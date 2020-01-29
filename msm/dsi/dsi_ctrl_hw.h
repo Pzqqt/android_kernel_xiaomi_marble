@@ -473,14 +473,6 @@ struct dsi_ctrl_hw_ops {
 			enum dsi_clk_gate_type clk_selection);
 
 	/**
-	 * debug_bus() - get dsi debug bus status.
-	 * @ctrl:        Pointer to the controller host hardware.
-	 * @entries:     Array of dsi debug bus control values.
-	 * @size:        Size of dsi debug bus control array.
-	 */
-	void (*debug_bus)(struct dsi_ctrl_hw *ctrl, u32 *entries, u32 size);
-
-	/**
 	 * soft_reset() - perform a soft reset on DSI controller
 	 * @ctrl:          Pointer to the controller host hardware.
 	 *

@@ -25,6 +25,7 @@
 #define DEFAULT_REGDUMP		SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_SDE	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_VBIFRT	SDE_DBG_DUMP_IN_MEM
+#define DEFAULT_DBGBUS_DSI	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_BASE_REG_CNT	DEFAULT_MDSS_HW_BLOCK_SIZE
 #define GROUP_BYTES		4
 #define ROW_BYTES		16
@@ -36,6 +37,7 @@
 
 #define DBGBUS_NAME_SDE		"sde"
 #define DBGBUS_NAME_VBIF_RT	"vbif_rt"
+#define DBGBUS_NAME_DSI		"dsi"
 
 /* offsets from sde top address for the debug buses */
 #define DBGBUS_SSPP0	0x188
@@ -43,6 +45,10 @@
 #define DBGBUS_SSPP1	0x298
 #define DBGBUS_DSPP	0x348
 #define DBGBUS_PERIPH	0x418
+
+/* offsets from DSI CTRL base address for the DSI debug buses */
+#define DSI_DEBUG_BUS_CTRL	0x0124
+#define DSI_DEBUG_BUS		0x0128
 
 #define TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
 #define TEST_EXT_MASK(id, tp)	(((tp >> 3) << 24) | (id << 4) \
@@ -153,6 +159,17 @@ struct vbif_debug_bus_entry {
 	u32 test_pnt_cnt;
 };
 
+struct dsi_debug_bus_entry {
+	u32 mux;
+	u32 sel;
+};
+
+struct sde_dbg_dsi_ctrl_list_entry {
+	const char *name;
+	void __iomem *base;
+	struct list_head list;
+};
+
 struct sde_dbg_debug_bus_common {
 	char *name;
 	u32 enable_mask;
@@ -176,8 +193,8 @@ struct sde_dbg_vbif_debug_bus {
 };
 
 struct sde_dbg_dsi_debug_bus {
-	u32 *entries;
-	u32 size;
+	struct sde_dbg_debug_bus_common cmn;
+	struct dsi_debug_bus_entry *entries;
 };
 
 /**
@@ -237,13 +254,15 @@ static struct sde_dbg_base {
 	struct sde_dbg_dsi_debug_bus dbgbus_dsi;
 	bool dump_all;
 	bool dump_secure;
-	bool dsi_dbg_bus;
 	u32 debugfs_ctrl;
 
 	struct sde_dbg_regbuf regbuf;
 	u32 cur_evt_index;
 	enum sde_dbg_dump_context dump_mode;
 } sde_dbg_base;
+
+static LIST_HEAD(sde_dbg_dsi_list);
+static DEFINE_MUTEX(sde_dbg_dsi_mutex);
 
 /* sde_dbg_base_evtlog - global pointer to main sde event log for macro use */
 struct sde_dbg_evtlog *sde_dbg_base_evtlog;
@@ -4220,40 +4239,56 @@ static struct vbif_debug_bus_entry vbif_dbg_bus_msm8998[] = {
 	{0x21c, 0x214, 0, 14, 0, 0xc}, /* xin blocks - clock side */
 };
 
-u32 dsi_dbg_bus_kona[] = {
-	0x0001, 0x1001, 0x0001, 0x0011,
-	0x1021, 0x0021, 0x0031, 0x0041,
-	0x0051, 0x0061, 0x3061, 0x0061,
-	0x2061, 0x2061, 0x1061, 0x1061,
-	0x1061, 0x0071, 0x0071, 0x0071,
-	0x0081, 0x0081, 0x00A1, 0x00A1,
-	0x10A1, 0x20A1, 0x30A1, 0x10A1,
-	0x10A1, 0x30A1, 0x20A1, 0x00B1,
-	0x00C1, 0x00C1, 0x10C1, 0x20C1,
-	0x30C1, 0x00D1, 0x00D1, 0x20D1,
-	0x30D1, 0x00E1, 0x00E1, 0x00E1,
-	0x00F1, 0x00F1, 0x0101, 0x0101,
-	0x1101, 0x2101, 0x3101, 0x0111,
-	0x0141, 0x1141, 0x0141, 0x1141,
-	0x1141, 0x0151, 0x0151, 0x1151,
-	0x2151, 0x3151, 0x0161, 0x0161,
-	0x1161, 0x0171, 0x0171, 0x0181,
-	0x0181, 0x0191, 0x0191, 0x01A1,
-	0x01A1, 0x01B1, 0x01B1, 0x11B1,
-	0x21B1, 0x01C1, 0x01C1, 0x11C1,
-	0x21C1, 0x31C1, 0x01D1, 0x01D1,
-	0x01D1, 0x01D1, 0x11D1, 0x21D1,
-	0x21D1, 0x01E1, 0x01E1, 0x01F1,
-	0x01F1, 0x0201, 0x0201, 0x0211,
-	0x0221, 0x0231, 0x0241, 0x0251,
-	0x0281, 0x0291, 0x0281, 0x0291,
-	0x02A1, 0x02B1, 0x02C1, 0x0321,
-	0x0321, 0x1321, 0x2321, 0x3321,
-	0x0331, 0x0331, 0x1331, 0x0341,
-	0x0341, 0x1341, 0x2341, 0x3341,
-	0x0351, 0x0361, 0x0361, 0x1361,
-	0x2361, 0x0371, 0x0381, 0x0391,
-	0x03C1, 0x03D1, 0x03E1, 0x03F1,
+static struct dsi_debug_bus_entry dsi_dbg_bus_kona[] = {
+	{0, 0x00}, {1, 0x00}, {2, 0x00}, {3, 0x00},
+	{0, 0x01}, {1, 0x01}, {2, 0x01}, {3, 0x01},
+	{0, 0x02}, {1, 0x02}, {2, 0x02}, {3, 0x02},
+	{0, 0x03}, {1, 0x03}, {2, 0x03}, {3, 0x03},
+	{0, 0x04}, {1, 0x04}, {2, 0x04}, {3, 0x04},
+	{0, 0x05}, {1, 0x05}, {2, 0x05}, {3, 0x05},
+	{0, 0x06}, {1, 0x06}, {2, 0x06}, {3, 0x06},
+	{0, 0x07}, {1, 0x07}, {2, 0x07}, {3, 0x07},
+	{0, 0x08}, {1, 0x08}, {2, 0x08}, {3, 0x08},
+	{0, 0x0a}, {1, 0x0a}, {2, 0x0a}, {3, 0x0a},
+	{0, 0x0b}, {1, 0x0b}, {2, 0x0b}, {3, 0x0b},
+	{0, 0x0c}, {1, 0x0c}, {2, 0x0c}, {3, 0x0c},
+	{0, 0x0d}, {1, 0x0d}, {2, 0x0d}, {3, 0x0d},
+	{0, 0x0e}, {1, 0x0e}, {2, 0x0e}, {3, 0x0e},
+	{0, 0x0f}, {1, 0x0f}, {2, 0x0f}, {3, 0x0f},
+	{0, 0x10}, {1, 0x10}, {2, 0x10}, {3, 0x10},
+	{0, 0x11}, {1, 0x11}, {2, 0x11}, {3, 0x11},
+	{0, 0x14}, {1, 0x14}, {2, 0x14}, {3, 0x14},
+	{0, 0x15}, {1, 0x15}, {2, 0x15}, {3, 0x15},
+	{0, 0x16}, {1, 0x16}, {2, 0x16}, {3, 0x16},
+	{0, 0x17}, {1, 0x17}, {2, 0x17}, {3, 0x17},
+	{0, 0x18}, {1, 0x18}, {2, 0x18}, {3, 0x18},
+	{0, 0x19}, {1, 0x19}, {2, 0x19}, {3, 0x19},
+	{0, 0x1a}, {1, 0x1a}, {2, 0x1a}, {3, 0x1a},
+	{0, 0x1b}, {1, 0x1b}, {2, 0x1b}, {3, 0x1b},
+	{0, 0x1c}, {1, 0x1c}, {2, 0x1c}, {3, 0x1c},
+	{0, 0x1d}, {1, 0x1d}, {2, 0x1d}, {3, 0x1d},
+	{0, 0x1e}, {1, 0x1e}, {2, 0x1e}, {3, 0x1e},
+	{0, 0x1f}, {1, 0x1f}, {2, 0x1f}, {3, 0x1f},
+	{0, 0x20}, {1, 0x20}, {2, 0x20}, {3, 0x20},
+	{0, 0x21}, {1, 0x21}, {2, 0x21}, {3, 0x21},
+	{0, 0x22}, {1, 0x22}, {2, 0x22}, {3, 0x22},
+	{0, 0x23}, {1, 0x23}, {2, 0x23}, {3, 0x23},
+	{0, 0x24}, {1, 0x24}, {2, 0x24}, {3, 0x24},
+	{0, 0x25}, {1, 0x25}, {2, 0x25}, {3, 0x25},
+	{0, 0x28}, {1, 0x28}, {2, 0x28}, {3, 0x28},
+	{0, 0x29}, {1, 0x29}, {2, 0x29}, {3, 0x29},
+	{0, 0x2a}, {1, 0x2a}, {2, 0x2a}, {3, 0x2a},
+	{0, 0x2b}, {1, 0x2b}, {2, 0x2b}, {3, 0x2b},
+	{0, 0x2c}, {1, 0x2c}, {2, 0x2c}, {3, 0x2c},
+	{0, 0x32}, {1, 0x32}, {2, 0x32}, {3, 0x32},
+	{0, 0x33}, {1, 0x33}, {2, 0x33}, {3, 0x33},
+	{0, 0x34}, {1, 0x34}, {2, 0x34}, {3, 0x34},
+	{0, 0x35}, {1, 0x35}, {2, 0x35}, {3, 0x35},
+	{0, 0x36}, {1, 0x36}, {2, 0x36}, {3, 0x36},
+	{0, 0x37}, {1, 0x37}, {2, 0x37}, {3, 0x37},
+	{0, 0x38}, {1, 0x38}, {2, 0x38}, {3, 0x38},
+	{0, 0x39}, {1, 0x39}, {2, 0x39}, {3, 0x39},
+	{0, 0x3c}, {0, 0x3d}, {0, 0x3e}, {0, 0x3f},
 };
 
 /**
@@ -4825,6 +4860,106 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 			bus->cmn.name);
 }
 
+static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_dsi_debug_bus *bus)
+{
+	struct sde_dbg_dsi_ctrl_list_entry *entry;
+	struct list_head *list;
+	int list_size = 0;
+	u32 reg;
+	bool in_log, in_mem;
+	u32 **dump_mem = NULL;
+	u32 *dump_addr = NULL;
+	u32 *end_addr;
+	struct dsi_debug_bus_entry *dbg_bus;
+	u32 bus_size;
+	int i, rc, dsi_idx = 0;
+
+	if (!bus || !bus->cmn.entries_size)
+		return;
+
+	dbg_bus = bus->entries;
+	bus_size = bus->cmn.entries_size;
+	dump_mem = &bus->cmn.dumped_content;
+
+	if (!dump_mem || !dbg_bus || list_empty(&sde_dbg_dsi_list))
+		return;
+
+	in_log = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_LOG);
+	in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
+
+	if (!in_log && !in_mem)
+		return;
+
+	rc = pm_runtime_get_sync(sde_dbg_base.dev);
+	if (rc < 0) {
+		pr_err("failed to enable power %d\n", rc);
+		return;
+	}
+
+	dev_info(sde_dbg_base.dev, "======== start %s dump =========\n",
+				bus->cmn.name);
+
+	mutex_lock(&sde_dbg_dsi_mutex);
+	if (in_mem) {
+		/* 4 fields of 4 bytes each, per table entry, per dsi ctrl*/
+		list_for_each(list, &sde_dbg_dsi_list)
+			list_size++;
+		list_size *= bus_size * sizeof(u32) * DUMP_CLMN_COUNT;
+
+		if (!(*dump_mem)) {
+			*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size,
+					GFP_KERNEL);
+			bus->cmn.content_size = list_size  / sizeof(u32);
+		}
+
+		if (*dump_mem) {
+			dump_addr = *dump_mem;
+			end_addr = *dump_mem + bus->cmn.content_size;
+			dev_info(sde_dbg_base.dev,
+				"%s: start_addr:0x%pK len:0x%x\n",
+				__func__, dump_addr, list_size);
+		} else {
+			in_mem = false;
+			pr_err("dump_mem: allocation fails\n");
+		}
+	}
+
+	list_for_each_entry(entry, &sde_dbg_dsi_list, list) {
+		dev_info(sde_dbg_base.dev, "%s start_addr:0x%pK\n",
+				entry->name, dump_addr);
+
+		for (i = 0; i < bus_size; i++) {
+			if (!entry->base)
+				break;
+
+			reg = ((dbg_bus[i].mux << 12) |
+					(dbg_bus[i].sel << 4) | BIT(0));
+			writel_relaxed(reg, entry->base + DSI_DEBUG_BUS_CTRL);
+			wmb(); /* make sure debug-bus test point is enabled */
+			reg = readl_relaxed(entry->base + DSI_DEBUG_BUS);
+			if (dump_addr && (dump_addr < end_addr)) {
+				*dump_addr++ = dsi_idx;
+				*dump_addr++ = dbg_bus[i].mux;
+				*dump_addr++ = dbg_bus[i].sel;
+				*dump_addr++ = reg;
+			}
+			if (in_log)
+				dev_info(sde_dbg_base.dev,
+					"mux:0x%x sel:0x%x status:0x%x\n",
+					dbg_bus[i].mux, dbg_bus[i].sel, reg);
+		}
+
+		/* Disable debug bus once we are done */
+		writel_relaxed(0, entry->base + DSI_DEBUG_BUS_CTRL);
+		dsi_idx++;
+	}
+	mutex_unlock(&sde_dbg_dsi_mutex);
+
+	pm_runtime_put_sync(sde_dbg_base.dev);
+	dev_info(sde_dbg_base.dev, "======== end %s dump =========\n",
+			bus->cmn.name);
+}
+
 /**
  * _sde_dump_array - dump array of register bases
  * @blk_arr: array of register base pointers
@@ -4833,11 +4968,14 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
  * @name: string indicating origin of dump
  * @dump_dbgbus_sde: whether to dump the sde debug bus
  * @dump_dbgbus_vbif_rt: whether to dump the vbif rt debug bus
+ * @dump_dbgbus_dsi: whether to dump the dsi debug bus
+ * @dump_all: dump evtlog + regs
  * @dump_secure: flag to indicate dumping in secure-session
  */
 static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	u32 len, bool do_panic, const char *name, bool dump_dbgbus_sde,
-	bool dump_dbgbus_vbif_rt, bool dump_all, bool dump_secure)
+	bool dump_dbgbus_vbif_rt,  bool dump_dbgbus_dsi, bool dump_all,
+	bool dump_secure)
 {
 	int i;
 
@@ -4863,9 +5001,8 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 	if (dump_dbgbus_vbif_rt)
 		_sde_dbg_dump_vbif_dbg_bus(&sde_dbg_base.dbgbus_vbif_rt);
 
-	if (sde_dbg_base.dsi_dbg_bus || dump_all)
-		dsi_ctrl_debug_dump(sde_dbg_base.dbgbus_dsi.entries,
-				    sde_dbg_base.dbgbus_dsi.size);
+	if (dump_all || dump_dbgbus_dsi)
+		_sde_dbg_dump_dsi_dbg_bus(&sde_dbg_base.dbgbus_dsi);
 
 	if (do_panic && sde_dbg_base.panic_on_err)
 		panic(name);
@@ -4884,6 +5021,7 @@ static void _sde_dump_work(struct work_struct *work)
 		sde_dbg_base.work_panic, "evtlog_workitem",
 		sde_dbg_base.dbgbus_sde.cmn.include_in_deferred_work,
 		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work,
+		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work,
 		sde_dbg_base.dump_all, sde_dbg_base.dump_secure);
 }
 
@@ -4893,6 +5031,7 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 	bool do_panic = false;
 	bool dump_dbgbus_sde = false;
 	bool dump_dbgbus_vbif_rt = false;
+	bool dump_dbgbus_dsi = false;
 	bool dump_all = false;
 	bool dump_secure = false;
 	va_list args;
@@ -4947,7 +5086,7 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 			dump_dbgbus_vbif_rt = true;
 
 		if (!strcmp(blk_name, "dsi_dbg_bus"))
-			sde_dbg_base.dsi_dbg_bus = true;
+			dump_dbgbus_dsi = true;
 
 		if (!strcmp(blk_name, "panic"))
 			do_panic = true;
@@ -4964,12 +5103,14 @@ void sde_dbg_dump(enum sde_dbg_dump_context dump_mode, const char *name, ...)
 				dump_dbgbus_sde;
 		sde_dbg_base.dbgbus_vbif_rt.cmn.include_in_deferred_work =
 				dump_dbgbus_vbif_rt;
+		sde_dbg_base.dbgbus_dsi.cmn.include_in_deferred_work =
+				dump_dbgbus_dsi;
 		sde_dbg_base.dump_all = dump_all;
 		schedule_work(&sde_dbg_base.dump_work);
 	} else {
 		_sde_dump_array(blk_arr, blk_len, do_panic, name,
 				dump_dbgbus_sde, dump_dbgbus_vbif_rt,
-				dump_all, dump_secure);
+				dump_dbgbus_dsi, dump_all, dump_secure);
 	}
 }
 
@@ -5119,7 +5260,7 @@ static ssize_t sde_evtlog_dump_write(struct file *file,
 	const char __user *user_buf, size_t count, loff_t *ppos)
 {
 	_sde_dump_array(NULL, 0, sde_dbg_base.panic_on_err, "dump_debugfs",
-		true, true, true, false);
+		true, true, true, true, false);
 
 	return count;
 }
@@ -5485,6 +5626,28 @@ static int sde_recovery_vbif_dbgbus_dump_open(struct inode *inode,
 
 static const struct file_operations sde_recovery_vbif_dbgbus_fops = {
 	.open = sde_recovery_vbif_dbgbus_dump_open,
+	.read = sde_recovery_dbgbus_dump_read,
+};
+
+static int sde_recovery_dsi_dbgbus_dump_open(struct inode *inode,
+		struct file *file)
+{
+	if (!inode || !file)
+		return -EINVAL;
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data =  (void *)&sde_dbg_base.dbgbus_dsi.cmn;
+
+	mutex_lock(&sde_dbg_base.mutex);
+	sde_dbg_base.dbgbus_dsi.cmn.content_idx = 0;
+	mutex_unlock(&sde_dbg_base.mutex);
+
+	return 0;
+}
+
+static const struct file_operations sde_recovery_dsi_dbgbus_fops = {
+	.open = sde_recovery_dsi_dbgbus_dump_open,
 	.read = sde_recovery_dbgbus_dump_read,
 };
 
@@ -5880,6 +6043,15 @@ int sde_dbg_debugfs_register(struct dentry *debugfs_root)
 				&dbg->dbgbus_vbif_rt.cmn.enable_mask);
 	}
 
+	if (dbg->dbgbus_dsi.entries) {
+		debugfs_create_file("recovery_dsi_dbgbus", 0400, debugfs_root,
+				NULL, &sde_recovery_dsi_dbgbus_fops);
+		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
+				dbg->dbgbus_dsi.cmn.name);
+		debugfs_create_u32(debug_name, 0600, debugfs_root,
+				&dbg->dbgbus_dsi.cmn.enable_mask);
+	}
+
 	list_for_each_entry(blk_base, &dbg->reg_base_list, reg_base_head) {
 		snprintf(debug_name, sizeof(debug_name), "%s_off",
 				blk_base->name);
@@ -5917,10 +6089,14 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 		dbg->dbgbus_vbif_rt.entries = vbif_dbg_bus_msm8998;
 		dbg->dbgbus_vbif_rt.cmn.entries_size =
 				ARRAY_SIZE(vbif_dbg_bus_msm8998);
-		dbg->dbgbus_dsi.entries = dsi_dbg_bus_kona;
-		dbg->dbgbus_dsi.size = ARRAY_SIZE(dsi_dbg_bus_kona);
 		dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 		dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
+
+		dbg->dbgbus_dsi.entries = dsi_dbg_bus_kona;
+		dbg->dbgbus_dsi.cmn.entries_size =
+				ARRAY_SIZE(dsi_dbg_bus_kona);
+		dbg->dbgbus_dsi.cmn.name = DBGBUS_NAME_DSI;
+		dbg->dbgbus_dsi.cmn.enable_mask = DEFAULT_DBGBUS_DSI;
 	} else if (SDE_HW_REV_MAJOR(hwversion) == 0x6) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_kona;
 		dbg->dbgbus_sde.cmn.entries_size =
@@ -5932,10 +6108,14 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 		dbg->dbgbus_vbif_rt.entries = vbif_dbg_bus_msm8998;
 		dbg->dbgbus_vbif_rt.cmn.entries_size =
 				ARRAY_SIZE(vbif_dbg_bus_msm8998);
-		dbg->dbgbus_dsi.entries = dsi_dbg_bus_kona;
-		dbg->dbgbus_dsi.size = ARRAY_SIZE(dsi_dbg_bus_kona);
 		dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 		dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
+
+		dbg->dbgbus_dsi.entries = dsi_dbg_bus_kona;
+		dbg->dbgbus_dsi.cmn.entries_size =
+				ARRAY_SIZE(dsi_dbg_bus_kona);
+		dbg->dbgbus_dsi.cmn.name = DBGBUS_NAME_DSI;
+		dbg->dbgbus_dsi.cmn.enable_mask = DEFAULT_DBGBUS_DSI;
 	} else if (SDE_HW_REV_MAJOR(hwversion) == 0x5) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_sm8150;
 		dbg->dbgbus_sde.cmn.entries_size =
@@ -5947,10 +6127,11 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 		dbg->dbgbus_vbif_rt.entries = vbif_dbg_bus_msm8998;
 		dbg->dbgbus_vbif_rt.cmn.entries_size =
 				ARRAY_SIZE(vbif_dbg_bus_msm8998);
-		dbg->dbgbus_dsi.entries = NULL;
-		dbg->dbgbus_dsi.size = 0;
 		dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 		dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
+
+		dbg->dbgbus_dsi.entries = NULL;
+		dbg->dbgbus_dsi.cmn.entries_size = 0;
 	} else {
 		pr_err("unsupported chipset id %X\n", hwversion);
 	}
@@ -6006,6 +6187,19 @@ static void sde_dbg_reg_base_destroy(void)
 		kfree(blk_base);
 	}
 }
+
+static void sde_dbg_dsi_ctrl_destroy(void)
+{
+	struct sde_dbg_dsi_ctrl_list_entry *entry, *tmp;
+
+	mutex_lock(&sde_dbg_dsi_mutex);
+	list_for_each_entry_safe(entry, tmp, &sde_dbg_dsi_list, list) {
+		list_del(&entry->list);
+		kfree(entry);
+	}
+	mutex_unlock(&sde_dbg_dsi_mutex);
+}
+
 /**
  * sde_dbg_destroy - destroy sde debug facilities
  */
@@ -6018,7 +6212,26 @@ void sde_dbg_destroy(void)
 	sde_evtlog_destroy(sde_dbg_base.evtlog);
 	sde_dbg_base.evtlog = NULL;
 	sde_dbg_reg_base_destroy();
+	sde_dbg_dsi_ctrl_destroy();
 	mutex_destroy(&sde_dbg_base.mutex);
+}
+
+int sde_dbg_dsi_ctrl_register(void __iomem *base, const char *name)
+{
+	struct sde_dbg_dsi_ctrl_list_entry *entry;
+
+	entry = kzalloc(sizeof(*entry), GFP_KERNEL);
+	if (!entry)
+		return -ENOMEM;
+
+	entry->name = name;
+	entry->base = base;
+	mutex_lock(&sde_dbg_dsi_mutex);
+	list_add_tail(&entry->list, &sde_dbg_dsi_list);
+	mutex_unlock(&sde_dbg_dsi_mutex);
+
+	pr_debug("registered DSI CTRL %s for debugbus support\n", entry->name);
+	return 0;
 }
 
 int sde_dbg_reg_register_base(const char *name, void __iomem *base,
