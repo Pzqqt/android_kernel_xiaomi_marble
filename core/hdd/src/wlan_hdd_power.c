@@ -281,8 +281,7 @@ static void __wlan_hdd_ipv6_changed(struct net_device *net_dev)
 		goto exit;
 
 	if (adapter->device_mode == QDF_STA_MODE ||
-	    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	    adapter->device_mode == QDF_NDI_MODE) {
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 		schedule_work(&adapter->ipv6_notifier_work);
@@ -910,8 +909,7 @@ static void __wlan_hdd_ipv4_changed(struct net_device *net_dev)
 		goto exit;
 
 	if (adapter->device_mode == QDF_STA_MODE ||
-	    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	    adapter->device_mode == QDF_NDI_MODE) {
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 
