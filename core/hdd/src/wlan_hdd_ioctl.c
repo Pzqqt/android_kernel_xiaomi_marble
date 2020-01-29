@@ -4583,7 +4583,7 @@ static int drv_cmd_get_scan_home_away_time(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint16_t val;
-	char extra[32];
+	char extra[32] = {0};
 	uint8_t len = 0;
 	QDF_STATUS status;
 
