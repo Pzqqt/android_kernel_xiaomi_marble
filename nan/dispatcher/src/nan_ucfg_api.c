@@ -372,6 +372,13 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	uint32_t len;
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
+	int err;
+	struct nan_psoc_priv_obj *psoc_obj = NULL;
+	struct osif_request *request;
+	static const struct osif_request_params params = {
+		.priv_size = 0,
+		.timeout_ms = WLAN_WAIT_TIME_NDP_END,
+	};
 
 	if (!in_req) {
 		nan_alert("req is null");
@@ -387,6 +394,11 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 		break;
 	case NDP_END_REQ:
 		len = sizeof(struct nan_datapath_end_req);
+		psoc_obj = nan_get_psoc_priv_obj(wlan_vdev_get_psoc(vdev));
+		if (!psoc_obj) {
+			nan_err("nan psoc priv object is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
 		break;
 	case NDP_END_ALL:
 		len = sizeof(struct nan_datapath_end_all_ndps);
@@ -408,10 +420,35 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_NAN,
 					QDF_MODULE_ID_OS_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("failed to post msg to NAN component, status: %d",
+			status);
 		qdf_mem_free(msg.bodyptr);
+		return status;
+	}
 
-	return status;
+	if (req_type == NDP_END_REQ) {
+		/* Wait for NDP_END indication */
+		if (!psoc_obj) {
+			nan_err("nan psoc priv object is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+		request = osif_request_alloc(&params);
+		if (!request) {
+			nan_err("Request allocation failure");
+			return QDF_STATUS_E_NOMEM;
+		}
+		psoc_obj->request_context = osif_request_cookie(request);
+
+		nan_debug("Wait for NDP END indication");
+		err = osif_request_wait_for_response(request);
+		if (err)
+			nan_err("NAN request timed out: %d", err);
+		osif_request_put(request);
+		psoc_obj->request_context = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 void ucfg_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
