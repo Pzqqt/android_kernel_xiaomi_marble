@@ -3155,6 +3155,8 @@ static void set_mpdu_info(
 		mpdu_info->preamble = DOT11_B;
 	else
 		mpdu_info->preamble = DOT11_A;
+
+	mpdu_info->mcs = CDP_LEGACY_MCS3;
 }
 
 static void dp_gen_ack_frame(struct hal_rx_ppdu_info *ppdu_info,
@@ -3186,12 +3188,35 @@ static void dp_gen_ack_frame(struct hal_rx_ppdu_info *ppdu_info,
 
 static void dp_gen_block_ack_frame(
 	struct mon_rx_user_status *rx_user_status,
+	struct mon_rx_user_info *rx_user_info,
 	struct dp_peer *peer,
 	qdf_nbuf_t mpdu_nbuf)
 {
 	struct dp_vdev *vdev = NULL;
+	uint32_t tid;
+	struct dp_tx_tid *tx_tid;
 	struct ieee80211_ctlframe_addr2 *wh_addr2;
 	uint8_t *frm;
+
+	tid = rx_user_status->tid;
+	tx_tid = &peer->tx_capture.tx_tid[tid];
+	if (!rx_user_info->bar_frame) {
+		tx_tid->first_data_seq_ctrl =
+			rx_user_status->first_data_seq_ctrl;
+		tx_tid->mpdu_cnt = rx_user_status->mpdu_cnt_fcs_ok +
+			rx_user_status->mpdu_cnt_fcs_err;
+		if (tx_tid->mpdu_cnt > DP_MAX_MPDU_64)
+			qdf_mem_copy(tx_tid->mpdu_fcs_ok_bitmap,
+				     rx_user_status->mpdu_fcs_ok_bitmap,
+				     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP * sizeof(
+				     rx_user_status->mpdu_fcs_ok_bitmap[0]));
+		else
+			qdf_mem_copy(tx_tid->mpdu_fcs_ok_bitmap,
+				     rx_user_status->mpdu_fcs_ok_bitmap,
+				     DP_NUM_WORDS_PER_PPDU_BITMAP_64 * sizeof(
+				     rx_user_status->mpdu_fcs_ok_bitmap[0]));
+	}
+
 
 	wh_addr2 = (struct ieee80211_ctlframe_addr2 *)
 			qdf_nbuf_data(mpdu_nbuf);
@@ -3219,19 +3244,17 @@ static void dp_gen_block_ack_frame(
 		DP_IEEE80211_BAR_CTL_COMBA);
 	frm += 2;
 	*((uint16_t *)frm) =
-		rx_user_status->first_data_seq_ctrl;
+		tx_tid->first_data_seq_ctrl;
 	frm += 2;
-	if ((rx_user_status->mpdu_cnt_fcs_ok +
-		rx_user_status->mpdu_cnt_fcs_err)
-		> DP_MAX_MPDU_64) {
+	if (tx_tid->mpdu_cnt > DP_MAX_MPDU_64) {
 		qdf_mem_copy(frm,
-			     rx_user_status->mpdu_fcs_ok_bitmap,
+			     tx_tid->mpdu_fcs_ok_bitmap,
 			     HAL_RX_NUM_WORDS_PER_PPDU_BITMAP *
 			     sizeof(rx_user_status->mpdu_fcs_ok_bitmap[0]));
 		frm += DP_NUM_BYTES_PER_PPDU_BITMAP;
 	} else {
 		qdf_mem_copy(frm,
-			     rx_user_status->mpdu_fcs_ok_bitmap,
+			     tx_tid->mpdu_fcs_ok_bitmap,
 			     DP_NUM_WORDS_PER_PPDU_BITMAP_64 *
 			     sizeof(rx_user_status->mpdu_fcs_ok_bitmap[0]));
 		frm += DP_NUM_BYTES_PER_PPDU_BITMAP_64;
@@ -3259,8 +3282,10 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	uint32_t peer_id;
 	struct mon_rx_status *rx_status;
 	struct mon_rx_user_status *rx_user_status;
+	struct mon_rx_user_info *rx_user_info;
 	uint32_t ast_index;
 	uint32_t i;
+	bool bar_frame;
 
 	rx_status = &ppdu_info->rx_status;
 
@@ -3271,11 +3296,30 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	    HAL_MPDU_SW_FRAME_GROUP_MGMT_BEACON)
 		return QDF_STATUS_SUCCESS;
 
+	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_MGMT_PROBE_REQ &&
+	    (ppdu_info->rx_info.mac_addr1[0] & 1)) {
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR)
+		bar_frame = true;
+	else
+		bar_frame = false;
+
 	for (i = 0; i < ppdu_info->com_info.num_users; i++) {
 		if (i > OFDMA_NUM_USERS)
 			return QDF_STATUS_E_FAULT;
 
 		rx_user_status =  &ppdu_info->rx_user_status[i];
+		rx_user_info = &ppdu_info->rx_user_info[i];
+
+		rx_user_info->bar_frame = bar_frame;
+
+		if (rx_user_info->qos_control_info_valid &&
+		    ((rx_user_info->qos_control &
+		    IEEE80211_QOS_ACKPOLICY) >> IEEE80211_QOS_ACKPOLICY_S)
+		    == IEEE80211_BAR_CTL_NOACK)
+			continue;
 
 		ast_index = rx_user_status->ast_index;
 		if (ast_index >=
@@ -3338,9 +3382,11 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		if (rx_status->rs_flags & IEEE80211_AMPDU_FLAG) {
-			dp_gen_block_ack_frame(
-					       rx_user_status, peer,
+		if (peer->rx_tid[rx_user_status->tid].ba_status ==
+		     DP_RX_BA_ACTIVE) {
+			dp_gen_block_ack_frame(rx_user_status,
+					       rx_user_info,
+					       peer,
 					       tx_capture_info.mpdu_nbuf);
 			tx_capture_info.mpdu_info.tid = rx_user_status->tid;
 
