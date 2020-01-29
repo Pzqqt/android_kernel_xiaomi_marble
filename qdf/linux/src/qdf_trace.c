@@ -3094,6 +3094,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_QLD] = {"QLD"},
 	[QDF_MODULE_ID_DYNAMIC_MODE_CHG] = {"Dynamic Mode Change"},
 	[QDF_MODULE_ID_COEX] = {"COEX"},
+	[QDF_MODULE_ID_MON_FILTER] = {"Monitor Filter"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 	[QDF_MODULE_ID_PKT_CAPTURE] = {"pkt_capture"},
 };
@@ -3554,6 +3555,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_QLD] = QDF_TRACE_LEVEL_ERROR,
 		[QDF_MODULE_ID_DYNAMIC_MODE_CHG] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_COEX] = QDF_TRACE_LEVEL_ERROR,
+		[QDF_MODULE_ID_MON_FILTER] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_PKT_CAPTURE] = QDF_TRACE_LEVEL_NONE,
 	};
