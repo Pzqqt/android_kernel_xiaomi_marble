@@ -774,6 +774,8 @@ qdf_freq_t wlan_reg_chan_band_to_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_chan_band_to_freq(pdev, chan, band_mask);
 }
 
+qdf_export_symbol(wlan_reg_chan_band_to_freq);
+
 bool wlan_reg_is_49ghz_freq(qdf_freq_t freq)
 {
 	return reg_is_49ghz_freq(freq);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,7 @@
 #include "../dfs_random_chan_sel.h"
 #include <qdf_mc_timer.h>
 #include <wlan_utility.h>
+#include <wlan_reg_services_api.h>
 #include "../dfs_process_radar_found_ind.h"
 
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
@@ -854,7 +855,8 @@ dfs_mark_leaking_ch(struct wlan_dfs *dfs,
 
 	nol = dfs->dfs_nol;
 	while (nol) {
-		dfs_nol_channel = wlan_freq_to_chan(nol->nol_freq);
+		dfs_nol_channel = wlan_reg_freq_to_chan(dfs->dfs_pdev_obj,
+							nol->nol_freq);
 		if (false == dfs_find_target_channel_in_channel_matrix(
 					ch_width, dfs_nol_channel,
 					&target_chan_matrix)) {
@@ -1785,7 +1787,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 		if (acs_info && acs_info->acs_mode) {
 			for (j = 0; j < acs_info->num_of_channel; j++) {
 				if (acs_info->chan_freq_list[j] ==
-				    wlan_chan_to_freq(chan->dfs_ch_ieee)) {
+							     chan->dfs_ch_freq){
 					found = true;
 					break;
 				}
