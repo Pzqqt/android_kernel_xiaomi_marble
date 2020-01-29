@@ -719,33 +719,44 @@ static enum powersave_qpower_mode wma_get_qpower_config(tp_wma_handle wma)
 	}
 }
 
-void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
+void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 {
 	uint32_t vdev_id = ps_req->sessionid;
 	QDF_STATUS ret;
-	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	enum powersave_qpower_mode qpower_config;
+	struct wma_txrx_node *iface;
+	t_wma_handle *wma_handle;
 
-	if (!iface->vdev) {
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		wma_err("wma handle is null");
+		return;
+	}
+
+	iface = &wma_handle->interfaces[vdev_id];
+
+	if (!iface || !iface->vdev) {
 		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
 		return;
 	}
 
+	qpower_config = wma_get_qpower_config(wma_handle);
 	if (eSIR_ADDON_NOTHING == ps_req->psSetting) {
 		if (qpower_config && iface->uapsd_cached_val) {
 			qpower_config = 0;
 			WMA_LOGD("Qpower is disabled");
 		}
 		WMA_LOGD("Enable Sta Mode Ps vdevId %d", vdev_id);
-		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
+		ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
+						   vdev_id,
 				WMI_STA_PS_PARAM_UAPSD, 0);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Set Uapsd param 0 Failed vdevId %d", vdev_id);
 			return;
 		}
 
-		ret = wma_set_force_sleep(wma, vdev_id, false,
-				qpower_config, true);
+		ret = wma_set_force_sleep(wma_handle, vdev_id, false,
+					  qpower_config, true);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Sta Ps Failed vdevId %d", vdev_id);
 			return;
@@ -757,10 +768,11 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 		if (uapsd_val != iface->uapsd_cached_val) {
 			WMA_LOGD("Enable Uapsd vdevId %d Mask %d",
 					vdev_id, uapsd_val);
-			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
-					vdev_id,
-					WMI_STA_PS_PARAM_UAPSD,
-					uapsd_val);
+			ret =
+			 wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
+						      vdev_id,
+						      WMI_STA_PS_PARAM_UAPSD,
+						      uapsd_val);
 			if (QDF_IS_STATUS_ERROR(ret)) {
 				WMA_LOGE("Enable Uapsd Failed vdevId %d",
 						vdev_id);
@@ -778,27 +790,27 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 			WMA_LOGD("Qpower is disabled");
 		}
 		WMA_LOGD("Enable Forced Sleep vdevId %d", vdev_id);
-		ret = wma_set_force_sleep(wma, vdev_id, true,
-				qpower_config, true);
+		ret = wma_set_force_sleep(wma_handle, vdev_id, true,
+					  qpower_config, true);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Forced Sleep Failed vdevId %d",
-					vdev_id);
+				 vdev_id);
 			return;
 		}
 	}
 
-	if (wma->ito_repeat_count) {
+	if (wma_handle->ito_repeat_count) {
 		WMA_LOGI("Set ITO count to %d for vdevId %d",
-					wma->ito_repeat_count, vdev_id);
+					wma_handle->ito_repeat_count, vdev_id);
 
-		ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
+		ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
 			vdev_id,
 			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX,
-			wma->ito_repeat_count);
+			wma_handle->ito_repeat_count);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Set ITO count failed vdevId %d Error %d",
-								vdev_id, ret);
+				 vdev_id, ret);
 			return;
 		}
 	}
@@ -807,6 +819,7 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 	iface->in_bmps = true;
 }
 
+
 /**
  * wma_disable_sta_ps_mode() - disable sta powersave params in fw
  * @wma: wma handle
@@ -814,16 +827,25 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
  *
  * Return: none
  */
-void wma_disable_sta_ps_mode(tp_wma_handle wma, tpDisablePsParams ps_req)
+void wma_disable_sta_ps_mode(tpDisablePsParams ps_req)
 {
 	QDF_STATUS ret;
 	uint32_t vdev_id = ps_req->sessionid;
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *iface;
+	t_wma_handle *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		wma_err("wma handle is null");
+		return;
+	}
+
+	iface = &wma_handle->interfaces[vdev_id];
 
 	WMA_LOGD("Disable Sta Mode Ps vdevId %d", vdev_id);
 
 	/* Disable Sta Mode Power save */
-	ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, false);
+	ret = wmi_unified_set_sta_ps(wma_handle->wmi_handle, vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
 		return;
@@ -833,7 +855,8 @@ void wma_disable_sta_ps_mode(tp_wma_handle wma, tpDisablePsParams ps_req)
 	/* Disable UAPSD incase if additional Req came */
 	if (eSIR_ADDON_DISABLE_UAPSD == ps_req->psSetting) {
 		WMA_LOGD("Disable Uapsd vdevId %d", vdev_id);
-		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
+		ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
+						   vdev_id,
 				WMI_STA_PS_PARAM_UAPSD, 0);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Disable Uapsd Failed vdevId %d", vdev_id);

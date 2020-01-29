@@ -8319,16 +8319,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* REMOVE_PKT_LOG */
-	case WMA_ENTER_PS_REQ:
-		wma_enable_sta_ps_mode(wma_handle,
-				       (tpEnablePsParams) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_EXIT_PS_REQ:
-		wma_disable_sta_ps_mode(wma_handle,
-					(tpDisablePsParams) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_ENABLE_UAPSD_REQ:
 		wma_enable_uapsd_mode(wma_handle,
 				      (tpEnableUapsdParams) msg->bodyptr);

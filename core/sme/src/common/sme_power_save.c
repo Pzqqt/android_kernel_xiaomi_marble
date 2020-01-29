@@ -138,13 +138,12 @@ static void sme_get_ps_state(struct mac_context *mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_ps_enable_ps_req_params(struct mac_context *mac_ctx,
-		uint32_t session_id)
+static QDF_STATUS
+sme_ps_enable_ps_req_params(struct mac_context *mac_ctx, uint32_t vdev_id)
 {
 	struct sEnablePsParams *enable_ps_req_params;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
-	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+	struct ps_params *ps_param = &ps_global_info->ps_params[vdev_id];
 	enum ps_state ps_state;
 
 	enable_ps_req_params =  qdf_mem_malloc(sizeof(*enable_ps_req_params));
@@ -155,21 +154,20 @@ static QDF_STATUS sme_ps_enable_ps_req_params(struct mac_context *mac_ctx,
 		enable_ps_req_params->psSetting = eSIR_ADDON_ENABLE_UAPSD;
 		sme_ps_fill_uapsd_req_params(mac_ctx,
 				&enable_ps_req_params->uapsdParams,
-				session_id, &ps_state);
+				vdev_id, &ps_state);
 		ps_state = UAPSD_MODE;
 		enable_ps_req_params->uapsdParams.enable_ps = true;
 	} else {
 		enable_ps_req_params->psSetting = eSIR_ADDON_NOTHING;
 		ps_state = LEGACY_POWER_SAVE_MODE;
 	}
-	enable_ps_req_params->sessionid = session_id;
+	enable_ps_req_params->sessionid = vdev_id;
 
-	status = sme_post_ps_msg_to_wma(WMA_ENTER_PS_REQ, enable_ps_req_params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return QDF_STATUS_E_FAILURE;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		FL("Message WMA_ENTER_PS_REQ Successfully sent to WMA"));
+	wma_enable_sta_ps_mode(enable_ps_req_params);
+
+	sme_debug("Powersave Enable sent to FW");
 	ps_param->ps_state = ps_state;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -181,24 +179,21 @@ static QDF_STATUS sme_ps_enable_ps_req_params(struct mac_context *mac_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sme_ps_disable_ps_req_params(struct mac_context *mac_ctx,
-		uint32_t session_id)
+					       uint32_t vdev_id)
 {
 	struct  sDisablePsParams *disable_ps_req_params;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	disable_ps_req_params = qdf_mem_malloc(sizeof(*disable_ps_req_params));
 	if (!disable_ps_req_params)
 		return QDF_STATUS_E_NOMEM;
 
 	disable_ps_req_params->psSetting = eSIR_ADDON_NOTHING;
-	disable_ps_req_params->sessionid = session_id;
+	disable_ps_req_params->sessionid = vdev_id;
 
-	status = sme_post_ps_msg_to_wma(WMA_EXIT_PS_REQ, disable_ps_req_params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return QDF_STATUS_E_FAILURE;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			FL("Message WMA_EXIT_PS_REQ Successfully sent to WMA"));
-	sme_set_ps_state(mac_ctx, session_id, FULL_POWER_MODE);
+	wma_disable_sta_ps_mode(disable_ps_req_params);
+	sme_debug("Powersave disable sent to FW");
+	sme_set_ps_state(mac_ctx, vdev_id, FULL_POWER_MODE);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -411,7 +406,6 @@ QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 	enum ps_state ps_state;
 	QDF_TIMER_STATE tstate;
 	struct sEnablePsParams *req;
-	t_wma_handle *wma;
 
 	QDF_BUG(session_id < WLAN_MAX_VDEVS);
 	if (session_id >= WLAN_MAX_VDEVS)
@@ -432,12 +426,6 @@ QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 
 	qdf_mc_timer_stop(&ps_parm->auto_ps_enable_timer);
 
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		sme_err("wma is null");
-		return QDF_STATUS_E_INVAL;
-	}
-
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req)
 		return QDF_STATUS_E_NOMEM;
@@ -454,7 +442,7 @@ QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 	}
 	req->sessionid = session_id;
 
-	wma_enable_sta_ps_mode(wma, req);
+	wma_enable_sta_ps_mode(req);
 	qdf_mem_free(req);
 
 	ps_parm->ps_state = ps_state;
