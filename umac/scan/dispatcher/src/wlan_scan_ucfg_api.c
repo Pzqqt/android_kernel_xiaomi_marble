@@ -1380,7 +1380,7 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 		req->scan_req.chan_list.chan[idx].freq =
 			(chan_list[idx] > WLAN_24_GHZ_BASE_FREQ) ?
 			chan_list[idx] :
-			wlan_reg_chan_to_freq(pdev, chan_list[idx]);
+			wlan_reg_legacy_chan_to_freq(pdev, chan_list[idx]);
 		if (phymode)
 			req->scan_req.chan_list.chan[idx].phymode =
 				phymode[idx];

@@ -639,7 +639,7 @@ static int32_t scm_calculate_oce_wan_score(
 #ifdef WLAN_POLICY_MGR_ENABLE
 
 static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
-			uint8_t bss_channel,
+			qdf_freq_t bss_channel_freq,
 			uint8_t vdev_nss_2g,
 			uint8_t vdev_nss_5g)
 {
@@ -650,22 +650,22 @@ static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
 	 */
 
 	if (policy_mgr_is_chnl_in_diff_band(
-	    psoc, wlan_chan_to_freq(bss_channel)) &&
+	    psoc, bss_channel_freq) &&
 	    policy_mgr_is_hw_dbs_capable(psoc) &&
 	    !(policy_mgr_is_hw_dbs_2x2_capable(psoc)))
 		return 1;
 
-	return (WLAN_REG_IS_24GHZ_CH(bss_channel) ?
+	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
 		vdev_nss_2g :
 		vdev_nss_5g);
 }
 #else
 static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
-			uint8_t bss_channel,
+			qdf_freq_t bss_channel_freq,
 			uint8_t vdev_nss_2g,
 			uint8_t vdev_nss_5g)
 {
-	return (WLAN_REG_IS_24GHZ_CH(bss_channel) ?
+	return (WLAN_REG_IS_24GHZ_CH_FREQ(bss_channel_freq) ?
 		vdev_nss_2g :
 		vdev_nss_5g);
 }
@@ -812,9 +812,7 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	}
 
 	sta_nss = scm_get_sta_nss(psoc,
-				  wlan_reg_freq_to_chan(
-						pdev,
-						entry->channel.chan_freq),
+				  entry->channel.chan_freq,
 				  score_config->vdev_nss_24g,
 				  score_config->vdev_nss_5g);
 
