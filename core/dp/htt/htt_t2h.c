@@ -44,6 +44,8 @@
 #include <cdp_txrx_ipa.h>
 #include "pktlog_ac.h"
 #include <cdp_txrx_handle.h>
+#include <wlan_pkt_capture_ucfg_api.h>
+#include <ol_txrx.h>
 /*--- target->host HTT message dispatch function ----------------------------*/
 
 #ifndef DEBUG_CREDIT
@@ -1091,6 +1093,7 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 	uint32_t i;
 	enum htt_t2h_msg_type msg_type;
 	uint32_t msg_len;
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	for (i = 0; i < num_cmpls; i++) {
 		htt_t2h_msg = cmpl_msdus[i];
@@ -1238,6 +1241,71 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 			ol_tx_completion_handler(pdev->txrx_pdev, num_msdus,
 						 status, msg_word);
 
+			break;
+		}
+		case HTT_T2H_MSG_TYPE_TX_OFFLOAD_DELIVER_IND:
+		{
+			struct htt_tx_offload_deliver_ind_hdr_t
+							*offload_deliver_msg;
+			uint8_t vdev_id;
+			struct ol_txrx_vdev_t *vdev;
+			bool is_pkt_during_roam = false;
+			struct ol_txrx_pdev_t *txrx_pdev = pdev->txrx_pdev;
+			struct ol_txrx_peer_t *peer;
+			uint8_t bssid[QDF_MAC_ADDR_SIZE];
+			uint32_t freq = 0;
+
+			if (!(ucfg_pkt_capture_get_pktcap_mode((void *)soc->psoc) &
+			      PKT_CAPTURE_MODE_DATA_ONLY))
+				break;
+
+			offload_deliver_msg =
+			(struct htt_tx_offload_deliver_ind_hdr_t *)msg_word;
+			is_pkt_during_roam =
+			(offload_deliver_msg->reserved_2 ? true : false);
+
+			if (qdf_unlikely(
+				!pdev->cfg.is_full_reorder_offload)) {
+				break;
+			}
+
+			/* Is FW sends offload data during roaming */
+			if (is_pkt_during_roam) {
+				vdev_id = HTT_INVALID_VDEV;
+				freq =
+				(uint32_t)offload_deliver_msg->reserved_3;
+				htt_rx_mon_note_capture_channel(
+						pdev, cds_freq_to_chan(freq));
+			} else {
+				vdev_id = offload_deliver_msg->vdev_id;
+				vdev = (struct ol_txrx_vdev_t *)
+					ol_txrx_get_vdev_from_vdev_id(vdev_id);
+
+				if (vdev) {
+					qdf_spin_lock_bh(
+						&txrx_pdev->peer_ref_mutex);
+					peer = TAILQ_FIRST(&vdev->peer_list);
+					qdf_spin_unlock_bh(
+						&txrx_pdev->peer_ref_mutex);
+					if (peer) {
+						qdf_spin_lock_bh(
+							&peer->peer_info_lock);
+						qdf_mem_copy(
+							bssid,
+							&peer->mac_addr.raw,
+							QDF_MAC_ADDR_SIZE);
+						qdf_spin_unlock_bh(
+							&peer->peer_info_lock);
+					} else {
+						break;
+					}
+				} else {
+					break;
+				}
+			}
+			ucfg_pkt_capture_offload_deliver_indication_handler(
+							msg_word,
+							vdev_id, bssid, pdev);
 			break;
 		}
 		case HTT_T2H_MSG_TYPE_RX_PN_IND:
