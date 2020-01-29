@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1394,6 +1394,7 @@ bool ce_check_rx_pending(struct CE_state *CE_state)
 qdf_export_symbol(ce_check_rx_pending);
 
 #ifdef IPA_OFFLOAD
+#ifdef GENOA_IPA_WORKAROUND
 /**
  * ce_ipa_get_resource() - get uc resource on copyengine
  * @ce: copyengine context
@@ -1442,9 +1443,51 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 	*ce_sr = CE_state->scn->ipa_ce_ring;
 	*ce_sr_ring_size = (uint32_t)(CE_state->src_ring->nentries *
 		sizeof(struct CE_src_desc));
+	/* 0x0002005c is the offset address of PCIE_PCIE_SCRATCH_2 register */
+	*ce_reg_paddr = phy_mem_base + 0x2005C;
+
+}
+
+#else
+void ce_ipa_get_resource(struct CE_handle *ce,
+			 qdf_shared_mem_t **ce_sr,
+			 uint32_t *ce_sr_ring_size,
+			 qdf_dma_addr_t *ce_reg_paddr)
+{
+	struct CE_state *CE_state = (struct CE_state *)ce;
+	uint32_t ring_loop;
+	struct CE_src_desc *ce_desc;
+	qdf_dma_addr_t phy_mem_base;
+	struct hif_softc *scn = CE_state->scn;
+
+	if (CE_UNUSED == CE_state->state) {
+		*qdf_mem_get_dma_addr_ptr(scn->qdf_dev,
+			&CE_state->scn->ipa_ce_ring->mem_info) = 0;
+		*ce_sr_ring_size = 0;
+		return;
+	}
+
+	/* Update default value for descriptor */
+	for (ring_loop = 0; ring_loop < CE_state->src_ring->nentries;
+	     ring_loop++) {
+		ce_desc = (struct CE_src_desc *)
+			  ((char *)CE_state->src_ring->base_addr_owner_space +
+			   ring_loop * (sizeof(struct CE_src_desc)));
+		CE_IPA_RING_INIT(ce_desc);
+	}
+
+	/* Get BAR address */
+	hif_read_phy_mem_base(CE_state->scn, &phy_mem_base);
+
+	*ce_sr = CE_state->scn->ipa_ce_ring;
+	*ce_sr_ring_size = (uint32_t)(CE_state->src_ring->nentries *
+		sizeof(struct CE_src_desc));
 	*ce_reg_paddr = phy_mem_base + CE_BASE_ADDRESS(CE_state->id) +
 			SR_WR_INDEX_ADDRESS;
+
 }
+
+#endif
 #endif /* IPA_OFFLOAD */
 
 #ifdef HIF_CE_DEBUG_DATA_BUF
