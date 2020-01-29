@@ -38,29 +38,35 @@
 /* timeout in msec to wait for mon thread to suspend */
 #define PKT_CAPTURE_SUSPEND_TIMEOUT 200
 
-typedef void (*pkt_capture_mon_thread_cb)(void *context, void *monpkt,
-					  uint8_t vdev_id, uint8_t tid,
-					  uint8_t status, bool pkt_format);
+typedef void (*pkt_capture_mon_thread_cb)(
+			void *context, void *ppdev, void *monpkt,
+			uint8_t vdev_id, uint8_t tid,
+			uint8_t status, bool pkt_format,
+			uint8_t *bssid);
 
 /*
  * struct pkt_capture_mon_pkt - mon packet wrapper for mon data from TXRX
  * @list: List for storing mon packets
  * @context: Callback context
+ * @pdev: pointer to pdev handle
  * @monpkt: Mon skb
  * @vdev_id: Vdev id to which this packet is destined
  * @tid: Tid of mon packet
  * @status: Tx packet status
  * @pkt_format: Mon packet format, 0 = 802.3 format , 1 = 802.11 format
+ * @bssid: bssid
  * @callback: Mon callback
  */
 struct pkt_capture_mon_pkt {
 	struct list_head list;
 	void *context;
+	void *pdev;
 	void *monpkt;
 	uint8_t vdev_id;
 	uint8_t tid;
 	uint8_t status;
 	bool pkt_format;
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	pkt_capture_mon_thread_cb callback;
 };
 

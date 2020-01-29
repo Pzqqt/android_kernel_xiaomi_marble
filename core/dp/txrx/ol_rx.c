@@ -56,6 +56,7 @@
 #include <cdp_txrx_handle.h>
 #include <pld_common.h>
 #include <htt_internal.h>
+#include <wlan_pkt_capture_ucfg_api.h>
 
 #ifndef OL_RX_INDICATION_MAX_RECORDS
 #define OL_RX_INDICATION_MAX_RECORDS 2048
@@ -1561,6 +1562,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 {
 	struct ol_txrx_vdev_t *vdev = NULL;
 	struct ol_txrx_peer_t *peer = NULL;
+	struct ol_txrx_peer_t *peer_head = NULL;
 	htt_pdev_handle htt_pdev = NULL;
 	int status;
 	qdf_nbuf_t head_msdu = NULL, tail_msdu = NULL;
@@ -1569,6 +1571,14 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	uint32_t msdu_count;
 	uint8_t pktlog_bit;
 	uint32_t filled = 0;
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	bool offloaded_pkt;
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
 
 	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
 		ol_txrx_err("invalid tid, %u", tid);
@@ -1631,6 +1641,43 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	/* Send the chain of MSDUs to the OS */
 	/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
 	qdf_nbuf_set_next(tail_msdu, NULL);
+
+	/* Packet Capture Mode */
+
+	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) &
+	      PKT_CAPTURE_MODE_DATA_ONLY)) {
+		offloaded_pkt = ucfg_pkt_capture_rx_offloaded_pkt(rx_ind_msg);
+		if (peer) {
+			vdev = peer->vdev;
+			if (peer->vdev) {
+				qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+				peer_head = TAILQ_FIRST(&vdev->peer_list);
+				qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+				if (peer_head) {
+					qdf_spin_lock_bh(
+						&peer_head->peer_info_lock);
+					qdf_mem_copy(bssid,
+						     &peer_head->mac_addr.raw,
+						     QDF_MAC_ADDR_SIZE);
+					qdf_spin_unlock_bh(
+						&peer_head->peer_info_lock);
+
+					ucfg_pkt_capture_rx_msdu_process(
+							bssid, head_msdu,
+							peer->vdev->vdev_id,
+							htt_pdev);
+				}
+			}
+		} else if (offloaded_pkt) {
+			ucfg_pkt_capture_rx_msdu_process(
+						bssid, head_msdu,
+						HTT_INVALID_VDEV,
+						htt_pdev);
+
+			ucfg_pkt_capture_rx_drop_offload_pkt(head_msdu);
+			return;
+		}
+	}
 
 	/* Pktlog */
 	ol_rx_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);

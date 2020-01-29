@@ -458,17 +458,9 @@ static uint8_t htt_mon_rx_get_rtap_flags(struct htt_host_rx_desc_base *rx_desc)
 	return rtap_flags;
 }
 
-/**
- * htt_rx_mon_get_rx_status() - Update information about the rx status,
- * which is used later for radiotap updation.
- * @rx_desc: Pointer to struct htt_host_rx_desc_base
- * @rx_status: Return variable updated with rx_status
- *
- * Return: None
- */
-static void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
-				     struct htt_host_rx_desc_base *rx_desc,
-				     struct mon_rx_status *rx_status)
+void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
+			      struct htt_host_rx_desc_base *rx_desc,
+			      struct mon_rx_status *rx_status)
 {
 	uint16_t channel_flags = 0;
 	struct mon_channel *ch_info = &pdev->mon_ch_info;

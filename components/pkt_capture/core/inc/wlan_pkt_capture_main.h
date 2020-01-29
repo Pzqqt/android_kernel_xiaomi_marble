@@ -30,6 +30,7 @@
 #include <qdf_types.h>
 #include "wlan_pkt_capture_priv.h"
 #include "wlan_pkt_capture_objmgr.h"
+#include "wlan_objmgr_vdev_obj.h"
 
 #define pkt_capture_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_PKT_CAPTURE, level, ## args)
@@ -50,6 +51,13 @@
 
 #define PKT_CAPTURE_ENTER() pkt_capture_debug("enter")
 #define PKT_CAPTURE_EXIT() pkt_capture_debug("exit")
+
+/**
+ * pkt_capture_get_vdev() - Get pkt capture objmgr vdev.
+ *
+ * Return: pkt capture objmgr vdev
+ */
+struct wlan_objmgr_vdev *pkt_capture_get_vdev(void);
 
 /**
  * pkt_capture_vdev_create_notification() - Handler for vdev create notify.

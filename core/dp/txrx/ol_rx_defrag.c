@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,6 +58,7 @@
 #include <ol_rx_defrag.h>
 #include <enet.h>
 #include <qdf_time.h>           /* qdf_system_time */
+#include <wlan_pkt_capture_ucfg_api.h>
 
 #define DEFRAG_IEEE80211_ADDR_EQ(a1, a2) \
 	(!qdf_mem_cmp(a1, a2, QDF_MAC_ADDR_SIZE))
@@ -653,7 +654,14 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 	struct ieee80211_frame *wh;
 	uint8_t key[DEFRAG_IEEE80211_KEY_LEN];
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
+	struct ol_txrx_peer_t *peer_head = NULL;
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
+	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
+	if (qdf_unlikely(!soc)) {
+		ol_txrx_err("soc is NULL");
+		return;
+	}
 	vdev = peer->vdev;
 
 	/* bypass defrag for safe mode */
@@ -769,6 +777,33 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 		ol_rx_defrag_qos_decap(pdev, msdu, hdr_space);
 	if (ol_cfg_frame_type(pdev->ctrl_pdev) == wlan_frm_fmt_802_3)
 		ol_rx_defrag_nwifi_to_8023(pdev, msdu);
+
+	/* Packet Capture Mode */
+
+	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) &
+	      PKT_CAPTURE_MODE_DATA_ONLY)) {
+		if (peer) {
+			if (peer->vdev) {
+				qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+				peer_head = TAILQ_FIRST(&vdev->peer_list);
+				qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+				if (peer_head) {
+					qdf_spin_lock_bh(
+						&peer_head->peer_info_lock);
+					qdf_mem_copy(bssid,
+						     &peer_head->mac_addr.raw,
+						     QDF_MAC_ADDR_SIZE);
+					qdf_spin_unlock_bh(
+						&peer_head->peer_info_lock);
+
+					ucfg_pkt_capture_rx_msdu_process(
+								bssid, msdu,
+								vdev->vdev_id,
+								htt_pdev);
+				}
+			}
+		}
+	}
 
 	ol_rx_fwd_check(vdev, peer, tid, msdu);
 }
