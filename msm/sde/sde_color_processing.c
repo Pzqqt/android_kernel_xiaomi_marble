@@ -1376,11 +1376,31 @@ static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
 	[SDE_CP_CRTC_LM_GC] = SDE_DSPP_MAX,
 };
 
+static void _flush_sb_dma_hw(int *active_ctls, struct sde_hw_ctl *ctl,
+		u32 list_size)
+{
+	//For each CTL send last CD to SB DMA only once.
+	u32 j;
+	struct sde_hw_reg_dma_ops *dma_ops = sde_reg_dma_get_ops();
+
+	for (j = 0; j < list_size; j++) {
+		if (active_ctls[j] == ctl->idx) {
+			break;
+		} else if (active_ctls[j] == 0) {
+			active_ctls[j] = ctl->idx;
+			dma_ops->last_command_sb(ctl, DMA_CTL_QUEUE1,
+					REG_DMA_NOWAIT);
+			break;
+		}
+	}
+}
+
 void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 {
 	u32 i, sub_blk, num_mixers;
 	struct sde_hw_dspp *dspp;
 	struct sde_hw_ctl *ctl;
+	int active_ctls[CTL_MAX - CTL_0];
 
 	if (!sde_crtc || feature >= SDE_CP_CRTC_MAX_FEATURES) {
 		SDE_ERROR("invalid args: sde_crtc %s for feature %d",
@@ -1390,16 +1410,24 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 
 	num_mixers = sde_crtc->num_mixers;
 	sub_blk = dspp_feature_to_sub_blk_tbl[feature];
+	memset(&active_ctls, 0, sizeof(active_ctls));
 
 	for (i = 0; i < num_mixers; i++) {
 		ctl = sde_crtc->mixers[i].hw_ctl;
 		dspp = sde_crtc->mixers[i].hw_dspp;
 		if (ctl && ctl->ops.update_bitmask_dspp_subblk) {
-			if (feature == SDE_CP_CRTC_DSPP_SB &&
-					!dspp->sb_dma_in_use)
-				continue;
-			ctl->ops.update_bitmask_dspp_subblk(
-					ctl, dspp->idx, sub_blk, true);
+			if (feature == SDE_CP_CRTC_DSPP_SB) {
+				if (!dspp->sb_dma_in_use)
+					continue;
+
+				_flush_sb_dma_hw(active_ctls, ctl,
+						sizeof(active_ctls));
+				ctl->ops.update_bitmask_dspp_subblk(ctl,
+						dspp->idx, sub_blk, true);
+			} else {
+				ctl->ops.update_bitmask_dspp_subblk(ctl,
+						dspp->idx, sub_blk, true);
+			}
 		}
 	}
 }

@@ -3839,16 +3839,9 @@ static void _perform_sbdma_kickoff(struct sde_hw_dspp *ctx,
 	kick_off.dma_type = REG_DMA_TYPE_SB;
 	rc = dma_ops->kick_off(&kick_off);
 	if (!rc) {
-		rc = dma_ops->last_command_sb(hw_cfg->ctl, DMA_CTL_QUEUE1,
-				REG_DMA_NOWAIT);
-		if (rc) {
-			DRM_ERROR("failed to call last_command_sb ret %d\n",
-					rc);
-		} else {
-			for (i = 0; i < hw_cfg->num_of_mixers; ++i) {
-				if (blk & dspp_mapping[hw_cfg->dspp[i]->idx])
-					hw_cfg->dspp[i]->sb_dma_in_use = true;
-			}
+		for (i = 0; i < hw_cfg->num_of_mixers; i++) {
+			if (blk & dspp_mapping[hw_cfg->dspp[i]->idx])
+				hw_cfg->dspp[i]->sb_dma_in_use = true;
 		}
 	} else if (rc == -EOPNOTSUPP) {
 		DRM_DEBUG("Falling back to dbdma\n", rc);
