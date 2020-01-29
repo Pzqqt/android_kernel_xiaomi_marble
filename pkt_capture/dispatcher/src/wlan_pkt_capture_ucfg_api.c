@@ -24,6 +24,7 @@
 #include "wlan_pkt_capture_main.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_pkt_capture_mon_thread.h"
+#include "wlan_pkt_capture_mgmt_txrx.h"
 
 enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -183,4 +184,41 @@ int ucfg_pkt_capture_suspend_mon_thread(struct wlan_objmgr_vdev *vdev)
 void ucfg_pkt_capture_resume_mon_thread(struct wlan_objmgr_vdev *vdev)
 {
 	pkt_capture_resume_mon_thread(vdev);
+}
+
+/**
+ * ucfg_process_pktcapture_mgmt_tx_data() - process management tx packets
+ * @pdev: pointer to pdev object
+ * @params: management offload event params
+ * @nbuf: netbuf
+ * @status: status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
+				      struct mgmt_offload_event_params *params,
+				      qdf_nbuf_t nbuf,
+				      uint8_t status)
+{
+	return pkt_capture_process_mgmt_tx_data(pdev, params, nbuf, status);
+}
+
+/**
+ * ucfg_process_pktcapture_mgmt_tx_completion(): process mgmt tx completion
+ * for pkt capture mode
+ * @pdev: pointer to pdev object
+ * @desc_id: desc_id
+ * @status: status
+ * @params: management offload event params
+ *
+ * Return: none
+ */
+void
+ucfg_pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
+				    uint32_t desc_id,
+				    uint32_t status,
+				    struct mgmt_offload_event_params *params)
+{
+	pkt_capture_mgmt_tx_completion(pdev, desc_id, status, params);
 }
