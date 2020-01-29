@@ -4973,8 +4973,6 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	struct wlan_objmgr_vdev *vdev;
 	enum QDF_OPMODE mode;
 
-	WMA_LOGD("%s: Enter", __func__);
-
 	if (wma && wma->cds_context)
 		mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 
@@ -4995,7 +4993,6 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	}
 
 	snr_monitor_enabled = wlan_scan_is_snr_monitor_enabled(mac->psoc);
-	WMA_LOGD("%s: monitor:%d", __func__, snr_monitor_enabled);
 	if (snr_monitor_enabled && mac->chan_info_cb) {
 		buf.tx_frame_count = event->tx_frame_cnt;
 		buf.clock_freq = event->mac_clk_mhz;
@@ -5011,26 +5008,21 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 						    WLAN_LEGACY_WMA_ID);
 
 	if (!vdev) {
-		WMA_LOGE("%s: vdev is NULL for vdev %d",
-			 __func__, event->vdev_id);
+		wma_err("vdev not found for vdev %d", event->vdev_id);
 		return -EINVAL;
 	}
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
-	WMA_LOGD("Vdevid %d mode %d", event->vdev_id, mode);
 
 	if (mac->sap.acs_with_more_param && mode == QDF_SAP_MODE) {
 		channel_status = qdf_mem_malloc(sizeof(*channel_status));
 		if (!channel_status)
 			return -ENOMEM;
 
-		WMA_LOGD(FL("freq=%d nf=%d rxcnt=%u cyccnt=%u tx_r=%d tx_t=%d"),
-			 event->freq,
-			 event->noise_floor,
-			 event->rx_clear_count,
-			 event->cycle_count,
-			 event->chan_tx_pwr_range,
-			 event->chan_tx_pwr_tp);
+		wma_debug("freq %d nf %d rxcnt %u cyccnt %u tx_r %d tx_t %d",
+			  event->freq, event->noise_floor,
+			  event->rx_clear_count, event->cycle_count,
+			  event->chan_tx_pwr_range, event->chan_tx_pwr_tp);
 
 		channel_status->channelfreq = event->freq;
 		channel_status->noise_floor = event->noise_floor;

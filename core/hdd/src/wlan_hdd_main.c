@@ -15899,18 +15899,15 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	hdd_debug("Adapter with device mode %s(%d) exists",
-		  qdf_opmode_str(adapter->device_mode),
-		  adapter->device_mode);
 	if (((QDF_STA_MODE == adapter->device_mode)
 		|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
 		|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
 		&& (eConnectionState_Connecting ==
 			(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
 				conn_info.conn_state)) {
-		hdd_debug("%pK(%d) Connection is in progress",
+		hdd_debug("%pK(%d) mode %d Connection is in progress",
 			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
-			  adapter->vdev_id);
+			  adapter->vdev_id, adapter->device_mode);
 
 		context->out_vdev_id = adapter->vdev_id;
 		context->out_reason = CONNECTION_IN_PROGRESS;
@@ -15927,9 +15924,9 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 		     mac_handle,
 		     adapter->vdev_id)) ||
 		     hdd_is_roaming_in_progress(hdd_ctx)) {
-		hdd_debug("%pK(%d) Reassociation in progress",
+		hdd_debug("%pK(%d) mode %d Reassociation in progress",
 			  WLAN_HDD_GET_STATION_CTX_PTR(adapter),
-			  adapter->vdev_id);
+			  adapter->vdev_id, adapter->device_mode);
 
 		context->out_vdev_id = adapter->vdev_id;
 		context->out_reason = REASSOC_IN_PROGRESS;
@@ -15977,7 +15974,8 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 			return QDF_STATUS_E_ABORTED;
 		}
 		if (hdd_ctx->connection_in_progress) {
-			hdd_debug("AP/GO: connection is in progress");
+			hdd_debug("AP/GO: vdev %d connection is in progress",
+				  adapter->vdev_id);
 			context->out_reason = SAP_CONNECTION_IN_PROGRESS;
 			context->out_vdev_id = adapter->vdev_id;
 			context->connection_in_progress = true;

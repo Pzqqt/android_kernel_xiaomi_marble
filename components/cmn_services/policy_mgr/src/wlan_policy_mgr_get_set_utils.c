@@ -951,10 +951,8 @@ bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc)
 	}
 
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc) ||
-	    !policy_mgr_find_if_hwlist_has_dbs(psoc)) {
-		policy_mgr_debug("HW mode list has no DBS");
+	    !policy_mgr_find_if_hwlist_has_dbs(psoc))
 		return false;
-	}
 
 	policy_mgr_get_dual_mac_feature(psoc, &dbs_type);
 	/*

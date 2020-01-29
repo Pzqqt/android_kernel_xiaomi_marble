@@ -1688,21 +1688,16 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc)
 		return;
 
 	if (TDLS_SUPPORT_DISABLED == tdls_soc->tdls_current_mode) {
-		tdls_debug("TDLS mode is disabled OR not enabled");
+		tdls_debug_rl("TDLS mode is disabled OR not enabled");
 		return;
 	}
 
 	/* if tdls was enabled before scan, re-enable tdls mode */
 	if (TDLS_SUPPORT_IMP_MODE == tdls_soc->tdls_last_mode ||
 	    TDLS_SUPPORT_EXT_CONTROL == tdls_soc->tdls_last_mode ||
-	    TDLS_SUPPORT_EXP_TRIG_ONLY == tdls_soc->tdls_last_mode) {
-		tdls_debug("revert tdls mode %d",
-			   tdls_soc->tdls_last_mode);
-
+	    TDLS_SUPPORT_EXP_TRIG_ONLY == tdls_soc->tdls_last_mode)
 		tdls_set_current_mode(tdls_soc, tdls_soc->tdls_last_mode,
-				      false,
-				      TDLS_SET_MODE_SOURCE_SCAN);
-	}
+				      false, TDLS_SET_MODE_SOURCE_SCAN);
 }
 
 /**
