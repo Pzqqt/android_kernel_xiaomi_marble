@@ -291,3 +291,33 @@ void ucfg_pkt_capture_rx_drop_offload_pkt(qdf_nbuf_t head_msdu)
 {
 	pkt_capture_rx_in_order_drop_offload_pkt(head_msdu);
 }
+
+void
+ucfg_pkt_capture_offload_deliver_indication_handler(
+					void *msg, uint8_t vdev_id,
+					uint8_t *bssid, htt_pdev_handle pdev)
+{
+	pkt_capture_offload_deliver_indication_handler(msg, vdev_id,
+						       bssid, pdev);
+}
+
+struct htt_tx_data_hdr_information *ucfg_pkt_capture_tx_get_txcomplete_data_hdr(
+							uint32_t *msg_word,
+							int num_msdus)
+{
+	return pkt_capture_tx_get_txcomplete_data_hdr(msg_word, num_msdus);
+}
+
+void
+ucfg_pkt_capture_tx_completion_process(
+			uint8_t vdev_id,
+			qdf_nbuf_t mon_buf_list,
+			enum pkt_capture_data_process_type type,
+			uint8_t tid, uint8_t status, bool pkt_format,
+			uint8_t *bssid, htt_pdev_handle pdev)
+{
+	pkt_capture_datapkt_process(
+				vdev_id,
+				mon_buf_list, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
+				tid, status, pkt_format, bssid, pdev);
+}
