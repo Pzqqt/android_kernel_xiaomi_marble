@@ -146,4 +146,12 @@ void pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
  */
 enum pkt_capture_mode
 pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pkt_capture_drop_nbuf_list() - drop an nbuf list
+ * @buf_list: buffer list to be dropepd
+ *
+ * Return: number of buffers dropped
+ */
+uint32_t pkt_capture_drop_nbuf_list(qdf_nbuf_t buf_list);
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */

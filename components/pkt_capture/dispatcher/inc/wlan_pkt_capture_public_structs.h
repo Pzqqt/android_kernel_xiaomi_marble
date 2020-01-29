@@ -33,4 +33,27 @@ enum pkt_capture_mode {
 	PACKET_CAPTURE_MODE_DATA_MGMT,
 };
 
+/**
+ * struct mgmt_offload_event_params - Management offload event params
+ * @tsf_l32: The lower 32 bits of the TSF
+ * @chan_freq: channel frequency in MHz
+ * @rate_kbps: Rate kbps
+ * @rssi: combined RSSI, i.e. the sum of the snr + noise floor (dBm units)
+ * @buf_len: length of the frame in bytes
+ * @tx_status: 0: xmit ok
+ *             1: excessive retries
+ *             2: blocked by tx filtering
+ *             4: fifo underrun
+ *             8: swabort
+ * @buf: management frame buffer
+ */
+struct mgmt_offload_event_params {
+	uint32_t tsf_l32;
+	uint32_t chan_freq;
+	uint32_t rate_kbps;
+	uint32_t rssi;
+	uint32_t buf_len;
+	uint32_t tx_status;
+	uint8_t *buf;
+};
 #endif /* _WLAN_PKT_CAPTURE_PUBLIC_STRUCTS_H_ */

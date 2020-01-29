@@ -24,6 +24,7 @@
 #include "wlan_pkt_capture_main.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_pkt_capture_mon_thread.h"
+#include "wlan_pkt_capture_mgmt_txrx.h"
 
 enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -49,6 +50,7 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 			       void *context)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
+	QDF_STATUS status;
 
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
@@ -64,12 +66,19 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 	vdev_priv->cb_ctx->mon_cb = mon_cb;
 	vdev_priv->cb_ctx->mon_ctx = context;
 
+	status = pkt_capture_mgmt_rx_ops(wlan_vdev_get_psoc(vdev), true);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to register pkt capture mgmt rx ops");
+		return status;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
+	QDF_STATUS status;
 
 	if (!vdev) {
 		pkt_capture_err("vdev is NULL");
@@ -81,6 +90,10 @@ QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
 		pkt_capture_err("vdev priv is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	status = pkt_capture_mgmt_rx_ops(wlan_vdev_get_psoc(vdev), false);
+	if (QDF_IS_STATUS_ERROR(status))
+		pkt_capture_err("Failed to unregister pkt capture mgmt rx ops");
 
 	vdev_priv->cb_ctx->mon_cb = NULL;
 	vdev_priv->cb_ctx->mon_ctx = NULL;
@@ -216,6 +229,22 @@ static void
 pkt_capture_mon_context_destroy(struct pkt_capture_vdev_priv *vdev_priv)
 {
 	qdf_mem_free(vdev_priv->mon_ctx);
+}
+
+uint32_t pkt_capture_drop_nbuf_list(qdf_nbuf_t buf_list)
+{
+	qdf_nbuf_t buf, next_buf;
+	uint32_t num_dropped = 0;
+
+	buf = buf_list;
+	while (buf) {
+		QDF_NBUF_CB_RX_PEER_CACHED_FRM(buf) = 1;
+		next_buf = qdf_nbuf_queue_next(buf);
+		qdf_nbuf_free(buf);
+		buf = next_buf;
+		num_dropped++;
+	}
+	return num_dropped;
 }
 
 /**

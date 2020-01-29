@@ -115,6 +115,38 @@ void ucfg_pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
  */
 enum pkt_capture_mode
 ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pkt_capture_process_mgmt_tx_data() - process management tx packets
+ * @pdev: pointer to pdev object
+ * @params: management offload event params
+ * @nbuf: netbuf
+ * @status: status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
+				      struct mgmt_offload_event_params *params,
+				      qdf_nbuf_t nbuf,
+				      uint8_t status);
+
+/**
+ * ucfg_pkt_capture_mgmt_tx_completion(): process mgmt tx completion
+ * for pkt capture mode
+ * @pdev: pointer to pdev object
+ * @desc_id: desc_id
+ * @status: status
+ * @params: management offload event params
+ *
+ * Return: none
+ */
+void
+ucfg_pkt_capture_mgmt_tx_completion(
+				struct wlan_objmgr_pdev *pdev,
+				uint32_t desc_id,
+				uint32_t status,
+				struct mgmt_offload_event_params *params);
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
@@ -168,6 +200,23 @@ static inline enum pkt_capture_mode
 ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return PACKET_CAPTURE_MODE_DISABLE;
+}
+
+static inline QDF_STATUS
+ucfg_pkt_capture_process_mgmt_tx_data(
+				struct mgmt_offload_event_params *params,
+				qdf_nbuf_t nbuf,
+				uint8_t status)
+{
+	return 0;
+}
+
+static inline void
+ucfg_pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
+				    uint32_t desc_id,
+				    uint32_t status,
+				    struct mgmt_offload_event_params *params)
+{
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* _WLAN_PKT_CAPTURE_UCFG_API_H_ */
