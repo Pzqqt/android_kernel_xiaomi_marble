@@ -1397,6 +1397,7 @@ struct ipa3_stats {
 	u32 flow_enable;
 	u32 flow_disable;
 	u32 tx_non_linear;
+	u32 rx_page_drop_cnt;
 	struct ipa3_page_recycle_stats page_recycle_stats[2];
 };
 
@@ -2318,8 +2319,10 @@ struct ipa3_mem_partition {
 	u32 uc_descriptor_ram_size;
 	u32 pdn_config_ofst;
 	u32 pdn_config_size;
-	u32 stats_quota_ofst;
-	u32 stats_quota_size;
+	u32 stats_quota_q6_ofst;
+	u32 stats_quota_q6_size;
+	u32 stats_quota_ap_ofst;
+	u32 stats_quota_ap_size;
 	u32 stats_tethering_ofst;
 	u32 stats_tethering_size;
 	u32 stats_fnr_ofst;
