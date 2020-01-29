@@ -4072,7 +4072,7 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int lmac_id =
-			dp_get_lmac_id_for_pdev_id(soc, pdev->pdev_id, mac_id);
+			dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev->pdev_id);
 
 		dp_mon_ring_deinit(soc, pdev, lmac_id);
 
