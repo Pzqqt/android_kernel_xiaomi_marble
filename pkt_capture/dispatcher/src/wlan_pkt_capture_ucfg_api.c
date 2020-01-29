@@ -26,6 +26,7 @@
 #include "wlan_pkt_capture_mon_thread.h"
 #include "wlan_pkt_capture_mgmt_txrx.h"
 #include "target_if_pkt_capture.h"
+#include "wlan_pkt_capture_data_txrx.h"
 
 enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -270,4 +271,23 @@ int ucfg_pkt_capture_enable_ops(struct wlan_objmgr_vdev *vdev)
 	vdev_priv->is_ops_registered = true;
 
 	return 0;
+}
+
+void ucfg_pkt_capture_rx_msdu_process(
+				uint8_t *bssid,
+				qdf_nbuf_t head_msdu,
+				uint8_t vdev_id, htt_pdev_handle pdev)
+{
+		pkt_capture_msdu_process_pkts(bssid, head_msdu,
+					      vdev_id, pdev);
+}
+
+bool ucfg_pkt_capture_rx_offloaded_pkt(qdf_nbuf_t rx_ind_msg)
+{
+	return pkt_capture_rx_in_order_offloaded_pkt(rx_ind_msg);
+}
+
+void ucfg_pkt_capture_rx_drop_offload_pkt(qdf_nbuf_t head_msdu)
+{
+	pkt_capture_rx_in_order_drop_offload_pkt(head_msdu);
 }

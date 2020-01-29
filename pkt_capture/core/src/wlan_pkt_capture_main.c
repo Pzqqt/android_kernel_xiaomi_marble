@@ -27,6 +27,13 @@
 #include "wlan_pkt_capture_mgmt_txrx.h"
 #include "target_if_pkt_capture.h"
 
+static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
+
+struct wlan_objmgr_vdev *pkt_capture_get_vdev()
+{
+	return gp_pkt_capture_vdev;
+}
+
 enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
 	struct pkt_psoc_priv *psoc_priv;
@@ -296,6 +303,7 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 
 	vdev_priv->vdev = vdev;
+	gp_pkt_capture_vdev = vdev;
 
 	status = pkt_capture_callback_ctx_create(vdev_priv);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -366,6 +374,7 @@ pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	pkt_capture_mon_context_destroy(vdev_priv);
 	pkt_capture_callback_ctx_destroy(vdev_priv);
 	qdf_mem_free(vdev_priv);
+	gp_pkt_capture_vdev = NULL;
 	return status;
 }
 

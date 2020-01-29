@@ -44,9 +44,9 @@
  * Return: none
  */
 static void
-pkt_capture_mgmtpkt_cb(void *context, void *nbuf_list,
+pkt_capture_mgmtpkt_cb(void *context, void *ppdev, void *nbuf_list,
 		       uint8_t vdev_id, uint8_t tid, uint8_t status,
-		       bool pkt_format)
+		       bool pkt_format, uint8_t *bssid)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
 	struct wlan_objmgr_psoc *psoc = context;
@@ -293,7 +293,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	qdf_nbuf_t nbuf;
 	int buf_len;
 
-	if (!(pkt_capture_get_mode(psoc) & PKT_CAPTURE_MODE_MGMT_ONLY))
+	if (!(pkt_capture_get_pktcap_mode(psoc) & PKT_CAPTURE_MODE_MGMT_ONLY))
 		return QDF_STATUS_E_FAILURE;
 
 	buf_len = qdf_nbuf_len(wbuf);
