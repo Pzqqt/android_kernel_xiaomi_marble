@@ -1581,7 +1581,11 @@ struct dp_pdev {
 	struct hal_rx_ppdu_info ppdu_info;
 
 	/* operating channel */
-	uint8_t operating_channel;
+	struct {
+		uint8_t num;
+		uint8_t band;
+		uint16_t freq;
+	} operating_channel;
 
 	qdf_nbuf_queue_t rx_status_q;
 	uint32_t mon_ppdu_status;

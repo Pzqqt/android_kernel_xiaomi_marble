@@ -2136,10 +2136,18 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	if (freq != ppdu_desc->channel) {
 		soc = pdev->soc;
 		ppdu_desc->channel = freq;
+		pdev->operating_channel.freq = freq;
 		if (soc && soc->cdp_soc.ol_ops->freq_to_channel)
-			pdev->operating_channel =
-		soc->cdp_soc.ol_ops->freq_to_channel(soc->ctrl_psoc,
-						     pdev->pdev_id, freq);
+			pdev->operating_channel.num =
+			    soc->cdp_soc.ol_ops->freq_to_channel(soc->ctrl_psoc,
+								 pdev->pdev_id,
+								 freq);
+
+		if (soc && soc->cdp_soc.ol_ops->freq_to_band)
+			pdev->operating_channel.band =
+			       soc->cdp_soc.ol_ops->freq_to_band(soc->ctrl_psoc,
+								 pdev->pdev_id,
+								 freq);
 	}
 
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);

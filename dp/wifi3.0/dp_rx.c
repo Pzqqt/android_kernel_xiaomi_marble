@@ -546,6 +546,9 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint32_t nss;
 	uint32_t rate_mcs;
 	uint32_t bw;
+	uint8_t primary_chan_num;
+	uint32_t center_chan_freq;
+	struct dp_soc *soc;
 
 	/* fill recv mesh stats */
 	rx_info = qdf_mem_malloc(sizeof(struct mesh_recv_hdr_s));
@@ -577,7 +580,18 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	rx_info->rs_rssi = hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
-	rx_info->rs_channel = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
+
+	soc = vdev->pdev->soc;
+	primary_chan_num = hal_rx_msdu_start_get_freq(rx_tlv_hdr);
+	center_chan_freq = hal_rx_msdu_start_get_freq(rx_tlv_hdr) >> 16;
+
+	if (soc->cdp_soc.ol_ops && soc->cdp_soc.ol_ops->freq_to_band) {
+		rx_info->rs_band = soc->cdp_soc.ol_ops->freq_to_band(
+							soc->ctrl_psoc,
+							vdev->pdev->pdev_id,
+							center_chan_freq);
+	}
+	rx_info->rs_channel = primary_chan_num;
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 	rate_mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
 	bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
