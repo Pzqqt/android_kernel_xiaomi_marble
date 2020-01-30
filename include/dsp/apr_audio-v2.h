@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -4338,6 +4338,7 @@ struct asm_aac_frame_size_control_t {
 struct asm_aac_enc_cfg_t {
 	struct asm_aac_enc_cfg_v2_t aac_cfg;
 	struct asm_aac_frame_size_control_t frame_ctl;
+	struct asm_aac_frame_size_control_t frame_ctl_v2;
 } __packed;
 
 /* FMT ID for apt-X Classic */
