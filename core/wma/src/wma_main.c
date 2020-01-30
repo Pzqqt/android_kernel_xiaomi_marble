@@ -100,6 +100,7 @@
 #include "target_if_vdev_mgr_rx_ops.h"
 #include "wlan_policy_mgr_i.h"
 #include "target_if_psoc_timer_tx_ops.h"
+#include <ftm_time_sync_ucfg_api.h>
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -6712,6 +6713,15 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	} else {
 		wlan_res_cfg->tstamp64_en = false;
 		cdp_cfg_set_tx_compl_tsf64(soc, false);
+	}
+
+	if (ucfg_is_ftm_time_sync_enable(wma_handle->psoc) &&
+	    wmi_service_enabled(wmi_handle, wmi_service_time_sync_ftm)) {
+		wlan_res_cfg->time_sync_ftm = true;
+		ucfg_ftm_time_sync_set_enable(wma_handle->psoc, true);
+	} else {
+		wlan_res_cfg->time_sync_ftm = false;
+		ucfg_ftm_time_sync_set_enable(wma_handle->psoc, false);
 	}
 
 	wma_init_dbr_params(wma_handle);

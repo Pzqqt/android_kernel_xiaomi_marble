@@ -107,7 +107,7 @@ target_if_ftm_time_sync_start_stop_event(struct wlan_objmgr_psoc *psoc)
 			target_if_time_sync_ftm_start_stop_event_handler,
 			WMI_RX_SERIALIZER_CTX);
 	if (status) {
-		target_if_err("Ftm timesync start stop event register failed");
+		target_if_err("Ftm time_sync start stop event register failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -142,7 +142,7 @@ target_if_time_sync_master_slave_offset_event_handler(ol_scn_t scn_handle,
 
 	if (wmi_unified_extract_time_sync_ftm_offset(
 			wmi_handle, data, &param) != QDF_STATUS_SUCCESS) {
-		target_if_err("Extraction of timesync ftm offset param failed");
+		target_if_err("Extraction of time_sync ftm offset param failed");
 		return -EINVAL;
 	}
 
@@ -169,7 +169,7 @@ target_if_ftm_time_sync_master_slave_offset(struct wlan_objmgr_psoc *psoc)
 			target_if_time_sync_master_slave_offset_event_handler,
 			WMI_RX_SERIALIZER_CTX);
 	if (status) {
-		target_if_err("Ftm timesync offset event register failed");
+		target_if_err("Ftm time_sync offset event register failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -210,25 +210,25 @@ target_if_ftm_time_sync_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_SUCCESS;
 }
 
-void
-target_if_ftm_time_sync_register_rx_ops(struct wlan_ftm_timesync_rx_ops *rx_ops)
+void target_if_ftm_time_sync_register_rx_ops(
+				struct wlan_ftm_time_sync_rx_ops *rx_ops)
 {
 	if (!rx_ops) {
-		target_if_err("FTM timesync rx_ops is null");
+		target_if_err("FTM time_sync rx_ops is null");
 		return;
 	}
 
-	rx_ops->ftm_timesync_register_start_stop =
+	rx_ops->ftm_time_sync_register_start_stop =
 				target_if_ftm_time_sync_start_stop_event;
-	rx_ops->ftm_timesync_regiser_master_slave_offset =
+	rx_ops->ftm_time_sync_regiser_master_slave_offset =
 				target_if_ftm_time_sync_master_slave_offset;
 }
 
-void
-target_if_ftm_time_sync_register_tx_ops(struct wlan_ftm_timesync_tx_ops *tx_ops)
+void target_if_ftm_time_sync_register_tx_ops(
+				struct wlan_ftm_time_sync_tx_ops *tx_ops)
 {
 	if (!tx_ops) {
-		target_if_err("FTM timesync tx_ops is null");
+		target_if_err("FTM time_sync tx_ops is null");
 		return;
 	}
 

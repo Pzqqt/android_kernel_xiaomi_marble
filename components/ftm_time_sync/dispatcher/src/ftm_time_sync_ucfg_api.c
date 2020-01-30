@@ -15,56 +15,108 @@
  */
 
 /**
- * DOC: Public API implementation of ftm timesync called by north bound iface.
+ * DOC: Public API implementation of ftm time_sync called by north bound iface.
  */
 
 #include "ftm_time_sync_ucfg_api.h"
 #include "ftm_time_sync_main.h"
 #include <qdf_str.h>
 
-QDF_STATUS ucfg_ftm_timesync_init(void)
+QDF_STATUS ucfg_ftm_time_sync_init(void)
 {
 	QDF_STATUS status;
 
+	status = wlan_objmgr_register_psoc_create_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_create_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ftm_time_sync_err("Failed to register psoc create handler");
+		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_destroy_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ftm_time_sync_err("Failed to register psoc delete handler");
+		goto fail_destroy_psoc;
+	}
+
 	status = wlan_objmgr_register_vdev_create_handler(
 				WLAN_UMAC_COMP_FTM_TIME_SYNC,
-				ftm_timesync_vdev_create_notification, NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+				ftm_time_sync_vdev_create_notification, NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		ftm_time_sync_err("Failed to register vdev create handler");
-		goto exit;
+		goto fail_create_vdev;
 	}
 
 	status = wlan_objmgr_register_vdev_destroy_handler(
 				WLAN_UMAC_COMP_FTM_TIME_SYNC,
-				ftm_timesync_vdev_destroy_notification, NULL);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		ftm_time_sync_debug("vdev create/delete notif registered");
-		goto exit;
+				ftm_time_sync_vdev_destroy_notification, NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		ftm_time_sync_err("Failed to register vdev destroy handler");
+		goto fail_destroy_vdev;
 	}
+	return status;
 
-	ftm_time_sync_err("Failed to register vdev delete handler");
+fail_destroy_vdev:
 	wlan_objmgr_unregister_vdev_create_handler(
-			WLAN_UMAC_COMP_FTM_TIME_SYNC,
-			ftm_timesync_vdev_create_notification, NULL);
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_vdev_create_notification, NULL);
 
-exit:
+fail_create_vdev:
+	wlan_objmgr_unregister_psoc_destroy_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_destroy_notification, NULL);
+
+fail_destroy_psoc:
+	wlan_objmgr_unregister_psoc_create_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_create_notification, NULL);
+
 	return status;
 }
 
-void ucfg_ftm_timesync_deinit(void)
+void ucfg_ftm_time_sync_deinit(void)
 {
 	QDF_STATUS status;
 
-	status = wlan_objmgr_unregister_vdev_create_handler(
-				WLAN_UMAC_COMP_FTM_TIME_SYNC,
-				ftm_timesync_vdev_create_notification, NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		ftm_time_sync_err("Failed to unregister vdev create handler");
-
 	status = wlan_objmgr_unregister_vdev_destroy_handler(
 				WLAN_UMAC_COMP_FTM_TIME_SYNC,
-				ftm_timesync_vdev_destroy_notification,
+				ftm_time_sync_vdev_destroy_notification,
 				NULL);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_ERROR(status))
 		ftm_time_sync_err("Failed to unregister vdev delete handler");
+
+	status = wlan_objmgr_unregister_vdev_create_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_vdev_create_notification, NULL);
+	if (!QDF_IS_STATUS_ERROR(status))
+		ftm_time_sync_err("Failed to unregister vdev create handler");
+
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_destroy_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		ftm_time_sync_err("Failed to unregister psoc destroy handler");
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+				WLAN_UMAC_COMP_FTM_TIME_SYNC,
+				ftm_time_sync_psoc_create_notification,
+				NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		ftm_time_sync_err("Failed to unregister psoc create handler");
+}
+
+bool  ucfg_is_ftm_time_sync_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return ftm_time_sync_is_enable(psoc);
+}
+
+void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool enable)
+{
+	return ftm_time_sync_set_enable(psoc, enable);
 }

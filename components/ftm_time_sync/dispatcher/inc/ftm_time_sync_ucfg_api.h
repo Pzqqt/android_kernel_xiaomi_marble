@@ -15,7 +15,7 @@
  */
 
 /**
- * DOC: Declare public API related to the ftm timesync called by north bound
+ * DOC: Declare public API related to the ftm time_sync called by north bound
  * HDD/OSIF/LIM
  */
 
@@ -24,13 +24,12 @@
 
 #include <qdf_status.h>
 #include <qdf_types.h>
-//#include "ftm_time_sync_public_struct.h"
 #include "ftm_time_sync_objmgr.h"
 
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 
 /**
- * ucfg_ftm_timesync_init() - FTM time sync component initialization.
+ * ucfg_ftm_time_sync_init() - FTM time sync component initialization.
  *
  * This function initializes the ftm time sync component and registers
  * the handlers which are invoked on vdev creation.
@@ -38,29 +37,59 @@
  * Return: For successful registration - QDF_STATUS_SUCCESS,
  *	   else QDF_STATUS error codes.
  */
-QDF_STATUS ucfg_ftm_timesync_init(void);
+QDF_STATUS ucfg_ftm_time_sync_init(void);
 
 /**
- * ucfg_ftm_timesync_deinit() - FTM time sync component deinit.
+ * ucfg_ftm_time_sync_deinit() - FTM time sync component deinit.
  *
  * This function deinits ftm time sync component.
  *
  * Return: None
  */
-void ucfg_ftm_timesync_deinit(void);
+void ucfg_ftm_time_sync_deinit(void);
 
+/**
+ * ucfg_is_ftm_time_sync_enable() - FTM time sync feature enable/disable
+ * @psoc: psoc context
+ *
+ * This function advertises whether the ftm time sync feature is enabled or not
+ *
+ * Return: true if enable else false
+ */
+bool ucfg_is_ftm_time_sync_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_ftm_time_sync_set_enable() - FTM time sync feature set enable/disable
+ * @psoc: psoc context
+ * @value: value to be set
+ *
+ * This function enables/disables the feature.
+ *
+ * Return: None
+ */
+void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value);
 #else
 
 static inline
-QDF_STATUS ucfg_ftm_timesync_init(void)
+QDF_STATUS ucfg_ftm_time_sync_init(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline
-void ucfg_ftm_timesync_deinit(void)
+void ucfg_ftm_time_sync_deinit(void)
 {
 }
 
+static inline
+bool ucfg_is_ftm_time_sync_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value)
+{
+}
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 #endif /* _FTM_TIME_SYNC_UCFG_API_H_ */

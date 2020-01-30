@@ -14361,7 +14361,7 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto blm_deinit;
 
-	status = ucfg_ftm_timesync_init();
+	status = ucfg_ftm_time_sync_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto pkt_capture_deinit;
 
@@ -14413,7 +14413,7 @@ mlme_global_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
-	ucfg_ftm_timesync_deinit();
+	ucfg_ftm_time_sync_deinit();
 	ucfg_pkt_capture_deinit();
 	ucfg_blm_deinit();
 	ucfg_tdls_deinit();

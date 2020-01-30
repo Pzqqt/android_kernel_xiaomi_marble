@@ -16,10 +16,10 @@
 
 /**
  * DOC: Declare private API which shall be used internally only
- * in ftm_timesync component. This file shall include prototypes of
- * ftm_timesync parsing and send logic.
+ * in ftm_time_sync component. This file shall include prototypes of
+ * ftm_time_sync parsing and send logic.
  *
- * Note: This API should be never accessed out of ftm_timesync component.
+ * Note: This API should be never accessed out of ftm_time_sync component.
  */
 
 #ifndef _FTM_TIME_SYNC_PRIV_STRUCT_H_
@@ -43,20 +43,42 @@ struct wlan_time_sync_pair {
 };
 
 /**
- * struct ftm_timesync_vdev_priv - Private object to be stored in vdev
+ * struct ftm_time_sync_vdev_priv - Private object to be stored in vdev
  * @qtime_ref: qtime ref
  * @mac_ref: mac time ref
  * @time_pair: array of master/slave qtime pair
  */
 
-struct ftm_timesync_priv {
+struct ftm_time_sync_priv {
 	uint64_t qtime_ref;
 	uint64_t mac_ref;
 	struct wlan_time_sync_pair time_pair[WLAN_FTM_TIME_SYNC_PAIR_MAX];
 };
 
 /**
- * struct ftm_timesync_vdev_priv - Private object to be stored in vdev
+ * struct ftm_time_sync_cfg - Cfg ini param for FTM time sync
+ * @enable: FTM time_sync feature enable/disable
+ * @mode: Aggregated/burst mode applicable iff enable = 1
+ * @role: Slave/Master Role applicable iff enable = 1
+ */
+struct ftm_time_sync_cfg {
+	bool enable;
+	enum ftm_time_sync_mode mode;
+	enum ftm_time_sync_role role;
+};
+
+/**
+ * struct ftm_time_sync_psoc_priv - Private object to be stored in psoc
+ * @psoc: pointer to psoc object
+ * @cfg_param: INI config param for ftm time sync
+ */
+struct ftm_time_sync_psoc_priv {
+	struct wlan_objmgr_psoc *psoc;
+	struct ftm_time_sync_cfg cfg_param;
+};
+
+/**
+ * struct ftm_time_sync_vdev_priv - Private object to be stored in vdev
  * @vdev: pointer to vdev object
  * @ftm_ts_priv: time sync private struct
  * @rx_ops: rx operations for ftm time sync
@@ -68,11 +90,11 @@ struct ftm_timesync_priv {
  * @num_reads: number of times the qtime to be captured
  * @valid: send qtime to FW only if this is true
  */
-struct ftm_timesync_vdev_priv {
+struct ftm_time_sync_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
-	struct ftm_timesync_priv ftm_ts_priv;
-	struct wlan_ftm_timesync_rx_ops rx_ops;
-	struct wlan_ftm_timesync_tx_ops tx_ops;
+	struct ftm_time_sync_priv ftm_ts_priv;
+	struct wlan_ftm_time_sync_rx_ops rx_ops;
+	struct wlan_ftm_time_sync_tx_ops tx_ops;
 	qdf_mutex_t ftm_time_sync_mutex;
 	struct qdf_delayed_work ftm_time_sync_work;
 	uint32_t time_sync_interval;
