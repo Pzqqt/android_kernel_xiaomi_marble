@@ -60,9 +60,6 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_ctrl.h>
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-#include <cdp_txrx_mon.h>
-#endif /* WLAN_FEATURE_PKT_CAPTURE */
 
 #include "wlan_policy_mgr_api.h"
 #include "wma_nan_datapath.h"
@@ -2158,66 +2155,6 @@ static void wma_clear_iface_key(struct wma_txrx_node *iface)
 }
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-/**
- * wma_set_packet_capture_mode() - set packet capture mode
- * @wma: wma handle
- * @vdev_id: vdev id
- * @val: mode to set
- *
- * Return: 0 on success, errno on failure
- */
-static int wma_set_packet_capture_mode(
-				tp_wma_handle wma_handle,
-				uint8_t vdev_id,
-				uint8_t val)
-{
-	int ret;
-
-	ret = wma_cli_set_command(vdev_id,
-				  WMI_VDEV_PARAM_PACKET_CAPTURE_MODE,
-				  val, VDEV_CMD);
-	return ret;
-}
-
-/**
- * wma_handle_packet_capture_mode() - handle packet capture mode
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- * @pdev_id: pdev id
- *
- * Return: none
- */
-static void wma_handle_packet_capture_mode(
-				tp_wma_handle wma_handle,
-				uint8_t vdev_id, uint8_t pdev_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (soc && cds_is_pktcapture_enabled() &&
-	    wma_handle->is_pktcapture_enabled &&
-	    (cds_get_pktcapture_mode() != PKT_CAPTURE_MODE_DISABLE)) {
-		uint8_t val = cds_get_pktcapture_mode();
-
-		status = wma_set_packet_capture_mode(
-				wma_handle, vdev_id, val);
-
-		if (status != QDF_STATUS_SUCCESS)
-			WMA_LOGE("failed to set capture mode (err=%d)",
-				 status);
-		else if (status == QDF_STATUS_SUCCESS)
-			cdp_set_packet_capture_mode(soc, pdev_id, val);
-	}
-}
-#else
-static void wma_handle_packet_capture_mode(
-				tp_wma_handle wma_handle,
-				uint8_t vdev_id, uint8_t pdev_id)
-{
-}
-#endif
-
 QDF_STATUS
 __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 {
@@ -2576,9 +2513,6 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		if (QDF_IS_STATUS_ERROR(status))
 			WMA_LOGE("failed to set sw retry threshold tx non aggr(status = %d)",
 				 status);
-
-		wma_handle_packet_capture_mode(wma_handle, vdev_id,
-					       WMI_PDEV_ID_SOC);
 
 		status = wma_set_sw_retry_threshold_per_ac(wma_handle, vdev_id,
 							   qos_aggr);

@@ -1121,9 +1121,6 @@ typedef struct {
 	qdf_mc_timer_t wma_fw_time_sync_timer;
 	bool fw_therm_throt_support;
 	bool enable_tx_compl_tsf64;
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-	bool is_pktcapture_enabled;
-#endif
 } t_wma_handle, *tp_wma_handle;
 
 /**
