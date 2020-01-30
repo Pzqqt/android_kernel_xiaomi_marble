@@ -30,6 +30,7 @@
 #include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_lmac_api.h"
 #include "../dfs_partial_offload_radar.h"
+#include "../dfs_confirm_radar.h"
 
 #ifdef DFS_FCC_TYPE4_DURATION_CHECK
 #define DFS_WAR_30_MHZ_SEPARATION   30
@@ -47,10 +48,7 @@
 #define DFS_MAX_FREQ_SPREAD            (1375 * 1)
 #define DFS_LARGE_PRI_MULTIPLIER       4
 #define DFS_W53_DEFAULT_PRI_MULTIPLIER 2
-#define DFS_INVALID_PRI_LIMIT 100  /* should we use 135? */
 #define DFS_BIG_SIDX          10000
-
-#define FRAC_PRI_SCORE_ARRAY_SIZE 40
 
 static char debug_dup[33];
 static int debug_dup_cnt;
@@ -199,16 +197,19 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 	dfs->dfs_phyerr_freq_max = 0;
 }
 
+#ifndef CONFIG_EXT_RADAR_PROCESS
 /**
- * dfs_confirm_radar() - This function checks for fractional PRI and jitter in
+ * dfs_is_real_radar() - This function checks for fractional PRI and jitter in
  * sidx index to determine if the radar is real or not.
  * @dfs: Pointer to dfs structure.
  * @rf: Pointer to dfs_filter structure.
  * @ext_chan_flag: ext chan flags.
+ *
+ * Return : true if real RADAR else false.
  */
-static int dfs_confirm_radar(struct wlan_dfs *dfs,
-		struct dfs_filter *rf,
-		int ext_chan_flag)
+static bool dfs_is_real_radar(struct wlan_dfs *dfs,
+			      struct dfs_filter *rf,
+			      int ext_chan_flag)
 {
 	int i = 0;
 	int index;
@@ -362,6 +363,7 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 							dl->dl_max_sidx) / 2);
 	return 1;
 }
+#endif /* CONFIG_EXT_RADAR_PROCESS */
 
 /*
  * dfs_reject_on_pri() - Rejecting on individual filter based on min PRI .
@@ -440,7 +442,7 @@ static inline void dfs_confirm_radar_check(
 		int *false_radar_found)
 {
 	if (rf->rf_patterntype != 1) {
-		*found = dfs_confirm_radar(dfs, rf, ext_chan_event_flag);
+		*found = (int)dfs_is_real_radar(dfs, rf, ext_chan_event_flag);
 		*false_radar_found = (*found == 1) ? 0 : 1;
 	}
 }
