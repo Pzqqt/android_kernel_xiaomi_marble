@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -228,9 +228,6 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 		scm_err("psoc: 0x%pK, event_info: 0x%pK", psoc, event_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	scm_debug("vdev: %d, type: %d, reason: %d, freq: %d, req: %d, scanid: %d",
-		  vdev_id, event->type, event->reason, event->chan_freq,
-		  event->requester, event->scan_id);
 
 	event_info->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(psoc,

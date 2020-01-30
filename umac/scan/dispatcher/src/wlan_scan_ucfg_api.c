@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -443,14 +443,10 @@ ucfg_scan_start(struct scan_start_request *req)
 	}
 
 	if (!scm_is_scan_allowed(req->vdev)) {
-		scm_err("scan disabled, rejecting the scan req");
+		scm_err_rl("scan disabled, rejecting the scan req");
 		scm_scan_free_scan_request_mem(req);
 		return QDF_STATUS_E_AGAIN;
 	}
-
-	scm_debug("reqid: %d, scanid: %d, vdevid: %d",
-		  req->scan_req.scan_req_id, req->scan_req.scan_id,
-		  req->scan_req.vdev_id);
 
 	/* Try to get vdev reference. Return if reference could
 	 * not be taken. Reference will be released once scan
@@ -647,9 +643,6 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 			qdf_mem_free(req);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	scm_debug("reqid: %d, scanid: %d, vdevid: %d, type: %d",
-		  req->cancel_req.requester, req->cancel_req.scan_id,
-		  req->cancel_req.vdev_id, req->cancel_req.req_type);
 
 	status = wlan_objmgr_vdev_try_get_ref(req->vdev, WLAN_SCAN_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1332,28 +1325,23 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 		reg_chan_list = qdf_mem_malloc_atomic(NUM_CHANNELS *
 				sizeof(struct regulatory_channel));
 		if (!reg_chan_list) {
-			scm_err("Couldn't allocate reg_chan_list memory");
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
 		scan_freqs =
 			qdf_mem_malloc_atomic(sizeof(uint32_t) * max_chans);
 		if (!scan_freqs) {
-			scm_err("Couldn't allocate scan_freqs memory");
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
 		status = ucfg_reg_get_current_chan_list(pdev, reg_chan_list);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_err("Couldn't get current chan list");
+		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
-		}
+
 		status = wlan_reg_get_freq_range(pdev, &low_2g,
 				&high_2g, &low_5g, &high_5g);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_err("Couldn't get frequency range");
+		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
-		}
 
 		for (idx = 0, num_chans = 0;
 			(idx < NUM_CHANNELS && num_chans < max_chans); idx++)
@@ -1374,7 +1362,7 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 		goto end;
 	}
 	if (!chan_list) {
-		scm_err("null chan_list while num_chans: %d", num_chans);
+		scm_info("null chan_list while num_chans: %d", num_chans);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto end;
 	}
@@ -1403,10 +1391,6 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 		else
 			req->scan_req.chan_list.chan[idx].phymode =
 				SCAN_PHY_MODE_11A;
-
-		scm_debug("chan[%d]: freq:%d, phymode:%d", idx,
-			req->scan_req.chan_list.chan[idx].freq,
-			req->scan_req.chan_list.chan[idx].phymode);
 	}
 
 end:

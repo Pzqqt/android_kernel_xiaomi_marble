@@ -414,10 +414,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 		status = wlan_abort_scan(pdev,
 				wlan_objmgr_pdev_get_pdev_id(pdev),
 				INVAL_VDEV_ID, INVAL_SCAN_ID, true);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			osif_err("aborting the existing scan is unsuccessful");
+		if (QDF_IS_STATUS_ERROR(status))
 			return -EBUSY;
-		}
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
@@ -719,8 +717,6 @@ static QDF_STATUS wlan_scan_request_dequeue(
 	struct pdev_osif_priv *osif_ctx;
 	struct osif_scan_pdev *scan_priv;
 
-	osif_debug("Dequeue Scan id: %d", scan_id);
-
 	if ((!source) || (!req)) {
 		osif_err("source or request is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -765,7 +761,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 				return QDF_STATUS_SUCCESS;
 			} else {
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
-				osif_err("Failed to remove node scan id %d, pending scans %d",
+				osif_err("Failed to remove scan id %d, pending scans %d",
 					 scan_id,
 					 qdf_list_size(&scan_priv->scan_req_q));
 				return status;
@@ -774,7 +770,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 	} while (QDF_STATUS_SUCCESS ==
 		qdf_list_peek_next(&scan_priv->scan_req_q, node, &next_node));
 	qdf_mutex_release(&scan_priv->scan_req_q_lock);
-	osif_err("Failed to find scan id %d", scan_id);
+	osif_debug("Failed to find scan id %d", scan_id);
 
 	return status;
 }
@@ -983,8 +979,8 @@ static void wlan_cfg80211_scan_done_callback(
 	if (!util_is_scan_completed(event, &success))
 		return;
 
-	osif_debug("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
-		   scan_id, event->vdev_id,
+	osif_debug("vdev %d, scan id %d type %s(%d) reason %s(%d)",
+		   event->vdev_id, scan_id,
 		   util_scan_get_ev_type_name(event->type), event->type,
 		   util_scan_get_ev_reason_name(event->reason),
 		   event->reason);
@@ -1303,6 +1299,10 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		osif_err("Invalid psoc object");
 		return -EINVAL;
 	}
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+
+	osif_debug("%s(vdev%d): mode %d", request->wdev->netdev->name,
+		   wlan_vdev_get_id(vdev), opmode);
 
 	/* Get NL global context from objmgr*/
 	osif_priv = wlan_pdev_get_ospriv(pdev);
@@ -1318,7 +1318,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	 */
 	if (!wlan_cfg80211_allow_simultaneous_scan(psoc) &&
 	    !qdf_list_empty(&osif_priv->osif_scan->scan_req_q) &&
-	    wlan_vdev_mlme_get_opmode(vdev) != QDF_SAP_MODE) {
+	    opmode != QDF_SAP_MODE) {
 		osif_err("Simultaneous scan disabled, reject scan");
 		return -EBUSY;
 	}
@@ -1370,7 +1370,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.num_ssids = request->n_ssids;
 
 		if (req->scan_req.num_ssids > WLAN_SCAN_MAX_NUM_SSID) {
-			osif_info("number of ssid received %d is greater than MAX %d so copy only MAX nuber of SSIDs",
+			osif_info("number of ssid %d greater than MAX %d",
 				  req->scan_req.num_ssids,
 				  WLAN_SCAN_MAX_NUM_SSID);
 			req->scan_req.num_ssids = WLAN_SCAN_MAX_NUM_SSID;
@@ -1385,11 +1385,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			qdf_mem_copy(pssid->ssid,
 				     &request->ssids[j].ssid[0],
 				     pssid->length);
-			osif_info("SSID number %d: %.*s", j, pssid->length,
-				  pssid->ssid);
 		}
 	}
-	opmode = wlan_vdev_mlme_get_opmode(vdev);
 	if (request->ssids ||
 	   (opmode == QDF_P2P_GO_MODE) || (opmode == QDF_P2P_DEVICE_MODE))
 		req->scan_req.scan_f_passive = false;
@@ -1449,9 +1446,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		qdf_set_macaddr_broadcast(&req->scan_req.bssid_list[0]);
 
 	if (request->n_channels) {
-		uint32_t buff_len = (request->n_channels * 5) + 1;
-		char *chl = qdf_mem_malloc(buff_len);
-		int len = 0;
 #ifdef WLAN_POLICY_MGR_ENABLE
 		bool ap_or_go_present =
 			policy_mgr_mode_specific_connection_count(
@@ -1459,10 +1453,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			     policy_mgr_mode_specific_connection_count(
 			     psoc, PM_P2P_GO_MODE, NULL);
 #endif
-		if (!chl) {
-			ret = -ENOMEM;
-			goto err;
-		}
 		for (i = 0; i < request->n_channels; i++) {
 			c_freq = request->channels[i]->center_freq;
 			if (wlan_reg_is_dsrc_freq(c_freq))
@@ -1476,8 +1466,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 
 				if (QDF_IS_STATUS_ERROR(qdf_status)) {
 					osif_err("DNBS check failed");
-					qdf_mem_free(chl);
-					chl = NULL;
 					ret = -EINVAL;
 					goto err;
 				}
@@ -1485,8 +1473,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 					continue;
 			}
 #endif
-			len += snprintf(chl + len, buff_len - len, "%d ",
-					c_freq);
 			req->scan_req.chan_list.chan[num_chan].freq = c_freq;
 			band = util_scan_scm_freq_to_band(c_freq);
 			if (band == WLAN_BAND_2_4_GHZ)
@@ -1499,10 +1485,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 			if (num_chan >= NUM_CHANNELS)
 				break;
 		}
-		osif_info("Channel-List: %s", chl);
-		qdf_mem_free(chl);
-		chl = NULL;
-		osif_info("No. of Scan Channels: %d", num_chan);
 	}
 	if (!num_chan) {
 		osif_err("Received zero non-dsrc channels");
@@ -1579,7 +1561,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 
 	qdf_status = ucfg_scan_start(req);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		osif_err("ucfg_scan_start returned error %d", qdf_status);
+		osif_err("scan req failed with error %d", qdf_status);
 		if (qdf_status == QDF_STATUS_E_RESOURCES)
 			osif_err("HO is in progress.So defer the scan by informing busy");
 		wlan_scan_request_dequeue(pdev, scan_id, &request,
@@ -1690,7 +1672,6 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 				vdev_id, WLAN_OSIF_ID);
 
 	if (!vdev) {
-		osif_err("Failed get vdev");
 		qdf_mem_free(req);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1706,6 +1687,10 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_PDEV_ALL;
 	else
 		req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
+
+	osif_debug("Type %d Vdev %d pdev %d scan id %d sync %d",
+		   req->cancel_req.req_type, req->cancel_req.vdev_id,
+		   req->cancel_req.pdev_id, req->cancel_req.scan_id, sync);
 
 	if (sync)
 		status = ucfg_scan_cancel_sync(req);
