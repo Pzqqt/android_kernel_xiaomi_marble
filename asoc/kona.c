@@ -39,159 +39,29 @@
 #define __CHIPSET__ "KONA "
 #define MSM_DAILINK_NAME(name) (__CHIPSET__#name)
 
-#define SAMPLING_RATE_8KHZ      8000
-#define SAMPLING_RATE_11P025KHZ 11025
-#define SAMPLING_RATE_16KHZ     16000
-#define SAMPLING_RATE_22P05KHZ  22050
-#define SAMPLING_RATE_32KHZ     32000
-#define SAMPLING_RATE_44P1KHZ   44100
-#define SAMPLING_RATE_48KHZ     48000
-#define SAMPLING_RATE_88P2KHZ   88200
-#define SAMPLING_RATE_96KHZ     96000
-#define SAMPLING_RATE_176P4KHZ  176400
-#define SAMPLING_RATE_192KHZ    192000
-#define SAMPLING_RATE_352P8KHZ  352800
-#define SAMPLING_RATE_384KHZ    384000
-
 #define WCD9XXX_MBHC_DEF_RLOADS     5
 #define WCD9XXX_MBHC_DEF_BUTTONS    8
 #define CODEC_EXT_CLK_RATE          9600000
-#define ADSP_STATE_READY_TIMEOUT_MS 3000
 #define DEV_NAME_STR_LEN            32
 #define WCD_MBHC_HS_V_MAX           1600
 
-#define TDM_CHANNEL_MAX		8
-#define DEV_NAME_STR_LEN	32
-
-#define MSM_LL_QOS_VALUE	300 /* time in us to ensure LPM doesn't go in C3/C4 */
-
-#define ADSP_STATE_READY_TIMEOUT_MS 3000
-
 #define WSA8810_NAME_1 "wsa881x.20170211"
 #define WSA8810_NAME_2 "wsa881x.20170212"
+
 #define WCN_CDC_SLIM_RX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX 2
-#define WCN_CDC_SLIM_TX_CH_MAX_LITO 3
 
-enum {
-	RX_PATH = 0,
-	TX_PATH,
-	MAX_PATH,
-};
-
-enum {
-	TDM_0 = 0,
-	TDM_1,
-	TDM_2,
-	TDM_3,
-	TDM_4,
-	TDM_5,
-	TDM_6,
-	TDM_7,
-	TDM_PORT_MAX,
-};
-
-#define TDM_MAX_SLOTS 8
-#define TDM_SLOT_WIDTH_BITS 32
-
-enum {
-	TDM_PRI = 0,
-	TDM_SEC,
-	TDM_TERT,
-	TDM_QUAT,
-	TDM_QUIN,
-	TDM_SEN,
-	TDM_INTERFACE_MAX,
-};
-
-enum {
-	PRIM_AUX_PCM = 0,
-	SEC_AUX_PCM,
-	TERT_AUX_PCM,
-	QUAT_AUX_PCM,
-	QUIN_AUX_PCM,
-	SEN_AUX_PCM,
-	AUX_PCM_MAX,
-};
-
-enum {
-	PRIM_MI2S = 0,
-	SEC_MI2S,
-	TERT_MI2S,
-	QUAT_MI2S,
-	QUIN_MI2S,
-	SEN_MI2S,
-	MI2S_MAX,
-};
-
-enum {
-	WSA_CDC_DMA_RX_0 = 0,
-	WSA_CDC_DMA_RX_1,
-	RX_CDC_DMA_RX_0,
-	RX_CDC_DMA_RX_1,
-	RX_CDC_DMA_RX_2,
-	RX_CDC_DMA_RX_3,
-	RX_CDC_DMA_RX_5,
-	CDC_DMA_RX_MAX,
-};
-
-enum {
-	WSA_CDC_DMA_TX_0 = 0,
-	WSA_CDC_DMA_TX_1,
-	WSA_CDC_DMA_TX_2,
-	TX_CDC_DMA_TX_0,
-	TX_CDC_DMA_TX_3,
-	TX_CDC_DMA_TX_4,
-	VA_CDC_DMA_TX_0,
-	VA_CDC_DMA_TX_1,
-	VA_CDC_DMA_TX_2,
-	CDC_DMA_TX_MAX,
-};
-
-enum {
-	SLIM_RX_7 = 0,
-	SLIM_RX_MAX,
-};
-enum {
-	SLIM_TX_7 = 0,
-	SLIM_TX_8,
-	SLIM_TX_MAX,
-};
-
-enum {
-	AFE_LOOPBACK_TX_IDX = 0,
-	AFE_LOOPBACK_TX_IDX_MAX,
-};
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
-	int usbc_en2_gpio; /* used by gpio driver API */
 	int lito_v2_enabled;
 	struct device_node *dmic01_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic23_gpio_p; /* used by pinctrl API */
 	struct device_node *dmic45_gpio_p; /* used by pinctrl API */
-	struct device_node *mi2s_gpio_p[MI2S_MAX]; /* used by pinctrl API */
-	atomic_t mi2s_gpio_ref_count[MI2S_MAX]; /* used by pinctrl API */
 	struct device_node *us_euro_gpio_p; /* used by pinctrl API */
 	struct pinctrl *usbc_en2_gpio_p; /* used by pinctrl API */
 	struct device_node *hph_en1_gpio_p; /* used by pinctrl API */
 	struct device_node *hph_en0_gpio_p; /* used by pinctrl API */
-	bool is_afe_config_done;
 	struct device_node *fsa_handle;
-};
-
-struct tdm_port {
-	u32 mode;
-	u32 channel;
-};
-
-struct tdm_dev_config {
-	unsigned int tdm_slot_offset[TDM_MAX_SLOTS];
-};
-
-enum {
-	EXT_DISP_RX_IDX_DP = 0,
-	EXT_DISP_RX_IDX_DP1,
-	EXT_DISP_RX_IDX_MAX,
 };
 
 struct msm_wsa881x_dev_info {
@@ -203,120 +73,6 @@ struct aux_codec_dev_info {
 	struct device_node *of_node;
 	u32 index;
 };
-
-struct dev_config {
-	u32 sample_rate;
-	u32 bit_format;
-	u32 channels;
-};
-
-struct mi2s_conf {
-	struct mutex lock;
-	u32 ref_cnt;
-	u32 msm_is_mi2s_master;
-};
-
-static const char *const vi_feed_ch_text[] = {"One", "Two"};
-static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE",
-					  "S32_LE"};
-static char const *cdc80_bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE"};
-static const char *const cdc_dma_rx_ch_text[] = {"One", "Two"};
-static const char *const cdc_dma_tx_ch_text[] = {"One", "Two", "Three", "Four",
-						"Five", "Six", "Seven",
-						"Eight"};
-static char const *cdc_dma_sample_rate_text[] = {"KHZ_8", "KHZ_11P025",
-						 "KHZ_16", "KHZ_22P05",
-						 "KHZ_32", "KHZ_44P1", "KHZ_48",
-						 "KHZ_88P2", "KHZ_96",
-						 "KHZ_176P4", "KHZ_192",
-						 "KHZ_352P8", "KHZ_384"};
-static char const *cdc80_dma_sample_rate_text[] = {"KHZ_8", "KHZ_11P025",
-						 "KHZ_16", "KHZ_22P05",
-						 "KHZ_32", "KHZ_44P1", "KHZ_48",
-						 "KHZ_88P2", "KHZ_96",
-						 "KHZ_176P4", "KHZ_192"};
-
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_0_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_1_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_2_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_3_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_5_chs, cdc_dma_rx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_1_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_chs, cdc_dma_tx_ch_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_1_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_0_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_1_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_sample_rate,
-				cdc_dma_sample_rate_text);
-
-/* WCD9380 */
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_0_format, cdc80_bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_1_format, cdc80_bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_2_format, cdc80_bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_3_format, cdc80_bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_5_format, cdc80_bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_0_sample_rate,
-				cdc80_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_1_sample_rate,
-				cdc80_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_2_sample_rate,
-				cdc80_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_3_sample_rate,
-				cdc80_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_5_sample_rate,
-				cdc80_dma_sample_rate_text);
-/* WCD9385 */
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_0_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_1_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_2_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_3_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_5_format, bit_format_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_0_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_1_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_2_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_3_sample_rate,
-				cdc_dma_sample_rate_text);
-static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_5_sample_rate,
-				cdc_dma_sample_rate_text);
 
 static bool is_initial_boot;
 static bool codec_reg_done;
@@ -647,6 +403,16 @@ static void *def_wcd_mbhc_cal(void)
 	return wcd_mbhc_cal;
 }
 
+static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
+{
+	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
+	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160};
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+
+	return snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
+			tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
+}
+
 /* Digital audio interface glue - connects codec <---> CPU */
 static struct snd_soc_dai_link msm_common_dai_links[] = {
 	{
@@ -829,6 +595,34 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
+    },
+    {
+	    .name = LPASS_BE_SLIMBUS_7_RX,
+	    .stream_name = LPASS_BE_SLIMBUS_7_RX,
+	    .cpu_dai_name = "snd-soc-dummy-dai",
+	    .async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+	    .dpcm_playback = 1,
+	    .trigger = {SND_SOC_DPCM_TRIGGER_POST,
+		    SND_SOC_DPCM_TRIGGER_POST},
+	    .codec_name = "btfmslim_slave",
+	    .codec_dai_name = "btfm_bt_sco_a2dp_slim_rx",
+	    .ignore_suspend = 1,
+	    /* this dainlink has playback support */
+	    .ignore_pmdown_time = 1,
+    },
+    {
+	    .name = LPASS_BE_SLIMBUS_7_TX,
+	    .stream_name = LPASS_BE_SLIMBUS_7_TX,
+	    .cpu_dai_name = "snd-soc-dummy-dai",
+	    .async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+	    .dpcm_capture = 1,
+	    .trigger = {SND_SOC_DPCM_TRIGGER_POST,
+		    SND_SOC_DPCM_TRIGGER_POST},
+	    .codec_name = "btfmslim_slave",
+	    .codec_dai_name = "btfm_bt_sco_slim_tx",
+	    .ignore_suspend = 1,
+	    .ignore_pmdown_time = 1,
+	    .init = &msm_wcn_init,
     },
 };
 
@@ -1520,7 +1314,6 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	struct msm_asoc_mach_data *pdata = NULL;
 	const char *mbhc_audio_jack_type = NULL;
 	int ret = 0;
-	uint index = 0;
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev, "%s: No platform supplied from device tree\n", __func__);
@@ -1662,21 +1455,6 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic23_gpio_p, false);
 	if (pdata->dmic45_gpio_p)
 		msm_cdc_pinctrl_set_wakeup_capable(pdata->dmic45_gpio_p, false);
-
-	pdata->mi2s_gpio_p[PRIM_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,pri-mi2s-gpios", 0);
-	pdata->mi2s_gpio_p[SEC_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,sec-mi2s-gpios", 0);
-	pdata->mi2s_gpio_p[TERT_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,tert-mi2s-gpios", 0);
-	pdata->mi2s_gpio_p[QUAT_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,quat-mi2s-gpios", 0);
-	pdata->mi2s_gpio_p[QUIN_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,quin-mi2s-gpios", 0);
-	pdata->mi2s_gpio_p[SEN_MI2S] = of_parse_phandle(pdev->dev.of_node,
-					"qcom,sen-mi2s-gpios", 0);
-	for (index = PRIM_MI2S; index < MI2S_MAX; index++)
-		atomic_set(&(pdata->mi2s_gpio_ref_count[index]), 0);
 
 	ret = msm_audio_ssr_register(&pdev->dev);
 	if (ret)
