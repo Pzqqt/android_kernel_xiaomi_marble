@@ -567,14 +567,11 @@ QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
-		sme_debug("WLAN_SER_CB_ACTIVATE_CMD callback");
 		status = sme_ser_handle_active_cmd(cmd);
 		break;
 	case WLAN_SER_CB_CANCEL_CMD:
-		sme_debug("WLAN_SER_CB_CANCEL_CMD callback");
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		sme_debug("WLAN_SER_CB_RELEASE_MEM_CMD callback");
 		if (cmd->vdev)
 			wlan_objmgr_vdev_release_ref(cmd->vdev,
 						     WLAN_LEGACY_SME_ID);
@@ -582,10 +579,9 @@ QDF_STATUS sme_ser_cmd_callback(struct wlan_serialization_command *cmd,
 		csr_release_command_buffer(mac_ctx, sme_cmd);
 		break;
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
-		sme_debug("WLAN_SER_CB_ACTIVE_CMD_TIMEOUT callback");
 		break;
 	default:
-		sme_debug("STOP: unknown reason code");
+		sme_debug("unknown reason code");
 		return QDF_STATUS_E_FAILURE;
 	}
 	return status;

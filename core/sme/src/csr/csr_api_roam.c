@@ -19566,26 +19566,21 @@ void csr_release_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd)
 	cmd_info.req_type = WLAN_SER_CANCEL_NON_SCAN_CMD;
 	cmd_info.cmd_type = csr_get_cmd_type(sme_cmd);
 	cmd_info.vdev = vdev;
-	sme_debug("cmd_id = %d type %d", sme_cmd->cmd_id, cmd_info.cmd_type);
 	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
 	cmd.cmd_id = cmd_info.cmd_id;
 	cmd.cmd_type = cmd_info.cmd_type;
 	cmd.vdev = cmd_info.vdev;
 	if (wlan_serialization_is_cmd_present_in_active_queue(
 				mac_ctx->psoc, &cmd)) {
-		sme_debug("Releasing active cmd_id[%d] cmd_type[%d]",
-				cmd_info.cmd_id, cmd_info.cmd_type);
 		cmd_info.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE;
 		wlan_serialization_remove_cmd(&cmd_info);
 	} else if (wlan_serialization_is_cmd_present_in_pending_queue(
 				mac_ctx->psoc, &cmd)) {
-		sme_debug("Releasing pending cmd_id[%d] cmd_type[%d]",
-				cmd_info.cmd_id, cmd_info.cmd_type);
 		cmd_info.queue_type = WLAN_SERIALIZATION_PENDING_QUEUE;
 		wlan_serialization_cancel_request(&cmd_info);
 	} else {
-		sme_debug("can't find cmd_id[%d] cmd_type[%d]",
-				cmd_info.cmd_id, cmd_info.cmd_type);
+		sme_debug("can't find cmd_id %d cmd_type %d", cmd_info.cmd_id,
+			  cmd_info.cmd_type);
 	}
 	if (cmd_info.vdev)
 		wlan_objmgr_vdev_release_ref(cmd_info.vdev, WLAN_LEGACY_SME_ID);
@@ -19741,9 +19736,6 @@ static void csr_fill_cmd_timeout(struct wlan_serialization_command *cmd)
 		cmd->cmd_timeout_duration = SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE;
 		break;
 	}
-
-	sme_debug("cmd_type %d, timeout %d", cmd->cmd_type,
-		  cmd->cmd_timeout_duration);
 }
 
 QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
@@ -19767,13 +19759,11 @@ QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 	 */
 	sme_cmd->cmd_id = csr_get_monotonous_number(mac_ctx);
 	cmd->cmd_id = sme_cmd->cmd_id;
-	sme_debug("cmd_id = %d", cmd->cmd_id);
 
 	cmd->cmd_type = csr_get_cmd_type(sme_cmd);
-	sme_debug("filled cmd_type[%d] cmd_id[%d]",
-		cmd->cmd_type, cmd->cmd_id);
 	if (cmd->cmd_type == WLAN_SER_CMD_MAX) {
-		sme_err("serialization enum not found");
+		sme_err("serialization enum not found for sme_cmd type %d",
+			sme_cmd->command);
 		return status;
 	}
 	cmd->vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
