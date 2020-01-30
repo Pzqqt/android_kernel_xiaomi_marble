@@ -10687,6 +10687,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_rx_fse_support] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_bw_165mhz_support] =
 		WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_nss_ratio_to_host_support] =
+		WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
