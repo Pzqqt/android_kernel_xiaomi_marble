@@ -9,18 +9,12 @@
 
 static int __init audio_platform_init(void)
 {
-	msm_dai_q6_hdmi_init();
-	msm_dai_q6_init();
-	msm_dai_slim_init();
 
 	return 0;
 }
 
 static void audio_platform_exit(void)
 {
-	msm_dai_slim_exit();
-	msm_dai_q6_exit();
-	msm_dai_q6_hdmi_exit();
 }
 
 module_init(audio_platform_init);

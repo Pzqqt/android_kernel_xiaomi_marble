@@ -151,12 +151,7 @@ ifdef CONFIG_SND_SOC_SA8155
 endif
 
 ifdef CONFIG_SND_SOC_QDSP6V2
-	PLATFORM_OBJS += msm-dai-q6-hdmi-v2.o
-	PLATFORM_OBJS += msm-dai-q6-v2.o
 	PLATFORM_OBJS += platform_init.o
-endif
-ifdef CONFIG_WCD9XXX_CODEC_CORE
-	PLATFORM_OBJS += msm-dai-slim.o
 endif
 
 LINUX_INC +=	-Iinclude/linux
