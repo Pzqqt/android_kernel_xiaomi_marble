@@ -4459,17 +4459,19 @@ int gsi_config_channel_mode(unsigned long chan_hdl, enum gsi_chan_mode mode)
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
 
+	spin_lock_irqsave(&gsi_ctx->slock, flags);
+
 	if (atomic_read(&ctx->poll_mode))
 		curr = GSI_CHAN_MODE_POLL;
 	else
 		curr = GSI_CHAN_MODE_CALLBACK;
 
 	if (mode == curr) {
-		GSIDBG("already in requested mode %u chan_hdl=%lu\n",
+		GSIERR("already in requested mode %u chan_hdl=%lu\n",
 				curr, chan_hdl);
+		spin_unlock_irqrestore(&gsi_ctx->slock, flags);
 		return -GSI_STATUS_UNSUPPORTED_OP;
 	}
-	spin_lock_irqsave(&gsi_ctx->slock, flags);
 	if (curr == GSI_CHAN_MODE_CALLBACK &&
 			mode == GSI_CHAN_MODE_POLL) {
 		if (gsi_ctx->per.ver >= GSI_VER_3_0) {

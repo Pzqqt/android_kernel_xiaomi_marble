@@ -2287,9 +2287,11 @@ static void ipa3_wq_handle_rx(struct work_struct *work)
 	IPA_ACTIVE_CLIENTS_INC_EP(client_type);
 	if (ipa_net_initialized && sys->napi_obj) {
 		napi_schedule(sys->napi_obj);
+		IPA_STATS_INC_CNT(sys->napi_sch_cnt);
 	} else if (ipa_net_initialized &&
 		sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS) {
 		napi_schedule(&sys->napi_rx);
+		IPA_STATS_INC_CNT(sys->napi_sch_cnt);
 	} else if (IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		tasklet_schedule(&sys->tasklet);
 	} else
@@ -5279,14 +5281,18 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	if (!clk_off && ipa_net_initialized && sys->napi_obj) {
 		trace_ipa3_napi_schedule(sys->ep->client);
 		napi_schedule(sys->napi_obj);
+		IPA_STATS_INC_CNT(sys->napi_sch_cnt);
 	} else if (!clk_off &&
 		(sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_DATA_CONS)) {
 		napi_schedule(&sys->napi_rx);
+		IPA_STATS_INC_CNT(sys->napi_sch_cnt);
 	} else if (!clk_off &&
 		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		tasklet_schedule(&sys->tasklet);
-	} else
+	} else {
 		queue_work(sys->wq, &sys->work);
+	}
+
 }
 
 static void ipa_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
@@ -5945,6 +5951,7 @@ start_poll:
 	cnt += weight - remain_aggr_weight * IPA_LAN_AGGR_PKT_CNT;
 	if (cnt < weight) {
 		napi_complete(ep->sys->napi_obj);
+		IPA_STATS_INC_CNT(ep->sys->napi_comp_cnt);
 		ret = ipa3_rx_switch_to_intr_mode(ep->sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
 				napi_reschedule(ep->sys->napi_obj))
@@ -6046,6 +6053,7 @@ start_poll:
 	if (cnt < weight && ep->sys->len > IPA_DEFAULT_SYS_YELLOW_WM &&
 		wan_def_sys->len > IPA_DEFAULT_SYS_YELLOW_WM) {
 		napi_complete(ep->sys->napi_obj);
+		IPA_STATS_INC_CNT(ep->sys->napi_comp_cnt);
 		ret = ipa3_rx_switch_to_intr_mode(ep->sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
 				napi_reschedule(ep->sys->napi_obj))
@@ -6268,6 +6276,7 @@ start_poll:
 	 */
 	if (cnt < budget && (sys->len > IPA_DEFAULT_SYS_YELLOW_WM)) {
 		napi_complete(napi_rx);
+		IPA_STATS_INC_CNT(sys->napi_comp_cnt);
 		ret = ipa3_rx_switch_to_intr_mode(sys);
 		if (ret == -GSI_STATUS_PENDING_IRQ &&
 				napi_reschedule(napi_rx))
