@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 
 #include <wmi.h>
 #include <wmi_unified_priv.h>
+#include "wmi_unified.h"
 
 /**
  * wmi_vdev_attach_tlv: API to init vdev tlv ops
@@ -35,5 +36,16 @@
  * Return: none
  */
 void wmi_vdev_attach_tlv(struct wmi_unified *wmi_handle);
+
+#ifdef WLAN_BCN_RATECODE_ENABLE
+static inline void wmi_enable_bcn_ratecode(uint32_t cmd_flag)
+{
+	cmd_flag |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
+}
+#else
+static inline void wmi_enable_bcn_ratecode(uint32_t cmd_flag)
+{
+}
+#endif
 
 #endif /* __WMI_UNIFIED_VDEV_TLV_H__ */

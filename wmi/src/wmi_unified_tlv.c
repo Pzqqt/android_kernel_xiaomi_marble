@@ -1011,7 +1011,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->bcn_tx_rate = req->bcn_tx_rate_code;
 	if (req->bcn_tx_rate_code)
-		cmd->flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
+		wmi_enable_bcn_ratecode(cmd->flags);
 
 	if (!req->is_restart) {
 		if (req->pmf_enabled)
