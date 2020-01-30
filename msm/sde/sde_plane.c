@@ -3421,7 +3421,8 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		{SDE_DRM_BLEND_OP_NOT_DEFINED,    "not_defined"},
 		{SDE_DRM_BLEND_OP_OPAQUE,         "opaque"},
 		{SDE_DRM_BLEND_OP_PREMULTIPLIED,  "premultiplied"},
-		{SDE_DRM_BLEND_OP_COVERAGE,       "coverage"}
+		{SDE_DRM_BLEND_OP_COVERAGE,       "coverage"},
+		{SDE_DRM_BLEND_OP_SKIP,           "skip_blending"},
 	};
 	static const struct drm_prop_enum_list e_src_config[] = {
 		{SDE_DRM_DEINTERLACE, "deinterlace"}
