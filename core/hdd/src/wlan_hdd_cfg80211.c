@@ -15656,7 +15656,12 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 			hdd_err("could not get VHT capability");
 
 		if (is_vht_for_24ghz &&
-		    sme_is_feature_supported_by_fw(DOT11AC))
+		    sme_is_feature_supported_by_fw(DOT11AC) &&
+		    (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
+		     cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY ||
+		     cfg->dot11Mode == eHDD_DOT11_MODE_11ac ||
+		     cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
+		     cfg->dot11Mode == eHDD_DOT11_MODE_11ax_ONLY))
 			wlan_hdd_band_2_4_ghz.vht_cap.vht_supported = 1;
 	}
 	if (!hdd_is_5g_supported(hdd_ctx) ||
@@ -15686,6 +15691,13 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 		wlan_hdd_copy_srd_ch((char *)wiphy->bands[
 				     HDD_NL80211_BAND_5GHZ]->channels +
 				     len_5g_ch, len_srd_ch);
+
+	if (cfg->dot11Mode != eHDD_DOT11_MODE_AUTO &&
+	    cfg->dot11Mode != eHDD_DOT11_MODE_11ac &&
+	    cfg->dot11Mode != eHDD_DOT11_MODE_11ac_ONLY &&
+	    cfg->dot11Mode != eHDD_DOT11_MODE_11ax &&
+	    cfg->dot11Mode != eHDD_DOT11_MODE_11ax_ONLY)
+		 wlan_hdd_band_5_ghz.vht_cap.vht_supported = 0;
 
 	hdd_init_6ghz(hdd_ctx);
 
