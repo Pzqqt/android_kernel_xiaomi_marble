@@ -51,28 +51,92 @@
 #define FTM_TIME_SYNC_EXIT() ftm_time_sync_debug("exit")
 
 /**
- * ftm_time_sync_vdev_create_notification(): Handler for vdev create notify.
+ * ftm_time_sync_vdev_create_notification() - Handler for vdev create notify.
  * @vdev: vdev which is going to be created by objmgr
- * @arg: argument for notification handler.
+ * @arg: argument for notification handler
  *
  * Allocate and attach vdev private object.
  *
- * Return: QDF_STATUS status in case of success else return error.
+ * Return: QDF_STATUS
  */
-QDF_STATUS ftm_timesync_vdev_create_notification(struct wlan_objmgr_vdev *vdev,
-						 void *arg);
+QDF_STATUS ftm_time_sync_vdev_create_notification(struct wlan_objmgr_vdev *vdev,
+						  void *arg);
 
 /**
- * ftm_time_sync_vdev_destroy_notification(): Handler for vdev destroy notify.
+ * ftm_time_sync_vdev_destroy_notification() - Handler for vdev destroy notify.
  * @vdev: vdev which is going to be destroyed by objmgr
  * @arg: argument for notification handler.
  *
  * Deallocate and detach vdev private object.
  *
- * Return QDF_STATUS status in case of success else return error
+ * Return: QDF_STATUS
  */
 QDF_STATUS
-ftm_timesync_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev,
+ftm_time_sync_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev,
+					void *arg);
+
+/**
+ * ftm_time_sync_psoc_create_notification() - Handler for psoc create notify.
+ * @psoc: psoc which is going to be created by objmgr
+ * @arg: argument for notification handler.
+ *
+ * Allocate and attach psoc private object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ftm_time_sync_psoc_create_notification(struct wlan_objmgr_psoc *psoc,
 				       void *arg);
 
+/**
+ * ftm_time_sync_psoc_destroy_notification() -  Handler for psoc destroy notify.
+ * @psoc: psoc which is going to be destroyed by objmgr
+ * @arg: argument for notification handler.
+ *
+ * Deallocate and detach psoc private object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ftm_time_sync_psoc_destroy_notification(struct wlan_objmgr_psoc *psoc,
+					void *arg);
+
+/**
+ * ftm_time_sync_is_enable() - Function to advertise feature is enabled or not
+ * @psoc: psoc context
+ *
+ * This function advertises whether the feature is enabled or not.
+ *
+ * Return: true if enable, false if disable
+ */
+bool ftm_time_sync_is_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ftm_time_sync_set_enable() - Handler to enable the feature
+ * @psoc: psoc context
+ * @value: value to be set
+ *
+ * This function is used to enable the ftm time sync feature.
+ * The feature is enabled iff both ini and wmi service is advertised by
+ * firmware.
+ *
+ * Return: None
+ */
+void ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
+ * ftm_time_sync_get_mode() - API to get the ftm time sync mode
+ * @psoc: psoc context
+ *
+ * Return: enum ftm_time_sync_mode
+ */
+enum ftm_time_sync_mode ftm_time_sync_get_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ftm_time_sync_get_role() -  API to get the ftm time sync role
+ * @psoc: psoc context
+ *
+ * Return: enum ftm_time_sync_role
+ */
+enum ftm_time_sync_role ftm_time_sync_get_role(struct wlan_objmgr_psoc *psoc);
 #endif /* end of _FTM_TIME_SYNC_MAIN_H_ */

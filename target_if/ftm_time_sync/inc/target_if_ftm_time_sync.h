@@ -34,7 +34,7 @@
  *
  * Return: None
  */
-void target_if_ftm_time_sync_register_rx_ops(struct wlan_ftm_timesync_rx_ops
+void target_if_ftm_time_sync_register_rx_ops(struct wlan_ftm_time_sync_rx_ops
 					     *rx_ops);
 
 /**
@@ -44,7 +44,7 @@ void target_if_ftm_time_sync_register_rx_ops(struct wlan_ftm_timesync_rx_ops
  *
  * Return: None
  */
-void target_if_ftm_time_sync_register_tx_ops(struct wlan_ftm_timesync_tx_ops
+void target_if_ftm_time_sync_register_tx_ops(struct wlan_ftm_time_sync_tx_ops
 					     *tx_ops);
 
 /**

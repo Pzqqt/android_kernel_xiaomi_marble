@@ -28,7 +28,7 @@ tgt_ftm_ts_start_stop_evt(struct wlan_objmgr_psoc *psoc,
 			  struct ftm_time_sync_start_stop_params *param)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct ftm_timesync_vdev_priv *vdev_priv;
+	struct ftm_time_sync_vdev_priv *vdev_priv;
 	uint8_t vdev_id;
 
 	vdev_id = param->vdev_id;
@@ -40,7 +40,7 @@ tgt_ftm_ts_start_stop_evt(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev_priv = ftm_timesync_vdev_get_priv(vdev);
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
 
 	qdf_mutex_acquire(&vdev_priv->ftm_time_sync_mutex);
 
@@ -61,7 +61,7 @@ tgt_ftm_ts_start_stop_evt(struct wlan_objmgr_psoc *psoc,
 		qdf_mutex_release(&vdev_priv->ftm_time_sync_mutex);
 	}
 
-	ftm_timesync_vdev_put_ref(vdev);
+	ftm_time_sync_vdev_put_ref(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -69,7 +69,7 @@ tgt_ftm_ts_start_stop_evt(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS tgt_ftm_ts_offset_evt(struct wlan_objmgr_psoc *psoc,
 				 struct ftm_time_sync_offset *param)
 {
-	struct ftm_timesync_vdev_priv *vdev_priv;
+	struct ftm_time_sync_vdev_priv *vdev_priv;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t vdev_id;
 	int iter;
@@ -83,7 +83,7 @@ QDF_STATUS tgt_ftm_ts_offset_evt(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev_priv = ftm_timesync_vdev_get_priv(vdev);
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
 
 	vdev_priv->num_qtime_pair = param->num_qtime <
 			FTM_TIME_SYNC_QTIME_PAIR_MAX ? param->num_qtime :
@@ -96,7 +96,7 @@ QDF_STATUS tgt_ftm_ts_offset_evt(struct wlan_objmgr_psoc *psoc,
 						param->pairs[iter].qtime_slave;
 	}
 
-	ftm_timesync_vdev_put_ref(vdev);
+	ftm_time_sync_vdev_put_ref(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

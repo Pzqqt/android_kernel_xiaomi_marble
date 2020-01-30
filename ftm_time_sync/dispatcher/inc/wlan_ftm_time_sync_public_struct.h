@@ -25,14 +25,38 @@
 #ifndef _WLAN_TIME_SYNC_FTM_PUBLIC_STRUCT_H_
 #define _WLAN_TIME_SYNC_FTM_PUBLIC_STRUCT_H_
 
+struct wlan_objmgr_psoc;
+
 /**
- * struct wlan_ftm_timesync_tx_ops - structure of tx operation function
- *				     pointers for ftm timesync component
+ * enum ftm_time_sync_mode - ftm time sync modes
+ * @FTM_TIMESYNC_AGGREGATED_MODE: Ftm time sync aggregated mode
+ *				  Only one aggregated offset is provided
+ * @FTM_TIMESYNC_BURST_MODE: Ftm time sync burst mode, offset for each FTM
+ *			     frame is provided
+ */
+enum ftm_time_sync_mode {
+	FTM_TIMESYNC_AGGREGATED_MODE,
+	FTM_TIMESYNC_BURST_MODE,
+};
+
+/**
+ * enum ftm_time_sync_role - ftm time sync role
+ * @FTM_TIMESYNC_SLAVE_ROLE: Slave/STA role
+ * @FTM_TIMESYNC_MASTER_ROLE: Master/SAP role
+ */
+enum ftm_time_sync_role {
+	FTM_TIMESYNC_SLAVE_ROLE,
+	FTM_TIMESYNC_MASTER_ROLE,
+};
+
+/**
+ * struct wlan_ftm_time_sync_tx_ops - structure of tx operation function
+ *				      pointers for ftm time_sync component
  * @ftm_time_sync_send_qtime: send qtime wmi cmd to FW
  * @ftm_time_sync_send_trigger: send ftm time sync trigger cmd
  *
  */
-struct wlan_ftm_timesync_tx_ops {
+struct wlan_ftm_time_sync_tx_ops {
 	QDF_STATUS (*ftm_time_sync_send_qtime)(struct wlan_objmgr_psoc *psoc,
 					       uint32_t vdev_id,
 					       uint64_t lpass_ts);
@@ -41,16 +65,16 @@ struct wlan_ftm_timesync_tx_ops {
 };
 
 /**
- * struct wlan_ftm_timesync_rx_ops - structure of rx operation function
- *				     pointers for ftm timesync component
- * @ftm_timesync_register_start_stop: register ftm timesync start stop event
- * @ftm_timesync_regiser_master_slave_offset: register master slave qtime
- *					      offset event
+ * struct wlan_ftm_time_sync_rx_ops - structure of rx operation function
+ *				      pointers for ftm time_sync component
+ * @ftm_time_sync_register_start_stop: register ftm time_sync start stop event
+ * @ftm_time_sync_regiser_master_slave_offset: register master slave qtime
+ *					       offset event
  */
-struct wlan_ftm_timesync_rx_ops {
-	QDF_STATUS (*ftm_timesync_register_start_stop)
+struct wlan_ftm_time_sync_rx_ops {
+	QDF_STATUS (*ftm_time_sync_register_start_stop)
 					(struct wlan_objmgr_psoc *psoc);
-	QDF_STATUS (*ftm_timesync_regiser_master_slave_offset)
+	QDF_STATUS (*ftm_time_sync_regiser_master_slave_offset)
 					(struct wlan_objmgr_psoc *psoc);
 };
 #endif /*_WLAN_TIME_SYNC_FTM_PUBLIC_STRUCT_H_ */
