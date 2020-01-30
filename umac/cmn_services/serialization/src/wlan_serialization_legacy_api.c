@@ -143,8 +143,6 @@ wlan_serialization_peek_head_active_cmd_using_psoc(
 	cmd_list = qdf_container_of(nnode,
 			struct wlan_serialization_command_list, pdev_node);
 	cmd = &cmd_list->cmd;
-	ser_debug("cmd_type[%d], cmd_id[%d]",
-		  cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 
 end:
 	return cmd;
