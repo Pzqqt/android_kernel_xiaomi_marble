@@ -9440,7 +9440,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	mac_handle_t mac_handle = MAC_HANDLE(mac);
 	struct csr_roam_session *session_ptr;
 	struct csr_roam_connectedinfo *prev_connect_info;
-	tPmkidCacheInfo pmksa_entry;
+	tPmkidCacheInfo *pmksa_entry;
 	uint32_t len = 0, roamId = 0, reason_code = 0;
 	bool is_dis_pending;
 
@@ -9520,13 +9520,18 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	 * AP.
 	 */
 	if (reason_code == eSIR_MAC_INVALID_PMKID) {
+		pmksa_entry = qdf_mem_malloc(sizeof(*pmksa_entry));
+		if (!pmksa_entry)
+			return;
+
 		sme_warn("Assoc reject from BSSID:%pM due to invalid PMKID",
 			 session_ptr->joinFailStatusCode.bssId);
-		qdf_mem_copy(&pmksa_entry.BSSID.bytes,
+		qdf_mem_copy(pmksa_entry->BSSID.bytes,
 			     &session_ptr->joinFailStatusCode.bssId,
 			     sizeof(tSirMacAddr));
 		sme_roam_del_pmkid_from_cache(mac_handle, session_ptr->vdev_id,
-					      &pmksa_entry, false);
+					      pmksa_entry, false);
+		qdf_mem_free(pmksa_entry);
 	}
 
 	/* If Join fails while Handoff is in progress, indicate
@@ -14969,14 +14974,21 @@ static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
 static void csr_update_sae_config(struct join_req *csr_join_req,
 	struct mac_context *mac, struct csr_roam_session *session)
 {
-	tPmkidCacheInfo pmkid_cache;
+	tPmkidCacheInfo *pmkid_cache;
 	uint32_t index;
 
-	qdf_mem_copy(pmkid_cache.BSSID.bytes,
-		csr_join_req->bssDescription.bssId, QDF_MAC_ADDR_SIZE);
+	pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
+	if (!pmkid_cache)
+		return;
+
+	qdf_mem_copy(pmkid_cache->BSSID.bytes,
+		     csr_join_req->bssDescription.bssId,
+		     QDF_MAC_ADDR_SIZE);
 
 	csr_join_req->sae_pmk_cached =
-	       csr_lookup_pmkid_using_bssid(mac, session, &pmkid_cache, &index);
+	       csr_lookup_pmkid_using_bssid(mac, session, pmkid_cache, &index);
+
+	qdf_mem_free(pmkid_cache);
 
 	if (!csr_join_req->sae_pmk_cached)
 		return;
@@ -21081,7 +21093,7 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	sme_QosAssocInfo assoc_info;
 	struct bss_params *add_bss_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tPmkidCacheInfo pmkid_cache;
+	tPmkidCacheInfo *pmkid_cache;
 	uint32_t pmkid_index;
 	uint16_t len;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -21317,27 +21329,33 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		 * Check if a PMK cache exists for the roamed AP and update
 		 * it into the session pmk.
 		 */
-		qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
-		qdf_copy_macaddr(&pmkid_cache.BSSID,
+		pmkid_cache = qdf_mem_malloc(sizeof(*pmkid_cache));
+		if (!pmkid_cache) {
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+
+		qdf_copy_macaddr(&pmkid_cache->BSSID,
 				 &session->connectedProfile.bssid);
 		sme_debug("Trying to find PMKID for " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(pmkid_cache.BSSID.bytes));
+			  QDF_MAC_ADDR_ARRAY(pmkid_cache->BSSID.bytes));
 		if (csr_lookup_pmkid_using_bssid(mac_ctx, session,
-						 &pmkid_cache,
+						 pmkid_cache,
 						 &pmkid_index)) {
-			session->pmk_len = pmkid_cache.pmk_len;
+			session->pmk_len = pmkid_cache->pmk_len;
 			qdf_mem_zero(session->psk_pmk,
 				     sizeof(session->psk_pmk));
-			qdf_mem_copy(session->psk_pmk, pmkid_cache.pmk,
+			qdf_mem_copy(session->psk_pmk, pmkid_cache->pmk,
 				     session->pmk_len);
 			sme_debug("pmkid found for " QDF_MAC_ADDR_STR " at %d len %d",
-				  QDF_MAC_ADDR_ARRAY(pmkid_cache.BSSID.bytes),
+				  QDF_MAC_ADDR_ARRAY(pmkid_cache->BSSID.bytes),
 				  pmkid_index, (uint32_t)session->pmk_len);
 		} else {
 			sme_debug("PMKID Not found in cache for " QDF_MAC_ADDR_STR,
-				  QDF_MAC_ADDR_ARRAY(pmkid_cache.BSSID.bytes));
+				  QDF_MAC_ADDR_ARRAY(pmkid_cache->BSSID.bytes));
 		}
-		qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
+		qdf_mem_zero(pmkid_cache, sizeof(pmkid_cache));
+		qdf_mem_free(pmkid_cache);
 	} else {
 		roam_info->fAuthRequired = true;
 		csr_roam_substate_change(mac_ctx,
