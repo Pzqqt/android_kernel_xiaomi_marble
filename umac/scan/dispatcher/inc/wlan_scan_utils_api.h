@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -708,6 +708,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->rnrie = conv_ptr(ie_lst->rnrie, old_ptr, new_ptr);
 	ie_lst->extender = conv_ptr(ie_lst->extender, old_ptr, new_ptr);
 	ie_lst->adaptive_11r = conv_ptr(ie_lst->adaptive_11r, old_ptr, new_ptr);
+	ie_lst->single_pmk = conv_ptr(ie_lst->single_pmk, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -856,6 +857,23 @@ static inline uint8_t*
 util_scan_entry_adaptive_11r(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.adaptive_11r;
+}
+
+/**
+ * util_scan_entry_single_pmk()- function to read single pmk Vendor IE
+ * @scan_entry: scan entry
+ *
+ * API, function to read sae single pmk IE
+ *
+ * Return: true if single_pmk ie is present or false if ie is not present
+ */
+static inline bool
+util_scan_entry_single_pmk(struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry->ie_list.single_pmk)
+		return true;
+
+	return false;
 }
 
 /**

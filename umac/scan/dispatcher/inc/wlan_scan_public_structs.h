@@ -159,6 +159,7 @@ struct element_info {
  * @mbo_oce: pointer to mbo/oce indication ie
  * @rnrie: reduced neighbor report IE
  * @adaptive_11r: pointer to adaptive 11r IE
+ * @single_pmk: Pointer to sae single pmk IE
  */
 struct ie_list {
 	uint8_t *tim;
@@ -210,6 +211,7 @@ struct ie_list {
 	uint8_t *rnrie;
 	uint8_t *extender;
 	uint8_t *adaptive_11r;
+	uint8_t *single_pmk;
 };
 
 enum scan_entry_connection_state {
