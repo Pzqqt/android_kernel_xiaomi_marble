@@ -1521,6 +1521,8 @@ struct bss_load_trigger {
  * @fw_akm_bitmap:                  Supported Akm suites of firmware
  * @roam_full_scan_period: Idle period in seconds between two successive
  * full channel roam scans
+ * @sae_same_pmk_feature_enabled: Contains value of ini
+ * sae_same_pmk_feature_enabled
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1624,6 +1626,9 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t fw_akm_bitmap;
 	uint32_t roam_full_scan_period;
+#ifdef WLAN_SAE_SINGLE_PMK
+	bool sae_same_pmk_feature_enabled;
+#endif
 };
 
 /**
