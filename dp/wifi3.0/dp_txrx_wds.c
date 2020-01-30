@@ -32,6 +32,13 @@
 #define DP_VLAN_TAGGED_MULTICAST 1
 #define DP_VLAN_TAGGED_UNICAST 2
 #define DP_MAX_VLAN_IDS 4096
+#define DP_INVALID_AST_IDX 0xffff
+#define DP_INVALID_FLOW_PRIORITY 0xff
+#define DP_PEER_AST0_FLOW_MASK 0x4
+#define DP_PEER_AST1_FLOW_MASK 0x8
+#define DP_PEER_AST2_FLOW_MASK 0x1
+#define DP_PEER_AST3_FLOW_MASK 0x2
+#define DP_MAX_AST_INDEX_PER_PEER 4
 
 static void dp_ast_aging_timer_fn(void *soc_hdl)
 {
@@ -800,5 +807,265 @@ void dp_peer_multipass_list_init(struct dp_vdev *vdev)
 	 */
 	TAILQ_INIT(&vdev->mpass_peer_list);
 	qdf_spinlock_create(&vdev->mpass_peer_mutex);
+}
+#endif
+
+#ifdef QCA_PEER_MULTIQ_SUPPORT
+
+/**
+ * dp_peer_reset_flowq_map() - reset peer flowq map table
+ * @peer - dp peer handle
+ *
+ * Return: none
+ */
+void dp_peer_reset_flowq_map(struct dp_peer *peer)
+{
+	int i = 0;
+
+	if (!peer)
+		return;
+
+	for (i = 0; i < DP_PEER_AST_FLOWQ_MAX; i++) {
+		peer->peer_ast_flowq_idx[i].is_valid = false;
+		peer->peer_ast_flowq_idx[i].valid_tid_mask = false;
+		peer->peer_ast_flowq_idx[i].ast_idx = DP_INVALID_AST_IDX;
+		peer->peer_ast_flowq_idx[i].flowQ = DP_INVALID_FLOW_PRIORITY;
+	}
+}
+
+/**
+ * dp_peer_get_flowid_from_flowmask() - get flow id from flow mask
+ * @peer - dp peer handle
+ * @mask - flow mask
+ *
+ * Return: flow id
+ */
+static int dp_peer_get_flowid_from_flowmask(struct dp_peer *peer,
+		uint8_t mask)
+{
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: Invalid peer\n", __func__);
+		return -1;
+	}
+
+	if (mask & DP_PEER_AST0_FLOW_MASK)
+		return DP_PEER_AST_FLOWQ_UDP;
+	else if (mask & DP_PEER_AST1_FLOW_MASK)
+		return DP_PEER_AST_FLOWQ_NON_UDP;
+	else if (mask & DP_PEER_AST2_FLOW_MASK)
+		return DP_PEER_AST_FLOWQ_HI_PRIO;
+	else if (mask & DP_PEER_AST3_FLOW_MASK)
+		return DP_PEER_AST_FLOWQ_LOW_PRIO;
+
+	return DP_PEER_AST_FLOWQ_MAX;
+}
+
+/**
+ * dp_peer_get_ast_valid() - get ast index valid from mask
+ * @mask - mask for ast valid bits
+ * @index - index for an ast
+ *
+ * Return - 1 if ast index is valid from mask else 0
+ */
+static inline bool dp_peer_get_ast_valid(uint8_t mask, uint16_t index)
+{
+	if (index == 0)
+		return 1;
+	return ((mask) & (1 << ((index) - 1)));
+}
+
+/**
+ * dp_peer_ast_index_flow_queue_map_create() - create ast index flow queue map
+ * @soc - genereic soc handle
+ * @is_wds - flag to indicate if peer is wds
+ * @peer_id - peer_id from htt peer map message
+ * @peer_mac_addr - mac address of the peer
+ * @ast_info - ast flow override information from peer map
+ *
+ * Return: none
+ */
+void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
+		bool is_wds, uint16_t peer_id, uint8_t *peer_mac_addr,
+		struct dp_ast_flow_override_info *ast_info)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_peer *peer = NULL;
+	uint8_t i;
+
+	/*
+	 * Ast flow override feature is supported
+	 * only for connected client
+	 */
+	if (is_wds)
+		return;
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: Invalid peer\n", __func__);
+		return;
+	}
+
+	/* Valid only in AP mode */
+	if (peer->vdev->opmode != wlan_op_mode_ap) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: Peer ast flow map not in STA mode\n", __func__);
+		/* Release peer reference */
+		dp_peer_unref_del_find_by_id(peer);
+		return;
+	}
+
+	/* Making sure the peer is for this mac address */
+	if (!qdf_is_macaddr_equal((struct qdf_mac_addr *)peer_mac_addr,
+				(struct qdf_mac_addr *)peer->mac_addr.raw)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: Peer mac address mismatch\n", __func__);
+		dp_peer_unref_del_find_by_id(peer);
+		return;
+	}
+
+	/* Ast entry flow mapping not valid for self peer map */
+	if (qdf_is_macaddr_equal((struct qdf_mac_addr *)peer_mac_addr,
+				(struct qdf_mac_addr *)peer->vdev->mac_addr.raw)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s: Ast flow mapping not valid for self peer \n", __func__);
+		dp_peer_unref_del_find_by_id(peer);
+		return;
+	}
+
+	/* Fill up ast index <---> flow id mapping table for this peer */
+	for (i = 0; i < DP_MAX_AST_INDEX_PER_PEER; i++) {
+
+		/* Check if this ast index is valid */
+		peer->peer_ast_flowq_idx[i].is_valid =
+			dp_peer_get_ast_valid(ast_info->ast_valid_mask, i);
+		if (!peer->peer_ast_flowq_idx[i].is_valid)
+			continue;
+
+		/* Get the flow queue id which is mapped to this ast index */
+		peer->peer_ast_flowq_idx[i].flowQ =
+			dp_peer_get_flowid_from_flowmask(peer,
+					ast_info->ast_flow_mask[i]);
+		/*
+		 * Update tid valid mask only if flow id HIGH or
+		 * Low priority
+		 */
+		if (peer->peer_ast_flowq_idx[i].flowQ ==
+				DP_PEER_AST_FLOWQ_HI_PRIO) {
+			peer->peer_ast_flowq_idx[i].valid_tid_mask =
+				ast_info->tid_valid_hi_pri_mask;
+		} else if (peer->peer_ast_flowq_idx[i].flowQ ==
+				DP_PEER_AST_FLOWQ_LOW_PRIO) {
+			peer->peer_ast_flowq_idx[i].valid_tid_mask =
+				ast_info->tid_valid_low_pri_mask;
+		}
+
+		/* Save the ast index for this entry */
+		peer->peer_ast_flowq_idx[i].ast_idx = ast_info->ast_idx[i];
+	}
+
+	if (soc->cdp_soc.ol_ops->peer_ast_flowid_map) {
+		soc->cdp_soc.ol_ops->peer_ast_flowid_map(
+				soc->ctrl_psoc, peer->peer_ids[0],
+				peer->vdev->vdev_id, peer_mac_addr);
+	}
+
+	/* Release peer reference */
+	dp_peer_unref_del_find_by_id(peer);
+}
+
+/**
+ * dp_peer_find_ast_index_by_flowq_id() - API to get ast idx for a given flowid
+ * @soc - soc handle
+ * @peer_mac_addr - mac address of the peer
+ * @flow_id - flow id to find ast index
+ *
+ * Return: ast index for a given flow id, -1 for fail cases
+ */
+int dp_peer_find_ast_index_by_flowq_id(struct cdp_soc_t *soc,
+		uint16_t vdev_id, uint8_t *peer_mac_addr,
+		uint8_t flow_id, uint8_t tid)
+{
+	struct dp_peer *peer = NULL;
+	uint8_t i;
+	uint16_t ast_index;
+
+	if (flow_id >= DP_PEER_AST_FLOWQ_MAX) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Invalid Flow ID %d\n", flow_id);
+		return -1;
+	}
+
+	peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+				peer_mac_addr, 0, vdev_id);
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: Invalid peer\n", __func__);
+		return -1;
+	}
+
+	 /*
+	  * Loop over the ast entry <----> flow-id mapping to find
+	  * which ast index entry has this flow queue id enabled.
+	  */
+	for (i = 0; i < DP_PEER_AST_FLOWQ_MAX; i++) {
+		if (peer->peer_ast_flowq_idx[i].flowQ == flow_id)
+			/*
+			 * Found the matching index for this flow id
+			 */
+			break;
+	}
+
+	/*
+	 * No match found for this flow id
+	 */
+	if (i == DP_PEER_AST_FLOWQ_MAX) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: ast index not found for flow %d\n", __func__, flow_id);
+		dp_peer_unref_delete(peer);
+		return -1;
+	}
+
+	/* Check whether this ast entry is valid */
+	if (!peer->peer_ast_flowq_idx[i].is_valid) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: ast index is invalid for flow %d\n", __func__, flow_id);
+		dp_peer_unref_delete(peer);
+		return -1;
+	}
+
+	if (flow_id == DP_PEER_AST_FLOWQ_HI_PRIO ||
+			flow_id == DP_PEER_AST_FLOWQ_LOW_PRIO) {
+		/*
+		 * check if this tid is valid for Hi
+		 * and Low priority flow id
+		 */
+		if ((peer->peer_ast_flowq_idx[i].valid_tid_mask
+					& (1 << tid))) {
+			/* Release peer reference */
+			ast_index = peer->peer_ast_flowq_idx[i].ast_idx;
+			dp_peer_unref_delete(peer);
+			return ast_index;
+		} else {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s: TID %d is not valid for flow %d\n",
+					__func__, tid, flow_id);
+			/*
+			 * TID is not valid for this flow
+			 * Return -1
+			 */
+			dp_peer_unref_delete(peer);
+			return -1;
+		}
+	}
+
+	/*
+	 * TID valid check not required for
+	 * UDP/NON UDP flow id
+	 */
+	ast_index = peer->peer_ast_flowq_idx[i].ast_idx;
+	dp_peer_unref_delete(peer);
+	return ast_index;
 }
 #endif

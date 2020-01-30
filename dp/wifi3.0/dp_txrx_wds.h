@@ -26,7 +26,11 @@
 ((DP_WDS_AST_AGING_TIMER_DEFAULT_MS / DP_AST_AGING_TIMER_DEFAULT_MS) - 1)
 void dp_soc_wds_attach(struct dp_soc *soc);
 void dp_soc_wds_detach(struct dp_soc *soc);
-
+#ifdef QCA_PEER_MULTIQ_SUPPORT
+int dp_peer_find_ast_index_by_flowq_id(struct cdp_soc_t *soc,
+	       uint16_t vdev_id, uint8_t *peer_mac_addr,
+	       uint8_t flow_id, uint8_t tid);
+#endif
 void
 dp_rx_da_learn(struct dp_soc *soc,
 	       uint8_t *rx_tlv_hdr,
