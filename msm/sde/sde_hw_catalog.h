@@ -959,7 +959,7 @@ struct sde_dspp_top_cfg  {
  */
 struct sde_dspp_cfg  {
 	SDE_HW_BLK_INFO;
-	const struct sde_dspp_sub_blks *sblk;
+	struct sde_dspp_sub_blks *sblk;
 };
 
 /**
