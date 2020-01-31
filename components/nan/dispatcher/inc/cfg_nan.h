@@ -69,7 +69,7 @@
  * </ini>
  */
 #define CFG_NAN_SEPARATE_IFACE_SUPP CFG_INI_BOOL("nan_separate_iface_support", \
-						 0, \
+						 1, \
 						 "Seperate iface for NAN")
 
 
