@@ -1843,7 +1843,7 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 	qdf_mem_free(freedesc);
 }
 
-#if defined(QCA_WIFI_QCA8074_VP) && defined(BUILD_X86)
+#if defined(CONFIG_WIFI_EMULATION_WIFI_3_0) && defined(BUILD_X86)
 /* Hawkeye emulation requires bus address to be >= 0x50000000 */
 static inline int dp_reo_desc_addr_chk(qdf_dma_addr_t dma_addr)
 {

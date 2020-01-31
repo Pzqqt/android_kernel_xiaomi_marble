@@ -2013,7 +2013,6 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	if (status)
 		goto disable_wlan;
 
-	/* QCA_WIFI_QCA8074_VP:Should not be executed on 8074 VP platform */
 	if (hif_needs_bmi(hif_osc)) {
 		status = hif_set_hia(hif_sc);
 		if (status)
