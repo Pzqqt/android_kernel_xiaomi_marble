@@ -5310,6 +5310,8 @@ struct wow_enable_params {
 #define AUTO_RATE_GI_1600NS	10
 #define AUTO_RATE_GI_3200NS	11
 
+#define AUTO_RATE_LDPC_DIS_BIT	16
+
 #define SET_AUTO_RATE_SGI_VAL(set_val, bit_mask) \
 	(set_val = (set_val & HE_LTF_ALL) | bit_mask)
 

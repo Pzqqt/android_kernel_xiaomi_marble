@@ -3014,6 +3014,17 @@ int sme_set_auto_rate_he_sgi(mac_handle_t mac_handle, uint8_t session_id,
 			     uint8_t cfg_val);
 
 /**
+ * sme_set_auto_rate_ldpc() - Sets LDPC for auto rate
+ * @mac_handle: Opaque handle to the global MAC context
+ * @session_id: SME session id
+ * @ldpc_disable: LDPC configuration value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_auto_rate_ldpc(mac_handle_t mac_handle, uint8_t session_id,
+			   uint8_t ldpc_disable);
+
+/**
  * sme_set_auto_rate_he_ltf() - Sets HE LTF for auto rate
  * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id

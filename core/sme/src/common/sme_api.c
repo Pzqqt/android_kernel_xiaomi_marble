@@ -8550,6 +8550,30 @@ int sme_set_auto_rate_he_sgi(mac_handle_t mac_handle, uint8_t session_id,
 	return 0;
 }
 
+int sme_set_auto_rate_ldpc(mac_handle_t mac_handle, uint8_t session_id,
+			   uint8_t ldpc_disable)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint32_t set_val;
+	int status;
+
+	set_val = mac_ctx->he_sgi_ltf_cfg_bit_mask;
+
+	set_val |= (ldpc_disable << AUTO_RATE_LDPC_DIS_BIT);
+
+	status = wma_cli_set_command(session_id,
+				     WMI_VDEV_PARAM_AUTORATE_MISC_CFG,
+				     set_val, VDEV_CMD);
+	if (status) {
+		sme_err("failed to set auto rate LDPC cfg");
+		return status;
+	}
+
+	sme_debug("auto rate misc cfg set to 0x%08X", set_val);
+
+	return 0;
+}
+
 #define HT20_SHORT_GI_MCS7_RATE 722
 /*
  * sme_send_rate_update_ind() -
