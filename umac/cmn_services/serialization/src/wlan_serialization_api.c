@@ -63,9 +63,6 @@ bool wlan_serialization_is_cmd_present_in_active_queue(
 
 	status = wlan_serialization_is_cmd_present_queue(cmd, true);
 
-	ser_debug("Cmd type:%d id:%d present: %d",
-		  cmd->cmd_type, cmd->cmd_id, status);
-
 error:
 	return status;
 }
@@ -195,8 +192,6 @@ wlan_serialization_non_scan_cmd_status(
 	qdf_list_node_t *node = NULL;
 	qdf_list_t *queue = NULL;
 
-	ser_enter();
-
 	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
 
 	/* Look in the pdev non scan active queue */
@@ -228,7 +223,6 @@ wlan_serialization_non_scan_cmd_status(
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
-	ser_exit();
 	return cmd_status;
 }
 
@@ -243,8 +237,6 @@ wlan_serialization_cancel_request(
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
 	struct wlan_serialization_pdev_queue *pdev_queue;
-
-	ser_enter();
 
 	if (!req) {
 		ser_err("given request is empty");
@@ -264,6 +256,7 @@ wlan_serialization_cancel_request(
 	cmd.source = req->requestor;
 	cmd.vdev = req->vdev;
 
+	ser_debug("Type %d id %d source %d", cmd.cmd_type, cmd.cmd_id, cmd.source);
 	pdev = wlan_serialization_get_pdev_from_cmd(&cmd);
 	if (!pdev) {
 		ser_err("pdev is invalid");
@@ -286,7 +279,7 @@ wlan_serialization_cancel_request(
 			&cmd, req->req_type, req->queue_type);
 
 error:
-	ser_exit();
+
 	return cmd_status;
 }
 
@@ -297,8 +290,6 @@ void wlan_serialization_remove_cmd(
 	enum wlan_serialization_cmd_status ser_status;
 	struct wlan_serialization_command cmd = {0};
 
-	ser_enter();
-
 	if (!cmd_info) {
 		ser_err("given request is empty");
 		QDF_ASSERT(0);
@@ -307,9 +298,9 @@ void wlan_serialization_remove_cmd(
 	status = wlan_serialization_validate_cmd(cmd_info->requestor,
 						 cmd_info->cmd_type);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		ser_err("cmd is not valid");
+		ser_err("cmd type %d is not valid", cmd_info->cmd_type);
 		QDF_ASSERT(0);
-		goto error;
+		return;
 	}
 
 	cmd.cmd_type = cmd_info->cmd_type;
@@ -322,12 +313,9 @@ void wlan_serialization_remove_cmd(
 
 	if (ser_status != WLAN_SER_CMD_IN_ACTIVE_LIST) {
 		if (ser_status != WLAN_SER_CMD_MARKED_FOR_ACTIVATION)
-		ser_debug("Can't dequeue requested cmd_id[%d] type[%d]",
-			  cmd.cmd_id, cmd.cmd_type);
+		ser_debug("Can't dequeue requested id %d type %d requestor %d",
+			  cmd.cmd_id, cmd.cmd_type, cmd_info->requestor);
 	}
-
-error:
-	ser_exit();
 }
 
 enum wlan_serialization_status
@@ -339,8 +327,6 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	struct wlan_ser_psoc_obj *ser_soc_obj;
 	union wlan_serialization_rules_info info;
 	struct wlan_objmgr_psoc *psoc;
-
-	ser_enter();
 
 	serialization_status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
 
@@ -384,7 +370,6 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	serialization_status = wlan_serialization_enqueue_cmd(cmd, SER_REQUEST);
 
 error:
-	ser_exit();
 	return serialization_status;
 }
 
@@ -428,8 +413,6 @@ wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 	struct wlan_serialization_pdev_queue *pdev_q;
 	enum wlan_serialization_cmd_status status;
 
-	ser_enter();
-
 	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
 	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
@@ -446,23 +429,8 @@ wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 			cmd_in_active, cmd_in_pending);
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
-	ser_exit();
 
 	return status;
-}
-
-void wlan_serialization_flush_cmd(
-		struct wlan_serialization_queued_cmd_info *cmd)
-{
-	ser_enter();
-
-	if (!cmd) {
-		ser_err("cmd is null, can't flush");
-		goto error;
-	}
-
-error:
-	ser_exit();
 }
 
 enum wlan_serialization_cmd_status
@@ -576,8 +544,6 @@ void *wlan_serialization_get_active_cmd(
 	qdf_list_t *queue;
 	struct wlan_serialization_pdev_queue *pdev_q;
 
-	ser_enter();
-
 	if (!psoc) {
 		ser_err("invalid psoc");
 		goto error;
@@ -625,7 +591,7 @@ void *wlan_serialization_get_active_cmd(
 release_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 error:
-	ser_exit();
+
 	return umac_cmd;
 }
 
@@ -758,8 +724,6 @@ wlan_ser_validate_umac_cmd(struct wlan_objmgr_vdev *vdev,
 	struct wlan_serialization_pdev_queue *pdev_q;
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	ser_enter();
-
 	if (!vdev) {
 		ser_err("invalid vdev");
 		return QDF_STATUS_E_INVAL;
@@ -796,7 +760,6 @@ wlan_ser_validate_umac_cmd(struct wlan_objmgr_vdev *vdev,
 	}
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
-	ser_exit();
 
 	return status;
 }

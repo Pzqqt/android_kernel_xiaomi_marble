@@ -388,22 +388,6 @@ void wlan_serialization_remove_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd);
 
 /**
- * wlan_serialization_flush_cmd() - Request to flush command
- * @cmd: Command information
- *
- * This API is used to flush a cmd sitting in the queue. It
- * simply flushes the cmd from the queue and does not call
- * any callbacks in between. If the request is for active
- * queue, and if the active queue becomes empty upon flush,
- * then it will pick the next pending cmd and put in the active
- * queue before returning.
- *
- * Return: None
- */
-void wlan_serialization_flush_cmd(
-		struct wlan_serialization_queued_cmd_info *cmd);
-
-/**
  * wlan_serialization_update_timer() -Update timer for an active command
  * @cmd: Command information
  *

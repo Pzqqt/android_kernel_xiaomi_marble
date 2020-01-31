@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,10 +97,8 @@ wlan_serialization_is_active_scan_cmd_allowed(
 			psoc, WLAN_PDEV_OP,
 			wlan_serialization_active_scan_cmd_count_handler,
 			&count, 1, WLAN_SERIALIZATION_ID);
-	if (count < ucfg_scan_get_max_active_scans(psoc)) {
-		ser_debug("count is [%d]", count);
+	if (count < ucfg_scan_get_max_active_scans(psoc))
 		status =  true;
-	}
 
 error:
 	return status;
@@ -136,12 +134,6 @@ wlan_ser_add_scan_cmd(
 {
 	enum wlan_serialization_status status;
 
-	ser_debug("add scan cmd: type[%d] id[%d] prio[%d] blocking[%d]",
-		  cmd_list->cmd.cmd_type,
-		  cmd_list->cmd.cmd_id,
-		  cmd_list->cmd.is_high_priority,
-		  cmd_list->cmd.is_blocking);
-
 	status = wlan_serialization_add_cmd_to_pdev_queue(
 			ser_pdev_obj, cmd_list,
 			is_cmd_for_active_queue);
@@ -157,12 +149,6 @@ wlan_ser_remove_scan_cmd(
 		uint8_t is_active_cmd)
 {
 	QDF_STATUS status;
-
-	ser_debug("remove scan cmd: type[%d] id[%d] prio[%d] blocking[%d]",
-		  cmd->cmd_type,
-		  cmd->cmd_id,
-		  cmd->is_high_priority,
-		  cmd->is_blocking);
 
 	status = wlan_serialization_remove_cmd_from_pdev_queue(
 			ser_pdev_obj, pcmd_list, cmd, is_active_cmd);
@@ -187,8 +173,6 @@ wlan_ser_cancel_scan_cmd(
 	enum wlan_serialization_cmd_status status = WLAN_SER_CMD_NOT_FOUND;
 	struct wlan_objmgr_psoc *psoc = NULL;
 	QDF_STATUS qdf_status;
-
-	ser_enter();
 
 	pdev_q = &ser_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
@@ -322,17 +306,10 @@ wlan_ser_cancel_scan_cmd(
 		 * it is being removed
 		 */
 		if (cmd_bkup.cmd_cb) {
-			ser_debug("cmd cb: type[%d] id[%d]",
-				  cmd_bkup.cmd_type,
-				  cmd_bkup.cmd_id);
-			ser_debug("reason: WLAN_SER_CB_CANCEL_CMD");
-
-			cmd_bkup.cmd_cb(&cmd_bkup,
-					WLAN_SER_CB_CANCEL_CMD);
-
-			ser_debug("reason: WLAN_SER_CB_RELEASE_MEM_CMD");
-			cmd_bkup.cmd_cb(&cmd_bkup,
-					WLAN_SER_CB_RELEASE_MEM_CMD);
+			ser_debug("Cancel command: type %d id %d and Release memory",
+				  cmd_bkup.cmd_type, cmd_bkup.cmd_id);
+			cmd_bkup.cmd_cb(&cmd_bkup, WLAN_SER_CB_CANCEL_CMD);
+			cmd_bkup.cmd_cb(&cmd_bkup, WLAN_SER_CB_RELEASE_MEM_CMD);
 		}
 
 		wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
@@ -343,7 +320,6 @@ wlan_ser_cancel_scan_cmd(
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
-	ser_exit();
 	return status;
 }
 
@@ -361,8 +337,6 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
-	ser_enter();
-
 	if (!ser_pdev_obj) {
 		ser_err("Can't find ser_pdev_obj");
 		goto error;
@@ -374,7 +348,6 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	if (wlan_serialization_list_empty(pending_queue)) {
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
-		ser_debug("nothing to move from pend to active que");
 		goto error;
 	}
 
@@ -400,6 +373,7 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 		     sizeof(struct wlan_serialization_command));
 
 	if (!wlan_serialization_is_active_scan_cmd_allowed(&cmd_to_remove)) {
+		ser_debug("active scan command not allowed");
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		goto error;
 	}
@@ -415,7 +389,7 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
-		ser_err("Can't remove cmd from pendingQ id-%d type-%d",
+		ser_err("Can't remove from pendingQ id %d type %d",
 			pending_cmd_list->cmd.cmd_id,
 			pending_cmd_list->cmd.cmd_type);
 		QDF_ASSERT(0);
@@ -453,6 +427,5 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 	wlan_serialization_activate_cmd(active_cmd_list, ser_pdev_obj,
 					SER_PENDING_TO_ACTIVE);
 error:
-	ser_exit();
 	return status;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,17 +132,11 @@ enum wlan_serialization_status wlan_ser_add_non_scan_cmd(
 	uint8_t vdev_id;
 	struct wlan_serialization_pdev_queue *pdev_queue;
 
-	ser_debug("add non scan cmd: type[%d] id[%d] prio[%d] blocking[%d]",
-		  cmd_list->cmd.cmd_type,
-		  cmd_list->cmd.cmd_id,
-		  cmd_list->cmd.is_high_priority,
-		  cmd_list->cmd.is_blocking);
-
 	vdev_status = wlan_serialization_add_cmd_to_vdev_queue(
 			ser_pdev_obj, cmd_list, is_cmd_for_active_queue);
 
 	if (vdev_status == WLAN_SER_CMD_DENIED_LIST_FULL) {
-		ser_err_rl("List is full cannot add CMD %d cmd id %d",
+		ser_err_rl("List is full cannot add type %d cmd id %d",
 			   cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 		status = vdev_status;
 		goto vdev_error;
@@ -150,13 +144,15 @@ enum wlan_serialization_status wlan_ser_add_non_scan_cmd(
 
 	if (is_cmd_for_active_queue) {
 		if (vdev_status != WLAN_SER_CMD_ACTIVE) {
-			ser_err("Failed to add to vdev active queue");
+			ser_err("Failed to add type %d cmd id %d to vdev active queue",
+				cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 			QDF_ASSERT(0);
 			goto vdev_error;
 		}
 	} else {
 		if (vdev_status != WLAN_SER_CMD_PENDING) {
-			ser_err("Failed to add to vdev pending queue");
+			ser_err("Failed to add type %d cmd id %d to vdev pending queue",
+				cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 			QDF_ASSERT(0);
 			goto vdev_error;
 		}
@@ -166,19 +162,23 @@ enum wlan_serialization_status wlan_ser_add_non_scan_cmd(
 			ser_pdev_obj, cmd_list, is_cmd_for_active_queue);
 
 	if (pdev_status == WLAN_SER_CMD_DENIED_LIST_FULL) {
+		ser_err_rl("pdev List is full cannot add type %d cmd id %d",
+			   cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 		status = pdev_status;
 		goto pdev_error;
 	}
 
 	if (is_cmd_for_active_queue) {
 		if (pdev_status != WLAN_SER_CMD_ACTIVE) {
-			ser_err("Failed to add to pdev active queue");
+			ser_err("Failed to add type %d cmd id %d to pdev active queue",
+				cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 			QDF_ASSERT(0);
 			goto pdev_error;
 		}
 	} else {
 		if (pdev_status != WLAN_SER_CMD_PENDING) {
-			ser_err("Failed to add to pdev pending queue");
+			ser_err("Failed to add type %d cmd id %d to pdev pending queue",
+				cmd_list->cmd.cmd_type, cmd_list->cmd.cmd_id);
 			QDF_ASSERT(0);
 			goto pdev_error;
 		}
@@ -240,8 +240,6 @@ wlan_ser_move_non_scan_pending_to_active(
 	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
 	vdev_queue = &ser_vdev_obj->vdev_q[SER_VDEV_QUEUE_COMP_NON_SCAN];
 
-	ser_enter();
-
 	if (!ser_pdev_obj) {
 		ser_err("Can't find ser_pdev_obj");
 		goto error;
@@ -260,9 +258,7 @@ wlan_ser_move_non_scan_pending_to_active(
 
 	qsize =  wlan_serialization_list_size(pending_queue);
 	if (!qsize) {
-		wlan_serialization_release_lock(
-			&pdev_queue->pdev_queue_lock);
-		ser_debug("Pending Queue is empty");
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		goto error;
 	}
 
@@ -383,7 +379,7 @@ wlan_ser_move_non_scan_pending_to_active(
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 error:
-	ser_exit();
+
 	return status;
 }
 
@@ -398,12 +394,6 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 	uint32_t vdev_id;
 	bool blocking_cmd_removed = 0;
 	struct wlan_serialization_pdev_queue *pdev_queue;
-
-	ser_debug("remove non scan cmd: type[%d] id[%d] prio[%d] blocking[%d]",
-		  cmd->cmd_type,
-		  cmd->cmd_id,
-		  cmd->is_high_priority,
-		  cmd->is_blocking);
 
 	vdev_status =
 		wlan_serialization_remove_cmd_from_vdev_queue(ser_pdev_obj,
@@ -423,7 +413,8 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 	if (vdev_status != QDF_STATUS_SUCCESS) {
 		status = vdev_status;
 		if (vdev_status != QDF_STATUS_E_PENDING)
-			ser_debug("Failed to remove cmd from vdev queue");
+			ser_debug("Failed to remove type %d id %d from vdev queue",
+				  cmd->cmd_type, cmd->cmd_id);
 		goto error;
 	}
 
@@ -434,7 +425,8 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 							      is_active_cmd);
 
 	if (pdev_status != QDF_STATUS_SUCCESS) {
-		ser_err("Failed to remove cmd from pdev active/pending queue");
+		ser_debug("Failed to remove type %d id %d from pdev active/pending queue",
+			  cmd->cmd_type, cmd->cmd_id);
 		goto error;
 	}
 
@@ -478,8 +470,6 @@ wlan_ser_cancel_non_scan_cmd(
 	QDF_STATUS qdf_status;
 	QDF_STATUS pdev_status, vdev_status;
 	struct wlan_ser_vdev_obj *ser_vdev_obj;
-
-	ser_enter();
 
 	pdev_q = wlan_serialization_get_pdev_queue_obj(ser_pdev_obj, cmd_type);
 
@@ -647,16 +637,11 @@ wlan_ser_cancel_non_scan_cmd(
 		 */
 		if (cmd_bkup.cmd_cb) {
 			/* caller should now do necessary clean up */
-			ser_debug("cmd cb: type[%d] id[%d]",
-				  cmd_bkup.cmd_type,
-				  cmd_bkup.cmd_id);
-			ser_debug("reason: WLAN_SER_CB_CANCEL_CMD");
-			cmd_bkup.cmd_cb(&cmd_bkup,
-					WLAN_SER_CB_CANCEL_CMD);
+			ser_debug("Cancel command: type %d id %d and Release memory",
+				  cmd_bkup.cmd_type, cmd_bkup.cmd_id);
+			cmd_bkup.cmd_cb(&cmd_bkup, WLAN_SER_CB_CANCEL_CMD);
 			/* caller should release the memory */
-			ser_debug("reason: WLAN_SER_CB_RELEASE_MEM_CMD");
-			cmd_bkup.cmd_cb(&cmd_bkup,
-					WLAN_SER_CB_RELEASE_MEM_CMD);
+			cmd_bkup.cmd_cb(&cmd_bkup, WLAN_SER_CB_RELEASE_MEM_CMD);
 		}
 
 		wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
@@ -682,6 +667,5 @@ wlan_ser_cancel_non_scan_cmd(
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
-	ser_exit();
 	return status;
 }

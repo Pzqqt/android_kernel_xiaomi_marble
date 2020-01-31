@@ -466,6 +466,21 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	else
 		info->wlan_res_cfg.agile_capability = ready_ev.agile_capability;
 
+	/* Indicate to the waiting thread that the ready
+	 * event was received
+	 */
+	info->wlan_init_status = wmi_ready_extract_init_status(
+						wmi_handle, event);
+
+	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (legacy_callback)
+		if (legacy_callback(wmi_ready_event_id,
+				    scn_handle, event, data_len)) {
+			target_if_err("Legacy callback returned error!");
+			tgt_hdl->info.wmi_ready = FALSE;
+			goto exit;
+		}
+
 	num_radios = target_psoc_get_num_radios(tgt_hdl);
 
 	if ((ready_ev.num_total_peer != 0) &&
@@ -513,20 +528,6 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		}
 	}
 
-	/* Indicate to the waiting thread that the ready
-	 * event was received
-	 */
-	info->wlan_init_status = wmi_ready_extract_init_status(
-						wmi_handle, event);
-
-	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
-	if (legacy_callback)
-		if (legacy_callback(wmi_ready_event_id,
-				    scn_handle, event, data_len)) {
-			target_if_err("Legacy callback returned error!");
-			tgt_hdl->info.wmi_ready = FALSE;
-			goto exit;
-		}
 
 	if (ready_ev.pktlog_defs_checksum) {
 		for (i = 0; i < num_radios; i++) {

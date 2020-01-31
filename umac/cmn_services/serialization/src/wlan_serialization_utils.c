@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -127,7 +127,6 @@ QDF_STATUS wlan_serialization_timer_destroy(
 		goto error;
 	}
 
-	ser_debug("Destroying the timer");
 	qdf_timer_stop(&ser_timer->timer);
 	ser_timer->cmd = NULL;
 
@@ -160,8 +159,6 @@ QDF_STATUS wlan_serialization_cleanup_vdev_timers(
 	uint32_t i = 0;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_psoc *psoc = NULL;
-
-	ser_enter();
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	if (!pdev) {
@@ -211,7 +208,6 @@ QDF_STATUS wlan_serialization_cleanup_vdev_timers(
 
 	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
 error:
-	ser_exit();
 	return status;
 }
 
@@ -221,8 +217,6 @@ QDF_STATUS wlan_serialization_cleanup_all_timers(
 	struct wlan_serialization_timer *ser_timer;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t i = 0;
-
-	ser_enter();
 
 	if (!psoc_ser_obj) {
 		ser_err("Invalid psoc_ser_obj");
@@ -245,7 +239,7 @@ QDF_STATUS wlan_serialization_cleanup_all_timers(
 
 	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
 error:
-	ser_exit();
+
 	return status;
 }
 
@@ -269,7 +263,8 @@ QDF_STATUS wlan_serialization_validate_cmd(
 	if (cmd_type < 0 || comp_id < 0 ||
 	    cmd_type >= WLAN_SER_CMD_MAX ||
 	   comp_id >= WLAN_UMAC_COMP_ID_MAX) {
-		ser_err("Invalid cmd or comp passed");
+		ser_err("Invalid cmd or comp passed comp %d type %d",
+			comp_id, cmd_type);
 		goto error;
 	}
 
@@ -344,12 +339,10 @@ void wlan_serialization_destroy_pdev_list(
 
 void wlan_serialization_destroy_vdev_list(qdf_list_t *list)
 {
-	ser_enter();
 
 	wlan_serialization_release_vdev_list_cmds(list);
 	qdf_list_destroy(list);
 
-	ser_exit();
 }
 
 struct wlan_ser_psoc_obj *wlan_serialization_get_psoc_obj(
@@ -494,8 +487,10 @@ wlan_serialization_remove_cmd_from_queue(
 	node = wlan_serialization_find_cmd(queue, WLAN_SER_MATCH_CMD_ID_VDEV,
 					   cmd, 0, NULL, cmd->vdev, node_type);
 
-	if (!node)
+	if (!node) {
+		ser_info("fail to find node %d for removal", node_type);
 		goto error;
+	}
 
 	if (node_type == WLAN_SER_PDEV_NODE)
 		cmd_list =
@@ -508,13 +503,6 @@ wlan_serialization_remove_cmd_from_queue(
 					 struct wlan_serialization_command_list,
 					 vdev_node);
 
-	ser_debug("Matching command found for removal from queue");
-	ser_debug("remove cmd: type[%d] id[%d] prio[%d] blocking[%d]",
-		  cmd_list->cmd.cmd_type,
-			  cmd_list->cmd.cmd_id,
-			  cmd_list->cmd.is_high_priority,
-			  cmd_list->cmd.is_blocking);
-
 	if (qdf_atomic_test_bit(CMD_MARKED_FOR_ACTIVATION,
 				&cmd_list->cmd_in_use)) {
 		qdf_atomic_set_bit(CMD_ACTIVE_MARKED_FOR_REMOVAL,
@@ -526,7 +514,7 @@ wlan_serialization_remove_cmd_from_queue(
 	status = wlan_serialization_remove_node(queue, node);
 
 	if (QDF_STATUS_SUCCESS != status)
-		ser_err("Fail to add to free pool type[%d]",
+		ser_err("Fail to add to free pool type %d",
 			cmd->cmd_type);
 
 	*pcmd_list = cmd_list;
@@ -552,24 +540,16 @@ wlan_serialization_add_cmd_to_queue(
 		goto error;
 	}
 
-	if (node_type == WLAN_SER_PDEV_NODE) {
+	if (node_type == WLAN_SER_PDEV_NODE)
 		node = &cmd_list->pdev_node;
-		ser_debug("pdev_queue: %pK", queue);
-	} else {
+	else
 		node = &cmd_list->vdev_node;
-		ser_debug("vdev_queue: %pK", queue);
-	}
-
-	ser_debug("add cmd: type[%d] id[%d] high_priority[%d] blocking[%d]",
-		  cmd_list->cmd.cmd_type,
-		  cmd_list->cmd.cmd_id,
-		  cmd_list->cmd.is_high_priority,
-		  cmd_list->cmd.is_blocking);
 
 	if (qdf_list_size(queue) == qdf_list_max_size(queue)) {
 		status = WLAN_SER_CMD_DENIED_LIST_FULL;
-		ser_err("qdf_list_size: %d is already max %d",
-			qdf_list_size(queue), qdf_list_max_size(queue));
+		ser_err("Queue size reached max %d, fail to add type %d id %d",
+			qdf_list_max_size(queue), cmd_list->cmd.cmd_type,
+			cmd_list->cmd.cmd_id);
 		goto error;
 	}
 
@@ -580,8 +560,6 @@ wlan_serialization_add_cmd_to_queue(
 
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		goto error;
-
-	ser_debug("adding cmd to node: %pK", node);
 
 	if (is_cmd_for_active_queue)
 		status = WLAN_SER_CMD_ACTIVE;
@@ -765,7 +743,9 @@ bool wlan_serialization_match_cmd_vdev(qdf_list_node_t *nnode,
 	if (cmd_list->cmd.vdev == vdev)
 		match_found = true;
 
-	ser_debug("matching cmd found(vdev:%pK): %d", vdev, match_found);
+	if (!match_found)
+		ser_debug("matching cmd not found for (vdev:%pK)", vdev);
+
 	return match_found;
 }
 
@@ -836,10 +816,8 @@ wlan_serialization_find_cmd(qdf_list_t *queue,
 
 	queuelen = wlan_serialization_list_size(queue);
 
-	if (!queuelen) {
-		ser_debug("queue empty");
+	if (!queuelen)
 		goto error;
-	}
 
 	while (queuelen--) {
 		status = wlan_serialization_get_cmd_from_queue(queue, &nnode);
