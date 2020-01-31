@@ -197,9 +197,10 @@
  *      HTT_T2H_MSG_TYPE_CHAN_CALDATA and HTT_H2T_MSG_TYPE_CHAN_CALDATA
  * 3.74 Add HTT_T2H_MSG_TYPE_RX_FISA_CFG msg.
  * 3.75 Add fp_ndp and mo_ndp flags in HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG.
+ * 3.76 Add HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG msg.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 75
+#define HTT_CURRENT_VERSION_MINOR 76
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -542,6 +543,7 @@ enum htt_h2t_msg_type {
     HTT_H2T_MSG_TYPE_RX_FSE_OPERATION_CFG  = 0x13,
     HTT_H2T_MSG_TYPE_CHAN_CALDATA          = 0x14,
     HTT_H2T_MSG_TYPE_RX_FISA_CFG           = 0x15,
+    HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG      = 0x16,
 
     /* keep this last */
     HTT_H2T_NUM_MSGS
@@ -6632,6 +6634,98 @@ enum htt_rx_fse_operation {
       } while (0)
 #define HTT_RX_FSE_L4_PROTO_GET(word) \
         (((word) & HTT_RX_FSE_L4_PROTO_M) >> HTT_RX_FSE_L4_PROTO_S)
+
+
+/**
+ * @brief HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG
+ * host --> target Receive to configure the RxOLE 3-tuple Hash
+ *
+ *     |31            24|23              |15             8|7          2|1|0|
+ *     |----------------+----------------+----------------+----------------|
+ *     |              reserved           |    pdev_id     |    msg_type    |
+ *     |---------------------------------+----------------+----------------|
+ *     |                        reserved                               |E|F|
+ *     |---------------------------------+----------------+----------------|
+ *     Where E = Configure the target to provide the 3-tuple hash value in
+ *                      toeplitz_hash_2_or_4 field of rx_msdu_start tlv
+ *           F = Configure the target to provide the 3-tuple hash value in
+ *                      flow_id_toeplitz field of rx_msdu_start tlv
+ *
+ * The following field definitions describe the format of the 3 tuple hash value
+ * message sent from the host to target as part of initialization sequence.
+ *
+ * Header fields:
+ *  dword0 - b'7:0   - msg_type: This will be set to
+ *                     HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG
+ *           b'15:8  - pdev_id:  0 indicates msg is for all LMAC rings, i.e. soc
+ *                     1, 2, 3 indicates pdev_id 0,1,2 and the msg is for the
+ *                     specified pdev's LMAC ring.
+ *           b'31:16 - reserved : Reserved for future use
+ *  dword1 - b'0     - flow_id_toeplitz_field_enable
+ *           b'1     - toeplitz_hash_2_or_4_field_enable
+ *           b'31:2  - reserved : Reserved for future use
+ * ---------+------+----------------------------------------------------------
+ *     bit1 | bit0 |   Functionality
+ * ---------+------+----------------------------------------------------------
+ *       0  |   1  |   Configure the target to provide the 3 tuple hash value
+ *          |      |   in flow_id_toeplitz field
+ * ---------+------+----------------------------------------------------------
+ *       1  |   0  |   Configure the target to provide the 3 tuple hash value
+ *          |      |   in toeplitz_hash_2_or_4 field
+ * ---------+------+----------------------------------------------------------
+ *       1  |   1  |   Configure the target to provide the 3 tuple hash value
+ *          |      |   in both flow_id_toeplitz & toeplitz_hash_2_or_4 field
+ * ---------+------+----------------------------------------------------------
+ *       0  |   0  |   Configure the target to provide the 5 tuple hash value
+ *          |      |   in flow_id_toeplitz field 2 or 4 tuple has value in
+ *          |      |   toeplitz_hash_2_or_4 field
+ *----------------------------------------------------------------------------
+ */
+PREPACK struct htt_h2t_msg_rx_3_tuple_hash_cfg_t {
+    A_UINT32 msg_type                          :8,
+             pdev_id                           :8,
+             reserved0                         :16;
+    A_UINT32 flow_id_toeplitz_field_enable     :1,
+             toeplitz_hash_2_or_4_field_enable :1,
+             reserved1                         :30;
+} POSTPACK;
+
+/* DWORD0 : pdev_id configuration Macros */
+#define HTT_H2T_3_TUPLE_HASH_PDEV_ID_M                  0xff00
+#define HTT_H2T_3_TUPLE_HASH_PDEV_ID_S                  8
+#define HTT_RX_3_TUPLE_HASH_PDEV_ID_GET(_var) \
+        (((_var) & HTT_H2T_3_TUPLE_HASH_PDEV_ID_M) >> \
+                HTT_H2T_3_TUPLE_HASH_PDEV_ID_S)
+#define HTT_RX_3_TUPLE_HASH_PDEV_ID_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_H2T_3_TUPLE_HASH_PDEV_ID, _val); \
+            ((_var) |= ((_val) << HTT_H2T_3_TUPLE_HASH_PDEV_ID_S)); \
+        } while (0)
+
+/* DWORD1: rx 3 tuple hash value reception field configuration Macros */
+#define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_M         0x1
+#define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_S         0
+#define HTT_FLOW_ID_TOEPLITZ_FIELD_CONFIG_GET(_var)    \
+    (((_var) & HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_M) >> \
+        HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_S)
+#define HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG, _val); \
+        ((_var) |= ((_val) << HTT_H2T_FLOW_ID_TOEPLITZ_FIELD_CONFIG_S)); \
+    } while (0)
+
+#define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_M         0x2
+#define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_S         1
+#define HTT_TOEPLITZ_2_OR_4_FIELD_CONFIG_GET(_var)    \
+    (((_var) & HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_M) >> \
+        HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_S)
+#define HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG, _val); \
+        ((_var) |= ((_val) << HTT_H2T_TOEPLITZ_2_OR_4_FIELD_CONFIG_S)); \
+    } while (0)
+
+#define HTT_3_TUPLE_HASH_CFG_REQ_BYTES     8
 
 
 
