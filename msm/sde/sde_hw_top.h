@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_TOP_H
@@ -215,6 +215,14 @@ struct sde_hw_mdp_ops {
 	 */
 	void (*set_hdr_plus_metadata)(struct sde_hw_mdp *mdp,
 			u8 *payload, u32 len, u32 stream_id);
+
+	/**
+	 * get_autorefresh_status - get autorefresh status
+	 * @mdp:     mdp top context driver
+	 * @intf_idx:  intf block index for relative information
+	 */
+	u32 (*get_autorefresh_status)(struct sde_hw_mdp *mdp,
+			u32 intf_idx);
 };
 
 struct sde_hw_mdp {

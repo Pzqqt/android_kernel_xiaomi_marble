@@ -21,6 +21,8 @@
 #define FLD_INTF_2_SW_TRG_MUX             BIT(8)
 #define FLD_TE_LINE_INTER_WATERLEVEL_MASK 0xFFFF
 
+#define MDP_DSPP_DBGBUS_CTRL              0x348
+#define MDP_DSPP_DBGBUS_STATUS            0x34C
 #define DANGER_STATUS                     0x360
 #define SAFE_STATUS                       0x364
 
@@ -37,6 +39,7 @@
 #define MDP_WD_TIMER_1_CTL                0x390
 #define MDP_WD_TIMER_1_CTL2               0x394
 #define MDP_WD_TIMER_1_LOAD_VALUE         0x398
+#define MDP_PERIPH_DBGBUS_CTRL            0x418
 #define MDP_WD_TIMER_2_CTL                0x420
 #define MDP_WD_TIMER_2_CTL2               0x424
 #define MDP_WD_TIMER_2_LOAD_VALUE         0x428
@@ -50,6 +53,9 @@
 #define MDP_TICK_COUNT                    16
 #define XO_CLK_RATE                       19200
 #define MS_TICKS_IN_SEC                   1000
+
+#define AUTOREFRESH_TEST_POINT	0x2
+#define TEST_MASK(id, tp)	((id << 4) | (tp << 1) | BIT(0))
 
 #define CALCULATE_WD_LOAD_VALUE(fps) \
 	((uint32_t)((MS_TICKS_IN_SEC * XO_CLK_RATE)/(MDP_TICK_COUNT * fps)))
@@ -526,6 +532,28 @@ static void sde_hw_set_hdr_plus_metadata(struct sde_hw_mdp *mdp,
 	}
 }
 
+static u32 sde_hw_get_autorefresh_status(struct sde_hw_mdp *mdp, u32 intf_idx)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 autorefresh_status;
+	u32 blk_id = (intf_idx == INTF_2) ? 65 : 64;
+
+	if (!mdp)
+		return 0;
+
+	c = &mdp->hw;
+
+	SDE_REG_WRITE(&mdp->hw, MDP_PERIPH_DBGBUS_CTRL,
+			TEST_MASK(blk_id, AUTOREFRESH_TEST_POINT));
+	SDE_REG_WRITE(&mdp->hw, MDP_DSPP_DBGBUS_CTRL, 0x7001);
+	wmb(); /* make sure test bits were written */
+
+	autorefresh_status = SDE_REG_READ(&mdp->hw, MDP_DSPP_DBGBUS_STATUS);
+	SDE_REG_WRITE(&mdp->hw, MDP_PERIPH_DBGBUS_CTRL, 0x0);
+
+	return autorefresh_status;
+}
+
 static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 		unsigned long cap)
 {
@@ -550,6 +578,7 @@ static void _setup_mdp_ops(struct sde_hw_mdp_ops *ops,
 	if (cap & BIT(SDE_MDP_DHDR_MEMPOOL_4K) ||
 			cap & BIT(SDE_MDP_DHDR_MEMPOOL))
 		ops->set_hdr_plus_metadata = sde_hw_set_hdr_plus_metadata;
+	ops->get_autorefresh_status = sde_hw_get_autorefresh_status;
 }
 
 static const struct sde_mdp_cfg *_top_offset(enum sde_mdp mdp,

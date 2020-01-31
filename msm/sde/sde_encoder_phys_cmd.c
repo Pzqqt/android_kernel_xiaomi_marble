@@ -34,8 +34,9 @@
 #define DEFAULT_TEARCHECK_SYNC_THRESH_CONTINUE	4
 
 #define SDE_ENC_WR_PTR_START_TIMEOUT_US 20000
-
-#define SDE_ENC_MAX_POLL_TIMEOUT_US	2000
+#define AUTOREFRESH_SEQ1_POLL_TIME	2000
+#define AUTOREFRESH_SEQ2_POLL_TIME	25000
+#define AUTOREFRESH_SEQ2_POLL_TIMEOUT	1000000
 
 static inline int _sde_encoder_phys_cmd_get_idle_timeout(
 		struct sde_encoder_phys_cmd *cmd_enc)
@@ -1742,12 +1743,130 @@ static void sde_encoder_phys_cmd_update_split_role(
 	_sde_encoder_phys_cmd_update_flush_mask(phys_enc);
 }
 
+static void _sde_encoder_autorefresh_disable_seq1(
+		struct sde_encoder_phys *phys_enc)
+{
+	int trial = 0;
+	struct sde_encoder_phys_cmd *cmd_enc =
+				to_sde_encoder_phys_cmd(phys_enc);
+
+	/*
+	 * If autorefresh is enabled, disable it and make sure it is safe to
+	 * proceed with current frame commit/push. Sequence fallowed is,
+	 * 1. Disable TE - caller will take care of it
+	 * 2. Disable autorefresh config
+	 * 4. Poll for frame transfer ongoing to be false
+	 * 5. Enable TE back - caller will take care of it
+	 */
+	_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
+
+	do {
+		udelay(AUTOREFRESH_SEQ1_POLL_TIME);
+		if ((trial * AUTOREFRESH_SEQ1_POLL_TIME)
+				> (KICKOFF_TIMEOUT_MS * USEC_PER_MSEC)) {
+			SDE_ERROR_CMDENC(cmd_enc,
+					"disable autorefresh failed\n");
+
+			phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
+			break;
+		}
+
+		trial++;
+	} while (_sde_encoder_phys_cmd_is_ongoing_pptx(phys_enc));
+}
+
+static void _sde_encoder_autorefresh_disable_seq2(
+		struct sde_encoder_phys *phys_enc)
+{
+	int trial = 0;
+	struct sde_hw_mdp *hw_mdp = phys_enc->hw_mdptop;
+	u32 autorefresh_status = 0;
+	struct sde_encoder_phys_cmd *cmd_enc =
+				to_sde_encoder_phys_cmd(phys_enc);
+
+	if (!hw_mdp->ops.get_autorefresh_status) {
+		SDE_DEBUG_CMDENC(cmd_enc,
+			"autofresh disable seq2 not supported\n");
+		return;
+	}
+
+	/*
+	 * If autorefresh is still enabled after sequence-1, proceed with
+	 * below sequence-2.
+	 * 1. Disable TEAR CHECK
+	 * 2. Disable autorefresh config
+	 * 4. Poll for autorefresh to be disabled
+	 * 5. Enable TEAR CHECK
+	 */
+	autorefresh_status = hw_mdp->ops.get_autorefresh_status(hw_mdp,
+					phys_enc->intf_idx);
+	SDE_EVT32(DRMID(phys_enc->parent), phys_enc->intf_idx - INTF_0,
+				autorefresh_status, SDE_EVTLOG_FUNC_CASE1);
+
+	if (!(autorefresh_status & BIT(7))) {
+		usleep_range(AUTOREFRESH_SEQ2_POLL_TIME,
+			AUTOREFRESH_SEQ2_POLL_TIME + 1);
+
+		autorefresh_status = hw_mdp->ops.get_autorefresh_status(hw_mdp,
+					phys_enc->intf_idx);
+		SDE_EVT32(DRMID(phys_enc->parent), phys_enc->intf_idx - INTF_0,
+				autorefresh_status, SDE_EVTLOG_FUNC_CASE2);
+	}
+
+	if (autorefresh_status & BIT(7)) {
+		SDE_ERROR_CMDENC(cmd_enc, "autofresh status:0x%x intf:%d\n",
+			autorefresh_status, phys_enc->intf_idx - INTF_0);
+
+		if (phys_enc->has_intf_te &&
+		    phys_enc->hw_intf->ops.enable_tearcheck)
+			phys_enc->hw_intf->ops.enable_tearcheck(
+				phys_enc->hw_intf, false);
+		else if (phys_enc->hw_pp->ops.enable_tearcheck)
+			phys_enc->hw_pp->ops.enable_tearcheck(
+				phys_enc->hw_pp, false);
+
+		_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
+
+		do {
+			usleep_range(AUTOREFRESH_SEQ2_POLL_TIME,
+				AUTOREFRESH_SEQ2_POLL_TIME + 1);
+			if ((trial * AUTOREFRESH_SEQ2_POLL_TIME)
+				> AUTOREFRESH_SEQ2_POLL_TIMEOUT) {
+				SDE_ERROR_CMDENC(cmd_enc,
+					"disable autorefresh failed\n");
+				SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus",
+						"panic");
+				break;
+			}
+
+			trial++;
+			autorefresh_status =
+			    hw_mdp->ops.get_autorefresh_status(hw_mdp,
+					phys_enc->intf_idx);
+			SDE_ERROR_CMDENC(cmd_enc,
+				"autofresh status:0x%x intf:%d\n",
+				autorefresh_status,
+				phys_enc->intf_idx - INTF_0);
+			SDE_EVT32(DRMID(phys_enc->parent),
+				phys_enc->intf_idx - INTF_0,
+				autorefresh_status);
+		} while (autorefresh_status & BIT(7));
+
+		if (phys_enc->has_intf_te &&
+		    phys_enc->hw_intf->ops.enable_tearcheck)
+			phys_enc->hw_intf->ops.enable_tearcheck(
+				phys_enc->hw_intf, true);
+		else if (phys_enc->hw_pp->ops.enable_tearcheck)
+			phys_enc->hw_pp->ops.enable_tearcheck(
+				phys_enc->hw_pp, true);
+	}
+}
+
 static void sde_encoder_phys_cmd_prepare_commit(
 		struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_phys_cmd *cmd_enc =
 		to_sde_encoder_phys_cmd(phys_enc);
-	int trial = 0;
 
 	if (!phys_enc)
 		return;
@@ -1761,35 +1880,12 @@ static void sde_encoder_phys_cmd_prepare_commit(
 	if (!sde_encoder_phys_cmd_is_autorefresh_enabled(phys_enc))
 		return;
 
-	/*
-	 * If autorefresh is enabled, disable it and make sure it is safe to
-	 * proceed with current frame commit/push. Sequence fallowed is,
-	 * 1. Disable TE
-	 * 2. Disable autorefresh config
-	 * 4. Poll for frame transfer ongoing to be false
-	 * 5. Enable TE back
-	 */
 	sde_encoder_phys_cmd_connect_te(phys_enc, false);
-
-	_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
-
-	do {
-		udelay(SDE_ENC_MAX_POLL_TIMEOUT_US);
-		if ((trial * SDE_ENC_MAX_POLL_TIMEOUT_US)
-				> (KICKOFF_TIMEOUT_MS * USEC_PER_MSEC)) {
-			SDE_ERROR_CMDENC(cmd_enc,
-					"disable autorefresh failed\n");
-
-			phys_enc->enable_state = SDE_ENC_ERR_NEEDS_HW_RESET;
-			break;
-		}
-
-		trial++;
-	} while (_sde_encoder_phys_cmd_is_ongoing_pptx(phys_enc));
-
+	_sde_encoder_autorefresh_disable_seq1(phys_enc);
+	_sde_encoder_autorefresh_disable_seq2(phys_enc);
 	sde_encoder_phys_cmd_connect_te(phys_enc, true);
 
-	SDE_DEBUG_CMDENC(cmd_enc, "disabled autorefresh\n");
+	SDE_DEBUG_CMDENC(cmd_enc, "autorefresh disabled successfully\n");
 }
 
 static void sde_encoder_phys_cmd_trigger_start(
