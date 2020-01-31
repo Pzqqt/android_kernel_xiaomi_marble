@@ -502,6 +502,9 @@ static QDF_STATUS send_vdev_start_cmd_non_tlv(wmi_unified_t wmi,
 	cmd->disable_hw_ack = param->disable_hw_ack;
 	cmd->beacon_interval = param->beacon_interval;
 	cmd->dtim_period = param->dtim_period;
+	cmd->bcn_tx_rate = param->bcn_tx_rate_code;
+	if (param->bcn_tx_rate_code)
+		cmd->flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
 
 	WMI_SET_CHANNEL_MIN_POWER(&cmd->chan, param->channel.minpower);
 	WMI_SET_CHANNEL_MAX_POWER(&cmd->chan, param->channel.maxpower);
