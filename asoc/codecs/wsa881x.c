@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -992,6 +992,9 @@ static void wsa881x_ocp_ctl_work(struct work_struct *work)
 	dwork = to_delayed_work(work);
 	wsa881x = container_of(dwork, struct wsa881x_priv, ocp_ctl_work);
 
+	if (wsa881x->state == WSA881X_DEV_DOWN)
+		return;
+
 	component = wsa881x->component;
 	wsa881x_get_temp(wsa881x->tz_pdata.tz_dev, &temp_val);
 	dev_dbg(component->dev, " temp = %d\n", temp_val);
@@ -1605,14 +1608,14 @@ static int wsa881x_swr_down(struct swr_device *pdev)
 		dev_err(&pdev->dev, "%s: wsa881x is NULL\n", __func__);
 		return -EINVAL;
 	}
-	if (delayed_work_pending(&wsa881x->ocp_ctl_work))
-		cancel_delayed_work_sync(&wsa881x->ocp_ctl_work);
 	ret = wsa881x_gpio_ctrl(wsa881x, false);
 	if (ret)
 		dev_err(&pdev->dev, "%s: Failed to disable gpio\n", __func__);
 	else
 		wsa881x->state = WSA881X_DEV_DOWN;
 
+	if (delayed_work_pending(&wsa881x->ocp_ctl_work))
+		cancel_delayed_work_sync(&wsa881x->ocp_ctl_work);
 	return ret;
 }
 
