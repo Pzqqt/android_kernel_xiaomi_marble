@@ -6870,6 +6870,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	WMI_MSDU_FLOW_TID_VALID_LOW_MASKS_SET(
 		resource_cfg->msdu_flow_override_config1,
 		tgt_res_cfg->ast_tid_low_mask_enable);
+	WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_SET(
+		resource_cfg->host_service_flags,
+		tgt_res_cfg->nan_separate_iface_support);
+
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -13747,6 +13751,12 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID;
 	event_ids[wmi_roam_pmkid_request_event_id] =
 				WMI_ROAM_PMKID_REQUEST_EVENTID;
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+	event_ids[wmi_wlan_time_sync_ftm_start_stop_event_id] =
+				WMI_VDEV_AUDIO_SYNC_START_STOP_EVENTID;
+	event_ids[wmi_wlan_time_sync_q_master_slave_offset_eventid] =
+			WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID;
+#endif
 }
 
 /**

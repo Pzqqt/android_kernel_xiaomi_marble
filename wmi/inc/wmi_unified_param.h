@@ -4548,6 +4548,10 @@ typedef enum {
 	wmi_mgmt_offload_data_event_id,
 	wmi_pdev_multi_vdev_restart_response_event_id,
 	wmi_roam_pmkid_request_event_id,
+#ifdef FEATURE_WLAN_TIME_SYNC_FTM
+	wmi_wlan_time_sync_ftm_start_stop_event_id,
+	wmi_wlan_time_sync_q_master_slave_offset_eventid,
+#endif
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5187,6 +5191,7 @@ struct wmi_host_fw_abi_ver {
  * @ast_3_flow_mask_enable: mask to enable flow support for ast index 3
  * @ast_tid_high_mask_enable: enable tid valid mask for high priority flow
  * @ast_tid_low_mask_enable: enable tid valid mask for low priority flow
+ * @nan_separate_iface_support: Separate iface creation for NAN
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5283,6 +5288,7 @@ typedef struct {
 		 ast_3_flow_mask_enable:4,
 		 ast_tid_high_mask_enable:8,
 		 ast_tid_low_mask_enable:8;
+	bool nan_separate_iface_support;
 } target_resource_config;
 
 /**

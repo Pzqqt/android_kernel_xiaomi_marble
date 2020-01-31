@@ -9943,6 +9943,9 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
 	case cfg_dp_disable_intra_bss_fwd:
 		value = dpsoc->wlan_cfg_ctx->disable_intra_bss_fwd;
 		break;
+	case cfg_dp_pktlog_buffer_size:
+		value = dpsoc->wlan_cfg_ctx->pktlog_buffer_size;
+		break;
 	default:
 		value =  0;
 	}
