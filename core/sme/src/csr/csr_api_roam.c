@@ -18817,6 +18817,8 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		bss_score_params->oce_wan_scoring.score_pcnt11_to_8;
 	req_score_params->oce_wan_scoring.score_pcnt15_to_12 =
 		bss_score_params->oce_wan_scoring.score_pcnt15_to_12;
+	req_score_params->cand_min_roam_score_delta =
+		bss_score_params->min_roam_score_delta;
 }
 
 uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
