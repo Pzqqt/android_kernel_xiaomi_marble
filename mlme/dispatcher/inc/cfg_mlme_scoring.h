@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1037,6 +1037,40 @@
 
 /*
  * <ini>
+ * min_roam_score_delta - Difference of roam score values between connected
+ * AP and roam candidate AP.
+ * @Min: 0
+ * @Max: 10000
+ * @Default: 1850
+ *
+ * This ini is used during CU and low rssi based roam triggers, consider
+ * AP as roam candidate only if its roam score is better than connected
+ * AP score by at least min_roam_score_delta.
+ * If user configured "roam_score_delta" and "min_roam_score_delta" both,
+ * then firmware selects roam candidate AP by considering values of both
+ * INIs.
+ * Example: If DUT is connected with AP1 and roam candidate AP2 has roam
+ * score greater than roam_score_delta and min_roam_score_delta then only
+ * firmware will trigger roaming to AP2.
+ *
+ * Related: roam_score_delta
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_CAND_MIN_ROAM_SCORE_DELTA CFG_INI_UINT( \
+			"min_roam_score_delta", \
+			0, \
+			10000, \
+			1850, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Diff between connected AP's and candidate AP's roam score")
+
+/*
+ * <ini>
  * enable_scoring_for_roam - enable/disable scoring logic in FW for candidate
  * selection during roaming
  *
@@ -1256,6 +1290,7 @@
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12) \
 	CFG(CFG_ROAM_TRIGGER_BITMAP) \
 	CFG(CFG_ROAM_SCORE_DELTA) \
+	CFG(CFG_CAND_MIN_ROAM_SCORE_DELTA) \
 	CFG(CFG_ENABLE_SCORING_FOR_ROAM) \
 	CFG(CFG_APSD_ENABLED) \
 	CFG(CFG_DISCONNECT_ROAM_TRIGGER_MIN_RSSI) \

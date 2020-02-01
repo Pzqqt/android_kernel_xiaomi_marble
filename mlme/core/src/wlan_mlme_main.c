@@ -1863,6 +1863,8 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_ROAM_TRIGGER_BITMAP);
 	scoring_cfg->roam_score_delta = cfg_get(psoc, CFG_ROAM_SCORE_DELTA);
 	scoring_cfg->apsd_enabled = (bool)cfg_default(CFG_APSD_ENABLED);
+	scoring_cfg->min_roam_score_delta =
+				cfg_get(psoc, CFG_CAND_MIN_ROAM_SCORE_DELTA);
 }
 
 static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,

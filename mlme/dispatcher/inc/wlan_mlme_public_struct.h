@@ -1877,6 +1877,8 @@ struct wlan_mlme_per_slot_scoring {
  * @roam_score_delta: percentage delta in roam score
  * @apsd_enabled: Enable automatic power save delivery
  * @vendor_roam_score_algorithm: Preferred vendor roam score algorithm
+ * @min_roam_score_delta: Minimum difference between connected AP's and
+ *			candidate AP's roam score to start roaming.
  */
 struct wlan_mlme_scoring_cfg {
 	bool enable_scoring_for_roam;
@@ -1891,6 +1893,7 @@ struct wlan_mlme_scoring_cfg {
 	uint32_t roam_score_delta;
 	bool apsd_enabled;
 	uint32_t vendor_roam_score_algorithm;
+	uint32_t min_roam_score_delta;
 };
 
 /* struct wlan_mlme_threshold - Threshold related config items
