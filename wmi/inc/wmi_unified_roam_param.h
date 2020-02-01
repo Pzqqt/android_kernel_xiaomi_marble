@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -394,10 +394,11 @@ struct param_slot_scoring {
  * ap over the roam score of the current ap
  * @roam_trigger_bitmap: bitmap of roam triggers on which roam_score_delta
  * will be applied
+ * @vendor_roam_score_algorithm: Prefered algorithm for roam candidate selection
+ * @cand_min_roam_score_delta: candidate min roam score delta value
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
- * @vendor_roam_score_algorithm: Prefered algorithm for roam candidate selection
  */
 struct scoring_param {
 	uint32_t disable_bitmap;
@@ -418,6 +419,7 @@ struct scoring_param {
 	uint32_t roam_score_delta;
 	uint32_t roam_trigger_bitmap;
 	uint32_t vendor_roam_score_algorithm;
+	uint32_t cand_min_roam_score_delta;
 	struct rssi_scoring rssi_scoring;
 	struct param_slot_scoring esp_qbss_scoring;
 	struct param_slot_scoring oce_wan_scoring;
