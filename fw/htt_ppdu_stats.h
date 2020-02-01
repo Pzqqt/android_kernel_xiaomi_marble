@@ -643,7 +643,8 @@ typedef struct {
             A_UINT32 phy_ppdu_tx_time_us:   16,
                      num_ul_expected_users:  8,
                      beam_change:            1,
-                     reserved1:              7;
+                     doppler_indication:     1,
+                     reserved1:              6;
         };
     };
     /* ppdu_start_tstmp_u32_us:
