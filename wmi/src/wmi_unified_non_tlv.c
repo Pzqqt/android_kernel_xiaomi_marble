@@ -500,6 +500,8 @@ static QDF_STATUS send_vdev_start_cmd_non_tlv(wmi_unified_t wmi,
 	cmd->chan.band_center_freq1 = param->channel.cfreq1;
 	cmd->chan.band_center_freq2 = param->channel.cfreq2;
 	cmd->disable_hw_ack = param->disable_hw_ack;
+	cmd->beacon_interval = param->beacon_interval;
+	cmd->dtim_period = param->dtim_period;
 
 	WMI_SET_CHANNEL_MIN_POWER(&cmd->chan, param->channel.minpower);
 	WMI_SET_CHANNEL_MAX_POWER(&cmd->chan, param->channel.maxpower);
