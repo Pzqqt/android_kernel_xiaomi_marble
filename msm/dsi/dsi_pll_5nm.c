@@ -1391,7 +1391,7 @@ static int vco_5nm_prepare(struct clk_hw *hw)
 
 	if ((pll->vco_cached_rate != 0) &&
 	    (pll->vco_cached_rate == clk_hw_get_rate(hw))) {
-		rc = hw->init->ops->set_rate(hw, pll->vco_cached_rate,
+		rc = vco_5nm_set_rate(hw, pll->vco_cached_rate,
 				pll->vco_cached_rate);
 		if (rc) {
 			pr_err("pll(%d) set_rate failed, rc=%d\n",
