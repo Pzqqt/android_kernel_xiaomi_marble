@@ -3646,10 +3646,97 @@ static const char *csr_get_encr_type_str(uint8_t encr_type)
 	}
 }
 
-static void csr_dump_connection_stats(struct mac_context *mac_ctx,
-		struct csr_roam_session *session,
-		struct csr_roam_info *roam_info,
-		eRoamCmdStatus u1, eCsrRoamResult u2)
+static const uint8_t *csr_get_akm_str(uint8_t akm)
+{
+	switch (akm) {
+	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
+		return "Open";
+	case eCSR_AUTH_TYPE_SHARED_KEY:
+		return "Shared Key";
+	case eCSR_AUTH_TYPE_SAE:
+		return "SAE";
+	case eCSR_AUTH_TYPE_WPA:
+		return "WPA";
+	case eCSR_AUTH_TYPE_WPA_PSK:
+		return "WPA-PSK";
+	case eCSR_AUTH_TYPE_WPA_NONE:
+		return "WPA-NONE";
+	case eCSR_AUTH_TYPE_RSN:
+		return "EAP 802.1x";
+	case eCSR_AUTH_TYPE_RSN_PSK:
+		return "WPA2-PSK";
+	case eCSR_AUTH_TYPE_FT_RSN:
+		return "FT-802.1x";
+	case eCSR_AUTH_TYPE_FT_RSN_PSK:
+		return "FT-PSK";
+	case eCSR_AUTH_TYPE_CCKM_WPA:
+		return "WPA-CCKM";
+	case eCSR_AUTH_TYPE_CCKM_RSN:
+		return "RSN-CCKM";
+	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
+		return "PSK-SHA256";
+	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
+		return "EAP 802.1x-SHA256";
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+		return "FILS-SHA256";
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+		return "FILS-SHA384";
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+		return "FILS-SHA256";
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
+		return "FILS-SHA384";
+	case eCSR_AUTH_TYPE_DPP_RSN:
+		return "DPP";
+	case eCSR_AUTH_TYPE_OWE:
+		return "OWE";
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
+		return "EAP Suite-B SHA256";
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
+		return "EAP Suite-B SHA384";
+	case eCSR_AUTH_TYPE_OSEN:
+		return "OSEN";
+	case eCSR_AUTH_TYPE_FT_SAE:
+		return "FT-SAE";
+	case eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384:
+		return "FT-Suite-B SHA384";
+	default:
+		return "NONE";
+	}
+}
+
+/**
+ * csr_get_sta_ap_intersected_nss  - Get the intersected NSS capability between
+ * sta and connected AP.
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: Vdev id
+ *
+ * Return: NSS value
+ */
+static uint8_t
+csr_get_sta_ap_intersected_nss(struct mac_context *mac_ctx, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t intrsct_nss;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_warn("vdev not found for id: %d", vdev_id);
+		return 0;
+	}
+	wlan_vdev_obj_lock(vdev);
+	intrsct_nss = wlan_vdev_mlme_get_nss(vdev);
+	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return intrsct_nss;
+}
+
+static void
+csr_connect_info(struct mac_context *mac_ctx,
+		 struct csr_roam_session *session,
+		 struct csr_roam_info *roam_info,
+		 eCsrRoamResult u2)
 {
 	struct tagCsrRoamConnectedProfile *conn_profile;
 	struct csr_roam_profile *profile;
@@ -3694,23 +3781,23 @@ static void csr_dump_connection_stats(struct mac_context *mac_ctx,
 	conn_stats.reason_code = 0;
 	conn_stats.op_freq = conn_profile->op_freq;
 	sme_debug("+---------CONNECTION INFO START------------+");
-	sme_debug("connection stats for session-id: %d", session->sessionId);
+	sme_debug("VDEV-ID: %d self_mac:%pM", session->vdev_id,
+		  session->self_mac_addr.bytes);
 	sme_debug("ssid: %.*s", conn_stats.ssid_len, conn_stats.ssid);
 	sme_debug("bssid: %pM", conn_stats.bssid);
-	sme_debug("rssi: %d dBm", conn_stats.rssi);
-	sme_debug("channel: %d", conn_stats.operating_channel);
+	sme_debug("RSSI: %d dBm", conn_stats.rssi);
+	sme_debug("Channel Freq: %d channel_bw: %s", conn_stats.op_freq,
+		  csr_get_ch_width_str(conn_stats.chnl_bw));
 	sme_debug("dot11Mode: %s",
 		  csr_get_dot11_mode_str(conn_stats.dot11mode));
-	sme_debug("channel bw: %s",
-		  csr_get_ch_width_str(conn_stats.chnl_bw));
-	sme_debug("Qos enable: %d", conn_stats.qos_capability);
-	sme_debug("Auth-type: %s",
-		  csr_get_auth_type_str(conn_stats.auth_type));
+	sme_debug("AKM: %s", csr_get_akm_str(conn_profile->AuthType));
+	sme_debug("DUT_NSS: %d | Intersected NSS:%d", session->vdev_nss,
+		  csr_get_sta_ap_intersected_nss(mac_ctx, session->vdev_id));
 	sme_debug("Encry-type: %s",
 		  csr_get_encr_type_str(conn_stats.encryption_type));
-	sme_debug("is associated?: %s",
+	sme_debug("Qos enable: %d | Associated: %s",
+		  conn_stats.qos_capability,
 		  (conn_stats.result_code ? "yes" : "no"));
-	sme_debug("channel frequency: %d", conn_stats.op_freq);
 	sme_debug("+---------CONNECTION INFO END------------+");
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
@@ -3792,10 +3879,10 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 			     ((hw_mode != 0) ? "yes" : "no"));
 }
 #else
-static void csr_dump_connection_stats(struct mac_context *mac_ctx,
-		struct csr_roam_session *session,
-		struct csr_roam_info *roam_info,
-		eRoamCmdStatus u1, eCsrRoamResult u2)
+static void csr_connect_info(struct mac_context *mac_ctx,
+			     struct csr_roam_session *session,
+			     struct csr_roam_info *roam_info,
+			     eCsrRoamResult u2)
 {}
 
 #endif
@@ -3881,7 +3968,7 @@ QDF_STATUS csr_roam_call_callback(struct mac_context *mac, uint32_t sessionId,
 	}
 
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
-		csr_dump_connection_stats(mac, pSession, roam_info, u1, u2);
+		csr_connect_info(mac, pSession, roam_info, u2);
 
 	if (mac->session_roam_complete_cb) {
 		if (roam_info) {
