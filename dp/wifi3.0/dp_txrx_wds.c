@@ -605,42 +605,32 @@ bool dp_tx_multipass_process(struct dp_soc *soc, struct dp_vdev *vdev,
  *
  * Return: bool: true in case of success else false
  * Success is considered if:
- *  i. If frame doesn't come from special peer and do not need multipass processing.
- *  ii. Successfully processed multipass processing.
+ *  i. If frame has vlan header
+ *  ii. If the frame comes from different peer and dont need multipass processing
  * Failure is considered if:
- *  i. If frame needs to be dropped.
+ *  i. Frame comes from multipass peer but doesn't contain vlan header.
+ *  In failure case, drop such frames.
  */
 bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf, uint8_t tid)
 {
-	qdf_ether_header_t *eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-	struct vlan_ethhdr vethhdr;
+	struct vlan_ethhdr *vethhdrp;
 
 	if (qdf_unlikely(!peer->vlan_id))
 	       return true;
 
-	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < ETHERTYPE_VLAN_LEN))
-		return true;
-
+	vethhdrp = (struct vlan_ethhdr *)qdf_nbuf_data(nbuf);
 	/*
-	 * Form the VLAN header and insert in nbuf
+	 * h_vlan_proto & h_vlan_TCI should be 0x8100 & zero respectively
+	 * as it is expected to be padded by 0
+	 * return false if frame doesn't have above tag so that caller will
+	 * drop the frame.
 	 */
-	qdf_mem_copy(vethhdr.h_dest, eh->ether_dhost, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(vethhdr.h_source, eh->ether_shost, QDF_MAC_ADDR_SIZE);
-	vethhdr.h_vlan_proto = htons(QDF_ETH_TYPE_8021Q);
-	vethhdr.h_vlan_TCI = htons(((tid & 0x7) << VLAN_PRIO_SHIFT) |
-			      (peer->vlan_id & VLAN_VID_MASK));
+	if (qdf_unlikely(vethhdrp->h_vlan_proto != htons(QDF_ETH_TYPE_8021Q)) ||
+	    qdf_unlikely(vethhdrp->h_vlan_TCI != 0))
+		return false;
 
-	/*
-	 * Packet format : DSTMAC | SRCMAC | <VLAN HEADERS TO BE INSERTED> | ETHERTYPE | IP HEADER
-	 * DSTMAC: 6 BYTES
-	 * SRCMAC: 6 BYTES
-	 * VLAN HEADER: 4 BYTES ( TPID | PCP | VLAN ID)
-	 * ETHERTYPE: 2 BYTES
-	 */
-	qdf_nbuf_push_head(nbuf, sizeof(struct vlan_hdr));
-	qdf_mem_copy(qdf_nbuf_data(nbuf), &vethhdr,
-		     sizeof(struct vlan_ethhdr)- ETHERNET_TYPE_LEN);
-
+	vethhdrp->h_vlan_TCI = htons(((tid & 0x7) << VLAN_PRIO_SHIFT) |
+		(peer->vlan_id & VLAN_VID_MASK));
 	return true;
 }
 
