@@ -607,7 +607,7 @@ target_if_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
-	if (dbr_tx_ops->direct_buf_rx_module_register) {
+	if (dbr_tx_ops->direct_buf_rx_module_unregister) {
 		return dbr_tx_ops->direct_buf_rx_module_unregister
 			(pdev, DBR_MODULE_CFR);
 	}
