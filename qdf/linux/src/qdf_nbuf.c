@@ -1914,6 +1914,8 @@ bool __qdf_nbuf_data_is_icmp_pkt(uint8_t *data)
 		return false;
 }
 
+qdf_export_symbol(__qdf_nbuf_data_is_icmp_pkt);
+
 /**
  * __qdf_nbuf_data_is_icmpv6_pkt() - check if it is IPV6 ICMPV6 packet.
  * @data: Pointer to IPV6 ICMPV6 packet data buffer
