@@ -670,6 +670,8 @@ void hif_display_stats(struct hif_opaque_softc *hif_ctx)
 	hif_display_bus_stats(hif_ctx);
 }
 
+qdf_export_symbol(hif_display_stats);
+
 void hif_clear_stats(struct hif_opaque_softc *hif_ctx)
 {
 	hif_clear_bus_stats(hif_ctx);
