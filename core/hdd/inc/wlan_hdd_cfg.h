@@ -244,6 +244,13 @@ struct hdd_config {
 #endif
 	bool get_roam_chan_from_fw;
 	uint32_t fisa_enable;
+
+#ifdef WLAN_FEATURE_PERIODIC_STA_STATS
+	/* Periodicity of logging */
+	uint32_t periodic_stats_timer_interval;
+	/* Duration for which periodic logging should be done */
+	uint32_t periodic_stats_timer_duration;
+#endif /* WLAN_FEATURE_PERIODIC_STA_STATS */
 };
 
 /**

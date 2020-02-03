@@ -1362,6 +1362,70 @@ struct dhcp_server {
 			CFG_VALUE_OR_DEFAULT, \
 			"Disable wow feature")
 
+#ifdef WLAN_FEATURE_PERIODIC_STA_STATS
+/*
+ * <ini>
+ * periodic_stats_timer_interval - Print selective stats on this specified
+ *				   interval
+ *
+ * @Min: 0
+ * @Max: 10000
+ * Default: 3000
+ *
+ * This ini is used to specify interval in milliseconds for periodic stats
+ * timer. This timer will print selective stats after expiration of each
+ * interval. STA starts this periodic timer after initial connection or after
+ * roaming is successful. This will be restarted for every
+ * periodic_stats_timer_interval till the periodic_stats_timer_duration expires.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_PERIODIC_STATS_TIMER_INTERVAL  CFG_INI_UINT( \
+				"periodic_stats_timer_interval", \
+				0, \
+				10000, \
+				3000, \
+				CFG_VALUE_OR_DEFAULT, \
+				"Periodic stats timer interval")
+
+/*
+ * <ini>
+ * periodic_stats_timer_duration - Used as duration for which periodic timer
+ *				   should run
+ *
+ * @Min: 0
+ * @Max: 60000
+ * Default: 30000
+ *
+ * This ini is used as duration in milliseconds for which periodic stats timer
+ * should run. This periodic timer will print selective stats for every
+ * periodic_stats_timer_interval until this duration is reached.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_PERIODIC_STATS_TIMER_DURATION  CFG_INI_UINT( \
+			"periodic_stats_timer_duration", \
+			0, \
+			60000, \
+			30000, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Periodic stats timer duration")
+
+#define CFG_WLAN_STA_PERIODIC_STATS \
+	 CFG(CFG_PERIODIC_STATS_TIMER_DURATION) \
+	 CFG(CFG_PERIODIC_STATS_TIMER_INTERVAL)
+#else
+#define CFG_WLAN_STA_PERIODIC_STATS
+#endif /* WLAN_FEATURE_PERIODIC_STA_STATS */
+
 /**
  * enum host_log_level - Debug verbose level imposed by user
  * @HOST_LOG_LEVEL_NONE: no trace will be logged.
@@ -1478,6 +1542,7 @@ enum host_log_level {
 	CFG_VC_MODE_BITMAP_ALL \
 	CFG_WLAN_AUTO_SHUTDOWN_ALL \
 	CFG_WLAN_LOGGING_SUPPORT_ALL \
+	CFG_WLAN_STA_PERIODIC_STATS \
 	CFG(CFG_ACTION_OUI_CCKM_1X1) \
 	CFG(CFG_ACTION_OUI_CONNECT_1X1) \
 	CFG(CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN) \
