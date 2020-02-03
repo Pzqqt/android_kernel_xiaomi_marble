@@ -434,6 +434,30 @@ uint16_t reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class)
 }
 
 #ifdef CONFIG_CHAN_FREQ_API
+void reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
+					  qdf_freq_t freq,
+					  uint16_t chan_width,
+					  bool global_tbl_lookup,
+					  uint16_t behav_limit,
+					  uint8_t *op_class,
+					  uint8_t *chan_num)
+{
+	if (reg_freq_to_band(freq) == REG_BAND_6G) {
+		global_tbl_lookup = true;
+		if (chan_width == BW_40_MHZ)
+			behav_limit = BIT(BEHAV_NONE);
+	} else {
+		global_tbl_lookup = false;
+	}
+
+	reg_freq_width_to_chan_op_class(pdev, freq,
+					chan_width,
+					global_tbl_lookup,
+					behav_limit,
+					op_class,
+					chan_num);
+}
+
 void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 				     qdf_freq_t freq,
 				     uint16_t chan_width,

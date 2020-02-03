@@ -997,6 +997,21 @@ void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					       chan_num);
 }
 
+void wlan_reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq,
+					       uint16_t chan_width,
+					       bool global_tbl_lookup,
+					       uint16_t behav_limit,
+					       uint8_t *op_class,
+					       uint8_t *chan_num)
+{
+	reg_freq_width_to_chan_op_class_auto(pdev, freq, chan_width,
+					     global_tbl_lookup,
+					     behav_limit,
+					     op_class,
+					     chan_num);
+}
+
 void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 				    qdf_freq_t freq,
 				    bool global_tbl_lookup,

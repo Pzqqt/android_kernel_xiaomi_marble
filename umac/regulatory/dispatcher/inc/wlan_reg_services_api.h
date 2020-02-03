@@ -1154,6 +1154,27 @@ void wlan_reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					  uint8_t *chan_num);
 
 /**
+ * wlan_reg_freq_width_to_chan_op_class_auto() - convert frequency to
+ * operating class,channel
+ * @pdev: pdev pointer
+ * @freq: channel frequency in mhz
+ * @chan_width: channel width
+ * @global_tbl_lookup: whether to lookup global op class tbl
+ * @behav_limit: behavior limit
+ * @op_class: operating class
+ * @chan_num: channel number
+ *
+ * Return: Void.
+ */
+void wlan_reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq,
+					       uint16_t chan_width,
+					       bool global_tbl_lookup,
+					       uint16_t behav_limit,
+					       uint8_t *op_class,
+					       uint8_t *chan_num);
+
+/**
  * wlan_reg_freq_to_chan_and_op_class() - Converts freq to oper class
  * @pdev: pdev ptr
  * @freq: channel frequency
