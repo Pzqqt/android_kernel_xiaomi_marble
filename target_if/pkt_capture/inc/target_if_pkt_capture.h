@@ -25,8 +25,12 @@
 #ifndef _TARGET_IF_PKT_CAPTURE_H_
 #define _TARGET_IF_PKT_CAPTURE_H_
 
-#include <qdf_types.h>
-#include "wlan_pkt_capture_public_structs.h"
+#include <wlan_pkt_capture_main.h>
+#include <wlan_pkt_capture_ucfg_api.h>
+#include <wlan_pkt_capture_mgmt_txrx.h>
+#include <wlan_pkt_capture_public_structs.h>
+#include <target_if.h>
+#include <linux/ieee80211.h>
 
 /**
  * target_if_set_packet_capture_mode() - set packet capture mode
@@ -39,4 +43,15 @@
 QDF_STATUS target_if_set_packet_capture_mode(struct wlan_objmgr_psoc *psoc,
 					     uint8_t vdev_id,
 					     enum pkt_capture_mode mode);
+
+/**
+ * target_if_register_mgmt_data_offload_event() - Register offload event handler
+ * @psoc: wlan psoc object
+ *
+ * Register mgmt data offload event handler
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc);
 #endif /* _TARGET_IF_PKT_CAPTURE_H_ */
