@@ -38,11 +38,22 @@
 #define WSA883X_TEMP_RETRY 3
 #define WSA883X_VBAT_TIMER_SEC    2
 
+#define MAX_NAME_LEN	30
+#define WSA883X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+			SNDRV_PCM_RATE_384000)
+/* Fractional Rates */
+#define WSA883X_FRAC_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |\
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800)
+
+#define WSA883X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+		SNDRV_PCM_FMTBIT_S24_LE |\
+		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
+
 static int wsa883x_vbat_timer_sec = WSA883X_VBAT_TIMER_SEC;
 module_param(wsa883x_vbat_timer_sec, int, 0664);
 MODULE_PARM_DESC(wsa883x_vbat_timer_sec, "timer for VBAT monitor polling");
-
-#define DRV_NAME "wsa-codec"
 
 enum {
 	WSA_4OHMS =4,
@@ -1242,8 +1253,8 @@ static void wsa883x_codec_remove(struct snd_soc_component *component)
 	return;
 }
 
-static const struct snd_soc_component_driver soc_codec_dev_wsa883x = {
-	.name = DRV_NAME,
+static const struct snd_soc_component_driver soc_codec_dev_wsa883x_wsa = {
+	.name = "",
 	.probe = wsa883x_codec_probe,
 	.remove = wsa883x_codec_remove,
 	.controls = wsa883x_snd_controls,
@@ -1336,6 +1347,21 @@ static int wsa883x_enable_supplies(struct device * dev,
 	return ret;
 }
 
+static struct snd_soc_dai_driver wsa_dai[] = {
+	{
+		.name = "",
+		.playback = {
+			.stream_name = "",
+			.rates = WSA883X_RATES | WSA883X_FRAC_RATES,
+			.formats = WSA883X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+	},
+};
+
 static int wsa883x_swr_probe(struct swr_device *pdev)
 {
 	int ret = 0, i = 0;
@@ -1343,6 +1369,10 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	u8 devnum = 0;
 	bool pin_state_current = false;
 	struct wsa_ctrl_platform_data *plat_data = NULL;
+	struct snd_soc_component *component;
+	const char *wsa883x_name_prefix_of = NULL;
+	char buffer[MAX_NAME_LEN];
+	int dev_index = 0;
 
 	wsa883x = devm_kzalloc(&pdev->dev, sizeof(struct wsa883x_priv),
 			    GFP_KERNEL);
@@ -1445,13 +1475,57 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR);
 
-	ret = snd_soc_register_component(&pdev->dev, &soc_codec_dev_wsa883x,
-				     NULL, 0);
+	ret = of_property_read_string(pdev->dev.of_node, "qcom,wsa-prefix",
+				&wsa883x_name_prefix_of);
 	if (ret) {
-		dev_err(&pdev->dev, "%s: Codec registration failed\n",
-			__func__);
+		dev_err(&pdev->dev,
+			"%s: Looking up %s property in node %s failed\n",
+			__func__, "qcom,wsa-prefix",
+			pdev->dev.of_node->full_name);
 		goto err_irq;
 	}
+
+	wsa883x->driver = devm_kzalloc(&pdev->dev,
+			sizeof(struct snd_soc_component_driver), GFP_KERNEL);
+        if (!wsa883x->driver) {
+                ret = -ENOMEM;
+                goto err_irq;
+        }
+
+        memcpy(wsa883x->driver, &soc_codec_dev_wsa883x_wsa,
+                        sizeof(struct snd_soc_component_driver));
+
+	wsa883x->dai_driver = devm_kzalloc(&pdev->dev,
+				sizeof(struct snd_soc_dai_driver), GFP_KERNEL);
+	if (!wsa883x->dai_driver) {
+		ret = -ENOMEM;
+		goto err_mem;
+	}
+
+	memcpy(wsa883x->dai_driver, wsa_dai, sizeof(struct snd_soc_dai_driver));
+
+	/* Get last digit from HEX format */
+	dev_index = (int)((char)(pdev->addr & 0xF));
+
+	snprintf(buffer, sizeof(buffer), "wsa-codec.%d", dev_index);
+	wsa883x->driver->name = kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	snprintf(buffer, sizeof(buffer), "wsa_rx%d", dev_index);
+	wsa883x->dai_driver->name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	snprintf(buffer, sizeof(buffer), "WSA883X_AIF%d Playback", dev_index);
+	wsa883x->dai_driver->playback.stream_name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+	/* Number of DAI's used is 1 */
+	ret = snd_soc_register_component(&pdev->dev,
+				wsa883x->driver, wsa883x->dai_driver, 1);
+
+	wsa883x->wsa883x_name_prefix = kstrndup(wsa883x_name_prefix_of,
+			strlen(wsa883x_name_prefix_of), GFP_KERNEL);
+	component = snd_soc_lookup_component(&pdev->dev, wsa883x->driver->name);
+	component->name_prefix = wsa883x->wsa883x_name_prefix;
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
 					      "qcom,bolero-handle", 0);
@@ -1517,6 +1591,11 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	return 0;
 
+err_mem:
+	if (wsa883x->dai_driver)
+		kfree(wsa883x->dai_driver);
+	if (wsa883x->driver)
+		kfree(wsa883x->driver);
 err_irq:
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR, NULL);
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF, NULL);
@@ -1567,6 +1646,14 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 #endif
 	mutex_destroy(&wsa883x->res_lock);
 	snd_soc_unregister_component(&pdev->dev);
+	kfree(wsa883x->wsa883x_name_prefix);
+	kfree(wsa883x->driver->name);
+	kfree(wsa883x->dai_driver->name);
+	kfree(wsa883x->dai_driver->playback.stream_name);
+	if (wsa883x->dai_driver)
+		kfree(wsa883x->dai_driver);
+	if (wsa883x->driver)
+		kfree(wsa883x->driver);
 	swr_set_dev_data(pdev, NULL);
 	return 0;
 }
