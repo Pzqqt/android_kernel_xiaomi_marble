@@ -330,10 +330,6 @@ static void lim_post_join_set_link_state_callback(
 		return;
 	}
 
-	pe_debug("Sessionid %d set link state(%d) cb status: %d",
-		session_entry->peSessionId, session_entry->limMlmState,
-			status);
-
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to find pe session for session id:%d",
 			session_entry->peSessionId);
@@ -347,12 +343,6 @@ static void lim_post_join_set_link_state_callback(
 	session_entry->channelChangeReasonCode =
 			 LIM_SWITCH_CHANNEL_JOIN;
 	session_entry->pLimMlmReassocRetryReq = NULL;
-	pe_debug("[lim_process_mlm_join_req]: suspend link success(%d) "
-		 "on sessionid: %d setting channel to: freq %d with ch_width :%d "
-		 "and maxtxPower: %d", status, session_entry->peSessionId,
-		 session_entry->curr_op_freq,
-		 session_entry->ch_width,
-		 session_entry->maxTxPower);
 	lim_send_switch_chnl_params(mac, session_entry);
 
 	return;

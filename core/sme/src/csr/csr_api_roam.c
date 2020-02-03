@@ -2028,7 +2028,6 @@ void csr_assign_rssi_for_category(struct mac_context *mac, int8_t bestApRssi,
 {
 	int i;
 
-	sme_debug("best AP RSSI: %d cat offset: %d", bestApRssi, catOffset);
 	if (catOffset) {
 		mac->roam.configParam.bCatRssiOffset = catOffset;
 		for (i = 0; i < CSR_NUM_RSSI_CAT; i++) {
@@ -2964,46 +2963,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 				!wlan_reg_11d_enabled_on_host(mac->psoc))
 			csr_init_channel_power_list(mac, &pParam->Csr11dinfo);
 
-		sme_debug("neighbor_scan_timer_period: %d",
-			  mac->mlme_cfg->lfr.neighbor_scan_timer_period);
-		sme_debug("neighbor_scan_min_timer_period: %d",
-			  mac->mlme_cfg->lfr.neighbor_scan_min_timer_period);
-		sme_debug("neighbor_lookup_rssi_threshold: %d",
-			  mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold);
-		sme_debug("opportunistic_scan_threshold_diff: %d",
-			  mac->mlme_cfg->lfr.
-			  opportunistic_scan_threshold_diff);
-		sme_debug("roam_rescan_rssi_diff: %d",
-			  mac->mlme_cfg->lfr.roam_rescan_rssi_diff);
-		sme_debug("neighbor_scan_min_chan_time: %d",
-			  mac->mlme_cfg->lfr.neighbor_scan_min_chan_time);
-		sme_debug("neighbor_scan_max_chan_time: %d",
-			  mac->mlme_cfg->lfr.neighbor_scan_max_chan_time);
-		sme_debug("neighbor_scan_results_refresh_period: %d",
-			  mac->mlme_cfg->lfr.
-			  neighbor_scan_results_refresh_period);
-		sme_debug("empty_scan_refresh_period: %d",
-			  mac->mlme_cfg->lfr.empty_scan_refresh_period);
-		{
-			int i;
-
-			sme_debug("Num of Channels in CFG Channel List: %d",
-				  mac->mlme_cfg->lfr.
-				  neighbor_scan_channel_list_num);
-			for (i = 0; i < mac->mlme_cfg->lfr.
-			     neighbor_scan_channel_list_num; i++) {
-				sme_debug("%d ", mac->mlme_cfg->lfr.
-					  neighbor_scan_channel_list[i]);
-			}
-		}
-		sme_debug("roam_bmiss_first_bcnt: %d",
-			  mac->mlme_cfg->lfr.roam_bmiss_first_bcnt);
-		sme_debug("roam_bmiss_final_bcnt: %d",
-			  mac->mlme_cfg->lfr.roam_bmiss_final_bcnt);
-		sme_debug("roam_beacon_rssi_weight: %d",
-			  mac->mlme_cfg->lfr.roam_beacon_rssi_weight);
-		sme_debug("full_scan_period: %u",
-			  mac->mlme_cfg->lfr.roam_full_scan_period);
 		mac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		mac->roam.configParam.fScanTwice = pParam->fScanTwice;
 		/* This parameter is not available in cfg and not passed from
