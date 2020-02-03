@@ -270,9 +270,6 @@ wlansap_filter_unsafe_ch(struct wlan_objmgr_psoc *psoc,
 
 	sap_debug("Updated ACS ch list len %d", num_safe_ch);
 	sap_ctx->acs_cfg->ch_list_count = num_safe_ch;
-
-	for (i = 0; i < num_safe_ch; i++)
-		sap_debug("Safe freq %d", sap_ctx->acs_cfg->freq_list[i]);
 }
 
 static void
@@ -362,8 +359,6 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	sap_config_acs_result(mac_handle, sap_ctx,
 			      sap_ctx->acs_cfg->ht_sec_ch_freq);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Channel freq selected = %d"), sap_ctx->chan_freq);
 	sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 close_session:

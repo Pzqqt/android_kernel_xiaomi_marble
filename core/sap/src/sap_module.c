@@ -2478,10 +2478,8 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 		return sap_signal_hdd_event(sap_context, NULL,
 				eSAP_ACS_CHANNEL_SELECTED,
 				(void *) eSAP_STATUS_SUCCESS);
-	} else if (QDF_STATUS_SUCCESS == qdf_status) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Successfully Issued a Pre Start Bss Scan Request");
 	}
+
 	return qdf_status;
 }
 
@@ -2740,17 +2738,9 @@ bool wlansap_is_channel_present_in_acs_list(uint32_t freq,
 {
 	uint8_t i;
 
-	for(i = 0; i < ch_count; i++) {
-		if (ch_freq_list[i] == freq) {
-			/*
-			 * channel was given by hostpad for ACS, and is present
-			 * in PCL.
-			 */
-			sap_debug("channel present in ACS channel list %d",
-				  freq);
+	for(i = 0; i < ch_count; i++)
+		if (ch_freq_list[i] == freq)
 			return true;
-		}
-	}
 
 	return false;
 }
