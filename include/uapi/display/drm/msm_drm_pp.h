@@ -561,6 +561,38 @@ struct drm_msm_ltm_buffer {
 	__u32 status;
 };
 
+#define SPR_INIT_PARAM_SIZE_1 4
+#define SPR_INIT_PARAM_SIZE_2 5
+#define SPR_INIT_PARAM_SIZE_3 16
+#define SPR_INIT_PARAM_SIZE_4 24
+#define SPR_INIT_PARAM_SIZE_5 32
+
+/**
+ * struct drm_msm_spr_init_cfg - SPR initial configuration structure
+ *
+ */
+struct drm_msm_spr_init_cfg {
+	__u64 flags;
+	__u16 cfg0;
+	__u16 cfg1;
+	__u16 cfg2;
+	__u16 cfg3;
+	__u16 cfg4;
+	__u16 cfg5;
+	__u16 cfg6;
+	__u16 cfg7;
+	__u16 cfg8;
+	__u16 cfg9;
+	__u32 cfg10;
+	__u16 cfg11[SPR_INIT_PARAM_SIZE_1];
+	__u16 cfg12[SPR_INIT_PARAM_SIZE_1];
+	__u16 cfg13[SPR_INIT_PARAM_SIZE_1];
+	__u16 cfg14[SPR_INIT_PARAM_SIZE_2];
+	__u16 cfg15[SPR_INIT_PARAM_SIZE_5];
+	int cfg16[SPR_INIT_PARAM_SIZE_3];
+	int cfg17[SPR_INIT_PARAM_SIZE_4];
+};
+
 /**
  * struct drm_msm_ad4_manual_str_cfg - ad4 manual strength config set
  * by user-space client.
