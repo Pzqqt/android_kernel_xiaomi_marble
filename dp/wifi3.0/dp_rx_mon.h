@@ -45,15 +45,9 @@ QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl, uint8_t pdev_id);
-
-/**
- * dp_pdev_configure_monitor_rings() - configure monitor rings
- * @vdev_handle: Datapath VDEV handle
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS dp_pdev_configure_monitor_rings(struct dp_pdev *pdev);
+QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
+				 uint8_t pdev_id,
+				 uint8_t smart_monitor);
 
 /**
  * dp_mon_link_free() - free monitor link desc pool

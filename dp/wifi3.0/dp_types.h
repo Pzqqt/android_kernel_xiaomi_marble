@@ -134,6 +134,7 @@ union dp_rx_desc_list_elem_t;
 struct cdp_peer_rate_stats_ctx;
 struct cdp_soc_rate_stats_ctx;
 struct dp_rx_fst;
+struct dp_mon_filter;
 
 #define DP_PDEV_ITERATE_VDEV_LIST(_pdev, _vdev) \
 	TAILQ_FOREACH((_vdev), &(_pdev)->vdev_list, vdev_list_elem)
@@ -1774,6 +1775,8 @@ struct dp_pdev {
 #ifdef WLAN_SUPPORT_DATA_STALL
 	data_stall_detect_cb data_stall_detect_callback;
 #endif /* WLAN_SUPPORT_DATA_STALL */
+
+	struct dp_mon_filter **filter;	/* Monitor Filter pointer */
 };
 
 struct dp_peer;

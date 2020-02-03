@@ -65,6 +65,8 @@ cdp_mempools_attach(ol_txrx_soc_handle soc)
 	return soc->ops->ctrl_ops->txrx_mempools_attach(soc);
 }
 
+
+#if defined(ATH_SUPPORT_NAC) || defined(ATH_SUPPORT_NAC_RSSI)
 /**
  * @brief update the neighbour peer addresses
  * @details
@@ -95,6 +97,7 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers
 			(soc, vdev_id, cmd, macaddr);
 }
+#endif /* ATH_SUPPORT_NAC || ATH_SUPPORT_NAC_RSSI*/
 
 /**
  * @brief set the Reo Destination ring for the pdev
