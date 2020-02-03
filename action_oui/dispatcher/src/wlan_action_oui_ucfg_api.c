@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -172,8 +172,6 @@ bool ucfg_action_oui_search(struct wlan_objmgr_psoc *psoc,
 	struct action_oui_psoc_priv *psoc_priv;
 	bool found = false;
 
-	ACTION_OUI_ENTER();
-
 	if (!psoc || !attr) {
 		action_oui_err("Invalid psoc or search attrs");
 		goto exit;
@@ -191,10 +189,8 @@ bool ucfg_action_oui_search(struct wlan_objmgr_psoc *psoc,
 	}
 
 	found = action_oui_search(psoc_priv, attr, action_id);
-	if (found)
-		action_oui_debug("Search Successful");
 
 exit:
-	ACTION_OUI_EXIT();
+
 	return found;
 }
