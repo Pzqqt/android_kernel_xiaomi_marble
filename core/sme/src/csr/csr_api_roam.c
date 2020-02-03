@@ -19774,7 +19774,6 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd,
 
 	vdev = cmd.vdev;
 	ser_cmd_status = wlan_serialization_request(&cmd);
-	sme_debug("wlan_serialization_request status:%d", ser_cmd_status);
 
 	switch (ser_cmd_status) {
 	case WLAN_SER_CMD_PENDING:
@@ -19782,13 +19781,9 @@ QDF_STATUS csr_queue_sme_command(struct mac_context *mac_ctx, tSmeCmd *sme_cmd,
 		/* Command posted to active/pending list */
 		status = QDF_STATUS_SUCCESS;
 		break;
-	case WLAN_SER_CMD_DENIED_LIST_FULL:
-	case WLAN_SER_CMD_DENIED_RULES_FAILED:
-	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
-		status = QDF_STATUS_E_FAILURE;
-		goto error;
 	default:
-		QDF_ASSERT(0);
+		sme_err("Failed to queue command %d with status:%d",
+			  sme_cmd->command, ser_cmd_status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}

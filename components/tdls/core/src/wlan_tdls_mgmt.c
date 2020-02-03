@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -347,9 +347,6 @@ tdls_send_mgmt_serialize_callback(struct wlan_serialization_command *cmd,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = cmd->umac_cmd;
-
-	tdls_debug("reason: %d, vdev_id: %d",
-		reason, req->vdev_id);
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
