@@ -25,6 +25,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_pkt_capture_mon_thread.h"
 #include "wlan_pkt_capture_mgmt_txrx.h"
+#include "target_if_pkt_capture.h"
 
 enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -71,6 +72,9 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 		pkt_capture_err("Failed to register pkt capture mgmt rx ops");
 		return status;
 	}
+
+	target_if_pkt_capture_register_tx_ops(&vdev_priv->tx_ops);
+	target_if_pkt_capture_register_rx_ops(&vdev_priv->rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -140,6 +144,9 @@ pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 		pkt_capture_err("psoc is NULL");
 		return 0;
 	}
+
+	if (!pkt_capture_get_mode(psoc))
+		return 0;
 
 	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
 							QDF_STA_MODE,
@@ -271,6 +278,10 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	struct pkt_capture_vdev_priv *vdev_priv;
 	QDF_STATUS status;
 
+	if ((wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE) ||
+	    !pkt_capture_get_mode(wlan_vdev_get_psoc(vdev)))
+		return QDF_STATUS_SUCCESS;
+
 	vdev_priv = qdf_mem_malloc(sizeof(*vdev_priv));
 	if (!vdev_priv)
 		return QDF_STATUS_E_NOMEM;
@@ -333,6 +344,10 @@ pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
 	QDF_STATUS status;
+
+	if ((wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE) ||
+	    !pkt_capture_get_mode(wlan_vdev_get_psoc(vdev)))
+		return QDF_STATUS_SUCCESS;
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv) {

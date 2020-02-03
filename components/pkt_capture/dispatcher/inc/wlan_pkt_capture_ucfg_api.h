@@ -147,6 +147,14 @@ ucfg_pkt_capture_mgmt_tx_completion(
 				uint32_t desc_id,
 				uint32_t status,
 				struct mgmt_offload_event_params *params);
+
+/**
+ * ucfg_pkt_capture_enable_ops - Enable packet capture tx and rx ops handlers
+ * @wlan_objmgr_vdev: wlan vdev object manager
+ *
+ * Return: 0 on success, -EINVAL on failure
+ */
+int ucfg_pkt_capture_enable_ops(struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)

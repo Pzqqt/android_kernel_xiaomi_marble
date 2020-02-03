@@ -27,9 +27,18 @@
 #include <target_if.h>
 #include <init_deinit_lmac.h>
 
-QDF_STATUS target_if_set_packet_capture_mode(struct wlan_objmgr_psoc *psoc,
-					     uint8_t vdev_id,
-					     enum pkt_capture_mode mode)
+/**
+ * target_if_set_packet_capture_mode() - set packet capture mode
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id
+ * @mode: mode to set
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_set_packet_capture_mode(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id,
+				  enum pkt_capture_mode mode)
 {
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -148,7 +157,14 @@ target_if_mgmt_offload_data_event_handler(void *handle, uint8_t *data,
 	return 0;
 }
 
-QDF_STATUS
+/**
+ * target_if_register_mgmt_data_offload_event() - Register mgmt data offload
+ * event handler
+ * @psoc: wlan psoc object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
 target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 {
 	wmi_unified_t wmi_handle;
@@ -178,4 +194,27 @@ target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 	}
 	PKT_CAPTURE_ENTER();
 	return QDF_STATUS_SUCCESS;
+}
+
+void
+target_if_pkt_capture_register_rx_ops(struct wlan_pkt_capture_rx_ops *rx_ops)
+{
+	if (!rx_ops) {
+		target_if_err("packet capture rx_ops is null");
+		return;
+	}
+
+	rx_ops->pkt_capture_register_mgmt_data_offload_event =
+				target_if_register_mgmt_data_offload_event;
+}
+
+void
+target_if_pkt_capture_register_tx_ops(struct wlan_pkt_capture_tx_ops *tx_ops)
+{
+	if (!tx_ops) {
+		target_if_err("packet capture tx_ops is null");
+		return;
+	}
+
+	tx_ops->pkt_capture_send_mode = target_if_set_packet_capture_mode;
 }
