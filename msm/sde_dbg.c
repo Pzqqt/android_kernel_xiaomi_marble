@@ -160,6 +160,8 @@ struct sde_dbg_debug_bus_common {
 	u32 flags;
 	u32 entries_size;
 	u32 *dumped_content;
+	u32 content_idx;
+	u32 content_size;
 };
 
 struct sde_dbg_sde_debug_bus {
@@ -240,8 +242,6 @@ static struct sde_dbg_base {
 
 	struct sde_dbg_regbuf regbuf;
 	u32 cur_evt_index;
-	u32 dbgbus_dump_idx;
-	u32 vbif_dbgbus_dump_idx;
 	enum sde_dbg_dump_context dump_mode;
 } sde_dbg_base;
 
@@ -4582,9 +4582,11 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 			bus->cmn.name);
 
 	if (in_mem) {
-		if (!(*dump_mem))
+		if (!(*dump_mem)) {
 			*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size,
 					GFP_KERNEL);
+			bus->cmn.content_size = list_size / sizeof(u32);
+		}
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
@@ -4742,9 +4744,11 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 		return;
 
 	if (in_mem) {
-		if (!(*dump_mem))
+		if (!(*dump_mem)) {
 			*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size,
 					GFP_KERNEL);
+			bus->cmn.content_size = list_size  / sizeof(u32);
+		}
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
@@ -5402,46 +5406,31 @@ static const struct file_operations sde_recovery_reg_fops = {
 	.read = sde_recovery_regdump_read,
 };
 
-static int sde_recovery_dbgbus_dump_open(struct inode *inode, struct file *file)
-{
-	if (!inode || !file)
-		return -EINVAL;
-
-	/* non-seekable */
-	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
-	file->private_data = inode->i_private;
-
-	mutex_lock(&sde_dbg_base.mutex);
-	sde_dbg_base.dbgbus_dump_idx = 0;
-	mutex_unlock(&sde_dbg_base.mutex);
-
-	return 0;
-}
-
 static ssize_t sde_recovery_dbgbus_dump_read(struct file *file,
 		char __user *buff,
 		size_t count, loff_t *ppos)
 {
 	ssize_t len = 0;
-	char evtlog_buf[SDE_EVTLOG_BUF_MAX];
+	char log_buf[SDE_EVTLOG_BUF_MAX];
 	u32 *data;
-	struct sde_dbg_sde_debug_bus *bus;
+	struct sde_dbg_debug_bus_common *cmn = file->private_data;
+	u32 entry_size = DUMP_CLMN_COUNT;
+	u32 max_size = min_t(size_t, count, SDE_EVTLOG_BUF_MAX);
 
+	memset(log_buf,  0, sizeof(log_buf));
 	mutex_lock(&sde_dbg_base.mutex);
-	bus = &sde_dbg_base.dbgbus_sde;
-	if (!bus->cmn.dumped_content || !bus->cmn.entries_size)
+	if (!cmn->dumped_content || !cmn->entries_size)
 		goto dump_done;
 
-	if (sde_dbg_base.dbgbus_dump_idx <=
-			((bus->cmn.entries_size - 1) * DUMP_CLMN_COUNT)) {
-		data = &bus->cmn.dumped_content[
-			sde_dbg_base.dbgbus_dump_idx];
-		len = snprintf(evtlog_buf, SDE_EVTLOG_BUF_MAX,
+	if (cmn->content_idx < cmn->content_size) {
+		data = &cmn->dumped_content[cmn->content_idx];
+		len = scnprintf(log_buf, max_size,
 				"0x%.8X | %.8X %.8X %.8X %.8X\n",
-				sde_dbg_base.dbgbus_dump_idx,
+				cmn->content_idx * sizeof(*data),
 				data[0], data[1], data[2], data[3]);
-		sde_dbg_base.dbgbus_dump_idx += DUMP_CLMN_COUNT;
-		if ((count < len) || copy_to_user(buff, evtlog_buf, len)) {
+
+		cmn->content_idx += entry_size;
+		if (copy_to_user(buff, log_buf, len)) {
 			len = -EFAULT;
 			goto dump_done;
 		}
@@ -5451,6 +5440,22 @@ dump_done:
 	mutex_unlock(&sde_dbg_base.mutex);
 
 	return len;
+}
+
+static int sde_recovery_dbgbus_dump_open(struct inode *inode, struct file *file)
+{
+	if (!inode || !file)
+		return -EINVAL;
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data = (void *)&sde_dbg_base.dbgbus_sde.cmn;
+
+	mutex_lock(&sde_dbg_base.mutex);
+	sde_dbg_base.dbgbus_sde.cmn.content_idx = 0;
+	mutex_unlock(&sde_dbg_base.mutex);
+
+	return 0;
 }
 
 static const struct file_operations sde_recovery_dbgbus_fops = {
@@ -5466,63 +5471,18 @@ static int sde_recovery_vbif_dbgbus_dump_open(struct inode *inode,
 
 	/* non-seekable */
 	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
-	file->private_data = inode->i_private;
+	file->private_data = (void *)&sde_dbg_base.dbgbus_vbif_rt.cmn;
 
 	mutex_lock(&sde_dbg_base.mutex);
-	sde_dbg_base.vbif_dbgbus_dump_idx = 0;
+	sde_dbg_base.dbgbus_vbif_rt.cmn.content_idx = 0;
 	mutex_unlock(&sde_dbg_base.mutex);
 
 	return 0;
 }
 
-static ssize_t sde_recovery_vbif_dbgbus_dump_read(struct file *file,
-		char __user *buff,
-		size_t count, loff_t *ppos)
-{
-	ssize_t len = 0;
-	char evtlog_buf[SDE_EVTLOG_BUF_MAX];
-	int i;
-	u32 *data;
-	u32 list_size = 0;
-	struct vbif_debug_bus_entry *head;
-	struct sde_dbg_vbif_debug_bus *bus;
-
-	mutex_lock(&sde_dbg_base.mutex);
-	bus = &sde_dbg_base.dbgbus_vbif_rt;
-	if (!bus->cmn.dumped_content || !bus->cmn.entries_size)
-		goto dump_done;
-
-	/* calculate total number of test point */
-	for (i = 0; i < bus->cmn.entries_size; i++) {
-		head = bus->entries + i;
-		list_size += (head->block_cnt * head->test_pnt_cnt);
-	}
-
-	/* 4 entries for each test point*/
-	list_size *= DUMP_CLMN_COUNT;
-	if (sde_dbg_base.vbif_dbgbus_dump_idx < list_size) {
-		data = &bus->cmn.dumped_content[
-			sde_dbg_base.vbif_dbgbus_dump_idx];
-		len = snprintf(evtlog_buf, SDE_EVTLOG_BUF_MAX,
-				"0x%.8X | %.8X %.8X %.8X %.8X\n",
-				sde_dbg_base.vbif_dbgbus_dump_idx,
-				data[0], data[1], data[2], data[3]);
-		sde_dbg_base.vbif_dbgbus_dump_idx += DUMP_CLMN_COUNT;
-		if ((count < len) || copy_to_user(buff, evtlog_buf, len)) {
-			len = -EFAULT;
-			goto dump_done;
-		}
-		*ppos += len;
-	}
-dump_done:
-	mutex_unlock(&sde_dbg_base.mutex);
-
-	return len;
-}
-
 static const struct file_operations sde_recovery_vbif_dbgbus_fops = {
 	.open = sde_recovery_vbif_dbgbus_dump_open,
-	.read = sde_recovery_vbif_dbgbus_dump_read,
+	.read = sde_recovery_dbgbus_dump_read,
 };
 
 /**
@@ -5898,12 +5858,10 @@ int sde_dbg_debugfs_register(struct dentry *debugfs_root)
 			&sde_dbg_base.enable_reg_dump);
 	debugfs_create_file("recovery_reg", 0400, debugfs_root, NULL,
 			&sde_recovery_reg_fops);
-	debugfs_create_file("recovery_dbgbus", 0400, debugfs_root, NULL,
-			&sde_recovery_dbgbus_fops);
-	debugfs_create_file("recovery_vbif_dbgbus", 0400, debugfs_root, NULL,
-			&sde_recovery_vbif_dbgbus_fops);
 
 	if (dbg->dbgbus_sde.entries) {
+		debugfs_create_file("recovery_dbgbus", 0400, debugfs_root, NULL,
+				&sde_recovery_dbgbus_fops);
 		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
 				dbg->dbgbus_sde.cmn.name);
 		debugfs_create_u32(debug_name, 0600, debugfs_root,
@@ -5911,6 +5869,8 @@ int sde_dbg_debugfs_register(struct dentry *debugfs_root)
 	}
 
 	if (dbg->dbgbus_vbif_rt.entries) {
+		debugfs_create_file("recovery_vbif_dbgbus", 0400, debugfs_root,
+				NULL, &sde_recovery_vbif_dbgbus_fops);
 		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
 				dbg->dbgbus_vbif_rt.cmn.name);
 		debugfs_create_u32(debug_name, 0600, debugfs_root,
