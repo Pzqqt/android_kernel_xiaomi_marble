@@ -108,10 +108,9 @@ void hdd_notify_teardown_tdls_links(struct wlan_objmgr_psoc *psoc)
 	struct wlan_objmgr_vdev *vdev;
 
 	vdev = ucfg_get_tdls_vdev(psoc, WLAN_OSIF_ID);
-	if (!vdev) {
-		osif_debug("Unable to get the vdev");
+	if (!vdev)
 		return;
-	}
+
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 
 	if (!osif_priv || !osif_priv->osif_tdls) {

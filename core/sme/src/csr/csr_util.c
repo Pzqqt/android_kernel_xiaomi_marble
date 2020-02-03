@@ -1557,7 +1557,6 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(struct mac_context *mac,
 
 	switch (csrDot11Mode) {
 	case eCSR_CFG_DOT11_MODE_AUTO:
-		sme_debug("eCSR_CFG_DOT11_MODE_AUTO");
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
 			ret = MLME_DOT11_MODE_11AX;
 		else if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))

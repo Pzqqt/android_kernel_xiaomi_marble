@@ -141,8 +141,6 @@ QDF_STATUS ucfg_action_oui_send(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	uint32_t id;
 
-	ACTION_OUI_ENTER();
-
 	if (!psoc) {
 		action_oui_err("psoc is NULL");
 		goto exit;
@@ -161,7 +159,7 @@ QDF_STATUS ucfg_action_oui_send(struct wlan_objmgr_psoc *psoc)
 	}
 
 exit:
-	ACTION_OUI_EXIT();
+
 	return status;
 }
 

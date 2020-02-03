@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -895,7 +895,6 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 	qdf_mutex_acquire(&oui_priv->extension_lock);
 	if (qdf_list_empty(extension_list)) {
 		qdf_mutex_release(&oui_priv->extension_lock);
-		action_oui_debug("OUI List Empty");
 		return false;
 	}
 
@@ -911,44 +910,25 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 		 * to other checks skipping the OUI and vendor data checks
 		 */
 
-		if (!(extension->info_mask & ACTION_OUI_INFO_OUI)) {
-			action_oui_debug("Wildcard OUI found");
+		if (!(extension->info_mask & ACTION_OUI_INFO_OUI))
 			wildcard_oui = true;
-		}
 
 		oui_ptr = action_oui_get_oui_ptr(extension, attr);
 
-		if (!oui_ptr  && !wildcard_oui) {
-			action_oui_debug("No matching IE found for OUI");
-			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
-					   QDF_TRACE_LEVEL_DEBUG,
-					   extension->oui,
-					   extension->oui_length);
+		if (!oui_ptr  && !wildcard_oui)
 			goto next;
-		}
-
-		action_oui_debug("IE found for OUI");
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
-				   QDF_TRACE_LEVEL_DEBUG,
-				   extension->oui,
-				   extension->oui_length);
 
 		if (extension->data_length && !wildcard_oui &&
-		    !check_for_vendor_oui_data(extension, oui_ptr)) {
-			action_oui_debug("Vendor IE Data mismatch");
+		    !check_for_vendor_oui_data(extension, oui_ptr))
 			goto next;
-		}
+
 
 		if ((extension->info_mask & ACTION_OUI_INFO_MAC_ADDRESS) &&
-		    !check_for_vendor_ap_mac(extension, attr)) {
-			action_oui_debug("Vendor IE MAC Mismatch");
+		    !check_for_vendor_ap_mac(extension, attr))
 			goto next;
-		}
 
-		if (!check_for_vendor_ap_capabilities(extension, attr)) {
-			action_oui_debug("Vendor IE capabilties mismatch");
+		if (!check_for_vendor_ap_capabilities(extension, attr))
 			goto next;
-		}
 
 		action_oui_debug("Vendor AP/STA found for OUI");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,

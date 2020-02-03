@@ -8477,9 +8477,6 @@ QDF_STATUS csr_roam_issue_connect(struct mac_context *mac, uint32_t sessionId,
 		/* We need to free the BssList when the command is done */
 		pCommand->u.roamCmd.fReleaseBssList = true;
 		pCommand->u.roamCmd.fUpdateCurRoamProfile = true;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			 FL("CSR PERSONA=%d"),
-			  pCommand->u.roamCmd.roamProfile.csrPersona);
 		status = csr_queue_sme_command(mac, pCommand, fImediate);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("fail to send message status: %d", status);
@@ -8628,7 +8625,7 @@ static void csr_roam_print_candidate_aps(tScanResultHandle results)
 	while (entry) {
 		bss_desc = GET_BASE_ADDR(entry,
 				struct tag_csrscan_result, Link);
-		sme_debug("BSSID" QDF_MAC_ADDR_STR "score is %d",
+		sme_debug(QDF_MAC_ADDR_STR " score: %d",
 			  QDF_MAC_ADDR_ARRAY(bss_desc->Result.BssDescriptor.bssId),
 			  bss_desc->bss_score);
 
@@ -8670,11 +8667,10 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	pSession->join_bssid_count = 0;
 	pSession->discon_in_progress = false;
 	pSession->is_fils_connection = csr_is_fils_connection(pProfile);
-	sme_debug(
-		"called  BSSType = %s (%d) authtype = %d  encryType = %d",
-		sme_bss_type_to_string(pProfile->BSSType),
-		pProfile->BSSType, pProfile->AuthType.authType[0],
-		pProfile->EncryptionType.encryptionType[0]);
+	sme_debug("Persona %d authtype %d  encryType %d mc_encType %d",
+		  pProfile->csrPersona, pProfile->AuthType.authType[0],
+		  pProfile->EncryptionType.encryptionType[0],
+		  pProfile->mcEncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(mac, sessionId);
 	csr_scan_abort_mac_scan(mac, sessionId, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(mac, sessionId, NULL, eCsrHddIssued);
@@ -8740,7 +8736,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	}
 	status = csr_scan_get_result(mac, filter, &hBSSList);
 	qdf_mem_free(filter);
-	sme_debug("csr_scan_get_result Status: %d", status);
 	csr_roam_print_candidate_aps(hBSSList);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		/* check if set hw mode needs to be done */
@@ -8823,8 +8818,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 				sme_err("CSR failed to issue SSID scan cmd with status: 0x%08X",
 					status);
 				fCallCallback = true;
-			} else {
-				sme_debug("SSID scan requested");
 			}
 		}
 	} else {
@@ -9525,9 +9518,6 @@ static QDF_STATUS csr_roam_issue_join(struct mac_context *mac, uint32_t sessionI
 {
 	QDF_STATUS status;
 
-	sme_debug("Attempting to Join Bssid= " QDF_MAC_ADDR_STR,
-		QDF_MAC_ADDR_ARRAY(pSirBssDesc->bssId));
-
 	/* Set the roaming substate to 'join attempt'... */
 	csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_JOIN_REQ, sessionId);
 	/* attempt to Join this BSS... */
@@ -9667,8 +9657,6 @@ csr_roaming_state_config_cnf_processor(struct mac_context *mac_ctx,
 		return;
 	}
 
-	/* we have active entry */
-	sme_debug("Cfg sequence complete");
 	/*
 	 * Successfully set the configuration parameters for the new Bss.
 	 * Attempt to join the roaming Bss
@@ -14834,10 +14822,6 @@ static void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
 				  tDot11fBeaconIEs *ies,
 				  struct join_req *csr_join_req)
 {
-	sme_debug("mgmt encryption type %d MFPe %d MFPr %d",
-		 profile->mgmt_encryption_type,
-		 profile->MFPEnabled, profile->MFPRequired);
-
 	if (profile->MFPEnabled)
 		csr_join_req->MgmtEncryptionType =
 					profile->mgmt_encryption_type;
@@ -14888,9 +14872,10 @@ static void csr_update_fils_connection_info(struct csr_roam_profile *profile,
 
 #ifdef WLAN_FEATURE_SAE
 /*
- * csr_update_sae_config: Copy SAE info to join request
- * @profile: pointer to profile
+ * csr_update_sae_config() - Copy SAE info to join request
  * @csr_join_req: csr join request
+ * @mac: mac context
+ * @session: sme session
  *
  * Return: None
  */
@@ -14906,9 +14891,11 @@ static void csr_update_sae_config(struct join_req *csr_join_req,
 	csr_join_req->sae_pmk_cached =
 	       csr_lookup_pmkid_using_bssid(mac, session, &pmkid_cache, &index);
 
-	sme_debug("pmk_cached %d for BSSID=" QDF_MAC_ADDR_STR,
-		csr_join_req->sae_pmk_cached,
-		QDF_MAC_ADDR_ARRAY(csr_join_req->bssDescription.bssId));
+	if (!csr_join_req->sae_pmk_cached)
+		return;
+
+	sme_debug("Found for BSSID=" QDF_MAC_ADDR_STR,
+		  QDF_MAC_ADDR_ARRAY(csr_join_req->bssDescription.bssId));
 }
 #else
 static inline void csr_update_sae_config(struct join_req *csr_join_req,
@@ -14966,42 +14953,6 @@ static uint8_t csr_get_nss_supported_by_sta_and_ap(tDot11fIEVHTCaps *vht_caps,
 	}
 
 	return NSS_1x1_MODE;
-}
-
-/**
- * csr_dump_vendor_ies() - Dumps all the vendor IEs
- * @ie:         ie buffer
- * @ie_len:     length of ie buffer
- *
- * This function dumps the vendor IEs present in the AP's IE buffer
- *
- * Return: none
- */
-static
-void csr_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
-{
-	int32_t left = ie_len;
-	uint8_t *ptr = ie;
-	uint8_t elem_id, elem_len;
-
-	while (left >= 2) {
-		elem_id  = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
-		if (elem_len > left) {
-			sme_err("Invalid IEs eid: %d elem_len: %d left: %d",
-				elem_id, elem_len, left);
-			return;
-		}
-		if (elem_id == WLAN_ELEMID_VENDOR) {
-			sme_debug("Dumping Vendor IE of len %d", elem_len);
-			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
-					   QDF_TRACE_LEVEL_DEBUG,
-					   &ptr[2], elem_len);
-		}
-		left -= elem_len;
-		ptr += (elem_len + 2);
-	}
 }
 
 /**
@@ -15334,10 +15285,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		ieLen = csr_get_ielen_from_bss_description(pBssDescription);
 
-		/* Dump the Vendor Specific IEs*/
-		csr_dump_vendor_ies((uint8_t *)&pBssDescription->ieFields[0],
-				    ieLen);
-
 		/* Fill the Vendor AP search params */
 		vendor_ap_search_attr.ie_data =
 				(uint8_t *)&pBssDescription->ieFields[0];
@@ -15481,10 +15428,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		csr_join_req->nss = pSession->nss;
 		csr_join_req->nss_forced_1x1 = pSession->nss_forced_1x1;
 		csr_join_req->dot11mode = (uint8_t)dot11mode;
-		sme_debug("dot11mode=%d, uCfgDot11Mode=%d nss=%d",
-			  csr_join_req->dot11mode,
-			  pSession->bssParams.uCfgDot11Mode,
-			  csr_join_req->nss);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		csr_join_req->cc_switch_mode =
 			mac->roam.configParam.cc_switch_mode;
@@ -15494,9 +15437,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		csr_join_req->cbMode = (uint8_t) pSession->bssParams.cbMode;
 		csr_join_req->force_24ghz_in_ht20 =
 			pProfile->force_24ghz_in_ht20;
-		sme_debug("CSR PERSONA: %d CSR CbMode: %d force 24gh ht20 %d",
-			  pProfile->csrPersona, pSession->bssParams.cbMode,
-			  csr_join_req->force_24ghz_in_ht20);
 		pSession->uapsd_mask = pProfile->uapsd_mask;
 		status =
 			csr_get_rate_set(mac, pProfile,
@@ -16091,7 +16031,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		}
 
 		if (pProfile->csrPersona == QDF_STA_MODE) {
-			sme_debug("Invoking packetdump register API");
 			wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
 			packetdump_timer_status = qdf_mc_timer_start(
 						&mac->roam.packetdump_timer,
@@ -16106,8 +16045,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (eWNI_SME_JOIN_REQ == messageType) {
 			/* Notify QoS module that join happening */
 			pSession->join_bssid_count++;
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"BSSID Count: %d", pSession->join_bssid_count);
 			sme_qos_csr_event_ind(mac, (uint8_t) sessionId,
 						SME_QOS_CSR_JOIN_REQ, NULL);
 		} else if (eWNI_SME_REASSOC_REQ == messageType)
