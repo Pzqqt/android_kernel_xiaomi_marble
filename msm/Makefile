@@ -70,10 +70,12 @@ msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_hw_reg_dma_v1.o \
 	sde/sde_hw_dsc.o \
 	sde/sde_hw_dsc_1_2.o \
+	sde/sde_hw_vdc.o \
 	sde/sde_hw_ds.o \
 	sde/sde_fence.o \
 	sde/sde_hw_qdss.o \
 	sde_dsc_helper.o \
+	sde_vdc_helper.o \
 
 msm_drm-$(CONFIG_DRM_SDE_WB) += sde/sde_wb.o \
 	sde/sde_encoder_phys_wb.o \

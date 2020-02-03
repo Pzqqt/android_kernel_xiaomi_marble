@@ -85,6 +85,8 @@ struct sde_hw_intf_cfg {
  * @cdm:                      Id of active cdm blocks
  * @dsc_count:                No. of active dsc blocks
  * @dsc:                      Id of active dsc blocks
+ * @vdc_count:                No. of active vdc blocks
+ * @vdc:                      Id of active vdc blocks
  */
 struct sde_hw_intf_cfg_v1 {
 	uint32_t intf_count;
@@ -106,6 +108,9 @@ struct sde_hw_intf_cfg_v1 {
 
 	uint32_t dsc_count;
 	enum sde_dsc dsc[MAX_DSC_PER_CTL_V1];
+
+	uint32_t vdc_count;
+	enum sde_vdc vdc[MAX_VDC_PER_CTL_V1];
 };
 
 /**
@@ -260,7 +265,8 @@ struct sde_hw_ctl_ops {
 	int (*setup_intf_cfg_v1)(struct sde_hw_ctl *ctx,
 		struct sde_hw_intf_cfg_v1 *cfg);
 
-	/** Update the interface selection with input WB config
+	/**
+	 * Update the interface selection with input WB config
 	 * @ctx       : ctl path ctx pointer
 	 * @cfg       : pointer to input wb config
 	 * @enable    : set if true, clear otherwise
@@ -385,6 +391,14 @@ struct sde_hw_ctl_ops {
 	 */
 	int (*update_bitmask_dsc)(struct sde_hw_ctl *ctx,
 		enum sde_dsc blk, bool enable);
+
+	/**
+	 * update_bitmask_vdc: updates mask corresponding to vdc
+	 * @blk               : blk id
+	 * @enable            : true to enable, 0 to disable
+	 */
+	int (*update_bitmask_vdc)(struct sde_hw_ctl *ctx,
+		enum sde_vdc blk, bool enable);
 
 	/**
 	 * update_bitmask_merge3d: updates mask corresponding to merge_3d

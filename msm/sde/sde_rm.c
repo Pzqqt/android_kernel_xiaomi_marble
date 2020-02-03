@@ -16,6 +16,7 @@
 #include "sde_encoder.h"
 #include "sde_connector.h"
 #include "sde_hw_dsc.h"
+#include "sde_hw_vdc.h"
 #include "sde_crtc.h"
 #include "sde_hw_qdss.h"
 
@@ -56,10 +57,12 @@ static const struct sde_rm_topology_def g_ctl_ver_1_top_table[] = {
 	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false },
 	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false },
 	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,       1, 1, 1, 1, false },
 	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 1, true  },
 	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 1, true  },
 	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false },
 	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC, 2, 1, 1, 1, false },
 	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false },
 	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true  },
 };
@@ -185,6 +188,8 @@ static void _sde_rm_inc_resource_info(struct sde_rm *rm,
 		avail_res->num_ctl++;
 	else if (type == SDE_HW_BLK_DSC)
 		avail_res->num_dsc++;
+	else if (type == SDE_HW_BLK_VDC)
+		avail_res->num_vdc++;
 }
 
 static void _sde_rm_dec_resource_info(struct sde_rm *rm,
@@ -199,6 +204,8 @@ static void _sde_rm_dec_resource_info(struct sde_rm *rm,
 		avail_res->num_ctl--;
 	else if (type == SDE_HW_BLK_DSC)
 		avail_res->num_dsc--;
+	else if (type == SDE_HW_BLK_VDC)
+		avail_res->num_vdc--;
 }
 
 void sde_rm_get_resource_info(struct sde_rm *rm,
@@ -443,6 +450,9 @@ static void _sde_rm_hw_destroy(enum sde_hw_blk_type type, void *hw)
 	case SDE_HW_BLK_DSC:
 		sde_hw_dsc_destroy(hw);
 		break;
+	case SDE_HW_BLK_VDC:
+		sde_hw_vdc_destroy(hw);
+		break;
 	case SDE_HW_BLK_QDSS:
 		sde_hw_qdss_destroy(hw);
 		break;
@@ -534,6 +544,9 @@ static int _sde_rm_hw_blk_create(
 	case SDE_HW_BLK_DSC:
 		hw = sde_hw_dsc_init(id, mmio, cat);
 		break;
+	case SDE_HW_BLK_VDC:
+		hw = sde_hw_vdc_init(id, mmio, cat);
+		break;
 	case SDE_HW_BLK_QDSS:
 		hw = sde_hw_qdss_init(id, mmio, cat);
 		break;
@@ -609,6 +622,15 @@ static int _sde_rm_hw_blk_create_new(struct sde_rm *rm,
 			cat->dsc[i].id, &cat->dsc[i]);
 		if (rc) {
 			SDE_ERROR("failed: dsc hw not available\n");
+			goto fail;
+		}
+	}
+
+	for (i = 0; i < cat->vdc_count; i++) {
+		rc = _sde_rm_hw_blk_create(rm, cat, mmio, SDE_HW_BLK_VDC,
+			cat->vdc[i].id, &cat->vdc[i]);
+		if (rc) {
+			SDE_ERROR("failed: vdc hw not available\n");
 			goto fail;
 		}
 	}
@@ -1233,6 +1255,21 @@ static bool _sde_rm_check_dsc(struct sde_rm *rm,
 	return true;
 }
 
+static bool _sde_rm_check_vdc(struct sde_rm *rm,
+		struct sde_rm_rsvp *rsvp,
+		struct sde_rm_hw_blk *vdc)
+{
+	const struct sde_vdc_cfg *vdc_cfg = to_sde_hw_vdc(vdc->hw)->caps;
+
+	/* Already reserved? */
+	if (RESERVED_BY_OTHER(vdc, rsvp)) {
+		SDE_DEBUG("vdc %d already reserved\n", vdc_cfg->id);
+		return false;
+	}
+
+	return true;
+}
+
 static int _sde_rm_reserve_dsc(
 		struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
@@ -1323,6 +1360,66 @@ static int _sde_rm_reserve_dsc(
 		dsc[i]->rsvp_nxt = rsvp;
 
 		SDE_EVT32(dsc[i]->type, rsvp->enc_id, dsc[i]->id);
+	}
+
+	return 0;
+}
+
+static int _sde_rm_reserve_vdc(
+		struct sde_rm *rm,
+		struct sde_rm_rsvp *rsvp,
+		struct sde_rm_requirements *reqs,
+		const struct sde_rm_topology_def *top,
+		u8 *_vdc_ids)
+{
+	struct sde_rm_hw_iter iter_i;
+	struct sde_rm_hw_blk *vdc[MAX_BLOCKS];
+	int alloc_count = 0;
+	int num_vdc_enc = top->num_comp_enc;
+	int i;
+
+	if (!top->num_comp_enc)
+		return 0;
+
+	if (reqs->hw_res.comp_info->comp_type != MSM_DISPLAY_COMPRESSION_VDC)
+		return 0;
+
+	sde_rm_init_hw_iter(&iter_i, 0, SDE_HW_BLK_VDC);
+
+	/* Find a VDC */
+	while (alloc_count != num_vdc_enc &&
+			_sde_rm_get_hw_locked(rm, &iter_i)) {
+
+		memset(&vdc, 0, sizeof(vdc));
+		alloc_count = 0;
+
+		if (_vdc_ids && (iter_i.blk->id != _vdc_ids[alloc_count]))
+			continue;
+
+		if (!_sde_rm_check_vdc(rm, rsvp, iter_i.blk))
+			continue;
+
+		SDE_DEBUG("blk id = %d, _vdc_ids[%d] = %d\n",
+			iter_i.blk->id,
+			alloc_count,
+			_vdc_ids ? _vdc_ids[alloc_count] : -1);
+
+		vdc[alloc_count++] = iter_i.blk;
+	}
+
+	if (alloc_count != num_vdc_enc) {
+		SDE_ERROR("couldn't reserve %d vdc blocks for enc id %d\n",
+			num_vdc_enc, rsvp->enc_id);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(vdc); i++) {
+		if (!vdc[i])
+			break;
+
+		vdc[i]->rsvp_nxt = rsvp;
+
+		SDE_EVT32(vdc[i]->type, rsvp->enc_id, vdc[i]->id);
 	}
 
 	return 0;
@@ -1579,6 +1676,26 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 	return 0;
 }
 
+static int _sde_rm_make_vdc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
+		struct sde_rm_requirements *reqs,
+		struct sde_splash_display *splash_display)
+{
+	int ret, i;
+	u8 *hw_ids = NULL;
+
+	/* Check if splash data provided vdc_ids */
+	if (splash_display) {
+		hw_ids = splash_display->vdc_ids;
+		for (i = 0; i < splash_display->vdc_cnt; i++)
+			SDE_DEBUG("splash_data.vdc_ids[%d] = %d\n",
+				i, splash_display->vdc_ids[i]);
+	}
+
+	ret = _sde_rm_reserve_vdc(rm, rsvp, reqs, reqs->topology, hw_ids);
+
+	return ret;
+}
+
 static int _sde_rm_make_next_rsvp(struct sde_rm *rm, struct drm_encoder *enc,
 		struct drm_crtc_state *crtc_state,
 		struct drm_connector_state *conn_state,
@@ -1632,6 +1749,10 @@ static int _sde_rm_make_next_rsvp(struct sde_rm *rm, struct drm_encoder *enc,
 		return ret;
 
 	ret = _sde_rm_make_dsc_rsvp(rm, rsvp, reqs, splash_display);
+	if (ret)
+		return ret;
+
+	ret = _sde_rm_make_vdc_rsvp(rm, rsvp, reqs, splash_display);
 	if (ret)
 		return ret;
 

@@ -74,6 +74,7 @@
 #define TOPOLOGY_DUALPIPE_MERGE_MODE(x) \
 		(((x) == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE) || \
 		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE) || \
+		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC) || \
 		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC))
 
 /**
@@ -2040,6 +2041,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *conn = NULL, *conn_search;
 	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
+	struct sde_rm_hw_iter vdc_iter;
 	struct sde_rm_hw_request request_hw;
 	enum sde_intf_mode intf_mode;
 	bool is_cmd_mode = false;
@@ -2162,6 +2164,14 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		if (!sde_rm_get_hw(&sde_kms->rm, &dsc_iter))
 			break;
 		sde_enc->hw_dsc[i] = (struct sde_hw_dsc *) dsc_iter.hw;
+	}
+
+	sde_rm_init_hw_iter(&vdc_iter, drm_enc->base.id, SDE_HW_BLK_VDC);
+	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
+		sde_enc->hw_vdc[i] = NULL;
+		if (!sde_rm_get_hw(&sde_kms->rm, &vdc_iter))
+			break;
+		sde_enc->hw_vdc[i] = (struct sde_hw_vdc *) vdc_iter.hw;
 	}
 
 	/* Get PP for DSC configuration */

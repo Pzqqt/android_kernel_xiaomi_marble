@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DEFS_H_
@@ -15,29 +15,6 @@
 
 #define DSI_V_TOTAL(t) (((t)->v_active) + ((t)->v_back_porch) + \
 			((t)->v_sync_width) + ((t)->v_front_porch))
-
-#define DSI_H_TOTAL_DSC(t) \
-	({\
-		u64 value;\
-		if ((t)->dsc_enabled && (t)->dsc)\
-			value = (t)->dsc->pclk_per_line;\
-		else\
-			value = (t)->h_active;\
-		value = value + (t)->h_back_porch + (t)->h_sync_width +\
-			(t)->h_front_porch;\
-		value;\
-	})
-
-#define DSI_H_ACTIVE_DSC(t) \
-	({\
-		u64 value;\
-		if ((t)->dsc_enabled && (t)->dsc)\
-			value = (t)->dsc->pclk_per_line;\
-		else\
-			value = (t)->h_active;\
-		value;\
-	})
-
 
 #define DSI_DEBUG_NAME_LEN		32
 #define display_for_each_ctrl(index, display) \
@@ -402,7 +379,9 @@ struct dsi_panel_cmd_set {
  *                    panels in microseconds.
  * @dsi_transfer_time_us:   Specifies dsi transfer time for command mode.
  * @dsc_enabled:      DSC compression enabled.
+ * @vdc_enabled:      VDC compression enabled.
  * @dsc:              DSC compression configuration.
+ * @vdc:              VDC compression configuration.
  * @roi_caps:         Panel ROI capabilities.
  */
 struct dsi_mode_info {
@@ -425,7 +404,9 @@ struct dsi_mode_info {
 	u32 mdp_transfer_time_us;
 	u32 dsi_transfer_time_us;
 	bool dsc_enabled;
+	bool vdc_enabled;
 	struct msm_display_dsc_info *dsc;
+	struct msm_display_vdc_info *vdc;
 	struct msm_roi_caps roi_caps;
 };
 
@@ -583,7 +564,9 @@ struct dsi_host_config {
  * @min_dsi_clk_hz:       Min dsi clk per lane to transfer frame in vsync time.
  * @topology:             Topology selected for the panel
  * @dsc:                  DSC compression info
+ * @vdc:                  VDC compression info
  * @dsc_enabled:          DSC compression enabled
+ * @vdc_enabled:          VDC compression enabled
  * @roi_caps:		  Panel ROI capabilities
  */
 struct dsi_display_mode_priv_info {
@@ -602,7 +585,9 @@ struct dsi_display_mode_priv_info {
 
 	struct msm_display_topology topology;
 	struct msm_display_dsc_info dsc;
+	struct msm_display_vdc_info vdc;
 	bool dsc_enabled;
+	bool vdc_enabled;
 	struct msm_roi_caps roi_caps;
 };
 
@@ -718,4 +703,25 @@ static inline int dsi_pixel_format_to_bpp(enum dsi_pixel_format fmt)
 	}
 	return 24;
 }
+
+static inline u64 dsi_h_active_dce(struct dsi_mode_info *mode)
+{
+	u64 h_active = 0;
+
+	if (mode->dsc_enabled && mode->dsc)
+		h_active = mode->dsc->pclk_per_line;
+	else if (mode->vdc_enabled && mode->vdc)
+		h_active = mode->vdc->pclk_per_line;
+	else
+		h_active = mode->h_active;
+
+	return h_active;
+}
+
+static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
+{
+	return dsi_h_active_dce(mode) + mode->h_back_porch +
+		mode->h_sync_width + mode->h_front_porch;
+}
+
 #endif /* _DSI_DEFS_H_ */

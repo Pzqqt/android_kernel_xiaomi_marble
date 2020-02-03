@@ -1721,7 +1721,7 @@ static void dp_display_update_dsc_resources(struct dp_display_private *dp,
 	u32 dsc_blk_cnt = 0;
 
 	if (panel->pinfo.comp_info.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-		panel->pinfo.comp_info.comp_ratio) {
+		(panel->pinfo.comp_info.comp_ratio > 1)) {
 		dsc_blk_cnt = panel->pinfo.h_active /
 				dp->parser->max_dp_dsc_input_width_pixs;
 		if (panel->pinfo.h_active %
@@ -2084,7 +2084,7 @@ static enum drm_mode_status dp_display_validate_mode(
 
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
-	dsc_en = dp_mode.timing.comp_info.comp_ratio ? true : false;
+	dsc_en = (dp_mode.timing.comp_info.comp_ratio > 1) ? true : false;
 	mode_bpp = dsc_en ?
 		DSC_BPP(dp_mode.timing.comp_info.dsc_info.config)
 		: dp_mode.timing.bpp;

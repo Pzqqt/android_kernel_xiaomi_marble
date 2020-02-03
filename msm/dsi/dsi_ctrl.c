@@ -913,7 +913,7 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 		do_div(bit_rate, dsi_transfer_time_us);
 		bit_rate = bit_rate * num_of_lanes;
 	} else {
-		h_period = DSI_H_TOTAL_DSC(timing);
+		h_period = dsi_h_total_dce(timing);
 		v_period = DSI_V_TOTAL(timing);
 		bit_rate = h_period * v_period * timing->refresh_rate * bpp;
 	}

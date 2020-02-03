@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -50,8 +50,6 @@ static void drm_mode_to_intf_timing_params(
 		struct intf_timing_params *timing)
 {
 	const struct sde_encoder_phys *phys_enc = &vid_enc->base;
-	enum msm_display_compression_ratio comp_ratio =
-				MSM_DISPLAY_COMPRESSION_RATIO_NONE;
 
 	memset(timing, 0, sizeof(*timing));
 
@@ -82,13 +80,12 @@ static void drm_mode_to_intf_timing_params(
 	 */
 	timing->width = mode->hdisplay;	/* active width */
 
-	if (phys_enc->hw_intf->cap->type != INTF_DP &&
-		vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC) {
-		comp_ratio = vid_enc->base.comp_ratio;
-		if (comp_ratio == MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1)
-			timing->width = DIV_ROUND_UP(timing->width, 2);
-		else
-			timing->width = DIV_ROUND_UP(timing->width, 3);
+	if (phys_enc->hw_intf->cap->type != INTF_DP) {
+		if ((vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC) ||
+				(vid_enc->base.comp_type ==
+				MSM_DISPLAY_COMPRESSION_VDC))
+			timing->width = DIV_ROUND_UP(timing->width,
+					vid_enc->base.comp_ratio);
 	}
 
 	timing->height = mode->vdisplay;	/* active height */
@@ -131,7 +128,8 @@ static void drm_mode_to_intf_timing_params(
 	 * compression ratio
 	 */
 	if (phys_enc->hw_intf->cap->type == INTF_DP &&
-		(timing->wide_bus_en || vid_enc->base.comp_ratio)) {
+			(timing->wide_bus_en ||
+			(vid_enc->base.comp_ratio > 1))) {
 		timing->width = timing->width >> 1;
 		timing->xres = timing->xres >> 1;
 		timing->h_back_porch = timing->h_back_porch >> 1;
@@ -139,7 +137,7 @@ static void drm_mode_to_intf_timing_params(
 		timing->hsync_pulse_width = timing->hsync_pulse_width >> 1;
 
 		if (vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-				vid_enc->base.comp_ratio) {
+				(vid_enc->base.comp_ratio > 1)) {
 			timing->compression_en = true;
 			timing->extra_dto_cycles =
 				vid_enc->base.dsc_extra_pclk_cycle_cnt;

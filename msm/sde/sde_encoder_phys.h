@@ -310,7 +310,7 @@ struct sde_encoder_phys {
 	struct sde_hw_intf_cfg intf_cfg;
 	struct sde_hw_intf_cfg_v1 intf_cfg_v1;
 	enum msm_display_compression_type comp_type;
-	enum msm_display_compression_ratio comp_ratio;
+	u32 comp_ratio;
 	u32 dsc_extra_pclk_cycle_cnt;
 	u32 dsc_extra_disp_width;
 	bool wide_bus_en;
@@ -610,7 +610,8 @@ static inline enum sde_3d_blend_mode sde_encoder_helper_get_3d_blend_mode(
 	topology = sde_connector_get_topology_name(phys_enc->connector);
 	if (phys_enc->split_role == ENC_ROLE_SOLO &&
 			(topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE ||
-			 topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC))
+			 topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC ||
+			topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC))
 		return BLEND_3D_H_ROW_INT;
 
 	return BLEND_3D_NONE;

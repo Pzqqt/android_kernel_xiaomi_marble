@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_MDSS_H
@@ -103,6 +103,7 @@ enum sde_hw_blk_type {
 	SDE_HW_BLK_INTF,
 	SDE_HW_BLK_WB,
 	SDE_HW_BLK_DSC,
+	SDE_HW_BLK_VDC,
 	SDE_HW_BLK_MERGE_3D,
 	SDE_HW_BLK_QDSS,
 	SDE_HW_BLK_MAX,
@@ -228,6 +229,13 @@ enum sde_dsc {
 	DSC_4,
 	DSC_5,
 	DSC_MAX
+};
+
+enum sde_vdc {
+	VDC_NONE = 0,
+	VDC_0,
+	VDC_1,
+	VDC_MAX
 };
 
 enum sde_intf {
@@ -519,6 +527,7 @@ struct sde_mdss_color {
 #define SDE_DBG_MASK_UIDLE    (1 << 15)
 #define SDE_DBG_MASK_SID      (1 << 15)
 #define SDE_DBG_MASK_QDSS     (1 << 16)
+#define SDE_DBG_MASK_VDC      (1 << 17)
 
 /**
  * struct sde_hw_cp_cfg: hardware dspp/lm feature payload.
@@ -596,10 +605,12 @@ struct sde_sspp_index_info {
  * @ctl_ids:	Stores the valid MDSS ctl block ids for the current mode
  * @lm_ids:	Stores the valid MDSS layer mixer block ids for the current mode
  * @dsc_ids:	Stores the valid MDSS DSC block ids for the current mode
+ * @vdc_ids:	Stores the valid MDSS VDC block ids for the current mode
  * @pipes:      Array of sspp info detected on this display
  * @ctl_cnt:    Stores the active number of MDSS "top" blks of the current mode
  * @lm_cnt:	Stores the active number of MDSS "LM" blks for the current mode
  * @dsc_cnt:	Stores the active number of MDSS "dsc" blks for the current mode
+ * @vdc_cnt:	Stores the valid MDSS VDC block ids for the current mode
  * @pipe_cnt:	Stores the active number of "sspp" blks connected
  */
 struct sde_splash_display {
@@ -609,10 +620,12 @@ struct sde_splash_display {
 	u8 ctl_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 lm_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 dsc_ids[MAX_DATA_PATH_PER_DSIPLAY];
+	u8 vdc_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	struct sde_sspp_index_info pipes[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 ctl_cnt;
 	u8 lm_cnt;
 	u8 dsc_cnt;
+	u8 vdc_cnt;
 	u8 pipe_cnt;
 };
 

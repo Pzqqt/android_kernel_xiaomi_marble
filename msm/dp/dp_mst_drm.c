@@ -526,7 +526,7 @@ static int dp_mst_calc_pbn_mode(struct dp_display_mode *dp_mode)
 	bool dsc_en;
 	s64 pbn_fp;
 
-	dsc_en = dp_mode->timing.comp_info.comp_ratio ? true : false;
+	dsc_en = (dp_mode->timing.comp_info.comp_ratio > 1) ? true : false;
 	bpp = dsc_en ?
 		DSC_BPP(dp_mode->timing.comp_info.dsc_info.config)
 		: dp_mode->timing.bpp;

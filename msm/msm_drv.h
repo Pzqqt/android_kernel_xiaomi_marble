@@ -72,6 +72,13 @@ struct msm_gem_vma;
 #define MAX_BRIDGES    16
 #define MAX_CONNECTORS 16
 
+#define MSM_RGB 0x0
+#define MSM_YUV 0x1
+
+#define MSM_CHROMA_444 0x0
+#define MSM_CHROMA_422 0x1
+#define MSM_CHROMA_420 0x2
+
 #define TEARDOWN_DEADLOCK_RETRY_MAX 5
 
 struct msm_file_private {
@@ -213,24 +220,16 @@ enum msm_mdp_conn_property {
  * enum msm_display_compression_type - compression method used for pixel stream
  * @MSM_DISPLAY_COMPRESSION_NONE:     Pixel data is not compressed
  * @MSM_DISPLAY_COMPRESSION_DSC:      DSC compresison is used
+ * @MSM_DISPLAY_COMPRESSION_VDC:      VDC compresison is used
  */
 enum msm_display_compression_type {
 	MSM_DISPLAY_COMPRESSION_NONE,
 	MSM_DISPLAY_COMPRESSION_DSC,
+	MSM_DISPLAY_COMPRESSION_VDC
 };
 
-/**
- * enum msm_display_compression_ratio - compression ratio
- * @MSM_DISPLAY_COMPRESSION_NONE: no compression
- * @MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1: 2 to 1 compression
- * @MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1: 3 to 1 compression
- */
-enum msm_display_compression_ratio {
-	MSM_DISPLAY_COMPRESSION_RATIO_NONE,
-	MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1,
-	MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1,
-	MSM_DISPLAY_COMPRESSION_RATIO_MAX,
-};
+#define MSM_DISPLAY_COMPRESSION_RATIO_NONE 1
+#define MSM_DISPLAY_COMPRESSION_RATIO_MAX 5
 
 /**
  * enum msm_display_caps - features/capabilities supported by displays
@@ -322,6 +321,8 @@ struct msm_roi_caps {
  * @pclk_per_line:           Compressed width.
  * @slice_last_group_size:   Size of last group in pixels.
  * @slice_per_pkt:           Number of slices per packet.
+ * @source_color_space:      Source color space of DSC encoder
+ * @chroma_format:           Chroma_format of DSC encoder.
  * @det_thresh_flatness:     Flatness threshold.
  * @extra_width:             Extra width required in timing calculations.
  * @pps_delay_ms:            Post PPS command delay in milliseconds.
@@ -338,11 +339,243 @@ struct msm_display_dsc_info {
 	int pclk_per_line;
 	int slice_last_group_size;
 	int slice_per_pkt;
+	int source_color_space;
+	int chroma_format;
 	int det_thresh_flatness;
 	u32 extra_width;
 	u32 pps_delay_ms;
 };
 
+
+/**
+ * struct msm_display_vdc_info - defines vdc configuration
+ * @version_major:              major version number of VDC encoder.
+ * @version_minor:              minor version number of VDC encoder.
+ * @source_color_space:         source color space of VDC encoder
+ * @chroma_format:              chroma_format of VDC encoder.
+ * @mppf_bpc_r_y:               MPPF bpc for R/Y color component
+ * @mppf_bpc_g_cb:              MPPF bpc for G/Cb color component
+ * @mppf_bpc_b_cr:              MPPF bpc for B/Cr color component
+ * @mppf_bpc_y:                 MPPF bpc for Y color component
+ * @mppf_bpc_co:                MPPF bpc for Co color component
+ * @mppf_bpc_cg:                MPPF bpc for Cg color component
+ * @flatqp_vf_fbls:             flatness qp very flat FBLs
+ * @flatqp_vf_nbls:             flatness qp very flat NBLs
+ * @flatqp_sw_fbls:             flatness qp somewhat flat FBLs
+ * @flatqp_sw_nbls:             flatness qp somewhat flat NBLs
+ * @chroma_samples:             number of chroma samples
+ * @split_panel_enable:         indicates whether split panel is enabled
+ * @panel_mode:                 indicates panel is in video or cmd mode
+ * @traffic_mode:               indicates burst/non-burst mode
+ * @flatness_qp_lut:            LUT used to determine flatness QP
+ * @max_qp_lut:                 LUT used to determine maximum QP
+ * @tar_del_lut:                LUT used to calculate RC target rate
+ * @lbda_brate_lut:             lambda bitrate LUT for encoder
+ * @lbda_bf_lut:                lambda buffer fullness lut for encoder
+ * @lbda_brate_lut_interp:      interpolated lambda bitrate LUT
+ * @lbda_bf_lut_interp:         interpolated lambda buffer fullness lut
+ * @num_of_active_ss:           number of active soft slices
+ * @bits_per_component:         number of bits per component.
+ * @max_pixels_per_line:        maximum pixels per line
+ * @max_pixels_per_hs_line:     maximum pixels per hs line
+ * @max_lines_per_frame:        maximum lines per frame
+ * @max_lines_per_slice:        maximum lines per slice
+ * @chunk_size:                 chunk size for encoder
+ * @chunk_size_bits:            number of bits in the chunk
+ * @avg_block_bits:             average block bits
+ * @per_chunk_pad_bits:         number of bits per chunk pad
+ * @tot_pad_bits:               total padding bits
+ * @rc_stuffing_bits:           rate control stuffing bits
+ * @chunk_adj_bits:             number of adjacent bits in the chunk
+ * @rc_buf_init_size_temp:      temporary rate control buffer init size
+ * @init_tx_delay_temp:         initial tx delay
+ * @rc_buffer_init_size:        rate control buffer init size
+ * @rc_init_tx_delay:           rate control buffer init tx delay
+ * @rc_init_tx_delay_px_times:  rate control buffer init tx
+ *                              delay times pixels
+ * @rc_buffer_max_size:         max size of rate control buffer
+ * @rc_tar_rate_scale_temp_a:   rate control target rate scale parameter
+ * @rc_tar_rate_scale_temp_b:	rate control target rate scale parameter
+ * @rc_tar_rate_scale:          rate control target rate scale
+ * @block_max_bits:             max bits in the block
+ * @rc_lambda_bitrate_scale:    rate control lambda bitrate scale
+ * @rc_buffer_fullness_scale:   rate control lambda fullness scale
+ * @rc_fullness_offset_thresh:  rate control lambda fullness threshold
+ * @ramp_blocks:                number of ramp blocks
+ * @bits_per_pixel:             number of bits per pixel.
+ * @num_extra_mux_bits_init:    initial value of number of extra mux bits
+ * @extra_crop_bits:            number of extra crop bits
+ * @num_extra_mux_bits:         value of number of extra mux bits
+ * @mppf_bits_comp_0:           mppf bits in color component 0
+ * @mppf_bits_comp_1:           mppf bits in color component 1
+ * @mppf_bits_comp_2:           mppf bits in color component 2
+ * @min_block_bits:             min number of block bits
+ * @slice_height:               slice height configuration of encoder.
+ * @slice_width:                slice width configuration of encoder.
+ * @frame_width:                frame width configuration of encoder
+ * @frame_height:               frame height configuration of encoder
+ * @bytes_in_slice:             Number of bytes in slice.
+ * @bytes_per_pkt:              Number of bytes in packet.
+ * @eol_byte_num:               Valid bytes at the end of line.
+ * @pclk_per_line:              Compressed width.
+ * @slice_per_pkt:              Number of slices per packet.
+ * @pkt_per_line:               Number of packets per line.
+ * @min_ssm_delay:              Min Sub-stream multiplexing delay
+ * @max_ssm_delay:              Max Sub-stream multiplexing delay
+ * @input_ssm_out_latency:      input Sub-stream multiplexing output latency
+ * @input_ssm_out_latency_min:  min input Sub-stream multiplexing output latency
+ * @obuf_latency:               Output buffer latency
+ * @base_hs_latency:            base hard-slice latency
+ * @base_hs_latency_min:        base hard-slice min latency
+ * @base_hs_latency_pixels:     base hard-slice latency pixels
+ * @base_hs_latency_pixels_min: base hard-slice latency pixels(min)
+ * @base_initial_lines:         base initial lines
+ * @base_top_up:                base top up
+ * @output_rate:                output rate
+ * @output_rate_ratio_100:      output rate times 100
+ * @burst_accum_pixels:         burst accumulated pixels
+ * @ss_initial_lines:           soft-slice initial lines
+ * @burst_initial_lines:        burst mode initial lines
+ * @initial_lines:              initial lines
+ * @obuf_base:                  output buffer base
+ * @obuf_extra_ss0:             output buffer extra ss0
+ * @obuf_extra_ss1:             output buffer extra ss1
+ * @obuf_extra_burst:           output buffer extra burst
+ * @obuf_ss0:                   output buffer ss0
+ * @obuf_ss1:                   output buffer ss1
+ * @obuf_margin_words:          output buffer margin words
+ * @ob0_max_addr:               output buffer 0 max address
+ * @ob1_max_addr:               output buffer 1 max address
+ * @slice_width_orig:           original slice width
+ * @r2b0_max_addr:              r2b0 max addr
+ * @r2b1_max_addr:              r1b1 max addr
+ * @slice_num_px:               number of pixels per slice
+ * @rc_target_rate_threshold:   rate control target rate threshold
+ * @rc_fullness_offset_slope:   rate control fullness offset slop
+ * @pps_delay_ms:               Post PPS command delay in milliseconds.
+ * @version_release:            release version of VDC encoder.
+ * @slice_num_bits:             number of bits per slice
+ * @ramp_bits:                  number of ramp bits
+ */
+struct msm_display_vdc_info {
+	u8 version_major;
+	u8 version_minor;
+
+	u8 source_color_space;
+	u8 chroma_format;
+	u8 mppf_bpc_r_y;
+	u8 mppf_bpc_g_cb;
+	u8 mppf_bpc_b_cr;
+	u8 mppf_bpc_y;
+	u8 mppf_bpc_co;
+	u8 mppf_bpc_cg;
+	u8 flatqp_vf_fbls;
+	u8 flatqp_vf_nbls;
+	u8 flatqp_sw_fbls;
+	u8 flatqp_sw_nbls;
+	u8 chroma_samples;
+	u8 split_panel_enable;
+	u8 panel_mode;
+	u8 traffic_mode;
+
+	u16 flatness_qp_lut[8];
+	u16 max_qp_lut[8];
+	u16 tar_del_lut[16];
+	u16 lbda_brate_lut[16];
+	u16 lbda_bf_lut[16];
+	u16 lbda_brate_lut_interp[64];
+	u16 lbda_bf_lut_interp[64];
+
+	u8 num_of_active_ss;
+	u8 bits_per_component;
+
+	u16 max_pixels_per_line;
+	u16 max_pixels_per_hs_line;
+	u16 max_lines_per_frame;
+	u16 max_lines_per_slice;
+
+	u16 chunk_size;
+	u16 chunk_size_bits;
+
+	u16 avg_block_bits;
+	u16 per_chunk_pad_bits;
+	u16 tot_pad_bits;
+	u16 rc_stuffing_bits;
+	u16 chunk_adj_bits;
+	u16 rc_buf_init_size_temp;
+	u16 init_tx_delay_temp;
+	u16 rc_buffer_init_size;
+	u16 rc_init_tx_delay;
+	u16 rc_init_tx_delay_px_times;
+	u16 rc_buffer_max_size;
+	u16 rc_tar_rate_scale_temp_a;
+	u16 rc_tar_rate_scale_temp_b;
+	u16 rc_tar_rate_scale;
+	u16 block_max_bits;
+	u16 rc_lambda_bitrate_scale;
+	u16 rc_buffer_fullness_scale;
+	u16 rc_fullness_offset_thresh;
+	u16 ramp_blocks;
+	u16 bits_per_pixel;
+	u16 num_extra_mux_bits_init;
+	u16 extra_crop_bits;
+	u16 num_extra_mux_bits;
+	u16 mppf_bits_comp_0;
+	u16 mppf_bits_comp_1;
+	u16 mppf_bits_comp_2;
+	u16 min_block_bits;
+
+	int slice_height;
+	int slice_width;
+	int frame_width;
+	int frame_height;
+
+	int bytes_in_slice;
+	int bytes_per_pkt;
+	int eol_byte_num;
+	int pclk_per_line;
+	int slice_per_pkt;
+	int pkt_per_line;
+
+	int min_ssm_delay;
+	int max_ssm_delay;
+	int input_ssm_out_latency;
+	int input_ssm_out_latency_min;
+	int obuf_latency;
+	int base_hs_latency;
+	int base_hs_latency_min;
+	int base_hs_latency_pixels;
+	int base_hs_latency_pixels_min;
+	int base_initial_lines;
+	int base_top_up;
+	int output_rate;
+	int output_rate_ratio_100;
+	int burst_accum_pixels;
+	int ss_initial_lines;
+	int burst_initial_lines;
+	int initial_lines;
+	int obuf_base;
+	int obuf_extra_ss0;
+	int obuf_extra_ss1;
+	int obuf_extra_burst;
+	int obuf_ss0;
+	int obuf_ss1;
+	int obuf_margin_words;
+	int ob0_max_addr;
+	int ob1_max_addr;
+	int slice_width_orig;
+	int r2b0_max_addr;
+	int r2b1_max_addr;
+
+	u32 slice_num_px;
+	u32 rc_target_rate_threshold;
+	u32 rc_fullness_offset_slope;
+	u32 pps_delay_ms;
+	u32 version_release;
+
+	u64 slice_num_bits;
+	u64 ramp_bits;
+};
 
 /**
  * Bits/pixel target >> 4  (removing the fractional bits)
@@ -356,13 +589,16 @@ struct msm_display_dsc_info {
  * @comp_ratio:       compression ratio
  * @dsc_info:         dsc configuration if the compression
  *                    supported is DSC
+ * @vdc_info:         vdc configuration if the compression
+ *                    supported is VDC
  */
 struct msm_compression_info {
 	enum msm_display_compression_type comp_type;
-	enum msm_display_compression_ratio comp_ratio;
+	u32 comp_ratio;
 
 	union{
 		struct msm_display_dsc_info dsc_info;
+		struct msm_display_vdc_info vdc_info;
 	};
 };
 
@@ -411,6 +647,7 @@ struct msm_mode_info {
  * struct msm_resource_caps_info - defines hw resources
  * @num_lm              number of layer mixers available
  * @num_dsc             number of dsc available
+ * @num_vdc             number of vdc available
  * @num_ctl             number of ctl available
  * @num_3dmux           number of 3d mux available
  * @max_mixer_width:    max width supported by layer mixer
@@ -418,6 +655,7 @@ struct msm_mode_info {
 struct msm_resource_caps_info {
 	uint32_t num_lm;
 	uint32_t num_dsc;
+	uint32_t num_vdc;
 	uint32_t num_ctl;
 	uint32_t num_3dmux;
 	uint32_t max_mixer_width;
@@ -980,5 +1218,7 @@ static inline unsigned long timeout_to_jiffies(const ktime_t *timeout)
 int msm_get_mixer_count(struct msm_drm_private *priv,
 		const struct drm_display_mode *mode,
 		const struct msm_resource_caps_info *res, u32 *num_lm);
+
+int msm_get_src_bpc(int chroma_format, int bpc);
 
 #endif /* __MSM_DRV_H__ */

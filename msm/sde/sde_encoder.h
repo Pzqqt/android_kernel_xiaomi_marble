@@ -135,6 +135,7 @@ struct sde_encoder_ops {
  * @hw_pp		Handle to the pingpong blocks used for the display. No.
  *			pingpong blocks can be different than num_phys_encs.
  * @hw_dsc:		Array of DSC block handles used for the display.
+ * @hw_vdc:		Array of VDC block handles used for the display.
  * @dirty_dsc_ids:	Cached dsc indexes for dirty DSC blocks needing flush
  * @intfs_swapped	Whether or not the phys_enc interfaces have been swapped
  *			for partial update right-only cases, such as pingpong
@@ -205,9 +206,10 @@ struct sde_encoder_virt {
 	struct sde_encoder_phys *cur_master;
 	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
 	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
+	struct sde_hw_vdc *hw_vdc[MAX_CHANNELS_PER_ENC];
 	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
 	enum sde_dsc dirty_dsc_ids[MAX_CHANNELS_PER_ENC];
-
+	enum sde_vdc dirty_vdc_ids[MAX_CHANNELS_PER_ENC];
 	bool intfs_swapped;
 	bool qdss_status;
 

@@ -20,6 +20,10 @@
 #define VSC_EXT_VESA_SDP_SUPPORTED BIT(4)
 #define VSC_EXT_VESA_SDP_CHAINING_SUPPORTED BIT(5)
 
+#define DP_COMPRESSION_RATIO_2_TO_1 2
+#define DP_COMPRESSION_RATIO_3_TO_1 3
+#define DP_COMPRESSION_RATIO_NONE 1
+
 enum dp_panel_hdr_pixel_encoding {
 	RGB,
 	YCbCr444,
@@ -1001,16 +1005,8 @@ static void dp_panel_calc_tu_parameters(struct dp_panel *dp_panel,
 	in.fec_en = dp_panel->fec_en;
 	in.num_of_dsc_slices = pinfo->comp_info.dsc_info.slice_per_pkt;
 
-	switch (pinfo->comp_info.comp_ratio) {
-	case MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1:
-		in.compress_ratio = 200;
-		break;
-	case MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1:
-		in.compress_ratio = 300;
-		break;
-	default:
-		in.compress_ratio = 100;
-	}
+	if (pinfo->comp_info.comp_ratio)
+		in.compress_ratio = pinfo->comp_info.comp_ratio * 100;
 
 	_dp_panel_calc_tu(&in, tu_table);
 }
@@ -1064,32 +1060,25 @@ static void dp_panel_config_tr_unit(struct dp_panel *dp_panel)
 	catalog->update_transfer_unit(catalog);
 }
 
-struct dp_dsc_dto_data {
-	enum msm_display_compression_ratio comp_ratio;
-	u32 org_bpp; /* bits */
-	u32 dto_numerator;
-	u32 dto_denominator;
-};
-
-struct dp_dsc_dto_data dto_tbl[] = {
-	{MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1, 24, 1, 2},
-	{MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1, 30, 5, 8},
-	{MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1, 24, 1, 3},
-	{MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1, 30, 5, 12},
-};
-
-static void _dp_panel_get_dto_m_n(enum msm_display_compression_ratio ratio,
-		u32 org_bpp, u32 *dto_n, u32 *dto_d)
+static void dp_panel_get_dto_params(u8 comp_ratio, u32 *num, u32 *denom,
+		u32 org_bpp)
 {
-	u32 idx;
-
-	for (idx = 0; idx < ARRAY_SIZE(dto_tbl); idx++) {
-		if (ratio == dto_tbl[idx].comp_ratio &&
-				org_bpp == dto_tbl[idx].org_bpp) {
-			*dto_n = dto_tbl[idx].dto_numerator;
-			*dto_d = dto_tbl[idx].dto_denominator;
-			return;
-		}
+	if ((comp_ratio == 2) && (org_bpp == 24)) {
+		*num = 1;
+		*denom = 2;
+	} else if ((comp_ratio == 2) && (org_bpp == 30)) {
+		*num = 5;
+		*denom = 8;
+	} else if ((comp_ratio == 3) && (org_bpp == 24)) {
+		*num = 1;
+		*denom = 3;
+	} else if ((comp_ratio == 3) && (org_bpp == 30)) {
+		*num = 5;
+		*denom = 12;
+	} else {
+		DP_ERR("dto params not found\n");
+		*num = 0;
+		*denom = 1;
 	}
 }
 
@@ -1134,7 +1123,7 @@ static void dp_panel_dsc_prepare_pps_packet(struct dp_panel *dp_panel)
 }
 
 static void _dp_panel_dsc_get_num_extra_pclk(struct msm_display_dsc_info *dsc,
-				enum msm_display_compression_ratio ratio)
+				u8 ratio)
 {
 	unsigned int dto_n = 0, dto_d = 0, remainder;
 	int ack_required, last_few_ack_required, accum_ack;
@@ -1142,8 +1131,8 @@ static void _dp_panel_dsc_get_num_extra_pclk(struct msm_display_dsc_info *dsc,
 	int start, temp, line_width = dsc->config.pic_width/2;
 	s64 temp1_fp, temp2_fp;
 
-	_dp_panel_get_dto_m_n(ratio, dsc->config.bits_per_component * 3,
-			&dto_n, &dto_d);
+	dp_panel_get_dto_params(ratio, &dto_n, &dto_d,
+			dsc->config.bits_per_component * 3);
 
 	ack_required = dsc->pclk_per_line;
 
@@ -1219,7 +1208,7 @@ static void _dp_panel_dsc_bw_overhead_calc(struct dp_panel *dp_panel,
 
 static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 		struct msm_display_dsc_info *dsc,
-		enum msm_display_compression_ratio ratio,
+		u8 ratio,
 		struct dp_display_mode *dp_mode)
 {
 	int comp_ratio, intf_width;
@@ -1238,17 +1227,8 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 	slice_per_intf = DIV_ROUND_UP(intf_width,
 			dsc->config.slice_width);
 
-	switch (ratio) {
-	case MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1:
-		comp_ratio = 200;
-		break;
-	case MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1:
-		comp_ratio = 300;
-		break;
-	default:
-		comp_ratio = 100;
-		break;
-	}
+	if (ratio)
+		comp_ratio = ratio * 100;
 
 	temp1_fp = drm_fixp_from_fraction(comp_ratio, 100);
 	temp2_fp = drm_fixp_from_fraction(slice_per_pkt * 8, 1);
@@ -1457,7 +1437,7 @@ static int dp_panel_dsc_prepare_basic_params(
 		DIV_ROUND_UP(dp_mode->timing.h_active, slice_width);
 
 	comp_info->comp_type = MSM_DISPLAY_COMPRESSION_DSC;
-	comp_info->comp_ratio = MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1;
+	comp_info->comp_ratio = DP_COMPRESSION_RATIO_3_TO_1;
 	return 0;
 }
 
@@ -2136,16 +2116,12 @@ static u32 _dp_panel_calc_be_in_lane(struct dp_panel *dp_panel)
 	if (!dp_panel->mst_state)
 		return be_in_lane;
 
-	switch (pinfo->comp_info.comp_ratio) {
-	case MSM_DISPLAY_COMPRESSION_RATIO_2_TO_1:
+	if (pinfo->comp_info.comp_ratio == DP_COMPRESSION_RATIO_2_TO_1)
 		denominator = 16; /* 2 * bits-in-byte */
-		break;
-	case MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1:
+	else if (pinfo->comp_info.comp_ratio == DP_COMPRESSION_RATIO_3_TO_1)
 		denominator = 24; /* 3 * bits-in-byte */
-		break;
-	default:
-		denominator = 8; /* 1 * bits-in-byte */
-	}
+	else
+		denominator = 8;
 
 	numerator = (pinfo->h_active + pinfo->h_back_porch +
 				pinfo->h_front_porch + pinfo->h_sync_width) *
@@ -2205,8 +2181,8 @@ static void dp_panel_config_dsc(struct dp_panel *dp_panel, bool enable)
 		dsc->dsc_en = true;
 		dsc->dto_en = true;
 
-		_dp_panel_get_dto_m_n(comp_info->comp_ratio, pinfo->bpp,
-				&dsc->dto_n, &dsc->dto_d);
+		dp_panel_get_dto_params(comp_info->comp_ratio, &dsc->dto_n,
+				&dsc->dto_d, pinfo->bpp);
 	} else {
 		dsc->dsc_en = false;
 		dsc->dto_en = false;
@@ -2957,9 +2933,11 @@ static void dp_panel_convert_to_dp_mode(struct dp_panel *dp_panel,
 	dp_mode->timing.widebus_en = dp_panel->widebus_en;
 	dp_mode->timing.dsc_overhead_fp = 0;
 
-	if (dp_panel->dsc_en && dsc_cap) {
-		comp_info = &dp_mode->timing.comp_info;
+	comp_info = &dp_mode->timing.comp_info;
+	comp_info->comp_ratio = DP_COMPRESSION_RATIO_NONE;
+	comp_info->comp_type = MSM_DISPLAY_COMPRESSION_NONE;
 
+	if (dp_panel->dsc_en && dsc_cap) {
 		if (dp_panel_dsc_prepare_basic_params(comp_info,
 					dp_mode, dp_panel)) {
 			DP_DEBUG("prepare DSC basic params failed\n");

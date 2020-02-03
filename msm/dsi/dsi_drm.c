@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -472,6 +472,8 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 {
 	struct dsi_display_mode dsi_mode;
 	struct dsi_mode_info *timing;
+	int chroma_format;
+	int src_bpp, tar_bpp;
 
 	if (!drm_mode || !mode_info)
 		return -EINVAL;
@@ -498,11 +500,25 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 
 	mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_NONE;
 	if (dsi_mode.priv_info->dsc_enabled) {
+		chroma_format = dsi_mode.priv_info->dsc.chroma_format;
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
 		memcpy(&mode_info->comp_info.dsc_info, &dsi_mode.priv_info->dsc,
 			sizeof(dsi_mode.priv_info->dsc));
-		mode_info->comp_info.comp_ratio =
-			MSM_DISPLAY_COMPRESSION_RATIO_3_TO_1;
+		tar_bpp = dsi_mode.priv_info->dsc.config.bits_per_pixel >> 4;
+		src_bpp = msm_get_src_bpc(chroma_format,
+			dsi_mode.priv_info->dsc.config.bits_per_component);
+		mode_info->comp_info.comp_ratio = mult_frac(1, src_bpp,
+				tar_bpp);
+	} else if (dsi_mode.priv_info->vdc_enabled) {
+		chroma_format = dsi_mode.priv_info->vdc.chroma_format;
+		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_VDC;
+		memcpy(&mode_info->comp_info.vdc_info, &dsi_mode.priv_info->vdc,
+			sizeof(dsi_mode.priv_info->vdc));
+		tar_bpp = dsi_mode.priv_info->vdc.bits_per_pixel >> 4;
+		src_bpp = msm_get_src_bpc(chroma_format,
+			dsi_mode.priv_info->vdc.bits_per_component);
+		mode_info->comp_info.comp_ratio = mult_frac(1, src_bpp,
+				tar_bpp);
 	}
 
 	if (dsi_mode.priv_info->roi_caps.enabled) {

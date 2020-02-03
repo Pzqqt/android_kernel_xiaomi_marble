@@ -319,6 +319,15 @@ enum {
 };
 
 enum {
+	VDC_OFF,
+	VDC_LEN,
+	VDC_REV,
+	VDC_ENC,
+	VDC_CTL,
+	VDC_PROP_MAX,
+};
+
+enum {
 	DS_TOP_OFF,
 	DS_TOP_LEN,
 	DS_TOP_INPUT_LINEWIDTH,
@@ -708,6 +717,14 @@ static struct sde_prop_type dsc_prop[] = {
 	{DSC_ENC, "qcom,sde-dsc-enc", false, PROP_TYPE_U32_ARRAY},
 	{DSC_CTL, "qcom,sde-dsc-ctl", false, PROP_TYPE_U32_ARRAY},
 	{DSC_422, "qcom,sde-dsc-native422-supp", false, PROP_TYPE_U32_ARRAY}
+};
+
+static struct sde_prop_type vdc_prop[] = {
+	{VDC_OFF, "qcom,sde-vdc-off", false, PROP_TYPE_U32_ARRAY},
+	{VDC_LEN, "qcom,sde-vdc-size", false, PROP_TYPE_U32},
+	{VDC_REV, "qcom,sde-vdc-hw-rev", false, PROP_TYPE_STRING},
+	{VDC_ENC, "qcom,sde-vdc-enc", false, PROP_TYPE_U32_ARRAY},
+	{VDC_CTL, "qcom,sde-vdc-ctl", false, PROP_TYPE_U32_ARRAY},
 };
 
 static struct sde_prop_type cdm_prop[] = {
@@ -2784,6 +2801,85 @@ end:
 	return rc;
 };
 
+static int sde_vdc_parse_dt(struct device_node *np,
+			struct sde_mdss_cfg *sde_cfg)
+{
+	int rc, prop_count[MAX_BLOCKS], i;
+	struct sde_prop_value *prop_value = NULL;
+	bool prop_exists[VDC_PROP_MAX];
+	u32 off_count, vdc_rev;
+	const char *rev;
+	struct sde_vdc_cfg *vdc;
+	struct sde_vdc_sub_blks *sblk;
+
+	if (!sde_cfg) {
+		SDE_ERROR("invalid argument\n");
+		rc = -EINVAL;
+		goto end;
+	}
+
+	prop_value = kzalloc(VDC_PROP_MAX *
+			sizeof(struct sde_prop_value), GFP_KERNEL);
+	if (!prop_value) {
+		rc = -ENOMEM;
+		goto end;
+	}
+
+	rc = _validate_dt_entry(np, vdc_prop, ARRAY_SIZE(vdc_prop), prop_count,
+		&off_count);
+	if (rc)
+		goto end;
+
+	sde_cfg->vdc_count = off_count;
+
+	rc = of_property_read_string(np, vdc_prop[VDC_REV].prop_name, &rev);
+	if ((rc == -EINVAL) || (rc == -ENODATA)) {
+		vdc_rev = SDE_VDC_HW_REV_1_1;
+		rc = 0;
+	} else if (!rc && !strcmp(rev, "vdc_1_1")) {
+		vdc_rev = SDE_VDC_HW_REV_1_1;
+		rc = 0;
+	} else {
+		SDE_ERROR("invalid vdc configuration\n");
+	}
+
+	rc = _read_dt_entry(np, vdc_prop, ARRAY_SIZE(vdc_prop), prop_count,
+		prop_exists, prop_value);
+	if (rc)
+		goto end;
+
+	for (i = 0; i < off_count; i++) {
+		vdc = sde_cfg->vdc + i;
+
+		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
+		if (!sblk) {
+			rc = -ENOMEM;
+			/* catalog deinit will release the allocated blocks */
+			goto end;
+		}
+		vdc->sblk = sblk;
+
+		vdc->base = PROP_VALUE_ACCESS(prop_value, VDC_OFF, i);
+		vdc->id = VDC_0 + i;
+		vdc->len = PROP_VALUE_ACCESS(prop_value, VDC_LEN, 0);
+		snprintf(vdc->name, SDE_HW_BLK_NAME_LEN, "vdc_%u",
+				vdc->id - VDC_0);
+
+		if (!prop_exists[VDC_LEN])
+			vdc->len = DEFAULT_SDE_HW_BLOCK_LEN;
+
+		sblk->enc.base = PROP_VALUE_ACCESS(prop_value,
+			VDC_ENC, i);
+		sblk->ctl.base = PROP_VALUE_ACCESS(prop_value,
+			VDC_CTL, i);
+		set_bit(SDE_VDC_HW_REV_1_1, &vdc->features);
+	}
+
+end:
+	kfree(prop_value);
+	return rc;
+};
+
 static int sde_cdm_parse_dt(struct device_node *np,
 				struct sde_mdss_cfg *sde_cfg)
 {
@@ -4542,6 +4638,9 @@ void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg)
 	for (i = 0; i < sde_cfg->pingpong_count; i++)
 		kfree(sde_cfg->pingpong[i].sblk);
 
+	for (i = 0; i < sde_cfg->vdc_count; i++)
+		kfree(sde_cfg->vdc[i].sblk);
+
 	for (i = 0; i < sde_cfg->vbif_count; i++) {
 		kfree(sde_cfg->vbif[i].dynamic_ot_rd_tbl.cfg);
 		kfree(sde_cfg->vbif[i].dynamic_ot_wr_tbl.cfg);
@@ -4631,6 +4730,10 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 		goto end;
 
 	rc = sde_dsc_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = sde_vdc_parse_dt(np, sde_cfg);
 	if (rc)
 		goto end;
 

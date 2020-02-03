@@ -19,10 +19,12 @@
  * @SDE_RM_TOPOLOGY_NONE:                 No topology in use currently
  * @SDE_RM_TOPOLOGY_SINGLEPIPE:           1 LM, 1 PP, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_SINGLEPIPE_DSC:       1 LM, 1 DSC, 1 PP, 1 INTF/WB
+ * @SDE_RM_TOPOLOGY_SINGLEPIPE_VDC:       1 LM, 1 VDC, 1 PP, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE:             2 LM, 2 PP, 2 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE_DSC:         2 LM, 2 DSC, 2 PP, 2 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE:     2 LM, 2 PP, 3DMux, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC: 2 LM, 2 PP, 3DMux, 1 DSC, 1 INTF/WB
+ * @SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC: 2 LM, 2 PP, 3DMux, 1 VDC, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE:    2 LM, 2 PP, 2 DSC Merge, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_PPSPLIT:              1 LM, 2 PPs, 2 INTF/WB
  */
@@ -30,10 +32,12 @@ enum sde_rm_topology_name {
 	SDE_RM_TOPOLOGY_NONE = 0,
 	SDE_RM_TOPOLOGY_SINGLEPIPE,
 	SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,
+	SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,
 	SDE_RM_TOPOLOGY_DUALPIPE,
 	SDE_RM_TOPOLOGY_DUALPIPE_DSC,
 	SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,
 	SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC,
+	SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC,
 	SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,
 	SDE_RM_TOPOLOGY_PPSPLIT,
 	SDE_RM_TOPOLOGY_MAX,
@@ -297,6 +301,27 @@ static inline const struct sde_rm_topology_def*
 	}
 
 	return &rm->topology_tbl[topology];
+}
+
+/**
+ * sde_rm_topology_get_num_lm - returns number of mixers
+ * used for this topology
+ * @rm: SDE Resource Manager handle
+ * @topology: topology selected for the display
+ * @return: number of lms
+ */
+static inline int sde_rm_topology_get_num_lm(struct sde_rm *rm,
+		enum sde_rm_topology_name topology)
+{
+	if ((!rm) || (topology <= SDE_RM_TOPOLOGY_NONE) ||
+			(topology >= SDE_RM_TOPOLOGY_MAX)) {
+		pr_err("invalid arguments: rm:%d topology:%d\n",
+				rm == NULL, topology);
+
+		return -EINVAL;
+	}
+
+	return rm->topology_tbl[topology].num_lm;
 }
 
 /**

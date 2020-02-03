@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/drm_atomic_helper.h>
@@ -418,7 +418,7 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 
 	dp_disp->convert_to_dp_mode(dp_disp, dp_panel, drm_mode, &dp_mode);
 
-	if (dp_mode.timing.comp_info.comp_ratio) {
+	if (dp_mode.timing.comp_info.comp_ratio > 1) {
 		memcpy(&mode_info->comp_info,
 			&dp_mode.timing.comp_info,
 			sizeof(mode_info->comp_info));

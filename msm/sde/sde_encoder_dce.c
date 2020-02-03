@@ -20,10 +20,12 @@
 #include "sde_encoder_phys.h"
 #include "sde_power_handle.h"
 #include "sde_hw_dsc.h"
+#include "sde_hw_vdc.h"
 #include "sde_crtc.h"
 #include "sde_trace.h"
 #include "sde_core_irq.h"
 #include "sde_dsc_helper.h"
+#include "sde_vdc_helper.h"
 
 #define SDE_DEBUG_DCE(e, fmt, ...) SDE_DEBUG("enc%d " fmt,\
 		(e) ? (e)->base.base.id : -1, ##__VA_ARGS__)
@@ -65,7 +67,7 @@ static int _dce_dsc_update_pic_dim(struct msm_display_dsc_info *dsc,
 	}
 
 	if ((pic_width % dsc->config.slice_width) ||
-	    (pic_height % dsc->config.slice_height)) {
+		(pic_height % dsc->config.slice_height)) {
 		SDE_ERROR("pic_dim=%dx%d has to be multiple of slice=%dx%d\n",
 			pic_width, pic_height,
 			dsc->config.slice_width, dsc->config.slice_height);
@@ -74,6 +76,29 @@ static int _dce_dsc_update_pic_dim(struct msm_display_dsc_info *dsc,
 
 	dsc->config.pic_width = pic_width;
 	dsc->config.pic_height = pic_height;
+
+	return 0;
+}
+
+static int _dce_vdc_update_pic_dim(struct msm_display_vdc_info *vdc,
+		int frame_width, int frame_height)
+{
+	if (!vdc || !frame_width || !frame_height) {
+		SDE_ERROR("invalid input: frame_width=%d frame_height=%d\n",
+			frame_width, frame_height);
+		return -EINVAL;
+	}
+
+	if ((frame_width % vdc->slice_width) ||
+			(frame_height % vdc->slice_height)) {
+		SDE_ERROR("pic_dim=%dx%d has to be multiple of slice=%dx%d\n",
+			frame_width, frame_height,
+			vdc->slice_width, vdc->slice_height);
+		return -EINVAL;
+	}
+
+	vdc->frame_width = frame_width;
+	vdc->frame_height = frame_height;
 
 	return 0;
 }
@@ -223,24 +248,59 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 		hw_dsc_pp->ops.enable_dsc(hw_dsc_pp);
 }
 
-static inline bool _dce_check_half_panel_update(int num_dsc,
-		bool merge_3d,
+static void _dce_vdc_pipe_cfg(struct sde_hw_vdc *hw_vdc,
+		struct sde_hw_pingpong *hw_pp,
+		struct msm_display_vdc_info *vdc,
+		enum sde_3d_blend_mode mode_3d,
+		bool disable_merge_3d, bool enable)
+{
+
+	if (!vdc || !hw_vdc || !hw_pp) {
+		SDE_ERROR("invalid params %d %d %d\n", !vdc, !hw_vdc,
+				!hw_pp);
+		return;
+	}
+
+	if (!enable) {
+		if (hw_vdc->ops.vdc_disable)
+			hw_vdc->ops.vdc_disable(hw_vdc);
+
+		if (hw_vdc->ops.bind_pingpong_blk)
+			hw_vdc->ops.bind_pingpong_blk(hw_vdc, false,
+					PINGPONG_MAX);
+
+		if (mode_3d && hw_pp->ops.reset_3d_mode)
+			hw_pp->ops.reset_3d_mode(hw_pp);
+		return;
+	}
+
+	if (hw_vdc->ops.vdc_config)
+		hw_vdc->ops.vdc_config(hw_vdc, vdc);
+
+	if (mode_3d && disable_merge_3d && hw_pp->ops.reset_3d_mode) {
+		SDE_DEBUG("disabling 3d mux\n");
+		hw_pp->ops.reset_3d_mode(hw_pp);
+	}
+
+	if (mode_3d && !disable_merge_3d && hw_pp->ops.setup_3d_mode) {
+		SDE_DEBUG("enabling 3d mux\n");
+		hw_pp->ops.setup_3d_mode(hw_pp, mode_3d);
+	}
+	if (hw_vdc->ops.bind_pingpong_blk)
+		hw_vdc->ops.bind_pingpong_blk(hw_vdc, true, hw_pp->idx);
+
+}
+
+static inline bool _dce_check_half_panel_update(int num_lm,
 		unsigned long affected_displays)
 {
 	/**
 	 * partial update logic is currently supported only upto dual
 	 * pipe configurations.
 	 */
-
-	if (merge_3d) {
-		int num_mixers = 2;
-
-		return (hweight_long(affected_displays) != num_mixers);
-	} else if (num_dsc > 1) {
-		return (hweight_long(affected_displays) != num_dsc);
-	}
-	return false;
+	return (hweight_long(affected_displays) != num_lm);
 }
+
 static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 		struct sde_encoder_kickoff_params *params)
 {
@@ -263,7 +323,7 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	bool disable_merge_3d = false;
 	int this_frame_slices;
 	int intf_ip_w, enc_ip_w;
-	int num_intf, num_dsc;
+	int num_intf, num_dsc, num_lm;
 	int ich_res;
 	int dsc_common_mode = 0;
 	int i;
@@ -314,6 +374,7 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	num_intf = def->num_intf;
 	mode_3d = (topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC) ?
 		BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
+	num_lm = def->num_lm;
 
 	/*
 	 * If this encoder is driving more than one DSC encoder, they
@@ -323,9 +384,8 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	_dce_dsc_update_pic_dim(dsc, roi->w, roi->h);
 	merge_3d = (mode_3d != BLEND_3D_NONE) ? true: false;
 	dsc_merge = (num_dsc > num_intf) ? true : false;
-
-	half_panel_partial_update = _dce_check_half_panel_update(
-			num_dsc, merge_3d, params->affected_displays);
+	half_panel_partial_update = _dce_check_half_panel_update(num_lm,
+		params->affected_displays);
 
 	if (half_panel_partial_update && merge_3d)
 		disable_merge_3d = true;
@@ -445,6 +505,176 @@ static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
 	return 0;
 }
 
+static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
+		struct sde_encoder_kickoff_params *params)
+{
+	struct drm_connector *drm_conn;
+	struct sde_kms *sde_kms;
+	struct msm_drm_private *priv;
+	struct drm_encoder *drm_enc;
+	struct sde_encoder_phys *enc_master;
+	struct sde_hw_vdc *hw_vdc[MAX_CHANNELS_PER_ENC];
+	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
+	struct msm_display_vdc_info *vdc = NULL;
+	enum sde_rm_topology_name topology;
+	const struct sde_rect *roi;
+	struct sde_hw_ctl *hw_ctl;
+	struct sde_hw_intf_cfg_v1 cfg;
+	enum sde_3d_blend_mode mode_3d;
+	bool half_panel_partial_update, merge_3d;
+	bool disable_merge_3d = false;
+	int this_frame_slices;
+	int intf_ip_w, enc_ip_w;
+	const struct sde_rm_topology_def *def;
+	int num_intf, num_vdc, num_lm;
+	int i;
+	int ret = 0;
+
+	if (!sde_enc || !params || !sde_enc->phys_encs[0] ||
+			!sde_enc->phys_encs[0]->connector)
+		return -EINVAL;
+
+	drm_conn = sde_enc->phys_encs[0]->connector;
+
+	topology = sde_connector_get_topology_name(drm_conn);
+	if (topology == SDE_RM_TOPOLOGY_NONE) {
+		SDE_ERROR_DCE(sde_enc, "topology not set yet\n");
+		return -EINVAL;
+	}
+
+	SDE_DEBUG_DCE(sde_enc, "topology:%d\n", topology);
+	SDE_EVT32(DRMID(&sde_enc->base), topology,
+			sde_enc->cur_conn_roi.x,
+			sde_enc->cur_conn_roi.y,
+			sde_enc->cur_conn_roi.w,
+			sde_enc->cur_conn_roi.h,
+			sde_enc->prv_conn_roi.x,
+			sde_enc->prv_conn_roi.y,
+			sde_enc->prv_conn_roi.w,
+			sde_enc->prv_conn_roi.h,
+			sde_enc->cur_master->cached_mode.hdisplay,
+			sde_enc->cur_master->cached_mode.vdisplay);
+
+	if (sde_kms_rect_is_equal(&sde_enc->cur_conn_roi,
+			&sde_enc->prv_conn_roi))
+		return ret;
+
+	enc_master = sde_enc->cur_master;
+	roi = &sde_enc->cur_conn_roi;
+	hw_ctl = enc_master->hw_ctl;
+	vdc = &sde_enc->mode_info.comp_info.vdc_info;
+
+	drm_enc = &sde_enc->base;
+	priv = drm_enc->dev->dev_private;
+	sde_kms = to_sde_kms(priv->kms);
+
+	def = sde_rm_topology_get_topology_def(&sde_kms->rm, topology);
+	if (IS_ERR_OR_NULL(def))
+		return -EINVAL;
+
+	num_vdc = def->num_comp_enc;
+	num_intf = def->num_intf;
+	mode_3d = (topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC) ?
+		BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
+	num_lm = def->num_lm;
+
+	/*
+	 * If this encoder is driving more than one VDC encoder, they
+	 * operate in tandem, same pic dimension needs to be used by
+	 * each of them.(pp-split is assumed to be not supported)
+	 */
+	_dce_vdc_update_pic_dim(vdc, roi->w, roi->h);
+	merge_3d = (mode_3d != BLEND_3D_NONE) ? true : false;
+	half_panel_partial_update = _dce_check_half_panel_update(num_lm,
+		params->affected_displays);
+
+	if (half_panel_partial_update && merge_3d)
+		disable_merge_3d = true;
+
+	this_frame_slices = roi->w / vdc->slice_width;
+	intf_ip_w = this_frame_slices * vdc->slice_width;
+
+	sde_vdc_populate_config(vdc, intf_ip_w, vdc->traffic_mode);
+
+	enc_ip_w = intf_ip_w;
+
+	SDE_DEBUG_DCE(sde_enc, "pic_w: %d pic_h: %d\n",
+				roi->w, roi->h);
+
+	for (i = 0; i < num_vdc; i++) {
+		bool active = !!((1 << i) & params->affected_displays);
+
+		/*
+		 * if half_panel partial update vdc should be bound to the pp
+		 * that is driving the update, in other case when both the
+		 * layer mixers are driving the update, vdc should be bound
+		 * to left side pp
+		 */
+		if (merge_3d && half_panel_partial_update)
+			hw_pp[i] = (active) ? sde_enc->hw_pp[0] :
+				sde_enc->hw_pp[1];
+		else
+			hw_pp[i] = sde_enc->hw_pp[i];
+		hw_vdc[i] = sde_enc->hw_vdc[i];
+
+		if (!hw_vdc[i]) {
+			SDE_ERROR_DCE(sde_enc, "invalid params for VDC\n");
+			SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
+				i, active);
+			return -EINVAL;
+		}
+
+		_dce_vdc_pipe_cfg(hw_vdc[i], hw_pp[i],
+				vdc, mode_3d, disable_merge_3d, active);
+
+		memset(&cfg, 0, sizeof(cfg));
+		cfg.vdc[cfg.vdc_count++] = hw_vdc[i]->idx;
+
+		if (hw_ctl->ops.update_intf_cfg)
+			hw_ctl->ops.update_intf_cfg(hw_ctl,
+					&cfg,
+					active);
+
+		if (hw_ctl->ops.update_bitmask_vdc)
+			hw_ctl->ops.update_bitmask_vdc(hw_ctl,
+					hw_vdc[i]->idx, active);
+
+		SDE_DEBUG_DCE(sde_enc,
+				"update_intf_cfg hw_ctl[%d], vdc:%d, %s",
+				hw_ctl->idx,
+				cfg.vdc[0],
+				active ? "enabled" : "disabled");
+
+		if (mode_3d) {
+			memset(&cfg, 0, sizeof(cfg));
+
+			cfg.merge_3d[cfg.merge_3d_count++] =
+				hw_pp[i]->merge_3d->idx;
+
+			if (hw_ctl->ops.update_intf_cfg)
+				hw_ctl->ops.update_intf_cfg(hw_ctl,
+						&cfg,
+						!disable_merge_3d);
+
+			if (hw_ctl->ops.update_bitmask_merge3d)
+				hw_ctl->ops.update_bitmask_merge3d(
+						hw_ctl,
+						hw_pp[i]->merge_3d->idx, true);
+
+			SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
+					disable_merge_3d ?
+					"disabled" : "enabled",
+					hw_ctl->idx - CTL_0,
+					hw_pp[i]->idx - PINGPONG_0,
+					hw_pp[i]->merge_3d ?
+					hw_pp[i]->merge_3d->idx - MERGE_3D_0 :
+					-1);
+		}
+	}
+
+	return 0;
+}
+
 static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 {
 	int i;
@@ -494,7 +724,55 @@ static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 	 */
 }
 
-static bool _dce_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
+
+static void _dce_vdc_disable(struct sde_encoder_virt *sde_enc)
+{
+	int i;
+	struct sde_hw_pingpong *hw_pp = NULL;
+	struct sde_hw_vdc *hw_vdc = NULL;
+	struct sde_hw_ctl *hw_ctl = NULL;
+	struct sde_hw_intf_cfg_v1 cfg;
+
+	if (!sde_enc || !sde_enc->phys_encs[0] ||
+			!sde_enc->phys_encs[0]->connector) {
+		SDE_ERROR("invalid params %d %d\n",
+			!sde_enc, sde_enc ? !sde_enc->phys_encs[0] : -1);
+		return;
+	}
+
+	if (sde_enc->cur_master)
+		hw_ctl = sde_enc->cur_master->hw_ctl;
+
+	memset(&cfg, 0, sizeof(cfg));
+
+	/* Disable VDC for all the pp's present in this topology */
+	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
+		hw_pp = sde_enc->hw_pp[i];
+		hw_vdc = sde_enc->hw_vdc[i];
+
+		_dce_vdc_pipe_cfg(hw_vdc, hw_pp, NULL,
+						BLEND_3D_NONE, false,
+						false);
+
+		if (hw_vdc) {
+			sde_enc->dirty_vdc_ids[i] = hw_vdc->idx;
+			cfg.vdc[cfg.vdc_count++] = hw_vdc->idx;
+		}
+	}
+
+	/* Clear the VDC ACTIVE config for this CTL */
+	if (hw_ctl && hw_ctl->ops.update_intf_cfg)
+		hw_ctl->ops.update_intf_cfg(hw_ctl, &cfg, false);
+
+	/**
+	 * Since pending flushes from previous commit get cleared
+	 * sometime after this point, setting VDC flush bits now
+	 * will have no effect. Therefore dirty_vdc_ids track which
+	 * VDC blocks must be flushed for the next trigger.
+	 */
+}
+
+bool _dce_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
 {
 	int i;
 
@@ -510,6 +788,21 @@ static bool _dce_dsc_is_dirty(struct sde_encoder_virt *sde_enc)
 	return false;
 }
 
+bool _dce_vdc_is_dirty(struct sde_encoder_virt *sde_enc)
+{
+	int i;
+
+	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
+		/**
+		 * This dirty_vdc_hw field is set during VDC disable to
+		 * indicate which VDC blocks need to be flushed
+		 */
+		if (sde_enc->dirty_vdc_ids[i])
+			return true;
+	}
+
+	return false;
+}
 
 static void _dce_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
 {
@@ -529,6 +822,24 @@ static void _dce_helper_flush_dsc(struct sde_encoder_virt *sde_enc)
 	}
 }
 
+void _dce_helper_flush_vdc(struct sde_encoder_virt *sde_enc)
+{
+	int i;
+	struct sde_hw_ctl *hw_ctl = NULL;
+	enum sde_vdc vdc_idx;
+
+	if (sde_enc->cur_master)
+		hw_ctl = sde_enc->cur_master->hw_ctl;
+
+	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
+		vdc_idx = sde_enc->dirty_vdc_ids[i];
+		if (vdc_idx && hw_ctl && hw_ctl->ops.update_bitmask_vdc)
+			hw_ctl->ops.update_bitmask_vdc(hw_ctl, vdc_idx, 1);
+
+		sde_enc->dirty_vdc_ids[i] = VDC_NONE;
+	}
+}
+
 void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc)
 {
 	enum msm_display_compression_type comp_type;
@@ -540,6 +851,8 @@ void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc)
 
 	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC)
 		_dce_dsc_disable(sde_enc);
+	else if (comp_type == MSM_DISPLAY_COMPRESSION_VDC)
+		_dce_vdc_disable(sde_enc);
 }
 
 int sde_encoder_dce_flush(struct sde_encoder_virt *sde_enc)
@@ -551,6 +864,8 @@ int sde_encoder_dce_flush(struct sde_encoder_virt *sde_enc)
 
 	if (_dce_dsc_is_dirty(sde_enc))
 		_dce_helper_flush_dsc(sde_enc);
+	else if (_dce_vdc_is_dirty(sde_enc))
+		_dce_helper_flush_vdc(sde_enc);
 
 	return rc;
 }
@@ -568,6 +883,8 @@ int sde_encoder_dce_setup(struct sde_encoder_virt *sde_enc,
 
 	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC)
 		rc = _dce_dsc_setup(sde_enc, params);
+	else if (comp_type == MSM_DISPLAY_COMPRESSION_VDC)
+		rc = _dce_vdc_setup(sde_enc, params);
 
 	return rc;
 }
