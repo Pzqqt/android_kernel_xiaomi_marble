@@ -247,7 +247,7 @@ QDF_STATUS wlan_serialization_validate_cmdtype(
 		 enum wlan_serialization_cmd_type cmd_type)
 {
 	if (cmd_type < 0 || cmd_type >= WLAN_SER_CMD_MAX) {
-		ser_err("Invalid cmd or comp passed");
+		ser_err("Invalid cmd %d passed", cmd_type);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -260,9 +260,8 @@ QDF_STATUS wlan_serialization_validate_cmd(
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	if (cmd_type < 0 || comp_id < 0 ||
-	    cmd_type >= WLAN_SER_CMD_MAX ||
-	   comp_id >= WLAN_UMAC_COMP_ID_MAX) {
+	if (cmd_type < 0 || comp_id < 0 || cmd_type >= WLAN_SER_CMD_MAX ||
+	    comp_id >= WLAN_UMAC_COMP_ID_MAX) {
 		ser_err("Invalid cmd or comp passed comp %d type %d",
 			comp_id, cmd_type);
 		goto error;

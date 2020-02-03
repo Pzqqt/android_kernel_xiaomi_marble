@@ -463,9 +463,9 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	pdev_queue = wlan_serialization_get_pdev_queue_obj(
 			ser_pdev_obj, cmd->cmd_type);
 
-	ser_debug("Type %d id %d high_priority %d blocking %d",
-		  cmd->cmd_type, cmd->cmd_id, cmd->is_high_priority,
-		  cmd->is_blocking);
+	ser_debug("Type %d id %d blocking %d reason %d active %d",
+		  cmd->cmd_type, cmd->cmd_id, cmd->is_blocking,
+		  ser_reason, active_cmd);
 
 	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 

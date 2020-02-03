@@ -256,7 +256,9 @@ wlan_serialization_cancel_request(
 	cmd.source = req->requestor;
 	cmd.vdev = req->vdev;
 
-	ser_debug("Type %d id %d source %d", cmd.cmd_type, cmd.cmd_id, cmd.source);
+	ser_debug("Type %d id %d source %d req type %d queue type %d",
+		  cmd.cmd_type, cmd.cmd_id, cmd.source, req->req_type,
+		  req->queue_type);
 	pdev = wlan_serialization_get_pdev_from_cmd(&cmd);
 	if (!pdev) {
 		ser_err("pdev is invalid");
@@ -313,8 +315,9 @@ void wlan_serialization_remove_cmd(
 
 	if (ser_status != WLAN_SER_CMD_IN_ACTIVE_LIST) {
 		if (ser_status != WLAN_SER_CMD_MARKED_FOR_ACTIVATION)
-		ser_debug("Can't dequeue requested id %d type %d requestor %d",
-			  cmd.cmd_id, cmd.cmd_type, cmd_info->requestor);
+			ser_debug("Can't dequeue requested id %d type %d requestor %d",
+				  cmd.cmd_id, cmd.cmd_type,
+				  cmd_info->requestor);
 	}
 }
 
@@ -335,10 +338,8 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 		goto error;
 	}
 	status = wlan_serialization_validate_cmd(cmd->source, cmd->cmd_type);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		ser_err("cmd is not valid");
+	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
-	}
 
 	psoc = wlan_serialization_get_psoc_from_cmd(cmd);
 	if (!psoc) {
