@@ -796,6 +796,7 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 	if (qdf_unlikely(!fisa_flow_vdev ||
 					(fisa_flow_vdev != fisa_flow->vdev))) {
 		qdf_nbuf_free(fisa_flow->head_skb);
+		goto out;
 	}
 	dp_fisa_debug("fisa_flow->curr_aggr %d", fisa_flow->cur_aggr);
 	linear_skb = dp_fisa_rx_linear_skb(vdev, fisa_flow->head_skb, 24000);
@@ -807,6 +808,7 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 		vdev->osif_rx(vdev->osif_vdev, fisa_flow->head_skb);
 	}
 
+out:
 	fisa_flow->head_skb = NULL;
 	fisa_flow->last_skb = NULL;
 
