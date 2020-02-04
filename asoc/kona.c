@@ -446,7 +446,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
 	},
-    {
+	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
 		.stream_name = LPASS_BE_WSA_CDC_DMA_TX_1,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -460,8 +460,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_0,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_0,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -475,8 +475,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_1,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -490,8 +490,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_2,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -505,8 +505,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_3,
 		.stream_name = LPASS_BE_RX_CDC_DMA_RX_3,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -520,8 +520,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_3,
 		.stream_name = LPASS_BE_TX_CDC_DMA_TX_3,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -535,8 +535,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
 		.stream_name = LPASS_BE_TX_CDC_DMA_TX_4,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -550,8 +550,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_0,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_0,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -565,8 +565,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_1,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_1,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -580,8 +580,8 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
+	},
+	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_2,
 		.stream_name = LPASS_BE_VA_CDC_DMA_TX_2,
 		.cpu_dai_name = "snd-soc-dummy-dai",
@@ -595,35 +595,73 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
-    },
-    {
-	    .name = LPASS_BE_SLIMBUS_7_RX,
-	    .stream_name = LPASS_BE_SLIMBUS_7_RX,
-	    .cpu_dai_name = "snd-soc-dummy-dai",
-	    .async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-	    .dpcm_playback = 1,
-	    .trigger = {SND_SOC_DPCM_TRIGGER_POST,
-		    SND_SOC_DPCM_TRIGGER_POST},
-	    .codec_name = "btfmslim_slave",
-	    .codec_dai_name = "btfm_bt_sco_a2dp_slim_rx",
-	    .ignore_suspend = 1,
-	    /* this dainlink has playback support */
-	    .ignore_pmdown_time = 1,
-    },
-    {
-	    .name = LPASS_BE_SLIMBUS_7_TX,
-	    .stream_name = LPASS_BE_SLIMBUS_7_TX,
-	    .cpu_dai_name = "snd-soc-dummy-dai",
-	    .async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
-	    .dpcm_capture = 1,
-	    .trigger = {SND_SOC_DPCM_TRIGGER_POST,
-		    SND_SOC_DPCM_TRIGGER_POST},
-	    .codec_name = "btfmslim_slave",
-	    .codec_dai_name = "btfm_bt_sco_slim_tx",
-	    .ignore_suspend = 1,
-	    .ignore_pmdown_time = 1,
-	    .init = &msm_wcn_init,
-    },
+	},
+	{
+		.name = LPASS_BE_SLIMBUS_7_RX,
+		.stream_name = LPASS_BE_SLIMBUS_7_RX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_name = "btfmslim_slave",
+		.codec_dai_name = "btfm_bt_sco_a2dp_slim_rx",
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_SLIMBUS_7_TX,
+		.stream_name = LPASS_BE_SLIMBUS_7_TX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_name = "btfmslim_slave",
+		.codec_dai_name = "btfm_bt_sco_slim_tx",
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.init = &msm_wcn_init,
+	},
+	{
+		.name = LPASS_BE_DISPLAY_PORT_RX,
+		.stream_name = LPASS_BE_DISPLAY_PORT_RX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "msm-ext-disp-audio-codec-rx",
+		.codec_dai_name = "msm_dp_audio_codec_rx_dai",
+		.dpcm_playback = 1,
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_USB_AUDIO_RX,
+		.stream_name = LPASS_BE_USB_AUDIO_RX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.dpcm_playback = 1,
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_USB_AUDIO_TX,
+		.stream_name = LPASS_BE_USB_AUDIO_TX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.dpcm_capture = 1,
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+	},
 };
 
 static struct snd_soc_dai_link msm_kona_dai_links[
