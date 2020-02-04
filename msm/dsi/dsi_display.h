@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DISPLAY_H_
@@ -180,6 +180,7 @@ struct dsi_display_ext_bridge {
  * @misr_enable       Frame MISR enable/disable
  * @misr_frame_count  Number of frames to accumulate the MISR value
  * @esd_trigger       field indicating ESD trigger through debugfs
+ * @poms_te_work      POMS delayed work for disabling panel TE
  * @te_source         vsync source pin information
  * @clk_gating_config Clocks for which clock gating needs to be enabled
  * @queue_cmd_waits   Indicates if wait for dma commands done has to be queued.
@@ -260,6 +261,9 @@ struct dsi_display {
 	struct work_struct fifo_underflow_work;
 	struct work_struct fifo_overflow_work;
 	struct work_struct lp_rx_timeout_work;
+
+	/* panel te delayed work */
+	struct delayed_work poms_te_work;
 
 	/* firmware panel data */
 	const struct firmware *fw;

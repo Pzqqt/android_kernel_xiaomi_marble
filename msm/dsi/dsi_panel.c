@@ -1479,6 +1479,8 @@ static int dsi_panel_parse_panel_mode(struct dsi_panel *panel)
 		}
 	}
 
+	panel->poms_align_vsync = utils->read_bool(utils->data,
+					"qcom,poms-align-panel-vsync");
 	panel->panel_mode = panel_mode;
 	panel->panel_mode_switch_enabled = panel_mode_switch_enabled;
 error:
