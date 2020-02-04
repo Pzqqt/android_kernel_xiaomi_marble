@@ -165,6 +165,8 @@ sme_ps_enable_ps_req_params(struct mac_context *mac_ctx, uint32_t vdev_id)
 
 	wma_enable_sta_ps_mode(enable_ps_req_params);
 
+	qdf_mem_free(enable_ps_req_params);
+
 	sme_debug("Powersave Enable sent to FW");
 	ps_param->ps_state = ps_state;
 
@@ -191,6 +193,8 @@ static QDF_STATUS sme_ps_disable_ps_req_params(struct mac_context *mac_ctx,
 	disable_ps_req_params->sessionid = vdev_id;
 
 	wma_disable_sta_ps_mode(disable_ps_req_params);
+	qdf_mem_free(disable_ps_req_params);
+
 	sme_debug("Powersave disable sent to FW");
 	sme_set_ps_state(mac_ctx, vdev_id, FULL_POWER_MODE);
 
