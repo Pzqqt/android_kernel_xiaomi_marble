@@ -2254,7 +2254,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 
 		if (!is_open_auth) {
 			bss_mfp_capable =
-				lim_get_bss_rmf_capable(mac_ctx, pe_session);
+				lim_get_vdev_rmf_capable(mac_ctx, pe_session);
 			if (!bss_mfp_capable) {
 				pe_debug("Peer doesn't support PMF, Don't add MBO IE");
 				qdf_mem_free(mbo_ie);

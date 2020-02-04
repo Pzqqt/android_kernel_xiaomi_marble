@@ -1165,48 +1165,8 @@ static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 }
 
 #ifdef WLAN_FEATURE_11W
-/**
- * lim_set_rmf_enabled() - set rmf enabled
- * @mac: mac context
- * @session: pe session
- * @csr_join_req: csr join req
- *
- * Return: void
- */
-static void lim_set_rmf_enabled(struct mac_context *mac,
-				struct pe_session *session,
-				struct join_req *csr_join_req)
-{
-	struct wlan_objmgr_vdev *vdev;
-	uint16_t rsn_caps;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
-						    csr_join_req->vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		pe_err("Invalid vdev");
-		return;
-	}
-	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
-						   WLAN_CRYPTO_PARAM_RSN_CAP);
-	if (wlan_crypto_vdev_has_mgmtcipher(
-				vdev,
-				(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
-				(1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256) |
-				(1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) &&
-	    (rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) &&
-	    (rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED))
-		session->limRmfEnabled = 1;
-
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
-	pe_debug("vdev %d limRmfEnabled %d rsn_caps 0x%x",
-		 csr_join_req->vdev_id, session->limRmfEnabled,
-		 rsn_caps);
-}
-
-bool lim_get_bss_rmf_capable(struct mac_context *mac,
-			     struct pe_session *session)
+bool
+lim_get_vdev_rmf_capable(struct mac_context *mac, struct pe_session *session)
 {
 	struct wlan_objmgr_vdev *vdev;
 	uint16_t rsn_caps;
@@ -1236,21 +1196,6 @@ bool lim_get_bss_rmf_capable(struct mac_context *mac,
 		 rsn_caps);
 
 	return peer_rmf_capable;
-}
-#else
-/**
- * lim_set_rmf_enabled() - set rmf enabled
- * @mac: mac context
- * @session: pe session
- * @csr_join_req: csr join req
- *
- * Return: void
- */
-static inline void lim_set_rmf_enabled(struct mac_context *mac,
-				       struct pe_session *session,
-				       struct join_req *csr_join_req)
-
-{
 }
 #endif
 
@@ -1516,7 +1461,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 
 		/* Record if management frames need to be protected */
-		lim_set_rmf_enabled(mac_ctx, session, sme_join_req);
+		session->limRmfEnabled =
+			lim_get_vdev_rmf_capable(mac_ctx, session);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 		session->rssi = bss_desc->rssi;
