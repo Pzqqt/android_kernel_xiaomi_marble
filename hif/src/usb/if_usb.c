@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,9 @@
 #include "epping_main.h"
 #include "hif_main.h"
 #include "usb_api.h"
+#ifdef CONFIG_PLD_USB_CNSS
+#include "pld_common.h"
+#endif
 
 #define DELAY_FOR_TARGET_READY 200	/* 200ms */
 
