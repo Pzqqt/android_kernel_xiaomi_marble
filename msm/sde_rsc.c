@@ -1357,6 +1357,7 @@ static ssize_t _sde_debugfs_mode_ctrl_read(struct file *file, char __user *buf,
 	struct sde_rsc_priv *rsc = file->private_data;
 	char buffer[MAX_BUFFER_SIZE];
 	int blen = 0;
+	size_t max_size = min_t(size_t, count, MAX_BUFFER_SIZE);
 
 	if (*ppos || !rsc || !rsc->hw_ops.mode_ctrl)
 		return 0;
@@ -1364,23 +1365,23 @@ static ssize_t _sde_debugfs_mode_ctrl_read(struct file *file, char __user *buf,
 	mutex_lock(&rsc->client_lock);
 	if (rsc->current_state == SDE_RSC_IDLE_STATE) {
 		pr_debug("debug node is not supported during idle state\n");
-		blen = snprintf(buffer, MAX_BUFFER_SIZE,
+		blen = scnprintf(buffer, max_size,
 				"hw state is not supported during idle pc\n");
 		goto end;
 	}
 
-	blen = rsc->hw_ops.mode_ctrl(rsc, MODE_READ, buffer,
-							MAX_BUFFER_SIZE, 0);
+	blen = rsc->hw_ops.mode_ctrl(rsc, MODE_READ, buffer, max_size, 0);
 
 end:
 	mutex_unlock(&rsc->client_lock);
 	if (blen <= 0)
 		return 0;
 
-	if (blen > count)
+	if (blen > count) {
 		blen = count;
+		buffer[count - 1] = '\0';
+	}
 
-	blen = min_t(size_t, blen, MAX_BUFFER_SIZE);
 	if (copy_to_user(buf, buffer, blen))
 		return -EFAULT;
 
@@ -1447,6 +1448,7 @@ static ssize_t _sde_debugfs_vsync_mode_read(struct file *file, char __user *buf,
 	struct sde_rsc_priv *rsc = file->private_data;
 	char buffer[MAX_BUFFER_SIZE];
 	int blen = 0;
+	size_t max_size = min_t(size_t, count, MAX_BUFFER_SIZE);
 
 	if (*ppos || !rsc || !rsc->hw_ops.hw_vsync)
 		return 0;
@@ -1454,23 +1456,23 @@ static ssize_t _sde_debugfs_vsync_mode_read(struct file *file, char __user *buf,
 	mutex_lock(&rsc->client_lock);
 	if (rsc->current_state == SDE_RSC_IDLE_STATE) {
 		pr_debug("debug node is not supported during idle state\n");
-		blen = snprintf(buffer, MAX_BUFFER_SIZE,
+		blen = scnprintf(buffer, max_size,
 				"hw state is not supported during idle pc\n");
 		goto end;
 	}
 
-	blen = rsc->hw_ops.hw_vsync(rsc, VSYNC_READ, buffer,
-						MAX_BUFFER_SIZE, 0);
+	blen = rsc->hw_ops.hw_vsync(rsc, VSYNC_READ, buffer, max_size, 0);
 
 end:
 	mutex_unlock(&rsc->client_lock);
 	if (blen <= 0)
 		return 0;
 
-	if (blen > count)
+	if (blen > count) {
 		blen = count;
+		buffer[count - 1] = '\0';
+	}
 
-	blen = min_t(size_t, blen, MAX_BUFFER_SIZE);
 	if (copy_to_user(buf, buffer, blen))
 		return -EFAULT;
 

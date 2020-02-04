@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde_rsc_hw:%s:%d]: " fmt, __func__, __LINE__
@@ -717,8 +717,7 @@ int rsc_hw_mode_ctrl(struct sde_rsc_priv *rsc, enum rsc_mode_req request,
 		if (!buffer || !buffer_size)
 			return blen;
 
-		blen = snprintf(buffer, buffer_size - blen,
-			"mode_status:0x%x\n",
+		blen = scnprintf(buffer, buffer_size, "mode_status:0x%x\n",
 			dss_reg_r(&rsc->drv_io, SDE_RSCC_SOLVER_STATUS2_DRV0,
 			rsc->debug_mode));
 		break;
@@ -798,14 +797,12 @@ int rsc_hw_vsync(struct sde_rsc_priv *rsc, enum rsc_vsync_req request,
 		if (!buffer || !buffer_size)
 			return blen;
 
-		blen = snprintf(buffer, buffer_size - blen, "vsync0:0x%x\n",
+		blen = scnprintf(buffer, buffer_size, "vsync0:0x%x\n",
 			 dss_reg_r(&rsc->wrapper_io,
 				SDE_RSCC_WRAPPER_VSYNC_TIMESTAMP0,
 				rsc->debug_mode));
-		if (blen >= buffer_size)
-			return blen;
 
-		blen += snprintf(buffer + blen, buffer_size - blen,
+		blen += scnprintf(buffer + blen, buffer_size - blen,
 			"vsync1:0x%x\n",
 			 dss_reg_r(&rsc->wrapper_io,
 				SDE_RSCC_WRAPPER_VSYNC_TIMESTAMP1,
