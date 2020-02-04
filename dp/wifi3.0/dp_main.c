@@ -6446,6 +6446,12 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (!peer->valid) {
+		dp_peer_unref_delete(peer);
+		dp_err("Invalid peer: %pM", peer_mac);
+		return QDF_STATUS_E_ALREADY;
+	}
+
 	peer->valid = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
