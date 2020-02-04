@@ -1730,7 +1730,9 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
 	}
 
-	if (ppdu_desc->resp_type == HTT_PPDU_STATS_ACK_EXPECTED_E)
+	if (ppdu_desc->resp_type == HTT_PPDU_STATS_ACK_EXPECTED_E &&
+	    ppdu_desc->user[0].completion_status ==
+	    HTT_PPDU_STATS_USER_STATUS_OK)
 		dp_gen_ack_rx_frame(pdev, &tx_capture_info);
 }
 
