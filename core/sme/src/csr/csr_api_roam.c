@@ -20903,7 +20903,7 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 	}
 
 	if (vdev_roam_params->roam_invoke_in_progress) {
-		sme_debug("Roaming in progress set by source = %d, aborting this roam invoke",
+		sme_debug("Roaming already initiated by %d source",
 			  vdev_roam_params->source);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return QDF_STATUS_E_FAILURE;
@@ -20915,10 +20915,9 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 	/* if both are same then set the flag */
-	if (!qdf_mem_cmp(connected_bssid, bssid, ETH_ALEN)) {
+	if (!qdf_mem_cmp(connected_bssid, bssid, ETH_ALEN))
 		fastreassoc->is_same_bssid = true;
-		sme_debug("bssid same, bssid[%pM]", bssid);
-	}
+
 	fastreassoc->vdev_id = vdev_id;
 	fastreassoc->bssid[0] = bssid[0];
 	fastreassoc->bssid[1] = bssid[1];
@@ -20975,11 +20974,10 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 	} else {
 		vdev_roam_params->roam_invoke_in_progress = true;
 		vdev_roam_params->source = USERSPACE_INITIATED;
-		sme_debug("Trigger roaming for vdev id %d source = USERSPACE_INITIATED",
-			  session->sessionId);
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	return status;
 }
 
@@ -21072,13 +21070,13 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				eCSR_ROAM_NAPI_OFF, eCSR_ROAM_RESULT_SUCCESS);
 		goto end;
 	case SIR_ROAMING_INVOKE_FAIL:
+		sme_debug("Roaming triggered failed source %d",
+			   vdev_roam_params->source);
 		if (vdev_roam_params->source == USERSPACE_INITIATED) {
 			/* Userspace roam req fail, disconnect with AP */
-			sme_debug("LFR3: roam invoke from user-space fail, dis cur AP");
 			csr_roam_disconnect(mac_ctx, session_id,
 					    eCSR_DISCONNECT_REASON_DEAUTH);
 		}
-		sme_debug("Roaming Failed, clearing roam invoke in progress");
 		vdev_roam_params->roam_invoke_in_progress = false;
 		goto end;
 	case SIR_ROAM_SYNCH_PROPAGATION:
