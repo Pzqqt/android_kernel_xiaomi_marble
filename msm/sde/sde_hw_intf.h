@@ -37,6 +37,7 @@ struct intf_timing_params {
 	bool compression_en;
 	u32 extra_dto_cycles;	/* for DP only */
 	bool dsc_4hs_merge;	/* DSC 4HS merge */
+	bool poms_align_vsync;	/* poms with vsync aligned */
 };
 
 struct intf_prog_fetch {

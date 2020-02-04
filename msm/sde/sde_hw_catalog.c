@@ -2150,6 +2150,10 @@ static int sde_intf_parse_dt(struct device_node *np,
 
 			set_bit(SDE_INTF_TE, &intf->features);
 		}
+
+		if (SDE_HW_MAJOR(sde_cfg->hwversion) >=
+				SDE_HW_MAJOR(SDE_HW_VER_700))
+			set_bit(SDE_INTF_TE_ALIGN_VSYNC, &intf->features);
 	}
 
 end:

@@ -679,6 +679,7 @@ struct msm_resource_caps_info {
  * @display_type:       Enum for type of display
  * @is_te_using_watchdog_timer:  Boolean to indicate watchdog TE is
  *				 used instead of panel TE in cmd mode panels
+ * @poms_align_vsync:   poms with vsync aligned
  * @roi_caps:           Region of interest capability info
  * @qsync_min_fps	Minimum fps supported by Qsync feature
  * @te_source		vsync source pin information
@@ -701,6 +702,7 @@ struct msm_display_info {
 
 	uint32_t display_type;
 	bool is_te_using_watchdog_timer;
+	bool poms_align_vsync;
 	struct msm_roi_caps roi_caps;
 
 	uint32_t qsync_min_fps;

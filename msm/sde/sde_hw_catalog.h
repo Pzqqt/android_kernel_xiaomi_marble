@@ -446,11 +446,13 @@ enum {
  * @SDE_INTF_INPUT_CTRL         Supports the setting of pp block from which
  *                              pixel data arrives to this INTF
  * @SDE_INTF_TE                 INTF block has TE configuration support
+ * @SDE_INTF_TE_ALIGN_VSYNC     INTF block has POMS Align vsync support
  * @SDE_INTF_MAX
  */
 enum {
 	SDE_INTF_INPUT_CTRL = 0x1,
 	SDE_INTF_TE,
+	SDE_INTF_TE_ALIGN_VSYNC,
 	SDE_INTF_MAX
 };
 
