@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_NAT_I_H_
@@ -18,7 +18,7 @@
  * |Target Port(2B) |Private Port(2B)| Public Port(2B) | Next Index(2B)  |
  * -----------------------------------------------------------------------
  * |Proto|      TimeStamp(3B)        |     Flags(2B)   |IP check sum Diff|
- * |(1B) |                           |EN|Redirect|Resv |        (2B)     |
+ * |(1B) |                           |                 |        (2B)     |
  * -----------------------------------------------------------------------
  * |TCP/UDP checksum|  PDN info(2B)  |    SW Specific Parameters(4B)     |
  * |    diff (2B)   |Info|Resv       |index table entry|  prev index     |
@@ -35,17 +35,45 @@ struct ipa_nat_hw_ipv4_entry {
 	u32 target_port : 16;
 	u32 ip_chksum : 16;
 
-	u32 rsvd1 : 14;
+	/*---------------------------------------------------
+	 *IPA NAT Flag is interpreted as follows
+	 *---------------------------------------------------
+	 *|  EN   |FIN/RST|  S   | IPv4 uC activation index |
+	 *| [15]  | [14]  | [13] |          [12:0]          |
+	 *---------------------------------------------------
+	 */
+	u32 uc_activation_index: 13;
+	u32 s : 1;
 	u32 redirect : 1;
 	u32 enable : 1;
 
 	u32 time_stamp : 24;
 	u32 protocol : 8;
 
+	/*--------------------------------------------------
+	 *32 bit sw_spec_params is interpreted as follows
+	 *------------------------------------
+	 *|     16 bits     |     16 bits    |
+	 *------------------------------------
+	 *|  index table    |  prev index    |
+	 *|     entry       |                |
+	 *------------------------------------
+	 */
 	u32 prev_index : 16;
 	u32 indx_tbl_entry : 16;
 
-	u32 rsvd2 : 12;
+	u32 rsvd2 : 11; //including next 3 reserved buts
+
+	/*-----------------------------------------
+	 *8 bit PDN info is interpreted as following
+	 *-----------------------------------------------------
+	 *|     4 bits      |     1 bit      |     3 bits     |
+	 *-----------------------------------------------------
+	 *|  PDN index      |  uC processing |     Reserved   |
+	 *|      [7:4]      |       [3]      |      [2:0]     |
+	 *-----------------------------------------------------
+	 */
+	u32 ucp : 1; /* IPA 4.0 and greater */
 	u32 pdn_index : 4; /* IPA 4.0 and greater */
 
 	u32 tcp_udp_chksum : 16;
@@ -90,7 +118,7 @@ struct ipa_nat_hw_pdn_entry {
 
 /*-------------------------  IPV6CT Table Entry  ------------------------------
  *-----------------------------------------------------------------------------
- *|   7    |      6      |  5  |  4   |        3         |  2  |   1  |   0   |
+ *|   7    |      6      |  5  |  4   |      3      |   2   |   1    |   0    |
  *-----------------------------------------------------------------------------
  *|                   Outbound Src IPv6 Address (8 LSB Bytes)                 |
  *-----------------------------------------------------------------------------
@@ -100,17 +128,23 @@ struct ipa_nat_hw_pdn_entry {
  *-----------------------------------------------------------------------------
  *|                   Outbound Dest IPv6 Address (8 MSB Bytes)                |
  *-----------------------------------------------------------------------------
- *|Protocol|      TimeStamp (3B)      |       Flags (2B)       |Reserved (2B) |
- *|  (1B)  |                          |Enable|Redirect|Resv    |              |
+ *|Protocol|      TimeStamp (3B)      |       Flags (2B)    |Rsvd   |S |uC ACT|
+ *|  (1B)  |                          |Enable|Redirect|Resv |[15:14]|13|[12:0]|
  *-----------------------------------------------------------------------------
- *|Reserved|Direction(1B)|Src Port(2B)|     Dest Port (2B)     |Next Index(2B)|
- *|  (1B)  |IN|OUT|Resv  |            |                        |              |
+ *|Reserved|Settings|    Src Port(2B) |   Dest Port (2B)    |  Next Index(2B) |
+ *|  (1B)  |  (1B)  |                 |                     |                 |
  *-----------------------------------------------------------------------------
  *|    SW Specific Parameters(4B)     |                Reserved (4B)          |
  *|    Prev Index (2B)   |Reserved(2B)|                                       |
  *-----------------------------------------------------------------------------
  *|                            Reserved (8B)                                  |
  *-----------------------------------------------------------------------------
+ *
+ * Settings
+ *-----------------------------------------------
+ *|IN Allowed|OUT Allowed|Reserved|uC processing|
+ *|[7:7]     |[6:6]      |[5:1]   |[0:0]        |
+ *-----------------------------------------------
  */
 struct ipa_nat_hw_ipv6ct_entry {
 	/* An IP address can't be bit-field, because its address is used */
@@ -119,7 +153,9 @@ struct ipa_nat_hw_ipv6ct_entry {
 	u64 dest_ipv6_lsb;
 	u64 dest_ipv6_msb;
 
-	u64 rsvd1 : 30;
+	u64 uc_activation_index : 13;
+	u64 s : 1;
+	u64 rsvd1 : 16;
 	u64 redirect : 1;
 	u64 enable : 1;
 
@@ -129,7 +165,8 @@ struct ipa_nat_hw_ipv6ct_entry {
 	u64 next_index : 16;
 	u64 dest_port : 16;
 	u64 src_port : 16;
-	u64 rsvd2 : 6;
+	u64 ucp : 1;
+	u64 rsvd2 : 5;
 	u64 out_allowed : 1;
 	u64 in_allowed : 1;
 	u64 rsvd3 : 8;

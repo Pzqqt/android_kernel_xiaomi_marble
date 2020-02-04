@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_REG_H_
@@ -154,6 +154,12 @@ enum ipahal_reg_name {
 	IPA_FILT_ROUT_CACHE_FLUSH,
 	IPA_FILTER_CACHE_CFG_n,
 	IPA_ROUTER_CACHE_CFG_n,
+	IPA_NAT_UC_EXTERNAL_CFG,
+	IPA_NAT_UC_LOCAL_CFG,
+	IPA_NAT_UC_SHARED_CFG,
+	IPA_CONN_TRACK_UC_EXTERNAL_CFG,
+	IPA_CONN_TRACK_UC_LOCAL_CFG,
+	IPA_CONN_TRACK_UC_SHARED_CFG,
 	IPA_REG_MAX,
 };
 
@@ -743,6 +749,69 @@ struct ipahal_ipa_flavor_0 {
 	u8 ipa_cons_pipes;
 	u8 ipa_prod_pipes;
 	u8 ipa_prod_lowest;
+};
+
+/*
+ * struct ipahal_reg_nat_uc_local_cfg -  IPA_NAT_UC_EXTERNAL_CFG register
+ * @nat_uc_external_table_addr_lsb: 32 LSb bits of system-memory address of
+ * external UC-activation entry table.
+ */
+struct ipahal_reg_nat_uc_external_cfg {
+	u32 nat_uc_external_table_addr_lsb;
+};
+
+/*
+ * struct ipahal_reg_nat_uc_local_cfg - IPA_NAT_UC_LOCAL_CFG register
+ * @nat_uc_local_table_addr_lsb: 32 LSb bits of local address of local
+ * UC-activation entry table. Address is memory-map based,
+ * i.e. includes IPA address from chip level.
+ */
+struct ipahal_reg_nat_uc_local_cfg {
+	u32 nat_uc_local_table_addr_lsb;
+};
+
+/*
+ * struct ipahal_reg_nat_uc_shared_cfg -  IPA_NAT_UC_SHARED_CFG register
+ * @nat_uc_external_table_addr_msb: 16 MSb of external UC-ativation entry table.
+ * @nat_uc_local_table_addr_msb: 16 MSb bits of local UC-ativation entry table.
+ */
+struct ipahal_reg_nat_uc_shared_cfg {
+	u32 nat_uc_local_table_addr_msb;
+	u32 nat_uc_external_table_addr_msb;
+};
+
+/*
+ * struct ipahal_reg_conn_track_uc_local_cfg - IPA_conn_track_UC_EXTERNAL_CFG
+ * register
+ * @conn_track_uc_external_table_addr_lsb: 32 LSb bits of system-memory address
+ * of external UC-activation entry table.
+ */
+struct ipahal_reg_conn_track_uc_external_cfg {
+	u32 conn_track_uc_external_table_addr_lsb;
+};
+
+/*
+ * struct ipahal_reg_conn_track_uc_local_cfg - IPA_conn_track_UC_LOCAL_CFG
+ * register
+ * @conn_track_uc_local_table_addr_lsb: 32 LSb bits of local address of local
+ * UC-activation entry table. Address is memory-map based,
+ * i.e. includes IPA address from chip level.
+ */
+struct ipahal_reg_conn_track_uc_local_cfg {
+	u32 conn_track_uc_local_table_addr_lsb;
+};
+
+/*
+ * struct ipahal_reg_conn_track_uc_shared_cfg -  IPA_conn_track_UC_SHARED_CFG
+ * register
+ * @conn_track_uc_external_table_addr_msb: 16 MSb of external UC-ativation
+ * entry table.
+ * @conn_track_uc_local_table_addr_msb: 16 MSb bits of local UC-ativation
+ * entry table.
+ */
+struct ipahal_reg_conn_track_uc_shared_cfg {
+	u16 conn_track_uc_local_table_addr_msb;
+	u16 conn_track_uc_external_table_addr_msb;
 };
 
 /*
