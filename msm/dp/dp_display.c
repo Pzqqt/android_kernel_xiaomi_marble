@@ -3182,14 +3182,18 @@ end:
 	return rc;
 }
 
-static int dp_display_bridge_mst_attention(void *dev, bool hpd, bool hpd_irq)
+static int dp_display_bridge_internal_hpd(void *dev, bool hpd, bool hpd_irq)
 {
 	struct dp_display_private *dp = dev;
+	struct drm_device *drm_dev = dp->dp_display.drm_dev;
 
-	if (!hpd_irq)
-		return -EINVAL;
+	if (!drm_dev || !drm_dev->mode_config.poll_enabled)
+		return -EBUSY;
 
-	dp_display_mst_attention(dp);
+	if (hpd_irq)
+		dp_display_mst_attention(dp);
+	else
+		dp->hpd->simulate_connect(dp->hpd, hpd);
 
 	return 0;
 }
@@ -3219,10 +3223,9 @@ static int dp_display_init_aux_bridge(struct dp_display_private *dp)
 	}
 
 	if (dp->aux_bridge->register_hpd &&
-			(dp->aux_bridge->flag & DP_AUX_BRIDGE_MST) &&
 			!(dp->aux_bridge->flag & DP_AUX_BRIDGE_HPD))
 		dp->aux_bridge->register_hpd(dp->aux_bridge,
-				dp_display_bridge_mst_attention, dp);
+				dp_display_bridge_internal_hpd, dp);
 
 end:
 	return rc;

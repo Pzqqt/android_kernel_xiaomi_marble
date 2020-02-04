@@ -848,6 +848,11 @@ static int dp_mst_sim_down_rep(struct dp_mst_sim_context *ctx,
 
 int dp_mst_sim_transfer(void *mst_sim_context, struct drm_dp_aux_msg *msg)
 {
+	struct dp_mst_sim_context *ctx = mst_sim_context;
+
+	if (!ctx || !ctx->port_num || !msg)
+		return -ENOENT;
+
 	if (msg->request == DP_AUX_NATIVE_WRITE) {
 		if (msg->address >= DP_SIDEBAND_MSG_DOWN_REQ_BASE &&
 		    msg->address < DP_SIDEBAND_MSG_DOWN_REQ_BASE + 256)
@@ -877,7 +882,7 @@ int dp_mst_sim_update(void *mst_sim_context, u32 port_num,
 	int rc = 0;
 	u32 i;
 
-	if (port_num >= 15)
+	if (!ctx || port_num >= 15)
 		return -EINVAL;
 
 	mutex_lock(&ctx->session_lock);
@@ -930,6 +935,9 @@ int dp_mst_sim_create(const struct dp_mst_sim_cfg *cfg,
 {
 	struct dp_mst_sim_context *ctx;
 
+	if (!cfg || !mst_sim_context)
+		return -EINVAL;
+
 	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
 	if (!ctx)
 		return -ENOMEM;
@@ -957,6 +965,9 @@ int dp_mst_sim_destroy(void *mst_sim_context)
 {
 	struct dp_mst_sim_context *ctx = mst_sim_context;
 	u32 i;
+
+	if (!ctx)
+		return -EINVAL;
 
 	for (i = 0; i < ctx->port_num; i++)
 		kfree(ctx->ports[i].edid);
