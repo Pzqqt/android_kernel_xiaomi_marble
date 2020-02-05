@@ -1170,7 +1170,8 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 		return;
 
 	hif_runtime_exit(sc->dev);
-	hif_pm_runtime_resume(sc->dev);
+
+	hif_pm_runtime_sync_resume(GET_HIF_OPAQUE_HDL(sc));
 
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
 
@@ -1276,6 +1277,29 @@ static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 	hif_is_recovery_in_progress(scn) ?
 		hif_pm_runtime_sanitize_on_ssr_exit(sc) :
 		hif_pm_runtime_sanitize_on_exit(sc);
+}
+
+int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	int pm_state;
+
+	if (!sc)
+		return -EINVAL;
+
+	if (!pm_runtime_enabled(sc->dev))
+		return 0;
+
+	pm_state = qdf_atomic_read(&sc->pm_state);
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
+	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
+		HIF_INFO("Runtime PM resume is requested by %ps",
+			 (void *)_RET_IP_);
+
+	sc->pm_stats.request_resume++;
+	sc->pm_stats.last_resume_caller = (void *)_RET_IP_;
+
+	return pm_runtime_resume(sc->dev);
 }
 #else
 static void hif_pm_runtime_close(struct hif_pci_softc *sc) {}

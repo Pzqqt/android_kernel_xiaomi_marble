@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -268,9 +268,5 @@ static inline int hif_pm_runtime_put_auto(struct device *dev)
 	return pm_runtime_put_autosuspend(dev);
 }
 
-static inline int hif_pm_runtime_resume(struct device *dev)
-{
-	return pm_runtime_resume(dev);
-}
 #endif /* FEATURE_RUNTIME_PM */
 #endif /* __ATH_PCI_H__ */
