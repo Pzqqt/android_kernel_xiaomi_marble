@@ -1304,10 +1304,8 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 
-	if (pm_ctx->unsafe_channel_count == 0) {
-		policy_mgr_debug("There are no unsafe channels");
+	if (pm_ctx->unsafe_channel_count == 0)
 		return is_safe;
-	}
 
 	for (j = 0; j < pm_ctx->unsafe_channel_count; j++) {
 		if (ch_freq == pm_ctx->unsafe_channel_list[j]) {

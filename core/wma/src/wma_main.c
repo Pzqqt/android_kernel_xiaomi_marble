@@ -5359,8 +5359,10 @@ wma_is_dbs_mandatory(struct wlan_objmgr_psoc *psoc,
 	uint8_t supported_band = 0;
 
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc) ||
-	    !policy_mgr_find_if_hwlist_has_dbs(psoc))
+	    !policy_mgr_find_if_hwlist_has_dbs(psoc)) {
+		wma_debug("DBS is not mandatory");
 		return false;
+	}
 
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
@@ -9068,15 +9070,16 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		    msg->chan_weights.saved_chan_list[i]))
 			msg->chan_weights.weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
-		WMA_LOGD("%s: freq:%d weight[%d]=%d", __func__,
-			 msg->chan_weights.saved_chan_list[i], i,
-			 msg->chan_weights.weighed_valid_list[i]);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("%s: Error in creating weighed pcl", __func__);
 		return status;
 	}
+	wma_debug("Dump channel list send to wmi");
+	policy_mgr_dump_channel_list(msg->chan_weights.saved_num_chan,
+				     msg->chan_weights.saved_chan_list,
+				     msg->chan_weights.weighed_valid_list);
 
 	if (wmi_unified_pdev_set_pcl_cmd(wma_handle->wmi_handle,
 					 &msg->chan_weights))

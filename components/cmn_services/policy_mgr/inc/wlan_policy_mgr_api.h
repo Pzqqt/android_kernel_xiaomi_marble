@@ -3302,4 +3302,17 @@ bool policy_mgr_is_sap_go_on_2g(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_get_5g_scc_prefer(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 
+/**
+ * policy_mgr_dump_channel_list() - Print channel list
+ * @len: Length of pcl list
+ * @pcl_channels: pcl channels list
+ * @pcl_weight: pcl weight list
+ *
+ *
+ * Return: True or false
+ */
+bool policy_mgr_dump_channel_list(uint32_t len,
+				  uint32_t *pcl_channels,
+				  uint8_t *pcl_weight);
+
 #endif /* __WLAN_POLICY_MGR_API_H */
