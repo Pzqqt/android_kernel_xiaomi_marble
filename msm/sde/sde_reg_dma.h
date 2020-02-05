@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_REG_DMA_H
@@ -131,6 +131,7 @@ enum sde_reg_dma_setup_ops {
 	REG_DMA_SETUP_OPS_MAX,
 };
 
+#define REG_DMA_BLK_MAX 32
 /**
  * enum sde_reg_dma_blk - defines blocks for which reg dma op should be
  *                        performed

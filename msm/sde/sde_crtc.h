@@ -350,6 +350,7 @@ struct sde_crtc {
  * @lm_roi        : Current LM ROI, possibly sub-rectangle of mode.
  *                  Origin top left of CRTC.
  * @user_roi_list : List of user's requested ROIs as from set property
+ * @cached_user_roi_list : Copy of user_roi_list from previous PU frame
  * @property_state: Local storage for msm_prop properties
  * @property_values: Current crtc property values
  * @input_fence_timeout_ns : Cached input fence timeout, in ns
@@ -376,7 +377,7 @@ struct sde_crtc_state {
 	struct sde_rect crtc_roi;
 	struct sde_rect lm_bounds[CRTC_DUAL_MIXERS];
 	struct sde_rect lm_roi[CRTC_DUAL_MIXERS];
-	struct msm_roi_list user_roi_list;
+	struct msm_roi_list user_roi_list, cached_user_roi_list;
 
 	struct msm_property_state property_state;
 	struct msm_property_value property_values[CRTC_PROP_COUNT];

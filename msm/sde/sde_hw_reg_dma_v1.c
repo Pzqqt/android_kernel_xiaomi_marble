@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
+
 #include <linux/iopoll.h>
 #include "sde_hw_mdss.h"
 #include "sde_hw_ctl.h"
@@ -14,6 +15,7 @@
 #define ALIGNED_OFFSET (U32_MAX & ~(GUARD_BYTES))
 #define ADDR_ALIGN BIT(8)
 #define MAX_RELATIVE_OFF (BIT(20) - 1)
+#define ABSOLUTE_RANGE BIT(27)
 
 #define DECODE_SEL_OP (BIT(HW_BLK_SELECT))
 #define REG_WRITE_OP ((BIT(REG_SINGLE_WRITE)) | (BIT(REG_BLK_WRITE_SINGLE)) | \
@@ -39,6 +41,7 @@
 #define GRP_DMA_HW_BLK_SELECT (DMA0 | DMA1 | DMA2 | DMA3)
 #define GRP_DSPP_HW_BLK_SELECT (DSPP0 | DSPP1 | DSPP2 | DSPP3)
 #define GRP_LTM_HW_BLK_SELECT (LTM0 | LTM1)
+#define GRP_MDSS_HW_BLK_SELECT (MDSS)
 #define BUFFER_SPACE_LEFT(cfg) ((cfg)->dma_buf->buffer_size - \
 			(cfg)->dma_buf->index)
 
@@ -162,7 +165,7 @@ static void get_decode_sel(unsigned long blk, u32 *decode_sel)
 	int i = 0;
 
 	*decode_sel = 0;
-	for_each_set_bit(i, &blk, 31) {
+	for_each_set_bit(i, &blk, REG_DMA_BLK_MAX) {
 		switch (BIT(i)) {
 		case VIG0:
 			*decode_sel |= BIT(0);
@@ -212,6 +215,9 @@ static void get_decode_sel(unsigned long blk, u32 *decode_sel)
 		case LTM1:
 			*decode_sel |= BIT(23);
 			break;
+		case MDSS:
+			*decode_sel |= BIT(31);
+			break;
 		default:
 			DRM_ERROR("block not supported %zx\n", (size_t)BIT(i));
 			break;
@@ -240,6 +246,9 @@ int write_multi_reg_index(struct sde_reg_dma_setup_ops_cfg *cfg)
 			cfg->dma_buf->index);
 	loc[0] = HW_INDEX_REG_WRITE_OPCODE;
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
+	if (cfg->blk == MDSS)
+		loc[0] |= ABSOLUTE_RANGE;
+
 	loc[1] = SIZE_DWORD(cfg->data_size);
 	cfg->dma_buf->index += ops_mem_size[cfg->ops];
 
@@ -253,6 +262,9 @@ int write_multi_reg_inc(struct sde_reg_dma_setup_ops_cfg *cfg)
 	loc =  (u32 *)((u8 *)cfg->dma_buf->vaddr +
 			cfg->dma_buf->index);
 	loc[0] = AUTO_INC_REG_WRITE_OPCODE;
+	if (cfg->blk == MDSS)
+		loc[0] |= ABSOLUTE_RANGE;
+
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
 	loc[1] = SIZE_DWORD(cfg->data_size);
 	cfg->dma_buf->index += ops_mem_size[cfg->ops];
@@ -268,6 +280,9 @@ static int write_multi_lut_reg(struct sde_reg_dma_setup_ops_cfg *cfg)
 			cfg->dma_buf->index);
 	loc[0] = BLK_REG_WRITE_OPCODE;
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
+	if (cfg->blk == MDSS)
+		loc[0] |= ABSOLUTE_RANGE;
+
 	loc[1] = (cfg->inc) ? 0 : BIT(31);
 	loc[1] |= (cfg->wrap_size & WRAP_MAX_SIZE) << 16;
 	loc[1] |= ((SIZE_DWORD(cfg->data_size)) & MAX_DWORDS_SZ);
@@ -285,6 +300,9 @@ static int write_single_reg(struct sde_reg_dma_setup_ops_cfg *cfg)
 			cfg->dma_buf->index);
 	loc[0] = SINGLE_REG_WRITE_OPCODE;
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
+	if (cfg->blk == MDSS)
+		loc[0] |= ABSOLUTE_RANGE;
+
 	loc[1] = *cfg->data;
 	cfg->dma_buf->index += ops_mem_size[cfg->ops];
 	cfg->dma_buf->ops_completed |= REG_WRITE_OP;
@@ -301,6 +319,9 @@ static int write_single_modify(struct sde_reg_dma_setup_ops_cfg *cfg)
 			cfg->dma_buf->index);
 	loc[0] = SINGLE_REG_MODIFY_OPCODE;
 	loc[0] |= (cfg->blk_offset & MAX_RELATIVE_OFF);
+	if (cfg->blk == MDSS)
+		loc[0] |= ABSOLUTE_RANGE;
+
 	loc[1] = cfg->mask;
 	loc[2] = *cfg->data;
 	cfg->dma_buf->index += ops_mem_size[cfg->ops];
@@ -381,6 +402,7 @@ static int validate_write_reg(struct sde_reg_dma_setup_ops_cfg *cfg)
 static int validate_write_decode_sel(struct sde_reg_dma_setup_ops_cfg *cfg)
 {
 	u32 remain_len;
+	bool vig_blk, dma_blk, dspp_blk, mdss_blk;
 
 	remain_len = BUFFER_SPACE_LEFT(cfg);
 	if (remain_len < ops_mem_size[HW_BLK_SELECT]) {
@@ -393,15 +415,16 @@ static int validate_write_decode_sel(struct sde_reg_dma_setup_ops_cfg *cfg)
 		DRM_ERROR("blk set as 0\n");
 		return -EINVAL;
 	}
-	/* VIG, DMA and DSPP can't be combined */
-	if (((cfg->blk & GRP_VIG_HW_BLK_SELECT) &&
-		(cfg->blk & GRP_DSPP_HW_BLK_SELECT)) ||
-		((cfg->blk & GRP_DMA_HW_BLK_SELECT) &&
-		(cfg->blk & GRP_DSPP_HW_BLK_SELECT)) ||
-		((cfg->blk & GRP_VIG_HW_BLK_SELECT) &&
-		(cfg->blk & GRP_DMA_HW_BLK_SELECT))) {
-		DRM_ERROR("invalid blk combination %x\n",
-			    cfg->blk);
+
+	vig_blk = (cfg->blk & GRP_VIG_HW_BLK_SELECT) ? true : false;
+	dma_blk = (cfg->blk & GRP_DMA_HW_BLK_SELECT) ? true : false;
+	dspp_blk = (cfg->blk & GRP_DSPP_HW_BLK_SELECT) ? true : false;
+	mdss_blk = (cfg->blk & MDSS) ? true : false;
+
+	if ((vig_blk && dspp_blk) || (dma_blk && dspp_blk) ||
+			(vig_blk && dma_blk) ||
+			(mdss_blk && (vig_blk | dma_blk | dspp_blk))) {
+		DRM_ERROR("invalid blk combination %x\n", cfg->blk);
 		return -EINVAL;
 	}
 
@@ -685,7 +708,7 @@ static int check_support_v1(enum sde_reg_dma_features feature,
 	if (!is_supported)
 		return -EINVAL;
 
-	if (feature >= REG_DMA_FEATURES_MAX || blk >= MDSS) {
+	if (feature >= REG_DMA_FEATURES_MAX || blk >= BIT(REG_DMA_BLK_MAX)) {
 		*is_supported = false;
 		return ret;
 	}
@@ -805,7 +828,8 @@ static struct sde_reg_dma_buffer *alloc_reg_dma_buf_v1(u32 size)
 	int rc = 0;
 
 	if (!size || SIZE_DWORD(size) > MAX_DWORDS_SZ) {
-		DRM_ERROR("invalid buffer size %d\n", size);
+		DRM_ERROR("invalid buffer size %d, max %d\n",
+				SIZE_DWORD(size), MAX_DWORDS_SZ);
 		return ERR_PTR(-EINVAL);
 	}
 

@@ -4655,6 +4655,12 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		goto end;
 	}
 
+	rc = sde_cp_crtc_check_properties(crtc, state);
+	if (rc) {
+		SDE_ERROR("crtc%d failed cp properties check %d\n",
+				crtc->base.id, rc);
+		goto end;
+	}
 end:
 	kfree(pstates);
 	kfree(multirect_plane);
