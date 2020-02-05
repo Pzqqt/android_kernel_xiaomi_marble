@@ -4132,7 +4132,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			vdev_id = HTT_RX_PEER_UNMAP_VDEV_ID_GET(*msg_word);
 
 			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
-						 vdev_id, mac_addr, 0);
+						 vdev_id, mac_addr, 0,
+						 DP_PEER_WDS_COUNT_INVALID);
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_SEC_IND:
@@ -4329,6 +4330,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			u_int16_t peer_id;
 			u_int8_t vdev_id;
 			u_int8_t is_wds;
+			u_int32_t free_wds_count;
 
 			peer_id =
 			HTT_RX_PEER_UNMAP_V2_SW_PEER_ID_GET(*msg_word);
@@ -4338,6 +4340,9 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 						   &mac_addr_deswizzle_buf[0]);
 			is_wds =
 			HTT_RX_PEER_UNMAP_V2_NEXT_HOP_GET(*(msg_word + 2));
+			free_wds_count =
+			HTT_RX_PEER_UNMAP_V2_PEER_WDS_FREE_COUNT_GET(*(msg_word + 4));
+
 			QDF_TRACE(QDF_MODULE_ID_TXRX,
 				  QDF_TRACE_LEVEL_INFO,
 				  "HTT_T2H_MSG_TYPE_PEER_UNMAP msg for peer id %d vdev id %d n",
@@ -4345,7 +4350,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 
 			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
 						 vdev_id, mac_addr,
-						 is_wds);
+						 is_wds, free_wds_count);
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_RX_DELBA:

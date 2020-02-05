@@ -1244,11 +1244,38 @@ static uint32_t dp_peer_ast_free_wds_entries(struct dp_soc *soc,
 
 	return num_ast;
 }
-#else
-static uint32_t dp_peer_ast_free_wds_entries(struct dp_soc *soc,
-					     struct dp_peer *peer)
+/**
+ * dp_peer_clean_wds_entries() - Clean wds ast entries and compare
+ * @soc: soc handle
+ * @peer: peer handle
+ * @free_wds_count - number of wds entries freed by FW with peer delete
+ *
+ * Free all the wds ast entries associated with peer and compare with
+ * the value received from firmware
+ *
+ * Return: Number of wds ast entries freed
+ */
+static void
+dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
+			  uint32_t free_wds_count)
 {
-	return 0;
+	uint32_t wds_deleted = 0;
+
+	wds_deleted = dp_peer_ast_free_wds_entries(soc, peer);
+	if ((DP_PEER_WDS_COUNT_INVALID != free_wds_count) &&
+	    (free_wds_count != wds_deleted)) {
+		DP_STATS_INC(soc, ast.ast_mismatch, 1);
+		dp_alert("For peer %pK (mac: %pM)number of wds entries deleted by fw = %d during peer delete is not same as the numbers deleted by host = %d",
+			 peer, peer->mac_addr.raw, free_wds_count,
+			 wds_deleted);
+	}
+}
+
+#else
+static void
+dp_peer_clean_wds_entries(struct dp_soc *soc, struct dp_peer *peer,
+			  uint32_t free_wds_count)
+{
 }
 #endif
 
@@ -1711,13 +1738,14 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
  * @vdev_id - vdev ID
  * @mac_addr - mac address of the peer or wds entry
  * @is_wds - flag to indicate peer map event for WDS ast entry
+ * @free_wds_count - number of wds entries freed by FW with peer delete
  *
  * Return: none
  */
 void
 dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			 uint8_t vdev_id, uint8_t *mac_addr,
-			 uint8_t is_wds)
+			 uint8_t is_wds, uint32_t free_wds_count)
 {
 	struct dp_peer *peer;
 	uint8_t i;
@@ -1747,7 +1775,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 
 		return;
 	} else {
-		dp_peer_ast_free_wds_entries(soc, peer);
+		dp_peer_clean_wds_entries(soc, peer, free_wds_count);
 	}
 
 	dp_info("peer_unmap_event (soc:%pK) peer_id %d peer %pK",

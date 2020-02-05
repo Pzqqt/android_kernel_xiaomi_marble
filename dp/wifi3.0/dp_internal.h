@@ -22,7 +22,7 @@
 #include "dp_types.h"
 
 #define RX_BUFFER_SIZE_PKTLOG_LITE 1024
-
+#define DP_PEER_WDS_COUNT_INVALID UINT_MAX
 
 #define DP_RSSI_INVAL 0x80
 #define DP_RSSI_AVG_WEIGHT 2

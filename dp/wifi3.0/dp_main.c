@@ -1173,6 +1173,8 @@ void dp_print_ast_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("	Entries Deleted = %d", soc->stats.ast.deleted);
 	DP_PRINT_STATS("	Entries Agedout = %d", soc->stats.ast.aged_out);
 	DP_PRINT_STATS("	Entries MAP ERR  = %d", soc->stats.ast.map_err);
+	DP_PRINT_STATS("	Entries Mismatch ERR  = %d",
+		       soc->stats.ast.ast_mismatch);
 
 	DP_PRINT_STATS("AST Table:");
 
@@ -5467,7 +5469,8 @@ static void dp_peer_flush_ast_entry(struct dp_soc *soc,
 						(soc, peer_id,
 						 vdev_id,
 						 ase->mac_addr.raw,
-						 1);
+						 1,
+						 DP_PEER_WDS_COUNT_INVALID);
 		}
 	}
 }
@@ -5558,7 +5561,8 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 
 		dp_rx_peer_unmap_handler(soc, peer_ids[i],
 					 vdev->vdev_id,
-					 peer->mac_addr.raw, 0);
+					 peer->mac_addr.raw, 0,
+					 DP_PEER_WDS_COUNT_INVALID);
 	}
 
 	qdf_mem_free(peer_ids);

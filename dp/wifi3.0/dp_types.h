@@ -708,6 +708,7 @@ struct dp_soc_stats {
 		uint32_t deleted;
 		uint32_t aged_out;
 		uint32_t map_err;
+		uint32_t ast_mismatch;
 	} ast;
 
 	/* SOC level TX stats */

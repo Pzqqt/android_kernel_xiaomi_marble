@@ -121,7 +121,7 @@ void dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 			    uint8_t is_wds);
 void dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			      uint8_t vdev_id, uint8_t *peer_mac_addr,
-			      uint8_t is_wds);
+			      uint8_t is_wds, uint32_t free_wds_count);
 void dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 			   enum cdp_sec_type sec_type, int is_unicast,
 			   u_int32_t *michael_key, u_int32_t *rx_pn);
