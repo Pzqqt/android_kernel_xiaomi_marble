@@ -461,12 +461,6 @@ uint32_t hal_rx_msdu_start_reception_type_get_6490(uint8_t *buf)
 	return reception_type;
 }
 
-#define HAL_RX_MSDU_END_DA_IDX_GET(_rx_msdu_end)	\
-	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_msdu_end,	\
-		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_OFFSET)),	\
-		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_MASK,	\
-		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_LSB))
-
 /**
  * hal_rx_msdu_end_da_idx_get_6490: API to get da_idx
  * from rx_msdu_end TLV
@@ -1292,30 +1286,6 @@ uint16_t hal_rx_get_rx_sequence_6490(uint8_t *buf)
 }
 
 /**
- * hal_rx_msdu_packet_metadata_get_6490(): API to get the
- * msdu information from rx_msdu_end TLV
- *
- * @ buf: pointer to the start of RX PKT TLV headers
- * @ hal_rx_msdu_metadata: pointer to the msdu info structure
- */
-static void
-hal_rx_msdu_packet_metadata_get_6490(uint8_t *buf,
-				     void *msdu_pkt_metadata)
-{
-	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
-	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
-	struct hal_rx_msdu_metadata *msdu_metadata =
-		(struct hal_rx_msdu_metadata *)msdu_pkt_metadata;
-
-	msdu_metadata->l3_hdr_pad =
-		HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
-	msdu_metadata->sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
-	msdu_metadata->da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
-	msdu_metadata->sa_sw_peer_id =
-		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
-}
-
-/**
  * hal_get_window_address_6490(): Function to get hp/tp address
  * @hal_soc: Pointer to hal_soc
  * @addr: address offset of register
@@ -1419,7 +1389,7 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	NULL,
 	NULL,
 	/* rx - msdu end fast path info fields */
-	hal_rx_msdu_packet_metadata_get_6490,
+	hal_rx_msdu_packet_metadata_get_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_6490[] = {
