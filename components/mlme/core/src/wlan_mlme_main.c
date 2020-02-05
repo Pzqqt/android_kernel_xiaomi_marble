@@ -2233,6 +2233,10 @@ static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_MWS_COEX_4G_QUICK_FTDM);
 	mwc->mws_coex_5g_nr_pwr_limit =
 		cfg_get(psoc, CFG_MWS_COEX_5G_NR_PWR_LIMIT);
+	mwc->mws_coex_pcc_channel_avoid_delay =
+		cfg_get(psoc, CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY);
+	mwc->mws_coex_scc_channel_avoid_delay =
+		cfg_get(psoc, CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY);
 }
 #else
 static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
