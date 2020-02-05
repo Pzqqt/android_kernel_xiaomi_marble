@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -222,13 +222,18 @@ enum wlan_crypto_key_type {
  * @pmkid: pmkid info
  * @pmk: pmk info
  * @pmk_len: pmk len
+ * @ssid_len: ssid length
+ * @ssid: ssid information
+ * @cache_id: cache id
  */
-
 struct wlan_crypto_pmksa {
 	struct qdf_mac_addr bssid;
 	uint8_t    pmkid[PMKID_LEN];
 	uint8_t    pmk[MAX_PMK_LEN];
 	uint8_t    pmk_len;
+	uint8_t    ssid_len;
+	uint8_t    ssid[WLAN_SSID_MAX_LEN];
+	uint8_t    cache_id[WLAN_CACHE_ID_LEN];
 };
 
 /**

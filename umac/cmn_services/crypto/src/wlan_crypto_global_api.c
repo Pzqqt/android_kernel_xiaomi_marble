@@ -336,6 +336,19 @@ QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
 			qdf_mem_free(crypto_params->pmksa[i]);
 			crypto_params->pmksa[i] = pmksa;
 			return QDF_STATUS_SUCCESS;
+		} else if (pmksa->ssid_len &&
+			    !qdf_mem_cmp(pmksa->ssid,
+					 crypto_params->pmksa[i]->ssid,
+					 pmksa->ssid_len) &&
+			    !qdf_mem_cmp(pmksa->cache_id,
+					 crypto_params->pmksa[i]->cache_id,
+					 WLAN_CACHE_ID_LEN)){
+			/* free the current pmksa and use this slot */
+			qdf_mem_zero(crypto_params->pmksa[i],
+				     sizeof(struct wlan_crypto_pmksa));
+			qdf_mem_free(crypto_params->pmksa[i]);
+			crypto_params->pmksa[i] = pmksa;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -365,10 +378,22 @@ QDF_STATUS wlan_crypto_del_pmksa(struct wlan_crypto_params *crypto_params,
 			qdf_mem_free(crypto_params->pmksa[i]);
 			crypto_params->pmksa[i] = NULL;
 			return QDF_STATUS_SUCCESS;
+		} else if (pmksa->ssid_len &&
+			   !qdf_mem_cmp(pmksa->ssid,
+					crypto_params->pmksa[i]->ssid,
+					pmksa->ssid_len) &&
+			   !qdf_mem_cmp(pmksa->cache_id,
+					crypto_params->pmksa[i]->cache_id,
+					WLAN_CACHE_ID_LEN)){
+			qdf_mem_zero(crypto_params->pmksa[i],
+				     sizeof(struct wlan_crypto_pmksa));
+			qdf_mem_free(crypto_params->pmksa[i]);
+			crypto_params->pmksa[i] = NULL;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
-	return QDF_STATUS_E_INVAL;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_crypto_pmksa_flush(struct wlan_crypto_params *crypto_params)
@@ -429,6 +454,48 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 }
 
 struct wlan_crypto_pmksa *
+wlan_crypto_get_peer_pmksa(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_crypto_pmksa *pmksa)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	uint8_t i;
+
+	if (!pmksa) {
+		crypto_err("pmksa is NULL");
+		return NULL;
+	}
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return NULL;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+		if (qdf_is_macaddr_equal(&pmksa->bssid,
+					 &crypto_params->pmksa[i]->bssid)) {
+			return crypto_params->pmksa[i];
+		} else if (pmksa->ssid_len &&
+			   !qdf_mem_cmp(pmksa->ssid,
+					crypto_params->pmksa[i]->ssid,
+					pmksa->ssid_len) &&
+			   !qdf_mem_cmp(pmksa->cache_id,
+					crypto_params->pmksa[i]->cache_id,
+					WLAN_CACHE_ID_LEN)){
+			return crypto_params->pmksa[i];
+		}
+	}
+
+	return NULL;
+}
+
+struct wlan_crypto_pmksa *
 wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *bssid)
 {
 	struct wlan_crypto_comp_priv *crypto_priv;
@@ -460,6 +527,7 @@ wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *bssid)
 
 	return NULL;
 }
+
 /**
  * wlan_crypto_is_htallowed - called to check is HT allowed for cipher
  * @vdev:  vdev
@@ -2632,19 +2700,9 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 	return frm;
 }
 
-/**
- * wlan_crypto_build_rsnie - called by mlme to build rsnie
- * @vdev: vdev
- * @iebuf: ie buffer
- * @bssid: bssid mac address to add pmkid in rsnie
- *
- * This function gets called by mlme to build rsnie from given vdev
- *
- * Return: end of buffer
- */
-uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
-					uint8_t *iebuf,
-					struct qdf_mac_addr *bssid)
+uint8_t *wlan_crypto_build_rsnie_with_pmksa(struct wlan_objmgr_vdev *vdev,
+					    uint8_t *iebuf,
+					    struct wlan_crypto_pmksa *pmksa)
 {
 	uint8_t *frm = iebuf;
 	uint8_t *selcnt;
@@ -2796,20 +2854,13 @@ add_rsn_caps:
 	/* optional capabilities */
 	if (crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) {
 		/* PMK list */
-		if (bssid) {
-			struct wlan_crypto_pmksa *pmksa;
-
-			pmksa = wlan_crypto_get_pmksa(vdev, bssid);
-
-			if (pmksa) {
-				WLAN_CRYPTO_ADDSHORT(frm, 1);
-				qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
-				frm += PMKID_LEN;
-			} else {
-				WLAN_CRYPTO_ADDSHORT(frm, 0);
-			}
-		} else
+		if (pmksa) {
+			WLAN_CRYPTO_ADDSHORT(frm, 1);
+			qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
+			frm += PMKID_LEN;
+		} else {
 			WLAN_CRYPTO_ADDSHORT(frm, 0);
+		}
 
 		if (HAS_MGMT_CIPHER(crypto_params,
 						WLAN_CRYPTO_CIPHER_AES_CMAC)) {
@@ -2836,17 +2887,12 @@ add_rsn_caps:
 		}
 	} else {
 		/* PMK list */
-		if (bssid) {
-			struct wlan_crypto_pmksa *pmksa;
-
-			pmksa = wlan_crypto_get_pmksa(vdev, bssid);
-			if (pmksa) {
-				WLAN_CRYPTO_ADDSHORT(frm, 1);
-				qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
-				frm += PMKID_LEN;
-			} else {
-				WLAN_CRYPTO_ADDSHORT(frm, 0);
-			}
+		if (pmksa) {
+			WLAN_CRYPTO_ADDSHORT(frm, 1);
+			qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
+			frm += PMKID_LEN;
+		} else {
+			WLAN_CRYPTO_ADDSHORT(frm, 0);
 		}
 	}
 
@@ -2854,6 +2900,18 @@ add_rsn_caps:
 	iebuf[1] = frm - iebuf - 2;
 
 	return frm;
+}
+
+uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
+				 uint8_t *iebuf,
+				 struct qdf_mac_addr *bssid)
+{
+	struct wlan_crypto_pmksa *pmksa = NULL;
+
+	if (bssid)
+		pmksa = wlan_crypto_get_pmksa(vdev, bssid);
+
+	return wlan_crypto_build_rsnie_with_pmksa(vdev, iebuf, pmksa);
 }
 
 bool wlan_crypto_rsn_info(struct wlan_objmgr_vdev *vdev,

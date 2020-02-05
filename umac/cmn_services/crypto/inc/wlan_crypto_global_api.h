@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -320,6 +320,21 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *, uint8_t *frm);
  */
 uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 					uint8_t *iebuf);
+
+/**
+ * wlan_crypto_build_rsnie_with_pmksa() - called by mlme to build rsnie
+ * @vdev: vdev
+ * @iebuf: ie buffer
+ * @pmksa: pmksa struct
+ *
+ * This function gets called by mlme to build rsnie from given vdev
+ *
+ * Return: end of buffer
+ */
+uint8_t *wlan_crypto_build_rsnie_with_pmksa(struct wlan_objmgr_vdev *vdev,
+					    uint8_t *iebuf,
+					    struct wlan_crypto_pmksa *pmksa);
+
 /**
  * wlan_crypto_build_rsnie - called by mlme to build rsnie
  * @vdev: vdev
@@ -852,6 +867,20 @@ QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* CRYPTO_SET_KEY_CONVERGED */
+
+/**
+ * wlan_crypto_get_peer_pmksa() - called to get pmksa based on pmksa parameter
+ * @vdev: vdev
+ * @pmksa: bssid
+ *
+ * This function is to get pmksa based on pmksa parameter
+ *
+ * Return: wlan_crypto_pmksa when match found else NULL.
+ */
+struct wlan_crypto_pmksa *
+wlan_crypto_get_peer_pmksa(struct wlan_objmgr_vdev *vdev,
+			   struct wlan_crypto_pmksa *pmksa);
+
 /**
  * wlan_crypto_get_pmksa - called to get pmksa of bssid passed.
  * @vdev: vdev

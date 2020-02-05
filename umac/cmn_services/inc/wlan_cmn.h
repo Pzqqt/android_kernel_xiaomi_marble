@@ -61,6 +61,8 @@
 /* Max length of a SSID */
 #define WLAN_SSID_MAX_LEN 32
 
+#define WLAN_CACHE_ID_LEN 2
+
 /* Max sequence number */
 #define WLAN_MAX_SEQ_NUM 4096
 
