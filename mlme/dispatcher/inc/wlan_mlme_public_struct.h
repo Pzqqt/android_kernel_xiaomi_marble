@@ -2133,10 +2133,14 @@ struct wlan_mlme_fe_rrm {
  * struct wlan_mlme_mwc - MWC related configs
  * @mws_coex_4g_quick_tdm:  bitmap to set mws-coex 5g-nr power limit
  * @mws_coex_5g_nr_pwr_limit: bitmap to set mws-coex 5g-nr power limit
+ * @mws_coex_pcc_channel_avoid_delay: PCC avoidance delay in seconds
+ * @mws_coex_scc_channel_avoid_delay: SCC avoidance delay in seconds
  **/
 struct wlan_mlme_mwc {
 	uint32_t mws_coex_4g_quick_tdm;
 	uint32_t mws_coex_5g_nr_pwr_limit;
+	uint32_t mws_coex_pcc_channel_avoid_delay;
+	uint32_t mws_coex_scc_channel_avoid_delay;
 };
 #else
 struct wlan_mlme_mwc {

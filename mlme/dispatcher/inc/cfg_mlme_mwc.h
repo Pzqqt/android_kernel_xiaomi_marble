@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,9 +79,55 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"set mws-coex 5g-nr power limit")
 
+/*
+ * <ini>
+ * mws_coex_pcc_channel_avoid_delay - configures the duration, when WWAN PCC
+ * (Primary Component Carrier) conflicts with WLAN channel.
+ * @Min: 0x00
+ * @Max: 0xFF
+ * @Default: 0x3C
+ *
+ * It is used to set MWS-COEX WWAN PCC channel avoidance delay
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY CFG_INI_UINT(\
+		"mws_coex_pcc_channel_avoid_delay", \
+		0x00, \
+		0xFF, \
+		0x3C, \
+		CFG_VALUE_OR_DEFAULT, \
+		"set mws-coex PCC channel avoidance delay")
+
+/*
+ * <ini>
+ * mws_coex_scc_channel_avoid_delay - configures the duration, when WWAN SCC
+ * (Secondary Component Carrier) conflicts with WLAN channel.
+ * @Min: 0x00
+ * @Max: 0xFF
+ * @Default: 0x78
+ *
+ * It is used to set MWS-COEX WWAN SCC channel avoidance delay
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY CFG_INI_UINT(\
+		"mws_coex_scc_channel_avoid_delay", \
+		0x00, \
+		0xFF, \
+		0x78, \
+		CFG_VALUE_OR_DEFAULT, \
+		"set mws-coex SCC channel avoidance delay")
+
 #define CFG_MWC_ALL \
 	CFG(CFG_MWS_COEX_4G_QUICK_FTDM) \
-	CFG(CFG_MWS_COEX_5G_NR_PWR_LIMIT)
+	CFG(CFG_MWS_COEX_5G_NR_PWR_LIMIT) \
+	CFG(CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY) \
+	CFG(CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY)
 
 #else
 #define CFG_MWC_ALL

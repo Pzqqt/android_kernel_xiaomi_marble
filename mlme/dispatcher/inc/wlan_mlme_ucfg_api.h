@@ -3685,6 +3685,30 @@ ucfg_mlme_get_mws_coex_4g_quick_tdm(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
 				       uint32_t *val);
+
+/**
+ * ucfg_mlme_get_mws_coex_pcc_channel_avoid_delay() - Get mws coex pcc
+ *                                                    avoid channel delay
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_mws_coex_pcc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *val);
+
+/**
+ * ucfg_mlme_get_mws_coex_scc_channel_avoid_delay() - Get mws coex scc
+ *                                                    avoidance channel delay
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_mws_coex_scc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *val);
 #endif
 
 /**

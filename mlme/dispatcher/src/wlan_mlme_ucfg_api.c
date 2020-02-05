@@ -1481,6 +1481,42 @@ ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_mws_coex_pcc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY);
+		mlme_legacy_err("mlme obj null");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	*val = mlme_obj->cfg.mwc.mws_coex_pcc_channel_avoid_delay;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_mws_coex_scc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY);
+		mlme_legacy_err("mlme obj null");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	*val = mlme_obj->cfg.mwc.mws_coex_scc_channel_avoid_delay;
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 QDF_STATUS
