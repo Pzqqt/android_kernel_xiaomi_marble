@@ -1292,8 +1292,8 @@ static inline void scm_print_scan_req_info(struct scan_req_params *req)
 		return;
 
 	for (idx = 0; idx < chan_lst->num_chan; idx++)
-		len += snprintf(chan_buff + len, buff_len - len, "%d ",
-					chan_lst->chan[idx].freq);
+		len += qdf_scnprintf(chan_buff + len, buff_len - len, "%d ",
+				     chan_lst->chan[idx].freq);
 
 	scm_nofl_debug("Freq list[%d]: %s", chan_lst->num_chan, chan_buff);
 
