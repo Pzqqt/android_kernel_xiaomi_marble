@@ -493,6 +493,8 @@ typedef enum {
     WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID,
     /** Preferred channel list for each vdev */
     WMI_VDEV_SET_PCL_CMDID,
+    /** Get per vdev BIG DATA stats */
+    WMI_VDEV_GET_BIG_DATA_CMDID,
 
     /* peer specific commands */
 
@@ -1465,6 +1467,8 @@ typedef enum {
     WMI_VDEV_AUDIO_SYNC_START_STOP_EVENTID,
     /** Sends the final offset in the QTIMERs of both master and slave */
     WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID,
+    /* send BIG DATA stats to host */
+    WMI_VDEV_SEND_BIG_DATA_EVENTID,
 
 
     /* peer specific events */
@@ -25276,6 +25280,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_AUDIO_SYNC_TRIGGER_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -26978,6 +26983,77 @@ typedef struct {
  * A_UINT32 channel_list[];
  */
 } wmi_roam_scan_channel_list_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param */
+    A_UINT32 vdev_id;
+} wmi_vdev_get_big_data_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_send_big_data_event_fixed_param */
+    A_UINT32 vdev_id;
+    /** param list **/
+    /* Target power (dBm units) - 2.4G/5G */
+    A_UINT32 target_power_2g_dsss;
+    A_UINT32 target_power_2g_ofdm;
+    A_UINT32 target_power_2g_mcs0;
+    A_UINT32 target_power_5g_ofdm;
+    A_UINT32 target_power_5g_mcs0;
+
+    /* ANI level from hal-phy */
+    A_UINT32 ani_level;
+
+    /* Number of probe requests sent while roaming after BMISS */
+    A_UINT32 tx_probe_req;
+
+    /* Number of probe responses received while roaming after BMISS */
+    A_UINT32 rx_probe_response;
+
+    /*
+     * Number of retries (both by HW and FW) for tx data MPDUs sent by this vdev
+     */
+    A_UINT32 num_data_retries;
+
+    /* Number of tx data MPDUs dropped from this vdev due to tx retry limit */
+    A_UINT32 num_tx_data_fail;
+
+    /* Number of aggregated unicast tx expecting response ppdu */
+    A_UINT32 data_tx_ppdu_count;
+
+    /* Number of aggregated unicast tx expecting response mpdu */
+    A_UINT32 data_tx_mpdu_count;
+
+    /* number of rx frames with good PCLP */
+    A_UINT32 rx_frame_good_pclp_count;
+
+    /* Number of occasions that no valid delimiter is detected by ampdu parser */
+    A_UINT32 invalid_delimiter_count;
+
+    /* Number of frames for which the CRC check failed in the MAC */
+    A_UINT32 rx_crc_check_fail_count;
+
+    /* tx fifo overflows count for transmissions by this vdev */
+    A_UINT32 txpcu_fifo_overflows_count;
+
+    /* Number of ucast ACKS received good FCS (doesn't include block acks) */
+    A_UINT32 successful_acks_count;
+
+    /*
+     * RX BlockACK Counts
+     * Note that this counts the number of block acks received by this vdev,
+     * not the number of MPDUs acked by block acks.
+     */
+    A_UINT32 rx_block_ack_count;
+
+    /* Beacons received from member of BSS */
+    A_UINT32 member_bss_beacon_count;
+
+    /* Beacons received from other BSS */
+    A_UINT32 non_bss_beacon_count;
+
+    /* Number of RX Data multicast frames dropped by the HW */
+    A_UINT32 rx_data_mc_frame_filtered_count;
+} wmi_vdev_send_big_data_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
