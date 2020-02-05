@@ -987,7 +987,8 @@ struct ol_if_ops {
 	void (*peer_del_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
 				   uint8_t vdev_id,
 				   uint8_t *wds_macaddr,
-				   uint8_t type);
+				   uint8_t type,
+				   uint8_t delete_in_fw);
 	QDF_STATUS
 	(*lro_hash_config)(struct cdp_ctrl_objmgr_psoc *psoc, uint8_t pdev_id,
 			   struct cdp_lro_hash_config *rx_offld_hash);

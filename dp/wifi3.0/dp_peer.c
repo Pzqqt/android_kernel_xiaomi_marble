@@ -1178,14 +1178,79 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
 		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
 
+	/*
+	 * If peer delete_in_progress is set, the peer is about to get
+	 * teared down with a peer delete command to firmware,
+	 * which will cleanup all the wds ast entries.
+	 * So, no need to send explicit wds ast delete to firmware.
+	 */
 	if (ast_entry->next_hop) {
 		cdp_soc->ol_ops->peer_del_wds_entry(soc->ctrl_psoc,
 						    peer->vdev->vdev_id,
 						    ast_entry->mac_addr.raw,
-						    ast_entry->type);
+						    ast_entry->type,
+						    !peer->delete_in_progress);
 	}
 
 }
+
+#ifdef FEATURE_WDS
+/**
+ * dp_peer_ast_free_wds_entries() - Free wds ast entries associated with peer
+ * @soc: soc handle
+ * @peer: peer handle
+ *
+ * Free all the wds ast entries associated with peer
+ *
+ * Return: Number of wds ast entries freed
+ */
+static uint32_t dp_peer_ast_free_wds_entries(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	TAILQ_HEAD(, dp_ast_entry) ast_local_list = {0};
+	struct dp_ast_entry *ast_entry, *temp_ast_entry;
+	uint32_t num_ast = 0;
+
+	TAILQ_INIT(&ast_local_list);
+	qdf_spin_lock_bh(&soc->ast_lock);
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry) {
+		if (ast_entry->next_hop) {
+			if (ast_entry->is_mapped)
+				soc->ast_table[ast_entry->ast_idx] = NULL;
+
+			dp_peer_unlink_ast_entry(soc, ast_entry);
+			DP_STATS_INC(soc, ast.deleted, 1);
+			dp_peer_ast_hash_remove(soc, ast_entry);
+			TAILQ_INSERT_TAIL(&ast_local_list, ast_entry,
+					  ase_list_elem);
+			soc->num_ast_entries--;
+			num_ast++;
+		}
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	TAILQ_FOREACH_SAFE(ast_entry, &ast_local_list, ase_list_elem,
+			   temp_ast_entry) {
+		if (ast_entry->callback)
+			ast_entry->callback(soc->ctrl_psoc,
+					    dp_soc_to_cdp_soc(soc),
+					    ast_entry->cookie,
+					    CDP_TXRX_AST_DELETED);
+
+		qdf_mem_free(ast_entry);
+	}
+
+	return num_ast;
+}
+#else
+static uint32_t dp_peer_ast_free_wds_entries(struct dp_soc *soc,
+					     struct dp_peer *peer)
+{
+	return 0;
+}
+#endif
 
 /**
  * dp_peer_ast_free_entry_by_mac() - find ast entry by MAC address and delete
@@ -1681,6 +1746,8 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			 is_wds);
 
 		return;
+	} else {
+		dp_peer_ast_free_wds_entries(soc, peer);
 	}
 
 	dp_info("peer_unmap_event (soc:%pK) peer_id %d peer %pK",
