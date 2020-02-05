@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,9 +62,7 @@ QDF_STATUS dsc_driver_create(struct dsc_driver **out_driver)
 {
 	QDF_STATUS status;
 
-	dsc_enter();
 	status = __dsc_driver_create(out_driver);
-	dsc_exit();
 
 	return status;
 }
@@ -100,9 +98,7 @@ static void __dsc_driver_destroy(struct dsc_driver **out_driver)
 
 void dsc_driver_destroy(struct dsc_driver **out_driver)
 {
-	dsc_enter();
 	__dsc_driver_destroy(out_driver);
-	dsc_exit();
 }
 
 static bool __dsc_driver_trans_active_down_tree(struct dsc_driver *driver)
@@ -170,7 +166,8 @@ QDF_STATUS dsc_driver_trans_start(struct dsc_driver *driver, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_driver_trans_start(driver, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -215,7 +212,8 @@ dsc_driver_trans_start_wait(struct dsc_driver *driver, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_driver_trans_start_wait(driver, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -264,9 +262,7 @@ static void __dsc_driver_trans_stop(struct dsc_driver *driver)
 
 void dsc_driver_trans_stop(struct dsc_driver *driver)
 {
-	dsc_enter();
 	__dsc_driver_trans_stop(driver);
-	dsc_exit();
 }
 
 static void __dsc_driver_assert_trans_protected(struct dsc_driver *driver)
@@ -281,9 +277,7 @@ static void __dsc_driver_assert_trans_protected(struct dsc_driver *driver)
 
 void dsc_driver_assert_trans_protected(struct dsc_driver *driver)
 {
-	dsc_enter();
 	__dsc_driver_assert_trans_protected(driver);
-	dsc_exit();
 }
 
 static QDF_STATUS
@@ -318,7 +312,8 @@ QDF_STATUS _dsc_driver_op_start(struct dsc_driver *driver, const char *func)
 
 	dsc_enter_str(func);
 	status = __dsc_driver_op_start(driver, func);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -339,9 +334,7 @@ static void __dsc_driver_op_stop(struct dsc_driver *driver, const char *func)
 
 void _dsc_driver_op_stop(struct dsc_driver *driver, const char *func)
 {
-	dsc_enter_str(func);
 	__dsc_driver_op_stop(driver, func);
-	dsc_exit();
 }
 
 static void __dsc_driver_wait_for_ops(struct dsc_driver *driver)
@@ -373,8 +366,6 @@ static void __dsc_driver_wait_for_ops(struct dsc_driver *driver)
 
 void dsc_driver_wait_for_ops(struct dsc_driver *driver)
 {
-	dsc_enter();
 	__dsc_driver_wait_for_ops(driver);
-	dsc_exit();
 }
 

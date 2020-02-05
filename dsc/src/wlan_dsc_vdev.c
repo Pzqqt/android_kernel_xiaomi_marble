@@ -63,9 +63,7 @@ QDF_STATUS dsc_vdev_create(struct dsc_psoc *psoc, struct dsc_vdev **out_vdev)
 {
 	QDF_STATUS status;
 
-	dsc_enter();
 	status =  __dsc_vdev_create(psoc, out_vdev);
-	dsc_exit();
 
 	return status;
 }
@@ -102,9 +100,7 @@ static void __dsc_vdev_destroy(struct dsc_vdev **out_vdev)
 
 void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
 {
-	dsc_enter();
 	__dsc_vdev_destroy(out_vdev);
-	dsc_exit();
 }
 
 #define __dsc_vdev_can_op(vdev) __dsc_vdev_can_trans(vdev)
@@ -194,7 +190,8 @@ QDF_STATUS dsc_vdev_trans_start(struct dsc_vdev *vdev, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_vdev_trans_start(vdev, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -238,7 +235,8 @@ QDF_STATUS dsc_vdev_trans_start_wait(struct dsc_vdev *vdev, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_vdev_trans_start_wait(vdev, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -269,9 +267,7 @@ static void __dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 
 void dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 {
-	dsc_enter();
 	__dsc_vdev_trans_stop(vdev);
-	dsc_exit();
 }
 
 static void __dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev)
@@ -288,9 +284,7 @@ static void __dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev)
 
 void dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev)
 {
-	dsc_enter();
 	__dsc_vdev_assert_trans_protected(vdev);
-	dsc_exit();
 }
 
 static QDF_STATUS __dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
@@ -373,8 +367,6 @@ static void __dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
 
 void dsc_vdev_wait_for_ops(struct dsc_vdev *vdev)
 {
-	dsc_enter();
 	__dsc_vdev_wait_for_ops(vdev);
-	dsc_exit();
 }
 

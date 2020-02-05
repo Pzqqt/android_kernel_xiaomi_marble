@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,9 +64,7 @@ dsc_psoc_create(struct dsc_driver *driver, struct dsc_psoc **out_psoc)
 {
 	QDF_STATUS status;
 
-	dsc_enter();
 	status =  __dsc_psoc_create(driver, out_psoc);
-	dsc_exit();
 
 	return status;
 }
@@ -107,9 +105,7 @@ static void __dsc_psoc_destroy(struct dsc_psoc **out_psoc)
 
 void dsc_psoc_destroy(struct dsc_psoc **out_psoc)
 {
-	dsc_enter();
 	__dsc_psoc_destroy(out_psoc);
-	dsc_exit();
 }
 
 static bool __dsc_psoc_trans_active_down_tree(struct dsc_psoc *psoc)
@@ -199,7 +195,8 @@ QDF_STATUS dsc_psoc_trans_start(struct dsc_psoc *psoc, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_psoc_trans_start(psoc, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -243,7 +240,8 @@ QDF_STATUS dsc_psoc_trans_start_wait(struct dsc_psoc *psoc, const char *desc)
 
 	dsc_enter_str(desc);
 	status = __dsc_psoc_trans_start_wait(psoc, desc);
-	dsc_exit_status(status);
+	if (QDF_IS_STATUS_ERROR(status))
+		dsc_exit_status(status);
 
 	return status;
 }
@@ -277,9 +275,7 @@ static void __dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 
 void dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 {
-	dsc_enter();
 	__dsc_psoc_trans_stop(psoc);
-	dsc_exit();
 }
 
 static void __dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc)
@@ -295,9 +291,7 @@ static void __dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc)
 
 void dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc)
 {
-	dsc_enter();
 	__dsc_psoc_assert_trans_protected(psoc);
-	dsc_exit();
 }
 
 bool __dsc_psoc_trans_trigger_checked(struct dsc_psoc *psoc)
@@ -390,8 +384,6 @@ static void __dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
 
 void dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
 {
-	dsc_enter();
 	__dsc_psoc_wait_for_ops(psoc);
-	dsc_exit();
 }
 
