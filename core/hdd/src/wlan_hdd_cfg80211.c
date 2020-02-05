@@ -21251,6 +21251,18 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 	QDF_STATUS result;
 	struct wlan_crypto_pmksa *pmksa;
 	struct wlan_objmgr_vdev *vdev;
+	mac_handle_t mac_handle;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return QDF_STATUS_E_INVAL;
+	mac_handle = hdd_ctx->mac_handle;
 
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
@@ -21261,7 +21273,15 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 		hdd_objmgr_put_vdev(vdev);
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_copy_macaddr(&pmksa->bssid, &pmk_cache->BSSID);
+
+	if (!pmk_cache->ssid_len) {
+		qdf_copy_macaddr(&pmksa->bssid, &pmk_cache->BSSID);
+	} else {
+		qdf_mem_copy(pmksa->ssid, pmk_cache->ssid, pmk_cache->ssid_len);
+		qdf_mem_copy(pmksa->cache_id, pmk_cache->cache_id,
+			     WLAN_CACHE_ID_LEN);
+		pmksa->ssid_len = pmk_cache->ssid_len;
+	}
 	qdf_mem_copy(pmksa->pmkid, pmk_cache->PMKID, PMKID_LEN);
 	qdf_mem_copy(pmksa->pmk, pmk_cache->pmk, pmk_cache->pmk_len);
 	pmksa->pmk_len = pmk_cache->pmk_len;
@@ -21274,6 +21294,9 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 
 	wlan_update_sae_single_pmk_info(vdev, pmk_cache);
 
+	if (result == QDF_STATUS_SUCCESS && pmk_cache->pmk_len)
+		sme_roam_set_psk_pmk(mac_handle, adapter->vdev_id,
+				     pmk_cache->pmk, pmk_cache->pmk_len);
 	hdd_objmgr_put_vdev(vdev);
 
 	return result;
@@ -21323,11 +21346,9 @@ QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
 static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
 {
 	if (!pmksa->bssid) {
-		hdd_warn("bssid (%pK) is NULL",
-					pmksa->bssid);
+		hdd_warn("bssid is NULL");
 		if (!pmksa->ssid || !pmksa->cache_id) {
-			hdd_err("either ssid (%pK) or cache_id (%pK) are NULL",
-					pmksa->ssid, pmksa->cache_id);
+			hdd_err("either ssid or cache_id are NULL");
 			return false;
 		}
 	}
