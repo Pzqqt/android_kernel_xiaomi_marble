@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -180,6 +180,9 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_POLICY_MGR, params)
 #define policymgr_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_POLICY_MGR, params)
+
+#define policy_mgr_rl_debug(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_POLICY_MGR, params)
 
 #define PM_CONC_CONNECTION_LIST_VALID_INDEX(index) \
 		((MAX_NUMBER_OF_CONC_CONNECTIONS > index) && \

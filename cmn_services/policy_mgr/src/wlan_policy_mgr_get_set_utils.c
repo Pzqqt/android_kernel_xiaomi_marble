@@ -874,8 +874,6 @@ bool policy_mgr_find_if_fw_supports_dbs(struct wlan_objmgr_psoc *psoc)
 	dbs_support =
 	wmi_service_enabled(wmi_handle,
 			    wmi_service_dual_band_simultaneous_support);
-	policy_mgr_debug("is DBS supported by FW/HW: %s",
-			 dbs_support ? "yes" : "no");
 
 	/* The agreement with FW is that: To know if the target is DBS
 	 * capable, DBS needs to be supported both in the HW mode list
@@ -900,9 +898,7 @@ bool policy_mgr_find_if_hwlist_has_dbs(struct wlan_objmgr_psoc *psoc)
 	}
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_debug("HW param: %x", param);
 		if (POLICY_MGR_HW_MODE_DBS_MODE_GET(param)) {
-			policy_mgr_debug("HW (%d) is DBS capable", i);
 			found = 1;
 			break;
 		}
@@ -926,9 +922,7 @@ static bool policy_mgr_find_if_hwlist_has_sbs(struct wlan_objmgr_psoc *psoc)
 	}
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_debug("HW param: %x", param);
 		if (POLICY_MGR_HW_MODE_SBS_MODE_GET(param)) {
-			policy_mgr_debug("HW (%d) is SBS capable", i);
 			found = 1;
 			break;
 		}
@@ -972,27 +966,32 @@ bool policy_mgr_is_dbs_scan_allowed(struct wlan_objmgr_psoc *psoc)
 
 bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 {
-	if (!policy_mgr_is_dbs_enable(psoc)) {
-		policy_mgr_debug("DBS is disabled");
+	if (!policy_mgr_is_dbs_enable(psoc))
+		return false;
+
+	if (!policy_mgr_find_if_fw_supports_dbs(psoc))
+		return false;
+
+	if (!policy_mgr_find_if_hwlist_has_dbs(psoc)) {
+		policymgr_nofl_debug("HW mode list has no DBS");
 		return false;
 	}
 
-	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
-		policy_mgr_debug("HW mode list has no DBS");
-		return false;
-	}
-
-	return policy_mgr_find_if_hwlist_has_dbs(psoc);
+	return true;
 }
 
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 {
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
-		policy_mgr_debug("HW mode list has no DBS");
 		return false;
 	}
 
-	return policy_mgr_find_if_hwlist_has_sbs(psoc);
+	if (!policy_mgr_find_if_hwlist_has_sbs(psoc)) {
+		policymgr_nofl_debug("HW mode list has no SBS");
+		return false;
+	}
+
+	return true;
 }
 
 QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
@@ -1086,8 +1085,6 @@ QDF_STATUS policy_mgr_get_current_hw_mode(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	uint32_t old_hw_index = 0, new_hw_index = 0;
 
-	policy_mgr_debug("Get the current hw mode");
-
 	status = policy_mgr_get_old_and_new_hw_index(psoc, &old_hw_index,
 			&new_hw_index);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -1127,7 +1124,7 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc)) {
-		policy_mgr_debug("DBS is disabled from ini");
+		policy_mgr_rl_debug("DBS is disabled from ini");
 		return false;
 	}
 
@@ -1136,10 +1133,6 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-
-	policy_mgr_debug("DBS=%d",
-		WMI_DBS_FW_MODE_CFG_DBS_GET(
-			pm_ctx->dual_mac_cfg.cur_fw_mode_config));
 
 	if (WMI_DBS_FW_MODE_CFG_DBS_GET(
 			pm_ctx->dual_mac_cfg.cur_fw_mode_config))
@@ -2041,9 +2034,7 @@ uint32_t policy_mgr_get_mode_specific_conn_info(
 	count = policy_mgr_mode_specific_connection_count(
 				psoc, mode, list);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if (count == 0) {
-		policy_mgr_debug("No mode:[%d] connection", mode);
-	} else if (count == 1) {
+	if (count == 1) {
 		*ch_freq_list = pm_conc_connection_list[list[index]].freq;
 		*vdev_id =
 			pm_conc_connection_list[list[index]].vdev_id;
@@ -2055,7 +2046,6 @@ uint32_t policy_mgr_get_mode_specific_conn_info(
 			vdev_id[index] =
 			pm_conc_connection_list[list[index]].vdev_id;
 		}
-		policy_mgr_debug("Multiple mode:[%d] connections", mode);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
@@ -2331,8 +2321,6 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 		sta_sap_scc_on_dfs_chan =
 			policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
-		policy_mgr_debug("sta_sap_scc_on_dfs_chan %u",
-				 sta_sap_scc_on_dfs_chan);
 
 		if (!sta_sap_scc_on_dfs_chan && ((mode == PM_P2P_GO_MODE) ||
 		    (mode == PM_SAP_MODE))) {
@@ -2348,7 +2336,7 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		    num_connections) {
 			if (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 				if (policy_mgr_is_sap_p2pgo_on_dfs(psoc)) {
-					policy_mgr_err("MCC not allowed: SAP/P2PGO on DFS");
+					policy_mgr_rl_debug("MCC not allowed: SAP/P2PGO on DFS");
 					goto done;
 				}
 			}
@@ -3498,8 +3486,8 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 
 	roffchan = wlan_vdev_mlme_cap_get(vdev, WLAN_VDEV_C_RESTRICT_OFFCHAN);
 
-	policy_mgr_debug("Restrict offchannel:%s",
-			 roffchan  ? "set" : "clear");
+	if (roffchan)
+		policy_mgr_debug("Restrict offchannel is set");
 
 	return roffchan;
 }
@@ -3520,15 +3508,13 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	cc_count = policy_mgr_get_mode_specific_conn_info(
 			psoc, &op_ch_freq_list[cc_count],
 			&vdev_id[cc_count], PM_SAP_MODE);
-	policy_mgr_debug("Number of SAP modes: %d", cc_count);
 
 	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
 		cc_count = cc_count +
 			   policy_mgr_get_mode_specific_conn_info(
 					psoc, &op_ch_freq_list[cc_count],
 					&vdev_id[cc_count], PM_P2P_GO_MODE);
-	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",
-							cc_count);
+
 	if (!cc_count) {
 		*ok = true;
 		return QDF_STATUS_SUCCESS;
@@ -3596,7 +3582,6 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 			wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 		}
 	}
-	policy_mgr_debug("freq: %d ok %d", ch_freq, *ok);
 
 	return QDF_STATUS_SUCCESS;
 }
