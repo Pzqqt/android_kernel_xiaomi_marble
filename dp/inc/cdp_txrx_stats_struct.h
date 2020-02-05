@@ -2034,6 +2034,8 @@ enum _ol_ath_param_t {
 	/* Enable/disable CE stats print */
 	OL_ATH_PARAM_ENABLE_CE_LATENCY_STATS = 437,
 #endif
+	/* set operating class table (MBO) value. */
+	OL_ATH_PARAM_OPCLASS_TBL = 438,
 };
 #endif
 /* Bitmasks for stats that can block */
