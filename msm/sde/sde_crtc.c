@@ -4690,69 +4690,50 @@ int sde_crtc_vblank(struct drm_crtc *crtc, bool en)
 	return 0;
 }
 
-/**
- * sde_crtc_install_properties - install all drm properties for crtc
- * @crtc: Pointer to drm crtc structure
- */
-static void sde_crtc_install_properties(struct drm_crtc *crtc,
-				struct sde_mdss_cfg *catalog)
+static void sde_crtc_install_dest_scale_properties(struct sde_crtc *sde_crtc,
+		struct sde_mdss_cfg *catalog, struct sde_kms_info *info)
 {
-	struct sde_crtc *sde_crtc;
-	struct drm_device *dev;
-	struct sde_kms_info *info;
-	struct sde_kms *sde_kms;
-	int i, j;
+	sde_kms_info_add_keyint(info, "has_dest_scaler",
+			catalog->mdp[0].has_dest_scaler);
+	sde_kms_info_add_keyint(info, "dest_scaler_count",
+				catalog->ds_count);
 
-	static const struct drm_prop_enum_list e_secure_level[] = {
-		{SDE_DRM_SEC_NON_SEC, "sec_and_non_sec"},
-		{SDE_DRM_SEC_ONLY, "sec_only"},
-	};
-
-	static const struct drm_prop_enum_list e_cwb_data_points[] = {
-		{CAPTURE_MIXER_OUT, "capture_mixer_out"},
-		{CAPTURE_DSPP_OUT, "capture_pp_out"},
-	};
-
-	static const struct drm_prop_enum_list e_idle_pc_state[] = {
-		{IDLE_PC_NONE, "idle_pc_none"},
-		{IDLE_PC_ENABLE, "idle_pc_enable"},
-		{IDLE_PC_DISABLE, "idle_pc_disable"},
-	};
-
-	SDE_DEBUG("\n");
-
-	if (!crtc || !catalog) {
-		SDE_ERROR("invalid crtc or catalog\n");
-		return;
+	if (catalog->ds[0].top) {
+		sde_kms_info_add_keyint(info,
+				"max_dest_scaler_input_width",
+				catalog->ds[0].top->maxinputwidth);
+		sde_kms_info_add_keyint(info,
+				"max_dest_scaler_output_width",
+				catalog->ds[0].top->maxoutputwidth);
+		sde_kms_info_add_keyint(info, "max_dest_scale_up",
+				catalog->ds[0].top->maxupscale);
 	}
 
-	sde_crtc = to_sde_crtc(crtc);
-	dev = crtc->dev;
-	sde_kms = _sde_crtc_get_kms(crtc);
-
-	if (!sde_kms) {
-		SDE_ERROR("invalid argument\n");
-		return;
+	if (catalog->ds[0].features & BIT(SDE_SSPP_SCALER_QSEED3)) {
+		msm_property_install_volatile_range(
+				&sde_crtc->property_info, "dest_scaler",
+				0x0, 0, ~0, 0, CRTC_PROP_DEST_SCALER);
+		msm_property_install_blob(&sde_crtc->property_info,
+				"ds_lut_ed", 0,
+				CRTC_PROP_DEST_SCALER_LUT_ED);
+		msm_property_install_blob(&sde_crtc->property_info,
+				"ds_lut_cir", 0,
+				CRTC_PROP_DEST_SCALER_LUT_CIR);
+		msm_property_install_blob(&sde_crtc->property_info,
+				"ds_lut_sep", 0,
+				CRTC_PROP_DEST_SCALER_LUT_SEP);
+	} else if (catalog->ds[0].features
+			& BIT(SDE_SSPP_SCALER_QSEED3LITE)) {
+		msm_property_install_volatile_range(
+				&sde_crtc->property_info, "dest_scaler",
+				0x0, 0, ~0, 0, CRTC_PROP_DEST_SCALER);
 	}
+}
 
-	info = kzalloc(sizeof(struct sde_kms_info), GFP_KERNEL);
-	if (!info) {
-		SDE_ERROR("failed to allocate info memory\n");
-		return;
-	}
-
-	/* range properties */
-	msm_property_install_range(&sde_crtc->property_info,
-		"input_fence_timeout", 0x0, 0, SDE_CRTC_MAX_INPUT_FENCE_TIMEOUT,
-		SDE_CRTC_INPUT_FENCE_TIMEOUT, CRTC_PROP_INPUT_FENCE_TIMEOUT);
-
-	msm_property_install_volatile_range(&sde_crtc->property_info,
-		"output_fence", 0x0, 0, ~0, 0, CRTC_PROP_OUTPUT_FENCE);
-
-	msm_property_install_range(&sde_crtc->property_info,
-			"output_fence_offset", 0x0, 0, 1, 0,
-			CRTC_PROP_OUTPUT_FENCE_OFFSET);
-
+static void sde_crtc_install_perf_properties(struct sde_crtc *sde_crtc,
+		struct sde_kms *sde_kms, struct sde_mdss_cfg *catalog,
+		struct sde_kms_info *info)
+{
 	msm_property_install_range(&sde_crtc->property_info,
 			"core_clk", 0x0, 0, U64_MAX,
 			sde_kms->perf.max_core_clk_rate,
@@ -4790,47 +4771,39 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			sde_kms->perf.max_core_clk_rate,
 			CRTC_PROP_ROT_CLK);
 
-	msm_property_install_range(&sde_crtc->property_info,
-		"idle_time", 0, 0, U64_MAX, 0,
-		CRTC_PROP_IDLE_TIMEOUT);
+	if (catalog->perf.max_bw_low)
+		sde_kms_info_add_keyint(info, "max_bandwidth_low",
+				catalog->perf.max_bw_low * 1000LL);
+	if (catalog->perf.max_bw_high)
+		sde_kms_info_add_keyint(info, "max_bandwidth_high",
+				catalog->perf.max_bw_high * 1000LL);
+	if (catalog->perf.min_core_ib)
+		sde_kms_info_add_keyint(info, "min_core_ib",
+				catalog->perf.min_core_ib * 1000LL);
+	if (catalog->perf.min_llcc_ib)
+		sde_kms_info_add_keyint(info, "min_llcc_ib",
+				catalog->perf.min_llcc_ib * 1000LL);
+	if (catalog->perf.min_dram_ib)
+		sde_kms_info_add_keyint(info, "min_dram_ib",
+				catalog->perf.min_dram_ib * 1000LL);
+	if (sde_kms->perf.max_core_clk_rate)
+		sde_kms_info_add_keyint(info, "max_mdp_clk",
+				sde_kms->perf.max_core_clk_rate);
+}
 
-	if (catalog->has_idle_pc)
-		msm_property_install_enum(&sde_crtc->property_info,
-			"idle_pc_state", 0x0, 0, e_idle_pc_state,
-			ARRAY_SIZE(e_idle_pc_state),
-			CRTC_PROP_IDLE_PC_STATE);
-
-	if (catalog->has_cwb_support)
-		msm_property_install_enum(&sde_crtc->property_info,
-				"capture_mode", 0, 0, e_cwb_data_points,
-				ARRAY_SIZE(e_cwb_data_points),
-				CRTC_PROP_CAPTURE_OUTPUT);
-
-	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
-		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
-
-	msm_property_install_volatile_range(&sde_crtc->property_info,
-		"sde_drm_roi_v1", 0x0, 0, ~0, 0, CRTC_PROP_ROI_V1);
-
-	msm_property_install_enum(&sde_crtc->property_info, "security_level",
-			0x0, 0, e_secure_level,
-			ARRAY_SIZE(e_secure_level),
-			CRTC_PROP_SECURITY_LEVEL);
+static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
+		struct sde_mdss_cfg *catalog)
+{
+	int i, j;
 
 	sde_kms_info_reset(info);
-
-	if (catalog->has_dim_layer) {
-		msm_property_install_volatile_range(&sde_crtc->property_info,
-			"dim_layer_v1", 0x0, 0, ~0, 0, CRTC_PROP_DIM_LAYER_V1);
-		sde_kms_info_add_keyint(info, "dim_layer_v1_max_layers",
-				SDE_MAX_DIM_LAYERS);
-	}
 
 	sde_kms_info_add_keyint(info, "hw_version", catalog->hwversion);
 	sde_kms_info_add_keyint(info, "max_linewidth",
 			catalog->max_mixer_width);
 	sde_kms_info_add_keyint(info, "max_blendstages",
 			catalog->max_mixer_blendstages);
+
 	if (catalog->qseed_type == SDE_SSPP_SCALER_QSEED2)
 		sde_kms_info_add_keystr(info, "qseed_type", "qseed2");
 	if (catalog->qseed_type == SDE_SSPP_SCALER_QSEED3)
@@ -4861,65 +4834,9 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 					"smart_dma_rev", "smart_dma_v2p5");
 	}
 
-	if (catalog->mdp[0].has_dest_scaler) {
-		sde_kms_info_add_keyint(info, "has_dest_scaler",
-				catalog->mdp[0].has_dest_scaler);
-		sde_kms_info_add_keyint(info, "dest_scaler_count",
-					catalog->ds_count);
-
-		if (catalog->ds[0].top) {
-			sde_kms_info_add_keyint(info,
-					"max_dest_scaler_input_width",
-					catalog->ds[0].top->maxinputwidth);
-			sde_kms_info_add_keyint(info,
-					"max_dest_scaler_output_width",
-					catalog->ds[0].top->maxinputwidth);
-			sde_kms_info_add_keyint(info, "max_dest_scale_up",
-					catalog->ds[0].top->maxupscale);
-		}
-
-		if (catalog->ds[0].features & BIT(SDE_SSPP_SCALER_QSEED3)) {
-			msm_property_install_volatile_range(
-					&sde_crtc->property_info, "dest_scaler",
-					0x0, 0, ~0, 0, CRTC_PROP_DEST_SCALER);
-			msm_property_install_blob(&sde_crtc->property_info,
-					"ds_lut_ed", 0,
-					CRTC_PROP_DEST_SCALER_LUT_ED);
-			msm_property_install_blob(&sde_crtc->property_info,
-					"ds_lut_cir", 0,
-					CRTC_PROP_DEST_SCALER_LUT_CIR);
-			msm_property_install_blob(&sde_crtc->property_info,
-					"ds_lut_sep", 0,
-					CRTC_PROP_DEST_SCALER_LUT_SEP);
-		} else if (catalog->ds[0].features
-				& BIT(SDE_SSPP_SCALER_QSEED3LITE)) {
-			msm_property_install_volatile_range(
-					&sde_crtc->property_info, "dest_scaler",
-					0x0, 0, ~0, 0, CRTC_PROP_DEST_SCALER);
-		}
-	}
-
 	sde_kms_info_add_keyint(info, "has_src_split", catalog->has_src_split);
 	sde_kms_info_add_keyint(info, "has_hdr", catalog->has_hdr);
 	sde_kms_info_add_keyint(info, "has_hdr_plus", catalog->has_hdr_plus);
-	if (catalog->perf.max_bw_low)
-		sde_kms_info_add_keyint(info, "max_bandwidth_low",
-				catalog->perf.max_bw_low * 1000LL);
-	if (catalog->perf.max_bw_high)
-		sde_kms_info_add_keyint(info, "max_bandwidth_high",
-				catalog->perf.max_bw_high * 1000LL);
-	if (catalog->perf.min_core_ib)
-		sde_kms_info_add_keyint(info, "min_core_ib",
-				catalog->perf.min_core_ib * 1000LL);
-	if (catalog->perf.min_llcc_ib)
-		sde_kms_info_add_keyint(info, "min_llcc_ib",
-				catalog->perf.min_llcc_ib * 1000LL);
-	if (catalog->perf.min_dram_ib)
-		sde_kms_info_add_keyint(info, "min_dram_ib",
-				catalog->perf.min_dram_ib * 1000LL);
-	if (sde_kms->perf.max_core_clk_rate)
-		sde_kms_info_add_keyint(info, "max_mdp_clk",
-				sde_kms->perf.max_core_clk_rate);
 
 	for (i = 0; i < catalog->limit_count; i++) {
 		sde_kms_info_add_keyint(info,
@@ -4981,15 +4898,116 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			catalog->perf.num_mnoc_ports);
 	sde_kms_info_add_keyint(info, "axi_bus_width",
 			catalog->perf.axi_bus_width);
+
 	sde_kms_info_add_keyint(info, "sec_ui_blendstage",
 			catalog->sui_supported_blendstage);
 
 	if (catalog->ubwc_bw_calc_version)
 		sde_kms_info_add_keyint(info, "ubwc_bw_calc_ver",
 				catalog->ubwc_bw_calc_version);
+}
 
+/**
+ * sde_crtc_install_properties - install all drm properties for crtc
+ * @crtc: Pointer to drm crtc structure
+ */
+static void sde_crtc_install_properties(struct drm_crtc *crtc,
+				struct sde_mdss_cfg *catalog)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_kms_info *info;
+	struct sde_kms *sde_kms;
+
+	static const struct drm_prop_enum_list e_secure_level[] = {
+		{SDE_DRM_SEC_NON_SEC, "sec_and_non_sec"},
+		{SDE_DRM_SEC_ONLY, "sec_only"},
+	};
+
+	static const struct drm_prop_enum_list e_cwb_data_points[] = {
+		{CAPTURE_MIXER_OUT, "capture_mixer_out"},
+		{CAPTURE_DSPP_OUT, "capture_pp_out"},
+	};
+
+	static const struct drm_prop_enum_list e_idle_pc_state[] = {
+		{IDLE_PC_NONE, "idle_pc_none"},
+		{IDLE_PC_ENABLE, "idle_pc_enable"},
+		{IDLE_PC_DISABLE, "idle_pc_disable"},
+	};
+
+	SDE_DEBUG("\n");
+
+	if (!crtc || !catalog) {
+		SDE_ERROR("invalid crtc or catalog\n");
+		return;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	sde_kms = _sde_crtc_get_kms(crtc);
+	if (!sde_kms) {
+		SDE_ERROR("invalid argument\n");
+		return;
+	}
+
+	info = kzalloc(sizeof(struct sde_kms_info), GFP_KERNEL);
+	if (!info) {
+		SDE_ERROR("failed to allocate info memory\n");
+		return;
+	}
+
+	sde_crtc_setup_capabilities_blob(info, catalog);
+
+	msm_property_install_range(&sde_crtc->property_info,
+		"input_fence_timeout", 0x0, 0,
+		SDE_CRTC_MAX_INPUT_FENCE_TIMEOUT, SDE_CRTC_INPUT_FENCE_TIMEOUT,
+		CRTC_PROP_INPUT_FENCE_TIMEOUT);
+	msm_property_install_volatile_range(&sde_crtc->property_info,
+		"output_fence", 0x0, 0, ~0, 0, CRTC_PROP_OUTPUT_FENCE);
+	msm_property_install_range(&sde_crtc->property_info,
+			"output_fence_offset", 0x0, 0, 1, 0,
+			CRTC_PROP_OUTPUT_FENCE_OFFSET);
+
+	sde_crtc_install_perf_properties(sde_crtc, sde_kms, catalog, info);
+
+	msm_property_install_range(&sde_crtc->property_info,
+		"idle_time", 0, 0, U64_MAX, 0,
+		CRTC_PROP_IDLE_TIMEOUT);
+
+	if (catalog->has_idle_pc)
+		msm_property_install_enum(&sde_crtc->property_info,
+			"idle_pc_state", 0x0, 0, e_idle_pc_state,
+			ARRAY_SIZE(e_idle_pc_state),
+			CRTC_PROP_IDLE_PC_STATE);
+
+	if (catalog->has_cwb_support)
+		msm_property_install_enum(&sde_crtc->property_info,
+				"capture_mode", 0, 0, e_cwb_data_points,
+				ARRAY_SIZE(e_cwb_data_points),
+				CRTC_PROP_CAPTURE_OUTPUT);
+
+	msm_property_install_volatile_range(&sde_crtc->property_info,
+		"sde_drm_roi_v1", 0x0, 0, ~0, 0, CRTC_PROP_ROI_V1);
+
+	msm_property_install_enum(&sde_crtc->property_info, "security_level",
+			0x0, 0, e_secure_level,
+			ARRAY_SIZE(e_secure_level),
+			CRTC_PROP_SECURITY_LEVEL);
+
+	if (catalog->has_dim_layer) {
+		msm_property_install_volatile_range(&sde_crtc->property_info,
+			"dim_layer_v1", 0x0, 0, ~0, 0, CRTC_PROP_DIM_LAYER_V1);
+		sde_kms_info_add_keyint(info, "dim_layer_v1_max_layers",
+				SDE_MAX_DIM_LAYERS);
+	}
+
+	if (catalog->mdp[0].has_dest_scaler)
+		sde_crtc_install_dest_scale_properties(sde_crtc, catalog,
+				info);
+
+	msm_property_install_blob(&sde_crtc->property_info, "capabilities",
+		DRM_MODE_PROP_IMMUTABLE, CRTC_PROP_INFO);
 	msm_property_set_blob(&sde_crtc->property_info, &sde_crtc->blob_info,
-			info->data, SDE_KMS_INFO_DATALEN(info), CRTC_PROP_INFO);
+			info->data, SDE_KMS_INFO_DATALEN(info),
+			CRTC_PROP_INFO);
 
 	kfree(info);
 }
