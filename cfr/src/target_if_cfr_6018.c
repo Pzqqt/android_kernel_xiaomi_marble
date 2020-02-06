@@ -158,7 +158,8 @@ void cfr_free_pending_dbr_events(struct wlan_objmgr_pdev *pdev)
 		if (!lut)
 			continue;
 
-		if (lut->dbr_recv && !lut->tx_recv) {
+		if (lut->dbr_recv && !lut->tx_recv &&
+		    (lut->dbr_tstamp < pcfr->last_success_tstamp)) {
 			target_if_dbr_buf_release(pdev, DBR_MODULE_CFR,
 						  lut->dbr_address,
 						  i, 0);
@@ -552,6 +553,7 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 	if ((lut->dbr_recv == true) && (lut->tx_recv == true)) {
 		if (lut->dbr_ppdu_id == lut->tx_ppdu_id) {
 
+			pcfr->last_success_tstamp = lut->dbr_tstamp;
 			if (lut->dbr_tstamp > lut->txrx_tstamp) {
 				diff = lut->dbr_tstamp - lut->txrx_tstamp;
 				cfr_debug("<CORRELATE><%u>: "
