@@ -199,8 +199,6 @@ __wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
 	pno_req->fast_scan_max_cycles = scan_timer_repeat_value;
 	pno_req->slow_scan_period =
 		(slow_scan_multiplier * pno_req->fast_scan_period);
-	osif_debug("Base scan interval: %d sec PNO Scan Timer Repeat Value: %d",
-		   (request->interval / 1000), scan_timer_repeat_value);
 }
 #endif
 
@@ -446,10 +444,13 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 	enable_dfs_pno_chnl_scan = ucfg_scan_is_dfs_chnl_scan_enabled(psoc);
 	if (request->n_channels) {
-		char *chl = qdf_mem_malloc((request->n_channels * 5) + 1);
+		uint32_t buff_len;
+		char *chl;
 		int len = 0;
 		bool ap_or_go_present = wlan_cfg80211_is_ap_go_present(psoc);
 
+		buff_len = (request->n_channels * 5) + 1;
+		chl = qdf_mem_malloc(buff_len);
 		if (!chl) {
 			ret = -ENOMEM;
 			goto error;
@@ -482,11 +483,10 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 				if (!ok)
 					continue;
 			}
-			len += snprintf(chl + len, 5, "%d ", chan_freq);
+			len += qdf_scnprintf(chl + len, buff_len - len, " %d", chan_freq);
 			valid_ch[num_chan++] = chan_freq;
 		}
-		osif_notice("No. of Scan Channels: %d", num_chan);
-		osif_notice("Channel-List: %s", chl);
+		osif_debug("Channel-List[%d]:%s", num_chan, chl);
 		qdf_mem_free(chl);
 		chl = NULL;
 		/* If all channels are DFS and dropped,
@@ -519,10 +519,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 		req->networks_list[i].encryption = 0;       /*eED_ANY */
 		req->networks_list[i].bc_new_type = 0;    /*eBCAST_UNKNOWN */
 
-		osif_notice("Received ssid:%.*s",
-			    req->networks_list[i].ssid.length,
-			    req->networks_list[i].ssid.ssid);
-
 		/*Copying list of valid channel into request */
 		qdf_mem_copy(req->networks_list[i].channels, valid_ch,
 			num_chan * sizeof(uint32_t));
@@ -552,8 +548,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 			j++;
 		}
 	}
-	osif_notice("Number of hidden networks being Configured = %d",
-		    request->n_ssids);
 
 	/*
 	 * Before Kernel 4.4
@@ -575,9 +569,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	wlan_config_sched_scan_plan(req, request);
 	req->delay_start_time = wlan_config_sched_scan_start_delay(request);
 	req->scan_backoff_multiplier = scan_backoff_multiplier;
-	osif_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
-		    req->fast_scan_period, req->fast_scan_max_cycles,
-		    req->slow_scan_period);
+
 	wlan_hdd_sched_scan_update_relative_rssi(req, request);
 
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -590,14 +582,26 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 	if (ucfg_ie_whitelist_enabled(psoc, vdev))
 		ucfg_copy_ie_whitelist_attrs(psoc, &req->ie_whitelist);
+
+	osif_debug("Network count %d n_ssids %d fast_scan_period: %d msec slow_scan_period: %d msec, fast_scan_max_cycles: %d, relative_rssi %d band_pref %d, rssi_pref %d",
+		   req->networks_cnt, request->n_ssids, req->fast_scan_period,
+		   req->slow_scan_period, req->fast_scan_max_cycles,
+		   req->relative_rssi, req->band_rssi_pref.band,
+		   req->band_rssi_pref.rssi);
+
+	for (i = 0; i < req->networks_cnt; i++)
+		osif_debug("[%d] ssid: %.*s, RSSI th %d bc NW type %u",
+			   i, req->networks_list[i].ssid.length,
+			   req->networks_list[i].ssid.ssid,
+			   req->networks_list[i].rssi_thresh,
+			   req->networks_list[i].bc_new_type);
+
 	status = ucfg_scan_pno_start(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		osif_err("Failed to enable PNO");
 		ret = -EINVAL;
 		goto error;
 	}
-
-	osif_info("PNO scan request offloaded");
 
 error:
 	qdf_mem_free(req);
@@ -610,9 +614,7 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_vdev *vdev)
 
 	status = ucfg_scan_pno_stop(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		osif_err("Failed to disabled PNO");
-	else
-		osif_info("PNO scan disabled");
+		osif_debug("Failed to disable PNO");
 
 	return 0;
 }

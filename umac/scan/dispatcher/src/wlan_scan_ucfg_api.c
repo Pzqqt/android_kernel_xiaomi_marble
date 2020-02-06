@@ -190,12 +190,12 @@ QDF_STATUS ucfg_scan_pno_stop(struct wlan_objmgr_vdev *vdev)
 	}
 	if (!scan_vdev_obj->pno_in_progress) {
 		scm_debug("pno already stopped");
-		return QDF_STATUS_E_ALREADY;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	status = tgt_scan_pno_stop(vdev, wlan_vdev_get_id(vdev));
 	if (QDF_IS_STATUS_ERROR(status))
-		scm_err("pno start failed");
+		scm_err("pno stop failed");
 	else
 		scan_vdev_obj->pno_in_progress = false;
 
