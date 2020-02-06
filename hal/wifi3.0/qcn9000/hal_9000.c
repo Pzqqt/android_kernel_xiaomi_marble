@@ -1343,6 +1343,30 @@ static inline void hal_write_window_register(struct hal_soc *hal_soc)
 		      WINDOW_CONFIGURATION_VALUE_9000);
 }
 
+/**
+ * hal_rx_msdu_packet_metadata_get_9000(): API to get the
+ * msdu information from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * @ hal_rx_msdu_metadata: pointer to the msdu info structure
+ */
+static void
+hal_rx_msdu_packet_metadata_get_9000(uint8_t *buf,
+				     void *msdu_pkt_metadata)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct hal_rx_msdu_metadata *msdu_metadata =
+		(struct hal_rx_msdu_metadata *)msdu_pkt_metadata;
+
+	msdu_metadata->l3_hdr_pad =
+		HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+	msdu_metadata->sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+	msdu_metadata->da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+	msdu_metadata->sa_sw_peer_id =
+		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1435,7 +1459,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	NULL,
 	NULL,
 	/* rx - msdu fast path info fields */
-	hal_rx_msdu_packet_metadata_get_generic,
+	hal_rx_msdu_packet_metadata_get_9000,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {
