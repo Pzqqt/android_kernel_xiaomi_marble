@@ -1318,9 +1318,9 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 			rates->vhtTxMCSMap |= peer_mcs_map;
 		}
 	}
-	pe_debug("enable2x2 - %d nss %d vhtRxMCSMap - %x vhtTxMCSMap - %x",
-		vht_cap_info->enable2x2, nss,
-		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
+
+	pe_debug("RxMCSMap %x TxMCSMap %x", rates->vhtRxMCSMap,
+		 rates->vhtTxMCSMap);
 
 	if (!session_entry)
 		return QDF_STATUS_SUCCESS;
@@ -1328,7 +1328,6 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	session_entry->supported_nss_1x1 =
 		((rates->vhtTxMCSMap & VHT_MCS_1x1) == VHT_MCS_1x1) ?
 		true : false;
-	pe_debug("VHT supported nss 1x1: %d", session_entry->supported_nss_1x1);
 
 	if (!sta_ds || CH_WIDTH_80MHZ >= session_entry->ch_width)
 		return QDF_STATUS_SUCCESS;
@@ -1338,6 +1337,43 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	lim_get_vht_gt80_nss(mac_ctx, sta_ds, peer_vht_caps, session_entry);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+static void lim_dump_ht_mcs_mask(uint8_t *self_mcs, uint8_t *peer_mcs)
+{
+	uint32_t len = 0;
+	uint8_t idx;
+	uint8_t *buff;
+	uint32_t buff_len;
+
+	/*
+	 * Buffer of (SIR_MAC_MAX_SUPPORTED_MCS_SET * 5) + 1  to consider the 4
+	 * char MCS eg 0xff and 1 space after it and 1 to end the string with
+	 * NULL.
+	 */
+	buff_len = (SIR_MAC_MAX_SUPPORTED_MCS_SET * 5) + 1;
+	buff = qdf_mem_malloc(buff_len);
+	if (!buff)
+		return;
+
+	if (self_mcs) {
+		for (idx = 0; idx < SIR_MAC_MAX_SUPPORTED_MCS_SET; idx++)
+			len += qdf_scnprintf(buff + len, buff_len - len,
+					     "0x%x ", self_mcs[idx]);
+
+		pe_nofl_debug("SELF HT MCS: %s", buff);
+	}
+
+	if (peer_mcs) {
+		len = 0;
+		for (idx = 0; idx < SIR_MAC_MAX_SUPPORTED_MCS_SET; idx++)
+			len += qdf_scnprintf(buff + len, buff_len - len,
+					     "0x%x ", peer_mcs[idx]);
+
+		pe_nofl_debug("PEER HT MCS: %s", buff);
+	}
+
+	qdf_mem_free(buff);
 }
 
 QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
@@ -1460,9 +1496,7 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac_ctx,
 					 supported_mcs_set[i];
 		}
 
-		pe_debug("MCS Rate Set Bitmap: ");
-		for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
-			pe_debug("%x ", rates->supportedMCSSet[i]);
+		lim_dump_ht_mcs_mask(rates->supportedMCSSet, NULL);
 	}
 	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps, session_entry,
 				 session_entry->nss, NULL);
@@ -1653,9 +1687,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				pRates->supportedMCSSet[i] &=
 					pSupportedMCSSet[i];
 		}
-		pe_debug("MCS Rate Set Bitmap: ");
-		for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++)
-			pe_debug("%x ", pRates->supportedMCSSet[i]);
+
+		lim_dump_ht_mcs_mask(NULL, pRates->supportedMCSSet);
 
 		if (pRates->supportedMCSSet[0] == 0) {
 			pe_debug("Incorrect MCS 0 - 7. They must be supported");
@@ -1664,8 +1697,6 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 
 		pe_session->supported_nss_1x1 =
 			((pRates->supportedMCSSet[1] != 0) ? false : true);
-		pe_debug("HT supported nss 1x1: %d",
-			pe_session->supported_nss_1x1);
 	}
 	lim_populate_vht_mcs_set(mac, pRates, pVHTCaps, pe_session,
 				 pe_session->nss, sta_ds);
@@ -1696,7 +1727,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 	} else if (pRates->supportedMCSSet[1] == 0) {
 		pe_session->nss = NSS_1x1_MODE;
 	}
-	pe_debug("nss: %d", pe_session->nss);
+	pe_debug("nss 1x1 %d nss %d", pe_session->supported_nss_1x1,
+		 pe_session->nss);
 
 	if (pBeaconStruct)
 		qdf_mem_free(pBeaconStruct);
@@ -1918,11 +1950,8 @@ QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 			sta_ds->supportedRates.supportedMCSSet[i] =
 				mcs_set[i] & supported_mcs_set[i];
 
-		pe_debug("MCS Rate Set Bitmap from CFG and DPH: ");
-		for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++) {
-			pe_debug("%x %x ", mcs_set[i],
-			    sta_ds->supportedRates.supportedMCSSet[i]);
-		}
+		lim_dump_ht_mcs_mask(mcs_set,
+				     sta_ds->supportedRates.supportedMCSSet);
 	}
 	lim_populate_vht_mcs_set(mac_ctx, &sta_ds->supportedRates, vht_caps,
 				 session_entry, session_entry->nss, sta_ds);
@@ -3167,9 +3196,6 @@ QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac,
 {
 	qdf_mem_zero((uint8_t *) beaconStruct, sizeof(tSirProbeRespBeacon));
 
-	pe_debug("The IE's being received are:");
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-				pIE, ieLen);
 	/* Parse the Beacon IE's, Don't try to parse if we dont have anything in IE */
 	if (ieLen > 0) {
 		if (QDF_STATUS_SUCCESS !=
