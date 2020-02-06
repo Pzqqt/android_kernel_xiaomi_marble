@@ -2470,102 +2470,58 @@ end:
 static int sde_dspp_parse_dt(struct device_node *np,
 						struct sde_mdss_cfg *sde_cfg)
 {
-	int rc, prop_count[DSPP_PROP_MAX], i;
-	int ad_prop_count[AD_PROP_MAX];
-	int ltm_prop_count[LTM_PROP_MAX];
-	bool prop_exists[DSPP_PROP_MAX], ad_prop_exists[AD_PROP_MAX];
-	bool ltm_prop_exists[LTM_PROP_MAX];
-	bool blocks_prop_exists[DSPP_BLOCKS_PROP_MAX];
-	struct sde_prop_value *ad_prop_value = NULL, *ltm_prop_value = NULL;
-	int blocks_prop_count[DSPP_BLOCKS_PROP_MAX];
-	struct sde_prop_value *prop_value = NULL, *blocks_prop_value = NULL;
+	int rc = 0, i;
 	u32 off_count, ad_off_count, ltm_off_count;
+	struct sde_dt_props *props, *ad_props, *ltm_props;
+	struct sde_dt_props *blocks_props = NULL;
 	struct sde_dspp_cfg *dspp;
 	struct sde_dspp_sub_blks *sblk;
 	struct device_node *snp = NULL;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
-	prop_value = kzalloc(DSPP_PROP_MAX *
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	rc = _validate_dt_entry(np, dspp_prop, ARRAY_SIZE(dspp_prop),
-		prop_count, &off_count);
-	if (rc)
-		goto end;
+	props = sde_get_dt_props(np, DSPP_PROP_MAX, dspp_prop,
+			ARRAY_SIZE(dspp_prop), &off_count);
+	if (IS_ERR_OR_NULL(props))
+		return PTR_ERR(props);
 
 	sde_cfg->dspp_count = off_count;
 
-	rc = _read_dt_entry(np, dspp_prop, ARRAY_SIZE(dspp_prop), prop_count,
-		prop_exists, prop_value);
-	if (rc)
-		goto end;
-
 	/* Parse AD dtsi entries */
-	ad_prop_value = kcalloc(AD_PROP_MAX,
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!ad_prop_value) {
-		rc = -ENOMEM;
-		goto end;
+	ad_props = sde_get_dt_props(np, AD_PROP_MAX, ad_prop,
+			ARRAY_SIZE(ad_prop), &ad_off_count);
+	if (IS_ERR_OR_NULL(ad_props)) {
+		rc = PTR_ERR(ad_props);
+		goto put_props;
 	}
-	rc = _validate_dt_entry(np, ad_prop, ARRAY_SIZE(ad_prop),
-		ad_prop_count, &ad_off_count);
-	if (rc)
-		goto end;
-	rc = _read_dt_entry(np, ad_prop, ARRAY_SIZE(ad_prop), ad_prop_count,
-		ad_prop_exists, ad_prop_value);
-	if (rc)
-		goto end;
 
 	/* Parse LTM dtsi entries */
-	ltm_prop_value = kcalloc(LTM_PROP_MAX,
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!ltm_prop_value) {
-		rc = -ENOMEM;
-		goto end;
+	ltm_props = sde_get_dt_props(np, LTM_PROP_MAX, ltm_prop,
+			ARRAY_SIZE(ltm_prop), &ltm_off_count);
+	if (IS_ERR_OR_NULL(ltm_props)) {
+		rc = PTR_ERR(ltm_props);
+		goto put_ad_props;
 	}
-	rc = _validate_dt_entry(np, ltm_prop, ARRAY_SIZE(ltm_prop),
-		ltm_prop_count, &ltm_off_count);
-	if (rc)
-		goto end;
-	rc = _read_dt_entry(np, ltm_prop, ARRAY_SIZE(ltm_prop), ltm_prop_count,
-		ltm_prop_exists, ltm_prop_value);
-	if (rc)
-		goto end;
 
 	/* get DSPP feature dt properties if they exist */
 	snp = of_get_child_by_name(np, dspp_prop[DSPP_BLOCKS].prop_name);
 	if (snp) {
-		blocks_prop_value = kzalloc(DSPP_BLOCKS_PROP_MAX *
-				MAX_SDE_HW_BLK * sizeof(struct sde_prop_value),
-				GFP_KERNEL);
-		if (!blocks_prop_value) {
-			rc = -ENOMEM;
-			goto end;
+		blocks_props = sde_get_dt_props(snp, DSPP_BLOCKS_PROP_MAX,
+				dspp_blocks_prop, ARRAY_SIZE(dspp_blocks_prop),
+				NULL);
+		if (IS_ERR_OR_NULL(blocks_props)) {
+			rc = PTR_ERR(blocks_props);
+			goto put_ltm_props;
 		}
-		rc = _validate_dt_entry(snp, dspp_blocks_prop,
-			ARRAY_SIZE(dspp_blocks_prop), blocks_prop_count, NULL);
-		if (rc)
-			goto end;
-		rc = _read_dt_entry(snp, dspp_blocks_prop,
-			ARRAY_SIZE(dspp_blocks_prop), blocks_prop_count,
-			blocks_prop_exists, blocks_prop_value);
-		if (rc)
-			goto end;
 	}
 
 	for (i = 0; i < off_count; i++) {
 		dspp = sde_cfg->dspp + i;
-		dspp->base = PROP_VALUE_ACCESS(prop_value, DSPP_OFF, i);
-		dspp->len = PROP_VALUE_ACCESS(prop_value, DSPP_SIZE, 0);
+		dspp->base = PROP_VALUE_ACCESS(props->values, DSPP_OFF, i);
+		dspp->len = PROP_VALUE_ACCESS(props->values, DSPP_SIZE, 0);
 		dspp->id = DSPP_0 + i;
 		snprintf(dspp->name, SDE_HW_BLK_NAME_LEN, "dspp_%u",
 				dspp->id - DSPP_0);
@@ -2578,17 +2534,18 @@ static int sde_dspp_parse_dt(struct device_node *np,
 		}
 		dspp->sblk = sblk;
 
-		if (blocks_prop_value)
+		if (blocks_props)
 			_sde_dspp_setup_blocks(sde_cfg, dspp, sblk,
-					blocks_prop_exists, blocks_prop_value);
+					blocks_props->exists,
+					blocks_props->values);
 
 		sblk->ad.id = SDE_DSPP_AD;
 		sde_cfg->ad_count = ad_off_count;
-		if (ad_prop_value && (i < ad_off_count) &&
-		    ad_prop_exists[AD_OFF]) {
-			sblk->ad.base = PROP_VALUE_ACCESS(ad_prop_value,
+		if (ad_props && (i < ad_off_count) &&
+		    ad_props->exists[AD_OFF]) {
+			sblk->ad.base = PROP_VALUE_ACCESS(ad_props->values,
 				AD_OFF, i);
-			sblk->ad.version = PROP_VALUE_ACCESS(ad_prop_value,
+			sblk->ad.version = PROP_VALUE_ACCESS(ad_props->values,
 				AD_VERSION, 0);
 			set_bit(SDE_DSPP_AD, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
@@ -2600,11 +2557,11 @@ static int sde_dspp_parse_dt(struct device_node *np,
 
 		sblk->ltm.id = SDE_DSPP_LTM;
 		sde_cfg->ltm_count = ltm_off_count;
-		if (ltm_prop_value && (i < ltm_off_count) &&
-		    ltm_prop_exists[LTM_OFF]) {
-			sblk->ltm.base = PROP_VALUE_ACCESS(ltm_prop_value,
+		if (ltm_props && (i < ltm_off_count) &&
+		    ltm_props->exists[LTM_OFF]) {
+			sblk->ltm.base = PROP_VALUE_ACCESS(ltm_props->values,
 				LTM_OFF, i);
-			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_prop_value,
+			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_props->values,
 				LTM_VERSION, 0);
 			set_bit(SDE_DSPP_LTM, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
@@ -2617,10 +2574,13 @@ static int sde_dspp_parse_dt(struct device_node *np,
 	}
 
 end:
-	kfree(prop_value);
-	kfree(ad_prop_value);
-	kfree(ltm_prop_value);
-	kfree(blocks_prop_value);
+	sde_put_dt_props(blocks_props);
+put_ltm_props:
+	sde_put_dt_props(ltm_props);
+put_ad_props:
+	sde_put_dt_props(ad_props);
+put_props:
+	sde_put_dt_props(props);
 	return rc;
 }
 
@@ -2728,7 +2688,6 @@ static int sde_ds_parse_dt(struct device_node *np,
 			set_bit(SDE_SSPP_SCALER_QSEED3, &ds->features);
 		else if (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)
 			set_bit(SDE_SSPP_SCALER_QSEED3LITE, &ds->features);
-
 	}
 
 end:
