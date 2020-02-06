@@ -1790,12 +1790,17 @@ static int dp_panel_read_sink_caps(struct dp_panel *dp_panel,
 		}
 	}
 
+	/* There is no need to read EDID from MST branch */
+	if (panel->parser->has_mst && dp_panel->read_mst_cap(dp_panel))
+		goto skip_edid;
+
 	rc = dp_panel_read_edid(dp_panel, connector);
 	if (rc) {
 		DP_ERR("panel edid read failed, set failsafe mode\n");
 		return rc;
 	}
 
+skip_edid:
 	dp_panel->widebus_en = panel->parser->has_widebus;
 	dp_panel->dsc_feature_enable = panel->parser->dsc_feature_enable;
 	dp_panel->fec_feature_enable = panel->parser->fec_feature_enable;
