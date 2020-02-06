@@ -2137,6 +2137,11 @@ QDF_STATUS (*extract_get_elna_bypass_resp)(wmi_unified_t wmi_handle,
 					 struct get_elna_bypass_response *resp);
 #endif /* WLAN_FEATURE_ELNA */
 
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+QDF_STATUS (*send_dscp_tid_map_cmd)(wmi_unified_t wmi_handle,
+				     uint32_t *dscp_to_tid_map);
+#endif
+
 QDF_STATUS (*send_pdev_get_pn_cmd)(wmi_unified_t wmi_handle,
 				   struct peer_request_pn_param *pn_params);
 QDF_STATUS (*extract_get_pn_data)(wmi_unified_t wmi_handle,

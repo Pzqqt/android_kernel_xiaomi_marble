@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,5 +64,27 @@ QDF_STATUS
 wmi_extract_get_elna_bypass_resp(struct wmi_unified *wmi_handle, void *resp_buf,
 				 struct get_elna_bypass_response *resp);
 #endif /* WLAN_FEATURE_ELNA */
+
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+/**
+ * wmi_unified_send_dscp_tip_map_cmd() - Send dscp-to-tid map values cmd
+ * @wmi_handle: wmi handle
+ * @dscp_to_tid_map: array of dscp_tid map values
+ *
+ * Send dscp-to-tid map values to FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_unified_send_dscp_tip_map_cmd(struct wmi_unified *wmi_handle,
+				  uint32_t *dscp_to_tid_map);
+#else
+static inline QDF_STATUS
+wmi_unified_send_dscp_tip_map_cmd(struct wmi_unified *wmi_handle,
+				  uint32_t *dscp_to_tid_map)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
 
 #endif /* _WMI_UNIFIED_FWOL_API_H_ */

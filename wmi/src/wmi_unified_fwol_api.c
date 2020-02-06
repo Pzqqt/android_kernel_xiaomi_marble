@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,3 +58,16 @@ wmi_extract_get_elna_bypass_resp(struct wmi_unified *wmi_handle, void *resp_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WLAN_FEATURE_ELNA */
+
+#ifdef WLAN_SEND_DSCP_UP_MAP_TO_FW
+QDF_STATUS
+wmi_unified_send_dscp_tip_map_cmd(struct wmi_unified *wmi_handle,
+				  uint32_t *dscp_to_tid_map)
+{
+	if (wmi_handle->ops->send_dscp_tid_map_cmd)
+		return wmi_handle->ops->send_dscp_tid_map_cmd(wmi_handle,
+							      dscp_to_tid_map);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_SEND_DSCP_UP_MAP_TO_FW */
