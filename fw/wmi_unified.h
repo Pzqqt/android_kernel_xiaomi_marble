@@ -6431,6 +6431,13 @@ typedef enum {
      */
     WMI_PDEV_PARAM_ENABLE_FW_DYNAMIC_HE_EDCA,
 
+    /*
+     * Parameter used to set default 6 GHz rate.
+     * Applies to all non data transmissions in 6 GHz unless
+     * overwritten by respective VDEV params.
+     */
+    WMI_PDEV_PARAM_DEFAULT_6GHZ_RATE,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
