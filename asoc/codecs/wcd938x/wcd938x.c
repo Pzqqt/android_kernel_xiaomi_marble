@@ -362,7 +362,8 @@ static int wcd938x_tx_connect_port(struct snd_soc_component *component,
 					u8 slv_port_type, u8 enable)
 {
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	u8 port_id, num_ch, ch_mask, ch_type;
+	u8 port_id, num_ch, ch_mask;
+	u8 ch_type = 0;
 	u32 ch_rate;
 	int slave_ch_idx;
 	u8 num_port = 1;
@@ -376,7 +377,7 @@ static int wcd938x_tx_connect_port(struct snd_soc_component *component,
 
 	slave_ch_idx = wcd938x_slave_get_slave_ch_val(slv_port_type);
 	if (slave_ch_idx != -EINVAL)
-		ch_type = wcd938x_slave_get_master_ch_val(slave_ch_idx);
+		ch_type = wcd938x->tx_master_ch_map[slave_ch_idx];
 
 	dev_dbg(component->dev, "%s slv_ch_idx: %d, mstr_ch_type: %d\n",
 		__func__, slave_ch_idx, ch_type);

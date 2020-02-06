@@ -267,7 +267,7 @@ static int wcd937x_tx_connect_port(struct snd_soc_component *component,
 	u8 num_ch;
 	u8 ch_mask;
 	u32 ch_rate;
-	u8 ch_type;
+	u8 ch_type = 0;
 	int slave_port_idx;
 	u8 num_port = 1;
 	int ret = 0;
@@ -281,7 +281,7 @@ static int wcd937x_tx_connect_port(struct snd_soc_component *component,
 
 	slave_ch_idx = wcd937x_slave_get_slave_ch_val(slv_port_type);
 	if (slave_ch_idx != -EINVAL)
-		ch_type = wcd937x_slave_get_master_ch_val(slave_ch_idx);
+		ch_type = wcd937x->tx_master_ch_map[slave_ch_idx];
 
 	dev_dbg(component->dev, "%s slv_ch_idx: %d, mstr_ch_type: %d\n",
 		__func__, slave_ch_idx, ch_type);
@@ -1954,7 +1954,7 @@ static int wcd937x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 
 	wcd937x_tx_get_slave_ch_type_idx(kcontrol->id.name, &slave_ch_idx);
 
-	dev_dbg(component->dev, "%s: slave_ch_idx: %d",	__func__, slave_ch_idx);
+	dev_dbg(component->dev, "%s: slave_ch_idx: %d", __func__, slave_ch_idx);
 	dev_dbg(component->dev, "%s: ucontrol->value.enumerated.item[0] = %ld\n",
 			__func__, ucontrol->value.enumerated.item[0]);
 
