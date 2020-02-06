@@ -1665,11 +1665,6 @@ static int wma_get_obj_mgr_peer_type(tp_wma_handle wma, uint8_t vdev_id,
 	}
 	addr = wlan_vdev_mlme_get_macaddr(vdev);
 
-	WMA_LOGD("vdev id %d vdev type %d vdev subtype %d peer addr %pM vdev addr %pM",
-		 vdev_id, wma->interfaces[vdev_id].type,
-		 wma->interfaces[vdev_id].sub_type, peer_addr,
-		 addr);
-
 	if (wma_peer_type == WMI_PEER_TYPE_TDLS)
 		return WLAN_PEER_TDLS;
 
@@ -1738,9 +1733,6 @@ static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
 	obj_peer = wlan_objmgr_peer_obj_create(obj_vdev, obj_peer_type,
 						peer_addr);
 	wlan_objmgr_vdev_release_ref(obj_vdev, WLAN_LEGACY_WMA_ID);
-	if (obj_peer)
-		WMA_LOGD("Peer %pM added successfully! Type: %d", peer_addr,
-			 obj_peer_type);
 
 	return obj_peer;
 
@@ -1821,10 +1813,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 		goto err;
 	}
 
-	WMA_LOGD("%s: attaching peer_addr %pM to vdev_id %d, peer_count %d",
-		 __func__, peer_addr, vdev_id,
-		 wma->interfaces[vdev_id].peer_count);
-
 	if (peer_type == WMI_PEER_TYPE_TDLS)
 		cdp_peer_set_peer_as_tdls(dp_soc, vdev_id, peer_addr, true);
 
@@ -1861,9 +1849,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 	wlan_roam_debug_log(vdev_id, DEBUG_PEER_CREATE_SEND,
 			    DEBUG_INVALID_PEER_ID, peer_addr, NULL, 0, 0);
 	cdp_peer_setup(dp_soc, vdev_id, peer_addr);
-
-	WMA_LOGD("%s: Initialized peer with peer_addr %pM vdev_id %d",
-		__func__, peer_addr, vdev_id);
 
 	mac_addr_raw = cdp_get_vdev_mac_addr(dp_soc, vdev_id);
 	if (!mac_addr_raw) {
