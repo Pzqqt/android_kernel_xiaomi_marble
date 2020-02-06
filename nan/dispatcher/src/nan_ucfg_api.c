@@ -48,6 +48,12 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 			 struct nan_psoc_priv_obj *nan_obj)
 {
 	nan_obj->cfg_param.enable = cfg_get(psoc, CFG_NAN_ENABLE);
+	nan_obj->cfg_param.support_mp0_discovery =
+					cfg_get(psoc,
+						CFG_SUPPORT_MP0_DISCOVERY);
+	nan_obj->cfg_param.ndp_keep_alive_period =
+					cfg_get(psoc,
+						CFG_NDP_KEEP_ALIVE_PERIOD);
 }
 
 /**

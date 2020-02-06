@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,5 +79,31 @@ QDF_STATUS cfg_nan_get_ndp_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
 
 	*val = nan_obj->cfg_param.ndp_inactivity_timeout;
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfg_nan_get_ndp_keepalive_period(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *val)
+{
+	struct nan_psoc_priv_obj *nan_obj = cfg_nan_get_priv_obj(psoc);
+
+	if (!nan_obj) {
+		nan_err("NAN obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = nan_obj->cfg_param.ndp_keep_alive_period;
+	return QDF_STATUS_SUCCESS;
+}
+
+bool cfg_nan_get_support_mp0_discovery(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *nan_obj = cfg_nan_get_priv_obj(psoc);
+
+	if (!nan_obj) {
+		nan_err("NAN obj null");
+		return false;
+	}
+
+	return nan_obj->cfg_param.support_mp0_discovery;
 }
 

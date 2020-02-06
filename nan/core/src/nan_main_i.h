@@ -82,6 +82,10 @@ enum nan_disc_state {
  * @ndi_mac_randomize: Randomize NAN datapath interface MAC
  * @ndp_inactivity_timeout: NDP inactivity timeout
  * @nan_separate_iface_support: To supports separate iface creation for NAN
+ * @ndp_keep_alive_period: To configure duration of how many seconds to
+ * wait to kickout peer if peer is not reachable
+ * @support_mp0_discovery: To support discovery of NAN cluster with Master
+ * Preference (MP) as 0 when a new device is enabling NAN
  */
 struct nan_cfg_params {
 	bool enable;
@@ -89,6 +93,8 @@ struct nan_cfg_params {
 	bool ndi_mac_randomize;
 	uint16_t ndp_inactivity_timeout;
 	bool nan_separate_iface_support;
+	uint16_t ndp_keep_alive_period;
+	bool support_mp0_discovery;
 };
 
 /**
