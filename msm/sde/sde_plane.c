@@ -2484,7 +2484,7 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	uint32_t scaler_src_w, scaler_src_h;
 	uint32_t max_downscale_num, max_downscale_denom;
 	uint32_t max_upscale, max_linewidth;
-	bool inline_rotation, rt_client, pre_down_en = false;
+	bool inline_rotation, rt_client, has_predown, pre_down_en = false;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_cstate;
 
@@ -2511,7 +2511,8 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 
 	max_upscale = psde->pipe_sblk->maxupscale;
 	max_linewidth = psde->pipe_sblk->maxlinewidth;
-	if (_sde_plane_has_pre_downscale(psde))
+	has_predown = _sde_plane_has_pre_downscale(psde);
+	if (has_predown)
 		pre_down_en = _sde_plane_is_pre_downscale_enabled(
 				&pstate->pre_down);
 
@@ -2524,10 +2525,12 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	max_downscale_denom = 1;
 	/* inline rotation RT clients have a different max downscaling limit */
 	if (inline_rotation) {
-		if (rt_client && !pre_down_en) {
-			max_downscale_num =
+		if (rt_client && has_predown) {
+			max_downscale_num = pre_down_en ?
+				psde->pipe_sblk->in_rot_maxdwnscale_rt_num :
 				psde->pipe_sblk->in_rot_minpredwnscale_num;
-			max_downscale_denom =
+			max_downscale_denom = pre_down_en ?
+				psde->pipe_sblk->in_rot_maxdwnscale_rt_denom :
 				psde->pipe_sblk->in_rot_minpredwnscale_denom;
 		} else if (rt_client) {
 			max_downscale_num =
