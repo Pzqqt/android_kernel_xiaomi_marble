@@ -5944,7 +5944,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 			frame = param_buf->deauth_disassoc_frame;
 		wma_handle->pe_disconnect_cb(wma_handle->mac_context,
 					     wmi_event->vdev_id,
-					     frame, wmi_event->notif_params1);
+					     frame, wmi_event->notif_params1,
+					     wmi_event->notif);
 		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
 		if (!roam_synch_data)
 			return -ENOMEM;

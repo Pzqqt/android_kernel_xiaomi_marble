@@ -335,13 +335,16 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
  * @vdev_id: VDEV in which the event was received
  * @deauth_disassoc_frame: Deauth/disassoc frame received from firmware
  * @deauth_disassoc_frame_len: Length of @deauth_disassoc_frame
+ * @reason_code: Fw sent reason code if disassoc/deauth frame is not
+ * available
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		       uint8_t *deauth_disassoc_frame,
-		       uint16_t deauth_disassoc_frame_len);
+		       uint16_t deauth_disassoc_frame_len,
+		       uint16_t reason_code);
 
 #else
 static inline QDF_STATUS
@@ -356,7 +359,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 static inline QDF_STATUS
 pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		       uint8_t *deauth_disassoc_frame,
-		       uint16_t deauth_disassoc_frame_len)
+		       uint16_t deauth_disassoc_frame_len,
+		       uint16_t reason_code)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
