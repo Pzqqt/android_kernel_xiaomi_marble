@@ -16466,7 +16466,14 @@ void hdd_hidden_ssid_enable_roaming(hdd_handle_t hdd_handle, uint8_t vdev_id)
  */
 bool wlan_hdd_is_session_type_monitor(uint8_t session_type)
 {
-	if (cds_is_pktcapture_enabled() &&
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc) &&
 	    cds_get_conparam() != QDF_GLOBAL_MONITOR_MODE &&
 	    session_type == QDF_MONITOR_MODE)
 		return true;
@@ -16491,7 +16498,7 @@ bool wlan_hdd_check_mon_concurrency(void)
 		return -EINVAL;
 	}
 
-	if (cds_is_pktcapture_enabled()) {
+	if (ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
 		if (policy_mgr_get_concurrency_mode(hdd_ctx->psoc) ==
 		    (QDF_STA_MASK | QDF_MONITOR_MASK)) {
 			hdd_err("STA + MON mode is UP");
@@ -16550,7 +16557,7 @@ wlan_hdd_add_monitor_check(struct hdd_context *hdd_ctx,
 	uint32_t mode;
 	uint8_t num_open_session = 0;
 
-	if (!cds_is_pktcapture_enabled())
+	if (!ucfg_pkt_capture_get_mode(hdd_ctx->psoc))
 		return 0;
 
 	/*

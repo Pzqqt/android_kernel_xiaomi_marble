@@ -551,40 +551,4 @@ QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev, bool ipa_present);
  * Return: Status of map operation
  */
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr);
-
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-/**
- * cds_is_pktcapture_enabled() - is packet capture support enabled
- *
- * Check is packet capture mode enabled from ini
- *
- * Return: 0 - disable, 1 - enable
- */
-bool cds_is_pktcapture_enabled(void);
-
-/**
- * cds_get_pktcapture_mode() - get pktcapture mode value
- *
- * Get the pktcapture mode value from hdd context
- *
- * Return: 0 - disable
- *         1 - Mgmt packets
- *         2 - Data packets
- *         3 - Both Mgmt and Data packets
- */
-uint8_t cds_get_pktcapture_mode(void);
-#else
-static inline
-bool cds_is_pktcapture_enabled(void)
-{
-	return false;
-}
-
-static inline
-uint8_t cds_get_pktcapture_mode(void)
-{
-	return 0;
-}
-#endif /* WLAN_FEATURE_PKT_CAPTURE */
-
 #endif /* if !defined __CDS_API_H */
