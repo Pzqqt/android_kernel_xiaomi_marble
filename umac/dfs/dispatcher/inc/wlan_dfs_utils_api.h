@@ -653,15 +653,7 @@ static inline bool utils_is_dfs_chan_for_freq(struct wlan_objmgr_pdev *pdev,
  *
  * Return: True if channel dfs cfreq2, else false.
  */
-#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev);
-#else
-static inline
-bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev)
-{
-	return false;
-}
-#endif
 
 /**
  * utils_dfs_reg_update_nol_ch() - set nol channel
