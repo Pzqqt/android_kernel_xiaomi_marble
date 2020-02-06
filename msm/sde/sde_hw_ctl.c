@@ -10,45 +10,45 @@
 #include "sde_kms.h"
 #include "sde_reg_dma.h"
 
-#define   CTL_LAYER(lm)                 \
+#define CTL_LAYER(lm)                 \
 	(((lm) == LM_5) ? (0x024) : (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT(lm)             \
+#define CTL_LAYER_EXT(lm)             \
 	(0x40 + (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT2(lm)             \
+#define CTL_LAYER_EXT2(lm)             \
 	(0x70 + (((lm) - LM_0) * 0x004))
-#define   CTL_LAYER_EXT3(lm)             \
+#define CTL_LAYER_EXT3(lm)             \
 	(0xA0 + (((lm) - LM_0) * 0x004))
-#define   CTL_TOP                       0x014
-#define   CTL_FLUSH                     0x018
-#define   CTL_START                     0x01C
-#define   CTL_PREPARE                   0x0d0
-#define   CTL_SW_RESET                  0x030
-#define   CTL_SW_RESET_OVERRIDE         0x060
-#define   CTL_STATUS                    0x064
-#define   CTL_LAYER_EXTN_OFFSET         0x40
-#define   CTL_ROT_TOP                   0x0C0
-#define   CTL_ROT_FLUSH                 0x0C4
-#define   CTL_ROT_START                 0x0CC
+#define CTL_TOP                       0x014
+#define CTL_FLUSH                     0x018
+#define CTL_START                     0x01C
+#define CTL_PREPARE                   0x0d0
+#define CTL_SW_RESET                  0x030
+#define CTL_SW_RESET_OVERRIDE         0x060
+#define CTL_STATUS                    0x064
+#define CTL_LAYER_EXTN_OFFSET         0x40
+#define CTL_ROT_TOP                   0x0C0
+#define CTL_ROT_FLUSH                 0x0C4
+#define CTL_ROT_START                 0x0CC
 
-#define   CTL_MERGE_3D_ACTIVE           0x0E4
-#define   CTL_DSC_ACTIVE                0x0E8
-#define   CTL_WB_ACTIVE                 0x0EC
-#define   CTL_CWB_ACTIVE                0x0F0
-#define   CTL_INTF_ACTIVE               0x0F4
-#define   CTL_CDM_ACTIVE                0x0F8
-#define   CTL_FETCH_PIPE_ACTIVE         0x0FC
+#define CTL_MERGE_3D_ACTIVE           0x0E4
+#define CTL_DSC_ACTIVE                0x0E8
+#define CTL_WB_ACTIVE                 0x0EC
+#define CTL_CWB_ACTIVE                0x0F0
+#define CTL_INTF_ACTIVE               0x0F4
+#define CTL_CDM_ACTIVE                0x0F8
+#define CTL_FETCH_PIPE_ACTIVE         0x0FC
 
-#define   CTL_MERGE_3D_FLUSH           0x100
-#define   CTL_DSC_FLUSH                0x104
-#define   CTL_WB_FLUSH                 0x108
-#define   CTL_CWB_FLUSH                0x10C
-#define   CTL_INTF_FLUSH               0x110
-#define   CTL_CDM_FLUSH                0x114
-#define   CTL_PERIPH_FLUSH             0x128
-#define   CTL_DSPP_0_FLUSH             0x13c
+#define CTL_MERGE_3D_FLUSH           0x100
+#define CTL_DSC_FLUSH                0x104
+#define CTL_WB_FLUSH                 0x108
+#define CTL_CWB_FLUSH                0x10C
+#define CTL_INTF_FLUSH               0x110
+#define CTL_CDM_FLUSH                0x114
+#define CTL_PERIPH_FLUSH             0x128
+#define CTL_DSPP_0_FLUSH             0x13c
 
-#define  CTL_INTF_MASTER               0x134
-#define  CTL_UIDLE_ACTIVE              0x138
+#define CTL_INTF_MASTER               0x134
+#define CTL_UIDLE_ACTIVE              0x138
 
 #define CTL_MIXER_BORDER_OUT            BIT(24)
 #define CTL_FLUSH_MASK_ROT              BIT(27)
@@ -220,14 +220,14 @@ sspp_reg_cfg_tbl[SSPP_MAX][CTL_SSPP_MAX_RECTS] = {
 /**
  * Individual flush bit in CTL_FLUSH
  */
-#define  WB_IDX         16
-#define  DSC_IDX        22
-#define  MERGE_3D_IDX   23
-#define  CDM_IDX        26
-#define  CWB_IDX        28
-#define  DSPP_IDX       29
-#define  PERIPH_IDX     30
-#define  INTF_IDX       31
+#define WB_IDX         16
+#define DSC_IDX        22
+#define MERGE_3D_IDX   23
+#define CDM_IDX        26
+#define CWB_IDX        28
+#define DSPP_IDX       29
+#define PERIPH_IDX     30
+#define INTF_IDX       31
 
 static struct sde_ctl_cfg *_ctl_offset(enum sde_ctl ctl,
 		struct sde_mdss_cfg *m,
