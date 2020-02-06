@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015, 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2018-2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWR_SLAVE_REGISTERS_H
@@ -27,21 +27,21 @@
 #define SWRS_SCP_FRAME_CTRL_BANK(m)                    (SWRS_BASE+0x0060+0x10*m)
 #define SWRS_SCP_IMPDEF_SWR_INTERRUPT_DETECT_TYPE      (SWRS_BASE+0x00C8)
 #define SWRS_SCP_HOST_CLK_DIV2_CTL_BANK(m)             (SWRS_BASE+0x00E0+0x10*m)
-#define SWRS_DP_INT_STATUS(n)                          (SWRS_BASE+0x0100*n)
-#define SWRS_DP_INT_STATUS_MASK(n)                     (SWRS_BASE+0x01+0x100*n)
-#define SWRS_DP_PORT_CONTROL(n)                        (SWRS_BASE+0x02+0x100*n)
-#define SWRS_DP_BLOCK_CONTROL_1(n)                     (SWRS_BASE+0x03+0x100*n)
-#define SWRS_DP_PREPARE_STATUS(n)                      (SWRS_BASE+0x04+0x100*n)
-#define SWRS_DP_PREPARE_CONTROL(n)                     (SWRS_BASE+0x05+0x100*n)
-#define SWRS_DP_CHANNEL_ENABLE_BANK(n, m)       (SWRS_BASE+0x20+0x100*n+0x10*m)
-#define SWRS_DP_BLOCK_CONTROL_2_BANK(n, m)      (SWRS_BASE+0x21+0x100*n+0x10*m)
-#define SWRS_DP_SAMPLE_CONTROL_1_BANK(n, m)     (SWRS_BASE+0x22+0x100*n+0x10*m)
-#define SWRS_DP_SAMPLE_CONTROL_2_BANK(n, m)     (SWRS_BASE+0x23+0x100*n+0x10*m)
-#define SWRS_DP_OFFSET_CONTROL_1_BANK(n, m)     (SWRS_BASE+0x24+0x100*n+0x10*m)
-#define SWRS_DP_OFFSET_CONTROL_2_BANK(n, m)     (SWRS_BASE+0x25+0x100*n+0x10*m)
-#define SWRS_DP_HCONTROL_BANK(n, m)             (SWRS_BASE+0x26+0x100*n+0x10*m)
-#define SWRS_DP_BLOCK_CONTROL_3_BANK(n, m)      (SWRS_BASE+0x27+0x100*n+0x10*m)
-#define SWRS_DP_LANE_CONTROL_BANK(n, m)         (SWRS_BASE+0x28+0x100*n+0x10*m)
+#define SWRS_DP_INT_STATUS(n)                          (SWRS_BASE+0x100+0x0100*n)
+#define SWRS_DP_INT_STATUS_MASK(n)                     (SWRS_BASE+0x101+0x100*n)
+#define SWRS_DP_PORT_CONTROL(n)                        (SWRS_BASE+0x102+0x100*n)
+#define SWRS_DP_BLOCK_CONTROL_1(n)                     (SWRS_BASE+0x103+0x100*n)
+#define SWRS_DP_PREPARE_STATUS(n)                      (SWRS_BASE+0x104+0x100*n)
+#define SWRS_DP_PREPARE_CONTROL(n)                     (SWRS_BASE+0x105+0x100*n)
+#define SWRS_DP_CHANNEL_ENABLE_BANK(n, m)       (SWRS_BASE+0x120+0x100*n+0x10*m)
+#define SWRS_DP_BLOCK_CONTROL_2_BANK(n, m)      (SWRS_BASE+0x121+0x100*n+0x10*m)
+#define SWRS_DP_SAMPLE_CONTROL_1_BANK(n, m)     (SWRS_BASE+0x122+0x100*n+0x10*m)
+#define SWRS_DP_SAMPLE_CONTROL_2_BANK(n, m)     (SWRS_BASE+0x123+0x100*n+0x10*m)
+#define SWRS_DP_OFFSET_CONTROL_1_BANK(n, m)     (SWRS_BASE+0x124+0x100*n+0x10*m)
+#define SWRS_DP_OFFSET_CONTROL_2_BANK(n, m)     (SWRS_BASE+0x125+0x100*n+0x10*m)
+#define SWRS_DP_HCONTROL_BANK(n, m)             (SWRS_BASE+0x126+0x100*n+0x10*m)
+#define SWRS_DP_BLOCK_CONTROL_3_BANK(n, m)      (SWRS_BASE+0x127+0x100*n+0x10*m)
+#define SWRS_DP_LANE_CONTROL_BANK(n, m)         (SWRS_BASE+0x128+0x100*n+0x10*m)
 #define SWRS_DP_ALL_INT_STATUS                  (SWRS_BASE+0x0F00)
 #define SWRS_DP_ALL_INT_STATUS_MASK             (SWRS_BASE+0x0F01)
 #define SWRS_DP_ALL_PORT_CONTROL                (SWRS_BASE+0x0F02)
