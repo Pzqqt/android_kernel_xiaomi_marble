@@ -401,25 +401,12 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct hif_ipci_softc *ipci_sc = HIF_GET_IPCI_SOFTC(scn);
 
-	/* do wake irq assignment */
-	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "WAKE",
-					  &msi_data_count, &msi_data_start,
-					  &msi_irq_start);
-	if (ret)
-		return ret;
-
-	scn->wake_irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_irq_start);
-	ret = request_irq(scn->wake_irq, hif_wake_interrupt_handler,
-			  IRQF_NO_SUSPEND, "wlan_wake_irq", scn);
-	if (ret)
-		return ret;
-
 	/* do ce irq assignments */
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
 					  &msi_data_count, &msi_data_start,
 					  &msi_irq_start);
 	if (ret)
-		goto free_wake_irq;
+		return ret;
 
 	scn->bus_ops.hif_irq_disable = &hif_ce_srng_msi_irq_disable;
 	scn->bus_ops.hif_irq_enable = &hif_ce_srng_msi_irq_enable;
@@ -461,10 +448,6 @@ free_irq:
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 		free_irq(irq, &ce_sc->tasklets[ce_id]);
 	}
-
-free_wake_irq:
-	free_irq(scn->wake_irq, scn->qdf_dev->dev);
-	scn->wake_irq = 0;
 
 	return ret;
 }
@@ -685,7 +668,7 @@ bool hif_ipci_needs_bmi(struct hif_softc *scn)
 #ifdef FORCE_WAKE
 int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 {
-	uint32_t timeout = 0, value;
+	uint32_t timeout = 0;
 	struct hif_softc *scn = (struct hif_softc *)hif_handle;
 	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
 
@@ -707,36 +690,6 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 		return -EINVAL;
 	}
 	HIF_STATS_INC(ipci_scn, mhi_force_wake_success, 1);
-	hif_write32_mb(scn,
-		       scn->mem +
-		       PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG,
-		       0);
-	hif_write32_mb(scn,
-		       scn->mem +
-		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
-		       1);
-
-	HIF_STATS_INC(ipci_scn, soc_force_wake_register_write_success, 1);
-	/*
-	 * do not reset the timeout
-	 * total_wake_time = MHI_WAKE_TIME + PCI_WAKE_TIME < 50 ms
-	 */
-	do {
-		value =
-		hif_read32_mb(scn,
-			      scn->mem +
-			      PCIE_SOC_PCIE_REG_PCIE_SCRATCH_0_SOC_PCIE_REG);
-		if (value)
-			break;
-		qdf_mdelay(FORCE_WAKE_DELAY_MS);
-		timeout += FORCE_WAKE_DELAY_MS;
-	} while (timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS);
-
-	if (!value) {
-		hif_err("failed handshake mechanism");
-		HIF_STATS_INC(ipci_scn, soc_force_wake_failure, 1);
-		return -ETIMEDOUT;
-	}
 
 	HIF_STATS_INC(ipci_scn, soc_force_wake_success, 1);
 
@@ -757,10 +710,7 @@ int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
 	}
 
 	HIF_STATS_INC(ipci_scn, mhi_force_wake_release_success, 1);
-	hif_write32_mb(scn,
-		       scn->mem +
-		       PCIE_PCIE_LOCAL_REG_PCIE_SOC_WAKE_PCIE_LOCAL_REG,
-		       0);
+
 	HIF_STATS_INC(ipci_scn, soc_force_wake_release_success, 1);
 	return 0;
 }
