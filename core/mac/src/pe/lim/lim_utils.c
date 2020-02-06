@@ -8615,11 +8615,10 @@ QDF_STATUS lim_pre_vdev_start(struct mac_context *mac,
 	mlme_obj->proto.generic.slot_time = session->shortSlotTimeSupported;
 	mlme_obj->mgmt.rate_info.bcn_tx_rate = session->beacon_tx_rate;
 
-	pe_debug("maxregpower %d cac_duration_ms %d beacon_interval %d hidden_ssid: %d dtimPeriod %d slot_time %d bcn tx rate %d",
-		 session->maxTxPower, session->cac_duration_ms,
-		 session->beaconParams.beaconInterval, session->ssidHidden,
-		 session->dtimPeriod, mlme_obj->proto.generic.slot_time,
-		 session->beacon_tx_rate);
+	pe_debug("cac_duration_ms %d beacon_interval %d hidden_ssid: %d dtimPeriod %d slot_time %d bcn tx rate %d",
+		 session->cac_duration_ms, session->beaconParams.beaconInterval,
+		 session->ssidHidden, session->dtimPeriod,
+		 mlme_obj->proto.generic.slot_time, session->beacon_tx_rate);
 
 	mlme_obj->proto.ht_info.allow_ht = !!session->htCapability;
 	mlme_obj->proto.vht_info.allow_vht = !!session->vhtCapability;

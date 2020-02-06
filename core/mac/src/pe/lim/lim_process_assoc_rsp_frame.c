@@ -604,9 +604,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_nofl_info("Assoc RX %d vid %d sys role %d"
-		     " lim state %d rssi %d from "QDF_MAC_ADDR_STR, subtype,
-		     session_entry->peSessionId,
+	pe_nofl_info("Assoc RX subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_STR,
+		     subtype, session_entry->vdev_id,
 		     GET_LIM_SYSTEM_ROLE(session_entry),
 		     session_entry->limMlmState,
 		     WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),

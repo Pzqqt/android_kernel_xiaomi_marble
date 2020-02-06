@@ -13507,10 +13507,8 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter,
 	struct csr_roam_profile *roam_profile;
 	struct hdd_station_ctx *sta_ctx;
 
-	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc)) {
-		hdd_debug("No active sta session");
+	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
 		return;
-	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		roam_profile = hdd_roam_profile(adapter);

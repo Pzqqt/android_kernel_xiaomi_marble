@@ -1321,11 +1321,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				pe_err("Session Can not be created");
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto end;
-			} else {
-				pe_debug("SessionId:%d New session created",
-					session_id);
 			}
-
 			/* Update the beacon/probe filter in mac_ctx */
 			lim_set_bcn_probe_filter(mac_ctx, session,
 						 &sme_join_req->ssId,
@@ -1369,12 +1365,10 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				SIR_MAC_CISCO_OUI, SIR_MAC_CISCO_OUI_SIZE,
 				((uint8_t *)&bss_desc->ieFields), ie_len);
 
-		if (vendor_ie) {
-			pe_debug("Cisco vendor OUI present");
+		if (vendor_ie)
 			session->isCiscoVendorAP = true;
-		} else {
+		else
 			session->isCiscoVendorAP = false;
-		}
 
 		/* Copy the dot 11 mode in to the session table */
 
@@ -1395,11 +1389,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		 * self and peer rates
 		 */
 		session->supported_nss_1x1 = true;
-		pe_debug("enable Smps: %d mode: %d send action: %d supported nss 1x1: %d cbMode %d nwType: %d dot11mode: %d force_24ghz_in_ht20 %d",
-			 session->enableHtSmps, session->htSmpsvalue,
-			 session->send_smps_action, session->supported_nss_1x1,
-			 sme_join_req->cbMode, session->nwType,
-			 session->dot11mode, sme_join_req->force_24ghz_in_ht20);
 
 		/* Copy oper freq to the session Table */
 		session->curr_op_freq = bss_desc->chan_freq;
@@ -1416,15 +1405,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				sme_join_req->enableVhtpAid;
 			session->enableVhtGid =
 				sme_join_req->enableVhtGid;
-			pe_debug("vht su bformer [%d]",
-					session->vht_config.su_beam_former);
 		}
 
-		pe_debug("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d",
-				session->vhtCapability,
-				session->vht_config.su_beam_formee,
-				session->vht_config.csnof_beamformer_antSup,
-				session->vht_config.su_beam_former);
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
@@ -1551,11 +1533,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 		session->nss = sme_join_req->nss;
 		session->nss_forced_1x1 = sme_join_req->nss_forced_1x1;
 
-		pe_debug("nss %d, vdev_nss %d, supported_nss_1x1 %d",
-			 session->nss,
-			 session->vdev_nss,
-			 session->supported_nss_1x1);
-
 		mlm_join_req->bssDescription.length =
 			session->lim_join_req->bssDescription.length;
 
@@ -1590,20 +1567,18 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 							   &tx_pwr_attr);
 		session->def_max_tx_pwr = session->maxTxPower;
 
-		pe_debug("Reg max %d local power con %d max tx pwr %d",
-			reg_max, local_power_constraint, session->maxTxPower);
+		pe_debug("Reg %d local %d session %d join req %d",
+			 reg_max, local_power_constraint, session->maxTxPower,
+			 sme_join_req->powerCap.maxTxPower);
 
-		if (sme_join_req->powerCap.maxTxPower > session->maxTxPower) {
+		if (sme_join_req->powerCap.maxTxPower > session->maxTxPower)
 			sme_join_req->powerCap.maxTxPower = session->maxTxPower;
-			pe_debug("Update MaxTxPower in join Req to %d",
-				sme_join_req->powerCap.maxTxPower);
-		}
 
 		if (session->gLimCurrentBssUapsd) {
 			session->gUapsdPerAcBitmask =
 				session->lim_join_req->uapsdPerAcBitmask;
 			pe_debug("UAPSD flag for all AC - 0x%2x",
-				session->gUapsdPerAcBitmask);
+				 session->gUapsdPerAcBitmask);
 
 			/* resetting the dynamic uapsd mask  */
 			session->gUapsdPerAcDeliveryEnableMask = 0;
@@ -1645,6 +1620,16 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			session->spectrumMgtEnabled = true;
 
 		session->isOSENConnection = sme_join_req->isOSENConnection;
+		pe_debug("Smps %d: mode %d action %d, nss 1x1 %d vdev_nss %d nss %d cbMode %d width %d dot11mode %d subfer %d subfee %d csn %d is_cisco %d",
+			 session->enableHtSmps, session->htSmpsvalue,
+			 session->send_smps_action, session->supported_nss_1x1,
+			 session->vdev_nss, session->nss,
+			 sme_join_req->cbMode, session->ch_width,
+			 session->dot11mode,
+			 session->vht_config.su_beam_former,
+			 session->vht_config.su_beam_formee,
+			 session->vht_config.csnof_beamformer_antSup,
+			 session->isCiscoVendorAP);
 
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
 		status = lim_send_join_req(session, mlm_join_req);

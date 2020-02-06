@@ -1987,12 +1987,12 @@ void csr_roam_substate_change(struct mac_context *mac,
 			  sessionId);
 		return;
 	}
-	sme_debug("CSR RoamSubstate: [ %s <== %s ]",
-		mac_trace_getcsr_roam_sub_state(NewSubstate),
-		mac_trace_getcsr_roam_sub_state(mac->roam.
-		curSubState[sessionId]));
 	if (mac->roam.curSubState[sessionId] == NewSubstate)
 		return;
+	sme_debug("CSR RoamSubstate: [ %s <== %s ]",
+		  mac_trace_getcsr_roam_sub_state(NewSubstate),
+		  mac_trace_getcsr_roam_sub_state(mac->roam.
+		  curSubState[sessionId]));
 	spin_lock(&mac->roam.roam_state_lock);
 	mac->roam.curSubState[sessionId] = NewSubstate;
 	spin_unlock(&mac->roam.roam_state_lock);
@@ -2004,22 +2004,26 @@ enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 {
 	enum csr_roam_state PreviousState;
 
-	sme_debug("CSR RoamState[%hu]: [ %s <== %s ]", sessionId,
-		mac_trace_getcsr_roam_state(NewRoamState),
-		mac_trace_getcsr_roam_state(mac->roam.curState[sessionId]));
 	PreviousState = mac->roam.curState[sessionId];
 
-	if (NewRoamState != mac->roam.curState[sessionId]) {
-		/* Whenever we transition OUT of the Roaming state,
-		 * clear the Roaming substate.
-		 */
-		if (CSR_IS_ROAM_JOINING(mac, sessionId)) {
-			csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
-						 sessionId);
-		}
+	if (NewRoamState == mac->roam.curState[sessionId])
+		return PreviousState;
 
-		mac->roam.curState[sessionId] = NewRoamState;
+	sme_debug("CSR RoamState[%d]: [ %s <== %s ]", sessionId,
+		  mac_trace_getcsr_roam_state(NewRoamState),
+		  mac_trace_getcsr_roam_state(
+		  mac->roam.curState[sessionId]));
+	/*
+	 * Whenever we transition OUT of the Roaming state,
+	 * clear the Roaming substate.
+	 */
+	if (CSR_IS_ROAM_JOINING(mac, sessionId)) {
+		csr_roam_substate_change(mac, eCSR_ROAM_SUBSTATE_NONE,
+					 sessionId);
 	}
+
+	mac->roam.curState[sessionId] = NewRoamState;
+
 	return PreviousState;
 }
 
@@ -3780,25 +3784,24 @@ csr_connect_info(struct mac_context *mac_ctx,
 	conn_stats.result_code = (u2 == eCSR_ROAM_RESULT_ASSOCIATED) ? 1 : 0;
 	conn_stats.reason_code = 0;
 	conn_stats.op_freq = conn_profile->op_freq;
-	sme_debug("+---------CONNECTION INFO START------------+");
-	sme_debug("VDEV-ID: %d self_mac:%pM", session->vdev_id,
-		  session->self_mac_addr.bytes);
-	sme_debug("ssid: %.*s", conn_stats.ssid_len, conn_stats.ssid);
-	sme_debug("bssid: %pM", conn_stats.bssid);
-	sme_debug("RSSI: %d dBm", conn_stats.rssi);
-	sme_debug("Channel Freq: %d channel_bw: %s", conn_stats.op_freq,
-		  csr_get_ch_width_str(conn_stats.chnl_bw));
-	sme_debug("dot11Mode: %s",
-		  csr_get_dot11_mode_str(conn_stats.dot11mode));
-	sme_debug("AKM: %s", csr_get_akm_str(conn_profile->AuthType));
-	sme_debug("DUT_NSS: %d | Intersected NSS:%d", session->vdev_nss,
+	sme_nofl_debug("+---------CONNECTION INFO START------------+");
+	sme_nofl_debug("VDEV-ID: %d self_mac:%pM", session->vdev_id,
+		       session->self_mac_addr.bytes);
+	sme_nofl_debug("ssid: %.*s bssid: %pM RSSI: %d dBm",
+		       conn_stats.ssid_len, conn_stats.ssid,
+		       conn_stats.bssid, conn_stats.rssi);
+	sme_nofl_debug("Channel Freq: %d channel_bw: %s dot11Mode: %s", conn_stats.op_freq,
+		       csr_get_ch_width_str(conn_stats.chnl_bw),
+		       csr_get_dot11_mode_str(conn_stats.dot11mode));
+	sme_nofl_debug("AKM: %s Encry-type: %s",
+		       csr_get_akm_str(conn_profile->AuthType),
+		       csr_get_encr_type_str(conn_stats.encryption_type));
+	sme_nofl_debug("DUT_NSS: %d | Intersected NSS:%d", session->vdev_nss,
 		  csr_get_sta_ap_intersected_nss(mac_ctx, session->vdev_id));
-	sme_debug("Encry-type: %s",
-		  csr_get_encr_type_str(conn_stats.encryption_type));
-	sme_debug("Qos enable: %d | Associated: %s",
-		  conn_stats.qos_capability,
-		  (conn_stats.result_code ? "yes" : "no"));
-	sme_debug("+---------CONNECTION INFO END------------+");
+	sme_nofl_debug("Qos enable: %d | Associated: %s",
+		       conn_stats.qos_capability,
+		       (conn_stats.result_code ? "yes" : "no"));
+	sme_nofl_debug("+---------CONNECTION INFO END------------+");
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
 }
@@ -9261,7 +9264,6 @@ csr_roam_save_connected_information(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	sme_debug("session id: %d", sessionId);
 	pConnectProfile = &pSession->connectedProfile;
 	if (pConnectProfile->pAddIEAssoc) {
 		qdf_mem_free(pConnectProfile->pAddIEAssoc);
@@ -9460,7 +9462,8 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	if (pEntry)
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 
-	sme_debug("is_fils_connection %d", pSmeJoinRsp->is_fils_connection);
+	if (pSmeJoinRsp->is_fils_connection)
+		sme_debug("Fils connection");
 	/* Copy Sequence Number last used for FILS assoc failure case */
 	if (session_ptr->is_fils_connection)
 		session_ptr->fils_seq_num = pSmeJoinRsp->fils_seq_num;
@@ -9481,8 +9484,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 		}
 
 		session_ptr->supported_nss_1x1 = pSmeJoinRsp->supported_nss_1x1;
-		sme_debug("SME session supported nss: %d",
-			  session_ptr->supported_nss_1x1);
 
 		/*
 		 * The join bssid count can be reset as soon as

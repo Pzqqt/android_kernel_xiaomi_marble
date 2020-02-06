@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -135,7 +135,6 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 
 	return QDF_STATUS_SUCCESS;
 send_resp:
-	pe_err("switch channel rsp, status = 0x%x", status);
 	rsp.status = status;
 	rsp.vdev_id = session->vdev_id;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -346,11 +346,6 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	else
 		mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
-	pe_debug("Bcon: VHTCap.present: %d SU Beamformer: %d BSS_VHT_CAPABLE: %d",
-		beacon_struct->VHTCaps.present,
-		beacon_struct->VHTCaps.suBeamFormerCap,
-		IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
-
 	vht_op = &beacon_struct->VHTOperation;
 	vht_caps = &beacon_struct->VHTCaps;
 	if (IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps) &&
@@ -484,10 +479,6 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 				session->ch_center_freq_seg1 = 0;
 		}
 		session->ch_width = vht_ch_wd + 1;
-		pe_debug("cntr_freq0: %d cntr_freq1: %d width: %d",
-				session->ch_center_freq_seg0,
-				session->ch_center_freq_seg1,
-				session->ch_width);
 	}
 
 	if (session->vhtCapability &&

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,9 +67,12 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	 * beacon counter
 	 */
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-	pe_debug("Received Beacon frame with length: %d from",
-		WMA_GET_RX_MPDU_LEN(rx_pkt_info));
-		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG2);
+
+	pe_debug("Beacon (len %d): " QDF_MAC_ADDR_STR " RSSI %d",
+		 WMA_GET_RX_MPDU_LEN(rx_pkt_info),
+		 QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
+		 (uint)abs((int8_t)
+		 WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
 
 	/* Expect Beacon in any state as Scan is independent of LIM state */
 	bcn_ptr = qdf_mem_malloc(sizeof(*bcn_ptr));

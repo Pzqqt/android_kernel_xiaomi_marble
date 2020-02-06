@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -159,8 +159,6 @@ void lim_handle_param_update(struct mac_context *mac, eUpdateIEsType cfgId)
 void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t phyMode;
-
-	pe_debug("Applying config");
 
 	pe_session->limSentCapsChangeNtf = false;
 
