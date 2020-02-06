@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -275,8 +275,8 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 		return NULL;
 	}
 
-	obj_mgr_debug("Created peer " QDF_MAC_ADDR_STR,
-		      QDF_MAC_ADDR_ARRAY(macaddr));
+	obj_mgr_debug("Created peer " QDF_MAC_ADDR_STR " type %d",
+		      QDF_MAC_ADDR_ARRAY(macaddr), type);
 
 	return peer;
 }
