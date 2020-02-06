@@ -1602,11 +1602,10 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
  * sde_hw_catalog_init - sde hardware catalog init API parses dtsi property
  * and stores all parsed offset, hardware capabilities in config structure.
  * @dev:          drm device node.
- * @hw_rev:       caller needs provide the hardware revision before parsing.
  *
  * Return: parsed sde config structure
  */
-struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev);
+struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev);
 
 /**
  * sde_hw_catalog_deinit - sde hardware catalog cleanup

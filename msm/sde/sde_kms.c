@@ -2839,12 +2839,6 @@ static const struct msm_kms_funcs kms_funcs = {
 	.get_mixer_count = sde_kms_get_mixer_count,
 };
 
-/* the caller api needs to turn on clock before calling it */
-static inline void _sde_kms_core_hw_rev_init(struct sde_kms *sde_kms)
-{
-	sde_kms->core_rev = readl_relaxed(sde_kms->mmio + 0x0);
-}
-
 static int _sde_kms_mmu_destroy(struct sde_kms *sde_kms)
 {
 	int i;
@@ -3325,11 +3319,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	struct sde_rm *rm = NULL;
 	int i, rc = -EINVAL;
 
-	_sde_kms_core_hw_rev_init(sde_kms);
-
-	pr_info("sde hardware revision:0x%x\n", sde_kms->core_rev);
-
-	sde_kms->catalog = sde_hw_catalog_init(dev, sde_kms->core_rev);
+	sde_kms->catalog = sde_hw_catalog_init(dev);
 	if (IS_ERR_OR_NULL(sde_kms->catalog)) {
 		rc = PTR_ERR(sde_kms->catalog);
 		if (!sde_kms->catalog)
@@ -3338,6 +3328,9 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 		sde_kms->catalog = NULL;
 		goto power_error;
 	}
+	sde_kms->core_rev = sde_kms->catalog->hwversion;
+
+	pr_info("sde hardware revision:0x%x\n", sde_kms->core_rev);
 
 	/* initialize power domain if defined */
 	rc = _sde_kms_hw_init_power_helper(dev, sde_kms);
