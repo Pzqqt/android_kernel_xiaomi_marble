@@ -626,7 +626,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
 	struct cdp_rx_stats_ppdu_user *rx_stats_peruser;
 	struct cdp_rx_ppdu_cfr_info *cfr_info;
-	qdf_dma_addr_t buf_addr = 0, buf_addr_temp = 0;
+	qdf_dma_addr_t buf_addr = 0, buf_addr_extn = 0;
 	struct pdev_cfr *pcfr;
 	struct look_up_table *lut = NULL;
 	struct csi_cfr_header *header = NULL;
@@ -701,9 +701,9 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	}
 
 	cfr_rx_ops = &psoc->soc_cb.rx_ops.cfr_rx_ops;
-	buf_addr_temp = cfr_info->rtt_che_buffer_pointer_high8;
+	buf_addr_extn = cfr_info->rtt_che_buffer_pointer_high8 & 0xF;
 	buf_addr = (cfr_info->rtt_che_buffer_pointer_low32 |
-		    ((uint64_t)buf_addr_temp << 32));
+		    ((uint64_t)buf_addr_extn << 32));
 
 
 	if (target_if_dbr_cookie_lookup(pdev, DBR_MODULE_CFR, buf_addr,
