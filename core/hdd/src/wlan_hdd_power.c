@@ -1766,12 +1766,6 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		goto exit_with_code;
 	}
 
-	exit_code = wlan_hdd_validate_context(hdd_ctx);
-	if (exit_code) {
-		hdd_err("Invalid HDD context");
-		goto exit_with_code;
-	}
-
 	if (hdd_ctx->config->is_wow_disabled) {
 		hdd_err("wow is disabled");
 		return -EINVAL;
