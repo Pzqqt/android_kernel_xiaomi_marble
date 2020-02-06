@@ -142,8 +142,58 @@
 						    CFG_VALUE_OR_DEFAULT, \
 						    "NDP Auto Terminate time")
 
+/*
+ * <ini>
+ * gNdpKeepAlivePeriod - To configure duration of how many seconds
+ * to wait to kickout peer if peer is not reachable.
+ *
+ * @Min: 10
+ * @Max: 30
+ * @Default: 20
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_NDP_KEEP_ALIVE_PERIOD CFG_INI_UINT( \
+			"gNdpKeepAlivePeriod", \
+			10, \
+			30, \
+			20, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Keep alive timeout of a peer")
+
+/*
+ * <ini>
+ * gSupportMp0Discovery - To support discovery of NAN cluster with
+ * Master Preference (MP) as 0 when a new device is enabling NAN.
+ *
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SUPPORT_MP0_DISCOVERY CFG_INI_BOOL( \
+			"gSupportMp0Discovery", \
+			1, \
+			"Enable/Disable discovery of NAN cluster with Master Preference (MP) as 0")
+
 #ifdef WLAN_FEATURE_NAN
-#define CFG_NAN_DISC CFG(CFG_NAN_ENABLE)
+#define CFG_NAN_DISC CFG(CFG_NAN_ENABLE) \
+			CFG(CFG_NDP_KEEP_ALIVE_PERIOD) \
+			CFG(CFG_SUPPORT_MP0_DISCOVERY)
 #define CFG_NAN_DP      CFG(CFG_NAN_DATAPATH_ENABLE) \
 			CFG(CFG_NAN_RANDOMIZE_NDI_MAC) \
 			CFG(CFG_NAN_NDP_INACTIVITY_TIMEOUT) \

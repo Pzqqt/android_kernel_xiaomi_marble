@@ -693,6 +693,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	struct csr_roam_info *roam_info;
 	struct bss_description tmp_bss_descp = {0};
 	uint16_t ndp_inactivity_timeout = 0;
+	uint16_t ndp_keep_alive_period;
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -733,6 +734,14 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 		sme_cli_set_command(adapter->vdev_id,
 				    WMI_VDEV_PARAM_NDP_INACTIVITY_TIMEOUT,
 				    ndp_inactivity_timeout, VDEV_CMD);
+
+		if (QDF_IS_STATUS_SUCCESS(cfg_nan_get_ndp_keepalive_period(
+						hdd_ctx->psoc,
+						&ndp_keep_alive_period)))
+			sme_cli_set_command(
+				adapter->vdev_id,
+				WMI_VDEV_PARAM_NDP_KEEPALIVE_TIMEOUT,
+				ndp_keep_alive_period, VDEV_CMD);
 	} else {
 		hdd_alert("NDI interface creation failed with reason %d",
 			ndi_rsp->reason /* create_reason */);

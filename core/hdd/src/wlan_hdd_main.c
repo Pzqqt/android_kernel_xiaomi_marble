@@ -178,6 +178,7 @@
 #include "mac_init_api.h"
 #include "wlan_pkt_capture_ucfg_api.h"
 #include <wlan_hdd_sar_limits.h>
+#include "cfg_nan_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4808,6 +4809,13 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		hdd_objmgr_put_vdev(vdev);
 	}
 
+	if (QDF_NAN_DISC_MODE == adapter->device_mode) {
+		sme_cli_set_command(
+		adapter->vdev_id,
+		WMI_VDEV_PARAM_ALLOW_NAN_INITIAL_DISCOVERY_OF_MP0_CLUSTER,
+		cfg_nan_get_support_mp0_discovery(hdd_ctx->psoc),
+		VDEV_CMD);
+	}
 	hdd_store_nss_chains_cfg_in_vdev(adapter);
 
 	hdd_nofl_debug("vdev %d created successfully", adapter->vdev_id);
