@@ -3293,8 +3293,7 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 
 	if (!maxTxPower)
 		WMA_LOGW("Setting Tx power limit to 0");
-	WMA_LOGD("Set maxTx pwr [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
-						maxTxPower);
+	wma_debug("Set maxTx pwr to %d", maxTxPower);
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_TX_PWRLIMIT,
 					      maxTxPower);
@@ -3762,8 +3761,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to send wmi packet power save cmd");
 	else
-		WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
-			 pps_val, status);
+		WMA_LOGD("Sent packet power save %x", pps_val);
 
 	add_bss->staContext.no_ptk_4_way = add_bss->no_ptk_4_way;
 
@@ -4262,7 +4260,6 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 
 		if (wmi_service_enabled(wma->wmi_handle,
 					    wmi_service_peer_assoc_conf)) {
-			WMA_LOGD(FL("WMI_SERVICE_PEER_ASSOC_CONF is enabled"));
 			peer_assoc_cnf = true;
 			msg = wma_fill_hold_req(wma, params->smesessionId,
 				WMA_ADD_STA_REQ, WMA_PEER_ASSOC_CNF_START,

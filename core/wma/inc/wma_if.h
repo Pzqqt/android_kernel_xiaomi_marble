@@ -363,7 +363,6 @@ struct bss_params {
 
 	uint8_t extSetStaKeyParamValid;
 	tSetStaKeyParams extSetStaKeyParam;
-	uint8_t bSpectrumMgtEnabled;
 	uint8_t vhtCapable;
 	enum phy_ch_width ch_width;
 	uint8_t nonRoamReassoc;
