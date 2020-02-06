@@ -1682,8 +1682,6 @@ static void dp_panel_decode_dsc_dpcd(struct dp_panel *dp_panel)
 		dp_panel->sink_dsc_caps.dsc_capable = false;
 		dp_panel->dsc_en = false;
 	}
-
-	dp_panel->widebus_en = dp_panel->dsc_en;
 }
 
 static void dp_panel_read_sink_dsc_caps(struct dp_panel *dp_panel)
