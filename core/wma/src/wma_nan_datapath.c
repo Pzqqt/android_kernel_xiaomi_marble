@@ -118,7 +118,7 @@ send_rsp:
 void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta)
 {
-	wma_remove_peer(wma, wma->peer_macaddr.bytes,
+	wma_remove_peer(wma, del_sta->staMac,
 			del_sta->smesessionId, false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
