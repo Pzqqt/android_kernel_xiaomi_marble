@@ -468,6 +468,8 @@ struct cfr_rcc_param {
  *	[5] - No. PPDUs filtered due to freeze_reason_ALL_PACKET
  * release_err_cnt: No. of lookup table entries freed due to invalid CFR data
  * length
+ * last_success_tstamp: DBR timestamp which indicates that both DBR and TX/RX
+ * events have been received successfully.
  */
 /*
  * To be extended if we get more capbality info
@@ -508,6 +510,7 @@ struct pdev_cfr {
 	uint64_t invalid_dma_length_cnt;
 	uint64_t flush_timeout_dbr_cnt;
 	uint64_t clear_txrx_event;
+	uint64_t last_success_tstamp;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
 };
