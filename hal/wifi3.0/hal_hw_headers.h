@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -228,9 +228,16 @@
 #define SRNG_SRC_ADDR(_srng, _reg) \
 	SRNG_REG_ADDR(_srng, _reg, _reg ## _GROUP, SRC)
 
+#ifdef FEATURE_HAL_DELAYED_WRITE
 #define SRNG_REG_WRITE(_srng, _reg, _value, _dir) \
-	hal_write_address_32_mb(_srng->hal_soc, \
+	hal_delayed_reg_write(_srng->hal_soc, _srng,\
 		SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value))
+#else
+#define SRNG_REG_WRITE(_srng, _reg, _value, _dir) \
+	hal_write_address_32_mb(_srng->hal_soc,\
+		SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value))
+#endif
+
 
 #define SRNG_REG_READ(_srng, _reg, _dir) \
 	hal_read_address_32_mb(_srng->hal_soc, \

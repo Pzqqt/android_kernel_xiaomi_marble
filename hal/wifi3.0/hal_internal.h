@@ -25,6 +25,9 @@
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
 #include "pld_common.h"
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+#include "qdf_defer.h"
+#endif
 
 #define hal_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_TXRX, params)
 #define hal_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_TXRX, params)
@@ -194,6 +197,79 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  */
 #define HAL_SRNG_FLUSH_EVENT BIT(0)
 
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+
+/**
+ * struct hal_reg_write_q_elem - delayed register write queue element
+ * @srng: hal_srng queued for a delayed write
+ * @addr: iomem address of the register
+ * @val: register value at the time of delayed write enqueue
+ * @valid: whether this entry is valid or not
+ * @enqueue_time: enqueue time (qdf_log_timestamp)
+ * @dequeue_time: dequeue time (qdf_log_timestamp)
+ */
+struct hal_reg_write_q_elem {
+	struct hal_srng *srng;
+	void __iomem *addr;
+	uint32_t val;
+	uint8_t valid;
+	qdf_time_t enqueue_time;
+	qdf_time_t dequeue_time;
+};
+
+/**
+ * struct hal_reg_write_srng_stats - srng stats to keep track of register writes
+ * @enqueues: writes enqueued to delayed work
+ * @dequeues: writes dequeued from delayed work (not written yet)
+ * @coalesces: writes not enqueued since srng is already queued up
+ * @direct: writes not enqueued and written to register directly
+ */
+struct hal_reg_write_srng_stats {
+	uint32_t enqueues;
+	uint32_t dequeues;
+	uint32_t coalesces;
+	uint32_t direct;
+};
+
+/**
+ * enum hal_reg_sched_delay - ENUM for write sched delay histogram
+ * @REG_WRITE_SCHED_DELAY_SUB_100us: index for delay < 100us
+ * @REG_WRITE_SCHED_DELAY_SUB_1000us: index for delay < 1000us
+ * @REG_WRITE_SCHED_DELAY_SUB_5000us: index for delay < 5000us
+ * @REG_WRITE_SCHED_DELAY_GT_5000us: index for delay >= 5000us
+ * @REG_WRITE_SCHED_DELAY_HIST_MAX: Max value (nnsize of histogram array)
+ */
+enum hal_reg_sched_delay {
+	REG_WRITE_SCHED_DELAY_SUB_100us,
+	REG_WRITE_SCHED_DELAY_SUB_1000us,
+	REG_WRITE_SCHED_DELAY_SUB_5000us,
+	REG_WRITE_SCHED_DELAY_GT_5000us,
+	REG_WRITE_SCHED_DELAY_HIST_MAX,
+};
+
+/**
+ * struct hal_reg_write_soc_stats - soc stats to keep track of register writes
+ * @enqueues: writes enqueued to delayed work
+ * @dequeues: writes dequeued from delayed work (not written yet)
+ * @coalesces: writes not enqueued since srng is already queued up
+ * @direct: writes not enqueud and writted to register directly
+ * @prevent_l1_fails: prevent l1 API failed
+ * @q_depth: current queue depth in delayed register write queue
+ * @max_q_depth: maximum queue for delayed register write queue
+ * @sched_delay: = kernel work sched delay + bus wakeup delay, histogram
+ */
+struct hal_reg_write_soc_stats {
+	qdf_atomic_t enqueues;
+	uint32_t dequeues;
+	qdf_atomic_t coalesces;
+	qdf_atomic_t direct;
+	uint32_t prevent_l1_fails;
+	qdf_atomic_t q_depth;
+	uint32_t max_q_depth;
+	uint32_t sched_delay[REG_WRITE_SCHED_DELAY_HIST_MAX];
+};
+#endif
+
 /* Common SRNG ring structure for source and destination rings */
 struct hal_srng {
 	/* Unique SRNG ring ID */
@@ -304,6 +380,13 @@ struct hal_srng {
 	unsigned long srng_event;
 	/* last flushed time stamp */
 	uint64_t last_flush_ts;
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+	/* flag to indicate whether srng is already queued for delayed write */
+	uint8_t reg_write_in_progress;
+
+	/* srng specific delayed write stats */
+	struct hal_reg_write_srng_stats wstats;
+#endif
 };
 
 /* HW SRNG configuration table */
@@ -480,11 +563,15 @@ struct hal_hw_txrx_ops {
 /**
  * struct hal_soc_stats - Hal layer stats
  * @reg_write_fail: number of failed register writes
+ * @wstats: delayed register write stats
  *
  * This structure holds all the statistics at HAL layer.
  */
 struct hal_soc_stats {
 	uint32_t reg_write_fail;
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+	struct hal_reg_write_soc_stats wstats;
+#endif
 };
 
 #ifdef ENABLE_HAL_REG_WR_HISTORY
@@ -575,7 +662,35 @@ struct hal_soc {
 #ifdef ENABLE_HAL_REG_WR_HISTORY
 	struct hal_reg_write_fail_history *reg_wr_fail_hist;
 #endif
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+	/* queue(array) to hold register writes */
+	struct hal_reg_write_q_elem *reg_write_queue;
+	/* delayed work to be queued into workqueue */
+	qdf_work_t reg_write_work;
+	/* workqueue for delayed register writes */
+	qdf_workqueue_t *reg_write_wq;
+	/* write index used by caller to enqueue delayed work */
+	qdf_atomic_t write_idx;
+	/* read index used by worker thread to dequeue/write registers */
+	uint32_t read_idx;
+#endif
 };
+
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+/**
+ *  hal_delayed_reg_write() - delayed regiter write
+ * @hal_soc: HAL soc handle
+ * @srng: hal srng
+ * @addr: iomem address
+ * @value: value to be written
+ *
+ * Return: none
+ */
+void hal_delayed_reg_write(struct hal_soc *hal_soc,
+			   struct hal_srng *srng,
+			   void __iomem *addr,
+			   uint32_t value);
+#endif
 
 void hal_qca6750_attach(struct hal_soc *hal_soc);
 void hal_qca6490_attach(struct hal_soc *hal_soc);

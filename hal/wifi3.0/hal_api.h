@@ -438,10 +438,29 @@ void hal_write_address_32_mb(struct hal_soc *hal_soc,
 }
 
 #ifdef DP_HAL_MULTIWINDOW_DIRECT_ACCESS
-#define hal_srng_write_address_32_mb(_a, _b, _c) qdf_iowrite32(_b, _c)
+static inline void hal_srng_write_address_32_mb(struct hal_soc *hal_soc,
+						struct hal_srng *srng,
+						void __iomem *addr,
+						uint32_t value)
+{
+	qdf_iowrite32(addr, value);
+}
+#elif defined(FEATURE_HAL_DELAYED_WRITE)
+static inline void hal_srng_write_address_32_mb(struct hal_soc *hal_soc,
+						struct hal_srng *srng,
+						void __iomem *addr,
+						uint32_t value)
+{
+	hal_delayed_reg_write(hal_soc, srng, addr, value);
+}
 #else
-#define hal_srng_write_address_32_mb(_a, _b, _c) \
-		hal_write_address_32_mb(_a, _b, _c)
+static inline void hal_srng_write_address_32_mb(struct hal_soc *hal_soc,
+						struct hal_srng *srng,
+						void __iomem *addr,
+						uint32_t value)
+{
+	hal_write_address_32_mb(hal_soc, addr, value);
+}
 #endif
 
 #if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
@@ -467,8 +486,7 @@ void hal_write_address_32_mb(struct hal_soc *hal_soc,
  *
  * Return: < 0 for failure/>= 0 for success
  */
-static inline
-uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
+static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
 	uint32_t ret;
 	unsigned long flags;
@@ -533,6 +551,32 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 	}
 
 	return ret;
+}
+#endif
+
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+/**
+ * hal_dump_reg_write_srng_stats() - dump SRNG reg write stats
+ * @hal_soc: HAL soc handle
+ *
+ * Return: none
+ */
+void hal_dump_reg_write_srng_stats(hal_soc_handle_t hal_soc_hdl);
+
+/**
+ * hal_dump_reg_write_stats() - dump reg write stats
+ * @hal_soc: HAL soc handle
+ *
+ * Return: none
+ */
+void hal_dump_reg_write_stats(hal_soc_handle_t hal_soc_hdl);
+#else
+static inline void hal_dump_reg_write_srng_stats(hal_soc_handle_t hal_soc_hdl)
+{
+}
+
+static inline void hal_dump_reg_write_stats(hal_soc_handle_t hal_soc_hdl)
+{
 }
 #endif
 
@@ -1425,10 +1469,12 @@ hal_srng_access_end_unlocked(void *hal_soc, hal_ring_handle_t hal_ring_hdl)
 	} else {
 		if (srng->ring_dir == HAL_SRNG_SRC_RING)
 			hal_srng_write_address_32_mb(hal_soc,
+						     srng,
 						     srng->u.src_ring.hp_addr,
 						     srng->u.src_ring.hp);
 		else
 			hal_srng_write_address_32_mb(hal_soc,
+						     srng,
 						     srng->u.dst_ring.tp_addr,
 						     srng->u.dst_ring.tp);
 	}

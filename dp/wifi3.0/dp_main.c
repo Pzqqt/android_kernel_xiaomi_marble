@@ -334,6 +334,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_PDEV_CFG_PARAMS},
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_INTERRUPT_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_FSE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_HAL_REG_WRITE_STATS},
 };
 
 /* MCL specific functions */
@@ -7604,6 +7605,7 @@ static void dp_txrx_stats_help(void)
 	dp_info(" 29 -- Host Soc cfg param Statistics");
 	dp_info(" 30 -- Host pdev cfg param Statistics");
 	dp_info(" 31 -- Host FISA stats");
+	dp_info(" 32 -- Host Register Work stats");
 }
 
 /**
@@ -7663,11 +7665,17 @@ dp_print_host_stats(struct dp_vdev *vdev,
 		break;
 	case TXRX_NAPI_STATS:
 		dp_print_napi_stats(pdev->soc);
+		break;
 	case TXRX_SOC_INTERRUPT_STATS:
 		dp_print_soc_interrupt_stats(pdev->soc);
 		break;
 	case TXRX_SOC_FSE_STATS:
 		dp_rx_dump_fisa_table(pdev->soc);
+		break;
+	case TXRX_HAL_REG_WRITE_STATS:
+		hal_dump_reg_write_stats(pdev->soc->hal_soc);
+		hal_dump_reg_write_srng_stats(pdev->soc->hal_soc);
+		break;
 	default:
 		dp_info("Wrong Input For TxRx Host Stats");
 		dp_txrx_stats_help();
@@ -9098,6 +9106,7 @@ static QDF_STATUS dp_txrx_dump_stats(struct cdp_soc_t *psoc, uint16_t value,
 	case CDP_TXRX_PATH_STATS:
 		dp_txrx_path_stats(soc);
 		dp_print_soc_interrupt_stats(soc);
+		hal_dump_reg_write_stats(soc->hal_soc);
 		break;
 
 	case CDP_RX_RING_STATS:
