@@ -1667,13 +1667,10 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 				i, splash_display->dsc_ids[i]);
 	}
 
-	if ( reqs->hw_res.comp_info->comp_type ==
-			MSM_DISPLAY_COMPRESSION_DSC)
-		return  _sde_rm_reserve_dsc(rm, rsvp,
-				&reqs->hw_res.comp_info->dsc_info,
-				reqs->topology, hw_ids);
+	return  _sde_rm_reserve_dsc(rm, rsvp,
+			&reqs->hw_res.comp_info->dsc_info,
+			reqs->topology, hw_ids);
 
-	return 0;
 }
 
 static int _sde_rm_make_vdc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
