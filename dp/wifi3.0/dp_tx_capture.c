@@ -2051,6 +2051,9 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 			qdf_nbuf_data(nbuf_ppdu_desc);
 
+	if (ppdu_desc->mprot_type)
+		dp_send_dummy_rts_cts_frame(pdev, ppdu_desc);
+
 	type = (ppdu_desc->frame_ctrl &
 		IEEE80211_FC0_TYPE_MASK) >>
 		IEEE80211_FC0_TYPE_SHIFT;
