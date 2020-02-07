@@ -206,7 +206,7 @@ QDF_STATUS cds_init(void)
 
 	gp_cds_context->qdf_ctx = &g_qdf_ctx;
 
-	qdf_register_self_recovery_callback(__cds_trigger_recovery);
+	qdf_register_self_recovery_callback(cds_trigger_recovery_psoc);
 	qdf_register_fw_down_callback(cds_is_fw_down);
 	qdf_register_is_driver_unloading_callback(cds_is_driver_unloading);
 	qdf_register_recovering_state_query_callback(cds_is_driver_recovering);
@@ -1842,6 +1842,13 @@ void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
 
 	cds_trigger_recovery_handler(func, line);
 }
+
+void cds_trigger_recovery_psoc(void *psoc, enum qdf_hang_reason reason,
+			       const char *func, const uint32_t line)
+{
+	__cds_trigger_recovery(reason, func, line);
+}
+
 
 /**
  * cds_get_recovery_reason() - get self recovery reason
