@@ -54,10 +54,6 @@ static void wlan_p2p_rx_callback(void *user_data,
 	struct vdev_osif_priv *osif_priv;
 	struct wireless_dev *wdev;
 
-	osif_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
-		   user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
-		   rx_frame->buf, rx_frame->frame_len);
-
 	psoc = user_data;
 	if (!psoc) {
 		osif_err("psoc is null");
