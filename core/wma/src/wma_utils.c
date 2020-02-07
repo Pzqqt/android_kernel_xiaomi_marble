@@ -2044,23 +2044,20 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("Radio stats Fixed Param:");
-	WMA_LOGD("req_id: %u num_radio: %u more_radio_events: %u",
+	WMA_LOGD("Radio stats Fixed Param: req_id: %u num_radio: %u more_radio_events: %u",
 		 fixed_param->request_id, fixed_param->num_radio,
 		 fixed_param->more_radio_events);
 
-	WMA_LOGD("Radio Info: radio_id: %u on_time: %u tx_time: %u rx_time: %u on_time_scan: %u",
-		radio_stats->radio_id, radio_stats->on_time,
-		radio_stats->tx_time, radio_stats->rx_time,
-		radio_stats->on_time_scan);
-	WMA_LOGD("on_time_nbd: %u on_time_gscan: %u on_time_roam_scan: %u",
-		radio_stats->on_time_nbd,
-		radio_stats->on_time_gscan, radio_stats->on_time_roam_scan);
-	WMA_LOGD("on_time_pno_scan: %u on_time_hs20: %u num_channels: %u",
-		radio_stats->on_time_pno_scan, radio_stats->on_time_hs20,
-		radio_stats->num_channels);
-	WMA_LOGD("on_time_host_scan: %u, on_time_lpi_scan: %u",
-		radio_stats->on_time_host_scan, radio_stats->on_time_lpi_scan);
+	WMA_LOGD("Radio Info: radio_id: %u on_time: %u tx_time: %u rx_time: %u on_time_scan: %u on_time_nbd: %u on_time_gscan: %u on_time_roam_scan: %u",
+		 radio_stats->radio_id, radio_stats->on_time,
+		 radio_stats->tx_time, radio_stats->rx_time,
+		 radio_stats->on_time_scan, radio_stats->on_time_nbd,
+		 radio_stats->on_time_gscan, radio_stats->on_time_roam_scan);
+
+	WMA_LOGD("on_time_pno_scan: %u on_time_hs20: %u num_channels: %u on_time_host_scan: %u, on_time_lpi_scan: %u",
+		 radio_stats->on_time_pno_scan, radio_stats->on_time_hs20,
+		 radio_stats->num_channels, radio_stats->on_time_host_scan,
+		 radio_stats->on_time_lpi_scan);
 
 	results = (uint8_t *) link_stats_results->results;
 	t_radio_stats = (uint8_t *) radio_stats;

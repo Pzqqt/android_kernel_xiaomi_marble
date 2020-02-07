@@ -627,8 +627,6 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	struct nlattr *peers;
 	int num_rate;
 
-	hdd_enter();
-
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return;
@@ -707,7 +705,6 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
-	hdd_exit();
 }
 
 /**
@@ -730,8 +727,6 @@ hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
-
-	hdd_enter();
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
@@ -767,7 +762,6 @@ hdd_link_layer_process_iface_stats(struct hdd_adapter *adapter,
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
-	hdd_exit();
 }
 
 /**
@@ -967,13 +961,10 @@ hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 	struct wifi_radio_stats *radio_stat_save = radio_stat;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_enter();
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return;
-
-	hdd_debug("LL_STATS_RADIO: number of radios: %u", num_radio);
 
 	for (i = 0; i < num_radio; i++) {
 		hdd_debug("LL_STATS_RADIO"

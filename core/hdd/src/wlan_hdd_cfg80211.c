@@ -4706,7 +4706,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	}
 
 	if (tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]) {
-		hdd_debug("Parse and send roam triggers to firmware");
 		value = nla_get_u32(tb2[QCA_ATTR_ROAM_CONTROL_TRIGGERS]);
 		hdd_debug("Received roam trigger bitmap: 0x%x", value);
 		status = hdd_send_roam_triggers_to_sme(hdd_ctx,
@@ -4718,16 +4717,17 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_ENABLE];
 	if (attr) {
-		hdd_debug("Parse and send roam control enable/disable");
 		status = sme_set_roam_config_enable(hdd_ctx->mac_handle,
 						    vdev_id,
 						    nla_get_u8(attr));
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("failed to enable/disable roam control config");
 
+		hdd_debug("Parse and send roam control %s:",
+			  nla_get_u8(attr) ? "Enable" : "Disable");
+
 		attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD];
 		if (attr) {
-			hdd_debug("Parse and send scan period to firmware");
 			/* Default value received as part of Roam control enable
 			 * Set this only if user hasn't configured any value so
 			 * far.
@@ -4742,7 +4742,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 
 		attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
 		if (attr) {
-			hdd_debug("Parse and send full scan period to firmware");
 			value = nla_get_u32(attr);
 			/* Default value received as part of Roam control enable
 			 * Set this only if user hasn't configured any value so
@@ -4758,7 +4757,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	} else {
 		attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD];
 		if (attr) {
-			hdd_debug("Parse and send scan period to firmware");
 			/* User configured value, cache the value directly */
 			value = nla_get_u32(attr);
 			status = hdd_send_roam_scan_period_to_sme(hdd_ctx,
@@ -4770,7 +4768,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 
 		attr = tb2[QCA_ATTR_ROAM_CONTROL_FULL_SCAN_PERIOD];
 		if (attr) {
-			hdd_debug("Parse and send full scan period to firmware");
 			value = nla_get_u32(attr);
 			/* User configured value, cache the value directly */
 			status = hdd_send_roam_full_scan_period_to_sme(hdd_ctx,
@@ -4785,7 +4782,6 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	/* Scoring and roam candidate selection criteria */
 	attr = tb2[QCA_ATTR_ROAM_CONTROL_SELECTION_CRITERIA];
 	if (attr) {
-		hdd_debug("Send candidate selection criteria to firmware");
 		status = hdd_send_roam_cand_sel_criteria_to_sme(hdd_ctx,
 								vdev_id, attr);
 		if (QDF_IS_STATUS_ERROR(status))
@@ -4903,8 +4899,10 @@ hdd_roam_control_config_fill_data(struct hdd_context *hdd_ctx, uint8_t vdev_id,
 	uint32_t full_roam_scan_period;
 
 	config = nla_nest_start(skb, PARAM_ROAM_CONTROL_CONFIG);
-	if (!config)
+	if (!config) {
+		hdd_err("nla nest start failure");
 		return -EINVAL;
+	}
 
 	if (tb[QCA_ATTR_ROAM_CONTROL_STATUS]) {
 		status = sme_get_roam_config_status(hdd_ctx->mac_handle,
@@ -4961,7 +4959,6 @@ hdd_send_roam_control_config(struct hdd_context *hdd_ctx,
 	uint16_t skb_len;
 	int status;
 
-	hdd_enter();
 	skb_len = hdd_roam_control_config_buf_size(hdd_ctx, tb);
 	if (!skb_len) {
 		hdd_err("No data requested");
@@ -4979,7 +4976,6 @@ hdd_send_roam_control_config(struct hdd_context *hdd_ctx,
 	if (status)
 		goto fail;
 
-	hdd_exit();
 	return cfg80211_vendor_cmd_reply(skb);
 
 fail:
@@ -5003,7 +4999,6 @@ static int hdd_get_roam_control_config(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1];
 
-	hdd_enter();
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
 	if (!tb[PARAM_ROAM_CONTROL_CONFIG]) {
 		hdd_err("Attribute CONTROL_CONFIG is not present");
@@ -5217,8 +5212,6 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct roam_ext_params *roam_params = NULL;
 	int ret;
-
-	hdd_enter_dev(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
