@@ -316,8 +316,8 @@ void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 	uint8_t *usermac = NULL;
 
 	cfr_debug("<METADATA><%u>\n"
-		  "start_magic_num = %d\n"
-		  "vendorid = %d\n"
+		  "start_magic_num = 0x%x\n"
+		  "vendorid = 0x%x\n"
 		  "cfr_metadata_version = %d\n"
 		  "cfr_data_version = %d\n"
 		  "chip_type = %d\n"
@@ -333,7 +333,7 @@ void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 		  "cfr_capture_type = %d\n"
 		  "sts_count = %d\n"
 		  "num_rx_chain = %d\n"
-		  "timestamp = %d\n"
+		  "timestamp = 0x%x\n"
 		  "length = %d\n"
 		  "is_mu_ppdu = %d\n"
 		  "num_users = %d\n",
