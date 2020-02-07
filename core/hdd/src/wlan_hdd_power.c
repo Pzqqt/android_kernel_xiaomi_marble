@@ -951,8 +951,14 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 {
 	struct hdd_context *hdd_ctx = container_of(nb, struct hdd_context,
 						   pm_qos_notifier);
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	void *hif_ctx;
 
+	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
+		hdd_debug_rl("Driver Module closed; skipping pm qos notify");
+		return 0;
+	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Hif context is Null");
 		return -EINVAL;
