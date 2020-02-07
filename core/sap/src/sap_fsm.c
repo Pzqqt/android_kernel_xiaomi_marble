@@ -1997,8 +1997,10 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 			/* Don't check CAC for non-dfs channel */
 			profile = &sap_context->csr_roamProfile;
 			freq = profile->op_freq;
-			if (!wlan_reg_chan_has_dfs_attribute_for_freq(mac->pdev,
-								      freq))
+			if (CHANNEL_STATE_DFS !=
+			    wlan_reg_get_5g_bonded_channel_state_for_freq(mac->pdev,
+									  freq,
+									  profile->ch_params.ch_width))
 				continue;
 
 			/* If this is an end notification of a pre cac, the
