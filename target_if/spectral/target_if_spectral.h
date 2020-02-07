@@ -508,6 +508,16 @@ struct spectral_report_params {
 };
 
 /**
+ * struct spectral_param_min_max - Spectral parameter minimum and maximum values
+ * @fft_size_min: Minimum value of fft_size
+ * @fft_size_max: Maximum value of fft_size for each BW
+ */
+struct spectral_param_min_max {
+	uint16_t fft_size_min;
+	uint16_t fft_size_max[CH_WIDTH_MAX];
+};
+
+/**
  * struct spectral_timestamp_swar - Spectral time stamp WAR related parameters
  * @timestamp_war_offset: Offset to be added to correct timestamp
  * @target_reset_count: Number of times target exercised the reset routine
@@ -877,8 +887,7 @@ struct spectral_param_properties {
  * @chaninfo: Channel statistics
  * @tsf64: Latest TSF Value
  * @param_info: Offload architecture Spectral parameter cache information
- * @ch_width: Indicates Channel Width 20/40/80/160 MHz with values 0, 1, 2, 3
- * respectively
+ * @ch_width: Indicates Channel Width 20/40/80/160 MHz for each Spectral mode
  * @diag_stats: Diagnostic statistics
  * @is_160_format:  Indicates whether information provided by HW is in altered
  * format for 802.11ac 160/80+80 MHz support (QCA9984 onwards)
@@ -909,6 +918,7 @@ struct spectral_param_properties {
  * @prev_tstamp: Timestamp of the previously received sample, which has to be
  * compared with the current tstamp to check descrepancy
  * @rparams: Parameters related to Spectral report structure
+ * @param_min_max: Spectral parameter's minimum and maximum values
  */
 struct target_if_spectral {
 	struct wlan_objmgr_pdev *pdev_obj;
@@ -995,8 +1005,7 @@ struct target_if_spectral {
 	struct target_if_spectral_param_state_info
 					param_info[SPECTRAL_SCAN_MODE_MAX];
 #endif
-	uint32_t                               ch_width;
-	uint32_t                               agile_ch_width;
+	enum phy_ch_width ch_width[SPECTRAL_SCAN_MODE_MAX];
 	struct spectral_diag_stats              diag_stats;
 	bool                                    is_160_format;
 	bool                                    is_lb_edge_extrabins_format;
@@ -1018,13 +1027,12 @@ struct target_if_spectral {
 	struct spectral_fft_bin_len_adj_swar len_adj_swar;
 	struct spectral_timestamp_war timestamp_war;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;
-	uint16_t fft_size_min;
-	uint16_t fft_size_max;
 	bool dbr_ring_debug;
 	bool dbr_buff_debug;
 	bool direct_dma_support;
 	uint32_t prev_tstamp;
 	struct spectral_report_params rparams;
+	struct spectral_param_min_max param_min_max;
 };
 
 /**
@@ -1595,7 +1603,7 @@ reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral,
 	enum spectral_msg_type smsg_type;
 	QDF_STATUS ret;
 
-	if (spectral->ch_width == CH_WIDTH_160MHZ) {
+	if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) {
 		spectral->state_160mhz_delivery =
 			SPECTRAL_REPORT_WAIT_PRIMARY80;
 
@@ -1622,7 +1630,7 @@ static inline
 bool is_secondaryseg_expected(struct target_if_spectral *spectral)
 {
 	return
-	((spectral->ch_width == CH_WIDTH_160MHZ) &&
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) &&
 	(spectral->state_160mhz_delivery == SPECTRAL_REPORT_WAIT_SECONDARY80));
 }
 
@@ -1639,8 +1647,8 @@ static inline
 bool is_primaryseg_expected(struct target_if_spectral *spectral)
 {
 	return
-	((spectral->ch_width != CH_WIDTH_160MHZ) ||
-	((spectral->ch_width == CH_WIDTH_160MHZ) &&
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] != CH_WIDTH_160MHZ) ||
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) &&
 	(spectral->state_160mhz_delivery == SPECTRAL_REPORT_WAIT_PRIMARY80)));
 }
 
@@ -1656,8 +1664,8 @@ static inline
 bool is_primaryseg_rx_inprog(struct target_if_spectral *spectral)
 {
 	return
-	((spectral->ch_width != CH_WIDTH_160MHZ) ||
-	((spectral->ch_width == CH_WIDTH_160MHZ) &&
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] != CH_WIDTH_160MHZ) ||
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) &&
 	((spectral->spectral_gen == SPECTRAL_GEN2) ||
 	((spectral->spectral_gen == SPECTRAL_GEN3) &&
 	(spectral->state_160mhz_delivery == SPECTRAL_REPORT_RX_PRIMARY80)))));
@@ -1675,7 +1683,7 @@ static inline
 bool is_secondaryseg_rx_inprog(struct target_if_spectral *spectral)
 {
 	return
-	((spectral->ch_width == CH_WIDTH_160MHZ) &&
+	((spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) &&
 	((spectral->spectral_gen == SPECTRAL_GEN2) ||
 	((spectral->spectral_gen == SPECTRAL_GEN3) &&
 	(spectral->state_160mhz_delivery == SPECTRAL_REPORT_RX_SECONDARY80))));

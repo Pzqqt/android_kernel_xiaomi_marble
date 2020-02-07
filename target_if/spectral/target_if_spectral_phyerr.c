@@ -967,8 +967,8 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 		acs_stats->nfc_ctl_rssi = control_rssi;
 		acs_stats->nfc_ext_rssi = extension_rssi;
 
-		if (spectral->is_160_format &&
-		    spectral->ch_width == CH_WIDTH_160MHZ) {
+		if (spectral->is_160_format && spectral->ch_width
+		    [SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) {
 			/*
 			 * We expect to see one more Search FFT report, and it
 			 * should be equal in size to the current one.
@@ -1096,7 +1096,8 @@ target_if_get_combrssi_sec80_seg_gen2(
 	total_gain_db = p_sfft_sec80->total_gain_info;
 
 	/* Calculate offset */
-	offset = target_if_get_offset_swar_sec80(spectral->ch_width);
+	offset = target_if_get_offset_swar_sec80(
+			spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL]);
 
 	/* Calculate RSSI */
 	comb_rssi = ((avgpwr_db - total_gain_db) + offset);
@@ -1416,7 +1417,7 @@ target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 				       uint8_t detector_id) {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (spectral->ch_width != CH_WIDTH_160MHZ)
+	if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] != CH_WIDTH_160MHZ)
 		return QDF_STATUS_E_FAILURE;
 
 	/* agile reports should not be coupled with 160 MHz state machine
@@ -1899,7 +1900,8 @@ target_if_consume_spectral_report_gen3(
 				target_reset_count;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
-		if (spectral->ch_width == CH_WIDTH_160MHZ) {
+		if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] ==
+		    CH_WIDTH_160MHZ) {
 			ret = target_if_160mhz_delivery_state_change(
 					spectral,
 					detector_id);
@@ -2014,7 +2016,8 @@ target_if_consume_spectral_report_gen3(
 		params.raw_timestamp_sec80 = p_sfft->timestamp;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
-		if (spectral->ch_width == CH_WIDTH_160MHZ) {
+		if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] ==
+		    CH_WIDTH_160MHZ) {
 			ret = target_if_160mhz_delivery_state_change(
 					spectral,
 					detector_id);
