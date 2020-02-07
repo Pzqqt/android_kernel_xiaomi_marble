@@ -410,6 +410,19 @@ static inline QDF_STATUS wifi_pos_init_cir_cfr_rings(
 #endif
 
 /**
+ * wifi_pos_register_get_fw_phy_mode_for_freq_cb: API to register callback
+ * to get current PHY mode
+ * @psoc: pointer to psoc object
+ * @handler: callback to be registered
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_register_get_fw_phy_mode_for_freq_cb(
+			struct wlan_objmgr_psoc *psoc,
+			void (*handler)(uint32_t, uint32_t, uint32_t *));
+
+/**
  * wifi_pos_register_get_phy_mode_cb: API to register callback to get
  * current PHY mode
  * @psoc: pointer to psoc object

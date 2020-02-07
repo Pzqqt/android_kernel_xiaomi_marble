@@ -304,6 +304,12 @@ struct wifi_pos_dma_rings_cfg {
  * @oem_6g_support_disable: oem target 6ghz support is disabled if set
  * @wifi_pos_req_handler: function pointer to handle TLV or non-TLV
  * @wifi_pos_send_rsp: function pointer to send msg to userspace APP
+ * @wifi_pos_get_phy_mode: function pointer to get wlan phymode for given
+ *                         channel, channel width
+ * @wifi_pos_get_fw_phy_mode_for_freq: function pointer to get fw phymode
+ *                                     for given freq and channel width
+ * @wifi_pos_send_action: function pointer to send registered action frames
+ *                        to userspace APP
  *
  * wifi pos request messages
  * <----- fine_time_meas_cap (in bits) ----->
@@ -344,6 +350,8 @@ struct wifi_pos_psoc_priv_obj {
 				    struct wifi_pos_req_msg *req);
 	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
 	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
+	void (*wifi_pos_get_fw_phy_mode_for_freq)(uint32_t, uint32_t,
+						  uint32_t *);
 	void (*wifi_pos_send_action)(struct wlan_objmgr_psoc *psoc,
 				     uint32_t oem_subtype, uint8_t *buf,
 				     uint32_t len);
