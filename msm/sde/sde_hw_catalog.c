@@ -912,6 +912,8 @@ static int _validate_dt_entry(struct device_node *np,
 		case PROP_TYPE_U32:
 			rc = of_property_read_u32(np, sde_prop[i].prop_name,
 				&val);
+			if (!rc)
+				prop_count[i] = 1;
 			break;
 		case PROP_TYPE_U32_ARRAY:
 			prop_count[i] = of_property_count_u32_elems(np,
@@ -934,6 +936,14 @@ static int _validate_dt_entry(struct device_node *np,
 					sde_prop[i].prop_name);
 			if (!snp)
 				rc = -EINVAL;
+			break;
+		case PROP_TYPE_BOOL:
+			/**
+			 * No special handling for bool properties here.
+			 * They will always exist, with value indicating
+			 * if the given key is present or not.
+			 */
+			prop_count[i] = 1;
 			break;
 		default:
 			SDE_DEBUG("invalid property type:%d\n",
