@@ -46,4 +46,14 @@ void target_if_ftm_time_sync_register_rx_ops(struct wlan_ftm_timesync_rx_ops
  */
 void target_if_ftm_time_sync_register_tx_ops(struct wlan_ftm_timesync_tx_ops
 					     *tx_ops);
+
+/**
+ * target_if_ftm_time_sync_unregister_ev_handlers() - Unregister wmi events
+ *						      handlers
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_if_ftm_time_sync_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc);
 #endif /*_TARGET_IF_FTM_TIME_SYNC_H_ */
