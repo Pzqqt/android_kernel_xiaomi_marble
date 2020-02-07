@@ -1059,7 +1059,8 @@ FTM_TIME_SYNC_INC := -I$(WLAN_ROOT)/$(FTM_TIME_SYNC_DIR)/core/inc \
 
 ifeq ($(CONFIG_FEATURE_WLAN_TIME_SYNC_FTM), y)
 FTM_TIME_SYNC_OBJS := $(FTM_TIME_SYNC_DIR)/core/src/ftm_time_sync_main.o \
-		$(FTM_TIME_SYNC_DIR)/dispatcher/src/ftm_time_sync_ucfg_api.o
+		$(FTM_TIME_SYNC_DIR)/dispatcher/src/ftm_time_sync_ucfg_api.o \
+		$(FTM_TIME_SYNC_DIR)/dispatcher/src/wlan_ftm_time_sync_tgt_api.o
 endif
 
 ########## CLD TARGET_IF #######

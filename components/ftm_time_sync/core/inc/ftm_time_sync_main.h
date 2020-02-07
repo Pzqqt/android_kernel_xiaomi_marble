@@ -26,6 +26,7 @@
 #define _FTM_TIME_SYNC_MAIN_H_
 
 #include <qdf_types.h>
+#include <qdf_delayed_work.h>
 #include "ftm_time_sync_priv.h"
 #include "ftm_time_sync_objmgr.h"
 

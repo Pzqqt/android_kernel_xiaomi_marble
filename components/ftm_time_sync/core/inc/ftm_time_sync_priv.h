@@ -61,12 +61,24 @@ struct ftm_timesync_priv {
  * @ftm_ts_priv: time sync private struct
  * @rx_ops: rx operations for ftm time sync
  * @tx_ops: tx operations for ftm time sync
+ * @ftm_time_sync_mutex: mutex to access ftm time sync priv members
+ * @ftm_time_sync_work: work to capture audio qtime and send it to FW
+ * @time_sync_interval: interval between two qtime capture
+ * @num_qtime_pair: number of qmaster and qslave pair derived
+ * @num_reads: number of times the qtime to be captured
+ * @valid: send qtime to FW only if this is true
  */
 struct ftm_timesync_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
 	struct ftm_timesync_priv ftm_ts_priv;
 	struct wlan_ftm_timesync_rx_ops rx_ops;
 	struct wlan_ftm_timesync_tx_ops tx_ops;
+	qdf_mutex_t ftm_time_sync_mutex;
+	struct qdf_delayed_work ftm_time_sync_work;
+	uint32_t time_sync_interval;
+	int num_qtime_pair;
+	int num_reads;
+	bool valid;
 };
 
 #endif /* End  of _FTM_TIME_SYNC_PRIV_STRUCT_H_ */
