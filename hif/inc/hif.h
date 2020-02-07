@@ -537,7 +537,7 @@ struct htc_callbacks {
  * @is_recovery_in_progress: Query if driver state is recovery in progress
  * @is_load_unload_in_progress: Query if driver state Load/Unload in Progress
  * @is_driver_unloading: Query if driver is unloading.
- *
+ * @get_bandwidth_level: Query current bandwidth level for the driver
  * This Structure provides callback pointer for HIF to query hdd for driver
  * states.
  */
@@ -548,6 +548,7 @@ struct hif_driver_state_callbacks {
 	bool (*is_load_unload_in_progress)(void *context);
 	bool (*is_driver_unloading)(void *context);
 	bool (*is_target_ready)(void *context);
+	int (*get_bandwidth_level)(void *context);
 };
 
 /* This API detaches the HTC layer from the HIF device */

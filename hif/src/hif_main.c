@@ -1219,6 +1219,19 @@ bool hif_is_target_ready(struct hif_softc *scn)
 }
 qdf_export_symbol(hif_is_target_ready);
 
+int hif_get_bandwidth_level(struct hif_opaque_softc *hif_handle)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_handle);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->get_bandwidth_level)
+		return cbk->get_bandwidth_level(cbk->context);
+
+	return 0;
+}
+
+qdf_export_symbol(hif_get_bandwidth_level);
+
 /**
  * hif_batch_send() - API to access hif specific function
  * ce_batch_send.

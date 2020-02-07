@@ -324,6 +324,15 @@ bool hif_is_driver_unloading(struct hif_softc *scn);
 bool hif_is_load_or_unload_in_progress(struct hif_softc *scn);
 bool hif_is_recovery_in_progress(struct hif_softc *scn);
 bool hif_is_target_ready(struct hif_softc *scn);
+
+/**
+ * hif_get_bandwidth_level() - API to get the current bandwidth level
+ * @scn: HIF Context
+ *
+ * Return: PLD bandwidth level
+ */
+int hif_get_bandwidth_level(struct hif_opaque_softc *hif_handle);
+
 void hif_wlan_disable(struct hif_softc *scn);
 int hif_target_sleep_state_adjust(struct hif_softc *scn,
 					 bool sleep_ok,
