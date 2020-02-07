@@ -2313,12 +2313,12 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	sde_conn = to_sde_connector(connector);
 	c_state = to_sde_connector_state(connector->state);
 
-	connector->hdr_eotf = 0;
-	connector->hdr_metadata_type_one = 0;
-	connector->hdr_max_luminance = 0;
-	connector->hdr_avg_luminance = 0;
-	connector->hdr_min_luminance = 0;
-	connector->hdr_supported = false;
+	sde_conn->hdr_eotf = 0;
+	sde_conn->hdr_metadata_type_one = 0;
+	sde_conn->hdr_max_luminance = 0;
+	sde_conn->hdr_avg_luminance = 0;
+	sde_conn->hdr_min_luminance = 0;
+	sde_conn->hdr_supported = false;
 	sde_conn->hdr_plus_app_ver = 0;
 
 	sde_conn->colorspace_updated = false;
