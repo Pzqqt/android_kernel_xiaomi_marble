@@ -10524,6 +10524,9 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->reg_cap_ext.high_2ghz_chan = mac_phy_caps->high_2ghz_chan_freq;
 	param->reg_cap_ext.low_5ghz_chan  = mac_phy_caps->low_5ghz_chan_freq;
 	param->reg_cap_ext.high_5ghz_chan = mac_phy_caps->high_5ghz_chan_freq;
+	param->nss_ratio_enabled = WMI_NSS_RATIO_ENABLE_DISABLE_GET(
+			mac_phy_caps->nss_ratio);
+	param->nss_ratio_info = WMI_NSS_RATIO_INFO_GET(mac_phy_caps->nss_ratio);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -14036,6 +14039,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_time_sync_ftm] =
 			WMI_SERVICE_AUDIO_SYNC_SUPPORT;
+	wmi_service[wmi_service_nss_ratio_to_host_support] =
+			WMI_SERVICE_NSS_RATIO_TO_HOST_SUPPORT;
 }
 
 /**

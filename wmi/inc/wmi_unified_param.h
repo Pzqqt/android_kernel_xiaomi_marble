@@ -5059,6 +5059,7 @@ typedef enum {
 	wmi_service_multiple_vdev_restart_ext,
 	wmi_service_peer_delete_no_peer_flush_tids_cmd,
 	wmi_service_time_sync_ftm,
+	wmi_service_nss_ratio_to_host_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

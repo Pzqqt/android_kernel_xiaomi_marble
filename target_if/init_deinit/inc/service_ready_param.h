@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -180,6 +180,9 @@ struct wlan_psoc_host_hal_reg_cap_ext {
  * @lmac_id: hw mac id
  * @reg_cap_ext: extended regulatory capabilities
  * @tgt_pdev_id: target pdev id assigned and used by firmware
+ * @nss_ratio_enabled: This flag is set if nss ratio is received from FW as part
+ *                     of service ready ext event.
+ * @nss_ratio: nss ratio is used to calculate the NSS value for 160MHz.
  */
 struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
@@ -219,6 +222,8 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t lmac_id;
 	struct wlan_psoc_host_hal_reg_cap_ext reg_cap_ext;
 	uint32_t tgt_pdev_id;
+	bool nss_ratio_enabled;
+	uint8_t nss_ratio_info;
 };
 
 /**

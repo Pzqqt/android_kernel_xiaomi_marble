@@ -130,6 +130,11 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		wlan_psoc_nif_fw_ext_cap_set(psoc,
 					     WLAN_SOC_RESTRICTED_80P80_SUPPORT);
 
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_nss_ratio_to_host_support))
+		wlan_psoc_nif_fw_ext_cap_set(
+				psoc, WLAN_SOC_NSS_RATIO_TO_HOST_SUPPORT);
+
 	target_if_debug(" TT support %d, Wide BW Scan %d, SW cal %d",
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_TT_SUPPORT),
 		wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WIDEBAND_SCAN),
