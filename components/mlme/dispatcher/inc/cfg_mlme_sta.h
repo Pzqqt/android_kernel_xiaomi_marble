@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@
  *
  * @Min: 0
  * @Max: 1000
- * @Default: 60
+ * @Default: 30
  *
  * This ini is used to control how frequently STA should send NULL frames to AP
  * (period in seconds) to notify AP of its existence.
@@ -47,7 +47,7 @@
 	"gStaKeepAlivePeriod", \
 	0, \
 	1000, \
-	60, \
+	30, \
 	CFG_VALUE_OR_DEFAULT, \
 	"send default NULL frame to AP")
 
