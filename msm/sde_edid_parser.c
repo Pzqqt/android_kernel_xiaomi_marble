@@ -496,6 +496,58 @@ static void sde_edid_parse_vsvdb_info(struct drm_connector *connector,
 	SDE_EDID_DEBUG("%s -\n", __func__);
 }
 
+static bool sde_edid_is_luminance_value_present(u32 block_length,
+	enum luminance_value value)
+{
+	return block_length > NO_LUMINANCE_DATA && value <= block_length;
+}
+
+/*
+ * sde_edid_parse_hdr_db - Parse the HDR extended block
+ * @connector: connector for the external sink
+ * @db: start of the HDR extended block
+ *
+ * Parses the HDR extended block to extract sink info for @connector.
+ */
+static void
+sde_edid_parse_hdr_db(struct drm_connector *connector, const u8 *db)
+{
+
+	u8 len = 0;
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+
+	if (!db)
+		return;
+
+	len = db[0] & 0x1f;
+	/* Byte 3: Electro-Optical Transfer Functions */
+	c_conn->hdr_eotf = db[2] & 0x3F;
+
+	/* Byte 4: Static Metadata Descriptor Type 1 */
+	c_conn->hdr_metadata_type_one = (db[3] & BIT(0));
+
+	/* Byte 5: Desired Content Maximum Luminance */
+	if (sde_edid_is_luminance_value_present(len, MAXIMUM_LUMINANCE))
+		c_conn->hdr_max_luminance = db[MAXIMUM_LUMINANCE];
+
+	/* Byte 6: Desired Content Max Frame-average Luminance */
+	if (sde_edid_is_luminance_value_present(len, FRAME_AVERAGE_LUMINANCE))
+		c_conn->hdr_avg_luminance = db[FRAME_AVERAGE_LUMINANCE];
+
+	/* Byte 7: Desired Content Min Luminance */
+	if (sde_edid_is_luminance_value_present(len, MINIMUM_LUMINANCE))
+		c_conn->hdr_min_luminance = db[MINIMUM_LUMINANCE];
+
+	c_conn->hdr_supported = true;
+	SDE_EDID_DEBUG("HDR electro-optical %d\n", c_conn->hdr_eotf);
+	SDE_EDID_DEBUG("metadata desc 1 %d\n", c_conn->hdr_metadata_type_one);
+	SDE_EDID_DEBUG("max luminance %d\n", c_conn->hdr_max_luminance);
+	SDE_EDID_DEBUG("avg luminance %d\n", c_conn->hdr_avg_luminance);
+	SDE_EDID_DEBUG("min luminance %d\n", c_conn->hdr_min_luminance);
+}
+
 /*
  * sde_edid_parse_extended_blk_info - Parse the HDMI extended tag blocks
  * @connector: connector corresponding to external sink
@@ -525,6 +577,9 @@ sde_edid_parse_extended_blk_info(struct drm_connector *connector,
 				case VENDOR_SPECIFIC_VIDEO_DATA_BLOCK:
 					sde_edid_parse_vsvdb_info(connector,
 							db);
+					break;
+				case HDR_STATIC_METADATA_DATA_BLOCK:
+					sde_edid_parse_hdr_db(connector, db);
 					break;
 				default:
 					break;
