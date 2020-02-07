@@ -6301,7 +6301,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	struct cdp_peer_cookie peer_cookie;
 	enum wlan_op_mode vdev_opmode;
 	uint8_t vdev_mac_addr[QDF_MAC_ADDR_SIZE];
-	struct dp_ast_entry *peer_ast_entry = NULL;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -6333,10 +6332,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		if (peer->self_ast_entry) {
-			peer_ast_entry = peer->self_ast_entry;
-			dp_peer_unlink_ast_entry(soc, peer_ast_entry);
-			dp_peer_free_ast_entry(soc, peer_ast_entry);
-			peer->self_ast_entry = NULL;
+			dp_peer_del_ast(soc, peer->self_ast_entry);
 		}
 		qdf_spin_unlock_bh(&soc->ast_lock);
 
