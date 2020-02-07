@@ -36,8 +36,6 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct crash_inject param;
-	struct wmi_unified *wmi_handle;
 	struct vdev_start_response start_rsp = {0};
 	struct vdev_stop_response stop_rsp = {0};
 	struct vdev_delete_response del_rsp = {0};
@@ -137,21 +135,12 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 		return;
 	}
 
-	/* Trigger fw recovery to collect fw dump */
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
-	if (wmi_handle) {
-		mlme_err("PSOC_%d VDEV_%d: Self recovery, %s rsp timeout",
-			 wlan_psoc_get_id(psoc), vdev_id,
-			 string_from_rsp_bit(rsp_pos));
-		qdf_mem_set(&param, sizeof(param), 0);
-		/* RECOVERY_SIM_ASSERT */
-		param.type = 0x01;
-		wmi_crash_inject(wmi_handle, &param);
-	} else if (target_if_vdev_mgr_is_panic_on_bug()) {
-		QDF_DEBUG_PANIC("PSOC_%d VDEV_%d: Panic, %s response timeout",
-				wlan_psoc_get_id(psoc),
-				vdev_id, string_from_rsp_bit(rsp_pos));
-	}
+	/* Trigger recovery */
+	mlme_err("PSOC_%d VDEV_%d: Self recovery, %s rsp timeout",
+		 wlan_psoc_get_id(psoc), vdev_id,
+		 string_from_rsp_bit(rsp_pos));
+
+	qdf_trigger_self_recovery(psoc, QDF_REASON_UNSPECIFIED);
 }
 
 #ifdef SERIALIZE_VDEV_RESP
