@@ -434,6 +434,7 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 {
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
+	bool ndi_present;
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
@@ -444,6 +445,15 @@ scm_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 
 	if (!wlan_scan_cfg_honour_nl_scan_policy_flags(psoc)) {
 		scm_debug_rl("nl scan policy flags not honoured, goto end");
+		goto end;
+	}
+
+	ndi_present = policy_mgr_mode_specific_connection_count(psoc,
+								PM_NDI_MODE,
+								NULL);
+
+	if (ndi_present && !policy_mgr_is_hw_dbs_2x2_capable(psoc)) {
+		scm_debug("NDP present go for DBS scan");
 		goto end;
 	}
 
@@ -549,6 +559,8 @@ int scm_scan_get_burst_duration(int max_ch_time, bool miracast_enabled)
 	}
 	return burst_duration;
 }
+
+#define SCM_ACTIVE_DWELL_TIME_NAN      40
 
 /**
  * scm_req_update_concurrency_params() - update scan req params depending on
@@ -758,6 +770,17 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 					SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
 					req->scan_req.dwell_time_active;
 		}
+	}
+
+	if (ndi_present) {
+		req->scan_req.dwell_time_active =
+			QDF_MIN(req->scan_req.dwell_time_active,
+				SCM_ACTIVE_DWELL_TIME_NAN);
+		req->scan_req.dwell_time_active_2g =
+			QDF_MIN(req->scan_req.dwell_time_active_2g,
+			SCM_ACTIVE_DWELL_TIME_NAN);
+		scm_debug("NDP active modify dwell time 2ghz %d",
+			req->scan_req.dwell_time_active_2g);
 	}
 }
 
