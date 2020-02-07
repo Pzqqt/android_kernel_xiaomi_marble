@@ -427,6 +427,8 @@ void pld_get_default_fw_files(struct pld_fw_files *pfw_files);
 int pld_get_fw_files_for_target(struct device *dev,
 				struct pld_fw_files *pfw_files,
 				u32 target_type, u32 target_version);
+int pld_prevent_l1(struct device *dev);
+void pld_allow_l1(struct device *dev);
 void pld_is_pci_link_down(struct device *dev);
 int pld_shadow_control(struct device *dev, bool enable);
 void pld_schedule_recovery_work(struct device *dev,

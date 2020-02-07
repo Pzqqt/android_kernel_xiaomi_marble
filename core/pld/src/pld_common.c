@@ -589,6 +589,52 @@ int pld_get_fw_files_for_target(struct device *dev,
 }
 
 /**
+ * pld_prevent_l1() - Prevent PCIe enter L1 state
+ * @dev: device
+ *
+ * Prevent PCIe enter L1 and L1ss states
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_prevent_l1(struct device *dev)
+{
+	int ret = 0;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_prevent_l1(dev);
+		break;
+	default:
+		ret = -EINVAL;
+		pr_err("Invalid device type\n");
+		break;
+	}
+
+	return ret;
+}
+
+/**
+ * pld_allow_l1() - Allow PCIe enter L1 state
+ * @dev: device
+ *
+ * Allow PCIe enter L1 and L1ss states
+ *
+ * Return: void
+ */
+void pld_allow_l1(struct device *dev)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		pld_pcie_allow_l1(dev);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
+/**
  * pld_is_pci_link_down() - Notification for pci link down event
  * @dev: device
  *
