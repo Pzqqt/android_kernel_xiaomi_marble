@@ -133,6 +133,16 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 			 int sval2, int vpdev);
 
 /**
+ * wma_get_fw_phy_mode_for_freq_cb() - Callback to get current PHY Mode.
+ * @freq: channel freq
+ * @chan_width: maximum channel width possible
+ * @phy_mode: firmware PHY Mode
+ *
+ * Return: None
+ */
+void wma_get_fw_phy_mode_for_freq_cb(uint32_t freq, uint32_t chan_width,
+				     uint32_t  *phy_mode);
+/**
  * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
  * @chan: channel number
  * @chan_width: maximum channel width possible
