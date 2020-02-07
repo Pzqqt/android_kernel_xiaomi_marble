@@ -10510,6 +10510,19 @@ typedef enum {
      */
     WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_ROLE, /* 0x9A */
 
+    /**
+     * To configure duration of how many seconds to wait to kickout peer
+     * if peer is not reachable
+     */
+    WMI_VDEV_PARAM_NDP_KEEPALIVE_TIMEOUT,      /* 0x9B*/
+
+    /**
+     * To support discovery of NAN cluster with Master Preference (MP) as 0
+     * when a new device is enabling NAN
+     */
+    WMI_VDEV_PARAM_ALLOW_NAN_INITIAL_DISCOVERY_OF_MP0_CLUSTER, /* 0x9C */
+
+
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
      * prone to change.
