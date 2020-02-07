@@ -1032,9 +1032,8 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 		tx_ota_comp_cb = tgt_p2p_mgmt_ota_comp_cb;
 	}
 
-	p2p_debug("length:%d, vdev_id:%d, chanfreq:%d, no_ack:%d",
-		mgmt_param.frm_len, mgmt_param.vdev_id,
-		mgmt_param.chanfreq, tx_ctx->no_ack);
+	p2p_debug("length:%d, chanfreq:%d", mgmt_param.frm_len,
+		  mgmt_param.chanfreq);
 
 	tx_ctx->nbuf = packet;
 
