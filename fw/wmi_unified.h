@@ -6438,6 +6438,24 @@ typedef enum {
      */
     WMI_PDEV_PARAM_DEFAULT_6GHZ_RATE,
 
+    /*
+     * Configures the duration (in seconds) to delay the channel avoidance
+     * indication at WLAN firmware before indicating it to WLAN host,
+     * when WWAN (LTE/5GNR) PCC is in conflict due to WWAN-WLAN coexistence.
+     * Default value is 60 seconds.
+     * If set to zero, FW sends channel avoidance indcation immediately to Host.
+     */
+    WMI_PDEV_PARAM_MWSCOEX_PCC_CHAVD_DELAY,
+
+    /*
+     * Configures the duration (in seconds) to delay the channel avoidance
+     * indication at WLAN firmware before indicating it to WLAN host,
+     * when WWAN (LTE/5GNR) SCC is in conflict due to WWAN-WLAN coexistence.
+     * Default value is 120 seconds.
+     * If set to zero, FW sends channel avoidance indcation immediately to Host.
+     */
+    WMI_PDEV_PARAM_MWSCOEX_SCC_CHAVD_DELAY,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
