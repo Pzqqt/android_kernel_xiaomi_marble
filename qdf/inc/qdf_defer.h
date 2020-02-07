@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,6 +124,18 @@ static inline qdf_workqueue_t *qdf_create_workqueue(char *name)
 static inline qdf_workqueue_t *qdf_create_singlethread_workqueue(char *name)
 {
 	return  __qdf_create_singlethread_workqueue(name);
+}
+
+/**
+ * qdf_alloc_high_prior_ordered_workqueue - alloc high-prior ordered workqueue
+ * @name: string
+ *
+ * Return: pointer of type qdf_workqueue_t
+ */
+static inline
+qdf_workqueue_t *qdf_alloc_high_prior_ordered_workqueue(char *name)
+{
+	return __qdf_alloc_high_prior_ordered_workqueue(name);
 }
 
 /**
