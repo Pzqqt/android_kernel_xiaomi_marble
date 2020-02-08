@@ -800,29 +800,31 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 		return status;
 
 	cfr_err("bb_captured_channel_cnt = %llu\n",
-		 pcfr->bb_captured_channel_cnt);
+		pcfr->bb_captured_channel_cnt);
 	cfr_err("bb_captured_timeout_cnt = %llu\n",
-		 pcfr->bb_captured_timeout_cnt);
+		pcfr->bb_captured_timeout_cnt);
 	cfr_err("rx_loc_info_valid_cnt = %llu\n",
-		 pcfr->rx_loc_info_valid_cnt);
-	cfr_err("tx_evt_cnt = %llu\n",
-		 pcfr->tx_evt_cnt);
+		pcfr->rx_loc_info_valid_cnt);
+	cfr_err("total_tx_evt_cnt = %llu\n",
+		pcfr->total_tx_evt_cnt);
 	cfr_err("dbr_evt_cnt = %llu\n",
-		 pcfr->dbr_evt_cnt);
+		pcfr->dbr_evt_cnt);
 	cfr_err("rx_tlv_evt_cnt = %llu\n",
-		 pcfr->rx_tlv_evt_cnt);
+		pcfr->rx_tlv_evt_cnt);
 	cfr_err("release_cnt = %llu\n",
-		 pcfr->release_cnt);
+		pcfr->release_cnt);
 	cfr_err("Error cnt:\n");
 	cfr_err("flush_dbr_cnt = %llu\n",
-		 pcfr->flush_dbr_cnt);
+		pcfr->flush_dbr_cnt);
 	cfr_err("invalid_dma_length_cnt = %llu\n",
-		 pcfr->invalid_dma_length_cnt);
+		pcfr->invalid_dma_length_cnt);
 	cfr_err("flush_timeout_dbr_cnt = %llu\n",
-		 pcfr->flush_timeout_dbr_cnt);
+		pcfr->flush_timeout_dbr_cnt);
 	cfr_err("PPDU id mismatch for same cookie:\n");
 	cfr_err("clear_txrx_event = %llu\n",
-		 pcfr->clear_txrx_event);
+		pcfr->clear_txrx_event);
+	cfr_err("cfr_dma_aborts = %llu\n",
+		pcfr->cfr_dma_aborts);
 
 	cfr_err("Channel capture status:\n");
 	for (counter = 0; counter < CAPTURE_MAX; counter++) {
