@@ -283,13 +283,6 @@ static inline uint16_t wma_mcs_rate_match(uint16_t raw_rate,
 	uint8_t gi_index_max = 2;
 	uint16_t ret_rate = 0;
 
-	WMA_LOGD("%s raw_rate: %u, %u %u %u %u",
-		 __func__, raw_rate, nss1_rate[0],
-		 nss1_rate[1], nss2_rate[0], nss2_rate[1]);
-	if (is_he)
-		WMA_LOGD("%s : is_he %u,  %u, %u",
-			 __func__, is_he, nss1_rate[2], nss2_rate[2]);
-
 	if (is_he)
 		gi_index_max = 3;
 
@@ -314,9 +307,6 @@ static inline uint16_t wma_mcs_rate_match(uint16_t raw_rate,
 		else
 			*guard_interval = TXRATE_GI_0_8_US;
 	}
-
-	WMA_LOGD("%s ret_rate: %u, guard interval %u nss %u",
-		 __func__, ret_rate, *guard_interval, *nss);
 
 	return ret_rate;
 }
@@ -460,8 +450,8 @@ uint8_t wma_get_mcs_idx(uint16_t raw_rate, enum tx_rate_info rate_flags,
 	uint16_t *nss1_rate;
 	uint16_t *nss2_rate;
 
-	WMA_LOGD("%s enter:  raw_rate:%d rate_flgs: 0x%x, nss: %d",
-		 __func__, raw_rate, rate_flags, *nss);
+	wma_debug("Rates from FW:  raw_rate:%d rate_flgs: 0x%x, nss: %d",
+		  raw_rate, rate_flags, *nss);
 
 	*mcs_rate_flag = rate_flags;
 
@@ -567,7 +557,7 @@ rate_found:
 	else
 		*mcs_rate_flag &= ~TX_RATE_SGI;
 
-	WMA_LOGD("%s exit: match_rate %d index: %d"
+	WMA_LOGD("%s Matched rate in table: %d index: %d"
 		 " mcs_rate_flag: 0x%x nss %d guard interval %d",
 		 __func__, match_rate, index, *mcs_rate_flag,
 		 *nss, *guard_interval);

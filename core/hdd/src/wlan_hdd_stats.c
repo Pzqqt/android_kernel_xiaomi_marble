@@ -3918,7 +3918,7 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	if (status != 0)
 		return status;
 
-	hdd_debug("get peer %pM info", mac);
+	hdd_debug("Peer %pM", mac);
 
 	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list, mac);
 	if (!stainfo) {
@@ -4582,18 +4582,16 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			rx_mcs_index = 0;
 	}
 
-	hdd_debug("RSSI %d, RLMS %u, rssi high %d, rssi mid %d, rssi low %d",
+	hdd_debug("[RSSI %d, RLMS %u, rssi high %d, rssi mid %d, rssi low %d]-"
+		  "[Rate info: TX: %d, RX: %d]-[Rate flags: TX: 0x%x, RX: 0x%x]"
+		  "-[MCS Index: TX: %d, RX: %d]-[NSS: TX: %d, RX: %d]-"
+		  "[dcm: TX: %d, RX: %d]-[guard interval: TX: %d, RX: %d",
 		  sinfo->signal, link_speed_rssi_report,
 		  link_speed_rssi_high, link_speed_rssi_mid,
-		  link_speed_rssi_low);
-	hdd_debug("Rate info: TX: %d, RX: %d", my_tx_rate, my_rx_rate);
-	hdd_debug("Rate flags: TX: 0x%x, RX: 0x%x", (int)tx_rate_flags,
-		  (int)rx_rate_flags);
-	hdd_debug("MCS Index: TX: %d, RX: %d", (int)tx_mcs_index,
-		  (int)rx_mcs_index);
-	hdd_debug("NSS: TX: %d, RX: %d", (int)tx_nss, (int)rx_nss);
-	hdd_debug("dcm: TX: %d, RX: %d", (int)tx_dcm, (int)rx_dcm);
-	hdd_debug("guard interval: TX: %d, RX: %d", (int)tx_gi, (int)rx_gi);
+		  link_speed_rssi_low, my_tx_rate, my_rx_rate,
+		  (int)tx_rate_flags, (int)rx_rate_flags, (int)tx_mcs_index,
+		  (int)rx_mcs_index, (int)tx_nss, (int)rx_nss,
+		  (int)tx_dcm, (int)rx_dcm, (int)tx_gi, (int)rx_gi);
 
 	if (!ucfg_mlme_stats_is_link_speed_report_actual(hdd_ctx->psoc)) {
 		bool tx_rate_calc, rx_rate_calc;
@@ -4664,19 +4662,18 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			 HDD_INFO_RX_PACKETS;
 
 	if (tx_rate_flags & TX_RATE_LEGACY) {
-		hdd_debug("TX: Reporting legacy rate %d pkt cnt %d",
-			  sinfo->txrate.legacy, sinfo->tx_packets);
-		hdd_debug("RX: Reporting legacy rate %d pkt cnt %d",
+		hdd_debug("[TX: Reporting legacy rate %d pkt cnt %d]-"
+			  "[RX: Reporting legacy rate %d pkt cnt %d]",
+			  sinfo->txrate.legacy, sinfo->tx_packets,
 			  sinfo->rxrate.legacy, sinfo->rx_packets);
 	} else {
-		hdd_debug("TX: Reporting MCS rate %d, flags 0x%x pkt cnt %d, nss %d, bw %d",
+		hdd_debug("[TX: Reporting MCS rate %d, flags 0x%x pkt cnt %d, nss %d, bw %d]-"
+			  "[RX: Reporting MCS rate %d, flags 0x%x pkt cnt %d, nss %d, bw %d]",
 			  sinfo->txrate.mcs, sinfo->txrate.flags,
 			  sinfo->tx_packets, sinfo->txrate.nss,
-			  sinfo->rxrate.bw);
-		hdd_debug("RX: Reporting MCS rate %d, flags 0x%x pkt cnt %d, nss %d, bw %d",
-			  sinfo->rxrate.mcs, sinfo->rxrate.flags,
-			  sinfo->rx_packets, sinfo->rxrate.nss,
-			  sinfo->rxrate.bw);
+			  sinfo->rxrate.bw, sinfo->rxrate.mcs,
+			  sinfo->rxrate.flags, sinfo->rx_packets,
+			  sinfo->rxrate.nss, sinfo->rxrate.bw);
 	}
 
 	hdd_wlan_fill_per_chain_rssi_stats(sinfo, adapter);
