@@ -1058,11 +1058,10 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	else
 		country[2] = OP_CLASS_GLOBAL;
 
-	sme_debug("Channel = %d", beacon_req->channel_info.chan_num);
-
-	sme_debug("Request Reg class %d, AP's country code %c%c 0x%x",
+	sme_debug("Request Reg class %d, AP's country code %c%c 0x%x, channel = %d",
 		  beacon_req->channel_info.reg_class,
-		  country[0], country[1], country[2]);
+		  country[0], country[1], country[2],
+		  beacon_req->channel_info.chan_num);
 
 	if (beacon_req->channel_list.num_channels > SIR_ESE_MAX_MEAS_IE_REQS) {
 		sme_err("Beacon report request numChannels:%u exceeds max num channels",
@@ -1185,12 +1184,11 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		     (uint8_t *)&beacon_req->measurementDuration,
 		     SIR_ESE_MAX_MEAS_IE_REQS);
 
-	sme_debug("token: %d regClass: %d randnIntvl: %d msgSource: %d measurementduration %d, rrm_ctx duration %d Meas_mode: %s",
-		sme_rrm_ctx->token, sme_rrm_ctx->regClass,
-		sme_rrm_ctx->randnIntvl, sme_rrm_ctx->msgSource,
-		beacon_req->measurementDuration[0],
-		sme_rrm_ctx->duration[0],
-		sme_rrm_get_meas_mode_string(sme_rrm_ctx->measMode[0]));
+	sme_debug("token: %d randnIntvl: %d msgSource: %d measurementduration %d, rrm_ctx duration %d Meas_mode: %s",
+		  sme_rrm_ctx->token, sme_rrm_ctx->randnIntvl,
+		  sme_rrm_ctx->msgSource, beacon_req->measurementDuration[0],
+		  sme_rrm_ctx->duration[0],
+		  sme_rrm_get_meas_mode_string(sme_rrm_ctx->measMode[0]));
 
 	return sme_rrm_issue_scan_req(mac);
 

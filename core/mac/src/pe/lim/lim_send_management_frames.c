@@ -4523,7 +4523,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		return QDF_STATUS_E_NOMEM;
 
 	if (!pe_session) {
-		pe_err("(!psession) in Request to send Beacon Report action frame");
+		pe_err("session not found");
 		qdf_mem_free(frm);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4586,7 +4586,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		qdf_mem_free(frm);
 		return QDF_STATUS_E_FAILURE;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while calculating the packed size for a Radio Measure Report (0x%08x)",
+		pe_warn("Warnings while calculating the size for Radio Measure Report (0x%08x)",
 			nStatus);
 	}
 
@@ -4630,22 +4630,17 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		status_code = QDF_STATUS_E_FAILURE;
 		goto returnAfterError;
 	} else if (DOT11F_WARNED(nStatus)) {
-		pe_warn("There were warnings while packing Radio Measure Report (0x%08x)",
+		pe_warn("Warnings while packing Radio Measure Report (0x%08x)",
 			nStatus);
 	}
 
-	pe_debug("Sending Radio Measure Report to %pM", peer);
-	if (frm->MeasurementReport[0].type == SIR_MAC_RRM_BEACON_TYPE)
-		pe_nofl_info("TX: [802.11 BCN_RPT] seq_no:%d dialog_token:%d no. of APs:%d is_last_rpt:%d",
-			     (pMacHdr->seqControl.seqNumHi << HIGH_SEQ_NUM_OFFSET |
-			      pMacHdr->seqControl.seqNumLo),
-			     dialog_token, frm->num_MeasurementReport,
-			     is_last_report);
-	else
-		pe_nofl_info("TX: [802.11 RRM] seq_no:%d dialog_token %d num_report %d is_last_frm %d",
-			     (pMacHdr->seqControl.seqNumHi << HIGH_SEQ_NUM_OFFSET |
-			      pMacHdr->seqControl.seqNumLo),
-			     dialog_token, num_report, is_last_frame);
+	pe_nofl_info("TX: %s seq_no:%d dialog_token:%d no. of APs:%d is_last_rpt:%d num_report: %d peer:%pM",
+		     frm->MeasurementReport[0].type == SIR_MAC_RRM_BEACON_TYPE ?
+		     "[802.11 BCN_RPT]" : "[802.11 RRM]",
+		     (pMacHdr->seqControl.seqNumHi << HIGH_SEQ_NUM_OFFSET |
+		     pMacHdr->seqControl.seqNumLo),
+		     dialog_token, frm->num_MeasurementReport,
+		     is_last_report, num_report, peer);
 
 	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
