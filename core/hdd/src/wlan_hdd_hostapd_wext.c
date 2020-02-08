@@ -2850,7 +2850,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}, {
 		QCASAP_PARAM_LDPC,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-		0, "set_ldpc"
+		0, "ldpc"
 	}, {
 		QCASAP_PARAM_TX_STBC,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
