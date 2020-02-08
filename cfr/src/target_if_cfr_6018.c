@@ -1496,6 +1496,7 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
+	pcfr->is_cfr_rcc_capable = 1;
 	pcfr->rcc_param.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	pcfr->rcc_param.modified_in_curr_session = MAX_RESET_CFG_ENTRY;
 	pcfr->rcc_param.num_grp_tlvs = MAX_TA_RA_ENTRIES;
