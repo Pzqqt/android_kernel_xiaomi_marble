@@ -490,6 +490,8 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 						     WLAN_UMAC_COMP_CFR);
 
 	if (module_id == CORRELATE_TXRX_EV_MODULE_ID) {
+		if (lut->tx_recv)
+			pcfr->cfr_dma_aborts++;
 		lut->tx_recv = true;
 	} else if (module_id == CORRELATE_DBR_MODULE_ID) {
 		pcfr->dbr_evt_cnt++;
@@ -557,6 +559,7 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 			lut->tx_recv = false;
 			lut->tx_ppdu_id = 0;
 			pcfr->clear_txrx_event++;
+			pcfr->cfr_dma_aborts++;
 			status = STATUS_HOLD;
 		}
 	} else {
@@ -1204,6 +1207,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	}
 
 	pcfr->tx_evt_cnt++;
+	pcfr->total_tx_evt_cnt++;
 
 	lut->tx_ppdu_id = (tx_evt_param.correlation_info_2 >> 16);
 	lut->tx_address1 = tx_evt_param.correlation_info_1;
@@ -1550,6 +1554,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->tx_evt_cnt = 0;
 	pcfr->dbr_evt_cnt = 0;
 	pcfr->release_cnt = 0;
+	pcfr->total_tx_evt_cnt = 0;
 	pcfr->rx_tlv_evt_cnt = 0;
 	pcfr->flush_dbr_cnt = 0;
 	pcfr->flush_timeout_dbr_cnt = 0;
@@ -1558,6 +1563,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->bb_captured_channel_cnt = 0;
 	pcfr->bb_captured_timeout_cnt = 0;
 	pcfr->rx_loc_info_valid_cnt = 0;
+	pcfr->cfr_dma_aborts = 0;
 	qdf_mem_zero(&pcfr->chan_capture_status,
 		     sizeof(uint64_t) * NUM_CHAN_CAPTURE_STATUS);
 	qdf_mem_zero(&pcfr->bb_captured_reason_cnt,
