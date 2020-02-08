@@ -312,7 +312,7 @@ QDF_STATUS dev_sanity_check(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (!(*ppcfr)->is_cfr_capable) {
+	if (!(*ppcfr)->is_cfr_rcc_capable) {
 		cfr_err("cfr is not supported on this chip\n");
 		wlan_objmgr_pdev_release_ref(*ppdev, WLAN_CFR_ID);
 		return QDF_STATUS_E_NOSUPPORT;
