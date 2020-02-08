@@ -8362,10 +8362,8 @@ static QDF_STATUS extract_cca_stats_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *)evt_buf;
 	congestion_stats = param_buf->congestion_stats;
-	if (!congestion_stats) {
-		WMI_LOGD("%s: no cca stats in event buffer", __func__);
+	if (!congestion_stats)
 		return QDF_STATUS_E_INVAL;
-	}
 
 	out_buff->vdev_id = congestion_stats->vdev_id;
 	out_buff->congestion = congestion_stats->congestion;

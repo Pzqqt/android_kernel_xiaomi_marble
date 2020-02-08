@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -228,15 +228,12 @@ static QDF_STATUS target_if_cp_stats_extract_cca_stats(
 	struct wmi_host_congestion_stats stats = {0};
 
 	status = wmi_extract_cca_stats(wmi_hdl, data, &stats);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		cp_stats_debug("no congestion stats");
+	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_SUCCESS;
-	}
 
 	ev->cca_stats = qdf_mem_malloc(sizeof(*ev->cca_stats));
 	if (!ev->cca_stats)
 		return QDF_STATUS_E_NOMEM;
-
 
 	ev->cca_stats->vdev_id = stats.vdev_id;
 	ev->cca_stats->congestion = stats.congestion;
@@ -415,11 +412,22 @@ static QDF_STATUS target_if_cp_stats_extract_event(struct wmi_unified *wmi_hdl,
 		cp_stats_err("stats param extract failed: %d", status);
 		return status;
 	}
-	cp_stats_debug("num: pdev: %d, vdev: %d, peer: %d, rssi: %d, mib %d, mib_extd %d",
-		       stats_param.num_pdev_stats, stats_param.num_vdev_stats,
-		       stats_param.num_peer_stats, stats_param.num_rssi_stats,
+	cp_stats_debug("num: pdev: %d, pdev_extd: %d, vdev: %d, peer: %d,"
+		       "peer_extd: %d rssi: %d, mib %d, mib_extd %d, "
+		       "bcnflt: %d, channel: %d, bcn: %d, peer_extd2: %d,"
+		       "last_event: %x",
+		       stats_param.num_pdev_stats,
+		       stats_param.num_pdev_ext_stats,
+		       stats_param.num_vdev_stats,
+		       stats_param.num_peer_stats,
+		       stats_param.num_peer_extd_stats,
+		       stats_param.num_rssi_stats,
 		       stats_param.num_mib_stats,
-		       stats_param.num_mib_extd_stats);
+		       stats_param.num_mib_extd_stats,
+		       stats_param.num_bcnflt_stats,
+		       stats_param.num_chan_stats,
+		       stats_param.num_bcn_stats,
+		       stats_param.num_peer_adv_stats, stats_param.last_event);
 
 	ev->last_event = stats_param.last_event;
 	status = target_if_cp_stats_extract_pdev_stats(wmi_hdl, &stats_param,

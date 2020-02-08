@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,8 @@
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_CP_STATS, ## args)
 #define cp_stats_err(args ...) \
 		QDF_TRACE_ERROR(QDF_MODULE_ID_CP_STATS, ## args)
-
+#define cp_stats_nofl_debug(args ...) \
+		QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_CP_STATS, ## args)
 /**
  * enum wlan_cp_stats_cfg_state - State of Object configuration to
  * indicate whether object has to be attached/detached in cp stats
