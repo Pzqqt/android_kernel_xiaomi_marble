@@ -1527,12 +1527,13 @@ static void sde_connector_update_hdr_props(struct drm_connector *connector)
 static void sde_connector_update_colorspace(struct drm_connector *connector)
 {
 	int ret;
+	struct sde_connector *c_conn = to_sde_connector(connector);
 
 	ret = msm_property_set_property(
 			sde_connector_get_propinfo(connector),
 			sde_connector_get_property_state(connector->state),
 			CONNECTOR_PROP_SUPPORTED_COLORSPACES,
-				connector->color_enc_fmt);
+				c_conn->color_enc_fmt);
 
 	if (ret)
 		SDE_ERROR("failed to set colorspace property for connector\n");

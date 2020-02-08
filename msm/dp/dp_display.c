@@ -1827,9 +1827,11 @@ end:
 static void dp_display_clear_colorspaces(struct dp_display *dp_display)
 {
 	struct drm_connector *connector;
+	struct sde_connector *sde_conn;
 
 	connector = dp_display->base_connector;
-	connector->color_enc_fmt = 0;
+	sde_conn = to_sde_connector(connector);
+	sde_conn->color_enc_fmt = 0;
 }
 
 static int dp_display_pre_disable(struct dp_display *dp_display, void *panel)
