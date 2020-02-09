@@ -1048,6 +1048,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_scan_channel_list_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_send_big_data_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_nan_dmesg_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1722,6 +1723,7 @@ typedef enum {
     OP(WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID) \
     OP(WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID) \
     OP(WMI_VDEV_SEND_BIG_DATA_EVENTID) \
+    OP(WMI_NAN_DMESG_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5777,6 +5779,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_send_big_data_event_fixed_param, wmi_vdev_send_big_data_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SEND_BIG_DATA_EVENTID);
 
+#define WMITLV_TABLE_WMI_NAN_DMESG_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_nan_dmesg_event_fixed_param, wmi_nan_dmesg_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, msg, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_NAN_DMESG_EVENTID);
 
 #ifdef __cplusplus
 }

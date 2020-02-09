@@ -1860,6 +1860,7 @@ typedef enum {
     WMI_NAN_DISC_IFACE_DELETED_EVENTID,
     WMI_NAN_STARTED_CLUSTER_EVENTID,
     WMI_NAN_JOINED_CLUSTER_EVENTID,
+    WMI_NAN_DMESG_EVENTID,
 
     /* Coex Event */
     WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
@@ -18351,6 +18352,17 @@ typedef struct {
 } wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE;
 
 #define wmi_nan_joined_cluster_event_fixed_param wmi_nan_joined_cluster_event_fixed_param_PROTOTYPE
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_dmesg_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** length in byte of msg[]. */
+    A_UINT32 msg_len;
+    /* Following this structure is the TLV:
+     *  A_UINT8 msg[]; <-- length in byte given by field data_len.
+     * This data contains the string message which will be given to Host to dump it to kernel logs.
+     */
+} wmi_nan_dmesg_event_fixed_param;
 
 /** NAN DATA CMD's */
 
