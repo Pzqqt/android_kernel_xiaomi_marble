@@ -2324,6 +2324,17 @@ void wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
 void
 wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 				struct mlme_pmk_info *sae_single_pmk);
+
+/**
+ * wlan_mlme_get_sae_single_pmk_info - API to get mlme_pmkid_info
+ * @vdev: vdev object
+ * @pmksa: pointer to PMKSA struct
+ *
+ * Return : None
+ */
+void
+wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_mlme_sae_single_pmk *pmksa);
 #else
 static inline void
 wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
@@ -2334,6 +2345,12 @@ wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
 static inline void
 wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 				struct mlme_pmk_info *sae_single_pmk)
+{
+}
+
+static inline void
+wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_mlme_sae_single_pmk *pmksa)
 {
 }
 #endif

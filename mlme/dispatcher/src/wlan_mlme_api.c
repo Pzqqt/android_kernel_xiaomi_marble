@@ -3638,6 +3638,34 @@ void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 	    is_sae_connection)
 		mlme_priv->mlme_roam.sae_single_pmk.pmk_info = *sae_single_pmk;
 }
+
+void wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_mlme_sae_single_pmk *pmksa)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	struct mlme_pmk_info pmk_info;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	pmk_info = mlme_priv->mlme_roam.sae_single_pmk.pmk_info;
+
+	pmksa->sae_single_pmk_ap =
+		mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap;
+
+	if (pmk_info.pmk_len) {
+		qdf_mem_copy(pmksa->pmk_info.pmk, pmk_info.pmk,
+			     pmk_info.pmk_len);
+		pmksa->pmk_info.pmk_len = pmk_info.pmk_len;
+		return;
+	}
+
+	qdf_mem_zero(pmksa->pmk_info.pmk, sizeof(*pmksa->pmk_info.pmk));
+	pmksa->pmk_info.pmk_len = 0;
+}
 #endif
 
 char *mlme_get_roam_fail_reason_str(uint32_t result)
