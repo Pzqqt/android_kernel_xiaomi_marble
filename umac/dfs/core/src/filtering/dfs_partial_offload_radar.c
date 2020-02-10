@@ -646,13 +646,13 @@ void dfs_radarfound_action_fcc(struct wlan_dfs *dfs, uint8_t seg_id)
 	qdf_mem_copy(&dfs->dfs_radar_found_chan, dfs->dfs_curchan,
 		     sizeof(dfs->dfs_radar_found_chan));
 	dfs_extract_radar_found_params(dfs, &params);
-	dfs_send_avg_params_to_fw(dfs, &params);
 	dfs->dfs_is_host_wait_running = 1;
-	dfs->dfs_seg_id = seg_id;
 	qdf_timer_mod(&dfs->dfs_host_wait_timer,
 		      (dfs->dfs_status_timeout_override ==
 		       -1) ? HOST_DFS_STATUS_WAIT_TIMER_MS :
 		      dfs->dfs_status_timeout_override);
+	dfs->dfs_seg_id = seg_id;
+	dfs_send_avg_params_to_fw(dfs, &params);
 }
 
 void dfs_host_wait_timer_reset(struct wlan_dfs *dfs)
