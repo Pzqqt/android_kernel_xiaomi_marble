@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -398,6 +398,10 @@ UCFG_VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
 UCFG_VDEV_CP_STATS_GET_FUNCS(rx_wrongbss);
 UCFG_VDEV_CP_STATS_GET_FUNCS(rx_wrongdir);
 UCFG_VDEV_CP_STATS_GET_FUNCS(rx_ssid_mismatch);
+UCFG_VDEV_CP_STATS_GET_FUNCS(peer_delete_req);
+UCFG_VDEV_CP_STATS_GET_FUNCS(peer_delete_resp);
+UCFG_VDEV_CP_STATS_GET_FUNCS(peer_delete_all_req);
+UCFG_VDEV_CP_STATS_GET_FUNCS(peer_delete_all_resp);
 
 #define UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(field) \
 	static inline void \
