@@ -224,6 +224,25 @@ bool HAL_RX_HW_DESC_MPDU_VALID(void *hw_desc_addr)
 	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
 }
 
+/*
+ * HAL_RX_HW_DESC_MPDU_VALID() - check MPDU start TLV user id in MPDU
+ *			start TLV of Hardware TLV descriptor
+ * @hw_desc_addr: Hardware desciptor address
+ *
+ * Return: unit32_t: user id
+ */
+static inline
+uint32_t HAL_RX_HW_DESC_MPDU_USER_ID(void *hw_desc_addr)
+{
+	struct rx_mon_pkt_tlvs *rx_desc =
+		(struct rx_mon_pkt_tlvs *)hw_desc_addr;
+	uint32_t user_id;
+
+	user_id = HAL_RX_GET_USER_TLV32_USERID(
+		&rx_desc->mpdu_start_tlv);
+
+	return user_id;
+}
 
 /* TODO: Move all Rx descriptor functions to hal_rx.h to avoid duplication */
 
@@ -544,12 +563,12 @@ struct mon_rx_info {
 	uint16_t qos_control;
 	uint8_t mac_addr1_valid;
 	uint8_t mac_addr1[QDF_MAC_ADDR_SIZE];
+	uint32_t user_id;
 };
 
 struct mon_rx_user_info {
 	uint16_t qos_control;
 	uint8_t qos_control_info_valid;
-	uint32_t bar_frame:1;
 };
 
 struct hal_rx_ppdu_info {

@@ -37,11 +37,25 @@ dp_handle_tx_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 {
 	struct hal_rx_ppdu_info *ppdu_info = &pdev->ppdu_info;
 
-	if (pdev->tx_capture_enabled != CDP_TX_ENH_CAPTURE_DISABLED &&
-	    ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_NDPA)
+	if (pdev->tx_capture_enabled
+	    == CDP_TX_ENH_CAPTURE_DISABLED)
+		return;
+
+	if ((ppdu_info->sw_frame_group_id ==
+	      HAL_MPDU_SW_FRAME_GROUP_CTRL_NDPA) ||
+	     (ppdu_info->sw_frame_group_id ==
+	      HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR))
 		dp_handle_tx_capture_from_dest(soc, pdev, mon_mpdu);
 }
 
+static void
+dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
+{
+	if (dp_pdev->tx_capture_enabled
+	    != CDP_TX_ENH_CAPTURE_DISABLED)
+		dp_pdev->ppdu_info.rx_info.user_id =
+			HAL_RX_HW_DESC_MPDU_USER_ID(rx_desc_tlv);
+}
 #else
 static inline void
 dp_handle_tx_capture(struct dp_soc *soc, struct dp_pdev *pdev,
@@ -49,6 +63,10 @@ dp_handle_tx_capture(struct dp_soc *soc, struct dp_pdev *pdev,
 {
 }
 
+static void
+dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
+{
+}
 #endif
 
 
@@ -299,6 +317,10 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;
 				}
+
+				dp_tx_capture_get_user_id(dp_pdev,
+							  rx_desc_tlv);
+
 				dp_pdev->mon_last_linkdesc_paddr =
 					buf_info.paddr;
 			}
