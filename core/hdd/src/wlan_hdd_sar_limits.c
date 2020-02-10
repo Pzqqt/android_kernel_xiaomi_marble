@@ -331,14 +331,14 @@ void hdd_disable_sar(struct hdd_context *hdd_ctx)
 	struct sar_limit_cmd_row *row;
 	QDF_STATUS status;
 
-	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
-	if (!sar_limit_cmd)
-		return;
-
 	if (hdd_ctx->sar_version != SAR_VERSION_2) {
 		hdd_nofl_debug("FW SAR version: %d", hdd_ctx->sar_version);
 		return;
 	}
+
+	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
+	if (!sar_limit_cmd)
+		return;
 
 	/*
 	 * Need two rows to hold the per-chain V2 power index
@@ -388,14 +388,14 @@ void hdd_configure_sar_index(struct hdd_context *hdd_ctx, uint32_t sar_index)
 	struct sar_limit_cmd_row *row;
 	QDF_STATUS status;
 
-	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
-	if (!sar_limit_cmd)
-		return;
-
 	if (hdd_ctx->sar_version != SAR_VERSION_2) {
 		hdd_nofl_debug("FW SAR version: %d", hdd_ctx->sar_version);
 		return;
 	}
+
+	sar_limit_cmd = qdf_mem_malloc(sizeof(struct sar_limit_cmd_params));
+	if (!sar_limit_cmd)
+		return;
 
 	/*
 	 * Need two rows to hold the per-chain V2 power index
@@ -460,6 +460,9 @@ void hdd_configure_sar_sleep_index(struct hdd_context *hdd_ctx)
 
 void hdd_configure_sar_resume_index(struct hdd_context *hdd_ctx)
 {
+	if (!hdd_ctx->config->enable_sar_safety)
+		return;
+
 	hdd_nofl_debug("Configure SAR safety index %d on wlan resume",
 		       hdd_ctx->config->sar_safety_index);
 	hdd_configure_sar_index(hdd_ctx,
