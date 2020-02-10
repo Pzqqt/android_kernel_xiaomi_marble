@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -620,6 +620,68 @@ reg_get_op_class_tbl_by_chan_map(const struct
 }
 
 /**
+ * reg_get_channel_cen - Calculate central channel in the channel set.
+ *
+ * @op_class_tbl - Pointer to op_class_tbl.
+ * @idx - Pointer to channel index.
+ * @num_channels - Number of channels.
+ * @center_chan - Pointer to center channel number
+ *
+ * Return : void
+ */
+static void reg_get_channel_cen(const struct
+				reg_dmn_op_class_map_t *op_class_tbl,
+				uint8_t *idx,
+				uint8_t num_channels,
+				uint8_t *center_chan)
+{
+	uint8_t i;
+	uint16_t new_chan = 0;
+
+	for (i = *idx; i < (*idx + num_channels); i++)
+		new_chan += op_class_tbl->channels[i];
+
+	new_chan = new_chan / num_channels;
+	*center_chan = new_chan;
+	*idx = *idx + num_channels;
+}
+
+/**
+ * reg_get_chan_or_chan_center - Calculate central channel in the channel set.
+ *
+ * @op_class_tbl - Pointer to op_class_tbl.
+ * @idx - Pointer to channel index.
+ *
+ * Return : Center channel number
+ */
+static uint8_t reg_get_chan_or_chan_center(const struct
+					   reg_dmn_op_class_map_t *op_class_tbl,
+					   uint8_t *idx)
+{
+	uint8_t center_chan;
+
+	if (((op_class_tbl->chan_spacing == BW_80_MHZ) &&
+	     (op_class_tbl->behav_limit == BIT(BEHAV_NONE))) ||
+	    ((op_class_tbl->chan_spacing == BW_80_MHZ) &&
+	     (op_class_tbl->behav_limit == BIT(BEHAV_BW80_PLUS)))) {
+		reg_get_channel_cen(op_class_tbl,
+				    idx,
+				    NUM_20_MHZ_CHAN_IN_80_MHZ_CHAN,
+				    &center_chan);
+	} else if (op_class_tbl->chan_spacing == BW_160_MHZ) {
+		reg_get_channel_cen(op_class_tbl,
+				    idx,
+				    NUM_20_MHZ_CHAN_IN_160_MHZ_CHAN,
+				    &center_chan);
+	} else {
+		center_chan = op_class_tbl->channels[*idx];
+		*idx = *idx + 1;
+	}
+
+	return center_chan;
+}
+
+/**
  * reg_get_channels_from_opclassmap()- Get channels from the opclass map
  * @pdev: Pointer to pdev
  * @reg_ap_cap: Pointer to reg_ap_cap
@@ -653,17 +715,16 @@ reg_get_channels_from_opclassmap(
 			reg_is_freq_present_in_cur_chan_list(pdev, search_freq);
 
 		if (!is_freq_present) {
-			reg_ap_cap[index].
-					non_sup_chan_list[n_unsup_chans++] =
-					op_class_tbl->channels[chan_idx];
+			reg_ap_cap[index].non_sup_chan_list[n_unsup_chans++] =
+				reg_get_chan_or_chan_center(op_class_tbl,
+							    &chan_idx);
 			reg_ap_cap[index].num_non_supported_chan++;
 		} else {
 			reg_ap_cap[index].sup_chan_list[n_sup_chans++] =
-					op_class_tbl->channels[chan_idx];
+				reg_get_chan_or_chan_center(op_class_tbl,
+							    &chan_idx);
 			reg_ap_cap[index].num_supported_chan++;
 		}
-
-		chan_idx++;
 	}
 
 	if (reg_ap_cap[index].num_supported_chan >= 1)
