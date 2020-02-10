@@ -2335,6 +2335,15 @@ wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
 void
 wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_mlme_sae_single_pmk *pmksa);
+/**
+ * wlan_mlme_clear_sae_single_pmk_info - API to clear mlme_pmkid_info ap caps
+ * @vdev: vdev object
+ * @pmk : pmk info to clear
+ *
+ * Return : None
+ */
+void wlan_mlme_clear_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+					 struct mlme_pmk_info *pmk);
 #else
 static inline void
 wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
@@ -2353,7 +2362,14 @@ wlan_mlme_get_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_mlme_sae_single_pmk *pmksa)
 {
 }
+
+static inline
+void wlan_mlme_clear_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+					 struct mlme_pmk_info *pmk)
+{
+}
 #endif
+
 /**
  * mlme_get_roam_fail_reason_str() - Get fail string from enum
  * WMI_ROAM_FAIL_REASON_ID
