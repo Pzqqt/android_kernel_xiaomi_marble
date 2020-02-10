@@ -1960,6 +1960,8 @@ QDF_STATUS (*extract_ndp_initiator_rsp)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_initiator_rsp *rsp);
 QDF_STATUS (*extract_ndp_ind)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_indication_event *ind);
+QDF_STATUS (*extract_nan_msg)(uint8_t *data,
+			      struct nan_dump_msg *msg);
 QDF_STATUS (*extract_ndp_confirm)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_confirm_event *ev);
 QDF_STATUS (*extract_ndp_responder_rsp)(wmi_unified_t wmi_handle,

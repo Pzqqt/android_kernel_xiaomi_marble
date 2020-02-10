@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,6 +94,16 @@ QDF_STATUS wmi_unified_ndp_end_req_cmd_send(wmi_unified_t wmi_handle,
 	if (wmi_handle->ops->send_ndp_end_req_cmd)
 		return wmi_handle->ops->send_ndp_end_req_cmd(wmi_handle,
 							     req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_nan_msg(wmi_unified_t wmi_handle,
+			       uint8_t *data,
+			       struct nan_dump_msg *msg)
+{
+	if (wmi_handle->ops->extract_nan_msg)
+		return wmi_handle->ops->extract_nan_msg(data, msg);
 
 	return QDF_STATUS_E_FAILURE;
 }

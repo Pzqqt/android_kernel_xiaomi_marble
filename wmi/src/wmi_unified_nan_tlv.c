@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -755,6 +755,29 @@ static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#define MAX_NAN_MSG_LEN                 200
+
+static QDF_STATUS extract_nan_msg_tlv(uint8_t *data,
+				      struct nan_dump_msg *msg)
+{
+	WMI_NAN_DMESG_EVENTID_param_tlvs *event;
+	wmi_nan_dmesg_event_fixed_param *fixed_params;
+
+	event = (WMI_NAN_DMESG_EVENTID_param_tlvs *)data;
+	fixed_params = (wmi_nan_dmesg_event_fixed_param *)event->fixed_param;
+	if (!fixed_params->msg_len ||
+	    fixed_params->msg_len > MAX_NAN_MSG_LEN ||
+	    fixed_params->msg_len > event->num_msg)
+		return QDF_STATUS_E_FAILURE;
+
+	msg->data_len = fixed_params->msg_len;
+	msg->msg = event->msg;
+
+	msg->msg[fixed_params->msg_len - 1] = (uint8_t)'\0';
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_indication_event *rsp)
 {
@@ -1239,6 +1262,7 @@ void wmi_nan_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_ndp_end_req_cmd = nan_ndp_end_req_tlv;
 	ops->extract_ndp_initiator_rsp = extract_ndp_initiator_rsp_tlv;
 	ops->extract_ndp_ind = extract_ndp_ind_tlv;
+	ops->extract_nan_msg = extract_nan_msg_tlv,
 	ops->extract_ndp_confirm = extract_ndp_confirm_tlv;
 	ops->extract_ndp_responder_rsp = extract_ndp_responder_rsp_tlv;
 	ops->extract_ndp_end_rsp = extract_ndp_end_rsp_tlv;

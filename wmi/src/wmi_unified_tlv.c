@@ -14047,6 +14047,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_oem_data_event_id] = WMI_OEM_DATA_EVENTID;
 	event_ids[wmi_mgmt_offload_data_event_id] =
 				WMI_VDEV_MGMT_OFFLOAD_EVENTID;
+	event_ids[wmi_nan_dmesg_event_id] =
+				WMI_NAN_DMESG_EVENTID;
 	event_ids[wmi_pdev_multi_vdev_restart_response_event_id] =
 				WMI_PDEV_MULTIPLE_VDEV_RESTART_RESP_EVENTID;
 	event_ids[wmi_roam_pmkid_request_event_id] =

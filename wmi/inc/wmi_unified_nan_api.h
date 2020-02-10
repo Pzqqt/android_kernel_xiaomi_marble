@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,6 +110,16 @@ wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle, uint8_t *data,
  */
 QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
 			       struct nan_datapath_indication_event *ind);
+
+/**
+ * wmi_extract_nan_msg - api to extract ndp dmesg buffer to print logs
+ * @data: event buffer
+ * @msg: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_nan_msg(wmi_unified_t wmi_handle, uint8_t *data,
+			       struct nan_dump_msg *msg);
 
 /**
  * wmi_extract_ndp_confirm - api to extract ndp confim struct from even buffer

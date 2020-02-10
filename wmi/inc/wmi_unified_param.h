@@ -4526,6 +4526,7 @@ typedef enum {
 	wmi_ndp_responder_rsp_event_id,
 	wmi_ndp_end_indication_event_id,
 	wmi_ndp_end_rsp_event_id,
+	wmi_nan_dmesg_event_id,
 	wmi_ndl_schedule_update_event_id,
 	wmi_ndp_event_id,
 	wmi_oem_response_event_id,
