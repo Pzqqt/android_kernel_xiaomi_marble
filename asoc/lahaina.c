@@ -172,10 +172,12 @@ enum {
 	AFE_LOOPBACK_TX_IDX_MAX,
 };
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static const char* wsa883x_devices[] = {
 	"wsa883x.202170221",
 	"wsa883x.202170222",
 };
+#endif /* CONFIG_AUDIO_QGKI */
 
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
