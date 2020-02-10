@@ -30,7 +30,7 @@
 #include "asoc/msm-cdc-pinctrl.h"
 #include "asoc/wcd-mbhc-v2.h"
 #include "codecs/wcd938x/wcd938x-mbhc.h"
-#include "codecs/wsa881x.h"
+#include "codecs/wsa883x/wsa883x.h"
 #include "codecs/wcd938x/wcd938x.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
@@ -78,8 +78,6 @@
 
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 
-#define WSA8810_NAME_1 "wsa881x.20170211"
-#define WSA8810_NAME_2 "wsa881x.20170212"
 #define WCN_CDC_SLIM_RX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX_LITO 3
@@ -173,6 +171,12 @@ enum {
 	AFE_LOOPBACK_TX_IDX = 0,
 	AFE_LOOPBACK_TX_IDX_MAX,
 };
+
+static const char* wsa883x_devices[] = {
+	"wsa883x.202170221",
+	"wsa883x.202170222",
+};
+
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
 	int usbc_en2_gpio; /* used by gpio driver API */
@@ -207,7 +211,7 @@ enum {
 	EXT_DISP_RX_IDX_MAX,
 };
 
-struct msm_wsa881x_dev_info {
+struct msm_wsa883x_dev_info {
 	struct device_node *of_node;
 	u32 index;
 };
@@ -5328,7 +5332,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm;
 	struct snd_card *card;
 	struct snd_info_entry *entry;
-	struct snd_soc_component *aux_comp;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
@@ -5389,18 +5392,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		__func__, rtd->card->num_aux_devs);
 	if (rtd->card->num_aux_devs &&
 	    !list_empty(&rtd->card->component_dev_list)) {
-		list_for_each_entry(aux_comp,
-				&rtd->card->aux_comp_list,
-				card_aux_list) {
-			if (aux_comp->name != NULL && (
-				!strcmp(aux_comp->name, WSA8810_NAME_1) ||
-		    		!strcmp(aux_comp->name, WSA8810_NAME_2))) {
-				wsa_macro_set_spkr_mode(component,
-						WSA_MACRO_SPKR_MODE_1);
-				wsa_macro_set_spkr_gain_offset(component,
-						WSA_MACRO_GAIN_OFFSET_M1P5_DB);
-			}
-		}
 		if (pdata->lito_v2_enabled) {
 			/*
 			 * Enable tx data line3 for saipan version v2 amd
@@ -7151,16 +7142,16 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 }
 
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
-static int msm_wsa881x_init(struct snd_soc_component *component)
+static int msm_wsa883x_init(struct snd_soc_component *component)
 {
-	u8 spkleft_ports[WSA881X_MAX_SWR_PORTS] = {0, 1, 2, 3};
-	u8 spkright_ports[WSA881X_MAX_SWR_PORTS] = {0, 1, 2, 3};
-	u8 spkleft_port_types[WSA881X_MAX_SWR_PORTS] = {SPKR_L, SPKR_L_COMP,
+	u8 spkleft_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
+	u8 spkright_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
+	u8 spkleft_port_types[WSA883X_MAX_SWR_PORTS] = {SPKR_L, SPKR_L_COMP,
 						SPKR_L_BOOST, SPKR_L_VI};
-	u8 spkright_port_types[WSA881X_MAX_SWR_PORTS] = {SPKR_R, SPKR_R_COMP,
+	u8 spkright_port_types[WSA883X_MAX_SWR_PORTS] = {SPKR_R, SPKR_R_COMP,
 						SPKR_R_BOOST, SPKR_R_VI};
-	unsigned int ch_rate[WSA881X_MAX_SWR_PORTS] = {2400, 600, 300, 1200};
-	unsigned int ch_mask[WSA881X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
+	unsigned int ch_rate[WSA883X_MAX_SWR_PORTS] = {2400, 600, 300, 1200};
+	unsigned int ch_mask[WSA883X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
 	struct msm_asoc_mach_data *pdata;
 	struct snd_soc_dapm_context *dapm;
 	struct snd_card *card;
@@ -7178,8 +7169,8 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	if (!strcmp(component->name_prefix, "SpkrLeft")) {
 		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
 			__func__, component->name);
-		wsa881x_set_channel_map(component, &spkleft_ports[0],
-				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+		wsa883x_set_channel_map(component, &spkleft_ports[0],
+				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkleft_port_types[0]);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft IN");
@@ -7188,8 +7179,8 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	} else if (!strcmp(component->name_prefix, "SpkrRight")) {
 		dev_dbg(component->dev, "%s: setting right ch map to codec %s\n",
 			__func__, component->name);
-		wsa881x_set_channel_map(component, &spkright_ports[0],
-				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+		wsa883x_set_channel_map(component, &spkright_ports[0],
+				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkright_port_types[0]);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight IN");
@@ -7213,7 +7204,7 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 		}
 		pdata->codec_root = entry;
 	}
-	wsa881x_codec_info_create_codec_entry(pdata->codec_root,
+	wsa883x_codec_info_create_codec_entry(pdata->codec_root,
 					      component);
 err:
 	return ret;
@@ -7298,8 +7289,8 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	u32 codec_max_aux_devs = 0;
 	u32 codec_aux_dev_cnt = 0;
 	int i;
-	struct msm_wsa881x_dev_info *wsa881x_dev_info;
-	struct aux_codec_dev_info *aux_cdc_dev_info;
+	struct msm_wsa883x_dev_info *wsa883x_dev_info;
+	struct aux_codec_dev_info *aux_cdc_dev_info = NULL;
 	struct snd_soc_dai_link_component *dlc;
 	const char *auxdev_name_prefix[1];
 	char *dev_name_str = NULL;
@@ -7369,10 +7360,10 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	 * Alloc mem to store phandle and index info of WSA device, if already
 	 * registered with ALSA core
 	 */
-	wsa881x_dev_info = devm_kcalloc(&pdev->dev, wsa_max_devs,
-					sizeof(struct msm_wsa881x_dev_info),
+	wsa883x_dev_info = devm_kcalloc(&pdev->dev, wsa_max_devs,
+					sizeof(struct msm_wsa883x_dev_info),
 					GFP_KERNEL);
-	if (!wsa881x_dev_info) {
+	if (!wsa883x_dev_info) {
 		ret = -ENOMEM;
 		goto err;
 	}
@@ -7398,8 +7389,8 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 		dlc->name = NULL;
 		if (soc_find_component(dlc)) {
 			/* WSA device registered with ALSA core */
-			wsa881x_dev_info[found].of_node = wsa_of_node;
-			wsa881x_dev_info[found].index = i;
+			wsa883x_dev_info[found].of_node = wsa_of_node;
+			wsa883x_dev_info[found].index = i;
 			found++;
 			if (found == wsa_max_devs)
 				break;
@@ -7413,7 +7404,7 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 		return -EPROBE_DEFER;
 	}
 	dev_info(&pdev->dev,
-		"%s: found %d wsa881x devices registered with ALSA core\n",
+		"%s: found %d wsa883x devices registered with ALSA core\n",
 		__func__, found);
 
 codec_aux_dev:
@@ -7546,7 +7537,7 @@ aux_dev_register:
 
 		ret = of_property_read_string_index(pdev->dev.of_node,
 						    "qcom,wsa-aux-dev-prefix",
-						    wsa881x_dev_info[i].index,
+						    wsa883x_dev_info[i].index,
 						    auxdev_name_prefix);
 		if (ret) {
 			dev_err(&pdev->dev,
@@ -7556,16 +7547,15 @@ aux_dev_register:
 			goto err;
 		}
 
-		snprintf(dev_name_str, strlen("wsa881x.%d"), "wsa881x.%d", i);
-		msm_aux_dev[i].dlc.name = dev_name_str;
+		msm_aux_dev[i].dlc.name = wsa883x_devices[i];
 		msm_aux_dev[i].dlc.dai_name = NULL;
 		msm_aux_dev[i].dlc.of_node =
-					wsa881x_dev_info[i].of_node;
-		msm_aux_dev[i].init = msm_wsa881x_init;
+					wsa883x_dev_info[i].of_node;
+		msm_aux_dev[i].init = msm_wsa883x_init;
 		msm_codec_conf[i].dev_name = NULL;
 		msm_codec_conf[i].name_prefix = auxdev_name_prefix[0];
 		msm_codec_conf[i].of_node =
-				wsa881x_dev_info[i].of_node;
+				wsa883x_dev_info[i].of_node;
 	}
 
 	for (i = 0; i < codec_aux_dev_cnt; i++) {
