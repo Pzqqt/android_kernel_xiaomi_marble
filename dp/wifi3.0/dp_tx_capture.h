@@ -285,6 +285,21 @@ dp_handle_tx_capture_from_dest(struct dp_soc *soc, struct dp_pdev *pdev,
 			       qdf_nbuf_t mon_mpdu);
 
 /**
+ * dp_bar_send_ack_frm_to_stack(): send  ACK frame
+ * to upper layers on received BAR packet for tx capture feature
+ *
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @nbuf: received packet
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         others on error
+ */
+QDF_STATUS dp_bar_send_ack_frm_to_stack(struct dp_soc *soc,
+			      struct dp_pdev *pdev,
+			      qdf_nbuf_t nbuf);
+
+/**
  * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
  * @pdev: DP PDEV handle
  * @peer: Peer handle
