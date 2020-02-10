@@ -371,8 +371,9 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				__func__, i, *ppdu_id, num_msdus);
 
 			if (is_first_msdu) {
-				if (!HAL_RX_HW_DESC_MPDU_VALID(
-					rx_desc_tlv)) {
+				if (!hal_rx_mpdu_start_tlv_tag_valid(
+						soc->hal_soc,
+						rx_desc_tlv)) {
 					drop_mpdu = true;
 					qdf_nbuf_free(msdu);
 					msdu = NULL;
@@ -383,7 +384,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				msdu_ppdu_id = hal_rx_hw_desc_get_ppduid_get(
 						soc->hal_soc,
-						rx_desc_tlv);
+						rx_desc_tlv,
+						rxdma_dst_ring_desc);
 				is_first_msdu = false;
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
