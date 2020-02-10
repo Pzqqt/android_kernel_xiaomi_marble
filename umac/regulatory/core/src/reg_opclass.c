@@ -261,8 +261,8 @@ static const struct reg_dmn_op_class_map_t japan_op_class[] = {
  *
  * Return: class.
  */
-static const
-struct reg_dmn_op_class_map_t *reg_get_class_from_country(uint8_t *country)
+static const struct reg_dmn_op_class_map_t
+*reg_get_class_from_country(const uint8_t *country)
 {
 	const struct reg_dmn_op_class_map_t *class = NULL;
 
@@ -367,6 +367,42 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 	}
 
 	return 0;
+}
+
+uint8_t reg_get_band_cap_from_op_class(const uint8_t *country,
+				       uint8_t num_of_opclass,
+				       const uint8_t *opclass)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+	uint8_t supported_band = 0, opclassidx;
+
+	op_class_tbl = reg_get_class_from_country(country);
+
+	while (op_class_tbl && op_class_tbl->op_class) {
+		for (opclassidx = 0; opclassidx < num_of_opclass;
+		     opclassidx++) {
+			if (op_class_tbl->op_class == opclass[opclassidx]) {
+				if (op_class_tbl->start_freq ==
+				    TWOG_START_FREQ) {
+					supported_band |= BIT(REG_BAND_2G);
+				} else if (op_class_tbl->start_freq ==
+					   FIVEG_START_FREQ) {
+					supported_band |= BIT(REG_BAND_5G);
+				} else if (op_class_tbl->start_freq ==
+					   SIXG_STARTING_FREQ) {
+					supported_band |= BIT(REG_BAND_6G);
+				} else {
+					reg_err_rl("Unknown band");
+				}
+			}
+		}
+		op_class_tbl++;
+	}
+
+	if (!supported_band)
+		reg_err_rl("None of the operating classes is found");
+
+	return supported_band;
 }
 
 void reg_dmn_print_channels_in_opclass(uint8_t *country, uint8_t op_class)

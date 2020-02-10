@@ -267,6 +267,14 @@ uint16_t wlan_reg_dmn_get_opclass_from_channel(uint8_t *country,
 						offset);
 }
 
+uint8_t wlan_reg_get_band_cap_from_op_class(const uint8_t *country,
+					    uint8_t num_of_opclass,
+					    const uint8_t *opclass)
+{
+	return reg_get_band_cap_from_op_class(country,
+					      num_of_opclass, opclass);
+}
+
 uint8_t wlan_reg_get_opclass_from_freq_width(uint8_t *country,
 					     qdf_freq_t freq,
 					     uint8_t ch_width,

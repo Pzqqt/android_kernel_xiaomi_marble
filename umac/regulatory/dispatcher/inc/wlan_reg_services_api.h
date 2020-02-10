@@ -562,6 +562,21 @@ uint8_t wlan_reg_get_opclass_from_freq_width(uint8_t *country,
 					     uint16_t behav_limit);
 
 /**
+ * wlan_reg_get_band_cap_from_op_class() - Return band capability bitmap
+ * @country: Pointer to Country code.
+ * @num_of_opclass: Number of Operating class.
+ * @opclass: Pointer to opclass.
+ *
+ * Return supported band bitmap based on the input operating class list
+ * provided.
+ *
+ * Return: Return supported band capability
+ */
+uint8_t wlan_reg_get_band_cap_from_op_class(const uint8_t *country,
+					    uint8_t num_of_opclass,
+					    const uint8_t *opclass);
+
+/**
  * wlan_reg_dmn_print_channels_in_opclass() - Print channels in op-class
  * @country: country alpha2
  * @opclass: oplcass

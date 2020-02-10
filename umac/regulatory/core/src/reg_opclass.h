@@ -63,6 +63,21 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 					    uint16_t behav_limit);
 
 /**
+ * reg_get_band_cap_from_op_class() - Return band capability bitmap
+ * @country: Pointer to Country code.
+ * @num_of_opclass: Number of Operating class.
+ * @opclass: Pointer to opclass.
+ *
+ * Return supported band bitmap based on the input operating class list
+ * provided.
+ *
+ * Return: Return supported band capability
+ */
+uint8_t reg_get_band_cap_from_op_class(const uint8_t *country,
+				       uint8_t num_of_opclass,
+				       const uint8_t *opclass);
+
+/**
  * reg_dmn_get_opclass_from_channe() - Print channels in op class.
  * @country: Country code.
  * @opclass: opclass.
@@ -261,6 +276,14 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 					    qdf_freq_t freq,
 					    uint8_t ch_width,
 					    uint16_t behav_limit)
+{
+	return 0;
+}
+
+static inline
+uint8_t reg_get_band_cap_from_op_class(uint8_t *country,
+				       uint8_t num_of_opclass,
+				       const uint8_t *opclass)
 {
 	return 0;
 }
