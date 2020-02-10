@@ -60,6 +60,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 #include <wlan_coex_ucfg_api.h>
+#include "wlan_crypto_global_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -14166,7 +14167,33 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 
 #endif
 
-QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
+void sme_clear_sae_single_pmk_info(struct wlan_objmgr_psoc *psoc,
+				   uint8_t session_id,
+				   tPmkidCacheInfo *pmk_cache_info)
+{
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+	tPmkidCacheInfo pmk_to_del;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, session_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return;
+	}
+	pmksa = wlan_crypto_get_pmksa(vdev, &pmk_cache_info->BSSID);
+	if (!pmksa) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	qdf_mem_copy(&pmk_to_del.pmk, pmksa->pmk, pmksa->pmk_len);
+	pmk_to_del.pmk_len = pmksa->pmk_len;
+	csr_clear_sae_single_pmk(psoc, session_id, &pmk_to_del);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
+
+QDF_STATUS sme_set_del_pmkid_cache(struct wlan_objmgr_psoc *psoc,
+				   uint8_t session_id,
 				   tPmkidCacheInfo *pmk_cache_info,
 				   bool is_add)
 {
@@ -14183,6 +14210,7 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 
 	if (!pmk_cache_info) {
 		pmk_cache->is_flush_all = true;
+		csr_clear_sae_single_pmk(psoc, session_id, NULL);
 		goto send_flush_cmd;
 	}
 

@@ -919,6 +919,26 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 					 tPmkidCacheInfo *pmksa,
 					 bool flush_cache);
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * csr_clear_sae_single_pmk - API to clear single_pmk_info cache
+ * @psoc: psoc common object
+ * @vdev_id: session id
+ * @pmksa: pmk info
+ *
+ * Return : None
+ */
+void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
+			      uint8_t vdev_id, tPmkidCacheInfo *pmksa);
+
+#else
+static inline void
+csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 tPmkidCacheInfo *pmksa)
+{
+}
+#endif
+
 QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
 				uint32_t channel, uint8_t session_id);
 

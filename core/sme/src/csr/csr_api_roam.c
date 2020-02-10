@@ -14582,7 +14582,7 @@ QDF_STATUS csr_roam_set_psk_pmk(struct mac_context *mac, uint32_t sessionId,
 	pSession->pmk_len = pmk_len;
 
 	if (csr_is_auth_type_ese(mac->roam.roamSession[sessionId].
-				connectedProfile.AuthType)) {
+				 connectedProfile.AuthType)) {
 		sme_debug("PMK update is not required for ESE");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -14602,6 +14602,37 @@ static void csr_mem_zero_psk_pmk(struct csr_roam_session *session)
 #else
 static void csr_mem_zero_psk_pmk(struct csr_roam_session *session)
 {
+}
+#endif
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void csr_clear_sae_single_pmk(struct wlan_objmgr_psoc *psoc,
+			      uint8_t vdev_id, tPmkidCacheInfo *pmk_cache)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t keymgmt;
+	struct mlme_pmk_info pmk_info;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("vdev is NULL");
+		return;
+	}
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	if (!(keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE))) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return;
+	}
+	if (pmk_cache) {
+		qdf_mem_copy(&pmk_info.pmk, pmk_cache->pmk, pmk_cache->pmk_len);
+		pmk_info.pmk_len = pmk_cache->pmk_len;
+		wlan_mlme_clear_sae_single_pmk_info(vdev, &pmk_info);
+	} else {
+		wlan_mlme_clear_sae_single_pmk_info(vdev, NULL);
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 }
 #endif
 
@@ -14632,11 +14663,16 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 		/* Flush the entire cache */
 		qdf_mem_zero(pSession->PmkidCacheInfo,
 			     sizeof(tPmkidCacheInfo) * CSR_MAX_PMKID_ALLOWED);
+		/* flush single_pmk_info information */
+		csr_clear_sae_single_pmk(mac->psoc, pSession->vdev_id, NULL);
 		pSession->NumPmkidCache = 0;
 		pSession->curr_cache_idx = 0;
 		csr_mem_zero_psk_pmk(pSession);
 		return QDF_STATUS_SUCCESS;
 	}
+
+	/* clear single_pmk_info information */
+	csr_clear_sae_single_pmk(mac->psoc, pSession->vdev_id, pmksa);
 
 	/* !flush_cache - so look up in the cache */
 	for (Index = 0; Index < CSR_MAX_PMKID_ALLOWED; Index++) {
