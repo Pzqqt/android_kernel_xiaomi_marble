@@ -1596,14 +1596,13 @@ static int wcd937x_event_notify(struct notifier_block *block,
 		break;
 	case BOLERO_WCD_EVT_SSR_UP:
 		wcd937x_reset(wcd937x->dev);
+		/* allow reset to take effect */
+		usleep_range(10000, 10010);
 		wcd937x_get_logical_addr(wcd937x->tx_swr_dev);
 		wcd937x_get_logical_addr(wcd937x->rx_swr_dev);
+		wcd937x_init_reg(component);
 		regcache_mark_dirty(wcd937x->regmap);
 		regcache_sync(wcd937x->regmap);
-		/* Enable surge protection */
-		snd_soc_component_update_bits(component,
-				WCD937X_HPH_SURGE_HPHLR_SURGE_EN,
-				0xFF, 0xD9);
 		/* Initialize MBHC module */
 		mbhc = &wcd937x->mbhc->wcd_mbhc;
 		ret = wcd937x_mbhc_post_ssr_init(wcd937x->mbhc, component);
