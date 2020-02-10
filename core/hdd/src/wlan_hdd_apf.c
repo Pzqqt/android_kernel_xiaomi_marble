@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -227,8 +227,6 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	int prog_len;
 	int ret = 0;
 
-	hdd_enter();
-
 	if (!hdd_conn_is_connected(
 	    WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 		hdd_err("Not in Connected state!");
@@ -246,7 +244,7 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	apf_set_offload.total_length = nla_get_u32(tb[APF_PACKET_SIZE]);
 
 	if (!apf_set_offload.total_length) {
-		hdd_debug("APF reset packet filter received");
+		hdd_debug("APF reset packet");
 		goto post_sme;
 	}
 
@@ -268,10 +266,6 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	apf_set_offload.current_length = prog_len;
 	nla_memcpy(apf_set_offload.program, tb[APF_PROGRAM], prog_len);
 
-	hdd_debug("APF set instructions");
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-			   apf_set_offload.program, prog_len);
-
 	/* Parse and fetch filter Id */
 	if (!tb[APF_FILTER_ID]) {
 		hdd_err("attr filter id failed");
@@ -289,7 +283,7 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	apf_set_offload.current_offset = nla_get_u32(tb[APF_CURRENT_OFFSET]);
 
 post_sme:
-	hdd_debug("Posting APF SET/RESET to SME, session_id: %d APF Version: %d filter ID: %d total_length: %d current_length: %d current offset: %d",
+	hdd_debug("Posting, session_id: %d APF Version: %d filter ID: %d total_len: %d current_len: %d offset: %d",
 		  apf_set_offload.session_id, apf_set_offload.version,
 		  apf_set_offload.filter_id, apf_set_offload.total_length,
 		  apf_set_offload.current_length,
@@ -326,8 +320,6 @@ hdd_enable_disable_apf(struct hdd_adapter *adapter, bool apf_enable)
 {
 	QDF_STATUS status;
 
-	hdd_enter();
-
 	status = sme_set_apf_enable_disable(hdd_adapter_get_mac_handle(adapter),
 					    adapter->vdev_id, apf_enable);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -338,7 +330,6 @@ hdd_enable_disable_apf(struct hdd_adapter *adapter, bool apf_enable)
 
 	adapter->apf_context.apf_enabled = apf_enable;
 
-	hdd_exit();
 	return 0;
 }
 
@@ -359,9 +350,6 @@ hdd_apf_write_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 	int ret = 0;
-
-	hdd_enter();
-
 
 	write_mem_params.vdev_id = adapter->vdev_id;
 	if (adapter->apf_context.apf_enabled) {
@@ -419,7 +407,6 @@ hdd_apf_write_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	if (write_mem_params.buf)
 		qdf_mem_free(write_mem_params.buf);
 
-	hdd_exit();
 	return ret;
 }
 
@@ -509,8 +496,6 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	struct sk_buff *skb = NULL;
 	uint8_t *bufptr;
 
-	hdd_enter();
-
 	if (context->apf_enabled) {
 		hdd_err("Cannot get/set while interpreter is enabled");
 		return -EINVAL;
@@ -596,7 +581,6 @@ fail:
 		context->buf = NULL;
 	}
 
-	hdd_exit();
 	return ret;
 }
 
