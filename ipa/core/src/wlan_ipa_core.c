@@ -26,6 +26,8 @@
 #include "sir_api.h"
 #include "host_diag_core_event.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "osif_psoc_sync.h"
+#include <wlan_cfg80211.h>
 
 static struct wlan_ipa_priv *gp_ipa;
 static void wlan_ipa_set_pending_tx_timer(struct wlan_ipa_priv *ipa_ctx);
@@ -176,49 +178,6 @@ static void wlan_ipa_uc_loaded_uc_cb(void *priv_ctxt)
 
 done:
 	qdf_mem_free(msg);
-}
-
-/**
- * wlan_ipa_uc_send_wdi_control_msg() - Set WDI control message
- * @ctrl: WDI control value
- *
- * Send WLAN_WDI_ENABLE for ctrl = true and WLAN_WDI_DISABLE otherwise.
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
-{
-	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
-	qdf_ipa_msg_meta_t meta;
-	qdf_ipa_wlan_msg_t *ipa_msg;
-	int ret = 0;
-
-	/* WDI enable message to IPA */
-	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(*ipa_msg);
-	ipa_msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
-	if (!ipa_msg) {
-		ipa_err("msg allocation failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	if (ctrl) {
-		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_ENABLE);
-		ipa_ctx->stats.event[QDF_WDI_ENABLE]++;
-	} else {
-		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_DISABLE);
-		ipa_ctx->stats.event[QDF_WDI_DISABLE]++;
-	}
-
-	ipa_debug("ipa_send_msg(Evt:%d)", QDF_IPA_MSG_META_MSG_TYPE(&meta));
-	ret = qdf_ipa_send_msg(&meta, ipa_msg, wlan_ipa_msg_free_fn);
-	if (ret) {
-		ipa_err("ipa_send_msg(Evt:%d)-fail=%d",
-			QDF_IPA_MSG_META_MSG_TYPE(&meta), ret);
-		qdf_mem_free(ipa_msg);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
 }
 
 struct wlan_ipa_priv *wlan_ipa_get_obj_context(void)
@@ -2792,10 +2751,59 @@ static inline uint8_t wlan_ipa_get_rx_ipa_client(struct wlan_ipa_priv *ipa_ctx)
 	else
 		return IPA_CLIENT_WLAN1_PROD;
 }
+
+/**
+ * wlan_ipa_uc_send_wdi_control_msg() - Set WDI control message
+ * @ctrl: WDI control value
+ *
+ * Send WLAN_WDI_ENABLE for ctrl = true and WLAN_WDI_DISABLE otherwise.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #else
 static inline uint8_t wlan_ipa_get_rx_ipa_client(struct wlan_ipa_priv *ipa_ctx)
 {
 	return IPA_CLIENT_WLAN1_PROD;
+}
+
+static QDF_STATUS wlan_ipa_uc_send_wdi_control_msg(bool ctrl)
+{
+	struct wlan_ipa_priv *ipa_ctx = gp_ipa;
+	qdf_ipa_msg_meta_t meta;
+	qdf_ipa_wlan_msg_t *ipa_msg;
+	int ret = 0;
+
+	/* WDI enable message to IPA */
+	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(*ipa_msg);
+	ipa_msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
+	if (!ipa_msg) {
+		ipa_err("msg allocation failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (ctrl) {
+		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_ENABLE);
+		ipa_ctx->stats.event[QDF_WDI_ENABLE]++;
+	} else {
+		QDF_IPA_SET_META_MSG_TYPE(&meta, QDF_WDI_DISABLE);
+		ipa_ctx->stats.event[QDF_WDI_DISABLE]++;
+	}
+
+	ipa_debug("ipa_send_msg(Evt:%d)", QDF_IPA_MSG_META_MSG_TYPE(&meta));
+	ret = qdf_ipa_send_msg(&meta, ipa_msg, wlan_ipa_msg_free_fn);
+	if (ret) {
+		ipa_err("ipa_send_msg(Evt:%d)-fail=%d",
+			QDF_IPA_MSG_META_MSG_TYPE(&meta), ret);
+		qdf_mem_free(ipa_msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -3421,14 +3429,27 @@ static void __wlan_ipa_uc_fw_op_event_handler(void *data)
  */
 static void wlan_ipa_uc_fw_op_event_handler(void *data)
 {
-	struct qdf_op_sync *op_sync;
+	int ret;
+	struct osif_psoc_sync *psoc_sync;
+	struct uc_op_work_struct *uc_op_work =
+		(struct uc_op_work_struct *)data;
 
-	if (qdf_op_protect(&op_sync))
+	if (!uc_op_work || !uc_op_work->osdev) {
+		ipa_err("Invalid op work");
 		return;
+	}
+
+	/* This event handler needs to wait for psoc transition */
+	ret = osif_psoc_sync_trans_start_wait(uc_op_work->osdev->dev,
+					      &psoc_sync);
+	if (ret) {
+		ipa_err("op start ret: %d", ret);
+		return;
+	}
 
 	__wlan_ipa_uc_fw_op_event_handler(data);
 
-	qdf_op_unprotect(op_sync);
+	osif_psoc_sync_trans_stop(psoc_sync);
 }
 
 /**
@@ -3518,6 +3539,7 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 			       wlan_ipa_uc_op_event_handler, (void *)ipa_ctx);
 
 	for (i = 0; i < WLAN_IPA_UC_OPCODE_MAX; i++) {
+		ipa_ctx->uc_op_work[i].osdev = osdev;
 		qdf_create_work(0, &ipa_ctx->uc_op_work[i].work,
 				wlan_ipa_uc_fw_op_event_handler,
 				&ipa_ctx->uc_op_work[i]);

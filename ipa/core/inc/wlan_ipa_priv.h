@@ -487,10 +487,12 @@ struct uc_rm_work_struct {
  * struct uc_op_work_struct
  * @work: uC OP work
  * @msg: OP message
+ * @osdev: poiner to qdf net device, used by osif_psoc_sync_trans_start_wait
  */
 struct uc_op_work_struct {
 	qdf_work_t work;
 	struct op_msg_type *msg;
+	qdf_device_t osdev;
 };
 
 /**
