@@ -62,6 +62,7 @@ enum dp_display_states {
 	DP_STATE_SUSPENDED              = BIT(7),
 	DP_STATE_ABORTED                = BIT(8),
 	DP_STATE_HDCP_ABORTED           = BIT(9),
+	DP_STATE_SRC_PWRDN              = BIT(10),
 };
 
 static char *dp_display_state_name(enum dp_display_states state)
@@ -110,6 +111,10 @@ static char *dp_display_state_name(enum dp_display_states state)
 	if (state & DP_STATE_HDCP_ABORTED)
 		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
 			"HDCP_ABORTED");
+
+	if (state & DP_STATE_SRC_PWRDN)
+		len += scnprintf(buf + len, sizeof(buf) - len, "|%s|",
+			"SRC_PWRDN");
 
 	if (!strlen(buf))
 		return "DISCONNECTED";
@@ -995,6 +1000,26 @@ static int dp_display_process_hpd_high(struct dp_display_private *dp)
 
 	dp->dp_display.max_pclk_khz = min(dp->parser->max_pclk_khz,
 					dp->debug->max_pclk_khz);
+
+	/*
+	 * If dp video session is not restored from a previous session teardown
+	 * by userspace, ensure the host_init is executed, in such a scenario,
+	 * so that all the required DP resources are enabled.
+	 *
+	 * Below is one of the sequences of events which describe the above
+	 * scenario:
+	 *  a. Source initiated power down resulting in host_deinit.
+	 *  b. Sink issues hpd low attention without physical cable disconnect.
+	 *  c. Source initiated power up sequence returns early because hpd is
+	 *     not high.
+	 *  d. Sink issues a hpd high attention event.
+	 */
+	if (dp_display_state_is(DP_STATE_SRC_PWRDN) &&
+			dp_display_state_is(DP_STATE_CONFIGURED)) {
+		dp_display_host_init(dp);
+		dp_display_state_remove(DP_STATE_SRC_PWRDN);
+	}
+
 	dp_display_host_ready(dp);
 
 	dp->link->psm_config(dp->link, &dp->panel->link_info, false);
@@ -1270,7 +1295,6 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state,
 			dp->debug->psm_enabled);
-	dp_display_state_remove(DP_STATE_CONFIGURED);
 
 	if (dp->debug->psm_enabled && dp_display_state_is(DP_STATE_READY))
 		dp->link->psm_config(dp->link, &dp->panel->link_info, true);
@@ -1279,6 +1303,7 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 
 	mutex_lock(&dp->session_lock);
 	dp_display_host_deinit(dp);
+	dp_display_state_remove(DP_STATE_CONFIGURED);
 	mutex_unlock(&dp->session_lock);
 
 	if (!dp->debug->sim_mode && !dp->parser->no_aux_switch
@@ -1842,6 +1867,20 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	mutex_lock(&dp->session_lock);
 
 	/*
+	 * If DP video session is restored by the userspace after display
+	 * disconnect notification from dongle i.e. typeC cable connected to
+	 * source but disconnected at the display side, the DP controller is
+	 * not restored to the desired configured state. So, ensure host_init
+	 * is executed in such a scenario so that all the DP controller
+	 * resources are enabled for the next connection event.
+	 */
+	if (dp_display_state_is(DP_STATE_SRC_PWRDN) &&
+			dp_display_state_is(DP_STATE_CONFIGURED)) {
+		dp_display_host_init(dp);
+		dp_display_state_remove(DP_STATE_SRC_PWRDN);
+	}
+
+	/*
 	 * If the physical connection to the sink is already lost by the time
 	 * we try to set up the connection, we can just skip all the steps
 	 * here safely.
@@ -1866,7 +1905,6 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 	}
 
 	/* For supporting DP_PANEL_SRC_INITIATED_POWER_DOWN case */
-	dp_display_host_init(dp);
 	dp_display_host_ready(dp);
 
 	if (dp->debug->psm_enabled) {
@@ -2283,6 +2321,7 @@ static int dp_display_unprepare(struct dp_display *dp_display, void *panel)
 		dp->ctrl->off(dp->ctrl);
 		dp_display_host_unready(dp);
 		dp_display_host_deinit(dp);
+		dp_display_state_add(DP_STATE_SRC_PWRDN);
 	}
 
 	dp_display_state_remove(DP_STATE_ENABLED);
