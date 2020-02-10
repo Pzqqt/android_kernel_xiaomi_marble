@@ -3097,6 +3097,52 @@ fail:
 }
 
 
+/**
+ * dp_set_key_sec_type_wifi3() - set security mode of key
+ * @soc: Datapath soc handle
+ * @peer_mac: Datapath peer mac address
+ * @vdev_id: id of atapath vdev
+ * @vdev: Datapath vdev
+ * @pdev - data path device instance
+ * @sec_type - security type
+ * #is_unicast - key type
+ *
+ */
+
+QDF_STATUS
+dp_set_key_sec_type_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
+			  uint8_t *peer_mac, enum cdp_sec_type sec_type,
+			  bool is_unicast)
+{
+	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc,
+				peer_mac, 0, vdev_id);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int sec_index;
+
+	if (!peer || peer->delete_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Peer is NULL!\n", __func__);
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "key sec spec for peer %pK %pM: %s key of type %d",
+		  peer,
+		  peer->mac_addr.raw,
+		  is_unicast ? "ucast" : "mcast",
+		  sec_type);
+
+	sec_index = is_unicast ? dp_sec_ucast : dp_sec_mcast;
+	peer->security[sec_index].sec_type = sec_type;
+
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer);
+
+	return status;
+}
+
 void
 dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 		      enum cdp_sec_type sec_type, int is_unicast,

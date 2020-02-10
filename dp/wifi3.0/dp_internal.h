@@ -1140,6 +1140,11 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 		      uint8_t *peer_mac, enum cdp_sec_type sec_type,
 		      uint32_t *rx_pn);
 
+QDF_STATUS
+dp_set_key_sec_type_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
+			  uint8_t *peer_mac, enum cdp_sec_type sec_type,
+			  bool is_unicast);
+
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 
 QDF_STATUS

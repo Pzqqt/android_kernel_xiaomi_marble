@@ -200,6 +200,10 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(&pn[0], &params.key_rsc_ctr, sizeof(pn));
 	cdp_set_pn_check(soc, vdev->vdev_objmgr.vdev_id, req->macaddr,
 			 sec_type, pn);
+
+	cdp_set_key_sec_type(soc, vdev->vdev_objmgr.vdev_id, req->macaddr,
+			     sec_type, pairwise);
+
 	cdp_set_key(soc, vdev->vdev_objmgr.vdev_id, req->macaddr, pairwise,
 		    (uint32_t *)(req->keyval + WLAN_CRYPTO_IV_SIZE +
 		     WLAN_CRYPTO_MIC_LEN));

@@ -437,6 +437,12 @@ struct cdp_cmn_ops {
 				    uint8_t vdev_id, uint8_t *peermac,
 				    enum cdp_sec_type sec_type,
 				    uint32_t *rx_pn);
+
+	QDF_STATUS(*set_key_sec_type)(struct cdp_soc_t *soc_handle,
+				      uint8_t vdev_id, uint8_t *peermac,
+				      enum cdp_sec_type sec_type,
+				      bool is_unicast);
+
 	QDF_STATUS (*update_config_parameters)(struct cdp_soc *psoc,
 			struct cdp_config_params *params);
 

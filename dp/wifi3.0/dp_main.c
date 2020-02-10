@@ -9964,6 +9964,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_intr_attach = dp_soc_interrupt_attach_wrapper,
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
+	.set_key_sec_type = dp_set_key_sec_type_wifi3,
 	.update_config_parameters = dp_update_config_parameters,
 	/* TODO: Add other functions */
 	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set,
