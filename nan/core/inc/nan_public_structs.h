@@ -613,6 +613,17 @@ struct nan_datapath_end_indication_event {
 };
 
 /**
+ * struct nan_datapath_peer_ind - ndp peer indication
+ * @msg: msg received by FW
+ * @data_len: data length
+ *
+ */
+struct nan_dump_msg {
+	uint8_t *msg;
+	uint32_t data_len;
+};
+
+/**
  * struct nan_datapath_confirm_event - ndp confirmation event from FW
  * @vdev: pointer to vdev object
  * @ndp_instance_id: ndp instance id for which confirm is being generated
