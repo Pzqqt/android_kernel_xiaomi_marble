@@ -480,6 +480,8 @@ typedef enum {
     HTT_STATS_PDEV_TX_RATE_TXBF_STATS_TAG          = 108, /* htt_tx_peer_rate_txbf_stats_tlv */
     HTT_STATS_UNSUPPORTED_ERROR_STATS_TAG          = 109, /* htt_stats_error_tlv_v */
     HTT_STATS_UNAVAILABLE_ERROR_STATS_TAG          = 110, /* htt_stats_error_tlv_v */
+    HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG = 111, /* htt_tx_selfgen_ac_sched_status_stats_tlv */
+    HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG = 112, /* htt_tx_selfgen_ax_sched_status_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -1791,6 +1793,38 @@ typedef struct _htt_tx_hwq_stats {
         ((_var) |= ((_val) << HTT_TX_SELFGEN_CMN_STATS_MAC_ID_S)); \
     } while (0)
 
+typedef enum {
+    HTT_TXERR_NONE,
+    HTT_TXERR_RESP,    /* response timeout, mismatch,
+                        * BW mismatch, mimo ctrl mismatch,
+                        * CRC error.. */
+    HTT_TXERR_FILT,    /* blocked by tx filtering */
+    HTT_TXERR_FIFO,    /* fifo, misc errors in HW */
+    HTT_TXERR_SWABORT, /* software initialted abort (TX_ABORT) */
+
+    HTT_TXERR_RESERVED1,
+    HTT_TXERR_RESERVED2,
+    HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS = 7,
+
+    HTT_TXERR_INVALID = 0xff,
+} htt_tx_err_status_t;
+
+
+/* Matching enum for htt_tx_selfgen_sch_tsflag_error_stats */
+typedef enum {
+    HTT_TX_SELFGEN_SCH_TSFLAG_FLUSH_RCVD_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_FILT_SCHED_CMD_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_RESP_MISMATCH_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_RESP_CBF_MIMO_CTRL_MISMATCH_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_RESP_CBF_BW_MISMATCH_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_RETRY_COUNT_FAIL_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_RESP_TOO_LATE_RECEIVED_ERR,
+    HTT_TX_SELFGEN_SCH_TSFLAG_ERR_RESERVED,
+
+    HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS = 8,  /* includes RESERVED */
+    HTT_TX_SELFGEN_SCH_TSFLAG_ERROR_STATS_VALID = 7 /* not incl. RESERVED */
+} htt_tx_selfgen_sch_tsflag_error_stats;
+
 #define HTT_TX_PDEV_STATS_NUM_AC_MUMIMO_USER_STATS 4
 #define HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS 8
 #define HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS 74
@@ -1940,6 +1974,36 @@ typedef struct {
     A_UINT32 ax_mu_mimo_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
 } htt_tx_selfgen_ax_err_stats_tlv;
 
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11AC sched status stats */
+    A_UINT32 ac_su_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ac_su_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ac_su_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ac_mu_mimo_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ac_mu_mimo_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ac_mu_mimo_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ac_mu_mimo_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ac_mu_mimo_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+} htt_tx_selfgen_ac_sched_status_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* 11AX error stats */
+    A_UINT32 ax_su_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_su_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_su_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ax_mu_mimo_ndpa_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_mu_mimo_ndp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_mu_mimo_ndp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ax_mu_brp_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_mu_brp_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ax_mu_bar_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_mu_bar_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+    A_UINT32 ax_basic_trig_sch_status[HTT_TX_PDEV_STATS_NUM_TX_ERR_STATUS];
+    A_UINT32 ax_basic_trig_sch_flag_err[HTT_TX_SELFGEN_NUM_SCH_TSFLAG_ERROR_STATS];
+} htt_tx_selfgen_ax_sched_status_stats_tlv;
+
 /* STATS_TYPE : HTT_DBG_EXT_STATS_TX_SELFGEN_INFO
  * TLV_TAGS:
  *      - HTT_STATS_TX_SELFGEN_CMN_STATS_TAG
@@ -1962,6 +2026,10 @@ typedef struct {
     htt_tx_selfgen_ac_err_stats_tlv ac_err_tlv;
     /* 11AX error stats */
     htt_tx_selfgen_ax_err_stats_tlv ax_err_tlv;
+    /* 11AC sched stats */
+    htt_tx_selfgen_ac_sched_status_stats_tlv ac_sched_status_tlv;
+    /* 11AX sched stats */
+    htt_tx_selfgen_ax_sched_status_stats_tlv ax_sched_status_tlv;
 } htt_tx_pdev_selfgen_stats_t;
 
 /* == TX MU STATS == */
