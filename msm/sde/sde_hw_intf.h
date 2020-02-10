@@ -52,6 +52,11 @@ struct intf_status {
 	u32 line_count;		/* current line count including blanking */
 };
 
+struct intf_tear_status {
+	u32 read_count;		/* frame & line count for tear init value */
+	u32 write_count;	/* frame & line count for tear write */
+};
+
 struct intf_avr_params {
 	u32 default_fps;
 	u32 min_fps;
@@ -188,6 +193,12 @@ struct sde_hw_intf_ops {
 	 */
 	void (*enable_compressed_input)(struct sde_hw_intf *intf,
 		bool compression_en, bool dsc_4hs_merge);
+
+	/**
+	 * Check the intf tear check status and reset it to start_pos
+	 */
+	int (*check_and_reset_tearcheck)(struct sde_hw_intf *intf,
+			struct intf_tear_status *status);
 };
 
 struct sde_hw_intf {

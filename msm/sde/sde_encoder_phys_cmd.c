@@ -1783,8 +1783,11 @@ static void _sde_encoder_autorefresh_disable_seq2(
 	u32 autorefresh_status = 0;
 	struct sde_encoder_phys_cmd *cmd_enc =
 				to_sde_encoder_phys_cmd(phys_enc);
+	struct intf_tear_status tear_status;
+	struct sde_hw_intf *hw_intf = phys_enc->hw_intf;
 
-	if (!hw_mdp->ops.get_autorefresh_status) {
+	if (!hw_mdp->ops.get_autorefresh_status ||
+			!hw_intf->ops.check_and_reset_tearcheck) {
 		SDE_DEBUG_CMDENC(cmd_enc,
 			"autofresh disable seq2 not supported\n");
 		return;
@@ -1793,10 +1796,11 @@ static void _sde_encoder_autorefresh_disable_seq2(
 	/*
 	 * If autorefresh is still enabled after sequence-1, proceed with
 	 * below sequence-2.
-	 * 1. Disable TEAR CHECK
-	 * 2. Disable autorefresh config
-	 * 4. Poll for autorefresh to be disabled
-	 * 5. Enable TEAR CHECK
+	 * 1. Disable autorefresh config
+	 * 2. Run in loop:
+	 *    2.1 Poll for autorefresh to be disabled
+	 *    2.2 Log read and write count status
+	 *    2.3 Replace te write count with start_pos to meet trigger window
 	 */
 	autorefresh_status = hw_mdp->ops.get_autorefresh_status(hw_mdp,
 					phys_enc->intf_idx);
@@ -1813,52 +1817,36 @@ static void _sde_encoder_autorefresh_disable_seq2(
 				autorefresh_status, SDE_EVTLOG_FUNC_CASE2);
 	}
 
-	if (autorefresh_status & BIT(7)) {
-		SDE_ERROR_CMDENC(cmd_enc, "autofresh status:0x%x intf:%d\n",
-			autorefresh_status, phys_enc->intf_idx - INTF_0);
-
-		if (phys_enc->has_intf_te &&
-		    phys_enc->hw_intf->ops.enable_tearcheck)
-			phys_enc->hw_intf->ops.enable_tearcheck(
-				phys_enc->hw_intf, false);
-		else if (phys_enc->hw_pp->ops.enable_tearcheck)
-			phys_enc->hw_pp->ops.enable_tearcheck(
-				phys_enc->hw_pp, false);
-
-		_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
-
-		do {
-			usleep_range(AUTOREFRESH_SEQ2_POLL_TIME,
-				AUTOREFRESH_SEQ2_POLL_TIME + 1);
-			if ((trial * AUTOREFRESH_SEQ2_POLL_TIME)
-				> AUTOREFRESH_SEQ2_POLL_TIMEOUT) {
-				SDE_ERROR_CMDENC(cmd_enc,
-					"disable autorefresh failed\n");
-				SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus",
-						"panic");
-				break;
-			}
-
-			trial++;
-			autorefresh_status =
-			    hw_mdp->ops.get_autorefresh_status(hw_mdp,
-					phys_enc->intf_idx);
+	while (autorefresh_status & BIT(7)) {
+		if (!trial) {
 			SDE_ERROR_CMDENC(cmd_enc,
-				"autofresh status:0x%x intf:%d\n",
-				autorefresh_status,
-				phys_enc->intf_idx - INTF_0);
-			SDE_EVT32(DRMID(phys_enc->parent),
-				phys_enc->intf_idx - INTF_0,
-				autorefresh_status);
-		} while (autorefresh_status & BIT(7));
+			  "autofresh status:0x%x intf:%d\n", autorefresh_status,
+			  phys_enc->intf_idx - INTF_0);
 
-		if (phys_enc->has_intf_te &&
-		    phys_enc->hw_intf->ops.enable_tearcheck)
-			phys_enc->hw_intf->ops.enable_tearcheck(
-				phys_enc->hw_intf, true);
-		else if (phys_enc->hw_pp->ops.enable_tearcheck)
-			phys_enc->hw_pp->ops.enable_tearcheck(
-				phys_enc->hw_pp, true);
+			_sde_encoder_phys_cmd_config_autorefresh(phys_enc, 0);
+		}
+
+		usleep_range(AUTOREFRESH_SEQ2_POLL_TIME,
+				AUTOREFRESH_SEQ2_POLL_TIME + 1);
+		if ((trial * AUTOREFRESH_SEQ2_POLL_TIME)
+			> AUTOREFRESH_SEQ2_POLL_TIMEOUT) {
+			SDE_ERROR_CMDENC(cmd_enc,
+					"disable autorefresh failed\n");
+			SDE_DBG_DUMP("all", "dbg_bus", "vbif_dbg_bus", "panic");
+			break;
+		}
+
+		trial++;
+		autorefresh_status = hw_mdp->ops.get_autorefresh_status(hw_mdp,
+					phys_enc->intf_idx);
+		hw_intf->ops.check_and_reset_tearcheck(hw_intf, &tear_status);
+		SDE_ERROR_CMDENC(cmd_enc,
+			"autofresh status:0x%x intf:%d tear_read:0x%x tear_write:0x%x\n",
+			autorefresh_status, phys_enc->intf_idx - INTF_0,
+			tear_status.read_count, tear_status.write_count);
+		SDE_EVT32(DRMID(phys_enc->parent), phys_enc->intf_idx - INTF_0,
+			autorefresh_status, tear_status.read_count,
+			tear_status.write_count);
 	}
 }
 
