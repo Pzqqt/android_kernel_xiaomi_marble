@@ -15048,16 +15048,13 @@ static void hdd_driver_unload(void)
 		QWLAN_VERSIONSTR);
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (!hif_ctx) {
-		hdd_err_rl("hif context is Null");
-		return;
+	if (hif_ctx) {
+		/*
+		 * Trigger runtime sync resume before setting unload in progress
+		 * such that resume can happen successfully
+		 */
+		hif_pm_runtime_sync_resume(hif_ctx);
 	}
-
-	/*
-	 * Trigger runtime sync resume before setting unload in progress
-	 * such that resume can happen successfully
-	 */
-	hif_pm_runtime_sync_resume(hif_ctx);
 
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
