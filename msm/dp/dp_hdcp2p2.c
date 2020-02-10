@@ -31,6 +31,7 @@ struct dp_hdcp2p2_ctrl {
 	DECLARE_KFIFO(cmd_q, enum hdcp_transport_wakeup_cmd, 8);
 	wait_queue_head_t wait_q;
 	atomic_t auth_state;
+	atomic_t abort;
 	enum dp_hdcp2p2_sink_status sink_status; /* Is sink connected */
 	struct dp_hdcp2p2_interrupts *intr;
 	struct sde_hdcp_init_data init_data;
@@ -150,6 +151,9 @@ static void dp_hdcp2p2_set_interrupts(struct dp_hdcp2p2_ctrl *ctrl, bool enable)
 {
 	void __iomem *base = ctrl->init_data.dp_ahb->base;
 	struct dp_hdcp2p2_interrupts *intr = ctrl->intr;
+
+	if (atomic_read(&ctrl->abort))
+		return;
 
 	while (intr && intr->reg) {
 		struct dp_hdcp2p2_int_set *int_set = intr->int_set;
@@ -882,6 +886,13 @@ static int dp_hdcp2p2_main(void *data)
 	return 0;
 }
 
+static void dp_hdcp2p2_abort(void *input, bool abort)
+{
+	struct dp_hdcp2p2_ctrl *ctrl = input;
+
+	atomic_set(&ctrl->abort, abort);
+}
+
 void *sde_dp_hdcp2p2_init(struct sde_hdcp_init_data *init_data)
 {
 	int rc;
@@ -896,6 +907,7 @@ void *sde_dp_hdcp2p2_init(struct sde_hdcp_init_data *init_data)
 		.set_mode = dp_hdcp2p2_register,
 		.on = dp_hdcp2p2_on,
 		.off = dp_hdcp2p2_off,
+		.abort = dp_hdcp2p2_abort,
 		.cp_irq = dp_hdcp2p2_cp_irq,
 		.register_streams = dp_hdcp2p2_register_streams,
 		.deregister_streams = dp_hdcp2p2_deregister_streams,

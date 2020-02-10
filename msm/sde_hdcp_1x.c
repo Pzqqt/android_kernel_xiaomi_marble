@@ -207,6 +207,7 @@ struct sde_hdcp_1x {
 	bool reauth;
 	bool ksv_ready;
 	bool force_encryption;
+	atomic_t abort;
 	enum sde_hdcp_state hdcp_state;
 	struct HDCP_V2V1_MSG_TOPOLOGY current_tp;
 	struct delayed_work hdcp_auth_work;
@@ -1040,7 +1041,7 @@ static void sde_hdcp_1x_update_auth_status(struct sde_hdcp_1x *hdcp)
 
 static void sde_hdcp_1x_auth_work(struct work_struct *work)
 {
-	int rc;
+	int rc = 0;
 	struct delayed_work *dw = to_delayed_work(work);
 	struct sde_hdcp_1x *hdcp = container_of(dw,
 		struct sde_hdcp_1x, hdcp_auth_work);
@@ -1055,6 +1056,9 @@ static void sde_hdcp_1x_auth_work(struct work_struct *work)
 		pr_err("invalid state\n");
 		return;
 	}
+
+	if (atomic_read(&hdcp->abort))
+		goto end;
 
 	hdcp->sink_r0_ready = false;
 	hdcp->reauth = false;
@@ -1484,6 +1488,15 @@ irq_not_handled:
 	return -EINVAL;
 }
 
+static void sde_hdcp_1x_abort(void *data, bool abort)
+{
+	struct sde_hdcp_1x *hdcp = data;
+
+	atomic_set(&hdcp->abort, abort);
+	cancel_delayed_work_sync(&hdcp->hdcp_auth_work);
+	flush_workqueue(hdcp->workq);
+}
+
 void *sde_hdcp_1x_init(struct sde_hdcp_init_data *init_data)
 {
 	struct sde_hdcp_1x *hdcp = NULL;
@@ -1496,6 +1509,7 @@ void *sde_hdcp_1x_init(struct sde_hdcp_init_data *init_data)
 		.feature_supported = sde_hdcp_1x_feature_supported,
 		.force_encryption = sde_hdcp_1x_force_encryption,
 		.sink_support = sde_hdcp_1x_sink_support,
+		.abort = sde_hdcp_1x_abort,
 		.off = sde_hdcp_1x_off
 	};
 

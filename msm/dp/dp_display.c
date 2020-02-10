@@ -513,6 +513,22 @@ static void dp_display_hdcp_process_state(struct dp_display_private *dp)
 	}
 }
 
+static void dp_display_abort_hdcp(struct dp_display_private *dp,
+		bool abort)
+{
+	u8 i = HDCP_VERSION_2P2;
+	struct dp_hdcp_dev *dev = NULL;
+
+	while (i) {
+		dev = &dp->hdcp.dev[i];
+		i >>= 1;
+		if (!(dp->hdcp.source_cap & dev->ver))
+			continue;
+
+		dev->ops->abort(dev->fd, abort);
+	}
+}
+
 static void dp_display_hdcp_cb_work(struct work_struct *work)
 {
 	struct dp_display_private *dp;
@@ -894,6 +910,7 @@ static void dp_display_host_init(struct dp_display_private *dp)
 	dp->hpd->host_init(dp->hpd, &dp->catalog->hpd);
 	dp->ctrl->init(dp->ctrl, flip, reset);
 	enable_irq(dp->irq);
+	dp_display_abort_hdcp(dp, false);
 
 	dp_display_state_add(DP_STATE_INITIALIZED);
 
@@ -971,6 +988,7 @@ static void dp_display_host_deinit(struct dp_display_private *dp)
 		return;
 	}
 
+	dp_display_abort_hdcp(dp, true);
 	dp->ctrl->deinit(dp->ctrl);
 	dp->hpd->host_deinit(dp->hpd, &dp->catalog->hpd);
 	dp->power->deinit(dp->power);
