@@ -430,22 +430,30 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 	uint32_t ratekbps = 0;
 	uint32_t ppdu_rx_rate = 0;
 	uint32_t nss = 0;
+	uint8_t mcs = 0;
 	uint32_t rix;
 	uint16_t ratecode;
-	struct cdp_rx_stats_ppdu_user *ppdu_user;
+	struct cdp_rx_stats_ppdu_user *ppdu_user = NULL;
 
 	if (!peer || !ppdu)
 		return;
 
-	ppdu_user = &ppdu->user[user];
+	if (ppdu->u.ppdu_type != HAL_RX_TYPE_SU) {
+		ppdu_user = &ppdu->user[user];
 
-	if (ppdu_user->nss == 0)
-		nss = 0;
-	else
-		nss = ppdu_user->nss - 1;
+		if (ppdu_user->nss == 0)
+			nss = 0;
+		else
+			nss = ppdu_user->nss - 1;
+		mcs = ppdu_user->mcs;
+
+	} else {
+		mcs = ppdu->u.mcs;
+		nss = ppdu->u.nss;
+	}
 
 	ratekbps = dp_getrateindex(ppdu->u.gi,
-				   ppdu_user->mcs,
+				   mcs,
 				   nss,
 				   ppdu->u.preamble,
 				   ppdu->u.bw,
