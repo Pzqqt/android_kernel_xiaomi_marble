@@ -1746,26 +1746,18 @@ uint32_t dp_rx_srng_get_num_pending(hal_soc_handle_t hal_soc,
 }
 
 #ifdef WLAN_SUPPORT_RX_FISA
-/*
- * dp_rx_skip_tlvs() - Skip TLVs only if FISA is not enabled
- * @vdev: DP vdev context
- * @nbuf: nbuf whose data pointer is adjusted
- * @size: size to be adjusted
- *
- * Return: None
- */
-static void dp_rx_skip_tlvs(struct dp_vdev *vdev, qdf_nbuf_t nbuf, int size)
+void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding)
 {
-	/* TLVs include FISA info do not skip them yet */
-	if (!vdev->osif_fisa_rx)
-		qdf_nbuf_pull_head(nbuf, size);
+	QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(nbuf) = l3_padding;
+	qdf_nbuf_pull_head(nbuf, l3_padding + RX_PKT_TLVS_LEN);
 }
-#else /* !WLAN_SUPPORT_RX_FISA */
-static void dp_rx_skip_tlvs(struct dp_vdev *vdev, qdf_nbuf_t nbuf, int size)
+#else
+void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding)
 {
-	qdf_nbuf_pull_head(nbuf, size);
+	qdf_nbuf_pull_head(nbuf, l3_padding + RX_PKT_TLVS_LEN);
 }
-#endif /* !WLAN_SUPPORT_RX_FISA */
+#endif
+
 
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
@@ -2213,8 +2205,7 @@ done:
 				  RX_PKT_TLVS_LEN;
 
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
-			dp_rx_skip_tlvs(vdev, nbuf, RX_PKT_TLVS_LEN +
-						msdu_metadata.l3_hdr_pad);
+			dp_rx_skip_tlvs(nbuf, msdu_metadata.l3_hdr_pad);
 		}
 
 		/*

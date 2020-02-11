@@ -2084,4 +2084,12 @@ void dp_set_max_page_size(struct qdf_mem_multi_page_t *pages,
 }
 #endif /* MAX_ALLOC_PAGE_SIZE */
 
+/**
+ * dp_rx_skip_tlvs() - Skip TLVs len + L2 hdr_offset, save in nbuf->cb
+ * @nbuf: nbuf cb to be updated
+ * @l2_hdr_offset: l2_hdr_offset
+ *
+ * Return: None
+ */
+void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding);
 #endif /* #ifndef _DP_INTERNAL_H_ */
