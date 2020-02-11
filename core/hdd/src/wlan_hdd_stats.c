@@ -5778,6 +5778,7 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	dynamic_cfg = mlme_get_dynamic_vdev_config(adapter->vdev);
 	if (!dynamic_cfg) {
 		hdd_err("nss chain dynamic config NULL");
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 		return -EINVAL;
 	}
 
