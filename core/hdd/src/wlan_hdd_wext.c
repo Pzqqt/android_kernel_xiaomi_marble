@@ -7940,14 +7940,20 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		if ((apps_args[0] < WLAN_MODULE_ID_MIN) ||
 		    (apps_args[0] >= WLAN_MODULE_ID_MAX)) {
-			hdd_err("Invalid MODULE ID %d", apps_args[0]);
+			hdd_err_rl("Invalid MODULE ID %d", apps_args[0]);
 			return -EINVAL;
 		}
 		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
 		    (apps_args[1] < 0)) {
-			hdd_err("Too Many/Few args %d", apps_args[1]);
+			hdd_err_rl("Too Many/Few args %d", apps_args[1]);
 			return -EINVAL;
 		}
+
+		if (adapter->vdev_id >= WLAN_MAX_VDEVS) {
+			hdd_err_rl("Invalid vdev id");
+			return -EINVAL;
+		}
+
 		status = sme_send_unit_test_cmd(adapter->vdev_id,
 						apps_args[0],
 						apps_args[1],
