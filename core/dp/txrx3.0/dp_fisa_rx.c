@@ -1022,6 +1022,9 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 		next_nbuf = head_nbuf->next;
 		qdf_nbuf_set_next(head_nbuf, NULL);
 
+		qdf_nbuf_push_head(head_nbuf, RX_PKT_TLVS_LEN +
+				   QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(head_nbuf));
+
 		/* Add new flow if the there is no ongoing flow */
 		fisa_flow = dp_rx_get_fisa_flow(dp_fisa_rx_hdl, vdev,
 						head_nbuf);
