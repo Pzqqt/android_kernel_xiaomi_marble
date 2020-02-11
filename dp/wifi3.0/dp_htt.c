@@ -191,6 +191,9 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	if (!peer || !ppdu)
 		return;
 
+	if (ppdu->completion_status != HTT_PPDU_STATS_USER_STATUS_OK)
+		return;
+
 	ratekbps = dp_getrateindex(ppdu->gi,
 				   ppdu->mcs,
 				   ppdu->nss,
