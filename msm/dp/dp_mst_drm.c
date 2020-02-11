@@ -1390,11 +1390,11 @@ static struct dp_mst_bridge *_dp_mst_get_bridge_from_encoder(
 }
 
 static int dp_mst_connector_atomic_check(struct drm_connector *connector,
-		void *display, struct drm_connector_state *new_conn_state)
+		void *display, struct drm_atomic_state *state)
 {
 	int rc = 0, slots, i;
-	struct drm_atomic_state *state;
 	struct drm_connector_state *old_conn_state;
+	struct drm_connector_state *new_conn_state;
 	struct drm_crtc *old_crtc;
 	struct drm_crtc_state *crtc_state;
 	struct dp_mst_bridge *bridge = NULL;
@@ -1412,12 +1412,14 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 	if (mst->state == PM_SUSPEND)
 		return rc;
 
+	if (!state)
+		return rc;
+
+	new_conn_state = drm_atomic_get_new_connector_state(state, connector);
 	if (!new_conn_state)
 		return rc;
 
 	mutex_lock(&mst->mst_lock);
-
-	state = new_conn_state->state;
 
 	old_conn_state = drm_atomic_get_old_connector_state(state, connector);
 	if (!old_conn_state)
