@@ -2781,8 +2781,7 @@ static void lim_process_switch_channel_join_req(
 	/* include additional IE if there is */
 	lim_send_probe_req_mgmt_frame(mac_ctx, &ssId,
 		session_entry->pLimMlmJoinReq->bssDescription.bssId,
-		wlan_reg_freq_to_chan(mac_ctx->pdev,
-				      session_entry->curr_op_freq),
+		session_entry->curr_op_freq,
 		session_entry->self_mac_addr,
 		session_entry->dot11mode,
 		&session_entry->lim_join_req->addIEScan.length,

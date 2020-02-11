@@ -144,7 +144,7 @@ void lim_populate_mac_header(struct mac_context *mac_ctx, uint8_t *buf,
  * @mac_ctx: Pointer to Global MAC structure
  * @ssid: SSID to be sent in Probe Request frame
  * @bssid: BSSID to be sent in Probe Request frame
- * @channel: Channel # on which the Probe Request is going out
+ * @chan_freq: Channel frequency on which the Probe Request is going out
  * @self_macaddr: self MAC address
  * @dot11mode: self dotllmode
  * @additional_ielen: if non-zero, include additional_ie in the Probe Request
@@ -167,7 +167,7 @@ QDF_STATUS
 lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			      tSirMacSSid *ssid,
 			      tSirMacAddr bssid,
-			      uint8_t channel,
+			      qdf_freq_t chan_freq,
 			      tSirMacAddr self_macaddr,
 			      uint32_t dot11mode,
 			      uint16_t *additional_ielen,
@@ -190,11 +190,12 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	tDot11fIEExtCap extracted_ext_cap;
 	QDF_STATUS sir_status;
 	const uint8_t *qcn_ie = NULL;
-	uint32_t chan_freq;
+	uint8_t channel;
 
 	if (additional_ielen)
 		addn_ielen = *additional_ielen;
 
+	channel = wlan_reg_freq_to_chan(mac_ctx->pdev, chan_freq);
 	/*
 	 * The probe req should not send 11ac capabilities if band is
 	 * 2.4GHz, unless gEnableVhtFor24GHzBand is enabled in INI. So
@@ -266,14 +267,15 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	txPower = (uint8_t) rrm_get_mgmt_tx_power(mac_ctx, pesession);
 	populate_dot11f_wfatpc(mac_ctx, &pr.WFATPC, txPower, 0);
 
-
 	if (pesession) {
 		pesession->htCapability = IS_DOT11_MODE_HT(dot11mode);
 		/* Include HT Capability IE */
-		if (pesession->htCapability)
+		if (pesession->htCapability &&
+		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq)))
 			populate_dot11f_ht_caps(mac_ctx, pesession, &pr.HTCaps);
 	} else {                /* !pesession */
-		if (IS_DOT11_MODE_HT(dot11mode))
+		if (IS_DOT11_MODE_HT(dot11mode) &&
+		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq)))
 			populate_dot11f_ht_caps(mac_ctx, NULL, &pr.HTCaps);
 	}
 
@@ -281,7 +283,8 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Set channelbonding information as "disabled" when tunned to a
 	 * 2.4 GHz channel
 	 */
-	if (channel <= SIR_11B_CHANNEL_END) {
+	if (channel <= SIR_11B_CHANNEL_END &&
+	    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {
 		if (mac_ctx->roam.configParam.channelBondingMode24GHz
 		    == PHY_SINGLE_CHANNEL_CENTERED) {
 			pr.HTCaps.supportedChannelWidthSet =
@@ -295,13 +298,15 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (pesession) {
 		pesession->vhtCapability = IS_DOT11_MODE_VHT(dot11mode);
 		/* Include VHT Capability IE */
-		if (pesession->vhtCapability) {
+		if (pesession->vhtCapability &&
+		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {
 			populate_dot11f_vht_caps(mac_ctx, pesession,
 						 &pr.VHTCaps);
 			is_vht_enabled = true;
 		}
 	} else {
-		if (IS_DOT11_MODE_VHT(dot11mode)) {
+		if (IS_DOT11_MODE_VHT(dot11mode) &&
+		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {
 			populate_dot11f_vht_caps(mac_ctx, pesession,
 						 &pr.VHTCaps);
 			is_vht_enabled = true;
@@ -406,8 +411,6 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			     additional_ie, addn_ielen);
 		payload += addn_ielen;
 	}
-
-	chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, channel);
 
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.

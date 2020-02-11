@@ -1617,8 +1617,7 @@ static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ct
 		ssid.length = session->ssId.length;
 		lim_send_probe_req_mgmt_frame(mac_ctx, &ssid,
 			session->pLimMlmJoinReq->bssDescription.bssId,
-			wlan_reg_freq_to_chan(mac_ctx->pdev,
-					      session->curr_op_freq),
+			session->curr_op_freq,
 			session->self_mac_addr, session->dot11mode,
 			&session->lim_join_req->addIEScan.length,
 			session->lim_join_req->addIEScan.addIEdata);

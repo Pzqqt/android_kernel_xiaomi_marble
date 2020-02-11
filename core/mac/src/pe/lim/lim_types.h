@@ -488,8 +488,8 @@ void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pRxMe
 void lim_populate_mac_header(struct mac_context *, uint8_t *, uint8_t, uint8_t,
 				      tSirMacAddr, tSirMacAddr);
 QDF_STATUS lim_send_probe_req_mgmt_frame(struct mac_context *, tSirMacSSid *,
-					    tSirMacAddr, uint8_t, tSirMacAddr,
-					    uint32_t, uint16_t *, uint8_t *);
+					 tSirMacAddr, qdf_freq_t, tSirMacAddr,
+					 uint32_t, uint16_t *, uint8_t *);
 
 /**
  * lim_send_probe_rsp_mgmt_frame() - Send probe response

@@ -1599,8 +1599,7 @@ lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 				lim_send_probe_req_mgmt_frame(
 					mac, &pe_session->ssId,
 					pe_session->bssId,
-					wlan_reg_freq_to_chan(
-					mac->pdev, pe_session->curr_op_freq),
+					pe_session->curr_op_freq,
 					pe_session->self_mac_addr,
 					pe_session->dot11mode,
 					NULL, NULL);
