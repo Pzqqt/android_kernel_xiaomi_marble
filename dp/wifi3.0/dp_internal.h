@@ -1135,8 +1135,15 @@ void dp_htt_stats_print_tag(struct dp_pdev *pdev,
 void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag_buf);
 QDF_STATUS dp_h2t_3tuple_config_send(struct dp_pdev *pdev, uint32_t tuple_mask,
 				     uint8_t mac_id);
-void dp_peer_rxtid_stats(struct dp_peer *peer, void (*callback_fn),
-		void *cb_ctxt);
+/**
+ * dp_rxtid_stats_cmd_cb - function pointer for peer
+ *			   rx tid stats cmd call_back
+ */
+typedef void (*dp_rxtid_stats_cmd_cb)(struct dp_soc *soc, void *cb_ctxt,
+				      union hal_reo_status *reo_status);
+int dp_peer_rxtid_stats(struct dp_peer *peer,
+			dp_rxtid_stats_cmd_cb dp_stats_cmd_cb,
+			void *cb_ctxt);
 QDF_STATUS
 dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 		      uint8_t *peer_mac, enum cdp_sec_type sec_type,

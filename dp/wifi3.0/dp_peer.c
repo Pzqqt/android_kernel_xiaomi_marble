@@ -3586,17 +3586,20 @@ bool dp_find_peer_exist(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
  * @dp_stats_cmd_cb: REO command callback function
  * @cb_ctxt: Callback context
  *
- * Return: none
+ * Return: count of tid stats cmd send succeeded
  */
-void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
+int dp_peer_rxtid_stats(struct dp_peer *peer,
+			dp_rxtid_stats_cmd_cb dp_stats_cmd_cb,
 			void *cb_ctxt)
 {
 	struct dp_soc *soc = peer->vdev->pdev->soc;
 	struct hal_reo_cmd_params params;
 	int i;
+	int stats_cmd_sent_cnt = 0;
+	QDF_STATUS status;
 
 	if (!dp_stats_cmd_cb)
-		return;
+		return stats_cmd_sent_cnt;
 
 	qdf_mem_zero(&params, sizeof(params));
 	for (i = 0; i < DP_MAX_TIDS; i++) {
@@ -3609,12 +3612,19 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 
 			if (cb_ctxt) {
-				dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS,
-					&params, dp_stats_cmd_cb, cb_ctxt);
+				status = dp_reo_send_cmd(
+						soc, CMD_GET_QUEUE_STATS,
+						&params, dp_stats_cmd_cb,
+						cb_ctxt);
 			} else {
-				dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS,
-					&params, dp_stats_cmd_cb, rx_tid);
+				status = dp_reo_send_cmd(
+						soc, CMD_GET_QUEUE_STATS,
+						&params, dp_stats_cmd_cb,
+						rx_tid);
 			}
+
+			if (QDF_IS_STATUS_SUCCESS(status))
+				stats_cmd_sent_cnt++;
 
 			/* Flush REO descriptor from HW cache to update stats
 			 * in descriptor memory. This is to help debugging */
@@ -3629,6 +3639,8 @@ void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
 				NULL);
 		}
 	}
+
+	return stats_cmd_sent_cnt;
 }
 
 QDF_STATUS
