@@ -25,9 +25,7 @@
  * WLAN Host Device Driver SAR limits API specification
  */
 
-#ifdef FEATURE_SAR_LIMITS
-
-#ifdef SAR_SAFETY_FEATURE
+#if defined(FEATURE_SAR_LIMITS) && defined(SAR_SAFETY_FEATURE)
 /**
  * wlan_hdd_sar_unsolicited_timer_start() - Start SAR unsolicited timer
  * @hdd_ctx: Pointer to HDD context
@@ -148,6 +146,7 @@ static inline void hdd_configure_sar_resume_index(struct hdd_context *hdd_ctx)
 
 #endif
 
+#ifdef FEATURE_SAR_LIMITS
 /**
  * wlan_hdd_cfg80211_get_sar_power_limits() - Get SAR power limits
  * @wiphy: Pointer to wireless phy
