@@ -38,6 +38,10 @@ static u32 dither_depth_map[DITHER_DEPTH_MAP_INDEX] = {
 	0, 0, 0, 0, 0, 1, 2, 3, 3
 };
 
+#define DITHER_VER_MAJOR_1 1
+/* supports LUMA Dither */
+#define DITHER_VER_MAJOR_2 2
+
 #define MERGE_3D_MODE 0x004
 #define MERGE_3D_MUX  0x000
 
@@ -311,7 +315,7 @@ static int sde_hw_pp_setup_dsc(struct sde_hw_pingpong *pp)
 	return 0;
 }
 
-static int sde_hw_pp_setup_dither_v1(struct sde_hw_pingpong *pp,
+static int sde_hw_pp_setup_dither(struct sde_hw_pingpong *pp,
 					void *cfg, size_t len)
 {
 	struct sde_hw_blk_reg_map *c;
@@ -357,7 +361,12 @@ static int sde_hw_pp_setup_dither_v1(struct sde_hw_pingpong *pp,
 			((dither->matrix[i + 3] & REG_MASK(4)) << 12);
 		SDE_REG_WRITE(c, base + offset, data);
 	}
-	SDE_REG_WRITE(c, base, 1);
+
+	if (test_bit(SDE_PINGPONG_DITHER_LUMA, &pp->caps->features)
+				&& (dither->flags & DITHER_LUMA_MODE))
+		SDE_REG_WRITE(c, base, 0x11);
+	else
+		SDE_REG_WRITE(c, base, 1);
 
 	return 0;
 }
@@ -491,8 +500,9 @@ static void _setup_pingpong_ops(struct sde_hw_pingpong_ops *ops,
 
 	version = SDE_COLOR_PROCESS_MAJOR(hw_cap->sblk->dither.version);
 	switch (version) {
-	case 1:
-		ops->setup_dither = sde_hw_pp_setup_dither_v1;
+	case DITHER_VER_MAJOR_1:
+	case DITHER_VER_MAJOR_2:
+		ops->setup_dither = sde_hw_pp_setup_dither;
 		break;
 	default:
 		ops->setup_dither = NULL;

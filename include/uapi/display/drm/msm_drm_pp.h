@@ -412,10 +412,12 @@ struct drm_msm_ad4_cfg {
 };
 
 #define DITHER_MATRIX_SZ 16
+#define DITHER_LUMA_MODE (1 << 0)
 
 /**
  * struct drm_msm_dither - dither feature structure
- * @flags: for customizing operations
+ * @flags: flags for the feature customization, values can be:
+	   -DITHER_LUMA_MODE: Enable LUMA dither mode
  * @temporal_en: temperal dither enable
  * @c0_bitdepth: c0 component bit depth
  * @c1_bitdepth: c1 component bit depth
