@@ -535,6 +535,41 @@ typedef enum HTT_PPDU_STATS_SEQ_TYPE HTT_PPDU_STATS_SEQ_TYPE;
          ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_M    0x02000000
+#define HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_S            25
+
+#define HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_S)); \
+    } while (0)
+
+enum HTT_PPDU_STATS_SPATIAL_REUSE {
+    HTT_SRP_DISALLOW                        =  0,
+    /* values 1-12 are reserved */
+    HTT_SR_RESTRICTED                       = 13,
+    HTT_SR_DELAY                            = 14,
+    HTT_SRP_AND_NON_SRG_OBSS_PD_PROHIBITED  = 15,
+};
+typedef enum HTT_PPDU_STATS_SPATIAL_REUSE HTT_PPDU_STATS_SPATIAL_REUSE;
+
+#define HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_M    0x3c000000
+#define HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_S            26
+
+#define HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_S)); \
+    } while (0)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -634,17 +669,22 @@ typedef struct {
      *                 then beam_change = 0.
      *                 If we apply TxBF only starting from HE portion,
      *                 then beam_change = 1.
-     * BIT [31 : 25] - reserved
+     * BIT [25 : 25] - doppler_indication
+     * BIT [29 : 26] - spatial_reuse for HE_SU,HE_MU and HE_EXT_SU format PPDU
+     *                 HTT_PPDU_STATS_SPATIAL_REUSE
+     * BIT [31 : 30] - reserved
      */
     union {
         A_UINT32 reserved__ppdu_tx_time_us;
         A_UINT32 reserved__num_ul_expected_users__ppdu_tx_time_us;
+        A_UINT32 reserved__spatial_reuse__doppler_indication__beam_change__num_ul_expected_users__ppdu_tx_time_us;
         struct {
             A_UINT32 phy_ppdu_tx_time_us:   16,
                      num_ul_expected_users:  8,
                      beam_change:            1,
                      doppler_indication:     1,
-                     reserved1:              6;
+                     spatial_reuse:          4,
+                     reserved1:              2;
         };
     };
     /* ppdu_start_tstmp_u32_us:
