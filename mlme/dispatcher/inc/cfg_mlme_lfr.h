@@ -2212,7 +2212,7 @@
  * rssi delta and if other criteria of ini "enable_idle_roam" is met
  * @Min: 0
  * @Max: 50
- * @Default: 5
+ * @Default: 3
  *
  * Related: enable_idle_roam
  *
@@ -2226,7 +2226,7 @@
 	"idle_roam_rssi_delta", \
 	0, \
 	50, \
-	5, \
+	3, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Configure RSSI delta to start idle roam")
 
