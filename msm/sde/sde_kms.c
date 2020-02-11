@@ -1319,6 +1319,49 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		SDE_ERROR("capping number of displays to %d", max_encoders);
 	}
 
+	/* wb */
+	for (i = 0; i < sde_kms->wb_display_count &&
+		priv->num_encoders < max_encoders; ++i) {
+		display = sde_kms->wb_displays[i];
+		encoder = NULL;
+
+		memset(&info, 0x0, sizeof(info));
+		rc = sde_wb_get_info(NULL, &info, display);
+		if (rc) {
+			SDE_ERROR("wb get_info %d failed\n", i);
+			continue;
+		}
+
+		encoder = sde_encoder_init(dev, &info);
+		if (IS_ERR_OR_NULL(encoder)) {
+			SDE_ERROR("encoder init failed for wb %d\n", i);
+			continue;
+		}
+
+		rc = sde_wb_drm_init(display, encoder);
+		if (rc) {
+			SDE_ERROR("wb bridge %d init failed, %d\n", i, rc);
+			sde_encoder_destroy(encoder);
+			continue;
+		}
+
+		connector = sde_connector_init(dev,
+				encoder,
+				0,
+				display,
+				&wb_ops,
+				DRM_CONNECTOR_POLL_HPD,
+				DRM_MODE_CONNECTOR_VIRTUAL);
+		if (connector) {
+			priv->encoders[priv->num_encoders++] = encoder;
+			priv->connectors[priv->num_connectors++] = connector;
+		} else {
+			SDE_ERROR("wb %d connector init failed\n", i);
+			sde_wb_drm_deinit(display);
+			sde_encoder_destroy(encoder);
+		}
+	}
+
 	/* dsi */
 	for (i = 0; i < sde_kms->dsi_display_count &&
 		priv->num_encoders < max_encoders; ++i) {
@@ -1372,49 +1415,6 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		}
 	}
 
-
-	/* wb */
-	for (i = 0; i < sde_kms->wb_display_count &&
-		priv->num_encoders < max_encoders; ++i) {
-		display = sde_kms->wb_displays[i];
-		encoder = NULL;
-
-		memset(&info, 0x0, sizeof(info));
-		rc = sde_wb_get_info(NULL, &info, display);
-		if (rc) {
-			SDE_ERROR("wb get_info %d failed\n", i);
-			continue;
-		}
-
-		encoder = sde_encoder_init(dev, &info);
-		if (IS_ERR_OR_NULL(encoder)) {
-			SDE_ERROR("encoder init failed for wb %d\n", i);
-			continue;
-		}
-
-		rc = sde_wb_drm_init(display, encoder);
-		if (rc) {
-			SDE_ERROR("wb bridge %d init failed, %d\n", i, rc);
-			sde_encoder_destroy(encoder);
-			continue;
-		}
-
-		connector = sde_connector_init(dev,
-				encoder,
-				0,
-				display,
-				&wb_ops,
-				DRM_CONNECTOR_POLL_HPD,
-				DRM_MODE_CONNECTOR_VIRTUAL);
-		if (connector) {
-			priv->encoders[priv->num_encoders++] = encoder;
-			priv->connectors[priv->num_connectors++] = connector;
-		} else {
-			SDE_ERROR("wb %d connector init failed\n", i);
-			sde_wb_drm_deinit(display);
-			sde_encoder_destroy(encoder);
-		}
-	}
 	/* dp */
 	for (i = 0; i < sde_kms->dp_display_count &&
 			priv->num_encoders < max_encoders; ++i) {
