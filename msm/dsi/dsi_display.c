@@ -2723,7 +2723,8 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 		m_flags |= DSI_CTRL_CMD_LAST_COMMAND;
 	}
 
-	if (display->queue_cmd_waits) {
+	if (display->queue_cmd_waits ||
+			msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE) {
 		flags |= DSI_CTRL_CMD_ASYNC_WAIT;
 		m_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
 	}
@@ -2883,7 +2884,8 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 				msg->ctrl : 0;
 		u32 cmd_flags = DSI_CTRL_CMD_FETCH_MEMORY;
 
-		if (display->queue_cmd_waits)
+		if (display->queue_cmd_waits ||
+				msg->flags & MIPI_DSI_MSG_ASYNC_OVERRIDE)
 			cmd_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
 
 		rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
@@ -7514,14 +7516,44 @@ int dsi_display_pre_disable(struct dsi_display *display)
 		if (display->config.panel_mode == DSI_OP_CMD_MODE)
 			dsi_panel_pre_mode_switch_to_video(display->panel);
 
-		if (display->config.panel_mode == DSI_OP_VIDEO_MODE)
+		if (display->config.panel_mode == DSI_OP_VIDEO_MODE) {
+			/*
+			 * Add unbalanced vote for clock & cmd engine to enable
+			 * async trigger of pre video to cmd mode switch.
+			 */
+			rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+					DSI_ALL_CLKS, DSI_CLK_ON);
+			if (rc) {
+				DSI_ERR("[%s]failed to enable all clocks,rc=%d",
+						display->name, rc);
+				goto exit;
+			}
+
+			rc = dsi_display_cmd_engine_enable(display);
+			if (rc) {
+				DSI_ERR("[%s]failed to enable cmd engine,rc=%d",
+						display->name, rc);
+				goto error_disable_clks;
+			}
+
 			dsi_panel_pre_mode_switch_to_cmd(display->panel);
+		}
 	} else {
 		rc = dsi_panel_pre_disable(display->panel);
 		if (rc)
 			DSI_ERR("[%s] panel pre-disable failed, rc=%d\n",
 				display->name, rc);
 	}
+	goto exit;
+
+error_disable_clks:
+	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+			DSI_ALL_CLKS, DSI_CLK_OFF);
+	if (rc)
+		DSI_ERR("[%s] failed to disable all DSI clocks, rc=%d\n",
+		       display->name, rc);
+
+exit:
 	mutex_unlock(&display->display_lock);
 	return rc;
 }
@@ -7624,7 +7656,8 @@ int dsi_display_update_pps(char *pps_cmd, void *disp)
 
 int dsi_display_unprepare(struct dsi_display *display)
 {
-	int rc = 0;
+	int rc = 0, i;
+	struct dsi_display_ctrl *ctrl;
 
 	if (!display) {
 		DSI_ERR("Invalid params\n");
@@ -7644,6 +7677,24 @@ int dsi_display_unprepare(struct dsi_display *display)
 			DSI_ERR("[%s] panel unprepare failed, rc=%d\n",
 			       display->name, rc);
 	}
+
+	/* Remove additional vote added for pre_mode_switch_to_cmd */
+	if (display->poms_pending &&
+			display->config.panel_mode == DSI_OP_VIDEO_MODE) {
+		display_for_each_ctrl(i, display) {
+			ctrl = &display->ctrl[i];
+			if (!ctrl->ctrl || !ctrl->ctrl->dma_wait_queued)
+				continue;
+			flush_workqueue(display->dma_cmd_workq);
+			cancel_work_sync(&ctrl->ctrl->dma_cmd_wait);
+			ctrl->ctrl->dma_wait_queued = false;
+		}
+
+		dsi_display_cmd_engine_disable(display);
+		dsi_display_clk_ctrl(display->dsi_clk_handle,
+				DSI_ALL_CLKS, DSI_CLK_OFF);
+	}
+
 	rc = dsi_display_ctrl_host_disable(display);
 	if (rc)
 		DSI_ERR("[%s] failed to disable DSI host, rc=%d\n",
