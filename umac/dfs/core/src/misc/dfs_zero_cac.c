@@ -4243,8 +4243,12 @@ dfs_find_agile_width(struct wlan_dfs *dfs, enum phy_ch_width chwidth)
 	case CH_WIDTH_40MHZ:
 		return CH_WIDTH_40MHZ;
 	case CH_WIDTH_80MHZ:
+		return CH_WIDTH_80MHZ;
 	case CH_WIDTH_80P80MHZ:
 	case CH_WIDTH_160MHZ:
+		if (dfs_is_true_160mhz_supported(dfs) ||
+		    dfs_is_restricted_80p80mhz_supported(dfs))
+			return CH_WIDTH_160MHZ;
 		return CH_WIDTH_80MHZ;
 	default:
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid chwidth enum!");
@@ -4359,6 +4363,13 @@ void dfs_get_ieeechan_for_agilecac_for_freq(struct wlan_dfs *dfs,
 		dfs->dfs_agile_precac_freq_mhz = ieee_chan_freq;
 	else
 		dfs->dfs_agile_precac_freq_mhz = 0;
+
+	/* It was assumed that the bandwidth of the restricted 80p80 channel is
+	 * 160MHz to build the precac tree. But when configuring Agile the
+	 * channel width should be given as 80p80.
+	 */
+	if (ieee_chan_freq == RESTRICTED_80P80_CHAN_CENTER_FREQ)
+		dfs->dfs_precac_chwidth = CH_WIDTH_80P80MHZ;
 
 	*ch_freq = dfs->dfs_agile_precac_freq_mhz;
 }
