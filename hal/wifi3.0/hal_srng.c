@@ -258,6 +258,7 @@ static void hal_target_based_configure(struct hal_soc *hal)
 #ifdef QCA_WIFI_QCA6750
 		case TARGET_TYPE_QCA6750:
 			hal->use_register_windowing = true;
+			hal->static_window_map = true;
 			hal_qca6750_attach(hal);
 		break;
 #endif
