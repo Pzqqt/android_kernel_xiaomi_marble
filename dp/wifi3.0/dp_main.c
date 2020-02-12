@@ -1075,8 +1075,7 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	break;
 
 	case RXDMA_MONITOR_BUF:
-		/* TODO: support low_thresh interrupt */
-		return -QDF_STATUS_E_NOENT;
+		grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[0];
 	break;
 
 	case TCL_DATA:
@@ -1333,6 +1332,15 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 		ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
 		ring_params->intr_batch_cntr_thres_entries = 0;
 	}
+
+	/* In case of PCI chipsets, we dont have PPDU end interrupts,
+	 * so MONITOR STATUS ring is reaped by receiving MSI from srng.
+	 * Keep batch threshold as 8 so that interrupt is received for
+	 * every 4 packets in MONITOR_STATUS ring
+	 */
+	if ((ring_type == RXDMA_MONITOR_STATUS) &&
+	    (soc->intr_mode == DP_INTR_MSI))
+		ring_params->intr_batch_cntr_thres_entries = 4;
 }
 #endif
 
@@ -2038,6 +2046,10 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int rxdma2host_ring_mask = wlan_cfg_get_rxdma2host_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
+	int host2rxdma_ring_mask = wlan_cfg_get_host2rxdma_ring_mask(
+					soc->wlan_cfg_ctx, intr_ctx_num);
+	int host2rxdma_mon_ring_mask = wlan_cfg_get_host2rxdma_mon_ring_mask(
+					soc->wlan_cfg_ctx, intr_ctx_num);
 
 	unsigned int vector =
 		(intr_ctx_num % msi_vector_count) + msi_vector_start;
@@ -2046,7 +2058,8 @@ static void dp_soc_interrupt_map_calculate_msi(struct dp_soc *soc,
 	soc->intr_mode = DP_INTR_MSI;
 
 	if (tx_mask | rx_mask | rx_mon_mask | rx_err_ring_mask |
-	    rx_wbm_rel_ring_mask | reo_status_ring_mask | rxdma2host_ring_mask)
+	    rx_wbm_rel_ring_mask | reo_status_ring_mask | rxdma2host_ring_mask |
+	    host2rxdma_ring_mask | host2rxdma_mon_ring_mask)
 		irq_id_map[num_irq++] =
 			pld_get_msi_irq(soc->osdev->dev, vector);
 
@@ -11307,7 +11320,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		soc->hw_nac_monitor_support = 1;
 		soc->per_tid_basize_max_tid = 8;
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
-		soc->lmac_polled_mode = 1;
+		soc->lmac_polled_mode = 0;
 		soc->wbm_release_desc_rx_sg_support = 1;
 		if (cfg_get(soc->ctrl_psoc, CFG_DP_FULL_MON_MODE))
 			soc->full_mon_mode = true;
