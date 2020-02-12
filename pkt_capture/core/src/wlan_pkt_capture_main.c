@@ -43,6 +43,143 @@ enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv->cfg_param.pkt_capture_mode;
 }
 
+QDF_STATUS
+pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
+			       QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t),
+			       void *context)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev priv is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_priv->cb_ctx->mon_cb = mon_cb;
+	vdev_priv->cb_ctx->mon_ctx = context;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		pkt_capture_err("vdev priv is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_priv->cb_ctx->mon_cb = NULL;
+	vdev_priv->cb_ctx->mon_ctx = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
+				 enum pkt_capture_mode mode)
+{
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!psoc) {
+		pkt_capture_err("psoc is NULL");
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
+							QDF_STA_MODE,
+							WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (vdev_priv)
+		vdev_priv->cb_ctx->pkt_capture_mode = mode;
+	else
+		pkt_capture_err("vdev_priv is NULL");
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
+}
+
+enum pkt_capture_mode
+pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
+{
+	enum pkt_capture_mode mode = PACKET_CAPTURE_MODE_DISABLE;
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!psoc) {
+		pkt_capture_err("psoc is NULL");
+		return 0;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
+							QDF_STA_MODE,
+							WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return 0;
+	}
+
+	vdev_priv = pkt_capture_vdev_get_priv(vdev);
+	if (!vdev_priv)
+		pkt_capture_err("vdev_priv is NULL");
+	else
+		mode = vdev_priv->cb_ctx->pkt_capture_mode;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
+	return mode;
+}
+
+/**
+ * pkt_capture_callback_ctx_create() - Create packet capture callback context
+ * @vdev_priv: pointer to packet capture vdev priv obj
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+pkt_capture_callback_ctx_create(struct pkt_capture_vdev_priv *vdev_priv)
+{
+	struct pkt_capture_cb_context *cb_ctx;
+
+	cb_ctx = qdf_mem_malloc(sizeof(*cb_ctx));
+	if (!cb_ctx) {
+		pkt_capture_err("MON context create failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	vdev_priv->cb_ctx = cb_ctx;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * pkt_capture_callback_ctx_destroy() - Destroy packet capture callback context
+ * @vdev_priv: pointer to packet capture vdev priv obj
+ *
+ * Return: None
+ */
+static void
+pkt_capture_callback_ctx_destroy(struct pkt_capture_vdev_priv *vdev_priv)
+{
+	qdf_mem_free(vdev_priv->cb_ctx);
+}
+
 /**
  * pkt_capture_mon_context_create() - Create packet capture mon context
  * @vdev_priv: pointer to packet capture vdev priv obj
@@ -120,11 +257,18 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 
 	vdev_priv->vdev = vdev;
 
+	status = pkt_capture_callback_ctx_create(vdev_priv);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pkt_capture_err("Failed to create callback context");
+		goto detach_vdev_priv;
+	}
+
 	status = pkt_capture_mon_context_create(vdev_priv);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pkt_capture_err("Failed to create mon context");
-		goto detach_vdev_priv;
+		goto destroy_pkt_capture_cb_context;
 	}
+
 	mon_ctx = vdev_priv->mon_ctx;
 
 	status = pkt_capture_alloc_mon_thread(mon_ctx);
@@ -144,6 +288,8 @@ open_mon_thread_fail:
 	pkt_capture_free_mon_pkt_freeq(mon_ctx);
 destroy_mon_context:
 	pkt_capture_mon_context_destroy(vdev_priv);
+destroy_pkt_capture_cb_context:
+	pkt_capture_callback_ctx_destroy(vdev_priv);
 detach_vdev_priv:
 	wlan_objmgr_vdev_component_obj_detach(vdev,
 					      WLAN_UMAC_COMP_PKT_CAPTURE,
@@ -174,6 +320,7 @@ pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 
 	pkt_capture_close_mon_thread(vdev_priv->mon_ctx);
 	pkt_capture_mon_context_destroy(vdev_priv);
+	pkt_capture_callback_ctx_destroy(vdev_priv);
 	qdf_mem_free(vdev_priv);
 	return status;
 }

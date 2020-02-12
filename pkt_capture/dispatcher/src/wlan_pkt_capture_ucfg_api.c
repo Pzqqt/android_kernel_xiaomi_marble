@@ -30,6 +30,65 @@ enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 	return pkt_capture_get_mode(psoc);
 }
 
+/**
+ * ucfg_pkt_capture_register_callbacks - Register packet capture callbacks
+ * @vdev: pointer to wlan vdev object manager
+ * mon_cb: callback to call
+ * context: callback context
+ *
+ * Return: 0 in case of success, invalid in case of failure.
+ */
+QDF_STATUS
+ucfg_pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
+				    QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t),
+				    void *context)
+{
+	return pkt_capture_register_callbacks(vdev, mon_cb, context);
+}
+
+/**
+ * ucfg_pkt_capture_deregister_callbacks - De-register packet capture callbacks
+ * @vdev: pointer to wlan vdev object manager
+ *
+ * Return: 0 in case of success, invalid in case of failure.
+ */
+QDF_STATUS ucfg_pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev)
+{
+	return pkt_capture_deregister_callbacks(vdev);
+}
+
+/**
+ * ucfg_pkt_capture_set_pktcap_mode - Set packet capture mode
+ * @psoc: pointer to psoc object
+ * @mode: mode to be set
+ *
+ * Return: None
+ */
+void ucfg_pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
+				      enum pkt_capture_mode mode)
+{
+	pkt_capture_set_pktcap_mode(psoc, mode);
+}
+
+/**
+ * ucfg_pkt_capture_get_pktcap_mode - Get packet capture mode
+ * @psoc: pointer to psoc object
+ *
+ * Return: enum pkt_capture_mode
+ */
+enum pkt_capture_mode
+ucfg_pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return pkt_capture_get_pktcap_mode(psoc);
+}
+
+/**
+ * ucfg_pkt_capture_init() - Packet capture component initialization.
+ *
+ * This function gets called when packet capture initializing.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success.
+ */
 QDF_STATUS ucfg_pkt_capture_init(void)
 {
 	QDF_STATUS status;
