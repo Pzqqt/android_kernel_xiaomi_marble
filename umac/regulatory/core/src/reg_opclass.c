@@ -526,6 +526,32 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					op_class,
 					chan_num);
 }
+
+bool reg_country_opclass_freq_check(struct wlan_objmgr_pdev *pdev,
+				    const uint8_t country[3],
+				    uint8_t op_class,
+				    qdf_freq_t chan_freq)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+	uint8_t i;
+
+	op_class_tbl = reg_get_class_from_country((uint8_t *)country);
+
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if  (op_class_tbl->op_class == op_class) {
+			for (i = 0; (i < REG_MAX_CHANNELS_PER_OPERATING_CLASS &&
+				     op_class_tbl->channels[i]); i++) {
+				if (op_class_tbl->channels[i] *
+				    FREQ_TO_CHAN_SCALE +
+				    op_class_tbl->start_freq == chan_freq)
+					return true;
+			}
+		}
+		op_class_tbl++;
+	}
+	return false;
+}
+
 #endif
 
 uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
@@ -781,4 +807,5 @@ QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
 #endif

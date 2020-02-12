@@ -1172,6 +1172,21 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 				    uint8_t *chan_num);
 
 /**
+ * wlan_reg_country_opclass_freq_check() - checks frequency in (ctry, op class)
+ *                                         pair
+ * @pdev: pdev ptr
+ * @country: country information
+ * @op_class: operating class
+ * @chan_freq: channel frequency
+ *
+ * Return: bool
+ */
+bool wlan_reg_country_opclass_freq_check(struct wlan_objmgr_pdev *pdev,
+					 const uint8_t country[3],
+					 uint8_t op_class,
+					 qdf_freq_t chan_freq);
+
+/**
  * wlan_reg_get_5g_bonded_channel_and_state_for_freq()- Return the channel
  * state for a 5G or 6G channel frequency based on the channel width and
  * bonded channel.

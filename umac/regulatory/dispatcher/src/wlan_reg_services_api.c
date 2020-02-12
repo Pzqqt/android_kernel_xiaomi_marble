@@ -1009,6 +1009,15 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					 chan_num);
 }
 
+bool wlan_reg_country_opclass_freq_check(struct wlan_objmgr_pdev *pdev,
+					 const uint8_t country[3],
+					 uint8_t op_class,
+					 qdf_freq_t chan_freq)
+{
+	return reg_country_opclass_freq_check(pdev, country,
+					      op_class, chan_freq);
+}
+
 enum channel_state
 wlan_reg_get_5g_bonded_channel_and_state_for_freq(struct wlan_objmgr_pdev *pdev,
 						  uint16_t freq,
