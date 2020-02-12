@@ -531,18 +531,10 @@ QDF_STATUS pmo_core_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	/* Suspend all components before sending target suspend command */
-	status = pmo_suspend_all_components(psoc, type);
-	if (status != QDF_STATUS_SUCCESS) {
-		pmo_err("Failed to suspend all component");
-		goto dec_psoc_ref;
-	}
-
 	status = pmo_core_psoc_configure_suspend(psoc, false);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to configure suspend");
 
-dec_psoc_ref:
 	pmo_psoc_put_ref(psoc);
 out:
 	pmo_exit();
@@ -712,18 +704,10 @@ QDF_STATUS pmo_core_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 		goto out;
 	}
 
-	/* Resume all components */
-	status = pmo_resume_all_components(psoc, type);
-	if (status != QDF_STATUS_SUCCESS) {
-		pmo_err("Failed to resume all the components");
-		goto dec_psoc_ref;
-	}
-
 	status = pmo_core_psoc_configure_resume(psoc, false);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to configure resume");
 
-dec_psoc_ref:
 	pmo_psoc_put_ref(psoc);
 out:
 	pmo_exit();
