@@ -2036,14 +2036,6 @@ IE ESERadMgmtCap (EID_VENDOR_SPECIFIC) OUI (0x00, 0x40, 0x96, 0x01)
 
 }
 
-IE BeaconReportStatus (EID_VENDOR_SPECIFIC) OUI (0x00, 0x00, 0x00F, 0x22)
-{
-        sub_type,       1;
-        version,        1;
-        length,         1;
-        reason_code,    1;
-}
-
 IE Vendor1IE (EID_VENDOR_SPECIFIC) OUI (0x00, 0x10, 0x18)
 {
 }
@@ -4132,7 +4124,6 @@ FRAME RadioMeasurementReport
    FF   DialogToken;
    //Measurement Report elements.
    MANDIE MeasurementReport[1..4];
-   OPTIE  BeaconReportStatus;
 }
 
 FRAME LinkMeasurementRequest
