@@ -40,13 +40,27 @@ struct pkt_capture_cfg {
 };
 
 /**
+ * struct pkt_capture_cb_context - packet capture callback context
+ * @mon_cb: monitor callback function pointer
+ * @mon_ctx: monitor callback context
+ * @pkt_capture_mode: packet capture mode
+ */
+struct pkt_capture_cb_context {
+	QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t);
+	void *mon_ctx;
+	enum pkt_capture_mode pkt_capture_mode;
+};
+
+/**
  * struct pkt_capture_vdev_priv - Private object to be stored in vdev
  * @vdev: pointer to vdev object
  * @pkt_capture_mon_ctx: pointer to packet capture mon context
+ * @cb_ctx: pointer to packet capture mon callback context
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
 	struct pkt_capture_mon_context *mon_ctx;
+	struct pkt_capture_cb_context *cb_ctx;
 };
 
 /**

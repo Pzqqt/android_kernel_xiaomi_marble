@@ -106,4 +106,44 @@ pkt_capture_psoc_create_notification(struct wlan_objmgr_psoc *psoc, void *arg);
  */
 QDF_STATUS
 pkt_capture_psoc_destroy_notification(struct wlan_objmgr_psoc *psoc, void *arg);
+
+/**
+ * pkt_capture_register_callbacks - Register packet capture callbacks
+ * @vdev: pointer to wlan vdev object manager
+ * @mon_cb: callback to call
+ * @context: callback context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
+			       QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t),
+			       void *context);
+
+/**
+ * pkt_capture_deregister_callbacks - De-register packet capture callbacks
+ * @vdev: pointer to wlan vdev object manager
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS pkt_capture_deregister_callbacks(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pkt_capture_set_pktcap_mode - Set packet capture mode
+ * @psoc: pointer to psoc object
+ * @mode: mode to be set
+ *
+ * Return: None
+ */
+void pkt_capture_set_pktcap_mode(struct wlan_objmgr_psoc *psoc,
+				 enum pkt_capture_mode mode);
+
+/**
+ * pkt_capture_get_pktcap_mode - Get packet capture mode
+ * @psoc: pointer to psoc object
+ *
+ * Return: enum pkt_capture_mode
+ */
+enum pkt_capture_mode
+pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc);
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
