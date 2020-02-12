@@ -5928,117 +5928,6 @@ void ol_deregister_packetdump_callback(struct cdp_soc_t *soc_hdl,
 	pdev->ol_rx_packetdump_cb = NULL;
 }
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-/**
- * ol_txrx_register_pktcapture_cb() - Register pkt capture mode callback
- * @soc: soc handle
- * @pdev_id: pdev id
- * @context: virtual device's osif_dev
- * @cb: callback to register
- *
- * Return: QDF_STATUS Enumeration
- */
-static QDF_STATUS ol_txrx_register_pktcapture_cb(
-					struct cdp_soc_t *soc,
-					uint8_t pdev_id,
-					void *context,
-					QDF_STATUS(cb)(void *, qdf_nbuf_t))
-{
-	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(
-					cdp_soc_t_to_ol_txrx_soc_t(soc),
-					pdev_id);
-
-	if (!pdev) {
-		ol_txrx_err("pdev NULL!");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	pdev->mon_osif_dev = context;
-	pdev->mon_cb = cb;
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ol_txrx_deregister_pktcapture_cb() - Register pkt capture mode callback
- * @soc: soc handle
- * @pdev_id: pdev id
- *
- * Return: QDF_STATUS Enumeration
- */
-static QDF_STATUS ol_txrx_deregister_pktcapture_cb(struct cdp_soc_t *soc,
-						   uint8_t pdev_id)
-{
-	ol_txrx_pdev_handle pdev = ol_txrx_get_pdev_from_pdev_id(
-					cdp_soc_t_to_ol_txrx_soc_t(soc),
-					pdev_id);
-
-	if (qdf_unlikely(!pdev)) {
-		qdf_print("%s: pdev is NULL!\n", __func__);
-		qdf_assert(0);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	pdev->mon_osif_dev = NULL;
-	pdev->mon_cb = NULL;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ol_txrx_get_pktcapture_mode() - return pktcapture mode
- * @soc: soc handle
- * @pdev_id: pdev id
- *
- * Return: 0 - disable
- *         1 - Mgmt packets
- *         2 - Data packets
- *         3 - Both Mgmt and Data packets
- */
-static uint8_t ol_txrx_get_pktcapture_mode(struct cdp_soc_t *soc,
-					   uint8_t pdev_id)
-{
-	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(
-					cdp_soc_t_to_ol_txrx_soc_t(soc),
-					pdev_id);
-
-	if (!pdev) {
-		qdf_print("%s: pdev is NULL\n", __func__);
-		return 0;
-	}
-
-	if (!pdev->mon_cb || !pdev->mon_osif_dev)
-		return 0;
-
-	return pdev->pktcapture_mode_value;
-}
-
-/**
- * ol_txrx_set_pktcapture_mode() - set pktcapture mode
- * @soc: soc handle
- * @pdev_id: pdev id
- * @val  : 0 - disable
- *         1 - Mgmt packets
- *         2 - Data packets
- *         3 - Both Mgmt and Data packets
- *
- * Return: none
- */
-static void ol_txrx_set_pktcapture_mode(struct cdp_soc_t *soc,
-					uint8_t pdev_id, uint8_t val)
-{
-	struct ol_txrx_pdev_t *pdev = ol_txrx_get_pdev_from_pdev_id(
-					cdp_soc_t_to_ol_txrx_soc_t(soc),
-					pdev_id);
-
-	if (!pdev) {
-		qdf_print("%s: pdev is NULL\n", __func__);
-		return;
-	}
-
-	pdev->pktcapture_mode_value = val;
-}
-#endif /* WLAN_FEATURE_PKT_CAPTURE */
-
 static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_soc_attach_target = ol_txrx_soc_attach_target,
 	.txrx_vdev_attach = ol_txrx_vdev_attach,
@@ -6286,15 +6175,6 @@ static struct cdp_raw_ops ol_ops_raw = {
 	/* EMPTY FOR MCL */
 };
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-static struct cdp_pktcapture_ops ol_ops_pkt_capture = {
-	.txrx_pktcapture_cb_register = ol_txrx_register_pktcapture_cb,
-	.txrx_pktcapture_cb_deregister = ol_txrx_deregister_pktcapture_cb,
-	.txrx_pktcapture_set_mode = ol_txrx_set_pktcapture_mode,
-	.txrx_pktcapture_get_mode = ol_txrx_get_pktcapture_mode,
-};
-#endif /* #ifdef WLAN_FEATURE_PKT_CAPTURE */
-
 static struct cdp_ops ol_txrx_ops = {
 	.cmn_drv_ops = &ol_ops_cmn,
 	.ctrl_ops = &ol_ops_ctrl,
@@ -6322,9 +6202,6 @@ static struct cdp_ops ol_txrx_ops = {
 	.mob_stats_ops = &ol_ops_mob_stats,
 	.delay_ops = &ol_ops_delay,
 	.pmf_ops = &ol_ops_pmf,
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-	.pktcapture_ops = &ol_ops_pkt_capture,
-#endif
 };
 
 ol_txrx_soc_handle ol_txrx_soc_attach(void *scn_handle,
