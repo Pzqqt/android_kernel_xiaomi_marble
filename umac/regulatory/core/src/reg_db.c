@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -1319,8 +1319,8 @@ const struct regulatory_rule reg_rules_5g[] = {
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_5935_6435_1] = {5935, 6435, 160, 18, REGULATORY_CHAN_AFC},
 	[CHAN_5935_6435_2] = {5935, 6435, 160, 30, REGULATORY_CHAN_AFC},
-	[CHAN_6435_6535_1] = {6435, 6535, 160, 18, REGULATORY_CHAN_INDOOR_ONLY},
-	[CHAN_6435_6535_2] = {6435, 6535, 160, 24, REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_6435_6535_1] = {6435, 6535, 100, 18, REGULATORY_CHAN_INDOOR_ONLY},
+	[CHAN_6435_6535_2] = {6435, 6535, 100, 24, REGULATORY_CHAN_INDOOR_ONLY},
 	[CHAN_6535_6875_1] = {6535, 6875, 160, 18, REGULATORY_CHAN_AFC},
 	[CHAN_6535_6875_2] = {6535, 6875, 160, 30, REGULATORY_CHAN_AFC},
 	[CHAN_6875_7115_1] = {6875, 7115, 160, 18, REGULATORY_CHAN_INDOOR_ONLY},
