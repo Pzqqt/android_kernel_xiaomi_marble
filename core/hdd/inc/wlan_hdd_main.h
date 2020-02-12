@@ -1624,10 +1624,6 @@ struct hdd_context {
 
 	bool is_scheduler_suspended;
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
-	bool is_ol_mon_thread_suspended;
-#endif
-
 #ifdef QCA_CONFIG_SMP
 	bool is_ol_rx_thread_suspended;
 #endif
