@@ -50,7 +50,9 @@ CONFIG_QCACLD_FEATURE_METERING := n
 CONFIG_WLAN_DYNAMIC_CVM := n
 
 #We might need to disable WEXT support in perf builds in future
+ifeq ($(CONFIG_WIRELESS_EXT), y)
 CONFIG_WLAN_WEXT_SUPPORT_ENABLE := y
+endif
 CONFIG_HOST_11D_SCAN := y
 
 #Flag to enable/disable Avoid acs freq feature
