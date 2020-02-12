@@ -23,6 +23,7 @@
 
 #include "wlan_pkt_capture_main.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_pkt_capture_mon_thread.h"
 
 enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -40,6 +41,44 @@ enum pkt_capture_mode pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return psoc_priv->cfg_param.pkt_capture_mode;
+}
+
+/**
+ * pkt_capture_mon_context_create() - Create packet capture mon context
+ * @vdev_priv: pointer to packet capture vdev priv obj
+ *
+ * This function allocates memory for packet capture mon context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+pkt_capture_mon_context_create(struct pkt_capture_vdev_priv *vdev_priv)
+{
+	struct pkt_capture_mon_context *mon_context;
+
+	mon_context = qdf_mem_malloc(sizeof(*mon_context));
+	if (!mon_context) {
+		pkt_capture_err("MON context create failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	vdev_priv->mon_ctx = mon_context;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * pkt_capture_mon_context_destroy() - Destroy packet capture mon context
+ * @vdev_priv: pointer to packet capture vdev priv obj
+ *
+ * Free packet capture mon context
+ *
+ * Return: None
+ */
+static void
+pkt_capture_mon_context_destroy(struct pkt_capture_vdev_priv *vdev_priv)
+{
+	qdf_mem_free(vdev_priv->mon_ctx);
 }
 
 /**
@@ -62,6 +101,7 @@ pkt_capture_cfg_init(struct pkt_psoc_priv *psoc_priv)
 QDF_STATUS
 pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 {
+	struct pkt_capture_mon_context *mon_ctx;
 	struct pkt_capture_vdev_priv *vdev_priv;
 	QDF_STATUS status;
 
@@ -79,8 +119,35 @@ pkt_capture_vdev_create_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	}
 
 	vdev_priv->vdev = vdev;
+
+	status = pkt_capture_mon_context_create(vdev_priv);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to create mon context");
+		goto detach_vdev_priv;
+	}
+	mon_ctx = vdev_priv->mon_ctx;
+
+	status = pkt_capture_alloc_mon_thread(mon_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to alloc mon thread");
+		goto destroy_mon_context;
+	}
+
+	status = pkt_capture_open_mon_thread(mon_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pkt_capture_err("Failed to open mon thread");
+		goto open_mon_thread_fail;
+	}
 	return status;
 
+open_mon_thread_fail:
+	pkt_capture_free_mon_pkt_freeq(mon_ctx);
+destroy_mon_context:
+	pkt_capture_mon_context_destroy(vdev_priv);
+detach_vdev_priv:
+	wlan_objmgr_vdev_component_obj_detach(vdev,
+					      WLAN_UMAC_COMP_PKT_CAPTURE,
+					      vdev_priv);
 free_vdev_priv:
 	qdf_mem_free(vdev_priv);
 	return status;
@@ -105,6 +172,8 @@ pkt_capture_vdev_destroy_notification(struct wlan_objmgr_vdev *vdev, void *arg)
 	if (QDF_IS_STATUS_ERROR(status))
 		pkt_capture_err("Failed to detach vdev component obj");
 
+	pkt_capture_close_mon_thread(vdev_priv->mon_ctx);
+	pkt_capture_mon_context_destroy(vdev_priv);
 	qdf_mem_free(vdev_priv);
 	return status;
 }

@@ -23,6 +23,7 @@
 #include "wlan_pkt_capture_objmgr.h"
 #include "wlan_pkt_capture_main.h"
 #include "wlan_pkt_capture_ucfg_api.h"
+#include "wlan_pkt_capture_mon_thread.h"
 
 enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
@@ -113,4 +114,14 @@ void ucfg_pkt_capture_deinit(void)
 				NULL);
 	if (QDF_IS_STATUS_ERROR(status))
 		pkt_capture_err("Failed to unregister psoc create handler");
+}
+
+int ucfg_pkt_capture_suspend_mon_thread(struct wlan_objmgr_vdev *vdev)
+{
+	return pkt_capture_suspend_mon_thread(vdev);
+}
+
+void ucfg_pkt_capture_resume_mon_thread(struct wlan_objmgr_vdev *vdev)
+{
+	pkt_capture_resume_mon_thread(vdev);
 }
