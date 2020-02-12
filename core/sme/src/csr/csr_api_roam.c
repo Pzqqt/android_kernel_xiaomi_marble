@@ -10859,10 +10859,48 @@ void csr_roam_joined_state_msg_processor(struct mac_context *mac, void *msg_buf)
 	}
 }
 
+/**
+ * csr_update_wep_key_peer_macaddr() - Update wep key peer mac addr
+ * @vdev: vdev object
+ * @crypto_key: crypto key info
+ * @unicast: uncast or broadcast
+ * @mac_addr: peer mac address
+ *
+ * Update peer mac address to key context before set wep key to target.
+ *
+ * Return void
+ */
+static void
+csr_update_wep_key_peer_macaddr(struct wlan_objmgr_vdev *vdev,
+				struct wlan_crypto_key *crypto_key,
+				bool unicast,
+				struct qdf_mac_addr *mac_addr)
+{
+	if (!crypto_key || !vdev) {
+		sme_err("vdev or crytpo_key null");
+		return;
+	}
+
+	if (unicast) {
+		qdf_mem_copy(&crypto_key->macaddr, mac_addr,
+			     QDF_MAC_ADDR_SIZE);
+	} else {
+		if (vdev->vdev_mlme.vdev_opmode == QDF_STA_MODE ||
+		    vdev->vdev_mlme.vdev_opmode == QDF_P2P_CLIENT_MODE)
+			qdf_mem_copy(&crypto_key->macaddr, mac_addr,
+				     QDF_MAC_ADDR_SIZE);
+		else
+			qdf_mem_copy(&crypto_key->macaddr,
+				     vdev->vdev_mlme.macaddr,
+				     QDF_MAC_ADDR_SIZE);
+	}
+}
+
 static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 						 uint32_t session_id,
 						 bool add_key, bool unicast,
-						 uint8_t key_idx)
+						 uint8_t key_idx,
+						 struct qdf_mac_addr *mac_addr)
 {
 	enum wlan_crypto_cipher_type cipher;
 	struct wlan_crypto_key *crypto_key;
@@ -10879,6 +10917,8 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 	if (IS_WEP_CIPHER(cipher)) {
 		wep_key_idx = wlan_crypto_get_default_key_idx(vdev, !unicast);
 		crypto_key = wlan_crypto_get_key(vdev, wep_key_idx);
+		csr_update_wep_key_peer_macaddr(vdev, crypto_key, unicast,
+						mac_addr);
 	} else {
 		crypto_key = wlan_crypto_get_key(vdev, key_idx);
 	}
@@ -11007,7 +11047,8 @@ csr_issue_set_context_req_helper(struct mac_context *mac_ctx,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
 	return csr_roam_issue_set_context_req(mac_ctx, session_id, addkey,
-					      unicast, key_id);
+					      unicast, key_id,
+					      (struct qdf_mac_addr *)bssid);
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
