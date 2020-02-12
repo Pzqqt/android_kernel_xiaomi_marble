@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -388,12 +388,23 @@ ucfg_pmo_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
 	return pmo_core_psoc_user_space_suspend_req(psoc, type);
 }
 
-
 QDF_STATUS
 ucfg_pmo_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
 				    enum qdf_suspend_type type)
 {
 	return pmo_core_psoc_user_space_resume_req(psoc, type);
+}
+
+QDF_STATUS ucfg_pmo_suspend_all_components(struct wlan_objmgr_psoc *psoc,
+					   enum qdf_suspend_type type)
+{
+	return pmo_suspend_all_components(psoc, type);
+}
+
+QDF_STATUS ucfg_pmo_resume_all_components(struct wlan_objmgr_psoc *psoc,
+					  enum qdf_suspend_type type)
+{
+	return pmo_resume_all_components(psoc, type);
 }
 
 QDF_STATUS

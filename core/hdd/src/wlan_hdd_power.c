@@ -1789,7 +1789,13 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 		scheduler_resume();
 		hdd_ctx->is_scheduler_suspended = false;
 	}
-
+	/* Resume all components registered to pmo */
+	status = ucfg_pmo_resume_all_components(hdd_ctx->psoc,
+						QDF_SYSTEM_SUSPEND);
+	if (status != QDF_STATUS_SUCCESS) {
+		exit_code = 0;
+		goto exit_with_code;
+	}
 	/* Resume tlshim Rx thread */
 	if (hdd_ctx->enable_rxthread)
 		wlan_hdd_rx_thread_resume(hdd_ctx);
@@ -1953,14 +1959,22 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	/* abort ongoing scan and flush any pending powersave timers */
+	/* flush any pending powersave timers */
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
-				adapter->vdev_id, INVALID_SCAN_ID, false);
 		if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 			continue;
 
 		sme_ps_timer_flush_sync(mac_handle, adapter->vdev_id);
+	}
+
+	/*
+	 * Suspend all components registered to pmo, abort ongoing scan and
+	 * don't allow new scan any more before scheduler thread suspended.
+	 */
+	if (ucfg_pmo_suspend_all_components(hdd_ctx->psoc,
+					    QDF_SYSTEM_SUSPEND)) {
+		hdd_err("Some components not ready to suspend!");
+		return -EAGAIN;
 	}
 
 	/*
