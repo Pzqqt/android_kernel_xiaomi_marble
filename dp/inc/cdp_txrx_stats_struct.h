@@ -1665,6 +1665,9 @@ struct cdp_cfr_rcc_stats {
  * @nondata_rx_ru_size: UL ofdma non data ru size counter array
  * @data_rx_ppdu: data rx ppdu counter
  * @data_user: data user counter array
+ * @tx_ppdu_proc: stats counter for tx ppdu processed
+ * @ack_ba_comes_twice: stats counter for ack_ba_comes twice
+ * @ppdu_drop: stats counter for ppdu_desc drop once threshold reached
  */
 struct cdp_pdev_stats {
 	struct {
@@ -1727,6 +1730,10 @@ struct cdp_pdev_stats {
 
 	struct cdp_tso_stats tso_stats;
 	struct cdp_cfr_rcc_stats rcc;
+
+	uint64_t tx_ppdu_proc;
+	uint32_t ack_ba_comes_twice;
+	uint32_t ppdu_drop;
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT

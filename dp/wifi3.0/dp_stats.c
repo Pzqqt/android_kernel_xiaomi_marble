@@ -5822,8 +5822,12 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	}
 	DP_PRINT_STATS("BA not received for delayed_ba: %d",
 		       pdev->stats.cdp_delayed_ba_not_recev);
-	DP_PRINT_STATS("tx_ppdu_proc: %llu\n",
-		       pdev->tx_ppdu_proc);
+	DP_PRINT_STATS("tx_ppdu_proc: %llu",
+		       pdev->stats.tx_ppdu_proc);
+	DP_PRINT_STATS("ack ba comes twice: %llu",
+		       pdev->stats.ack_ba_comes_twice);
+	DP_PRINT_STATS("ppdu dropped because of incomplete tlv: %llu",
+		       pdev->stats.ppdu_drop);
 
 	for (i = 0; i < CDP_WDI_NUM_EVENTS; i++) {
 		if (!pdev->stats.wdi_event[i])

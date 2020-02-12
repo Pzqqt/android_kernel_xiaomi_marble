@@ -340,4 +340,47 @@ dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
 void dp_rx_tid_delete_cb(struct dp_soc *soc,
 			 void *cb_ctxt,
 			 union hal_reo_status *reo_status);
+
+#ifndef WLAN_TX_PKT_CAPTURE_ENH
+/**
+ * dp_peer_tid_queue_init() – Initialize ppdu stats queue per TID
+ * @peer: Datapath peer
+ *
+ */
+static inline void dp_peer_tid_queue_init(struct dp_peer *peer)
+{
+}
+
+/**
+ * dp_peer_tid_peer_id_update() – update peer_id to tid structure
+ * @peer: Datapath peer
+ * @peer_id: peer_id
+ *
+ */
+static inline
+void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id)
+{
+}
+
+/**
+ * dp_peer_tid_queue_cleanup() – remove ppdu stats queue per TID
+ * @peer: Datapath peer
+ *
+ */
+static inline void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
+{
+}
+
+/**
+ * dp_peer_update_80211_hdr() – dp peer update 80211 hdr
+ * @vdev: Datapath vdev
+ * @peer: Datapath peer
+ *
+ */
+static inline void
+dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
+{
+}
+#endif
+
 #endif /* _DP_PEER_H_ */

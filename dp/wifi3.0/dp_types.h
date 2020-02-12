@@ -1409,18 +1409,18 @@ struct dp_neighbour_peer {
 
 /**
  * struct ppdu_info - PPDU Status info descriptor
- * @ppdu_id         - Unique ppduid assigned by firmware for every tx packet
- * @sched_cmdid     - schedule command id, which will be same in a burst
- * @max_ppdu_id     - wrap around for ppdu id
- * @last_tlv_cnt    - Keep track for missing ppdu tlvs
- * @last_user       - last ppdu processed for user
- * @is_ampdu        - set if Ampdu aggregate
- * @nbuf            - ppdu descriptor payload
- * @ppdu_desc       - ppdu descriptor
- * @ppdu_info_list_elem  - linked list of ppdu tlvs
- * @ppdu_info_queue_elem - Singly linked list (queue) of ppdu tlvs
- * @mpdu_compltn_common_tlv  - Successful MPDU counter from COMPLTN COMMON tlv
- * @mpdu_ack_ba_tlv	    - Successful MPDU from ACK BA tlv
+ * @ppdu_id: Unique ppduid assigned by firmware for every tx packet
+ * @sched_cmdid: schedule command id, which will be same in a burst
+ * @max_ppdu_id: wrap around for ppdu id
+ * @last_tlv_cnt: Keep track for missing ppdu tlvs
+ * @last_user: last ppdu processed for user
+ * @is_ampdu: set if Ampdu aggregate
+ * @nbuf: ppdu descriptor payload
+ * @ppdu_desc: ppdu descriptor
+ * @ppdu_info_list_elem: linked list of ppdu tlvs
+ * @ppdu_info_queue_elem: Singly linked list (queue) of ppdu tlvs
+ * @mpdu_compltn_common_tlv: Successful tlv counter from COMPLTN COMMON tlv
+ * @mpdu_ack_ba_tlv: Successful tlv counter from ACK BA tlv
  */
 struct ppdu_info {
 	uint32_t ppdu_id;
@@ -1442,8 +1442,8 @@ struct ppdu_info {
 #else
 	TAILQ_ENTRY(ppdu_info) ppdu_info_list_elem;
 #endif
-	uint16_t mpdu_compltn_common_tlv;
-	uint16_t mpdu_ack_ba_tlv;
+	uint8_t compltn_common_tlv;
+	uint8_t ack_ba_tlv;
 };
 
 /**
@@ -1840,8 +1840,6 @@ struct dp_pdev {
 	/* tx packet capture enhancement */
 	enum cdp_tx_enh_capture_mode tx_capture_enabled;
 	struct dp_pdev_tx_capture tx_capture;
-	/* stats counter for tx ppdu processed */
-	uint64_t tx_ppdu_proc;
 
 	uint32_t *ppdu_tlv_buf; /* Buffer to hold HTT ppdu stats TLVs*/
 
