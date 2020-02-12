@@ -160,4 +160,12 @@ QDF_STATUS ftm_time_sync_send_trigger(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * ftm_time_sync_show() - Handler to print the offset derived
+ * @vdev: vdev for which offset is to be shown
+ * @buf: buffer in which the values to be printed
+ *
+ * Return: the number of bytes written in buf
+ */
+ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf);
 #endif /* end of _FTM_TIME_SYNC_MAIN_H_ */

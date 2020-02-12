@@ -372,3 +372,30 @@ QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
+{
+	struct ftm_time_sync_vdev_priv *vdev_priv;
+	uint64_t q_master, q_slave;
+	ssize_t size = 0;
+	int iter;
+
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		ftm_time_sync_debug("Failed to get ftm time sync vdev_priv");
+		return 0;
+	}
+
+	for (iter = 0; iter < vdev_priv->num_qtime_pair; iter++) {
+		q_master = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_master;
+		q_slave = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_slave;
+
+		size += qdf_scnprintf(buf + size, PAGE_SIZE,
+				      "%s %llu %s %llu %s %lld\n",
+				      "Qtime_master", q_master, "Qtime_slave",
+				      q_slave, "Offset", q_slave > q_master ?
+				      q_slave - q_master : q_master - q_slave);
+	}
+	return size;
+}
+

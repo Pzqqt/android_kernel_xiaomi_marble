@@ -96,6 +96,18 @@ ucfg_ftm_time_sync_update_sta_connect_state(struct wlan_objmgr_vdev *vdev,
  */
 void ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
 					 enum ftm_time_sync_bss_state ap_state);
+
+/**
+ * ucfg_ftm_time_sync_show() - Show the ftm time sync offset values derived
+ * @vdev: vdev context
+ * @buf: buffer in which the values to be written
+ *
+ * This function prints the offset values derived after ftm time sync
+ * between the qtime of STA(slave) and connected SAP(master).
+ *
+ * Return: number of bytes written in buffer
+ */
+ssize_t ucfg_ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf);
 #else
 
 static inline
@@ -130,6 +142,12 @@ static inline void
 ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
 				    enum ftm_time_sync_bss_state ap_state)
 {
+}
+
+static inline
+ssize_t ucfg_ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
+{
+	return 0;
 }
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 #endif /* _FTM_TIME_SYNC_UCFG_API_H_ */

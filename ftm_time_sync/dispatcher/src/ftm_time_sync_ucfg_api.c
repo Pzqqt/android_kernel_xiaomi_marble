@@ -166,3 +166,8 @@ void ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
 			ftm_time_sync_stop(vdev);
 	}
 }
+
+ssize_t ucfg_ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
+{
+	return ftm_time_sync_show(vdev, buf);
+}
