@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -313,6 +313,16 @@ QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(
 	if (wmi_handle->ops->send_invoke_neighbor_report_cmd)
 		return wmi_handle->ops->send_invoke_neighbor_report_cmd(
 				wmi_handle, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_get_roam_scan_ch_list(wmi_unified_t wmi_handle,
+					     uint8_t vdev_id)
+{
+	if (wmi_handle->ops->send_roam_scan_ch_list_req_cmd)
+		return wmi_handle->ops->send_roam_scan_ch_list_req_cmd(
+				wmi_handle, vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

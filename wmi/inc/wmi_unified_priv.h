@@ -2232,7 +2232,8 @@ QDF_STATUS (*extract_time_sync_ftm_offset_event)(
 					wmi_unified_t wmi_hdl, void *evt_buf,
 					struct ftm_time_sync_offset *param);
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
-
+QDF_STATUS (*send_roam_scan_ch_list_req_cmd)(wmi_unified_t wmi_hdl,
+					     uint32_t vdev_id);
 };
 
 /* Forward declartion for psoc*/
