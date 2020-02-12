@@ -2794,6 +2794,12 @@ static int hdd_get_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command,
 				 val);
 		return 0;
 	}
+	if (strncmp(command, "GETDWELLTIME 2G MAX", 19) == 0) {
+		ucfg_scan_cfg_get_active_2g_dwelltime(psoc, &val);
+		*len = scnprintf(extra, n, "GETDWELLTIME 2G MAX %u\n",
+				 val);
+		return 0;
+	}
 	if (strncmp(command, "GETDWELLTIME", 12) == 0) {
 		ucfg_scan_cfg_get_active_dwelltime(psoc, &val);
 		*len = scnprintf(extra, n, "GETDWELLTIME %u\n", val);
@@ -2821,7 +2827,7 @@ static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 		value = value + 24;
 		temp = kstrtou32(value, 10, &val);
 		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME, val)) {
-			hdd_err("argument passed for SETDWELLTIME ACTIVE MAX is incorrect");
+			hdd_err_rl("argument passed for SETDWELLTIME ACTIVE MAX is incorrect");
 			return -EFAULT;
 		}
 		ucfg_scan_cfg_set_active_dwelltime(psoc, val);
@@ -2832,10 +2838,22 @@ static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 		value = value + 25;
 		temp = kstrtou32(value, 10, &val);
 		if (temp || !cfg_in_range(CFG_PASSIVE_MAX_CHANNEL_TIME, val)) {
-			hdd_err("argument passed for SETDWELLTIME PASSIVE MAX is incorrect");
+			hdd_err_rl("argument passed for SETDWELLTIME PASSIVE MAX is incorrect");
 			return -EFAULT;
 		}
 		ucfg_scan_cfg_set_passive_dwelltime(psoc, val);
+	} else if (strncmp(command, "SETDWELLTIME 2G MAX", 19) == 0) {
+		if (drv_cmd_validate(command, 19))
+			return -EINVAL;
+
+		value = value + 20;
+		temp = kstrtou32(value, 10, &val);
+		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_2G_CHANNEL_TIME,
+					  val)) {
+			hdd_err_rl("argument passed for SETDWELLTIME 2G MAX is incorrect");
+			return -EFAULT;
+		}
+		ucfg_scan_cfg_set_active_2g_dwelltime(psoc, val);
 	} else if (strncmp(command, "SETDWELLTIME", 12) == 0) {
 		if (drv_cmd_validate(command, 12))
 			return -EINVAL;
@@ -2843,7 +2861,7 @@ static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 		value = value + 13;
 		temp = kstrtou32(value, 10, &val);
 		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME, val)) {
-			hdd_err("argument passed for SETDWELLTIME is incorrect");
+			hdd_err_rl("argument passed for SETDWELLTIME is incorrect");
 			return -EFAULT;
 		}
 		ucfg_scan_cfg_set_active_dwelltime(psoc, val);
