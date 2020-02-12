@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -184,6 +184,19 @@ void hdd_unregister_wext(struct net_device *dev);
  */
 void hdd_register_wext(struct net_device *dev);
 
+/**
+ * hdd_wext_unregister() - unregister wext context with rtnl lock dependency
+ * @dev: net device from which wireless extensions are being unregistered
+ * @rtnl_held: flag which indicates if caller is holding the rtnl_lock
+ *
+ * Unregisters wext context for a given net device. This behaves the
+ * same as hdd_unregister_wext() except it does not take the rtnl_lock
+ * if the caller is already holding it.
+ *
+ * Returns: None
+ */
+void hdd_wext_unregister(struct net_device *dev,
+			 bool rtnl_held);
 void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 		       char *buffer, uint16_t buf_len);
 void hdd_wlan_list_fw_profile(uint16_t *length,
@@ -361,6 +374,11 @@ static inline void hdd_unregister_wext(struct net_device *dev)
 }
 
 static inline void hdd_register_wext(struct net_device *dev)
+{
+}
+
+static inline void hdd_wext_unregister(struct net_device *dev,
+				       bool rtnl_locked)
 {
 }
 #endif /* WLAN_WEXT_SUPPORT_ENABLE */

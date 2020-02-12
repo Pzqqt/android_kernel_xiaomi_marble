@@ -11053,3 +11053,17 @@ void hdd_unregister_wext(struct net_device *dev)
 
 	hdd_exit();
 }
+
+void hdd_wext_unregister(struct net_device *dev,
+			 bool rtnl_held)
+{
+	if (!dev)
+		return;
+
+	if (!rtnl_held)
+		rtnl_lock();
+	dev->wireless_handlers = NULL;
+	if (!rtnl_held)
+		rtnl_unlock();
+}
+

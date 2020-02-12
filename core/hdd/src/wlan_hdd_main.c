@@ -4978,16 +4978,6 @@ static void hdd_deinit_station_mode(struct hdd_context *hdd_ctx,
 {
 	hdd_enter_dev(adapter->dev);
 
-	if (adapter->dev) {
-		if (rtnl_held)
-			adapter->dev->wireless_handlers = NULL;
-		else {
-			rtnl_lock();
-			adapter->dev->wireless_handlers = NULL;
-			rtnl_unlock();
-		}
-	}
-
 	if (test_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags)) {
 		hdd_deinit_tx_rx(adapter);
 		clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
@@ -5007,6 +4997,8 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			bool rtnl_held)
 {
 	hdd_enter();
+
+	hdd_wext_unregister(adapter->dev, rtnl_held);
 
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
