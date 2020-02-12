@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -662,6 +662,20 @@ void ucfg_scan_cfg_set_active_dwelltime(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_scan_cfg_set_active_2g_dwelltime() - API to set scan active 2g dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active dwell time
+ *
+ * Return: none
+ */
+static inline
+void ucfg_scan_cfg_set_active_2g_dwelltime(struct wlan_objmgr_psoc *psoc,
+					   uint32_t dwell_time)
+{
+	return wlan_scan_cfg_set_active_2g_dwelltime(psoc, dwell_time);
+}
+
+/**
  * ucfg_scan_cfg_get_active_dwelltime() - API to get active dwelltime
  * @psoc: pointer to psoc object
  * @dwell_time: scan active dwelltime
@@ -700,6 +714,20 @@ void ucfg_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *dwell_time)
 {
 	return wlan_scan_cfg_get_passive_dwelltime(psoc, dwell_time);
+}
+
+/**
+ * ucfg_scan_cfg_get_active_2g_dwelltime() - API to get active 2g dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan active 2g dwelltime
+ *
+ * Return: scan active 2g dwelltime
+ */
+static inline
+void ucfg_scan_cfg_get_active_2g_dwelltime(struct wlan_objmgr_psoc *psoc,
+					   uint32_t *dwell_time)
+{
+	return wlan_scan_cfg_get_active_2g_dwelltime(psoc, dwell_time);
 }
 
 /**
