@@ -1234,7 +1234,7 @@
  */
 #define CFG_DP_PROTO_EVENT_BITMAP \
 		CFG_INI_UINT("dp_proto_event_bitmap", \
-		0, 0x17, 0x6, \
+		0, 0x17, 0x17, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Control for which protocol type diag log should be sent")
 
