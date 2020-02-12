@@ -36,6 +36,7 @@
 #include "rrm_global.h"
 #include <wlan_scan_ucfg_api.h>
 #include <wlan_scan_utils_api.h>
+#include <wlan_reg_services_api.h>
 #include <wlan_utility.h>
 
 /* Roam score for a neighbor AP will be calculated based on the below
@@ -961,31 +962,28 @@ free_ch_lst:
 static QDF_STATUS sme_rrm_fill_scan_channels(struct mac_context *mac,
 					     uint8_t *country,
 					     tpRrmSMEContext sme_rrm_context,
-					     uint8_t reg_class,
+					     uint8_t op_class,
 					     uint32_t num_channels)
 {
 	uint32_t num_chan = 0;
 	uint32_t i;
 	uint32_t *freq_list;
-	uint16_t op_class;
-
-	/* List all the channels in the requested RC */
-	wlan_reg_dmn_print_channels_in_opclass(country, reg_class);
+	bool found;
 
 	freq_list = sme_rrm_context->channelList.freq_list;
-
+	found = false;
 	for (i = 0; i < num_channels; i++) {
-		uint8_t chan = (uint8_t)wlan_reg_freq_to_chan(mac->pdev,
-							      freq_list[i]);
-		op_class = wlan_reg_dmn_get_opclass_from_channel(country,
-								 chan,
-								 BWALL);
-
-		if (op_class == reg_class) {
+		found = wlan_reg_country_opclass_freq_check(mac->pdev,
+							    country,
+							    op_class,
+							    freq_list[i]);
+		if (found) {
 			freq_list[num_chan] = freq_list[i];
 			num_chan++;
 		}
+		found = false;
 	}
+
 	sme_rrm_context->channelList.numOfChannels = num_chan;
 	if (sme_rrm_context->channelList.numOfChannels == 0) {
 		qdf_mem_free(sme_rrm_context->channelList.freq_list);
