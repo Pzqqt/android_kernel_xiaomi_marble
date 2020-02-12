@@ -54,7 +54,26 @@ void ucfg_pkt_capture_deinit(void);
  *
  * Return: enum pkt_capture_mode
  */
-enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc);
+enum pkt_capture_mode
+ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pkt_capture_suspend_mon_thread() - suspend packet capture mon thread
+ * vdev: pointer to vdev object manager
+ *
+ * Return: 0 on success, -EINVAL on failure
+ */
+int ucfg_pkt_capture_suspend_mon_thread(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pkt_capture_resume_mon_thread() - resume packet capture mon thread
+ * vdev: pointer to vdev object manager
+ *
+ * Resume packet capture MON thread by completing RX thread resume event
+ *
+ * Return: None
+ */
+void ucfg_pkt_capture_resume_mon_thread(struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
@@ -71,6 +90,17 @@ static inline
 enum pkt_capture_mode ucfg_pkt_capture_get_mode(struct wlan_objmgr_psoc *psoc)
 {
 	return PACKET_CAPTURE_MODE_DISABLE;
+}
+
+static inline
+void ucfg_pkt_capture_resume_mon_thread(struct wlan_objmgr_vdev *vdev)
+{
+}
+
+static inline
+int ucfg_pkt_capture_suspend_mon_thread(struct wlan_objmgr_vdev *vdev)
+{
+	return 0;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
 #endif /* _WLAN_PKT_CAPTURE_UCFG_API_H_ */
