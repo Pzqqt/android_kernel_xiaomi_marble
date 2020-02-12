@@ -6110,8 +6110,6 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
 
-	lim_log_he_cap(mac_ctx, he_cap);
-
 	return QDF_STATUS_SUCCESS;
 }
 

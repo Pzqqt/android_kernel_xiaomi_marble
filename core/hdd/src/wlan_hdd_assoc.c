@@ -2412,9 +2412,6 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	qdf_mem_copy(buf_ptr, &roam_profile.SSID.ssId[0],
 			roam_profile.SSID.length);
 	ssid_ie_len = 2 + roam_profile.SSID.length;
-	hdd_debug("SSIDIE:");
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = qdf_mem_malloc(IW_GENERIC_IE_MAX);
 	if (!final_req_ie) {
 		if (bss)
@@ -3158,10 +3155,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					FT_ASSOC_RSP_IES_OFFSET;
 
 				hdd_debug("assoc_rsp_len %d", assoc_rsp_len);
-				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
-						   QDF_TRACE_LEVEL_DEBUG,
-						   assoc_rsp,
-						   assoc_rsp_len);
 			} else {
 				hdd_debug("AssocRsp is NULL");
 				assoc_rsp_len = 0;
@@ -3178,11 +3171,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					 */
 					assoc_req +=
 						FT_ASSOC_REQ_IES_OFFSET;
-					hdd_debug("assoc_req is now at %02x%02x",
-						 (unsigned int)
-						 assoc_req[0],
-						 (unsigned int)
-						 assoc_req[1]);
 					assoc_req_len =
 					    roam_info->nAssocReqLength -
 						FT_ASSOC_REQ_IES_OFFSET;
@@ -3194,12 +3182,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					assoc_req_len =
 					    roam_info->nAssocReqLength;
 				}
-
 				hdd_debug("assoc_req_len %d", assoc_req_len);
-				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD,
-						   QDF_TRACE_LEVEL_DEBUG,
-						   assoc_req,
-						   assoc_req_len);
 			} else {
 				hdd_debug("AssocReq is NULL");
 				assoc_req_len = 0;
@@ -3528,6 +3511,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						(u8 *)(roam_info->pbFrames +
 						      roam_info->nBeaconLength +
 						    roam_info->nAssocReqLength);
+					hdd_debug("assoc_req_len %d assoc resp len %d",
+						  roam_info->nAssocReqLength,
+						  roam_info->nAssocRspLength);
 				}
 				hdd_err("send connect failure to nl80211: for bssid "
 					QDF_MAC_ADDR_STR

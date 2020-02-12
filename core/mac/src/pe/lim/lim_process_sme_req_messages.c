@@ -3430,7 +3430,6 @@ lim_send_vdev_restart(struct mac_context *mac,
 		pe_err("vdev component object is NULL");
 		return;
 	}
-	pe_debug("pe_session->ssidHidden %d", pe_session->ssidHidden);
 
 	mlme_obj->mgmt.ap.hidden_ssid = pe_session->ssidHidden ? true : false;
 

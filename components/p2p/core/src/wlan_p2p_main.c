@@ -1397,10 +1397,8 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 	}
 
 	mode = wlan_vdev_mlme_get_opmode(vdev);
-	if (mode != QDF_P2P_CLIENT_MODE) {
-		p2p_debug("this is not P2P CLIENT, mode:%d", mode);
+	if (mode != QDF_P2P_CLIENT_MODE)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
 	switch (p2p_soc_obj->connection_status) {
