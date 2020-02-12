@@ -941,3 +941,29 @@ void dfs_complete_deferred_tasks(struct wlan_dfs *dfs)
 		dfs->dfs_defer_params.is_cac_completed = false;
 	}
 }
+
+#ifdef WLAN_DFS_TRUE_160MHZ_SUPPORT
+bool dfs_is_true_160mhz_supported(struct wlan_dfs *dfs)
+{
+	struct wlan_objmgr_psoc *psoc = dfs->dfs_soc_obj->psoc;
+	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	uint32_t target_type;
+
+	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
+	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+	if (tx_ops->tgt_is_tgt_type_qcn9000)
+		return tx_ops->tgt_is_tgt_type_qcn9000(target_type);
+	return false;
+}
+
+bool dfs_is_restricted_80p80mhz_supported(struct wlan_dfs *dfs)
+{
+	return wlan_psoc_nif_fw_ext_cap_get(dfs->dfs_soc_obj->psoc,
+					    WLAN_SOC_RESTRICTED_80P80_SUPPORT);
+}
+#endif
+
+uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs)
+{
+	return dfs->dfs_agile_detector_id;
+}

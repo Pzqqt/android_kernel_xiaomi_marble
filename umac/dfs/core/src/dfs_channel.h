@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2008 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -290,5 +290,9 @@
 #define WLAN_IS_CHAN_MODE_80_80(_c)       \
 	(WLAN_IS_CHAN_11AC_VHT80_80(_c)   || \
 	 WLAN_IS_CHAN_11AXA_HE80_80(_c))
+
+#define WLAN_IS_CHAN_MODE_165(_dfs, _c) \
+	dfs_is_restricted_80p80mhz_supported(_dfs) && \
+	WLAN_IS_CHAN_MODE_80_80(_c)
 
 #endif /* _DFS_CHANNEL_H_ */

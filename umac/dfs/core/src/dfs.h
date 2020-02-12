@@ -41,6 +41,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <osdep.h>
 #include <wlan_cmn.h>
+#include "target_type.h"
 
 /* File Line and Submodule String */
 #define FLSM(x, str)   #str " : " FL(x)
@@ -403,11 +404,24 @@
  */
 #define USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW 2
 
-/* Non Agile detector IDs */
-#define DETECTOR_ID_0 0
-#define DETECTOR_ID_1 1
-/* Agile detector ID */
-#define AGILE_DETECTOR_ID 2
+/**
+ * enum detector_id - Detector ID values.
+ * @DETECTOR_ID_0: Detector ID 0 (Non Agile).
+ * @DETECTOR_ID_1: Detector ID 1 (Non Agile in 80p80MHz supported devices,
+ *                 Agile detector in true 160MHz supported devices).
+ * @DETECTOR_ID_2: Detector ID 2 (Agile detector in 80p80MHZ supported devices).
+ * @AGILE_DETECTOR_ID_TRUE_160MHZ:  Agile detector ID in true 160MHz devices.
+ * @AGILE_DETECTOR_ID_80p80: Agile detector ID in 80p80MHz supported devices.
+ * @DETECTOR_ID_MAX: Maximum detector ID value.
+ */
+enum detector_id {
+	DETECTOR_ID_0,
+	DETECTOR_ID_1,
+	DETECTOR_ID_2,
+	AGILE_DETECTOR_ID_TRUE_160MHZ = DETECTOR_ID_1,
+	AGILE_DETECTOR_ID_80P80 = DETECTOR_ID_2,
+	DETECTOR_ID_MAX,
+};
 
 /**
  * struct dfs_pulseparams - DFS pulse param structure.
@@ -1084,6 +1098,7 @@ struct dfs_mode_switch_defer_params {
  *                                   defer timer running.
  * @dfs_defer_params:                DFS deferred event parameters (allocated
  *                                   only for the duration of defer alone).
+ * @dfs_agile_detector_id:           Agile detector ID for the DFS object.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1248,6 +1263,7 @@ struct wlan_dfs {
 	bool           dfs_allow_hw_pulses;
 #endif
 	struct dfs_mode_switch_defer_params dfs_defer_params;
+	uint8_t        dfs_agile_detector_id;
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
@@ -2828,4 +2844,41 @@ void dfs_complete_deferred_tasks(struct wlan_dfs *dfs);
  * Return: void.
  */
 void dfs_process_cac_completion(struct wlan_dfs *dfs);
+
+#ifdef WLAN_DFS_TRUE_160MHZ_SUPPORT
+/**
+ * dfs_is_true_160mhz_supported() - Find if true 160MHz is supported.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: True if true 160MHz is supported, else false.
+ */
+bool dfs_is_true_160mhz_supported(struct wlan_dfs *dfs);
+
+/**
+ * dfs_is_restricted_80p80mhz_supported() - Find if restricted 80p80mhz is
+ * supported.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: True if restricted 160MHz is supported, else false.
+ */
+bool dfs_is_restricted_80p80mhz_supported(struct wlan_dfs *dfs);
+#else
+static inline bool dfs_is_true_160mhz_supported(struct wlan_dfs *dfs)
+{
+	return false;
+}
+
+static inline bool dfs_is_restricted_80p80mhz_supported(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif /* WLAN_DFS_TRUE_160MHZ_SUPPORT */
+
+/**
+ * dfs_get_agile_detector_id() - Find the Agile detector ID for given DFS.
+ * @dfs: Pointer to wlan_dfs object.
+ *
+ * Return: Agile detector value (uint8_t).
+ */
+uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */
