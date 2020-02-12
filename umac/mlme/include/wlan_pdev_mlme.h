@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,7 @@ struct pdev_mlme_obj {
 	unsigned long restart_send_vdev_bmap[2];
 	unsigned long start_send_vdev_arr[2];
 	struct pdev_restart_attr pdev_restart;
+	qdf_atomic_t multivdev_restart_wait_cnt;
 };
 
 #endif
