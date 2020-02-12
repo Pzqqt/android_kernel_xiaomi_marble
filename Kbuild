@@ -277,6 +277,10 @@ ifeq ($(CONFIG_QCACLD_FEATURE_BTC_CHAIN_MODE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_btc_chain_mode.o
 endif
 
+ifeq ($(CONFIG_FEATURE_WLAN_TIME_SYNC_FTM), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_ftm_time_sync.o
+endif
+
 ###### OSIF_SYNC ########
 SYNC_DIR := os_if/sync
 SYNC_INC_DIR := $(SYNC_DIR)/inc
