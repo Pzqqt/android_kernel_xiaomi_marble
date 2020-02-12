@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -80,7 +80,7 @@ __qdf_vfs_clear_file_attributes(struct qdf_dev_obj *devobj,
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-statuc inline QDF_STATUS
+static inline QDF_STATUS
 __qdf_vfs_create_binfile(struct qdf_dev_obj *devobj,
 			 struct qdf_vf_bin_attr *attr)
 {
