@@ -2532,7 +2532,7 @@ end:
 static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 	struct device *dev)
 {
-	int i, ret;
+	int i, ret, crtc_id = 0;
 	struct drm_device *ddev = dev_get_drvdata(dev);
 	struct drm_connector *conn;
 	struct drm_connector_list_iter conn_iter;
@@ -2551,12 +2551,17 @@ static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 
 		ret = sde_encoder_wait_for_event(conn->encoder,
 						MSM_ENC_TX_COMPLETE);
-		if (ret && ret != -EWOULDBLOCK)
+		if (ret && ret != -EWOULDBLOCK) {
 			SDE_ERROR(
 				"[conn: %d] wait for commit done returned %d\n",
 				conn->base.id, ret);
-		else if (!ret)
+		} else if (!ret) {
+			crtc_id = drm_crtc_index(conn->state->crtc);
+			if (priv->event_thread[crtc_id].thread)
+				kthread_flush_worker(
+					&priv->event_thread[crtc_id].worker);
 			sde_encoder_idle_request(conn->encoder);
+		}
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
