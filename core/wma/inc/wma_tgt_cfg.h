@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,7 @@
  * @twt_requestor: TWT requestor capability
  * @twt_responder: TWT responder capability
  * @bcn_reception_stats: Beacon Reception stats capability
+ * @is_roam_scan_ch_to_host: Get roam scan channels from fw supported
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -75,6 +76,7 @@ struct wma_tgt_services {
 	bool twt_responder;
 	bool obss_scan_offload;
 	bool bcn_reception_stats;
+	bool is_roam_scan_ch_to_host;
 };
 
 /**

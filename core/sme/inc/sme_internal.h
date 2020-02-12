@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -392,6 +392,8 @@ struct sme_context {
 	void (*oem_data_event_handler_cb)
 			(const struct oem_data *oem_event_data);
 #endif
+	sme_get_raom_scan_ch_callback roam_scan_ch_callback;
+	void *roam_scan_ch_get_context;
 };
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

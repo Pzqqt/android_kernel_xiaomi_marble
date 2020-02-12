@@ -3281,6 +3281,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_roam_stats_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
+	wmi_unified_register_event_handler(
+		wma_handle->wmi_handle, wmi_roam_scan_chan_list_id,
+		wma_roam_scan_chan_list_event_handler,
+		WMA_RX_SERIALIZER_CTX);
+
 	wma_register_pmkid_req_event_handler(wma_handle);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -4683,6 +4688,9 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_vdev_latency_config))
 		g_fw_wlan_feat_caps |= (1 << VDEV_LATENCY_CONFIG);
+	if (wmi_service_enabled(wmi_handle,
+				wmi_roam_scan_chan_list_to_host_support))
+		cfg->is_roam_scan_ch_to_host = true;
 }
 
 /**
@@ -8960,6 +8968,9 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_ROAM_INIT_PARAM:
 		wma_update_roam_offload_flag(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_ROAM_SCAN_CH_REQ:
+		wma_get_roam_scan_ch(wma_handle->wmi_handle, msg->bodyval);
 		break;
 	default:
 		WMA_LOGD("Unhandled WMA message of type %d", msg->type);

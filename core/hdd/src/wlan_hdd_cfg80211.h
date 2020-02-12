@@ -397,6 +397,17 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * hdd_send_roam_scan_ch_list_event() - roam scan ch list event to user space
+ * @hdd_ctx: HDD context
+ * @buf_len: length of frequency list
+ * @buf: pointer to buffer of frequency list
+ *
+ * Return: None
+ */
+void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
+				      uint16_t buf_len, uint8_t *buf);
+
 int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
 		*rsp_rsn_ie, uint32_t rsp_rsn_length, struct csr_roam_info
@@ -408,6 +419,12 @@ static inline int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter,
 		struct csr_roam_info *roam_info_ptr)
 {
 	return 0;
+}
+
+static inline void
+hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
+				 uint16_t buf_len, uint8_t *buf)
+{
 }
 #endif
 

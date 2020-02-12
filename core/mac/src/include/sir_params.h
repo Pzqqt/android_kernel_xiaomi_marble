@@ -652,6 +652,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_SET_ROAM_TRIGGERS           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 413)
 
+#define SIR_HAL_ROAM_SCAN_CH_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 414)
+
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* LIM message types */

@@ -1900,6 +1900,7 @@ struct hdd_context {
 	/* value for packet capturte mode */
 	uint8_t val_pkt_capture_mode;
 #endif
+	bool roam_ch_from_fw_supported;
 };
 
 /**

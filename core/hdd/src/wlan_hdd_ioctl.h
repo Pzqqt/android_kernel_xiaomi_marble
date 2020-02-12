@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017-2019, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +47,32 @@ QDF_STATUS hdd_update_smps_antenna_mode(struct hdd_context *hdd_ctx, int mode);
  */
 int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 			  struct hdd_context *hdd_ctx, int mode);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * hdd_get_roam_scan_ch_cb() - roam scan channel list callback handler
+ * @hdd_handle: Pointer to hdd context
+ * @roam_ch: pointer to roam scan ch event data
+ * @context: cookie
+ *
+ * Callback function to processes roam scan chaanel list event. If
+ * command response field in the response message is set that means
+ * event received as a response of GETROAMSCANCHANNELS command else
+ * event was rasied by firmware upon disconnection.
+ *
+ * Return: none
+ */
+void hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
+			     struct roam_scan_ch_resp *roam_ch,
+			     void *context);
+#else
+static inline void
+hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
+			void *roam_ch,
+			void *context)
+{
+}
+#endif
 
 #ifdef QCA_IBSS_SUPPORT
 /**

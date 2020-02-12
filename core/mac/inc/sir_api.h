@@ -192,6 +192,20 @@ struct rsn_caps {
 };
 
 /**
+ * struct roam_scan_ch_resp - roam scan chan list response to userspace
+ * @vdev_id: vdev id
+ * @num_channels: number of roam scan channels
+ * @command_resp: command response or async event
+ * @chan_list: list of roam scan channels
+ */
+struct roam_scan_ch_resp {
+	uint16_t vdev_id;
+	uint16_t num_channels;
+	uint32_t command_resp;
+	uint32_t *chan_list;
+};
+
+/**
  * struct wlan_beacon_report - Beacon info to be send to userspace
  * @vdev_id: vdev id
  * @ssid: ssid present in beacon

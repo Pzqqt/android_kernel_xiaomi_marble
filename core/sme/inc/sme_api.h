@@ -561,6 +561,32 @@ void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
+ * sme_set_roam_scan_ch_event_cb() - Register roam scan ch callback
+ * @mac_handle: Opaque handle to the MAC context
+ * @cb: callback to be registered
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_set_roam_scan_ch_event_cb(mac_handle_t mac_handle,
+			      sme_get_raom_scan_ch_callback cb);
+
+/**
+ * sme_get_roam_scan_ch() -API to get roam scan channels
+ * @mac_handle: Pointer to mac handle
+ * @sta_id: vdev id
+ * @pcontext: pointer to the context
+ *
+ * Extract number of frequencies and frequency list from chan_info and print
+ * to the logs.
+ *
+ * Return: None
+ */
+QDF_STATUS
+sme_get_roam_scan_ch(mac_handle_t mac_handle,
+		     uint8_t vdev_id, void *pcontext);
+
+/**
  * sme_get_pmk_info(): A wrapper function to request CSR to save PMK
  * @mac_handle: Global structure
  * @session_id: SME session_id
@@ -578,6 +604,20 @@ static inline
 void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
 		      tPmkidCacheInfo *pmk_cache)
 {}
+
+static inline QDF_STATUS
+sme_get_roam_scan_ch(mac_handle_t mac_handle,
+		     uint8_t vdev_id, void *pcontext)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+sme_set_roam_scan_ch_event_cb(mac_handle_t mac_handle,
+			      void *cb)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 /**
@@ -1106,6 +1146,7 @@ QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
 					  uint32_t *freq_list,
 					  uint8_t *pNumChannels,
 					  uint8_t sessionId);
+
 /**
  * sme_dump_freq_list() - Dump the frequencies from given chan info
  * @chan_info: Contains the frequency list and number of frequencies

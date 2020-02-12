@@ -1436,6 +1436,11 @@ static inline void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 {}
 #endif
 
+typedef void (*sme_get_raom_scan_ch_callback)(
+				hdd_handle_t hdd_handle,
+				struct roam_scan_ch_resp *roam_ch,
+				void *context);
+
 /**
  * csr_packetdump_timer_stop() - stops packet dump timer
  *

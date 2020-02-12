@@ -1585,7 +1585,10 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS_EVENT,
 	},
-
+	[QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO,
+	}
 };
 
 /**
@@ -6207,6 +6210,41 @@ wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
+				      uint16_t buf_len, uint8_t *buf)
+{
+	struct sk_buff *vendor_event;
+	uint32_t len, ret;
+
+	if (!hdd_ctx) {
+		hdd_err_rl("hdd context is null");
+		return;
+	}
+
+	len = nla_total_size(buf_len) + NLMSG_HDRLEN;
+	vendor_event =
+		cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy, NULL, len,
+			QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX,
+			GFP_KERNEL);
+
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	ret = nla_put(vendor_event,
+		      QCA_WLAN_VENDOR_ATTR_UPDATE_STA_INFO_CONNECT_CHANNELS,
+		      buf_len, buf);
+	if (ret) {
+		hdd_err("OEM event put fails status %d", ret);
+		kfree_skb(vendor_event);
+		return;
+	}
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+}
+
 /**
  * wlan_hdd_send_roam_auth_event() - Send the roamed and authorized event
  * @adapter: Pointer to adapter struct

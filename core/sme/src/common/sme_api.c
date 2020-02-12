@@ -1721,6 +1721,38 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS sme_get_roam_scan_ch(mac_handle_t mac_handle,
+				uint8_t vdev_id, void *pcontext)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+
+	msg.type = WMA_ROAM_SCAN_CH_REQ;
+	msg.bodyval = vdev_id;
+	mac->sme.roam_scan_ch_get_context = pcontext;
+
+	if (scheduler_post_message(QDF_MODULE_ID_SME,
+				   QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_WMA,
+				   &msg)) {
+		sme_err("Posting message %d failed",
+			WMA_ROAM_SCAN_CH_REQ);
+		mac->sme.roam_scan_ch_get_context = NULL;
+		sme_release_global_lock(&mac->sme);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sme_release_global_lock(&mac->sme);
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * sme_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
  * @mac_handle: Opaque handle to the global MAC context
@@ -1948,6 +1980,55 @@ static QDF_STATUS sme_process_dual_mac_config_resp(struct mac_context *mac,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS sme_set_roam_scan_ch_event_cb(mac_handle_t mac_handle,
+					 sme_get_raom_scan_ch_callback cb)
+{
+	QDF_STATUS qdf_status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		return qdf_status;
+
+	mac->sme.roam_scan_ch_callback = cb;
+	sme_release_global_lock(&mac->sme);
+
+	return qdf_status;
+}
+
+/**
+ * sme_process_roam_scan_ch_list_resp() - Process get roam scan ch list
+ * response
+ * @mac: Global MAC pointer
+ * @msgbuf: pointer to roam scan ch list response
+ *
+ * This function checks the roam scan chan list message is for command
+ * response or a async event and accordingly data is given to user space.
+ * callback to process further
+ */
+static void
+sme_process_roam_scan_ch_list_resp(struct mac_context *mac,
+				   struct roam_scan_ch_resp *roam_ch)
+{
+	sme_get_raom_scan_ch_callback callback =
+				mac->sme.roam_scan_ch_callback;
+
+	if (!roam_ch)
+		return;
+
+	if (callback)
+		callback(mac->hdd_handle, roam_ch,
+			 mac->sme.roam_scan_ch_get_context);
+}
+#else
+static void
+sme_process_roam_scan_ch_list_resp(tpAniSirGlobal mac,
+				   struct roam_scan_ch_resp *roam_ch)
+{
+}
+#endif
 
 /**
  * sme_process_antenna_mode_resp() - Process set antenna mode
@@ -2325,6 +2406,10 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);
 		}
+		break;
+	case eWNI_SME_GET_ROAM_SCAN_CH_LIST_EVENT:
+		sme_process_roam_scan_ch_list_resp(mac, pMsg->bodyptr);
+		qdf_mem_free(pMsg->bodyptr);
 		break;
 	default:
 

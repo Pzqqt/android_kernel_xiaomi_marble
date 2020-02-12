@@ -3273,6 +3273,69 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
 	return 0;
 }
 
+int wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle,
+					  uint8_t *event,
+					  uint32_t len)
+{
+	tp_wma_handle wma = (tp_wma_handle)handle;
+	WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID_param_tlvs *param_buf;
+	wmi_roam_scan_channel_list_event_fixed_param *fixed_param;
+	uint8_t vdev_id, i = 0, num_ch = 0;
+	struct roam_scan_ch_resp *resp;
+	struct scheduler_msg sme_msg = {0};
+
+	param_buf = (WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wma_err_rl("NULL event received from target");
+		return -EINVAL;
+	}
+
+	fixed_param = param_buf->fixed_param;
+	if (!fixed_param) {
+		wma_err_rl(" NULL fixed param");
+		return -EINVAL;
+	}
+
+	vdev_id = fixed_param->vdev_id;
+	if (vdev_id >= wma->max_bssid) {
+		wma_err_rl("Invalid vdev_id %d", vdev_id);
+		return -EINVAL;
+	}
+
+	num_ch = (param_buf->num_channel_list <
+		WNI_CFG_VALID_CHANNEL_LIST_LEN) ?
+		param_buf->num_channel_list :
+		WNI_CFG_VALID_CHANNEL_LIST_LEN;
+
+	resp = qdf_mem_malloc(sizeof(struct roam_scan_ch_resp) +
+		num_ch * sizeof(param_buf->channel_list[0]));
+	if (!resp) {
+		wma_err_rl("Failed to alloc resp message");
+		return -EINVAL;
+	}
+
+	resp->chan_list = (uint32_t *)(resp + 1);
+	resp->vdev_id = vdev_id;
+	resp->command_resp = fixed_param->command_response;
+	resp->num_channels = param_buf->num_channel_list;
+
+	for (i = 0; i < num_ch; i++)
+		resp->chan_list[i] = param_buf->channel_list[i];
+
+	sme_msg.type = eWNI_SME_GET_ROAM_SCAN_CH_LIST_EVENT;
+	sme_msg.bodyptr = resp;
+
+	if (scheduler_post_message(QDF_MODULE_ID_WMA,
+				   QDF_MODULE_ID_SME,
+				   QDF_MODULE_ID_SME, &sme_msg)) {
+		WMA_LOGE(FL("Failed to post msg to SME"));
+		qdf_mem_free(sme_msg.bodyptr);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_get_trigger_detail_str  - Return roam trigger string from the

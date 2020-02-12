@@ -295,6 +295,25 @@ void wma_process_pdev_hw_mode_trans_ind(void *wma,
 QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wma_get_roam_scan_ch() - API to get roam scan channel list.
+ * @wma_handle: pointer to wma handle.
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wma_get_roam_scan_ch(wmi_unified_t wma,
+				uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS wma_get_roam_scan_ch(wmi_unified_t wma,
+				uint8_t vdev_id)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * wma_set_tx_rx_aggr_size() - set tx rx aggregation size
  * @vdev_id: vdev id
