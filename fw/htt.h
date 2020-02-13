@@ -199,9 +199,10 @@
  * 3.75 Add fp_ndp and mo_ndp flags in HTT_H2T_MSG_TYPE_RX_RING_SELECTION_CFG.
  * 3.76 Add HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG msg.
  * 3.77 Add HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE msg.
+ * 3.78 Add htt_ppdu_id def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 77
+#define HTT_CURRENT_VERSION_MINOR 78
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -14000,5 +14001,118 @@ PREPACK struct htt_chan_caldata_msg {
         HTT_CHECK_SET_VAL(HTT_CHAN_CALDATA_MSG_FREQ2, _val);  \
         ((_var) |= ((_val) << HTT_CHAN_CALDATA_MSG_FREQ2_S)); \
     } while (0)
+
+
+/**
+ *  @brief - HTT PPDU ID format
+ *
+ *   @details
+ *    The following field definitions describe the format of the PPDU ID.
+ *    The PPDU ID is truncated to 24 bits for TLVs from TQM.
+ *
+ *  |31 30|29        24|     23|    22|21   19|18  17|16     12|11            0|
+ *  +---------------------------------------------------------------------------
+ *  |rsvd |seq_cmd_type|tqm_cmd| rsvd |seq_idx|mac_id| hwq_ id |      sch id   |
+ *  +---------------------------------------------------------------------------
+ *
+ *   sch id :Schedule command id
+ *   Bits [11 : 0] : monotonically increasing counter to track the
+ *   PPDU posted to a specific transmit queue.
+ *
+ *   hwq_id: Hardware Queue ID.
+ *   Bits [16 : 12] : Indicates the queue id in the hardware transmit queue.
+ *
+ *   mac_id: MAC ID
+ *   Bits [18 : 17] : LMAC ID obtained from the whal_mac_struct
+ *
+ *   seq_idx: Sequence index.
+ *   Bits [21 : 19] : Sequence index indicates all the PPDU belonging to
+ *   a particular TXOP.
+ *
+ *   tqm_cmd: HWSCH/TQM flag.
+ *   Bit [23] : Always set to 0.
+ *
+ *   seq_cmd_type: Sequence command type.
+ *   Bit [29 : 24] : Indicates the frame type for the current sequence.
+ *   Refer to enum HTT_STATS_FTYPE for values.
+ */
+PREPACK struct htt_ppdu_id {
+    A_UINT32
+        sch_id:         12,
+        hwq_id:          5,
+        mac_id:          2,
+        seq_idx:         3,
+        reserved1:       1,
+        tqm_cmd:         1,
+        seq_cmd_type:    6,
+        reserved2:       2;
+} POSTPACK;
+
+#define HTT_PPDU_ID_SCH_ID_S    0
+#define HTT_PPDU_ID_SCH_ID_M    0x00000fff
+#define HTT_PPDU_ID_SCH_ID_GET(_var) \
+    (((_var) & HTT_PPDU_ID_SCH_ID_M) >> HTT_PPDU_ID_SCH_ID_S)
+
+#define HTT_PPDU_ID_SCH_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_SCH_ID, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_SCH_ID_S)); \
+    } while (0)
+
+#define HTT_PPDU_ID_HWQ_ID_S    12
+#define HTT_PPDU_ID_HWQ_ID_M    0x0001f000
+#define HTT_PPDU_ID_HWQ_ID_GET(_var) \
+    (((_var) & HTT_PPDU_ID_HWQ_ID_M) >> HTT_PPDU_ID_HWQ_ID_S)
+
+#define HTT_PPDU_ID_HWQ_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_HWQ_ID, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_HWQ_ID_S)); \
+    } while (0)
+
+#define HTT_PPDU_ID_MAC_ID_S    17
+#define HTT_PPDU_ID_MAC_ID_M    0x00060000
+#define HTT_PPDU_ID_MAC_ID_GET(_var) \
+    (((_var) & HTT_PPDU_ID_MAC_ID_M) >> HTT_PPDU_ID_MAC_ID_S)
+
+#define HTT_PPDU_ID_MAC_ID_SET(_var, _val) \
+    do {                                            \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_MAC_ID, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_MAC_ID_S)); \
+    } while (0)
+
+#define HTT_PPDU_ID_SEQ_IDX_S    19
+#define HTT_PPDU_ID_SEQ_IDX_M    0x00380000
+#define HTT_PPDU_ID_SEQ_IDX_GET(_var) \
+    (((_var) & HTT_PPDU_ID_SEQ_IDX_M) >> HTT_PPDU_ID_SEQ_IDX_S)
+
+#define HTT_PPDU_ID_SEQ_IDX_SET(_var, _val) \
+    do {                                            \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_SEQ_IDX, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_SEQ_IDX_S)); \
+    } while (0)
+
+#define HTT_PPDU_ID_TQM_CMD_S    23
+#define HTT_PPDU_ID_TQM_CMD_M    0x00800000
+#define HTT_PPDU_ID_TQM_CMD_GET(_var) \
+    (((_var) & HTT_PPDU_ID_TQM_CMD_M) >> HTT_PPDU_ID_TQM_CMD_S)
+
+#define HTT_PPDU_ID_TQM_CMD_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_TQM_CMD, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_TQM_CMD_S)); \
+    } while (0)
+
+#define HTT_PPDU_ID_SEQ_CMD_TYPE_S    24
+#define HTT_PPDU_ID_SEQ_CMD_TYPE_M    0x3f000000
+#define HTT_PPDU_ID_SEQ_CMD_TYPE_GET(_var) \
+    (((_var) & HTT_PPDU_ID_SEQ_CMD_TYPE_M) >> HTT_PPDU_ID_SEQ_CMD_TYPE_S)
+
+#define HTT_PPDU_ID_SEQ_CMD_TYPE_SET(_var, _val) \
+    do {                                                 \
+        HTT_CHECK_SET_VAL(HTT_PPDU_ID_SEQ_CMD_TYPE, _val);  \
+        ((_var) |= ((_val) << HTT_PPDU_ID_SEQ_CMD_TYPE_S)); \
+    } while (0)
+
 
 #endif
