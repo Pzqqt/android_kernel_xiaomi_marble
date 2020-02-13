@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
@@ -1119,7 +1119,7 @@ static int _sde_hw_intr_init_irq_tables(struct sde_hw_intr *intr,
 	struct sde_mdss_cfg *m)
 {
 	struct sde_intr_irq_offsets *item;
-	int i, idx, sde_irq_tbl_idx = 0, ret = 0;
+	int i, sde_irq_tbl_idx = 0, ret = 0;
 	u32 low_idx, high_idx;
 	u32 sde_irq_map_idx = 0;
 
@@ -1127,9 +1127,6 @@ static int _sde_hw_intr_init_irq_tables(struct sde_hw_intr *intr,
 	list_for_each_entry(item, &m->irq_offset_list, list) {
 		low_idx = sde_irq_map_idx;
 		high_idx = low_idx + _get_irq_map_size(item);
-
-		pr_debug("init[%d]=%d low:%d high:%d\n",
-			sde_irq_tbl_idx, idx, low_idx, high_idx);
 
 		if (sde_irq_tbl_idx >= intr->sde_irq_size ||
 			sde_irq_tbl_idx < 0) {
