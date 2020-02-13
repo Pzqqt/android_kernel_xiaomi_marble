@@ -46,7 +46,6 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 	qdf_spin_unlock_bh(&temp_ctx->pmo_vdev_lock);
 
 	for (i = 0; i < ip->count; i++) {
-		pmo_debug("%pM", ip->mc_addr[i].bytes);
 		/*
 		 * Skip following addresses:
 		 * 1)IPv6 router solicitation address
@@ -71,8 +70,7 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 		qdf_mem_copy(&op_list->mc_addr[j].bytes,
 			     ip->mc_addr[i].bytes, QDF_MAC_ADDR_SIZE);
 		qdf_spin_unlock_bh(&temp_ctx->pmo_vdev_lock);
-		pmo_debug("Index = %d, mlist[%pM]",
-			  j, op_list->mc_addr[i].bytes);
+		pmo_debug("Index = %d, mac[%pM]", j, op_list->mc_addr[i].bytes);
 		j++;
 	}
 }
@@ -108,8 +106,6 @@ QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	pmo_enter();
-
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto exit_with_status;
@@ -119,7 +115,6 @@ QDF_STATUS pmo_core_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 	pmo_vdev_put_ref(vdev);
 
 exit_with_status:
-	pmo_exit();
 
 	return status;
 }
@@ -400,7 +395,6 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	pmo_enter();
 	if (!psoc) {
 		pmo_err("psoc is NULL");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -433,7 +427,6 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 dec_ref:
 	pmo_vdev_put_ref(vdev);
 out:
-	pmo_exit();
 
 	return status;
 }
