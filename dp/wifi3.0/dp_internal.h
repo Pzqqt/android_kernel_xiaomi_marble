@@ -1875,7 +1875,7 @@ struct dp_soc *cdp_soc_t_to_dp_soc(struct cdp_soc_t *psoc)
 	return (struct dp_soc *)psoc;
 }
 
-#ifdef WLAN_SUPPORT_RX_FLOW_TAG
+#if defined(WLAN_SUPPORT_RX_FLOW_TAG) || defined(WLAN_SUPPORT_RX_FISA)
 /**
  * dp_rx_flow_update_fse_stats() - Update a flow's statistics
  * @pdev: pdev handle
@@ -1934,7 +1934,8 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev);
  */
 QDF_STATUS dp_rx_flow_send_fst_fw_setup(struct dp_soc *soc,
 					struct dp_pdev *pdev);
-#else
+#else /* !((WLAN_SUPPORT_RX_FLOW_TAG) || defined(WLAN_SUPPORT_RX_FISA)) */
+
 /**
  * dp_rx_fst_attach() - Initialize Rx FST and setup necessary parameters
  * @soc: SoC handle
@@ -1959,7 +1960,7 @@ static inline
 void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 }
-#endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+#endif
 
 /**
  * dp_get_vdev_from_soc_vdev_id_wifi3() - Returns vdev object given the vdev id
@@ -2030,4 +2031,7 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 				int *max_mac_rings);
 
 
+#if defined(WLAN_SUPPORT_RX_FISA)
+void dp_rx_dump_fisa_table(struct dp_soc *soc);
+#endif /* WLAN_SUPPORT_RX_FISA */
 #endif /* #ifndef _DP_INTERNAL_H_ */

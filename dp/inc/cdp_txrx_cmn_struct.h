@@ -79,6 +79,7 @@
 #define CDP_BUNDLE_STATS           23
 #define CDP_CREDIT_STATS           24
 #define CDP_DISCONNECT_STATS       25
+#define CDP_DP_RX_FISA_STATS	   26
 
 #define WME_AC_TO_TID(_ac) (       \
 		((_ac) == WME_AC_VO) ? 6 : \
@@ -284,6 +285,7 @@ enum cdp_host_txrx_stats {
 	TXRX_PDEV_CFG_PARAMS  = 10,
 	TXRX_NAPI_STATS       = 11,
 	TXRX_SOC_INTERRUPT_STATS = 12,
+	TXRX_SOC_FSE_STATS = 13,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -729,6 +731,11 @@ typedef bool (*ol_txrx_tx_flow_control_is_pause_fp)(void *osif_dev);
  */
 typedef QDF_STATUS(*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
 
+typedef QDF_STATUS(*ol_txrx_fisa_rx_fp)(void *soc,
+					void *dp_vdev,
+					qdf_nbuf_t msdu_list);
+
+typedef QDF_STATUS(*ol_txrx_fisa_flush_fp)(void *soc, int ring_num);
 /**
  * ol_txrx_rx_flush_fp - receive function to hand batches of data
  * frames from txrx to OS shim
@@ -905,6 +912,8 @@ struct ol_txrx_ops {
 		ol_txrx_rx_mon_fp       mon;
 		ol_txrx_stats_rx_fp           stats_rx;
 		ol_txrx_rsim_rx_decap_fp rsim_rx_decap;
+		ol_txrx_fisa_rx_fp	osif_fisa_rx;
+		ol_txrx_fisa_flush_fp   osif_fisa_flush;
 	} rx;
 	/* proxy arp function pointer - specified by OS shim, stored by txrx */
 	ol_txrx_proxy_arp_fp      proxy_arp;
@@ -2234,6 +2243,14 @@ struct cdp_peer_cookie {
 	uint8_t cookie;
 };
 
+#ifdef WLAN_SUPPORT_RX_FISA
+struct cdp_flow_stats {
+	uint32_t aggr_count;
+	uint32_t curr_aggr_count;
+	uint32_t flush_count;
+	uint32_t bytes_aggregated;
+};
+#else
 /**
  * cdp_flow_stats - Per-Flow (5-tuple) statistics
  * @msdu_count: number of rx msdus matching this flow
@@ -2244,6 +2261,7 @@ struct cdp_peer_cookie {
 struct cdp_flow_stats {
 	uint32_t msdu_count;
 };
+#endif
 
 /**
  * cdp_flow_fst_operation - RX FST operations allowed
@@ -2278,6 +2296,9 @@ enum cdp_flow_protocol_type {
  * @l4_protocol: protocol type in flow (TCP/UDP)
  */
 struct cdp_rx_flow_tuple_info {
+#ifdef WLAN_SUPPORT_RX_FISA
+	uint8_t tuple_populated;
+#endif
 	uint32_t dest_ip_127_96;
 	uint32_t dest_ip_95_64;
 	uint32_t dest_ip_63_32;

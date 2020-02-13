@@ -289,6 +289,19 @@ struct dp_htt_rx_flow_fst_operation {
 	struct cdp_rx_flow_info *rx_flow;
 };
 
+/**
+ * struct dp_htt_rx_fisa_config - Rx fisa config
+ * @pdev_id: DP Pdev identifier
+ * @fisa_timeout: fisa aggregation timeout
+ */
+struct dp_htt_rx_fisa_cfg {
+	uint8_t pdev_id;
+	uint32_t fisa_timeout;
+};
+
+QDF_STATUS dp_htt_rx_fisa_config(struct dp_pdev *pdev,
+				 struct dp_htt_rx_fisa_cfg *fisa_config);
+
 /*
  * htt_soc_initialize() - SOC level HTT initialization
  * @htt_soc: Opaque htt SOC handle

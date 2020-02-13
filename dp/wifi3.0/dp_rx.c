@@ -1348,7 +1348,13 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 		vdev->osif_rsim_rx_decap(vdev->osif_vdev, &nbuf_head,
 				&nbuf_tail, peer->mac_addr.raw);
 	}
-	vdev->osif_rx(vdev->osif_vdev, nbuf_head);
+
+	/* Function pointer initialized only when FISA is enabled */
+	if (vdev->osif_fisa_rx)
+		/* on failure send it via regular path */
+		vdev->osif_fisa_rx(soc, vdev, nbuf_head);
+	else
+		vdev->osif_rx(vdev->osif_vdev, nbuf_head);
 }
 
 /**
@@ -1738,6 +1744,28 @@ uint32_t dp_rx_srng_get_num_pending(hal_soc_handle_t hal_soc,
 
 	return num_pending;
 }
+
+#ifdef WLAN_SUPPORT_RX_FISA
+/*
+ * dp_rx_skip_tlvs() - Skip TLVs only if FISA is not enabled
+ * @vdev: DP vdev context
+ * @nbuf: nbuf whose data pointer is adjusted
+ * @size: size to be adjusted
+ *
+ * Return: None
+ */
+static void dp_rx_skip_tlvs(struct dp_vdev *vdev, qdf_nbuf_t nbuf, int size)
+{
+	/* TLVs include FISA info do not skip them yet */
+	if (!vdev->osif_fisa_rx)
+		qdf_nbuf_pull_head(nbuf, size);
+}
+#else /* !WLAN_SUPPORT_RX_FISA */
+static void dp_rx_skip_tlvs(struct dp_vdev *vdev, qdf_nbuf_t nbuf, int size)
+{
+	qdf_nbuf_pull_head(nbuf, size);
+}
+#endif /* !WLAN_SUPPORT_RX_FISA */
 
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
@@ -2185,9 +2213,8 @@ done:
 				  RX_PKT_TLVS_LEN;
 
 			qdf_nbuf_set_pktlen(nbuf, pkt_len);
-			qdf_nbuf_pull_head(nbuf,
-					   RX_PKT_TLVS_LEN +
-					   msdu_metadata.l3_hdr_pad);
+			dp_rx_skip_tlvs(vdev, nbuf, RX_PKT_TLVS_LEN +
+						msdu_metadata.l3_hdr_pad);
 		}
 
 		/*
@@ -2354,6 +2381,9 @@ done:
 				}
 			}
 		}
+
+		if (vdev && vdev->osif_fisa_flush)
+			vdev->osif_fisa_flush(soc, reo_ring_num);
 
 		if (vdev && vdev->osif_gro_flush && rx_ol_pkt_cnt) {
 			vdev->osif_gro_flush(vdev->osif_vdev,

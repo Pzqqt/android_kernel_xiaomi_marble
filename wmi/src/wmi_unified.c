@@ -36,6 +36,8 @@
 
 #include <linux/debugfs.h>
 #include <target_if.h>
+#include <qdf_debugfs.h>
+#include "wmi_filtered_logging.h"
 
 /* This check for CONFIG_WIN temporary added due to redeclaration compilation
 error in MCL. Error is caused due to inclusion of wmi.h in wmi_unified_api.h
@@ -101,7 +103,7 @@ typedef PREPACK struct {
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
 /* TODO Cleanup this backported function */
-static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
+static int wmi_bp_seq_printf(qdf_debugfs_file_t m, const char *f, ...)
 {
 	va_list args;
 
@@ -813,6 +815,8 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	qdf_spinlock_create(&wmi_handle->log_info.wmi_record_lock);
 	wmi_handle->log_info.wmi_logging_enable = 1;
 
+	wmi_filtered_logging_init(wmi_handle);
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif
@@ -827,6 +831,8 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 #ifdef WMI_INTERFACE_EVENT_LOGGING_DYNAMIC_ALLOC
 static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle)
 {
+	wmi_filtered_logging_free(wmi_handle);
+
 	if (wmi_handle->log_info.wmi_command_log_buf_info.buf)
 		qdf_mem_free(wmi_handle->log_info.wmi_command_log_buf_info.buf);
 	if (wmi_handle->log_info.wmi_command_tx_cmp_log_buf_info.buf)
@@ -850,6 +856,7 @@ static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle)
 		qdf_mem_free(
 			wmi_handle->log_info.wmi_diag_event_log_buf_info.buf);
 	wmi_handle->log_info.wmi_logging_enable = 0;
+
 	qdf_spinlock_destroy(&wmi_handle->log_info.wmi_record_lock);
 }
 #else
@@ -1357,6 +1364,12 @@ GENERATE_DEBUG_STRUCTS(wmi_mgmt_command_tx_cmp_log);
 GENERATE_DEBUG_STRUCTS(wmi_mgmt_event_log);
 GENERATE_DEBUG_STRUCTS(wmi_enable);
 GENERATE_DEBUG_STRUCTS(wmi_log_size);
+#ifdef WMI_INTERFACE_FILTERED_EVENT_LOGGING
+GENERATE_DEBUG_STRUCTS(filtered_wmi_cmds);
+GENERATE_DEBUG_STRUCTS(filtered_wmi_evts);
+GENERATE_DEBUG_STRUCTS(wmi_filtered_command_log);
+GENERATE_DEBUG_STRUCTS(wmi_filtered_event_log);
+#endif
 
 struct wmi_debugfs_info wmi_debugfs_infos[NUM_DEBUG_INFOS] = {
 	DEBUG_FOO(wmi_command_log),
@@ -1368,6 +1381,12 @@ struct wmi_debugfs_info wmi_debugfs_infos[NUM_DEBUG_INFOS] = {
 	DEBUG_FOO(wmi_mgmt_event_log),
 	DEBUG_FOO(wmi_enable),
 	DEBUG_FOO(wmi_log_size),
+#ifdef WMI_INTERFACE_FILTERED_EVENT_LOGGING
+	DEBUG_FOO(filtered_wmi_cmds),
+	DEBUG_FOO(filtered_wmi_evts),
+	DEBUG_FOO(wmi_filtered_command_log),
+	DEBUG_FOO(wmi_filtered_event_log),
+#endif
 };
 
 
@@ -1484,7 +1503,7 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 
 	WMI_MGMT_COMMAND_RECORD(wmi_handle, cmd, (uint8_t *)data);
-
+	wmi_specific_cmd_record(wmi_handle, cmd, (uint8_t *)data);
 	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 }
 #else
@@ -1839,9 +1858,11 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		 * WMI mgmt command already recorded in wmi_mgmt_cmd_record
 		 */
 		if (wmi_handle->ops->is_management_record(cmd_id) == false) {
-			WMI_COMMAND_RECORD(wmi_handle, cmd_id,
-					qdf_nbuf_data(buf) +
-			 wmi_handle->soc->buf_offset_command);
+			uint8_t *tmpbuf = (uint8_t *)qdf_nbuf_data(buf) +
+				wmi_handle->soc->buf_offset_command;
+
+			WMI_COMMAND_RECORD(wmi_handle, cmd_id, tmpbuf);
+			wmi_specific_cmd_record(wmi_handle, cmd_id, tmpbuf);
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -2430,8 +2451,11 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 			 * as its already logged in WMI RX event buffer
 			 */
 		} else {
-			WMI_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-					wmi_handle->soc->buf_offset_event));
+			uint8_t *tmpbuf = (uint8_t *)data +
+					wmi_handle->soc->buf_offset_event;
+
+			WMI_EVENT_RECORD(wmi_handle, id, tmpbuf);
+			wmi_specific_evt_record(wmi_handle, id, tmpbuf);
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
