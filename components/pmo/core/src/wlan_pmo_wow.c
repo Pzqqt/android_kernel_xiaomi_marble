@@ -51,7 +51,6 @@ QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
 	uint8_t pattern_count;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	pmo_enter();
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
@@ -69,7 +68,6 @@ QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
 
 	pmo_vdev_put_ref(vdev);
 out:
-	pmo_exit();
 	return status;
 }
 
