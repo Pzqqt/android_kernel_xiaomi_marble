@@ -46,6 +46,7 @@ enum htt_ppdu_stats_tlv_tag {
     HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV,          /* htt_ppdu_stats_usr_common_array_tlv_v */
     HTT_PPDU_STATS_INFO_TLV,                      /* htt_ppdu_stats_info */
     HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV,       /* htt_ppdu_stats_tx_mgmtctrl_payload_tlv */
+    HTT_PPDU_STATS_USERS_INFO_TLV,                /* htt_ppdu_stats_users_info_tlv */
 
     /* New TLV's are added above to this line */
     HTT_PPDU_STATS_MAX_TAG,
@@ -570,6 +571,19 @@ typedef enum HTT_PPDU_STATS_SPATIAL_REUSE HTT_PPDU_STATS_SPATIAL_REUSE;
         ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_M     0x0000003f
+#define HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_S              0
+
+#define HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_M) >> \
+    HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_S)
+
+#define HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_SET(_var, _val) \
+     do { \
+            HTT_CHECK_SET_VAL(HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID, _val); \
+            ((_var) |= ((_val) << HTT_PPDU_STATS_COMMON_TLV_BSS_COLOR_ID_S)); \
+    } while (0)
+
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
 
@@ -687,12 +701,28 @@ typedef struct {
                      reserved1:              2;
         };
     };
+
     /* ppdu_start_tstmp_u32_us:
      * Upper 32 bits of the PPDU start timestamp.
      * This field can be combined with the ppdu_start_tstmp_us field's
      * lower 32 bits of the PPDU start timestamp to form a 64-bit timestamp.
      */
     A_UINT32 ppdu_start_tstmp_u32_us;
+
+    /*
+     * BIT [5 : 0] - bss_color_id indicates he_bss_color which is an identifier
+     *               of the BSS and is used to assist a receiving STA in
+     *               identifying the BSS from which a PPDU originates.
+     *               Value in the range 0 to 63
+     * BIT [31 : 6] -reserved
+     */
+    union {
+        A_UINT32 reserved__bss_color_id;
+        struct {
+            A_UINT32 bss_color_id:   6,
+                     reserved2:     26;
+        };
+    };
 } htt_ppdu_stats_common_tlv;
 
 #define HTT_PPDU_STATS_USER_COMMON_TLV_TID_NUM_M     0x000000ff
@@ -2228,6 +2258,50 @@ typedef struct {
      */
     A_UINT32 payload[1];
 } htt_ppdu_stats_tx_mgmtctrl_payload_tlv;
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_M   0x000000ff
+#define HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_S            0
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_M) >> \
+    HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_S)
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_S)); \
+    } while (0)
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_M   0x0000ff00
+#define HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_S            8
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_M) >> \
+    HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_S)
+
+#define HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USERS_INFO_TLV_FRAME_TYPE_S)); \
+    } while (0)
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    /*
+     * BIT [  7 :   0]   :- max_users
+     * BIT [ 15 :   8]   :- frame_type (HTT_STATS_FTYPE)
+     * BIT [ 31 :  16]   :- reserved1
+     */
+    union {
+        A_UINT32 rsvd__frame_type__max_users;
+        struct {
+            A_UINT32 max_users: 8,
+                     frame_type:     8,
+                     reserved1:     16;
+        };
+    };
+} htt_ppdu_stats_users_info_tlv;
 
 
 #endif //__HTT_PPDU_STATS_H__
