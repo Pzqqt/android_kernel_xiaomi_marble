@@ -1858,12 +1858,6 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("%s: tot_num_tx_pwr_lvls: %u num_tx_pwr_lvls: %u pwr_lvl_offset: %u radio_id: %u",
-			__func__, fixed_param->total_num_tx_power_levels,
-			 fixed_param->num_tx_power_levels,
-			 fixed_param->power_level_offset,
-			 fixed_param->radio_id);
-
 	if (fixed_param->num_tx_power_levels > ((WMI_SVC_MSG_MAX_SIZE -
 	    sizeof(*fixed_param)) / sizeof(uint32_t)) ||
 	    fixed_param->num_tx_power_levels >
@@ -1942,11 +1936,12 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		link_stats_results->moreResultToFollow = 0;
 		link_stats_results->nr_received++;
 	}
-
-	WMA_LOGD("%s: moreResultToFollow: %u nr: %u nr_received: %u",
-			__func__, link_stats_results->moreResultToFollow,
-			link_stats_results->num_radio,
-			link_stats_results->nr_received);
+	WMA_LOGD("num tx pwr lvls %u num tx pwr lvls %u pwr lvl offset %u radio_id %u moretofollow: %u nr_received: %u",
+		 fixed_param->total_num_tx_power_levels,
+		 fixed_param->num_tx_power_levels,
+		 fixed_param->power_level_offset, fixed_param->radio_id,
+		 link_stats_results->moreResultToFollow,
+		 link_stats_results->nr_received);
 
 	/* If still data to receive, return from here */
 	if (link_stats_results->moreResultToFollow)
@@ -2101,17 +2096,6 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		 fixed_param->request_id, fixed_param->num_radio,
 		 fixed_param->more_radio_events);
 
-	WMA_LOGD("Radio Info: radio_id: %u on_time: %u tx_time: %u rx_time: %u on_time_scan: %u on_time_nbd: %u on_time_gscan: %u on_time_roam_scan: %u",
-		 radio_stats->radio_id, radio_stats->on_time,
-		 radio_stats->tx_time, radio_stats->rx_time,
-		 radio_stats->on_time_scan, radio_stats->on_time_nbd,
-		 radio_stats->on_time_gscan, radio_stats->on_time_roam_scan);
-
-	WMA_LOGD("on_time_pno_scan: %u on_time_hs20: %u num_channels: %u on_time_host_scan: %u, on_time_lpi_scan: %u",
-		 radio_stats->on_time_pno_scan, radio_stats->on_time_hs20,
-		 radio_stats->num_channels, radio_stats->on_time_host_scan,
-		 radio_stats->on_time_lpi_scan);
-
 	results = (uint8_t *) link_stats_results->results;
 	t_radio_stats = (uint8_t *) radio_stats;
 	t_channel_stats = (uint8_t *) channel_stats;
@@ -2152,11 +2136,10 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		next_chan_offset = WMI_TLV_HDR_SIZE;
 		WMA_LOGD("Channel Stats Info");
 		for (count = 0; count < radio_stats->num_channels; count++) {
-			WMA_LOGD("channel_width %u center_freq %u center_freq0 %u",
-				 channel_stats->channel_width,
+			WMA_LOGD("freq %u width %u freq0 %u freq1 %u awake time %u cca busy time %u",
 				 channel_stats->center_freq,
-				 channel_stats->center_freq0);
-			WMA_LOGD("center_freq1 %u radio_awake_time %u cca_busy_time %u",
+				 channel_stats->channel_width,
+				 channel_stats->center_freq0,
 				 channel_stats->center_freq1,
 				 channel_stats->radio_awake_time,
 				 channel_stats->cca_busy_time);

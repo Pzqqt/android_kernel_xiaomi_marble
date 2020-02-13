@@ -632,8 +632,8 @@ static void hdd_link_layer_process_peer_stats(struct hdd_adapter *adapter,
 	if (0 != status)
 		return;
 
-	hdd_debug("LL_STATS_PEER_ALL : num_peers %u, more data = %u",
-		  peer_stat->num_peers, more_data);
+	hdd_nofl_debug("LL_STATS_PEER_ALL : num_peers %u, more data = %u",
+		       peer_stat->num_peers, more_data);
 
 	/*
 	 * Allocate a size of 4096 for the peer stats comprising
@@ -968,7 +968,7 @@ hdd_link_layer_process_radio_stats(struct hdd_adapter *adapter,
 		return;
 
 	for (i = 0; i < num_radio; i++) {
-		hdd_debug("LL_STATS_RADIO"
+		hdd_nofl_debug("LL_STATS_RADIO"
 		       " radio: %u on_time: %u tx_time: %u rx_time: %u"
 		       " on_time_scan: %u on_time_nbd: %u"
 		       " on_time_gscan: %u on_time_roam_scan: %u"
@@ -1094,18 +1094,13 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(hdd_handle_t hdd_handle,
 		return;
 	}
 
-	hdd_debug("Link Layer Indication Type: %d", indication_type);
-
 	switch (indication_type) {
 	case SIR_HAL_LL_STATS_RESULTS_RSP:
 	{
-		hdd_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %pK",
-			results->paramId,
-			results->ifaceId,
-			results->rspId,
-			results->moreResultToFollow,
-			results->num_radio,
-			results->results);
+		hdd_nofl_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %pK",
+			       results->paramId, results->ifaceId,
+			       results->rspId, results->moreResultToFollow,
+			       results->num_radio, results->results);
 
 		request = osif_request_get(cookie);
 		if (!request) {
