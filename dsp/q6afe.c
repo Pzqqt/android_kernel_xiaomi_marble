@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/debugfs.h>
@@ -6855,7 +6855,7 @@ static int afe_sidetone_iir(u16 tx_port_id)
 	 * Set IIR enable params
 	 */
 	param_hdr.module_id = mid;
-	param_hdr.param_id = INSTANCE_ID_0;
+	param_hdr.instance_id = INSTANCE_ID_0;
 	param_hdr.param_id = AFE_PARAM_ID_ENABLE;
 	param_hdr.param_size = sizeof(enable);
 	enable.enable = iir_enable;
