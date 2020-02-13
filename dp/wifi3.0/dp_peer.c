@@ -34,6 +34,34 @@
 #include "dp_tx_capture.h"
 #endif
 
+#ifdef FEATURE_WDS
+static inline bool
+dp_peer_ast_free_in_unmap_supported(struct dp_peer *peer,
+				    struct dp_ast_entry *ast_entry)
+{
+	/* if peer map v2 is enabled we are not freeing ast entry
+	 * here and it is supposed to be freed in unmap event (after
+	 * we receive delete confirmation from target)
+	 *
+	 * if peer_id is invalid we did not get the peer map event
+	 * for the peer free ast entry from here only in this case
+	 */
+
+	if ((ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) &&
+	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF))
+		return true;
+
+	return false;
+}
+#else
+static inline bool
+dp_peer_ast_free_in_unmap_supported(struct dp_peer *peer,
+				    struct dp_ast_entry *ast_entry)
+{
+	return false;
+}
+#endif
+
 static inline void
 dp_set_ssn_valid_flag(struct hal_reo_cmd_params *params,
 					uint8_t valid)
@@ -935,12 +963,7 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	 * if peer_id is invalid we did not get the peer map event
 	 * for the peer free ast entry from here only in this case
 	 */
-
-	/* For HM_SEC and SELF type we do not receive unmap event
-	 * free ast_entry from here it self
-	 */
-	if ((ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) &&
-	    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF))
+	if (dp_peer_ast_free_in_unmap_supported(peer, ast_entry))
 		return;
 
 	/* for WDS secondary entry ast_entry->next_hop would be set so

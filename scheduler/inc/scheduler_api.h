@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,6 +91,15 @@ struct scheduler_msg {
 	uint64_t queued_at_us;
 #endif /* WLAN_SCHED_HISTORY_SIZE */
 };
+
+/**
+ * sched_history_print() - print scheduler history
+ *
+ * This API prints the scheduler history.
+ *
+ * Return: None
+ */
+void sched_history_print(void);
 
 typedef QDF_STATUS (*scheduler_msg_process_fn_t) (struct scheduler_msg  *msg);
 typedef void (*hdd_suspend_callback)(void);

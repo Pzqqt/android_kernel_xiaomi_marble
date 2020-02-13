@@ -28,6 +28,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_net_types.h"
 #include <wlan_cfg.h>
+#include "dp_ipa.h"
 #if defined(MESH_MODE_SUPPORT) || defined(FEATURE_PERPKT_INFO)
 #include "if_meta_hdr.h"
 #endif
@@ -4327,6 +4328,9 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 			hal_tx_init_data_ring(soc->hal_soc,
 					soc->tcl_data_ring[i].hal_srng);
 		}
+		if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+			hal_tx_init_data_ring(soc->hal_soc,
+					soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX].hal_srng);
 	}
 
 	/*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,15 @@ DEFINE_QDF_FLEX_MEM_POOL(sched_pool, sizeof(struct scheduler_msg),
 			 WLAN_SCHED_REDUCTION_LIMIT);
 
 #ifdef WLAN_SCHED_HISTORY_SIZE
+
+#define SCHEDULER_HISTORY_HEADER "|Callback                               "\
+				 "|Message Type"			   \
+				 "|Queue Duration(us)|Queue Depth"	   \
+				 "|Run Duration(us)|"
+
+#define SCHEDULER_HISTORY_LINE "--------------------------------------" \
+			       "--------------------------------------" \
+			       "--------------------------------------"
 
 /**
  * struct sched_history_item - metrics for a scheduler message
@@ -87,12 +96,52 @@ static void sched_history_stop(void)
 	sched_history_index %= WLAN_SCHED_HISTORY_SIZE;
 }
 
+void sched_history_print(void)
+{
+	struct sched_history_item *history, *item;
+	uint32_t history_idx;
+	uint32_t idx, index;
+
+	history = qdf_mem_malloc(sizeof(*history) * WLAN_SCHED_HISTORY_SIZE);
+
+	if (!history) {
+		sched_err("Mem alloc failed");
+		return;
+	}
+
+	qdf_mem_copy(history, &sched_history,
+		     (sizeof(*history) * WLAN_SCHED_HISTORY_SIZE));
+	history_idx = sched_history_index;
+
+	sched_nofl_fatal(SCHEDULER_HISTORY_LINE);
+	sched_nofl_fatal(SCHEDULER_HISTORY_HEADER);
+	sched_nofl_fatal(SCHEDULER_HISTORY_LINE);
+
+	for (idx = 0; idx < WLAN_SCHED_HISTORY_SIZE; idx++) {
+		index = (history_idx + idx) % WLAN_SCHED_HISTORY_SIZE;
+		item = history + index;
+
+		if (!item->callback)
+			continue;
+
+		sched_nofl_fatal("%40pF|%12d|%18d|%11d|%16d|",
+				 item->callback, item->type_id,
+				 item->queue_duration_us,
+				 item->queue_depth,
+				 item->run_duration_us);
+	}
+
+	sched_nofl_fatal(SCHEDULER_HISTORY_LINE);
+
+	qdf_mem_free(history);
+}
 #else /* WLAN_SCHED_HISTORY_SIZE */
 
 static inline void sched_history_queue(struct scheduler_mq_type *queue,
 				       struct scheduler_msg *msg) { }
 static inline void sched_history_start(struct scheduler_msg *msg) { }
 static inline void sched_history_stop(void) { }
+void sched_history_print(void) { }
 
 #endif /* WLAN_SCHED_HISTORY_SIZE */
 

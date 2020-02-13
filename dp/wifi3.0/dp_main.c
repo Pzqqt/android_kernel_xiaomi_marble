@@ -2883,6 +2883,40 @@ static inline void dp_create_ext_stats_event(struct dp_soc *soc)
 }
 #endif
 
+static
+QDF_STATUS dp_setup_tx_ring_pair_by_index(struct dp_soc *soc, uint8_t index)
+{
+	int tx_ring_size;
+	int tx_comp_ring_size;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+	int cached;
+
+	tx_ring_size = wlan_cfg_tx_ring_size(soc_cfg_ctx);
+	if (dp_srng_setup(soc, &soc->tcl_data_ring[index], TCL_DATA,
+			  index, 0, tx_ring_size, 0)) {
+		dp_err("dp_srng_setup failed for tcl_data_ring");
+		goto fail1;
+	}
+
+	tx_comp_ring_size = wlan_cfg_tx_comp_ring_size(soc_cfg_ctx);
+	/* Disable cached desc if NSS offload is enabled */
+	cached = WLAN_CFG_DST_RING_CACHED_DESC;
+	if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
+		cached = 0;
+
+	if (dp_srng_setup(soc, &soc->tx_comp_ring[index],
+			  WBM2SW_RELEASE, index, 0, tx_comp_ring_size,
+			cached)) {
+		dp_err("dp_srng_setup failed for tx_comp_ring");
+		goto fail1;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+fail1:
+	return QDF_STATUS_E_FAILURE;
+}
+
 /*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
@@ -2899,6 +2933,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	int reo_dst_ring_size;
 	uint32_t entries;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+	QDF_STATUS status;
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
@@ -2934,32 +2969,17 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 			wlan_cfg_tx_comp_ring_size(soc_cfg_ctx);
 		tx_ring_size =
 			wlan_cfg_tx_ring_size(soc_cfg_ctx);
-		for (i = 0; i < soc->num_tcl_data_rings; i++) {
-			if (dp_srng_setup(soc, &soc->tcl_data_ring[i],
-					  TCL_DATA, i, 0, tx_ring_size, 0)) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("dp_srng_setup failed for tcl_data_ring[%d]"), i);
-				goto fail1;
-			}
 
-			/* Disable cached desc if NSS offload is enabled */
-			cached = WLAN_CFG_DST_RING_CACHED_DESC;
-			if (wlan_cfg_get_dp_soc_nss_cfg(soc_cfg_ctx))
-				cached = 0;
-			/*
-			 * TBD: Set IPA WBM ring size with ini IPA UC tx buffer
-			 * count
-			 */
-			if (dp_srng_setup(soc, &soc->tx_comp_ring[i],
-					  WBM2SW_RELEASE, i, 0,
-					  tx_comp_ring_size,
-					  cached)) {
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_ERROR,
-					FL("dp_srng_setup failed for tx_comp_ring[%d]"), i);
+		for (i = 0; i < soc->num_tcl_data_rings; i++) {
+			status = dp_setup_tx_ring_pair_by_index(soc, i);
+			if (status != QDF_STATUS_SUCCESS)
 				goto fail1;
-			}
+		}
+		if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+			status = dp_setup_tx_ring_pair_by_index(soc,
+						IPA_TCL_DATA_RING_IDX);
+			if (status != QDF_STATUS_SUCCESS)
+				goto fail1;
 		}
 	} else {
 		/* This will be incremented during per pdev ring setup */
@@ -4349,11 +4369,10 @@ static void dp_soc_deinit(void *txrx_soc)
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
-			dp_srng_deinit(soc, &soc->tcl_data_ring[i],
-				       TCL_DATA, i);
-			dp_srng_deinit(soc, &soc->tx_comp_ring[i],
-				       WBM2SW_RELEASE, i);
+			dp_tx_deinit_pair_by_index(soc, i);
 		}
+		if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx))
+			dp_tx_deinit_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
 	}
 
 	/* TCL command and status rings */
@@ -4400,6 +4419,12 @@ static void dp_soc_deinit(void *txrx_soc)
 	qdf_spinlock_destroy(&soc->ast_lock);
 
 	dp_soc_mem_reset(soc);
+}
+
+void dp_tx_deinit_pair_by_index(struct dp_soc *soc, int index)
+{
+	dp_srng_deinit(soc, &soc->tcl_data_ring[index], TCL_DATA, index);
+	dp_srng_deinit(soc, &soc->tx_comp_ring[index], WBM2SW_RELEASE, index);
 }
 
 /**
@@ -4455,6 +4480,12 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 				TCL_DATA, i);
 			dp_srng_cleanup(soc, &soc->tx_comp_ring[i],
 				WBM2SW_RELEASE, i);
+		}
+		if (wlan_cfg_is_ipa_enabled(soc->wlan_cfg_ctx)) {
+			dp_srng_cleanup(soc, &soc->tcl_data_ring[IPA_TCL_DATA_RING_IDX],
+				TCL_DATA, IPA_TCL_DATA_RING_IDX);
+			dp_srng_cleanup(soc, &soc->tx_comp_ring[IPA_TCL_DATA_RING_IDX],
+				WBM2SW_RELEASE, IPA_TCL_DATA_RING_IDX);
 		}
 	}
 
@@ -6301,7 +6332,6 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	struct cdp_peer_cookie peer_cookie;
 	enum wlan_op_mode vdev_opmode;
 	uint8_t vdev_mac_addr[QDF_MAC_ADDR_SIZE];
-	struct dp_ast_entry *peer_ast_entry = NULL;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -6333,10 +6363,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 
 		qdf_spin_lock_bh(&soc->ast_lock);
 		if (peer->self_ast_entry) {
-			peer_ast_entry = peer->self_ast_entry;
-			dp_peer_unlink_ast_entry(soc, peer_ast_entry);
-			dp_peer_free_ast_entry(soc, peer_ast_entry);
-			peer->self_ast_entry = NULL;
+			dp_peer_del_ast(soc, peer->self_ast_entry);
 		}
 		qdf_spin_unlock_bh(&soc->ast_lock);
 

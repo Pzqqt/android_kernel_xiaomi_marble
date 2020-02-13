@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,7 +84,15 @@ typedef struct __qdf_spinlock {
 
 typedef struct semaphore __qdf_semaphore_t;
 
-typedef struct wakeup_source qdf_wake_lock_t;
+/**
+ * typedef struct - qdf_wake_lock_t
+ * @lock: this lock needs to be used in kernel version < 5.4
+ * @priv: this lock pointer needs to be used in kernel version >= 5.4
+ */
+typedef struct qdf_wake_lock {
+	struct wakeup_source lock;
+	struct wakeup_source *priv;
+} qdf_wake_lock_t;
 
 struct hif_pm_runtime_lock;
 typedef struct qdf_runtime_lock {
