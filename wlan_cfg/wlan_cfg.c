@@ -713,7 +713,7 @@ int wlan_cfg_get_target_pdev_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 {
 	int idx;
 
-	for (idx = 0; idx < MAX_NUM_LMAC_HW; idx++) {
+	for (idx = 0; idx < MAX_PDEV_CNT; idx++) {
 		if (cfg->hw_macid[idx] == hw_macid)
 			return (idx + 1);
 	}
