@@ -37,6 +37,21 @@
 /* Max number of scans allowed from userspace */
 #define WLAN_MAX_SCAN_COUNT 8
 
+extern const struct nla_policy cfg80211_scan_policy[
+			QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
+
+#define FEATURE_ABORT_SCAN_VENDOR_COMMANDS \
+	{ \
+		.info.vendor_id = QCA_NL80211_VENDOR_ID, \
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ABORT_SCAN, \
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
+			WIPHY_VENDOR_CMD_NEED_NETDEV | \
+			WIPHY_VENDOR_CMD_NEED_RUNNING, \
+		.doit = wlan_hdd_vendor_abort_scan, \
+		vendor_command_policy(cfg80211_scan_policy, \
+				      QCA_WLAN_VENDOR_ATTR_SCAN_MAX) \
+	},
+
 /* GPS application requirement */
 #define QCOM_VENDOR_IE_ID 221
 #define QCOM_OUI1         0x00
