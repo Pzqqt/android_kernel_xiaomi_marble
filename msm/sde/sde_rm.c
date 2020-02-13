@@ -2166,7 +2166,8 @@ static int _sde_rm_commit_rsvp(
 	/* Swap next rsvp to be the active */
 	for (type = 0; type < SDE_HW_BLK_MAX; type++) {
 		list_for_each_entry(blk, &rm->hw_blks[type], list) {
-			if (blk->rsvp_nxt) {
+			if (blk->rsvp_nxt && conn_state->best_encoder->base.id
+					 == blk->rsvp_nxt->enc_id) {
 				blk->rsvp = blk->rsvp_nxt;
 				blk->rsvp_nxt = NULL;
 				_sde_rm_dec_resource_info(rm,
