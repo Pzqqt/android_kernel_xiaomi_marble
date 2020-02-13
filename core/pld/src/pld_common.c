@@ -1162,7 +1162,9 @@ int pld_force_wake_request(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
+		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_force_wake_request(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1196,7 +1198,9 @@ int pld_is_device_awake(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
+		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_is_device_awake(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1229,7 +1233,9 @@ int pld_force_wake_release(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
+		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_force_wake_release(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1701,10 +1707,13 @@ int pld_athdiag_read(struct device *dev, uint32_t offset,
 		ret = pld_usb_athdiag_read(dev, offset, memtype,
 					   datalen, output);
 		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_athdiag_read(dev, offset, memtype,
+					    datalen, output);
+		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
 	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
-	case PLD_BUS_TYPE_IPCI:
 		break;
 	default:
 		ret = -EINVAL;
@@ -1746,10 +1755,13 @@ int pld_athdiag_write(struct device *dev, uint32_t offset,
 		ret = pld_usb_athdiag_write(dev, offset, memtype,
 					    datalen, input);
 		break;
+	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_athdiag_write(dev, offset, memtype,
+					     datalen, input);
+		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
 	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
-	case PLD_BUS_TYPE_IPCI:
 		break;
 	default:
 		ret = -EINVAL;

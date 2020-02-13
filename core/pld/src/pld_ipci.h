@@ -120,6 +120,35 @@ static inline int pld_ipci_smmu_map(struct device *dev, phys_addr_t paddr,
 	return 0;
 }
 
+static inline int pld_ipci_force_wake_request(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_ipci_force_wake_release(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_ipci_is_device_awake(struct device *dev)
+{
+	return 0;
+}
+
+static inline int pld_ipci_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return 0;
+}
+
+static inline int pld_ipci_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return 0;
+}
+
 #else
 int pld_ipci_register_driver(void);
 void pld_ipci_unregister_driver(void);
@@ -197,5 +226,33 @@ static inline int pld_ipci_smmu_map(struct device *dev, phys_addr_t paddr,
 	return icnss_smmu_map(dev, paddr, iova_addr, size);
 }
 
+static inline int pld_ipci_force_wake_request(struct device *dev)
+{
+	return icnss_force_wake_request(dev);
+}
+
+static inline int pld_ipci_force_wake_release(struct device *dev)
+{
+	return icnss_force_wake_release(dev);
+}
+
+static inline int pld_ipci_is_device_awake(struct device *dev)
+{
+	return icnss_is_device_awake(dev);
+}
+
+static inline int pld_ipci_athdiag_read(struct device *dev, uint32_t offset,
+					uint32_t memtype, uint32_t datalen,
+					uint8_t *output)
+{
+	return icnss_athdiag_read(dev, offset, memtype, datalen, output);
+}
+
+static inline int pld_ipci_athdiag_write(struct device *dev, uint32_t offset,
+					 uint32_t memtype, uint32_t datalen,
+					 uint8_t *input)
+{
+	return icnss_athdiag_write(dev, offset, memtype, datalen, input);
+}
 #endif
 #endif
