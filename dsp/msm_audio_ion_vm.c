@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -564,6 +564,7 @@ static int msm_audio_ion_map_buf(void *handle, dma_addr_t *paddr,
 		if (rc) {
 			pr_err("%s: failed to do smmu map, err = %d\n",
 				__func__, rc);
+			msm_audio_dma_buf_unmap((struct dma_buf *) handle);
 			goto err;
 		}
 	}
