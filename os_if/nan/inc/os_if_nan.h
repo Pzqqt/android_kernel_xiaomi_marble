@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,15 @@
 #ifdef WLAN_FEATURE_NAN
 #include "nan_public_structs.h"
 #include "nan_ucfg_api.h"
+#include "qca_vendor.h"
+
+/* QCA_NL80211_VENDOR_SUBCMD_NAN_EXT policy */
+extern const struct nla_policy nan_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_NDP policy */
+extern const struct nla_policy vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1];
 
 /**
  * struct ndi_find_vdev_filter - find vdev filter object. this can be extended

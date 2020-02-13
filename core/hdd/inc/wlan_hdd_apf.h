@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,6 +37,7 @@
 #include "sir_api.h"
 #include "wlan_hdd_main.h"
 #include "wmi_unified_param.h"
+#include "qca_vendor.h"
 
 #define APF_CONTEXT_MAGIC 0x4575354
 
@@ -44,6 +45,22 @@
 
 /* APF commands wait times in msec */
 #define WLAN_WAIT_TIME_APF_READ_MEM     10000
+
+/* QCA_NL80211_VENDOR_PACKET_FILTER policy */
+extern const struct nla_policy wlan_hdd_apf_offload_policy[
+			QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_MAX + 1];
+
+#define FEATURE_APF_OFFLOAD_VENDOR_COMMANDS \
+	{ \
+		.info.vendor_id = QCA_NL80211_VENDOR_ID, \
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_PACKET_FILTER, \
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
+			WIPHY_VENDOR_CMD_NEED_NETDEV | \
+			WIPHY_VENDOR_CMD_NEED_RUNNING, \
+		.doit = wlan_hdd_cfg80211_apf_offload, \
+		vendor_command_policy(wlan_hdd_apf_offload_policy, \
+				      QCA_WLAN_VENDOR_ATTR_PACKET_FILTER_MAX) \
+	},
 
 /**
  * wlan_hdd_cfg80211_apf_offload() - SSR Wrapper to APF Offload
@@ -89,6 +106,8 @@ void hdd_apf_context_destroy(struct hdd_adapter *adapter);
 void hdd_get_apf_capabilities_cb(void *hdd_context,
 				 struct sir_apf_get_offload *data);
 #else /* FEATURE_WLAN_APF */
+
+#define FEATURE_APF_OFFLOAD_VENDOR_COMMANDS
 
 static inline void hdd_apf_context_init(struct hdd_adapter *adapter)
 {

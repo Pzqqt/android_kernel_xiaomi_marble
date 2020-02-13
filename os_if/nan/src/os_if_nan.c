@@ -40,8 +40,8 @@
 #define NAN_CMD_MAX_SIZE 2048
 
 /* NLA policy */
-static const struct nla_policy
-nan_attr_policy[QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1] = {
+const struct nla_policy nan_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA] = {
 						.type = NLA_BINARY,
 						.len = NAN_CMD_MAX_SIZE
@@ -61,8 +61,8 @@ nan_attr_policy[QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1] = {
 };
 
 /* NLA policy */
-static const struct nla_policy
-vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
+const struct nla_policy vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t)

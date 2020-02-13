@@ -41,17 +41,17 @@
 #define PARAM_IPV4_ADDR QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV4_ADDR
 #define PARAM_IPV6_ADDR QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV6_ADDR
 
-static const struct nla_policy
-	policy[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1] = {
-		[PARAM_MAC_ADDR] = {
+const struct nla_policy subnet_detect_policy[
+			QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1] = {
+		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_GW_MAC_ADDR] = {
 				.type = NLA_UNSPEC,
 				.len = QDF_MAC_ADDR_SIZE
 		},
-		[PARAM_IPV4_ADDR] = {
+		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV4_ADDR] = {
 				.type = NLA_UNSPEC,
 				.len = QDF_IPV4_ADDR_SIZE
 		},
-		[PARAM_IPV6_ADDR] = {
+		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV6_ADDR] = {
 				.type = NLA_UNSPEC,
 				.len = QDF_IPV6_ADDR_SIZE
 		}
@@ -114,7 +114,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	 */
 	if (wlan_cfg80211_nla_parse(tb,
 				    QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX,
-				    data, data_len, policy)) {
+				    data, data_len, subnet_detect_policy)) {
 		hdd_err("Invalid ATTR list");
 		return -EINVAL;
 	}

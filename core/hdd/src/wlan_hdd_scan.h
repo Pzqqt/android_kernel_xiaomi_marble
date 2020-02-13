@@ -29,6 +29,22 @@
 #include "wlan_hdd_main.h"
 #include "csr_inside_api.h"
 #include <wlan_cfg80211_scan.h>
+#include "qca_vendor.h"
+
+extern const struct nla_policy scan_policy[
+			QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1];
+
+#define FEATURE_TRIGGER_SCAN_VENDOR_COMMANDS \
+{ \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID, \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN, \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
+		WIPHY_VENDOR_CMD_NEED_NETDEV | \
+		WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_vendor_scan, \
+	vendor_command_policy(scan_policy, \
+			      QCA_WLAN_VENDOR_ATTR_SCAN_MAX) \
+},
 
 #define EXTSCAN_PARAM_MAX QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
 

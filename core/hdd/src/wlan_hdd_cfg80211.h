@@ -32,6 +32,42 @@
 
 struct hdd_context;
 
+/* QCA_NL80211_VENDOR_SUBCMD_ROAM policy */
+extern const struct nla_policy wlan_hdd_set_roam_param_policy[
+			QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_INFO policy */
+extern const struct nla_policy qca_wlan_vendor_get_wifi_info_policy[
+			QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION policy */
+extern const struct nla_policy wlan_hdd_wifi_config_policy[
+			QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_WIFI_LOGGER_START policy */
+extern const struct nla_policy qca_wlan_vendor_wifi_logger_start_policy[
+			QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_START_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_ND_OFFLOAD policy */
+extern const struct nla_policy ns_offload_set_policy[
+			QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_GET_PREFERRED_FREQ_LIST policy */
+extern const struct nla_policy get_preferred_freq_list_policy[
+			QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_SET_PROBABLE_OPER_CHANNEL policy */
+extern const struct nla_policy set_probable_oper_channel_policy[
+			QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_NO_DFS_FLAG policy */
+extern const struct nla_policy wlan_hdd_set_no_dfs_flag_config_policy[
+			QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_GET_RING_DATA policy */
+extern const struct nla_policy qca_wlan_vendor_wifi_logger_get_ring_data_policy[
+			QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX + 1];
+
 /* value for initial part of frames and number of bytes to be compared */
 #define GAS_INITIAL_REQ "\x04\x0a"
 #define GAS_INITIAL_REQ_SIZE 2

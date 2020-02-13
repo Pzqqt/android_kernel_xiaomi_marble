@@ -1201,13 +1201,12 @@ void hdd_lost_link_info_cb(hdd_handle_t hdd_handle,
 	hdd_debug("rssi on disconnect %d", adapter->rssi_on_disconnect);
 }
 
-const struct
-nla_policy
-	qca_wlan_vendor_ll_set_policy[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_MPDU_SIZE_THRESHOLD] = {
-						.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING] = {
-						.type = NLA_U32},
+const struct nla_policy qca_wlan_vendor_ll_set_policy[
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_MPDU_SIZE_THRESHOLD]
+						= { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING]
+						= { .type = NLA_U32 },
 };
 
 /**
@@ -1329,9 +1328,8 @@ int wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	return errno;
 }
 
-const struct
-nla_policy
-	qca_wlan_vendor_ll_get_policy[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX + 1] = {
+const struct nla_policy qca_wlan_vendor_ll_get_policy[
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX + 1] = {
 	/* Unsigned 32bit value provided by the caller issuing the GET stats
 	 * command. When reporting
 	 * the stats results, the driver uses the same value to indicate
