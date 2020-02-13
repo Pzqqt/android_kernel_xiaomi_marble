@@ -19395,7 +19395,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	}
 
 	/*Try disconnecting if already in connected state */
-	status = wlan_hdd_try_disconnect(adapter);
+	status = wlan_hdd_try_disconnect(adapter,
+					 eSIR_MAC_UNSPEC_FAILURE_REASON);
 	if (0 > status) {
 		hdd_err("Failed to disconnect the existing IBSS connection");
 		return -EALREADY;
@@ -19570,7 +19571,8 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	INIT_COMPLETION(adapter->disconnect_comp_var);
 	status = sme_roam_disconnect(mac_handle,
 				     adapter->vdev_id,
-				     eCSR_DISCONNECT_REASON_IBSS_LEAVE);
+				     eCSR_DISCONNECT_REASON_IBSS_LEAVE,
+				     eSIR_MAC_UNSPEC_FAILURE_REASON);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_roam_disconnect failed status: %d",
 		       status);
@@ -19840,7 +19842,8 @@ static void wlan_hdd_cfg80211_clear_privacy(struct hdd_adapter *adapter)
 
 static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 					struct hdd_adapter *adapter,
-					uint16_t reason)
+					uint16_t reason,
+					tSirMacReasonCodes mac_reason)
 {
 	eConnectionState prev_conn_state;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -19862,7 +19865,8 @@ static int wlan_hdd_wait_for_disconnect(mac_handle_t mac_handle,
 	prev_conn_state = sta_ctx->conn_info.conn_state;
 	hdd_conn_set_connection_state(adapter, eConnectionState_Disconnecting);
 
-	status = sme_roam_disconnect(mac_handle, adapter->vdev_id, reason);
+	status = sme_roam_disconnect(mac_handle, adapter->vdev_id, reason,
+				     mac_reason);
 	if (status == QDF_STATUS_CMD_NOT_QUEUED &&
 	    prev_conn_state == eConnectionState_Connecting) {
 		/*
@@ -19942,7 +19946,8 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 	}
 }
 
-int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
+int wlan_hdd_try_disconnect(struct hdd_adapter *adapter,
+			    enum eSirMacReasonCodes reason)
 {
 	mac_handle_t mac_handle;
 
@@ -19950,7 +19955,8 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	wlan_hdd_wait_for_roaming(mac_handle, adapter);
 
 	return wlan_hdd_wait_for_disconnect(mac_handle, adapter,
-					    eCSR_DISCONNECT_REASON_UNSPECIFIED);
+					    eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					    reason);
 }
 
 /**
@@ -20215,7 +20221,8 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 		return status;
 
 	/* Try disconnecting if already in connected state */
-	status = wlan_hdd_try_disconnect(adapter);
+	status = wlan_hdd_try_disconnect(adapter,
+					 eSIR_MAC_UNSPEC_FAILURE_REASON);
 	if (0 > status) {
 		hdd_err("Failed to disconnect the existing connection");
 		return -EALREADY;
@@ -20274,7 +20281,75 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	return errno;
 }
 
-int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
+/**
+ * wlan_hdd_get_ieee80211_disconnect_reason() - Get ieee80211 disconnect reason
+ * @adapter: pointer to adapter structure
+ * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
+ *
+ * Reason codes that are greater than eSIR_MAC_REASON_PROP_START are internal
+ * reason codes. Cache the same in hdd_ctx and return UNSPECIFIED.
+ * Rest of the reason codes are valid ieee80211 reason codes.
+ *
+ * Return: Reason code of type ieee80211_reasoncode.
+ */
+static enum ieee80211_reasoncode
+wlan_hdd_get_cfg80211_disconnect_reason(struct hdd_adapter *adapter,
+					enum eSirMacReasonCodes reason)
+{
+	enum ieee80211_reasoncode ieee80211_reason = WLAN_REASON_UNSPECIFIED;
+
+	/*
+	 * Cache internal reason code in adapter. This can be sent to
+	 * userspace with a vendor event.
+	 */
+	if (reason >= eSIR_MAC_REASON_PROP_START)
+		adapter->last_disconnect_reason = reason;
+	else
+		ieee80211_reason = (enum ieee80211_reasoncode)reason;
+
+	return ieee80211_reason;
+}
+
+#if defined(CFG80211_DISCONNECTED_V2) || \
+(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
+void
+wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
+				      bool locally_generated,
+				      enum eSirMacReasonCodes reason,
+				      uint8_t *disconnect_ies,
+				      uint16_t disconnect_ies_len)
+{
+	enum ieee80211_reasoncode ieee80211_reason;
+
+	ieee80211_reason = wlan_hdd_get_cfg80211_disconnect_reason(adapter,
+								   reason);
+	hdd_debug("Disconnect reason code - MAC: %u, IEEE80211: %u locally_generated: %u",
+		  reason, ieee80211_reason, locally_generated);
+	cfg80211_disconnected(adapter->dev, ieee80211_reason, disconnect_ies,
+			      disconnect_ies_len, locally_generated,
+			      GFP_KERNEL);
+}
+#else
+void
+wlan_hdd_cfg80211_indicate_disconnect(struct hdd_adapter *adapter,
+				      bool locally_generated,
+				      enum eSirMacReasonCodes reason,
+				      uint8_t *disconnect_ies,
+				      uint16_t disconnect_ies_len)
+{
+	enum ieee80211_reasoncode ieee80211_reason;
+
+	ieee80211_reason = wlan_hdd_get_cfg80211_disconnect_reason(adapter,
+								   reason);
+	hdd_debug("Disconnect reason code - MAC: %u, IEEE80211: %u locally_generated: %u",
+		  reason, ieee80211_reason, locally_generated);
+	cfg80211_disconnected(adapter->dev, ieee80211_reason, disconnect_ies,
+			      disconnect_ies_len, GFP_KERNEL);
+}
+#endif
+
+int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason,
+			tSirMacReasonCodes mac_reason)
 {
 	int ret;
 	mac_handle_t mac_handle;
@@ -20287,15 +20362,16 @@ int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 	wlan_hdd_netif_queue_control(adapter,
 		WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER, WLAN_CONTROL_PATH);
 
-	ret = wlan_hdd_wait_for_disconnect(mac_handle, adapter, reason);
+	ret = wlan_hdd_wait_for_disconnect(mac_handle, adapter, reason,
+					   mac_reason);
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0)
 	/* Sending disconnect event to userspace for kernel version < 3.11
 	 * is handled by __cfg80211_disconnect call to __cfg80211_disconnected
 	 */
 	hdd_debug("Send disconnected event to userspace");
-	wlan_hdd_cfg80211_indicate_disconnect(adapter->dev, true,
-					      WLAN_REASON_UNSPECIFIED, NULL, 0);
+	wlan_hdd_cfg80211_indicate_disconnect(adapter, true,
+					      mac_reason, NULL, 0);
 #endif
 
 	return ret;
@@ -20482,7 +20558,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 		hdd_info("%s(vdevid-%d): Disconnect from userspace; reason:%d (%s)",
 			 dev->name, adapter->vdev_id, reason, hdd_ieee80211_reason_code_to_str(reason));
-		status = wlan_hdd_disconnect(adapter, reasonCode);
+		status = wlan_hdd_disconnect(adapter, reasonCode, reason);
 		if (0 != status) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d", status);
 			hdd_set_disconnect_status(adapter, false);

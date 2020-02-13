@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -267,14 +267,16 @@ int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx);
  * hdd_check_and_disconnect_sta_on_invalid_channel() - Disconnect STA if it is
  * on invalid channel
  * @hdd_ctx: pointer to hdd context
+ * @reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
  *
  * STA should be disconnected before starting the SAP if it is on indoor
  * channel.
  *
  * Return: void
  */
-void hdd_check_and_disconnect_sta_on_invalid_channel(
-						struct hdd_context *hdd_ctx);
+void
+hdd_check_and_disconnect_sta_on_invalid_channel(struct hdd_context *hdd_ctx,
+						tSirMacReasonCodes reason);
 
 /**
  * hdd_stop_sap_due_to_invalid_channel() - to stop sap in case of invalid chnl

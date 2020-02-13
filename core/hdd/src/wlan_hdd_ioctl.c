@@ -7262,6 +7262,7 @@ static bool check_disable_channels(struct hdd_context *hdd_ctx,
  * disconnect_sta_and_stop_sap() - Disconnect STA and stop SAP
  *
  * @hdd_ctx: Pointer to hdd context
+ * @reason: Disconnect reason code as per @enum eSirMacReasonCodes
  *
  * Disable channels provided by user and disconnect STA if it is
  * connected to any AP, stop SAP and send deauthentication request
@@ -7269,7 +7270,8 @@ static bool check_disable_channels(struct hdd_context *hdd_ctx,
  *
  * Return: None
  */
-static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx)
+static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx,
+					enum eSirMacReasonCodes reason)
 {
 	struct hdd_adapter *adapter, *next = NULL;
 	QDF_STATUS status;
@@ -7278,7 +7280,7 @@ static void disconnect_sta_and_stop_sap(struct hdd_context *hdd_ctx)
 	if (!hdd_ctx)
 		return;
 
-	hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx);
+	hdd_check_and_disconnect_sta_on_invalid_channel(hdd_ctx, reason);
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter);
 	while (adapter && (status == QDF_STATUS_SUCCESS)) {
@@ -7475,7 +7477,8 @@ mem_alloc_failed:
 		ret = wlan_hdd_disable_channels(hdd_ctx);
 		if (ret)
 			return ret;
-		disconnect_sta_and_stop_sap(hdd_ctx);
+		disconnect_sta_and_stop_sap(hdd_ctx,
+					    eSIR_MAC_OPER_CHANNEL_BAND_CHANGE);
 	}
 
 	hdd_exit();

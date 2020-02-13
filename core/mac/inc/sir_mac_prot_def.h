@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -439,7 +439,7 @@ typedef enum eSirMacReasonCodes {
 	eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON = 9,  /* Station requesting (re)association is not authenticated with responding station */
 	eSIR_MAC_PWR_CAPABILITY_BAD_REASON = 10,        /* Disassociated because the information in the Power Capability element is unacceptable */
 	eSIR_MAC_SPRTD_CHANNELS_BAD_REASON = 11,        /* Disassociated because the information in the Supported Channels element is unacceptable */
-	/* reserved                                        12 */
+	eSIR_MAC_BSS_TRANSITION_DISASSOC = 12,
 	eSIR_MAC_INVALID_IE_REASON = 13,        /* Invalid information element, i.e., an information element defined in this standard for */
 	/* which the content does not meet the specifications in Clause 7 */
 	eSIR_MAC_MIC_FAILURE_REASON = 14,       /* Message integrity code (MIC) failure */
@@ -475,7 +475,29 @@ typedef enum eSirMacReasonCodes {
 	eSIR_MAC_CIPHER_NOT_SUPPORTED_REASON = 45,      /* Peer STA does not support the requested cipher suite */
 	eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON = 46, /* FT reason */
 	/* reserved                                         47 - 65535. */
-	eSIR_BEACON_MISSED = 65534,     /* We invented this to tell beacon missed case */
+
+	/*
+	 * Internal reason codes: Add any internal reason code just after
+	 * eSIR_MAC_REASON_PROP_START and decrease the value of
+	 * eSIR_MAC_REASON_PROP_START accordingly.
+	 */
+	eSIR_MAC_REASON_PROP_START = 65519,
+	eSIR_MAC_HOST_TRIGGERED_ROAM_FAILURE  = 65519,
+	eSIR_MAC_FW_TRIGGERED_ROAM_FAILURE = 65520,
+	eSIR_MAC_GATEWAY_REACHABILITY_FAILURE = 65521,
+	eSIR_MAC_UNSUPPORTED_CHANNEL_CSA = 65522,
+	eSIR_MAC_OPER_CHANNEL_DISABLED_INDOOR = 65523,
+	eSIR_MAC_OPER_CHANNEL_USER_DISABLED = 65524,
+	eSIR_MAC_DEVICE_RECOVERY = 65525,
+	eSIR_MAC_KEY_TIMEOUT = 65526,
+	eSIR_MAC_OPER_CHANNEL_BAND_CHANGE = 65527,
+	eSIR_MAC_IFACE_DOWN = 65528,
+	eSIR_MAC_PEER_XRETRY_FAIL = 65529,
+	eSIR_MAC_PEER_INACTIVITY = 65530,
+	eSIR_MAC_SA_QUERY_TIMEOUT = 65531,
+	eSIR_MAC_CHANNEL_SWITCH_FAILED = 65532,
+	eSIR_MAC_BEACON_MISSED = 65533,
+	eSIR_MAC_USER_TRIGGERED_ROAM_FAILURE = 65534,
 } tSirMacReasonCodes;
 
 /* / Frame control field format (2 bytes) */

@@ -5965,6 +5965,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	struct sap_config *sap_config;
 	mac_handle_t mac_handle;
 	struct wlan_objmgr_vdev *vdev;
+	enum eSirMacReasonCodes reason = eSIR_MAC_IFACE_DOWN;
 
 	hdd_enter();
 
@@ -6001,22 +6002,28 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			INIT_COMPLETION(adapter->disconnect_comp_var);
 
 			roam_profile = hdd_roam_profile(adapter);
+			if (cds_is_driver_recovering())
+				reason = eSIR_MAC_DEVICE_RECOVERY;
+
 			/* For NDI do not use roam_profile */
 			if (adapter->device_mode == QDF_NDI_MODE)
 				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_NDI_DELETE);
+					eCSR_DISCONNECT_REASON_NDI_DELETE,
+					reason);
 			else if (roam_profile->BSSType ==
 						eCSR_BSS_TYPE_START_IBSS)
 				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_IBSS_LEAVE);
+					eCSR_DISCONNECT_REASON_IBSS_LEAVE,
+					reason);
 			else if (adapter->device_mode == QDF_STA_MODE) {
 				rc = wlan_hdd_disconnect(
 						adapter,
-						eCSR_DISCONNECT_REASON_DEAUTH);
+						eCSR_DISCONNECT_REASON_DEAUTH,
+						reason);
 				if (rc != 0 && ucfg_ipa_is_enabled()) {
 					hdd_err("STA disconnect failed");
 					ucfg_ipa_uc_cleanup_sta(hdd_ctx->pdev,
@@ -6026,7 +6033,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+					eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					reason);
 			}
 			/* success implies disconnect is queued */
 			if (QDF_IS_STATUS_SUCCESS(status) &&
@@ -7109,9 +7117,9 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 				/* indicate disconnected event to nl80211 */
 				wlan_hdd_cfg80211_indicate_disconnect(
-						adapter->dev, false,
-						WLAN_REASON_UNSPECIFIED,
-						NULL, 0);
+					adapter, true,
+					eSIR_MAC_DEVICE_RECOVERY,
+					NULL, 0);
 			} else if (eConnectionState_Connecting == conn_state) {
 				/*
 				 * Indicate connect failure to supplicant if we

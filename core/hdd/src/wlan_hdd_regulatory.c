@@ -823,7 +823,8 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 			status = sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+					eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					eSIR_MAC_OPER_CHANNEL_BAND_CHANGE);
 
 			if (QDF_STATUS_SUCCESS != status) {
 				hdd_err("sme_roam_disconnect failure, status: %d",

@@ -424,7 +424,8 @@ void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
 		hdd_debug("Disconnecting STA on vdev: %d",
 			  sta_adapter->vdev_id);
 		status = wlan_hdd_disconnect(sta_adapter,
-					     eCSR_DISCONNECT_REASON_DEAUTH);
+					     eCSR_DISCONNECT_REASON_DEAUTH,
+					     eSIR_MAC_UNSPEC_FAILURE_REASON);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("wlan_hdd_disconnect failed, status: %d",
 				status);
@@ -1696,6 +1697,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	bool sendDisconInd = true;
 	mac_handle_t mac_handle;
 	struct wlan_ies disconnect_ies = {0};
+	bool from_ap = false;
+	uint32_t reason_code = 0;
 
 	if (!dev) {
 		hdd_err("net_dev is released return");
@@ -1776,9 +1779,13 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n",
 						roam_info->rxRssi);
 			}
+			ucfg_mlme_get_discon_reason_n_from_ap(hdd_ctx->psoc,
+							      adapter->vdev_id,
+							      &from_ap,
+							      &reason_code);
 			wlan_hdd_cfg80211_indicate_disconnect(
-							dev, false,
-							reason,
+							adapter, !from_ap,
+							reason_code,
 							disconnect_ies.data,
 							disconnect_ies.len);
 
@@ -3057,7 +3064,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				sme_roam_disconnect(
 					mac_handle,
 					adapter->vdev_id,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+					eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					eSIR_MAC_UNSPEC_FAILURE_REASON);
 			}
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -3116,9 +3124,10 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 					 */
 					hdd_debug("Disconnecting...");
 					sme_roam_disconnect(
-					   mac_handle,
-					   adapter->vdev_id,
-					   eCSR_DISCONNECT_REASON_UNSPECIFIED);
+					mac_handle,
+					adapter->vdev_id,
+					eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					eSIR_MAC_UNSPEC_FAILURE_REASON);
 				}
 				qdf_mem_free(reqRsnIe);
 				qdf_mem_free(rsp_rsn_ie);

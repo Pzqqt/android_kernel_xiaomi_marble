@@ -254,10 +254,12 @@ eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 					    uint32_t sessionId);
 /* pBand can be NULL if caller doesn't need to get it */
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
-					uint32_t sessionId,
-					   eCsrRoamDisconnectReason reason);
+					   uint32_t sessionId,
+					   eCsrRoamDisconnectReason reason,
+					   tSirMacReasonCodes mac_reason);
 QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessionId,
-					eCsrRoamDisconnectReason reason);
+					eCsrRoamDisconnectReason reason,
+					tSirMacReasonCodes mac_reason);
 /* pCommand may be NULL */
 void csr_roam_remove_duplicate_command(struct mac_context *mac, uint32_t sessionId,
 				       tSmeCmd *pCommand,
@@ -813,15 +815,17 @@ void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 QDF_STATUS csr_apply_channel_and_power_list(struct mac_context *mac);
 
 /*
- * csr_roam_disconnect() -
- *  To disconnect from a network
+ * csr_roam_disconnect() - To disconnect from a network
+ * @mac: pointer to mac context
+ * @session_id: Session ID
+ * @reason: CSR disconnect reason code as per @enum eCsrRoamDisconnectReason
+ * @mac_reason: Mac Disconnect reason code as per @enum eSirMacReasonCodes
  *
- * Reason -- To indicate the reason for disconnecting. Currently, only
- * eCSR_DISCONNECT_REASON_MIC_ERROR is meanful.
  * Return QDF_STATUS
  */
-QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t sessionId,
-			       eCsrRoamDisconnectReason reason);
+QDF_STATUS csr_roam_disconnect(struct mac_context *mac, uint32_t session_id,
+			       eCsrRoamDisconnectReason reason,
+			       tSirMacReasonCodes mac_reason);
 
 /* This function is used to stop a BSS. It is similar of csr_roamIssueDisconnect
  * but this function doesn't have any logic other than blindly trying to stop

@@ -570,10 +570,11 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 
 	sme_debug("csr_roamHandoffRequested: disassociating with current AP");
 
-	if (!QDF_IS_STATUS_SUCCESS
-		    (csr_roam_issue_disassociate_cmd
-			    (mac_ctx, session_id,
-			    eCSR_DISCONNECT_REASON_HANDOFF))) {
+	if (!QDF_IS_STATUS_SUCCESS(csr_roam_issue_disassociate_cmd(
+					mac_ctx,
+					session_id,
+					eCSR_DISCONNECT_REASON_HANDOFF,
+					eSIR_MAC_UNSPEC_FAILURE_REASON))) {
 		sme_warn("csr_roamHandoffRequested: fail to issue disassoc");
 		qdf_mem_free(roam_info);
 		return;

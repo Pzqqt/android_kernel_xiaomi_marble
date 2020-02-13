@@ -1874,7 +1874,8 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 			lim_tear_down_link_with_ap(mac,
 					   mac->lim.lim_timers.
 					   gLimChannelSwitchTimer.sessionId,
-					   eSIR_MAC_UNSPEC_FAILURE_REASON);
+					   eSIR_MAC_UNSUPPORTED_CHANNEL_CSA,
+					   eLIM_LINK_MONITORING_DISASSOC);
 			return;
 		}
 	}
@@ -4724,7 +4725,8 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 			 */
 			lim_tear_down_link_with_ap(mac_ctx,
 						psession_entry->peSessionId,
-						eSIR_BEACON_MISSED);
+						eSIR_MAC_BEACON_MISSED,
+						eLIM_LINK_MONITORING_DISASSOC);
 			mac_ctx->lim.gLimProbeFailureAfterHBfailedCnt++;
 		} else {
 			pe_err("Unexpected wt-probe-timeout in state");

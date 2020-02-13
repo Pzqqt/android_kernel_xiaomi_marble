@@ -769,8 +769,21 @@ static inline void lim_update_tdls_set_state_for_fw(struct pe_session
 /* / Function that handles heartbeat failure */
 void lim_handle_heart_beat_failure(struct mac_context *, struct pe_session *);
 
-/* / Function that triggers link tear down with AP upon HB failure */
-void lim_tear_down_link_with_ap(struct mac_context *, uint8_t, tSirMacReasonCodes);
+/**
+ * lim_tear_down_link_with_ap() - Tear down link with AP
+ * @mac: mac context
+ * @session_id: PE session id
+ * @reason_code: Disconnect reason code as per emun eSirMacReasonCodes
+ * @trigger: Disconnect trigger as per enum eLimDisassocTrigger
+ *
+ * Function that triggers link tear down with AP upon HB failure
+ *
+ * Return: None
+ */
+void lim_tear_down_link_with_ap(struct mac_context *mac,
+				uint8_t session_id,
+				tSirMacReasonCodes reason_code,
+				enum eLimDisassocTrigger trigger);
 
 /* / Function that defers the messages received */
 uint32_t lim_defer_msg(struct mac_context *, struct scheduler_msg *);
