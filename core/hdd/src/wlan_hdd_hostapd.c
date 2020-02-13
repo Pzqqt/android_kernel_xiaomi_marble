@@ -2621,7 +2621,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		goto stopbss;
 		return QDF_STATUS_SUCCESS;
 	}
-	wireless_send_event(dev, we_event, &wrqu,
+	hdd_wext_send_event(dev, we_event, &wrqu,
 			    (char *)we_custom_event_generic);
 	qdf_mem_free(we_custom_start_event);
 	qdf_mem_free(unknownSTAEvent);
@@ -2684,7 +2684,7 @@ stopbss:
 		wrqu.data.length = event_len;
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_event;
-		wireless_send_event(dev, we_event, &wrqu,
+		hdd_wext_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
 
 		qdf_mem_free(we_custom_start_event);

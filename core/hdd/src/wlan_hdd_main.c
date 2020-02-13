@@ -6065,7 +6065,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			memset(&wrqu, '\0', sizeof(wrqu));
 			wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 			memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
-			wireless_send_event(adapter->dev, SIOCGIWAP, &wrqu,
+			hdd_wext_send_event(adapter->dev, SIOCGIWAP, &wrqu,
 					    NULL);
 		} else if (adapter->device_mode == QDF_NAN_DISC_MODE &&
 			   ucfg_is_nan_disc_active(hdd_ctx->psoc))
@@ -7133,7 +7133,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 				memset(&wrqu, '\0', sizeof(wrqu));
 				wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 				memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
-				wireless_send_event(adapter->dev, SIOCGIWAP,
+				hdd_wext_send_event(adapter->dev, SIOCGIWAP,
 						    &wrqu, NULL);
 				adapter->session.station.
 				hdd_reassoc_scenario = false;

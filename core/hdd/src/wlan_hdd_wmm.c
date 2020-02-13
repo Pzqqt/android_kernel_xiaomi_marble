@@ -294,7 +294,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *qos_context)
 
 	/* send the event */
 	hdd_debug("Sending [%s]", buf);
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
 #ifdef FEATURE_WLAN_ESE

@@ -17340,7 +17340,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 				     "QCOM: LFR_PREAUTH_INIT " QDF_MAC_ADDR_STR,
 				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
 	hdd_exit();
@@ -17391,7 +17391,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 	wrqu.data.pointer = metrics_notification;
 	wrqu.data.length = strlen(metrics_notification);
 
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
 	hdd_exit();
@@ -17433,7 +17433,7 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 				     QDF_MAC_ADDR_STR,
 				     QDF_MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
 
 	hdd_exit();

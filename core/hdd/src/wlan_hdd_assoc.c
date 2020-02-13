@@ -1095,7 +1095,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 		return;
 
 	memcpy(buff, assoc_rsp, len);
-	wireless_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
+	hdd_wext_send_event(dev, IWEVASSOCRESPIE, &wrqu, buff);
 
 	qdf_mem_free(buff);
 }
@@ -1184,7 +1184,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 		hdd_warn("Do not send RIC IEs as length is 0");
 	} else {
 		wrqu.data.length = str_len + ric_ies_length;
-		wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
+		hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
 	}
 
 	/* Sme needs to provide the Auth Resp */
@@ -1201,7 +1201,7 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 	}
 
 	wrqu.data.length = str_len + auth_resp_len;
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
 
 	qdf_mem_free(buff);
 #endif
@@ -1255,7 +1255,7 @@ hdd_send_new_ap_channel_info(struct net_device *dev,
 	wrqu.freq.m = wlan_reg_freq_to_chan(pdev, descriptor->chan_freq);
 	wrqu.freq.e = 0;
 	wrqu.freq.i = 0;
-	wireless_send_event(adapter->dev, SIOCGIWFREQ, &wrqu, NULL);
+	hdd_wext_send_event(adapter->dev, SIOCGIWFREQ, &wrqu, NULL);
 }
 
 #endif /* FEATURE_WLAN_ESE */
@@ -1325,7 +1325,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 
 		hdd_debug("Beacon IEs length to supplicant = %d",
 			   currentLen);
-		wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
+		hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buff);
 	} while (totalIeLen > 0);
 
 	qdf_mem_free(buff);
@@ -1503,7 +1503,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	 * driver so not sending the status of the connection to supplicant
 	 */
 	if (cds_is_load_or_unload_in_progress()) {
-		wireless_send_event(dev, we_event, &wrqu, msg);
+		hdd_wext_send_event(dev, we_event, &wrqu, msg);
 #ifdef FEATURE_WLAN_ESE
 		if (eConnectionState_Associated ==
 			 sta_ctx->conn_info.conn_state) {
@@ -4157,7 +4157,7 @@ hdd_indicate_tsm_ie(struct hdd_adapter *adapter, uint8_t tid,
 	wrqu.data.pointer = buf;
 	wrqu.data.length = nBytes;
 	/* send the event */
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
@@ -4207,7 +4207,7 @@ hdd_indicate_cckm_pre_auth(struct hdd_adapter *adapter,
 	wrqu.data.length = (IW_CUSTOM_MAX - freeBytes);
 
 	/* send the event */
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
@@ -4242,7 +4242,7 @@ hdd_indicate_ese_adj_ap_rep_ind(struct hdd_adapter *adapter,
 	wrqu.data.length = nBytes;
 
 	/* send the event */
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
@@ -4280,7 +4280,7 @@ hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *adapter,
 	wrqu.data.pointer = buf;
 	wrqu.data.length = nBytes;
 	/* send the event */
-	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
@@ -4492,7 +4492,7 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
 			wrqu.data.length = IW_CUSTOM_MAX - freeBytes;
 
 			/* send the event */
-			wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
+			hdd_wext_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 					    buf);
 			lastSent += sendBss;
 		}

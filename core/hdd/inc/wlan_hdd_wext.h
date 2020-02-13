@@ -197,6 +197,14 @@ void hdd_register_wext(struct net_device *dev);
  */
 void hdd_wext_unregister(struct net_device *dev,
 			 bool rtnl_held);
+
+static inline
+void hdd_wext_send_event(struct net_device *dev, unsigned int cmd,
+			 union iwreq_data *wrqu, const char *extra)
+{
+	wireless_send_event(dev, cmd, wrqu, extra);
+}
+
 void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 		       char *buffer, uint16_t buf_len);
 void hdd_wlan_list_fw_profile(uint16_t *length,
@@ -379,6 +387,12 @@ static inline void hdd_register_wext(struct net_device *dev)
 
 static inline void hdd_wext_unregister(struct net_device *dev,
 				       bool rtnl_locked)
+{
+}
+
+static inline
+void hdd_wext_send_event(struct net_device *dev, unsigned int cmd,
+			 union iwreq_data *wrqu, const char *extra)
 {
 }
 #endif /* WLAN_WEXT_SUPPORT_ENABLE */

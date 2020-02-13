@@ -9224,7 +9224,7 @@ static void found_pref_network_cb(struct wlan_objmgr_vdev *vdev,
 
 	/* send the event */
 
-	wireless_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buf);
+	hdd_wext_send_event(wdev->netdev, IWEVCUSTOM, &wrqu, buf);
 }
 
 /**
