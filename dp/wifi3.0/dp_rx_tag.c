@@ -284,7 +284,7 @@ void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
 	if (qdf_likely(1 != dp_pdev->ppdu_info.rx_status.rxpcu_filter_pass))
 		return;
 
-	msdu_ppdu_id = hal_rx_hw_desc_get_ppduid_get(soc->hal_soc, rx_desc);
+	msdu_ppdu_id = hal_rx_get_ppdu_id(soc->hal_soc, rx_desc);
 
 	if (msdu_ppdu_id != dp_pdev->ppdu_info.com_info.ppdu_id) {
 		QDF_TRACE(QDF_MODULE_ID_DP,
