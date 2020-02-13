@@ -84,6 +84,10 @@
 #include <target_if_coex.h>
 #endif
 
+#ifdef DCS_INTERFERENCE_DETECTION
+#include <target_if_dcs.h>
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -399,6 +403,20 @@ target_if_cp_stats_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 	return target_if_cp_stats_register_tx_ops(tx_ops);
 }
 
+#ifdef DCS_INTERFERENCE_DETECTION
+static QDF_STATUS
+target_if_dcs_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return target_if_dcs_register_tx_ops(tx_ops);
+}
+#else
+static QDF_STATUS
+target_if_dcs_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 static QDF_STATUS
 target_if_vdev_mgr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -454,6 +472,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_ftm_tx_ops_register(tx_ops);
 
 	target_if_cp_stats_tx_ops_register(tx_ops);
+
+	target_if_dcs_tx_ops_register(tx_ops);
 
 	target_if_crypto_tx_ops_register(tx_ops);
 

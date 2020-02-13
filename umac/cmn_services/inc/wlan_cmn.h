@@ -275,6 +275,7 @@
  * @WLAN_UMAC_COMP_COEX:          Coex config component
  * @WLAN_UMAC_COMP_FTM_TIME_SYNC: WLAN FTM TIMESYNC
  * @WLAN_UMAC_COMP_PKT_CAPTURE:   Packet capture component
+ * @WLAN_UMAC_COMP_DCS:           DCS
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -317,6 +318,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_COEX               = 33,
 	WLAN_UMAC_COMP_FTM_TIME_SYNC      = 34,
 	WLAN_UMAC_COMP_PKT_CAPTURE        = 35,
+	WLAN_UMAC_COMP_DCS                = 36,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
