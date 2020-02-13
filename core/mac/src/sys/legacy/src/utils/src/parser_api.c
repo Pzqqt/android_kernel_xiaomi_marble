@@ -6177,7 +6177,7 @@ populate_dot11f_he_6ghz_cap(struct mac_context *mac_ctx,
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 
-	if (!session || !session->he_6ghz_band)
+	if (session && !session->he_6ghz_band)
 		return QDF_STATUS_SUCCESS;
 
 	ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
@@ -6186,8 +6186,12 @@ populate_dot11f_he_6ghz_cap(struct mac_context *mac_ctx,
 	he_6g_cap->present = 1;
 	he_6g_cap->min_mpdu_start_spacing =
 		mac_ctx->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
-	he_6g_cap->max_ampdu_len_exp =
-		session->vht_config.max_ampdu_lenexp;
+	if (session)
+		he_6g_cap->max_ampdu_len_exp =
+			session->vht_config.max_ampdu_lenexp;
+	else
+		he_6g_cap->max_ampdu_len_exp =
+			vht_cap_info->ampdu_len_exponent & 0x7;
 	he_6g_cap->max_mpdu_len = vht_cap_info->ampdu_len;
 	he_6g_cap->sm_pow_save = ht_cap_info->mimo_power_save;
 	he_6g_cap->rd_responder = 0;

@@ -1551,6 +1551,30 @@ lim_update_he_6ghz_band_caps(struct mac_context *mac,
 }
 #endif
 
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+/**
+ * lim_send_he_6g_band_caps_ie() - Send HE 6ghz band caps to FW
+ * @mac_ctx: Global MAC context
+ * @session: session ptr
+ * @vdev_id: vdev id
+ *
+ * Send HE 6ghz band capabilities IE to firmware
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS lim_send_he_6g_band_caps_ie(struct mac_context *mac_ctx,
+				       struct pe_session *session,
+				       uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS lim_send_he_6g_band_caps_ie(struct mac_context *mac_ctx,
+				       struct pe_session *session,
+				       uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * lim_decrement_pending_mgmt_count: Decrement mgmt frame count
  * @mac_ctx: Pointer to global MAC structure

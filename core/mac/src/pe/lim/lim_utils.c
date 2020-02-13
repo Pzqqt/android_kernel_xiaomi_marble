@@ -5756,6 +5756,9 @@ QDF_STATUS lim_send_ies_per_band(struct mac_context *mac_ctx,
 
 	status = lim_send_he_caps_ie(mac_ctx, session, vdev_id);
 
+	if (QDF_IS_STATUS_SUCCESS(status))
+		status = lim_send_he_6g_band_caps_ie(mac_ctx, session, vdev_id);
+
 	return status;
 }
 
@@ -7475,6 +7478,47 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		 rates->rx_he_mcs_map_80_80, rates->tx_he_mcs_map_80_80);
 
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#if defined(CONFIG_BAND_6GHZ) && defined(WLAN_FEATURE_11AX)
+QDF_STATUS lim_send_he_6g_band_caps_ie(struct mac_context *mac_ctx,
+				       struct pe_session *session,
+				       uint8_t vdev_id)
+{
+	uint8_t he_6g_band_caps_ie[DOT11F_IE_HE_6GHZ_BAND_CAP_MIN_LEN + 3];
+	tDot11fIEhe_6ghz_band_cap he_6g_band_cap;
+	QDF_STATUS status;
+	uint32_t size = 0;
+	uint32_t result;
+
+	qdf_mem_zero(&he_6g_band_cap, sizeof(he_6g_band_cap));
+	populate_dot11f_he_6ghz_cap(mac_ctx, session, &he_6g_band_cap);
+	if (!he_6g_band_cap.present) {
+		pe_debug("no HE 6g band cap for vdev %d", vdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	qdf_mem_zero(he_6g_band_caps_ie, sizeof(he_6g_band_caps_ie));
+	result = dot11f_pack_ie_he_6ghz_band_cap(mac_ctx, &he_6g_band_cap,
+						 he_6g_band_caps_ie,
+						 sizeof(he_6g_band_caps_ie),
+						 &size);
+	if (result != DOT11F_PARSE_SUCCESS) {
+		pe_err("pack erro for HE 6g band cap for vdev %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	pe_debug("send HE 6ghz band cap: 0x%01x 0x%01x for vdev %d",
+		 he_6g_band_caps_ie[3], he_6g_band_caps_ie[4],
+		 vdev_id);
+	status = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_6GHZ_BAND_CAP,
+			     CDS_BAND_5GHZ, &he_6g_band_caps_ie[2],
+			     DOT11F_IE_HE_6GHZ_BAND_CAP_MIN_LEN + 1);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Unable send HE 6g band Cap IE for 5GHZ band, status: %d",
+		       status);
+
+	return status;
 }
 #endif
 
