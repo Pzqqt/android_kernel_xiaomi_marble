@@ -421,8 +421,9 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 		bool reattach = false;
 
 		dev = msm_gem_get_aspace_device(aspace);
-		if (dev && obj->import_attach &&
-				(dev != obj->import_attach->dev)) {
+		if ((dev && obj->import_attach) &&
+				((dev != obj->import_attach->dev) ||
+				msm_obj->obj_dirty)) {
 			dmabuf = obj->import_attach->dmabuf;
 
 			DRM_DEBUG("detach nsec-dev:%pK attach sec-dev:%pK\n",
@@ -440,6 +441,7 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 						PTR_ERR(obj->import_attach));
 				goto unlock;
 			}
+			msm_obj->obj_dirty = false;
 			reattach = true;
 		}
 
@@ -631,6 +633,7 @@ void msm_gem_aspace_domain_attach_detach_update(
 			if (obj->import_attach) {
 				mutex_lock(&msm_obj->lock);
 				put_iova(obj);
+				msm_obj->obj_dirty = true;
 				mutex_unlock(&msm_obj->lock);
 			}
 		}
@@ -1091,6 +1094,7 @@ static int msm_gem_new_impl(struct drm_device *dev,
 	INIT_LIST_HEAD(&msm_obj->iova_list);
 	msm_obj->aspace = NULL;
 	msm_obj->in_active_list = false;
+	msm_obj->obj_dirty = false;
 
 	if (struct_mutex_locked) {
 		WARN_ON(!mutex_is_locked(&dev->struct_mutex));
