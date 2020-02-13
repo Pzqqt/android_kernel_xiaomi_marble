@@ -824,6 +824,7 @@ int ipa3_xdci_start(u32 clnt_hdl, u8 xferrscidx, bool xferrscidx_valid)
 	int result = -EFAULT;
 	enum gsi_status gsi_res;
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_usb;
 
 	IPADBG("entry\n");
 	if (clnt_hdl >= ipa3_ctx->ipa_num_pipes  ||
@@ -866,6 +867,16 @@ int ipa3_xdci_start(u32 clnt_hdl, u8 xferrscidx, bool xferrscidx_valid)
 		IPAERR("Error starting channel: %d\n", gsi_res);
 		goto write_chan_scratch_fail;
 	}
+
+	if (IPA_CLIENT_IS_HOLB_CONS(ep->client)) {
+		result = ipa3_uc_client_add_holb_monitor(ep->gsi_chan_hdl,
+				HOLB_MONITOR_MASK,
+				holb_max_cnt, IPA_EE_AP);
+		if (result)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					ep->gsi_chan_hdl);
+	}
+
 	ipa3_start_gsi_debug_monitor(clnt_hdl);
 	if (!ep->keep_ipa_awake)
 		IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
@@ -1520,6 +1531,8 @@ int ipa3_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	struct gsi_chan_info ul_gsi_chan_info, dl_gsi_chan_info;
 	int aggr_active_bitmap = 0;
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_usb;
+	int res = 0;
 
 	/* In case of DPL, dl is the DPL channel/client */
 
@@ -1633,6 +1646,14 @@ int ipa3_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 
 start_dl_and_exit:
 	gsi_start_channel(dl_ep->gsi_chan_hdl);
+	if (IPA_CLIENT_IS_HOLB_CONS(dl_ep->client)) {
+		res = ipa3_uc_client_add_holb_monitor(dl_ep->gsi_chan_hdl,
+			HOLB_MONITOR_MASK, holb_max_cnt,
+			IPA_EE_AP);
+		if (res)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					dl_ep->gsi_chan_hdl);
+	}
 	ipa3_start_gsi_debug_monitor(dl_clnt_hdl);
 unsuspend_dl_and_exit:
 	if (ipa3_ctx->ipa_hw_type < IPA_HW_v4_0) {
@@ -1653,6 +1674,8 @@ int ipa3_start_gsi_channel(u32 clnt_hdl)
 	int result = -EFAULT;
 	enum gsi_status gsi_res;
 	enum ipa_client_type client_type;
+	int res = 0;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_usb;
 
 	IPADBG("entry\n");
 	if (clnt_hdl >= ipa3_ctx->ipa_num_pipes  ||
@@ -1670,6 +1693,14 @@ int ipa3_start_gsi_channel(u32 clnt_hdl)
 	if (gsi_res != GSI_STATUS_SUCCESS) {
 		IPAERR("Error starting channel: %d\n", gsi_res);
 		goto start_chan_fail;
+	}
+	if (IPA_CLIENT_IS_HOLB_CONS(ep->client)) {
+		res = ipa3_uc_client_add_holb_monitor(ep->gsi_chan_hdl,
+				HOLB_MONITOR_MASK,
+				holb_max_cnt, IPA_EE_AP);
+		if (res)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					ep->gsi_chan_hdl);
 	}
 	ipa3_start_gsi_debug_monitor(clnt_hdl);
 
@@ -1692,6 +1723,8 @@ int ipa3_xdci_resume(u32 ul_clnt_hdl, u32 dl_clnt_hdl, bool is_dpl)
 	struct ipa3_ep_context *dl_ep = NULL;
 	enum gsi_status gsi_res;
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
+	int result;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_usb;
 
 	/* In case of DPL, dl is the DPL channel/client */
 
@@ -1720,6 +1753,14 @@ int ipa3_xdci_resume(u32 ul_clnt_hdl, u32 dl_clnt_hdl, bool is_dpl)
 	gsi_res = gsi_start_channel(dl_ep->gsi_chan_hdl);
 	if (gsi_res != GSI_STATUS_SUCCESS)
 		IPAERR("Error starting DL channel: %d\n", gsi_res);
+	if (!is_dpl) {
+		result = ipa3_uc_client_add_holb_monitor(dl_ep->gsi_chan_hdl,
+				HOLB_MONITOR_MASK,
+				holb_max_cnt, IPA_EE_AP);
+		if (result)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					dl_ep->gsi_chan_hdl);
+	}
 	ipa3_start_gsi_debug_monitor(dl_clnt_hdl);
 
 	/* Start UL channel */

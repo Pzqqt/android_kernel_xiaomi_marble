@@ -36,6 +36,7 @@
 #include <linux/mailbox/qmp.h>
 #include <linux/rmnet_ipa_fd_ioctl.h>
 #include <linux/ipa_fmwk.h>
+#include "ipa_uc_holb_monitor.h"
 
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
@@ -1444,12 +1445,19 @@ struct ipa3_tag_completion {
 
 struct ipa3_controller;
 
+enum ipa_ees {
+	IPA_EE_AP = 0,
+	IPA_EE_Q6 = 1,
+	IPA_EE_UC = 2,
+};
+
 /**
  * struct ipa3_uc_hdlrs - IPA uC callback functions
  * @ipa_uc_loaded_hdlr: Function handler when uC is loaded
  * @ipa_uc_event_hdlr: Event handler function
  * @ipa3_uc_response_hdlr: Response handler function
  * @ipa_uc_event_log_info_hdlr: Log event handler function
+ * @ipa_uc_holb_enabled_hdlr: Function handler when uC HOLB is enabled
  */
 struct ipa3_uc_hdlrs {
 	void (*ipa_uc_loaded_hdlr)(void);
@@ -1463,6 +1471,8 @@ struct ipa3_uc_hdlrs {
 
 	void (*ipa_uc_event_log_info_hdlr)
 		(struct IpaHwEventLogInfoData_t *uc_event_top_mmio);
+
+	void (*ipa_uc_holb_enabled_hdlr)(void);
 };
 
 /**
@@ -1497,6 +1507,7 @@ enum ipa3_hw_flags {
  * @uc_inited: Indicates if uC interface has been initialized
  * @uc_loaded: Indicates if uC has loaded
  * @uc_failed: Indicates if uC has failed / returned an error
+ * @uc_holb_enabled: Indicates if uC HOLB enable cmd is sent.
  * @uc_lock: uC interface lock to allow only one uC interaction at a time
  * @uc_spinlock: same as uc_lock but for irq contexts
  * @uc_completation: Completion mechanism to wait for uC commands
@@ -1505,11 +1516,14 @@ enum ipa3_hw_flags {
  * @uc_status: The last status provided by the uC
  * @uc_error_type: error type from uC error event
  * @uc_error_timestamp: tag timer sampled after uC crashed
+ * @ipa_use_uc_holb_monitor: Indicates if uC HOLB feature is enabled
+ * @ipa_holb_monitor: Struct with all info needed for uC HOLB feature
  */
 struct ipa3_uc_ctx {
 	bool uc_inited;
 	bool uc_loaded;
 	bool uc_failed;
+	bool uc_holb_enabled;
 	struct mutex uc_lock;
 	spinlock_t uc_spinlock;
 	struct completion uc_completion;
@@ -1534,6 +1548,8 @@ struct ipa3_uc_ctx {
 	u32 ering_rp_local;
 	u32 ering_wp;
 	u32 ering_rp;
+	bool ipa_use_uc_holb_monitor;
+	struct ipa_holb_monitor holb_monitor;
 };
 
 /**
@@ -2124,6 +2140,11 @@ struct ipa3_plat_drv_res {
 	const char *icc_path_name[IPA_ICC_PATH_MAX];
 	u32 icc_clk_val[IPA_ICC_LVL_MAX][IPA_ICC_MAX];
 	bool rmnet_ctl_enable;
+	bool ipa_use_uc_holb_monitor;
+	u32 ipa_holb_monitor_poll_period;
+	u32 ipa_holb_monitor_max_cnt_wlan;
+	u32 ipa_holb_monitor_max_cnt_usb;
+	u32 ipa_holb_monitor_max_cnt_11ad;
 	const char *gsi_fw_file_name;
 	const char *uc_fw_file_name;
 	u32 tx_wrapper_cache_max_size;
@@ -3006,6 +3027,7 @@ int ipa3_uc_interface_init(void);
 int ipa3_uc_is_gsi_channel_empty(enum ipa_client_type ipa_client);
 int ipa3_uc_state_check(void);
 int ipa3_uc_loaded_check(void);
+int ipa3_uc_holb_enabled_check(void);
 int ipa3_uc_register_ready_cb(struct notifier_block *nb);
 int ipa3_uc_unregister_ready_cb(struct notifier_block *nb);
 int ipa3_uc_send_cmd(u32 cmd, u32 opcode, u32 expected_status,
@@ -3039,6 +3061,11 @@ int ipa3_uc_debug_stats_alloc(
 	struct IpaHwOffloadStatsAllocCmdData_t cmdinfo);
 int ipa3_uc_debug_stats_dealloc(uint32_t protocol);
 int ipa3_uc_quota_monitor(uint64_t quota);
+int ipa3_uc_enable_holb_monitor(uint32_t polling_period);
+int ipa3_uc_add_holb_monitor(uint16_t gsi_ch, uint32_t action_mask,
+	uint32_t max_stuck_count, uint8_t ee);
+int ipa3_uc_del_holb_monitor(uint16_t gsi_ch, uint8_t ee);
+int ipa3_uc_disable_holb_monitor(void);
 int ipa3_uc_bw_monitor(struct ipa_wdi_bw_info *info);
 int ipa3_uc_setup_event_ring(void);
 int ipa3_set_wlan_tx_info(struct ipa_wdi_tx_info *info);

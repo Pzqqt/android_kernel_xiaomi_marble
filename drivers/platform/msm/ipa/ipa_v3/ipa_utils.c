@@ -646,11 +646,6 @@ static const u32 ipa3_rsrc_rx_grp_hps_weight_config
 	},
 };
 
-enum ipa_ees {
-	IPA_EE_AP = 0,
-	IPA_EE_Q6 = 1,
-	IPA_EE_UC = 2,
-};
 
 enum ipa_qmb_instance_type {
 	IPA_QMB_INSTANCE_DDR = 0,
@@ -7964,6 +7959,13 @@ static int __ipa3_stop_gsi_channel(u32 clnt_hdl)
 
 	ep = &ipa3_ctx->ep[clnt_hdl];
 	client_type = ipa3_get_client_mapping(clnt_hdl);
+	if (IPA_CLIENT_IS_HOLB_CONS(client_type)) {
+		res = ipa3_uc_client_del_holb_monitor(ep->gsi_chan_hdl,
+							IPA_EE_AP);
+		if (res)
+			IPAERR("Delete HOLB monitor failed for ch %d\n",
+					ep->gsi_chan_hdl);
+	}
 	memset(&mem, 0, sizeof(mem));
 
 	/* stop uC gsi dbg stats monitor */

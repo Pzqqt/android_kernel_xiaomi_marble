@@ -2470,6 +2470,8 @@ int ipa3_resume_gsi_wdi_pipe(u32 clnt_hdl)
 	struct gsi_chan_info chan_info;
 	union __packed gsi_channel_scratch gsi_scratch;
 	struct IpaHwOffloadStatsAllocCmdData_t *pcmd_t = NULL;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_wlan;
+	int res = 0;
 
 	IPADBG("ep=%d\n", clnt_hdl);
 	ep = &ipa3_ctx->ep[clnt_hdl];
@@ -2492,6 +2494,14 @@ int ipa3_resume_gsi_wdi_pipe(u32 clnt_hdl)
 	if (result != GSI_STATUS_SUCCESS) {
 		IPAERR("gsi_start_channel failed %d\n", result);
 		ipa_assert();
+	}
+	if (IPA_CLIENT_IS_HOLB_CONS(ep->client)) {
+		res = ipa3_uc_client_add_holb_monitor(ep->gsi_chan_hdl,
+						HOLB_MONITOR_MASK, holb_max_cnt,
+						IPA_EE_AP);
+		if (res)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					ep->gsi_chan_hdl);
 	}
 	pcmd_t = &ipa3_ctx->gsi_info[IPA_HW_PROTOCOL_WDI];
 	/* start uC gsi dbg stats monitor */

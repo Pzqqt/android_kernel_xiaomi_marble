@@ -6056,8 +6056,8 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		IPAERR(":ipa Uc interface init failed (%d)\n", -result);
 	else
 		IPADBG(":ipa Uc interface init ok\n");
-
 	uc_hdlrs.ipa_uc_loaded_hdlr = ipa3_uc_is_loaded;
+	uc_hdlrs.ipa_uc_holb_enabled_hdlr = ipa3_uc_holb_client_handler;
 	ipa3_uc_register_handlers(IPA_HW_FEATURE_COMMON, &uc_hdlrs);
 
 	result = ipa3_wdi_init();
@@ -6653,6 +6653,16 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->wan_rx_ring_size = resource_p->wan_rx_ring_size;
 	ipa3_ctx->lan_rx_ring_size = resource_p->lan_rx_ring_size;
 	ipa3_ctx->ipa_wan_skb_page = resource_p->ipa_wan_skb_page;
+	ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor =
+		resource_p->ipa_use_uc_holb_monitor;
+	ipa3_ctx->uc_ctx.holb_monitor.poll_period =
+		resource_p->ipa_holb_monitor_poll_period;
+	ipa3_ctx->uc_ctx.holb_monitor.max_cnt_wlan =
+		resource_p->ipa_holb_monitor_max_cnt_wlan;
+	ipa3_ctx->uc_ctx.holb_monitor.max_cnt_usb =
+		resource_p->ipa_holb_monitor_max_cnt_usb;
+	ipa3_ctx->uc_ctx.holb_monitor.max_cnt_11ad =
+		resource_p->ipa_holb_monitor_max_cnt_11ad;
 	ipa3_ctx->stats.page_recycle_stats[0].total_replenished = 0;
 	ipa3_ctx->stats.page_recycle_stats[0].tmp_alloc = 0;
 	ipa3_ctx->stats.page_recycle_stats[1].total_replenished = 0;
@@ -7414,6 +7424,10 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	u32 *ipa_tz_unlock_reg;
 	int elem_num;
 	u32 mhi_evid_limits[2];
+	u32 ipa_holb_monitor_poll_period;
+	u32 ipa_holb_monitor_max_cnt_wlan;
+	u32 ipa_holb_monitor_max_cnt_usb;
+	u32 ipa_holb_monitor_max_cnt_11ad;
 
 	/* initialize ipa3_res */
 	ipa_drv_res->ipa_pipe_mem_start_ofst = IPA_PIPE_MEM_START_OFST;
@@ -7424,6 +7438,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->modem_cfg_emb_pipe_flt = false;
 	ipa_drv_res->ipa_wdi2 = false;
 	ipa_drv_res->ipa_wan_skb_page = false;
+	ipa_drv_res->ipa_use_uc_holb_monitor = false;
 	ipa_drv_res->ipa_wdi2_over_gsi = false;
 	ipa_drv_res->ipa_wdi3_over_gsi = false;
 	ipa_drv_res->ipa_mhi_dynamic_config = false;
@@ -7552,6 +7567,74 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Use skb page = %s\n",
 			ipa_drv_res->ipa_wan_skb_page
 			? "True" : "False");
+
+	ipa_drv_res->ipa_use_uc_holb_monitor =
+			of_property_read_bool(pdev->dev.of_node,
+			"qcom,ipa-uc-holb-monitor");
+	IPADBG(": uC HOLB monitor = %s\n",
+			ipa_drv_res->ipa_use_uc_holb_monitor
+			? "True" : "False");
+
+	/* Get HOLB Monitor Polling Period */
+	result = of_property_read_u32(pdev->dev.of_node,
+			"qcom,ipa-holb-monitor-poll-period",
+			&ipa_holb_monitor_poll_period);
+	if (result) {
+		IPADBG("ipa holb monitor poll period = %u\n",
+			IPA_HOLB_POLLING_PERIOD_MS);
+		ipa_holb_monitor_poll_period = IPA_HOLB_POLLING_PERIOD_MS;
+	} else
+		IPADBG("ipa holb monitor poll period = %u\n",
+			ipa_holb_monitor_poll_period);
+
+	ipa_drv_res->ipa_holb_monitor_poll_period =
+			ipa_holb_monitor_poll_period;
+
+	/* Get HOLB Monitor Max Stuck Cnt Values */
+	result = of_property_read_u32(pdev->dev.of_node,
+			"qcom,ipa-holb-monitor-max-cnt-wlan",
+			&ipa_holb_monitor_max_cnt_wlan);
+	if (result) {
+		IPADBG("ipa holb monitor max count wlan = %u\n",
+			IPA_HOLB_MONITOR_MAX_STUCK_COUNT);
+		ipa_holb_monitor_max_cnt_wlan =
+				IPA_HOLB_MONITOR_MAX_STUCK_COUNT;
+	} else
+		IPADBG("ipa holb monitor max count wlan = %u\n",
+			ipa_holb_monitor_max_cnt_wlan);
+
+	ipa_drv_res->ipa_holb_monitor_max_cnt_wlan =
+			ipa_holb_monitor_max_cnt_wlan;
+
+	result = of_property_read_u32(pdev->dev.of_node,
+			"qcom,ipa-holb-monitor-max-cnt-usb",
+			&ipa_holb_monitor_max_cnt_usb);
+	if (result) {
+		IPADBG("ipa holb monitor max count usb = %u\n",
+			IPA_HOLB_MONITOR_MAX_STUCK_COUNT);
+		ipa_holb_monitor_max_cnt_usb =
+				IPA_HOLB_MONITOR_MAX_STUCK_COUNT;
+	} else
+		IPADBG("ipa holb monitor max count usb = %u\n",
+			ipa_holb_monitor_max_cnt_usb);
+
+	ipa_drv_res->ipa_holb_monitor_max_cnt_usb =
+			ipa_holb_monitor_max_cnt_usb;
+
+	result = of_property_read_u32(pdev->dev.of_node,
+			"qcom,ipa-holb-monitor-max-cnt-11ad",
+			&ipa_holb_monitor_max_cnt_11ad);
+	if (result) {
+		IPADBG("ipa holb monitor max count 11ad = %u\n",
+			IPA_HOLB_MONITOR_MAX_STUCK_COUNT);
+		ipa_holb_monitor_max_cnt_11ad =
+			IPA_HOLB_MONITOR_MAX_STUCK_COUNT;
+	} else
+		IPADBG("ipa holb monitor max count 11ad = %u\n",
+			ipa_holb_monitor_max_cnt_11ad);
+
+	ipa_drv_res->ipa_holb_monitor_max_cnt_11ad =
+			ipa_holb_monitor_max_cnt_11ad;
 
 	ipa_drv_res->ipa_fltrt_not_hashable =
 			of_property_read_bool(pdev->dev.of_node,

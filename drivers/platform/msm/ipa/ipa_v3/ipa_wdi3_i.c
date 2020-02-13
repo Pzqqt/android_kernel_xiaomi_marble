@@ -726,6 +726,7 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 {
 	struct ipa3_ep_context *ep_tx, *ep_rx;
 	int result = 0;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_wlan;
 
 	/* wdi3 only support over gsi */
 	if (!ipa3_ctx->ipa_wdi3_over_gsi) {
@@ -777,6 +778,13 @@ int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 		IPAERR("failed to start gsi tx channel\n");
 		goto fail_enable_path2;
 	}
+
+	result = ipa3_uc_client_add_holb_monitor(ep_tx->gsi_chan_hdl,
+					HOLB_MONITOR_MASK, holb_max_cnt,
+					IPA_EE_AP);
+	if (result)
+		IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+				ep_tx->gsi_chan_hdl);
 
 	/* start gsi rx channel */
 	result = gsi_start_channel(ep_rx->gsi_chan_hdl);
@@ -875,6 +883,7 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 		result = -EFAULT;
 		goto fail;
 	}
+
 	/* stop gsi tx channel */
 	result = ipa3_stop_gsi_channel(ipa_ep_idx_tx);
 	if (result) {

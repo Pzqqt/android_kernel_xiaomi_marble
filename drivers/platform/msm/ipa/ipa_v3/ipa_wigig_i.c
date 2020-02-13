@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "ipa_i.h"
@@ -1650,6 +1650,7 @@ int ipa3_enable_wigig_pipe_i(enum ipa_client_type client)
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	int retry_cnt = 0;
 	uint64_t val;
+	u32 holb_max_cnt = ipa3_ctx->uc_ctx.holb_monitor.max_cnt_11ad;
 
 	IPADBG("\n");
 
@@ -1703,6 +1704,14 @@ int ipa3_enable_wigig_pipe_i(enum ipa_client_type client)
 		WARN_ON(1);
 		res = -EFAULT;
 		goto fail_gsi_start;
+	}
+	if (IPA_CLIENT_IS_HOLB_CONS(ep->client)) {
+		res = ipa3_uc_client_add_holb_monitor(ep->gsi_chan_hdl,
+						HOLB_MONITOR_MASK, holb_max_cnt,
+						IPA_EE_AP);
+		if (res)
+			IPAERR("Add HOLB monitor failed for gsi ch %d\n",
+					ep->gsi_chan_hdl);
 	}
 
 	/* for TX we have to ring the channel db (last desc in the ring) */

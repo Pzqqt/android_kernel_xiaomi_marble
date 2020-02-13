@@ -186,6 +186,117 @@ static ssize_t ipa3_write_ep_holb(struct file *file,
 	return count;
 }
 
+static ssize_t ipa3_write_holb_monitor_client(struct file *file,
+		const char __user *buf, size_t count, loff_t *ppos)
+{
+	struct ipa_uc_holb_client_info holb_client;
+	u32 max_stuck_cnt;
+	u16 gsi_ch;
+	u8 set_client;
+	unsigned long missing;
+	char *sptr, *token;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	missing = copy_from_user(dbg_buff, buf, count);
+	if (missing)
+		return -EFAULT;
+
+	dbg_buff[count] = '\0';
+
+	sptr = dbg_buff;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &gsi_ch))
+		return -EINVAL;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &max_stuck_cnt))
+		return -EINVAL;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &set_client))
+		return -EINVAL;
+
+	holb_client.gsi_chan_hdl = gsi_ch;
+	holb_client.debugfs_param = set_client;
+	holb_client.max_stuck_cnt = max_stuck_cnt;
+	holb_client.action_mask = HOLB_MONITOR_MASK;
+	holb_client.ee = IPA_EE_AP;
+
+
+	ipa3_set_holb_client_by_ch(holb_client);
+
+	return count;
+}
+
+static ssize_t ipa3_write_holb_monitor_client_add_del(struct file *file,
+		const char __user *buf, size_t count, loff_t *ppos)
+{
+	u32 max_stuck_cnt, action_mask;
+	u16 gsi_ch;
+	u8 ee, add_client;
+
+	unsigned long missing;
+	char *sptr, *token;
+
+	if (count >= sizeof(dbg_buff))
+		return -EFAULT;
+
+	missing = copy_from_user(dbg_buff, buf, count);
+	if (missing)
+		return -EFAULT;
+
+	dbg_buff[count] = '\0';
+
+	sptr = dbg_buff;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou16(token, 0, &gsi_ch))
+		return -EINVAL;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &action_mask))
+		return -EINVAL;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou32(token, 0, &max_stuck_cnt))
+		return -EINVAL;
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &ee))
+		return -EINVAL;
+
+
+	token = strsep(&sptr, " ");
+	if (!token)
+		return -EINVAL;
+	if (kstrtou8(token, 0, &add_client))
+		return -EINVAL;
+
+	if (add_client)
+		ipa3_uc_client_add_holb_monitor(gsi_ch, action_mask,
+			max_stuck_cnt, ee);
+	else
+		ipa3_uc_client_del_holb_monitor(gsi_ch, ee);
+
+	return count;
+}
 static ssize_t ipa3_write_ep_reg(struct file *file, const char __user *buf,
 		size_t count, loff_t *ppos)
 {
@@ -2855,6 +2966,14 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 	}, {
 		"holb", IPA_WRITE_ONLY_MODE, NULL, {
 			.write = ipa3_write_ep_holb,
+		}
+	}, {
+		"holb_monitor_client_param", IPA_WRITE_ONLY_MODE, NULL, {
+			.write = ipa3_write_holb_monitor_client,
+		}
+	}, {
+		"holb_monitor_client_add_del", IPA_WRITE_ONLY_MODE, NULL, {
+			.write = ipa3_write_holb_monitor_client_add_del,
 		}
 	}, {
 		"hdr", IPA_READ_ONLY_MODE, NULL, {

@@ -28,6 +28,7 @@
 #define IPA_UC_ERING_n_r 1
 #define IPA_UC_ERING_n_w 0
 #define IPA_UC_MON_INTERVAL 5
+#define IPA_UC_HOLB_WORKQUEUE_NAME "ipa_uc_holb_wq"
 
 /**
  * enum ipa3_cpu_2_hw_commands - Values that represent the commands from the CPU
@@ -49,6 +50,12 @@
  * IPA_CPU_2_HW_CMD_UPDATE_FLOW_CTL_MONITOR: Command to update pipes to monitor.
  * IPA_CPU_2_HW_CMD_DISABLE_FLOW_CTL_MONITOR: Command to disable pipe
 					monitoring, no parameter required.
+ * IPA_CPU_2_HW_CMD_ENABLE_HOLB_MONITOR: Command to enable HOLB monitoring.
+ * IPA_CPU_2_HW_CMD_ADD_HOLB_MONITOR: Command to add GSI channel to HOLB
+ *                                 monitor.
+ * IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR: Command to delete GSI channel to HOLB
+ *                                 monitor.
+ * IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR: Command to disable HOLB monitoring.
  */
 enum ipa3_cpu_2_hw_commands {
 	IPA_CPU_2_HW_CMD_NO_OP                     =
@@ -83,7 +90,14 @@ enum ipa3_cpu_2_hw_commands {
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 14),
 	IPA_CPU_2_HW_CMD_DISABLE_FLOW_CTL_MONITOR  =
 		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 15),
-
+	IPA_CPU_2_HW_CMD_ENABLE_HOLB_MONITOR       =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 17),
+	IPA_CPU_2_HW_CMD_ADD_HOLB_MONITOR          =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 18),
+	IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR          =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 19),
+	IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR       =
+		FEATURE_ENUM_VAL(IPA_HW_FEATURE_COMMON, 20),
 };
 
 /**
@@ -239,9 +253,64 @@ struct IpaUpdateFlowCtlMonitorData_t {
 	u8 add_delete;
 };
 
+/**
+ * @brief   Structure holding the parameter for
+ *          IPA_CPU_2_HW_CMD_ENABLE_HOLB_MONITOR command: HOLB
+ *          monitor polling period in ms (expected range min:
+ *          5ms, max: 50ms)
+ */
+union IpaEnableHolbMonitorCmdData_t {
+	struct IpaEnableHolbMonitorParams_t {
+		uint32_t     holbMonitorPollingPeriod;
+	} params;
+	uint32_t raw32b;
+} __packed;
+
+/**
+ * @brief   Structure holding the parameters for
+ *          IPA_CPU_2_HW_CMD_ADD_HOLB_MONITOR command
+ *
+ * @param   ipaProdGsiChid    GSI chid to be HOLB monitored
+ * @param   EE                EE that the chid belongs to
+ * @param   holbActionMask    bit0: uC enables HOLB on
+ *                            corresponding pipe with timer = 0
+ *                            bit1: Notify AP of bad chid
+ *                            bits can be set independently or
+ *                            together
+ * @param   maxStuckSampleCnt Max stuck sample count before
+ *                            taking action
+ */
+union IpaAddHolbMonitorCmdData_t {
+	struct IpaAddHolbMonitorParams_t {
+		uint32_t  ipaProdGsiChid    :8;
+		uint32_t  EE                :8;
+		uint32_t  holbActionMask    :8;
+		uint32_t  maxStuckSampleCnt :8;
+	} __packed params;
+	uint32_t raw32b;
+} __packed;
+
+/**
+ * @brief   Structure holding the parameters for
+ *          IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR command.
+ *
+ * @param   ipaProdGsiChid    GSI chid to be removed from HOLB
+ *                            monitoring
+ * @param   EE                EE that the chid belongs to
+ */
+union IpaDelHolbMonitorCmdData_t {
+	struct IpaDelHolbMonitorParams_t {
+		uint32_t  ipaProdGsiChid :8;
+		uint32_t  EE             :8;
+		uint32_t  reserved       :16;
+	} __packed params;
+	uint32_t raw32b;
+} __packed;
+
 static DEFINE_MUTEX(uc_loaded_nb_lock);
 static BLOCKING_NOTIFIER_HEAD(uc_loaded_notifier);
 
+static struct workqueue_struct *ipa_uc_holb_wq;
 struct ipa3_uc_hdlrs ipa3_uc_hdlrs[IPA_HW_NUM_FEATURES] = { { 0 } };
 
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type)
@@ -282,6 +351,34 @@ const char *ipa_hw_error_str(enum ipa3_hw_errors err_type)
 
 	return str;
 }
+
+static void ipa3_deferred_holb_work(struct work_struct *work)
+{
+
+	int res;
+	u32 poll_period = ipa3_ctx->uc_ctx.holb_monitor.poll_period;
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	res = ipa3_uc_enable_holb_monitor(poll_period);
+	if (res) {
+		IPAERR("Failed to enable HOLB monitoring %d\n", res);
+		goto fail_holb_enable;
+	}
+	if (!ipa3_ctx->uc_ctx.uc_event_ring_valid) {
+		if (ipa3_uc_setup_event_ring()) {
+			IPAERR("failed to set uc event ring\n");
+			goto fail_holb_enable;
+		}
+	}
+
+	if (ipa3_uc_hdlrs[IPA_HW_FEATURE_COMMON].ipa_uc_holb_enabled_hdlr)
+		ipa3_uc_hdlrs[IPA_HW_FEATURE_COMMON].ipa_uc_holb_enabled_hdlr();
+
+
+fail_holb_enable:
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+}
+DECLARE_WORK(ipa3_holb_enabled_work, ipa3_deferred_holb_work);
 
 static void ipa3_uc_save_dbg_stats(u32 size)
 {
@@ -418,7 +515,7 @@ static void ipa3_event_ring_hdlr(void)
 	u32 ering_rp, offset;
 	void *rp_va;
 	struct ipa_inform_wlan_bw bw_info;
-	struct eventElement_t *e_b = NULL, *e_q = NULL;
+	struct eventElement_t *e_b = NULL, *e_q = NULL, *e_h = NULL;
 	int mul = 0;
 
 	ering_rp = ipahal_read_reg_mn(IPA_UC_MAILBOX_m_n,
@@ -456,7 +553,21 @@ static void ipa3_event_ring_hdlr(void)
 			if (ipa3_broadcast_wdi_quota_reach_ind(0,
 				e_q->Value.quota_param.usage))
 				IPAERR_RL("failed on quota_reach for %d\n",
-				e_q->Protocol);
+						e_q->Protocol);
+		} else if (((struct eventElement_t *) rp_va)->Opcode
+				== IPA_HOLB_BAD_PERIPHERAL_EVENT) {
+			e_h = ((struct eventElement_t *) rp_va);
+			IPAERR("Bad Periph for Chan %d QTimer %u %u\n",
+				e_h->Value.holb_notify_param.ipaProdGsiChid,
+				e_h->Value.holb_notify_param.qTimerMSB,
+				e_h->Value.holb_notify_param.qTimerLSB);
+		} else if (((struct eventElement_t *) rp_va)->Opcode
+				== IPA_HOLB_PERIPHERAL_RECOVERED_EVENT) {
+			e_h = ((struct eventElement_t *) rp_va);
+			IPAERR("Recovered Periph Chan %d QTimer %u %u\n",
+				e_h->Value.holb_notify_param.ipaProdGsiChid,
+				e_h->Value.holb_notify_param.qTimerMSB,
+				e_h->Value.holb_notify_param.qTimerLSB);
 		}
 		ipa3_ctx->uc_ctx.ering_rp_local += offset;
 		ipa3_ctx->uc_ctx.ering_rp_local %=
@@ -507,6 +618,17 @@ int ipa3_uc_loaded_check(void)
 	return ipa3_ctx->uc_ctx.uc_loaded;
 }
 EXPORT_SYMBOL(ipa3_uc_loaded_check);
+
+/**
+ * ipa3_uc_holb_enabled_check() - Check the uC has been loaded
+ *
+ * Return value: 1 if the uC is loaded, 0 otherwise
+ */
+int ipa3_uc_holb_enabled_check(void)
+{
+	return ipa3_ctx->uc_ctx.uc_holb_enabled;
+}
+EXPORT_SYMBOL(ipa3_uc_holb_enabled_check);
 
 /**
  * ipa3_uc_register_ready_cb() - register a uC ready callback notifier block
@@ -694,6 +816,9 @@ static void ipa3_uc_response_hdlr(enum ipa_irq_type interrupt,
 
 		ipa3_ctx->uc_ctx.uc_loaded = true;
 
+		if (ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor)
+			queue_work(ipa_uc_holb_wq, &ipa3_holb_enabled_work);
+
 		(void) blocking_notifier_call_chain(&uc_loaded_notifier, true,
 			ipa3_ctx);
 
@@ -741,6 +866,7 @@ static void ipa3_uc_response_hdlr(enum ipa_irq_type interrupt,
 		       ipa3_ctx->uc_ctx.uc_sram_mmio->responseOp);
 	}
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
 }
 
 static void ipa3_uc_wigig_misc_int_handler(enum ipa_irq_type interrupt,
@@ -904,6 +1030,7 @@ int ipa3_uc_interface_init(void)
 	}
 
 	mutex_init(&ipa3_ctx->uc_ctx.uc_lock);
+	mutex_init(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
 	spin_lock_init(&ipa3_ctx->uc_ctx.uc_spinlock);
 
 	phys_addr = ipa3_ctx->ipa_wrapper_base +
@@ -944,10 +1071,22 @@ int ipa3_uc_interface_init(void)
 		goto irq_fail2;
 	}
 
+	if (ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor) {
+		ipa_uc_holb_wq = alloc_workqueue(IPA_UC_HOLB_WORKQUEUE_NAME,
+				WQ_MEM_RECLAIM | WQ_UNBOUND | WQ_SYSFS, 1);
+
+		if (!ipa_uc_holb_wq) {
+			IPAERR("Failed to create ipa_uc_holb_wq\n");
+			result = -EFAULT;
+			goto fail_wq;
+		}
+	}
 	ipa3_ctx->uc_ctx.uc_inited = true;
 
 	IPADBG("IPA uC interface is initialized\n");
 	return 0;
+fail_wq:
+	destroy_workqueue(ipa_uc_holb_wq);
 irq_fail2:
 	ipa3_remove_interrupt_handler(IPA_UC_IRQ_1);
 irq_fail1:
@@ -1038,6 +1177,100 @@ int ipa3_uc_is_gsi_channel_empty(enum ipa_client_type ipa_client)
 	return ret;
 }
 
+/**
+ * ipa3_uc_enable_holb_monitor() - Enable HOLB monitoring
+ *
+ * Return value: 0 on success, negative value otherwise
+ */
+int ipa3_uc_enable_holb_monitor(uint32_t polling_period)
+{
+	union IpaEnableHolbMonitorCmdData_t cmd;
+	int ret;
+
+	cmd.params.holbMonitorPollingPeriod = polling_period;
+
+	IPADBG("Sending uc CMD ENABLE_HOLB_MONITOR with polling_period (%d)\n",
+		polling_period);
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ret = ipa3_uc_send_cmd(cmd.raw32b, IPA_CPU_2_HW_CMD_ENABLE_HOLB_MONITOR,
+				 0, false, 10*HZ);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+	return ret;
+}
+
+/**
+ * ipa3_uc_add_holb_monitor() - Add a gsi channel that needs to be monitored
+ *
+ * Return value: 0 on success, negative value otherwise
+ */
+int ipa3_uc_add_holb_monitor(uint16_t gsi_ch, uint32_t action_mask,
+		uint32_t max_stuck_cnt, uint8_t ee)
+{
+	union IpaAddHolbMonitorCmdData_t cmd;
+	int ret;
+
+	cmd.params.ipaProdGsiChid = gsi_ch;
+	cmd.params.EE = ee;
+	cmd.params.holbActionMask = action_mask;
+	cmd.params.maxStuckSampleCnt = max_stuck_cnt;
+
+	IPADBG("Sending uc CMD ADD_HOLB_MONITOR");
+	IPADBG("CMD params gsi_chid (%d), mask (%d), max_stuck_cnt (%d)\n",
+			gsi_ch, action_mask, max_stuck_cnt);
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ret = ipa3_uc_send_cmd(cmd.raw32b, IPA_CPU_2_HW_CMD_ADD_HOLB_MONITOR, 0,
+			      false, 10*HZ);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+	return ret;
+}
+
+/**
+ * ipa3_uc_del_holb_monitor() - Disable monitoring for a particular
+ * gsi channel
+ *
+ * Return value: 0 on success, negative value otherwise
+ */
+int ipa3_uc_del_holb_monitor(uint16_t gsi_ch, uint8_t ee)
+{
+	union IpaDelHolbMonitorCmdData_t cmd;
+	int ret;
+
+	cmd.params.ipaProdGsiChid = gsi_ch;
+	cmd.params.EE = ee;
+
+	IPADBG("Sending uc IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR for gsi_ch %d\n",
+		gsi_ch);
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ret = ipa3_uc_send_cmd(cmd.raw32b, IPA_CPU_2_HW_CMD_DEL_HOLB_MONITOR, 0,
+			      false, 10*HZ);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+	return ret;
+}
+
+/**
+ * ipa3_uc_disable_holb_monitor() - Disable HOLB monitoring
+ *
+ * Return value: 0 on success, negative value otherwise
+ */
+int ipa3_uc_disable_holb_monitor(void)
+{
+	int ret;
+
+	IPADBG("Sending uc IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR\n");
+
+	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
+	ret = ipa3_uc_send_cmd(0, IPA_CPU_2_HW_CMD_DISABLE_HOLB_MONITOR, 0,
+			      false, 10*HZ);
+	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
+
+	return ret;
+}
 
 /**
  * ipa3_uc_notify_clk_state() - notify to uC of clock enable / disable

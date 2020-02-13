@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPA_UC_OFFLOAD_I_H_
@@ -673,6 +673,8 @@ struct IpaHwOffloadCommonChCmdData_t {
 enum EVENT_2_CPU_OPCODE {
 	BW_NOTIFY = 0x0,
 	QUOTA_NOTIFY = 0x1,
+	IPA_HOLB_BAD_PERIPHERAL_EVENT = 0x2,
+	IPA_HOLB_PERIPHERAL_RECOVERED_EVENT = 0x3
 };
 
 struct EventStructureBwMonitoring_t {
@@ -686,9 +688,27 @@ struct EventStructureQuotaMonitoring_t {
 	uint64_t usage;
 } __packed;
 
+
+/**
+ * @brief   Structure holding the parameters for
+ *          IPA_HW_2_CPU_EVENT_PERIPH_BAD and
+ *          IPA_HW_2_CPU_EVENT_PERIPH_RECOVERED events.
+ *
+ * @param   ipaProdGsiChid    bad OR recovered GSI chid
+ * @param   EE                EE that the chid belongs to
+ */
+struct EventStructureHolbMonitoring_t {
+	uint32_t ipaProdGsiChid :8;
+	uint32_t EE             :8;
+	uint32_t reserved       :16;
+	uint32_t qTimerLSB;
+	uint32_t qTimerMSB;
+} __packed;
+
 union EventParamFormat_t {
 	struct EventStructureBwMonitoring_t bw_param;
 	struct EventStructureQuotaMonitoring_t quota_param;
+	struct EventStructureHolbMonitoring_t holb_notify_param;
 } __packed;
 
 /* EVT RING STRUCTURE
