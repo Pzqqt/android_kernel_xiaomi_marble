@@ -548,6 +548,58 @@ sde_edid_parse_hdr_db(struct drm_connector *connector, const u8 *db)
 	SDE_EDID_DEBUG("min luminance %d\n", c_conn->hdr_min_luminance);
 }
 
+
+/*
+ * drm_extract_clrmetry_db - Parse the HDMI colorimetry extended block
+ * @connector: connector corresponding to the HDMI sink
+ * @db: start of the HDMI colorimetry extended block
+ *
+ * Parses the HDMI colorimetry block to extract sink info for @connector.
+ */
+static void
+sde_parse_clrmetry_db(struct drm_connector *connector, const u8 *db)
+{
+
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+
+	if (!db) {
+		DRM_ERROR("invalid db\n");
+		return;
+	}
+
+	/* Byte 3 Bit 0: xvYCC_601 */
+	if (db[2] & BIT(0))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_xvYCC_601;
+	/* Byte 3 Bit 1: xvYCC_709 */
+	if (db[2] & BIT(1))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_xvYCC_709;
+	/* Byte 3 Bit 2: sYCC_601 */
+	if (db[2] & BIT(2))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_sYCC_601;
+	/* Byte 3 Bit 3: ADBYCC_601 */
+	if (db[2] & BIT(3))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADBYCC_601;
+	/* Byte 3 Bit 4: ADB_RGB */
+	if (db[2] & BIT(4))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADB_RGB;
+	/* Byte 3 Bit 5: BT2020_CYCC */
+	if (db[2] & BIT(5))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_CYCC;
+	/* Byte 3 Bit 6: BT2020_YCC */
+	if (db[2] & BIT(6))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_YCC;
+	/* Byte 3 Bit 7: BT2020_RGB */
+	if (db[2] & BIT(7))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_RGB;
+	/* Byte 4 Bit 7: DCI-P3 */
+	if (db[3] & BIT(7))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_DCI_P3;
+
+	DRM_DEBUG_KMS("colorimetry fmts = 0x%x\n", c_conn->color_enc_fmt);
+}
+
 /*
  * sde_edid_parse_extended_blk_info - Parse the HDMI extended tag blocks
  * @connector: connector corresponding to external sink
@@ -581,6 +633,8 @@ sde_edid_parse_extended_blk_info(struct drm_connector *connector,
 				case HDR_STATIC_METADATA_DATA_BLOCK:
 					sde_edid_parse_hdr_db(connector, db);
 					break;
+				case COLORIMETRY_EXTENDED_DATA_BLOCK:
+					sde_parse_clrmetry_db(connector, db);
 				default:
 					break;
 				}

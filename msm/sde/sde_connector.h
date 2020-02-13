@@ -424,6 +424,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @hdr_avg_luminance: desired avg luminance obtained from HDR block
  * @hdr_min_luminance: desired min luminance obtained from HDR block
  * @hdr_supported: does the sink support HDR content
+ * @color_enc_fmt: Colorimetry encoding formats of sink
  * @allow_bl_update: Flag to indicate if BL update is allowed currently or not
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
@@ -483,6 +484,8 @@ struct sde_connector {
 	u32 hdr_avg_luminance;
 	u32 hdr_min_luminance;
 	bool hdr_supported;
+
+	u32 color_enc_fmt;
 
 	u8 hdr_plus_app_ver;
 	u32 qsync_mode;
