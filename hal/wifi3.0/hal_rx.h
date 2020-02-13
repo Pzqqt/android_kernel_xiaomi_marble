@@ -3243,17 +3243,20 @@ hal_rx_msdu_flow_idx_invalid(hal_soc_handle_t hal_soc_hdl,
 /**
  * hal_rx_hw_desc_get_ppduid_get() - Retrieve ppdu id
  * @hal_soc_hdl: hal_soc handle
- * @hw_desc_addr: hardware descriptor address
+ * @rx_tlv_hdr: Rx_tlv_hdr
+ * @rxdma_dst_ring_desc: Rx HW descriptor
  *
- * Return: 0 - success/ non-zero failure
+ * Return: ppdu id
  */
 static inline
 uint32_t hal_rx_hw_desc_get_ppduid_get(hal_soc_handle_t hal_soc_hdl,
-				       void *hw_desc_addr)
+				       void *rx_tlv_hdr,
+				       void *rxdma_dst_ring_desc)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 
-	return hal_soc->ops->hal_rx_hw_desc_get_ppduid_get(hw_desc_addr);
+	return hal_soc->ops->hal_rx_hw_desc_get_ppduid_get(rx_tlv_hdr,
+							   rxdma_dst_ring_desc);
 }
 
 /**
@@ -3615,5 +3618,24 @@ hal_rx_get_fisa_timeout(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 		return hal_soc->ops->hal_rx_get_fisa_timeout(buf);
 
 	return 0;
+}
+
+/**
+ * hal_rx_mpdu_start_tlv_tag_valid - API to check if RX_MPDU_START tlv
+ * tag is valid
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * @rx_tlv_hdr: start address of rx_pkt_tlvs
+ *
+ * Return: true if RX_MPDU_START tlv tag is valid, else false
+ */
+
+static inline uint8_t
+hal_rx_mpdu_start_tlv_tag_valid(hal_soc_handle_t hal_soc_hdl,
+				void *rx_tlv_hdr)
+{
+	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
+
+	return hal->ops->hal_rx_mpdu_start_tlv_tag_valid(rx_tlv_hdr);
 }
 #endif /* _HAL_RX_H */

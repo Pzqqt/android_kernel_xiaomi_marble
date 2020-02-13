@@ -593,14 +593,16 @@ static uint32_t hal_rx_tid_get_6390(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 /**
  * hal_rx_hw_desc_get_ppduid_get_6390(): retrieve ppdu id
- * @hw_desc_addr: hw addr
+ * @rx_tlv_hdr: start address of rx_pkt_tlvs
+ * @rxdma_dst_ring_desc: Rx HW descriptor
  *
  * Return: ppdu id
  */
-static uint32_t hal_rx_hw_desc_get_ppduid_get_6390(void *hw_desc_addr)
+static uint32_t hal_rx_hw_desc_get_ppduid_get_6390(void *rx_tlv_hdr,
+						   void *rxdma_dst_ring_desc)
 {
 	struct rx_mpdu_info *rx_mpdu_info;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)rx_tlv_hdr;
 
 	rx_mpdu_info =
 		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
