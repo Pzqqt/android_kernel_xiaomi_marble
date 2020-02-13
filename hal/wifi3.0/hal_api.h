@@ -94,6 +94,16 @@ hal_set_verbose_debug(bool flag)
 }
 #endif
 
+#ifdef ENABLE_HAL_SOC_STATS
+#define HAL_STATS_INC(_handle, _field, _delta) \
+{ \
+	if (likely(_handle)) \
+		_handle->stats._field += _delta; \
+}
+#else
+#define HAL_STATS_INC(_handle, _field, _delta)
+#endif
+
 /**
  * hal_reg_write_result_check() - check register writing result
  * @hal_soc: HAL soc handle
@@ -117,6 +127,8 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 			  "the expectation 0x%x, actual value 0x%x\n",
 			  exp_val,
 			  value);
+		HAL_STATS_INC(hal_soc, reg_write_fail, 1);
+		QDF_BUG(0);
 	}
 }
 
