@@ -79,8 +79,10 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->spectral_mode = params->smode;
 		samp_data->spectral_data_len = params->datalen;
 		samp_data->spectral_rssi = params->rssi;
-		samp_data->ch_width = spectral->ch_width;
-		samp_data->agile_ch_width = spectral->agile_ch_width;
+		samp_data->ch_width =
+				spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL];
+		samp_data->agile_ch_width =
+				spectral->ch_width[SPECTRAL_SCAN_MODE_AGILE];
 		samp_data->spectral_agc_total_gain = params->agc_total_gain;
 		samp_data->spectral_gainchange = params->gainchange;
 		samp_data->spectral_pri80ind = params->pri80ind;
@@ -237,7 +239,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		}
 	}
 
-	if ((spectral->ch_width != CH_WIDTH_160MHZ) ||
+	if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] != CH_WIDTH_160MHZ ||
 	    (params->smode == SPECTRAL_SCAN_MODE_AGILE) ||
 	    is_secondaryseg_rx_inprog(spectral)) {
 		if (spectral->send_phy_data(spectral->pdev_obj,
