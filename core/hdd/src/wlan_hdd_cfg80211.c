@@ -21417,8 +21417,11 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	/* Delete the PMKID CSR cache */
 	if (QDF_STATUS_SUCCESS !=
 	    wlan_hdd_del_pmksa_cache(adapter, pmk_cache)) {
-		hdd_err("Failed to delete PMKSA for " QDF_MAC_ADDR_STR,
-		       QDF_MAC_ADDR_ARRAY(pmksa->bssid));
+		if (!pmksa->bssid)
+			hdd_err("Failed to delete PMKSA for null bssid");
+		else
+			hdd_err("Failed to delete PMKSA for " QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_ARRAY(pmksa->bssid));
 		status = -EINVAL;
 	}
 
