@@ -5101,6 +5101,7 @@ typedef enum {
 	wmi_service_ext2_msg,
 	wmi_service_6ghz_support,
 	wmi_service_bw_165mhz_support,
+	wmi_service_bw_restricted_80p80_support,
 	wmi_service_packet_capture_support,
 	wmi_service_nan_vdev,
 	wmi_service_multiple_vdev_restart_ext,
