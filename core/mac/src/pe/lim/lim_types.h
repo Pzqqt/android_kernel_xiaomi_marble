@@ -818,6 +818,9 @@ void lim_process_mlm_add_sta_rsp(struct mac_context *mac,
 void lim_process_mlm_del_sta_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ);
 
+QDF_STATUS
+lim_process_mlm_del_all_sta_rsp(struct vdev_mlme_obj *vdev_mlme,
+				struct peer_delete_all_response *rsp);
 /**
  * lim_process_mlm_del_bss_rsp () - API to process delete bss response
  * @mac: Pointer to Global MAC structure

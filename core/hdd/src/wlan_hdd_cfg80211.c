@@ -20690,6 +20690,7 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 					 struct hdd_hostapd_state *hapd_state,
 					 struct csr_del_sta_params *param)
 {
+	uint8_t index = 0;
 	qdf_event_t *disassoc_event = &hapd_state->qdf_sta_disassoc_event;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS qdf_status;
@@ -20714,7 +20715,13 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 	qdf_status = hdd_softap_sta_deauth(adapter, param);
 
 	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		sta_info->is_deauth_in_progress = true;
+		if(qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
+			hdd_for_each_station(adapter->sta_info_list,
+					     sta_info, index)
+				sta_info->is_deauth_in_progress = true;
+		} else {
+			sta_info->is_deauth_in_progress = true;
+		}
 		qdf_status = qdf_wait_for_event_completion(
 						disassoc_event,
 						SME_PEER_DISCONNECT_TIMEOUT);
@@ -20758,8 +20765,15 @@ QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 	ucfg_mlme_get_sap_bcast_deauth_enabled(hdd_ctx->psoc,
 					       &is_sap_bcast_deauth_enabled);
 
-	if (is_sap_bcast_deauth_enabled)
-		return QDF_STATUS_E_INVAL;
+	hdd_debug("sap_bcast_deauth_enabled %d", is_sap_bcast_deauth_enabled);
+
+	if (is_sap_bcast_deauth_enabled) {
+		struct hdd_station_info bcast_sta_info;
+
+		qdf_set_macaddr_broadcast(&bcast_sta_info.sta_mac);
+		return hdd_softap_deauth_current_sta(adapter, &bcast_sta_info,
+						     hapd_state, param);
+	}
 
 	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
 		if (!sta_info->is_deauth_in_progress) {

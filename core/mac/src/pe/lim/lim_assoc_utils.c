@@ -55,6 +55,10 @@
 #include "wlan_utility.h"
 #include "wlan_mlme_api.h"
 #include "wma.h"
+#include "../../core/src/vdev_mgr_ops.h"
+
+#include <cdp_txrx_cfg.h>
+#include <cdp_txrx_cmn.h>
 
 #ifdef FEATURE_WLAN_TDLS
 #define IS_TDLS_PEER(type)  ((type) == STA_ENTRY_TDLS_PEER)
@@ -300,6 +304,80 @@ uint8_t lim_check_mcs_set(struct mac_context *mac, uint8_t *supportedMCSSet)
 #define SECURITY_SUITE_TYPE_WEP104 0x4
 #define SECURITY_SUITE_TYPE_GCMP 0x8
 #define SECURITY_SUITE_TYPE_GCMP_256 0x9
+
+/**
+ *lim_del_peer_info() - remove all peer information from host driver and fw
+ * @mac:    Pointer to Global MAC structure
+ * @pe_session: Pointer to PE Session entry
+ *
+ * @Return: QDF_STATUS
+ */
+
+QDF_STATUS lim_del_peer_info(struct mac_context *mac,
+			     struct pe_session *pe_session)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint16_t i;
+	uint32_t  bitmap = 1 << CDP_PEER_DELETE_NO_SPECIAL;
+	bool peer_unmap_conf_support_enabled;
+
+	peer_unmap_conf_support_enabled =
+				cdp_cfg_get_peer_unmap_conf_support(soc);
+
+	for (i = 0; i < pe_session->dph.dphHashTable.size; i++) {
+		tpDphHashNode sta_ds;
+
+		sta_ds = dph_get_hash_entry(mac, i,
+					    &pe_session->dph.dphHashTable);
+		if (!sta_ds)
+			continue;
+
+		cdp_peer_teardown(soc, pe_session->vdev_id, sta_ds->staAddr);
+		if (peer_unmap_conf_support_enabled)
+			cdp_peer_delete_sync(soc, pe_session->vdev_id,
+					     sta_ds->staAddr,
+					     wma_peer_unmap_conf_cb,
+					     bitmap);
+		else
+			cdp_peer_delete(soc, pe_session->vdev_id,
+					sta_ds->staAddr, bitmap);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * lim_del_sta_all(): Cleanup all peers associated with VDEV
+ * @mac:    Pointer to Global MAC structure
+ * @pe_session: Pointer to PE Session entry
+ *
+ * @Return: QDF Status of operation
+ */
+
+QDF_STATUS lim_del_sta_all(struct mac_context *mac,
+			   struct pe_session *pe_session)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct vdev_mlme_obj *mlme_obj;
+
+	if (!LIM_IS_AP_ROLE(pe_session))
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (!mlme_obj) {
+		pe_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = vdev_mgr_peer_delete_all_send(mlme_obj);
+	if (status != QDF_STATUS_SUCCESS) {
+		pe_err("failed status = %d", status);
+		return status;
+	}
+
+	status = lim_del_peer_info(mac, pe_session);
+
+	return status;
+}
 
 /**
  * lim_cleanup_rx_path()
@@ -4049,6 +4127,47 @@ returnFailure:
 	/* Clean-up will be done by the caller... */
 	qdf_mem_free(pBeaconStruct);
 	return retCode;
+}
+
+/**
+ * lim_prepare_and_send_del_all_sta_cnf() - prepares and send del all sta cnf
+ * @mac:          mac global context
+ * @status_code:    status code
+ * @pe_session: session context
+ *
+ * deletes DPH entry, changes the MLM mode for station, calls
+ * lim_send_del_sta_cnf
+ *
+ * Return: void
+ */
+void lim_prepare_and_send_del_all_sta_cnf(struct mac_context *mac,
+					  tSirResultCodes status_code,
+					  struct pe_session *pe_session)
+{
+	tLimMlmDeauthCnf mlm_deauth;
+	tpDphHashNode sta_ds = NULL;
+	uint32_t i;
+
+	if (!LIM_IS_AP_ROLE(pe_session))
+		return;
+
+	for (i = 1; i < pe_session->dph.dphHashTable.size; i++) {
+		sta_ds = dph_get_hash_entry(mac, i,
+					    &pe_session->dph.dphHashTable);
+		if (!sta_ds)
+			continue;
+		lim_delete_dph_hash_entry(mac, sta_ds->staAddr,
+					  sta_ds->assocId, pe_session);
+		lim_release_peer_idx(mac, sta_ds->assocId, pe_session);
+	}
+
+	qdf_set_macaddr_broadcast(&mlm_deauth.peer_macaddr);
+	mlm_deauth.resultCode = status_code;
+	mlm_deauth.deauthTrigger = eLIM_HOST_DEAUTH;
+	mlm_deauth.sessionId = pe_session->peSessionId;
+
+	lim_post_sme_message(mac, LIM_MLM_DEAUTH_CNF,
+			    (uint32_t *)&mlm_deauth);
 }
 
 /**

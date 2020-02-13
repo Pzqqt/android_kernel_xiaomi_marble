@@ -13826,12 +13826,25 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 				 struct csr_del_sta_params *param)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
+	struct hdd_context *hdd_ctx;
+	bool is_sap_bcast_deauth_enabled = false;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ucfg_mlme_get_sap_bcast_deauth_enabled(hdd_ctx->psoc,
+					       &is_sap_bcast_deauth_enabled);
 
 	hdd_enter();
 
+	hdd_debug("sap_bcast_deauth_enabled %d", is_sap_bcast_deauth_enabled);
 	/* Ignore request to deauth bcmc station */
-	if (param->peerMacAddr.bytes[0] & 0x1)
-		return qdf_status;
+	if (!is_sap_bcast_deauth_enabled)
+		if (param->peerMacAddr.bytes[0] & 0x1)
+			return qdf_status;
 
 	qdf_status =
 		wlansap_deauth_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),

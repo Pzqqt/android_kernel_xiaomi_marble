@@ -104,6 +104,26 @@ QDF_STATUS lim_del_bss(struct mac_context *, tpDphHashNode, uint16_t, struct pe_
 QDF_STATUS lim_del_sta(struct mac_context *, tpDphHashNode, bool, struct pe_session *);
 QDF_STATUS lim_add_sta_self(struct mac_context *, uint8_t, struct pe_session *);
 
+/**
+ *lim_del_peer_info() - remove all peer information from host driver and fw
+ * @mac:    Pointer to Global MAC structure
+ * @pe_session: Pointer to PE Session entry
+ *
+ * @Return: QDF_STATUS
+ */
+QDF_STATUS lim_del_peer_info(struct mac_context *mac,
+			     struct pe_session *pe_session);
+
+/**
+ * lim_del_sta_all() - Cleanup all peers associated with VDEV
+ * @mac:    Pointer to Global MAC structure
+ * @pe_session: Pointer to PE Session entry
+ *
+ * @Return: QDF Status of operation.
+ */
+QDF_STATUS lim_del_sta_all(struct mac_context *mac,
+			   struct pe_session *pe_session);
+
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_restore_pre_reassoc_state(struct mac_context *,
 				   tSirResultCodes, uint16_t, struct pe_session *);
@@ -226,6 +246,10 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac,
  * Return: none
  */
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac,
+					  struct pe_session *pe_session);
+
+void lim_prepare_and_send_del_all_sta_cnf(struct mac_context *mac,
+					  tSirResultCodes status_code,
 					  struct pe_session *pe_session);
 
 void lim_prepare_and_send_del_sta_cnf(struct mac_context *mac,

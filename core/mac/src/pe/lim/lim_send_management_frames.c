@@ -2896,6 +2896,7 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 	tLimMlmDeauthReq *deauth_req;
 	tLimMlmDeauthCnf deauth_cnf;
 	struct pe_session *session_entry;
+	QDF_STATUS qdf_status;
 
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (deauth_req) {
@@ -2912,12 +2913,21 @@ QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 				eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
+		if (qdf_is_macaddr_broadcast(&deauth_req->peer_macaddr) &&
+		    mac_ctx->mlme_cfg->sap_cfg.is_sap_bcast_deauth_enabled) {
+			qdf_status = lim_del_sta_all(mac_ctx, session_entry);
+			qdf_mem_free(deauth_req);
+			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq =
+									 NULL;
+			return qdf_status;
+		}
 
 		sta_ds =
 			dph_lookup_hash_entry(mac_ctx,
 					      deauth_req->peer_macaddr.bytes,
 					      &aid,
-					      &session_entry->dph.dphHashTable);
+					      &session_entry->
+					      dph.dphHashTable);
 		if (!sta_ds) {
 			deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;

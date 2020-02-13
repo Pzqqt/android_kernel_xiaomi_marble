@@ -1649,6 +1649,43 @@ end:
 }
 
 /**
+ * lim_process_mlm_del_all_sta_rsp() - Process DEL STA response
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: The MsgQ header, which contains the response buffer
+ *
+ * This function is called to process a WMA_DEL_ALL_STA_RSP from
+ * WMA Upon receipt of this message from FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+lim_process_mlm_del_all_sta_rsp(struct vdev_mlme_obj *vdev_mlme,
+				struct peer_delete_all_response *rsp)
+{
+	struct pe_session *session_entry;
+	tSirResultCodes status_code = eSIR_SME_SUCCESS;
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t vdev_id;
+
+	vdev = vdev_mlme->vdev;
+	vdev_id = wlan_vdev_get_id(vdev);
+
+	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
+
+	session_entry = pe_find_session_by_vdev_id(mac_ctx,
+						   vdev_id);
+	if (!session_entry) {
+		pe_err("Session Doesn't exist: %d", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_prepare_and_send_del_all_sta_cnf(mac_ctx, status_code,
+					     session_entry);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_process_mlm_del_sta_rsp() - Process DEL STA response
  * @mac_ctx: Pointer to Global MAC structure
  * @msg: The MsgQ header, which contains the response buffer
