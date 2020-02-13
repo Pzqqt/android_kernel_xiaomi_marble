@@ -7541,15 +7541,25 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 	QDF_STATUS status;
 	struct set_arp_stats *arp_stats;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, cannot send per roam config",
 			 __func__);
 		return;
 	}
+
 	if (!wma_is_vdev_valid(req_buf->vdev_id)) {
 		WMA_LOGE("vdev id:%d is not active", req_buf->vdev_id);
 		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						    req_buf->vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+	if (!wma_is_vdev_started(vdev)) {
+		WMA_LOGD("vdev id:%d is not started", req_buf->vdev_id);
+		goto release_ref;
 	}
 
 	arp_stats = (struct set_arp_stats *)req_buf;
@@ -7557,6 +7567,9 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 					       arp_stats);
 	if (QDF_IS_STATUS_ERROR(status))
 		wma_err("failed to set arp stats to FW");
+
+release_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 }
 
 /**
