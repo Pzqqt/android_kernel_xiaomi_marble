@@ -65,14 +65,14 @@ static int _dsc_calc_ob_max_addr(struct sde_hw_dsc *hw_dsc, int num_ss)
 
 	if ((idx == DSC_0) || (idx == DSC_1)) {
 		if (num_ss == 1)
-			return 3759;
+			return 2399;
 		else if (num_ss == 2)
-			return 1879;
+			return 1199;
 	} else if ((idx == DSC_2) || (idx == DSC_3)) {
 		if (num_ss == 1)
-			return 1879;
+			return 1199;
 		else if (num_ss == 2)
-			return 939;
+			return 599;
 	}
 	return 0;
 }
@@ -126,7 +126,7 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 	struct sde_hw_blk_reg_map *dsc_c;
 	u32 idx;
 	u32 data = 0;
-	u32 slice_count_per_enc = 0;
+	u32 slice_count_per_enc;
 
 	if (!hw_dsc || !dsc)
 		return;
@@ -137,21 +137,21 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 	dsc_c = &hw_dsc->hw;
 	slice_count_per_enc = dsc->config.slice_count;
 
-	if (mode & DSC_MODE_SPLIT_PANEL) {
+	if (mode & DSC_MODE_SPLIT_PANEL)
 		data |= BIT(0);
-		slice_count_per_enc = dsc->config.slice_count >> 1;
-	}
+
 	if (mode & DSC_MODE_MULTIPLEX) {
+		slice_count_per_enc = dsc->config.slice_count >> 1;
 		data |= BIT(1);
-		data |= (slice_count_per_enc & 0x3) << 7;
 	}
 
+	data |= (slice_count_per_enc & 0x3) << 7;
 	SDE_REG_WRITE(dsc_c, DSC_CMN_MAIN_CNF, data);
 
 	data = (dsc->initial_lines & 0xff);
 	data |= ((mode & DSC_MODE_VIDEO) ? 1 : 0) << 9;
 	data |= (ich_reset_override ? 1 : 0) << 10;
-	data |= (_dsc_calc_ob_max_addr(hw_dsc, dsc->config.slice_count) << 18);
+	data |= (_dsc_calc_ob_max_addr(hw_dsc, slice_count_per_enc) << 18);
 
 	SDE_REG_WRITE(dsc_c, ENC_DF_CTRL + idx, data);
 

@@ -1663,15 +1663,15 @@ static void adjust_timing_by_ctrl_count(const struct dsi_display *display,
 		mode->timing.h_skew /= sublinks_count;
 		mode->pixel_clk_khz /= sublinks_count;
 	} else {
+		if (mode->priv_info->dsc_enabled)
+			mode->priv_info->dsc.config.pic_width =
+				mode->timing.h_active;
 		mode->timing.h_active /= display->ctrl_count;
 		mode->timing.h_front_porch /= display->ctrl_count;
 		mode->timing.h_sync_width /= display->ctrl_count;
 		mode->timing.h_back_porch /= display->ctrl_count;
 		mode->timing.h_skew /= display->ctrl_count;
 		mode->pixel_clk_khz /= display->ctrl_count;
-		if (mode->priv_info->dsc_enabled)
-			mode->priv_info->dsc.config.pic_width *=
-				display->ctrl_count;
 	}
 }
 
