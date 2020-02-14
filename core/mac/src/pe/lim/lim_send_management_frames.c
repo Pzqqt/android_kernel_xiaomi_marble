@@ -5011,6 +5011,11 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	} else if (!session->active_ba_64_session) {
 		session->active_ba_64_session = true;
 	}
+	if (frm.addba_param_set.buff_size > buff_size) {
+		pe_debug("buff size: %d larger than peer's capability: %d",
+			 frm.addba_param_set.buff_size, buff_size);
+		frm.addba_param_set.buff_size = buff_size;
+	}
 
 	/* Enable RX AMSDU only in HE mode if supported */
 	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
