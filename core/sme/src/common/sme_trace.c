@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,32 +176,32 @@ static void sme_trace_dump(void *mac_ctx, tp_qdf_trace_record record,
 {
 	switch (record->code) {
 	case TRACE_CODE_SME_COMMAND:
-		sme_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
-			rec_index, record->qtime, record->time, record->session,
-			"SME COMMAND:",
-			sme_trace_get_command_string(record->data),
-			record->data);
+		sme_nofl_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+			       rec_index, record->qtime, record->time,
+			       record->session, "SME COMMAND:",
+				sme_trace_get_command_string(record->data),
+				record->data);
 		break;
 	case TRACE_CODE_SME_TX_WMA_MSG:
-		sme_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
-			rec_index, record->qtime, record->time, record->session,
-			"TX WMA Msg:",
-			mac_trace_get_wma_msg_string((uint16_t)record->data),
-			record->data);
+		sme_nofl_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+			       rec_index, record->qtime, record->time,
+			       record->session, "TX WMA Msg:",
+			       mac_trace_get_wma_msg_string((uint16_t)record->data),
+			       record->data);
 		break;
 	case TRACE_CODE_SME_RX_WMA_MSG:
-		sme_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
-			rec_index, record->qtime, record->time, record->session,
-			"RX WMA Msg:",
-			mac_trace_get_sme_msg_string((uint16_t)record->data),
-			record->data);
+		sme_nofl_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+			       rec_index, record->qtime, record->time, record->session,
+			       "RX WMA Msg:",
+			       mac_trace_get_sme_msg_string((uint16_t)record->data),
+			       record->data);
 		break;
 	default:
-		sme_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
-			rec_index, record->qtime, record->time, record->session,
-			"RX HDD MSG:",
-			sme_trace_get_rx_msg_string(record->code),
-			record->data);
+		sme_nofl_debug("%04d %012llu %s S%d %-14s %-30s(0x%x)",
+			       rec_index, record->qtime, record->time, record->session,
+			       "RX HDD MSG:",
+			       sme_trace_get_rx_msg_string(record->code),
+			       record->data);
 		break;
 	}
 }
