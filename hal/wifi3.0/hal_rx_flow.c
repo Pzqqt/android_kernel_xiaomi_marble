@@ -198,6 +198,8 @@ hal_rx_flow_setup_fse(struct hal_rx_fst *fst, uint32_t table_offset,
 
 	return fse;
 }
+
+qdf_export_symbol(hal_rx_flow_setup_fse);
 #elif defined(WLAN_SUPPORT_RX_FISA)
 /**
  * hal_rx_flow_setup_fse() - Setup a flow search entry in HW FST
@@ -310,8 +312,9 @@ hal_rx_flow_setup_fse(struct hal_rx_fst *fst, uint32_t table_offset,
 
 	return fse;
 }
-#endif /* WLAN_SUPPORT_RX_FISA */
+
 qdf_export_symbol(hal_rx_flow_setup_fse);
+#endif /* WLAN_SUPPORT_RX_FISA */
 
 /**
  * hal_rx_flow_delete_entry() - Delete a flow from the Rx Flow Search Table
