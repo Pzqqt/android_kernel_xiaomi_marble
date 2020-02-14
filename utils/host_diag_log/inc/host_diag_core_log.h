@@ -285,10 +285,9 @@ struct host_log_cold_boot_cal_data_type {
 	uint8_t cb_cal_data[HOST_LOG_MAX_COLD_BOOT_CAL_DATA_SIZE];
 };
 
-#define WLAN_MAX_ROAM_CANDIDATE_AP      8
+#define WLAN_MAX_ROAM_CANDIDATE_AP      9
 #define WLAN_MAX_ROAM_SCAN_CHAN         38
 #define WLAN_MAX_SSID_SIZE              32
-#define WLAN_MAC_ADDR_SIZE              6
 
 /**
  * host_log_wlan_mgmt_tx_rx_info: To capture TX/RX mgmt frames' payload
@@ -324,8 +323,8 @@ struct host_log_wlan_mgmt_tx_rx_info {
 	uint8_t operating_freq;
 	uint8_t ssid_len;
 	char ssid[WLAN_MAX_SSID_SIZE];
-	uint8_t self_mac_addr[WLAN_MAC_ADDR_SIZE];
-	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t self_mac_addr[QDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint16_t mac_failure_reason;
 	uint16_t mgmt_status_code;
 	uint8_t auth_algo;
@@ -429,7 +428,7 @@ struct host_log_wlan_roam_candidate_info {
 	uint8_t version;
 	uint32_t timestamp;
 	uint8_t type;
-	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint16_t freq;
 	uint32_t cu_load;
 	uint32_t cu_score;
@@ -499,7 +498,7 @@ struct host_log_wlan_roam_result_info {
  * request
  */
 struct wlan_rrm_beacon_report {
-	uint8_t req_bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t req_bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t req_ssid[WLAN_MAX_SSID_SIZE];
 	bool is_wildcard_bssid;
 	uint8_t req_reg_class;
@@ -543,7 +542,7 @@ struct host_log_wlan_rrm_tx_rx_info {
 	uint8_t action_category;
 	uint8_t rrm_action_code;
 	uint8_t radio_measurement_type;
-	uint8_t bssid[WLAN_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t req_num_freq;
 	uint16_t req_freq[WLAN_MAX_ROAM_SCAN_CHAN];
 	uint8_t fail_reason_code;
