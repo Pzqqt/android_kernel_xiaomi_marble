@@ -120,3 +120,49 @@ void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool enable)
 {
 	return ftm_time_sync_set_enable(psoc, enable);
 }
+
+void ucfg_ftm_time_sync_update_sta_connect_state(
+					struct wlan_objmgr_vdev *vdev,
+					enum ftm_time_sync_sta_state sta_state)
+{
+	struct wlan_objmgr_psoc *psoc;
+	enum ftm_time_sync_role role;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		ftm_time_sync_err("Failed to get psoc");
+		return;
+	}
+
+	role = ftm_time_sync_get_role(psoc);
+	if (role == FTM_TIMESYNC_SLAVE_ROLE) {
+		if (sta_state == FTM_TIME_SYNC_STA_CONNECTED)
+			ftm_time_sync_send_trigger(vdev);
+		else
+			ftm_time_sync_stop(vdev);
+	}
+}
+
+void ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
+					 enum ftm_time_sync_bss_state ap_state)
+{
+	struct wlan_objmgr_psoc *psoc;
+	enum ftm_time_sync_role role;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		ftm_time_sync_err("Failed to get psoc");
+		return;
+	}
+
+	if (!ftm_time_sync_is_enable(psoc))
+		return;
+
+	role = ftm_time_sync_get_role(psoc);
+	if (role == FTM_TIMESYNC_MASTER_ROLE) {
+		if (ap_state == FTM_TIME_SYNC_BSS_STARTED)
+			ftm_time_sync_send_trigger(vdev);
+		else
+			ftm_time_sync_stop(vdev);
+	}
+}

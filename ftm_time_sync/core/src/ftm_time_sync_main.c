@@ -325,3 +325,50 @@ ftm_time_sync_psoc_destroy_notification(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_free(psoc_priv);
 	return status;
 }
+
+QDF_STATUS ftm_time_sync_send_trigger(struct wlan_objmgr_vdev *vdev)
+{
+	struct ftm_time_sync_vdev_priv *vdev_priv;
+	struct wlan_objmgr_psoc *psoc;
+	enum ftm_time_sync_mode mode;
+	uint8_t vdev_id;
+	QDF_STATUS status;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		ftm_time_sync_err("Failed to get psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		ftm_time_sync_err("Failed to get ftm time sync vdev_priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev_priv->vdev);
+	mode = ftm_time_sync_get_mode(psoc);
+
+	status = vdev_priv->tx_ops.ftm_time_sync_send_trigger(psoc,
+							      vdev_id, mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		ftm_time_sync_err("send_ftm_time_sync_trigger failed %d",
+				  status);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev)
+{
+	struct ftm_time_sync_vdev_priv *vdev_priv;
+
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		ftm_time_sync_err("Failed to get ftm time sync vdev_priv");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_delayed_work_stop_sync(&vdev_priv->ftm_time_sync_work);
+
+	return QDF_STATUS_SUCCESS;
+}

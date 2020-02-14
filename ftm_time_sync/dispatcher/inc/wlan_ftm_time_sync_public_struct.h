@@ -50,6 +50,25 @@ enum ftm_time_sync_role {
 };
 
 /**
+ * enum ftm_time_sync_sta_state - ftm time sync sta states
+ * @FTM_TIME_SYNC_STA_CONNECTED: STA connected to AP
+ * @FTM_TIME_SYNC_STA_DISCONNECTED: STA disconnected
+ */
+enum ftm_time_sync_sta_state {
+	FTM_TIME_SYNC_STA_CONNECTED,
+	FTM_TIME_SYNC_STA_DISCONNECTED,
+};
+
+/**
+ * enum ftm_time_sync_bss_state - ftm time sync bss states
+ * @FTM_TIME_SYNC_BSS_STARTED: BSS started
+ * @FTM_TIME_SYNC_BSS_STOPPED: BSS stopped
+ */
+enum ftm_time_sync_bss_state {
+	FTM_TIME_SYNC_BSS_STARTED,
+	FTM_TIME_SYNC_BSS_STOPPED,
+};
+/**
  * struct wlan_ftm_time_sync_tx_ops - structure of tx operation function
  *				      pointers for ftm time_sync component
  * @ftm_time_sync_send_qtime: send qtime wmi cmd to FW

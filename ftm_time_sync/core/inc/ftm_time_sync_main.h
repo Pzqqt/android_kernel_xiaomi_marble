@@ -139,4 +139,25 @@ enum ftm_time_sync_mode ftm_time_sync_get_mode(struct wlan_objmgr_psoc *psoc);
  * Return: enum ftm_time_sync_role
  */
 enum ftm_time_sync_role ftm_time_sync_get_role(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ftm_time_sync_send_trigger() - Handler for sending trigger cmd to FW
+ * @vdev: vdev for which FTM time_sync trigger cmd to be send
+ *
+ * This function sends the ftm trigger cmd to target.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ftm_time_sync_send_trigger(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ftm_time_sync_stop() - Handler for stopping the FTM time sync
+ * @vdev: vdev for which FTM time_sync feature to be stopped
+ *
+ * This function stops the ftm time sync functionality.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev);
+
 #endif /* end of _FTM_TIME_SYNC_MAIN_H_ */
