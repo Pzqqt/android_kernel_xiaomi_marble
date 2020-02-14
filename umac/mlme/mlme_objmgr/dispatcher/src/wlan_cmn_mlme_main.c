@@ -158,7 +158,7 @@ QDF_STATUS mlme_vdev_ops_multivdev_restart_fw_cmd_send(
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (glbl_ops && glbl_ops->mlme_multivdev_restart_fw_send)
-		glbl_ops->mlme_multivdev_restart_fw_send(pdev);
+		ret = glbl_ops->mlme_multivdev_restart_fw_send(pdev);
 
 	return ret;
 }
