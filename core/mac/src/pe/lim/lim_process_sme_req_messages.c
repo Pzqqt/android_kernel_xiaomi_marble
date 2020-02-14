@@ -3918,9 +3918,9 @@ static void __lim_process_sme_register_mgmt_frame_req(struct mac_context *mac_ct
 	struct mgmt_frm_reg_info *next = NULL;
 	bool match = false;
 
-	pe_debug("registerFrame %d, frameType %d, matchLen %d",
-				sme_req->registerFrame, sme_req->frameType,
-				sme_req->matchLen);
+	pe_nofl_debug("Register Frame: register %d, type %d, match length %d",
+		      sme_req->registerFrame, sme_req->frameType,
+		      sme_req->matchLen);
 	/* First check whether entry exists already */
 	qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
@@ -4541,10 +4541,8 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 	bool bufConsumed = true;
 	uint32_t *msg_buf = pMsg->bodyptr;
 
-	pe_debug("LIM Received SME Message %s(%d) Global LimSmeState:%s(%d) Global LimMlmState: %s(%d)",
-		       lim_msg_str(pMsg->type), pMsg->type,
-		       lim_sme_state_str(mac->lim.gLimSmeState), mac->lim.gLimSmeState,
-		       lim_mlm_state_str(mac->lim.gLimMlmState), mac->lim.gLimMlmState);
+	pe_nofl_debug("LIM handle SME Msg %s(%d)",
+		      lim_msg_str(pMsg->type), pMsg->type);
 
 	/* If no insert NOA required then execute the code below */
 

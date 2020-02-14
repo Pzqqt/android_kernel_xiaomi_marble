@@ -6820,10 +6820,6 @@ static void
 sme_restore_default_roaming_params(struct mac_context *mac,
 				   tCsrNeighborRoamControlInfo *roam_info)
 {
-	sme_debug("%s default roam scoring",
-		  mac->mlme_cfg->scoring.enable_scoring_for_roam ?
-		  "Enable" : "Disable");
-
 	roam_info->cfgParams.enable_scoring_for_roam =
 			mac->mlme_cfg->scoring.enable_scoring_for_roam;
 	roam_info->cfgParams.emptyScanRefreshPeriod =
@@ -6884,20 +6880,16 @@ QDF_STATUS sme_roam_control_restore_default_config(mac_handle_t mac_handle,
 		goto out;
 	}
 
-	sme_debug("Cleanup roam scan control");
 	mac->roam.configParam.nRoamScanControl = false;
 
 	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
 
-	sme_debug("Cleanup Preferred frequency list");
 	chan_info = &neighbor_roam_info->cfgParams.pref_chan_info;
 	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
 
-	sme_debug("Cleanup specific frequency list");
 	chan_info = &neighbor_roam_info->cfgParams.specific_chan_info;
 	csr_flush_cfg_bg_scan_roam_channel_list(chan_info);
 
-	sme_debug("Cleanup roam control config related lfr params");
 	mlme_reinit_control_config_lfr_params(mac->psoc, &mac->mlme_cfg->lfr);
 
 	sme_restore_default_roaming_params(mac, neighbor_roam_info);

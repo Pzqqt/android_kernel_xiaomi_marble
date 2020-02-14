@@ -867,8 +867,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
 
-	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
-
 	if (!mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		return;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -453,9 +453,6 @@ void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
 					      tDblLinkList *llist)
 {
 	tpCsrNeighborRoamBSSInfo result = NULL;
-
-	sme_debug("Emptying the BSS list. Current count: %d",
-		  csr_ll_count(llist));
 
 	/*
 	 * Pick up the head, remove and free the node till

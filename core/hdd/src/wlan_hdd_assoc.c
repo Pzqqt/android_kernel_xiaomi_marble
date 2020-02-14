@@ -1643,41 +1643,28 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter,
  */
 static void hdd_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
 {
-	uint32_t *cap_info;
+	uint32_t *ht_cap_info;
+	uint32_t *vht_cap_info;
+	struct hdd_connection_info *conn_info;
 
-	hdd_debug("WIFI DATA LOGGER");
-	hdd_debug("chan_freq: %d",
-		  hdd_sta_ctx->conn_info.chan_freq);
-	hdd_debug("dot11mode: %d",
-		 hdd_sta_ctx->conn_info.dot11mode);
-	hdd_debug("AKM: %d",
-		  hdd_sta_ctx->conn_info.last_auth_type);
-	hdd_debug("ssid: %.*s",
-		 hdd_sta_ctx->conn_info.last_ssid.SSID.length,
-		 hdd_sta_ctx->conn_info.last_ssid.SSID.ssId);
-	hdd_debug("roam count: %d",
-		 hdd_sta_ctx->conn_info.roam_count);
-	hdd_debug("ant_info: %d",
-		 hdd_sta_ctx->conn_info.txrate.nss);
-	hdd_debug("datarate legacy %d",
-		 hdd_sta_ctx->conn_info.txrate.legacy);
-	hdd_debug("datarate mcs: %d",
-		 hdd_sta_ctx->conn_info.txrate.mcs);
-	if (hdd_sta_ctx->conn_info.conn_flag.ht_present) {
-		cap_info = (uint32_t *)&hdd_sta_ctx->conn_info.ht_caps;
-		hdd_debug("ht caps: %x", *cap_info);
-	}
-	if (hdd_sta_ctx->conn_info.conn_flag.vht_present) {
-		cap_info = (uint32_t *)&hdd_sta_ctx->conn_info.vht_caps;
-		hdd_debug("vht caps: %x", *cap_info);
-	}
-	if (hdd_sta_ctx->conn_info.conn_flag.hs20_present)
-		hdd_debug("hs20 info: %x",
-			 hdd_sta_ctx->conn_info.hs20vendor_ie.release_num);
-	hdd_debug("signal: %d",
-		 hdd_sta_ctx->conn_info.signal);
-	hdd_debug("noise: %d",
-		 hdd_sta_ctx->conn_info.noise);
+	conn_info = &hdd_sta_ctx->conn_info;
+
+	hdd_nofl_debug("*********** WIFI DATA LOGGER **************");
+	hdd_nofl_debug("freq: %d dot11mode %d AKM %d ssid: \"%.*s\" ,roam_count %d nss %d legacy %d mcs %d signal %d noise: %d",
+		       conn_info->chan_freq, conn_info->dot11mode,
+		       conn_info->last_auth_type,
+		       conn_info->last_ssid.SSID.length,
+		       conn_info->last_ssid.SSID.ssId, conn_info->roam_count,
+		       conn_info->txrate.nss, conn_info->txrate.legacy,
+		       conn_info->txrate.mcs, conn_info->signal,
+		       conn_info->noise);
+	ht_cap_info = (uint32_t *)&conn_info->ht_caps;
+	vht_cap_info = (uint32_t *)&conn_info->vht_caps;
+	hdd_nofl_debug("HT 0x%x VHT 0x%x ht20 info 0x%x",
+		       conn_info->conn_flag.ht_present ? *ht_cap_info : 0,
+		       conn_info->conn_flag.vht_present ? *vht_cap_info : 0,
+		       conn_info->conn_flag.hs20_present ?
+		       conn_info->hs20vendor_ie.release_num : 0);
 }
 
 /**

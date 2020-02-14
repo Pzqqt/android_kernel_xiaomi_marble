@@ -4211,31 +4211,29 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 
 	hdd_enter_dev(dev);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
-		goto out;
+		return;
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
-		goto out;
+		return;
 
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
-		goto out;
+		return;
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_debug("%s: Driver module is closed", __func__);
-		goto out;
+		return;
 	}
 
 	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
 	if (!mc_list_request)
-		goto out;
+		return;
 
 	/* Delete already configured multicast address list */
-	if (adapter->mc_addr_list.mc_cnt > 0) {
-		hdd_debug("clear previously configured MC address list");
+	if (adapter->mc_addr_list.mc_cnt > 0)
 		hdd_disable_and_flush_mc_addr_list(adapter,
 			pmo_mc_list_change_notify);
-	}
 
 	if (dev->flags & IFF_ALLMULTI) {
 		hdd_debug("allow all multicast frames");
@@ -4252,8 +4250,6 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			goto free_req;
 		}
 		netdev_for_each_mc_addr(ha, dev) {
-			hdd_debug("ha_addr[%d] "QDF_MAC_ADDR_STR,
-				i, QDF_MAC_ADDR_ARRAY(ha->addr));
 			if (i == mc_count)
 				break;
 			memset(&(mc_list_request->mc_addr[i].bytes),
@@ -4282,9 +4278,6 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 
 free_req:
 	qdf_mem_free(mc_list_request);
-
-out:
-	hdd_exit();
 }
 
 /**

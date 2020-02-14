@@ -610,8 +610,6 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
 	 * clear all the whitelist parameters and remaining
 	 * needs to be retained across connections.
 	 */
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		FL("Roaming parameters are reset"));
 	roam_params = &mac_ctx->roam.configParam.roam_params;
 	roam_params->num_ssid_allowed_list = 0;
 	qdf_mem_zero(&roam_params->ssid_allowed_list,
@@ -624,7 +622,6 @@ static void csr_roam_restore_default_config(tpAniSirGlobal mac_ctx,
 {
 	struct roam_triggers triggers;
 
-	sme_debug("Disable roam control config done through SET");
 	sme_set_roam_config_enable(MAC_HANDLE(mac_ctx), vdev_id, 0);
 
 	triggers.vdev_id = vdev_id;
