@@ -287,8 +287,9 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
-	return scnprintf(tbuf, tbuf_sz, "[%.6s][0x%llx]%s",
-			 current_process_name(), ts, time_buf);
+	return scnprintf(tbuf, tbuf_sz, "[%.6s][%llu]%s",
+			 current_process_name(), (unsigned long long)ts,
+			 time_buf);
 }
 
 #ifdef WLAN_MAX_LOGS_PER_SEC
