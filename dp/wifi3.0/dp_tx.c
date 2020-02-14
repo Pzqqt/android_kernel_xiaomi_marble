@@ -4290,17 +4290,18 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 	num_ext_desc = wlan_cfg_get_num_tx_ext_desc(soc->wlan_cfg_ctx);
 
-	if (num_pool > MAX_TXDESC_POOLS)
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "%s Tx Desc Alloc num_pool = %d, descs = %d",
+		  __func__, num_pool, num_desc);
+
+	if ((num_pool > MAX_TXDESC_POOLS) ||
+	    (num_desc > WLAN_CFG_NUM_TX_DESC_MAX))
 		goto fail;
 
 	if (dp_tx_alloc_static_pools(soc, num_pool, num_desc))
 		goto fail;
 
 	dp_tx_flow_control_init(soc);
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s Tx Desc Alloc num_pool = %d, descs = %d",
-			__func__, num_pool, num_desc);
 
 	/* Allocate extension tx descriptor pools */
 	for (i = 0; i < num_pool; i++) {
