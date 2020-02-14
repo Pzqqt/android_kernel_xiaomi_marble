@@ -71,6 +71,7 @@
 #include <wlan_crypto_global_api.h>
 #include "wlan_blm_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
+#include "ftm_time_sync_ucfg_api.h"
 
 #include <ol_defines.h>
 
@@ -1669,6 +1670,32 @@ static void hdd_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
 }
 
 /**
+ * hdd_ftm_time_sync_sta_state_notify() - notify FTM TIME SYNC sta state change
+ * @adapter: pointer to adapter
+ * @state: enum ftm_time_sync_sta_state
+ *
+ * This function is called by hdd connect and disconnect handler and notifies
+ * the FTM TIME SYNC component about the sta state.
+ *
+ * Return: None
+ */
+static void
+hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
+				   enum ftm_time_sync_sta_state state)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(adapter->vdev);
+	if (!psoc)
+		return;
+
+	if (!ucfg_is_ftm_time_sync_enable(psoc))
+		return;
+
+	ucfg_ftm_time_sync_update_sta_connect_state(adapter->vdev, state);
+}
+
+/**
  * hdd_dis_connect_handler() - disconnect event handler
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
@@ -1793,11 +1820,15 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		ucfg_p2p_status_disconnect(adapter->vdev);
 	}
 
-	/* Inform BLM about the disconnection with the AP */
-	if (adapter->device_mode == QDF_STA_MODE)
+	if (adapter->device_mode == QDF_STA_MODE) {
+		/* Inform BLM about the disconnection with the AP */
 		ucfg_blm_update_bssid_connect_params(hdd_ctx->pdev,
 						     sta_ctx->conn_info.bssid,
 						     BLM_AP_DISCONNECTED);
+		/* Inform FTM TIME SYNC about the disconnection with the AP */
+		hdd_ftm_time_sync_sta_state_notify(
+				adapter, FTM_TIME_SYNC_STA_DISCONNECTED);
+	}
 
 	hdd_wmm_adapter_clear(adapter);
 	mac_handle = hdd_ctx->mac_handle;
@@ -3405,10 +3436,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
 			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 #endif
-		if (adapter->device_mode == QDF_STA_MODE)
+		if (adapter->device_mode == QDF_STA_MODE) {
 			ucfg_blm_update_bssid_connect_params(hdd_ctx->pdev,
 							     roam_info->bssid,
 							     BLM_AP_CONNECTED);
+
+			/* Inform FTM TIME SYNC about the connection with AP */
+			hdd_ftm_time_sync_sta_state_notify(
+					adapter, FTM_TIME_SYNC_STA_CONNECTED);
+		}
 
 		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		hdd_debug("check for SAP restart");

@@ -25,6 +25,7 @@
 #include <qdf_status.h>
 #include <qdf_types.h>
 #include "ftm_time_sync_objmgr.h"
+#include "wlan_ftm_time_sync_public_struct.h"
 
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 
@@ -68,6 +69,33 @@ bool ucfg_is_ftm_time_sync_enable(struct wlan_objmgr_psoc *psoc);
  * Return: None
  */
 void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
+ * ucfg_ftm_time_sync_update_sta_connect_state() - Handler for STA state change
+ * @vdev: STA vdev
+ * @state: connected/disconnected state
+ *
+ * This function triggers the FTM time sync feature in case of connection and
+ * stops the ftm sync feature in case of disconnection.
+ *
+ * Return: None
+ */
+void
+ucfg_ftm_time_sync_update_sta_connect_state(struct wlan_objmgr_vdev *vdev,
+					    enum ftm_time_sync_sta_state state);
+
+/**
+ * ucfg_ftm_time_sync_update_bss_state() - Handler to notify bss start/stop
+ * @vdev: SAP vdev
+ * @ap_state: BSS start/stop state
+ *
+ * This function triggers the FTM time sync feature in case of bss start and
+ * stops the ftm sync feature in case of bss stop.
+ *
+ * Return: None.
+ */
+void ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
+					 enum ftm_time_sync_bss_state ap_state);
 #else
 
 static inline
@@ -89,6 +117,18 @@ bool ucfg_is_ftm_time_sync_enable(struct wlan_objmgr_psoc *psoc)
 
 static inline
 void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value)
+{
+}
+
+static inline void
+ucfg_ftm_time_sync_update_sta_connect_state(struct wlan_objmgr_vdev *vdev,
+					    enum ftm_time_sync_sta_state state)
+{
+}
+
+static inline void
+ucfg_ftm_time_sync_update_bss_state(struct wlan_objmgr_vdev *vdev,
+				    enum ftm_time_sync_bss_state ap_state)
 {
 }
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
