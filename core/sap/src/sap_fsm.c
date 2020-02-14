@@ -2483,8 +2483,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		 * Transition from SAP_STARTING to SAP_STARTED
 		 * (both without substates)
 		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("from state chan_freq = %d %s => %s ch_width %d"),
+		sap_debug("Chan %d %s => %s ch_width %d",
 			  sap_ctx->chan_freq, "SAP_STARTING", "SAP_STARTED",
 			  sap_ctx->ch_params.ch_width);
 		sap_ctx->fsm_state = SAP_STARTED;
@@ -2494,11 +2493,6 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_SUCCESS);
 		sap_chan_freq = sap_ctx->chan_freq;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("ap_ctx->ch_params.ch_width %d, channel %d"),
-			     sap_ctx->ch_params.ch_width,
-			     wlan_reg_get_channel_state_for_freq(
-					mac_ctx->pdev, sap_chan_freq));
 		band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
 		if (sap_ctx->ch_params.center_freq_seg1)
 			ch_cfreq1 = wlan_reg_chan_band_to_freq(
@@ -2753,9 +2747,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, struct sap_sm_event *sap_event)
 	}
 	mac_handle = MAC_HANDLE(mac_ctx);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  FL("sap_ctx=%pK, state_var=%d, msg=0x%x"),
-		  sap_ctx, state_var, msg);
+	sap_debug("state=%d handle event=%d", state_var, msg);
 
 	switch (state_var) {
 	case SAP_INIT:

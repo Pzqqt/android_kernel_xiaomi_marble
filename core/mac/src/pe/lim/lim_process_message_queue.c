@@ -827,7 +827,6 @@ static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
 					cds_pkt_t *rx_pkt)
 {
 	rx_pkt->pkt_meta.frequency = scan_entry->channel.chan_freq;
-	pe_debug("rx pkt meta freq %d", rx_pkt->pkt_meta.frequency);
 	rx_pkt->pkt_meta.mpdu_hdr_len = sizeof(struct ieee80211_frame);
 	rx_pkt->pkt_meta.mpdu_len = scan_entry->raw_frame.len;
 	rx_pkt->pkt_meta.mpdu_data_len = rx_pkt->pkt_meta.mpdu_len -

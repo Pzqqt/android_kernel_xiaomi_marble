@@ -836,18 +836,13 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hdd_debug("chan_freq:%d width:%d sec_ch_offset:%d seg0:%d seg1:%d",
-		chan_change.chan_freq, chan_change.chan_params.ch_width,
-		chan_change.chan_params.sec_ch_offset,
-		chan_change.chan_params.center_freq_seg0,
-		chan_change.chan_params.center_freq_seg1);
-
 	freq = chan_change.chan_freq;
 
 	chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
 
 	if (!chan) {
-		hdd_err("Invalid input frequency for channel conversion");
+		hdd_err("Invalid input frequency %d for channel conversion",
+			freq);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2461,7 +2456,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
-		hdd_debug("Received eSAP_CHANNEL_CHANGE_EVENT event");
 		if (hostapd_state->bss_state != BSS_STOP) {
 			/* Allow suspend for old channel */
 			hdd_hostapd_channel_allow_suspend(adapter,
@@ -2514,7 +2508,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		phy_mode = wlan_sap_get_phymode(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-		hdd_debug("phy_mode:%d", phy_mode);
 
 		switch (phy_mode) {
 		case eCSR_DOT11_MODE_11n:

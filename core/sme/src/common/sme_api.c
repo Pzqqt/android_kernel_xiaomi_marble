@@ -214,12 +214,14 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 		csr_saved_scan_cmd_free_fields(mac, session);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
-		sme_info("Continue channel switch for STA");
+		sme_info("Continue channel switch for STA on vdev %d",
+			 session_id);
 		csr_sta_continue_csa(mac, session_id);
 	}
 
 	if (reason == POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH) {
-		sme_info("Continue channel switch for SAP");
+		sme_info("Continue channel switch for SAP on vdev %d",
+			 session_id);
 		csr_csa_restart(mac, session_id);
 	}
 	if (reason == POLICY_MGR_UPDATE_REASON_LFR2_ROAM)
@@ -1256,9 +1258,6 @@ static QDF_STATUS dfs_msg_processor(struct mac_context *mac,
 		session_id = csa_ie_tx_complete_rsp->sessionId;
 		roam_status = eCSR_ROAM_DFS_CHAN_SW_NOTIFY;
 		roam_result = eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND session=%d",
-			  session_id);
 		break;
 	}
 	case eWNI_SME_DFS_CAC_COMPLETE:

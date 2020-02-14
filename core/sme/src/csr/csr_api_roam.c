@@ -19993,8 +19993,6 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 	qdf_mem_copy(&msg->extended_rateset, &param.extendedRateSet,
 		     sizeof(msg->extended_rateset));
 
-	sme_debug("target_chan_freq %d ch_width %d dot11mode %d",
-		  msg->target_chan_freq, msg->ch_width, msg->dot11mode);
 	status = umac_send_mb_message_to_mac(msg);
 
 	return status;

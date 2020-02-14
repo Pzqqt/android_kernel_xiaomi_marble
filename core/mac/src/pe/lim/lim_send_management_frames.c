@@ -3972,7 +3972,6 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	ch_spacing = wlan_reg_dmn_get_chanwidth_from_opclass(
 			mac_ctx->scan.countryCodeCurrent, new_channel,
 			new_op_class);
-	pe_debug("wrapper: ch_spacing %hu", ch_spacing);
 
 	if ((ch_spacing == 80) || (ch_spacing == 160)) {
 		wide_bw_ie = &session_entry->gLimWiderBWChannelSwitch;
@@ -4041,12 +4040,12 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	    session_entry->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	pe_debug("Send Ext channel Switch to :"QDF_MAC_ADDR_STR" with swcount %d, swmode %d , newchannel %d newops %d",
-		QDF_MAC_ADDR_ARRAY(mac_hdr->da),
-		frm.ext_chan_switch_ann_action.switch_count,
-		frm.ext_chan_switch_ann_action.switch_mode,
-		frm.ext_chan_switch_ann_action.new_channel,
-			 frm.ext_chan_switch_ann_action.op_class);
+	pe_debug("ECSA frame to :"QDF_MAC_ADDR_STR" count %d mode %d chan %d op class %d",
+		 QDF_MAC_ADDR_ARRAY(mac_hdr->da),
+		 frm.ext_chan_switch_ann_action.switch_count,
+		 frm.ext_chan_switch_ann_action.switch_mode,
+		 frm.ext_chan_switch_ann_action.new_channel,
+		 frm.ext_chan_switch_ann_action.op_class);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			session_entry->peSessionId, mac_hdr->fc.subType));

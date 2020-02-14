@@ -79,9 +79,6 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		return;
 	}
 
-	pe_debug("Channel switch Mode: %d",
-		       pe_session->gLimChannelSwitch.switchMode);
-
 	mac->lim.lim_timers.gLimChannelSwitchTimer.sessionId = sessionId;
 	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,

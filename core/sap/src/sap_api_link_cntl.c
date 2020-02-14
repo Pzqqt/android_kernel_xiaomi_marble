@@ -404,9 +404,9 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	 * Channel change is successful. If the new channel is a DFS channel,
 	 * then we will to perform channel availability check for 60 seconds
 	 */
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-		  FL("sapdfs: changing target channel freq to [%d] state %d"),
-		  mac_ctx->sap.SapDfsInfo.target_chan_freq, sap_ctx->fsm_state);
+	sap_nofl_debug("sapdfs: SAP CSA: freq to [%d] state %d",
+		       mac_ctx->sap.SapDfsInfo.target_chan_freq,
+		       sap_ctx->fsm_state);
 	target_chan_freq = mac_ctx->sap.SapDfsInfo.target_chan_freq;
 
 	/* If SAP is not in starting or started state don't proceed further */
@@ -437,8 +437,6 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	sap_ctx->chan_freq = target_chan_freq;
 	/* check if currently selected channel is a DFS channel */
 	if (is_ch_dfs && sap_ctx->pre_cac_complete) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED, FL(
-		    "sapdfs: => SAP_STARTING, on pre cac"));
 		/* Start beaconing on the new pre cac channel */
 		wlansap_start_beacon_req(sap_ctx);
 		sap_ctx->fsm_state = SAP_STARTING;
@@ -455,20 +453,12 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 					mac_ctx->psoc,
 					sap_ctx->sessionId)) {
 			sap_ctx->fsm_state = SAP_INIT;
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				  "%s: %d: sapdfs: => SAP_INIT with ignore cac false on sapctx[%pK]",
-				  __func__, __LINE__, sap_ctx);
 			/* DFS Channel */
 			sap_event.event = eSAP_DFS_CHANNEL_CAC_START;
 			sap_event.params = csr_roam_info;
 			sap_event.u1 = 0;
 			sap_event.u2 = 0;
 		} else {
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				  QDF_TRACE_LEVEL_INFO_MED,
-				  "%s: %d: sapdfs: SAP_STARTING with ignore cac true on sapctx[%pK]",
-				  __func__, __LINE__, sap_ctx);
-
 			/* Start beaconing on the new channel */
 			wlansap_start_beacon_req(sap_ctx);
 			sap_ctx->fsm_state = SAP_STARTING;
@@ -479,9 +469,6 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 			sap_event.u2 = eCSR_ROAM_RESULT_INFRA_STARTED;
 		}
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  "%s: %d: sapdfs: => SAP_STARTING on sapctx[%pK]",
-			  __func__, __LINE__, sap_ctx);
 		/* non-DFS channel */
 		sap_ctx->fsm_state = SAP_STARTING;
 		mac_ctx->sap.SapDfsInfo.sap_radar_found_status = false;

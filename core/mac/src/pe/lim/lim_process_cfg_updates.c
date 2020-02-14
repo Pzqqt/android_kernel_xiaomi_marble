@@ -178,7 +178,6 @@ void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_sess
 		   as a part of join request for a BT-AMP station */
 
 		if (pe_session->statypeForBss == STA_ENTRY_SELF) {
-			pe_debug("Initializing BT-AMP beacon generation");
 			sch_set_beacon_interval(mac, pe_session);
 			sch_set_fixed_beacon_fields(mac, pe_session);
 		}

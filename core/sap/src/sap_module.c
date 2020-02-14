@@ -1351,12 +1351,12 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		sap_err("%u is unsafe channel freq", target_chan_freq);
 		return QDF_STATUS_E_FAULT;
 	}
-	sap_debug("sap chan freq:%d target freq:%d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
-		  sap_ctx->chan_freq, target_chan_freq,
-		policy_mgr_is_any_mode_active_on_band_along_with_session(
-			mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
-			sap_get_csa_reason_str(sap_ctx->csa_reason),
-			sap_ctx->csa_reason, strict, sap_ctx->sessionId);
+	sap_nofl_debug("SAP CSA: %d ---> %d conn on 5GHz:%d, csa_reason:%s(%d) strict %d vdev %d",
+		       sap_ctx->chan_freq, target_chan_freq,
+		       policy_mgr_is_any_mode_active_on_band_along_with_session(
+		       mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
+		       sap_get_csa_reason_str(sap_ctx->csa_reason),
+		       sap_ctx->csa_reason, strict, sap_ctx->sessionId);
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);
@@ -1445,7 +1445,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 			 * user input is used for the bandwidth
 			 */
 			if (target_bw != CH_WIDTH_MAX) {
-				sap_debug("target bw:%d new width:%d",
+				sap_nofl_debug("SAP CSA: target bw:%d new width:%d",
 					  target_bw,
 					  mac->sap.SapDfsInfo.
 					  new_ch_params.ch_width);
@@ -1504,10 +1504,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 		return QDF_STATUS_E_FAULT;
 	}
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Posted eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START successfully to sap_fsm for Channel freq = %d",
-		  __func__, target_chan_freq);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1680,8 +1676,6 @@ void wlansap_get_sec_channel(uint8_t sec_ch_offset,
 	default:
 		*sec_chan_freq = 0;
 	}
-	sap_debug("sec channel offset %d, sec channel %d",
-		  sec_ch_offset, *sec_chan_freq);
 }
 
 static void
@@ -1758,9 +1752,6 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 		 (phy_mode == eCSR_DOT11_MODE_11a))
 		phy_mode = eCSR_DOT11_MODE_11g;
 
-	sap_debug("phy_mode: %d, target_channel freq: %d new phy_mode: %d",
-		  sap_ctx->csr_roamProfile.phyMode,
-		  target_chan_freq, phy_mode);
 	sap_ctx->csr_roamProfile.phyMode = phy_mode;
 
 	if (sap_ctx->csr_roamProfile.ChannelInfo.numOfChannels == 0 ||

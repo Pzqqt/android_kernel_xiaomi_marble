@@ -2221,7 +2221,6 @@ static QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 			 SIR_MAX_BEACON_SIZE - sizeof(uint32_t)));
 		return QDF_STATUS_E_INVAL;
 	}
-	wma_debug("Storing received beacon template buf to local buffer");
 	qdf_spin_lock_bh(&bcn->lock);
 
 	/*
@@ -2446,7 +2445,6 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 
 	if (wmi_service_enabled(wma->wmi_handle,
 				   wmi_service_beacon_offload)) {
-		wma_nofl_debug("Beacon Offload Enabled Sending Unified command");
 		status = wma_unified_bcn_tmpl_send(wma, vdev_id, bcn_info, 4);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s : wmi_unified_bcn_tmpl_send Failed ",

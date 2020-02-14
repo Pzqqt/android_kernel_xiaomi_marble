@@ -1000,8 +1000,6 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	uint32_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq;
 	QDF_STATUS status;
 
-	sme_debug("sap_ch_freq: %d sap_phymode: %d", sap_ch_freq, sap_phymode);
-
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		return 0;
@@ -1022,7 +1020,7 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	}
 
 	sme_debug("sap_ch:%d sap_phymode:%d sap_cch:%d sap_hbw:%d chb:%d",
-		sap_ch_freq, sap_phymode, sap_cfreq, sap_hbw, chb);
+		  sap_ch_freq, sap_phymode, sap_cfreq, sap_hbw, chb);
 
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -1055,11 +1053,6 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 					session, &sap_ch_freq, &sap_hbw,
 					&sap_cfreq, &intf_ch_freq, &intf_hbw,
 					&intf_cfreq);
-
-			sme_debug("%d: sap_ch:%d sap_hbw:%d sap_cfreq:%d"
-				  " intf_ch:%d intf_hbw:%d, intf_cfreq:%d",
-				  i, sap_ch_freq, sap_hbw, sap_cfreq,
-				  intf_ch_freq, intf_hbw, intf_cfreq);
 		}
 		if (intf_ch_freq &&
 		    ((intf_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_2484) &&
@@ -1070,8 +1063,8 @@ uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 	}
 
 	sme_debug("intf_ch:%d sap_ch:%d cc_switch_mode:%d, dbs:%d",
-			intf_ch_freq, sap_ch_freq, cc_switch_mode,
-			policy_mgr_is_dbs_enable(mac_ctx->psoc));
+		  intf_ch_freq, sap_ch_freq, cc_switch_mode,
+		  policy_mgr_is_dbs_enable(mac_ctx->psoc));
 
 	if (intf_ch_freq && sap_ch_freq != intf_ch_freq &&
 	    !policy_mgr_is_force_scc(mac_ctx->psoc)) {

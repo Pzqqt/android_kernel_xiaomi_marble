@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,14 +50,14 @@ static int hdd_green_ap_check_enable(struct hdd_context *hdd_ctx,
 
 		status = policy_mgr_mode_specific_num_active_sessions(
 					hdd_ctx->psoc, mode, &num_sessions);
-		hdd_debug("No. of active sessions for mode: %d is %d",
-			  mode, num_sessions);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to get num sessions for mode: %d",
 				mode);
 			return -EINVAL;
 		} else if (num_sessions) {
 			*enable_green_ap = false;
+			hdd_debug("active sessions for mode: %d is %d disable green AP",
+				  mode, num_sessions);
 			return 0;
 		}
 	}
