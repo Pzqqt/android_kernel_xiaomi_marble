@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,10 +76,8 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	uint8_t pdev_cnt;
 
 	soc_reg_obj = qdf_mem_malloc(sizeof(*soc_reg_obj));
-	if (!soc_reg_obj) {
-		reg_alert("Mem alloc failed for reg psoc priv obj");
+	if (!soc_reg_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	soc_reg_obj->offload_enabled = false;
 	soc_reg_obj->psoc_ptr = psoc;
@@ -136,7 +134,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_destroyed_notification(
 
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
 	if (!psoc_priv_obj) {
-		reg_err("reg psoc private obj is NULL");
+		reg_err_rl("NULL reg psoc priv obj");
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -147,9 +145,9 @@ QDF_STATUS wlan_regulatory_psoc_obj_destroyed_notification(
 			psoc, WLAN_UMAC_COMP_REGULATORY, psoc_priv_obj);
 
 	if (status != QDF_STATUS_SUCCESS)
-		reg_err("psoc_priv_obj private obj detach failed");
+		reg_err_rl("psoc_priv_obj private obj detach failed");
 
-	reg_debug("reg psoc obj detached with status %d", status);
+	reg_debug("reg psoc obj detached");
 
 	qdf_mem_free(psoc_priv_obj);
 
@@ -190,10 +188,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	struct reg_rule_info *psoc_reg_rules;
 
 	pdev_priv_obj = qdf_mem_malloc(sizeof(*pdev_priv_obj));
-	if (!pdev_priv_obj) {
-		reg_alert("Mem alloc failed for pdev priv obj");
+	if (!pdev_priv_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	parent_psoc = wlan_pdev_get_psoc(pdev);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
@@ -310,7 +306,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 	if (status != QDF_STATUS_SUCCESS)
 		reg_err("reg pdev private obj detach failed");
 
-	reg_debug("reg pdev obj deleted with status %d", status);
+	reg_debug("reg pdev obj deleted");
 
 	qdf_spin_lock_bh(&pdev_priv_obj->reg_rules_lock);
 	reg_reset_reg_rules(&pdev_priv_obj->reg_rules);

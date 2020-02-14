@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -77,7 +77,7 @@ static int tgt_reg_ch_avoid_event_handler(ol_scn_t handle, uint8_t *event_buf,
 		return -EFAULT;
 	}
 
-	target_if_debug("processed CH avoid event");
+	TARGET_IF_EXIT();
 
 	return 0;
 }

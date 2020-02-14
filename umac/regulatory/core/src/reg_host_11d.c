@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -66,9 +66,9 @@ static QDF_STATUS reg_11d_scan_trigger_handler(
 	req->scan_req.scan_f_passive = false;
 
 	status = ucfg_scan_start(req);
-	reg_debug("11d scan trigger vdev %d scan_id %d req_id %d status %d",
-		  soc_reg->vdev_id_for_11d_scan, soc_reg->scan_id,
-		  soc_reg->scan_req_id, status);
+	reg_nofl_debug("11d scan trigger vdev %d scan_id %d req_id %d status %d",
+		       soc_reg->vdev_id_for_11d_scan, soc_reg->scan_id,
+		       soc_reg->scan_req_id, status);
 
 	if (status != QDF_STATUS_SUCCESS)
 		/* Don't free req here, ucfg_scan_start will do free */
@@ -99,10 +99,8 @@ QDF_STATUS reg_11d_host_scan(
 	if (soc_reg->enable_11d_supp) {
 		qdf_mc_timer_stop(&soc_reg->timer);
 		status = reg_11d_scan_trigger_handler(soc_reg);
-		if (status != QDF_STATUS_SUCCESS) {
-			reg_err("11d scan trigger failed!");
+		if (status != QDF_STATUS_SUCCESS)
 			return status;
-		}
 
 		qdf_mc_timer_start(&soc_reg->timer, soc_reg->scan_11d_interval);
 	} else {

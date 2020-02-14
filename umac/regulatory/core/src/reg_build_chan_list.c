@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -923,7 +923,7 @@ reg_send_ctl_info(struct wlan_regulatory_psoc_priv_obj *soc_reg,
 		return QDF_STATUS_SUCCESS;
 
 	if (!tx_ops || !tx_ops->send_ctl_info) {
-		reg_err("No regulatory tx_ops for send_ctl_info");
+		reg_err("No regulatory tx_ops");
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -1019,7 +1019,7 @@ QDF_STATUS reg_process_master_chan_list(
 	}
 
 	if (regulat_info->status_code != REG_SET_CC_STATUS_PASS) {
-		reg_err("Setting country code failed, status code is %d",
+		reg_err("Set country code failed, status code %d",
 			regulat_info->status_code);
 
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
@@ -1135,10 +1135,8 @@ QDF_STATUS reg_process_master_chan_list(
 
 	soc_reg->chan_list_recvd[phy_id] = true;
 	status = reg_send_ctl_info(soc_reg, regulat_info, tx_ops);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		reg_err("Failed to send ctl info to fw");
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
 
 	if (soc_reg->new_user_ctry_pending[phy_id]) {
 		soc_reg->new_user_ctry_pending[phy_id] = false;

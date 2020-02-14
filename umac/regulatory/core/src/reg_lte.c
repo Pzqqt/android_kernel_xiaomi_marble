@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -117,19 +117,14 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
-	reg_debug("number of unsafe channels is %d ",
-		  psoc_priv_obj->unsafe_chan_list.chan_cnt);
-
-	if (!psoc_priv_obj->unsafe_chan_list.chan_cnt) {
-		reg_debug("No valid ch are present in avoid freq event");
+	if (!psoc_priv_obj->unsafe_chan_list.chan_cnt)
 		return QDF_STATUS_SUCCESS;
-	}
 
 	for (ch_loop = 0; ch_loop < psoc_priv_obj->unsafe_chan_list.chan_cnt;
 		ch_loop++) {
 		if (ch_loop >= NUM_CHANNELS)
 			break;
-		reg_debug("channel freq %d is not safe",
+		reg_debug("Unsafe freq %d",
 			  psoc_priv_obj->unsafe_chan_list.chan_freq_list[ch_loop]);
 	}
 

@@ -266,8 +266,7 @@ struct reg_dmn_op_class_map_t *reg_get_class_from_country(uint8_t *country)
 {
 	const struct reg_dmn_op_class_map_t *class = NULL;
 
-	qdf_debug("Country %c%c 0x%x",
-		  country[0], country[1], country[2]);
+	reg_debug_rl("Country %c%c 0x%x", country[0], country[1], country[2]);
 
 	switch (country[2]) {
 	case OP_CLASS_US:
@@ -473,7 +472,7 @@ void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
 	if (chan_enum == INVALID_CHANNEL) {
-		reg_err(" channel enumeration is invalid %d", chan_enum);
+		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return;
 	}
 
@@ -528,7 +527,7 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
-		reg_err("pdev reg obj is NULL");
+		reg_err_rl("NULL pdev reg obj");
 		return;
 	}
 
@@ -537,7 +536,7 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 	chan_enum = reg_get_chan_enum_for_freq(freq);
 
 	if (chan_enum == INVALID_CHANNEL) {
-		reg_err(" channel enumeration is invalid %d", chan_enum);
+		reg_err_rl("Invalid chan enum %d", chan_enum);
 		return;
 	}
 
@@ -649,7 +648,7 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 		}
 		op_class_tbl++;
 	}
-	reg_err_rl("Invalid opclass given as input");
+	reg_err_rl("Invalid opclass");
 	return 0;
 }
 
