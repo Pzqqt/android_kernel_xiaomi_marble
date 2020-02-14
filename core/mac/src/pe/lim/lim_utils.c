@@ -7045,11 +7045,11 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap)
 void lim_log_he_op(struct mac_context *mac, tDot11fIEhe_op *he_ops,
 		   struct pe_session *session)
 {
-	pe_debug("bss_color 0x%0x, default_pe_dur 0x%0x, twt_req  0x%0x, txop_rts_thres  0x%0x, vht_op 0x%0x",
+	pe_debug("bss_color 0x%x, default_pe_dur 0x%x, twt_req  0x%x, txop_rts_thres  0x%x, vht_op 0x%x",
 		 he_ops->bss_color, he_ops->default_pe,
 		 he_ops->twt_required, he_ops->txop_rts_threshold,
 		 he_ops->vht_oper_present);
-	pe_debug("\tpart_bss_color 0x%0x, Co-located BSS 0x%0x, BSS color dis 0x%0x basic mcs nss: 0x0x%x",
+	pe_debug("\tpart_bss_color 0x%x, Co-located BSS 0x%x, BSS color dis 0x%x basic mcs nss: 0x%x",
 		 he_ops->partial_bss_col, he_ops->co_located_bss,
 		 he_ops->bss_col_disabled,
 		 *((uint16_t *)he_ops->basic_mcs_nss));
