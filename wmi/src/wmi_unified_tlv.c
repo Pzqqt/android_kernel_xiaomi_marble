@@ -11194,7 +11194,11 @@ static struct cur_reg_rule
 	struct cur_reg_rule *reg_rule_ptr;
 	uint32_t count;
 
-	reg_rule_ptr = qdf_mem_malloc(num_reg_rules * sizeof(*reg_rule_ptr));
+	if (!num_reg_rules)
+		return NULL;
+
+	reg_rule_ptr = qdf_mem_malloc(num_reg_rules *
+				      sizeof(*reg_rule_ptr));
 
 	if (!reg_rule_ptr)
 		return NULL;
