@@ -1050,7 +1050,8 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 	break;
 
 	case TCL_DATA:
-	case TCL_CMD:
+	/* CMD_CREDIT_RING is used as command in 8074 and credit in 9000 */
+	case TCL_CMD_CREDIT:
 	case REO_CMD:
 	case SW2WBM_RELEASE:
 	case WBM_IDLE_LINK:
@@ -2996,12 +2997,11 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-	entries = wlan_cfg_get_dp_soc_tcl_cmd_ring_size(soc_cfg_ctx);
-	/* TCL command and status rings */
-	if (dp_srng_setup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0, 0,
+	entries = wlan_cfg_get_dp_soc_tcl_cmd_credit_ring_size(soc_cfg_ctx);
+	if (dp_srng_setup(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0, 0,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for tcl_cmd_ring"));
+			FL("dp_srng_setup failed for tcl_cmd_credit_ring."));
 		goto fail2;
 	}
 
@@ -4379,8 +4379,9 @@ static void dp_soc_deinit(void *txrx_soc)
 			dp_tx_deinit_pair_by_index(soc, IPA_TCL_DATA_RING_IDX);
 	}
 
-	/* TCL command and status rings */
-	dp_srng_deinit(soc, &soc->tcl_cmd_ring, TCL_CMD, 0);
+	/* TCL command/credit ring */
+	dp_srng_deinit(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0);
+	/* TCL status ring */
 	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
 	/* Rx data rings */
@@ -4493,8 +4494,9 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 		}
 	}
 
-	/* TCL command and status rings */
-	dp_srng_cleanup(soc, &soc->tcl_cmd_ring, TCL_CMD, 0);
+	/* TCL command/credit ring */
+	dp_srng_cleanup(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT, 0);
+	/* TCL status rings */
 	dp_srng_cleanup(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
 
 	/* Rx data rings */
@@ -5522,26 +5524,6 @@ static inline void dp_peer_rx_bufq_resources_init(struct dp_peer *peer)
 }
 #endif
 
-#ifdef WLAN_FEATURE_STATS_EXT
-/*
- * dp_set_ignore_reo_status_cb() - set ignore reo status cb flag
- * @soc: dp soc handle
- * @flag: flag to set or reset
- *
- * Return: None
- */
-static inline void dp_set_ignore_reo_status_cb(struct dp_soc *soc,
-					       bool flag)
-{
-	soc->ignore_reo_status_cb = flag;
-}
-#else
-static inline void dp_set_ignore_reo_status_cb(struct dp_soc *soc,
-					       bool flag)
-{
-}
-#endif
-
 /*
  * dp_peer_create_wifi3() - attach txrx peer
  * @soc_hdl: Datapath soc handle
@@ -5612,6 +5594,12 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		DP_STATS_INIT(peer);
 		DP_STATS_UPD(peer, rx.avg_rssi, INVALID_RSSI);
 
+		/*
+		 * In tx_monitor mode, filter may be set for unassociated peer
+		 * when unassociated peer get associated peer need to
+		 * update tx_cap_enabled flag to support peer filter.
+		 */
+		dp_peer_tx_capture_filter_check(pdev, peer);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5702,12 +5690,6 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		vdev->vap_self_peer = peer;
 	}
 
-	if (wlan_op_mode_sta == vdev->opmode &&
-	    qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
-			QDF_MAC_ADDR_SIZE) != 0) {
-		dp_set_ignore_reo_status_cb(soc, false);
-	}
-
 	for (i = 0; i < DP_MAX_TIDS; i++)
 		qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 
@@ -5735,6 +5717,14 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 						peer_cookie.ctx;
 		}
 	}
+
+	/*
+	 * In tx_monitor mode, filter may be set for unassociated peer
+	 * when unassociated peer get associated peer need to
+	 * update tx_cap_enabled flag to support peer filter.
+	 */
+	dp_peer_tx_capture_filter_check(pdev, peer);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6279,8 +6269,11 @@ static void dp_vdev_reset_peer(struct dp_vdev *vdev,
 	if (!vdev) {
 		dp_err("vdev is NULL");
 	} else {
-		if (vdev->vap_bss_peer == peer)
-		    vdev->vap_bss_peer = NULL;
+		if (vdev->vap_bss_peer == peer) {
+			vdev->vap_bss_peer = NULL;
+			qdf_mem_zero(vdev->vap_bss_peer_mac_addr,
+				     QDF_MAC_ADDR_SIZE);
+		}
 
 		if (vdev && vdev->vap_bss_peer) {
 		    bss_peer = vdev->vap_bss_peer;
@@ -6542,12 +6535,6 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 	qdf_spinlock_destroy(&peer->peer_info_lock);
 	dp_peer_multipass_list_remove(peer);
-
-	if (wlan_op_mode_sta == peer->vdev->opmode &&
-	    qdf_mem_cmp(peer->mac_addr.raw, peer->vdev->mac_addr.raw,
-			QDF_MAC_ADDR_SIZE) != 0) {
-		dp_set_ignore_reo_status_cb(peer->vdev->pdev->soc, true);
-	}
 
 	/*
 	 * Remove the reference added during peer_attach.
@@ -7374,8 +7361,8 @@ char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type)
 		return "wbm2sw_release";
 	case TCL_DATA:
 		return "tcl_data";
-	case TCL_CMD:
-		return "tcl_cmd";
+	case TCL_CMD_CREDIT:
+		return "tcl_cmd_credit";
 	case TCL_STATUS:
 		return "tcl_status";
 	case SW2WBM_RELEASE:
@@ -8426,7 +8413,8 @@ static QDF_STATUS dp_get_psoc_param(struct cdp_soc_t *cdp_soc,
  * @soc: DP_SOC handle
  * @pdev_id: id of DP_PDEV handle
  * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
- * @is_tx_pkt_cap_enable: enable/disable Tx packet capture in monitor mode
+ * @is_tx_pkt_cap_enable: enable/disable/delete/print
+ * Tx packet capture in monitor mode
  * @peer_mac: MAC address for which the above need to be enabled/disabled
  *
  * Return: Success if Rx & Tx capture is enabled for peer, false otherwise
@@ -8435,28 +8423,30 @@ QDF_STATUS
 dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
 				  uint8_t pdev_id,
 				  bool is_rx_pkt_cap_enable,
-				  bool is_tx_pkt_cap_enable,
+				  uint8_t is_tx_pkt_cap_enable,
 				  uint8_t *peer_mac)
 {
+	QDF_STATUS status;
 	struct dp_peer *peer;
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
 						   pdev_id);
-
 	if (!pdev)
 		return QDF_STATUS_E_FAILURE;
 
 	peer = (struct dp_peer *)dp_find_peer_by_addr((struct cdp_pdev *)pdev,
 						      peer_mac);
-	if (!peer) {
-		dp_err("Invalid Peer");
-		return QDF_STATUS_E_FAILURE;
-	}
 
-	dp_peer_set_rx_capture_enabled(peer, is_rx_pkt_cap_enable);
-	dp_peer_set_tx_capture_enabled(peer, is_tx_pkt_cap_enable);
+	/* we need to set tx pkt capture for non associated peer */
+	status = dp_peer_set_tx_capture_enabled(pdev, peer,
+						is_tx_pkt_cap_enable,
+						peer_mac);
 
-	return QDF_STATUS_SUCCESS;
+	status = dp_peer_set_rx_capture_enabled(pdev, peer,
+						is_rx_pkt_cap_enable,
+						peer_mac);
+
+	return status;
 }
 
 /*
@@ -10003,6 +9993,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_intr_attach = dp_soc_interrupt_attach_wrapper,
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
+	.set_key_sec_type = dp_set_key_sec_type_wifi3,
 	.update_config_parameters = dp_update_config_parameters,
 	/* TODO: Add other functions */
 	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set,
@@ -10377,6 +10368,39 @@ dp_txrx_post_data_stall_event(struct cdp_soc_t *soc_hdl,
 }
 #endif /* WLAN_SUPPORT_DATA_STALL */
 
+#ifdef DP_PEER_EXTENDED_API
+/**
+ * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
+ * @dev: physical device instance
+ * @peer_mac_addr: peer mac address
+ * @debug_id: to track enum peer access
+ *
+ * Return: peer instance pointer
+ */
+static void *
+dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
+			     enum peer_debug_id_type debug_id)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)dev;
+	struct dp_peer *peer;
+
+	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
+
+	if (!peer)
+		return NULL;
+
+	if (peer->delete_in_progress) {
+		dp_err("Peer deletion in progress");
+		dp_peer_unref_delete(peer);
+		return NULL;
+	}
+
+	dp_info_rl("peer %pK mac: %pM", peer, peer->mac_addr.raw);
+
+	return peer;
+}
+#endif /* DP_PEER_EXTENDED_API */
+
 #ifdef WLAN_FEATURE_STATS_EXT
 /* rx hw stats event wait timeout in ms */
 #define DP_REO_STATUS_STATS_TIMEOUT 1000
@@ -10427,11 +10451,6 @@ static void dp_rx_hw_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
 	struct hal_reo_queue_status *queue_status = &reo_status->queue_status;
 
-	if (soc->ignore_reo_status_cb) {
-		qdf_event_set(&soc->rx_hw_stats_event);
-		return;
-	}
-
 	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
 		dp_info("REO stats failure %d for TID %d",
 			queue_status->header.status, rx_tid->tid);
@@ -10452,45 +10471,34 @@ static void dp_rx_hw_stats_cb(struct dp_soc *soc, void *cb_ctxt,
  *
  * Return: None
  */
-static void
+static QDF_STATUS
 dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	struct dp_peer *peer;
+	QDF_STATUS status;
 
 	if (!vdev) {
-		dp_err("vdev is null");
-		qdf_event_set(&soc->rx_hw_stats_event);
-		return;
+		dp_err("vdev is null for vdev_id: %u", vdev_id);
+		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = vdev->vap_bss_peer;
+	peer = dp_peer_get_ref_find_by_addr((struct cdp_pdev *)vdev->pdev,
+					    vdev->vap_bss_peer_mac_addr, 0);
 
-	if (!peer || peer->delete_in_progress) {
-		dp_err("Peer deletion in progress");
-		qdf_event_set(&soc->rx_hw_stats_event);
-		return;
+	if (!peer) {
+		dp_err("Peer is NULL");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	qdf_event_reset(&soc->rx_hw_stats_event);
 	dp_peer_rxtid_stats(peer, dp_rx_hw_stats_cb, NULL);
-}
-
-/**
- * dp_wait_for_ext_rx_stats - wait for rx reo status for rx stats
- * @soc_hdl: cdp opaque soc handle
- *
- * Return: status
- */
-static QDF_STATUS
-dp_wait_for_ext_rx_stats(struct cdp_soc_t *soc_hdl)
-{
-	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	QDF_STATUS status;
 
 	status = qdf_wait_single_event(&soc->rx_hw_stats_event,
 				       DP_REO_STATUS_STATS_TIMEOUT);
+
+	dp_peer_unref_delete(peer);
 
 	return status;
 }
@@ -10519,8 +10527,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 #ifdef WLAN_FEATURE_STATS_EXT
 	.txrx_ext_stats_request = dp_txrx_ext_stats_request,
 	.request_rx_hw_stats = dp_request_rx_hw_stats,
-	.wait_for_ext_rx_stats = dp_wait_for_ext_rx_stats,
-#endif
+#endif /* WLAN_FEATURE_STATS_EXT */
 };
 #endif
 

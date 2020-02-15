@@ -1140,6 +1140,11 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 		      uint8_t *peer_mac, enum cdp_sec_type sec_type,
 		      uint32_t *rx_pn);
 
+QDF_STATUS
+dp_set_key_sec_type_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
+			  uint8_t *peer_mac, enum cdp_sec_type sec_type,
+			  bool is_unicast);
+
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 
 QDF_STATUS
@@ -1802,6 +1807,19 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 {
 }
 
+/*
+ * dp_peer_tx_capture_filter_check: check filter is enable for the filter
+ * and update tx_cap_enabled flag
+ * @pdev: DP PDEV handle
+ * @peer: DP PEER handle
+ *
+ * return: void
+ */
+static inline
+void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+				     struct dp_peer *peer)
+{
+}
 #endif
 
 #ifdef FEATURE_PERPKT_INFO

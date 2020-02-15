@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -287,7 +287,7 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
-	return scnprintf(tbuf, tbuf_sz, "[%.16s][0x%llx]%s",
+	return scnprintf(tbuf, tbuf_sz, "[%.6s][0x%llx]%s",
 			 current_process_name(), ts, time_buf);
 }
 

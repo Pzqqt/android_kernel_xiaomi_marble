@@ -126,7 +126,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_dynamic_hw_mode))
 		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_DYNAMIC_HW_MODE);
 
-	if (wmi_service_enabled(wmi_handle, wmi_service_bw_165mhz_support))
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_bw_restricted_80p80_support))
 		wlan_psoc_nif_fw_ext_cap_set(psoc,
 					     WLAN_SOC_RESTRICTED_80P80_SUPPORT);
 

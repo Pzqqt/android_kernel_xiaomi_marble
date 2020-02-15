@@ -906,7 +906,7 @@ static inline QDF_STATUS
 cdp_update_peer_pkt_capture_params(ol_txrx_soc_handle soc,
 				   uint8_t pdev_id,
 				   bool is_rx_pkt_cap_enable,
-				   bool is_tx_pkt_cap_enable,
+				   uint8_t is_tx_pkt_cap_enable,
 				   uint8_t *peer_mac)
 {
 	if (!soc || !soc->ops) {
@@ -921,8 +921,7 @@ cdp_update_peer_pkt_capture_params(ol_txrx_soc_handle soc,
 
 	return soc->ops->ctrl_ops->txrx_update_peer_pkt_capture_params
 			(soc, pdev_id, is_rx_pkt_cap_enable,
-			 is_tx_pkt_cap_enable,
-			 peer_mac);
+			 is_tx_pkt_cap_enable, peer_mac);
 }
 #endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
 

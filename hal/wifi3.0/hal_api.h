@@ -552,7 +552,7 @@ enum hal_ring_type {
 	REO_CMD = 3,
 	REO_STATUS = 4,
 	TCL_DATA = 5,
-	TCL_CMD = 6,
+	TCL_CMD_CREDIT = 6,
 	TCL_STATUS = 7,
 	CE_SRC = 8,
 	CE_DST = 9,

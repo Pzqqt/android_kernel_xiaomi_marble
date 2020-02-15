@@ -11842,6 +11842,46 @@ send_roam_scan_stats_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_roam_scan_ch_list_req_cmd_tlv() - send wmi cmd to get roam scan
+ * channel list from firmware
+ * @wmi_handle: wmi handler
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_roam_scan_ch_list_req_cmd_tlv(wmi_unified_t wmi_handle,
+						     uint32_t vdev_id)
+{
+	wmi_buf_t buf;
+	wmi_roam_get_scan_channel_list_cmd_fixed_param *cmd;
+	uint16_t len = sizeof(*cmd);
+	int ret;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_roam_get_scan_channel_list_cmd_fixed_param *)
+					wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_roam_get_scan_channel_list_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		wmi_roam_get_scan_channel_list_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	wmi_mtrace(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID, vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send get roam scan channels request = %d",
+			 ret);
+		wmi_buf_free(buf);
+	}
+	return ret;
+}
+
+/**
  * extract_roam_scan_stats_res_evt_tlv() - Extract roam scan stats event
  * @wmi_handle: wmi handle
  * @evt_buf: pointer to event buffer
@@ -13471,6 +13511,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_time_sync_ftm_offset_event =
 					extract_time_sync_ftm_offset_event_tlv,
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
+	.send_roam_scan_ch_list_req_cmd = send_roam_scan_ch_list_req_cmd_tlv,
 };
 
 /**
@@ -13835,6 +13876,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_wlan_time_sync_q_master_slave_offset_eventid] =
 			WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID;
 #endif
+event_ids[wmi_roam_scan_chan_list_id] =
+			WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID;
 }
 
 /**
@@ -14113,6 +14156,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_6GHZ_SUPPORT;
 	wmi_service[wmi_service_bw_165mhz_support] =
 			WMI_SERVICE_BW_165MHZ_SUPPORT;
+	wmi_service[wmi_service_bw_restricted_80p80_support] =
+			WMI_SERVICE_BW_RESTRICTED_80P80_SUPPORT;
 	wmi_service[wmi_service_packet_capture_support] =
 			WMI_SERVICE_PACKET_CAPTURE_SUPPORT;
 	wmi_service[wmi_service_nan_vdev] = WMI_SERVICE_NAN_VDEV_SUPPORT;
@@ -14124,6 +14169,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_AUDIO_SYNC_SUPPORT;
 	wmi_service[wmi_service_nss_ratio_to_host_support] =
 			WMI_SERVICE_NSS_RATIO_TO_HOST_SUPPORT;
+	wmi_service[wmi_roam_scan_chan_list_to_host_support] =
+			WMI_SERVICE_ROAM_SCAN_CHANNEL_LIST_TO_HOST_SUPPORT;
 }
 
 /**

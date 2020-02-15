@@ -286,7 +286,9 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
  * @soc: DP SOC handle
  * @pdev_id: id of DP pdev handle
  * @is_rx_pkt_cap_enable: enable/disable Rx packet capture in monitor mode
- * @is_tx_pkt_cap_enable: enable/disable Tx packet capture in monitor mode
+ * @is_tx_pkt_cap_enable: enable/disable/delete/print
+ * Tx packet capture in monitor mode
+ * Tx packet capture in monitor mode
  * @peer_mac: MAC address for which the above need to be enabled/disabled
  *
  * Return: Success if Rx & Tx capture is enabled for peer, false otherwise
@@ -295,7 +297,7 @@ QDF_STATUS
 dp_peer_update_pkt_capture_params(ol_txrx_soc_handle soc,
 				  uint8_t pdev_id,
 				  bool is_rx_pkt_cap_enable,
-				  bool is_tx_pkt_cap_enable,
+				  uint8_t is_tx_pkt_cap_enable,
 				  uint8_t *peer_mac);
 
 /*

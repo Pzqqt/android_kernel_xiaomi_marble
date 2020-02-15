@@ -437,6 +437,12 @@ struct cdp_cmn_ops {
 				    uint8_t vdev_id, uint8_t *peermac,
 				    enum cdp_sec_type sec_type,
 				    uint32_t *rx_pn);
+
+	QDF_STATUS(*set_key_sec_type)(struct cdp_soc_t *soc_handle,
+				      uint8_t vdev_id, uint8_t *peermac,
+				      enum cdp_sec_type sec_type,
+				      bool is_unicast);
+
 	QDF_STATUS (*update_config_parameters)(struct cdp_soc *psoc,
 			struct cdp_config_params *params);
 
@@ -704,7 +710,7 @@ struct cdp_ctrl_ops {
 #if defined(WLAN_TX_PKT_CAPTURE_ENH) || defined(WLAN_RX_PKT_CAPTURE_ENH)
 	QDF_STATUS (*txrx_update_peer_pkt_capture_params)(
 			ol_txrx_soc_handle soc, uint8_t pdev_id,
-			bool is_rx_pkt_cap_enable, bool is_tx_pkt_cap_enable,
+			bool is_rx_pkt_cap_enable, uint8_t is_tx_pkt_cap_enable,
 			uint8_t *peer_mac);
 #endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
 	QDF_STATUS
@@ -1209,8 +1215,8 @@ struct cdp_misc_ops {
 	QDF_STATUS (*txrx_ext_stats_request)(struct cdp_soc_t *soc_hdl,
 					     uint8_t pdev_id,
 					     struct cdp_txrx_ext_stats *req);
-	void (*request_rx_hw_stats)(struct cdp_soc_t *soc_hdl, uint8_t vdev_id);
-	QDF_STATUS (*wait_for_ext_rx_stats)(struct cdp_soc_t *soc_hdl);
+	QDF_STATUS (*request_rx_hw_stats)(struct cdp_soc_t *soc_hdl,
+					  uint8_t vdev_id);
 };
 
 /**

@@ -1014,8 +1014,9 @@ struct dp_soc {
 	/* Number of TCL data rings */
 	uint8_t num_tcl_data_rings;
 
-	/* TCL command ring */
-	struct dp_srng tcl_cmd_ring;
+	/* TCL CMD_CREDIT ring */
+	/* It is used as credit based ring on QCN9000 else command ring */
+	struct dp_srng tcl_cmd_credit_ring;
 
 	/* TCL command status ring */
 	struct dp_srng tcl_status_ring;
@@ -1209,10 +1210,7 @@ struct dp_soc {
 		uint32_t rx_mpdu_missed;
 	} ext_stats;
 	qdf_event_t rx_hw_stats_event;
-
-	/* Ignore reo command queue status during peer delete */
-	bool ignore_reo_status_cb;
-#endif
+#endif /* WLAN_FEATURE_STATS_EXT */
 
 	/* Smart monitor capability for HKv2 */
 	uint8_t hw_nac_monitor_support;
@@ -1993,6 +1991,9 @@ struct dp_vdev {
 	bool peer_protocol_count_track;
 	int peer_protocol_count_dropmask;
 #endif
+
+	/* vap bss peer mac addr */
+	uint8_t vap_bss_peer_mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 

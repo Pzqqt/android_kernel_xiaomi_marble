@@ -371,8 +371,11 @@ static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 static inline
-void dp_peer_set_tx_capture_enabled(struct dp_peer *peer_handle, bool value)
+QDF_STATUS dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
+					  struct dp_peer *peer_handle,
+					  uint8_t value, uint8_t *peer_mac)
 {
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif

@@ -23,8 +23,7 @@
 #include "hif.h"
 #include "hif_main.h"
 
-#if defined(HIF_REG_WINDOW_SUPPORT) && (defined(HIF_PCI) || \
-    defined(HIF_IPCI))
+#if defined(HIF_REG_WINDOW_SUPPORT) && defined(HIF_PCI)
 
 static inline
 void hif_write32_mb_reg_window(void *sc,

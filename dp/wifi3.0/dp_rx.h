@@ -1103,8 +1103,11 @@ bool dp_rx_multipass_process(struct dp_peer *peer, qdf_nbuf_t nbuf,
 
 #ifndef WLAN_RX_PKT_CAPTURE_ENH
 static inline
-void dp_peer_set_rx_capture_enabled(struct dp_peer *peer_handle, bool value)
+QDF_STATUS dp_peer_set_rx_capture_enabled(struct dp_pdev *pdev,
+					  struct dp_peer *peer_handle,
+					  bool value, uint8_t *mac_addr)
 {
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

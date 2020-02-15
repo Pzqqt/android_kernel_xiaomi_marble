@@ -1677,6 +1677,36 @@ static inline int cdp_set_pn_check(ol_txrx_soc_handle soc,
 	return 0;
 }
 
+/**
+ * cdp_set_key_sec_type(): function to set sec mode of key
+ * @soc: soc handle
+ * @vdev_id: id of virtual device
+ * @peer_mac: mac address of peer
+ * @sec_type: security type
+ * #is_unicast: ucast or mcast
+ */
+static inline int cdp_set_key_sec_type(ol_txrx_soc_handle soc,
+				       uint8_t vdev_id,
+				       uint8_t *peer_mac,
+				       enum cdp_sec_type sec_type,
+				       bool is_unicast)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_key_sec_type)
+		return 0;
+
+	soc->ops->cmn_drv_ops->set_key_sec_type(soc, vdev_id,
+			peer_mac, sec_type, is_unicast);
+	return 0;
+}
+
 static inline QDF_STATUS
 cdp_set_key(ol_txrx_soc_handle soc,
 	    uint8_t vdev_id,
