@@ -502,9 +502,12 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 
 	flow_idx_valid = is_flow_idx_valid(flow_invalid, flow_timeout);
 	if (flow_idx_valid) {
-		qdf_assert_always(flow_idx < fisa_hdl->max_entries);
 		dp_fisa_debug("flow_idx is valid 0x%x", flow_idx);
-		return &sw_ft_base[flow_idx];
+		qdf_assert_always(flow_idx < fisa_hdl->max_entries);
+		sw_ft_entry = &sw_ft_base[flow_idx];
+		sw_ft_entry->vdev = vdev;
+
+		return sw_ft_entry;
 	}
 
 	/* else new flow, add entry to FT */
