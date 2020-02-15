@@ -155,20 +155,27 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
  * based on global per-pdev setting or per-peer setting
  * @pdev: Datapath pdev handle
  * @peer: Datapath peer
+ * @mac_addr: peer mac address
  *
  * Return: true if feature is enabled on a per-pdev basis or if
  * enabled for the given peer when per-peer mode is set, false otherwise
  */
 inline bool
 dp_peer_or_pdev_tx_cap_enabled(struct dp_pdev *pdev,
-			       struct dp_peer *peer)
+			       struct dp_peer *peer, uint8_t *mac_addr)
 {
 	if ((pdev->tx_capture_enabled ==
 	     CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS) ||
-	    ((pdev->tx_capture_enabled ==
-	      CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) &&
-	     peer->tx_cap_enabled))
-		return true;
+	    (pdev->tx_capture_enabled ==
+	      CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER)) {
+		if (peer && peer->tx_cap_enabled)
+			return true;
+
+		/* do search based on mac address */
+		return is_dp_peer_mgmt_pkt_filter(pdev,
+						  HTT_INVALID_PEER,
+						  mac_addr);
+	}
 	return false;
 }
 
@@ -305,6 +312,11 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			return;
 		}
 
+		if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL, wh->i_addr1)) {
+			qdf_nbuf_free(nbuf);
+			return;
+		}
+
 		qdf_spin_lock_bh(
 			&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
 		qdf_nbuf_queue_add(&pdev->tx_capture.ctl_mgmt_q[type][subtype],
@@ -318,6 +330,208 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 	}
 }
 
+static inline int dp_peer_compare_mac_addr(void *addr1, void *addr2)
+{
+	union dp_align_mac_addr *mac_addr1 = (union dp_align_mac_addr *)addr1;
+	union dp_align_mac_addr *mac_addr2 = (union dp_align_mac_addr *)addr2;
+
+	return !((mac_addr1->align4.bytes_abcd == mac_addr2->align4.bytes_abcd)
+		 & (mac_addr1->align4.bytes_ef == mac_addr2->align4.bytes_ef));
+}
+
+/*
+ * dp_peer_tx_cap_search: filter mgmt pkt based on peer and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on matched and false on not found
+ */
+static
+bool dp_peer_tx_cap_search(struct dp_pdev *pdev,
+			   uint16_t peer_id, uint8_t *mac_addr)
+{
+	struct dp_pdev_tx_capture *tx_capture;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	uint8_t i = 0;
+	bool found = false;
+
+	tx_capture = &pdev->tx_capture;
+
+	/* search based on mac address */
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		uint8_t *peer_mac_addr;
+
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		if (ptr_peer_mgmt_list->avail)
+			continue;
+		peer_mac_addr = ptr_peer_mgmt_list->mac_addr;
+		if (!dp_peer_compare_mac_addr(mac_addr,
+					      peer_mac_addr)) {
+			found = true;
+			break;
+		}
+	}
+	return found;
+}
+
+/*
+ * dp_peer_tx_cap_add_filter: add peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+bool dp_peer_tx_cap_add_filter(struct dp_pdev *pdev,
+			       uint16_t peer_id, uint8_t *mac_addr)
+{
+	struct dp_pdev_tx_capture *tx_capture;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	uint8_t i = 0;
+	bool status = false;
+
+	tx_capture = &pdev->tx_capture;
+
+	if (dp_peer_tx_cap_search(pdev, peer_id, mac_addr)) {
+		/* mac address and peer_id already there */
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+			  "%s: %d peer_id[%d] mac_addr[%pM] already there\n",
+			  __func__, __LINE__, peer_id, mac_addr);
+		return status;
+	}
+
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		if (!ptr_peer_mgmt_list->avail)
+			continue;
+		qdf_mem_copy(ptr_peer_mgmt_list->mac_addr,
+			     mac_addr, QDF_MAC_ADDR_SIZE);
+		ptr_peer_mgmt_list->avail = false;
+		ptr_peer_mgmt_list->peer_id = peer_id;
+		status = true;
+		break;
+	}
+
+	return status;
+}
+
+/*
+ * dp_peer_tx_cap_del_all_filter: delete all peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: void
+ */
+void dp_peer_tx_cap_del_all_filter(struct dp_pdev *pdev)
+{
+	struct dp_pdev_tx_capture *tx_capture;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	uint8_t i = 0;
+
+	tx_capture = &pdev->tx_capture;
+
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		ptr_peer_mgmt_list->avail = true;
+		ptr_peer_mgmt_list->peer_id = HTT_INVALID_PEER;
+		qdf_mem_zero(ptr_peer_mgmt_list->mac_addr, QDF_MAC_ADDR_SIZE);
+	}
+}
+
+/*
+ * dp_peer_tx_cap_del_filter: delete peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+bool dp_peer_tx_cap_del_filter(struct dp_pdev *pdev,
+			       uint16_t peer_id, uint8_t *mac_addr)
+{
+	struct dp_pdev_tx_capture *tx_capture;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	uint8_t i = 0;
+	bool status = false;
+
+	tx_capture = &pdev->tx_capture;
+
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		if (!dp_peer_compare_mac_addr(mac_addr,
+					      ptr_peer_mgmt_list->mac_addr) &&
+		    (!ptr_peer_mgmt_list->avail)) {
+			ptr_peer_mgmt_list->avail = true;
+			ptr_peer_mgmt_list->peer_id = HTT_INVALID_PEER;
+			qdf_mem_zero(ptr_peer_mgmt_list->mac_addr,
+				     QDF_MAC_ADDR_SIZE);
+			status = true;
+			break;
+		}
+	}
+
+	if (!status)
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+			  "unable to delete peer[%d] mac[%pM] filter list",
+			  peer_id, mac_addr);
+	return status;
+}
+
+/*
+ * dp_peer_tx_cap_print_mgmt_filter: pradd peer filter mgmt pkt based on peer
+ * and mac address
+ * @pdev: DP PDEV handle
+ * @peer_id: DP PEER ID
+ * @mac_addr: pointer to mac address
+ *
+ * return: true on added and false on not failed
+ */
+void dp_peer_tx_cap_print_mgmt_filter(struct dp_pdev *pdev,
+				      uint16_t peer_id, uint8_t *mac_addr)
+{
+	struct dp_pdev_tx_capture *tx_capture;
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	uint8_t i = 0;
+
+	tx_capture = &pdev->tx_capture;
+
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+		  "peer filter list:");
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+			  "peer_id[%d] mac_addr[%pM] avail[%d]",
+			  ptr_peer_mgmt_list->peer_id,
+			  ptr_peer_mgmt_list->mac_addr,
+			  ptr_peer_mgmt_list->avail);
+	}
+}
+
+/*
+ * dp_peer_mgmt_pkt_filter: filter mgmt pkt based on peer and mac address
+ * @pdev: DP PDEV handle
+ * @nbuf: buffer containing the ppdu_desc
+ *
+ * return: status
+ */
+bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
+				uint32_t peer_id, uint8_t *mac_addr)
+{
+	bool found = false;
+
+	found = dp_peer_tx_cap_search(pdev, peer_id, mac_addr);
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+		  "%s: %d peer_id[%d] mac_addr[%pM] found[%d]!",
+		  __func__, __LINE__, peer_id, mac_addr, found);
+
+	return found;
+}
+
 /**
  * dp_tx_ppdu_stats_attach - Initialize Tx PPDU stats and enhanced capture
  * @pdev: DP PDEV
@@ -326,7 +540,11 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
  */
 void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
+	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	struct dp_pdev_tx_capture *tx_capture;
 	int i, j;
+
+	tx_capture = &pdev->tx_capture;
 	/* Work queue setup for HTT stats and tx capture handling */
 	qdf_create_work(0, &pdev->tx_capture.ppdu_stats_work,
 			dp_tx_ppdu_stats_process,
@@ -350,6 +568,14 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	}
 	qdf_mem_zero(&pdev->tx_capture.dummy_ppdu_desc,
 		     sizeof(struct cdp_tx_completion_ppdu));
+
+	pdev->tx_capture.ptr_peer_mgmt_list = (struct dp_peer_mgmt_list *)
+			qdf_mem_malloc(sizeof(struct dp_peer_mgmt_list) *
+				       MAX_MGMT_PEER_FILTER);
+	for (i = 0; i < MAX_MGMT_PEER_FILTER; i++) {
+		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
+		ptr_peer_mgmt_list->avail = true;
+	}
 }
 
 /**
@@ -400,6 +626,8 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
 		}
 	}
+
+	qdf_mem_free(pdev->tx_capture.ptr_peer_mgmt_list);
 }
 
 /**
@@ -499,14 +727,15 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 				   struct dp_peer *peer)
 {
 	int ret = QDF_STATUS_E_FAILURE;
+	struct dp_pdev *pdev = desc->pdev;
 
-	if (peer && dp_peer_or_pdev_tx_cap_enabled(desc->pdev, peer) &&
+	if (peer &&
+	    dp_peer_or_pdev_tx_cap_enabled(pdev, peer, peer->mac_addr.raw) &&
 	    ((ts->status == HAL_TX_TQM_RR_FRAME_ACKED) ||
 	    (ts->status == HAL_TX_TQM_RR_REM_CMD_TX) ||
-	    ((ts->status == HAL_TX_TQM_RR_REM_CMD_AGED) && ts->transmit_cnt))) {
-		ret = dp_update_msdu_to_list(soc, desc->pdev,
-					     peer, ts, desc->nbuf);
-	}
+	    ((ts->status == HAL_TX_TQM_RR_REM_CMD_AGED) && ts->transmit_cnt)))
+		ret = dp_update_msdu_to_list(soc, pdev, peer, ts, desc->nbuf);
+
 	return ret;
 }
 
@@ -667,6 +896,8 @@ static void  dp_iterate_free_peer_msdu_q(void *pdev_hdl)
 			int tid;
 			struct dp_tx_tid *tx_tid;
 
+			/* set peer tx cap enabled to 0, when feature disable */
+			peer->tx_cap_enabled = 0;
 			for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 				qdf_nbuf_t ppdu_nbuf = NULL;
 				struct cdp_tx_completion_ppdu *ppdu_desc =
@@ -743,6 +974,7 @@ dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 					&pdev->tx_capture.ctl_mgmt_lock[i][j]);
 			}
 		}
+		dp_peer_tx_cap_del_all_filter(pdev);
 	}
 
 	qdf_spin_unlock(&pdev->tx_capture.config_lock);
@@ -1412,6 +1644,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 					  void *desc)
 {
 	struct dp_peer *peer;
+	struct dp_vdev *vdev = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = desc;
 	struct cdp_tx_completion_ppdu_user *user = &ppdu_desc->user[0];
 	struct ieee80211_ctlframe_addr2 *wh_min;
@@ -1498,15 +1731,17 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 	else {
 		peer = dp_peer_find_by_id(pdev->soc, user->peer_id);
 		if (peer) {
-			struct dp_vdev *vdev = NULL;
-
 			vdev = peer->vdev;
-			if (vdev)
-				qdf_mem_copy(wh_min->i_addr2,
-					     vdev->mac_addr.raw,
-					     QDF_MAC_ADDR_SIZE);
 			dp_peer_unref_del_find_by_id(peer);
+		} else {
+			vdev =
+			dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+							   ppdu_desc->vdev_id);
 		}
+		if (vdev)
+			qdf_mem_copy(wh_min->i_addr2,
+				     vdev->mac_addr.raw,
+				     QDF_MAC_ADDR_SIZE);
 		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf, sizeof(*wh_min));
 	}
 
@@ -1545,6 +1780,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 	struct dp_pdev_tx_capture *ptr_tx_cap;
 	struct dp_peer *peer;
 	uint8_t rts_send;
+	struct dp_vdev *vdev = NULL;
 
 	rts_send = 0;
 	ptr_tx_cap = &pdev->tx_capture;
@@ -1596,15 +1832,19 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 		peer = dp_peer_find_by_id(pdev->soc,
 					  cur_ppdu_desc->user[0].peer_id);
 		if (peer) {
-			struct dp_vdev *vdev = NULL;
-
 			vdev = peer->vdev;
-			if (vdev)
-				qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
-					     vdev->mac_addr.raw,
-					     QDF_MAC_ADDR_SIZE);
 			dp_peer_unref_del_find_by_id(peer);
+		} else {
+			uint8_t vdev_id;
+
+			vdev_id = ppdu_desc->vdev_id;
+			vdev = dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
+								  vdev_id);
 		}
+
+		if (vdev)
+			qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
+				     vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 
 		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc);
 	}
@@ -2201,6 +2441,12 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 		subtype = 0;
 	}
 
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL,
+					    ppdu_desc->user[0].mac_addr)) {
+		qdf_nbuf_free(nbuf_ppdu_desc);
+		status = 0;
+		goto free_ppdu_desc;
+	}
 	switch (ppdu_desc->htt_frame_type) {
 	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
 	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
@@ -2278,7 +2524,7 @@ get_mgmt_pkt_from_queue:
 			    HTT_PPDU_STATS_USER_STATUS_FILTERED) {
 				qdf_nbuf_free(nbuf_ppdu_desc);
 				status = 0;
-				goto free_ppdu_desc;
+				goto insert_mgmt_buf_to_queue;
 			}
 
 			/*
@@ -2287,6 +2533,7 @@ get_mgmt_pkt_from_queue:
 			qdf_nbuf_queue_add(retries_q, nbuf_ppdu_desc);
 			status = 0;
 
+insert_mgmt_buf_to_queue:
 			/*
 			 * insert the mgmt_ctl buffer back to
 			 * the queue
@@ -2877,6 +3124,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			uint16_t tid = 0;
 			uint32_t num_msdu = 0;
 			uint32_t qlen = 0;
+			uint16_t peer_id;
 
 			qdf_nbuf_queue_init(&head_msdu);
 			qdf_nbuf_queue_init(&head_xretries);
@@ -2940,19 +3188,19 @@ void dp_tx_ppdu_stats_process(void *context)
 				continue;
 			}
 
-			peer = dp_peer_find_by_id(pdev->soc,
-						  ppdu_desc->user[0].peer_id);
-			/**
-			 * peer can be NULL
-			 */
-			if (!peer) {
-				qdf_nbuf_free(nbuf);
-				continue;
-			}
-
 			if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) ||
 			    (ppdu_desc->num_mpdu &&
 			     ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR)) {
+				peer_id = ppdu_desc->user[0].peer_id;
+				peer = dp_peer_find_by_id(pdev->soc, peer_id);
+				/**
+				 * peer can be NULL
+				 */
+				if (!peer) {
+					qdf_nbuf_free(nbuf);
+					continue;
+				}
+
 				/**
 				 * check whether it is bss peer,
 				 * if bss_peer no need to process further
@@ -2961,7 +3209,7 @@ void dp_tx_ppdu_stats_process(void *context)
 				 */
 				if (peer->bss_peer ||
 				    !dp_peer_or_pdev_tx_cap_enabled(pdev,
-				    peer)) {
+				    peer, peer->mac_addr.raw)) {
 					dp_peer_unref_del_find_by_id(peer);
 					qdf_nbuf_free(nbuf);
 					continue;
@@ -3068,6 +3316,8 @@ dequeue_msdu_again:
 					  ppdu_desc->user[0].start_seq,
 					  ppdu_cnt,
 					  ppdu_desc_cnt);
+
+				dp_peer_unref_del_find_by_id(peer);
 			} else {
 				/*
 				 * other packet frame also added to
@@ -3076,7 +3326,6 @@ dequeue_msdu_again:
 				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
 			}
 
-			dp_peer_unref_del_find_by_id(peer);
 		}
 
 		/*
@@ -3334,8 +3583,7 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	if (!peer)
 		return QDF_STATUS_E_FAILURE;
 
-	if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
-					    peer)) {
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL, peer->mac_addr.raw)) {
 		dp_peer_unref_del_find_by_id(peer);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3391,6 +3639,7 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	uint32_t ast_index;
 	uint32_t i;
 	bool bar_frame;
+	uint8_t *ptr_mac_addr;
 
 	rx_status = &ppdu_info->rx_status;
 
@@ -3433,6 +3682,10 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 		ast_index = rx_user_status->ast_index;
 		if (ast_index >=
 		    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+			ptr_mac_addr = &ppdu_info->nac_info.mac_addr2[0];
+			if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
+							    NULL, ptr_mac_addr))
+				continue;
 			set_mpdu_info(&tx_capture_info,
 				      rx_status, rx_user_status);
 			tx_capture_info.mpdu_nbuf =
@@ -3471,7 +3724,8 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 			continue;
 
 		if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
-						    peer)) {
+						    NULL,
+						    peer->mac_addr.raw)) {
 			dp_peer_unref_del_find_by_id(peer);
 			continue;
 		}
@@ -3515,16 +3769,56 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 
 /**
  * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
+ * @pdev: DP PDEV handle
  * @peer: Peer handle
  * @value: Enable/disable setting for tx_cap_enabled
+ * @peer_mac: peer mac address
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void
-dp_peer_set_tx_capture_enabled(struct dp_peer *peer, bool value)
+QDF_STATUS
+dp_peer_set_tx_capture_enabled(struct dp_pdev *pdev,
+			       struct dp_peer *peer, uint8_t value,
+			       uint8_t *peer_mac)
 {
-	peer->tx_cap_enabled = value;
-	if (!value)
-		dp_peer_tx_cap_tid_queue_flush(peer);
+	uint32_t peer_id = HTT_INVALID_PEER;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (value) {
+		if (dp_peer_tx_cap_add_filter(pdev, peer_id, peer_mac)) {
+			if (peer)
+				peer->tx_cap_enabled = value;
+			status = QDF_STATUS_SUCCESS;
+		}
+	} else {
+		if (dp_peer_tx_cap_del_filter(pdev, peer_id, peer_mac)) {
+			if (peer)
+				peer->tx_cap_enabled = value;
+			status = QDF_STATUS_SUCCESS;
+		}
+	}
+
+	return status;
+}
+
+/*
+ * dp_peer_tx_capture_filter_check: check filter is enable for the filter
+ * and update tx_cap_enabled flag
+ * @pdev: DP PDEV handle
+ * @peer: DP PEER handle
+ *
+ * return: void
+ */
+void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
+				     struct dp_peer *peer)
+{
+	if (!peer)
+		return;
+
+	if (dp_peer_tx_cap_search(pdev, peer->peer_ids[0],
+				  peer->mac_addr.raw)) {
+		peer->tx_cap_enabled = 1;
+	}
+	return;
 }
 #endif
