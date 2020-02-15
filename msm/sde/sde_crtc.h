@@ -219,7 +219,6 @@ struct sde_crtc_misr_info {
  * @enabled       : whether the SDE CRTC is currently enabled. updated in the
  *                  commit-thread, not state-swap time which is earlier, so
  *                  safe to make decisions on during VBLANK on/off work
- * @ds_reconfig   : force reconfiguration of the destination scaler block
  * @feature_list  : list of color processing features supported on a crtc
  * @active_list   : list of color processing features are active
  * @dirty_list    : list of color processing features are dirty
@@ -292,7 +291,6 @@ struct sde_crtc {
 	struct kernfs_node *vsync_event_sf;
 	bool enabled;
 
-	bool ds_reconfig;
 	struct list_head feature_list;
 	struct list_head active_list;
 	struct list_head dirty_list;
@@ -344,6 +342,12 @@ struct sde_crtc {
 	int target_bpp;
 };
 
+enum sde_crtc_dirty_flags {
+	SDE_CRTC_DIRTY_DEST_SCALER,
+	SDE_CRTC_DIRTY_DIM_LAYERS,
+	SDE_CRTC_DIRTY_MAX,
+};
+
 #define to_sde_crtc(x) container_of(x, struct sde_crtc, base)
 
 /**
@@ -370,7 +374,6 @@ struct sde_crtc {
  * @dim_layer: Dim layer configs
  * @num_ds: Number of destination scalers to be configured
  * @num_ds_enabled: Number of destination scalers enabled
- * @ds_dirty: Boolean to indicate if dirty or not
  * @ds_cfg: Destination scaler config
  * @scl3_lut_cfg: QSEED3 lut config
  * @new_perf: new performance state being requested
@@ -393,12 +396,12 @@ struct sde_crtc_state {
 
 	struct msm_property_state property_state;
 	struct msm_property_value property_values[CRTC_PROP_COUNT];
+	DECLARE_BITMAP(dirty, SDE_CRTC_DIRTY_MAX);
 	uint64_t input_fence_timeout_ns;
 	uint32_t num_dim_layers;
 	struct sde_hw_dim_layer dim_layer[SDE_MAX_DIM_LAYERS];
 	uint32_t num_ds;
 	uint32_t num_ds_enabled;
-	bool ds_dirty;
 	struct sde_hw_ds_cfg ds_cfg[SDE_MAX_DS_COUNT];
 	struct sde_hw_scaler3_lut_cfg scl3_lut_cfg;
 
