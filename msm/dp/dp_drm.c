@@ -504,7 +504,7 @@ int dp_connector_atomic_check(struct drm_connector *connector,
 	struct drm_connector_state *old_state;
 	struct drm_connector_state *c_state;
 
-	if (!connector || !display || a_state)
+	if (!connector || !display || !a_state)
 		return -EINVAL;
 
 	c_state = drm_atomic_get_new_connector_state(a_state, connector);
