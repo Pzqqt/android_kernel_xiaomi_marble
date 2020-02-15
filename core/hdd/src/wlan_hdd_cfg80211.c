@@ -17790,6 +17790,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	 */
 	hdd_sta_ctx->conn_info.gtk_installed = false;
 	hdd_sta_ctx->conn_info.ptk_installed = false;
+	adapter->last_disconnect_reason = 0;
 
 	roam_profile = hdd_roam_profile(adapter);
 	if (roam_profile) {
