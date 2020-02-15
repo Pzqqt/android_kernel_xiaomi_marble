@@ -17759,16 +17759,53 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 				struct roam_offload_scan_req *rso_req)
 {
 	tSirRoamNetworkType *network_cfg = &rso_req->ConnectedNetwork;
-	tCsrRoamConnectedProfile session_connected_profile =
-			mac_ctx->roam.roamSession[session_id].connectedProfile;
 	tAniEdType group_mgmt_cipher;
 
-	network_cfg->mfp_enabled = session_connected_profile.MFPEnabled;
-	group_mgmt_cipher = session_connected_profile.mgmt_encryption_type;
+	struct wlan_objmgr_vdev *vdev;
+	uint16_t rsn_caps;
+	bool peer_rmf_capable = false;
+	uint32_t keymgmt;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+			session_id,
+			WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		pe_err("Invalid vdev");
+		return;
+	}
+
+	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
+						   WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (wlan_crypto_vdev_has_mgmtcipher(vdev,
+					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
+					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256) |
+					(1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) &&
+					(rsn_caps &
+					 WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
+		peer_rmf_capable = true;
+
+	network_cfg->mfp_enabled = peer_rmf_capable;
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+
+	if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) {
+		group_mgmt_cipher = eSIR_ED_AES_128_CMAC;
+	} else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC)) {
+		group_mgmt_cipher = eSIR_ED_AES_GMAC_128;
+	} else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
+		group_mgmt_cipher = eSIR_ED_AES_GMAC_256;
+	} else {
+		group_mgmt_cipher = eSIR_ED_NONE;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	if (network_cfg->mfp_enabled)
 		network_cfg->gp_mgmt_cipher_suite = group_mgmt_cipher;
 	else
 		network_cfg->gp_mgmt_cipher_suite = eSIR_ED_NONE;
+
+	pe_debug("gp_mgmt_cipher_suite %d", network_cfg->gp_mgmt_cipher_suite);
 }
 
 #else
