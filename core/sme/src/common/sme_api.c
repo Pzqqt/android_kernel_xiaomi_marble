@@ -16286,3 +16286,50 @@ void sme_reset_oem_data_event_handler_cb(mac_handle_t  mac_handle)
 	}
 }
 #endif
+
+QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
+					  uint8_t vdev_id,
+					  uint8_t **ies, uint32_t *ie_len)
+{
+	struct csr_roam_session *session;
+	struct mac_context *mac;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t len;
+	uint8_t *beacon_ie;
+
+	if (!mac_handle) {
+		sme_err("mac_handle is not valid");
+		return QDF_STATUS_E_INVAL;
+	}
+	mac = MAC_CONTEXT(mac_handle);
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("session not found");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Failed to acquire sme lock; status: %d", status);
+		return status;
+	}
+
+	len = session->prev_assoc_ap_info.nBeaconLength;
+	if (!len) {
+		sme_debug("No IEs to return");
+		status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+	beacon_ie = qdf_mem_malloc(len);
+	if (!beacon_ie) {
+		status = QDF_STATUS_E_NOMEM;
+		goto end;
+	}
+	qdf_mem_copy(beacon_ie, session->prev_assoc_ap_info.pbFrames, len);
+
+	*ie_len = len;
+	*ies = beacon_ie;
+end:
+	sme_release_global_lock(&mac->sme);
+	return status;
+}

@@ -9498,6 +9498,22 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	if (session_ptr->is_fils_connection)
 		session_ptr->fils_seq_num = pSmeJoinRsp->fils_seq_num;
 
+	len = pSmeJoinRsp->assocReqLength +
+	      pSmeJoinRsp->assocRspLength + pSmeJoinRsp->beaconLength;
+	if (prev_connect_info->pbFrames)
+		csr_roam_free_connected_info(mac, prev_connect_info);
+
+	prev_connect_info->pbFrames = qdf_mem_malloc(len);
+	if (prev_connect_info->pbFrames) {
+		qdf_mem_copy(prev_connect_info->pbFrames, pSmeJoinRsp->frames,
+			     len);
+		prev_connect_info->nAssocReqLength =
+					pSmeJoinRsp->assocReqLength;
+		prev_connect_info->nAssocRspLength =
+					pSmeJoinRsp->assocRspLength;
+		prev_connect_info->nBeaconLength = pSmeJoinRsp->beaconLength;
+	}
+
 	if (eSIR_SME_SUCCESS == pSmeJoinRsp->status_code) {
 		if (pCommand &&
 		    eCsrSmeIssuedAssocToSimilarAP ==
@@ -9526,7 +9542,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 
 		return;
 	}
-
 
 	/* The head of the active list is the request we sent
 	 * Try to get back the same profile and roam again
@@ -9579,22 +9594,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 						   QDF_STATUS_E_FAILURE);
 	}
 
-	len = pSmeJoinRsp->assocReqLength +
-	      pSmeJoinRsp->assocRspLength + pSmeJoinRsp->beaconLength;
-	if (prev_connect_info->pbFrames)
-		csr_roam_free_connected_info(mac, prev_connect_info);
-
-	prev_connect_info->pbFrames = qdf_mem_malloc(len);
-	if (prev_connect_info->pbFrames) {
-		qdf_mem_copy(prev_connect_info->pbFrames, pSmeJoinRsp->frames,
-			     len);
-		prev_connect_info->nAssocReqLength =
-					pSmeJoinRsp->assocReqLength;
-		prev_connect_info->nAssocRspLength =
-					pSmeJoinRsp->assocRspLength;
-		prev_connect_info->nBeaconLength = pSmeJoinRsp->beaconLength;
-	}
-
 	/*
 	 * if userspace has issued disconnection, driver should not continue
 	 * connecting
@@ -9603,7 +9602,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	if (pCommand && !is_dis_pending &&
 	    session_ptr->join_bssid_count < CSR_MAX_BSSID_COUNT) {
 		csr_roam(mac, pCommand);
-		csr_roam_free_connected_info(mac, prev_connect_info);
 		return;
 	}
 
@@ -9630,7 +9628,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 			       eCSR_ROAM_ASSOCIATION_COMPLETION,
 			       eCSR_ROAM_RESULT_NOT_ASSOCIATED);
 	csr_roam_complete(mac, eCsrNothingToJoin, NULL, pSmeJoinRsp->vdev_id);
-	csr_roam_free_connected_info(mac, prev_connect_info);
 }
 
 static QDF_STATUS csr_roam_issue_join(struct mac_context *mac, uint32_t sessionId,

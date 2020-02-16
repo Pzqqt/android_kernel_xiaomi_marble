@@ -4102,4 +4102,19 @@ static inline void sme_reset_oem_data_event_handler_cb(mac_handle_t  mac_handle)
 }
 #endif
 
+/**
+ * sme_get_prev_connected_bss_ies() - Get the previous connected AP IEs
+ * @mac_handle: The handle returned by mac_open.
+ * @vdev_id: vdev id
+ * @ies: IEs of the disconnected AP. Currently to carry beacon IEs.
+ * @ie_len: Length of the @ies
+ *
+ * This API extracts the IEs from the previous connected AP info and update
+ * them to the ies and ie_len.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
+					  uint8_t vdev_id,
+					  uint8_t **ies, uint32_t *ie_len);
 #endif /* #if !defined( __SME_API_H ) */
