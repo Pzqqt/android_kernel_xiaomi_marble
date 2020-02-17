@@ -44,16 +44,6 @@ struct wlan_mlme_psoc_ext_obj {
 };
 
 /**
- * struct wlan_ies - Generic WLAN Information Element(s) format
- * @len: Total length of the IEs
- * @data: IE data
- */
-struct wlan_ies {
-	uint16_t len;
-	uint8_t *data;
-};
-
-/**
  * struct wlan_disconnect_info - WLAN Disconnection Information
  * @self_discon_ies: Disconnect IEs to be sent in deauth/disassoc frames
  *                   originated from driver

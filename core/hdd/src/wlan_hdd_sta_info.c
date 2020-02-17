@@ -75,18 +75,26 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 			 struct hdd_station_info **sta_info)
 {
+	struct hdd_station_info *info;
+
 	if (!sta_info_container || !sta_info) {
 		hdd_err("Parameter(s) null");
 		return;
 	}
 
+	info = *sta_info;
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
-	qdf_ht_remove(&((*sta_info)->sta_node));
+	qdf_ht_remove(&(info->sta_node));
 
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
-	qdf_mem_free(*sta_info);
+	if (info->assoc_req_ies.len) {
+		qdf_mem_free(info->assoc_req_ies.data);
+		info->assoc_req_ies.data = NULL;
+		info->assoc_req_ies.len = 0;
+	}
+	qdf_mem_free(info);
 	*sta_info = NULL;
 }
 

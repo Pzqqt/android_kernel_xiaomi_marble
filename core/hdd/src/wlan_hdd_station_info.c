@@ -108,6 +108,8 @@
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_DRIVER_DISCONNECT_REASON
 #define BEACON_IES \
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_BEACON_IES
+#define ASSOC_REQ_IES \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_REQ_IES
 
 /*
  * MSB of rx_mc_bc_cnt indicates whether FW supports rx_mc_bc_cnt
@@ -1136,6 +1138,9 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 			 NLA_HDRLEN) +
 			(sizeof(stainfo->rx_retry_cnt) +
 			 NLA_HDRLEN);
+	if (stainfo->assoc_req_ies.len)
+		nl_buf_len += stainfo->assoc_req_ies.len + NLA_HDRLEN;
+
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
 		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
@@ -1196,6 +1201,13 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 		}
 	}
 
+	if (stainfo->assoc_req_ies.len) {
+		if (nla_put(skb, ASSOC_REQ_IES, stainfo->assoc_req_ies.len,
+			    stainfo->assoc_req_ies.data)) {
+			hdd_err("Failed to put assoc req IEs");
+			goto fail;
+		}
+	}
 	hdd_sta_info_detach(&adapter->cache_sta_info_list, &stainfo);
 	qdf_atomic_dec(&adapter->cache_sta_count);
 

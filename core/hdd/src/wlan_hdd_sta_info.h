@@ -32,6 +32,7 @@
 #include "cdp_txrx_cmn_struct.h"
 #include "sir_mac_prot_def.h"
 #include <linux/ieee80211.h>
+#include <wlan_mlme_public_struct.h>
 
 /* A bucket size of 2^4 = 16 */
 #define WLAN_HDD_STA_INFO_SIZE 4
@@ -120,6 +121,7 @@ enum dhcp_nego_status {
  * feature or not, if first bit is 1 it indicates that FW supports this
  * feature, if it is 0 it indicates FW doesn't support this feature
  * @sta_info: The sta_info node for the station info list maintained in adapter
+ * @assoc_req_ies: Assoc request IEs of the peer station
  */
 struct hdd_station_info {
 	bool in_use;
@@ -168,6 +170,7 @@ struct hdd_station_info {
 	uint32_t rx_retry_cnt;
 	uint32_t rx_mc_bc_cnt;
 	struct qdf_ht_entry sta_node;
+	struct wlan_ies assoc_req_ies;
 };
 
 /**

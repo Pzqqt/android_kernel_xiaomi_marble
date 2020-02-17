@@ -1532,6 +1532,13 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 			return;
 
 		qdf_mem_copy(cache_sta_info, stainfo, sizeof(*cache_sta_info));
+		cache_sta_info->assoc_req_ies.data =
+				qdf_mem_malloc(event->ies_len);
+		if (cache_sta_info->assoc_req_ies.data) {
+			qdf_mem_copy(cache_sta_info->assoc_req_ies.data,
+				     event->ies, event->ies_len);
+			cache_sta_info->assoc_req_ies.len = event->ies_len;
+		}
 		qdf_mem_zero(&cache_sta_info->sta_node,
 			     sizeof(cache_sta_info->sta_node));
 
