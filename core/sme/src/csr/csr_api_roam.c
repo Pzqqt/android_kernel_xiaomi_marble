@@ -18890,6 +18890,8 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 		req->reason = REASON_ROAM_STOP_ALL;
 	else if (reason == REASON_SUPPLICANT_DISABLED_ROAMING)
 		req->reason = REASON_SUPPLICANT_DISABLED_ROAMING;
+	else if (reason == REASON_DISCONNECTED)
+		req->reason = REASON_DISCONNECTED;
 	else
 		req->reason = REASON_SME_ISSUED;
 
