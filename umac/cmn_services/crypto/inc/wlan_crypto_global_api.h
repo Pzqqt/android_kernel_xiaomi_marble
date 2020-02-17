@@ -683,6 +683,7 @@ bool wlan_crypto_check_wep(struct wlan_objmgr_psoc *psoc, uint8_t vedv_id);
  * @vdev_id: vdev id
  * @ie_ptr: pointer to IEs
  * @ie_len: IE length
+ * @peer_crypto_params: return peer crypto parameters
  *
  * This function gets called from ucfg to check RSN match.
  *
@@ -690,7 +691,8 @@ bool wlan_crypto_check_wep(struct wlan_objmgr_psoc *psoc, uint8_t vedv_id);
  */
 bool wlan_crypto_check_rsn_match(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vedv_id, uint8_t *ie_ptr,
-				 uint16_t ie_len);
+				 uint16_t ie_len, struct wlan_crypto_params *
+				 peer_crypto_params);
 
 /**
  * wlan_crypto_check_rsn_match - called by ucfg to check for WPA match
@@ -698,6 +700,7 @@ bool wlan_crypto_check_rsn_match(struct wlan_objmgr_psoc *psoc,
  * @vdev_id: vdev id
  * @ie_ptr: pointer to IEs
  * @ie_len: IE length
+ * @peer_crypto_params: return peer crypto parameters
  *
  * This function gets called from ucfg to check WPA match.
  *
@@ -705,7 +708,8 @@ bool wlan_crypto_check_rsn_match(struct wlan_objmgr_psoc *psoc,
  */
 bool wlan_crypto_check_wpa_match(struct wlan_objmgr_psoc *psoc,
 				 uint8_t vedv_id, uint8_t *ie_ptr,
-				 uint16_t ie_len);
+				 uint16_t ie_len, struct wlan_crypto_params *
+				 peer_crypto_params);
 
 /**
  * wlan_set_vdev_crypto_prarams_from_ie - Sets vdev crypto params from IE info
