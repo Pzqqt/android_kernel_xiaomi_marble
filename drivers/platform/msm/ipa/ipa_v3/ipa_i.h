@@ -1882,6 +1882,8 @@ struct ipa3_app_clock_vote {
  * @icc_clk - table for icc bw clock value
  * @coal_cmd_pyld: holds the coslescing close frame command payload
  * @rmnet_ctl_enable: enable pipe support fow low latency data
+ * @gsi_fw_file_name: GSI IPA fw file name
+ * @uc_fw_file_name: uC IPA fw file name
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
@@ -2063,6 +2065,8 @@ struct ipa3_context {
 	struct ipa3_app_clock_vote app_clock_vote;
 	bool clients_registered;
 	bool rmnet_ctl_enable;
+	char *gsi_fw_file_name;
+	char *uc_fw_file_name;
 };
 
 struct ipa3_plat_drv_res {
@@ -2116,6 +2120,8 @@ struct ipa3_plat_drv_res {
 	const char *icc_path_name[IPA_ICC_PATH_MAX];
 	u32 icc_clk_val[IPA_ICC_LVL_MAX][IPA_ICC_MAX];
 	bool rmnet_ctl_enable;
+	const char *gsi_fw_file_name;
+	const char *uc_fw_file_name;
 };
 
 /**
