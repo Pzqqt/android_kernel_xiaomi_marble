@@ -162,11 +162,6 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 		wma_handle->saved_chan.ch_freq_list[i] =
 					chan_list->chanParam[i].freq;
 
-		WMA_LOGD("chan[%d] = freq:%u DFS:%d tx power:%d",
-			 i, chan_p->mhz,
-			 chan_list->chanParam[i].dfsSet,
-			 chan_list->chanParam[i].pwr);
-
 		if (chan_list->chanParam[i].dfsSet) {
 			chan_p->is_chan_passive = 1;
 			chan_p->dfs_set = 1;

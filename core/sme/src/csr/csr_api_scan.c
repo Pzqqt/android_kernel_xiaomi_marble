@@ -1553,16 +1553,10 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 			for (idx = 0; idx < ch_set->numChannels; idx++) {
 				ch_pwr_set->first_freq =
 					ch_set->first_chan_freq;
-				sme_debug(
-					"Setting Channel freq %d",
-					ch_pwr_set->first_freq);
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
 					mac->mlme_cfg->power.max_tx_power);
-				sme_debug(
-					"Setting Max Transmit Power %d",
-					ch_pwr_set->maxTxPower);
 				cbLen += sizeof(tSirMacChanInfo);
 				ch_pwr_set++;
 				count++;
@@ -1578,14 +1572,9 @@ static void csr_save_tx_power_to_cfg(struct mac_context *mac,
 				break;
 			}
 			ch_pwr_set->first_freq = ch_set->first_chan_freq;
-			sme_debug("Setting Channel Freq %d", ch_pwr_set->first_freq);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
 					mac->mlme_cfg->power.max_tx_power);
-			sme_debug(
-				"Setting Max Tx Power %d, nTxPower %d",
-				ch_pwr_set->maxTxPower,
-				mac->mlme_cfg->power.max_tx_power);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
 			count++;
@@ -1624,7 +1613,7 @@ static void csr_set_cfg_country_code(struct mac_context *mac,
 	uint8_t cc[CFG_COUNTRY_CODE_LEN];
 	/* v_REGDOMAIN_t DomainId */
 
-	sme_debug("Setting Country Code in Cfg %s", countryCode);
+	sme_debug("Set Country in Cfg %s", countryCode);
 	qdf_mem_copy(cc, countryCode, CFG_COUNTRY_CODE_LEN);
 
 	/*
@@ -1650,7 +1639,6 @@ static void csr_set_cfg_country_code(struct mac_context *mac,
 	 */
 	qdf_mem_copy(mac->mlme_cfg->reg.country_code, cc, CFG_COUNTRY_CODE_LEN);
 	mac->mlme_cfg->reg.country_code_len = CFG_COUNTRY_CODE_LEN;
-	sme_debug("CFG_COUNTRY_CODE changed");
 	sch_edca_profile_update_all(mac);
 	/*
 	 * Need to let HALPHY know about the current domain so it can apply some
