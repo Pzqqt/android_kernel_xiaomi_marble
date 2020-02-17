@@ -4429,6 +4429,11 @@ struct sir_sme_ext_cng_chan_req {
 	uint8_t   vdev_id;
 };
 
+#define IGNORE_NUD_FAIL                      0
+#define DISCONNECT_AFTER_NUD_FAIL            1
+#define ROAM_AFTER_NUD_FAIL                  2
+#define DISCONNECT_AFTER_ROAM_FAIL           3
+
 /**
  * struct sir_sme_ext_change_chan_ind.
  * @session_id: session id

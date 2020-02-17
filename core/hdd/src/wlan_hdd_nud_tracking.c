@@ -290,7 +290,8 @@ hdd_handle_nud_fail_non_sta(struct hdd_adapter *adapter)
 static bool
 hdd_is_roam_after_nud_enabled(struct hdd_config *config)
 {
-	if (config->enable_nud_tracking == CFG_DP_ROAM_AFTER_NUD_FAIL)
+	if (config->enable_nud_tracking == ROAM_AFTER_NUD_FAIL ||
+	    config->enable_nud_tracking == DISCONNECT_AFTER_ROAM_FAIL)
 		return true;
 
 	return false;

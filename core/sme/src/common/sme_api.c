@@ -841,6 +841,13 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 	}
 }
 
+void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	mac->nud_fail_behaviour = nud_fail_behavior;
+}
+
 /**
  * sme_update_neighbor_report_config() - Update CSR config for 11k params
  * @mac_handle: Pointer to MAC context

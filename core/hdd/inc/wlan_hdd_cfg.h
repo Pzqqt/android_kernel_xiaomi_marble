@@ -204,9 +204,7 @@ struct hdd_config {
 	bool enable_dp_trace;
 	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
 #endif
-#ifdef WLAN_NUD_TRACKING
 	uint8_t enable_nud_tracking;
-#endif
 	uint32_t operating_chan_freq;
 	uint8_t num_vdevs;
 	uint8_t enable_concurrent_sta[CFG_CONCURRENT_IFACE_MAX_LEN];

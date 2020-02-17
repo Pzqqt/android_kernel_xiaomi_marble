@@ -412,6 +412,13 @@ void sme_cleanup_session(mac_handle_t mac_handle, uint8_t vdev_id);
 void sme_set_curr_device_mode(mac_handle_t mac_handle,
 			      enum QDF_OPMODE curr_device_mode);
 
+/**
+ * sme_update_nud_config() - update nud config
+ * @mac_handle: The handle returned by mac_open.
+ * @nud_fail_behavior: Vlaue of nud fail behaviour
+ */
+void sme_update_nud_config(mac_handle_t mac_handle, uint8_t nud_fail_behavior);
+
 QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 				  uint8_t session_id,
 				  struct roam_ext_params *roam_params_src,

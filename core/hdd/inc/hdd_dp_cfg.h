@@ -1251,7 +1251,7 @@
  * <ini>
  * gEnableNUDTracking - Will enable or disable NUD tracking within driver
  * @Min: 0
- * @Max: 2
+ * @Max: 3
  * @Default: 2
  *
  * This ini is used to specify the behaviour of the driver for NUD tracking.
@@ -1261,7 +1261,7 @@
  * the connected BSSID.
  * 2: Driver will track the NUD failures and if honoured will roam away from
  * the connected BSSID to a new BSSID to retain the data connectivity.
- *
+ * 3: Driver will try to roam to a new AP but if roam fails, disconnect.
  * Related: None
  *
  * Supported Feature: STA
@@ -1270,15 +1270,11 @@
  *
  * <ini>
  */
-#define CFG_DP_ROAM_AFTER_NUD_FAIL                   2
-#define CFG_DP_DISCONNECT_AFTER_NUD_FAIL             1
-#define CFG_DP_DISABLE_NUD_TRACKING                  0
-
 #define CFG_DP_ENABLE_NUD_TRACKING \
 		CFG_INI_UINT("gEnableNUDTracking", \
-		 CFG_DP_DISABLE_NUD_TRACKING, \
-		 CFG_DP_ROAM_AFTER_NUD_FAIL, \
-		 CFG_DP_ROAM_AFTER_NUD_FAIL, \
+		 0, \
+		 3, \
+		 2, \
 		 CFG_VALUE_OR_DEFAULT, "Driver NUD tracking behaviour")
 
 #define CFG_DP_ENABLE_NUD_TRACKING_ALL \

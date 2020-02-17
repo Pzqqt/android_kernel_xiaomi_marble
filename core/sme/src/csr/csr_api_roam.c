@@ -21167,9 +21167,10 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 				eCSR_ROAM_NAPI_OFF, eCSR_ROAM_RESULT_SUCCESS);
 		goto end;
 	case SIR_ROAMING_INVOKE_FAIL:
-		sme_debug("Roaming triggered failed source %d",
-			   vdev_roam_params->source);
-		if (vdev_roam_params->source == USERSPACE_INITIATED) {
+		sme_debug("Roaming triggered failed source %d nud behaviour %d",
+			   vdev_roam_params->source, mac_ctx->nud_fail_behaviour);
+		if (vdev_roam_params->source == USERSPACE_INITIATED ||
+		    mac_ctx->nud_fail_behaviour == DISCONNECT_AFTER_NUD_FAIL) {
 			/* Userspace roam req fail, disconnect with AP */
 			csr_roam_disconnect(mac_ctx, session_id,
 					eCSR_DISCONNECT_REASON_DEAUTH,
