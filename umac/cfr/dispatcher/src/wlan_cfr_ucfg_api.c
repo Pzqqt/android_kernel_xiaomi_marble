@@ -312,7 +312,7 @@ QDF_STATUS dev_sanity_check(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (!(*ppcfr)->is_cfr_capable) {
+	if (!(*ppcfr)->is_cfr_rcc_capable) {
 		cfr_err("cfr is not supported on this chip\n");
 		wlan_objmgr_pdev_release_ref(*ppdev, WLAN_CFR_ID);
 		return QDF_STATUS_E_NOSUPPORT;
@@ -800,33 +800,31 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 		return status;
 
 	cfr_err("bb_captured_channel_cnt = %llu\n",
-		 pcfr->bb_captured_channel_cnt);
+		pcfr->bb_captured_channel_cnt);
 	cfr_err("bb_captured_timeout_cnt = %llu\n",
-		 pcfr->bb_captured_timeout_cnt);
+		pcfr->bb_captured_timeout_cnt);
 	cfr_err("rx_loc_info_valid_cnt = %llu\n",
-		 pcfr->rx_loc_info_valid_cnt);
-	cfr_err("tx_evt_cnt = %llu\n",
-		 pcfr->tx_evt_cnt);
+		pcfr->rx_loc_info_valid_cnt);
+	cfr_err("total_tx_evt_cnt = %llu\n",
+		pcfr->total_tx_evt_cnt);
 	cfr_err("dbr_evt_cnt = %llu\n",
-		 pcfr->dbr_evt_cnt);
+		pcfr->dbr_evt_cnt);
 	cfr_err("rx_tlv_evt_cnt = %llu\n",
-		 pcfr->rx_tlv_evt_cnt);
+		pcfr->rx_tlv_evt_cnt);
 	cfr_err("release_cnt = %llu\n",
-		 pcfr->release_cnt);
+		pcfr->release_cnt);
 	cfr_err("Error cnt:\n");
 	cfr_err("flush_dbr_cnt = %llu\n",
-		 pcfr->flush_dbr_cnt);
+		pcfr->flush_dbr_cnt);
 	cfr_err("invalid_dma_length_cnt = %llu\n",
-		 pcfr->invalid_dma_length_cnt);
-	cfr_err("flush_all_dbr_cnt = %llu\n",
-		 pcfr->flush_all_dbr_cnt);
-	cfr_err("flush_all_txrx_cnt = %llu\n",
-		 pcfr->flush_all_txrx_cnt);
+		pcfr->invalid_dma_length_cnt);
 	cfr_err("flush_timeout_dbr_cnt = %llu\n",
-		 pcfr->flush_timeout_dbr_cnt);
+		pcfr->flush_timeout_dbr_cnt);
 	cfr_err("PPDU id mismatch for same cookie:\n");
 	cfr_err("clear_txrx_event = %llu\n",
-		 pcfr->clear_txrx_event);
+		pcfr->clear_txrx_event);
+	cfr_err("cfr_dma_aborts = %llu\n",
+		pcfr->cfr_dma_aborts);
 
 	cfr_err("Channel capture status:\n");
 	for (counter = 0; counter < CAPTURE_MAX; counter++) {
@@ -919,6 +917,7 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cdp_monitor_filter filter_val = {0};
 
@@ -926,6 +925,12 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("psoc is null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 	/*
 	 * If capture mode is valid, then Host:
 	 * Subscribes for PPDU status TLVs in monitor status ring.
@@ -990,11 +995,15 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 			filter_val.fp_ctrl |= FILTER_CTRL_VHT_NDP;
 		}
 
+		if (!cdp_get_cfr_rcc(wlan_psoc_get_dp_handle(psoc),
+				    wlan_objmgr_pdev_get_pdev_id(pdev)))
+			tgt_cfr_start_lut_age_timer(pdev);
 		cfr_set_filter(pdev, 1, &filter_val);
-		tgt_cfr_start_lut_age_timer(pdev);
 	} else {
+		if (cdp_get_cfr_rcc(wlan_psoc_get_dp_handle(psoc),
+				    wlan_objmgr_pdev_get_pdev_id(pdev)))
+			tgt_cfr_stop_lut_age_timer(pdev);
 		cfr_set_filter(pdev, 0, &filter_val);
-		tgt_cfr_stop_lut_age_timer(pdev);
 	}
 
 	/* Trigger wmi to start the TLV processing. */

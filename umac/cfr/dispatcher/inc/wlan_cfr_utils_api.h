@@ -444,10 +444,26 @@ struct cfr_rcc_param {
  * pdev_obj: pointer to pdev object
  * is_cfr_capable: flag to determine if cfr is enabled or not
  * cfr_timer_enable: flag to enable/disable timer
+ * cfr_mem_chunk: Region of memory used for storing cfr data
+ * cfr_max_sta_count: Maximum stations supported in one-shot capture mode
+ * num_subbufs: No. of sub-buffers used in relayfs
+ * subbuf_size: Size of sub-buffer used in relayfs
+ * chan_ptr: Channel in relayfs
+ * dir_ptr: Parent directory of relayfs file
+ * lut: lookup table used to store asynchronous DBR and TX/RX events for
+ * correlation
+ * dbr_buf_size: Size of DBR completion buffer
+ * dbr_num_bufs: No. of DBR completions
+ * tx_evt_cnt: No. of TX completion events till CFR stop was issued
+ * total_tx_evt_cnt: No. of Tx completion events since wifi was up
+ * dbr_evt_cnt: No. of WMI DBR completion events
+ * release_cnt: No. of CFR data buffers relayed to userspace
+ * rcc_param: Structure to store CFR config for the current commit session
+ * global: Structure to store accumulated CFR config
  * rx_tlv_evt_cnt: Number of CFR WDI events from datapath
  * lut_age_timer: Timer to flush pending TXRX/DBR events in lookup table
  * lut_timer_init: flag to determine if lut_age_timer is initialized or not
- * cfr_data_subscriber: CFR WDI subscriber object
+ * is_cfr_rcc_capable: Flag to determine if RCC is enabled or not.
  * bb_captured_channel_cnt: No. of PPDUs for which MAC sent Freeze TLV to PHY
  * bb_captured_timeout_cnt: No. of PPDUs for which CFR filter criteria matched
  * but MAC did not send Freeze TLV to PHY as time exceeded freeze tlv delay
@@ -466,10 +482,17 @@ struct cfr_rcc_param {
  *	[3] - No. PPDUs filtered due to freeze_reason_TA_RA_TYPE_FILTER
  *	[4] - No. PPDUs filtered due to freeze_reason_NDPA_NDP
  *	[5] - No. PPDUs filtered due to freeze_reason_ALL_PACKET
- * release_err_cnt: No. of lookup table entries freed due to invalid CFR data
- * length
+ * flush_dbr_cnt: No. of un-correlated DBR completions flushed when a newer PPDU
+ * is correlated successfully with newer DBR completion
+ * invalid_dma_length_cnt: No. of buffers for which CFR DMA header length (or)
+ * data length was invalid
+ * flush_timeout_dbr_cnt: No. of DBR completion flushed out in ageout logic
+ * clear_txrx_event: No. of PPDU status TLVs over-written in LUT
+ * unassoc_pool: Pool of un-associated clients used when capture method is
+ * CFR_CAPTURE_METHOD_PROBE_RESPONSE
  * last_success_tstamp: DBR timestamp which indicates that both DBR and TX/RX
  * events have been received successfully.
+ * cfr_dma_aborts: No. of CFR DMA aborts in ucode
  */
 /*
  * To be extended if we get more capbality info
@@ -490,6 +513,7 @@ struct pdev_cfr {
 	uint32_t dbr_buf_size;
 	uint32_t dbr_num_bufs;
 	uint64_t tx_evt_cnt;
+	uint64_t total_tx_evt_cnt;
 	uint64_t dbr_evt_cnt;
 	uint64_t release_cnt;
 #ifdef WLAN_ENH_CFR_ENABLE
@@ -498,19 +522,18 @@ struct pdev_cfr {
 	uint64_t rx_tlv_evt_cnt;
 	qdf_timer_t lut_age_timer;
 	uint8_t lut_timer_init;
-	void *cfr_data_subscriber;
+	uint8_t is_cfr_rcc_capable;
 	uint64_t bb_captured_channel_cnt;
 	uint64_t bb_captured_timeout_cnt;
 	uint64_t rx_loc_info_valid_cnt;
 	uint64_t chan_capture_status[CAPTURE_MAX];
 	uint64_t bb_captured_reason_cnt[FREEZE_REASON_MAX];
 	uint64_t flush_dbr_cnt;
-	uint64_t flush_all_dbr_cnt;
-	uint64_t flush_all_txrx_cnt;
 	uint64_t invalid_dma_length_cnt;
 	uint64_t flush_timeout_dbr_cnt;
 	uint64_t clear_txrx_event;
 	uint64_t last_success_tstamp;
+	uint64_t cfr_dma_aborts;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
 };
