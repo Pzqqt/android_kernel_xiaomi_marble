@@ -5938,14 +5938,14 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		break;
 	case WMI_ROAM_REASON_DEAUTH:
 		WMA_LOGD("%s: Received disconnect roam event reason:%d",
-			 __func__, wmi_event->notif);
+			 __func__, wmi_event->notif_params);
 
 		if (wmi_event->notif_params1)
 			frame = param_buf->deauth_disassoc_frame;
 		wma_handle->pe_disconnect_cb(wma_handle->mac_context,
 					     wmi_event->vdev_id,
 					     frame, wmi_event->notif_params1,
-					     wmi_event->notif);
+					     wmi_event->notif_params);
 		roam_synch_data = qdf_mem_malloc(sizeof(*roam_synch_data));
 		if (!roam_synch_data)
 			return -ENOMEM;
