@@ -2335,4 +2335,13 @@ struct mlme_roam_debug_info {
 	struct wmi_neighbor_report_data data_11kv;
 };
 
+/**
+ * struct wlan_ies - Generic WLAN Information Element(s) format
+ * @len: Total length of the IEs
+ * @data: IE data
+ */
+struct wlan_ies {
+	uint16_t len;
+	uint8_t *data;
+};
 #endif
