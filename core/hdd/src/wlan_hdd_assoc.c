@@ -1748,7 +1748,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	hdd_clear_roam_profile_ie(adapter);
 	hdd_wmm_init(adapter);
-	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 	/* indicate 'disconnect' status to wpa_supplicant... */
@@ -1788,9 +1787,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 							reason_code,
 							disconnect_ies.data,
 							disconnect_ies.len);
-
-			hdd_debug("sent disconnected event to nl80211, reason code %d",
-				  reason);
 		}
 
 		/* update P2P connection status */
@@ -1807,8 +1803,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	mac_handle = hdd_ctx->mac_handle;
 	sme_ft_reset(mac_handle, adapter->vdev_id);
 	sme_reset_key(mac_handle, adapter->vdev_id);
-	if (!hdd_remove_beacon_filter(adapter))
-		hdd_debug("hdd_remove_beacon_filter() failed");
+	hdd_remove_beacon_filter(adapter);
 
 	if (sme_is_beacon_report_started(mac_handle, adapter->vdev_id)) {
 		hdd_debug("Sending beacon pause indication to userspace");
@@ -1821,14 +1816,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 		vstatus = hdd_roam_deregister_sta(adapter,
 						  sta_ctx->conn_info.bssid);
-		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hdd_err("hdd_roam_deregister_sta() failed for sta"
-				QDF_MAC_ADDR_STR " Status: %d [0x%x]",
-				QDF_MAC_ADDR_ARRAY(
-				sta_ctx->conn_info.bssid.bytes),
-				status, status);
+		if (QDF_IS_STATUS_ERROR(vstatus))
 			status = QDF_STATUS_E_FAILURE;
-		}
 
 		/* Clear all the peer sta register with TL. */
 		for (i = 0; i < MAX_PEERS; i++) {
@@ -1843,13 +1832,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 			vstatus = hdd_roam_deregister_sta(adapter, mac_addr);
 
-			if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-				hdd_err("hdd_roam_deregister_sta() failed sta "
-					QDF_MAC_ADDR_STR " Status: %d [0x%x]",
-					QDF_MAC_ADDR_ARRAY(mac_addr.bytes),
-					status, status);
+			if (QDF_IS_STATUS_ERROR(vstatus))
 				status = QDF_STATUS_E_FAILURE;
-			}
 			/* set the peer mac as 0, all other
 			 * reset are done in hdd_conn_remove_connect_info.
 			 */
@@ -1858,8 +1842,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 		}
 	} else {
-		hdd_debug("roam_result: %d", roam_result);
-
 		/* clear scan cache for Link Lost */
 		if (eCSR_ROAM_LOSTLINK == roam_status) {
 			wlan_hdd_cfg80211_unlink_bss(adapter,
@@ -1894,7 +1876,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	}
 	wlan_hdd_clear_link_layer_stats(adapter);
 
-	hdd_debug("check for SAP restart");
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
@@ -4712,7 +4693,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		break;
 	case eCSR_ROAM_LOSTLINK:
 		if (roam_result == eCSR_ROAM_RESULT_LOSTLINK) {
-			hdd_debug("Roaming started due to connection lost");
 			hdd_debug("Disabling queues");
 			wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,

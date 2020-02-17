@@ -467,13 +467,6 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 					eLIM_LINK_MONITORING_DISASSOC) ||
 		(mlmStaContext.cleanupTrigger ==
 					eLIM_PROMISCUOUS_MODE_DISASSOC)) {
-		/**
-		 * Host or LMM driven Disassociation.
-		 * Issue Disassoc Confirm to SME.
-		 */
-		pe_debug("Lim Posting DISASSOC_CNF to Sme. Trigger: %d",
-			mlmStaContext.cleanupTrigger);
-
 		qdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
 			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
 		mlmDisassocCnf.resultCode = status_code;
@@ -488,12 +481,6 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 					eLIM_HOST_DEAUTH) ||
 			(mlmStaContext.cleanupTrigger ==
 					eLIM_LINK_MONITORING_DEAUTH)) {
-		/**
-		 * Host or LMM driven Deauthentication.
-		 * Issue Deauth Confirm to SME.
-		 */
-		pe_debug("Lim Posting DEAUTH_CNF to Sme. Trigger: %d",
-			mlmStaContext.cleanupTrigger);
 		qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
 		mlmDeauthCnf.resultCode = status_code;
 		mlmDeauthCnf.deauthTrigger = mlmStaContext.cleanupTrigger;
@@ -506,12 +493,6 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 	} else if ((mlmStaContext.cleanupTrigger ==
 		    eLIM_PEER_ENTITY_DISASSOC) ||
 		   (mlmStaContext.cleanupTrigger == eLIM_PEER_ENTITY_DEAUTH)) {
-		/**
-		 * Received Disassociation/Deauthentication from peer.
-		 * Issue Purge Ind to SME.
-		 */
-		pe_debug("Lim Posting PURGE_STA_IND to Sme. Trigger: %d",
-			mlmStaContext.cleanupTrigger);
 		qdf_mem_copy((uint8_t *) &mlmPurgeStaInd.peerMacAddr,
 			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
 		mlmPurgeStaInd.reasonCode =
@@ -578,12 +559,6 @@ lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		}
 
 	} else if (mlmStaContext.cleanupTrigger == eLIM_DUPLICATE_ENTRY) {
-		/**
-		 * LIM driven Disassociation.
-		 * Issue Disassoc Confirm to SME.
-		 */
-		pe_debug("Lim Posting DISASSOC_CNF to Sme. Trigger: %d",
-			mlmStaContext.cleanupTrigger);
 
 		qdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
 			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
@@ -3225,14 +3200,9 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 		lim_deactivate_and_change_timer(mac, eLIM_JOIN_FAIL_TIMER);
 	}
 
-	pe_debug("Sessionid %d : Sending HAL_DELETE_BSS_REQ BSSID:"
-		 QDF_MAC_ADDR_STR,
-		 pe_session->peSessionId,
-		 QDF_MAC_ADDR_ARRAY(pe_session->bssId));
 	/* we need to defer the message until we get the response back from HAL. */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 
-	pe_debug("process_ho_fail = %d", pe_session->process_ho_fail);
 	if (pe_session->process_ho_fail)
 		msgQ.type = WMA_DELETE_BSS_HO_FAIL_REQ;
 	else
@@ -3241,6 +3211,9 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
 	msgQ.bodyptr = NULL;
 	msgQ.bodyval = pe_session->smeSessionId;
 
+	pe_debug("Sessionid %d : Sending HAL_DELETE_BSS_REQ BSSID:" QDF_MAC_ADDR_STR,
+		 pe_session->peSessionId,
+		 QDF_MAC_ADDR_ARRAY(pe_session->bssId));
 	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 
 	retCode = wma_post_ctrl_msg(mac, &msgQ);

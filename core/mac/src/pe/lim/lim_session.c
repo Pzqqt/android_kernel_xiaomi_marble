@@ -1035,8 +1035,7 @@ struct pe_session *pe_find_session_by_peer_sta(struct mac_context *mac, uint8_t 
 		}
 	}
 
-	pe_debug("Session lookup fails for Peer StaId:");
-	lim_print_mac_addr(mac, sa, LOGD);
+	pe_debug("Session lookup fails for Peer StaId: %pM", sa);
 	return NULL;
 }
 

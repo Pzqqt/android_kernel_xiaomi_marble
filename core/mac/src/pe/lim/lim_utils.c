@@ -710,7 +710,7 @@ uint8_t lim_write_deferred_msg_q(struct mac_context *mac_ctx,
 			cds_flush_logs(WLAN_LOG_TYPE_NON_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
 				WLAN_LOG_REASON_QUEUE_FULL,
-				true, false);
+				false, false);
 		} else {
 			mac_ctx->lim.deferredMsgCnt++;
 		}

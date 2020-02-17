@@ -1561,8 +1561,6 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 	struct wlan_objmgr_psoc *psoc = adapter->hdd_ctx->psoc;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	hdd_enter();
-
 	if (!psoc) {
 		hdd_err("Invalid psoc handle");
 		return QDF_STATUS_E_FAILURE;

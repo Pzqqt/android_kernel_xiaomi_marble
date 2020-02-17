@@ -2051,11 +2051,13 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 		disassocTrigger = eLIM_HOST_DISASSOC;
 		goto sendDisassoc;
 	}
-	pe_debug("received DISASSOC_REQ message on sessionid %d Systemrole %d Reason: %u SmeState: %d from: "
-			QDF_MAC_ADDR_STR, smesessionId,
-		GET_LIM_SYSTEM_ROLE(pe_session), smeDisassocReq.reasonCode,
-		mac->lim.gLimSmeState,
-		QDF_MAC_ADDR_ARRAY(smeDisassocReq.peer_macaddr.bytes));
+	pe_debug("vdev %d (session %d) Systemrole %d Reason: %u SmeState: %d limMlmState %d ho fail %d  send OTA %d from: "
+		 QDF_MAC_ADDR_STR, pe_session->vdev_id, pe_session->peSessionId,
+		 GET_LIM_SYSTEM_ROLE(pe_session), smeDisassocReq.reasonCode,
+		 pe_session->limSmeState, pe_session->limMlmState,
+		 smeDisassocReq.process_ho_fail,
+		 smeDisassocReq.doNotSendOverTheAir,
+		 QDF_MAC_ADDR_ARRAY(smeDisassocReq.peer_macaddr.bytes));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_REQ_EVENT, pe_session,
@@ -2063,7 +2065,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	pe_session->smeSessionId = smesessionId;
-	pe_debug("ho_fail: %d ", smeDisassocReq.process_ho_fail);
 	pe_session->process_ho_fail = smeDisassocReq.process_ho_fail;
 
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
@@ -2071,8 +2072,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 		switch (pe_session->limSmeState) {
 		case eLIM_SME_ASSOCIATED_STATE:
 		case eLIM_SME_LINK_EST_STATE:
-			pe_debug("Rcvd SME_DISASSOC_REQ in limSmeState: %d ",
-				pe_session->limSmeState);
 			pe_session->limPrevSmeState =
 				pe_session->limSmeState;
 			pe_session->limSmeState = eLIM_SME_WT_DISASSOC_STATE;
@@ -2094,7 +2093,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 				       (mac, TRACE_CODE_SME_STATE,
 				       pe_session->peSessionId,
 				       pe_session->limSmeState));
-			pe_debug("Rcvd SME_DISASSOC_REQ while in SME_WT_DEAUTH_STATE");
 			break;
 
 		case eLIM_SME_WT_DISASSOC_STATE:
@@ -2107,12 +2105,10 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 			 * It will send a disassoc, which is ok. However, we can use the global flag
 			 * sendDisassoc to not send disassoc frame.
 			 */
-			pe_debug("Rcvd SME_DISASSOC_REQ while in SME_WT_DISASSOC_STATE");
 			break;
 
 		case eLIM_SME_JOIN_FAILURE_STATE: {
 			/* Already in Disconnected State, return success */
-			pe_debug("Rcvd SME_DISASSOC_REQ while in eLIM_SME_JOIN_FAILURE_STATE");
 			if (mac->lim.gLimRspReqd) {
 				retCode = eSIR_SME_SUCCESS;
 				disassocTrigger = eLIM_HOST_DISASSOC;
@@ -2163,14 +2159,8 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 	disassocTrigger = eLIM_HOST_DISASSOC;
 	reasonCode = smeDisassocReq.reasonCode;
 
-	if (smeDisassocReq.doNotSendOverTheAir) {
-		pe_debug("do not send dissoc over the air");
+	if (smeDisassocReq.doNotSendOverTheAir)
 		send_disassoc_frame = 0;
-	}
-	/* Trigger Disassociation frame to peer MAC entity */
-	pe_debug("Sending Disasscoc with disassoc Trigger"
-				" : %d, reasonCode : %d",
-			disassocTrigger, reasonCode);
 
 	pMlmDisassocReq = qdf_mem_malloc(sizeof(tLimMlmDisassocReq));
 	if (!pMlmDisassocReq)
@@ -2406,11 +2396,11 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 		deauth_trigger = eLIM_HOST_DEAUTH;
 		goto send_deauth;
 	}
-	pe_debug("received DEAUTH_REQ vdev_id %d Systemrole %d reasoncode %u limSmestate %d from "
-		QDF_MAC_ADDR_STR, vdev_id,
-		GET_LIM_SYSTEM_ROLE(session_entry), sme_deauth_req.reasonCode,
-		session_entry->limSmeState,
-		QDF_MAC_ADDR_ARRAY(sme_deauth_req.peer_macaddr.bytes));
+	pe_debug("vdev %d (session %d) Systemrole %d reasoncode %u limSmestate %d limMlmState %d from "
+		 QDF_MAC_ADDR_STR, vdev_id, session_entry->peSessionId,
+		 GET_LIM_SYSTEM_ROLE(session_entry), sme_deauth_req.reasonCode,
+		 session_entry->limSmeState, session_entry->limMlmState,
+		 QDF_MAC_ADDR_ARRAY(sme_deauth_req.peer_macaddr.bytes));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_DEAUTH_REQ_EVENT,
 			session_entry, 0, sme_deauth_req.reasonCode);
@@ -2449,7 +2439,6 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 			 * was sent for deauth/disassoc frame.
 			 */
 			session_entry->limSmeState = eLIM_SME_WT_DEAUTH_STATE;
-			pe_debug("Rcvd SME_DEAUTH_REQ while in SME_WT_DEAUTH_STATE");
 			break;
 		default:
 			/*
