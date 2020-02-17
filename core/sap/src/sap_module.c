@@ -1776,13 +1776,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 	sap_ctx->chan_freq = target_chan_freq;
 	wlansap_get_sec_channel(ch_params->sec_ch_offset, sap_ctx->chan_freq,
 				&sap_ctx->sec_ch_freq);
-	sap_ctx->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
-	sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
-						ch_params->sec_ch_offset;
-	sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
-						ch_params->center_freq_seg0;
-	sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
-						ch_params->center_freq_seg1;
+	sap_ctx->csr_roamProfile.ch_params = *ch_params;
 	sap_dfs_set_current_channel(sap_ctx);
 	wlansap_set_cac_required_for_chan(mac_ctx, sap_ctx);
 

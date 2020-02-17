@@ -1719,11 +1719,11 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
 		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
 		acs_selected->ch_width =
-			sap_ctx->csr_roamProfile.ch_params.ch_width;
+			sap_ctx->acs_cfg->ch_width;
 		acs_selected->vht_seg0_center_ch_freq =
-			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg0;
+			sap_ctx->acs_cfg->vht_seg0_center_ch_freq;
 		acs_selected->vht_seg1_center_ch_freq =
-			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg1;
+			sap_ctx->acs_cfg->vht_seg1_center_ch_freq;
 		break;
 
 	case eSAP_ECSA_CHANGE_CHAN_IND:
