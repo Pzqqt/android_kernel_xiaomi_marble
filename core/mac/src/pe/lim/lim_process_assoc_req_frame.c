@@ -829,6 +829,23 @@ static void lim_print_ht_cap(struct mac_context *mac_ctx, struct pe_session *ses
 	}
 }
 
+static enum mac_status_code
+lim_check_crypto_param(tpSirAssocReq assoc_req,
+		       struct wlan_crypto_params *peer_crypto_params)
+{
+	/* TKIP/WEP is not allowed in HT/VHT mode*/
+	if (assoc_req->HTCaps.present) {
+		if ((peer_crypto_params->ucastcipherset &
+			(1 << WLAN_CRYPTO_CIPHER_TKIP)) ||
+		    (peer_crypto_params->ucastcipherset &
+			(1 << WLAN_CRYPTO_CIPHER_WEP))) {
+			pe_info("TKIP/WEP cipher with HT supported client, reject assoc");
+			return eSIR_MAC_INVALID_IE_STATUS;
+		}
+	}
+	return eSIR_MAC_SUCCESS_STATUS;
+}
+
 static
 enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 				      struct mac_context *mac_ctx,
@@ -841,6 +858,7 @@ enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 	uint8_t buffer[WLAN_MAX_IE_LEN];
 	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
 	tSirMacRsnInfo rsn_ie;
+	struct wlan_crypto_params peer_crypto_params;
 
 	dot11f_status = dot11f_pack_ie_rsn(mac_ctx, rsn, buffer,
 					   nbuffer, &written);
@@ -852,7 +870,8 @@ enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 	rsn_ie.length = (uint8_t) written;
 	qdf_mem_copy(&rsn_ie.info[0], buffer, rsn_ie.length);
 	if (wlan_crypto_check_rsn_match(mac_ctx->psoc, session->smeSessionId,
-					&rsn_ie.info[0], rsn_ie.length)) {
+					&rsn_ie.info[0], rsn_ie.length,
+					&peer_crypto_params)) {
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 							session->smeSessionId,
 							WLAN_LEGACY_MAC_ID);
@@ -863,6 +882,8 @@ enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 
 		*pmf_connection = wlan_crypto_vdev_is_pmf_enabled(vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		return lim_check_crypto_param(assoc_req, &peer_crypto_params);
+
 	} else {
 		return eSIR_MAC_INVALID_IE_STATUS;
 	}
@@ -878,6 +899,7 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
 	uint8_t buffer[WLAN_MAX_IE_LEN];
 	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
 	tSirMacRsnInfo wpa_ie = {0};
+	struct wlan_crypto_params peer_crypto_params;
 
 	dot11f_status = dot11f_pack_ie_wpa(mac_ctx, wpa, buffer,
 					   nbuffer, &written);
@@ -889,8 +911,10 @@ static enum mac_status_code lim_check_wpa_ie(struct pe_session *session,
 	wpa_ie.length = (uint8_t) written;
 	qdf_mem_copy(&wpa_ie.info[0], buffer, wpa_ie.length);
 	if (wlan_crypto_check_wpa_match(mac_ctx->psoc, session->smeSessionId,
-					&wpa_ie.info[0], wpa_ie.length))
-		return eSIR_MAC_SUCCESS_STATUS;
+					&wpa_ie.info[0], wpa_ie.length,
+					&peer_crypto_params)) {
+		return lim_check_crypto_param(assoc_req, &peer_crypto_params);
+	}
 
 	return eSIR_MAC_INVALID_IE_STATUS;
 }
