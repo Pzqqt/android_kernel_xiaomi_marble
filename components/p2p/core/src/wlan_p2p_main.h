@@ -231,7 +231,6 @@ struct p2p_soc_priv_obj {
 	qdf_list_t tx_q_ack;
 	wlan_scan_requester scan_req_id;
 	struct p2p_start_param *start_param;
-	qdf_event_t cancel_roc_done;
 	qdf_event_t cleanup_roc_done;
 	qdf_event_t cleanup_tx_done;
 	qdf_runtime_lock_t roc_runtime_lock;
