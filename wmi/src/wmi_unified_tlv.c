@@ -5092,9 +5092,9 @@ static QDF_STATUS send_process_ll_stats_set_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->aggressive_statistics_gathering =
 		set_req->aggressive_statistics_gathering;
 
-	WMI_LOGD("LINK_LAYER_STATS - Start/Set Request Params");
-	WMI_LOGD("MPDU Size Thresh : %d", cmd->mpdu_size_threshold);
-	WMI_LOGD("Aggressive Gather: %d", cmd->aggressive_statistics_gathering);
+	WMI_LOGD("LINK_LAYER_STATS - Start/Set Params MPDU Size Thresh : %d Aggressive Gather: %d",
+		 cmd->mpdu_size_threshold,
+		 cmd->aggressive_statistics_gathering);
 
 	wmi_mtrace(WMI_START_LINK_STATS_CMDID, NO_SESSION, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -5146,11 +5146,9 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_req->peer_macaddr.bytes,
 				   &cmd->peer_macaddr);
 
-	WMI_LOGD("LINK_LAYER_STATS - Get Request Params");
-	WMI_LOGD("Request ID: %u", cmd->request_id);
-	WMI_LOGD("Stats Type: %0x", cmd->stats_type);
-	WMI_LOGD("Vdev ID: %d", cmd->vdev_id);
-	WMI_LOGD("Peer MAC Addr: %pM", get_req->peer_macaddr.bytes);
+	WMI_LOGD("LINK_LAYER_STATS - Get Request Params Request ID: %u Stats Type: %0x Vdev ID: %d Peer MAC Addr: %pM",
+		 cmd->request_id, cmd->stats_type, cmd->vdev_id,
+		 get_req->peer_macaddr.bytes);
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,
