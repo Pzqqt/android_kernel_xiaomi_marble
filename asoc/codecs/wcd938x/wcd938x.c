@@ -2095,6 +2095,132 @@ static int wcd938x_codec_force_enable_micbias(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
+static int wcd938x_enable_micbias(struct wcd938x_priv *wcd938x,
+					int micb_num, int req)
+{
+	int micb_index = micb_num - 1;
+	u16 micb_reg;
+
+	if (NULL == wcd938x) {
+		pr_err("%s: wcd938x private data is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (micb_num) {
+	case MIC_BIAS_1:
+		micb_reg = WCD938X_ANA_MICB1;
+		break;
+	case MIC_BIAS_2:
+		micb_reg = WCD938X_ANA_MICB2;
+		break;
+	case MIC_BIAS_3:
+		micb_reg = WCD938X_ANA_MICB3;
+		break;
+	case MIC_BIAS_4:
+		micb_reg = WCD938X_ANA_MICB4;
+		break;
+	default:
+		pr_err("%s: Invalid micbias number: %d\n", __func__, micb_num);
+		return -EINVAL;
+	};
+
+	mutex_lock(&wcd938x->micb_lock);
+
+	switch (req) {
+	case MICB_ENABLE:
+		wcd938x->micb_ref[micb_index]++;
+		if (wcd938x->micb_ref[micb_index] == 1) {
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0xE0, 0xE0);
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
+			regmap_update_bits(wcd938x->regmap,
+			       WCD938X_DIGITAL_CDC_ANA_TX_CLK_CTL, 0x01, 0x01);
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_MICB1_TEST_CTL_2, 0x01, 0x01);
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_MICB2_TEST_CTL_2, 0x01, 0x01);
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_MICB3_TEST_CTL_2, 0x01, 0x01);
+			regmap_update_bits(wcd938x->regmap,
+				WCD938X_MICB4_TEST_CTL_2, 0x01, 0x01);
+			regmap_update_bits(wcd938x->regmap,
+				micb_reg, 0xC0, 0x40);
+			regmap_update_bits(wcd938x->regmap, micb_reg, 0x3F, 0x10);
+		}
+		break;
+	case MICB_PULLUP_ENABLE:
+		wcd938x->pullup_ref[micb_index]++;
+		if ((wcd938x->pullup_ref[micb_index] == 1) &&
+		    (wcd938x->micb_ref[micb_index] == 0))
+			regmap_update_bits(wcd938x->regmap, micb_reg,
+							0xC0, 0x80);
+		break;
+	case MICB_PULLUP_DISABLE:
+		if (wcd938x->pullup_ref[micb_index] > 0)
+			wcd938x->pullup_ref[micb_index]--;
+
+		if ((wcd938x->pullup_ref[micb_index] == 0) &&
+		    (wcd938x->micb_ref[micb_index] == 0))
+			regmap_update_bits(wcd938x->regmap, micb_reg,
+							0xC0, 0x00);
+		break;
+	case MICB_DISABLE:
+		if (wcd938x->micb_ref[micb_index] > 0)
+			wcd938x->micb_ref[micb_index]--;
+
+		if ((wcd938x->micb_ref[micb_index] == 0) &&
+		    (wcd938x->pullup_ref[micb_index] > 0))
+			regmap_update_bits(wcd938x->regmap, micb_reg,
+							0xC0, 0x80);
+		else if ((wcd938x->micb_ref[micb_index] == 0) &&
+			 (wcd938x->pullup_ref[micb_index] == 0))
+			regmap_update_bits(wcd938x->regmap, micb_reg,
+							0xC0, 0x00);
+		break;
+	};
+
+	mutex_unlock(&wcd938x->micb_lock);
+	return 0;
+}
+
+int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
+					int event, int micb_num)
+{
+	struct wcd938x_priv *wcd938x_priv = NULL;
+
+	if(NULL == component) {
+		pr_err("%s: wcd938x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if(event != SND_SOC_DAPM_PRE_PMU && event != SND_SOC_DAPM_POST_PMD) {
+		pr_err("%s: invalid event: %d\n", __func__, event);
+		return -EINVAL;
+	}
+	if(micb_num < MIC_BIAS_1 || micb_num > MIC_BIAS_4) {
+		pr_err("%s: invalid mic bias num: %d\n", __func__, micb_num);
+		return -EINVAL;
+	}
+
+	wcd938x_priv = snd_soc_component_get_drvdata(component);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		wcd938x_wakeup(wcd938x_priv, true);
+		wcd938x_enable_micbias(wcd938x_priv, micb_num, MICB_PULLUP_ENABLE);
+		wcd938x_wakeup(wcd938x_priv, false);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		wcd938x_wakeup(wcd938x_priv, true);
+		wcd938x_enable_micbias(wcd938x_priv, micb_num, MICB_PULLUP_DISABLE);
+		wcd938x_wakeup(wcd938x_priv, false);
+		break;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(wcd938x_codec_force_enable_micbias_v2);
+
 static inline int wcd938x_tx_path_get(const char *wname,
 				      unsigned int *path_num)
 {
