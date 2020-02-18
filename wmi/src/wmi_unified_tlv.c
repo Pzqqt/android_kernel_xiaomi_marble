@@ -3171,26 +3171,26 @@ static void wmi_scan_chanlist_dump(struct scan_chan_list_params *scan_chan_list)
 {
 	uint32_t i;
 	uint8_t info[WMI_MAX_CHAN_INFO_LOG];
-	int len = 0;
+	uint32_t len = 0;
 	struct channel_param *chan;
 	int ret;
 
-	WMI_LOGD(FL("start (freq MHz, tx power dBm):"));
+	wmi_debug("Total chan %d", scan_chan_list->nallchans);
 	for (i = 0; i < scan_chan_list->nallchans; i++) {
 		chan = &scan_chan_list->ch_param[i];
-		ret = scnprintf(info + len, sizeof(info) - len, "%d %d ",
-				chan->mhz, chan->maxregpower);
+		ret = qdf_scnprintf(info + len, sizeof(info) - len,
+				    " %d[%d][%d]", chan->mhz, chan->maxregpower,
+				    chan->dfs_set);
 		if (ret <= 0)
 			break;
 		len += ret;
 		if (len >= (sizeof(info) - 20)) {
-			WMI_LOGD(FL("%s"), info);
+			wmi_nofl_debug("Chan[TXPwr][DFS]:%s", info);
 			len = 0;
 		}
 	}
-	if (len > 0)
-		WMI_LOGD(FL("%s"), info);
-	WMI_LOGD(FL("end total_count %d"), scan_chan_list->nallchans);
+	if (len)
+		wmi_nofl_debug("Chan[TXPwr][DFS]:%s", info);
 }
 
 static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,

@@ -1285,8 +1285,9 @@ static inline void scm_print_scan_req_info(struct scan_req_params *req)
 	uint32_t buff_len;
 	char *chan_buff;
 	uint32_t len = 0;
-	uint8_t idx;
+	uint8_t idx, count = 0;
 	struct chan_list *chan_lst;
+#define MAX_SCAN_FREQ_TO_PRINT 60
 
 	scm_nofl_debug("Scan start: scan id %d vdev %d Dwell time: act %d pass %d act_2G %d act_6G %d pass_6G %d, probe time %d n_probes %d flags %x ext_flag %x events %x policy %d wide_bw %d pri %d",
 		       req->scan_id, req->vdev_id, req->dwell_time_active,
@@ -1309,16 +1310,25 @@ static inline void scm_print_scan_req_info(struct scan_req_params *req)
 	 * Buffer of (num channl * 5) + 1  to consider the 4 char freq and
 	 * 1 space after it for each channel and 1 to end the string with NULL.
 	 */
-	buff_len = (chan_lst->num_chan * 5) + 1;
+	buff_len =
+		(QDF_MIN(MAX_SCAN_FREQ_TO_PRINT, chan_lst->num_chan) * 5) + 1;
 	chan_buff = qdf_mem_malloc(buff_len);
 	if (!chan_buff)
 		return;
-
-	for (idx = 0; idx < chan_lst->num_chan; idx++)
+	scm_nofl_debug("Total freq %d", chan_lst->num_chan);
+	for (idx = 0; idx < chan_lst->num_chan; idx++) {
 		len += qdf_scnprintf(chan_buff + len, buff_len - len, "%d ",
 				     chan_lst->chan[idx].freq);
-
-	scm_nofl_debug("Freq list[%d]: %s", chan_lst->num_chan, chan_buff);
+		count++;
+		if (count >= MAX_SCAN_FREQ_TO_PRINT) {
+			/* Print the MAX_SCAN_FREQ_TO_PRINT channels */
+			scm_nofl_debug("Freq list: %s", chan_buff);
+			len = 0;
+			count = 0;
+		}
+	}
+	if (len)
+		scm_nofl_debug("Freq list: %s", chan_buff);
 
 	qdf_mem_free(chan_buff);
 }

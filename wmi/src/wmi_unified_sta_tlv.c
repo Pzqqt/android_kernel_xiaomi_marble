@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1956,17 +1956,12 @@ static QDF_STATUS send_pdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 							wmi_handle,
 							WMI_HOST_PDEV_ID_SOC);
 	cmd->num_chan = chan_len;
-	WMI_LOGD("%s: Total chan (PCL) len:%d", __func__, cmd->num_chan);
-
 	buf_ptr += sizeof(wmi_pdev_set_pcl_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
 			(chan_len * sizeof(uint32_t)));
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < chan_len ; i++) {
+	for (i = 0; i < chan_len ; i++)
 		cmd_args[i] = msg->weighed_valid_list[i];
-		WMI_LOGD("%s: freq:%d weight:%d", __func__,
-			 msg->saved_chan_list[i], cmd_args[i]);
-	}
 	wmi_mtrace(WMI_PDEV_SET_PCL_CMDID, NO_SESSION, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_SET_PCL_CMDID)) {
