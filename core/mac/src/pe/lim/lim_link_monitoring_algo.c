@@ -186,6 +186,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 	tpDeleteStaContext msg = (tpDeleteStaContext) lim_msg->bodyptr;
 	struct pe_session *session_entry;
 	tpDphHashNode sta_ds;
+	enum eSirMacReasonCodes reason_code;
 
 	if (!msg) {
 		pe_err("Invalid body pointer in message");
@@ -200,6 +201,8 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 
 	switch (msg->reasonCode) {
 	case HAL_DEL_STA_REASON_CODE_KEEP_ALIVE:
+	case HAL_DEL_STA_REASON_CODE_SA_QUERY_TIMEOUT:
+	case HAL_DEL_STA_REASON_CODE_XRETRY:
 		if (LIM_IS_STA_ROLE(session_entry) && !msg->is_tdls) {
 			if (!((session_entry->limMlmState ==
 			    eLIM_MLM_LINK_ESTABLISHED_STATE) &&
@@ -226,10 +229,18 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 			lim_send_deauth_mgmt_frame(mac_ctx,
 				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
 				msg->addr2, session_entry, false);
+			if (msg->reasonCode ==
+				HAL_DEL_STA_REASON_CODE_SA_QUERY_TIMEOUT)
+				reason_code = eSIR_MAC_SA_QUERY_TIMEOUT;
+			else if (msg->reasonCode ==
+				HAL_DEL_STA_REASON_CODE_XRETRY)
+				reason_code = eSIR_MAC_PEER_XRETRY_FAIL;
+			else
+				reason_code = eSIR_MAC_PEER_INACTIVITY;
 			lim_tear_down_link_with_ap(mac_ctx,
-				session_entry->peSessionId,
-				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
-				eLIM_LINK_MONITORING_DEAUTH);
+						   session_entry->peSessionId,
+						   reason_code,
+						   eLIM_LINK_MONITORING_DEAUTH);
 			/* only break for STA role (non TDLS) */
 			break;
 		}
@@ -254,7 +265,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 			return;
 		}
 		lim_send_deauth_mgmt_frame(mac_ctx,
-				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				eSIR_MAC_BSS_TRANSITION_DISASSOC,
 				session_entry->bssId, session_entry, false);
 		lim_tear_down_link_with_ap(mac_ctx, session_entry->peSessionId,
 					   eSIR_MAC_BSS_TRANSITION_DISASSOC,
