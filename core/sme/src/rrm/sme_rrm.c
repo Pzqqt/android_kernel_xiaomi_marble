@@ -688,7 +688,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 	ch_idx = pSmeRrmContext->currentIndex;
 	num_chan = pSmeRrmContext->channelList.numOfChannels;
 	if (((ch_idx + 1) < num_chan) && valid_result) {
-		sme_rrm_send_scan_result(mac, 1, freq_list, false);
+		sme_rrm_send_scan_result(mac, 1, &freq_list[ch_idx], false);
 		/* Advance the current index. */
 		pSmeRrmContext->currentIndex++;
 		/* start the timer to issue next request. */
@@ -712,7 +712,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 		/* Done with the measurement. Clean up all context and send a
 		 * message to PE with measurement done flag set.
 		 */
-		sme_rrm_send_scan_result(mac, 1, freq_list, true);
+		sme_rrm_send_scan_result(mac, 1, &freq_list[ch_idx], true);
 		qdf_mem_free(pSmeRrmContext->channelList.freq_list);
 		pSmeRrmContext->channelList.freq_list = NULL;
 		sme_reset_ese_bcn_req_in_progress(pSmeRrmContext);
@@ -925,7 +925,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 		ch_idx = sme_rrm_ctx->currentIndex;
 		if ((ch_idx + 1) < sme_rrm_ctx->channelList.numOfChannels) {
 			sme_rrm_send_scan_result(mac_ctx, 1,
-						 freq_list, false);
+						 &freq_list[ch_idx], false);
 			/* Advance the current index. */
 			sme_rrm_ctx->currentIndex++;
 			sme_rrm_issue_scan_req(mac_ctx);
@@ -939,7 +939,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 			 * send a message to PE with measurement done flag set.
 			 */
 			sme_rrm_send_scan_result(mac_ctx, 1,
-						 freq_list, true);
+						 &freq_list[ch_idx], true);
 			goto free_ch_lst;
 		}
 	}
