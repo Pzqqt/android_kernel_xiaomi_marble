@@ -296,6 +296,7 @@ reg_country_opclass_freq_check(struct wlan_objmgr_pdev *pdev,
 			       uint8_t op_class,
 			       uint16_t chan_freq)
 {
+	return false;
 }
 
 #endif
