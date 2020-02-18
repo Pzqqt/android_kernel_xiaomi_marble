@@ -30,6 +30,7 @@
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 #include "../dfs_process_radar_found_ind.h"
 #endif
+#include "../dfs_confirm_radar.h"
 
 /**
  * struct dfs_pulse dfs_fcc_radars - FCC radar table for Offload chipsets.
@@ -94,16 +95,6 @@ static struct dfs_pulse dfs_mkk4_radars[] = {
 
 	/* FCC TYPE 4 */
 	{16, 15, 2000, 5000, 0,  4,  7, 11, 23, 22,  0, 3, 0, 5, 0, 11},
-};
-
-/**
- * struct dfs_pulse dfs_mkkn_radars - MKKN radar table for Offload chipsets.
- */
-static struct dfs_pulse dfs_mkkn_radars[] = {
-	/** Since the table is empty  no new radar type shall be detected.
-	 * New filters shall be added to this tables after proper testing
-	 * and verification.
-	 */
 };
 
 /**
@@ -419,8 +410,8 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 	case DFS_MKKN_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKKN domain");
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
-		rinfo.dfs_radars = dfs_mkkn_radars;
-		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkkn_radars);
+		rinfo.dfs_radars = dfs_mkk4_radars;
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;
