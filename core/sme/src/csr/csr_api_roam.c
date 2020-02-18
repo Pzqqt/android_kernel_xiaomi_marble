@@ -2738,12 +2738,36 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 }
 
 #ifdef WLAN_FEATURE_11AX
-#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _ch_freq)                \
-	(_req)->he_config.bfee_sts_lt_80 =                                   \
-				wlan_reg_is_24ghz_ch_freq((_ch_freq)) ?      \
-				(_pmac)->he_cap_2g.bfee_sts_lt_80 :          \
-				(_pmac)->he_cap_5g.bfee_sts_lt_80
+#define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _ch_freq) \
+	csr_revise_req_he_cap_per_band(&(_req)->he_config, _pmac, _ch_freq)
 
+static void
+csr_revise_req_he_cap_per_band(tDot11fIEhe_cap *he_config,
+			       struct mac_context *mac,
+			       uint32_t ch_freq)
+{
+	if (wlan_reg_is_24ghz_ch_freq(ch_freq)) {
+		he_config->bfee_sts_lt_80 =
+			mac->he_cap_2g.bfee_sts_lt_80;
+	} else {
+		he_config->bfee_sts_lt_80 =
+			mac->he_cap_5g.bfee_sts_lt_80;
+
+		he_config->num_sounding_lt_80 =
+			mac->he_cap_5g.num_sounding_lt_80;
+		if (he_config->chan_width_2 ||
+		    he_config->chan_width_3) {
+			he_config->bfee_sts_gt_80 =
+				mac->he_cap_5g.bfee_sts_gt_80;
+			he_config->num_sounding_gt_80 =
+				mac->he_cap_5g.num_sounding_gt_80;
+			he_config->he_ppdu_20_in_160_80p80Mhz =
+				mac->he_cap_5g.he_ppdu_20_in_160_80p80Mhz;
+			he_config->he_ppdu_80_in_160_80p80Mhz =
+				mac->he_cap_5g.he_ppdu_80_in_160_80p80Mhz;
+		}
+	}
+}
 
 /**
  * csr_join_req_copy_he_cap() - Copy HE cap into CSR Join Req
