@@ -948,7 +948,7 @@ struct cdp_raw_ops {
 struct cdp_pflow_ops {
 	uint32_t (*pflow_update_pdev_params)(struct cdp_soc_t *soc,
 					     uint8_t pdev_id,
-					     enum _ol_ath_param_t,
+					     enum _dp_param_t,
 					     uint32_t, void *);
 };
 #endif /* PEER_FLOW_CONTROL */

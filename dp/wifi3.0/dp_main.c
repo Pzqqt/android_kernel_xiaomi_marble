@@ -9760,7 +9760,7 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
  */
 static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 					       uint8_t pdev_id,
-					       enum _ol_ath_param_t param,
+					       enum _dp_param_t param,
 					       uint32_t value, void *buff)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
@@ -9777,20 +9777,20 @@ static uint32_t dp_tx_flow_ctrl_configure_pdev(struct cdp_soc_t *soc_handle,
 
 	switch (param) {
 #ifdef QCA_ENH_V3_STATS_SUPPORT
-	case OL_ATH_PARAM_VIDEO_DELAY_STATS_FC:
+	case DP_PARAM_VIDEO_DELAY_STATS_FC:
 		if (value)
 			pdev->delay_stats_flag = true;
 		else
 			pdev->delay_stats_flag = false;
 		break;
-	case OL_ATH_PARAM_VIDEO_STATS_FC:
+	case DP_PARAM_VIDEO_STATS_FC:
 		qdf_print("------- TID Stats ------\n");
 		dp_pdev_print_tid_stats(pdev);
 		qdf_print("------ Delay Stats ------\n");
 		dp_pdev_print_delay_stats(pdev);
 		break;
 #endif
-	case OL_ATH_PARAM_TOTAL_Q_SIZE:
+	case DP_PARAM_TOTAL_Q_SIZE:
 		{
 			uint32_t tx_min, tx_max;
 
