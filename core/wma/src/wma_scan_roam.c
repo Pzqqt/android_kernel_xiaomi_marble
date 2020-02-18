@@ -728,7 +728,8 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 {
 	QDF_STATUS status;
 	int i;
-	uint32_t *chan_list_mhz = NULL;
+	uint32_t *chan_list_mhz = NULL, buf_len = 0, len = 0;
+	uint8_t *chan_buff = NULL;
 
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
@@ -739,12 +740,27 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 		chan_list_mhz = qdf_mem_malloc(chan_count * sizeof(*chan_list_mhz));
 		if (!chan_list_mhz)
 			return QDF_STATUS_E_NOMEM;
+
+		/*
+		 * Buffer of (num channl * 5) + 1  to consider the 4 char freq
+		 * and 1 space after it for each channel and 1 to end the string
+		 * with NULL.
+		 */
+		buf_len = (chan_count * 5) + 1;
+		chan_buff = qdf_mem_malloc(buf_len);
 	}
 
 	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
 		chan_list_mhz[i] = chan_freq_list[i];
-		WMA_LOGD("%d,", chan_list_mhz[i]);
+		if (chan_buff)
+			len += qdf_scnprintf(chan_buff + len, buf_len - len,
+					     " %d", chan_list_mhz[i]);
+	}
+
+	if (chan_buff) {
+		wma_debug("Freq list[%d]:%s", chan_count, chan_buff);
+		qdf_mem_free(chan_buff);
 	}
 
 	status = wmi_unified_roam_scan_offload_chan_list_cmd(

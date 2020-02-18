@@ -3175,12 +3175,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	sap_config->acs_cfg.is_ht_enabled = ht_enabled;
 	sap_config->acs_cfg.is_vht_enabled = vht_enabled;
 
-	if (sap_config->acs_cfg.ch_list_count) {
-		hdd_nofl_debug("ACS freq list: len: %d",
-			       sap_config->acs_cfg.ch_list_count);
-		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
-			hdd_nofl_debug("%d ", sap_config->acs_cfg.freq_list[i]);
-	}
+	sap_dump_acs_channel(&sap_config->acs_cfg);
 
 	qdf_status = ucfg_mlme_get_vendor_acs_support(hdd_ctx->psoc,
 						&is_vendor_acs_support);

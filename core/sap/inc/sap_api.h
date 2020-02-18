@@ -1486,6 +1486,16 @@ QDF_STATUS sap_acquire_vdev_ref(struct wlan_objmgr_psoc *psoc,
 				uint8_t session_id);
 
 /**
+ * sap_dump_acs_channel() - dump acs channel list
+ * @acs_cfg: acs config
+ *
+ * This function dump acs channel list
+ *
+ * Return: void.
+ */
+void sap_dump_acs_channel(struct sap_acs_cfg *acs_cfg);
+
+/**
  * sap_release_vdev_ref() - Decrement reference count for vdev object
  * @sap_ctx: for which vdev reference is to be decremented
  *
