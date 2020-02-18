@@ -306,6 +306,7 @@ static inline void ol_txrx_setup_mcc_sys_pipes(
 #endif
 
 #ifdef ENABLE_SMMU_S1_TRANSLATION
+#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_tx_smmu_params() - Config IPA TX params
  * @ipa_res: IPA resources
@@ -341,7 +342,6 @@ static inline void ol_txrx_ipa_wdi_tx_smmu_params(
 	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(tx_smmu) = 0;
 }
 
-#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_rx_smmu_params() - Config IPA RX params
  * @ipa_res: IPA resources
@@ -380,6 +380,33 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 
 }
 #else
+
+static inline void ol_txrx_ipa_wdi_tx_smmu_params(
+				struct ol_txrx_ipa_resources *ipa_res,
+				qdf_ipa_wdi_pipe_setup_info_smmu_t *tx_smmu,
+				bool over_gsi)
+{
+	QDF_IPA_WDI_SETUP_INFO_SMMU_CLIENT(tx_smmu) =
+		IPA_CLIENT_WLAN1_CONS;
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_BASE(
+				tx_smmu),
+		     &ipa_res->tx_comp_ring->sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_TRANSFER_RING_SIZE(tx_smmu) =
+		ipa_res->tx_comp_ring->mem_info.size;
+	qdf_mem_copy(&QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_BASE(
+				tx_smmu),
+		     &ipa_res->ce_sr->sgtable,
+		     sizeof(sgtable_t));
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_SIZE(tx_smmu) =
+		ipa_res->ce_sr_ring_size;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_EVENT_RING_DOORBELL_PA(tx_smmu) =
+		ipa_res->ce_reg_paddr;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_NUM_PKT_BUFFERS(tx_smmu) =
+		ipa_res->tx_num_alloc_buffer;
+	QDF_IPA_WDI_SETUP_INFO_SMMU_PKT_OFFSET(tx_smmu) = 0;
+}
+
 static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 				struct ol_txrx_ipa_resources *ipa_res,
 				qdf_ipa_wdi_pipe_setup_info_smmu_t *rx_smmu,
@@ -417,6 +444,7 @@ static inline void ol_txrx_ipa_wdi_rx_smmu_params(
 }
 #endif
 
+#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_tx_params() - Config IPA TX params
  * @ipa_res: IPA resources
@@ -457,7 +485,6 @@ static inline void ol_txrx_ipa_wdi_tx_params(
 	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
 }
 
-#ifdef QCA_WIFI_3_0
 /**
  * ol_txrx_ipa_wdi_rx_params() - Config IPA RX params
  * @ipa_res: IPA resources
@@ -491,6 +518,36 @@ static inline void ol_txrx_ipa_wdi_rx_params(
 }
 
 #else
+static inline void ol_txrx_ipa_wdi_tx_params(
+				struct ol_txrx_ipa_resources *ipa_res,
+				qdf_ipa_wdi_pipe_setup_info_t *tx,
+				bool over_gsi)
+{
+	qdf_device_t osdev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!osdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: qdf device is null!", __func__);
+		return;
+	}
+
+	QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
+		qdf_mem_get_dma_addr(osdev,
+				&ipa_res->tx_comp_ring->mem_info);
+	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(tx) =
+		ipa_res->tx_comp_ring->mem_info.size;
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_BASE_PA(tx) =
+		qdf_mem_get_dma_addr(osdev,
+				&ipa_res->ce_sr->mem_info);
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_SIZE(tx) =
+		ipa_res->ce_sr_ring_size;
+	QDF_IPA_WDI_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
+		ipa_res->ce_reg_paddr;
+	QDF_IPA_WDI_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
+		ipa_res->tx_num_alloc_buffer;
+	QDF_IPA_WDI_SETUP_INFO_PKT_OFFSET(tx) = 0;
+}
 
 static inline void ol_txrx_ipa_wdi_rx_params(
 				struct ol_txrx_ipa_resources *ipa_res,
