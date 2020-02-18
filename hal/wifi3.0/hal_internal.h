@@ -20,6 +20,7 @@
 #define _HAL_INTERNAL_H_
 
 #include "qdf_types.h"
+#include "qdf_atomic.h"
 #include "qdf_lock.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
@@ -484,6 +485,40 @@ struct hal_soc_stats {
 	uint32_t reg_write_fail;
 };
 
+#ifdef ENABLE_HAL_REG_WR_HISTORY
+/* The history size should always be a power of 2 */
+#define HAL_REG_WRITE_HIST_SIZE 8
+
+/**
+ * struct hal_reg_write_fail_entry - Record of
+ *		register write which failed.
+ * @timestamp: timestamp of reg write failure
+ * @reg_offset: offset of register where the write failed
+ * @write_val: the value which was to be written
+ * @read_val: the value read back from the register after write
+ */
+struct hal_reg_write_fail_entry {
+	uint64_t timestamp;
+	uint32_t reg_offset;
+	uint32_t write_val;
+	uint32_t read_val;
+};
+
+/**
+ * struct hal_reg_write_fail_history - Hal layer history
+ *		of all the register write failures.
+ * @index: index to add the new record
+ * @record: array of all the records in history
+ *
+ * This structure holds the history of register write
+ * failures at HAL layer.
+ */
+struct hal_reg_write_fail_history {
+	qdf_atomic_t index;
+	struct hal_reg_write_fail_entry record[HAL_REG_WRITE_HIST_SIZE];
+};
+#endif
+
 /**
  * HAL context to be used to access SRNG APIs (currently used by data path
  * and transport (CE) modules)
@@ -535,6 +570,9 @@ struct hal_soc {
 	bool init_phase;
 	/* Hal level stats */
 	struct hal_soc_stats stats;
+#ifdef ENABLE_HAL_REG_WR_HISTORY
+	struct hal_reg_write_fail_history *reg_wr_fail_hist;
+#endif
 };
 
 void hal_qca6750_attach(struct hal_soc *hal_soc);

@@ -104,6 +104,30 @@ hal_set_verbose_debug(bool flag)
 #define HAL_STATS_INC(_handle, _field, _delta)
 #endif
 
+#ifdef ENABLE_HAL_REG_WR_HISTORY
+#define HAL_REG_WRITE_FAIL_HIST_ADD(hal_soc, offset, wr_val, rd_val) \
+	hal_reg_wr_fail_history_add(hal_soc, offset, wr_val, rd_val)
+
+void hal_reg_wr_fail_history_add(struct hal_soc *hal_soc,
+				 uint32_t offset,
+				 uint32_t wr_val,
+				 uint32_t rd_val);
+
+static inline int hal_history_get_next_index(qdf_atomic_t *table_index,
+					     int array_size)
+{
+	int record_index = qdf_atomic_inc_return(table_index);
+
+	return record_index & (array_size - 1);
+}
+#else
+#define HAL_REG_WRITE_FAIL_HIST_ADD(hal_soc, offset, wr_val, rd_val) \
+	hal_err("write failed at reg offset 0x%x, write 0x%x read 0x%x\n", \
+		offset,	\
+		wr_val,	\
+		rd_val)
+#endif
+
 /**
  * hal_reg_write_result_check() - check register writing result
  * @hal_soc: HAL soc handle
@@ -121,14 +145,8 @@ static inline void hal_reg_write_result_check(struct hal_soc *hal_soc,
 
 	value = qdf_ioread32(hal_soc->dev_base_addr + offset);
 	if (exp_val != value) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "register offset 0x%x write failed!\n", offset);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "the expectation 0x%x, actual value 0x%x\n",
-			  exp_val,
-			  value);
+		HAL_REG_WRITE_FAIL_HIST_ADD(hal_soc, offset, exp_val, value);
 		HAL_STATS_INC(hal_soc, reg_write_fail, 1);
-		QDF_BUG(0);
 	}
 }
 
