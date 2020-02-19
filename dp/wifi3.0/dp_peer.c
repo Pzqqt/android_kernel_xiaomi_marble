@@ -2641,6 +2641,16 @@ int dp_addba_resp_tx_completion_wifi3(struct cdp_soc_t *cdp_soc,
 		goto fail;
 	}
 
+	if (dp_rx_tid_update_wifi3(peer, tid,
+				   rx_tid->ba_win_size,
+				   rx_tid->startseqnum)) {
+		dp_err("%s: failed update REO SSN", __func__);
+	}
+
+	dp_info("%s: tid %u window_size %u start_seq_num %u",
+		__func__, tid, rx_tid->ba_win_size,
+		rx_tid->startseqnum);
+
 	/* First Session */
 	if (peer->active_ba_session_cnt == 0) {
 		if (rx_tid->ba_win_size > 64 && rx_tid->ba_win_size <= 256)
