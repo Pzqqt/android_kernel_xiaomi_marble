@@ -42,8 +42,13 @@
 #define OCAC_RESET 1
 #define OCAC_CANCEL 2
 
-#define TREE_DEPTH                        3
+#define TREE_DEPTH_MAX                    TREE_DEPTH_160
+#define TREE_DEPTH_160                    4
+#define TREE_DEPTH_80                     3
+#define TREE_DEPTH_40                     2
+#define TREE_DEPTH_20                     1
 #define N_SUBCHANS_FOR_80BW               4
+#define N_SUBCHANS_FOR_160BW              8
 
 #define INITIAL_20_CHAN_OFFSET           -6
 #define INITIAL_40_CHAN_OFFSET           -4
@@ -57,6 +62,7 @@
 #define DFS_CHWIDTH_40_VAL               40
 #define DFS_CHWIDTH_80_VAL               80
 #define DFS_CHWIDTH_160_VAL             160
+#define DFS_CHWIDTH_165_VAL             165
 
 #define WEATHER_CHAN_START              120
 #define WEATHER_CHAN_END                128
@@ -70,6 +76,22 @@
 #define PCAC_DFS_INDEX_ZERO               0
 #define PCAC_TIMER_NOT_RUNNING            0
 #define PRECAC_NOT_STARTED                0
+
+/* While building precac tree, the center of the 165MHz channel or the
+ * restricted 80p80 channel(which includes channels 132, 136, 140, 144,
+ * 149, 153, 157 and 161) is assumed to be 146(center channel) or
+ * 5730(center frequency).
+ */
+#define RESTRICTED_80P80_CHAN_CENTER_FREQ     5730
+#define RESTRICTED_80P80_LEFT_80_CENTER_CHAN  138
+#define RESTRICTED_80P80_RIGHT_80_CENTER_CHAN 155
+#define RESTRICTED_80P80_LEFT_80_CENTER_FREQ  5690
+#define RESTRICTED_80P80_RIGHT_80_CENTER_FREQ 5775
+#define DEPTH_160_ROOT                        0
+#define DEPTH_80_ROOT                         1
+#define DEPTH_40_ROOT                         2
+#define DEPTH_20_ROOT                         3
+
 /**
  * struct precac_tree_node - Individual tree node structure for every node in
  *                           the precac forest maintained.
@@ -82,6 +104,7 @@
  * @n_valid_subchs:    Number of subchannels of the ch_ieee available (as per
  *                     the country's channel list).
  * @bandwidth:         Bandwidth of the ch_ieee (in the current node).
+ * @depth:             Depth of the precac tree node.
  */
 struct precac_tree_node {
 	struct precac_tree_node *left_child;
@@ -92,6 +115,7 @@ struct precac_tree_node {
 	uint8_t n_nol_subchs;
 	uint8_t n_valid_subchs;
 	uint8_t bandwidth;
+	uint8_t depth;
 };
 
 /**
@@ -115,6 +139,11 @@ enum precac_chan_state {
  * @pe_list:           PreCAC entry.
  * @vht80_ch_ieee:     VHT80 centre channel IEEE value.
  * @vht80_ch_freq:     VHT80 centre channel frequency value.
+ * @center_ch_ieee:    Center channel IEEE value of given bandwidth 20/40/80/
+ *                     160. For 165MHz channel, the value is 146.
+ * @center_ch_freq:    Center frequency of given bandwidth 20/40/80/160. For
+ *                     165MHz channel, the value is 5730.
+ * @bw:                Bandwidth of the precac entry.
  * @dfs:               Pointer to wlan_dfs structure.
  * @tree_root:         Tree root node with 80MHz channel key.
  */
@@ -122,6 +151,9 @@ struct dfs_precac_entry {
 	TAILQ_ENTRY(dfs_precac_entry) pe_list;
 	uint8_t             vht80_ch_ieee;
 	uint16_t            vht80_ch_freq;
+	uint8_t             center_ch_ieee;
+	uint16_t            center_ch_freq;
+	uint16_t            bw;
 	struct wlan_dfs     *dfs;
 	struct precac_tree_node *tree_root;
 };
@@ -1095,13 +1127,15 @@ static inline bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 #ifdef CONFIG_CHAN_FREQ_API
 #define VHT160_FREQ_DIFF 80
 
-#define INITIAL_20_CHAN_FREQ_OFFSET           -30
-#define INITIAL_40_CHAN_FREQ_OFFSET           -20
-#define INITIAL_80_CHAN_FREQ_OFFSET            0
+#define INITIAL_20_CHAN_FREQ_OFFSET           -70
+#define INITIAL_40_CHAN_FREQ_OFFSET           -60
+#define INITIAL_80_CHAN_FREQ_OFFSET           -40
+#define INITIAL_160_CHAN_FREQ_OFFSET            0
 
 #define NEXT_20_CHAN_FREQ_OFFSET               20
 #define NEXT_40_CHAN_FREQ_OFFSET               40
 #define NEXT_80_CHAN_FREQ_OFFSET               80
+#define NEXT_160_CHAN_FREQ_OFFSET             160
 
 #define WEATHER_CHAN_START_FREQ              5600
 #define WEATHER_CHAN_END_FREQ                5640
