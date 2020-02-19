@@ -49,6 +49,7 @@
 #define MAX_RETRIES 4
 #define MAX_RECEPTION_TYPES 4
 
+#define MINIDUMP_STR_SIZE 25
 #ifndef REMOVE_PKT_LOG
 #include <pktlog.h>
 #endif
@@ -933,6 +934,14 @@ struct htt_t2h_stats {
 	uint32_t num_stats;
 };
 
+struct link_desc_bank {
+	void *base_vaddr_unaligned;
+	void *base_vaddr;
+	qdf_dma_addr_t base_paddr_unaligned;
+	qdf_dma_addr_t base_paddr;
+	uint32_t size;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -974,15 +983,6 @@ struct dp_soc {
 	/* RXDMA error destination ring */
 	struct dp_srng rxdma_err_dst_ring[MAX_NUM_LMAC_HW];
 
-	/* Link descriptor memory banks */
-	struct {
-		void *base_vaddr_unaligned;
-		void *base_vaddr;
-		qdf_dma_addr_t base_paddr_unaligned;
-		qdf_dma_addr_t base_paddr;
-		uint32_t size;
-	} mon_link_desc_banks[MAX_NUM_LMAC_HW][MAX_MON_LINK_DESC_BANKS];
-
 	/* RXDMA monitor buffer replenish ring */
 	struct dp_srng rxdma_mon_buf_ring[MAX_NUM_LMAC_HW];
 
@@ -1010,6 +1010,20 @@ struct dp_soc {
 	/* Link descriptor pages */
 	struct qdf_mem_multi_page_t link_desc_pages;
 
+	/* total link descriptors for regular RX and TX */
+	uint32_t total_link_descs;
+
+	/* monitor link descriptor pages */
+	struct qdf_mem_multi_page_t mon_link_desc_pages[MAX_NUM_LMAC_HW];
+
+	/* total link descriptors for monitor mode for each radio */
+	uint32_t total_mon_link_descs[MAX_NUM_LMAC_HW];
+
+	/* Monitor Link descriptor memory banks */
+	struct link_desc_bank
+		mon_link_desc_banks[MAX_NUM_LMAC_HW][MAX_MON_LINK_DESC_BANKS];
+	uint32_t num_mon_link_desc_banks[MAX_NUM_LMAC_HW];
+
 	/* Link descriptor Idle list for HW internal use (SRNG mode) */
 	struct dp_srng wbm_idle_link_ring;
 
@@ -1017,6 +1031,7 @@ struct dp_soc {
 	 */
 	qdf_dma_addr_t wbm_idle_scatter_buf_base_paddr[MAX_IDLE_SCATTER_BUFS];
 	void *wbm_idle_scatter_buf_base_vaddr[MAX_IDLE_SCATTER_BUFS];
+	uint32_t num_scatter_bufs;
 
 	/* Tx SW descriptor pool */
 	struct dp_tx_desc_pool_s tx_desc[MAX_TXDESC_POOLS];

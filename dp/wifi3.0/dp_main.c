@@ -2241,101 +2241,196 @@ static void dp_soc_interrupt_detach(struct cdp_soc_t *txrx_soc)
 #define AVG_MSDUS_PER_MPDU 4
 
 /*
- * Allocate and setup link descriptor pool that will be used by HW for
- * various link and queue descriptors and managed by WBM
+ * dp_hw_link_desc_pool_banks_free() - Free h/w link desc pool banks
+ * @soc: DP SOC handle
+ * @mac_id: mac id
+ *
+ * Return: none
  */
-static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
+void dp_hw_link_desc_pool_banks_free(struct dp_soc *soc, uint32_t mac_id)
 {
+	struct qdf_mem_multi_page_t *pages;
+
+	if (mac_id != WLAN_INVALID_PDEV_ID)
+		pages = &soc->mon_link_desc_pages[mac_id];
+	else
+		pages = &soc->link_desc_pages;
+
+	if (pages->dma_pages) {
+		wlan_minidump_remove((void *)
+				     pages->dma_pages->page_v_addr_start);
+		qdf_mem_multi_pages_free(soc->osdev, pages, 0, false);
+	}
+}
+
+/*
+ * dp_hw_link_desc_pool_banks_alloc() - Allocate h/w link desc pool banks
+ * @soc: DP SOC handle
+ * @mac_id: mac id
+ *
+ * Allocates memory pages for link descriptors, the page size is 4K for
+ * MCL and 2MB for WIN. if the mac_id is invalid link descriptor pages are
+ * allocated for regular RX/TX and if the there is a proper mac_id link
+ * descriptors are allocated for RX monitor mode.
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *	   QDF_STATUS_E_FAILURE: Failure
+ */
+QDF_STATUS dp_hw_link_desc_pool_banks_alloc(struct dp_soc *soc, uint32_t mac_id)
+{
+	hal_soc_handle_t hal_soc = soc->hal_soc;
 	int link_desc_size = hal_get_link_desc_size(soc->hal_soc);
 	int link_desc_align = hal_get_link_desc_align(soc->hal_soc);
 	uint32_t max_clients = wlan_cfg_get_max_clients(soc->wlan_cfg_ctx);
-	uint32_t num_mpdus_per_link_desc =
-		hal_num_mpdus_per_link_desc(soc->hal_soc);
-	uint32_t num_msdus_per_link_desc =
-		hal_num_msdus_per_link_desc(soc->hal_soc);
+	uint32_t num_mpdus_per_link_desc = hal_num_mpdus_per_link_desc(hal_soc);
+	uint32_t num_msdus_per_link_desc = hal_num_msdus_per_link_desc(hal_soc);
 	uint32_t num_mpdu_links_per_queue_desc =
-		hal_num_mpdu_links_per_queue_desc(soc->hal_soc);
+		hal_num_mpdu_links_per_queue_desc(hal_soc);
 	uint32_t max_alloc_size = wlan_cfg_max_alloc_size(soc->wlan_cfg_ctx);
-	uint32_t total_link_descs, total_mem_size;
+	uint32_t *total_link_descs, total_mem_size;
 	uint32_t num_mpdu_link_descs, num_mpdu_queue_descs;
 	uint32_t num_tx_msdu_link_descs, num_rx_msdu_link_descs;
-	uint32_t entry_size, num_entries;
-	int i;
-	uint32_t cookie = 0;
-	qdf_dma_addr_t *baseaddr = NULL;
-	uint32_t page_idx = 0;
+	uint32_t num_entries;
 	struct qdf_mem_multi_page_t *pages;
-	struct qdf_mem_dma_page_t *dma_pages;
-	uint32_t offset = 0;
-	uint32_t count = 0;
-	uint32_t num_descs_per_page;
+	struct dp_srng *dp_srng;
+	uint8_t minidump_str[MINIDUMP_STR_SIZE];
 
 	/* Only Tx queue descriptors are allocated from common link descriptor
 	 * pool Rx queue descriptors are not included in this because (REO queue
 	 * extension descriptors) they are expected to be allocated contiguously
 	 * with REO queue descriptors
 	 */
-	num_mpdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
-		AVG_MAX_MPDUS_PER_TID) / num_mpdus_per_link_desc;
+	if (mac_id != WLAN_INVALID_PDEV_ID) {
+		pages = &soc->mon_link_desc_pages[mac_id];
+		dp_srng = &soc->rxdma_mon_desc_ring[mac_id];
+		num_entries = dp_srng->alloc_size /
+			hal_srng_get_entrysize(soc->hal_soc,
+					       RXDMA_MONITOR_DESC);
+		total_link_descs = &soc->total_mon_link_descs[mac_id];
+		qdf_str_lcopy(minidump_str, "mon_link_desc_bank",
+			      MINIDUMP_STR_SIZE);
+	} else {
+		num_mpdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
+			AVG_MAX_MPDUS_PER_TID) / num_mpdus_per_link_desc;
 
-	num_mpdu_queue_descs = num_mpdu_link_descs /
-		num_mpdu_links_per_queue_desc;
+		num_mpdu_queue_descs = num_mpdu_link_descs /
+			num_mpdu_links_per_queue_desc;
 
-	num_tx_msdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
-		AVG_FLOWS_PER_TID * AVG_MSDUS_PER_FLOW) /
-		num_msdus_per_link_desc;
+		num_tx_msdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
+			AVG_FLOWS_PER_TID * AVG_MSDUS_PER_FLOW) /
+			num_msdus_per_link_desc;
 
-	num_rx_msdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
-		AVG_MAX_MPDUS_PER_TID * AVG_MSDUS_PER_MPDU) / 6;
+		num_rx_msdu_link_descs = (max_clients * AVG_TIDS_PER_CLIENT *
+			AVG_MAX_MPDUS_PER_TID * AVG_MSDUS_PER_MPDU) / 6;
 
-	num_entries = num_mpdu_link_descs + num_mpdu_queue_descs +
-		num_tx_msdu_link_descs + num_rx_msdu_link_descs;
+		num_entries = num_mpdu_link_descs + num_mpdu_queue_descs +
+			num_tx_msdu_link_descs + num_rx_msdu_link_descs;
+
+		pages = &soc->link_desc_pages;
+		total_link_descs = &soc->total_link_descs;
+		qdf_str_lcopy(minidump_str, "link_desc_bank",
+			      MINIDUMP_STR_SIZE);
+	}
 
 	/* Round up to power of 2 */
-	total_link_descs = 1;
-	while (total_link_descs < num_entries)
-		total_link_descs <<= 1;
+	*total_link_descs = 1;
+	while (*total_link_descs < num_entries)
+		*total_link_descs <<= 1;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("total_link_descs: %u, link_desc_size: %d"),
-		total_link_descs, link_desc_size);
-	total_mem_size =  total_link_descs * link_desc_size;
-
+		  FL("total_link_descs: %u, link_desc_size: %d"),
+		  *total_link_descs, link_desc_size);
+	total_mem_size =  *total_link_descs * link_desc_size;
 	total_mem_size += link_desc_align;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("total_mem_size: %d"), total_mem_size);
+		  FL("total_mem_size: %d"), total_mem_size);
 
-	pages = &soc->link_desc_pages;
 	dp_set_max_page_size(pages, max_alloc_size);
-	if (!dp_is_soc_reinit(soc)) {
-		qdf_mem_multi_pages_alloc(soc->osdev,
-					  pages,
-					  link_desc_size,
-					  total_link_descs,
-					  0, false);
-		if (!pages->num_pages) {
-			dp_err("Multi page alloc fail for hw link desc pool");
-			goto fail_page_alloc;
-		}
-		wlan_minidump_log(pages->dma_pages->page_v_addr_start,
-				  pages->num_pages * pages->page_size,
-				  soc->ctrl_psoc,
-				  WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
-				  "hw_link_desc_bank");
+	qdf_mem_multi_pages_alloc(soc->osdev,
+				  pages,
+				  link_desc_size,
+				  *total_link_descs,
+				  0, false);
+	if (!pages->num_pages) {
+		dp_err("Multi page alloc fail for hw link desc pool");
+		return QDF_STATUS_E_FAULT;
 	}
 
-	/* Allocate and setup link descriptor idle list for HW internal use */
-	entry_size = hal_srng_get_entrysize(soc->hal_soc, WBM_IDLE_LINK);
-	total_mem_size = entry_size * total_link_descs;
+	wlan_minidump_log(pages->dma_pages->page_v_addr_start,
+			  pages->num_pages * pages->page_size,
+			  soc->ctrl_psoc,
+			  WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
+			  "hw_link_desc_bank");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_hw_link_desc_ring_free() - Free h/w link desc rings
+ * @soc: DP SOC handle
+ *
+ * Return: none
+ */
+static void dp_hw_link_desc_ring_free(struct dp_soc *soc)
+{
+	uint32_t i;
+	uint32_t size = soc->wbm_idle_scatter_buf_size;
+	void *vaddr = soc->wbm_idle_link_ring.base_vaddr_unaligned;
+	qdf_dma_addr_t paddr;
+
+	if (soc->wbm_idle_scatter_buf_base_vaddr[0]) {
+		for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
+			vaddr = soc->wbm_idle_scatter_buf_base_vaddr[i];
+			paddr = soc->wbm_idle_scatter_buf_base_paddr[i];
+			if (vaddr) {
+				qdf_mem_free_consistent(soc->osdev,
+							soc->osdev->dev,
+							size,
+							vaddr,
+							paddr,
+							0);
+				vaddr = NULL;
+			}
+		}
+	} else {
+		wlan_minidump_remove(vaddr);
+		dp_srng_free(soc, &soc->wbm_idle_link_ring);
+	}
+}
+
+/*
+ * dp_hw_link_desc_ring_alloc() - Allocate hw link desc rings
+ * @soc: DP SOC handle
+ *
+ * Allocate memory for WBM_IDLE_LINK srng ring if the number of
+ * link descriptors is less then the max_allocated size. else
+ * allocate memory for wbm_idle_scatter_buffer.
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_NO_MEM: No memory (Failure)
+ */
+static QDF_STATUS dp_hw_link_desc_ring_alloc(struct dp_soc *soc)
+{
+	uint32_t entry_size, i;
+	uint32_t total_mem_size;
+	qdf_dma_addr_t *baseaddr = NULL;
+	struct dp_srng *dp_srng;
+	uint32_t ring_type;
+	uint32_t max_alloc_size = wlan_cfg_max_alloc_size(soc->wlan_cfg_ctx);
+	uint32_t tlds;
+
+	ring_type = WBM_IDLE_LINK;
+	dp_srng = &soc->wbm_idle_link_ring;
+	tlds = soc->total_link_descs;
+
+	entry_size = hal_srng_get_entrysize(soc->hal_soc, ring_type);
+	total_mem_size = entry_size * tlds;
 
 	if (total_mem_size <= max_alloc_size) {
-		void *desc;
-
-		if (dp_srng_setup(soc, &soc->wbm_idle_link_ring,
-				  WBM_IDLE_LINK, 0, 0, total_link_descs, 0)) {
+		if (dp_srng_alloc(soc, dp_srng, ring_type, tlds, 0)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Link desc idle ring setup failed"));
+				  FL("Link desc idle ring setup failed"));
 			goto fail;
 		}
 
@@ -2344,39 +2439,9 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				  soc->ctrl_psoc,
 				  WLAN_MD_DP_SRNG_WBM_IDLE_LINK,
 				  "wbm_idle_link_ring");
-
-		hal_srng_access_start_unlocked(soc->hal_soc,
-			soc->wbm_idle_link_ring.hal_srng);
-		page_idx = 0; count = 0;
-		offset = 0;
-		pages = &soc->link_desc_pages;
-		if (pages->dma_pages)
-			dma_pages = pages->dma_pages;
-		else
-			goto fail;
-		num_descs_per_page =
-			pages->num_element_per_page;
-		while ((desc = hal_srng_src_get_next(
-				soc->hal_soc,
-				soc->wbm_idle_link_ring.hal_srng)) &&
-		       (count < total_link_descs)) {
-			page_idx = count / num_descs_per_page;
-			offset = count % num_descs_per_page;
-			cookie = LINK_DESC_COOKIE(count, page_idx);
-			hal_set_link_desc_addr(
-				desc, cookie,
-				dma_pages[page_idx].page_p_addr
-				+ (offset * link_desc_size));
-			count++;
-		}
-		hal_srng_access_end_unlocked(soc->hal_soc,
-			soc->wbm_idle_link_ring.hal_srng);
 	} else {
 		uint32_t num_scatter_bufs;
 		uint32_t num_entries_per_buf;
-		uint32_t rem_entries;
-		uint8_t *scatter_buf_ptr;
-		uint16_t scatter_buf_num;
 		uint32_t buf_size = 0;
 
 		soc->wbm_idle_scatter_buf_size =
@@ -2389,21 +2454,19 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 		if (num_scatter_bufs > MAX_IDLE_SCATTER_BUFS) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					FL("scatter bufs size out of bounds"));
+				  FL("scatter bufs size out of bounds"));
 			goto fail;
 		}
 
 		for (i = 0; i < num_scatter_bufs; i++) {
 			baseaddr = &soc->wbm_idle_scatter_buf_base_paddr[i];
-			if (!dp_is_soc_reinit(soc)) {
-				buf_size = soc->wbm_idle_scatter_buf_size;
-				soc->wbm_idle_scatter_buf_base_vaddr[i] =
-					qdf_mem_alloc_consistent(soc->osdev,
-								 soc->osdev->
-								 dev,
-								 buf_size,
-								 baseaddr);
-			}
+			buf_size = soc->wbm_idle_scatter_buf_size;
+			soc->wbm_idle_scatter_buf_base_vaddr[i] =
+				qdf_mem_alloc_consistent(soc->osdev,
+							 soc->osdev->dev,
+							 buf_size,
+							 baseaddr);
+
 			if (!soc->wbm_idle_scatter_buf_base_vaddr[i]) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -2411,43 +2474,154 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 				goto fail;
 			}
 		}
+		soc->num_scatter_bufs = num_scatter_bufs;
+	}
+	return QDF_STATUS_SUCCESS;
 
+fail:
+	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
+		void *vaddr = soc->wbm_idle_scatter_buf_base_vaddr[i];
+		qdf_dma_addr_t paddr = soc->wbm_idle_scatter_buf_base_paddr[i];
+
+		if (vaddr) {
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+						soc->wbm_idle_scatter_buf_size,
+						vaddr,
+						paddr, 0);
+			vaddr = NULL;
+		}
+	}
+	return QDF_STATUS_E_NOMEM;
+}
+
+/*
+ * dp_hw_link_desc_ring_init() - Initialize hw link desc rings
+ * @soc: DP SOC handle
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_FAILURE: failure
+ */
+static QDF_STATUS dp_hw_link_desc_ring_init(struct dp_soc *soc)
+{
+	struct dp_srng *dp_srng = &soc->wbm_idle_link_ring;
+
+	if (dp_srng->base_vaddr_unaligned) {
+		if (dp_srng_init(soc, dp_srng, WBM_IDLE_LINK, 0, 0))
+			return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_hw_link_desc_ring_deinit() - Reset hw link desc rings
+ * @soc: DP SOC handle
+ *
+ * Return: None
+ */
+static void dp_hw_link_desc_ring_deinit(struct dp_soc *soc)
+{
+	dp_srng_deinit(soc, &soc->wbm_idle_link_ring, WBM_IDLE_LINK, 0);
+}
+
+/*
+ * dp_hw_link_desc_ring_replenish() - Replenish hw link desc rings
+ * @soc: DP SOC handle
+ * @mac_id: mac id
+ *
+ * Return: None
+ */
+void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id)
+{
+	uint32_t cookie = 0;
+	uint32_t page_idx = 0;
+	struct qdf_mem_multi_page_t *pages;
+	struct qdf_mem_dma_page_t *dma_pages;
+	uint32_t offset = 0;
+	uint32_t count = 0;
+	void *desc_srng;
+	int link_desc_size = hal_get_link_desc_size(soc->hal_soc);
+	uint32_t total_link_descs;
+	uint32_t scatter_buf_num;
+	uint32_t num_entries_per_buf = 0;
+	uint32_t rem_entries;
+	uint32_t num_descs_per_page;
+	uint32_t num_scatter_bufs = 0;
+	uint8_t *scatter_buf_ptr;
+	void *desc;
+
+	num_scatter_bufs = soc->num_scatter_bufs;
+
+	if (mac_id == WLAN_INVALID_PDEV_ID) {
+		pages = &soc->link_desc_pages;
+		total_link_descs = soc->total_link_descs;
+		desc_srng = soc->wbm_idle_link_ring.hal_srng;
+	} else {
+		pages = &soc->mon_link_desc_pages[mac_id];
+		total_link_descs = soc->total_mon_link_descs[mac_id];
+		desc_srng = soc->rxdma_mon_desc_ring[mac_id].hal_srng;
+	}
+
+	dma_pages = pages->dma_pages;
+	do {
+		qdf_mem_zero(dma_pages[page_idx].page_v_addr_start,
+			     pages->page_size);
+		page_idx++;
+	} while (page_idx < pages->num_pages);
+
+	if (desc_srng) {
+		hal_srng_access_start_unlocked(soc->hal_soc, desc_srng);
+		page_idx = 0;
+		count = 0;
+		offset = 0;
+		pages = &soc->link_desc_pages;
+		while ((desc = hal_srng_src_get_next(soc->hal_soc,
+						     desc_srng)) &&
+			(count < total_link_descs)) {
+			page_idx = count / pages->num_element_per_page;
+			offset = count % pages->num_element_per_page;
+			cookie = LINK_DESC_COOKIE(count, page_idx);
+
+			hal_set_link_desc_addr(desc, cookie,
+					       dma_pages[page_idx].page_p_addr
+					       + (offset * link_desc_size));
+			count++;
+		}
+		hal_srng_access_end_unlocked(soc->hal_soc, desc_srng);
+	} else {
 		/* Populate idle list scatter buffers with link descriptor
 		 * pointers
 		 */
 		scatter_buf_num = 0;
+		num_entries_per_buf = hal_idle_scatter_buf_num_entries(
+					soc->hal_soc,
+					soc->wbm_idle_scatter_buf_size);
+
 		scatter_buf_ptr = (uint8_t *)(
 			soc->wbm_idle_scatter_buf_base_vaddr[scatter_buf_num]);
 		rem_entries = num_entries_per_buf;
 		pages = &soc->link_desc_pages;
 		page_idx = 0; count = 0;
 		offset = 0;
-		num_descs_per_page =
-			pages->num_element_per_page;
-		if (pages->dma_pages)
-			dma_pages = pages->dma_pages;
-		else
-			goto fail;
+		num_descs_per_page = pages->num_element_per_page;
+
 		while (count < total_link_descs) {
 			page_idx = count / num_descs_per_page;
 			offset = count % num_descs_per_page;
 			cookie = LINK_DESC_COOKIE(count, page_idx);
-			hal_set_link_desc_addr(
-				(void *)scatter_buf_ptr,
-				cookie,
-				dma_pages[page_idx].page_p_addr +
-				(offset * link_desc_size));
+			hal_set_link_desc_addr((void *)scatter_buf_ptr,
+					       cookie,
+					       dma_pages[page_idx].page_p_addr +
+					       (offset * link_desc_size));
 			rem_entries--;
 			if (rem_entries) {
-				scatter_buf_ptr += entry_size;
+				scatter_buf_ptr += link_desc_size;
 			} else {
 				rem_entries = num_entries_per_buf;
 				scatter_buf_num++;
 				if (scatter_buf_num >= num_scatter_bufs)
 					break;
-				scatter_buf_ptr =
-					(uint8_t *)
-				(soc->wbm_idle_scatter_buf_base_vaddr[
+				scatter_buf_ptr = (uint8_t *)
+					(soc->wbm_idle_scatter_buf_base_vaddr[
 					 scatter_buf_num]);
 			}
 			count++;
@@ -2461,63 +2635,37 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 			(uint8_t *)(soc->wbm_idle_scatter_buf_base_vaddr[
 			scatter_buf_num-1])), total_link_descs);
 	}
-	return 0;
+}
 
-fail:
-	if (soc->wbm_idle_link_ring.hal_srng) {
-		wlan_minidump_remove(
-			soc->wbm_idle_link_ring.base_vaddr_unaligned);
-		dp_srng_cleanup(soc, &soc->wbm_idle_link_ring,
-				WBM_IDLE_LINK, 0);
+/*
+ * Allocate and setup link descriptor pool that will be used by HW for
+ * various link and queue descriptors and managed by WBM
+ */
+static QDF_STATUS
+dp_hw_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
+{
+	if (!dp_is_soc_reinit(soc)) {
+		if (dp_hw_link_desc_pool_banks_alloc(soc, mac_id))
+			return QDF_STATUS_E_FAILURE;
+		if (dp_hw_link_desc_ring_alloc(soc))
+			return QDF_STATUS_E_FAILURE;
 	}
 
-	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
-		if (soc->wbm_idle_scatter_buf_base_vaddr[i]) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				soc->wbm_idle_scatter_buf_size,
-				soc->wbm_idle_scatter_buf_base_vaddr[i],
-				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
-			soc->wbm_idle_scatter_buf_base_vaddr[i] = NULL;
-		}
-	}
+	if (dp_hw_link_desc_ring_init(soc))
+		return QDF_STATUS_E_FAILURE;
 
-	pages = &soc->link_desc_pages;
-	qdf_minidump_remove(
-		(void *)pages->dma_pages->page_v_addr_start);
-	qdf_mem_multi_pages_free(soc->osdev,
-				 pages, 0, false);
-	return QDF_STATUS_E_FAILURE;
-
-fail_page_alloc:
-	return QDF_STATUS_E_FAULT;
+	dp_link_desc_ring_replenish(soc, mac_id);
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
  * Free link descriptor pool that was setup HW
  */
-static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
+static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 {
-	int i;
-	struct qdf_mem_multi_page_t *pages;
-
-	wlan_minidump_remove(soc->wbm_idle_link_ring.base_vaddr_unaligned);
-	dp_srng_cleanup(soc, &soc->wbm_idle_link_ring, WBM_IDLE_LINK, 0);
-
-	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
-		if (soc->wbm_idle_scatter_buf_base_vaddr[i]) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-					soc->wbm_idle_scatter_buf_size,
-					soc->wbm_idle_scatter_buf_base_vaddr[i],
-					soc->wbm_idle_scatter_buf_base_paddr[i],
-					0);
-			soc->wbm_idle_scatter_buf_base_vaddr[i] = NULL;
-		}
-	}
-
-	pages = &soc->link_desc_pages;
-	wlan_minidump_remove((void *)pages->dma_pages->page_v_addr_start);
-	qdf_mem_multi_pages_free(soc->osdev,
-			pages, 0, false);
+	dp_hw_link_desc_ring_deinit(soc);
+	dp_hw_link_desc_ring_free(soc);
+	dp_hw_link_desc_pool_banks_free(soc, mac_id);
 }
 
 #ifdef IPA_OFFLOAD
@@ -3080,7 +3228,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		return 0;
 
-	if (dp_hw_link_desc_pool_setup(soc))
+	if (dp_hw_link_desc_pool_setup(soc, WLAN_INVALID_PDEV_ID))
 		goto fail1;
 
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
@@ -4846,7 +4994,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	wlan_minidump_remove(soc->reo_status_ring.base_vaddr_unaligned);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
-	dp_hw_link_desc_pool_cleanup(soc);
+	dp_hw_link_desc_pool_cleanup(soc, WLAN_INVALID_PDEV_ID);
 
 	htt_soc_detach(soc->htt_handle);
 	soc->dp_soc_reinit = 0;
