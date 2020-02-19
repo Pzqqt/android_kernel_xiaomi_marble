@@ -5511,6 +5511,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 				vdev->opmode);
 		}
 
+		peer->valid = 1;
 		dp_local_peer_id_alloc(pdev, peer);
 
 		qdf_spinlock_create(&peer->peer_info_lock);
