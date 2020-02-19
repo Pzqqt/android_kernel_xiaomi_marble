@@ -70,13 +70,18 @@ target_if_vdev_mgr_rsp_timer_stop(struct wlan_objmgr_psoc *psoc,
 		 * This is triggered from timer expiry case only for
 		 * which timer stop is not required
 		 */
-		if (vdev_rsp->timer_status != QDF_STATUS_E_TIMEOUT)
-			qdf_timer_stop(&vdev_rsp->rsp_timer);
-
-		vdev_rsp->timer_status = QDF_STATUS_SUCCESS;
-		if (clear_bit == DELETE_RESPONSE_BIT)
-			txops->psoc_vdev_rsp_timer_deinit(psoc,
-							  vdev_rsp->vdev_id);
+		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
+			qdf_atomic_set(&vdev_rsp->rsp_timer_inuse, 0);
+			vdev_rsp->psoc = NULL;
+		} else {
+			vdev_rsp->timer_status = QDF_STATUS_SUCCESS;
+			if (clear_bit == DELETE_RESPONSE_BIT) {
+				txops->psoc_vdev_rsp_timer_deinit(psoc,
+								  vdev_rsp->vdev_id);
+			} else {
+				qdf_timer_stop(&vdev_rsp->rsp_timer);
+			}
+		}
 
 		/*
 		 * Releasing reference taken at the time of
