@@ -237,6 +237,14 @@ void ucfg_pkt_capture_tx_completion_process(
 			uint8_t tid, uint8_t status, bool pkt_format,
 			uint8_t *bssid, htt_pdev_handle pdev);
 
+/**
+ * ucfg_pkt_capture_record_channel() - Update Channel Information
+ * for packet capture mode
+ * @vdev: pointer to vdev
+ *
+ * Return: None
+ */
+void ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
@@ -351,6 +359,11 @@ ucfg_pkt_capture_tx_completion_process(
 			uint8_t tid, uint8_t status, bool pkt_format,
 			uint8_t *bssid, htt_pdev_handle pdev)
 
+{
+}
+
+static inline void
+ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
 {
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
