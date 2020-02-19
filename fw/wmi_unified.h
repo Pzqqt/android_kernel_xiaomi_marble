@@ -10531,6 +10531,15 @@ typedef enum {
      */
     WMI_VDEV_PARAM_ALLOW_NAN_INITIAL_DISCOVERY_OF_MP0_CLUSTER, /* 0x9C */
 
+    /**
+     * VDEV parameter to enable or disable roaming reason VSIE in
+     * re-association request
+     *
+     * Default : Disabled
+     * valid values: 0 - Disable 1 - Enable
+     */
+    WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE, /* 0x9D */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
