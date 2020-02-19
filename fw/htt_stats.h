@@ -345,6 +345,10 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STATS_PDEV_TX_RATE_TXBF   = 31,
 
+    /* HTT_DBG_EXT_STATS_TXBF_OFDMA
+     */
+    HTT_DBG_EXT_STATS_TXBF_OFDMA          = 32,
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -482,6 +486,10 @@ typedef enum {
     HTT_STATS_UNAVAILABLE_ERROR_STATS_TAG          = 110, /* htt_stats_error_tlv_v */
     HTT_STATS_TX_SELFGEN_AC_SCHED_STATUS_STATS_TAG = 111, /* htt_tx_selfgen_ac_sched_status_stats_tlv */
     HTT_STATS_TX_SELFGEN_AX_SCHED_STATUS_STATS_TAG = 112, /* htt_tx_selfgen_ax_sched_status_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG            = 113, /* htt_txbf_ofdma_ndpa_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG             = 114, /* htt_txbf_ofdma_ndp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv */
+    HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -1925,6 +1933,62 @@ typedef struct {
     A_UINT32 ax_mu_mimo_ndp_queued;
     A_UINT32 ax_mu_mimo_brpoll_queued[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
 } htt_tx_selfgen_ax_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 ax_ofdma_ndpa_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndpa_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndpa_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndpa_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_txbf_ofdma_ndpa_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 ax_ofdma_ndp_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndp_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndp_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_ndp_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_txbf_ofdma_ndp_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 ax_ofdma_brpoll_queued[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_brpoll_tried[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_brp_err[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_brp_err_num_cbf_rcvd[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS+1];
+} htt_txbf_ofdma_brp_stats_tlv;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+
+    A_UINT32 ax_ofdma_num_ppdu_steer[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_num_ppdu_ol[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_num_usrs_prefetch[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_num_usrs_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+    A_UINT32 ax_ofdma_num_usrs_force_sound[HTT_TX_PDEV_STATS_NUM_OFDMA_USER_STATS];
+} htt_txbf_ofdma_steer_stats_tlv;
+
+/* STATS_TYPE : HTT_DBG_EXT_STATS_TXBF_OFDMA
+ * TLV_TAGS:
+ *      - HTT_STATS_TXBF_OFDMA_NDPA_STATS_TAG
+ *      - HTT_STATS_TXBF_OFDMA_NDP_STATS_TAG
+ *      - HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG
+ *      - HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_txbf_ofdma_ndpa_stats_tlv ofdma_ndpa_tlv;
+    htt_txbf_ofdma_ndp_stats_tlv ofdma_ndp_tlv;
+    htt_txbf_ofdma_brp_stats_tlv ofdma_brp_tlv;
+    htt_txbf_ofdma_steer_stats_tlv ofdma_steer_tlv;
+} htt_tx_pdev_txbf_ofdma_stats_t;
 
 typedef struct {
     htt_tlv_hdr_t tlv_hdr;
