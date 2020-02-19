@@ -1292,7 +1292,7 @@ QDF_STATUS pmo_core_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 	wow_mode = pmo_core_is_wow_enabled(psoc_ctx);
 	pmo_debug("wow mode %d", wow_mode);
 
-	pmo_core_update_wow_initial_wake_up(psoc_ctx, false);
+	pmo_core_update_wow_initial_wake_up(psoc_ctx, 0);
 
 	/* If target was not suspended, bail out */
 	if (!pmo_tgt_is_target_suspended(psoc)) {
@@ -1424,7 +1424,7 @@ int pmo_core_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc)
 	}
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
-	pmo_core_update_wow_initial_wake_up(psoc_ctx, false);
+	pmo_core_update_wow_initial_wake_up(psoc_ctx, 0);
 
 	pmo_psoc_put_ref(psoc);
 out:
@@ -1445,7 +1445,7 @@ void pmo_core_psoc_handle_initial_wake_up(void *cb_ctx)
 	}
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
-	pmo_core_update_wow_initial_wake_up(psoc_ctx, true);
+	pmo_core_update_wow_initial_wake_up(psoc_ctx, 1);
 
 out:
 	pmo_exit();
