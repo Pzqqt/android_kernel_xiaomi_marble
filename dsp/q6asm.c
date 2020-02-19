@@ -10907,14 +10907,23 @@ EXPORT_SYMBOL(q6asm_get_path_delay);
 
 int q6asm_get_apr_service_id(int session_id)
 {
+	int service_id;
+
 	pr_debug("%s:\n", __func__);
 
 	if (session_id <= 0 || session_id > ASM_ACTIVE_STREAMS_ALLOWED) {
 		pr_err("%s: invalid session_id = %d\n", __func__, session_id);
 		return -EINVAL;
 	}
-
-	return ((struct apr_svc *)(session[session_id].ac)->apr)->id;
+	mutex_lock(&session[session_id].mutex_lock_per_session);
+	if (session[session_id].ac != NULL)
+		if ((session[session_id].ac)->apr != NULL) {
+			service_id = ((struct apr_svc *)(session[session_id].ac)->apr)->id;
+			mutex_unlock(&session[session_id].mutex_lock_per_session);
+			return service_id;
+	}
+	mutex_unlock(&session[session_id].mutex_lock_per_session);
+	return -EINVAL;
 }
 
 uint8_t q6asm_get_asm_stream_id(int session_id)
