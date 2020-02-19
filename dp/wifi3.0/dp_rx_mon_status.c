@@ -2078,10 +2078,14 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	dp_info("Mon RX Status Pool[%d] entries=%d",
 		ring_id, num_entries);
 
-	status = dp_rx_desc_pool_alloc(soc, ring_id, num_entries + 1,
-				       rx_desc_pool);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
+	if (!dp_is_soc_reinit(soc)) {
+		status = dp_rx_desc_pool_alloc(soc, num_entries + 1,
+					       rx_desc_pool);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			return status;
+	}
+
+	dp_rx_desc_pool_init(soc, ring_id, num_entries + 1, rx_desc_pool);
 
 	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;

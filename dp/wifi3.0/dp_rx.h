@@ -431,6 +431,11 @@ struct dp_rx_desc *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc,
 	return dp_get_rx_desc_from_cookie(soc, &soc->rx_desc_status[0], cookie);
 }
 #else
+
+void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
+			  uint32_t pool_size,
+			  struct rx_desc_pool *rx_desc_pool);
+
 /**
  * dp_rx_cookie_2_va_rxdma_buf() - Converts cookie to a virtual address of
  *			 the Rx descriptor on Rx DMA source ring buffer
@@ -494,6 +499,15 @@ void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
 }
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
+QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool);
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
+				 uint32_t pool_size,
+				 struct rx_desc_pool *rx_desc_pool);
+
+void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
+			  uint32_t pool_size,
+			  struct rx_desc_pool *rx_desc_pool);
+
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,
 				union dp_rx_desc_list_elem_t **tail,
@@ -507,7 +521,17 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 				union dp_rx_desc_list_elem_t **tail);
 
 
+QDF_STATUS dp_rx_pdev_desc_pool_alloc(struct dp_pdev *pdev);
+void dp_rx_pdev_desc_pool_free(struct dp_pdev *pdev);
+
+QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev);
+void dp_rx_pdev_desc_pool_deinit(struct dp_pdev *pdev);
+void dp_rx_desc_pool_deinit(struct dp_soc *soc,
+			    struct rx_desc_pool *rx_desc_pool);
+
 QDF_STATUS dp_rx_pdev_attach(struct dp_pdev *pdev);
+QDF_STATUS dp_rx_pdev_buffers_alloc(struct dp_pdev *pdev);
+void dp_rx_pdev_buffers_free(struct dp_pdev *pdev);
 
 void dp_rx_pdev_detach(struct dp_pdev *pdev);
 
@@ -570,19 +594,6 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
  */
 qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf);
 
-/*
- * dp_rx_desc_pool_alloc() - create a pool of software rx_descs
- *			     at the time of dp rx initialization
- *
- * @soc: core txrx main context
- * @pool_id: pool_id which is one of 3 mac_ids
- * @pool_size: number of Rx descriptor in the pool
- * @rx_desc_pool: rx descriptor pool pointer
- *
- * Return: QDF status
- */
-QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
-				 uint32_t pool_size, struct rx_desc_pool *pool);
 
 /*
  * dp_rx_desc_nbuf_and_pool_free() - free the sw rx desc pool called during

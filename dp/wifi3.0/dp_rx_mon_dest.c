@@ -1151,12 +1151,14 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 
 	dp_debug("Mon RX Desc Pool[%d] entries=%u",
 		 pdev_id, num_entries);
-
 	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx) * num_entries;
-	status = dp_rx_desc_pool_alloc(soc, mac_id, rx_desc_pool_size,
-				       rx_desc_pool);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
+
+	if (!dp_is_soc_reinit(soc)) {
+		status = dp_rx_desc_pool_alloc(soc, rx_desc_pool_size,
+					       rx_desc_pool);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			return status;
+	}
 
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
 	rx_desc_pool->buf_size = RX_MONITOR_BUFFER_SIZE;
@@ -1164,6 +1166,9 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 
 	replenish_size = ((num_entries - 1) < MON_BUF_MIN_ALLOC_ENTRIES) ?
 			  (num_entries - 1) : MON_BUF_MIN_ALLOC_ENTRIES;
+
+	dp_rx_desc_pool_init(soc, mac_id, rx_desc_pool_size, rx_desc_pool);
+
 	status = dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
 					   rx_desc_pool, replenish_size);
 

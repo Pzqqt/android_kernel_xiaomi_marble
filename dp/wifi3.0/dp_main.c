@@ -4544,7 +4544,8 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	dp_pktlogmod_exit(pdev);
 
 	dp_rx_fst_detach(soc, pdev);
-	dp_rx_pdev_detach(pdev);
+	dp_rx_pdev_buffers_free(pdev);
+	dp_rx_pdev_desc_pool_deinit(pdev);
 	dp_rx_pdev_mon_detach(pdev);
 	dp_neighbour_peers_detach(pdev);
 	qdf_spinlock_destroy(&pdev->tx_mutex);
@@ -4652,7 +4653,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct rx_desc_pool *rx_desc_pool;
-	int mac_id, mac_for_pdev;
+	int mac_id;
 	int lmac_id;
 
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
@@ -4668,6 +4669,7 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_mon_link_free(pdev);
 
+	dp_rx_pdev_detach(pdev);
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
 		wlan_minidump_remove(
@@ -4691,19 +4693,11 @@ static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
 				RXDMA_DST, 0);
 
 		if (dp_is_soc_reinit(soc)) {
-			mac_for_pdev =
-				dp_get_lmac_id_for_pdev_id(soc, mac_id,
-							   pdev->pdev_id);
-			rx_desc_pool = &soc->rx_desc_status[mac_for_pdev];
+			rx_desc_pool = &soc->rx_desc_status[lmac_id];
 			dp_rx_desc_pool_free(soc, rx_desc_pool);
-			rx_desc_pool = &soc->rx_desc_mon[mac_for_pdev];
+			rx_desc_pool = &soc->rx_desc_mon[lmac_id];
 			dp_rx_desc_pool_free(soc, rx_desc_pool);
 		}
-	}
-
-	if (dp_is_soc_reinit(soc)) {
-		rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
-		dp_rx_desc_pool_free(soc, rx_desc_pool);
 	}
 
 	/* only do soc common cleanup when last pdev do detach */

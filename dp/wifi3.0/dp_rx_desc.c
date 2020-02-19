@@ -25,29 +25,54 @@ A_COMPILE_TIME_ASSERT(cookie_size_check,
 		      PAGE_SIZE / sizeof(union dp_rx_desc_list_elem_t) <=
 		      1 << DP_RX_DESC_PAGE_ID_SHIFT);
 
-QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
+/*
+ * dp_rx_desc_pool_is_allocated() - check if memory is allocated for the
+ *					rx descriptor pool
+ *
+ * @rx_desc_pool: rx descriptor pool pointer
+ * Return: QDF_STATUS  QDF_STATUS_SUCCESS
+ *			QDF_STATUS_E_NOMEM
+ */
+QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
+{
+	if (!rx_desc_pool->desc_pages.num_pages) {
+		dp_err("Multi page alloc fail, size=%d, elem=%d",
+		       rx_desc_pool->elem_size, rx_desc_pool->pool_size);
+		return QDF_STATUS_E_NOMEM;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_rx_desc_pool_alloc() - Allocate a memory pool for software rx
+ *			     descriptors
+ *
+ * @soc: core txrx main context
+ * @num_elem: number of rx descriptors (size of the pool)
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: QDF_STATUS  QDF_STATUS_SUCCESS
+ *		       QDF_STATUS_E_NOMEM
+ *		       QDF_STATUS_E_FAULT
+ */
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 				 uint32_t num_elem,
 				 struct rx_desc_pool *rx_desc_pool)
 {
-	uint32_t id, page_id, offset, desc_size, num_desc_per_page;
-	uint32_t count = 0;
+	uint32_t desc_size;
 	union dp_rx_desc_list_elem_t *rx_desc_elem;
 
 	desc_size = sizeof(*rx_desc_elem);
 	rx_desc_pool->elem_size = desc_size;
-	if (!dp_is_soc_reinit(soc)) {
-		qdf_mem_multi_pages_alloc(soc->osdev, &rx_desc_pool->desc_pages,
-					  desc_size, num_elem, 0, true);
-		if (!rx_desc_pool->desc_pages.num_pages) {
-			qdf_err("Multi page alloc fail,size=%d, elem=%d",
-				desc_size, num_elem);
-			return QDF_STATUS_E_NOMEM;
-		}
+
+	qdf_mem_multi_pages_alloc(soc->osdev, &rx_desc_pool->desc_pages,
+				  desc_size, num_elem, 0, true);
+	if (!rx_desc_pool->desc_pages.num_pages) {
+		qdf_err("Multi page alloc fail,size=%d, elem=%d",
+			desc_size, num_elem);
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	num_desc_per_page = rx_desc_pool->desc_pages.num_element_per_page;
-	rx_desc_pool->freelist = (union dp_rx_desc_list_elem_t *)
-				  *rx_desc_pool->desc_pages.cacheable_pages;
 	if (qdf_mem_multi_page_link(soc->osdev,
 				    &rx_desc_pool->desc_pages,
 				    desc_size, num_elem, true)) {
@@ -55,10 +80,41 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 			desc_size, num_elem);
 		goto free_rx_desc_pool;
 	}
+	return QDF_STATUS_SUCCESS;
+
+free_rx_desc_pool:
+	dp_rx_desc_pool_free(soc, rx_desc_pool);
+
+	return QDF_STATUS_E_FAULT;
+}
+
+/*
+ * dp_rx_desc_pool_init() - Initialize the software RX descriptor pool
+ *			convert the pool of memory into a list of
+ *			rx descriptors and create locks to access this
+ *			list of rx descriptors.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @pool_size: size of the rx descriptor pool
+ * @rx_desc_pool: rx descriptor pool pointer
+ */
+void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
+			  uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
+{
+	uint32_t id, page_id, offset, num_desc_per_page;
+	uint32_t count = 0;
+	union dp_rx_desc_list_elem_t *rx_desc_elem;
+
 	/* Initialize the lock */
 	qdf_spinlock_create(&rx_desc_pool->lock);
+
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
-	rx_desc_pool->pool_size = num_elem;
+	rx_desc_pool->pool_size = pool_size;
+
+	num_desc_per_page = rx_desc_pool->desc_pages.num_element_per_page;
+	rx_desc_pool->freelist = (union dp_rx_desc_list_elem_t *)
+				  *rx_desc_pool->desc_pages.cacheable_pages;
 
 	rx_desc_elem = rx_desc_pool->freelist;
 	while (rx_desc_elem) {
@@ -82,12 +138,6 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 		count++;
 	}
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
-	return QDF_STATUS_SUCCESS;
-
-free_rx_desc_pool:
-	dp_rx_desc_pool_free(soc, rx_desc_pool);
-
-	return QDF_STATUS_E_FAULT;
 }
 
 union dp_rx_desc_list_elem_t *dp_rx_desc_find(uint16_t page_id, uint16_t offset,
@@ -142,6 +192,7 @@ void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
 	qdf_status = __dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 	if (QDF_IS_STATUS_SUCCESS(qdf_status))
 		dp_rx_desc_pool_free(soc, rx_desc_pool);
+
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 
 	qdf_spinlock_destroy(&rx_desc_pool->lock);
@@ -153,8 +204,6 @@ void dp_rx_desc_nbuf_free(struct dp_soc *soc,
 	qdf_spin_lock_bh(&rx_desc_pool->lock);
 	__dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
-
-	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
 void dp_rx_desc_pool_free(struct dp_soc *soc,
@@ -165,25 +214,78 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 	qdf_mem_multi_pages_free(soc->osdev,
 				 &rx_desc_pool->desc_pages, 0, true);
 }
-#else
-QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
-	uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
+
+void dp_rx_desc_pool_deinit(struct dp_soc *soc,
+			    struct rx_desc_pool *rx_desc_pool)
 {
-	uint32_t i;
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
 
-	if (!dp_is_soc_reinit(soc)) {
-		rx_desc_pool->array =
-		qdf_mem_malloc(pool_size *
-		sizeof(union dp_rx_desc_list_elem_t));
-
-		if (!(rx_desc_pool->array)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-				  "%s: RX Desc Pool[%d] allocation failed",
-				  __func__, pool_id);
-			return QDF_STATUS_E_NOMEM;
-		}
+	rx_desc_pool->freelist = NULL;
+	rx_desc_pool->pool_size = 0;
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+	qdf_spinlock_destroy(&rx_desc_pool->lock);
+}
+#else
+/*
+ * dp_rx_desc_pool_is_allocated() - check if memory is allocated for the
+ *					rx descriptor pool
+ *
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: QDF_STATUS  QDF_STATUS_SUCCESS
+ *			QDF_STATUS_E_NOMEM
+ */
+QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
+{
+	if (!rx_desc_pool->array) {
+		dp_err("nss-wifi<4> skip Rx refil");
+		return QDF_STATUS_E_NOMEM;
 	}
+	return QDF_STATUS_SUCCESS;
+}
 
+/*
+ * dp_rx_desc_pool_alloc() - Allocate a memory pool for software rx
+ *			     descriptors
+ *
+ * @soc: core txrx main context
+ * @num_elem: number of rx descriptors (size of the pool)
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: QDF_STATUS  QDF_STATUS_SUCCESS
+ *		       QDF_STATUS_E_NOMEM
+ *		       QDF_STATUS_E_FAULT
+ */
+QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
+				 uint32_t pool_size,
+				 struct rx_desc_pool *rx_desc_pool)
+{
+	rx_desc_pool->array = qdf_mem_malloc(pool_size *
+				     sizeof(union dp_rx_desc_list_elem_t));
+
+	if (!(rx_desc_pool->array)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s: RX Desc Pool allocation failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_rx_desc_pool_init() - Initialize the software RX descriptor pool
+ *			convert the pool of memory into a list of
+ *			rx descriptors and create locks to access this
+ *			list of rx descriptors.
+ *
+ * @soc: core txrx main context
+ * @pool_id: pool_id which is one of 3 mac_ids
+ * @pool_size: size of the rx descriptor pool
+ * @rx_desc_pool: rx descriptor pool pointer
+ */
+void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
+			  uint32_t pool_size, struct rx_desc_pool *rx_desc_pool)
+{
+	int i;
 	/* Initialize the lock */
 	qdf_spinlock_create(&rx_desc_pool->lock);
 
@@ -192,6 +294,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 
 	/* link SW rx descs into a freelist */
 	rx_desc_pool->freelist = &rx_desc_pool->array[0];
+	qdf_mem_zero(rx_desc_pool->freelist, rx_desc_pool->pool_size);
 	for (i = 0; i <= rx_desc_pool->pool_size - 1; i++) {
 		if (i == rx_desc_pool->pool_size - 1)
 			rx_desc_pool->array[i].next = NULL;
@@ -204,7 +307,6 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 	}
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
-	return QDF_STATUS_SUCCESS;
 }
 
 void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
@@ -251,12 +353,10 @@ void dp_rx_desc_nbuf_free(struct dp_soc *soc,
 				qdf_nbuf_unmap_single(soc->osdev, nbuf,
 						      QDF_DMA_FROM_DEVICE);
 			}
-
 			qdf_nbuf_free(nbuf);
 		}
 	}
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
-	qdf_spinlock_destroy(&rx_desc_pool->lock);
 }
 
 void dp_rx_desc_pool_free(struct dp_soc *soc,
@@ -264,6 +364,18 @@ void dp_rx_desc_pool_free(struct dp_soc *soc,
 {
 	qdf_mem_free(rx_desc_pool->array);
 }
+
+void dp_rx_desc_pool_deinit(struct dp_soc *soc,
+			    struct rx_desc_pool *rx_desc_pool)
+{
+	qdf_spin_lock_bh(&rx_desc_pool->lock);
+
+	rx_desc_pool->freelist = NULL;
+	rx_desc_pool->pool_size = 0;
+	qdf_spin_unlock_bh(&rx_desc_pool->lock);
+	qdf_spinlock_destroy(&rx_desc_pool->lock);
+}
+
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 /*
  * dp_rx_get_free_desc_list() - provide a list of descriptors from
