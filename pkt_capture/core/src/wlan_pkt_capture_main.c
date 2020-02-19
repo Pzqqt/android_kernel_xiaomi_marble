@@ -26,6 +26,7 @@
 #include "wlan_pkt_capture_mon_thread.h"
 #include "wlan_pkt_capture_mgmt_txrx.h"
 #include "target_if_pkt_capture.h"
+#include "cdp_txrx_ctrl.h"
 
 static struct wlan_objmgr_vdev *gp_pkt_capture_vdev;
 
@@ -428,4 +429,28 @@ pkt_capture_psoc_destroy_notification(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	qdf_mem_free(psoc_priv);
 	return status;
+}
+
+void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_channel *des_chan;
+	cdp_config_param_type val;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!pkt_capture_get_mode(psoc))
+		return;
+	/*
+	 * Record packet capture channel here
+	 */
+	des_chan = vdev->vdev_mlme.des_chan;
+	val.cdp_pdev_param_monitor_chan = des_chan->ch_ieee;
+	cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_CHANNEL, val);
+	val.cdp_pdev_param_mon_freq = des_chan->ch_freq;
+	cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+				CDP_MONITOR_FREQUENCY, val);
 }

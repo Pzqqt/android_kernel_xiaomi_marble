@@ -162,4 +162,13 @@ pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc);
  * Return: number of buffers dropped
  */
 uint32_t pkt_capture_drop_nbuf_list(qdf_nbuf_t buf_list);
+
+/**
+ * pkt_capture_record_channel() - Update Channel Information
+ * for packet capture mode
+ * @vdev: pointer to vdev
+ *
+ * Return: None
+ */
+void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
