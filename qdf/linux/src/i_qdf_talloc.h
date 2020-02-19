@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,8 +41,6 @@
 #define __free(ptr) kfree(ptr)
 
 #define __alloc_size(ptr) ksize(ptr)
-
-#define __page_size ((size_t)PAGE_SIZE)
 
 #endif /* __I_QDF_TALLOC_H */
 

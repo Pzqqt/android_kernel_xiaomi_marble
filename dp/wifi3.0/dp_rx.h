@@ -688,8 +688,9 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
  * dp_rx_cookie_2_link_desc_va() - Converts cookie to a virtual address of
  *				   the MSDU Link Descriptor
  * @soc: core txrx main context
- * @buf_info: buf_info include cookie that used to lookup virtual address of
- * link descriptor Normally this is just an index into a per SOC array.
+ * @buf_info: buf_info includes cookie that is used to lookup
+ * virtual address of link descriptor after deriving the page id
+ * and the offset or index of the desc on the associatde page.
  *
  * This is the VA of the link descriptor, that HAL layer later uses to
  * retrieve the list of MSDU's for a given MPDU.
@@ -701,16 +702,16 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
 				  struct hal_buf_info *buf_info)
 {
 	void *link_desc_va;
-	uint32_t bank_id = LINK_DESC_COOKIE_BANK_ID(buf_info->sw_cookie);
+	struct qdf_mem_multi_page_t *pages;
+	uint16_t page_id = LINK_DESC_COOKIE_PAGE_ID(buf_info->sw_cookie);
 
-
-	/* TODO */
-	/* Add sanity for  cookie */
-
-	link_desc_va = soc->link_desc_banks[bank_id].base_vaddr +
-		(buf_info->paddr -
-			soc->link_desc_banks[bank_id].base_paddr);
-
+	pages = &soc->link_desc_pages;
+	if (!pages)
+		return NULL;
+	if (qdf_unlikely(page_id >= pages->num_pages))
+		return NULL;
+	link_desc_va = pages->dma_pages[page_id].page_v_addr_start +
+		(buf_info->paddr - pages->dma_pages[page_id].page_p_addr);
 	return link_desc_va;
 }
 

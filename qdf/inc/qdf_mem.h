@@ -39,6 +39,7 @@
  * Return: aligned value.
  */
 #define qdf_align(a, align_size)   __qdf_align(a, align_size)
+#define qdf_page_size __page_size
 
 /**
  * struct qdf_mem_dma_page_t - Allocated dmaable page
@@ -64,6 +65,7 @@ struct qdf_mem_multi_page_t {
 	uint16_t num_pages;
 	struct qdf_mem_dma_page_t *dma_pages;
 	void **cacheable_pages;
+	qdf_size_t page_size;
 };
 
 

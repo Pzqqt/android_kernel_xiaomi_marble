@@ -2098,12 +2098,16 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 	uint32_t total_link_descs, total_mem_size;
 	uint32_t num_mpdu_link_descs, num_mpdu_queue_descs;
 	uint32_t num_tx_msdu_link_descs, num_rx_msdu_link_descs;
-	uint32_t num_link_desc_banks;
-	uint32_t last_bank_size = 0;
 	uint32_t entry_size, num_entries;
 	int i;
-	uint32_t desc_id = 0;
+	uint32_t cookie = 0;
 	qdf_dma_addr_t *baseaddr = NULL;
+	uint32_t page_idx = 0;
+	struct qdf_mem_multi_page_t *pages;
+	struct qdf_mem_dma_page_t *dma_pages;
+	uint32_t offset = 0;
+	uint32_t count = 0;
+	uint32_t num_descs_per_page;
 
 	/* Only Tx queue descriptors are allocated from common link descriptor
 	 * pool Rx queue descriptors are not included in this because (REO queue
@@ -2138,97 +2142,27 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 	total_mem_size += link_desc_align;
 
-	if (total_mem_size <= max_alloc_size) {
-		num_link_desc_banks = 0;
-		last_bank_size = total_mem_size;
-	} else {
-		num_link_desc_banks = (total_mem_size) /
-			(max_alloc_size - link_desc_align);
-		last_bank_size = total_mem_size %
-			(max_alloc_size - link_desc_align);
-	}
-
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("total_mem_size: %d, num_link_desc_banks: %u"),
-		total_mem_size, num_link_desc_banks);
+		FL("total_mem_size: %d"), total_mem_size);
 
-	for (i = 0; i < num_link_desc_banks; i++) {
-		if (!dp_is_soc_reinit(soc)) {
-			baseaddr = &soc->link_desc_banks[i].
-					base_paddr_unaligned;
-			soc->link_desc_banks[i].base_vaddr_unaligned =
-				qdf_mem_alloc_consistent(soc->osdev,
-							 soc->osdev->dev,
-							 max_alloc_size,
-							 baseaddr);
+	pages = &soc->link_desc_pages;
+	dp_set_max_page_size(pages, max_alloc_size);
+	if (!dp_is_soc_reinit(soc)) {
+		qdf_mem_multi_pages_alloc(soc->osdev,
+					  pages,
+					  link_desc_size,
+					  total_link_descs,
+					  0, false);
+		if (!pages->num_pages) {
+			dp_err("Multi page alloc fail for hw link desc pool");
+			goto fail_page_alloc;
 		}
-		soc->link_desc_banks[i].size = max_alloc_size;
-
-		soc->link_desc_banks[i].base_vaddr = (void *)((unsigned long)(
-			soc->link_desc_banks[i].base_vaddr_unaligned) +
-			((unsigned long)(
-			soc->link_desc_banks[i].base_vaddr_unaligned) %
-			link_desc_align));
-
-		soc->link_desc_banks[i].base_paddr = (unsigned long)(
-			soc->link_desc_banks[i].base_paddr_unaligned) +
-			((unsigned long)(soc->link_desc_banks[i].base_vaddr) -
-			(unsigned long)(
-			soc->link_desc_banks[i].base_vaddr_unaligned));
-
-		if (!soc->link_desc_banks[i].base_vaddr_unaligned) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Link descriptor memory alloc failed"));
-			goto fail;
-		}
-		if (!dp_is_soc_reinit(soc)) {
-			qdf_minidump_log(soc->link_desc_banks[i].base_vaddr,
-					 soc->link_desc_banks[i].size,
-					 "link_desc_bank");
-		}
-		qdf_minidump_log((soc->link_desc_banks[i].base_vaddr),
-				 soc->link_desc_banks[i].size,
-				 "link_desc_bank");
+		qdf_minidump_log(
+			(void *)(pages->dma_pages->page_v_addr_start),
+			pages->num_pages *
+			sizeof(struct qdf_mem_dma_page_t),
+			"hw_link_desc_bank");
 	}
-
-	if (last_bank_size) {
-		/* Allocate last bank in case total memory required is not exact
-		 * multiple of max_alloc_size
-		 */
-		if (!dp_is_soc_reinit(soc)) {
-			baseaddr = &soc->link_desc_banks[i].
-					base_paddr_unaligned;
-			soc->link_desc_banks[i].base_vaddr_unaligned =
-				qdf_mem_alloc_consistent(soc->osdev,
-							 soc->osdev->dev,
-							 last_bank_size,
-							 baseaddr);
-		}
-		soc->link_desc_banks[i].size = last_bank_size;
-
-		soc->link_desc_banks[i].base_vaddr = (void *)((unsigned long)
-			(soc->link_desc_banks[i].base_vaddr_unaligned) +
-			((unsigned long)(
-			soc->link_desc_banks[i].base_vaddr_unaligned) %
-			link_desc_align));
-
-		soc->link_desc_banks[i].base_paddr =
-			(unsigned long)(
-			soc->link_desc_banks[i].base_paddr_unaligned) +
-			((unsigned long)(soc->link_desc_banks[i].base_vaddr) -
-			(unsigned long)(
-			soc->link_desc_banks[i].base_vaddr_unaligned));
-
-		if (!dp_is_soc_reinit(soc)) {
-			qdf_minidump_log(soc->link_desc_banks[i].base_vaddr,
-					 soc->link_desc_banks[i].size,
-					 "link_desc_bank");
-		}
-		qdf_minidump_log((soc->link_desc_banks[i].base_vaddr),
-				 soc->link_desc_banks[i].size,
-				 "link_desc_bank");
-	}
-
 
 	/* Allocate and setup link descriptor idle list for HW internal use */
 	entry_size = hal_srng_get_entrysize(soc->hal_soc, WBM_IDLE_LINK);
@@ -2250,27 +2184,27 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 
 		hal_srng_access_start_unlocked(soc->hal_soc,
 			soc->wbm_idle_link_ring.hal_srng);
-
-		for (i = 0; i < MAX_LINK_DESC_BANKS &&
-			soc->link_desc_banks[i].base_paddr; i++) {
-			uint32_t num_entries = (soc->link_desc_banks[i].size -
-				((unsigned long)(
-				soc->link_desc_banks[i].base_vaddr) -
-				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned)))
-				/ link_desc_size;
-			unsigned long paddr = (unsigned long)(
-				soc->link_desc_banks[i].base_paddr);
-
-			while (num_entries && (desc = hal_srng_src_get_next(
+		page_idx = 0; count = 0;
+		offset = 0;
+		pages = &soc->link_desc_pages;
+		if (pages->dma_pages)
+			dma_pages = pages->dma_pages;
+		else
+			goto fail;
+		num_descs_per_page =
+			pages->num_element_per_page;
+		while ((desc = hal_srng_src_get_next(
 				soc->hal_soc,
-				soc->wbm_idle_link_ring.hal_srng))) {
-				hal_set_link_desc_addr(desc,
-					LINK_DESC_COOKIE(desc_id, i), paddr);
-				num_entries--;
-				desc_id++;
-				paddr += link_desc_size;
-			}
+				soc->wbm_idle_link_ring.hal_srng)) &&
+		       (count < total_link_descs)) {
+			page_idx = count / num_descs_per_page;
+			offset = count % num_descs_per_page;
+			cookie = LINK_DESC_COOKIE(count, page_idx);
+			hal_set_link_desc_addr(
+				desc, cookie,
+				dma_pages[page_idx].page_p_addr
+				+ (offset * link_desc_size));
+			count++;
 		}
 		hal_srng_access_end_unlocked(soc->hal_soc,
 			soc->wbm_idle_link_ring.hal_srng);
@@ -2322,40 +2256,38 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		scatter_buf_ptr = (uint8_t *)(
 			soc->wbm_idle_scatter_buf_base_vaddr[scatter_buf_num]);
 		rem_entries = num_entries_per_buf;
-
-		for (i = 0; i < MAX_LINK_DESC_BANKS &&
-			soc->link_desc_banks[i].base_paddr; i++) {
-			uint32_t num_link_descs =
-				(soc->link_desc_banks[i].size -
-				((unsigned long)(
-				soc->link_desc_banks[i].base_vaddr) -
-				(unsigned long)(
-				soc->link_desc_banks[i].base_vaddr_unaligned)))
-				/ link_desc_size;
-			unsigned long paddr = (unsigned long)(
-				soc->link_desc_banks[i].base_paddr);
-
-			while (num_link_descs) {
-				hal_set_link_desc_addr((void *)scatter_buf_ptr,
-					LINK_DESC_COOKIE(desc_id, i), paddr);
-				num_link_descs--;
-				desc_id++;
-				paddr += link_desc_size;
-				rem_entries--;
-				if (rem_entries) {
-					scatter_buf_ptr += entry_size;
-				} else {
-					rem_entries = num_entries_per_buf;
-					scatter_buf_num++;
-
-					if (scatter_buf_num >= num_scatter_bufs)
-						break;
-
-					scatter_buf_ptr = (uint8_t *)(
-						soc->wbm_idle_scatter_buf_base_vaddr[
-						scatter_buf_num]);
-				}
+		pages = &soc->link_desc_pages;
+		page_idx = 0; count = 0;
+		offset = 0;
+		num_descs_per_page =
+			pages->num_element_per_page;
+		if (pages->dma_pages)
+			dma_pages = pages->dma_pages;
+		else
+			goto fail;
+		while (count < total_link_descs) {
+			page_idx = count / num_descs_per_page;
+			offset = count % num_descs_per_page;
+			cookie = LINK_DESC_COOKIE(count, page_idx);
+			hal_set_link_desc_addr(
+				(void *)scatter_buf_ptr,
+				cookie,
+				dma_pages[page_idx].page_p_addr +
+				(offset * link_desc_size));
+			rem_entries--;
+			if (rem_entries) {
+				scatter_buf_ptr += entry_size;
+			} else {
+				rem_entries = num_entries_per_buf;
+				scatter_buf_num++;
+				if (scatter_buf_num >= num_scatter_bufs)
+					break;
+				scatter_buf_ptr =
+					(uint8_t *)
+				(soc->wbm_idle_scatter_buf_base_vaddr[
+					 scatter_buf_num]);
 			}
+			count++;
 		}
 		/* Setup link descriptor idle list in HW */
 		hal_setup_link_idle_list(soc->hal_soc,
@@ -2384,17 +2316,15 @@ fail:
 		}
 	}
 
-	for (i = 0; i < MAX_LINK_DESC_BANKS; i++) {
-		if (soc->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				soc->link_desc_banks[i].size,
-				soc->link_desc_banks[i].base_vaddr_unaligned,
-				soc->link_desc_banks[i].base_paddr_unaligned,
-				0);
-			soc->link_desc_banks[i].base_vaddr_unaligned = NULL;
-		}
-	}
+	pages = &soc->link_desc_pages;
+	qdf_minidump_remove(
+		(void *)pages->dma_pages->page_v_addr_start);
+	qdf_mem_multi_pages_free(soc->osdev,
+				 pages, 0, false);
 	return QDF_STATUS_E_FAILURE;
+
+fail_page_alloc:
+	return QDF_STATUS_E_FAULT;
 }
 
 /*
@@ -2403,6 +2333,7 @@ fail:
 static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 {
 	int i;
+	struct qdf_mem_multi_page_t *pages;
 
 	if (soc->wbm_idle_link_ring.hal_srng) {
 		qdf_minidump_remove(
@@ -2421,17 +2352,11 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 		}
 	}
 
-	for (i = 0; i < MAX_LINK_DESC_BANKS; i++) {
-		if (soc->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_minidump_remove(soc->link_desc_banks[i].base_vaddr);
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				soc->link_desc_banks[i].size,
-				soc->link_desc_banks[i].base_vaddr_unaligned,
-				soc->link_desc_banks[i].base_paddr_unaligned,
-				0);
-			soc->link_desc_banks[i].base_vaddr_unaligned = NULL;
-		}
-	}
+	pages = &soc->link_desc_pages;
+	qdf_minidump_remove(
+		(void *)pages->dma_pages->page_v_addr_start);
+	qdf_mem_multi_pages_free(soc->osdev,
+				 pages, 0, false);
 }
 
 #ifdef IPA_OFFLOAD

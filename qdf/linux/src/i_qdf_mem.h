@@ -98,6 +98,7 @@ typedef struct __qdf_mempool_ctxt {
 
 #endif /* __KERNEL__ */
 
+#define __page_size ((size_t)PAGE_SIZE)
 #define __qdf_align(a, mask) ALIGN(a, mask)
 
 #ifdef DISABLE_MEMDEBUG_PANIC

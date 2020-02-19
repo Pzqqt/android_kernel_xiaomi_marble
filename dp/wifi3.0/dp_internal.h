@@ -2054,4 +2054,34 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 #if defined(WLAN_SUPPORT_RX_FISA)
 void dp_rx_dump_fisa_table(struct dp_soc *soc);
 #endif /* WLAN_SUPPORT_RX_FISA */
+
+#ifdef MAX_ALLOC_PAGE_SIZE
+/**
+ * dp_set_page_size() - Set the max page size for hw link desc.
+ * For MCL the page size is set to OS defined value and for WIN
+ * the page size is set to the max_alloc_size cfg ini
+ * param.
+ * This is to ensure that WIN gets contiguous memory allocations
+ * as per requirement.
+ * @pages: link desc page handle
+ * @max_alloc_size: max_alloc_size
+ *
+ * Return: None
+ */
+static inline
+void dp_set_max_page_size(struct qdf_mem_multi_page_t *pages,
+			  uint32_t max_alloc_size)
+{
+	pages->page_size = qdf_page_size;
+}
+
+#else
+static inline
+void dp_set_max_page_size(struct qdf_mem_multi_page_t *pages,
+			  uint32_t max_alloc_size)
+{
+	pages->page_size = max_alloc_size;
+}
+#endif /* MAX_ALLOC_PAGE_SIZE */
+
 #endif /* #ifndef _DP_INTERNAL_H_ */
