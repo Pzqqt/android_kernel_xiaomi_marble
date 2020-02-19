@@ -2440,4 +2440,9 @@ struct dp_req_rx_hw_stats_t {
 };
 #endif
 
+void dp_hw_link_desc_pool_banks_free(struct dp_soc *soc, uint32_t mac_id);
+QDF_STATUS dp_hw_link_desc_pool_banks_alloc(struct dp_soc *soc,
+					    uint32_t mac_id);
+void dp_link_desc_ring_replenish(struct dp_soc *soc, uint32_t mac_id);
+
 #endif /* _DP_TYPES_H_ */

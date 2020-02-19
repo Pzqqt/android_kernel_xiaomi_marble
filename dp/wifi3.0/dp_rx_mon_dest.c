@@ -1199,216 +1199,15 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
+QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t lmac_id)
 {
-	int link_desc_size = hal_get_link_desc_size(soc->hal_soc);
-	int link_desc_align = hal_get_link_desc_align(soc->hal_soc);
-	uint32_t max_alloc_size = wlan_cfg_max_alloc_size(soc->wlan_cfg_ctx);
-	uint32_t total_link_descs, total_mem_size;
-	uint32_t num_link_desc_banks;
-	uint32_t last_bank_size = 0;
-	uint32_t entry_size, num_entries;
-	void *mon_desc_srng;
-	uint32_t num_replenish_buf;
-	struct dp_srng *dp_srng;
-	int i;
-	qdf_dma_addr_t *baseaddr = NULL;
+	if (!dp_is_soc_reinit(soc))
+		if (dp_hw_link_desc_pool_banks_alloc(soc, lmac_id))
+			return QDF_STATUS_E_FAILURE;
 
-	dp_srng = &soc->rxdma_mon_desc_ring[mac_id];
-
-	num_entries = dp_srng->alloc_size/hal_srng_get_entrysize(
-					soc->hal_soc, RXDMA_MONITOR_DESC);
-
-	/* Round up to power of 2 */
-	total_link_descs = 1;
-	while (total_link_descs < num_entries)
-		total_link_descs <<= 1;
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: total_link_descs: %u, link_desc_size: %d",
-		  __func__, total_link_descs, link_desc_size);
-
-	total_mem_size =  total_link_descs * link_desc_size;
-
-	total_mem_size += link_desc_align;
-
-	if (total_mem_size <= max_alloc_size) {
-		num_link_desc_banks = 0;
-		last_bank_size = total_mem_size;
-	} else {
-		num_link_desc_banks = (total_mem_size) /
-			(max_alloc_size - link_desc_align);
-		last_bank_size = total_mem_size %
-			(max_alloc_size - link_desc_align);
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		  "%s: total_mem_size: %d, num_link_desc_banks: %u",
-		  __func__, total_mem_size, num_link_desc_banks);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		  "%s: max_alloc_size: %d last_bank_size: %d",
-		  __func__, max_alloc_size, last_bank_size);
-
-	for (i = 0; i < num_link_desc_banks; i++) {
-		baseaddr = &soc->mon_link_desc_banks[mac_id][i].
-			base_paddr_unaligned;
-		if (!dp_is_soc_reinit(soc)) {
-			soc->mon_link_desc_banks[mac_id][i].
-				base_vaddr_unaligned =
-				qdf_mem_alloc_consistent(soc->osdev,
-							 soc->osdev->dev,
-							 max_alloc_size,
-							 baseaddr);
-
-			if (!soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: Link desc mem alloc failed",
-					  __func__);
-				goto fail;
-			}
-		}
-		soc->mon_link_desc_banks[mac_id][i].size = max_alloc_size;
-
-		soc->mon_link_desc_banks[mac_id][i].base_vaddr =
-		 (void *)((unsigned long)
-		 (soc->mon_link_desc_banks[mac_id][i].
-							base_vaddr_unaligned) +
-		 ((unsigned long)
-		 (soc->mon_link_desc_banks[mac_id][i].
-							base_vaddr_unaligned) %
-		 link_desc_align));
-
-		soc->mon_link_desc_banks[mac_id][i].base_paddr =
-			(unsigned long)
-			(soc->mon_link_desc_banks[mac_id][i].
-							base_paddr_unaligned) +
-			((unsigned long)
-			(soc->mon_link_desc_banks[mac_id][i].base_vaddr) -
-			 (unsigned long)
-			 (soc->mon_link_desc_banks[mac_id][i].
-							base_vaddr_unaligned));
-	}
-
-	if (last_bank_size) {
-		/* Allocate last bank in case total memory required is not exact
-		 * multiple of max_alloc_size
-		 */
-		baseaddr = &soc->mon_link_desc_banks[mac_id][i].
-			base_paddr_unaligned;
-		if (!dp_is_soc_reinit(soc)) {
-			soc->mon_link_desc_banks[mac_id][i].
-				base_vaddr_unaligned =
-				qdf_mem_alloc_consistent(soc->osdev,
-							 soc->osdev->dev,
-							 last_bank_size,
-							 baseaddr);
-
-			if (!soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned) {
-				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: alloc fail:mon link desc pool",
-					  __func__);
-				goto fail;
-			}
-		}
-		soc->mon_link_desc_banks[mac_id][i].size =
-			last_bank_size;
-
-		soc->mon_link_desc_banks[mac_id][i].base_vaddr =
-		(void *)((unsigned long)
-		(soc->mon_link_desc_banks[mac_id][i].
-			base_vaddr_unaligned) +
-		((unsigned long)
-		(soc->mon_link_desc_banks[mac_id][i].
-			base_vaddr_unaligned) %
-		link_desc_align));
-
-		soc->mon_link_desc_banks[mac_id][i].base_paddr =
-		(unsigned long)
-		(soc->mon_link_desc_banks[mac_id][i].
-			base_paddr_unaligned) +
-		((unsigned long)
-		(soc->mon_link_desc_banks[mac_id][i].base_vaddr) -
-		(unsigned long)
-		(soc->mon_link_desc_banks[mac_id][i].
-			base_vaddr_unaligned));
-	}
-
-	/* Allocate and setup link descriptor idle list for HW internal use */
-	entry_size = hal_srng_get_entrysize(soc->hal_soc, RXDMA_MONITOR_DESC);
-	total_mem_size = entry_size * total_link_descs;
-
-	mon_desc_srng = soc->rxdma_mon_desc_ring[mac_id].hal_srng;
-
-	num_replenish_buf = 0;
-
-	if (total_mem_size <= max_alloc_size) {
-		void *desc;
-
-
-		for (i = 0;
-			 i < MAX_MON_LINK_DESC_BANKS &&
-			 soc->mon_link_desc_banks[mac_id][i].base_paddr;
-			 i++) {
-			uint32_t num_entries =
-			(soc->mon_link_desc_banks[mac_id][i].size -
-			(unsigned long)
-			(soc->mon_link_desc_banks[mac_id][i].base_vaddr) -
-			(unsigned long)
-			(soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned)) / link_desc_size;
-			unsigned long paddr =
-			 (unsigned long)
-			 (soc->mon_link_desc_banks[mac_id][i].base_paddr);
-			unsigned long vaddr =
-			 (unsigned long)
-			 (soc->mon_link_desc_banks[mac_id][i].base_vaddr);
-
-			hal_srng_access_start_unlocked(soc->hal_soc,
-								mon_desc_srng);
-
-			while (num_entries && (desc =
-				hal_srng_src_get_next(soc->hal_soc,
-					mon_desc_srng))) {
-
-				hal_set_link_desc_addr(desc, i, paddr);
-				num_entries--;
-				num_replenish_buf++;
-				paddr += link_desc_size;
-				vaddr += link_desc_size;
-			}
-			hal_srng_access_end_unlocked(soc->hal_soc,
-								mon_desc_srng);
-		}
-	} else {
-		qdf_assert(0);
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		"%s: successfully replenished %d buffer",
-		__func__, num_replenish_buf);
+	dp_link_desc_ring_replenish(soc, lmac_id);
 
 	return QDF_STATUS_SUCCESS;
-
-fail:
-	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
-		if (soc->mon_link_desc_banks[mac_id][i].
-						base_vaddr_unaligned) {
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-					soc->mon_link_desc_banks[mac_id][i].
-					size,
-					soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned,
-					soc->mon_link_desc_banks[mac_id][i].
-					base_paddr_unaligned, 0);
-					soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned = NULL;
-		}
-	}
-	return QDF_STATUS_E_FAILURE;
 }
 
 /*
@@ -1417,22 +1216,7 @@ fail:
 static
 void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 {
-	int i;
-
-	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
-		if (soc->mon_link_desc_banks[mac_id][i].
-						base_vaddr_unaligned) {
-		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-					soc->mon_link_desc_banks[mac_id][i].
-					size,
-					soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned,
-					soc->mon_link_desc_banks[mac_id][i].
-					base_paddr_unaligned, 0);
-		soc->mon_link_desc_banks[mac_id][i].
-					base_vaddr_unaligned = NULL;
-		}
-	}
+	dp_hw_link_desc_pool_banks_free(soc, mac_id);
 }
 
 /**
@@ -1516,11 +1300,11 @@ static QDF_STATUS
 dp_rx_pdev_mon_cmn_detach(struct dp_pdev *pdev, int mac_id) {
 	struct dp_soc *soc = pdev->soc;
 	uint8_t pdev_id = pdev->pdev_id;
-	int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+	int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
-	dp_mon_link_desc_pool_cleanup(soc, mac_for_pdev);
-	dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
-	dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+	dp_mon_link_desc_pool_cleanup(soc, lmac_id);
+	dp_rx_pdev_mon_status_detach(pdev, lmac_id);
+	dp_rx_pdev_mon_buf_detach(pdev, lmac_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1540,22 +1324,22 @@ static QDF_STATUS
 dp_rx_pdev_mon_cmn_attach(struct dp_pdev *pdev, int mac_id) {
 	struct dp_soc *soc = pdev->soc;
 	uint8_t pdev_id = pdev->pdev_id;
-	int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+	int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 	QDF_STATUS status;
 
-	status = dp_rx_pdev_mon_buf_attach(pdev, mac_for_pdev);
+	status = dp_rx_pdev_mon_buf_attach(pdev, lmac_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		dp_err("%s: dp_rx_pdev_mon_buf_attach() failed\n", __func__);
 		goto fail;
 	}
 
-	status = dp_rx_pdev_mon_status_attach(pdev, mac_for_pdev);
+	status = dp_rx_pdev_mon_status_attach(pdev, lmac_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		dp_err("%s: dp_rx_pdev_mon_status_attach() failed", __func__);
 		goto mon_buf_detach;
 	}
 
-	status = dp_mon_link_desc_pool_setup(soc, mac_for_pdev);
+	status = dp_mon_link_desc_pool_setup(soc, lmac_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		dp_err("%s: dp_mon_link_desc_pool_setup() failed", __func__);
 		goto mon_status_detach;
@@ -1564,10 +1348,10 @@ dp_rx_pdev_mon_cmn_attach(struct dp_pdev *pdev, int mac_id) {
 	return status;
 
 mon_status_detach:
-	dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
+	dp_rx_pdev_mon_status_detach(pdev, lmac_id);
 
 mon_buf_detach:
-	dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+	dp_rx_pdev_mon_buf_detach(pdev, lmac_id);
 
 fail:
 	return status;
@@ -1622,13 +1406,11 @@ QDF_STATUS
 dp_mon_link_free(struct dp_pdev *pdev) {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
-	int mac_id;
+	int mac_id, lmac_id;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc,
-							   mac_id, pdev_id);
-
-		dp_mon_link_desc_pool_cleanup(soc, mac_for_pdev);
+		lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+		dp_mon_link_desc_pool_cleanup(soc, lmac_id);
 	}
 
 	return QDF_STATUS_SUCCESS;

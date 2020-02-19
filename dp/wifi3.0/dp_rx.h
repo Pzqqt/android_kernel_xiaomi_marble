@@ -796,16 +796,18 @@ void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
 				  int mac_id)
 {
 	void *link_desc_va;
+	struct qdf_mem_multi_page_t *pages;
+	uint16_t page_id = LINK_DESC_COOKIE_PAGE_ID(buf_info->sw_cookie);
 
-	/* TODO */
-	/* Add sanity for  cookie */
+	pages = &pdev->soc->mon_link_desc_pages[mac_id];
+	if (!pages)
+		return NULL;
 
-	link_desc_va =
-	   pdev->soc->mon_link_desc_banks[mac_id][buf_info->sw_cookie]
-			.base_vaddr +
-	   (buf_info->paddr -
-	   pdev->soc->mon_link_desc_banks[mac_id][buf_info->sw_cookie]
-			.base_paddr);
+	if (qdf_unlikely(page_id >= pages->num_pages))
+		return NULL;
+
+	link_desc_va = pages->dma_pages[page_id].page_v_addr_start +
+		(buf_info->paddr - pages->dma_pages[page_id].page_p_addr);
 
 	return link_desc_va;
 }
