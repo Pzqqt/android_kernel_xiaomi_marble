@@ -795,9 +795,6 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			 * frames, since data frames were already mapped as they
 			 * entered into the driver.
 			 */
-			pPacket->PktInfo.AsTx.Flags |=
-				HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
-
 			ret = qdf_nbuf_map(target->osdev,
 				GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
 				QDF_DMA_TO_DEVICE);
@@ -809,6 +806,8 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 				status = QDF_STATUS_E_FAILURE;
 				break;
 			}
+			pPacket->PktInfo.AsTx.Flags |=
+				HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 		}
 
 		if (!pEndpoint->async_update) {
