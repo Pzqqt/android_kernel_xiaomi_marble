@@ -2,6 +2,7 @@
 /*
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
+
 #include <drm/msm_drm_pp.h>
 #include "sde_reg_dma.h"
 #include "sde_hw_reg_dma_v1_color_proc.h"
@@ -63,6 +64,9 @@
 #define SIXZONE_MEM_SIZE ((sizeof(struct drm_msm_sixzone)) + \
 		REG_DMA_HEADERS_BUFFER_SZ)
 #define MEMCOLOR_MEM_SIZE ((sizeof(struct drm_msm_memcol)) + \
+		REG_DMA_HEADERS_BUFFER_SZ)
+
+#define RC_MEM_SIZE ((RC_DATA_SIZE_MAX * 2 * sizeof(u32)) + \
 		REG_DMA_HEADERS_BUFFER_SZ)
 
 #define QSEED3_MEM_SIZE (sizeof(struct sde_hw_scaler3_cfg) + \
@@ -133,6 +137,7 @@ static u32 feature_map[SDE_DSPP_MAX] = {
 	[SDE_DSPP_DITHER] = REG_DMA_FEATURES_MAX,
 	[SDE_DSPP_HIST] = REG_DMA_FEATURES_MAX,
 	[SDE_DSPP_AD] = REG_DMA_FEATURES_MAX,
+	[SDE_DSPP_RC] = RC_DATA,
 };
 
 static u32 sspp_feature_map[SDE_SSPP_MAX] = {
@@ -159,6 +164,7 @@ static u32 feature_reg_dma_sz[SDE_DSPP_MAX] = {
 	[SDE_DSPP_HSIC] = HSIC_MEM_SIZE,
 	[SDE_DSPP_SIXZONE] = SIXZONE_MEM_SIZE,
 	[SDE_DSPP_MEMCOLOR] = MEMCOLOR_MEM_SIZE,
+	[SDE_DSPP_RC] = RC_MEM_SIZE,
 };
 
 static u32 sspp_feature_reg_dma_sz[SDE_SSPP_MAX] = {
@@ -1115,6 +1121,89 @@ void reg_dmav1_setup_dspp_igcv31(struct sde_hw_dspp *ctx, void *cfg)
 	rc = dma_ops->kick_off(&kick_off);
 	if (rc)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
+}
+
+int reg_dmav1_setup_rc_datav1(struct sde_hw_dspp *ctx, void *cfg)
+{
+	struct drm_msm_rc_mask_cfg *rc_mask_cfg;
+	struct sde_hw_reg_dma_ops *dma_ops;
+	struct sde_reg_dma_kickoff_cfg kick_off;
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
+	int rc = 0;
+	u32 i = 0;
+	u32 *data = NULL;
+	u32 buf_sz = 0, abs_offset = 0;
+	u32 cfg_param_07;
+	u64 cfg_param_09;
+
+	rc = reg_dma_dspp_check(ctx, cfg, RC_DATA);
+	if (rc) {
+		DRM_ERROR("invalid dma dspp check rc = %d\n");
+		return -EINVAL;
+	}
+
+	if (hw_cfg->len != sizeof(struct drm_msm_rc_mask_cfg)) {
+		DRM_ERROR("invalid size of payload len %d exp %zd\n",
+			  hw_cfg->len, sizeof(struct drm_msm_rc_mask_cfg));
+		return -EINVAL;
+	}
+
+	rc_mask_cfg = hw_cfg->payload;
+	buf_sz = rc_mask_cfg->cfg_param_08 * 2 * sizeof(u32);
+	abs_offset = ctx->hw.blk_off + ctx->cap->sblk->rc.base + 0x28;
+
+	dma_ops = sde_reg_dma_get_ops();
+	dma_ops->reset_reg_dma_buf(dspp_buf[RC_DATA][ctx->idx]);
+	REG_DMA_INIT_OPS(dma_write_cfg, MDSS, RC_DATA,
+		dspp_buf[RC_DATA][ctx->idx]);
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, 0, NULL, 0, HW_BLK_SELECT, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("write decode select failed ret %d\n", rc);
+		return -ENOMEM;
+	}
+
+	DRM_DEBUG_DRIVER("allocating %u bytes of memory for dma\n", buf_sz);
+	data = kzalloc(buf_sz, GFP_KERNEL);
+	if (!data) {
+		DRM_ERROR("memory allocation failed ret %d\n", rc);
+		return -ENOMEM;
+	}
+
+	cfg_param_07 = rc_mask_cfg->cfg_param_07;
+	for (i = 0; i < rc_mask_cfg->cfg_param_08; i++) {
+		cfg_param_09 =  rc_mask_cfg->cfg_param_09[i];
+		DRM_DEBUG_DRIVER("cfg_param_09[%d] = 0x%016lX at %u\n", i,
+				 cfg_param_09,
+				 i + cfg_param_07);
+		data[i * 2] = (i == 0) ? (BIT(30) | (cfg_param_07 << 18)) : 0;
+		data[i * 2] |= (cfg_param_09 & 0x3FFFF);
+		data[i * 2 + 1] = ((cfg_param_09 >> 18) & 0x3FFFF);
+	}
+
+	REG_DMA_SETUP_OPS(dma_write_cfg, abs_offset, data, buf_sz,
+			REG_BLK_WRITE_INC, 0, 0, 0);
+	rc = dma_ops->setup_payload(&dma_write_cfg);
+	if (rc) {
+		DRM_ERROR("rc dma write failed ret %d\n", rc);
+		goto exit;
+	}
+
+	/* defer trigger to kickoff phase */
+	REG_DMA_SETUP_KICKOFF(kick_off, hw_cfg->ctl,
+		dspp_buf[RC_DATA][ctx->idx], REG_DMA_WRITE,
+		DMA_CTL_QUEUE0, WRITE_TRIGGER);
+	rc = dma_ops->kick_off(&kick_off);
+	if (rc) {
+		DRM_ERROR("failed to kick off ret %d\n", rc);
+		goto exit;
+	}
+
+exit:
+	kfree(data);
+	return rc;
 }
 
 static void _dspp_pccv4_off(struct sde_hw_dspp *ctx, void *cfg)

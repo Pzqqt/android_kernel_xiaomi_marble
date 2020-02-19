@@ -56,6 +56,8 @@ static void dspp_ad_install_property(struct drm_crtc *crtc);
 
 static void dspp_ltm_install_property(struct drm_crtc *crtc);
 
+static void dspp_rc_install_property(struct drm_crtc *crtc);
+
 static void dspp_vlut_install_property(struct drm_crtc *crtc);
 
 static void dspp_gamut_install_property(struct drm_crtc *crtc);
@@ -112,6 +114,7 @@ do { \
 	func[SDE_DSPP_IGC] = dspp_igc_install_property; \
 	func[SDE_DSPP_HIST] = dspp_hist_install_property; \
 	func[SDE_DSPP_DITHER] = dspp_dither_install_property; \
+	func[SDE_DSPP_RC] = dspp_rc_install_property; \
 } while (0)
 
 typedef void (*lm_prop_install_func_t)(struct drm_crtc *crtc);
@@ -160,6 +163,7 @@ enum sde_cp_crtc_features {
 	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3,
 	SDE_CP_CRTC_DSPP_LTM_VLUT,
 	SDE_CP_CRTC_DSPP_SB,
+	SDE_CP_CRTC_DSPP_RC_MASK,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
 
@@ -172,11 +176,15 @@ enum sde_cp_crtc_features {
 };
 
 enum sde_cp_crtc_pu_features {
+	SDE_CP_CRTC_DSPP_RC_PU,
 	SDE_CP_CRTC_MAX_PU_FEATURES,
 };
 
 static enum sde_cp_crtc_pu_features
-		sde_cp_crtc_pu_to_feature[SDE_CP_CRTC_MAX_PU_FEATURES];
+		sde_cp_crtc_pu_to_feature[SDE_CP_CRTC_MAX_PU_FEATURES] = {
+	[SDE_CP_CRTC_DSPP_RC_PU] =
+		(enum sde_cp_crtc_pu_features) SDE_CP_CRTC_DSPP_RC_MASK,
+};
 
 static void _sde_cp_crtc_enable_hist_irq(struct sde_crtc *sde_crtc);
 
@@ -672,10 +680,122 @@ static int set_ltm_hist_crtl_feature(struct sde_hw_dspp *hw_dspp,
 	return ret;
 }
 
+static int check_rc_mask_feature(struct sde_hw_dspp *hw_dspp,
+				 struct sde_hw_cp_cfg *hw_cfg,
+				 struct sde_crtc *sde_crtc)
+{
+	int ret = 0;
+
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid arguments");
+		return -EINVAL;
+	}
+
+	if (!hw_dspp->ops.validate_rc_mask) {
+		DRM_ERROR("invalid rc ops");
+		return -EINVAL;
+	}
+
+	ret = hw_dspp->ops.validate_rc_mask(hw_dspp, hw_cfg);
+	if (ret)
+		DRM_ERROR("failed to validate rc mask %d", ret);
+
+	return ret;
+}
+
+static int set_rc_mask_feature(struct sde_hw_dspp *hw_dspp,
+			       struct sde_hw_cp_cfg *hw_cfg,
+			       struct sde_crtc *sde_crtc)
+{
+	int ret = 0;
+
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	if (!hw_dspp->ops.setup_rc_mask || !hw_dspp->ops.setup_rc_data) {
+		DRM_ERROR("invalid rc ops\n");
+		return -EINVAL;
+	}
+
+	DRM_DEBUG_DRIVER("dspp %d setup mask for rc instance %u\n",
+			hw_dspp->idx, hw_dspp->cap->sblk->rc.idx);
+
+	ret = hw_dspp->ops.setup_rc_mask(hw_dspp, hw_cfg);
+	if (ret) {
+		DRM_ERROR("failed to setup rc mask, ret %d\n", ret);
+		goto exit;
+	}
+
+	/* rc data should be programmed once if dspp are in multi-pipe mode */
+	if (hw_dspp->cap->sblk->rc.idx % hw_cfg->num_of_mixers == 0) {
+		ret = hw_dspp->ops.setup_rc_data(hw_dspp, hw_cfg);
+		if (ret) {
+			DRM_ERROR("failed to setup rc data, ret %d\n", ret);
+			goto exit;
+		}
+	}
+
+exit:
+	return ret;
+}
+
+static int set_rc_pu_feature(struct sde_hw_dspp *hw_dspp,
+			     struct sde_hw_cp_cfg *hw_cfg,
+			     struct sde_crtc *sde_crtc)
+{
+	int ret = 0;
+
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	if (!hw_dspp->ops.setup_rc_pu_roi) {
+		DRM_ERROR("invalid rc ops\n");
+		return -EINVAL;
+	}
+
+	DRM_DEBUG_DRIVER("dspp %d setup pu roi for rc instance %u\n",
+			hw_dspp->idx, hw_dspp->cap->sblk->rc.idx);
+
+	ret = hw_dspp->ops.setup_rc_pu_roi(hw_dspp, hw_cfg);
+	if (ret < 0)
+		DRM_ERROR("failed to setup rc pu roi, ret %d\n", ret);
+
+	return ret;
+}
+
+static int check_rc_pu_feature(struct sde_hw_dspp *hw_dspp,
+			       struct sde_hw_cp_cfg *hw_cfg,
+			       struct sde_crtc *sde_crtc)
+{
+	int ret = 0;
+
+	if (!hw_dspp || !hw_cfg || !sde_crtc) {
+		DRM_ERROR("invalid arguments\n");
+		return -EINVAL;
+	}
+
+	if (!hw_dspp->ops.validate_rc_pu_roi) {
+		SDE_ERROR("invalid rc ops");
+		return -EINVAL;
+	}
+
+	ret = hw_dspp->ops.validate_rc_pu_roi(hw_dspp, hw_cfg);
+	if (ret)
+		SDE_ERROR("failed to validate rc pu roi, ret %d", ret);
+
+	return ret;
+}
 
 feature_wrapper check_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_check_crtc_feature_wrappers(wrappers) \
-memset(wrappers, 0, sizeof(wrappers))
+do { \
+	memset(wrappers, 0, sizeof(wrappers)); \
+	wrappers[SDE_CP_CRTC_DSPP_RC_MASK] = check_rc_mask_feature; \
+} while (0)
 
 feature_wrapper set_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_set_crtc_feature_wrappers(wrappers) \
@@ -718,15 +838,22 @@ do { \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2] = set_ltm_queue_buf_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = set_ltm_queue_buf_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_HIST_CTL] = set_ltm_hist_crtl_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_RC_MASK] = set_rc_mask_feature; \
 } while (0)
 
 feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 #define setup_set_crtc_pu_feature_wrappers(wrappers) \
-memset(wrappers, 0, sizeof(wrappers))
+do { \
+	memset(wrappers, 0, sizeof(wrappers)); \
+	wrappers[SDE_CP_CRTC_DSPP_RC_PU] = set_rc_pu_feature; \
+} while (0)
 
 feature_wrapper check_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
 #define setup_check_crtc_pu_feature_wrappers(wrappers) \
-memset(wrappers, 0, sizeof(wrappers))
+do { \
+	memset(wrappers, 0, sizeof(wrappers)); \
+	wrappers[SDE_CP_CRTC_DSPP_RC_PU] = check_rc_pu_feature; \
+} while (0)
 
 #define INIT_PROP_ATTACH(p, crtc, prop, node, feature, val) \
 	do { \
@@ -1372,6 +1499,7 @@ static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
 	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_LTM_VLUT] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_SB] = SDE_DSPP_SB,
+	[SDE_CP_CRTC_DSPP_RC_MASK] = SDE_DSPP_RC,
 	[SDE_CP_CRTC_DSPP_MAX] = SDE_DSPP_MAX,
 	[SDE_CP_CRTC_LM_GC] = SDE_DSPP_MAX,
 };
@@ -2384,6 +2512,36 @@ static void dspp_ltm_install_property(struct drm_crtc *crtc)
 			SDE_CP_CRTC_DSPP_LTM_VLUT, 0, U64_MAX, 0);
 		sde_cp_create_local_blob(crtc, SDE_CP_CRTC_DSPP_LTM_VLUT,
 			sizeof(struct drm_msm_ltm_data));
+		break;
+	default:
+		DRM_ERROR("version %d not supported\n", version);
+		break;
+	}
+}
+
+static void dspp_rc_install_property(struct drm_crtc *crtc)
+{
+	char feature_name[256];
+	struct sde_kms *kms = NULL;
+	struct sde_mdss_cfg *catalog = NULL;
+	u32 version;
+
+	if (!crtc) {
+		DRM_ERROR("invalid arguments");
+		return;
+	}
+
+	kms = get_kms(crtc);
+	catalog = kms->catalog;
+	version = catalog->dspp[0].sblk->rc.version >> 16;
+	switch (version) {
+	case 1:
+		snprintf(feature_name, ARRAY_SIZE(feature_name), "%s%d",
+				"SDE_DSPP_RC_MASK_V", version);
+		sde_cp_crtc_install_blob_property(crtc, feature_name,
+				SDE_CP_CRTC_DSPP_RC_MASK,
+				sizeof(struct drm_msm_rc_mask_cfg));
+
 		break;
 	default:
 		DRM_ERROR("version %d not supported\n", version);
@@ -3774,4 +3932,27 @@ int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
 	struct sde_irq_callback *hist_irq)
 {
 	return 0;
+}
+
+void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm)
+{
+	struct sde_cp_node *prop_node = NULL, *n = NULL;
+	struct sde_crtc *crtc;
+
+	if (!crtc_drm) {
+		DRM_ERROR("invalid crtc handle");
+		return;
+	}
+	crtc = to_sde_crtc(crtc_drm);
+	mutex_lock(&crtc->crtc_cp_lock);
+	list_for_each_entry_safe(prop_node, n, &crtc->active_list,
+				 active_list) {
+		if (prop_node->feature == SDE_CP_CRTC_DSPP_LTM_INIT ||
+			prop_node->feature == SDE_CP_CRTC_DSPP_LTM_VLUT) {
+			list_del_init(&prop_node->active_list);
+			list_add_tail(&prop_node->dirty_list,
+				&crtc->dirty_list);
+		}
+	}
+	mutex_unlock(&crtc->crtc_cp_lock);
 }

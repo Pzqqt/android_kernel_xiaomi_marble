@@ -172,6 +172,7 @@ enum sde_stage {
 	SDE_STAGE_10,
 	SDE_STAGE_MAX
 };
+
 enum sde_dspp {
 	DSPP_0 = 1,
 	DSPP_1,
@@ -184,6 +185,12 @@ enum sde_ltm {
 	LTM_0 = DSPP_0,
 	LTM_1,
 	LTM_MAX
+};
+
+enum sde_rc {
+	RC_0 = DSPP_0,
+	RC_1,
+	RC_MAX
 };
 
 enum sde_ds {

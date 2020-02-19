@@ -199,4 +199,10 @@ int sde_cp_ltm_wb_pb_interrupt(struct drm_crtc *crtc_drm, bool en,
  */
 int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
 	struct sde_irq_callback *hist_irq);
+
+/**
+ * sde_cp_mode_switch_prop_dirty: API marks mode dependent features as dirty
+ * @crtc_drm: Pointer to crtc.
+ */
+void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm);
 #endif /*_SDE_COLOR_PROCESSING_H */

@@ -32,6 +32,9 @@
 /* each entry will have register address and bit offset in that register */
 #define MAX_BIT_OFFSET 2
 
+/* max table size for dts property lists, increase if tables grow larger */
+#define MAX_SDE_DT_TABLE_SIZE 64
+
 /* default line width for sspp, mixer, ds (input), wb */
 #define DEFAULT_SDE_LINE_WIDTH 2048
 
@@ -381,6 +384,14 @@ enum {
 };
 
 enum {
+	RC_OFF,
+	RC_LEN,
+	RC_VERSION,
+	RC_MEM_TOTAL_SIZE,
+	RC_PROP_MAX,
+};
+
+enum {
 	MIXER_OFF,
 	MIXER_LEN,
 	MIXER_PAIR_MASK,
@@ -473,6 +484,20 @@ struct sde_prop_type {
 struct sde_prop_value {
 	u32 value[MAX_SDE_HW_BLK];
 	u32 bit_value[MAX_SDE_HW_BLK][MAX_BIT_OFFSET];
+};
+
+/**
+ * struct sde_dt_props - stores dts properties read from a sde_prop_type table
+ * @exists:	Array of bools indicating if the given prop name was present
+ * @counts:	Count of the number of valid values for the property
+ * @values:	Array storing the count[i] property values
+ *
+ * Must use the sde_[get|put]_dt_props APIs to allocate/free this object.
+ */
+struct sde_dt_props {
+	bool exists[MAX_SDE_DT_TABLE_SIZE];
+	int counts[MAX_SDE_DT_TABLE_SIZE];
+	struct sde_prop_value *values;
 };
 
 /*************************************************************
@@ -680,6 +705,13 @@ static struct sde_prop_type ad_prop[] = {
 static struct sde_prop_type ltm_prop[] = {
 	{LTM_OFF, "qcom,sde-dspp-ltm-off", false, PROP_TYPE_U32_ARRAY},
 	{LTM_VERSION, "qcom,sde-dspp-ltm-version", false, PROP_TYPE_U32},
+};
+
+static struct sde_prop_type rc_prop[] = {
+	{RC_OFF, "qcom,sde-dspp-rc-off", false, PROP_TYPE_U32_ARRAY},
+	{RC_LEN, "qcom,sde-dspp-rc-size", false, PROP_TYPE_U32},
+	{RC_VERSION, "qcom,sde-dspp-rc-version", false, PROP_TYPE_U32},
+	{RC_MEM_TOTAL_SIZE, "qcom,sde-dspp-rc-mem-size", false, PROP_TYPE_U32},
 };
 
 static struct sde_prop_type ds_top_prop[] = {
@@ -912,6 +944,8 @@ static int _validate_dt_entry(struct device_node *np,
 		case PROP_TYPE_U32:
 			rc = of_property_read_u32(np, sde_prop[i].prop_name,
 				&val);
+			if (!rc)
+				prop_count[i] = 1;
 			break;
 		case PROP_TYPE_U32_ARRAY:
 			prop_count[i] = of_property_count_u32_elems(np,
@@ -934,6 +968,14 @@ static int _validate_dt_entry(struct device_node *np,
 					sde_prop[i].prop_name);
 			if (!snp)
 				rc = -EINVAL;
+			break;
+		case PROP_TYPE_BOOL:
+			/**
+			 * No special handling for bool properties here.
+			 * They will always exist, with value indicating
+			 * if the given key is present or not.
+			 */
+			prop_count[i] = 1;
 			break;
 		default:
 			SDE_DEBUG("invalid property type:%d\n",
@@ -1089,6 +1131,50 @@ static int _read_dt_entry(struct device_node *np,
 
 end:
 	return rc;
+}
+
+static struct sde_dt_props *sde_get_dt_props(struct device_node *np,
+		size_t prop_max, struct sde_prop_type *sde_prop,
+		u32 prop_size, u32 *off_count)
+{
+	struct sde_dt_props *props;
+	int rc = -ENOMEM;
+
+	props = kzalloc(sizeof(*props), GFP_KERNEL);
+	if (!props)
+		return ERR_PTR(rc);
+
+	props->values = kcalloc(prop_max, sizeof(*props->values),
+			GFP_KERNEL);
+	if (!props->values)
+		goto free_props;
+
+	rc = _validate_dt_entry(np, sde_prop, prop_size, props->counts,
+			off_count);
+	if (rc)
+		goto free_vals;
+
+	rc = _read_dt_entry(np, sde_prop, prop_size, props->counts,
+		props->exists, props->values);
+	if (rc)
+		goto free_vals;
+
+	return props;
+
+free_vals:
+	kfree(props->values);
+free_props:
+	kfree(props);
+	return ERR_PTR(rc);
+}
+
+static void sde_put_dt_props(struct sde_dt_props *props)
+{
+	if (!props)
+		return;
+
+	kfree(props->values);
+	kfree(props);
 }
 
 static int _add_to_irq_offset_list(struct sde_mdss_cfg *sde_cfg,
@@ -1709,43 +1795,29 @@ end:
 static int sde_ctl_parse_dt(struct device_node *np,
 		struct sde_mdss_cfg *sde_cfg)
 {
-	int rc, prop_count[HW_PROP_MAX], i;
-	bool prop_exists[HW_PROP_MAX];
-	struct sde_prop_value *prop_value = NULL;
+	int i;
+	struct sde_dt_props *props;
 	struct sde_ctl_cfg *ctl;
 	u32 off_count;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument input param\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
-	prop_value = kzalloc(HW_PROP_MAX *
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	rc = _validate_dt_entry(np, ctl_prop, ARRAY_SIZE(ctl_prop), prop_count,
-		&off_count);
-	if (rc)
-		goto end;
+	props = sde_get_dt_props(np, HW_PROP_MAX, ctl_prop,
+			ARRAY_SIZE(ctl_prop), &off_count);
+	if (IS_ERR_OR_NULL(props))
+		return PTR_ERR(props);
 
 	sde_cfg->ctl_count = off_count;
-
-	rc = _read_dt_entry(np, ctl_prop, ARRAY_SIZE(ctl_prop), prop_count,
-		prop_exists, prop_value);
-	if (rc)
-		goto end;
 
 	for (i = 0; i < off_count; i++) {
 		const char *disp_pref = NULL;
 
 		ctl = sde_cfg->ctl + i;
-		ctl->base = PROP_VALUE_ACCESS(prop_value, HW_OFF, i);
-		ctl->len = PROP_VALUE_ACCESS(prop_value, HW_LEN, 0);
+		ctl->base = PROP_VALUE_ACCESS(props->values, HW_OFF, i);
+		ctl->len = PROP_VALUE_ACCESS(props->values, HW_LEN, 0);
 		ctl->id = CTL_0 + i;
 		snprintf(ctl->name, SDE_HW_BLK_NAME_LEN, "ctl_%u",
 				ctl->id - CTL_0);
@@ -1766,9 +1838,9 @@ static int sde_ctl_parse_dt(struct device_node *np,
 				SDE_HW_MAJOR(SDE_HW_VER_700))
 			set_bit(SDE_CTL_UNIFIED_DSPP_FLUSH, &ctl->features);
 	}
-end:
-	kfree(prop_value);
-	return rc;
+
+	sde_put_dt_props(props);
+	return 0;
 }
 
 void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
@@ -1840,14 +1912,7 @@ void sde_hw_mixer_set_preference(struct sde_mdss_cfg *sde_cfg, u32 num_lm,
 static int sde_mixer_parse_dt(struct device_node *np,
 						struct sde_mdss_cfg *sde_cfg)
 {
-	int rc, prop_count[MIXER_PROP_MAX], i, j;
-	int blocks_prop_count[MIXER_BLOCKS_PROP_MAX];
-	int blend_prop_count[MIXER_BLEND_PROP_MAX];
-	bool prop_exists[MIXER_PROP_MAX];
-	bool blocks_prop_exists[MIXER_BLOCKS_PROP_MAX];
-	bool blend_prop_exists[MIXER_BLEND_PROP_MAX];
-	struct sde_prop_value *prop_value = NULL, *blocks_prop_value = NULL;
-	struct sde_prop_value *blend_prop_value = NULL;
+	int rc = 0, i, j;
 	u32 off_count, blend_off_count, max_blendstages, lm_pair_mask;
 	struct sde_lm_cfg *mixer;
 	struct sde_lm_sub_blks *sblk;
@@ -1855,30 +1920,18 @@ static int sde_mixer_parse_dt(struct device_node *np,
 	u32 pp_idx, dspp_idx, ds_idx;
 	u32 mixer_base;
 	struct device_node *snp = NULL;
+	struct sde_dt_props *props, *blend_props, *blocks_props = NULL;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument input param\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 	max_blendstages = sde_cfg->max_mixer_blendstages;
 
-	prop_value = kcalloc(MIXER_PROP_MAX,
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	rc = _validate_dt_entry(np, mixer_prop, ARRAY_SIZE(mixer_prop),
-		prop_count, &off_count);
-	if (rc)
-		goto end;
-
-	rc = _read_dt_entry(np, mixer_prop, ARRAY_SIZE(mixer_prop), prop_count,
-		prop_exists, prop_value);
-	if (rc)
-		goto end;
+	props = sde_get_dt_props(np, MIXER_PROP_MAX, mixer_prop,
+			ARRAY_SIZE(mixer_prop), &off_count);
+	if (IS_ERR_OR_NULL(props))
+		return PTR_ERR(props);
 
 	pp_count = sde_cfg->pingpong_count;
 	dspp_count = sde_cfg->dspp_count;
@@ -1887,47 +1940,30 @@ static int sde_mixer_parse_dt(struct device_node *np,
 	/* get mixer feature dt properties if they exist */
 	snp = of_get_child_by_name(np, mixer_prop[MIXER_BLOCKS].prop_name);
 	if (snp) {
-		blocks_prop_value = kzalloc(MIXER_BLOCKS_PROP_MAX *
-				MAX_SDE_HW_BLK * sizeof(struct sde_prop_value),
-				GFP_KERNEL);
-		if (!blocks_prop_value) {
-			rc = -ENOMEM;
-			goto end;
+		blocks_props = sde_get_dt_props(snp, MIXER_PROP_MAX,
+				mixer_blocks_prop,
+				ARRAY_SIZE(mixer_blocks_prop), NULL);
+		if (IS_ERR_OR_NULL(blocks_props)) {
+			rc = PTR_ERR(blocks_props);
+			goto put_props;
 		}
-		rc = _validate_dt_entry(snp, mixer_blocks_prop,
-			ARRAY_SIZE(mixer_blocks_prop), blocks_prop_count, NULL);
-		if (rc)
-			goto end;
-		rc = _read_dt_entry(snp, mixer_blocks_prop,
-				ARRAY_SIZE(mixer_blocks_prop),
-				blocks_prop_count, blocks_prop_exists,
-				blocks_prop_value);
 	}
 
 	/* get the blend_op register offsets */
-	blend_prop_value = kzalloc(MIXER_BLEND_PROP_MAX *
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!blend_prop_value) {
-		rc = -ENOMEM;
-		goto end;
+	blend_props = sde_get_dt_props(np, MIXER_BLEND_PROP_MAX,
+			mixer_blend_prop, ARRAY_SIZE(mixer_blend_prop),
+			&blend_off_count);
+	if (IS_ERR_OR_NULL(blend_props)) {
+		rc = PTR_ERR(blend_props);
+		goto put_blocks;
 	}
-	rc = _validate_dt_entry(np, mixer_blend_prop,
-		ARRAY_SIZE(mixer_blend_prop), blend_prop_count,
-		&blend_off_count);
-	if (rc)
-		goto end;
-
-	rc = _read_dt_entry(np, mixer_blend_prop, ARRAY_SIZE(mixer_blend_prop),
-		blend_prop_count, blend_prop_exists, blend_prop_value);
-	if (rc)
-		goto end;
 
 	for (i = 0, mixer_count = 0, pp_idx = 0, dspp_idx = 0,
 			ds_idx = 0; i < off_count; i++) {
 		const char *disp_pref = NULL;
 		const char *cwb_pref = NULL;
 
-		mixer_base = PROP_VALUE_ACCESS(prop_value, MIXER_OFF, i);
+		mixer_base = PROP_VALUE_ACCESS(props->values, MIXER_OFF, i);
 		if (!mixer_base)
 			continue;
 
@@ -1942,15 +1978,15 @@ static int sde_mixer_parse_dt(struct device_node *np,
 		mixer->sblk = sblk;
 
 		mixer->base = mixer_base;
-		mixer->len = PROP_VALUE_ACCESS(prop_value, MIXER_LEN, 0);
+		mixer->len = PROP_VALUE_ACCESS(props->values, MIXER_LEN, 0);
 		mixer->id = LM_0 + i;
 		snprintf(mixer->name, SDE_HW_BLK_NAME_LEN, "lm_%u",
 				mixer->id - LM_0);
 
-		if (!prop_exists[MIXER_LEN])
+		if (!props->exists[MIXER_LEN])
 			mixer->len = DEFAULT_SDE_HW_BLOCK_LEN;
 
-		lm_pair_mask = PROP_VALUE_ACCESS(prop_value,
+		lm_pair_mask = PROP_VALUE_ACCESS(props->values,
 				MIXER_PAIR_MASK, i);
 		if (lm_pair_mask)
 			mixer->lm_pair_mask = 1 << lm_pair_mask;
@@ -1960,7 +1996,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 
 		for (j = 0; j < blend_off_count; j++)
 			sblk->blendstage_base[j] =
-				PROP_VALUE_ACCESS(blend_prop_value,
+				PROP_VALUE_ACCESS(blend_props->values,
 						MIXER_BLEND_OP_OFF, j);
 
 		if (sde_cfg->has_src_split)
@@ -1995,11 +2031,11 @@ static int sde_mixer_parse_dt(struct device_node *np,
 		mixer_count++;
 
 		sblk->gc.id = SDE_MIXER_GC;
-		if (blocks_prop_value && blocks_prop_exists[MIXER_GC_PROP]) {
-			sblk->gc.base = PROP_VALUE_ACCESS(blocks_prop_value,
+		if (blocks_props && blocks_props->exists[MIXER_GC_PROP]) {
+			sblk->gc.base = PROP_VALUE_ACCESS(blocks_props->values,
 					MIXER_GC_PROP, 0);
-			sblk->gc.version = PROP_VALUE_ACCESS(blocks_prop_value,
-					MIXER_GC_PROP, 1);
+			sblk->gc.version = PROP_VALUE_ACCESS(
+					blocks_props->values, MIXER_GC_PROP, 1);
 			sblk->gc.len = 0;
 			set_bit(SDE_MIXER_GC, &mixer->features);
 		}
@@ -2007,9 +2043,11 @@ static int sde_mixer_parse_dt(struct device_node *np,
 	sde_cfg->mixer_count = mixer_count;
 
 end:
-	kfree(prop_value);
-	kfree(blocks_prop_value);
-	kfree(blend_prop_value);
+	sde_put_dt_props(blend_props);
+put_blocks:
+	sde_put_dt_props(blocks_props);
+put_props:
+	sde_put_dt_props(props);
 	return rc;
 }
 
@@ -2455,102 +2493,66 @@ end:
 static int sde_dspp_parse_dt(struct device_node *np,
 						struct sde_mdss_cfg *sde_cfg)
 {
-	int rc, prop_count[DSPP_PROP_MAX], i;
-	int ad_prop_count[AD_PROP_MAX];
-	int ltm_prop_count[LTM_PROP_MAX];
-	bool prop_exists[DSPP_PROP_MAX], ad_prop_exists[AD_PROP_MAX];
-	bool ltm_prop_exists[LTM_PROP_MAX];
-	bool blocks_prop_exists[DSPP_BLOCKS_PROP_MAX];
-	struct sde_prop_value *ad_prop_value = NULL, *ltm_prop_value = NULL;
-	int blocks_prop_count[DSPP_BLOCKS_PROP_MAX];
-	struct sde_prop_value *prop_value = NULL, *blocks_prop_value = NULL;
-	u32 off_count, ad_off_count, ltm_off_count;
+	int rc = 0, i;
+	u32 off_count, ad_off_count, ltm_off_count, rc_off_count;
+	struct sde_dt_props *props, *ad_props, *ltm_props, *rc_props;
+	struct sde_dt_props *blocks_props = NULL;
 	struct sde_dspp_cfg *dspp;
 	struct sde_dspp_sub_blks *sblk;
 	struct device_node *snp = NULL;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
-		rc = -EINVAL;
-		goto end;
+		return -EINVAL;
 	}
 
-	prop_value = kzalloc(DSPP_PROP_MAX *
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value) {
-		rc = -ENOMEM;
-		goto end;
-	}
-
-	rc = _validate_dt_entry(np, dspp_prop, ARRAY_SIZE(dspp_prop),
-		prop_count, &off_count);
-	if (rc)
-		goto end;
+	props = sde_get_dt_props(np, DSPP_PROP_MAX, dspp_prop,
+			ARRAY_SIZE(dspp_prop), &off_count);
+	if (IS_ERR_OR_NULL(props))
+		return PTR_ERR(props);
 
 	sde_cfg->dspp_count = off_count;
 
-	rc = _read_dt_entry(np, dspp_prop, ARRAY_SIZE(dspp_prop), prop_count,
-		prop_exists, prop_value);
-	if (rc)
-		goto end;
-
 	/* Parse AD dtsi entries */
-	ad_prop_value = kcalloc(AD_PROP_MAX,
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!ad_prop_value) {
-		rc = -ENOMEM;
-		goto end;
+	ad_props = sde_get_dt_props(np, AD_PROP_MAX, ad_prop,
+			ARRAY_SIZE(ad_prop), &ad_off_count);
+	if (IS_ERR_OR_NULL(ad_props)) {
+		rc = PTR_ERR(ad_props);
+		goto put_props;
 	}
-	rc = _validate_dt_entry(np, ad_prop, ARRAY_SIZE(ad_prop),
-		ad_prop_count, &ad_off_count);
-	if (rc)
-		goto end;
-	rc = _read_dt_entry(np, ad_prop, ARRAY_SIZE(ad_prop), ad_prop_count,
-		ad_prop_exists, ad_prop_value);
-	if (rc)
-		goto end;
 
 	/* Parse LTM dtsi entries */
-	ltm_prop_value = kcalloc(LTM_PROP_MAX,
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!ltm_prop_value) {
-		rc = -ENOMEM;
-		goto end;
+	ltm_props = sde_get_dt_props(np, LTM_PROP_MAX, ltm_prop,
+			ARRAY_SIZE(ltm_prop), &ltm_off_count);
+	if (IS_ERR_OR_NULL(ltm_props)) {
+		rc = PTR_ERR(ltm_props);
+		goto put_ad_props;
 	}
-	rc = _validate_dt_entry(np, ltm_prop, ARRAY_SIZE(ltm_prop),
-		ltm_prop_count, &ltm_off_count);
-	if (rc)
-		goto end;
-	rc = _read_dt_entry(np, ltm_prop, ARRAY_SIZE(ltm_prop), ltm_prop_count,
-		ltm_prop_exists, ltm_prop_value);
-	if (rc)
-		goto end;
+
+	/* Parse RC dtsi entries */
+	rc_props = sde_get_dt_props(np, RC_PROP_MAX, rc_prop,
+			ARRAY_SIZE(rc_prop), &rc_off_count);
+	if (IS_ERR_OR_NULL(rc_props)) {
+		rc = PTR_ERR(rc_props);
+		goto put_ltm_props;
+	}
 
 	/* get DSPP feature dt properties if they exist */
 	snp = of_get_child_by_name(np, dspp_prop[DSPP_BLOCKS].prop_name);
 	if (snp) {
-		blocks_prop_value = kzalloc(DSPP_BLOCKS_PROP_MAX *
-				MAX_SDE_HW_BLK * sizeof(struct sde_prop_value),
-				GFP_KERNEL);
-		if (!blocks_prop_value) {
-			rc = -ENOMEM;
-			goto end;
+		blocks_props = sde_get_dt_props(snp, DSPP_BLOCKS_PROP_MAX,
+				dspp_blocks_prop, ARRAY_SIZE(dspp_blocks_prop),
+				NULL);
+		if (IS_ERR_OR_NULL(blocks_props)) {
+			rc = PTR_ERR(blocks_props);
+			goto put_rc_props;
 		}
-		rc = _validate_dt_entry(snp, dspp_blocks_prop,
-			ARRAY_SIZE(dspp_blocks_prop), blocks_prop_count, NULL);
-		if (rc)
-			goto end;
-		rc = _read_dt_entry(snp, dspp_blocks_prop,
-			ARRAY_SIZE(dspp_blocks_prop), blocks_prop_count,
-			blocks_prop_exists, blocks_prop_value);
-		if (rc)
-			goto end;
 	}
 
 	for (i = 0; i < off_count; i++) {
 		dspp = sde_cfg->dspp + i;
-		dspp->base = PROP_VALUE_ACCESS(prop_value, DSPP_OFF, i);
-		dspp->len = PROP_VALUE_ACCESS(prop_value, DSPP_SIZE, 0);
+		dspp->base = PROP_VALUE_ACCESS(props->values, DSPP_OFF, i);
+		dspp->len = PROP_VALUE_ACCESS(props->values, DSPP_SIZE, 0);
 		dspp->id = DSPP_0 + i;
 		snprintf(dspp->name, SDE_HW_BLK_NAME_LEN, "dspp_%u",
 				dspp->id - DSPP_0);
@@ -2563,17 +2565,18 @@ static int sde_dspp_parse_dt(struct device_node *np,
 		}
 		dspp->sblk = sblk;
 
-		if (blocks_prop_value)
+		if (blocks_props)
 			_sde_dspp_setup_blocks(sde_cfg, dspp, sblk,
-					blocks_prop_exists, blocks_prop_value);
+					blocks_props->exists,
+					blocks_props->values);
 
 		sblk->ad.id = SDE_DSPP_AD;
 		sde_cfg->ad_count = ad_off_count;
-		if (ad_prop_value && (i < ad_off_count) &&
-		    ad_prop_exists[AD_OFF]) {
-			sblk->ad.base = PROP_VALUE_ACCESS(ad_prop_value,
+		if (ad_props && (i < ad_off_count) &&
+		    ad_props->exists[AD_OFF]) {
+			sblk->ad.base = PROP_VALUE_ACCESS(ad_props->values,
 				AD_OFF, i);
-			sblk->ad.version = PROP_VALUE_ACCESS(ad_prop_value,
+			sblk->ad.version = PROP_VALUE_ACCESS(ad_props->values,
 				AD_VERSION, 0);
 			set_bit(SDE_DSPP_AD, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
@@ -2585,11 +2588,11 @@ static int sde_dspp_parse_dt(struct device_node *np,
 
 		sblk->ltm.id = SDE_DSPP_LTM;
 		sde_cfg->ltm_count = ltm_off_count;
-		if (ltm_prop_value && (i < ltm_off_count) &&
-		    ltm_prop_exists[LTM_OFF]) {
-			sblk->ltm.base = PROP_VALUE_ACCESS(ltm_prop_value,
+		if (ltm_props && (i < ltm_off_count) &&
+		    ltm_props->exists[LTM_OFF]) {
+			sblk->ltm.base = PROP_VALUE_ACCESS(ltm_props->values,
 				LTM_OFF, i);
-			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_prop_value,
+			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_props->values,
 				LTM_VERSION, 0);
 			set_bit(SDE_DSPP_LTM, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
@@ -2599,13 +2602,34 @@ static int sde_dspp_parse_dt(struct device_node *np,
 				goto end;
 		}
 
+		sblk->rc.id = SDE_DSPP_RC;
+		sde_cfg->rc_count = rc_off_count;
+		if (rc_props && (i < rc_off_count) &&
+		    rc_props->exists[RC_OFF]) {
+			sblk->rc.base = PROP_VALUE_ACCESS(rc_props->values,
+					RC_OFF, i);
+			sblk->rc.len = PROP_VALUE_ACCESS(rc_props->values,
+					RC_LEN, 0);
+			sblk->rc.version = PROP_VALUE_ACCESS(rc_props->values,
+					RC_VERSION, 0);
+			sblk->rc.mem_total_size = PROP_VALUE_ACCESS(
+					rc_props->values, RC_MEM_TOTAL_SIZE,
+					0);
+			sblk->rc.idx = i;
+			set_bit(SDE_DSPP_RC, &dspp->features);
+		}
 	}
 
 end:
-	kfree(prop_value);
-	kfree(ad_prop_value);
-	kfree(ltm_prop_value);
-	kfree(blocks_prop_value);
+	sde_put_dt_props(blocks_props);
+put_rc_props:
+	sde_put_dt_props(rc_props);
+put_ltm_props:
+	sde_put_dt_props(ltm_props);
+put_ad_props:
+	sde_put_dt_props(ad_props);
+put_props:
+	sde_put_dt_props(props);
 	return rc;
 }
 
@@ -2713,7 +2737,6 @@ static int sde_ds_parse_dt(struct device_node *np,
 			set_bit(SDE_SSPP_SCALER_QSEED3, &ds->features);
 		else if (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)
 			set_bit(SDE_SSPP_SCALER_QSEED3LITE, &ds->features);
-
 	}
 
 end:
