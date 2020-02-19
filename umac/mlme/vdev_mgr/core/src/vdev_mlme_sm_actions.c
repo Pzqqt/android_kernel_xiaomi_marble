@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -293,6 +293,7 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 			     &pdev_mlme->restart_send_vdev_bmap,
 			     sizeof(pdev_mlme->pdev_restart.restart_bmap));
 
+		qdf_atomic_init(&pdev_mlme->multivdev_restart_wait_cnt);
 		if (!wlan_pdev_nif_feat_cap_get(pdev,
 						WLAN_PDEV_F_MULTIVDEV_RESTART))
 			wlan_objmgr_pdev_iterate_obj_list
@@ -316,6 +317,7 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 	}
 }
 
+#define MULTIVDEV_RESTART_MAX_RETRY_CNT 100
 static os_timer_func(mlme_restart_req_timeout)
 {
 	unsigned long restart_pend_vdev_bmap[2];
@@ -331,6 +333,13 @@ static os_timer_func(mlme_restart_req_timeout)
 		wlan_pdev_chan_change_pending_vdevs(pdev,
 						    restart_pend_vdev_bmap,
 						    WLAN_MLME_SB_ID);
+		qdf_atomic_inc(&pdev_mlme->multivdev_restart_wait_cnt);
+		if (qdf_atomic_read(&pdev_mlme->multivdev_restart_wait_cnt) > MULTIVDEV_RESTART_MAX_RETRY_CNT) {
+			mlme_err("Multivdev Restart_pend_vdev_bmap 0x%lx 0x%lx",
+				 pdev_mlme->restart_pend_vdev_bmap[1],
+				 pdev_mlme->restart_pend_vdev_bmap[0]);
+			QDF_BUG(0);
+		}
 
 		/* If all the pending vdevs goes down, this would fail,
 		 * otherwise start timer
@@ -566,6 +575,7 @@ QDF_STATUS mlme_register_cmn_ops(struct vdev_mlme_obj *vdev_mlme)
 
 void mlme_restart_timer_init(struct pdev_mlme_obj *pdev_mlme)
 {
+	qdf_atomic_init(&pdev_mlme->multivdev_restart_wait_cnt);
 	qdf_timer_init(NULL, &pdev_mlme->restart_req_timer,
 		       mlme_restart_req_timeout, (void *)(pdev_mlme),
 		       QDF_TIMER_TYPE_WAKE_APPS);
