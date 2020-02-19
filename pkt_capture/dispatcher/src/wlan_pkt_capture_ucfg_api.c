@@ -206,6 +206,15 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 	return pkt_capture_process_mgmt_tx_data(pdev, params, nbuf, status);
 }
 
+void
+ucfg_pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint16_t chan_freq,
+			 uint8_t preamble_type)
+{
+	pkt_capture_mgmt_tx(pdev, nbuf, chan_freq, preamble_type);
+}
+
 /**
  * ucfg_process_pktcapture_mgmt_tx_completion(): process mgmt tx completion
  * for pkt capture mode

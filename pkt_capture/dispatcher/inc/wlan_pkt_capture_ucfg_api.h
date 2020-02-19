@@ -136,7 +136,23 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				      uint8_t status);
 
 /**
- * ucfg_pkt_capture_mgmt_tx_completion(): process mgmt tx completion
+ * ucfg_pkt_capture_mgmt_tx() - process mgmt tx completion
+ * for pkt capture mode
+ * @pdev: pointer to pdev object
+ * @nbuf: netbuf
+ * @chan_freq: channel freq
+ * @preamble_type: preamble_type
+ *
+ * Return: none
+ */
+void
+ucfg_pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint16_t chan_freq,
+			 uint8_t preamble_type);
+
+/**
+ * ucfg_pkt_capture_mgmt_tx_completion() - process mgmt tx completion
  * for pkt capture mode
  * @pdev: pointer to pdev object
  * @desc_id: desc_id
@@ -307,6 +323,14 @@ ucfg_pkt_capture_process_mgmt_tx_data(
 				uint8_t status)
 {
 	return 0;
+}
+
+static inline void
+ucfg_pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint16_t chan_freq,
+			 uint8_t preamble_type)
+{
 }
 
 static inline void

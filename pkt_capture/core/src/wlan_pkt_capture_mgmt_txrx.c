@@ -238,6 +238,56 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 					   nbuf, status);
 }
 
+void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint16_t chan_freq,
+			 uint8_t preamble_type)
+{
+	qdf_nbuf_t wbuf;
+	int nbuf_len;
+	struct mgmt_offload_event_params params = {0};
+
+	if (!pdev) {
+		pkt_capture_err("pdev is NULL");
+		return;
+	}
+
+	nbuf_len = qdf_nbuf_len(nbuf);
+	wbuf = qdf_nbuf_alloc(NULL, roundup(nbuf_len + RESERVE_BYTES, 4),
+			      RESERVE_BYTES, 4, false);
+	if (!wbuf) {
+		pkt_capture_err("Failed to allocate wbuf for mgmt len(%u)",
+				nbuf_len);
+		return;
+	}
+
+	qdf_nbuf_put_tail(wbuf, nbuf_len);
+	qdf_mem_copy(qdf_nbuf_data(wbuf), qdf_nbuf_data(nbuf), nbuf_len);
+
+	params.chan_freq = chan_freq;
+	/*
+	 * Filling Tpc in rssi field.
+	 * As Tpc is not available, filling with default value of tpc
+	 */
+	params.rssi = 0;
+	/* Assigning the local timestamp as TSF timestamp is not available*/
+	params.tsf_l32 = (uint32_t)jiffies;
+
+	if (preamble_type == (1 << WMI_RATE_PREAMBLE_CCK))
+		params.rate_kbps = 1000; /* Rate is 1 Mbps for CCK */
+	else
+		params.rate_kbps = 6000; /* Rate is 6 Mbps for OFDM */
+
+	/*
+	 * The mgmt tx packet is send to mon interface before tx completion.
+	 * we do not have status for this packet, using magic number(0xFF)
+	 * as status for mgmt tx packet
+	 */
+	if (QDF_STATUS_SUCCESS !=
+		pkt_capture_process_mgmt_tx_data(pdev, &params, wbuf, 0xFF))
+		qdf_nbuf_free(wbuf);
+}
+
 void
 pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 			       uint32_t desc_id,
