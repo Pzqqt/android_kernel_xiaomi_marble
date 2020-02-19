@@ -48,6 +48,20 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				 struct mgmt_offload_event_params *params,
 				 qdf_nbuf_t nbuf,
 				 uint8_t status);
+/**
+ * pkt_capture_mgmt_tx() - process mgmt tx completion
+ * for pkt capture mode
+ * @pdev: pointer to pdev object
+ * @nbuf: netbuf
+ * @chan_freq: channel freq
+ * @preamble_type: preamble_type
+ *
+ * Return: none
+ */
+void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
+			 qdf_nbuf_t nbuf,
+			 uint16_t chan_freq,
+			 uint8_t preamble_type);
 
 /**
  * pkt_capture_mgmt_tx_completion() - process mgmt tx completion
