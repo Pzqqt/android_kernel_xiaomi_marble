@@ -1746,15 +1746,22 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 		 * MCC restriction. So free ch list allocated in do_acs
 		 * func for Sec AP and realloc for Pri AP ch list size
 		 */
-		if (sap_config->acs_cfg.freq_list)
+		if (sap_config->acs_cfg.freq_list) {
 			qdf_mem_free(sap_config->acs_cfg.freq_list);
+			sap_config->acs_cfg.freq_list = NULL;
+		}
+		if (sap_config->acs_cfg.master_freq_list) {
+			qdf_mem_free(sap_config->acs_cfg.master_freq_list);
+			sap_config->acs_cfg.master_freq_list = NULL;
+		}
 
 		qdf_mem_copy(&sap_config->acs_cfg,
 			     &con_sap_config->acs_cfg,
 			     sizeof(struct sap_acs_cfg));
-		sap_config->acs_cfg.freq_list = qdf_mem_malloc(
-						sizeof(uint32_t) *
-					con_sap_config->acs_cfg.ch_list_count);
+
+		sap_config->acs_cfg.freq_list =
+			qdf_mem_malloc(sizeof(uint32_t) *
+				con_sap_config->acs_cfg.ch_list_count);
 		if (!sap_config->acs_cfg.freq_list) {
 			sap_config->acs_cfg.ch_list_count = 0;
 			return -ENOMEM;
@@ -1762,10 +1769,21 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 		qdf_mem_copy(sap_config->acs_cfg.freq_list,
 			     con_sap_config->acs_cfg.freq_list,
 			     con_sap_config->acs_cfg.ch_list_count *
-			     sizeof(uint32_t));
-		sap_config->acs_cfg.ch_list_count =
-					con_sap_config->acs_cfg.ch_list_count;
+				sizeof(uint32_t));
 
+		sap_config->acs_cfg.master_freq_list =
+			qdf_mem_malloc(sizeof(uint32_t) *
+				con_sap_config->acs_cfg.master_ch_list_count);
+		if (!sap_config->acs_cfg.master_freq_list) {
+			sap_config->acs_cfg.master_ch_list_count = 0;
+			qdf_mem_free(sap_config->acs_cfg.freq_list);
+			sap_config->acs_cfg.freq_list = NULL;
+			return -ENOMEM;
+		}
+		qdf_mem_copy(sap_config->acs_cfg.master_freq_list,
+			     con_sap_config->acs_cfg.master_freq_list,
+			     con_sap_config->acs_cfg.master_ch_list_count *
+				sizeof(uint32_t));
 	} else {
 		sap_config->acs_cfg.pri_ch_freq = con_ch_freq;
 		if (sap_config->acs_cfg.ch_width > eHT_CHANNEL_WIDTH_20MHZ)
