@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -486,41 +486,29 @@ bool pmo_core_get_wow_enable_cmd_sent(struct pmo_psoc_priv_obj *psoc_ctx)
 /**
  * pmo_core_update_wow_initial_wake_up() - update wow initial wake up
  * @psoc_ctx: Pointer to objmgr psoc handle
- * @value: true if wow initial wake up is received else false
+ * @value: set to 1 if wow initial wake up is received;
+ *         if clean state, reset it to 0;
  *
  * Return: None
  */
 static inline
 void pmo_core_update_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx,
-	bool value)
+	int value)
 {
-	/* Intentionally using irq save since initial wake flag is updated
-	 * from wake msi hard irq handler
-	 */
-	qdf_spin_lock_irqsave(&psoc_ctx->lock);
-	psoc_ctx->wow.wow_initial_wake_up = value;
-	qdf_spin_unlock_irqrestore(&psoc_ctx->lock);
+	qdf_atomic_set(&psoc_ctx->wow.wow_initial_wake_up, value);
 }
 
 /**
  * pmo_core_get_wow_initial_wake_up() - Get wow initial wake up
  * @psoc_ctx: Pointer to objmgr psoc handle
  *
- * Return:  true if wow initial wake up is received else false
+ * Return:  1 if wow initial wake up is received;
+ *          0 if wow iniital wake up is not received;
  */
 static inline
-bool pmo_core_get_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx)
+int pmo_core_get_wow_initial_wake_up(struct pmo_psoc_priv_obj *psoc_ctx)
 {
-	bool value;
-
-	/* Intentionally using irq save since initial wake flag is updated
-	 * from wake msi hard irq handler
-	 */
-	qdf_spin_lock_irqsave(&psoc_ctx->lock);
-	value = psoc_ctx->wow.wow_initial_wake_up;
-	qdf_spin_unlock_irqrestore(&psoc_ctx->lock);
-
-	return value;
+	return qdf_atomic_read(&psoc_ctx->wow.wow_initial_wake_up);
 }
 
 #ifdef FEATURE_WLAN_EXTSCAN

@@ -187,6 +187,8 @@ QDF_STATUS pmo_psoc_object_created_notification(
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
+
+	qdf_atomic_init(&psoc_ctx->wow.wow_initial_wake_up);
 	/* Register PMO tx ops*/
 	target_if_pmo_register_tx_ops(&psoc_ctx->pmo_tx_ops);
 out:
