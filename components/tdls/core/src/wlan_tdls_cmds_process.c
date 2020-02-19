@@ -1714,8 +1714,6 @@ static QDF_STATUS tdls_config_force_peer(
 	struct tdls_peer_update_state *peer_update_param;
 
 	macaddr = req->peer_addr;
-	tdls_debug("NL80211_TDLS_SETUP for " QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(macaddr));
 
 	vdev = req->vdev;
 	pdev = wlan_vdev_get_pdev(vdev);

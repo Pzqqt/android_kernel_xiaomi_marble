@@ -628,10 +628,6 @@ void wlan_cfg80211_tdls_rx_callback(void *user_data,
 	struct vdev_osif_priv *osif_priv;
 	struct wireless_dev *wdev;
 
-	osif_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
-		   user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
-		   rx_frame->buf, rx_frame->frame_len);
-
 	psoc = user_data;
 	if (!psoc) {
 		osif_err("psoc is null");
@@ -908,7 +904,6 @@ wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
 
-	osif_debug("Implicit TDLS, request Send Discovery request");
 	cfg80211_tdls_oper_request(osif_vdev->wdev->netdev,
 				   ind->peer_mac, NL80211_TDLS_DISCOVERY_REQ,
 				   false, GFP_KERNEL);
