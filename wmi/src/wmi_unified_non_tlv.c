@@ -8928,7 +8928,8 @@ static QDF_STATUS extract_all_stats_counts_non_tlv(wmi_unified_t wmi_handle,
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_EXTD_STAT;
 	if (stats_id & WMI_REQUEST_VDEV_EXTD_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_EXTD_STAT;
-	if (stats_id & (WMI_REQUEST_PDEV_EXT2_STAT | WMI_REQUEST_NAC_RSSI_STAT))
+	if ((stats_id & WMI_REQUEST_PDEV_EXT2_STAT) &&
+		(stats_id & WMI_REQUEST_NAC_RSSI_STAT))
 		stats_param->stats_id |= WMI_HOST_REQUEST_NAC_RSSI;
 	if (stats_id & WMI_REQUEST_PEER_RETRY_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_RETRY_STAT;
