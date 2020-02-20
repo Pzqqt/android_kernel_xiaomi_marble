@@ -13251,6 +13251,7 @@ extract_vdev_mgmt_offload_event_tlv(void *handle, void *evt_buf,
 	params->buf_len = hdr->buf_len;
 	params->tx_status = hdr->tx_status;
 	params->buf = param_tlvs->bufp;
+	params->tx_retry_cnt = hdr->tx_retry_cnt;
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
