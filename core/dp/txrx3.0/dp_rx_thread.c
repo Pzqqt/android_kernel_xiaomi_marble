@@ -407,7 +407,6 @@ static int dp_rx_thread_sub_loop(struct dp_rx_thread *rx_thread, bool *shutdown)
 			dp_debug("received suspend ind (%s) id %d pid %d",
 				 qdf_get_current_comm(), rx_thread->id,
 				 qdf_get_current_pid());
-			qdf_event_reset(&rx_thread->resume_event);
 			qdf_event_set(&rx_thread->suspend_event);
 			dp_debug("waiting for resume (%s) id %d pid %d",
 				 qdf_get_current_comm(), rx_thread->id,
@@ -648,7 +647,7 @@ ret:
  * @rx_tm_hdl: dp_rx_tm_handle containing the overall thread
  *            infrastructure
  *
- * Return: QDF_STATUS_SUCCESS
+ * Return: Success/Failure
  */
 QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 {
@@ -661,9 +660,12 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	rx_tm_hdl->state = DP_RX_THREADS_SUSPENDING;
+
 	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
+		qdf_event_reset(&rx_tm_hdl->rx_thread[i]->resume_event);
 		qdf_event_reset(&rx_tm_hdl->rx_thread[i]->suspend_event);
 		qdf_set_bit(RX_SUSPEND_EVENT,
 			    &rx_tm_hdl->rx_thread[i]->event_flag);
@@ -679,16 +681,22 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 						   DP_RX_THREAD_WAIT_TIMEOUT);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			dp_debug("thread:%d suspended", rx_thread->id);
-		else if (qdf_status == QDF_STATUS_E_TIMEOUT)
-			dp_err("thread:%d timed out waiting for suspend",
-			       rx_thread->id);
 		else
-			dp_err("thread:%d failed while waiting for suspend",
-			       rx_thread->id);
+			goto suspend_fail;
 	}
 	rx_tm_hdl->state = DP_RX_THREADS_SUSPENDED;
 
 	return QDF_STATUS_SUCCESS;
+
+suspend_fail:
+	dp_err("thread:%d %s(%d) while waiting for suspend",
+	       rx_thread->id,
+	       qdf_status == QDF_STATUS_E_TIMEOUT ? "timeout out" : "failed",
+	       qdf_status);
+
+	dp_rx_tm_resume(rx_tm_hdl);
+
+	return qdf_status;
 }
 
 /**
@@ -781,7 +789,8 @@ QDF_STATUS dp_rx_tm_resume(struct dp_rx_tm_handle *rx_tm_hdl)
 {
 	int i;
 
-	if (rx_tm_hdl->state != DP_RX_THREADS_SUSPENDED) {
+	if (rx_tm_hdl->state != DP_RX_THREADS_SUSPENDED &&
+	    rx_tm_hdl->state != DP_RX_THREADS_SUSPENDING) {
 		dp_info("resume callback received w/o suspend! Ignoring.");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -790,6 +799,12 @@ QDF_STATUS dp_rx_tm_resume(struct dp_rx_tm_handle *rx_tm_hdl)
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		dp_debug("calling thread %d to resume", i);
+
+		/* postively reset event_flag for DP_RX_THREADS_SUSPENDING
+		 * state
+		 */
+		qdf_clear_bit(RX_SUSPEND_EVENT,
+			      &rx_tm_hdl->rx_thread[i]->event_flag);
 		qdf_event_set(&rx_tm_hdl->rx_thread[i]->resume_event);
 	}
 

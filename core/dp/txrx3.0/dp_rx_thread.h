@@ -110,11 +110,13 @@ struct dp_rx_thread {
  * @DP_RX_THREADS_INVALID: initial invalid state
  * @DP_RX_THREADS_RUNNING: rx threads functional(NOT suspended, processing
  *			  packets or waiting on a wait_queue)
+ * @DP_RX_THREADS_SUSPENDING: rx thread is suspending
  * @DP_RX_THREADS_SUSPENDED: rx_threads suspended from cfg8011 suspend
  */
 enum dp_rx_thread_state {
 	DP_RX_THREADS_INVALID,
 	DP_RX_THREADS_RUNNING,
+	DP_RX_THREADS_SUSPENDING,
 	DP_RX_THREADS_SUSPENDED
 };
 
