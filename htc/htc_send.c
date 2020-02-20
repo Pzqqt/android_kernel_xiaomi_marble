@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,7 +129,7 @@ static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
 	 * In case of SSR, we cannot call the upper layer completion
 	 * callbacks, hence just free the nbuf and HTC packet here.
 	 */
-	if (hif_get_target_status(target->hif_dev)) {
+	if (target->hif_dev && hif_get_target_status(target->hif_dev)) {
 		htc_free_control_tx_packet(target, pPacket);
 		return;
 	}
