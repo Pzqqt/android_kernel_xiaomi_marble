@@ -2155,6 +2155,10 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(RESV_NUM_UL_BEAM);
 	ppdu_desc->beam_change =
 		HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_GET(*tag_buf);
+	ppdu_desc->doppler =
+		HTT_PPDU_STATS_COMMON_TLV_DOPPLER_INDICATION_GET(*tag_buf);
+	ppdu_desc->spatial_reuse =
+		HTT_PPDU_STATS_COMMON_TLV_SPATIAL_REUSE_GET(*tag_buf);
 
 	dp_tx_capture_htt_frame_counter(pdev, frame_type);
 
