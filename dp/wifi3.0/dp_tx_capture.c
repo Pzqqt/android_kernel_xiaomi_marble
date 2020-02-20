@@ -2125,12 +2125,15 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 		/* Find missing mpdus from current schedule list */
 		ppdu_cnt = 0;
 
-		if (!nbuf_ppdu_desc_list[ppdu_cnt]) {
+		while (!nbuf_ppdu_desc_list[ppdu_cnt]) {
 			ppdu_cnt++;
 			if (ppdu_cnt < ppdu_desc_cnt)
 				continue;
 			break;
 		}
+
+		if (ppdu_cnt == ppdu_desc_cnt)
+			break;
 
 		ppdu_desc = (struct cdp_tx_completion_ppdu *)qdf_nbuf_data(
 			pend_ppdu);
@@ -2577,8 +2580,8 @@ insert_mgmt_buf_to_queue:
 					(struct cdp_tx_completion_ppdu *)
 						qdf_nbuf_data(nbuf_retry_ppdu);
 				tmp_mgmt_ctl_nbuf =
-					skb_copy_expand(mgmt_ctl_nbuf,
-							0, 0, GFP_ATOMIC);
+					qdf_nbuf_copy_expand(mgmt_ctl_nbuf,
+							0, 0);
 
 				dp_update_tx_cap_info(pdev, nbuf_retry_ppdu,
 						      &tx_capture_info, true);
@@ -2801,7 +2804,6 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 		uint32_t num_mpdu;
 		uint16_t start_seq, seq_no = 0;
 		int i;
-		uint32_t len;
 		qdf_nbuf_t mpdu_nbuf;
 		struct dp_peer *peer;
 		uint8_t type;
@@ -2857,9 +2859,6 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 		/* find mpdu tried is same as success mpdu */
 
 		num_mpdu = ppdu_desc->user[0].mpdu_success;
-
-		/* get length */
-		len = qdf_nbuf_queue_len(&ppdu_desc->mpdu_q);
 
 		/* ba_size is updated in BA bitmap TLVs, which are not received
 		 * in case of non-QoS TID.
