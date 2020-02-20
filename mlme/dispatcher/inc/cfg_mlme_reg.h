@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -251,15 +251,6 @@
  *
  * This ini is used to ignore regdb offload indication from FW and
  * regulatory will be treated as non offload.
- * There is a case where FW is sending the offload indication in
- * service ready event but not sending the cc list event
- * WMI_REG_CHAN_LIST_CC_EVENTID and because of this driver is not
- * able to populate the channel list. To address this issue, this ini
- * is added. If this ini is enabled, regulatory will always be treated as
- * non offload solution.
- *
- * This ini should only be enabled to circumvent the above mentioned firmware
- * bug.
  *
  * Related: None
  *
