@@ -967,11 +967,12 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		if (tx_unmute_delay < unmute_delay)
 			tx_unmute_delay = unmute_delay;
 		/* schedule work queue to Remove Mute */
-		schedule_delayed_work(&tx_priv->tx_mute_dwork[decimator].dwork,
-				      msecs_to_jiffies(tx_unmute_delay));
+		queue_delayed_work(system_freezable_wq,
+				   &tx_priv->tx_mute_dwork[decimator].dwork,
+				   msecs_to_jiffies(tx_unmute_delay));
 		if (tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ) {
-			schedule_delayed_work(
+			queue_delayed_work(system_freezable_wq,
 				&tx_priv->tx_hpf_work[decimator].dwork,
 				msecs_to_jiffies(hpf_delay));
 			snd_soc_component_update_bits(component,
@@ -3279,6 +3280,10 @@ static const struct of_device_id tx_macro_dt_match[] = {
 };
 
 static const struct dev_pm_ops bolero_dev_pm_ops = {
+	SET_SYSTEM_SLEEP_PM_OPS(
+		pm_runtime_force_suspend,
+		pm_runtime_force_resume
+	)
 	SET_RUNTIME_PM_OPS(
 		bolero_runtime_suspend,
 		bolero_runtime_resume,

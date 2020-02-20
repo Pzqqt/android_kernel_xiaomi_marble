@@ -1199,6 +1199,7 @@ static int bolero_remove(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
 int bolero_runtime_resume(struct device *dev)
 {
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
@@ -1272,6 +1273,7 @@ int bolero_runtime_suspend(struct device *dev)
 	return 0;
 }
 EXPORT_SYMBOL(bolero_runtime_suspend);
+#endif /* CONFIG_PM */
 
 bool bolero_check_core_votes(struct device *dev)
 {
