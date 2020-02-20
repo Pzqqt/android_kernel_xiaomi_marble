@@ -26,8 +26,36 @@
 #include <enet.h>
 #include <wlan_reg_services_api.h>
 #include <cds_ieee80211_common.h>
+#include <ol_txrx_htt_api.h>
 
 #define RESERVE_BYTES (100)
+
+/**
+ * pkt_capture_txrx_status_map() - map Tx status for data packets
+ * with packet capture Tx status
+ * @status: Tx status
+ *
+ * Return: pkt_capture_tx_status enum
+ */
+static enum pkt_capture_tx_status
+pkt_capture_txrx_status_map(uint8_t status)
+{
+	enum pkt_capture_tx_status tx_status;
+
+	switch (status) {
+	case htt_tx_status_ok:
+		tx_status = pkt_capture_tx_status_ok;
+		break;
+	case htt_tx_status_no_ack:
+		tx_status = pkt_capture_tx_status_no_ack;
+		break;
+	default:
+		tx_status = pkt_capture_tx_status_discard;
+		break;
+	}
+
+	return tx_status;
+}
 
 /**
  * pkt_capture_get_tx_rate() - get tx rate for tx packet
@@ -211,6 +239,9 @@ pkt_capture_update_tx_status(
 	tx_status->chan_flags = channel_flags;
 	tx_status->ant_signal_db = pktcapture_hdr->rssi_comb;
 	tx_status->rssi_comb = pktcapture_hdr->rssi_comb;
+	tx_status->tx_status = pktcapture_hdr->status;
+	tx_status->tx_retry_cnt = pktcapture_hdr->tx_retry_cnt;
+	tx_status->add_rtap_ext = true;
 }
 
 /**
@@ -381,7 +412,7 @@ void pkt_capture_msdu_process_pkts(
 			vdev_id, pktcapture_msdu,
 			TXRX_PROCESS_TYPE_DATA_RX, 0, 0,
 			TXRX_PKTCAPTURE_PKT_FORMAT_8023,
-			bssid, pdev);
+			bssid, pdev, 0);
 }
 
 /**
@@ -395,6 +426,7 @@ void pkt_capture_msdu_process_pkts(
  * @status: Tx status
  * @pkt_format: Frame format
  * @bssid: bssid
+ * @tx_retry_cnt: tx retry count
  *
  * Return: none
  */
@@ -403,7 +435,7 @@ pkt_capture_rx_data_cb(
 		void *context, void *ppdev, void *nbuf_list,
 		uint8_t vdev_id, uint8_t tid,
 		uint8_t status, bool pkt_format,
-		uint8_t *bssid)
+		uint8_t *bssid, uint8_t tx_retry_cnt)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
 	qdf_nbuf_t buf_list = (qdf_nbuf_t)nbuf_list;
@@ -471,6 +503,9 @@ pkt_capture_rx_data_cb(
 		/* need to update this to fill rx_status*/
 		htt_rx_mon_get_rx_status(pdev, rx_desc, &rx_status);
 		rx_status.chan_noise_floor = NORMALIZED_TO_NOISE_FLOOR;
+		rx_status.tx_status = status;
+		rx_status.tx_retry_cnt = tx_retry_cnt;
+		rx_status.add_rtap_ext = true;
 
 		/* clear IEEE80211_RADIOTAP_F_FCS flag*/
 		rx_status.rtap_flags &= ~(BIT(4));
@@ -519,6 +554,7 @@ free_buf:
  * @pktformat: Frame format
  * @bssid: bssid
  * @pdev: pdev handle
+ * @tx_retry_cnt: tx retry count
  *
  * Return: none
  */
@@ -526,7 +562,7 @@ static void
 pkt_capture_tx_data_cb(
 		void *context, void *ppdev, void *nbuf_list, uint8_t vdev_id,
 		uint8_t tid, uint8_t status, bool pkt_format,
-		uint8_t *bssid)
+		uint8_t *bssid, uint8_t tx_retry_cnt)
 {
 	qdf_nbuf_t msdu, next_buf;
 	struct pkt_capture_vdev_priv *vdev_priv;
@@ -577,6 +613,8 @@ pkt_capture_tx_data_cb(
 		pktcapture_hdr.sgi = cmpl_desc->sgi;
 		pktcapture_hdr.ldpc = cmpl_desc->ldpc;
 		pktcapture_hdr.beamformed = cmpl_desc->beamformed;
+		pktcapture_hdr.status = status;
+		pktcapture_hdr.tx_retry_cnt = tx_retry_cnt;
 
 		qdf_nbuf_pull_head(
 			msdu,
@@ -688,13 +726,15 @@ void pkt_capture_datapkt_process(
 		qdf_nbuf_t mon_buf_list,
 		enum pkt_capture_data_process_type type,
 		uint8_t tid, uint8_t status, bool pkt_format,
-		uint8_t *bssid, htt_pdev_handle pdev)
+		uint8_t *bssid, htt_pdev_handle pdev,
+		uint8_t tx_retry_cnt)
 {
 	uint8_t drop_count;
 	struct pkt_capture_mon_pkt *pkt;
 	pkt_capture_mon_thread_cb callback = NULL;
 	struct wlan_objmgr_vdev *vdev;
 
+	status = pkt_capture_txrx_status_map(status);
 	vdev = pkt_capture_get_vdev();
 	if (!vdev)
 		goto drop_rx_buf;
@@ -724,6 +764,7 @@ void pkt_capture_datapkt_process(
 	pkt->status = status;
 	pkt->pkt_format = pkt_format;
 	qdf_mem_copy(pkt->bssid, bssid, QDF_MAC_ADDR_SIZE);
+	pkt->tx_retry_cnt = tx_retry_cnt;
 	pkt_capture_indicate_monpkt(vdev, pkt);
 	return;
 
@@ -834,5 +875,6 @@ void pkt_capture_offload_deliver_indication_handler(
 	pkt_capture_datapkt_process(
 			vdev_id,
 			netbuf, TXRX_PROCESS_TYPE_DATA_TX,
-			tid, status, pkt_format, bssid, pdev);
+			tid, status, pkt_format, bssid, pdev,
+			offload_deliver_msg->tx_retry_cnt);
 }

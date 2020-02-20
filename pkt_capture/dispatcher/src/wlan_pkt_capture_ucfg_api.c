@@ -203,7 +203,9 @@ ucfg_pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				      qdf_nbuf_t nbuf,
 				      uint8_t status)
 {
-	return pkt_capture_process_mgmt_tx_data(pdev, params, nbuf, status);
+	return pkt_capture_process_mgmt_tx_data(
+					pdev, params, nbuf,
+					pkt_capture_mgmt_status_map(status));
 }
 
 void
@@ -323,12 +325,14 @@ ucfg_pkt_capture_tx_completion_process(
 			qdf_nbuf_t mon_buf_list,
 			enum pkt_capture_data_process_type type,
 			uint8_t tid, uint8_t status, bool pkt_format,
-			uint8_t *bssid, htt_pdev_handle pdev)
+			uint8_t *bssid, htt_pdev_handle pdev,
+			uint8_t tx_retry_cnt)
 {
 	pkt_capture_datapkt_process(
 				vdev_id,
 				mon_buf_list, TXRX_PROCESS_TYPE_DATA_TX_COMPL,
-				tid, status, pkt_format, bssid, pdev);
+				tid, status, pkt_format, bssid, pdev,
+				tx_retry_cnt);
 }
 
 void ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev)
