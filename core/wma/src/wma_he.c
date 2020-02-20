@@ -1277,6 +1277,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
 	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
 	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->txop_rts_threshold);
+	WMI_HEOPS_ERSUDIS_SET(he_ops, he_op->er_su_disable);
 	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
 	peer->peer_he_ops = he_ops;
