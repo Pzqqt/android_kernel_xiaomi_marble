@@ -380,7 +380,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	tpDphHashNode sta = NULL;
 	tpAddStaParams pAddStaParams = NULL;
 	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
-	uint32_t selfStaDot11Mode = 0;
 
 	/* Sanity Checks */
 
@@ -508,7 +507,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	listenInterval = mac->mlme_cfg->sap_cfg.listen_interval;
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
-	selfStaDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 	pAddStaParams->encryptType = pe_session->encryptType;
 	pAddStaParams->maxTxPower = pe_session->maxTxPower;
 
