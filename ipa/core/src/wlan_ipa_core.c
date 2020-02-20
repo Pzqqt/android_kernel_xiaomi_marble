@@ -1033,7 +1033,7 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 		/* Disable to forward Intra-BSS Rx packets when
 		 * ap_isolate=1 in hostapd.conf
 		 */
-		if (!ipa_ctx->ap_intrabss_fwd) {
+		if (!ipa_ctx->disable_intrabss_fwd[session_id]) {
 			/*
 			 * When INTRA_BSS_FWD_OFFLOAD is enabled, FW will send
 			 * all Rx packets to IPA uC, which need to be forwarded
@@ -1049,7 +1049,8 @@ static void __wlan_ipa_w2i_cb(void *priv, qdf_ipa_dp_evt_type_t evt,
 						     skb))
 				break;
 		} else {
-			ipa_debug_rl("Intra-BSS forwarding is disabled");
+			ipa_debug_rl("Intra-BSS fwd disabled for session_id %u",
+				     session_id);
 		}
 
 		wlan_ipa_send_skb_to_network(skb, iface_context);
@@ -3488,6 +3489,7 @@ QDF_STATUS wlan_ipa_uc_ol_init(struct wlan_ipa_priv *ipa_ctx,
 	for (i = 0; i < WLAN_IPA_MAX_SESSION; i++) {
 		ipa_ctx->vdev_to_iface[i] = WLAN_IPA_MAX_SESSION;
 		ipa_ctx->vdev_offload_enabled[i] = false;
+		ipa_ctx->disable_intrabss_fwd[i] = false;
 	}
 
 	if (cdp_ipa_get_resource(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id)) {

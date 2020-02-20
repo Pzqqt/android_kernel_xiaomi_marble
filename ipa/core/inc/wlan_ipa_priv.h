@@ -670,7 +670,7 @@ struct wlan_ipa_priv {
 	bool vdev_offload_enabled[WLAN_IPA_MAX_SESSION];
 	bool mcc_mode;
 	qdf_work_t mcc_work;
-	bool ap_intrabss_fwd;
+	bool disable_intrabss_fwd[WLAN_IPA_MAX_SESSION];
 	bool dfs_cac_block_tx;
 #ifdef FEATURE_METERING
 	struct ipa_uc_sharing_stats ipa_sharing_stats;
