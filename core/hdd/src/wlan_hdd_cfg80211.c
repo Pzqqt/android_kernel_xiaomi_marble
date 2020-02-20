@@ -16041,6 +16041,7 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 			ret = -EINVAL;
 
 		ucfg_ipa_set_ap_ibss_fwd(hdd_ctx->pdev,
+					 adapter->vdev_id,
 					 adapter->session.ap.
 					 disable_intrabss_fwd);
 	}

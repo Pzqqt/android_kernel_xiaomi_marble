@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -579,14 +579,20 @@ void wlan_ipa_set_dfs_cac_tx(struct wlan_ipa_priv *ipa_ctx, bool tx_block)
 /**
  * wlan_ipa_set_ap_ibss_fwd() - Set AP intra bss forward
  * @ipa_ctx: IPA context
- * @intra_bss: enable or disable ap intra bss forward
+ * @session_id: vdev id
+ * @intra_bss: 1 to disable ap intra bss forward and 0 to enable ap intra bss
+ *	       forward
  *
  * Return: void
  */
 static inline
-void wlan_ipa_set_ap_ibss_fwd(struct wlan_ipa_priv *ipa_ctx, bool intra_bss)
+void wlan_ipa_set_ap_ibss_fwd(struct wlan_ipa_priv *ipa_ctx, uint8_t session_id,
+			      bool intra_bss)
 {
-	ipa_ctx->ap_intrabss_fwd = intra_bss;
+	if (session_id >= WLAN_IPA_MAX_SESSION)
+		return;
+
+	ipa_ctx->disable_intrabss_fwd[session_id] = intra_bss;
 }
 
 /**
