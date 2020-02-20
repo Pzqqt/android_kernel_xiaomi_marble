@@ -406,7 +406,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		ret = enable_wcd_codec_supply(swr_dmic, true);
 		if (ret) {
 			ret = -EPROBE_DEFER;
-			goto dev_err;
+			goto err;
 		}
 		++swr_dmic->is_en_supply;
 	}
@@ -445,7 +445,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, swr_devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
-		goto dev_err;
+		goto err;
 	}
 	pdev->dev_num = swr_devnum;
 
