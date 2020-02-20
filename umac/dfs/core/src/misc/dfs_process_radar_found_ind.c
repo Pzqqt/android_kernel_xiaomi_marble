@@ -389,6 +389,13 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs)) {
 		*freq_center = utils_dfs_chan_to_freq(
 				dfs->dfs_agile_precac_freq);
+		if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ ||
+		    dfs->dfs_precac_chwidth == CH_WIDTH_80P80MHZ) {
+			if (radar_found->segment_id == PRIMARY_SEG)
+				*freq_center -= DFS_160MHZ_SECOND_SEG_OFFSET;
+			else
+				*freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
+		}
        /* Radar found on primary segment by the HW. */
 	} else if (radar_found->segment_id == PRIMARY_SEG) {
 		*freq_center = utils_dfs_chan_to_freq(
@@ -944,6 +951,99 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 }
 #endif
 
+#ifdef WLAN_DFS_TRUE_160MHZ_SUPPORT
+#define DFS_80P80MHZ_SECOND_SEG_OFFSET 85
+/**
+ * dfs_translate_radar_params() - Translate the radar parameters received in
+ *                                true 160MHz supported chipsets.
+ * @dfs: Pointer to the wlan_dfs object.
+ * @radar_found: Radar found parameters.
+ *
+ * Radar found parameters in true 160MHz detectors are represented below:
+ *
+ * Offset received with respect to the center of 160MHz ranging from -80 to +80.
+ *          __________________________________________
+ *         |                                          |
+ *         |             160 MHz Channel              |
+ *         |__________________________________________|
+ *         |        |           |           |         |
+ *         |        |           |           |         |
+ *        -80    -ve offset   center    +ve offset   +80
+ *
+ *
+ * Radar found parameters after translation by this API:
+ *
+ * Offsets with respect to pri/sec 80MHz center ranging from -40 to +40.
+ *          __________________________________________
+ *         |                    |                     |
+ *         |             160 MHz|Channel              |
+ *         |____________________|_____________________|
+ *         |         |          |           |         |
+ *         |         |          |           |         |
+ *        -40    pri center  +40/-40     sec center  +40
+ *
+ * Return: void.
+ */
+static void
+dfs_translate_radar_params(struct wlan_dfs *dfs,
+			   struct radar_found_info *radar_found)
+{
+	struct dfs_channel *curchan = dfs->dfs_curchan;
+	bool is_primary_ch_right_of_center = false;
+
+	if (!dfs_is_true_160mhz_supported(dfs))
+		return;
+
+	/* Is the primary channel ( or primary 80 segment) to the right
+	 * of the center of 160/165Mhz channel.
+	 */
+	if (curchan->dfs_ch_freq > curchan->dfs_ch_mhz_freq_seg2)
+		is_primary_ch_right_of_center = true;
+
+	if (WLAN_IS_CHAN_MODE_160(curchan)) {
+		if (radar_found->freq_offset > 0) {
+			/* Offset positive: Equivalent to Upper IEEE
+			 * 80Mhz chans Synthesizer.
+			 */
+			if (!is_primary_ch_right_of_center)
+				radar_found->segment_id = SEG_ID_SECONDARY;
+			radar_found->freq_offset -=
+				DFS_160MHZ_SECOND_SEG_OFFSET;
+		} else {
+			/* Offset negative: Equivalent to Lower IEEE
+			 * 80Mhz chans Synthesizer.
+			 */
+			if (is_primary_ch_right_of_center)
+				radar_found->segment_id = SEG_ID_SECONDARY;
+			radar_found->freq_offset +=
+				DFS_160MHZ_SECOND_SEG_OFFSET;
+		}
+	} else if (WLAN_IS_CHAN_MODE_165(dfs, curchan)) {
+		/* If offset is greater than 40MHz, radar is found on the
+		 * secondary segment.
+		 */
+		if (abs(radar_found->freq_offset) > 40) {
+			radar_found->segment_id = SEG_ID_SECONDARY;
+			/* Update the freq. offset with respect to the
+			 * secondary segment center freq.
+			 */
+			if (is_primary_ch_right_of_center)
+				radar_found->freq_offset +=
+					DFS_80P80MHZ_SECOND_SEG_OFFSET;
+			else
+				radar_found->freq_offset -=
+					DFS_80P80MHZ_SECOND_SEG_OFFSET;
+		}
+	}
+}
+#else
+static inline void
+dfs_translate_radar_params(struct wlan_dfs *dfs,
+			   struct radar_found_info *radar_found)
+{
+}
+#endif /* WLAN_DFS_TRUE_160MHZ_SUPPORT */
+
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
@@ -963,6 +1063,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 */
 	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
 
+	dfs_translate_radar_params(dfs, radar_found);
 	/* Before processing radar, check if HW mode switch is in progress.
 	 * If in progress, defer the processing of radar event received till
 	 * the mode switch is completed.
