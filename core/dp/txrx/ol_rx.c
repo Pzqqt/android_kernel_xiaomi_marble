@@ -1644,7 +1644,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 
 	/* Packet Capture Mode */
 
-	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) &
+	if ((ucfg_pkt_capture_get_pktcap_mode((void *)soc->psoc) &
 	      PKT_CAPTURE_MODE_DATA_ONLY)) {
 		offloaded_pkt = ucfg_pkt_capture_rx_offloaded_pkt(rx_ind_msg);
 		if (peer) {

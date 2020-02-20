@@ -736,7 +736,7 @@ ol_tx_pkt_capture_tx_completion_process(
 				netbuf, pkt_type,
 				tid, status,
 				TXRX_PKTCAPTURE_PKT_FORMAT_8023, bssid,
-				pdev->htt_pdev);
+				pdev->htt_pdev, payload_hdr->tx_retry_cnt);
 }
 #else
 static void

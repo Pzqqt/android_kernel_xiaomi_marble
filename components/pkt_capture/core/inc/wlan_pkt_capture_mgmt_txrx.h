@@ -91,4 +91,14 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS pkt_capture_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 				   bool is_register);
+
+/**
+ * pkt_capture_mgmt_status_map() - map Tx status for MGMT packets
+ * with packet capture Tx status
+ * @status: Tx status
+ *
+ * Return: pkt_capture_tx_status enum
+ */
+enum pkt_capture_tx_status
+pkt_capture_mgmt_status_map(uint8_t status);
 #endif

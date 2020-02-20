@@ -210,7 +210,8 @@ pkt_capture_process_from_queue(struct pkt_capture_mon_context *mon_ctx)
 		vdev_id = pkt->vdev_id;
 		tid = pkt->tid;
 		pkt->callback(pkt->context, pkt->pdev, pkt->monpkt, vdev_id,
-			      tid, pkt->status, pkt->pkt_format, pkt->bssid);
+			      tid, pkt->status, pkt->pkt_format, pkt->bssid,
+			      pkt->tx_retry_cnt);
 		pkt_capture_free_mon_pkt(mon_ctx, pkt);
 		spin_lock_bh(&mon_ctx->mon_queue_lock);
 	}

@@ -780,7 +780,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 
 	/* Packet Capture Mode */
 
-	if ((ucfg_pkt_capture_get_mode((void *)soc->psoc) &
+	if ((ucfg_pkt_capture_get_pktcap_mode((void *)soc->psoc) &
 	      PKT_CAPTURE_MODE_DATA_ONLY)) {
 		if (peer) {
 			if (peer->vdev) {

@@ -2656,6 +2656,7 @@ static void wma_extract_mgmt_offload_event_params(
 	params->rssi = hdr->rssi;
 	params->buf_len = hdr->buf_len;
 	params->tx_status = hdr->tx_status;
+	params->tx_retry_cnt = hdr->tx_retry_cnt;
 }
 
 /**

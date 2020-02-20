@@ -61,6 +61,7 @@ enum pkt_capture_data_process_type {
  * @pkt_format: Frame format
  * @bssid: bssid
  * @pdev: pdev handle
+ * @tx_retry_cnt: tx retry count
  *
  * Return: none
  */
@@ -68,8 +69,9 @@ void pkt_capture_datapkt_process(
 			uint8_t vdev_id,
 			qdf_nbuf_t mon_buf_list,
 			enum pkt_capture_data_process_type type,
-			uint8_t tid, uint8_t status, bool pkt_format,
-			uint8_t *bssid, htt_pdev_handle pdev);
+			uint8_t tid, uint8_t status, bool pktformat,
+			uint8_t *bssid, htt_pdev_handle pdev,
+			uint8_t tx_retry_cnt);
 /**
  * pkt_capture_msdu_process_pkts() - process data rx pkts
  * @bssid: bssid
@@ -118,6 +120,20 @@ void pkt_capture_offload_deliver_indication_handler(
 /**
  * pkt_capture_tx_hdr_elem_t - tx packets header struture to
  * be used to update radiotap header for packet capture mode
+ * @timestamp: timestamp
+ * @preamble: preamble
+ * @mcs: MCS
+ * @rate: rate
+ * @rssi_comb: rssi in dBm
+ * @nss: if nss 1 means 1ss and 2 means 2ss
+ * @bw: BW (0=>20MHz, 1=>40MHz, 2=>80MHz, 3=>160MHz)
+ * @stbc: STBC
+ * @sgi: SGI
+ * @ldpc: LDPC
+ * @beamformed: beamformed
+ * @dir: direction rx: 0 and tx: 1
+ * @status: tx status
+ * @tx_retry_cnt: tx retry count
  */
 struct pkt_capture_tx_hdr_elem_t {
 	uint32_t timestamp;
@@ -133,6 +149,7 @@ struct pkt_capture_tx_hdr_elem_t {
 	bool beamformed;
 	bool dir; /* rx:0 , tx:1 */
 	uint8_t status; /* tx status */
+	uint8_t tx_retry_cnt;
 };
 
 /**
