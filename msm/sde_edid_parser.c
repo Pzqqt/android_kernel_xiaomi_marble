@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/drm_edid.h>
@@ -8,6 +8,7 @@
 
 #include "sde_kms.h"
 #include "sde_edid_parser.h"
+#include "sde/sde_connector.h"
 
 #define DBC_START_OFFSET 4
 #define EDID_DTD_LEN 18
@@ -464,6 +465,184 @@ static void _sde_edid_extract_audio_data_blocks(
 	SDE_EDID_DEBUG("%s -", __func__);
 }
 
+static void sde_edid_parse_hdr_plus_info(struct drm_connector *connector,
+	const u8 *db)
+{
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+	c_conn->hdr_plus_app_ver = db[5] & VSVDB_HDR10_PLUS_APP_VER_MASK;
+}
+
+static void sde_edid_parse_vsvdb_info(struct drm_connector *connector,
+	const u8 *db)
+{
+	u8 db_len = 0;
+	u32 ieee_code = 0;
+
+	SDE_EDID_DEBUG("%s +\n", __func__);
+
+	db_len = sde_cea_db_payload_len(db);
+
+	if (db_len < 5)
+		return;
+
+	/* Bytes 2-4: IEEE 24-bit code, LSB first */
+	ieee_code = db[2] | (db[3] << 8) | (db[4] << 16);
+
+	if (ieee_code == VSVDB_HDR10_PLUS_IEEE_CODE)
+		sde_edid_parse_hdr_plus_info(connector, db);
+
+	SDE_EDID_DEBUG("%s -\n", __func__);
+}
+
+static bool sde_edid_is_luminance_value_present(u32 block_length,
+	enum luminance_value value)
+{
+	return block_length > NO_LUMINANCE_DATA && value <= block_length;
+}
+
+/*
+ * sde_edid_parse_hdr_db - Parse the HDR extended block
+ * @connector: connector for the external sink
+ * @db: start of the HDR extended block
+ *
+ * Parses the HDR extended block to extract sink info for @connector.
+ */
+static void
+sde_edid_parse_hdr_db(struct drm_connector *connector, const u8 *db)
+{
+
+	u8 len = 0;
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+
+	if (!db)
+		return;
+
+	len = db[0] & 0x1f;
+	/* Byte 3: Electro-Optical Transfer Functions */
+	c_conn->hdr_eotf = db[2] & 0x3F;
+
+	/* Byte 4: Static Metadata Descriptor Type 1 */
+	c_conn->hdr_metadata_type_one = (db[3] & BIT(0));
+
+	/* Byte 5: Desired Content Maximum Luminance */
+	if (sde_edid_is_luminance_value_present(len, MAXIMUM_LUMINANCE))
+		c_conn->hdr_max_luminance = db[MAXIMUM_LUMINANCE];
+
+	/* Byte 6: Desired Content Max Frame-average Luminance */
+	if (sde_edid_is_luminance_value_present(len, FRAME_AVERAGE_LUMINANCE))
+		c_conn->hdr_avg_luminance = db[FRAME_AVERAGE_LUMINANCE];
+
+	/* Byte 7: Desired Content Min Luminance */
+	if (sde_edid_is_luminance_value_present(len, MINIMUM_LUMINANCE))
+		c_conn->hdr_min_luminance = db[MINIMUM_LUMINANCE];
+
+	c_conn->hdr_supported = true;
+	SDE_EDID_DEBUG("HDR electro-optical %d\n", c_conn->hdr_eotf);
+	SDE_EDID_DEBUG("metadata desc 1 %d\n", c_conn->hdr_metadata_type_one);
+	SDE_EDID_DEBUG("max luminance %d\n", c_conn->hdr_max_luminance);
+	SDE_EDID_DEBUG("avg luminance %d\n", c_conn->hdr_avg_luminance);
+	SDE_EDID_DEBUG("min luminance %d\n", c_conn->hdr_min_luminance);
+}
+
+
+/*
+ * drm_extract_clrmetry_db - Parse the HDMI colorimetry extended block
+ * @connector: connector corresponding to the HDMI sink
+ * @db: start of the HDMI colorimetry extended block
+ *
+ * Parses the HDMI colorimetry block to extract sink info for @connector.
+ */
+static void
+sde_parse_clrmetry_db(struct drm_connector *connector, const u8 *db)
+{
+
+	struct sde_connector *c_conn;
+
+	c_conn = to_sde_connector(connector);
+
+	if (!db) {
+		DRM_ERROR("invalid db\n");
+		return;
+	}
+
+	/* Byte 3 Bit 0: xvYCC_601 */
+	if (db[2] & BIT(0))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_xvYCC_601;
+	/* Byte 3 Bit 1: xvYCC_709 */
+	if (db[2] & BIT(1))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_xvYCC_709;
+	/* Byte 3 Bit 2: sYCC_601 */
+	if (db[2] & BIT(2))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_sYCC_601;
+	/* Byte 3 Bit 3: ADBYCC_601 */
+	if (db[2] & BIT(3))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADBYCC_601;
+	/* Byte 3 Bit 4: ADB_RGB */
+	if (db[2] & BIT(4))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADB_RGB;
+	/* Byte 3 Bit 5: BT2020_CYCC */
+	if (db[2] & BIT(5))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_CYCC;
+	/* Byte 3 Bit 6: BT2020_YCC */
+	if (db[2] & BIT(6))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_YCC;
+	/* Byte 3 Bit 7: BT2020_RGB */
+	if (db[2] & BIT(7))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_RGB;
+	/* Byte 4 Bit 7: DCI-P3 */
+	if (db[3] & BIT(7))
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_DCI_P3;
+
+	DRM_DEBUG_KMS("colorimetry fmts = 0x%x\n", c_conn->color_enc_fmt);
+}
+
+/*
+ * sde_edid_parse_extended_blk_info - Parse the HDMI extended tag blocks
+ * @connector: connector corresponding to external sink
+ * @edid: handle to the EDID structure
+ * Parses the all extended tag blocks extract sink info for @connector.
+ */
+static void
+sde_edid_parse_extended_blk_info(struct drm_connector *connector,
+	struct edid *edid)
+{
+	const u8 *cea = sde_find_cea_extension(edid);
+	const u8 *db = NULL;
+
+	if (cea && sde_cea_revision(cea) >= 3) {
+		int i, start, end;
+
+		if (sde_cea_db_offsets(cea, &start, &end))
+			return;
+
+		sde_for_each_cea_db(cea, i, start, end) {
+			db = &cea[i];
+
+			if (sde_cea_db_tag(db) == USE_EXTENDED_TAG) {
+				SDE_EDID_DEBUG("found ext tag block = %d\n",
+						db[1]);
+				switch (db[1]) {
+				case VENDOR_SPECIFIC_VIDEO_DATA_BLOCK:
+					sde_edid_parse_vsvdb_info(connector,
+							db);
+					break;
+				case HDR_STATIC_METADATA_DATA_BLOCK:
+					sde_edid_parse_hdr_db(connector, db);
+					break;
+				case COLORIMETRY_EXTENDED_DATA_BLOCK:
+					sde_parse_clrmetry_db(connector, db);
+				default:
+					break;
+				}
+			}
+		}
+	}
+}
+
 static void _sde_edid_extract_speaker_allocation_data(
 	struct sde_edid_ctrl *edid_ctrl)
 {
@@ -552,6 +731,8 @@ int _sde_edid_update_modes(struct drm_connector *connector,
 		rc = drm_add_edid_modes(connector, edid_ctrl->edid);
 		sde_edid_set_mode_format(connector, edid_ctrl);
 		_sde_edid_update_dc_modes(connector, edid_ctrl);
+		sde_edid_parse_extended_blk_info(connector,
+				edid_ctrl->edid);
 		SDE_EDID_DEBUG("%s -", __func__);
 		return rc;
 	}

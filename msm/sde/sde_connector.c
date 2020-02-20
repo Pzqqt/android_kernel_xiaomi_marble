@@ -1184,7 +1184,6 @@ static int _sde_connector_set_ext_hdr_info(
 	void __user *usr_ptr)
 {
 	int rc = 0;
-	struct drm_connector *connector;
 	struct drm_msm_ext_hdr_metadata *hdr_meta;
 	size_t payload_size = 0;
 	u8 *payload = NULL;
@@ -1196,9 +1195,7 @@ static int _sde_connector_set_ext_hdr_info(
 		goto end;
 	}
 
-	connector = &c_conn->base;
-
-	if (!connector->hdr_supported) {
+	if (!c_conn->hdr_supported) {
 		SDE_ERROR_CONN(c_conn, "sink doesn't support HDR\n");
 		rc = -ENOTSUPP;
 		goto end;
@@ -1225,7 +1222,7 @@ static int _sde_connector_set_ext_hdr_info(
 	if (!hdr_meta->hdr_plus_payload_size || !hdr_meta->hdr_plus_payload)
 		goto skip_dhdr;
 
-	if (!connector->hdr_plus_app_ver) {
+	if (!c_conn->hdr_plus_app_ver) {
 		SDE_ERROR_CONN(c_conn, "sink doesn't support dynamic HDR\n");
 		rc = -ENOTSUPP;
 		goto end;
@@ -1515,13 +1512,13 @@ static void sde_connector_update_hdr_props(struct drm_connector *connector)
 	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct drm_msm_ext_hdr_properties hdr = {0};
 
-	hdr.hdr_metadata_type_one = connector->hdr_metadata_type_one ? 1 : 0;
-	hdr.hdr_supported = connector->hdr_supported ? 1 : 0;
-	hdr.hdr_eotf = connector->hdr_eotf;
-	hdr.hdr_max_luminance = connector->hdr_max_luminance;
-	hdr.hdr_avg_luminance = connector->hdr_avg_luminance;
-	hdr.hdr_min_luminance = connector->hdr_min_luminance;
-	hdr.hdr_plus_supported = connector->hdr_plus_app_ver;
+	hdr.hdr_metadata_type_one = c_conn->hdr_metadata_type_one ? 1 : 0;
+	hdr.hdr_supported = c_conn->hdr_supported ? 1 : 0;
+	hdr.hdr_eotf = c_conn->hdr_eotf;
+	hdr.hdr_max_luminance = c_conn->hdr_max_luminance;
+	hdr.hdr_avg_luminance = c_conn->hdr_avg_luminance;
+	hdr.hdr_min_luminance = c_conn->hdr_min_luminance;
+	hdr.hdr_plus_supported = c_conn->hdr_plus_app_ver;
 
 	msm_property_set_blob(&c_conn->property_info, &c_conn->blob_ext_hdr,
 			&hdr, sizeof(hdr), CONNECTOR_PROP_EXT_HDR_INFO);

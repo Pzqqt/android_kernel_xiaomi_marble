@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -1372,32 +1372,32 @@ static int dp_debug_print_hdr_params_to_buf(struct drm_connector *connector,
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "eotf = %d\n",
-		connector->hdr_eotf);
+		c_conn->hdr_eotf);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "type_one = %d\n",
-		connector->hdr_metadata_type_one);
+		c_conn->hdr_metadata_type_one);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "hdr_plus_app_ver = %d\n",
-		connector->hdr_plus_app_ver);
+			c_conn->hdr_plus_app_ver);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "max_luminance = %d\n",
-		connector->hdr_max_luminance);
+		c_conn->hdr_max_luminance);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "avg_luminance = %d\n",
-		connector->hdr_avg_luminance);
+		c_conn->hdr_avg_luminance);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 
 	rc = snprintf(buf + len, max_size, "min_luminance = %d\n",
-		connector->hdr_min_luminance);
+		c_conn->hdr_min_luminance);
 	if (dp_debug_check_buffer_overflow(rc, &max_size, &len))
 		goto error;
 

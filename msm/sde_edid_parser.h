@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_EDID_PARSER_H_
@@ -26,10 +26,22 @@
 
 #define SDE_DRM_MODE_FLAG_FMT_MASK (0x3 << 20)
 
+#define VSVDB_HDR10_PLUS_IEEE_CODE 0x90848b
+#define VSVDB_HDR10_PLUS_APP_VER_MASK 0x3
+
+/*Enum storing luminance types for HDR blocks in EDID*/
+enum luminance_value {
+	NO_LUMINANCE_DATA = 3,
+	MAXIMUM_LUMINANCE = 4,
+	FRAME_AVERAGE_LUMINANCE = 5,
+	MINIMUM_LUMINANCE = 6
+};
+
 enum extended_data_block_types {
 	VIDEO_CAPABILITY_DATA_BLOCK = 0x0,
 	VENDOR_SPECIFIC_VIDEO_DATA_BLOCK = 0x01,
 	HDMI_VIDEO_DATA_BLOCK = 0x04,
+	COLORIMETRY_EXTENDED_DATA_BLOCK = 0x5,
 	HDR_STATIC_METADATA_DATA_BLOCK = 0x06,
 	Y420_VIDEO_DATA_BLOCK = 0x0E,
 	VIDEO_FORMAT_PREFERENCE_DATA_BLOCK = 0x0D,
