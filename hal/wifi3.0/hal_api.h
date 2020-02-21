@@ -1389,7 +1389,8 @@ void *hal_srng_src_get_next(void *hal_soc,
 }
 
 /**
- * hal_srng_src_peek - Get next entry from a ring without moving head pointer.
+ * hal_srng_src_peek_n_get_next - Get next entry from a ring without
+ * moving head pointer.
  * hal_srng_src_get_next should be called subsequently to move the head pointer
  *
  * @hal_soc: Opaque HAL SOC handle
@@ -1398,8 +1399,8 @@ void *hal_srng_src_get_next(void *hal_soc,
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
 static inline
-void *hal_srng_src_peek(hal_soc_handle_t hal_soc_hdl,
-			hal_ring_handle_t hal_ring_hdl)
+void *hal_srng_src_peek_n_get_next(hal_soc_handle_t hal_soc_hdl,
+				   hal_ring_handle_t hal_ring_hdl)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 	uint32_t *desc;
@@ -1412,11 +1413,42 @@ void *hal_srng_src_peek(hal_soc_handle_t hal_soc_hdl,
 	 */
 	if (((srng->u.src_ring.hp + srng->entry_size) %
 		srng->ring_size) != srng->u.src_ring.cached_tp) {
-		desc = &(srng->ring_base_vaddr[srng->u.src_ring.hp]);
+		desc = &(srng->ring_base_vaddr[(srng->u.src_ring.hp +
+						srng->entry_size) %
+						srng->ring_size]);
 		return (void *)desc;
 	}
 
 	return NULL;
+}
+
+/**
+ * hal_srng_src_get_cur_hp_n_move_next () - API returns current hp
+ * and move hp to next in src ring
+ *
+ * Usage: This API should only be used at init time replenish.
+ *
+ * @hal_soc_hdl: HAL soc handle
+ * @hal_ring_hdl: Source ring pointer
+ *
+ */
+static inline void *
+hal_srng_src_get_cur_hp_n_move_next(hal_soc_handle_t hal_soc_hdl,
+				    hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t *cur_desc = NULL;
+	uint32_t next_hp;
+
+	cur_desc = &srng->ring_base_vaddr[(srng->u.src_ring.hp)];
+
+	next_hp = (srng->u.src_ring.hp + srng->entry_size) %
+		srng->ring_size;
+
+	if (next_hp != srng->u.src_ring.cached_tp)
+		srng->u.src_ring.hp = next_hp;
+
+	return (void *)cur_desc;
 }
 
 /**
