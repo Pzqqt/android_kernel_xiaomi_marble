@@ -226,22 +226,6 @@
 		 VALID_CHANNEL_LIST_DEFAULT, \
 		 "valid channel list")
 
- /*
-  * country_code - Set country code
-  * @Default: NA
-  *
-  * This ini is used to set country code
-  *
-  * Usage: Internal
-  *
-  */
-#define CFG_COUNTRY_CODE CFG_STRING( \
-		 "country_code", \
-		 0, \
-		 CFG_COUNTRY_CODE_LEN, \
-		 "", \
-		 "country code")
-
 /*
  * <ini>
  * ignore_fw_reg_offload_ind - If set, Ignore the FW offload indication
@@ -297,7 +281,6 @@
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
 	CFG(CFG_SCAN_11D_INTERVAL) \
 	CFG(CFG_VALID_CHANNEL_LIST) \
-	CFG(CFG_COUNTRY_CODE) \
 	CFG(CFG_IGNORE_FW_REG_OFFLOAD_IND) \
 	CFG_SAP_AVOID_ACS_FREQ_LIST_ALL
 

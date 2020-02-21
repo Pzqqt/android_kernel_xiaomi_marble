@@ -2357,9 +2357,6 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_MLME_NB_ID);
 
-	qdf_str_lcopy(reg->country_code, cfg_default(CFG_COUNTRY_CODE),
-		      sizeof(reg->country_code));
-	reg->country_code_len = (uint8_t)sizeof(reg->country_code);
 	mlme_init_acs_avoid_freq_list(psoc, reg);
 }
 
