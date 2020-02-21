@@ -112,10 +112,14 @@ struct wlan_mlme_roaming_config {
  *  roam config info
  * @roam_sm: Structure containing roaming state related details
  * @roam_config: Roaming configurations structure
+ * @sae_single_pmk: Details for sae roaming using single pmk
  */
 struct wlan_mlme_roam {
 	struct wlan_mlme_roam_state_info roam_sm;
 	struct wlan_mlme_roaming_config roam_cfg;
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+	struct wlan_mlme_sae_single_pmk sae_single_pmk;
+#endif
 };
 
 /**

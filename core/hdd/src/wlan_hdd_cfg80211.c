@@ -21212,6 +21212,39 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return errno;
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_update_sae_single_pmk_info() - Update a separate pmk information
+ * structure to support sae roaming using same pmk
+ * @vdev: vdev common object
+ * @pmk_cache: Pointer to pmk cache info
+ *
+ * Return: None
+ */
+static void wlan_update_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+					    tPmkidCacheInfo *pmk_cache)
+{
+	struct mlme_pmk_info *pmk_info;
+
+	pmk_info = qdf_mem_malloc(sizeof(*pmk_info));
+	if (!pmk_info)
+		return;
+
+	qdf_mem_copy(pmk_info->pmk, pmk_cache->pmk, pmk_cache->pmk_len);
+	pmk_info->pmk_len = pmk_cache->pmk_len;
+
+	ucfg_mlme_update_sae_single_pmk_info(vdev, pmk_info);
+
+	qdf_mem_zero(pmk_info, sizeof(*pmk_info));
+	qdf_mem_free(pmk_info);
+
+}
+#else
+static void wlan_update_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
+					    tPmkidCacheInfo *pmk_cache)
+{
+}
+#endif
 static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 					   tPmkidCacheInfo *pmk_cache)
 {
@@ -21238,6 +21271,9 @@ static QDF_STATUS wlan_hdd_set_pmksa_cache(struct hdd_adapter *adapter,
 		qdf_mem_zero(pmksa, sizeof(*pmksa));
 		qdf_mem_free(pmksa);
 	}
+
+	wlan_update_sae_single_pmk_info(vdev, pmk_cache);
+
 	hdd_objmgr_put_vdev(vdev);
 
 	return result;

@@ -2302,6 +2302,41 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger);
  */
 void mlme_get_converted_timestamp(uint32_t timestamp, char *time);
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_mlme_set_sae_single_pmk_bss_cap - API to set WPA3 single pmk AP IE
+ * @psoc: Pointer to psoc object
+ * @vdev_id: vdev id
+ * @val: value to be set
+ *
+ * Return : None
+ */
+void wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, bool val);
+
+/**
+ * wlan_mlme_update_sae_single_pmk - API to update mlme_pmkid_info
+ * @vdev: vdev object
+ * @sae_single_pmk: pointer to sae_single_pmk_info struct
+ *
+ * Return : None
+ */
+void
+wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
+				struct mlme_pmk_info *sae_single_pmk);
+#else
+static inline void
+wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id, bool val)
+{
+}
+
+static inline void
+wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
+				struct mlme_pmk_info *sae_single_pmk)
+{
+}
+#endif
 /**
  * mlme_get_roam_fail_reason_str() - Get fail string from enum
  * WMI_ROAM_FAIL_REASON_ID
