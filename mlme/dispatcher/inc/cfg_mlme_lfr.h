@@ -2414,13 +2414,13 @@
 #define LFR_SUBNET_DETECTION_ALL
 #endif
 
-#ifdef WLAN_SAE_SINGLE_PMK
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /*
  * <ini>
- * sae_same_pmk_feature_enabled - Enable/disable sae single pmk feature.
+ * sae_single_pmk_feature_enabled - Enable/disable sae single pmk feature.
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This INI is to enable/disable SAE Roaming with same PMK/PMKID feature support
  *
@@ -2433,9 +2433,9 @@
  * </ini>
  */
 #define CFG_SAE_SINGLE_PMK CFG_INI_BOOL( \
-		"sae_same_pmk_feature_enabled", \
-		true, \
-		"Enable/disable SAE Roaming with same PMK/PMKID")
+		"sae_single_pmk_feature_enabled", \
+		false, \
+		"Enable/disable SAE Roaming with single PMK/PMKID")
 
 #define SAE_SINGLE_PMK_ALL CFG(CFG_SAE_SINGLE_PMK)
 #else

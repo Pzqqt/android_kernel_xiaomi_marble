@@ -3589,6 +3589,57 @@ void mlme_get_converted_timestamp(uint32_t timestamp, char *time)
 		     (timestamp % 1000) * 1000);
 }
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void wlan_mlme_set_sae_single_pmk_bss_cap(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id, bool val)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_OBJMGR_ID);
+
+	if (!vdev) {
+		mlme_err("get vdev failed");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap = val;
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+
+void wlan_mlme_update_sae_single_pmk(struct wlan_objmgr_vdev *vdev,
+				     struct mlme_pmk_info *sae_single_pmk)
+{
+	struct mlme_legacy_priv *mlme_priv;
+	uint32_t keymgmt;
+	bool is_sae_connection = false;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+
+	if (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_SAE))
+		is_sae_connection = true;
+
+	if (mlme_priv->mlme_roam.sae_single_pmk.sae_single_pmk_ap &&
+	    is_sae_connection)
+		mlme_priv->mlme_roam.sae_single_pmk.pmk_info = *sae_single_pmk;
+}
+#endif
+
 char *mlme_get_roam_fail_reason_str(uint32_t result)
 {
 	switch (result) {
