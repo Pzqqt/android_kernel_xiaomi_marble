@@ -72,6 +72,7 @@ static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev = NULL;
 	struct pdev_mc_cp_stats *pdev_mc_stats;
 	struct pdev_cp_stats *pdev_cp_stats_priv;
+	bool pending = false;
 
 	if (!ev->pdev_stats)
 		return;
@@ -122,8 +123,10 @@ static void tgt_mc_cp_stats_extract_tx_power(struct wlan_objmgr_psoc *psoc,
 
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_CONNECTION_TX_POWER)) {
 		ucfg_mc_cp_stats_reset_pending_req(psoc,
-						   TYPE_CONNECTION_TX_POWER);
-		if (last_req.u.get_tx_power_cb)
+						   TYPE_CONNECTION_TX_POWER,
+						   &last_req,
+						   &pending);
+		if (last_req.u.get_tx_power_cb && pending)
 			last_req.u.get_tx_power_cb(max_pwr, last_req.cookie);
 	}
 end:
@@ -465,8 +468,8 @@ static void tgt_mc_cp_stats_extract_peer_stats(struct wlan_objmgr_psoc *psoc,
 	uint32_t i;
 	QDF_STATUS status;
 	struct request_info last_req = {0};
+	bool pending = false;
 	uint32_t selected;
-
 
 	if (is_station_stats)
 		status = ucfg_mc_cp_stats_get_pending_req(psoc,
@@ -542,8 +545,10 @@ complete:
 
 	tgt_mc_cp_stats_extract_peer_extd_stats(psoc, ev);
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_PEER_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS);
-		tgt_mc_cp_stats_prepare_raw_peer_rssi(psoc, &last_req);
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS,
+						   &last_req, &pending);
+		if (pending && last_req.u.get_peer_rssi_cb)
+			tgt_mc_cp_stats_prepare_raw_peer_rssi(psoc, &last_req);
 	}
 }
 
@@ -553,6 +558,7 @@ static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status;
 	struct request_info last_req = {0};
+	bool pending = false;
 
 	if (!ev->mib_stats) {
 		cp_stats_debug("no mib stats");
@@ -568,8 +574,9 @@ static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_MIB_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_MIB_STATS);
-		if (last_req.u.get_mib_stats_cb)
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_MIB_STATS,
+						   &last_req, &pending);
+		if (last_req.u.get_mib_stats_cb && pending)
 			last_req.u.get_mib_stats_cb(ev, last_req.cookie);
 	}
 }
@@ -857,6 +864,7 @@ static void tgt_mc_cp_stats_extract_station_stats(
 {
 	QDF_STATUS status;
 	struct request_info last_req = {0};
+	bool pending = false;
 
 	status = ucfg_mc_cp_stats_get_pending_req(psoc,
 						  TYPE_STATION_STATS,
@@ -876,9 +884,12 @@ static void tgt_mc_cp_stats_extract_station_stats(
 	 * reset type_map bit for station stats .
 	 */
 	if (tgt_mc_cp_stats_is_last_event(ev, TYPE_STATION_STATS)) {
-		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS);
-		tgt_mc_cp_stats_prepare_n_send_raw_station_stats(psoc,
-								 &last_req);
+		ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_STATION_STATS,
+						   &last_req,
+						   &pending);
+		if (pending && last_req.u.get_station_stats_cb)
+			tgt_mc_cp_stats_prepare_n_send_raw_station_stats(
+							psoc, &last_req);
 	}
 }
 

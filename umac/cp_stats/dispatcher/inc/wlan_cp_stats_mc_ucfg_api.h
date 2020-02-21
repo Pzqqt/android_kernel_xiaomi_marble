@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -158,11 +158,17 @@ QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
  * ucfg_mc_cp_stats_reset_pending_req() - API to reset pending request
  * @psoc: pointer to psoc object
  * @type: request to update
+ * @last_req: last request
+ * @pending: pending request present
+ *
+ * The function is an atomic operation of "reset" and "get" last request.
  *
  * Return: status of operation
  */
 QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
-					      enum stats_req_type type);
+					      enum stats_req_type type,
+					      struct request_info *last_req,
+					      bool *pending);
 
 /**
  * ucfg_mc_cp_stats_get_pending_req() - API to get pending request

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -532,7 +532,9 @@ QDF_STATUS ucfg_mc_cp_stats_set_pending_req(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
-					      enum stats_req_type type)
+					      enum stats_req_type type,
+					      struct request_info *last_req,
+					      bool *pending)
 {
 	struct psoc_mc_cp_stats *psoc_mc_stats;
 	struct psoc_cp_stats *psoc_cp_stats_priv;
@@ -550,6 +552,12 @@ QDF_STATUS ucfg_mc_cp_stats_reset_pending_req(struct wlan_objmgr_psoc *psoc,
 
 	wlan_cp_stats_psoc_obj_lock(psoc_cp_stats_priv);
 	psoc_mc_stats = psoc_cp_stats_priv->obj_stats;
+	if (psoc_mc_stats->pending.type_map & (1 << type)) {
+		*last_req = psoc_mc_stats->pending.req[type];
+		*pending = true;
+	} else {
+		*pending = false;
+	}
 	psoc_mc_stats->pending.type_map &= ~(1 << type);
 	qdf_mem_zero(&psoc_mc_stats->pending.req[type],
 		     sizeof(psoc_mc_stats->pending.req[type]));

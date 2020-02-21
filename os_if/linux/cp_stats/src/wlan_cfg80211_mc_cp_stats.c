@@ -461,6 +461,12 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 			 summary_size, rssi_size);
 		goto station_stats_cb_fail;
 	}
+	if (priv->vdev_summary_stats || priv->vdev_chain_rssi ||
+	    priv->peer_adv_stats) {
+		osif_err("invalid context cookie %pK request %pK",
+			 cookie, request);
+		goto station_stats_cb_fail;
+	}
 
 	priv->vdev_summary_stats = qdf_mem_malloc(summary_size);
 	if (!priv->vdev_summary_stats)
