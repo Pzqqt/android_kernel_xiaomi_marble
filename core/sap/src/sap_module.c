@@ -1770,6 +1770,7 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 	wlan_reg_set_channel_params_for_freq(mac_ctx->pdev, target_chan_freq,
 			0, ch_params);
 	sap_ctx->ch_params = *ch_params;
+	sap_ctx->freq_before_ch_switch = sap_ctx->chan_freq;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
@@ -1789,11 +1790,6 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sap_ctx,
 		  sap_ctx->chan_freq, phy_mode, ch_params->ch_width,
 		  ch_params->sec_ch_offset, ch_params->center_freq_seg0,
 		  ch_params->center_freq_seg1);
-
-	if (QDF_IS_STATUS_SUCCESS(status))
-		sap_signal_hdd_event(sap_ctx, NULL,
-				     eSAP_CHANNEL_CHANGE_EVENT,
-				     (void *) eSAP_STATUS_SUCCESS);
 
 	return status;
 }

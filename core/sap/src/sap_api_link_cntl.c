@@ -1067,8 +1067,6 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 	case eCSR_ROAM_SET_CHANNEL_RSP:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received set channel response"));
-		/* SAP channel change request processing is completed */
-		sap_ctx->is_chan_change_inprogress = false;
 		break;
 	case eCSR_ROAM_CAC_COMPLETE_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

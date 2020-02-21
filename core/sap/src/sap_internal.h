@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -225,6 +225,7 @@ struct sap_context {
 	bool dfs_cac_offload;
 	bool is_chan_change_inprogress;
 	qdf_list_t owe_pending_assoc_ind_list;
+	uint32_t freq_before_ch_switch;
 };
 
 /*----------------------------------------------------------------------------

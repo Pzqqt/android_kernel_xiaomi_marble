@@ -2488,10 +2488,18 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			  sap_ctx->ch_params.ch_width);
 		sap_ctx->fsm_state = SAP_STARTED;
 
-		/* Action code for transition */
-		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
-				eSAP_START_BSS_EVENT,
-				(void *) eSAP_STATUS_SUCCESS);
+		if (sap_ctx->is_chan_change_inprogress) {
+			/* SAP channel change request processing is completed */
+			sap_ctx->is_chan_change_inprogress = false;
+			qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
+						eSAP_CHANNEL_CHANGE_EVENT,
+						(void *)eSAP_STATUS_SUCCESS);
+		} else {
+			/* Action code for transition */
+			qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
+					eSAP_START_BSS_EVENT,
+					(void *) eSAP_STATUS_SUCCESS);
+		}
 		sap_chan_freq = sap_ctx->chan_freq;
 		band = wlan_reg_freq_to_band(sap_ctx->chan_freq);
 		if (sap_ctx->ch_params.center_freq_seg1)
@@ -2506,7 +2514,9 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		 * CAC is done if the operating channel is DFS
 		 */
 		if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
-			is_dfs = true;
+			is_dfs = wlan_reg_get_5g_bonded_channel_state_for_freq(
+					mac_ctx->pdev, sap_chan_freq,
+					CH_WIDTH_160MHZ);
 		} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
 			if (wlan_reg_get_channel_state_for_freq(
 							mac_ctx->pdev,
