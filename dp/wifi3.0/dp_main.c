@@ -77,6 +77,16 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #endif
 #endif
 
+#ifdef WLAN_FEATURE_STATS_EXT
+#define INIT_RX_HW_STATS_LOCK(_soc) \
+	qdf_spinlock_create(&(_soc)->rx_hw_stats_lock)
+#define DEINIT_RX_HW_STATS_LOCK(_soc) \
+	qdf_spinlock_destroy(&(_soc)->rx_hw_stats_lock)
+#else
+#define INIT_RX_HW_STATS_LOCK(_soc)  /* no op */
+#define DEINIT_RX_HW_STATS_LOCK(_soc) /* no op */
+#endif
+
 /*
  * The max size of cdp_peer_stats_param_t is limited to 16 bytes.
  * If the buffer size is exceeding this size limit,
@@ -4347,6 +4357,8 @@ static void dp_soc_deinit(void *txrx_soc)
 	dp_reo_desc_freelist_destroy(soc);
 
 	qdf_spinlock_destroy(&soc->ast_lock);
+
+	DEINIT_RX_HW_STATS_LOCK(soc);
 
 	dp_soc_mem_reset(soc);
 }
@@ -10338,7 +10350,7 @@ dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 
 #ifdef WLAN_FEATURE_STATS_EXT
 /* rx hw stats event wait timeout in ms */
-#define DP_REO_STATUS_STATS_TIMEOUT 1000
+#define DP_REO_STATUS_STATS_TIMEOUT 1500
 /**
  * dp_txrx_ext_stats_request - request dp txrx extended stats request
  * @soc_hdl: soc handle
@@ -10383,20 +10395,36 @@ dp_txrx_ext_stats_request(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 static void dp_rx_hw_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 			      union hal_reo_status *reo_status)
 {
-	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
+	struct dp_req_rx_hw_stats_t *rx_hw_stats = cb_ctxt;
 	struct hal_reo_queue_status *queue_status = &reo_status->queue_status;
+	bool is_query_timeout;
+
+	qdf_spin_lock_bh(&soc->rx_hw_stats_lock);
+	is_query_timeout = rx_hw_stats->is_query_timeout;
+	/* free the cb_ctxt if all pending tid stats query is received */
+	if (qdf_atomic_dec_and_test(&rx_hw_stats->pending_tid_stats_cnt)) {
+		if (!is_query_timeout) {
+			qdf_event_set(&soc->rx_hw_stats_event);
+			soc->is_last_stats_ctx_init = false;
+		}
+
+		qdf_mem_free(rx_hw_stats);
+	}
 
 	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
-		dp_info("REO stats failure %d for TID %d",
-			queue_status->header.status, rx_tid->tid);
+		dp_info("REO stats failure %d",
+			queue_status->header.status);
+		qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
 		return;
 	}
 
-	soc->ext_stats.rx_mpdu_received += queue_status->mpdu_frms_cnt;
-	soc->ext_stats.rx_mpdu_missed += queue_status->late_recv_mpdu_cnt;
-
-	if (rx_tid->tid == (DP_MAX_TIDS - 1))
-		qdf_event_set(&soc->rx_hw_stats_event);
+	if (!is_query_timeout) {
+		soc->ext_stats.rx_mpdu_received +=
+					queue_status->mpdu_frms_cnt;
+		soc->ext_stats.rx_mpdu_missed +=
+					queue_status->late_recv_mpdu_cnt;
+	}
+	qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
 }
 
 /**
@@ -10413,6 +10441,8 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 	struct dp_peer *peer;
 	QDF_STATUS status;
+	struct dp_req_rx_hw_stats_t *rx_hw_stats;
+	int rx_stats_sent_cnt = 0;
 
 	if (!vdev) {
 		dp_err("vdev is null for vdev_id: %u", vdev_id);
@@ -10427,12 +10457,39 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	rx_hw_stats = qdf_mem_malloc(sizeof(*rx_hw_stats));
+
+	if (!rx_hw_stats) {
+		dp_err("malloc failed for hw stats structure");
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	qdf_event_reset(&soc->rx_hw_stats_event);
-	dp_peer_rxtid_stats(peer, dp_rx_hw_stats_cb, NULL);
+	qdf_spin_lock_bh(&soc->rx_hw_stats_lock);
+	rx_stats_sent_cnt =
+		dp_peer_rxtid_stats(peer, dp_rx_hw_stats_cb, rx_hw_stats);
+	if (!rx_stats_sent_cnt) {
+		dp_err("no tid stats sent successfully");
+		qdf_mem_free(rx_hw_stats);
+		qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
+		return QDF_STATUS_E_INVAL;
+	}
+	qdf_atomic_set(&rx_hw_stats->pending_tid_stats_cnt,
+		       rx_stats_sent_cnt);
+	rx_hw_stats->is_query_timeout = false;
+	soc->is_last_stats_ctx_init = true;
+	qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
 
 	status = qdf_wait_single_event(&soc->rx_hw_stats_event,
 				       DP_REO_STATUS_STATS_TIMEOUT);
 
+	qdf_spin_lock_bh(&soc->rx_hw_stats_lock);
+	if (status != QDF_STATUS_SUCCESS) {
+		dp_info("rx hw stats event timeout");
+		if (soc->is_last_stats_ctx_init)
+			rx_hw_stats->is_query_timeout = true;
+	}
+	qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
 	dp_peer_unref_delete(peer);
 
 	return status;
@@ -10930,6 +10987,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	qdf_spinlock_create(&soc->reo_desc_freelist_lock);
 	qdf_list_create(&soc->reo_desc_freelist, REO_DESC_FREELIST_SIZE);
+	INIT_RX_HW_STATS_LOCK(soc);
 
 	/* fill the tx/rx cpu ring map*/
 	dp_soc_set_txrx_ring_map(soc);
