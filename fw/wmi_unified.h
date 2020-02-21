@@ -26561,8 +26561,28 @@ typedef enum {
     WMI_ROAM_TRIGGER_REASON_BSS_LOAD,
     WMI_ROAM_TRIGGER_REASON_DEAUTH,
     WMI_ROAM_TRIGGER_REASON_IDLE,
+    /*
+     * NOTE: don't add any more ROAM_TRIGGER_REASON values here.
+     * There are checks in the FW that require the value of
+     * WMI_ROAM_TRIGGER_REASON_MAX to be < 16.
+     * Add new ROAM_TRIGGER_REASON values below, inside the
+     * WMI_ROAM_TRIGGER_EXT_REASON_ID enum.
+     */
     WMI_ROAM_TRIGGER_REASON_MAX,
 } WMI_ROAM_TRIGGER_REASON_ID;
+
+/*
+ * The WMI_ROAM_TRIGGER_REASON_ID enum cannot be expanded with new values,
+ * due to checks in the FW that require WMI_ROAM_TRIGGER_REASON_MAX to be
+ * less than 16.
+ * The WMI_ROAM_TRIGGER_EXT_REASON_ID enum is used to hold further roam
+ * trigger reasons.
+ */
+typedef enum {
+    WMI_ROAM_TRIGGER_REASON_STA_KICKOUT = WMI_ROAM_TRIGGER_REASON_MAX,
+
+    WMI_ROAM_TRIGGER_EXT_REASON_MAX
+} WMI_ROAM_TRIGGER_EXT_REASON_ID;
 
 /* value for DENSE roam trigger */
 #define WMI_RX_TRAFFIC_ABOVE_THRESHOLD 0x1
