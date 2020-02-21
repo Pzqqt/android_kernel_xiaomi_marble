@@ -3403,6 +3403,8 @@ static void set_mpdu_info(
 	mpdu_info = &tx_capture_info->mpdu_info;
 	mpdu_info->ppdu_start_timestamp = rx_status->tsft + 16;
 	mpdu_info->channel_num = rx_status->chan_num;
+	mpdu_info->channel = rx_status->chan_freq;
+
 	mpdu_info->bw = 0;
 
 	if  (mpdu_info->channel_num < 20)
