@@ -306,8 +306,6 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 		enum sde_rm_topology_name topology)
 {
 	struct sde_kms *sde_kms;
-	struct msm_drm_private *priv;
-	struct drm_encoder *drm_enc;
 	struct sde_encoder_phys *enc_master;
 	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
 	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
@@ -327,9 +325,7 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	int dsc_common_mode = 0;
 	int i;
 
-	drm_enc = &sde_enc->base;
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
 
 	def = sde_rm_topology_get_topology_def(&sde_kms->rm, topology);
 	if (IS_ERR_OR_NULL(def))
@@ -517,8 +513,6 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 {
 	struct drm_connector *drm_conn;
 	struct sde_kms *sde_kms;
-	struct msm_drm_private *priv;
-	struct drm_encoder *drm_enc;
 	struct sde_encoder_phys *enc_master;
 	struct sde_hw_vdc *hw_vdc[MAX_CHANNELS_PER_ENC];
 	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
@@ -571,9 +565,7 @@ static int _dce_vdc_setup(struct sde_encoder_virt *sde_enc,
 	hw_ctl = enc_master->hw_ctl;
 	vdc = &sde_enc->mode_info.comp_info.vdc_info;
 
-	drm_enc = &sde_enc->base;
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
 
 	def = sde_rm_topology_get_topology_def(&sde_kms->rm, topology);
 	if (IS_ERR_OR_NULL(def))
