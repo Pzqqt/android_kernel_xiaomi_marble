@@ -340,6 +340,7 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 	uint16_t rem_len = scan_info->default_scan_ies_len;
 	uint8_t *temp_ie = scan_info->default_scan_ies;
 	uint8_t *current_ie;
+	const uint8_t *mbo_ie;
 	uint8_t elem_id;
 	uint16_t elem_len;
 	bool add_ie = false;
@@ -347,6 +348,9 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 	if (!scan_info->default_scan_ies_len || !scan_info->default_scan_ies)
 		return 0;
 
+	mbo_ie = wlan_get_vendor_ie_ptr_from_oui(MBO_OUI_TYPE,
+						 MBO_OUI_TYPE_SIZE, scan_ie,
+						 *scan_ie_len);
 	while (rem_len >= 2) {
 		current_ie = temp_ie;
 		elem_id = *temp_ie++;
@@ -366,10 +370,12 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 				add_ie = true;
 			break;
 		case WLAN_ELEMID_VENDOR:
-			if ((0 != qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
-							MBO_OUI_TYPE_SIZE)) ||
-				(0 == qdf_mem_cmp(&temp_ie[0], QCN_OUI_TYPE,
-							QCN_OUI_TYPE_SIZE)))
+			/* Donot add MBO IE if its already present */
+			if ((!mbo_ie &&
+			     0 == qdf_mem_cmp(&temp_ie[0], MBO_OUI_TYPE,
+					      MBO_OUI_TYPE_SIZE)) ||
+			    (0 == qdf_mem_cmp(&temp_ie[0], QCN_OUI_TYPE,
+					      QCN_OUI_TYPE_SIZE)))
 				add_ie = true;
 			break;
 		}
