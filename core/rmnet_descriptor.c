@@ -1036,7 +1036,9 @@ int rmnet_frag_process_next_hdr_packet(struct rmnet_frag_descriptor *frag_desc,
 			rmnet_recycle_frag_descriptor(frag_desc, port);
 		break;
 	case RMNET_MAP_HEADER_TYPE_CSUM_OFFLOAD:
-		if (rmnet_frag_get_csum_valid(frag_desc)) {
+		if (unlikely(!(frag_desc->dev->features & NETIF_F_RXCSUM))) {
+			priv->stats.csum_sw++;
+		} else if (rmnet_frag_get_csum_valid(frag_desc)) {
 			priv->stats.csum_ok++;
 			frag_desc->csum_valid = true;
 		} else {

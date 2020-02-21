@@ -1172,7 +1172,9 @@ int rmnet_map_process_next_hdr_packet(struct sk_buff *skb,
 			consume_skb(skb);
 		break;
 	case RMNET_MAP_HEADER_TYPE_CSUM_OFFLOAD:
-		if (rmnet_map_get_csum_valid(skb)) {
+		if (unlikely(!(skb->dev->features & NETIF_F_RXCSUM))) {
+			priv->stats.csum_sw++;
+		} else if (rmnet_map_get_csum_valid(skb)) {
 			priv->stats.csum_ok++;
 			skb->ip_summed = CHECKSUM_UNNECESSARY;
 		} else {
