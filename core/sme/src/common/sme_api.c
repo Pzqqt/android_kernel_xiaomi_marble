@@ -3558,36 +3558,6 @@ QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 }
 
 /*
- * sme_get_country_code() -
- * To return the current country code. If no country code is applied,
- * default country code is used to fill the buffer.
- * If 11d supported is turned off, an error is return and the last
- * applied/default country code is used.
- * This is a synchronous API.
- *
- * pBuf - pointer to a caller allocated buffer for returned country code.
- * pbLen  For input, this parameter indicates how big is the buffer.
- *		  Upon return, this parameter has the number of bytes for
- *		  country. If pBuf doesn't have enough space, this function
- *		  returns fail status and this parameter contains the number
- *		  that is needed.
- *
- * Return QDF_STATUS  SUCCESS.
- *
- * FAILURE or RESOURCES  The API finished and failed.
- */
-QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
-				uint8_t *pbLen)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_GET_CNTRYCODE, NO_SESSION, 0));
-
-	return csr_get_country_code(mac, pBuf, pbLen);
-}
-
-/*
  * sme_generic_change_country_code() -
  * Change Country code from upperlayer during WLAN driver operation.
  * This is a synchronous API.
@@ -5453,12 +5423,12 @@ sme_handle_generic_change_country_code(struct mac_context *mac_ctx,
 		    ('0' != msg->countryCode[1]))
 			qdf_mem_copy(mac_ctx->scan.countryCode11d,
 				     msg->countryCode,
-				     CFG_COUNTRY_CODE_LEN);
+				     REG_ALPHA2_LEN + 1);
 	}
 
 	qdf_mem_copy(mac_ctx->scan.countryCodeCurrent,
 		     msg->countryCode,
-		     CFG_COUNTRY_CODE_LEN);
+		     REG_ALPHA2_LEN + 1);
 
 	/* get the channels based on new cc */
 	status = csr_get_channel_and_power_list(mac_ctx);

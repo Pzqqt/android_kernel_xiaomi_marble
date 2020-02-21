@@ -1996,9 +1996,10 @@ int iw_get_channel_list_with_cc(struct net_device *dev,
 {
 	uint8_t i, len;
 	char *buf;
-	uint8_t ubuf[CFG_COUNTRY_CODE_LEN] = {0};
-	uint8_t ubuf_len = CFG_COUNTRY_CODE_LEN;
+	uint8_t ubuf[REG_ALPHA2_LEN + 1] = {0};
+	uint8_t ubuf_len = REG_ALPHA2_LEN + 1;
 	struct channel_list_info channel_list;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	hdd_enter_dev(dev);
 
@@ -2020,14 +2021,13 @@ int iw_get_channel_list_with_cc(struct net_device *dev,
 		return -EINVAL;
 	}
 	len = scnprintf(buf, WE_MAX_STR_LEN, "%u ", channel_list.num_channels);
-	if (QDF_STATUS_SUCCESS == sme_get_country_code(mac_handle, ubuf,
-						       &ubuf_len)) {
-		/* Printing Country code in getChannelList */
-		for (i = 0; i < (ubuf_len - 1); i++)
-			len += scnprintf(buf + len, WE_MAX_STR_LEN - len, "%c", ubuf[i]);
-	}
+	wlan_reg_get_cc_and_src(mac->psoc, ubuf);
+	/* Printing Country code in getChannelList */
+	for (i = 0; i < (ubuf_len - 1); i++)
+		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, "%c", ubuf[i]);
 	for (i = 0; i < channel_list.num_channels; i++)
-		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, " %u", channel_list.channels[i]);
+		len += scnprintf(buf + len, WE_MAX_STR_LEN - len, " %u",
+				 channel_list.channels[i]);
 
 	wrqu->data.length = strlen(extra) + 1;
 

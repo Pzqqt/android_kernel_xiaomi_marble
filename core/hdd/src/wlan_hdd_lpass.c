@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,7 +84,6 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 					 uint8_t is_on, uint8_t is_connected)
 {
 	struct hdd_context *hdd_ctx = NULL;
-	uint8_t buflen = WLAN_SVC_COUNTRY_CODE_LEN;
 	int i;
 	uint32_t chan_id;
 	uint32_t *chan_freq_list, chan_freq_len;
@@ -146,7 +145,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 
 	qdf_mem_free(chan_freq_list);
 
-	sme_get_country_code(hdd_ctx->mac_handle, data->country_code, &buflen);
+	wlan_reg_get_cc_and_src(hdd_ctx->psoc, data->country_code);
 	data->is_on = is_on;
 	data->vdev_id = adapter->vdev_id;
 	data->vdev_mode = adapter->device_mode;

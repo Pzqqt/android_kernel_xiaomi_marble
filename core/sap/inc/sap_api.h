@@ -490,7 +490,7 @@ struct sap_config {
 	/* Max ie length 255 * 2(WPA+RSN) + 2 bytes(vendor specific ID) * 2 */
 	uint8_t RSNWPAReqIE[(WLAN_MAX_IE_LEN * 2) + 4];
 	/* it is ignored if [0] is 0. */
-	uint8_t countryCode[CFG_COUNTRY_CODE_LEN];
+	uint8_t countryCode[REG_ALPHA2_LEN + 1];
 	uint8_t RSNEncryptType;
 	uint8_t mcRSNEncryptType;
 	eSapAuthType authType;

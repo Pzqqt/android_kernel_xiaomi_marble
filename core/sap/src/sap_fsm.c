@@ -2938,7 +2938,7 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	/* country code */
 	if (config->countryCode[0])
 		qdf_mem_copy(profile->countryCode, config->countryCode,
-			     CFG_COUNTRY_CODE_LEN);
+			     REG_ALPHA2_LEN + 1);
 	profile->ieee80211d = config->ieee80211d;
 	/* wps config info */
 	profile->wps_state = config->wps_state;

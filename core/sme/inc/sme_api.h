@@ -739,9 +739,6 @@ void sme_deregister_oem_data_rsp_callback(mac_handle_t mac_handle)
 
 #endif
 
-QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
-				uint8_t *pbLen);
-
 QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
 					   uint8_t *pCountry);
 

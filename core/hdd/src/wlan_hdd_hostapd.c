@@ -1793,7 +1793,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	eSapDfsCACState_t cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
 	struct hdd_config *cfg = NULL;
 	struct wlan_dfs_info dfs_info;
-	uint8_t cc_len = WLAN_SVC_COUNTRY_CODE_LEN;
 	struct hdd_adapter *con_sap_adapter;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSap_StationAssocReassocCompleteEvent *event;
@@ -1845,7 +1844,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	mac_handle = hdd_ctx->mac_handle;
 	dfs_info.channel = wlan_reg_freq_to_chan(
 			hdd_ctx->pdev, ap_ctx->operating_chan_freq);
-	sme_get_country_code(mac_handle, dfs_info.country_code, &cc_len);
+	wlan_reg_get_cc_and_src(hdd_ctx->psoc, dfs_info.country_code);
 	sta_id = sap_event->sapevt.sapStartBssCompleteEvent.staId;
 	sap_config = &adapter->session.ap.sap_config;
 

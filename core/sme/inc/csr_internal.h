@@ -400,9 +400,9 @@ struct csr_scanstruct {
 	tDblLinkList channelPowerInfoList5G;
 	uint32_t nLastAgeTimeOut;
 	uint32_t nAgingCountDown;
-	uint8_t countryCodeDefault[CFG_COUNTRY_CODE_LEN];
-	uint8_t countryCodeCurrent[CFG_COUNTRY_CODE_LEN];
-	uint8_t countryCode11d[CFG_COUNTRY_CODE_LEN];
+	uint8_t countryCodeDefault[REG_ALPHA2_LEN + 1];
+	uint8_t countryCodeCurrent[REG_ALPHA2_LEN + 1];
+	uint8_t countryCode11d[REG_ALPHA2_LEN + 1];
 	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
 	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
 
@@ -410,7 +410,7 @@ struct csr_scanstruct {
 	 * in 11d IE from probe rsp or beacons of neighboring APs
 	 * will use the most popular one (max count)
 	 */
-	uint8_t countryCodeElected[CFG_COUNTRY_CODE_LEN];
+	uint8_t countryCodeElected[REG_ALPHA2_LEN + 1];
 	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time
