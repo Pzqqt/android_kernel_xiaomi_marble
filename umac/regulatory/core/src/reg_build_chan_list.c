@@ -183,12 +183,10 @@ static void reg_do_auto_bw_correction(uint32_t num_reg_rules,
 	uint16_t new_bw;
 
 	for (count = 0; count < num_reg_rules - 1; count++) {
-		if ((reg_rule_ptr[count].end_freq ==
-		     reg_rule_ptr[count + 1].start_freq) &&
-		    ((reg_rule_ptr[count].max_bw +
-		      reg_rule_ptr[count + 1].max_bw) <= max_bw)) {
-			new_bw = reg_rule_ptr[count].max_bw +
-				reg_rule_ptr[count + 1].max_bw;
+		if (reg_rule_ptr[count].end_freq ==
+		    reg_rule_ptr[count + 1].start_freq) {
+			new_bw = QDF_MIN(max_bw, reg_rule_ptr[count].max_bw +
+					 reg_rule_ptr[count + 1].max_bw);
 			reg_rule_ptr[count].max_bw = new_bw;
 			reg_rule_ptr[count + 1].max_bw = new_bw;
 		}
