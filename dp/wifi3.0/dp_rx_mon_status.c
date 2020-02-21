@@ -1643,7 +1643,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	 * BUFFER_ADDR_INFO STRUCT
 	 */
 	while (qdf_likely((rxdma_mon_status_ring_entry =
-		hal_srng_src_peek(hal_soc, mon_status_srng))
+		hal_srng_src_peek_n_get_next(hal_soc, mon_status_srng))
 			&& quota--)) {
 		uint32_t rx_buf_cookie;
 		qdf_nbuf_t status_nbuf;
@@ -1921,7 +1921,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		num_req_buffers = num_entries_avail;
 	}
 
-	while (count < num_req_buffers) {
+	while (count <= num_req_buffers) {
 		rx_netbuf = dp_rx_nbuf_prepare(dp_soc, dp_pdev);
 
 		/*
@@ -1940,8 +1940,9 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 
 		next = (*desc_list)->next;
-		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-							 rxdma_srng);
+		rxdma_ring_entry = hal_srng_src_get_cur_hp_n_move_next(
+						dp_soc->hal_soc,
+						rxdma_srng);
 
 		if (qdf_unlikely(!rxdma_ring_entry)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
