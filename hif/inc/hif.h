@@ -1202,6 +1202,37 @@ int hif_force_wake_release(struct hif_opaque_softc *handle)
 }
 #endif /* FORCE_WAKE */
 
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+/**
+ * hif_prevent_link_low_power_states() - Prevent from going to low power states
+ * @hif - HIF opaque context
+ *
+ * Return: 0 on success. Error code on failure.
+ */
+int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif);
+
+/**
+ * hif_allow_link_low_power_states() - Allow link to go to low power states
+ * @hif - HIF opaque context
+ *
+ * Return: None
+ */
+void hif_allow_link_low_power_states(struct hif_opaque_softc *hif);
+
+#else
+
+static inline
+int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	return 0;
+}
+
+static inline
+void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
+{
+}
+#endif
+
 void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle);
 
 /**

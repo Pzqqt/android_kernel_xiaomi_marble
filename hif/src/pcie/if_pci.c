@@ -4844,3 +4844,14 @@ void hif_print_pci_stats(struct hif_pci_softc *pci_handle)
 }
 #endif /* FORCE_WAKE */
 
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	return pld_prevent_l1(HIF_GET_SOFTC(hif)->qdf_dev->dev);
+}
+
+void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	pld_allow_l1(HIF_GET_SOFTC(hif)->qdf_dev->dev);
+}
+#endif
