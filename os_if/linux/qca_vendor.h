@@ -3900,6 +3900,12 @@ enum qca_ignore_assoc_disallowed {
  * QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION and
  * QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_CONFIGURATION subcommands.
  */
+#define QCA_WLAN_VENDOR_ATTR_DISCONNECT_IES\
+		QCA_WLAN_VENDOR_ATTR_CONFIG_DISCONNECT_IES
+#define QCA_WLAN_VENDOR_ATTR_BEACON_REPORT_FAIL\
+		QCA_WLAN_VENDOR_ATTR_CONFIG_BEACON_REPORT_FAIL
+#define QCA_WLAN_VENDOR_ATTR_ROAM_REASON\
+		QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON
 enum qca_wlan_vendor_attr_config {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_INVALID = 0,
 	/*
@@ -4214,7 +4220,7 @@ enum qca_wlan_vendor_attr_config {
 	 * take the union of IEs from both of these interfaces and send in
 	 * further disassoc/deauth frames.
 	 */
-	QCA_WLAN_VENDOR_ATTR_DISCONNECT_IES = 58,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_DISCONNECT_IES = 58,
 
 	/* 8-bit unsigned value for ELNA bypass.
 	 * 1-Enable, 0-Disable
@@ -4226,7 +4232,13 @@ enum qca_wlan_vendor_attr_config {
 	 * scenarios where STA cannot honor the Beacon report request from AP.
 	 * 1-Enable, 0-Disable.
 	 */
-	QCA_WLAN_VENDOR_ATTR_BEACON_REPORT_FAIL = 60,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_BEACON_REPORT_FAIL = 60,
+
+	/* 8-bit unsigned value. This attribute enables/disables the host driver
+	 * to send roam reason information in the reassociation request to the
+	 * AP. 1-Enable, 0-Disable.
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON = 61,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AFTER_LAST,
