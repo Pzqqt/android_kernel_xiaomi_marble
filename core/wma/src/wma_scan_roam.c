@@ -2722,8 +2722,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, vdev_id);
-	wma_add_bss_peer_sta(roam_synch_ind_ptr->self_mac.bytes,
-			     roam_synch_ind_ptr->bssid.bytes, true);
+	wma_add_bss_peer_sta(vdev_id, roam_synch_ind_ptr->bssid.bytes, true);
 	/* Update new peer's uc cipher */
 	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher, cipher_cap,
 					      roam_synch_ind_ptr->bssid.bytes);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -613,7 +613,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	else
 		val = mac->mlme_cfg->sap_cfg.listen_interval;
 
-	status = wma_add_bss_peer_sta(session->self_mac_addr, session->bssId,
+	status = wma_add_bss_peer_sta(session->vdev_id, session->bssId,
 				      false);
 
 	if (QDF_IS_STATUS_ERROR(status)) {

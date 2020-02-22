@@ -1688,6 +1688,27 @@ static int wma_get_obj_mgr_peer_type(tp_wma_handle wma, uint8_t vdev_id,
 
 }
 
+static bool wma_objmgr_peer_exist(tp_wma_handle wma, uint8_t vdev_id,
+				  uint8_t *peer_addr)
+{
+	struct wlan_objmgr_peer *peer;
+	uint8_t peer_vdev_id;
+
+	peer = wlan_objmgr_get_peer_by_mac(wma->psoc, peer_addr,
+					   WLAN_LEGACY_WMA_ID);
+	if (!peer)
+		return false;
+
+	peer_vdev_id = wlan_vdev_get_id(wlan_peer_get_vdev(peer));
+
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
+
+	wma_info("Peer %pM already exist on vdev %d can't add it on vdev %d",
+		 peer_addr, peer_vdev_id, vdev_id);
+
+	return true;
+}
+
 /**
  * wma_create_objmgr_peer() - create objmgr peer information in host driver
  * @wma: wma handle
@@ -1707,6 +1728,13 @@ static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
 	struct wlan_objmgr_peer *obj_peer = NULL;
 	struct wlan_objmgr_vdev *obj_vdev = NULL;
 	struct wlan_objmgr_psoc *psoc = wma->psoc;
+
+	/*
+	 * Check if peer with same MAC exist on any Vdev, If so avoid
+	 * adding this peer.
+	 */
+	if (wma_objmgr_peer_exist(wma, vdev_id, peer_addr))
+		return NULL;
 
 	obj_peer_type = wma_get_obj_mgr_peer_type(wma, vdev_id, peer_addr,
 						  wma_peer_type);
@@ -1733,6 +1761,7 @@ static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
 	return obj_peer;
 
 }
+
 /**
  * wma_create_peer() - send peer create command to fw
  * @wma: wma handle
@@ -1784,14 +1813,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma,
 		WMA_LOGE("Invalid peer address received reject it");
 		goto err;
 	}
-
-	/*
-	 * Check if peer with same MAC exist on other Vdev, If so avoid
-	 * adding this peer, as it will cause FW to crash.
-	 */
-	if (cdp_find_peer_exist_on_other_vdev(dp_soc, vdev_id, peer_addr,
-					      wma->max_bssid))
-		goto err;
 
 	obj_peer = wma_create_objmgr_peer(wma, vdev_id, peer_addr, peer_type);
 	if (!obj_peer)
@@ -5063,10 +5084,9 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 	return ret;
 }
 
-QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid,
+QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
 				bool roam_synch)
 {
-	uint8_t vdev_id;
 	tp_wma_handle wma;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -5075,10 +5095,7 @@ QDF_STATUS wma_add_bss_peer_sta(uint8_t *self_mac, uint8_t *bssid,
 		WMA_LOGE("Invalid wma");
 		goto err;
 	}
-	if (wma_find_vdev_id_by_addr(wma, self_mac, &vdev_id)) {
-		WMA_LOGE("vdev not found for addr: %pM", self_mac);
-		goto err;
-	}
+
 	status = wma_create_peer(wma, bssid, WMI_PEER_TYPE_DEFAULT,
 				 vdev_id, roam_synch);
 err:
