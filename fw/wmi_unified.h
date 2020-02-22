@@ -16236,7 +16236,17 @@ typedef struct {
     A_UINT32  max_duration_ms; /* in milliseconds */
     A_UINT32  chan_freq;   /* in MHz */
     A_UINT32  chan_width;  /* in MHz */
-    A_UINT32  center_freq; /* in MHz */
+    /*
+     * Two center frequencies are required since agile channel switch
+     * has to support 160/165 MHz for products like Pine.
+     * For agile which supports only up to 80MHz (HK),
+     * freq2 will be 0 and ignored.
+     */
+    union {
+        A_UINT32  center_freq; /* in MHz */ /* old name */
+        A_UINT32  center_freq1; /* in MHz */ /* new name */
+    };
+    A_UINT32  center_freq2; /* in MHz */
 } wmi_vdev_adfs_ch_cfg_cmd_fixed_param;
 
 typedef struct {
@@ -16274,8 +16284,18 @@ typedef struct {
     A_UINT32 vdev_id;
     A_UINT32 chan_freq;   /* in MHz */
     A_UINT32 chan_width;  /* in MHz */
-    A_UINT32 center_freq; /* in MHz */
+    /*
+     * Two center frequencies are required since agile channel switch
+     * has to support 160/165 MHz for products like Pine.
+     * For agile which supports only up to 80MHz (HK),
+     * freq2 will be 0 and ignored.
+     */
+    union {
+        A_UINT32 center_freq; /* in MHz */ /* old name */
+        A_UINT32 center_freq1; /* in MHz */ /* new name */
+    };
     A_UINT32 status;   /* WMI_VDEV_OCAC_COMPLETE_STATUS */
+    A_UINT32 center_freq2; /* in MHz */
 } wmi_vdev_adfs_ocac_complete_event_fixed_param;
 
 typedef struct {
