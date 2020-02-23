@@ -164,10 +164,10 @@ inline bool
 dp_peer_or_pdev_tx_cap_enabled(struct dp_pdev *pdev,
 			       struct dp_peer *peer, uint8_t *mac_addr)
 {
-	if ((pdev->tx_capture_enabled ==
-	     CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS) ||
-	    (pdev->tx_capture_enabled ==
-	      CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER)) {
+	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS) {
+		return true;
+	} else if (pdev->tx_capture_enabled ==
+		   CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) {
 		if (peer && peer->tx_cap_enabled)
 			return true;
 
