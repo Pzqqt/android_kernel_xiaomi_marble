@@ -1340,10 +1340,6 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				    center_freq0, center_freq1, chan_freq,
 				    spectch_start, spectch_end);
 
-			sap_debug("freq = %d, rssi aggr = %d, bss count yet = %d",
-				  chan_freq, pSpectCh->rssiAgr,
-				  pSpectCh->bssCount);
-
 			pSpectCh++;
 			break;
 

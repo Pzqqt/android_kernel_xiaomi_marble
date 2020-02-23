@@ -2322,24 +2322,14 @@ static QDF_STATUS sap_fsm_state_init(struct sap_context *sap_ctx,
 			goto exit;
 		}
 
-		/* Transition from SAP_INIT to SAP_STARTING */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("new from state %s => %s: session:%d"),
-			  "SAP_INIT", "SAP_STARTING",
-			  sap_ctx->sessionId);
-
 		qdf_status = sap_goto_starting(sap_ctx, sap_event,
 					       mac_ctx, mac_handle);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			QDF_TRACE(QDF_MODULE_ID_SAP,
-				  QDF_TRACE_LEVEL_ERROR,
-				  FL("sap_goto_starting failed"));
+		if (!QDF_IS_STATUS_ERROR(qdf_status))
+			sap_err("sap_goto_starting failed");
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		qdf_status = sap_fsm_cac_start(sap_ctx, mac_ctx, mac_handle);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("in state %s, event msg %d"),
-			  "SAP_INIT", msg);
+		sap_err("in state %s, event msg %d", "SAP_INIT", msg);
 	}
 
 exit:
@@ -2877,8 +2867,7 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 	profile->nWPAReqIELength = 0;
 
 	if (profile->pRSNReqIE) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("pRSNReqIE already allocated."));
+		sap_debug("pRSNReqIE already allocated.");
 		qdf_mem_free(profile->pRSNReqIE);
 		profile->pRSNReqIE = NULL;
 	}
@@ -2913,7 +2902,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 		sap_err("Get ap UAPSD enabled/disabled failed");
 
 	profile->ApUapsdEnable = sap_uapsd;
-	sap_debug("Uapsd %d", sap_uapsd);
 	/* Enable protection parameters */
 	profile->protEnabled = ucfg_mlme_is_ap_prot_enabled(mac_ctx->psoc);
 
@@ -2924,15 +2912,11 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 		sap_err("Get ap obss protection failed");
 	profile->obssProtEnabled = ap_obss_prot;
 
-	sap_debug("ProtEnabled = %d", profile->protEnabled);
-	sap_debug("OBSSProtEnabled = %d", profile->obssProtEnabled);
-
 	qdf_status = ucfg_mlme_get_ap_protection_mode(mac_ctx->psoc, &ap_prot);
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		sap_err("Get ap protection mode failed using default value");
 	profile->cfg_protection = ap_prot;
 
-	sap_debug("cfg_protection = %d", profile->cfg_protection);
 	/* country code */
 	if (config->countryCode[0])
 		qdf_mem_copy(profile->countryCode, config->countryCode,
@@ -3010,7 +2994,6 @@ sapconvert_to_csr_profile(struct sap_config *config, eCsrRoamBssType bssType,
 		if (mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
 			profile->chan_switch_hostapd_rate_enabled = false;
 	}
-	sap_debug("rate_enabled %d", profile->chan_switch_hostapd_rate_enabled);
 
 	return eSAP_STATUS_SUCCESS;
 }

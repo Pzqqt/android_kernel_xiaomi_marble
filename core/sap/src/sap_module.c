@@ -689,19 +689,14 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	int sap_chanswitch_beacon_cnt;
 	bool sap_chanswitch_mode;
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("sap_ctx=%pK"), sap_ctx);
-
 	if (!sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid SAP pointer",
-			  __func__);
+		sap_info("Invalid SAP context");
 		return QDF_STATUS_E_FAULT;
 	}
 
 	pmac = sap_get_mac_context();
 	if (!pmac) {
-		sap_err("Invalid MAC context");
+		sap_err("Invalid sap MAC context");
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto fail;
 	}
@@ -737,8 +732,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 		sap_err("get_auto_channel_weight failed");
 
 	sap_ctx->auto_channel_select_weight = auto_channel_select_weight;
-	sap_debug("auto_channel_select_weight %d",
-		  sap_ctx->auto_channel_select_weight);
 
 	sap_ctx->user_context = user_context;
 	sap_ctx->enableOverLapCh = config->enOverLapCh;
@@ -778,16 +771,14 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 				sap_chanswitch_beacon_cnt;
 	pmac->sap.SapDfsInfo.sap_ch_switch_mode =
 				sap_chanswitch_beacon_cnt;
-	sap_debug("sap_chanswitch_beacon_cnt:%d", sap_chanswitch_beacon_cnt);
 
 	qdf_status = ucfg_mlme_get_sap_channel_switch_mode(
 						pmac->psoc,
 						&sap_chanswitch_mode);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+	if (QDF_IS_STATUS_ERROR(qdf_status))
 		sap_err("ucfg_mlme_get_sap_channel_switch_mode, set def");
-	pmac->sap.SapDfsInfo.sap_ch_switch_mode = sap_chanswitch_mode;
-	sap_debug("sap_chanswitch_mode:%d", sap_chanswitch_mode);
 
+	pmac->sap.SapDfsInfo.sap_ch_switch_mode = sap_chanswitch_mode;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =
 		sap_ctx->csr_roamProfile.csrPersona;
@@ -800,7 +791,11 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 
 	pmac->sap.SapDfsInfo.reduced_beacon_interval =
 					reduced_beacon_interval;
-	sap_debug("reduced_beacon_interval %d", reduced_beacon_interval);
+	sap_debug("SAP: auth ch select weight:%d chswitch bcn cnt:%d chswitch mode:%d reduced bcn intv:%d",
+		  sap_ctx->auto_channel_select_weight,
+		  sap_chanswitch_beacon_cnt,
+		  pmac->sap.SapDfsInfo.sap_ch_switch_mode,
+		  pmac->sap.SapDfsInfo.reduced_beacon_interval);
 
 	/* Copy MAC filtering settings to sap context */
 	sap_ctx->eSapMacAddrAclMode = config->SapMacaddr_acl;
