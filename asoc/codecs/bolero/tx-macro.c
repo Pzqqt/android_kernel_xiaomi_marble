@@ -904,6 +904,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 hpf_gate_reg = 0;
 	u16 tx_gain_ctl_reg = 0;
 	u8 hpf_cut_off_freq = 0;
+	u16 adc_mux_reg = 0;
 	int hpf_delay = TX_MACRO_DMIC_HPF_DELAY_MS;
 	int unmute_delay = TX_MACRO_DMIC_UNMUTE_DELAY_MS;
 	struct device *tx_dev = NULL;
@@ -925,6 +926,8 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 	tx_gain_ctl_reg = BOLERO_CDC_TX0_TX_VOL_CTL +
 				TX_MACRO_TX_PATH_OFFSET * decimator;
+	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
+			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -1008,6 +1011,32 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 					BOLERO_CDC_TX0_TX_PATH_SEC7, 0x40,
 					0x40);
 		}
+		if (tx_priv->version == BOLERO_VERSION_2_0) {
+			if (snd_soc_component_read32(component, adc_mux_reg)
+							& SWR_MIC) {
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,
+					0x01, 0x01);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC0_CTL,
+					0x0E, 0x0C);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC1_CTL,
+					0x0E, 0x0C);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC2_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC3_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC4_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
+					0x0E, 0x00);
+			}
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1036,6 +1065,14 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		cancel_delayed_work_sync(
 				&tx_priv->tx_mute_dwork[decimator].dwork);
+
+		if (tx_priv->version == BOLERO_VERSION_2_0) {
+			if (snd_soc_component_read32(component, adc_mux_reg)
+							& SWR_MIC)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,
+					0x01, 0x00);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component, tx_vol_ctl_reg,

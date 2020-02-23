@@ -172,13 +172,6 @@ enum {
 	AFE_LOOPBACK_TX_IDX_MAX,
 };
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-static const char* wsa883x_devices[] = {
-	"wsa883x.202170221",
-	"wsa883x.202170222",
-};
-#endif /* CONFIG_AUDIO_QGKI */
-
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
 	int usbc_en2_gpio; /* used by gpio driver API */
@@ -219,6 +212,11 @@ struct msm_wsa883x_dev_info {
 };
 
 struct aux_codec_dev_info {
+	struct device_node *of_node;
+	u32 index;
+};
+
+struct msm_swr_dmic_dev_info {
 	struct device_node *of_node;
 	u32 index;
 };
@@ -7281,28 +7279,47 @@ err_hs_detect:
 	return ret;
 }
 
+static int msm_swr_dmic_init(struct snd_soc_component *component)
+{
+	/* TODO: add sound wire dmic initialization */
+
+	if (NULL == component) {
+		pr_err("%s: swr dmic component is NULL\n", __func__);
+		return 0;
+	}
+
+	return 0;
+}
+
 static int msm_init_aux_dev(struct platform_device *pdev,
 				struct snd_soc_card *card)
 {
 	struct device_node *wsa_of_node;
 	struct device_node *aux_codec_of_node;
+	struct device_node *swr_dmic_of_node;
 	u32 wsa_max_devs;
 	u32 wsa_dev_cnt;
 	u32 codec_max_aux_devs = 0;
 	u32 codec_aux_dev_cnt = 0;
+	u32 swr_dmic_max_devs = 0;
+	u32 swr_dmic_dev_cnt = 0;
+	int swr_dmic_index = 0;
 	int i;
 	struct msm_wsa883x_dev_info *wsa883x_dev_info;
 	struct aux_codec_dev_info *aux_cdc_dev_info = NULL;
+	struct msm_swr_dmic_dev_info *swr_dmic_dev_info = NULL;
 	struct snd_soc_dai_link_component *dlc;
 	const char *auxdev_name_prefix[1];
 	char *dev_name_str = NULL;
 	int found = 0;
 	int codecs_found = 0;
+	int dmics_found = 0;
 	int ret = 0;
 
 	dlc = devm_kcalloc(&pdev->dev, 1,
 			sizeof(struct snd_soc_dai_link_component),
 			GFP_KERNEL);
+
 	/* Get maximum WSA device count for this platform */
 	ret = of_property_read_u32(pdev->dev.of_node,
 				   "qcom,wsa-max-devs", &wsa_max_devs);
@@ -7419,13 +7436,13 @@ codec_aux_dev:
 			 "%s: codec-max-aux-devs property missing in DT %s, ret = %d\n",
 			 __func__, pdev->dev.of_node->full_name, ret);
 		codec_max_aux_devs = 0;
-		goto aux_dev_register;
+		goto dmic_aux_dev;
 	}
 	if (codec_max_aux_devs == 0) {
 		dev_dbg(&pdev->dev,
 			 "%s: Max aux codec devices is 0 for this target?\n",
 			 __func__);
-		goto aux_dev_register;
+		goto dmic_aux_dev;
 	}
 
 	/* Get count of aux codec device phandles for this platform */
@@ -7507,9 +7524,122 @@ codec_aux_dev:
 		"%s: found %d AUX codecs registered with ALSA core\n",
 		__func__, codecs_found);
 
+dmic_aux_dev:
+	/* Get maximum WSA device count for this platform */
+	ret = of_property_read_u32(pdev->dev.of_node,
+				   "qcom,swr-dmic-max-devs",
+				   &swr_dmic_max_devs);
+	if (ret) {
+		dev_info(&pdev->dev,
+			 "%s: swr-dmic-max-devs property missing in DT %s,"
+			 " ret = %d\n",
+			 __func__, pdev->dev.of_node->full_name, ret);
+		swr_dmic_max_devs = 0;
+		goto aux_dev_register;
+	}
+	if (swr_dmic_max_devs == 0) {
+		dev_warn(&pdev->dev,
+			 "%s: Max SWR DMIC devices is 0 for this target?\n",
+			 __func__);
+		goto aux_dev_register;
+	}
+
+	/* Get count of SWR DMIC device phandles for this platform */
+	swr_dmic_dev_cnt = of_count_phandle_with_args(pdev->dev.of_node,
+						 "qcom,swr-dmic-devs", NULL);
+	if (swr_dmic_dev_cnt == -ENOENT) {
+		dev_warn(&pdev->dev, "%s: No swr_dmic device defined in DT.\n",
+			 __func__);
+		goto err;
+	} else if (swr_dmic_dev_cnt <= 0) {
+		dev_err(&pdev->dev,
+			"%s: Error reading swr_dmic device from DT."
+			" swr_dmic_dev_cnt = %d\n",
+			__func__, swr_dmic_dev_cnt);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	/*
+	 * Expect total phandles count to be NOT less than maximum possible
+	 * SWR DMIC count. However, if it is less, then assign same value to
+	 * max count as well.
+	 */
+	if (swr_dmic_dev_cnt < swr_dmic_max_devs) {
+		dev_dbg(&pdev->dev,
+			"%s: swr_dmic_max_devs = %d cannot exceed "
+			"swr_dmic_dev_cnt = %d\n",
+			__func__, swr_dmic_max_devs, swr_dmic_dev_cnt);
+		swr_dmic_max_devs = swr_dmic_dev_cnt;
+	}
+
+	/* Make sure prefix string passed for each WSA device */
+	ret = of_property_count_strings(pdev->dev.of_node,
+					"qcom,swr-dmic-prefix");
+	if (ret != swr_dmic_dev_cnt) {
+		dev_err(&pdev->dev,
+			"%s: expecting %d swr_dmic prefix. Defined only %d "
+			"in DT\n", __func__, swr_dmic_dev_cnt, ret);
+		ret = -EINVAL;
+		goto err;
+	}
+
+	/*
+	 * Alloc mem to store phandle and index info of WSA device, if already
+	 * registered with ALSA core
+	 */
+	swr_dmic_dev_info = devm_kcalloc(&pdev->dev, swr_dmic_max_devs,
+					sizeof(struct msm_swr_dmic_dev_info),
+					GFP_KERNEL);
+	if (!swr_dmic_dev_info) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	/*
+	 * search and check whether all WSA devices are already
+	 * registered with ALSA core or not. If found a node, store
+	 * the node and the index in a local array of struct for later
+	 * use.
+	 */
+	for (i = 0; i < swr_dmic_max_devs; i++) {
+		swr_dmic_of_node = of_parse_phandle(pdev->dev.of_node,
+					    "qcom,swr-dmic-devs", i);
+		if (unlikely(!swr_dmic_of_node)) {
+			/* we should not be here */
+			dev_err(&pdev->dev,
+				"%s: swr_dmic dev node is not present\n",
+				__func__);
+			ret = -EINVAL;
+			goto err;
+		}
+		dlc->of_node = swr_dmic_of_node;
+		dlc->name = NULL;
+		if (soc_find_component(dlc)) {
+			/* WSA device registered with ALSA core */
+			swr_dmic_dev_info[dmics_found].of_node =
+							swr_dmic_of_node;
+			swr_dmic_dev_info[dmics_found].index = i;
+			dmics_found++;
+			if (dmics_found == swr_dmic_max_devs)
+				break;
+		}
+	}
+
+	if (dmics_found < swr_dmic_max_devs) {
+		dev_err(&pdev->dev,
+			"%s: failed to find %d components. Found only %d\n",
+			__func__, swr_dmic_max_devs, dmics_found);
+		return -EPROBE_DEFER;
+	}
+	dev_info(&pdev->dev,
+		"%s: found %d swr_dmic devices registered with ALSA core\n",
+		__func__, dmics_found);
+
 aux_dev_register:
-	card->num_aux_devs = wsa_max_devs + codec_aux_dev_cnt;
-	card->num_configs = wsa_max_devs + codec_aux_dev_cnt;
+	card->num_aux_devs = wsa_max_devs + codec_aux_dev_cnt +
+				swr_dmic_max_devs;
+	card->num_configs = card->num_aux_devs;
 
 	/* Alloc array of AUX devs struct */
 	msm_aux_dev = devm_kcalloc(&pdev->dev, card->num_aux_devs,
@@ -7543,13 +7673,13 @@ aux_dev_register:
 						    auxdev_name_prefix);
 		if (ret) {
 			dev_err(&pdev->dev,
-				"%s: failed to read wsa aux dev prefix, ret = %d\n",
-				__func__, ret);
+				"%s: failed to read wsa aux dev prefix, "
+				"ret = %d\n", __func__, ret);
 			ret = -EINVAL;
 			goto err;
 		}
 
-		msm_aux_dev[i].dlc.name = wsa883x_devices[i];
+		msm_aux_dev[i].dlc.name = NULL;
 		msm_aux_dev[i].dlc.dai_name = NULL;
 		msm_aux_dev[i].dlc.of_node =
 					wsa883x_dev_info[i].of_node;
@@ -7571,6 +7701,39 @@ aux_dev_register:
 						NULL;
 		msm_codec_conf[wsa_max_devs + i].of_node =
 				aux_cdc_dev_info[i].of_node;
+	}
+
+	for (i = 0; i < swr_dmic_max_devs; i++) {
+		dev_name_str = devm_kzalloc(&pdev->dev, DEV_NAME_STR_LEN,
+					    GFP_KERNEL);
+		if (!dev_name_str) {
+			ret = -ENOMEM;
+			goto err;
+		}
+
+		ret = of_property_read_string_index(pdev->dev.of_node,
+						    "qcom,swr-dmic-prefix",
+						    swr_dmic_dev_info[i].index,
+						    auxdev_name_prefix);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: failed to read swr dmic dev prefix, "
+				"ret = %d\n", __func__, ret);
+			ret = -EINVAL;
+			goto err;
+		}
+		swr_dmic_index = wsa_max_devs + codec_aux_dev_cnt + i;
+
+		msm_aux_dev[swr_dmic_index].dlc.name = NULL;
+		msm_aux_dev[swr_dmic_index].dlc.dai_name = NULL;
+		msm_aux_dev[swr_dmic_index].dlc.of_node =
+					swr_dmic_dev_info[i].of_node;
+		msm_aux_dev[swr_dmic_index].init = msm_swr_dmic_init;
+		msm_codec_conf[swr_dmic_index].dev_name = NULL;
+		msm_codec_conf[swr_dmic_index].name_prefix =
+						auxdev_name_prefix[0];
+		msm_codec_conf[swr_dmic_index].of_node =
+						swr_dmic_dev_info[i].of_node;
 	}
 
 	card->codec_conf = msm_codec_conf;
