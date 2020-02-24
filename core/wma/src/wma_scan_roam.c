@@ -1780,6 +1780,35 @@ wma_send_idle_roam_params(tp_wma_handle wma_handle,
 {}
 #endif
 
+/* wma_set_vdev_roam_reason_vsie: set vdev param
+ *WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE
+ *
+ *@wma: wma handler
+ *@vdev_id: vdev id
+ *@is_roam_reason_vsie_enabled: enable_roam_reason_vsie ini value
+ *
+ * Return: Void
+ */
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void wma_set_vdev_roam_reason_vsie(tp_wma_handle wma, uint8_t vdev_id,
+					  bool is_roam_reason_vsie_enabled)
+{
+	int ret;
+
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				 WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE,
+				 is_roam_reason_vsie_enabled);
+	if (ret)
+		WMA_LOGE("Failed to set vdev param %d",
+			 WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE);
+}
+#else
+static void wma_set_vdev_roam_reason_vsie(tp_wma_handle wma, uint8_t vdev_id,
+					  bool is_roam_reason_vsie_enabled)
+{
+}
+#endif
+
 /**
  * wma_process_roaming_config() - process roam request
  * @wma_handle: wma handle
@@ -1796,6 +1825,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	wmi_start_scan_cmd_fixed_param scan_params;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t mode = 0;
+	uint8_t enable_roam_reason_vsie = 0;
 	struct wma_txrx_node *intr = NULL;
 	struct wmi_bss_load_config *bss_load_cfg;
 
@@ -1837,6 +1867,11 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 					     roam_req->sessionId);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
+
+		wlan_mlme_get_roam_reason_vsie_status(wma_handle->psoc,
+						      &enable_roam_reason_vsie);
+		wma_set_vdev_roam_reason_vsie(wma_handle, roam_req->sessionId,
+					      enable_roam_reason_vsie);
 
 		/* Opportunistic scan runs on a timer, value set by
 		 * EmptyRefreshScanPeriod. Age out the entries after 3 such

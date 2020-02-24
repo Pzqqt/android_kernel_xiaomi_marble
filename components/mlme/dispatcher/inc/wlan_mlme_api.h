@@ -2421,4 +2421,45 @@ wlan_mlme_get_status_ring_buffer(struct wlan_objmgr_psoc *psoc,
  * Return: true if peer unmap confirmation support is enabled, else false
  */
 bool wlan_mlme_get_peer_unmap_conf(struct wlan_objmgr_psoc *psoc);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wlan_mlme_get_roam_reason_vsie_status() - Indicate if roam reason
+ * vsie is enabled or disabled
+ * @psoc: pointer to psoc object
+ * @roam_reason_vsie_enabled: pointer to hold value of roam reason
+ * vsie
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *roam_reason_vsie_enabled);
+
+/**
+ * wlan_mlme_set_roam_reason_vsie_status() - Update roam reason vsie status
+ * @psoc: pointer to psoc object
+ * @roam_reason_vsie_enabled: value of roam reason vsie
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t roam_reason_vsie_enabled);
+#else
+static inline QDF_STATUS
+wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *roam_reason_vsie_enable)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+wlan_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t roam_reason_vsie_enable)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 #endif /* _WLAN_MLME_API_H_ */

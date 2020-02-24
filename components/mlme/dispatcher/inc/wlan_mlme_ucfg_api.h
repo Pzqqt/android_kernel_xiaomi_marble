@@ -4034,4 +4034,39 @@ ucfg_mlme_get_discon_reason_n_from_ap(struct wlan_objmgr_psoc *psoc,
 {
 	mlme_get_discon_reason_n_from_ap(psoc, vdev_id, from_ap, reason_code);
 }
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * ucfg_mlme_get_roam_reason_vsie_status() - Get roam reason vsie is
+ * enabled or disabled
+ * @psoc: pointer to psoc object
+ * @roam_reason_vsie_enabled: pointer to hold value of roam reason vsie
+ *
+ * Return: Success if able to get bcn rpt err vsie value, else failure
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t *roam_reason_vsie_enabled)
+{
+	return wlan_mlme_get_roam_reason_vsie_status(psoc,
+					roam_reason_vsie_enabled);
+}
+
+/**
+ * ucfg_mlme_set_roam_reason_vsie_status() - Update roam reason vsie status
+ * value with user configured value
+ * @psoc: pointer to psoc object
+ * @roam_reason_vsie_enabled: value of roam reason vsie status
+ *
+ * Return: Success if able to get bcn rpt err vsie value, else failure
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
+				      uint8_t roam_reason_vsie_enabled)
+{
+	return wlan_mlme_set_roam_reason_vsie_status(psoc,
+					roam_reason_vsie_enabled);
+}
+
+#endif
 #endif /* _WLAN_MLME_UCFG_API_H_ */
