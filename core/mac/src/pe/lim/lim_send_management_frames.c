@@ -319,7 +319,6 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	if (IS_DOT11_MODE_HE(dot11mode) && pesession)
 		lim_update_session_he_capable(mac_ctx, pesession);
 
-	pe_debug("Populate HE IEs");
 	populate_dot11f_he_caps(mac_ctx, pesession, &pr.he_cap);
 	populate_dot11f_he_6ghz_cap(mac_ctx, pesession,
 				    &pr.he_6ghz_band_cap);
@@ -411,6 +410,10 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			     additional_ie, addn_ielen);
 		payload += addn_ielen;
 	}
+	pe_nofl_debug("Probe req TX: vdev %d seq num %d to " QDF_MAC_ADDR_STR " len %d",
+		      vdev_id, mac_ctx->mgmtSeqNum,
+		      QDF_MAC_ADDR_ARRAY(bssid),
+		      (int)sizeof(tSirMacMgmtHdr) + payload);
 
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.

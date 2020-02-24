@@ -2269,8 +2269,6 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	uint8_t acm_mask;
 	mac_handle_t mac_handle;
 
-	hdd_enter();
-
 	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == bss_type) &&
 	    roam_info && roam_info->u.pConnectedProfile) {
 		qap = roam_info->u.pConnectedProfile->qap;
@@ -2329,8 +2327,6 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 		}
 
 	}
-
-	hdd_exit();
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -215,7 +215,7 @@ enum policy_mgr_conc_next_action policy_mgr_need_opportunistic_upgrade(
 	}
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
-		policy_mgr_err("driver isn't dbs capable, no further action needed");
+		policy_mgr_rl_debug("driver isn't dbs capable, no further action needed");
 		goto exit;
 	}
 

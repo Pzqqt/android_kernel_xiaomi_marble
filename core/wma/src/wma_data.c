@@ -2736,8 +2736,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		chanfreq = 0;
 	}
 
-	WMA_LOGD("%s: chan freq %d vdev:%d subType:%d",
-		 __func__, chanfreq, vdev_id, pFc->subType);
 	if (mac->mlme_cfg->gen.debug_packet_log & 0x1) {
 		if ((pFc->type == SIR_MAC_MGMT_FRAME) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_REQ) &&
