@@ -2599,6 +2599,36 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"Roam scan period post inactivity")
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/*
+ * <ini>
+ * enable_roam_reason_vsie - Enable/Disable inclusion of Roam Reason
+ * in Re(association) frame
+ *
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable fw to include/exclude roam reason vsie in
+ * Re(association)
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_ROAM_REASON_VSIE CFG_INI_BOOL( \
+		"enable_roam_reason_vsie", \
+		0, \
+		"To Enable enable_roam_reason_vsie")
+#define ROAM_REASON_VSIE_ALL CFG(CFG_ENABLE_ROAM_REASON_VSIE)
+#else
+#define ROAM_REASON_VSIE_ALL
+#endif
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -2687,6 +2717,7 @@
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL \
 	LFR_SUBNET_DETECTION_ALL \
-	SAE_SINGLE_PMK_ALL
+	SAE_SINGLE_PMK_ALL \
+	ROAM_REASON_VSIE_ALL
 
 #endif /* CFG_MLME_LFR_H__ */
