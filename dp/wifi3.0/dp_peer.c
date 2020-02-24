@@ -849,6 +849,7 @@ add_ast_entry:
 				soc->ctrl_psoc,
 				peer->vdev->vdev_id,
 				peer->mac_addr.raw,
+				peer->peer_ids[0],
 				mac_addr,
 				next_node_mac,
 				flags,

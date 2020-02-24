@@ -1004,6 +1004,7 @@ struct ol_if_ops {
 	int (*peer_add_wds_entry)(struct cdp_ctrl_objmgr_psoc *soc,
 				  uint8_t vdev_id,
 				  uint8_t *peer_macaddr,
+				  uint16_t peer_id,
 				  const uint8_t *dest_macaddr,
 				  uint8_t *next_node_mac,
 				  uint32_t flags,
