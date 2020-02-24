@@ -736,6 +736,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	uint8_t tid;
 	qdf_ether_header_t *eh;
 	struct hal_rx_msdu_metadata msdu_metadata;
+	uint16_t sa_idx = 0;
 
 	qdf_nbuf_set_rx_chfrag_start(nbuf,
 				hal_rx_msdu_end_first_msdu_get(soc->hal_soc,
@@ -823,6 +824,16 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 				   RX_PKT_TLVS_LEN));
 
 	dp_vdev_peer_stats_update_protocol_cnt(vdev, nbuf, NULL, 0, 1);
+
+	if (hal_rx_msdu_end_sa_is_valid_get(soc->hal_soc, rx_tlv_hdr)) {
+		sa_idx = hal_rx_msdu_end_sa_idx_get(soc->hal_soc, rx_tlv_hdr);
+
+		if ((sa_idx < 0) ||
+		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
+			DP_STATS_INC(soc, rx.err.invalid_sa_da_idx, 1);
+			goto drop_nbuf;
+		}
+	}
 
 	if (dp_rx_mcast_echo_check(soc, peer, rx_tlv_hdr, nbuf)) {
 		/* this is a looped back MCBC pkt, drop it */
