@@ -3432,6 +3432,11 @@ static void hdd_wlan_unregister_pm_qos_notifier(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
+	if (hdd_ctx->config->runtime_pm != hdd_runtime_pm_dynamic) {
+		hdd_debug("Dynamic Runtime PM disabled");
+		return;
+	}
+
 	ret = pm_qos_remove_notifier(PM_QOS_CPU_DMA_LATENCY,
 				     &hdd_ctx->pm_qos_notifier);
 	if (ret)
