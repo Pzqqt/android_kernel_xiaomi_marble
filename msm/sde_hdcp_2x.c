@@ -480,6 +480,12 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated,
 					hdcp->app_data.response.data[0]);
+
+	if (atomic_read(&hdcp->hdcp_off)) {
+		pr_debug("invalid state, hdcp off\n");
+		goto exit;
+	}
+
 	switch (hdcp->app_data.response.data[0]) {
 	case SKE_SEND_TYPE_ID:
 		if (!hdcp2_app_comm(hdcp->hdcp2_ctx,
@@ -531,6 +537,8 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 	}
 
 	sde_hdcp_2x_wakeup_client(hdcp, &cdata);
+
+exit:
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hdcp->authenticated);
 }
 
