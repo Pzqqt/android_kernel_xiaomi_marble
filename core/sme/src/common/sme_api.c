@@ -6137,16 +6137,12 @@ void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 {
 	struct fils_join_rsp_params *roam_fils_params;
 
-	if (!roam_info) {
-		sme_debug("FILS Roam Info NULL");
+	if (!roam_info)
 		return;
-	}
 
 	roam_fils_params = roam_info->fils_join_rsp;
-	if (!roam_fils_params) {
-		sme_debug("FILS Roam Param NULL");
+	if (!roam_fils_params)
 		return;
-	}
 
 	if (roam_fils_params->fils_pmk)
 		qdf_mem_free(roam_fils_params->fils_pmk);
@@ -7393,7 +7389,7 @@ void sme_dump_freq_list(tCsrChannelInfo *chan_info)
 		}
 	}
 
-	sme_debug("No.of frequencies: %u, frequency list: %s", i, channel_list);
+	sme_debug("frequency list [%u]: %s", i, channel_list);
 	qdf_mem_free(channel_list);
 }
 

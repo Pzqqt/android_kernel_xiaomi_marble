@@ -4036,9 +4036,7 @@ static void wma_set_roam_offload_flag(tp_wma_handle wma, uint8_t vdev_id,
 			flag |= WMI_ROAM_BMISS_FINAL_SCAN_TYPE_FLAG;
 	}
 
-	WMA_LOGD("%s: vdev_id:%d, is_set:%d, flag:%d",
-		 __func__, vdev_id, is_set, flag);
-
+	wma_debug("vdev_id:%d, is_set:%d, flag:%d", vdev_id, is_set, flag);
 	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 				    WMI_VDEV_PARAM_ROAM_FW_OFFLOAD, flag);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -4050,9 +4048,6 @@ void wma_update_roam_offload_flag(void *handle,
 {
 	tp_wma_handle wma = handle;
 	struct wma_txrx_node *iface;
-
-	WMA_LOGD("%s: vdev_id:%d, is_connected:%d", __func__,
-		 params->vdev_id, params->enable);
 
 	if (!wma_is_vdev_valid(params->vdev_id)) {
 		WMA_LOGE("%s: vdev_id: %d is not active", __func__,

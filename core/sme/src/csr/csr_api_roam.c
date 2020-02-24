@@ -2186,11 +2186,8 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 	     ROAMING_DFS_CHANNEL_DISABLED ||
 	     mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 	     CSR_STA_ROAM_POLICY_DFS_DISABLED) &&
-	    (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, freq))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  ("dfs freq %d"), freq);
+	    (wlan_reg_is_dfs_for_freq(mac_ctx->pdev, freq)))
 		return true;
-	}
 
 	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
 				    &unsafe_chan_cnt,
@@ -2209,7 +2206,6 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 			}
 		}
 	}
-	sme_debug("band %d", band);
 	if (!csr_check_band_freq_match(band, freq)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  ("ignoring non-intra band freq %d"),
@@ -17633,10 +17629,6 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 	ch_lst = mac_ctx->scan.occupiedChannels[session_id].channel_freq_list;
 	op_freq = session->connectedProfile.op_freq;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		"Num of channels before filtering=%d",
-		mac_ctx->scan.occupiedChannels[session_id].numChannels);
-
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
 		if (WLAN_REG_IS_5GHZ_CH_FREQ(op_freq))
 			band = BAND_5G;
@@ -17652,14 +17644,6 @@ csr_fetch_ch_lst_from_occupied_lst(struct mac_context *mac_ctx,
 			continue;
 		}
 		req_buf->ConnectedNetwork.chan_freq_cache[num_channels++] = *ch_lst;
-		if (*ch_lst)
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"DFSRoam=%d, ChnlState=%d, Chnl freq=%d, num_ch=%d",
-				mac_ctx->mlme_cfg->lfr.roaming_dfs_channel,
-				wlan_reg_get_channel_state_for_freq(
-				mac_ctx->pdev, *ch_lst),
-				*ch_lst,
-				num_channels);
 		ch_lst++;
 	}
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
@@ -17753,7 +17737,6 @@ csr_add_ch_lst_from_roam_scan_list(struct mac_context *mac_ctx,
 		sme_err("Failed to copy channels to roam list");
 		return status;
 	}
-	sme_debug("Added to roam chan list:");
 	sme_dump_freq_list(pref_chan_info);
 	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC;
 
@@ -17820,8 +17803,6 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 		network_cfg->gp_mgmt_cipher_suite = group_mgmt_cipher;
 	else
 		network_cfg->gp_mgmt_cipher_suite = eSIR_ED_NONE;
-
-	pe_debug("gp_mgmt_cipher_suite %d", network_cfg->gp_mgmt_cipher_suite);
 }
 
 #else
@@ -17962,13 +17943,6 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->RoamBeaconRssiWeight =
 		roam_info->cfgParams.nRoamBeaconRssiWeight;
 	csr_copy_mawc_config(mac_ctx, &req_buf->mawc_roam_params);
-	sme_debug("MAWC:global=%d,roam=%d,traffic=%d,ap_rssi=%d,high=%d,low=%d",
-		  req_buf->mawc_roam_params.mawc_enabled,
-		  req_buf->mawc_roam_params.mawc_roam_enabled,
-		  req_buf->mawc_roam_params.mawc_roam_traffic_threshold,
-		  req_buf->mawc_roam_params.mawc_roam_ap_rssi_threshold,
-		  req_buf->mawc_roam_params.mawc_roam_rssi_high_adjust,
-		  req_buf->mawc_roam_params.mawc_roam_rssi_low_adjust);
 
 	req_buf->min_rssi_params[DEAUTH_MIN_RSSI] =
 			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
@@ -17987,12 +17961,13 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		(csr_is_auth_type_ese(req_buf->
 			ConnectedNetwork.authentication)));
 	req_buf->is_11r_assoc = roam_info->is11rAssoc;
-	sme_debug("IsEseAssoc: %d is_11r_assoc: %d middle of roaming: %d",
-		  req_buf->IsESEAssoc, req_buf->is_11r_assoc,
-		  req_buf->middle_of_roaming);
 
-	sme_debug("ese_neighbor_list_recvd: %d cur no of chan: %d",
-		  ese_neighbor_list_recvd, curr_ch_lst_info->numOfChannels);
+	if (req_buf->IsESEAssoc || req_buf->is_11r_assoc ||
+	    req_buf->middle_of_roaming)
+		sme_debug("IsEseAssoc: %d is_11r_assoc: %d middle of roaming: %d ese_neighbor_list_recvd: %d cur no of chan: %d",
+			  req_buf->IsESEAssoc, req_buf->is_11r_assoc,
+			  req_buf->middle_of_roaming, ese_neighbor_list_recvd,
+			  curr_ch_lst_info->numOfChannels);
 #endif
 
 	if (ese_neighbor_list_recvd ||
@@ -18109,18 +18084,6 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
 
-	sme_debug("HomeAwayTime=%d EarlyStopFeature Enable=%d",
-		  req_buf->HomeAwayTime, req_buf->early_stop_scan_enable);
-
-	sme_debug("MinThresh=%d, MaxThresh=%d",
-		  req_buf->early_stop_scan_min_threshold,
-		  req_buf->early_stop_scan_max_threshold);
-
-	sme_debug("disallow_dur=%d rssi_chan_pen=%d num_disallowed_aps=%d",
-		  req_buf->lca_config_params.disallow_duration,
-		  req_buf->lca_config_params.rssi_channel_penalization,
-		  req_buf->lca_config_params.num_disallowed_aps);
-
 	/* For RSO Stop, we need to notify FW to deinit BTM */
 	if (command == ROAM_SCAN_OFFLOAD_STOP)
 		req_buf->btm_offload_config = 0;
@@ -18176,7 +18139,6 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 				csr_config->offload_11k_enable_bitmask;
 	} else {
 		params->offload_11k_bitmask = 0;
-		sme_debug("11k offload disabled in RSO");
 		return;
 	}
 
@@ -18245,8 +18207,6 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 	qdf_mem_copy(params->neighbor_report_params.ssid.mac_ssid,
 			session->connectedProfile.SSID.ssId,
 			session->connectedProfile.SSID.length);
-
-	sme_debug("Updated 11k offload params to RSO");
 }
 
 QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
@@ -18370,7 +18330,6 @@ csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
 					       MAX_RSSI_AVOID_BSSID_LIST,
 					       DRIVER_RSSI_REJECT_TYPE);
 	if (!roam_params->num_rssi_rejection_ap) {
-		sme_debug("RSSI reject list NULL");
 		qdf_mem_free(reject_list);
 		return;
 	}
@@ -18903,10 +18862,8 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 		    session->pCurRoamProfile->csrPersona != QDF_STA_MODE)
 			continue;
 
-		if (MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, i)) {
-			sme_debug("ROAM: Enabled on vdev_id: %d", i);
+		if (MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, i))
 			return i;
-		}
 	}
 
 	return WLAN_UMAC_VDEV_ID_MAX;
@@ -19258,12 +19215,12 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	struct roam_ext_params *roam_params_dst;
 	struct roam_ext_params *roam_params_src;
-	uint8_t i, temp_session_id;
+	uint8_t temp_session_id;
 	bool prev_roaming_state;
 	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
 
-	sme_debug("RSO Command %d, Session id %d, Reason %d", command,
+	sme_debug("RSO Command %d, vdev %d, Reason %d", command,
 		   session_id, reason);
 	if (!session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -19396,7 +19353,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 			(-1);
 	req_buf->rssi_thresh_offset_5g =
 		roam_info->cfgParams.rssi_thresh_offset_5g;
-	sme_debug("5g offset threshold: %d", req_buf->rssi_thresh_offset_5g);
 	qdf_mem_copy(roam_params_dst, roam_params_src,
 		sizeof(*roam_params_dst));
 	roam_params_dst->traffic_threshold =
@@ -19430,57 +19386,12 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	 */
 	if (roam_params_src->rssi_diff)
 		req_buf->RoamRssiDiff = roam_params_src->rssi_diff;
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		"num_bssid_avoid_list: %d num_ssid_allowed_list: %d num_bssid_favored: %d raise_rssi_thresh_5g: %d drop_rssi_thresh_5g: %d raise_rssi_type_5g: %d raise_factor_5g: %d drop_rssi_type_5g: %d drop_factor_5g: %d max_raise_rssi_5g: %d max_drop_rssi_5g: %d rssi_diff: %d alert_rssi_threshold: %d",
-		roam_params_dst->num_bssid_avoid_list,
-		roam_params_dst->num_ssid_allowed_list,
-		roam_params_dst->num_bssid_favored,
-		roam_params_dst->raise_rssi_thresh_5g,
-		roam_params_dst->drop_rssi_thresh_5g,
-		roam_params_dst->raise_rssi_type_5g,
-		roam_params_dst->raise_factor_5g,
-		roam_params_dst->drop_rssi_type_5g,
-		roam_params_dst->drop_factor_5g,
-		roam_params_dst->max_raise_rssi_5g,
-		roam_params_dst->max_drop_rssi_5g,
-		req_buf->RoamRssiDiff, roam_params_dst->alert_rssi_threshold);
 
 	/* Set initial dense roam status */
 	if (mac_ctx->scan.roam_candidate_count[session_id] >
 	    roam_params_dst->dense_min_aps_cnt)
 		roam_params_dst->initial_dense_status = true;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		"dense_rssi_thresh_offset: %d, dense_min_aps_cnt:%d, traffic_threshold:%d, "
-		"initial_dense_status:%d, candidate count:%d",
-		roam_params_dst->dense_rssi_thresh_offset,
-		roam_params_dst->dense_min_aps_cnt,
-		roam_params_dst->traffic_threshold,
-		roam_params_dst->initial_dense_status,
-		mac_ctx->scan.roam_candidate_count[session_id]);
-	sme_debug("BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam %d",
-			roam_params_dst->bg_scan_bad_rssi_thresh,
-			roam_params_dst->bg_scan_client_bitmap,
-			roam_params_dst->roam_bad_rssi_thresh_offset_2g);
-
-	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"Blacklist Bssid:"QDF_MAC_ADDR_STR")",
-			QDF_MAC_ADDR_ARRAY(roam_params_dst->bssid_avoid_list[i].
-				bytes));
-	}
-	for (i = 0; i < roam_params_dst->num_ssid_allowed_list; i++) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"Whitelist: %.*s",
-			roam_params_dst->ssid_allowed_list[i].length,
-			roam_params_dst->ssid_allowed_list[i].ssId);
-	}
-	for (i = 0; i < roam_params_dst->num_bssid_favored; i++) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"Preferred Bssid:"QDF_MAC_ADDR_STR") score: %d",
-			QDF_MAC_ADDR_ARRAY(roam_params_dst->bssid_favored[i].bytes),
-			roam_params_dst->bssid_favored_factor[i]);
-	}
 	req_buf->hi_rssi_scan_max_count =
 		roam_info->cfgParams.hi_rssi_scan_max_count;
 	req_buf->hi_rssi_scan_delay =
@@ -19498,12 +19409,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	else
 		req_buf->hi_rssi_scan_rssi_delta =
 			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
-
-	sme_debug("hi_rssi:delta=%d, max_count=%d, delay=%d, ub=%d",
-		  req_buf->hi_rssi_scan_rssi_delta,
-		  req_buf->hi_rssi_scan_max_count,
-		  req_buf->hi_rssi_scan_delay,
-		  req_buf->hi_rssi_scan_rssi_ub);
 
 	if (command != ROAM_SCAN_OFFLOAD_STOP) {
 		req_buf->assoc_ie.length = session->nAddIEAssocLength;
@@ -21796,7 +21701,6 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 	 * stop command, otherwise due to a race if deinit RSO goes first
 	 * without RSO stop , firmware will assert.
 	 */
-	sme_debug("Post roam init to LIM for vdev %d", vdev_id);
 	message.bodyptr = params;
 	message.type = eWNI_SME_ROAM_INIT_PARAM;
 	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
