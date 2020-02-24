@@ -3241,6 +3241,7 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 			uint8_t tlv_type)
 {
 	struct ppdu_info *ppdu_info = NULL;
+	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 
 	/*
 	 * Find ppdu_id node exists or not
@@ -3266,13 +3267,18 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 			    (1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV)))
 				return ppdu_info;
 
+			ppdu_desc = (struct cdp_tx_completion_ppdu *)
+				qdf_nbuf_data(ppdu_info->nbuf);
+
 			/**
 			 * apart from ACK BA STATUS TLV rest all comes in order
 			 * so if tlv type not ACK BA STATUS TLV we can deliver
 			 * ppdu_info
 			 */
-			if (tlv_type ==
-			    HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
+			if ((tlv_type ==
+			     HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) &&
+			    (ppdu_desc->htt_frame_type ==
+			     HTT_STATS_FTYPE_SGEN_MU_BAR))
 				return ppdu_info;
 
 			dp_ppdu_desc_deliver(pdev, ppdu_info);
