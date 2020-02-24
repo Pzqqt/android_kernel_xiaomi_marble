@@ -7230,7 +7230,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_set_aggr_mode = ipa3_set_aggr_mode;
 	api_ctrl->ipa_set_qcncm_ndp_sig = ipa3_set_qcncm_ndp_sig;
 	api_ctrl->ipa_set_single_ndp_per_mbim = ipa3_set_single_ndp_per_mbim;
-	api_ctrl->ipa_tx_dp = ipa3_tx_dp;
 	api_ctrl->ipa_tx_dp_mul = ipa3_tx_dp_mul;
 	api_ctrl->ipa_free_skb = ipa3_free_skb;
 	api_ctrl->ipa_setup_sys_pipe = ipa3_setup_sys_pipe;
@@ -7317,7 +7316,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_get_gsi_ep_info = ipa3_get_gsi_ep_info;
 	api_ctrl->ipa_stop_gsi_channel = ipa3_stop_gsi_channel;
 	api_ctrl->ipa_start_gsi_channel = ipa3_start_gsi_channel;
-	api_ctrl->ipa_register_ipa_ready_cb = ipa3_register_ipa_ready_cb;
 	api_ctrl->ipa_inc_client_enable_clks = ipa3_inc_client_enable_clks;
 	api_ctrl->ipa_dec_client_disable_clks = ipa3_dec_client_disable_clks;
 	api_ctrl->ipa_inc_client_enable_clks_no_block =

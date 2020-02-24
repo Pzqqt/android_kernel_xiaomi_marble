@@ -1720,44 +1720,6 @@ int ipa_set_single_ndp_per_mbim(bool enable)
 EXPORT_SYMBOL(ipa_set_single_ndp_per_mbim);
 
 /**
- * ipa_tx_dp() - Data-path tx handler
- * @dst:	[in] which IPA destination to route tx packets to
- * @skb:	[in] the packet to send
- * @metadata:	[in] TX packet meta-data
- *
- * Data-path tx handler, this is used for both SW data-path which by-passes most
- * IPA HW blocks AND the regular HW data-path for WLAN AMPDU traffic only. If
- * dst is a "valid" CONS type, then SW data-path is used. If dst is the
- * WLAN_AMPDU PROD type, then HW data-path for WLAN AMPDU is used. Anything else
- * is an error. For errors, client needs to free the skb as needed. For success,
- * IPA driver will later invoke client callback if one was supplied. That
- * callback should free the skb. If no callback supplied, IPA driver will free
- * the skb internally
- *
- * The function will use two descriptors for this send command
- * (for A5_WLAN_AMPDU_PROD only one desciprtor will be sent),
- * the first descriptor will be used to inform the IPA hardware that
- * apps need to push data into the IPA (IP_PACKET_INIT immediate command).
- * Once this send was done from SPS point-of-view the IPA driver will
- * get notified by the supplied callback - ipa_sps_irq_tx_comp()
- *
- * ipa_sps_irq_tx_comp will call to the user supplied
- * callback (from ipa_connect)
- *
- * Returns:	0 on success, negative on failure
- */
-int ipa_tx_dp(enum ipa_client_type dst, struct sk_buff *skb,
-		struct ipa_tx_meta *meta)
-{
-	int ret;
-
-	IPA_API_DISPATCH_RETURN(ipa_tx_dp, dst, skb, meta);
-
-	return ret;
-}
-EXPORT_SYMBOL(ipa_tx_dp);
-
-/**
  * ipa_tx_dp_mul() - Data-path tx handler for multiple packets
  * @src: [in] - Client that is sending data
  * @ipa_tx_data_desc:	[in] data descriptors from wlan
@@ -3232,18 +3194,6 @@ static int ipa_ap_resume(struct device *dev)
 	return ret;
 }
 
-int ipa_register_ipa_ready_cb(void (*ipa_ready_cb)(void *user_data),
-			      void *user_data)
-{
-	int ret;
-
-	IPA_API_DISPATCH_RETURN(ipa_register_ipa_ready_cb,
-				ipa_ready_cb, user_data);
-
-	return ret;
-}
-EXPORT_SYMBOL(ipa_register_ipa_ready_cb);
-
 /**
  * ipa_inc_client_enable_clks() - Increase active clients counter, and
  * enable ipa clocks if necessary
@@ -3831,6 +3781,12 @@ static int __init ipa_module_init(void)
 {
 	pr_debug("IPA module init\n");
 
+	ipa3_ctx = kzalloc(sizeof(*ipa3_ctx), GFP_KERNEL);
+	if (!ipa3_ctx) {
+		return -ENOMEM;
+	}
+	mutex_init(&ipa3_ctx->lock);
+
 	if (running_emulation) {
 		/* Register as a PCI device driver */
 		return pci_register_driver(&ipa_pci_driver);
@@ -3845,6 +3801,8 @@ static void __exit ipa_module_exit(void)
 	if (running_emulation)
 		pci_unregister_driver(&ipa_pci_driver);
 	platform_driver_unregister(&ipa_plat_drv);
+	kfree(ipa3_ctx);
+	ipa3_ctx = NULL;
 }
 module_exit(ipa_module_exit);
 

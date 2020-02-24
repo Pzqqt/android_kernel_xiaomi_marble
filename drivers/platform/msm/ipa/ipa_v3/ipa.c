@@ -141,7 +141,7 @@ static struct ipa3_plat_drv_res ipa3_res = {0, };
 
 static struct clk *ipa3_clk;
 
-struct ipa3_context *ipa3_ctx;
+struct ipa3_context *ipa3_ctx = NULL;
 
 static struct {
 	bool present[IPA_SMMU_CB_MAX];
@@ -5656,20 +5656,6 @@ static void ipa3_register_panic_hdlr(void)
 		&ipa3_panic_blk);
 }
 
-static void ipa3_trigger_ipa_ready_cbs(void)
-{
-	struct ipa3_ready_cb_info *info;
-
-	mutex_lock(&ipa3_ctx->lock);
-
-	/* Call all the CBs */
-	list_for_each_entry(info, &ipa3_ctx->ipa_ready_cb_list, link)
-		if (info->ready_cb)
-			info->ready_cb(info->user_data);
-
-	mutex_unlock(&ipa3_ctx->lock);
-}
-
 static void ipa3_uc_is_loaded(void)
 {
 	IPADBG("\n");
@@ -5773,6 +5759,34 @@ static inline void ipa3_enable_napi_lan_rx(void)
 		napi_enable(&ipa3_ctx->napi_lan_rx);
 }
 
+static inline void ipa3_register_to_fmwk(void)
+{
+	struct ipa_core_data data;
+
+	data.ipa_tx_dp = ipa3_tx_dp;
+
+	if (ipa_fmwk_register_ipa(&data)) {
+		IPAERR("couldn't register to IPA framework\n");
+	}
+}
+
+void ipa3_notify_clients_registered(void)
+{
+	bool reg = false;
+
+	mutex_lock(&ipa3_ctx->lock);
+	if (ipa3_ctx->ipa_initialization_complete)
+		reg = true;
+	ipa3_ctx->clients_registered = true;
+	mutex_unlock(&ipa3_ctx->lock);
+
+	if (reg) {
+		IPADBG("register to fmwk\n");
+		ipa3_register_to_fmwk();
+	}
+}
+EXPORT_SYMBOL(ipa3_notify_clients_registered);
+
 /**
  * ipa3_post_init() - Initialize the IPA Driver (Part II).
  * This part contains all initialization which requires interaction with
@@ -5806,6 +5820,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	struct ipa3_flt_tbl *flt_tbl;
 	int i;
 	struct idr *idr;
+	bool reg = false;
 
 	if (ipa3_ctx == NULL) {
 		IPADBG("IPA driver haven't initialized\n");
@@ -6070,9 +6085,14 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 	mutex_lock(&ipa3_ctx->lock);
 	ipa3_ctx->ipa_initialization_complete = true;
+	if (ipa3_ctx->clients_registered)
+		reg = true;
 	mutex_unlock(&ipa3_ctx->lock);
 	ipa3_enable_napi_lan_rx();
-	ipa3_trigger_ipa_ready_cbs();
+	if (reg) {
+		IPADBG("register to fmwk\n");
+		ipa3_register_to_fmwk();
+	}
 	complete_all(&ipa3_ctx->init_completion_obj);
 
 	ipa_ut_module_init();
@@ -6567,7 +6587,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 
 	IPADBG("IPA Driver initialization started\n");
 
-	ipa3_ctx = kzalloc(sizeof(*ipa3_ctx), GFP_KERNEL);
 	if (!ipa3_ctx) {
 		result = -ENOMEM;
 		goto fail_mem_ctx;
@@ -6949,7 +6968,6 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	INIT_LIST_HEAD(&ipa3_ctx->msg_wlan_client_list);
 	mutex_init(&ipa3_ctx->msg_wlan_client_lock);
 
-	mutex_init(&ipa3_ctx->lock);
 	mutex_init(&ipa3_ctx->q6_proxy_clk_vote_mutex);
 	mutex_init(&ipa3_ctx->ipa_cne_evt_lock);
 
@@ -7139,8 +7157,6 @@ fail_mem_ctrl:
 fail_tz_unlock_reg:
 	if (ipa3_ctx->logbuf)
 		ipc_log_context_destroy(ipa3_ctx->logbuf);
-	kfree(ipa3_ctx);
-	ipa3_ctx = NULL;
 fail_mem_ctx:
 	return result;
 }
@@ -8494,37 +8510,6 @@ static void ipa_gsi_notify_cb(struct gsi_per_notify *notify)
 			notify->evt_id);
 		ipa_assert();
 	}
-}
-
-int ipa3_register_ipa_ready_cb(void (*ipa_ready_cb)(void *), void *user_data)
-{
-	struct ipa3_ready_cb_info *cb_info = NULL;
-
-	/* check ipa3_ctx existed or not */
-	if (!ipa3_ctx) {
-		IPADBG("IPA driver haven't initialized\n");
-		return -ENXIO;
-	}
-	mutex_lock(&ipa3_ctx->lock);
-	if (ipa3_ctx->ipa_initialization_complete) {
-		mutex_unlock(&ipa3_ctx->lock);
-		IPADBG("IPA driver finished initialization already\n");
-		return -EEXIST;
-	}
-
-	cb_info = kmalloc(sizeof(struct ipa3_ready_cb_info), GFP_KERNEL);
-	if (!cb_info) {
-		mutex_unlock(&ipa3_ctx->lock);
-		return -ENOMEM;
-	}
-
-	cb_info->ready_cb = ipa_ready_cb;
-	cb_info->user_data = user_data;
-
-	list_add_tail(&cb_info->link, &ipa3_ctx->ipa_ready_cb_list);
-	mutex_unlock(&ipa3_ctx->lock);
-
-	return 0;
 }
 
 int ipa3_iommu_map(struct iommu_domain *domain,

@@ -11,6 +11,7 @@
 #include <linux/ipa_usb.h>
 #include <linux/rndis_ipa.h>
 #include <linux/ecm_ipa.h>
+#include <linux/ipa_fmwk.h>
 #include "../ipa_v3/ipa_i.h"
 #include "../ipa_rm_i.h"
 
@@ -732,7 +733,7 @@ static int ipa_usb_set_lock_unlock(bool is_lock)
 	return 0;
 }
 
-int ipa_usb_init_teth_prot(enum ipa_usb_teth_prot teth_prot,
+static int ipa_usb_init_teth_prot_api(enum ipa_usb_teth_prot teth_prot,
 			   struct ipa_usb_teth_params *teth_params,
 			   int (*ipa_usb_notify_cb)(enum ipa_usb_notify_event,
 			   void *),
@@ -906,7 +907,6 @@ bad_params:
 	mutex_unlock(&ipa3_usb_ctx->general_mutex);
 	return result;
 }
-EXPORT_SYMBOL(ipa_usb_init_teth_prot);
 
 static void ipa3_usb_gsi_evt_err_cb(struct gsi_evt_err_notify *notify)
 {
@@ -1828,7 +1828,7 @@ static void ipa_usb_debugfs_init(void){}
 static void ipa_usb_debugfs_remove(void){}
 #endif /* CONFIG_DEBUG_FS */
 
-int ipa_usb_xdci_connect(struct ipa_usb_xdci_chan_params *ul_chan_params,
+static int ipa_usb_xdci_connect_api(struct ipa_usb_xdci_chan_params *ul_chan_params,
 			 struct ipa_usb_xdci_chan_params *dl_chan_params,
 			 struct ipa_req_chan_out_params *ul_out_params,
 			 struct ipa_req_chan_out_params *dl_out_params,
@@ -1910,7 +1910,6 @@ bad_params:
 	mutex_unlock(&ipa3_usb_ctx->general_mutex);
 	return result;
 }
-EXPORT_SYMBOL(ipa_usb_xdci_connect);
 
 static int ipa3_usb_check_disconnect_prot(enum ipa_usb_teth_prot teth_prot)
 {
@@ -1996,7 +1995,7 @@ static int ipa_usb_xdci_dismiss_channels(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	return 0;
 }
 
-int ipa_usb_xdci_disconnect(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_disconnect_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 			    enum ipa_usb_teth_prot teth_prot)
 {
 	int result = 0;
@@ -2106,9 +2105,8 @@ bad_params:
 	return result;
 
 }
-EXPORT_SYMBOL(ipa_usb_xdci_disconnect);
 
-int ipa_usb_deinit_teth_prot(enum ipa_usb_teth_prot teth_prot)
+static int ipa_usb_deinit_teth_prot_api(enum ipa_usb_teth_prot teth_prot)
 {
 	int result = -EFAULT;
 	enum ipa3_usb_transport_type ttype;
@@ -2209,7 +2207,6 @@ bad_params:
 	mutex_unlock(&ipa3_usb_ctx->general_mutex);
 	return result;
 }
-EXPORT_SYMBOL(ipa_usb_deinit_teth_prot);
 
 /* Assumes lock already acquired */
 static int ipa3_usb_suspend_no_remote_wakeup(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
@@ -2295,7 +2292,7 @@ fail_exit:
 	return result;
 }
 
-int ipa_usb_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_suspend_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	enum ipa_usb_teth_prot teth_prot, bool with_remote_wakeup)
 {
 	int result = 0;
@@ -2374,7 +2371,6 @@ bad_params:
 	mutex_unlock(&ipa3_usb_ctx->general_mutex);
 	return result;
 }
-EXPORT_SYMBOL(ipa_usb_xdci_suspend);
 
 /* Assumes lock already acquired */
 static int ipa3_usb_resume_no_remote_wakeup(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
@@ -2454,7 +2450,7 @@ fail_exit:
 	return result;
 }
 
-int ipa_usb_xdci_resume(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_resume_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	enum ipa_usb_teth_prot teth_prot)
 {
 	int result = -EFAULT;
@@ -2555,16 +2551,17 @@ bad_params:
 	mutex_unlock(&ipa3_usb_ctx->general_mutex);
 	return result;
 }
-EXPORT_SYMBOL(ipa_usb_xdci_resume);
 
-static int __init ipa3_usb_init(void)
+int ipa3_usb_init(void)
 {
 	int i;
 	unsigned long flags;
 	int res;
 	struct ipa3_usb_pm_context *pm_ctx;
+	struct ipa_usb_data funcs;
 
 	pr_info("ipa_usb driver init\n");
+
 	ipa3_usb_ctx = kzalloc(sizeof(struct ipa3_usb_context), GFP_KERNEL);
 	if (ipa3_usb_ctx == NULL) {
 		pr_err(":ipa_usb init failed\n");
@@ -2608,6 +2605,16 @@ static int __init ipa3_usb_init(void)
 
 	ipa_usb_debugfs_init();
 
+	funcs.ipa_usb_init_teth_prot = ipa_usb_init_teth_prot_api;
+	funcs.ipa_usb_xdci_connect = ipa_usb_xdci_connect_api;
+	funcs.ipa_usb_xdci_disconnect = ipa_usb_xdci_disconnect_api;
+	funcs.ipa_usb_deinit_teth_prot = ipa_usb_deinit_teth_prot_api;
+	funcs.ipa_usb_xdci_suspend = ipa_usb_xdci_suspend_api;
+	funcs.ipa_usb_xdci_resume = ipa_usb_xdci_resume_api;
+	if (ipa_fmwk_register_ipa_usb(&funcs)) {
+		pr_err("failed to register ipa_usb APIs\n");
+	}
+
 	pr_info("exit: IPA_USB init success!\n");
 
 	return 0;
@@ -2618,7 +2625,7 @@ ipa_usb_workqueue_fail:
 	return res;
 }
 
-static void ipa3_usb_exit(void)
+void ipa3_usb_exit(void)
 {
 	IPA_USB_DBG_LOW("IPA_USB exit\n");
 
@@ -2633,9 +2640,3 @@ static void ipa3_usb_exit(void)
 	ipa_usb_debugfs_remove();
 	kfree(ipa3_usb_ctx);
 }
-
-arch_initcall(ipa3_usb_init);
-module_exit(ipa3_usb_exit);
-
-MODULE_LICENSE("GPL v2");
-MODULE_DESCRIPTION("IPA USB client driver");

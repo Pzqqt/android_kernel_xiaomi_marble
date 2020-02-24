@@ -35,6 +35,7 @@
 #include <linux/mailbox_client.h>
 #include <linux/mailbox/qmp.h>
 #include <linux/rmnet_ipa_fd_ioctl.h>
+#include <linux/ipa_fmwk.h>
 
 #define IPA_DEV_NAME_MAX_LEN 15
 #define DRV_NAME "ipa"
@@ -1647,21 +1648,6 @@ struct ipa3_smp2p_info {
 	struct qcom_smem_state *smem_state;
 };
 
-/**
- * struct ipa3_ready_cb_info - A list of all the registrations
- *  for an indication of IPA driver readiness
- *
- * @link: linked list link
- * @ready_cb: callback
- * @user_data: User data
- *
- */
-struct ipa3_ready_cb_info {
-	struct list_head link;
-	ipa_ready_cb ready_cb;
-	void *user_data;
-};
-
 struct ipa_dma_task_info {
 	struct ipa_mem_buffer mem;
 	struct ipahal_imm_cmd_pyld *cmd_pyld;
@@ -2074,6 +2060,7 @@ struct ipa3_context {
 	u32 icc_clk[IPA_ICC_LVL_MAX][IPA_ICC_PATH_MAX][IPA_ICC_TYPE_MAX];
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld;
 	struct ipa3_app_clock_vote app_clock_vote;
+	bool clients_registered;
 };
 
 struct ipa3_plat_drv_res {
@@ -3143,7 +3130,6 @@ int emulator_load_fws(
 	u32 transport_mem_base,
 	u32 transport_mem_size,
 	enum gsi_ver);
-int ipa3_register_ipa_ready_cb(void (*ipa_ready_cb)(void *), void *user_data);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);
 int ipa3_rx_poll(u32 clnt_hdl, int budget);
@@ -3177,6 +3163,7 @@ int ipa3_get_transport_info(
 irq_handler_t ipa3_get_isr(void);
 void ipa_pc_qmp_enable(void);
 u32 ipa3_get_r_rev_version(void);
+void ipa3_notify_clients_registered(void);
 #if defined(CONFIG_IPA3_REGDUMP)
 int ipa_reg_save_init(u32 value);
 void ipa_save_registers(void);

@@ -175,9 +175,6 @@ struct ipa_api_controller {
 
 	int (*ipa_set_single_ndp_per_mbim)(bool enable);
 
-	int (*ipa_tx_dp)(enum ipa_client_type dst, struct sk_buff *skb,
-		struct ipa_tx_meta *metadata);
-
 	int (*ipa_tx_dp_mul)(enum ipa_client_type dst,
 			struct ipa_tx_data_desc *data_desc);
 
@@ -371,9 +368,6 @@ struct ipa_api_controller {
 
 	const struct ipa_gsi_ep_config *(*ipa_get_gsi_ep_info)
 		(enum ipa_client_type client);
-
-	int (*ipa_register_ipa_ready_cb)(void (*ipa_ready_cb)(void *user_data),
-		void *user_data);
 
 	void (*ipa_inc_client_enable_clks)(
 		struct ipa_active_client_logging_info *id);
