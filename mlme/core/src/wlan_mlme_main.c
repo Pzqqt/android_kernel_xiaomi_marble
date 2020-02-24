@@ -2667,9 +2667,9 @@ static void
 mlme_print_roaming_state(uint8_t vdev_id, enum roam_offload_state cur_state,
 			 enum roam_offload_state new_state)
 {
-	mlme_debug("ROAM: vdev[%d] ROAM State Changed from [%s] to [%s]",
-		   vdev_id, mlme_roam_state_to_string(cur_state),
-		   mlme_roam_state_to_string(new_state));
+	mlme_debug("ROAM: vdev %d: %s(%d) --> %s(%d)",
+		   vdev_id, mlme_roam_state_to_string(cur_state), cur_state,
+		   mlme_roam_state_to_string(new_state), new_state);
 
 	/* TODO: Try to print the state change requestor also */
 }
