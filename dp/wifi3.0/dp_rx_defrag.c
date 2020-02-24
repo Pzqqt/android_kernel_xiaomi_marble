@@ -1719,7 +1719,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	}
 
 	/* all buffers in MSDU link belong to same pdev */
-	pdev = soc->pdev_list[rx_desc->pool_id];
+	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
 	*mac_id = rx_desc->pool_id;
 
 	msdu = rx_desc->nbuf;
