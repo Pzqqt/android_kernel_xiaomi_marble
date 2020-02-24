@@ -749,14 +749,15 @@ csr_roam_chk_lnk_ibss_new_peer_ind(struct mac_context *mac_ctx,
 				     session->pConnectBssDesc->length);
 		}
 	}
-	if ((eCSR_ENCRYPT_TYPE_NONE ==
-		session->connectedProfile.EncryptionType)) {
+	if (eCSR_ENCRYPT_TYPE_NONE ==
+	    session->connectedProfile.EncryptionType) {
 		/* NO keys. these key parameters don't matter */
-		csr_roam_issue_set_context_req_helper(mac_ctx, sessionId,
-			session->connectedProfile.EncryptionType,
-			session->pConnectBssDesc,
-			&pIbssPeerInd->peer_addr.bytes,
-			false, true, eSIR_TX_RX, 0, 0, NULL, 0);
+		csr_issue_set_context_req_helper(mac_ctx,
+						 session->pCurRoamProfile,
+						 sessionId,
+						 &pIbssPeerInd->peer_addr.bytes,
+						 false, true, eSIR_TX_RX,
+						 0, 0, NULL);
 	}
 
 callback_and_free:
@@ -7449,11 +7450,11 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 			 */
 			if (!CSR_IS_IBSS(session->pCurRoamProfile)) {
 				/* NO keys. these key parameters don't matter */
-				csr_roam_issue_set_context_req_helper(mac_ctx,
-					session_id,
-					profile->negotiatedMCEncryptionType,
-					bss_desc, &bcast_mac, false,
-					false, eSIR_TX_RX, 0, 0, NULL, 0);
+				csr_issue_set_context_req_helper(mac_ctx,
+							profile, session_id,
+							&bcast_mac, false,
+							false, eSIR_TX_RX,
+							0, 0, NULL);
 			}
 		}
 		if (CSR_IS_IBSS(session->pCurRoamProfile) &&
@@ -7620,7 +7621,6 @@ static void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 					struct bss_description *bss_desc,
 					struct join_rsp *join_rsp)
 {
-	tSirMacAddr bcast_mac = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	QDF_STATUS status;
 
 	if (!join_rsp || !join_rsp->fils_join_rsp) {
@@ -7635,24 +7635,21 @@ static void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 		goto process_fils_join_rsp_fail;
 	}
 
-	status = csr_roam_issue_set_context_req_helper(mac_ctx, session_id,
-					profile->negotiatedMCEncryptionType,
-					bss_desc, &bcast_mac, true, false,
-					eSIR_RX_ONLY, 2,
-					roam_info->fils_join_rsp->gtk_len,
-					roam_info->fils_join_rsp->gtk, 0);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	status = csr_issue_set_context_req_helper(mac_ctx, profile,
+			session_id, &bss_desc->bssId, true, false,
+			eSIR_RX_ONLY, 2, roam_info->fils_join_rsp->gtk_len,
+			roam_info->fils_join_rsp->gtk);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Set context for bcast fail");
 		goto process_fils_join_rsp_fail;
 	}
 
-	status = csr_roam_issue_set_context_req_helper(mac_ctx, session_id,
-					profile->negotiatedUCEncryptionType,
-					bss_desc, &(bss_desc->bssId), true,
-					true, eSIR_TX_RX, 0,
-					roam_info->fils_join_rsp->tk_len,
-					roam_info->fils_join_rsp->tk, 0);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	status = csr_issue_set_context_req_helper(mac_ctx, profile,
+				session_id, &bss_desc->bssId, true,
+				true, eSIR_TX_RX, 0,
+				roam_info->fils_join_rsp->tk_len,
+				roam_info->fils_join_rsp->tk);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Set context for unicast fail");
 		goto process_fils_join_rsp_fail;
 	}
@@ -7827,13 +7824,10 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 			 * Issue the set Context request to LIM to establish
 			 * the Unicast STA context
 			 */
-			if (!QDF_IS_STATUS_SUCCESS(
-				csr_roam_issue_set_context_req_helper(mac_ctx,
-					session_id,
-					profile->negotiatedUCEncryptionType,
-					bss_desc, &(bss_desc->bssId),
-					false, true,
-					eSIR_TX_RX, 0, 0, NULL, 0))) {
+			if (QDF_IS_STATUS_ERROR(
+				csr_issue_set_context_req_helper(mac_ctx,
+					profile, session_id, &bss_desc->bssId,
+					false, true, eSIR_TX_RX, 0, 0, NULL))) {
 				/* NO keys. these key parameters don't matter */
 				sme_debug("Set context for unicast fail");
 				csr_roam_substate_change(mac_ctx,
@@ -7844,11 +7838,11 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 			 * to establish the Broadcast STA context
 			 * NO keys. these key parameters don't matter
 			 */
-			csr_roam_issue_set_context_req_helper(mac_ctx,
-				session_id,
-				profile->negotiatedMCEncryptionType,
-				bss_desc, &bcast_mac, false, false,
-				eSIR_TX_RX, 0, 0, NULL, 0);
+			csr_issue_set_context_req_helper(mac_ctx, profile,
+							 session_id, &bcast_mac,
+							 false, false,
+							 eSIR_TX_RX, 0, 0,
+							 NULL);
 		} else if (CSR_IS_AUTH_TYPE_FILS(profile->negotiatedAuthType)
 				&& join_rsp->is_fils_connection) {
 			roam_info->is_fils_connection = true;
@@ -10893,7 +10887,7 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 
 	sme_debug("session:%d, cipher:%d, ucast:%d, idx:%d, wep:%d, add:%d",
 		  session_id, cipher, unicast, key_idx, wep_key_idx, add_key);
-	if (!IS_WEP_CIPHER(cipher))
+	if (!IS_WEP_CIPHER(cipher) && !add_key)
 		return QDF_STATUS_E_INVAL;
 
 	return ucfg_crypto_set_key_req(vdev, crypto_key, (unicast ?
@@ -10901,25 +10895,61 @@ static QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac_ctx,
 				       WLAN_CRYPTO_KEY_TYPE_GROUP));
 }
 
-static QDF_STATUS csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
-					  bool unicast, uint8_t key_id,
-					  uint16_t key_length, uint8_t *key,
-					  tSirMacAddr *bssid)
+static enum wlan_crypto_cipher_type
+csr_encr_to_cipher_type(eCsrEncryptionType encr_type)
+{
+	switch (encr_type) {
+	case eCSR_ENCRYPT_TYPE_WEP40:
+		return WLAN_CRYPTO_CIPHER_WEP_40;
+	case eCSR_ENCRYPT_TYPE_WEP104:
+		return WLAN_CRYPTO_CIPHER_WEP_104;
+	case eCSR_ENCRYPT_TYPE_TKIP:
+		return WLAN_CRYPTO_CIPHER_TKIP;
+	case eCSR_ENCRYPT_TYPE_AES:
+		return WLAN_CRYPTO_CIPHER_AES_CCM;
+	case eCSR_ENCRYPT_TYPE_AES_CMAC:
+		return WLAN_CRYPTO_CIPHER_AES_CMAC;
+	case eCSR_ENCRYPT_TYPE_AES_GMAC_128:
+		return WLAN_CRYPTO_CIPHER_AES_GMAC;
+	case eCSR_ENCRYPT_TYPE_AES_GMAC_256:
+		return WLAN_CRYPTO_CIPHER_AES_GMAC_256;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+		return WLAN_CRYPTO_CIPHER_AES_GCM;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
+		return WLAN_CRYPTO_CIPHER_AES_GCM_256;
+	default:
+		return WLAN_CRYPTO_CIPHER_NONE;
+	}
+}
+
+#ifdef WLAN_FEATURE_FILS_SK
+static QDF_STATUS
+csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
+			bool unicast, uint8_t key_id,
+			uint16_t key_length, uint8_t *key,
+			tSirMacAddr *bssid,
+			eCsrEncryptionType encr_type)
 {
 	struct wlan_crypto_key *crypto_key = NULL;
-	uint8_t key_index = 0;
 	QDF_STATUS status;
+	/*
+	 * key index is the FW key index.
+	 * Key_id is for host crypto component key storage index
+	 */
+	uint8_t key_index = 0;
 
 	if (unicast)
 		key_index = 0;
 	else
-		key_index = 1;
-	crypto_key = wlan_crypto_get_key(vdev, key_index);
+		key_index = 2;
+
+	crypto_key = wlan_crypto_get_key(vdev, key_id);
 	if (!crypto_key) {
 		crypto_key = qdf_mem_malloc(sizeof(*crypto_key));
 		if (!crypto_key)
 			return QDF_STATUS_E_INVAL;
-		status = wlan_crypto_save_key(vdev, key_index, crypto_key);
+
+		status = wlan_crypto_save_key(vdev, key_id, crypto_key);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("Failed to save key");
 			qdf_mem_free(crypto_key);
@@ -10927,6 +10957,8 @@ static QDF_STATUS csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 	qdf_mem_zero(crypto_key, sizeof(*crypto_key));
+	/* TODO add support for FILS cipher translation in OSIF */
+	crypto_key->cipher_type = csr_encr_to_cipher_type(encr_type);
 	crypto_key->keylen = key_length;
 	crypto_key->keyix = key_index;
 	sme_debug("key_len %d, unicast %d", key_length, unicast);
@@ -10935,17 +10967,25 @@ static QDF_STATUS csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+static inline
+QDF_STATUS csr_roam_store_fils_key(struct wlan_objmgr_vdev *vdev,
+				   bool unicast, uint8_t key_id,
+				   uint16_t key_length, uint8_t *key,
+				   tSirMacAddr *bssid,
+				   eCsrEncryptionType encr_type)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
-QDF_STATUS csr_roam_issue_set_context_req_helper(
-					struct mac_context *mac_ctx,
-					uint32_t session_id,
-					eCsrEncryptionType encr_type,
-					struct bss_description *bss_descr,
-					tSirMacAddr *bssid, bool addkey,
-					bool unicast,
-					tAniKeyDirection key_direction,
-					uint8_t key_id, uint16_t key_length,
-					uint8_t *key, uint8_t pae_role)
+QDF_STATUS
+csr_issue_set_context_req_helper(struct mac_context *mac_ctx,
+				 struct csr_roam_profile *profile,
+				 uint32_t session_id, tSirMacAddr *bssid,
+				 bool addkey, bool unicast,
+				 tAniKeyDirection key_direction, uint8_t key_id,
+				 uint16_t key_length, uint8_t *key)
 {
 	enum wlan_crypto_cipher_type cipher;
 	struct wlan_objmgr_vdev *vdev;
@@ -10956,10 +10996,13 @@ QDF_STATUS csr_roam_issue_set_context_req_helper(
 		sme_err("VDEV object not found for session_id %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
+
 	cipher = wlan_crypto_get_cipher(vdev, unicast, key_id);
-	if (cipher == WLAN_CRYPTO_CIPHER_FILS_AEAD)
+	if (addkey && !IS_WEP_CIPHER(cipher) &&
+	    (profile && csr_is_fils_connection(profile)))
 		csr_roam_store_fils_key(vdev, unicast, key_id, key_length,
-					key, bssid);
+					key, bssid,
+					profile->negotiatedMCEncryptionType);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 
@@ -11871,13 +11914,10 @@ csr_roam_chk_lnk_assoc_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		    CSR_IS_ENC_TYPE_STATIC(
 			session->pCurRoamProfile->negotiatedUCEncryptionType)) {
 			/* NO keys... these key parameters don't matter. */
-			csr_roam_issue_set_context_req_helper(mac_ctx,
-				sessionId,
-				session->pCurRoamProfile->
-				negotiatedUCEncryptionType,
-				session->pConnectBssDesc,
-				&roam_info->peerMac.bytes,
-				false, true, eSIR_TX_RX, 0, 0, NULL, 0);
+			csr_issue_set_context_req_helper(mac_ctx,
+					session->pCurRoamProfile, sessionId,
+					&roam_info->peerMac.bytes, false, true,
+					eSIR_TX_RX, 0, 0, NULL);
 			roam_info->fAuthRequired = false;
 		} else {
 			roam_info->fAuthRequired = true;
@@ -12468,12 +12508,10 @@ csr_roam_chk_lnk_wm_status_change_ntf(struct mac_context *mac_ctx,
 
 		if ((eCSR_ENCRYPT_TYPE_NONE ==
 		     session->connectedProfile.EncryptionType)) {
-			csr_roam_issue_set_context_req_helper(mac_ctx,
-			    sessionId,
-			    session->connectedProfile.EncryptionType,
-			    session->pConnectBssDesc,
-			    &Broadcastaddr, false, false,
-			    eSIR_TX_RX, 0, 0, NULL, 0);
+			csr_issue_set_context_req_helper(mac_ctx,
+				    session->pCurRoamProfile, sessionId,
+				    &Broadcastaddr, false, false,
+				    eSIR_TX_RX, 0, 0, NULL);
 		}
 		result = eCSR_ROAM_RESULT_IBSS_COALESCED;
 		roamStatus = eCSR_ROAM_IBSS_IND;

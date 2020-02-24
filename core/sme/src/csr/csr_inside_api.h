@@ -214,16 +214,31 @@ QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 				  bool fImediate);
 void csr_roam_complete(struct mac_context *mac, enum csr_roamcomplete_result Result,
 		       void *Context, uint8_t session_id);
+
+/**
+ * csr_issue_set_context_req_helper  - Function to fill unicast/broadcast keys
+ * request to set the keys to fw
+ * @mac:         Poiner to mac context
+ * @profile:     Pointer to connected profile
+ * @vdev_id:     vdev id
+ * @bssid:       Connected BSSID
+ * @addkey:      Is add key request to crypto
+ * @unicast:     Unicast(1) or broadcast key(0)
+ * @key_direction: Key used in TX or RX or both Tx and RX path
+ * @key_id:       Key index
+ * @key_length:   Key length
+ * @key:          Pointer to the key
+ *
+ * Return: QDF_STATUS
+ */
 QDF_STATUS
-csr_roam_issue_set_context_req_helper(struct mac_context *mac,
-				      uint32_t session_id,
-				      eCsrEncryptionType encr_type,
-				      struct bss_description *bss_descr,
-				      tSirMacAddr *bssid, bool addkey,
-				      bool unicast,
-				      tAniKeyDirection key_direction,
-				      uint8_t key_id, uint16_t key_length,
-				      uint8_t *key, uint8_t pae_role);
+csr_issue_set_context_req_helper(struct mac_context *mac,
+				 struct csr_roam_profile *profile,
+				 uint32_t session_id,
+				 tSirMacAddr *bssid, bool addkey,
+				 bool unicast, tAniKeyDirection key_direction,
+				 uint8_t key_id, uint16_t key_length,
+				 uint8_t *key);
 
 QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 						tSmeCmd *pCommand,
