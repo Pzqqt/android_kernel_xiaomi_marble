@@ -2779,6 +2779,23 @@ dp_tx_ppdu_stats_flush(struct dp_pdev *pdev,
 	return;
 }
 
+static void dp_ppdu_queue_free(struct cdp_tx_completion_ppdu *ppdu_desc)
+{
+	int i;
+	qdf_nbuf_t mpdu_nbuf = NULL;
+
+	for (i = 0; i < ppdu_desc->user[0].ba_size; i++) {
+		mpdu_nbuf = ppdu_desc->mpdus[i];
+		if (mpdu_nbuf)
+			qdf_nbuf_free(mpdu_nbuf);
+	}
+	qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
+	qdf_mem_free(ppdu_desc->mpdus);
+	ppdu_desc->mpdus = NULL;
+
+	return;
+}
+
 /**
  * dp_check_ppdu_and_deliver(): Check PPDUs for any holes and deliver
  * to upper layer if complete
@@ -2943,9 +2960,14 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 					    i);
 			} else {
 				/* any error case we need to handle */
-				ppdu_desc->mpdus[seq_no - start_seq] =
-					qdf_nbuf_queue_remove(
+				mpdu_nbuf = qdf_nbuf_queue_remove(
 					&ppdu_desc->mpdu_q);
+				/* check mpdu_nbuf NULL */
+				if (!mpdu_nbuf)
+					continue;
+
+				ppdu_desc->mpdus[seq_no - start_seq] =
+					mpdu_nbuf;
 			}
 		}
 		dp_peer_unref_del_find_by_id(peer);
@@ -2953,9 +2975,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 		if ((ppdu_desc->pending_retries == 0) &&
 		    qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
 			dp_send_data_to_stack(pdev, ppdu_desc);
-			qdf_nbuf_queue_free(&ppdu_desc->mpdu_q);
-			qdf_mem_free(ppdu_desc->mpdus);
-			ppdu_desc->mpdus = NULL;
+			dp_ppdu_queue_free(ppdu_desc);
 			tmp_nbuf = nbuf_ppdu_desc_list[desc_cnt];
 			nbuf_ppdu_desc_list[desc_cnt] = NULL;
 			qdf_nbuf_free(tmp_nbuf);
@@ -2980,9 +3000,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 		if (!peer) {
 			tmp_nbuf = nbuf_ppdu_desc_list[i];
 			nbuf_ppdu_desc_list[i] = NULL;
-			qdf_nbuf_queue_free(&cur_ppdu_desc->mpdu_q);
-			qdf_mem_free(cur_ppdu_desc->mpdus);
-			cur_ppdu_desc->mpdus = NULL;
+			dp_ppdu_queue_free(cur_ppdu_desc);
 			qdf_nbuf_free(tmp_nbuf);
 			continue;
 		}
@@ -3001,9 +3019,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				if (cur_ppdu_desc->pending_retries)
 					break;
 				dp_send_data_to_stack(pdev, cur_ppdu_desc);
-				qdf_nbuf_queue_free(&cur_ppdu_desc->mpdu_q);
-				qdf_mem_free(cur_ppdu_desc->mpdus);
-				cur_ppdu_desc->mpdus = NULL;
+				dp_ppdu_queue_free(cur_ppdu_desc);
 				qdf_nbuf_queue_remove(&head_ppdu);
 				qdf_nbuf_free(tmp_nbuf);
 			}
@@ -3297,6 +3313,10 @@ dequeue_msdu_again:
 						dp_peer_unref_del_find_by_id(peer);
 						continue;
 					}
+				} else {
+					qdf_nbuf_free(nbuf);
+					dp_peer_unref_del_find_by_id(peer);
+					continue;
 				}
 
 				nbuf_ppdu_desc_list[ppdu_desc_cnt++] = nbuf;
