@@ -40,6 +40,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 	struct vdev_stop_response stop_rsp = {0};
 	struct vdev_delete_response del_rsp = {0};
 	struct peer_delete_all_response peer_del_all_rsp = {0};
+	enum qdf_hang_reason recovery_reason;
 	uint8_t vdev_id;
 	uint16_t rsp_pos = RESPONSE_BIT_MAX;
 
@@ -91,10 +92,12 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 			start_rsp.resp_type =
 				WMI_HOST_VDEV_START_RESP_EVENT;
 			rsp_pos = START_RESPONSE_BIT;
+			recovery_reason = QDF_VDEV_START_RESPONSE_TIMED_OUT;
 		} else {
 			start_rsp.resp_type =
 				WMI_HOST_VDEV_RESTART_RESP_EVENT;
 			rsp_pos = RESTART_RESPONSE_BIT;
+			recovery_reason = QDF_VDEV_RESTART_RESPONSE_TIMED_OUT;
 		}
 
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
@@ -104,6 +107,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 				       &vdev_rsp->rsp_status)) {
 		rsp_pos = STOP_RESPONSE_BIT;
 		stop_rsp.vdev_id = vdev_id;
+		recovery_reason = QDF_VDEV_STOP_RESPONSE_TIMED_OUT;
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_stop_response(psoc, &stop_rsp);
@@ -111,6 +115,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 				       &vdev_rsp->rsp_status)) {
 		del_rsp.vdev_id = vdev_id;
 		rsp_pos = DELETE_RESPONSE_BIT;
+		recovery_reason = QDF_VDEV_DELETE_RESPONSE_TIMED_OUT;
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_delete_response(psoc, &del_rsp);
@@ -118,6 +123,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 				&vdev_rsp->rsp_status)) {
 		peer_del_all_rsp.vdev_id = vdev_id;
 		rsp_pos = PEER_DELETE_ALL_RESPONSE_BIT;
+		recovery_reason = QDF_VDEV_PEER_DELETE_ALL_RESPONSE_TIMED_OUT;
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp, rsp_pos);
 
 		rx_ops->vdev_mgr_peer_delete_all_response(
@@ -140,7 +146,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 		 wlan_psoc_get_id(psoc), vdev_id,
 		 string_from_rsp_bit(rsp_pos));
 
-	qdf_trigger_self_recovery(psoc, QDF_REASON_UNSPECIFIED);
+	qdf_trigger_self_recovery(psoc, recovery_reason);
 }
 
 #ifdef SERIALIZE_VDEV_RESP
