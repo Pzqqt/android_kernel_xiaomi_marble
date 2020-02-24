@@ -45,7 +45,7 @@ wlan_dcs_get_pdev_private_obj(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
 		goto end;
 	}
 
-	if (pdev_id >= WLAN_UMAC_MAX_PDEVS) {
+	if (pdev_id >= WLAN_DCS_MAX_PDEVS) {
 		dcs_err("invalid pdev_id: %u", pdev_id);
 		goto end;
 	}

@@ -32,6 +32,8 @@
 #define dcs_err(args ...) \
 		QDF_TRACE_ERROR(QDF_MODULE_ID_DCS, ## args)
 
+#define WLAN_DCS_MAX_PDEVS 3
+
 #define DCS_TX_MAX_CU  30
 #define MAX_DCS_TIME_RECORD 10
 #define DCS_FREQ_CONTROL_TIME (5 * 60 * 1000)
@@ -151,7 +153,7 @@ struct dcs_pdev_priv_obj {
  * @dcs_cbk: dcs callback
  */
 struct dcs_psoc_priv_obj {
-	struct dcs_pdev_priv_obj dcs_pdev_priv[WLAN_UMAC_MAX_PDEVS];
+	struct dcs_pdev_priv_obj dcs_pdev_priv[WLAN_DCS_MAX_PDEVS];
 	struct psoc_dcs_cbk dcs_cbk;
 };
 
