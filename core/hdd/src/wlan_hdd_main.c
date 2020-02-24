@@ -4851,8 +4851,9 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 	/* block on a completion variable until sme session is closed */
-	rc = wait_for_completion_timeout(&adapter->vdev_destroy_event,
-					 SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
+	rc = wait_for_completion_timeout(
+			&adapter->vdev_destroy_event,
+			msecs_to_jiffies(SME_CMD_VDEV_CREATE_DELETE_TIMEOUT));
 	if (rc) {
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 
