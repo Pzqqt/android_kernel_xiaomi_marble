@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d]: " fmt, __func__, __LINE__
@@ -416,17 +416,27 @@ static int sde_power_reg_bus_parse(struct platform_device *pdev,
 	struct sde_power_handle *phandle)
 {
 	int rc = 0;
+	const char *bus_name = "qcom,sde-reg-bus";
 
-	phandle->reg_bus_hdl = of_icc_get(&pdev->dev, "qcom,sde-reg-bus");
+	/* not all clients need reg-bus, skip if not referenced for this node */
+	rc = of_property_match_string(pdev->dev.of_node,
+			"interconnect-names", bus_name);
+	if (rc < 0)
+		goto end;
+
+	phandle->reg_bus_hdl = of_icc_get(&pdev->dev, bus_name);
 	if (IS_ERR_OR_NULL(phandle->reg_bus_hdl)) {
-		pr_err("reg bus handle parsing failed\n");
+		rc = PTR_ERR(phandle->reg_bus_hdl);
+		pr_err("bus %s parsing failed, rc:%d\n", bus_name, rc);
 		phandle->reg_bus_hdl = NULL;
-		rc = -EINVAL;
-	} else {
-		pr_debug("reg_bus_hdl parsing success\n");
+		return rc;
 	}
 
-	return rc;
+end:
+	pr_debug("bus %s dt node %s(%d), hdl is %s\n",
+			bus_name, rc < 0 ? "missing" : "found", rc,
+			phandle->reg_bus_hdl ? "valid" : "NULL");
+	return 0;
 }
 
 static void sde_power_reg_bus_unregister(struct icc_path *reg_bus_hdl)
