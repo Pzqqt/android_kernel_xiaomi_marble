@@ -1628,7 +1628,7 @@ send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_set_param_cmd_fixed_param));
-	if (param->is_target_pdev_id)
+	if (param->is_host_pdev_id)
 		cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(
 								wmi_handle,
 								mac_id);

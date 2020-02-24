@@ -44,9 +44,9 @@ void ucfg_dcs_register_cb(
 QDF_STATUS
 ucfg_wlan_dcs_cmd(struct wlan_objmgr_psoc *psoc,
 		  uint32_t pdev_id,
-		  bool is_target_pdev_id)
+		  bool is_host_pdev_id)
 {
-	return wlan_dcs_cmd_send(psoc, pdev_id, is_target_pdev_id);
+	return wlan_dcs_cmd_send(psoc, pdev_id, is_host_pdev_id);
 }
 
 void ucfg_config_dcs_enable(struct wlan_objmgr_psoc *psoc,

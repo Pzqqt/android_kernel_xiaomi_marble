@@ -104,7 +104,7 @@ QDF_STATUS wlan_dcs_detach(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 			     uint32_t pdev_id,
-			     bool is_target_pdev_id)
+			     bool is_host_pdev_id)
 {
 	struct wlan_target_if_dcs_tx_ops *dcs_tx_ops;
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
@@ -129,7 +129,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 		dcs_info("dcs_enable: %u, pdev_id: %u", dcs_enable, pdev_id);
 		return dcs_tx_ops->dcs_cmd_send(psoc,
 						pdev_id,
-						is_target_pdev_id,
+						is_host_pdev_id,
 						dcs_enable);
 	}
 
@@ -140,7 +140,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
  * wlan_dcs_disable_cmd_send() - send dcs disable command to target_if layer
  * @psoc: psoc pointer
  * @pdev_id: pdev_id
- * @is_target_pdev_id: pdev_id is target id or not
+ * @is_host_pdev_id: pdev_id is host id or not
  *
  * The function gets called to send dcs disable command to FW
  *
@@ -148,7 +148,7 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
  */
 static QDF_STATUS wlan_dcs_disable_cmd_send(struct wlan_objmgr_psoc *psoc,
 					    uint32_t pdev_id,
-					    bool is_target_pdev_id)
+					    bool is_host_pdev_id)
 {
 	struct wlan_target_if_dcs_tx_ops *dcs_tx_ops;
 	struct dcs_pdev_priv_obj *dcs_pdev_priv;
@@ -169,7 +169,7 @@ static QDF_STATUS wlan_dcs_disable_cmd_send(struct wlan_objmgr_psoc *psoc,
 		dcs_info("dcs_enable: %u, pdev_id: %u", 0, pdev_id);
 		return dcs_tx_ops->dcs_cmd_send(psoc,
 						pdev_id,
-						is_target_pdev_id,
+						is_host_pdev_id,
 						0);
 	}
 

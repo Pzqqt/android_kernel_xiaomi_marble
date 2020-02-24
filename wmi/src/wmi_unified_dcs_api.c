@@ -52,13 +52,13 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(
 #ifdef ENABLE_HOST_TO_TARGET_CONVERSION
 QDF_STATUS wmi_send_dcs_pdev_param(wmi_unified_t wmi_handle,
 				   uint32_t pdev_idx,
-				   bool is_target_pdev_id,
+				   bool is_host_pdev_id,
 				   uint32_t dcs_enable)
 {
 	struct pdev_params pparam;
 
 	qdf_mem_zero(&pparam, sizeof(pparam));
-	pparam.is_target_pdev_id = is_target_pdev_id;
+	pparam.is_host_pdev_id = is_host_pdev_id;
 	pparam.param_id = wmi_pdev_param_dcs;
 	pparam.param_value = dcs_enable;
 
@@ -67,13 +67,13 @@ QDF_STATUS wmi_send_dcs_pdev_param(wmi_unified_t wmi_handle,
 #else
 QDF_STATUS wmi_send_dcs_pdev_param(wmi_unified_t wmi_handle,
 				   uint32_t pdev_idx,
-				   bool is_target_pdev_id,
+				   bool is_host_pdev_id,
 				   uint32_t dcs_enable)
 {
 	struct pdev_params pparam;
 
 	qdf_mem_zero(&pparam, sizeof(pparam));
-	pparam.is_target_pdev_id = is_target_pdev_id;
+	pparam.is_host_pdev_id = is_host_pdev_id;
 	pparam.param_id = WMI_PDEV_PARAM_DCS;
 	pparam.param_value = dcs_enable;
 

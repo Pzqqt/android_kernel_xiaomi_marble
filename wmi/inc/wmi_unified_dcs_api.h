@@ -61,7 +61,7 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(
  * wmi_send_dcs_pdev_param() - send dcs pdev param
  * @wmi_handle: wmi handle
  * @pdev_idx: pdev id
- * @is_target_pdev_id: target pdev_id or not
+ * @is_host_pdev_id: host pdev_id or not
  * @dcs_enable: value of dcs enable
  *
  * This functions gets called to send dcs pdev param
@@ -70,6 +70,6 @@ QDF_STATUS wmi_extract_dcs_im_tgt_stats(
  */
 QDF_STATUS wmi_send_dcs_pdev_param(wmi_unified_t wmi_handle,
 				   uint32_t pdev_idx,
-				   bool is_target_pdev_id,
+				   bool is_host_pdev_id,
 				   uint32_t dcs_enable);
 #endif /* _WMI_UNIFIED_DCS_API_H_ */

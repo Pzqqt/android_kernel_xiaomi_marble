@@ -191,7 +191,7 @@ QDF_STATUS wlan_dcs_detach(struct wlan_objmgr_psoc *psoc);
  * wlan_dcs_cmd_send() - Send dcs command to target_if layer
  * @psoc: psoc pointer
  * @pdev_id: pdev_id
- * @is_target_pdev_id: pdev_id is target id or not
+ * @is_host_pdev_id: pdev_id is host id or not
  *
  * The function gets called to send dcs command to FW
  *
@@ -199,7 +199,7 @@ QDF_STATUS wlan_dcs_detach(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 			     uint32_t pdev_id,
-			     bool is_target_pdev_id);
+			     bool is_host_pdev_id);
 
 /**
  * wlan_dcs_process() - dcs process main entry

@@ -139,14 +139,14 @@ target_if_dcs_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
  * target_if_dcs_cmd_send() - Send WMI command for dcs requests
  * @psoc: psoc pointer
  * @pdev_id: pdev_id
- * @is_target_pdev_id: pdev_id is target pdev_id or not
+ * @is_host_pdev_id: pdev_id is host pdev_id or not
  * @dcs_enable: dcs enable or not
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 static QDF_STATUS
 target_if_dcs_cmd_send(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
-		       bool is_target_pdev_id, uint32_t dcs_enable)
+		       bool is_host_pdev_id, uint32_t dcs_enable)
 {
 	QDF_STATUS ret;
 	struct wmi_unified *wmi_handle;
@@ -163,7 +163,7 @@ target_if_dcs_cmd_send(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id,
 	}
 
 	ret = wmi_send_dcs_pdev_param(wmi_handle, pdev_id,
-				      is_target_pdev_id, dcs_enable);
+				      is_host_pdev_id, dcs_enable);
 	if (QDF_IS_STATUS_ERROR(ret))
 		target_if_err("wmi dcs cmd send failed, ret: %d", ret);
 

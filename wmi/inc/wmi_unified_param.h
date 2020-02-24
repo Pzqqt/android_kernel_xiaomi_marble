@@ -878,12 +878,12 @@ struct suspend_params {
  * struct pdev_params - pdev set cmd parameter
  * @param_id: parameter id
  * @param_value: parameter value
- * @is_target_pdev_id: indicate whether pdev_id is target pdev_id or not
+ * @is_host_pdev_id: indicate whether pdev_id is host pdev_id or not
  */
 struct pdev_params {
 	uint32_t param_id;
 	uint32_t param_value;
-	bool is_target_pdev_id;
+	bool is_host_pdev_id;
 };
 
 /**

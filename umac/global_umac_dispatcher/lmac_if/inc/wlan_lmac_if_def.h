@@ -132,7 +132,7 @@ struct wlan_target_if_dcs_tx_ops {
 	QDF_STATUS (*dcs_detach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*dcs_cmd_send)(struct wlan_objmgr_psoc *psoc,
 				   uint32_t pdev_id,
-				   bool is_target_pdev_id,
+				   bool is_host_pdev_id,
 				   uint32_t dcs_enable);
 };
 

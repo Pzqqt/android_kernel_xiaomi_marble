@@ -66,7 +66,7 @@ void ucfg_dcs_register_cb(
  * ucfg_wlan_dcs_cmd(): API to send dcs command
  * @psoc: pointer to psoc object
  * @pdev_id: pdev_id
- * @is_target_pdev_id: pdev_id is target id or not
+ * @is_host_pdev_id: pdev_id is host id or not
  *
  * This function gets called to send dcs command
  *
@@ -75,7 +75,7 @@ void ucfg_dcs_register_cb(
 QDF_STATUS
 ucfg_wlan_dcs_cmd(struct wlan_objmgr_psoc *psoc,
 		  uint32_t pdev_id,
-		  bool is_target_pdev_id);
+		  bool is_host_pdev_id);
 
 /**
  * ucfg_config_dcs_enable() - API to config dcs enable
