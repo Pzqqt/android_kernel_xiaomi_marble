@@ -150,7 +150,7 @@ struct peer_delete_all_response {
 	uint8_t status;
 };
 
-#define VDEV_ID_BMAP_SIZE 2
+#define VDEV_ID_BMAP_SIZE 3
 /**
  * struct multi_vdev_restart_resp - multi-vdev restart response structure
  * @pdev_id: pdev id
