@@ -266,10 +266,10 @@ void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 #endif /* QCA6490_HEADERS_DEF */
 
 #if defined(QCA6750_HEADERS_DEF)
-	case TARGET_TYPE_QCA6750:
+	case HIF_TYPE_QCA6750:
 		scn->hostdef = QCA6750_HOSTdef;
-		HIF_TRACE("%s: TARGET_TYPE_QCA6750", __func__);
-			break;
+		HIF_TRACE("%s: HIF_TYPE_QCA6750", __func__);
+		break;
 #endif /* QCA6750_HEADERS_DEF */
 	default:
 		break;
