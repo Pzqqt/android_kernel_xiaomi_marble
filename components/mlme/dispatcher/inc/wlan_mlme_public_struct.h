@@ -1436,6 +1436,8 @@ struct bss_load_trigger {
  * below which the connection is idle.
  * @idle_roam_min_rssi: Minimum rssi of connected AP to be considered for
  * idle roam trigger.
+ * @enable_roam_reason_vsie:        Enable/disable incluison of roam reason
+ * vsie in Re(assoc) frame
  * @early_stop_scan_enable:         Set early stop scan
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
@@ -1538,6 +1540,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t idle_data_packet_count;
 	uint32_t idle_roam_band;
 	int32_t idle_roam_min_rssi;
+	bool enable_roam_reason_vsie;
 #endif
 	bool early_stop_scan_enable;
 	bool enable_5g_band_pref;
