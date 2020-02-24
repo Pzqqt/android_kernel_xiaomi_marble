@@ -676,7 +676,7 @@ send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->tdls_discovery_wake_timeout =
 		tdls_param->tdls_discovery_wake_timeout;
 
-	WMI_LOGD("%s: tdls_state: %d, state: %d, "
+	WMI_LOGD("%s: vdev %d tdls_state: %d, state: %d, "
 		 "notification_interval_ms: %d, "
 		 "tx_discovery_threshold: %d, "
 		 "tx_teardown_threshold: %d, "
@@ -691,7 +691,7 @@ send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 		 "teardown_notification_ms: %d, "
 		 "tdls_peer_kickout_threshold: %d, "
 		 "tdls_discovery_wake_timeout: %d",
-		 __func__, tdls_state, cmd->state,
+		 __func__,tdls_param->vdev_id, tdls_state, cmd->state,
 		 cmd->notification_interval_ms,
 		 cmd->tx_discovery_threshold,
 		 cmd->tx_teardown_threshold,
@@ -714,7 +714,6 @@ send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: vdev_id %d", __func__, tdls_param->vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }

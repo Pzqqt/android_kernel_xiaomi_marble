@@ -1079,7 +1079,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	      sizeof(wmi_start_scan_cmd_fixed_param);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	WMI_LOGD("auth_mode = %d", auth_mode);
+	wmi_debug("auth_mode = %d", auth_mode);
 	if (roam_req->is_roam_req_valid &&
 	    roam_req->roam_offload_enabled) {
 		len += sizeof(wmi_roam_offload_tlv_param);
@@ -1123,8 +1123,6 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 		if (roam_req->is_roam_req_valid)
 			WMI_LOGD("%s : roam offload = %d", __func__,
 				 roam_req->roam_offload_enabled);
-		else
-			WMI_LOGD("%s : roam_req is NULL", __func__);
 
 		len += (4 * WMI_TLV_HDR_SIZE);
 	}
@@ -1539,7 +1537,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 				ap_profile->profile.rsn_mcastmgmtcipherset;
 	profile->rssi_abs_thresh = ap_profile->profile.rssi_abs_thresh;
 
-	WMI_LOGD("AP profile: flags %x rssi_threshold %d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
+	WMI_LOGD("AP PROFILE: flags %x rssi_threshold %d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
 		 profile->flags, profile->rssi_threshold,
 		 profile->ssid.ssid_len, ap_profile->profile.ssid.mac_ssid,
 		 profile->rsn_authmode, profile->rsn_ucastcipherset,
@@ -1733,8 +1731,6 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 			status);
 		wmi_buf_free(buf);
 	}
-
-	WMI_LOGD("WMI --> WMI_ROAM_AP_PROFILE and other parameters");
 
 	return status;
 }
@@ -1987,9 +1983,10 @@ static QDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(wmi_unified_t wmi_h
 		goto error;
 	}
 
-	WMI_LOGD(FL("roam_scan_rssi_change_thresh=%d, bcn_rssi_weight=%d"),
-		 rssi_change_thresh, bcn_rssi_weight);
-	WMI_LOGD(FL("hirssi_delay_btw_scans=%d"), hirssi_delay_btw_scans);
+	wmi_nofl_debug("roam_scan_rssi_change_thresh %d bcn_rssi_weight %d hirssi_delay_btw_scans %d",
+		       rssi_change_thresh, bcn_rssi_weight,
+		       hirssi_delay_btw_scans);
+
 	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
