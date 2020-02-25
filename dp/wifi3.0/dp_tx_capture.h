@@ -71,6 +71,7 @@ struct dp_pdev_tx_capture {
 	uint32_t htt_frame_type[TX_CAP_HTT_MAX_FTYPE];
 	struct cdp_tx_completion_ppdu dummy_ppdu_desc;
 	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
+	bool tx_cap_mode_flag;
 };
 
 /* Tx TID */
