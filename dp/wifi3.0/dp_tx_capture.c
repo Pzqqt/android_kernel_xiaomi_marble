@@ -110,6 +110,47 @@ void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
 	pdev->tx_capture.htt_frame_type[htt_frame_type]++;
 }
 
+void dp_print_tid_qlen_per_peer(void *pdev_hdl)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_vdev *vdev = NULL;
+	struct dp_peer *peer = NULL;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+
+	ptr_tx_cap = &(pdev->tx_capture);
+
+	DP_PRINT_STATS("pending peer msdu and ppdu:");
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+
+	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+			int tid;
+			struct dp_tx_tid *tx_tid;
+			uint32_t msdu_len;
+			uint32_t ppdu_len;
+
+			for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+				tx_tid = &peer->tx_capture.tx_tid[tid];
+				msdu_len =
+				qdf_nbuf_queue_len(&tx_tid->msdu_comp_q);
+				ppdu_len =
+				qdf_nbuf_queue_len(&tx_tid->pending_ppdu_q);
+
+				if (!msdu_len && !ppdu_len)
+					continue;
+
+				DP_PRINT_STATS(" peer_id[%d] tid[%d] msdu_comp_q[%d] pending_ppdu_q[%d]",
+					       peer->peer_ids[0], tid,
+					       msdu_len, ppdu_len);
+			}
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+}
+
 /*
  * dp_tx_cature_stats: print tx capture stats
  * @pdev: DP PDEV handle
@@ -141,6 +182,8 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 				ptr_tx_cap->retries_ctl_mgmt_q[i][j].qlen);
 		}
 	}
+
+	dp_print_tid_qlen_per_peer(pdev);
 
 	for (i = 0; i < TX_CAP_HTT_MAX_FTYPE; i++) {
 		if (!ptr_tx_cap->htt_frame_type[i])
