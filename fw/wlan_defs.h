@@ -290,33 +290,87 @@ typedef enum {
 #endif /* SUPPORT_11AX */
 
 enum {
-    REGDMN_MODE_11A              = 0x00000001,  /* 11a channels */
-    REGDMN_MODE_TURBO            = 0x00000002,  /* 11a turbo-only channels */
-    REGDMN_MODE_11B              = 0x00000004,  /* 11b channels */
-    REGDMN_MODE_PUREG            = 0x00000008,  /* 11g channels (OFDM only) */
-    REGDMN_MODE_11G              = 0x00000008,  /* XXX historical */
-    REGDMN_MODE_108G             = 0x00000020,  /* 11g+Turbo channels */
-    REGDMN_MODE_108A             = 0x00000040,  /* 11a+Turbo channels */
-    REGDMN_MODE_XR               = 0x00000100,  /* XR channels */
-    REGDMN_MODE_11A_HALF_RATE    = 0x00000200,  /* 11A half rate channels */
-    REGDMN_MODE_11A_QUARTER_RATE = 0x00000400,  /* 11A quarter rate channels */
-    REGDMN_MODE_11NG_HT20        = 0x00000800,  /* 11N-G HT20 channels */
-    REGDMN_MODE_11NA_HT20        = 0x00001000,  /* 11N-A HT20 channels */
-    REGDMN_MODE_11NG_HT40PLUS    = 0x00002000,  /* 11N-G HT40 + channels */
-    REGDMN_MODE_11NG_HT40MINUS   = 0x00004000,  /* 11N-G HT40 - channels */
-    REGDMN_MODE_11NA_HT40PLUS    = 0x00008000,  /* 11N-A HT40 + channels */
-    REGDMN_MODE_11NA_HT40MINUS   = 0x00010000,  /* 11N-A HT40 - channels */
-    REGDMN_MODE_11AC_VHT20       = 0x00020000,  /* 5Ghz, VHT20 */
-    REGDMN_MODE_11AC_VHT40PLUS   = 0x00040000,  /* 5Ghz, VHT40 + channels */
-    REGDMN_MODE_11AC_VHT40MINUS  = 0x00080000,  /* 5Ghz  VHT40 - channels */
-    REGDMN_MODE_11AC_VHT80       = 0x000100000, /* 5Ghz, VHT80 channels */
-    REGDMN_MODE_11AC_VHT20_2G    = 0x000200000, /* 2Ghz, VHT20 */
-    REGDMN_MODE_11AC_VHT40_2G    = 0x000400000, /* 2Ghz, VHT40 */
-    REGDMN_MODE_11AC_VHT80_2G    = 0x000800000, /* 2Ghz, VHT80 */
-    REGDMN_MODE_11AC_VHT160      = 0x001000000, /* 5Ghz, VHT160 */
-    REGDMN_MODE_11AC_VHT40_2GPLUS  = 0x002000000, /* 2Ghz, VHT40+ */
-    REGDMN_MODE_11AC_VHT40_2GMINUS = 0x004000000, /* 2Ghz, VHT40- */
-    REGDMN_MODE_11AC_VHT80_80      = 0x008000000, /* 5GHz, VHT80+80 */
+    REGDMN_MODE_11A_BIT                = 0,  /* 11a channels */
+    REGDMN_MODE_TURBO_BIT              = 1,  /* 11a turbo-only channels */
+    REGDMN_MODE_11B_BIT                = 2,  /* 11b channels */
+    REGDMN_MODE_PUREG_BIT              = 3,  /* 11g channels (OFDM only) */
+    REGDMN_MODE_11G_BIT                = 3,  /* XXX historical */
+    /* bit 4 is reserved */
+    REGDMN_MODE_108G_BIT               = 5,  /* 11g+Turbo channels */
+    REGDMN_MODE_108A_BIT               = 6,  /* 11a+Turbo channels */
+    /* bit 7 is reserved */
+    REGDMN_MODE_XR_BIT                 = 8,  /* XR channels */
+    REGDMN_MODE_11A_HALF_RATE_BIT      = 9,  /* 11A half rate channels */
+    REGDMN_MODE_11A_QUARTER_RATE_BIT   = 10, /* 11A quarter rate channels */
+    REGDMN_MODE_11NG_HT20_BIT          = 11, /* 11N-G HT20 channels */
+    REGDMN_MODE_11NA_HT20_BIT          = 12, /* 11N-A HT20 channels */
+    REGDMN_MODE_11NG_HT40PLUS_BIT      = 13, /* 11N-G HT40 + channels */
+    REGDMN_MODE_11NG_HT40MINUS_BIT     = 14, /* 11N-G HT40 - channels */
+    REGDMN_MODE_11NA_HT40PLUS_BIT      = 15, /* 11N-A HT40 + channels */
+    REGDMN_MODE_11NA_HT40MINUS_BIT     = 16, /* 11N-A HT40 - channels */
+    REGDMN_MODE_11AC_VHT20_BIT         = 17, /* 5Ghz, VHT20 */
+    REGDMN_MODE_11AC_VHT40PLUS_BIT     = 18, /* 5Ghz, VHT40 + channels */
+    REGDMN_MODE_11AC_VHT40MINUS_BIT    = 19, /* 5Ghz  VHT40 - channels */
+    REGDMN_MODE_11AC_VHT80_BIT         = 20, /* 5Ghz, VHT80 channels */
+    REGDMN_MODE_11AC_VHT20_2G_BIT      = 21, /* 2Ghz, VHT20 */
+    REGDMN_MODE_11AC_VHT40_2G_BIT      = 22, /* 2Ghz, VHT40 */
+    REGDMN_MODE_11AC_VHT80_2G_BIT      = 23, /* 2Ghz, VHT80 */
+    REGDMN_MODE_11AC_VHT160_BIT        = 24, /* 5Ghz, VHT160 */
+    REGDMN_MODE_11AC_VHT40_2GPLUS_BIT  = 25, /* 2Ghz, VHT40+ */
+    REGDMN_MODE_11AC_VHT40_2GMINUS_BIT = 26, /* 2Ghz, VHT40- */
+    REGDMN_MODE_11AC_VHT80_80_BIT      = 27, /* 5GHz, VHT80+80 */
+    /* bits 28 to 31 are reserved */
+    REGDMN_MODE_11AXG_HE20_BIT         = 32, /* 2Ghz, HE20 */
+    REGDMN_MODE_11AXA_HE20_BIT         = 33, /* 5Ghz, HE20 */
+    REGDMN_MODE_11AXG_HE40PLUS_BIT     = 34, /* 2Ghz, HE40+ */
+    REGDMN_MODE_11AXG_HE40MINUS_BIT    = 35, /* 2Ghz, HE40- */
+    REGDMN_MODE_11AXA_HE40PLUS_BIT     = 36, /* 5Ghz, HE40+ */
+    REGDMN_MODE_11AXA_HE40MINUS_BIT    = 37, /* 5Ghz, HE40- */
+    REGDMN_MODE_11AXA_HE80_BIT         = 38, /* 5Ghz, HE80 */
+    REGDMN_MODE_11AXA_HE160_BIT        = 39, /* 5Ghz, HE160 */
+    REGDMN_MODE_11AXA_HE80_80_BIT      = 40, /* 5Ghz, HE80+80 */
+};
+
+enum {
+    REGDMN_MODE_11A                = 1 << REGDMN_MODE_11A_BIT,                /* 11a channels */
+    REGDMN_MODE_TURBO              = 1 << REGDMN_MODE_TURBO_BIT,              /* 11a turbo-only channels */
+    REGDMN_MODE_11B                = 1 << REGDMN_MODE_11B_BIT,                /* 11b channels */
+    REGDMN_MODE_PUREG              = 1 << REGDMN_MODE_PUREG_BIT,              /* 11g channels (OFDM only) */
+    REGDMN_MODE_11G                = 1 << REGDMN_MODE_11G_BIT,                /* XXX historical */
+    REGDMN_MODE_108G               = 1 << REGDMN_MODE_108G_BIT,               /* 11g+Turbo channels */
+    REGDMN_MODE_108A               = 1 << REGDMN_MODE_108A_BIT,               /* 11a+Turbo channels */
+    REGDMN_MODE_XR                 = 1 << REGDMN_MODE_XR_BIT,                 /* XR channels */
+    REGDMN_MODE_11A_HALF_RATE      = 1 << REGDMN_MODE_11A_HALF_RATE_BIT,      /* 11A half rate channels */
+    REGDMN_MODE_11A_QUARTER_RATE   = 1 << REGDMN_MODE_11A_QUARTER_RATE_BIT,   /* 11A quarter rate channels */
+    REGDMN_MODE_11NG_HT20          = 1 << REGDMN_MODE_11NG_HT20_BIT,          /* 11N-G HT20 channels */
+    REGDMN_MODE_11NA_HT20          = 1 << REGDMN_MODE_11NA_HT20_BIT,          /* 11N-A HT20 channels */
+    REGDMN_MODE_11NG_HT40PLUS      = 1 << REGDMN_MODE_11NG_HT40PLUS_BIT,      /* 11N-G HT40 + channels */
+    REGDMN_MODE_11NG_HT40MINUS     = 1 << REGDMN_MODE_11NG_HT40MINUS_BIT,     /* 11N-G HT40 - channels */
+    REGDMN_MODE_11NA_HT40PLUS      = 1 << REGDMN_MODE_11NA_HT40PLUS_BIT,      /* 11N-A HT40 + channels */
+    REGDMN_MODE_11NA_HT40MINUS     = 1 << REGDMN_MODE_11NA_HT40MINUS_BIT,     /* 11N-A HT40 - channels */
+    REGDMN_MODE_11AC_VHT20         = 1 << REGDMN_MODE_11AC_VHT20_BIT,         /* 5Ghz, VHT20 */
+    REGDMN_MODE_11AC_VHT40PLUS     = 1 << REGDMN_MODE_11AC_VHT40PLUS_BIT,     /* 5Ghz, VHT40 + channels */
+    REGDMN_MODE_11AC_VHT40MINUS    = 1 << REGDMN_MODE_11AC_VHT40MINUS_BIT,    /* 5Ghz  VHT40 - channels */
+    REGDMN_MODE_11AC_VHT80         = 1 << REGDMN_MODE_11AC_VHT80_BIT,         /* 5Ghz, VHT80 channels */
+    REGDMN_MODE_11AC_VHT20_2G      = 1 << REGDMN_MODE_11AC_VHT20_2G_BIT,      /* 2Ghz, VHT20 */
+    REGDMN_MODE_11AC_VHT40_2G      = 1 << REGDMN_MODE_11AC_VHT40_2G_BIT,      /* 2Ghz, VHT40 */
+    REGDMN_MODE_11AC_VHT80_2G      = 1 << REGDMN_MODE_11AC_VHT80_2G_BIT,      /* 2Ghz, VHT80 */
+    REGDMN_MODE_11AC_VHT160        = 1 << REGDMN_MODE_11AC_VHT160_BIT,        /* 5Ghz, VHT160 */
+    REGDMN_MODE_11AC_VHT40_2GPLUS  = 1 << REGDMN_MODE_11AC_VHT40_2GPLUS_BIT,  /* 2Ghz, VHT40+ */
+    REGDMN_MODE_11AC_VHT40_2GMINUS = 1 << REGDMN_MODE_11AC_VHT40_2GMINUS_BIT, /* 2Ghz, VHT40- */
+    REGDMN_MODE_11AC_VHT80_80      = 1 << REGDMN_MODE_11AC_VHT80_80_BIT,      /* 5GHz, VHT80+80 */
+};
+
+enum {
+    REGDMN_MODE_U32_11AXG_HE20      = 1 << (REGDMN_MODE_11AXG_HE20_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE20      = 1 << (REGDMN_MODE_11AXA_HE20_BIT - 32),
+    REGDMN_MODE_U32_11AXG_HE40PLUS  = 1 << (REGDMN_MODE_11AXG_HE40PLUS_BIT - 32),
+    REGDMN_MODE_U32_11AXG_HE40MINUS = 1 << (REGDMN_MODE_11AXG_HE40MINUS_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE40PLUS  = 1 << (REGDMN_MODE_11AXA_HE40PLUS_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE40MINUS = 1 << (REGDMN_MODE_11AXA_HE40MINUS_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE80      = 1 << (REGDMN_MODE_11AXA_HE80_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE160     = 1 << (REGDMN_MODE_11AXA_HE160_BIT - 32),
+    REGDMN_MODE_U32_11AXA_HE80_80   = 1 << (REGDMN_MODE_11AXA_HE80_80_BIT - 32),
 };
 
 #define REGDMN_MODE_ALL       (0xFFFFFFFF)       /* REGDMN_MODE_ALL is defined out of the enum
@@ -349,6 +403,7 @@ typedef struct {
     A_UINT32 high_2ghz_chan;
     A_UINT32 low_5ghz_chan;
     A_UINT32 high_5ghz_chan;
+    A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
 } HAL_REG_CAPABILITIES;
 
 #ifdef NUM_SPATIAL_STREAM
