@@ -1571,7 +1571,7 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
 			 __func__, peer_addr, vdev_id,
 			wma->interfaces[vdev_id].peer_count);
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 

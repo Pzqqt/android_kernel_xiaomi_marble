@@ -5116,7 +5116,7 @@ bool lim_set_nss_change(struct mac_context *mac, struct pe_session *pe_session,
 
 	if (!rxNss) {
 		pe_err("Invalid rxNss value: %u", rxNss);
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		return false;
 	}
 
 	tempParam.rxNss = rxNss;
