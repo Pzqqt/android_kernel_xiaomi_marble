@@ -354,7 +354,7 @@ static bool ol_txrx_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 	struct ol_txrx_vdev_t *vdev;
 
 	for (i = 0; i < max_bssid; i++) {
-		vdev = ol_txrx_get_vdev_from_soc_vdev_id(soc, vdev_id);
+		vdev = ol_txrx_get_vdev_from_soc_vdev_id(soc, i);
 		/* Need to check vdevs other than the vdev_id */
 		if (vdev_id == i || !vdev)
 			continue;
@@ -362,7 +362,7 @@ static bool ol_txrx_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 					ol_txrx_pdev_t_to_cdp_pdev(vdev->pdev),
 					ol_txrx_vdev_t_to_cdp_vdev(vdev),
 					peer_addr)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				  "%s: Duplicate peer %pM already exist on vdev %d",
 				  __func__, peer_addr, i);
 			return true;
