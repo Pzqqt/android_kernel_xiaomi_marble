@@ -3559,7 +3559,7 @@ bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 	struct dp_vdev *vdev;
 
 	for (i = 0; i < max_bssid; i++) {
-		vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+		vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, i);
 		/* Need to check vdevs other than the vdev_id */
 		if (vdev_id == i || !vdev)
 			continue;
@@ -3567,9 +3567,8 @@ bool dp_find_peer_exist_on_other_vdev(struct cdp_soc_t *soc_hdl,
 					dp_pdev_to_cdp_pdev(vdev->pdev),
 					dp_vdev_to_cdp_vdev(vdev),
 					peer_addr)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Duplicate peer %pM already exist on vdev %d",
-				  __func__, peer_addr, i);
+			dp_err("%s: Duplicate peer %pM already exist on vdev %d",
+			       __func__, peer_addr, i);
 			return true;
 		}
 	}
