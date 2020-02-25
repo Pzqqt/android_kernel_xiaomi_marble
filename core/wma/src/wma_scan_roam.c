@@ -4383,12 +4383,6 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 			wmi_passpoint_match_event_id,
 			wma_passpoint_match_event_handler,
 			WMA_RX_SERIALIZER_CTX);
-
-	/* Register BTM reject list event handler */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_roam_blacklist_event_id,
-					   wma_handle_btm_blacklist_event,
-					   WMA_RX_SERIALIZER_CTX);
 }
 
 /**

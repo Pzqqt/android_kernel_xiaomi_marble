@@ -3281,10 +3281,15 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_roam_stats_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
-	wmi_unified_register_event_handler(
-		wma_handle->wmi_handle, wmi_roam_scan_chan_list_id,
-		wma_roam_scan_chan_list_event_handler,
-		WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_roam_scan_chan_list_id,
+					   wma_roam_scan_chan_list_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_roam_blacklist_event_id,
+					   wma_handle_btm_blacklist_event,
+					   WMA_RX_SERIALIZER_CTX);
 
 	wma_register_pmkid_req_event_handler(wma_handle);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
