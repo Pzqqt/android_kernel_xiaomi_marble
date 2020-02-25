@@ -69,16 +69,6 @@
 #include "qc_sap_ioctl.h"
 #include "sme_api.h"
 #include "wma_types.h"
-#include "qdf_delayed_work_test.h"
-#include "qdf_hashtable_test.h"
-#include "qdf_periodic_work_test.h"
-#include "qdf_ptr_hash_test.h"
-#include "qdf_slist_test.h"
-#include "qdf_talloc_test.h"
-#include "qdf_str.h"
-#include "qdf_trace.h"
-#include "qdf_tracker_test.h"
-#include "qdf_types_test.h"
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_scan.h"
@@ -121,6 +111,7 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "dp_txrx.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "wlan_hdd_unit_test.h"
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_NONE    (SIOCIWFIRSTPRIV + 0)
@@ -5833,89 +5824,6 @@ static int iw_setnone_get_threeint(struct net_device *dev,
 
 	return errno;
 }
-
-#ifdef WLAN_UNIT_TEST
-typedef uint32_t (*hdd_ut_callback)(void);
-
-struct hdd_ut_entry {
-	const hdd_ut_callback callback;
-	const char *name;
-};
-
-struct hdd_ut_entry hdd_ut_entries[] = {
-	{ .name = "dsc", .callback = dsc_unit_test },
-	{ .name = "qdf_delayed_work", .callback = qdf_delayed_work_unit_test },
-	{ .name = "qdf_ht", .callback = qdf_ht_unit_test },
-	{ .name = "qdf_periodic_work",
-	  .callback = qdf_periodic_work_unit_test },
-	{ .name = "qdf_ptr_hash", .callback = qdf_ptr_hash_unit_test },
-	{ .name = "qdf_slist", .callback = qdf_slist_unit_test },
-	{ .name = "qdf_talloc", .callback = qdf_talloc_unit_test },
-	{ .name = "qdf_tracker", .callback = qdf_tracker_unit_test },
-	{ .name = "qdf_types", .callback = qdf_types_unit_test },
-};
-
-#define hdd_for_each_ut_entry(cursor) \
-	for (cursor = hdd_ut_entries; \
-	     cursor < hdd_ut_entries + ARRAY_SIZE(hdd_ut_entries); \
-	     cursor++)
-
-static struct hdd_ut_entry *hdd_ut_lookup(const char *name)
-{
-	struct hdd_ut_entry *entry;
-
-	hdd_for_each_ut_entry(entry) {
-		if (qdf_str_eq(entry->name, name))
-			return entry;
-	}
-
-	return NULL;
-}
-
-static uint32_t hdd_ut_single(const struct hdd_ut_entry *entry)
-{
-	uint32_t errors;
-
-	hdd_nofl_info("START: '%s'", entry->name);
-
-	errors = entry->callback();
-	if (errors)
-		hdd_nofl_err("FAIL: '%s' with %u errors", entry->name, errors);
-	else
-		hdd_nofl_info("PASS: '%s'", entry->name);
-
-	return errors;
-}
-
-static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *name)
-{
-	struct hdd_ut_entry *entry;
-	uint32_t errors = 0;
-
-	hdd_nofl_info("Unit tests begin");
-
-	if (!name || !name[0] || qdf_str_eq(name, "all")) {
-		hdd_for_each_ut_entry(entry)
-			errors += hdd_ut_single(entry);
-	} else {
-		entry = hdd_ut_lookup(name);
-		if (entry)
-			errors += hdd_ut_single(entry);
-		else
-			hdd_nofl_err("Unit test '%s' not found", name);
-	}
-
-	hdd_nofl_info("Unit tests complete");
-
-	return errors ? -EPERM : 0;
-}
-#else
-static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *name)
-{
-	return -EOPNOTSUPP;
-}
-#endif /* WLAN_UNIT_TEST */
-
 /**
  * iw_setchar_getnone() - Generic "set string" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -6041,7 +5949,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		hdd_debug("Received WE_SET_AP_WPS_IE, won't process");
 		break;
 	case WE_UNIT_TEST:
-		ret = hdd_we_unit_test(hdd_ctx, str_arg);
+		ret = wlan_hdd_unit_test(hdd_ctx, str_arg);
 		break;
 	default:
 	{

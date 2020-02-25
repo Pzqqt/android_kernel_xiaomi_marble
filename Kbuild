@@ -88,6 +88,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_PERIODIC_STA_STATS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_periodic_sta_stats.o
 endif
 
+ifeq ($(CONFIG_UNIT_TEST), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_unit_test.o
+endif
+
 ifeq ($(CONFIG_WLAN_WEXT_SUPPORT_ENABLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_wext.o \
 	    $(HDD_SRC_DIR)/wlan_hdd_hostapd_wext.o
@@ -114,6 +118,7 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_connect.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_offload.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_roam.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_config.o
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_unit_test.o
 ifeq ($(CONFIG_WLAN_MWS_INFO_DEBUGFS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_coex.o
 endif

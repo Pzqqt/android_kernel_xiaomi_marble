@@ -182,6 +182,7 @@
 #include "cfg_nan_api.h"
 #include "wlan_hdd_btc_chain_mode.h"
 #include <wlan_hdd_dcs.h>
+#include "wlan_hdd_debugfs_unit_test.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -13148,6 +13149,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
 	hdd_debugfs_mws_coex_info_init(hdd_ctx);
 	hdd_debugfs_ini_config_init(hdd_ctx);
+	wlan_hdd_debugfs_unit_test_host_create(hdd_ctx);
 	wlan_cfg80211_init_interop_issues_ap(hdd_ctx->pdev);
 
 	hdd_exit();
