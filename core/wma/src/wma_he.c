@@ -1381,6 +1381,11 @@ void wma_set_he_txbf_params(uint8_t vdev_id, bool su_bfer,
 	QDF_STATUS status;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma) {
+		wma_err("Invalid WMA handle");
+		return;
+	}
+
 	hemu_mode = DOT11AX_HEMU_MODE;
 	hemu_mode |= ((su_bfer << HE_SUBFER) | (su_bfee << HE_SUBFEE) |
 		      (mu_bfer << HE_MUBFER) | (su_bfee << HE_MUBFEE));
