@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_DRM_H_
@@ -59,12 +59,14 @@ extern "C" {
  *                                  less than 0xff, apply modulation as well.
  * @SDE_DRM_BLEND_OP_MAX:           Used to track maximum blend operation
  *                                  possible by mdp.
+ * @SDE_DRM_BLEND_OP_SKIP:          Skip staging the layer in the layer mixer.
  */
 #define SDE_DRM_BLEND_OP_NOT_DEFINED    0
 #define SDE_DRM_BLEND_OP_OPAQUE         1
 #define SDE_DRM_BLEND_OP_PREMULTIPLIED  2
 #define SDE_DRM_BLEND_OP_COVERAGE       3
 #define SDE_DRM_BLEND_OP_MAX            4
+#define SDE_DRM_BLEND_OP_SKIP           5
 
 /**
  * Bit masks for "src_config" property
