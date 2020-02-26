@@ -399,13 +399,13 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 				     u32 vc_id,
 				     struct dsi_rect *roi)
 {
-	u32 width_final, stride_final;
-	u32 height_final;
+	u32 width_final = 0, stride_final = 0;
+	u32 height_final = 0;
 	u32 stream_total = 0, stream_ctrl = 0;
 	u32 reg_ctrl = 0, reg_ctrl2 = 0, data = 0;
 	u32 reg = 0, offset = 0;
-	int pic_width, this_frame_slices, intf_ip_w;
-	u32 pkt_per_line, eol_byte_num, bytes_in_slice;
+	int pic_width = 0, this_frame_slices = 0, intf_ip_w = 0;
+	u32 pkt_per_line = 0, eol_byte_num = 0, bytes_in_slice = 0;
 
 	if (roi && (!roi->w || !roi->h))
 		return;
