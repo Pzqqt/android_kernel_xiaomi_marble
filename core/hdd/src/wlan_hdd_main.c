@@ -14208,7 +14208,6 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 	}
 
 	if (!cds_is_driver_loaded()) {
-		init_completion(&wlan_start_comp);
 		rc = wait_for_completion_timeout(&wlan_start_comp,
 				msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
 		if (!rc) {
@@ -14216,8 +14215,6 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 			ret = -EINVAL;
 			return ret;
 		}
-
-		hdd_start_complete(0);
 	}
 
 exit:
@@ -14236,6 +14233,8 @@ static int  wlan_hdd_state_ctrl_param_create(void)
 	unsigned int wlan_hdd_state_major = 0;
 	int ret;
 	struct device *dev;
+
+	init_completion(&wlan_start_comp);
 
 	device = MKDEV(wlan_hdd_state_major, 0);
 
