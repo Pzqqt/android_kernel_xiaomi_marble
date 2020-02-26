@@ -678,13 +678,23 @@ static enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
 {
 	enum policy_mgr_three_connection_mode fourth_index = 0;
 	enum policy_mgr_pcl_type pcl;
+	enum policy_mgr_con_mode pm_mode;
 
 	/* Will be enhanced for other types of 4 port conc (NaN etc.)
 	 * in future.
 	 */
-	if (mode != PM_STA_MODE && mode != PM_SAP_MODE &&
-	    mode != PM_P2P_GO_MODE) {
-		policy_mgr_err("Can't start 4th port if not STA, SAP");
+	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+		policy_mgr_err("Can't find index for 4th port pcl table for non dbs capable");
+		return PM_MAX_PCL_TYPE;
+	}
+
+	/* SAP and P2P Go have same result in 4th port pcl table */
+	if (mode == PM_SAP_MODE || mode == PM_P2P_GO_MODE) {
+		pm_mode = PM_SAP_MODE;
+	} else if (mode == PM_STA_MODE) {
+		pm_mode = PM_STA_MODE;
+	} else {
+		policy_mgr_err("Can't start 4th port of type: %d", mode);
 		return PM_MAX_PCL_TYPE;
 	}
 
@@ -696,14 +706,9 @@ static enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
 	}
 	policy_mgr_debug("Index for 4th port pcl table: %d", fourth_index);
 
-	if (policy_mgr_is_hw_dbs_capable(psoc) == true) {
-		pcl = fourth_connection_pcl_dbs_table
-			[fourth_index][mode][pref];
-		return pcl;
-	}
-	policy_mgr_err("Can't find index for 4th port pcl table for non dbs capable");
+	pcl = fourth_connection_pcl_dbs_table[fourth_index][pm_mode][pref];
 
-	return PM_MAX_PCL_TYPE;
+	return pcl;
 }
 #else
 static inline enum policy_mgr_pcl_type policy_mgr_get_pcl_4_port(
