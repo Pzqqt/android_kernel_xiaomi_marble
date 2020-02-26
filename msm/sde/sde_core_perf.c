@@ -842,12 +842,18 @@ static void _sde_core_perf_crtc_update_check(struct drm_crtc *crtc,
 		}
 	}
 
+	if (kms->perf.perf_tune.mode_changed &&
+			kms->perf.perf_tune.min_core_clk)
+		new->core_clk_rate = kms->perf.perf_tune.min_core_clk;
+
 	if ((params_changed &&
 			(new->core_clk_rate > old->core_clk_rate)) ||
 			(!params_changed && new->core_clk_rate &&
-			(new->core_clk_rate < old->core_clk_rate))) {
+			(new->core_clk_rate < old->core_clk_rate)) ||
+			kms->perf.perf_tune.mode_changed) {
 		old->core_clk_rate = new->core_clk_rate;
 		*update_clk = 1;
+		kms->perf.perf_tune.mode_changed = false;
 	}
 }
 
@@ -1069,6 +1075,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 		DRM_INFO("normal performance mode\n");
 	}
 	perf->perf_tune.mode = perf_mode;
+	perf->perf_tune.mode_changed = true;
 
 	return count;
 }

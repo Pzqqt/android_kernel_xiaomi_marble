@@ -47,11 +47,13 @@ struct sde_core_perf_params {
  * @mode: performance mode
  * @min_core_clk: minimum core clock
  * @min_bus_vote: minimum bus vote
+ * @mode_changed: indicate if clock tuning strategy changed
  */
 struct sde_core_perf_tune {
 	u32 mode;
 	u64 min_core_clk;
 	u64 min_bus_vote;
+	bool mode_changed;
 };
 
 /**
