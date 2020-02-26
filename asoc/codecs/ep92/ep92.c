@@ -44,6 +44,61 @@ static const unsigned int ep92_dsd_freq_table[4] = {
 	64, 128, 256, 0
 };
 
+/* EP92 register default values */
+static struct reg_default ep92_reg_defaults[] = {
+	{EP92_BI_VENDOR_ID_0,                   0x17},
+	{EP92_BI_VENDOR_ID_1,                   0x7A},
+	{EP92_BI_DEVICE_ID_0,                   0x94},
+	{EP92_BI_DEVICE_ID_1,                   0xA3},
+	{EP92_BI_VERSION_NUM,                   0x10},
+	{EP92_BI_VERSION_YEAR,                  0x09},
+	{EP92_BI_VERSION_MONTH,                 0x07},
+	{EP92_BI_VERSION_DATE,                  0x06},
+	{EP92_BI_GENERAL_INFO_0,                0x00},
+	{EP92_BI_GENERAL_INFO_1,                0x00},
+	{EP92_BI_GENERAL_INFO_2,                0x00},
+	{EP92_BI_GENERAL_INFO_3,                0x00},
+	{EP92_BI_GENERAL_INFO_4,                0x00},
+	{EP92_BI_GENERAL_INFO_5,                0x00},
+	{EP92_BI_GENERAL_INFO_6,                0x00},
+	{EP92_ISP_MODE_ENTER_ISP,               0x00},
+	{EP92_GENERAL_CONTROL_0,                0x20},
+	{EP92_GENERAL_CONTROL_1,                0x00},
+	{EP92_GENERAL_CONTROL_2,                0x00},
+	{EP92_GENERAL_CONTROL_3,                0x10},
+	{EP92_GENERAL_CONTROL_4,                0x00},
+	{EP92_CEC_EVENT_CODE,                   0x00},
+	{EP92_CEC_EVENT_PARAM_1,                0x00},
+	{EP92_CEC_EVENT_PARAM_2,                0x00},
+	{EP92_CEC_EVENT_PARAM_3,                0x00},
+	{EP92_CEC_EVENT_PARAM_4,                0x00},
+	{EP92_AUDIO_INFO_SYSTEM_STATUS_0,       0x00},
+	{EP92_AUDIO_INFO_SYSTEM_STATUS_1,       0x00},
+	{EP92_AUDIO_INFO_AUDIO_STATUS,          0x00},
+	{EP92_AUDIO_INFO_CHANNEL_STATUS_0,      0x00},
+	{EP92_AUDIO_INFO_CHANNEL_STATUS_1,      0x00},
+	{EP92_AUDIO_INFO_CHANNEL_STATUS_2,      0x00},
+	{EP92_AUDIO_INFO_CHANNEL_STATUS_3,      0x00},
+	{EP92_AUDIO_INFO_CHANNEL_STATUS_4,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_0,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_1,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_2,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_3,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_4,      0x00},
+	{EP92_AUDIO_INFO_ADO_INFO_FRAME_5,      0x00},
+	{EP92_OTHER_PACKETS_HDMI_VS_0,          0x00},
+	{EP92_OTHER_PACKETS_HDMI_VS_1,          0x00},
+	{EP92_OTHER_PACKETS_ACP_PACKET,         0x00},
+	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_0,   0x00},
+	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_1,   0x00},
+	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_2,   0x00},
+	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_3,   0x00},
+	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_4,   0x00},
+	{EP92_OTHER_PACKETS_GC_PACKET_0,        0x00},
+	{EP92_OTHER_PACKETS_GC_PACKET_1,        0x00},
+	{EP92_OTHER_PACKETS_GC_PACKET_2,        0x00},
+};
+
 static bool ep92_volatile_register(struct device *dev, unsigned int reg)
 {
 	/* do not cache register state in regmap */
@@ -114,6 +169,77 @@ struct ep92_pdata {
 	struct dentry *debugfs_file_ro;
 #endif /* CONFIG_DEBUG_FS */
 };
+
+struct ep92_mclk_cfg_info {
+	uint32_t in_sample_rate;
+	uint32_t out_mclk_freq;
+	uint8_t mul_val;
+};
+
+#define EP92_MCLK_MUL_512		0x3
+#define EP92_MCLK_MUL_384		0x2
+#define EP92_MCLK_MUL_256		0x1
+#define EP92_MCLK_MUL_128		0x0
+#define EP92_MCLK_MUL_MASK		0x3
+
+/**
+ * ep92_set_ext_mclk - Configure the mclk based on sample freq
+ *
+ * @codec: handle pointer to ep92 codec
+ * @mclk_freq: mclk frequency to be set
+ *
+ * Returns 0 for sucess or appropriate negative error code
+ */
+int ep92_set_ext_mclk(struct snd_soc_codec *codec, uint32_t mclk_freq)
+{
+	unsigned int samp_freq = 0;
+	struct ep92_pdata *ep92 = NULL;
+	uint8_t value = 0;
+	int ret = 0;
+
+	if (!codec)
+		return -EINVAL;
+
+	ep92 = snd_soc_codec_get_drvdata(codec);
+
+	samp_freq = ep92_samp_freq_table[(ep92->ai.audio_status) &
+						EP92_AI_RATE_MASK];
+
+	if (!mclk_freq || (mclk_freq % samp_freq)) {
+		pr_err("%s incompatbile mclk:%u and sample freq:%u\n",
+				__func__, mclk_freq, samp_freq);
+		return -EINVAL;
+	}
+
+	switch (mclk_freq / samp_freq) {
+	case 512:
+		value = EP92_MCLK_MUL_512;
+		break;
+	case 384:
+		value = EP92_MCLK_MUL_384;
+		break;
+	case 256:
+		value = EP92_MCLK_MUL_256;
+		break;
+	case 128:
+		value = EP92_MCLK_MUL_128;
+		break;
+	default:
+		dev_err(codec->dev, "unsupported mclk:%u for sample freq:%u\n",
+					mclk_freq, samp_freq);
+		return -EINVAL;
+	}
+
+	pr_debug("%s mclk:%u, in sample freq:%u, write reg:0x%02x val:0x%02x\n",
+		__func__, mclk_freq, samp_freq,
+		EP92_GENERAL_CONTROL_2, EP92_MCLK_MUL_MASK & value);
+
+	ret = snd_soc_update_bits(codec, EP92_GENERAL_CONTROL_2,
+					EP92_MCLK_MUL_MASK, value);
+
+	return (((ret == 0) || (ret == 1)) ? 0 : ret);
+}
+EXPORT_SYMBOL(ep92_set_ext_mclk);
 
 #if IS_ENABLED(CONFIG_DEBUG_FS)
 static int debugfs_codec_open_op(struct inode *inode, struct file *file)

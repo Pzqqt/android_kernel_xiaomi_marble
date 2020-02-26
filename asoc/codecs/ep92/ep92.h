@@ -69,63 +69,6 @@
 
 #define   EP92_MAX_REGISTER_ADDR                EP92_OTHER_PACKETS_GC_PACKET_2
 
-
-/* EP92 register default values */
-static struct reg_default ep92_reg_defaults[] = {
-	{EP92_BI_VENDOR_ID_0,                   0x17},
-	{EP92_BI_VENDOR_ID_1,                   0x7A},
-	{EP92_BI_DEVICE_ID_0,                   0x94},
-	{EP92_BI_DEVICE_ID_1,                   0xA3},
-	{EP92_BI_VERSION_NUM,                   0x10},
-	{EP92_BI_VERSION_YEAR,                  0x09},
-	{EP92_BI_VERSION_MONTH,                 0x07},
-	{EP92_BI_VERSION_DATE,                  0x06},
-	{EP92_BI_GENERAL_INFO_0,                0x00},
-	{EP92_BI_GENERAL_INFO_1,                0x00},
-	{EP92_BI_GENERAL_INFO_2,                0x00},
-	{EP92_BI_GENERAL_INFO_3,                0x00},
-	{EP92_BI_GENERAL_INFO_4,                0x00},
-	{EP92_BI_GENERAL_INFO_5,                0x00},
-	{EP92_BI_GENERAL_INFO_6,                0x00},
-	{EP92_ISP_MODE_ENTER_ISP,               0x00},
-	{EP92_GENERAL_CONTROL_0,                0x20},
-	{EP92_GENERAL_CONTROL_1,                0x00},
-	{EP92_GENERAL_CONTROL_2,                0x00},
-	{EP92_GENERAL_CONTROL_3,                0x10},
-	{EP92_GENERAL_CONTROL_4,                0x00},
-	{EP92_CEC_EVENT_CODE,                   0x00},
-	{EP92_CEC_EVENT_PARAM_1,                0x00},
-	{EP92_CEC_EVENT_PARAM_2,                0x00},
-	{EP92_CEC_EVENT_PARAM_3,                0x00},
-	{EP92_CEC_EVENT_PARAM_4,                0x00},
-	{EP92_AUDIO_INFO_SYSTEM_STATUS_0,       0x00},
-	{EP92_AUDIO_INFO_SYSTEM_STATUS_1,       0x00},
-	{EP92_AUDIO_INFO_AUDIO_STATUS,          0x00},
-	{EP92_AUDIO_INFO_CHANNEL_STATUS_0,      0x00},
-	{EP92_AUDIO_INFO_CHANNEL_STATUS_1,      0x00},
-	{EP92_AUDIO_INFO_CHANNEL_STATUS_2,      0x00},
-	{EP92_AUDIO_INFO_CHANNEL_STATUS_3,      0x00},
-	{EP92_AUDIO_INFO_CHANNEL_STATUS_4,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_0,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_1,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_2,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_3,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_4,      0x00},
-	{EP92_AUDIO_INFO_ADO_INFO_FRAME_5,      0x00},
-	{EP92_OTHER_PACKETS_HDMI_VS_0,          0x00},
-	{EP92_OTHER_PACKETS_HDMI_VS_1,          0x00},
-	{EP92_OTHER_PACKETS_ACP_PACKET,         0x00},
-	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_0,   0x00},
-	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_1,   0x00},
-	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_2,   0x00},
-	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_3,   0x00},
-	{EP92_OTHER_PACKETS_AVI_INFO_FRAME_4,   0x00},
-	{EP92_OTHER_PACKETS_GC_PACKET_0,        0x00},
-	{EP92_OTHER_PACKETS_GC_PACKET_1,        0x00},
-	{EP92_OTHER_PACKETS_GC_PACKET_2,        0x00},
-};
-
-
 /* shift/masks for register bits
  * GI = General Info
  * GC = General Control
@@ -210,5 +153,7 @@ enum {
 	EP92_KCTL_CH_ALLOC,
 	EP92_KCTL_MAX
 };
+
+int ep92_set_ext_mclk(struct snd_soc_codec *codec, uint32_t mclk_freq);
 
 #endif /* __EP92_H__ */
