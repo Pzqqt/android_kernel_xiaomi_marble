@@ -4147,6 +4147,9 @@ typedef enum {
 /* Force all 6ghz scan channels to active channel */
 #define WMI_SCAN_FLAG_EXT_6GHZ_FORCE_CHAN_ACTIVE      0x00000100
 
+/* Force broadcast address in RA even though specified bssid */
+#define WMI_SCAN_FLAG_EXT_FORCE_BRCAST_RA             0x00000200
+
 /**
  * new 6 GHz flags per chan (short ssid or bssid) in struct
  * wmi_hint_freq_short_ssid or wmi_hint_freq_bssid
@@ -4156,6 +4159,9 @@ typedef enum {
 
 /* Force channel in WMI hint to active channel */
 #define WMI_SCAN_HINT_FLAG_FORCE_CHAN_ACTIVE    0x00000002
+
+/* Combine short SSID with legacy bssid list */
+#define WMI_SCAN_HINT_FLAG_COMBINE_BSSID_LIST   0x00000004
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param */
@@ -13599,6 +13605,8 @@ typedef struct {
     wmi_mac_addr bssid;
     /** How much time in milliseconds to keep AP in blacklist */
     A_UINT32 timeout;
+    /** rssi (dBm units) when put in blacklist */
+    A_INT32 rssi;
 } wmi_roam_blacklist_with_timeout_tlv_param;
 
 /** WMI_ROAM_BLACKLIST_EVENT: generated whenever STA needs to move AP to blacklist for a particluar time
@@ -13864,6 +13872,7 @@ typedef struct {
     A_UINT32 num_ssid_white_list; /* number of whitelist in the TLV variable ssid_white_list */
     A_UINT32 num_bssid_preferred_list; /* only for lfr 3.0. number of preferred list & factor in the TLV */
     A_UINT32 num_rssi_rejection_ap; /** number of list of AP who rejected STA due to low RSSI */
+    A_UINT32 delta_rssi; /** (dB units) when AB in RSSI blacklist improved by at least delta_rssi, it will be removed from blacklist */
     /**
      * TLV (tag length value) parameters follows roam_filter_list_cmd
      * The TLV's are:
