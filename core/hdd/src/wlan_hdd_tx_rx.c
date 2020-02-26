@@ -933,6 +933,9 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	struct wlan_objmgr_vdev *vdev;
 	struct hdd_context *hdd_ctx;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
+	bool is_eapol = false;
+	bool is_dhcp = false;
 
 #ifdef QCA_WIFI_FTM
 	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
@@ -968,6 +971,26 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 					"%s : ARP packet", __func__);
+		}
+	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+		   QDF_NBUF_CB_PACKET_TYPE_EAPOL) {
+		subtype = qdf_nbuf_get_eapol_subtype(skb);
+		if (subtype == QDF_PROTO_EAPOL_M2) {
+			++adapter->hdd_stats.hdd_eapol_stats.eapol_m2_count;
+			is_eapol = true;
+		} else if (subtype == QDF_PROTO_EAPOL_M4) {
+			++adapter->hdd_stats.hdd_eapol_stats.eapol_m4_count;
+			is_eapol = true;
+		}
+	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+		   QDF_NBUF_CB_PACKET_TYPE_DHCP) {
+		subtype = qdf_nbuf_get_dhcp_subtype(skb);
+		if (subtype == QDF_PROTO_DHCP_DISCOVER) {
+			++adapter->hdd_stats.hdd_dhcp_stats.dhcp_dis_count;
+			is_dhcp = true;
+		} else if (subtype == QDF_PROTO_DHCP_REQUEST) {
+			++adapter->hdd_stats.hdd_dhcp_stats.dhcp_req_count;
+			is_dhcp = true;
 		}
 	}
 	/* track connectivity stats */
@@ -1171,6 +1194,12 @@ drop_pkt_accounting:
 		++adapter->hdd_stats.hdd_arp_stats.tx_dropped;
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s : ARP packet dropped", __func__);
+	} else if (is_eapol) {
+		++adapter->hdd_stats.hdd_eapol_stats.
+				tx_dropped[subtype - QDF_PROTO_EAPOL_M1];
+	} else if (is_dhcp) {
+		++adapter->hdd_stats.hdd_dhcp_stats.
+				tx_dropped[subtype - QDF_PROTO_DHCP_DISCOVER];
 	}
 }
 
@@ -2073,6 +2102,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	uint8_t pkt_type = 0;
 	bool track_arp = false;
 	struct wlan_objmgr_vdev *vdev;
+	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
+	bool is_eapol = false;
+	bool is_dhcp = false;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rxBuf))) {
@@ -2117,6 +2149,28 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 						"%s: ARP packet received",
 						__func__);
 				track_arp = true;
+			}
+		} else if (qdf_nbuf_is_ipv4_eapol_pkt(skb)) {
+			subtype = qdf_nbuf_get_eapol_subtype(skb);
+			if (subtype == QDF_PROTO_EAPOL_M1) {
+				++adapter->hdd_stats.hdd_eapol_stats.
+						eapol_m1_count;
+				is_eapol = true;
+			} else if (subtype == QDF_PROTO_EAPOL_M3) {
+				++adapter->hdd_stats.hdd_eapol_stats.
+						eapol_m3_count;
+				is_eapol = true;
+			}
+		} else if (qdf_nbuf_is_ipv4_dhcp_pkt(skb)) {
+			subtype = qdf_nbuf_get_dhcp_subtype(skb);
+			if (subtype == QDF_PROTO_DHCP_OFFER) {
+				++adapter->hdd_stats.hdd_dhcp_stats.
+						dhcp_off_count;
+				is_dhcp = true;
+			} else if (subtype == QDF_PROTO_DHCP_ACK) {
+				++adapter->hdd_stats.hdd_dhcp_stats.
+						dhcp_ack_count;
+				is_dhcp = true;
 			}
 		}
 		/* track connectivity stats */
@@ -2210,6 +2264,13 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			if (track_arp)
 				++adapter->hdd_stats.hdd_arp_stats.
 							rx_delivered;
+			if (is_eapol)
+				++adapter->hdd_stats.hdd_eapol_stats.
+				     rx_delivered[subtype - QDF_PROTO_EAPOL_M1];
+			else if (is_dhcp)
+				++adapter->hdd_stats.hdd_dhcp_stats.
+				rx_delivered[subtype - QDF_PROTO_DHCP_DISCOVER];
+
 			/* track connectivity stats */
 			if (adapter->pkt_type_bitmap)
 				hdd_tx_rx_collect_connectivity_stats_info(
@@ -2219,6 +2280,13 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 			if (track_arp)
 				++adapter->hdd_stats.hdd_arp_stats.rx_refused;
+
+			if (is_eapol)
+				++adapter->hdd_stats.hdd_eapol_stats.
+				       rx_refused[subtype - QDF_PROTO_EAPOL_M1];
+			else if (is_dhcp)
+				++adapter->hdd_stats.hdd_dhcp_stats.
+				  rx_refused[subtype - QDF_PROTO_DHCP_DISCOVER];
 
 			/* track connectivity stats */
 			if (adapter->pkt_type_bitmap)

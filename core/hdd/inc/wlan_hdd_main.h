@@ -611,6 +611,52 @@ struct hdd_peer_stats {
 	uint32_t fcs_count;
 };
 
+#define MAX_SUBTYPES_TRACKED	4
+
+/**
+ * struct hdd_eapol_stats_s - eapol debug stats count
+ * @eapol_m1_count: eapol m1 count
+ * @eapol_m2_count: eapol m2 count
+ * @eapol_m3_count: eapol m3 count
+ * @eapol_m4_count: eapol m4 count
+ * @tx_dropped: no of tx frames dropped by host
+ * @tx_noack_cnt: no of frames for which there is no ack
+ * @rx_delivered: no. of frames delivered to network stack
+ * @rx_refused: no of frames not delivered to network stack
+ */
+struct hdd_eapol_stats_s {
+	uint16_t eapol_m1_count;
+	uint16_t eapol_m2_count;
+	uint16_t eapol_m3_count;
+	uint16_t eapol_m4_count;
+	uint16_t tx_dropped[MAX_SUBTYPES_TRACKED];
+	uint16_t tx_noack_cnt[MAX_SUBTYPES_TRACKED];
+	uint16_t rx_delivered[MAX_SUBTYPES_TRACKED];
+	uint16_t rx_refused[MAX_SUBTYPES_TRACKED];
+};
+
+/**
+ * struct hdd_dhcp_stats_s - dhcp debug stats count
+ * @dhcp_dis_count: dhcp discovery count
+ * @dhcp_off_count: dhcp offer count
+ * @dhcp_req_count: dhcp request count
+ * @dhcp_ack_count: dhcp ack count
+ * @tx_dropped: no of tx frames dropped by host
+ * @tx_noack_cnt: no of frames for which there is no ack
+ * @rx_delivered: no. of frames delivered to network stack
+ * @rx_refused: no of frames not delivered to network stack
+ */
+struct hdd_dhcp_stats_s {
+	uint16_t dhcp_dis_count;
+	uint16_t dhcp_off_count;
+	uint16_t dhcp_req_count;
+	uint16_t dhcp_ack_count;
+	uint16_t tx_dropped[MAX_SUBTYPES_TRACKED];
+	uint16_t tx_noack_cnt[MAX_SUBTYPES_TRACKED];
+	uint16_t rx_delivered[MAX_SUBTYPES_TRACKED];
+	uint16_t rx_refused[MAX_SUBTYPES_TRACKED];
+};
+
 struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
 	tCsrGlobalClassAStatsInfo class_a_stat;
@@ -625,6 +671,8 @@ struct hdd_stats {
 #ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hdd_pmf_stats;
 #endif
+	struct hdd_eapol_stats_s hdd_eapol_stats;
+	struct hdd_dhcp_stats_s hdd_dhcp_stats;
 };
 
 /**
