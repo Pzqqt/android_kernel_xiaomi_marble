@@ -1049,6 +1049,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_send_big_data_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_nan_dmesg_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_frame_inject_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1478,6 +1479,7 @@ typedef enum {
     OP(WMI_VDEV_SET_PCL_CMDID) \
     OP(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID) \
     OP(WMI_VDEV_GET_BIG_DATA_CMDID) \
+    OP(WMI_PDEV_FRAME_INJECT_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4292,6 +4294,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
 #define WMITLV_TABLE_WMI_VDEV_GET_BIG_DATA_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param, wmi_vdev_get_big_data_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_BIG_DATA_CMDID);
+
+/* Frame inject command */
+#define WMITLV_TABLE_WMI_PDEV_FRAME_INJECT_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_frame_inject_cmd_fixed_param, wmi_frame_inject_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FRAME_INJECT_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
