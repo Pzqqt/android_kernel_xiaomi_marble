@@ -361,6 +361,7 @@ QDF_STATUS ftm_time_sync_send_trigger(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev)
 {
 	struct ftm_time_sync_vdev_priv *vdev_priv;
+	int iter;
 
 	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
 	if (!vdev_priv) {
@@ -369,6 +370,13 @@ QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev)
 	}
 
 	qdf_delayed_work_stop_sync(&vdev_priv->ftm_time_sync_work);
+
+	for (iter = 0; iter < vdev_priv->num_qtime_pair; iter++) {
+		vdev_priv->ftm_ts_priv.time_pair[iter].qtime_master = 0;
+		vdev_priv->ftm_ts_priv.time_pair[iter].qtime_slave = 0;
+	}
+
+	vdev_priv->num_qtime_pair = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -386,6 +394,9 @@ ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
 		return 0;
 	}
 
+	size = qdf_scnprintf(buf, PAGE_SIZE, "%s %pM\n", "BSSID",
+			     vdev_priv->bssid.bytes);
+
 	for (iter = 0; iter < vdev_priv->num_qtime_pair; iter++) {
 		q_master = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_master;
 		q_slave = vdev_priv->ftm_ts_priv.time_pair[iter].qtime_slave;
@@ -399,3 +410,16 @@ ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf)
 	return size;
 }
 
+void ftm_time_sync_update_bssid(struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr bssid)
+{
+	struct ftm_time_sync_vdev_priv *vdev_priv;
+
+	vdev_priv = ftm_time_sync_vdev_get_priv(vdev);
+	if (!vdev_priv) {
+		ftm_time_sync_debug("Failed to get ftm time sync vdev_priv");
+		return;
+	}
+
+	vdev_priv->bssid = bssid;
+}

@@ -44,6 +44,7 @@ void
 hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 				   enum ftm_time_sync_sta_state state)
 {
+	struct hdd_station_ctx *hdd_sta_ctx;
 	struct wlan_objmgr_psoc *psoc;
 	struct net_device *net_dev;
 
@@ -65,5 +66,8 @@ hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 					   &dev_attr_ftm_time_sync);
 	}
 
-	ucfg_ftm_time_sync_update_sta_connect_state(adapter->vdev, state);
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	ucfg_ftm_time_sync_update_sta_connect_state(
+						adapter->vdev, state,
+						hdd_sta_ctx->conn_info.bssid);
 }

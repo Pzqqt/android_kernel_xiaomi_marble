@@ -74,6 +74,7 @@ void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value);
  * ucfg_ftm_time_sync_update_sta_connect_state() - Handler for STA state change
  * @vdev: STA vdev
  * @state: connected/disconnected state
+ * @bssid: bssid of connected AP
  *
  * This function triggers the FTM time sync feature in case of connection and
  * stops the ftm sync feature in case of disconnection.
@@ -82,7 +83,8 @@ void ucfg_ftm_time_sync_set_enable(struct wlan_objmgr_psoc *psoc, bool value);
  */
 void
 ucfg_ftm_time_sync_update_sta_connect_state(struct wlan_objmgr_vdev *vdev,
-					    enum ftm_time_sync_sta_state state);
+					    enum ftm_time_sync_sta_state state,
+					    struct qdf_mac_addr bssid);
 
 /**
  * ucfg_ftm_time_sync_update_bss_state() - Handler to notify bss start/stop
