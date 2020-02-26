@@ -89,6 +89,7 @@ struct ftm_time_sync_psoc_priv {
  * @num_qtime_pair: number of qmaster and qslave pair derived
  * @num_reads: number of times the qtime to be captured
  * @valid: send qtime to FW only if this is true
+ * @bssid: bssid of connected AP
  */
 struct ftm_time_sync_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -101,6 +102,7 @@ struct ftm_time_sync_vdev_priv {
 	int num_qtime_pair;
 	int num_reads;
 	bool valid;
+	struct qdf_mac_addr bssid;
 };
 
 #endif /* End  of _FTM_TIME_SYNC_PRIV_STRUCT_H_ */

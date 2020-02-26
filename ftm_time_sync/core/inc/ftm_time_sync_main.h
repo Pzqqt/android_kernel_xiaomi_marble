@@ -168,4 +168,15 @@ QDF_STATUS ftm_time_sync_stop(struct wlan_objmgr_vdev *vdev);
  * Return: the number of bytes written in buf
  */
 ssize_t ftm_time_sync_show(struct wlan_objmgr_vdev *vdev, char *buf);
+
+/**
+ * ftm_time_sync_update_bssid() - Update the bssid info
+ * @vdev: vdev context
+ * @bssid: bssid of connected AP
+ *
+ * Return: None
+ */
+void ftm_time_sync_update_bssid(struct wlan_objmgr_vdev *vdev,
+				struct qdf_mac_addr bssid);
+
 #endif /* end of _FTM_TIME_SYNC_MAIN_H_ */
