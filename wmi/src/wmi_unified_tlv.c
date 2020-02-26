@@ -14441,6 +14441,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_ROAM_SCAN_CHANNEL_LIST_TO_HOST_SUPPORT;
 	wmi_service[wmi_beacon_protection_support] =
 			WMI_SERVICE_BEACON_PROTECTION_SUPPORT;
+	wmi_service[wmi_service_sta_nan_ndi_four_port] =
+			WMI_SERVICE_NDI_NDI_STA_SUPPORT;
 }
 
 /**
