@@ -2146,38 +2146,48 @@ static bool policy_mgr_is_concurrency_allowed_4_port(
 {
 	uint32_t i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t sap_cnt, go_cnt;
 
 	/* new STA may just have ssid, no channel until bssid assigned */
 	if (ch_freq == 0 && mode == PM_STA_MODE)
 		return true;
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("context is NULL");
+	sap_cnt = policy_mgr_mode_specific_connection_count(psoc,
+							    PM_SAP_MODE, NULL);
+
+	go_cnt = policy_mgr_mode_specific_connection_count(psoc,
+							   PM_P2P_GO_MODE, NULL);
+	if (sap_cnt || go_cnt) {
+		pm_ctx = policy_mgr_get_context(psoc);
+		if (!pm_ctx) {
+			policy_mgr_err("context is NULL");
+			return false;
+		}
+
+		if (policy_mgr_get_mcc_to_scc_switch_mode(psoc) !=
+		    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) {
+			policy_mgr_err("couldn't start 4th port for bad force scc cfg");
+			return false;
+		}
+		if (pm_ctx->cfg.dual_mac_feature ||
+		    !pm_ctx->cfg.sta_sap_scc_on_dfs_chnl  ||
+		    !pm_ctx->cfg.sta_sap_scc_on_lte_coex_chnl) {
+			policy_mgr_err(
+				"Couldn't start 4th port for bad cfg of dual mac, dfs scc, lte coex scc");
+			return false;
+		}
+
+		for (i = 0; i < pcl.pcl_len; i++)
+			if (ch_freq == pcl.pcl_list[i])
+				return true;
+
+		policy_mgr_err("4th port failed on ch freq %d with mode %d",
+			       ch_freq, mode);
+
 		return false;
 	}
 
-	if (policy_mgr_get_mcc_to_scc_switch_mode(psoc) !=
-	    QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) {
-		policy_mgr_err("couldn't start 4th port for bad force scc cfg");
-		return false;
-	}
-	if (pm_ctx->cfg.dual_mac_feature ||
-	    !pm_ctx->cfg.sta_sap_scc_on_dfs_chnl  ||
-	    !pm_ctx->cfg.sta_sap_scc_on_lte_coex_chnl) {
-		policy_mgr_err(
-			"Couldn't start 4th port for bad cfg of dual mac, dfs scc, lte coex scc");
-		return false;
-	}
-
-	for (i = 0; i < pcl.pcl_len; i++)
-		if (ch_freq == pcl.pcl_list[i])
-			return true;
-
-	policy_mgr_err("4th port failed on ch freq %d with mode %d",
-		       ch_freq, mode);
-
-	return false;
+	return true;
 }
 #else
 static inline bool policy_mgr_is_concurrency_allowed_4_port(
