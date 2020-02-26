@@ -2612,6 +2612,7 @@ bool pld_have_platform_driver_support(struct device *dev)
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = true;
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		ret = pld_sdio_platform_driver_support();
