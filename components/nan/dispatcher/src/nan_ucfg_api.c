@@ -1072,7 +1072,13 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 		if (wlan_vdev_get_id(vdev) == vdev_id_list[id])
 			return true;
 
-	return false;
+	/* If the flow reaches here then it is 4th NDI with STA */
+	if (!ucfg_nan_is_sta_nan_ndi_4_port_allowed(psoc))
+		return false;
+
+	/* The final freq would be provided by FW, it is not known now */
+	return policy_mgr_allow_concurrency(psoc, PM_NDI_MODE, 0,
+					    HW_MODE_20_MHZ);
 }
 
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
@@ -1086,6 +1092,20 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return psoc_nan_obj->nan_caps.nan_vdev_allowed;
+}
+
+bool
+ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return false;
+	}
+
+	return psoc_nan_obj->nan_caps.sta_nan_ndi_ndi_allowed;
 }
 
 bool ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc)

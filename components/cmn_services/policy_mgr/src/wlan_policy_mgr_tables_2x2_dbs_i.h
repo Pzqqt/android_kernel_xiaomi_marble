@@ -2110,8 +2110,9 @@ pm_third_connection_pcl_dbs_2x2_table = {
 /**
  * fourth_connection_pcl_dbs_table - table which provides PCL for
  * the 4th connection, when we have 3 connections already in
- * the system (with DBS supported by HW)
+ * the system (with DBS supported by HW), this table is for auto products.
  */
+#ifdef FOURTH_CONNECTION_AUTO
 const enum policy_mgr_pcl_type
 fourth_connection_pcl_dbs_table
 	[PM_MAX_THREE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
@@ -2131,6 +2132,35 @@ fourth_connection_pcl_dbs_table
 	[PM_SAP_NDI_SCC_5_NAN_DISC_24_DBS] = {
 	[PM_SAP_MODE] = { PM_24G, PM_24G, PM_24G } }
 };
+#else
+/**
+ * fourth_connection_pcl_dbs_table - table which provides PCL for
+ * the 4th connection, when we have 3 connections already in
+ * the system (with DBS supported by HW), this table is for mobile products
+ * If you want to support any 4 port other than the below in MCL add below as
+ * other concurrencies supported by auto may not be PORed for mobile products
+ * and vice-versa.
+ */
+const enum policy_mgr_pcl_type
+fourth_connection_pcl_dbs_table
+	[PM_MAX_THREE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
+	[PM_MAX_CONC_PRIORITY_MODE] = {
+	[PM_NAN_DISC_STA_24_NDI_5_DBS] = {
+	[PM_NDI_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_NAN_DISC_NDI_24_STA_5_DBS] = {
+	[PM_NDI_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_STA_NDI_5_NAN_DISC_24_DBS] = {
+	[PM_NDI_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_STA_NDI_NAN_DISC_24_SMM] = {
+	[PM_NDI_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_NAN_DISC_NDI_24_NDI_5_DBS] = {
+	[PM_STA_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_NDI_NDI_5_NAN_DISC_24_DBS] = {
+	[PM_STA_MODE] = { PM_5G, PM_5G, PM_5G } },
+	[PM_NDI_NDI_NAN_DISC_24_SMM] = {
+	[PM_STA_MODE] = { PM_5G, PM_5G, PM_5G } }
+};
+#endif
 #endif
 
 /**

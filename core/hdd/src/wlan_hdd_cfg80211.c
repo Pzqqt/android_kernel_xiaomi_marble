@@ -19951,9 +19951,12 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	}
 	/*
 	 * STA+NDI concurrency gets preference over NDI+NDI. Disable
-	 * first NDI in case an NDI+NDI concurrency exists.
+	 * first NDI in case an NDI+NDI concurrency exists if FW does
+	 * not support 4 port concurrency of two NDI + NAN with STA.
 	 */
-	ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, false);
+	if (!ucfg_nan_is_sta_nan_ndi_4_port_allowed(hdd_ctx->psoc))
+		ucfg_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc,
+							   false);
 
 	/*
 	 * In STA + STA roaming scenario, connection to same ssid but different

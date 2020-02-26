@@ -370,6 +370,15 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_nan_is_sta_nan_ndi_4_port_allowed- Get support for 4 port (STA +
+ * NAN Disc + NDI + NDI)
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if 4 port concurrency allowed or not.
+ */
+bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_nan_get_is_separate_nan_iface() - get is_separate_nan_iface value
  * @psoc: pointer to psoc object
  *
@@ -446,6 +455,12 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 static inline
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }

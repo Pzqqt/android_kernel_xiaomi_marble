@@ -5291,6 +5291,10 @@ static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 
 	if (wmi_service_enabled(wma_handle->wmi_handle, wmi_service_nan_vdev))
 		tgt_cfg->nan_caps.nan_vdev_allowed = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_sta_nan_ndi_four_port))
+		tgt_cfg->nan_caps.sta_nan_ndi_ndi_allowed = 1;
 }
 #else
 static void wma_update_nan_target_caps(tp_wma_handle wma_handle,

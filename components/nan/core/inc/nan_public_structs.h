@@ -806,6 +806,8 @@ struct wlan_nan_rx_ops {
  * @nan_sap_supported: Target supports NAN Discovery with SAP concurrency
  * @ndi_sap_supported: Target supports NAN Datapth with SAP concurrency
  * @nan_vdev_allowed: Allow separate vdev creation for NAN discovery
+ * @sta_nan_ndi_ndi_allowed: 4 port concurrency of STA+NAN+NDI+NDI is supported
+ * by Fw or not.
  */
 struct nan_tgt_caps {
 	uint32_t nan_disable_supported:1;
@@ -814,6 +816,7 @@ struct nan_tgt_caps {
 	uint32_t nan_sap_supported:1;
 	uint32_t ndi_sap_supported:1;
 	uint32_t nan_vdev_allowed:1;
+	uint32_t sta_nan_ndi_ndi_allowed:1;
 };
 
 #endif
