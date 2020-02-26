@@ -1040,7 +1040,7 @@ struct hdd_context;
  * @acs_complete_event: acs complete event
  * @latency_level: 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
  * @last_disconnect_reason: Last disconnected internal reason code
- *                          as per enum eSirMacReasonCodes
+ *                          as per enum qca_disconnect_reason_codes
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1314,7 +1314,7 @@ struct hdd_adapter {
 	bool motion_det_in_progress;
 	uint32_t motion_det_baseline_value;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
-	enum eSirMacReasonCodes last_disconnect_reason;
+	enum qca_disconnect_reason_codes last_disconnect_reason;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
