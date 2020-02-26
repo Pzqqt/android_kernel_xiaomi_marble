@@ -1474,6 +1474,11 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	bool nbuf_used;
 	uint32_t rx_enh_capture_mode;
 
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return;
+	}
 
 	ppdu_info = &pdev->ppdu_info;
 	rx_mon_stats = &pdev->rx_mon_stats;
@@ -1620,6 +1625,12 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	void *rxdma_mon_status_ring_entry;
 	QDF_STATUS status;
 	uint32_t work_done = 0;
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return work_done;
+	}
 
 	mon_status_srng = soc->rxdma_mon_status_ring[mac_id].hal_srng;
 
@@ -1874,6 +1885,12 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_srng;
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(dp_soc, mac_id);
+
+	if (!dp_pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	rxdma_srng = dp_rxdma_srng->hal_srng;
 

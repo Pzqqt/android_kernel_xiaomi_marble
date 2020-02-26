@@ -83,6 +83,8 @@
 #define WLAN_CFG_RX_FST_MAX_SEARCH 2
 #define WLAN_CFG_RX_FST_TOEPLITZ_KEYLEN 40
 
+#define INVALID_PDEV_ID 0xFF
+
 struct wlan_cfg_dp_pdev_ctxt;
 
 /**

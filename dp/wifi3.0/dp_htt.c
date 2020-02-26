@@ -3596,6 +3596,10 @@ static bool dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	struct ppdu_info *ppdu_info = NULL;
 	bool free_buf = true;
 
+	if (pdev_id >= MAX_PDEV_CNT)
+		return true;
+
+	pdev = soc->pdev_list[pdev_id];
 	if (!pdev)
 		return true;
 
@@ -3900,6 +3904,12 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 	target_pdev_id = HTT_T2H_RX_BKPRESSURE_PDEV_ID_GET(*msg_word);
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
+	if (pdev_id >= MAX_PDEV_CNT) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev id %d is invalid", pdev_id);
+		return;
+	}
+
 	pdev = (struct dp_pdev *)dpsoc->pdev_list[pdev_id];
 	ring_id = HTT_T2H_RX_BKPRESSURE_RINGID_GET(*msg_word);
 	hp_idx = HTT_T2H_RX_BKPRESSURE_HEAD_IDX_GET(*(msg_word + 1));

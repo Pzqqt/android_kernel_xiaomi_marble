@@ -725,9 +725,9 @@ int wlan_cfg_get_target_pdev_id(struct wlan_cfg_dp_soc_ctxt *cfg,
 void wlan_cfg_set_pdev_idx(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,
 			   int hw_macid)
 {
-	qdf_assert_always(pdev_idx < MAX_PDEV_CNT);
+	qdf_assert_always((pdev_idx < MAX_PDEV_CNT) ||
+			  (pdev_idx == INVALID_PDEV_ID));
 	qdf_assert_always(hw_macid < MAX_NUM_LMAC_HW);
-
 	cfg->hw_macid_pdev_id_map[hw_macid] = pdev_idx;
 }
 

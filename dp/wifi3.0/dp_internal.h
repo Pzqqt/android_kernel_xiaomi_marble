@@ -1377,13 +1377,11 @@ dp_get_lmac_id_for_pdev_id
 static inline struct dp_pdev *
 	dp_get_pdev_for_lmac_id(struct dp_soc *soc, uint32_t lmac_id)
 {
-	int i = 0;
+	uint8_t i = 0;
 
 	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
 		i = wlan_cfg_get_pdev_idx(soc->wlan_cfg_ctx, lmac_id);
-		qdf_assert_always(i < MAX_PDEV_CNT);
-
-		return soc->pdev_list[i];
+		return ((i < MAX_PDEV_CNT) ? soc->pdev_list[i] : NULL);
 	}
 
 	/* Typically for MCL as there only 1 PDEV*/
@@ -1449,7 +1447,7 @@ dp_get_host_pdev_id_for_target_pdev_id
 	/*Get host pdev from lmac*/
 	pdev = dp_get_pdev_for_lmac_id(soc, lmac_id);
 
-	return pdev->pdev_id;
+	return pdev ? pdev->pdev_id : INVALID_PDEV_ID;
 }
 
 /*

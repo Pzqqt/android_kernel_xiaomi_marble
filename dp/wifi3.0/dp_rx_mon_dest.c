@@ -185,6 +185,12 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint64_t nbuf_paddr = 0;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 
+	if (qdf_unlikely(!dp_pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return rx_bufs_used;
+	}
+
 	msdu = 0;
 
 	last = NULL;
@@ -470,6 +476,12 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	head_frag_list = NULL;
 	mpdu_buf = NULL;
+
+	if (qdf_unlikely(!dp_pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return NULL;
+	}
 
 	/* The nbuf has been pulled just beyond the status and points to the
 	   * payload
@@ -851,7 +863,7 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
 
-	if (!pdev->monitor_vdev && !pdev->mcopy_mode)
+	if (!pdev || (!pdev->monitor_vdev && !pdev->mcopy_mode))
 		goto mon_deliver_fail;
 
 	/* restitch mon MPDU for delivery via monitor interface */
@@ -928,7 +940,7 @@ QDF_STATUS dp_rx_mon_deliver_non_std(struct dp_soc *soc,
 	qdf_nbuf_t dummy_msdu;
 
 	/* Sanity checking */
-	if ((!pdev->monitor_vdev) || (!pdev->monitor_vdev->osif_rx_mon))
+	if (!pdev || !pdev->monitor_vdev || !pdev->monitor_vdev->osif_rx_mon)
 		goto mon_deliver_non_std_fail;
 
 	/* Generate a dummy skb_buff */
@@ -997,6 +1009,12 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	uint32_t mpdu_rx_bufs_used;
 	int mac_for_pdev = mac_id;
 	struct cdp_pdev_mon_stats *rx_mon_stats;
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return;
+	}
 
 	mon_dst_srng = dp_rxdma_get_mon_dst_ring(pdev, mac_for_pdev);
 

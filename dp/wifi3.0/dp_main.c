@@ -10962,6 +10962,17 @@ dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 
 #endif
 
+static inline void dp_soc_set_def_pdev(struct dp_soc *soc)
+{
+	int lmac_id;
+
+	for (lmac_id = 0; lmac_id < MAX_NUM_LMAC_HW; lmac_id++) {
+		/*Set default host PDEV ID for lmac_id*/
+		wlan_cfg_set_pdev_idx(soc->wlan_cfg_ctx,
+				      INVALID_PDEV_ID, lmac_id);
+	}
+}
+
 /**
  * dp_soc_attach() - Attach txrx SOC
  * @ctrl_psoc: Opaque SOC handle from control plane
@@ -11016,6 +11027,8 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 
 	if (htt_soc_htc_prealloc(htt_soc) != QDF_STATUS_SUCCESS)
 		goto fail2;
+
+	dp_soc_set_def_pdev(soc);
 
 	return soc;
 fail2:
@@ -11200,7 +11213,7 @@ void *dp_soc_init_wifi3(struct cdp_soc_t *soc,
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
 {
 	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
-		return soc->pdev_list[mac_id];
+		return (mac_id < MAX_PDEV_CNT) ? soc->pdev_list[mac_id] : NULL;
 
 	/* Typically for MCL as there only 1 PDEV*/
 	return soc->pdev_list[0];

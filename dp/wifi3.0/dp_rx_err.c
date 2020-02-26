@@ -279,6 +279,12 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		/* all buffers from a MSDU link link belong to same pdev */
 		*mac_id = rx_desc->pool_id;
 		pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  "pdev is null for pool_id = %d",
+				  rx_desc->pool_id);
+			return rx_bufs_used;
+		}
 
 		if (!dp_rx_desc_check_magic(rx_desc)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -435,6 +441,11 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 */
 	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 
+	if (!dp_pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return mpdu_done;
+	}
 	/* if invalid peer SG list has max values free the buffers in list
 	 * and treat current buffer as start of list
 	 *
@@ -644,6 +655,11 @@ dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 	struct ieee80211_frame *wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for pool_id = %d", pool_id);
+		return false;
+	}
 	/*
 	 * WAR- In certain types of packets if peer_id is not correct then
 	 * driver may not be able find. Try finding peer by addr_2 of
@@ -787,6 +803,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	if (!peer) {
 		bool mpdu_done = false;
 		struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
+
+		if (!pdev) {
+			dp_err_rl("pdev is null for pool_id = %d", pool_id);
+			return QDF_STATUS_E_FAILURE;
+		}
 
 		dp_err_rl("peer is NULL");
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
@@ -1522,7 +1543,6 @@ done:
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		if (rx_bufs_reaped[mac_id]) {
-			dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 			dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
 			rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
@@ -1764,6 +1784,12 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	hal_rxdma_desc_t ring_desc;
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return rx_bufs_used;
+	}
 
 	msdu = 0;
 
@@ -2029,7 +2055,6 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 			     uint32_t buf_type)
 {
 	struct hal_buf_info buf_info = {0};
-	struct dp_pdev *dp_pdev;
 	struct dp_rx_desc *rx_desc = NULL;
 	uint32_t rx_buf_cookie;
 	uint32_t rx_bufs_reaped = 0;
@@ -2075,7 +2100,6 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 		struct dp_srng *dp_rxdma_srng;
 
 		DP_STATS_INC(soc, tx.wbm_internal_error[WBM_INT_ERROR_REO_BUFF_REAPED], 1);
-		dp_pdev = dp_get_pdev_for_lmac_id(soc, pool_id);
 		dp_rxdma_srng = &soc->rx_refill_buf_ring[pool_id];
 		rx_desc_pool = &soc->rx_desc_buf[pool_id];
 

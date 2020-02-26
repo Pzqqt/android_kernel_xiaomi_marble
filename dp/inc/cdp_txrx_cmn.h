@@ -1925,7 +1925,7 @@ cdp_soc_handle_mode_change(ol_txrx_soc_handle soc, uint8_t pdev_id,
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->map_pdev_to_lmac)
+	    !soc->ops->cmn_drv_ops->handle_mode_change)
 		return QDF_STATUS_E_FAILURE;
 
 	return soc->ops->cmn_drv_ops->handle_mode_change(soc, pdev_id,

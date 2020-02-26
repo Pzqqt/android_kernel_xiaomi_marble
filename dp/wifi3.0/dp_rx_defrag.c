@@ -1720,6 +1720,12 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 
 	/* all buffers in MSDU link belong to same pdev */
 	pdev = dp_get_pdev_for_lmac_id(soc, rx_desc->pool_id);
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for pool_id = %d", rx_desc->pool_id);
+		return rx_bufs_used;
+	}
+
 	*mac_id = rx_desc->pool_id;
 
 	msdu = rx_desc->nbuf;
