@@ -213,6 +213,7 @@ QDF_STATUS pmo_core_arp_check_offload(struct wlan_objmgr_psoc *psoc,
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	bool active_offload_cond, is_applied_cond;
+	enum QDF_OPMODE opmode;
 
 	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
@@ -224,6 +225,13 @@ QDF_STATUS pmo_core_arp_check_offload(struct wlan_objmgr_psoc *psoc,
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto out;
+
+	opmode = pmo_get_vdev_opmode(vdev);
+	if (opmode == QDF_NDI_MODE) {
+		pmo_debug("ARP offload is not supported in NaN mode");
+		pmo_vdev_put_ref(vdev);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 	psoc_ctx = vdev_ctx->pmo_psoc_ctx;
