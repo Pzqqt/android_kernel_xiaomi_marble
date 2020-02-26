@@ -828,7 +828,7 @@ rrm_fill_beacon_ies(struct mac_context *mac, uint8_t *pIes,
 		pIes += sizeof(uint16_t);
 	}
 
-	while (BcnNumIes > 0) {
+	while (BcnNumIes >= 2) {
 		len = *(pBcnIes + 1);
 		len += 2;       /* element id + length. */
 		pe_debug("EID = %d, len = %d total = %d",
