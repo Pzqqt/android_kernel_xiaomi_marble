@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,3 +86,15 @@ cfg_p2p_get_device_addr_admin(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool cfg_p2p_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+
+	p2p_soc_obj = wlan_psoc_get_p2p_object(psoc);
+	if (!p2p_soc_obj) {
+		p2p_err("p2p psoc null");
+		return false;
+	}
+
+	return p2p_soc_obj->param.p2p_disable_roam;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,5 +60,14 @@ cfg_p2p_get_go_link_monitor_period(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 cfg_p2p_get_device_addr_admin(struct wlan_objmgr_psoc *psoc,
 			      bool *enable);
+
+/**
+ * cfg_p2p_is_roam_config_disabled() - get disable roam config on sta interface
+ * during p2p connection
+ * @psoc:        pointer to psoc object
+ *
+ * Get disable roam configuration during p2p connection
+ */
+bool cfg_p2p_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc);
 
 #endif /* _WLAN_P2P_CFG_API_H_ */
