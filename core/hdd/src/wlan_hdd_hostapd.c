@@ -5723,8 +5723,20 @@ error:
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
 
 free:
-	/* Enable Roaming after start bss in case of failure/success */
-	wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
+	/*
+	 * Due to audio share glitch with P2P GO due
+	 * to roam scan on concurrent interface, disable
+	 * roaming if "p2p_disable_roam" ini is enabled.
+	 * Donot re-enable roaming again on other STA interface
+	 * if p2p GO is active on any vdev.
+	 */
+	if (ucfg_p2p_is_roam_config_disabled(hdd_ctx->psoc) &&
+	    adapter->device_mode == QDF_P2P_GO_MODE) {
+		hdd_debug("p2p go mode, keep roam disabled");
+	} else {
+		/* Enable Roaming after start bss in case of failure/success */
+		wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
+	}
 	qdf_mem_free(sme_config);
 	return ret;
 }
@@ -5878,6 +5890,19 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 						adapter->vdev_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
+
+		/*
+		 * Due to audio share glitch with P2P GO due
+		 * to roam scan on concurrent interface, disable
+		 * roaming if "p2p_disable_roam" ini is enabled.
+		 * Re-enable roaming on other STA interface if p2p GO
+		 * is active on any vdev.
+		 */
+		if (ucfg_p2p_is_roam_config_disabled(hdd_ctx->psoc) &&
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
+			hdd_debug("p2p go disconnected enable roam");
+			wlan_hdd_enable_roaming(adapter, RSO_START_BSS);
+		}
 
 		if (adapter->session.ap.beacon) {
 			qdf_mem_free(adapter->session.ap.beacon);

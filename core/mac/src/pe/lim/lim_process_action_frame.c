@@ -51,6 +51,7 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
 #include "dot11f.h"
+#include "wlan_p2p_cfg_api.h"
 
 static last_processed_msg rrm_link_action_frm;
 
@@ -1911,6 +1912,15 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		case WNM_BSS_TM_QUERY:
 		case WNM_BSS_TM_REQUEST:
 		case WNM_BSS_TM_RESPONSE:
+			if (cfg_p2p_is_roam_config_disabled(mac_ctx->psoc) &&
+			    session && LIM_IS_STA_ROLE(session) &&
+			    (policy_mgr_mode_specific_connection_count(
+				mac_ctx->psoc, PM_P2P_CLIENT_MODE, NULL) ||
+			     policy_mgr_mode_specific_connection_count(
+				mac_ctx->psoc, PM_P2P_GO_MODE, NULL))) {
+				pe_debug("p2p session active drop BTM frame");
+				break;
+			}
 		case WNM_NOTIF_REQUEST:
 		case WNM_NOTIF_RESPONSE:
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);

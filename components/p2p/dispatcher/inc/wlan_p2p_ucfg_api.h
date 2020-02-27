@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
 #ifndef _WLAN_P2P_UCFG_API_H_
 #define _WLAN_P2P_UCFG_API_H_
 
+#include "wlan_p2p_cfg_api.h"
 #include <qdf_types.h>
 
 struct wlan_objmgr_psoc;
@@ -409,4 +410,18 @@ QDF_STATUS ucfg_p2p_status_start_bss(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS ucfg_p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * ucfg_p2p_is_roam_config_disabled() - Roam disable config during p2p
+ * connection
+ * @psoc: psoc context
+ *
+ * During P2P connection disable roam on STA interface
+ *
+ * Return: p2p disable roam - in case of success else false
+ */
+static inline
+bool ucfg_p2p_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	return cfg_p2p_is_roam_config_disabled(psoc);
+}
 #endif /* _WLAN_P2P_UCFG_API_H_ */

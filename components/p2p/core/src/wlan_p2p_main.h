@@ -198,11 +198,14 @@ enum p2p_connection_status {
  * @p2p_device_addr_admin:          enable/disable to derive the P2P
  *                                  MAC address from the primary MAC address
  * @skip_dfs_channel_p2p_search:    skip DFS Channel in case of P2P Search
+ * @p2p_disable_roam:               Disable Roam on sta interface during P2P
+ *                                  connection
  */
 struct p2p_param {
 	uint32_t go_keepalive_period;
 	uint32_t go_link_monitor_period;
 	bool p2p_device_addr_admin;
+	bool p2p_disable_roam;
 };
 
 /**

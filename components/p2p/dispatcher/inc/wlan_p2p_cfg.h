@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,9 +98,32 @@
 	1, \
 	"derive the P2P MAC address from the primary MAC address")
 
+/*
+ * <ini>
+ * p2p_disable_roam - Disable Roam on sta interface during P2P connection
+ * @Min: 0 - Roam Enabled on sta interface during P2P connection
+ * @Max: 1 - Roam Disabled on sta interface during P2P connection
+ * @Default: 0
+ *
+ * Disable roaming on STA iface to avoid audio glitches on p2p if its connected
+ *
+ * Related: None.
+ *
+ * Supported Feature: Disable Roam during P2P
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_P2P_DISABLE_ROAM CFG_INI_BOOL( \
+		"p2p_disable_roam", \
+		0, \
+		"disable roam on STA iface if p2p is connected")
+
 #define CFG_P2P_ALL \
 	CFG(CFG_GO_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_GO_LINK_MONITOR_PERIOD) \
-	CFG(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED)
+	CFG(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED) \
+	CFG(CFG_P2P_DISABLE_ROAM)
 
 #endif
