@@ -279,6 +279,22 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info);
 #endif
 
+extern const struct nla_policy
+	qca_wlan_vendor_set_nud_stats_policy
+	[QCA_ATTR_NUD_STATS_SET_MAX + 1];
+
+#define FEATURE_VENDOR_SUBCMD_NUD_STATS_SET				    \
+{									    \
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,		    \
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_SET,     \
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			    \
+			WIPHY_VENDOR_CMD_NEED_NETDEV |			    \
+			WIPHY_VENDOR_CMD_NEED_RUNNING,			    \
+		.doit = wlan_hdd_cfg80211_set_nud_stats,		    \
+		vendor_command_policy(qca_wlan_vendor_set_nud_stats_policy, \
+				      QCA_ATTR_NUD_STATS_SET_MAX)	    \
+},
+
 /**
  * hdd_cfg80211_wiphy_alloc() - Allocate wiphy
  *
