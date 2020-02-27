@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -44,6 +44,14 @@
 QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 					    *reg_info)
 {
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = reg_info->psoc;
+	soc_reg = reg_get_psoc_obj(psoc);
+	if (!soc_reg->offload_enabled)
+		return QDF_STATUS_SUCCESS;
+
 	return reg_process_master_chan_list(reg_info);
 }
 
