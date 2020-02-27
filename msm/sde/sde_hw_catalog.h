@@ -1297,6 +1297,7 @@ struct sde_sc_cfg {
  * @qos_refresh_rate: different refresh rates for luts
  * @cdp_cfg            cdp use case configurations
  * @cpu_mask:          pm_qos cpu mask value
+ * @cpu_mask_perf:     pm_qos cpu silver core mask value
  * @cpu_dma_latency:   pm_qos cpu dma latency value
  * @axi_bus_width:     axi bus width value in bytes
  * @num_mnoc_ports:    number of mnoc ports
@@ -1326,7 +1327,8 @@ struct sde_perf_cfg {
 	u32 qos_refresh_count;
 	u32 *qos_refresh_rate;
 	struct sde_perf_cdp_cfg cdp_cfg[SDE_PERF_CDP_USAGE_MAX];
-	u32 cpu_mask;
+	unsigned long cpu_mask;
+	unsigned long cpu_mask_perf;
 	u32 cpu_dma_latency;
 	u32 axi_bus_width;
 	u32 num_mnoc_ports;
