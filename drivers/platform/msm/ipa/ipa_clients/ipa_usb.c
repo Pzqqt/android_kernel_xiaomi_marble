@@ -1653,7 +1653,7 @@ connect_ul_fail:
 	if (ipa3_is_mhip_offload_enabled())
 		ipa_mpm_mhip_xdci_pipe_disable(params->teth_prot);
 connect_fail:
-		ipa_pm_deactivate_sync(
+	ipa_pm_deactivate_sync(
 			ipa3_usb_ctx->ttype_ctx[ttype].pm_ctx.hdl);
 
 	return result;
