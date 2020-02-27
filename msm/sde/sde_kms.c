@@ -2948,6 +2948,8 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 		sde_irq_update(msm_kms, false);
 		sde_kms->first_kickoff = false;
 		_sde_kms_active_override(sde_kms, true);
+		if (!is_sde_rsc_available(SDE_RSC_INDEX))
+			sde_vbif_axi_halt_request(sde_kms);
 	}
 }
 

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -26,18 +26,18 @@ static int _sde_vbif_wait_for_xin_halt(struct sde_hw_vbif *vbif, u32 xin_id)
 	bool status;
 	int rc;
 
-	if (!vbif || !vbif->cap || !vbif->ops.get_halt_ctrl) {
+	if (!vbif || !vbif->cap || !vbif->ops.get_xin_halt_status) {
 		SDE_ERROR("invalid arguments vbif %d\n", !vbif);
 		return -EINVAL;
 	}
 
 	timeout = ktime_add_us(ktime_get(), vbif->cap->xin_halt_timeout);
 	for (;;) {
-		status = vbif->ops.get_halt_ctrl(vbif, xin_id);
+		status = vbif->ops.get_xin_halt_status(vbif, xin_id);
 		if (status)
 			break;
 		if (ktime_compare_safe(ktime_get(), timeout) > 0) {
-			status = vbif->ops.get_halt_ctrl(vbif, xin_id);
+			status = vbif->ops.get_xin_halt_status(vbif, xin_id);
 			break;
 		}
 		usleep_range(501, 1000);
@@ -52,6 +52,26 @@ static int _sde_vbif_wait_for_xin_halt(struct sde_hw_vbif *vbif, u32 xin_id)
 		SDE_DEBUG("VBIF %d client %d is halted\n",
 				vbif->idx - VBIF_0, xin_id);
 	}
+
+	return rc;
+}
+
+static int _sde_vbif_wait_for_axi_halt(struct sde_hw_vbif *vbif)
+{
+	int rc;
+
+	if (!vbif || !vbif->cap || !vbif->ops.get_axi_halt_status) {
+		SDE_ERROR("invalid arguments vbif %d\n", !vbif);
+		return -EINVAL;
+	}
+
+	rc = vbif->ops.get_axi_halt_status(vbif);
+	if (rc)
+		SDE_ERROR("VBIF %d AXI port(s) not halting. TIMEDOUT.\n",
+				vbif->idx - VBIF_0);
+	else
+		SDE_DEBUG("VBIF %d AXI port(s) halted\n",
+				vbif->idx - VBIF_0);
 
 	return rc;
 }
@@ -76,8 +96,8 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 
 	vbif = sde_kms->hw_vbif[VBIF_RT];
 	mdp = sde_kms->hw_mdp;
-	if (!vbif || !mdp || !vbif->ops.get_halt_ctrl ||
-		       !vbif->ops.set_halt_ctrl ||
+	if (!vbif || !mdp || !vbif->ops.get_xin_halt_status ||
+		       !vbif->ops.set_xin_halt ||
 		       !mdp->ops.setup_clk_force_ctrl) {
 		SDE_ERROR("invalid vbif or mdp arguments\n");
 		return -EINVAL;
@@ -92,7 +112,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 	 * while halting by forcing it ON only if it was not previously
 	 * forced on. If status is 1 then its already halted.
 	 */
-	status = vbif->ops.get_halt_ctrl(vbif, xin_id);
+	status = vbif->ops.get_xin_halt_status(vbif, xin_id);
 	if (status) {
 		mutex_unlock(&vbif->mutex);
 		return 0;
@@ -101,7 +121,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 	forced_on = mdp->ops.setup_clk_force_ctrl(mdp, clk_ctrl, true);
 
 	/* send halt request for unused plane's xin client */
-	vbif->ops.set_halt_ctrl(vbif, xin_id, true);
+	vbif->ops.set_xin_halt(vbif, xin_id, true);
 
 	rc = _sde_vbif_wait_for_xin_halt(vbif, xin_id);
 	if (rc) {
@@ -112,7 +132,7 @@ int sde_vbif_halt_plane_xin(struct sde_kms *sde_kms, u32 xin_id, u32 clk_ctrl)
 	}
 
 	/* open xin client to enable transactions */
-	vbif->ops.set_halt_ctrl(vbif, xin_id, false);
+	vbif->ops.set_xin_halt(vbif, xin_id, false);
 	if (forced_on)
 		mdp->ops.setup_clk_force_ctrl(mdp, clk_ctrl, false);
 
@@ -250,7 +270,7 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 
 	if (!mdp->ops.setup_clk_force_ctrl ||
 			!vbif->ops.set_limit_conf ||
-			!vbif->ops.set_halt_ctrl)
+			!vbif->ops.set_xin_halt)
 		return;
 
 	mutex_lock(&vbif->mutex);
@@ -273,13 +293,13 @@ void sde_vbif_set_ot_limit(struct sde_kms *sde_kms,
 
 	vbif->ops.set_limit_conf(vbif, params->xin_id, params->rd, ot_lim);
 
-	vbif->ops.set_halt_ctrl(vbif, params->xin_id, true);
+	vbif->ops.set_xin_halt(vbif, params->xin_id, true);
 
 	ret = _sde_vbif_wait_for_xin_halt(vbif, params->xin_id);
 	if (ret)
 		SDE_EVT32(vbif->idx, params->xin_id);
 
-	vbif->ops.set_halt_ctrl(vbif, params->xin_id, false);
+	vbif->ops.set_xin_halt(vbif, params->xin_id, false);
 
 	if (forced_on)
 		mdp->ops.setup_clk_force_ctrl(mdp, params->clk_ctrl, false);
@@ -357,7 +377,7 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 	}
 
 	if (!mdp->ops.setup_clk_force_ctrl ||
-			!vbif->ops.set_halt_ctrl)
+			!vbif->ops.set_xin_halt)
 		return false;
 
 	mutex_lock(&vbif->mutex);
@@ -368,13 +388,13 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 		forced_on = mdp->ops.setup_clk_force_ctrl(mdp,
 				params->clk_ctrl, true);
 
-		vbif->ops.set_halt_ctrl(vbif, params->xin_id, true);
+		vbif->ops.set_xin_halt(vbif, params->xin_id, true);
 
 		ret = _sde_vbif_wait_for_xin_halt(vbif, params->xin_id);
 		if (ret)
 			SDE_EVT32(vbif->idx, params->xin_id, SDE_EVTLOG_ERROR);
 	} else {
-		vbif->ops.set_halt_ctrl(vbif, params->xin_id, false);
+		vbif->ops.set_xin_halt(vbif, params->xin_id, false);
 
 		if (params->forced_on)
 			mdp->ops.setup_clk_force_ctrl(mdp,
@@ -511,6 +531,32 @@ void sde_vbif_init_memtypes(struct sde_kms *sde_kms)
 	}
 }
 
+void sde_vbif_axi_halt_request(struct sde_kms *sde_kms)
+{
+	struct sde_hw_vbif *vbif;
+	int i;
+
+	if (!sde_kms) {
+		SDE_ERROR("invalid argument\n");
+		return;
+	}
+
+	if (!sde_kms_is_vbif_operation_allowed(sde_kms)) {
+		SDE_DEBUG("vbif operations not permitted\n");
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(sde_kms->hw_vbif); i++) {
+		vbif = sde_kms->hw_vbif[i];
+		if (vbif && vbif->cap && vbif->ops.set_axi_halt) {
+			mutex_lock(&vbif->mutex);
+			vbif->ops.set_axi_halt(vbif);
+			_sde_vbif_wait_for_axi_halt(vbif);
+			mutex_unlock(&vbif->mutex);
+		}
+	}
+}
+
 int sde_vbif_halt_xin_mask(struct sde_kms *sde_kms, u32 xin_id_mask,
 				bool halt)
 {
@@ -524,7 +570,7 @@ int sde_vbif_halt_xin_mask(struct sde_kms *sde_kms, u32 xin_id_mask,
 
 	vbif = sde_kms->hw_vbif[VBIF_RT];
 
-	if (!vbif->ops.get_halt_ctrl || !vbif->ops.set_halt_ctrl)
+	if (!vbif->ops.get_xin_halt_status || !vbif->ops.set_xin_halt)
 		return 0;
 
 	SDE_EVT32(xin_id_mask, halt);
@@ -533,16 +579,16 @@ int sde_vbif_halt_xin_mask(struct sde_kms *sde_kms, u32 xin_id_mask,
 		if (xin_id_mask & BIT(i)) {
 			/* unhalt the xin-clients */
 			if (!halt) {
-				vbif->ops.set_halt_ctrl(vbif, i, false);
+				vbif->ops.set_xin_halt(vbif, i, false);
 				continue;
 			}
 
-			status = vbif->ops.get_halt_ctrl(vbif, i);
+			status = vbif->ops.get_xin_halt_status(vbif, i);
 			if (status)
 				continue;
 
 			/* halt xin-clients and wait for ack */
-			vbif->ops.set_halt_ctrl(vbif, i, true);
+			vbif->ops.set_xin_halt(vbif, i, true);
 
 			rc = _sde_vbif_wait_for_xin_halt(vbif, i);
 			if (rc) {

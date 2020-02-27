@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_VBIF_H
@@ -38,22 +38,34 @@ struct sde_hw_vbif_ops {
 			u32 xin_id, bool rd);
 
 	/**
-	 * set_halt_ctrl - set halt control
+	 * set_xin_halt - set xin client halt control
 	 * @vbif: vbif context driver
 	 * @xin_id: client interface identifier
 	 * @enable: halt control enable
 	 */
-	void (*set_halt_ctrl)(struct sde_hw_vbif *vbif,
+	void (*set_xin_halt)(struct sde_hw_vbif *vbif,
 			u32 xin_id, bool enable);
 
 	/**
-	 * get_halt_ctrl - get halt control
+	 * get_xin_halt_status - get xin client halt control
 	 * @vbif: vbif context driver
 	 * @xin_id: client interface identifier
 	 * @return: halt control enable
 	 */
-	bool (*get_halt_ctrl)(struct sde_hw_vbif *vbif,
+	bool (*get_xin_halt_status)(struct sde_hw_vbif *vbif,
 			u32 xin_id);
+
+	/**
+	 * set_axi_halt - set axi port halt control
+	 * @vbif: vbif context driver
+	 */
+	void (*set_axi_halt)(struct sde_hw_vbif *vbif);
+
+	/**
+	 * get_axi_halt_status - get axi port halt control status
+	 * @vbif: vbif context driver
+	 */
+	int (*get_axi_halt_status)(struct sde_hw_vbif *vbif);
 
 	/**
 	 * set_qos_remap - set QoS priority remap
