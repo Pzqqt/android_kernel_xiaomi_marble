@@ -699,7 +699,8 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (ts->tid > DP_MAX_TIDS) {
+	if ((ts->tid > DP_MAX_TIDS) ||
+	    (peer->bss_peer && ts->tid == DP_NON_QOS_TID)) {
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d peer_id %d, tid %d > NON_QOS_TID!",
 			  __func__, __LINE__, ts->peer_id, ts->tid);
