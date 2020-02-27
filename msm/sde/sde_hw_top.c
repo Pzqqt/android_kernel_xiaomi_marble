@@ -62,8 +62,19 @@
 
 #define DCE_SEL                           0x450
 
-#define ROT_SID_RD			  0x20
-#define ROT_SID_WR			  0x24
+#define MDP_SID_VIG0			  0x0
+#define MDP_SID_VIG1			  0x4
+#define MDP_SID_VIG2			  0x8
+#define MDP_SID_VIG3			  0xC
+#define MDP_SID_DMA0			  0x10
+#define MDP_SID_DMA1			  0x14
+#define MDP_SID_DMA2			  0x18
+#define MDP_SID_DMA3			  0x1C
+#define MDP_SID_ROT_RD			  0x20
+#define MDP_SID_ROT_WR			  0x24
+#define MDP_SID_WB2			  0x28
+#define MDP_SID_XIN7			  0x2C
+
 #define ROT_SID_ID_VAL			  0x1c
 
 static void sde_hw_setup_split_pipe(struct sde_hw_mdp *mdp,
@@ -470,10 +481,38 @@ struct sde_hw_sid *sde_hw_sid_init(void __iomem *addr,
 	return c;
 }
 
-void sde_hw_sid_rotator_set(struct sde_hw_sid *sid)
+void sde_hw_set_rotator_sid(struct sde_hw_sid *sid)
 {
-	SDE_REG_WRITE(&sid->hw, ROT_SID_RD, ROT_SID_ID_VAL);
-	SDE_REG_WRITE(&sid->hw, ROT_SID_WR, ROT_SID_ID_VAL);
+	if (!sid)
+		return;
+
+	SDE_REG_WRITE(&sid->hw, MDP_SID_ROT_RD, ROT_SID_ID_VAL);
+	SDE_REG_WRITE(&sid->hw, MDP_SID_ROT_WR, ROT_SID_ID_VAL);
+}
+
+void sde_hw_set_sspp_sid(struct sde_hw_sid *sid, u32 pipe, u32 vm)
+{
+	u32 offset = 0;
+
+	if (!sid)
+		return;
+
+	if ((pipe >= SSPP_VIG0) && (pipe <= SSPP_VIG3))
+		offset = MDP_SID_VIG0 + ((pipe - SSPP_VIG0) * 4);
+	else if ((pipe >= SSPP_DMA0) && (pipe <= SSPP_DMA3))
+		offset = MDP_SID_DMA0 + ((pipe - SSPP_DMA0) * 4);
+	else
+		return;
+
+	SDE_REG_WRITE(&sid->hw, offset, vm << 2);
+}
+
+void sde_hw_set_lutdma_sid(struct sde_hw_sid *sid, u32 vm)
+{
+	if (!sid)
+		return;
+
+	SDE_REG_WRITE(&sid->hw, MDP_SID_XIN7, vm << 2);
 }
 
 static void sde_hw_program_cwb_ppb_ctrl(struct sde_hw_mdp *mdp,

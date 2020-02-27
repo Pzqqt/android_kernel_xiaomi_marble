@@ -2928,7 +2928,7 @@ static void sde_kms_init_shared_hw(struct sde_kms *sde_kms)
 						sde_kms->catalog);
 
 	if (sde_kms->sid)
-		sde_hw_sid_rotator_set(sde_kms->hw_sid);
+		sde_hw_set_rotator_sid(sde_kms->hw_sid);
 }
 
 static void _sde_kms_set_lutdma_vbif_remap(struct sde_kms *sde_kms)

@@ -327,6 +327,13 @@ void sde_plane_clear_ubwc_error(struct drm_plane *plane);
 void sde_plane_setup_src_split_order(struct drm_plane *plane,
 		enum sde_sspp_multirect_index rect_mode, bool enable);
 
+/*
+ * sde_plane_set_sid - set VM SID for the plane
+ * @plane: Pointer to DRM plane object
+ * @vm: VM id
+ */
+void sde_plane_set_sid(struct drm_plane *plane, u32 vm);
+
 /* sde_plane_is_cache_required - indicates if the system cache is
  *	required for the plane.
  * @plane: Pointer to DRM plane object
