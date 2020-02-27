@@ -36,7 +36,7 @@
 #include <qca_vendor.h>
 #include "wlan_fwol_ucfg_api.h"
 
-static const struct nla_policy
+const struct nla_policy
 	wlan_hdd_thermal_mitigation_policy
 	[QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX + 1] = {
 		[QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_VALUE] = {.type = NLA_U32},

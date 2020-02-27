@@ -25,6 +25,7 @@
 
 #include <linux/netdevice.h>
 #include <net/cfg80211.h>
+#include <qca_vendor.h>
 
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 
@@ -40,12 +41,18 @@ wlan_hdd_cfg80211_set_thermal_mitigation_policy(struct wiphy *wiphy,
  */
 bool wlan_hdd_thermal_config_support(void);
 
-#define FEATURE_THERMAL_VENDOR_COMMANDS				\
-{								\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD,	\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV,			\
-	.doit = wlan_hdd_cfg80211_set_thermal_mitigation_policy	\
+extern const struct nla_policy
+	wlan_hdd_thermal_mitigation_policy
+	[QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX + 1];
+
+#define FEATURE_THERMAL_VENDOR_COMMANDS                             \
+{                                                                   \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                    \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_THERMAL_CMD,       \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV,                        \
+	.doit = wlan_hdd_cfg80211_set_thermal_mitigation_policy,    \
+	vendor_command_policy(wlan_hdd_thermal_mitigation_policy,   \
+			      QCA_WLAN_VENDOR_ATTR_THERMAL_CMD_MAX) \
 },
 #else
 #define FEATURE_THERMAL_VENDOR_COMMANDS
