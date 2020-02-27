@@ -995,7 +995,8 @@ static inline void dfs_check_if_bin5(
 
 	/* BIN5 pulses are FCC and Japan specific. */
 	if ((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
-			(dfs->dfsdomain == DFS_MKK4_DOMAIN)) {
+	    (dfs->dfsdomain == DFS_MKK4_DOMAIN) ||
+	    (dfs->dfsdomain == DFS_MKKN_DOMAIN)) {
 		for (p = 0; (p < dfs->dfs_rinfo.rn_numbin5radars) && (!*found);
 				p++) {
 			struct dfs_bin5radars *br;
