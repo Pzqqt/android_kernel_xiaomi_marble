@@ -2886,7 +2886,8 @@ static void sde_kms_init_shared_hw(struct sde_kms *sde_kms)
 		sde_kms->hw_mdp->ops.reset_ubwc(sde_kms->hw_mdp,
 						sde_kms->catalog);
 
-	sde_hw_sid_rotator_set(sde_kms->hw_sid);
+	if (sde_kms->sid)
+		sde_hw_sid_rotator_set(sde_kms->hw_sid);
 }
 
 static void _sde_kms_set_lutdma_vbif_remap(struct sde_kms *sde_kms)
@@ -3137,16 +3138,15 @@ static int _sde_kms_hw_init_ioremap(struct sde_kms *sde_kms,
 	sde_kms->sid = msm_ioremap(platformdev, "sid_phys",
 							"sid_phys");
 	if (IS_ERR(sde_kms->sid)) {
-		rc = PTR_ERR(sde_kms->sid);
-		SDE_ERROR("sid register memory map failed: %d\n", rc);
+		SDE_DEBUG("sid register is not defined: %d\n", rc);
 		sde_kms->sid = NULL;
-		goto error;
+	} else {
+		sde_kms->sid_len = msm_iomap_size(platformdev, "sid_phys");
+		rc =  sde_dbg_reg_register_base("sid", sde_kms->sid,
+				sde_kms->sid_len);
+		if (rc)
+			SDE_ERROR("dbg base register sid failed: %d\n", rc);
 	}
-
-	sde_kms->sid_len = msm_iomap_size(platformdev, "sid_phys");
-	rc =  sde_dbg_reg_register_base("sid", sde_kms->sid, sde_kms->sid_len);
-	if (rc)
-		SDE_ERROR("dbg base register sid failed: %d\n", rc);
 
 error:
 	return rc;
@@ -3317,12 +3317,15 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 		sde_kms->hw_uidle = NULL;
 	}
 
-	sde_kms->hw_sid = sde_hw_sid_init(sde_kms->sid,
+	if (sde_kms->sid) {
+		sde_kms->hw_sid = sde_hw_sid_init(sde_kms->sid,
 				sde_kms->sid_len, sde_kms->catalog);
-	if (IS_ERR(sde_kms->hw_sid)) {
-		SDE_ERROR("failed to init sid %ld\n", PTR_ERR(sde_kms->hw_sid));
-		sde_kms->hw_sid = NULL;
-		goto power_error;
+		if (IS_ERR_OR_NULL(sde_kms->hw_sid)) {
+			rc = PTR_ERR(sde_kms->hw_sid);
+			SDE_ERROR("failed to init sid %ld\n", rc);
+			sde_kms->hw_sid = NULL;
+			goto power_error;
+		}
 	}
 
 	rc = sde_core_perf_init(&sde_kms->perf, dev, sde_kms->catalog,
