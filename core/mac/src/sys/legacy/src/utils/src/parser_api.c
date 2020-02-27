@@ -955,7 +955,7 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 	nCfgValue = 0;
 	/* With VHT it suffices if we just examine HT */
 	if (pe_session) {
-		if (!pe_session->vhtCapability) {
+		if (lim_is_he_6ghz_band(pe_session)) {
 			pDot11f->present = 0;
 			return QDF_STATUS_SUCCESS;
 		}

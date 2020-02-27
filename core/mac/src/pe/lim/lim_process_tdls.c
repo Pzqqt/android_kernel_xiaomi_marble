@@ -720,10 +720,10 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 	}
 	pe_debug("HT present: %hu, Chan Width: %hu",
 		htCap->present, htCap->supportedChannelWidthSet);
-	if (((wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) <=
-		SIR_11B_CHANNEL_END) && vht_cap_info->b24ghz_band) ||
-	    (wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq) >=
-		SIR_11B_CHANNEL_END)) {
+
+	if ((WLAN_REG_IS_24GHZ_CH_FREQ(pe_session->curr_op_freq) &&
+	     vht_cap_info->b24ghz_band) ||
+	    WLAN_REG_IS_5GHZ_CH_FREQ(pe_session->curr_op_freq)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/* Include VHT Capability IE */
