@@ -239,6 +239,12 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pAddBssParams->vhtCapable = 0;
 	}
 
+	if (lim_is_session_he_capable(ft_session) &&
+	    pBeaconStruct->he_cap.present) {
+		lim_update_bss_he_capable(mac, pAddBssParams);
+		lim_add_bss_he_cfg(pAddBssParams, ft_session);
+	}
+
 	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d",
 		bssDescription->chan_freq);
 
