@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -145,7 +145,8 @@ void target_if_flush_psoc_vdev_timers(struct wlan_objmgr_psoc *psoc)
 	for (i = 0; i < WLAN_UMAC_PSOC_MAX_VDEVS; i++) {
 		vdev_rsp = rx_ops->psoc_get_vdev_response_timer_info(psoc,
 								     i);
-		if (vdev_rsp && qdf_timer_sync_cancel(&vdev_rsp->rsp_timer))
+		if (vdev_rsp && qdf_atomic_read(&vdev_rsp->rsp_timer_inuse) &&
+		    qdf_timer_sync_cancel(&vdev_rsp->rsp_timer))
 			target_if_vdev_mgr_rsp_timer_cb(vdev_rsp);
 	}
 }
