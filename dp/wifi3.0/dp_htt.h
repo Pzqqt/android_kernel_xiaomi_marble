@@ -95,7 +95,12 @@ int htt_wbm_event_record(struct htt_logger *h, uint8_t tx_status,
 #define HTT_PPDU_DESC_MAX_DEPTH 16
 #define DP_SCAN_PEER_ID 0xFFFF
 
-#define DP_HTT_HTC_PKT_MISCLIST_SIZE          256
+/*
+ * Set the base misclist size to HTT copy engine source ring size
+ * to guarantee that a packet on the misclist wont be freed while it
+ * is sitting in the copy engine.
+ */
+#define DP_HTT_HTC_PKT_MISCLIST_SIZE          2048
 #define HTT_T2H_MAX_MSG_SIZE 2048
 
 #define HTT_T2H_EXT_STATS_TLV_START_OFFSET    3
