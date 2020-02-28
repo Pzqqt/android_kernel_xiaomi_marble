@@ -774,11 +774,13 @@ typedef struct sStatsExtRequest {
  * @bssid - bssid that is to be blacklisted
  * @timeout - time duration for which the bssid is blacklisted
  * @received_time - boot timestamp at which the firmware event was received
+ * @rssi - rssi value for which the bssid is blacklisted
  */
 struct roam_blacklist_timeout {
 	struct qdf_mac_addr bssid;
 	uint32_t timeout;
 	qdf_time_t received_time;
+	int32_t rssi;
 };
 
 /*

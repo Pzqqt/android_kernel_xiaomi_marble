@@ -6199,10 +6199,19 @@ void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 	for (i = 0; i < src_lst->num_entries; i++) {
 
 		entry.bssid = blacklist->bssid;
-		entry.retry_delay = blacklist->timeout;
 		entry.time_during_rejection = blacklist->received_time;
-		/* set 0dbm as expected rssi for btm blaclisted entries */
-		entry.expected_rssi = LIM_MIN_RSSI;
+		/* If timeout = 0 and rssi = 0 ignore the entry */
+		if (!blacklist->timeout && !blacklist->rssi) {
+			continue;
+		} else if (blacklist->timeout) {
+			entry.retry_delay = blacklist->timeout;
+			/* set 0dbm as expected rssi */
+			entry.expected_rssi = LIM_MIN_RSSI;
+		} else {
+			/* blacklist timeout as 0 */
+			entry.retry_delay = blacklist->timeout;
+			entry.expected_rssi = blacklist->rssi;
+		}
 
 		/* Add this bssid to the rssi reject ap type in blacklist mgr */
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &entry);

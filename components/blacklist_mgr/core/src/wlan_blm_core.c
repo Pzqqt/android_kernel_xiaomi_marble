@@ -28,6 +28,7 @@
 
 #define SECONDS_TO_MS(params)       (params * 1000)
 #define MINUTES_TO_MS(params)       (SECONDS_TO_MS(params) * 60)
+#define RSSI_TIMEOUT_VALUE          60
 
 static void
 blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
@@ -94,7 +95,8 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 		qdf_time_t entry_age = cur_timestamp -
 			    blm_entry->ap_timestamp.rssi_reject_timestamp;
 
-		if ((entry_age > blm_entry->rssi_reject_params.retry_delay) ||
+		if ((blm_entry->rssi_reject_params.retry_delay &&
+		     entry_age > blm_entry->rssi_reject_params.retry_delay) ||
 		    (scan_entry && (scan_entry->rssi_raw > blm_entry->
 					   rssi_reject_params.expected_rssi))) {
 			/*
@@ -421,7 +423,7 @@ blm_get_delta_of_bssid(enum blm_reject_ap_type list_type,
 		       struct blm_config *cfg)
 {
 	qdf_time_t cur_timestamp = qdf_mc_timer_get_system_time();
-
+	int32_t disallowed_time;
 	/*
 	 * For all the list types, delta would be the entry age only. Hence the
 	 * oldest entry would be removed first in case of list is full, and the
@@ -451,9 +453,16 @@ blm_get_delta_of_bssid(enum blm_reject_ap_type list_type,
 	 * de-blacklisting the AP from rssi reject list.
 	 */
 	case DRIVER_RSSI_REJECT_TYPE:
-		return blm_entry->rssi_reject_params.retry_delay -
-			(cur_timestamp -
-				blm_entry->ap_timestamp.rssi_reject_timestamp);
+		if (blm_entry->rssi_reject_params.retry_delay) {
+			return blm_entry->rssi_reject_params.retry_delay -
+				(cur_timestamp -
+				 blm_entry->ap_timestamp.rssi_reject_timestamp);
+		} else {
+			disallowed_time = (int32_t)(MINUTES_TO_MS(RSSI_TIMEOUT_VALUE) -
+				(cur_timestamp -
+				 blm_entry->ap_timestamp.rssi_reject_timestamp));
+			return ((disallowed_time < 0) ? 0 : disallowed_time);
+		}
 	case DRIVER_MONITOR_TYPE:
 		return cur_timestamp -
 			       blm_entry->ap_timestamp.driver_monitor_timestamp;
@@ -1054,3 +1063,22 @@ blm_update_bssid_connect_params(struct wlan_objmgr_pdev *pdev,
 
 	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }
+
+int32_t blm_get_rssi_blacklist_threshold(struct wlan_objmgr_pdev *pdev)
+{
+	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	struct blm_config *cfg;
+
+	blm_ctx = blm_get_pdev_obj(pdev);
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || !blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return 0;
+	}
+
+	cfg = &blm_psoc_obj->blm_cfg;
+	return cfg->delta_rssi;
+}
+

@@ -41,6 +41,7 @@
 #include "lim_ser_des_utils.h"
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
+#include "wlan_blm_core.h"
 
 /**
  * lim_update_stads_htcap() - Updates station Descriptor HT capability
@@ -795,11 +796,17 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	    assoc_rsp->rssi_assoc_rej.present) {
 		struct sir_rssi_disallow_lst ap_info = {{0}};
 
+		if (!assoc_rsp->rssi_assoc_rej.retry_delay)
+			ap_info.expected_rssi = assoc_rsp->rssi_assoc_rej.delta_rssi +
+				WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info) +
+				blm_get_rssi_blacklist_threshold(mac_ctx->pdev);
+		else
+			ap_info.expected_rssi = assoc_rsp->rssi_assoc_rej.delta_rssi +
+				WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
+
 		ap_info.retry_delay = assoc_rsp->rssi_assoc_rej.retry_delay *
 							QDF_MC_TIMER_TO_MS_UNIT;
 		qdf_mem_copy(ap_info.bssid.bytes, hdr->sa, QDF_MAC_ADDR_SIZE);
-		ap_info.expected_rssi = assoc_rsp->rssi_assoc_rej.delta_rssi +
-					WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 	}
 	if (assoc_rsp->status_code != eSIR_MAC_SUCCESS_STATUS) {

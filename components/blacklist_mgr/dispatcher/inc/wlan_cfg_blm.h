@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,11 +132,39 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"bad bssid reset time")
 
+/*
+ * <ini>
+ * delta_rssi - RSSI threshold value, only when AP rssi improves
+ * by threshold value entry would be removed from blacklist manager and assoc
+ * req would be sent by FW.
+ * @Min: 0
+ * @Max: 10
+ * @Default: 5
+ *
+ * This ini is used to specify the rssi threshold value, after rssi improves
+ * by threshold the BSSID which is in the blacklist manager list should be
+ * removed from the respective list.
+ *
+ * Supported Feature: Customer requirement
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_BLACKLIST_RSSI_THRESHOLD CFG_INI_INT( \
+			"delta_rssi", \
+			0, \
+			10, \
+			5, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Configure delta RSSI")
+
 #define CFG_BLACKLIST_MGR_ALL \
 	CFG(CFG_AVOID_LIST_EXPIRY_TIME) \
 	CFG(CFG_BAD_BSSID_COUNTER_THRESHOLD) \
 	CFG(CFG_BLACK_LIST_EXPIRY_TIME) \
-	CFG(CFG_BAD_BSSID_RESET_TIME)
+	CFG(CFG_BAD_BSSID_RESET_TIME) \
+	CFG(CFG_BLACKLIST_RSSI_THRESHOLD)
 
 #else
 

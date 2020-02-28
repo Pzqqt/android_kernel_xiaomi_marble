@@ -479,6 +479,8 @@ typedef enum eSirMacReasonCodes {
 	eSIR_MAC_PEER_TIMEDOUT_REASON = 39,     /* Requested from peer STA due to timeout */
 	eSIR_MAC_CIPHER_NOT_SUPPORTED_REASON = 45,      /* Peer STA does not support the requested cipher suite */
 	eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON = 46, /* FT reason */
+	eSIR_MAC_POOR_RSSI_CONDITIONS = 71, /* Disassociated due to poor RSSI conditions */
+
 	/* reserved                                         47 - 65535. */
 
 	/*

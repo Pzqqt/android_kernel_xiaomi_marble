@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -247,4 +247,15 @@ blm_get_bssid_reject_list(struct wlan_objmgr_pdev *pdev,
 			  struct reject_ap_config_params *reject_list,
 			  uint8_t max_bssid_to_be_filled,
 			  enum blm_reject_ap_type reject_ap_type);
+
+/**
+ * blm_get_rssi_blacklist_threshold() - Get rssi blacklist threshold value
+ * @pdev: pdev object
+ *
+ * This API will get the RSSI blacklist threshold info.
+ *
+ * Return: rssi theshold value
+ */
+int32_t
+blm_get_rssi_blacklist_threshold(struct wlan_objmgr_pdev *pdev);
 #endif
