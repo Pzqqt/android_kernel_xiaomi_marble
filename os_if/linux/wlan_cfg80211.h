@@ -63,8 +63,11 @@
 #define vendor_command_policy(__policy, __maxattr) \
 	.policy = __policy,                        \
 	.maxattr = __maxattr
+#define VENDOR_NLA_POLICY_NESTED(__policy) \
+	NLA_POLICY_NESTED(__policy)
 #else
 #define vendor_command_policy(__policy, __maxattr)
+#define VENDOR_NLA_POLICY_NESTED(__policy) {.type = NLA_NESTED}
 #endif /*End of (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0) */
 
 #if defined(NBUF_MEMORY_DEBUG) && defined(NETLINK_BUF_TRACK)
