@@ -263,6 +263,50 @@ static void wlan_vdev_start_fw_send(struct wlan_objmgr_pdev *pdev,
 	wlan_util_change_map_index(send_array, wlan_vdev_get_id(vdev), 0);
 }
 
+static void mlme_dispatch_mvr_req_fail(struct pdev_mlme_obj *pdev_mlme)
+{
+	uint32_t vdev_id;
+	uint32_t max_vdevs = 0;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!pdev_mlme) {
+		mlme_err("PDEV_MLME is NULL");
+		return;
+	}
+
+	pdev = pdev_mlme->pdev;
+	if (!pdev) {
+		mlme_err("PDEV is NULL");
+		return;
+	}
+
+	max_vdevs = wlan_psoc_get_max_vdev_count(wlan_pdev_get_psoc(pdev));
+	for (vdev_id = 0; vdev_id < max_vdevs; vdev_id++) {
+		if (!wlan_util_map_index_is_set(
+				pdev_mlme->restart_send_vdev_bmap,
+				vdev_id)) {
+			continue;
+		}
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(
+				pdev, vdev_id, WLAN_MLME_NB_ID);
+		if (!vdev) {
+			mlme_err("objmgr vdev not found for vdev %u", vdev_id);
+			continue;
+		}
+
+		mlme_err("Multivdev restart request failed vdev:%u", vdev_id);
+		wlan_vdev_mlme_sm_deliver_evt(vdev,
+					      WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
+					      0, NULL);
+
+		wlan_util_change_map_index(pdev_mlme->restart_send_vdev_bmap,
+					   vdev_id, 0);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+	}
+}
+
 static void mlme_restart_req_timer_start(struct pdev_mlme_obj *pdev_mlme)
 {
 	qdf_timer_mod(&pdev_mlme->restart_req_timer, 100);
@@ -273,9 +317,10 @@ static void mlme_restart_req_timer_stop(struct pdev_mlme_obj *pdev_mlme)
 	qdf_timer_stop(&pdev_mlme->restart_req_timer);
 }
 
-static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
+static QDF_STATUS mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 {
 	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pdev = pdev_mlme->pdev;
 
@@ -302,7 +347,8 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 				 pdev_mlme->restart_send_vdev_bmap, 0,
 				 WLAN_MLME_NB_ID);
 		else
-			mlme_vdev_ops_multivdev_restart_fw_cmd_send(pdev);
+			status = mlme_vdev_ops_multivdev_restart_fw_cmd_send(
+					pdev);
 
 		if (pdev_mlme->start_send_vdev_arr[0] ||
 		    pdev_mlme->start_send_vdev_arr[1]) {
@@ -315,16 +361,18 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 	} else {
 		mlme_restart_req_timer_start(pdev_mlme);
 	}
+
+	return status;
 }
 
 #define MULTIVDEV_RESTART_MAX_RETRY_CNT 100
-static os_timer_func(mlme_restart_req_timeout)
+static void mlme_restart_req_timeout(void *arg)
 {
 	unsigned long restart_pend_vdev_bmap[2];
 	struct wlan_objmgr_pdev *pdev;
-	struct pdev_mlme_obj *pdev_mlme;
+	struct pdev_mlme_obj *pdev_mlme = (struct pdev_mlme_obj *)arg;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	OS_GET_TIMER_ARG(pdev_mlme, struct pdev_mlme_obj *);
 
 	pdev = pdev_mlme->pdev;
 
@@ -350,9 +398,12 @@ static os_timer_func(mlme_restart_req_timeout)
 		     pdev_mlme->restart_pend_vdev_bmap[1])))
 			mlme_restart_req_timer_start(pdev_mlme);
 		else
-			mlme_multivdev_restart(pdev_mlme);
+			status = mlme_multivdev_restart(pdev_mlme);
 	}
 	qdf_spin_unlock_bh(&pdev_mlme->vdev_restart_lock);
+
+	if (status != QDF_STATUS_SUCCESS)
+		mlme_dispatch_mvr_req_fail(pdev_mlme);
 }
 
 static QDF_STATUS mlme_vdev_restart_is_allowed(struct wlan_objmgr_pdev *pdev,
@@ -406,22 +457,12 @@ static QDF_STATUS mlme_vdev_restart_is_allowed(struct wlan_objmgr_pdev *pdev,
 		wlan_util_change_map_index(pdev_mlme->restart_send_vdev_bmap,
 					   wlan_vdev_get_id(vdev), 1);
 
-		/* If all vdev id bits are enabled, start vdev restart for all
-		 * vdevs, otherwise, start timer and return
+		/* On timer expiry, check any pending vdev has gone
+		 * down, then enable thats vdev bit, if pending vdev
+		 * is still in valid, then restart the timer
 		 */
-		if (!pdev_mlme->restart_pend_vdev_bmap[0] &&
-		    !pdev_mlme->restart_pend_vdev_bmap[1]) {
-			mlme_restart_req_timer_stop(pdev_mlme);
-			mlme_multivdev_restart(pdev_mlme);
-			status = QDF_STATUS_E_FAILURE;
-		} else {
-			/* On timer expiry, check any pending vdev has gone
-			 * down, then enable thats vdev bit, if pending vdev
-			 * is still in valid, then restart the timer
-			 */
-			mlme_restart_req_timer_start(pdev_mlme);
-			status = QDF_STATUS_E_FAILURE;
-		}
+		mlme_restart_req_timer_start(pdev_mlme);
+		status = QDF_STATUS_E_FAILURE;
 	}
 	qdf_spin_unlock_bh(&pdev_mlme->vdev_restart_lock);
 
