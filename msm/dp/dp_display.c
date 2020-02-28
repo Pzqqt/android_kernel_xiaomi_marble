@@ -2324,9 +2324,13 @@ static int dp_display_unprepare(struct dp_display *dp_display, void *panel)
 	 * Check if the power off sequence was triggered
 	 * by a source initialated action like framework
 	 * reboot or suspend-resume but not from normal
-	 * hot plug.
+	 * hot plug. If connector is in MST mode, skip
+	 * powering down host as aux needs to be kept
+	 * alive to handle hot-plug sideband message.
 	 */
-	if (dp_display_is_ready(dp))
+	if (dp_display_is_ready(dp) &&
+		(dp_display_state_is(DP_STATE_SUSPENDED) ||
+		!dp->mst.mst_active))
 		flags |= DP_PANEL_SRC_INITIATED_POWER_DOWN;
 
 	if (dp->active_stream_cnt)
