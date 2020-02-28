@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -167,6 +167,8 @@ blm_init_cfg(struct wlan_objmgr_psoc *psoc, struct blm_config *blm_cfg)
 				cfg_get(psoc, CFG_BAD_BSSID_RESET_TIME);
 	blm_cfg->bad_bssid_counter_thresh =
 				cfg_get(psoc, CFG_BAD_BSSID_COUNTER_THRESHOLD);
+	blm_cfg->delta_rssi =
+				cfg_get(psoc, CFG_BLACKLIST_RSSI_THRESHOLD);
 }
 
 QDF_STATUS
