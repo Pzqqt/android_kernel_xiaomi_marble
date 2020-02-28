@@ -36,6 +36,7 @@
 #define DP_BA_ACK_FRAME_SIZE (sizeof(struct ieee80211_ctlframe_addr2) + 36)
 #define DP_ACK_FRAME_SIZE (sizeof(struct ieee80211_frame_min_one))
 #define DP_CTS_FRAME_SIZE (sizeof(struct ieee80211_frame_min_one))
+#define DP_ACKNOACK_FRAME_SIZE (sizeof(struct ieee80211_frame) + 16)
 #define DP_MAX_MPDU_64 64
 #define DP_NUM_WORDS_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 5)
 #define DP_NUM_BYTES_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 3)
@@ -46,6 +47,11 @@
 
 #define INVALID_PPDU_ID 0xFFFF
 #define MAX_END_TSF 0xFFFFFFFF
+
+#define DP_IEEE80211_CATEGORY_VHT (21)
+#define DP_NOACK_SOUNDING_TOKEN_POS (4)
+#define DP_NOACK_STOKEN_POS_SHIFT (2)
+#define DP_NDPA_TOKEN_POS (16)
 
 /* Macros to handle sequence number bitmaps */
 
@@ -3766,7 +3772,9 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 		return QDF_STATUS_SUCCESS;
 
 	if (ppdu_info->sw_frame_group_id ==
-	    HAL_MPDU_SW_FRAME_GROUP_MGMT_BEACON)
+	    HAL_MPDU_SW_FRAME_GROUP_MGMT_BEACON ||
+	    ppdu_info->sw_frame_group_id ==
+	    HAL_MPDU_SW_FRAME_GROUP_CTRL_NDPA)
 		return QDF_STATUS_SUCCESS;
 
 	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_MGMT_PROBE_REQ &&
@@ -3883,6 +3891,184 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 
 	}
 
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_gen_noack_frame: generate noack Action frame by using parameters
+ *					from received NDPA frame
+ * @ppdu_info: pointer to ppdu_info
+ * @peer: pointer to peer structure
+ * @mpdu_nbuf: buffer for the generated noack frame
+ * @mon_mpdu: mpdu from monitor destination path
+ *
+ * Return: QDF_STATUS
+ */
+static void dp_gen_noack_frame(struct hal_rx_ppdu_info *ppdu_info,
+			       struct dp_peer *peer, qdf_nbuf_t mpdu_nbuf,
+			       qdf_nbuf_t mon_mpdu)
+{
+	struct ieee80211_frame *wh;
+	uint16_t duration;
+	struct dp_vdev *vdev = NULL;
+	char *ndpa_buf = qdf_nbuf_data(mon_mpdu);
+	uint8_t token = 0;
+	uint8_t *frm;
+
+	wh = (struct ieee80211_frame *)qdf_nbuf_data(mpdu_nbuf);
+
+	qdf_mem_zero(((char *)wh), DP_ACKNOACK_FRAME_SIZE);
+
+	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 |
+			IEEE80211_FC0_TYPE_MGT |
+			IEEE80211_FCO_SUBTYPE_ACTION_NO_ACK;
+
+	qdf_mem_copy(wh->i_addr1, &peer->mac_addr.raw[0], QDF_MAC_ADDR_SIZE);
+
+	vdev = peer->vdev;
+	if (vdev) {
+		qdf_mem_copy(wh->i_addr2,
+			     vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+
+		qdf_mem_copy(wh->i_addr3,
+			     vdev->mac_addr.raw,
+			     QDF_MAC_ADDR_SIZE);
+	}
+
+	duration = (ppdu_info->rx_status.duration > SIFS_INTERVAL) ?
+		    ppdu_info->rx_status.duration - SIFS_INTERVAL : 0;
+	wh->i_dur[0] = duration & 0xff;
+	wh->i_dur[1] = (duration >> 8) & 0xff;
+
+	frm = (uint8_t *)&wh[1];
+	/*
+	 * Update category field
+	 */
+	*frm = DP_IEEE80211_CATEGORY_VHT;
+
+	/*
+	 * Update sounding token obtained from NDPA,
+	 * shift to get upper six bits
+	 */
+	frm += DP_NOACK_SOUNDING_TOKEN_POS;
+
+	token = ndpa_buf[DP_NDPA_TOKEN_POS] >> DP_NOACK_STOKEN_POS_SHIFT;
+
+	*frm = (token) << DP_NOACK_STOKEN_POS_SHIFT;
+
+	qdf_nbuf_set_pktlen(mpdu_nbuf, DP_ACKNOACK_FRAME_SIZE);
+}
+
+/**
+ * dp_send_noack_frame_to_stack: Sends noack Action frame to upper stack
+ *					in response to received NDPA frame.
+ * @soc: SoC handle
+ * @pdev: PDEV pointer
+ * @mon_mpdu: mpdu from monitor destination path
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
+					struct dp_pdev *pdev,
+					qdf_nbuf_t mon_mpdu)
+{
+	struct hal_rx_ppdu_info *ppdu_info = &pdev->ppdu_info;
+	struct mon_rx_user_status *rx_user_status =
+				&ppdu_info->rx_user_status[0];
+	struct dp_ast_entry *ast_entry;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+	struct cdp_tx_indication_info tx_capture_info;
+
+	if (rx_user_status->ast_index >=
+		wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = soc->ast_table[rx_user_status->ast_index];
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer = ast_entry->peer;
+	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+	peer_id = peer->peer_ids[0];
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer) {
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer, peer->mac_addr.raw)) {
+		dp_peer_unref_del_find_by_id(peer);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	set_mpdu_info(&tx_capture_info,
+		      &ppdu_info->rx_status, rx_user_status);
+
+	tx_capture_info.mpdu_info.mcs = rx_user_status->mcs;
+	/*
+	 *ppdu_desc is not required for legacy frames
+	 */
+	tx_capture_info.ppdu_desc = NULL;
+
+	tx_capture_info.mpdu_nbuf =
+		qdf_nbuf_alloc(pdev->soc->osdev,
+			       MAX_MONITOR_HEADER +
+			       DP_ACKNOACK_FRAME_SIZE,
+			       MAX_MONITOR_HEADER,
+			       4, FALSE);
+
+	if (!tx_capture_info.mpdu_nbuf) {
+		dp_peer_unref_del_find_by_id(peer);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	dp_gen_noack_frame(ppdu_info, peer,
+			   tx_capture_info.mpdu_nbuf, mon_mpdu);
+
+	dp_peer_unref_del_find_by_id(peer);
+	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+			     &tx_capture_info, HTT_INVALID_PEER,
+			     WDI_NO_VAL, pdev->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_handle_tx_capture_from_dest: Handle any TX capture frames from
+ *			monitor destination path.
+ * @soc: SoC handle
+ * @pdev: PDEV pointer
+ * @mon_mpdu: mpdu from monitor destination path
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dp_handle_tx_capture_from_dest(struct dp_soc *soc,
+					  struct dp_pdev *pdev,
+					  qdf_nbuf_t mon_mpdu)
+{
+	struct hal_rx_ppdu_info *ppdu_info = &pdev->ppdu_info;
+
+	/*
+	 * The below switch case can be extended to
+	 * add more frame types as needed
+	 */
+	switch (ppdu_info->sw_frame_group_id) {
+	case HAL_MPDU_SW_FRAME_GROUP_CTRL_NDPA:
+		return dp_send_noack_frame_to_stack(soc, pdev, mon_mpdu);
+
+	default:
+		break;
+	}
 	return QDF_STATUS_SUCCESS;
 }
 

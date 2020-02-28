@@ -272,6 +272,19 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 				      struct hal_rx_ppdu_info *ppdu_info);
 
 /**
+ * dp_handle_tx_capture_from_dest: Handle any TX capture frames from
+ * monitor destination path.
+ * @soc: SoC handle
+ * @pdev: PDEV pointer
+ * @mon_mpdu: mpdu from monitor destination path
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_handle_tx_capture_from_dest(struct dp_soc *soc, struct dp_pdev *pdev,
+			       qdf_nbuf_t mon_mpdu);
+
+/**
  * dp_peer_set_tx_capture_enabled: Set tx_cap_enabled bit in peer
  * @pdev: DP PDEV handle
  * @peer: Peer handle
