@@ -123,18 +123,18 @@ QDF_STATUS tgt_cfr_config_rcc(struct wlan_objmgr_pdev *pdev,
  * entries
  * @pdev: pointer to pdev_object
  *
- * Return: succcess / failure
+ * Return: None
  */
-QDF_STATUS tgt_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev);
+void tgt_cfr_start_lut_age_timer(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_cfr_stop_lut_age_timer() - API to stop timer to flush aged out LUT
  * entries
  * @pdev: pointer to pdev_object
  *
- * Return: succcess / failure
+ * Return: None
  */
-QDF_STATUS tgt_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev);
+void tgt_cfr_stop_lut_age_timer(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_cfr_default_ta_ra_cfg() - API to configure default values in TA_RA mode
@@ -159,5 +159,11 @@ void tgt_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev);
  * @nbuf: pointer to cdp_rx_indication_ppdu
  */
 void tgt_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
+
+/**
+ * tgt_cfr_update_global_cfg() - Update global config after successful commit
+ * @pdev: pointer to pdev_object
+ */
+void tgt_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev);
 #endif
 #endif

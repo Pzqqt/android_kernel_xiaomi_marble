@@ -604,59 +604,17 @@ QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-void cfr_update_global_cfg(struct pdev_cfr *pdev_cfrobj)
+static bool cfr_is_filter_enabled(struct cfr_rcc_param *rcc_param)
 {
-	int grp_id;
-	struct ta_ra_cfr_cfg *curr_cfg = NULL;
-	struct ta_ra_cfr_cfg *glbl_cfg = NULL;
-	unsigned long *modified_in_this_session =
-	 (unsigned long *)&pdev_cfrobj->rcc_param.modified_in_curr_session;
-
-	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
-		if (qdf_test_bit(grp_id, modified_in_this_session)) {
-			/* Populating global config based on user's input */
-			glbl_cfg = &pdev_cfrobj->global[grp_id];
-			curr_cfg = &pdev_cfrobj->rcc_param.curr[grp_id];
-
-			if (curr_cfg->valid_ta)
-				qdf_mem_copy(glbl_cfg->tx_addr,
-					     curr_cfg->tx_addr,
-					     QDF_MAC_ADDR_SIZE);
-
-			if (curr_cfg->valid_ra)
-				qdf_mem_copy(glbl_cfg->rx_addr,
-					     curr_cfg->rx_addr,
-					     QDF_MAC_ADDR_SIZE);
-
-			if (curr_cfg->valid_ta_mask)
-				qdf_mem_copy(glbl_cfg->tx_addr_mask,
-					     curr_cfg->tx_addr_mask,
-					     QDF_MAC_ADDR_SIZE);
-
-			if (curr_cfg->valid_ra_mask)
-				qdf_mem_copy(glbl_cfg->rx_addr_mask,
-					     curr_cfg->rx_addr_mask,
-					     QDF_MAC_ADDR_SIZE);
-
-			if (curr_cfg->valid_bw_mask)
-				glbl_cfg->bw = curr_cfg->bw;
-
-			if (curr_cfg->valid_nss_mask)
-				glbl_cfg->nss = curr_cfg->nss;
-
-			if (curr_cfg->valid_mgmt_subtype)
-				glbl_cfg->mgmt_subtype_filter =
-					curr_cfg->mgmt_subtype_filter;
-
-			if (curr_cfg->valid_ctrl_subtype)
-				glbl_cfg->ctrl_subtype_filter =
-					curr_cfg->ctrl_subtype_filter;
-
-			if (curr_cfg->valid_data_subtype)
-				glbl_cfg->data_subtype_filter =
-					curr_cfg->data_subtype_filter;
-		}
-	}
+	if (rcc_param->m_directed_ftm ||
+	    rcc_param->m_all_ftm_ack ||
+	    rcc_param->m_ndpa_ndp_directed ||
+	    rcc_param->m_ndpa_ndp_all ||
+	    rcc_param->m_ta_ra_filter ||
+	    rcc_param->m_all_packet)
+		return true;
+	else
+		return false;
 }
 
 QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
@@ -670,6 +628,11 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 	status = dev_sanity_check(vdev, &pdev, &pcfr);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
+	if (!cfr_is_filter_enabled(&pcfr->rcc_param)) {
+		cfr_err(" All RCC modes are disabled.\n");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return status;
+	}
 
 	cfr_err("CAPTURE MODE:\n");
 
@@ -886,19 +849,6 @@ void cfr_set_filter(struct wlan_objmgr_pdev *pdev,
 		       filter_val);
 }
 
-static bool cfr_is_filter_enabled(struct cfr_rcc_param *rcc_param)
-{
-	if (rcc_param->m_directed_ftm ||
-	    rcc_param->m_all_ftm_ack ||
-	    rcc_param->m_ndpa_ndp_directed ||
-	    rcc_param->m_ndpa_ndp_all ||
-	    rcc_param->m_ta_ra_filter ||
-	    rcc_param->m_all_packet)
-		return true;
-	else
-		return false;
-}
-
 /*
  * With the initiation of commit command, this handler will be triggered.
  *
@@ -1010,8 +960,8 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 	status = tgt_cfr_config_rcc(pdev, &pcfr->rcc_param);
 	if (status == QDF_STATUS_SUCCESS) {
 		cfr_info("CFR commit done\n");
-		/* Update glbl cfg */
-		cfr_update_global_cfg(pcfr);
+		/* Update global config */
+		tgt_cfr_update_global_cfg(pdev);
 
 		/* Bring curr_cfg to default state for next commit session */
 		tgt_cfr_default_ta_ra_cfg(pdev, &pcfr->rcc_param,
