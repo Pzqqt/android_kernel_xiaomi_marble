@@ -1682,9 +1682,12 @@ static void swrm_enable_slave_irq(struct swr_mstr_ctrl *swrm)
 	}
 	dev_dbg(swrm->dev, "%s: slave status: 0x%x\n", __func__, status);
 	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
-		if (status & SWRM_MCP_SLV_STATUS_MASK)
+		if (status & SWRM_MCP_SLV_STATUS_MASK) {
+			swrm_cmd_fifo_wr_cmd(swrm, 0xFF, i, 0x0,
+					SWRS_SCP_INT_STATUS_CLEAR_1);
 			swrm_cmd_fifo_wr_cmd(swrm, 0x4, i, 0x0,
-						SWRS_SCP_INT_STATUS_MASK_1);
+					SWRS_SCP_INT_STATUS_MASK_1);
+		}
 		status >>= 2;
 	}
 }
@@ -1810,6 +1813,17 @@ handle_irq:
 				dev_dbg(swrm->dev,
 					"%s: device %d got detached\n",
 					__func__, devnum);
+				if (devnum == 0) {
+					/*
+					 * enable host irq if device 0 detached
+					 * as hw will mask host_irq at slave
+					 * but will not unmask it afterwards.
+					 */
+					swrm_cmd_fifo_wr_cmd(swrm, 0xFF, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_CLEAR_1);
+					swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_MASK_1);
+				}
 				break;
 			case SWR_ATTACHED_OK:
 				dev_dbg(swrm->dev,
