@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,14 @@ wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 					      struct wireless_dev *wdev,
 					      const void *data, int data_len);
 
+extern const struct nla_policy
+	btm_params_policy
+	[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+
+extern const struct nla_policy
+	btm_cand_list_policy
+	[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_MAX + 1];
+
 #define FEATURE_BSS_TRANSITION_VENDOR_COMMANDS				\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -51,7 +59,9 @@ wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 		 WIPHY_VENDOR_CMD_NEED_NETDEV |				\
 		 WIPHY_VENDOR_CMD_NEED_RUNNING,				\
-	.doit = wlan_hdd_cfg80211_fetch_bss_transition_status		\
+	.doit = wlan_hdd_cfg80211_fetch_bss_transition_status,		\
+	vendor_command_policy(btm_params_policy,			\
+			      QCA_WLAN_VENDOR_ATTR_MAX)			\
 },
 #else /* FEATURE_BSS_TRANSITION */
 #define FEATURE_BSS_TRANSITION_VENDOR_COMMANDS

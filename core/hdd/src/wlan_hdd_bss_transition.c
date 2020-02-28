@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -82,6 +82,22 @@ static int wlan_hdd_fill_btm_resp(struct sk_buff *reply_skb,
 	return 0;
 }
 
+const struct nla_policy
+btm_params_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_BTM_MBO_TRANSITION_REASON] = {
+						.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO] =
+			VENDOR_NLA_POLICY_NESTED(btm_cand_list_policy),
+};
+
+const struct nla_policy
+btm_cand_list_policy[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_MAX + 1]
+	= {[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_BSSID] = {
+					.len = QDF_MAC_ADDR_SIZE},
+	   [QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_STATUS] = {
+						.type = NLA_U32},
+};
+
 /**
  * __wlan_hdd_cfg80211_fetch_bss_transition_status() - fetch bss transition
  * status
@@ -117,21 +133,6 @@ __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 					WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle_t mac_handle;
 	QDF_STATUS status;
-
-	const struct nla_policy
-	btm_params_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
-		[QCA_WLAN_VENDOR_ATTR_BTM_MBO_TRANSITION_REASON] = {
-							.type = NLA_U8},
-		[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO] = {
-							.type = NLA_NESTED},
-	};
-	const struct nla_policy
-	btm_cand_list_policy[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_MAX + 1]
-		= {[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_BSSID] = {
-						.len = QDF_MAC_ADDR_SIZE},
-		   [QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_STATUS] = {
-							.type = NLA_U32},
-		};
 
 	hdd_enter();
 
