@@ -66,6 +66,9 @@
 
 #define SDE_HW_BLK_NAME_LEN	16
 
+/* default size of valid register space for MDSS_HW block (offset 0) */
+#define DEFAULT_MDSS_HW_BLOCK_SIZE 0x5C
+
 #define MAX_IMG_WIDTH 0x3fff
 #define MAX_IMG_HEIGHT 0x3fff
 
@@ -1423,6 +1426,7 @@ struct sde_limit_cfg {
  * @has_sui_blendstage  flag to indicate secure-ui has a blendstage restriction
  * @has_cursor    indicates if hardware cursor is supported
  * @has_vig_p010  indicates if vig pipe supports p010 format
+ * @mdss_hw_block_size  Max offset of MDSS_HW block (0 offset), used for debug
  * @inline_rot_formats	formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  * @rc_count	number of rounded corner hardware instances
@@ -1485,6 +1489,7 @@ struct sde_mdss_cfg {
 	bool has_hdr_plus;
 	bool has_cursor;
 	bool has_vig_p010;
+	u32 mdss_hw_block_size;
 	u32 mdss_count;
 	struct sde_mdss_base_cfg mdss[MAX_BLOCKS];
 

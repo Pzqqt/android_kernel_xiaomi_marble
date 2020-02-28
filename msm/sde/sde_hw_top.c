@@ -615,6 +615,9 @@ struct sde_hw_mdp *sde_hw_mdptop_init(enum sde_mdp idx,
 		goto blk_init_error;
 	}
 
+	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, "mdss_hw", 0,
+			m->mdss_hw_block_size, 0);
+
 	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name,
 			mdp->hw.blk_off, mdp->hw.blk_off + mdp->hw.length,
 			mdp->hw.xin_id);
