@@ -1805,6 +1805,14 @@ end:
 static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 	u32 sw_event, struct sde_encoder_virt *sde_enc, bool is_vid_mode)
 {
+	struct msm_drm_private *priv;
+	struct sde_kms *sde_kms;
+	struct drm_crtc *crtc = drm_enc->crtc;
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+
+	priv = drm_enc->dev->dev_private;
+	sde_kms = to_sde_kms(priv->kms);
+
 	mutex_lock(&sde_enc->rc_lock);
 
 	if (sde_enc->rc_state != SDE_ENC_RC_STATE_ON) {
@@ -1829,6 +1837,10 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 		/* disable all the clks and resources */
 		_sde_encoder_update_rsc_client(drm_enc, false);
 		_sde_encoder_resource_control_helper(drm_enc, false);
+
+		if (!sde_kms->perf.bw_vote_mode)
+			memset(&sde_crtc->cur_perf, 0,
+				sizeof(struct sde_core_perf_params));
 	}
 
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
