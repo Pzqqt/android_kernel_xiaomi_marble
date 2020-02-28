@@ -2446,6 +2446,14 @@ wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 				      uint8_t roam_reason_vsie_enabled);
+
+/**
+ * wlan_mlme_get_roaming_triggers  - Get the roaming triggers bitmap
+ * @psoc: Pointer to PSOC object
+ *
+ * Return: Roaming triggers value
+ */
+uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc);
 #else
 static inline QDF_STATUS
 wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
@@ -2459,6 +2467,12 @@ wlan_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 				      uint8_t roam_reason_vsie_enable)
 {
 	return QDF_STATUS_E_FAILURE;
+}
+
+static inline
+uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
+{
+	return 0xFFFF;
 }
 #endif
 

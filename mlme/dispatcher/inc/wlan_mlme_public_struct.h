@@ -1438,6 +1438,7 @@ struct bss_load_trigger {
  * idle roam trigger.
  * @enable_roam_reason_vsie:        Enable/disable incluison of roam reason
  * vsie in Re(assoc) frame
+ * @roam_trigger_bitmap:            Bitmap of roaming triggers.
  * @early_stop_scan_enable:         Set early stop scan
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
@@ -1541,6 +1542,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t idle_roam_band;
 	int32_t idle_roam_min_rssi;
 	bool enable_roam_reason_vsie;
+	uint32_t roam_trigger_bitmap;
 #endif
 	bool early_stop_scan_enable;
 	bool enable_5g_band_pref;
