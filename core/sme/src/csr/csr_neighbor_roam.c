@@ -34,6 +34,7 @@
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
 #include "wlan_policy_mgr_api.h"
+#include "wlan_mlme_api.h"
 
 static const char *lfr_get_config_item_string(uint8_t reason)
 {
@@ -616,7 +617,7 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-static void csr_roam_restore_default_config(tpAniSirGlobal mac_ctx,
+static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 					    uint8_t vdev_id)
 {
 	struct roam_triggers triggers;
@@ -624,14 +625,14 @@ static void csr_roam_restore_default_config(tpAniSirGlobal mac_ctx,
 	sme_set_roam_config_enable(MAC_HANDLE(mac_ctx), vdev_id, 0);
 
 	triggers.vdev_id = vdev_id;
-	triggers.trigger_bitmap = 0xff;
+	triggers.trigger_bitmap = wlan_mlme_get_roaming_triggers(mac_ctx->psoc);
 	sme_debug("Reset roam trigger bitmap to 0x%x", triggers.trigger_bitmap);
 	sme_set_roam_triggers(MAC_HANDLE(mac_ctx), &triggers);
 	sme_roam_control_restore_default_config(MAC_HANDLE(mac_ctx),
 						vdev_id);
 }
 #else
-static void csr_roam_restore_default_config(tpAniSirGlobal mac_ctx,
+static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 					    uint8_t vdev_id)
 {
 }
