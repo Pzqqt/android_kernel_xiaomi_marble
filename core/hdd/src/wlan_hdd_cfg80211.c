@@ -15447,6 +15447,7 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 	uint32_t channel_bonding_mode;
 	struct ieee80211_supported_band *band_2g;
 	struct ieee80211_supported_band *band_5g;
+	uint8_t i;
 
 	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status)
@@ -15466,6 +15467,16 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 
 		if (!ht_cap_info.short_gi_20_mhz)
 			band_2g->ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_20;
+
+		for (i = 0; i < hdd_ctx->num_rf_chains; i++)
+			band_2g->ht_cap.mcs.rx_mask[i] = 0xff;
+
+		/*
+		 * According to mcs_nss HT MCS parameters highest data rate for
+		 * Nss = 1 is 150 Mbps
+		 */
+		band_2g->ht_cap.mcs.rx_highest =
+				cpu_to_le16(150 * hdd_ctx->num_rf_chains);
 	}
 
 	if (band_5g) {
@@ -15488,6 +15499,15 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 		if (!channel_bonding_mode)
 			band_5g->ht_cap.cap &=
 					~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+
+		for (i = 0; i < hdd_ctx->num_rf_chains; i++)
+			band_5g->ht_cap.mcs.rx_mask[i] = 0xff;
+		/*
+		 * According to mcs_nss HT MCS parameters highest data rate for
+		 * Nss = 1 is 150 Mbps
+		 */
+		band_5g->ht_cap.mcs.rx_highest =
+				cpu_to_le16(150 * hdd_ctx->num_rf_chains);
 	}
 }
 
