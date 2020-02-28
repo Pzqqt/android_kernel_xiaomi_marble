@@ -425,6 +425,7 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 			roam_req->num_bssid_preferred_list;
 	roam_filter->num_rssi_rejection_ap =
 			roam_req->num_rssi_rejection_ap;
+	roam_filter->delta_rssi = roam_req->delta_rssi;
 	buf_ptr += sizeof(wmi_roam_filter_fixed_param);
 
 	WMITLV_SET_HDR((buf_ptr),

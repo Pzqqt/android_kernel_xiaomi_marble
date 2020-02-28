@@ -200,6 +200,8 @@ struct wmi_mawc_roam_params {
  *                             AP's, in units of db
  * @num_disallowed_aps: How many APs the target should maintain in its LCA
  *                      list
+ * @delta_rssi: (dB units) when AB in RSSI blacklist improved by at least
+ *              delta_rssi,it will be removed from blacklist
  *
  * This structure holds all the key parameters related to
  * initial connection and roaming connections.
@@ -222,6 +224,7 @@ struct roam_scan_filter_params {
 	uint32_t num_rssi_rejection_ap;
 	struct reject_ap_config_params
 				rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
+	uint32_t delta_rssi;
 };
 
 #define WMI_CFG_VALID_CHANNEL_LIST_LEN    100
