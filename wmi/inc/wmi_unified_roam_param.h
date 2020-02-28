@@ -462,6 +462,7 @@ struct scoring_param {
  * ROAM_TRIGGER_REASON_DEAUTH: Roam triggered due to deauth received from the
  * current connected AP.
  * ROAM_TRIGGER_REASON_IDLE: Roam triggered due to inactivity of the device.
+ * ROAM_TRIGGER_REASON_STA_KICKOUT: Roam triggered due to sta kickout event.
  * ROAM_TRIGGER_REASON_MAX: Maximum number of roam triggers
  */
 enum roam_trigger_reason {
@@ -480,6 +481,7 @@ enum roam_trigger_reason {
 	ROAM_TRIGGER_REASON_BSS_LOAD,
 	ROAM_TRIGGER_REASON_DEAUTH,
 	ROAM_TRIGGER_REASON_IDLE,
+	ROAM_TRIGGER_REASON_STA_KICKOUT,
 	ROAM_TRIGGER_REASON_MAX,
 };
 
@@ -763,41 +765,6 @@ struct wmi_invoke_neighbor_report_params {
 	uint32_t vdev_id;
 	uint32_t send_resp_to_host;
 	struct mac_ssid ssid;
-};
-
-/**
- * enum roam_control_trigger_reason - Bitmap of roaming triggers
- *
- * @ROAM_TRIGGER_REASON_PER: Set if the roam has to be triggered based on
- *     a bad packet error rates (PER).
- * @ROAM_TRIGGER_REASON_BEACON_MISS: Set if the roam has to be triggered
- *     based on beacon misses from the connected AP.
- * @ROAM_TRIGGER_REASON_POOR_RSSI: Set if the roam has to be triggered
- *     due to poor RSSI of the connected AP.
- * @ROAM_TRIGGER_REASON_BETTER_RSSI: Set if the roam has to be triggered
- *     upon finding a BSSID with a better RSSI than the connected BSSID.
- *     Here the RSSI of the current BSSID need not be poor.
- * @ROAM_TRIGGER_REASON_PERIODIC: Set if the roam has to be triggered
- *     by triggering a periodic scan to find a better AP to roam.
- * @ROAM_TRIGGER_REASON_DENSE: Set if the roam has to be triggered
- *     when the connected channel environment is too noisy/congested.
- * @ROAM_TRIGGER_REASON_BTM: Set if the roam has to be triggered
- *     when BTM Request frame is received from the connected AP.
- * @ROAM_TRIGGER_REASON_BSS_LOAD: Set if the roam has to be triggered
- *     when the channel utilization is goes above the configured threshold.
- *
- * Set the corresponding roam trigger reason bit to consider it for roam
- * trigger.
- */
-enum roam_control_trigger_reason {
-	ROAM_CONTROL_TRIGGER_REASON_PER			= 1 << 0,
-	ROAM_CONTROL_TRIGGER_REASON_BEACON_MISS		= 1 << 1,
-	ROAM_CONTROL_TRIGGER_REASON_POOR_RSSI		= 1 << 2,
-	ROAM_CONTROL_TRIGGER_REASON_BETTER_RSSI		= 1 << 3,
-	ROAM_CONTROL_TRIGGER_REASON_PERIODIC		= 1 << 4,
-	ROAM_CONTROL_TRIGGER_REASON_DENSE		= 1 << 5,
-	ROAM_CONTROL_TRIGGER_REASON_BTM			= 1 << 6,
-	ROAM_CONTROL_TRIGGER_REASON_BSS_LOAD		= 1 << 7,
 };
 
 /**
