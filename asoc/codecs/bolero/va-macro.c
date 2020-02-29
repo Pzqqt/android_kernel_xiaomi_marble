@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -44,16 +44,18 @@
 #define VA_MACRO_TX_DMIC_CLK_DIV_MASK 0x0E
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 #define VA_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
-#define VA_MACRO_ADC_MUX_CFG_OFFSET 0x2
+#define VA_MACRO_ADC_MUX_CFG_OFFSET 0x8
 
-#define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
+#define BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS       40
+#define BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS       100
+#define BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS       300
+#define BOLERO_CDC_VA_TX_AMIC_HPF_DELAY_MS       300
 #define MAX_RETRY_ATTEMPTS 500
-
 #define VA_MACRO_SWR_STRING_LEN 80
 #define VA_MACRO_CHILD_DEVICES_MAX 3
 
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
-static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS;
+static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 module_param(va_tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(va_tx_unmute_delay, "delay to unmute the tx path");
 
@@ -708,6 +710,25 @@ done:
 	return ret;
 }
 
+static int is_amic_enabled(struct snd_soc_component *component, int decimator)
+{
+	u16 adc_mux_reg = 0, adc_reg = 0;
+	u16 adc_n = BOLERO_ADC_MAX;
+
+	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+		adc_n = snd_soc_component_read32(component, adc_reg) &
+				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
+		if (adc_n >= BOLERO_ADC_MAX)
+			adc_n = BOLERO_ADC_MAX;
+	}
+
+	return adc_n;
+}
+
 static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 {
 	struct delayed_work *hpf_delayed_work;
@@ -716,7 +737,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct snd_soc_component *component;
 	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
-	u16 adc_mux_reg = 0, adc_n = 0, adc_reg = 0;
+	u16 adc_n = 0;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
@@ -732,26 +753,30 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
-			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
-		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
-			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
-				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n >= BOLERO_ADC_MAX)
-			goto va_hpf_set;
+	adc_n = is_amic_enabled(component, hpf_work->decimator);
+	if (adc_n < BOLERO_ADC_MAX) {
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x03, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x03, 0x01);
+	} else {
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x02, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+					      0x02, 0x00);
 	}
-va_hpf_set:
-	snd_soc_component_update_bits(component,
-			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
-			hpf_cut_off_freq << 5);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x02);
-	/* Minimum 1 clk cycle delay is required as per HW spec */
-	usleep_range(1000, 1010);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x00);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
@@ -1045,6 +1070,8 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u8 hpf_cut_off_freq;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
+	int hpf_delay = BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS;
+	int unmute_delay = BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -1090,21 +1117,27 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component, dec_cfg_reg,
 					    TX_HPF_CUT_OFF_FREQ_MASK,
 					    CF_MIN_3DB_150HZ << 5);
-			snd_soc_component_update_bits(component,
-					hpf_gate_reg, 0x03, 0x03);
-			/*
-			 * Minimum 1 clk cycle delay is required as per HW spec
-			 */
-			usleep_range(1000, 1010);
-			snd_soc_component_update_bits(component,
-				hpf_gate_reg, 0x02, 0x00);
-			snd_soc_component_update_bits(component,
-				hpf_gate_reg, 0x01, 0x01);
-			/*
-			 * 6ms delay is required as per HW spec
-			 */
-			usleep_range(6000, 6010);
 		}
+		if (is_amic_enabled(component, decimator) < BOLERO_ADC_MAX) {
+			hpf_delay = BOLERO_CDC_VA_TX_AMIC_HPF_DELAY_MS;
+			unmute_delay = BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS;
+			if (va_tx_unmute_delay < unmute_delay)
+				va_tx_unmute_delay = unmute_delay;
+		}
+		snd_soc_component_update_bits(component,
+				hpf_gate_reg, 0x03, 0x03);
+		/*
+		 * Minimum 1 clk cycle delay is required as per HW spec
+		 */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
+			hpf_gate_reg, 0x02, 0x00);
+		snd_soc_component_update_bits(component,
+			hpf_gate_reg, 0x01, 0x01);
+		/*
+		 * 6ms delay is required as per HW spec
+		 */
+		usleep_range(6000, 6010);
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&va_priv->va_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(va_tx_unmute_delay));
@@ -1112,7 +1145,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 							CF_MIN_3DB_150HZ)
 			schedule_delayed_work(
 					&va_priv->va_hpf_work[decimator].dwork,
-					msecs_to_jiffies(50));
+					msecs_to_jiffies(hpf_delay));
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read32(component, tx_gain_ctl_reg));
@@ -1672,18 +1705,7 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets_common[] = {
 	VA_MACRO_DAPM_MUX("VA SMIC MUX0", 0, va_smic0_v2),
 	VA_MACRO_DAPM_MUX("VA SMIC MUX1", 0, va_smic1_v2),
 
-	SND_SOC_DAPM_INPUT("VA SWR_MIC0"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC1"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC2"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC3"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC4"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC5"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC6"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC7"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC8"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC9"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC10"),
-	SND_SOC_DAPM_INPUT("VA SWR_MIC11"),
+	SND_SOC_DAPM_INPUT("VA SWR_INPUT"),
 
 	SND_SOC_DAPM_SUPPLY("VA MIC BIAS1", SND_SOC_NOPM, 0, 0,
 		va_macro_enable_micbias,
@@ -1971,18 +1993,18 @@ static const struct snd_soc_dapm_route va_audio_map_common[] = {
 	{"VA DMIC MUX0", "DMIC7", "VA DMIC7"},
 
 	{"VA DEC0 MUX", "SWR_MIC", "VA SMIC MUX0"},
-	{"VA SMIC MUX0", "SWR_MIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX0", "SWR_MIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX0", "SWR_MIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX0", "SWR_MIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX0", "SWR_MIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX0", "SWR_MIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX0", "SWR_MIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX0", "SWR_MIC7", "VA SWR_MIC7"},
-	{"VA SMIC MUX0", "SWR_MIC8", "VA SWR_MIC8"},
-	{"VA SMIC MUX0", "SWR_MIC9", "VA SWR_MIC9"},
-	{"VA SMIC MUX0", "SWR_MIC10", "VA SWR_MIC10"},
-	{"VA SMIC MUX0", "SWR_MIC11", "VA SWR_MIC11"},
+	{"VA SMIC MUX0", "SWR_MIC0", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC1", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC2", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC3", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC4", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC5", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC6", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC7", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC8", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC9", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC10", "VA SWR_INPUT"},
+	{"VA SMIC MUX0", "SWR_MIC11", "VA SWR_INPUT"},
 
 	{"VA DEC1 MUX", "MSM_DMIC", "VA DMIC MUX1"},
 	{"VA DMIC MUX1", "DMIC0", "VA DMIC0"},
@@ -1995,31 +2017,31 @@ static const struct snd_soc_dapm_route va_audio_map_common[] = {
 	{"VA DMIC MUX1", "DMIC7", "VA DMIC7"},
 
 	{"VA DEC1 MUX", "SWR_MIC", "VA SMIC MUX1"},
-	{"VA SMIC MUX1", "SWR_MIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX1", "SWR_MIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX1", "SWR_MIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX1", "SWR_MIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX1", "SWR_MIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX1", "SWR_MIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX1", "SWR_MIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX1", "SWR_MIC7", "VA SWR_MIC7"},
-	{"VA SMIC MUX1", "SWR_MIC8", "VA SWR_MIC8"},
-	{"VA SMIC MUX1", "SWR_MIC9", "VA SWR_MIC9"},
-	{"VA SMIC MUX1", "SWR_MIC10", "VA SWR_MIC10"},
-	{"VA SMIC MUX1", "SWR_MIC11", "VA SWR_MIC11"},
+	{"VA SMIC MUX1", "SWR_MIC0", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC1", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC2", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC3", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC4", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC5", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC6", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC7", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC8", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC9", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC10", "VA SWR_INPUT"},
+	{"VA SMIC MUX1", "SWR_MIC11", "VA SWR_INPUT"},
 
-	{"VA SWR_MIC0", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC1", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC2", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC3", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC4", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC5", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC6", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC7", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC8", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC9", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC10", NULL, "VA_SWR_PWR"},
-	{"VA SWR_MIC11", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
+	{"VA SWR_INPUT", NULL, "VA_SWR_PWR"},
 
 };
 
@@ -2044,18 +2066,18 @@ static const struct snd_soc_dapm_route va_audio_map_v3[] = {
 	{"VA DMIC MUX2", "DMIC7", "VA DMIC7"},
 
 	{"VA DEC2 MUX", "SWR_MIC", "VA SMIC MUX2"},
-	{"VA SMIC MUX2", "SWR_MIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX2", "SWR_MIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX2", "SWR_MIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX2", "SWR_MIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX2", "SWR_MIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX2", "SWR_MIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX2", "SWR_MIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX2", "SWR_MIC7", "VA SWR_MIC7"},
-	{"VA SMIC MUX2", "SWR_MIC8", "VA SWR_MIC8"},
-	{"VA SMIC MUX2", "SWR_MIC9", "VA SWR_MIC9"},
-	{"VA SMIC MUX2", "SWR_MIC10", "VA SWR_MIC10"},
-	{"VA SMIC MUX2", "SWR_MIC11", "VA SWR_MIC11"},
+	{"VA SMIC MUX2", "SWR_MIC0", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC1", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC2", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC3", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC4", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC5", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC6", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC7", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC8", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC9", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC10", "VA SWR_INPUT"},
+	{"VA SMIC MUX2", "SWR_MIC11", "VA SWR_INPUT"},
 
 	{"VA DEC3 MUX", "MSM_DMIC", "VA DMIC MUX3"},
 	{"VA DMIC MUX3", "DMIC0", "VA DMIC0"},
@@ -2068,18 +2090,18 @@ static const struct snd_soc_dapm_route va_audio_map_v3[] = {
 	{"VA DMIC MUX3", "DMIC7", "VA DMIC7"},
 
 	{"VA DEC3 MUX", "SWR_MIC", "VA SMIC MUX3"},
-	{"VA SMIC MUX3", "SWR_MIC0", "VA SWR_MIC0"},
-	{"VA SMIC MUX3", "SWR_MIC1", "VA SWR_MIC1"},
-	{"VA SMIC MUX3", "SWR_MIC2", "VA SWR_MIC2"},
-	{"VA SMIC MUX3", "SWR_MIC3", "VA SWR_MIC3"},
-	{"VA SMIC MUX3", "SWR_MIC4", "VA SWR_MIC4"},
-	{"VA SMIC MUX3", "SWR_MIC5", "VA SWR_MIC5"},
-	{"VA SMIC MUX3", "SWR_MIC6", "VA SWR_MIC6"},
-	{"VA SMIC MUX3", "SWR_MIC7", "VA SWR_MIC7"},
-	{"VA SMIC MUX3", "SWR_MIC8", "VA SWR_MIC8"},
-	{"VA SMIC MUX3", "SWR_MIC9", "VA SWR_MIC9"},
-	{"VA SMIC MUX3", "SWR_MIC10", "VA SWR_MIC10"},
-	{"VA SMIC MUX3", "SWR_MIC11", "VA SWR_MIC11"},
+	{"VA SMIC MUX3", "SWR_MIC0", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC1", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC2", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC3", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC4", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC5", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC6", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC7", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC8", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC9", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC10", "VA SWR_INPUT"},
+	{"VA SMIC MUX3", "SWR_MIC11", "VA SWR_INPUT"},
 };
 
 static const struct snd_soc_dapm_route va_audio_map[] = {
@@ -2549,18 +2571,7 @@ static int va_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF2 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF3 Capture");
 	if (va_priv->version >= BOLERO_VERSION_2_0) {
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC8");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC9");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC10");
-		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC11");
+		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_INPUT");
 	} else {
 		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
 		snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");

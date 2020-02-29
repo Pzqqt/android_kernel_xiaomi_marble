@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -40,12 +40,15 @@
 #define TX_MACRO_MCLK_FREQ 9600000
 #define TX_MACRO_TX_PATH_OFFSET 0x80
 #define TX_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
-#define TX_MACRO_ADC_MUX_CFG_OFFSET 0x2
+#define TX_MACRO_ADC_MUX_CFG_OFFSET 0x8
 #define TX_MACRO_ADC_MODE_CFG0_SHIFT 1
 
-#define TX_MACRO_TX_UNMUTE_DELAY_MS	40
+#define TX_MACRO_DMIC_UNMUTE_DELAY_MS	40
+#define TX_MACRO_AMIC_UNMUTE_DELAY_MS	100
+#define TX_MACRO_DMIC_HPF_DELAY_MS	300
+#define TX_MACRO_AMIC_HPF_DELAY_MS	300
 
-static int tx_unmute_delay = TX_MACRO_TX_UNMUTE_DELAY_MS;
+static int tx_unmute_delay = TX_MACRO_DMIC_UNMUTE_DELAY_MS;
 module_param(tx_unmute_delay, int, 0664);
 MODULE_PARM_DESC(tx_unmute_delay, "delay to unmute the tx path");
 
@@ -223,19 +226,19 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 
 	mutex_lock(&tx_priv->mclk_lock);
 	if (mclk_enable) {
+		ret = bolero_clk_rsc_request_clock(tx_priv->dev,
+						TX_CORE_CLK,
+						TX_CORE_CLK,
+						true);
+		if (ret < 0) {
+			dev_err_ratelimited(tx_priv->dev,
+				"%s: request clock enable failed\n",
+				__func__);
+			goto exit;
+		}
+		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+					true);
 		if (tx_priv->tx_mclk_users == 0) {
-			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
-							   TX_CORE_CLK,
-							   TX_CORE_CLK,
-							   true);
-			if (ret < 0) {
-				dev_err_ratelimited(tx_priv->dev,
-					"%s: request clock enable failed\n",
-					__func__);
-				goto exit;
-			}
-			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					TX_START_OFFSET,
@@ -266,14 +269,14 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
-			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  false);
-
-			bolero_clk_rsc_request_clock(tx_priv->dev,
-						 TX_CORE_CLK,
-						 TX_CORE_CLK,
-						 false);
 		}
+
+		bolero_clk_rsc_fs_gen_request(tx_priv->dev,
+				false);
+		bolero_clk_rsc_request_clock(tx_priv->dev,
+				 TX_CORE_CLK,
+				 TX_CORE_CLK,
+				 false);
 	}
 exit:
 	mutex_unlock(&tx_priv->mclk_lock);
@@ -424,6 +427,25 @@ static int tx_macro_reg_wake_irq(struct snd_soc_component *component,
 	return ret;
 }
 
+static int is_amic_enabled(struct snd_soc_component *component, int decimator)
+{
+	u16 adc_mux_reg = 0, adc_reg = 0;
+	u16 adc_n = BOLERO_ADC_MAX;
+
+	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
+			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
+			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+		adc_n = snd_soc_component_read32(component, adc_reg) &
+				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
+		if (adc_n >= BOLERO_ADC_MAX)
+			adc_n = BOLERO_ADC_MAX;
+	}
+
+	return adc_n;
+}
+
 static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 {
 	struct delayed_work *hpf_delayed_work = NULL;
@@ -432,7 +454,7 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct snd_soc_component *component = NULL;
 	u16 dec_cfg_reg = 0, hpf_gate_reg = 0;
 	u8 hpf_cut_off_freq = 0;
-	u16 adc_mux_reg = 0, adc_n = 0, adc_reg = 0;
+	u16 adc_n = 0;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
@@ -448,26 +470,30 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(component->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
-			TX_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
-		adc_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG0 +
-			TX_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
-		adc_n = snd_soc_component_read32(component, adc_reg) &
-				TX_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n >= BOLERO_ADC_MAX)
-			goto tx_hpf_set;
+	adc_n = is_amic_enabled(component, hpf_work->decimator);
+	if (adc_n < BOLERO_ADC_MAX) {
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+						0x03, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+						0x03, 0x01);
+	} else {
+		snd_soc_component_update_bits(component,
+				dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
+				hpf_cut_off_freq << 5);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+						0x02, 0x02);
+		/* Minimum 1 clk cycle delay is required as per HW spec */
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component, hpf_gate_reg,
+						0x02, 0x00);
 	}
-tx_hpf_set:
-	snd_soc_component_update_bits(component,
-			dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
-			hpf_cut_off_freq << 5);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x02);
-	/* Minimum 1 clk cycle delay is required as per HW spec */
-	usleep_range(1000, 1010);
-	snd_soc_component_update_bits(component, hpf_gate_reg, 0x02, 0x00);
 }
 
 static void tx_macro_mute_update_callback(struct work_struct *work)
@@ -878,6 +904,8 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 hpf_gate_reg = 0;
 	u16 tx_gain_ctl_reg = 0;
 	u8 hpf_cut_off_freq = 0;
+	int hpf_delay = TX_MACRO_DMIC_HPF_DELAY_MS;
+	int unmute_delay = TX_MACRO_DMIC_UNMUTE_DELAY_MS;
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
 
@@ -929,14 +957,20 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						TX_HPF_CUT_OFF_FREQ_MASK,
 						CF_MIN_3DB_150HZ << 5);
 
+		if (is_amic_enabled(component, decimator) < BOLERO_ADC_MAX) {
+			hpf_delay = TX_MACRO_AMIC_HPF_DELAY_MS;
+			unmute_delay = TX_MACRO_AMIC_UNMUTE_DELAY_MS;
+		}
+		if (tx_unmute_delay < unmute_delay)
+			tx_unmute_delay = unmute_delay;
 		/* schedule work queue to Remove Mute */
 		schedule_delayed_work(&tx_priv->tx_mute_dwork[decimator].dwork,
 				      msecs_to_jiffies(tx_unmute_delay));
 		if (tx_priv->tx_hpf_work[decimator].hpf_cut_off_freq !=
 							CF_MIN_3DB_150HZ) {
 			schedule_delayed_work(
-					&tx_priv->tx_hpf_work[decimator].dwork,
-					msecs_to_jiffies(300));
+				&tx_priv->tx_hpf_work[decimator].dwork,
+				msecs_to_jiffies(hpf_delay));
 			snd_soc_component_update_bits(component,
 					hpf_gate_reg, 0x03, 0x03);
 			/*
@@ -1489,18 +1523,7 @@ static const struct snd_soc_dapm_widget tx_macro_dapm_widgets_common[] = {
 		tx_macro_enable_dmic, SND_SOC_DAPM_PRE_PMU |
 		SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_INPUT("TX SWR_MIC0"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC1"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC2"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC3"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC4"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC5"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC6"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC7"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC8"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC9"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC10"),
-	SND_SOC_DAPM_INPUT("TX SWR_MIC11"),
+	SND_SOC_DAPM_INPUT("TX SWR_INPUT"),
 
 	SND_SOC_DAPM_MUX_E("TX DEC0 MUX", SND_SOC_NOPM,
 			   TX_MACRO_DEC0, 0,
@@ -1786,18 +1809,18 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX DMIC MUX0", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC0 MUX", "SWR_MIC", "TX SMIC MUX0"},
-	{"TX SMIC MUX0", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX0", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX0", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX0", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX0", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX0", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX0", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX0", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX0", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX0", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX0", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX0", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX0", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX0", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC1 MUX", "MSM_DMIC", "TX DMIC MUX1"},
 	{"TX DMIC MUX1", "DMIC0", "TX DMIC0"},
@@ -1810,18 +1833,18 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX DMIC MUX1", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC1 MUX", "SWR_MIC", "TX SMIC MUX1"},
-	{"TX SMIC MUX1", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX1", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX1", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX1", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX1", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX1", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX1", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX1", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX1", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX1", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX1", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX1", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX1", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX1", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC2 MUX", "MSM_DMIC", "TX DMIC MUX2"},
 	{"TX DMIC MUX2", "DMIC0", "TX DMIC0"},
@@ -1834,18 +1857,18 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX DMIC MUX2", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC2 MUX", "SWR_MIC", "TX SMIC MUX2"},
-	{"TX SMIC MUX2", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX2", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX2", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX2", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX2", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX2", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX2", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX2", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX2", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX2", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX2", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX2", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX2", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX2", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC3 MUX", "MSM_DMIC", "TX DMIC MUX3"},
 	{"TX DMIC MUX3", "DMIC0", "TX DMIC0"},
@@ -1858,18 +1881,18 @@ static const struct snd_soc_dapm_route tx_audio_map_common[] = {
 	{"TX DMIC MUX3", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC3 MUX", "SWR_MIC", "TX SMIC MUX3"},
-	{"TX SMIC MUX3", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX3", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX3", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX3", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX3", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX3", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX3", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX3", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX3", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX3", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX3", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX3", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX3", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX3", "SWR_MIC11", "TX SWR_INPUT"},
 };
 
 static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
@@ -1904,18 +1927,18 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX DMIC MUX4", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC4 MUX", "SWR_MIC", "TX SMIC MUX4"},
-	{"TX SMIC MUX4", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX4", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX4", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX4", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX4", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX4", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX4", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX4", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX4", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX4", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX4", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX4", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX4", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX4", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC5 MUX", "MSM_DMIC", "TX DMIC MUX5"},
 	{"TX DMIC MUX5", "DMIC0", "TX DMIC0"},
@@ -1928,18 +1951,18 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX DMIC MUX5", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC5 MUX", "SWR_MIC", "TX SMIC MUX5"},
-	{"TX SMIC MUX5", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX5", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX5", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX5", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX5", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX5", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX5", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX5", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX5", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX5", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX5", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX5", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX5", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX5", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC6 MUX", "MSM_DMIC", "TX DMIC MUX6"},
 	{"TX DMIC MUX6", "DMIC0", "TX DMIC0"},
@@ -1952,18 +1975,18 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX DMIC MUX6", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC6 MUX", "SWR_MIC", "TX SMIC MUX6"},
-	{"TX SMIC MUX6", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX6", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX6", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX6", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX6", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX6", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX6", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX6", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX6", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX6", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX6", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX6", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX6", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX6", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX DEC7 MUX", "MSM_DMIC", "TX DMIC MUX7"},
 	{"TX DMIC MUX7", "DMIC0", "TX DMIC0"},
@@ -1976,18 +1999,18 @@ static const struct snd_soc_dapm_route tx_audio_map_v3[] = {
 	{"TX DMIC MUX7", "DMIC7", "TX DMIC7"},
 
 	{"TX DEC7 MUX", "SWR_MIC", "TX SMIC MUX7"},
-	{"TX SMIC MUX7", "SWR_MIC0", "TX SWR_MIC0"},
-	{"TX SMIC MUX7", "SWR_MIC1", "TX SWR_MIC1"},
-	{"TX SMIC MUX7", "SWR_MIC2", "TX SWR_MIC2"},
-	{"TX SMIC MUX7", "SWR_MIC3", "TX SWR_MIC3"},
-	{"TX SMIC MUX7", "SWR_MIC4", "TX SWR_MIC4"},
-	{"TX SMIC MUX7", "SWR_MIC5", "TX SWR_MIC5"},
-	{"TX SMIC MUX7", "SWR_MIC6", "TX SWR_MIC6"},
-	{"TX SMIC MUX7", "SWR_MIC7", "TX SWR_MIC7"},
-	{"TX SMIC MUX7", "SWR_MIC8", "TX SWR_MIC8"},
-	{"TX SMIC MUX7", "SWR_MIC9", "TX SWR_MIC9"},
-	{"TX SMIC MUX7", "SWR_MIC10", "TX SWR_MIC10"},
-	{"TX SMIC MUX7", "SWR_MIC11", "TX SWR_MIC11"},
+	{"TX SMIC MUX7", "SWR_MIC0", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC1", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC2", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC3", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC4", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC5", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC6", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC7", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC8", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC9", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC10", "TX SWR_INPUT"},
+	{"TX SMIC MUX7", "SWR_MIC11", "TX SWR_INPUT"},
 
 	{"TX SMIC MUX0", NULL, "TX_SWR_CLK"},
 	{"TX SMIC MUX1", NULL, "TX_SWR_CLK"},
@@ -2460,12 +2483,13 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 					BOLERO_CDC_TX_TOP_CSR_FREQ_MCLK,
 					0x01, 0x01);
 				regmap_update_bits(regmap,
-				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 					0x01, 0x01);
 				regmap_update_bits(regmap,
-			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x01, 0x01);
 			}
+			tx_priv->tx_mclk_users++;
 		}
 		if (tx_priv->swr_clk_users == 0) {
 			dev_dbg(tx_priv->dev, "%s: reset_swr: %d\n",
@@ -2508,16 +2532,24 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 		if (clk_type == TX_MCLK)
 			tx_macro_mclk_enable(tx_priv, 0);
 		if (clk_type == VA_MCLK) {
+			if (tx_priv->tx_mclk_users <= 0) {
+				dev_err(tx_priv->dev, "%s: clock already disabled\n",
+						__func__);
+				tx_priv->tx_mclk_users = 0;
+				goto tx_clk;
+			}
+			tx_priv->tx_mclk_users--;
 			if (tx_priv->tx_mclk_users == 0) {
 				regmap_update_bits(regmap,
-			      BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_FS_CNT_CONTROL,
 					0x01, 0x00);
 				regmap_update_bits(regmap,
-				BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
+					BOLERO_CDC_TX_CLK_RST_CTRL_MCLK_CONTROL,
 					0x01, 0x00);
 			}
+
 			bolero_clk_rsc_fs_gen_request(tx_priv->dev,
-						  false);
+						false);
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 							   TX_CORE_CLK,
 							   VA_CORE_CLK,
@@ -2529,6 +2561,7 @@ static int tx_macro_tx_va_mclk_enable(struct tx_macro_priv *tx_priv,
 				goto done;
 			}
 		}
+tx_clk:
 		if (!clk_tx_ret)
 			ret = bolero_clk_rsc_request_clock(tx_priv->dev,
 						   TX_CORE_CLK,
@@ -2864,18 +2897,7 @@ static int tx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF2 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF3 Capture");
 	if (tx_priv->version >= BOLERO_VERSION_2_0) {
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC0");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC1");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC2");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC3");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC4");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC5");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC6");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC7");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC8");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC9");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC10");
-		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC11");
+		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_INPUT");
 	} else {
 		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC0");
 		snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");

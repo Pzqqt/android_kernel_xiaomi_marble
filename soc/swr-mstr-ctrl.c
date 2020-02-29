@@ -50,7 +50,7 @@
 #define ERR_AUTO_SUSPEND_TIMER_VAL 0x1
 
 #define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
-#define SWRM_LINK_STATUS_RETRY_CNT 0x5
+#define SWRM_LINK_STATUS_RETRY_CNT 100
 
 #define SWRM_ROW_48    48
 #define SWRM_ROW_50    50
@@ -1031,7 +1031,7 @@ static void swrm_disable_ports(struct swr_master *master,
 					bank));
 			dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x\n",
 				__func__, i,
-				(SWRM_DP_PORT_CTRL_BANK(i + 1, bank)));
+				(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)));
 		}
 		value = ((mport->req_ch)
 					<< SWRM_DP_PORT_CTRL_EN_CHAN_SHFT);
@@ -1042,11 +1042,11 @@ static void swrm_disable_ports(struct swr_master *master,
 		value |= mport->sinterval;
 
 		swr_master_write(swrm,
-				SWRM_DP_PORT_CTRL_BANK(i+1, bank),
+				SWRM_DP_PORT_CTRL_BANK((i + 1), bank),
 				value);
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
 			__func__, i,
-			(SWRM_DP_PORT_CTRL_BANK(i+1, bank)), value);
+			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
 		if (mport->stream_type == SWR_PCM)
 			swrm_pcm_port_config(swrm, i, mport->dir, false);
@@ -1203,37 +1203,37 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		value |= mport->sinterval;
 
 
-		reg[len] = SWRM_DP_PORT_CTRL_BANK(i + 1, bank);
+		reg[len] = SWRM_DP_PORT_CTRL_BANK((i + 1), bank);
 		val[len++] = value;
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
 			__func__, i,
-			(SWRM_DP_PORT_CTRL_BANK(i + 1, bank)), value);
+			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
 		if (mport->lane_ctrl != SWR_INVALID_PARAM) {
-			reg[len] = SWRM_DP_PORT_CTRL_2_BANK(i + 1, bank);
+			reg[len] = SWRM_DP_PORT_CTRL_2_BANK((i + 1), bank);
 			val[len++] = mport->lane_ctrl;
 		}
 		if (mport->word_length != SWR_INVALID_PARAM) {
-			reg[len] = SWRM_DP_BLOCK_CTRL_1(i + 1);
+			reg[len] = SWRM_DP_BLOCK_CTRL_1((i + 1));
 			val[len++] = mport->word_length;
 		}
 
 		if (mport->blk_grp_count != SWR_INVALID_PARAM) {
-			reg[len] = SWRM_DP_BLOCK_CTRL2_BANK(i + 1, bank);
+			reg[len] = SWRM_DP_BLOCK_CTRL2_BANK((i + 1), bank);
 			val[len++] = mport->blk_grp_count;
 		}
 		if (mport->hstart != SWR_INVALID_PARAM
 				&& mport->hstop != SWR_INVALID_PARAM) {
-			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
+			reg[len] = SWRM_DP_PORT_HCTRL_BANK((i + 1), bank);
 			hparams = (mport->hstop << 4) | mport->hstart;
 			val[len++] = hparams;
 		} else {
-			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
+			reg[len] = SWRM_DP_PORT_HCTRL_BANK((i + 1), bank);
 			hparams = (SWR_HSTOP_MAX_VAL << 4) | SWR_HSTART_MIN_VAL;
 			val[len++] = hparams;
 		}
 		if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
-			reg[len] = SWRM_DP_BLOCK_CTRL3_BANK(i + 1, bank);
+			reg[len] = SWRM_DP_BLOCK_CTRL3_BANK((i + 1), bank);
 			val[len++] = mport->blk_pack_mode;
 		}
 		mport->ch_en = mport->req_ch;
@@ -1680,6 +1680,7 @@ handle_irq:
 					continue;
 				if (swr_dev->slave_irq) {
 					do {
+						swr_dev->slave_irq_pending = 0;
 						handle_nested_irq(
 							irq_find_mapping(
 							swr_dev->slave_irq, 0));
@@ -2464,7 +2465,7 @@ static int swrm_probe(struct platform_device *pdev)
 			"%s: Error in master Initialization , err %d\n",
 			__func__, ret);
 		mutex_unlock(&swrm->mlock);
-		goto err_mstr_fail;
+		goto err_mstr_init_fail;
 	}
 
 	mutex_unlock(&swrm->mlock);
@@ -2509,6 +2510,8 @@ static int swrm_probe(struct platform_device *pdev)
 	return 0;
 err_irq_wakeup_fail:
 	device_init_wakeup(swrm->dev, false);
+err_mstr_init_fail:
+	swr_unregister_master(&swrm->master);
 err_mstr_fail:
 	if (swrm->reg_irq)
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
@@ -2585,6 +2588,7 @@ static int swrm_runtime_resume(struct device *dev)
 	bool aud_core_err = false;
 	struct swr_master *mstr = &swrm->master;
 	struct swr_device *swr_dev;
+	u32 temp = 0;
 
 	dev_dbg(dev, "%s: pm_runtime: resume, state:%d\n",
 		__func__, swrm->state);
@@ -2664,6 +2668,11 @@ static int swrm_runtime_resume(struct device *dev)
 				mutex_lock(&swrm->reslock);
 			}
 		} else {
+			if (swrm->swrm_hctl_reg) {
+				temp = ioread32(swrm->swrm_hctl_reg);
+				temp &= 0xFFFFFFFD;
+				iowrite32(temp, swrm->swrm_hctl_reg);
+			}
 			/*wake up from clock stop*/
 			swr_master_write(swrm, SWRM_MCP_BUS_CTRL, 0x2);
 			/* clear and enable bus clash interrupt */

@@ -18,6 +18,7 @@
 #include <linux/firmware.h>
 #include <linux/completion.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/usb/typec.h>
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include <asoc/msm-cdc-pinctrl.h>
@@ -1633,7 +1634,7 @@ static int wcd_mbhc_usbc_ana_event_handler(struct notifier_block *nb,
 
 	dev_dbg(mbhc->component->dev, "%s: mode = %lu\n", __func__, mode);
 
-	if (mode == POWER_SUPPLY_TYPEC_SINK_AUDIO_ADAPTER) {
+	if (mode == TYPEC_ACCESSORY_AUDIO) {
 		if (mbhc->mbhc_cb->clk_setup)
 			mbhc->mbhc_cb->clk_setup(mbhc->component, true);
 		/* insertion detected, enable L_DET_EN */

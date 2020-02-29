@@ -1387,14 +1387,22 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP,
 			"WSA OCP", wsa883x_ocp_handle_irq, NULL);
 
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP);
+
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLIP,
 			"WSA CLIP", wsa883x_clip_handle_irq, NULL);
+
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLIP);
 
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD,
 			"WSA PDM WD", wsa883x_pdm_wd_handle_irq, NULL);
 
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD,
 			"WSA CLK WD", wsa883x_clk_wd_handle_irq, NULL);
+
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_CLK_WD);
 
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN,
 			"WSA EXT INT", wsa883x_ext_int_handle_irq, NULL);
@@ -1405,6 +1413,8 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR,
 			"WSA PA ERR", wsa883x_pa_on_err_handle_irq, NULL);
+
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR);
 
 	ret = snd_soc_register_component(&pdev->dev, &soc_codec_dev_wsa883x,
 				     NULL, 0);
