@@ -605,3 +605,15 @@ QDF_STATUS wmi_unified_peer_vlan_config_send(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_muedca_params_handler(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct muedca_params *muedca_param_list)
+{
+	if (wmi_handle->ops->extract_muedca_params_handler)
+		return wmi_handle->ops->extract_muedca_params_handler(
+					wmi_handle, evt_buf, muedca_param_list);
+
+	return QDF_STATUS_E_FAILURE;
+}
