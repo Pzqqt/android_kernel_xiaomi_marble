@@ -1497,6 +1497,10 @@ QDF_STATUS (*extract_ext_tbttoffset_num_vdevs)(wmi_unified_t wmi_hdl,
 					       void *evt_buf,
 					       uint32_t *num_vdevs);
 
+QDF_STATUS (*extract_muedca_params_handler)(wmi_unified_t wmi_hdl,
+					    void *evt_buf,
+					    struct muedca_params *muedca_param_list);
+
 QDF_STATUS (*extract_mgmt_rx_params)(wmi_unified_t wmi_handle, void *evt_buf,
 	struct mgmt_rx_event_params *hdr, uint8_t **bufp);
 

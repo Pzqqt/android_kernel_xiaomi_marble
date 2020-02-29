@@ -14095,6 +14095,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 #endif
 event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID;
+	event_ids[wmi_muedca_params_config_eventid] =
+			WMI_MUEDCA_PARAMS_CONFIG_EVENTID;
 }
 
 /**

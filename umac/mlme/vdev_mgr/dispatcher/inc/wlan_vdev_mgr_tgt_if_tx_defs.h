@@ -523,4 +523,23 @@ struct peer_delete_all_params {
 	uint8_t vdev_id;
 };
 
+#define AC_MAX 4
+#define WMI_MUEDCA_PARAM_MASK 0xff
+/**
+ * struct muedca_params - MU-EDCA parameters
+ * @muedca_ecwmin: CWmin in exponential form
+ * @muedca_ecwmax: CWmax in exponential form
+ * @muedca_aifsn:  AIFSN parameter
+ * @muedca_acm:    ACM parameter
+ * @muedca_timer:  MU EDCA timer value
+ */
+struct muedca_params {
+	uint32_t pdev_id;
+	uint8_t muedca_ecwmin[AC_MAX];      /* CWmin in exponential form */
+	uint8_t muedca_ecwmax[AC_MAX];      /* CWmax in exponential form */
+	uint8_t muedca_aifsn[AC_MAX];       /* AIFSN parameter */
+	uint8_t muedca_acm[AC_MAX];         /* ACM parameter */
+	uint8_t muedca_timer[AC_MAX];       /* MU EDCA timer value */
+};
+
 #endif /* __WLAN_VDEV_MGR_TX_OPS_DEFS_H__ */
