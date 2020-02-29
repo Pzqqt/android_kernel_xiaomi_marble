@@ -430,14 +430,12 @@ void extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
 
-	if (freeze->sw_peer_id_valid) {
-		peermac[0] = freeze->packet_ta_lower_16 & 0x00FF;
-		peermac[1] = (freeze->packet_ta_lower_16 & 0xFF00) >> 8;
-		peermac[2] = freeze->packet_ta_mid_16 & 0x00FF;
-		peermac[3] = (freeze->packet_ta_mid_16 & 0xFF00) >> 8;
-		peermac[4] = freeze->packet_ta_upper_16 & 0x00FF;
-		peermac[5] = (freeze->packet_ta_upper_16 & 0xFF00) >> 8;
-	}
+	peermac[0] = freeze->packet_ta_lower_16 & 0x00FF;
+	peermac[1] = (freeze->packet_ta_lower_16 & 0xFF00) >> 8;
+	peermac[2] = freeze->packet_ta_mid_16 & 0x00FF;
+	peermac[3] = (freeze->packet_ta_mid_16 & 0xFF00) >> 8;
+	peermac[4] = freeze->packet_ta_upper_16 & 0x00FF;
+	peermac[5] = (freeze->packet_ta_upper_16 & 0xFF00) >> 8;
 }
 
 /**
@@ -489,7 +487,7 @@ int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
 
-	if (module_id == CORRELATE_TXRX_EV_MODULE_ID) {
+	if (module_id == CORRELATE_TX_EV_MODULE_ID) {
 		if (lut->tx_recv)
 			pcfr->cfr_dma_aborts++;
 		lut->tx_recv = true;
@@ -590,7 +588,6 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_channel *bss_chan;
 	enum wlan_phymode ch_phymode;
-	enum phy_ch_width ch_width;
 	uint16_t ch_freq;
 	uint32_t ch_cfreq1;
 	uint32_t ch_cfreq2;
@@ -623,32 +620,9 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 
 	cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)qdf_nbuf_data(nbuf);
 	cfr_info = &cdp_rx_ppdu->cfr_info;
-	if (cfr_info->bb_captured_timeout) {
-		pcfr->bb_captured_timeout_cnt++;
-		pcfr->bb_captured_reason_cnt[cfr_info->bb_captured_reason]++;
+
+	if (!cfr_info->bb_captured_channel)
 		goto done;
-	}
-
-
-	if (cfr_info->bb_captured_channel) {
-		pcfr->bb_captured_channel_cnt++;
-		pcfr->bb_captured_reason_cnt[cfr_info->bb_captured_reason]++;
-	} else {
-		goto done; /* HW registers have not captured FFT bins */
-	}
-
-	pcfr->chan_capture_status[cfr_info->chan_capture_status]++;
-	if (cfr_info->rx_location_info_valid) {
-		pcfr->rx_loc_info_valid_cnt++;
-	} else {
-		goto done;
-	}
-
-	if (cfr_info->chan_capture_status != CAPTURE_ACTIVE) {
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
-		qdf_nbuf_free(nbuf);
-		return;
-	}
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (qdf_unlikely(!psoc)) {
@@ -702,7 +676,6 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	ch_cfreq1 = bss_chan->ch_cfreq1;
 	ch_cfreq2 = bss_chan->ch_cfreq2;
 	ch_phymode = bss_chan->ch_phymode;
-	ch_width = bss_chan->ch_width;
 	rx_chainmask = wlan_vdev_mlme_get_rxchainmask(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 
@@ -723,7 +696,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	header->Reserved               = 0;
 
 	meta->status       = 1;
-	meta->capture_bw   = ch_width;
+	meta->capture_bw   = cdp_rx_ppdu->u.bw;
 	meta->phy_mode = ch_phymode;
 	meta->prim20_chan  = ch_freq;
 	meta->center_freq1 = ch_cfreq1;
@@ -754,7 +727,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		}
 	}
 	status = correlate_and_relay_enh(pdev, cookie, lut,
-					 CORRELATE_TXRX_EV_MODULE_ID);
+					 CORRELATE_TX_EV_MODULE_ID);
 	if (status == STATUS_STREAM_AND_RELEASE) {
 		if (cfr_rx_ops->cfr_info_send)
 			status = cfr_rx_ops->cfr_info_send(pdev,
@@ -1254,7 +1227,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		     HOST_MAX_CHAINS * sizeof(tx_evt_param.chain_phase[0]));
 
 	status = correlate_and_relay_enh(pdev, cookie, lut,
-					 CORRELATE_TXRX_EV_MODULE_ID);
+					 CORRELATE_TX_EV_MODULE_ID);
 	if (status == STATUS_STREAM_AND_RELEASE) {
 		if (cfr_rx_ops->cfr_info_send)
 			status = cfr_rx_ops->cfr_info_send(pdev,
@@ -1626,14 +1599,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->flush_timeout_dbr_cnt = 0;
 	pcfr->invalid_dma_length_cnt = 0;
 	pcfr->clear_txrx_event = 0;
-	pcfr->bb_captured_channel_cnt = 0;
-	pcfr->bb_captured_timeout_cnt = 0;
-	pcfr->rx_loc_info_valid_cnt = 0;
 	pcfr->cfr_dma_aborts = 0;
-	qdf_mem_zero(&pcfr->chan_capture_status,
-		     sizeof(uint64_t) * NUM_CHAN_CAPTURE_STATUS);
-	qdf_mem_zero(&pcfr->bb_captured_reason_cnt,
-		     sizeof(uint64_t) * NUM_CHAN_CAPTURE_REASON);
 	qdf_mem_zero(&pcfr->rcc_param, sizeof(struct cfr_rcc_param));
 	qdf_mem_zero(&pcfr->global, (sizeof(struct ta_ra_cfr_cfg) *
 				     MAX_TA_RA_ENTRIES));

@@ -116,24 +116,6 @@ enum cfr_capture_type {
 	CFR_TYPE_METHOD_MAX,
 };
 
-enum mac_freeze_capture_reason {
-	FREEZE_REASON_TM = 0,
-	FREEZE_REASON_FTM = 1,
-	FREEZE_REASON_ACK_RESP_TO_TM_FTM = 2,
-	FREEZE_REASON_TA_RA_TYPE_FILTER = 3,
-	FREEZE_REASON_NDPA_NDP = 4,
-	FREEZE_REASON_ALL_PACKET = 5,
-	FREEZE_REASON_MAX,
-};
-
-enum chan_capture_status {
-	CAPTURE_IDLE = 0,
-	CAPTURE_BUSY,
-	CAPTURE_ACTIVE,
-	CAPTURE_NO_BUFFER,
-	CAPTURE_MAX,
-};
-
 struct cfr_metadata_version_1 {
 	u_int8_t    peer_addr[QDF_MAC_ADDR_SIZE];
 	u_int8_t    status;
@@ -464,24 +446,6 @@ struct cfr_rcc_param {
  * lut_age_timer: Timer to flush pending TXRX/DBR events in lookup table
  * lut_timer_init: flag to determine if lut_age_timer is initialized or not
  * is_cfr_rcc_capable: Flag to determine if RCC is enabled or not.
- * bb_captured_channel_cnt: No. of PPDUs for which MAC sent Freeze TLV to PHY
- * bb_captured_timeout_cnt: No. of PPDUs for which CFR filter criteria matched
- * but MAC did not send Freeze TLV to PHY as time exceeded freeze tlv delay
- * count threshold
- * rx_loc_info_valid_cnt: No. of PPDUs for which PHY could find a valid buffer
-   in ucode IPC ring
- * chan_capture_status[]: capture status counters
- *	[0] - No. of PPDUs with capture status CAPTURE_IDLE
- *	[1] - No. of PPDUs with capture status CAPTURE_BUSY
- *	[2] - No. of PPDUs with capture status CAPTURE_ACTIVE
- *	[3] - No. of PPDUs with capture status CAPTURE_NO_BUFFER
- * bb_captured_reason_cnt[]: capture reason counters
- *	[0] - No. PPDUs filtered due to freeze_reason_TM
- *	[1] - No. PPDUs filtered due to freeze_reason_FTM
- *	[2] - No. PPDUs filtered due to freeze_reason_ACK_resp_to_TM_FTM
- *	[3] - No. PPDUs filtered due to freeze_reason_TA_RA_TYPE_FILTER
- *	[4] - No. PPDUs filtered due to freeze_reason_NDPA_NDP
- *	[5] - No. PPDUs filtered due to freeze_reason_ALL_PACKET
  * flush_dbr_cnt: No. of un-correlated DBR completions flushed when a newer PPDU
  * is correlated successfully with newer DBR completion
  * invalid_dma_length_cnt: No. of buffers for which CFR DMA header length (or)
@@ -523,11 +487,6 @@ struct pdev_cfr {
 	qdf_timer_t lut_age_timer;
 	uint8_t lut_timer_init;
 	uint8_t is_cfr_rcc_capable;
-	uint64_t bb_captured_channel_cnt;
-	uint64_t bb_captured_timeout_cnt;
-	uint64_t rx_loc_info_valid_cnt;
-	uint64_t chan_capture_status[CAPTURE_MAX];
-	uint64_t bb_captured_reason_cnt[FREEZE_REASON_MAX];
 	uint64_t flush_dbr_cnt;
 	uint64_t invalid_dma_length_cnt;
 	uint64_t flush_timeout_dbr_cnt;
