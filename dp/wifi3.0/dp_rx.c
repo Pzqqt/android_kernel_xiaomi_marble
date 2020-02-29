@@ -89,6 +89,40 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 }
 #endif
 
+#ifdef RX_DESC_SANITY_WAR
+static inline
+QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     hal_ring_desc_t ring_desc,
+			     struct dp_rx_desc *rx_desc)
+{
+	if (qdf_unlikely(!rx_desc)) {
+		/*
+		 * This is an unlikely case where the cookie obtained
+		 * from the ring_desc is invalid and hence we are not
+		 * able to find the corresponding rx_desc
+		 */
+		DP_STATS_INC(soc, rx.err.invalid_cookie, 1);
+		dp_err("Ring Desc:");
+		hal_srng_dump_ring_desc(hal_soc, hal_ring_hdl,
+					ring_desc);
+		qdf_assert(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline
+QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
+			     hal_ring_handle_t hal_ring_hdl,
+			     hal_ring_desc_t ring_desc,
+			     struct dp_rx_desc *rx_desc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -1831,6 +1865,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	uint32_t rx_ol_pkt_cnt = 0;
 	uint32_t num_entries = 0;
 	struct hal_rx_msdu_metadata msdu_metadata;
+	QDF_STATUS status;
 
 	DP_HIST_INIT();
 
@@ -1894,7 +1929,12 @@ more_data:
 		rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
 
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
-		qdf_assert(rx_desc);
+		status = dp_rx_desc_sanity(soc, hal_soc, hal_ring_hdl,
+					   ring_desc, rx_desc);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
+			continue;
+		}
 
 		/*
 		 * this is a unlikely scenario where the host is reaping

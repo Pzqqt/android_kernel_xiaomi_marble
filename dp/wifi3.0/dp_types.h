@@ -784,6 +784,8 @@ struct dp_soc_stats {
 			uint32_t reo_cmd_send_fail;
 			/* RX msdu drop count due to scatter */
 			uint32_t scatter_msdu;
+			/* RX msdu drop count due to invalid cookie */
+			uint32_t invalid_cookie;
 		} err;
 
 		/* packet count per core - per ring */
