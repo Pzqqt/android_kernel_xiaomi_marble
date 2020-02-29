@@ -61,6 +61,7 @@
 #include "wlan_fwol_ucfg_api.h"
 #include <wlan_coex_ucfg_api.h>
 #include "wlan_crypto_global_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -15329,6 +15330,7 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
+	QDF_STATUS status;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
@@ -15383,12 +15385,25 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.he_er_su_ppdu = 0;
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.dl_mu_mimo_part_bw = 0;
 	csr_update_session_he_cap(mac_ctx, session);
+
+	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, false);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed not set enable bcast probe resp info, %d",
+			status);
+
+	status = wma_cli_set_command(vdev_id,
+				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				     0, VDEV_CMD);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to set enable bcast probe resp in FW, %d",
+			status);
 }
 
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session;
+	QDF_STATUS status;
 
 	session = CSR_GET_SESSION(mac_ctx, vdev_id);
 
@@ -15400,6 +15415,18 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 	mac_ctx->mlme_cfg->he_caps.dot11_he_cap =
 		mac_ctx->mlme_cfg->he_caps.he_cap_orig;
 	csr_update_session_he_cap(mac_ctx, session);
+
+	status = ucfg_mlme_set_enable_bcast_probe_rsp(mac_ctx->psoc, true);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed not set enable bcast probe resp info, %d",
+			status);
+
+	status = wma_cli_set_command(vdev_id,
+				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				     1, VDEV_CMD);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to set enable bcast probe resp in FW, %d",
+			status);
 }
 #endif
 
