@@ -1068,6 +1068,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 tx_vol_ctl_reg, dec_cfg_reg, hpf_gate_reg;
 	u16 tx_gain_ctl_reg;
 	u8 hpf_cut_off_freq;
+	u16 adc_mux_reg = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
 	int hpf_delay = BOLERO_CDC_VA_TX_DMIC_HPF_DELAY_MS;
@@ -1089,6 +1090,8 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				VA_MACRO_TX_PATH_OFFSET * decimator;
 	tx_gain_ctl_reg = BOLERO_CDC_VA_TX0_TX_VOL_CTL +
 				VA_MACRO_TX_PATH_OFFSET * decimator;
+	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
+				VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -1149,6 +1152,32 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* apply gain after decimator is enabled */
 		snd_soc_component_write(component, tx_gain_ctl_reg,
 			snd_soc_component_read32(component, tx_gain_ctl_reg));
+		if (va_priv->version == BOLERO_VERSION_2_0) {
+			if (snd_soc_component_read32(component, adc_mux_reg)
+							& SWR_MIC) {
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,
+					0x01, 0x01);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC0_CTL,
+					0x0E, 0x0C);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC1_CTL,
+					0x0E, 0x0C);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC2_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC3_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC4_CTL,
+					0x0E, 0x00);
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_MIC5_CTL,
+					0x0E, 0x00);
+			}
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		hpf_cut_off_freq =
@@ -1177,6 +1206,13 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		cancel_delayed_work_sync(
 				&va_priv->va_mute_dwork[decimator].dwork);
+		if (va_priv->version == BOLERO_VERSION_2_0) {
+			if (snd_soc_component_read32(component, adc_mux_reg)
+							& SWR_MIC)
+				snd_soc_component_update_bits(component,
+					BOLERO_CDC_TX_TOP_CSR_SWR_CTRL,
+					0x01, 0x00);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Disable TX CLK */
