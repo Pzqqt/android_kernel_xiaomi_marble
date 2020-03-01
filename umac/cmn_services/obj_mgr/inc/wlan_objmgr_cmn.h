@@ -430,6 +430,9 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_MISC_ID",
 					"WLAN_FWOL_NB_ID",
 					"WLAN_FWOL_SB_ID",
+					"WLAN_PSOC_TARGET_IF_ID",
+					"FTM_TIME_SYNC_ID",
+					"WLAN_PKT_CAPTURE_ID",
 					"WLAN_DCS_ID",
 					"WLAN_REF_ID_MAX"};
 
