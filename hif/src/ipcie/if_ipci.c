@@ -619,6 +619,14 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	ret = qdf_set_dma_coherent_mask(dev,
+					DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE);
+	if (ret) {
+		HIF_ERROR("%s: failed to set dma mask error = %d",
+			  __func__, ret);
+		return ret;
+	}
+
 	sc->dev = dev;
 	tgt_info = hif_get_target_info_handle(hif_hdl);
 	hif_ipci_init_deinit_ops_attach(sc, device_id);
