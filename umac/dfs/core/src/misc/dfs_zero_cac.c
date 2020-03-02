@@ -1812,7 +1812,7 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 		if (detector_id == AGILE_DETECTOR_ID) {
 			dfs_prepare_agile_precac_chan(dfs);
 		} else {
-			dfs->dfs_agile_precac_freq = 0;
+			dfs->dfs_agile_precac_freq_mhz = 0;
 			dfs_soc_obj->precac_state_started = PRECAC_NOT_STARTED;
 		}
 	}
