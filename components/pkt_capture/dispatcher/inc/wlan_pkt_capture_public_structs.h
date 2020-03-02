@@ -58,4 +58,12 @@ struct mgmt_offload_event_params {
 	uint8_t *buf;
 	uint8_t tx_retry_cnt;
 };
+
+/**
+ * struct pkt_capture_callbacks - callbacks to non-converged driver
+ * @get_rmf_status: callback to get rmf status
+ */
+struct pkt_capture_callbacks {
+	int (*get_rmf_status)(uint8_t vdev_id);
+};
 #endif /* _WLAN_PKT_CAPTURE_PUBLIC_STRUCTS_H_ */

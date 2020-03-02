@@ -177,20 +177,47 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				 uint8_t status)
 {
 	struct mon_rx_status txrx_status = {0};
+	struct pkt_psoc_priv *psoc_priv;
+	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t channel_flags = 0;
 	tpSirMacFrameCtl pfc = (tpSirMacFrameCtl) (qdf_nbuf_data(nbuf));
 	struct ieee80211_frame *wh;
-	uint8_t mgt_type;
+	uint8_t mgt_type, vdev_id;
+	int rmf_enabled;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
 
+	psoc_priv = pkt_capture_psoc_get_priv(psoc);
+	if (!psoc_priv) {
+		pkt_capture_err("psoc priv is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
+
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
+							 wh->i_addr2,
+							 WLAN_PKT_CAPTURE_ID);
+	if (!vdev) {
+		pkt_capture_err("vdev is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev_id = wlan_vdev_get_id(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
+
+	rmf_enabled = psoc_priv->cb_obj.get_rmf_status(vdev_id);
+	if (rmf_enabled < 0) {
+		pkt_capture_err("unable to get rmf status");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
-	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
+	if (rmf_enabled &&
+	    (mgt_type == IEEE80211_FC0_TYPE_MGT) &&
 	    (pfc->subType == SIR_MAC_MGMT_DISASSOC ||
 	     pfc->subType == SIR_MAC_MGMT_DEAUTH ||
 	     pfc->subType == SIR_MAC_MGMT_ACTION)) {
@@ -203,7 +230,7 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 				orig_hdr = (uint8_t *)qdf_nbuf_data(nbuf);
 				pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 				status = mlme_get_peer_mic_len(psoc, pdev_id,
-							       wh->i_addr2,
+							       wh->i_addr1,
 							       &mic_len,
 							       &hdr_len);
 				if (QDF_IS_STATUS_ERROR(status)) {

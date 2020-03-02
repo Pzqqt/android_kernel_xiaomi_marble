@@ -3601,6 +3601,21 @@ struct wma_txrx_node  *wma_get_interface_by_vdev_id(uint8_t vdev_id)
 	return &wma->interfaces[vdev_id];
 }
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+int wma_get_rmf_status(uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface;
+
+	iface = wma_get_interface_by_vdev_id(vdev_id);
+	if (!iface) {
+		WMA_LOGE("Unable to get wma interface");
+		return -EINVAL;
+	}
+
+	return iface->rmfEnabled;
+}
+#endif
+
 /**
  * wma_update_intf_hw_mode_params() - Update WMA params
  * @vdev_id: VDEV id whose params needs to be updated

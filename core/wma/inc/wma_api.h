@@ -178,6 +178,10 @@ QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
 		struct nan_datapath_channel_info *ndp_chan_info);
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+int wma_get_rmf_status(uint8_t vdev_id);
+#endif
+
 bool wma_is_vdev_up(uint8_t vdev_id);
 
 void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size);

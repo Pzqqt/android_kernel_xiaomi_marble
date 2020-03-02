@@ -106,6 +106,10 @@
 #include <target_if_direct_buf_rx_api.h>
 #endif
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+#include "wlan_pkt_capture_ucfg_api.h"
+#endif
+
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
 
@@ -2844,6 +2848,23 @@ static void wma_register_nan_callbacks(tp_wma_handle wma_handle)
 }
 #endif
 
+#ifdef WLAN_FEATURE_PKT_CAPTURE
+static void
+wma_register_pkt_capture_callbacks(tp_wma_handle wma_handle)
+{
+	struct pkt_capture_callbacks cb_obj = {0};
+
+	cb_obj.get_rmf_status = wma_get_rmf_status;
+
+	ucfg_pkt_capture_register_wma_callbacks(wma_handle->psoc, &cb_obj);
+}
+#else
+static inline void
+wma_register_pkt_capture_callbacks(tp_wma_handle wma_handle)
+{
+}
+#endif
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -3373,6 +3394,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 						  wma_vdev_get_beacon_interval);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
 	wma_register_nan_callbacks(wma_handle);
+	wma_register_pkt_capture_callbacks(wma_handle);
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Failed to register wma cb with Policy Manager");
