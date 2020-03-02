@@ -76,17 +76,25 @@ ifdef CONFIG_ICNSS2
 	CONFIG_ROME_IF = ipci
 endif
 
+ifdef CONFIG_IPCIE_FW_SIM
+	CONFIG_ROME_IF = ipci
+endif
+
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
+ifndef CONFIG_IPCIE_FW_SIM
 	CONFIG_ROME_IF = pci
+endif
 endif
 endif
 
 ifeq (m,$(findstring m,$(CONFIG_CNSS2)))
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
+ifndef CONFIG_IPCIE_FW_SIM
 	CONFIG_ROME_IF = pci
+endif
 endif
 endif
 

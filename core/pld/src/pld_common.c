@@ -415,6 +415,7 @@ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 						  QWLAN_VERSIONSTR);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_wlan_enable(dev, config, mode,
 						  QWLAN_VERSIONSTR);
 		break;
@@ -462,6 +463,7 @@ int pld_wlan_disable(struct device *dev, enum pld_driver_mode mode)
 		ret = pld_snoc_fw_sim_wlan_disable(dev, mode);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_wlan_disable(dev, mode);
 		break;
 	case PLD_BUS_TYPE_SDIO:
@@ -499,6 +501,7 @@ int pld_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 		ret = pld_snoc_set_fw_log_mode(dev, fw_log_mode);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SDIO:
 		break;
@@ -566,6 +569,7 @@ int pld_get_fw_files_for_target(struct device *dev,
 						       target_version);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -646,6 +650,7 @@ void pld_is_pci_link_down(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		pld_pcie_link_down(dev);
@@ -677,6 +682,7 @@ void pld_schedule_recovery_work(struct device *dev,
 		pld_pcie_schedule_recovery_work(dev, reason);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -708,6 +714,7 @@ int pld_wlan_pm_control(struct device *dev, bool vote)
 		ret = pld_pcie_wlan_pm_control(dev, vote);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -739,6 +746,7 @@ void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size)
 		mem = pld_pcie_get_virt_ramdump_mem(dev, size);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -761,6 +769,7 @@ void pld_release_virt_ramdump_mem(struct device *dev, void *address)
 		pld_pcie_release_virt_ramdump_mem(address);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -790,6 +799,7 @@ void pld_device_crashed(struct device *dev)
 		pld_pcie_device_crashed(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -819,6 +829,7 @@ void pld_device_self_recovery(struct device *dev,
 		pld_pcie_device_self_recovery(dev, reason);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -848,6 +859,7 @@ void pld_intr_notify_q6(struct device *dev)
 		pld_pcie_intr_notify_q6(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -874,6 +886,7 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val)
 		pld_pcie_request_pm_qos(dev, qos_val);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -905,6 +918,7 @@ void pld_remove_pm_qos(struct device *dev)
 		pld_pcie_remove_pm_qos(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -938,6 +952,7 @@ int pld_request_bus_bandwidth(struct device *dev, int bandwidth)
 		ret = pld_pcie_request_bus_bandwidth(dev, bandwidth);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -973,6 +988,7 @@ int pld_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 		ret = pld_pcie_get_platform_cap(dev, cap);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_get_platform_cap(dev, cap);
 		break;
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
@@ -1014,6 +1030,7 @@ int pld_get_sha_hash(struct device *dev, const u8 *data,
 					    hash_idx, out);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1044,6 +1061,7 @@ void *pld_get_fw_ptr(struct device *dev)
 		ptr = pld_pcie_get_fw_ptr(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -1074,6 +1092,7 @@ int pld_auto_suspend(struct device *dev)
 		ret = pld_pcie_auto_suspend(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1105,6 +1124,7 @@ int pld_auto_resume(struct device *dev)
 		ret = pld_pcie_auto_resume(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1137,6 +1157,7 @@ int pld_force_wake_request(struct device *dev)
 		ret = pld_pcie_force_wake_request(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
@@ -1170,6 +1191,7 @@ int pld_is_device_awake(struct device *dev)
 		ret = pld_pcie_is_device_awake(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
@@ -1202,6 +1224,7 @@ int pld_force_wake_release(struct device *dev)
 		ret = pld_pcie_force_wake_release(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
@@ -1245,6 +1268,7 @@ int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
 						     handler, flags, name, ctx);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 		break;
 	case PLD_BUS_TYPE_IPCI:
@@ -1278,6 +1302,7 @@ int pld_ce_free_irq(struct device *dev, unsigned int ce_id, void *ctx)
 		ret = pld_snoc_fw_sim_ce_free_irq(dev, ce_id, ctx);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 		break;
 	case PLD_BUS_TYPE_IPCI:
@@ -1307,6 +1332,7 @@ void pld_enable_irq(struct device *dev, unsigned int ce_id)
 		pld_snoc_fw_sim_enable_irq(dev, ce_id);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -1335,6 +1361,7 @@ void pld_disable_irq(struct device *dev, unsigned int ce_id)
 		pld_snoc_fw_sim_disable_irq(dev, ce_id);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -1368,6 +1395,7 @@ int pld_get_soc_info(struct device *dev, struct pld_soc_info *info)
 		ret = pld_snoc_fw_sim_get_soc_info(dev, info);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_get_soc_info(dev, info);
 		break;
 	case PLD_BUS_TYPE_PCIE:
@@ -1408,6 +1436,7 @@ int pld_get_ce_id(struct device *dev, int irq)
 		ret = pld_pcie_get_ce_id(dev, irq);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -1440,6 +1469,7 @@ int pld_get_irq(struct device *dev, int ce_id)
 	case PLD_BUS_TYPE_IPCI:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 	default:
 		ret = -EINVAL;
@@ -1462,6 +1492,7 @@ void pld_lock_pm_sem(struct device *dev)
 		pld_pcie_lock_pm_sem(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -1489,6 +1520,7 @@ void pld_release_pm_sem(struct device *dev)
 		pld_pcie_release_pm_sem(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -1519,6 +1551,7 @@ void pld_lock_reg_window(struct device *dev, unsigned long *flags)
 		pld_pcie_lock_reg_window(dev, flags);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -1549,6 +1582,7 @@ void pld_unlock_reg_window(struct device *dev, unsigned long *flags)
 		pld_pcie_unlock_reg_window(dev, flags);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_IPCI:
@@ -1582,6 +1616,7 @@ int pld_power_on(struct device *dev)
 		 */
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -1617,6 +1652,7 @@ int pld_power_off(struct device *dev)
 		 */
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -1666,6 +1702,7 @@ int pld_athdiag_read(struct device *dev, uint32_t offset,
 					   datalen, output);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -1710,6 +1747,7 @@ int pld_athdiag_write(struct device *dev, uint32_t offset,
 					    datalen, input);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -1741,6 +1779,7 @@ void *pld_smmu_get_domain(struct device *dev)
 		ptr = pld_pcie_smmu_get_domain(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
@@ -1774,6 +1813,7 @@ void *pld_smmu_get_mapping(struct device *dev)
 		ptr = pld_snoc_smmu_get_mapping(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
@@ -1811,6 +1851,7 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		ret = pld_snoc_smmu_map(dev, paddr, iova_addr, size);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
@@ -1891,6 +1932,7 @@ int pld_get_user_msi_assignment(struct device *dev, char *user_name,
 						       base_vector);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_get_user_msi_assignment(dev, user_name,
 							      num_vectors,
 							      user_base_data,
@@ -1943,6 +1985,7 @@ int pld_srng_request_irq(struct device *dev, int irq, irq_handler_t handler,
 		ret = request_irq(irq, handler, irqflags, devname, dev_data);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_request_irq(dev, irq, handler,
 						  irqflags, devname,
 						  dev_data);
@@ -1988,6 +2031,7 @@ int pld_srng_free_irq(struct device *dev, int irq, void *dev_data)
 		free_irq(irq, dev_data);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_free_irq(dev, irq, dev_data);
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -2023,6 +2067,7 @@ void pld_srng_enable_irq(struct device *dev, int irq)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		pld_pcie_fw_sim_enable_irq(dev, irq);
 		break;
 	case PLD_BUS_TYPE_PCIE:
@@ -2053,6 +2098,7 @@ void pld_srng_disable_irq(struct device *dev, int irq)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		pld_pcie_fw_sim_disable_irq(dev, irq);
 		break;
 	case PLD_BUS_TYPE_PCIE:
@@ -2087,6 +2133,7 @@ int pld_pci_read_config_word(struct pci_dev *pdev, int offset, uint16_t *val)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
 		break;
@@ -2121,6 +2168,7 @@ int pld_pci_write_config_word(struct pci_dev *pdev, int offset, uint16_t val)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pci_write_config_word(pdev, offset, val);
@@ -2155,6 +2203,7 @@ int pld_pci_read_config_dword(struct pci_dev *pdev, int offset, uint32_t *val)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pci_read_config_dword(pdev, offset, val);
@@ -2189,6 +2238,7 @@ int pld_pci_write_config_dword(struct pci_dev *pdev, int offset, uint32_t val)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pci_write_config_dword(pdev, offset, val);
@@ -2223,6 +2273,7 @@ int pld_get_msi_irq(struct device *dev, unsigned int vector)
 		ret = pld_pcie_get_msi_irq(dev, vector);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = pld_pcie_fw_sim_get_msi_irq(dev, vector);
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -2262,6 +2313,7 @@ void pld_get_msi_address(struct device *dev, uint32_t *msi_addr_low,
 		pld_pcie_get_msi_address(dev, msi_addr_low, msi_addr_high);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		pld_pcie_fw_sim_get_msi_address(dev, msi_addr_low,
 						msi_addr_high);
 		break;
@@ -2298,6 +2350,7 @@ int pld_is_drv_connected(struct device *dev)
 		ret = pld_pcie_is_drv_connected(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
@@ -2329,6 +2382,7 @@ unsigned int pld_socinfo_get_serial_number(struct device *dev)
 		ret = pld_snoc_socinfo_get_serial_number(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 		pr_err("Not supported on type %d\n", type);
 		break;
@@ -2366,6 +2420,7 @@ int pld_is_qmi_disable(struct device *dev)
 	case PLD_BUS_TYPE_IPCI:
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_PCIE:
 	case PLD_BUS_TYPE_SDIO:
 		pr_err("Not supported on type %d\n", type);
@@ -2405,6 +2460,7 @@ int pld_is_fw_down(struct device *dev)
 		ret = pld_snoc_fw_sim_is_fw_down(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pld_pcie_is_fw_down(dev);
@@ -2446,6 +2502,7 @@ int pld_force_assert_target(struct device *dev)
 	case PLD_BUS_TYPE_PCIE:
 		return pld_pcie_force_assert_target(dev);
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		return -EOPNOTSUPP;
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SDIO:
@@ -2474,6 +2531,7 @@ int pld_collect_rddm(struct device *dev)
 	case PLD_BUS_TYPE_PCIE:
 		return pld_pcie_collect_rddm(dev);
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
@@ -2595,6 +2653,7 @@ bool pld_is_fw_dump_skipped(struct device *dev)
 		ret = pld_sdio_is_fw_dump_skipped();
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 	default:
@@ -2613,6 +2672,7 @@ int pld_is_pdr(struct device *dev)
 		ret = pld_snoc_is_pdr();
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 	default:
@@ -2631,6 +2691,7 @@ int pld_is_fw_rejuvenate(struct device *dev)
 		ret = pld_snoc_is_fw_rejuvenate();
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 	default:
@@ -2648,6 +2709,7 @@ bool pld_have_platform_driver_support(struct device *dev)
 		ret = pld_pcie_platform_driver_support();
 		break;
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 		ret = true;
 		break;
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
@@ -2687,6 +2749,7 @@ int pld_idle_shutdown(struct device *dev,
 			errno = pld_pcie_idle_shutdown(dev);
 			break;
 		case PLD_BUS_TYPE_PCIE_FW_SIM:
+		case PLD_BUS_TYPE_IPCI_FW_SIM:
 			errno = pld_pcie_fw_sim_idle_shutdown(dev);
 			break;
 		case PLD_BUS_TYPE_SNOC_FW_SIM:
@@ -2723,6 +2786,7 @@ int pld_idle_restart(struct device *dev,
 			errno = pld_pcie_idle_restart(dev);
 			break;
 		case PLD_BUS_TYPE_PCIE_FW_SIM:
+		case PLD_BUS_TYPE_IPCI_FW_SIM:
 			errno = pld_pcie_fw_sim_idle_restart(dev);
 			break;
 		case PLD_BUS_TYPE_SNOC_FW_SIM:
@@ -2766,6 +2830,7 @@ int pld_get_audio_wlan_timestamp(struct device *dev,
 	case PLD_BUS_TYPE_PCIE:
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
 	case PLD_BUS_TYPE_IPCI:

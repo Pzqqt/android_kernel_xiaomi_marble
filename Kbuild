@@ -1979,6 +1979,9 @@ PLD_INC :=	-I$(WLAN_ROOT)/$(PLD_INC_DIR) \
 
 PLD_OBJS :=	$(PLD_SRC_DIR)/pld_common.o
 
+ifeq ($(CONFIG_IPCIE_FW_SIM), y)
+PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie_fw_sim.o
+endif
 ifeq ($(CONFIG_PCIE_FW_SIM), y)
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie_fw_sim.o
 else ifeq ($(CONFIG_HIF_PCI), y)
@@ -2335,6 +2338,9 @@ cppflags-$(CONFIG_FEATURE_COEX) += -DFEATURE_COEX
 cppflags-$(CONFIG_PLD_IPCI_ICNSS_FLAG) += -DCONFIG_PLD_IPCI_ICNSS
 cppflags-$(CONFIG_PLD_SDIO_CNSS_FLAG) += -DCONFIG_PLD_SDIO_CNSS
 
+ifeq ($(CONFIG_IPCIE_FW_SIM), y)
+cppflags-y += -DCONFIG_PLD_IPCIE_FW_SIM
+endif
 ifeq ($(CONFIG_PLD_PCIE_CNSS_FLAG), y)
 ifeq ($(CONFIG_PCIE_FW_SIM), y)
 cppflags-y += -DCONFIG_PLD_PCIE_FW_SIM

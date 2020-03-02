@@ -245,6 +245,7 @@ static enum qdf_bus_type to_bus_type(enum pld_bus_type bus_type)
 		return QDF_BUS_TYPE_SDIO;
 	case PLD_BUS_TYPE_USB:
 		return QDF_BUS_TYPE_USB;
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
 	case PLD_BUS_TYPE_IPCI:
 		return QDF_BUS_TYPE_IPCI;
 	default:

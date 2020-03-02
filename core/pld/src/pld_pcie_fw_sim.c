@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,7 +24,7 @@
 
 #include "pld_pcie_fw_sim.h"
 
-#ifdef CONFIG_PLD_PCIE_FW_SIM
+#if defined(CONFIG_PLD_PCIE_FW_SIM) || defined(CONFIG_PLD_IPCIE_FW_SIM)
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define CE_COUNT_MAX 12
@@ -32,6 +32,255 @@
 #define CE_COUNT_MAX 8
 #endif
 
+#endif
+
+#ifdef CONFIG_PLD_IPCIE_FW_SIM
+/**
+ * pld_pcie_fw_sim_probe() - Probe function for PCIE platform driver
+ * @pdev: PCIE device
+ * @id: PCIE device ID table
+ *
+ * The probe function will be called when PCIE device provided
+ * in the ID table is detected.
+ *
+ * Return: int
+ */
+static int pld_pcie_fw_sim_probe(struct pci_dev *pdev,
+				 const struct pci_device_id *id)
+{
+	struct pld_context *pld_context;
+	int ret = 0;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context) {
+		ret = -ENODEV;
+		goto out;
+	}
+
+	ret = pld_add_dev(pld_context, &pdev->dev, NULL,
+			  PLD_BUS_TYPE_IPCI_FW_SIM);
+	if (ret)
+		goto out;
+
+	return pld_context->ops->probe(&pdev->dev,
+		       PLD_BUS_TYPE_IPCI_FW_SIM, NULL, NULL);
+
+out:
+	return ret;
+}
+
+/**
+ * pld_pcie_fw_sim_remove() - Remove function for PCIE device
+ * @pdev: PCIE device
+ *
+ * The remove function will be called when PCIE device is disconnected
+ *
+ * Return: void
+ */
+static void pld_pcie_fw_sim_remove(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+	int errno;
+	struct osif_psoc_sync *psoc_sync;
+
+	errno = osif_psoc_sync_trans_start_wait(&pdev->dev, &psoc_sync);
+	if (errno)
+		return;
+
+	osif_psoc_sync_unregister(&pdev->dev);
+	osif_psoc_sync_wait_for_ops(psoc_sync);
+
+	pld_context = pld_get_global_context();
+
+	if (!pld_context)
+		goto out;
+
+	pld_context->ops->remove(&pdev->dev, PLD_BUS_TYPE_IPCI_FW_SIM);
+
+	pld_del_dev(pld_context, &pdev->dev);
+
+out:
+	osif_psoc_sync_trans_stop(psoc_sync);
+	osif_psoc_sync_destroy(psoc_sync);
+}
+
+/**
+ * pld_pcie_fw_sim_idle_restart_cb() - Perform idle restart
+ * @pdev: PCIE device
+ * @id: PCIE device ID
+ *
+ * This function will be called if there is an idle restart request
+ *
+ * Return: int
+ */
+static int pld_pcie_fw_sim_idle_restart_cb(struct pci_dev *pdev,
+					   const struct pci_device_id *id)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->idle_restart)
+		return pld_context->ops->idle_restart(&pdev->dev,
+						      PLD_BUS_TYPE_IPCI_FW_SIM);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_pcie_fw_sim_idle_shutdown_cb() - Perform idle shutdown
+ * @pdev: PCIE device
+ * @id: PCIE device ID
+ *
+ * This function will be called if there is an idle shutdown request
+ *
+ * Return: int
+ */
+static int pld_pcie_fw_sim_idle_shutdown_cb(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->shutdown)
+		return pld_context->ops->idle_shutdown(&pdev->dev,
+						PLD_BUS_TYPE_IPCI_FW_SIM);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_pcie_fw_sim_reinit() - SSR re-initialize function for PCIE device
+ * @pdev: PCIE device
+ * @id: PCIE device ID
+ *
+ * During subsystem restart(SSR), this function will be called to
+ * re-initialize pcie device.
+ *
+ * Return: int
+ */
+static int pld_pcie_fw_sim_reinit(struct pci_dev *pdev,
+				  const struct pci_device_id *id)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->reinit)
+		return pld_context->ops->reinit(&pdev->dev,
+				PLD_BUS_TYPE_IPCI_FW_SIM, NULL, NULL);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_pcie_fw_sim_shutdown() - SSR shutdown function for PCIE device
+ * @pdev: PCIE device
+ *
+ * During SSR, this function will be called to shutdown PCIE device.
+ *
+ * Return: void
+ */
+static void pld_pcie_fw_sim_shutdown(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->shutdown)
+		pld_context->ops->shutdown(&pdev->dev,
+						PLD_BUS_TYPE_IPCI_FW_SIM);
+}
+
+/**
+ * pld_pcie_fw_sim_crash_shutdown() - Crash shutdown function for PCIE device
+ * @pdev: PCIE device
+ *
+ * This function will be called when a crash is detected, it will shutdown
+ * the PCIE device.
+ *
+ * Return: void
+ */
+static void pld_pcie_fw_sim_crash_shutdown(struct pci_dev *pdev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->crash_shutdown)
+		pld_context->ops->crash_shutdown(&pdev->dev,
+						PLD_BUS_TYPE_IPCI_FW_SIM);
+}
+
+/**
+ * pld_pcie_fw_sim_notify_handler() - Modem state notification callback function
+ * @pdev: PCIE device
+ * @state: modem power state
+ *
+ * This function will be called when there's a modem power state change.
+ *
+ * Return: void
+ */
+static void pld_pcie_fw_sim_notify_handler(struct pci_dev *pdev, int state)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (pld_context->ops->modem_status)
+		pld_context->ops->modem_status(&pdev->dev,
+					       PLD_BUS_TYPE_IPCI_FW_SIM, state);
+}
+
+/**
+ * pld_pcie_fw_sim_uevent() - update wlan driver status callback function
+ * @pdev: PCIE device
+ * @status driver uevent status
+ *
+ * This function will be called when platform driver wants to update wlan
+ * driver's status.
+ *
+ * Return: void
+ */
+static void pld_pcie_fw_sim_uevent(struct pci_dev *pdev, uint32_t status)
+{
+	struct pld_context *pld_context;
+	struct pld_uevent_data data;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return;
+
+	switch (status) {
+	case CNSS_RECOVERY:
+		data.uevent = PLD_FW_RECOVERY_START;
+		break;
+	case CNSS_FW_DOWN:
+		data.uevent = PLD_FW_DOWN;
+		break;
+	default:
+		goto out;
+	}
+
+	if (pld_context->ops->uevent)
+		pld_context->ops->uevent(&pdev->dev, &data);
+
+out:
+	return;
+}
+
+static struct pci_device_id pld_pcie_fw_sim_id_table[] = {
+	{ 0x168c, 0x003c, PCI_ANY_ID, PCI_ANY_ID },
+	{ 0x168c, 0x003e, PCI_ANY_ID, PCI_ANY_ID },
+	{ 0x168c, 0x0041, PCI_ANY_ID, PCI_ANY_ID },
+	{ 0x168c, 0xabcd, PCI_ANY_ID, PCI_ANY_ID },
+	{ 0x168c, 0x7021, PCI_ANY_ID, PCI_ANY_ID },
+	{ 0 }
+};
+
+#ifdef MULTI_IF_NAME
+#define PLD_PCIE_FW_SIM_OPS_NAME "pld_ipcie_fw_sim_" MULTI_IF_NAME
+#else
+#define PLD_PCIE_FW_SIM_OPS_NAME "pld_ipcie_fw_sim"
+#endif
+
+#endif
+
+#ifdef CONFIG_PLD_PCIE_FW_SIM
 /**
  * pld_pcie_fw_sim_probe() - Probe function for PCIE platform driver
  * @pdev: PCIE device
@@ -275,6 +524,9 @@ static struct pci_device_id pld_pcie_fw_sim_id_table[] = {
 #define PLD_PCIE_FW_SIM_OPS_NAME "pld_pcie_fw_sim"
 #endif
 
+#endif
+
+#if defined(CONFIG_PLD_PCIE_FW_SIM) || defined(CONFIG_PLD_IPCIE_FW_SIM)
 struct cnss_wlan_driver pld_pcie_fw_sim_ops = {
 	.name       = PLD_PCIE_FW_SIM_OPS_NAME,
 	.id_table   = pld_pcie_fw_sim_id_table,
