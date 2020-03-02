@@ -627,8 +627,6 @@ void tgt_dfs_deinit_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev);
  * tgt_dfs_save_dfs_nol_in_psoc() - Save NOL data of given pdev.
  * @pdev: Pointer to pdev object.
  * @pdev_id: The pdev ID which will have the NOL data.
- * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
- * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
  *
  * Based on the frequency of the NOL channel, copy it to the target pdev_id
  * structure in psoc.
@@ -636,20 +634,22 @@ void tgt_dfs_deinit_tmp_psoc_nol(struct wlan_objmgr_pdev *pdev);
  * Return: void.
  */
 void tgt_dfs_save_dfs_nol_in_psoc(struct wlan_objmgr_pdev *pdev,
-				  uint8_t pdev_id,
-				  uint16_t low_5ghz_freq,
-				  uint16_t high_5ghz_freq);
+				  uint8_t pdev_id);
 
 /**
  * tgt_dfs_reinit_nol_from_psoc_copy() - Reinit saved NOL data to corresponding
  * pdevs.
  * @pdev: Pointer to pdev object.
  * @pdev_id: pdev_id of the given pdev.
+ * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
+ * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
  *
  * Return: void.
  */
 void tgt_dfs_reinit_nol_from_psoc_copy(struct wlan_objmgr_pdev *pdev,
-				       uint8_t pdev_id);
+				       uint8_t pdev_id,
+				       uint16_t low_5ghz_freq,
+				       uint16_t high_5ghz_freq);
 
 /**
  * tgt_dfs_reinit_precac_lists() - Reinit preCAC lists.

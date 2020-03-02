@@ -929,14 +929,11 @@ void dfs_deinit_tmp_psoc_nol(struct wlan_dfs *dfs)
 }
 
 void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs,
-			      uint8_t pdev_id,
-			      uint16_t low_5ghz_freq,
-			      uint16_t high_5ghz_freq)
+			      uint8_t pdev_id)
 {
 	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
 	struct dfsreq_nolinfo tmp_nolinfo, *nolinfo;
 	uint32_t i, num_chans = 0;
-	uint16_t tmp_freq;
 
 	if (!dfs->dfs_nol_count)
 		return;
@@ -951,32 +948,30 @@ void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs,
 	/* nolinfo might already have some data. Do not overwrite it */
 	num_chans = nolinfo->dfs_ch_nchans;
 	for (i = 0; i < tmp_nolinfo.dfs_ch_nchans; i++) {
-		tmp_freq = tmp_nolinfo.dfs_nol[i].nol_freq;
+		/* Figure out the completed duration of each NOL. */
+		uint32_t nol_completed_ms =
+			qdf_system_ticks_to_msecs(qdf_system_ticks() -
+					tmp_nolinfo.dfs_nol[i].nol_start_ticks);
 
-		/* Add to nolinfo only if within the pdev's frequency range. */
-		if ((low_5ghz_freq < tmp_freq) && (high_5ghz_freq > tmp_freq)) {
-			/* Figure out the completed duration of each NOL. */
-			uint32_t nol_completed_ms =
-				qdf_system_ticks_to_msecs(qdf_system_ticks() -
-				tmp_nolinfo.dfs_nol[i].nol_start_ticks);
-
-			nolinfo->dfs_nol[num_chans] = tmp_nolinfo.dfs_nol[i];
-			/* Remember the remaining NOL time in the timeout
-			 * variable.
-			 */
-			nolinfo->dfs_nol[num_chans++].nol_timeout_ms -=
-				nol_completed_ms;
-		}
+		nolinfo->dfs_nol[num_chans] = tmp_nolinfo.dfs_nol[i];
+		/* Remember the remaining NOL time in the timeout
+		 * variable.
+		 */
+		nolinfo->dfs_nol[num_chans++].nol_timeout_ms -=
+			nol_completed_ms;
 	}
 
 	nolinfo->dfs_ch_nchans = num_chans;
 }
 
-void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs, uint8_t pdev_id)
+void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs,
+				   uint8_t pdev_id,
+				   uint16_t low_5ghz_freq,
+				   uint16_t high_5ghz_freq)
 {
 	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
-	struct dfsreq_nolinfo *nol;
-	uint8_t i;
+	struct dfsreq_nolinfo *nol, req_nol;
+	uint8_t i, j = 0;
 
 	if (!dfs_soc_obj->dfs_psoc_nolinfo)
 		return;
@@ -986,14 +981,22 @@ void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs, uint8_t pdev_id)
 
 	nol = &dfs_soc_obj->dfs_psoc_nolinfo[pdev_id];
 
-	/* The NOL timeout value in each entry points to the remaining time
-	 * of the NOL. This is to indicate that the NOL entries are paused
-	 * and are not left to continue.
-	 * While adding these NOL, update the start ticks to current time
-	 * to avoid losing entries which might have timed out during
-	 * the pause and resume mechanism.
-	 */
-	for (i = 0; i < nol->dfs_ch_nchans; i++)
-		nol->dfs_nol[i].nol_start_ticks = qdf_system_ticks();
-	dfs_set_nol(dfs, nol->dfs_nol, nol->dfs_ch_nchans);
+	for (i = 0; i < nol->dfs_ch_nchans; i++) {
+		uint16_t tmp_freq = nol->dfs_nol[i].nol_freq;
+
+		/* Add to nol only if within the tgt pdev's frequency range. */
+		if ((low_5ghz_freq < tmp_freq) && (high_5ghz_freq > tmp_freq)) {
+			/* The NOL timeout value in each entry points to the
+			 * remaining time of the NOL. This is to indicate that
+			 * the NOL entries are paused and are not left to
+			 * continue.
+			 * While adding these NOL, update the start ticks to
+			 * current time to avoid losing entries which might
+			 * have timed out during the pause and resume mechanism.
+			 */
+			nol->dfs_nol[i].nol_start_ticks = qdf_system_ticks();
+			req_nol.dfs_nol[j++] = nol->dfs_nol[i];
+		}
+	}
+	dfs_set_nol(dfs, req_nol.dfs_nol, j);
 }

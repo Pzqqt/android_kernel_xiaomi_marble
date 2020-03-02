@@ -2773,28 +2773,28 @@ void dfs_deinit_tmp_psoc_nol(struct wlan_dfs *dfs);
  * dfs_save_dfs_nol_in_psoc() - Save NOL data of given pdev.
  * @dfs: Pointer to wlan_dfs object.
  * @pdev_id: The pdev ID which will have the NOL data.
- * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
- * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
  *
  * Based on the frequency of the NOL channel, copy it to the target pdev_id
  * structure in psoc.
  *
  * Return: void.
  */
-void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs,
-			      uint8_t pdev_id,
-			      uint16_t low_5ghz_freq,
-			      uint16_t high_5ghz_freq);
+void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs, uint8_t pdev_id);
 
 /**
  * dfs_reinit_nol_from_psoc_copy() - Reinit saved NOL data to corresponding
  * DFS object.
  * @dfs: Pointer to wlan_dfs object.
  * @pdev_id: pdev_id of the given dfs object.
+ * @low_5ghz_freq: The low 5GHz frequency value of the target pdev id.
+ * @high_5ghz_freq: The high 5GHz frequency value of the target pdev id.
  *
  * Return: void.
  */
-void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs, uint8_t pdev_id);
+void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs,
+				   uint8_t pdev_id,
+				   uint16_t low_5ghz_freq,
+				   uint16_t high_5ghz_freq);
 
 /**
  * dfs_is_hw_mode_switch_in_progress() - Check if HW mode switch in progress.

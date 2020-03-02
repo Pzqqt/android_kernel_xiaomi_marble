@@ -1592,11 +1592,11 @@ struct wlan_lmac_if_dfs_rx_ops {
 				      uint8_t num_radios);
 	void (*dfs_deinit_tmp_psoc_nol)(struct wlan_objmgr_pdev *pdev);
 	void (*dfs_save_dfs_nol_in_psoc)(struct wlan_objmgr_pdev *pdev,
-					 uint8_t pdev_id,
-					 uint16_t low_5ghz_freq,
-					 uint16_t high_5ghz_freq);
+					 uint8_t pdev_id);
 	void (*dfs_reinit_nol_from_psoc_copy)(struct wlan_objmgr_pdev *pdev,
-					      uint8_t pdev_id);
+					      uint8_t pdev_id,
+					      uint16_t low_5ghz_freq,
+					      uint16_t high_5ghz_freq);
 	void (*dfs_reinit_precac_lists)(struct wlan_objmgr_pdev *src_pdev,
 					struct wlan_objmgr_pdev *dest_pdev,
 					uint16_t low_5g_freq,
