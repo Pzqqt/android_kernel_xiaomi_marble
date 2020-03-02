@@ -95,9 +95,11 @@ struct pkt_capture_vdev_priv {
  * struct pkt_psoc_priv - Private object to be stored in psoc
  * @psoc: pointer to psoc object
  * @cfg_param: INI config params for packet capture
+ * @cb_obj: struct contaning callback pointers
  */
 struct pkt_psoc_priv {
 	struct wlan_objmgr_psoc *psoc;
 	struct pkt_capture_cfg cfg_param;
+	struct pkt_capture_callbacks cb_obj;
 };
 #endif /* End  of _WLAN_PKT_CAPTURE_PRIV_STRUCT_H_ */

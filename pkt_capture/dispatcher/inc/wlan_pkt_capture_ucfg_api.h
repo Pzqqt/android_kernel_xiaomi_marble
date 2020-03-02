@@ -263,6 +263,17 @@ void ucfg_pkt_capture_tx_completion_process(
  * Return: None
  */
 void ucfg_pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_pkt_capture_register_callbacks - ucfg API to register WMA callbacks
+ * @psoc - pointer to psoc object
+ * @cb_obj - Pointer to packet capture callback structure
+ *
+ * Return: status of operation
+ */
+int
+ucfg_pkt_capture_register_wma_callbacks(struct wlan_objmgr_psoc *psoc,
+					struct pkt_capture_callbacks *cb_obj);
 #else
 static inline
 QDF_STATUS ucfg_pkt_capture_init(void)
