@@ -1616,7 +1616,7 @@ qdf_nbuf_t get_mpdu_clone_from_next_ppdu(qdf_nbuf_t nbuf_ppdu_desc_list[],
 		}
 	}
 
-	return qdf_nbuf_copy_expand(mpdu, MAX_MONITOR_HEADER, 0);
+	return qdf_nbuf_copy_expand_fraglist(mpdu, MAX_MONITOR_HEADER, 0);
 }
 
 /**
@@ -2138,9 +2138,9 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 						&xretry_ppdu->mpdu_q);
 				} else {
 					ppdu_desc->mpdus[seq_no - start_seq] =
-					qdf_nbuf_copy_expand(mpdu_nbuf,
-							     MAX_MONITOR_HEADER,
-							     0);
+					qdf_nbuf_copy_expand_fraglist(
+						mpdu_nbuf,
+						MAX_MONITOR_HEADER, 0);
 					mpdu_nbuf =
 						qdf_nbuf_queue_next(mpdu_nbuf);
 				}
@@ -2284,8 +2284,8 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 					ppdu_desc->user[0].start_seq + i,
 					ppdu_desc->ppdu_id);
 				ppdu_desc->mpdus[i] =
-				qdf_nbuf_copy_expand(mpdu_nbuf,
-						     MAX_MONITOR_HEADER, 0);
+				qdf_nbuf_copy_expand_fraglist(
+					mpdu_nbuf, MAX_MONITOR_HEADER, 0);
 				ppdu_desc->user[0].failed_bitmap[k] |=
 				SEQ_SEG_MSK(ppdu_desc->user[0].failed_bitmap[k],
 					    i);
