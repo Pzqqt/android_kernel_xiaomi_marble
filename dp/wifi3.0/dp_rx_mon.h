@@ -96,6 +96,156 @@ uint32_t dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
  * Return: None
  */
 void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev);
+
+/**
+ * dp_rx_mon_link_desc_return() - Return a MPDU link descriptor to HW
+ *			      (WBM), following error handling
+ *
+ * @dp_pdev: core txrx pdev context
+ * @buf_addr_info: void pointer to monitor link descriptor buf addr info
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
+			   hal_buff_addrinfo_t buf_addr_info,
+			   int mac_id);
+
+/**
+ * dp_mon_adjust_frag_len() - MPDU and MSDU may spread across
+ *				multiple nbufs. This function
+ *                              is to return data length in
+ *				fragmented buffer
+ *
+ * @total_len: pointer to remaining data length.
+ * @frag_len: pointer to data length in this fragment.
+*/
+static inline void dp_mon_adjust_frag_len(uint32_t *total_len,
+					  uint32_t *frag_len)
+{
+	if (*total_len >= (RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
+		*frag_len = RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN;
+		*total_len -= *frag_len;
+	} else {
+		*frag_len = *total_len;
+		*total_len = 0;
+	}
+}
+
+/**
+ * dp_rx_cookie_2_mon_link_desc() - Retrieve Link descriptor based on target
+ * @pdev: core physical device context
+ * @hal_buf_info: structure holding the buffer info
+ * mac_id: mac number
+ *
+ * Return: link descriptor address
+ */
+static inline
+void *dp_rx_cookie_2_mon_link_desc(struct dp_pdev *pdev,
+				   struct hal_buf_info buf_info,
+				   uint8_t mac_id)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_cookie_2_mon_link_desc_va(pdev, &buf_info,
+						       mac_id);
+
+	return dp_rx_cookie_2_link_desc_va(pdev->soc, &buf_info);
+}
+
+/**
+ * dp_rx_monitor_link_desc_return() - Return Link descriptor based on target
+ * @pdev: core physical device context
+ * @p_last_buf_addr_info: MPDU Link descriptor
+ * mac_id: mac number
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS dp_rx_monitor_link_desc_return(struct dp_pdev *pdev,
+					  hal_buff_addrinfo_t
+					  p_last_buf_addr_info,
+					  uint8_t mac_id, uint8_t bm_action)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_mon_link_desc_return(pdev, p_last_buf_addr_info,
+						  mac_id);
+
+	return dp_rx_link_desc_return_by_addr(pdev->soc, p_last_buf_addr_info,
+				      bm_action);
+}
+
+/**
+ * dp_rxdma_get_mon_dst_ring() - Return the pointer to rxdma_err_dst_ring
+ *					or mon_dst_ring based on the target
+ * @pdev: core physical device context
+ * @mac_for_pdev: mac_id number
+ *
+ * Return: ring address
+ */
+static inline
+void *dp_rxdma_get_mon_dst_ring(struct dp_pdev *pdev,
+				uint8_t mac_for_pdev)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return pdev->soc->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
+
+	return pdev->soc->rxdma_err_dst_ring[mac_for_pdev].hal_srng;
+}
+
+/**
+ * dp_rxdma_get_mon_buf_ring() - Return monitor buf ring address
+ *				    based on target
+ * @pdev: core physical device context
+ * @mac_for_pdev: mac id number
+ *
+ * Return: ring address
+ */
+static inline
+struct dp_srng *dp_rxdma_get_mon_buf_ring(struct dp_pdev *pdev,
+					  uint8_t mac_for_pdev)
+{
+	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
+		return &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
+
+	return &pdev->soc->rx_refill_buf_ring[mac_for_pdev];
+}
+
+/**
+ * dp_rx_get_mon_desc_pool() - Return monitor descriptor pool
+ *			       based on target
+ * @soc: soc handle
+ * @mac_id: mac id number
+ * @pdev_id: pdev id number
+ *
+ * Return: descriptor pool address
+ */
+static inline
+struct rx_desc_pool *dp_rx_get_mon_desc_pool(struct dp_soc *soc,
+					     uint8_t mac_id,
+					     uint8_t pdev_id)
+{
+	if (soc->wlan_cfg_ctx->rxdma1_enable)
+		return &soc->rx_desc_mon[mac_id];
+
+	return &soc->rx_desc_buf[pdev_id];
+}
+
+/**
+ * dp_rx_get_mon_desc() - Return Rx descriptor based on target
+ * @soc: soc handle
+ * @cookie: cookie value
+ *
+ * Return: Rx descriptor
+ */
+static inline
+struct dp_rx_desc *dp_rx_get_mon_desc(struct dp_soc *soc,
+				      uint32_t cookie)
+{
+	if (soc->wlan_cfg_ctx->rxdma1_enable)
+		return dp_rx_cookie_2_va_mon_buf(soc, cookie);
+
+	return dp_rx_cookie_2_va_rxdma_buf(soc, cookie);
+}
+
 #ifndef REMOVE_MON_DBG_STATS
 /*
  * dp_rx_mon_update_dbg_ppdu_stats() - Update status ring TLV count
