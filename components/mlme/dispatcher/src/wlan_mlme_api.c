@@ -3865,3 +3865,22 @@ uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj->cfg.lfr.roam_trigger_bitmap;
 }
 #endif
+
+QDF_STATUS
+wlan_mlme_get_dfs_chan_ageout_time(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *dfs_chan_ageout_time)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*dfs_chan_ageout_time =
+			cfg_default(CFG_DFS_CHAN_AGEOUT_TIME);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*dfs_chan_ageout_time = mlme_obj->cfg.gen.dfs_chan_ageout_time;
+
+	return QDF_STATUS_SUCCESS;
+}
