@@ -504,6 +504,21 @@ QDF_STATUS ucfg_fwol_get_enable_fw_module_log_level(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS ucfg_fwol_get_sap_xlna_bypass(struct wlan_objmgr_psoc *psoc,
+					 bool *sap_xlna_bypass)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*sap_xlna_bypass = fwol_obj->cfg.sap_xlna_bypass;
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef FEATURE_WLAN_RA_FILTERING
 QDF_STATUS ucfg_fwol_set_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
 					       bool is_rate_limit_enabled)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -705,6 +705,29 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Secondary Retry Rate feature subset control")
 
+/*
+ * <ini>
+ * sap_xlna_bypass - Enable/Disable xLNA bypass
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable SAP xLNA bypass in the FW
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+
+#define CFG_SET_SAP_XLNA_BYPASS CFG_INI_BOOL( \
+		"xlna_bypass", \
+		0, \
+		"SAP xLNA bypass control")
+
 #define CFG_FWOL_GENERIC_ALL \
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
@@ -730,6 +753,7 @@
 	__CFG_IS_SAE_ENABLED \
 	CFG(CFG_ENABLE_GCMP) \
 	CFG(CFG_TX_SCH_DELAY) \
-	CFG(CFG_ENABLE_SECONDARY_RATE)
+	CFG(CFG_ENABLE_SECONDARY_RATE) \
+	CFG(CFG_SET_SAP_XLNA_BYPASS)
 
 #endif
