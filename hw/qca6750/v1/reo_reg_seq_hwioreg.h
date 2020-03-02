@@ -8464,14 +8464,8 @@
 		HWIO_INTFREE();\
 	} while (0) 
 
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_DESC_TYPE_BITMAP_BMSK       0x01fe0000
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_DESC_TYPE_BITMAP_SHFT             0x11
-
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CACHE_EMPTY_THRESHOLD_SET2_BMSK 0x0001fe00
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CACHE_EMPTY_THRESHOLD_SET2_SHFT        0x9
-
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CACHE_LINE_USE_NUM_SET2_BMSK 0x000001ff
-#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CACHE_LINE_USE_NUM_SET2_SHFT        0x0
+#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CONFIG_SET_BMSK             0x01ffffff
+#define HWIO_REO_R0_CACHE_CTL_CONFIG_SET_CONFIG_SET_SHFT                    0x0
 
 //// Register REO_R0_CACHE_CTL_SET_SIZE ////
 
@@ -9023,10 +9017,128 @@
 #define HWIO_REO_R1_CACHE_CTL_END_OF_TEST_CHECK_END_OF_TEST_SELF_CHECK_BMSK 0x00000001
 #define HWIO_REO_R1_CACHE_CTL_END_OF_TEST_CHECK_END_OF_TEST_SELF_CHECK_SHFT        0x0
 
+//// Register REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1 ////
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_ADDR(x)            (x+0x00002040)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_PHYS(x)            (x+0x00002040)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_RMSK               0x000007ff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_SHFT                        0
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_IN(x)              \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_ADDR(x), HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_RMSK)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_INM(x, mask)       \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_ADDR(x), mask) 
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_OUT(x, val)        \
+	out_dword( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_ADDR(x), val)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_OUTM(x, mask, val) \
+	do {\
+		HWIO_INTLOCK(); \
+		out_dword_masked_ns(HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_ADDR(x), mask, val, HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_IN(x)); \
+		HWIO_INTFREE();\
+	} while (0) 
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_BACKUP_BMSK        0x000007f8
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_BACKUP_SHFT               0x3
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_WITHOUT_INVALIDATE_BMSK 0x00000004
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_WITHOUT_INVALIDATE_SHFT        0x2
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_ENTIRE_CACHE_BMSK 0x00000002
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_ENTIRE_CACHE_SHFT        0x1
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_REQ_BMSK     0x00000001
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG1_FLUSH_REQ_SHFT            0x0
+
+//// Register REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2 ////
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_ADDR(x)            (x+0x00002044)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_PHYS(x)            (x+0x00002044)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_RMSK               0xffffffff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_SHFT                        0
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_IN(x)              \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_ADDR(x), HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_RMSK)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_INM(x, mask)       \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_ADDR(x), mask) 
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_OUT(x, val)        \
+	out_dword( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_ADDR(x), val)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_OUTM(x, mask, val) \
+	do {\
+		HWIO_INTLOCK(); \
+		out_dword_masked_ns(HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_ADDR(x), mask, val, HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_IN(x)); \
+		HWIO_INTFREE();\
+	} while (0) 
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_FLUSH_ADDR_31_0_BMSK 0xffffffff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG2_FLUSH_ADDR_31_0_SHFT        0x0
+
+//// Register REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3 ////
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_ADDR(x)            (x+0x00002048)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_PHYS(x)            (x+0x00002048)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_RMSK               0x000000ff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_SHFT                        0
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_IN(x)              \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_ADDR(x), HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_RMSK)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_INM(x, mask)       \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_ADDR(x), mask) 
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_OUT(x, val)        \
+	out_dword( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_ADDR(x), val)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_OUTM(x, mask, val) \
+	do {\
+		HWIO_INTLOCK(); \
+		out_dword_masked_ns(HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_ADDR(x), mask, val, HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_IN(x)); \
+		HWIO_INTFREE();\
+	} while (0) 
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_FLUSH_ADDR_39_32_BMSK 0x000000ff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_CONFIG3_FLUSH_ADDR_39_32_SHFT        0x0
+
+//// Register REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS ////
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_ADDR(x)             (x+0x0000204c)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_PHYS(x)             (x+0x0000204c)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_RMSK                0x3fffffff
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_SHFT                         0
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_IN(x)               \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_ADDR(x), HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_RMSK)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_INM(x, mask)        \
+	in_dword_masked ( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_ADDR(x), mask) 
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_OUT(x, val)         \
+	out_dword( HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_ADDR(x), val)
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_OUTM(x, mask, val)  \
+	do {\
+		HWIO_INTLOCK(); \
+		out_dword_masked_ns(HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_ADDR(x), mask, val, HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_IN(x)); \
+		HWIO_INTFREE();\
+	} while (0) 
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_BACKUP_BMSK         0x3fc00000
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_BACKUP_SHFT               0x16
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_COUNT_BMSK    0x003ff000
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_COUNT_SHFT           0xc
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_HW_IF_BUSY_BMSK 0x00000800
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_HW_IF_BUSY_SHFT        0xb
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_ERROR_BMSK 0x00000600
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_ERROR_SHFT        0x9
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_CLIENT_ID_BMSK 0x000001e0
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_CLIENT_ID_SHFT        0x5
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_DESC_TYPE_BMSK 0x0000001c
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_DESC_TYPE_SHFT        0x2
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_HIT_BMSK 0x00000002
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_STATUS_HIT_SHFT        0x1
+
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_DONE_BMSK     0x00000001
+#define HWIO_REO_R1_CACHE_CTL_DEBUG_FLUSH_STATUS_FLUSH_DONE_SHFT            0x0
+
 //// Register REO_R1_END_OF_TEST_CHECK ////
 
-#define HWIO_REO_R1_END_OF_TEST_CHECK_ADDR(x)                        (x+0x00002040)
-#define HWIO_REO_R1_END_OF_TEST_CHECK_PHYS(x)                        (x+0x00002040)
+#define HWIO_REO_R1_END_OF_TEST_CHECK_ADDR(x)                        (x+0x00002050)
+#define HWIO_REO_R1_END_OF_TEST_CHECK_PHYS(x)                        (x+0x00002050)
 #define HWIO_REO_R1_END_OF_TEST_CHECK_RMSK                           0x00000001
 #define HWIO_REO_R1_END_OF_TEST_CHECK_SHFT                                    0
 #define HWIO_REO_R1_END_OF_TEST_CHECK_IN(x)                          \
@@ -9047,8 +9159,8 @@
 
 //// Register REO_R1_SM_ALL_IDLE ////
 
-#define HWIO_REO_R1_SM_ALL_IDLE_ADDR(x)                              (x+0x00002044)
-#define HWIO_REO_R1_SM_ALL_IDLE_PHYS(x)                              (x+0x00002044)
+#define HWIO_REO_R1_SM_ALL_IDLE_ADDR(x)                              (x+0x00002054)
+#define HWIO_REO_R1_SM_ALL_IDLE_PHYS(x)                              (x+0x00002054)
 #define HWIO_REO_R1_SM_ALL_IDLE_RMSK                                 0x00000007
 #define HWIO_REO_R1_SM_ALL_IDLE_SHFT                                          0
 #define HWIO_REO_R1_SM_ALL_IDLE_IN(x)                                \
@@ -9075,8 +9187,8 @@
 
 //// Register REO_R1_TESTBUS_CTRL ////
 
-#define HWIO_REO_R1_TESTBUS_CTRL_ADDR(x)                             (x+0x00002048)
-#define HWIO_REO_R1_TESTBUS_CTRL_PHYS(x)                             (x+0x00002048)
+#define HWIO_REO_R1_TESTBUS_CTRL_ADDR(x)                             (x+0x00002058)
+#define HWIO_REO_R1_TESTBUS_CTRL_PHYS(x)                             (x+0x00002058)
 #define HWIO_REO_R1_TESTBUS_CTRL_RMSK                                0x0000007f
 #define HWIO_REO_R1_TESTBUS_CTRL_SHFT                                         0
 #define HWIO_REO_R1_TESTBUS_CTRL_IN(x)                               \
@@ -9097,8 +9209,8 @@
 
 //// Register REO_R1_TESTBUS_LOWER ////
 
-#define HWIO_REO_R1_TESTBUS_LOWER_ADDR(x)                            (x+0x0000204c)
-#define HWIO_REO_R1_TESTBUS_LOWER_PHYS(x)                            (x+0x0000204c)
+#define HWIO_REO_R1_TESTBUS_LOWER_ADDR(x)                            (x+0x0000205c)
+#define HWIO_REO_R1_TESTBUS_LOWER_PHYS(x)                            (x+0x0000205c)
 #define HWIO_REO_R1_TESTBUS_LOWER_RMSK                               0xffffffff
 #define HWIO_REO_R1_TESTBUS_LOWER_SHFT                                        0
 #define HWIO_REO_R1_TESTBUS_LOWER_IN(x)                              \
@@ -9119,8 +9231,8 @@
 
 //// Register REO_R1_TESTBUS_HIGHER ////
 
-#define HWIO_REO_R1_TESTBUS_HIGHER_ADDR(x)                           (x+0x00002050)
-#define HWIO_REO_R1_TESTBUS_HIGHER_PHYS(x)                           (x+0x00002050)
+#define HWIO_REO_R1_TESTBUS_HIGHER_ADDR(x)                           (x+0x00002060)
+#define HWIO_REO_R1_TESTBUS_HIGHER_PHYS(x)                           (x+0x00002060)
 #define HWIO_REO_R1_TESTBUS_HIGHER_RMSK                              0x000000ff
 #define HWIO_REO_R1_TESTBUS_HIGHER_SHFT                                       0
 #define HWIO_REO_R1_TESTBUS_HIGHER_IN(x)                             \
@@ -9141,8 +9253,8 @@
 
 //// Register REO_R1_SM_STATES_IX_0 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_0_ADDR(x)                           (x+0x00002054)
-#define HWIO_REO_R1_SM_STATES_IX_0_PHYS(x)                           (x+0x00002054)
+#define HWIO_REO_R1_SM_STATES_IX_0_ADDR(x)                           (x+0x00002064)
+#define HWIO_REO_R1_SM_STATES_IX_0_PHYS(x)                           (x+0x00002064)
 #define HWIO_REO_R1_SM_STATES_IX_0_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_0_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_0_IN(x)                             \
@@ -9163,8 +9275,8 @@
 
 //// Register REO_R1_SM_STATES_IX_1 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_1_ADDR(x)                           (x+0x00002058)
-#define HWIO_REO_R1_SM_STATES_IX_1_PHYS(x)                           (x+0x00002058)
+#define HWIO_REO_R1_SM_STATES_IX_1_ADDR(x)                           (x+0x00002068)
+#define HWIO_REO_R1_SM_STATES_IX_1_PHYS(x)                           (x+0x00002068)
 #define HWIO_REO_R1_SM_STATES_IX_1_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_1_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_1_IN(x)                             \
@@ -9185,8 +9297,8 @@
 
 //// Register REO_R1_SM_STATES_IX_2 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_2_ADDR(x)                           (x+0x0000205c)
-#define HWIO_REO_R1_SM_STATES_IX_2_PHYS(x)                           (x+0x0000205c)
+#define HWIO_REO_R1_SM_STATES_IX_2_ADDR(x)                           (x+0x0000206c)
+#define HWIO_REO_R1_SM_STATES_IX_2_PHYS(x)                           (x+0x0000206c)
 #define HWIO_REO_R1_SM_STATES_IX_2_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_2_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_2_IN(x)                             \
@@ -9207,8 +9319,8 @@
 
 //// Register REO_R1_SM_STATES_IX_3 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_3_ADDR(x)                           (x+0x00002060)
-#define HWIO_REO_R1_SM_STATES_IX_3_PHYS(x)                           (x+0x00002060)
+#define HWIO_REO_R1_SM_STATES_IX_3_ADDR(x)                           (x+0x00002070)
+#define HWIO_REO_R1_SM_STATES_IX_3_PHYS(x)                           (x+0x00002070)
 #define HWIO_REO_R1_SM_STATES_IX_3_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_3_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_3_IN(x)                             \
@@ -9229,8 +9341,8 @@
 
 //// Register REO_R1_SM_STATES_IX_4 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_4_ADDR(x)                           (x+0x00002064)
-#define HWIO_REO_R1_SM_STATES_IX_4_PHYS(x)                           (x+0x00002064)
+#define HWIO_REO_R1_SM_STATES_IX_4_ADDR(x)                           (x+0x00002074)
+#define HWIO_REO_R1_SM_STATES_IX_4_PHYS(x)                           (x+0x00002074)
 #define HWIO_REO_R1_SM_STATES_IX_4_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_4_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_4_IN(x)                             \
@@ -9251,8 +9363,8 @@
 
 //// Register REO_R1_SM_STATES_IX_5 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_5_ADDR(x)                           (x+0x00002068)
-#define HWIO_REO_R1_SM_STATES_IX_5_PHYS(x)                           (x+0x00002068)
+#define HWIO_REO_R1_SM_STATES_IX_5_ADDR(x)                           (x+0x00002078)
+#define HWIO_REO_R1_SM_STATES_IX_5_PHYS(x)                           (x+0x00002078)
 #define HWIO_REO_R1_SM_STATES_IX_5_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_5_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_5_IN(x)                             \
@@ -9273,8 +9385,8 @@
 
 //// Register REO_R1_SM_STATES_IX_6 ////
 
-#define HWIO_REO_R1_SM_STATES_IX_6_ADDR(x)                           (x+0x0000206c)
-#define HWIO_REO_R1_SM_STATES_IX_6_PHYS(x)                           (x+0x0000206c)
+#define HWIO_REO_R1_SM_STATES_IX_6_ADDR(x)                           (x+0x0000207c)
+#define HWIO_REO_R1_SM_STATES_IX_6_PHYS(x)                           (x+0x0000207c)
 #define HWIO_REO_R1_SM_STATES_IX_6_RMSK                              0xffffffff
 #define HWIO_REO_R1_SM_STATES_IX_6_SHFT                                       0
 #define HWIO_REO_R1_SM_STATES_IX_6_IN(x)                             \
@@ -9295,8 +9407,8 @@
 
 //// Register REO_R1_IDLE_STATES_IX_0 ////
 
-#define HWIO_REO_R1_IDLE_STATES_IX_0_ADDR(x)                         (x+0x00002070)
-#define HWIO_REO_R1_IDLE_STATES_IX_0_PHYS(x)                         (x+0x00002070)
+#define HWIO_REO_R1_IDLE_STATES_IX_0_ADDR(x)                         (x+0x00002080)
+#define HWIO_REO_R1_IDLE_STATES_IX_0_PHYS(x)                         (x+0x00002080)
 #define HWIO_REO_R1_IDLE_STATES_IX_0_RMSK                            0xffffffff
 #define HWIO_REO_R1_IDLE_STATES_IX_0_SHFT                                     0
 #define HWIO_REO_R1_IDLE_STATES_IX_0_IN(x)                           \
@@ -9317,8 +9429,8 @@
 
 //// Register REO_R1_INVALID_APB_ACCESS ////
 
-#define HWIO_REO_R1_INVALID_APB_ACCESS_ADDR(x)                       (x+0x00002074)
-#define HWIO_REO_R1_INVALID_APB_ACCESS_PHYS(x)                       (x+0x00002074)
+#define HWIO_REO_R1_INVALID_APB_ACCESS_ADDR(x)                       (x+0x00002084)
+#define HWIO_REO_R1_INVALID_APB_ACCESS_PHYS(x)                       (x+0x00002084)
 #define HWIO_REO_R1_INVALID_APB_ACCESS_RMSK                          0x0007ffff
 #define HWIO_REO_R1_INVALID_APB_ACCESS_SHFT                                   0
 #define HWIO_REO_R1_INVALID_APB_ACCESS_IN(x)                         \

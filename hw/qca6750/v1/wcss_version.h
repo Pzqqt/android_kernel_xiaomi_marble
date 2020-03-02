@@ -16,4 +16,4 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define WCSS_VERSION 1052 /* E1.5 */
+#define WCSS_VERSION 29 /* E1.5 */

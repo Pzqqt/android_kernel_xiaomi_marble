@@ -1571,7 +1571,7 @@ mpdu_ht_control_field
 			This LMAC/peer-based routing is not supported in
 			Hastings80 and HastingsPrime.
 			
-			<legal 0>
+			<legal all>
 */
 #define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB_OFFSET 0x00000000
 #define RX_MPDU_INFO_0_RXPT_CLASSIFY_INFO_DETAILS_LMAC_PEER_ID_MSB_LSB 5
