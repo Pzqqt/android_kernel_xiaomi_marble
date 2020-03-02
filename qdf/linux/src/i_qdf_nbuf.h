@@ -1928,6 +1928,21 @@ __qdf_nbuf_copy_expand(struct sk_buff *buf, int headroom, int tailroom)
 }
 
 /**
+ * __qdf_nbuf_get_ref_fraglist() - get reference to fragments
+ * @buf: Network buf instance
+ *
+ * Return: void
+ */
+static inline void
+__qdf_nbuf_get_ref_fraglist(struct sk_buff *buf)
+{
+	struct sk_buff *list;
+
+	skb_walk_frags(buf, list)
+		skb_get(list);
+}
+
+/**
  * __qdf_nbuf_tx_cksum_info() - tx checksum info
  *
  * Return: true/false
