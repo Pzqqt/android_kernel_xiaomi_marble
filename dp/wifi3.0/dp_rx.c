@@ -1709,7 +1709,7 @@ bool dp_is_special_data(qdf_nbuf_t nbuf)
  *
  * Return: None
  */
-static inline
+static
 void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 {
 	uint16_t peer_id;
