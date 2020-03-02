@@ -190,6 +190,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @enable_fw_log_type: Set the FW log type
  * @enable_fw_module_log_level: enable fw module log level
  * @enable_fw_module_log_level_num: enablefw module log level num
+ * @sap_xlna_bypass: bypass SAP xLNA
  * @is_rate_limit_enabled: Enable/disable RA rate limited
  * @tsf_gpio_pin: TSF GPIO Pin config
  * @tsf_irq_host_gpio_pin: TSF GPIO Pin config
@@ -225,6 +226,7 @@ struct wlan_fwol_cfg {
 	uint16_t enable_fw_log_type;
 	uint8_t enable_fw_module_log_level[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
 	uint8_t enable_fw_module_log_level_num;
+	bool sap_xlna_bypass;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	bool is_rate_limit_enabled;
 #endif
