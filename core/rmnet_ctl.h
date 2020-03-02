@@ -10,6 +10,8 @@
 
 #include <linux/skbuff.h>
 
+#define CONFIG_RMNET_CTL 1
+
 enum rmnet_ctl_log_lvl {
 	RMNET_CTL_LOG_CRIT,
 	RMNET_CTL_LOG_ERR,

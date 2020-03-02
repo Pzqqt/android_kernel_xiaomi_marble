@@ -199,8 +199,24 @@ static struct mhi_driver rmnet_ctl_driver = {
 	},
 };
 
-module_driver(rmnet_ctl_driver,
-	      mhi_driver_register, mhi_driver_unregister);
+static int __init rmnet_ctl_init(void)
+{
+	int rc;
 
-MODULE_DESCRIPTION("RmNet Control Driver");
+	rc = mhi_driver_register(&rmnet_ctl_driver);
+	rmnet_ctl_set_dbgfs(true);
+
+	return rc;
+}
+
+static void __exit rmnet_ctl_exit(void)
+{
+	mhi_driver_unregister(&rmnet_ctl_driver);
+	rmnet_ctl_set_dbgfs(false);
+}
+
+module_init(rmnet_ctl_init)
+module_exit(rmnet_ctl_exit)
+
+MODULE_DESCRIPTION("RmNet Control MHI Driver");
 MODULE_LICENSE("GPL v2");

@@ -33,5 +33,26 @@ KBUILD_OPTIONS := $(RMNET_BLD_DIR)
 $(warning $(DLKM_DIR))
 include $(DLKM_DIR)/AndroidKernelModule.mk
 
+######## Create RMNET_CTL DLKM ########
+include $(CLEAR_VARS)
+
+LOCAL_CFLAGS := -Wno-macro-redefined -Wno-unused-function -Wall -Werror
+LOCAL_CLANG :=true
+
+LOCAL_MODULE_PATH := $(KERNEL_MODULES_OUT)
+LOCAL_MODULE := rmnet_ctl.ko
+
+LOCAL_SRC_FILES := \
+	rmnet_ctl_client.c \
+	rmnet_ctl_ipa.c
+
+RMNET_BLD_DIR := ../../vendor/qcom/opensource/datarmnet/core
+DLKM_DIR := $(TOP)/device/qcom/common/dlkm
+
+KBUILD_OPTIONS := $(RMNET_BLD_DIR)
+
+$(warning $(DLKM_DIR))
+include $(DLKM_DIR)/AndroidKernelModule.mk
+
 endif #End of Check for target
 endif #End of Check for qssi target
