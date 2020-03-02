@@ -2189,7 +2189,7 @@ void dfs_precac_csa(struct wlan_dfs *dfs)
 	 * next time a DFS channel needs preCAC, there is no channel switch
 	 * until preCAC finishes.
 	 */
-	dfs->dfs_precac_inter_chan_freq = dfs->dfs_autoswitch_des_chan_freq;
+	dfs->dfs_precac_inter_chan_freq = dfs->dfs_autoswitch_chan->dfs_ch_freq;
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		  "Use %d as intermediate channel for further channel changes",
 		  dfs->dfs_precac_inter_chan_freq);
@@ -2197,9 +2197,10 @@ void dfs_precac_csa(struct wlan_dfs *dfs)
 	if (global_dfs_to_mlme.mlme_precac_chan_change_csa_for_freq)
 		global_dfs_to_mlme.mlme_precac_chan_change_csa_for_freq
 			(dfs->dfs_pdev_obj,
-			 dfs->dfs_autoswitch_des_chan_freq,
+			 dfs->dfs_autoswitch_chan->dfs_ch_freq,
 			 dfs->dfs_autoswitch_des_mode);
-	dfs->dfs_autoswitch_des_chan_freq = 0;
+	qdf_mem_free(dfs->dfs_autoswitch_chan);
+	dfs->dfs_autoswitch_chan = NULL;
 }
 #else
 #ifdef CONFIG_CHAN_NUM_API
@@ -2239,33 +2240,9 @@ void dfs_precac_csa(struct wlan_dfs *dfs)
 #ifdef CONFIG_CHAN_FREQ_API
 static bool dfs_precac_check_home_chan_change(struct wlan_dfs *dfs)
 {
-	struct dfs_channel chan;
+	struct dfs_channel *chan = dfs->dfs_autoswitch_chan;
 
-	qdf_mem_zero(&chan, sizeof(struct dfs_channel));
-	if (QDF_STATUS_SUCCESS !=
-	    dfs_mlme_find_dot11_chan_for_freq(dfs->dfs_pdev_obj,
-					      dfs->dfs_autoswitch_des_chan_freq,
-					      0, dfs->dfs_autoswitch_des_mode,
-					      &chan.dfs_ch_freq,
-					      &chan.dfs_ch_flags,
-					      &chan.dfs_ch_flagext,
-					      &chan.dfs_ch_ieee,
-					      &chan.dfs_ch_vhtop_ch_freq_seg1,
-					      &chan.dfs_ch_vhtop_ch_freq_seg2,
-					      &chan.dfs_ch_mhz_freq_seg1,
-					      &chan.dfs_ch_mhz_freq_seg2)) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"Channel %d not found for mode %d",
-			dfs->dfs_autoswitch_des_chan_freq,
-			dfs->dfs_autoswitch_des_mode);
-		return false;
-	}
-	/*
-	 * If desired channel is in precac done list,
-	 * Change channel to desired channel using CSA.
-	 */
-	if (dfs->dfs_autoswitch_des_chan_freq &&
-	    dfs_is_precac_done(dfs, &chan)) {
+	if (chan && dfs_is_precac_done(dfs, chan)) {
 		dfs_precac_csa(dfs);
 		dfs->dfs_soc_obj->precac_state_started = false;
 		return true;
@@ -3813,6 +3790,106 @@ uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
 }
 #endif
 
+#ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
+#ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_find_precac_state_of_node() - Find the preCAC state of the given channel.
+ * @channel: Channel whose preCAC state is to be found.
+ * @precac_entry: PreCAC entry where the channel exists.
+ *
+ * Return, enum value of type precac_chan_state.
+ */
+static enum precac_chan_state
+dfs_find_precac_state_of_node(qdf_freq_t channel,
+			      struct dfs_precac_entry *precac_entry)
+{
+	struct precac_tree_node *node = precac_entry->tree_root;
+
+	while (node) {
+		if (node->ch_freq == channel) {
+			if (node->n_nol_subchs)
+				return PRECAC_NOL;
+			if (node->n_caced_subchs ==
+			    N_SUBCHS_FOR_BANDWIDTH(node->bandwidth))
+				return PRECAC_DONE;
+			return PRECAC_REQUIRED;
+		}
+		node = dfs_descend_precac_tree_for_freq(node, channel);
+	}
+	return PRECAC_ERR;
+}
+
+/**
+ * dfs_configure_deschan_for_precac() - API to prioritize user configured
+ * channel for preCAC.
+ *
+ * @dfs: Pointer to DFS of wlan_dfs structure.
+ * Return: frequency of type qdf_freq_t if configured, else 0.
+ */
+static qdf_freq_t
+dfs_configure_deschan_for_precac(struct wlan_dfs *dfs)
+{
+	struct dfs_channel *deschan = dfs->dfs_autoswitch_chan;
+	qdf_freq_t channels[2];
+	uint8_t i, nchannels;
+	struct dfs_precac_entry *tmp_precac_entry;
+	enum precac_chan_state precac_state = PRECAC_ERR;
+
+	if (!deschan)
+		return 0;
+
+	if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ &&
+	    WLAN_IS_CHAN_MODE_160(dfs->dfs_autoswitch_chan)) {
+		channels[0] = deschan->dfs_ch_mhz_freq_seg2;
+		channels[1] = 0;
+		nchannels = 1;
+	} else {
+		/* The InterCAC feature is enabled only for 80MHz or 160MHz.
+		 * Hence split preferred channel into two 80MHz channels.
+		 */
+		channels[0] = deschan->dfs_ch_mhz_freq_seg1;
+		channels[1] = deschan->dfs_ch_mhz_freq_seg2;
+		if (WLAN_IS_CHAN_MODE_160(dfs->dfs_autoswitch_chan)) {
+			if (deschan->dfs_ch_freq >
+			    deschan->dfs_ch_mhz_freq_seg2)
+				channels[1] -= DFS_160MHZ_SECSEG_CHAN_OFFSET;
+			else
+				channels[1] += DFS_160MHZ_SECSEG_CHAN_OFFSET;
+		}
+		nchannels = 2;
+	}
+
+	for (i = 0; i < nchannels; i++) {
+		PRECAC_LIST_LOCK(dfs);
+		TAILQ_FOREACH(tmp_precac_entry,
+			      &dfs->dfs_precac_list,
+			      pe_list) {
+			if (IS_WITHIN_RANGE(channels[i],
+					    tmp_precac_entry->center_ch_freq,
+					    tmp_precac_entry->bw)) {
+				precac_state = dfs_find_precac_state_of_node(
+						channels[i],
+						tmp_precac_entry);
+				if (precac_state == PRECAC_REQUIRED) {
+					PRECAC_LIST_UNLOCK(dfs);
+					return channels[i];
+				}
+			}
+		}
+		PRECAC_LIST_UNLOCK(dfs);
+	}
+
+	return 0;
+}
+#endif
+#else
+static inline qdf_freq_t
+dfs_configure_deschan_for_precac(struct wlan_dfs *dfs)
+{
+	return 0;
+}
+#endif
+
 /*
  * dfs_get_ieeechan_for_precac_for_freq() - Get chan frequency for preCAC.
  * @dfs: Pointer to wlan_dfs.
@@ -3835,6 +3912,13 @@ uint16_t dfs_get_ieeechan_for_precac_for_freq(struct wlan_dfs *dfs,
 		 exclude_pri_ch_freq,
 		 exclude_sec_ch_freq);
 
+	/* If interCAC is enabled, prioritize the desired channel first before
+	 * using the normal logic to find a channel for preCAC. */
+	ieee_chan_freq = dfs_configure_deschan_for_precac(dfs);
+
+	if (ieee_chan_freq)
+		goto exit;
+
 	PRECAC_LIST_LOCK(dfs);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_list)) {
 		TAILQ_FOREACH(precac_entry, &dfs->dfs_precac_list,
@@ -3849,6 +3933,8 @@ uint16_t dfs_get_ieeechan_for_precac_for_freq(struct wlan_dfs *dfs,
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
+
+exit:
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Channel picked for preCAC = %u",
 		 ieee_chan_freq);
 
@@ -4448,73 +4534,6 @@ void dfs_reset_precac_lists(struct wlan_dfs *dfs)
  * @mode: Wireless mode of channel.
  */
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
-#ifdef CONFIG_CHAN_FREQ_API
-void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
-				      struct dfs_channel *chan, uint8_t mode)
-{
-	bool found = false;
-	uint16_t freq_160_sec_mhz = 0;
-	struct dfs_precac_entry *precac_entry;
-
-	if (dfs_is_precac_timer_running(dfs) &&
-	    WLAN_IS_CHAN_MODE_80(chan) &&
-	    (dfs->dfs_precac_secondary_freq_mhz == chan->dfs_ch_freq)) {
-		return;
-	}
-
-	/* Remove and insert into head, so that the user configured channel
-	 * is picked first for preCAC.
-	 */
-	PRECAC_LIST_LOCK(dfs);
-	if (WLAN_IS_CHAN_DFS(chan) &&
-	    !TAILQ_EMPTY(&dfs->dfs_precac_list)) {
-		TAILQ_FOREACH(precac_entry,
-			      &dfs->dfs_precac_list, pe_list) {
-			if (precac_entry->vht80_ch_freq ==
-			    chan->dfs_ch_mhz_freq_seg1) {
-				found = true;
-				TAILQ_REMOVE(&dfs->dfs_precac_list,
-					     precac_entry, pe_list);
-				TAILQ_INSERT_HEAD(&dfs->dfs_precac_list,
-						  precac_entry, pe_list);
-				break;
-			}
-		}
-	}
-
-	if (WLAN_IS_CHAN_MODE_160(chan) && WLAN_IS_CHAN_DFS(chan) &&
-	    !TAILQ_EMPTY(&dfs->dfs_precac_list)) {
-		if (chan->dfs_ch_freq < chan->dfs_ch_mhz_freq_seg2)
-			freq_160_sec_mhz = chan->dfs_ch_mhz_freq_seg1 +
-				VHT160_FREQ_DIFF;
-		else
-			freq_160_sec_mhz = chan->dfs_ch_mhz_freq_seg1 -
-				VHT160_FREQ_DIFF;
-
-		found = false;
-		TAILQ_FOREACH(precac_entry,
-			      &dfs->dfs_precac_list, pe_list) {
-			if (precac_entry->vht80_ch_freq ==
-			    freq_160_sec_mhz) {
-				found = true;
-				TAILQ_REMOVE(&dfs->dfs_precac_list,
-					     precac_entry, pe_list);
-				TAILQ_INSERT_HEAD(&dfs->dfs_precac_list,
-						  precac_entry, pe_list);
-				break;
-			}
-		}
-	}
-
-	PRECAC_LIST_UNLOCK(dfs);
-
-	if (!found) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"frequency not found in precac list");
-		return;
-	}
-}
-#else
 #ifdef CONFIG_CHAN_NUM_API
 void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 				      struct dfs_channel *chan, uint8_t mode)
@@ -4582,7 +4601,6 @@ void dfs_set_precac_preferred_channel(struct wlan_dfs *dfs,
 	}
 }
 #endif
-#endif
 
 #ifdef CONFIG_CHAN_NUM_API
 bool
@@ -4638,46 +4656,56 @@ dfs_decide_precac_preferred_chan_for_freq(struct wlan_dfs *dfs,
 					  uint16_t *pref_chan_freq,
 					  enum wlan_phymode mode)
 {
-	struct dfs_channel chan;
+	struct dfs_channel *chan;
 
-	qdf_mem_zero(&chan, sizeof(struct dfs_channel));
+	chan = qdf_mem_malloc(sizeof(struct dfs_channel));
+
+	if (!chan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "malloc failed");
+		return false;
+	}
+
 	if (QDF_STATUS_SUCCESS !=
 	    dfs_mlme_find_dot11_chan_for_freq(dfs->dfs_pdev_obj,
 					      *pref_chan_freq, 0,
 					      mode,
-					      &chan.dfs_ch_freq,
-					      &chan.dfs_ch_flags,
-					      &chan.dfs_ch_flagext,
-					      &chan.dfs_ch_ieee,
-					      &chan.dfs_ch_vhtop_ch_freq_seg1,
-					      &chan.dfs_ch_vhtop_ch_freq_seg2,
-					      &chan.dfs_ch_mhz_freq_seg1,
-					      &chan.dfs_ch_mhz_freq_seg2))
-		return false;
+					      &chan->dfs_ch_freq,
+					      &chan->dfs_ch_flags,
+					      &chan->dfs_ch_flagext,
+					      &chan->dfs_ch_ieee,
+					      &chan->dfs_ch_vhtop_ch_freq_seg1,
+					      &chan->dfs_ch_vhtop_ch_freq_seg2,
+					      &chan->dfs_ch_mhz_freq_seg1,
+					      &chan->dfs_ch_mhz_freq_seg2))
+		goto exit;
 	if (!dfs->dfs_precac_inter_chan_freq)
-		return false;
+		goto exit;
 
 	/*
 	 * If precac is done on this channel use it, else use a intermediate
 	 * non-DFS channel and trigger a precac on this channel.
 	 */
-	if ((WLAN_IS_CHAN_DFS(&chan) ||
-	     (WLAN_IS_CHAN_MODE_160(&chan) &&
-	      WLAN_IS_CHAN_DFS_CFREQ2(&chan))) &&
-	    !dfs_is_precac_done(dfs, &chan)) {
-		dfs_set_precac_preferred_channel(dfs, &chan, mode);
-		dfs->dfs_autoswitch_des_chan_freq = *pref_chan_freq;
+	if ((WLAN_IS_CHAN_DFS(chan) ||
+	     (WLAN_IS_CHAN_MODE_160(chan) &&
+	      WLAN_IS_CHAN_DFS_CFREQ2(chan))) &&
+	    !dfs_is_precac_done(dfs, chan)) {
 		dfs->dfs_autoswitch_des_mode = mode;
 		*pref_chan_freq = dfs->dfs_precac_inter_chan_freq;
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "des_chan=%d, des_mode=%d. Current operating channel=%d",
-			  dfs->dfs_autoswitch_des_chan_freq,
+			  chan->dfs_ch_freq,
 			  dfs->dfs_autoswitch_des_mode,
 			  *pref_chan_freq);
+		dfs->dfs_autoswitch_chan = chan;
 		return true;
 	}
 
-	dfs->dfs_precac_inter_chan_freq = chan.dfs_ch_freq;
+	/* Since preCAC is completed on the user configured preferred channel,
+	 * make this channel the future intermediate channel.
+	 */
+	dfs->dfs_precac_inter_chan_freq = chan->dfs_ch_freq;
+exit:
+	qdf_mem_free(chan);
 	return false;
 }
 #endif
@@ -4907,6 +4935,7 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 						     dfs->dfs_precac_chwidth);
 
 	dfs->dfs_soc_obj->ocac_status = OCAC_RESET;
+
 	ieee_chan = dfs_get_ieeechan_for_precac(dfs,
 						pri_ch_ieee,
 						sec_ch_ieee,
