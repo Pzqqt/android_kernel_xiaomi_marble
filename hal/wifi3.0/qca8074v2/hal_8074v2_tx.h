@@ -128,13 +128,12 @@ static void hal_tx_set_dscp_tid_map_8074v2(struct hal_soc *soc,
 static void hal_tx_update_dscp_tid_8074v2(struct hal_soc *soc, uint8_t tid,
 					  uint8_t id, uint8_t dscp)
 {
-	uint32_t addr, addr1, cmn_reg_addr;
+	uint32_t addr, addr1, cmn_reg_addr, regmask = 0xFFFFFFFF;
 	uint32_t start_value = 0, end_value = 0;
 	uint32_t regval;
 	uint8_t end_bits = 0;
 	uint8_t start_bits = 0;
 	uint32_t start_index, end_index;
-
 	cmn_reg_addr = HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_ADDR(
 					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
 
@@ -171,7 +170,7 @@ static void hal_tx_update_dscp_tid_8074v2(struct hal_soc *soc, uint8_t tid,
 	regval = HAL_REG_READ(soc, addr);
 
 	if (end_index < start_index)
-		regval &= (~0) >> start_bits;
+		regval &= (regmask >> start_bits);
 	else
 		regval &= ~(7 << start_index);
 
