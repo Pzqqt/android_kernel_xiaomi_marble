@@ -2045,12 +2045,12 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 			    type == QDF_IPA_AP_DISCONNECT) {
 				for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 					iface_ctx = &ipa_ctx->iface_context[i];
-
-					if (iface_ctx->dev == net_dev)
+					if (iface_ctx->dev == net_dev) {
+						wlan_ipa_cleanup_iface(
+								iface_ctx);
 						break;
+					}
 				}
-				if (iface_ctx)
-					wlan_ipa_cleanup_iface(iface_ctx);
 			}
 
 			return QDF_STATUS_SUCCESS;
@@ -2288,12 +2288,11 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 
 		for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 			iface_ctx = &ipa_ctx->iface_context[i];
-
-			if (iface_ctx->dev == net_dev)
+			if (iface_ctx->dev == net_dev) {
+				wlan_ipa_cleanup_iface(iface_ctx);
 				break;
+			}
 		}
-		if (i < WLAN_IPA_MAX_IFACE)
-			wlan_ipa_cleanup_iface(iface_ctx);
 
 		qdf_mutex_release(&ipa_ctx->event_lock);
 		break;
@@ -3673,12 +3672,11 @@ void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
 
 	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
 		iface_ctx = &ipa_ctx->iface_context[i];
-		if (iface_ctx->dev == net_dev)
+		if (iface_ctx->dev == net_dev) {
+			wlan_ipa_cleanup_iface(iface_ctx);
 			break;
+		}
 	}
-
-	if (iface_ctx)
-		wlan_ipa_cleanup_iface(iface_ctx);
 }
 
 void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx)
