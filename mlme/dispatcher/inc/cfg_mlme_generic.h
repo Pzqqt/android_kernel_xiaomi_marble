@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -687,6 +687,29 @@
 		1, \
 		"To Enable Ring Buffer")
 
+/*
+ * <ini>
+ * dfs_chan_ageout_time - Set DFS Channel ageout time(in seconds)
+ * @Min: 0
+ * @Max: 8
+ * Default: 0
+ *
+ * Ageout time is the time upto which DFS channel information such as beacon
+ * found is remembered. So that Firmware performs Active scan instead of the
+ * Passive to reduce the Dwell time.
+ * This ini Parameter used to set ageout timer value from host to FW.
+ * If not set, Firmware will disable ageout time.
+ *
+ * Supported Feature: STA scan in DFS channels
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DFS_CHAN_AGEOUT_TIME CFG_INI_UINT("dfs_chan_ageout_time", \
+			0, 8, 0, CFG_VALUE_OR_DEFAULT, \
+			"Set DFS Channel ageout time from host to firmware")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -716,5 +739,6 @@
 	CFG(CFG_REMOVE_TIME_STAMP_SYNC_CMD) \
 	CFG(CFG_MGMT_RETRY_MAX) \
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
-	CFG(CFG_ENABLE_RING_BUFFER)
+	CFG(CFG_ENABLE_RING_BUFFER) \
+	CFG(CFG_DFS_CHAN_AGEOUT_TIME)
 #endif /* __CFG_MLME_GENERIC_H */

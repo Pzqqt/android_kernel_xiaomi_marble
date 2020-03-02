@@ -1129,6 +1129,7 @@ struct wlan_mlme_chainmask {
  * candidate is found in partial scan based on channel map
  * @enable_ring_buffer: Decide to enable/disable ring buffer for bug report
  * @enable_peer_unmap_conf_support: Indicate whether to send conf for peer unmap
+ * @dfs_chan_ageout_time: Set DFS Channel ageout time
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1164,6 +1165,7 @@ struct wlan_mlme_generic {
 	bool bmiss_skip_full_scan;
 	bool enable_ring_buffer;
 	bool enable_peer_unmap_conf_support;
+	uint8_t dfs_chan_ageout_time;
 };
 
 /*
