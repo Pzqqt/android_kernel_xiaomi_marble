@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,7 +146,7 @@ nla_put_failure:
 	return -EINVAL;
 }
 
-static const struct nla_policy
+const struct nla_policy
 encrypt_decrypt_policy[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION] = {
 		.type = NLA_FLAG},
