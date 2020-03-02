@@ -1680,7 +1680,12 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_CLIENT_MODE, NULL) >
 									0) ||
 	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) > 0) ||
-	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) > 0)) {
+	    (policy_mgr_mode_specific_connection_count(psoc,
+						       PM_IBSS_MODE,
+						       NULL) > 0) ||
+	    (policy_mgr_mode_specific_connection_count(psoc,
+						       PM_NDI_MODE,
+						       NULL) > 0)) {
 		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(true);
 	};
@@ -1751,12 +1756,25 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->tdls_cbacks.tdls_notify_decrement_session)
 		pm_ctx->tdls_cbacks.tdls_notify_decrement_session(psoc);
 	/* Enable LRO/GRO if there no concurrency */
-	if ((policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE, NULL) == 1) &&
-	    (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL) == 0) &&
-	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_CLIENT_MODE, NULL) ==
-									0) &&
-	    (policy_mgr_mode_specific_connection_count(psoc, PM_P2P_GO_MODE, NULL) == 0) &&
-	    (policy_mgr_mode_specific_connection_count(psoc, PM_IBSS_MODE, NULL) == 0)) {
+	if ((policy_mgr_get_connection_count(psoc) == 0) ||
+	    ((policy_mgr_mode_specific_connection_count(psoc,
+							PM_STA_MODE,
+							NULL) == 1) &&
+	     (policy_mgr_mode_specific_connection_count(psoc,
+							PM_SAP_MODE,
+							NULL) == 0) &&
+	     (policy_mgr_mode_specific_connection_count(psoc,
+							PM_P2P_CLIENT_MODE,
+							NULL) == 0) &&
+	     (policy_mgr_mode_specific_connection_count(psoc,
+							PM_P2P_GO_MODE,
+							NULL) == 0) &&
+	     (policy_mgr_mode_specific_connection_count(psoc,
+							PM_IBSS_MODE,
+							NULL) == 0) &&
+	     (policy_mgr_mode_specific_connection_count(psoc,
+							PM_NDI_MODE,
+							NULL) == 0))) {
 		if (pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency)
 			pm_ctx->dp_cbacks.hdd_disable_rx_ol_in_concurrency(false);
 	};
