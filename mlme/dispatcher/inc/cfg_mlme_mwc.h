@@ -95,8 +95,8 @@
  */
 #define CFG_MWS_COEX_PCC_CHANNEL_AVOID_DELAY CFG_INI_UINT(\
 		"mws_coex_pcc_channel_avoid_delay", \
-		0x00, \
-		0xFF, \
+		0x00000000, \
+		0xFFFFFFFF, \
 		0x3C, \
 		CFG_VALUE_OR_DEFAULT, \
 		"set mws-coex PCC channel avoidance delay")
@@ -117,8 +117,8 @@
  */
 #define CFG_MWS_COEX_SCC_CHANNEL_AVOID_DELAY CFG_INI_UINT(\
 		"mws_coex_scc_channel_avoid_delay", \
-		0x00, \
-		0xFF, \
+		0x00000000, \
+		0xFFFFFFFF, \
 		0x78, \
 		CFG_VALUE_OR_DEFAULT, \
 		"set mws-coex SCC channel avoidance delay")
