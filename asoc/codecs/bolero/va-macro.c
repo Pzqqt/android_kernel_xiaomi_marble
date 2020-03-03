@@ -685,14 +685,20 @@ static int va_macro_swrm_clock(void *handle, bool enable)
 		if (va_priv->va_swr_clk_cnt && !va_priv->tx_swr_clk_cnt) {
 			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
 							VA_MCLK, enable);
-			if (ret)
+			if (ret) {
+				pm_runtime_mark_last_busy(va_priv->dev);
+				pm_runtime_put_autosuspend(va_priv->dev);
 				goto done;
+			}
 			va_priv->va_clk_status++;
 		} else {
 			ret = va_macro_tx_va_mclk_enable(va_priv, regmap,
 							TX_MCLK, enable);
-			if (ret)
+			if (ret) {
+				pm_runtime_mark_last_busy(va_priv->dev);
+				pm_runtime_put_autosuspend(va_priv->dev);
 				goto done;
+			}
 			va_priv->tx_clk_status++;
 		}
 		pm_runtime_mark_last_busy(va_priv->dev);
