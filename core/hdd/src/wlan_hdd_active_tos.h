@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,14 +43,20 @@ int wlan_hdd_cfg80211_set_limit_offchan_param(struct wiphy *wiphy,
 					      struct wireless_dev *wdev,
 					      const void *data, int data_len);
 
-#define FEATURE_ACTIVE_TOS_VENDOR_COMMANDS			\
-{								\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ACTIVE_TOS,	\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
-		WIPHY_VENDOR_CMD_NEED_NETDEV |			\
-		WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_set_limit_offchan_param	\
+extern const struct nla_policy
+	wlan_hdd_set_limit_off_channel_param_policy
+	[QCA_WLAN_VENDOR_ATTR_ACTIVE_TOS_MAX + 1];
+
+#define FEATURE_ACTIVE_TOS_VENDOR_COMMANDS				   \
+{									   \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			   \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ACTIVE_TOS,		   \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				   \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				   \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				   \
+	.doit = wlan_hdd_cfg80211_set_limit_offchan_param,		   \
+	vendor_command_policy(wlan_hdd_set_limit_off_channel_param_policy, \
+			      QCA_WLAN_VENDOR_ATTR_ACTIVE_TOS_MAX)	   \
 },
 #else /* FEATURE_ACTIVE_TOS */
 #define FEATURE_ACTIVE_TOS_VENDOR_COMMANDS
