@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,7 @@
 #include "osif_sync.h"
 #include "wlan_fwol_ucfg_api.h"
 
-static const struct nla_policy
+const struct nla_policy
 coex_config_three_way_policy[QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX + 1] = {
 	[QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_CONFIG_TYPE] = {
 							      .type = NLA_U32},

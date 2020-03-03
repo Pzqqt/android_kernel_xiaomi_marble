@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,14 +41,19 @@ int wlan_hdd_cfg80211_set_coex_config(struct wiphy *wiphy,
 				      struct wireless_dev *wdev,
 				      const void *data, int data_len);
 
-#define FEATURE_COEX_CONFIG_COMMANDS				\
-{								\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_COEX_CONFIG,\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
-		WIPHY_VENDOR_CMD_NEED_NETDEV |			\
-		WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_set_coex_config			\
+extern const struct nla_policy
+coex_config_three_way_policy[QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX + 1];
+
+#define FEATURE_COEX_CONFIG_COMMANDS                                     \
+{                                                                        \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                         \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_COEX_CONFIG,            \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                            \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,                           \
+	.doit = wlan_hdd_cfg80211_set_coex_config,                       \
+	vendor_command_policy(coex_config_three_way_policy,              \
+			      QCA_VENDOR_ATTR_COEX_CONFIG_THREE_WAY_MAX) \
 },
 #else /* FEATURE_COEX_CONFIG */
 #define FEATURE_COEX_CONFIG_COMMANDS
