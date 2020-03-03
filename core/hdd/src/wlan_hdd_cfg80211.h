@@ -295,6 +295,22 @@ extern const struct nla_policy
 				      QCA_ATTR_NUD_STATS_SET_MAX)	    \
 },
 
+extern const struct nla_policy
+	qca_wlan_vendor_set_trace_level_policy
+	[QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX + 1];
+
+#define FEATURE_VENDOR_SUBCMD_SET_TRACE_LEVEL				\
+{									\
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_TRACE_LEVEL,	\
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				\
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				\
+	.doit = wlan_hdd_cfg80211_set_trace_level,			\
+	vendor_command_policy(qca_wlan_vendor_set_trace_level_policy,	\
+			      QCA_WLAN_VENDOR_ATTR_SET_TRACE_LEVEL_MAX)	\
+},
+
 /**
  * hdd_cfg80211_wiphy_alloc() - Allocate wiphy
  *
