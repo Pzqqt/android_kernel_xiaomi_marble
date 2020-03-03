@@ -2863,9 +2863,146 @@ void dfs_zero_cac_detach(struct wlan_dfs *dfs)
 	PRECAC_LIST_LOCK_DESTROY(dfs);
 }
 
+/**
+ * dfs_is_pcac_required_for_freq() - Find if given frequency is preCAC required.
+ * @node: Pointer to the preCAC tree Node in which the frequency is present.
+ * @freq: Frequency to be checked.
+ *
+ * Return: False if the frequency is not fully CAC done or in NOL, else true.
+ */
+static bool
+dfs_is_pcac_required_for_freq(struct precac_tree_node *node, uint16_t freq)
+{
+	while (node) {
+		if (node->ch_freq == freq) {
+			if ((node->n_caced_subchs ==
+			     N_SUBCHS_FOR_BANDWIDTH(node->bandwidth)) ||
+			     (node->n_nol_subchs))
+				return false;
+			else
+				return true;
+		}
+		node = dfs_descend_precac_tree_for_freq(node, freq);
+	}
+	return false;
+}
+
+#define DFS_160MHZ_SECSEG_CHAN_FREQ_OFFSET 40
+#ifdef CONFIG_CHAN_NUM_API
+/**
+ * dfs_get_num_cur_subchans_in_node() - Get number of excluded channels
+ *                                      inside the current node.
+ * @dfs:  Pointer to wlan_dfs structure.
+ * @node: Node to be checked.
+ *
+ * Return: uint8_t.
+ * Return the number of excluded (current operating channels in CAC) that are in
+ * the given tree node range.
+ */
+static uint8_t
+dfs_get_num_cur_subchans_in_node(struct wlan_dfs *dfs,
+				 struct precac_tree_node *node)
+{
+	uint16_t exclude_pri_ch_freq, exclude_sec_ch_freq, n_exclude_subchs = 0;
+	uint8_t chwidth_val = DFS_CHWIDTH_80_VAL;
+	struct dfs_channel *curchan = dfs->dfs_curchan;
+
+	exclude_pri_ch_freq =
+		utils_dfs_chan_to_freq(curchan->dfs_ch_vhtop_ch_freq_seg1);
+	exclude_sec_ch_freq =
+		utils_dfs_chan_to_freq(curchan->dfs_ch_vhtop_ch_freq_seg2);
+	if (WLAN_IS_CHAN_MODE_160(curchan)) {
+		if (exclude_sec_ch_freq < exclude_pri_ch_freq)
+			exclude_sec_ch_freq -=
+				DFS_160MHZ_SECSEG_CHAN_FREQ_OFFSET;
+		else
+			exclude_sec_ch_freq +=
+				DFS_160MHZ_SECSEG_CHAN_FREQ_OFFSET;
+	}
+
+	if (WLAN_IS_CHAN_MODE_20(curchan))
+		chwidth_val = DFS_CHWIDTH_20_VAL;
+	else if (WLAN_IS_CHAN_MODE_40(curchan))
+		chwidth_val = DFS_CHWIDTH_40_VAL;
+
+	/* Check if the channel is a subset of the tree node and if it's
+	 * currently in CAC period. This is to avoid excluding channels twice,
+	 * one below and one in the already CACed channels exclusion (in the
+	 * caller API). */
+	if (IS_WITHIN_RANGE(exclude_pri_ch_freq,
+			   node->ch_freq,
+			   (node->bandwidth / 2)) &&
+	   dfs_is_pcac_required_for_freq(node, exclude_pri_ch_freq))
+		n_exclude_subchs += N_SUBCHS_FOR_BANDWIDTH(chwidth_val);
+	if (IS_WITHIN_RANGE(exclude_sec_ch_freq,
+			   node->ch_freq,
+			   (node->bandwidth / 2)) &&
+	   dfs_is_pcac_required_for_freq(node, exclude_sec_ch_freq))
+		n_exclude_subchs += N_SUBCHS_FOR_BANDWIDTH(chwidth_val);
+	return n_exclude_subchs;
+}
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_get_num_cur_subchans_in_node_freq() - Get number of excluded channels
+ *                                           inside the current node.
+ * @dfs:  Pointer to wlan_dfs structure.
+ * @node: Node to be checked.
+ *
+ * Return: uint8_t.
+ * Return the number of excluded (current operating channels in CAC) that are in
+ * the given tree node range.
+ */
+static uint8_t
+dfs_get_num_cur_subchans_in_node_freq(struct wlan_dfs *dfs,
+				      struct precac_tree_node *node)
+{
+	uint16_t exclude_pri_ch_freq, exclude_sec_ch_freq;
+	uint8_t chwidth_val = DFS_CHWIDTH_80_VAL;
+	uint8_t n_exclude_subchs = 0;
+
+	exclude_pri_ch_freq =
+		dfs->dfs_curchan->dfs_ch_mhz_freq_seg1;
+	exclude_sec_ch_freq =
+		dfs->dfs_curchan->dfs_ch_mhz_freq_seg2;
+	if (WLAN_IS_CHAN_MODE_160(dfs->dfs_curchan)) {
+		if (exclude_sec_ch_freq < exclude_pri_ch_freq)
+			exclude_sec_ch_freq -=
+				DFS_160MHZ_SECSEG_CHAN_OFFSET;
+		else
+			exclude_sec_ch_freq +=
+				DFS_160MHZ_SECSEG_CHAN_OFFSET;
+	}
+
+	if (WLAN_IS_CHAN_MODE_20(dfs->dfs_curchan))
+		chwidth_val = DFS_CHWIDTH_20_VAL;
+	else if (WLAN_IS_CHAN_MODE_40(dfs->dfs_curchan))
+		chwidth_val = DFS_CHWIDTH_40_VAL;
+
+	/* Check if the channel is a subset of the tree node and if it's
+	 * currently in CAC period. This is to avoid excluding channels twice,
+	 * one below and one in the already CACed channels exclusion (in the
+	 * caller API). */
+	if (IS_WITHIN_RANGE(exclude_pri_ch_freq,
+			   node->ch_freq,
+			   (node->bandwidth / 2)) &&
+	   dfs_is_pcac_required_for_freq(node, exclude_pri_ch_freq))
+		n_exclude_subchs += N_SUBCHS_FOR_BANDWIDTH(chwidth_val);
+	if (IS_WITHIN_RANGE(exclude_sec_ch_freq,
+			   node->ch_freq,
+			   (node->bandwidth / 2)) &&
+	   dfs_is_pcac_required_for_freq(node, exclude_sec_ch_freq))
+		n_exclude_subchs += N_SUBCHS_FOR_BANDWIDTH(chwidth_val);
+	return n_exclude_subchs;
+}
+#endif
+
+#ifdef CONFIG_CHAN_NUM_API
 /* dfs_is_cac_needed_for_bst_node() - For a requested bandwidth, find
  *                                    if the current preCAC BSTree node needs
  *                                    CAC.
+ * @dfs:           Pointer to wlan_dfs structure.
  * @node:          Node to be checked.
  * @req_bandwidth: bandwidth of channel requested.
  *
@@ -2874,33 +3011,84 @@ void dfs_zero_cac_detach(struct wlan_dfs *dfs)
  * for the node which is not CAC done, else false.
  */
 static bool
-dfs_is_cac_needed_for_bst_node(struct precac_tree_node *node,
+dfs_is_cac_needed_for_bst_node(struct wlan_dfs *dfs,
+			       struct precac_tree_node *node,
 			       uint8_t req_bandwidth)
 {
-	uint8_t n_subchs_for_req_bw, non_nol_subchs;
+	uint8_t n_subchs_for_req_bw, n_allowed_subchs, n_excluded_subchs;
 
 	if (!node)
 		return false;
 
 	/* Find the number of subchannels for the requested bandwidth */
+	n_excluded_subchs = dfs_get_num_cur_subchans_in_node(dfs, node);
 	n_subchs_for_req_bw = N_SUBCHS_FOR_BANDWIDTH(req_bandwidth);
-	non_nol_subchs = node->n_valid_subchs - node->n_nol_subchs;
+	n_allowed_subchs = node->n_valid_subchs -
+			(node->n_nol_subchs + n_excluded_subchs);
 
 	/* Return false if,
-	 * 1. Number of non-NOL subchannels in the current node is less than
-	 *    the requested number of subchannels.
-	 * 2. All the subchannels of the node are CAC done.
-	 * 3. If the number CAC done subchannels + NOL subchannels in the
-	 *    current node is equal to number of valid subchannels in the node.
+	 * 1. Number of allowed subchannels (all subchannels other than
+	 *    current operating sub-channels and NOL sub-channels) in the
+	 *    current node is less than the requested number of subchannels.
+	 * 3. If the number CAC done subchannels + NOL subchannels + current
+	 *    operating subchannels in the current node is equal to number of
+	 *    valid subchannels in the node.
 	 * else, return true.
 	 */
-	if ((non_nol_subchs < n_subchs_for_req_bw) ||
-	    (node->n_caced_subchs == node->n_valid_subchs) ||
-	    (node->n_caced_subchs + node->n_nol_subchs == node->n_valid_subchs))
+	if ((n_allowed_subchs < n_subchs_for_req_bw) ||
+	    ((node->n_caced_subchs + node->n_nol_subchs + n_excluded_subchs) ==
+	     node->n_valid_subchs))
 		return false;
 
 	return true;
 }
+#endif
+
+#ifdef CONFIG_CHAN_FREQ_API
+/* dfs_is_cac_needed_for_bst_node_for_freq() - For a requested bandwidth, find
+ *                                             if the current preCAC BSTree
+ *                                             node needs CAC.
+ * @dfs:           Pointer to wlan_dfs struct.
+ * @node:          Node to be checked.
+ * @req_bandwidth: bandwidth of channel requested.
+ *
+ * Return: TRUE/FALSE.
+ * Return true if there exists a channel of the requested bandwidth
+ * for the node which is not CAC done, else false.
+ */
+static bool
+dfs_is_cac_needed_for_bst_node_for_freq(struct wlan_dfs *dfs,
+					struct precac_tree_node *node,
+					uint8_t req_bandwidth)
+{
+	uint8_t n_subchs_for_req_bw, n_allowed_subchs, n_excluded_subchs;
+
+	if (!node)
+		return false;
+
+	/* Find the number of subchannels for the requested bandwidth */
+	n_excluded_subchs = dfs_get_num_cur_subchans_in_node_freq(dfs, node);
+	n_subchs_for_req_bw = N_SUBCHS_FOR_BANDWIDTH(req_bandwidth);
+	n_allowed_subchs = node->n_valid_subchs -
+			(node->n_nol_subchs + n_excluded_subchs);
+
+	/* Return false if,
+	 * 1. Number of allowed subchannels (all subchannels other than
+	 *    current operating sub-channels and NOL sub-channels) in the
+	 *    current node is less than the requested number of subchannels.
+	 * 3. If the number CAC done subchannels + NOL subchannels + current
+	 *    operating subchannels in the current node is equal to number of
+	 *    valid subchannels in the node.
+	 * else, return true.
+	 */
+	if ((n_allowed_subchs < n_subchs_for_req_bw) ||
+	    ((node->n_caced_subchs + node->n_nol_subchs + n_excluded_subchs) ==
+	     node->n_valid_subchs))
+		return false;
+
+	return true;
+}
+#endif
 
 /* dfs_find_ieee_ch_from_precac_tree() - from the given preCAC tree, find a IEEE
  *                                       channel of the given bandwidth which
@@ -2914,19 +3102,22 @@ dfs_is_cac_needed_for_bst_node(struct precac_tree_node *node,
  */
 #ifdef CONFIG_CHAN_NUM_API
 static uint8_t
-dfs_find_ieee_ch_from_precac_tree(struct precac_tree_node *root,
+dfs_find_ieee_ch_from_precac_tree(struct wlan_dfs *dfs,
+				  struct precac_tree_node *root,
 				  uint8_t req_bw)
 {
 	struct precac_tree_node *curr_node;
 
-	if (!dfs_is_cac_needed_for_bst_node(root, req_bw))
+	if (!dfs_is_cac_needed_for_bst_node(dfs, root, req_bw))
 		return 0;
 
 	curr_node = root;
 	while (curr_node) {
 		if (curr_node->bandwidth == req_bw) {
 			/* find if current node in valid state (req.) */
-			if (dfs_is_cac_needed_for_bst_node(curr_node, req_bw))
+			if (dfs_is_cac_needed_for_bst_node(dfs,
+							   curr_node,
+							   req_bw))
 				return curr_node->ch_ieee;
 			else
 				return 0;
@@ -2935,7 +3126,8 @@ dfs_find_ieee_ch_from_precac_tree(struct precac_tree_node *root,
 		/* Find if we need to go to left or right subtree.
 		 * Note: If both are available, go to left.
 		 */
-		if (!dfs_is_cac_needed_for_bst_node(curr_node->left_child,
+		if (!dfs_is_cac_needed_for_bst_node(dfs,
+						    curr_node->left_child,
 						    req_bw))
 			curr_node = curr_node->right_child;
 		else
@@ -2958,19 +3150,22 @@ dfs_find_ieee_ch_from_precac_tree(struct precac_tree_node *root,
  */
 #ifdef CONFIG_CHAN_FREQ_API
 static uint16_t
-dfs_find_ieee_ch_from_precac_tree_for_freq(struct precac_tree_node *root,
+dfs_find_ieee_ch_from_precac_tree_for_freq(struct wlan_dfs *dfs,
+					   struct precac_tree_node *root,
 					   uint8_t req_bw)
 {
 	struct precac_tree_node *curr_node;
 
-	if (!dfs_is_cac_needed_for_bst_node(root, req_bw))
+	if (!dfs_is_cac_needed_for_bst_node_for_freq(dfs, root, req_bw))
 		return 0;
 
 	curr_node = root;
 	while (curr_node) {
 		if (curr_node->bandwidth == req_bw) {
 			/* find if current node in valid state (req.) */
-			if (dfs_is_cac_needed_for_bst_node(curr_node, req_bw))
+			if (dfs_is_cac_needed_for_bst_node_for_freq(dfs,
+								    curr_node,
+								    req_bw))
 				return curr_node->ch_freq;
 			else
 				return 0;
@@ -2979,8 +3174,10 @@ dfs_find_ieee_ch_from_precac_tree_for_freq(struct precac_tree_node *root,
 		/* Find if we need to go to left or right subtree.
 		 * Note: If both are available, go to left.
 		 */
-		if (!dfs_is_cac_needed_for_bst_node(curr_node->left_child,
-						    req_bw))
+		if (!dfs_is_cac_needed_for_bst_node_for_freq(
+				dfs,
+				curr_node->left_child,
+				req_bw))
 			curr_node = curr_node->right_child;
 		else
 			curr_node = curr_node->left_child;
@@ -3011,13 +3208,11 @@ uint8_t dfs_get_ieeechan_for_precac(struct wlan_dfs *dfs,
 			      pe_list) {
 			root = precac_entry->tree_root;
 			ieee_chan =
-				dfs_find_ieee_ch_from_precac_tree(root,
+				dfs_find_ieee_ch_from_precac_tree(dfs,
+								  root,
 								  bandwidth);
-			if (ieee_chan &&
-			    (ieee_chan != exclude_pri_ch_ieee) &&
-			    (ieee_chan != exclude_sec_ch_ieee))
+			if (ieee_chan)
 				break;
-			ieee_chan = 0;
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
@@ -3056,13 +3251,11 @@ uint16_t dfs_get_ieeechan_for_precac_for_freq(struct wlan_dfs *dfs,
 			      pe_list) {
 			root = precac_entry->tree_root;
 			ieee_chan_freq =
-				dfs_find_ieee_ch_from_precac_tree_for_freq(root,
+				dfs_find_ieee_ch_from_precac_tree_for_freq(dfs,
+									   root,
 									   bw);
-			if (ieee_chan_freq &&
-			    (ieee_chan_freq != exclude_pri_ch_freq) &&
-			    (ieee_chan_freq != exclude_sec_ch_freq))
+			if (ieee_chan_freq)
 				break;
-			ieee_chan_freq = 0;
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
