@@ -5929,13 +5929,10 @@ static int wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 #endif
 
 const struct nla_policy qca_wlan_vendor_get_wifi_info_policy[
-	QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1] = {
-		[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION] = {
-							.type = NLA_U8 },
-		[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION] = {
-							.type = NLA_U8 },
-		[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_RADIO_INDEX] = {
-							.type = NLA_U32 },
+			QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_DRIVER_VERSION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_FIRMWARE_VERSION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_WIFI_INFO_RADIO_INDEX] = {.type = NLA_U32 },
 };
 
 /**
@@ -6535,11 +6532,42 @@ nla_put_failure:
 	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_PEER_MAC
 #define RX_BLOCKSIZE_WINLIMIT \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_WINLIMIT
+
 const struct nla_policy wlan_hdd_wifi_config_policy[
 			QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_PENALIZE_AFTER_NCONS_BEACON_MISS] = {
+							.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES] = {.type = NLA_BINARY},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_COMMAND] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_VALUE] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_DATA] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_LENGTH] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_GENERIC_FLAGS] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_VOICE] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_VIDEO] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_BESTEFFORT] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_BACKGROUND] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_PEER_MAC] = {
+		.type = NLA_UNSPEC,
+		.len = QDF_MAC_ADDR_SIZE},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_BLOCKSIZE_WINLIMIT] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_BEACON_MISS_THRESHOLD_24] = {
+		.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_BEACON_MISS_THRESHOLD_5] = {
+		.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT] = {
+		.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_BEACON_REPORT_FAIL] = {.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONF_TX_RATE] = {.type = NLA_U16},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED] = {
-		.type = NLA_U8 },
+		.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR] = {.type = NLA_U16 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME] = {.type = NLA_U32 },
@@ -9434,6 +9462,25 @@ static int hdd_unmap_req_id_to_pattern_id(struct hdd_context *hdd_ctx,
 #define PARAM_PROTO_TYPE \
 		QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_ETHER_PROTO_TYPE
 
+const struct nla_policy offloaded_packet_policy[
+			QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_REQUEST_ID] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_SENDING_CONTROL] = {
+			.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_SRC_MAC_ADDR] = {
+			.type = NLA_BINARY,
+			.len = QDF_MAC_ADDR_SIZE },
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_SRC_MAC_ADDR] = {
+			.type = NLA_BINARY,
+			 .len = QDF_MAC_ADDR_SIZE },
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_DST_MAC_ADDR] = {
+			.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_IP_PACKET_DATA] = {
+			.type = NLA_BINARY},
+	[QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_ETHER_PROTO_TYPE] = {
+			.type = NLA_U16},
+};
+
 /**
  * wlan_hdd_add_tx_ptrn() - add tx pattern
  * @adapter: adapter pointer
@@ -9674,16 +9721,6 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 	struct nlattr *tb[PARAM_MAX + 1];
 	uint8_t control;
 	int ret;
-	static const struct nla_policy policy[PARAM_MAX + 1] = {
-			[PARAM_REQUEST_ID] = { .type = NLA_U32 },
-			[PARAM_CONTROL] = { .type = NLA_U32 },
-			[PARAM_SRC_MAC_ADDR] = { .type = NLA_BINARY,
-						.len = QDF_MAC_ADDR_SIZE },
-			[PARAM_DST_MAC_ADDR] = { .type = NLA_BINARY,
-						.len = QDF_MAC_ADDR_SIZE },
-			[PARAM_PERIOD] = { .type = NLA_U32 },
-			[PARAM_PROTO_TYPE] = {.type = NLA_U16},
-	};
 
 	hdd_enter_dev(dev);
 
@@ -9701,7 +9738,8 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 		return -ENOTSUPP;
 	}
 
-	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len, policy)) {
+	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len,
+				    offloaded_packet_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -14512,7 +14550,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_wifi_configuration_get
+		.doit = wlan_hdd_cfg80211_wifi_configuration_get,
+		vendor_command_policy(wlan_hdd_wifi_config_policy,
+				      QCA_WLAN_VENDOR_ATTR_CONFIG_MAX)
 	},
 
 	FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION
@@ -14581,7 +14621,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_get_tdls_capabilities
+		.doit = wlan_hdd_cfg80211_get_tdls_capabilities,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 #endif
 #ifdef WLAN_FEATURE_OFFLOAD_PACKETS
@@ -14591,7 +14632,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_offloaded_packets
+		.doit = wlan_hdd_cfg80211_offloaded_packets,
+		vendor_command_policy(offloaded_packet_policy,
+				      QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_MAX)
 	},
 #endif
 	FEATURE_RSSI_MONITOR_VENDOR_COMMANDS

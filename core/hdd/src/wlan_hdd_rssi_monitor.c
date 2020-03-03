@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,6 +42,14 @@
 #define PARAM_MIN_RSSI QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MIN_RSSI
 #define PARAM_MAX_RSSI QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MAX_RSSI
 
+const struct nla_policy moitor_rssi_policy[
+			QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_REQUEST_ID] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_CONTROL] = { .type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MIN_RSSI] = { .type = NLA_S8 },
+	[QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MAX_RSSI] = { .type = NLA_S8 },
+};
+
 /**
  * __wlan_hdd_cfg80211_monitor_rssi() - monitor rssi
  * @wiphy: Pointer to wireless phy
@@ -66,12 +74,6 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 	int ret;
 	uint32_t control;
 	mac_handle_t mac_handle;
-	static const struct nla_policy policy[PARAM_MAX + 1] = {
-			[PARAM_REQUEST_ID] = { .type = NLA_U32 },
-			[PARAM_CONTROL] = { .type = NLA_U32 },
-			[PARAM_MIN_RSSI] = { .type = NLA_S8 },
-			[PARAM_MAX_RSSI] = { .type = NLA_S8 },
-	};
 
 	hdd_enter_dev(dev);
 
@@ -89,7 +91,8 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 		return -ENOTSUPP;
 	}
 
-	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len, policy)) {
+	if (wlan_cfg80211_nla_parse(tb, PARAM_MAX, data, data_len,
+				    moitor_rssi_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}

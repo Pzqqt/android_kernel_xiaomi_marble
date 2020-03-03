@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,11 @@
  */
 
 #ifdef FEATURE_RSSI_MONITOR
+
+/* QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI policy */
+extern const struct nla_policy moitor_rssi_policy[
+			QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_monitor_rssi() - SSR wrapper to rssi monitoring
  * @wiphy:    wiphy structure pointer

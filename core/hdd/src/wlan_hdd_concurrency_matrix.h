@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,11 @@
  */
 
 #ifdef FEATURE_CONCURRENCY_MATRIX
+
+extern const struct nla_policy
+wlan_hdd_get_concurrency_matrix_policy[
+			QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_get_concurrency_matrix() - get concurrency matrix
  * @wiphy:   pointer to wireless wiphy structure.
@@ -47,7 +52,9 @@ int wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_CONCURRENCY_MATRIX,\
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV,\
-	.doit = wlan_hdd_cfg80211_get_concurrency_matrix		\
+	.doit = wlan_hdd_cfg80211_get_concurrency_matrix,		\
+	vendor_command_policy(wlan_hdd_get_concurrency_matrix_policy,   \
+			      QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX)\
 },
 #else /* FEATURE_CONCURRENCY_MATRIX */
 #define FEATURE_CONCURRENCY_MATRIX_VENDOR_COMMANDS

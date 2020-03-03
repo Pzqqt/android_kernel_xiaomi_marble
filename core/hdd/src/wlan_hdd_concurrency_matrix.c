@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,8 @@
 	QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX
 #define MATRIX_CONFIG_PARAM_SET_SIZE_MAX \
 	QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_CONFIG_PARAM_SET_SIZE_MAX
-static const struct nla_policy
+
+const struct nla_policy
 wlan_hdd_get_concurrency_matrix_policy[MAX_CONCURRENT_MATRIX + 1] = {
 	[MATRIX_CONFIG_PARAM_SET_SIZE_MAX] = {.type = NLA_U32},
 };
