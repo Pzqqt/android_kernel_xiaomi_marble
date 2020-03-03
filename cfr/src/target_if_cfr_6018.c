@@ -16,6 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef WLAN_ENH_CFR_ENABLE
+
 #include <target_if_cfr.h>
 #include <wlan_tgt_def_config.h>
 #include <target_type.h>
@@ -1616,3 +1618,6 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 
 	return status;
 }
+
+#endif /* WLAN_ENH_CFR_ENABLE */
+
