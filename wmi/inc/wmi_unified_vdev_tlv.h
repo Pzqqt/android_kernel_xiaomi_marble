@@ -38,12 +38,12 @@
 void wmi_vdev_attach_tlv(struct wmi_unified *wmi_handle);
 
 #ifdef WLAN_BCN_RATECODE_ENABLE
-static inline void wmi_enable_bcn_ratecode(uint32_t cmd_flag)
+static inline void wmi_enable_bcn_ratecode(uint32_t *cmd_flag)
 {
-	cmd_flag |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
+	*cmd_flag |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
 }
 #else
-static inline void wmi_enable_bcn_ratecode(uint32_t cmd_flag)
+static inline void wmi_enable_bcn_ratecode(uint32_t *cmd_flag)
 {
 }
 #endif
