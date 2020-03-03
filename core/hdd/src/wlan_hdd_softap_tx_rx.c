@@ -319,8 +319,7 @@ int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
 	struct hdd_station_info *hdd_sta_info;
 	int errno = 0;
-	struct qdf_mac_addr *src_mac, *macaddr =
-		(struct qdf_mac_addr *)(skb->data + QDF_NBUF_SRC_MAC_OFFSET);
+	struct qdf_mac_addr *src_mac;
 
 	if (((adapter->device_mode == QDF_SAP_MODE) ||
 	     (adapter->device_mode == QDF_P2P_GO_MODE)) &&
@@ -333,8 +332,7 @@ int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
 
 		subtype = qdf_nbuf_get_dhcp_subtype(skb);
 		hdd_sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
-						       macaddr->bytes);
-
+						       src_mac->bytes);
 		if (!hdd_sta_info) {
 			hdd_debug("Station not found");
 			return -EINVAL;
