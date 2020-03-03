@@ -910,16 +910,8 @@ static int wsa883x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					&port_type[0]);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		swr_slvdev_datapath_control(wsa883x->swr_slave,
-					    wsa883x->swr_slave->dev_num,
-					    true);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		swr_slvdev_datapath_control(wsa883x->swr_slave,
-					    wsa883x->swr_slave->dev_num,
-					    false);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
 		wsa883x_set_port(component, SWR_DAC_PORT,
 				&port_id[num_port], &num_ch[num_port],
 				&ch_mask[num_port], &ch_rate[num_port],
@@ -943,6 +935,11 @@ static int wsa883x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 		swr_disconnect_port(wsa883x->swr_slave, &port_id[0], num_port,
 				&ch_mask[0], &port_type[0]);
 		break;
+	case SND_SOC_DAPM_POST_PMD:
+		swr_slvdev_datapath_control(wsa883x->swr_slave,
+					    wsa883x->swr_slave->dev_num,
+					    false);
+		break;
 	default:
 		break;
 	}
@@ -959,8 +956,10 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 	dev_dbg(component->dev, "%s: %s %d\n", __func__, w->name, event);
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
-				0x01, 0x01);
+		swr_slvdev_datapath_control(wsa883x->swr_slave,
+					    wsa883x->swr_slave->dev_num,
+					    true);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
@@ -983,6 +982,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 				0x0E, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
 		break;
 	}
 	return 0;
@@ -1266,6 +1266,11 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		snd_soc_component_update_bits(wsa883x->component,
 					WSA883X_PA_FSM_CTL,
 					0x01, 0x00);
+		break;
+	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
+		snd_soc_component_update_bits(wsa883x->component,
+						WSA883X_PA_FSM_CTL,
+						0x01, 0x01);
 		break;
 	default:
 		dev_dbg(wsa883x->dev, "%s: unknown event %d\n",

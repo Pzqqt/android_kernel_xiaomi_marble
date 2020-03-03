@@ -65,6 +65,7 @@ enum {
 	BOLERO_WSA_EVT_PA_OFF_PRE_SSR,
 	BOLERO_WSA_EVT_SSR_DOWN,
 	BOLERO_WSA_EVT_SSR_UP,
+	BOLERO_WSA_EVT_PA_ON_POST_FSCLK,
 };
 
 struct wsa_ctrl_platform_data {
