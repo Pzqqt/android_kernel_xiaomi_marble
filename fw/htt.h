@@ -200,9 +200,10 @@
  * 3.76 Add HTT_H2T_MSG_TYPE_3_TUPLE_HASH_CFG msg.
  * 3.77 Add HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE msg.
  * 3.78 Add htt_ppdu_id def.
+ * 3.79 Add HTT_NUM_AC_WMM def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 78
+#define HTT_CURRENT_VERSION_MINOR 79
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -252,6 +253,9 @@ enum HTT_AC_WMM {
     HTT_AC_WMM_BK         = 0x1,
     HTT_AC_WMM_VI         = 0x2,
     HTT_AC_WMM_VO         = 0x3,
+
+    HTT_NUM_AC_WMM        = 0x4,
+
     /* extension Access Categories */
     HTT_AC_EXT_NON_QOS    = 0x4,
     HTT_AC_EXT_UCAST_MGMT = 0x5,
