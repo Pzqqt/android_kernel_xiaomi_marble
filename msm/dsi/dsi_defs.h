@@ -16,6 +16,8 @@
 #define DSI_V_TOTAL(t) (((t)->v_active) + ((t)->v_back_porch) + \
 			((t)->v_sync_width) + ((t)->v_front_porch))
 
+#define DSI_H_SCALE(h, s) (DIV_ROUND_UP((h) * (s)->numer, (s)->denom))
+
 #define DSI_DEBUG_NAME_LEN		32
 #define display_for_each_ctrl(index, display) \
 	for (index = 0; (index < (display)->ctrl_count) &&\
@@ -398,6 +400,7 @@ struct dsi_panel_cmd_set {
  * @vdc_enabled:      VDC compression enabled.
  * @dsc:              DSC compression configuration.
  * @vdc:              VDC compression configuration.
+ * @pclk_scale:       pclk scale factor, target bpp to source bpp
  * @roi_caps:         Panel ROI capabilities.
  */
 struct dsi_mode_info {
@@ -423,6 +426,7 @@ struct dsi_mode_info {
 	bool vdc_enabled;
 	struct msm_display_dsc_info *dsc;
 	struct msm_display_vdc_info *vdc;
+	struct msm_ratio pclk_scale;
 	struct msm_roi_caps roi_caps;
 };
 
@@ -585,7 +589,9 @@ struct dsi_host_config {
  * @vdc:                  VDC compression info
  * @dsc_enabled:          DSC compression enabled
  * @vdc_enabled:          VDC compression enabled
+ * @pclk_scale:           pclk scale factor, target bpp to source bpp
  * @roi_caps:		  Panel ROI capabilities
+ * @widebus_support       48 bit wide data bus is supported by hw
  */
 struct dsi_display_mode_priv_info {
 	struct dsi_panel_cmd_set cmd_sets[DSI_CMD_SET_MAX];
@@ -606,7 +612,9 @@ struct dsi_display_mode_priv_info {
 	struct msm_display_vdc_info vdc;
 	bool dsc_enabled;
 	bool vdc_enabled;
+	struct msm_ratio pclk_scale;
 	struct msm_roi_caps roi_caps;
+	bool widebus_support;
 };
 
 /**
@@ -738,8 +746,12 @@ static inline u64 dsi_h_active_dce(struct dsi_mode_info *mode)
 
 static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
 {
-	return dsi_h_active_dce(mode) + mode->h_back_porch +
-		mode->h_sync_width + mode->h_front_porch;
+	u64 h_total = dsi_h_active_dce(mode);
+
+	h_total += DSI_H_SCALE(mode->h_back_porch, &mode->pclk_scale) +
+			DSI_H_SCALE(mode->h_front_porch, &mode->pclk_scale) +
+			DSI_H_SCALE(mode->h_sync_width, &mode->pclk_scale);
+	return h_total;
 }
 
 #endif /* _DSI_DEFS_H_ */

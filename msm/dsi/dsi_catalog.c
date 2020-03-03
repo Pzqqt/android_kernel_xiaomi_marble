@@ -163,7 +163,11 @@ int dsi_catalog_ctrl_setup(struct dsi_ctrl_hw *ctrl,
 	case DSI_CTRL_VERSION_2_2:
 	case DSI_CTRL_VERSION_2_3:
 	case DSI_CTRL_VERSION_2_4:
+		ctrl->phy_isolation_enabled = phy_isolation_enabled;
+		dsi_catalog_cmn_init(ctrl, version);
+		break;
 	case DSI_CTRL_VERSION_2_5:
+		ctrl->widebus_support = true;
 		ctrl->phy_isolation_enabled = phy_isolation_enabled;
 		dsi_catalog_cmn_init(ctrl, version);
 		break;

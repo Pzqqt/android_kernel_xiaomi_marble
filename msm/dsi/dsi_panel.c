@@ -728,6 +728,10 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	mode->clk_rate_hz = !rc ? tmp64 : 0;
 	display_mode->priv_info->clk_rate_hz = mode->clk_rate_hz;
 
+	mode->pclk_scale.numer = 1;
+	mode->pclk_scale.denom = 1;
+	display_mode->priv_info->pclk_scale = mode->pclk_scale;
+
 	rc = utils->read_u32(utils->data, "qcom,mdss-mdp-transfer-time-us",
 				&mode->mdp_transfer_time_us);
 	if (!rc)
@@ -2416,8 +2420,15 @@ static int dsi_panel_parse_dsc_params(struct dsi_display_mode *mode,
 		goto error;
 	}
 
+	priv_info->pclk_scale.numer =
+			priv_info->dsc.config.bits_per_pixel >> 4;
+	priv_info->pclk_scale.denom = msm_get_src_bpc(
+			priv_info->dsc.chroma_format,
+			priv_info->dsc.config.bits_per_component);
+
 	mode->timing.dsc_enabled = true;
 	mode->timing.dsc = &priv_info->dsc;
+	mode->timing.pclk_scale = priv_info->pclk_scale;
 
 error:
 	return rc;
@@ -2595,8 +2606,15 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		goto error;
 	}
 
+	priv_info->pclk_scale.numer =
+			priv_info->vdc.bits_per_pixel >> 4;
+	priv_info->pclk_scale.denom = msm_get_src_bpc(
+			priv_info->vdc.chroma_format,
+			priv_info->vdc.bits_per_component);
+
 	mode->timing.vdc_enabled = true;
 	mode->timing.vdc = &priv_info->vdc;
+	mode->timing.pclk_scale = priv_info->pclk_scale;
 
 error:
 	return rc;

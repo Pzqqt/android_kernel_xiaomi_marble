@@ -432,14 +432,15 @@ struct dsi_ctrl_hw_ops {
 	 * setup_cmd_stream() - set up parameters for command pixel streams
 	 * @ctrl:              Pointer to controller host hardware.
 	 * @mode:              Pointer to mode information.
-	 * @h_stride:          Horizontal stride in bytes.
+	 * @cfg:               DSI host configuration that is common to both
+	 *                     video and command modes.
 	 * @vc_id:             stream_id.
 	 *
 	 * Setup parameters for command mode pixel stream size.
 	 */
 	void (*setup_cmd_stream)(struct dsi_ctrl_hw *ctrl,
 				 struct dsi_mode_info *mode,
-				 u32 h_stride,
+				 struct dsi_host_common_cfg *cfg,
 				 u32 vc_id,
 				 struct dsi_rect *roi);
 
@@ -850,6 +851,7 @@ struct dsi_ctrl_hw_ops {
  *                          dsi controller and run only dsi controller.
  * @null_insertion_enabled:  A boolean property to allow dsi controller to
  *                           insert null packet.
+ * @widebus_support:        48 bit wide data bus is supported.
  */
 struct dsi_ctrl_hw {
 	void __iomem *base;
@@ -870,6 +872,7 @@ struct dsi_ctrl_hw {
 
 	bool phy_isolation_enabled;
 	bool null_insertion_enabled;
+	bool widebus_support;
 };
 
 #endif /* _DSI_CTRL_HW_H_ */

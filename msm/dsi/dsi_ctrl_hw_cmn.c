@@ -342,6 +342,16 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
 		reg |= eol_byte_num << 4;
 		reg |= 1;
 		DSI_W32(ctrl, DSI_VIDEO_COMPRESSION_MODE_CTRL, reg);
+
+		if (ctrl->widebus_support) {
+			reg = DSI_R32(ctrl, DSI_VIDEO_MODE_CTRL);
+			reg |= BIT(25);
+			DSI_W32(ctrl, DSI_VIDEO_MODE_CTRL, reg);
+		}
+
+		mode->h_active = DIV_ROUND_UP(mode->h_active *
+				mode->pclk_scale.numer,
+				mode->pclk_scale.denom);
 	} else {
 		width = mode->h_active;
 	}
@@ -388,14 +398,15 @@ void dsi_ctrl_hw_cmn_set_video_timing(struct dsi_ctrl_hw *ctrl,
  * setup_cmd_stream() - set up parameters for command pixel streams
  * @ctrl:              Pointer to controller host hardware.
  * @mode:              Pointer to mode information.
- * @h_stride:          Horizontal stride in bytes.
+ * @cfg:               DSI host configuration that is common to both
+ *                     video and command modes.
  * @vc_id:             stream_id
  *
  * Setup parameters for command mode pixel stream size.
  */
 void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 				     struct dsi_mode_info *mode,
-				     u32 h_stride,
+				     struct dsi_host_common_cfg *cfg,
 				     u32 vc_id,
 				     struct dsi_rect *roi)
 {
@@ -421,7 +432,7 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 
 		sde_dsc_populate_dsc_private_params(&dsc, intf_ip_w);
 
-		width_final = dsc.pclk_per_line;
+		width_final = dsc.bytes_per_pkt * dsc.pkt_per_line;
 		stride_final = dsc.bytes_per_pkt;
 		pkt_per_line = dsc.pkt_per_line;
 		eol_byte_num = dsc.eol_byte_num;
@@ -436,7 +447,7 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 
 		sde_vdc_intf_prog_params(&vdc, intf_ip_w);
 
-		width_final = vdc.pclk_per_line;
+		width_final = vdc.bytes_per_pkt * vdc.pkt_per_line;
 		stride_final = vdc.bytes_per_pkt;
 		pkt_per_line = vdc.pkt_per_line;
 		eol_byte_num = vdc.eol_byte_num;
@@ -447,13 +458,23 @@ void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 		height_final = roi->h;
 	} else {
 		width_final = mode->h_active;
-		stride_final = h_stride;
+		stride_final = mode->h_active * 3;
 		height_final = mode->v_active;
 	}
 
 	if (dsi_compression_enabled(mode)) {
 		pic_width = roi ? roi->w : mode->h_active;
 		height_final = roi ? roi->h : mode->v_active;
+
+		if (ctrl->widebus_support) {
+			width_final = DIV_ROUND_UP(width_final, 6);
+			reg = DSI_R32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2);
+			reg |= BIT(20);
+			DSI_W32(ctrl, DSI_COMMAND_MODE_MDP_CTRL2, reg);
+		} else {
+			width_final = DIV_ROUND_UP(width_final, 3);
+		}
+
 		reg_ctrl = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL);
 		reg_ctrl2 = DSI_R32(ctrl, DSI_COMMAND_COMPRESSION_MODE_CTRL2);
 

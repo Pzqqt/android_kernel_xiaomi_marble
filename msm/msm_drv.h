@@ -291,6 +291,16 @@ enum panel_op_mode {
 };
 
 /**
+ * struct msm_ratio - integer ratio
+ * @numer: numerator
+ * @denom: denominator
+ */
+struct msm_ratio {
+	uint32_t numer;
+	uint32_t denom;
+};
+
+/**
  * enum msm_event_wait - type of HW events to wait for
  * @MSM_ENC_COMMIT_DONE - wait for the driver to flush the registers to HW
  * @MSM_ENC_TX_COMPLETE - wait for the HW to transfer the frame to panel
