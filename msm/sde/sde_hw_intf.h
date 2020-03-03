@@ -33,11 +33,12 @@ struct intf_timing_params {
 	u32 underflow_clr;
 	u32 hsync_skew;
 	u32 v_front_porch_fixed;
-	bool wide_bus_en;	/* for DP only */
+	bool wide_bus_en;
 	bool compression_en;
 	u32 extra_dto_cycles;	/* for DP only */
 	bool dsc_4hs_merge;	/* DSC 4HS merge */
 	bool poms_align_vsync;	/* poms with vsync aligned */
+	u32 dce_bytes_per_line;
 };
 
 struct intf_prog_fetch {
@@ -199,6 +200,11 @@ struct sde_hw_intf_ops {
 	 */
 	int (*check_and_reset_tearcheck)(struct sde_hw_intf *intf,
 			struct intf_tear_status *status);
+
+	/**
+	 * Enable processing of 2 pixels per clock
+	 */
+	void (*enable_wide_bus)(struct sde_hw_intf *intf, bool enable);
 };
 
 struct sde_hw_intf {

@@ -550,4 +550,20 @@ static inline struct sde_kms *sde_encoder_get_kms(struct drm_encoder *drm_enc)
 
 	return to_sde_kms(priv->kms);
 }
+
+/*
+ * sde_encoder_is_widebus_enabled - check if widebus is enabled for current mode
+ * @drm_enc:    Pointer to drm encoder structure
+ * @Return: true if widebus is enabled for current mode
+ */
+static inline bool sde_encoder_is_widebus_enabled(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc;
+
+	if (!drm_enc)
+		return false;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	return sde_enc->mode_info.wide_bus_en;
+}
 #endif /* __SDE_ENCODER_H__ */
