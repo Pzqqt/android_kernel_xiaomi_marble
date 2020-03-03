@@ -274,8 +274,6 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 
-	pmo_enter();
-
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
@@ -287,8 +285,6 @@ QDF_STATUS pmo_vdev_ready(struct wlan_objmgr_vdev *vdev)
 	pmo_register_wow_default_patterns(vdev);
 
 	pmo_vdev_put_ref(vdev);
-
-	pmo_exit();
 
 	/*
 	 * The above APIs should return a status but don't.

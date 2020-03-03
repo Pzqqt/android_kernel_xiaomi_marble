@@ -64,8 +64,6 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 	int vdev_id;
 
-	pmo_enter();
-
 	psoc = pmo_vdev_get_psoc(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
 
@@ -83,7 +81,6 @@ QDF_STATUS pmo_tgt_disable_wow_wakeup_event(
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to disable wow wakeup event");
 out:
-	pmo_exit();
 
 	return status;
 }
