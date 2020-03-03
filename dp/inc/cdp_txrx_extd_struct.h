@@ -85,6 +85,7 @@ struct cdp_rx_indication_mpdu_info {
 	uint32_t length;
 	uint8_t per_chain_rssi[CDP_MAX_RX_CHAINS];
 	uint8_t channel;
+	qdf_freq_t chan_freq;
 };
 
 #ifdef __KERNEL__

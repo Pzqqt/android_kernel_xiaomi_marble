@@ -81,6 +81,7 @@ dp_rx_populate_cdp_indication_mpdu_info(
 
 	cdp_mpdu_info->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_mpdu_info->channel = ppdu_info->rx_status.chan_num;
+	cdp_mpdu_info->chan_freq = ppdu_info->rx_status.chan_freq;
 	cdp_mpdu_info->duration = ppdu_info->rx_status.duration;
 	cdp_mpdu_info->timestamp = ppdu_info->rx_status.tsft;
 	cdp_mpdu_info->bw = ppdu_info->rx_status.bw;
