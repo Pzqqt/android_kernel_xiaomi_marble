@@ -32,7 +32,7 @@
 #include <wlan_cfg80211_spectral.h>
 #include <spectral_ioctl.h>
 
-static const struct nla_policy spectral_scan_policy[
+const struct nla_policy spectral_scan_policy[
 		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_SCAN_COUNT] = {
 							.type = NLA_U32},
