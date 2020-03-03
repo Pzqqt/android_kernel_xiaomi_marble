@@ -235,248 +235,88 @@ void sde_plane_setup_src_split_order(struct drm_plane *plane,
 }
 
 /**
- * _sde_plane_calc_fill_level - calculate fill level of the given source format
+ * _sde_plane_set_qos_lut - set danger, safe and creq LUT of the given plane
  * @plane:		Pointer to drm plane
- * @fmt:		Pointer to source buffer format
- * @src_wdith:		width of source buffer
- * Return: fill level corresponding to the source buffer/format or 0 if error
- */
-static inline int _sde_plane_calc_fill_level(struct drm_plane *plane,
-		const struct sde_format *fmt, u32 src_width)
-{
-	struct sde_plane *psde, *tmp;
-	struct sde_plane_state *pstate;
-	u32 fixed_buff_size;
-	u32 total_fl;
-	u32 hflip_bytes;
-	u32 unused_space;
-
-	if (!plane || !fmt || !plane->state || !src_width || !fmt->bpp) {
-		SDE_ERROR("invalid arguments\n");
-		return 0;
-	}
-
-	psde = to_sde_plane(plane);
-	if (psde->perf_features & BIT(SDE_PERF_SSPP_QOS_FL_NOCALC))
-		return 0;
-
-	pstate = to_sde_plane_state(plane->state);
-	fixed_buff_size = psde->pipe_sblk->pixel_ram_size;
-
-	list_for_each_entry(tmp, &psde->mplane_list, mplane_list) {
-		if (!sde_plane_enabled(tmp->base.state))
-			continue;
-		SDE_DEBUG("plane%d/%d src_width:%d/%d\n",
-				psde->base.base.id, tmp->base.base.id,
-				src_width, tmp->pipe_cfg.src_rect.w);
-		src_width = max_t(u32, src_width, tmp->pipe_cfg.src_rect.w);
-	}
-
-	if ((pstate->rotation & DRM_MODE_REFLECT_X) &&
-			SDE_FORMAT_IS_LINEAR(fmt))
-		hflip_bytes = (src_width + 32) * fmt->bpp;
-	else
-		hflip_bytes = 0;
-
-	if (fmt->fetch_planes == SDE_PLANE_PSEUDO_PLANAR) {
-
-		unused_space = 23 * 128;
-		if (fmt->chroma_sample == SDE_CHROMA_420) {
-			/* NV12 */
-			total_fl = (fixed_buff_size / 2 - hflip_bytes -
-				unused_space) / ((src_width + 32) * fmt->bpp);
-		} else {
-			/* non NV12 */
-			total_fl = (fixed_buff_size / 2 - hflip_bytes -
-				unused_space) * 2 / ((src_width + 32) *
-				fmt->bpp);
-		}
-	} else {
-
-		unused_space = 6 * 128;
-		if (pstate->multirect_mode == SDE_SSPP_MULTIRECT_PARALLEL) {
-			total_fl = (fixed_buff_size / 2 - hflip_bytes -
-				unused_space) * 2 / ((src_width + 32) *
-				fmt->bpp);
-		} else {
-			total_fl = (fixed_buff_size - hflip_bytes -
-				unused_space) * 2 / ((src_width + 32) *
-				fmt->bpp);
-		}
-	}
-
-	SDE_DEBUG("plane%u: pnum:%d fmt: %4.4s w:%u hf:%d us:%d fl:%u\n",
-			plane->base.id, psde->pipe - SSPP_VIG0,
-			(char *)&fmt->base.pixel_format,
-			src_width, hflip_bytes, unused_space, total_fl);
-
-	return total_fl;
-}
-
-/**
- * _sde_plane_get_qos_lut - get LUT mapping based on fill level
- * @tbl:		Pointer to LUT table
- * @total_fl:		fill level
- * Return: LUT setting corresponding to the fill level
- */
-static u64 _sde_plane_get_qos_lut(const struct sde_qos_lut_tbl *tbl,
-		u32 total_fl)
-{
-	int i;
-
-	if (!tbl || !tbl->nentry || !tbl->entries)
-		return 0;
-
-	for (i = 0; i < tbl->nentry; i++)
-		if (total_fl <= tbl->entries[i].fl)
-			return tbl->entries[i].lut;
-
-	/* if last fl is zero, use as default */
-	if (!tbl->entries[i-1].fl)
-		return tbl->entries[i-1].lut;
-
-	return 0;
-}
-
-/**
- * _sde_plane_set_qos_lut - set QoS LUT of the given plane
- * @plane:		Pointer to drm plane
+ * @crtc:		Pointer to drm crtc to find refresh rate on mode
  * @fb:			Pointer to framebuffer associated with the given plane
  */
 static void _sde_plane_set_qos_lut(struct drm_plane *plane,
+		struct drm_crtc *crtc,
 		struct drm_framebuffer *fb)
 {
 	struct sde_plane *psde;
 	const struct sde_format *fmt = NULL;
-	u64 qos_lut;
-	u32 total_fl = 0, lut_usage;
+	u32 frame_rate, qos_count, fps_index = 0, lut_index, index;
+	struct sde_perf_cfg *perf;
+	struct sde_plane_state *pstate;
 
 	if (!plane || !fb) {
-		SDE_ERROR("invalid arguments plane %d fb %d\n",
-				!plane, !fb);
+		SDE_ERROR("invalid arguments\n");
 		return;
 	}
 
 	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
 
 	if (!psde->pipe_hw || !psde->pipe_sblk || !psde->catalog) {
 		SDE_ERROR("invalid arguments\n");
 		return;
-	} else if (!psde->pipe_hw->ops.setup_creq_lut) {
+	} else if (!psde->pipe_hw->ops.setup_qos_lut) {
 		return;
 	}
 
+	frame_rate = crtc->mode.vrefresh;
+	perf = &psde->catalog->perf;
+	qos_count = perf->qos_refresh_count;
+	while (qos_count && perf->qos_refresh_rate) {
+		if (frame_rate >= perf->qos_refresh_rate[qos_count - 1]) {
+			fps_index = qos_count - 1;
+			break;
+		}
+		qos_count--;
+	}
+
 	if (!psde->is_rt_pipe) {
-		lut_usage = SDE_QOS_LUT_USAGE_NRT;
+		lut_index = SDE_QOS_LUT_USAGE_NRT;
 	} else {
 		fmt = sde_get_sde_format_ext(
 				fb->format->format,
 				fb->modifier);
-		total_fl = _sde_plane_calc_fill_level(plane, fmt,
-				psde->pipe_cfg.src_rect.w);
 
-		if (fmt && SDE_FORMAT_IS_LINEAR(fmt))
-			lut_usage = SDE_QOS_LUT_USAGE_LINEAR;
-		else if (psde->features & BIT(SDE_SSPP_SCALER_QSEED3) ||
-			psde->features & BIT(SDE_SSPP_SCALER_QSEED3LITE))
-			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE_QSEED;
+		if (fmt && SDE_FORMAT_IS_LINEAR(fmt) &&
+		    pstate->scaler3_cfg.enable)
+			lut_index = SDE_QOS_LUT_USAGE_LINEAR_QSEED;
+		else if (fmt && SDE_FORMAT_IS_LINEAR(fmt))
+			lut_index = SDE_QOS_LUT_USAGE_LINEAR;
+		else if (pstate->scaler3_cfg.enable)
+			lut_index = SDE_QOS_LUT_USAGE_MACROTILE_QSEED;
 		else
-			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE;
+			lut_index = SDE_QOS_LUT_USAGE_MACROTILE;
 	}
 
-	qos_lut = _sde_plane_get_qos_lut(
-			&psde->catalog->perf.qos_lut_tbl[lut_usage], total_fl);
-
-	psde->pipe_qos_cfg.creq_lut = qos_lut;
+	index = (fps_index * SDE_QOS_LUT_USAGE_MAX) + lut_index;
+	psde->pipe_qos_cfg.danger_lut = perf->danger_lut[index];
+	psde->pipe_qos_cfg.safe_lut = perf->safe_lut[index];
+	psde->pipe_qos_cfg.creq_lut = perf->creq_lut[index];
 
 	trace_sde_perf_set_qos_luts(psde->pipe - SSPP_VIG0,
 			(fmt) ? fmt->base.pixel_format : 0,
-			psde->is_rt_pipe, total_fl, qos_lut, lut_usage);
-
-	SDE_DEBUG("plane%u: pnum:%d fmt: %4.4s rt:%d fl:%u lut:0x%llx\n",
-			plane->base.id,
-			psde->pipe - SSPP_VIG0,
-			fmt ? (char *)&fmt->base.pixel_format : NULL,
-			psde->is_rt_pipe, total_fl, qos_lut);
-
-	psde->pipe_hw->ops.setup_creq_lut(psde->pipe_hw, &psde->pipe_qos_cfg);
-}
-
-/**
- * _sde_plane_set_panic_lut - set danger/safe LUT of the given plane
- * @plane:		Pointer to drm plane
- * @fb:			Pointer to framebuffer associated with the given plane
- */
-static void _sde_plane_set_danger_lut(struct drm_plane *plane,
-		struct drm_framebuffer *fb)
-{
-	struct sde_plane *psde;
-	const struct sde_format *fmt = NULL;
-	u32 danger_lut, safe_lut;
-	u32 total_fl = 0, lut_usage;
-
-	if (!plane || !fb) {
-		SDE_ERROR("invalid arguments\n");
-		return;
-	}
-
-	psde = to_sde_plane(plane);
-
-	if (!psde->pipe_hw || !psde->pipe_sblk || !psde->catalog) {
-		SDE_ERROR("invalid arguments\n");
-		return;
-	} else if (!psde->pipe_hw->ops.setup_danger_safe_lut) {
-		return;
-	}
-
-	if (!psde->is_rt_pipe) {
-		danger_lut = psde->catalog->perf.danger_lut_tbl
-				[SDE_QOS_LUT_USAGE_NRT];
-		lut_usage = SDE_QOS_LUT_USAGE_NRT;
-	} else {
-		fmt = sde_get_sde_format_ext(
-				fb->format->format,
-				fb->modifier);
-		total_fl = _sde_plane_calc_fill_level(plane, fmt,
-				psde->pipe_cfg.src_rect.w);
-
-		if (fmt && SDE_FORMAT_IS_LINEAR(fmt)) {
-			danger_lut = psde->catalog->perf.danger_lut_tbl
-					[SDE_QOS_LUT_USAGE_LINEAR];
-			lut_usage = SDE_QOS_LUT_USAGE_LINEAR;
-		} else if (psde->features & BIT(SDE_SSPP_SCALER_QSEED3)) {
-			danger_lut = psde->catalog->perf.danger_lut_tbl
-					[SDE_QOS_LUT_USAGE_MACROTILE_QSEED];
-			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE_QSEED;
-		} else {
-			danger_lut = psde->catalog->perf.danger_lut_tbl
-					[SDE_QOS_LUT_USAGE_MACROTILE];
-			lut_usage = SDE_QOS_LUT_USAGE_MACROTILE;
-		}
-	}
-
-	safe_lut = (u32) _sde_plane_get_qos_lut(
-			&psde->catalog->perf.sfe_lut_tbl[lut_usage], total_fl);
-
-	psde->pipe_qos_cfg.danger_lut = danger_lut;
-	psde->pipe_qos_cfg.safe_lut = safe_lut;
-
-	trace_sde_perf_set_danger_luts(psde->pipe - SSPP_VIG0,
-			(fmt) ? fmt->base.pixel_format : 0,
 			(fmt) ? fmt->fetch_mode : 0,
 			psde->pipe_qos_cfg.danger_lut,
-			psde->pipe_qos_cfg.safe_lut);
+			psde->pipe_qos_cfg.safe_lut,
+			psde->pipe_qos_cfg.creq_lut);
 
-	SDE_DEBUG("plane%u: pnum:%d fmt:%4.4s mode:%d fl:%d luts[0x%x,0x%x]\n",
+	SDE_DEBUG(
+		"plane%u: pnum:%d fmt:%4.4s fps:%d mode:%d luts[0x%x,0x%x 0x%llx]\n",
 		plane->base.id,
 		psde->pipe - SSPP_VIG0,
-		fmt ? (char *)&fmt->base.pixel_format : NULL,
-		fmt ? fmt->fetch_mode : -1, total_fl,
+		fmt ? (char *)&fmt->base.pixel_format : NULL, frame_rate,
+		fmt ? fmt->fetch_mode : -1,
 		psde->pipe_qos_cfg.danger_lut,
-		psde->pipe_qos_cfg.safe_lut);
+		psde->pipe_qos_cfg.safe_lut,
+		psde->pipe_qos_cfg.creq_lut);
 
-	psde->pipe_hw->ops.setup_danger_safe_lut(psde->pipe_hw,
-			&psde->pipe_qos_cfg);
+	psde->pipe_hw->ops.setup_qos_lut(psde->pipe_hw, &psde->pipe_qos_cfg);
 }
 
 /**
@@ -3202,8 +3042,7 @@ static void _sde_plane_update_properties(struct drm_plane *plane,
 		psde->pipe_hw->ops.setup_sharpening)
 		_sde_plane_update_sharpening(psde);
 
-	_sde_plane_set_qos_lut(plane, fb);
-	_sde_plane_set_danger_lut(plane, fb);
+	_sde_plane_set_qos_lut(plane, crtc, fb);
 
 	if (plane->type != DRM_PLANE_TYPE_CURSOR) {
 		_sde_plane_set_qos_ctrl(plane, true, SDE_PLANE_QOS_PANIC_CTRL);

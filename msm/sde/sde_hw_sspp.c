@@ -841,7 +841,7 @@ static void sde_hw_sspp_setup_solidfill(struct sde_hw_pipe *ctx, u32 color, enum
 				color);
 }
 
-static void sde_hw_sspp_setup_danger_safe_lut(struct sde_hw_pipe *ctx,
+static void sde_hw_sspp_setup_qos_lut(struct sde_hw_pipe *ctx,
 		struct sde_hw_pipe_qos_cfg *cfg)
 {
 	u32 idx;
@@ -851,15 +851,6 @@ static void sde_hw_sspp_setup_danger_safe_lut(struct sde_hw_pipe *ctx,
 
 	SDE_REG_WRITE(&ctx->hw, SSPP_DANGER_LUT + idx, cfg->danger_lut);
 	SDE_REG_WRITE(&ctx->hw, SSPP_SAFE_LUT + idx, cfg->safe_lut);
-}
-
-static void sde_hw_sspp_setup_creq_lut(struct sde_hw_pipe *ctx,
-		struct sde_hw_pipe_qos_cfg *cfg)
-{
-	u32 idx;
-
-	if (_sspp_subblk_offset(ctx, SDE_SSPP_SRC, &idx))
-		return;
 
 	if (ctx->cap && test_bit(SDE_PERF_SSPP_QOS_8LVL,
 				&ctx->cap->perf_features)) {
@@ -1230,9 +1221,8 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 		c->ops.setup_excl_rect = _sde_hw_sspp_setup_excl_rect;
 
 	if (test_bit(SDE_PERF_SSPP_QOS, &features)) {
-		c->ops.setup_danger_safe_lut =
-			sde_hw_sspp_setup_danger_safe_lut;
-		c->ops.setup_creq_lut = sde_hw_sspp_setup_creq_lut;
+		c->ops.setup_qos_lut =
+			sde_hw_sspp_setup_qos_lut;
 		c->ops.setup_qos_ctrl = sde_hw_sspp_setup_qos_ctrl;
 	}
 

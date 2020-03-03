@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_WB_H
@@ -89,27 +89,11 @@ struct sde_hw_wb_ops {
 		struct sde_hw_wb_cfg *wb);
 
 	/**
-	 * setup_danger_safe_lut - setup danger safe LUTs
+	 * setup_qos_lut - setup danger, safe, creq, etc. LUTs
 	 * @ctx: Pointer to pipe context
 	 * @cfg: Pointer to pipe QoS configuration
 	 */
-	void (*setup_danger_safe_lut)(struct sde_hw_wb *ctx,
-			struct sde_hw_wb_qos_cfg *cfg);
-
-	/**
-	 * setup_creq_lut - setup CREQ LUT
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe QoS configuration
-	 */
-	void (*setup_creq_lut)(struct sde_hw_wb *ctx,
-			struct sde_hw_wb_qos_cfg *cfg);
-
-	/**
-	 * setup_qos_ctrl - setup QoS control
-	 * @ctx: Pointer to pipe context
-	 * @cfg: Pointer to pipe QoS configuration
-	 */
-	void (*setup_qos_ctrl)(struct sde_hw_wb *ctx,
+	void (*setup_qos_lut)(struct sde_hw_wb *ctx,
 			struct sde_hw_wb_qos_cfg *cfg);
 
 	/**

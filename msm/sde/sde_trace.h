@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  */
 
 #if !defined(_SDE_TRACE_H_) || defined(TRACE_HEADER_MULTI_READ)
@@ -16,41 +16,16 @@
 #define TRACE_INCLUDE_FILE sde_trace
 
 TRACE_EVENT(sde_perf_set_qos_luts,
-	TP_PROTO(u32 pnum, u32 fmt, bool rt, u32 fl,
-		u32 lut, u32 lut_usage),
-	TP_ARGS(pnum, fmt, rt, fl, lut, lut_usage),
-	TP_STRUCT__entry(
-			__field(u32, pnum)
-			__field(u32, fmt)
-			__field(bool, rt)
-			__field(u32, fl)
-			__field(u64, lut)
-			__field(u32, lut_usage)
-	),
-	TP_fast_assign(
-			__entry->pnum = pnum;
-			__entry->fmt = fmt;
-			__entry->rt = rt;
-			__entry->fl = fl;
-			__entry->lut = lut;
-			__entry->lut_usage = lut_usage;
-	),
-	TP_printk("pnum=%d fmt=0x%x rt=%d fl=%d lut=0x%llx lut_usage=%d",
-			__entry->pnum, __entry->fmt,
-			__entry->rt, __entry->fl,
-			__entry->lut, __entry->lut_usage)
-);
-
-TRACE_EVENT(sde_perf_set_danger_luts,
 	TP_PROTO(u32 pnum, u32 fmt, u32 mode, u32 danger_lut,
-		u32 safe_lut),
-	TP_ARGS(pnum, fmt, mode, danger_lut, safe_lut),
+		u32 safe_lut, u64 creq_lut),
+	TP_ARGS(pnum, fmt, mode, danger_lut, safe_lut, creq_lut),
 	TP_STRUCT__entry(
 			__field(u32, pnum)
 			__field(u32, fmt)
 			__field(u32, mode)
 			__field(u32, danger_lut)
 			__field(u32, safe_lut)
+			__field(u64, creq_lut)
 	),
 	TP_fast_assign(
 			__entry->pnum = pnum;
@@ -58,11 +33,12 @@ TRACE_EVENT(sde_perf_set_danger_luts,
 			__entry->mode = mode;
 			__entry->danger_lut = danger_lut;
 			__entry->safe_lut = safe_lut;
+			__entry->creq_lut = creq_lut;
 	),
-	TP_printk("pnum=%d fmt=0x%x mode=%d luts[0x%x, 0x%x]",
+	TP_printk("pnum=%d fmt=0x%x mode=%d luts[0x%x, 0x%x 0x%llx]",
 			__entry->pnum, __entry->fmt,
 			__entry->mode, __entry->danger_lut,
-			__entry->safe_lut)
+			__entry->safe_lut, __entry->creq_lut)
 );
 
 TRACE_EVENT(sde_perf_set_ot,
