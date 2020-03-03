@@ -10250,7 +10250,7 @@ static int wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 
 static const struct
 nla_policy
-qca_wlan_vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_MAX+1] = {
+wlan_hdd_get_link_properties_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_MAC_ADDR] = {
 		.type = NLA_BINARY, .len = QDF_MAC_ADDR_SIZE },
 };
@@ -10296,7 +10296,8 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX, data,
-				    data_len, qca_wlan_vendor_attr_policy)) {
+				    data_len,
+				    wlan_hdd_get_link_properties_policy)) {
 		hdd_err("Invalid attribute");
 		return -EINVAL;
 	}
@@ -14643,78 +14644,17 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 
 	/* OCB commands */
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_SET_CONFIG,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ocb_set_config
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_SET_UTC_TIME,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ocb_set_utc_time
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd =
-			QCA_NL80211_VENDOR_SUBCMD_OCB_START_TIMING_ADVERT,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ocb_start_timing_advert
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_STOP_TIMING_ADVERT,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ocb_stop_timing_advert
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_GET_TSF_TIMER,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ocb_get_tsf_timer
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_GET_STATS,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_dcc_get_stats
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_CLEAR_STATS,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_dcc_clear_stats
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_UPDATE_NDL,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-				 WIPHY_VENDOR_CMD_NEED_NETDEV |
-				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_dcc_update_ndl
-	},
+	FEATURE_OCB_VENDOR_COMMANDS
+
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_get_link_properties
+		.doit = wlan_hdd_cfg80211_get_link_properties,
+		vendor_command_policy(wlan_hdd_get_link_properties_policy,
+				      QCA_WLAN_VENDOR_ATTR_MAX)
 	},
 
 	FEATURE_OTA_TEST_VENDOR_COMMANDS
@@ -14786,7 +14726,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_get_wakelock_stats
+		.doit = wlan_hdd_cfg80211_get_wakelock_stats,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

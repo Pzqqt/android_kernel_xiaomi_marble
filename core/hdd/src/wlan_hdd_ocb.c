@@ -594,7 +594,7 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 }
 #endif /* WLAN_WEXT_SUPPORT_ENABLE */
 
-static const struct nla_policy qca_wlan_vendor_ocb_set_config_policy[
+const struct nla_policy qca_wlan_vendor_ocb_set_config_policy[
 		QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_CHANNEL_COUNT] = {
 		.type = NLA_U32
@@ -619,7 +619,7 @@ static const struct nla_policy qca_wlan_vendor_ocb_set_config_policy[
 	},
 };
 
-static const struct nla_policy qca_wlan_vendor_ocb_set_utc_time_policy[
+const struct nla_policy qca_wlan_vendor_ocb_set_utc_time_policy[
 		QCA_WLAN_VENDOR_ATTR_OCB_SET_UTC_TIME_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OCB_SET_UTC_TIME_VALUE] = {
 		.type = NLA_BINARY, .len = SIZE_UTC_TIME
@@ -629,7 +629,7 @@ static const struct nla_policy qca_wlan_vendor_ocb_set_utc_time_policy[
 	},
 };
 
-static const struct nla_policy qca_wlan_vendor_ocb_start_timing_advert_policy[
+const struct nla_policy qca_wlan_vendor_ocb_start_timing_advert_policy[
 		QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_CHANNEL_FREQ] = {
 		.type = NLA_U32
@@ -639,7 +639,7 @@ static const struct nla_policy qca_wlan_vendor_ocb_start_timing_advert_policy[
 	},
 };
 
-static const struct nla_policy  qca_wlan_vendor_ocb_stop_timing_advert_policy[
+const struct nla_policy  qca_wlan_vendor_ocb_stop_timing_advert_policy[
 		QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_CHANNEL_FREQ] = {
 		.type = NLA_U32
@@ -655,7 +655,7 @@ static const struct nla_policy qca_wlan_vendor_ocb_get_tsf_timer_resp[] = {
 	},
 };
 
-static const struct nla_policy qca_wlan_vendor_dcc_get_stats[] = {
+const struct nla_policy qca_wlan_vendor_dcc_get_stats[] = {
 	[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_CHANNEL_COUNT] = {
 		.type = NLA_U32
 	},
@@ -673,13 +673,13 @@ static const struct nla_policy qca_wlan_vendor_dcc_get_stats_resp[] = {
 	},
 };
 
-static const struct nla_policy qca_wlan_vendor_dcc_clear_stats[] = {
+const struct nla_policy qca_wlan_vendor_dcc_clear_stats[] = {
 	[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_BITMAP] = {
 		.type = NLA_U32
 	},
 };
 
-static const struct nla_policy qca_wlan_vendor_dcc_update_ndl[
+const struct nla_policy qca_wlan_vendor_dcc_update_ndl[
 		QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_CHANNEL_COUNT] = {
 		.type = NLA_U32

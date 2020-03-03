@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -238,7 +238,116 @@ struct hdd_context;
 int iw_set_dot11p_channel_sched(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra);
+
+extern const struct nla_policy qca_wlan_vendor_ocb_set_config_policy[
+			QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_MAX + 1];
+extern const struct nla_policy qca_wlan_vendor_ocb_set_utc_time_policy[
+			QCA_WLAN_VENDOR_ATTR_OCB_SET_UTC_TIME_MAX + 1];
+extern const struct nla_policy qca_wlan_vendor_ocb_start_timing_advert_policy[
+			QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_MAX + 1];
+extern const struct nla_policy  qca_wlan_vendor_ocb_stop_timing_advert_policy[
+			QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_MAX + 1];
+extern const struct nla_policy qca_wlan_vendor_dcc_get_stats[
+			QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_MAX + 1];
+extern const struct nla_policy qca_wlan_vendor_dcc_clear_stats[
+			QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_MAX + 1];
+extern const struct nla_policy qca_wlan_vendor_dcc_update_ndl[
+			QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX + 1];
+
+#define FEATURE_OCB_VENDOR_COMMANDS					     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_SET_CONFIG,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_ocb_set_config,			     \
+	vendor_command_policy(qca_wlan_vendor_ocb_set_config_policy,	     \
+			      QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_MAX)	     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_SET_UTC_TIME,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_ocb_set_utc_time,			     \
+	vendor_command_policy(qca_wlan_vendor_ocb_set_utc_time_policy,	     \
+			      QCA_WLAN_VENDOR_ATTR_OCB_SET_UTC_TIME_MAX)     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd =							     \
+		QCA_NL80211_VENDOR_SUBCMD_OCB_START_TIMING_ADVERT,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_ocb_start_timing_advert,		     \
+	vendor_command_policy(						     \
+			qca_wlan_vendor_ocb_start_timing_advert_policy,	     \
+			QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_MAX)    \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_STOP_TIMING_ADVERT,     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_ocb_stop_timing_advert,		     \
+	vendor_command_policy(						     \
+			qca_wlan_vendor_ocb_stop_timing_advert_policy,	     \
+			QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_MAX)     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OCB_GET_TSF_TIMER,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_ocb_get_tsf_timer,			     \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)			     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_GET_STATS,		     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_dcc_get_stats,			     \
+	vendor_command_policy(qca_wlan_vendor_dcc_get_stats,		     \
+			      QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_MAX)	     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_CLEAR_STATS,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_dcc_clear_stats,			     \
+	vendor_command_policy(qca_wlan_vendor_dcc_clear_stats,		     \
+			      QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_MAX)	     \
+},									     \
+									     \
+{									     \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			     \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_UPDATE_NDL,	     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				     \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				     \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				     \
+	.doit = wlan_hdd_cfg80211_dcc_update_ndl,			     \
+	vendor_command_policy(qca_wlan_vendor_dcc_update_ndl,		     \
+			      QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX)	     \
+},
+
 #else
+#define FEATURE_OCB_VENDOR_COMMANDS
+
 static inline
 int iw_set_dot11p_channel_sched(struct net_device *dev,
 				struct iw_request_info *info,
@@ -247,6 +356,8 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 	return 0;
 }
 #endif
+#else
+#define FEATURE_OCB_VENDOR_COMMANDS
 #endif
 
 #ifdef WLAN_FEATURE_DSRC
