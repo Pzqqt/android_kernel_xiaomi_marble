@@ -6619,7 +6619,7 @@ qca_wlan_vendor_attr_he_omi_tx_policy [QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DATA_DISABLE] = {.type = NLA_U8 },
 };
 
-static const struct nla_policy
+const struct nla_policy
 wlan_hdd_wifi_test_config_policy[
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1] = {
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE] = {
@@ -14612,15 +14612,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_wifi_configuration_get
 	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd =
-			QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_set_wifi_test_config
-	},
+
+	FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION
 
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

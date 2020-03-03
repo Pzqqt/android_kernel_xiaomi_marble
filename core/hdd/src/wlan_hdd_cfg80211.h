@@ -243,6 +243,22 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 #define CONNECTIVITY_CHECK_SET_TCP_ACK \
 	QCA_WLAN_VENDOR_CONNECTIVITY_CHECK_SET_TCP_ACK
 
+extern const struct nla_policy
+wlan_hdd_wifi_test_config_policy[
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
+
+#define FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION                    \
+{                                                                        \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                         \
+	.info.subcmd =                                                   \
+		QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION,       \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                            \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,                           \
+	.doit = wlan_hdd_cfg80211_set_wifi_test_config,                  \
+	vendor_command_policy(wlan_hdd_wifi_test_config_policy,          \
+			      QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX) \
+},
 
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
