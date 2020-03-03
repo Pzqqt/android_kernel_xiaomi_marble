@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,7 +240,7 @@ enum scan_mode_6ghz {
  */
 #define CFG_SCAN_PROBE_REPEAT_TIME CFG_INI_UINT(\
 			"gScanProbeRepeatTime",\
-			0, 30, PLATFORM_VALUE(20, 50),\
+			0, 50, PLATFORM_VALUE(20, 50),\
 			CFG_VALUE_OR_DEFAULT,\
 			"probe repeat time on each channel")
 
