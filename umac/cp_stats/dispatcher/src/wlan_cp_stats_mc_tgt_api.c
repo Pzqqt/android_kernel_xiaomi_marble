@@ -39,13 +39,10 @@ static bool tgt_mc_cp_stats_is_last_event(struct stats_event *ev,
 	if (IS_MSB_SET(ev->last_event)) {
 		is_last_event = IS_LSB_SET(ev->last_event);
 	} else {
-		if (stats_type == TYPE_CONNECTION_TX_POWER) {
-			cp_stats_debug("FW does not support last event bit");
+		if (stats_type == TYPE_CONNECTION_TX_POWER)
 			is_last_event = true;
-		} else {
-			cp_stats_debug("FW does not support last event bit");
+		else
 			is_last_event = !!ev->peer_stats;
-		}
 	}
 
 	if (is_last_event)
