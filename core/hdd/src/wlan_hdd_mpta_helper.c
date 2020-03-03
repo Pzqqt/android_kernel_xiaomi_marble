@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@
 #include "wlan_osif_request_manager.h"
 #include "osif_sync.h"
 
-static const struct nla_policy
+const struct nla_policy
 qca_wlan_vendor_mpta_helper_attr[QCA_MPTA_HELPER_VENDOR_ATTR_MAX + 1] = {
 	[QCA_MPTA_HELPER_VENDOR_ATTR_ZIGBEE_STATE] = {.type = NLA_U32 },
 	[QCA_MPTA_HELPER_VENDOR_ATTR_INT_WLAN_DURATION] = {.type = NLA_U32 },

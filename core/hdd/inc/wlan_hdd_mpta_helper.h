@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,6 +59,9 @@ int wlan_hdd_cfg80211_mpta_helper_config(struct wiphy *wiphy,
 					 const void *data,
 					 int data_len);
 
+extern const struct nla_policy
+qca_wlan_vendor_mpta_helper_attr[QCA_MPTA_HELPER_VENDOR_ATTR_MAX + 1];
+
 #define FEATURE_MPTA_HELPER_COMMANDS				\
 {								\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
@@ -66,7 +69,9 @@ int wlan_hdd_cfg80211_mpta_helper_config(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
 		WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 		WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_mpta_helper_config	\
+	.doit = wlan_hdd_cfg80211_mpta_helper_config,	\
+	vendor_command_policy(qca_wlan_vendor_mpta_helper_attr, \
+			      QCA_MPTA_HELPER_VENDOR_ATTR_MAX)  \
 },
 
 #else /* FEATURE_MPTA_HELPER */
