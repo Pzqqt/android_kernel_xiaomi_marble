@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -334,7 +334,7 @@ QDF_STATUS dev_sanity_check(struct wlan_objmgr_vdev *vdev,
  */
 
 QDF_STATUS ucfg_cfr_set_reset_bitmap(struct wlan_objmgr_vdev *vdev,
-				     struct ieee80211_wlanconfig_cfr *params)
+				     struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -366,7 +366,7 @@ QDF_STATUS ucfg_cfr_set_reset_bitmap(struct wlan_objmgr_vdev *vdev,
  */
 
 QDF_STATUS ucfg_cfr_set_en_bitmap(struct wlan_objmgr_vdev *vdev,
-				  struct ieee80211_wlanconfig_cfr *params)
+				  struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -389,7 +389,7 @@ QDF_STATUS ucfg_cfr_set_en_bitmap(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 ucfg_cfr_set_ul_mu_user_mask(struct wlan_objmgr_vdev *vdev,
-			     struct ieee80211_wlanconfig_cfr *params)
+			     struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -420,7 +420,7 @@ ucfg_cfr_set_ul_mu_user_mask(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 ucfg_cfr_set_freeze_tlv_delay_cnt(struct wlan_objmgr_vdev *vdev,
-				  struct ieee80211_wlanconfig_cfr *params)
+				  struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -448,7 +448,7 @@ ucfg_cfr_set_freeze_tlv_delay_cnt(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
-			      struct ieee80211_wlanconfig_cfr *params)
+			      struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -472,7 +472,7 @@ ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
-			      struct ieee80211_wlanconfig_cfr *params)
+			      struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -498,7 +498,7 @@ ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
 
 QDF_STATUS
 ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
-				struct ieee80211_wlanconfig_cfr *params)
+				struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -536,7 +536,7 @@ ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
  */
 
 QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
-			       struct ieee80211_wlanconfig_cfr *params)
+			       struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
@@ -571,7 +571,7 @@ QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
  */
 
 QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
-				    struct ieee80211_wlanconfig_cfr *params)
+				    struct cfr_wlanconfig_param *params)
 {
 	struct pdev_cfr *pcfr = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;

@@ -189,7 +189,7 @@ endif
 
 ifeq ($(QCA_CFR_SUPPORT), 1)
 ccflags-y+= -DWLAN_CFR_ENABLE=1
-INCS += -I$(obj)/$(DEPTH)/component_dev/umac/cfr/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cfr/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/component_dev/qal/inc
 endif
 

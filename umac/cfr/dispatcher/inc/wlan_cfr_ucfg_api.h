@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,7 +21,7 @@
 
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
-#include <ieee80211_ioctl.h>
+#include <wlan_cfr_public_structs.h>
 
 #define MAX_CFR_PRD        (10*60*1000)        /* 10 minutes */
 
@@ -135,7 +135,7 @@ bool ucfg_cfr_get_rcc_enabled(struct wlan_objmgr_vdev *vdev);
  * Return: status
  */
 QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
-				    struct ieee80211_wlanconfig_cfr *params);
+				    struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_bw_nss() - function to configure nss and bandwidth
@@ -145,7 +145,7 @@ QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
  * Return: status
  */
 QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
-			       struct ieee80211_wlanconfig_cfr *params);
+			       struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_frame_type_subtype() - function to configure frame type/subtype
@@ -156,7 +156,7 @@ QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
-				struct ieee80211_wlanconfig_cfr *params);
+				struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_capture_duration() - function to configure capture duration
@@ -167,7 +167,7 @@ ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
-			      struct ieee80211_wlanconfig_cfr *params);
+			      struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_capture_interval() - function to configure capture interval
@@ -178,7 +178,7 @@ ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
-			      struct ieee80211_wlanconfig_cfr *params);
+			      struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_en_bitmap() - function to configure 16-bit bitmap in TA_RA mode
@@ -188,7 +188,7 @@ ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
  * Return: status
  */
 QDF_STATUS ucfg_cfr_set_en_bitmap(struct wlan_objmgr_vdev *vdev,
-				  struct ieee80211_wlanconfig_cfr *params);
+				  struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_reset_bitmap() - function to clear all 9 params for all 16
@@ -199,7 +199,7 @@ QDF_STATUS ucfg_cfr_set_en_bitmap(struct wlan_objmgr_vdev *vdev,
  * Return: status
  */
 QDF_STATUS ucfg_cfr_set_reset_bitmap(struct wlan_objmgr_vdev *vdev,
-				     struct ieee80211_wlanconfig_cfr *params);
+				     struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_ul_mu_user_mask() - function to configure UL MU user mask
@@ -210,7 +210,7 @@ QDF_STATUS ucfg_cfr_set_reset_bitmap(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 ucfg_cfr_set_ul_mu_user_mask(struct wlan_objmgr_vdev *vdev,
-			     struct ieee80211_wlanconfig_cfr *params);
+			     struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_set_freeze_tlv_delay_cnt() - function to configure freeze TLV delay
@@ -222,7 +222,7 @@ ucfg_cfr_set_ul_mu_user_mask(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS
 ucfg_cfr_set_freeze_tlv_delay_cnt(struct wlan_objmgr_vdev *vdev,
-				  struct ieee80211_wlanconfig_cfr *params);
+				  struct cfr_wlanconfig_param *params);
 
 /**
  * ucfg_cfr_committed_rcc_config() - function to commit user config
