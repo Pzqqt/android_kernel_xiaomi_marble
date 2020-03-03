@@ -941,11 +941,12 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 }
 
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
-				     struct hdd_station_info *sta_info)
+				     struct hdd_station_info **sta_info)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
 	struct qdf_mac_addr *mac_addr;
+	struct hdd_station_info *sta = *sta_info;
 
 	if (!adapter) {
 		hdd_err("NULL adapter");
@@ -957,7 +958,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!sta_info) {
+	if (!sta) {
 		hdd_err("Invalid station");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -973,10 +974,10 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	 * If the address is a broadcast address then the CDP layers expects
 	 * the self mac address of the adapter.
 	 */
-	if (QDF_IS_ADDR_BROADCAST(sta_info->sta_mac.bytes))
+	if (QDF_IS_ADDR_BROADCAST(sta->sta_mac.bytes))
 		mac_addr = &adapter->mac_addr;
 	else
-		mac_addr = &sta_info->sta_mac;
+		mac_addr = &sta->sta_mac;
 
 	/* Clear station in TL and then update HDD data
 	 * structures. This helps to block RX frames from other
@@ -984,7 +985,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	 */
 
 	hdd_debug("Deregistering sta: " QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+		  QDF_MAC_ADDR_ARRAY(sta->sta_mac.bytes));
 
 	qdf_status = cdp_clear_peer(
 			cds_get_context(QDF_MODULE_ID_SOC),
@@ -1005,7 +1006,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				      mac_addr->bytes) != QDF_STATUS_SUCCESS)
 			hdd_debug("WLAN_CLIENT_DISCONNECT event failed");
 	}
-	hdd_sta_info_detach(&adapter->sta_info_list, &sta_info);
+	hdd_sta_info_detach(&adapter->sta_info_list, &sta);
 
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 
@@ -1037,7 +1038,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	if (sta_info) {
 		hdd_debug("clean up old entry for STA MAC " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(sta_mac->bytes));
-		hdd_softap_deregister_sta(adapter, sta_info);
+		hdd_softap_deregister_sta(adapter, &sta_info);
 	}
 
 	/*
@@ -1192,8 +1193,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 
 	hdd_for_each_station_safe(adapter->sta_info_list, sta_info,
 				  index, tmp) {
-		status = hdd_softap_deregister_sta(adapter,
-						   sta_info);
+		status = hdd_softap_deregister_sta(adapter, &sta_info);
 
 		if (QDF_IS_STATUS_ERROR(status) && sta_info)
 			hdd_debug("Deregistering STA " QDF_MAC_ADDR_STR

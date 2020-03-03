@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -111,12 +111,12 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf);
 /**
  * hdd_softap_deregister_sta() - Deregister a STA with the Data Path
  * @adapter: pointer to adapter context
- * @sta_info: pointer to HDD station info structure
+ * @sta_info: double pointer to HDD station info structure
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
-				     struct hdd_station_info *sta_info);
+				     struct hdd_station_info **sta_info);
 
 /**
  * hdd_softap_register_sta() - Register a SoftAP STA

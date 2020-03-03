@@ -2361,7 +2361,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					  WMA_DHCP_STOP_IND);
 		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
-		hdd_softap_deregister_sta(adapter, stainfo);
+		hdd_softap_deregister_sta(adapter, &stainfo);
 
 		ap_ctx->ap_active = false;
 
@@ -6744,7 +6744,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 
 		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
-			hdd_softap_deregister_sta(adapter, sta_info);
+			hdd_softap_deregister_sta(adapter, &sta_info);
 			continue;
 		}
 
