@@ -538,7 +538,7 @@ action_oui_parse(struct action_oui_psoc_priv *psoc_priv,
 	str1 = qdf_str_trim((char *)oui_string);
 
 	while (str1) {
-		str2 = skip_spaces(str1);
+		str2 = (char *)qdf_str_left_trim(str1);
 		if (str2[0] == '\0') {
 			action_oui_err("Invalid spaces in action oui: %u at extension: %u for token: %s",
 				action_id,
