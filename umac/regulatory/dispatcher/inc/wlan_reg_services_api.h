@@ -638,6 +638,16 @@ wlan_reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 			     bool global_tbl_lookup);
 
 /**
+ * wlan_reg_get_cc_and_src () - get country code and src
+ * @psoc: psoc ptr
+ * @alpha2: country code alpha2
+ *
+ * Return: country_src
+ */
+enum country_src wlan_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *alpha);
+
+/**
  * wlan_regulatory_init() - init regulatory component
  *
  * Return: Success or Failure

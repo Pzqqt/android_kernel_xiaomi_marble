@@ -322,6 +322,12 @@ wlan_reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 				       global_tbl_lookup);
 }
 
+enum country_src wlan_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *alpha)
+{
+	return reg_get_cc_and_src(psoc, alpha);
+}
+
 QDF_STATUS wlan_regulatory_init(void)
 {
 	QDF_STATUS status;
