@@ -3641,15 +3641,17 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 		return;
 
 	tmp = buf;
-	for (i = 0; i < num_ch; i++) {
+	if (num_ch) {
 		buf_cons = qdf_snprint(tmp, buf_left, "{ ");
 		buf_left -= buf_cons;
 		tmp += buf_cons;
 
-		buf_cons = qdf_snprint(tmp, buf_left, "%d ",
-				       neigh_rpt->freq[i]);
-		buf_left -= buf_cons;
-		tmp += buf_cons;
+		for (i = 0; i < num_ch; i++) {
+			buf_cons = qdf_snprint(tmp, buf_left, "%d ",
+					       neigh_rpt->freq[i]);
+			buf_left -= buf_cons;
+			tmp += buf_cons;
+		}
 
 		buf_cons = qdf_snprint(tmp, buf_left, "}");
 		buf_left -= buf_cons;
