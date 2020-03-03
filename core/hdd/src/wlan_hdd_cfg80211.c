@@ -14851,7 +14851,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 				 WIPHY_VENDOR_CMD_NEED_NETDEV |
 				 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_ll_stats_ext_set_param
+		.doit = wlan_hdd_cfg80211_ll_stats_ext_set_param,
+		vendor_command_policy(qca_wlan_vendor_ll_ext_policy,
+				      QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX)
 	},
 	FEATURE_VENDOR_SUBCMD_NUD_STATS_SET
 	{

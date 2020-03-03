@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,6 +39,8 @@
 
 #define WLAN_HDD_TGT_NOISE_FLOOR_DBM     (-96)
 
+extern const struct nla_policy qca_wlan_vendor_ll_ext_policy[
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX + 1];
 /**
  * struct index_vht_data_rate_type - vht data rate type
  * @beacon_rate_index: Beacon rate index
