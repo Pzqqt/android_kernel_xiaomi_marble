@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,21 +74,27 @@ struct spectral_scan_msg_v {
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_START, \
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
 			WIPHY_VENDOR_CMD_NEED_NETDEV, \
-	.doit = wlan_hdd_cfg80211_spectral_scan_start \
+	.doit = wlan_hdd_cfg80211_spectral_scan_start, \
+	vendor_command_policy(spectral_scan_policy, \
+			      QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX) \
 }, \
 { \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID, \
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_STOP, \
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
 		WIPHY_VENDOR_CMD_NEED_NETDEV, \
-	.doit = wlan_hdd_cfg80211_spectral_scan_stop \
+	.doit = wlan_hdd_cfg80211_spectral_scan_stop, \
+	vendor_command_policy(spectral_scan_policy, \
+			      QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX) \
 }, \
 { \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID, \
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_CONFIG, \
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
 			WIPHY_VENDOR_CMD_NEED_NETDEV, \
-	.doit = wlan_hdd_cfg80211_spectral_scam_get_config \
+	.doit = wlan_hdd_cfg80211_spectral_scam_get_config, \
+	vendor_command_policy(spectral_scan_policy, \
+			      QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX) \
 }, \
 { \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID, \

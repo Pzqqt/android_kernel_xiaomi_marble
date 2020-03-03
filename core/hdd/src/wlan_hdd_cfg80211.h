@@ -29,6 +29,7 @@
 #include <wlan_cfg80211.h>
 #include <wlan_cfg80211_tdls.h>
 #include <qca_vendor.h>
+#include <wlan_cfg80211_spectral.h>
 
 struct hdd_context;
 
