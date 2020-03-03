@@ -398,6 +398,7 @@ struct sde_hw_vdc *sde_hw_vdc_init(enum sde_vdc idx,
 	struct sde_vdc_cfg *cfg;
 	int rc;
 	u32 vdc_ctl_reg;
+	char blk_name[32];
 
 	c = kzalloc(sizeof(*c), GFP_KERNEL);
 	if (!c)
@@ -420,21 +421,34 @@ struct sde_hw_vdc *sde_hw_vdc_init(enum sde_vdc idx,
 		goto blk_init_error;
 	}
 
-	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name, c->hw.blk_off,
-		c->hw.blk_off + c->hw.length, c->hw.xin_id);
-
 	if (_vdc_subblk_offset(c, SDE_VDC_CTL, &vdc_ctl_reg)) {
 		SDE_ERROR("vdc ctl not found\n");
 		kfree(c);
 		return ERR_PTR(-EINVAL);
 	}
 
-	if (c->idx == VDC_0) {
-		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, "vdc_ctl",
-				vdc_ctl_reg,
-				vdc_ctl_reg + VDC_CTL_BLOCK_SIZE,
-				c->hw.xin_id);
-	}
+	sde_dbg_reg_register_dump_range(SDE_DBG_NAME, cfg->name, c->hw.blk_off,
+		c->hw.blk_off + c->hw.length, c->hw.xin_id);
+
+	snprintf(blk_name, sizeof(blk_name), "vdc_enc_%u",
+			c->idx - VDC_0);
+
+	sde_dbg_reg_register_dump_range(SDE_DBG_NAME,
+			blk_name,
+			c->hw.blk_off + c->caps->sblk->enc.base,
+			c->hw.blk_off + c->caps->sblk->enc.base +
+			c->caps->sblk->enc.len,
+			c->hw.xin_id);
+
+	snprintf(blk_name, sizeof(blk_name), "vdc_ctl_%u",
+			c->idx - VDC_0);
+
+	sde_dbg_reg_register_dump_range(SDE_DBG_NAME,
+			blk_name,
+			c->hw.blk_off + c->caps->sblk->ctl.base,
+			c->hw.blk_off + c->caps->sblk->ctl.base +
+			c->caps->sblk->ctl.len,
+			c->hw.xin_id);
 
 	return c;
 

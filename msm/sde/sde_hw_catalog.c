@@ -316,7 +316,9 @@ enum {
 	DSC_PAIR_MASK,
 	DSC_REV,
 	DSC_ENC,
+	DSC_ENC_LEN,
 	DSC_CTL,
+	DSC_CTL_LEN,
 	DSC_422,
 	DSC_PROP_MAX,
 };
@@ -326,7 +328,9 @@ enum {
 	VDC_LEN,
 	VDC_REV,
 	VDC_ENC,
+	VDC_ENC_LEN,
 	VDC_CTL,
+	VDC_CTL_LEN,
 	VDC_PROP_MAX,
 };
 
@@ -748,7 +752,9 @@ static struct sde_prop_type dsc_prop[] = {
 	{DSC_PAIR_MASK, "qcom,sde-dsc-pair-mask", false, PROP_TYPE_U32_ARRAY},
 	{DSC_REV, "qcom,sde-dsc-hw-rev", false, PROP_TYPE_STRING},
 	{DSC_ENC, "qcom,sde-dsc-enc", false, PROP_TYPE_U32_ARRAY},
+	{DSC_ENC_LEN, "qcom,sde-dsc-enc-size", false, PROP_TYPE_U32},
 	{DSC_CTL, "qcom,sde-dsc-ctl", false, PROP_TYPE_U32_ARRAY},
+	{DSC_CTL_LEN, "qcom,sde-dsc-ctl-size", false, PROP_TYPE_U32},
 	{DSC_422, "qcom,sde-dsc-native422-supp", false, PROP_TYPE_U32_ARRAY}
 };
 
@@ -757,7 +763,9 @@ static struct sde_prop_type vdc_prop[] = {
 	{VDC_LEN, "qcom,sde-vdc-size", false, PROP_TYPE_U32},
 	{VDC_REV, "qcom,sde-vdc-hw-rev", false, PROP_TYPE_STRING},
 	{VDC_ENC, "qcom,sde-vdc-enc", false, PROP_TYPE_U32_ARRAY},
+	{VDC_ENC_LEN, "qcom,sde-vdc-enc-size", false, PROP_TYPE_U32},
 	{VDC_CTL, "qcom,sde-vdc-ctl", false, PROP_TYPE_U32_ARRAY},
+	{VDC_CTL_LEN, "qcom,sde-vdc-ctl-size", false, PROP_TYPE_U32},
 };
 
 static struct sde_prop_type cdm_prop[] = {
@@ -2818,8 +2826,12 @@ static int sde_dsc_parse_dt(struct device_node *np,
 		if (dsc_rev == SDE_DSC_HW_REV_1_2) {
 			sblk->enc.base = PROP_VALUE_ACCESS(prop_value,
 					DSC_ENC, i);
+			sblk->enc.len = PROP_VALUE_ACCESS(prop_value,
+					DSC_ENC_LEN, 0);
 			sblk->ctl.base = PROP_VALUE_ACCESS(prop_value,
 					DSC_CTL, i);
+			sblk->ctl.len = PROP_VALUE_ACCESS(prop_value,
+					DSC_CTL_LEN, 0);
 			set_bit(SDE_DSC_HW_REV_1_2, &dsc->features);
 			if (PROP_VALUE_ACCESS(prop_value, DSC_422, i))
 					set_bit(SDE_DSC_NATIVE_422_EN,
@@ -2904,8 +2916,12 @@ static int sde_vdc_parse_dt(struct device_node *np,
 
 		sblk->enc.base = PROP_VALUE_ACCESS(prop_value,
 			VDC_ENC, i);
+		sblk->enc.len = PROP_VALUE_ACCESS(prop_value,
+			VDC_ENC_LEN, 0);
 		sblk->ctl.base = PROP_VALUE_ACCESS(prop_value,
 			VDC_CTL, i);
+		sblk->ctl.len = PROP_VALUE_ACCESS(prop_value,
+			VDC_CTL_LEN, 0);
 		set_bit(SDE_VDC_HW_REV_1_1, &vdc->features);
 	}
 
