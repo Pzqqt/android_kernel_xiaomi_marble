@@ -5643,7 +5643,7 @@ static int wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	return errno;
 }
 
-static const struct nla_policy
+const struct nla_policy
 wlan_hdd_wisa_cmd_policy[QCA_WLAN_VENDOR_ATTR_WISA_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_WISA_MODE] = {.type = NLA_U32 },
 };
@@ -10449,15 +10449,15 @@ static int wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	return errno;
 }
 
-static const struct nla_policy
+const struct nla_policy
 wlan_hdd_sap_config_policy[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_CHANNEL] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_FREQUENCY] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST] = {
-							.type = NLA_NESTED},
+							.type = NLA_BINARY},
 };
 
-static const struct nla_policy
+const struct nla_policy
 wlan_hdd_set_acs_dfs_config_policy[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ACS_DFS_MODE] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_ACS_CHANNEL_HINT] = {.type = NLA_U8},
@@ -10633,7 +10633,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 	return sap_operating_band;
 }
 
-static const struct nla_policy
+const struct nla_policy
 wlan_hdd_set_sta_roam_config_policy[
 QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_STA_DFS_MODE] = {.type = NLA_U8 },
@@ -11284,6 +11284,10 @@ static int wlan_hdd_cfg80211_get_bus_size(struct wiphy *wiphy,
 	return errno;
 }
 
+const struct nla_policy setband_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
+		[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE] = {.type = NLA_U32}
+};
+
 /**
  *__wlan_hdd_cfg80211_setband() - set band
  * @wiphy: Pointer to wireless phy
@@ -11301,8 +11305,6 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
 	int ret;
-	static const struct nla_policy policy[QCA_WLAN_VENDOR_ATTR_MAX + 1]
-		= {[QCA_WLAN_VENDOR_ATTR_SETBAND_VALUE] = { .type = NLA_U32 } };
 
 	hdd_enter();
 
@@ -11311,7 +11313,7 @@ static int __wlan_hdd_cfg80211_setband(struct wiphy *wiphy,
 		return ret;
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX,
-				    data, data_len, policy)) {
+				    data, data_len, setband_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -14450,7 +14452,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_handle_wisa_cmd
+		.doit = wlan_hdd_cfg80211_handle_wisa_cmd,
+		vendor_command_policy(wlan_hdd_wisa_cmd_policy,
+				      QCA_WLAN_VENDOR_ATTR_WISA_MAX)
 	},
 
 	FEATURE_STATION_INFO_VENDOR_COMMANDS
@@ -14567,16 +14571,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 				set_probable_oper_channel_policy,
 				QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX)
 	},
-#ifdef WLAN_FEATURE_TSF
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TSF,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_handle_tsf_cmd
-	},
-#endif
+
+	FEATURE_HANDLE_TSF_VENDOR_COMMANDS
+
 #ifdef FEATURE_WLAN_TDLS
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -14655,7 +14652,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_acs_dfs_mode
+		.doit = wlan_hdd_cfg80211_acs_dfs_mode,
+		vendor_command_policy(wlan_hdd_set_acs_dfs_config_policy,
+				      QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -14663,7 +14662,10 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_sta_roam_policy
+		.doit = wlan_hdd_cfg80211_sta_roam_policy,
+		vendor_command_policy(
+			wlan_hdd_set_sta_roam_config_policy,
+			QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX)
 	},
 #ifdef FEATURE_WLAN_CH_AVOID
 	{
@@ -14681,7 +14683,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_sap_configuration_set
+		.doit = wlan_hdd_cfg80211_sap_configuration_set,
+		vendor_command_policy(wlan_hdd_sap_config_policy,
+				      QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX)
 	},
 
 	FEATURE_P2P_LISTEN_OFFLOAD_VENDOR_COMMANDS
@@ -14721,7 +14725,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 					WIPHY_VENDOR_CMD_NEED_NETDEV |
 					WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_setband
+		.doit = wlan_hdd_cfg80211_setband,
+		vendor_command_policy(setband_policy, QCA_WLAN_VENDOR_ATTR_MAX)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

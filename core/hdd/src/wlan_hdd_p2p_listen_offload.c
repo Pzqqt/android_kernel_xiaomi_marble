@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,7 +39,7 @@
 #define P2P_LO_DEV_TYPE_MAX_LEN \
 	(P2P_LO_MAX_REQ_DEV_TYPE_COUNT * P2P_LO_WPS_DEV_TYPE_LEN)
 
-static const struct nla_policy
+const struct nla_policy
 p2p_listen_offload_policy[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_CHANNEL] = { .type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_PERIOD] = { .type = NLA_U32 },

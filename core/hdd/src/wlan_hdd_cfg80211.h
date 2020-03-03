@@ -68,6 +68,25 @@ extern const struct nla_policy wlan_hdd_set_no_dfs_flag_config_policy[
 extern const struct nla_policy qca_wlan_vendor_wifi_logger_get_ring_data_policy[
 			QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX + 1];
 
+/* QCA_NL80211_VENDOR_SUBCMD_OFFLOADED_PACKETS policy */
+extern const struct nla_policy offloaded_packet_policy[
+			QCA_WLAN_VENDOR_ATTR_OFFLOADED_PACKETS_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_SETBAND policy */
+extern const struct nla_policy setband_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_ACS_POLICY policy */
+extern const struct nla_policy wlan_hdd_set_acs_dfs_config_policy[
+			QCA_WLAN_VENDOR_ATTR_ACS_DFS_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_STA_CONNECT_ROAM_POLICY policy */
+extern const struct nla_policy wlan_hdd_set_sta_roam_config_policy[
+			QCA_WLAN_VENDOR_ATTR_STA_CONNECT_ROAM_POLICY_MAX + 1];
+
+/* QCA_NL80211_VENDOR_SUBCMD_WISA  policy */
+extern const struct nla_policy wlan_hdd_wisa_cmd_policy[
+			QCA_WLAN_VENDOR_ATTR_WISA_MAX + 1];
+
 /* value for initial part of frames and number of bytes to be compared */
 #define GAS_INITIAL_REQ "\x04\x0a"
 #define GAS_INITIAL_REQ_SIZE 2

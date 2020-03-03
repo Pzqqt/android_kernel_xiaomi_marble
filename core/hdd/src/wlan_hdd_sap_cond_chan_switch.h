@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,10 @@
  */
 
 #ifdef FEATURE_SAP_COND_CHAN_SWITCH
+
+extern const struct nla_policy conditional_chan_switch_policy[
+		QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_conditional_chan_switch() - SAP conditional channel switch
  * @wiphy: Pointer to wireless phy
@@ -51,7 +55,10 @@ int wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 			WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 			WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_conditional_chan_switch		\
+	.doit = wlan_hdd_cfg80211_conditional_chan_switch,		\
+	vendor_command_policy(						\
+			conditional_chan_switch_policy,			\
+			QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX) \
 },
 #else /* FEATURE_SAP_COND_CHAN_SWITCH */
 #define FEATURE_SAP_COND_CHAN_SWITCH_VENDOR_COMMANDS

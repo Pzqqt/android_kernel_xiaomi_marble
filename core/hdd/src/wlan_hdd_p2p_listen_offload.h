@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,6 +61,9 @@ int wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 				  const void *data,
 				  int data_len);
 
+extern const struct nla_policy
+p2p_listen_offload_policy[QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX + 1];
+
 #define FEATURE_P2P_LISTEN_OFFLOAD_VENDOR_COMMANDS			\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -69,7 +72,9 @@ int wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 			WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 			WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_p2p_lo_start				\
+	.doit = wlan_hdd_cfg80211_p2p_lo_start,				\
+	vendor_command_policy(p2p_listen_offload_policy,		\
+			      QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX)\
 },									\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -78,7 +83,9 @@ int wlan_hdd_cfg80211_p2p_lo_stop(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 			WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 			WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_p2p_lo_stop				\
+	.doit = wlan_hdd_cfg80211_p2p_lo_stop,				\
+	vendor_command_policy(p2p_listen_offload_policy,		\
+			      QCA_WLAN_VENDOR_ATTR_P2P_LISTEN_OFFLOAD_MAX)\
 },
 #else /* FEATURE_P2P_LISTEN_OFFLOAD */
 #define FEATURE_P2P_LISTEN_OFFLOAD_VENDOR_COMMANDS

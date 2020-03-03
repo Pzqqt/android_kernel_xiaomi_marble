@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,6 +125,18 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf);
 
+extern const struct nla_policy tsf_policy[QCA_WLAN_VENDOR_ATTR_TSF_MAX + 1];
+
+#define FEATURE_HANDLE_TSF_VENDOR_COMMANDS \
+{ \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID, \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TSF, \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
+		WIPHY_VENDOR_CMD_NEED_NETDEV | \
+		WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_handle_tsf_cmd, \
+	vendor_command_policy(tsf_policy, QCA_WLAN_VENDOR_ATTR_TSF_MAX)\
+},
 #else
 static inline void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
@@ -158,6 +170,7 @@ static inline int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	return -ENOTSUPP;
 }
 
+#define FEATURE_HANDLE_TSF_VENDOR_COMMANDS
 #endif
 
 #if defined(WLAN_FEATURE_TSF_PLUS) && defined(WLAN_FEATURE_TSF)

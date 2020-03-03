@@ -119,7 +119,7 @@
 #define HDD_STATION_INFO_RX_MC_BC_COUNT (1 << 31)
 
 
-static const struct nla_policy
+const struct nla_policy
 hdd_get_station_policy[STATION_MAX + 1] = {
 	[STATION_INFO] = {.type = NLA_FLAG},
 	[STATION_ASSOC_FAIL_REASON] = {.type = NLA_FLAG},

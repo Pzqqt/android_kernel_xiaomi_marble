@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,9 @@
  */
 
 #ifdef FEATURE_STATION_INFO
+extern const struct nla_policy hdd_get_station_policy[
+			QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_get_station_cmd() - Handle get station vendor cmd
  * @wiphy: corestack handler
@@ -50,7 +53,9 @@ int32_t hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 		WIPHY_VENDOR_CMD_NEED_NETDEV |				\
 		WIPHY_VENDOR_CMD_NEED_RUNNING,				\
-	.doit = hdd_cfg80211_get_station_cmd				\
+	.doit = hdd_cfg80211_get_station_cmd,				\
+	vendor_command_policy(hdd_get_station_policy,			\
+			      QCA_WLAN_VENDOR_ATTR_GET_STATION_MAX)	\
 },
 #else /* FEATURE_STATION_INFO */
 #define FEATURE_STATION_INFO_VENDOR_COMMANDS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,13 @@
  */
 
 #ifdef FEATURE_TX_POWER
+
+extern const struct nla_policy txpower_scale_policy[
+			QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1];
+
+extern const struct nla_policy txpower_scale_decr_db_policy[
+			QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_txpower_scale () - txpower scaling
  * @wiphy: Pointer to wireless phy
@@ -61,7 +68,9 @@ int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_txpower_scale				\
+	.doit = wlan_hdd_cfg80211_txpower_scale,			\
+	vendor_command_policy(txpower_scale_policy,                     \
+			      QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX)   \
 },									\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -70,7 +79,9 @@ int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |			\
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_txpower_scale_decr_db			\
+	.doit = wlan_hdd_cfg80211_txpower_scale_decr_db,                \
+	vendor_command_policy(txpower_scale_decr_db_policy,             \
+			      QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX) \
 },
 #else /* FEATURE_TX_POWER */
 #define FEATURE_TX_POWER_VENDOR_COMMANDS

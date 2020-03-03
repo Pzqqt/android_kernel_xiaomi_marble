@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -420,6 +420,14 @@ destroy_sync:
 	return errno;
 }
 
+const struct nla_policy conditional_chan_switch_policy[
+		QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST] = {
+				.type = NLA_BINARY },
+	[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_STATUS] = {
+				.type = NLA_U32 },
+};
+
 /**
  * __wlan_hdd_cfg80211_conditional_chan_switch() - Conditional channel switch
  * @wiphy: Pointer to wireless phy
@@ -483,7 +491,7 @@ __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	 */
 	if (wlan_cfg80211_nla_parse(tb,
 			   QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_MAX,
-			   data, data_len, NULL)) {
+			   data, data_len, conditional_chan_switch_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}

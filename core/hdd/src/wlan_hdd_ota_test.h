@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,10 @@
  */
 
 #ifdef FEATURE_OTA_TEST
+
+extern const struct nla_policy qca_wlan_vendor_ota_test_policy[
+				QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX + 1];
+
 /**
  * wlan_hdd_cfg80211_set_ota_test () - Enable or disable OTA test
  * @wiphy: Pointer to wireless phy
@@ -47,7 +51,9 @@ int wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |		\
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,		\
-	.doit = wlan_hdd_cfg80211_set_ota_test			\
+	.doit = wlan_hdd_cfg80211_set_ota_test,                 \
+	vendor_command_policy(qca_wlan_vendor_ota_test_policy,  \
+			      QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX)\
 },
 #else /* FEATURE_OTA_TEST */
 #define FEATURE_OTA_TEST_VENDOR_COMMANDS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,10 +32,8 @@
 #include <sme_power_save_api.h>
 #include <wlan_hdd_ota_test.h>
 
-static const struct
-nla_policy
-qca_wlan_vendor_ota_test_policy
-[QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX + 1] = {
+const struct nla_policy qca_wlan_vendor_ota_test_policy[
+		QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE] = {.type = NLA_U8 },
 };
 

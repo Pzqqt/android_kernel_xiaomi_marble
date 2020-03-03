@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,7 @@
 
 #define MAX_TXPOWER_SCALE 4
 
-static const struct nla_policy
+const struct nla_policy
 txpower_scale_policy[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE] = { .type = NLA_U8 },
 };
@@ -117,7 +117,7 @@ int wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 	return errno;
 }
 
-static const struct nla_policy txpower_scale_decr_db_policy
+const struct nla_policy txpower_scale_decr_db_policy
 [QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB] = { .type = NLA_U8 },
 };
