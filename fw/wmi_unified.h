@@ -1835,6 +1835,9 @@ typedef enum {
     /* hw RFkill */
     WMI_RFKILL_STATE_CHANGE_EVENTID,
 
+    /* Smart Antenna Controller status */
+    WMI_SMARTANT_STATE_CHANGE_EVENTID,
+
     /* TDLS Event */
     WMI_TDLS_PEER_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TDLS),
 
@@ -17384,6 +17387,15 @@ typedef struct {
 
 #define WMI_WNTS_CFG_GPIO_PIN_NUM_OFFSET 0
 #define WMI_WNTS_CFG_GPIO_PIN_NUM_MASK   0xff
+
+/** WMI_SMARTANT_STATE_CHANGE_EVENTIDWMI_SMARTANT_STATE_CHANGE_EVENTID
+ *    report Smart Antenna status to host */
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_smartant_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** whether Antenna Controller is still alive or offline. */
+    A_UINT32 smart_ant_AC_alive;
+} wmi_smartant_state_param;
 
 /** WMI_PEER_INFO_REQ_CMDID
  *   Request FW to provide peer info */
