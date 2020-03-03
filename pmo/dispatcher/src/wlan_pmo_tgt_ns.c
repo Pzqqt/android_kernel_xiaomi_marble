@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,7 +37,6 @@ QDF_STATUS pmo_tgt_enable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
-	pmo_enter();
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	psoc = pmo_vdev_get_psoc(vdev);
@@ -63,13 +62,10 @@ QDF_STATUS pmo_tgt_enable_ns_offload_req(struct wlan_objmgr_vdev *vdev,
 		sizeof(*ns_offload_req));
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
-	pmo_debug("ARP Offload vdev_id: %d enable: %d",
-		vdev_id,
-		arp_offload_req->enable);
-	pmo_debug("NS Offload vdev_id: %d enable: %d ns_count: %u",
-		vdev_id,
-		ns_offload_req->enable,
-		ns_offload_req->num_ns_offload_count);
+	pmo_debug("vdev_id: %d: ARP offload %d NS offload  %d ns_count %u",
+		  vdev_id,
+		  arp_offload_req->enable, ns_offload_req->enable,
+		  ns_offload_req->num_ns_offload_count);
 
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!pmo_tx_ops.send_ns_offload_req) {
@@ -96,7 +92,6 @@ out:
 		qdf_mem_free(arp_offload_req);
 	if (ns_offload_req)
 		qdf_mem_free(ns_offload_req);
-	pmo_exit();
 
 	return status;
 }

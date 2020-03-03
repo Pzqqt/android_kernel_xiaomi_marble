@@ -214,30 +214,26 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 
-	pmo_enter();
 	if (!psoc) {
 		pmo_err("psoc is null");
-		goto out;
+		return;
 	}
 
 	vdev = pmo_psoc_get_vdev(psoc, vdev_id);
 	if (!vdev) {
 		pmo_err("vdev is NULL");
-		goto out;
+		return;
 	}
 
 	status = pmo_vdev_get_ref(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto out;
+		return;
 
 	pmo_set_wow_event_bitmap(wow_event, PMO_WOW_MAX_EVENT_BM_LEN, bitmap);
 
 	pmo_tgt_disable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
-
-out:
-	pmo_exit();
 }
 
 /**
