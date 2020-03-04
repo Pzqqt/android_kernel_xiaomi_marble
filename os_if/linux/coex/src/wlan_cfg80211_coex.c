@@ -25,7 +25,7 @@
 #include <wlan_coex_ucfg_api.h>
 #include <wlan_cfg80211_coex.h>
 
-static const struct nla_policy
+const struct nla_policy
 btc_chain_mode_policy[QCA_VENDOR_ATTR_BTC_CHAIN_MODE_MAX + 1] = {
 	[QCA_VENDOR_ATTR_BTC_CHAIN_MODE] = {.type = NLA_U32},
 	[QCA_VENDOR_ATTR_BTC_CHAIN_MODE_RESTART] = {.type = NLA_FLAG},

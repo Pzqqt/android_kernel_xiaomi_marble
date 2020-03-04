@@ -23,6 +23,10 @@
 #include <wlan_cfg80211.h>
 #include <wlan_objmgr_cmn.h>
 
+extern const struct nla_policy
+	btc_chain_mode_policy
+	[QCA_VENDOR_ATTR_BTC_CHAIN_MODE_MAX + 1];
+
 #ifdef FEATURE_COEX
 int wlan_cfg80211_coex_set_btc_chain_mode(struct wlan_objmgr_vdev *vdev,
 					  const void *data, int data_len);
