@@ -109,6 +109,17 @@ static inline int pld_ipci_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 	return 0;
 }
 
+static inline void *pld_ipci_smmu_get_domain(struct device *dev)
+{
+	return NULL;
+}
+
+static inline int pld_ipci_smmu_map(struct device *dev, phys_addr_t paddr,
+				    uint32_t *iova_addr, size_t size)
+{
+	return 0;
+}
+
 #else
 int pld_ipci_register_driver(void);
 void pld_ipci_unregister_driver(void);
@@ -173,6 +184,17 @@ static inline int pld_ipci_is_fw_down(struct device *dev)
 static inline int pld_ipci_set_fw_log_mode(struct device *dev, u8 fw_log_mode)
 {
 	return icnss_set_fw_log_mode(dev, fw_log_mode);
+}
+
+static inline void *pld_ipci_smmu_get_domain(struct device *dev)
+{
+	return icnss_smmu_get_domain(dev);
+}
+
+static inline int pld_ipci_smmu_map(struct device *dev, phys_addr_t paddr,
+				    uint32_t *iova_addr, size_t size)
+{
+	return icnss_smmu_map(dev, paddr, iova_addr, size);
 }
 
 #endif

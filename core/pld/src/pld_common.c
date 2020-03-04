@@ -1744,6 +1744,7 @@ void *pld_smmu_get_domain(struct device *dev)
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		pld_ipci_smmu_get_domain(dev);
 		break;
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
@@ -1813,6 +1814,7 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 	case PLD_BUS_TYPE_SNOC_FW_SIM:
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = pld_ipci_smmu_map(dev, paddr, iova_addr, size);
 		break;
 	case PLD_BUS_TYPE_PCIE:
 		ret = pld_pcie_smmu_map(dev, paddr, iova_addr, size);
@@ -1917,6 +1919,7 @@ int pld_srng_request_irq(struct device *dev, int irq, irq_handler_t handler,
 		ret = -ENODEV;
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		ret = request_irq(irq, handler, irqflags, devname, dev_data);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1959,6 +1962,7 @@ int pld_srng_free_irq(struct device *dev, int irq, void *dev_data)
 		ret = -ENODEV;
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		free_irq(irq, dev_data);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
@@ -1991,6 +1995,7 @@ void pld_srng_enable_irq(struct device *dev, int irq)
 	case PLD_BUS_TYPE_SDIO:
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		enable_irq(irq);
 		break;
 	default:
 		pr_err("Invalid device type\n");
@@ -2020,6 +2025,7 @@ void pld_srng_disable_irq(struct device *dev, int irq)
 	case PLD_BUS_TYPE_SDIO:
 		break;
 	case PLD_BUS_TYPE_IPCI:
+		disable_irq_nosync(irq);
 		break;
 	default:
 		pr_err("Invalid device type\n");
