@@ -48,14 +48,16 @@ int wlan_hdd_cfg80211_set_btc_chain_mode(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
 					 const void *data, int data_len);
 
-#define FEATURE_BTC_CHAIN_MODE_COMMANDS				\
-{								\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_BTC_CHAIN_MODE,\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
-		WIPHY_VENDOR_CMD_NEED_NETDEV |			\
-		WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_set_btc_chain_mode			\
+#define FEATURE_BTC_CHAIN_MODE_COMMANDS					\
+{									\
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_BTC_CHAIN_MODE,	\
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				\
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				\
+	.doit = wlan_hdd_cfg80211_set_btc_chain_mode,			\
+	vendor_command_policy(btc_chain_mode_policy,			\
+			      QCA_VENDOR_ATTR_BTC_CHAIN_MODE_MAX)	\
 },
 #else /* FEATURE_BTC_CHAIN_MODE */
 static inline void
