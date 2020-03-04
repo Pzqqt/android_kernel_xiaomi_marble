@@ -12172,6 +12172,10 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		return;
 	}
 	session->connectedProfile.op_freq = pSwitchChnInd->freq;
+
+	/* Update the occupied channel list with the new switched channel */
+	csr_init_occupied_channels_list(mac_ctx, sessionId);
+
 	if (session->pConnectBssDesc) {
 		session->pConnectBssDesc->chan_freq = pSwitchChnInd->freq;
 
