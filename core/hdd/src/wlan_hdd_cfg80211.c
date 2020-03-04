@@ -14134,12 +14134,19 @@ int wlan_hdd_send_mode_change_event(void)
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID
 #define EXTSCAN_CONFIG_WIFI_BAND \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_WIFI_BAND
-#define ETCAN_CONFIG_MAX_CHANNELS \
+#define EXTSCAN_CONFIG_MAX_CHANNELS \
 QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_MAX_CHANNELS
 #define EXTSCAN_RESULTS_NUM_CHANNELS \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_NUM_CHANNELS
 #define EXTSCAN_RESULTS_CHANNELS \
 	QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_CHANNELS
+
+static const struct nla_policy
+wlan_hdd_extscan_get_valid_channels_policy[EXTSCAN_CONFIG_MAX + 1] = {
+	[EXTSCAN_CONFIG_REQUEST_ID] = {.type = NLA_U32},
+	[EXTSCAN_CONFIG_WIFI_BAND] = {.type = NLA_U32},
+	[EXTSCAN_CONFIG_MAX_CHANNELS] = {.type = NLA_U32},
+};
 
 /**
  * hdd_remove_dsrc_channels () - remove dsrc chanels
@@ -14223,9 +14230,8 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	uint32_t chan_list[CFG_VALID_CHANNEL_LIST_LEN] = {0};
 	uint8_t num_channels  = 0, i, buf[256] = {0};
-	struct nlattr *tb[EXTSCAN_CONFIG_MAX +
-			  1];
-	uint32_t requestId, maxChannels;
+	struct nlattr *tb[EXTSCAN_CONFIG_MAX + 1];
+	uint32_t request_id, max_channels;
 	tWifiBand wifi_band;
 	QDF_STATUS status;
 	struct sk_buff *reply_skb;
@@ -14242,10 +14248,8 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (wlan_cfg80211_nla_parse(
-			   tb,
-			   EXTSCAN_CONFIG_MAX,
-			   data, data_len, wlan_hdd_extscan_config_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, EXTSCAN_CONFIG_MAX, data, data_len,
+				  wlan_hdd_extscan_get_valid_channels_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -14255,36 +14259,28 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 		hdd_err("attr request id failed");
 		return -EINVAL;
 	}
-	requestId =
-		nla_get_u32(tb
-		 [EXTSCAN_CONFIG_REQUEST_ID]);
+	request_id = nla_get_u32(tb[EXTSCAN_CONFIG_REQUEST_ID]);
 
 	/* Parse and fetch wifi band */
-	if (!tb
-	    [EXTSCAN_CONFIG_WIFI_BAND]) {
+	if (!tb[EXTSCAN_CONFIG_WIFI_BAND]) {
 		hdd_err("attr wifi band failed");
 		return -EINVAL;
 	}
-	wifi_band =
-		nla_get_u32(tb
-		    [EXTSCAN_CONFIG_WIFI_BAND]);
-	if (!tb
-	    [ETCAN_CONFIG_MAX_CHANNELS]) {
+	wifi_band = nla_get_u32(tb[EXTSCAN_CONFIG_WIFI_BAND]);
+	if (!tb[EXTSCAN_CONFIG_MAX_CHANNELS]) {
 		hdd_err("attr max channels failed");
 		return -EINVAL;
 	}
-	maxChannels =
-		nla_get_u32(tb
-		    [ETCAN_CONFIG_MAX_CHANNELS]);
+	max_channels = nla_get_u32(tb[EXTSCAN_CONFIG_MAX_CHANNELS]);
 
-	if (maxChannels > CFG_VALID_CHANNEL_LIST_LEN) {
+	if (max_channels > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("Max channels %d exceeded Valid channel list len %d",
-			maxChannels, CFG_VALID_CHANNEL_LIST_LEN);
+			max_channels, CFG_VALID_CHANNEL_LIST_LEN);
 		return -EINVAL;
 	}
 
-	hdd_err("Req Id: %u Wifi band: %d Max channels: %d", requestId,
-		wifi_band, maxChannels);
+	hdd_err("Req Id: %u Wifi band: %d Max channels: %d", request_id,
+		wifi_band, max_channels);
 	status = sme_get_valid_channels_by_band(hdd_ctx->mac_handle,
 						wifi_band, chan_list,
 						&num_channels);
@@ -14294,7 +14290,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	num_channels = QDF_MIN(num_channels, maxChannels);
+	num_channels = QDF_MIN(num_channels, max_channels);
 
 	hdd_remove_dsrc_channels(hdd_ctx, wiphy, chan_list, &num_channels);
 	if ((QDF_SAP_MODE == adapter->device_mode) ||
@@ -14386,7 +14382,10 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_get_valid_channels
+		.doit = wlan_hdd_cfg80211_extscan_get_valid_channels,
+		vendor_command_policy(
+				wlan_hdd_extscan_get_valid_channels_policy,
+				EXTSCAN_PARAM_MAX)
 	},
 #ifdef WLAN_FEATURE_STATS_EXT
 	{
@@ -14397,77 +14396,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_stats_ext_request
 	},
 #endif
-#ifdef FEATURE_WLAN_EXTSCAN
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_START,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_start
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_STOP,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_stop
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_GET_CAPABILITIES,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_get_capabilities
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_GET_CACHED_RESULTS,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_get_cached_results
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SET_BSSID_HOTLIST,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_set_bssid_hotlist
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_RESET_BSSID_HOTLIST,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_reset_bssid_hotlist
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd =
-			QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SET_SIGNIFICANT_CHANGE,
-		.flags =
-			WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_set_significant_change
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd =
-			QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_RESET_SIGNIFICANT_CHANGE,
-		.flags =
-			WIPHY_VENDOR_CMD_NEED_WDEV | WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_extscan_reset_significant_change
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_SET_LIST,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_set_epno_list
-	},
-#endif /* FEATURE_WLAN_EXTSCAN */
-
+	FEATURE_EXTSCAN_VENDOR_COMMANDS
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -14577,24 +14506,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_keymgmt_set_key
 	},
 #endif
-#ifdef FEATURE_WLAN_EXTSCAN
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_SET_PASSPOINT_LIST,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_set_passpoint_list
-	},
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_RESET_PASSPOINT_LIST,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_reset_passpoint_list
-	},
-#endif /* FEATURE_WLAN_EXTSCAN */
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_WIFI_INFO,

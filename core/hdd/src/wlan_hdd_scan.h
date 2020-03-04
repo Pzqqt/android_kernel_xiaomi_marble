@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -134,85 +134,119 @@ void hdd_reset_scan_reject_params(struct hdd_context *hdd_ctx,
  */
 void wlan_hdd_cfg80211_scan_block(struct hdd_adapter *adapter);
 
-static const
-struct nla_policy wlan_hdd_extscan_config_policy[EXTSCAN_PARAM_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_WIFI_BAND] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_VALID_CHANNELS_CONFIG_PARAM_MAX_CHANNELS] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CHANNEL_SPEC_CHANNEL] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CHANNEL_SPEC_DWELL_TIME] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CHANNEL_SPEC_PASSIVE] = {.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CHANNEL_SPEC_CLASS] = {.type = NLA_U8},
+#ifdef FEATURE_WLAN_EXTSCAN
+extern const struct nla_policy
+wlan_hdd_extscan_config_policy[EXTSCAN_PARAM_MAX + 1];
+extern const struct nla_policy
+wlan_hdd_pno_config_policy[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
 
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_INDEX] = {.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_BAND] = {.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_PERIOD] = {.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_REPORT_EVENTS] = {
-				.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_NUM_CHANNEL_SPECS] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SCAN_CMD_PARAMS_BASE_PERIOD] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SCAN_CMD_PARAMS_MAX_AP_PER_SCAN] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SCAN_CMD_PARAMS_REPORT_THRESHOLD_PERCENT] = {
-				.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SCAN_CMD_PARAMS_REPORT_THRESHOLD_NUM_SCANS] = {
-				.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SCAN_CMD_PARAMS_NUM_BUCKETS] = {
-				.type = NLA_U8},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_CACHED_SCAN_RESULTS_CONFIG_PARAM_FLUSH] = {
-				.type = NLA_U8},
-
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_GET_CACHED_SCAN_RESULTS_CONFIG_PARAM_MAX] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_BSSID] = {
-				.type = NLA_UNSPEC,
-				.len = QDF_MAC_ADDR_SIZE},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_RSSI_LOW] = {
-				.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_RSSI_HIGH] = {
-				.type = NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_CHANNEL] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BSSID_HOTLIST_PARAMS_NUM_AP] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SIGNIFICANT_CHANGE_PARAMS_RSSI_SAMPLE_SIZE] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SIGNIFICANT_CHANGE_PARAMS_LOST_AP_SAMPLE_SIZE] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SIGNIFICANT_CHANGE_PARAMS_MIN_BREACHING] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SIGNIFICANT_CHANGE_PARAMS_NUM_AP] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_MAX_PERIOD] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_BASE] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BUCKET_SPEC_STEP_COUNT] = {
-				.type = NLA_U32},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_THRESHOLD_PARAM_SSID] = {
-				.type = NLA_BINARY,
-				.len = IEEE80211_MAX_SSID_LEN + 1 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_HOTLIST_PARAMS_LOST_SSID_SAMPLE_SIZE] = {
-				.type = NLA_U32 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_HOTLIST_PARAMS_NUM_SSID] = {
-				.type = NLA_U32 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_THRESHOLD_PARAM_BAND] = {
-				.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_THRESHOLD_PARAM_RSSI_LOW] = {
-				.type = NLA_S32 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SSID_THRESHOLD_PARAM_RSSI_HIGH] = {
-				.type = NLA_S32 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_CONFIGURATION_FLAGS] = {
-				.type = NLA_U32 },
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_BSSID_HOTLIST_PARAMS_LOST_AP_SAMPLE_SIZE] = {
-				.type = NLA_U32},
-};
+#define FEATURE_EXTSCAN_VENDOR_COMMANDS					       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_START,		       \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_start,			       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_STOP,		       \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_stop				       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_GET_CAPABILITIES,     \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_get_capabilities		       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_GET_CACHED_RESULTS,   \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_get_cached_results		       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SET_BSSID_HOTLIST,    \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_set_bssid_hotlist		       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_RESET_BSSID_HOTLIST,  \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_reset_bssid_hotlist		       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd =							       \
+		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SET_SIGNIFICANT_CHANGE,      \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_set_significant_change	       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd =							       \
+		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_RESET_SIGNIFICANT_CHANGE,    \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_extscan_reset_significant_change	       \
+	vendor_command_policy(wlan_hdd_extscan_config_policy,		       \
+			      EXTSCAN_PARAM_MAX)			       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_SET_LIST,	       \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_set_epno_list				       \
+	vendor_command_policy(wlan_hdd_pno_config_policy,		       \
+			      QCA_WLAN_VENDOR_ATTR_PNO_MAX)		       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd =							       \
+		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_SET_PASSPOINT_LIST,      \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_set_passpoint_list			       \
+	vendor_command_policy(wlan_hdd_pno_config_policy,		       \
+			      QCA_WLAN_VENDOR_ATTR_PNO_MAX)		       \
+},									       \
+{									       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			       \
+	.info.subcmd =							       \
+		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_RESET_PASSPOINT_LIST,    \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				       \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING, \
+	.doit = wlan_hdd_cfg80211_reset_passpoint_list			       \
+	vendor_command_policy(wlan_hdd_pno_config_policy,		       \
+			      QCA_WLAN_VENDOR_ATTR_PNO_MAX)		       \
+},
+#else
+#define FEATURE_EXTSCAN_VENDOR_COMMANDS
+#endif /* FEATURE_WLAN_EXTSCAN */
 
 #endif /* end #if !defined(WLAN_HDD_SCAN_H) */
 
