@@ -1207,7 +1207,7 @@ struct dbglog_params {
 	uint32_t val;
 	uint32_t *module_id_bitmap;
 	uint32_t bitmap_len;
-	uint32_t cfgvalid[2];
+	uint32_t cfgvalid[3];
 };
 
 /**
