@@ -153,7 +153,7 @@ static const struct nla_policy
 							.type = NLA_U32},
 };
 
-static const struct nla_policy
+const struct nla_policy
 	wlan_hdd_tdls_mode_configuration_policy
 	[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX + 1] = {
 		[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_TRIGGER_MODE] = {

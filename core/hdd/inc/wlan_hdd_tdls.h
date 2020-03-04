@@ -23,9 +23,27 @@
  * WLAN Host Device Driver TDLS include file
  */
 
+#include "qca_vendor.h"
+
 struct hdd_context;
 
 #ifdef FEATURE_WLAN_TDLS
+
+extern const struct nla_policy
+	wlan_hdd_tdls_mode_configuration_policy
+	[QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX + 1];
+
+#define FEATURE_TDLS_VENDOR_COMMANDS                                    \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_CONFIGURE_TDLS,        \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+			 WIPHY_VENDOR_CMD_NEED_NETDEV |                 \
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,                 \
+	.doit = wlan_hdd_cfg80211_configure_tdls_mode,                  \
+	vendor_command_policy(wlan_hdd_tdls_mode_configuration_policy,  \
+			      QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX)     \
+},
 
 /* Bit mask flag for tdls_option to FW */
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
@@ -184,6 +202,8 @@ void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg);
  */
 void hdd_config_tdls_with_band_switch(struct hdd_context *hdd_ctx);
 #else
+
+#define FEATURE_TDLS_VENDOR_COMMANDS
 
 static inline int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 					       struct hdd_adapter *adapter,
