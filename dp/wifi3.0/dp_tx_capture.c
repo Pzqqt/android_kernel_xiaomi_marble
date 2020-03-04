@@ -22,7 +22,6 @@
 #include "dp_peer.h"
 #include "dp_types.h"
 #include "dp_internal.h"
-#include "dp_rx_mon.h"
 #include "htt_ppdu_stats.h"
 #include "dp_htt.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
