@@ -1888,7 +1888,7 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return NULL;
 	}
 
-	paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
+	paddr = qdf_nbuf_mapped_paddr_get(nbuf);
 	seg_info->frags[0].paddr_lo = paddr;
 	seg_info->frags[0].paddr_hi = ((uint64_t) paddr) >> 32;
 	seg_info->frags[0].len = qdf_nbuf_headlen(nbuf);
@@ -1904,7 +1904,7 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			return NULL;
 		}
 
-		paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
+		paddr = qdf_nbuf_get_tx_frag_paddr(nbuf);
 		seg_info->frags[cur_frag + 1].paddr_lo = paddr;
 		seg_info->frags[cur_frag + 1].paddr_hi =
 			((uint64_t) paddr) >> 32;
