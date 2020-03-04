@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,6 +57,10 @@ void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
 				      enum scan_event_type type,
 				      bool is_disconnected);
 
+extern const struct nla_policy
+	beacon_reporting_params_policy
+	[QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX + 1];
+
 #define BCN_RECV_FEATURE_VENDOR_COMMANDS				\
 {									\
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
@@ -64,7 +68,9 @@ void hdd_beacon_recv_pause_indication(hdd_handle_t hdd_handle,
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 		 WIPHY_VENDOR_CMD_NEED_NETDEV |				\
 		 WIPHY_VENDOR_CMD_NEED_RUNNING,				\
-	.doit = wlan_hdd_cfg80211_bcn_rcv_op\
+	.doit = wlan_hdd_cfg80211_bcn_rcv_op,				\
+	vendor_command_policy(beacon_reporting_params_policy,		\
+			      QCA_WLAN_VENDOR_ATTR_BEACON_REPORTING_MAX)\
 },
 
 #define BCN_RECV_FEATURE_VENDOR_EVENTS			\
