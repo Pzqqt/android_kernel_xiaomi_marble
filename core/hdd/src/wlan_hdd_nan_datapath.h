@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -99,5 +99,17 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer);
 void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool last_peer);
+/**
+ * hdd_cleanup_ndi(): Cleanup NDI state/resources
+ * @hdd_ctx: HDD context
+ * @adapter: Pointer to the NDI adapter
+ *
+ * Cleanup NDI state/resources allocated when NDPs are created on that NDI.
+ *
+ * Return: None
+ */
+
+void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
+		     struct hdd_adapter *adapter);
 
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */
