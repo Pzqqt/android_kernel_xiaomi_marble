@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,8 +28,13 @@
 #include <wlan_objmgr_cmn.h>
 #include <qdf_types.h>
 #include <net/cfg80211.h>
+#include <qca_vendor.h>
 
 #ifdef WLAN_FEATURE_INTEROP_ISSUES_AP
+
+extern const struct nla_policy
+	interop_issues_ap_policy
+	[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX + 1];
 
 #define FEATURE_INTEROP_ISSUES_AP_VENDOR_COMMANDS \
 { \
@@ -38,7 +43,9 @@
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV | \
 		 WIPHY_VENDOR_CMD_NEED_NETDEV | \
 		 WIPHY_VENDOR_CMD_NEED_RUNNING, \
-	.doit = wlan_cfg80211_set_interop_issues_ap_config \
+	.doit = wlan_cfg80211_set_interop_issues_ap_config, \
+	vendor_command_policy(interop_issues_ap_policy, \
+			      QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX) \
 },
 
 #define FEATURE_INTEROP_ISSUES_AP_VENDOR_COMMANDS_INDEX \
