@@ -13840,6 +13840,12 @@ nla_put_failure:
 	return -EINVAL;
 }
 
+static const struct
+nla_policy get_chain_rssi_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]       = {.type = NLA_BINARY,
+						 .len = QDF_MAC_ADDR_SIZE},
+};
+
 /**
  * __wlan_hdd_cfg80211_get_chain_rssi() - get chain rssi
  * @wiphy: wiphy pointer
@@ -13876,7 +13882,7 @@ static int __wlan_hdd_cfg80211_get_chain_rssi(struct wiphy *wiphy,
 		return retval;
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX,
-				    data, data_len, NULL)) {
+				    data, data_len, get_chain_rssi_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -14956,7 +14962,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_get_chain_rssi
+		.doit = wlan_hdd_cfg80211_get_chain_rssi,
+		vendor_command_policy(get_chain_rssi_policy,
+				      QCA_WLAN_VENDOR_ATTR_MAX)
 	},
 
 	FEATURE_ACTIVE_TOS_VENDOR_COMMANDS
