@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1118,7 +1118,7 @@ int oem_deactivate_service(void)
 #endif
 
 #ifdef FEATURE_OEM_DATA
-static const struct nla_policy
+const struct nla_policy
 oem_data_attr_policy[QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA] = {
 						    .type = NLA_BINARY,
