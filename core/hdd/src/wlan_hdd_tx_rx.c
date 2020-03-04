@@ -1985,9 +1985,6 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 		       hdd_ctx->enable_rxthread)) {
 		local_bh_disable();
 		netif_status = netif_receive_skb(skb);
-		if (netif_status)
-			hdd_err("netif_receive_skb return dropped skb %pk",
-				skb);
 		local_bh_enable();
 	} else if (qdf_unlikely(QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))) {
 		/*
