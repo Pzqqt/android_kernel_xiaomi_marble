@@ -14416,7 +14416,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_DFS_CAPABILITY,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV,
-		.doit = is_driver_dfs_capable
+		.doit = is_driver_dfs_capable,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -14436,7 +14437,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_STATS_EXT,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_stats_ext_request
+		.doit = wlan_hdd_cfg80211_stats_ext_request,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 #endif
 	FEATURE_EXTSCAN_VENDOR_COMMANDS
@@ -14717,7 +14719,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_avoid_freq
+		.doit = wlan_hdd_cfg80211_avoid_freq,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 #endif
 	{
@@ -14777,7 +14780,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_set_fast_roaming
+		.doit = wlan_hdd_cfg80211_set_fast_roaming,
+		vendor_command_policy(qca_wlan_vendor_attr,
+				      QCA_WLAN_VENDOR_ATTR_MAX)
 	},
 	FEATURE_DISA_VENDOR_COMMANDS
 	FEATURE_TDLS_VENDOR_COMMANDS

@@ -74,7 +74,8 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                   \
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |                 \
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,                 \
-		.doit = wlan_hdd_cfg80211_nan_request                   \
+		.doit = wlan_hdd_cfg80211_nan_request,                  \
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)           \
 	},								\
 	{                                                               \
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,                \
