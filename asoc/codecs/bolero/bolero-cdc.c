@@ -101,8 +101,11 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 		goto ssr_err;
 	}
 
-	if (priv->macro_params[VA_MACRO].dev)
+	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
+		if (!bolero_check_core_votes(priv->macro_params[VA_MACRO].dev))
+			goto ssr_err;
+	}
 
 	if (priv->version < BOLERO_VERSION_2_0) {
 		/* Request Clk before register access */
@@ -149,8 +152,11 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 		ret = -EINVAL;
 		goto ssr_err;
 	}
-	if (priv->macro_params[VA_MACRO].dev)
+	if (priv->macro_params[VA_MACRO].dev) {
 		pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
+		if (!bolero_check_core_votes(priv->macro_params[VA_MACRO].dev))
+			goto ssr_err;
+	}
 
 	if (priv->version < BOLERO_VERSION_2_0) {
 		/* Request Clk before register access */
