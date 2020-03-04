@@ -14913,7 +14913,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS,
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_set_sar_power_limits
+		.doit = wlan_hdd_cfg80211_set_sar_power_limits,
+		vendor_command_policy(sar_limits_policy,
+				      QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX)
 	},
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
