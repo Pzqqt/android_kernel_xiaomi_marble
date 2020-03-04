@@ -1726,6 +1726,8 @@ int sde_crtc_find_plane_fb_modes(struct drm_crtc *crtc,
 		case SDE_DRM_FB_SEC_DIR_TRANS:
 			(*fb_sec_dir)++;
 			break;
+		case SDE_DRM_FB_NON_SEC_DIR_TRANS:
+			break;
 		default:
 			SDE_ERROR("Error: Plane[%d], fb_trans_mode:%d",
 					DRMID(plane), mode);
@@ -1772,6 +1774,8 @@ int sde_crtc_state_find_plane_fb_modes(struct drm_crtc_state *state,
 			break;
 		case SDE_DRM_FB_SEC_DIR_TRANS:
 			(*fb_sec_dir)++;
+			break;
+		case SDE_DRM_FB_NON_SEC_DIR_TRANS:
 			break;
 		default:
 			SDE_ERROR("Error: Plane[%d], fb_trans_mode:%d",
@@ -1925,6 +1929,10 @@ int sde_crtc_get_secure_transition_ops(struct drm_crtc *crtc,
 	case SDE_DRM_FB_NON_SEC:
 		_sde_drm_fb_transactions(smmu_state, catalog,
 				old_valid_fb, post_commit, &ops);
+		break;
+
+	case SDE_DRM_FB_NON_SEC_DIR_TRANS:
+		ops = 0;
 		break;
 
 	default:

@@ -2147,11 +2147,31 @@ _sde_kms_get_address_space(struct msm_kms *kms,
 static struct device *_sde_kms_get_address_space_device(struct msm_kms *kms,
 		unsigned int domain)
 {
-	struct msm_gem_address_space *aspace =
-		_sde_kms_get_address_space(kms, domain);
+	struct sde_kms *sde_kms;
+	struct device *dev;
+	struct msm_gem_address_space *aspace;
 
-	return (aspace && aspace->domain_attached) ?
-			msm_gem_get_aspace_device(aspace) : NULL;
+	if (!kms) {
+		SDE_ERROR("invalid kms\n");
+		return  NULL;
+	}
+
+	sde_kms = to_sde_kms(kms);
+	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev) {
+		SDE_ERROR("invalid params\n");
+		return NULL;
+	}
+
+	/* return default device, when IOMMU is not present */
+	if (!iommu_present(&platform_bus_type)) {
+		dev = sde_kms->dev->dev;
+	} else {
+		aspace = _sde_kms_get_address_space(kms, domain);
+		dev =  (aspace && aspace->domain_attached) ?
+				msm_gem_get_aspace_device(aspace) : NULL;
+	}
+
+	return dev;
 }
 
 static void _sde_kms_post_open(struct msm_kms *kms, struct drm_file *file)

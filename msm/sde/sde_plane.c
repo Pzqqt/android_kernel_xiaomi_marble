@@ -701,6 +701,7 @@ static int _sde_plane_get_aspace(
 		if (!aspace)
 			return -EINVAL;
 		break;
+	case SDE_DRM_FB_NON_SEC_DIR_TRANS:
 	case SDE_DRM_FB_SEC_DIR_TRANS:
 		*aspace = NULL;
 		break;
