@@ -96,21 +96,33 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
 			     hal_ring_desc_t ring_desc,
 			     struct dp_rx_desc *rx_desc)
 {
+	uint8_t return_buffer_manager;
+
 	if (qdf_unlikely(!rx_desc)) {
 		/*
 		 * This is an unlikely case where the cookie obtained
 		 * from the ring_desc is invalid and hence we are not
 		 * able to find the corresponding rx_desc
 		 */
-		DP_STATS_INC(soc, rx.err.invalid_cookie, 1);
-		dp_err("Ring Desc:");
-		hal_srng_dump_ring_desc(hal_soc, hal_ring_hdl,
-					ring_desc);
-		qdf_assert(0);
-		return QDF_STATUS_E_NULL_VALUE;
+		goto fail;
+	}
+
+	return_buffer_manager = hal_rx_ret_buf_manager_get(ring_desc);
+	if (qdf_unlikely(!(return_buffer_manager == HAL_RX_BUF_RBM_SW1_BM ||
+			 return_buffer_manager == HAL_RX_BUF_RBM_SW3_BM))) {
+		dp_rx_desc_dump(rx_desc);
+		goto fail;
 	}
 
 	return QDF_STATUS_SUCCESS;
+
+fail:
+	DP_STATS_INC(soc, rx.err.invalid_cookie, 1);
+	dp_err("Ring Desc:");
+	hal_srng_dump_ring_desc(hal_soc, hal_ring_hdl,
+				ring_desc);
+	return QDF_STATUS_E_NULL_VALUE;
+
 }
 #else
 static inline
@@ -1936,6 +1948,8 @@ more_data:
 			continue;
 		}
 
+		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
+
 		/*
 		 * this is a unlikely scenario where the host is reaping
 		 * a descriptor which it already reaped just a while ago
@@ -1961,8 +1975,6 @@ more_data:
 			dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
 						   ring_desc, rx_desc);
 		}
-
-		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 
 		/* Get MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
