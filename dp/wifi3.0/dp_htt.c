@@ -2327,12 +2327,14 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 			     QDF_MAC_ADDR_SIZE);
 	} else {
 		peer = dp_peer_find_by_id(pdev->soc, peer_id);
-		if (!peer)
-			return;
-		ppdu_desc->vdev_id = peer->vdev->vdev_id;
-		qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
-			     QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+
+		if (peer) {
+			ppdu_desc->vdev_id = peer->vdev->vdev_id;
+			qdf_mem_copy(ppdu_user_desc->mac_addr,
+				     peer->mac_addr.raw,
+				     QDF_MAC_ADDR_SIZE);
+			dp_peer_unref_del_find_by_id(peer);
+		}
 	}
 
 	ppdu_user_desc->peer_id = peer_id;
