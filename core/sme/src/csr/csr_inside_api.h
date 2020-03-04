@@ -29,13 +29,6 @@
 #include "cds_reg_service.h"
 #include "wlan_objmgr_vdev_obj.h"
 
-/* This number minus 1 means the number of times a channel is scanned before
- * a BSS is removed from cache scan result
- */
-#define CSR_AGING_COUNT     3
-
-/* These are going against the signed RSSI (int8_t) so it is between -+127 */
-#define CSR_BEST_RSSI_VALUE         (-30)       /* RSSI >= this is in CAT4 */
 #define CSR_DEFAULT_RSSI_DB_GAP     30  /* every 30 dbm for one category */
 
 #ifdef QCA_WIFI_3_0_EMU
@@ -77,20 +70,6 @@ enum csr_roamcomplete_result {
 
 struct tag_csrscan_result {
 	tListElem Link;
-	/* This BSS is removed when it reaches 0 or less */
-	int32_t AgingCount;
-	/* The bigger the number, the better the BSS.
-	 * This value override capValue
-	 */
-	uint32_t preferValue;
-	/* The biggger the better. This value is in use only if we have
-	 * equal preferValue
-	 */
-	uint32_t capValue;
-	/* This member must be the last in the structure because the end of
-	 * struct bss_description (inside) is an
-	 * array with nonknown size at this time
-	 */
 	/* Preferred Encryption type that matched with profile. */
 	eCsrEncryptionType ucEncryptionType;
 	eCsrEncryptionType mcEncryptionType;
@@ -364,8 +343,6 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac,
 					struct csr_channel *pChannelList,
 					uint8_t *countryCode);
 void csr_apply_power2_current(struct mac_context *mac);
-void csr_assign_rssi_for_category(struct mac_context *mac, int8_t bestApRssi,
-				  uint8_t catOffset);
 
 /* return a bool to indicate whether roaming completed or continue. */
 bool csr_roam_complete_roaming(struct mac_context *mac, uint32_t sessionId,

@@ -82,9 +82,6 @@
 /* 120 seconds, for WPS */
 #define CSR_WAIT_FOR_WPS_KEY_TIMEOUT_PERIOD (120 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-#define CSR_MIN_GLOBAL_STAT_QUERY_PERIOD   500  /* ms */
-#define CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS 2000   /* ms */
-
 #define CSR_SINGLE_PMK_OUI               "\x00\x40\x96\x03"
 #define CSR_SINGLE_PMK_OUI_SIZE          4
 
@@ -2037,28 +2034,8 @@ enum csr_roam_state csr_roam_state_change(struct mac_context *mac,
 	return PreviousState;
 }
 
-void csr_assign_rssi_for_category(struct mac_context *mac, int8_t bestApRssi,
-				  uint8_t catOffset)
-{
-	int i;
-
-	if (catOffset) {
-		mac->roam.configParam.bCatRssiOffset = catOffset;
-		for (i = 0; i < CSR_NUM_RSSI_CAT; i++) {
-			mac->roam.configParam.RSSICat[CSR_NUM_RSSI_CAT - i -
-						       1] =
-				(int)bestApRssi -
-				mac->mlme_cfg->gen.select_5ghz_margin -
-				(int)(i * catOffset);
-		}
-	}
-}
-
 static void init_config_param(struct mac_context *mac)
 {
-	int i;
-
-	mac->roam.configParam.agingCount = CSR_AGING_COUNT;
 	mac->roam.configParam.channelBondingMode24GHz =
 		WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	mac->roam.configParam.channelBondingMode5GHz =
@@ -2071,20 +2048,10 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.Is11eSupportEnabled = true;
 	mac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	mac->roam.configParam.ProprietaryRatesEnabled = true;
-	for (i = 0; i < CSR_NUM_RSSI_CAT; i++)
-		mac->roam.configParam.BssPreferValue[i] = i;
-	csr_assign_rssi_for_category(mac, CSR_BEST_RSSI_VALUE,
-			CSR_DEFAULT_RSSI_DB_GAP);
-	mac->roam.configParam.statsReqPeriodicity =
-		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
-	mac->roam.configParam.statsReqPeriodicityInPS =
-		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS;
+	mac->roam.configParam.bCatRssiOffset = CSR_DEFAULT_RSSI_DB_GAP;
 
 	mac->roam.configParam.nVhtChannelWidth =
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
-
-	mac->roam.configParam.fScanTwice = false;
-
 	/* Remove this code once SLM_Sessionization is supported */
 	/* BMPS_WORKAROUND_NOT_NEEDED */
 	mac->roam.configParam.doBMPSWorkaround = 0;
@@ -2976,13 +2943,9 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 							mac->roam.configParam.
 						ProprietaryRatesEnabled);
 
-		csr_assign_rssi_for_category(mac,
-			mac->mlme_cfg->lfr.first_scan_bucket_threshold,
-			pParam->bCatRssiOffset);
-		mac->roam.configParam.statsReqPeriodicity =
-			pParam->statsReqPeriodicity;
-		mac->roam.configParam.statsReqPeriodicityInPS =
-			pParam->statsReqPeriodicityInPS;
+		if (pParam->bCatRssiOffset)
+			mac->roam.configParam.bCatRssiOffset =
+							pParam->bCatRssiOffset;
 		/* Assign this before calling csr_init11d_info */
 		if (wlan_reg_11d_enabled_on_host(mac->psoc))
 			status = csr_init11d_info(mac, &pParam->Csr11dinfo);
@@ -2998,7 +2961,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			csr_init_channel_power_list(mac, &pParam->Csr11dinfo);
 
 		mac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
-		mac->roam.configParam.fScanTwice = pParam->fScanTwice;
 		/* This parameter is not available in cfg and not passed from
 		 * upper layers. Instead it is initialized here This parametere
 		 * is used in concurrency to determine if there are concurrent
@@ -3013,16 +2975,12 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->roam.configParam.doBMPSWorkaround = 0;
 		mac->roam.configParam.send_smps_action =
 			pParam->send_smps_action;
-		mac->roam.configParam.disable_high_ht_mcs_2x2 =
-					pParam->disable_high_ht_mcs_2x2;
 		mac->roam.configParam.isCoalesingInIBSSAllowed =
 			pParam->isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		mac->roam.configParam.cc_switch_mode = pParam->cc_switch_mode;
 #endif
 		mac->roam.configParam.obssEnabled = pParam->obssEnabled;
-		mac->roam.configParam.vendor_vht_sap =
-			pParam->vendor_vht_sap;
 		mac->roam.configParam.conc_custom_rule1 =
 			pParam->conc_custom_rule1;
 		mac->roam.configParam.conc_custom_rule2 =
@@ -3053,13 +3011,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->sta_roam_policy_params.skip_unsafe_channels;
 		mac->roam.configParam.sta_roam_policy.sap_operating_band =
 			pParam->sta_roam_policy_params.sap_operating_band;
-
-		mac->roam.configParam.enable_bcast_probe_rsp =
-			pParam->enable_bcast_probe_rsp;
-		mac->roam.configParam.is_fils_enabled =
-			pParam->is_fils_enabled;
-		mac->roam.configParam.oce_feature_bitmap =
-			pParam->oce_feature_bitmap;
 
 		csr_set_11k_offload_config_param(&mac->roam.configParam,
 						 pParam);
@@ -3120,10 +3071,7 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->ad_hoc_ch_freq_5g = cfg_params->ad_hoc_ch_freq_5g;
 	pParam->ad_hoc_ch_freq_2g = cfg_params->ad_hoc_ch_freq_2g;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
-	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
-	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->fEnableDFSChnlScan = mac->scan.fEnableDFSChnlScan;
-	pParam->fScanTwice = cfg_params->fScanTwice;
 	pParam->fEnableMCCMode = cfg_params->fenableMCCMode;
 	pParam->fAllowMCCGODiffBI = cfg_params->fAllowMCCGODiffBI;
 
@@ -3131,12 +3079,9 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
 #endif
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
-	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
 	csr_set_channels(mac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
-	pParam->vendor_vht_sap =
-		mac->roam.configParam.vendor_vht_sap;
 	pParam->roam_dense_min_aps =
 			cfg_params->roam_params.dense_min_aps_cnt;
 
@@ -3164,12 +3109,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 		mac->roam.configParam.sta_roam_policy.dfs_mode;
 	pParam->sta_roam_policy_params.skip_unsafe_channels =
 		mac->roam.configParam.sta_roam_policy.skip_unsafe_channels;
-	pParam->enable_bcast_probe_rsp =
-		mac->roam.configParam.enable_bcast_probe_rsp;
-	pParam->is_fils_enabled =
-		mac->roam.configParam.is_fils_enabled;
-	pParam->oce_feature_bitmap =
-		mac->roam.configParam.oce_feature_bitmap;
 
 	csr_get_11k_offload_config_param(&mac->roam.configParam, pParam);
 

@@ -37,7 +37,6 @@
 #include "wlan_mlme_public_struct.h"
 #include "csr_host_scan_roam.h"
 
-#define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
 /* No of sessions to be supported, and a session is for Infra, IBSS or BT-AMP */
@@ -332,7 +331,6 @@ struct delstafor_sessionCmd {
 #define NEIGHBOR_REPORT_PARAMS_ALL                    0x3F
 
 struct csr_config {
-	uint32_t agingCount;
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
@@ -348,16 +346,7 @@ struct csr_config {
 	uint8_t fAllowMCCGODiffBI;
 	uint32_t ad_hoc_ch_freq_2g;
 	uint32_t ad_hoc_ch_freq_5g;
-	/* each RSSI category has one value */
-	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
-	int RSSICat[CSR_NUM_RSSI_CAT];
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
-	uint32_t statsReqPeriodicity;    /* stats req freq while in fullpower */
-	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
-	uint32_t dtimPeriod;
-	bool ssidHidden;
-	struct mawc_params csr_mawc_config;
-	uint8_t isRoamOffloadScanEnabled;
 	bool nRoamScanControl;
 
 	/*
@@ -365,15 +354,8 @@ struct csr_config {
 	 * BMPS_WORKAROUND_NOT_NEEDED
 	 */
 	bool doBMPSWorkaround;
-	/* To enable scanning 2g channels twice on single scan req from HDD */
-	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
-	uint8_t disable_high_ht_mcs_2x2;
-	/*
-	 * Enable/Disable heartbeat offload
-	 */
-	bool enableHeartBeatOffload;
 	uint8_t isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
@@ -383,12 +365,8 @@ struct csr_config {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
-	bool vendor_vht_sap;
 	struct csr_sta_roam_policy_params sta_roam_policy;
-	bool enable_bcast_probe_rsp;
-	bool is_fils_enabled;
 	enum force_1x1_type is_force_1x1;
-	uint8_t oce_feature_bitmap;
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;

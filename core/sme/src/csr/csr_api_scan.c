@@ -447,13 +447,6 @@ csr_scan_save_bss_description(struct mac_context *mac,
 	if (!pCsrBssDescription)
 		return false;
 
-	pCsrBssDescription->AgingCount =
-		(int32_t) mac->roam.configParam.agingCount;
-	sme_debug(
-		"Set Aging Count = %d for BSS " QDF_MAC_ADDR_STR " ",
-		pCsrBssDescription->AgingCount,
-		QDF_MAC_ADDR_ARRAY(pCsrBssDescription->Result.BssDescriptor.
-			       bssId));
 	qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 		     pBSSDescription, cbBSSDesc);
 	csr_scan_add_result(mac, pCsrBssDescription);
@@ -1122,9 +1115,6 @@ static QDF_STATUS csr_save_profile(struct mac_context *mac_ctx,
 	if (!temp)
 		goto error;
 
-	temp->AgingCount = scan_result->AgingCount;
-	temp->preferValue = scan_result->preferValue;
-	temp->capValue = scan_result->capValue;
 	temp->ucEncryptionType = scan_result->ucEncryptionType;
 	temp->mcEncryptionType = scan_result->mcEncryptionType;
 	temp->authType = scan_result->authType;
@@ -2398,8 +2388,6 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	if (!bss)
 		return QDF_STATUS_E_NOMEM;
 
-	bss->AgingCount =
-		(int32_t) mac_ctx->roam.configParam.agingCount;
 	bss->ucEncryptionType =
 		csr_covert_enc_type_old(scan_entry->neg_sec_info.uc_enc);
 	bss->mcEncryptionType =
