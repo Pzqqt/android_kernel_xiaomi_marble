@@ -2937,10 +2937,10 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			continue;
 		}
 
-		if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL ||
-		    ppdu_desc->htt_frame_type ==
-		    HTT_STATS_FTYPE_SGEN_QOS_NULL ||
-		    type != FRAME_CTRL_TYPE_DATA) {
+		if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_CTRL) ||
+		    (ppdu_desc->htt_frame_type ==
+		     HTT_STATS_FTYPE_SGEN_QOS_NULL) ||
+		    (type != FRAME_CTRL_TYPE_DATA)) {
 			qdf_nbuf_t nbuf_ppdu = nbuf_ppdu_desc_list[desc_cnt];
 
 			if (dp_check_mgmt_ctrl_ppdu(pdev, nbuf_ppdu)) {
@@ -3236,6 +3236,7 @@ void dp_tx_ppdu_stats_process(void *context)
 			uint32_t num_msdu = 0;
 			uint32_t qlen = 0;
 			uint16_t peer_id;
+			uint8_t type, subtype;
 
 			qdf_nbuf_queue_init(&head_msdu);
 			qdf_nbuf_queue_init(&head_xretries);
@@ -3258,6 +3259,18 @@ void dp_tx_ppdu_stats_process(void *context)
 
 			ppdu_desc = (struct cdp_tx_completion_ppdu *)
 				qdf_nbuf_data(nbuf);
+			type = (ppdu_desc->frame_ctrl &
+				IEEE80211_FC0_TYPE_MASK);
+			subtype = (ppdu_desc->frame_ctrl &
+				   IEEE80211_FC0_SUBTYPE_MASK);
+
+			if ((type == IEEE80211_FC0_TYPE_DATA) &&
+			    (subtype == IEEE80211_FC0_SUBTYPE_QOS_NULL) &&
+			    (ppdu_desc->htt_frame_type ==
+			     HTT_STATS_FTYPE_TIDQ_DATA_SU)) {
+				ppdu_desc->htt_frame_type =
+					HTT_STATS_FTYPE_SGEN_QOS_NULL;
+			}
 
 			/* send WDI event */
 			if (pdev->tx_capture_enabled ==
@@ -3302,9 +3315,11 @@ void dp_tx_ppdu_stats_process(void *context)
 				continue;
 			}
 
-			if ((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) ||
-			    (ppdu_desc->num_mpdu &&
-			     ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR)) {
+			if (((ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) &&
+			     (ppdu_desc->htt_frame_type !=
+			      HTT_STATS_FTYPE_SGEN_QOS_NULL)) ||
+			    ((ppdu_desc->num_mpdu) &&
+			     (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR))) {
 				peer_id = ppdu_desc->user[0].peer_id;
 				peer = dp_peer_find_by_id(pdev->soc, peer_id);
 				/**
