@@ -369,6 +369,25 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 	return 0;
 }
 
+static void
+reg_get_band_cap_from_chan_set(const struct reg_dmn_op_class_map_t
+			       *op_class_tbl,
+			       uint8_t *supported_band)
+{
+	qdf_freq_t chan_freq = op_class_tbl->start_freq +
+						(op_class_tbl->channels[0] *
+						 FREQ_TO_CHAN_SCALE);
+
+	if (reg_is_24ghz_ch_freq(chan_freq))
+		*supported_band |= BIT(REG_BAND_2G);
+	else if (reg_is_5ghz_ch_freq(chan_freq))
+		*supported_band |= BIT(REG_BAND_5G);
+	else if (reg_is_6ghz_chan_freq(chan_freq))
+		*supported_band |= BIT(REG_BAND_6G);
+	else
+		reg_err_rl("Unknown band");
+}
+
 uint8_t reg_get_band_cap_from_op_class(const uint8_t *country,
 				       uint8_t num_of_opclass,
 				       const uint8_t *opclass)
@@ -382,18 +401,8 @@ uint8_t reg_get_band_cap_from_op_class(const uint8_t *country,
 		for (opclassidx = 0; opclassidx < num_of_opclass;
 		     opclassidx++) {
 			if (op_class_tbl->op_class == opclass[opclassidx]) {
-				if (op_class_tbl->start_freq ==
-				    TWOG_START_FREQ) {
-					supported_band |= BIT(REG_BAND_2G);
-				} else if (op_class_tbl->start_freq ==
-					   FIVEG_START_FREQ) {
-					supported_band |= BIT(REG_BAND_5G);
-				} else if (op_class_tbl->start_freq ==
-					   SIXG_STARTING_FREQ) {
-					supported_band |= BIT(REG_BAND_6G);
-				} else {
-					reg_err_rl("Unknown band");
-				}
+				reg_get_band_cap_from_chan_set(op_class_tbl,
+							       &supported_band);
 			}
 		}
 		op_class_tbl++;
