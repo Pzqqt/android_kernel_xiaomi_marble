@@ -321,18 +321,17 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf_list);
 		cdp_get_os_rx_handles_from_vdev(soc, vdev_id, &stack_fn,
 						&osif_vdev);
-		if (!stack_fn || !osif_vdev) {
+		dp_debug("rx_thread %pK sending packet %pK to stack",
+			 rx_thread, nbuf_list);
+		if (!stack_fn || !osif_vdev ||
+		    QDF_STATUS_SUCCESS != stack_fn(osif_vdev, nbuf_list)) {
 			rx_thread->stats.dropped_invalid_os_rx_handles +=
 							num_list_elements;
 			qdf_nbuf_list_free(nbuf_list);
-			goto dequeue_rx_thread;
+		} else {
+			rx_thread->stats.nbuf_sent_to_stack +=
+							num_list_elements;
 		}
-		dp_debug("rx_thread %pK sending packet %pK to stack", rx_thread,
-			 nbuf_list);
-		stack_fn(osif_vdev, nbuf_list);
-		rx_thread->stats.nbuf_sent_to_stack += num_list_elements;
-
-dequeue_rx_thread:
 		nbuf_list = dp_rx_tm_thread_dequeue(rx_thread);
 	}
 

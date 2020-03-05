@@ -871,6 +871,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_ERROR,
 				  "%s: ERROR!!Invalid netdevice", __func__);
+			qdf_nbuf_free(skb);
 			continue;
 		}
 		cpu_index = wlan_hdd_get_cpu();
