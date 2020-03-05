@@ -3874,7 +3874,7 @@ wlan_get_crypto_params_from_rsn_ie(struct wlan_crypto_params *crypto_params,
 	qdf_mem_zero(crypto_params, sizeof(struct wlan_crypto_params));
 	rsn_ie = wlan_get_ie_ptr_from_eid(WLAN_ELEMID_RSN, ie_ptr, ie_len);
 	if (!rsn_ie) {
-		crypto_err("RSN IE NULL");
+		crypto_debug("RSN IE not present");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3901,7 +3901,7 @@ wlan_get_crypto_params_from_wpa_ie(struct wlan_crypto_params *crypto_params,
 	wpa_ie = wlan_get_vendor_ie_ptr_from_oui((uint8_t *)&wpa_oui,
 						 WLAN_OUI_SIZE, ie_ptr, ie_len);
 	if (!wpa_ie) {
-		crypto_err("WPA IE NULL");
+		crypto_debug("WPA IE not present");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -4064,20 +4064,16 @@ QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 	wlan_crypto_reset_prarams(vdev_crypto_params);
 	status = wlan_get_crypto_params_from_rsn_ie(&crypto_params,
 						    ie_ptr, ie_len);
-	if (QDF_STATUS_SUCCESS == status) {
+	if (QDF_IS_STATUS_SUCCESS(status))
 		wlan_crypto_merge_prarams(vdev_crypto_params, &crypto_params);
-	} else {
-		crypto_err("get crypto prarams from RSN IE failed");
+	else
 		send_fail = true;
-	}
 
 	status = wlan_get_crypto_params_from_wpa_ie(&crypto_params,
 						    ie_ptr, ie_len);
-	if (QDF_STATUS_SUCCESS == status) {
+	if (QDF_IS_STATUS_SUCCESS(status)) {
 		wlan_crypto_merge_prarams(vdev_crypto_params, &crypto_params);
 		send_fail = false;
-	} else {
-		crypto_debug("get crypto prarams from WPA IE failed");
 	}
 
 	return send_fail ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
