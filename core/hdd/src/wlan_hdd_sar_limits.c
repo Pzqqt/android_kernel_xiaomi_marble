@@ -503,6 +503,7 @@ static void hdd_sar_unsolicited_timer_cb(void *user_data)
 	hdd_nofl_debug("Sar unsolicited timer expired");
 
 	for (i = 0; i < hdd_ctx->config->sar_safety_req_resp_retry; i++) {
+		qdf_event_reset(&hdd_ctx->sar_safety_req_resp_event);
 		hdd_send_sar_unsolicited_event(hdd_ctx);
 		status = qdf_wait_for_event_completion(
 				&hdd_ctx->sar_safety_req_resp_event,
