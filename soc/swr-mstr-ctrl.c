@@ -1799,7 +1799,6 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 		return IRQ_NONE;
 	}
 
-	mutex_lock(&swrm->ssr_lock);
 	mutex_lock(&swrm->reslock);
 	if (swrm_request_hw_vote(swrm, LPASS_HW_CORE, true)) {
 		ret = IRQ_NONE;
@@ -2024,7 +2023,6 @@ err_audio_hw_vote:
 	swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
 exit:
 	mutex_unlock(&swrm->reslock);
-	mutex_unlock(&swrm->ssr_lock);
 	swrm_unlock_sleep(swrm);
 	trace_printk("%s exit\n", __func__);
 	return ret;
@@ -2564,7 +2562,6 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_init(&swrm->clklock);
 	mutex_init(&swrm->devlock);
 	mutex_init(&swrm->pm_lock);
-	mutex_init(&swrm->ssr_lock);
 	swrm->wlock_holders = 0;
 	swrm->pm_state = SWRM_PM_SLEEPABLE;
 	init_waitqueue_head(&swrm->pm_wq);
@@ -2719,7 +2716,6 @@ err_irq_fail:
 	mutex_destroy(&swrm->iolock);
 	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->pm_lock);
-	mutex_destroy(&swrm->ssr_lock);
 	pm_qos_remove_request(&swrm->pm_qos_req);
 
 err_pdata_fail:
@@ -2753,7 +2749,6 @@ static int swrm_remove(struct platform_device *pdev)
 	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->force_down_lock);
 	mutex_destroy(&swrm->pm_lock);
-	mutex_destroy(&swrm->ssr_lock);
 	pm_qos_remove_request(&swrm->pm_qos_req);
 	devm_kfree(&pdev->dev, swrm);
 	return 0;
@@ -3231,7 +3226,6 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		break;
 	case SWR_DEVICE_SSR_DOWN:
 		trace_printk("%s: swr device down called\n", __func__);
-		mutex_lock(&swrm->ssr_lock);
 		mutex_lock(&swrm->mlock);
 		if (swrm->state == SWR_MSTR_DOWN)
 			dev_dbg(swrm->dev, "%s:SWR master is already Down:%d\n",
@@ -3245,7 +3239,6 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		swrm->state = SWR_MSTR_SSR;
 		mutex_unlock(&swrm->reslock);
 		mutex_unlock(&swrm->mlock);
-		mutex_unlock(&swrm->ssr_lock);
 		break;
 	case SWR_DEVICE_SSR_UP:
 		/* wait for clk voting to be zero */
