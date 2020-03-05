@@ -2413,17 +2413,23 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 	struct sde_kms *sde_kms;
 	s64 mode_clock_hz = 0;
 	s64 max_mdp_clock_hz = 0;
-	s64 mdp_fudge_factor = 0;
-	s64 temp = 0;
+	s64 max_lm_width = 0;
+	s64 hdisplay_fp = 0;
 	s64 htotal_fp = 0;
 	s64 vtotal_fp = 0;
 	s64 vrefresh_fp = 0;
+	s64 mdp_fudge_factor = 0;
+	s64 num_lm_fp = 0;
+	s64 lm_clk_fp = 0;
+	s64 lm_width_fp = 0;
+	int rc = 0;
 
 	if (!num_lm) {
 		SDE_ERROR("invalid num_lm pointer\n");
 		return -EINVAL;
 	}
 
+	/* default to 1 layer mixer */
 	*num_lm = 1;
 	if (!kms || !mode || !res) {
 		SDE_ERROR("invalid input args\n");
@@ -2432,31 +2438,51 @@ static int sde_kms_get_mixer_count(const struct msm_kms *kms,
 
 	sde_kms = to_sde_kms(kms);
 
-	max_mdp_clock_hz = drm_fixp_from_fraction(
-			sde_kms->perf.max_core_clk_rate, 1);
-	mdp_fudge_factor = drm_fixp_from_fraction(105, 100); /* 1.05 */
-	htotal_fp = drm_fixp_from_fraction(mode->htotal, 1);
-	vtotal_fp = drm_fixp_from_fraction(mode->vtotal, 1);
-	vrefresh_fp = drm_fixp_from_fraction(mode->vrefresh, 1);
+	max_mdp_clock_hz = drm_int2fixp(sde_kms->perf.max_core_clk_rate);
+	max_lm_width = drm_int2fixp(res->max_mixer_width);
+	hdisplay_fp = drm_int2fixp(mode->hdisplay);
+	htotal_fp = drm_int2fixp(mode->htotal);
+	vtotal_fp = drm_int2fixp(mode->vtotal);
+	vrefresh_fp = drm_int2fixp(mode->vrefresh);
+	mdp_fudge_factor = drm_fixp_from_fraction(105, 100);
 
-	temp = drm_fixp_mul(htotal_fp, vtotal_fp);
-	temp = drm_fixp_mul(temp, vrefresh_fp);
-	mode_clock_hz = drm_fixp_mul(temp, mdp_fudge_factor);
+	/* mode clock = [(h * v * fps * 1.05) / (num_lm)] */
+	mode_clock_hz = drm_fixp_mul(htotal_fp, vtotal_fp);
+	mode_clock_hz = drm_fixp_mul(mode_clock_hz, vrefresh_fp);
+	mode_clock_hz = drm_fixp_mul(mode_clock_hz, mdp_fudge_factor);
+
 	if (mode_clock_hz > max_mdp_clock_hz ||
-			mode->hdisplay > res->max_mixer_width) {
-		*num_lm = 2;
-		if ((mode_clock_hz >> 1) > max_mdp_clock_hz) {
-			SDE_DEBUG("[%s] clock %d exceeds max_mdp_clk %d\n",
-					mode->name, mode_clock_hz,
-					max_mdp_clock_hz);
-			return -EINVAL;
-		}
-	}
-	SDE_DEBUG("[%s] h=%d, v=%d, fps=%d, max_mdp_clk_hz=%llu, num_lm=%d\n",
-			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
-			sde_kms->perf.max_core_clk_rate, *num_lm);
+			hdisplay_fp > max_lm_width) {
+		*num_lm = 0;
+		do {
+			*num_lm += 2;
+			num_lm_fp = drm_int2fixp(*num_lm);
+			lm_clk_fp = drm_fixp_div(mode_clock_hz, num_lm_fp);
+			lm_width_fp = drm_fixp_div(hdisplay_fp, num_lm_fp);
 
+			if (*num_lm > 4) {
+				rc = -EINVAL;
+				goto error;
+			}
+
+		} while (lm_clk_fp > max_mdp_clock_hz ||
+				lm_width_fp > max_lm_width);
+
+		mode_clock_hz = lm_clk_fp;
+	}
+	SDE_DEBUG("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
+			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
+			*num_lm, drm_fixp2int(mode_clock_hz),
+			sde_kms->perf.max_core_clk_rate);
 	return 0;
+
+error:
+	SDE_ERROR("required mode clk exceeds max mdp clk\n");
+	SDE_ERROR("[%s] h=%d v=%d fps=%d lm=%d mode_clk=%llu max_clk=%llu\n",
+			mode->name, mode->htotal, mode->vtotal, mode->vrefresh,
+			*num_lm, drm_fixp2int(mode_clock_hz),
+			sde_kms->perf.max_core_clk_rate);
+	return rc;
 }
 
 static void _sde_kms_null_commit(struct drm_device *dev,
