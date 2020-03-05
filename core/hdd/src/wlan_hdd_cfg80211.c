@@ -2674,7 +2674,7 @@ static int hdd_create_acs_timer(struct hdd_adapter *adapter)
 }
 
 static const struct nla_policy
-wlan_hdd_cfg80211_do_acs_policy[QCA_WLAN_VENDOR_ATTR_ACS_MAX+1] = {
+wlan_hdd_cfg80211_do_acs_policy[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE] = { .type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_ACS_HT_ENABLED] = { .type = NLA_FLAG },
 	[QCA_WLAN_VENDOR_ATTR_ACS_HT40_ENABLED] = { .type = NLA_FLAG },
@@ -14505,7 +14505,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 				WIPHY_VENDOR_CMD_NEED_NETDEV |
 				WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_do_acs
+		.doit = wlan_hdd_cfg80211_do_acs,
+		vendor_command_policy(wlan_hdd_cfg80211_do_acs_policy,
+				      QCA_WLAN_VENDOR_ATTR_ACS_MAX)
 	},
 
 	{
