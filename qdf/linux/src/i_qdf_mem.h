@@ -61,7 +61,9 @@
 #ifdef CONFIG_ARM_SMMU
 #include <pld_common.h>
 #ifdef ENABLE_SMMU_S1_TRANSLATION
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 0))
 #include <asm/dma-iommu.h>
+#endif
 #endif
 #include <linux/iommu.h>
 #endif
