@@ -2385,7 +2385,6 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 {
 	struct dsi_display *dsi_display;
 	int rc;
-	struct drm_connector *connector;
 
 	msm_property_install_blob(&c_conn->property_info, "capabilities",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_SDE_INFO);
@@ -2397,8 +2396,6 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			"failed to setup connector info, rc = %d\n", rc);
 		return rc;
 	}
-
-	connector = &c_conn->base;
 
 	msm_property_install_blob(&c_conn->property_info, "mode_properties",
 			DRM_MODE_PROP_IMMUTABLE, CONNECTOR_PROP_MODE_INFO);
@@ -2443,11 +2440,6 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			      &hdr,
 			      sizeof(hdr),
 			      CONNECTOR_PROP_EXT_HDR_INFO);
-
-		/* create and attach colorspace property for DP */
-		if (!drm_mode_create_colorspace_property(connector))
-			drm_object_attach_property(&connector->base,
-				connector->colorspace_property, 0);
 	}
 
 	msm_property_install_volatile_range(&c_conn->property_info,
