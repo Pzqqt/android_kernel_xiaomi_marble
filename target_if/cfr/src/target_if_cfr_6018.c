@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,11 +20,9 @@
 #include <wlan_tgt_def_config.h>
 #include <target_type.h>
 #include <hif_hw_version.h>
-#include <ol_if_athvar.h>
 #include <target_if.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
-#include <wlan_mlme_dispatcher.h>
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
 #ifdef DIRECT_BUF_RX_ENABLE
@@ -58,8 +56,8 @@ static struct look_up_table *get_lut_entry(struct pdev_cfr *pcfr,
  *
  * Return: status
  */
-int release_lut_entry_enh(struct wlan_objmgr_pdev *pdev,
-			  struct look_up_table *lut)
+static int release_lut_entry_enh(struct wlan_objmgr_pdev *pdev,
+				 struct look_up_table *lut)
 {
 	lut->dbr_recv = false;
 	lut->tx_recv = false;
@@ -132,7 +130,7 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
  *
  * return: none
  */
-void cfr_free_pending_dbr_events(struct wlan_objmgr_pdev *pdev)
+static void cfr_free_pending_dbr_events(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pcfr;
 	struct look_up_table *lut = NULL;
@@ -177,7 +175,7 @@ void cfr_free_pending_dbr_events(struct wlan_objmgr_pdev *pdev)
  *
  * Return: none
  */
-void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
+static void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
 {
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
@@ -221,8 +219,9 @@ void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
  *
  * Return: none
  */
-void dump_mu_rx_info(void *mu_rx_user_info, uint8_t mu_rx_num_users,
-		     uint32_t cookie)
+static void dump_mu_rx_info(void *mu_rx_user_info,
+			    uint8_t mu_rx_num_users,
+			    uint32_t cookie)
 {
 	uint8_t i;
 	struct uplink_user_setup_info *ul_mu_user_info =
@@ -255,7 +254,7 @@ void dump_mu_rx_info(void *mu_rx_user_info, uint8_t mu_rx_num_users,
 	}
 }
 
-void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
+static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 {
 	uint8_t user_id, chain_id;
 	struct cfr_metadata_version_3 *meta = &header->u.meta_v3;
@@ -341,12 +340,10 @@ void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
  *
  * Return: none
  */
-void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
-		      void *freeze_tlv,
-		      void *mu_rx_user_info,
-		      struct csi_cfr_header *header,
-		      int error,
-		      uint32_t cookie)
+static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
+			     void *freeze_tlv, void *mu_rx_user_info,
+			     struct csi_cfr_header *header, int error,
+			     uint32_t cookie)
 {
 	if (!error) {
 		cfr_debug("<DBRCOMP><%u>\n"
@@ -425,7 +422,8 @@ void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
  *
  * Return: none
  */
-void extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
+static void
+extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
 {
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
@@ -444,7 +442,7 @@ void extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS check_dma_length(struct look_up_table *lut)
+static QDF_STATUS check_dma_length(struct look_up_table *lut)
 {
 	if (lut->header_length <= CYP_MAX_HEADER_LENGTH_WORDS &&
 	    lut->payload_length <= CYP_MAX_DATA_LENGTH_BYTES) {
@@ -469,8 +467,10 @@ QDF_STATUS check_dma_length(struct look_up_table *lut)
  *	- STATUS_HOLD
  *	- STATUS_STREAM_AND_RELEASE
  */
-int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev, uint32_t cookie,
-			    struct look_up_table *lut, uint8_t module_id)
+static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
+				   uint32_t cookie,
+				   struct look_up_table *lut,
+				   uint8_t module_id)
 {
 	struct pdev_cfr *pcfr;
 	uint64_t diff;
@@ -760,7 +760,7 @@ done:
  *
  * Return: cfr type enum
  */
-uint8_t freeze_reason_to_capture_type(void *freeze_tlv)
+static uint8_t freeze_reason_to_capture_type(void *freeze_tlv)
 {
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
@@ -792,8 +792,8 @@ uint8_t freeze_reason_to_capture_type(void *freeze_tlv)
  *
  * Return: status
  */
-bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
-			       struct direct_buf_rx_data *payload)
+static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
+				      struct direct_buf_rx_data *payload)
 {
 	uint8_t *data = NULL;
 	uint32_t cookie = 0;
@@ -927,7 +927,7 @@ bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
  *
  * Return: status
  */
-QDF_STATUS
+static QDF_STATUS
 target_if_register_to_dbr_enh(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -953,7 +953,7 @@ target_if_register_to_dbr_enh(struct wlan_objmgr_pdev *pdev)
  *
  * Return: status
  */
-QDF_STATUS
+static QDF_STATUS
 target_if_unregister_to_dbr_enh(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -978,8 +978,8 @@ target_if_unregister_to_dbr_enh(struct wlan_objmgr_pdev *pdev)
  *
  * Return: none
  */
-void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
-				uint32_t cookie)
+static void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
+				       uint32_t cookie)
 {
 	cfr_debug("<TXCOMP><%u>CFR capture method: %d vdev_id: %d mac: %s\n",
 		  cookie,
@@ -1276,7 +1276,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
  *
  * Return: Success/Failure status
  */
-int
+static int
 target_if_register_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
 						   *psoc)
 {
@@ -1311,7 +1311,7 @@ target_if_register_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
  *
  * Return: Success/Failure status
  */
-int
+static int
 target_if_unregister_tx_completion_enh_event_handler(struct wlan_objmgr_psoc
 						     *psoc)
 {

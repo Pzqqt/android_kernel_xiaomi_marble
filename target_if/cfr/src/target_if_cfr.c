@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,11 +20,9 @@
 #include <wlan_tgt_def_config.h>
 #include <target_type.h>
 #include <hif_hw_version.h>
-#include <ol_if_athvar.h>
 #include <target_if.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
-#include <wlan_mlme_dispatcher.h>
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
 #include <wlan_objmgr_pdev_obj.h>
@@ -302,7 +300,7 @@ void target_if_cfr_default_ta_ra_config(struct cfr_rcc_param *rcc_info,
 #endif
 
 #ifdef WLAN_ENH_CFR_ENABLE
-void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+static void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	tx_ops->cfr_tx_ops.cfr_config_rcc =
 		target_if_cfr_config_rcc;
@@ -320,7 +318,7 @@ void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_cfr_update_global_cfg;
 }
 #else
-void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+static void target_if_enh_cfr_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 }
 #endif

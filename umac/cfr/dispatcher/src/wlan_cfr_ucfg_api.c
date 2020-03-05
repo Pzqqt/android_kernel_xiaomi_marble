@@ -17,11 +17,12 @@
  */
 
 #include <wlan_cfr_ucfg_api.h>
-#include "../../core/inc/cfr_defs_i.h"
+#include "cfr_defs_i.h"
 #include <wlan_cfr_utils_api.h>
 #include <wlan_cfr_tgt_api.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <qdf_module.h>
 #ifdef WLAN_ENH_CFR_ENABLE
 #include "cdp_txrx_ctrl.h"
 #endif
@@ -891,8 +892,8 @@ QDF_STATUS ucfg_cfr_rcc_dump_lut(struct wlan_objmgr_vdev *vdev)
 	return status;
 }
 
-void cfr_set_filter(struct wlan_objmgr_pdev *pdev,
-		    bool enable, struct cdp_monitor_filter *filter_val)
+static void cfr_set_filter(struct wlan_objmgr_pdev *pdev, bool enable,
+			   struct cdp_monitor_filter *filter_val)
 {
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 
