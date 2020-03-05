@@ -27,6 +27,10 @@ ifeq ($(CONFIG_CNSS_QCA6390), y)
 endif
 
 ifeq ($(CONFIG_CNSS_QCA6490), y)
+	CONFIG_DIRECT_BUF_RX_ENABLE := y
+	CONFIG_WMI_DBR_SUPPORT := y
+	CONFIG_WLAN_CFR_ENABLE := y
+	CONFIG_WLAN_ENH_CFR_ENABLE := y
 	ifeq ($(CONFIG_CNSS_EMULATION), y)
 		CONFIG_QCA_WIFI_NAPIER_EMULATION := y
 	endif
@@ -495,6 +499,12 @@ ifeq ($(CONFIG_DEBUG_FS), y)
        CONFIG_WLAN_DEBUGFS := y
 
        CONFIG_WLAN_POWER_DEBUGFS := y
+
+       # Flag to enable streamfs. Depends on CONFIG_DEBUG_FS and
+       # CONFIG_RELAY in kernel configuration.
+ifeq ($(CONFIG_RELAY), y)
+       CONFIG_WLAN_STREAMFS := y
+endif
 endif
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
