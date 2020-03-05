@@ -59,6 +59,8 @@ int wcd938x_info_create_codec_entry(struct snd_info_entry *codec_root,
 				    struct snd_soc_component *component);
 
 int wcd938x_get_codec_variant(struct snd_soc_component *component);
+int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *wcd938x,
+					int event, int micb_num);
 
 static inline int wcd938x_slave_get_master_ch_val(int ch)
 {
@@ -96,6 +98,13 @@ static inline int wcd938x_get_codec_variant(struct snd_soc_component *component)
 {
 	return 0;
 }
+static inline int wcd938x_codec_force_enable_micbias_v2(
+					struct snd_soc_component *wcd938x,
+					int event, int micb_num)
+{
+	return 0;
+}
+
 static inline int wcd938x_slave_get_master_ch_val(int ch)
 {
 	return 0;

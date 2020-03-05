@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SWR_WCD_CTRL_H
@@ -26,6 +26,7 @@
 #define SWR_ROW_48		0
 #define SWR_ROW_50		1
 #define SWR_ROW_64		3
+#define SWR_COL_04		1 /* Cols = 4 */
 #define SWR_MAX_COL		7 /* Cols = 16 */
 #define SWR_MIN_COL		0 /* Cols = 2 */
 
@@ -42,7 +43,7 @@
 
 #define SWR_MAX_CH_PER_PORT 8
 
-#define SWR_MAX_SLAVE_DEVICES 11
+#define SWRM_NUM_AUTO_ENUM_SLAVES    6
 
 enum {
 	SWR_MSTR_PAUSE,
@@ -86,7 +87,6 @@ struct swrm_mports {
 	bool port_en;
 	u8 ch_en;
 	u8 req_ch;
-	u8 ch_rate;
 	u8 offset1;
 	u8 offset2;
 	u8 sinterval;
@@ -98,6 +98,7 @@ struct swrm_mports {
 	u8 lane_ctrl;
 	u8 dir;
 	u8 stream_type;
+	u32 ch_rate;
 };
 
 struct swrm_port_type {
