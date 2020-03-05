@@ -268,10 +268,13 @@ static u8 get_misc_colorimetry_val(struct dp_panel_private *panel,
 	case DRM_MODE_COLORIMETRY_DCI_P3_RGB_THEATER:
 		colorimetry = 0x7;
 		break;
-	case DRM_MODE_COLORIMETRY_RGB_WIDE_FIXED:
+	case DRM_MODE_DP_COLORIMETRY_SRGB:
+		colorimetry = 0x4;
+		break;
+	case DRM_MODE_DP_COLORIMETRY_RGB_WIDE_GAMUT:
 		colorimetry = 0x3;
 		break;
-	case DRM_MODE_COLORIMETRY_RGB_WIDE_FLOAT:
+	case DRM_MODE_DP_COLORIMETRY_SCRGB:
 		colorimetry = 0xb;
 		break;
 	case DRM_MODE_COLORIMETRY_OPRGB:
@@ -1208,7 +1211,7 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 		u8 ratio,
 		struct dp_display_mode *dp_mode)
 {
-	int comp_ratio = 100, intf_width;
+	int comp_ratio, intf_width;
 	int slice_per_pkt, slice_per_intf;
 	s64 temp1_fp, temp2_fp;
 	s64 numerator_fp, denominator_fp;
@@ -1216,8 +1219,8 @@ static void dp_panel_dsc_pclk_param_calc(struct dp_panel *dp_panel,
 	u32 dsc_byte_count, temp1, temp2;
 
 	intf_width = dp_mode->timing.h_active;
-	if (!dsc || !dsc->config.slice_width || !dsc->slice_per_pkt ||
-			 (intf_width < dsc->config.slice_width))
+	if (!dsc || !dsc->slice_width || !dsc->slice_per_pkt ||
+			 (intf_width < dsc->slice_width))
 		return;
 
 	slice_per_pkt = dsc->slice_per_pkt;

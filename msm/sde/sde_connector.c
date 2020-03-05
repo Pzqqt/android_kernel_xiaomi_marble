@@ -2445,7 +2445,7 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			      CONNECTOR_PROP_EXT_HDR_INFO);
 
 		/* create and attach colorspace property for DP */
-		if (!drm_mode_create_dp_colorspace_property(connector))
+		if (!drm_mode_create_colorspace_property(connector))
 			drm_object_attach_property(&connector->base,
 				connector->colorspace_property, 0);
 	}
