@@ -1247,23 +1247,53 @@ QDF_STATUS dp_tx_print_bitmap(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
-				       struct dp_peer *peer,
-				       void *data,
-				       qdf_nbuf_t nbuf,
-				       uint16_t ether_type,
-				       uint8_t *src_addr)
+/*
+ * dp_peer_tx_wds_addr_add() – Update WDS peer to include 4th address
+ * @peer: Datapath peer
+ * @addr4_mac_addr: Source MAC address for WDS TX
+ *
+ */
+static
+void dp_peer_tx_wds_addr_add(struct dp_peer *peer, uint8_t *addr4_mac_addr)
+{
+	struct ieee80211_frame_addr4 *ptr_wh;
+
+	if (!peer)
+		return;
+
+	ptr_wh = &peer->tx_capture.tx_wifi_addr4_hdr;
+	qdf_mem_copy(ptr_wh->i_addr4,
+		     addr4_mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+}
+
+/*
+ * dp_peer_tx_update_80211_wds_hdr() – Update 80211 frame header to include a
+ * 4 address frame, and set QoS related information if necessary
+ * @pdev: Physical device reference
+ * @peer: Datapath peer
+ * @data: ppdu_descriptor
+ * @nbuf: 802.11 frame
+ * @ether_type: ethernet type
+ * @src_addr: ether shost address
+ *
+ */
+static uint32_t dp_tx_update_80211_wds_hdr(struct dp_pdev *pdev,
+					   struct dp_peer *peer,
+					   void *data,
+					   qdf_nbuf_t nbuf,
+					   uint16_t ether_type,
+					   uint8_t *src_addr)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
-	struct ieee80211_frame *ptr_wh;
-	struct ieee80211_qoscntl *ptr_qoscntl;
-	uint32_t mpdu_buf_len;
+	uint32_t mpdu_buf_len, frame_size;
 	uint8_t *ptr_hdr;
 	uint16_t eth_type = qdf_htons(ether_type);
+	struct ieee80211_qosframe_addr4 *ptr_wh;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)data;
-	ptr_wh = &peer->tx_capture.tx_wifi_hdr;
-	ptr_qoscntl = &peer->tx_capture.tx_qoscntl;
+
+	ptr_wh = &peer->tx_capture.tx_wifi_addr4_qos_hdr;
 
 	/*
 	 * update framectrl only for first ppdu_id
@@ -1277,18 +1307,19 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 		ptr_wh->i_dur[1] = (ppdu_desc->tx_duration & 0xFF00) >> 8;
 		ptr_wh->i_dur[0] = (ppdu_desc->tx_duration & 0xFF);
 
-		ptr_qoscntl->i_qos[1] = (ppdu_desc->user[0].qos_ctrl &
-					 0xFF00) >> 8;
-		ptr_qoscntl->i_qos[0] = (ppdu_desc->user[0].qos_ctrl & 0xFF);
+		ptr_wh->i_qos[1] = (ppdu_desc->user[0].qos_ctrl & 0xFF00) >> 8;
+		ptr_wh->i_qos[0] = (ppdu_desc->user[0].qos_ctrl & 0xFF);
 		/* Update Addr 3 (SA) with SA derived from ether packet */
 		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
 
 		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
 	}
 
-	mpdu_buf_len = sizeof(struct ieee80211_frame) + LLC_SNAP_HDR_LEN;
-	if (qdf_likely(ppdu_desc->user[0].tid != DP_NON_QOS_TID))
-		mpdu_buf_len += sizeof(struct ieee80211_qoscntl);
+	frame_size = (ppdu_desc->user[0].tid != DP_NON_QOS_TID) ?
+		      sizeof(struct ieee80211_qosframe_addr4) :
+		      sizeof(struct ieee80211_frame_addr4);
+
+	mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
 
 	nbuf->protocol = qdf_htons(ETH_P_802_2);
 
@@ -1300,16 +1331,93 @@ static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
 	}
 
 	ptr_hdr = (void *)qdf_nbuf_data(nbuf);
-	qdf_mem_copy(ptr_hdr, ptr_wh, sizeof(struct ieee80211_frame));
+	qdf_mem_copy(ptr_hdr, ptr_wh, frame_size);
 
-	ptr_hdr = ptr_hdr + (sizeof(struct ieee80211_frame));
+	ptr_hdr = ptr_hdr + frame_size;
 
-	/* update qoscntl header */
-	if (qdf_likely(ppdu_desc->user[0].tid != DP_NON_QOS_TID)) {
-		qdf_mem_copy(ptr_hdr, ptr_qoscntl,
-			     sizeof(struct ieee80211_qoscntl));
-		ptr_hdr = ptr_hdr + sizeof(struct ieee80211_qoscntl);
+	/* update LLC */
+	*ptr_hdr =  LLC_SNAP_LSAP;
+	*(ptr_hdr + 1) = LLC_SNAP_LSAP;
+	*(ptr_hdr + 2) = LLC_UI;
+	*(ptr_hdr + 3) = 0x00;
+	*(ptr_hdr + 4) = 0x00;
+	*(ptr_hdr + 5) = 0x00;
+	*(ptr_hdr + 6) = (eth_type & 0xFF00) >> 8;
+	*(ptr_hdr + 7) = (eth_type & 0xFF);
+
+	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) - mpdu_buf_len);
+	return 0;
+}
+
+/*
+ * dp_peer_tx_update_80211_hdr() – Update 80211 frame header to set QoS
+ * related information if necessary
+ * @pdev: Physical device reference
+ * @peer: Datapath peer
+ * @data: ppdu_descriptor
+ * @nbuf: 802.11 frame
+ * @ether_type: ethernet type
+ * @src_addr: ether shost address
+ *
+ */
+
+static uint32_t dp_tx_update_80211_hdr(struct dp_pdev *pdev,
+				       struct dp_peer *peer,
+				       void *data,
+				       qdf_nbuf_t nbuf,
+				       uint16_t ether_type,
+				       uint8_t *src_addr)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	uint32_t mpdu_buf_len, frame_size;
+	uint8_t *ptr_hdr;
+	uint16_t eth_type = qdf_htons(ether_type);
+
+	struct ieee80211_qosframe *ptr_wh;
+
+	ppdu_desc = (struct cdp_tx_completion_ppdu *)data;
+
+	ptr_wh = &peer->tx_capture.tx_wifi_qos_hdr;
+
+	/*
+	 * update framectrl only for first ppdu_id
+	 * rest of mpdu will have same frame ctrl
+	 * mac address and duration
+	 */
+	if (ppdu_desc->ppdu_id != peer->tx_capture.tx_wifi_ppdu_id) {
+		ptr_wh->i_fc[1] = (ppdu_desc->frame_ctrl & 0xFF00) >> 8;
+		ptr_wh->i_fc[0] = (ppdu_desc->frame_ctrl & 0xFF);
+
+		ptr_wh->i_dur[1] = (ppdu_desc->tx_duration & 0xFF00) >> 8;
+		ptr_wh->i_dur[0] = (ppdu_desc->tx_duration & 0xFF);
+
+		ptr_wh->i_qos[1] = (ppdu_desc->user[0].qos_ctrl & 0xFF00) >> 8;
+		ptr_wh->i_qos[0] = (ppdu_desc->user[0].qos_ctrl & 0xFF);
+		/* Update Addr 3 (SA) with SA derived from ether packet */
+		qdf_mem_copy(ptr_wh->i_addr3, src_addr, QDF_MAC_ADDR_SIZE);
+
+		peer->tx_capture.tx_wifi_ppdu_id = ppdu_desc->ppdu_id;
 	}
+
+	frame_size = (ppdu_desc->user[0].tid != DP_NON_QOS_TID) ?
+		      sizeof(struct ieee80211_qosframe) :
+		      sizeof(struct ieee80211_frame);
+
+	mpdu_buf_len = frame_size + LLC_SNAP_HDR_LEN;
+
+	nbuf->protocol = qdf_htons(ETH_P_802_2);
+
+	/* update ieee80211_frame header */
+	if (!qdf_nbuf_push_head(nbuf, mpdu_buf_len)) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+			  FL("No headroom"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ptr_hdr = (void *)qdf_nbuf_data(nbuf);
+	qdf_mem_copy(ptr_hdr, ptr_wh, frame_size);
+
+	ptr_hdr = ptr_hdr + frame_size;
 
 	/* update LLC */
 	*ptr_hdr =  LLC_SNAP_LSAP;
@@ -1371,6 +1479,12 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 		qdf_nbuf_pull_head(curr_nbuf,
 			sizeof(struct msdu_completion_info));
 
+		if ((qdf_likely((peer->vdev->tx_encap_type !=
+				 htt_cmn_pkt_type_raw))) &&
+		    ((ppdu_desc->frame_ctrl & IEEE80211_FC1_DIR_MASK) &&
+		     (IEEE80211_FC1_DIR_TODS | IEEE80211_FC1_DIR_FROMDS)))
+			dp_peer_tx_wds_addr_add(peer, eh->ether_shost);
+
 		if (first_msdu && first_msdu_not_seen) {
 			first_nbuf = curr_nbuf;
 			frag_list_sum_len = 0;
@@ -1427,16 +1541,26 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 						   MAX_MONITOR_HEADER,
 						   4, FALSE);
 
+
 			if (!mpdu_nbuf) {
 				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 					  QDF_TRACE_LEVEL_FATAL,
 					  "MPDU head allocation failed !!!");
 				goto free_ppdu_desc_mpdu_q;
 			}
-
-			dp_tx_update_80211_hdr(pdev, peer,
-					       ppdu_desc, mpdu_nbuf,
-					       ether_type, eh->ether_shost);
+			if (((ppdu_desc->frame_ctrl & IEEE80211_FC1_DIR_MASK) &&
+			     (IEEE80211_FC1_DIR_TODS |
+			      IEEE80211_FC1_DIR_FROMDS))) {
+				dp_tx_update_80211_wds_hdr(pdev, peer,
+							   ppdu_desc, mpdu_nbuf,
+							   ether_type,
+							   eh->ether_shost);
+			} else {
+				dp_tx_update_80211_hdr(pdev, peer,
+						       ppdu_desc, mpdu_nbuf,
+						       ether_type,
+						       eh->ether_shost);
+			}
 
 			/*
 			 * first nbuf will hold list of msdu
