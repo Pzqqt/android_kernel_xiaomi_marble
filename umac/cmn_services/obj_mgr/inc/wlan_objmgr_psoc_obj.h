@@ -23,7 +23,7 @@
 #define _WLAN_OBJMGR_PSOC_OBJ_H_
 
 #include "wlan_objmgr_cmn.h"
-#include "wlan_lmac_if_def.h"
+#include "wlan_objmgr_debug.h"
 
 #define REG_DMN_CH144        0x0001
 #define REG_DMN_ENTREPRISE   0x0002
@@ -318,8 +318,8 @@ struct wlan_objmgr_psoc_objmgr {
  * @rx_ops: contains southbound rx callbacks
  */
 struct wlan_soc_southbound_cb {
-	struct wlan_lmac_if_tx_ops tx_ops;
-	struct wlan_lmac_if_rx_ops rx_ops;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 };
 
 /**
@@ -1371,7 +1371,7 @@ static inline uint8_t *wlan_psoc_get_hw_macaddr(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
- * wlan_objmgr_psoc_get_comp_private_obj(): API to retrieve component object
+ * wlan_objmgr_psoc_get_comp_private_obj() - API to retrieve component object
  * @psoc: Psoc pointer
  * @id: component id
  *
@@ -1399,7 +1399,79 @@ static inline uint8_t wlan_psoc_get_pdev_count(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
- * wlan_psoc_set_tgt_if_handle(): API to set target if handle in psoc object
+ * wlan_psoc_set_lmac_if_txops() - API to set tx ops handle in psoc object
+ * @psoc: Psoc pointer
+ * @tx_ops: tx callbacks handle
+ *
+ * API to set tx callbacks handle in psoc object
+ *
+ * Return: None
+ */
+static inline
+void wlan_psoc_set_lmac_if_txops(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	if (!psoc)
+		return;
+
+	psoc->soc_cb.tx_ops = tx_ops;
+}
+
+/**
+ * wlan_psoc_get_lmac_if_txops() - API to get tx ops handle
+ * @psoc: Psoc pointer
+ *
+ * API to get tx callbacks handle from psoc object
+ *
+ * Return: tx callbacks handle
+ */
+static inline
+struct wlan_lmac_if_tx_ops *wlan_psoc_get_lmac_if_txops(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc)
+		return NULL;
+
+	return psoc->soc_cb.tx_ops;
+}
+
+/**
+ * wlan_psoc_set_lmac_if_rxops() - API to set rx ops handle in psoc object
+ * @psoc: Psoc pointer
+ * @tgt_if_handle: rx callbacks handle
+ *
+ * API to set rx callbacks handle in psoc object
+ *
+ * Return: None
+ */
+static inline
+void wlan_psoc_set_lmac_if_rxops(struct wlan_objmgr_psoc *psoc, struct
+		wlan_lmac_if_rx_ops *rx_ops)
+{
+	if (!psoc)
+		return;
+
+	psoc->soc_cb.rx_ops = rx_ops;
+}
+
+/**
+ * wlan_psoc_get_lmac_if_rxops() - API to get rx ops handle
+ * @psoc: Psoc pointer
+ *
+ * API to get rx callbacks handle from psoc object
+ *
+ * Return: rx callbacks handle
+ */
+static inline
+struct wlan_lmac_if_rx_ops *wlan_psoc_get_lmac_if_rxops(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc)
+		return NULL;
+
+	return psoc->soc_cb.rx_ops;
+}
+
+/**
+ * wlan_psoc_set_tgt_if_handle() - API to set target if handle in psoc object
  * @psoc: Psoc pointer
  * @tgt_if_handle: target interface handle
  *
@@ -1418,7 +1490,7 @@ void wlan_psoc_set_tgt_if_handle(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * wlan_psoc_get_tgt_if_handle(): API to get target interface handle
+ * wlan_psoc_get_tgt_if_handle() - API to get target interface handle
  * @psoc: Psoc pointer
  *
  * API to get target interface handle from psoc object
@@ -1436,7 +1508,7 @@ struct target_psoc_info *wlan_psoc_get_tgt_if_handle(
 }
 
 /**
- * wlan_psoc_get_qdf_dev(): API to get qdf device
+ * wlan_psoc_get_qdf_dev() - API to get qdf device
  * @psoc: Psoc pointer
  *
  * API to get qdf device from psoc object
@@ -1453,7 +1525,7 @@ static inline qdf_device_t wlan_psoc_get_qdf_dev(
 }
 
 /**
- * wlan_psoc_set_qdf_dev(): API to get qdf device
+ * wlan_psoc_set_qdf_dev() - API to get qdf device
  * @psoc: Psoc pointer
  * dev: qdf device
  *
@@ -1714,18 +1786,6 @@ struct wlan_logically_del_peer {
 	qdf_list_node_t list;
 	struct wlan_objmgr_peer *peer;
 };
-
-/**
- * wlan_psoc_get_lmac_if_txops() - get lmac if txops for the psoc
- * @psoc: psoc object pointer
- *
- * Return: Pointer to wlan_lmac_if_tx_ops
- */
-static inline struct wlan_lmac_if_tx_ops *
-wlan_psoc_get_lmac_if_txops(struct wlan_objmgr_psoc *psoc)
-{
-	return &((psoc->soc_cb.tx_ops));
-}
 
 /**
  * wlan_psoc_get_id() - get psoc id
