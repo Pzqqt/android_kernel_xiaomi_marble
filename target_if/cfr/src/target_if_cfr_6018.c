@@ -714,11 +714,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	for (i = 0; i < MAX_CHAIN; i++)
 		meta->chain_rssi[i] = cdp_rx_ppdu->per_chain_rssi[i];
 
-	if (cdp_rx_ppdu->u.ppdu_type == CDP_RX_TYPE_SU) {
-		qdf_mem_copy(meta->peer_addr.su_peer_addr,
-			     cdp_rx_ppdu->mac_addr,
-			     QDF_MAC_ADDR_SIZE);
-	} else {
+	if (cdp_rx_ppdu->u.ppdu_type != CDP_RX_TYPE_SU) {
 		for (i = 0 ; i < meta->num_mu_users; i++) {
 			rx_stats_peruser = &cdp_rx_ppdu->user[i];
 			qdf_mem_copy(meta->peer_addr.mu_peer_addr[i],
