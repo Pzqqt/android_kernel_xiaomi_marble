@@ -27069,7 +27069,13 @@ typedef enum {
     WMI_ROAM_FAIL_REASON_EAPOL_M4_SEND,     /* Unable to send EAPOL M4 frame */
     WMI_ROAM_FAIL_REASON_EAPOL_M4_INTERNAL_DROP,   /* EAPOL M4 frame dropped internally */
     WMI_ROAM_FAIL_REASON_EAPOL_M4_NO_ACK,   /* No Ack is recieved for EAPOL M4 frame */
-
+    WMI_ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS, /* Roam scan is not started for Final Bmiss case */
+    WMI_ROAM_FAIL_REASON_DISCONNECT,        /* Deauth or Disassoc received from AP during roaming handoff */
+    WMI_ROAM_FAIL_REASON_SYNC,              /* when host wakes-up during roaming in-progress, abort current roaming if previous sync is pending */
+    WMI_ROAM_FAIL_REASON_SAE_INVALID_PMKID, /* WPA3-SAE invalid PMKID */
+    WMI_ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT, /* WPA3-SAE pre-authentication timeout */
+    WMI_ROAM_FAIL_REASON_SAE_PREAUTH_FAIL, /* WPA3-SAE pre-authentication failed */
+    WMI_ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO, /* Roam HO is not started due to FW internal issue */
 
     WMI_ROAM_FAIL_REASON_UNKNOWN = 255,
 } WMI_ROAM_FAIL_REASON_ID;
