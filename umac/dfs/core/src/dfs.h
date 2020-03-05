@@ -45,6 +45,8 @@
 #ifdef QCA_SUPPORT_ADFS_RCAC
 #include <wlan_sm_engine.h> /* for struct wlan_sm */
 #endif
+#include <wlan_dfs_public_struct.h>
+#include <reg_services_public_struct.h>
 
 /* File Line and Submodule String */
 #define FLSM(x, str)   #str " : " FL(x)

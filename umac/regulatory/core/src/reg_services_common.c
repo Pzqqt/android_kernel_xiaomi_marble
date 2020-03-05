@@ -1050,7 +1050,15 @@ uint16_t reg_get_bw_value(enum phy_ch_width bw)
 struct wlan_lmac_if_reg_tx_ops *reg_get_psoc_tx_ops(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return &((psoc->soc_cb.tx_ops.reg_ops));
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		reg_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->reg_ops;
 }
 
 #ifdef CONFIG_CHAN_NUM_API

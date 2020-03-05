@@ -25,6 +25,7 @@
 #include <linux/version.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <wlan_spectral_public_structs.h>
 
 /* NETLINK related declarations */
 #if (KERNEL_VERSION(2, 6, 31) > LINUX_VERSION_CODE)

@@ -26,6 +26,8 @@
 #ifndef __WLAN_REG_SERVICES_API_H
 #define __WLAN_REG_SERVICES_API_H
 
+#include <reg_services_public_struct.h>
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * wlan_reg_min_24ghz_ch_num() - Get minimum 2.4GHz channel number

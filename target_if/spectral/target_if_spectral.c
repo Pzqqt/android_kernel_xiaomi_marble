@@ -2267,9 +2267,10 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	uint32_t target_type;
 	uint32_t target_revision;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
 	enum spectral_scan_mode smode = SPECTRAL_SCAN_MODE_NORMAL;
 	QDF_STATUS status;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	if (!pdev) {
 		spectral_err("SPECTRAL: pdev is NULL!");
@@ -2286,17 +2287,24 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
+		qdf_mem_free(spectral);
+		return NULL;
+	}
 
-	if (tx_ops->tgt_get_tgt_type) {
-		target_type = tx_ops->tgt_get_tgt_type(psoc);
+	tgt_tx_ops = &tx_ops->target_tx_ops;
+
+	if (tgt_tx_ops->tgt_get_tgt_type) {
+		target_type = tgt_tx_ops->tgt_get_tgt_type(psoc);
 	} else {
 		qdf_mem_free(spectral);
 		return NULL;
 	}
 
-	if (tx_ops->tgt_get_tgt_revision) {
-		target_revision = tx_ops->tgt_get_tgt_revision(psoc);
+	if (tgt_tx_ops->tgt_get_tgt_revision) {
+		target_revision = tgt_tx_ops->tgt_get_tgt_revision(psoc);
 	} else {
 		qdf_mem_free(spectral);
 		return NULL;
@@ -4378,7 +4386,12 @@ target_if_spectral_do_dbr_ring_debug(struct wlan_objmgr_pdev *pdev, bool enable)
 		spectral_err("psoc is null");
 		return QDF_STATUS_E_INVAL;
 	}
-	tx_ops = &psoc->soc_cb.tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
@@ -4424,7 +4437,12 @@ target_if_spectral_do_dbr_buff_debug(struct wlan_objmgr_pdev *pdev, bool enable)
 		spectral_err("psoc is null");
 		return QDF_STATUS_E_INVAL;
 	}
-	tx_ops = &psoc->soc_cb.tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
@@ -4531,7 +4549,12 @@ target_if_spectral_set_dma_debug(
 		spectral_err("psoc is null");
 		return QDF_STATUS_E_INVAL;
 	}
-	tx_ops = &psoc->soc_cb.tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!tx_ops->target_tx_ops.tgt_get_tgt_type) {
 		spectral_err("Unable to fetch target type");
@@ -4831,8 +4854,10 @@ target_if_process_spectral_report(struct wlan_objmgr_pdev *pdev,
 static inline void
 target_if_sptrl_debug_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
-	if (!tx_ops)
+	if (!tx_ops) {
+		spectral_err("tx_ops is NULL");
 		return;
+	}
 
 	tx_ops->sptrl_tx_ops.sptrlto_set_dma_debug =
 		target_if_spectral_set_dma_debug;

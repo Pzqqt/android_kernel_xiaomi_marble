@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,6 +25,8 @@
 
 #ifndef __WLAN_REG_UCFG_API_H
 #define __WLAN_REG_UCFG_API_H
+
+#include <reg_services_public_struct.h>
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 

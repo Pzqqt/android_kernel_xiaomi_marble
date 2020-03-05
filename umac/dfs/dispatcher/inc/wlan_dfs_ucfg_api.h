@@ -28,6 +28,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_dfs_ioctl.h>
+#include <wlan_dfs_public_struct.h>
 
 /**
  * struct dfs_to_mlme - These are MLME function pointer used by DFS component.

@@ -27,6 +27,7 @@
 
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_dfs_ioctl.h>
 
 /**
  * lmac_get_caps() - Get DFS capabilities.

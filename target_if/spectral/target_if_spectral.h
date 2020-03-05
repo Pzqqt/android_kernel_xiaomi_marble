@@ -1428,6 +1428,7 @@ struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
 {
 	struct target_if_spectral *spectral;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	if (!pdev) {
 		spectral_err("pdev is null");
@@ -1440,9 +1441,15 @@ struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
 		return NULL;
 	}
 
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return NULL;
+	}
+
 	spectral = (struct target_if_spectral *)
-		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_pdev_target_handle(
-		pdev);
+		rx_ops->sptrl_rx_ops.sptrlro_get_pdev_target_handle(pdev);
+
 	return spectral;
 }
 
@@ -1458,6 +1465,7 @@ static inline
 struct target_if_psoc_spectral *get_target_if_spectral_handle_from_psoc(
 	struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
 	struct target_if_psoc_spectral *psoc_spectral;
 
 	if (!psoc) {
@@ -1465,9 +1473,14 @@ struct target_if_psoc_spectral *get_target_if_spectral_handle_from_psoc(
 		return NULL;
 	}
 
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return NULL;
+	}
+
 	psoc_spectral = (struct target_if_psoc_spectral *)
-		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_psoc_target_handle(
-		psoc);
+		rx_ops->sptrl_rx_ops.sptrlro_get_psoc_target_handle(psoc);
 
 	return psoc_spectral;
 }
@@ -1485,14 +1498,20 @@ static inline
 int16_t target_if_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		spectral_err("psoc is NULL");
 		return -EINVAL;
 	}
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return -EINVAL;
+	}
 
-	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_chan_freq(
+	return rx_ops->sptrl_rx_ops.sptrlro_vdev_get_chan_freq(
 		vdev);
 }
 
@@ -1509,6 +1528,7 @@ static inline
 int16_t target_if_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -1516,8 +1536,13 @@ int16_t target_if_vdev_get_chan_freq_seg2(struct wlan_objmgr_vdev *vdev)
 		return -EINVAL;
 	}
 
-	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_chan_freq_seg2(
-		vdev);
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return -EINVAL;
+	}
+
+	return rx_ops->sptrl_rx_ops.sptrlro_vdev_get_chan_freq_seg2(vdev);
 }
 
 /**
@@ -1534,6 +1559,7 @@ enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 	enum phy_ch_width ch_width;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -1541,8 +1567,13 @@ enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 		return CH_WIDTH_INVALID;
 	}
 
-	ch_width = psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_ch_width(
-		   vdev);
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return CH_WIDTH_INVALID;
+	}
+
+	ch_width = rx_ops->sptrl_rx_ops.sptrlro_vdev_get_ch_width(vdev);
 
 	if (ch_width == CH_WIDTH_160MHZ) {
 		int16_t cfreq2;
@@ -1576,6 +1607,7 @@ int target_if_vdev_get_sec20chan_freq_mhz(
 	uint16_t *sec20chan_freq)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -1583,7 +1615,13 @@ int target_if_vdev_get_sec20chan_freq_mhz(
 		return -EINVAL;
 	}
 
-	return psoc->soc_cb.rx_ops.sptrl_rx_ops.
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
+		return -EINVAL;
+	}
+
+	return rx_ops->sptrl_rx_ops.
 		sptrlro_vdev_get_sec20chan_freq_mhz(vdev, sec20chan_freq);
 }
 
@@ -1601,10 +1639,17 @@ void target_if_spectral_set_rxchainmask(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc = NULL;
 	struct target_if_spectral *spectral = NULL;
 	enum spectral_scan_mode smode = SPECTRAL_SCAN_MODE_NORMAL;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		spectral_err("psoc is NULL");
+		return;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		spectral_err("rx_ops is null");
 		return;
 	}
 
@@ -1613,7 +1658,7 @@ void target_if_spectral_set_rxchainmask(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	if (psoc->soc_cb.rx_ops.sptrl_rx_ops.
+	if (rx_ops->sptrl_rx_ops.
 	    sptrlro_spectral_is_feature_disabled(psoc)) {
 		spectral_info("Spectral is disabled");
 		return;

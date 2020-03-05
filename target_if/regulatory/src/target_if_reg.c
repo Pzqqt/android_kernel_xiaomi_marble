@@ -51,10 +51,15 @@ static inline uint32_t get_chan_list_cc_event_id(void)
  */
 static bool tgt_if_regulatory_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
 {
-	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
 
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
 	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return false;
+	}
 
 	if (!wmi_handle)
 		return false;
@@ -111,7 +116,15 @@ static bool tgt_if_regulatory_is_there_serv_ready_extn(
 struct wlan_lmac_if_reg_rx_ops *
 target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.rx_ops.reg_rx_ops;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		target_if_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->reg_rx_ops;
 }
 
 QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc)
@@ -181,6 +194,11 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle, uint8_t *event_buf,
 	}
 
 	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return -EINVAL;
+	}
+
 	if (!reg_rx_ops->master_list_handler) {
 		target_if_err("master_list_handler is NULL");
 		return -EINVAL;

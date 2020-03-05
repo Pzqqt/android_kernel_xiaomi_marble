@@ -16,6 +16,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <wlan_dfs_public_struct.h>
+#include <reg_services_public_struct.h>
+
 /* dfs regions definitions */
 /* un-initialized region */
 #define DFS_UNINIT_REGION_VAL   0

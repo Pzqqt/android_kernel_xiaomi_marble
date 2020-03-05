@@ -25,6 +25,8 @@
 #ifndef __REG_UTILS_H_
 #define __REG_UTILS_H_
 
+#include <wlan_lmac_if_def.h>
+
 #ifdef WLAN_FEATURE_DSRC
 #define REG_DSRC_START_FREQ channel_map[MIN_DSRC_CHANNEL].center_freq
 #define REG_DSRC_END_FREQ   channel_map[MAX_DSRC_CHANNEL].center_freq

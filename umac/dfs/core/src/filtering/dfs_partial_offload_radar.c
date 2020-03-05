@@ -302,11 +302,18 @@ static void dfs_set_adrastea_rf_thrshold(
 		struct wlan_dfs_radar_tab_info *rinfo)
 {
 	int i;
-	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
-	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "tx_ops is null");
+		return;
+	}
 
-	if (tx_ops->tgt_is_tgt_type_adrastea(target_type) &&
+	tgt_tx_ops = &tx_ops->target_tx_ops;
+
+	if (tgt_tx_ops->tgt_is_tgt_type_adrastea(target_type) &&
 	    dfsdomain == DFS_ETSI_DOMAIN) {
 		for (i = 0; i < rinfo->numradars; i++) {
 			rinfo->dfs_radars[i].rp_rssithresh =
@@ -385,15 +392,15 @@ void dfs_update_radar_info(struct wlan_dfs_radar_tab_info *rinfo,
 static void
 dfs_assign_mkk_bin5_radars(struct wlan_dfs_radar_tab_info *rinfo,
 			   uint32_t target_type,
-			   struct wlan_lmac_if_target_tx_ops *tx_ops)
+			   struct wlan_lmac_if_target_tx_ops *tgt_tx_ops)
 {
-	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
-	    tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
+	if (tgt_tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+	    tgt_tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
 		rinfo->b5pulses = dfs_jpn_bin5pulses_ar900b;
 		rinfo->numb5radars = QDF_ARRAY_SIZE(
 				dfs_jpn_bin5pulses_ar900b);
-	} else if (tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
-			tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
+	} else if (tgt_tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+			tgt_tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
 		rinfo->b5pulses = dfs_jpn_bin5pulses_qca9984;
 		rinfo->numb5radars = QDF_ARRAY_SIZE
 			(dfs_jpn_bin5pulses_qca9984);
@@ -408,12 +415,13 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
 	int i;
 	uint32_t target_type;
 	int dfsdomain = DFS_FCC_DOMAIN;
 	struct dfs_pulse *external_radars, *merged_radars = NULL;
 	uint8_t num_ext_radars;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	/* Fetch current radar patterns from the lmac */
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
@@ -431,12 +439,18 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		return;
 	}
 
-	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "tx_ops is null");
+		return;
+	}
+
+	tgt_tx_ops = &tx_ops->target_tx_ops;
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
 		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
-		dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
+		dfs_assign_fcc_pulse_table(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_CN_DOMAIN:
@@ -497,7 +511,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
-		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
+		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT_MKKN;
 		break;
 	case DFS_MKK4_DOMAIN:
@@ -505,7 +519,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
-		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
+		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tgt_tx_ops);
 		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	default:
@@ -528,10 +542,10 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 					      num_ext_radars);
 	}
 
-	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
-			tx_ops->tgt_is_tgt_type_ipq4019(target_type) ||
-			tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
-			tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
+	if (tgt_tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+			tgt_tx_ops->tgt_is_tgt_type_ipq4019(target_type) ||
+			tgt_tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+			tgt_tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
 		/* Beeliner WAR: lower RSSI threshold to improve detection of
 		 * certian radar types
 		 */

@@ -40,7 +40,15 @@
 struct wlan_lmac_if_dfs_tx_ops *
 wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
 {
-	return &((psoc->soc_cb.tx_ops.dfs_tx_ops));
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "tx_ops is null");
+		return NULL;
+	}
+
+	return &tx_ops->dfs_tx_ops;
 }
 
 bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev)
