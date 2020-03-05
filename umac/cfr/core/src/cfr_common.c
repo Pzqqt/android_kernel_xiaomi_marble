@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,9 +24,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_cfr_tgt_api.h>
-#include <qal_streamfs.h>
-#include <relay.h>
-#include <debugfs.h>
+#include <qdf_streamfs.h>
 #include <target_if.h>
 
 QDF_STATUS
@@ -171,51 +169,6 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * create_buf_file_handler() - Create streamfs buffer file
- *  @filename: base name of files to create, NULL for buffering only
- *  @parent: dentry of parent directory, NULL for root directory
- *  @mode: filemode
- *  @rchan_buf: streamfs channel buf
- *
- *  Returns dentry if successful, NULL otherwise.
- */
-static struct dentry *create_buf_file_handler(const char *filename,
-					      struct dentry *parent,
-					      umode_t mode,
-					      struct rchan_buf *buf,
-					      int *is_global)
-{
-	struct qal_dentry_t *buf_file;
-	*is_global = 1;
-	buf_file = qal_streamfs_create_file(filename, mode,
-					(struct qal_dentry_t *)parent,
-					(struct qal_streamfs_chan_buf *)buf);
-
-	if (!buf_file) {
-		cfr_err("Chan buffer creation failed\n");
-		return NULL;
-	}
-
-	return (struct dentry *)buf_file;
-}
-
-/**
- * remove_buf_file_handler() - Remove streamfs buffer file
- *  @dentry:dentry
- */
-static int remove_buf_file_handler(struct dentry *dentry)
-{
-	qal_streamfs_remove_file((struct qal_dentry_t *)dentry);
-
-	return 0;
-}
-
-static struct rchan_callbacks cfr_streamfs_cb = {
-	.create_buf_file = create_buf_file_handler,
-	.remove_buf_file = remove_buf_file_handler,
-};
-
 QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pa = NULL;
@@ -252,21 +205,20 @@ QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
 
 	snprintf(folder, sizeof(folder), "cfr%s", pdev_netdev->name);
 
-	pa->dir_ptr = qal_streamfs_create_dir((const char *)folder, NULL);
+	pa->dir_ptr = qdf_streamfs_create_dir((const char *)folder, NULL);
 
 	if (!pa->dir_ptr) {
 		cfr_err("Directory create failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pa->chan_ptr = qal_streamfs_open("cfr_dump", pa->dir_ptr,
-			pa->subbuf_size, pa->num_subbufs,
-			(struct qal_streamfs_chan_callbacks *)&cfr_streamfs_cb,
-			NULL);
+	pa->chan_ptr = qdf_streamfs_open("cfr_dump", pa->dir_ptr,
+					 pa->subbuf_size,
+					 pa->num_subbufs, NULL);
 
 	if (!pa->chan_ptr) {
 		cfr_err("Chan create failed");
-		qal_streamfs_remove_dir_recursive(pa->dir_ptr);
+		qdf_streamfs_remove_dir_recursive(pa->dir_ptr);
 		pa->dir_ptr = NULL;
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -281,12 +233,12 @@ QDF_STATUS cfr_streamfs_remove(struct wlan_objmgr_pdev *pdev)
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa) {
 		if (pa->chan_ptr) {
-			qal_streamfs_close(pa->chan_ptr);
+			qdf_streamfs_close(pa->chan_ptr);
 			pa->chan_ptr = NULL;
 		}
 
 		if (pa->dir_ptr) {
-			qal_streamfs_remove_dir_recursive(pa->dir_ptr);
+			qdf_streamfs_remove_dir_recursive(pa->dir_ptr);
 			pa->dir_ptr = NULL;
 		}
 
@@ -302,8 +254,8 @@ QDF_STATUS cfr_streamfs_write(struct pdev_cfr *pa, const void *write_data,
 	if (pa->chan_ptr) {
 
 	/* write to channel buffer */
-		qal_streamfs_write(pa->chan_ptr, (const void *)write_data,
-				write_len);
+		qdf_streamfs_write(pa->chan_ptr, (const void *)write_data,
+				   write_len);
 	} else
 		return QDF_STATUS_E_FAILURE;
 
@@ -315,7 +267,7 @@ QDF_STATUS cfr_streamfs_flush(struct pdev_cfr *pa)
 	if (pa->chan_ptr) {
 
 	/* Flush the data write to channel buffer */
-		qal_streamfs_flush(pa->chan_ptr);
+		qdf_streamfs_flush(pa->chan_ptr);
 	} else
 		return QDF_STATUS_E_FAILURE;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,7 +20,7 @@
 #define _WLAN_CFR_UTILS_API_H_
 
 #include <wlan_objmgr_cmn.h>
-#include <qal_streamfs.h>
+#include <qdf_streamfs.h>
 #ifdef WLAN_ENH_CFR_ENABLE
 #include <qdf_timer.h>
 #endif
@@ -471,8 +471,8 @@ struct pdev_cfr {
 	uint16_t cfr_current_sta_count;
 	uint32_t num_subbufs;
 	uint32_t subbuf_size;
-	struct qal_streamfs_chan *chan_ptr;
-	struct qal_dentry_t *dir_ptr;
+	qdf_streamfs_chan_t chan_ptr;
+	qdf_dentry_t dir_ptr;
 	struct look_up_table lut[MAX_LUT_ENTRIES];
 	uint32_t dbr_buf_size;
 	uint32_t dbr_num_bufs;
