@@ -71,8 +71,10 @@ target_if_vdev_mgr_rsp_timer_stop(struct wlan_objmgr_psoc *psoc,
 		 * which timer stop is not required
 		 */
 		if (vdev_rsp->timer_status == QDF_STATUS_E_TIMEOUT) {
-			qdf_atomic_set(&vdev_rsp->rsp_timer_inuse, 0);
-			vdev_rsp->psoc = NULL;
+			if (clear_bit == DELETE_RESPONSE_BIT) {
+				qdf_atomic_set(&vdev_rsp->rsp_timer_inuse, 0);
+				vdev_rsp->psoc = NULL;
+			}
 		} else {
 			vdev_rsp->timer_status = QDF_STATUS_SUCCESS;
 			if (clear_bit == DELETE_RESPONSE_BIT) {
