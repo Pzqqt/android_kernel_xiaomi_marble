@@ -201,10 +201,9 @@ pkt_capture_process_mgmt_tx_data(struct wlan_objmgr_pdev *pdev,
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
 							 wh->i_addr2,
 							 WLAN_PKT_CAPTURE_ID);
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	vdev_id = wlan_vdev_get_id(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_PKT_CAPTURE_ID);
 

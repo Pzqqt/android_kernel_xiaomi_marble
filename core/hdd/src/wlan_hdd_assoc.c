@@ -1454,7 +1454,9 @@ static void hdd_send_association_event(struct net_device *dev,
 		/* start timer in sta/p2p_cli */
 		hdd_bus_bw_compute_prev_txrx_stats(adapter);
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
-		ucfg_pkt_capture_record_channel(adapter->vdev);
+
+		if (ucfg_pkt_capture_get_pktcap_mode(hdd_ctx->psoc))
+			ucfg_pkt_capture_record_channel(adapter->vdev);
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			sta_ctx->conn_info.conn_state) {
 		policy_mgr_update_connection_info(hdd_ctx->psoc,
