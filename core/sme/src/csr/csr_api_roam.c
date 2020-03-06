@@ -9468,7 +9468,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	mac_handle_t mac_handle = MAC_HANDLE(mac);
 	struct csr_roam_session *session_ptr;
 	struct csr_roam_connectedinfo *prev_connect_info;
-	tPmkidCacheInfo *pmksa_entry;
+	struct wlan_crypto_pmksa *pmksa;
 	uint32_t len = 0, roamId = 0, reason_code = 0;
 	bool is_dis_pending;
 
@@ -9563,18 +9563,18 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	 * AP.
 	 */
 	if (reason_code == eSIR_MAC_INVALID_PMKID) {
-		pmksa_entry = qdf_mem_malloc(sizeof(*pmksa_entry));
-		if (!pmksa_entry)
+		pmksa = qdf_mem_malloc(sizeof(*pmksa));
+		if (!pmksa)
 			return;
 
 		sme_warn("Assoc reject from BSSID:%pM due to invalid PMKID",
 			 session_ptr->joinFailStatusCode.bssId);
-		qdf_mem_copy(pmksa_entry->BSSID.bytes,
+		qdf_mem_copy(pmksa->bssid.bytes,
 			     &session_ptr->joinFailStatusCode.bssId,
 			     sizeof(tSirMacAddr));
 		sme_roam_del_pmkid_from_cache(mac_handle, session_ptr->vdev_id,
-					      pmksa_entry, false);
-		qdf_mem_free(pmksa_entry);
+					      pmksa, false);
+		qdf_mem_free(pmksa);
 	}
 
 	/* If Join fails while Handoff is in progress, indicate

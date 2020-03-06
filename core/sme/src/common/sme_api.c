@@ -3150,25 +3150,30 @@ void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 }
 
 QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
-					 uint8_t sessionId,
-					 tPmkidCacheInfo *pmksa,
-					 bool flush_cache)
+					 uint8_t vdev_id,
+					 struct wlan_crypto_pmksa *pmksa,
+					 bool set_pmk)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct wlan_objmgr_vdev *vdev;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_ROAM_DEL_PMKIDCACHE,
-			 sessionId, flush_cache));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_del_pmkid_from_cache(mac, sessionId,
-						       pmksa, flush_cache);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
+			 vdev_id, set_pmk));
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Vdev[%d] is NULL!", vdev_id);
+		return QDF_STATUS_E_FAILURE;
 	}
+
+	status = wlan_crypto_set_del_pmksa(vdev, pmksa, set_pmk);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Delete PMK entry failed");
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	return status;
 }
 

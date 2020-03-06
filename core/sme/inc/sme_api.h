@@ -1183,9 +1183,10 @@ QDF_STATUS sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,
 QDF_STATUS sme_send_rate_update_ind(mac_handle_t mac_handle,
 		tSirRateUpdateInd *rateUpdateParams);
 QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
-					 uint8_t sessionId,
-					 tPmkidCacheInfo *pmksa,
-					 bool flush_cache);
+					 uint8_t vdev_id,
+					 struct wlan_crypto_pmksa *pmksa,
+					 bool set_pmk);
+
 void sme_get_command_q_status(mac_handle_t mac_handle);
 
 #ifdef FEATURE_WLAN_RMC
