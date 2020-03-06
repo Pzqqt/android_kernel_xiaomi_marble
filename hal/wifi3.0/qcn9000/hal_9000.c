@@ -269,6 +269,24 @@ uint8_t hal_rx_mpdu_start_tlv_tag_valid_9000(void *rx_tlv_hdr)
 }
 
 /**
+ * hal_rx_wbm_err_msdu_continuation_get_9000 () - API to check if WBM
+ * msdu continuation bit is set
+ *
+ *@wbm_desc: wbm release ring descriptor
+ *
+ * Return: true if msdu continuation bit is set.
+ */
+uint8_t hal_rx_wbm_err_msdu_continuation_get_9000(void *wbm_desc)
+{
+	uint32_t comp_desc =
+		*(uint32_t *)(((uint8_t *)wbm_desc) +
+				WBM_RELEASE_RING_3_MSDU_CONTINUATION_OFFSET);
+
+	return (comp_desc & WBM_RELEASE_RING_3_MSDU_CONTINUATION_MASK) >>
+		WBM_RELEASE_RING_3_MSDU_CONTINUATION_LSB;
+}
+
+/**
  * hal_rx_proc_phyrx_other_receive_info_tlv_9000(): API to get tlv info
  *
  * Return: uint32_t
@@ -1548,6 +1566,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	NULL,
 	hal_rx_mpdu_start_tlv_tag_valid_9000,
 	hal_rx_sw_mon_desc_info_get_9000,
+	hal_rx_wbm_err_msdu_continuation_get_9000,
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {

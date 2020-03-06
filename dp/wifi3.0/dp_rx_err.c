@@ -813,11 +813,19 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
 				 qdf_nbuf_len(nbuf));
 
-		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
-		/* Trigger invalid peer handler wrapper */
-		dp_rx_process_invalid_peer_wrapper(soc,
-						   pdev->invalid_peer_head_msdu,
-						   mpdu_done, pool_id);
+		/* QCN9000 has the support enabled */
+		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
+			mpdu_done = true;
+			/* Trigger invalid peer handler wrapper */
+			dp_rx_process_invalid_peer_wrapper(soc,
+					nbuf, mpdu_done, pool_id);
+		} else {
+			mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
+			/* Trigger invalid peer handler wrapper */
+			dp_rx_process_invalid_peer_wrapper(soc,
+					pdev->invalid_peer_head_msdu,
+					mpdu_done, pool_id);
+		}
 
 		if (mpdu_done) {
 			pdev->invalid_peer_head_msdu = NULL;
@@ -1442,6 +1450,11 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	struct hal_wbm_err_desc_info wbm_err_info = { 0 };
 	uint8_t pool_id;
 	uint8_t tid = 0;
+	uint8_t msdu_continuation = 0;
+	bool first_msdu_in_sg = false;
+	bool is_raw_mode = false;
+	uint32_t msdu_len = 0;
+
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -1463,9 +1476,30 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		goto done;
 	}
 
-	while (qdf_likely(quota-- && (ring_desc =
-				hal_srng_dst_get_next(hal_soc,
-						      hal_ring_hdl)))) {
+	while (qdf_likely(quota)) {
+		ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
+
+		if (qdf_unlikely(!ring_desc)) {
+			/* Check hw hp in case of SG support */
+			if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
+				/*
+				 * Update the cached hp from hw hp
+				 * This is required for partially created
+				 * SG packets while quote is still left
+				 */
+				hal_srng_sync_cachedhp(hal_soc, hal_ring_hdl);
+				ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
+				if (!ring_desc) {
+					QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+							FL("No Rx Hw Desc for intermediate sg -- %pK"),
+							hal_ring_hdl);
+					break;
+				}
+			} else {
+				/* Come out of the loop in Non SG support cases */
+				break;
+			}
+		}
 
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
@@ -1519,6 +1553,31 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 						   ring_desc, rx_desc);
 		}
 
+		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
+			/* SG is detected from continuation bit */
+			msdu_continuation = hal_rx_wbm_err_msdu_continuation_get(hal_soc,
+					ring_desc);
+			if (msdu_continuation && !first_msdu_in_sg) {
+				/* Update length from first buffer in SG */
+				msdu_len = hal_rx_msdu_start_msdu_len_get(
+						qdf_nbuf_data(rx_desc->nbuf));
+				first_msdu_in_sg = true;
+				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
+			}
+
+			if (msdu_continuation) {
+				/* MSDU continued packets */
+				qdf_nbuf_set_rx_chfrag_cont(rx_desc->nbuf, 1);
+				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
+			} else {
+				/* This is the terminal packet in SG */
+				qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
+				qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
+				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
+				first_msdu_in_sg = false;
+			}
+		}
+
 		nbuf = rx_desc->nbuf;
 		qdf_nbuf_unmap_single(soc->osdev, nbuf,	QDF_DMA_FROM_DEVICE);
 
@@ -1537,6 +1596,14 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 						&tail[rx_desc->pool_id],
 						rx_desc);
+
+		/*
+		 * if continuation bit is set then we have MSDU spread
+		 * across multiple buffers, let us not decrement quota
+		 * till we reap all buffers of that MSDU.
+		 */
+		if (qdf_likely(!msdu_continuation))
+			quota -= 1;
 	}
 done:
 	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
@@ -1581,9 +1648,26 @@ done:
 
 		next = nbuf->next;
 
+		/*
+		 * Form the SG for msdu continued buffers
+		 * QCN9000 has this support
+		 */
+		if (qdf_nbuf_is_rx_chfrag_cont(nbuf)) {
+			nbuf = dp_rx_sg_create(nbuf);
+			next = nbuf->next;
+			is_raw_mode = HAL_IS_DECAP_FORMAT_RAW(soc->hal_soc, qdf_nbuf_data(nbuf));
+			if (!is_raw_mode) {
+				/* Free the pacckets in case of 802.3 SG */
+				qdf_nbuf_free(nbuf);
+				dp_info_rl("scattered 802.3 msdu dropped");
+				nbuf = next;
+				continue;
+			}
+		}
+
 		if (wbm_err_info.wbm_err_src == HAL_RX_WBM_ERR_SRC_REO) {
 			if (wbm_err_info.reo_psh_rsn
-				== HAL_RX_WBM_REO_PSH_RSN_ERROR) {
+					== HAL_RX_WBM_REO_PSH_RSN_ERROR) {
 
 				DP_STATS_INC(soc,
 					rx.err.reo_error

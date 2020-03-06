@@ -1422,6 +1422,7 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	NULL,
 	NULL,
 	NULL,
+	NULL,
 };
 
 struct hal_hw_srng_config hw_srng_table_6750[] = {

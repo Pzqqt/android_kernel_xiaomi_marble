@@ -590,6 +590,7 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_mpdu_start_tlv_tag_valid)(void *rx_tlv_hdr);
 	void (*hal_rx_sw_mon_desc_info_get)(hal_ring_desc_t rxdma_dst_ring_desc,
 					    hal_rx_mon_desc_info_t mon_desc_info);
+	uint8_t (*hal_rx_wbm_err_msdu_continuation_get)(void *ring_desc);
 };
 
 /**

@@ -69,7 +69,8 @@ struct hal_wbm_err_desc_info {
 		 reserved_1:2;
 	uint8_t wbm_err_src:3,
 		pool_id:2,
-		reserved_2:3;
+		msdu_continued:1,
+		reserved_2:2;
 };
 
 /**
@@ -2962,6 +2963,21 @@ static inline void hal_rx_wbm_err_info_get_from_tlv(uint8_t *buf,
 
 	qdf_mem_copy(wbm_er_info, pkt_tlvs->rx_padding0,
 		    sizeof(struct hal_wbm_err_desc_info));
+}
+
+/**
+ * hal_rx_wbm_err_msdu_continuation_get(): Get wbm msdu continuation
+ * bit from wbm release ring descriptor
+ * @wbm_desc: wbm ring descriptor
+ * Return: uint8_t
+ */
+static inline
+uint8_t hal_rx_wbm_err_msdu_continuation_get(hal_soc_handle_t hal_soc_hdl,
+				void *wbm_desc)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_rx_wbm_err_msdu_continuation_get(wbm_desc);
 }
 
 #define HAL_RX_MSDU_START_NSS_GET(_rx_msdu_start)		\

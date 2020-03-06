@@ -1158,6 +1158,24 @@ hal_srng_dst_num_valid_locked(hal_soc_handle_t hal_soc,
 }
 
 /**
+ * hal_srng_sync_cachedhp - sync cachehp pointer from hw hp
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring_hdl: Destination ring pointer
+ *
+ */
+static inline
+void hal_srng_sync_cachedhp(void *hal_soc,
+				hal_ring_handle_t hal_ring_hdl)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	uint32_t hp;
+
+	hp = *(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
+	srng->u.dst_ring.cached_hp = hp;
+}
+
+/**
  * hal_srng_src_reap_next - Reap next entry from a source ring and move reap
  * pointer. This can be used to release any buffers associated with completed
  * ring entries. Note that this should not be used for posting new descriptor

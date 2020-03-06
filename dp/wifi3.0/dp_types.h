@@ -1255,6 +1255,8 @@ struct dp_soc {
 
 	/* Full monitor mode support */
 	bool full_mon_mode;
+	/* SG supported for msdu continued packets from wbm release ring */
+	bool wbm_release_desc_rx_sg_support;
 };
 
 #ifdef IPA_OFFLOAD
