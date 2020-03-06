@@ -43,6 +43,32 @@ extern const struct nla_policy
 	.doit = wlan_hdd_cfg80211_configure_tdls_mode,                  \
 	vendor_command_policy(wlan_hdd_tdls_mode_configuration_policy,  \
 			      QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX)     \
+},                                                                     \
+{                                                                      \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TDLS_ENABLE,          \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                          \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |                        \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,                        \
+	.doit = wlan_hdd_cfg80211_exttdls_enable,                      \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                  \
+},                                                                     \
+{                                                                      \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TDLS_DISABLE,         \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                          \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV |                        \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,                        \
+	.doit = wlan_hdd_cfg80211_exttdls_disable,                     \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                  \
+},                                                                     \
+{                                                                      \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                       \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_TDLS_GET_STATUS,      \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                          \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV,                         \
+	.doit = wlan_hdd_cfg80211_exttdls_get_status,                  \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                  \
 },
 
 /* Bit mask flag for tdls_option to FW */
