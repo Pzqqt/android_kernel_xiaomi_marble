@@ -310,11 +310,11 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 			usermac = meta->peer_addr.mu_peer_addr[user_id];
 			cfr_debug("peermac[%d]: %s\n",
 				  user_id,
-				  ether_sprintf(usermac));
+				  mac2str(usermac));
 		}
 	} else {
 		cfr_debug("peermac: %s\n",
-			  ether_sprintf(meta->peer_addr.su_peer_addr));
+			  mac2str(meta->peer_addr.su_peer_addr));
 	}
 
 	for (chain_id = 0; chain_id < HOST_MAX_CHAINS; chain_id++) {
@@ -984,7 +984,7 @@ static void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
 	cfr_debug("<TXCOMP><%u>CFR capture method: %d vdev_id: %d mac: %s\n",
 		  cookie,
 		  event->capture_method, event->vdev_id,
-		  ether_sprintf(&event->peer_mac_addr.bytes[0]));
+		  mac2str(&event->peer_mac_addr.bytes[0]));
 
 	cfr_debug("<TXCOMP><%u>Chan: %d bw: %d phymode: %d cfreq1: %d cfrq2: %d "
 		  "nss: %d\n",
@@ -1044,7 +1044,6 @@ static int
 target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 {
 	QDF_STATUS retval = 0;
-	ol_ath_soc_softc_t *scn = (ol_ath_soc_softc_t *)sc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -1060,7 +1059,12 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	struct wlan_channel *bss_chan;
 	struct wlan_lmac_if_cfr_rx_ops *cfr_rx_ops = NULL;
 
-	psoc = scn->psoc_obj;
+	if (!sc || !data) {
+		cfr_err("sc or data is null");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(sc);
 	if (!psoc) {
 		cfr_err("psoc is null");
 		return -EINVAL;
@@ -1126,7 +1130,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
 		cfr_err("CFR capture failed as peer is in powersave : %s",
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+			  mac2str(&tx_evt_param.peer_mac_addr.bytes[0]));
 
 		enh_prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
 		if (cfr_rx_ops->cfr_info_send)
@@ -1142,7 +1146,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
 		cfr_debug("CFR capture failed for peer : %s",
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+			  mac2str(&tx_evt_param.peer_mac_addr.bytes[0]));
 		retval = -EINVAL;
 		goto end;
 	}
@@ -1150,7 +1154,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	if (tx_evt_param.status & CFR_TX_EVT_STATUS_MASK) {
 		cfr_debug("TX packet returned status %d for peer: %s",
 			  tx_evt_param.status & CFR_TX_EVT_STATUS_MASK,
-			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
+			  mac2str(&tx_evt_param.peer_mac_addr.bytes[0]));
 		retval = -EINVAL;
 		goto end;
 	}

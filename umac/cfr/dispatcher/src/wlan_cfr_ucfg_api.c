@@ -701,13 +701,13 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 		cfr_err("Data subtype : 0x%x\n",
 			glbl_cfg->data_subtype_filter);
 		cfr_err("TX Addr : %s\n",
-			ether_sprintf(glbl_cfg->tx_addr));
+			mac2str(glbl_cfg->tx_addr));
 		cfr_err("TX Addr Mask : %s\n",
-			ether_sprintf(glbl_cfg->tx_addr_mask));
+			mac2str(glbl_cfg->tx_addr_mask));
 		cfr_err("RX Addr : %s\n",
-			ether_sprintf(glbl_cfg->rx_addr));
+			mac2str(glbl_cfg->rx_addr));
 		cfr_err("RX Addr Mask: %s\n",
-			ether_sprintf(glbl_cfg->rx_addr_mask));
+			mac2str(glbl_cfg->rx_addr_mask));
 	}
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);

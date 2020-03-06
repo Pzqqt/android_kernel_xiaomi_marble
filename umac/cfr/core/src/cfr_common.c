@@ -18,14 +18,16 @@
 
 #include <cfr_defs_i.h>
 #include <qdf_types.h>
-#include <osif_private.h>
-#include <ol_if_athvar.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_cfr_tgt_api.h>
 #include <qdf_streamfs.h>
 #include <target_if.h>
+#ifndef CFR_USE_FIXED_FOLDER
+#include <os_if_athvar.h>
+#endif
+
 
 QDF_STATUS
 wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -169,28 +171,52 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
+#ifdef CFR_USE_FIXED_FOLDER
+static const char *cfr_get_dev_name(struct wlan_objmgr_pdev *pdev)
+{
+	const char *default_name = "wlan";
+
+	return default_name;
+}
+#else
+static const char *cfr_get_dev_name(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pa = NULL;
 	char folder[32];
 	struct net_device *pdev_netdev;
 	struct ol_ath_softc_net80211 *scn;
 	struct target_pdev_info *tgt_hdl;
+	const char *default_name = "wlan";
 
-	if (pdev == NULL) {
+	if (!pdev) {
 		cfr_err("PDEV is NULL\n");
-		return QDF_STATUS_E_FAILURE;
+		return default_name;
 	}
 
 	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
 
 	if (!tgt_hdl) {
 		cfr_err("target_pdev_info is NULL\n");
-		return QDF_STATUS_E_FAILURE;
+		return default_name;
 	}
 
 	scn = target_pdev_get_feature_ptr(tgt_hdl);
 	pdev_netdev = scn->netdev;
+
+	return pdev_netdev->name;
+}
+#endif
+
+QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_cfr *pa = NULL;
+	char folder[32];
+
+	if (!pdev) {
+		cfr_err("PDEV is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 
 	if (pa == NULL) {
@@ -203,7 +229,7 @@ QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	snprintf(folder, sizeof(folder), "cfr%s", pdev_netdev->name);
+	snprintf(folder, sizeof(folder), "cfr%s", cfr_get_dev_name(pdev));
 
 	pa->dir_ptr = qdf_streamfs_create_dir((const char *)folder, NULL);
 
