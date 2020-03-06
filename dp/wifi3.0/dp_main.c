@@ -2003,6 +2003,8 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 				ppdu_end_interrupts_mac1 - j;
 			irq_id_map[num_irq++] =
 				rxdma2host_monitor_status_ring_mac1 - j;
+			irq_id_map[num_irq++] =
+				rxdma2host_monitor_destination_mac1 - j;
 		}
 
 		if (rx_wbm_rel_ring_mask & (1 << j))

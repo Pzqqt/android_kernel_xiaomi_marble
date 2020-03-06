@@ -328,6 +328,12 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				dp_tx_capture_get_user_id(dp_pdev,
 							  rx_desc_tlv);
 
+				if (*ppdu_id == msdu_ppdu_id)
+					dp_pdev->rx_mon_stats.ppdu_id_match++;
+				else
+					dp_pdev->rx_mon_stats.ppdu_id_mismatch
+						++;
+
 				dp_pdev->mon_last_linkdesc_paddr =
 					buf_info.paddr;
 			}
@@ -892,7 +898,6 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 			DP_STATS_INC(pdev, dropped.mon_radiotap_update_err, 1);
 			goto mon_deliver_fail;
 		}
-
 		pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 						mon_mpdu,
 						&pdev->ppdu_info.rx_status);

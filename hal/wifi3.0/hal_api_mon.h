@@ -442,11 +442,13 @@ enum {
 /**
  * enum
  * @HAL_RX_MON_PPDU_START: PPDU start TLV is decoded in HAL
- * @HAL_RX_MON_PPDU_END: PPDU end TLV is decided in HAL
+ * @HAL_RX_MON_PPDU_END: PPDU end TLV is decoded in HAL
+ * @HAL_RX_MON_PPDU_RESET: Not PPDU start and end TLV
  */
 enum {
 	HAL_RX_MON_PPDU_START = 0,
 	HAL_RX_MON_PPDU_END,
+	HAL_RX_MON_PPDU_RESET,
 };
 
 /* struct hal_rx_ppdu_common_info  - common ppdu info

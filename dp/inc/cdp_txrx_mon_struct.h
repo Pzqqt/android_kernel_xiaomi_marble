@@ -223,6 +223,8 @@ enum {
  * @mon_rx_bufs_reaped_dest: Rx buffer reap count
  * @ppdu_id_mismatch: counter to track ppdu id mismatch in
  *  mointor status and monitor destination ring
+ * @ppdu_id_match: counter to track ppdu id match in
+ *  mointor status and monitor destination ring
  */
 struct cdp_pdev_mon_stats {
 #ifndef REMOVE_MON_DBG_STATS
@@ -247,5 +249,6 @@ struct cdp_pdev_mon_stats {
 	uint32_t mon_rx_bufs_replenished_dest;
 	uint32_t mon_rx_bufs_reaped_dest;
 	uint32_t ppdu_id_mismatch;
+	uint32_t ppdu_id_match;
 };
 #endif

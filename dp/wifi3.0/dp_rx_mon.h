@@ -330,6 +330,7 @@ dp_rx_mon_update_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
 			rx_mon_stats->status_ppdu_end_mis++;
 		rx_mon_stats->status_ppdu_state
 			= CDP_MON_PPDU_START;
+		ppdu_info->rx_state = HAL_RX_MON_PPDU_RESET;
 	} else if (ppdu_info->rx_state ==
 		HAL_RX_MON_PPDU_END) {
 		rx_mon_stats->status_ppdu_end++;
@@ -340,6 +341,7 @@ dp_rx_mon_update_dbg_ppdu_stats(struct hal_rx_ppdu_info *ppdu_info,
 			rx_mon_stats->status_ppdu_compl++;
 		rx_mon_stats->status_ppdu_state
 			= CDP_MON_PPDU_END;
+		ppdu_info->rx_state = HAL_RX_MON_PPDU_RESET;
 	}
 }
 
