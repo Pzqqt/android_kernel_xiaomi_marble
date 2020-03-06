@@ -362,7 +362,9 @@ static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
  */
 static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
 {
-	disable_irq_nosync(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+	pfrm_disable_irq_nosync(hif_sc->qdf_dev->dev,
+				hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+
 }
 
 /* hif_ce_srng_msi_irq_enable() - enable the irq for msi
@@ -373,7 +375,9 @@ static void hif_ce_srng_msi_irq_disable(struct hif_softc *hif_sc, int ce_id)
  */
 static void hif_ce_srng_msi_irq_enable(struct hif_softc *hif_sc, int ce_id)
 {
-	enable_irq(hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+	pfrm_enable_irq(hif_sc->qdf_dev->dev,
+			hif_ce_msi_map_ce_to_irq(hif_sc, ce_id));
+
 }
 
 /* hif_ce_msi_configure_irq() - configure the irq
@@ -452,9 +456,11 @@ free_irq:
 static void hif_exec_grp_irq_disable(struct hif_exec_context *hif_ext_group)
 {
 	int i;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 
 	for (i = 0; i < hif_ext_group->numirq; i++)
-		disable_irq_nosync(hif_ext_group->os_irq[i]);
+		pfrm_disable_irq_nosync(scn->qdf_dev->dev,
+					hif_ext_group->os_irq[i]);
 }
 
 /**
@@ -466,9 +472,10 @@ static void hif_exec_grp_irq_disable(struct hif_exec_context *hif_ext_group)
 static void hif_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 {
 	int i;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 
 	for (i = 0; i < hif_ext_group->numirq; i++)
-		enable_irq(hif_ext_group->os_irq[i]);
+		pfrm_enable_irq(scn->qdf_dev->dev, hif_ext_group->os_irq[i]);
 }
 
 const char *hif_ipci_get_irq_name(int irq_no)
