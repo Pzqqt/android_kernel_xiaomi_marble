@@ -9537,42 +9537,6 @@ static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 	}
 }
 
-#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
-int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
-{
-	struct hdd_context *hdd_ctx;
-	int ret;
-	bool crash_inject;
-	QDF_STATUS status;
-
-	hdd_debug("WE_SET_FW_CRASH_INJECT: %d %d",
-		  v1, v2);
-	pr_err("SSR is triggered by iwpriv CRASH_INJECT: %d %d\n",
-	       v1, v2);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get crash inject ini config");
-		return 0;
-	}
-
-	if (!crash_inject) {
-		hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
-		return 0;
-	}
-
-	if (v1 == 3) {
-		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
-		return 0;
-	}
-	ret = wma_cli_set2_command(adapter->vdev_id,
-				   GEN_PARAM_CRASH_INJECT,
-				   v1, v2, GEN_CMD);
-	return ret;
-}
-#endif
-
 #ifdef CONFIG_DP_TRACE
 void hdd_set_dump_dp_trace(uint16_t cmd_type, uint16_t count)
 {

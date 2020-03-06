@@ -122,6 +122,9 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_unit_test.o
 ifeq ($(CONFIG_WLAN_MWS_INFO_DEBUGFS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_coex.o
 endif
+ifeq ($(CONFIG_WLAN_DEBUG_CRASH_INJECT), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_debugfs_crash_inject.o
+endif
 endif
 
 ifeq ($(CONFIG_WLAN_CONV_SPECTRAL_ENABLE),y)

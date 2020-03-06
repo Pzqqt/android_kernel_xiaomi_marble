@@ -4206,4 +4206,27 @@ void wlan_hdd_del_monitor(struct hdd_context *hdd_ctx,
 {
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
+
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
+/**
+ * hdd_crash_inject() - Inject a crash
+ * @adapter: Adapter upon which the command was received
+ * @v1: first value to inject
+ * @v2: second value to inject
+ *
+ * This function is the handler for the crash inject debug feature.
+ * This feature only exists for internal testing and must not be
+ * enabled on a production device.
+ *
+ * Return: 0 on success and errno on failure
+ */
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2);
+#else
+static inline
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
+{
+	return -ENOTSUPP;
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -16762,6 +16762,42 @@ wlan_hdd_add_monitor_check(struct hdd_context *hdd_ctx,
 	return 0;
 }
 #endif /* WLAN_FEATURE_PKT_CAPTURE */
+
+#ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
+int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
+{
+	struct hdd_context *hdd_ctx;
+	int ret;
+	bool crash_inject;
+	QDF_STATUS status;
+
+	hdd_debug("v1: %d v2: %d", v1, v2);
+	pr_err("SSR is triggered by CRASH_INJECT: %d %d\n",
+	       v1, v2);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get crash inject ini config");
+		return 0;
+	}
+
+	if (!crash_inject) {
+		hdd_err("Crash Inject ini disabled, Ignore Crash Inject");
+		return 0;
+	}
+
+	if (v1 == 3) {
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+		return 0;
+	}
+	ret = wma_cli_set2_command(adapter->vdev_id,
+				   GEN_PARAM_CRASH_INJECT,
+				   v1, v2, GEN_CMD);
+	return ret;
+}
+#endif
+
 /* Register the module init/exit functions */
 module_init(hdd_module_init);
 module_exit(hdd_module_exit);
