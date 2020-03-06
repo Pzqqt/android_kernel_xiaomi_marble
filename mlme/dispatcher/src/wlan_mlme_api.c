@@ -3671,7 +3671,7 @@ void wlan_mlme_clear_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 					 struct mlme_pmk_info *pmk_recv)
 {
 	struct mlme_legacy_priv *mlme_priv;
-	struct wlan_mlme_sae_single_pmk sae_single_pmk;
+	struct wlan_mlme_sae_single_pmk *sae_single_pmk;
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
@@ -3679,22 +3679,22 @@ void wlan_mlme_clear_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	sae_single_pmk = mlme_priv->mlme_roam.sae_single_pmk;
+	sae_single_pmk = &mlme_priv->mlme_roam.sae_single_pmk;
 
 	if (!pmk_recv) {
 		/* Process flush pmk cmd */
 		mlme_legacy_debug("Flush sae_single_pmk info");
-		qdf_mem_zero(&sae_single_pmk.pmk_info,
-			     sizeof(sae_single_pmk.pmk_info));
-	} else if (pmk_recv->pmk_len != sae_single_pmk.pmk_info.pmk_len) {
+		qdf_mem_zero(&sae_single_pmk->pmk_info,
+			     sizeof(sae_single_pmk->pmk_info));
+	} else if (pmk_recv->pmk_len != sae_single_pmk->pmk_info.pmk_len) {
 		mlme_legacy_debug("Invalid pmk len");
 		return;
-	} else if (!qdf_mem_cmp(&sae_single_pmk.pmk_info.pmk, pmk_recv->pmk,
+	} else if (!qdf_mem_cmp(&sae_single_pmk->pmk_info.pmk, pmk_recv->pmk,
 		   pmk_recv->pmk_len)) {
 			/* Process delete pmk cmd */
 			mlme_legacy_debug("Clear sae_single_pmk info");
-			qdf_mem_zero(&sae_single_pmk.pmk_info,
-				     sizeof(sae_single_pmk.pmk_info));
+			qdf_mem_zero(&sae_single_pmk->pmk_info,
+				     sizeof(sae_single_pmk->pmk_info));
 	}
 }
 #endif
