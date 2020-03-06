@@ -77,8 +77,8 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 /*
  * Rate limit based on pkt prototype
  */
-#define QDF_MAX_DHCP_PKTS_PER_SEC       (10)
-#define QDF_MAX_EAPOL_PKTS_PER_SEC      (10)
+#define QDF_MAX_DHCP_PKTS_PER_SEC       (20)
+#define QDF_MAX_EAPOL_PKTS_PER_SEC      (50)
 #define QDF_MAX_ARP_PKTS_PER_SEC        (5)
 #define QDF_MAX_DNS_PKTS_PER_SEC        (5)
 #define QDF_MAX_OTHER_PKTS_PER_SEC      (1)
@@ -920,7 +920,7 @@ void qdf_dp_set_proto_event_bitmap(uint32_t value);
  * Return: none
  */
 void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
-			       uint8_t subtype, uint8_t dir, uint8_t msdu_id,
+			       uint8_t subtype, uint8_t dir, uint16_t msdu_id,
 			       uint8_t status);
 #else
 static inline
@@ -1014,7 +1014,7 @@ void qdf_dp_trace_data_pkt(qdf_nbuf_t nbuf, uint8_t pdev_id,
 
 static inline
 void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
-			       uint8_t subtype, uint8_t dir, uint8_t msdu_id,
+			       uint8_t subtype, uint8_t dir, uint16_t msdu_id,
 			       uint8_t status)
 {
 }
