@@ -159,10 +159,8 @@ pkt_capture_get_pktcap_mode(struct wlan_objmgr_psoc *psoc)
 	vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(psoc,
 							QDF_STA_MODE,
 							WLAN_PKT_CAPTURE_ID);
-	if (!vdev) {
-		pkt_capture_err("vdev is NULL");
+	if (!vdev)
 		return 0;
-	}
 
 	vdev_priv = pkt_capture_vdev_get_priv(vdev);
 	if (!vdev_priv)
