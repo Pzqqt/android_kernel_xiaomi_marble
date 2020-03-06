@@ -3366,14 +3366,14 @@ uint8_t reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 
 	if (chan_enum == INVALID_CHANNEL) {
 		reg_err("channel is invalid");
-		return QDF_STATUS_E_FAILURE;
+		return REG_INVALID_TXPOWER;
 	}
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
 	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
 		reg_err("reg pdev priv obj is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return REG_INVALID_TXPOWER;
 	}
 
 	reg_channels = pdev_priv_obj->cur_chan_list;
