@@ -6078,25 +6078,19 @@ QDF_STATUS populate_dot11f_he_caps(struct mac_context *mac_ctx, struct pe_sessio
 				   tDot11fIEhe_cap *he_cap)
 {
 	uint8_t *ppet;
-	uint32_t value = WNI_CFG_HE_PPET_LEN;
+	uint32_t value = 0;
 
 	he_cap->present = 1;
 
 	if (!session) {
 		qdf_mem_copy(he_cap, &mac_ctx->mlme_cfg->he_caps.dot11_he_cap,
 			     sizeof(tDot11fIEhe_cap));
-		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
-			     mac_ctx->mlme_cfg->he_caps.he_ppet_5g,
-			     value);
-
-		ppet = he_cap->ppet.ppe_threshold.ppe_th;
-		he_cap->ppet.ppe_threshold.num_ppe_th =
-						lim_truncate_ppet(ppet, value);
 		return QDF_STATUS_SUCCESS;
 	}
 	/** TODO: String items needs attention. **/
 	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
 	if (he_cap->ppet_present) {
+		value = WNI_CFG_HE_PPET_LEN;
 		/* if session is present, populate PPET based on band */
 		if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
 			qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,

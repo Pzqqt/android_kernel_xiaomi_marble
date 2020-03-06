@@ -1887,7 +1887,10 @@ struct he_capability_info {
 /*
  * frame parser does not include optional 160 and 80+80 mcs set for MIN IE len
  */
-#define SIR_MAC_HE_CAP_MIN_LEN       (DOT11F_IE_HE_CAP_MIN_LEN + 8)
+#define SIR_MAC_HE_CAP_MIN_LEN       (DOT11F_IE_HE_CAP_MIN_LEN)
+#define HE_CAP_160M_MCS_MAP_LEN      4
+#define HE_CAP_80P80_MCS_MAP_LEN     4
+#define HE_CAP_OUI_LEN               3
 
 /* QOS action frame definitions */
 
