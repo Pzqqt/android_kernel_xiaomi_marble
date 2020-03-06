@@ -1270,7 +1270,7 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	pe_nofl_info("Auth RX: vdev %d sys role %d lim_state %d from " QDF_MAC_ADDR_STR " rssi %d auth_alg %d seq %d",
 		     pe_session->vdev_id, GET_LIM_SYSTEM_ROLE(pe_session),
 		     pe_session->limMlmState,
-		     QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
+		     QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
 		     WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
 		     auth_alg, curr_seq_num);
 
