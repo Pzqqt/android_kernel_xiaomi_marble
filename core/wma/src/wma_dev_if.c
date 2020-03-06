@@ -3344,15 +3344,18 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 
 	if (!maxTxPower)
 		WMA_LOGW("Setting Tx power limit to 0");
-	wma_debug("Set maxTx pwr to %d", maxTxPower);
-	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-					      WMI_VDEV_PARAM_TX_PWRLIMIT,
-					      maxTxPower);
-	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("failed to set WMI_VDEV_PARAM_TX_PWRLIMIT");
-	else
-		mlme_set_max_reg_power(intr[vdev_id].vdev, maxTxPower);
-
+	wma_debug("Set max Tx power to %d", maxTxPower);
+	if (maxTxPower != INVALID_TXPOWER) {
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					 WMI_VDEV_PARAM_TX_PWRLIMIT,
+					 maxTxPower);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("failed to set WMI_VDEV_PARAM_TX_PWRLIMIT");
+		else
+			mlme_set_max_reg_power(intr[vdev_id].vdev, maxTxPower);
+	} else {
+		wma_err("Invalid max Tx power");
+	}
 	/* Slot time */
 	if (shortSlotTimeSupported)
 		slot_time = WMI_VDEV_SLOT_TIME_SHORT;
@@ -3521,6 +3524,11 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 		wma_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* Fill bss_chan after vdev start */
+	qdf_mem_copy(vdev->vdev_mlme.bss_chan,
+		     vdev->vdev_mlme.des_chan,
+		     sizeof(struct wlan_channel));
 
 	bss_power = wlan_reg_get_channel_reg_power_for_freq(wma->pdev,
 							    vdev->vdev_mlme.bss_chan->ch_freq);
