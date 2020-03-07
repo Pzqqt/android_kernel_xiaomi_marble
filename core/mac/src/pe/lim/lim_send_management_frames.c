@@ -352,10 +352,11 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 	/* Add qcn_ie only if qcn ie is not present in additional_ie */
 	if (!qcn_ie)
-		populate_dot11f_qcn_ie(mac_ctx, &pr.qcn_ie, QCN_IE_ATTR_ID_ALL);
+		populate_dot11f_qcn_ie(mac_ctx, pesession,
+				       &pr.qcn_ie, QCN_IE_ATTR_ID_ALL);
 	else
-		populate_dot11f_qcn_ie(mac_ctx, &pr.qcn_ie,
-				       QCN_IE_ATTR_ID_VHT_MCS11);
+		populate_dot11f_qcn_ie(mac_ctx, pesession,
+				       &pr.qcn_ie, QCN_IE_ATTR_ID_VHT_MCS11);
 
 	/*
 	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
@@ -1374,7 +1375,7 @@ lim_send_assoc_rsp_mgmt_frame(
 			populate_dot11f_vht_operation(mac_ctx, pe_session,
 					&frm.vendor_vht_ie.VHTOperation);
 			is_vht = true;
-			populate_dot11f_qcn_ie(mac_ctx, &frm.qcn_ie,
+			populate_dot11f_qcn_ie(mac_ctx, pe_session, &frm.qcn_ie,
 					       QCN_IE_ATTR_ID_ALL);
 		}
 		populate_dot11f_ext_cap(mac_ctx, is_vht, &frm.ExtCap,
@@ -2088,7 +2089,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, vht_enabled,
 				&frm->ExtCap, pe_session);
 
-	populate_dot11f_qcn_ie(mac_ctx, &frm->qcn_ie, QCN_IE_ATTR_ID_ALL);
+	populate_dot11f_qcn_ie(mac_ctx, pe_session,
+			       &frm->qcn_ie, QCN_IE_ATTR_ID_ALL);
 
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");

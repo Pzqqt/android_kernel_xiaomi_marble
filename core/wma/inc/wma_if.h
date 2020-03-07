@@ -244,6 +244,7 @@ typedef struct {
 	tDot11fIEhe_cap he_config;
 	tDot11fIEhe_op he_op;
 	tDot11fIEhe_6ghz_band_cap he_6ghz_band_caps;
+	uint16_t he_mcs_12_13_map;
 #endif
 	uint8_t stbc_capable;
 #ifdef WLAN_SUPPORT_TWT

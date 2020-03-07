@@ -1225,7 +1225,36 @@ populate_dot11f_ext_cap(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11AX
+static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
+					     struct pe_session *pe_session,
+					     tDot11fIEqcn_ie *qcn_ie,
+					     uint8_t attr_id)
+{
+	uint16_t mcs_12_13_supp;
+
+	if (wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq))
+		mcs_12_13_supp = mac->mlme_cfg->he_caps.he_mcs_12_13_supp_2g;
+	else
+		mcs_12_13_supp = mac->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
+
+	if (!mcs_12_13_supp)
+		return;
+
+	qcn_ie->present = 1;
+	qcn_ie->he_mcs13_attr.present = 1;
+	qcn_ie->he_mcs13_attr.he_mcs_12_13_supp = mcs_12_13_supp;
+}
+#else /* WLAN_FEATURE_11AX */
+static void populate_dot11f_qcn_ie_he_params(struct mac_context *mac,
+					     struct pe_session *pe_session,
+					     tDot11fIEqcn_ie *qcn_ie,
+					     uint8_t attr_id)
+{}
+#endif /* WLAN_FEATURE_11AX */
+
 void populate_dot11f_qcn_ie(struct mac_context *mac,
+			    struct pe_session *pe_session,
 			    tDot11fIEqcn_ie *qcn_ie,
 			    uint8_t attr_id)
 {
@@ -1243,6 +1272,8 @@ void populate_dot11f_qcn_ie(struct mac_context *mac,
 		qcn_ie->vht_mcs11_attr.present = 1;
 		qcn_ie->vht_mcs11_attr.vht_mcs_10_11_supp = 1;
 	}
+
+	populate_dot11f_qcn_ie_he_params(mac, pe_session, qcn_ie, attr_id);
 }
 
 QDF_STATUS
@@ -6228,8 +6259,8 @@ populate_dot11f_he_bss_color_change(struct mac_context *mac_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
-#endif
+#endif /* WLAN_FEATURE_11AX_BSS_COLOR */
+#endif /* WLAN_FEATURE_11AX */
 
 #ifdef WLAN_SUPPORT_TWT
 QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,

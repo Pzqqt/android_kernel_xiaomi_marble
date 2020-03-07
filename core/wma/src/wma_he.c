@@ -162,6 +162,7 @@ static void wma_convert_he_ppet(uint8_t *he_ppet,
  * @supp_mcs: Max MCS supported (Tx/Rx)
  * @tx_chain_mask: Tx chain mask
  * @rx_chain_mask: Rx chain mask
+ * @mcs_12_13_support: Store the supported MCS 12/13 capability
  *
  * This function converts various HE capability received as part of extended
  * service ready event into dot11f structure. GET macros are defined at WMI
@@ -171,7 +172,8 @@ static void wma_convert_he_ppet(uint8_t *he_ppet,
  */
 static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
 			       uint32_t *phy_cap, uint32_t supp_mcs,
-			       uint32_t tx_chain_mask, uint32_t rx_chain_mask)
+			       uint32_t tx_chain_mask, uint32_t rx_chain_mask,
+			       uint16_t *mcs_12_13_supp)
 {
 	uint8_t nss, chan_width;
 	uint16_t rx_mcs_le_80, tx_mcs_le_80, rx_mcs_160, tx_mcs_160;
@@ -227,6 +229,7 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t *mac_cap,
 		WMI_HECAP_MAC_PUNCSOUNDING_GET(mac_cap[1]);
 	he_cap->ht_vht_trg_frm_rx_supp =
 		WMI_HECAP_MAC_HTVHTTRIGRX_GET(mac_cap[1]);
+	*mcs_12_13_supp = WMI_GET_BITS(mac_cap[1], 16, 16);
 	/* HE PHY capabilities */
 	chan_width = WMI_HECAP_PHY_CBW_GET(phy_cap);
 	he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(chan_width, 0);
@@ -932,7 +935,8 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 					mac_cap->he_cap_phy_info_2G,
 					mac_cap->he_supp_mcs_2G,
 					mac_cap->tx_chain_mask_2G,
-					mac_cap->rx_chain_mask_2G);
+					mac_cap->rx_chain_mask_2G,
+					&tgt_cfg->he_mcs_12_13_supp_2g);
 			WMA_LOGD(FL("2g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet2G.numss_m1,
 					mac_cap->he_ppet2G.ru_bit_mask);
@@ -958,7 +962,8 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 					mac_cap->he_cap_phy_info_5G,
 					mac_cap->he_supp_mcs_5G,
 					mac_cap->tx_chain_mask_5G,
-					mac_cap->rx_chain_mask_5G);
+					mac_cap->rx_chain_mask_5G,
+					&tgt_cfg->he_mcs_12_13_supp_5g);
 			WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet5G.numss_m1,
 					mac_cap->he_ppet5G.ru_bit_mask);
@@ -1251,18 +1256,49 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 		params->supportedRates.rx_he_mcs_map_lt_80;
 	peer->peer_he_tx_mcs_set[0] =
 		params->supportedRates.tx_he_mcs_map_lt_80;
+	if (params->he_mcs_12_13_map) {
+		peer->peer_he_tx_mcs_set[0] |=
+			(params->he_mcs_12_13_map <<
+			 WMA_MCS_12_13_MAP_L80) & WMA_MCS_12_13_PEER_RATE_MAP;
+		peer->peer_he_rx_mcs_set[0] |=
+			(params->he_mcs_12_13_map <<
+			 WMA_MCS_12_13_MAP_L80) & WMA_MCS_12_13_PEER_RATE_MAP;
+	}
 
 	if (params->ch_width > CH_WIDTH_80MHZ) {
 		peer->peer_he_mcs_count = WMI_HOST_MAX_HE_RATE_SET;
-		peer->peer_he_rx_mcs_set[1] =
+		peer->peer_he_rx_mcs_set[1] |=
 			params->supportedRates.rx_he_mcs_map_160;
-		peer->peer_he_tx_mcs_set[1] =
+		peer->peer_he_tx_mcs_set[1] |=
 			params->supportedRates.tx_he_mcs_map_160;
-		peer->peer_he_rx_mcs_set[2] =
+		peer->peer_he_rx_mcs_set[2] |=
 			params->supportedRates.rx_he_mcs_map_80_80;
-		peer->peer_he_tx_mcs_set[2] =
+		peer->peer_he_tx_mcs_set[2] |=
 			params->supportedRates.tx_he_mcs_map_80_80;
+
+		if (params->he_mcs_12_13_map) {
+			peer->peer_he_tx_mcs_set[1] |=
+				(params->he_mcs_12_13_map <<
+				 WMA_MCS_12_13_MAP_G80) &
+				 WMA_MCS_12_13_PEER_RATE_MAP;
+			peer->peer_he_tx_mcs_set[2] |=
+				(params->he_mcs_12_13_map <<
+				 WMA_MCS_12_13_MAP_G80) &
+				 WMA_MCS_12_13_PEER_RATE_MAP;
+			peer->peer_he_rx_mcs_set[1] |=
+				(params->he_mcs_12_13_map <<
+				 WMA_MCS_12_13_MAP_G80) &
+				 WMA_MCS_12_13_PEER_RATE_MAP;
+			peer->peer_he_rx_mcs_set[2] |=
+				(params->he_mcs_12_13_map <<
+				 WMA_MCS_12_13_MAP_G80) &
+				 WMA_MCS_12_13_PEER_RATE_MAP;
+		}
 	}
+
+	wma_debug("Sending TX/RX MCS set to FW: <=80: %x, 80+80: %x, 160: %x",
+		  peer->peer_he_rx_mcs_set[0], peer->peer_he_rx_mcs_set[1],
+		  peer->peer_he_rx_mcs_set[2]);
 
 #define HE2x2MCSMASK 0xc
 

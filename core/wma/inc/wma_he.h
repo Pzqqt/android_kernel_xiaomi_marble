@@ -23,6 +23,13 @@
 #include "sir_api.h"
 #include "target_if.h"
 
+/* Number of bits to shift on HE MCS 12 13 MAP to get the desired map */
+#define WMA_MCS_12_13_MAP_L80 16
+#define WMA_MCS_12_13_MAP_G80 8
+
+/* Mask to fill tx and rx mcs rate maps to be sent to the FW */
+#define WMA_MCS_12_13_PEER_RATE_MAP 0x00ff0000
+
 #ifdef WLAN_FEATURE_11AX
 /**
  * wma_print_he_cap() - Print HE capabilities

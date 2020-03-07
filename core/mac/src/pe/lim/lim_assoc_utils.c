@@ -2015,8 +2015,20 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
 		add_sta_params->stbc_capable =
 			add_sta_params->he_config.rx_stbc_lt_80mhz;
 }
+
+static void lim_update_he_mcs_12_13(tpAddStaParams add_sta_params,
+				    tpDphHashNode sta_ds)
+{
+	if (sta_ds->he_mcs_12_13_map)
+		add_sta_params->he_mcs_12_13_map = sta_ds->he_mcs_12_13_map;
+}
+
 #else
 static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
+{}
+
+static void lim_update_he_mcs_12_13(tpAddStaParams add_sta_params,
+				    tpDphHashNode sta_ds)
 {}
 #endif
 
@@ -2443,6 +2455,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 	}
 
 	lim_update_he_stbc_capable(add_sta_params);
+	lim_update_he_mcs_12_13(add_sta_params, sta_ds);
 
 	msg_q.type = WMA_ADD_STA_REQ;
 	msg_q.reserved = 0;
@@ -3539,6 +3552,8 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 						 NULL,
 						 pAssocRsp);
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
+			lim_update_he_mcs_12_13(&pAddBssParams->staContext,
+						sta);
 		}
 
 		/*

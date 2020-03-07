@@ -206,6 +206,8 @@ struct wma_tgt_cfg {
 	uint8_t ppet_5g[HE_MAX_PPET_SIZE];
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;
+	uint16_t he_mcs_12_13_supp_2g;
+	uint16_t he_mcs_12_13_supp_5g;
 #endif
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;

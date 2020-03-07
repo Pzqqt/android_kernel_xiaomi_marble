@@ -1701,7 +1701,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				assoc_req->qcn_ie.vht_mcs11_attr.
 				vht_mcs_10_11_supp;
 	}
-	lim_intersect_sta_he_caps(assoc_req, session, sta_ds);
+	lim_intersect_sta_he_caps(mac_ctx, assoc_req, session, sta_ds);
 
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),

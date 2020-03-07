@@ -6601,6 +6601,9 @@ void lim_add_he_cap(struct mac_context *mac_ctx, struct pe_session *pe_session,
 	qdf_mem_copy(&add_sta_params->he_config, &assoc_req->he_cap,
 		     sizeof(add_sta_params->he_config));
 
+	add_sta_params->he_mcs_12_13_map =
+		assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+
 	if (lim_is_he_6ghz_band(pe_session))
 		lim_update_he_6ghz_band_caps(mac_ctx,
 					     &assoc_req->he_6ghz_band_cap,
@@ -6686,15 +6689,40 @@ static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
 					peer_he->twt_responder : 0;
 }
 
-void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, struct pe_session *session,
-		tpDphHashNode sta_ds)
+void lim_intersect_sta_he_caps(struct mac_context *mac_ctx,
+			       tpSirAssocReq assoc_req,
+			       struct pe_session *session,
+			       tpDphHashNode sta_ds)
 {
 	tDot11fIEhe_cap *rcvd_he = &assoc_req->he_cap;
 	tDot11fIEhe_cap *session_he = &session->he_config;
 	tDot11fIEhe_cap *peer_he = &sta_ds->he_config;
 
-	if (sta_ds->mlmStaContext.he_capable)
-		lim_intersect_he_caps(rcvd_he, session_he, peer_he);
+	if (!sta_ds->mlmStaContext.he_capable)
+		return;
+
+	/* If HE is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_HE(session->dot11mode))
+		return;
+
+	lim_intersect_he_caps(rcvd_he, session_he, peer_he);
+
+	/* If MCS 12/13 is supported from assoc QCN IE */
+	if (assoc_req->qcn_ie.present &&
+	    assoc_req->qcn_ie.he_mcs13_attr.present) {
+		sta_ds->he_mcs_12_13_map =
+		      assoc_req->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+	} else {
+		return;
+	}
+
+	/* Take intersection of FW capability for HE MCS 12/13 */
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
+		sta_ds->he_mcs_12_13_map &=
+			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_2g;
+	else
+		sta_ds->he_mcs_12_13_map &=
+			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
 }
 
 void lim_intersect_ap_he_caps(struct pe_session *session, struct bss_params *add_bss,
@@ -6756,7 +6784,8 @@ void lim_update_he_6gop_assoc_resp(struct bss_params *pAddBssParams,
 	pAddBssParams->staContext.ch_width = pAddBssParams->ch_width;
 }
 
-void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+void lim_update_stads_he_caps(struct mac_context *mac_ctx,
+			      tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      struct pe_session *session_entry)
 {
 	tDot11fIEhe_cap *he_cap;
@@ -6769,6 +6798,26 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 	qdf_mem_copy(&sta_ds->he_config, he_cap, sizeof(*he_cap));
 
+	/* If HE is not supported, do not fill sta_ds and return */
+	if (!IS_DOT11_MODE_HE(session_entry->dot11mode))
+		return;
+
+	/* If MCS 12/13 is supported by the assoc resp QCN IE */
+	if (assoc_rsp->qcn_ie.present &&
+	    assoc_rsp->qcn_ie.he_mcs13_attr.present) {
+		sta_ds->he_mcs_12_13_map =
+			assoc_rsp->qcn_ie.he_mcs13_attr.he_mcs_12_13_supp;
+	} else {
+		return;
+	}
+
+	/* Take intersection of the FW capability for HE MCS 12/13 */
+	if (wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq))
+		sta_ds->he_mcs_12_13_map &=
+			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_2g;
+	else
+		sta_ds->he_mcs_12_13_map &=
+			mac_ctx->mlme_cfg->he_caps.he_mcs_12_13_supp_5g;
 }
 
 void lim_update_stads_he_6ghz_op(struct pe_session *session,
@@ -7096,6 +7145,7 @@ void lim_update_sta_he_capable(struct mac_context *mac,
 	else
 		add_sta_params->he_capable = session_entry->he_capable;
 
+	add_sta_params->he_mcs_12_13_map = sta_ds->he_mcs_12_13_map;
 	pe_debug("he_capable: %d", add_sta_params->he_capable);
 }
 
@@ -7430,6 +7480,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 		peer_he_caps->tx_he_mcs_map_lt_80, nss,
 		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
 		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
+
 	if (session_entry->ch_width == CH_WIDTH_160MHZ) {
 		lim_populate_he_mcs_per_bw(
 			mac_ctx, &rates->rx_he_mcs_map_160,

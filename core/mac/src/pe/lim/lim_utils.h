@@ -1059,14 +1059,17 @@ void lim_intersect_ap_he_caps(struct pe_session *session, struct bss_params *add
 
 /**
  * lim_intersect_sta_he_caps() - Intersect STA capability with SAP capability
+ * @mac_ctx: pointer to the MAC context
  * @assoc_req: pointer to assoc request
  * @session: pointer to PE session
  * @sta_ds: pointer to STA dph hash table entry
  *
  * Return: None
  */
-void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, struct pe_session *session,
-		tpDphHashNode sta_ds);
+void lim_intersect_sta_he_caps(struct mac_context *mac_ctx,
+			       tpSirAssocReq assoc_req,
+			       struct pe_session *session,
+			       tpDphHashNode sta_ds);
 
 /**
  * lim_add_he_cap() - Copy HE capability into Add sta params
@@ -1193,13 +1196,15 @@ void lim_log_he_cap(struct mac_context *mac, tDot11fIEhe_cap *he_cap);
 
 /**
  * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
+ * @mac_ctx: pointer to mac context
  * @sta_ds: pointer to sta dph hash table entry
  * @assoc_rsp: pointer to assoc response
  * @session_entry: pointer to PE session
  *
  * Return: None
  */
-void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+void lim_update_stads_he_caps(struct mac_context *mac_ctx,
+			      tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      struct pe_session *session_entry);
 
 /**
@@ -1420,13 +1425,17 @@ static inline void lim_intersect_ap_he_caps(struct pe_session *session,
 	return;
 }
 
-static inline void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req,
-		struct pe_session *session, tpDphHashNode sta_ds)
+static inline void lim_intersect_sta_he_caps(struct mac_context *mac_ctx,
+					     tpSirAssocReq assoc_req,
+					     struct pe_session *session,
+					     tpDphHashNode sta_ds)
 {
 }
 
-static inline void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
-		struct pe_session *session_entry)
+static inline void lim_update_stads_he_caps(struct mac_context *mac_ctx,
+					    tpDphHashNode sta_ds,
+					    tpSirAssocRsp assoc_rsp,
+					    struct pe_session *session_entry)
 {
 	return;
 }

@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2006-2007, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2006-2007, 2014-2018, 2020 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2617,6 +2618,7 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
 
 const QTI_VERSION_ATTR_ID = 1;
 const QTI_VHT_MCS_10_11_ATTR_ID = 2;
+const QTI_HE_MCS_11_12_ATTR_ID = 9;
 
 IE qcn_ie (EID_VENDOR_SPECIFIC) OUI ( 0x8C, 0xFD, 0xF0, 0x01 )
 {
@@ -2629,6 +2631,11 @@ IE qcn_ie (EID_VENDOR_SPECIFIC) OUI ( 0x8C, 0xFD, 0xF0, 0x01 )
    OPTIE IE vht_mcs11_attr (QTI_VHT_MCS_10_11_ATTR_ID)
    {
       vht_mcs_10_11_supp, 1;
+   }
+
+   OPTIE IE he_mcs13_attr (QTI_HE_MCS_11_12_ATTR_ID)
+   {
+      he_mcs_12_13_supp, 2;
    }
 }
 

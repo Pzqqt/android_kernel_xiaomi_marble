@@ -186,7 +186,8 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	}
 
 	if (IS_DOT11_MODE_HE(session_entry->dot11mode))
-		lim_update_stads_he_caps(sta_ds, assoc_rsp, session_entry);
+		lim_update_stads_he_caps(mac_ctx, sta_ds, assoc_rsp,
+					 session_entry);
 
 	if (lim_is_sta_he_capable(sta_ds))
 		he_cap = &assoc_rsp->he_cap;
