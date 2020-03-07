@@ -1630,7 +1630,6 @@ static void hal_reo_setup_generic(struct hal_soc *soc,
 				       SEQ_WCSS_UMAC_REO_REG_OFFSET)));
 	}
 
-
 	/* TODO: Check if the following registers shoould be setup by host:
 	 * AGING_CONTROL
 	 * HIGH_MEMORY_THRESHOLD

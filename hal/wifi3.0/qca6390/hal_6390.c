@@ -988,6 +988,44 @@ static inline qdf_iomem_t hal_get_window_address_6390(struct hal_soc *hal_soc,
 	return addr;
 }
 
+/**
+ * hal_reo_set_err_dst_remap_6390(): Function to set REO error destination
+ *				     ring remap register
+ * @hal_soc: Pointer to hal_soc
+ *
+ * Return: none.
+ */
+static void
+hal_reo_set_err_dst_remap_6390(void *hal_soc)
+{
+	/*
+	 * Set REO error 2k jump (error code 5) / OOR (error code 7)
+	 * frame routed to REO2TCL ring.
+	 */
+	uint32_t dst_remap_ix0 =
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 0) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 1) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 2) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 3) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 4) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 5) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 6) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 7) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 8) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 9);
+
+		HAL_REG_WRITE(hal_soc,
+			      HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      dst_remap_ix0);
+
+		hal_info("HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0 0x%x",
+			 HAL_REG_READ(
+			 hal_soc,
+			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			 SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+}
+
 struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -996,6 +1034,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 	hal_get_window_address_6390,
+	hal_reo_set_err_dst_remap_6390,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_6390,

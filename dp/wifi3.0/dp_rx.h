@@ -132,6 +132,69 @@ struct dp_rx_desc {
 	(((_cookie) & RX_DESC_COOKIE_INDEX_MASK) >>	\
 			RX_DESC_COOKIE_INDEX_SHIFT)
 
+#define FRAME_MASK_IPV4_ARP   1
+#define FRAME_MASK_IPV4_DHCP  2
+#define FRAME_MASK_IPV4_EAPOL 4
+#define FRAME_MASK_IPV6_DHCP  8
+
+#ifdef DP_RX_SPECIAL_FRAME_NEED
+/**
+ * dp_rx_is_special_frame() - check is RX frame special needed
+ *
+ * @nbuf: RX skb pointer
+ * @frame_mask: the mask for speical frame needed
+ *
+ * Check is RX frame wanted matched with mask
+ *
+ * Return: true - special frame needed, false - no
+ */
+static inline
+bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
+{
+	if (((frame_mask & FRAME_MASK_IPV4_ARP) &&
+	     qdf_nbuf_is_ipv4_arp_pkt(nbuf)) ||
+	    ((frame_mask & FRAME_MASK_IPV4_DHCP) &&
+	     qdf_nbuf_is_ipv4_dhcp_pkt(nbuf)) ||
+	    ((frame_mask & FRAME_MASK_IPV4_EAPOL) &&
+	     qdf_nbuf_is_ipv4_eapol_pkt(nbuf)) ||
+	    ((frame_mask & FRAME_MASK_IPV6_DHCP) &&
+	     qdf_nbuf_is_ipv6_dhcp_pkt(nbuf)))
+		return true;
+
+	return false;
+}
+
+/**
+ * dp_rx_deliver_special_frame() - Deliver the RX special frame to stack
+ *				   if matches mask
+ *
+ * @soc: Datapath soc handler
+ * @peer: pointer to DP peer
+ * @nbuf: pointer to the skb of RX frame
+ * @frame_mask: the mask for speical frame needed
+ *
+ * note: Msdu_len must have been stored in QDF_NBUF_CB_RX_PKT_LEN(nbuf) and
+ * single nbuf is expected.
+ *
+ * return: true - nbuf has been delivered to stack, false - not.
+ */
+bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
+				 qdf_nbuf_t nbuf, uint32_t frame_mask);
+#else
+static inline
+bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
+{
+	return false;
+}
+
+static inline
+bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
+				 qdf_nbuf_t nbuf, uint32_t frame_mask)
+{
+	return false;
+}
+#endif
+
 /* DOC: Offset to obtain LLC hdr
  *
  * In the case of Wifi parse error

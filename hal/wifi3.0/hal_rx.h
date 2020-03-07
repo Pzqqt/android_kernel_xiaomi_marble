@@ -2121,6 +2121,22 @@ static inline bool hal_rx_reo_is_2k_jump(hal_ring_desc_t rx_desc)
 			true : false;
 }
 
+/**
+ * hal_rx_reo_is_oor_error() - Indicate if this error was caused by OOR
+ *
+ * @ring_desc: opaque pointer used by HAL to get the REO destination entry
+ *
+ * Return: true: error caused by OOR, false: other error
+ */
+static inline bool hal_rx_reo_is_oor_error(void *rx_desc)
+{
+	struct reo_destination_ring *reo_desc =
+			(struct reo_destination_ring *)rx_desc;
+
+	return (HAL_RX_REO_ERROR_GET(reo_desc) ==
+		HAL_REO_ERR_REGULAR_FRAME_OOR) ? true : false;
+}
+
 #define HAL_WBM_RELEASE_RING_DESC_LEN_DWORDS (NUM_OF_DWORDS_WBM_RELEASE_RING)
 /**
  * hal_dump_wbm_rel_desc() - dump wbm release descriptor
@@ -3655,5 +3671,64 @@ hal_rx_mpdu_start_tlv_tag_valid(hal_soc_handle_t hal_soc_hdl,
 	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
 
 	return hal->ops->hal_rx_mpdu_start_tlv_tag_valid(rx_tlv_hdr);
+}
+
+/**
+ * hal_rx_buffer_addr_info_get_paddr(): get paddr/sw_cookie from
+ *					<struct buffer_addr_info> structure
+ * @buf_addr_info: pointer to <struct buffer_addr_info> structure
+ * @buf_info: structure to return the buffer information including
+ *		paddr/cookie
+ *
+ * return: None
+ */
+static inline
+void hal_rx_buffer_addr_info_get_paddr(void *buf_addr_info,
+				       struct hal_buf_info *buf_info)
+{
+	buf_info->paddr =
+	 (HAL_RX_BUFFER_ADDR_31_0_GET(buf_addr_info) |
+	  ((uint64_t)(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
+
+	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
+}
+
+/**
+ * hal_rx_get_next_msdu_link_desc_buf_addr_info(): get next msdu link desc
+ *						   buffer addr info
+ * @link_desc_va: pointer to current msdu link Desc
+ * @next_addr_info: buffer to save next msdu link Desc buffer addr info
+ *
+ * return: None
+ */
+static inline
+void hal_rx_get_next_msdu_link_desc_buf_addr_info(
+				void *link_desc_va,
+				struct buffer_addr_info *next_addr_info)
+{
+	struct rx_msdu_link *msdu_link = link_desc_va;
+
+	if (!msdu_link) {
+		qdf_mem_zero(next_addr_info,
+			     sizeof(struct buffer_addr_info));
+		return;
+	}
+
+	*next_addr_info = msdu_link->next_msdu_link_desc_addr_info;
+}
+
+/**
+ * hal_rx_is_buf_addr_info_valid(): check is the buf_addr_info valid
+ *
+ * @buf_addr_info: pointer to buf_addr_info structure
+ *
+ * return: true: has valid paddr, false: not.
+ */
+static inline
+bool hal_rx_is_buf_addr_info_valid(
+				struct buffer_addr_info *buf_addr_info)
+{
+	return (HAL_RX_BUFFER_ADDR_31_0_GET(buf_addr_info) == 0) ?
+						false : true;
 }
 #endif /* _HAL_RX_H */

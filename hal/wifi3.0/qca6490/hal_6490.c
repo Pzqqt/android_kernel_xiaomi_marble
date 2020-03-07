@@ -1411,6 +1411,42 @@ bool hal_rx_get_fisa_timeout_6490(uint8_t *buf)
 	return HAL_RX_TLV_GET_FISA_TIMEOUT(buf);
 }
 
+/**
+ * hal_reo_set_err_dst_remap_6490(): Function to set REO error destination
+ *				     ring remap register
+ * @hal_soc: Pointer to hal_soc
+ *
+ * Return: none.
+ */
+static void
+hal_reo_set_err_dst_remap_6490(void *hal_soc)
+{
+	/*
+	 * Set REO error 2k jump (error code 5) / OOR (error code 7)
+	 * frame routed to REO2TCL ring.
+	 */
+	uint32_t dst_remap_ix0 =
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 0) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 1) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 2) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 3) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 4) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 5) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 6) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 7);
+
+		HAL_REG_WRITE(hal_soc,
+			      HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      dst_remap_ix0);
+
+		hal_info("HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0 0x%x",
+			 HAL_REG_READ(
+			 hal_soc,
+			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			 SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+}
+
 struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -1419,6 +1455,7 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 	hal_get_window_address_6490,
+	hal_reo_set_err_dst_remap_6490,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_6490,

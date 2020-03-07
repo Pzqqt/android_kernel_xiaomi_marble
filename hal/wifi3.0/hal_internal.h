@@ -469,6 +469,7 @@ struct hal_hw_txrx_ops {
 				uint32_t num_entries);
 	qdf_iomem_t (*hal_get_window_address)(struct hal_soc *hal_soc,
 					      qdf_iomem_t addr);
+	void (*hal_reo_set_err_dst_remap)(void *hal_soc);
 
 	/* tx */
 	void (*hal_tx_desc_set_dscp_tid_table_id)(void *desc, uint8_t id);

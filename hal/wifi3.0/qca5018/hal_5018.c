@@ -1352,6 +1352,7 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 	hal_get_window_address_5018,
+	NULL,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_5018,

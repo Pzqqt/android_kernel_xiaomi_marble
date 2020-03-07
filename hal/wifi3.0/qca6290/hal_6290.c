@@ -1000,6 +1000,7 @@ struct hal_hw_txrx_ops qca6290_hal_hw_txrx_ops = {
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 	hal_get_window_address_6290,
+	NULL,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_6290,
