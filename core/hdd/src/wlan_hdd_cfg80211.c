@@ -149,6 +149,7 @@
 #include "wlan_hdd_btc_chain_mode.h"
 #include "os_if_nan.h"
 #include "wlan_hdd_apf.h"
+#include "wlan_hdd_cfr.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -14301,6 +14302,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 
 	FEATURE_BSS_TRANSITION_VENDOR_COMMANDS
 	FEATURE_SPECTRAL_SCAN_VENDOR_COMMANDS
+	FEATURE_CFR_VENDOR_COMMANDS
 	FEATURE_11AX_VENDOR_COMMANDS
 
 	{
