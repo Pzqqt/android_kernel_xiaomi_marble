@@ -929,6 +929,8 @@ struct wlan_mlme_he_caps {
 	uint8_t enable_ul_mimo;
 	uint8_t enable_ul_ofdm;
 	uint32_t he_sta_obsspd;
+	uint16_t he_mcs_12_13_supp_2g;
+	uint16_t he_mcs_12_13_supp_5g;
 };
 #endif
 
