@@ -1270,6 +1270,7 @@ struct wlan_lmac_if_atf_rx_ops {
  * @fd_get_valid_fd_period: Get valid FD period
  * @fd_swfda_handler:       SWFDA event handler
  * @fd_offload:             Offload FD frame
+ * @fd_tmpl_update:         Update the FD frame template
  */
 struct wlan_lmac_if_fd_rx_ops {
 	uint8_t (*fd_is_fils_enable)(struct wlan_objmgr_vdev *vdev);
@@ -1281,6 +1282,7 @@ struct wlan_lmac_if_fd_rx_ops {
 	QDF_STATUS (*fd_swfda_handler)(struct wlan_objmgr_vdev *vdev);
 	QDF_STATUS (*fd_offload)(struct wlan_objmgr_vdev *vdev,
 				 uint32_t vdev_id);
+	QDF_STATUS (*fd_tmpl_update)(struct wlan_objmgr_vdev *vdev);
 };
 #endif
 

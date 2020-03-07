@@ -204,6 +204,7 @@ wlan_lmac_if_fd_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	fd_rx_ops->fd_get_valid_fd_period = tgt_fd_get_valid_fd_period;
 	fd_rx_ops->fd_swfda_handler = tgt_fd_swfda_handler;
 	fd_rx_ops->fd_offload = tgt_fd_offload;
+	fd_rx_ops->fd_tmpl_update = tgt_fd_tmpl_update;
 }
 #else
 static void
