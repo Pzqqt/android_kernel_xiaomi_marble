@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -283,5 +283,25 @@ void tgt_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev)
 
 	if (cfr_tx_ops->cfr_update_global_cfg)
 		cfr_tx_ops->cfr_update_global_cfg(pdev);
+}
+
+QDF_STATUS tgt_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
+				       bool is_subscribe)
+{
+	struct wlan_lmac_if_cfr_tx_ops *cfr_tx_ops = NULL;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		cfr_err("Invalid psoc\n");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_tx_ops = wlan_psoc_get_cfr_txops(psoc);
+
+	if (cfr_tx_ops->cfr_subscribe_ppdu_desc)
+		return cfr_tx_ops->cfr_subscribe_ppdu_desc(pdev,
+							   is_subscribe);
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif

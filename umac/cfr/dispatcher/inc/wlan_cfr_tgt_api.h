@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -165,5 +165,16 @@ void tgt_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
  * @pdev: pointer to pdev_object
  */
 void tgt_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_cfr_subscribe_ppdu_desc() - Target interface to
+ * subscribe/unsubscribe WDI PPDU desc event
+ * @pdev: pointer to pdev_object
+ * @is_subscribe: subscribe or unsubscribei
+ *
+ * return QDF status
+ */
+QDF_STATUS tgt_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
+				       bool is_subscribe);
 #endif
 #endif

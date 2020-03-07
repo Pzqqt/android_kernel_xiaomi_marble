@@ -553,6 +553,8 @@ struct wlan_lmac_if_cfr_tx_ops {
 	void (*cfr_dump_lut_enh)(struct wlan_objmgr_pdev *pdev);
 	void (*cfr_rx_tlv_process)(struct wlan_objmgr_pdev *pdev, void *nbuf);
 	void (*cfr_update_global_cfg)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*cfr_subscribe_ppdu_desc)(struct wlan_objmgr_pdev *pdev,
+					      bool is_subscribe);
 #endif
 };
 #endif /* WLAN_CFR_ENABLE */

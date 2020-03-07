@@ -263,5 +263,16 @@ QDF_STATUS ucfg_cfr_rcc_clr_dbg_counters(struct wlan_objmgr_vdev *vdev);
  * Return: status
  */
 QDF_STATUS ucfg_cfr_rcc_dump_lut(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_cfr_subscribe_ppdu_desc() - User space interface to
+ * subscribe/unsubscribe WDI PPDU desc event
+ * @pdev: pointer to pdev_object
+ * @is_subscribe: subscribe or unsubscribei
+ *
+ * return QDF status
+ */
+QDF_STATUS ucfg_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
+					bool is_subscribe);
 #endif
 #endif

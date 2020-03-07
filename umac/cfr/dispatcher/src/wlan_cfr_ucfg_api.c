@@ -1141,4 +1141,10 @@ bool ucfg_cfr_get_rcc_enabled(struct wlan_objmgr_vdev *vdev)
 
 	return rcc_enabled;
 }
+
+QDF_STATUS ucfg_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
+					bool is_subscribe)
+{
+	return tgt_cfr_subscribe_ppdu_desc(pdev, is_subscribe);
+}
 #endif
