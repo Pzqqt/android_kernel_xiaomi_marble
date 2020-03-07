@@ -491,4 +491,17 @@ typedef struct sLimSpecMgmtInfo {
 	tLimDot11hChanSwStates dot11hChanSwState;
 } tLimSpecMgmtInfo, *tpLimSpecMgmtInfo;
 
+/**
+ * struct lim_delba_req_info - Delba request struct
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @tid: tid
+ * @reason_code: reason code
+ */
+struct lim_delba_req_info {
+	uint8_t vdev_id;
+	tSirMacAddr peer_macaddr;
+	uint8_t tid;
+	uint8_t reason_code;
+};
 #endif

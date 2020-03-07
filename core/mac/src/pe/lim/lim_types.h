@@ -1163,6 +1163,22 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 					 struct pe_session *session,
 					 uint8_t addba_extn_present,
 					 uint8_t amsdu_support, uint8_t is_wep);
+
+/**
+ * lim_send_delba_action_frame() - Send delba to peer
+ * @mac_ctx: mac context
+ * @vdev_id: vdev id
+ * @peer_macaddr: Peer mac addr
+ * @tid: Tid number
+ * @reason_code: reason code
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+QDF_STATUS lim_send_delba_action_frame(struct mac_context *mac_ctx,
+				       uint8_t vdev_id,
+				       uint8_t *peer_macaddr, uint8_t tid,
+				       uint8_t reason_code);
+
 /**
  * lim_process_join_failure_timeout() - This function is called to process
  * JoinFailureTimeout

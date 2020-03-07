@@ -584,3 +584,27 @@ void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 	qdf_mem_free(msg);
 	lim_msg->bodyptr = NULL;
 }
+
+void lim_req_send_delba_ind_process(struct mac_context *mac_ctx,
+				    struct scheduler_msg *lim_msg)
+{
+	struct lim_delba_req_info *req =
+			(struct lim_delba_req_info *)lim_msg->bodyptr;
+	QDF_STATUS status;
+	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!req) {
+		pe_err("Invalid body pointer in message");
+		return;
+	}
+
+	status = lim_send_delba_action_frame(mac_ctx, req->vdev_id,
+					     req->peer_macaddr,
+					     req->tid, req->reason_code);
+	if (status != QDF_STATUS_SUCCESS)
+		cdp_delba_tx_completion(dp_soc, req->peer_macaddr,
+					req->vdev_id, req->tid,
+					WMI_MGMT_TX_COMP_TYPE_DISCARD);
+	qdf_mem_free(req);
+	lim_msg->bodyptr = NULL;
+}

@@ -2396,6 +2396,21 @@ void wma_delete_invalid_peer_entries(uint8_t vdev_id, uint8_t *peer_mac_addr);
 uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
 
 /**
+ * wma_dp_send_delba_ind() - the callback for DP to notify WMA layer
+ * to del ba of rx
+ * @vdev_id: vdev id
+ * @peer_macaddr: peer mac address
+ * @tid: tid of rx
+ * @reason_code: reason code
+ *
+ * Return: 0 for success or non-zero on failure
+ */
+int wma_dp_send_delba_ind(uint8_t vdev_id,
+			  uint8_t *peer_macaddr,
+			  uint8_t tid,
+			  uint8_t reason_code);
+
+/**
  * is_roam_inprogress() - Is vdev in progress
  * @vdev_id: vdev of interest
  *

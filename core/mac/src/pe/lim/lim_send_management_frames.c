@@ -5117,6 +5117,165 @@ error_addba_rsp:
 }
 
 /**
+ * lim_delba_tx_complete_cnf() - Confirmation for Delba OTA
+ * @context: pointer to global mac
+ * @buf: netbuf of Del BA frame
+ * @tx_complete : Sent status
+ * @params; tx completion params
+ *
+ * Return: This returns QDF_STATUS
+ */
+static QDF_STATUS lim_delba_tx_complete_cnf(void *context,
+					    qdf_nbuf_t buf,
+					    uint32_t tx_complete,
+					    void *params)
+{
+	struct mac_context *mac_ctx = (struct mac_context *)context;
+	tSirMacMgmtHdr *mac_hdr;
+	struct sDot11fdelba_req frm;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint32_t frame_len;
+	QDF_STATUS status;
+	uint8_t *data;
+	struct wmi_mgmt_params *mgmt_params = (struct wmi_mgmt_params *)params;
+
+	if (!mgmt_params || !mac_ctx || !buf || !soc) {
+		pe_err("delba tx cnf invalid parameters");
+		goto error;
+	}
+	data = qdf_nbuf_data(buf);
+	if (!data) {
+		pe_err("Delba frame is NULL");
+		goto error;
+	}
+
+	mac_hdr = (tSirMacMgmtHdr *)data;
+	qdf_mem_zero((void *)&frm, sizeof(struct sDot11fdelba_req));
+	frame_len = sizeof(frm);
+	status = dot11f_unpack_delba_req(mac_ctx, (uint8_t *)data +
+					 sizeof(*mac_hdr), frame_len,
+					 &frm, false);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to unpack and parse delba (0x%08x, %d bytes)",
+		       status, frame_len);
+		goto error;
+	}
+	pe_debug("delba ota done vdev %d %pM tid %d desc_id %d status %d",
+		 mgmt_params->vdev_id, mac_hdr->da, frm.delba_param_set.tid,
+		 mgmt_params->desc_id, tx_complete);
+	cdp_delba_tx_completion(soc, mac_hdr->da, mgmt_params->vdev_id,
+				frm.delba_param_set.tid, tx_complete);
+
+error:
+	if (buf)
+		qdf_nbuf_free(buf);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS lim_send_delba_action_frame(struct mac_context *mac_ctx,
+				       uint8_t vdev_id, uint8_t *peer_macaddr,
+				       uint8_t tid, uint8_t reason_code)
+{
+	struct pe_session *session;
+	struct sDot11fdelba_req frm;
+	QDF_STATUS qdf_status;
+	tpSirMacMgmtHdr mgmt_hdr;
+	uint32_t num_bytes, payload_size = 0;
+	uint32_t status;
+	void *pkt_ptr = NULL;
+	uint8_t *frame_ptr;
+	uint8_t tx_flag = 0;
+
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!session) {
+		pe_debug("delba invalid vdev id %d ", vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	pe_debug("send delba vdev %d %pM tid %d reason %d", vdev_id,
+		 peer_macaddr, tid, reason_code);
+	qdf_mem_zero((uint8_t *)&frm, sizeof(frm));
+	frm.Category.category = ACTION_CATEGORY_BACK;
+	frm.Action.action = DELBA;
+	frm.delba_param_set.initiator = 0;
+	frm.delba_param_set.tid = tid;
+	frm.Reason.code = reason_code;
+
+	status = dot11f_get_packed_delba_req_size(mac_ctx, &frm, &payload_size);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to calculate the packed size for a DELBA(0x%08x).",
+		       status);
+		/* We'll fall back on the worst case scenario: */
+		payload_size = sizeof(struct sDot11fdelba_req);
+	} else if (DOT11F_WARNED(status)) {
+		pe_warn("Warnings in calculating the packed size for a DELBA (0x%08x).",
+			status);
+	}
+	num_bytes = payload_size + sizeof(*mgmt_hdr);
+	qdf_status = cds_packet_alloc(num_bytes, (void **)&frame_ptr,
+				      (void **)&pkt_ptr);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status) || !pkt_ptr) {
+		pe_err("Failed to allocate %d bytes for a DELBA",
+		       num_bytes);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_zero(frame_ptr, num_bytes);
+
+	lim_populate_mac_header(mac_ctx, frame_ptr, SIR_MAC_MGMT_FRAME,
+				SIR_MAC_MGMT_ACTION, peer_macaddr,
+				session->self_mac_addr);
+
+	/* Update A3 with the BSSID */
+	mgmt_hdr = (tpSirMacMgmtHdr)frame_ptr;
+	sir_copy_mac_addr(mgmt_hdr->bssId, session->bssId);
+
+	/* DEL is a robust mgmt action frame,
+	 * set the "protect" (aka WEP) bit in the FC
+	 */
+	lim_set_protected_bit(mac_ctx, session, peer_macaddr, mgmt_hdr);
+
+	status = dot11f_pack_delba_req(mac_ctx, &frm,
+				       frame_ptr + sizeof(tSirMacMgmtHdr),
+				       payload_size, &payload_size);
+	if (DOT11F_FAILED(status)) {
+		pe_err("Failed to pack a DELBA (0x%08x)",
+		       status);
+		qdf_status = QDF_STATUS_E_FAILURE;
+		goto error_delba;
+	} else if (DOT11F_WARNED(status)) {
+		pe_warn("There were warnings while packing DELBA (0x%08x)",
+			status);
+	}
+	if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+	    wlan_reg_is_6ghz_chan_freq(session->curr_op_freq) ||
+	    session->opmode == QDF_P2P_CLIENT_MODE ||
+	    session->opmode == QDF_P2P_GO_MODE)
+		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
+			 session->peSessionId, mgmt_hdr->fc.subType));
+	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, pkt_ptr,
+						(uint16_t)num_bytes,
+						TXRX_FRM_802_11_MGMT,
+						ANI_TXDIR_TODS, 7,
+						NULL, frame_ptr,
+						lim_delba_tx_complete_cnf,
+						tx_flag, vdev_id,
+						false, 0, RATEID_DEFAULT);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		pe_err("delba wma_tx_frame FAILED! Status [%d]", qdf_status);
+		return qdf_status;
+	} else {
+		return QDF_STATUS_SUCCESS;
+	}
+
+error_delba:
+	if (pkt_ptr)
+		cds_packet_free((void *)pkt_ptr);
+
+	return qdf_status;
+}
+
+/**
  * lim_tx_mgmt_frame() - Transmits Auth mgmt frame
  * @mac_ctx Pointer to Global MAC structure
  * @mb_msg: Received message info

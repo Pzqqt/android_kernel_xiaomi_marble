@@ -1841,6 +1841,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case SIR_LIM_RX_INVALID_PEER:
 		lim_rx_invalid_peer_process(mac_ctx, msg);
 		break;
+	case SIR_HAL_REQ_SEND_DELBA_REQ_IND:
+		lim_req_send_delba_ind_process(mac_ctx, msg);
+		break;
 	case SIR_LIM_JOIN_FAIL_TIMEOUT:
 	case SIR_LIM_PERIODIC_JOIN_PROBE_REQ_TIMEOUT:
 	case SIR_LIM_AUTH_FAIL_TIMEOUT:

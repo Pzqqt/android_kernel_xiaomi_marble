@@ -1807,6 +1807,18 @@ void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 				 struct scheduler_msg *lim_msg);
 
 /**
+ * lim_req_send_delba_ind_process() - process send delba indication
+ * @mac_ctx: mac context
+ * @lim_msg: lim message
+ *
+ * This function will process the send delba indication from DP.
+ *
+ * Return: None
+ */
+void lim_req_send_delba_ind_process(struct mac_context *mac_ctx,
+				    struct scheduler_msg *lim_msg);
+
+/**
  * lim_send_beacon() - send beacon indication to firmware
  * @mac_ctx: Pointer to Global MAC structure
  * @session: session pointer
