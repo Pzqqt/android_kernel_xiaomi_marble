@@ -2457,6 +2457,7 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 		pe_debug("sta->htSupportedChannelWidthSet: 0x%x",
 				sta->htSupportedChannelWidthSet);
 
+		sta->ch_width = sta->htSupportedChannelWidthSet;
 		sta->htMIMOPSState = htCaps->mimoPowerSave;
 		sta->htMaxAmsduLength = htCaps->maximalAMSDUsize;
 		sta->htAMpduDensity = htCaps->mpduDensity;
