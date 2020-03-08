@@ -260,7 +260,11 @@ dp_peer_tx_sojourn_stats_print(uint8_t *peer_mac,
 		      sojourn_stats->sum_sojourn_msdu[tid],
 		      sojourn_stats->num_msdus[tid]);
 	}
-	PRINT("sizeof(avg): %"PRIu32,
+#ifdef __LP64__
+	PRINT("sizeof(avg) : %"PRIu64,
+#else
+	PRINT("sizeof(avg) : %"PRIu32,
+#endif
 				sizeof(sojourn_stats->avg_sojourn_msdu[tid]));
 	PRINT("\n...........................................");
 	PRINT("...................................");
