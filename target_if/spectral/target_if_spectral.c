@@ -3281,7 +3281,8 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 				    extension_channel;
 			}
 
-		} else if (spectral->ch_width[smode] == CH_WIDTH_160MHZ) {
+		} else if (is_ch_width_160_or_80p80(
+			   spectral->ch_width[smode])) {
 			/* Set the FFT Size */
 
 			/* The below applies to both 160 and 80+80 cases */

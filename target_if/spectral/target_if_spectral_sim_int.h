@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -119,9 +119,8 @@ struct spectralsim_context {
 /* Helper Macros */
 
 /* Allocate and populate reportset for a single configuration */
-#define SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx, reportset, width, \
-						is_80_80)                 \
-	{                                                                 \
+#define SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx, reportset, width) \
+	do {                                                                 \
 	(reportset) = (struct spectralsim_reportset *)                       \
 		qdf_mem_malloc(sizeof(struct spectralsim_reportset));        \
 									  \
@@ -133,13 +132,13 @@ struct spectralsim_context {
 	qdf_mem_zero((reportset), sizeof(struct spectralsim_reportset));     \
 									  \
 	if (target_if_populate_reportset_static( \
-		(simctx), (reportset), (width), (is_80_80)) != 0) { \
+		(simctx), (reportset), (width)) != 0) { \
 		target_if_depopulate_simdata((simctx));        \
 		return -EPERM;                                 \
 	}                                                                 \
 									  \
 	(reportset)->next = NULL;                                         \
-	}
+	} while (0)
 
 /* Depopulate and free list of report sets */
 #define SPECTRAL_SIM_REPORTSET_DEPOPLFREE_LIST(reportset)                 \

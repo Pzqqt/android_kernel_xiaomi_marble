@@ -251,6 +251,7 @@ target_if_get_offset_swar_sec80(uint32_t channel_width)
 		offset = OFFSET_CH_WIDTH_80;
 		break;
 	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_80P80MHZ:
 		offset = OFFSET_CH_WIDTH_160;
 		break;
 	default:
@@ -810,6 +811,8 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 
 	uint8_t segid = 0;
 	uint8_t segid_sec80 = 0;
+	enum phy_ch_width ch_width =
+				spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL];
 
 	if (spectral->is_160_format)
 		segid_skiplen = sizeof(SPECTRAL_SEGID_INFO);
@@ -967,8 +970,8 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 		acs_stats->nfc_ctl_rssi = control_rssi;
 		acs_stats->nfc_ext_rssi = extension_rssi;
 
-		if (spectral->is_160_format && spectral->ch_width
-		    [SPECTRAL_SCAN_MODE_NORMAL] == CH_WIDTH_160MHZ) {
+		if (spectral->is_160_format &&
+		    is_ch_width_160_or_80p80(ch_width)) {
 			/*
 			 * We expect to see one more Search FFT report, and it
 			 * should be equal in size to the current one.
@@ -1453,8 +1456,8 @@ target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (spectral->ch_width[smode] != CH_WIDTH_160MHZ) {
-		spectral_err_rl("Current scan BW %d is not 160 for mode %d",
+	if (!is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
+		spectral_err_rl("Scan BW %d is not 160/80p80 for mode %d",
 				spectral->ch_width[smode], smode);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1913,8 +1916,9 @@ target_if_consume_spectral_report_gen3(
 				target_reset_count;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
-		if (spectral->ch_width[spectral_mode] == CH_WIDTH_160MHZ &&
-		    spectral->rparams.fragmentation_160[spectral_mode]) {
+		if (is_ch_width_160_or_80p80(spectral->ch_width
+		    [spectral_mode]) && spectral->rparams.
+		    fragmentation_160[spectral_mode]) {
 			ret = target_if_160mhz_delivery_state_change(
 					spectral, spectral_mode,
 					detector_id);
@@ -1967,8 +1971,9 @@ target_if_consume_spectral_report_gen3(
 		params.bin_pwr_data = (uint8_t *)((uint8_t *)p_fft_report +
 						   SPECTRAL_FFT_BINS_POS);
 		params.pwr_count = fft_bin_count;
-		if (spectral->ch_width[spectral_mode] == CH_WIDTH_160MHZ &&
-		    !spectral->rparams.fragmentation_160[spectral_mode]) {
+		if (is_ch_width_160_or_80p80(spectral->ch_width
+		    [spectral_mode]) && !spectral->rparams.
+		    fragmentation_160[spectral_mode]) {
 			params.agc_total_gain_sec80 =
 				sscan_report_fields.sscan_agc_total_gain;
 			params.gainchange_sec80 =
@@ -2041,8 +2046,9 @@ target_if_consume_spectral_report_gen3(
 		params.raw_timestamp_sec80 = p_sfft->timestamp;
 
 		/* Take care of state transitions for 160 MHz and 80p80 */
-		if (spectral->ch_width[spectral_mode] == CH_WIDTH_160MHZ &&
-		    spectral->rparams.fragmentation_160[spectral_mode]) {
+		if (is_ch_width_160_or_80p80(spectral->ch_width
+		    [spectral_mode]) && spectral->rparams.
+		    fragmentation_160[spectral_mode]) {
 			ret = target_if_160mhz_delivery_state_change(
 					spectral, spectral_mode,
 					detector_id);

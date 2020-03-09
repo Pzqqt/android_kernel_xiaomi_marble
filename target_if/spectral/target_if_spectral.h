@@ -1445,6 +1445,7 @@ static inline
 enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
+	enum phy_ch_width ch_width;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
@@ -1452,8 +1453,24 @@ enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
 		return CH_WIDTH_INVALID;
 	}
 
-	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_ch_width(
-		vdev);
+	ch_width = psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_ch_width(
+		   vdev);
+
+	if (ch_width == CH_WIDTH_160MHZ) {
+		int16_t cfreq2;
+
+		cfreq2 = target_if_vdev_get_chan_freq_seg2(vdev);
+		if (cfreq2 < 0) {
+			spectral_err("Invalid value for cfreq2 %d", cfreq2);
+			return CH_WIDTH_INVALID;
+		}
+
+		/* Use non zero cfreq2 to identify 80p80 */
+		if (cfreq2)
+			ch_width = CH_WIDTH_80P80MHZ;
+	}
+
+	return ch_width;
 }
 
 /**
@@ -1585,6 +1602,12 @@ target_if_get_spectral_msg_type(enum spectral_scan_mode smode,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline bool
+is_ch_width_160_or_80p80(enum phy_ch_width ch_width)
+{
+	return (ch_width == CH_WIDTH_160MHZ || ch_width == CH_WIDTH_80P80MHZ);
+}
+
 /**
  * init_160mhz_delivery_state_machine() - Initialize 160MHz Spectral
  *                                        state machine
@@ -1625,7 +1648,7 @@ reset_160mhz_delivery_state_machine(struct target_if_spectral *spectral,
 		return;
 	}
 
-	if (spectral->ch_width[smode] == CH_WIDTH_160MHZ) {
+	if (is_ch_width_160_or_80p80(spectral->ch_width[smode])) {
 		spectral->state_160mhz_delivery[smode] =
 			SPECTRAL_REPORT_WAIT_PRIMARY80;
 
@@ -1654,10 +1677,10 @@ bool is_secondaryseg_expected(struct target_if_spectral *spectral,
 			      enum spectral_scan_mode smode)
 {
 	return
-	((spectral->ch_width[smode] == CH_WIDTH_160MHZ) &&
+	(is_ch_width_160_or_80p80(spectral->ch_width[smode]) &&
 	 spectral->rparams.fragmentation_160[smode] &&
-	(spectral->state_160mhz_delivery[smode] ==
-	 SPECTRAL_REPORT_WAIT_SECONDARY80));
+	 (spectral->state_160mhz_delivery[smode] ==
+	  SPECTRAL_REPORT_WAIT_SECONDARY80));
 }
 
 /**
@@ -1675,11 +1698,10 @@ bool is_primaryseg_expected(struct target_if_spectral *spectral,
 			    enum spectral_scan_mode smode)
 {
 	return
-	((spectral->ch_width[smode] != CH_WIDTH_160MHZ) ||
-	((spectral->ch_width[smode] == CH_WIDTH_160MHZ) &&
-	(!spectral->rparams.fragmentation_160[smode] ||
-	 spectral->state_160mhz_delivery[smode] ==
-	 SPECTRAL_REPORT_WAIT_PRIMARY80)));
+	(!is_ch_width_160_or_80p80(spectral->ch_width[smode]) ||
+	 !spectral->rparams.fragmentation_160[smode] ||
+	 (spectral->state_160mhz_delivery[smode] ==
+	  SPECTRAL_REPORT_WAIT_PRIMARY80));
 }
 
 /**
@@ -1696,13 +1718,12 @@ bool is_primaryseg_rx_inprog(struct target_if_spectral *spectral,
 			     enum spectral_scan_mode smode)
 {
 	return
-	((spectral->ch_width[smode] != CH_WIDTH_160MHZ) ||
-	((spectral->ch_width[smode] == CH_WIDTH_160MHZ) &&
-	((spectral->spectral_gen == SPECTRAL_GEN2) ||
-	((spectral->spectral_gen == SPECTRAL_GEN3) &&
-	(!spectral->rparams.fragmentation_160[smode] ||
-	 spectral->state_160mhz_delivery[smode] ==
-	 SPECTRAL_REPORT_RX_PRIMARY80)))));
+	(!is_ch_width_160_or_80p80(spectral->ch_width[smode]) ||
+	 spectral->spectral_gen == SPECTRAL_GEN2 ||
+	 (spectral->spectral_gen == SPECTRAL_GEN3 &&
+	  (!spectral->rparams.fragmentation_160[smode] ||
+	   spectral->state_160mhz_delivery[smode] ==
+	   SPECTRAL_REPORT_RX_PRIMARY80)));
 }
 
 /**
@@ -1719,12 +1740,12 @@ bool is_secondaryseg_rx_inprog(struct target_if_spectral *spectral,
 			       enum spectral_scan_mode smode)
 {
 	return
-	((spectral->ch_width[smode] == CH_WIDTH_160MHZ) &&
-	((spectral->spectral_gen == SPECTRAL_GEN2) ||
-	((spectral->spectral_gen == SPECTRAL_GEN3) &&
-	(!spectral->rparams.fragmentation_160[smode] ||
-	 spectral->state_160mhz_delivery[smode] ==
-	 SPECTRAL_REPORT_RX_SECONDARY80))));
+	(is_ch_width_160_or_80p80(spectral->ch_width[smode]) &&
+	 (spectral->spectral_gen == SPECTRAL_GEN2 ||
+	  ((spectral->spectral_gen == SPECTRAL_GEN3) &&
+	   (!spectral->rparams.fragmentation_160[smode] ||
+	    spectral->state_160mhz_delivery[smode] ==
+	    SPECTRAL_REPORT_RX_SECONDARY80))));
 }
 
 /**

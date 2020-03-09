@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -66,7 +66,6 @@ static OS_TIMER_FUNC(target_if_spectral_sim_phyerrdelivery_handler);
  * data for one report for generation 2 chipsets
  * @report: Pointer to spectral report data instance
  * @width : Channel bandwidth enumeration
- * @is_80_80: Whether the channel is operating in 80-80 mode
  *
  * Statically populate simulation data for one report for generation 2 chipsets
  *
@@ -75,7 +74,7 @@ static OS_TIMER_FUNC(target_if_spectral_sim_phyerrdelivery_handler);
 static int
 target_if_populate_report_static_gen2(
 	struct spectralsim_report *report,
-	enum phy_ch_width width, bool is_80_80)
+	enum phy_ch_width width)
 {
 	qdf_assert_always(report);
 
@@ -137,47 +136,47 @@ target_if_populate_report_static_gen2(
 			     &chan_info_80, sizeof(report->chan_info));
 
 		break;
-	case CH_WIDTH_160MHZ:
-		if (is_80_80) {
-			report->data = NULL;
-			report->data = (uint8_t *)
-			    qdf_mem_malloc(sizeof(reportdata_80_80_gen2));
+	case CH_WIDTH_80P80MHZ:
+		report->data = NULL;
+		report->data = (uint8_t *)
+		    qdf_mem_malloc(sizeof(reportdata_80_80_gen2));
 
-			if (!report->data)
-				goto bad;
+		if (!report->data)
+			goto bad;
 
-			report->datasize = sizeof(reportdata_80_80_gen2);
-			qdf_mem_copy(report->data,
-				     reportdata_80_80_gen2, report->datasize);
+		report->datasize = sizeof(reportdata_80_80_gen2);
+		qdf_mem_copy(report->data,
+			     reportdata_80_80_gen2, report->datasize);
 
-			qdf_mem_copy(&report->rfqual_info,
-				     &rfqual_info_80_80,
-				     sizeof(report->rfqual_info));
+		qdf_mem_copy(&report->rfqual_info,
+			     &rfqual_info_80_80,
+			     sizeof(report->rfqual_info));
 
-			qdf_mem_copy(&report->chan_info,
-				     &chan_info_80_80,
-				     sizeof(report->chan_info));
-
-		} else {
-			report->data = NULL;
-			report->data = (uint8_t *)
-			    qdf_mem_malloc(sizeof(reportdata_160_gen2));
-
-			if (!report->data)
-				goto bad;
-
-			report->datasize = sizeof(reportdata_160_gen2);
-			qdf_mem_copy(report->data,
-				     reportdata_160_gen2, report->datasize);
-
-			qdf_mem_copy(&report->rfqual_info,
-				     &rfqual_info_160,
-				     sizeof(report->rfqual_info));
-
-			qdf_mem_copy(&report->chan_info,
-				     &chan_info_160, sizeof(report->chan_info));
-		}
+		qdf_mem_copy(&report->chan_info,
+			     &chan_info_80_80,
+			     sizeof(report->chan_info));
 		break;
+
+	case CH_WIDTH_160MHZ:
+		report->data = NULL;
+		report->data = (uint8_t *)
+		    qdf_mem_malloc(sizeof(reportdata_160_gen2));
+
+		if (!report->data)
+			goto bad;
+
+		report->datasize = sizeof(reportdata_160_gen2);
+		qdf_mem_copy(report->data,
+			     reportdata_160_gen2, report->datasize);
+
+		qdf_mem_copy(&report->rfqual_info,
+			     &rfqual_info_160,
+			     sizeof(report->rfqual_info));
+
+		qdf_mem_copy(&report->chan_info,
+			     &chan_info_160, sizeof(report->chan_info));
+		break;
+
 	default:
 		spectral_err("Unhandled width. Please correct. Asserting");
 		qdf_assert_always(0);
@@ -194,7 +193,6 @@ target_if_populate_report_static_gen2(
  * data for one report for generation 3 chipsets
  * @report: Pointer to spectral report data instance
  * @width : Channel bandwidth enumeration
- * @is_80_80: Whether the channel is operating in 80-80 mode
  *
  * Statically populate simulation data for one report for generation 3 chipsets
  *
@@ -203,7 +201,7 @@ target_if_populate_report_static_gen2(
 static int
 target_if_populate_report_static_gen3(
 	struct spectralsim_report *report,
-	enum phy_ch_width width, bool is_80_80)
+	enum phy_ch_width width)
 {
 	qdf_assert_always(report);
 
@@ -265,47 +263,48 @@ target_if_populate_report_static_gen3(
 			     &chan_info_80, sizeof(report->chan_info));
 
 		break;
-	case CH_WIDTH_160MHZ:
-		if (is_80_80) {
-			report->data = NULL;
-			report->data = (uint8_t *)
-			    qdf_mem_malloc(sizeof(reportdata_80_80_gen3));
 
-			if (!report->data)
-				goto bad;
+	case CH_WIDTH_80P80MHZ:
+		report->data = NULL;
+		report->data = (uint8_t *)
+		    qdf_mem_malloc(sizeof(reportdata_80_80_gen3));
 
-			report->datasize = sizeof(reportdata_80_80_gen3);
-			qdf_mem_copy(report->data,
-				     reportdata_80_80_gen3, report->datasize);
+		if (!report->data)
+			goto bad;
 
-			qdf_mem_copy(&report->rfqual_info,
-				     &rfqual_info_80_80,
-				     sizeof(report->rfqual_info));
+		report->datasize = sizeof(reportdata_80_80_gen3);
+		qdf_mem_copy(report->data,
+			     reportdata_80_80_gen3, report->datasize);
 
-			qdf_mem_copy(&report->chan_info,
-				     &chan_info_80_80,
-				     sizeof(report->chan_info));
+		qdf_mem_copy(&report->rfqual_info,
+			     &rfqual_info_80_80,
+			     sizeof(report->rfqual_info));
 
-		} else {
-			report->data = NULL;
-			report->data = (uint8_t *)
-			    qdf_mem_malloc(sizeof(reportdata_160_gen3));
-
-			if (!report->data)
-				goto bad;
-
-			report->datasize = sizeof(reportdata_160_gen3);
-			qdf_mem_copy(report->data,
-				     reportdata_160_gen3, report->datasize);
-
-			qdf_mem_copy(&report->rfqual_info,
-				     &rfqual_info_160,
-				     sizeof(report->rfqual_info));
-
-			qdf_mem_copy(&report->chan_info,
-				     &chan_info_160, sizeof(report->chan_info));
-		}
+		qdf_mem_copy(&report->chan_info,
+			     &chan_info_80_80,
+			     sizeof(report->chan_info));
 		break;
+
+	case CH_WIDTH_160MHZ:
+		report->data = NULL;
+		report->data = (uint8_t *)
+		    qdf_mem_malloc(sizeof(reportdata_160_gen3));
+
+		if (!report->data)
+			goto bad;
+
+		report->datasize = sizeof(reportdata_160_gen3);
+		qdf_mem_copy(report->data,
+			     reportdata_160_gen3, report->datasize);
+
+		qdf_mem_copy(&report->rfqual_info,
+			     &rfqual_info_160,
+			     sizeof(report->rfqual_info));
+
+		qdf_mem_copy(&report->chan_info,
+			     &chan_info_160, sizeof(report->chan_info));
+		break;
+
 	default:
 		spectral_err("Unhandled width. Please correct. Asserting");
 		qdf_assert_always(0);
@@ -346,7 +345,6 @@ target_if_depopulate_report(
  * @simctx: Pointer to struct spectralsim_context
  * @reportset: Set of spectral report data instances
  * @width : Channel bandwidth enumeration
- * @is_80_80: Whether the channel is operating in 80+80 mode
  *
  * Statically populate simulation data for a given configuration
  *
@@ -356,7 +354,7 @@ static int
 target_if_populate_reportset_static(
 	struct spectralsim_context *simctx,
 	struct spectralsim_reportset *reportset,
-	enum phy_ch_width width, bool is_80_80)
+	enum phy_ch_width width)
 {
 	int ret = 0;
 	struct spectralsim_report *report = NULL;
@@ -380,7 +378,7 @@ target_if_populate_reportset_static(
 		qdf_mem_copy(&reportset->config,
 			     &config_20_1, sizeof(reportset->config));
 
-		ret = simctx->populate_report_static(report, CH_WIDTH_20MHZ, 0);
+		ret = simctx->populate_report_static(report, CH_WIDTH_20MHZ);
 		if (ret != 0)
 			goto bad;
 
@@ -391,7 +389,7 @@ target_if_populate_reportset_static(
 		qdf_mem_copy(&reportset->config,
 			     &config_40_1, sizeof(reportset->config));
 
-		ret = simctx->populate_report_static(report, CH_WIDTH_40MHZ, 0);
+		ret = simctx->populate_report_static(report, CH_WIDTH_40MHZ);
 		if (ret != 0)
 			goto bad;
 
@@ -402,41 +400,41 @@ target_if_populate_reportset_static(
 		qdf_mem_copy(&reportset->config,
 			     &config_80_1, sizeof(reportset->config));
 
-		ret = simctx->populate_report_static(report, CH_WIDTH_80MHZ, 0);
+		ret = simctx->populate_report_static(report, CH_WIDTH_80MHZ);
 		if (ret != 0)
 			goto bad;
 
 		report->next = NULL;
 		reportset->headreport = report;
 		break;
-	case CH_WIDTH_160MHZ:
-		if (is_80_80) {
-			qdf_mem_copy(&reportset->config,
-				     &config_80_80_1,
-				     sizeof(reportset->config));
 
-			ret = simctx->populate_report_static(report,
-							     CH_WIDTH_160MHZ,
-							     1);
-			if (ret != 0)
-				goto bad;
+	case CH_WIDTH_80P80MHZ:
+		qdf_mem_copy(&reportset->config,
+			     &config_80_80_1,
+			     sizeof(reportset->config));
 
-			report->next = NULL;
-			reportset->headreport = report;
-		} else {
-			qdf_mem_copy(&reportset->config,
-				     &config_160_1, sizeof(reportset->config));
+		ret = simctx->populate_report_static(report,
+						     CH_WIDTH_80P80MHZ);
+		if (ret != 0)
+			goto bad;
 
-			ret = simctx->populate_report_static(report,
-							     CH_WIDTH_160MHZ,
-							     0);
-			if (ret != 0)
-				goto bad;
-
-			report->next = NULL;
-			reportset->headreport = report;
-		}
+		report->next = NULL;
+		reportset->headreport = report;
 		break;
+
+	case CH_WIDTH_160MHZ:
+		qdf_mem_copy(&reportset->config,
+			     &config_160_1, sizeof(reportset->config));
+
+		ret = simctx->populate_report_static(report,
+						     CH_WIDTH_160MHZ);
+		if (ret != 0)
+			goto bad;
+
+		report->next = NULL;
+		reportset->headreport = report;
+		break;
+
 	default:
 		spectral_err("Unhandled width. Please rectify.");
 		qdf_assert_always(0);
@@ -500,27 +498,27 @@ target_if_populate_simdata(
 	simctx->bw20_headreportset = NULL;
 	SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx,
 						simctx->bw20_headreportset,
-						CH_WIDTH_20MHZ, 0);
+						CH_WIDTH_20MHZ);
 
 	simctx->bw40_headreportset = NULL;
 	SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx,
 						simctx->bw40_headreportset,
-						CH_WIDTH_40MHZ, 0);
+						CH_WIDTH_40MHZ);
 
 	simctx->bw80_headreportset = NULL;
 	SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx,
 						simctx->bw80_headreportset,
-						CH_WIDTH_80MHZ, 0);
+						CH_WIDTH_80MHZ);
 
 	simctx->bw160_headreportset = NULL;
 	SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx,
 						simctx->bw160_headreportset,
-						CH_WIDTH_160MHZ, 0);
+						CH_WIDTH_160MHZ);
 
 	simctx->bw80_80_headreportset = NULL;
 	SPECTRAL_SIM_REPORTSET_ALLOCPOPL_SINGLE(simctx,
 						simctx->bw80_80_headreportset,
-						CH_WIDTH_160MHZ, 1);
+						CH_WIDTH_80P80MHZ);
 
 	simctx->curr_reportset = NULL;
 
@@ -881,19 +879,12 @@ target_if_spectral_sops_sim_configure_params(
 		des_headreportset = simctx->bw80_headreportset;
 		break;
 	case CH_WIDTH_160MHZ:
-		phymode = wlan_vdev_get_phymode(vdev);
-		if (phymode == WLAN_PHYMODE_11AC_VHT160) {
-			des_headreportset = simctx->bw160_headreportset;
-		} else if (phymode == WLAN_PHYMODE_11AC_VHT80_80) {
-			des_headreportset = simctx->bw80_80_headreportset;
-		} else {
-			spectral_err("Spectral simulation: Unexpected PHY mode %u found for width 160 MHz...asserting.",
-				     phymode);
-			qdf_assert_always(0);
-		}
+		des_headreportset = simctx->bw160_headreportset;
 		break;
-
-	case IEEE80211_CWM_WIDTHINVALID:
+	case CH_WIDTH_80P80MHZ:
+		des_headreportset = simctx->bw80_80_headreportset;
+		break;
+	case CH_WIDTH_INVALID:
 		spectral_err("Spectral simulation: Invalid width configured - not proceeding with param config.");
 		is_invalid_width = true;
 	default:

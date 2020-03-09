@@ -238,7 +238,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		}
 	}
 
-	if (spectral->ch_width[params->smode] != CH_WIDTH_160MHZ ||
+	if (!is_ch_width_160_or_80p80(spectral->ch_width[params->smode]) ||
 	    is_secondaryseg_rx_inprog(spectral, params->smode)) {
 		if (spectral->send_phy_data(spectral->pdev_obj,
 					    msg_type) == 0)
@@ -248,7 +248,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 
 	/* Take care of state transitions for 160MHz/ 80p80 */
 	if (spectral->spectral_gen == SPECTRAL_GEN3 &&
-	    spectral->ch_width[params->smode] == CH_WIDTH_160MHZ &&
+	    is_ch_width_160_or_80p80(spectral->ch_width[params->smode]) &&
 	    spectral->rparams.fragmentation_160[params->smode])
 		target_if_160mhz_delivery_state_change(
 				spectral, params->smode,
