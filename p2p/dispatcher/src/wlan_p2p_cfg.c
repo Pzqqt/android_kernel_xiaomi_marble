@@ -24,6 +24,7 @@
 #include "wlan_p2p_public_struct.h"
 #include "wlan_p2p_cfg_api.h"
 #include "../../core/src/wlan_p2p_main.h"
+#include "wlan_mlme_ucfg_api.h"
 
 static inline struct p2p_soc_priv_obj *
 wlan_psoc_get_p2p_object(struct wlan_objmgr_psoc *psoc)
@@ -88,13 +89,11 @@ cfg_p2p_get_device_addr_admin(struct wlan_objmgr_psoc *psoc,
 
 bool cfg_p2p_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc)
 {
-	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint32_t sta_roam_disable = 0;
 
-	p2p_soc_obj = wlan_psoc_get_p2p_object(psoc);
-	if (!p2p_soc_obj) {
-		p2p_err("p2p psoc null");
-		return false;
-	}
+	if (ucfg_mlme_get_roam_disable_config(psoc, &sta_roam_disable) ==
+	    QDF_STATUS_SUCCESS)
+		return sta_roam_disable & LFR3_STA_ROAM_DISABLE_BY_P2P;
 
-	return p2p_soc_obj->param.p2p_disable_roam;
+	return false;
 }

@@ -83,7 +83,21 @@ QDF_STATUS cfg_nan_get_ndp_keepalive_period(struct wlan_objmgr_psoc *psoc,
  */
 bool cfg_nan_get_support_mp0_discovery(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * cfg_nan_is_roam_config_disabled() - get value of nan config roam disable
+ * discovery
+ * @psoc: pointer to psoc object
+ *
+ * Return: true on sta roam disable by nan else false
+ */
+bool cfg_nan_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc);
 #else
+static inline
+bool cfg_nan_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
 static inline bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
