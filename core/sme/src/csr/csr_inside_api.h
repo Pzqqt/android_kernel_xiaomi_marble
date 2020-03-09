@@ -76,6 +76,7 @@ struct tag_csrscan_result {
 	/* Preferred auth type that matched with the profile. */
 	enum csr_akm_type authType;
 	int  bss_score;
+	uint8_t retry_count;
 
 	tCsrScanResultInfo Result;
 	/*
