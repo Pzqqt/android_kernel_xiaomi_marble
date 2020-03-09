@@ -2713,10 +2713,24 @@ bool hdd_is_5g_supported(struct hdd_context *hdd_ctx);
  *
  * Return:  true if 2GHz channels are supported
  */
-
 bool hdd_is_2g_supported(struct hdd_context *hdd_ctx);
 
 int wlan_hdd_scan_abort(struct hdd_adapter *adapter);
+
+/**
+ * hdd_indicate_active_ndp_cnt() - Callback to indicate active ndp count to hdd
+ * if ndp connection is on NDI established
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id
+ * @cnt: number of active ndp sessions
+ *
+ * This HDD callback registerd with policy manager to indicates number of active
+ * ndp sessions to hdd.
+ *
+ * Return:  none
+ */
+void hdd_indicate_active_ndp_cnt(struct wlan_objmgr_psoc *psoc,
+				 uint8_t vdev_id, uint8_t cnt);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)

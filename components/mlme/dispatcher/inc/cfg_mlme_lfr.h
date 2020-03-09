@@ -2381,6 +2381,37 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Bitmap of roaming triggers")
 
+/*
+ * <ini>
+ * sta_disable_roam - Disable Roam on sta interface
+ * @Min: 0 - Roam Enabled on sta interface
+ * @Max: 0xffffffff - Roam Disabled on sta interface irrespective
+ * of other interface connections
+ * @Default: 0x00
+ *
+ * Disable roaming on STA iface to avoid audio glitches on p2p and ndp if
+ * those are in connected state. Each bit for "sta_disable_roam" INI represents
+ * an interface for which sta roaming can be disabled.
+ *
+ * LFR3_STA_ROAM_DISABLE_BY_P2P BIT(0)
+ * LFR3_STA_ROAM_DISABLE_BY_NAN BIT(1)
+ *
+ * Related: None.
+ *
+ * Supported Feature: ROAM
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_STA_DISABLE_ROAM CFG_INI_INT( \
+		"sta_disable_roam", \
+		0, \
+		0xffffffff, \
+		0x00, \
+		CFG_VALUE_OR_DEFAULT, \
+		"disable roam on STA iface if one of the iface mentioned in default is in connected state")
+
 #define ROAM_OFFLOAD_ALL \
 	CFG(CFG_LFR3_ROAMING_OFFLOAD) \
 	CFG(CFG_LFR_ENABLE_DISCONNECT_ROAM) \
@@ -2391,6 +2422,7 @@
 	CFG(CFG_LFR_IDLE_ROAM_MIN_RSSI) \
 	CFG(CFG_LFR_IDLE_ROAM_BAND) \
 	CFG(CFG_ROAM_TRIGGER_BITMAP) \
+	CFG(CFG_STA_DISABLE_ROAM) \
 
 #else
 #define ROAM_OFFLOAD_ALL

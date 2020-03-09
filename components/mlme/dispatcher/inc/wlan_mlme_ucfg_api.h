@@ -1027,6 +1027,17 @@ ucfg_mlme_is_override_ht20_40_24g(struct wlan_objmgr_psoc *psoc, bool *val);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
+ * ucfg_mlme_get_roam_disable_config() - Get sta roam disable value
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to bitmap of interfaces for those sta roaming is disabled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_roam_disable_config(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *val);
+
+/**
  * ucfg_mlme_get_roaming_offload() - Get roaming offload setting
  * @psoc: pointer to psoc object
  * @val:  Pointer to enable/disable roaming offload
@@ -1061,6 +1072,13 @@ ucfg_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 	return wlan_mlme_get_roaming_triggers(psoc);
 }
 #else
+static inline QDF_STATUS
+ucfg_mlme_get_roam_disable_config(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *val)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
 static inline QDF_STATUS
 ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 			      bool *val)

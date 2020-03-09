@@ -23,6 +23,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "cfg_nan_api.h"
 #include "../../core/src/nan_main_i.h"
+#include "wlan_mlme_ucfg_api.h"
 
 static inline struct nan_psoc_priv_obj
 		 *cfg_nan_get_priv_obj(struct wlan_objmgr_psoc *psoc)
@@ -107,3 +108,13 @@ bool cfg_nan_get_support_mp0_discovery(struct wlan_objmgr_psoc *psoc)
 	return nan_obj->cfg_param.support_mp0_discovery;
 }
 
+bool cfg_nan_is_roam_config_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t sta_roam_disable;
+
+	if (ucfg_mlme_get_roam_disable_config(psoc, &sta_roam_disable) ==
+	    QDF_STATUS_SUCCESS)
+		return sta_roam_disable & LFR3_STA_ROAM_DISABLE_BY_NAN;
+
+	return false;
+}

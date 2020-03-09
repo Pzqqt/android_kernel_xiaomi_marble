@@ -1322,6 +1322,7 @@ struct policy_mgr_sme_cbacks {
  * progress
  * @wlan_hdd_set_sap_csa_reason: Set the sap csa reason in cases like NAN.
  * @hdd_get_ap_6ghz_capable: get ap vdev 6ghz capable info from hdd ap adapter.
+ * @wlan_hdd_indicate_active_ndp_cnt: indicate active ndp cnt to hdd
  */
 struct policy_mgr_hdd_cbacks {
 	void (*sap_restart_chan_switch_cb)(struct wlan_objmgr_psoc *psoc,
@@ -1342,6 +1343,8 @@ struct policy_mgr_hdd_cbacks {
 					    uint8_t vdev_id, uint8_t reason);
 	uint32_t (*hdd_get_ap_6ghz_capable)(struct wlan_objmgr_psoc *psoc,
 					    uint8_t vdev_id);
+	void (*wlan_hdd_indicate_active_ndp_cnt)(struct wlan_objmgr_psoc *psoc,
+						 uint8_t vdev_id, uint8_t cnt);
 };
 
 
