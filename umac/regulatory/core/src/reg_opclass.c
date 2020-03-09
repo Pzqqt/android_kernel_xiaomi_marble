@@ -688,6 +688,17 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 	return 0;
 }
 
+qdf_freq_t reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
+					 bool global_tbl_lookup)
+{
+	if ((op_class >= MIN_6GHZ_OPER_CLASS) &&
+	    (op_class <= MAX_6GHZ_OPER_CLASS)) {
+		global_tbl_lookup = true;
+	}
+
+	return reg_chan_opclass_to_freq(chan, op_class, global_tbl_lookup);
+}
+
 #ifdef HOST_OPCLASS_EXT
 qdf_freq_t reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
 					    const uint8_t country[3],

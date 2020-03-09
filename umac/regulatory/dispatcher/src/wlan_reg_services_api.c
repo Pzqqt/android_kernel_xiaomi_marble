@@ -1102,3 +1102,12 @@ uint16_t wlan_reg_chan_opclass_to_freq(uint8_t chan,
 
 	return reg_chan_opclass_to_freq(chan, op_class, global_tbl_lookup);
 }
+
+qdf_freq_t wlan_reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
+					      bool global_tbl_lookup)
+{
+	if (!chan || !op_class)
+		return 0;
+
+	return reg_chan_opclass_to_freq_auto(chan, op_class, global_tbl_lookup);
+}

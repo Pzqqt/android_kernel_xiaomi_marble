@@ -245,6 +245,19 @@ qdf_freq_t reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
 uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 				  uint8_t op_class,
 				  bool global_tbl_lookup);
+
+/**
+ * reg_chan_opclass_to_freq_auto() - Convert channel number and opclass to
+ * frequency after fixing global_tbl_lookup
+ * @chan: IEEE Channel Number.
+ * @op_class: Opclass.
+ * @global_tbl_lookup: Global table lookup.
+ *
+ * Return: Channel center frequency else return 0.
+ */
+qdf_freq_t reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
+					 bool global_tbl_lookup);
+
 #else
 
 static inline uint16_t reg_dmn_get_chanwidth_from_opclass(
@@ -370,6 +383,13 @@ static inline uint16_t
 reg_chan_opclass_to_freq(uint8_t chan,
 			 uint8_t op_class,
 			 bool global_tbl_lookup)
+{
+	return 0;
+}
+
+static inline qdf_freq_t
+reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
+			      bool global_tbl_lookup)
 {
 	return 0;
 }

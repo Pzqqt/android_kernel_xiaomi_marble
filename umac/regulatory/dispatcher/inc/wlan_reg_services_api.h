@@ -1309,4 +1309,17 @@ wlan_reg_country_chan_opclass_to_freq(struct wlan_objmgr_pdev *pdev,
 uint16_t wlan_reg_chan_opclass_to_freq(uint8_t chan,
 				       uint8_t op_class,
 				       bool global_tbl_lookup);
+
+/**
+ * wlan_reg_chan_opclass_to_freq_auto() - Convert channel number and opclass to
+ * frequency
+ * @chan: IEEE channel number
+ * @op_class: Operating class of channel
+ * @global_tbl_lookup: Flag to determine if global table has to be looked up
+ *
+ * Return: Channel center frequency if valid, else zero
+ */
+
+qdf_freq_t wlan_reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
+					      bool global_tbl_lookup);
 #endif
