@@ -163,17 +163,81 @@ int wlan_hdd_cfg80211_get_sar_power_limits(struct wiphy *wiphy,
 					   const void *data,
 					   int data_len);
 
-#define FEATURE_SAR_LIMITS_VENDOR_COMMANDS				\
-{									\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS,	\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
-		 WIPHY_VENDOR_CMD_NEED_RUNNING,				\
-	.doit = wlan_hdd_cfg80211_get_sar_power_limits,			\
+/**
+ * wlan_hdd_cfg80211_set_sar_power_limits() - Set SAR power limits
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Length of @data
+ *
+ * Wrapper function of __wlan_hdd_cfg80211_set_sar_power_limits()
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int wlan_hdd_cfg80211_set_sar_power_limits(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   const void *data,
+					   int data_len);
+
+/**
+ * hdd_store_sar_config() - Store SAR config in HDD context
+ * @hdd_ctx: The HDD context
+ * @sar_limit_cmd: The sar_limit_cmd_params struct to save
+ *
+ * After SSR, the SAR configuration is lost. As SSR is hidden from
+ * userland, this command will not come from userspace after a SSR. To
+ * restore this configuration, save this in hdd context and restore
+ * after re-init.
+ *
+ * Return: None
+ */
+void hdd_store_sar_config(struct hdd_context *hdd_ctx,
+			  struct sar_limit_cmd_params *sar_limit_cmd);
+
+/**
+ * hdd_free_sar_config() - Free the resources allocated while storing SAR config
+ * @hdd_ctx: HDD context
+ *
+ * The driver stores the SAR config values in HDD context so that it can be
+ * restored in the case SSR is invoked. Free those resources.
+ *
+ * Return: None
+ */
+void wlan_hdd_free_sar_config(struct hdd_context *hdd_ctx);
+
+extern const struct nla_policy
+wlan_hdd_sar_limits_policy[QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX + 1];
+
+#define FEATURE_SAR_LIMITS_VENDOR_COMMANDS                              \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS,        \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,                         \
+	.doit = wlan_hdd_cfg80211_get_sar_power_limits,                 \
 	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                   \
+},                                                                      \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS,        \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		 WIPHY_VENDOR_CMD_NEED_RUNNING,                         \
+	.doit = wlan_hdd_cfg80211_set_sar_power_limits,                 \
+	vendor_command_policy(wlan_hdd_sar_limits_policy,               \
+			      QCA_WLAN_VENDOR_ATTR_SAR_LIMITS_MAX)      \
 },
 #else /* FEATURE_SAR_LIMITS */
 #define FEATURE_SAR_LIMITS_VENDOR_COMMANDS
+static inline
+void hdd_store_sar_config(struct hdd_context *hdd_ctx,
+			  struct sar_limit_cmd_params *sar_limit_cmd)
+{
+}
+
+static inline void wlan_hdd_free_sar_config(struct hdd_context *hdd_ctx)
+{
+}
+
 #endif /* FEATURE_SAR_LIMITS */
 
 #endif /* __WLAN_HDD_SAR_LIMITS_H */
