@@ -1040,12 +1040,12 @@ void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 					 chan_num);
 }
 
-bool wlan_reg_country_opclass_freq_check(struct wlan_objmgr_pdev *pdev,
+bool wlan_reg_is_freq_in_country_opclass(struct wlan_objmgr_pdev *pdev,
 					 const uint8_t country[3],
 					 uint8_t op_class,
 					 qdf_freq_t chan_freq)
 {
-	return reg_country_opclass_freq_check(pdev, country,
+	return reg_is_freq_in_country_opclass(pdev, country,
 					      op_class, chan_freq);
 }
 

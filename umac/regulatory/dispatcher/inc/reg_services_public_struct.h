@@ -62,6 +62,11 @@
 #define REGULATORY_PHYMODE_NO11AC    BIT(4)
 #define REGULATORY_PHYMODE_NO11AX    BIT(5)
 
+#define BW_5_MHZ      5
+#define BW_10_MHZ     10
+#define BW_20_MHZ     20
+#define BW_25_MHZ     25
+#define BW_40_MHZ     40
 #define BW_80_MHZ     80
 #define BW_160_MHZ    160
 #define BW_40_MHZ     40
