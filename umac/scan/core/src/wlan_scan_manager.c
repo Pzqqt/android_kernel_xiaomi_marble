@@ -561,6 +561,7 @@ int scm_scan_get_burst_duration(int max_ch_time, bool miracast_enabled)
 }
 
 #define SCM_ACTIVE_DWELL_TIME_NAN      40
+#define SCM_ACTIVE_DWELL_TIME_SAP      40
 
 /**
  * scm_req_update_concurrency_params() - update scan req params depending on
@@ -649,7 +650,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 	 * time for 2g channels instead of dwell_time_active_2g
 	 */
 	if (vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE)
-		req->scan_req.dwell_time_active_2g = 0;
+		req->scan_req.dwell_time_active_2g = SCM_ACTIVE_DWELL_TIME_SAP;
 
 	if (req->scan_req.scan_type == SCAN_TYPE_DEFAULT) {
 		/*
