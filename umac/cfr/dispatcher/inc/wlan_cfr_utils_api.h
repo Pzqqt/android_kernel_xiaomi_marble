@@ -452,11 +452,12 @@ struct cfr_rcc_param {
  * data length was invalid
  * flush_timeout_dbr_cnt: No. of DBR completion flushed out in ageout logic
  * clear_txrx_event: No. of PPDU status TLVs over-written in LUT
- * unassoc_pool: Pool of un-associated clients used when capture method is
- * CFR_CAPTURE_METHOD_PROBE_RESPONSE
  * last_success_tstamp: DBR timestamp which indicates that both DBR and TX/RX
  * events have been received successfully.
  * cfr_dma_aborts: No. of CFR DMA aborts in ucode
+ * unassoc_pool: Pool of un-associated clients used when capture method is
+ * CFR_CAPTURE_METHOD_PROBE_RESPONSE
+ * lut_lock: Lock to protect access to cfr lookup table
  */
 /*
  * To be extended if we get more capbality info
@@ -495,6 +496,7 @@ struct pdev_cfr {
 	uint64_t cfr_dma_aborts;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
+	qdf_spinlock_t lut_lock;
 };
 
 #define PEER_CFR_CAPTURE_ENABLE   1
