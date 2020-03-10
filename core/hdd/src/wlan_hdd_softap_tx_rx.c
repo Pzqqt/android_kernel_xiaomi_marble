@@ -1010,7 +1010,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 
 	ucfg_mlme_update_oce_flags(hdd_ctx->pdev);
 
-	return qdf_status;
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
@@ -1194,11 +1194,6 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	hdd_for_each_station_safe(adapter->sta_info_list, sta_info,
 				  index, tmp) {
 		status = hdd_softap_deregister_sta(adapter, &sta_info);
-
-		if (QDF_IS_STATUS_ERROR(status) && sta_info)
-			hdd_debug("Deregistering STA " QDF_MAC_ADDR_STR
-				  " failed",
-				  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 	}
 
 	if (adapter->device_mode == QDF_SAP_MODE &&
