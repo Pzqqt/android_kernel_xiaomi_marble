@@ -471,6 +471,8 @@ ifeq ($(CONFIG_DSC_TEST), y)
 	DSC_OBJS += $(DSC_TEST_DIR)/wlan_dsc_test.o
 endif
 
+cppflags-$(CONFIG_ONE_MSI_VECTOR) += -DWLAN_ONE_MSI_VECTOR
+
 cppflags-$(CONFIG_DSC_DEBUG) += -DWLAN_DSC_DEBUG
 cppflags-$(CONFIG_DSC_TEST) += -DWLAN_DSC_TEST
 
