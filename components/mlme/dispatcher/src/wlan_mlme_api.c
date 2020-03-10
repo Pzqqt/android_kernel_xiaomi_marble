@@ -3752,6 +3752,20 @@ char *mlme_get_roam_fail_reason_str(uint32_t result)
 		return "M4 frame dropped internally";
 	case WMI_ROAM_FAIL_REASON_EAPOL_M4_NO_ACK:
 		return "No ACK for M4 frame";
+	case WMI_ROAM_FAIL_REASON_NO_SCAN_FOR_FINAL_BMISS:
+		return "No scan on final BMISS";
+	case WMI_ROAM_FAIL_REASON_DISCONNECT:
+		return "Disconnect received during handoff";
+	case WMI_ROAM_FAIL_REASON_SYNC:
+		return "Previous roam sync pending";
+	case WMI_ROAM_FAIL_REASON_SAE_INVALID_PMKID:
+		return "Reason assoc reject - invalid PMKID";
+	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_TIMEOUT:
+		return "SAE preauth timed out";
+	case WMI_ROAM_FAIL_REASON_SAE_PREAUTH_FAIL:
+		return "SAE preauth failed";
+	case WMI_ROAM_FAIL_REASON_UNABLE_TO_START_ROAM_HO:
+		return "Start handoff failed- internal error";
 	default:
 		return "UNKNOWN";
 	}
