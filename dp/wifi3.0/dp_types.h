@@ -123,6 +123,15 @@ enum rx_pktlog_mode {
 };
 #endif
 
+/* enum m_copy_mode - Available mcopy mode
+ *
+ */
+enum m_copy_mode {
+	M_COPY_DISABLED = 0,
+	M_COPY = 2,
+	M_COPY_EXTENDED = 4,
+};
+
 struct msdu_list {
 	qdf_nbuf_t head;
 	qdf_nbuf_t tail;
@@ -1735,7 +1744,7 @@ struct dp_pdev {
 
 	bool tx_sniffer_enable;
 	/* mirror copy mode */
-	bool mcopy_mode;
+	enum m_copy_mode mcopy_mode;
 	bool cfr_rcc_mode;
 	bool enable_reap_timer_non_pkt;
 	bool bpr_enable;
@@ -1845,10 +1854,6 @@ struct dp_pdev {
 
 	uint32_t *ppdu_tlv_buf; /* Buffer to hold HTT ppdu stats TLVs*/
 
-	/* nbuf queue to maintain rx ppdu status buffer
-	 * belonging to one ppdu
-	 */
-	qdf_nbuf_queue_t rx_ppdu_buf_q;
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
 	/**
 	 * Pointer to DP Flow FST at SOC level if
@@ -1877,6 +1882,7 @@ struct dp_pdev {
 	 */
 	struct hal_rx_mon_desc_info *mon_desc;
 #endif
+	qdf_nbuf_t mcopy_status_nbuf;
 };
 
 struct dp_peer;

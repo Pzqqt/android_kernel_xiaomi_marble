@@ -161,6 +161,7 @@
 /* Max MPDUs per status buffer */
 #define HAL_RX_MAX_MPDU 256
 #define HAL_RX_NUM_WORDS_PER_PPDU_BITMAP (HAL_RX_MAX_MPDU >> 5)
+#define HAL_RX_MAX_MPDU_H_PER_STATUS_BUFFER 16
 
 /* Max pilot count */
 #define HAL_RX_MAX_SU_EVM_COUNT 32
@@ -476,12 +477,10 @@ struct hal_rx_ppdu_common_info {
  * struct hal_rx_msdu_payload_info - msdu payload info
  * @first_msdu_payload: pointer to first msdu payload
  * @payload_len: payload len
- * @nbuf: status network buffer to which msdu belongs to
  */
 struct hal_rx_msdu_payload_info {
 	uint8_t *first_msdu_payload;
 	uint32_t payload_len;
-	qdf_nbuf_t nbuf;
 };
 
 /**
@@ -630,8 +629,14 @@ struct hal_rx_ppdu_info {
 	/* Id to indicate how to process mpdu */
 	uint8_t sw_frame_group_id;
 	struct hal_rx_ppdu_msdu_info rx_msdu_info[HAL_MAX_UL_MU_USERS];
-	/* first msdu payload for all mpdus in ppdu */
-	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU];
+	/* fcs passed mpdu count in rx monitor status buffer */
+	uint8_t fcs_ok_cnt;
+	/* fcs error mpdu count in rx monitor status buffer */
+	uint8_t fcs_err_cnt;
+	/* MPDU FCS passed */
+	bool is_fcs_passed;
+	/* first msdu payload for all mpdus in rx monitor status buffer */
+	struct hal_rx_msdu_payload_info ppdu_msdu_info[HAL_RX_MAX_MPDU_H_PER_STATUS_BUFFER];
 	/* evm info */
 	struct hal_rx_su_evm_info evm_info;
 	/**

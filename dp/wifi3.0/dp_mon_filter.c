@@ -605,6 +605,7 @@ void dp_mon_filter_setup_mcopy_mode(struct dp_pdev *pdev)
 	/* Setup the filter */
 	filter.tlv_filter.enable_mo = 1;
 	filter.tlv_filter.packet_header = 1;
+	filter.tlv_filter.mpdu_end = 1;
 	dp_mon_filter_show_filter(pdev, mode, &filter);
 
 	srng_type = DP_MON_FILTER_SRNG_TYPE_RXDMA_MONITOR_STATUS;

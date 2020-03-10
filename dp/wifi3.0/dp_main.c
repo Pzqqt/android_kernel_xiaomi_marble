@@ -4591,7 +4591,6 @@ static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 	dp_tx_ppdu_stats_detach(pdev);
 
 	qdf_nbuf_free(pdev->sojourn_buf);
-	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
 
@@ -7231,10 +7230,9 @@ QDF_STATUS dp_monitor_mode_ring_config(struct dp_soc *soc, uint8_t mac_for_pdev,
 static inline void
 dp_pdev_disable_mcopy_code(struct dp_pdev *pdev)
 {
-	pdev->mcopy_mode = 0;
+	pdev->mcopy_mode = M_COPY_DISABLED;
 	pdev->monitor_configured = false;
 	pdev->monitor_vdev = NULL;
-	qdf_nbuf_queue_free(&pdev->rx_ppdu_buf_q);
 }
 
 /**
@@ -8236,7 +8234,6 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 		}
 #endif /* FEATURE_PERPKT_INFO */
 	}
-
 	switch (val) {
 	case 0:
 		pdev->tx_sniffer_enable = 0;
@@ -8274,13 +8271,14 @@ dp_config_debug_sniffer(struct dp_pdev *pdev, int val)
 				DP_PPDU_STATS_CFG_SNIFFER, pdev->pdev_id);
 		break;
 	case 2:
+	case 4:
 		if (pdev->monitor_vdev) {
 			status = QDF_STATUS_E_RESOURCES;
 			break;
 		}
 
 #ifdef FEATURE_PERPKT_INFO
-		pdev->mcopy_mode = 1;
+		pdev->mcopy_mode = val;
 		pdev->tx_sniffer_enable = 0;
 		pdev->monitor_configured = true;
 

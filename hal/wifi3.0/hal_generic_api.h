@@ -1513,19 +1513,20 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	case WIFIRX_HEADER_E:
 	{
 		struct hal_rx_ppdu_common_info *com_info = &ppdu_info->com_info;
-		uint16_t mpdu_cnt = com_info->mpdu_cnt;
 
-		if (mpdu_cnt >= HAL_RX_MAX_MPDU) {
-			hal_alert("Number of MPDUs per PPDU exceeded");
+		if (ppdu_info->fcs_ok_cnt >=
+		    HAL_RX_MAX_MPDU_H_PER_STATUS_BUFFER) {
+			hal_err("Number of MPDUs(%d) per status buff exceeded",
+				ppdu_info->fcs_ok_cnt);
 			break;
 		}
+
 		/* Update first_msdu_payload for every mpdu and increment
 		 * com_info->mpdu_cnt for every WIFIRX_HEADER_E TLV
 		 */
-		ppdu_info->ppdu_msdu_info[mpdu_cnt].first_msdu_payload =
+		ppdu_info->ppdu_msdu_info[ppdu_info->fcs_ok_cnt].first_msdu_payload =
 			rx_tlv;
-		ppdu_info->ppdu_msdu_info[mpdu_cnt].payload_len = tlv_len;
-		ppdu_info->ppdu_msdu_info[mpdu_cnt].nbuf = nbuf;
+		ppdu_info->ppdu_msdu_info[ppdu_info->fcs_ok_cnt].payload_len = tlv_len;
 		ppdu_info->msdu_info.first_msdu_payload = rx_tlv;
 		ppdu_info->msdu_info.payload_len = tlv_len;
 		ppdu_info->user_id = user_id;
