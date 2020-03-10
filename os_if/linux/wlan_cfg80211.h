@@ -178,7 +178,7 @@ wlan_cfg80211_nla_parse_nested(struct nlattr *tb[],
 {
 	return nla_parse_nested(tb, maxtype, nla, policy);
 }
-#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 2, 0)
+#else
 static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 					  int maxtype,
 					  const struct nlattr *head,
@@ -195,24 +195,6 @@ wlan_cfg80211_nla_parse_nested(struct nlattr *tb[],
 			       const struct nla_policy *policy)
 {
 	return nla_parse_nested(tb, maxtype, nla, policy, NULL);
-}
-#else
-static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
-					  int maxtype,
-					  const struct nlattr *head,
-					  int len,
-					  const struct nla_policy *policy)
-{
-	return 0;
-}
-
-static inline int
-wlan_cfg80211_nla_parse_nested(struct nlattr *tb[],
-			       int maxtype,
-			       const struct nlattr *nla,
-			       const struct nla_policy *policy)
-{
-	return 0;
 }
 #endif
 #define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse)
