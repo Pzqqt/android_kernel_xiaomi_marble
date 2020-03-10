@@ -761,6 +761,18 @@ QDF_STATUS utils_dfs_mark_leaking_chan_for_freq(struct wlan_objmgr_pdev *pdev,
 						uint8_t temp_ch_lst_sz,
 						uint16_t *temp_ch_lst);
 #endif
+
+/**
+ * utils_dfs_can_ignore_radar_event() - check whether to skip radar event
+ * processing
+ * @pdev: Pointer to pdev structure.
+ *
+ * This function will check with policy mgr to process radar event or not based
+ * on current concurrency mode and dfs policy.
+ *
+ * Return: true - ignore radar event processing, otherwise false.
+ */
+bool utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev);
 #else
 #ifdef CONFIG_CHAN_NUM_API
 static inline QDF_STATUS utils_dfs_mark_leaking_ch
@@ -782,6 +794,11 @@ static inline QDF_STATUS utils_dfs_mark_leaking_chan_for_freq
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+static inline bool
+utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
+}
 #endif
 /**
  * utils_get_dfsdomain() - Get DFS domain.

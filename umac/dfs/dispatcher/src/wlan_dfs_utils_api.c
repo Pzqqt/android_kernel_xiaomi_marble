@@ -965,6 +965,12 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	utils_dfs_get_channel_list(pdev, NULL, (struct dfs_channel *)clist,
 				   num_chan);
 }
+
+bool utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev)
+{
+	return !policy_mgr_get_dfs_master_dynamic_enabled(
+		wlan_pdev_get_psoc(pdev), INVALID_VDEV_ID);
+}
 #endif
 
 #ifdef CONFIG_CHAN_NUM_API

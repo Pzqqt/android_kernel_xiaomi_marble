@@ -956,6 +956,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	uint32_t radarfound_freq;
 	struct dfs_channel *dfs_curchan;
 
+	if (utils_dfs_can_ignore_radar_event(dfs->dfs_pdev_obj))
+		return QDF_STATUS_SUCCESS;
 	/* Acquire a lock to avoid initiating mode switch till radar
 	 * processing is completed.
 	 */
