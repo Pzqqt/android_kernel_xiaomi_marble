@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,7 +20,9 @@
 #define _WMI_UNIFIED_DBR_PARAM_H_
 
 #define WMI_HOST_DBR_RING_ADDR_LO_S 0
-#define WMI_HOST_DBR_RING_ADDR_LO 0xffffffff
+#define WMI_HOST_DBR_RING_ADDR_LO_M 0xffffffff
+#define WMI_HOST_DBR_RING_ADDR_LO \
+	(WMI_HOST_DBR_RING_ADDR_LO_M << WMI_HOST_DBR_RING_ADDR_LO_S)
 
 #define WMI_HOST_DBR_RING_ADDR_LO_GET(dword) \
 			WMI_HOST_F_MS(dword, WMI_HOST_DBR_RING_ADDR_LO)
@@ -28,7 +30,9 @@
 			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_RING_ADDR_LO)
 
 #define WMI_HOST_DBR_RING_ADDR_HI_S 0
-#define WMI_HOST_DBR_RING_ADDR_HI 0xf
+#define WMI_HOST_DBR_RING_ADDR_HI_M 0xf
+#define WMI_HOST_DBR_RING_ADDR_HI \
+	(WMI_HOST_DBR_RING_ADDR_HI_M << WMI_HOST_DBR_RING_ADDR_HI_S)
 
 #define WMI_HOST_DBR_RING_ADDR_HI_GET(dword) \
 			WMI_HOST_F_MS(dword, WMI_HOST_DBR_RING_ADDR_HI)
@@ -36,7 +40,9 @@
 			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_RING_ADDR_HI)
 
 #define WMI_HOST_DBR_DATA_ADDR_LO_S 0
-#define WMI_HOST_DBR_DATA_ADDR_LO 0xffffffff
+#define WMI_HOST_DBR_DATA_ADDR_LO_M 0xffffffff
+#define WMI_HOST_DBR_DATA_ADDR_LO \
+	(WMI_HOST_DBR_DATA_ADDR_LO_M << WMI_HOST_DBR_DATA_ADDR_LO_S)
 
 #define WMI_HOST_DBR_DATA_ADDR_LO_GET(dword) \
 			WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_LO)
@@ -44,7 +50,9 @@
 			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_LO)
 
 #define WMI_HOST_DBR_DATA_ADDR_HI_S 0
-#define WMI_HOST_DBR_DATA_ADDR_HI 0xf
+#define WMI_HOST_DBR_DATA_ADDR_HI_M 0xf
+#define WMI_HOST_DBR_DATA_ADDR_HI \
+	(WMI_HOST_DBR_DATA_ADDR_HI_M << WMI_HOST_DBR_DATA_ADDR_HI_S)
 
 #define WMI_HOST_DBR_DATA_ADDR_HI_GET(dword) \
 			WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_HI)
@@ -52,7 +60,10 @@
 			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_HI)
 
 #define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_S 12
-#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA 0x7fffff
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_M 0x7ffff
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA \
+	(WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_M << \
+	 WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_S)
 
 #define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_GET(dword) \
 		WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA)
