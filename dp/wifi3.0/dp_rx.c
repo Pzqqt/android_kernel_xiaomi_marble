@@ -110,7 +110,6 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
 	return_buffer_manager = hal_rx_ret_buf_manager_get(ring_desc);
 	if (qdf_unlikely(!(return_buffer_manager == HAL_RX_BUF_RBM_SW1_BM ||
 			 return_buffer_manager == HAL_RX_BUF_RBM_SW3_BM))) {
-		dp_rx_desc_dump(rx_desc);
 		goto fail;
 	}
 
