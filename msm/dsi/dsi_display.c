@@ -2160,7 +2160,7 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	else
 		boot_str = dsi_display_secondary;
 
-	sw_te = strnstr(boot_str, ":swte", strlen(boot_str));
+	sw_te = strnstr(boot_str, ":sim-swte", strlen(boot_str));
 	if (sw_te)
 		display->sw_te_using_wd = true;
 
