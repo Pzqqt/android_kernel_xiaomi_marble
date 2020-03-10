@@ -274,7 +274,7 @@ wlan_dcs_wlan_interference_process(
 {
 	struct wlan_host_dcs_im_tgt_stats *prev_stats;
 	struct pdev_dcs_params dcs_host_params;
-	struct pdev_dcs_im_stats dcs_im_stats;
+	struct pdev_dcs_im_stats *p_dcs_im_stats;
 	bool start_dcs_cbk_handler = false;
 
 	uint32_t reg_tsf_delta = 0;
@@ -311,7 +311,7 @@ wlan_dcs_wlan_interference_process(
 	}
 
 	dcs_host_params = dcs_pdev_priv->dcs_host_params;
-	dcs_im_stats = dcs_pdev_priv->dcs_im_stats;
+	p_dcs_im_stats = &dcs_pdev_priv->dcs_im_stats;
 	prev_stats =  &dcs_pdev_priv->dcs_im_stats.prev_dcs_im_stats;
 
 	if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_VERBOSE))
@@ -512,16 +512,16 @@ wlan_dcs_wlan_interference_process(
 
 	if (reg_unused_cu >= dcs_host_params.coch_intfr_threshold)
 		/* Quickly reach to decision */
-		dcs_im_stats.im_intfr_cnt += 2;
+		p_dcs_im_stats->im_intfr_cnt += 2;
 	else if (too_many_phy_errors &&
 		 (((total_wasted_cu >
 			(dcs_host_params.coch_intfr_threshold + 10)) &&
 		((reg_tx_cu + reg_rx_cu) > dcs_host_params.user_max_cu)) ||
 		((reg_tx_cu > DCS_TX_MAX_CU) &&
 			(tx_err >= dcs_host_params.tx_err_threshold))))
-		dcs_im_stats.im_intfr_cnt++;
+		p_dcs_im_stats->im_intfr_cnt++;
 
-	if (dcs_im_stats.im_intfr_cnt >=
+	if (p_dcs_im_stats->im_intfr_cnt >=
 		dcs_host_params.intfr_detection_threshold) {
 		if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_CRITICAL)) {
 			dcs_debug("interference threshold exceeded");
@@ -530,8 +530,8 @@ wlan_dcs_wlan_interference_process(
 				  total_wasted_cu, reg_tx_cu, reg_rx_cu);
 		}
 
-		dcs_im_stats.im_intfr_cnt = 0;
-		dcs_im_stats.im_samp_cnt = 0;
+		p_dcs_im_stats->im_intfr_cnt = 0;
+		p_dcs_im_stats->im_samp_cnt = 0;
 		/*
 		 * Once the interference is detected, change the channel, as on
 		 * today this is common routine for wirelesslan and
@@ -539,22 +539,23 @@ wlan_dcs_wlan_interference_process(
 		 * because of the DA code, which is using the same function.
 		 */
 		start_dcs_cbk_handler = true;
-	} else if (!dcs_im_stats.im_intfr_cnt ||
-			dcs_im_stats.im_samp_cnt >=
+	} else if (0 == p_dcs_im_stats->im_intfr_cnt ||
+			p_dcs_im_stats->im_samp_cnt >=
 				dcs_host_params.intfr_detection_window) {
-		dcs_im_stats.im_intfr_cnt = 0;
-		dcs_im_stats.im_samp_cnt = 0;
+		p_dcs_im_stats->im_intfr_cnt = 0;
+		p_dcs_im_stats->im_samp_cnt = 0;
 	}
 
 	/* Count the current run too */
-	dcs_im_stats.im_samp_cnt++;
+	p_dcs_im_stats->im_samp_cnt++;
 
 	/* Copy the stats for next cycle */
 	wlan_dcs_im_copy_stats(prev_stats, curr_stats);
 
 	if (unlikely(dcs_host_params.dcs_debug >= DCS_DEBUG_VERBOSE))
 		dcs_debug("intfr_count: %u, sample_count: %u",
-			  dcs_im_stats.im_intfr_cnt, dcs_im_stats.im_samp_cnt);
+			  p_dcs_im_stats->im_intfr_cnt,
+			  p_dcs_im_stats->im_samp_cnt);
 
 end:
 	return start_dcs_cbk_handler;
