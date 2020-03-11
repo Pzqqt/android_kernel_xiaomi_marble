@@ -169,7 +169,8 @@ int wlan_hdd_cfg80211_get_sar_power_limits(struct wiphy *wiphy,
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS,	\
 	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
 		 WIPHY_VENDOR_CMD_NEED_RUNNING,				\
-	.doit = wlan_hdd_cfg80211_get_sar_power_limits			\
+	.doit = wlan_hdd_cfg80211_get_sar_power_limits,			\
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                   \
 },
 #else /* FEATURE_SAR_LIMITS */
 #define FEATURE_SAR_LIMITS_VENDOR_COMMANDS

@@ -14810,7 +14810,8 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
 			WIPHY_VENDOR_CMD_NEED_NETDEV |
 			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_get_nud_stats
+		.doit = wlan_hdd_cfg80211_get_nud_stats,
+		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)
 	},
 
 	FEATURE_BSS_TRANSITION_VENDOR_COMMANDS

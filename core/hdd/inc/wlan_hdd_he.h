@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,13 +116,14 @@ int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx);
 int wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
 				 struct wireless_dev *wdev, const void *data,
 				 int data_len);
-#define FEATURE_11AX_VENDOR_COMMANDS					\
-{									\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_HE_CAPABILITIES,	\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
-		 WIPHY_VENDOR_CMD_NEED_NETDEV,				\
-	.doit = wlan_hdd_cfg80211_get_he_cap				\
+#define FEATURE_11AX_VENDOR_COMMANDS                                    \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_HE_CAPABILITIES,   \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		 WIPHY_VENDOR_CMD_NEED_NETDEV,                          \
+	.doit = wlan_hdd_cfg80211_get_he_cap,                           \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                   \
 },
 
 #else

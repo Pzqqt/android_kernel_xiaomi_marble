@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,20 +57,22 @@ wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy, struct wireless_dev *wdev,
 void hdd_rssi_threshold_breached(hdd_handle_t hdd_handle,
 				 struct rssi_breach_event *data);
 
-#define FEATURE_RSSI_MONITOR_VENDOR_EVENTS			\
-[QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI_INDEX] = {		\
-	.vendor_id = QCA_NL80211_VENDOR_ID,			\
-	.subcmd = QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI	\
+#define FEATURE_RSSI_MONITOR_VENDOR_EVENTS                      \
+[QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI_INDEX] = {              \
+	.vendor_id = QCA_NL80211_VENDOR_ID,                     \
+	.subcmd = QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI        \
 },
 
-#define FEATURE_RSSI_MONITOR_VENDOR_COMMANDS			\
-{								\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,		\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI,	\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |			\
-		WIPHY_VENDOR_CMD_NEED_NETDEV |			\
-		WIPHY_VENDOR_CMD_NEED_RUNNING,			\
-	.doit = wlan_hdd_cfg80211_monitor_rssi			\
+#define FEATURE_RSSI_MONITOR_VENDOR_COMMANDS                            \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_MONITOR_RSSI,          \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |                          \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,                          \
+	.doit = wlan_hdd_cfg80211_monitor_rssi,                         \
+	vendor_command_policy(moitor_rssi_policy,                       \
+			      QCA_WLAN_VENDOR_ATTR_RSSI_MONITORING_MAX) \
 },
 
 #else /* FEATURE_RSSI_MONITOR */

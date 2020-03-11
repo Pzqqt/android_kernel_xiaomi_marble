@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,13 +41,14 @@ int wlan_hdd_cfg80211_get_fw_state(struct wiphy *wiphy,
 				   const void *data,
 				   int data_len);
 
-#define FEATURE_FW_STATE_COMMANDS					\
-{									\
-	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
-	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE,		\
-	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
-		WIPHY_VENDOR_CMD_NEED_NETDEV,				\
-	.doit = wlan_hdd_cfg80211_get_fw_state				\
+#define FEATURE_FW_STATE_COMMANDS                                       \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_FW_STATE,          \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_NETDEV,                           \
+	.doit = wlan_hdd_cfg80211_get_fw_state,                         \
+	vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)                   \
 },
 #else /* FEATURE_FW_STATE */
 #define FEATURE_FW_STATE_COMMANDS
