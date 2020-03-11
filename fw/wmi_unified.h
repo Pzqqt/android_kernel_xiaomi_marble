@@ -4114,9 +4114,22 @@ typedef enum {
  * #define IEEE80211_VAP_SCAN            0x01000000
  * #define IEEE80211_ALL_SCANS           0x04000000
  */
-#define WMI_SCAN_STOP_ONE       0x00000000
-#define WMI_SCN_STOP_VAP_ALL    0x01000000
-#define WMI_SCAN_STOP_ALL       0x04000000
+/* WMI_SCAN_STOP_ONE:
+ * Stop one scan which matches with scan_id provided in scan stop command.
+ */
+#define WMI_SCAN_STOP_ONE         0x00000000
+/* WMI_SCN_STOP_VAP_ALL:
+ * Stop all scans (host scans and FW internal scans) on provided vdev.
+ */
+#define WMI_SCN_STOP_VAP_ALL      0x01000000
+/* WMI_SCN_STOP_HOST_VAP_ALL:
+ * Stop all host scans on provided vdev.
+ */
+#define WMI_SCN_STOP_HOST_VAP_ALL 0x02000000
+/* WMI_SCAN_STOP_ALL:
+ * Stop all scans (host scans and FW internal scans) on all vdevs.
+ */
+#define WMI_SCAN_STOP_ALL         0x04000000
 
 /** extended Scan ctrl flags **/
 #define WMI_SCAN_FLAG_EXT_DBS_SCAN_POLICY_MASK 0x00000003 /* Bit 0-1 reserved for DBS scan selection policy.*/
