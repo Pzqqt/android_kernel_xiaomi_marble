@@ -245,7 +245,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
  * Return: status
  */
 #ifdef WDS_VENDOR_EXTENSION
-void
+QDF_STATUS
 dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
 {
 	struct dp_peer *peer;
@@ -255,7 +255,7 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("vdev is NULL for vdev_id %d"), vdev_id);
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (vdev->opmode == wlan_op_mode_ap) {
@@ -280,6 +280,8 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
 		peer->wds_ecm.wds_rx_mcast_4addr =
 			(val & WDS_POLICY_RX_MCAST_4ADDR) ? 1 : 0;
 	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -293,7 +295,7 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
  *
  * Return: void
  */
-void
+QDF_STATUS
 dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *soc,  uint8_t vdev_id,
 				  uint8_t *peer_mac, int wds_tx_ucast,
 				  int wds_tx_mcast)
@@ -305,7 +307,7 @@ dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *soc,  uint8_t vdev_id,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("peer is NULL for mac %pM vdev_id %d"),
 			  peer_mac, vdev_id);
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (wds_tx_ucast || wds_tx_mcast) {
@@ -330,6 +332,7 @@ dp_txrx_peer_wds_tx_policy_update(struct cdp_soc_t *soc,  uint8_t vdev_id,
 		  peer->wds_ecm.wds_tx_mcast_4addr);
 
 	dp_peer_unref_delete(peer);
+	return QDF_STATUS_SUCCESS;
 }
 
 int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
@@ -339,7 +342,8 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
 	struct dp_peer *bss_peer;
 	int fr_ds, to_ds, rx_3addr, rx_4addr;
 	int rx_policy_ucast, rx_policy_mcast;
-	int rx_mcast = hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr);
+	hal_soc_handle_t hal_soc = vdev->pdev->soc->hal_soc;
+	int rx_mcast = hal_rx_msdu_end_da_is_mcbc_get(hal_soc, rx_tlv_hdr);
 
 	if (vdev->opmode == wlan_op_mode_ap) {
 		TAILQ_FOREACH(bss_peer, &vdev->peer_list, peer_list_elem) {
@@ -390,8 +394,8 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
 	 * ------------------------------------------------
 	 */
 
-	fr_ds = hal_rx_mpdu_get_fr_ds(rx_tlv_hdr);
-	to_ds = hal_rx_mpdu_get_to_ds(rx_tlv_hdr);
+	fr_ds = hal_rx_mpdu_get_fr_ds(hal_soc, rx_tlv_hdr);
+	to_ds = hal_rx_mpdu_get_to_ds(hal_soc, rx_tlv_hdr);
 	rx_3addr = fr_ds ^ to_ds;
 	rx_4addr = fr_ds & to_ds;
 
