@@ -837,7 +837,7 @@ static int _sde_kms_unmap_all_splash_regions(struct sde_kms *sde_kms)
 	int i = 0;
 	int ret = 0;
 
-	if (!sde_kms)
+	if (!sde_kms || !sde_kms->splash_data.num_splash_regions)
 		return -EINVAL;
 
 	for (i = 0; i < sde_kms->splash_data.num_splash_displays; i++) {
@@ -936,14 +936,15 @@ static void sde_kms_commit(struct msm_kms *kms,
 	SDE_ATRACE_END("sde_kms_commit");
 }
 
-static void _sde_kms_free_splash_region(struct sde_kms *sde_kms,
+static void _sde_kms_free_splash_display_data(struct sde_kms *sde_kms,
 		struct sde_splash_display *splash_display)
 {
 	if (!sde_kms || !splash_display ||
 			!sde_kms->splash_data.num_splash_displays)
 		return;
 
-	_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
+	if (sde_kms->splash_data.num_splash_regions)
+		_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
 	sde_kms->splash_data.num_splash_displays--;
 	SDE_DEBUG("cont_splash handoff done, remaining:%d\n",
 				sde_kms->splash_data.num_splash_displays);
@@ -981,7 +982,7 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 	if (splash_display->cont_splash_enabled) {
 		sde_encoder_update_caps_for_cont_splash(splash_display->encoder,
 				splash_display, false);
-		_sde_kms_free_splash_region(sde_kms, splash_display);
+		_sde_kms_free_splash_display_data(sde_kms, splash_display);
 	}
 
 	/* remove the votes if all displays are done with splash */
@@ -2289,7 +2290,8 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		return -EINVAL;
 	}
 
-	if (!sde_kms->splash_data.num_splash_regions ||
+	if (((sde_kms->splash_data.type == SDE_SPLASH_HANDOFF)
+		&& (!sde_kms->splash_data.num_splash_regions)) ||
 			!sde_kms->splash_data.num_splash_displays) {
 		DRM_INFO("cont_splash feature not enabled\n");
 		return rc;
@@ -3129,7 +3131,8 @@ static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 	return 0;
 }
 
-static int _sde_kms_get_splash_data(struct sde_splash_data *data)
+static int _sde_kms_get_splash_data(struct sde_kms *sde_kms,
+			struct sde_splash_data *data)
 {
 	int i = 0;
 	int ret = 0;
@@ -3211,6 +3214,8 @@ static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 				splash_display->splash->splash_buf_base,
 				splash_display->splash->splash_buf_size);
 	}
+
+	sde_kms->splash_data.type = SDE_SPLASH_HANDOFF;
 
 	return ret;
 }
@@ -3413,7 +3418,8 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 			 * cont-splash disabled case
 			 */
 			if (!display->cont_splash_enabled || ret)
-				_sde_kms_free_splash_region(sde_kms, display);
+				_sde_kms_free_splash_display_data(
+						sde_kms, display);
 		}
 	}
 
@@ -3528,7 +3534,7 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	if (rc)
 		goto error;
 
-	rc = _sde_kms_get_splash_data(&sde_kms->splash_data);
+	rc = _sde_kms_get_splash_data(sde_kms, &sde_kms->splash_data);
 	if (rc)
 		SDE_DEBUG("sde splash data fetch failed: %d\n", rc);
 
