@@ -3622,6 +3622,8 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		ret = QDF_STATUS_E_NOMEM;
 		goto fail0;
 	}
+	pdev->soc = soc;
+	pdev->pdev_id = pdev_id;
 
 	pdev->filter = dp_mon_filter_alloc(pdev);
 	if (!pdev->filter) {
@@ -3669,8 +3671,6 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	wlan_cfg_set_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx,
 			(nss_cfg & (1 << pdev_id)));
 
-	pdev->soc = soc;
-	pdev->pdev_id = pdev_id;
 	soc->pdev_list[pdev_id] = pdev;
 
 	pdev->lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, pdev_id);
