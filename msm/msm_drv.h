@@ -172,6 +172,7 @@ enum msm_mdp_crtc_property {
 
 	CRTC_PROP_IDLE_PC_STATE,
 	CRTC_PROP_CACHE_STATE,
+	CRTC_PROP_VM_REQ_STATE,
 
 	/* total # of properties */
 	CRTC_PROP_COUNT

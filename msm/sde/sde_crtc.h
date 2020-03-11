@@ -89,6 +89,18 @@ enum sde_crtc_cache_state {
 };
 
 /**
+ * enum sde_crtc_vm_req: request for VM operations
+ * @VM_REQ_NONE: no request. Normal VM operations.
+ * @VM_REQ_RELEASE: request to release the HW resources from the current VM
+ * @VM_REQ_ACQUIRE: request to acquire the HW resources in the current VM
+ */
+enum sde_crtc_vm_req {
+	VM_REQ_NONE,
+	VM_REQ_RELEASE,
+	VM_REQ_ACQUIRE,
+};
+
+/**
  * @connectors    : Currently associated drm connectors for retire event
  * @num_connectors: Number of associated drm connectors for retire event
  * @list:	event list
