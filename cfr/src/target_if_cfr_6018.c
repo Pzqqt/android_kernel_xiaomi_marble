@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,8 @@
 #endif
 #include <target_if_cfr_6018.h>
 #include "cdp_txrx_ctrl.h"
+
+#define CMN_NOISE_FLOOR       (-96)
 
 static u_int32_t end_magic = 0xBEAFDEAD;
 /**
@@ -714,7 +716,8 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		meta->num_mu_users = CYP_CFR_MU_USERS;
 
 	for (i = 0; i < MAX_CHAIN; i++)
-		meta->chain_rssi[i] = cdp_rx_ppdu->per_chain_rssi[i];
+		meta->chain_rssi[i] =
+			cdp_rx_ppdu->per_chain_rssi[i] + CMN_NOISE_FLOOR;
 
 	if (cdp_rx_ppdu->u.ppdu_type == CDP_RX_TYPE_SU) {
 		qdf_mem_copy(meta->peer_addr.su_peer_addr,
@@ -1605,6 +1608,7 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_zero(&pcfr->rcc_param, sizeof(struct cfr_rcc_param));
 	qdf_mem_zero(&pcfr->global, (sizeof(struct ta_ra_cfr_cfg) *
 				     MAX_TA_RA_ENTRIES));
+	pcfr->cfr_timer_enable = 0;
 
 #ifdef DIRECT_BUF_RX_ENABLE
 	status = target_if_unregister_to_dbr_enh(pdev);
