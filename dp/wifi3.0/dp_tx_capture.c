@@ -41,6 +41,9 @@
 #define DP_NUM_BYTES_PER_PPDU_BITMAP_64 (DP_MAX_MPDU_64 >> 3)
 #define DP_NUM_BYTES_PER_PPDU_BITMAP (HAL_RX_MAX_MPDU >> 3)
 #define DP_IEEE80211_BAR_CTL_TID_S 12
+#define DP_IEEE80211_BAR_CTL_TID_M 0xf
+#define DP_IEEE80211_BAR_CTL_POLICY_S 0
+#define DP_IEEE80211_BAR_CTL_POLICY_M 0x1
 #define DP_IEEE80211_BA_S_SEQ_S 4
 #define DP_IEEE80211_BAR_CTL_COMBA 0x0004
 
@@ -2526,7 +2529,6 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 			  wh_min->i_dur[1], wh_min->i_dur[0]);
 	}
 
-
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
 			     ptr_tx_cap_info, HTT_INVALID_PEER,
 			     WDI_NO_VAL, pdev->pdev_id);
@@ -3649,12 +3651,16 @@ static void set_mpdu_info(
 
 	mpdu_info->bw = 0;
 
-	if  (mpdu_info->channel_num < 20)
+	if (rx_status->preamble_type == HAL_RX_PKT_TYPE_11B) {
 		mpdu_info->preamble = DOT11_B;
-	else
+		mpdu_info->mcs = CDP_LEGACY_MCS3;
+	} else if (rx_status->preamble_type == HAL_RX_PKT_TYPE_11A) {
 		mpdu_info->preamble = DOT11_A;
-
-	mpdu_info->mcs = CDP_LEGACY_MCS3;
+		mpdu_info->mcs = CDP_LEGACY_MCS3;
+	} else {
+		mpdu_info->preamble = DOT11_A;
+		mpdu_info->mcs = CDP_LEGACY_MCS1;
+	}
 }
 
 static void dp_gen_ack_frame(struct hal_rx_ppdu_info *ppdu_info,
@@ -3685,6 +3691,7 @@ static void dp_gen_ack_frame(struct hal_rx_ppdu_info *ppdu_info,
 }
 
 static void dp_gen_block_ack_frame(
+	struct hal_rx_ppdu_info *ppdu_info,
 	struct mon_rx_user_status *rx_user_status,
 	struct mon_rx_user_info *rx_user_info,
 	struct dp_peer *peer,
@@ -3698,7 +3705,7 @@ static void dp_gen_block_ack_frame(
 
 	tid = rx_user_status->tid;
 	tx_tid = &peer->tx_capture.tx_tid[tid];
-	if (!rx_user_info->bar_frame) {
+	if (ppdu_info->sw_frame_group_id != HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR) {
 		tx_tid->first_data_seq_ctrl =
 			rx_user_status->first_data_seq_ctrl;
 		tx_tid->mpdu_cnt = rx_user_status->mpdu_cnt_fcs_ok +
@@ -3714,7 +3721,6 @@ static void dp_gen_block_ack_frame(
 				     DP_NUM_WORDS_PER_PPDU_BITMAP_64 * sizeof(
 				     rx_user_status->mpdu_fcs_ok_bitmap[0]));
 	}
-
 
 	wh_addr2 = (struct ieee80211_ctlframe_addr2 *)
 			qdf_nbuf_data(mpdu_nbuf);
@@ -3866,6 +3872,130 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 }
 
 /**
+ * dp_send_usr_ack_frm_to_stack(): Function to generate BA or ACK frame and
+ * send to upper layer
+ * @soc: core txrx main context
+ * @pdev: DP pdev object
+ * @ppdu_info: HAL RX PPDU info retrieved from status ring TLV
+ * @rx_status: variable for rx status
+ * @rx_user_status: variable for rx user status
+ * @rx_user_info: variable for rx user info
+ *
+ * return: no
+ */
+void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
+				      struct dp_pdev *pdev,
+				      struct hal_rx_ppdu_info *ppdu_info,
+				      struct mon_rx_status *rx_status,
+				      struct mon_rx_user_status *rx_user_status,
+				      struct mon_rx_user_info *rx_user_info)
+{
+	struct cdp_tx_indication_info tx_capture_info;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	uint32_t peer_id;
+	uint32_t ast_index;
+	uint8_t *ptr_mac_addr;
+
+	if (rx_user_info->qos_control_info_valid &&
+	    ((rx_user_info->qos_control &
+	    IEEE80211_QOS_ACKPOLICY) >> IEEE80211_QOS_ACKPOLICY_S)
+	    == IEEE80211_BAR_CTL_NOACK)
+		return;
+
+	ast_index = rx_user_status->ast_index;
+
+	if (ast_index >=
+	    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
+
+		if (ppdu_info->sw_frame_group_id ==
+		    HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR)
+			return;
+
+		ptr_mac_addr = &ppdu_info->nac_info.mac_addr2[0];
+		if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
+						    NULL, ptr_mac_addr))
+			return;
+
+		set_mpdu_info(&tx_capture_info,
+			      rx_status, rx_user_status);
+		tx_capture_info.mpdu_nbuf =
+			qdf_nbuf_alloc(pdev->soc->osdev,
+				       MAX_MONITOR_HEADER +
+				       DP_BA_ACK_FRAME_SIZE,
+				       MAX_MONITOR_HEADER,
+				       4, FALSE);
+		if (!tx_capture_info.mpdu_nbuf)
+			return;
+		dp_gen_ack_frame(ppdu_info, NULL,
+				 tx_capture_info.mpdu_nbuf);
+		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+				     &tx_capture_info, HTT_INVALID_PEER,
+				     WDI_NO_VAL, pdev->pdev_id);
+		return;
+	}
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = soc->ast_table[ast_index];
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return;
+	}
+
+	peer = ast_entry->peer;
+	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return;
+	}
+	peer_id = peer->peer_ids[0];
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer)
+		return;
+
+	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer,
+					    peer->mac_addr.raw)) {
+		dp_peer_unref_del_find_by_id(peer);
+		return;
+	}
+
+	set_mpdu_info(&tx_capture_info,
+		      rx_status, rx_user_status);
+
+	tx_capture_info.mpdu_nbuf =
+		qdf_nbuf_alloc(pdev->soc->osdev,
+			       MAX_MONITOR_HEADER +
+			       DP_BA_ACK_FRAME_SIZE,
+			       MAX_MONITOR_HEADER,
+			       4, FALSE);
+
+	if (!tx_capture_info.mpdu_nbuf) {
+		dp_peer_unref_del_find_by_id(peer);
+		return;
+	}
+
+	if (peer->rx_tid[rx_user_status->tid].ba_status == DP_RX_BA_ACTIVE ||
+	    ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR) {
+		dp_gen_block_ack_frame(ppdu_info,
+				       rx_user_status,
+				       rx_user_info,
+				       peer,
+				       tx_capture_info.mpdu_nbuf);
+		tx_capture_info.mpdu_info.tid = rx_user_status->tid;
+
+	} else {
+		dp_gen_ack_frame(ppdu_info, peer,
+				 tx_capture_info.mpdu_nbuf);
+	}
+
+	dp_peer_unref_del_find_by_id(peer);
+	dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
+			     &tx_capture_info, HTT_INVALID_PEER,
+			     WDI_NO_VAL, pdev->pdev_id);
+
+}
+/**
  * dp_send_ack_frame_to_stack(): Function to generate BA or ACK frame and
  * send to upper layer on received unicast frame
  * @soc: core txrx main context
@@ -3878,17 +4008,10 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 				      struct dp_pdev *pdev,
 				      struct hal_rx_ppdu_info *ppdu_info)
 {
-	struct cdp_tx_indication_info tx_capture_info;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ast_entry;
-	uint32_t peer_id;
 	struct mon_rx_status *rx_status;
 	struct mon_rx_user_status *rx_user_status;
 	struct mon_rx_user_info *rx_user_info;
-	uint32_t ast_index;
 	uint32_t i;
-	bool bar_frame;
-	uint8_t *ptr_mac_addr;
 
 	rx_status = &ppdu_info->rx_status;
 
@@ -3911,9 +4034,7 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 		return dp_send_cts_frame_to_stack(soc, pdev, ppdu_info);
 
 	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR)
-		bar_frame = true;
-	else
-		bar_frame = false;
+		return QDF_STATUS_SUCCESS;
 
 	for (i = 0; i < ppdu_info->com_info.num_users; i++) {
 		if (i > OFDMA_NUM_USERS)
@@ -3922,108 +4043,71 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 		rx_user_status =  &ppdu_info->rx_user_status[i];
 		rx_user_info = &ppdu_info->rx_user_info[i];
 
-		rx_user_info->bar_frame = bar_frame;
-
-		if (rx_user_info->qos_control_info_valid &&
-		    ((rx_user_info->qos_control &
-		    IEEE80211_QOS_ACKPOLICY) >> IEEE80211_QOS_ACKPOLICY_S)
-		    == IEEE80211_BAR_CTL_NOACK)
-			continue;
-
-		ast_index = rx_user_status->ast_index;
-		if (ast_index >=
-		    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
-			ptr_mac_addr = &ppdu_info->nac_info.mac_addr2[0];
-			if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
-							    NULL, ptr_mac_addr))
-				continue;
-			set_mpdu_info(&tx_capture_info,
-				      rx_status, rx_user_status);
-			tx_capture_info.mpdu_nbuf =
-				qdf_nbuf_alloc(pdev->soc->osdev,
-					       MAX_MONITOR_HEADER +
-					       DP_BA_ACK_FRAME_SIZE,
-					       MAX_MONITOR_HEADER,
-					       4, FALSE);
-			if (!tx_capture_info.mpdu_nbuf)
-				continue;
-			dp_gen_ack_frame(ppdu_info, NULL,
-					 tx_capture_info.mpdu_nbuf);
-			dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-					     &tx_capture_info, HTT_INVALID_PEER,
-					     WDI_NO_VAL, pdev->pdev_id);
-
-			if (tx_capture_info.mpdu_nbuf)
-				qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
-
-			continue;
-		}
-
-		qdf_spin_lock_bh(&soc->ast_lock);
-		ast_entry = soc->ast_table[ast_index];
-		if (!ast_entry) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			continue;
-		}
-
-		peer = ast_entry->peer;
-		if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			continue;
-		}
-		peer_id = peer->peer_ids[0];
-		qdf_spin_unlock_bh(&soc->ast_lock);
-
-		peer = dp_peer_find_by_id(soc, peer_id);
-		if (!peer)
-			continue;
-
-		if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
-						    NULL,
-						    peer->mac_addr.raw)) {
-			dp_peer_unref_del_find_by_id(peer);
-			continue;
-		}
-
-		set_mpdu_info(&tx_capture_info,
-			      rx_status, rx_user_status);
-
-		tx_capture_info.mpdu_nbuf =
-			qdf_nbuf_alloc(pdev->soc->osdev,
-				       MAX_MONITOR_HEADER +
-				       DP_BA_ACK_FRAME_SIZE,
-				       MAX_MONITOR_HEADER,
-				       4, FALSE);
-
-		if (!tx_capture_info.mpdu_nbuf) {
-			dp_peer_unref_del_find_by_id(peer);
-			return QDF_STATUS_E_NOMEM;
-		}
-
-		if (peer->rx_tid[rx_user_status->tid].ba_status ==
-		     DP_RX_BA_ACTIVE) {
-			dp_gen_block_ack_frame(rx_user_status,
-					       rx_user_info,
-					       peer,
-					       tx_capture_info.mpdu_nbuf);
-			tx_capture_info.mpdu_info.tid = rx_user_status->tid;
-
-		} else {
-			dp_gen_ack_frame(ppdu_info, peer,
-					 tx_capture_info.mpdu_nbuf);
-		}
-		dp_peer_unref_del_find_by_id(peer);
-		dp_wdi_event_handler(WDI_EVENT_TX_DATA, pdev->soc,
-				     &tx_capture_info, HTT_INVALID_PEER,
-				     WDI_NO_VAL, pdev->pdev_id);
-
-		if (tx_capture_info.mpdu_nbuf)
-			qdf_nbuf_free(tx_capture_info.mpdu_nbuf);
+		dp_send_usr_ack_frm_to_stack(soc, pdev, ppdu_info, rx_status,
+					     rx_user_status, rx_user_info);
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_bar_send_ack_frm_to_stack(): send BA or ACK frame
+ * to upper layers on received BAR packet for tx capture feature
+ *
+ * @soc: soc handle
+ * @pdev: pdev handle
+ * @nbuf: received packet
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         others on error
+ */
+QDF_STATUS
+dp_bar_send_ack_frm_to_stack(struct dp_soc *soc,
+			      struct dp_pdev *pdev,
+			      qdf_nbuf_t nbuf)
+{
+	struct ieee80211_ctlframe_addr2 *wh;
+	uint8_t *frm;
+	struct hal_rx_ppdu_info *ppdu_info;
+	struct mon_rx_status *rx_status;
+	struct mon_rx_user_status *rx_user_status;
+	struct mon_rx_user_info *rx_user_info;
+	uint16_t bar_ctl;
+	uint32_t user_id;
+	uint8_t tid;
+
+	if (!nbuf)
+		return QDF_STATUS_E_INVAL;
+
+	wh = (struct ieee80211_ctlframe_addr2 *)qdf_nbuf_data(nbuf);
+
+	if (wh->i_fc[0] != (IEEE80211_FC0_VERSION_0 |
+	     IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR)) {
+		return QDF_STATUS_SUCCESS;
+	}
+
+	frm = (uint8_t *)&wh[1];
+
+	bar_ctl = qdf_le16_to_cpu(*(uint16_t *)frm);
+
+	if (bar_ctl & DP_IEEE80211_BAR_CTL_POLICY_M)
+		return QDF_STATUS_SUCCESS;
+
+	tid = (bar_ctl >> DP_IEEE80211_BAR_CTL_TID_S) &
+		DP_IEEE80211_BAR_CTL_TID_M;
+
+	ppdu_info = &pdev->ppdu_info;
+	user_id = ppdu_info->rx_info.user_id;
+	rx_status = &ppdu_info->rx_status;
+	rx_user_status =  &ppdu_info->rx_user_status[user_id];
+	rx_user_info = &ppdu_info->rx_user_info[user_id];
+	rx_user_status->tid = tid;
+
+	dp_send_usr_ack_frm_to_stack(soc, pdev, ppdu_info, rx_status,
+				     rx_user_status, rx_user_info);
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * dp_gen_noack_frame: generate noack Action frame by using parameters
  *					from received NDPA frame
@@ -4198,6 +4282,9 @@ QDF_STATUS dp_handle_tx_capture_from_dest(struct dp_soc *soc,
 	switch (ppdu_info->sw_frame_group_id) {
 	case HAL_MPDU_SW_FRAME_GROUP_CTRL_NDPA:
 		return dp_send_noack_frame_to_stack(soc, pdev, mon_mpdu);
+
+	case HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR:
+		return dp_bar_send_ack_frm_to_stack(soc, pdev, mon_mpdu);
 
 	default:
 		break;
