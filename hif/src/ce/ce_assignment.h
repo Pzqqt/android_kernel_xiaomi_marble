@@ -124,7 +124,7 @@ static struct CE_pipe_config target_ce_config_wlan_qcn7605[] = {
 	/* NB: 50% of src nentries, since tx has 2 frags */
 #ifdef IPA_OFFLOAD
 	/* ipa_uc->target */
-	{ /* CE5 */ 5, PIPEDIR_OUT, 128,   64,
+	{ /* CE5 */ 5, PIPEDIR_OUT, 128, 256,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 #else
 	/* unused */
@@ -136,7 +136,7 @@ static struct CE_pipe_config target_ce_config_wlan_qcn7605[] = {
 	{ /* CE7 */ 7, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 #ifdef IPA_OFFLOAD
 	/* CE8 used only by IPA */
-	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
+	{ /* CE8 */ 8, PIPEDIR_IN, 128, 4096, CE_ATTR_FLAGS, 0,},
 #else
 	/* target->host HTT*/
 	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
