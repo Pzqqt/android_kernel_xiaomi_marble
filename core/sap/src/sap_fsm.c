@@ -3812,8 +3812,7 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 	uint8_t intf = 0, scc_dfs_counter = 0;
 	qdf_freq_t ch_freq;
 
-	ch_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
-				given_sapctx->csr_roamProfile.op_freq);
+	ch_freq = given_sapctx->csr_roamProfile.op_freq;
 	/*
 	 * current SAP persona's channel itself is not DFS, so no need to check
 	 * what other persona's channel is
