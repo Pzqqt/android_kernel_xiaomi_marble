@@ -66,6 +66,7 @@ struct dp_pdev_tx_capture {
 	uint32_t last_msdu_id;
 	qdf_event_t miss_ppdu_event;
 	uint32_t ppdu_dropped;
+	uint32_t pend_ppdu_dropped;
 	qdf_nbuf_queue_t ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_nbuf_queue_t retries_ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_spinlock_t ctl_mgmt_lock[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
