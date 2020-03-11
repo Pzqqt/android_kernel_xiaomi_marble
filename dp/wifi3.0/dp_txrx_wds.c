@@ -664,16 +664,27 @@ void dp_peer_multipass_list_remove(struct dp_peer *peer)
 /**
  * dp_peer_multipass_list_add: add to new multipass list
  * @dp_soc: soc handle
- * @peer: peer handle
+ * @peer_mac: mac address
+ * @vdev_id: vdev id for peer
+ * @vlan_id: vlan_id
  *
  * return: void
  */
-static void dp_peer_multipass_list_add(struct dp_soc *soc, struct dp_peer *peer)
+static void dp_peer_multipass_list_add(struct dp_soc *soc, uint8_t *peer_mac,
+				       uint8_t vdev_id, uint16_t vlan_id)
 {
+	struct dp_peer *peer =
+			dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id);
+
+	if (qdf_unlikely(!peer)) {
+		qdf_err("NULL peer");
+		return;
+	}
 	/*
 	 * Ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it when element is deleted from the list.
 	 */
+	peer->vlan_id = vlan_id;
 	qdf_spin_lock_bh(&peer->vdev->mpass_peer_mutex);
 	TAILQ_INSERT_HEAD(&peer->vdev->mpass_peer_list, peer,
 			  mpass_peer_list_elem);
@@ -683,6 +694,7 @@ static void dp_peer_multipass_list_add(struct dp_soc *soc, struct dp_peer *peer)
 /**
  * dp_peer_set_vlan_id: set vlan_id for this peer
  * @cdp_soc: soc handle
+ * @vdev_id: vdev id for peer
  * @peer_mac: mac address
  * @vlan_id: vlan id for peer
  *
@@ -693,7 +705,6 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 		uint16_t vlan_id)
 {
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
-	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev =
 		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
 						   vdev_id);
@@ -701,21 +712,7 @@ void dp_peer_set_vlan_id(struct cdp_soc_t *cdp_soc,
 	if (!vdev || !vdev->multipass_en)
 		return;
 
-	peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev->vdev_id);
-
-	if (qdf_unlikely(!peer)) {
-		qdf_err("NULL peer");
-		return;
-	}
-
-	peer->vlan_id = vlan_id;
-
-	dp_peer_multipass_list_add(soc, peer);
-
-	/* Ref_cnt is incremented inside dp_peer_find_hash_find().
-	 * Decrement it here.
-	 */
-	dp_peer_unref_delete(peer);
+	dp_peer_multipass_list_add(soc, peer_mac, vdev_id, vlan_id);
 }
 
 /**
