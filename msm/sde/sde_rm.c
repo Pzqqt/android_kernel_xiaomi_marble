@@ -1071,6 +1071,7 @@ static int _sde_rm_reserve_lms(
 	struct sde_rm_hw_blk *ds[MAX_BLOCKS];
 	struct sde_rm_hw_blk *pp[MAX_BLOCKS];
 	struct sde_rm_hw_iter iter_i, iter_j;
+	u32 lm_mask = 0;
 	int lm_count = 0;
 	int i, rc = 0;
 
@@ -1083,13 +1084,13 @@ static int _sde_rm_reserve_lms(
 	sde_rm_init_hw_iter(&iter_i, 0, SDE_HW_BLK_LM);
 	while (lm_count != reqs->topology->num_lm &&
 			_sde_rm_get_hw_locked(rm, &iter_i)) {
-		memset(&lm, 0, sizeof(lm));
-		memset(&dspp, 0, sizeof(dspp));
-		memset(&ds, 0, sizeof(ds));
-		memset(&pp, 0, sizeof(pp));
+		if (lm_mask & (1 << iter_i.blk->id))
+			continue;
 
-		lm_count = 0;
 		lm[lm_count] = iter_i.blk;
+		dspp[lm_count] = NULL;
+		ds[lm_count] = NULL;
+		pp[lm_count] = NULL;
 
 		SDE_DEBUG("blk id = %d, _lm_ids[%d] = %d\n",
 			iter_i.blk->id,
@@ -1105,15 +1106,24 @@ static int _sde_rm_reserve_lms(
 				&pp[lm_count], NULL))
 			continue;
 
+		lm_mask |= (1 << iter_i.blk->id);
 		++lm_count;
+
+		/* Return if peer is not needed */
+		if (lm_count == reqs->topology->num_lm)
+			break;
 
 		/* Valid primary mixer found, find matching peers */
 		sde_rm_init_hw_iter(&iter_j, 0, SDE_HW_BLK_LM);
 
-		while (lm_count != reqs->topology->num_lm &&
-				_sde_rm_get_hw_locked(rm, &iter_j)) {
-			if (iter_i.blk == iter_j.blk)
+		while (_sde_rm_get_hw_locked(rm, &iter_j)) {
+			if (lm_mask & (1 << iter_j.blk->id))
 				continue;
+
+			lm[lm_count] = iter_j.blk;
+			dspp[lm_count] = NULL;
+			ds[lm_count] = NULL;
+			pp[lm_count] = NULL;
 
 			if (!_sde_rm_check_lm_and_get_connected_blks(
 					rm, rsvp, reqs, iter_j.blk,
@@ -1121,16 +1131,23 @@ static int _sde_rm_reserve_lms(
 					&pp[lm_count], iter_i.blk))
 				continue;
 
-			lm[lm_count] = iter_j.blk;
 			SDE_DEBUG("blk id = %d, _lm_ids[%d] = %d\n",
-				iter_i.blk->id,
+				iter_j.blk->id,
 				lm_count,
 				_lm_ids ? _lm_ids[lm_count] : -1);
 
 			if (_lm_ids && (lm[lm_count])->id != _lm_ids[lm_count])
 				continue;
 
+			lm_mask |= (1 << iter_j.blk->id);
 			++lm_count;
+			break;
+		}
+
+		/* Rollback primary LM if peer is not found */
+		if (!iter_j.hw) {
+			lm_mask &= ~(1 << iter_i.blk->id);
+			--lm_count;
 		}
 	}
 
@@ -1139,10 +1156,7 @@ static int _sde_rm_reserve_lms(
 		return -ENAVAIL;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(lm); i++) {
-		if (!lm[i])
-			break;
-
+	for (i = 0; i < lm_count; i++) {
 		lm[i]->rsvp_nxt = rsvp;
 		pp[i]->rsvp_nxt = rsvp;
 		if (dspp[i])
