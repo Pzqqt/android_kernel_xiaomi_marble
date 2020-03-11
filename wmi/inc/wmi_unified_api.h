@@ -3912,4 +3912,16 @@ wmi_unified_extract_time_sync_ftm_offset(wmi_unified_t wmi_handle,
 					 struct ftm_time_sync_offset *param);
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 
+/**
+ * wmi_unified_send_injector_frame_config_cmd() - configure injector frame
+ * @wmi_handle: wmi handle
+ * @param: params received in the injector frame configure command
+ *
+ * This function configures the AP to send out injector frames
+ *
+ * Return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_send_injector_frame_config_cmd(wmi_unified_t wmi_handle,
+				struct wmi_host_injector_frame_params *param);
 #endif /* _WMI_UNIFIED_API_H_ */

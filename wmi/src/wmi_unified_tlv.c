@@ -8477,6 +8477,46 @@ QDF_STATUS send_obss_spatial_reuse_set_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+static
+QDF_STATUS send_injector_config_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_host_injector_frame_params *inject_config_params)
+{
+	wmi_buf_t buf;
+	wmi_frame_inject_cmd_fixed_param *cmd;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_frame_inject_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_frame_inject_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_frame_inject_cmd_fixed_param));
+
+	cmd->vdev_id = inject_config_params->vdev_id;
+	cmd->enable = inject_config_params->enable;
+	cmd->frame_type = inject_config_params->frame_type;
+	cmd->frame_inject_period = inject_config_params->frame_inject_period;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(inject_config_params->dstmac,
+			&cmd->frame_addr1);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PDEV_FRAME_INJECT_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE(
+		 "WMI_PDEV_FRAME_INJECT_CMDID send returned Error %d",
+		 ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
 #ifdef QCA_SUPPORT_CP_STATS
 /**
  * extract_cca_stats_tlv - api to extract congestion stats from event buffer
@@ -13727,6 +13767,7 @@ struct wmi_ops tlv_ops =  {
 					extract_time_sync_ftm_offset_event_tlv,
 #endif /* FEATURE_WLAN_TIME_SYNC_FTM */
 	.send_roam_scan_ch_list_req_cmd = send_roam_scan_ch_list_req_cmd_tlv,
+	.send_injector_config_cmd = send_injector_config_cmd_tlv,
 };
 
 /**

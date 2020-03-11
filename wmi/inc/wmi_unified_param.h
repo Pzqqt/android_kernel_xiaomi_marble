@@ -7353,6 +7353,22 @@ struct wmi_host_obss_spatial_reuse_set_def_thresh {
 #endif
 
 /**
+ * struct wmi_host_injector_frame_params - Injector frame configuration params
+ * @vdev_id: vdev identifer of VAP
+ * @enable: Enable/disable flag for the frame
+ * @frame_type: Frame type to be enabled
+ * @frame_inject_period: Periodicity of injector frame transmission
+ * @dstmac: Destination address to be used for the frame
+ */
+struct wmi_host_injector_frame_params {
+	uint32_t vdev_id;
+	uint32_t enable;
+	uint32_t frame_type;
+	uint32_t frame_inject_period;
+	uint8_t dstmac[QDF_MAC_ADDR_SIZE];
+};
+
+/**
  * struct wds_entry - WDS entry structure
  * @peer_mac: peer mac
  * @wds_mac: wds mac address
