@@ -871,6 +871,10 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->num_chan = 0;
 		cmd->num_bssid = 0;
 		cmd->roam_scan_mode = WMI_ROAM_INVOKE_SCAN_MODE_CACHE_MAP;
+		cmd->flags |= (1 << WMI_ROAM_INVOKE_FLAG_FULL_SCAN_IF_NO_CANDIDATE);
+		cmd->reason = ROAM_INVOKE_REASON_NUD_FAILURE;
+	} else {
+		cmd->reason = ROAM_INVOKE_REASON_USER_SPACE;
 	}
 
 	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
