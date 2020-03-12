@@ -14380,6 +14380,7 @@ typedef enum event_type_e {
     WOW_TKIP_MIC_ERR_FRAME_RECVD_EVENT,   /* 32 +  5 */
     WOW_ROAM_PREAUTH_START_EVENT,         /* 32 +  6 */
     WOW_ROAM_PMKID_REQUEST_EVENT,         /* 32 +  7 */
+    WOW_DFS_CAC_COMPLETE_EVENT,           /* 32 +  8 */
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
