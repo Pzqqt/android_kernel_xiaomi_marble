@@ -960,12 +960,17 @@ static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	}
 
 	/* compute the weightage */
-	for (i = 0; i < tmp_list_count; i++) {
+	for (i = 0, j = 0; i < tmp_list_count; i++) {
 		channel = scm_get_chan_meta(temp_list[i].freq);
+		if (!channel)
+			continue;
 		weight = channel->bss_beacon_probe_count * BCN_PROBE_WEIGHTAGE +
 			 channel->saved_profile_count * SAVED_PROFILE_WEIGHTAGE;
-		rnr_chan_info[i].weight = weight;
-		rnr_chan_info[i].chan_freq = temp_list[i].freq;
+		rnr_chan_info[j].weight = weight;
+		rnr_chan_info[j].chan_freq = temp_list[i].freq;
+		j++;
+		scm_debug("Freq %d weight %d bcn_cnt %d", temp_list[i].freq,
+			  weight, channel->bss_beacon_probe_count);
 	}
 
 	/* Sort the channel using selection sort */
@@ -988,10 +993,9 @@ static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	}
 
 	/* update the 6g list based on the weightage */
-	for (i = 0, j = 0;
-		(i < NUM_CHANNELS && j < NUM_6GHZ_CHANNELS); i++) {
+	for (i = 0, j = tmp_list_count - 1; (i < NUM_CHANNELS && j > 0); i++) {
 		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq))
-			chan_list->chan[i].freq = rnr_chan_info[j++].chan_freq;
+			chan_list->chan[i].freq = rnr_chan_info[j--].chan_freq;
 	}
 	qdf_mem_free(rnr_chan_info);
 }
@@ -1013,8 +1017,6 @@ static void scm_update_rnr_info(struct scan_start_request *req)
 	chan_list = &req->scan_req.chan_list;
 	for (i = 0; i < chan_list->num_chan; i++) {
 		freq = chan_list->chan[i].freq;
-		if (!wlan_reg_is_6ghz_chan_freq(freq))
-			continue;
 
 		chan = scm_get_chan_meta(freq);
 		if (!chan) {
@@ -1029,13 +1031,17 @@ static void scm_update_rnr_info(struct scan_start_request *req)
 			rnr_node = qdf_container_of(cur_node,
 						    struct scan_rnr_node,
 						    node);
-			if (!qdf_is_macaddr_zero(&rnr_node->entry.bssid)) {
+			if (!qdf_is_macaddr_zero(&rnr_node->entry.bssid) &&
+			    req->scan_req.num_hint_bssid <
+			    WLAN_SCAN_MAX_HINT_BSSID) {
 				qdf_mem_copy(&req->scan_req.hint_bssid[num_bssid++].bssid,
 					     &rnr_node->entry.bssid,
 					     QDF_MAC_ADDR_SIZE);
 				req->scan_req.num_hint_bssid++;
 				total_count--;
-			} else if (rnr_node->entry.short_ssid) {
+			} else if (rnr_node->entry.short_ssid &&
+				   req->scan_req.num_hint_s_ssid <
+				   WLAN_SCAN_MAX_HINT_S_SSID) {
 				req->scan_req.hint_s_ssid[num_ssid++].short_ssid =
 						rnr_node->entry.short_ssid;
 				req->scan_req.num_hint_s_ssid++;

@@ -62,6 +62,9 @@ struct meta_rnr_channel *scm_get_chan_meta(uint32_t chan_freq)
 {
 	int i;
 
+	if (!chan_freq || !wlan_reg_is_6ghz_chan_freq(chan_freq))
+		return NULL;
+
 	for (i = 0; i <= NUM_6GHZ_CHANNELS; i++)
 		if (rnr_channel_db.channel[i].chan_freq == chan_freq)
 			return &rnr_channel_db.channel[i];
@@ -84,7 +87,7 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 	if (!(is_6g_bss || entry->ie_list.rnrie))
 		return;
 
-	scm_debug("scan entry channel freq %d", chan_freq);
+	scm_debug("BSS freq %d BSSID: %pM", chan_freq, entry->bssid.bytes);
 	if (is_6g_bss) {
 		channel = scm_get_chan_meta(chan_freq);
 		if (!channel) {
@@ -110,18 +113,17 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 		chan_freq = wlan_reg_chan_opclass_to_freq(rnr_bss->channel_number,
 							  rnr_bss->operating_class,
 							  false);
-		/* continue if the BSS channel is not 6Ghz*/
-		if (!wlan_reg_is_6ghz_chan_freq(chan_freq))
-			continue;
 		channel = scm_get_chan_meta(chan_freq);
 		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d", chan_freq);
-			return;
+			continue;
 		}
 		channel->bss_beacon_probe_count++;
 		/* Don't add RNR entry if list is full */
-		if (qdf_list_size(&channel->rnr_list) >= WLAN_MAX_RNR_COUNT)
-			continue;
+		if (qdf_list_size(&channel->rnr_list) >= WLAN_MAX_RNR_COUNT) {
+			scm_debug("List is full");
+			return;
+		}
 
 		rnr_node = qdf_mem_malloc(sizeof(struct scan_rnr_node));
 		if (!rnr_node)
@@ -133,6 +135,8 @@ static void scm_add_rnr_channel_db(struct scan_cache_entry *entry)
 				     QDF_MAC_ADDR_SIZE);
 		if (rnr_bss->short_ssid)
 			rnr_node->entry.short_ssid = rnr_bss->short_ssid;
+		scm_debug("Add freq %d: %pM short ssid %x", chan_freq,
+			  rnr_bss->bssid.bytes, rnr_bss->short_ssid);
 		qdf_list_insert_back(&channel->rnr_list,
 				     &rnr_node->node);
 	}
@@ -154,7 +158,7 @@ static void scm_del_rnr_channel_db(struct scan_cache_entry *entry)
 	if (!(is_6g_bss || entry->ie_list.rnrie))
 		return;
 
-	scm_debug("channel freq of scan entry %d", chan_freq);
+	scm_debug("BSS freq %d BSSID: %pM", chan_freq, entry->bssid.bytes);
 	if (is_6g_bss) {
 		channel = scm_get_chan_meta(chan_freq);
 		if (!channel) {
@@ -182,7 +186,7 @@ static void scm_del_rnr_channel_db(struct scan_cache_entry *entry)
 		if (!channel) {
 			scm_debug("Failed to get chan Meta freq %d",
 				  chan_freq);
-			return;
+			continue;
 		}
 		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
@@ -1637,13 +1641,14 @@ QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
 
 	scm_info("min_freq %d max_freq %d", min_freq, max_freq);
 	i = min_freq;
+	qdf_mem_zero(&rnr_channel_db, sizeof(struct channel_list_db));
 	for (j = 0; j < NUM_6GHZ_CHANNELS; j++) {
-		if (i >= min_freq && i <= max_freq) {
+		if (i >= min_freq && i <= max_freq)
 			rnr_channel_db.channel[j].chan_freq = i;
-			qdf_list_create(&rnr_channel_db.channel[j].rnr_list,
-					WLAN_MAX_RNR_COUNT);
-		}
 		i += 20;
+		/* init list for all to avoid uninitialized list */
+		qdf_list_create(&rnr_channel_db.channel[j].rnr_list,
+				WLAN_MAX_RNR_COUNT);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -1658,6 +1663,9 @@ QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 	for (i = 0; i < NUM_6GHZ_CHANNELS; i++) {
 		channel = &rnr_channel_db.channel[i];
 		channel->chan_freq = 0;
+		channel->beacon_probe_last_time_found = 0;
+		channel->bss_beacon_probe_count = 0;
+		channel->saved_profile_count = 0;
 		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
 		while (cur_node) {
@@ -1673,6 +1681,7 @@ QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 			cur_node = next_node;
 			next_node = NULL;
 		}
+		qdf_list_destroy(&channel->rnr_list);
 	}
 
 	return QDF_STATUS_SUCCESS;
