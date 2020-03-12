@@ -24,6 +24,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include <wlan_objmgr_debug.h>
 #include <qdf_mem.h>
 #include <qdf_module.h>
 #include "wlan_objmgr_global_obj_i.h"

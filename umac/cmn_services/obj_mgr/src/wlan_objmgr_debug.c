@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include <wlan_objmgr_debug.h>
 #include "wlan_objmgr_global_obj_i.h"
 #include <qdf_mem.h>
 #include <qdf_platform.h>
