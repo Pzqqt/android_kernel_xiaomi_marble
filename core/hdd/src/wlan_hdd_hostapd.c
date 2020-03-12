@@ -5086,17 +5086,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	 */
 	hdd_abort_ongoing_sta_connection(hdd_ctx);
 
-	/*
-	 * Reject start bss if reassoc in progress on any adapter.
-	 * sme_is_any_session_in_middle_of_roaming is for LFR2 and
-	 * hdd_is_roaming_in_progress is for LFR3
-	 */
 	mac_handle = hdd_ctx->mac_handle;
-	if (sme_is_any_session_in_middle_of_roaming(mac_handle) ||
-	    hdd_is_roaming_in_progress(hdd_ctx)) {
-		hdd_info("Reassociation in progress");
-		return -EINVAL;
-	}
 
 	/* Disable Roaming on all adapters before starting bss */
 	wlan_hdd_disable_roaming(adapter, RSO_START_BSS);
