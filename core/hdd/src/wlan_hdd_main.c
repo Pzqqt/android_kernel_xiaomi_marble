@@ -4983,22 +4983,6 @@ bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
 	return 0;
 }
 
-static struct vdev_osif_priv *
-hdd_init_vdev_os_priv(struct hdd_adapter *adapter)
-{
-	struct vdev_osif_priv *os_priv;
-
-	os_priv = qdf_mem_malloc(sizeof(*os_priv));
-	if (!os_priv)
-		return NULL;
-
-	/* Initialize the vdev OS private structure*/
-	os_priv->wdev = adapter->dev->ieee80211_ptr;
-	os_priv->legacy_osif_priv = adapter;
-
-	return os_priv;
-}
-
 int hdd_vdev_create(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
@@ -5021,23 +5005,22 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		return errno;
 	}
 
-	osif_priv = hdd_init_vdev_os_priv(adapter);
-	if (!osif_priv) {
-		hdd_err("Failed to allocate osif_priv");
-		return -ENOMEM;
-	}
-
 	vdev_params.opmode = adapter->device_mode;
-	vdev_params.osifp = osif_priv;
 	qdf_mem_copy(vdev_params.macaddr,
 		     adapter->mac_addr.bytes,
 		     QDF_NET_MAC_ADDR_MAX_LEN);
 
+	vdev_params.size_vdev_priv = sizeof(*osif_priv);
 	vdev = sme_vdev_create(hdd_ctx->mac_handle, &vdev_params);
 	if (!vdev) {
 		hdd_err("failed to create vdev");
 		return -EINVAL;
 	}
+
+	/* Initialize the vdev OS private structure*/
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	osif_priv->wdev = adapter->dev->ieee80211_ptr;
+	osif_priv->legacy_osif_priv = adapter;
 
 	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR) !=
 	    QDF_STATUS_SUCCESS) {
@@ -9996,7 +9979,7 @@ wlan_hdd_get_adapter_by_vdev_id_from_objmgr(struct hdd_context *hdd_ctx,
 	if (!hdd_ctx)
 		return QDF_STATUS_E_INVAL;
 
-	if (!vdev || !vdev->vdev_nif.osdev) {
+	if (!vdev) {
 		hdd_err("null vdev object");
 		return QDF_STATUS_E_INVAL;
 	}
