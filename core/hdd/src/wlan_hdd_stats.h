@@ -43,15 +43,30 @@ extern const struct nla_policy qca_wlan_vendor_ll_ext_policy[
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX + 1];
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
+/* QCA_NL80211_VENDOR_SUBCMD_LL_STATS_CLR */
+extern const struct nla_policy qca_wlan_vendor_ll_clr_policy[
+			QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX + 1];
+
 /* QCA_NL80211_VENDOR_SUBCMD_LL_STATS_SET */
 extern const struct nla_policy qca_wlan_vendor_ll_set_policy[
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX + 1];
 
-/* QCA_NL80211_VENDOR_SUBCMD_NDP */
+/* QCA_NL80211_VENDOR_SUBCMD_LL_STATS_GET */
 extern const struct nla_policy qca_wlan_vendor_ll_get_policy[
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX + 1];
 
 #define FEATURE_LL_STATS_VENDOR_COMMANDS                                \
+{                                                                       \
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_LL_STATS_CLR,          \
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                           \
+		WIPHY_VENDOR_CMD_NEED_NETDEV |                          \
+		WIPHY_VENDOR_CMD_NEED_RUNNING,                          \
+	.doit = wlan_hdd_cfg80211_ll_stats_clear,                       \
+	vendor_command_policy(qca_wlan_vendor_ll_clr_policy,            \
+			      QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX)    \
+},                                                                      \
+									\
 {                                                                       \
 	.info.vendor_id = QCA_NL80211_VENDOR_ID,                        \
 	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_LL_STATS_SET,          \
