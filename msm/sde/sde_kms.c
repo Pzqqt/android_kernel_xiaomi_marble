@@ -2944,6 +2944,8 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 		}
 	}
 
+	sde_kms->base.aspace = sde_kms->aspace[0];
+
 	return 0;
 
 early_map_fail:
