@@ -237,16 +237,18 @@
 /**
  * struct wlan_vdev_create_params - Create params, HDD/OSIF passes this
  *				    structure While creating VDEV
- * @opmode:      Opmode of VDEV
- * @flags:       create flags
- * @osifp:       OS structure
- * @macaddr[]:   MAC address
- * @mataddr[]:   MAT address
+ * @opmode:         Opmode of VDEV
+ * @flags:          create flags
+ * @size_vdev_priv: Size of vdev private
+ * @legacy_osif:    Legacy os_if private member
+ * @macaddr[]:      MAC address
+ * @mataddr[]:      MAT address
  */
 struct wlan_vdev_create_params {
 	enum QDF_OPMODE opmode;
 	uint32_t flags;
-	struct vdev_osif_priv *osifp;
+	size_t size_vdev_priv;
+	void *legacy_osif;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t mataddr[QDF_MAC_ADDR_SIZE];
 };

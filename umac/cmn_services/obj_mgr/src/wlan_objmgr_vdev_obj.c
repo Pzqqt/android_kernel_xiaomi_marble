@@ -30,6 +30,8 @@
 #include "wlan_objmgr_pdev_obj_i.h"
 #include "wlan_objmgr_vdev_obj_i.h"
 #include <wlan_utility.h>
+#include <wlan_osif_priv.h>
+
 
 /**
  ** APIs to Create/Delete Global object APIs
@@ -110,12 +112,22 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 
 	qdf_mem_free(vdev->vdev_mlme.bss_chan);
 	qdf_mem_free(vdev->vdev_mlme.des_chan);
-	qdf_mem_free(vdev->vdev_nif.osdev);
 	wlan_minidump_remove(vdev);
 	qdf_mem_free(vdev);
 
 	return QDF_STATUS_SUCCESS;
 
+}
+
+static struct vdev_osif_priv *wlan_objmgr_vdev_get_osif_priv(
+						struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_osif_priv *osif_priv;
+
+	/* private data area immediately follows the struct wlan_objmgr_vdev */
+	osif_priv = (struct vdev_osif_priv *)(vdev + 1);
+
+	return osif_priv;
 }
 
 struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
@@ -142,7 +154,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		return NULL;
 	}
 	/* Allocate vdev object memory */
-	vdev = qdf_mem_malloc(sizeof(*vdev));
+	vdev = qdf_mem_malloc(sizeof(*vdev) + params->size_vdev_priv);
 	if (!vdev)
 		return NULL;
 	vdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
@@ -199,7 +211,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	/* Set create flags */
 	vdev->vdev_objmgr.c_flags = params->flags;
 	/* store os-specific pointer */
-	vdev->vdev_nif.osdev = params->osifp;
+	vdev->vdev_nif.osdev = wlan_objmgr_vdev_get_osif_priv(vdev);
 	/* peer count to 0 */
 	vdev->vdev_objmgr.wlan_peer_count = 0;
 	qdf_atomic_init(&vdev->vdev_objmgr.ref_cnt);
@@ -211,6 +223,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	else
 		vdev->vdev_objmgr.max_peer_count =
 				wlan_pdev_get_max_peer_count(pdev);
+
+	if (params->legacy_osif)
+		vdev->vdev_nif.osdev->legacy_osif_priv = params->legacy_osif;
 
 	/* Initialize peer list */
 	qdf_list_create(&vdev->vdev_objmgr.wlan_peer_list,
@@ -255,11 +270,6 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		obj_mgr_err("VDEV comp objects creation failed for vdev-id:%d",
 			vdev->vdev_objmgr.vdev_id);
 		wlan_objmgr_vdev_obj_delete(vdev);
-		/*
-		 * Set params osifp to NULL as it is freed during vdev obj
-		 * delete, This prevents caller from performing double free.
-		 */
-		params->osifp = NULL;
 		return NULL;
 	}
 
