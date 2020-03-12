@@ -1479,12 +1479,15 @@ struct meta_rnr_channel {
 	qdf_list_t rnr_list;
 };
 
+#define RNR_UPDATE_SCAN_CNT_THRESHOLD 2
 /**
  * channel_list_db - Database for channel information
  * @channel: channel meta information
+ * @scan_count: scan count since the db was updated
  */
 struct channel_list_db {
 	struct meta_rnr_channel channel[NUM_6GHZ_CHANNELS];
+	uint8_t scan_count;
 };
 
 /**

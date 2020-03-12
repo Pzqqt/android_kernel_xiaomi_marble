@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,6 +199,26 @@ QDF_STATUS scm_db_init(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc);
 
+#ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
+
+/**
+ * scm_get_rnr_channel_db() - API to get rnr db
+ * @psoc: psoc
+ *
+ * Return: rnr db
+ */
+struct channel_list_db *scm_get_rnr_channel_db(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_get_chan_meta() - API to return channel meta
+ * @psoc: psoc
+ * @freq: channel frequency
+ *
+ * Return: channel meta information
+ */
+struct meta_rnr_channel *scm_get_chan_meta(struct wlan_objmgr_psoc *psoc,
+					   uint32_t chan_freq);
+
 /**
  * scm_channel_list_db_init() - API to init scan list priority list db
  * @psoc: psoc
@@ -216,12 +236,33 @@ QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc);
 
 /**
- * scm_get_chan_meta() - API to return channel meta
- * @freq: channel frequency
+ * scm_rnr_db_flush() - API to flush rnr entries
+ * @psoc: psoc
  *
- * Return: channel meta information
+ * Return: QDF_STATUS
  */
-struct meta_rnr_channel *scm_get_chan_meta(uint32_t freq);
+QDF_STATUS scm_rnr_db_flush(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_update_rnr_from_scan_cache() - API to update rnr info from scan cache
+ * @pdev: pdev
+ *
+ * Return: void
+ */
+void scm_update_rnr_from_scan_cache(struct wlan_objmgr_pdev *pdev);
+
+#else
+static inline QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * scm_validate_scoring_config() - validate score config

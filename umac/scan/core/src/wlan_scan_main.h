@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,6 +89,9 @@
 #define SCAN_GO_MAX_ACTIVE_SCAN_BURST_DURATION   (240)
 #define SCAN_P2P_SCAN_MAX_BURST_DURATION     (240)
 #define SCAN_GO_BURST_SCAN_MAX_NUM_OFFCHANNELS   (6)
+
+/* MAX RNR entries per channel*/
+#define WLAN_MAX_RNR_COUNT 15
 
 /**
  * struct probe_time_dwell_time - probe time, dwell time map
@@ -495,6 +498,7 @@ struct scan_cb {
  * @drop_bcn_on_chan_mismatch: drop bcn if channel mismatch
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
+ * @rnr_channel_db: RNR channel list database
  */
 struct wlan_scan_obj {
 	uint32_t scan_disabled;
@@ -519,6 +523,9 @@ struct wlan_scan_obj {
 	bool disable_timeout;
 	bool drop_bcn_on_chan_mismatch;
 	struct scan_start_request scan_start_request_buff;
+#ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
+	struct channel_list_db rnr_channel_db;
+#endif
 };
 
 /**
