@@ -1125,7 +1125,11 @@ struct scan_chan_list_params {
  * @max_duration_ms: Maximum Off channel CAC duration
  * @chan_freq: channel number of precac channel
  * @chan_width: Precac Channel width
- * @center_freq: Center frequency of precac channel
+ * @center_freq1: Agile preCAC channel frequency in MHz for 20/40/80/160
+ *                and left center frequency(5690MHz) for restricted 80p80.
+ * @center_freq2: Second segment Agile frequency if applicable. 0 for
+ *                20/40/80/160 and right center frequency(5775MHz) for
+ *                restricted 80p80.
  */
 struct vdev_adfs_ch_cfg_params {
 	uint32_t vdev_id;
@@ -1134,7 +1138,8 @@ struct vdev_adfs_ch_cfg_params {
 	uint32_t max_duration_ms;
 	uint32_t chan_freq;
 	uint32_t chan_width;
-	uint32_t center_freq; /* in MHz */
+	uint32_t center_freq1; /* in MHz */
+	uint32_t center_freq2; /* in MHz */
 };
 
 /**

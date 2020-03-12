@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -127,15 +127,21 @@ struct dfs_radar_found_params {
 
 /**
  * struct dfs_agile_cac_params - Agile DFS-CAC parameters.
- * @precac_chan:        Agile preCAC channel.
- * @precac_chan_freq:   Agile preCAC channel frequency in MHZ.
- * @precac_chwidth:     Agile preCAC channel width.
- * @min_precac_timeout: Minimum agile preCAC timeout.
- * @max_precac_timeout: Maximum agile preCAC timeout.
+ * @precac_chan:           Agile preCAC channel.
+ * @precac_center_freq_1:  Agile preCAC channel frequency in MHz for 20/40/80/
+ *                         160 and left center frequency(5690MHz) for restricted
+ *                         80p80.
+ * @precac_center_freq_2:  Second segment Agile frequency if applicable. 0 for
+ *                         20/40/80/160 and right center frequency(5775MHz) for
+ *                         restricted 80p80.
+ * @precac_chwidth:        Agile preCAC channel width.
+ * @min_precac_timeout:    Minimum agile preCAC timeout.
+ * @max_precac_timeout:    Maximum agile preCAC timeout.
  */
 struct dfs_agile_cac_params {
 	uint8_t precac_chan;
-	uint16_t precac_chan_freq;
+	uint16_t precac_center_freq_1;
+	uint16_t precac_center_freq_2;
 	enum phy_ch_width precac_chwidth;
 	uint32_t min_precac_timeout;
 	uint32_t max_precac_timeout;

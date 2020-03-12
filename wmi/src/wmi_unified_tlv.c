@@ -8067,7 +8067,8 @@ QDF_STATUS send_adfs_ch_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->vdev_id = param->vdev_id;
 	cmd->ocac_mode = param->ocac_mode;
-	cmd->center_freq = param->center_freq;
+	cmd->center_freq1 = param->center_freq1;
+	cmd->center_freq2 = param->center_freq2;
 	cmd->chan_freq = param->chan_freq;
 	cmd->chan_width = param->chan_width;
 	cmd->min_duration_ms = param->min_duration_ms;

@@ -375,9 +375,10 @@ QDF_STATUS target_send_agile_ch_cfg_cmd(struct wlan_objmgr_pdev *pdev,
 	param.ocac_mode = QUICK_OCAC_MODE;
 	param.min_duration_ms = adfs_param->min_precac_timeout;
 	param.max_duration_ms = adfs_param->max_precac_timeout;
-	param.chan_freq = adfs_param->precac_chan;
+	param.chan_freq = adfs_param->precac_center_freq_1;
 	param.chan_width = adfs_param->precac_chwidth;
-	param.center_freq = adfs_param->precac_chan;
+	param.center_freq1 = adfs_param->precac_center_freq_1;
+	param.center_freq2 = adfs_param->precac_center_freq_2;
 
 	status = wmi_unified_send_vdev_adfs_ch_cfg_cmd(wmi_handle, &param);
 	if (QDF_IS_STATUS_ERROR(status))
