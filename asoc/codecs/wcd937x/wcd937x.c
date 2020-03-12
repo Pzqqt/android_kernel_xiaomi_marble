@@ -3132,7 +3132,7 @@ static void wcd937x_unbind(struct device *dev)
 }
 
 static const struct of_device_id wcd937x_dt_match[] = {
-	{ .compatible = "qcom,wcd937x-codec" },
+	{ .compatible = "qcom,wcd937x-codec" , .data = "wcd937x" },
 	{}
 };
 

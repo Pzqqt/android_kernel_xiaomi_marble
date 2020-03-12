@@ -31,8 +31,10 @@
 #include "asoc/msm-cdc-pinctrl.h"
 #include "asoc/wcd-mbhc-v2.h"
 #include "codecs/wcd937x/wcd937x-mbhc.h"
+#include "codecs/rouleur/rouleur-mbhc.h"
 #include "codecs/wsa881x-analog.h"
 #include "codecs/wcd937x/wcd937x.h"
+#include "codecs/rouleur/rouleur.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "bengal-port-config.h"
@@ -6054,9 +6056,13 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	struct snd_info_entry *entry;
 	struct snd_card *card = component->card->snd_card;
 	struct msm_asoc_mach_data *pdata;
+	struct platform_device *pdev = NULL;
+	char *data = NULL;
+	int i = 0;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
+	snd_soc_dapm_ignore_suspend(dapm, "LO");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
@@ -6077,14 +6083,49 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 		}
 		pdata->codec_root = entry;
 	}
-	wcd937x_info_create_codec_entry(pdata->codec_root, component);
+
+	for (i = 0; i < component->card->num_aux_devs; i++)
+	{
+		if (msm_aux_dev[i].name != NULL ) {
+			if (strstr(msm_aux_dev[i].name, "wsa"))
+				continue;
+		}
+
+		if (msm_aux_dev[i].codec_of_node) {
+			pdev = of_find_device_by_node(
+				msm_aux_dev[i].codec_of_node);
+			if (pdev)
+				data = (char*) of_device_get_match_data(
+							&pdev->dev);
+
+			if (data != NULL) {
+				if (!strncmp(data, "wcd937x",
+						sizeof("wcd937x"))) {
+					wcd937x_info_create_codec_entry(
+						pdata->codec_root, component);
+					break;
+				} else if (!strncmp(data, "rouleur",
+						sizeof("rouleur"))) {
+					rouleur_info_create_codec_entry(
+						pdata->codec_root, component);
+					break;
+				}
+			}
+		}
+	}
 
 mbhc_cfg_cal:
 	mbhc_calibration = def_wcd_mbhc_cal();
 	if (!mbhc_calibration)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+        if (data != NULL) {
+                if (!strncmp(data, "wcd937x", sizeof("wcd937x")))
+                        ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+                else if (!strncmp( data, "rouleur", sizeof("rouleur")))
+                        ret = rouleur_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+        }
+
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
 			__func__, ret);

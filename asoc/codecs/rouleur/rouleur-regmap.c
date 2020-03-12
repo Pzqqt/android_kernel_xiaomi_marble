@@ -134,13 +134,11 @@ static bool rouleur_volatile_register(struct device *dev, unsigned int reg)
 		if ((rouleur_reg_access_analog[ROULEUR_REG(reg)] & RD_REG)
 		    && !(rouleur_reg_access_analog[ROULEUR_REG(reg)] & WR_REG))
 			return true;
-		return false;
 	if (reg > ROULEUR_DIG_BASE_ADDR && reg <
 					ROULEUR_DIGITAL_REGISTERS_MAX_SIZE)
 		if ((rouleur_reg_access_digital[ROULEUR_REG(reg)] & RD_REG)
 		    && !(rouleur_reg_access_digital[ROULEUR_REG(reg)] & WR_REG))
 			return true;
-		return false;
 	return 0;
 }
 
