@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -240,12 +240,31 @@ static int pld_snoc_resume_noirq(struct device *dev)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0))
+static int pld_update_hang_evt_data(struct icnss_uevent_fw_down_data *evt_data,
+				    struct pld_uevent_data *data)
+{
+	if (!evt_data || !data)
+		return -EINVAL;
+
+	data->fw_down.hang_event_data = evt_data->hang_event_data;
+	data->fw_down.hang_event_data_len = evt_data->hang_event_data_len;
+	return 0;
+}
+#else
+static int pld_update_hang_evt_data(struct icnss_uevent_fw_down_data *evt_data,
+				    struct pld_uevent_data *data)
+{
+	return 0;
+}
+#endif
+
 static int pld_snoc_uevent(struct device *dev,
 			   struct icnss_uevent_data *uevent)
 {
 	struct pld_context *pld_context;
 	struct icnss_uevent_fw_down_data *uevent_data = NULL;
-	struct pld_uevent_data data;
+	struct pld_uevent_data data = {0};
 
 	pld_context = pld_get_global_context();
 	if (!pld_context)
@@ -267,6 +286,7 @@ static int pld_snoc_uevent(struct device *dev,
 		uevent_data = (struct icnss_uevent_fw_down_data *)uevent->data;
 		data.uevent = PLD_FW_DOWN;
 		data.fw_down.crashed = uevent_data->crashed;
+		pld_update_hang_evt_data(uevent_data, &data);
 		break;
 	default:
 		goto out;
