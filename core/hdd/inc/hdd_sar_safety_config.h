@@ -111,7 +111,7 @@
 #define CFG_SAR_SAFETY_REQ_RESP_TIMEOUT  CFG_INI_UINT( \
 			"gSarSafetyReqRespTimeout", \
 			500, \
-			3000, \
+			1000, \
 			1000, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Timeout value for SAR safety request response timer")
@@ -141,7 +141,7 @@
 #define CFG_SAR_SAFETY_REQ_RESP_RETRIES  CFG_INI_UINT( \
 			"gSarSafetyReqRespRetry", \
 			1, \
-			10, \
+			5, \
 			5, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Max Number of SAR Request Response Retries")
