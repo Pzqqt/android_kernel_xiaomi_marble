@@ -277,10 +277,10 @@ static int msm_cdc_pinctrl_probe(struct platform_device *pdev)
 	}
 
 cdc_tlmm_gpio:
-	count = of_property_count_u32_elems(pdev->dev.of_node, "qcom,tlmm-gpio");
+	count = of_property_count_u32_elems(pdev->dev.of_node, "qcom,tlmm-pins");
 	if (count <= 0)
 		goto cdc_rst;
-	if (!of_property_read_u32_array(pdev->dev.of_node, "qcom,tlmm-gpio",
+	if (!of_property_read_u32_array(pdev->dev.of_node, "qcom,tlmm-pins",
 				tlmm_gpio, count)) {
 		gpio_data->wakeup_capable = true;
 		for (i = 0; i < count; i++)
