@@ -257,6 +257,42 @@ static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_BT_CHAIN_SEPARATION);
 }
 
+static void mlme_init_ratemask_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_ratemask *ratemask_cfg)
+{
+	uint32_t masks[CFG_MLME_RATE_MASK_LEN] = { 0 };
+	qdf_size_t len = 0;
+	QDF_STATUS status;
+
+	ratemask_cfg->type = cfg_get(psoc, CFG_RATEMASK_TYPE);
+	if ((ratemask_cfg->type <= WLAN_MLME_RATEMASK_TYPE_NO_MASK) ||
+	    (ratemask_cfg->type >= WLAN_MLME_RATEMASK_TYPE_MAX)) {
+		mlme_legacy_debug("Ratemask disabled");
+		return;
+	}
+
+	status = qdf_uint32_array_parse(cfg_get(psoc, CFG_RATEMASK_SET),
+					masks,
+					CFG_MLME_RATE_MASK_LEN,
+					&len);
+
+	if (status != QDF_STATUS_SUCCESS || len != CFG_MLME_RATE_MASK_LEN) {
+		/* Do not enable ratemaks if config is invalid */
+		ratemask_cfg->type = WLAN_MLME_RATEMASK_TYPE_NO_MASK;
+		mlme_legacy_err("Failed to parse ratemask");
+		return;
+	}
+
+	ratemask_cfg->lower32 = masks[0];
+	ratemask_cfg->higher32 = masks[1];
+	ratemask_cfg->lower32_2 = masks[2];
+	ratemask_cfg->higher32_2 = masks[3];
+	mlme_legacy_debug("Ratemask type: %d, masks:0x%x, 0x%x, 0x%x, 0x%x",
+			  ratemask_cfg->type, ratemask_cfg->lower32,
+			  ratemask_cfg->higher32, ratemask_cfg->lower32_2,
+			  ratemask_cfg->higher32_2);
+}
+
 #ifdef WLAN_FEATURE_11W
 static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_generic *gen)
@@ -2290,6 +2326,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_reg_cfg(psoc, &mlme_cfg->reg);
 	mlme_init_btm_cfg(psoc, &mlme_cfg->btm);
 	mlme_init_roam_score_config(psoc, mlme_cfg);
+	mlme_init_ratemask_cfg(psoc, &mlme_cfg->ratemask_cfg);
 
 	return status;
 }
