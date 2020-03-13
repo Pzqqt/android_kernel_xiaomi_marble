@@ -237,8 +237,7 @@ static int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct vdev_start_response rsp = {0};
-	wmi_host_vdev_start_resp vdev_start_resp;
+	struct vdev_start_response vdev_start_resp = {0};
 	uint8_t vdev_id;
 	struct vdev_response_timer *vdev_rsp;
 
@@ -292,17 +291,7 @@ static int target_if_vdev_mgr_start_response_handler(ol_scn_t scn,
 		goto err;
 	}
 
-	rsp.vdev_id = vdev_start_resp.vdev_id;
-	rsp.requestor_id = vdev_start_resp.requestor_id;
-	rsp.status = vdev_start_resp.status;
-	rsp.resp_type = vdev_start_resp.resp_type;
-	rsp.chain_mask = vdev_start_resp.chain_mask;
-	rsp.smps_mode = vdev_start_resp.smps_mode;
-	rsp.mac_id = vdev_start_resp.mac_id;
-	rsp.cfgd_tx_streams = vdev_start_resp.cfgd_tx_streams;
-	rsp.cfgd_rx_streams = vdev_start_resp.cfgd_rx_streams;
-
-	status = rx_ops->vdev_mgr_start_response(psoc, &rsp);
+	status = rx_ops->vdev_mgr_start_response(psoc, &vdev_start_resp);
 
 err:
 	return qdf_status_to_os_return(status);

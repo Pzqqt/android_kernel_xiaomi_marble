@@ -167,7 +167,7 @@ send_vdev_set_neighbour_rx_cmd_tlv(struct wmi_unified *wmi_handle,
 
 static QDF_STATUS
 extract_vdev_start_resp_tlv(struct wmi_unified *wmi_handle, void *evt_buf,
-			    wmi_host_vdev_start_resp *vdev_rsp)
+			    struct vdev_start_response *vdev_rsp)
 {
 	WMI_VDEV_START_RESP_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_start_response_event_fixed_param *ev;

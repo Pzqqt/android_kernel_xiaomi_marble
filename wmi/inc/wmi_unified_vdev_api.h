@@ -84,7 +84,7 @@ QDF_STATUS wmi_unified_beacon_send_cmd(struct wmi_unified *wmi_handle,
  */
 QDF_STATUS
 wmi_extract_vdev_start_resp(struct wmi_unified *wmi_handle, void *evt_buf,
-			    wmi_host_vdev_start_resp *vdev_start_resp);
+			    struct vdev_start_response *vdev_rsp);
 
 /**
  * wmi_extract_vdev_stopped_param() - extract vdev stop param from event
