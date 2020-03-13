@@ -171,6 +171,7 @@ struct tbttoffset_params {
  * @ext_csa_switch_count_offset: ECSA switch count offset in beacon frame
  * @esp_ie_offset: ESP IE offset in beacon frame
  * @mu_edca_ie_offset: Mu EDCA IE offset in beacon frame
+ * @enable_bigtk: enable bigtk or not
  * @frm: beacon template parameter
  */
 struct beacon_tmpl_params {
@@ -183,6 +184,7 @@ struct beacon_tmpl_params {
 	uint32_t ext_csa_switch_count_offset;
 	uint32_t esp_ie_offset;
 	uint32_t mu_edca_ie_offset;
+	bool enable_bigtk;
 	uint8_t *frm;
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -427,9 +427,11 @@ struct wlan_crypto_mmie {
  * @crypto_params:    crypto params for the peer
  * @key:              key buffers for this peer
  * @igtk_key:         igtk key buffer for this peer
+ * @bigtk_key:        bigtk key buffer for this peer
  * @igtk_key_type:    igtk key type
  * @def_tx_keyid:     default key used for this peer
  * @def_igtk_tx_keyid default igtk key used for this peer
+ * @def_bigtk_tx_keyid default bigtk key used for this peer
  * @fils_aead_set     fils params for this peer
  *
  */
@@ -437,9 +439,11 @@ struct wlan_crypto_comp_priv {
 	struct wlan_crypto_params crypto_params;
 	struct wlan_crypto_key *key[WLAN_CRYPTO_MAX_VLANKEYIX];
 	struct wlan_crypto_key *igtk_key[WLAN_CRYPTO_MAXIGTKKEYIDX];
+	struct wlan_crypto_key *bigtk_key[WLAN_CRYPTO_MAXBIGTKKEYIDX];
 	uint32_t igtk_key_type;
 	uint8_t def_tx_keyid;
 	uint8_t def_igtk_tx_keyid;
+	uint8_t def_bigtk_tx_keyid;
 	uint8_t fils_aead_set;
 };
 

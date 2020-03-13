@@ -89,6 +89,9 @@
 #define WLAN_PDEV_F_MBSS_IE_ENABLE          0x20000000
 /* VDEV Peer delete all */
 #define WLAN_PDEV_F_DELETE_ALL_PEER         0x40000000
+/* PDEV BEacon Protection */
+#define WLAN_PDEV_F_BEACON_PROTECTION       0x80000000
+
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */

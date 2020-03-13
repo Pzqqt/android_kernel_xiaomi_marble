@@ -5120,6 +5120,7 @@ typedef enum {
 	wmi_service_time_sync_ftm,
 	wmi_service_nss_ratio_to_host_support,
 	wmi_roam_scan_chan_list_to_host_support,
+	wmi_beacon_protection_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

@@ -2402,6 +2402,9 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->esp_ie_offset = param->esp_ie_offset;
 	cmd->mu_edca_ie_offset = param->mu_edca_ie_offset;
 	cmd->buf_len = param->tmpl_len;
+
+	WMI_BEACON_PROTECTION_EN_SET(cmd->feature_enable_bitmap,
+				     param->enable_bigtk);
 	buf_ptr += sizeof(wmi_bcn_tmpl_cmd_fixed_param);
 
 	bcn_prb_info = (wmi_bcn_prb_info *) buf_ptr;
@@ -14436,6 +14439,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_NSS_RATIO_TO_HOST_SUPPORT;
 	wmi_service[wmi_roam_scan_chan_list_to_host_support] =
 			WMI_SERVICE_ROAM_SCAN_CHANNEL_LIST_TO_HOST_SUPPORT;
+	wmi_service[wmi_beacon_protection_support] =
+			WMI_SERVICE_BEACON_PROTECTION_SUPPORT;
 }
 
 /**

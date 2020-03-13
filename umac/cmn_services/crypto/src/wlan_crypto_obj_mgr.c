@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,6 +192,13 @@ static void wlan_crypto_free_key(struct wlan_crypto_comp_priv *crypto_priv)
 		if (crypto_priv->igtk_key[i]) {
 			qdf_mem_free(crypto_priv->igtk_key[i]);
 			crypto_priv->igtk_key[i] = NULL;
+		}
+	}
+
+	for (i = 0; i < WLAN_CRYPTO_MAXBIGTKKEYIDX; i++) {
+		if (crypto_priv->bigtk_key[i]) {
+			qdf_mem_free(crypto_priv->bigtk_key[i]);
+			crypto_priv->bigtk_key[i] = NULL;
 		}
 	}
 
