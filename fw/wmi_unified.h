@@ -13786,12 +13786,14 @@ typedef struct{
 
 /* flags for roam_invoke_cmd */
 /* add this channel into roam cache channel list after this command is finished */
-#define WMI_ROAM_INVOKE_FLAG_ADD_CH_TO_CACHE       0
+#define WMI_ROAM_INVOKE_FLAG_ADD_CH_TO_CACHE           0
 /* indicate to host of failure if WMI_ROAM_INVOKE_CMDID. */
-#define WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE        1
+#define WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE            1
 /* during host-invoked roaming, don't send null data frame to AP */
-#define WMI_ROAM_INVOKE_FLAG_NO_NULL_FRAME_TO_AP   2
-/* from bit 3 to bit 31 are reserved */
+#define WMI_ROAM_INVOKE_FLAG_NO_NULL_FRAME_TO_AP       2
+/* start extra full scan if no candidate found in previous scan */
+#define WMI_ROAM_INVOKE_FLAG_FULL_SCAN_IF_NO_CANDIDATE 3
+/* from bit 4 to bit 31 are reserved */
 
 #define WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
         (flag) |=  (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
@@ -13813,6 +13815,13 @@ typedef struct{
 
 #define WMI_ROAM_INVOKE_AP_SEL_FIXED_BSSID      0   /* roam to given BSSID only */
 #define WMI_ROAM_INVOKE_AP_SEL_ANY_BSSID        1   /* roam to any BSSID */
+
+enum wlan_roam_invoke_reason {
+    ROAM_INVOKE_REASON_UNDEFINED = 0,
+    /* FW will use default parameters to do roam scan, ignore other parameters like WLM, etc. */
+    ROAM_INVOKE_REASON_NUD_FAILURE, /* Neighbor Unreachable Detection */
+    ROAM_INVOKE_REASON_USER_SPACE,
+};
 
 /** WMI_ROAM_INVOKE_CMD: command to invoke roaming forcefully
 *
@@ -13837,6 +13846,7 @@ typedef struct {
     A_UINT32 num_chan; /** # if channels to scan. In the TLV channel_list[] */
     A_UINT32 num_bssid;  /** number of bssids. In the TLV bssid_list[] */
     A_UINT32 num_buf; /** number of buffers In the TLV bcn_prb_buf_list[] */
+    A_UINT32 reason; /** reason of invoke roam, see enum wlan_roam_invoke_reason */
     /**
      * TLV (tag length value) parameters follows roam_invoke_req
      * The TLV's are:
