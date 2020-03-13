@@ -639,7 +639,7 @@ QDF_STATUS wmi_extract_vdev_start_resp(
  */
 QDF_STATUS wmi_extract_vdev_delete_resp(
 		wmi_unified_t wmi_handle, void *evt_buf,
-		struct wmi_host_vdev_delete_resp *delele_rsp);
+		struct vdev_delete_response *delele_rsp);
 
 /**
  * wmi_extract_vdev_stopped_param() - extract vdev stop param from event
