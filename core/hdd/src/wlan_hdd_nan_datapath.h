@@ -56,6 +56,19 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 	struct wireless_dev *wdev, const void *data, int data_len);
 int hdd_init_nan_data_mode(struct hdd_adapter *adapter);
 void hdd_ndp_session_end_handler(struct hdd_adapter *adapter);
+
+/**
+ * hdd_cleanup_ndi(): Cleanup NDI state/resources
+ * @hdd_ctx: HDD context
+ * @adapter: Pointer to the NDI adapter
+ *
+ * Cleanup NDI state/resources allocated when NDPs are created on that NDI.
+ *
+ * Return: None
+ */
+
+void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
+		     struct hdd_adapter *adapter);
 #else
 #define WLAN_HDD_IS_NDI(adapter)	(false)
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
@@ -83,6 +96,11 @@ static inline int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 static inline void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
 }
+
+static inline void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
+				   struct hdd_adapter *adapter)
+{
+}
 #endif /* WLAN_FEATURE_NAN */
 
 enum nan_datapath_state;
@@ -99,17 +117,4 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer);
 void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool last_peer);
-/**
- * hdd_cleanup_ndi(): Cleanup NDI state/resources
- * @hdd_ctx: HDD context
- * @adapter: Pointer to the NDI adapter
- *
- * Cleanup NDI state/resources allocated when NDPs are created on that NDI.
- *
- * Return: None
- */
-
-void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
-		     struct hdd_adapter *adapter);
-
 #endif /* __WLAN_HDD_NAN_DATAPATH_H */
