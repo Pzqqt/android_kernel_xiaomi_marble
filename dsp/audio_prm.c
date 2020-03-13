@@ -357,9 +357,8 @@ static int audio_prm_remove(struct gpr_device *adev)
 		goto err;
 	}
 	g_prm.adev = NULL;
+	g_prm.is_adsp_up = false;
 	mutex_unlock(&g_prm.lock);
-
-	kfree(&g_prm);
 err:
 	return ret;
 }

@@ -33,11 +33,34 @@ static int audio_pdr_locator_callback(struct notifier_block *this,
 	memcpy(&audio_pdr_services, data,
 		sizeof(audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP]));
 	if (audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].total_domains == 1) {
+		int domain_list_size = (sizeof(struct servreg_loc_entry_v01)) *
+			            (audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].total_domains);
+		struct servreg_loc_entry_v01 *domain_list_temp = NULL;
+
 		pr_debug("%s: Service %s, returned total domains %d, ",
 			__func__,
 			audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].service_name,
 			audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].
 			total_domains);
+
+		domain_list_temp = (struct servreg_loc_entry_v01 *)kzalloc(
+			sizeof(domain_list_size), GFP_KERNEL);
+
+		if(!domain_list_size)
+		{
+			pr_err("%s: Service %s total domains %d could not allocate memory",
+			__func__,
+			audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].service_name,
+			audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].
+			total_domains);
+			goto done;
+		} else {
+			memcpy(domain_list_temp,
+				audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].domain_list,
+				domain_list_size);
+			audio_pdr_services[AUDIO_PDR_DOMAIN_ADSP].domain_list = domain_list_temp;
+		}
+
 		pdr_state = AUDIO_PDR_FRAMEWORK_UP;
 		goto done;
 	} else
@@ -108,7 +131,7 @@ void *audio_pdr_service_register(int domain_id,
 		audio_pdr_services[domain_id].domain_list[0].instance_id,
 		nb, curr_state);
 	if (IS_ERR_OR_NULL(handle)) {
-		pr_err("%s: Failed to register for service %s, instance %d\n",
+		pr_err("%s: Failed to register for domain %s, instance %d\n",
 			__func__,
 			audio_pdr_services[domain_id].domain_list[0].name,
 			audio_pdr_services[domain_id].domain_list[0].
@@ -168,6 +191,14 @@ module_init(audio_pdr_late_init);
 
 static void __exit audio_pdr_late_exit(void)
 {
+	int i;
+
+	for (i = 0; i < AUDIO_PDR_DOMAIN_MAX; i++)
+	{
+		if (audio_pdr_services[i].domain_list != NULL)
+			kfree(audio_pdr_services[i].domain_list);
+	}
+
 }
 module_exit(audio_pdr_late_exit);
 

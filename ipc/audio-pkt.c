@@ -62,12 +62,19 @@ do {									      \
 #define AUDPKT_DRIVER_NAME "aud_pasthru_adsp"
 #define CHANNEL_NAME "to_apps"
 
+
+enum audio_pkt_state {
+	AUDIO_PKT_INIT,
+	AUDIO_PKT_PROBED,
+	AUDIO_PKT_REMOVED,
+	AUDIO_PKT_DEINIT,
+};
+
 /**
- * struct audio_pkt - driver context, relates rpdev to cdev
- * @adev:	gpr device node
+ * struct audio_pkt_device - driver context, relates to platform dev
  * @dev:	audio pkt device
  * @cdev:	cdev for the audio pkt device
- * @lock:	synchronization of @rpdev
+ * @lock:	synchronization of @dev
  * @queue_lock:	synchronization of @queue operations
  * @queue:	incoming message queue
  * @readq:	wait object for incoming queue
@@ -77,12 +84,10 @@ do {									      \
  * @audio_pkt_class: audio pkt class pointer
  */
 struct audio_pkt_device {
-	struct gpr_device *adev;
 	struct device *dev;
 	struct cdev cdev;
 
 	struct mutex lock;
-
 	spinlock_t queue_lock;
 	struct sk_buff_head queue;
 	wait_queue_head_t readq;
@@ -93,6 +98,18 @@ struct audio_pkt_device {
 	dev_t audio_pkt_major;
 	struct class *audio_pkt_class;
 };
+
+struct audio_pkt_priv {
+	struct gpr_device *adev;
+	struct device *dev;
+	struct audio_pkt_device *ap_dev;
+
+	struct mutex lock;
+	enum audio_pkt_state status;
+};
+
+static struct audio_pkt_priv *ap_priv;
+
 
 struct audio_pkt_apm_cmd_shared_mem_map_regions_t {
 	uint16_t mem_pool_id;
@@ -124,9 +141,6 @@ struct audio_pkt_clnt_ch {
 	audio_pkt_clnt_cb_fn func;
 };
 
-#define dev_to_audpkt_dev(_dev) container_of(_dev, struct audio_pkt_device, dev)
-#define cdev_to_audpkt_dev(_cdev) container_of(_cdev, struct audio_pkt_device, cdev)
-
 /**
  * audio_pkt_open() - open() syscall for the audio_pkt device
  * inode:	Pointer to the inode structure.
@@ -138,14 +152,9 @@ struct audio_pkt_clnt_ch {
  */
 int audio_pkt_open(struct inode *inode, struct file *file)
 {
-	struct audio_pkt_device *audpkt_dev = cdev_to_audpkt_dev(inode->i_cdev);
-	struct device *dev = audpkt_dev->dev;
-
-	AUDIO_PKT_ERR("for %s\n", audpkt_dev->ch_name);
-
-	get_device(dev);
-	file->private_data = audpkt_dev;
-
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+	AUDIO_PKT_INFO("%s: for %s \n", __func__,audpkt_dev->ch_name);
+	file->private_data = ap_priv;
 	return 0;
 }
 
@@ -160,12 +169,18 @@ int audio_pkt_open(struct inode *inode, struct file *file)
  */
 int audio_pkt_release(struct inode *inode, struct file *file)
 {
-	struct audio_pkt_device *audpkt_dev = cdev_to_audpkt_dev(inode->i_cdev);
-	struct device *dev = audpkt_dev->dev;
+	struct audio_pkt_priv *ap_priv = file->private_data;
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+
 	struct sk_buff *skb;
 	unsigned long flags;
 
-	AUDIO_PKT_INFO("for %s \n", audpkt_dev->ch_name);
+	if ((!audpkt_dev)) {
+		AUDIO_PKT_ERR("invalid device handle\n");
+		return -EINVAL;
+	}
+
+	AUDIO_PKT_INFO("%s: for %s \n", __func__,audpkt_dev->ch_name);
 	spin_lock_irqsave(&audpkt_dev->queue_lock, flags);
 
 	/* Discard all SKBs */
@@ -176,8 +191,34 @@ int audio_pkt_release(struct inode *inode, struct file *file)
 	wake_up_interruptible(&audpkt_dev->readq);
 	spin_unlock_irqrestore(&audpkt_dev->queue_lock, flags);
 
-	put_device(dev);
 	file->private_data = NULL;
+
+	return 0;
+}
+
+
+static int audio_pkt_internal_release(struct platform_device *adev)
+{
+	struct audio_pkt_priv *ap_priv = platform_get_drvdata(adev);
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+	struct sk_buff *skb;
+	unsigned long flags;
+
+	if ((!audpkt_dev)) {
+		AUDIO_PKT_ERR("invalid device handle\n");
+		return -EINVAL;
+	}
+
+	AUDIO_PKT_INFO("%s: for %s\n", __func__,audpkt_dev->ch_name);
+	spin_lock_irqsave(&audpkt_dev->queue_lock, flags);
+	/* Discard all SKBs */
+	while (!skb_queue_empty(&audpkt_dev->queue)) {
+		skb = skb_dequeue(&audpkt_dev->queue);
+		kfree_skb(skb);
+	}
+	spin_unlock_irqrestore(&audpkt_dev->queue_lock, flags);
+
+	wake_up_interruptible(&audpkt_dev->readq);
 
 	return 0;
 }
@@ -196,7 +237,9 @@ int audio_pkt_release(struct inode *inode, struct file *file)
 ssize_t audio_pkt_read(struct file *file, char __user *buf,
 		       size_t count, loff_t *ppos)
 {
-	struct audio_pkt_device *audpkt_dev = file->private_data;
+	struct audio_pkt_priv *ap_priv = file->private_data;
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+
 	unsigned long flags;
 	struct sk_buff *skb;
 	int use;
@@ -206,6 +249,15 @@ ssize_t audio_pkt_read(struct file *file, char __user *buf,
 		AUDIO_PKT_ERR("invalid device handle\n");
 		return -EINVAL;
 	}
+
+	mutex_lock(&ap_priv->lock);
+	if (AUDIO_PKT_PROBED != ap_priv->status)
+	{
+		mutex_unlock(&ap_priv->lock);
+		AUDIO_PKT_ERR("dev is in reset\n");
+		return -ENETRESET;
+	}
+	mutex_unlock(&ap_priv->lock);
 
 	spin_lock_irqsave(&audpkt_dev->queue_lock, flags);
 	/* Wait for data in the queue */
@@ -278,7 +330,8 @@ int audpkt_chk_and_update_physical_addr(struct audio_gpr_pkt *gpr_pkt)
 ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 			size_t count, loff_t *ppos)
 {
-	struct audio_pkt_device *audpkt_dev = file->private_data;
+	struct audio_pkt_priv *ap_priv = file->private_data;
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
 	struct gpr_hdr *audpkt_hdr = NULL;
 	void *kbuf;
 	int ret;
@@ -287,6 +340,15 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		AUDIO_PKT_ERR("invalid device handle\n");
 		return -EINVAL;
 	}
+
+	mutex_lock(&ap_priv->lock);
+	if (AUDIO_PKT_PROBED != ap_priv->status)
+	{
+		mutex_unlock(&ap_priv->lock);
+		AUDIO_PKT_ERR("dev is in reset\n");
+		return -ENETRESET;
+	}
+	mutex_unlock(&ap_priv->lock);
 
 	kbuf = memdup_user(buf, count);
 	if (IS_ERR(kbuf))
@@ -305,9 +367,10 @@ ssize_t audio_pkt_write(struct file *file, const char __user *buf,
 		ret = -ERESTARTSYS;
 		goto free_kbuf;
 	}
-	ret = gpr_send_pkt(audpkt_dev->adev,(struct gpr_pkt *) kbuf);
+	ret = gpr_send_pkt(ap_priv->adev,(struct gpr_pkt *) kbuf);
 	if (ret < 0) {
 		AUDIO_PKT_ERR("APR Send Packet Failed ret -%d\n", ret);
+		mutex_unlock(&audpkt_dev->lock);
 		return ret;
 	}
 	mutex_unlock(&audpkt_dev->lock);
@@ -328,18 +391,16 @@ free_kbuf:
  */
 static unsigned int audio_pkt_poll(struct file *file, poll_table *wait)
 {
-	struct audio_pkt_device *audpkt_dev = file->private_data;
+	struct audio_pkt_priv *ap_priv = file->private_data;
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
 	unsigned int mask = 0;
 	unsigned long flags;
-
-	audpkt_dev = file->private_data;
 	if (!audpkt_dev) {
 		AUDIO_PKT_ERR("invalid device handle\n");
 		return POLLERR;
 	}
 
 	poll_wait(file, &audpkt_dev->readq, wait);
-
 	mutex_lock(&audpkt_dev->lock);
 
 	spin_lock_irqsave(&audpkt_dev->queue_lock, flags);
@@ -347,7 +408,6 @@ static unsigned int audio_pkt_poll(struct file *file, poll_table *wait)
 		mask |= POLLIN | POLLRDNORM;
 
 	spin_unlock_irqrestore(&audpkt_dev->queue_lock, flags);
-
 	mutex_unlock(&audpkt_dev->lock);
 
 	return mask;
@@ -372,7 +432,9 @@ static const struct file_operations audio_pkt_fops = {
 static int audio_pkt_srvc_callback(struct gpr_device *adev,
 				void *data)
 {
-	struct audio_pkt_device *audpkt_dev = dev_get_drvdata(&adev->dev);
+	struct audio_pkt_priv *ap_priv =  dev_get_drvdata(&adev->dev);
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+
 	unsigned long flags;
 	struct sk_buff *skb;
 	struct gpr_hdr *hdr = (struct gpr_hdr *)data;
@@ -380,7 +442,8 @@ static int audio_pkt_srvc_callback(struct gpr_device *adev,
 	hdr_size = GPR_PKT_GET_HEADER_BYTE_SIZE(hdr->header);
 	pkt_size = GPR_PKT_GET_PACKET_BYTE_SIZE(hdr->header);
 
-        AUDIO_PKT_INFO("header %d packet %d \n",hdr_size, pkt_size);
+    AUDIO_PKT_INFO("%s: header %d packet %d \n",
+		__func__,hdr_size, pkt_size);
 
 	skb = alloc_skb(pkt_size, GFP_ATOMIC);
 	if (!skb)
@@ -409,11 +472,117 @@ static int audio_pkt_srvc_callback(struct gpr_device *adev,
  */
 static int audio_pkt_probe(struct gpr_device *adev)
 {
-	struct audio_pkt_device *audpkt_dev;
-	struct device *dev = &adev->dev;
-	int ret;
+	if(ap_priv)
+	{
+		mutex_lock(&ap_priv->lock);
+		ap_priv->adev = adev;
+		ap_priv->status = AUDIO_PKT_PROBED;
+		mutex_unlock(&ap_priv->lock);
 
-	audpkt_dev = devm_kzalloc(dev, sizeof(*audpkt_dev), GFP_KERNEL);
+		dev_set_drvdata(&adev->dev, ap_priv);
+
+		dev_dbg(&adev->dev, "%s: Driver[%s] Probed\n",
+		 __func__, adev->name);
+	}
+	else
+	{
+		dev_err(&adev->dev, "%s: Driver[%s] Probe Failed\n",
+		 __func__, adev->name);
+		return -EINVAL;
+	}
+
+	return 0;
+
+}
+
+/**
+ * audio_pkt_remove() - Remove a AUDIO packet device
+ *
+ * adev:	Pointer to gpr device.
+ *
+ * return:	0 on success, standard Linux error codes on error.
+ *
+ * This function is called when the underlying device tree driver
+ * removeds a gpr device, mapped to a Audio packet device.
+ */
+static int audio_pkt_remove(struct gpr_device *adev)
+{
+	if(ap_priv)
+	{
+		mutex_lock(&ap_priv->lock);
+		ap_priv->adev = NULL;
+		ap_priv->status = AUDIO_PKT_REMOVED;
+		mutex_unlock(&ap_priv->lock);
+		dev_dbg(&adev->dev, "%s: Driver[%s] Removing\n",
+		 __func__, adev->name);
+		dev_set_drvdata(&adev->dev, NULL);
+	}
+	else
+	{
+		dev_err(&adev->dev, "%s: Driver[%s] Remove Failed\n",
+		 __func__, adev->name);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static const struct of_device_id audio_pkt_match_table[] = {
+	{ .compatible = "qcom,audio-pkt" },
+	{}
+};
+MODULE_DEVICE_TABLE(of, audio_pkt_match_table);
+
+static struct gpr_driver audio_pkt_driver = {
+	.probe = audio_pkt_probe,
+	.remove = audio_pkt_remove,
+	.callback = audio_pkt_srvc_callback,
+	.driver = {
+		.name = MODULE_NAME,
+		.of_match_table = of_match_ptr(audio_pkt_match_table),
+	 },
+};
+
+static int audio_pkt_plaform_driver_register_gpr(struct platform_device *pdev,
+				struct audio_pkt_device *audpkt_dev)
+{
+	int ret = 0;
+
+	ap_priv = devm_kzalloc(&pdev->dev,
+			     sizeof(*ap_priv), GFP_KERNEL);
+	if (!ap_priv)
+		return -ENOMEM;
+
+	ret = gpr_driver_register(&audio_pkt_driver);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "%s: registering to gpr driver failed, err = %d\n",
+			__func__, ret);
+		goto err;
+	}
+
+	mutex_init(&ap_priv->lock);
+	ap_priv->status = AUDIO_PKT_INIT;
+	ap_priv->ap_dev = audpkt_dev;
+	ap_priv->dev = audpkt_dev->dev;
+err:
+	return ret;
+}
+
+/**
+ * audio_pkt_platform_driver_probe() - Probe a AUDIO packet device
+ *
+ * adev:	Pointer to platform device.
+ *
+ * return:	0 on success, standard Linux error codes on error.
+ *
+ * This function is called when the underlying device tree driver registers
+ * a platform device, mapped to a Audio packet device.
+ */
+static int audio_pkt_platform_driver_probe(struct platform_device *pdev)
+{
+	int ret;
+	struct audio_pkt_device *audpkt_dev;
+
+	audpkt_dev = devm_kzalloc(&pdev->dev, sizeof(*audpkt_dev), GFP_KERNEL);
 	if (!audpkt_dev)
 		return -ENOMEM;
 
@@ -452,9 +621,6 @@ static int audio_pkt_probe(struct gpr_device *adev)
 	skb_queue_head_init(&audpkt_dev->queue);
 	init_waitqueue_head(&audpkt_dev->readq);
 
-	audpkt_dev->adev = adev;
-	dev_set_drvdata(dev, audpkt_dev);
-
 	cdev_init(&audpkt_dev->cdev, &audio_pkt_fops);
 	audpkt_dev->cdev.owner = THIS_MODULE;
 
@@ -466,12 +632,20 @@ static int audio_pkt_probe(struct gpr_device *adev)
 		goto free_dev;
 	}
 
+	ret = audio_pkt_plaform_driver_register_gpr(pdev, audpkt_dev);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "%s: Failed to register with gpr, err = %d\n",
+			__func__, ret);
+		goto free_dev;
+	}
+
+	platform_set_drvdata(pdev, ap_priv);
 	AUDIO_PKT_INFO("Audio Packet Port Driver Initialized\n");
 
-	return of_platform_populate(dev->of_node, NULL, NULL, dev);
+	goto done;
+	//return of_platform_populate(dev->of_node, NULL, NULL, dev);
 
 free_dev:
-	put_device(dev);
 	device_destroy(audpkt_dev->audio_pkt_class,audpkt_dev->audio_pkt_major);
 err_device:
 	class_destroy(audpkt_dev->audio_pkt_class);
@@ -479,45 +653,73 @@ err_class:
 	unregister_chrdev_region(MAJOR(audpkt_dev->audio_pkt_major),
 				 MINOR_NUMBER_COUNT);
 err_chrdev:
-	kfree(audpkt_dev);
+done:
 	return ret;
 
 }
 
 /**
- * audio_pkt_remove() - Remove a AUDIO packet device
+ * audio_pkt_platform_driver_remove() - Remove a AUDIO packet platform device
  *
- * adev:	Pointer to gpr device.
+ * adev:	Pointer to platform device.
  *
  * return:	0 on success, standard Linux error codes on error.
  *
  * This function is called when the underlying device tree driver
- * removeds a gpr device, mapped to a Audio packet device.
+ * removes a platform device, mapped to a Audio packet device.
  */
-static int audio_pkt_remove(struct gpr_device *adev)
+static int audio_pkt_platform_driver_remove(struct platform_device *adev)
 {
-	of_platform_depopulate(&adev->dev);
+	struct audio_pkt_priv *ap_priv = platform_get_drvdata(adev);
+	struct audio_pkt_device *audpkt_dev = ap_priv->ap_dev;
+
+	gpr_driver_unregister(&audio_pkt_driver);
+
+	audio_pkt_internal_release(adev);
+
+	if (audpkt_dev) {
+		cdev_del(&audpkt_dev->cdev);
+		device_destroy(audpkt_dev->audio_pkt_class,audpkt_dev->audio_pkt_major);
+		class_destroy(audpkt_dev->audio_pkt_class);
+		unregister_chrdev_region(MAJOR(audpkt_dev->audio_pkt_major),
+				 MINOR_NUMBER_COUNT);
+	}
+
+	//of_platform_depopulate(&adev->dev);
 	AUDIO_PKT_INFO("Audio Packet Port Driver Removed\n");
 
 	return 0;
 
 }
-static const struct of_device_id audio_pkt_match_table[] = {
-	{ .compatible = "qcom,audio-pkt" },
-	{},
-};
-MODULE_DEVICE_TABLE(of, audio_pkt_match_table);
 
-static struct gpr_driver audio_pkt_driver = {
-	.probe = audio_pkt_probe,
-	.remove = audio_pkt_remove,
-	.callback = audio_pkt_srvc_callback,
-	.driver = {
+static const struct of_device_id audio_pkt_platform_match_table[] = {
+	{ .compatible = "qcom,audio-pkt-core-platform"},
+	{}
+};
+MODULE_DEVICE_TABLE(of, audio_pkt_platform_match_table);
+
+
+static struct platform_driver audio_pkt_core_platform_driver = {
+	.probe          = audio_pkt_platform_driver_probe,
+	.remove         = audio_pkt_platform_driver_remove,
+	.driver         = {
 		.name = MODULE_NAME,
-		.of_match_table = of_match_ptr(audio_pkt_match_table),
-	 },
+		.of_match_table = of_match_ptr(audio_pkt_platform_match_table),
+	},
 };
 
-module_gpr_driver(audio_pkt_driver);
+
+static int __init audio_pkt_init(void)
+{
+	return platform_driver_register(&audio_pkt_core_platform_driver);
+}
+
+static void __exit audio_pkt_exit(void)
+{
+	platform_driver_unregister(&audio_pkt_core_platform_driver);
+}
+module_init(audio_pkt_init);
+module_exit(audio_pkt_exit);
+
 MODULE_DESCRIPTION("MSM Audio Packet Driver");
 MODULE_LICENSE("GPL v2");

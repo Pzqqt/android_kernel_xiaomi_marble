@@ -22,13 +22,56 @@
 #include <linux/rpmsg.h>
 #include <linux/of.h>
 
+#include <soc/snd_event.h>
+#include <dsp/audio_notifier.h>
+
 struct gpr {
 	struct rpmsg_endpoint *ch;
 	struct device *dev;
+	spinlock_t gpr_lock;
+	bool is_initial_boot;
+
 	spinlock_t svcs_lock;
 	struct idr svcs_idr;
 	int dest_domain_id;
 };
+
+static struct gpr_q6 q6;
+static struct gpr *gpr_priv;
+
+enum gpr_subsys_state gpr_get_q6_state(void)
+{
+	return atomic_read(&q6.q6_state);
+}
+EXPORT_SYMBOL(gpr_get_q6_state);
+
+enum gpr_subsys_state gpr_get_modem_state(void)
+{
+	return atomic_read(&q6.modem_state);
+}
+EXPORT_SYMBOL(gpr_get_modem_state);
+
+
+void gpr_subsys_notif_register(char *client_name, int domain,
+			   struct notifier_block *nb)
+{
+	int ret;
+
+	ret = audio_notifier_register(client_name, domain, nb);
+	if (ret < 0)
+		dev_err(gpr_priv->dev, "%s: Audio notifier register failed for domain %d ret = %d\n",
+			__func__, domain, ret);
+}
+
+void gpr_subsys_notif_deregister(char *client_name)
+{
+	int ret;
+
+	ret = audio_notifier_deregister(client_name);
+	if (ret < 0)
+		dev_err(gpr_priv->dev, "%s: Audio notifier de-register failed for client %s\n",
+			__func__, client_name);
+}
 
 /**
  * gpr_send_pkt() - Send a gpr message from gpr device
@@ -36,28 +79,176 @@ struct gpr {
  * @adev: Pointer to previously registered gpr device.
  * @pkt: Pointer to gpr packet to send
  *
- * Return: Will be an negative on packet size on success.
+ * Return: Will be an negative and/or packet size on success.
  */
 int gpr_send_pkt(struct gpr_device *adev, struct gpr_pkt *pkt)
 {
-	struct gpr *gpr = dev_get_drvdata(adev->dev.parent);
+	struct gpr *gpr;
 	struct gpr_hdr *hdr;
 	unsigned long flags;
 	uint32_t pkt_size;
 	int ret;
+
+	if(!adev)
+	{
+		pr_err("%s: enter pointer adev[%p] \n", __func__, adev);
+		return -EINVAL;
+	}
+
+	if(!(adev->dev.parent))
+	{
+		pr_err("%s: enter pointer adev->dev.parent[%p] \n",
+			__func__, adev->dev.parent);
+		return -EINVAL;
+	}
+
+	gpr = dev_get_drvdata(adev->dev.parent);
+
+	if ((adev->domain_id == GPR_IDS_DOMAIN_ID_ADSP_V) &&
+	    (gpr_get_q6_state() != GPR_SUBSYS_LOADED)) {
+		dev_err(gpr->dev,"%s: domain_id[%d], Still Dsp is not Up\n",
+			__func__, adev->domain_id);
+		return -ENETRESET;
+		} else if ((adev->domain_id == GPR_IDS_DOMAIN_ID_MODEM_V) &&
+		   (gpr_get_modem_state() == GPR_SUBSYS_DOWN)) {
+		dev_err(gpr->dev, "%s: domain_id[%d], Still Modem is not Up\n",
+			__func__, adev->domain_id );
+		return -ENETRESET;
+	}
 
 	spin_lock_irqsave(&adev->lock, flags);
 
 	hdr = &pkt->hdr;
 	pkt_size = GPR_PKT_GET_PACKET_BYTE_SIZE(hdr->header);
 
-	dev_dbg(gpr->dev, "SVC_ID %d %s packet size %d\n", adev->svc_id, __func__, pkt_size);
+	dev_dbg(gpr->dev, "SVC_ID %d %s packet size %d\n",
+		adev->svc_id, __func__, pkt_size);
 	ret = rpmsg_trysend(gpr->ch, pkt, pkt_size);
 	spin_unlock_irqrestore(&adev->lock, flags);
 
 	return ret ? ret : pkt_size;
 }
 EXPORT_SYMBOL_GPL(gpr_send_pkt);
+
+ /**
+  * apr_set_modem_state - Update modem load status.
+  *
+  * @state: State to update modem load status
+  *
+ */
+void gpr_set_modem_state(enum gpr_subsys_state state)
+{
+	atomic_set(&q6.modem_state, state);
+}
+EXPORT_SYMBOL(gpr_set_modem_state);
+
+
+static void gpr_modem_down(unsigned long opcode)
+{
+	gpr_set_modem_state(GPR_SUBSYS_DOWN);
+	//dispatch_event(opcode, APR_DEST_MODEM);
+}
+
+static void gpr_modem_up(void)
+{
+	//if (apr_cmpxchg_modem_state(APR_SUBSYS_DOWN, APR_SUBSYS_UP) ==
+	//						APR_SUBSYS_DOWN)
+	//	wake_up(&modem_wait);
+	//is_modem_up = 1;
+}
+
+
+int gpr_set_q6_state(enum gpr_subsys_state state)
+{
+	dev_dbg(gpr_priv->dev,"%s: setting adsp state %d\n", __func__, state);
+	if (state < GPR_SUBSYS_DOWN || state > GPR_SUBSYS_LOADED)
+		return -EINVAL;
+	atomic_set(&q6.q6_state, state);
+	return 0;
+}
+EXPORT_SYMBOL(gpr_set_q6_state);
+
+static void gpr_ssr_disable(struct device *dev, void *data)
+{
+	gpr_set_q6_state(GPR_SUBSYS_DOWN);
+}
+
+static const struct snd_event_ops gpr_ssr_ops = {
+	.disable = gpr_ssr_disable,
+};
+
+static void gpr_adsp_down(unsigned long opcode)
+{
+	dev_dbg(gpr_priv->dev,"%s: Q6 is Down\n", __func__);
+	snd_event_notify(gpr_priv->dev, SND_EVENT_DOWN);
+	gpr_set_q6_state(GPR_SUBSYS_DOWN);
+}
+
+static void gpr_adsp_up(void)
+{
+	dev_dbg(gpr_priv->dev,"%s: Q6 is Up\n", __func__);
+	gpr_set_q6_state(GPR_SUBSYS_LOADED);
+	snd_event_notify(gpr_priv->dev, SND_EVENT_UP);
+}
+
+static int gpr_notifier_service_cb(struct notifier_block *this,
+			   unsigned long opcode, void *data)
+{
+	struct audio_notifier_cb_data *cb_data = data;
+
+	if (cb_data == NULL) {
+		dev_err(gpr_priv->dev,"%s: Callback data is NULL!\n", __func__);
+		goto done;
+	}
+
+	dev_dbg(gpr_priv->dev,"%s: Service opcode 0x%lx, domain %d\n",
+		__func__, opcode, cb_data->domain);
+
+	switch (opcode) {
+	case AUDIO_NOTIFIER_SERVICE_DOWN:
+		/*
+		 * Use flag to ignore down notifications during
+		 * initial boot. There is no benefit from error
+		 * recovery notifications during initial boot
+		 * up since everything is expected to be down.
+		 */
+		spin_lock(&gpr_priv->gpr_lock);
+		if (gpr_priv->is_initial_boot) {
+			spin_unlock(&gpr_priv->gpr_lock);
+			break;
+		}
+		spin_unlock(&gpr_priv->gpr_lock);
+		if (cb_data->domain == AUDIO_NOTIFIER_MODEM_DOMAIN)
+			gpr_modem_down(opcode);
+		else
+			gpr_adsp_down(opcode);
+		break;
+	case AUDIO_NOTIFIER_SERVICE_UP:
+		if (cb_data->domain == AUDIO_NOTIFIER_MODEM_DOMAIN)
+			gpr_modem_up();
+		else
+			gpr_adsp_up();
+		spin_lock(&gpr_priv->gpr_lock);
+		gpr_priv->is_initial_boot = false;
+		spin_unlock(&gpr_priv->gpr_lock);
+		break;
+	default:
+		break;
+	}
+done:
+	return NOTIFY_OK;
+}
+
+static struct notifier_block adsp_service_nb = {
+	.notifier_call  = gpr_notifier_service_cb,
+	.priority = 0,
+};
+
+static struct notifier_block modem_service_nb = {
+	.notifier_call  = gpr_notifier_service_cb,
+	.priority = 0,
+};
+
 
 static void gpr_dev_release(struct device *dev)
 {
@@ -100,7 +291,8 @@ static int gpr_callback(struct rpmsg_device *rpdev, void *buf,
 		return -EINVAL;
 	}
 
-	dev_dbg(gpr->dev, "%s: dst_port %x hdr_size %d pkt_size %d\n",__func__ , hdr->dst_port, hdr_size, pkt_size);
+	dev_dbg(gpr->dev, "%s: dst_port %x hdr_size %d pkt_size %d\n",
+	__func__ , hdr->dst_port, hdr_size, pkt_size);
 
 	svc_id = hdr->dst_port;
 	spin_lock_irqsave(&gpr->svcs_lock, flags);
@@ -267,25 +459,53 @@ static void of_register_gpr_devices(struct device *dev)
 static int gpr_probe(struct rpmsg_device *rpdev)
 {
 	struct device *dev = &rpdev->dev;
-	struct gpr *gpr;
 	int ret;
-
-	gpr = devm_kzalloc(dev, sizeof(*gpr), GFP_KERNEL);
-	if (!gpr)
+	gpr_priv = devm_kzalloc(dev, sizeof(*gpr_priv), GFP_KERNEL);
+	if (!gpr_priv)
 		return -ENOMEM;
 
-	ret = of_property_read_u32(dev->of_node, "reg", &gpr->dest_domain_id);
+	spin_lock_init(&gpr_priv->gpr_lock);
+	mutex_init(&q6.lock);
+
+	spin_lock(&gpr_priv->gpr_lock);
+	gpr_priv->is_initial_boot = true;
+	spin_unlock(&gpr_priv->gpr_lock);
+
+	ret = of_property_read_u32(dev->of_node, "reg", &gpr_priv->dest_domain_id);
 	if (ret) {
 		dev_err(dev, "GPR Domain ID not specified in DT\n");
 		return ret;
 	}
+	if (GPR_DOMAIN_ADSP == gpr_priv->dest_domain_id) {
+		gpr_subsys_notif_register("gpr_adsp",
+				       AUDIO_NOTIFIER_ADSP_DOMAIN,
+				       &adsp_service_nb);
+	} else if (GPR_DOMAIN_MODEM == gpr_priv->dest_domain_id) {
+		gpr_subsys_notif_register("gpr_modem",
+				       AUDIO_NOTIFIER_MODEM_DOMAIN,
+				       &modem_service_nb);
+	} else {
+		dev_err(dev, "%s: invalid dest_domain_id %s\n", __func__,
+		  gpr_priv->dest_domain_id);
+		return -EINVAL;
+	}
 
-	dev_set_drvdata(dev, gpr);
-	gpr->ch = rpdev->ept;
-	gpr->dev = dev;
-	spin_lock_init(&gpr->svcs_lock);
-	idr_init(&gpr->svcs_idr);
+	dev_info(dev, "%s: registered via subsys_notif_register for domain id(%d)",
+		__func__, gpr_priv->dest_domain_id  );
+
+	dev_set_drvdata(dev, gpr_priv);
+	gpr_priv->ch = rpdev->ept;
+	gpr_priv->dev = dev;
+	spin_lock_init(&gpr_priv->svcs_lock);
+	idr_init(&gpr_priv->svcs_idr);
 	of_register_gpr_devices(dev);
+
+	ret = snd_event_client_register(&rpdev->dev, &gpr_ssr_ops, NULL);
+	if (ret) {
+		dev_err(dev,"%s: Registration with SND event fwk failed ret = %d\n",
+			__func__, ret);
+		ret = 0;
+	}
 
 	return 0;
 }
@@ -293,14 +513,24 @@ static int gpr_probe(struct rpmsg_device *rpdev)
 static int gpr_remove_device(struct device *dev, void *null)
 {
 	struct gpr_device *adev = to_gpr_device(dev);
-
 	device_unregister(&adev->dev);
-
 	return 0;
 }
 
 static void gpr_remove(struct rpmsg_device *rpdev)
 {
+	struct device *dev = &rpdev->dev;
+	snd_event_client_deregister(&rpdev->dev);
+	dev_info(dev, "%s: deregistering via subsys_notif_register for domain_id(%d)",
+		__func__, gpr_priv->dest_domain_id );
+	if (GPR_DOMAIN_ADSP == gpr_priv->dest_domain_id)
+	{
+		gpr_subsys_notif_deregister("gpr_adsp");
+	}
+	else if(GPR_DOMAIN_MODEM == gpr_priv->dest_domain_id)
+	{
+		gpr_subsys_notif_deregister("gpr_modem");
+	}
 	device_for_each_child(&rpdev->dev, NULL, gpr_remove_device);
 }
 

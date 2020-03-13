@@ -29,6 +29,14 @@ enum gpr_subsys_state {
 };
 
 
+struct gpr_q6 {
+ //void *pil;
+ atomic_t q6_state;
+ atomic_t modem_state;
+ struct mutex lock;
+};
+
+
 /* Version */
 #define GPR_PKT_VER		0x0
 

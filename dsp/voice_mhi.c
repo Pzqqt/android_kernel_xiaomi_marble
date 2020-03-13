@@ -488,8 +488,8 @@ static int voice_mhi_gpr_probe(struct gpr_device *gdev)
 
 static int voice_mhi_gpr_exit(struct gpr_device *gdev)
 {
-	mutex_lock(&voice_mhi_lcl.mutex);
 	voice_mhi_end();
+	mutex_lock(&voice_mhi_lcl.mutex);
 	voice_mhi_lcl.gdev = NULL;
 	VOICE_MHI_STATE_RESET(voice_mhi_lcl.voice_mhi_state,
 					VOICE_MHI_ADSP_UP);
