@@ -1255,6 +1255,31 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"Roam candidate selection score algorithm")
 
+/*
+ * <ini>
+ * CFG_OCE_AP_TX_PWR_WEIGHTAGE - update scoring param based on ap tx power
+ * @Min: 0
+ * @Max: 10
+ * @Default: 5
+ *
+ * This ini is used to store calculate weightage based on ap tx power.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_AP_TX_PWR_WEIGHTAGE CFG_INI_UINT( \
+		"oce_ap_tx_pwr_weightage", \
+		0, \
+		10, \
+		5, \
+		CFG_VALUE_OR_DEFAULT,\
+		"AP weigtage for OCE ap tx power")
+
 #define CFG_SCORING_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
 	CFG(CFG_SCORING_HT_CAPS_WEIGHTAGE) \
@@ -1298,5 +1323,6 @@
 	CFG(CFG_IDLE_ROAM_SCORE_DELTA) \
 	CFG(CFG_BTM_ROAM_SCORE_DELTA) \
 	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM) \
+	CFG(CFG_OCE_AP_TX_PWR_WEIGHTAGE) \
 
 #endif /* __CFG_MLME_SCORING_H */
