@@ -1233,6 +1233,12 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id))
 		tgt_dfs_radar_enable(wma->pdev, 0, 0, true);
 
+	iface = &wma->interfaces[rsp->vdev_id];
+	if (!iface->vdev) {
+		wma_err("Invalid vdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (rsp->status == QDF_STATUS_SUCCESS) {
 		wma->interfaces[rsp->vdev_id].tx_streams =
 			rsp->cfgd_tx_streams;
@@ -1256,9 +1262,13 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 				rsp->cfgd_rx_streams,
 				rsp->chain_mask,
 				wma->interfaces[rsp->vdev_id].mac_id);
+
+		/* Fill bss_chan after vdev start */
+		qdf_mem_copy(iface->vdev->vdev_mlme.bss_chan,
+			     iface->vdev->vdev_mlme.des_chan,
+			     sizeof(struct wlan_channel));
 	}
 
-	iface = &wma->interfaces[rsp->vdev_id];
 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id)) {
 		wma_dcs_clear_vdev_starting(mac_ctx, rsp->vdev_id);
 		wma_dcs_wlan_interference_mitigation_enable(mac_ctx,
