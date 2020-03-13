@@ -1811,6 +1811,7 @@ struct wlan_mlme_wmm_params {
  * @pcl_weightage: PCL weightage
  * @channel_congestion_weightage: channel congestion weightage
  * @oce_wan_weightage: OCE WAN metrics weightage
+ * @oce_ap_tx_pwr_weightage: weightage based on ap tx power
  */
 struct  wlan_mlme_weight_config {
 	uint8_t rssi_weightage;
@@ -1824,6 +1825,7 @@ struct  wlan_mlme_weight_config {
 	uint8_t pcl_weightage;
 	uint8_t channel_congestion_weightage;
 	uint8_t oce_wan_weightage;
+	uint8_t oce_ap_tx_pwr_weightage;
 };
 
 /**
