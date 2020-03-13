@@ -4926,24 +4926,10 @@ returnAfterError:
 #define IS_PE_SESSION_HE_MODE(_session) false
 #endif
 
-/**
- * lim_send_addba_response_frame(): Send ADDBA response action frame to peer
- * @mac_ctx: mac context
- * @peer_mac: Peer MAC address
- * @tid: TID for which addba response is being sent
- * @session: PE session entry
- * @addba_extn_present: ADDBA extension present flag
- * @amsdu_support: amsdu in ampdu support
- *
- * This function is called when ADDBA request is successful. ADDBA response is
- * setup by calling addba_response_setup API and frame is then sent out OTA.
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid,
 		struct pe_session *session, uint8_t addba_extn_present,
-		uint8_t amsdu_support)
+		uint8_t amsdu_support, uint8_t is_wep)
 {
 
 	tDot11faddba_rsp frm;
@@ -4980,12 +4966,10 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	}
 	frm.addba_param_set.tid = tid;
 
-	if (lim_is_session_he_capable(session)) {
-		sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
-					       &session->dph.dphHashTable);
-		if (sta_ds)
-			he_cap = lim_is_sta_he_capable(sta_ds);
-	}
+	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac, &aid,
+				       &session->dph.dphHashTable);
+	if (sta_ds && lim_is_session_he_capable(session))
+		he_cap = lim_is_sta_he_capable(sta_ds);
 
 	if (he_cap)
 		frm.addba_param_set.buff_size = MAX_BA_BUFF_SIZE;
@@ -5006,7 +4990,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	} else if (!session->active_ba_64_session) {
 		session->active_ba_64_session = true;
 	}
-	if (frm.addba_param_set.buff_size > buff_size) {
+	if (buff_size && (frm.addba_param_set.buff_size > buff_size)) {
 		pe_debug("buff size: %d larger than peer's capability: %d",
 			 frm.addba_param_set.buff_size, buff_size);
 		frm.addba_param_set.buff_size = buff_size;
@@ -5078,6 +5062,11 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	 * set the "protect" (aka WEP) bit in the FC
 	 */
 	lim_set_protected_bit(mac_ctx, session, peer_mac, mgmt_hdr);
+
+	if (is_wep && sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER) {
+		mgmt_hdr->fc.wep = 1;
+		tx_flag |= HAL_USE_PMF;
+	}
 
 	status = dot11f_pack_addba_rsp(mac_ctx, &frm,
 			frame_ptr + sizeof(tSirMacMgmtHdr), payload_size,

@@ -2443,8 +2443,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
+
 #ifdef WLAN_FEATURE_11W
-	if ((iface && iface->rmfEnabled) &&
+	if ((iface && (iface->rmfEnabled || tx_flag & HAL_USE_PMF)) &&
 	    (frmType == TXRX_FRM_802_11_MGMT) &&
 	    (pFc->subType == SIR_MAC_MGMT_DISASSOC ||
 	     pFc->subType == SIR_MAC_MGMT_DEAUTH ||
@@ -2459,17 +2460,21 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				/* Allocate extra bytes for privacy header and
 				 * trailer
 				 */
-				pdev_id = wlan_objmgr_pdev_get_pdev_id(
+				if (iface->type == WMI_VDEV_TYPE_NDI &&
+				    (tx_flag & HAL_USE_PMF)) {
+					hdr_len = IEEE80211_CCMP_HEADERLEN;
+					mic_len = IEEE80211_CCMP_MICLEN;
+				} else {
+					pdev_id = wlan_objmgr_pdev_get_pdev_id(
 							wma_handle->pdev);
-				qdf_status =
-					mlme_get_peer_mic_len(wma_handle->psoc,
-							      pdev_id,
-							      wh->i_addr1,
-							      &mic_len,
-							      &hdr_len);
+					qdf_status = mlme_get_peer_mic_len(
+							wma_handle->psoc,
+							pdev_id, wh->i_addr1,
+							&mic_len, &hdr_len);
 
-				if (QDF_IS_STATUS_ERROR(qdf_status))
-					return qdf_status;
+					if (QDF_IS_STATUS_ERROR(qdf_status))
+						return qdf_status;
+				}
 
 				newFrmLen = frmLen + hdr_len + mic_len;
 				qdf_status =

@@ -3046,7 +3046,8 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	bool ret = false;
 
-	if (wma_find_vdev_id_by_bssid(cds_ctx, wh->i_addr3, &vdev_id)) {
+	if (wma_find_vdev_id_by_bssid(cds_ctx, wh->i_addr3, &vdev_id) &&
+	    wma_find_vdev_id_by_addr(cds_ctx, wh->i_addr1, &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev", __func__);
 		return true;
 	}
@@ -3223,14 +3224,20 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			return -EINVAL;
 		}
 
-		pdev_id = wlan_objmgr_pdev_get_pdev_id(wma_handle->pdev);
-		status = mlme_get_peer_mic_len(wma_handle->psoc, pdev_id,
-					       wh->i_addr2, &mic_len,
-					       &hdr_len);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			WMA_LOGE("Failed to get mic hdr and length");
-			cds_pkt_return_packet(rx_pkt);
-			return -EINVAL;
+		if (iface->type == WMI_VDEV_TYPE_NDI) {
+			hdr_len = IEEE80211_CCMP_HEADERLEN;
+			mic_len = IEEE80211_CCMP_MICLEN;
+		} else {
+			pdev_id =
+				wlan_objmgr_pdev_get_pdev_id(wma_handle->pdev);
+			status = mlme_get_peer_mic_len(wma_handle->psoc,
+						       pdev_id, wh->i_addr2,
+						       &mic_len, &hdr_len);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				WMA_LOGE("Failed to get mic hdr and length");
+				cds_pkt_return_packet(rx_pkt);
+				return -EINVAL;
+			}
 		}
 
 		if (qdf_nbuf_len(wbuf) < (sizeof(*wh) + hdr_len + mic_len)) {
@@ -3369,12 +3376,14 @@ wma_check_and_process_rmf_frame(tp_wma_handle wma_handle,
 	struct ieee80211_frame *hdr = *wh;
 
 	iface = &(wma_handle->interfaces[vdev_id]);
-	if (!iface->rmfEnabled)
+	if (iface->type != WMI_VDEV_TYPE_NDI && !iface->rmfEnabled)
 		return 0;
 
 	if (qdf_is_macaddr_group((struct qdf_mac_addr *)(hdr->i_addr1)) ||
 	    qdf_is_macaddr_broadcast((struct qdf_mac_addr *)(hdr->i_addr1)) ||
-	    wma_get_peer_pmf_status(wma_handle, hdr->i_addr2)) {
+	    wma_get_peer_pmf_status(wma_handle, hdr->i_addr2) ||
+	    (iface->type == WMI_VDEV_TYPE_NDI &&
+	    (hdr->i_fc[1] & IEEE80211_FC1_WEP))) {
 		status = wma_process_rmf_frame(wma_handle, iface, hdr,
 					       rx_pkt, buf);
 		if (status)
@@ -3576,6 +3585,15 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	     mgt_subtype == MGMT_SUBTYPE_DEAUTH ||
 	     mgt_subtype == MGMT_SUBTYPE_ACTION)) {
 		if (wma_find_vdev_id_by_bssid(wma_handle, wh->i_addr3,
+					      &vdev_id) == QDF_STATUS_SUCCESS) {
+			status = wma_check_and_process_rmf_frame(wma_handle,
+								 vdev_id,
+								 &wh,
+								 rx_pkt,
+								 buf);
+			if (status)
+				return status;
+		} else if (wma_find_vdev_id_by_addr(wma_handle, wh->i_addr1,
 					      &vdev_id) == QDF_STATUS_SUCCESS) {
 			status = wma_check_and_process_rmf_frame(wma_handle,
 								 vdev_id,
