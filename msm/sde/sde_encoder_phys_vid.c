@@ -88,6 +88,7 @@ static void drm_mode_to_intf_timing_params(
 					vid_enc->base.comp_ratio);
 	}
 
+	timing->poms_align_vsync = phys_enc->poms_align_vsync;
 	timing->height = mode->vdisplay;	/* active height */
 	timing->xres = timing->width;
 	timing->yres = timing->height;

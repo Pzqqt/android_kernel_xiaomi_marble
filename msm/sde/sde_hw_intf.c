@@ -309,6 +309,11 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 	if (p->wide_bus_en)
 		intf_cfg2 |= BIT(0);
 
+	/* Synchronize timing engine enable to TE */
+	if ((ctx->cap->features & BIT(SDE_INTF_TE_ALIGN_VSYNC))
+			&& p->poms_align_vsync)
+		intf_cfg2 |= BIT(16);
+
 	if (ctx->cfg.split_link_en)
 		SDE_REG_WRITE(c, INTF_REG_SPLIT_LINK, 0x3);
 

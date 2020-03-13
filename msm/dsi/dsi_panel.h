@@ -171,6 +171,7 @@ struct dsi_panel {
 	struct dsi_cmd_engine_cfg cmd_config;
 	enum dsi_op_mode panel_mode;
 	bool panel_mode_switch_enabled;
+	bool poms_align_vsync;
 
 	struct dsi_dfps_capabilities dfps_caps;
 	struct dsi_dyn_clk_caps dyn_clk_caps;

@@ -5819,6 +5819,7 @@ int dsi_display_get_info(struct drm_connector *connector,
 	info->max_height = 1080;
 	info->qsync_min_fps =
 		display->panel->qsync_min_fps;
+	info->poms_align_vsync = display->panel->poms_align_vsync;
 
 	switch (display->panel->panel_mode) {
 	case DSI_OP_VIDEO_MODE:
@@ -7357,6 +7358,25 @@ int dsi_display_pre_disable(struct dsi_display *display)
 	return rc;
 }
 
+static void dsi_display_handle_poms_te(struct work_struct *work)
+{
+	struct dsi_display *display = NULL;
+	struct delayed_work *dw = to_delayed_work(work);
+	struct mipi_dsi_device *dsi;
+	int rc = 0;
+
+	display = container_of(dw, struct dsi_display, poms_te_work);
+	if (!display || !display->panel) {
+		DSI_ERR("Invalid params\n");
+		return;
+	}
+
+	dsi = &display->panel->mipi_device;
+	rc = mipi_dsi_dcs_set_tear_off(dsi);
+	if (rc < 0)
+		DSI_ERR("failed to set tear off\n");
+}
+
 int dsi_display_disable(struct dsi_display *display)
 {
 	int rc = 0;
@@ -7369,6 +7389,11 @@ int dsi_display_disable(struct dsi_display *display)
 	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 	mutex_lock(&display->display_lock);
 
+	/* cancel delayed work */
+	if (display->poms_pending &&
+			display->panel->poms_align_vsync)
+		cancel_delayed_work_sync(&display->poms_te_work);
+
 	rc = dsi_display_wake_up(display);
 	if (rc)
 		DSI_ERR("[%s] display wake up failed, rc=%d\n",
@@ -7380,6 +7405,18 @@ int dsi_display_disable(struct dsi_display *display)
 			DSI_ERR("[%s]failed to disable DSI vid engine, rc=%d\n",
 			       display->name, rc);
 	} else if (display->config.panel_mode == DSI_OP_CMD_MODE) {
+		/**
+		 * On POMS request , disable panel TE through
+		 * delayed work queue.
+		 */
+		if (display->poms_pending &&
+				display->panel->poms_align_vsync) {
+			INIT_DELAYED_WORK(&display->poms_te_work,
+					dsi_display_handle_poms_te);
+			queue_delayed_work(system_wq,
+					&display->poms_te_work,
+					msecs_to_jiffies(100));
+		}
 		rc = dsi_display_cmd_engine_disable(display);
 		if (rc)
 			DSI_ERR("[%s]failed to disable DSI cmd engine, rc=%d\n",

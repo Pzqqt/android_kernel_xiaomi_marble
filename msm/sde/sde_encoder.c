@@ -2582,6 +2582,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 		phys->comp_ratio = comp_info->comp_ratio;
 		phys->wide_bus_en = sde_enc->mode_info.wide_bus_en;
 		phys->frame_trigger_mode = sde_enc->frame_trigger_mode;
+		phys->poms_align_vsync = disp_info->poms_align_vsync;
 		if (phys->comp_type == MSM_DISPLAY_COMPRESSION_DSC) {
 			phys->dsc_extra_pclk_cycle_cnt =
 				comp_info->dsc_info.pclk_per_line;

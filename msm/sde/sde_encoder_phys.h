@@ -271,6 +271,7 @@ struct sde_encoder_irq {
  * @dsc_extra_pclk_cycle_cnt: Extra pclk cycle count for DSC over DP
  * @dsc_extra_disp_width: Additional display width for DSC over DP
  * @wide_bus_en:	Wide-bus configuraiton
+ * @poms_align_vsync:   poms with vsync aligned
  * @enc_spinlock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
  * @enable_state:	Enable state tracking
  * @vblank_refcount:	Reference count of vblank request
@@ -317,6 +318,7 @@ struct sde_encoder_phys {
 	u32 dsc_extra_pclk_cycle_cnt;
 	u32 dsc_extra_disp_width;
 	bool wide_bus_en;
+	bool poms_align_vsync;
 	spinlock_t *enc_spinlock;
 	enum sde_enc_enable_state enable_state;
 	struct mutex *vblank_ctl_lock;
