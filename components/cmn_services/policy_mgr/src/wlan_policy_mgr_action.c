@@ -933,6 +933,45 @@ policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
+/**
+ * policy_mgr_dbs1_dbs2_need_action() - whether more actions are needed
+ *                                      in DBS1 and DBS2 hw mode
+ * @psoc: psoc object
+ * @action: action type
+ * @hw_mode: hardware mode
+ *
+ * The function checks further action are needed or not for DBS1 and DBS2.
+ *
+ * Return: true if more action are needed, otherwise
+ *         return false
+ */
+static bool
+policy_mgr_dbs1_dbs2_need_action(struct wlan_objmgr_psoc *psoc,
+				 enum policy_mgr_conc_next_action action,
+				 struct policy_mgr_hw_mode_params *hw_mode)
+{
+	if (policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(psoc) ||
+	    policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(psoc)) {
+		policy_mgr_debug("curr dbs action %d new action %d",
+				 hw_mode->action_type, action);
+		if (hw_mode->action_type == PM_DBS1 &&
+		    ((action == PM_DBS1 ||
+		    action == PM_DBS1_DOWNGRADE))) {
+			policy_mgr_debug("driver is already in DBS_5G_2x2_24G_1x1 (%d), no further action %d needed",
+					 hw_mode->action_type, action);
+			return false;
+		} else if (hw_mode->action_type == PM_DBS2 &&
+			   ((action == PM_DBS2 ||
+			   action == PM_DBS2_DOWNGRADE))) {
+			policy_mgr_debug("driver is already in DBS_24G_2x2_5G_1x1 (%d), no further action %d needed",
+					 hw_mode->action_type, action);
+			return false;
+		}
+	}
+
+	return true;
+}
+
 QDF_STATUS
 policy_mgr_validate_dbs_switch(struct wlan_objmgr_psoc *psoc,
 			       enum policy_mgr_conc_next_action action)
@@ -980,21 +1019,8 @@ policy_mgr_validate_dbs_switch(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (policy_mgr_is_2x2_5G_1x1_2G_dbs_capable(psoc) ||
 	    policy_mgr_is_2x2_2G_1x1_5G_dbs_capable(psoc)) {
-		policy_mgr_debug("curr dbs action %d new action %d",
-				 hw_mode.action_type, action);
-		if (hw_mode.action_type == PM_DBS1 &&
-		    ((action == PM_DBS1 ||
-		    action == PM_DBS1_DOWNGRADE))) {
-			policy_mgr_debug("driver is already in DBS_5G_2x2_24G_1x1 (%d), no further action %d needed",
-					 hw_mode.action_type, action);
+		if (!policy_mgr_dbs1_dbs2_need_action(psoc, action, &hw_mode))
 			return QDF_STATUS_E_ALREADY;
-		} else if (hw_mode.action_type == PM_DBS2 &&
-			   ((action == PM_DBS2 ||
-			   action == PM_DBS2_DOWNGRADE))) {
-			policy_mgr_debug("driver is already in DBS_24G_2x2_5G_1x1 (%d), no further action %d needed",
-					 hw_mode.action_type, action);
-			return QDF_STATUS_E_ALREADY;
-		}
 	} else if ((action == PM_DBS_DOWNGRADE) || (action == PM_DBS) ||
 		   (action == PM_DBS_UPGRADE)) {
 		policy_mgr_debug("driver is already in %s mode, no further action needed",
@@ -1150,14 +1176,22 @@ QDF_STATUS policy_mgr_next_actions(
 					session_id);
 		break;
 	case PM_DBS1_DOWNGRADE:
-		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
-						    PM_DBS1, reason,
-						    session_id);
+		if (policy_mgr_dbs1_dbs2_need_action(psoc, action, &hw_mode))
+			status = policy_mgr_complete_action(psoc,
+							    POLICY_MGR_RX_NSS_1,
+							    PM_DBS1, reason,
+							    session_id);
+		else
+			status = QDF_STATUS_E_ALREADY;
 		break;
 	case PM_DBS2_DOWNGRADE:
-		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
-						    PM_DBS2, reason,
-						    session_id);
+		if (policy_mgr_dbs1_dbs2_need_action(psoc, action, &hw_mode))
+			status = policy_mgr_complete_action(psoc,
+							    POLICY_MGR_RX_NSS_1,
+							    PM_DBS2, reason,
+							    session_id);
+		else
+			status = QDF_STATUS_E_ALREADY;
 		break;
 	case PM_DBS1:
 		/*
@@ -1166,11 +1200,12 @@ QDF_STATUS policy_mgr_next_actions(
 		 * the 5G band was downgraded to 1x1. So, we need to
 		 * upgrade 5G vdevs after hw mode change.
 		 */
-		if (hw_mode.dbs_cap)
-			next_action = PM_UPGRADE_5G;
-		else
-			next_action = PM_NOP;
-		status = policy_mgr_pdev_set_hw_mode(
+		if (policy_mgr_dbs1_dbs2_need_action(psoc, action, &hw_mode)) {
+			if (hw_mode.dbs_cap)
+				next_action = PM_UPGRADE_5G;
+			else
+				next_action = PM_NOP;
+			status = policy_mgr_pdev_set_hw_mode(
 					psoc, session_id,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -1180,6 +1215,9 @@ QDF_STATUS policy_mgr_next_actions(
 					HW_MODE_AGILE_DFS_NONE,
 					HW_MODE_SBS_NONE,
 					reason, next_action, PM_DBS1);
+		} else {
+			status = QDF_STATUS_E_ALREADY;
+		}
 		break;
 	case PM_DBS2:
 		/*
@@ -1188,11 +1226,12 @@ QDF_STATUS policy_mgr_next_actions(
 		 * the 2G band was downgraded to 1x1. So, we need to
 		 * upgrade 5G vdevs after hw mode change.
 		 */
-		if (hw_mode.dbs_cap)
-			next_action = PM_UPGRADE_2G;
-		else
-			next_action = PM_NOP;
-		status = policy_mgr_pdev_set_hw_mode(
+		if (policy_mgr_dbs1_dbs2_need_action(psoc, action, &hw_mode)) {
+			if (hw_mode.dbs_cap)
+				next_action = PM_UPGRADE_2G;
+			else
+				next_action = PM_NOP;
+			status = policy_mgr_pdev_set_hw_mode(
 						psoc, session_id,
 						HW_MODE_SS_2x2,
 						HW_MODE_40_MHZ,
@@ -1202,6 +1241,9 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
 						reason, next_action, PM_DBS2);
+		} else {
+			status = QDF_STATUS_E_ALREADY;
+		}
 		break;
 	case PM_UPGRADE_5G:
 		status = policy_mgr_nss_update(
