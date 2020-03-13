@@ -24457,6 +24457,7 @@ typedef struct {
      * [31:5] : Reserved
      */
     A_UINT32 nss_ratio;
+    A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
@@ -24602,6 +24603,7 @@ typedef struct {
     A_UINT32 high_2ghz_chan; /* freq in MHz */
     A_UINT32 low_5ghz_chan;  /* freq in MHz */
     A_UINT32 high_5ghz_chan; /* freq in MHz */
+    A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
 } WMI_HAL_REG_CAPABILITIES_EXT;
 
 typedef struct {
