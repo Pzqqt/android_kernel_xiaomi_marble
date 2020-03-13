@@ -57,8 +57,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	if (QDF_IS_STATUS_ERROR(ret))
 		return;
 
-	if ((params->smode == SPECTRAL_SCAN_MODE_AGILE) ||
-	    is_primaryseg_rx_inprog(spectral)) {
+	if (is_primaryseg_rx_inprog(spectral, params->smode)) {
 		spec_samp_msg  = (struct spectral_samp_msg *)
 		      spectral->nl_cb.get_sbuff(spectral->pdev_obj,
 						msg_type,
@@ -169,7 +168,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		p_sops->get_mac_address(spectral, spec_samp_msg->macaddr);
 	}
 
-	if (is_secondaryseg_rx_inprog(spectral)) {
+	if (is_secondaryseg_rx_inprog(spectral, params->smode)) {
 		spec_samp_msg  = (struct spectral_samp_msg *)
 		      spectral->nl_cb.get_sbuff(spectral->pdev_obj,
 						msg_type,
@@ -239,9 +238,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		}
 	}
 
-	if (spectral->ch_width[SPECTRAL_SCAN_MODE_NORMAL] != CH_WIDTH_160MHZ ||
-	    (params->smode == SPECTRAL_SCAN_MODE_AGILE) ||
-	    is_secondaryseg_rx_inprog(spectral)) {
+	if (spectral->ch_width[params->smode] != CH_WIDTH_160MHZ ||
+	    is_secondaryseg_rx_inprog(spectral, params->smode)) {
 		if (spectral->send_phy_data(spectral->pdev_obj,
 					    msg_type) == 0)
 			spectral->spectral_sent_msg++;
@@ -249,9 +247,10 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	}
 
 	/* Take care of state transitions for 160MHz/ 80p80 */
-	if ((spectral->spectral_gen == SPECTRAL_GEN3) &&
-	    (params->smode != SPECTRAL_SCAN_MODE_AGILE))
+	if (spectral->spectral_gen == SPECTRAL_GEN3 &&
+	    spectral->ch_width[params->smode] == CH_WIDTH_160MHZ &&
+	    spectral->rparams.fragmentation_160[params->smode])
 		target_if_160mhz_delivery_state_change(
-				spectral,
-				SPECTRAL_DETECTOR_INVALID);
+				spectral, params->smode,
+				SPECTRAL_DETECTOR_ID_INVALID);
 }

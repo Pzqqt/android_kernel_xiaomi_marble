@@ -2132,14 +2132,27 @@ target_if_spectral_report_params_init(
 			struct spectral_report_params *rparams,
 			uint32_t target_type)
 {
+	enum spectral_scan_mode smode;
+
 	/* This entries are currently used by gen3 chipsets only. Hence
 	 * initialization is done for gen3 alone. In future if other generations
 	 * needs to use them they have to add proper initial values.
 	 */
-	if (target_type == TARGET_TYPE_QCN9000)
+	if (target_type == TARGET_TYPE_QCN9000) {
 		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_2;
-	else
+		rparams->num_spectral_detectors =
+				NUM_SPECTRAL_DETECTORS_GEN3_V2;
+		smode = SPECTRAL_SCAN_MODE_NORMAL;
+		for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
+			rparams->fragmentation_160[smode] = false;
+	} else {
 		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_1;
+		rparams->num_spectral_detectors =
+				NUM_SPECTRAL_DETECTORS_GEN3_V1;
+		smode = SPECTRAL_SCAN_MODE_NORMAL;
+		for (; smode < SPECTRAL_SCAN_MODE_MAX; smode++)
+			rparams->fragmentation_160[smode] = true;
+	}
 
 	switch (rparams->version) {
 	case SPECTRAL_REPORT_FORMAT_VERSION_1:
@@ -2156,6 +2169,20 @@ target_if_spectral_report_params_init(
 		break;
 	default:
 		qdf_assert_always(0);
+	}
+
+	rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_0] =
+						SPECTRAL_SCAN_MODE_NORMAL;
+	if (target_type == TARGET_TYPE_QCN9000) {
+		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_1] =
+						SPECTRAL_SCAN_MODE_AGILE;
+		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_2] =
+						SPECTRAL_SCAN_MODE_INVALID;
+	} else {
+		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_1] =
+						SPECTRAL_SCAN_MODE_NORMAL;
+		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_2] =
+						SPECTRAL_SCAN_MODE_AGILE;
 	}
 }
 

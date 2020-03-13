@@ -90,11 +90,14 @@ enum spectral_params {
  * enum spectral_scan_mode - Spectral scan mode
  * @SPECTRAL_SCAN_MODE_NORMAL: Normal mode
  * @SPECTRAL_SCAN_MODE_AGILE: Agile mode
+ * @SPECTRAL_SCAN_MODE_MAX: Max number of Spectral modes
+ * @SPECTRAL_SCAN_MODE_INVALID: Invalid Spectral mode
  */
 enum spectral_scan_mode {
 	SPECTRAL_SCAN_MODE_NORMAL,
 	SPECTRAL_SCAN_MODE_AGILE,
 	SPECTRAL_SCAN_MODE_MAX,
+	SPECTRAL_SCAN_MODE_INVALID = 0xff,
 };
 
 struct spectral_ioctl_params {
