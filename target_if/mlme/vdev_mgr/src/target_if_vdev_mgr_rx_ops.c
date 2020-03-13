@@ -363,8 +363,7 @@ static int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct vdev_delete_response rsp = {0};
-	struct wmi_host_vdev_delete_resp vdev_del_resp;
+	struct vdev_delete_response vdev_del_resp = {0};
 	struct vdev_response_timer *vdev_rsp;
 
 	if (!scn || !data) {
@@ -413,8 +412,7 @@ static int target_if_vdev_mgr_delete_response_handler(ol_scn_t scn,
 		goto err;
 	}
 
-	rsp.vdev_id = vdev_del_resp.vdev_id;
-	status = rx_ops->vdev_mgr_delete_response(psoc, &rsp);
+	status = rx_ops->vdev_mgr_delete_response(psoc, &vdev_del_resp);
 
 err:
 	return qdf_status_to_os_return(status);

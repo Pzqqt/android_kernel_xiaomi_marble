@@ -211,7 +211,7 @@ extract_vdev_start_resp_tlv(struct wmi_unified *wmi_handle, void *evt_buf,
 
 static QDF_STATUS
 extract_vdev_delete_resp_tlv(struct wmi_unified *wmi_handle, void *evt_buf,
-			     struct wmi_host_vdev_delete_resp *delete_rsp)
+			     struct vdev_delete_response *delete_rsp)
 {
 	WMI_VDEV_DELETE_RESP_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_delete_resp_event_fixed_param *ev;

@@ -5381,14 +5381,6 @@ typedef enum {
 } WMI_HOST_START_EVENT_PARAM;
 
 /**
- * struct wmi_host_vdev_delete_resp - VDEV delete response
- * @vdev_id: vdev id
- */
-struct wmi_host_vdev_delete_resp {
-	uint32_t vdev_id;
-};
-
-/**
  * struct wmi_host_roam_event - host roam event param
  * @vdev_id: vdev id
  * @reason: roam reason

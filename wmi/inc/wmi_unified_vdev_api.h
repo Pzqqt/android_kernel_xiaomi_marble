@@ -108,7 +108,7 @@ wmi_extract_vdev_stopped_param(struct wmi_unified *wmi_handle, void *evt_buf,
  */
 QDF_STATUS
 wmi_extract_vdev_delete_resp(struct wmi_unified *wmi_handle, void *evt_buf,
-			     struct wmi_host_vdev_delete_resp *vdev_del_resp);
+			     struct vdev_delete_response *vdev_del_resp);
 
 /**
  * wmi_extract_vdev_peer_delete_all_response_event() - extract peer delete all

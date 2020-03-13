@@ -1479,8 +1479,9 @@ QDF_STATUS
 QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 				      struct vdev_start_response *vdev_rsp);
 
-QDF_STATUS (*extract_vdev_delete_resp)(wmi_unified_t wmi_handle, void *evt_buf,
-	struct wmi_host_vdev_delete_resp *delete_rsp);
+QDF_STATUS (*extract_vdev_delete_resp)(
+				wmi_unified_t wmi_handle, void *evt_buf,
+				struct vdev_delete_response *delete_rsp);
 
 QDF_STATUS (*extract_tbttoffset_update_params)(wmi_unified_t wmi_hdl,
 					void *evt_buf, uint8_t idx,
