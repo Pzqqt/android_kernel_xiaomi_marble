@@ -101,12 +101,14 @@ enum dfs_reg {
  * OP_CLASS_EU- Class corresponds to EU
  * OP_CLASS_JAPAN- Class corresponds to JAPAN
  * OP_CLASS_GLOBAL- Class corresponds to GLOBAL
+ * OP_CLASS_CHINA- Class corresponds to CHINA
  */
 enum op_class_table_num {
 	OP_CLASS_US = 1,
 	OP_CLASS_EU,
 	OP_CLASS_JAPAN,
-	OP_CLASS_GLOBAL
+	OP_CLASS_GLOBAL,
+	OP_CLASS_CHINA
 };
 
 /**

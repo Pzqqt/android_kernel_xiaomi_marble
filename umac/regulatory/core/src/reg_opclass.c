@@ -254,6 +254,35 @@ static const struct reg_dmn_op_class_map_t japan_op_class[] = {
 	{0, 0, 0, 0, 0, {0} },
 };
 
+static const struct reg_dmn_op_class_map_t china_op_class[] = {
+	{7, 25, BW20, BIT(BEHAV_NONE), 2407,
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{8, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 2407,
+	 {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	{9, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 2407,
+	 {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{1, 20, BW20, BIT(BEHAV_NONE), 5000,
+	 {36, 40, 44, 48} },
+	{4, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
+	 {36, 44} },
+	{117, 40, BW40_HIGH_PRIMARY, BIT(BEHAV_BW40_HIGH_PRIMARY), 5000,
+	 {40, 48} },
+	{2, 20, BW20, BIT(BEHAV_NONE), 5000,
+	 {52, 56, 60, 64} },
+	{5, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
+	 {52, 60} },
+	{3, 20, BW20, BIT(BEHAV_NONE), 5000,
+	 {149, 153, 157, 161, 165} },
+	{6, 40, BW40_LOW_PRIMARY, BIT(BEHAV_BW40_LOW_PRIMARY), 5000,
+	 {149, 157} },
+	{128, 80, BW80, BIT(BEHAV_NONE), 5000,
+	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161} },
+	{129, 160, BW80, BIT(BEHAV_NONE), 5000,
+	 {36, 40, 44, 48, 52, 56, 60, 64,} },
+	{130, 80, BW80, BIT(BEHAV_BW80_PLUS), 5000,
+	 {36, 40, 44, 48, 52, 56, 60, 64, 149, 153, 157, 161} },
+	{0, 0, 0, 0, 0, {0} },
+};
 #ifdef HOST_OPCLASS
 /**
  * reg_get_class_from_country()- Get Class from country
@@ -285,6 +314,9 @@ static const struct reg_dmn_op_class_map_t
 		class = global_op_class;
 		break;
 
+	case OP_CLASS_CHINA:
+		class = china_op_class;
+		break;
 	default:
 		if (!qdf_mem_cmp(country, "US", 2))
 			class = us_op_class;
@@ -292,6 +324,8 @@ static const struct reg_dmn_op_class_map_t
 			class = euro_op_class;
 		else if (!qdf_mem_cmp(country, "JP", 2))
 			class = japan_op_class;
+		else if (!qdf_mem_cmp(country, "CN", 2))
+			class = china_op_class;
 		else
 			class = global_op_class;
 	}
@@ -529,7 +563,7 @@ void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 		else if (channel_map == channel_map_eu)
 			op_class_tbl = euro_op_class;
 		else if (channel_map == channel_map_china)
-			op_class_tbl = us_op_class;
+			op_class_tbl = china_op_class;
 		else if (channel_map == channel_map_jp)
 			op_class_tbl = japan_op_class;
 		else
@@ -636,7 +670,7 @@ uint16_t reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 		else if (channel_map == channel_map_eu)
 			op_class_tbl = euro_op_class;
 		else if (channel_map == channel_map_china)
-			op_class_tbl = us_op_class;
+			op_class_tbl = china_op_class;
 		else if (channel_map == channel_map_jp)
 			op_class_tbl = japan_op_class;
 		else
@@ -669,7 +703,7 @@ uint16_t reg_chan_opclass_to_freq(uint8_t chan,
 		} else if (channel_map == channel_map_eu) {
 			op_class_tbl = euro_op_class;
 		} else if (channel_map == channel_map_china) {
-			op_class_tbl = us_op_class;
+			op_class_tbl = china_op_class;
 		} else if (channel_map == channel_map_jp) {
 			op_class_tbl = japan_op_class;
 		} else {
@@ -764,7 +798,7 @@ reg_get_op_class_tbl_by_chan_map(const struct
 	else if (channel_map == channel_map_eu)
 		*op_class_tbl = euro_op_class;
 	else if (channel_map == channel_map_china)
-		*op_class_tbl = us_op_class;
+		*op_class_tbl = china_op_class;
 	else if (channel_map == channel_map_jp)
 		*op_class_tbl = japan_op_class;
 	else
