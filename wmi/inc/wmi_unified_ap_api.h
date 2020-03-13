@@ -625,7 +625,7 @@ QDF_STATUS wmi_unified_wmm_update_cmd_send(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_extract_vdev_start_resp(
 		wmi_unified_t wmi_handle, void *evt_buf,
-		wmi_host_vdev_start_resp *vdev_rsp);
+		struct vdev_start_response *vdev_rsp);
 
 /**
  * wmi_extract_vdev_delete_resp - api to extract vdev delete
