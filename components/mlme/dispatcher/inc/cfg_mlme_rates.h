@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,7 @@
 #define CFG_SUPPORTED_MCS_SET_LEN    16
 #define CFG_BASIC_MCS_SET_LEN    16
 #define CFG_CURRENT_MCS_SET_LEN    16
+#define CFG_MLME_RATE_MASK_LEN    4
 
 /*
  * <ini>
@@ -221,6 +222,78 @@
 		CFG_CURRENT_MCS_SET_DATA, \
 		"current MCS set")
 
+/*
+ * <cfg>
+ * ratemask_type - PHY type for the ratemask.
+ * @Min: 0 No rate mask set defined - disabled the configuration
+ * @Max: 4
+ * @Default: 0
+ *
+ * This ini is used to set the PHY type for ratemask in rate selection.
+ *
+ * 0 = Disables the configuration
+ * 1 = The rate mask specified is for CCK/OFDM configuration
+ * 2 = The rate mask specified is for HT configuration
+ * 3 = The rate mask specified is for VHT configuration
+ * 4 = The rate mask specified is for HE/11ax configuration
+ *
+ * Related: CFG_RATEMASK_SET
+ *
+ * Usage: External
+ */
+#define CFG_RATEMASK_TYPE CFG_INI_UINT( \
+		"ratemask_type", \
+		0, \
+		4, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Ratemask type")
+
+/*
+ * <cfg>
+ * ratemask_set - ratemasks for a PHY type used in rate selection
+ * @Min: default data length of ratemask in string format
+ * @Max: default data length of ratemask in string format
+ * @Default: 0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF, 0xFFFFFFFF
+ *
+ * This is used to set the rate mask value to be used in rate selection.
+ * Each of the four words must be configured.
+ * A bit value of 1 represents rate is enabled
+ * A bit value of 0 represents rate is disabled
+ *
+ * [b31-b0],[b63-b32],[b95-b64],[b127-b96]
+ * For HE targets, 12 bits correpond to one NSS setting. Ex:
+ * b0-13  => NSS1, MCS 0-13
+ * b14-27 => NSS2, MCS 0-13 and so on for other NSS.
+ * Note that the bit representation is continuous.
+ *
+ * For VHT targets, 10 bits correspond to one NSS setting.
+ * b0-9   => NSS1, MCS 0-9
+ * b10-19 => NSS2, MCS 0-9 and so on for other NSS.
+ *
+ * For HT targets, 8 bits correspond to one NSS setting.
+ * b0-7  => NSS1, MCS 0-7
+ * b8-15 => NSS2, MCS 0-7 and so on for other NSS.
+ *
+ * For OFDM/CCK targets, 8 bits correspond to one NSS setting.
+ * Bit position  |-b3-|-b2-|-b1-|-b0-|
+ * Rates in Mbps |-1 -|-2 -|-5.5|-11-| CCK Rates
+ *
+ * Bit position  |-b11-|-b10-|-b09-|-b08-|-b07-|-b06-|-b05-|-b04-|
+ * Rates in Mbps |- 9 -|- 18-|-36 -|-54 -|- 6 -|-12 -| -24-|-48- | OFDM Rates
+ *
+ * Related: CFG_RATEMASK_TYPE
+ *
+ * Usage: External
+ */
+#define CFG_RATEMASK_DATA "0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF"
+#define CFG_RATEMASK_SET CFG_INI_STRING( \
+		"ratemask_set", \
+		0, \
+		sizeof(CFG_RATEMASK_DATA) - 1, \
+		CFG_RATEMASK_DATA, \
+		"Ratemasks for rate selection")
+
 #define CFG_RATES_ALL \
 	CFG(CFG_MAX_HT_MCS_FOR_TX_DATA) \
 	CFG(CFG_DISABLE_ABG_RATE_FOR_TX_DATA) \
@@ -232,6 +305,8 @@
 	CFG(CFG_SUPPORTED_RATES_11A) \
 	CFG(CFG_SUPPORTED_MCS_SET) \
 	CFG(CFG_BASIC_MCS_SET) \
-	CFG(CFG_CURRENT_MCS_SET)
+	CFG(CFG_CURRENT_MCS_SET) \
+	CFG(CFG_RATEMASK_TYPE) \
+	CFG(CFG_RATEMASK_SET)
 
 #endif /* __CFG_MLME_RATES_H */
