@@ -2293,110 +2293,6 @@ end:
 	return rc;
 }
 
-static void _sde_dspp_setup_blocks(struct sde_mdss_cfg *sde_cfg,
-	struct sde_dspp_cfg *dspp, struct sde_dspp_sub_blks *sblk,
-	bool *prop_exists, struct sde_prop_value *prop_value)
-{
-	sblk->igc.id = SDE_DSPP_IGC;
-	if (prop_exists[DSPP_IGC_PROP]) {
-		sblk->igc.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_IGC_PROP, 0);
-		sblk->igc.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_IGC_PROP, 1);
-		sblk->igc.len = 0;
-		set_bit(SDE_DSPP_IGC, &dspp->features);
-	}
-
-	sblk->pcc.id = SDE_DSPP_PCC;
-	if (prop_exists[DSPP_PCC_PROP]) {
-		sblk->pcc.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_PCC_PROP, 0);
-		sblk->pcc.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_PCC_PROP, 1);
-		sblk->pcc.len = 0;
-		set_bit(SDE_DSPP_PCC, &dspp->features);
-	}
-
-	sblk->gc.id = SDE_DSPP_GC;
-	if (prop_exists[DSPP_GC_PROP]) {
-		sblk->gc.base = PROP_VALUE_ACCESS(prop_value, DSPP_GC_PROP, 0);
-		sblk->gc.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_GC_PROP, 1);
-		sblk->gc.len = 0;
-		set_bit(SDE_DSPP_GC, &dspp->features);
-	}
-
-	sblk->gamut.id = SDE_DSPP_GAMUT;
-	if (prop_exists[DSPP_GAMUT_PROP]) {
-		sblk->gamut.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_GAMUT_PROP, 0);
-		sblk->gamut.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_GAMUT_PROP, 1);
-		sblk->gamut.len = 0;
-		set_bit(SDE_DSPP_GAMUT, &dspp->features);
-	}
-
-	sblk->dither.id = SDE_DSPP_DITHER;
-	if (prop_exists[DSPP_DITHER_PROP]) {
-		sblk->dither.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_DITHER_PROP, 0);
-		sblk->dither.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_DITHER_PROP, 1);
-		sblk->dither.len = 0;
-		set_bit(SDE_DSPP_DITHER, &dspp->features);
-	}
-
-	sblk->hist.id = SDE_DSPP_HIST;
-	if (prop_exists[DSPP_HIST_PROP]) {
-		sblk->hist.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_HIST_PROP, 0);
-		sblk->hist.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_HIST_PROP, 1);
-		sblk->hist.len = 0;
-		set_bit(SDE_DSPP_HIST, &dspp->features);
-	}
-
-	sblk->hsic.id = SDE_DSPP_HSIC;
-	if (prop_exists[DSPP_HSIC_PROP]) {
-		sblk->hsic.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_HSIC_PROP, 0);
-		sblk->hsic.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_HSIC_PROP, 1);
-		sblk->hsic.len = 0;
-		set_bit(SDE_DSPP_HSIC, &dspp->features);
-	}
-
-	sblk->memcolor.id = SDE_DSPP_MEMCOLOR;
-	if (prop_exists[DSPP_MEMCOLOR_PROP]) {
-		sblk->memcolor.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_MEMCOLOR_PROP, 0);
-		sblk->memcolor.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_MEMCOLOR_PROP, 1);
-		sblk->memcolor.len = 0;
-		set_bit(SDE_DSPP_MEMCOLOR, &dspp->features);
-	}
-
-	sblk->sixzone.id = SDE_DSPP_SIXZONE;
-	if (prop_exists[DSPP_SIXZONE_PROP]) {
-		sblk->sixzone.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_SIXZONE_PROP, 0);
-		sblk->sixzone.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_SIXZONE_PROP, 1);
-		sblk->sixzone.len = 0;
-		set_bit(SDE_DSPP_SIXZONE, &dspp->features);
-	}
-
-	sblk->vlut.id = SDE_DSPP_VLUT;
-	if (prop_exists[DSPP_VLUT_PROP]) {
-		sblk->vlut.base = PROP_VALUE_ACCESS(prop_value,
-			DSPP_VLUT_PROP, 0);
-		sblk->vlut.version = PROP_VALUE_ACCESS(prop_value,
-			DSPP_VLUT_PROP, 1);
-		sblk->sixzone.len = 0;
-		set_bit(SDE_DSPP_VLUT, &dspp->features);
-	}
-}
-
 static int sde_rot_parse_dt(struct device_node *np,
 	struct sde_mdss_cfg *sde_cfg)
 {
@@ -2501,94 +2397,38 @@ end:
 	return rc;
 }
 
-static int sde_dspp_parse_dt(struct device_node *np,
-						struct sde_mdss_cfg *sde_cfg)
+static int _sde_ad_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
 {
-	int rc = 0, i;
-	u32 off_count, ad_off_count, ltm_off_count, rc_off_count;
-	struct sde_dt_props *props, *ad_props, *ltm_props, *rc_props;
-	struct sde_dt_props *blocks_props = NULL;
-	struct sde_dspp_cfg *dspp;
-	struct sde_dspp_sub_blks *sblk;
-	struct device_node *snp = NULL;
+	int rc = 0;
+	int off_count, i;
+	struct sde_dt_props *props;
 
-	if (!sde_cfg) {
-		SDE_ERROR("invalid argument\n");
-		return -EINVAL;
-	}
-
-	props = sde_get_dt_props(np, DSPP_PROP_MAX, dspp_prop,
-			ARRAY_SIZE(dspp_prop), &off_count);
-	if (IS_ERR_OR_NULL(props))
+	props = sde_get_dt_props(np, AD_PROP_MAX, ad_prop,
+			ARRAY_SIZE(ad_prop), &off_count);
+	if (IS_ERR(props))
 		return PTR_ERR(props);
 
-	sde_cfg->dspp_count = off_count;
-
-	/* Parse AD dtsi entries */
-	ad_props = sde_get_dt_props(np, AD_PROP_MAX, ad_prop,
-			ARRAY_SIZE(ad_prop), &ad_off_count);
-	if (IS_ERR_OR_NULL(ad_props)) {
-		rc = PTR_ERR(ad_props);
-		goto put_props;
+	sde_cfg->ad_count = off_count;
+	if (off_count > sde_cfg->dspp_count) {
+		SDE_ERROR("limiting %d AD blocks to %d DSPP instances\n",
+				off_count, sde_cfg->dspp_count);
+		sde_cfg->ad_count = sde_cfg->dspp_count;
 	}
 
-	/* Parse LTM dtsi entries */
-	ltm_props = sde_get_dt_props(np, LTM_PROP_MAX, ltm_prop,
-			ARRAY_SIZE(ltm_prop), &ltm_off_count);
-	if (IS_ERR_OR_NULL(ltm_props)) {
-		rc = PTR_ERR(ltm_props);
-		goto put_ad_props;
-	}
-
-	/* Parse RC dtsi entries */
-	rc_props = sde_get_dt_props(np, RC_PROP_MAX, rc_prop,
-			ARRAY_SIZE(rc_prop), &rc_off_count);
-	if (IS_ERR_OR_NULL(rc_props)) {
-		rc = PTR_ERR(rc_props);
-		goto put_ltm_props;
-	}
-
-	/* get DSPP feature dt properties if they exist */
-	snp = of_get_child_by_name(np, dspp_prop[DSPP_BLOCKS].prop_name);
-	if (snp) {
-		blocks_props = sde_get_dt_props(snp, DSPP_BLOCKS_PROP_MAX,
-				dspp_blocks_prop, ARRAY_SIZE(dspp_blocks_prop),
-				NULL);
-		if (IS_ERR_OR_NULL(blocks_props)) {
-			rc = PTR_ERR(blocks_props);
-			goto put_rc_props;
-		}
-	}
-
-	for (i = 0; i < off_count; i++) {
-		dspp = sde_cfg->dspp + i;
-		dspp->base = PROP_VALUE_ACCESS(props->values, DSPP_OFF, i);
-		dspp->len = PROP_VALUE_ACCESS(props->values, DSPP_SIZE, 0);
-		dspp->id = DSPP_0 + i;
-		snprintf(dspp->name, SDE_HW_BLK_NAME_LEN, "dspp_%u",
-				dspp->id - DSPP_0);
-
-		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
-		if (!sblk) {
-			rc = -ENOMEM;
-			/* catalog deinit will release the allocated blocks */
-			goto end;
-		}
-		dspp->sblk = sblk;
-
-		if (blocks_props)
-			_sde_dspp_setup_blocks(sde_cfg, dspp, sblk,
-					blocks_props->exists,
-					blocks_props->values);
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		struct sde_dspp_cfg *dspp = &sde_cfg->dspp[i];
+		struct sde_dspp_sub_blks *sblk = sde_cfg->dspp[i].sblk;
 
 		sblk->ad.id = SDE_DSPP_AD;
-		sde_cfg->ad_count = ad_off_count;
-		if (ad_props && (i < ad_off_count) &&
-		    ad_props->exists[AD_OFF]) {
-			sblk->ad.base = PROP_VALUE_ACCESS(ad_props->values,
-				AD_OFF, i);
-			sblk->ad.version = PROP_VALUE_ACCESS(ad_props->values,
-				AD_VERSION, 0);
+		if (!props->exists[AD_OFF])
+			continue;
+
+		if (i < off_count) {
+			sblk->ad.base = PROP_VALUE_ACCESS(props->values,
+					AD_OFF, i);
+			sblk->ad.version = PROP_VALUE_ACCESS(props->values,
+					AD_VERSION, 0);
 			set_bit(SDE_DSPP_AD, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
 					SDE_INTR_HWBLK_AD4, dspp->id,
@@ -2596,15 +2436,45 @@ static int sde_dspp_parse_dt(struct device_node *np,
 			if (rc)
 				goto end;
 		}
+	}
+
+end:
+	sde_put_dt_props(props);
+	return rc;
+}
+
+static int _sde_ltm_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int rc = 0;
+	int off_count, i;
+	struct sde_dt_props *props;
+
+	props = sde_get_dt_props(np, LTM_PROP_MAX, ltm_prop,
+			ARRAY_SIZE(ltm_prop), &off_count);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	sde_cfg->ltm_count = off_count;
+	if (off_count > sde_cfg->dspp_count) {
+		SDE_ERROR("limiting %d LTM blocks to %d DSPP instances\n",
+				off_count, sde_cfg->dspp_count);
+		sde_cfg->ltm_count = sde_cfg->dspp_count;
+	}
+
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		struct sde_dspp_cfg *dspp = &sde_cfg->dspp[i];
+		struct sde_dspp_sub_blks *sblk = sde_cfg->dspp[i].sblk;
 
 		sblk->ltm.id = SDE_DSPP_LTM;
-		sde_cfg->ltm_count = ltm_off_count;
-		if (ltm_props && (i < ltm_off_count) &&
-		    ltm_props->exists[LTM_OFF]) {
-			sblk->ltm.base = PROP_VALUE_ACCESS(ltm_props->values,
-				LTM_OFF, i);
-			sblk->ltm.version = PROP_VALUE_ACCESS(ltm_props->values,
-				LTM_VERSION, 0);
+		if (!props->exists[LTM_OFF])
+			continue;
+
+		if (i < off_count) {
+			sblk->ltm.base = PROP_VALUE_ACCESS(props->values,
+					LTM_OFF, i);
+			sblk->ltm.version = PROP_VALUE_ACCESS(props->values,
+					LTM_VERSION, 0);
 			set_bit(SDE_DSPP_LTM, &dspp->features);
 			rc = _add_to_irq_offset_list(sde_cfg,
 					SDE_INTR_HWBLK_LTM, dspp->id,
@@ -2612,35 +2482,196 @@ static int sde_dspp_parse_dt(struct device_node *np,
 			if (rc)
 				goto end;
 		}
+	}
+
+end:
+	sde_put_dt_props(props);
+	return rc;
+}
+
+static int _sde_rc_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int off_count, i;
+	struct sde_dt_props *props;
+
+	props = sde_get_dt_props(np, RC_PROP_MAX, rc_prop,
+			ARRAY_SIZE(rc_prop), &off_count);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	sde_cfg->rc_count = off_count;
+	if (off_count > sde_cfg->dspp_count) {
+		SDE_ERROR("limiting %d RC blocks to %d DSPP instances\n",
+				off_count, sde_cfg->dspp_count);
+		sde_cfg->rc_count = sde_cfg->dspp_count;
+	}
+
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		struct sde_dspp_cfg *dspp = &sde_cfg->dspp[i];
+		struct sde_dspp_sub_blks *sblk = sde_cfg->dspp[i].sblk;
 
 		sblk->rc.id = SDE_DSPP_RC;
-		sde_cfg->rc_count = rc_off_count;
-		if (rc_props && (i < rc_off_count) &&
-		    rc_props->exists[RC_OFF]) {
-			sblk->rc.base = PROP_VALUE_ACCESS(rc_props->values,
+		if (!props->exists[RC_OFF])
+			continue;
+
+		if (i < off_count) {
+			sblk->rc.base = PROP_VALUE_ACCESS(props->values,
 					RC_OFF, i);
-			sblk->rc.len = PROP_VALUE_ACCESS(rc_props->values,
+			sblk->rc.len = PROP_VALUE_ACCESS(props->values,
 					RC_LEN, 0);
-			sblk->rc.version = PROP_VALUE_ACCESS(rc_props->values,
+			sblk->rc.version = PROP_VALUE_ACCESS(props->values,
 					RC_VERSION, 0);
 			sblk->rc.mem_total_size = PROP_VALUE_ACCESS(
-					rc_props->values, RC_MEM_TOTAL_SIZE,
-					0);
+					props->values, RC_MEM_TOTAL_SIZE, 0);
 			sblk->rc.idx = i;
 			set_bit(SDE_DSPP_RC, &dspp->features);
 		}
 	}
 
-end:
-	sde_put_dt_props(blocks_props);
-put_rc_props:
-	sde_put_dt_props(rc_props);
-put_ltm_props:
-	sde_put_dt_props(ltm_props);
-put_ad_props:
-	sde_put_dt_props(ad_props);
-put_props:
 	sde_put_dt_props(props);
+	return 0;
+}
+
+static void _sde_init_dspp_sblk(struct sde_dspp_cfg *dspp,
+		struct sde_pp_blk *pp_blk, int prop_id, int blk_id,
+		struct sde_dt_props *props)
+{
+	pp_blk->id = prop_id;
+	if (props->exists[blk_id]) {
+		pp_blk->base = PROP_VALUE_ACCESS(props->values,
+				blk_id, 0);
+		pp_blk->version = PROP_VALUE_ACCESS(props->values,
+				blk_id, 1);
+		pp_blk->len = 0;
+		set_bit(prop_id, &dspp->features);
+	}
+}
+
+static int _sde_dspp_sblks_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int i;
+	struct device_node *snp = NULL;
+	struct sde_dt_props *props;
+
+	snp = of_get_child_by_name(np, dspp_prop[DSPP_BLOCKS].prop_name);
+	if (!snp)
+		return 0;
+
+	props = sde_get_dt_props(snp, DSPP_BLOCKS_PROP_MAX,
+			dspp_blocks_prop, ARRAY_SIZE(dspp_blocks_prop),
+			NULL);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		struct sde_dspp_cfg *dspp = &sde_cfg->dspp[i];
+		struct sde_dspp_sub_blks *sblk = sde_cfg->dspp[i].sblk;
+
+		_sde_init_dspp_sblk(dspp, &sblk->igc, SDE_DSPP_IGC,
+				DSPP_IGC_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->pcc, SDE_DSPP_PCC,
+				DSPP_PCC_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->gc, SDE_DSPP_GC,
+				DSPP_GC_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->gamut, SDE_DSPP_GAMUT,
+				DSPP_GAMUT_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->dither, SDE_DSPP_DITHER,
+				DSPP_DITHER_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->hist, SDE_DSPP_HIST,
+				DSPP_HIST_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->hsic, SDE_DSPP_HSIC,
+				DSPP_HSIC_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->memcolor, SDE_DSPP_MEMCOLOR,
+				DSPP_MEMCOLOR_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->sixzone, SDE_DSPP_SIXZONE,
+				DSPP_SIXZONE_PROP, props);
+
+		_sde_init_dspp_sblk(dspp, &sblk->vlut, SDE_DSPP_VLUT,
+				DSPP_VLUT_PROP, props);
+	}
+
+	sde_put_dt_props(props);
+	return 0;
+}
+
+static int _sde_dspp_cmn_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int rc = 0;
+	int i, off_count;
+	struct sde_dt_props *props;
+	struct sde_dspp_sub_blks *sblk;
+
+	props = sde_get_dt_props(np, DSPP_PROP_MAX, dspp_prop,
+			ARRAY_SIZE(dspp_prop), &off_count);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	if (off_count > MAX_BLOCKS) {
+		SDE_ERROR("off_count %d exceeds MAX_BLOCKS, limiting to %d\n",
+				off_count, MAX_BLOCKS);
+		off_count = MAX_BLOCKS;
+	}
+
+	sde_cfg->dspp_count = off_count;
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		sde_cfg->dspp[i].base = PROP_VALUE_ACCESS(props->values,
+				DSPP_OFF, i);
+		sde_cfg->dspp[i].len = PROP_VALUE_ACCESS(props->values,
+				DSPP_SIZE, 0);
+		sde_cfg->dspp[i].id = DSPP_0 + i;
+		snprintf(sde_cfg->dspp[i].name, SDE_HW_BLK_NAME_LEN, "dspp_%d",
+				i);
+
+		/* create an empty sblk for each dspp */
+		sblk = kzalloc(sizeof(*sblk), GFP_KERNEL);
+		if (!sblk) {
+			rc =  -ENOMEM;
+			/* catalog deinit will release the allocated blocks */
+			goto end;
+		}
+		sde_cfg->dspp[i].sblk = sblk;
+	}
+
+end:
+	sde_put_dt_props(props);
+	return rc;
+}
+
+static int sde_dspp_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int rc;
+
+	rc = _sde_dspp_cmn_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_dspp_sblks_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_ad_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_ltm_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_rc_parse_dt(np, sde_cfg);
+
+end:
 	return rc;
 }
 
@@ -4718,6 +4749,9 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 	int rc;
 	struct sde_mdss_cfg *sde_cfg;
 	struct device_node *np = dev->dev->of_node;
+
+	if (!np)
+		return ERR_PTR(-EINVAL);
 
 	sde_cfg = kzalloc(sizeof(*sde_cfg), GFP_KERNEL);
 	if (!sde_cfg)
