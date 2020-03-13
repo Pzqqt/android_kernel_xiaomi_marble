@@ -7468,7 +7468,7 @@ static QDF_STATUS extract_vdev_start_resp_non_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS extract_vdev_peer_delete_all_response_event_non_tlv(
 		wmi_unified_t wmi_hdl,
 		void *evt_buf,
-		struct wmi_host_vdev_peer_delete_all_response_event *param)
+		struct peer_delete_all_response *param)
 {
 	wmi_vdev_delete_all_peer_resp_event *ev;
 
