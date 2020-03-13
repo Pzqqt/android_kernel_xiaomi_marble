@@ -6934,20 +6934,6 @@ struct wmi_host_peer_delete_response_event {
 };
 
 /**
- * struct wmi_host_vdev_peer_delete_all_response_event -
- * VDEV peer delete all response
- * @vdev_id: vdev id
- * @status: status of request
- * 0 - OK; command successful
- * 1 - EINVAL; Requested invalid vdev_id
- * 2 - EFAILED; Delete all peer failed
- */
-struct wmi_host_vdev_peer_delete_all_response_event {
-	uint32_t vdev_id;
-	uint32_t status;
-};
-
-/**
  * @struct wmi_host_dcs_interference_param
  * @interference_type: Type of DCS Interference
  * @uint32_t pdev_id: pdev id

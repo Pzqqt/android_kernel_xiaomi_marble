@@ -96,7 +96,7 @@ wmi_extract_vdev_delete_resp(struct wmi_unified *wmi_handle, void *evt_buf,
 QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(
 	struct wmi_unified *wmi_handle,
 	void *evt_buf,
-	struct wmi_host_vdev_peer_delete_all_response_event *delete_rsp)
+	struct peer_delete_all_response *delete_rsp)
 {
 	if (wmi_handle->ops->extract_vdev_peer_delete_all_response_event)
 		return

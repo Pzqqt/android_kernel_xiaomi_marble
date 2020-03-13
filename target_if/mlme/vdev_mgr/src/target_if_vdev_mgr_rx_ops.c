@@ -434,9 +434,7 @@ static int target_if_vdev_mgr_peer_delete_all_response_handler(
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	struct peer_delete_all_response rsp = {0};
-	struct wmi_host_vdev_peer_delete_all_response_event
-						vdev_peer_del_all_resp;
+	struct peer_delete_all_response vdev_peer_del_all_resp = {0};
 	struct vdev_response_timer *vdev_rsp;
 
 	if (!scn || !data) {
@@ -490,9 +488,9 @@ static int target_if_vdev_mgr_peer_delete_all_response_handler(
 		goto err;
 	}
 
-	rsp.vdev_id = vdev_peer_del_all_resp.vdev_id;
-	rsp.status = vdev_peer_del_all_resp.status;
-	status = rx_ops->vdev_mgr_peer_delete_all_response(psoc, &rsp);
+	status = rx_ops->vdev_mgr_peer_delete_all_response(
+						psoc,
+						&vdev_peer_del_all_resp);
 
 err:
 	return qdf_status_to_os_return(status);

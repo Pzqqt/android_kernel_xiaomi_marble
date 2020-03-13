@@ -115,14 +115,14 @@ wmi_extract_vdev_delete_resp(struct wmi_unified *wmi_handle, void *evt_buf,
  * response
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
- * @param delete_rsp: Pointer to hold peer delete al response
+ * @param delete_rsp: Pointer to hold peer delete all response
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_extract_vdev_peer_delete_all_response_event(
 	struct wmi_unified *wmi_handle,
 	void *evt_buf,
-	struct wmi_host_vdev_peer_delete_all_response_event *delete_rsp);
+	struct peer_delete_all_response *delete_rsp);
 
 /**
  * wmi_extract_ext_tbttoffset_num_vdevs() - extract ext tbtt offset num vdev

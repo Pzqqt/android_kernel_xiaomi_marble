@@ -1841,13 +1841,12 @@ QDF_STATUS (*extract_peer_delete_response_event)(
 QDF_STATUS (*extract_vdev_peer_delete_all_resp)(
 		wmi_unified_t wmi_handle,
 		void *evt_buf,
-		struct wmi_host_vdev_peer_delete_all_response_event
-						*peer_delete_all_rsp);
+		struct peer_delete_all_response *peer_delete_all_rsp);
 
 QDF_STATUS (*extract_vdev_peer_delete_all_response_event)(
 		wmi_unified_t wmi_handle,
 		void *evt_buf,
-		struct wmi_host_vdev_peer_delete_all_response_event *param);
+		struct peer_delete_all_response *param);
 
 bool (*is_management_record)(uint32_t cmd_id);
 bool (*is_diag_event)(uint32_t event_id);
