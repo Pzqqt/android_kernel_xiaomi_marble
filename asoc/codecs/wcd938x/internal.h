@@ -104,6 +104,7 @@ struct wcd938x_priv {
 	int ear_rx_path;
 	bool dev_up;
 	u8 tx_master_ch_map[WCD938X_MAX_SLAVE_CH_TYPES];
+	bool usbc_hs_status;
 };
 
 struct wcd938x_micbias_setting {
