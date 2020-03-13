@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -1289,11 +1289,12 @@ int dsi_display_link_clk_force_update_ctrl(void *handle)
 }
 
 int dsi_display_clk_ctrl(void *handle,
-	enum dsi_clk_type clk_type, enum dsi_clk_state clk_state)
+	u32 clk_type, u32 clk_state)
 {
 	int rc = 0;
 
-	if (!handle) {
+	if ((!handle) || (clk_type > DSI_ALL_CLKS) ||
+			(clk_state > DSI_CLK_EARLY_GATE)) {
 		DSI_ERR("Invalid arg\n");
 		return -EINVAL;
 	}
