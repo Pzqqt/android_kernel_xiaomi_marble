@@ -766,4 +766,16 @@ QDF_STATUS wmi_unified_peer_vlan_config_send(wmi_unified_t wmi_handle,
 		uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
 		struct peer_vlan_config_param *param);
 
+/**
+ * wmi_extract_muedca_params_handler() - WMI function to extract Muedca params
+ *
+ * @wmi_handle: WMI handle
+ * @evt_buf: Event data buffer
+ * @muedca_param_list: struct muedca_params
+ *
+ * Return: QDF_STATUS_SUCCESS if success, else returns proper error code.
+ */
+QDF_STATUS wmi_extract_muedca_params_handler(wmi_unified_t wmi_handle,
+		void *evt_buf, struct muedca_params *muedca_param_list);
+
 #endif /* _WMI_UNIFIED_AP_API_H_ */
