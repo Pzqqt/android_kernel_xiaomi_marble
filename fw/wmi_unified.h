@@ -19451,6 +19451,11 @@ typedef struct {
     A_UINT32 vdev_id;
     /* peer MAC address */
     wmi_mac_addr peer_macaddr;
+    /* status
+     * 0: ok
+     * 1: fail - peer not present
+     */
+    A_UINT32 status;
 } wmi_peer_assoc_conf_event_fixed_param;
 
 typedef struct {
