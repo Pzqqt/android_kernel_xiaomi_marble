@@ -1407,9 +1407,9 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 				MAX_DOWNSCALE_RATIO_INROT_PD_RT_DENOMINATOR;
 			sblk->in_rot_maxdwnscale_nrt =
 					MAX_DOWNSCALE_RATIO_INROT_NRT_DEFAULT;
-			sblk->in_rot_minpredwnscale_num =
+			sblk->in_rot_maxdwnscale_rt_nopd_num =
 				MAX_DOWNSCALE_RATIO_INROT_NOPD_RT_NUMERATOR;
-			sblk->in_rot_minpredwnscale_denom =
+			sblk->in_rot_maxdwnscale_rt_nopd_denom =
 				MAX_DOWNSCALE_RATIO_INROT_NOPD_RT_DENOMINATOR;
 		} else if (IS_SDE_INLINE_ROT_REV_100(
 				sde_cfg->true_inline_rot_rev)) {

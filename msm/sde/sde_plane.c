@@ -2275,11 +2275,17 @@ static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 	int ret = 0;
 	u32 min_ratio_numer, min_ratio_denom;
 	struct sde_hw_inline_pre_downscale_cfg *pd_cfg = &pstate->pre_down;
-	bool pd_x = pd_cfg->pre_downscale_x_0 > 1;
-	bool pd_y = pd_cfg->pre_downscale_y_0 > 1;
+	bool pd_x;
+	bool pd_y;
 
-	min_ratio_numer = psde->pipe_sblk->in_rot_minpredwnscale_num;
-	min_ratio_denom = psde->pipe_sblk->in_rot_minpredwnscale_denom;
+	if (!_sde_plane_is_pre_downscale_enabled(pd_cfg))
+		return ret;
+
+	pd_x = pd_cfg->pre_downscale_x_0 > 1;
+	pd_y = pd_cfg->pre_downscale_y_0 > 1;
+
+	min_ratio_numer = psde->pipe_sblk->in_rot_maxdwnscale_rt_nopd_num;
+	min_ratio_denom = psde->pipe_sblk->in_rot_maxdwnscale_rt_nopd_denom;
 
 	if (pd_x && !_sde_plane_has_pre_downscale(psde)) {
 		SDE_ERROR_PLANE(psde,
@@ -2314,6 +2320,47 @@ static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 	return ret;
 }
 
+static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
+		struct sde_plane_state *pstate, bool rt_client,
+		u32 *max_numer_w, u32 *max_denom_w,
+		u32 *max_numer_h, u32 *max_denom_h)
+{
+	bool rotated, has_predown;
+	const struct sde_sspp_sub_blks *sblk;
+	struct sde_hw_inline_pre_downscale_cfg *pd;
+
+	rotated = pstate->rotation & DRM_MODE_ROTATE_90;
+	sblk = psde->pipe_sblk;
+	*max_numer_w = sblk->maxdwnscale;
+	*max_denom_w = 1;
+	*max_numer_h = sblk->maxdwnscale;
+	*max_denom_h = 1;
+
+	has_predown = _sde_plane_has_pre_downscale(psde);
+	if (has_predown)
+		pd = &pstate->pre_down;
+
+	/**
+	 * Inline rotation has different max vertical downscaling limits since
+	 * the source-width becomes the scaler's pre-downscaled source-height.
+	 **/
+	if (rotated) {
+		if (rt_client && has_predown) {
+			*max_numer_h = pd->pre_downscale_x_0 ?
+				sblk->in_rot_maxdwnscale_rt_num :
+				sblk->in_rot_maxdwnscale_rt_nopd_num;
+			*max_denom_h = pd->pre_downscale_x_0 ?
+				sblk->in_rot_maxdwnscale_rt_denom :
+				sblk->in_rot_maxdwnscale_rt_nopd_denom;
+		} else if (rt_client) {
+			*max_numer_h = sblk->in_rot_maxdwnscale_rt_num;
+			*max_denom_h = sblk->in_rot_maxdwnscale_rt_denom;
+		} else {
+			*max_numer_h = sblk->in_rot_maxdwnscale_nrt;
+		}
+	}
+}
+
 static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	struct sde_plane *psde, const struct sde_format *fmt,
 	struct sde_plane_state *pstate, struct sde_rect *src,
@@ -2322,11 +2369,13 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	int ret = 0;
 	uint32_t deci_w, deci_h, src_deci_w, src_deci_h;
 	uint32_t scaler_src_w, scaler_src_h;
-	uint32_t max_downscale_num, max_downscale_denom;
+	uint32_t max_downscale_num_w, max_downscale_denom_w;
+	uint32_t max_downscale_num_h, max_downscale_denom_h;
 	uint32_t max_upscale, max_linewidth;
-	bool inline_rotation, rt_client, has_predown, pre_down_en = false;
+	bool inline_rotation, rt_client;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_cstate;
+	const struct sde_sspp_sub_blks *sblk;
 
 	if (!state || !state->state || !state->crtc) {
 		SDE_ERROR_PLANE(psde, "invalid arguments\n");
@@ -2348,45 +2397,22 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 		scaler_src_w = src_deci_w;
 		scaler_src_h = src_deci_h;
 	}
-
-	max_upscale = psde->pipe_sblk->maxupscale;
-	max_linewidth = psde->pipe_sblk->maxlinewidth;
-	has_predown = _sde_plane_has_pre_downscale(psde);
-	if (has_predown)
-		pre_down_en = _sde_plane_is_pre_downscale_enabled(
-				&pstate->pre_down);
+	sblk = psde->pipe_sblk;
+	max_upscale = sblk->maxupscale;
+	max_linewidth = sblk->maxlinewidth;
 
 	crtc = state->crtc;
 	new_cstate = drm_atomic_get_new_crtc_state(state->state, crtc);
-
 	rt_client = sde_crtc_is_rt_client(crtc, new_cstate);
 
-	max_downscale_num = psde->pipe_sblk->maxdwnscale;
-	max_downscale_denom = 1;
-	/* inline rotation RT clients have a different max downscaling limit */
-	if (inline_rotation) {
-		if (rt_client && has_predown) {
-			max_downscale_num = pre_down_en ?
-				psde->pipe_sblk->in_rot_maxdwnscale_rt_num :
-				psde->pipe_sblk->in_rot_minpredwnscale_num;
-			max_downscale_denom = pre_down_en ?
-				psde->pipe_sblk->in_rot_maxdwnscale_rt_denom :
-				psde->pipe_sblk->in_rot_minpredwnscale_denom;
-		} else if (rt_client) {
-			max_downscale_num =
-				psde->pipe_sblk->in_rot_maxdwnscale_rt_num;
-			max_downscale_denom =
-				psde->pipe_sblk->in_rot_maxdwnscale_rt_denom;
-		} else {
-			max_downscale_num =
-				psde->pipe_sblk->in_rot_maxdwnscale_nrt;
-		}
-	}
+	_sde_plane_get_max_downscale_limits(psde, pstate, rt_client,
+		&max_downscale_num_w, &max_downscale_denom_w,
+		&max_downscale_num_h, &max_downscale_denom_h);
 
 	/* decimation validation */
 	if ((deci_w || deci_h)
-			&& ((deci_w > psde->pipe_sblk->maxhdeciexp)
-				|| (deci_h > psde->pipe_sblk->maxvdeciexp))) {
+			&& ((deci_w > sblk->maxhdeciexp)
+				|| (deci_h > sblk->maxvdeciexp))) {
 		SDE_ERROR_PLANE(psde, "too much decimation requested\n");
 		ret = -EINVAL;
 
@@ -2412,21 +2438,21 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	/* check max scaler capability */
 	} else if (((scaler_src_w * max_upscale) < dst->w) ||
 		((scaler_src_h * max_upscale) < dst->h) ||
-		(mult_frac(dst->w, max_downscale_num, max_downscale_denom)
+		(mult_frac(dst->w, max_downscale_num_w, max_downscale_denom_w)
 			< scaler_src_w) ||
-		(mult_frac(dst->h, max_downscale_num, max_downscale_denom)
+		(mult_frac(dst->h, max_downscale_num_h, max_downscale_denom_h)
 			< scaler_src_h)) {
 		SDE_ERROR_PLANE(psde,
-			"too much scaling %ux%u->%ux%u rot:%d dwn:%d/%d\n",
+			"too much scaling %ux%u->%ux%u rot:%d dwn:%d/%d %d/%d\n",
 			scaler_src_w, scaler_src_h, dst->w, dst->h,
-			inline_rotation, max_downscale_num,
-			max_downscale_denom);
+			inline_rotation, max_downscale_num_w,
+			max_downscale_denom_w, max_downscale_num_h,
+			max_downscale_denom_h);
 		ret = -E2BIG;
 
 	/* check inline pre-downscale support */
-	} else if (inline_rotation && pre_down_en &&
-			_sde_atomic_check_pre_downscale(psde, pstate, dst,
-			src_deci_w, src_deci_h)) {
+	} else if (inline_rotation && _sde_atomic_check_pre_downscale(psde,
+			pstate, dst, src_deci_w, src_deci_h)) {
 		ret = -EINVAL;
 
 	/* QSEED validation */
