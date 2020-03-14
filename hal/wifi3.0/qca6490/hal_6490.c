@@ -1510,6 +1510,8 @@ struct hal_hw_txrx_ops qca6490_hal_hw_txrx_ops = {
 	hal_rx_get_flow_agg_continuation_6490,
 	hal_rx_get_flow_agg_count_6490,
 	hal_rx_get_fisa_timeout_6490,
+	NULL,
+	NULL,
 };
 
 struct hal_hw_srng_config hw_srng_table_6490[] = {

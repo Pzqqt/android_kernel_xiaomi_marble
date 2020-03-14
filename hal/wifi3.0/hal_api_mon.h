@@ -155,6 +155,31 @@
 /* Max pilot count */
 #define HAL_RX_MAX_SU_EVM_COUNT 32
 
+/**
+ * struct hal_rx_mon_desc_info () - HAL Rx Monitor descriptor info
+ *
+ * @ppdu_id:                 PHY ppdu id
+ * @status_buf_count:        number of status buffer count
+ * @rxdma_push_reason:       rxdma push reason
+ * @rxdma_error_code:        rxdma error code
+ * @msdu_cnt:                msdu count
+ * @end_of_ppdu:             end of ppdu
+ * @link_desc:               msdu link descriptor address
+ * @status_buf:              for a PPDU, status buffers can span acrosss
+ *                           multiple buffers, status_buf points to first
+ *                           status buffer address of PPDU
+ */
+struct hal_rx_mon_desc_info {
+	uint16_t ppdu_id;
+	uint8_t status_buf_count;
+	uint8_t rxdma_push_reason;
+	uint8_t rxdma_error_code;
+	uint8_t msdu_count;
+	uint8_t end_of_ppdu;
+	struct hal_buf_info link_desc;
+	struct hal_buf_info status_buf;
+};
+
 /*
  * Struct hal_rx_su_evm_info - SU evm info
  * @number_of_symbols: number of symbols

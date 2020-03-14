@@ -68,6 +68,36 @@ extern bool is_hal_verbose_debug_enabled;
 struct hal_soc_handle;
 typedef struct hal_soc_handle *hal_soc_handle_t;
 
+/**
+ * hal_ring_desc - opaque handle for DP ring descriptor
+ */
+struct hal_ring_desc;
+typedef struct hal_ring_desc *hal_ring_desc_t;
+
+/**
+ * hal_link_desc - opaque handle for DP link descriptor
+ */
+struct hal_link_desc;
+typedef struct hal_link_desc *hal_link_desc_t;
+
+/**
+ * hal_rxdma_desc - opaque handle for DP rxdma dst ring descriptor
+ */
+struct hal_rxdma_desc;
+typedef struct hal_rxdma_desc *hal_rxdma_desc_t;
+
+/**
+ * hal_buff_addrinfo - opaque handle for DP buffer address info
+ */
+struct hal_buff_addrinfo;
+typedef struct hal_buff_addrinfo *hal_buff_addrinfo_t;
+
+/**
+ * hal_rx_mon_desc_info - opaque handle for sw monitor ring desc info
+ */
+struct hal_rx_mon_desc_info;
+typedef struct hal_rx_mon_desc_info *hal_rx_mon_desc_info_t;
+
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
 	/* UMAC rings */
@@ -558,6 +588,8 @@ struct hal_hw_txrx_ops {
 	uint8_t (*hal_rx_get_fisa_flow_agg_count)(uint8_t *buf);
 	bool (*hal_rx_get_fisa_timeout)(uint8_t *buf);
 	uint8_t (*hal_rx_mpdu_start_tlv_tag_valid)(void *rx_tlv_hdr);
+	void (*hal_rx_sw_mon_desc_info_get)(hal_ring_desc_t rxdma_dst_ring_desc,
+					    hal_rx_mon_desc_info_t mon_desc_info);
 };
 
 /**

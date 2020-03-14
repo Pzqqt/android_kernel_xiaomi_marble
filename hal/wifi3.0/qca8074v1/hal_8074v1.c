@@ -1113,6 +1113,7 @@ struct hal_hw_txrx_ops qca8074_hal_hw_txrx_ops = {
 	NULL,
 	NULL,
 	hal_rx_mpdu_start_tlv_tag_valid_8074v1,
+	NULL,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074[] = {

@@ -16,6 +16,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "sw_monitor_ring.h"
+#include "hal_rx.h"
+#include "hal_api_mon.h"
+
 #define HAL_RX_MSDU0_BUFFER_ADDR_LSB(link_desc_va)      \
 	((uint8_t *)(link_desc_va) +			\
 	RX_MSDU_LINK_8_MSDU_0_BUFFER_ADDR_INFO_DETAILS_BUFFER_ADDR_31_0_OFFSET)

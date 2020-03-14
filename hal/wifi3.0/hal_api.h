@@ -66,30 +66,6 @@
  */
 #define MAPPED_REF_OFF 0xFE0
 
-/**
- * hal_ring_desc - opaque handle for DP ring descriptor
- */
-struct hal_ring_desc;
-typedef struct hal_ring_desc *hal_ring_desc_t;
-
-/**
- * hal_link_desc - opaque handle for DP link descriptor
- */
-struct hal_link_desc;
-typedef struct hal_link_desc *hal_link_desc_t;
-
-/**
- * hal_rxdma_desc - opaque handle for DP rxdma dst ring descriptor
- */
-struct hal_rxdma_desc;
-typedef struct hal_rxdma_desc *hal_rxdma_desc_t;
-
-/**
- * hal_buff_addrinfo - opaque handle for DP buffer address info
- */
-struct hal_buff_addrinfo;
-typedef struct hal_buff_addrinfo *hal_buff_addrinfo_t;
-
 #ifdef ENABLE_VERBOSE_DEBUG
 static inline void
 hal_set_verbose_debug(bool flag)
@@ -2035,5 +2011,22 @@ static inline void hal_srng_inc_flush_cnt(hal_ring_handle_t hal_ring_hdl)
 	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
 
 	srng->flush_count++;
+}
+
+/**
+ * hal_rx_sw_mon_desc_info_get () - Get SW monitor desc info
+ *
+ * @hal: Core HAL soc handle
+ * @ring_desc: Mon dest ring descriptor
+ * @desc_info: Desc info to be populated
+ *
+ * Return void
+ */
+static inline void
+hal_rx_sw_mon_desc_info_get(struct hal_soc *hal,
+			    hal_ring_desc_t ring_desc,
+			    hal_rx_mon_desc_info_t desc_info)
+{
+	return hal->ops->hal_rx_sw_mon_desc_info_get(ring_desc, desc_info);
 }
 #endif /* _HAL_APIH_ */
