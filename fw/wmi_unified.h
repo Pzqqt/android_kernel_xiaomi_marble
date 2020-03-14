@@ -11028,6 +11028,15 @@ typedef struct {
      * Only non-zero values are considered.
      */
     A_UINT32 mu_edca_ie_offset;
+    /** Specify features that need to be enabled/disabled for the beacon.
+     *
+     * Bit 0:
+     *     Beacon Protection feature enable/disable indication.
+     *     Refer to WMI_BEACON_PROTECTION_EN_SET/GET macros.
+     *
+     * More features can be added to this bitmap.
+     */
+    A_UINT32 feature_enable_bitmap;
 
 /*
  * The TLVs follows:
@@ -11045,6 +11054,14 @@ typedef struct {
 #define WMI_CSC_EVENT_BMAP_SWITCH_COUNT_ZERO    0           /* Send only when the switch count becomes zero, added for backward compatibility
                                                             Same can also be achieved by setting bitmap to 0X80000001 */
 #define WMI_CSC_EVENT_BMAP_ALL                  0XFFFFFFFF  /* Send CSC switch count event for every update to switch count */
+
+#define WMI_BEACON_PROTECTION_BIT_POS           0 /* Beacon Protection enable/disable indication */
+
+#define WMI_BEACON_PROTECTION_EN_SET(param, value) \
+    WMI_SET_BITS(param, WMI_BEACON_PROTECTION_BIT_POS, 1, value)
+
+#define WMI_BEACON_PROTECTION_EN_GET(param) \
+    WMI_GET_BITS(param, WMI_BEACON_PROTECTION_EN_BIT_POS, 1)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param */
