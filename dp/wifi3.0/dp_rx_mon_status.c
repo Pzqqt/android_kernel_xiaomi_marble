@@ -39,6 +39,26 @@ dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
 				 struct hal_rx_ppdu_info *ppdu_info,
 				 struct cdp_rx_indication_ppdu *cdp_rx_ppdu);
 
+#ifndef QCA_SUPPORT_FULL_MON
+/**
+ * dp_rx_mon_process () - Core brain processing for monitor mode
+ *
+ * This API processes monitor destination ring followed by monitor status ring
+ * Called from bottom half (tasklet/NET_RX_SOFTIRQ)
+ *
+ * @soc: datapath soc context
+ * @mac_id: mac_id on which interrupt is received
+ * @quota: Number of status ring entry that can be serviced in one shot.
+ *
+ * @Return: Number of reaped status ring entries
+ */
+static inline uint32_t
+dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
+{
+	return quota;
+}
+#endif
+
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
 #include "dp_rx_mon_feature.h"
 #else
@@ -1595,7 +1615,11 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 					pdev->mon_chan_freq;
 			}
 
-			dp_rx_mon_dest_process(soc, mac_id, quota);
+			if (qdf_unlikely(soc->full_mon_mode))
+				dp_rx_mon_process(soc, mac_id, quota);
+			else
+				dp_rx_mon_dest_process(soc, mac_id, quota);
+
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 		}
 	}

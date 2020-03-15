@@ -2545,4 +2545,31 @@ cdp_vdev_get_peer_mac_list(ol_txrx_soc_handle soc,
 			(soc, vdev_id, newmac, mac_cnt);
 }
 
+/*
+ * cdp_soc_config_full_mon_mode () - Configure Full monitor mode
+ *
+ *@soc: dp soc handle
+ *@val: value to be configured val should be 0 or 1
+ *
+ * This API is used to enable/disable support for Full monitor mode feature
+ *
+ * Return: QDF_STATUS_SUCCESS if value set successfully
+ *         QDF_STATUS_E_INVAL false if error
+ */
+static inline QDF_STATUS
+cdp_soc_config_full_mon_mode(ol_txrx_soc_handle soc, uint8_t val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->config_full_mon_mode)
+		return QDF_STATUS_E_INVAL;
+
+	return soc->ops->mon_ops->config_full_mon_mode(soc, val);
+}
+
 #endif /* _CDP_TXRX_CMN_H_ */

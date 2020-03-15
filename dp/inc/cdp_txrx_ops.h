@@ -761,6 +761,10 @@ struct cdp_mon_ops {
 	QDF_STATUS (*txrx_set_advance_monitor_filter)
 		(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		 struct cdp_monitor_filter *filter_val);
+
+	/* Configure full monitor mode */
+	QDF_STATUS
+		(*config_full_mon_mode)(struct cdp_soc_t *soc, uint8_t val);
 };
 
 #ifdef WLAN_FEATURE_PKT_CAPTURE

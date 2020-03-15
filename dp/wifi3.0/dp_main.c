@@ -5109,6 +5109,32 @@ dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_FULL_MON
+static inline QDF_STATUS
+dp_soc_config_full_mon_mode(struct dp_pdev *pdev, enum dp_full_mon_config val)
+{
+	struct dp_soc *soc = pdev->soc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!soc->full_mon_mode)
+		return QDF_STATUS_SUCCESS;
+
+	if ((htt_h2t_full_mon_cfg(soc->htt_handle,
+				  pdev->pdev_id,
+				  val)) != QDF_STATUS_SUCCESS) {
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+#else
+static inline QDF_STATUS
+dp_soc_config_full_mon_mode(struct dp_pdev *pdev, enum dp_full_mon_config val)
+{
+	return 0;
+}
+#endif
+
 /*
 * dp_vdev_attach_wifi3() - attach txrx vdev
 * @txrx_pdev: Datapath PDEV handle
@@ -6833,6 +6859,7 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
 
+	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_DISABLE);
 	pdev->monitor_vdev = NULL;
 	pdev->monitor_configured = false;
 
@@ -6949,6 +6976,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc,
 
 	pdev->monitor_configured = true;
 	dp_mon_buf_delayed_replenish(pdev);
+
+	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
 
 	dp_mon_filter_setup_mon_mode(pdev);
 	status = dp_mon_filter_update(pdev);
@@ -10055,6 +10084,27 @@ static QDF_STATUS dp_set_vdev_pcp_tid_map_wifi3(struct cdp_soc_t *soc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_FULL_MON
+static inline QDF_STATUS
+dp_config_full_mon_mode(struct cdp_soc_t *soc_handle,
+			uint8_t val)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	soc->full_mon_mode = val;
+	qdf_alert("Configure full monitor mode val: %d ", val);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+dp_config_full_mon_mode(struct cdp_soc_t *soc_handle,
+			uint8_t val)
+{
+	return 0;
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -10220,6 +10270,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 	/* Added support for HK advance filter */
 	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,
 	.txrx_deliver_tx_mgmt = dp_deliver_tx_mgmt,
+	.config_full_mon_mode = dp_config_full_mon_mode,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {

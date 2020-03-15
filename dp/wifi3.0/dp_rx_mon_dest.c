@@ -1601,6 +1601,9 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 	pdev->mon_last_linkdesc_paddr = 0;
 	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
 	qdf_spinlock_create(&pdev->mon_lock);
+
+	/* Attach full monitor mode resources */
+	dp_full_mon_attach(pdev);
 	return QDF_STATUS_SUCCESS;
 
 fail:
@@ -1649,6 +1652,8 @@ dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 		dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
 		dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
 	}
+	/* Detach full monitor mode resources */
+	dp_full_mon_detach(pdev);
 
 	return QDF_STATUS_SUCCESS;
 }

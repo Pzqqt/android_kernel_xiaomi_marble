@@ -39,6 +39,64 @@ QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
 QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
 
+#ifdef QCA_SUPPORT_FULL_MON
+
+/**
+ * dp_full_mon_attach() - Full monitor mode attach
+ * This API initilises full monitor mode resources
+ *
+ * @pdev: dp pdev object
+ *
+ * Return: void
+ *
+ */
+void dp_full_mon_attach(struct dp_pdev *pdev);
+
+/**
+ * dp_full_mon_detach() - Full monitor mode attach
+ * This API deinitilises full monitor mode resources
+ *
+ * @pdev: dp pdev object
+ *
+ * Return: void
+ *
+ */
+void dp_full_mon_detach(struct dp_pdev *pdev);
+
+/**
+ * dp_rx_mon_process ()- API to process monitor destination ring for
+ * full monitor mode
+ *
+ * @soc: dp soc handle
+ * @mac_id: lmac id
+ * @quota: No. of ring entry that can be serviced in one shot.
+ */
+
+uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
+
+#else
+/**
+ * dp_full_mon_attach() - attach full monitor mode resources
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ */
+static inline void dp_full_mon_attach(struct dp_pdev *pdev)
+{
+}
+
+/**
+ * dp_full_mon_detach() - detach full monitor mode resources
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: void
+ *
+ */
+static inline void dp_full_mon_detach(struct dp_pdev *pdev)
+{
+}
+#endif
+
 /**
  * dp_reset_monitor_mode() - Disable monitor mode
  * @pdev_handle: Datapath PDEV handle

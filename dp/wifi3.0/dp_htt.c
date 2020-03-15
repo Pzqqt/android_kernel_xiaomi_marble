@@ -1032,6 +1032,111 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef QCA_SUPPORT_FULL_MON
+/**
+ * htt_h2t_full_mon_cfg() - Send full monitor configuarion msg to FW
+ *
+ * @htt_soc: HTT Soc handle
+ * @pdev_id: Radio id
+ * @dp_full_mon_config: enabled/disable configuration
+ *
+ * Return: Success when HTT message is sent, error on failure
+ */
+int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
+			 uint8_t pdev_id,
+			 enum dp_full_mon_config config)
+{
+	struct htt_soc *soc = (struct htt_soc *)htt_soc;
+	struct dp_htt_htc_pkt *pkt;
+	qdf_nbuf_t htt_msg;
+	uint32_t *msg_word;
+	uint8_t *htt_logger_bufp;
+
+	htt_msg = qdf_nbuf_alloc(soc->osdev,
+				 HTT_MSG_BUF_SIZE(
+				 HTT_RX_FULL_MONITOR_MODE_SETUP_SZ),
+				 /* reserve room for the HTC header */
+				 HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING,
+				 4,
+				 TRUE);
+	if (!htt_msg)
+		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Set the length of the message.
+	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
+	 * separately during the below call to qdf_nbuf_push_head.
+	 * The contribution from the HTC header is added separately inside HTC.
+	 */
+	if (!qdf_nbuf_put_tail(htt_msg, HTT_RX_RING_SELECTION_CFG_SZ)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Failed to expand head for RX Ring Cfg msg",
+			  __func__);
+		goto fail1;
+	}
+
+	msg_word = (uint32_t *)qdf_nbuf_data(htt_msg);
+
+	/* rewind beyond alignment pad to get to the HTC header reserved area */
+	qdf_nbuf_push_head(htt_msg, HTC_HDR_ALIGNMENT_PADDING);
+
+	/* word 0 */
+	*msg_word = 0;
+	htt_logger_bufp = (uint8_t *)msg_word;
+	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_FULL_MONITOR_MODE);
+	HTT_RX_FULL_MONITOR_MODE_OPERATION_PDEV_ID_SET(
+			*msg_word, DP_SW2HW_MACID(pdev_id));
+
+	msg_word++;
+	*msg_word = 0;
+	/* word 1 */
+	if (config == DP_FULL_MON_ENABLE) {
+		HTT_RX_FULL_MONITOR_MODE_ENABLE_SET(*msg_word, true);
+		HTT_RX_FULL_MONITOR_MODE_ZERO_MPDU_SET(*msg_word, true);
+		HTT_RX_FULL_MONITOR_MODE_NON_ZERO_MPDU_SET(*msg_word, true);
+		HTT_RX_FULL_MONITOR_MODE_RELEASE_RINGS_SET(*msg_word, 0x2);
+	} else if (config == DP_FULL_MON_DISABLE) {
+		HTT_RX_FULL_MONITOR_MODE_ENABLE_SET(*msg_word, false);
+		HTT_RX_FULL_MONITOR_MODE_ZERO_MPDU_SET(*msg_word, false);
+		HTT_RX_FULL_MONITOR_MODE_NON_ZERO_MPDU_SET(*msg_word, false);
+		HTT_RX_FULL_MONITOR_MODE_RELEASE_RINGS_SET(*msg_word, 0x2);
+	}
+
+	pkt = htt_htc_pkt_alloc(soc);
+	if (!pkt) {
+		qdf_err("HTC packet allocation failed");
+		goto fail1;
+	}
+
+	pkt->soc_ctxt = NULL; /* not used during send-done callback */
+
+	SET_HTC_PACKET_INFO_TX(
+		&pkt->htc_pkt,
+		dp_htt_h2t_send_complete_free_netbuf,
+		qdf_nbuf_data(htt_msg),
+		qdf_nbuf_len(htt_msg),
+		soc->htc_endpoint,
+		1); /* tag for no FW response msg */
+
+	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, htt_msg);
+	qdf_info("config: %d", config);
+	DP_HTT_SEND_HTC_PKT(soc, pkt, HTT_H2T_MSG_TYPE_SRING_SETUP,
+			    htt_logger_bufp);
+	return QDF_STATUS_SUCCESS;
+fail1:
+	qdf_nbuf_free(htt_msg);
+	return QDF_STATUS_E_FAILURE;
+}
+#else
+int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
+			 uint8_t pdev_id,
+			 enum dp_full_mon_config config)
+{
+	return 0;
+}
+
+#endif
+
 /*
  * htt_h2t_rx_ring_cfg() - Send SRNG packet and TLV filter
  * config message to target

@@ -2097,4 +2097,16 @@ void dp_set_max_page_size(struct qdf_mem_multi_page_t *pages,
  * Return: None
  */
 void dp_rx_skip_tlvs(qdf_nbuf_t nbuf, uint32_t l3_padding);
+
+/**
+ * dp_soc_is_full_mon_enable () - Return if full monitor mode is enabled
+ * @soc: DP soc handle
+ *
+ * Return: Full monitor mode status
+ */
+static inline bool dp_soc_is_full_mon_enable(struct dp_pdev *pdev)
+{
+	return (pdev->soc->full_mon_mode && pdev->monitor_configured) ?
+			true : false;
+}
 #endif /* #ifndef _DP_INTERNAL_H_ */
