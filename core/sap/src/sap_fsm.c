@@ -1902,8 +1902,7 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
 			profile = &sap_context->csr_roamProfile;
-			ch_freq = wlan_reg_legacy_chan_to_freq(mac->pdev,
-						profile->op_freq);
+			ch_freq = profile->op_freq;
 			if (!wlan_reg_is_dfs_for_freq(mac->pdev,
 						      ch_freq))
 				continue;
