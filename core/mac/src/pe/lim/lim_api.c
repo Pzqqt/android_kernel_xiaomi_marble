@@ -51,6 +51,7 @@
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "wma_types.h"
+#include "wlan_crypto_global_api.h"
 
 #include "rrm_api.h"
 
@@ -2215,6 +2216,91 @@ lim_copy_and_free_hlp_data_from_session(struct pe_session *session_ptr,
 {}
 #endif
 
+static
+uint8_t *lim_process_rmf_disconnect_frame(struct mac_context *mac,
+					  struct pe_session *session,
+					  uint8_t *deauth_disassoc_frame,
+					  uint16_t deauth_disassoc_frame_len,
+					  uint16_t *extracted_length)
+{
+	struct wlan_frame_hdr *mac_hdr;
+	uint8_t mic_len, hdr_len, pdev_id;
+	uint8_t *orig_ptr, *efrm;
+	int32_t mgmtcipherset;
+	uint32_t mmie_len;
+	QDF_STATUS status;
+
+	mac_hdr = (struct wlan_frame_hdr *)deauth_disassoc_frame;
+	orig_ptr = (uint8_t *)mac_hdr;
+
+	if (mac_hdr->i_fc[1] & IEEE80211_FC1_WEP) {
+		if (QDF_IS_ADDR_BROADCAST(mac_hdr->i_addr1) ||
+		    IEEE80211_IS_MULTICAST(mac_hdr->i_addr1)) {
+			pe_err("Encrypted BC/MC frame dropping the frame");
+			*extracted_length = 0;
+			return NULL;
+		}
+
+		pdev_id = wlan_objmgr_pdev_get_pdev_id(mac->pdev);
+		status = mlme_get_peer_mic_len(mac->psoc, pdev_id,
+					       mac_hdr->i_addr2, &mic_len,
+					       &hdr_len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("Failed to get mic hdr and length");
+			*extracted_length = 0;
+			return NULL;
+		}
+
+		if (deauth_disassoc_frame_len <
+		    (sizeof(*mac_hdr) + hdr_len + mic_len)) {
+			pe_err("Frame len less than expected %d",
+			       deauth_disassoc_frame_len);
+			*extracted_length = 0;
+			return NULL;
+		}
+
+		/*
+		 * Strip the privacy headers and trailer
+		 * for the received deauth/disassoc frame
+		 */
+		qdf_mem_move(orig_ptr + hdr_len, mac_hdr,
+			     sizeof(*mac_hdr));
+		*extracted_length = deauth_disassoc_frame_len -
+				    (hdr_len + mic_len);
+		return orig_ptr + hdr_len;
+	}
+
+	if (!(QDF_IS_ADDR_BROADCAST(mac_hdr->i_addr1) ||
+	      IEEE80211_IS_MULTICAST(mac_hdr->i_addr1))) {
+		pe_err("Rx unprotected unicast mgmt frame");
+		*extracted_length = 0;
+		return NULL;
+	}
+
+	mgmtcipherset = wlan_crypto_get_param(session->vdev,
+					      WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+	if (mgmtcipherset < 0) {
+		pe_err("Invalid mgmt cipher");
+		*extracted_length = 0;
+		return NULL;
+	}
+
+	mmie_len = (mgmtcipherset & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC) ?
+		    cds_get_mmie_size() : cds_get_gmac_mmie_size());
+
+	efrm = orig_ptr + deauth_disassoc_frame_len;
+	if (!mac->pmf_offload &&
+	    !wlan_crypto_is_mmie_valid(session->vdev, orig_ptr, efrm)) {
+		pe_err("Invalid MMIE");
+		*extracted_length = 0;
+		return NULL;
+	}
+
+	*extracted_length = deauth_disassoc_frame_len - mmie_len;
+
+	return deauth_disassoc_frame;
+}
+
 QDF_STATUS
 pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		       uint8_t *deauth_disassoc_frame,
@@ -2222,6 +2308,9 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		       uint16_t reason_code)
 {
 	struct pe_session *session;
+	uint8_t *extracted_frm = NULL;
+	uint16_t extracted_frm_len;
+	bool is_pmf_connection;
 
 	session = pe_find_session_by_vdev_id(mac, vdev_id);
 	if (!session) {
@@ -2237,16 +2326,39 @@ pe_disconnect_callback(struct mac_context *mac, uint8_t vdev_id,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (deauth_disassoc_frame &&
-	    deauth_disassoc_frame_len > SIR_MAC_MIN_IE_LEN) {
-		lim_extract_ies_from_deauth_disassoc(session,
-						     deauth_disassoc_frame,
-						     deauth_disassoc_frame_len);
+	if (!(deauth_disassoc_frame ||
+	      deauth_disassoc_frame_len > SIR_MAC_MIN_IE_LEN))
+		goto end;
 
-		reason_code = sir_read_u16(deauth_disassoc_frame +
-					   sizeof(struct wlan_frame_hdr));
+	/*
+	 * Use vdev pmf status instead of peer pmf capability as
+	 * the firmware might roam to new AP in powersave case and
+	 * roam synch can come before emergency deauth event.
+	 * In that case, get peer will fail and reason code received
+	 * from the WMI_ROAM_EVENTID  will be sent to upper layers.
+	 */
+	is_pmf_connection = lim_get_vdev_rmf_capable(mac, session);
+	if (is_pmf_connection) {
+		extracted_frm = lim_process_rmf_disconnect_frame(
+						mac, session,
+						deauth_disassoc_frame,
+						deauth_disassoc_frame_len,
+						&extracted_frm_len);
+		if (!extracted_frm) {
+			pe_err("PMF frame validation failed");
+			goto end;
+		}
+	} else {
+		extracted_frm = deauth_disassoc_frame;
+		extracted_frm_len = deauth_disassoc_frame_len;
 	}
 
+	lim_extract_ies_from_deauth_disassoc(session, extracted_frm,
+					     extracted_frm_len);
+
+	reason_code = sir_read_u16(extracted_frm +
+				   sizeof(struct wlan_frame_hdr));
+end:
 	lim_tear_down_link_with_ap(mac, session->peSessionId,
 				   reason_code,
 				   eLIM_PEER_ENTITY_DEAUTH);
