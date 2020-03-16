@@ -19655,6 +19655,24 @@ wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
+/**
+ * hdd_dump_prev_bssid() - dump prev_bssid of cfg80211_connect_params
+ * @req: pointer ro cfg80211_connect_params
+ *
+ * Return: void
+ */
+static inline void hdd_dump_prev_bssid(struct cfg80211_connect_params *req)
+{
+	if (req->prev_bssid)
+		hdd_nofl_debug("prev BSSID %pM", req->prev_bssid);
+}
+#else
+static inline void hdd_dump_prev_bssid(struct cfg80211_connect_params *req)
+{
+}
+#endif
+
 static inline void hdd_dump_connect_req(struct hdd_adapter *adapter,
 					struct net_device *ndev,
 					struct cfg80211_connect_params *req)
@@ -19673,8 +19691,7 @@ static inline void hdd_dump_connect_req(struct hdd_adapter *adapter,
 		hdd_nofl_debug("BSSID %pM", req->bssid);
 	if (req->bssid_hint)
 		hdd_nofl_debug("BSSID hint %pM", req->bssid_hint);
-	if (req->prev_bssid)
-		hdd_nofl_debug("prev BSSID %pM", req->prev_bssid);
+	hdd_dump_prev_bssid(req);
 
 	for (i = 0; i < req->crypto.n_akm_suites; i++)
 		hdd_nofl_debug("akm[%d] = %x", i, req->crypto.akm_suites[i]);
