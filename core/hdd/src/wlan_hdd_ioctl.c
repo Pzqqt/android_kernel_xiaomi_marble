@@ -4025,6 +4025,10 @@ void hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
 	 */
 	if (!roam_ch->command_resp) {
 		len = roam_ch->num_channels * sizeof(roam_ch->chan_list[0]);
+		if (!len) {
+			hdd_err("Invalid len");
+			return;
+		}
 		event = (uint8_t *)qdf_mem_malloc(len);
 		if (!event) {
 			hdd_err("Failed to alloc event response buf vdev_id: %d",
