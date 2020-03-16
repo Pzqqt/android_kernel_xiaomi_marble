@@ -72,6 +72,7 @@ fwol_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc, void *arg)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		fwol_err("Failed to attach psoc_ctx with psoc");
 		qdf_mem_free(fwol_obj);
+		return status;
 	}
 
 	tgt_fwol_register_rx_ops(&fwol_obj->rx_ops);
