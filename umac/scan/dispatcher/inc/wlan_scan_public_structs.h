@@ -68,6 +68,7 @@ typedef uint32_t wlan_scan_id;
 #define PCL_WEIGHT 10
 #define CHANNEL_CONGESTION_WEIGHTAGE 5
 #define OCE_WAN_WEIGHTAGE 0
+#define OCE_AP_TX_POWER_WEIGHTAGE 5
 #define BEST_CANDIDATE_MAX_WEIGHT 100
 #define MAX_INDEX_SCORE 100
 #define MAX_INDEX_PER_INI 4
@@ -478,6 +479,7 @@ struct scan_cache_entry {
  * @pcl_weightage: PCL weightage
  * @channel_congestion_weightage: channel congestion weightage
  * @oce_wan_weightage: OCE WAN metrics weightage
+ * @oce_ap_tx_pwr_weightage: OCE AP tx power weigtage
  */
 struct  weight_config {
 	uint8_t rssi_weightage;
@@ -491,6 +493,7 @@ struct  weight_config {
 	uint8_t pcl_weightage;
 	uint8_t channel_congestion_weightage;
 	uint8_t oce_wan_weightage;
+	uint8_t oce_ap_tx_pwr_weightage;
 };
 
 /**

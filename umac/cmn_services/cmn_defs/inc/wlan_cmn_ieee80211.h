@@ -43,6 +43,7 @@
 #define MBO_OCE_OUI 0x506f9a16
 #define MBO_OCE_OUI_SIZE 4
 #define REDUCED_WAN_METRICS_ATTR 103
+#define AP_TX_PWR_ATTR 107
 
 /* WCN IE */
 /* Microsoft OUI */
@@ -1901,4 +1902,51 @@ wlan_parse_oce_reduced_wan_metrics_ie(uint8_t *mbo_oce_ie,
 	return false;
 }
 
+/*
+ * wlan_parse_oce_ap_tx_pwr_ie() - parse oce ap tx pwr
+ * @mbo_oce_ie: MBO/OCE ie ptr
+ * @ap_tx_pwr: pointer to hold value of ap_tx_pwr in dbm
+ *
+ * Return: true if oce ap tx pwr is present, else false
+ */
+static inline bool
+wlan_parse_oce_ap_tx_pwr_ie(uint8_t *mbo_oce_ie, int8_t *ap_tx_pwr_dbm)
+{
+	uint8_t len, attribute_len, attribute_id;
+	uint8_t *ie;
+	int8_t ap_tx_power_in_2_complement;
+
+	if (!mbo_oce_ie)
+		return false;
+
+	ie = mbo_oce_ie;
+	len = ie[1];
+	ie += 2;
+
+	if (len <= MBO_OCE_OUI_SIZE)
+		return false;
+
+	ie += MBO_OCE_OUI_SIZE;
+	len -= MBO_OCE_OUI_SIZE;
+
+	while (len > 2) {
+		attribute_id = ie[0];
+		attribute_len = ie[1];
+		len -= 2;
+		if (attribute_len > len)
+			return false;
+
+		if (attribute_id == AP_TX_PWR_ATTR) {
+			ap_tx_power_in_2_complement = ie[2];
+			*ap_tx_pwr_dbm =
+				(int8_t)(256 - ap_tx_power_in_2_complement);
+			return true;
+		}
+
+		ie += (attribute_len + 2);
+		len -= attribute_len;
+	}
+
+	return false;
+}
 #endif /* _WLAN_CMN_IEEE80211_DEFS_H_ */
