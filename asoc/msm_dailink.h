@@ -521,3 +521,13 @@ SND_SOC_DAILINK_DEFS(afe_loopback_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.24577")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+
+SND_SOC_DAILINK_DEFS(proxy_tx,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.8195")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+
+SND_SOC_DAILINK_DEFS(proxy_rx,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.8194")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-rx")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
