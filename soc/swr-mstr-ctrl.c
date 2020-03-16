@@ -592,10 +592,10 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 		for (i = 0; i < length; i++) {
 		/* wait for FIFO WR command to complete to avoid overflow */
 		/*
-		 * Reduce sleep from 100us to 10us to meet KPIs
+		 * Reduce sleep from 100us to 50us to meet KPIs
 		 * This still meets the hardware spec
 		 */
-			usleep_range(10, 12);
+			usleep_range(50, 55);
 			swr_master_write(swrm, reg_addr[i], val[i]);
 		}
 		mutex_unlock(&swrm->iolock);
