@@ -3557,7 +3557,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			/* inform association failure event to nl80211 */
 			if (eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL ==
 			    roam_result) {
-				if (roam_info)
+				if (roam_info && assoc_req && assoc_rsp)
 					hdd_connect_result(dev,
 						roam_info->bssid.bytes,
 						roam_info, assoc_req,
@@ -3577,7 +3577,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						connect_timeout,
 						timeout_reason);
 			} else {
-				if (roam_info)
+				if (roam_info && assoc_req && assoc_rsp)
 					hdd_connect_result(dev,
 						roam_info->bssid.bytes,
 						roam_info, assoc_req,
