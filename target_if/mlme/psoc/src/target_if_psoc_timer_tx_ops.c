@@ -95,6 +95,7 @@ QDF_STATUS target_if_psoc_vdev_rsp_timer_init(struct wlan_objmgr_psoc *psoc,
 		       target_if_vdev_mgr_rsp_timer_mgmt_cb,
 		       vdev_rsp, QDF_TIMER_TYPE_WAKE_APPS);
 	qdf_atomic_init(&vdev_rsp->rsp_timer_inuse);
+	qdf_atomic_inc(&vdev_rsp->rsp_timer_inuse);
 
 	return QDF_STATUS_SUCCESS;
 }
