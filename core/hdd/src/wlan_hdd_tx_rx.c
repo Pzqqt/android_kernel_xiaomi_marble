@@ -39,7 +39,6 @@
 #include <wlan_hdd_p2p.h>
 #include <linux/wireless.h>
 #include <net/cfg80211.h>
-#include <net/ieee80211_radiotap.h>
 #include "sap_api.h"
 #include "wlan_hdd_wmm.h"
 #include "wlan_hdd_tdls.h"
@@ -62,6 +61,8 @@
 #include "dp_txrx.h"
 #if defined(WLAN_SUPPORT_RX_FISA)
 #include "dp_fisa_rx.h"
+#else
+#include <net/ieee80211_radiotap.h>
 #endif
 #include <ol_defines.h>
 #include "cfg_ucfg_api.h"

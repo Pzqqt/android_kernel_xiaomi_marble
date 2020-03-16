@@ -186,7 +186,7 @@ get_flow_tuple_from_nbuf(hal_soc_handle_t hal_soc_hdl,
 
 	qdf_nbuf_push_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
 
-	dp_fisa_debug("head_skb: %pk head_skb->next:%pk head_skb->data:%pk len %d data_len",
+	dp_fisa_debug("head_skb: %pk head_skb->next:%pk head_skb->data:%pk len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
 		      nbuf->data_len);
 }
@@ -903,7 +903,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 
 	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_ERROR);
-	dp_fisa_debug("nbuf: %pk nbuf->next:%pk nbuf->data:%pk len %d data_len",
+	dp_fisa_debug("nbuf: %pk nbuf->next:%pk nbuf->data:%pk len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
 		      nbuf->data_len);
 
@@ -1089,8 +1089,8 @@ QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 			sw_ft_entry->napi_id);
 		dp_info("num msdu aggr %d", sw_ft_entry->aggr_count);
 		dp_info("flush count %d", sw_ft_entry->flush_count);
-		dp_info("bytes_aggregated %d", sw_ft_entry->bytes_aggregated);
-		dp_info("avg aggregation %d",
+		dp_info("bytes_aggregated %llu", sw_ft_entry->bytes_aggregated);
+		dp_info("avg aggregation %llu",
 			sw_ft_entry->bytes_aggregated / sw_ft_entry->flush_count
 			);
 		print_flow_tuple(&sw_ft_entry->rx_flow_tuple_info);
