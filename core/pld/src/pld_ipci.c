@@ -263,6 +263,55 @@ out:
 	return 0;
 }
 
+/**
+ * pld_ipci_idle_restart_cb() - Perform idle restart
+ * @pdev: platform device
+ *
+ * This function will be called if there is an idle restart request
+ *
+ * Return: int
+ */
+static int pld_ipci_idle_restart_cb(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->idle_restart)
+		return pld_context->ops->idle_restart(dev,
+						      PLD_BUS_TYPE_IPCI);
+
+	return -ENODEV;
+}
+
+/**
+ * pld_ipci_idle_shutdown_cb() - Perform idle shutdown
+ * @pdev: PCIE device
+ * @id: PCIE device ID
+ *
+ * This function will be called if there is an idle shutdown request
+ *
+ * Return: int
+ */
+static int pld_ipci_idle_shutdown_cb(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->shutdown)
+		return pld_context->ops->idle_shutdown(dev,
+						       PLD_BUS_TYPE_IPCI);
+
+	return -ENODEV;
+}
+
 #ifdef MULTI_IF_NAME
 #define PLD_IPCI_OPS_NAME "pld_ipci_" MULTI_IF_NAME
 #else
@@ -281,6 +330,8 @@ struct icnss_driver_ops pld_ipci_ops = {
 	.suspend_noirq = pld_ipci_suspend_noirq,
 	.resume_noirq = pld_ipci_resume_noirq,
 	.uevent = pld_ipci_uevent,
+	.idle_restart = pld_ipci_idle_restart_cb,
+	.idle_shutdown = pld_ipci_idle_shutdown_cb,
 };
 
 /**
