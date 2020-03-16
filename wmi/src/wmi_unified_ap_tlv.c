@@ -2534,7 +2534,10 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_tlv(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	param->pdev_id = ev->pdev_id;
+
+	param->pdev_id = wmi_hdl->ops->convert_target_pdev_id_to_host(
+								wmi_hdl,
+								ev->pdev_id);
 	param->status = ev->status;
 
 	if (!param_buf->num_vdev_ids_bitmap)
