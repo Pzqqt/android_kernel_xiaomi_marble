@@ -580,6 +580,10 @@ qdf_export_symbol(__qdf_runtime_lock_init);
 void qdf_runtime_lock_deinit(qdf_runtime_lock_t *lock)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+
+	if (!lock)
+		return;
+
 	hif_runtime_lock_deinit(hif_ctx, lock->lock);
 }
 qdf_export_symbol(qdf_runtime_lock_deinit);
