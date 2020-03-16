@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,10 +199,10 @@ static void lim_ndp_delete_peers(struct mac_context *mac_ctx,
 		return;
 
 	for (i = 0; i < num_peers; i++) {
-		pe_info("ndp_map[%d]: MAC: " QDF_MAC_ADDR_STR " num_active %d",
-			i,
-			QDF_MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
-			ndp_map[i].num_active_ndp_sessions);
+		pe_debug("ndp_map[%d]: MAC: " QDF_MAC_ADDR_STR " num_active %d",
+			 i,
+			 QDF_MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
+			 ndp_map[i].num_active_ndp_sessions);
 
 		/* Do not delete a peer with active NDPs */
 		if (ndp_map[i].num_active_ndp_sessions > 0)
