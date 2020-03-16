@@ -1687,27 +1687,24 @@ done:
 					continue;
 
 				case HAL_RXDMA_ERR_DECRYPT:
-					if (!dp_handle_rxdma_decrypt_err()) {
-						if (peer)
-							DP_STATS_INC(peer,
-							rx.err.decrypt_err, 1);
+
+					if (peer) {
+						DP_STATS_INC(peer, rx.err.
+							     decrypt_err, 1);
 						break;
 					}
+
+					if (!dp_handle_rxdma_decrypt_err())
+						break;
 
 					pool_id = wbm_err_info.pool_id;
 					err_code = wbm_err_info.rxdma_err_code;
 					tlv_hdr = rx_tlv_hdr;
 					dp_rx_process_rxdma_err(soc, nbuf,
-								tlv_hdr, peer,
+								tlv_hdr, NULL,
 								err_code,
 								pool_id);
 					nbuf = next;
-					if (peer) {
-						DP_STATS_INC(peer, rx.err.
-							     decrypt_err, 1);
-						dp_peer_unref_del_find_by_id(
-									peer);
-					}
 					continue;
 
 				default:
