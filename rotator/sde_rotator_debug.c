@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
@@ -121,7 +121,6 @@ static void sde_rot_dump_debug_bus(u32 bus_dump_flag, u32 **dump_mem)
 	u32 *dump_addr = NULL;
 	u32 status = 0;
 	struct sde_rot_debug_bus *head;
-	phys_addr_t phys = 0;
 	int i;
 	u32 offset;
 	void __iomem *base;
@@ -137,9 +136,9 @@ static void sde_rot_dump_debug_bus(u32 bus_dump_flag, u32 **dump_mem)
 
 	if (in_mem) {
 		if (!(*dump_mem))
-			*dump_mem = dma_alloc_coherent(&mdata->pdev->dev,
+			*dump_mem = devm_kzalloc(&mdata->pdev->dev,
 				mdata->rot_dbg_bus_size * 4 * sizeof(u32),
-				&phys, GFP_KERNEL);
+				GFP_KERNEL);
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
@@ -249,7 +248,6 @@ static void sde_rot_dump_vbif_debug_bus(u32 bus_dump_flag,
 	u32 *dump_addr = NULL;
 	u32 value;
 	struct sde_rot_vbif_debug_bus *head;
-	phys_addr_t phys = 0;
 	int i, list_size = 0;
 	void __iomem *vbif_base;
 	struct sde_rot_vbif_debug_bus *dbg_bus;
@@ -277,8 +275,8 @@ static void sde_rot_dump_vbif_debug_bus(u32 bus_dump_flag,
 
 	if (in_mem) {
 		if (!(*dump_mem))
-			*dump_mem = dma_alloc_coherent(&mdata->pdev->dev,
-				list_size, &phys, GFP_KERNEL);
+			*dump_mem = devm_kzalloc(&mdata->pdev->dev, list_size,
+					GFP_KERNEL);
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
@@ -332,7 +330,6 @@ void sde_rot_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	struct sde_rot_data_type *mdata = sde_rot_get_mdata();
 	bool in_log, in_mem;
 	u32 *dump_addr = NULL;
-	phys_addr_t phys = 0;
 	int i;
 	void __iomem *base;
 
@@ -348,8 +345,8 @@ void sde_rot_dump_reg(const char *dump_name, u32 reg_dump_flag,
 
 	if (in_mem) {
 		if (!(*dump_mem))
-			*dump_mem = dma_alloc_coherent(&mdata->pdev->dev,
-				len * 16, &phys, GFP_KERNEL);
+			*dump_mem = devm_kzalloc(&mdata->pdev->dev, len * 16,
+					GFP_KERNEL);
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;

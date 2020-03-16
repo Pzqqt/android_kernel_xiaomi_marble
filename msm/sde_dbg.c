@@ -2949,11 +2949,9 @@ static void _sde_dump_reg(const char *dump_name, u32 reg_dump_flag,
 	end_addr = addr + len_bytes;
 
 	if (in_mem) {
-		if (dump_mem && !(*dump_mem)) {
-			phys_addr_t phys = 0;
-			*dump_mem = dma_alloc_coherent(sde_dbg_base.dev,
-					len_padded, &phys, GFP_KERNEL);
-		}
+		if (dump_mem && !(*dump_mem))
+			*dump_mem = devm_kzalloc(sde_dbg_base.dev, len_padded,
+					GFP_KERNEL);
 
 		if (dump_mem && *dump_mem) {
 			dump_addr = *dump_mem;
@@ -3189,7 +3187,6 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 	u32 *dump_addr = NULL;
 	u32 status = 0;
 	struct sde_debug_bus_entry *head;
-	phys_addr_t phys = 0;
 	int list_size;
 	int i;
 	u32 offset;
@@ -3227,8 +3224,8 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 
 	if (in_mem) {
 		if (!(*dump_mem))
-			*dump_mem = dma_alloc_coherent(sde_dbg_base.dev,
-				list_size, &phys, GFP_KERNEL);
+			*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size,
+					GFP_KERNEL);
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
@@ -3338,7 +3335,6 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 	u32 value, d0, d1;
 	unsigned long reg, reg1, reg2;
 	struct vbif_debug_bus_entry *head;
-	phys_addr_t phys = 0;
 	int i, list_size = 0;
 	void __iomem *mem_base = NULL;
 	struct vbif_debug_bus_entry *dbg_bus;
@@ -3388,8 +3384,8 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 
 	if (in_mem) {
 		if (!(*dump_mem))
-			*dump_mem = dma_alloc_coherent(sde_dbg_base.dev,
-				list_size, &phys, GFP_KERNEL);
+			*dump_mem = devm_kzalloc(sde_dbg_base.dev, list_size,
+					GFP_KERNEL);
 
 		if (*dump_mem) {
 			dump_addr = *dump_mem;
