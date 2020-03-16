@@ -1828,6 +1828,42 @@ int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 	return ret;
 }
 
+#ifdef CONFIG_SMMU_S1_UNMAP
+/**
+ * pld_smmu_unmap() - Unmap SMMU
+ * @dev: device
+ * @iova_addr: IOVA address to be unmapped
+ * @size: size to be unmapped
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_smmu_unmap(struct device *dev,
+		   uint32_t iova_addr, size_t size)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_SNOC:
+		ret = pld_snoc_smmu_unmap(dev, iova_addr, size);
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_IPCI:
+	case PLD_BUS_TYPE_PCIE:
+		pr_err("Not supported on type %d\n", type);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+#endif
+
 /**
  * pld_get_user_msi_assignment() - Get MSI assignment information
  * @dev: device structure

@@ -661,6 +661,16 @@ void *pld_smmu_get_mapping(struct device *dev);
 #endif
 int pld_smmu_map(struct device *dev, phys_addr_t paddr,
 		 uint32_t *iova_addr, size_t size);
+#ifdef CONFIG_SMMU_S1_UNMAP
+int pld_smmu_unmap(struct device *dev,
+		   uint32_t iova_addr, size_t size);
+#else
+static inline int pld_smmu_unmap(struct device *dev,
+				 uint32_t iova_addr, size_t size)
+{
+	return 0;
+}
+#endif
 int pld_get_user_msi_assignment(struct device *dev, char *user_name,
 				int *num_vectors, uint32_t *user_base_data,
 				uint32_t *base_vector);
