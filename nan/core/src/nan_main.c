@@ -87,8 +87,8 @@ QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
 
 	qdf_spin_unlock_bh(&psoc_priv->lock);
 
-	nan_info("NAN State transitioned from %d -> %d", cur_state,
-		 psoc_priv->disc_state);
+	nan_debug("NAN State transitioned from %d -> %d", cur_state,
+		  psoc_priv->disc_state);
 
 	return status;
 }
