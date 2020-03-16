@@ -2893,6 +2893,7 @@ _target_if_set_spectral_config(struct target_if_spectral *spectral,
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
 
@@ -3059,6 +3060,7 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
 
@@ -3782,6 +3784,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
 
@@ -3951,6 +3954,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 	if (!err) {
 		spectral_err("Error code argument is null");
 		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAILURE;
 	}
 	*err = SPECTRAL_SCAN_ERR_INVALID;
 
