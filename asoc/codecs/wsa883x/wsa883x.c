@@ -118,6 +118,10 @@ enum {
 };
 
 enum {
+	SPKR_STATUS = 0,
+};
+
+enum {
 	WSA883X_IRQ_INT_SAF2WAR = 0,
 	WSA883X_IRQ_INT_WAR2SAF,
 	WSA883X_IRQ_INT_DISABLE,
@@ -936,6 +940,10 @@ static int wsa883x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 				&ch_mask[0], &port_type[0]);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (swr_set_device_group(wsa883x->swr_slave, SWR_GROUP_NONE))
+			dev_err(component->dev,
+				"%s: set num ch failed\n", __func__);
+
 		swr_slvdev_datapath_control(wsa883x->swr_slave,
 					    wsa883x->swr_slave->dev_num,
 					    false);
@@ -971,6 +979,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 				0x01, 0x01);
 		schedule_delayed_work(&wsa883x->vbat_work,
 			msecs_to_jiffies(wsa883x_vbat_timer_sec * 1000));
+		set_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		cancel_delayed_work_sync(&wsa883x->vbat_work);
@@ -983,6 +992,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+		clear_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	}
 	return 0;
@@ -1281,7 +1291,8 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 					0x01, 0x00);
 		break;
 	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
-		snd_soc_component_update_bits(wsa883x->component,
+		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+			snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_PA_FSM_CTL,
 						0x01, 0x01);
 		break;

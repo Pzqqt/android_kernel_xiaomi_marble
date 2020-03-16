@@ -129,6 +129,7 @@ struct wsa883x_priv {
 	struct cdc_regulator *regulator;
 	int num_supplies;
 	struct regulator_bulk_data *supplies;
+	unsigned long status_mask;
 };
 
 #endif /* WSA883X_INTERNAL_H */
