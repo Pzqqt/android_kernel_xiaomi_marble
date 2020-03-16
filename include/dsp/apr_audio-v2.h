@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -1384,7 +1384,7 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_SLIMBUS_RANGE_SIZE	0xA
 
 /* Size of the range of port IDs for real-time proxy ports. */
-#define  AFE_PORT_ID_RT_PROXY_PORT_RANGE_SIZE	0x2
+#define  AFE_PORT_ID_RT_PROXY_PORT_RANGE_SIZE	0x4
 
 /* Size of the range of port IDs for pseudoports. */
 #define AFE_PORT_ID_PSEUDOPORT_RANGE_SIZE	0x5
@@ -1662,6 +1662,16 @@ struct adm_cmd_connect_afe_port_v5 {
  */
 #define AFE_PORT_ID_VOICE2_PLAYBACK_TX  0x8002
 #define AFE_PORT_ID_VOICE_PLAYBACK_TX   0x8005
+
+/*
+ * Proxyport used for voice call data processing.
+ * In cases like call-screening feature, where user can communicate
+ * with caller with the help of "call screen" mode, and without
+ * connecting the call with any HW input/output devices in the phone,
+ * voice call can use Proxy port to start voice data processing.
+ */
+#define RT_PROXY_PORT_002_TX  0x2003
+#define RT_PROXY_PORT_002_RX  0x2002
 
 #define AFE_PORT_ID_PRIMARY_TDM_RX \
 	(AFE_PORT_ID_TDM_PORT_RANGE_START + 0x00)
