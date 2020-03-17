@@ -116,9 +116,10 @@ void dsc_vdev_destroy(struct dsc_vdev **out_vdev)
  * should be rejected and not queued in the DSC queue. Return QDF_STATUS_E_INVAL
  * in this case.
  *
- * If there are any psoc transition taking place becasue of ssr or driver
- * unload, then the vdev trans/ops should be rejected and not queued in the
- * DSC queue. Return QDF_STATUS_E_INVAL in this case.
+ * If there are any psoc transition taking place because of SSR, then vdev
+ * trans/op should be rejected and queued in the DSC queue so that it may be
+ * resumed after the current trans/op is completed. return QDF_STATUS_E_AGAIN
+ * in this case.
  *
  * If there is a psoc transition taking place becasue of psoc idle shutdown,
  * then the vdev trans/ops should be rejected and queued in the DSC queue so
@@ -137,12 +138,17 @@ static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 	if (__dsc_trans_active_or_queued(&vdev->psoc->driver->trans))
 		return QDF_STATUS_E_INVAL;
 
+	if (qdf_is_recovering())
+		return QDF_STATUS_E_AGAIN;
+
 	if (__dsc_trans_active_or_queued(&vdev->psoc->trans)) {
 		/* psoc idle shutdown(wifi off) needs to be added in DSC queue
 		 * to avoid wifi on failure while previous psoc idle shutdown
-		 * is in progress and wifi is turned on.
+		 * is in progress and wifi is turned on. And Wifi On also needs
+		 * to be added to the queue so that it waits for SSR to
+		 * complete.
 		 */
-		if (qdf_is_driver_unloading() || qdf_is_recovering())
+		if (qdf_is_driver_unloading())
 			return QDF_STATUS_E_INVAL;
 		else
 			return QDF_STATUS_E_AGAIN;
