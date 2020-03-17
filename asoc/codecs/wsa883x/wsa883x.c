@@ -415,6 +415,14 @@ static const struct file_operations codec_debug_dump_ops = {
 };
 #endif
 
+static void wsa883x_regcache_sync(struct wsa883x_priv *wsa883x)
+{
+	mutex_lock(&wsa883x->res_lock);
+	regcache_mark_dirty(wsa883x->regmap);
+	regcache_sync(wsa883x->regmap);
+	mutex_unlock(&wsa883x->res_lock);
+}
+
 static irqreturn_t wsa883x_saf2war_handle_irq(int irq, void *data)
 {
 	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
@@ -700,8 +708,8 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	}
 	card = component->card;
 
-	snprintf(name, sizeof(name), "%s.%x", "wsa883x",
-		 (u32)wsa883x->swr_slave->addr);
+	snprintf(name, sizeof(name), "%s.%llx", "wsa883x",
+		 wsa883x->swr_slave->addr);
 
 	wsa883x->entry = snd_info_create_module_entry(codec_root->module,
 						(const char *)name,
@@ -1289,6 +1297,45 @@ static int wsa883x_gpio_ctrl(struct wsa883x_priv *wsa883x, bool enable)
 	return ret;
 }
 
+static int wsa883x_swr_up(struct wsa883x_priv *wsa883x)
+{
+	int ret;
+
+	ret = wsa883x_gpio_ctrl(wsa883x, true);
+	if (ret)
+		dev_err(wsa883x->dev, "%s: Failed to enable gpio\n", __func__);
+
+	return ret;
+}
+
+static int wsa883x_swr_down(struct wsa883x_priv *wsa883x)
+{
+	int ret;
+
+	ret = wsa883x_gpio_ctrl(wsa883x, false);
+	if (ret)
+		dev_err(wsa883x->dev, "%s: Failed to disable gpio\n", __func__);
+
+	return ret;
+}
+
+static int wsa883x_swr_reset(struct wsa883x_priv *wsa883x)
+{
+	u8 retry = WSA883X_NUM_RETRY;
+	u8 devnum = 0;
+	struct swr_device *pdev;
+
+	pdev = wsa883x->swr_slave;
+	while (swr_get_logical_dev_num(pdev, pdev->addr, &devnum) && retry--) {
+		/* Retry after 1 msec delay */
+		usleep_range(1000, 1100);
+	}
+	pdev->dev_num = devnum;
+	wsa883x_regcache_sync(wsa883x);
+
+	return 0;
+}
+
 static int wsa883x_event_notify(struct notifier_block *nb,
 				unsigned long val, void *ptr)
 {
@@ -1306,7 +1353,16 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		snd_soc_component_update_bits(wsa883x->component,
 					WSA883X_PA_FSM_CTL,
 					0x01, 0x00);
+		wsa883x_swr_down(wsa883x);
 		break;
+
+	case BOLERO_WSA_EVT_SSR_UP:
+		wsa883x_swr_up(wsa883x);
+		/* Add delay to allow enumerate */
+		usleep_range(20000, 20010);
+		wsa883x_swr_reset(wsa883x);
+		break;
+
 	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
 		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
 			snd_soc_component_update_bits(wsa883x->component,
