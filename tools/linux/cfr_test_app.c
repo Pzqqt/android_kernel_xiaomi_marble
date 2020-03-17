@@ -39,7 +39,7 @@
 #include <time.h>
 #include <signal.h>
 
-#define CFR_DUMP_STREAMFS_FILE "/sys/kernel/debug/cfr%s/cfr_dump0"
+#define CFR_DUMP_STREAMFS_FILE "/sys/kernel/debug/qdf/cfr%s/cfr_dump0"
 #define CFR_DUMP_FILE "/tmp/cfr_dump_%s.bin"
 
 #define MAX_FILE_SIZE          (8 * 1024 * 1024)
