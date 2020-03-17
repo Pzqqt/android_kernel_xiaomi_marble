@@ -1821,6 +1821,7 @@ target_if_consume_spectral_report_gen3(
 	enum spectral_detector_id detector_id;
 	QDF_STATUS ret;
 	enum spectral_scan_mode spectral_mode = SPECTRAL_SCAN_MODE_INVALID;
+	uint8_t *temp;
 
 	/* Process Spectral scan summary report */
 	if (target_if_verify_sig_and_tag_gen3(
@@ -1959,21 +1960,18 @@ target_if_consume_spectral_report_gen3(
 			params.agile_freq =
 				spectral->params[spectral_mode].ss_frequency;
 
-		/*
-		 * For modes upto VHT80, the noise floor is populated with
-		 * the one corresponding
-		 * to the highest enabled antenna chain
-		 */
-		/* TODO:  Fill proper values once FW provides them*/
-		params.noise_floor       =
+		params.noise_floor =
 			report->noisefloor[chn_idx_lowest_enabled];
-		params.datalen           = (fft_hdr_length * 4);
-		params.bin_pwr_data = (uint8_t *)((uint8_t *)p_fft_report +
-						   SPECTRAL_FFT_BINS_POS);
-		params.pwr_count = fft_bin_count;
+		temp = (uint8_t *)p_fft_report + SPECTRAL_FFT_BINS_POS;
 		if (is_ch_width_160_or_80p80(spectral->ch_width
 		    [spectral_mode]) && !spectral->rparams.
 		    fragmentation_160[spectral_mode]) {
+			struct wlan_objmgr_psoc *psoc;
+
+			qdf_assert_always(spectral->pdev_obj);
+			psoc = wlan_pdev_get_psoc(spectral->pdev_obj);
+			qdf_assert_always(psoc);
+
 			params.agc_total_gain_sec80 =
 				sscan_report_fields.sscan_agc_total_gain;
 			params.gainchange_sec80 =
@@ -1983,13 +1981,41 @@ target_if_consume_spectral_report_gen3(
 			params.noise_floor_sec80    =
 				report->noisefloor[chn_idx_lowest_enabled];
 			params.max_mag_sec80        = p_sfft->fft_peak_mag;
-			params.datalen_sec80        = fft_hdr_length * 4;
-			params.pwr_count = fft_bin_count / 2;
-			params.pwr_count_sec80      = fft_bin_count / 2;
-			params.bin_pwr_data_sec80   =
-				(uint8_t *)((uint8_t *)p_fft_report +
-				SPECTRAL_FFT_BINS_POS + (fft_bin_count / 2) *
-				fft_bin_size);
+			params.datalen = fft_hdr_length * 2;
+			params.datalen_sec80 = fft_hdr_length * 2;
+			if (spectral->ch_width[spectral_mode] ==
+			    CH_WIDTH_80P80MHZ && wlan_psoc_nif_fw_ext_cap_get(
+			    psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT)) {
+				struct spectral_fft_bin_markers_165mhz *marker;
+				enum spectral_report_mode rpt_mode;
+				enum spectral_fft_size fft_size;
+
+				rpt_mode = spectral->params[spectral_mode].
+					   ss_rpt_mode;
+				fft_size = spectral->params[spectral_mode].
+					   ss_fft_size;
+				marker = &spectral->rparams.marker
+					 [rpt_mode][fft_size];
+				params.bin_pwr_data = temp +
+					marker->start_pri80 * fft_bin_size;
+				params.pwr_count = marker->num_pri80;
+				params.bin_pwr_data_5mhz = temp +
+					marker->start_5mhz * fft_bin_size;
+				params.pwr_count_5mhz = marker->num_5mhz;
+				params.bin_pwr_data_sec80 = temp +
+					marker->start_sec80 * fft_bin_size;
+				params.pwr_count_sec80 = marker->num_sec80;
+			} else {
+				params.bin_pwr_data = temp;
+				params.pwr_count = fft_bin_count / 2;
+				params.pwr_count_sec80 = fft_bin_count / 2;
+				params.bin_pwr_data_sec80 = temp +
+					(fft_bin_count / 2) * fft_bin_size;
+			}
+		} else {
+			params.bin_pwr_data = temp;
+			params.pwr_count = fft_bin_count;
+			params.datalen = (fft_hdr_length * 4);
 		}
 
 		target_if_spectral_verify_ts(spectral, report->data,

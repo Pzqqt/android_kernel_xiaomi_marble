@@ -495,6 +495,31 @@ struct spectral_fft_bin_len_adj_swar {
 };
 
 /**
+ * struct spectral_fft_bin_markers_165mhz - Stores the start index and length of
+ * FFT bins in 165 MHz/Restricted 80p80 mode
+ * @start_pri80: Starting index of FFT bins corresponding to primary 80 MHz
+ *               in 165 MHz/Restricted 80p80 mode
+ * @num_pri80: Number of FFT bins corresponding to primary 80 MHz
+ *             in 165 MHz/Restricted 80p80 mode
+ * @start_5mhz: Starting index of FFT bins corresponding to extra 5 MHz
+ *               in 165 MHz/Restricted 80p80 mode
+ * @num_5mhz: Number of FFT bins corresponding to extra 5 MHz
+ *             in 165 MHz/Restricted 80p80 mode
+ * @start_sec80: Starting index of FFT bins corresponding to secondary 80 MHz
+ *               in 165 MHz/Restricted 80p80 mode
+ * @num_sec80: Number of FFT bins corresponding to secondary 80 MHz
+ *             in 165 MHz/Restricted 80p80 mode
+ */
+struct spectral_fft_bin_markers_165mhz {
+	size_t start_pri80;
+	size_t num_pri80;
+	size_t start_5mhz;
+	size_t num_5mhz;
+	size_t start_sec80;
+	size_t num_sec80;
+};
+
+/**
  * struct spectral_report_params - Parameters related to format of Spectral
  * report.
  * @version: This represents the report format version number within each
@@ -508,6 +533,7 @@ struct spectral_fft_bin_len_adj_swar {
  * fragmented.
  * @detid_mode_table: Detector ID to Spectral scan mode table
  * @num_spectral_detectors: Total number of Spectral detectors
+ * @marker: Describes the boundaries of pri80, 5 MHz and sec80 bins
  */
 struct spectral_report_params {
 	enum spectral_report_format_version version;
@@ -516,6 +542,8 @@ struct spectral_report_params {
 	bool fragmentation_160[SPECTRAL_SCAN_MODE_MAX];
 	enum spectral_scan_mode detid_mode_table[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_spectral_detectors;
+	struct spectral_fft_bin_markers_165mhz
+		marker[SPECTRAL_REPORT_MODE_MAX][SPECTRAL_FFT_SIZE_MAX];
 };
 
 /**
@@ -1068,12 +1096,16 @@ struct target_if_spectral {
  * @max_exp:  max exp
  * @peak: peak frequency (obsolete)
  * @pwr_count:  number of FFT bins (except for secondary 80 segment)
+ * @pwr_count_5mhz:  number of FFT bins in extra 5 MHz in
+ *                   165 MHz/restricted 80p80 mode
  * @pwr_count_sec80:  number of FFT bins in secondary 80 segment
  * @nb_lower: This is deprecated
  * @nb_upper: This is deprecated
  * @max_upper_index:  index of max mag in upper band
  * @max_lower_index:  index of max mag in lower band
  * @bin_pwr_data: Contains FFT magnitudes (except for secondary 80 segment)
+ * @bin_pwr_data_5mhz: Contains FFT magnitudes for the extra 5 MHz
+ *                     in 165 MHz/restricted 80p80 mode
  * @bin_pwr_data_sec80: Contains FFT magnitudes for the secondary 80 segment
  * @freq: Center frequency of primary 20MHz channel in MHz
  * @vhtop_ch_freq_seg1: VHT operation first segment center frequency in MHz
@@ -1128,12 +1160,14 @@ struct target_if_samp_msg_params {
 	uint8_t     max_exp;
 	int         peak;
 	int         pwr_count;
+	int         pwr_count_5mhz;
 	int         pwr_count_sec80;
 	int8_t      nb_lower;
 	int8_t      nb_upper;
 	uint16_t    max_lower_index;
 	uint16_t    max_upper_index;
 	uint8_t    *bin_pwr_data;
+	uint8_t    *bin_pwr_data_5mhz;
 	uint8_t    *bin_pwr_data_sec80;
 	uint16_t   freq;
 	uint16_t   vhtop_ch_freq_seg1;

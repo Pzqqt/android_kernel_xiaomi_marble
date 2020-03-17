@@ -49,6 +49,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	static int samp_msg_index;
 	size_t pwr_count = 0;
 	size_t pwr_count_sec80 = 0;
+	size_t pwr_count_5mhz = 0;
 	enum spectral_msg_type msg_type;
 	QDF_STATUS ret;
 	struct spectral_fft_bin_len_adj_swar *swar = &spectral->len_adj_swar;
@@ -216,8 +217,11 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		 */
 		pwr_count_sec80 = qdf_min((size_t)params->pwr_count_sec80,
 					  sizeof(samp_data->bin_pwr_sec80));
+		pwr_count_5mhz = qdf_min((size_t)params->pwr_count_5mhz,
+					 sizeof(samp_data->bin_pwr_5mhz));
 
 		samp_data->bin_pwr_count_sec80 = pwr_count_sec80;
+		samp_data->bin_pwr_count_5mhz = pwr_count_5mhz;
 
 		bin_pwr_data = params->bin_pwr_data_sec80;
 		if (swar->fftbin_size_war ==
@@ -230,6 +234,10 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 			binptr_16 = (uint16_t *)bin_pwr_data;
 			for (idx = 0; idx < pwr_count_sec80; idx++)
 				samp_data->bin_pwr_sec80[idx] = *(binptr_16++);
+
+			binptr_16 = (uint16_t *)params->bin_pwr_data_5mhz;
+			for (idx = 0; idx < pwr_count_5mhz; idx++)
+				samp_data->bin_pwr_5mhz[idx] = *(binptr_16++);
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr_sec80[0],

@@ -2184,6 +2184,98 @@ target_if_spectral_report_params_init(
 		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_2] =
 						SPECTRAL_SCAN_MODE_AGILE;
 	}
+
+	if (target_type == TARGET_TYPE_QCN9000) {
+		struct spectral_fft_bin_markers_165mhz *marker;
+
+		marker = rparams->marker[SPECTRAL_REPORT_MODE_2];
+
+		marker[SPECTRAL_FFT_SIZE_5].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_5].num_pri80 = 8;
+		marker[SPECTRAL_FFT_SIZE_5].start_5mhz = 8;
+		marker[SPECTRAL_FFT_SIZE_5].num_5mhz = 1;
+		marker[SPECTRAL_FFT_SIZE_5].start_sec80 = 9;
+		marker[SPECTRAL_FFT_SIZE_5].num_sec80 = 8;
+
+		marker[SPECTRAL_FFT_SIZE_6].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_6].num_pri80 = 16;
+		marker[SPECTRAL_FFT_SIZE_6].start_5mhz = 16;
+		marker[SPECTRAL_FFT_SIZE_6].num_5mhz = 1;
+		marker[SPECTRAL_FFT_SIZE_6].start_sec80 = 17;
+		marker[SPECTRAL_FFT_SIZE_6].num_sec80 = 16;
+
+		marker[SPECTRAL_FFT_SIZE_7].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_7].num_pri80 = 32;
+		marker[SPECTRAL_FFT_SIZE_7].start_5mhz = 32;
+		marker[SPECTRAL_FFT_SIZE_7].num_5mhz = 2;
+		marker[SPECTRAL_FFT_SIZE_7].start_sec80 = 34;
+		marker[SPECTRAL_FFT_SIZE_7].num_sec80 = 32;
+
+		marker[SPECTRAL_FFT_SIZE_8].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_8].num_pri80 = 64;
+		marker[SPECTRAL_FFT_SIZE_8].start_5mhz = 64;
+		marker[SPECTRAL_FFT_SIZE_8].num_5mhz = 4;
+		marker[SPECTRAL_FFT_SIZE_8].start_sec80 = 68;
+		marker[SPECTRAL_FFT_SIZE_8].num_sec80 = 64;
+
+		marker[SPECTRAL_FFT_SIZE_9].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_9].num_pri80 = 128;
+		marker[SPECTRAL_FFT_SIZE_9].start_5mhz = 128;
+		marker[SPECTRAL_FFT_SIZE_9].num_5mhz = 8;
+		marker[SPECTRAL_FFT_SIZE_9].start_sec80 = 136;
+		marker[SPECTRAL_FFT_SIZE_9].num_sec80 = 128;
+
+		marker[SPECTRAL_FFT_SIZE_10].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_10].num_pri80 = 256;
+		marker[SPECTRAL_FFT_SIZE_10].start_5mhz = 256;
+		marker[SPECTRAL_FFT_SIZE_10].num_5mhz = 16;
+		marker[SPECTRAL_FFT_SIZE_10].start_sec80 = 272;
+		marker[SPECTRAL_FFT_SIZE_10].num_sec80 = 256;
+
+		marker = rparams->marker[SPECTRAL_REPORT_MODE_3];
+
+		marker[SPECTRAL_FFT_SIZE_5].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_5].num_pri80 = 16;
+		marker[SPECTRAL_FFT_SIZE_5].start_5mhz = 16;
+		marker[SPECTRAL_FFT_SIZE_5].num_5mhz = 1;
+		marker[SPECTRAL_FFT_SIZE_5].start_sec80 = 17;
+		marker[SPECTRAL_FFT_SIZE_5].num_sec80 = 15;
+
+		marker[SPECTRAL_FFT_SIZE_6].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_6].num_pri80 = 32;
+		marker[SPECTRAL_FFT_SIZE_6].start_5mhz = 32;
+		marker[SPECTRAL_FFT_SIZE_6].num_5mhz = 1;
+		marker[SPECTRAL_FFT_SIZE_6].start_sec80 = 33;
+		marker[SPECTRAL_FFT_SIZE_6].num_sec80 = 31;
+
+		marker[SPECTRAL_FFT_SIZE_7].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_7].num_pri80 = 64;
+		marker[SPECTRAL_FFT_SIZE_7].start_5mhz = 64;
+		marker[SPECTRAL_FFT_SIZE_7].num_5mhz = 2;
+		marker[SPECTRAL_FFT_SIZE_7].start_sec80 = 66;
+		marker[SPECTRAL_FFT_SIZE_7].num_sec80 = 62;
+
+		marker[SPECTRAL_FFT_SIZE_8].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_8].num_pri80 = 128;
+		marker[SPECTRAL_FFT_SIZE_8].start_5mhz = 128;
+		marker[SPECTRAL_FFT_SIZE_8].num_5mhz = 4;
+		marker[SPECTRAL_FFT_SIZE_8].start_sec80 = 132;
+		marker[SPECTRAL_FFT_SIZE_8].num_sec80 = 124;
+
+		marker[SPECTRAL_FFT_SIZE_9].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_9].num_pri80 = 256;
+		marker[SPECTRAL_FFT_SIZE_9].start_5mhz = 256;
+		marker[SPECTRAL_FFT_SIZE_9].num_5mhz = 8;
+		marker[SPECTRAL_FFT_SIZE_9].start_sec80 = 264;
+		marker[SPECTRAL_FFT_SIZE_9].num_sec80 = 248;
+
+		marker[SPECTRAL_FFT_SIZE_10].start_pri80 = 0;
+		marker[SPECTRAL_FFT_SIZE_10].num_pri80 = 512;
+		marker[SPECTRAL_FFT_SIZE_10].start_5mhz = 512;
+		marker[SPECTRAL_FFT_SIZE_10].num_5mhz = 16;
+		marker[SPECTRAL_FFT_SIZE_10].start_sec80 = 528;
+		marker[SPECTRAL_FFT_SIZE_10].num_sec80 = 496;
+	}
 }
 
 /**
