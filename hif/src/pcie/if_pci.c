@@ -4762,6 +4762,7 @@ bool hif_pci_needs_bmi(struct hif_softc *scn)
 }
 
 #ifdef FORCE_WAKE
+#ifdef DEVICE_FORCE_WAKE_ENABLE
 int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 {
 	uint32_t timeout = 0, value;
@@ -4818,9 +4819,42 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	}
 
 	HIF_STATS_INC(pci_scn, soc_force_wake_success, 1);
-
 	return 0;
 }
+
+#else /* DEVICE_FORCE_WAKE_ENABLE */
+/** hif_force_wake_request() - Disable the PCIE scratch register
+ * write/read
+ *
+ * Return: 0
+ */
+int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
+{
+	uint32_t timeout = 0;
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
+
+	if (pld_force_wake_request(scn->qdf_dev->dev)) {
+		hif_err("force wake request send failed");
+		return -EINVAL;
+	}
+
+	HIF_STATS_INC(pci_scn, mhi_force_wake_request_vote, 1);
+	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
+	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
+		qdf_mdelay(FORCE_WAKE_DELAY_MS);
+		timeout += FORCE_WAKE_DELAY_MS;
+	}
+
+	if (pld_is_device_awake(scn->qdf_dev->dev) <= 0) {
+		hif_err("Unable to wake up mhi");
+		HIF_STATS_INC(pci_scn, mhi_force_wake_failure, 1);
+		return -EINVAL;
+	}
+	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
+	return 0;
+}
+#endif /* DEVICE_FORCE_WAKE_ENABLE */
 
 int hif_force_wake_release(struct hif_opaque_softc *hif_handle)
 {
