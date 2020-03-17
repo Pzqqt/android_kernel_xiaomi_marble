@@ -1848,6 +1848,7 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 	struct reo_desc_list_node *freedesc =
 		(struct reo_desc_list_node *)cb_ctxt;
 	struct dp_rx_tid *rx_tid = &freedesc->rx_tid;
+	unsigned long curr_ts = qdf_get_system_timestamp();
 
 	if ((reo_status->fl_cache_status.header.status !=
 		HAL_REO_CMD_SUCCESS) &&
@@ -1860,7 +1861,8 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 			  freedesc->rx_tid.tid);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: hw_qdesc_paddr: %pK, tid:%d", __func__,
+		  "%s:%lu hw_qdesc_paddr: %pK, tid:%d", __func__,
+		  curr_ts,
 		  (void *)(rx_tid->hw_qdesc_paddr), rx_tid->tid);
 	qdf_mem_unmap_nbytes_single(soc->osdev,
 		rx_tid->hw_qdesc_paddr,
@@ -2089,6 +2091,23 @@ static void dp_reo_desc_clean_up(struct dp_soc *soc,
 			     (qdf_list_node_t *)desc);
 }
 
+/*
+ * dp_reo_limit_clean_batch_sz() - Limit number REO CMD queued to cmd
+ * ring in aviod of REO hang
+ *
+ * @list_size: REO desc list size to be cleaned
+ */
+static inline void dp_reo_limit_clean_batch_sz(uint32_t *list_size)
+{
+	unsigned long curr_ts = qdf_get_system_timestamp();
+
+	if ((*list_size) > REO_DESC_FREELIST_SIZE) {
+		dp_err_log("%lu:freedesc number %d in freelist",
+			   curr_ts, *list_size);
+		/* limit the batch queue size */
+		*list_size = REO_DESC_FREELIST_SIZE;
+	}
+}
 #else
 /*
  * dp_reo_desc_clean_up() - If send cmd to REO inorder to flush
@@ -2107,6 +2126,16 @@ static void dp_reo_desc_clean_up(struct dp_soc *soc,
 		reo_status->fl_cache_status.header.status = 0;
 		dp_reo_desc_free(soc, (void *)desc, reo_status);
 	}
+}
+
+/*
+ * dp_reo_limit_clean_batch_sz() - Limit number REO CMD queued to cmd
+ * ring in aviod of REO hang
+ *
+ * @list_size: REO desc list size to be cleaned
+ */
+static inline void dp_reo_limit_clean_batch_sz(uint32_t *list_size)
+{
 }
 #endif
 
@@ -2176,6 +2205,7 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 		qdf_mem_zero(reo_status, sizeof(*reo_status));
 		reo_status->fl_cache_status.header.status = HAL_REO_CMD_DRAIN;
 		dp_reo_desc_free(soc, (void *)freedesc, reo_status);
+		DP_STATS_INC(soc, rx.err.reo_cmd_send_drain, 1);
 		return;
 	} else if (reo_status->rx_queue_status.header.status !=
 		HAL_REO_CMD_SUCCESS) {
@@ -2196,6 +2226,14 @@ void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 	freedesc->free_ts = curr_ts;
 	qdf_list_insert_back_size(&soc->reo_desc_freelist,
 		(qdf_list_node_t *)freedesc, &list_size);
+
+	/* MCL path add the desc back to reo_desc_freelist when REO FLUSH
+	 * failed. it may cause the number of REO queue pending  in free
+	 * list is even larger than REO_CMD_RING max size and lead REO CMD
+	 * flood then cause REO HW in an unexpected condition. So it's
+	 * needed to limit the number REO cmds in a batch operation.
+	 */
+	dp_reo_limit_clean_batch_sz(&list_size);
 
 	while ((qdf_list_peek_front(&soc->reo_desc_freelist,
 		(qdf_list_node_t **)&desc) == QDF_STATUS_SUCCESS) &&
