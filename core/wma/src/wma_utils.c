@@ -592,9 +592,6 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 		sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
 		sme_msg.bodyptr = lost_link_info;
 		sme_msg.bodyval = 0;
-		WMA_LOGD("%s: post msg to SME, bss_idx %d, rssi %d",  __func__,
-			 lost_link_info->vdev_id, lost_link_info->rssi);
-
 		qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
 						    QDF_MODULE_ID_SME,
 						    QDF_MODULE_ID_SME,

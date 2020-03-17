@@ -2117,8 +2117,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 	switch (pMsg->type) {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	case eWNI_SME_HO_FAIL_IND:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("LFR3: Rcvd eWNI_SME_HO_FAIL_IND"));
 		csr_process_ho_fail_ind(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;

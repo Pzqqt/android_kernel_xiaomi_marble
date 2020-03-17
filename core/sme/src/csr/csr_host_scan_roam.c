@@ -422,8 +422,6 @@ QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
 		&mac->roam.neighborRoamInfo[sessionId];
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	sme_debug("Received indication from firmware");
-
 	/* we must be in connected state, if not ignore it */
 	if ((eCSR_NEIGHBOR_ROAM_STATE_CONNECTED !=
 	     pNeighborRoamInfo->neighborRoamState)

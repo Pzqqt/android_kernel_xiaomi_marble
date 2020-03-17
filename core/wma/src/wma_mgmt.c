@@ -307,7 +307,7 @@ wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
-							uint8_t *macaddr)
+			   uint8_t *macaddr)
 {
 	WLAN_HOST_DIAG_EVENT_DEF(sta_kickout, struct host_event_wlan_kickout);
 	qdf_mem_zero(&sta_kickout, sizeof(sta_kickout));
@@ -315,7 +315,7 @@ void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
 	sta_kickout.vdev_id = vdev_id;
 	if (macaddr)
 		qdf_mem_copy(sta_kickout.peer_mac, macaddr,
-							QDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 	WLAN_HOST_DIAG_EVENT_REPORT(&sta_kickout, EVENT_WLAN_STA_KICKOUT);
 }
 #endif
