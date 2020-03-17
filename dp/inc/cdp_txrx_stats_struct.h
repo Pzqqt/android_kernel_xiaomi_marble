@@ -858,6 +858,7 @@ struct cdp_tx_stats {
 	struct cdp_tx_pkt_info ru_loc[MAX_RU_LOCATIONS];
 
 	uint32_t num_ppdu_cookie_valid;
+	uint32_t no_ack_count[QDF_PROTO_SUBTYPE_MAX];
 };
 
 /* struct cdp_rx_stats - rx Level Stats

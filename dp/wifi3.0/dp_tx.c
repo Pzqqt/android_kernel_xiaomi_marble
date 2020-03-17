@@ -2887,6 +2887,23 @@ static void dp_tx_compute_delay(struct dp_vdev *vdev,
 	vdev->prev_tx_enq_tstamp = timestamp_ingress;
 }
 
+#ifdef DISABLE_DP_STATS
+static
+inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer)
+{
+}
+#else
+static
+inline void dp_update_no_ack_stats(qdf_nbuf_t nbuf, struct dp_peer *peer)
+{
+	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
+
+	DPTRACE(qdf_dp_track_noack_check(nbuf, &subtype));
+	if (subtype != QDF_PROTO_INVALID)
+		DP_STATS_INC(peer, tx.no_ack_count[subtype], 1);
+}
+#endif
+
 /**
  * dp_tx_update_peer_stats() - Update peer stats from Tx completion indications
  *				per wbm ring
@@ -2973,6 +2990,7 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 	}
 
 	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
+		dp_update_no_ack_stats(tx_desc->nbuf, peer);
 		return;
 	}
 
