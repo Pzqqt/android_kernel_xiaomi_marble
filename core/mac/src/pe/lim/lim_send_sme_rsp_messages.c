@@ -1830,7 +1830,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	/* Send RSO Stop to FW before triggering the vdev restart for CSA */
 	if (mac_ctx->lim.stop_roaming_callback)
-		mac_ctx->lim.stop_roaming_callback(mac_ctx,
+		mac_ctx->lim.stop_roaming_callback(MAC_HANDLE(mac_ctx),
 						   session_entry->smeSessionId,
 						   REASON_DRIVER_DISABLED,
 						   RSO_CHANNEL_SWITCH);
