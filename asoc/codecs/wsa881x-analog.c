@@ -550,7 +550,6 @@ static void wsa881x_bandgap_ctrl(struct snd_soc_component *component,
 	} else {
 		--wsa881x->bg_cnt;
 		if (wsa881x->bg_cnt <= 0) {
-			WARN_ON(wsa881x->bg_cnt < 0);
 			wsa881x->bg_cnt = 0;
 			snd_soc_component_update_bits(component,
 						WSA881X_TEMP_OP, 0x04, 0x00);
@@ -588,7 +587,6 @@ static void wsa881x_clk_ctrl(struct snd_soc_component *component, bool enable)
 	} else {
 		--wsa881x->clk_cnt;
 		if (wsa881x->clk_cnt <= 0) {
-			WARN_ON(wsa881x->clk_cnt < 0);
 			wsa881x->clk_cnt = 0;
 			snd_soc_component_write(component,
 					WSA881X_CDC_ANA_CLK_CTL, 0x00);
