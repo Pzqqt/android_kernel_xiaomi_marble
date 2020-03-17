@@ -922,6 +922,16 @@ void qdf_dp_set_proto_event_bitmap(uint32_t value);
 void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 			       uint8_t subtype, uint8_t dir, uint16_t msdu_id,
 			       uint8_t status);
+
+/**
+ * qdf_dp_track_noack_check() - Check if no ack count should be tracked for
+ *  the configured protocol packet types
+ * @nbuf: nbuf
+ * @subtype: subtype of packet to be tracked
+ *
+ * Return: none
+ */
+void qdf_dp_track_noack_check(qdf_nbuf_t nbuf, enum qdf_proto_subtype *subtype);
 #else
 static inline
 bool qdf_dp_trace_log_pkt(uint8_t vdev_id, struct sk_buff *skb,
@@ -1016,6 +1026,11 @@ static inline
 void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 			       uint8_t subtype, uint8_t dir, uint16_t msdu_id,
 			       uint8_t status)
+{
+}
+
+static inline
+void qdf_dp_track_noack_check(qdf_nbuf_t nbuf, enum qdf_proto_subtype *subtype)
 {
 }
 #endif

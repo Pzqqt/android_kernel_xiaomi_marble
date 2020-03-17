@@ -2230,6 +2230,41 @@ bool qdf_dp_proto_log_enable_check(enum qdf_proto_type pkt_type,
 	}
 }
 
+void qdf_dp_track_noack_check(qdf_nbuf_t nbuf, enum qdf_proto_subtype *subtype)
+{
+	enum qdf_proto_type pkt_type = qdf_dp_get_pkt_proto_type(nbuf);
+	uint16_t dp_track = 0;
+
+	switch (pkt_type) {
+	case QDF_PROTO_TYPE_EAPOL:
+		dp_track = qdf_dp_get_proto_bitmap() &
+				QDF_NBUF_PKT_TRAC_TYPE_EAPOL;
+		break;
+	case QDF_PROTO_TYPE_DHCP:
+		dp_track = qdf_dp_get_proto_bitmap() &
+				QDF_NBUF_PKT_TRAC_TYPE_DHCP;
+		break;
+	case QDF_PROTO_TYPE_ARP:
+		dp_track = qdf_dp_get_proto_bitmap() &
+					QDF_NBUF_PKT_TRAC_TYPE_ARP;
+		break;
+	case QDF_PROTO_TYPE_DNS:
+		dp_track = qdf_dp_get_proto_bitmap() &
+					QDF_NBUF_PKT_TRAC_TYPE_DNS;
+		break;
+	default:
+		break;
+	}
+
+	if (!dp_track) {
+		*subtype = QDF_PROTO_INVALID;
+		return;
+	}
+
+	*subtype = qdf_dp_get_pkt_subtype(nbuf, pkt_type);
+}
+qdf_export_symbol(qdf_dp_track_noack_check);
+
 /**
  * qdf_dp_trace_ptr() - record dptrace
  * @code: dptrace code
