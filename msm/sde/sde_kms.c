@@ -3008,6 +3008,7 @@ static void _sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 {
 	struct device *cpu_dev;
 	int cpu = 0;
+	u32 cpu_irq_latency = sde_kms->catalog->perf.cpu_irq_latency;
 
 	if (cpumask_empty(&sde_kms->irq_cpu_mask)) {
 		SDE_DEBUG("%s: irq_cpu_mask is empty\n", __func__);
@@ -3024,12 +3025,12 @@ static void _sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 
 		if (dev_pm_qos_request_active(&sde_kms->pm_qos_irq_req[cpu]))
 			dev_pm_qos_update_request(&sde_kms->pm_qos_irq_req[cpu],
-					sde_kms->catalog->perf.cpu_dma_latency);
+					cpu_irq_latency);
 		else
 			dev_pm_qos_add_request(cpu_dev,
 				&sde_kms->pm_qos_irq_req[cpu],
 				DEV_PM_QOS_RESUME_LATENCY,
-				sde_kms->catalog->perf.cpu_dma_latency);
+				cpu_irq_latency);
 	}
 }
 

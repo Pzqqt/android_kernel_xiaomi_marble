@@ -228,6 +228,7 @@ enum {
 	PERF_CPU_MASK,
 	CPU_MASK_PERF,
 	PERF_CPU_DMA_LATENCY,
+	PERF_CPU_IRQ_LATENCY,
 	PERF_PROP_MAX,
 };
 
@@ -606,6 +607,8 @@ static struct sde_prop_type sde_perf_prop[] = {
 	{CPU_MASK_PERF, "qcom,sde-qos-cpu-mask-performance", false,
 			PROP_TYPE_U32},
 	{PERF_CPU_DMA_LATENCY, "qcom,sde-qos-cpu-dma-latency", false,
+			PROP_TYPE_U32},
+	{PERF_CPU_IRQ_LATENCY, "qcom,sde-qos-cpu-irq-latency", false,
 			PROP_TYPE_U32},
 };
 
@@ -4162,6 +4165,10 @@ static int _sde_perf_parse_dt_cfg(struct device_node *np,
 			prop_exists[PERF_CPU_DMA_LATENCY] ?
 			PROP_VALUE_ACCESS(prop_value, PERF_CPU_DMA_LATENCY, 0) :
 			DEFAULT_CPU_DMA_LATENCY;
+	cfg->perf.cpu_irq_latency =
+			prop_exists[PERF_CPU_IRQ_LATENCY] ?
+			PROP_VALUE_ACCESS(prop_value, PERF_CPU_IRQ_LATENCY, 0) :
+			PM_QOS_DEFAULT_VALUE;
 
 	return 0;
 }
