@@ -414,6 +414,14 @@ typedef enum {
     WMI_PDEV_DSM_FILTER_CMDID,
     /** enable/disable periodic frame injection */
     WMI_PDEV_FRAME_INJECT_CMDID,
+    /*
+     * Pdev level command to:
+     * a) solicit @WMI_TBTTOFFSET_EXT_UPDATE_EVENTID having TBTT in qtime
+     *    domain for all active vdevs or
+     * b) update one pdevs tbtt offset to another pdev for use in
+     *    RNR TBTT offset calculation.
+     */
+    WMI_PDEV_TBTT_OFFSET_SYNC_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -3518,6 +3526,14 @@ typedef struct {
      *  Bits 31:1 - Reserved
      */
     A_UINT32 host_service_flags;
+
+    /** @brief max_rnr_neighbours -
+     * The Maximum number of neighbour RNR's from other SoC.
+     * This limits the field @num_bss in @wmi_pdev_tbtt_offset_sync_cmd_fixed_param.
+     * Value of 0 means crosss SoC TBTT offset syncronization not required and
+     * @PDEV_TBTT_OFFSET_SYNC_CMD wouldn't be used.
+     */
+    A_UINT32 max_rnr_neighbours;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -11722,6 +11738,7 @@ typedef struct {
  */
 } wmi_tbtt_offset_event_fixed_param;
 
+#define WMI_TBTT_OFFSET_INVALID 0xffffffff /* tbttoffset is not updated by FW */
 typedef struct {
     A_UINT32 tlv_header;/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tbtt_offset_info */
     /** unique id identifying the VDEV */
@@ -24211,6 +24228,49 @@ typedef struct {
  **/
 } wmi_vdev_set_pcl_cmd_fixed_param;
 
+/** command type for WMI_PDEV_TBTT_OFFSET_SYNC_CMDID */
+enum pdev_tbtt_offset_cmd_type
+{
+    WMI_PDEV_GET_TBTT_OFFSET,
+    WMI_PDEV_SET_TBTT_OFFSET,
+};
+
+/** Per neighbour TBTT offset information */
+typedef struct
+{
+    /** TLV tag and len, tag equals WMITLV_TAG_STRUC_wmi_pdev_tbtt_offset_info */
+    A_UINT32 tlv_header;
+    /* neighbour bss mac address */
+    wmi_mac_addr bss_mac;
+    /* neighbour bss beacon interval in TU */
+    A_UINT32 beacon_intval;
+    /* neighbour bss operating class as defined in Annex E, IEEE80211 standard */
+    A_UINT32 opclass;
+    /* neighbour bss operating channel index */
+    A_UINT32 chan_idx;
+    /* neighbour bss next QTIME TBTT high 32 bit value */
+    A_UINT32 next_qtime_tbtt_high;
+    /* neighbour bss next QTIME TBTT low 32 bit value */
+    A_UINT32 next_qtime_tbtt_low;
+} wmi_pdev_rnr_bss_tbtt_info;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_tbtt_offset_sync_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /*
+     * PDEV identifier. Value WMI_PDEV_ID_SOC implies applicable to all pdevs
+     * on SoC else applicable only to specified pdev
+     */
+    A_UINT32 pdev_id;
+    /* command_type from enum pdev_tbtt_offset_cmd_type */
+    A_UINT32 cmd_type;
+    /*
+     * Following this structure is the TLV:
+     * struct wmi_pdev_rnr_bss_tbtt_info rnr_tbtt_info[num_rnr_tbtt_info];
+     */
+} wmi_pdev_tbtt_offset_sync_cmd_fixed_param;
+
 typedef enum {
     WLAN_2G_CAPABILITY = 0x1,
     WLAN_5G_CAPABILITY = 0x2,
@@ -25484,6 +25544,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_GET_SCAN_CHANNEL_LIST_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FRAME_INJECT_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_TBTT_OFFSET_SYNC_CMDID);
     }
 
     return "Invalid WMI cmd";
