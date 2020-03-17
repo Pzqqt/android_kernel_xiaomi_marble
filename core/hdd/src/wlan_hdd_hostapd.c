@@ -3189,8 +3189,16 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		hdd_debug("p2p go no scc required");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
 					   &mcc_to_scc_switch);
+	if (!policy_mgr_is_restart_sap_required(hdd_ctx->psoc, *ch_freq,
+						mcc_to_scc_switch)) {
+		wlansap_context_put(sap_context);
+		hdd_debug("SAP needn't restart");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/*
 	 * Check if STA's channel is DFS or passive or part of LTE avoided
 	 * channel list. In that case move SAP to other band if DBS is

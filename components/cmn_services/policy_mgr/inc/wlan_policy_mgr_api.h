@@ -3347,4 +3347,19 @@ bool policy_mgr_dump_channel_list(uint32_t len,
 				  uint32_t *pcl_channels,
 				  uint8_t *pcl_weight);
 
+/**
+ * policy_mgr_is_restart_sap_required() - check whether sap need restart
+ * @psoc: psoc pointer
+ * @freq: sap current freq
+ * @scc_mode: mcc to scc switch mode
+ *
+ * If there is no STA/P2P CLI on same MAC of SAP/P2P GO,
+ * SAP/P2P Go needn't switch channel to force scc.
+ *
+ * Return: True or false
+ */
+bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
+					qdf_freq_t freq,
+					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

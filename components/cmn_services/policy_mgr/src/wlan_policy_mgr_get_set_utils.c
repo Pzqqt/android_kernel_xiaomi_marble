@@ -4318,3 +4318,49 @@ bool policy_mgr_get_5g_scc_prefer(
 
 	return pm_ctx->cfg.prefer_5g_scc_to_dbs & (1 << mode);
 }
+
+bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
+					qdf_freq_t freq,
+					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode)
+{
+	uint32_t i;
+	bool restart_required = false;
+	bool is_sta_p2p_cli;
+	bool is_same_band;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct policy_mgr_conc_connection_info *connection;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid psoc");
+		return false;
+	}
+	if (scc_mode == QDF_MCC_TO_SCC_SWITCH_DISABLE) {
+		policy_mgr_debug("No scc required");
+		return false;
+	}
+
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	connection = pm_conc_connection_list;
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		is_sta_p2p_cli =
+			connection[i].in_use &&
+			(connection[i].mode == PM_STA_MODE ||
+			connection[i].mode == PM_P2P_CLIENT_MODE);
+
+		is_same_band =
+			wlan_reg_is_24ghz_ch_freq(freq) ==
+			wlan_reg_is_24ghz_ch_freq(connection[i].freq) &&
+			connection[i].freq != freq;
+
+		if (is_sta_p2p_cli &&
+		    (is_same_band || !policy_mgr_is_dbs_enable(psoc))) {
+			restart_required = true;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return restart_required;
+}
+
