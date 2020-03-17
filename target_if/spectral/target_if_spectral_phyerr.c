@@ -75,6 +75,11 @@ static inline void target_if_spectral_hexdump(unsigned char *_buf, int _len)
 
 	qdf_mem_zero(hexdump_line, sizeof(hexdump_line));
 
+	if (_len <= 0) {
+		spectral_err("buffer len is %d, too short", _len);
+		return;
+	}
+
 	for (i = 0; i < _len; i++) {
 		mod = i % SPECTRAL_HEXDUMP_NUM_OCTETS_PER_LINE;
 
