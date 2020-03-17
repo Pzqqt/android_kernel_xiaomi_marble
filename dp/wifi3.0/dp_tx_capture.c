@@ -1379,21 +1379,6 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			/* pull ethernet header from first MSDU alone */
 			qdf_nbuf_pull_head(curr_nbuf,
 					   sizeof(qdf_ether_header_t));
-			mpdu_nbuf = qdf_nbuf_alloc(pdev->soc->osdev,
-						   MAX_MONITOR_HEADER,
-						   MAX_MONITOR_HEADER,
-						   4, FALSE);
-
-			if (!mpdu_nbuf) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_FATAL,
-					  "MPDU head allocation failed !!!");
-				goto free_ppdu_desc_mpdu_q;
-			}
-
-			dp_tx_update_80211_hdr(pdev, peer,
-					       ppdu_desc, mpdu_nbuf,
-					       ether_type, eh->ether_shost);
 
 			/* update first buffer to previous buffer */
 			prev_nbuf = curr_nbuf;
@@ -1436,6 +1421,23 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 		frag_list_sum_len += qdf_nbuf_len(curr_nbuf);
 
 		if (last_msdu) {
+
+			mpdu_nbuf = qdf_nbuf_alloc(pdev->soc->osdev,
+						   MAX_MONITOR_HEADER,
+						   MAX_MONITOR_HEADER,
+						   4, FALSE);
+
+			if (!mpdu_nbuf) {
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_FATAL,
+					  "MPDU head allocation failed !!!");
+				goto free_ppdu_desc_mpdu_q;
+			}
+
+			dp_tx_update_80211_hdr(pdev, peer,
+					       ppdu_desc, mpdu_nbuf,
+					       ether_type, eh->ether_shost);
+
 			/*
 			 * first nbuf will hold list of msdu
 			 * stored in prev_nbuf
@@ -1462,6 +1464,9 @@ dp_tx_mon_restitch_mpdu(struct dp_pdev *pdev, struct dp_peer *peer,
 			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 				  QDF_TRACE_LEVEL_FATAL,
 				  "!!!! WAITING for msdu but list empty !!!!");
+
+			/* for incomplete list, free up the queue */
+			goto free_ppdu_desc_mpdu_q;
 		}
 
 		continue;
