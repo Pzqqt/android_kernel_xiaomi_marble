@@ -2054,7 +2054,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		rx_msdu_link_desc =
 			dp_rx_cookie_2_link_desc_va(soc, &buf_info);
 
-		qdf_assert(rx_msdu_link_desc);
+		qdf_assert_always(rx_msdu_link_desc);
 
 		hal_rx_msdu_list_get(soc->hal_soc, rx_msdu_link_desc,
 				     &msdu_list, &num_msdus);

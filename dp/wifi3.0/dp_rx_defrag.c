@@ -1057,7 +1057,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &buf_info);
 
-	qdf_assert(link_desc_va);
+	qdf_assert_always(link_desc_va);
 
 	msdu0 = hal_rx_msdu0_buffer_addr_lsb(soc->hal_soc, link_desc_va);
 	nbuf_len = qdf_nbuf_len(head) - RX_PKT_TLVS_LEN;
