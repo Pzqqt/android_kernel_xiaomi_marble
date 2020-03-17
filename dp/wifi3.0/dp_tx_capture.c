@@ -418,6 +418,9 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			"dlvr mgmt frm(0x%08x): fc 0x%x %x, dur 0x%x%x\n",
 			ptr_mgmt_hdr->ppdu_id, wh->i_fc[1], wh->i_fc[0],
 			wh->i_dur[1], wh->i_dur[0]);
+	} else {
+		qdf_nbuf_free(nbuf);
+		return;
 	}
 }
 
