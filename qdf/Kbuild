@@ -82,6 +82,10 @@ ifeq ($(WLAN_DEBUGFS),1)
 qdf-objs += linux/src/qdf_debugfs.o
 endif
 
+ifeq ($(WLAN_STREAMFS),1)
+qdf-objs += linux/src/qdf_streamfs.o
+endif
+
 ifeq ($(BUILD_ADF_NET_IOCTL),1)
 EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT
 #adf-objs += os/linux/adf_os_netlink_pvt.o \
