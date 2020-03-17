@@ -2658,6 +2658,12 @@ typedef struct {
     /* 2nd DWORD of HE MAC Capabilities */
     A_UINT32 he_cap_info_ext;
 
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
+
     /*
      * A variable-length TLV array of wmi_chan_rf_characterization_info will
      * follow this fixed_param TLV, containing rx characterization info for
@@ -24549,7 +24555,11 @@ typedef struct {
      * [31:5] : Reserved
      */
     A_UINT32 nss_ratio;
-    A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
@@ -24568,6 +24578,12 @@ typedef struct {
      * Refer to WMI_HW_MODE_CONFIG_TYPE values.
      */
     A_UINT32 hw_mode_config_type;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_HW_MODE_CAPABILITIES;
 
 /*
@@ -24639,6 +24655,12 @@ typedef struct {
         A_UINT32 supported_flags;
     };
     A_UINT32 chainmask;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_MAC_PHY_CHAINMASK_CAPABILITY;
 
 typedef struct {
@@ -24646,6 +24668,12 @@ typedef struct {
     A_UINT32 chainmask_table_id;
     /* Number of vaild Chainmask in the table */
     A_UINT32 num_valid_chainmask;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 /*
  * This TLV is followed by the below TLVs:
  * WMI_MAC_PHY_CHAINMASK_CAPABILITY mac_phy_chainmask_caps[num_valid_chainmask]
@@ -24658,6 +24686,13 @@ typedef struct {
     A_UINT32 num_hw_modes;
     /* number of unique chainmask combo tables */
     A_UINT32 num_chainmask_tables;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
+
 /*
  * This TLV is followed by the below TLVs:
  *
@@ -24695,13 +24730,23 @@ typedef struct {
     A_UINT32 high_2ghz_chan; /* freq in MHz */
     A_UINT32 low_5ghz_chan;  /* freq in MHz */
     A_UINT32 high_5ghz_chan; /* freq in MHz */
-    A_UINT32 wireless_modes_ext; /* REGDMN MODE ext */
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_HAL_REG_CAPABILITIES_EXT;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SOC_HAL_REG_CAPABILITIES */
     A_UINT32 num_phy;
     /* num_phy WMI_HAL_REG_CAPABILITIES_EXT TLV's */
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_SOC_HAL_REG_CAPABILITIES;
 
 typedef struct {
@@ -24713,12 +24758,24 @@ typedef struct {
     /* Minimum size in bytes of each buffer in the OEM DMA ring */
     A_UINT32 min_buf_align;
     /* Minimum alignment in bytes of each buffer in the OEM DMA ring */
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_OEM_DMA_RING_CAPABILITIES;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SAR_CAPABILITIES*/
     /* sar version in bdf */
     A_UINT32 active_version;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_SAR_CAPABILITIES;
 
 typedef struct {
@@ -26516,6 +26573,12 @@ typedef struct {
     A_UINT32 ring_elems_min; /* minimum spaces in the DMA ring for this pdev */
     A_UINT32 min_buf_size; /* minimum size in bytes of each buffer in the DMA ring */
     A_UINT32 min_buf_align; /* minimum alignment in bytes of each buffer in the DMA ring */
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_DMA_RING_CAPABILITIES;
 
 typedef struct {
@@ -26531,6 +26594,12 @@ typedef struct {
      *          the RF characterisation info applies (MHz)
      */
     A_UINT32 freq_info;
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } WMI_CHAN_RF_CHARACTERIZATION_INFO;
 
 #define WMI_CHAN_RF_CHARACTERIZATION_FREQ_INFO_CHAN_METRIC   0x000000ff
@@ -26711,6 +26780,12 @@ typedef struct {
     A_UINT32 high_level_offset; /* high level offset for fine tuning the scaling factor based on RSSI and AGC gain */
     A_UINT32 rssi_thr; /* RSSI threshold to be used to adjust the inband power of the given spectral report */
     A_UINT32 default_agc_max_gain;/* DEFAULT AGC MAX GAIN used. Fetched from register RXTD_RADAR_SBS_CTRL_1_L bits20:13 */
+
+    /**************************************************************************
+     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * It would cause the size of the READY_EXT message within some targets
+     * to exceed the size of the buffer used for the message.
+     **************************************************************************/
 } wmi_spectral_bin_scaling_params;
 
 typedef struct {
