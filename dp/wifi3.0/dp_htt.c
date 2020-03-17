@@ -2898,6 +2898,8 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 		dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
 				     nbuf, HTT_INVALID_PEER,
 				     WDI_NO_VAL, pdev->pdev_id);
+	} else {
+		qdf_nbuf_free(nbuf);
 	}
 }
 #endif
