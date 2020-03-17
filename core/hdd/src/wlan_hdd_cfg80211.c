@@ -10399,6 +10399,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		nss = sta_info->nss;
 		freq = (WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_chan_freq;
 		rate_flags = sta_info->rate_flags;
+		hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
 	} else {
 		hdd_err("Not Associated! with mac "QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(peer_mac));
@@ -21183,6 +21184,8 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			hdd_debug("Skip DEL STA as deauth is in progress::"
 				  QDF_MAC_ADDR_STR,
 				  QDF_MAC_ADDR_ARRAY(mac));
+			hdd_put_sta_info(&adapter->sta_info_list, &sta_info,
+					 true);
 			return -ENOENT;
 		}
 
@@ -21190,6 +21193,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			  QDF_MAC_ADDR_ARRAY(mac));
 		hdd_softap_deauth_current_sta(adapter, sta_info, hapd_state,
 					      param);
+		hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
 	}
 
 fn_end:

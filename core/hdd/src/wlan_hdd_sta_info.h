@@ -122,6 +122,7 @@ enum dhcp_nego_status {
  * feature, if it is 0 it indicates FW doesn't support this feature
  * @sta_info: The sta_info node for the station info list maintained in adapter
  * @assoc_req_ies: Assoc request IEs of the peer station
+ * @ref_cnt: Reference count to synchronize sta_info access
  */
 struct hdd_station_info {
 	bool in_use;
@@ -171,6 +172,7 @@ struct hdd_station_info {
 	uint32_t rx_mc_bc_cnt;
 	struct qdf_ht_entry sta_node;
 	struct wlan_ies assoc_req_ies;
+	qdf_atomic_t ref_cnt;
 };
 
 /**
@@ -269,6 +271,18 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 struct hdd_station_info *hdd_get_sta_info_by_mac(
 				struct hdd_sta_info_obj *sta_info_container,
 				const uint8_t *mac_addr);
+
+/**
+ * hdd_put_sta_info() - Release sta_info for synchronization
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @sta_info: Station info structure to be released.
+ *
+ * Return: None
+ */
+void hdd_put_sta_info(struct hdd_sta_info_obj *sta_info_container,
+		      struct hdd_station_info **sta_info, bool lock_required);
+
 /**
  * hdd_clear_cached_sta_info() - Clear the cached sta info from the container
  * @sta_info_container: The station info container obj that stores and maintains

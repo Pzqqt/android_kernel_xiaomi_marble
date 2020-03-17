@@ -64,6 +64,7 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
+	qdf_atomic_set(&sta_info->ref_cnt, 1);
 	qdf_ht_add(sta_info_container->sta_obj, &sta_info->sta_node,
 		   WLAN_HDD_STA_INFO_HASH(sta_info->sta_mac.bytes));
 
@@ -83,19 +84,16 @@ void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 	}
 
 	info = *sta_info;
+
+	if (!info)
+		return;
+
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
 	qdf_ht_remove(&(info->sta_node));
+	hdd_put_sta_info(sta_info_container, sta_info, false);
 
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
-
-	if (info->assoc_req_ies.len) {
-		qdf_mem_free(info->assoc_req_ies.data);
-		info->assoc_req_ies.data = NULL;
-		info->assoc_req_ies.len = 0;
-	}
-	qdf_mem_free(info);
-	*sta_info = NULL;
 }
 
 struct hdd_station_info *hdd_get_sta_info_by_mac(
@@ -115,6 +113,7 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 				  sta_node, WLAN_HDD_STA_INFO_HASH(mac_addr)) {
 		if (qdf_is_macaddr_equal(&sta_info->sta_mac,
 					 (struct qdf_mac_addr *)mac_addr)) {
+			qdf_atomic_inc(&sta_info->ref_cnt);
 			qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 			return sta_info;
 		}
@@ -123,6 +122,45 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
 	return NULL;
+}
+
+void hdd_put_sta_info(struct hdd_sta_info_obj *sta_info_container,
+		      struct hdd_station_info **sta_info, bool lock_required)
+{
+	struct hdd_station_info *info;
+
+	if (!sta_info_container || !sta_info) {
+		hdd_err("Parameter(s) null");
+		return;
+	}
+
+	info = *sta_info;
+
+	if (!info)
+		return;
+
+	if (lock_required)
+		qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
+
+	qdf_atomic_dec(&info->ref_cnt);
+
+	if (qdf_atomic_read(&info->ref_cnt)) {
+		if (lock_required)
+			qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
+		return;
+	}
+
+	if (info->assoc_req_ies.len) {
+		qdf_mem_free(info->assoc_req_ies.data);
+		info->assoc_req_ies.data = NULL;
+		info->assoc_req_ies.len = 0;
+	}
+
+	qdf_mem_free(info);
+	*sta_info = NULL;
+
+	if (lock_required)
+		qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 }
 
 void hdd_clear_cached_sta_info(struct hdd_sta_info_obj *sta_info_container)

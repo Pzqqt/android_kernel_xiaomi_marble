@@ -1530,7 +1530,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	if (!cache_sta_info) {
 		cache_sta_info = qdf_mem_malloc(sizeof(*cache_sta_info));
 		if (!cache_sta_info)
-			return;
+			goto exit;
 
 		qdf_mem_copy(cache_sta_info, stainfo, sizeof(*cache_sta_info));
 		cache_sta_info->assoc_req_ies.data =
@@ -1579,6 +1579,9 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 			hdd_sta_info_attach(&adapter->cache_sta_info_list,
 					    cache_sta_info);
 		}
+	} else {
+		hdd_put_sta_info(&adapter->cache_sta_info_list,
+				 &cache_sta_info, true);
 	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
@@ -1599,6 +1602,9 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		  stainfo->max_mcs_idx,
 		  stainfo->rx_mcs_map,
 		  stainfo->tx_mcs_map);
+exit:
+	hdd_put_sta_info(&adapter->sta_info_list, &stainfo, true);
+	return;
 }
 
 void hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
@@ -2219,10 +2225,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					&adapter->sta_info_list,
 					(uint8_t *)&wrqu.addr.sa_data);
 
-		if (stainfo)
+		if (stainfo) {
 			stainfo->ecsa_capable = event->ecsa_capable;
-		else
+			hdd_put_sta_info(&adapter->sta_info_list, &stainfo,
+					 true);
+		} else {
 			hdd_err("Station not found");
+		}
 
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
@@ -2325,6 +2334,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				  cache_stainfo->tx_rate,
 				  cache_stainfo->rx_rate,
 				  cache_stainfo->reason_code);
+			hdd_put_sta_info(&adapter->cache_sta_info_list,
+					 &cache_stainfo, true);
 		}
 		hdd_nofl_info("SAP disassociated " QDF_MAC_ADDR_STR,
 			      QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
@@ -2361,6 +2372,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					  WMA_DHCP_STOP_IND);
 		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
+		hdd_put_sta_info(&adapter->sta_info_list, &stainfo, true);
 		hdd_softap_deregister_sta(adapter, &stainfo);
 
 		ap_ctx->ap_active = false;
