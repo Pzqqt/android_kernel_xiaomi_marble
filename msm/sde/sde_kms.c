@@ -3194,11 +3194,6 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	struct sde_rm *rm = NULL;
 	int i, rc = -EINVAL;
 
-	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
-		sde_power_data_bus_set_quota(&priv->phandle, i,
-			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
-			SDE_POWER_HANDLE_CONT_SPLASH_BUS_IB_QUOTA);
-
 	_sde_kms_core_hw_rev_init(sde_kms);
 
 	pr_info("sde hardware revision:0x%x\n", sde_kms->core_rev);
