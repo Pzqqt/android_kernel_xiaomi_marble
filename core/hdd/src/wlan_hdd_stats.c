@@ -6078,15 +6078,17 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 	uint32_t total_rx_pkt, total_rx_dropped,
 		 total_rx_delv, total_rx_refused;
 
-	hdd_for_each_adapter(ctx, adapter) {
+	hdd_for_each_adapter_dev_held(ctx, adapter) {
 		total_rx_pkt = 0;
 		total_rx_dropped = 0;
 		total_rx_delv = 0;
 		total_rx_refused = 0;
 		stats = &adapter->hdd_stats.tx_rx_stats;
 
-		if (adapter->vdev_id == INVAL_VDEV_ID)
+		if (adapter->vdev_id == INVAL_VDEV_ID) {
+			dev_put(adapter->dev);
 			continue;
+		}
 
 		hdd_debug("adapter: %u", adapter->vdev_id);
 		for (; i < NUM_CPUS; i++) {
@@ -6095,6 +6097,9 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 			total_rx_delv += stats->rx_delivered[i];
 			total_rx_refused += stats->rx_refused[i];
 		}
+
+		/* dev_put has to be done here */
+		dev_put(adapter->dev);
 
 		hdd_debug("TX - called %u, dropped %u orphan %u",
 			  stats->tx_called, stats->tx_dropped,
