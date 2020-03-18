@@ -3974,11 +3974,11 @@ qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
 
 	put_unaligned_le16(rx_status->he_data6, &rtap_buf[rtap_len]);
 	rtap_len += 2;
-	qdf_debug("he data %x %x %x %x %x %x",
-		  rx_status->he_data1,
-		  rx_status->he_data2, rx_status->he_data3,
-		  rx_status->he_data4, rx_status->he_data5,
-		  rx_status->he_data6);
+	qdf_rl_debug("he data %x %x %x %x %x %x",
+		     rx_status->he_data1,
+		     rx_status->he_data2, rx_status->he_data3,
+		     rx_status->he_data4, rx_status->he_data5,
+		     rx_status->he_data6);
 	return rtap_len;
 }
 
