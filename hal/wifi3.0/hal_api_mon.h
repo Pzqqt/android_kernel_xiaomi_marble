@@ -118,6 +118,16 @@
 #define HE_GI_1_6 2
 #define HE_GI_3_2 3
 
+#define HE_GI_RADIOTAP_0_8 0
+#define HE_GI_RADIOTAP_1_6 1
+#define HE_GI_RADIOTAP_3_2 2
+#define HE_GI_RADIOTAP_RESERVED 3
+
+#define HE_LTF_RADIOTAP_UNKNOWN 0
+#define HE_LTF_RADIOTAP_1_X 1
+#define HE_LTF_RADIOTAP_2_X 2
+#define HE_LTF_RADIOTAP_4_X 3
+
 #define HT_SGI_PRESENT 0x80
 
 #define HE_LTF_1_X 0

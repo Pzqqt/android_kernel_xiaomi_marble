@@ -425,6 +425,46 @@ hal_get_mac_addr1(uint8_t *rx_mpdu_start,
 {
 }
 #endif
+
+/**
+ * hal_get_radiotap_he_gi_ltf() - Convert HE ltf and GI value
+ * from stats enum to radiotap enum
+ * @he_gi: HE GI value used in stats
+ * @he_ltf: HE LTF value used in stats
+ *
+ * Return: void
+ */
+static inline void hal_get_radiotap_he_gi_ltf(uint16_t *he_gi, uint16_t *he_ltf)
+{
+	switch (*he_gi) {
+	case HE_GI_0_8:
+		*he_gi = HE_GI_RADIOTAP_0_8;
+		break;
+	case HE_GI_1_6:
+		*he_gi = HE_GI_RADIOTAP_1_6;
+		break;
+	case HE_GI_3_2:
+		*he_gi = HE_GI_RADIOTAP_3_2;
+		break;
+	default:
+		*he_gi = HE_GI_RADIOTAP_RESERVED;
+	}
+
+	switch (*he_ltf) {
+	case HE_LTF_1_X:
+		*he_ltf = HE_LTF_RADIOTAP_1_X;
+		break;
+	case HE_LTF_2_X:
+		*he_ltf = HE_LTF_RADIOTAP_2_X;
+		break;
+	case HE_LTF_4_X:
+		*he_ltf = HE_LTF_RADIOTAP_4_X;
+		break;
+	default:
+		*he_ltf = HE_LTF_RADIOTAP_UNKNOWN;
+	}
+}
+
 /**
  * hal_rx_status_get_tlv_info() - process receive info TLV
  * @rx_tlv_hdr: pointer to TLV header
@@ -990,10 +1030,11 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 				break;
 		}
 		ppdu_info->rx_status.sgi = he_gi;
+		ppdu_info->rx_status.ltf_size = he_ltf;
+		hal_get_radiotap_he_gi_ltf(&he_gi, &he_ltf);
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
 		value = he_ltf << QDF_MON_STATUS_HE_LTF_SIZE_SHIFT;
-		ppdu_info->rx_status.ltf_size = he_ltf;
 		ppdu_info->rx_status.he_data5 |= value;
 
 		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_0, NSTS);
@@ -1116,6 +1157,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			break;
 		}
 		ppdu_info->rx_status.sgi = he_gi;
+		ppdu_info->rx_status.ltf_size = he_ltf;
+		hal_get_radiotap_he_gi_ltf(&he_gi, &he_ltf);
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
 
