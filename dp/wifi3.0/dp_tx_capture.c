@@ -224,7 +224,7 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS(" mgmt control retry queue stats:");
 	for (i = 0; i < TXCAP_MAX_TYPE; i++) {
 		for (j = 0; j < TXCAP_MAX_SUBTYPE; j++) {
-			if (ptr_tx_cap->ctl_mgmt_q[i][j].qlen)
+			if (ptr_tx_cap->retries_ctl_mgmt_q[i][j].qlen)
 				DP_PRINT_STATS(" retries_ctl_mgmt_q[%d][%d] = queue_len[%d]",
 				i, j,
 				ptr_tx_cap->retries_ctl_mgmt_q[i][j].qlen);
@@ -2648,6 +2648,7 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	struct cdp_tx_indication_info tx_capture_info;
 	qdf_nbuf_t mgmt_ctl_nbuf;
 	uint8_t type, subtype;
+	uint8_t fc_type, fc_subtype;
 	bool is_sgen_pkt;
 	struct cdp_tx_mgmt_comp_info *ptr_comp_info;
 	qdf_nbuf_queue_t *retries_q;
@@ -2664,6 +2665,11 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	 * timestamp and retries count.
 	 */
 	head_size = sizeof(struct cdp_tx_mgmt_comp_info);
+
+	fc_type = (ppdu_desc->frame_ctrl &
+		  IEEE80211_FC0_TYPE_MASK);
+	fc_subtype = (ppdu_desc->frame_ctrl &
+		     IEEE80211_FC0_SUBTYPE_MASK);
 
 	type = (ppdu_desc->frame_ctrl &
 		IEEE80211_FC0_TYPE_MASK) >>
@@ -2687,7 +2693,11 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	switch (ppdu_desc->htt_frame_type) {
 	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
 	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
-		is_sgen_pkt = false;
+		if ((fc_type == IEEE80211_FC0_TYPE_MGT) &&
+		    (fc_subtype == IEEE80211_FC0_SUBTYPE_BEACON))
+			is_sgen_pkt = true;
+		else
+			is_sgen_pkt = false;
 	break;
 	default:
 		is_sgen_pkt = true;
