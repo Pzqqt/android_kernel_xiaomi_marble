@@ -1675,7 +1675,7 @@ void dfs_mark_precac_nol(struct wlan_dfs *dfs,
 		 * Set precac_state_started to false to indicate preCAC is not
 		 * running and also reset the current Agile channel.
 		 */
-		if (detector_id == AGILE_DETECTOR_ID) {
+		if (detector_id == dfs_get_agile_detector_id(dfs)) {
 			dfs_prepare_agile_precac_chan(dfs);
 		} else {
 			dfs->dfs_agile_precac_freq = 0;
@@ -1809,7 +1809,7 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 		 * Set precac_state_started to false to indicate preCAC is not
 		 * running and also reset the current Agile channel.
 		 */
-		if (detector_id == AGILE_DETECTOR_ID) {
+		if (detector_id == dfs_get_agile_detector_id(dfs)) {
 			dfs_prepare_agile_precac_chan(dfs);
 		} else {
 			dfs->dfs_agile_precac_freq_mhz = 0;
@@ -2263,6 +2263,10 @@ void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 {
 	dfs->dfs_precac_timeout_override = -1;
 	PRECAC_LIST_LOCK_CREATE(dfs);
+	if (dfs_is_true_160mhz_supported(dfs))
+		dfs->dfs_agile_detector_id = AGILE_DETECTOR_ID_TRUE_160MHZ;
+	else
+		dfs->dfs_agile_detector_id = AGILE_DETECTOR_ID_80P80;
 }
 
 /* dfs_init_precac_tree_node() - Initialise the preCAC BSTree node with the
