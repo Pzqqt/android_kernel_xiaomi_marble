@@ -5160,13 +5160,17 @@ QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id)
 	}
 
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
-	if (wma_send_vdev_stop_to_fw(wma, vdev_id)) {
-		WMA_LOGP("%s: %d Failed to send vdev stop",
-			 __func__, __LINE__);
+
+	status = wma_send_vdev_stop_to_fw(wma, vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		struct vdev_stop_response resp_event;
+
+		wma_info("vdev %d Failed to send vdev stop", vdev_id);
+		resp_event.vdev_id = vdev_id;
+		mlme_set_connection_fail(wma->interfaces[vdev_id].vdev, false);
+		wma_handle_vdev_stop_rsp(wma, &resp_event);
 	}
 
-	WMA_LOGP("%s: %d vdev stop sent vdev %d", __func__, __LINE__,
-		 vdev_id);
 	/*
 	 * Remove peer, Vdev down and sending set link
 	 * response will be handled in vdev stop response
