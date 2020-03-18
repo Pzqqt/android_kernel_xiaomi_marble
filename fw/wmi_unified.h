@@ -2659,7 +2659,7 @@ typedef struct {
     A_UINT32 he_cap_info_ext;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -13331,6 +13331,11 @@ typedef struct {
      * by at least candidate_min_roam_score_delta.
      */
     A_UINT32 candidate_min_roam_score_delta;
+    /*
+     * For OCE Release 2, give weightage to roam candidate tx power if
+     * oce_ap_tx_pwr_weightage_pcnt != 0.
+     */
+    A_UINT32 oce_ap_tx_pwr_weightage_pcnt;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -24588,7 +24593,7 @@ typedef struct {
      */
     A_UINT32 nss_ratio;
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24612,7 +24617,7 @@ typedef struct {
     A_UINT32 hw_mode_config_type;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24689,7 +24694,7 @@ typedef struct {
     A_UINT32 chainmask;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24702,7 +24707,7 @@ typedef struct {
     A_UINT32 num_valid_chainmask;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24720,7 +24725,7 @@ typedef struct {
     A_UINT32 num_chainmask_tables;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24763,7 +24768,7 @@ typedef struct {
     A_UINT32 low_5ghz_chan;  /* freq in MHz */
     A_UINT32 high_5ghz_chan; /* freq in MHz */
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24775,7 +24780,7 @@ typedef struct {
     /* num_phy WMI_HAL_REG_CAPABILITIES_EXT TLV's */
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24792,7 +24797,7 @@ typedef struct {
     /* Minimum alignment in bytes of each buffer in the OEM DMA ring */
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -24804,7 +24809,7 @@ typedef struct {
     A_UINT32 active_version;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -26607,7 +26612,7 @@ typedef struct {
     A_UINT32 min_buf_align; /* minimum alignment in bytes of each buffer in the DMA ring */
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -26628,7 +26633,7 @@ typedef struct {
     A_UINT32 freq_info;
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
@@ -26814,7 +26819,7 @@ typedef struct {
     A_UINT32 default_agc_max_gain;/* DEFAULT AGC MAX GAIN used. Fetched from register RXTD_RADAR_SBS_CTRL_1_L bits20:13 */
 
     /**************************************************************************
-     * DON'T ADD ANY FURTHER FIELDS HERE - 
+     * DON'T ADD ANY FURTHER FIELDS HERE -
      * It would cause the size of the READY_EXT message within some targets
      * to exceed the size of the buffer used for the message.
      **************************************************************************/
