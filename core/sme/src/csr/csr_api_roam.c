@@ -7587,21 +7587,21 @@ static void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 	}
 
 	status = csr_issue_set_context_req_helper(mac_ctx, profile,
-			session_id, &bss_desc->bssId, true, false,
-			eSIR_RX_ONLY, 2, roam_info->fils_join_rsp->gtk_len,
-			roam_info->fils_join_rsp->gtk);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("Set context for bcast fail");
-		goto process_fils_join_rsp_fail;
-	}
-
-	status = csr_issue_set_context_req_helper(mac_ctx, profile,
 				session_id, &bss_desc->bssId, true,
 				true, eSIR_TX_RX, 0,
 				roam_info->fils_join_rsp->tk_len,
 				roam_info->fils_join_rsp->tk);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Set context for unicast fail");
+		goto process_fils_join_rsp_fail;
+	}
+
+	status = csr_issue_set_context_req_helper(mac_ctx, profile,
+			session_id, &bss_desc->bssId, true, false,
+			eSIR_RX_ONLY, 2, roam_info->fils_join_rsp->gtk_len,
+			roam_info->fils_join_rsp->gtk);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("Set context for bcast fail");
 		goto process_fils_join_rsp_fail;
 	}
 	return;
