@@ -952,6 +952,8 @@ struct wlan_mlme_chain_cfg {
  * struct mlme_tgt_caps - mlme related capability coming from target (FW)
  * @data_stall_recovery_fw_support: does target supports data stall recovery.
  * @bigtk_support: does the target support bigtk capability or not.
+ * @stop_all_host_scan_support: Target capability that indicates if the target
+ * supports stop all host scan request type.
  *
  * Add all the mlme-tgt related capablities here, and the public API would fill
  * the related capability in the required mlme cfg structure.
@@ -959,6 +961,7 @@ struct wlan_mlme_chain_cfg {
 struct mlme_tgt_caps {
 	bool data_stall_recovery_fw_support;
 	bool bigtk_support;
+	bool stop_all_host_scan_support;
 };
 
 /**
@@ -1137,6 +1140,8 @@ struct wlan_mlme_chainmask {
  * @enable_peer_unmap_conf_support: Indicate whether to send conf for peer unmap
  * @dfs_chan_ageout_time: Set DFS Channel ageout time
  * @bigtk_support: Whether BIGTK is supported or not
+ * @stop_all_host_scan_support: Target capability that indicates if the target
+ * supports stop all host scan request type.
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1174,6 +1179,7 @@ struct wlan_mlme_generic {
 	bool enable_peer_unmap_conf_support;
 	uint8_t dfs_chan_ageout_time;
 	bool bigtk_support;
+	bool stop_all_host_scan_support;
 };
 
 /*

@@ -805,6 +805,15 @@ QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
 				       bool *value);
 
 /**
+ * wlan_mlme_get_host_scan_abort_support() - Get support for stop all host
+ * scans service capability.
+ * @psoc: PSOC object pointer
+ *
+ * Return: True if capability is supported, else False
+ */
+bool wlan_mlme_get_host_scan_abort_support(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_mlme_get_oce_sap_enabled_info() - Get the OCE feature enable
  * info for SAP
  * @psoc: pointer to psoc object
