@@ -27,6 +27,34 @@
 #include "cdp_txrx_ctrl.h"
 #endif
 
+#ifdef WLAN_ENH_CFR_ENABLE
+static bool cfr_is_filter_enabled(struct cfr_rcc_param *rcc_param)
+{
+	if (rcc_param->m_directed_ftm ||
+	    rcc_param->m_all_ftm_ack ||
+	    rcc_param->m_ndpa_ndp_directed ||
+	    rcc_param->m_ndpa_ndp_all ||
+	    rcc_param->m_ta_ra_filter ||
+	    rcc_param->m_all_packet)
+		return true;
+	else
+		return false;
+}
+
+static bool cfr_is_rcc_enabled(struct pdev_cfr *pa)
+{
+	if (pa->is_cfr_rcc_capable &&
+	    cfr_is_filter_enabled(&pa->rcc_param))
+		return true;
+	else
+		return false;
+}
+#else
+static bool cfr_is_rcc_enabled(struct pdev_cfr *pa)
+{
+	return false;
+}
+#endif
 int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 			   struct wlan_objmgr_peer *peer,
 			   struct cfr_capture_params *params)
@@ -75,6 +103,12 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 		}
 		if (!(pe->request))
 			pa->cfr_current_sta_count++;
+	}
+
+	if (cfr_is_rcc_enabled(pa)) {
+		cfr_err("This is not allowed since RCC is enabled");
+		pa->cfr_timer_enable = 0;
+		return -EINVAL;
 	}
 
 	status = tgt_cfr_start_capture(pdev, peer, params);
@@ -616,19 +650,6 @@ QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-static bool cfr_is_filter_enabled(struct cfr_rcc_param *rcc_param)
-{
-	if (rcc_param->m_directed_ftm ||
-	    rcc_param->m_all_ftm_ack ||
-	    rcc_param->m_ndpa_ndp_directed ||
-	    rcc_param->m_ndpa_ndp_all ||
-	    rcc_param->m_ta_ra_filter ||
-	    rcc_param->m_all_packet)
-		return true;
-	else
-		return false;
-}
-
 QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 {
 	struct pdev_cfr *pcfr = NULL;
@@ -641,7 +662,7 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	if (!cfr_is_filter_enabled(&pcfr->rcc_param)) {
-		cfr_err(" All RCC modes are disabled.");
+		cfr_err(" All RCC modes are disabled");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 		return status;
 	}
@@ -946,6 +967,7 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 
 	if (!psoc) {
 		cfr_err("psoc is null!");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	/*
@@ -962,6 +984,12 @@ QDF_STATUS ucfg_cfr_committed_rcc_config(struct wlan_objmgr_vdev *vdev)
 	 */
 
 	if (cfr_is_filter_enabled(&pcfr->rcc_param)) {
+		if (pcfr->cfr_timer_enable) {
+			cfr_err("Not allowed: Periodic capture is enabled.\n");
+			wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
 		if (pcfr->rcc_param.m_all_ftm_ack) {
 			filter_val.mode |= MON_FILTER_PASS |
 					   MON_FILTER_OTHER;
