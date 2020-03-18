@@ -750,7 +750,6 @@ static int __init rmnet_init(void)
 {
 	int rc;
 
-	WARN_ON(1);
 	rc = register_netdevice_notifier(&rmnet_dev_notifier);
 	if (rc != 0)
 		return rc;
