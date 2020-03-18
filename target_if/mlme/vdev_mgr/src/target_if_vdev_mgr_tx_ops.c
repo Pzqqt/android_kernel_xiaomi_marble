@@ -877,6 +877,9 @@ static int32_t target_if_vdev_mgr_multi_vdev_restart_get_ref(
 						psoc,
 						wlan_vdev_get_id(tvdev));
 		if (!vdev_rsp) {
+			wlan_objmgr_vdev_release_ref(tvdev,
+						     WLAN_VDEV_TARGET_IF_ID);
+			vdev_list[vdev_idx] = NULL;
 			mlme_err("VDEV_%d PSOC_%d No vdev rsp timer",
 				 vdev_idx, wlan_psoc_get_id(psoc));
 			return last_vdev_idx;
@@ -901,7 +904,7 @@ static void target_if_vdev_mgr_multi_vdev_restart_rel_ref(
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *tvdev;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
-	uint32_t vdev_idx;
+	int32_t vdev_idx;
 	struct vdev_response_timer *vdev_rsp;
 
 	psoc = wlan_pdev_get_psoc(pdev);
