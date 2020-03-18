@@ -1482,6 +1482,9 @@ get_serialization_cancel_type(enum scan_cancel_req_type type)
 	case WLAN_SCAN_CANCEL_PDEV_ALL:
 		serialization_type = WLAN_SER_CANCEL_PDEV_SCANS;
 		break;
+	case WLAN_SCAN_CANCEL_HOST_VDEV_ALL:
+		serialization_type = WLAN_SER_CANCEL_VDEV_HOST_SCANS;
+		break;
 	default:
 		QDF_ASSERT(0);
 		scm_warn("invalid scan_cancel_req_type: %d", type);

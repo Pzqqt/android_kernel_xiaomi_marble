@@ -908,6 +908,7 @@ wlan_serialization_find_and_cancel_cmd(
 				WLAN_SER_CMD_ATTR_NONE);
 		break;
 	case WLAN_SER_CANCEL_VDEV_SCANS:
+	case WLAN_SER_CANCEL_VDEV_HOST_SCANS:
 		/* remove all scan cmds which matches the vdev object */
 		status = wlan_serialization_cmd_cancel_handler(
 				ser_obj, NULL, NULL, cmd->vdev,

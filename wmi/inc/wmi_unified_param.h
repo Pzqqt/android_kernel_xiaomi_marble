@@ -5124,6 +5124,7 @@ typedef enum {
 	wmi_roam_scan_chan_list_to_host_support,
 	wmi_beacon_protection_support,
 	wmi_service_sta_nan_ndi_four_port,
+	wmi_service_host_scan_stop_vdev_all,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
