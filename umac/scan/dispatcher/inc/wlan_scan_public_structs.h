@@ -671,13 +671,13 @@ struct scan_filter {
 	uint8_t country[3];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
-	uint32_t chan_freq_list[QDF_MAX_NUM_CHAN];
+	uint32_t chan_freq_list[NUM_CHANNELS];
 	enum wlan_auth_type auth_type[WLAN_NUM_OF_SUPPORT_AUTH_TYPE];
 	enum wlan_enc_type enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
 	enum wlan_enc_type mc_enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
-	uint32_t pcl_freq_list[QDF_MAX_NUM_CHAN];
+	uint32_t pcl_freq_list[NUM_CHANNELS];
 	struct fils_filter_info fils_scan_filter;
-	uint8_t pcl_weight_list[QDF_MAX_NUM_CHAN];
+	uint8_t pcl_weight_list[NUM_CHANNELS];
 	struct qdf_mac_addr bssid_hint;
 };
 
@@ -1255,7 +1255,7 @@ enum scan_cb_type {
 
 /* Set PNO */
 #define SCAN_PNO_MAX_PLAN_REQUEST   2
-#define SCAN_PNO_MAX_NETW_CHANNELS_EX  (QDF_MAX_NUM_CHAN)
+#define SCAN_PNO_MAX_NETW_CHANNELS_EX  (NUM_CHANNELS)
 #define SCAN_PNO_MAX_SUPP_NETWORKS  16
 #define SCAN_PNO_DEF_SLOW_SCAN_MULTIPLIER 6
 #define SCAN_PNO_DEF_SCAN_TIMER_REPEAT 20

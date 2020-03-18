@@ -908,8 +908,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 				       struct dfs_channel *chan_list,
 				       uint32_t *num_chan)
 {
-	uint32_t pcl_ch[QDF_MAX_NUM_CHAN] = {0};
-	uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_ch[NUM_CHANNELS] = {0};
+	uint8_t weight_list[NUM_CHANNELS] = {0};
 	uint32_t len;
 	uint32_t weight_len;
 	int i;

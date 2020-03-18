@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -270,8 +270,6 @@ struct flashing_req_params {
 	uint32_t led_x1;
 };
 
-#define MAX_NUM_CHAN 128
-
 /**
  * struct wmi_pcl_chan_weights - Params to get the valid weighed list
  * @pcl_list: channel freq list sorted in preferred order
@@ -285,12 +283,12 @@ struct flashing_req_params {
  * @weight_list: Weights assigned by policy manager
  */
 struct wmi_pcl_chan_weights {
-	uint32_t pcl_list[MAX_NUM_CHAN];
+	uint32_t pcl_list[NUM_CHANNELS];
 	uint32_t pcl_len;
-	uint32_t saved_chan_list[MAX_NUM_CHAN];
+	uint32_t saved_chan_list[NUM_CHANNELS];
 	uint32_t saved_num_chan;
-	uint8_t weighed_valid_list[MAX_NUM_CHAN];
-	uint8_t weight_list[MAX_NUM_CHAN];
+	uint8_t weighed_valid_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 };
 
 /**

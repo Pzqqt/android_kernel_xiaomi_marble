@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -92,9 +92,6 @@
 
 /* Start channel and center channel freq diff in 80Mhz */
 #define DFS_80MHZ_START_CENTER_CH_FREQ_DIFF     30
-
-/* Max number of channels */
-#define DFS_MAX_NUM_CHAN                        128
 
 /* Bitmap mask for 80MHz */
 #define DFS_80MHZ_MASK                          0x0F
