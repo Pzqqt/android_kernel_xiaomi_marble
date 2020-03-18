@@ -1098,4 +1098,27 @@ QDF_STATUS
 reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap);
 #endif
 
+#ifdef CHECK_REG_PHYMODE
+/**
+ * reg_get_max_phymode() - Recursively find the best possible phymode given a
+ * phymode, a frequency, and per-country regulations
+ * @pdev: pdev pointer
+ * @phy_in: phymode that the user requested
+ * @freq: current operating center frequency
+ *
+ * Return: maximum phymode allowed in current country that is <= phy_in
+ */
+enum reg_phymode reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
+				     enum reg_phymode phy_in,
+				     qdf_freq_t freq);
+#else
+static inline enum reg_phymode
+reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
+		    enum reg_phymode phy_in,
+		    qdf_freq_t freq)
+{
+	return REG_PHYMODE_INVALID;
+}
+#endif /* CHECK_REG_PHYMODE */
+
 #endif

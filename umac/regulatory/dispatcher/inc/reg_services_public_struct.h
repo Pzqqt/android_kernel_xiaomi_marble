@@ -1137,4 +1137,26 @@ struct reg_ctl_params {
 	uint8_t ctl_5g;
 };
 
+/**
+ * enum reg_phymode - Regulatory phymode
+ * @REG_PHYMODE_INVALID: Invalid phymode
+ * @REG_PHYMODE_11B: 802.11b phymode
+ * @REG_PHYMODE_11G: 802.11g phymode
+ * @REG_PHYMODE_11A: 802.11a phymode
+ * @REG_PHYMODE_11N: 802.11n phymode
+ * @REG_PHYMODE_11AC: 802.11ac phymode
+ * @REG_PHYMODE_11AX: 802.11ax phymode
+ * @REG_PHYMODE_MAX: placeholder for future phymodes
+ */
+enum reg_phymode {
+	REG_PHYMODE_INVALID,
+	REG_PHYMODE_11B,
+	REG_PHYMODE_11G,
+	REG_PHYMODE_11A,
+	REG_PHYMODE_11N,
+	REG_PHYMODE_11AC,
+	REG_PHYMODE_11AX,
+	REG_PHYMODE_MAX,
+};
+
 #endif

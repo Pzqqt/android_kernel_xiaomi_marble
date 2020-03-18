@@ -3795,3 +3795,74 @@ reg_get_unii_5g_bitmap(struct wlan_objmgr_pdev *pdev, uint8_t *bitmap)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef CHECK_REG_PHYMODE
+/**
+ * reg_is_phymode_allowed() - Check if requested phymode is unallowed
+ * @phy_in: phymode that the user requested
+ * @phymode_bitmap: bitmap of unallowed phymodes for specific country
+ *
+ * Return: true if phymode is not allowed, else false
+ */
+static bool reg_is_phymode_unallowed(enum reg_phymode phy_in,
+				     uint32_t phymode_bitmap)
+{
+	if (!phymode_bitmap)
+		return false;
+
+	if (phy_in == REG_PHYMODE_11AX)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11AX;
+	else if (phy_in == REG_PHYMODE_11AC)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11AC;
+	else if (phy_in == REG_PHYMODE_11N)
+		return phymode_bitmap & REGULATORY_CHAN_NO11N;
+	else if (phy_in == REG_PHYMODE_11G)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11G;
+	else if (phy_in == REG_PHYMODE_11A)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11A;
+	else if (phy_in == REG_PHYMODE_11B)
+		return phymode_bitmap & REGULATORY_PHYMODE_NO11B;
+	else
+		return true;
+
+}
+
+enum reg_phymode reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
+				     enum reg_phymode phy_in,
+				     qdf_freq_t freq)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint32_t phymode_bitmap;
+	enum reg_phymode current_phymode = phy_in;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return REG_PHYMODE_INVALID;
+	}
+
+	phymode_bitmap = pdev_priv_obj->phybitmap;
+
+	while (1) {
+		if (reg_is_phymode_unallowed(current_phymode, phymode_bitmap)) {
+			if (current_phymode == REG_PHYMODE_11N) {
+				if (REG_IS_24GHZ_CH_FREQ(freq))
+					current_phymode = REG_PHYMODE_11G;
+				else
+					current_phymode = REG_PHYMODE_11A;
+			} else if (current_phymode == REG_PHYMODE_11A ||
+				   current_phymode == REG_PHYMODE_11B) {
+				reg_err("Couldn't find a suitable phymode");
+				return REG_PHYMODE_INVALID;
+			} else if (current_phymode > REG_PHYMODE_MAX) {
+				reg_err("Unknown phymode");
+				return REG_PHYMODE_INVALID;
+			} else {
+				current_phymode--;
+			}
+		} else {
+			return current_phymode;
+		}
+	}
+}
+#endif /* CHECK_REG_PHYMODE */

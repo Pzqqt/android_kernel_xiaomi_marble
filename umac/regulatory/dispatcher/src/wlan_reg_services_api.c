@@ -1155,3 +1155,12 @@ qdf_freq_t wlan_reg_chan_opclass_to_freq_auto(uint8_t chan, uint8_t op_class,
 
 	return reg_chan_opclass_to_freq_auto(chan, op_class, global_tbl_lookup);
 }
+
+#ifdef CHECK_REG_PHYMODE
+enum reg_phymode wlan_reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
+					  enum reg_phymode phy_in,
+					  qdf_freq_t freq)
+{
+	return reg_get_max_phymode(pdev, phy_in, freq);
+}
+#endif /* CHECK_REG_PHYMODE */
