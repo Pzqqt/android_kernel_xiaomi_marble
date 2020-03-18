@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -726,12 +726,17 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 	int ret;
+	bool skip_recovering_check = false;
 	enum hif_target_status target_status = hif_get_target_status(scn);
 
 	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SNOC) {
 		BMI_ERR("SNOC doesn't suppor this code path!");
 		return;
 	}
+
+	/* If Host driver trigger target failure, skip recovering check */
+	if (cds_is_target_asserting())
+		skip_recovering_check = true;
 
 	qdf_event_set(&wma->recovery_event);
 
@@ -748,8 +753,13 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 		return;
 	}
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+	if (!skip_recovering_check && cds_is_driver_recovering()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
+		return;
+	}
+
+	if (cds_is_driver_in_bad_state()) {
+		BMI_ERR("%s: Driver in bad state, ignore!\n", __func__);
 		return;
 	}
 

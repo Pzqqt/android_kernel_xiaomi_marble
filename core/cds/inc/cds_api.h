@@ -61,6 +61,7 @@
  * CDS_DRIVER_STATE_RECOVERING: Recovery in progress.
  * CDS_DRIVER_STATE_BAD: Driver in bad state.
  * CDS_DRIVER_STATE_MODULE_STOPPING: Module stop in progress.
+ * CDS_DRIVER_STATE_ASSERTING_TARGET: Driver assert target in progress.
  */
 enum cds_driver_state {
 	CDS_DRIVER_STATE_UNINITIALIZED          = 0,
@@ -71,6 +72,7 @@ enum cds_driver_state {
 	CDS_DRIVER_STATE_BAD                    = BIT(4),
 	CDS_DRIVER_STATE_FW_READY               = BIT(5),
 	CDS_DRIVER_STATE_MODULE_STOPPING        = BIT(6),
+	CDS_DRIVER_STATE_ASSERTING_TARGET       = BIT(7),
 };
 
 /**
@@ -270,6 +272,33 @@ static inline bool cds_is_driver_loaded(void)
 	enum cds_driver_state state = cds_get_driver_state();
 
 	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADED);
+}
+
+/**
+ * cds_set_assert_target_in_progress() - Setting assert target in progress
+ *
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_assert_target_in_progress(bool value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_ASSERTING_TARGET);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_ASSERTING_TARGET);
+}
+
+/**
+ * cds_is_target_asserting() - Is driver asserting target
+ *
+ * Return: true if driver is asserting target
+ */
+static inline bool cds_is_target_asserting(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_ASSERTING_TARGET);
 }
 
 /**
