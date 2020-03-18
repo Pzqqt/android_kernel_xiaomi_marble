@@ -4041,7 +4041,8 @@ void hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
 			freq[i] = roam_ch->chan_list[i];
 		}
 
-		hdd_send_roam_scan_ch_list_event(hdd_ctx, len, event);
+		hdd_send_roam_scan_ch_list_event(hdd_ctx, roam_ch->vdev_id,
+						 len, event);
 		qdf_mem_free(event);
 		return;
 	}

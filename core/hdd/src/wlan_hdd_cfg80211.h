@@ -504,13 +504,15 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 /**
  * hdd_send_roam_scan_ch_list_event() - roam scan ch list event to user space
  * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
  * @buf_len: length of frequency list
  * @buf: pointer to buffer of frequency list
  *
  * Return: None
  */
 void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
-				      uint16_t buf_len, uint8_t *buf);
+				      uint8_t vdev_id, uint16_t buf_len,
+				      uint8_t *buf);
 
 int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
@@ -525,9 +527,10 @@ static inline int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter,
 	return 0;
 }
 
-static inline void
-hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
-				 uint16_t buf_len, uint8_t *buf)
+static inline
+void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
+				      uint8_t vdev_id, uint16_t buf_len,
+				      uint8_t *buf)
 {
 }
 #endif

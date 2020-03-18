@@ -6285,9 +6285,11 @@ wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
-				      uint16_t buf_len, uint8_t *buf)
+				      uint8_t vdev_id, uint16_t buf_len,
+				      uint8_t *buf)
 {
 	struct sk_buff *vendor_event;
+	struct hdd_adapter *adapter;
 	uint32_t len, ret;
 
 	if (!hdd_ctx) {
@@ -6295,10 +6297,14 @@ void hdd_send_roam_scan_ch_list_event(struct hdd_context *hdd_ctx,
 		return;
 	}
 
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter)
+		return;
+
 	len = nla_total_size(buf_len) + NLMSG_HDRLEN;
 	vendor_event =
 		cfg80211_vendor_event_alloc(
-			hdd_ctx->wiphy, NULL, len,
+			hdd_ctx->wiphy, &(adapter->wdev), len,
 			QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX,
 			GFP_KERNEL);
 
