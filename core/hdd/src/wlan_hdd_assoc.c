@@ -3762,7 +3762,7 @@ static bool roam_remove_ibss_station(struct hdd_adapter *adapter,
 	if (successful) {
 		if (del_idx == 0) {
 			if (hdd_is_valid_mac_address(
-			    sta_ctx->conn_info.peer_macaddr[idx].bytes)) {
+			    sta_ctx->conn_info.peer_macaddr[valid_idx].bytes)) {
 				qdf_copy_macaddr(&sta_ctx->conn_info.
 						 peer_macaddr[0],
 						 &sta_ctx->conn_info.
