@@ -2709,6 +2709,18 @@ typedef struct {
         WMI_BDF_REG_DB_VERSION_MINOR_SET(dword, bdf_reg_db_ver_minor); \
     } while (0)
 
+#define WMI_HW_MIN_TX_POWER_BITPOS  0
+#define WMI_HW_MAX_TX_POWER_BITPOS  16
+
+#define WMI_HW_MIN_TX_POWER_GET(dword) \
+    ((A_INT16) WMI_GET_BITS(dword, WMI_HW_MIN_TX_POWER_BITPOS, 16))
+#define WMI_HW_MIN_TX_POWER_SET(dword, value) \
+    WMI_SET_BITS(dword, WMI_HW_MIN_TX_POWER_BITPOS, 16, value)
+#define WMI_HW_MAX_TX_POWER_GET(dword) \
+    ((A_INT16) WMI_GET_BITS(dword, WMI_HW_MAX_TX_POWER_BITPOS, 16))
+#define WMI_HW_MAX_TX_POWER_SET(dword, value) \
+    WMI_SET_BITS(dword, WMI_HW_MAX_TX_POWER_BITPOS, 16, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param.*/
 
@@ -2722,6 +2734,26 @@ typedef struct {
      * access these bitfields.
      */
     A_UINT32 reg_db_version;
+
+    /* Min & Max Tx power (in dBm) supported in 2.4 GHz band
+     *  [15:0]   - Min Tx Power in 2.4 GHz band
+     *  [31:16]  - Max Tx Power in 2.4 GHz band
+     * WMI_HW_[MIN,MAX]_TX_POWER_[GET,SET] macros are used to access
+     * these bitfields.
+     * If Min Tx Power = Max Tx Power = 0 means Min Tx Power & Max Tx Power
+     * are not specified.
+     */
+    A_UINT32 hw_min_max_tx_power_2g;
+
+    /* Min & Max Tx power (in dBm) supported in 5 GHz band
+     *  [15:0]   - Min Tx Power in 5 GHz band
+     *  [31:16]  - Max Tx Power in 5 GHz band
+     * WMI_HW_[MIN,MAX]_TX_POWER_[GET,SET] macros are used to access
+     * these bitfields.
+     * If Min Tx Power = Max Tx Power = 0 means Min Tx Power & Max Tx Power
+     * are not specified.
+     */
+    A_UINT32 hw_min_max_tx_power_5g;
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
