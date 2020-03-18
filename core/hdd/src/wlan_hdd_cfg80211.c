@@ -16656,6 +16656,10 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 	crypto_key = wlan_crypto_get_key(adapter->vdev, key_index);
+	if (!crypto_key) {
+		hdd_err("Invalid NULL key info");
+		return -EINVAL;
+	}
 	hdd_debug("unicast %d, cipher %d", unicast, crypto_key->cipher_type);
 	if (!IS_WEP_CIPHER(crypto_key->cipher_type))
 		return 0;
