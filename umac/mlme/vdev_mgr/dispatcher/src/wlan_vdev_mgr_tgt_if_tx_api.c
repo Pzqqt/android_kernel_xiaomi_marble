@@ -652,5 +652,5 @@ QDF_STATUS tgt_vdev_mgr_peer_delete_all_send(
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("VDEV_%d: Tx Ops Error : %d", vdev_id, status);
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
