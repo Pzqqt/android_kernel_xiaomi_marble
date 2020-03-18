@@ -4724,6 +4724,25 @@ QDF_STATUS wma_send_coex_config_cmd(WMA_HANDLE wma_handle,
 					       coex_cfg_params);
 }
 
+QDF_STATUS wma_send_ocl_cmd(WMA_HANDLE wma_handle,
+			    struct ocl_cmd_params *ocl_params)
+{
+	tp_wma_handle wma = (tp_wma_handle)wma_handle;
+
+	if (!wma || !wma->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, can not issue coex config command",
+			 __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!ocl_params) {
+		WMA_LOGE("%s: ocl params ptr NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_send_ocl_cmd(wma->wmi_handle, ocl_params);
+}
+
 /**
  * wma_get_arp_stats_handler() - handle arp stats data
  * indicated by FW
