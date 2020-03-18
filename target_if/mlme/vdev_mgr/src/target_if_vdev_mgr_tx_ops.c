@@ -970,6 +970,12 @@ static QDF_STATUS target_if_vdev_mgr_multiple_vdev_restart_req_cmd(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (param->num_vdevs > WLAN_UMAC_PDEV_MAX_VDEVS) {
+		mlme_err("param->num_vdevs: %u exceed the limit",
+			 param->num_vdevs);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	last_vdev_idx = target_if_vdev_mgr_multi_vdev_restart_get_ref(
 							pdev, param,
 							vdev_list,
