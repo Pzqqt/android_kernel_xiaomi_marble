@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,6 +50,13 @@ void hdd_debugfs_process_mib_stats(struct hdd_adapter *adapter,
 int wlan_hdd_create_mib_stats_file(struct hdd_adapter *adapter);
 
 /**
+ * wlan_hdd_create_mib_stats_lock() - API to create MIB stats lock
+ *
+ * Return: No return
+ */
+void wlan_hdd_create_mib_stats_lock(void);
+
+/**
  * wlan_hdd_destroy_mib_stats_lock() - API to destroy MIB stats lock
  *
  * Return: No return
@@ -59,6 +66,10 @@ void wlan_hdd_destroy_mib_stats_lock(void);
 static inline int wlan_hdd_create_mib_stats_file(struct hdd_adapter *adapter)
 {
 	return 0;
+}
+
+static inline void wlan_hdd_create_mib_stats_lock(void)
+{
 }
 
 static inline void wlan_hdd_destroy_mib_stats_lock(void)

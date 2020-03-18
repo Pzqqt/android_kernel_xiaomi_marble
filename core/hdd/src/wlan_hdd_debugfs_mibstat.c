@@ -347,13 +347,14 @@ int wlan_hdd_create_mib_stats_file(struct hdd_adapter *adapter)
 				 adapter->dev, &fops_mib_stats))
 		return -EINVAL;
 
-	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
-				&mibstats_lock))) {
-		hdd_debug("mibstats lock init failed!");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	return 0;
+}
+
+void wlan_hdd_create_mib_stats_lock(void)
+{
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
+				&mibstats_lock)))
+		hdd_err("mibstats lock init failed!");
 }
 
 void wlan_hdd_destroy_mib_stats_lock(void)

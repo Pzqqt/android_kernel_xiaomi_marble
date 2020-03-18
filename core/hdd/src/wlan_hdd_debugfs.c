@@ -536,8 +536,10 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 
 	adapter->debugfs_phy = debugfs_create_dir(net_dev->name, 0);
 
-	if (!adapter->debugfs_phy)
+	if (!adapter->debugfs_phy) {
+		hdd_err("debugfs: create folder %s fail", net_dev->name);
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!debugfs_create_file("wow_pattern", 00400 | 00200,
 					adapter->debugfs_phy, net_dev,
@@ -581,6 +583,5 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 void hdd_debugfs_exit(struct hdd_adapter *adapter)
 {
 	debugfs_remove_recursive(adapter->debugfs_phy);
-	wlan_hdd_destroy_mib_stats_lock();
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */

@@ -184,6 +184,7 @@
 #include "wlan_hdd_btc_chain_mode.h"
 #include <wlan_hdd_dcs.h>
 #include "wlan_hdd_debugfs_unit_test.h"
+#include "wlan_hdd_debugfs_mibstat.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -6114,7 +6115,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	}
 
 	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
-		hdd_err("Interface %s wow debug_fs init failed",
+		hdd_err("debugfs: Interface %s init failed",
 			netdev_name(adapter->dev));
 
 	hdd_debug("%s interface created. iftype: %d", netdev_name(adapter->dev),
@@ -8121,6 +8122,7 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	wlan_hdd_destroy_mib_stats_lock();
 	hdd_debugfs_ini_config_deinit(hdd_ctx);
 	hdd_debugfs_mws_coex_info_deinit(hdd_ctx);
 	hdd_psoc_idle_timer_stop(hdd_ctx);
@@ -13230,6 +13232,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	hdd_debugfs_mws_coex_info_init(hdd_ctx);
 	hdd_debugfs_ini_config_init(hdd_ctx);
 	wlan_hdd_debugfs_unit_test_host_create(hdd_ctx);
+	wlan_hdd_create_mib_stats_lock();
 	wlan_cfg80211_init_interop_issues_ap(hdd_ctx->pdev);
 
 	hdd_exit();
