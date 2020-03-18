@@ -206,7 +206,8 @@ struct dp_srng *dp_rxdma_get_mon_buf_ring(struct dp_pdev *pdev,
 	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable)
 		return &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
 
-	return &pdev->soc->rx_refill_buf_ring[mac_for_pdev];
+	/* For MCL there is only 1 rx refill ring */
+	return &pdev->soc->rx_refill_buf_ring[0];
 }
 
 /**
