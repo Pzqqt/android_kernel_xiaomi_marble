@@ -872,7 +872,6 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 
 	tx_pwr_attr.reg_max = regMax;
 	tx_pwr_attr.ap_tx_power = local_constraint;
-	tx_pwr_attr.ini_tx_power = mac_ctx->mlme_cfg->power.max_tx_power;
 	tx_pwr_attr.frequency = session->curr_op_freq;
 
 	maxTxPower = lim_get_max_tx_power(mac_ctx, &tx_pwr_attr);

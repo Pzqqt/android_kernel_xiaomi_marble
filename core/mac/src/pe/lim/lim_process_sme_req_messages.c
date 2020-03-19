@@ -1550,8 +1550,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		tx_pwr_attr.reg_max = reg_max;
 		tx_pwr_attr.ap_tx_power = local_power_constraint;
-		tx_pwr_attr.ini_tx_power =
-				mac_ctx->mlme_cfg->power.max_tx_power;
 		tx_pwr_attr.frequency = session->curr_op_freq;
 
 		session->maxTxPower = lim_get_max_tx_power(mac_ctx,
@@ -1677,7 +1675,6 @@ uint8_t lim_get_max_tx_power(struct mac_context *mac,
 		return attr->reg_max;
 
 	tx_power = QDF_MIN(attr->reg_max, attr->ap_tx_power);
-	tx_power = QDF_MIN(tx_power, attr->ini_tx_power);
 
 	if (tx_power >= MIN_TX_PWR_CAP && tx_power <= MAX_TX_PWR_CAP)
 		max_tx_power = tx_power;

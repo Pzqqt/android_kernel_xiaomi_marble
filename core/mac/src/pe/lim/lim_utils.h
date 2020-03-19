@@ -123,13 +123,11 @@ typedef struct last_processed_frame {
  * struct lim_max_tx_pwr_attr - List of tx powers from various sources
  * @reg_max: power from regulatory database
  * @ap_tx_power: local power constraint adjusted value
- * @ini_tx_power: Max tx power from ini config
  * @frequency: current operating frequency for which above powers are defined
  */
 struct lim_max_tx_pwr_attr {
 	int8_t reg_max;
 	int8_t ap_tx_power;
-	uint8_t ini_tx_power;
 	uint32_t frequency;
 };
 

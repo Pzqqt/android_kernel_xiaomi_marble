@@ -1980,7 +1980,6 @@ struct mlme_power_usage {
  * @power_usage: power usage mode, min, max, mod
  * @tx_power_2g: limit tx power in 2.4 ghz
  * @tx_power_5g: limit tx power in 5 ghz
- * @max_tx_power: WLAN max tx power
  * @current_tx_power_level: current tx power level
  * @local_power_constraint: local power constraint
  */
@@ -1992,7 +1991,6 @@ struct wlan_mlme_power {
 	struct mlme_power_usage power_usage;
 	uint8_t tx_power_2g;
 	uint8_t tx_power_5g;
-	uint8_t max_tx_power;
 	uint8_t current_tx_power_level;
 	uint8_t local_power_constraint;
 };
