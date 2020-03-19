@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -185,7 +185,10 @@ ol_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
-	return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
+	if (!vdev)
+		return msdu_list;
+	else
+		return ol_tx_non_std_hl(vdev, tx_spec, msdu_list);
 }
 #else
 qdf_nbuf_t ol_tx_non_std_ll(struct ol_txrx_vdev_t *vdev,
@@ -199,7 +202,10 @@ ol_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	vdev = (struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
 
-	return ol_tx_non_std_ll(vdev, tx_spec, msdu_list);
+	if (!vdev)
+		return msdu_list;
+	else
+		return ol_tx_non_std_ll(vdev, tx_spec, msdu_list);
 }
 #endif
 

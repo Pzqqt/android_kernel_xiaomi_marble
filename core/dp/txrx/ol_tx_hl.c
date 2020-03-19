@@ -1911,6 +1911,11 @@ ol_txrx_hl_tdls_flag_reset(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 {
 	struct ol_txrx_vdev_t *vdev =
 		(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(vdev_id);
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid vdev_id %d", __func__, vdev_id);
+		return;
+	}
 
 	vdev->hlTdlsFlag = flag;
 }
