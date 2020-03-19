@@ -1301,6 +1301,10 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 			return QDF_STATUS_E_FAILURE;
 	}  else if (iface->type == WMI_VDEV_TYPE_OCB) {
 		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+		if (!mlme_obj) {
+			WMA_LOGE("%s: Failed to get mlme obj", __func__);
+			return QDF_STATUS_E_INVAL;
+		}
 		mlme_obj->proto.sta.assoc_id = iface->aid;
 		if (vdev_mgr_up_send(mlme_obj) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
