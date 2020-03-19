@@ -1257,6 +1257,8 @@ mlme_acs_parse_weight_list(struct wlan_objmgr_psoc *psoc,
 			sscanf(str2, "%d", &freq1);
 			sscanf(str1, "%d", &freq2);
 			strsep(&str1, "=");
+			if (!str1)
+				goto end;
 			sscanf(str1, "%d", &normalize_factor);
 
 			if (num_acs_weight_range == MAX_ACS_WEIGHT_RANGE)
@@ -1268,6 +1270,8 @@ mlme_acs_parse_weight_list(struct wlan_objmgr_psoc *psoc,
 		} else {
 			sscanf(str1, "%d", &freq1);
 			strsep(&str1, "=");
+			if (!str1)
+				goto end;
 			sscanf(str1, "%d", &normalize_factor);
 			if (mlme_is_freq_present_in_list(weight_list,
 							 num_acs_weight, freq1,
