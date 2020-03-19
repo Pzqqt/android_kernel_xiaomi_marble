@@ -1779,20 +1779,21 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	work_info = data;
 	if (!work_info) {
 		policy_mgr_err("Invalid work_info");
-		goto end;
+		return;
 	}
 
 	psoc = work_info->psoc;
 	if (!psoc) {
 		policy_mgr_err("Invalid psoc");
-		goto end;
+		return;
 	}
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid context");
-		goto end;
+		return;
 	}
+
 	mcc_to_scc_switch =
 		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
 
