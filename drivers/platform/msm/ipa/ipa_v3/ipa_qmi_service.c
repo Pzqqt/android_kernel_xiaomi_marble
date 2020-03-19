@@ -1472,6 +1472,11 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 	int rc;
 	struct ipa_master_driver_init_complt_ind_msg_v01 ind;
 
+	if (unlikely(!ipa_q6_clnt)) {
+		IPAWANERR("Invalid q6 clnt.Ignore sending ind.\n");
+		return;
+	}
+
 	rc = kernel_connect(ipa_q6_clnt->sock,
 		(struct sockaddr *) &ipa3_qmi_ctx->server_sq,
 		sizeof(ipa3_qmi_ctx->server_sq),
@@ -1532,7 +1537,7 @@ static void ipa3_q6_clnt_svc_arrive(struct work_struct *work)
 			IPA_QMI_RESULT_SUCCESS_V01;
 
 		if (unlikely(!ipa3_svc_handle)) {
-			IPAWANERR("Invalid svc handle.Ignore sending ind.");
+			IPAWANERR("Invalid svc handle.Ignore sending ind.\n");
 			return;
 		}
 
