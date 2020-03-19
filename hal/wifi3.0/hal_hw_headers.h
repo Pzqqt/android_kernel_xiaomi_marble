@@ -228,15 +228,9 @@
 #define SRNG_SRC_ADDR(_srng, _reg) \
 	SRNG_REG_ADDR(_srng, _reg, _reg ## _GROUP, SRC)
 
-#ifdef FEATURE_HAL_DELAYED_WRITE
-#define SRNG_REG_WRITE(_srng, _reg, _value, _dir) \
-	hal_delayed_reg_write(_srng->hal_soc, _srng,\
-		SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value))
-#else
 #define SRNG_REG_WRITE(_srng, _reg, _value, _dir) \
 	hal_write_address_32_mb(_srng->hal_soc,\
 		SRNG_ ## _dir ## _ADDR(_srng, _reg), (_value), false)
-#endif
 
 #define SRNG_REG_WRITE_CONFIRM(_srng, _reg, _value, _dir) \
 	hal_write_address_32_mb(_srng->hal_soc,\
