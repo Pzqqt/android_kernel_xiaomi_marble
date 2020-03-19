@@ -4342,6 +4342,20 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 	}
 
 	/*
+	 * Secure display to secure camera needs without direct
+	 * transition is currently not allowed
+	 */
+	if (fb_sec_dir && secure == SDE_DRM_SEC_NON_SEC &&
+		smmu_state->state != ATTACHED &&
+		smmu_state->secure_level == SDE_DRM_SEC_ONLY) {
+
+		SDE_EVT32(DRMID(crtc), fb_ns, fb_sec_dir,
+			smmu_state->state, smmu_state->secure_level,
+			secure);
+		goto sec_err;
+	}
+
+	/*
 	 * In video mode check for null commit before transition
 	 * from secure to non secure and vice versa
 	 */
@@ -4358,14 +4372,17 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 		SDE_EVT32(DRMID(crtc), fb_ns, fb_sec_dir,
 			smmu_state->state, smmu_state->secure_level,
 			secure, crtc->state->plane_mask, state->plane_mask);
-		SDE_ERROR(
-		 "crtc%d Invalid transition;sec%d state%d slvl%d ns%d sdir%d\n",
-			DRMID(crtc), secure, smmu_state->state,
-			smmu_state->secure_level, fb_ns, fb_sec_dir);
-		return -EINVAL;
+		goto sec_err;
 	}
 
 	return 0;
+
+sec_err:
+	SDE_ERROR(
+	 "crtc%d Invalid transition;sec%d state%d slvl%d ns%d sdir%d\n",
+		DRMID(crtc), secure, smmu_state->state,
+		smmu_state->secure_level, fb_ns, fb_sec_dir);
+	return -EINVAL;
 }
 
 static int _sde_crtc_check_secure_conn(struct drm_crtc *crtc,
