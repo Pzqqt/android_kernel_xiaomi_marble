@@ -796,7 +796,7 @@ static int ipa_test_mhi_suite_setup(void **ppriv)
 	}
 
 	test_mhi_ctx->gsi_mmio =
-	    ioremap_nocache(test_mhi_ctx->transport_phys_addr,
+	    ioremap(test_mhi_ctx->transport_phys_addr,
 			    test_mhi_ctx->transport_size);
 	if (!test_mhi_ctx->gsi_mmio) {
 		IPA_UT_ERR("failed to remap GSI HW size=%lu\n",

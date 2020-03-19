@@ -1475,7 +1475,7 @@ int ipa_reg_save_init(u32 value)
 	       ipa3_ctx->ipa_wrapper_base);
 
 	ipa3_ctx->reg_collection_base =
-		ioremap_nocache(ipa3_ctx->ipa_wrapper_base,
+		ioremap(ipa3_ctx->ipa_wrapper_base,
 			ipa3_ctx->entire_ipa_block_size);
 
 	if (!ipa3_ctx->reg_collection_base) {

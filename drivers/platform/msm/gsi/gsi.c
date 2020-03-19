@@ -997,7 +997,7 @@ int gsi_map_base(phys_addr_t gsi_base_addr, u32 gsi_size)
 		return -GSI_STATUS_NODEV;
 	}
 
-	gsi_ctx->base = devm_ioremap_nocache(
+	gsi_ctx->base = devm_ioremap(
 		gsi_ctx->dev, gsi_base_addr, gsi_size);
 
 	if (!gsi_ctx->base) {
