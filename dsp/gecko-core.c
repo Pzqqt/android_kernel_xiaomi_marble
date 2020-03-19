@@ -21,6 +21,7 @@
 #include <linux/jiffies.h>
 #include <ipc/gpr-lite.h>
 #include <dsp/gecko-core.h>
+#include <dsp/digital-cdc-rsc-mgr.h>
 
 #define APM_STATE_READY_TIMEOUT_MS    10000
 #define Q6_READY_TIMEOUT_MS 1000
@@ -371,6 +372,7 @@ static int gecko_core_platform_driver_probe(struct platform_device *pdev)
 		ret = 0;
 	}
 #endif
+    digital_cdc_rsc_mgr_init();
 
 	return ret;
 }
@@ -380,6 +382,7 @@ static int gecko_core_platform_driver_remove(struct platform_device *pdev)
 	//snd_event_client_deregister(&pdev->dev);
         gpr_driver_unregister(&qcom_gecko_core_driver);
 	gecko_core_priv = NULL;
+    digital_cdc_rsc_mgr_exit();
 	return 0;
 }
 
