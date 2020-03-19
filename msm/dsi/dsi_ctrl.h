@@ -554,7 +554,7 @@ int dsi_ctrl_set_tpg_state(struct dsi_ctrl *dsi_ctrl, bool on);
  */
 int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl,
 			  const struct mipi_dsi_msg *msg,
-			  u32 flags);
+			  u32 *flags);
 
 /**
  * dsi_ctrl_cmd_tx_trigger() - Trigger a deferred command.

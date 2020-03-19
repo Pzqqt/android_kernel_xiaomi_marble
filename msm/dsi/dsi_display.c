@@ -677,7 +677,7 @@ static int dsi_display_read_status(struct dsi_display_ctrl *ctrl,
 			cmds[i].msg.flags |= MIPI_DSI_MSG_USE_LPM;
 		cmds[i].msg.rx_buf = config->status_buf;
 		cmds[i].msg.rx_len = config->status_cmds_rlen[i];
-		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i].msg, flags);
+		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, &cmds[i].msg, &flags);
 		if (rc <= 0) {
 			DSI_ERR("rx cmd transfer failed rc=%d\n", rc);
 			return rc;
@@ -2733,7 +2733,7 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 	 * 2. Trigger commands
 	 */
 	m_ctrl = &display->ctrl[display->cmd_master_idx];
-	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, msg, m_flags);
+	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, msg, &m_flags);
 	if (rc) {
 		DSI_ERR("[%s] cmd transfer failed on master,rc=%d\n",
 		       display->name, rc);
@@ -2745,7 +2745,7 @@ static int dsi_display_broadcast_cmd(struct dsi_display *display,
 		if (ctrl == m_ctrl)
 			continue;
 
-		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, msg, flags);
+		rc = dsi_ctrl_cmd_transfer(ctrl->ctrl, msg, &flags);
 		if (rc) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
@@ -2887,7 +2887,7 @@ static ssize_t dsi_host_transfer(struct mipi_dsi_host *host,
 			cmd_flags |= DSI_CTRL_CMD_ASYNC_WAIT;
 
 		rc = dsi_ctrl_cmd_transfer(display->ctrl[ctrl_idx].ctrl, msg,
-				cmd_flags);
+				&cmd_flags);
 		if (rc) {
 			DSI_ERR("[%s] cmd transfer failed, rc=%d\n",
 			       display->name, rc);
