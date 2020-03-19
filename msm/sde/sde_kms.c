@@ -37,6 +37,7 @@
 #include "sde_wb.h"
 #include "dp_display.h"
 #include "dp_drm.h"
+#include "dp_mst_drm.h"
 
 #include "sde_kms.h"
 #include "sde_core_irq.h"

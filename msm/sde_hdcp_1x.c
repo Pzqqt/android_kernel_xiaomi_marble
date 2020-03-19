@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2010-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde-hdcp1x] %s: " fmt, __func__
@@ -14,7 +14,7 @@
 #include <linux/msm_hdcp.h>
 #include <drm/drm_dp_helper.h>
 #include "sde_hdcp.h"
-#include "video/msm_hdmi_hdcp_mgr.h"
+#include "hdcp/msm_hdmi_hdcp_mgr.h"
 #include "dp/dp_reg.h"
 
 #define SDE_HDCP_STATE_NAME (sde_hdcp_state_name(hdcp->hdcp_state))

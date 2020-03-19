@@ -22,9 +22,10 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 	dp/dp_display.o \
 	dp/dp_drm.o \
 	dp/dp_hdcp2p2.o \
-	dp/dp_mst_drm.o \
 	sde_hdcp_1x.o \
 	sde_hdcp_2x.o \
+
+msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o \
 
 msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_encoder.o \
