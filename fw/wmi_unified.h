@@ -26245,6 +26245,8 @@ typedef enum {
 #define WLM_FLAGS_SCAN_SET_SKIP_DFS(flag, val)            WMI_SET_BITS(flag, 1, 1, val)
 #define WLM_FLAGS_SCAN_GET_DWELL_TIME_POLICY(flag)        WMI_GET_BITS(flag, 2, 2)
 #define WLM_FLAGS_SCAN_SET_DWELL_TIME_POLICY(flag, val)   WMI_SET_BITS(flag, 2, 2, val)
+#define WLM_FLAGS_TSF_LATENCY_COMPENSATE_ENABLED_GET(flag) WMI_GET_BITS(flag, 4, 1)
+#define WLM_FLAGS_TSF_LATENCY_COMPENSATE_ENABLED_SET(flag) WMI_SET_BITS(flag, 4, 1, val)
 #define WLM_FLAGS_ROAM_GET_POLICY(flag)                   WMI_GET_BITS(flag, 6, 2)
 #define WLM_FLAGS_ROAM_SET_POLICY(flag, val)              WMI_SET_BITS(flag, 6, 2, val)
 #define WLM_FLAGS_PS_IS_BMPS_DISABLED(flag)               WMI_GET_BITS(flag, 9, 1)
