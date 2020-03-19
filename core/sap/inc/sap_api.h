@@ -474,6 +474,7 @@ enum  sap_acs_dfs_mode {
 
 struct sap_config {
 	tSap_SSIDInfo_t SSIDinfo;
+	eCsrPhyMode sap_orig_hw_mode;	/* Previous wireless Mode */
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
 	eSapMacAddrACL SapMacaddr_acl;
 	struct qdf_mac_addr accept_mac[MAX_ACL_MAC_ADDRESS]; /* MAC filtering */

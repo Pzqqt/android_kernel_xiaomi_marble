@@ -17667,6 +17667,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	uint8_t value = 0;
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t channel_bonding_mode;
+	enum reg_phymode phy_mode;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -17888,6 +17889,11 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 					adapter->scan_info.scan_add_ie.length;
 			}
 		}
+
+		phy_mode = wlan_reg_get_max_phymode(hdd_ctx->pdev,
+						    REG_PHYMODE_MAX,
+						    oper_freq);
+		roam_profile->phyMode = csr_convert_from_reg_phy_mode(phy_mode);
 
 		if ((policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) == true)
 			&& (false == wlan_hdd_handle_sap_sta_dfs_conc(adapter,

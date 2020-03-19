@@ -5061,6 +5061,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool bval = false;
 	bool enable_dfs_scan = true;
 	struct s_ext_cap *p_ext_cap;
+	enum reg_phymode reg_phy_mode, updated_phy_mode;
 
 	hdd_enter();
 
@@ -5555,6 +5556,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		    config->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
 			config->SapHw_mode = eCSR_DOT11_MODE_11n;
 	}
+
+	config->sap_orig_hw_mode = config->SapHw_mode;
+	reg_phy_mode = csr_convert_to_reg_phy_mode(config->SapHw_mode,
+						   config->chan_freq);
+	updated_phy_mode = wlan_reg_get_max_phymode(hdd_ctx->pdev, reg_phy_mode,
+						    config->chan_freq);
+	config->SapHw_mode = csr_convert_from_reg_phy_mode(updated_phy_mode);
 
 	qdf_mem_zero(sme_config, sizeof(*sme_config));
 	sme_get_config_param(mac_handle, sme_config);
