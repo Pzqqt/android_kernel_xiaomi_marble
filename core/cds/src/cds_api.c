@@ -1810,6 +1810,8 @@ static void cds_trigger_recovery_work(void *context)
 void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
 			    const uint32_t line)
 {
+	bool is_work_queue_needed = false;
+
 	if (!gp_cds_context) {
 		cds_err("gp_cds_context is null");
 		return;
@@ -1817,7 +1819,11 @@ void __cds_trigger_recovery(enum qdf_hang_reason reason, const char *func,
 
 	gp_cds_context->recovery_reason = reason;
 
-	if (in_atomic()) {
+	if (in_atomic() ||
+	    (QDF_RESUME_TIMEOUT == reason || QDF_SUSPEND_TIMEOUT == reason))
+		is_work_queue_needed = true;
+
+	if (is_work_queue_needed) {
 		__cds_recovery_caller.func = func;
 		__cds_recovery_caller.line = line;
 		qdf_queue_work(0, gp_cds_context->cds_recovery_wq,
