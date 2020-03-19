@@ -1836,6 +1836,23 @@ QDF_STATUS ucfg_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_bigtk_support() - Get whether bigtk is supported or not.
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the BIGTK support
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
+				       bool *value)
+{
+	return wlan_mlme_get_bigtk_support(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_oce_sap_enabled_info() - Get OCE feature enable/disable
  * info for SAP
  *

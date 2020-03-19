@@ -1218,6 +1218,8 @@ populate_dot11f_ext_cap(struct mac_context *mac,
 	if (pe_session && pe_session->is_mbssid_enabled)
 		p_ext_cap->multi_bssid = 1;
 
+	p_ext_cap->beacon_protection_enable = pe_session ?
+			mlme_get_bigtk_support(pe_session->vdev) : false;
 	/* Need to calculate the num_bytes based on bits set */
 	if (pDot11f->present)
 		pDot11f->num_bytes = lim_compute_ext_cap_ie_length(pDot11f);

@@ -584,6 +584,9 @@ struct s_ext_cap {
 	uint8_t reserved7:2;
 	uint8_t twt_requestor_support:1;
 	uint8_t twt_responder_support:1;
+	uint8_t reserved8: 1;
+	uint8_t reserved9: 4;
+	uint8_t beacon_protection_enable: 1;
 };
 
 void swap_bit_field16(uint16_t in, uint16_t *out);

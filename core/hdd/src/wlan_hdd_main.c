@@ -5002,6 +5002,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
 	struct wlan_vdev_create_params vdev_params = {0};
+	bool target_bigtk_support = false;
 
 	hdd_nofl_debug("creating new vdev");
 
@@ -5082,6 +5083,9 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		if (!vdev)
 			goto hdd_vdev_destroy_procedure;
 		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
+		ucfg_mlme_get_bigtk_support(hdd_ctx->psoc, &target_bigtk_support);
+		if (target_bigtk_support)
+			mlme_set_bigtk_support(adapter->vdev, true);
 		hdd_objmgr_put_vdev(vdev);
 	}
 

@@ -14550,6 +14550,17 @@ static void wlan_hdd_cfg80211_set_wiphy_scan_flags(struct wiphy *wiphy)
 }
 #endif
 
+#if defined(CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+static void wlan_hdd_cfg80211_set_bigtk_flags(struct wiphy *wiphy)
+{
+	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_BEACON_PROTECTION);
+}
+#else
+static void wlan_hdd_cfg80211_set_bigtk_flags(struct wiphy *wiphy)
+{
+}
+#endif
+
 #if defined(CFG80211_SCAN_OCE_CAPABILITY_SUPPORT) || \
 	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 15, 0))
 static void wlan_hdd_cfg80211_set_wiphy_oce_scan_flags(struct wiphy *wiphy)
@@ -15206,6 +15217,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
+	bool is_bigtk_supported;
 
 	if (!wiphy) {
 		hdd_err("Invalid wiphy");
@@ -15229,6 +15241,13 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 						     &dfs_master_capable);
 	if (QDF_IS_STATUS_SUCCESS(status) && dfs_master_capable)
 		wlan_hdd_cfg80211_set_dfs_offload_feature(wiphy);
+
+
+	status = ucfg_mlme_get_bigtk_support(hdd_ctx->psoc,
+					     &is_bigtk_supported);
+
+	if (QDF_IS_STATUS_SUCCESS(status) && is_bigtk_supported)
+		wlan_hdd_cfg80211_set_bigtk_flags(wiphy);
 
 	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc,
 						    &is_oce_sta_enabled);
@@ -16746,6 +16765,35 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	return errno;
 }
+
+#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+static int _wlan_hdd_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
+						     struct net_device *ndev,
+						     u8 key_index)
+{
+	hdd_enter();
+	return 0;
+}
+
+static int wlan_hdd_cfg80211_set_default_beacon_key(struct wiphy *wiphy,
+						    struct net_device *ndev,
+						    u8 key_index)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = _wlan_hdd_cfg80211_set_default_beacon_key(wiphy, ndev,
+							  key_index);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+#endif
 
 void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid, uint8_t *ssid,
@@ -23306,6 +23354,9 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.mgmt_tx = wlan_hdd_mgmt_tx,
 	.mgmt_tx_cancel_wait = wlan_hdd_cfg80211_mgmt_tx_cancel_wait,
 	.set_default_mgmt_key = wlan_hdd_set_default_mgmt_key,
+#if defined (CFG80211_BIGTK_CONFIGURATION_SUPPORT)
+	.set_default_beacon_key = wlan_hdd_cfg80211_set_default_beacon_key,
+#endif
 	.set_txq_params = wlan_hdd_set_txq_params,
 	.dump_station = wlan_hdd_cfg80211_dump_station,
 	.get_station = wlan_hdd_cfg80211_get_station,

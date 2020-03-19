@@ -5070,6 +5070,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool go_force_11n_for_11ac = 0;
 	bool bval = false;
 	bool enable_dfs_scan = true;
+	struct s_ext_cap *p_ext_cap;
 
 	hdd_enter();
 
@@ -5206,6 +5207,29 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	if (adapter->device_mode == QDF_SAP_MODE ||
 	    adapter->device_mode == QDF_P2P_GO_MODE) {
+		ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_EXTCAP,
+						   beacon->tail,
+						   beacon->tail_len);
+		if (ie && (ie[0] != DOT11F_EID_EXTCAP ||
+		    ie[1] > DOT11F_IE_EXTCAP_MAX_LEN)) {
+			hdd_err("Invalid IEs eid: %d elem_len: %d", ie[0],
+				ie[1]);
+			ret = -EINVAL;
+			goto error;
+		}
+		if (ie) {
+			bool target_bigtk_support = false;
+
+			p_ext_cap = (struct s_ext_cap *)(&ie[2]);
+			hdd_err("beacon protection %d",
+				p_ext_cap->beacon_protection_enable);
+			ucfg_mlme_get_bigtk_support(hdd_ctx->psoc,
+						    &target_bigtk_support);
+			if (target_bigtk_support &&
+			    p_ext_cap->beacon_protection_enable)
+				mlme_set_bigtk_support(adapter->vdev, true);
+		}
+
 		ie = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
 					      beacon->tail, beacon->tail_len);
 		if ((adapter->device_mode == QDF_SAP_MODE) && ie) {

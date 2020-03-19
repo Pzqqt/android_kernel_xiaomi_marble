@@ -455,6 +455,8 @@ wlan_mlme_update_cfg_with_tgt_caps(struct wlan_objmgr_psoc *psoc,
 
 	mlme_obj->cfg.gen.data_stall_recovery_fw_support =
 				tgt_caps->data_stall_recovery_fw_support;
+
+	mlme_obj->cfg.gen.bigtk_support = tgt_caps->bigtk_support;
 }
 
 #ifdef WLAN_FEATURE_11AX
@@ -2017,6 +2019,19 @@ QDF_STATUS wlan_mlme_set_go_11ac_override(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 	mlme_obj->cfg.sap_cfg.go_11ac_override = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
+				       bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*value = mlme_obj->cfg.gen.bigtk_support;
 
 	return QDF_STATUS_SUCCESS;
 }

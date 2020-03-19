@@ -2154,6 +2154,8 @@ static QDF_STATUS wma_unified_bcn_tmpl_send(tp_wma_handle wma,
 	params.tmpl_len = tmpl_len;
 	params.frm = frm;
 	params.tmpl_len_aligned = tmpl_len_aligned;
+	params.enable_bigtk =
+		mlme_get_bigtk_support(wma->interfaces[vdev_id].vdev);
 	if (bcn_info->csa_count_offset &&
 	    (bcn_info->csa_count_offset > bytes_to_strip))
 		params.csa_switch_count_offset =
