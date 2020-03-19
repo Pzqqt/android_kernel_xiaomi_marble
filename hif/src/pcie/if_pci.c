@@ -2048,6 +2048,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 	/* todo: consider replacing this with an srng field */
 	if (((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074V2) ||
+	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA5018) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA6018)) &&
 	    (hif_sc->bus_type == QDF_BUS_TYPE_AHB)) {
 		hif_sc->per_ce_irq = true;
@@ -2068,6 +2069,7 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 
 	if (((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA8074V2) ||
+	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA5018) ||
 	     (hif_sc->target_info.target_type == TARGET_TYPE_QCA6018)) &&
 	    (hif_sc->bus_type == QDF_BUS_TYPE_PCI))
 		HIF_INFO_MED("%s: Skip irq config for PCI based 8074 target",
@@ -3597,6 +3599,7 @@ int hif_configure_irq(struct hif_softc *scn)
 	case TARGET_TYPE_QCA8074:
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6018:
+	case TARGET_TYPE_QCA5018:
 		ret = hif_ahb_configure_irq(sc);
 		break;
 	default:

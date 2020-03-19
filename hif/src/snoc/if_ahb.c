@@ -489,6 +489,7 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 		/* Should not be executed on 8074 platform */
 		if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+		    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 		    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 			hif_ahb_clk_enable_disable(&pdev->dev, 0);
 
@@ -607,6 +608,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			HIF_INFO("error in enabling soc\n");
@@ -625,6 +627,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 err_target_sync:
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
 	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		HIF_INFO("Error: Disabling target\n");
 		hif_ahb_disable_bus(ol_sc);
@@ -733,9 +736,10 @@ void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id)
 			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
+			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA6018) {
 				/* Enable destination ring interrupts for
-				 * 8074, 8074V2 and 6018
+				 * 8074, 8074V2, 6018 and 50xx
 				 */
 				regval = hif_read32_mb(scn, scn->mem +
 					HOST_IE_ADDRESS_3);
@@ -783,9 +787,10 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 			hif_write32_mb(scn, scn->mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
+			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA6018) {
 				/* Disable destination ring interrupts for
-				 * 8074, 8074V2 and 6018
+				 * 8074, 8074V2, 6018 and 50xx
 				 */
 				regval = hif_read32_mb(scn, scn->mem +
 					HOST_IE_ADDRESS_3);

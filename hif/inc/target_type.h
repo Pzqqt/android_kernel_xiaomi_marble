@@ -58,11 +58,14 @@ extern "C" {
 #ifndef TARGET_TYPE_QCA6490
 #define TARGET_TYPE_QCA6490   27
 #endif
-
 /* Moselle */
 #ifndef TARGET_TYPE_QCA6750
 #define TARGET_TYPE_QCA6750 28
 #endif
+#ifndef TARGET_TYPE_QCA5018
+#define TARGET_TYPE_QCA5018   29
+#endif
+
 
 #ifdef __cplusplus
 }

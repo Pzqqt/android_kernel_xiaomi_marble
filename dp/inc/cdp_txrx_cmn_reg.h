@@ -65,7 +65,8 @@ ol_txrx_soc_attach(void *scn_handle, struct ol_if_ops *dp_ol_if_ops);
  *
  * Return: DP SOC handle on success, NULL on failure
  */
-#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
+	defined(QCA_WIFI_QCA5018)
 struct cdp_soc_t *
 dp_soc_attach_wifi3(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		    struct hif_opaque_softc *hif_handle,
@@ -111,6 +112,7 @@ ol_txrx_soc_handle cdp_soc_attach(u_int16_t devid,
 	case LITHIUM_DP: /*FIXME Add lithium devide IDs */
 	case QCA8074_DEVICE_ID: /* Hawekeye */
 	case QCA8074V2_DEVICE_ID: /* Hawekeye V2*/
+	case QCA5018_DEVICE_ID:
 	case QCA6290_DEVICE_ID:
 	case QCN9000_DEVICE_ID:
 	case QCA6390_DEVICE_ID:

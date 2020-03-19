@@ -66,6 +66,7 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCN9000 21
 #define HIF_TYPE_QCA6490 22
 #define HIF_TYPE_QCA6750 23
+#define HIF_TYPE_QCA5018 24
 
 #ifdef IPA_OFFLOAD
 #define DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE   37

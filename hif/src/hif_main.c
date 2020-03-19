@@ -39,7 +39,8 @@
 #include "qdf_status.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
-#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018)
+#if defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
+	defined(QCA_WIFI_QCA5018)
 #include "hal_api.h"
 #endif
 #include "hif_napi.h"
@@ -525,9 +526,9 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 }
 
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
-     defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
-     defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
-     defined(QCA_WIFI_QCA6750))
+	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018))
 static QDF_STATUS hif_hal_attach(struct hif_softc *scn)
 {
 	if (ce_srng_based(scn)) {
@@ -921,6 +922,12 @@ int hif_get_device_type(uint32_t device_id,
 		*hif_type = HIF_TYPE_QCA6018;
 		*target_type = TARGET_TYPE_QCA6018;
 		HIF_INFO(" *********** QCA6018 *************\n");
+		break;
+
+	case QCA5018_DEVICE_ID:
+		*hif_type = HIF_TYPE_QCA5018;
+		*target_type = TARGET_TYPE_QCA5018;
+		HIF_INFO(" *********** qca5018 *************\n");
 		break;
 
 	default:

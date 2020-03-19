@@ -87,6 +87,7 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
+	     (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	     (tgt_info->target_type == TARGET_TYPE_QCA6018))) ||
 	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
 	     (tgt_info->target_type == TARGET_TYPE_QCA6750)) ||
@@ -168,6 +169,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA8074V2) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCN9000) ||
+	      (tgt_info->target_type == TARGET_TYPE_QCA5018) ||
 	      (tgt_info->target_type == TARGET_TYPE_QCA6018))) ||
 	    (scn->bus_type ==  QDF_BUS_TYPE_IPCI &&
 	     (tgt_info->target_type == TARGET_TYPE_QCA6750)) ||

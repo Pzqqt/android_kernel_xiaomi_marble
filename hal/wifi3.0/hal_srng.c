@@ -43,6 +43,9 @@ void hal_qcn9000_attach(struct hal_soc *hal);
 #ifdef QCA_WIFI_QCA6750
 void hal_qca6750_attach(struct hal_soc *hal);
 #endif
+#ifdef QCA_WIFI_QCA5018
+void hal_qca5018_attach(struct hal_soc *hal);
+#endif
 
 #ifdef ENABLE_VERBOSE_DEBUG
 bool is_hal_verbose_debug_enabled;
@@ -323,6 +326,11 @@ static void hal_target_based_configure(struct hal_soc *hal)
 		 */
 		hal->static_window_map = true;
 		hal_qcn9000_attach(hal);
+	break;
+#endif
+#ifdef QCA_WIFI_QCA5018
+	case TARGET_TYPE_QCA5018:
+		hal_qca5018_attach(hal);
 	break;
 #endif
 	default:
