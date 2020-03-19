@@ -2387,6 +2387,10 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 	iface = &wma->interfaces[vdev_id];
 	vdev = iface->vdev;
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!mlme_obj) {
+		WMA_LOGE(FL("failed to get mlme_obj"));
+		return QDF_STATUS_E_INVAL;
+	}
 	mlme_obj->proto.sta.assoc_id = 0;
 
 	status = vdev_mgr_up_send(mlme_obj);

@@ -5388,8 +5388,10 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 		return;
 	}
 	iface = &wma->interfaces[session_id];
-	if (!iface)
-		wma_info("iface not found for session id %d", session_id);
+	if (!iface) {
+		wma_err("iface not found for session id %d", session_id);
+		return;
+	}
 
 	if (cipher_type == WLAN_CRYPTO_CIPHER_AES_GMAC ||
 	    cipher_type == WLAN_CRYPTO_CIPHER_AES_GMAC_256 ||
