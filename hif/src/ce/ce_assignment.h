@@ -980,7 +980,7 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 		512, NULL,},
 	/* target->host WMI */
 	{/*CE2*/ (CE_ATTR_FLAGS), 0, 0,  2048,
-		32, NULL,},
+		128, NULL,},
 	/* host->target WMI */
 	{/*CE3*/ (CE_ATTR_FLAGS), 0, 32, 2048, 0, NULL,},
 	/* host->target HTT */
