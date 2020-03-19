@@ -139,6 +139,7 @@ struct wlan_mlme_roam {
  * @disconnect_info: Disconnection information
  * @vdev_stop_type: vdev stop type request
  * @roam_off_state: Roam offload state
+ * @bigtk_vdev_support: BIGTK feature support for this vdev (SAP)
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -155,6 +156,7 @@ struct mlme_legacy_priv {
 	struct wlan_disconnect_info disconnect_info;
 	uint32_t vdev_stop_type;
 	struct wlan_mlme_roam mlme_roam;
+	bool bigtk_vdev_support;
 };
 
 /**

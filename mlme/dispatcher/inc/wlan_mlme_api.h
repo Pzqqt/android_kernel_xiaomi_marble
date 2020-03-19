@@ -795,6 +795,16 @@ QDF_STATUS wlan_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
 
 /**
+ * wlan_mlme_get_bigtk_support() - Get the BIGTK support
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
+				       bool *value);
+
+/**
  * wlan_mlme_get_oce_sap_enabled_info() - Get the OCE feature enable
  * info for SAP
  * @psoc: pointer to psoc object

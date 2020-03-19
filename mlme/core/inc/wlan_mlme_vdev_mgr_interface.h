@@ -111,6 +111,10 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
  */
 bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev);
 
+QDF_STATUS mlme_set_bigtk_support(struct wlan_objmgr_vdev *vdev, bool val);
+
+bool mlme_get_bigtk_support(struct wlan_objmgr_vdev *vdev);
+
 /**
  * mlme_set_connection_fail() - set connection failure flag
  * @vdev: vdev pointer
