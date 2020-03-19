@@ -1760,7 +1760,6 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 	power->power_usage.len = CFG_POWER_USAGE_MAX_LEN;
 	qdf_mem_copy(power->power_usage.data, cfg_get(psoc, CFG_POWER_USAGE),
 		     power->power_usage.len);
-	power->max_tx_power = cfg_get(psoc, CFG_MAX_TX_POWER);
 	power->current_tx_power_level =
 			(uint8_t)cfg_default(CFG_CURRENT_TX_POWER_LEVEL);
 	power->local_power_constraint =
