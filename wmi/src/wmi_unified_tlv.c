@@ -6729,6 +6729,12 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->num_max_sta_vdevs = tgt_res_cfg->num_max_sta_vdevs;
 	resource_cfg->max_bssid_indicator = tgt_res_cfg->max_bssid_indicator;
 	resource_cfg->max_num_group_keys = tgt_res_cfg->max_num_group_keys;
+	/* Deferred AI: Max rnr neighbors supported in multisoc case
+	 * where in SoC can support 6ghz. During WMI init of a SoC
+	 * currently there is no way to figure if another SOC is plugged in
+	 * and it can support 6Ghz.
+	 */
+	resource_cfg->max_rnr_neighbours = MAX_SUPPORTED_NEIGHBORS;
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
 	if (tgt_res_cfg->mgmt_comp_evt_bundle_support)

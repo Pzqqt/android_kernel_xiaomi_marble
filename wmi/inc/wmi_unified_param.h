@@ -5261,6 +5261,7 @@ struct wmi_host_fw_abi_ver {
  * @ast_tid_low_mask_enable: enable tid valid mask for low priority flow
  * @nan_separate_iface_support: Separate iface creation for NAN
  * @time_sync_ftm: enable ftm based time sync
+ * @max_rnr_neighbours: Max supported RNR neighbors in multisoc APs
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5359,6 +5360,7 @@ typedef struct {
 		 ast_tid_low_mask_enable:8;
 	bool nan_separate_iface_support;
 	bool time_sync_ftm;
+	uint32_t max_rnr_neighbours;
 } target_resource_config;
 
 /**
@@ -8150,4 +8152,13 @@ struct wmi_host_ani_level_event {
 	uint32_t ani_level;
 };
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
+
+#define WMI_HOST_TBTT_OFFSET_INVALID 0xffffffff
+#define MAX_SUPPORTED_NEIGHBORS 16
+
+/* command type for WMI_PDEV_TBTT_OFFSET_SYNC_CMDID */
+enum wmi_host_tbtt_offset_cmd_type {
+	WMI_HOST_PDEV_GET_TBTT_OFFSET,
+	WMI_HOST_PDEV_SET_TBTT_OFFSET,
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */

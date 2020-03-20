@@ -167,3 +167,13 @@ QDF_STATUS wmi_extract_multi_vdev_restart_resp_event(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_multisoc_tbtt_sync_cmd(wmi_unified_t wmi_handle,
+			struct rnr_tbtt_multisoc_sync_param *param)
+{
+	if (wmi_handle->ops->multisoc_tbtt_sync_cmd)
+		return wmi_handle->ops->multisoc_tbtt_sync_cmd(wmi_handle,
+				param);
+
+	return QDF_STATUS_E_FAILURE;
+}

@@ -147,6 +147,39 @@ struct sta_ps_params {
 };
 
 /**
+ * struct rnr_bss_tbtt_info_param: Reported Vdev info
+ * @bss_mac: Mac address
+ * @beacon_intval: Beacon interval of reported AP
+ * @opclass: Channel Opclass
+ * @chan_idx: Channel number
+ * @next_qtime_tbtt_high: Tbtt higher 32bit
+ * @next_qtime_tbtt_low: Tbtt lower 32bit
+ */
+struct rnr_bss_tbtt_info_param {
+	uint8_t bss_mac[QDF_MAC_ADDR_SIZE];
+	uint32_t beacon_intval;
+	uint32_t opclass;
+	uint32_t chan_idx;
+	uint32_t next_qtime_tbtt_high;
+	uint32_t next_qtime_tbtt_low;
+};
+
+/**
+ * struct rnr_tbtt_multisoc_sync_param - Params to
+ * sync tbtt with non self SoCs timers
+ * @pdev_id: Host pdev_id
+ * @rnr_vap_count: Count of Vap to be included in WMI cmd
+ * @cmd_type: Set/Get tbtt sync info
+ * @rnr_bss_tbtt: Reported AP Vap info
+ */
+struct rnr_tbtt_multisoc_sync_param {
+	uint32_t pdev_id;
+	uint8_t rnr_vap_count;
+	uint8_t cmd_type;
+	struct rnr_bss_tbtt_info_param *rnr_bss_tbtt;
+};
+
+/**
  * struct tbttoffset_params - Tbttoffset event params
  * @vdev_id: Virtual AP device identifier
  * @tbttoffset : Tbttoffset for the virtual AP device

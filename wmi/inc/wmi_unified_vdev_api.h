@@ -161,4 +161,15 @@ QDF_STATUS wmi_extract_multi_vdev_restart_resp_event(
 		struct wmi_unified *wmi_handle,
 		void *evt_buf,
 		struct multi_vdev_restart_resp *restart_rsp);
+
+/**
+ * wmi_unified_multisoc_tbtt_sync_cmd() - Send cmd to sync tbtt in multisoc case
+ * @wmi_handle: wmi handle
+ * @param: params received in rnr_tbtt_multisoc_sync_param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_multisoc_tbtt_sync_cmd(wmi_unified_t wmi_handle,
+				   struct rnr_tbtt_multisoc_sync_param *param);
 #endif
