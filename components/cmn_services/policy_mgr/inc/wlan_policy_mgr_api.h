@@ -638,6 +638,18 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			      uint8_t *pcl_weight, uint32_t weight_len);
 
 /**
+ * policy_mgr_init_chan_avoidance() - init channel avoidance in policy manager.
+ * @psoc: PSOC object information
+ * @chan_freq_list: channel frequency list
+ * @chan_cnt: channel count
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_init_chan_avoidance(struct wlan_objmgr_psoc *psoc,
+					  qdf_freq_t *chan_freq_list,
+					  uint16_t chan_cnt);
+
+/**
  * policy_mgr_update_with_safe_channel_list() - provides the safe
  * channel list
  * @psoc: PSOC object information
