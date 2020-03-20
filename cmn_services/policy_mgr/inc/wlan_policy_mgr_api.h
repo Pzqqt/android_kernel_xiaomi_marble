@@ -3350,6 +3350,7 @@ bool policy_mgr_dump_channel_list(uint32_t len,
 /**
  * policy_mgr_is_restart_sap_required() - check whether sap need restart
  * @psoc: psoc pointer
+ * @vdev_id: vdev id
  * @freq: sap current freq
  * @scc_mode: mcc to scc switch mode
  *
@@ -3359,6 +3360,7 @@ bool policy_mgr_dump_channel_list(uint32_t len,
  * Return: True or false
  */
 bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
 					qdf_freq_t freq,
 					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode);
 
