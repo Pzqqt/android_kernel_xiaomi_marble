@@ -3980,6 +3980,7 @@ static int q6afe_send_enc_config(u16 port_id,
 	struct asm_aptx_ad_speech_mode_cfg_t speech_codec_init_param;
 	struct param_hdr_v3 param_hdr;
 	int ret;
+	uint32_t frame_size_ctl_value_v2;
 
 	pr_debug("%s:update DSP for enc format = %d\n", __func__, format);
 
@@ -4067,14 +4068,38 @@ static int q6afe_send_enc_config(u16 port_id,
 			frame_ctl_param.ctl_type = enc_blk_param.
 				enc_blk_config.aac_config.frame_ctl.ctl_type;
 			frame_ctl_param.ctl_value = frame_size_ctl_value;
+
 			pr_debug("%s: send AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL\n",
-				  __func__);
+				__func__);
 			ret = q6afe_pack_and_set_param_in_band(port_id,
 					q6audio_get_port_index(port_id),
 					param_hdr,
 					(u8 *) &frame_ctl_param);
 			if (ret) {
 				pr_err("%s: AAC_FRM_SIZE_CONTROL failed %d\n",
+					__func__, ret);
+				goto exit;
+			}
+		}
+		frame_size_ctl_value_v2 = enc_blk_param.enc_blk_config.
+				aac_config.frame_ctl_v2.ctl_value;
+		if (frame_size_ctl_value_v2 > 0) {
+			param_hdr.param_id =
+				AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL;
+			param_hdr.param_size = sizeof(frame_ctl_param);
+			frame_ctl_param.ctl_type = enc_blk_param.
+				enc_blk_config.aac_config.frame_ctl_v2.ctl_type;
+			frame_ctl_param.ctl_value = enc_blk_param.
+				enc_blk_config.aac_config.frame_ctl_v2.ctl_value;
+
+			pr_debug("%s: send AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL V2\n",
+				__func__);
+			ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_hdr,
+					(u8 *) &frame_ctl_param);
+			if (ret) {
+				pr_err("%s: AAC_FRM_SIZE_CONTROL with VBR support failed %d\n",
 					__func__, ret);
 				goto exit;
 			}
