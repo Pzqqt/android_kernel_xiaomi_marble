@@ -2812,6 +2812,8 @@ static void dp_check_ba_buffersize(struct dp_peer *peer,
 	}
 }
 
+#define DP_RX_BA_SESSION_DISABLE  1
+
 /*
  * dp_addba_requestprocess_wifi3() - Process ADDBA request from peer
  *
@@ -2863,6 +2865,25 @@ int dp_addba_requestprocess_wifi3(struct cdp_soc_t *cdp_soc,
 		status = QDF_STATUS_E_FAILURE;
 		goto fail;
 	}
+
+	if (rx_tid->rx_ba_win_size_override == DP_RX_BA_SESSION_DISABLE) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s disable BA session",
+			    __func__);
+
+		buffersize = 1;
+	} else if (rx_tid->rx_ba_win_size_override) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s override BA win to %d", __func__,
+			      rx_tid->rx_ba_win_size_override);
+
+		buffersize = rx_tid->rx_ba_win_size_override;
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s restore BA win %d based on addba req",
+			    __func__, buffersize);
+	}
+
 	dp_check_ba_buffersize(peer, tid, buffersize);
 
 	if (dp_rx_tid_setup_wifi3(peer, tid,
@@ -2881,6 +2902,9 @@ int dp_addba_requestprocess_wifi3(struct cdp_soc_t *cdp_soc,
 		rx_tid->statuscode = rx_tid->userstatuscode;
 	else
 		rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
+
+	if (rx_tid->rx_ba_win_size_override == DP_RX_BA_SESSION_DISABLE)
+		rx_tid->statuscode = IEEE80211_STATUS_REFUSED;
 
 	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 
@@ -3277,6 +3301,65 @@ dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 	 */
 
 	dp_peer_unref_del_find_by_id(peer);
+}
+
+QDF_STATUS
+dp_rx_delba_ind_handler(void *soc_handle, uint16_t peer_id,
+			uint8_t tid, uint16_t win_sz)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+	struct dp_peer *peer;
+	struct dp_rx_tid *rx_tid;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Couldn't find peer from ID %d",
+			  peer_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_assert_always(tid < DP_MAX_TIDS);
+
+	rx_tid = &peer->rx_tid[tid];
+
+	if (rx_tid->hw_qdesc_vaddr_unaligned) {
+		if (!rx_tid->delba_tx_status) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "%s: PEER_ID: %d TID: %d, BA win: %d ",
+				  __func__, peer_id, tid, win_sz);
+
+			qdf_spin_lock_bh(&rx_tid->tid_lock);
+
+			rx_tid->delba_tx_status = 1;
+
+			rx_tid->rx_ba_win_size_override =
+			    qdf_min((uint16_t)63, win_sz);
+
+			rx_tid->delba_rcode =
+			    IEEE80211_REASON_QOS_SETUP_REQUIRED;
+
+			qdf_spin_unlock_bh(&rx_tid->tid_lock);
+
+			if (soc->cdp_soc.ol_ops->send_delba)
+				soc->cdp_soc.ol_ops->send_delba(
+					peer->vdev->pdev->soc->ctrl_psoc,
+					peer->vdev->vdev_id,
+					peer->mac_addr.raw,
+					tid,
+					rx_tid->delba_rcode);
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "BA session is not setup for TID:%d ", tid);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	dp_peer_unref_del_find_by_id(peer);
+
+	return status;
 }
 
 #ifdef DP_PEER_EXTENDED_API

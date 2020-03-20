@@ -4347,6 +4347,27 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 						 is_wds);
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_RX_DELBA:
+		{
+			uint16_t peer_id;
+			uint8_t tid;
+			uint8_t win_sz;
+			QDF_STATUS status;
+
+			peer_id = HTT_RX_DELBA_PEER_ID_GET(*msg_word);
+			tid = HTT_RX_DELBA_TID_GET(*msg_word);
+			win_sz = HTT_RX_DELBA_WIN_SIZE_GET(*msg_word);
+
+			status = dp_rx_delba_ind_handler(
+				soc->dp_soc,
+				peer_id, tid, win_sz);
+
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_INFO,
+				  FL("DELBA PeerID %d BAW %d TID %d stat %d"),
+				  peer_id, win_sz, tid, status);
+			break;
+		}
 	default:
 		break;
 	};
