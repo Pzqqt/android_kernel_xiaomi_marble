@@ -28,8 +28,6 @@
 /* Include files */
 #include <wmi_unified_api.h>
 
-#define POLICY_MGR_MAX_CHANNEL_LIST 128
-
 /**
  *  Some max value greater than the max length of the channel list
  */
@@ -1145,8 +1143,8 @@ struct policy_mgr_hw_mode {
  * @pcl_len: Number of channels in the PCL
  */
 struct policy_mgr_pcl_list {
-	uint32_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
-	uint8_t weight_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t pcl_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 	uint32_t pcl_len;
 };
 
@@ -1163,12 +1161,12 @@ struct policy_mgr_pcl_list {
  * @weight_list: Weights assigned by policy manager
  */
 struct policy_mgr_pcl_chan_weights {
-	uint32_t pcl_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t pcl_list[NUM_CHANNELS];
 	uint32_t pcl_len;
-	uint32_t saved_chan_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint32_t saved_chan_list[NUM_CHANNELS];
 	uint32_t saved_num_chan;
-	uint8_t weighed_valid_list[POLICY_MGR_MAX_CHANNEL_LIST];
-	uint8_t weight_list[POLICY_MGR_MAX_CHANNEL_LIST];
+	uint8_t weighed_valid_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 };
 
 /**
