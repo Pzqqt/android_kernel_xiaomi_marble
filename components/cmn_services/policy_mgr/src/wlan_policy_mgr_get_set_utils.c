@@ -4320,13 +4320,14 @@ bool policy_mgr_get_5g_scc_prefer(
 }
 
 bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
+					uint8_t vdev_id,
 					qdf_freq_t freq,
 					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode)
 {
-	uint32_t i;
+	uint8_t i, mac = 0;
 	bool restart_required = false;
 	bool is_sta_p2p_cli;
-	bool is_same_band;
+	bool is_same_mac;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_conc_connection_info *connection;
 
@@ -4343,18 +4344,25 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	connection = pm_conc_connection_list;
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
+		if (connection[i].vdev_id == vdev_id) {
+			mac = connection[i].mac;
+			break;
+		}
+	}
+	if (i == MAX_NUMBER_OF_CONC_CONNECTIONS) {
+		policy_mgr_err("Invalid vdev id: %d", vdev_id);
+		return false;
+	}
+
+	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
 		is_sta_p2p_cli =
 			connection[i].in_use &&
 			(connection[i].mode == PM_STA_MODE ||
 			connection[i].mode == PM_P2P_CLIENT_MODE);
+		is_same_mac = connection[i].mac == mac &&
+			      connection[i].freq != freq;
 
-		is_same_band =
-			wlan_reg_is_24ghz_ch_freq(freq) ==
-			wlan_reg_is_24ghz_ch_freq(connection[i].freq) &&
-			connection[i].freq != freq;
-
-		if (is_sta_p2p_cli &&
-		    (is_same_band || !policy_mgr_is_dbs_enable(psoc))) {
+		if (is_sta_p2p_cli && is_same_mac) {
 			restart_required = true;
 			break;
 		}

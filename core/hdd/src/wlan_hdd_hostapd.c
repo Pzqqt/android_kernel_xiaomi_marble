@@ -3204,7 +3204,9 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 
 	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
 					   &mcc_to_scc_switch);
-	if (!policy_mgr_is_restart_sap_required(hdd_ctx->psoc, *ch_freq,
+	policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch_freq);
+	if (!policy_mgr_is_restart_sap_required(hdd_ctx->psoc, vdev_id,
+						sap_ch_freq,
 						mcc_to_scc_switch)) {
 		wlansap_context_put(sap_context);
 		hdd_debug("SAP needn't restart");
@@ -3218,7 +3220,6 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * Need to take care of 3 port cases with 2 STA iface in future.
 	 */
 	intf_ch_freq = wlansap_check_cc_intf(sap_context);
-	policy_mgr_get_chan_by_session_id(psoc, vdev_id, &sap_ch_freq);
 	hdd_debug("sap_vdev %d intf_ch: %d, orig freq: %d",
 		  vdev_id, intf_ch_freq, sap_ch_freq);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
