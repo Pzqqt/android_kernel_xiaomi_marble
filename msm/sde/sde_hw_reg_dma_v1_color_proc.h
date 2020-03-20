@@ -288,5 +288,11 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg);
  */
 void reg_dmav2_setup_vig_gamutv61(struct sde_hw_pipe *ctx, void *cfg);
 
+/**
+ * reg_dmav1_setup_spr_init_cfgv1 - function to configure spr through LUTDMA
+ * @ctx: Pointer to dspp context
+ * @cfg: Pointer to configuration
+ */
+void reg_dmav1_setup_spr_init_cfgv1(struct sde_hw_dspp *ctx, void *cfg);
 
 #endif /* _SDE_HW_REG_DMA_V1_COLOR_PROC_H */

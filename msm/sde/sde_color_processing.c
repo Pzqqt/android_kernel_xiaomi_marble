@@ -58,6 +58,8 @@ static void dspp_ltm_install_property(struct drm_crtc *crtc);
 
 static void dspp_rc_install_property(struct drm_crtc *crtc);
 
+static void dspp_spr_install_property(struct drm_crtc *crtc);
+
 static void dspp_vlut_install_property(struct drm_crtc *crtc);
 
 static void dspp_gamut_install_property(struct drm_crtc *crtc);
@@ -108,6 +110,7 @@ do { \
 	func[SDE_DSPP_SIXZONE] = dspp_sixzone_install_property; \
 	func[SDE_DSPP_AD] = dspp_ad_install_property; \
 	func[SDE_DSPP_LTM] = dspp_ltm_install_property; \
+	func[SDE_DSPP_SPR] = dspp_spr_install_property; \
 	func[SDE_DSPP_VLUT] = dspp_vlut_install_property; \
 	func[SDE_DSPP_GAMUT] = dspp_gamut_install_property; \
 	func[SDE_DSPP_GC] = dspp_gc_install_property; \
@@ -164,6 +167,7 @@ enum sde_cp_crtc_features {
 	SDE_CP_CRTC_DSPP_LTM_VLUT,
 	SDE_CP_CRTC_DSPP_SB,
 	SDE_CP_CRTC_DSPP_RC_MASK,
+	SDE_CP_CRTC_DSPP_SPR_INIT,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
 
@@ -790,6 +794,22 @@ static int check_rc_pu_feature(struct sde_hw_dspp *hw_dspp,
 	return ret;
 }
 
+static int set_spr_init_feature(struct sde_hw_dspp *hw_dspp,
+				struct sde_hw_cp_cfg *hw_cfg,
+				struct sde_crtc *sde_crtc)
+{
+	int ret = 0;
+
+	if (!sde_crtc || !hw_dspp || !hw_dspp->ops.setup_spr_init_config) {
+		DRM_ERROR("invalid arguments\n");
+		ret = -EINVAL;
+	} else {
+		hw_dspp->ops.setup_spr_init_config(hw_dspp, hw_cfg);
+	}
+
+	return ret;
+}
+
 feature_wrapper check_crtc_feature_wrappers[SDE_CP_CRTC_MAX_FEATURES];
 #define setup_check_crtc_feature_wrappers(wrappers) \
 do { \
@@ -839,6 +859,7 @@ do { \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = set_ltm_queue_buf_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_LTM_HIST_CTL] = set_ltm_hist_crtl_feature; \
 	wrappers[SDE_CP_CRTC_DSPP_RC_MASK] = set_rc_mask_feature; \
+	wrappers[SDE_CP_CRTC_DSPP_SPR_INIT] = set_spr_init_feature; \
 } while (0)
 
 feature_wrapper set_crtc_pu_feature_wrappers[SDE_CP_CRTC_MAX_PU_FEATURES];
@@ -1499,6 +1520,7 @@ static const int dspp_feature_to_sub_blk_tbl[SDE_CP_CRTC_MAX_FEATURES] = {
 	[SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_LTM_VLUT] = SDE_DSPP_LTM,
 	[SDE_CP_CRTC_DSPP_SB] = SDE_DSPP_SB,
+	[SDE_CP_CRTC_DSPP_SPR_INIT] = SDE_DSPP_SPR,
 	[SDE_CP_CRTC_DSPP_RC_MASK] = SDE_DSPP_RC,
 	[SDE_CP_CRTC_DSPP_MAX] = SDE_DSPP_MAX,
 	[SDE_CP_CRTC_LM_GC] = SDE_DSPP_MAX,
@@ -2543,6 +2565,30 @@ static void dspp_rc_install_property(struct drm_crtc *crtc)
 				SDE_CP_CRTC_DSPP_RC_MASK,
 				sizeof(struct drm_msm_rc_mask_cfg));
 
+		break;
+	default:
+		DRM_ERROR("version %d not supported\n", version);
+		break;
+	}
+}
+
+static void dspp_spr_install_property(struct drm_crtc *crtc)
+{
+	struct sde_kms *kms = NULL;
+	u32 version = 0;
+
+	kms = get_kms(crtc);
+	if (!kms) {
+		DRM_ERROR("!kms = %d\n ", !kms);
+		return;
+	}
+
+	version = kms->catalog->dspp[0].sblk->spr.version >> 16;
+	switch (version) {
+	case 1:
+		sde_cp_crtc_install_blob_property(crtc, "SDE_SPR_INIT_CFG_V1",
+				SDE_CP_CRTC_DSPP_SPR_INIT,
+				sizeof(struct drm_msm_spr_init_cfg));
 		break;
 	default:
 		DRM_ERROR("version %d not supported\n", version);

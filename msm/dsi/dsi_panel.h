@@ -155,6 +155,11 @@ struct drm_panel_esd_config {
 	u32 groups;
 };
 
+struct dsi_panel_spr_info {
+	bool enable;
+	enum msm_display_spr_pack_type pack_type;
+};
+
 struct dsi_panel {
 	const char *name;
 	const char *type;
@@ -202,6 +207,8 @@ struct dsi_panel {
 
 	char dce_pps_cmd[DSI_CMD_PPS_SIZE];
 	enum dsi_dms_mode dms_mode;
+
+	struct dsi_panel_spr_info spr_info;
 
 	bool sync_broadcast_en;
 

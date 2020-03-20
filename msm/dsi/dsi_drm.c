@@ -650,6 +650,10 @@ int dsi_conn_set_info_blob(struct drm_connector *connector,
 		break;
 	}
 
+	if (panel->spr_info.enable)
+		sde_kms_info_add_keystr(info, "spr_pack_type",
+			msm_spr_pack_type_str[panel->spr_info.pack_type]);
+
 	if (mode_info && mode_info->roi_caps.enabled) {
 		sde_kms_info_add_keyint(info, "partial_update_num_roi",
 				mode_info->roi_caps.num_roi);

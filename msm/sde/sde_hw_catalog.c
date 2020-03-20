@@ -398,6 +398,13 @@ enum {
 };
 
 enum {
+	SPR_OFF,
+	SPR_LEN,
+	SPR_VERSION,
+	SPR_PROP_MAX,
+};
+
+enum {
 	MIXER_OFF,
 	MIXER_LEN,
 	MIXER_PAIR_MASK,
@@ -715,6 +722,12 @@ static struct sde_prop_type rc_prop[] = {
 	{RC_LEN, "qcom,sde-dspp-rc-size", false, PROP_TYPE_U32},
 	{RC_VERSION, "qcom,sde-dspp-rc-version", false, PROP_TYPE_U32},
 	{RC_MEM_TOTAL_SIZE, "qcom,sde-dspp-rc-mem-size", false, PROP_TYPE_U32},
+};
+
+static struct sde_prop_type spr_prop[] = {
+	{SPR_OFF, "qcom,sde-dspp-spr-off", false, PROP_TYPE_U32_ARRAY},
+	{SPR_LEN, "qcom,sde-dspp-spr-size", false, PROP_TYPE_U32},
+	{SPR_VERSION, "qcom,sde-dspp-spr-version", false, PROP_TYPE_U32},
 };
 
 static struct sde_prop_type ds_top_prop[] = {
@@ -2489,6 +2502,46 @@ end:
 	return rc;
 }
 
+static int _sde_dspp_spr_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int off_count, i;
+	struct sde_dt_props *props;
+	struct sde_dspp_cfg *dspp;
+	struct sde_dspp_sub_blks *sblk;
+
+	props = sde_get_dt_props(np, SPR_PROP_MAX, spr_prop,
+			ARRAY_SIZE(spr_prop), &off_count);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	sde_cfg->spr_count = off_count;
+	if (off_count > sde_cfg->dspp_count) {
+		SDE_ERROR("limiting %d spr blocks to %d DSPP instances\n",
+				off_count, sde_cfg->dspp_count);
+		sde_cfg->spr_count = sde_cfg->dspp_count;
+	}
+
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		dspp = &sde_cfg->dspp[i];
+		sblk = sde_cfg->dspp[i].sblk;
+
+		sblk->spr.id = SDE_DSPP_SPR;
+		if (props->exists[SPR_OFF] && i < off_count) {
+			sblk->spr.base = PROP_VALUE_ACCESS(props->values,
+					SPR_OFF, i);
+			sblk->spr.len = PROP_VALUE_ACCESS(props->values,
+					SPR_LEN, 0);
+			sblk->spr.version = PROP_VALUE_ACCESS(props->values,
+					SPR_VERSION, 0);
+			set_bit(SDE_DSPP_SPR, &dspp->features);
+		}
+	}
+
+	sde_put_dt_props(props);
+	return 0;
+}
+
 static int _sde_rc_parse_dt(struct device_node *np,
 		struct sde_mdss_cfg *sde_cfg)
 {
@@ -2669,8 +2722,11 @@ static int sde_dspp_parse_dt(struct device_node *np,
 	if (rc)
 		goto end;
 
-	rc = _sde_rc_parse_dt(np, sde_cfg);
+	rc = _sde_dspp_spr_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
 
+	rc = _sde_rc_parse_dt(np, sde_cfg);
 end:
 	return rc;
 }

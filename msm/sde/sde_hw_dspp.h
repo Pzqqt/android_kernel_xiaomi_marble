@@ -249,6 +249,13 @@ struct sde_hw_dspp_ops {
 	 * Return: 0 on success, non-zero otherwise.
 	 */
 	int (*setup_rc_data)(struct sde_hw_dspp *ctx, void *cfg);
+
+	/**
+	 * setup_spr_init_config - function to configure spr hw block
+	 * @ctx: Pointer to dspp context
+	 * @cfg: Pointer to configuration
+	 */
+	void (*setup_spr_init_config)(struct sde_hw_dspp *ctx, void *cfg);
 };
 
 /**
