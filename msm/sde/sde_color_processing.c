@@ -1547,6 +1547,7 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 			if (feature == SDE_CP_CRTC_DSPP_SB) {
 				if (!dspp->sb_dma_in_use)
 					continue;
+				dspp->sb_dma_in_use = false;
 
 				_flush_sb_dma_hw(active_ctls, ctl,
 						sizeof(active_ctls));
