@@ -255,24 +255,25 @@ void target_if_cfr_default_ta_ra_config(struct cfr_rcc_param *rcc_info,
 
 	uint8_t def_mac[QDF_MAC_ADDR_SIZE] = {0xFF, 0xFF, 0xFF,
 		0xFF, 0xFF, 0xFF};
-	uint8_t null_mac[QDF_MAC_ADDR_SIZE] = {0, 0, 0, 0, 0, 0};
+	uint8_t null_mac[QDF_MAC_ADDR_SIZE] = {0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00};
 
 	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
 		if (qdf_test_bit(grp_id, (unsigned long *)&reset_cfg)) {
 			curr_cfg = &rcc_info->curr[grp_id];
 			qdf_mem_copy(curr_cfg->tx_addr,
-				     def_mac, QDF_MAC_ADDR_SIZE);
+				     null_mac, QDF_MAC_ADDR_SIZE);
 			qdf_mem_copy(curr_cfg->tx_addr_mask,
-				     null_mac, QDF_MAC_ADDR_SIZE);
-			qdf_mem_copy(curr_cfg->rx_addr,
 				     def_mac, QDF_MAC_ADDR_SIZE);
-			qdf_mem_copy(curr_cfg->rx_addr_mask,
+			qdf_mem_copy(curr_cfg->rx_addr,
 				     null_mac, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(curr_cfg->rx_addr_mask,
+				     def_mac, QDF_MAC_ADDR_SIZE);
 			curr_cfg->bw = 0xf;
 			curr_cfg->nss = 0xff;
-			curr_cfg->mgmt_subtype_filter = 0xffff;
-			curr_cfg->ctrl_subtype_filter = 0xffff;
-			curr_cfg->data_subtype_filter = 0xffff;
+			curr_cfg->mgmt_subtype_filter = 0;
+			curr_cfg->ctrl_subtype_filter = 0;
+			curr_cfg->data_subtype_filter = 0;
 			if (!allvalid) {
 				curr_cfg->valid_ta = 0;
 				curr_cfg->valid_ta_mask = 0;
