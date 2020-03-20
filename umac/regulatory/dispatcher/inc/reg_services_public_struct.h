@@ -649,6 +649,15 @@ struct reg_start_11d_scan_req {
 };
 
 /**
+ * struct reg_11d_scan_msg: 11d scan message structure
+ * @psoc: pointer to psoc object
+ * @enable_11d_supp: enable 11d scan or disable 11d scan
+ */
+struct reg_11d_scan_msg {
+	struct wlan_objmgr_psoc *psoc;
+	bool enable_11d_supp;
+};
+/**
  * struct reg_stop_11d_scan_req: stop 11d scan request
  * @vdev_id: vdev id
  */
