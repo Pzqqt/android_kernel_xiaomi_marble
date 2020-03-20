@@ -7542,8 +7542,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 
 	case WE_POLICY_MANAGER_PCL_CMD:
 	{
-		uint32_t pcl[QDF_MAX_NUM_CHAN] = {0};
-		uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
+		uint32_t pcl[NUM_CHANNELS] = {0};
+		uint8_t weight_list[NUM_CHANNELS] = {0};
 		uint32_t pcl_len = 0, i = 0;
 
 		hdd_debug("<iwpriv wlan0 pm_pcl> is called");

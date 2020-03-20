@@ -1375,8 +1375,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	enum policy_mgr_con_mode mode;
-	uint32_t pcl_channels[QDF_MAX_NUM_CHAN + 1];
-	uint8_t pcl_weight[QDF_MAX_NUM_CHAN + 1];
+	uint32_t pcl_channels[NUM_CHANNELS + 1];
+	uint8_t pcl_weight[NUM_CHANNELS + 1];
 	struct policy_mgr_conc_connection_info info = {0};
 	uint8_t num_cxn_del = 0;
 	QDF_STATUS status;

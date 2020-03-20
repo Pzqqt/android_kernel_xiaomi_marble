@@ -412,8 +412,8 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	num_ch = chan_info->numOfChannels;
 	if (num_ch) {
 		filter->num_of_channels = num_ch;
-		if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
-			filter->num_of_channels = QDF_MAX_NUM_CHAN;
+		if (filter->num_of_channels > NUM_CHANNELS)
+			filter->num_of_channels = NUM_CHANNELS;
 		qdf_mem_copy(filter->chan_freq_list, chan_info->freq_list,
 			     filter->num_of_channels *
 			     sizeof(filter->chan_freq_list[0]));

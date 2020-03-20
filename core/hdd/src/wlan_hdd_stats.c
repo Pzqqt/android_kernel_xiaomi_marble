@@ -5149,7 +5149,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	int status;
 	bool filled = false;
 
-	if (idx > QDF_MAX_NUM_CHAN - 1)
+	if (idx > NUM_CHANNELS - 1)
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);

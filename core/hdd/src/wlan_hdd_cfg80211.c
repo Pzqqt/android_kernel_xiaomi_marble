@@ -2333,7 +2333,7 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 {
 	struct sap_config *sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_freqs[NUM_CHANNELS] = {0};
 	uint32_t chan_count;
 	uint32_t i;
 	QDF_STATUS status;
@@ -2351,7 +2351,7 @@ static int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 
 	*channel_count = 0;
 	for (i = 0; i < chan_count; i++) {
-		if (*channel_count >= QDF_MAX_NUM_CHAN)
+		if (*channel_count >= NUM_CHANNELS)
 			break;
 
 		if (band == BAND_2G &&
@@ -2469,9 +2469,9 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	struct sk_buff *skb;
 	struct sap_config *sap_config;
 	uint32_t channel_count = 0, status = -EINVAL;
-	uint32_t freq_list[QDF_MAX_NUM_CHAN] = {0};
-	uint32_t vendor_pcl_list[QDF_MAX_NUM_CHAN] = {0};
-	uint8_t vendor_weight_list[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t freq_list[NUM_CHANNELS] = {0};
+	uint32_t vendor_pcl_list[NUM_CHANNELS] = {0};
+	uint8_t vendor_weight_list[NUM_CHANNELS] = {0};
 	struct hdd_vendor_acs_chan_params acs_chan_params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	enum band_info band = BAND_2G;
@@ -2781,13 +2781,13 @@ static void wlan_hdd_trim_acs_channel_list(uint32_t *pcl, uint8_t pcl_count,
 {
 	uint16_t i, j, ch_list_count = 0;
 
-	if (*org_ch_list_count >= QDF_MAX_NUM_CHAN) {
+	if (*org_ch_list_count >= NUM_CHANNELS) {
 		hdd_err("org_ch_list_count too big %d",
 			*org_ch_list_count);
 		return;
 	}
 
-	if (pcl_count >= QDF_MAX_NUM_CHAN) {
+	if (pcl_count >= NUM_CHANNELS) {
 		hdd_err("pcl_count is too big %d", pcl_count);
 		return;
 	}
@@ -3093,7 +3093,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					&sap_config->acs_cfg.pcl_ch_count,
 					sap_config->acs_cfg.
 					pcl_channels_weight_list,
-					QDF_MAX_NUM_CHAN);
+					NUM_CHANNELS);
 
 	sap_config->acs_cfg.band = hw_mode;
 
@@ -10009,8 +10009,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	QDF_STATUS status;
 	uint32_t pcl_len = 0;
 	uint32_t pcl_len_legacy = 0;
-	uint32_t freq_list[QDF_MAX_NUM_CHAN];
-	uint32_t freq_list_legacy[QDF_MAX_NUM_CHAN];
+	uint32_t freq_list[NUM_CHANNELS];
+	uint32_t freq_list_legacy[NUM_CHANNELS];
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
@@ -10070,11 +10070,11 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	pcl_len_legacy = chan_weights->pcl_len;
 	for (i = 0; i < pcl_len_legacy; i++)
 		freq_list_legacy[i] = chan_weights->pcl_list[i];
-	chan_weights->saved_num_chan = POLICY_MGR_MAX_CHANNEL_LIST;
+	chan_weights->saved_num_chan = NUM_CHANNELS;
 	sme_get_valid_channels(chan_weights->saved_chan_list,
 			       &chan_weights->saved_num_chan);
 	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights);
-	w_pcl = qdf_mem_malloc(sizeof(struct weighed_pcl) * QDF_MAX_NUM_CHAN);
+	w_pcl = qdf_mem_malloc(sizeof(struct weighed_pcl) * NUM_CHANNELS);
 	if (!w_pcl) {
 		qdf_mem_free(chan_weights);
 		return -ENOMEM;
@@ -11102,7 +11102,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		    tb[QCA_WLAN_VENDOR_ATTR_SAP_MANDATORY_FREQUENCY_LIST])/
 		    sizeof(uint32_t);
 
-		if (freq_len > QDF_MAX_NUM_CHAN) {
+		if (freq_len > NUM_CHANNELS) {
 			hdd_err("insufficient space to hold channels");
 			return -ENOMEM;
 		}
@@ -22944,7 +22944,7 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 
 	hdd_ctx->chan_info =
 		qdf_mem_malloc(sizeof(struct scan_chan_info)
-					* QDF_MAX_NUM_CHAN);
+					* NUM_CHANNELS);
 	if (!hdd_ctx->chan_info)
 		return;
 	mutex_init(&hdd_ctx->chan_info_lock);

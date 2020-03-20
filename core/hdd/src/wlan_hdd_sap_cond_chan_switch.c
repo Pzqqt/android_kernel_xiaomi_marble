@@ -505,7 +505,7 @@ __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_SAP_CONDITIONAL_CHAN_SWITCH_FREQ_LIST])/
 		sizeof(uint32_t);
 
-	if (freq_len > QDF_MAX_NUM_CHAN) {
+	if (freq_len > NUM_CHANNELS) {
 		hdd_err("insufficient space to hold channels");
 		return -ENOMEM;
 	}

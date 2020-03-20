@@ -2348,8 +2348,8 @@ struct sir_wifi_start_log {
  */
 struct sir_pcl_list {
 	uint32_t pcl_len;
-	uint8_t pcl_list[128];
-	uint8_t weight_list[128];
+	uint8_t pcl_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 };
 
 /**
@@ -2365,12 +2365,12 @@ struct sir_pcl_list {
  * @weight_list: Weights assigned by policy manager
  */
 struct sir_pcl_chan_weights {
-	uint8_t pcl_list[128];
+	uint8_t pcl_list[NUM_CHANNELS];
 	uint32_t pcl_len;
-	uint8_t saved_chan_list[128];
+	uint8_t saved_chan_list[NUM_CHANNELS];
 	uint32_t saved_num_chan;
-	uint8_t weighed_valid_list[128];
-	uint8_t weight_list[128];
+	uint8_t weighed_valid_list[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS];
 };
 
 /**

@@ -1230,7 +1230,7 @@ struct wlan_mlme_acs {
 	bool is_vendor_acs_support;
 	bool is_acs_support_for_dfs_ltecoex;
 	bool is_external_acs_policy;
-	struct acs_weight normalize_weight_chan[QDF_MAX_NUM_CHAN];
+	struct acs_weight normalize_weight_chan[NUM_CHANNELS];
 	uint16_t normalize_weight_num_chan;
 	struct acs_weight_range normalize_weight_range[MAX_ACS_WEIGHT_RANGE];
 	uint16_t num_weight_range;

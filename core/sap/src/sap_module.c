@@ -2790,7 +2790,7 @@ static uint32_t
 wlansap_get_safe_channel(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
-	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN];
+	uint32_t pcl_freqs[NUM_CHANNELS];
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 	uint32_t pcl_len = 0;
@@ -2863,7 +2863,7 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx)
 {
 	struct mac_context *mac;
 	struct sir_pcl_list pcl = {0};
-	uint32_t pcl_freqs[QDF_MAX_NUM_CHAN] = {0};
+	uint32_t pcl_freqs[NUM_CHANNELS] = {0};
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 	uint32_t pcl_len = 0;

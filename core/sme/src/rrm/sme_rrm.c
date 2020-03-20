@@ -471,8 +471,8 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 	}
 
 	filter->num_of_channels = num_chan;
-	if (filter->num_of_channels > QDF_MAX_NUM_CHAN)
-		filter->num_of_channels = QDF_MAX_NUM_CHAN;
+	if (filter->num_of_channels > NUM_CHANNELS)
+		filter->num_of_channels = NUM_CHANNELS;
 	qdf_mem_copy(filter->chan_freq_list, freq_list,
 		     filter->num_of_channels *
 		     sizeof(filter->chan_freq_list[0]));

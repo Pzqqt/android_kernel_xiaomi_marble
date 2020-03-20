@@ -11146,7 +11146,7 @@ void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
 		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
 					    pcl_freq_list, &num_entries,
 					    filter->pcl_weight_list,
-					    QDF_MAX_NUM_CHAN);
+					    NUM_CHANNELS);
 		if (QDF_IS_STATUS_ERROR(status))
 			return;
 		qdf_mem_copy(filter->pcl_freq_list, pcl_freq_list,
@@ -11307,7 +11307,7 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 	    ch_info->freq_list[0]) {
 		filter->num_of_channels = 0;
 		for (i = 0; i < ch_info->numOfChannels; i++) {
-			if (filter->num_of_channels >= QDF_MAX_NUM_CHAN) {
+			if (filter->num_of_channels >= NUM_CHANNELS) {
 				sme_err("max allowed channel(%d) reached",
 					filter->num_of_channels);
 				break;

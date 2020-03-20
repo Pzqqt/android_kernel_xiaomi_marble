@@ -1275,7 +1275,7 @@ mlme_acs_parse_weight_list(struct wlan_objmgr_psoc *psoc,
 				weight_list[index].normalize_weight =
 							normalize_factor;
 			} else {
-				if (num_acs_weight == QDF_MAX_NUM_CHAN)
+				if (num_acs_weight == NUM_CHANNELS)
 					continue;
 
 				weight_list[num_acs_weight].chan_freq = freq1;
