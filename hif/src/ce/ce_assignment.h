@@ -85,7 +85,7 @@ static struct CE_attr host_ce_config_wlan_qcn7605[] = {
 	/* target->host HTT */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
 	/* host->target HTT */
-	{ /* CE4 */ CE_ATTR_FLAGS, 0,
+	{ /* CE4 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES_QCN7605, 256, 0, NULL,},
 #ifdef IPA_OFFLOAD
 	/* ipa_uc->target HTC control */
