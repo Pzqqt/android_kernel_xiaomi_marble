@@ -2560,6 +2560,14 @@ void hif_pci_nointrs(struct hif_softc *scn)
 	scn->request_irq_done = false;
 }
 
+static inline
+bool hif_pci_default_link_up(struct hif_target_info *tgt_info)
+{
+	if (ADRASTEA_BU && (tgt_info->target_type != TARGET_TYPE_QCN7605))
+		return true;
+	else
+		return false;
+}
 /**
  * hif_disable_bus(): hif_disable_bus
  *
@@ -2583,7 +2591,7 @@ void hif_pci_disable_bus(struct hif_softc *scn)
 		return;
 
 	pdev = sc->pdev;
-	if (ADRASTEA_BU) {
+	if (hif_pci_default_link_up(tgt_info)) {
 		hif_vote_link_down(GET_HIF_OPAQUE_HDL(scn));
 
 		hif_write32_mb(sc, sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
@@ -4025,7 +4033,7 @@ again:
 	if (!ce_srng_based(ol_sc)) {
 		hif_target_sync(ol_sc);
 
-		if (ADRASTEA_BU)
+		if (hif_pci_default_link_up(tgt_info))
 			hif_vote_link_up(hif_hdl);
 	}
 
