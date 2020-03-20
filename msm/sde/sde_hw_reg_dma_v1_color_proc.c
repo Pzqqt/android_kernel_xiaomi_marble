@@ -4059,10 +4059,9 @@ void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg)
 		data[j++] = (u16)(lut_cfg->c0[i] << 4);
 		data[j++] = (u16)(lut_cfg->c1[i] << 4);
 	}
-	data[j++] = (u16)(lut_cfg->c2_last << 4);
-	data[j++] = (u16)(lut_cfg->c0_last << 4);
-	data[j++] = (u16)(lut_cfg->c1_last << 4);
-
+	data[j++] = (4095 << 4);
+	data[j++] = (4095 << 4);
+	data[j++] = (4095 << 4);
 	REG_DMA_SETUP_OPS(dma_write_cfg, 0, (u32 *)data, len,
 			REG_BLK_LUT_WRITE, 0, 0, 0);
 	/* table select is only relevant to SSPP Gamut */
@@ -4146,9 +4145,10 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 	struct sde_reg_dma_setup_ops_cfg dma_write_cfg;
 	struct drm_msm_3d_gamut *payload;
 	int rc;
-	u32 num_of_mixers, blk = 0, i, j, k = 0, len;
+	u32 num_of_mixers, blk = 0, i, j, k = 0, len, tmp;
 	u32 op_mode, scale_offset, scale_tbl_offset, transfer_size_bytes;
 	u16 *data;
+	u32 scale_off[GAMUT_3D_SCALE_OFF_TBL_NUM][GAMUT_3D_SCALE_OFF_SZ];
 
 	rc = reg_dma_dspp_check(ctx, cfg, GAMUT);
 	if (rc)
@@ -4244,13 +4244,26 @@ void reg_dmav2_setup_dspp_3d_gamutv43(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
+	if (payload && (payload->flags & GAMUT_3D_MAP_EN)) {
+		for (i = 0; i < GAMUT_3D_SCALE_OFF_TBL_NUM; i++) {
+			for (j = 0; j < GAMUT_3D_SCALE_OFF_SZ; j++) {
+				scale_off[i][j] = payload->scale_off[i][j];
+				tmp = scale_off[i][j] & 0x1ffff000;
+				scale_off[i][j] &= 0xfff;
+				tmp = tmp << 3;
+				scale_off[i][j] =
+					tmp | scale_off[i][j];
+			}
+		}
+	}
+
 	if (op_mode & GAMUT_MAP_EN) {
 		for (i = 0; i < GAMUT_3D_SCALE_OFF_TBL_NUM; i++) {
 			scale_tbl_offset = ctx->cap->sblk->gamut.base +
 					scale_offset +
 					(i * GAMUT_SCALE_OFF_LEN);
 			REG_DMA_SETUP_OPS(dma_write_cfg, scale_tbl_offset,
-					&payload->scale_off[i][0],
+					&scale_off[i][0],
 					GAMUT_SCALE_OFF_LEN,
 					REG_BLK_WRITE_SINGLE, 0, 0, 0);
 			rc = dma_ops->setup_payload(&dma_write_cfg);
