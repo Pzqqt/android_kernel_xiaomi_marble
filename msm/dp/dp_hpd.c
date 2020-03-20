@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -9,6 +9,7 @@
 #include <linux/err.h>
 
 #include "dp_hpd.h"
+#include "dp_altmode.h"
 #include "dp_usbpd.h"
 #include "dp_gpio_hpd.h"
 #include "dp_lphw_hpd.h"
@@ -58,6 +59,14 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 		}
 		dp_hpd->type = DP_HPD_GPIO;
 	} else {
+		dp_hpd = dp_altmode_get(dev, cb);
+		if (!IS_ERR(dp_hpd)) {
+			dp_hpd->type = DP_HPD_ALTMODE;
+			goto config;
+		}
+		DP_WARN("dp_altmode failed (%ld), falling back to dp_usbpd\n",
+				PTR_ERR(dp_hpd));
+
 		dp_hpd = dp_usbpd_get(dev, cb);
 		if (IS_ERR(dp_hpd)) {
 			DP_ERR("failed to get usbpd\n");
@@ -66,6 +75,7 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 		dp_hpd->type = DP_HPD_USBPD;
 	}
 
+config:
 	if (!dp_hpd->host_init)
 		dp_hpd->host_init	= dp_hpd_host_init;
 	if (!dp_hpd->host_deinit)
@@ -84,6 +94,9 @@ void dp_hpd_put(struct dp_hpd *dp_hpd)
 	switch (dp_hpd->type) {
 	case DP_HPD_USBPD:
 		dp_usbpd_put(dp_hpd);
+		break;
+	case DP_HPD_ALTMODE:
+		dp_altmode_put(dp_hpd);
 		break;
 	case DP_HPD_GPIO:
 		dp_gpio_hpd_put(dp_hpd);

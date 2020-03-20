@@ -13,6 +13,8 @@
 #include "drm_connector.h"
 #include "sde_connector.h"
 #include "dp_display.h"
+#include "dp_pll.h"
+#include "dp_hpd.h"
 
 #define DEBUG_NAME "drm_dp"
 
@@ -40,6 +42,7 @@ struct dp_debug_private {
 	struct dp_debug dp_debug;
 	struct dp_parser *parser;
 	struct dp_ctrl *ctrl;
+	struct dp_pll *pll;
 	struct mutex lock;
 };
 
@@ -783,35 +786,6 @@ static ssize_t dp_debug_mst_sideband_mode_write(struct file *file,
 	DP_DEBUG("mst_sideband_mode: %d port_cnt:%d\n",
 			mst_sideband_mode, mst_port_cnt);
 	return count;
-}
-
-static ssize_t dp_debug_widebus_mode_write(struct file *file,
-		const char __user *user_buff, size_t count, loff_t *ppos)
-{
-	struct dp_debug_private *debug = file->private_data;
-	char buf[SZ_8];
-	size_t len = 0;
-	u32 widebus_mode = 0;
-
-	if (!debug || !debug->parser)
-		return -ENODEV;
-
-	if (*ppos)
-		return 0;
-
-	len = min_t(size_t, count, SZ_8 - 1);
-	if (copy_from_user(buf, user_buff, len))
-		return -EFAULT;
-
-	buf[len] = '\0';
-
-	if (kstrtoint(buf, 10, &widebus_mode) != 0)
-		return -EINVAL;
-
-	debug->parser->has_widebus = widebus_mode ? true : false;
-	DP_DEBUG("widebus_enable: %d\n", widebus_mode);
-
-	return len;
 }
 
 static ssize_t dp_debug_tpg_write(struct file *file,
@@ -1900,17 +1874,400 @@ static const struct file_operations hdcp_fops = {
 	.read = dp_debug_read_hdcp,
 };
 
-static const struct file_operations widebus_mode_fops = {
-	.open = simple_open,
-	.write = dp_debug_widebus_mode_write,
-};
+static int dp_debug_init_mst(struct dp_debug_private *debug, struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("mst_con_id", 0644, dir,
+					debug, &mst_con_id_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs create mst_con_id failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("mst_con_info", 0644, dir,
+					debug, &mst_conn_info_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs create mst_conn_info failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("mst_con_add", 0644, dir,
+					debug, &mst_con_add_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DRM_ERROR("[%s] debugfs create mst_con_add failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("mst_con_remove", 0644, dir,
+					debug, &mst_con_remove_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DRM_ERROR("[%s] debugfs create mst_con_remove failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("mst_mode", 0644, dir,
+			debug, &mst_mode_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs mst_mode failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("mst_sideband_mode", 0644, dir,
+			debug, &mst_sideband_mode_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs mst_sideband_mode failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_link(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("max_bw_code", 0644, dir,
+			debug, &bw_code_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs max_bw_code failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("max_pclk_khz", 0644, dir,
+			debug, &max_pclk_khz_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs max_pclk_khz failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_u32("max_lclk_khz", 0644, dir,
+			&debug->parser->max_lclk_khz);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs max_lclk_khz failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_u32("lane_count", 0644, dir,
+			&debug->panel->lane_count);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs lane_count failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_u32("link_bw_code", 0644, dir,
+			&debug->panel->link_bw_code);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs link_bw_code failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_hdcp(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_bool("hdcp_wait_sink_sync", 0644, dir,
+			&debug->dp_debug.hdcp_wait_sink_sync);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs hdcp_wait_sink_sync failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("force_encryption", 0644, dir,
+			&debug->dp_debug.force_encryption);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs force_encryption failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_sink_caps(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("edid_modes", 0644, dir,
+					debug, &edid_modes_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs create edid_modes failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("edid_modes_mst", 0644, dir,
+					debug, &edid_modes_mst_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs create edid_modes_mst failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("edid", 0644, dir,
+					debug, &edid_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs edid failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("dpcd", 0644, dir,
+					debug, &dpcd_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs dpcd failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_status(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("dp_debug", 0444, dir,
+				debug, &dp_debug_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs create file failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("connected", 0444, dir,
+					debug, &connected_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs connected failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("hdr", 0400, dir, debug, &hdr_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs hdr failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("hdr_mst", 0400, dir, debug, &hdr_mst_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs hdr_mst failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("hdcp", 0644, dir, debug, &hdcp_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs hdcp failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_sim(struct dp_debug_private *debug, struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("hpd", 0644, dir, debug, &hpd_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs hpd failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("sim", 0644, dir, debug, &sim_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs sim failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("attention", 0644, dir,
+			debug, &attention_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs attention failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("skip_uevent", 0644, dir,
+			&debug->dp_debug.skip_uevent);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs skip_uevent failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("force_multi_func", 0644, dir,
+			&debug->hpd->force_multi_func);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs force_multi_func failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_dsc_fec(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_bool("dsc_feature_enable", 0644, dir,
+			&debug->parser->dsc_feature_enable);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs dsc_feature failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("fec_feature_enable", 0644, dir,
+			&debug->parser->fec_feature_enable);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs fec_feature_enable failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_tpg(struct dp_debug_private *debug, struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("tpg_ctrl", 0644, dir,
+			debug, &tpg_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs tpg failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_reg_dump(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_file("exe_mode", 0644, dir,
+			debug, &exe_mode_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs register failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_file("dump", 0644, dir,
+		debug, &dump_fops);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs dump failed, rc=%d\n",
+			DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
+
+static int dp_debug_init_feature_toggle(struct dp_debug_private *debug,
+		struct dentry *dir)
+{
+	int rc = 0;
+	struct dentry *file;
+
+	file = debugfs_create_bool("ssc_enable", 0644, dir,
+			&debug->pll->ssc_en);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs ssc_enable failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	file = debugfs_create_bool("widebus_mode", 0644, dir,
+			&debug->parser->has_widebus);
+	if (IS_ERR_OR_NULL(file)) {
+		rc = PTR_ERR(file);
+		DP_ERR("[%s] debugfs widebus_mode failed, rc=%d\n",
+		       DEBUG_NAME, rc);
+		return rc;
+	}
+
+	return rc;
+}
 
 static int dp_debug_init(struct dp_debug *dp_debug)
 {
 	int rc = 0;
 	struct dp_debug_private *debug = container_of(dp_debug,
 		struct dp_debug_private, dp_debug);
-	struct dentry *dir, *file;
+	struct dentry *dir;
 
 	dir = debugfs_create_dir(DEBUG_NAME, NULL);
 	if (IS_ERR_OR_NULL(dir)) {
@@ -1925,272 +2282,49 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 
 	debug->root = dir;
 
-	file = debugfs_create_file("dp_debug", 0444, dir,
-				debug, &dp_debug_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs create file failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_status(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("edid_modes", 0644, dir,
-					debug, &edid_modes_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs create edid_modes failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_sink_caps(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("edid_modes_mst", 0644, dir,
-					debug, &edid_modes_mst_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs create edid_modes_mst failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_mst(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("mst_con_id", 0644, dir,
-					debug, &mst_con_id_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs create mst_con_id failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_link(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("mst_con_info", 0644, dir,
-					debug, &mst_conn_info_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs create mst_conn_info failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_hdcp(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("mst_con_add", 0644, dir,
-					debug, &mst_con_add_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DRM_ERROR("[%s] debugfs create mst_con_add failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_sim(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("mst_con_remove", 0644, dir,
-					debug, &mst_con_remove_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DRM_ERROR("[%s] debugfs create mst_con_remove failed, rc=%d\n",
-		       DEBUG_NAME, rc);
+	rc = dp_debug_init_dsc_fec(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("hpd", 0644, dir,
-					debug, &hpd_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs hpd failed, rc=%d\n",
-			DEBUG_NAME, rc);
+	rc = dp_debug_init_tpg(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("connected", 0444, dir,
-					debug, &connected_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs connected failed, rc=%d\n",
-			DEBUG_NAME, rc);
+	rc = dp_debug_init_reg_dump(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
 
-	file = debugfs_create_file("max_bw_code", 0644, dir,
-			debug, &bw_code_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_bw_code failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
-
-	file = debugfs_create_file("exe_mode", 0644, dir,
-			debug, &exe_mode_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs register failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
-
-	file = debugfs_create_file("edid", 0644, dir,
-					debug, &edid_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs edid failed, rc=%d\n",
-			DEBUG_NAME, rc);
+	rc = dp_debug_init_feature_toggle(debug, dir);
+	if (rc)
 		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("dpcd", 0644, dir,
-					debug, &dpcd_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs dpcd failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("tpg_ctrl", 0644, dir,
-			debug, &tpg_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs tpg failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("hdr", 0400, dir,
-		debug, &hdr_fops);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs hdr failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("hdr_mst", 0400, dir,
-		debug, &hdr_mst_fops);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs hdr_mst failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("sim", 0644, dir,
-		debug, &sim_fops);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs sim failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("attention", 0644, dir,
-		debug, &attention_fops);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs attention failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("dump", 0644, dir,
-		debug, &dump_fops);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs dump failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("mst_mode", 0644, dir,
-			debug, &mst_mode_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_bw_code failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("mst_sideband_mode", 0644, dir,
-			debug, &mst_sideband_mode_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_bw_code failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("max_pclk_khz", 0644, dir,
-			debug, &max_pclk_khz_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_pclk_khz failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_bool("force_encryption", 0644, dir,
-			&debug->dp_debug.force_encryption);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs force_encryption failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_file("hdcp", 0644, dir,
-					debug, &hdcp_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs hdcp failed, rc=%d\n",
-			DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_bool("hdcp_wait_sink_sync", 0644, dir,
-			&debug->dp_debug.hdcp_wait_sink_sync);
-
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs hdcp_wait_sink_sync failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-		goto error_remove_dir;
-	}
-
-	file = debugfs_create_bool("dsc_feature_enable", 0644, dir,
-			&debug->parser->dsc_feature_enable);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs dsc_feature failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
-
-	file = debugfs_create_bool("fec_feature_enable", 0644, dir,
-			&debug->parser->fec_feature_enable);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs fec_feature_enable failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
-
-	file = debugfs_create_file("widebus_mode", 0644, dir,
-			debug, &widebus_mode_fops);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs widebus failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
-
-	file = debugfs_create_u32("max_lclk_khz", 0644, dir,
-			&debug->parser->max_lclk_khz);
-	if (IS_ERR_OR_NULL(file)) {
-		rc = PTR_ERR(file);
-		DP_ERR("[%s] debugfs max_lclk_khz failed, rc=%d\n",
-		       DEBUG_NAME, rc);
-	}
 
 	return 0;
 
 error_remove_dir:
-	if (!file)
-		rc = -EINVAL;
 	debugfs_remove_recursive(dir);
 error:
 	return rc;
@@ -2229,7 +2363,7 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	struct dp_debug *dp_debug;
 
 	if (!in->dev || !in->panel || !in->hpd || !in->link ||
-	    !in->catalog || !in->ctrl) {
+	    !in->catalog || !in->ctrl || !in->pll) {
 		DP_ERR("invalid input\n");
 		rc = -EINVAL;
 		goto error;
@@ -2251,6 +2385,7 @@ struct dp_debug *dp_debug_get(struct dp_debug_in *in)
 	debug->catalog = in->catalog;
 	debug->parser = in->parser;
 	debug->ctrl = in->ctrl;
+	debug->pll = in->pll;
 
 	dp_debug = &debug->dp_debug;
 	dp_debug->vdisplay = 0;

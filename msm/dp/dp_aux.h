@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_AUX_H_
@@ -22,6 +22,7 @@
 #define DP_STATE_LINK_MAINTENANCE_COMPLETED BIT(10)
 #define DP_STATE_LINK_MAINTENANCE_FAILED    BIT(11)
 #define DP_STATE_AUX_TIMEOUT                BIT(12)
+#define DP_STATE_PLL_LOCKED                 BIT(13)
 
 enum dp_aux_error {
 	DP_AUX_ERR_NONE	= 0,

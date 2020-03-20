@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_USBPD_H_
@@ -46,6 +46,7 @@ struct dp_usbpd {
 	bool debug_en;
 };
 
+#ifdef CONFIG_DRM_MSM_DP_USBPD_LEGACY
 /**
  * dp_usbpd_get() - setup usbpd module
  *
@@ -59,6 +60,16 @@ struct dp_usbpd {
  * the callback functions about the connection and status.
  */
 struct dp_hpd *dp_usbpd_get(struct device *dev, struct dp_hpd_cb *cb);
-
 void dp_usbpd_put(struct dp_hpd *pd);
+#else
+static inline struct dp_hpd *dp_usbpd_get(struct device *dev,
+		struct dp_hpd_cb *cb)
+{
+	return NULL;
+}
+
+static inline void dp_usbpd_put(struct dp_hpd *pd)
+{
+}
+#endif /* CONFIG_DRM_MSM_DP_USBPD_LEGACY */
 #endif /* _DP_USBPD_H_ */

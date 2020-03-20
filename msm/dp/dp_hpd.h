@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_HPD_H_
@@ -13,13 +13,27 @@
 struct device;
 
 /**
+ * enum dp_hpd_plug_orientation - plug orientation
+ * @ORIENTATION_NONE:	Undefined or unspecified
+ * @ORIENTATION_CC1:	CC1
+ * @ORIENTATION_CC2:	CC2
+ */
+enum dp_hpd_plug_orientation {
+	ORIENTATION_NONE,
+	ORIENTATION_CC1,
+	ORIENTATION_CC2,
+};
+
+/**
  * enum dp_hpd_type - dp hpd type
+ * @DP_HPD_ALTMODE: AltMode over G-Link based HPD
  * @DP_HPD_USBPD:   USB type-c based HPD
  * @DP_HPD_GPIO:    GPIO based HPD
  * @DP_HPD_BUILTIN: Controller built-in HPD
  */
 
 enum dp_hpd_type {
+	DP_HPD_ALTMODE,
 	DP_HPD_USBPD,
 	DP_HPD_GPIO,
 	DP_HPD_LPHW,
@@ -48,6 +62,8 @@ struct dp_hpd_cb {
  * @hpd_irq: Change in the status since last message
  * @alt_mode_cfg_done: bool to specify alt mode status
  * @multi_func: multi-function preferred, USBPD type only
+ * @peer_usb_com: downstream supports usb data communication
+ * @force_multi_func: force multi-function preferred
  * @isr: event interrupt, BUILTIN and LPHW type only
  * @register_hpd: register hardware callback
  * @host_init: source or host side setup for hpd
@@ -64,6 +80,7 @@ struct dp_hpd {
 	bool alt_mode_cfg_done;
 	bool multi_func;
 	bool peer_usb_comm;
+	bool force_multi_func;
 
 	void (*isr)(struct dp_hpd *dp_hpd);
 	int (*register_hpd)(struct dp_hpd *dp_hpd);

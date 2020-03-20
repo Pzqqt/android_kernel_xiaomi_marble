@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_PARSER_H_
@@ -21,6 +21,7 @@ enum dp_pm_type {
 	DP_STREAM0_PM,
 	DP_STREAM1_PM,
 	DP_LINK_PM,
+	DP_PLL_PM,
 	DP_MAX_PM
 };
 
@@ -33,6 +34,7 @@ static inline const char *dp_parser_pm_name(enum dp_pm_type module)
 	case DP_STREAM0_PM:	return "DP_STREAM0_PM";
 	case DP_STREAM1_PM:	return "DP_STREAM1_PM";
 	case DP_LINK_PM:	return "DP_LINK_PM";
+	case DP_PLL_PM:		return "DP_PLL_PM";
 	default:		return "???";
 	}
 }

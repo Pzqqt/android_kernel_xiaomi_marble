@@ -4,7 +4,7 @@ ccflags-y += -I$(srctree)/techpack/display/msm/sde
 ccflags-y += -I$(srctree)/techpack/display/rotator
 ccflags-y += -I$(srctree)/drivers/clk/qcom/
 
-msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
+msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_altmode.o \
 	dp/dp_parser.o \
 	dp/dp_power.o \
 	dp/dp_catalog.o \
@@ -24,8 +24,11 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_usbpd.o \
 	dp/dp_hdcp2p2.o \
 	sde_hdcp_1x.o \
 	sde_hdcp_2x.o \
+	dp/dp_pll.o \
+	dp/dp_pll_5nm.o \
 
 msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o \
+msm_drm-$(CONFIG_DRM_MSM_DP_USBPD_LEGACY) += dp/dp_usbpd.o \
 
 msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_encoder.o \

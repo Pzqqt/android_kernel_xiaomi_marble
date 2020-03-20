@@ -11,7 +11,6 @@
 #include <linux/of_irq.h>
 #include <linux/extcon.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
-#include <linux/usb/usbpd.h>
 
 #include "sde_connector.h"
 
@@ -28,6 +27,7 @@
 #include "dp_display.h"
 #include "sde_hdcp.h"
 #include "dp_debug.h"
+#include "dp_pll.h"
 
 #define DP_MST_DEBUG(fmt, ...) DP_DEBUG(fmt, ##__VA_ARGS__)
 
@@ -152,6 +152,7 @@ struct dp_display_private {
 	struct dp_panel   *panel;
 	struct dp_ctrl    *ctrl;
 	struct dp_debug   *debug;
+	struct dp_pll     *pll;
 
 	struct dp_panel *active_panels[DP_STREAM_MAX];
 	struct dp_hdcp hdcp;
@@ -493,7 +494,8 @@ static void dp_display_deinitialize_hdcp(struct dp_display_private *dp)
 		return;
 	}
 
-	sde_dp_hdcp2p2_deinit(dp->hdcp.data);
+	sde_hdcp_1x_deinit(dp->hdcp.dev[HDCP_VERSION_1X].fd);
+	sde_dp_hdcp2p2_deinit(dp->hdcp.dev[HDCP_VERSION_2P2].fd);
 }
 
 static int dp_display_initialize_hdcp(struct dp_display_private *dp)
@@ -527,19 +529,18 @@ static int dp_display_initialize_hdcp(struct dp_display_private *dp)
 
 	fd = sde_hdcp_1x_init(&hdcp_init_data);
 	if (IS_ERR_OR_NULL(fd)) {
-		DP_ERR("Error initializing HDCP 1.x\n");
-		rc = -EINVAL;
-		goto error;
+		DP_DEBUG("Error initializing HDCP 1.x\n");
+		return -EINVAL;
 	}
 
 	dp->hdcp.dev[HDCP_VERSION_1X].fd = fd;
 	dp->hdcp.dev[HDCP_VERSION_1X].ops = sde_hdcp_1x_get(fd);
 	dp->hdcp.dev[HDCP_VERSION_1X].ver = HDCP_VERSION_1X;
-	DP_DEBUG("HDCP 1.3 initialized\n");
+	DP_INFO("HDCP 1.3 initialized\n");
 
 	fd = sde_dp_hdcp2p2_init(&hdcp_init_data);
 	if (IS_ERR_OR_NULL(fd)) {
-		DP_ERR("Error initializing HDCP 2.x\n");
+		DP_DEBUG("Error initializing HDCP 2.x\n");
 		rc = -EINVAL;
 		goto error;
 	}
@@ -547,11 +548,11 @@ static int dp_display_initialize_hdcp(struct dp_display_private *dp)
 	dp->hdcp.dev[HDCP_VERSION_2P2].fd = fd;
 	dp->hdcp.dev[HDCP_VERSION_2P2].ops = sde_dp_hdcp2p2_get(fd);
 	dp->hdcp.dev[HDCP_VERSION_2P2].ver = HDCP_VERSION_2P2;
-	DP_DEBUG("HDCP 2.2 initialized\n");
+	DP_INFO("HDCP 2.2 initialized\n");
 
 	return 0;
 error:
-	dp_display_deinitialize_hdcp(dp);
+	sde_hdcp_1x_deinit(dp->hdcp.dev[HDCP_VERSION_1X].fd);
 
 	return rc;
 }
@@ -661,8 +662,9 @@ static void dp_display_send_hpd_event(struct dp_display_private *dp)
 	envp[2] = bpp;
 	envp[3] = pattern;
 	envp[4] = NULL;
-	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE,
-			envp);
+	if (!dp->debug->skip_uevent)
+		kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE,
+				envp);
 
 	if (connector->status == connector_status_connected) {
 		dp_display_state_add(DP_STATE_CONNECT_NOTIFIED);
@@ -1346,17 +1348,18 @@ static int dp_display_get_usb_extcon(struct dp_display_private *dp)
 
 static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
 {
+	dp_debug_put(dp->debug);
+	dp_hpd_put(dp->hpd);
 	dp_audio_put(dp->panel->audio);
 	dp_ctrl_put(dp->ctrl);
-	dp_link_put(dp->link);
 	dp_panel_put(dp->panel);
-	dp_aux_put(dp->aux);
+	dp_link_put(dp->link);
 	dp_power_put(dp->power);
+	dp_pll_put(dp->pll);
+	dp_aux_put(dp->aux);
 	dp_catalog_put(dp->catalog);
 	dp_parser_put(dp->parser);
-	dp_hpd_put(dp->hpd);
 	mutex_destroy(&dp->session_lock);
-	dp_debug_put(dp->debug);
 }
 
 static int dp_init_sub_modules(struct dp_display_private *dp)
@@ -1373,6 +1376,9 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	};
 	struct dp_debug_in debug_in = {
 		.dev = dev,
+	};
+	struct dp_pll_in pll_in = {
+		.pdev = dp->pdev,
 	};
 
 	mutex_init(&dp->session_lock);
@@ -1401,21 +1407,6 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 		goto error_catalog;
 	}
 
-	dp->power = dp_power_get(dp->parser);
-	if (IS_ERR(dp->power)) {
-		rc = PTR_ERR(dp->power);
-		DP_ERR("failed to initialize power, rc = %d\n", rc);
-		dp->power = NULL;
-		goto error_power;
-	}
-
-	rc = dp->power->power_client_init(dp->power, &dp->priv->phandle,
-		dp->dp_display.drm_dev);
-	if (rc) {
-		DP_ERR("Power client create failed\n");
-		goto error_aux;
-	}
-
 	dp->aux = dp_aux_get(dev, &dp->catalog->aux, dp->parser,
 			dp->aux_switch_node);
 	if (IS_ERR(dp->aux)) {
@@ -1428,6 +1419,32 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	rc = dp->aux->drm_aux_register(dp->aux);
 	if (rc) {
 		DP_ERR("DRM DP AUX register failed\n");
+		goto error_pll;
+	}
+
+	pll_in.aux = dp->aux;
+	pll_in.parser = dp->parser;
+
+	dp->pll = dp_pll_get(&pll_in);
+	if (IS_ERR(dp->pll)) {
+		rc = PTR_ERR(dp->pll);
+		DP_ERR("failed to initialize pll, rc = %d\n", rc);
+		dp->pll = NULL;
+		goto error_pll;
+	}
+
+	dp->power = dp_power_get(dp->parser, dp->pll);
+	if (IS_ERR(dp->power)) {
+		rc = PTR_ERR(dp->power);
+		DP_ERR("failed to initialize power, rc = %d\n", rc);
+		dp->power = NULL;
+		goto error_power;
+	}
+
+	rc = dp->power->power_client_init(dp->power, &dp->priv->phandle,
+		dp->dp_display.drm_dev);
+	if (rc) {
+		DP_ERR("Power client create failed\n");
 		goto error_link;
 	}
 
@@ -1503,6 +1520,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	debug_in.catalog = dp->catalog;
 	debug_in.parser = dp->parser;
 	debug_in.ctrl = dp->ctrl;
+	debug_in.pll = dp->pll;
 
 	dp->debug = dp_debug_get(&debug_in);
 	if (IS_ERR(dp->debug)) {
@@ -1520,10 +1538,12 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 
 	dp_display_get_usb_extcon(dp);
 
-	rc = dp->hpd->register_hpd(dp->hpd);
-	if (rc) {
-		DP_ERR("failed register hpd\n");
-		goto error_hpd_reg;
+	if (dp->hpd->register_hpd) {
+		rc = dp->hpd->register_hpd(dp->hpd);
+		if (rc) {
+			DP_ERR("failed register hpd\n");
+			goto error_hpd_reg;
+		}
 	}
 
 	return rc;
@@ -1540,10 +1560,12 @@ error_ctrl:
 error_panel:
 	dp_link_put(dp->link);
 error_link:
-	dp_aux_put(dp->aux);
-error_aux:
 	dp_power_put(dp->power);
 error_power:
+	dp_pll_put(dp->pll);
+error_pll:
+	dp_aux_put(dp->aux);
+error_aux:
 	dp_catalog_put(dp->catalog);
 error_catalog:
 	dp_parser_put(dp->parser);
