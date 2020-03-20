@@ -100,21 +100,27 @@ qdf_export_symbol(qdf_try_allowing_sleep);
  */
 QDF_TIMER_STATE qdf_mc_timer_get_current_state(qdf_mc_timer_t *timer)
 {
+	QDF_TIMER_STATE timer_state = QDF_TIMER_STATE_UNUSED;
+
 	if (!timer) {
 		QDF_ASSERT(0);
-		return QDF_TIMER_STATE_UNUSED;
+		return timer_state;
 	}
+
+	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
 
 	switch (timer->state) {
 	case QDF_TIMER_STATE_STOPPED:
 	case QDF_TIMER_STATE_STARTING:
 	case QDF_TIMER_STATE_RUNNING:
 	case QDF_TIMER_STATE_UNUSED:
-		return timer->state;
+		timer_state = timer->state;
+		break;
 	default:
 		QDF_ASSERT(0);
-		return QDF_TIMER_STATE_UNUSED;
 	}
+	qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
+	return timer_state;
 }
 qdf_export_symbol(qdf_mc_timer_get_current_state);
 
@@ -741,11 +747,13 @@ QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	timer->state = QDF_TIMER_STATE_STOPPED;
-
 	qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
 
 	del_timer(&(timer->platform_info.timer));
+
+	qdf_spin_lock_irqsave(&timer->platform_info.spinlock);
+	timer->state = QDF_TIMER_STATE_STOPPED;
+	qdf_spin_unlock_irqrestore(&timer->platform_info.spinlock);
 
 	qdf_try_allowing_sleep(timer->type);
 
