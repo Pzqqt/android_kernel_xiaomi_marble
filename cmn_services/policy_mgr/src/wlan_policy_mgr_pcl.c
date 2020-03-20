@@ -212,6 +212,31 @@ policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 			 pm_ctx->unsafe_channel_count);
 }
 
+QDF_STATUS policy_mgr_init_chan_avoidance(struct wlan_objmgr_psoc *psoc,
+					  qdf_freq_t *chan_freq_list,
+					  uint16_t chan_cnt)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t i;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->unsafe_channel_count = chan_cnt >= NUM_CHANNELS ?
+			NUM_CHANNELS : chan_cnt;
+
+	for (i = 0; i < pm_ctx->unsafe_channel_count; i++)
+		pm_ctx->unsafe_channel_list[i] = chan_freq_list[i];
+
+	policy_mgr_debug("Channel list init, received %d avoided channels",
+			 pm_ctx->unsafe_channel_count);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void policy_mgr_update_with_safe_channel_list(struct wlan_objmgr_psoc *psoc,
 					      uint32_t *pcl_channels,
 					      uint32_t *len,

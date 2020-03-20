@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -204,6 +204,14 @@ ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
 {
 	return policy_mgr_get_sta_sap_scc_lte_coex_chnl(psoc,
 							sta_sap_scc_lte_coex);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_init_chan_avoidance(struct wlan_objmgr_psoc *psoc,
+				    qdf_freq_t *chan_freq_list,
+				    uint16_t chan_cnt)
+{
+	return policy_mgr_init_chan_avoidance(psoc, chan_freq_list, chan_cnt);
 }
 
 QDF_STATUS ucfg_policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,

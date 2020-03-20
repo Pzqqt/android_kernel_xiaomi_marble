@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -253,6 +253,20 @@ ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
 bool
 ucfg_policy_mgr_get_dfs_master_dynamic_enabled(struct wlan_objmgr_psoc *psoc,
 					       uint8_t vdev_id);
+
+/**
+ * ucfg_policy_mgr_init_chan_avoidance() - init channel avoidance in policy
+ *					   manager
+ * @psoc: pointer to psoc
+ * @chan_freq_list: channel frequency list
+ * @chan_cnt: channel count
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_init_chan_avoidance(struct wlan_objmgr_psoc *psoc,
+				    qdf_freq_t *chan_freq_list,
+				    uint16_t chan_cnt);
 
 /**
  * ucfg_policy_mgr_get_sap_mandt_chnl() - to find out if SAP mandatory channel
