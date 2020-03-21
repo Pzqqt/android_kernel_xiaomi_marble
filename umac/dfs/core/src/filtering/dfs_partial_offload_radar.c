@@ -376,6 +376,34 @@ void dfs_update_radar_info(struct wlan_dfs_radar_tab_info *rinfo,
 	rinfo->numradars += num_ext_radars;
 }
 
+/**
+ * dfs_assign_mkk_bin5_radars() - Assign the MKK bin5 radar table
+ * @rinfo: Pointer to wlan_dfs_radar_tab_info structure.
+ * @target_type: Target type.
+ * @tx_ops: target tx ops.
+ */
+static void
+dfs_assign_mkk_bin5_radars(struct wlan_dfs_radar_tab_info *rinfo,
+			   uint32_t target_type,
+			   struct wlan_lmac_if_target_tx_ops *tx_ops)
+{
+	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+	    tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
+		rinfo->b5pulses = dfs_jpn_bin5pulses_ar900b;
+		rinfo->numb5radars = QDF_ARRAY_SIZE(
+				dfs_jpn_bin5pulses_ar900b);
+	} else if (tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+			tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
+		rinfo->b5pulses = dfs_jpn_bin5pulses_qca9984;
+		rinfo->numb5radars = QDF_ARRAY_SIZE
+			(dfs_jpn_bin5pulses_qca9984);
+	} else {
+		rinfo->b5pulses = dfs_jpn_bin5pulses;
+		rinfo->numb5radars = QDF_ARRAY_SIZE(
+				dfs_jpn_bin5pulses);
+	}
+}
+
 void dfs_get_po_radars(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
@@ -465,30 +493,14 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.dfsdomain = DFS_MKKN_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
-		rinfo.b5pulses = NULL;
-		rinfo.numb5radars = 0;
+		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
 		break;
 	case DFS_MKK4_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
-
-		if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
-				tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
-			rinfo.b5pulses = dfs_jpn_bin5pulses_ar900b;
-			rinfo.numb5radars = QDF_ARRAY_SIZE(
-					dfs_jpn_bin5pulses_ar900b);
-		} else if (tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
-				tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
-			rinfo.b5pulses = dfs_jpn_bin5pulses_qca9984;
-			rinfo.numb5radars = QDF_ARRAY_SIZE
-				(dfs_jpn_bin5pulses_qca9984);
-		} else {
-			rinfo.b5pulses = dfs_jpn_bin5pulses;
-			rinfo.numb5radars = QDF_ARRAY_SIZE(
-					dfs_jpn_bin5pulses);
-		}
+		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
 		break;
 	default:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
