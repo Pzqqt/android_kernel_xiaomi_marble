@@ -269,10 +269,6 @@ dsi_ctrl_get_aspace(struct dsi_ctrl *dsi_ctrl,
 
 static void dsi_ctrl_flush_cmd_dma_queue(struct dsi_ctrl *dsi_ctrl)
 {
-	u32 status;
-	u32 mask = DSI_CMD_MODE_DMA_DONE;
-	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
-
 	/*
 	 * If a command is triggered right after another command,
 	 * check if the previous command transfer is completed. If
@@ -281,21 +277,8 @@ static void dsi_ctrl_flush_cmd_dma_queue(struct dsi_ctrl *dsi_ctrl)
 	 * completed before triggering the next command by
 	 * flushing the workqueue.
 	 */
-	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
 	if (atomic_read(&dsi_ctrl->dma_irq_trig)) {
 		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
-	} else if (status & mask) {
-		atomic_set(&dsi_ctrl->dma_irq_trig, 1);
-		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
-		dsi_hw_ops.clear_interrupt_status(
-						&dsi_ctrl->hw,
-						status);
-		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-				DSI_SINT_CMD_MODE_DMA_DONE);
-		complete_all(&dsi_ctrl->irq_info.cmd_dma_done);
-		cancel_work_sync(&dsi_ctrl->dma_cmd_wait);
-		DSI_CTRL_DEBUG(dsi_ctrl,
-				"dma_tx done but irq not yet triggered\n");
 	} else {
 		flush_workqueue(dsi_ctrl->dma_cmd_workq);
 	}
@@ -319,24 +302,11 @@ static void dsi_ctrl_dma_cmd_wait_for_done(struct work_struct *work)
 	 */
 	if (atomic_read(&dsi_ctrl->dma_irq_trig))
 		goto done;
-	/*
-	 * If IRQ wasn't triggered check interrupt status register for
-	 * transfer done before waiting.
-	 */
-	status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
-	if (status & mask) {
-		status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
-		dsi_hw_ops.clear_interrupt_status(&dsi_ctrl->hw,
-				status);
-		dsi_ctrl_disable_status_interrupt(dsi_ctrl,
-				DSI_SINT_CMD_MODE_DMA_DONE);
-		goto done;
-	}
 
 	ret = wait_for_completion_timeout(
 			&dsi_ctrl->irq_info.cmd_dma_done,
 			msecs_to_jiffies(DSI_CTRL_TX_TO_MS));
-	if (ret == 0) {
+	if (ret == 0 && !atomic_read(&dsi_ctrl->dma_irq_trig)) {
 		status = dsi_hw_ops.get_interrupt_status(&dsi_ctrl->hw);
 		if (status & mask) {
 			status |= (DSI_CMD_MODE_DMA_DONE | DSI_BTA_DONE);
@@ -877,9 +847,9 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 {
 	int rc = 0;
 	u32 num_of_lanes = 0;
-	u32 bpp, frame_time_us;
+	u32 bpp, frame_time_us, byte_intf_clk_div;
 	u64 h_period, v_period, bit_rate, pclk_rate, bit_rate_per_lane,
-	    byte_clk_rate;
+	    byte_clk_rate, byte_intf_clk_rate;
 	struct dsi_host_common_cfg *host_cfg = &config->common_config;
 	struct dsi_split_link_config *split_link = &host_cfg->split_link;
 	struct dsi_mode_info *timing = &config->video_timing;
@@ -924,14 +894,20 @@ static int dsi_ctrl_update_link_freqs(struct dsi_ctrl *dsi_ctrl,
 	do_div(pclk_rate, bpp);
 	byte_clk_rate = bit_rate_per_lane;
 	do_div(byte_clk_rate, 8);
+	byte_intf_clk_rate = byte_clk_rate;
+	byte_intf_clk_div = host_cfg->byte_intf_clk_div;
+	do_div(byte_intf_clk_rate, byte_intf_clk_div);
+
 	DSI_CTRL_DEBUG(dsi_ctrl, "bit_clk_rate = %llu, bit_clk_rate_per_lane = %llu\n",
 		 bit_rate, bit_rate_per_lane);
-	DSI_CTRL_DEBUG(dsi_ctrl, "byte_clk_rate = %llu, pclk_rate = %llu\n",
-		  byte_clk_rate, pclk_rate);
+	DSI_CTRL_DEBUG(dsi_ctrl, "byte_clk_rate = %llu, byte_intf_clk = %llu\n",
+		  byte_clk_rate, byte_intf_clk_rate);
+	DSI_CTRL_DEBUG(dsi_ctrl, "pclk_rate = %llu\n", pclk_rate);
 
 	dsi_ctrl->clk_freq.byte_clk_rate = byte_clk_rate;
 	dsi_ctrl->clk_freq.pix_clk_rate = pclk_rate;
 	dsi_ctrl->clk_freq.esc_clk_rate = config->esc_clk_rate_hz;
+	dsi_ctrl->clk_freq.byte_intf_clk_rate = byte_intf_clk_rate;
 	config->bit_clk_rate_hz = dsi_ctrl->clk_freq.byte_clk_rate * 8;
 
 	rc = dsi_clk_set_link_frequencies(clk_handle, dsi_ctrl->clk_freq,
@@ -1268,23 +1244,33 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 		 * result in smmu write faults with DSI as client.
 		 */
 		if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
-			dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
+			if (dsi_ctrl->version < DSI_CTRL_VERSION_2_4)
+				dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
 			dsi_ctrl->cmd_len = 0;
 		}
 	}
 }
 
-static u32 dsi_ctrl_validate_msg_flags(const struct mipi_dsi_msg *msg,
+static u32 dsi_ctrl_validate_msg_flags(struct dsi_ctrl *dsi_ctrl,
+				const struct mipi_dsi_msg *msg,
 				u32 flags)
 {
 	/*
-	 * ASYNC command wait mode is not supported for FIFO commands.
-	 * Waiting after a command is transferred cannot be guaranteed
-	 * if DSI_CTRL_CMD_ASYNC_WAIT flag is set.
+	 * ASYNC command wait mode is not supported for
+	 *    - commands sent using DSI FIFO memory
+	 *    - DSI read commands
+	 *    - DCS commands sent in non-embedded mode
+	 *    - whenever an explicit wait time is specificed for the command
+	 *      since the wait time cannot be guaranteed in async mode
+	 *    - video mode panels
 	 */
 	if ((flags & DSI_CTRL_CMD_FIFO_STORE) ||
-			msg->wait_ms)
+		flags & DSI_CTRL_CMD_READ ||
+		flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE ||
+		msg->wait_ms ||
+		(dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE))
 		flags &= ~DSI_CTRL_CMD_ASYNC_WAIT;
+
 	return flags;
 }
 
@@ -1313,7 +1299,7 @@ static int dsi_message_tx(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	flags = dsi_ctrl_validate_msg_flags(msg, flags);
+	flags = dsi_ctrl_validate_msg_flags(dsi_ctrl, msg, flags);
 
 	if (dsi_ctrl->dma_wait_queued)
 		dsi_ctrl_flush_cmd_dma_queue(dsi_ctrl);
@@ -2692,6 +2678,10 @@ void dsi_ctrl_enable_status_interrupt(struct dsi_ctrl *dsi_ctrl,
 		dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw,
 				dsi_ctrl->irq_info.irq_stat_mask);
 	}
+
+	if (intr_idx == DSI_SINT_CMD_MODE_DMA_DONE)
+		dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw,
+				dsi_ctrl->irq_info.irq_stat_mask);
 	++(dsi_ctrl->irq_info.irq_stat_refcount[intr_idx]);
 
 	if (event_info)
@@ -3196,7 +3186,8 @@ int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags)
 					BIT(DSI_FIFO_OVERFLOW), false);
 
 		if (flags & DSI_CTRL_CMD_NON_EMBEDDED_MODE) {
-			dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
+			if (dsi_ctrl->version < DSI_CTRL_VERSION_2_4)
+				dsi_hw_ops.soft_reset(&dsi_ctrl->hw);
 			dsi_ctrl->cmd_len = 0;
 		}
 	}

@@ -218,6 +218,22 @@ enum dsi_dfps_type {
 };
 
 /**
+ * enum dsi_dyn_clk_feature_type - Dynamic clock feature support type
+ * @DSI_DYN_CLK_TYPE_LEGACY:			Constant FPS is not supported
+ * @DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP:	Constant FPS supported with
+ *						change in hfp
+ * @DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP:	Constant FPS supported with
+ *						change in vfp
+ * @DSI_DYN_CLK_TYPE_MAX:
+ */
+enum dsi_dyn_clk_feature_type {
+	DSI_DYN_CLK_TYPE_LEGACY = 0,
+	DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP,
+	DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP,
+	DSI_DYN_CLK_TYPE_MAX
+};
+
+/**
  * enum dsi_cmd_set_type  - DSI command set type
  * @DSI_CMD_SET_PRE_ON:	                   Panel pre on
  * @DSI_CMD_SET_ON:                        Panel on
@@ -450,6 +466,7 @@ struct dsi_split_link_config {
  * @ext_bridge_mode:     External bridge is connected.
  * @force_hs_clk_lane:   Send continuous clock to the panel.
  * @dsi_split_link_config:  Split Link Configuration.
+ * @byte_intf_clk_div:   Determines the factor for calculating byte intf clock.
  */
 struct dsi_host_common_cfg {
 	enum dsi_pixel_format dst_format;
@@ -473,6 +490,7 @@ struct dsi_host_common_cfg {
 	bool ext_bridge_mode;
 	bool force_hs_clk_lane;
 	struct dsi_split_link_config split_link;
+	u32 byte_intf_clk_div;
 };
 
 /**

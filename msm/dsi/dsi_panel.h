@@ -82,6 +82,8 @@ struct dsi_dyn_clk_caps {
 	bool dyn_clk_support;
 	u32 *bit_clk_list;
 	u32 bit_clk_list_len;
+	enum dsi_dyn_clk_feature_type type;
+	bool maintain_const_fps;
 };
 
 struct dsi_pinctrl_info {
