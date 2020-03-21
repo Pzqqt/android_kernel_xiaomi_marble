@@ -850,11 +850,13 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 		return;
 	}
 
-	if (hw_ctl->ops.update_bitmask_wb)
-		hw_ctl->ops.update_bitmask_wb(hw_ctl, hw_wb->idx, 1);
+	if (hw_ctl->ops.update_bitmask)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_WB,
+				hw_wb->idx, 1);
 
-	if (hw_ctl->ops.update_bitmask_cdm && hw_cdm)
-		hw_ctl->ops.update_bitmask_cdm(hw_ctl, hw_cdm->idx, 1);
+	if (hw_ctl->ops.update_bitmask && hw_cdm)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_CDM,
+				hw_cdm->idx, 1);
 
 	if (test_bit(SDE_WB_CWB_CTRL, &hw_wb->caps->features)) {
 		for (i = 0; i < crtc->num_mixers; i++) {
@@ -865,14 +867,15 @@ static void _sde_encoder_phys_wb_update_cwb_flush(
 				hw_wb->ops.program_cwb_ctrl(hw_wb, cwb_idx,
 						src_pp_idx, dspp_out, enable);
 
-			if (hw_ctl->ops.update_bitmask_cwb)
-				hw_ctl->ops.update_bitmask_cwb(hw_ctl,
-						cwb_idx, 1);
+			if (hw_ctl->ops.update_bitmask)
+				hw_ctl->ops.update_bitmask(hw_ctl,
+						SDE_HW_FLUSH_CWB, cwb_idx, 1);
 		}
 
-		if (need_merge && hw_ctl->ops.update_bitmask_merge3d
+		if (need_merge && hw_ctl->ops.update_bitmask
 				&& hw_pp && hw_pp->merge_3d)
-			hw_ctl->ops.update_bitmask_merge3d(hw_ctl,
+			hw_ctl->ops.update_bitmask(hw_ctl,
+					SDE_HW_FLUSH_MERGE_3D,
 					hw_pp->merge_3d->idx, 1);
 	} else {
 		phys_enc->hw_mdptop->ops.set_cwb_ppb_cntl(phys_enc->hw_mdptop,
@@ -914,14 +917,16 @@ static void _sde_encoder_phys_wb_update_flush(struct sde_encoder_phys *phys_enc)
 		return;
 	}
 
-	if (hw_ctl->ops.update_bitmask_wb)
-		hw_ctl->ops.update_bitmask_wb(hw_ctl, hw_wb->idx, 1);
+	if (hw_ctl->ops.update_bitmask)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_WB,
+				hw_wb->idx, 1);
 
-	if (hw_ctl->ops.update_bitmask_cdm && hw_cdm)
-		hw_ctl->ops.update_bitmask_cdm(hw_ctl, hw_cdm->idx, 1);
+	if (hw_ctl->ops.update_bitmask && hw_cdm)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_CDM,
+				hw_cdm->idx, 1);
 
-	if (hw_ctl->ops.update_bitmask_merge3d && hw_pp && hw_pp->merge_3d)
-		hw_ctl->ops.update_bitmask_merge3d(hw_ctl,
+	if (hw_ctl->ops.update_bitmask && hw_pp && hw_pp->merge_3d)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_MERGE_3D,
 				hw_pp->merge_3d->idx, 1);
 
 	if (hw_ctl->ops.get_pending_flush)

@@ -2732,9 +2732,10 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 			wb_enc->hw_wb->ops.bind_pingpong_blk(wb_enc->hw_wb,
 					false, phys_enc->hw_pp->idx);
 
-			if (phys_enc->hw_ctl->ops.update_bitmask_wb)
-				phys_enc->hw_ctl->ops.update_bitmask_wb(
+			if (phys_enc->hw_ctl->ops.update_bitmask)
+				phys_enc->hw_ctl->ops.update_bitmask(
 						phys_enc->hw_ctl,
+						SDE_HW_FLUSH_WB,
 						wb_enc->hw_wb->idx, true);
 		}
 	} else {
@@ -2743,9 +2744,10 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 					phys_enc->hw_intf, false,
 					phys_enc->hw_pp->idx);
 
-			if (phys_enc->hw_ctl->ops.update_bitmask_intf)
-				phys_enc->hw_ctl->ops.update_bitmask_intf(
+			if (phys_enc->hw_ctl->ops.update_bitmask)
+				phys_enc->hw_ctl->ops.update_bitmask(
 						phys_enc->hw_ctl,
+						SDE_HW_FLUSH_INTF,
 						phys_enc->hw_intf->idx, true);
 		}
 	}
@@ -2753,10 +2755,10 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 	if (phys_enc->hw_pp && phys_enc->hw_pp->ops.reset_3d_mode) {
 		phys_enc->hw_pp->ops.reset_3d_mode(phys_enc->hw_pp);
 
-		if (phys_enc->hw_ctl->ops.update_bitmask_merge3d &&
+		if (phys_enc->hw_ctl->ops.update_bitmask &&
 				phys_enc->hw_pp->merge_3d)
-			phys_enc->hw_ctl->ops.update_bitmask_merge3d(
-					phys_enc->hw_ctl,
+			phys_enc->hw_ctl->ops.update_bitmask(
+					phys_enc->hw_ctl, SDE_HW_FLUSH_MERGE_3D,
 					phys_enc->hw_pp->merge_3d->idx, true);
 	}
 
@@ -2765,9 +2767,9 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 		phys_enc->hw_cdm->ops.bind_pingpong_blk(phys_enc->hw_cdm,
 				false, phys_enc->hw_pp->idx);
 
-		if (phys_enc->hw_ctl->ops.update_bitmask_cdm)
-			phys_enc->hw_ctl->ops.update_bitmask_cdm(
-					phys_enc->hw_ctl,
+		if (phys_enc->hw_ctl->ops.update_bitmask)
+			phys_enc->hw_ctl->ops.update_bitmask(
+					phys_enc->hw_ctl, SDE_HW_FLUSH_CDM,
 					phys_enc->hw_cdm->idx, true);
 	}
 
@@ -3117,18 +3119,18 @@ static inline void _sde_encoder_trigger_flush(struct drm_encoder *drm_enc,
 	pend_ret_fence_cnt = atomic_read(&phys->pending_retire_fence_cnt);
 
 	if (phys->hw_intf && phys->hw_intf->cap->type == INTF_DP &&
-			ctl->ops.update_bitmask_periph) {
+			ctl->ops.update_bitmask) {
 		/* perform peripheral flush on every frame update for dp dsc */
 		if (phys->comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
 				phys->comp_ratio && c_conn->ops.update_pps) {
 			c_conn->ops.update_pps(phys->connector, NULL,
 					c_conn->display);
-			ctl->ops.update_bitmask_periph(ctl,
+			ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_PERIPH,
 					phys->hw_intf->idx, 1);
 		}
 
 		if (sde_enc->dynamic_hdr_updated)
-			ctl->ops.update_bitmask_periph(ctl,
+			ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_PERIPH,
 					phys->hw_intf->idx, 1);
 	}
 
@@ -3821,9 +3823,10 @@ static int _helper_flush_qsync(struct sde_encoder_phys *phys_enc)
 			if (!hw_intf)
 				continue;
 
-			if (phys_enc->hw_ctl->ops.update_bitmask_intf)
-				phys_enc->hw_ctl->ops.update_bitmask_intf(
+			if (phys_enc->hw_ctl->ops.update_bitmask)
+				phys_enc->hw_ctl->ops.update_bitmask(
 						phys_enc->hw_ctl,
+						SDE_HW_FLUSH_INTF,
 						hw_intf->idx, 1);
 
 			intf_valid = true;

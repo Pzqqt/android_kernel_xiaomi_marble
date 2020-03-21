@@ -761,9 +761,7 @@ static void sde_encoder_phys_vid_enable(struct sde_encoder_phys *phys_enc)
 				!phys_enc->hw_intf, !phys_enc->hw_ctl);
 		return;
 	}
-	if (!ctl->ops.update_bitmask_intf ||
-		(test_bit(SDE_CTL_ACTIVE_CFG, &ctl->caps->features) &&
-		!ctl->ops.update_bitmask_merge3d)) {
+	if (!ctl->ops.update_bitmask) {
 		SDE_ERROR("invalid hw_ctl ops %d\n", ctl->idx);
 		return;
 	}
@@ -801,16 +799,16 @@ static void sde_encoder_phys_vid_enable(struct sde_encoder_phys *phys_enc)
 		goto skip_flush;
 	}
 
-	ctl->ops.update_bitmask_intf(ctl, intf->idx, 1);
+	ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_INTF, intf->idx, 1);
 
-	if (ctl->ops.update_bitmask_merge3d && phys_enc->hw_pp->merge_3d)
-		ctl->ops.update_bitmask_merge3d(ctl,
+	if (phys_enc->hw_pp->merge_3d)
+		ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_MERGE_3D,
 			phys_enc->hw_pp->merge_3d->idx, 1);
 
 	if (phys_enc->hw_intf->cap->type == INTF_DP &&
 		phys_enc->comp_type == MSM_DISPLAY_COMPRESSION_DSC &&
-		phys_enc->comp_ratio && ctl->ops.update_bitmask_periph)
-		ctl->ops.update_bitmask_periph(ctl, intf->idx, 1);
+		phys_enc->comp_ratio)
+		ctl->ops.update_bitmask(ctl, SDE_HW_FLUSH_PERIPH, intf->idx, 1);
 
 skip_flush:
 	SDE_DEBUG_VIDENC(vid_enc, "update pending flush ctl %d intf %d\n",
