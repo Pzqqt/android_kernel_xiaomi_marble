@@ -206,9 +206,13 @@ typedef  enum  {
     /* NOTE:
      * The above service flags are delivered in the wmi_service_bitmap field
      * of the WMI_SERVICE_READY_EVENT message.
-     * The below service flags are delivered in a WMI_SERVICE_AVAILABLE_EVENT
-     * message rather than in the WMI_SERVICE_READY_EVENT message's
-     * wmi_service_bitmap field.
+     * The below service flags are not delivered in the
+     * WMI_SERVICE_READY_EVENT message's wmi_service_bitmap field,
+     * but instead are delivered in the
+     *     fixed_param.wmi_service_segment_bitmap portion
+     * of the WMI_SERVICE_AVAILABLE_EVENT message, with
+     *     fixed_param.wmi_service_segment_offset
+     * set to 128.
      * The WMI_SERVICE_AVAILABLE_EVENT message immediately precedes the
      * WMI_SERVICE_READY_EVENT message.
      */
@@ -435,15 +439,38 @@ typedef  enum  {
     WMI_SERVICE_BEACON_PROTECTION_SUPPORT = 244, /* Indicates FW supports WPA3 Beacon protection */
 
 
-    /******* ADD NEW SERVICES HERE *******/
+    /******* ADD NEW SERVICES UP TO 256 HERE *******/
 
-    WMI_MAX_EXT_SERVICE
+    WMI_MAX_EXT_SERVICE = 256,
+
+    /* NOTE:
+     * The above service flags are delivered in the
+     *     fixed_param.wmi_service_segment_bitmap portion
+     * of the WMI_SERVICE_AVAILABLE_EVENT message, with
+     *     fixed_param.wmi_service_segment_offset
+     * set to 128.
+     * The below service flags can be delivered in one of two ways:
+     * 1.  The target can deliver a 2nd SERVICE_AVAILABLE message, with
+     *         fixed_param.wmi_service_segment_offset
+     *     set to 256.
+     *     (This method is acceptable, but not recommended.)
+     * 2.  The target can populate the wmi_service_ext_bitmap[] TLV array
+     *     within the WMI_SERVICE_AVAILABLE_EVENT message.
+     *     (This method is recommended.)
+     */
+
+
+    /******* ADD NEW SERVICES 256 AND BEYOND HERE *******/
+
+
+    WMI_MAX_EXT2_SERVICE
 
 } WMI_SERVICE;
 
 #define WMI_SERVICE_BM_SIZE   ((WMI_MAX_SERVICE + sizeof(A_UINT32)- 1)/sizeof(A_UINT32))
 
 #define WMI_NUM_EXT_SERVICES (WMI_MAX_EXT_SERVICE - WMI_MAX_SERVICE)
+#define WMI_NUM_EXT2_SERVICES (WMI_MAX_EXT2_SERVICE - WMI_MAX_EXT_SERVICE)
 
 /*
  * TEMPORARY WORKAROUND
@@ -511,6 +538,50 @@ typedef  enum  {
             (((pwmi_svc_ext_bmap)[((svc_id) - WMI_MAX_SERVICE) / 32] >> \
                 ((svc_id) & 0x1f)) & 0x1))
 
+#define WMI_SERVICE_EXT2_ENABLE( \
+    pwmi_svc_bmap, pwmi_svc_ext_bmap, pwmi_svc_ext2_bmap, svc_id) \
+    do { \
+        if (svc_id < WMI_MAX_SERVICE) { \
+            WMI_SERVICE_ENABLE(pwmi_svc_bmap, svc_id); \
+        } else if (svc_id < WMI_MAX_EXT_SERVICE) { \
+            WMI_SERVICE_EXT_ENABLE(pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id); \
+        } else { \
+            int word = ((svc_id) - WMI_MAX_EXT_SERVICE) / 32; \
+            int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
+            (pwmi_svc_ext2_bmap)[word] |= (1 << bit); \
+        } \
+    } while (0)
+
+#define WMI_SERVICE_EXT2_DISABLE( \
+    pwmi_svc_bmap, pwmi_svc_ext_bmap, pwmi_svc_ext2_bmap, svc_id) \
+    do { \
+        if (svc_id < WMI_MAX_SERVICE) { \
+            WMI_SERVICE_DISABLE(pwmi_svc_bmap, svc_id); \
+        } else if (svc_id < WMI_MAX_EXT_SERVICE) { \
+            WMI_SERVICE_DISABLE(pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id); \
+        } else { \
+            int word = ((svc_id) - WMI_MAX_EXT_SERVICE) / 32; \
+            int bit = (svc_id) & 0x1f; /* svc_id mod 32 */ \
+            (pwmi_svc_ext2_bmap)[word] &= ~(1 << bit); \
+        } \
+    } while (0)
+
+#define WMI_SERVICE_EXT2_IS_ENABLED( \
+    pwmi_svc_bmap, pwmi_svc_ext_bmap, pwmi_svc_ext2_bmap, svc_id) \
+    /* If the service ID is beyond the known limit, treat it as disabled */ \
+    ((svc_id) >= WMI_MAX_EXT2_SERVICE ? 0 : \
+        /* If service ID is in the non-extension range, use the old check */ \
+        (svc_id) < WMI_MAX_SERVICE ? \
+            WMI_SERVICE_IS_ENABLED(pwmi_svc_bmap, svc_id) : \
+            /* If service ID is in the 1st extended range, check ext_bmap */ \
+            (svc_id) < WMI_MAX_EXT_SERVICE ? \
+                WMI_SERVICE_EXT_IS_ENABLED( \
+                    pwmi_svc_bmap, pwmi_svc_ext_bmap, svc_id) : \
+                /* \
+                 * If service ID is in the 2nd extended range, check ext2_bmap \
+                 */ \
+                (((pwmi_svc_ext2_bmap)[((svc_id) - WMI_MAX_EXT_SERVICE) / 32] >> \
+                ((svc_id) & 0x1f)) & 0x1))
 
 #ifdef __cplusplus
 }

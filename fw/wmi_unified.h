@@ -2614,6 +2614,20 @@ typedef struct {
      */
     A_UINT32 wmi_service_segment_offset;
     A_UINT32 wmi_service_segment_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
+/*
+ * This TLV is followed by the below TLVs:
+ * A_UINT32 wmi_service_ext_bitmap[]
+ *     The wmi_service_ext_bitmap covers WMI service flags at the offset where
+ *     wmi_service_available_event_fixed_param.wmi_service_segment_bitmap
+ *     leaves off.
+ *     For example, if
+ *         wmi_service_available_event_fixed_param.wmi_service_segment_offset
+ *     is 128, then
+ *         wmi_service_available_event_fixed_param.wmi_service_segment_bitmap
+ *     will cover WMI service flags
+ *         128 to (128 + WMI_SERVICE_SEGMENT_BM_SIZE32 * 32) = 128 to 256
+ *     and wmi_service_ext_bitmap will cover WMI service flags starting at 256.
+ */
 } wmi_service_available_event_fixed_param;
 
 typedef struct {
