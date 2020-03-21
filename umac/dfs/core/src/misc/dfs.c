@@ -978,7 +978,9 @@ bool dfs_is_restricted_80p80mhz_supported(struct wlan_dfs *dfs)
 }
 #endif
 
+#ifdef QCA_SUPPORT_AGILE_DFS
 uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs)
 {
 	return dfs->dfs_agile_detector_id;
 }
+#endif

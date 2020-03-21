@@ -412,7 +412,7 @@
  * @DETECTOR_ID_2: Detector ID 2 (Agile detector in 80p80MHZ supported devices).
  * @AGILE_DETECTOR_ID_TRUE_160MHZ:  Agile detector ID in true 160MHz devices.
  * @AGILE_DETECTOR_ID_80p80: Agile detector ID in 80p80MHz supported devices.
- * @DETECTOR_ID_MAX: Maximum detector ID value.
+ * @INVALID_DETECTOR_ID: Invalid detector id.
  */
 enum detector_id {
 	DETECTOR_ID_0,
@@ -420,7 +420,7 @@ enum detector_id {
 	DETECTOR_ID_2,
 	AGILE_DETECTOR_ID_TRUE_160MHZ = DETECTOR_ID_1,
 	AGILE_DETECTOR_ID_80P80 = DETECTOR_ID_2,
-	DETECTOR_ID_MAX,
+	INVALID_DETECTOR_ID,
 };
 
 /**
@@ -2882,5 +2882,12 @@ static inline bool dfs_is_restricted_80p80mhz_supported(struct wlan_dfs *dfs)
  *
  * Return: Agile detector value (uint8_t).
  */
+#ifdef QCA_SUPPORT_AGILE_DFS
 uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs);
+#else
+static inline uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs)
+{
+	return INVALID_DETECTOR_ID;
+}
+#endif
 #endif  /* _DFS_H_ */
