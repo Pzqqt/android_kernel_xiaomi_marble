@@ -2404,7 +2404,7 @@
  *
  * </ini>
  */
-#define CFG_STA_DISABLE_ROAM CFG_INI_INT( \
+#define CFG_STA_DISABLE_ROAM CFG_INI_UINT( \
 		"sta_disable_roam", \
 		0, \
 		0xffffffff, \
