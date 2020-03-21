@@ -1153,6 +1153,19 @@ end:
 	return rc;
 }
 
+/**
+ * sde_get_dt_props - allocate and return prop counts, exists & values arrays
+ * @np	- device node
+ * @prop_max	- <BLK>_PROP_MAX enum, this will be number of values allocated
+ * @sde_prop	- pointer to prop table
+ * @prop_size	- size of prop table
+ * @off_count	- pointer to callers off_count
+ *
+ * @Returns	- valid pointer or -ve error code (can never return NULL)
+ * If a non-NULL off_count pointer is given, the value it points to will be
+ * updated with the number of elements in the offset array (entry 0 in table).
+ * Caller MUST free this object using sde_put_dt_props after parsing values.
+ */
 static struct sde_dt_props *sde_get_dt_props(struct device_node *np,
 		size_t prop_max, struct sde_prop_type *sde_prop,
 		u32 prop_size, u32 *off_count)
@@ -1188,6 +1201,7 @@ free_props:
 	return ERR_PTR(rc);
 }
 
+/* sde_put_dt_props - free an sde_dt_props object obtained with "get" */
 static void sde_put_dt_props(struct sde_dt_props *props)
 {
 	if (!props)
@@ -1827,7 +1841,7 @@ static int sde_ctl_parse_dt(struct device_node *np,
 
 	props = sde_get_dt_props(np, HW_PROP_MAX, ctl_prop,
 			ARRAY_SIZE(ctl_prop), &off_count);
-	if (IS_ERR_OR_NULL(props))
+	if (IS_ERR(props))
 		return PTR_ERR(props);
 
 	sde_cfg->ctl_count = off_count;
@@ -1950,7 +1964,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 
 	props = sde_get_dt_props(np, MIXER_PROP_MAX, mixer_prop,
 			ARRAY_SIZE(mixer_prop), &off_count);
-	if (IS_ERR_OR_NULL(props))
+	if (IS_ERR(props))
 		return PTR_ERR(props);
 
 	pp_count = sde_cfg->pingpong_count;
@@ -1963,7 +1977,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 		blocks_props = sde_get_dt_props(snp, MIXER_PROP_MAX,
 				mixer_blocks_prop,
 				ARRAY_SIZE(mixer_blocks_prop), NULL);
-		if (IS_ERR_OR_NULL(blocks_props)) {
+		if (IS_ERR(blocks_props)) {
 			rc = PTR_ERR(blocks_props);
 			goto put_props;
 		}
@@ -1973,7 +1987,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 	blend_props = sde_get_dt_props(np, MIXER_BLEND_PROP_MAX,
 			mixer_blend_prop, ARRAY_SIZE(mixer_blend_prop),
 			&blend_off_count);
-	if (IS_ERR_OR_NULL(blend_props)) {
+	if (IS_ERR(blend_props)) {
 		rc = PTR_ERR(blend_props);
 		goto put_blocks;
 	}
@@ -1998,13 +2012,12 @@ static int sde_mixer_parse_dt(struct device_node *np,
 		mixer->sblk = sblk;
 
 		mixer->base = mixer_base;
-		mixer->len = PROP_VALUE_ACCESS(props->values, MIXER_LEN, 0);
+		mixer->len = !props->exists[MIXER_LEN] ?
+				DEFAULT_SDE_HW_BLOCK_LEN :
+				PROP_VALUE_ACCESS(props->values, MIXER_LEN, 0);
 		mixer->id = LM_0 + i;
 		snprintf(mixer->name, SDE_HW_BLK_NAME_LEN, "lm_%u",
 				mixer->id - LM_0);
-
-		if (!props->exists[MIXER_LEN])
-			mixer->len = DEFAULT_SDE_HW_BLOCK_LEN;
 
 		lm_pair_mask = PROP_VALUE_ACCESS(props->values,
 				MIXER_PAIR_MASK, i);
@@ -2055,7 +2068,8 @@ static int sde_mixer_parse_dt(struct device_node *np,
 			sblk->gc.base = PROP_VALUE_ACCESS(blocks_props->values,
 					MIXER_GC_PROP, 0);
 			sblk->gc.version = PROP_VALUE_ACCESS(
-					blocks_props->values, MIXER_GC_PROP, 1);
+					blocks_props->values, MIXER_GC_PROP,
+					1);
 			sblk->gc.len = 0;
 			set_bit(SDE_MIXER_GC, &mixer->features);
 		}
