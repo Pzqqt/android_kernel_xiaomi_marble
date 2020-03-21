@@ -70,10 +70,12 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 	*pll = pll_res;
 
 	label = of_get_property(pdev->dev.of_node, "pll-label", NULL);
-	if (!label)
-		DSI_PLL_INFO(pll_res, "DSI pll label not specified\n");
-	else
-		DSI_PLL_INFO(pll_res, "DSI pll label = %s\n", label);
+	if (!label) {
+		DSI_PLL_ERR(pll_res, "DSI pll label not specified\n");
+		return 0;
+	}
+
+	DSI_PLL_INFO(pll_res, "DSI pll label = %s\n", label);
 
 	/**
 	  * Currently, Only supports 5nm PLL version. Will add
