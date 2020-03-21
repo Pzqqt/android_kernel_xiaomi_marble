@@ -1546,14 +1546,11 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 	}
 
 	for (i = 0; i < sde_crtc->num_mixers; i++) {
-		if (!mixer[i].hw_lm || !mixer[i].hw_ctl) {
+		if (!mixer[i].hw_lm) {
 			SDE_ERROR("invalid lm or ctl assigned to mixer\n");
 			return;
 		}
 		mixer[i].mixer_op_mode = 0;
-		if (mixer[i].hw_ctl->ops.clear_all_blendstages)
-			mixer[i].hw_ctl->ops.clear_all_blendstages(
-					mixer[i].hw_ctl);
 
 		/* clear dim_layer settings */
 		lm = mixer[i].hw_lm;
@@ -3078,6 +3075,22 @@ static void _sde_crtc_setup_lm_bounds(struct drm_crtc *crtc,
 	drm_mode_debug_printmodeline(adj_mode);
 }
 
+static void _sde_crtc_clear_all_blend_stages(struct sde_crtc *sde_crtc)
+{
+	struct sde_crtc_mixer mixer;
+
+	/*
+	 * Use mixer[0] to get hw_ctl which will use ops to clear
+	 * all blendstages. Clear all blendstages will iterate through
+	 * all mixers.
+	 */
+	if (sde_crtc->num_mixers) {
+		mixer = sde_crtc->mixers[0];
+		if (mixer.hw_ctl && mixer.hw_ctl->ops.clear_all_blendstages)
+			mixer.hw_ctl->ops.clear_all_blendstages(mixer.hw_ctl);
+	}
+}
+
 static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state)
 {
@@ -3119,6 +3132,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		_sde_crtc_setup_mixers(crtc);
 		_sde_crtc_setup_is_ppsplit(crtc->state);
 		_sde_crtc_setup_lm_bounds(crtc, crtc->state);
+		_sde_crtc_clear_all_blend_stages(sde_crtc);
 	}
 
 	list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
@@ -3999,6 +4013,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 					ktime_get());
 	}
 
+	_sde_crtc_clear_all_blend_stages(sde_crtc);
 	memset(sde_crtc->mixers, 0, sizeof(sde_crtc->mixers));
 	sde_crtc->num_mixers = 0;
 	sde_crtc->mixers_swapped = false;
