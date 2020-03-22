@@ -101,7 +101,7 @@ void hal_tx_comp_get_status_generic(void *desc,
  * Return: void
  */
 static inline void hal_tx_desc_set_buf_addr_generic(void *desc,
-		dma_addr_t paddr, uint8_t pool_id,
+		dma_addr_t paddr, uint8_t rbm_id,
 		uint32_t desc_id, uint8_t type)
 {
 	/* Set buffer_addr_info.buffer_addr_31_0 */
@@ -114,11 +114,11 @@ static inline void hal_tx_desc_set_buf_addr_generic(void *desc,
 		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_1, BUFFER_ADDR_39_32,
 		       (((uint64_t) paddr) >> 32));
 
-	/* Set buffer_addr_info.return_buffer_manager = pool id */
+	/* Set buffer_addr_info.return_buffer_manager = rbm id */
 	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_1,
 			 BUFFER_ADDR_INFO_BUF_ADDR_INFO) |=
 		HAL_TX_SM(UNIFIED_BUFFER_ADDR_INFO_1,
-		       RETURN_BUFFER_MANAGER, (pool_id + HAL_WBM_SW0_BM_ID));
+		       RETURN_BUFFER_MANAGER, rbm_id);
 
 	/* Set buffer_addr_info.sw_buffer_cookie = desc_id */
 	HAL_SET_FLD(desc, UNIFIED_TCL_DATA_CMD_1,
