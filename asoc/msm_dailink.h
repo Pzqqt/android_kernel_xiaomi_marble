@@ -217,6 +217,11 @@ SND_SOC_DAILINK_DEFS(multimedia32,
 	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-dsp.0")));
 
+SND_SOC_DAILINK_DEFS(afepcm_tx1,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.242")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-afe")));
+
 /* BE dai-links */
 SND_SOC_DAILINK_DEFS(afe_pcm_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.224")),
