@@ -2620,6 +2620,7 @@ static int msm_dai_q6_hw_params(struct snd_pcm_substream *substream,
 	case RT_PROXY_DAI_001_RX:
 	case RT_PROXY_DAI_002_TX:
 	case RT_PROXY_DAI_002_RX:
+	case RT_PROXY_DAI_003_TX:
 	case RT_PROXY_PORT_002_TX:
 	case RT_PROXY_PORT_002_RX:
 		rc = msm_dai_q6_afe_rtproxy_hw_params(params, dai);
@@ -4085,6 +4086,23 @@ static struct snd_soc_dai_driver msm_dai_q6_afe_tx_dai[] = {
 		.probe = msm_dai_q6_dai_probe,
 		.remove = msm_dai_q6_dai_remove,
 	},
+};
+
+static struct snd_soc_dai_driver msm_dai_q6_afe_cap_dai = {
+	.capture = {
+		.stream_name = "AFE-PROXY TX1",
+		.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+		SNDRV_PCM_RATE_16000,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		.channels_min = 1,
+		.channels_max = 8,
+		.rate_min =     8000,
+		.rate_max =     48000,
+	},
+	.ops = &msm_dai_q6_ops,
+	.id = RT_PROXY_DAI_003_TX,
+	.probe = msm_dai_q6_dai_probe,
+	.remove = msm_dai_q6_dai_remove,
 };
 
 static struct snd_soc_dai_driver msm_dai_q6_bt_sco_rx_dai = {
@@ -7278,6 +7296,10 @@ register_afe_capture:
 		if (rc)
 			pr_err("%s: Device not found stream name %s\n",
 			__func__, stream_name);
+		break;
+        case RT_PROXY_DAI_003_TX:
+		rc = snd_soc_register_component(&pdev->dev,
+			&msm_dai_q6_component, &msm_dai_q6_afe_cap_dai, 1);
 		break;
 	case VOICE_PLAYBACK_TX:
 		strlcpy(stream_name, "Voice Farend Playback", 80);

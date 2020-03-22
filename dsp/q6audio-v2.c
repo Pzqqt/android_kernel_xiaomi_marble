@@ -791,7 +791,8 @@ int q6audio_convert_virtual_to_portid(u16 port_id)
 		if (port_id == RT_PROXY_DAI_001_RX ||
 			port_id == RT_PROXY_DAI_001_TX ||
 			port_id == RT_PROXY_DAI_002_RX ||
-			port_id == RT_PROXY_DAI_002_TX)
+			port_id == RT_PROXY_DAI_002_TX ||
+			port_id == RT_PROXY_DAI_003_TX)
 			ret = VIRTUAL_ID_TO_PORTID(port_id);
 		else
 			ret = -EINVAL;

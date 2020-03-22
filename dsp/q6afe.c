@@ -181,6 +181,8 @@ static int pcm_afe_instance[2];
 static int proxy_afe_instance[2];
 bool afe_close_done[2] = {true, true};
 
+static bool proxy_afe_started = false;
+
 #define SIZEOF_CFG_CMD(y) \
 		(sizeof(struct apr_hdr) + sizeof(u16) + (sizeof(struct y)))
 
@@ -855,7 +857,9 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			}
 			break;
 		}
-		case RT_PROXY_PORT_001_RX: {
+		case RT_PROXY_PORT_001_RX:
+		case RT_PROXY_PORT_002_RX:
+		{
 			if (this_afe.rx_cb) {
 				this_afe.rx_cb(data->opcode, data->token,
 					data->payload,
@@ -4359,7 +4363,23 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		ret = -EINVAL;
 		return ret;
 	}
-
+	if (port_id == RT_PROXY_PORT_002_RX) {
+		if (proxy_afe_started) {
+			pr_debug("%s: afe port already started, port id 0x%x\n",
+				__func__, RT_PROXY_PORT_002_RX);
+			return 0;
+		} else {
+			proxy_afe_started = true;
+		}
+	}
+	if (port_id == RT_PROXY_DAI_003_TX) {
+		port_id = VIRTUAL_ID_TO_PORTID(port_id);
+		if (proxy_afe_started) {
+			pr_debug("%s: reconfigure afe port again\n", __func__);
+			afe_close(port_id);
+		}
+		proxy_afe_started = true;
+	}
 	if ((port_id == RT_PROXY_DAI_001_RX) ||
 		(port_id == RT_PROXY_DAI_002_TX)) {
 		pr_debug("%s: before incrementing pcm_afe_instance %d port_id 0x%x\n",
@@ -6290,7 +6310,8 @@ int afe_register_get_events(u16 port_id,
 		rtac_set_afe_handle(this_afe.apr);
 	}
 	if ((port_id == RT_PROXY_DAI_002_RX) ||
-		(port_id == RT_PROXY_DAI_001_TX)) {
+		(port_id == RT_PROXY_DAI_001_TX) ||
+		(port_id == RT_PROXY_DAI_003_TX)) {
 		port_id = VIRTUAL_ID_TO_PORTID(port_id);
 	} else {
 		pr_err("%s: wrong port id 0x%x\n", __func__, port_id);
@@ -6300,7 +6321,8 @@ int afe_register_get_events(u16 port_id,
 	if (port_id == RT_PROXY_PORT_001_TX) {
 		this_afe.tx_cb = cb;
 		this_afe.tx_private_data = private_data;
-	} else if (port_id == RT_PROXY_PORT_001_RX) {
+	} else if (port_id == RT_PROXY_PORT_001_RX ||
+			port_id == RT_PROXY_PORT_002_RX) {
 		this_afe.rx_cb = cb;
 		this_afe.rx_private_data = private_data;
 	}
@@ -6351,7 +6373,8 @@ int afe_unregister_get_events(u16 port_id)
 	}
 
 	if ((port_id == RT_PROXY_DAI_002_RX) ||
-		(port_id == RT_PROXY_DAI_001_TX)) {
+		(port_id == RT_PROXY_DAI_001_TX) ||
+		(port_id == RT_PROXY_DAI_003_TX)) {
 		port_id = VIRTUAL_ID_TO_PORTID(port_id);
 	} else {
 		pr_err("%s: wrong port id 0x%x\n", __func__, port_id);
@@ -6385,7 +6408,8 @@ int afe_unregister_get_events(u16 port_id)
 	if (port_id == RT_PROXY_PORT_001_TX) {
 		this_afe.tx_cb = NULL;
 		this_afe.tx_private_data = NULL;
-	} else if (port_id == RT_PROXY_PORT_001_RX) {
+	} else if (port_id == RT_PROXY_PORT_001_RX ||
+			port_id == RT_PROXY_PORT_002_RX) {
 		this_afe.rx_cb = NULL;
 		this_afe.rx_private_data = NULL;
 	}
@@ -6463,14 +6487,16 @@ EXPORT_SYMBOL(afe_rt_proxy_port_write);
  * @buf_addr_p: Physical buffer address to fill read data
  * @mem_map_handle: memory map handle for buffer read
  * @bytes: number of bytes to read
+ * @id: afe virtual port id
  *
  * Returns 0 on success or error on failure
  */
 int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
-		u32 mem_map_handle, int bytes)
+		u32 mem_map_handle, int bytes, int id)
 {
 	int ret = 0;
 	struct afe_port_data_cmd_rt_proxy_port_read_v2 afecmd_rd;
+	int port_id = VIRTUAL_ID_TO_PORTID(id);
 
 	if (this_afe.apr == NULL) {
 		pr_err("%s: register to AFE is not done\n", __func__);
@@ -6487,7 +6513,7 @@ int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
 	afecmd_rd.hdr.dest_port = 0;
 	afecmd_rd.hdr.token = 0;
 	afecmd_rd.hdr.opcode = AFE_PORT_DATA_CMD_RT_PROXY_PORT_READ_V2;
-	afecmd_rd.port_id = RT_PROXY_PORT_001_RX;
+	afecmd_rd.port_id = port_id;
 	afecmd_rd.buffer_address_lsw = lower_32_bits(buf_addr_p);
 	afecmd_rd.buffer_address_msw =
 				msm_audio_populate_upper_32_bits(buf_addr_p);
@@ -7344,7 +7370,8 @@ int afe_convert_virtual_to_portid(u16 port_id)
 		if (port_id == RT_PROXY_DAI_001_RX ||
 		    port_id == RT_PROXY_DAI_001_TX ||
 		    port_id == RT_PROXY_DAI_002_RX ||
-		    port_id == RT_PROXY_DAI_002_TX) {
+		    port_id == RT_PROXY_DAI_002_TX ||
+		    port_id == RT_PROXY_DAI_003_TX) {
 			ret = VIRTUAL_ID_TO_PORTID(port_id);
 		} else {
 			pr_err("%s: wrong port 0x%x\n",
@@ -7443,6 +7470,9 @@ int afe_close(int port_id)
 
 		afe_close_done[port_id & 0x1] = true;
 	}
+
+	if (port_id == RT_PROXY_PORT_002_RX && proxy_afe_started)
+		proxy_afe_started = false;
 
 	port_id = q6audio_convert_virtual_to_portid(port_id);
 	index = q6audio_get_port_index(port_id);
