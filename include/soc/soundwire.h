@@ -11,6 +11,7 @@
 #include <linux/regmap.h>
 #include "audio_mod_devicetable.h"
 
+#define SWR_CLK_RATE_0P3MHZ       300000
 #define SWR_CLK_RATE_0P6MHZ       600000
 #define SWR_CLK_RATE_1P2MHZ      1200000
 #define SWR_CLK_RATE_2P4MHZ      2400000
