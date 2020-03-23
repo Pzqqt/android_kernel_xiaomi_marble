@@ -2797,7 +2797,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 					WLAN_MGMT_NB_ID);
 	}
 
-	if (ucfg_pkt_capture_get_pktcap_mode(psoc) &&
+	if (ucfg_pkt_capture_get_pktcap_mode(psoc) &
 	    PKT_CAPTURE_MODE_MGMT_ONLY) {
 		ucfg_pkt_capture_mgmt_tx(wma_handle->pdev,
 					 tx_frame,
