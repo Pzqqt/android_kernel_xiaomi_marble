@@ -1757,7 +1757,15 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 
 	case eSAP_CHANNEL_CHANGE_RESP:
 		sap_ap_event.sapHddEventCode = eSAP_CHANNEL_CHANGE_RESP;
-		sap_ap_event.sapevt.ch_change_rsp_status = (QDF_STATUS)context;
+		acs_selected = &sap_ap_event.sapevt.sap_ch_selected;
+		acs_selected->pri_ch_freq = sap_ctx->chan_freq;
+		acs_selected->ht_sec_ch_freq = sap_ctx->sec_ch_freq;
+		acs_selected->ch_width =
+			sap_ctx->csr_roamProfile.ch_params.ch_width;
+		acs_selected->vht_seg0_center_ch_freq =
+			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg0;
+		acs_selected->vht_seg1_center_ch_freq =
+			sap_ctx->csr_roamProfile.ch_params.mhz_freq_seg1;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, SAP event callback event = %s",
 			 __func__, "eSAP_CHANNEL_CHANGE_RESP");

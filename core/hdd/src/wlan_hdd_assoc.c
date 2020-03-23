@@ -4600,9 +4600,9 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		roam_info->chan_info.ch_width;
 	chan_change.chan_params.sec_ch_offset =
 		roam_info->chan_info.sec_ch_offset;
-	chan_change.chan_params.center_freq_seg0 =
+	chan_change.chan_params.mhz_freq_seg0 =
 		roam_info->chan_info.band_center_freq1;
-	chan_change.chan_params.center_freq_seg1 =
+	chan_change.chan_params.mhz_freq_seg1 =
 		roam_info->chan_info.band_center_freq2;
 
 	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);

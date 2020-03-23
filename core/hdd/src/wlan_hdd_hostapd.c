@@ -885,9 +885,9 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		break;
 	case CH_WIDTH_80P80MHZ:
 		chandef.width = NL80211_CHAN_WIDTH_80P80;
-		if (chan_change.chan_params.center_freq_seg1)
-			chandef.center_freq2 = cds_chan_to_freq(
-				chan_change.chan_params.center_freq_seg1);
+		if (chan_change.chan_params.mhz_freq_seg1)
+			chandef.center_freq2 =
+				chan_change.chan_params.mhz_freq_seg1;
 		break;
 	case CH_WIDTH_160MHZ:
 		chandef.width = NL80211_CHAN_WIDTH_160;
@@ -899,9 +899,9 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 	if ((chan_change.chan_params.ch_width == CH_WIDTH_80MHZ) ||
 	    (chan_change.chan_params.ch_width == CH_WIDTH_80P80MHZ) ||
 	    (chan_change.chan_params.ch_width == CH_WIDTH_160MHZ)) {
-		if (chan_change.chan_params.center_freq_seg0)
-			chandef.center_freq1 = cds_chan_to_freq(
-				chan_change.chan_params.center_freq_seg0);
+		if (chan_change.chan_params.mhz_freq_seg0)
+			chandef.center_freq1 =
+				chan_change.chan_params.mhz_freq_seg0;
 	}
 
 	hdd_debug("notify: chan:%d width:%d freq1:%d freq2:%d",
@@ -1700,6 +1700,66 @@ static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
 	wma_update_set_key(adapter->vdev_id, true, 0, crypto_key->cipher_type);
 }
 
+/**
+ * hdd_hostapd_chan_change() - prepare new operation chan info to kernel
+ * @adapter: pointre to hdd_adapter
+ * @sap_event: pointer to sap_event
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS hdd_hostapd_chan_change(struct hdd_adapter *adapter,
+					  struct sap_event *sap_event)
+{
+	struct hdd_chan_change_params chan_change;
+	struct ch_params sap_ch_param = {0};
+	eCsrPhyMode phy_mode;
+	bool legacy_phymode;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct sap_ch_selected_s *sap_chan_selected =
+			&sap_event->sapevt.sap_ch_selected;
+
+	sap_ch_param.ch_width = sap_chan_selected->ch_width;
+	sap_ch_param.mhz_freq_seg0 =
+		sap_chan_selected->vht_seg0_center_ch_freq;
+	sap_ch_param.mhz_freq_seg1 =
+		sap_chan_selected->vht_seg1_center_ch_freq;
+
+	wlan_reg_set_channel_params_for_freq(
+		hdd_ctx->pdev,
+		sap_chan_selected->pri_ch_freq,
+		sap_chan_selected->ht_sec_ch_freq,
+		&sap_ch_param);
+
+	phy_mode = wlan_sap_get_phymode(
+			WLAN_HDD_GET_SAP_CTX_PTR(adapter));
+
+	switch (phy_mode) {
+	case eCSR_DOT11_MODE_11n:
+	case eCSR_DOT11_MODE_11n_ONLY:
+	case eCSR_DOT11_MODE_11ac:
+	case eCSR_DOT11_MODE_11ac_ONLY:
+	case eCSR_DOT11_MODE_11ax:
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		legacy_phymode = false;
+		break;
+	default:
+		legacy_phymode = true;
+		break;
+	}
+
+	chan_change.chan_freq = sap_chan_selected->pri_ch_freq;
+	chan_change.chan_params.ch_width = sap_chan_selected->ch_width;
+	chan_change.chan_params.sec_ch_offset =
+		sap_ch_param.sec_ch_offset;
+	chan_change.chan_params.mhz_freq_seg0 =
+			sap_chan_selected->vht_seg0_center_ch_freq;
+	chan_change.chan_params.mhz_freq_seg1 =
+			sap_chan_selected->vht_seg1_center_ch_freq;
+
+	return hdd_chan_change_notify(adapter, adapter->dev,
+				      chan_change, legacy_phymode);
+}
+
 QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				    void *context)
 {
@@ -1727,13 +1787,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	uint8_t cc_len = WLAN_SVC_COUNTRY_CODE_LEN;
 	struct hdd_adapter *con_sap_adapter;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct hdd_chan_change_params chan_change;
 	tSap_StationAssocReassocCompleteEvent *event;
 	tSap_StationSetKeyCompleteEvent *key_complete;
 	int ret = 0;
-	struct ch_params sap_ch_param = {0};
-	eCsrPhyMode phy_mode;
-	bool legacy_phymode;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo, *cache_stainfo;
 	uint8_t index = 0;
@@ -2525,61 +2581,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		ap_ctx->sap_config.acs_cfg.ch_width =
 			sap_event->sapevt.sap_ch_selected.ch_width;
 
-		sap_ch_param.ch_width =
-			sap_event->sapevt.sap_ch_selected.ch_width;
-		sap_ch_param.center_freq_seg0 =
-		wlan_reg_freq_to_chan(
-			hdd_ctx->pdev,
-		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq);
-
-		sap_ch_param.center_freq_seg1 =
-		wlan_reg_freq_to_chan(
-			hdd_ctx->pdev,
-		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq);
-		wlan_reg_set_channel_params_for_freq(
-			hdd_ctx->pdev,
-			sap_event->sapevt.sap_ch_selected.pri_ch_freq,
-			sap_event->sapevt.sap_ch_selected.ht_sec_ch_freq,
-			&sap_ch_param);
-
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
 				       adapter->vdev_id,
 				       ap_ctx->operating_chan_freq);
 
-		phy_mode = wlan_sap_get_phymode(
-				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
-
-		switch (phy_mode) {
-		case eCSR_DOT11_MODE_11n:
-		case eCSR_DOT11_MODE_11n_ONLY:
-		case eCSR_DOT11_MODE_11ac:
-		case eCSR_DOT11_MODE_11ac_ONLY:
-		case eCSR_DOT11_MODE_11ax:
-		case eCSR_DOT11_MODE_11ax_ONLY:
-			legacy_phymode = false;
-			break;
-		default:
-			legacy_phymode = true;
-			break;
-		}
-
-		chan_change.chan_freq =
-			sap_event->sapevt.sap_ch_selected.pri_ch_freq;
-		chan_change.chan_params.ch_width =
-			sap_event->sapevt.sap_ch_selected.ch_width;
-		chan_change.chan_params.sec_ch_offset =
-			sap_ch_param.sec_ch_offset;
-		chan_change.chan_params.center_freq_seg0 =
-		wlan_reg_freq_to_chan(
-			hdd_ctx->pdev,
-		sap_event->sapevt.sap_ch_selected.vht_seg0_center_ch_freq);
-		chan_change.chan_params.center_freq_seg1 =
-		wlan_reg_freq_to_chan(
-			hdd_ctx->pdev,
-		sap_event->sapevt.sap_ch_selected.vht_seg1_center_ch_freq);
-
-		return hdd_chan_change_notify(adapter, dev,
-					      chan_change, legacy_phymode);
+		return hdd_hostapd_chan_change(adapter, sap_event);
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
 		return hdd_handle_acs_scan_event(sap_event, adapter);
 
@@ -2635,8 +2641,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_CHANNEL_CHANGE_RESP:
-		hdd_debug("Channel change rsp status = %d",
-			  sap_event->sapevt.ch_change_rsp_status);
 		/*
 		 * Set the ch_switch_in_progress flag to zero and also enable
 		 * roaming once channel change process (success/failure)
@@ -2656,8 +2660,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				hdd_ctx, adapter->vdev_id,
 				adapter->session.ap.operating_chan_freq);
 
-		return QDF_STATUS_SUCCESS;
-
+		return hdd_hostapd_chan_change(adapter, sap_event);
 	default:
 		hdd_debug("SAP message is not handled");
 		goto stopbss;
