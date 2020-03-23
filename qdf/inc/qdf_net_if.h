@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,4 +48,12 @@ qdf_net_if_create_dummy_if(struct qdf_net_if *nif)
 	return __qdf_net_if_create_dummy_if(nif);
 }
 #endif
+
+/**
+ * qdf_net_if_get_devname() - Retrieve netdevice name
+ * @nif: Abstraction of netdevice
+ *
+ * Return: netdevice name
+ */
+char *qdf_net_if_get_devname(struct qdf_net_if *nif);
 #endif /* __QDF_NET_IF_H */
