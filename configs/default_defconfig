@@ -402,6 +402,15 @@ endif #CONFIG_HELIUMPLUS
 
 ifeq ($(CONFIG_LITHIUM), y)
 #
+# Enable VERBOSE debug INI mechanism
+#
+CONFIG_VERBOSE_DEBUG := y
+CONFIG_RX_DESC_SANITY_WAR := y
+ifeq ($(CONFIG_PCI_MSM), y)
+	CONFIG_FEATURE_HAL_DELAYED_REG_WRITE := y
+endif
+
+#
 # Enable Shadow V2 for all lithium platform
 #
 CONFIG_SHADOW_V2 := y
@@ -423,17 +432,7 @@ endif
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_QCA6750_HEADERS_DEF := y
 	CONFIG_QCA_WIFI_QCA6750 := y
-endif
-
-ifeq ($(CONFIG_LITHIUM), y)
-#
-# Enable VERBOSE debug INI mechanism
-#
-CONFIG_VERBOSE_DEBUG := y
-CONFIG_RX_DESC_SANITY_WAR := y
-ifeq ($(CONFIG_PCI_MSM), y)
-	CONFIG_FEATURE_HAL_DELAYED_REG_WRITE := y
-endif
+	CONFIG_FEATURE_HAL_DELAYED_REG_WRITE := n
 endif
 
 CONFIG_QCA_WIFI_QCA8074 := y
