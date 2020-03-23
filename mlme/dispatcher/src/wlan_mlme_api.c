@@ -3575,6 +3575,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "DEAUTH RECEIVED";
 	case WMI_ROAM_TRIGGER_REASON_IDLE:
 		return "IDLE STATE SCAN";
+	case WMI_ROAM_TRIGGER_REASON_STA_KICKOUT:
+		return "STA KICKOUT";
 	case WMI_ROAM_TRIGGER_REASON_NONE:
 		return "NONE";
 	default:
