@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -495,6 +495,7 @@ struct pdev_cfr {
 	uint64_t cfr_dma_aborts;
 #endif
 	struct unassoc_pool_entry unassoc_pool[MAX_CFR_ENABLED_CLIENTS];
+	qdf_spinlock_t lut_lock;
 };
 
 #define PEER_CFR_CAPTURE_ENABLE   1

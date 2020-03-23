@@ -109,6 +109,8 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
+	qdf_spin_lock_bh(&pcfr->lut_lock);
+
 	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
@@ -126,6 +128,9 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 		}
 
 	}
+
+	qdf_spin_unlock_bh(&pcfr->lut_lock);
+
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 }
 
@@ -619,19 +624,19 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 						     WLAN_UMAC_COMP_CFR);
 	if (qdf_unlikely(!pcfr)) {
 		cfr_err("pdev object for CFR is NULL");
-		goto done;
+		goto relref;
 	}
 
 	cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)qdf_nbuf_data(nbuf);
 	cfr_info = &cdp_rx_ppdu->cfr_info;
 
 	if (!cfr_info->bb_captured_channel)
-		goto done;
+		goto relref;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (qdf_unlikely(!psoc)) {
 		cfr_err("psoc is null\n");
-		goto done;
+		goto relref;
 	}
 
 	cfr_rx_ops = &psoc->soc_cb.rx_ops.cfr_rx_ops;
@@ -644,7 +649,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 					&cookie, 0)) {
 		cfr_debug("Cookie lookup failure for addr: 0x%pK",
 			  (void *)((uintptr_t)buf_addr));
-		goto done;
+		goto relref;
 	}
 
 	cfr_debug("<RXTLV><%u>:buffer address: 0x%pK \n"
@@ -663,16 +668,18 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		  cfr_info->rtt_che_buffer_pointer_high8,
 		  cfr_info->chan_capture_status);
 
+	qdf_spin_lock_bh(&pcfr->lut_lock);
+
 	lut = get_lut_entry(pcfr, cookie);
 	if (qdf_unlikely(!lut)) {
 		cfr_err("lut is NULL");
-		goto done;
+		goto unlock;
 	}
 
 	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_CFR_ID);
 	if (qdf_unlikely(!vdev)) {
 		cfr_debug("vdev is null\n");
-		goto done;
+		goto unlock;
 	}
 
 	bss_chan = wlan_vdev_mlme_get_bss_chan(vdev);
@@ -749,7 +756,10 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	} else {
 		cfr_err("Correlation returned invalid status!!");
 	}
-done:
+
+unlock:
+	qdf_spin_unlock_bh(&pcfr->lut_lock);
+relref:
 	qdf_nbuf_free(nbuf);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 }
@@ -855,9 +865,12 @@ bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	length  = dma_hdr.length * 4;
 	length += dma_hdr.total_bytes; /* size of cfr data */
 
+	qdf_spin_lock_bh(&pcfr->lut_lock);
+
 	lut = get_lut_entry(pcfr, cookie);
 	if (!lut) {
 		cfr_err("lut is NULL");
+		qdf_spin_unlock_bh(&pcfr->lut_lock);
 		return true;
 	}
 
@@ -918,6 +931,7 @@ bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		status = true;
 	}
 
+	qdf_spin_unlock_bh(&pcfr->lut_lock);
 	return status;
 }
 
@@ -1122,7 +1136,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	if (!pcfr) {
 		cfr_err("pdev object for CFR is NULL");
 		retval = -EINVAL;
-		goto end;
+		goto relref;
 	}
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
@@ -1138,14 +1152,14 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 						  NULL, 0, &end_magic, 4);
 
 		retval = -EINVAL;
-		goto end;
+		goto relref;
 	}
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
 		cfr_debug("CFR capture failed for peer : %s",
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
 		retval = -EINVAL;
-		goto end;
+		goto relref;
 	}
 
 	if (tx_evt_param.status & CFR_TX_EVT_STATUS_MASK) {
@@ -1153,7 +1167,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 			  tx_evt_param.status & CFR_TX_EVT_STATUS_MASK,
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
 		retval = -EINVAL;
-		goto end;
+		goto relref;
 	}
 
 	buf_addr_temp = (tx_evt_param.correlation_info_2 & 0x0f);
@@ -1165,7 +1179,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		cfr_debug("Cookie lookup failure for addr: 0x%pK status: 0x%x",
 			  (void *)((uintptr_t)buf_addr), tx_evt_param.status);
 		retval = -EINVAL;
-		goto end;
+		goto relref;
 	}
 
 	cfr_debug("buffer address: 0x%pK cookie: %u",
@@ -1173,11 +1187,13 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	dump_cfr_peer_tx_event_enh(&tx_evt_param, cookie);
 
+	qdf_spin_lock_bh(&pcfr->lut_lock);
+
 	lut = get_lut_entry(pcfr, cookie);
 	if (!lut) {
 		cfr_err("lut is NULL\n");
 		retval = -EINVAL;
-		goto end;
+		goto unlock;
 	}
 
 	pcfr->tx_evt_cnt++;
@@ -1251,10 +1267,11 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	} else {
 		cfr_err("Correlation returned invalid status!!");
 		retval = -EINVAL;
-		goto end;
 	}
 
-end:
+unlock:
+	qdf_spin_unlock_bh(&pcfr->lut_lock);
+relref:
 
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
@@ -1365,6 +1382,8 @@ static os_timer_func(lut_ageout_timer_task)
 
 	cur_tstamp = qdf_ktime_to_ms(qdf_ktime_get());
 
+	qdf_spin_lock_bh(&pcfr->lut_lock);
+
 	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
@@ -1385,6 +1404,8 @@ static os_timer_func(lut_ageout_timer_task)
 			}
 		}
 	}
+
+	qdf_spin_unlock_bh(&pcfr->lut_lock);
 
 	if (pcfr->lut_timer_init)
 		qdf_timer_mod(&pcfr->lut_age_timer, LUT_AGE_TIMER);
@@ -1562,6 +1583,8 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pcfr->lut_timer_init = 1;
 	}
 
+	qdf_spinlock_create(&pcfr->lut_lock);
+
 	return status;
 }
 
@@ -1615,6 +1638,8 @@ QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 	status = target_if_unregister_tx_completion_enh_event_handler(psoc);
 	if (status != QDF_STATUS_SUCCESS)
 		cfr_err("Failed to register with dbr");
+
+	qdf_spinlock_destroy(&pcfr->lut_lock);
 
 	return status;
 }
