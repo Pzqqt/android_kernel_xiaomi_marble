@@ -1055,9 +1055,10 @@ static inline void hal_tx_comp_get_status(void *desc, void *ts,
  * Return: void
  */
 static inline
-void hal_tx_desc_set_buf_addr(void *desc, dma_addr_t paddr,
+void hal_tx_desc_set_buf_addr(hal_soc_handle_t hal_soc_hdl, void *desc,
+			      dma_addr_t paddr,
 			      uint8_t pool_id, uint32_t desc_id,
-			      uint8_t type, hal_soc_handle_t hal_soc_hdl)
+			      uint8_t type)
 {
 	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
 

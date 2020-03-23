@@ -1109,7 +1109,8 @@ static void dp_tx_raw_prepare_unset(struct dp_soc *soc,
  *  Gets the next free TCL HW DMA descriptor and sets up required parameters
  *  from software Tx descriptor
  *
- * Return:
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
  */
 static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 				   struct dp_tx_desc_s *tx_desc, uint8_t tid,
@@ -1119,9 +1120,15 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 {
 	uint8_t type;
 	uint16_t length;
-	void *hal_tx_desc, *hal_tx_desc_cached;
+	void *hal_tx_desc;
+	uint32_t *hal_tx_desc_cached;
 	qdf_dma_addr_t dma_addr;
-	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES];
+
+	/*
+	 * Setting it initialization statically here to avoid
+	 * a memset call jump with qdf_mem_set call
+	 */
+	uint8_t cached_desc[HAL_TX_DESC_LEN_BYTES] = { 0 };
 
 	enum cdp_sec_type sec_type = ((tx_exc_metadata &&
 			tx_exc_metadata->sec_type != CDP_INVALID_SEC_TYPE) ?
@@ -1130,9 +1137,14 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	/* Return Buffer Manager ID */
 	uint8_t bm_id = ring_id;
 	hal_ring_handle_t hal_ring_hdl = soc->tcl_data_ring[ring_id].hal_srng;
+	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
+
+	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id)) {
+		dp_err_rl("Invalid tx desc id:%d", tx_desc->id);
+		return QDF_STATUS_E_RESOURCES;
+	}
 
 	hal_tx_desc_cached = (void *) cached_desc;
-	qdf_mem_zero(hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_FRAG) {
 		length = HAL_TX_EXT_DESC_WITH_META_DATA;
@@ -1146,39 +1158,32 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	qdf_assert_always(dma_addr);
 
-	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
-	hal_tx_desc_set_buf_addr(hal_tx_desc_cached,
-					dma_addr, bm_id, tx_desc->id,
-					type, soc->hal_soc);
-
-	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id))
-		return QDF_STATUS_E_RESOURCES;
-
-	hal_tx_desc_set_buf_length(hal_tx_desc_cached, length);
-	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
-	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
+	hal_tx_desc_set_buf_addr(soc->hal_soc, hal_tx_desc_cached,
+				 dma_addr, bm_id, tx_desc->id,
+				 type);
 	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
-				vdev->pdev->lmac_id);
+				vdev->lmac_id);
 	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
 				    vdev->search_type);
 	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
 				     vdev->bss_ast_idx);
 	hal_tx_desc_set_dscp_tid_table_id(soc->hal_soc, hal_tx_desc_cached,
 					  vdev->dscp_tid_map_id);
+
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
 			sec_type_map[sec_type]);
 	hal_tx_desc_set_cache_set_num(soc->hal_soc, hal_tx_desc_cached,
 				      (vdev->bss_ast_hash & 0xF));
 
-	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
-			 length, type, (uint64_t)dma_addr,
-			 tx_desc->pkt_offset, tx_desc->id);
+	hal_tx_desc_set_fw_metadata(hal_tx_desc_cached, fw_metadata);
+	hal_tx_desc_set_buf_length(hal_tx_desc_cached, length);
+	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
+	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
+	hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
+					  vdev->hal_desc_addr_search_flags);
 
 	if (tx_desc->flags & DP_TX_DESC_FLAG_TO_FW)
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
-
-	hal_tx_desc_set_addr_search_flags(hal_tx_desc_cached,
-			vdev->hal_desc_addr_search_flags);
 
 	/* verify checksum offload configuration*/
 	if ((wlan_cfg_get_checksum_offload(soc->wlan_cfg_ctx)) &&
@@ -1194,25 +1199,47 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_MESH)
 		hal_tx_desc_set_mesh_en(soc->hal_soc, hal_tx_desc_cached, 1);
 
-
 	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
-	/* Sync cached descriptor with HW */
-	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_ring_hdl);
 
-	if (!hal_tx_desc) {
+	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
+			 length, type, (uint64_t)dma_addr,
+			 tx_desc->pkt_offset, tx_desc->id);
+
+	hal_ring_hdl = soc->tcl_data_ring[ring_id].hal_srng;
+	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s %d : HAL RING Access Failed -- %pK",
+			 __func__, __LINE__, hal_ring_hdl);
+		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
+		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
+		return status;
+	}
+
+	/* Sync cached descriptor with HW */
+
+	hal_tx_desc = hal_srng_src_get_next(soc->hal_soc, hal_ring_hdl);
+	if (qdf_unlikely(!hal_tx_desc)) {
 		dp_verbose_debug("TCL ring full ring_id:%d", ring_id);
 		DP_STATS_INC(soc, tx.tcl_ring_full[ring_id], 1);
 		DP_STATS_INC(vdev, tx_i.dropped.enqueue_fail, 1);
-		return QDF_STATUS_E_RESOURCES;
+		goto ring_access_fail;
 	}
 
 	tx_desc->flags |= DP_TX_DESC_FLAG_QUEUED_TX;
 	dp_vdev_peer_stats_update_protocol_cnt_tx(vdev, tx_desc->nbuf);
-
 	hal_tx_desc_sync(hal_tx_desc_cached, hal_tx_desc);
 	DP_STATS_INC_PKT(vdev, tx_i.processed, 1, length);
+	status = QDF_STATUS_SUCCESS;
 
-	return QDF_STATUS_SUCCESS;
+ring_access_fail:
+	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
+		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
+		hif_pm_runtime_put(soc->hif_handle);
+	} else {
+		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
+	}
+
+	return status;
 }
 
 
@@ -1590,8 +1617,6 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_tx_desc_s *tx_desc;
 	QDF_STATUS status;
 	struct dp_tx_queue *tx_q = &(msdu_info->tx_queue);
-	hal_ring_handle_t hal_ring_hdl =
-				soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	uint16_t htt_tcl_metadata = 0;
 	uint8_t tid = msdu_info->tid;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
@@ -1618,20 +1643,6 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	dp_tx_update_tdls_flags(tx_desc);
-
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_ring_hdl);
-		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.
-			    tid_tx_stats[tx_q->ring_id][tid];
-		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
-		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
-		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
-		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
-		goto fail_return;
-	}
 
 	if (qdf_unlikely(peer_id == DP_INVALID_PEER)) {
 		htt_tcl_metadata = vdev->htt_tcl_metadata;
@@ -1663,21 +1674,10 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
-		goto fail_return;
+		return nbuf;
 	}
 
 	nbuf = NULL;
-
-fail_return:
-	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
-		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
-		hif_pm_runtime_put(soc->hif_handle);
-	} else {
-		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
-		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
-		hal_srng_inc_flush_cnt(hal_ring_hdl);
-	}
-
 	return nbuf;
 }
 
@@ -1707,22 +1707,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	QDF_STATUS status;
 	uint16_t htt_tcl_metadata = 0;
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
-	hal_ring_handle_t hal_ring_hdl =
-				soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
-
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s %d : HAL RING Access Failed -- %pK",
-				__func__, __LINE__, hal_ring_hdl);
-		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.
-			    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
-		tid_stats->swdrop_cnt[TX_HAL_RING_ACCESS_ERR]++;
-		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
-		return nbuf;
-	}
-
 	if (qdf_unlikely(soc->cce_disable)) {
 		is_cce_classified = dp_cce_classify(vdev, nbuf);
 		if (is_cce_classified) {
@@ -1845,15 +1830,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	nbuf = NULL;
 
 done:
-	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
-		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
-		hif_pm_runtime_put(soc->hif_handle);
-	} else {
-		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
-		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
-		hal_srng_inc_flush_cnt(hal_ring_hdl);
-	}
-
 	return nbuf;
 }
 

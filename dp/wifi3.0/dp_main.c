@@ -1278,7 +1278,6 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 	}
 	ring_params->low_threshold =
 			soc->wlan_srng_cfg[ring_type].low_threshold;
-
 	if (ring_params->low_threshold)
 		ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
 }
@@ -5196,6 +5195,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 #ifdef notyet
 	vdev->filters_num = 0;
 #endif
+	vdev->lmac_id = pdev->lmac_id;
 
 	qdf_mem_copy(
 		&vdev->mac_addr.raw[0], vdev_mac_addr, QDF_MAC_ADDR_SIZE);
@@ -9538,6 +9538,7 @@ dp_soc_handle_pdev_mode_change
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		HTT_TX_TCL_METADATA_PDEV_ID_SET(vdev->htt_tcl_metadata,
 						hw_pdev_id);
+		vdev->lmac_id = pdev->lmac_id;
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 

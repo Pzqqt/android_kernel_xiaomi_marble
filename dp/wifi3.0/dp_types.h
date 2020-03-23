@@ -370,20 +370,20 @@ struct dp_tx_ext_desc_pool_s {
 struct dp_tx_desc_s {
 	struct dp_tx_desc_s *next;
 	qdf_nbuf_t nbuf;
-	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
-	uint32_t  id;
+	uint32_t id;
 	struct dp_vdev *vdev;
 	struct dp_pdev *pdev;
-	uint8_t  pool_id;
+	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	uint16_t flags;
-	struct hal_tx_desc_comp_s comp;
 	uint16_t tx_encap_type;
 	uint8_t frm_type;
 	uint8_t pkt_offset;
+	uint8_t  pool_id;
 	void *me_buffer;
 	void *tso_desc;
 	void *tso_num_desc;
 	uint64_t timestamp;
+	struct hal_tx_desc_comp_s comp;
 };
 
 /**
@@ -1820,14 +1820,75 @@ struct dp_peer;
 struct dp_vdev {
 	/* OS device abstraction */
 	qdf_device_t osdev;
+
 	/* physical device that is the parent of this virtual device */
 	struct dp_pdev *pdev;
+
+	/* VDEV operating mode */
+	enum wlan_op_mode opmode;
+
+	/* VDEV subtype */
+	enum wlan_op_subtype subtype;
+
+	/* Tx encapsulation type for this VAP */
+	enum htt_cmn_pkt_type tx_encap_type;
+
+	/* Rx Decapsulation type for this VAP */
+	enum htt_cmn_pkt_type rx_decap_type;
+
+	/* BSS peer */
+	struct dp_peer *vap_bss_peer;
+
+	/* WDS enabled */
+	bool wds_enabled;
+
+	/* MEC enabled */
+	bool mec_enabled;
+
+	/* WDS Aging timer period */
+	uint32_t wds_aging_timer_val;
+
+	/* NAWDS enabled */
+	bool nawds_enabled;
+
+	/* Multicast enhancement enabled */
+	uint8_t mcast_enhancement_en;
+
+	/* vdev_id - ID used to specify a particular vdev to the target */
+	uint8_t vdev_id;
+
+	/* Default HTT meta data for this VDEV */
+	/* TBD: check alignment constraints */
+	uint16_t htt_tcl_metadata;
+
+	/* Mesh mode vdev */
+	uint32_t mesh_vdev;
+
+	/* Mesh mode rx filter setting */
+	uint32_t mesh_rx_filter;
+
+	/* DSCP-TID mapping table ID */
+	uint8_t dscp_tid_map_id;
+
+	/* Address search type to be set in TX descriptor */
+	uint8_t search_type;
+
+	/* AST hash value for BSS peer in HW valid for STA VAP*/
+	uint16_t bss_ast_hash;
+
+	/* vdev lmac_id */
+	int lmac_id;
+
+	bool multipass_en;
+
+	/* Address search flags to be configured in HAL descriptor */
+	uint8_t hal_desc_addr_search_flags;
 
 	/* Handle to the OS shim SW's virtual device */
 	ol_osif_vdev_handle osif_vdev;
 
-	/* vdev_id - ID used to specify a particular vdev to the target */
-	uint8_t vdev_id;
+	/* Handle to the UMAC handle */
+	struct cdp_ctrl_objmgr_vdev *ctrl_vdev;
 
 	/* MAC address */
 	union dp_align_mac_addr mac_addr;
@@ -1902,49 +1963,6 @@ struct dp_vdev {
 	bool tdls_link_connected;
 	bool is_tdls_frame;
 
-
-	/* VDEV operating mode */
-	enum wlan_op_mode opmode;
-
-	/* VDEV subtype */
-	enum wlan_op_subtype subtype;
-
-	/* Tx encapsulation type for this VAP */
-	enum htt_cmn_pkt_type tx_encap_type;
-	/* Rx Decapsulation type for this VAP */
-	enum htt_cmn_pkt_type rx_decap_type;
-
-	/* BSS peer */
-	struct dp_peer *vap_bss_peer;
-
-	/* WDS enabled */
-	bool wds_enabled;
-
-	/* MEC enabled */
-	bool mec_enabled;
-
-	/* WDS Aging timer period */
-	uint32_t wds_aging_timer_val;
-
-	/* NAWDS enabled */
-	bool nawds_enabled;
-
-	/* Default HTT meta data for this VDEV */
-	/* TBD: check alignment constraints */
-	uint16_t htt_tcl_metadata;
-
-	/* Mesh mode vdev */
-	uint32_t mesh_vdev;
-
-	/* Mesh mode rx filter setting */
-	uint32_t mesh_rx_filter;
-
-	/* DSCP-TID mapping table ID */
-	uint8_t dscp_tid_map_id;
-
-	/* Multicast enhancement enabled */
-	uint8_t mcast_enhancement_en;
-
 	/* per vdev rx nbuf queue */
 	qdf_nbuf_queue_t rxq;
 
@@ -1960,8 +1978,6 @@ struct dp_vdev {
 	/* Is isolation mode enabled */
 	bool isolation_vdev;
 
-	/* Address search flags to be configured in HAL descriptor */
-	uint8_t hal_desc_addr_search_flags;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	struct dp_tx_desc_pool_s *pool;
 #endif
@@ -1973,11 +1989,6 @@ struct dp_vdev {
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
 	bool raw_mode_war;
 
-	/* Address search type to be set in TX descriptor */
-	uint8_t search_type;
-
-	/* AST hash value for BSS peer in HW valid for STA VAP*/
-	uint16_t bss_ast_hash;
 
 	/* AST hash index for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_idx;
@@ -1999,7 +2010,6 @@ struct dp_vdev {
 	/* Self Peer in STA mode */
 	struct dp_peer *vap_self_peer;
 
-	bool multipass_en;
 #ifdef QCA_MULTIPASS_SUPPORT
 	uint16_t *iv_vlan_map;
 
