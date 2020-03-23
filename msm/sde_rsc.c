@@ -543,6 +543,13 @@ static int sde_rsc_switch_to_cmd(struct sde_rsc_priv *rsc,
 		}
 	}
 
+	/* vsync wait not needed during VID->CMD switch (rev 4+ HW only) */
+	if (rsc->current_state == SDE_RSC_VID_STATE &&
+			rsc->version >= SDE_RSC_REV_4) {
+		rc = 0;
+		goto end;
+	}
+
 vsync_wait:
 	/* indicate wait for vsync for vid to cmd state switch & cfg update */
 	if (!rc && (rsc->current_state == SDE_RSC_VID_STATE ||
@@ -682,11 +689,18 @@ static int sde_rsc_switch_to_vid(struct sde_rsc_priv *rsc,
 		rc = rsc->hw_ops.state_update(rsc, SDE_RSC_VID_STATE);
 		if (!rc) {
 			rpmh_mode_solver_set(rsc->rpmh_dev,
-				rsc->version == SDE_RSC_REV_3 ? true : false);
+				rsc->version >= SDE_RSC_REV_3);
 			sde_rsc_set_data_bus_mode(&rsc->phandle,
-				rsc->version == SDE_RSC_REV_3 ?
+				rsc->version >= SDE_RSC_REV_3 ?
 				QCOM_ICC_TAG_WAKE : QCOM_ICC_TAG_AMC);
 		}
+	}
+
+	/* vsync wait not needed during CMD->VID switch (rev 4+ HW only) */
+	if (rsc->current_state == SDE_RSC_CMD_STATE &&
+			rsc->version >= SDE_RSC_REV_4) {
+		rc = 0;
+		goto end;
 	}
 
 vsync_wait:
@@ -1176,12 +1190,157 @@ static int _sde_debugfs_status_open(struct inode *inode, struct file *file)
 	return single_open(file, _sde_debugfs_status_show, inode->i_private);
 }
 
+static int _sde_debugfs_counters_show(struct seq_file *s, void *data)
+{
+	struct sde_rsc_priv *rsc = s->private;
+	u32 counters[NUM_RSC_PROFILING_COUNTERS];
+	int i, ret;
+
+	if (!rsc)
+		return -EINVAL;
+
+	if (!rsc->hw_ops.get_counters) {
+		seq_puts(s, "counters are not supported on this target\n");
+		return 0;
+	}
+
+	memset(counters, 0, sizeof(counters));
+	mutex_lock(&rsc->client_lock);
+	if (rsc->current_state == SDE_RSC_IDLE_STATE) {
+		pr_debug("counters are not supported during idle state\n");
+		seq_puts(s, "no access to counters during idle pc\n");
+		goto end;
+	}
+
+	ret = rsc->hw_ops.get_counters(rsc, counters);
+	if (ret) {
+		pr_err("sde rsc: get_counters failed ret:%d\n", ret);
+		seq_puts(s, "failed to retrieve counts!\n");
+		goto end;
+	}
+
+	seq_puts(s, "rsc profiling counters:\n");
+	for (i = 0; i < NUM_RSC_PROFILING_COUNTERS; ++i)
+		seq_printf(s, "\tmode[%d] = 0x%08x:\n", i, counters[i]);
+
+end:
+	mutex_unlock(&rsc->client_lock);
+	return 0;
+}
+
+static int _sde_debugfs_counters_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, _sde_debugfs_counters_show, inode->i_private);
+}
+
 static int _sde_debugfs_generic_noseek_open(struct inode *inode,
 		struct file *file)
 {
 	/* non-seekable */
 	file->private_data = inode->i_private;
 	return nonseekable_open(inode, file);
+}
+
+static ssize_t _sde_debugfs_profiling_read(struct file *file, char __user *buf,
+				size_t count, loff_t *ppos)
+{
+	struct sde_rsc_priv *rsc = file->private_data;
+	size_t max_size = min_t(size_t, count, MAX_BUFFER_SIZE);
+	char buffer[MAX_BUFFER_SIZE];
+	int blen = 0;
+
+	if (*ppos || !rsc)
+		return 0;
+
+	if (!rsc->hw_ops.setup_counters) {
+		blen += scnprintf(&buffer[blen], max_size - blen,
+				"counters are not supported on this target\n");
+		goto end;
+	}
+
+	mutex_lock(&rsc->client_lock);
+	if (rsc->current_state == SDE_RSC_IDLE_STATE) {
+		pr_debug("counters are not supported during idle state\n");
+		blen += scnprintf(&buffer[blen], max_size - blen,
+				"no access to counters during idle pc\n");
+		goto unlock;
+	}
+
+	blen += scnprintf(&buffer[blen], max_size - blen,
+			"%s\n", rsc->profiling_en ? "Y" : "N");
+
+unlock:
+	mutex_unlock(&rsc->client_lock);
+end:
+	if (copy_to_user(buf, buffer, blen))
+		return -EFAULT;
+
+	*ppos += blen;
+	return blen;
+}
+
+static ssize_t _sde_debugfs_profiling_write(struct file *file,
+			const char __user *p, size_t count, loff_t *ppos)
+{
+	struct sde_rsc_priv *rsc = file->private_data;
+	bool input_valid, input_value;
+	char *input;
+	int rc;
+
+	if (!rsc || !rsc->hw_ops.setup_counters || !count ||
+			count > MAX_COUNT_SIZE_SUPPORTED)
+		return 0;
+
+	input = kmalloc(count + 1, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+
+	if (copy_from_user(input, p, count)) {
+		kfree(input);
+		return -EFAULT;
+	}
+	input[count] = '\0';
+
+	switch (input[0]) {
+	case 'y':
+	case 'Y':
+	case '1':
+		input_valid = true;
+		input_value = true;
+		break;
+	case 'n':
+	case 'N':
+	case '0':
+		input_valid = true;
+		input_value = false;
+		break;
+	default:
+		input_valid = false;
+		count = 0;
+		break;
+	}
+
+	mutex_lock(&rsc->client_lock);
+	if (rsc->current_state == SDE_RSC_IDLE_STATE) {
+		pr_debug("debug node is not supported during idle state\n");
+		count = 0;
+		goto end;
+	}
+
+	pr_debug("input %s, profiling_en: %d\n",
+			input_valid ? "valid" : "invalid", rsc->profiling_en);
+
+	if (input_valid) {
+		rsc->profiling_en = input_value;
+		rc = rsc->hw_ops.setup_counters(rsc, rsc->profiling_en);
+		if (rc)
+			pr_err("setup_counters failed, rc:%d\n", rc);
+	}
+
+end:
+	mutex_unlock(&rsc->client_lock);
+	kfree(input);
+	return count;
 }
 
 static ssize_t _sde_debugfs_mode_ctrl_read(struct file *file, char __user *buf,
@@ -1380,6 +1539,19 @@ static const struct file_operations vsync_status_fops = {
 	.write =	_sde_debugfs_vsync_mode_write,
 };
 
+static const struct file_operations profiling_enable_fops = {
+	.open =		_sde_debugfs_generic_noseek_open,
+	.read =		_sde_debugfs_profiling_read,
+	.write =	_sde_debugfs_profiling_write,
+};
+
+static const struct file_operations profiling_counts_fops = {
+	.open =		_sde_debugfs_counters_open,
+	.read =		seq_read,
+	.llseek =	seq_lseek,
+	.release =	single_release,
+};
+
 static void _sde_rsc_init_debugfs(struct sde_rsc_priv *rsc, char *name)
 {
 	rsc->debugfs_root = debugfs_create_dir(name, NULL);
@@ -1393,6 +1565,14 @@ static void _sde_rsc_init_debugfs(struct sde_rsc_priv *rsc, char *name)
 							&mode_control_fops);
 	debugfs_create_file("vsync_mode", 0600, rsc->debugfs_root, rsc,
 							&vsync_status_fops);
+	if (rsc->profiling_supp) {
+		debugfs_create_file("profiling_en", 0600, rsc->debugfs_root,
+				rsc, &profiling_enable_fops);
+		debugfs_create_file("profiling_counts", 0400,
+				rsc->debugfs_root, rsc,
+				&profiling_counts_fops);
+	}
+
 	debugfs_create_x32("debug_mode", 0600, rsc->debugfs_root,
 							&rsc->debug_mode);
 }
@@ -1515,12 +1695,12 @@ static int sde_rsc_probe(struct platform_device *pdev)
 	of_property_read_u32(pdev->dev.of_node, "qcom,sde-rsc-version",
 								&rsc->version);
 
-	if (rsc->version == SDE_RSC_REV_2)
+	if (rsc->version >= SDE_RSC_REV_2)
 		rsc->single_tcs_execution_time = SINGLE_TCS_EXECUTION_TIME_V2;
 	else
 		rsc->single_tcs_execution_time = SINGLE_TCS_EXECUTION_TIME_V1;
 
-	if (rsc->version == SDE_RSC_REV_3) {
+	if (rsc->version >= SDE_RSC_REV_3) {
 		rsc->time_slot_0_ns = rsc->single_tcs_execution_time
 					+ RSC_MODE_INSTRUCTION_TIME;
 		rsc->backoff_time_ns = RSC_MODE_INSTRUCTION_TIME;
@@ -1533,6 +1713,9 @@ static int sde_rsc_probe(struct platform_device *pdev)
 		rsc->mode_threshold_time_ns = rsc->backoff_time_ns
 						+ RSC_MODE_THRESHOLD_OVERHEAD;
 	}
+
+	if (rsc->version >= SDE_RSC_REV_4)
+		rsc->profiling_supp = true;
 
 	ret = sde_power_resource_init(pdev, &rsc->phandle);
 	if (ret) {

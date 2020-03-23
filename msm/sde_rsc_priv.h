@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_RSC_PRIV_H_
@@ -27,6 +27,7 @@
 #define SDE_RSC_REV_1			0x1
 #define SDE_RSC_REV_2			0x2
 #define SDE_RSC_REV_3			0x3
+#define SDE_RSC_REV_4			0x4
 
 #define SDE_RSC_HW_MAJOR_MINOR_STEP(major, minor, step) \
 	(((major & 0xff) << 16) |\
@@ -78,8 +79,10 @@ enum rsc_vsync_req {
  * @debug_dump:			dump debug bus registers or enable debug bus
  * @state_update:		Enable/override the solver based on rsc state
  *                              status (command/video)
- * @mode_show:			shows current mode status, mode0/1/2
  * @debug_show:			Show current debug status.
+ * @mode_ctrl:			shows current mode status, mode0/1/2
+ * @setup_counters:		Enable/disable RSC profiling counters
+ * @get_counters:		Get current status of profiling counters
  */
 
 struct sde_rsc_hw_ops {
@@ -96,6 +99,8 @@ struct sde_rsc_hw_ops {
 	int (*debug_show)(struct seq_file *s, struct sde_rsc_priv *rsc);
 	int (*mode_ctrl)(struct sde_rsc_priv *rsc, enum rsc_mode_req request,
 		char *buffer, int buffer_size, u32 mode);
+	int (*setup_counters)(struct sde_rsc_priv *rsc, bool enable);
+	int (*get_counters)(struct sde_rsc_priv *rsc, u32 *counters);
 };
 
 /**
@@ -186,6 +191,8 @@ struct sde_rsc_bw_config {
  * bw_config:		check sde_rsc_bw_config structure description.
  * dev:			rsc device node
  * resource_refcount:	Track rsc resource refcount
+ * profiling_supp:	Indicates if HW has support for profiling counters
+ * profiling_en:	Flag for rsc lpm profiling counters, true=enabled
  */
 struct sde_rsc_priv {
 	u32 version;
@@ -227,6 +234,8 @@ struct sde_rsc_priv {
 	struct sde_rsc_bw_config bw_config;
 	struct device *dev;
 	atomic_t resource_refcount;
+	bool profiling_supp;
+	bool profiling_en;
 };
 
 /**

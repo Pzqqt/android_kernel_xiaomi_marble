@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_RSC_H_
@@ -12,6 +12,7 @@
 #define SDE_RSC_INDEX		0
 
 #define MAX_RSC_CLIENT_NAME_LEN 128
+#define NUM_RSC_PROFILING_COUNTERS 3
 
 /* DRM Object IDs are numbered excluding 0, use 0 to indicate invalid CRTC */
 #define SDE_RSC_INVALID_CRTC_ID 0
