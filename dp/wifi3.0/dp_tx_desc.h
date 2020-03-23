@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -536,25 +536,25 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc(struct dp_soc *soc,
 						uint8_t desc_pool_id)
 {
 	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 
-	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
+	TX_DESC_LOCK_LOCK(&pool->lock);
 
-	tx_desc = soc->tx_desc[desc_pool_id].freelist;
+	tx_desc = pool->freelist;
 
 	/* Pool is exhausted */
 	if (!tx_desc) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+		TX_DESC_LOCK_UNLOCK(&pool->lock);
 		return NULL;
 	}
 
-	soc->tx_desc[desc_pool_id].freelist =
-		soc->tx_desc[desc_pool_id].freelist->next;
-	soc->tx_desc[desc_pool_id].num_allocated++;
-	soc->tx_desc[desc_pool_id].num_free--;
+	pool->freelist = pool->freelist->next;
+	pool->num_allocated++;
+	pool->num_free--;
 
 	tx_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 
-	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+	TX_DESC_LOCK_UNLOCK(&pool->lock);
 
 	return tx_desc;
 }
@@ -575,20 +575,21 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc_multiple(
 {
 	struct dp_tx_desc_s *c_desc = NULL, *h_desc = NULL;
 	uint8_t count;
+	struct dp_tx_desc_pool_s *pool = &soc->tx_desc[desc_pool_id];
 
-	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
+	TX_DESC_LOCK_LOCK(&pool->lock);
 
 	if ((num_requested == 0) ||
-			(soc->tx_desc[desc_pool_id].num_free < num_requested)) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+			(pool->num_free < num_requested)) {
+		TX_DESC_LOCK_UNLOCK(&pool->lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s, No Free Desc: Available(%d) num_requested(%d)",
-			__func__, soc->tx_desc[desc_pool_id].num_free,
+			__func__, pool->num_free,
 			num_requested);
 		return NULL;
 	}
 
-	h_desc = soc->tx_desc[desc_pool_id].freelist;
+	h_desc = pool->freelist;
 
 	/* h_desc should never be NULL since num_free > requested */
 	qdf_assert_always(h_desc);
@@ -598,12 +599,12 @@ static inline struct dp_tx_desc_s *dp_tx_desc_alloc_multiple(
 		c_desc->flags = DP_TX_DESC_FLAG_ALLOCATED;
 		c_desc = c_desc->next;
 	}
-	soc->tx_desc[desc_pool_id].num_free -= count;
-	soc->tx_desc[desc_pool_id].num_allocated += count;
-	soc->tx_desc[desc_pool_id].freelist = c_desc->next;
+	pool->num_free -= count;
+	pool->num_allocated += count;
+	pool->freelist = c_desc->next;
 	c_desc->next = NULL;
 
-	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+	TX_DESC_LOCK_UNLOCK(&pool->lock);
 	return h_desc;
 }
 
@@ -618,19 +619,20 @@ static inline void
 dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		uint8_t desc_pool_id)
 {
-	TX_DESC_LOCK_LOCK(&soc->tx_desc[desc_pool_id].lock);
-
+	struct dp_tx_desc_pool_s *pool = NULL;
 	tx_desc->vdev = NULL;
 	tx_desc->nbuf = NULL;
 	tx_desc->flags = 0;
-	tx_desc->next = soc->tx_desc[desc_pool_id].freelist;
-	soc->tx_desc[desc_pool_id].freelist = tx_desc;
-	soc->tx_desc[desc_pool_id].num_allocated--;
-	soc->tx_desc[desc_pool_id].num_free++;
 
-
-	TX_DESC_LOCK_UNLOCK(&soc->tx_desc[desc_pool_id].lock);
+	pool = &soc->tx_desc[desc_pool_id];
+	TX_DESC_LOCK_LOCK(&pool->lock);
+	tx_desc->next = pool->freelist;
+	pool->freelist = tx_desc;
+	pool->num_allocated--;
+	pool->num_free++;
+	TX_DESC_LOCK_UNLOCK(&pool->lock);
 }
+
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #ifdef QCA_DP_TX_DESC_ID_CHECK
