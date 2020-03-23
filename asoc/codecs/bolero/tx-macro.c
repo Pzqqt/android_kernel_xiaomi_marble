@@ -819,6 +819,66 @@ static int tx_macro_set_bcs(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static const char * const bcs_ch_sel_mux_text[] = {
+	"SWR_MIC0", "SWR_MIC1", "SWR_MIC2", "SWR_MIC3",
+	"SWR_MIC4", "SWR_MIC5", "SWR_MIC6", "SWR_MIC7",
+	"SWR_MIC8", "SWR_MIC9", "SWR_MIC10", "SWR_MIC11",
+};
+
+static const struct soc_enum bcs_ch_sel_mux_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(bcs_ch_sel_mux_text),
+			    bcs_ch_sel_mux_text);
+
+static int tx_macro_get_bcs_ch_sel(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value = 0;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	if (tx_priv->version == BOLERO_VERSION_2_1)
+		value = (snd_soc_component_read32(component,
+			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL)) & 0x0F;
+	else if (tx_priv->version == BOLERO_VERSION_2_0)
+		value = (snd_soc_component_read32(component,
+			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL)) & 0x0F;
+
+	ucontrol->value.integer.value[0] = value;
+	return 0;
+}
+
+static int tx_macro_put_bcs_ch_sel(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct tx_macro_priv *tx_priv = NULL;
+	struct device *tx_dev = NULL;
+	int value;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	if (ucontrol->value.integer.value[0] < 0 ||
+	    ucontrol->value.integer.value[0] > ARRAY_SIZE(bcs_ch_sel_mux_text))
+		return -EINVAL;
+
+	value = ucontrol->value.integer.value[0];
+	if (tx_priv->version == BOLERO_VERSION_2_1)
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_VA_TOP_CSR_SWR_CTRL, 0x0F, value);
+	else if (tx_priv->version == BOLERO_VERSION_2_0)
+		snd_soc_component_update_bits(component,
+			BOLERO_CDC_TX_TOP_CSR_SWR_CTRL, 0x0F, value);
+
+	return 0;
+}
+
 static int tx_macro_enable_dmic(struct snd_soc_dapm_widget *w,
 		struct snd_kcontrol *kcontrol, int event)
 {
@@ -2331,6 +2391,9 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
 
 	SOC_ENUM_EXT("BCS Channel", bcs_ch_enum,
 			tx_macro_bcs_ch_get, tx_macro_bcs_ch_put),
+
+	SOC_ENUM_EXT("BCS CH_SEL", bcs_ch_sel_mux_enum,
+			tx_macro_get_bcs_ch_sel, tx_macro_put_bcs_ch_sel),
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
