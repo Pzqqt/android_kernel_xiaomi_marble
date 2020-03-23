@@ -143,6 +143,9 @@ u32 ipahal_get_hw_tbl_hdr_width(void);
  */
 u32 ipahal_get_lcl_tbl_addr_alignment(void);
 
+/* Get the H/W (flt/rt) prefetch buf size */
+u32 ipahal_get_hw_prefetch_buf_size(void);
+
 /*
  * Rule priority is used to distinguish rules order
  * at the integrated table consisting from hashable and
