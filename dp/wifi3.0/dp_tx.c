@@ -1196,7 +1196,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_MESH)
 		hal_tx_desc_set_mesh_en(soc->hal_soc, hal_tx_desc_cached, 1);
 
-	tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
+	if (qdf_unlikely(vdev->pdev->delay_stats_flag))
+		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			 length, type, (uint64_t)dma_addr,
@@ -2281,22 +2282,18 @@ qdf_nbuf_t dp_tx_send_mesh(struct cdp_soc_t *soc, uint8_t vdev_id,
  */
 qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 {
-	qdf_ether_header_t *eh = NULL;
-	struct dp_tx_msdu_info_s msdu_info;
-	struct dp_tx_seg_info_s seg_info;
 	uint16_t peer_id = HTT_INVALID_PEER;
-	qdf_nbuf_t nbuf_mesh = NULL;
+	/*
+	 * doing a memzero is causing additional function call overhead
+	 * so doing static stack clearing
+	 */
+	struct dp_tx_msdu_info_s msdu_info = {0};
 	struct dp_vdev *vdev =
 		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
 						   vdev_id);
 
 	if (qdf_unlikely(!vdev))
 		return nbuf;
-
-	qdf_mem_zero(&msdu_info, sizeof(msdu_info));
-	qdf_mem_zero(&seg_info, sizeof(seg_info));
-
-	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
 	dp_verbose_debug("skb %pM", nbuf->data);
 
@@ -2308,7 +2305,7 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
-		nbuf_mesh = dp_tx_extract_mesh_meta_data(vdev, nbuf,
+		qdf_nbuf_t nbuf_mesh = dp_tx_extract_mesh_meta_data(vdev, nbuf,
 								&msdu_info);
 		if (!nbuf_mesh) {
 			dp_verbose_debug("Extracting mesh metadata failed");
@@ -2362,8 +2359,9 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 
 	/* SG */
 	if (qdf_unlikely(qdf_nbuf_is_nonlinear(nbuf))) {
-		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
+		struct dp_tx_seg_info_s seg_info = {0};
 
+		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
 		if (!nbuf)
 			return NULL;
 
@@ -2378,7 +2376,8 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 #ifdef ATH_SUPPORT_IQUE
 	/* Mcast to Ucast Conversion*/
 	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
-		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+		qdf_ether_header_t *eh = (qdf_ether_header_t *)
+					  qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
 		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 			dp_verbose_debug("Mcast frm for ME %pK", vdev);
@@ -2396,6 +2395,8 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc, uint8_t vdev_id, qdf_nbuf_t nbuf)
 
 	/* RAW */
 	if (qdf_unlikely(vdev->tx_encap_type == htt_cmn_pkt_type_raw)) {
+		struct dp_tx_seg_info_s seg_info = {0};
+
 		nbuf = dp_tx_prepare_raw(vdev, nbuf, &seg_info, &msdu_info);
 		if (!nbuf)
 			return NULL;
