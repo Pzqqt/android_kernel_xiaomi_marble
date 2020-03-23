@@ -941,6 +941,9 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 		__builtin_return_address(0), rsc->current_state,
 		caller_client->name, state);
 
+	if ((state == SDE_RSC_VID_STATE) && (rsc->version >= SDE_RSC_REV_3))
+		state = SDE_RSC_CLK_STATE;
+
 	if (rsc->current_state == SDE_RSC_IDLE_STATE)
 		sde_rsc_resource_enable(rsc);
 
