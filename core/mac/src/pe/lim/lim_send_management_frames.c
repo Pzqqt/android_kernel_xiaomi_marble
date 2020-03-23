@@ -5000,7 +5000,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	if (mac_ctx->is_usr_cfg_amsdu_enabled &&
 	    ((IS_PE_SESSION_HE_MODE(session) &&
 	      WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)) ||
-	     WLAN_REG_IS_5GHZ_CH_FREQ(session->curr_op_freq)))
+	     !WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)))
 		frm.addba_param_set.amsdu_supp = amsdu_support;
 	else
 		frm.addba_param_set.amsdu_supp = 0;
@@ -5022,9 +5022,10 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 
 	pe_debug("Sending a ADDBA Response from %pM to %pM",
 		session->self_mac_addr, peer_mac);
-	pe_debug("tid: %d, dialog_token: %d, status: %d, buff_size: %d",
-		tid, frm.DialogToken.token, frm.Status.status,
-		frm.addba_param_set.buff_size);
+	pe_debug("tid %d dialog_token %d status %d buff_size %d amsdu_supp %d",
+		 tid, frm.DialogToken.token, frm.Status.status,
+		 frm.addba_param_set.buff_size,
+		 frm.addba_param_set.amsdu_supp);
 	pe_debug("addba_extn %d he_capable %d no_frag %d he_frag %d",
 		addba_extn_present,
 		lim_is_session_he_capable(session),
