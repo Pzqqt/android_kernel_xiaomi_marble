@@ -180,20 +180,10 @@ struct rmnet_map_dl_ind_trl {
 
 struct rmnet_map_dl_ind {
 	u8 priority;
-	union {
-		void (*dl_hdr_handler)(struct rmnet_map_dl_ind_hdr *dlhdr);
-		void (*dl_hdr_handler_v2)(struct rmnet_map_dl_ind_hdr *dlhdr,
-					  struct
-					  rmnet_map_control_command_header
-					  * qcmd);
-	} __aligned(1);
-	union {
-		void (*dl_trl_handler)(struct rmnet_map_dl_ind_trl *dltrl);
-		void (*dl_trl_handler_v2)(struct rmnet_map_dl_ind_trl *dltrl,
-					  struct
-					  rmnet_map_control_command_header
-					  * qcmd);
-	} __aligned(1);
+	void (*dl_hdr_handler_v2)(struct rmnet_map_dl_ind_hdr *dlhdr,
+				  struct rmnet_map_control_command_header *qcmd);
+	void (*dl_trl_handler_v2)(struct rmnet_map_dl_ind_trl *dltrl,
+				  struct rmnet_map_control_command_header *qcmd);
 	struct list_head list;
 };
 
@@ -275,13 +265,9 @@ void rmnet_map_tx_aggregate_init(struct rmnet_port *port);
 void rmnet_map_tx_aggregate_exit(struct rmnet_port *port);
 void rmnet_map_update_ul_agg_config(struct rmnet_port *port, u16 size,
 				    u8 count, u8 features, u32 time);
-void rmnet_map_dl_hdr_notify(struct rmnet_port *port,
-			     struct rmnet_map_dl_ind_hdr *dl_hdr);
 void rmnet_map_dl_hdr_notify_v2(struct rmnet_port *port,
 				struct rmnet_map_dl_ind_hdr *dl_hdr,
 				struct rmnet_map_control_command_header *qcmd);
-void rmnet_map_dl_trl_notify(struct rmnet_port *port,
-			     struct rmnet_map_dl_ind_trl *dltrl);
 void rmnet_map_dl_trl_notify_v2(struct rmnet_port *port,
 				struct rmnet_map_dl_ind_trl *dltrl,
 				struct rmnet_map_control_command_header *qcmd);
