@@ -867,16 +867,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		is_exception = 1;
 	}
 
-	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-				qdf_nbuf_map(soc->osdev, nbuf,
-					QDF_DMA_TO_DEVICE))) {
-		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_map failed");
-		DP_STATS_INC(vdev, tx_i.dropped.dma_error, 1);
-		goto failure;
-	}
-
 	if (qdf_unlikely(vdev->nawds_enabled)) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
@@ -1496,8 +1486,8 @@ static void dp_tx_get_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  *
  * Return: void
  */
-static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-			       struct dp_tx_msdu_info_s *msdu_info)
+static inline void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+				      struct dp_tx_msdu_info_s *msdu_info)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 
@@ -1625,6 +1615,7 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	QDF_STATUS status;
 	struct dp_tx_queue *tx_q = &(msdu_info->tx_queue);
 	uint16_t htt_tcl_metadata = 0;
+	enum cdp_tx_sw_drop drop_code = TX_MAX_DROP;
 	uint8_t tid = msdu_info->tid;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
 
@@ -1634,11 +1625,8 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (!tx_desc) {
 		dp_err_rl("Tx_desc prepare Fail vdev %pK queue %d",
 			  vdev, tx_q->desc_pool_id);
-		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.
-			    tid_tx_stats[tx_q->ring_id][msdu_info->tid];
-		tid_stats->swdrop_cnt[TX_DESC_ERR]++;
-		return nbuf;
+		drop_code = TX_DESC_ERR;
+		goto fail_return;
 	}
 
 	if (qdf_unlikely(soc->cce_disable)) {
@@ -1662,9 +1650,19 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	} else
 		htt_tcl_metadata = vdev->htt_tcl_metadata;
 
-
 	if (msdu_info->exception_fw) {
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
+	}
+
+	if (qdf_unlikely(qdf_nbuf_map(soc->osdev, nbuf,
+				      QDF_DMA_TO_DEVICE)
+						!= QDF_STATUS_SUCCESS)) {
+		/* Handle failure */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "qdf_nbuf_map failed");
+		DP_STATS_INC(vdev, tx_i.dropped.dma_error, 1);
+		drop_code = TX_DMA_MAP_ERR;
+		goto release_desc;
 	}
 
 	/* Enqueue the Tx MSDU descriptor to HW for transmit */
@@ -1675,16 +1673,21 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
 			  __func__, tx_desc, tx_q->ring_id);
-		dp_tx_get_tid(vdev, nbuf, msdu_info);
-		tid_stats = &pdev->stats.tid_stats.
-			    tid_tx_stats[tx_q->ring_id][tid];
-		tid_stats->swdrop_cnt[TX_HW_ENQUEUE]++;
-		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
 		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
-		return nbuf;
+		drop_code = TX_HW_ENQUEUE;
+		goto release_desc;
 	}
 
-	nbuf = NULL;
+	return NULL;
+
+release_desc:
+	dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
+
+fail_return:
+	dp_tx_get_tid(vdev, nbuf, msdu_info);
+	tid_stats = &pdev->stats.tid_stats.
+		    tid_tx_stats[tx_q->ring_id][tid];
+	tid_stats->swdrop_cnt[drop_code]++;
 	return nbuf;
 }
 
@@ -1715,6 +1718,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint16_t htt_tcl_metadata = 0;
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
 	struct cdp_tid_tx_stats *tid_stats = NULL;
+
 	if (qdf_unlikely(soc->cce_disable)) {
 		is_cce_classified = dp_cce_classify(vdev, nbuf);
 		if (is_cce_classified) {

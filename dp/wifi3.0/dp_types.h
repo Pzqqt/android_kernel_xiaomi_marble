@@ -904,6 +904,9 @@ struct dp_soc {
 	/* OS device abstraction */
 	qdf_device_t osdev;
 
+	/*cce disable*/
+	bool cce_disable;
+
 	/* WLAN config context */
 	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx;
 
@@ -947,9 +950,6 @@ struct dp_soc {
 
 	/* Number of PDEVs */
 	uint8_t pdev_count;
-
-	/*cce disable*/
-	bool cce_disable;
 
 	/*ast override support in HW*/
 	bool ast_override_support;
