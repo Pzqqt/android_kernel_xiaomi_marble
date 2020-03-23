@@ -378,6 +378,68 @@ static inline uint8_t dp_tx_get_rbm_id(struct dp_soc *soc,
 	return (ring_id + HAL_WBM_SW0_BM_ID);
 }
 #endif
+
+#ifdef QCA_OL_TX_LOCK_LESS_ACCESS
+/*
+ * dp_tx_hal_ring_access_start()- hal_tx_ring access for data transmission
+ * @dp_soc - DP soc structure pointer
+ * @hal_ring_hdl - HAL ring handle
+ *
+ * Return - None
+ */
+static inline int dp_tx_hal_ring_access_start(struct dp_soc *soc,
+					      hal_ring_handle_t hal_ring_hdl)
+{
+	return hal_srng_access_start_unlocked(soc->hal_soc, hal_ring_hdl);
+}
+
+/*
+ * dp_tx_hal_ring_access_end()- hal_tx_ring access for data transmission
+ * @dp_soc - DP soc structure pointer
+ * @hal_ring_hdl - HAL ring handle
+ *
+ * Return - None
+ */
+static inline void dp_tx_hal_ring_access_end(struct dp_soc *soc,
+					     hal_ring_handle_t hal_ring_hdl)
+{
+	hal_srng_access_end_unlocked(soc->hal_soc, hal_ring_hdl);
+}
+
+/*
+ * dp_tx_hal_ring_access_reap()- hal_tx_ring access for data transmission
+ * @dp_soc - DP soc structure pointer
+ * @hal_ring_hdl - HAL ring handle
+ *
+ * Return - None
+ */
+static inline void dp_tx_hal_ring_access_end_reap(struct dp_soc *soc,
+						  hal_ring_handle_t
+						  hal_ring_hdl)
+{
+}
+
+#else
+static inline int dp_tx_hal_ring_access_start(struct dp_soc *soc,
+					      hal_ring_handle_t hal_ring_hdl)
+{
+	return hal_srng_access_start(soc->hal_soc, hal_ring_hdl);
+}
+
+static inline void dp_tx_hal_ring_access_end(struct dp_soc *soc,
+					     hal_ring_handle_t hal_ring_hdl)
+{
+	hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
+}
+
+static inline void dp_tx_hal_ring_access_end_reap(struct dp_soc *soc,
+						  hal_ring_handle_t
+						  hal_ring_hdl)
+{
+	hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
+}
+#endif
+
 #ifdef FEATURE_PERPKT_INFO
 QDF_STATUS
 dp_get_completion_indication_for_stack(struct dp_soc *soc,

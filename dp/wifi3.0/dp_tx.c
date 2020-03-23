@@ -1205,7 +1205,7 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	hal_ring_hdl = dp_tx_get_hal_ring_hdl(soc, ring_id);
 
-	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
+	if (qdf_unlikely(dp_tx_hal_ring_access_start(soc, hal_ring_hdl))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d : HAL RING Access Failed -- %pK",
 			 __func__, __LINE__, hal_ring_hdl);
@@ -1233,11 +1233,11 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 ring_access_fail:
 	if (hif_pm_runtime_get(soc->hif_handle,
 			       RTPM_ID_DW_TX_HW_ENQUEUE) == 0) {
-		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
+		dp_tx_hal_ring_access_end(soc, hal_ring_hdl);
 		hif_pm_runtime_put(soc->hif_handle,
 				   RTPM_ID_DW_TX_HW_ENQUEUE);
 	} else {
-		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
+		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
 	}
 
 	return status;
