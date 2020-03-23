@@ -669,9 +669,10 @@ static int msm_drm_display_thread_create(struct sched_param param,
 	return 0;
 
 }
-static struct msm_kms *_msm_drm_init_helper(struct msm_drm_private *priv,
-	struct drm_device *ddev, struct device *dev,
-	struct platform_device *pdev)
+static struct msm_kms *_msm_drm_component_init_helper(
+		struct msm_drm_private *priv,
+		struct drm_device *ddev, struct device *dev,
+		struct platform_device *pdev)
 {
 	int ret;
 	struct msm_kms *kms;
@@ -722,15 +723,13 @@ static struct msm_kms *_msm_drm_init_helper(struct msm_drm_private *priv,
 	return kms;
 }
 
-static int msm_drm_init(struct device *dev, struct drm_driver *drv)
+static int msm_drm_device_init(struct platform_device *pdev,
+		struct drm_driver *drv)
 {
-	struct platform_device *pdev = to_platform_device(dev);
+	struct device *dev = &pdev->dev;
 	struct drm_device *ddev;
 	struct msm_drm_private *priv;
-	struct msm_kms *kms = NULL;
-	int ret;
-	struct sched_param param = { 0 };
-	struct drm_crtc *crtc;
+	int i, ret;
 
 	ddev = drm_dev_alloc(drv, dev);
 	if (IS_ERR(ddev)) {
@@ -750,16 +749,6 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	ddev->dev_private = priv;
 	priv->dev = ddev;
 
-	ret = msm_mdss_init(ddev);
-	if (ret)
-		goto mdss_init_fail;
-
-	priv->wq = alloc_ordered_workqueue("msm_drm", 0);
-	init_waitqueue_head(&priv->pending_crtcs_event);
-
-	INIT_LIST_HEAD(&priv->client_event_list);
-	INIT_LIST_HEAD(&priv->inactive_list);
-
 	ret = sde_power_resource_init(pdev, &priv->phandle);
 	if (ret) {
 		pr_err("sde power resource init failed\n");
@@ -771,6 +760,42 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 		dev_err(dev, "failed to init sde dbg: %d\n", ret);
 		goto dbg_init_fail;
 	}
+
+	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
+		sde_power_data_bus_set_quota(&priv->phandle, i,
+			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
+			SDE_POWER_HANDLE_CONT_SPLASH_BUS_IB_QUOTA);
+
+	return ret;
+
+dbg_init_fail:
+	sde_power_resource_deinit(pdev, &priv->phandle);
+power_init_fail:
+priv_alloc_fail:
+	drm_dev_put(ddev);
+	kfree(priv);
+	return ret;
+}
+
+static int msm_drm_component_init(struct device *dev)
+{
+	struct platform_device *pdev = to_platform_device(dev);
+	struct drm_device *ddev = platform_get_drvdata(pdev);
+	struct msm_drm_private *priv = ddev->dev_private;
+	struct msm_kms *kms = NULL;
+	int ret;
+	struct sched_param param = { 0 };
+	struct drm_crtc *crtc;
+
+	ret = msm_mdss_init(ddev);
+	if (ret)
+		goto mdss_init_fail;
+
+	priv->wq = alloc_ordered_workqueue("msm_drm", 0);
+	init_waitqueue_head(&priv->pending_crtcs_event);
+
+	INIT_LIST_HEAD(&priv->client_event_list);
+	INIT_LIST_HEAD(&priv->inactive_list);
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);
@@ -784,9 +809,9 @@ static int msm_drm_init(struct device *dev, struct drm_driver *drv)
 	ddev->mode_config.funcs = &mode_config_funcs;
 	ddev->mode_config.helper_private = &mode_config_helper_funcs;
 
-	kms = _msm_drm_init_helper(priv, ddev, dev, pdev);
+	kms = _msm_drm_component_init_helper(priv, ddev, dev, pdev);
 	if (IS_ERR_OR_NULL(kms)) {
-		dev_err(dev, "msm_drm_init_helper failed\n");
+		dev_err(dev, "msm_drm_component_init_helper failed\n");
 		goto fail;
 	}
 
@@ -879,15 +904,13 @@ fail:
 	msm_drm_uninit(dev);
 	return ret;
 bind_fail:
-	sde_dbg_destroy();
-dbg_init_fail:
-	sde_power_resource_deinit(pdev, &priv->phandle);
-power_init_fail:
 	msm_mdss_destroy(ddev);
 mdss_init_fail:
-	kfree(priv);
-priv_alloc_fail:
+	sde_dbg_destroy();
+	sde_power_resource_deinit(pdev, &priv->phandle);
 	drm_dev_put(ddev);
+	kfree(priv);
+
 	return ret;
 }
 
@@ -1895,7 +1918,7 @@ int msm_get_mixer_count(struct msm_drm_private *priv,
 
 static int msm_drm_bind(struct device *dev)
 {
-	return msm_drm_init(dev, &msm_driver);
+	return msm_drm_component_init(dev);
 }
 
 static void msm_drm_unbind(struct device *dev)
@@ -1916,6 +1939,10 @@ static int msm_pdev_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct component_match *match = NULL;
+
+	ret = msm_drm_device_init(pdev, &msm_driver);
+	if (ret)
+		return ret;
 
 	ret = add_display_components(&pdev->dev, &match);
 	if (ret)
