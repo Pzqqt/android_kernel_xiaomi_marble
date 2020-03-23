@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -451,5 +451,18 @@ QDF_STATUS wmi_unified_peer_unmap_conf_send(wmi_unified_t wmi_handle,
 					    uint8_t vdev_id,
 					    uint32_t peer_id_cnt,
 					    uint16_t *peer_id_list);
+
+/**
+ * wmi_unified_send_ocl_cmd() - send OCL command
+ * @wmi_handle: wmi handle
+ * @param: OCL commang parameters
+ *
+ * Send WMI_SET_OCL_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS
+wmi_unified_send_ocl_cmd(wmi_unified_t wmi_handle,
+			 struct ocl_cmd_params *param);
 
 #endif /* _WMI_UNIFIED_STA_API_H_ */

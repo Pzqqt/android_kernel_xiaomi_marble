@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -411,6 +411,16 @@ QDF_STATUS wmi_unified_peer_unmap_conf_send(wmi_unified_t wmi_handle,
 	if (wmi_handle->ops->send_peer_unmap_conf_cmd)
 		return wmi_handle->ops->send_peer_unmap_conf_cmd(wmi_handle,
 				  vdev_id, peer_id_cnt, peer_id_list);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_send_ocl_cmd(wmi_unified_t wmi_handle,
+			 struct ocl_cmd_params *param)
+{
+	if (wmi_handle->ops->send_ocl_cmd)
+		return wmi_handle->ops->send_ocl_cmd(wmi_handle, param);
 
 	return QDF_STATUS_E_FAILURE;
 }
