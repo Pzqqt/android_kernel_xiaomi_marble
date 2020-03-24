@@ -3387,12 +3387,19 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 		 * resulting  MCC on DFS channel
 		 */
 		if (wlan_reg_is_dfs_for_freq(
-				mac_ctx->pdev,
-				WLAN_REG_CH_TO_FREQ(loop_count)) &&
-		    (policy_mgr_disallow_mcc(mac_ctx->psoc,
-			WLAN_REG_CH_TO_FREQ(loop_count)) ||
-		    !dfs_master_enable))
-			continue;
+					mac_ctx->pdev,
+					WLAN_REG_CH_TO_FREQ(loop_count))) {
+			if (!dfs_master_enable)
+				continue;
+			if (wlansap_dcs_is_wlan_interference_mitigation_enabled(
+								sap_ctx))
+				sap_debug("dfs chan_freq %d added when dcs enabled",
+					  WLAN_REG_CH_TO_FREQ(loop_count));
+			else if (policy_mgr_disallow_mcc(
+					mac_ctx->psoc,
+					WLAN_REG_CH_TO_FREQ(loop_count)))
+				continue;
+		}
 
 		/* Dont scan ETSI13 SRD channels if the ETSI13 SRD channels
 		 * are not enabled in master mode

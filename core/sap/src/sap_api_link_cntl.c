@@ -575,10 +575,13 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 	 * second SAP's channel change due to some previous platform's single
 	 * radio limitation.
 	 *
+	 * For DCS case, SAP will do channel switch one by one.
+	 *
 	 */
 	sap_scc_dfs = sap_is_conc_sap_doing_scc_dfs(mac_handle, sap_ctx);
 	if (sap_get_total_number_sap_intf(mac_handle) <= 1 ||
 	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) ||
+	    sap_ctx->csa_reason == CSA_REASON_DCS ||
 	    !sap_scc_dfs) {
 		sap_get_cac_dur_dfs_region(sap_ctx,
 			&sap_ctx->csr_roamProfile.cac_duration_ms,
