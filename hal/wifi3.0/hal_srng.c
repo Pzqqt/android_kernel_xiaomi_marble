@@ -393,11 +393,11 @@ static void hal_process_reg_write_q_elem(struct hal_soc *hal,
 	if (srng->ring_dir == HAL_SRNG_SRC_RING)
 		hal_write_address_32_mb(hal,
 					srng->u.src_ring.hp_addr,
-					srng->u.src_ring.hp);
+					srng->u.src_ring.hp, false);
 	else
 		hal_write_address_32_mb(hal,
 					srng->u.dst_ring.tp_addr,
-					srng->u.dst_ring.tp);
+					srng->u.dst_ring.tp, false);
 
 	SRNG_UNLOCK(&srng->lock);
 }
@@ -561,7 +561,7 @@ void hal_delayed_reg_write(struct hal_soc *hal_soc,
 	    hal_is_reg_write_tput_level_high(hal_soc)) {
 		qdf_atomic_inc(&hal_soc->stats.wstats.direct);
 		srng->wstats.direct++;
-		hal_write_address_32_mb(hal_soc, addr, value);
+		hal_write_address_32_mb(hal_soc, addr, value, false);
 	} else {
 		hal_reg_write_enqueue(hal_soc, srng, addr, value);
 	}
@@ -946,7 +946,7 @@ void hal_srng_dst_init_hp(struct hal_srng *srng,
 		return;
 
 	srng->u.dst_ring.hp_addr = vaddr;
-	SRNG_DST_REG_WRITE(srng, HP, srng->u.dst_ring.cached_hp);
+	SRNG_DST_REG_WRITE_CONFIRM(srng, HP, srng->u.dst_ring.cached_hp);
 
 	if (vaddr) {
 		*srng->u.dst_ring.hp_addr = srng->u.dst_ring.cached_hp;
