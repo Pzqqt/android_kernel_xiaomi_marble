@@ -49,6 +49,12 @@ QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 
 	psoc = reg_info->psoc;
 	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (!soc_reg->offload_enabled)
 		return QDF_STATUS_SUCCESS;
 
