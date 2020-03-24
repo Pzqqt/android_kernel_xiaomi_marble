@@ -110,6 +110,7 @@ void hif_vote_link_down(struct hif_opaque_softc *hif_ctx)
 
 	QDF_BUG(scn);
 	scn->linkstate_vote--;
+	HIF_INFO("Down_linkstate_vote %d", scn->linkstate_vote);
 	if (scn->linkstate_vote == 0)
 		hif_bus_prevent_linkdown(scn, false);
 }
@@ -131,6 +132,7 @@ void hif_vote_link_up(struct hif_opaque_softc *hif_ctx)
 
 	QDF_BUG(scn);
 	scn->linkstate_vote++;
+	HIF_INFO("Up_linkstate_vote %d", scn->linkstate_vote);
 	if (scn->linkstate_vote == 1)
 		hif_bus_prevent_linkdown(scn, true);
 }
