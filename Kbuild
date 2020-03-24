@@ -662,6 +662,10 @@ ifeq ($(CONFIG_LEAK_DETECTION), y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_tracker.o
 endif
 
+ifeq ($(CONFIG_WLAN_HANG_EVENT), y)
+	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_notifier.o
+endif
+
 ifeq ($(CONFIG_QDF_TEST), y)
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_delayed_work_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
@@ -682,6 +686,7 @@ cppflags-$(CONFIG_QDF_TEST) += -DWLAN_SLIST_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TALLOC_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TRACKER_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
+cppflags-$(CONFIG_WLAN_HANG_EVENT) += -DWLAN_HANG_EVENT
 
 ############ WBUFF ############
 WBUFF_OS_DIR :=	wbuff
