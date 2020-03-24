@@ -677,6 +677,10 @@ ifeq ($(CONFIG_QDF_TEST), y)
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
 endif
 
+ifeq ($(CONFIG_WLAN_HANG_EVENT), y)
+	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_hang_event_notifier.o
+endif
+
 cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_DELAYED_WORK_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
