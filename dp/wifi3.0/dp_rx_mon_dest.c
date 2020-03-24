@@ -204,7 +204,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				rxdma_dst_ring_desc);
 		if (qdf_unlikely((rxdma_err == HAL_RXDMA_ERR_FLUSH_REQUEST) ||
 		   (rxdma_err == HAL_RXDMA_ERR_MPDU_LENGTH) ||
-		   (rxdma_err == HAL_RXDMA_ERR_OVERFLOW))) {
+		   (rxdma_err == HAL_RXDMA_ERR_OVERFLOW) ||
+		   (rxdma_err == HAL_RXDMA_ERR_FCS && dp_pdev->mcopy_mode))) {
 			drop_mpdu = true;
 			dp_pdev->rx_mon_stats.dest_mpdu_drop++;
 		}
