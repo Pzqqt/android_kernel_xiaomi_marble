@@ -2048,7 +2048,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		conc_connection_info = policy_mgr_get_conn_info(&i);
 		if (conc_connection_info[0].mac ==
 			conc_connection_info[1].mac) {
-			if (WLAN_REG_IS_5GHZ_CH_FREQ(
+			if (!WLAN_REG_IS_24GHZ_CH_FREQ(
 				sap_config->acs_cfg.pcl_chan_freq[0])) {
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211A;
@@ -2579,7 +2579,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		if (conc_connection_info[0].mac ==
 			conc_connection_info[1].mac) {
 
-			if (WLAN_REG_IS_5GHZ_CH_FREQ(
+			if (!WLAN_REG_IS_24GHZ_CH_FREQ(
 				sap_config->acs_cfg.pcl_chan_freq[0])) {
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211A;
@@ -10756,7 +10756,8 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 		operating_chan_freq = adapter->session.ap.operating_chan_freq;
 		if (WLAN_REG_IS_24GHZ_CH_FREQ(operating_chan_freq))
 			sap_operating_band = BAND_2G;
-		else if (WLAN_REG_IS_5GHZ_CH_FREQ(operating_chan_freq))
+		else if (WLAN_REG_IS_5GHZ_CH_FREQ(operating_chan_freq) ||
+			 WLAN_REG_IS_6GHZ_CHAN_FREQ(operating_chan_freq))
 			sap_operating_band = BAND_5G;
 		else
 			sap_operating_band = BAND_ALL;
@@ -11520,7 +11521,7 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 				      channel_list->ht_sec_chan_freq);
 
 	sap_config->ch_params.ch_width = channel_list->chan_width;
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_config->chan_freq)) {
+	if (!WLAN_REG_IS_24GHZ_CH_FREQ(sap_config->chan_freq)) {
 		status =
 			ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
 							&ch_width);

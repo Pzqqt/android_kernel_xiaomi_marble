@@ -4650,7 +4650,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 		if (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n)
 			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
 
-		if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_cfg->chan_freq)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(sap_cfg->chan_freq)) {
 			status =
 			    ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
 							    &ch_width);
@@ -5256,7 +5256,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		 */
 		ret = 0;
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) ||
-		    WLAN_REG_IS_5GHZ_CH_FREQ(config->chan_freq)) {
+		    !WLAN_REG_IS_24GHZ_CH_FREQ(config->chan_freq)) {
 			ret = wlan_hdd_sap_cfg_dfs_override(adapter);
 			if (ret < 0)
 				goto error;
