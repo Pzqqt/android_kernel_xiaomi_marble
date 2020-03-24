@@ -41,7 +41,7 @@
 #include "lim_ser_des_utils.h"
 #include "lim_send_messages.h"
 #include "sch_api.h"
-#include "wlan_blm_core.h"
+#include "wlan_blm_api.h"
 
 /**
  * lim_process_disassoc_frame
@@ -306,7 +306,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 		ap_info.retry_delay = 0;
 		ap_info.expected_rssi = frame_rssi +
-			blm_get_rssi_blacklist_threshold(mac->pdev);
+			wlan_blm_get_rssi_blacklist_threshold(mac->pdev);
 		qdf_mem_copy(ap_info.bssid.bytes, pHdr->sa, QDF_MAC_ADDR_SIZE);
 		lim_add_bssid_to_reject_list(mac->pdev, &ap_info);
 	}

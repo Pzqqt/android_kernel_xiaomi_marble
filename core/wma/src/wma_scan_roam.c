@@ -80,7 +80,7 @@
 #include <wlan_crypto_global_api.h>
 #include <cdp_txrx_mon.h>
 #include <cdp_txrx_ctrl.h>
-#include "wlan_blm_core.h"
+#include "wlan_blm_api.h"
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
@@ -1427,7 +1427,7 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	params->num_ssid_white_list = num_ssid_white_list;
 	params->num_bssid_preferred_list = num_bssid_preferred_list;
 	params->num_rssi_rejection_ap = num_rssi_rejection_ap;
-	params->delta_rssi = blm_get_rssi_blacklist_threshold(wma_handle->pdev);
+	params->delta_rssi = wlan_blm_get_rssi_blacklist_threshold(wma_handle->pdev);
 	qdf_mem_copy(params->bssid_avoid_list, roam_params->bssid_avoid_list,
 			MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
 
