@@ -821,7 +821,12 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	}
 
 	if (ch_freq) {
-		adfs_param.precac_chan_freq = ch_freq;
+		adfs_param.precac_center_freq_1 =
+			(ch_freq == RESTRICTED_80P80_CHAN_CENTER_FREQ) ?
+			(RESTRICTED_80P80_LEFT_80_CENTER_FREQ) : ch_freq;
+		adfs_param.precac_center_freq_2 =
+			(ch_freq == RESTRICTED_80P80_CHAN_CENTER_FREQ) ?
+			(RESTRICTED_80P80_RIGHT_80_CENTER_FREQ) : 0;
 		adfs_param.precac_chan = utils_dfs_freq_to_chan(ch_freq);
 		adfs_param.precac_chwidth = temp_dfs->dfs_precac_chwidth;
 		dfs_start_agile_precac_timer(temp_dfs,
@@ -1860,7 +1865,7 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 		 * TRIGGER agile precac timer with 0sec timeout
 		 * with ocac_status 0 for old pdev
 		 */
-		adfs_param.precac_chan_freq = center_freq_mhz;
+		adfs_param.precac_center_freq_1 = center_freq_mhz;
 		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
 		dfs_start_agile_precac_timer(dfs,
 					     ocac_status,
@@ -3721,7 +3726,7 @@ void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 				  uint8_t ocac_status,
 				  struct dfs_agile_cac_params *adfs_param)
 {
-	uint16_t pcacfreq = adfs_param->precac_chan_freq;
+	uint16_t pcacfreq = adfs_param->precac_center_freq_1;
 	enum phy_ch_width chwidth = adfs_param->precac_chwidth;
 	uint32_t min_precac_timeout, max_precac_timeout;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
@@ -5049,7 +5054,7 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 		 * and ocac_status as 0
 		 */
 		adfs_param.precac_chan = 0;
-		adfs_param.precac_chan_freq = 0;
+		adfs_param.precac_center_freq_1 = 0;
 		adfs_param.precac_chwidth = CH_WIDTH_INVALID;
 		qdf_info("%s : %d Initiated agile precac",
 			 __func__, __LINE__);
