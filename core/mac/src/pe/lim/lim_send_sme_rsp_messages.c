@@ -668,11 +668,7 @@ void lim_send_sme_disassoc_ntf(struct mac_context *mac,
 					break;
 			}
 		}
-		if (sta_ds
-#ifdef WLAN_FEATURE_11W
-			&& (!sta_ds->rmfEnabled)
-#endif
-		) {
+		if (sta_ds) {
 			if (lim_add_sta(mac, sta_ds, false, session) !=
 					QDF_STATUS_SUCCESS)
 					pe_err("could not Add STA with assocId: %d",
