@@ -49,11 +49,11 @@ static void dspp_igc(struct sde_hw_dspp *c)
 		else
 			c->ops.setup_igc = sde_setup_dspp_igcv3;
 	} else if (c->cap->sblk->igc.version ==
-			SDE_COLOR_PROCESS_VER(0x3, 0x2)) {
+			SDE_COLOR_PROCESS_VER(0x4, 0x0)) {
 		c->ops.setup_igc = NULL;
 		ret = reg_dmav2_init_dspp_op_v4(SDE_DSPP_IGC, c->idx);
 		if (!ret)
-			c->ops.setup_igc = reg_dmav2_setup_dspp_igcv32;
+			c->ops.setup_igc = reg_dmav2_setup_dspp_igcv4;
 	}
 }
 
