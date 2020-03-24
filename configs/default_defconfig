@@ -207,6 +207,11 @@ CONFIG_WDI3_STATS_UPDATE := y
 CONFIG_WLAN_SYNC_TSF_TIMER := y
 endif
 
+ifeq ($(CONFIG_ARCH_LAHAINA), y)
+CONFIG_QCACLD_FEATURE_METERING := y
+CONFIG_WDI3_STATS_UPDATE := y
+endif
+
 #Flag to enable Fast Transition (11r) feature
 CONFIG_QCOM_VOWIFI_11R := y
 
