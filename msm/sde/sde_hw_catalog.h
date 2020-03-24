@@ -680,8 +680,10 @@ enum sde_qos_lut_usage {
  * @in_rot_maxdwnscale_rt_denom: max downscale ratio for inline rotation
  *                                 rt clients - denominator
  * @in_rot_maxdwnscale_nrt: max downscale ratio for inline rotation nrt clients
- * @in_rot_minpredwnscale_num: min downscale ratio to enable pre-downscale
- * @in_rot_minpredwnscale_denom: min downscale ratio to enable pre-downscale
+ * @in_rot_maxdwnscale_rt_nopd_num: downscale threshold for when pre-downscale
+ *                                    must be enabled on HW with this support.
+ * @in_rot_maxdwnscale_rt_nopd_denom: downscale threshold for when pre-downscale
+ *                                    must be enabled on HW with this support.
  * @in_rot_maxheight: max pre rotated height for inline rotation
  * @llcc_scid: scid for the system cache
  * @llcc_slice size: slice size of the system cache
@@ -718,8 +720,8 @@ struct sde_sspp_sub_blks {
 	u32 in_rot_maxdwnscale_rt_num;
 	u32 in_rot_maxdwnscale_rt_denom;
 	u32 in_rot_maxdwnscale_nrt;
-	u32 in_rot_minpredwnscale_num;
-	u32 in_rot_minpredwnscale_denom;
+	u32 in_rot_maxdwnscale_rt_nopd_num;
+	u32 in_rot_maxdwnscale_rt_nopd_denom;
 	u32 in_rot_maxheight;
 	int llcc_scid;
 	size_t llcc_slice_size;
