@@ -39,11 +39,11 @@ QDF_STATUS qdf_unregister_blocking_notifier_chain(qdf_blocking_notif_head *head,
 }
 
 QDF_STATUS qdf_blocking_notfier_call(qdf_blocking_notif_head *head,
-				     unsigned long v, void *data)
+				     unsigned long state, void *data)
 {
 	int ret;
 
-	ret = __qdf_blocking_notfier_call(head, v, data);
+	ret = __qdf_blocking_notfier_call(head, state, data);
 
 	return qdf_status_from_os_return(ret);
 }
