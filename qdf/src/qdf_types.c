@@ -56,6 +56,10 @@ const char *qdf_opmode_str(const enum QDF_OPMODE opmode)
 		return "BTAMP";
 	case QDF_AHDEMO_MODE:
 		return "AHDEMO";
+	case QDF_TDLS_MODE:
+		return "TDLS";
+	case QDF_NAN_DISC_MODE:
+		return "NAN";
 	default:
 		return "Invalid operating mode";
 	}
