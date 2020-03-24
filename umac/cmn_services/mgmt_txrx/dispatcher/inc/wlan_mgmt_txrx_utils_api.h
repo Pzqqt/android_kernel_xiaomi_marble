@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -112,6 +112,7 @@ enum mgmt_subtype {
  * @ACTION_CATEGORY_DMG: unprotected dmg action category
  * @ACTION_CATEGORY_WMM: wmm action category
  * @ACTION_CATEGORY_FST: fst action category
+ * @ACTION_CATEGORY_RVS: robust av streaming action category
  * @ACTION_CATEGORY_UNPROT_DMG: dmg action category
  * @ACTION_CATEGORY_VHT: vht action category
  * @ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED: vendor specific protected
@@ -138,6 +139,7 @@ enum mgmt_action_category {
 	ACTION_CATEGORY_DMG = 16,
 	ACTION_CATEGORY_WMM = 17,
 	ACTION_CATEGORY_FST = 18,
+	ACTION_CATEGORY_RVS = 19,
 	ACTION_CATEGORY_UNPROT_DMG = 20,
 	ACTION_CATEGORY_VHT = 21,
 	ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED = 126,
@@ -440,6 +442,24 @@ enum fst_actioncode {
 };
 
 /**
+ * enum rvs_actioncode - Robust av streaming action frames
+ * @SCS_REQ: scs request frame
+ * @SCS_RSP: scs response frame
+ * @GROUP_MEMBERSHIP_REQ:  Group Membership Request frame
+ * @GROUP_MEMBERSHIP_RSP: Group Membership Response frame
+ * @MCSC_REQ: mcsc request frame
+ * @MCSC_RSP: mcsc response frame
+ */
+enum rvs_actioncode {
+	SCS_REQ,
+	SCS_RSP,
+	GROUP_MEMBERSHIP_REQ,
+	GROUP_MEMBERSHIP_RSP,
+	MCSC_REQ,
+	MCSC_RSP,
+};
+
+/**
  * enum vht_actioncode - vht action frames
  * @VHT_ACTION_COMPRESSED_BF: vht compressed bf action frame
  * @VHT_ACTION_GID_NOTIF: vht gid notification action frame
@@ -573,6 +593,12 @@ struct action_frm_hdr {
  * @MGMT_ACTION_FST_ACK_REQ: FST ack frame for request
  * @MGMT_ACTION_FST_ACK_RSP: FST ack frame for response
  * @MGMT_ACTION_FST_ON_CHANNEL_TUNNEL: FST on channel tunnel frame
+ * @MGMT_ACTION_SCS_REQ: SCS request frame
+ * @MGMT_ACTION_SCS_RSP: SCS response frame
+ * @MGMT_ACTION_GROUP_MEMBERSHIP_REQ: group membership request frame
+ * @MGMT_ACTION_GROUP_MEMBERSHIP_RSP: group membership response frame
+ * @MGMT_ACTION_MCSC_REQ: MCSC request frame
+ * @MGMT_ACTION_MCSC_RSP: MCSC response frame
  * @MGMT_FRAME_TYPE_ALL:         mgmt frame type for all type of frames
  * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
  */
@@ -691,6 +717,12 @@ enum mgmt_frame_type {
 	MGMT_ACTION_FST_ACK_REQ,
 	MGMT_ACTION_FST_ACK_RSP,
 	MGMT_ACTION_FST_ON_CHANNEL_TUNNEL,
+	MGMT_ACTION_SCS_REQ,
+	MGMT_ACTION_SCS_RSP,
+	MGMT_ACTION_GROUP_MEMBERSHIP_REQ,
+	MGMT_ACTION_GROUP_MEMBERSHIP_RSP,
+	MGMT_ACTION_MCSC_REQ,
+	MGMT_ACTION_MCSC_RSP,
 	MGMT_FRAME_TYPE_ALL,
 	MGMT_MAX_FRAME_TYPE,
 };

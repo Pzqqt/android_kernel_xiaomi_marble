@@ -716,6 +716,46 @@ mgmt_get_fst_action_subtype(uint8_t action_code)
 }
 
 /**
+ * mgmt_get_rvs_action_subtype() - gets rvs action subtype
+ * @action_code: action code
+ *
+ * This function returns the subtype for rvs action
+ * category.
+ *
+ * Return: mgmt frame type
+ */
+static enum mgmt_frame_type
+mgmt_get_rvs_action_subtype(uint8_t action_code)
+{
+	enum mgmt_frame_type frm_type;
+
+	switch (action_code) {
+	case SCS_REQ:
+		frm_type = MGMT_ACTION_SCS_REQ;
+		break;
+	case SCS_RSP:
+		frm_type = MGMT_ACTION_SCS_RSP;
+		break;
+	case GROUP_MEMBERSHIP_REQ:
+		frm_type = MGMT_ACTION_GROUP_MEMBERSHIP_REQ;
+		break;
+	case GROUP_MEMBERSHIP_RSP:
+		frm_type = MGMT_ACTION_GROUP_MEMBERSHIP_RSP;
+		break;
+	case MCSC_REQ:
+		frm_type = MGMT_ACTION_MCSC_REQ;
+		break;
+	case MCSC_RSP:
+		frm_type = MGMT_ACTION_MCSC_RSP;
+	default:
+		frm_type = MGMT_FRM_UNSPECIFIED;
+		break;
+	}
+
+	return frm_type;
+}
+
+/**
  * mgmt_txrx_get_action_frm_subtype() - gets action frm subtype
  * @mpdu_data_ptr: pointer to mpdu data
  *
@@ -793,6 +833,10 @@ mgmt_txrx_get_action_frm_subtype(uint8_t *mpdu_data_ptr)
 		break;
 	case ACTION_CATEGORY_FST:
 		frm_type = mgmt_get_fst_action_subtype(action_hdr->action_code);
+		break;
+	case ACTION_CATEGORY_RVS:
+		frm_type =
+			mgmt_get_rvs_action_subtype(action_hdr->action_code);
 		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
