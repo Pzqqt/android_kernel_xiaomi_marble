@@ -627,7 +627,7 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 	}
 
 	ret = qdf_set_dma_coherent_mask(dev,
-					DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE);
+					DMA_COHERENT_MASK_DEFAULT);
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 			  __func__, ret);

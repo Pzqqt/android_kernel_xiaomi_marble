@@ -232,19 +232,20 @@ static int hif_set_dma_coherent_mask(qdf_device_t osdev)
 
 	if (false == hif_get_ipa_present())
 		return qdf_set_dma_coherent_mask(osdev->dev,
-					DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE);
+					DMA_COHERENT_MASK_DEFAULT);
 
 	if (hif_get_ipa_hw_type() < IPA_HW_v3_0)
 		addr_bits = DMA_COHERENT_MASK_BELOW_IPA_VER_3;
 	else
-		addr_bits = DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE;
+		addr_bits = DMA_COHERENT_MASK_DEFAULT;
 
 	return qdf_set_dma_coherent_mask(osdev->dev, addr_bits);
 }
 #else
 static int hif_set_dma_coherent_mask(qdf_device_t osdev)
 {
-	return qdf_set_dma_coherent_mask(osdev->dev, 37);
+	return qdf_set_dma_coherent_mask(osdev->dev,
+					DMA_COHERENT_MASK_DEFAULT);
 }
 #endif
 
