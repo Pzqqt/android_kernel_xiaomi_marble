@@ -11129,7 +11129,7 @@ typedef struct {
     WMI_SET_BITS(param, WMI_BEACON_PROTECTION_BIT_POS, 1, value)
 
 #define WMI_BEACON_PROTECTION_EN_GET(param) \
-    WMI_GET_BITS(param, WMI_BEACON_PROTECTION_EN_BIT_POS, 1)
+    WMI_GET_BITS(param, WMI_BEACON_PROTECTION_BIT_POS, 1)
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param */
