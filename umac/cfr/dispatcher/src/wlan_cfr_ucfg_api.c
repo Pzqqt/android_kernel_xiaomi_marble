@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -481,7 +481,11 @@ ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
-	pcfr->rcc_param.capture_interval = params->cap_intvl;
+	if (pcfr->rcc_param.capture_duration > params->cap_intvl) {
+		cfr_err("Capture intval should be more than capture duration");
+		status = QDF_STATUS_E_INVAL;
+	} else
+		pcfr->rcc_param.capture_interval = params->cap_intvl;
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
@@ -505,7 +509,12 @@ ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 
-	pcfr->rcc_param.capture_duration = params->cap_dur;
+	if (pcfr->rcc_param.capture_interval
+	    && (params->cap_dur > pcfr->rcc_param.capture_interval)) {
+		cfr_err("Capture duration is exceeding capture interval");
+		status = QDF_STATUS_E_INVAL;
+	} else
+		pcfr->rcc_param.capture_duration = params->cap_dur;
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
