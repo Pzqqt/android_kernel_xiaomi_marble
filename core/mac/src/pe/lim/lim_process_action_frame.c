@@ -2139,12 +2139,16 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 			break;
 		}
 		break;
+	case ACTION_CATEGORY_RVS:
 	case ACTION_CATEGORY_FST: {
 		tpSirMacMgmtHdr     hdr;
 
 		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 
-		pe_debug("Received FST MGMT action frame");
+		pe_debug("Received %s MGMT action frame",
+			 (action_hdr->category == ACTION_CATEGORY_FST) ?
+			"FST" : "RVS");
+
 		/* Forward to the SME to HDD */
 		lim_send_sme_mgmt_frame_ind(mac_ctx, hdr->fc.subType,
 					    (uint8_t *)hdr,
