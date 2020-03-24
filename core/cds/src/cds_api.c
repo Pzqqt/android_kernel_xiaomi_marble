@@ -76,6 +76,10 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_cp_stats_mc_ucfg_api.h"
+#include <qdf_hang_event_notifier.h>
+#include <qdf_notifier.h>
+#include <qwlan_version.h>
+#include <qdf_trace.h>
 
 /* Preprocessor Definitions and Constants */
 
@@ -87,6 +91,13 @@ static struct cds_context *gp_cds_context;
 static struct __qdf_device g_qdf_ctx;
 
 static uint8_t cds_multicast_logging;
+
+struct cds_hang_event_fixed_param {
+	uint32_t tlv_header;
+	uint32_t recovery_reason;
+	char driver_version[11];
+	char hang_event_version[3];
+} qdf_packed;
 
 #ifdef QCA_WIFI_QCA8074
 static inline int
@@ -515,6 +526,47 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
 	}
 }
 
+static int cds_hang_event_notifier_call(struct notifier_block *block,
+					unsigned long state,
+					void *data)
+{
+	struct qdf_notifer_data *cds_hang_data = data;
+	uint32_t total_len;
+	struct cds_hang_event_fixed_param *cmd;
+	uint8_t *cds_hang_evt_buff;
+
+	if (!cds_hang_data)
+		return NOTIFY_STOP_MASK;
+
+	cds_hang_evt_buff = cds_hang_data->hang_data;
+
+	if (!cds_hang_evt_buff)
+		return NOTIFY_STOP_MASK;
+
+	if (cds_hang_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
+		return NOTIFY_STOP_MASK;
+
+	total_len = sizeof(*cmd);
+
+	cds_hang_evt_buff = cds_hang_data->hang_data + cds_hang_data->offset;
+	cmd = (struct cds_hang_event_fixed_param *)cds_hang_evt_buff;
+	QDF_HANG_EVT_SET_HDR(&cmd->tlv_header, HANG_EVT_TAG_CDS,
+			     QDF_HANG_GET_STRUCT_TLVLEN(*cmd));
+
+	cmd->recovery_reason = gp_cds_context->recovery_reason;
+
+	qdf_mem_copy(&cmd->driver_version, QWLAN_VERSIONSTR, 11);
+
+	qdf_mem_copy(&cmd->hang_event_version, QDF_HANG_EVENT_VERSION, 3);
+
+	cds_hang_data->offset += total_len;
+	return NOTIFY_OK;
+}
+
+static qdf_notif_block cds_hang_event_notifier = {
+	.notif_block.notifier_call = cds_hang_event_notifier_call,
+};
+
 /**
  * cds_open() - open the CDS Module
  *
@@ -740,6 +792,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ucfg_mc_cp_stats_register_pmo_handler();
+	qdf_hang_event_register_notifier(&cds_hang_event_notifier);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1169,6 +1222,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 
+	qdf_hang_event_unregister_notifier(&cds_hang_event_notifier);
 	qdf_status = cds_sched_close();
 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	if (QDF_IS_STATUS_ERROR(qdf_status))
