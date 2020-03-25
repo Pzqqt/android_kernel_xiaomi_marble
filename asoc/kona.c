@@ -7854,8 +7854,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 					"qcom,quin-mi2s-gpios", 0);
 	pdata->mi2s_gpio_p[SEN_MI2S] = of_parse_phandle(pdev->dev.of_node,
 					"qcom,sen-mi2s-gpios", 0);
-	for (index = PRIM_MI2S; index < MI2S_MAX; index++)
+	for (index = PRIM_MI2S; index < MI2S_MAX; index++) {
+		if (pdata->mi2s_gpio_p[index])
+			msm_cdc_pinctrl_set_wakeup_capable(pdata->mi2s_gpio_p[index], false);
 		atomic_set(&(pdata->mi2s_gpio_ref_count[index]), 0);
+	}
 
 	/* Register LPASS audio hw vote */
 	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");
