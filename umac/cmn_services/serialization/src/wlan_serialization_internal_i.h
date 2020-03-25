@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -128,9 +128,9 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
  * timed-out command from active queue and move any pending command to active
  * queue of same cmd_type.
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-void wlan_serialization_generic_timer_cb(void *arg);
+QDF_STATUS wlan_serialization_generic_timer_cb(void *arg);
 
 /**
  * wlan_serialization_find_and_start_timer() - to find and start the timer

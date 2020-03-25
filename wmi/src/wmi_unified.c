@@ -2153,7 +2153,7 @@ static void wmi_discard_fw_event(struct scheduler_msg *msg)
 	msg->type = 0;
 }
 
-static int wmi_process_fw_event_handler(struct scheduler_msg *msg)
+static QDF_STATUS wmi_process_fw_event_handler(struct scheduler_msg *msg)
 {
 	struct wmi_process_fw_event_params *params =
 		(struct wmi_process_fw_event_params *)msg->bodyptr;
@@ -2170,7 +2170,7 @@ static int wmi_process_fw_event_handler(struct scheduler_msg *msg)
 
 	qdf_mem_free(msg->bodyptr);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
