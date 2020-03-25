@@ -48,6 +48,9 @@
 #define PCIE_ACCESS_DUMP 4
 #endif
 #include "mp_dev.h"
+#ifdef HIF_CE_LOG_INFO
+#include "qdf_hang_event_notifier.h"
+#endif
 
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6290) || \
 	defined(QCA_WIFI_QCA6018) || defined(QCA_WIFI_QCA5018)) && \
@@ -4197,3 +4200,59 @@ int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id)
 
 	return 0;
 }
+
+#ifdef HIF_CE_LOG_INFO
+/**
+ * ce_get_index_info(): Get CE index info
+ * @scn: HIF Context
+ * @ce_state: CE opaque handle
+ * @info: CE info
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static
+int ce_get_index_info(struct hif_softc *scn, void *ce_state,
+		      struct ce_index *info)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
+	return hif_state->ce_services->ce_get_index_info(scn, ce_state, info);
+}
+
+void hif_log_ce_info(struct hif_opaque_softc *hif_ctx, uint8_t *data,
+		     unsigned int *offset)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hang_event_info info = {0};
+	static uint32_t tracked_ce = BIT(CE_ID_1) | BIT(CE_ID_2) |
+		BIT(CE_ID_3) | BIT(CE_ID_4) | BIT(CE_ID_9) | BIT(CE_ID_10);
+	uint8_t curr_index = 0;
+	uint8_t i;
+	uint16_t size;
+
+	info.active_tasklet_count = qdf_atomic_read(&scn->active_tasklet_cnt);
+	info.active_grp_tasklet_cnt =
+				qdf_atomic_read(&scn->active_grp_tasklet_cnt);
+
+	for (i = 0; i < scn->ce_count; i++) {
+		if (!(tracked_ce & BIT(i)) || !scn->ce_id_to_state[i])
+			continue;
+
+		if (ce_get_index_info(scn, scn->ce_id_to_state[i],
+				      &info.ce_info[curr_index]))
+			continue;
+
+		curr_index++;
+	}
+
+	info.ce_count = curr_index;
+	size = sizeof(info) -
+		(CE_COUNT_MAX - info.ce_count) * sizeof(struct ce_index);
+
+	QDF_HANG_EVT_SET_HDR(&info.tlv_header, HANG_EVT_TAG_CE_INFO,
+			     size - QDF_HANG_EVENT_TLV_HDR_SIZE);
+
+	qdf_mem_copy(data + *offset, &info, size);
+	*offset = *offset + size;
+}
+#endif

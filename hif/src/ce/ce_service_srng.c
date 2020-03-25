@@ -941,6 +941,43 @@ static void ce_prepare_shadow_register_v2_cfg_srng(struct hif_softc *scn,
 			      num_shadow_registers_configured);
 }
 
+#ifdef HIF_CE_LOG_INFO
+/**
+ * ce_get_index_info_srng(): Get CE index info
+ * @scn: HIF Context
+ * @ce_state: CE opaque handle
+ * @info: CE info
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static
+int ce_get_index_info_srng(struct hif_softc *scn, void *ce_state,
+			   struct ce_index *info)
+{
+	struct CE_state *CE_state = (struct CE_state *)ce_state;
+	uint32_t tp, hp;
+
+	info->id = CE_state->id;
+	if (CE_state->src_ring) {
+		hal_get_sw_hptp(scn->hal_soc, CE_state->src_ring->srng_ctx,
+				&tp, &hp);
+		info->u.srng_info.tp = tp;
+		info->u.srng_info.hp = hp;
+	} else if (CE_state->dest_ring && CE_state->status_ring) {
+		hal_get_sw_hptp(scn->hal_soc, CE_state->status_ring->srng_ctx,
+				&tp, &hp);
+		info->u.srng_info.status_tp = tp;
+		info->u.srng_info.status_hp = hp;
+		hal_get_sw_hptp(scn->hal_soc, CE_state->dest_ring->srng_ctx,
+				&tp, &hp);
+		info->u.srng_info.tp = tp;
+		info->u.srng_info.hp = hp;
+	}
+
+	return 0;
+}
+#endif
+
 static struct ce_ops ce_service_srng = {
 	.ce_get_desc_size = ce_get_desc_size_srng,
 	.ce_ring_setup = ce_ring_setup_srng,
@@ -957,6 +994,10 @@ static struct ce_ops ce_service_srng = {
 	.ce_send_entries_done_nolock = ce_send_entries_done_nolock_srng,
 	.ce_prepare_shadow_register_v2_cfg =
 		ce_prepare_shadow_register_v2_cfg_srng,
+#ifdef HIF_CE_LOG_INFO
+	.ce_get_index_info =
+		ce_get_index_info_srng,
+#endif
 };
 
 struct ce_ops *ce_services_srng()

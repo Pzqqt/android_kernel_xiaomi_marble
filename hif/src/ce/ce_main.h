@@ -265,6 +265,49 @@ struct ce_info {
 #endif
 #endif
 
+/**
+ * struct ce_index
+ *
+ * @id: CE id
+ * @sw_index: sw index
+ * @write_index: write index
+ * @hp: ring head pointer
+ * @tp: ring tail pointer
+ * @status_hp: status ring head pointer
+ * @status_tp: status ring tail pointer
+ */
+struct ce_index {
+	uint8_t id;
+	union {
+		struct {
+			uint16_t sw_index;
+			uint16_t write_index;
+		} legacy_info;
+		struct {
+			uint16_t hp;
+			uint16_t tp;
+			uint16_t status_hp;
+			uint16_t status_tp;
+		} srng_info;
+	} u;
+} qdf_packed;
+
+/**
+ * struct hang_event_info
+ *
+ * @tlv_header: tlv header
+ * @active_tasklet_count: active tasklet count
+ * @active_grp_tasklet_cnt: active grp tasklet count
+ * @ce_info: CE info
+ */
+struct hang_event_info {
+	uint32_t tlv_header;
+	uint8_t active_tasklet_count;
+	uint8_t active_grp_tasklet_cnt;
+	uint8_t ce_count;
+	struct ce_index ce_info[CE_COUNT_MAX];
+} qdf_packed;
+
 void hif_ce_stop(struct hif_softc *scn);
 int hif_dump_ce_registers(struct hif_softc *scn);
 void

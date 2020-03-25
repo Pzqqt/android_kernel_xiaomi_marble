@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1266,6 +1266,34 @@ static bool ce_check_int_watermark(struct CE_state *CE_state,
 	return false;
 }
 
+#ifdef HIF_CE_LOG_INFO
+/**
+ * ce_get_index_info_legacy(): Get CE index info
+ * @scn: HIF Context
+ * @ce_state: CE opaque handle
+ * @info: CE info
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static
+int ce_get_index_info_legacy(struct hif_softc *scn, void *ce_state,
+			     struct ce_index *info)
+{
+	struct CE_state *state = (struct CE_state *)ce_state;
+
+	info->id = state->id;
+	if (state->src_ring) {
+		info->u.legacy_info.sw_index = state->src_ring->sw_index;
+		info->u.legacy_info.write_index = state->src_ring->write_index;
+	} else if (state->dest_ring) {
+		info->u.legacy_info.sw_index = state->dest_ring->sw_index;
+		info->u.legacy_info.write_index = state->dest_ring->write_index;
+	}
+
+	return 0;
+}
+#endif
+
 struct ce_ops ce_service_legacy = {
 	.ce_get_desc_size = ce_get_desc_size_legacy,
 	.ce_ring_setup = ce_ring_setup_legacy,
@@ -1282,6 +1310,10 @@ struct ce_ops ce_service_legacy = {
 	.ce_send_entries_done_nolock = ce_send_entries_done_nolock_legacy,
 	.ce_prepare_shadow_register_v2_cfg =
 		ce_prepare_shadow_register_v2_cfg_legacy,
+#ifdef HIF_CE_LOG_INFO
+	.ce_get_index_info =
+		ce_get_index_info_legacy,
+#endif
 };
 
 struct ce_ops *ce_services_legacy()
