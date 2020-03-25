@@ -362,35 +362,19 @@ static void dp_display_hdcp_deregister_stream(struct dp_display_private *dp,
 	}
 }
 
-static void dp_display_hdcp_cb_work(struct work_struct *work)
+static void dp_display_hdcp_process_delayed_off(struct dp_display_private *dp)
 {
-	struct dp_display_private *dp;
-	struct delayed_work *dw = to_delayed_work(work);
-	struct sde_hdcp_ops *ops;
-	struct dp_link_hdcp_status *status;
-	void *data;
-	int rc = 0;
-	u32 hdcp_auth_state;
-	u8 sink_status = 0;
-
-	dp = container_of(dw, struct dp_display_private, hdcp_cb_work);
-
-	if (!dp_display_state_is(DP_STATE_ENABLED | DP_STATE_CONNECTED) ||
-	     dp_display_state_is(DP_STATE_ABORTED | DP_STATE_HDCP_ABORTED))
-		return;
-
-	if (dp_display_state_is(DP_STATE_SUSPENDED)) {
-		DP_DEBUG("System suspending. Delay HDCP operations\n");
-		queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
-		return;
-	}
-
 	if (dp->hdcp_delayed_off) {
 		if (dp->hdcp.ops && dp->hdcp.ops->off)
 			dp->hdcp.ops->off(dp->hdcp.data);
 		dp_display_update_hdcp_status(dp, true);
 		dp->hdcp_delayed_off = false;
 	}
+}
+
+static int dp_display_hdcp_process_sink_sync(struct dp_display_private *dp)
+{
+	u8 sink_status = 0;
 
 	if (dp->debug->hdcp_wait_sink_sync) {
 		drm_dp_dpcd_readb(dp->aux->drm_aux, DP_SINK_STATUS,
@@ -400,41 +384,58 @@ static void dp_display_hdcp_cb_work(struct work_struct *work)
 		if (sink_status < 1) {
 			DP_DEBUG("Sink not synchronized. Queuing again then exiting\n");
 			queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
-			return;
+			return -EAGAIN;
 		}
 	}
 
-	status = &dp->link->hdcp_status;
+	return 0;
+}
 
-	if (status->hdcp_state == HDCP_STATE_INACTIVE) {
-		dp_display_check_source_hdcp_caps(dp);
-		dp_display_update_hdcp_info(dp);
+static int dp_display_hdcp_start(struct dp_display_private *dp)
+{
+	if (dp->link->hdcp_status.hdcp_state != HDCP_STATE_INACTIVE)
+		return -EINVAL;
 
-		if (dp_display_is_hdcp_enabled(dp)) {
-			if (dp->hdcp.ops && dp->hdcp.ops->on &&
-					dp->hdcp.ops->on(dp->hdcp.data)) {
-				dp_display_update_hdcp_status(dp, true);
-				return;
-			}
-		} else {
+	dp_display_check_source_hdcp_caps(dp);
+	dp_display_update_hdcp_info(dp);
+
+	if (dp_display_is_hdcp_enabled(dp)) {
+		if (dp->hdcp.ops && dp->hdcp.ops->on &&
+				dp->hdcp.ops->on(dp->hdcp.data)) {
 			dp_display_update_hdcp_status(dp, true);
-			return;
+			return 0;
 		}
+	} else {
+		dp_display_update_hdcp_status(dp, true);
+		return 0;
 	}
+
+	return -EINVAL;
+}
+
+static void dp_display_hdcp_print_auth_state(struct dp_display_private *dp)
+{
+	u32 hdcp_auth_state;
+	int rc;
 
 	rc = dp->catalog->ctrl.read_hdcp_status(&dp->catalog->ctrl);
 	if (rc >= 0) {
 		hdcp_auth_state = (rc >> 20) & 0x3;
 		DP_DEBUG("hdcp auth state %d\n", hdcp_auth_state);
 	}
+}
+
+static void dp_display_hdcp_process_state(struct dp_display_private *dp)
+{
+	struct dp_link_hdcp_status *status;
+	struct sde_hdcp_ops *ops;
+	void *data;
+	int rc = 0;
+
+	status = &dp->link->hdcp_status;
 
 	ops = dp->hdcp.ops;
 	data = dp->hdcp.data;
-
-	DP_DEBUG("%s: %s\n", sde_hdcp_version(status->hdcp_version),
-		sde_hdcp_state_name(status->hdcp_state));
-
-	dp_display_update_hdcp_status(dp, false);
 
 	if (status->hdcp_state != HDCP_STATE_AUTHENTICATED &&
 		dp->debug->force_encryption && ops && ops->force_encryption)
@@ -470,6 +471,46 @@ static void dp_display_hdcp_cb_work(struct work_struct *work)
 		dp_display_hdcp_register_streams(dp);
 		break;
 	}
+}
+
+static void dp_display_hdcp_cb_work(struct work_struct *work)
+{
+	struct dp_display_private *dp;
+	struct delayed_work *dw = to_delayed_work(work);
+	struct dp_link_hdcp_status *status;
+	int rc = 0;
+
+	dp = container_of(dw, struct dp_display_private, hdcp_cb_work);
+
+	if (!dp_display_state_is(DP_STATE_ENABLED | DP_STATE_CONNECTED) ||
+	     dp_display_state_is(DP_STATE_ABORTED | DP_STATE_HDCP_ABORTED))
+		return;
+
+	if (dp_display_state_is(DP_STATE_SUSPENDED)) {
+		DP_DEBUG("System suspending. Delay HDCP operations\n");
+		queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
+		return;
+	}
+
+	dp_display_hdcp_process_delayed_off(dp);
+
+	rc = dp_display_hdcp_process_sink_sync(dp);
+	if (rc)
+		return;
+
+	rc = dp_display_hdcp_start(dp);
+	if (!rc)
+		return;
+
+	dp_display_hdcp_print_auth_state(dp);
+
+	status = &dp->link->hdcp_status;
+	DP_DEBUG("%s: %s\n", sde_hdcp_version(status->hdcp_version),
+		sde_hdcp_state_name(status->hdcp_state));
+
+	dp_display_update_hdcp_status(dp, false);
+
+	dp_display_hdcp_process_state(dp);
 }
 
 static void dp_display_notify_hdcp_status_cb(void *ptr,
@@ -2065,25 +2106,150 @@ end:
 	return 0;
 }
 
+static int dp_display_validate_link_clock(struct dp_display_private *dp,
+		struct drm_display_mode *mode, struct dp_display_mode dp_mode)
+{
+	struct drm_dp_link *link_info;
+	u32 mode_rate_khz = 0, supported_rate_khz = 0, mode_bpp = 0;
+	bool dsc_en;
+	int rate;
+
+	link_info = &dp->panel->link_info;
+
+	dsc_en = (dp_mode.timing.comp_info.comp_ratio > 1) ? true : false;
+	mode_bpp = dsc_en ?
+		DSC_BPP(dp_mode.timing.comp_info.dsc_info.config)
+		: dp_mode.timing.bpp;
+
+	mode_rate_khz = mode->clock * mode_bpp;
+	rate = drm_dp_bw_code_to_link_rate(dp->link->link_params.bw_code);
+	supported_rate_khz = link_info->num_lanes * rate * 8;
+
+	if (mode_rate_khz > supported_rate_khz) {
+		DP_DEBUG("mode_rate: %d kHz, supported_rate: %d kHz\n",
+				mode_rate_khz, supported_rate_khz);
+		return -EPERM;
+	}
+
+	return 0;
+}
+
+static int dp_display_validate_pixel_clock(struct dp_display_mode dp_mode,
+		u32 max_pclk_khz)
+{
+	u32 pclk_khz = dp_mode.timing.widebus_en ?
+		(dp_mode.timing.pixel_clk_khz >> 1) :
+		dp_mode.timing.pixel_clk_khz;
+
+	if (pclk_khz > max_pclk_khz) {
+		DP_DEBUG("clk: %d kHz, max: %d kHz\n", pclk_khz, max_pclk_khz);
+		return -EPERM;
+	}
+
+	return 0;
+}
+
+static int dp_display_validate_mixers(struct msm_drm_private *priv,
+		struct drm_display_mode *mode,
+		const struct msm_resource_caps_info *avail_res)
+{
+	int rc;
+	u32 num_lm = 0;
+
+	rc = msm_get_mixer_count(priv, mode, avail_res, &num_lm);
+	if (rc) {
+		DP_ERR("error getting mixer count. rc:%d\n", rc);
+		return rc;
+	}
+
+	if (num_lm > avail_res->num_lm ||
+			(num_lm == 2 && !avail_res->num_3dmux)) {
+		DP_DEBUG("num_lm:%d, req lm:%d 3dmux:%d\n", num_lm,
+				avail_res->num_lm, avail_res->num_3dmux);
+		return -EPERM;
+	}
+
+	return 0;
+}
+
+static void dp_display_validate_mst_connectors(struct dp_debug *debug,
+		struct dp_panel *dp_panel, struct drm_display_mode *mode,
+		enum drm_mode_status *mode_status, bool *use_default)
+{
+	struct dp_mst_connector *mst_connector;
+	int hdis, vdis, vref, ar, _hdis, _vdis, _vref, _ar;
+	bool in_list = false;
+
+	/*
+	 * If the connector exists in the mst connector list and if debug is
+	 * enabled for that connector, use the mst connector settings from the
+	 * list for validation. Otherwise, use non-mst default settings.
+	 */
+	mutex_lock(&debug->dp_mst_connector_list.lock);
+
+	if (list_empty(&debug->dp_mst_connector_list.list)) {
+		mutex_unlock(&debug->dp_mst_connector_list.lock);
+		*use_default = true;
+		return;
+	}
+
+	list_for_each_entry(mst_connector, &debug->dp_mst_connector_list.list,
+			list) {
+		if (mst_connector->con_id != dp_panel->connector->base.id)
+			continue;
+
+		in_list = true;
+
+		if (!mst_connector->debug_en) {
+			mutex_unlock(&debug->dp_mst_connector_list.lock);
+			*use_default = false;
+			*mode_status = MODE_OK;
+			return;
+		}
+
+		hdis = mst_connector->hdisplay;
+		vdis = mst_connector->vdisplay;
+		vref = mst_connector->vrefresh;
+		ar = mst_connector->aspect_ratio;
+
+		_hdis = mode->hdisplay;
+		_vdis = mode->vdisplay;
+		_vref = mode->vrefresh;
+		_ar = mode->picture_aspect_ratio;
+
+		if (hdis == _hdis && vdis == _vdis && vref == _vref &&
+				ar == _ar) {
+			mutex_unlock(&debug->dp_mst_connector_list.lock);
+			*use_default = false;
+			*mode_status = MODE_OK;
+			return;
+		}
+
+		break;
+	}
+
+	mutex_unlock(&debug->dp_mst_connector_list.lock);
+
+	if (in_list) {
+		*use_default = false;
+		return;
+	}
+
+	*use_default = true;
+}
+
 static enum drm_mode_status dp_display_validate_mode(
 		struct dp_display *dp_display,
 		void *panel, struct drm_display_mode *mode,
 		const struct msm_resource_caps_info *avail_res)
 {
 	struct dp_display_private *dp;
-	struct drm_dp_link *link_info;
-	u32 mode_rate_khz = 0, supported_rate_khz = 0, mode_bpp = 0;
 	struct dp_panel *dp_panel;
 	struct dp_debug *debug;
 	enum drm_mode_status mode_status = MODE_BAD;
-	bool in_list = false;
-	struct dp_mst_connector *mst_connector;
-	int hdis, vdis, vref, ar, _hdis, _vdis, _vref, _ar, rate;
 	struct dp_display_mode dp_mode;
-	bool dsc_en;
-	u32 num_lm = 0;
 	int rc = 0;
-	u32 pclk_khz = 0;
+	bool use_default = true;
 
 	if (!dp_display || !mode || !panel ||
 			!avail_res || !avail_res->max_mixer_width) {
@@ -2101,104 +2267,29 @@ static enum drm_mode_status dp_display_validate_mode(
 		goto end;
 	}
 
-	link_info = &dp->panel->link_info;
-
 	debug = dp->debug;
 	if (!debug)
 		goto end;
 
 	dp_display->convert_to_dp_mode(dp_display, panel, mode, &dp_mode);
 
-	dsc_en = (dp_mode.timing.comp_info.comp_ratio > 1) ? true : false;
-	mode_bpp = dsc_en ?
-		DSC_BPP(dp_mode.timing.comp_info.dsc_info.config)
-		: dp_mode.timing.bpp;
-
-	mode_rate_khz = mode->clock * mode_bpp;
-	rate = drm_dp_bw_code_to_link_rate(dp->link->link_params.bw_code);
-	supported_rate_khz = link_info->num_lanes * rate * 8;
-
-	if (mode_rate_khz > supported_rate_khz) {
-		DP_MST_DEBUG("pclk:%d, supported_rate:%d\n",
-				mode->clock, supported_rate_khz);
-		goto end;
-	}
-
-	pclk_khz = dp_mode.timing.widebus_en ?
-		(dp_mode.timing.pixel_clk_khz >> 1) :
-		(dp_mode.timing.pixel_clk_khz);
-
-	if (pclk_khz > dp_display->max_pclk_khz) {
-		DP_MST_DEBUG("clk:%d, max:%d\n", pclk_khz,
-				dp_display->max_pclk_khz);
-		goto end;
-	}
-
-	rc = msm_get_mixer_count(dp->priv, mode, avail_res, &num_lm);
-	if (rc) {
-		DP_ERR("error getting mixer count. rc:%d\n", rc);
-		goto end;
-	}
-
-	if (num_lm > avail_res->num_lm ||
-			(num_lm == 2 && !avail_res->num_3dmux)) {
-		DP_MST_DEBUG("num_lm:%d, req lm:%d 3dmux:%d\n", num_lm,
-				avail_res->num_lm, avail_res->num_3dmux);
-		goto end;
-	}
-
-	/*
-	 * If the connector exists in the mst connector list and if debug is
-	 * enabled for that connector, use the mst connector settings from the
-	 * list for validation. Otherwise, use non-mst default settings.
-	 */
-	mutex_lock(&debug->dp_mst_connector_list.lock);
-
-	if (list_empty(&debug->dp_mst_connector_list.list)) {
-		mutex_unlock(&debug->dp_mst_connector_list.lock);
-		goto verify_default;
-	}
-
-	list_for_each_entry(mst_connector, &debug->dp_mst_connector_list.list,
-			list) {
-		if (mst_connector->con_id == dp_panel->connector->base.id) {
-			in_list = true;
-
-			if (!mst_connector->debug_en) {
-				mode_status = MODE_OK;
-				mutex_unlock(
-				&debug->dp_mst_connector_list.lock);
-				goto end;
-			}
-
-			hdis = mst_connector->hdisplay;
-			vdis = mst_connector->vdisplay;
-			vref = mst_connector->vrefresh;
-			ar = mst_connector->aspect_ratio;
-
-			_hdis = mode->hdisplay;
-			_vdis = mode->vdisplay;
-			_vref = mode->vrefresh;
-			_ar = mode->picture_aspect_ratio;
-
-			if (hdis == _hdis && vdis == _vdis && vref == _vref &&
-					ar == _ar) {
-				mode_status = MODE_OK;
-				mutex_unlock(
-				&debug->dp_mst_connector_list.lock);
-				goto end;
-			}
-
-			break;
-		}
-	}
-
-	mutex_unlock(&debug->dp_mst_connector_list.lock);
-
-	if (in_list)
+	rc = dp_display_validate_link_clock(dp, mode, dp_mode);
+	if (rc)
 		goto end;
 
-verify_default:
+	rc = dp_display_validate_pixel_clock(dp_mode, dp_display->max_pclk_khz);
+	if (rc)
+		goto end;
+
+	rc = dp_display_validate_mixers(dp->priv, mode, avail_res);
+	if (rc)
+		goto end;
+
+	dp_display_validate_mst_connectors(debug, dp_panel, mode, &mode_status,
+			&use_default);
+	if (!use_default)
+		goto end;
+
 	if (debug->debug_en && (mode->hdisplay != debug->hdisplay ||
 			mode->vdisplay != debug->vdisplay ||
 			mode->vrefresh != debug->vrefresh ||
