@@ -83,7 +83,10 @@
 #include <ol_txrx_ipa.h>
 #include "wlan_roam_debug.h"
 #include "cfg_ucfg_api.h"
-
+#ifdef DP_SUPPORT_RECOVERY_NOTIFY
+#include <qdf_notifier.h>
+#include <qdf_hang_event_notifier.h>
+#endif
 
 #define DPT_DEBUGFS_PERMS	(QDF_FILE_USR_READ |	\
 				QDF_FILE_USR_WRITE |	\
@@ -3322,6 +3325,63 @@ ol_txrx_clear_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 	return status;
 }
 
+#ifdef DP_SUPPORT_RECOVERY_NOTIFY
+static
+int ol_peer_recovery_notifier_cb(struct notifier_block *block,
+				 unsigned long state, void *data)
+{
+	struct qdf_notifer_data *notif_data = data;
+	qdf_notif_block *notif_block;
+	struct ol_txrx_peer_t *peer;
+	struct peer_hang_data hang_data;
+	enum peer_debug_id_type dbg_id;
+
+	if (!data || !block)
+		return -EINVAL;
+
+	notif_block = qdf_container_of(block, qdf_notif_block, notif_block);
+
+	peer = notif_block->priv_data;
+	if (!peer)
+		return -EINVAL;
+
+	QDF_HANG_EVT_SET_HDR(&hang_data.tlv_header,
+			     HANG_EVT_TAG_DP_PEER_INFO,
+			     QDF_HANG_GET_STRUCT_TLVLEN(struct peer_hang_data));
+
+	qdf_mem_copy(&hang_data.peer_mac_addr, &peer->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
+
+	for (dbg_id = 0; dbg_id < PEER_DEBUG_ID_MAX; dbg_id++)
+		if (qdf_atomic_read(&peer->access_list[dbg_id]))
+			hang_data.peer_timeout_bitmask |= (1 << dbg_id);
+
+	qdf_mem_copy(notif_data->hang_data + notif_data->offset,
+		     &hang_data, sizeof(struct peer_hang_data));
+	notif_data->offset += sizeof(struct peer_hang_data);
+
+	return 0;
+}
+
+static qdf_notif_block ol_peer_recovery_notifier = {
+	.notif_block.notifier_call = ol_peer_recovery_notifier_cb,
+};
+
+static
+QDF_STATUS ol_register_peer_recovery_notifier(struct ol_txrx_peer_t *peer)
+{
+	ol_peer_recovery_notifier.priv_data = peer;
+
+	return qdf_hang_event_register_notifier(&ol_peer_recovery_notifier);
+}
+#else
+static inline
+QDF_STATUS ol_register_peer_recovery_notifier(struct ol_txrx_peer_t *peer)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * peer_unmap_timer_handler() - peer unmap timer function
  * @data: peer object pointer
@@ -3340,6 +3400,7 @@ void peer_unmap_timer_handler(void *data)
 	ol_txrx_err("peer %pK ("QDF_MAC_ADDR_STR")",
 		    peer,
 		    QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+	ol_register_peer_recovery_notifier(peer);
 
 	cds_trigger_recovery(QDF_PEER_UNMAP_TIMEDOUT);
 }
@@ -5928,6 +5989,52 @@ void ol_deregister_packetdump_callback(struct cdp_soc_t *soc_hdl,
 	pdev->ol_rx_packetdump_cb = NULL;
 }
 
+#ifdef DP_SUPPORT_RECOVERY_NOTIFY
+static
+int ol_recovery_notifier_cb(struct notifier_block *block,
+			    unsigned long state, void *data)
+{
+	struct qdf_notifer_data *notif_data = data;
+	qdf_notif_block *notif_block;
+	struct ol_txrx_soc_t *soc;
+	struct hif_opaque_softc *hif_handle;
+
+	if (!data || !block)
+		return -EINVAL;
+
+	notif_block = qdf_container_of(block, qdf_notif_block, notif_block);
+
+	soc = notif_block->priv_data;
+	if (!soc)
+		return -EINVAL;
+
+	hif_handle = cds_get_context(QDF_MODULE_ID_HIF);
+	hif_log_ce_info(hif_handle, notif_data->hang_data,
+			&notif_data->offset);
+
+	return 0;
+}
+
+static qdf_notif_block ol_recovery_notifier = {
+	.notif_block.notifier_call = ol_recovery_notifier_cb,
+};
+
+static
+QDF_STATUS ol_register_recovery_notifier(struct cdp_soc_t *soc_hdl)
+{
+	struct ol_txrx_soc_t *soc = cdp_soc_t_to_ol_txrx_soc_t(soc_hdl);
+
+	ol_recovery_notifier.priv_data = soc;
+	return qdf_hang_event_register_notifier(&ol_recovery_notifier);
+}
+
+static
+QDF_STATUS ol_unregister_recovery_notifier(void)
+{
+	return qdf_hang_event_unregister_notifier(&ol_recovery_notifier);
+}
+#endif
+
 static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_soc_attach_target = ol_txrx_soc_attach_target,
 	.txrx_vdev_attach = ol_txrx_vdev_attach,
@@ -5995,6 +6102,10 @@ static struct cdp_misc_ops ol_ops_misc = {
 #ifdef WLAN_SUPPORT_TXRX_HL_BUNDLE
 	.vdev_set_bundle_require_flag = ol_tx_vdev_set_bundle_require,
 	.pdev_reset_bundle_require_flag = ol_tx_pdev_reset_bundle_require,
+#endif
+#ifdef DP_SUPPORT_RECOVERY_NOTIFY
+	.register_recovery_notifier = ol_register_recovery_notifier,
+	.unregister_recovery_notifier = ol_unregister_recovery_notifier,
 #endif
 };
 
