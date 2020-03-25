@@ -1182,10 +1182,13 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 	struct swr_port_info *port_req;
 	int i;
 	struct swrm_mports *mport;
+	struct swrm_mports *prev_mport = NULL;
 	u32 reg[SWRM_MAX_PORT_REG];
 	u32 val[SWRM_MAX_PORT_REG];
 	int len = 0;
 	u8 hparams;
+	u8 offset1 = 0;
+
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
 
 	if (!swrm) {
@@ -1217,9 +1220,18 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 					port_req->dev_num, 0x00,
 					SWRS_DP_SAMPLE_CONTROL_1_BANK(slv_id,
 								bank));
-
+			/* Assumption: If different channels in the same port
+			 * on master is enabled for different slaves, then each
+			 * slave offset should be configured differently.
+			 */
+			if (prev_mport == mport)
+				offset1 += mport->offset1;
+			else {
+				offset1 = mport->offset1;
+				prev_mport = mport;
+			}
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK(mport->offset1,
+			val[len++] = SWR_REG_VAL_PACK(offset1,
 					port_req->dev_num, 0x00,
 					SWRS_DP_OFFSET_CONTROL_1_BANK(slv_id,
 								bank));
@@ -1567,9 +1579,8 @@ static int swrm_connect_port(struct swr_master *master,
 		mport->req_ch |= mstr_ch_msk;
 		master->port_en_mask |= (1 << mstr_port_id);
 		if (swrm->clk_stop_mode0_supp &&
-				swrm->dynamic_port_map_supported &&
-				(mport->ch_rate < portinfo->ch_rate[i])) {
-			mport->ch_rate = portinfo->ch_rate[i];
+				swrm->dynamic_port_map_supported) {
+			mport->ch_rate += portinfo->ch_rate[i];
 			swrm_update_bus_clk(swrm);
 		}
 	}
