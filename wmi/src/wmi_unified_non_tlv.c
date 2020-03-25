@@ -712,7 +712,6 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 	/* length depends on ieee key length */
 	int len = sizeof(wmi_vdev_install_key_cmd) + param->key_len;
 	uint8_t	wmi_cipher_type;
-	int i;
 
 	wmi_cipher_type = param->key_cipher;
 
@@ -755,7 +754,7 @@ static QDF_STATUS send_setup_install_key_cmd_non_tlv(wmi_unified_t wmi_handle,
 
 #ifdef ATH_SUPPORT_WAPI
 	if (wmi_cipher_type == WMI_CIPHER_WAPI) {
-		int j;
+		int i, j;
 		/* For WAPI, TSC and RSC has to be initialized with predefined
 		 * value.Here, Indicating TSC, RSC to target as part of set
 		 * key message
