@@ -1353,6 +1353,37 @@ static void __sde_crtc_assign_active_cfg(struct sde_crtc *sdecrtc,
 	sdecrtc->active_cfg.stage[i][0] = sde_plane_pipe(plane);
 }
 
+static void _sde_crtc_setup_blend_cfg_by_stage(struct sde_crtc_mixer *mixer,
+		int num_mixers, struct plane_state *pstates, int cnt)
+{
+	int i, lm_idx;
+	struct sde_format *format;
+	bool blend_stage[SDE_STAGE_MAX] = { false };
+	u32 blend_type;
+
+	for (i = cnt - 1; i >= 0; i--) {
+		blend_type = sde_plane_get_property(pstates[i].sde_pstate,
+				PLANE_PROP_BLEND_OP);
+		/* stage has already been programmed or BLEND_OP_SKIP type */
+		if (blend_stage[pstates[i].sde_pstate->stage] ||
+				blend_type == SDE_DRM_BLEND_OP_SKIP)
+			continue;
+
+		for (lm_idx = 0; lm_idx < num_mixers; lm_idx++) {
+			format = to_sde_format(msm_framebuffer_format(
+					pstates[i].sde_pstate->base.fb));
+			if (!format) {
+				SDE_ERROR("invalid format\n");
+				return;
+			}
+
+			_sde_crtc_setup_blend_cfg(mixer + lm_idx,
+					pstates[i].sde_pstate, format);
+			blend_stage[pstates[i].sde_pstate->stage] = true;
+		}
+	}
+}
+
 static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state, struct sde_crtc *sde_crtc,
 		struct sde_crtc_mixer *mixer)
@@ -1448,12 +1479,8 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 				format->base.pixel_format,
 				fb ? fb->modifier : 0);
 
-			/* blend config update */
 			for (lm_idx = 0; lm_idx < sde_crtc->num_mixers;
 							lm_idx++) {
-				_sde_crtc_setup_blend_cfg(mixer + lm_idx,
-						pstate, format);
-
 				if (bg_alpha_enable && !format->alpha_enable)
 					mixer[lm_idx].mixer_op_mode = 0;
 				else
@@ -1477,6 +1504,10 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 		cnt++;
 	}
+
+	/* blend config update */
+	_sde_crtc_setup_blend_cfg_by_stage(mixer, sde_crtc->num_mixers,
+			pstates, cnt);
 
 	sort(pstates, cnt, sizeof(pstates[0]), pstate_cmp, NULL);
 	_sde_crtc_set_src_split_order(crtc, pstates, cnt);
