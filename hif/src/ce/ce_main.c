@@ -2799,7 +2799,8 @@ void hif_ce_stop(struct hif_softc *scn)
 
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		if (pipe_info->ce_hdl) {
-			if (pipe_info->ce_hdl != ce_diag) {
+			if (pipe_info->ce_hdl != ce_diag &&
+			    hif_state->started) {
 				attr = hif_state->host_ce_config[pipe_num];
 				if (attr.src_nentries)
 					qdf_spinlock_destroy(&pipe_info->
