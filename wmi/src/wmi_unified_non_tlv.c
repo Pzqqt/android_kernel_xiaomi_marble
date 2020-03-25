@@ -7439,9 +7439,10 @@ static QDF_STATUS extract_fips_event_data_non_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-static QDF_STATUS extract_vdev_start_resp_non_tlv(wmi_unified_t wmi_handle,
-		void *evt_buf,
-		wmi_host_vdev_start_resp *vdev_rsp)
+static QDF_STATUS extract_vdev_start_resp_non_tlv(
+					wmi_unified_t wmi_handle,
+					void *evt_buf,
+					struct vdev_start_response *vdev_rsp)
 {
 	wmi_vdev_start_response_event *ev =
 	    (wmi_vdev_start_response_event *) evt_buf;
