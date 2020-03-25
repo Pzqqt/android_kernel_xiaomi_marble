@@ -25,6 +25,7 @@
 #include <soc/swr-common.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
+#include <soc/soundwire.h>
 #include "device_event.h"
 #include "msm-pcm-routing-v2.h"
 #include "asoc/msm-cdc-pinctrl.h"
@@ -7156,7 +7157,8 @@ static int msm_wsa883x_init(struct snd_soc_component *component)
 						SPKR_L_BOOST, SPKR_L_VI};
 	u8 spkright_port_types[WSA883X_MAX_SWR_PORTS] = {SPKR_R, SPKR_R_COMP,
 						SPKR_R_BOOST, SPKR_R_VI};
-	unsigned int ch_rate[WSA883X_MAX_SWR_PORTS] = {2400, 600, 300, 1200};
+	unsigned int ch_rate[WSA883X_MAX_SWR_PORTS] = {SWR_CLK_RATE_2P4MHZ, SWR_CLK_RATE_0P6MHZ,
+							SWR_CLK_RATE_0P3MHZ, SWR_CLK_RATE_1P2MHZ};
 	unsigned int ch_mask[WSA883X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
 	struct msm_asoc_mach_data *pdata;
 	struct snd_soc_dapm_context *dapm;
