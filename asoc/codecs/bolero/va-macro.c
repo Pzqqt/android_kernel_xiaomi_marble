@@ -2419,6 +2419,8 @@ static const struct snd_kcontrol_new va_macro_snd_controls_v3[] = {
 	SOC_SINGLE_SX_TLV("VA_DEC3 Volume",
 			  BOLERO_CDC_VA_TX3_TX_VOL_CTL,
 			  0, -84, 40, digital_gain),
+	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
+		va_macro_lpi_get, va_macro_lpi_put),
 };
 
 static int va_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
