@@ -16189,7 +16189,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		/* Fill rrm config parameters */
 		qdf_mem_copy(&csr_join_req->rrm_config,
-			     &mac->rrm.rrmSmeContext.rrmConfig,
+			     &mac->rrm.rrmConfig,
 			     sizeof(struct rrm_config_param));
 
 		pAP_capabilityInfo =

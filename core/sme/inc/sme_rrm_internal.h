@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,7 @@ typedef struct sRrmSMEContext {
 	uint16_t token;
 	struct qdf_mac_addr sessionBssId;
 	uint8_t regClass;
+	uint8_t measurement_idx;
 	/* list of all channels to be measured. */
 	tCsrChannelInfo channelList;
 	uint8_t currentIndex;
@@ -74,7 +75,7 @@ typedef struct sRrmSMEContext {
 	uint16_t randnIntvl;
 	uint16_t duration[SIR_ESE_MAX_MEAS_IE_REQS];
 	uint8_t measMode[SIR_ESE_MAX_MEAS_IE_REQS];
-	struct rrm_config_param rrmConfig;
+	uint32_t scan_id;
 	qdf_mc_timer_t IterMeasTimer;
 	tDblLinkList neighborReportCache;
 	tRrmNeighborRequestControlInfo neighborReqControlInfo;

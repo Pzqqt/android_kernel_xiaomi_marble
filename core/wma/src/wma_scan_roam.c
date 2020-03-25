@@ -3923,7 +3923,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (mac->mlme_cfg->scoring.apsd_enabled)
 		selfCaps.apsd = 1;
 
-	selfCaps.rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+	selfCaps.rrm = mac->rrm.rrmConfig.rrm_enabled;
 
 	val = mac->mlme_cfg->feature_flags.enable_block_ack;
 	selfCaps.delayedBA =

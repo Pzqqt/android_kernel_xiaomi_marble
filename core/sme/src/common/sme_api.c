@@ -826,12 +826,12 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 
 	if (!val) {
 		mac_ctx->rrm.rrmPEContext.rrmEnabledCaps.fine_time_meas_rpt = 0;
-		((tpRRMCaps)mac_ctx->rrm.rrmSmeContext.
-			rrmConfig.rm_capability)->fine_time_meas_rpt = 0;
+		((tpRRMCaps)mac_ctx->rrm.rrmConfig.
+			rm_capability)->fine_time_meas_rpt = 0;
 	} else {
 		mac_ctx->rrm.rrmPEContext.rrmEnabledCaps.fine_time_meas_rpt = 1;
-		((tpRRMCaps)mac_ctx->rrm.rrmSmeContext.
-			rrmConfig.rm_capability)->fine_time_meas_rpt = 1;
+		((tpRRMCaps)mac_ctx->rrm.rrmConfig.
+			rm_capability)->fine_time_meas_rpt = 1;
 	}
 
 	/* Inform this RRM IE change to FW */
@@ -1643,7 +1643,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 	const tCsrEseBeaconReqParams *bcn_req = NULL;
 	uint8_t counter = 0;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac, sessionId);
-	tpRrmSMEContext sme_rrm_ctx = &mac->rrm.rrmSmeContext;
+	tpRrmSMEContext sme_rrm_ctx = &mac->rrm.rrmSmeContext[0];
 
 	if (sme_rrm_ctx->eseBcnReqInProgress == true) {
 		sme_err("A Beacon Report Req is already in progress");
@@ -1671,6 +1671,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 	sme_bcn_rpt_req->channel_info.chan_num = 255;
 	sme_bcn_rpt_req->channel_list.num_channels = in_req->numBcnReqIe;
 	sme_bcn_rpt_req->msgSource = eRRM_MSG_SOURCE_ESE_UPLOAD;
+	sme_bcn_rpt_req->measurement_idx = 0;
 
 	for (counter = 0; counter < in_req->numBcnReqIe; counter++) {
 		bcn_req = &in_req->bcnReq[counter];
@@ -3402,7 +3403,7 @@ QDF_STATUS sme_oem_update_capability(mac_handle_t mac_handle,
 	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
 	uint8_t *bytes;
 
-	bytes = pmac->rrm.rrmSmeContext.rrmConfig.rm_capability;
+	bytes = pmac->rrm.rrmConfig.rm_capability;
 
 	if (cap->ftm_rr)
 		bytes[4] |= RM_CAP_FTM_RANGE_REPORT;
@@ -3430,7 +3431,7 @@ QDF_STATUS sme_oem_get_capability(mac_handle_t mac_handle,
 	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
 	uint8_t *bytes;
 
-	bytes = pmac->rrm.rrmSmeContext.rrmConfig.rm_capability;
+	bytes = pmac->rrm.rrmConfig.rm_capability;
 
 	cap->ftm_rr = bytes[4] & RM_CAP_FTM_RANGE_REPORT;
 	cap->lci_capability = bytes[4] & RM_CAP_CIVIC_LOC_MEASUREMENT;

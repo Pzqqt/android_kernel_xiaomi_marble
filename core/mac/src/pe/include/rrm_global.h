@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,6 +27,9 @@
 
    ========================================================================*/
 
+#define MAX_MEASUREMENT_REQUEST 2
+#define DEFAULT_RRM_IDX 0
+
 typedef enum eRrmRetStatus {
 	eRRM_SUCCESS,
 	eRRM_INCAPABLE,
@@ -49,6 +52,7 @@ struct sir_channel_info {
 typedef struct sSirBeaconReportReqInd {
 	uint16_t messageType;   /* eWNI_SME_BEACON_REPORT_REQ_IND */
 	uint16_t length;
+	uint8_t measurement_idx;
 	tSirMacAddr bssId;
 	uint16_t measurementDuration[SIR_ESE_MAX_MEAS_IE_REQS]; /* ms */
 	uint16_t randomizationInterval; /* ms */
@@ -66,6 +70,7 @@ typedef struct sSirBeaconReportReqInd {
 typedef struct sSirBeaconReportXmitInd {
 	uint16_t messageType;   /* eWNI_SME_BEACON_REPORT_RESP_XMIT_IND */
 	uint16_t length;
+	uint8_t measurement_idx;
 	tSirMacAddr bssId;
 	uint16_t uDialogToken;
 	uint8_t fMeasureDone;
@@ -131,6 +136,7 @@ typedef struct sSirNeighborReportInd {
 	uint16_t messageType;   /* eWNI_SME_NEIGHBOR_REPORT_IND */
 	uint16_t length;
 	uint8_t sessionId;
+	uint8_t measurement_idx;
 	uint16_t numNeighborReports;
 	tSirMacAddr bssId;      /* For the session. */
 	tSirNeighborBssDescription sNeighborBssDescription[1];
@@ -148,6 +154,7 @@ typedef struct sRRMBeaconReportRequestedIes {
 #define BEACON_REPORTING_DETAIL_ALL_FF_IE 2
 
 typedef struct sRRMReq {
+	uint8_t measurement_idx; /* Index of the measurement report in frame */
 	uint8_t dialog_token;   /* In action frame; */
 	uint8_t token;          /* Within individual request; */
 	uint8_t type;
@@ -211,7 +218,7 @@ typedef struct sRrmPEContext {
 	/* Dialog token for the request initiated from station. */
 	uint8_t DialogToken;
 	uint16_t prev_rrm_report_seq_num;
-	tpRRMReq pCurrentReq;
+	tpRRMReq pCurrentReq[MAX_MEASUREMENT_REQUEST];
 } tRrmPEContext, *tpRrmPEContext;
 
 /* 2008 11k spec reference: 18.4.8.5 RCPI Measurement */

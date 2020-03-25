@@ -1287,7 +1287,8 @@ __lim_process_radio_measure_request(struct mac_context *mac, uint8_t *pRxPacketI
 			 HIGH_SEQ_NUM_OFFSET) |
 			pHdr->seqControl.seqNumLo);
 	if (curr_seq_num == mac->rrm.rrmPEContext.prev_rrm_report_seq_num &&
-	    mac->rrm.rrmPEContext.pCurrentReq) {
+	    (mac->rrm.rrmPEContext.pCurrentReq[DEFAULT_RRM_IDX] ||
+	     mac->rrm.rrmPEContext.pCurrentReq[DEFAULT_RRM_IDX + 1])) {
 		pe_err("rrm report req frame, seq num: %d is already in progress, drop it",
 			curr_seq_num);
 		return;

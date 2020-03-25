@@ -8399,7 +8399,7 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 	if (mac->mlme_cfg->scoring.apsd_enabled)
 		pcap_info->apsd = 1;
 
-	pcap_info->rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+	pcap_info->rrm = mac->rrm.rrmConfig.rrm_enabled;
 	pe_debug("RRM: %d", pcap_info->rrm);
 	/* DSSS-OFDM */
 	/* FIXME : no config defined yet. */

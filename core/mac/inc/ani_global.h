@@ -679,7 +679,8 @@ struct mgmt_frm_reg_info {
 };
 
 typedef struct sRrmContext {
-	tRrmSMEContext rrmSmeContext;
+	struct rrm_config_param rrmConfig;
+	tRrmSMEContext rrmSmeContext[MAX_MEASUREMENT_REQUEST];
 	tRrmPEContext rrmPEContext;
 } tRrmContext, *tpRrmContext;
 
