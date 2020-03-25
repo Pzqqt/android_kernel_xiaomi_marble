@@ -2447,7 +2447,7 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
-	uint8_t mcc_adapt_sch;
+	bool mcc_adapt_sch = false;
 	QDF_STATUS ret;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	u_int8_t vdev_id;
@@ -2679,8 +2679,8 @@ QDF_STATUS wma_post_vdev_create_setup(struct wlan_objmgr_vdev *vdev)
 		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt,
 		vdev_id);
 
-	if (policy_mgr_get_mcc_adaptive_sch(mac->psoc,
-					    &mcc_adapt_sch) ==
+	if (policy_mgr_get_dynamic_mcc_adaptive_sch(mac->psoc,
+						    &mcc_adapt_sch) ==
 	    QDF_STATUS_SUCCESS) {
 		WMA_LOGD("%s: setting ini value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED: %d",
 			 __func__, mcc_adapt_sch);

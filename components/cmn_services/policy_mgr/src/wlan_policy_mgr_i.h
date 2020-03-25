@@ -332,6 +332,7 @@ struct policy_mgr_cfg {
  * @mode_change_cb: Mode change callback
  * @user_config_sap_ch_freq: SAP channel freq configured by user application
  * @cfg: Policy manager config data
+ * @dynamic_mcc_adaptive_sched: disable/enable mcc adaptive scheduler feature
  */
 struct policy_mgr_psoc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -372,6 +373,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_cfg cfg;
 	uint32_t valid_ch_freq_list[NUM_CHANNELS];
 	uint32_t valid_ch_freq_list_count;
+	bool dynamic_mcc_adaptive_sched;
 };
 
 /**

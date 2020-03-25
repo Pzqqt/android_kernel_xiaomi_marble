@@ -340,6 +340,38 @@ QDF_STATUS policy_mgr_set_ch_select_plcy(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_set_dynamic_mcc_adaptive_sch(
+				struct wlan_objmgr_psoc *psoc,
+				bool dynamic_mcc_adaptive_sched)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pm_ctx->dynamic_mcc_adaptive_sched = dynamic_mcc_adaptive_sched;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_get_dynamic_mcc_adaptive_sch(
+				struct wlan_objmgr_psoc *psoc,
+				bool *dynamic_mcc_adaptive_sched)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*dynamic_mcc_adaptive_sched = pm_ctx->dynamic_mcc_adaptive_sched;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
 					   uint8_t *enable_mcc_adaptive_sch)
 {

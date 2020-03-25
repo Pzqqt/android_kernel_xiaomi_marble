@@ -342,6 +342,34 @@ QDF_STATUS policy_mgr_set_ch_select_plcy(struct wlan_objmgr_psoc *psoc,
 					 uint32_t ch_select_policy);
 
 /**
+ * policy_mgr_get_dynamic_mcc_adaptive_sch() - to get dynamic mcc adaptive
+ *                                             scheduler
+ * @psoc: pointer to psoc
+ * @dynamic_mcc_adaptive_sched: value to be filled
+ *
+ * This API is used to get dynamic mcc adaptive scheduler
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_dynamic_mcc_adaptive_sch(
+				struct wlan_objmgr_psoc *psoc,
+				bool *dynamic_mcc_adaptive_sched);
+
+/**
+ * policy_mgr_set_dynamic_mcc_adaptive_sch() - to set dynamic mcc adaptive
+ *                                             scheduler
+ * @psoc: pointer to psoc
+ * @dynamic_mcc_adaptive_sched: value to be set
+ *
+ * This API is used to set dynamic mcc adaptive scheduler
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_set_dynamic_mcc_adaptive_sch(
+				struct wlan_objmgr_psoc *psoc,
+				bool dynamic_mcc_adaptive_sched);
+
+/**
  * policy_mgr_get_mcc_adaptive_sch() - to get mcc adaptive scheduler
  * @psoc: pointer to psoc
  * @enable_mcc_adaptive_sch: value to be filled
