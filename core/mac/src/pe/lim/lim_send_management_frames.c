@@ -853,7 +853,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			      addn_ie_len, p2p_ie, noa_ie, total_noalen,
 			      noa_stream, noalen);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -1061,7 +1061,7 @@ lim_send_addts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending an Add TS Request frame to");
 	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -1542,7 +1542,7 @@ lim_send_assoc_rsp_mgmt_frame(
 			     sta->mlmStaContext.owe_ie,
 			     sta->mlmStaContext.owe_ie_len);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -1699,7 +1699,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	pe_debug("Sending DELTS REQ (size %d) to ", nBytes);
 	lim_print_mac_addr(mac, pMacHdr->da, LOGD);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -2402,7 +2402,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		pe_session->assocReqLen = payload;
 	}
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -2844,7 +2844,7 @@ alloc_packet:
 	    (!wlan_reg_is_24ghz_ch_freq(
 	     session->ftPEContext.pFTPreAuthReq->pre_auth_channel_freq)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+	else if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq) ||
 		 session->opmode == QDF_P2P_CLIENT_MODE ||
 		 session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -3283,7 +3283,7 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 		     QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		     QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -3471,7 +3471,7 @@ lim_send_deauth_mgmt_frame(struct mac_context *mac,
 		     QDF_MAC_ADDR_ARRAY(pMacHdr->da),
 		     QDF_MAC_ADDR_ARRAY(pe_session->self_mac_addr));
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -3901,7 +3901,7 @@ lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 			nStatus);
 	}
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4040,7 +4040,7 @@ lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 		 status);
 	}
 
-	if (wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq) ||
 	    session_entry->opmode == QDF_P2P_CLIENT_MODE ||
 	    session_entry->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4192,7 +4192,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 		 status);
 	}
 
-	if (wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(session_entry->curr_op_freq) ||
 	    session_entry->opmode == QDF_P2P_CLIENT_MODE ||
 	    session_entry->opmode == QDF_P2P_GO_MODE) {
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4327,7 +4327,7 @@ lim_send_neighbor_report_request_frame(struct mac_context *mac,
 	pe_debug("Sending a Neighbor Report Request to");
 	lim_print_mac_addr(mac, peer, LOGD);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4454,7 +4454,7 @@ lim_send_link_report_action_frame(struct mac_context *mac,
 
 	pe_warn("RRM: Sending Link Report to %pM on vdev[%d]", peer, vdev_id);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4629,7 +4629,7 @@ lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 		     dialog_token, frm->num_MeasurementReport,
 		     is_last_report, num_report, peer);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4758,7 +4758,7 @@ QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *tra
 	pe_debug("Sending an SA Query Request from ");
 	lim_print_mac_addr(mac, pe_session->self_mac_addr, LOGD);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4886,7 +4886,7 @@ QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 	pe_debug("Sending a SA Query Response to");
 	lim_print_mac_addr(mac, peer, LOGD);
 
-	if (wlan_reg_is_5ghz_ch_freq(pe_session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(pe_session->curr_op_freq) ||
 	    pe_session->opmode == QDF_P2P_CLIENT_MODE ||
 	    pe_session->opmode == QDF_P2P_GO_MODE)
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -5086,7 +5086,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 	}
 
 
-	if (wlan_reg_is_5ghz_ch_freq(session->curr_op_freq) ||
+	if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq) ||
 	    session->opmode == QDF_P2P_CLIENT_MODE ||
 	    session->opmode == QDF_P2P_GO_MODE)
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
