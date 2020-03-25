@@ -2646,6 +2646,11 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 		vdev->roam_synch_frame_ind.reassoc_rsp = NULL;
 	}
 
+	if (vdev->plink_status_req) {
+		qdf_mem_free(vdev->plink_status_req);
+		vdev->plink_status_req = NULL;
+	}
+
 	qdf_runtime_lock_deinit(&vdev->vdev_set_key_runtime_wakelock);
 	qdf_wake_lock_destroy(&vdev->vdev_set_key_wakelock);
 	vdev->is_waiting_for_key = false;
