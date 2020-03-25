@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,10 +67,12 @@ static inline void hdd_data_stall_send_event(uint32_t reason)
  *
  * Return: void
  */
-static void hdd_data_stall_process_event(
+static QDF_STATUS hdd_data_stall_process_event(
 			struct data_stall_event_info *data_stall_info)
 {
 	hdd_data_stall_send_event(data_stall_info->data_stall_type);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

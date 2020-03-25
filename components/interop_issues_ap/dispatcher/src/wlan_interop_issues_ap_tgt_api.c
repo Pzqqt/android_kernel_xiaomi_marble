@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,10 +37,11 @@ static QDF_STATUS wlan_interop_issues_ap_flush_cbk(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static void wlan_interop_issues_ap_info_cbk(struct scheduler_msg *msg)
+static QDF_STATUS wlan_interop_issues_ap_info_cbk(struct scheduler_msg *msg)
 {
 	struct wlan_interop_issues_ap_event *data;
 	struct wlan_interop_issues_ap_callbacks *cbs;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	data = msg->bodyptr;
 	data->pdev = wlan_objmgr_get_pdev_by_id(data->psoc,
@@ -48,6 +49,7 @@ static void wlan_interop_issues_ap_info_cbk(struct scheduler_msg *msg)
 						WLAN_INTEROP_ISSUES_AP_ID);
 	if (!data->pdev) {
 		interop_issues_ap_err("pdev is null.");
+		status = QDF_STATUS_E_FAILURE;
 		goto err;
 	}
 
@@ -59,6 +61,7 @@ static void wlan_interop_issues_ap_info_cbk(struct scheduler_msg *msg)
 err:
 	qdf_mem_free(data);
 	msg->bodyptr = NULL;
+	return status;
 }
 
 QDF_STATUS tgt_interop_issues_ap_info_callback(struct wlan_objmgr_psoc *psoc,

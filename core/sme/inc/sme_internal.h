@@ -253,8 +253,8 @@ typedef void (*hidden_ssid_cb)(hdd_handle_t hdd_handle,
  * @hdd_handle: HDD handle registered with SME
  * @beacon_report: Beacon report structure
  */
-typedef void (*beacon_report_cb)(hdd_handle_t hdd_handle,
-				 struct wlan_beacon_report *beacon_report);
+typedef QDF_STATUS (*beacon_report_cb)
+	(hdd_handle_t hdd_handle, struct wlan_beacon_report *beacon_report);
 
 /**
  * beacon_pause_cb : scan start callback fun
