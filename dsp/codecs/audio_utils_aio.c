@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /* Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2009-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2020, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -631,9 +631,11 @@ int audio_aio_release(struct inode *inode, struct file *file)
 #ifdef CONFIG_DEBUG_FS
 	debugfs_remove(audio->dentry);
 #endif
+	spin_lock(&enc_dec_lock);
 	kfree(audio->codec_cfg);
 	kfree(audio);
 	file->private_data = NULL;
+	spin_unlock(&enc_dec_lock);
 	mutex_unlock(&lock);
 	return 0;
 }
