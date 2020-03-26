@@ -4103,7 +4103,12 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 	sde_crtc = to_sde_crtc(crtc);
 
-	drm_crtc_vblank_on(crtc);
+	/*
+	 * Avoid drm_crtc_vblank_on during seamless DMS case
+	 * when CRTC is already in enabled state
+	 */
+	if (!sde_crtc->enabled)
+		drm_crtc_vblank_on(crtc);
 
 	mutex_lock(&sde_crtc->crtc_lock);
 	SDE_EVT32(DRMID(crtc), sde_crtc->enabled);
