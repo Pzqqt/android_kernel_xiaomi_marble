@@ -292,6 +292,7 @@ static int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		return 0;
 	}
 
+	wlan_hdd_undo_acs(adapter);
 	if (!QDF_IS_STATUS_SUCCESS(sap_deinit_ctx(sap_ctx))) {
 		hdd_err("Error stopping the sap session");
 		status = -EINVAL;

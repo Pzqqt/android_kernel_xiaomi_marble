@@ -6448,7 +6448,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 				&adapter->acs_complete_event,
 				ACS_COMPLETE_TIMEOUT);
 		}
-		wlan_hdd_undo_acs(adapter);
 
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
