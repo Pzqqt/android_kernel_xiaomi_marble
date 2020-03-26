@@ -484,6 +484,18 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		     filter->num_of_channels *
 		     sizeof(filter->chan_freq_list[0]));
 	filter->rrm_measurement_filter = true;
+
+	if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource ||
+	    eRRM_MSG_SOURCE_LEGACY_ESE == rrm_ctx->msgSource)
+		scan_type = rrm_ctx->measMode[rrm_ctx->currentIndex];
+	else
+		scan_type = rrm_ctx->measMode[0];
+
+	if (scan_type == eSIR_BEACON_TABLE)
+		filter->age_threshold =
+			wlan_scan_get_aging_time(mac_ctx->psoc);
+
+
 	/*
 	 * In case this is beacon report request from last AP (before roaming)
 	 * following call to csr_roam_get_session_id_from_bssid will fail,
@@ -575,11 +587,6 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 		goto rrm_send_scan_results_done;
 	}
 
-	if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource ||
-	    eRRM_MSG_SOURCE_LEGACY_ESE == rrm_ctx->msgSource)
-		scan_type = rrm_ctx->measMode[rrm_ctx->currentIndex];
-	else
-		scan_type = rrm_ctx->measMode[0];
 
 	while (scan_results) {
 		/*
