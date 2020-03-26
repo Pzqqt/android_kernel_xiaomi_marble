@@ -24,6 +24,21 @@
 
 #define WAKELOCK_TIMEOUT	5000
 #define AFE_CLK_TOKEN	1024
+
+struct afe_avcs_payload_port_mapping {
+	u16 port_id;
+	struct avcs_load_unload_modules_payload *payload;
+} __packed;
+
+enum {
+	ENCODER_CASE,
+	DECODER_CASE,
+	/* Add new use case here */
+	MAX_ALLOWED_USE_CASES
+};
+
+static struct afe_avcs_payload_port_mapping *pm[MAX_ALLOWED_USE_CASES];
+
 enum {
 	AFE_COMMON_RX_CAL = 0,
 	AFE_COMMON_TX_CAL,
@@ -239,6 +254,120 @@ static bool proxy_afe_started = false;
 
 #define SIZEOF_CFG_CMD(y) \
 		(sizeof(struct apr_hdr) + sizeof(u16) + (sizeof(struct y)))
+
+static void q6afe_unload_avcs_modules(u16 port_id, int index)
+{
+	int ret = 0;
+
+	ret = q6core_avcs_load_unload_modules(pm[index]->payload,
+			AVCS_UNLOAD_MODULES);
+
+	if (ret < 0)
+		pr_err("%s: avcs module unload failed %d\n", __func__, ret);
+
+	kfree(pm[index]->payload);
+	pm[index]->payload = NULL;
+	kfree(pm[index]);
+	pm[index] = NULL;
+}
+
+static int q6afe_load_avcs_modules(int num_modules, u16 port_id,
+		 uint32_t use_case, u32 format_id)
+{
+	int i = 0;
+	int32_t ret = 0;
+	size_t payload_size = 0, port_struct_size = 0;
+	struct afe_avcs_payload_port_mapping payload_map;
+	struct avcs_load_unload_modules_sec_payload sec_payload;
+
+	if (num_modules <= 0) {
+		pr_err("%s: Invalid number of modules to load\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < MAX_ALLOWED_USE_CASES; i++) {
+		if (pm[i] == NULL) {
+			port_struct_size = sizeof(payload_map);
+			pm[i] = kzalloc(port_struct_size, GFP_KERNEL);
+			if (!pm[i])
+				return -ENOMEM;
+
+			pm[i]->port_id = port_id;
+			payload_size = sizeof(uint32_t) + (sizeof(sec_payload)
+					* num_modules);
+			pm[i]->payload = kzalloc(payload_size, GFP_KERNEL);
+			if (!pm[i]->payload) {
+				kfree(pm[i]);
+				pm[i] = NULL;
+				return -ENOMEM;
+			}
+
+			/*
+			 * index 0 : packetizer/de-packetizer
+			 * index 1 : encoder/decoder
+			 */
+
+			pm[i]->payload->num_modules = num_modules;
+
+			/*
+			 * Remaining fields of payload
+			 * are initialized to zero
+			 */
+
+			if (use_case == ENCODER_CASE) {
+				pm[i]->payload->load_unload_info[0].module_type =
+						AMDB_MODULE_TYPE_PACKETIZER;
+				pm[i]->payload->load_unload_info[0].id1 =
+						AVS_MODULE_ID_PACKETIZER_COP;
+				pm[i]->payload->load_unload_info[1].module_type =
+						AMDB_MODULE_TYPE_ENCODER;
+				pm[i]->payload->load_unload_info[1].id1 =
+						format_id;
+			} else if (use_case == DECODER_CASE) {
+				pm[i]->payload->load_unload_info[0].module_type =
+						AMDB_MODULE_TYPE_DEPACKETIZER;
+				pm[i]->payload->load_unload_info[0].id1 =
+					AVS_MODULE_ID_DEPACKETIZER_COP_V1;
+
+				if (format_id == ENC_CODEC_TYPE_LDAC) {
+					pm[i]->payload->load_unload_info[0].id1 =
+						AVS_MODULE_ID_DEPACKETIZER_COP;
+					goto load_unload;
+				}
+
+				pm[i]->payload->load_unload_info[1].module_type =
+						AMDB_MODULE_TYPE_DECODER;
+				pm[i]->payload->load_unload_info[1].id1 =
+						format_id;
+
+			} else {
+				pr_err("%s:load usecase %d not supported\n",
+					 __func__, use_case);
+				ret = -EINVAL;
+				goto fail;
+			}
+
+load_unload:
+			ret = q6core_avcs_load_unload_modules(pm[i]->payload,
+						 AVCS_LOAD_MODULES);
+
+			if (ret < 0) {
+				pr_err("%s: load failed %d\n", __func__, ret);
+				goto fail;
+			}
+			return 0;
+		}
+
+	}
+	pr_err("%s: Not enough ports available\n", __func__);
+	ret = -EINVAL;
+fail:
+	kfree(pm[i]->payload);
+	pm[i]->payload = NULL;
+	kfree(pm[i]);
+	pm[i] = NULL;
+	return ret;
+}
 
 static int afe_get_cal_hw_delay(int32_t path,
 				struct audio_cal_hw_delay_entry *entry);
@@ -5512,8 +5641,21 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	if ((codec_format != ASM_MEDIA_FMT_NONE) &&
 	    (cfg_type == AFE_PARAM_ID_SLIMBUS_CONFIG)) {
 		if (enc_cfg != NULL) {
-			pr_debug("%s: Found AFE encoder support for SLIMBUS format = %d\n",
+			pr_debug("%s: Found AFE encoder support  for SLIMBUS format = %d\n",
 						__func__, codec_format);
+
+			if ((q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >=
+						AVCS_API_VERSION_V5)) {
+				ret = q6afe_load_avcs_modules(2, port_id,
+					ENCODER_CASE, codec_format);
+				if (ret < 0) {
+					pr_err("%s:encoder load for port 0x%x failed %d\n",
+						__func__, port_id, ret);
+					goto fail_cmd;
+				}
+			}
+
 			ret = q6afe_send_enc_config(port_id, enc_cfg,
 						    codec_format, *afe_config,
 						    afe_in_channels,
@@ -5527,7 +5669,24 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		}
 		if (dec_cfg != NULL) {
 			pr_debug("%s: Found AFE decoder support for SLIMBUS format = %d\n",
-				  __func__, codec_format);
+				__func__, codec_format);
+
+			if ((q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >=
+				AVCS_API_VERSION_V5)) {
+				/* LDAC doesn't require decoder */
+				if (codec_format == ENC_CODEC_TYPE_LDAC)
+					ret = q6afe_load_avcs_modules(1, port_id,
+						DECODER_CASE, codec_format);
+				else
+					ret = q6afe_load_avcs_modules(2, port_id,
+						DECODER_CASE, codec_format);
+				if (ret < 0) {
+					pr_err("%s:decoder load for port 0x%x failed %d\n",
+						__func__, port_id, ret);
+					goto fail_cmd;
+				}
+			}
 			ret = q6afe_send_dec_config(port_id, *afe_config,
 						    dec_cfg, codec_format,
 						    afe_in_channels,
@@ -8333,6 +8492,7 @@ int afe_close(int port_id)
 	struct afe_port_cmd_device_stop stop;
 	enum afe_mad_type mad_type;
 	int ret = 0;
+	u16 i;
 	int index = 0;
 	uint16_t port_index;
 
@@ -8455,6 +8615,15 @@ int afe_close(int port_id)
 		pr_err("%s: AFE close failed %d\n", __func__, ret);
 
 fail_cmd:
+	if ((q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >= AVCS_API_VERSION_V5)) {
+		for (i = 0; i < MAX_ALLOWED_USE_CASES; i++) {
+			if (pm[i] && pm[i]->port_id == port_id) {
+				q6afe_unload_avcs_modules(port_id, i);
+				break;
+			}
+		}
+	}
 	mutex_unlock(&this_afe.afe_cmd_lock);
 	return ret;
 }
