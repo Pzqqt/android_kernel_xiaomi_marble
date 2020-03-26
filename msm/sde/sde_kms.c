@@ -2991,7 +2991,7 @@ static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 	int ret = 0;
 	struct device_node *parent, *node, *node1;
 	struct resource r, r1;
-	const char *node_name = "cont_splash_region";
+	const char *node_name = "splash_region";
 	struct sde_splash_mem *mem;
 	bool share_splash_mem = false;
 	int num_displays, num_regions;
