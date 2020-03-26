@@ -1005,8 +1005,11 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
 			curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
 
-		if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, curr_nbuf,
-					QDF_DMA_TO_DEVICE)) {
+		if (QDF_STATUS_SUCCESS !=
+			qdf_nbuf_map_nbytes_single(vdev->osdev,
+						   curr_nbuf,
+						   QDF_DMA_TO_DEVICE,
+						   curr_nbuf->len)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s dma map error ", __func__);
 			DP_STATS_INC(vdev, tx_i.raw.dma_map_error, 1);
@@ -1038,7 +1041,9 @@ error:
 	while (nbuf) {
 		curr_nbuf = nbuf;
 		if (i < mapped_buf_num) {
-			qdf_nbuf_unmap(vdev->osdev, curr_nbuf, QDF_DMA_TO_DEVICE);
+			qdf_nbuf_unmap_nbytes_single(vdev->osdev, curr_nbuf,
+						     QDF_DMA_TO_DEVICE,
+						     curr_nbuf->len);
 			i++;
 		}
 		nbuf = qdf_nbuf_next(nbuf);
@@ -1063,7 +1068,9 @@ static void dp_tx_raw_prepare_unset(struct dp_soc *soc,
 	qdf_nbuf_t cur_nbuf = nbuf;
 
 	do {
-		qdf_nbuf_unmap(soc->osdev, cur_nbuf, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap_nbytes_single(soc->osdev, cur_nbuf,
+					     QDF_DMA_TO_DEVICE,
+					     cur_nbuf->len);
 		cur_nbuf = qdf_nbuf_next(cur_nbuf);
 	} while (cur_nbuf);
 }
@@ -1655,9 +1662,9 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 	}
 
-	if (qdf_unlikely(qdf_nbuf_map(soc->osdev, nbuf,
-				      QDF_DMA_TO_DEVICE)
-						!= QDF_STATUS_SUCCESS)) {
+	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
+		qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
+					   QDF_DMA_TO_DEVICE, nbuf->len))) {
 		/* Handle failure */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "qdf_nbuf_map failed");
@@ -1674,7 +1681,9 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
 			  __func__, tx_desc, tx_q->ring_id);
-		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
+					     QDF_DMA_TO_DEVICE,
+					     nbuf->len);
 		drop_code = TX_HW_ENQUEUE;
 		goto release_desc;
 	}
@@ -1866,8 +1875,9 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	sg_info = &msdu_info->u.sg_info;
 	nr_frags = qdf_nbuf_get_nr_frags(nbuf);
 
-	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
-				QDF_DMA_TO_DEVICE)) {
+	if (QDF_STATUS_SUCCESS !=
+		qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
+					   QDF_DMA_TO_DEVICE, nbuf->len)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"dma map error");
 		DP_STATS_INC(vdev, tx_i.sg.dma_map_error, 1);
@@ -2772,7 +2782,8 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 		}
 	}
 
-	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
+				     QDF_DMA_TO_DEVICE, nbuf->len);
 
 	if (qdf_unlikely(!vdev)) {
 		qdf_nbuf_free(nbuf);
@@ -3220,8 +3231,9 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 							   peer, ts,
 							   desc->nbuf,
 							   time_latency)) {
-			qdf_nbuf_unmap(soc->osdev, desc->nbuf,
-				       QDF_DMA_TO_DEVICE);
+			qdf_nbuf_unmap_nbytes_single(soc->osdev, desc->nbuf,
+						     QDF_DMA_TO_DEVICE,
+						     desc->nbuf->len);
 			dp_send_completion_to_stack(soc,
 						    desc->pdev,
 						    ts->peer_id,
