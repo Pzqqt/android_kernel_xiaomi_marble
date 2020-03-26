@@ -452,6 +452,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 {
 	struct net_device *wlan_dev = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	void *soc;
 	QDF_STATUS status;
 	int32_t ret_val;
 	mac_handle_t mac_handle;
@@ -508,6 +509,22 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	if (0 != ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+	/*
+	 * In case of USB tethering, LRO is disabled. If SSR happened
+	 * during that time, then as part of SSR init, do not enable
+	 * the LRO again. Keep the LRO state same as before SSR.
+	 */
+	if (cdp_cfg_get(soc, cfg_dp_lro_enable) &&
+	    !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
+		adapter->dev->features |= NETIF_F_LRO;
+
+	if (cdp_cfg_get(soc, cfg_dp_enable_ip_tcp_udp_checksum_offload))
+		adapter->dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+
+	adapter->dev->features |= NETIF_F_RXCSUM;
+
+	hdd_set_tso_flags(hdd_ctx, adapter->dev);
 
 	update_ndi_state(adapter, NAN_DATA_NDI_CREATING_STATE);
 	return ret_val;
