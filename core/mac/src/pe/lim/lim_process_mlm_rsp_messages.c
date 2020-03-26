@@ -2816,6 +2816,8 @@ error:
 static void lim_handle_mon_switch_channel_rsp(struct pe_session *session,
 					      QDF_STATUS status)
 {
+	struct scheduler_msg message = {0};
+
 	if (session->bssType != eSIR_MONITOR_MODE)
 		return;
 
@@ -2829,6 +2831,17 @@ static void lim_handle_mon_switch_channel_rsp(struct pe_session *session,
 
 	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 				      WLAN_VDEV_SM_EV_START_SUCCESS, 0, NULL);
+
+	message.type = eWNI_SME_MONITOR_MODE_VDEV_UP;
+	message.bodyval = session->vdev_id;
+	pe_debug("vdev id %d ", session->vdev_id);
+
+	if (QDF_STATUS_SUCCESS !=
+	    scheduler_post_message(QDF_MODULE_ID_PE,
+				   QDF_MODULE_ID_SME,
+				   QDF_MODULE_ID_SME, &message)) {
+		pe_err("Failed to post message montior mode vdev up");
+	}
 }
 
 /**

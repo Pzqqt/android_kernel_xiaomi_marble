@@ -2409,6 +2409,9 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		sme_process_roam_scan_ch_list_resp(mac, pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
+	case eWNI_SME_MONITOR_MODE_VDEV_UP:
+		status = sme_process_monitor_mode_vdev_up_evt(pMsg->bodyval);
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -16474,3 +16477,46 @@ end:
 	sme_release_global_lock(&mac->sme);
 	return status;
 }
+
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+
+QDF_STATUS sme_set_monitor_mode_cb(mac_handle_t mac_handle,
+				   void (*monitor_mode_cb)(uint8_t vdev_id))
+{
+	QDF_STATUS qdf_status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		sme_err("Failed to acquire sme lock; status: %d", qdf_status);
+		return qdf_status;
+	}
+	mac->sme.monitor_mode_cb = monitor_mode_cb;
+	sme_release_global_lock(&mac->sme);
+
+	return qdf_status;
+}
+
+QDF_STATUS sme_process_monitor_mode_vdev_up_evt(uint8_t vdev_id)
+{
+	mac_handle_t mac_handle;
+	struct mac_context *mac;
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
+		sme_err("mac_handle is not valid");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac = MAC_CONTEXT(mac_handle);
+
+	if (mac->sme.monitor_mode_cb)
+		mac->sme.monitor_mode_cb(vdev_id);
+	else {
+		sme_warn_rl("monitor_mode_cb is not registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

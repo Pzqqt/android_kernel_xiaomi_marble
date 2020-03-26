@@ -22450,15 +22450,53 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 		hdd_err("Failed to change hw mode");
 		return -EINVAL;
 	}
+
+	if (adapter->monitor_mode_vdev_up_in_progress) {
+		hdd_err_rl("monitor mode vdev up in progress");
+		return -EBUSY;
+	}
+
+	status = qdf_event_reset(&adapter->qdf_monitor_mode_vdev_up_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err_rl("failed to reinit monitor mode vdev up event");
+		return qdf_status_to_os_return(status);
+	}
+	adapter->monitor_mode_vdev_up_in_progress = true;
+
 	status = sme_roam_channel_change_req(mac_handle, bssid,
 					     &roam_profile.ch_params,
 					     &roam_profile);
 	if (status) {
-		hdd_err("Failed to set sme_RoamChannel for monitor mode status: %d",
-			status);
+		hdd_err_rl("Failed to set sme_RoamChannel for monitor mode status: %d",
+			   status);
+		adapter->monitor_mode_vdev_up_in_progress = false;
 		ret = qdf_status_to_os_return(status);
 		return ret;
 	}
+
+	/* block on a completion variable until vdev up success*/
+	status = qdf_wait_for_event_completion(
+				       &adapter->qdf_monitor_mode_vdev_up_event,
+					WLAN_MONITOR_MODE_VDEV_UP_EVT);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err_rl("monitor vdev up event time out vdev id: %d",
+			  adapter->vdev_id);
+		if (adapter->qdf_monitor_mode_vdev_up_event.force_set)
+			/*
+			 * SSR/PDR has caused shutdown, which has
+			 * forcefully set the event.
+			 */
+			hdd_err_rl("monitor mode vdev up event forcefully set");
+		else if (status == QDF_STATUS_E_TIMEOUT)
+			hdd_err_rl("monitor mode vdev up timed out");
+		else
+			hdd_err_rl("Failed monitor mode vdev up(status-%d)",
+				  status);
+
+		adapter->monitor_mode_vdev_up_in_progress = false;
+		return qdf_status_to_os_return(status);
+	}
+
 	hdd_exit();
 
 	return 0;

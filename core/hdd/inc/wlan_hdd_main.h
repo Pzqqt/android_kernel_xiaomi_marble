@@ -257,6 +257,9 @@ enum hdd_adapter_flags {
 /* Maximum time(ms) to wait for external acs response */
 #define WLAN_VENDOR_ACS_WAIT_TIME 1000
 
+/* Maximum time(ms) to wait for monitor mode vdev up event completion*/
+#define WLAN_MONITOR_MODE_VDEV_UP_EVT      SME_CMD_VDEV_START_BSS_TIMEOUT
+
 /* Mac Address string length */
 #define MAC_ADDRESS_STR_LEN 18  /* Including null terminator */
 /* Max and min IEs length in bytes */
@@ -1116,6 +1119,11 @@ struct hdd_adapter {
 	/* QDF event for session open */
 	qdf_event_t qdf_session_open_event;
 
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+	/* QDF event for monitor mode vdev up */
+	qdf_event_t qdf_monitor_mode_vdev_up_event;
+#endif
+
 	/* TODO: move these to sta ctx. These may not be used in AP */
 	/** completion variable for disconnect callback */
 	struct completion disconnect_comp_var;
@@ -1296,7 +1304,9 @@ struct hdd_adapter {
 	uint32_t mon_chan_freq;
 	uint32_t mon_bandwidth;
 	uint16_t latency_level;
-
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+	bool monitor_mode_vdev_up_in_progress;
+#endif
 	/* rcpi information */
 	struct rcpi_info rcpi;
 	bool send_mode_change;
@@ -4237,6 +4247,31 @@ static inline
 int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 {
 	return -ENOTSUPP;
+}
+#endif
+
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+
+void hdd_sme_monitor_mode_callback(uint8_t vdev_id);
+
+QDF_STATUS hdd_monitor_mode_vdev_status(struct hdd_adapter *adapter);
+
+QDF_STATUS hdd_monitor_mode_qdf_create_event(struct hdd_adapter *adapter,
+					     uint8_t session_type);
+#else
+static inline void hdd_sme_monitor_mode_callback(uint8_t vdev_id) {}
+
+static inline QDF_STATUS
+hdd_monitor_mode_vdev_status(struct hdd_adapter *adapter)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+hdd_monitor_mode_qdf_create_event(struct hdd_adapter *adapter,
+				  uint8_t session_type)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

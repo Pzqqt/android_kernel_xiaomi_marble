@@ -4177,4 +4177,38 @@ QDF_STATUS sme_vdev_self_peer_delete_resp(struct del_vdev_params *param);
  * Return: None
  */
 void sme_vdev_del_resp(uint8_t vdev_id);
+
+#ifdef FEATURE_MONITOR_MODE_SUPPORT
+/**
+ * sme_set_monitor_mode_cb() - Register monitor mode vdev up operation callback
+ * @mac_handle: Opaque handle to the MAC context
+ * @monitor_mode_cb: callback to be registered
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_monitor_mode_cb(mac_handle_t mac_handle,
+				   void (*monitor_mode_cb)(uint8_t vdev_id));
+
+/*
+ * sme_process_monitor_mode_vdev_up_evt() - Handle vdev up completion
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS sme_process_monitor_mode_vdev_up_evt(uint8_t vdev_id);
+#else
+static inline
+QDF_STATUS sme_set_monitor_mode_cb(mac_handle_t mac_handle,
+				   void (*monitor_mode_cb)(uint8_t vdev_id))
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+sme_process_monitor_mode_vdev_up_evt(uint8_t vdev_id)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */
