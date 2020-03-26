@@ -2881,9 +2881,11 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	/* increase successful mpdu counter */
 	ppdu_info->mpdu_ack_ba_tlv += ppdu_user_desc->num_mpdu;
 
-	ppdu_user_desc->ba_seq_no = ppdu_user_desc->start_seq;
-	ppdu_user_desc->ba_bitmap[0] = 1;
-	ppdu_user_desc->ba_size = 1;
+	if (ppdu_user_desc->ba_size == 0) {
+		ppdu_user_desc->ba_seq_no = ppdu_user_desc->start_seq;
+		ppdu_user_desc->ba_bitmap[0] = 1;
+		ppdu_user_desc->ba_size = 1;
+	}
 }
 
 /*
