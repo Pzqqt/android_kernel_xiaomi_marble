@@ -63,6 +63,7 @@
 #define PMO_MAC_SELF_PROTECTED        15
 #define PMO_MAC_ACTION_WME            17
 #define PMO_MAC_ACTION_FST            18
+#define PMO_MAC_ACTION_RVS            19
 #define PMO_MAC_ACTION_VHT            21
 #define PMO_MAC_ACTION_MAX            256
 
@@ -93,6 +94,7 @@
  * PMO_SELF_PROTECTED         15      0
  * PMO_ACTION_WME             17      1
  * PMO_ACTION_FST             18      1
+ * PMO_ACTION_RVS             19      1
  * PMO_ACTION_VHT             21      1
  * ----------------------------+------+-------+
  */
@@ -105,6 +107,7 @@
 			 (1 << PMO_MAC_ACTION_WNM) | \
 			 (1 << PMO_MAC_ACTION_WME) | \
 			 (1 << PMO_MAC_ACTION_FST) | \
+			 (1 << PMO_MAC_ACTION_RVS) | \
 			 (1 << PMO_MAC_ACTION_VHT))
 
 #define ALLOWED_ACTION_FRAMES_BITMAP1   0x0
@@ -127,6 +130,7 @@
 		 (1 << PMO_MAC_ACTION_WNM) | \
 		 (1 << PMO_MAC_ACTION_WME) | \
 		 (1 << PMO_MAC_ACTION_FST) | \
+		 (1 << PMO_MAC_ACTION_RVS) | \
 		 (1 << PMO_MAC_ACTION_VHT))
 
 /* Public Action for 20/40 BSS Coexistence */
