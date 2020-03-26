@@ -336,6 +336,8 @@ static void wma_roam_scan_offload_set_params(
 				(roam_req->ConnectedNetwork.authentication,
 				 roam_req->ConnectedNetwork.encryption);
 
+	params->disable_self_roam =
+				!roam_req->enable_self_bss_roam;
 	params->roam_offload_enabled = roam_req->roam_offload_enabled;
 	params->roam_offload_params.ho_delay_for_rx =
 				roam_req->ho_delay_for_rx;

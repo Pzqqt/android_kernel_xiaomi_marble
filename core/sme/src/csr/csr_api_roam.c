@@ -17473,6 +17473,8 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 	if (!req_buf->roam_offload_enabled)
 		return;
 
+	req_buf->enable_self_bss_roam =
+			mac_ctx->mlme_cfg->lfr.enable_self_bss_roam;
 	req_buf->roam_triggers.vdev_id = session->vdev_id;
 	req_buf->roam_triggers.trigger_bitmap =
 		mlme_get_roam_trigger_bitmap(mac_ctx->psoc, session->vdev_id);

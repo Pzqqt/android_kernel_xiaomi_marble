@@ -2150,6 +2150,28 @@
 
 /*
  * <ini>
+ * enable_self_bss_roam - enable/disable roaming to self bss
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This INI is used to enable/disable roaming to already connected BSSID
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ENABLE_SELF_BSS_ROAM CFG_INI_BOOL( \
+	"enable_self_bss_roam", \
+	0, \
+	"enable self bss roam")
+
+/*
+ * <ini>
  * enable_disconnect_roam_offload - Enable/Disable emergency roaming during
  * deauth/disassoc
  * @Min: 0 - Disabled
@@ -2414,6 +2436,7 @@
 
 #define ROAM_OFFLOAD_ALL \
 	CFG(CFG_LFR3_ROAMING_OFFLOAD) \
+	CFG(CFG_LFR3_ENABLE_SELF_BSS_ROAM) \
 	CFG(CFG_LFR_ENABLE_DISCONNECT_ROAM) \
 	CFG(CFG_LFR_ENABLE_IDLE_ROAM) \
 	CFG(CFG_LFR_IDLE_ROAM_RSSI_DELTA) \
