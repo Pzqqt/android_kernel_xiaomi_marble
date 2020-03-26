@@ -594,6 +594,7 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 	struct dp_htt_htc_pkt_union *pkt, *next;
 	qdf_nbuf_t netbuf;
 
+	HTT_TX_MUTEX_ACQUIRE(&soc->htt_tx_mutex);
 	pkt = soc->htt_htc_pkt_misclist;
 
 	while (pkt) {
@@ -611,6 +612,7 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 		pkt = next;
 	}
 	soc->htt_htc_pkt_misclist = NULL;
+	HTT_TX_MUTEX_RELEASE(&soc->htt_tx_mutex);
 }
 
 /*
