@@ -2529,18 +2529,23 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 {
 	uint8_t i;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
+	bool dbs_required_2g;
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return;
 	}
 
+	if (!policy_mgr_is_hw_dbs_capable(psoc))
+		return;
+
 	if (QDF_TIMER_STATE_RUNNING == pm_ctx->dbs_opportunistic_timer.state)
 		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
 
-	if (policy_mgr_is_hw_dbs_required_for_band(psoc, HW_MODE_MAC_BAND_2G) &&
-	    (WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))) {
+	dbs_required_2g =
+	    policy_mgr_is_hw_dbs_required_for_band(psoc, HW_MODE_MAC_BAND_2G);
+
+	if (dbs_required_2g && WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq)) {
 		policy_mgr_debug("DBS required for new connection");
 		return;
 	}
@@ -2549,15 +2554,16 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 	for (i = 0; i < MAX_NUMBER_OF_CONC_CONNECTIONS; i++) {
 		if (pm_conc_connection_list[i].in_use) {
 			if (!WLAN_REG_IS_SAME_BAND_FREQS(
-			    ch_freq, pm_conc_connection_list[i].freq)) {
+			    ch_freq, pm_conc_connection_list[i].freq) &&
+			    (WLAN_REG_IS_24GHZ_CH_FREQ(
+			    pm_conc_connection_list[i].freq) ||
+			    WLAN_REG_IS_24GHZ_CH_FREQ(ch_freq))) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 				policy_mgr_debug("DBS required");
 				return;
 			}
-			if (policy_mgr_is_hw_dbs_required_for_band(
-					psoc, HW_MODE_MAC_BAND_2G) &&
-			    WLAN_REG_IS_24GHZ_CH_FREQ(
-					pm_conc_connection_list[i].freq)) {
+			if (dbs_required_2g && WLAN_REG_IS_24GHZ_CH_FREQ(
+			    pm_conc_connection_list[i].freq)) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 				policy_mgr_debug("DBS required");
 				return;
