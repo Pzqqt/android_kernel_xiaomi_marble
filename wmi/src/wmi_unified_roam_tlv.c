@@ -1221,7 +1221,8 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 			roam_req->reassoc_failure_timeout;
 		roam_offload_params->roam_candidate_validity_time =
 			roam_req->rct_validity_timer;
-
+		roam_offload_params->roam_to_current_bss_disable =
+					roam_req->disable_self_roam;
 		/* Fill the capabilities */
 		roam_offload_params->capability =
 				req_offload_params->capability;
