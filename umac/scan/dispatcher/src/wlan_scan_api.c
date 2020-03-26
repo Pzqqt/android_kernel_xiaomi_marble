@@ -264,3 +264,14 @@ free:
 
 	return status;
 }
+
+qdf_time_t wlan_scan_get_aging_time(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return cfg_default(CFG_SCAN_AGING_TIME) * 1000;
+
+	return scan_obj->scan_def.scan_cache_aging_time;
+}

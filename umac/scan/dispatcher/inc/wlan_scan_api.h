@@ -202,4 +202,12 @@ wlan_scan_process_bcn_probe_rx_sync(struct wlan_objmgr_psoc *psoc,
 				    struct mgmt_rx_event_params *rx_param,
 				    enum mgmt_frame_type frm_type);
 
+/**
+ * wlan_scan_get_aging_time  - Get the scan aging time config
+ * @psoc: psoc context
+ *
+ * Return: Scan aging time config
+ */
+qdf_time_t wlan_scan_get_aging_time(struct wlan_objmgr_psoc *psoc);
+
 #endif
