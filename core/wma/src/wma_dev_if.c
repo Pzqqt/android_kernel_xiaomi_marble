@@ -3012,11 +3012,13 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 	return status;
 }
 
-static void wma_trigger_recovery_assert_on_fw_timeout(uint16_t wma_msg)
+static
+void wma_trigger_recovery_assert_on_fw_timeout(uint16_t wma_msg,
+					       enum qdf_hang_reason reason)
 {
 	WMA_LOGE("%s timed out, triggering recovery",
 		 mac_trace_get_wma_msg_string(wma_msg));
-	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+	qdf_trigger_self_recovery(NULL, reason);
 }
 
 static inline bool wma_crash_on_fw_timeout(bool crash_enabled)
@@ -3076,7 +3078,8 @@ void wma_hold_req_timer(void *data)
 			 params->staMac, params->status);
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-				WMA_ADD_STA_REQ);
+				WMA_ADD_STA_REQ,
+				QDF_AP_STA_CONNECT_REQ_TIMEOUT);
 		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
 					   (void *)params, 0);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
@@ -3087,7 +3090,8 @@ void wma_hold_req_timer(void *data)
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-				WMA_ADD_BSS_REQ);
+				WMA_ADD_BSS_REQ,
+				QDF_STA_AP_CONNECT_REQ_TIMEOUT);
 
 		wma_send_add_bss_resp(wma, tgt_req->vdev_id,
 				      QDF_STATUS_E_TIMEOUT);
@@ -3102,7 +3106,8 @@ void wma_hold_req_timer(void *data)
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-				WMA_DELETE_STA_REQ);
+				WMA_DELETE_STA_REQ,
+				QDF_PEER_DELETION_TIMEDOUT);
 		wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP,
 					   (void *)params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
@@ -3116,7 +3121,8 @@ void wma_hold_req_timer(void *data)
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-				WMA_DELETE_STA_REQ);
+				WMA_DELETE_STA_REQ,
+				QDF_PEER_DELETION_TIMEDOUT);
 		wma_handle_vdev_detach(wma, del_sta->self_sta_param);
 		mlme_vdev_self_peer_delete_resp(del_sta->self_sta_param);
 		qdf_mem_free(tgt_req->user_data);
@@ -3131,7 +3137,8 @@ void wma_hold_req_timer(void *data)
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-				WMA_DELETE_STA_REQ);
+				WMA_DELETE_STA_REQ,
+				QDF_PEER_DELETION_TIMEDOUT);
 		wma_send_vdev_down_req(wma, params);
 	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_SET_HW_MODE) &&
 			(tgt_req->type == WMA_PDEV_SET_HW_MODE_RESP)) {
@@ -3142,7 +3149,8 @@ void wma_hold_req_timer(void *data)
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-						SIR_HAL_PDEV_SET_HW_MODE);
+			  SIR_HAL_PDEV_SET_HW_MODE,
+			  QDF_MAC_HW_MODE_CHANGE_TIMEOUT);
 		if (!params) {
 			WMA_LOGE(FL("Failed to allocate memory for params"));
 			goto timer_destroy;
@@ -3160,7 +3168,8 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGE(FL("set dual mac config timeout"));
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
-						SIR_HAL_PDEV_DUAL_MAC_CFG_REQ);
+				SIR_HAL_PDEV_DUAL_MAC_CFG_REQ,
+				QDF_MAC_HW_MODE_CONFIG_TIMEOUT);
 		if (!resp) {
 			WMA_LOGE(FL("Failed to allocate memory for resp"));
 			goto timer_destroy;
