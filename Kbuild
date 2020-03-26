@@ -3445,6 +3445,9 @@ cppflags-y += -DTGT_IF_VDEV_MGR_CONV
 cppflags-y += -DCONFIG_CHAN_NUM_API
 cppflags-y += -DCONFIG_CHAN_FREQ_API
 
+#Flag to enable/disable MCC specific feature regarding unallowed phymodes
+cppflags-y += -DCHECK_REG_PHYMODE
+
 cppflags-$(CONFIG_BAND_6GHZ) += -DCONFIG_BAND_6GHZ
 cppflags-$(CONFIG_6G_SCAN_CHAN_SORT_ALGO) += -DFEATURE_6G_SCAN_CHAN_SORT_ALGO
 

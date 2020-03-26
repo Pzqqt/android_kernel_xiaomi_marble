@@ -33,6 +33,9 @@
 #include "pld_common.h"
 #include <net/cfg80211.h>
 #include "wlan_policy_mgr_ucfg.h"
+#include "sap_api.h"
+#include "wlan_hdd_hostapd.h"
+#include "osif_psoc_sync.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -1401,6 +1404,239 @@ static void hdd_regulatory_chanlist_dump(struct regulatory_channel *chan_list)
 	hdd_debug("end total_count %d", count);
 }
 
+/**
+ * hdd_country_change_update_sta() - handle country code change for STA
+ * @hdd_ctx: Global HDD context
+ *
+ * This function handles the stop/start/restart of STA/P2P_CLI adapters when
+ * the country code changes
+ *
+ * Return: none
+ */
+static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_station_ctx *sta_ctx = NULL;
+	struct csr_roam_profile *roam_profile = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	uint32_t new_phy_mode;
+	bool freq_changed, phy_changed;
+	qdf_freq_t oper_freq;
+	eCsrPhyMode csr_phy_mode;
+
+	pdev = hdd_ctx->pdev;
+
+	hdd_for_each_adapter_dev_held(hdd_ctx, adapter) {
+		oper_freq = hdd_get_adapter_home_channel(adapter);
+		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
+
+		switch (adapter->device_mode) {
+		case QDF_P2P_CLIENT_MODE:
+			/*
+			 * P2P client is the same as STA
+			 * continue to next statement
+			 */
+		case QDF_STA_MODE:
+			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			roam_profile = &sta_ctx->roam_profile;
+			new_phy_mode = wlan_reg_get_max_phymode(pdev,
+								REG_PHYMODE_MAX,
+								oper_freq);
+			csr_phy_mode =
+				csr_convert_from_reg_phy_mode(new_phy_mode);
+			phy_changed = (roam_profile->phyMode != csr_phy_mode);
+
+			if (phy_changed || freq_changed) {
+				sme_roam_disconnect(
+					hdd_ctx->mac_handle,
+					adapter->vdev_id,
+					eCSR_DISCONNECT_REASON_UNSPECIFIED,
+					eSIR_MAC_UNSPEC_FAILURE_REASON);
+				roam_profile->phyMode = csr_phy_mode;
+			}
+			break;
+		default:
+			break;
+		}
+		/* dev_put has to be done here */
+		dev_put(adapter->dev);
+	}
+}
+
+/**
+ * hdd_restart_sap_with_new_phymode() - restart the SAP with the new phymode
+ * @hdd_ctx: Global HDD context
+ * @adapter: HDD vdev context
+ * @sap_config: sap configuration pointer
+ * @csr_phy_mode: phymode to restart SAP with
+ * @freq_changed: flag to set freq update on restart
+ *
+ * This function handles the stop/start/restart of SAP/P2P_GO adapters when the
+ * country code changes
+ *
+ * Return: none
+ */
+static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
+					     struct hdd_adapter *adapter,
+					     struct sap_config *sap_config,
+					     eCsrPhyMode csr_phy_mode,
+					     bool freq_changed)
+{
+	struct hdd_hostapd_state *hostapd_state = NULL;
+	struct sap_context *sap_ctx = NULL;
+	QDF_STATUS status;
+
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+
+	qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
+	status = wlansap_stop_bss(sap_ctx);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("SAP Stop Bss fail");
+		return;
+	}
+	status = qdf_wait_for_event_completion(
+					&hostapd_state->qdf_stop_bss_event,
+					SME_CMD_STOP_BSS_TIMEOUT);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("SAP Stop timeout");
+		return;
+	}
+
+	if (freq_changed) {
+		sap_config->chan_freq =
+		wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
+	}
+
+	sap_config->sap_orig_hw_mode = sap_config->SapHw_mode;
+	sap_config->SapHw_mode = csr_phy_mode;
+
+	mutex_lock(&hdd_ctx->sap_lock);
+	qdf_event_reset(&hostapd_state->qdf_event);
+	status = wlansap_start_bss(sap_ctx, hdd_hostapd_sap_event_cb,
+				   sap_config, adapter->dev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+		hdd_err("SAP Start Bss fail");
+		return;
+	}
+	status = qdf_wait_for_event_completion(&hostapd_state->qdf_event,
+					       SME_CMD_START_BSS_TIMEOUT);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		mutex_unlock(&hdd_ctx->sap_lock);
+		hdd_err("SAP Start timeout");
+		return;
+	}
+	mutex_unlock(&hdd_ctx->sap_lock);
+}
+
+/**
+ * hdd_country_change_update_sap() - handle country code change for SAP
+ * @hdd_ctx: Global HDD context
+ *
+ * This function handles the stop/start/restart of SAP/P2P_GO adapters when the
+ * country code changes
+ *
+ * Return: none
+ */
+static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct sap_config *sap_config = NULL;
+	struct sap_context *sap_ctx = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	uint32_t reg_phy_mode, new_phy_mode;
+	bool freq_changed, phy_changed;
+	qdf_freq_t oper_freq;
+	eCsrPhyMode csr_phy_mode;
+	struct sta_ap_intf_check_work_ctx intf_work;
+	QDF_STATUS status;
+
+	pdev = hdd_ctx->pdev;
+
+	hdd_for_each_adapter_dev_held(hdd_ctx, adapter) {
+		oper_freq = hdd_get_adapter_home_channel(adapter);
+		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
+
+		switch (adapter->device_mode) {
+		case QDF_P2P_GO_MODE:
+			sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+			if (freq_changed) {
+				status = wlansap_stop_bss(sap_ctx);
+				if (QDF_IS_STATUS_SUCCESS(status))
+					hdd_debug("Deleting SAP/P2P link!!");
+			}
+			break;
+		case QDF_SAP_MODE:
+			sap_config = &adapter->session.ap.sap_config;
+			reg_phy_mode = csr_convert_to_reg_phy_mode(
+						sap_config->sap_orig_hw_mode,
+						oper_freq);
+			new_phy_mode = wlan_reg_get_max_phymode(pdev,
+								reg_phy_mode,
+								oper_freq);
+			csr_phy_mode =
+				csr_convert_from_reg_phy_mode(new_phy_mode);
+			phy_changed = (csr_phy_mode != sap_config->SapHw_mode);
+			if (freq_changed) {
+				intf_work.psoc = wlan_pdev_get_psoc(pdev);
+				policy_mgr_check_sta_ap_concurrent_ch_intf(
+								&intf_work);
+			}
+
+			if (phy_changed)
+				hdd_restart_sap_with_new_phymode(hdd_ctx,
+								 adapter,
+								 sap_config,
+								 csr_phy_mode,
+								 freq_changed);
+			break;
+		default:
+			break;
+		}
+		/* dev_put has to be done here */
+		dev_put(adapter->dev);
+	}
+}
+
+static void __hdd_country_change_work_handle(struct hdd_context *hdd_ctx)
+{
+	/*
+	 * Loop over STAs first since it may lead to different channel
+	 * selection for SAPs
+	 */
+	hdd_country_change_update_sta(hdd_ctx);
+	hdd_country_change_update_sap(hdd_ctx);
+}
+
+/**
+ * hdd_country_change_work_handle() - handle country code change
+ * @arg: Global HDD context
+ *
+ * This function handles the stop/start/restart of all adapters when the
+ * country code changes
+ *
+ * Return: none
+ */
+static void hdd_country_change_work_handle(void *arg)
+{
+	struct hdd_context *hdd_ctx = (struct hdd_context *)arg;
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return;
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy), &psoc_sync);
+	if (errno)
+		return;
+
+	__hdd_country_change_work_handle(hdd_ctx);
+
+	osif_psoc_sync_op_stop(psoc_sync);
+}
+
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,
 				   struct regulatory_channel *chan_list,
@@ -1445,8 +1681,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 		sme_generic_change_country_code(hdd_ctx->mac_handle,
 				hdd_ctx->reg.alpha2);
-		/*Check whether need restart SAP/P2p Go*/
-		policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
+		qdf_sched_work(0, &hdd_ctx->country_change_work);
 	}
 }
 
@@ -1471,6 +1706,8 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		return -ENOMEM;
 	}
 
+	qdf_create_work(0, &hdd_ctx->country_change_work,
+			hdd_country_change_work_handle, hdd_ctx);
 	ucfg_reg_register_chan_change_callback(hdd_ctx->psoc,
 					       hdd_regulatory_dyn_cbk,
 					       NULL);
@@ -1533,6 +1770,12 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	return 0;
 }
 #endif
+
+void hdd_regulatory_deinit(struct hdd_context *hdd_ctx)
+{
+	qdf_flush_work(&hdd_ctx->country_change_work);
+	qdf_destroy_work(0, &hdd_ctx->country_change_work);
+}
 
 void hdd_update_regdb_offload_config(struct hdd_context *hdd_ctx)
 {

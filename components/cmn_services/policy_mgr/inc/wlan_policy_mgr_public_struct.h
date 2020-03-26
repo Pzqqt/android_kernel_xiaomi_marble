@@ -1276,4 +1276,13 @@ struct connection_info {
 	uint8_t channel;
 	uint32_t ch_freq;
 };
+
+/**
+ * struct sta_ap_intf_check_work_ctx - sta_ap_intf_check_work
+ * related info
+ * @psoc: pointer to PSOC object information
+ */
+struct sta_ap_intf_check_work_ctx {
+	struct wlan_objmgr_psoc *psoc;
+};
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

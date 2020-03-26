@@ -1648,6 +1648,7 @@ struct hdd_fw_ver_info {
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  * @sar_cmd_params: SAR command params to be configured to the FW
+ * @country_change_work: work for updating vdev when country changes
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1972,6 +1973,7 @@ struct hdd_context {
 #ifdef FW_THERMAL_THROTTLE_SUPPORT
 	uint8_t dutycycle_off_percent;
 #endif
+	qdf_work_t country_change_work;
 };
 
 /**
