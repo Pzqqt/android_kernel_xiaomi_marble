@@ -223,15 +223,6 @@ extern enum policy_mgr_conc_next_action
 	(struct wlan_objmgr_psoc *psoc);
 
 /**
- * struct sta_ap_intf_check_work_ctx - sta_ap_intf_check_work
- * related info
- * @psoc: pointer to PSOC object information
- */
-struct sta_ap_intf_check_work_ctx {
-	struct wlan_objmgr_psoc *psoc;
-};
-
-/**
  * struct policy_mgr_cfg - all the policy manager owned configs
  * @mcc_to_scc_switch: switch to indicate MCC to SCC config
  * @sys_pref: system's preference while selecting PCLs
