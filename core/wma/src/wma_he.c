@@ -1328,8 +1328,9 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	wma_print_he_ppet(&peer->peer_ppet);
 
 	qdf_mem_copy(&peer->peer_he_caps_6ghz,
-		     ((uint16_t *)&params->he_6ghz_band_caps) + 1,
-		     sizeof(peer->peer_he_caps_6ghz));
+		     ((uint8_t *)&params->he_6ghz_band_caps) + 1,
+		     DOT11F_IE_HE_6GHZ_BAND_CAP_MAX_LEN);
+	WMA_LOGD(FL("HE 6GHz band caps: %0x"), peer->peer_he_caps_6ghz);
 	return;
 }
 
