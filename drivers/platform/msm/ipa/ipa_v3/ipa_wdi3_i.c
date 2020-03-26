@@ -1090,10 +1090,16 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx,
 			 */
 			IPAERR("failed to force clear %d\n", result);
 			IPAERR("remove delay from SCND reg\n");
-			ep_ctrl_scnd.endp_delay = false;
-			ipahal_write_reg_n_fields(
-				IPA_ENDP_INIT_CTRL_SCND_n, ipa_ep_idx_rx,
-					&ep_ctrl_scnd);
+			if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+				ipa3_remove_secondary_flow_ctrl(
+							ep->gsi_chan_hdl);
+			} else {
+				ep_ctrl_scnd.endp_delay = false;
+				ipahal_write_reg_n_fields(
+						IPA_ENDP_INIT_CTRL_SCND_n,
+						ipa_ep_idx_rx,
+						&ep_ctrl_scnd);
+			}
 		} else {
 			disable_force_clear = true;
 		}

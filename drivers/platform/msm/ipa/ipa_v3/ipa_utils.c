@@ -7401,6 +7401,10 @@ int ipa3_cfg_ep_hdr_ext(u32 clnt_hdl,
  */
 int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl)
 {
+	int code = 0, result;
+	struct ipa3_ep_context *ep;
+	bool primary_secondry;
+
 	if (clnt_hdl >= ipa3_ctx->ipa_num_pipes || ep_ctrl == NULL) {
 		IPAERR("bad parm, clnt_hdl = %d\n", clnt_hdl);
 		return -EINVAL;
@@ -7421,6 +7425,33 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl)
 		clnt_hdl,
 		ep_ctrl->ipa_ep_suspend,
 		ep_ctrl->ipa_ep_delay);
+	ep = &ipa3_ctx->ep[clnt_hdl];
+	if (ipa3_ctx->ipa_endp_delay_wa_v2 &&
+		IPA_CLIENT_IS_PROD(ep->client)) {
+
+		IPADBG("Configuring flow control for pipe = %d\n", clnt_hdl);
+		/* Configure enhanced flow control instead of delay
+		 * Q6 controlled AP pipes(USB PROD and MHI_PROD) configuring the
+		 * secondary flow control.
+		 * AP controlled pipe configuring primary flow control.
+		 */
+		if (ep->client == IPA_CLIENT_USB_PROD ||
+			ep->client == IPA_CLIENT_MHI_PROD)
+			primary_secondry = true;
+		else
+			primary_secondry = false;
+
+		result = gsi_flow_control_ee(ep->gsi_chan_hdl, 0,
+				ep_ctrl->ipa_ep_delay, primary_secondry, &code);
+		if (result == GSI_STATUS_SUCCESS) {
+			IPADBG("flow control sussess gsi ch %d with code %d\n",
+					ep->gsi_chan_hdl, code);
+		} else {
+			IPADBG("failed to flow control gsi ch %d code %d\n",
+					ep->gsi_chan_hdl, code);
+		}
+		return 0;
+	}
 
 	ipahal_write_reg_n_fields(IPA_ENDP_INIT_CTRL_n, clnt_hdl, ep_ctrl);
 

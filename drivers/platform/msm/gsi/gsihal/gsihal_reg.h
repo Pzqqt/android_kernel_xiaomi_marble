@@ -50,6 +50,7 @@ enum gsihal_reg_name {
 	GSI_EE_n_CNTXT_MSI_BASE_MSB,
 	GSI_EE_n_GSI_STATUS,
 	GSI_EE_n_CNTXT_SCRATCH_0,
+	GSI_EE_n_CNTXT_SCRATCH_1,
 	GSI_EE_n_EV_CH_k_CNTXT_1,
 	GSI_EE_n_EV_CH_k_CNTXT_2,
 	GSI_EE_n_EV_CH_k_CNTXT_3,
@@ -313,6 +314,7 @@ struct gsihal_reg_gsi_ee_generic_cmd {
 	uint32_t opcode;
 	uint32_t virt_chan_idx;
 	uint32_t ee;
+	bool prmy_scnd_fc;
 };
 
 struct gsihal_reg_gsi_ee_n_cntxt_gsi_irq {

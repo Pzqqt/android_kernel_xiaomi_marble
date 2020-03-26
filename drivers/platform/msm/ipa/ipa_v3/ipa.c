@@ -3669,6 +3669,40 @@ static void ipa3_destroy_imm(void *user1, int user2)
 	ipahal_destroy_imm_cmd(user1);
 }
 
+static void ipa3_q6_pipe_flow_control(bool delay)
+{
+	int ep_idx;
+	int client_idx;
+	int code = 0, result;
+	const struct ipa_gsi_ep_config *gsi_ep_cfg;
+
+	for (client_idx = 0; client_idx < IPA_CLIENT_MAX; client_idx++) {
+		if (IPA_CLIENT_IS_Q6_PROD(client_idx)) {
+			ep_idx = ipa3_get_ep_mapping(client_idx);
+			if (ep_idx == -1)
+				continue;
+			gsi_ep_cfg = ipa3_get_gsi_ep_info(client_idx);
+			if (!gsi_ep_cfg) {
+				IPAERR("failed to get GSI config\n");
+				ipa_assert();
+				return;
+			}
+			IPADBG("pipe setting V2 flow control\n");
+			/* Configurig primary flow control on Q6 pipes*/
+			result = gsi_flow_control_ee(
+					gsi_ep_cfg->ipa_gsi_chan_num,
+					gsi_ep_cfg->ee, delay, false, &code);
+			if (result == GSI_STATUS_SUCCESS) {
+				IPADBG("sussess gsi ch %d with code %d\n",
+					gsi_ep_cfg->ipa_gsi_chan_num, code);
+			} else {
+				IPADBG("failed  gsi ch %d code %d\n",
+					gsi_ep_cfg->ipa_gsi_chan_num, code);
+			}
+		}
+	}
+}
+
 static void ipa3_q6_pipe_delay(bool delay)
 {
 	int client_idx;
@@ -4384,8 +4418,12 @@ void ipa3_q6_pre_shutdown_cleanup(void)
 	IPA_ACTIVE_CLIENTS_INC_SIMPLE();
 
 	ipa3_update_ssr_state(true);
-	if (!ipa3_ctx->ipa_endp_delay_wa)
+
+	if (ipa3_ctx->ipa_endp_delay_wa_v2)
+		ipa3_q6_pipe_flow_control(true);
+	else if (!ipa3_ctx->ipa_endp_delay_wa)
 		ipa3_q6_pipe_delay(true);
+
 	ipa3_q6_avoid_holb();
 	if (ipa3_ctx->ipa_config_is_mhi) {
 		ipa3_set_reset_client_cons_pipe_sus_holb(true,
@@ -4415,7 +4453,11 @@ void ipa3_q6_pre_shutdown_cleanup(void)
 	 * on pipe reset procedure
 	 */
 
-	if (!ipa3_ctx->ipa_endp_delay_wa) {
+	if (ipa3_ctx->ipa_endp_delay_wa_v2) {
+		ipa3_q6_pipe_flow_control(false);
+		ipa3_set_reset_client_prod_pipe_delay(true,
+			IPA_CLIENT_USB_PROD);
+	} else if (!ipa3_ctx->ipa_endp_delay_wa) {
 		ipa3_q6_pipe_delay(false);
 		ipa3_set_reset_client_prod_pipe_delay(true,
 			IPA_CLIENT_USB_PROD);
@@ -7670,6 +7712,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		ipa3_ctx->do_testbus_collection_on_crash = false;
 	}
 	ipa3_ctx->ipa_endp_delay_wa = resource_p->ipa_endp_delay_wa;
+	ipa3_ctx->ipa_endp_delay_wa_v2 = resource_p->ipa_endp_delay_wa_v2;
 
 	WARN(ipa3_ctx->ipa3_hw_mode != IPA_HW_MODE_NORMAL,
 		"Non NORMAL IPA HW mode, is this emulation platform ?");
@@ -8407,6 +8450,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_gpi_event_rp_ddr = false;
 	ipa_drv_res->ipa_config_is_auto = false;
 	ipa_drv_res->max_num_smmu_cb = IPA_SMMU_CB_MAX;
+	ipa_drv_res->ipa_endp_delay_wa_v2 = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -8498,6 +8542,14 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": endppoint delay wa = %s\n",
 			ipa_drv_res->ipa_endp_delay_wa
 			? "True" : "False");
+
+	ipa_drv_res->ipa_endp_delay_wa_v2 =
+			of_property_read_bool(pdev->dev.of_node,
+			"qcom,ipa-endp-delay-wa-v2");
+	IPADBG(": endppoint delay wa v2 = %s\n",
+			ipa_drv_res->ipa_endp_delay_wa_v2
+			? "True" : "False");
+
 
 	ipa_drv_res->ipa_wdi3_over_gsi =
 			of_property_read_bool(pdev->dev.of_node,

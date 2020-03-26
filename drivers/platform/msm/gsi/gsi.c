@@ -1477,6 +1477,9 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	if (gsi_ctx->per.ver >= GSI_VER_1_2)
 		gsihal_write_reg_n(GSI_EE_n_ERROR_LOG, gsi_ctx->per.ee, 0);
 
+	/* Reset to zero scratch_1 register*/
+	gsihal_write_reg_n(GSI_EE_n_CNTXT_SCRATCH_1, gsi_ctx->per.ee, 0);
+
 	if (running_emulation) {
 		/*
 		 * Set up the emulator's interrupt controller...
@@ -4650,6 +4653,161 @@ free_lock:
 	return res;
 }
 EXPORT_SYMBOL(gsi_enable_flow_control_ee);
+
+int gsi_flow_control_ee(unsigned int chan_idx, unsigned int ee,
+				bool enable, bool prmy_scnd_fc, int *code)
+{
+	struct gsihal_reg_gsi_ee_generic_cmd cmd;
+	enum gsi_generic_ee_cmd_opcode op = enable ?
+					GSI_GEN_EE_CMD_ENABLE_FLOW_CHANNEL :
+					GSI_GEN_EE_CMD_DISABLE_FLOW_CHANNEL;
+	int res;
+
+	if (!gsi_ctx) {
+		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
+		return -GSI_STATUS_NODEV;
+	}
+
+	if (chan_idx >= gsi_ctx->max_ch || !code) {
+		GSIERR("bad params chan_idx=%d\n", chan_idx);
+		return -GSI_STATUS_INVALID_PARAMS;
+	}
+
+	mutex_lock(&gsi_ctx->mlock);
+	__gsi_config_glob_irq(gsi_ctx->per.ee,
+			gsihal_get_glob_irq_en_gp_int1_mask(), ~0);
+	reinit_completion(&gsi_ctx->gen_ee_cmd_compl);
+
+	/* invalidate the response */
+	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+                gsi_ctx->per.ee);
+
+	gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code = 0;
+	gsihal_write_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+                gsi_ctx->per.ee, gsi_ctx->scratch.word0.val);
+
+	gsi_ctx->gen_ee_cmd_dbg.flow_ctrl_channel++;
+	cmd.opcode = op;
+	cmd.virt_chan_idx = chan_idx;
+	cmd.ee = ee;
+	cmd.prmy_scnd_fc = prmy_scnd_fc;
+	gsihal_write_reg_n_fields(
+		GSI_EE_n_GSI_EE_GENERIC_CMD, gsi_ctx->per.ee, &cmd);
+
+	res = wait_for_completion_timeout(&gsi_ctx->gen_ee_cmd_compl,
+		msecs_to_jiffies(GSI_CMD_TIMEOUT));
+	if (res == 0) {
+		GSIERR("chan_idx=%u ee=%u timed out\n", chan_idx, ee);
+		res = -GSI_STATUS_TIMED_OUT;
+		GSI_ASSERT();
+		goto free_lock;
+	}
+
+	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+					gsi_ctx->per.ee);
+
+	if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code ==
+		GSI_GEN_EE_CMD_RETURN_CODE_CHANNEL_NOT_RUNNING) {
+		GSIDBG("chan_idx=%u ee=%u not in correct state\n",
+							chan_idx, ee);
+		*code = GSI_GEN_EE_CMD_RETURN_CODE_CHANNEL_NOT_RUNNING;
+		res = -GSI_STATUS_RES_ALLOC_FAILURE;
+		goto free_lock;
+	} else if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code ==
+			GSI_GEN_EE_CMD_RETURN_CODE_INCORRECT_CHANNEL_TYPE) {
+		GSIERR("chan_idx=%u ee=%u not in correct state\n",
+				chan_idx, ee);
+		GSI_ASSERT();
+	} else if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code ==
+			GSI_GEN_EE_CMD_RETURN_CODE_INCORRECT_CHANNEL_INDEX) {
+		GSIERR("Channel ID = %u ee = %u not allocated\n", chan_idx, ee);
+	}
+
+	if (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code == 0) {
+		GSIERR("No response received\n");
+		res = -GSI_STATUS_ERROR;
+		goto free_lock;
+	}
+
+	*code = gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code;
+	res = GSI_STATUS_SUCCESS;
+free_lock:
+	__gsi_config_glob_irq(gsi_ctx->per.ee,
+			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+	mutex_unlock(&gsi_ctx->mlock);
+
+	return res;
+}
+EXPORT_SYMBOL(gsi_flow_control_ee);
+
+int gsi_query_flow_control_state_ee(unsigned int chan_idx, unsigned int ee,
+						bool prmy_scnd_fc, int *code)
+{
+	struct gsihal_reg_gsi_ee_generic_cmd cmd;
+	enum gsi_generic_ee_cmd_opcode op = GSI_GEN_EE_CMD_QUERY_FLOW_CHANNEL;
+	int res;
+
+	if (!gsi_ctx) {
+		pr_err("%s:%d gsi context not allocated\n", __func__, __LINE__);
+		return -GSI_STATUS_NODEV;
+	}
+
+	if (chan_idx >= gsi_ctx->max_ch || !code) {
+		GSIERR("bad params chan_idx=%d\n", chan_idx);
+		return -GSI_STATUS_INVALID_PARAMS;
+	}
+
+	mutex_lock(&gsi_ctx->mlock);
+	__gsi_config_glob_irq(gsi_ctx->per.ee,
+			gsihal_get_glob_irq_en_gp_int1_mask(), ~0);
+	reinit_completion(&gsi_ctx->gen_ee_cmd_compl);
+
+	/* invalidate the response */
+	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+							gsi_ctx->per.ee);
+	gsi_ctx->scratch.word0.s.generic_ee_cmd_return_code = 0;
+	gsihal_write_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+                gsi_ctx->per.ee, gsi_ctx->scratch.word0.val);
+
+	gsi_ctx->gen_ee_cmd_dbg.flow_ctrl_channel++;
+	cmd.opcode = op;
+	cmd.virt_chan_idx = chan_idx;
+	cmd.ee = ee;
+	cmd.prmy_scnd_fc = prmy_scnd_fc;
+	gsihal_write_reg_n_fields(
+			GSI_EE_n_GSI_EE_GENERIC_CMD, gsi_ctx->per.ee, &cmd);
+
+	res = wait_for_completion_timeout(&gsi_ctx->gen_ee_cmd_compl,
+		msecs_to_jiffies(GSI_CMD_TIMEOUT));
+	if (res == 0) {
+		GSIERR("chan_idx=%u ee=%u timed out\n", chan_idx, ee);
+		res = -GSI_STATUS_TIMED_OUT;
+		goto free_lock;
+	}
+
+	gsi_ctx->scratch.word0.val = gsihal_read_reg_n(GSI_EE_n_CNTXT_SCRATCH_0,
+					gsi_ctx->per.ee);
+
+	*code = gsi_ctx->scratch.word0.s.generic_ee_cmd_return_val;
+
+	if (prmy_scnd_fc)
+		res = (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_val ==
+		GSI_GEN_EE_CMD_RETURN_VAL_FLOW_CONTROL_SECONDARY)?
+				GSI_STATUS_SUCCESS:-GSI_STATUS_ERROR;
+	else
+		res = (gsi_ctx->scratch.word0.s.generic_ee_cmd_return_val ==
+		GSI_GEN_EE_CMD_RETURN_VAL_FLOW_CONTROL_PRIMARY)?
+				GSI_STATUS_SUCCESS:-GSI_STATUS_ERROR;
+
+free_lock:
+	__gsi_config_glob_irq(gsi_ctx->per.ee,
+			gsihal_get_glob_irq_en_gp_int1_mask(), 0);
+	mutex_unlock(&gsi_ctx->mlock);
+
+	return res;
+}
+EXPORT_SYMBOL(gsi_query_flow_control_state_ee);
+
 
 int gsi_map_virtual_ch_to_per_ep(u32 ee, u32 chan_num, u32 per_ep_index)
 {
