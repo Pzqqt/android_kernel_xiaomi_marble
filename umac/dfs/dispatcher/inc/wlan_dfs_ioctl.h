@@ -57,17 +57,17 @@
 #define DFS_ALLOW_HW_PULSES 28
 #define DFS_SET_PRI_MULTIPILER   29
 
-#define RESTRICTED_80P80_START_CHAN 132
-#define RESTRICTED_80P80_END_CHAN 161
+#define RESTRICTED_80P80_START_FREQ 5660
+#define RESTRICTED_80P80_END_FREQ 5805
 
-/* Check if the given channels are within restricted 80P80 start chan(132) and
- * end chan (161).
+/* Check if the given frequencies are within restricted 80P80 start freq(5660)
+ * and end freq (5805).
  */
-#define CHAN_WITHIN_RESTRICTED_80P80(chan, cfreq_seg2) \
-	((((chan) >= RESTRICTED_80P80_START_CHAN) && \
-	  ((chan) <= RESTRICTED_80P80_END_CHAN) && \
-	  ((cfreq_seg2) >= RESTRICTED_80P80_START_CHAN) && \
-	  ((cfreq_seg2) <= RESTRICTED_80P80_END_CHAN)) ? true : false)
+#define CHAN_WITHIN_RESTRICTED_80P80(cfreq1, cfreq2) \
+	((((cfreq1) >= RESTRICTED_80P80_START_FREQ) && \
+	  ((cfreq1) <= RESTRICTED_80P80_END_FREQ) && \
+	  ((cfreq2) >= RESTRICTED_80P80_START_FREQ) && \
+	  ((cfreq2) <= RESTRICTED_80P80_END_FREQ)) ? true : false)
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
