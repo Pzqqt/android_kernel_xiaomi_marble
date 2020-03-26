@@ -20,8 +20,7 @@
 #ifndef _WLAN_CFR_PUBLIC_STRUCTS_H_
 #define _WLAN_CFR_PUBLIC_STRUCTS_H_
 
-#ifdef WLAN_CFR_ENABLE
-#include "qdf_types.h"
+#define MAC_ADDR_LEN 6
 
 /**
  * cfr_cwm_width : Capture bandwidth
@@ -115,12 +114,12 @@ struct cfr_wlanconfig_param {
 	enum cfr_cwm_width bandwidth;
 	uint32_t periodicity;
 	enum cfr_capture_method capture_method;
-	uint8_t mac[QDF_MAC_ADDR_SIZE];
+	uint8_t mac[MAC_ADDR_LEN];
 #ifdef WLAN_ENH_CFR_ENABLE
-	uint8_t ta[QDF_MAC_ADDR_SIZE];
-	uint8_t ra[QDF_MAC_ADDR_SIZE];
-	uint8_t ta_mask[QDF_MAC_ADDR_SIZE];
-	uint8_t ra_mask[QDF_MAC_ADDR_SIZE];
+	uint8_t ta[MAC_ADDR_LEN];
+	uint8_t ra[MAC_ADDR_LEN];
+	uint8_t ta_mask[MAC_ADDR_LEN];
+	uint8_t ra_mask[MAC_ADDR_LEN];
 	uint16_t en_directed_ftm             :1,
 		 en_directed_ndpa_ndp        :1,
 		 en_ta_ra_filter             :1,
@@ -162,6 +161,5 @@ struct cfr_wlanconfig_param {
 #endif
 };
 
-#endif /* WLAN_CFR_ENABLE */
 #endif /* _WLAN_CFR_PUBLIC_STRUCTS_H_ */
 

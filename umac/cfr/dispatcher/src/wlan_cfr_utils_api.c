@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,7 +19,7 @@
 #include <wlan_cfr_utils_api.h>
 #include <wlan_cfr_tgt_api.h>
 #include <qdf_module.h>
-#include "../../core/inc/cfr_defs_i.h"
+#include <cfr_defs_i.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 
