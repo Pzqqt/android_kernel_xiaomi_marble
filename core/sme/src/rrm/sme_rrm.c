@@ -1032,7 +1032,7 @@ static QDF_STATUS sme_rrm_fill_scan_channels(struct mac_context *mac,
 	freq_list = sme_rrm_context->channelList.freq_list;
 	found = false;
 	for (i = 0; i < num_channels; i++) {
-		found = wlan_reg_country_opclass_freq_check(mac->pdev,
+		found = wlan_reg_is_freq_in_country_opclass(mac->pdev,
 							    country,
 							    op_class,
 							    freq_list[i]);
