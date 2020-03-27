@@ -937,7 +937,7 @@ scm_update_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 				       struct chan_list *chan_list)
 {
-	uint8_t i, j = 0, min, tmp_list_count;
+	uint8_t i, j = 0, max, tmp_list_count;
 	struct meta_rnr_channel *channel;
 	struct chan_info temp_list[MAX_6GHZ_CHANNEL];
 	struct rnr_chan_weight *rnr_chan_info, *temp;
@@ -981,19 +981,18 @@ static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 			  weight, channel->bss_beacon_probe_count);
 	}
 
-	/* Sort the channel using selection sort */
+	/* Sort the channel using selection sort - descending order */
 	for (i = 0; i < tmp_list_count - 1; i++) {
-		min = i;
+		max = i;
 		for (j = i + 1; j < tmp_list_count; j++) {
-			if (rnr_chan_info[j].weight <
-			    rnr_chan_info[min].weight) {
-				min = j;
-			}
+			if (rnr_chan_info[j].weight >
+			    rnr_chan_info[max].weight)
+				max = j;
 		}
-		if (min != i) {
-			qdf_mem_copy(&temp, &rnr_chan_info[min],
+		if (max != i) {
+			qdf_mem_copy(&temp, &rnr_chan_info[max],
 				     sizeof(*rnr_chan_info));
-			qdf_mem_copy(&rnr_chan_info[min], &rnr_chan_info[i],
+			qdf_mem_copy(&rnr_chan_info[max], &rnr_chan_info[i],
 				     sizeof(*rnr_chan_info));
 			qdf_mem_copy(&rnr_chan_info[i], &temp,
 				     sizeof(*rnr_chan_info));
@@ -1001,9 +1000,9 @@ static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	}
 
 	/* update the 6g list based on the weightage */
-	for (i = 0, j = tmp_list_count - 1; (i < NUM_CHANNELS && j > 0); i++) {
+	for (i = 0, j = 0; (i < NUM_CHANNELS && j < tmp_list_count); i++) {
 		if (wlan_reg_is_6ghz_chan_freq(chan_list->chan[i].freq))
-			chan_list->chan[i].freq = rnr_chan_info[j--].chan_freq;
+			chan_list->chan[i].freq = rnr_chan_info[j++].chan_freq;
 	}
 	qdf_mem_free(rnr_chan_info);
 }
