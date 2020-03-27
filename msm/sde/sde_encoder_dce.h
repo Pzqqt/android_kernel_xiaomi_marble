@@ -9,6 +9,14 @@
 #include "sde_encoder.h"
 
 /**
+ * sde_encoder_dce_set_bpp : set src_bpp and target_bpp in sde_crtc
+ * @msm_mode_info: Mode info
+ * @crtc: Pointer to drm crtc structure
+ */
+void sde_encoder_dce_set_bpp(
+		struct msm_mode_info mode_info, struct drm_crtc *crtc);
+
+/**
  * sde_encoder_dce_disable : function to disable compression
  * @sde_enc: pointer to virtual encoder structure
  */

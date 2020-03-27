@@ -255,6 +255,8 @@ struct sde_crtc_misr_info {
  * @ltm_buffer_lock : muttx to protect ltm_buffers allcation and free
  * @ltm_lock        : Spinlock to protect ltm buffer_cnt, hist_en and ltm lists
  * @needs_hw_reset  : Initiate a hw ctl reset
+ * @src_bpp         : source bpp used to calculate compression ratio
+ * @target_bpp      : target bpp used to calculate compression ratio
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -337,6 +339,9 @@ struct sde_crtc {
 	struct mutex ltm_buffer_lock;
 	spinlock_t ltm_lock;
 	bool needs_hw_reset;
+
+	int src_bpp;
+	int target_bpp;
 };
 
 #define to_sde_crtc(x) container_of(x, struct sde_crtc, base)
@@ -829,5 +834,18 @@ void sde_crtc_misr_setup(struct drm_crtc *crtc, bool enable, u32 frame_count);
  */
 void sde_crtc_get_misr_info(struct drm_crtc *crtc,
 		struct sde_crtc_misr_info *crtc_misr_info);
+
+/**
+ * sde_crtc_set_bpp - set src and target bpp values
+ * @sde_crtc: Pointer to sde crtc struct
+ * @src_bpp: source bpp value to be stored
+ * @target_bpp: target value to be stored
+ */
+static inline void sde_crtc_set_bpp(struct sde_crtc *sde_crtc, int src_bpp,
+		int target_bpp)
+{
+	sde_crtc->src_bpp = src_bpp;
+	sde_crtc->target_bpp = target_bpp;
+}
 
 #endif /* _SDE_CRTC_H_ */

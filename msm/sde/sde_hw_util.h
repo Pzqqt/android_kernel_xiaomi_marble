@@ -215,7 +215,8 @@ uint32_t sde_copy_formats(
 		const struct sde_format_extended *src_list,
 		uint32_t src_list_size);
 
-uint32_t sde_get_linetime(struct drm_display_mode *mode);
+uint32_t sde_get_linetime(struct drm_display_mode *mode,
+		int src_bpp, int target_bpp);
 
 static inline bool is_qseed3_rev_qseed3lite(struct sde_mdss_cfg *sde_cfg)
 {
