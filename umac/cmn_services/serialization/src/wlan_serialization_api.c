@@ -37,14 +37,39 @@ bool wlan_serialization_is_cmd_present_in_pending_queue(
 		struct wlan_serialization_command *cmd)
 {
 	bool status = false;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+	struct wlan_serialization_pdev_queue *pdev_queue;
 
 	if (!cmd) {
 		ser_err("invalid cmd");
 		goto error;
 	}
 
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	if (!pdev) {
+		ser_err("invalid pdev");
+		goto error;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser pdev obj");
+		goto error;
+	}
+
+	pdev_queue = wlan_serialization_get_pdev_queue_obj(ser_pdev_obj,
+							   cmd->cmd_type);
+	if (!pdev_queue) {
+		ser_err("pdev_queue is invalid");
+		goto error;
+	}
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
 	status = wlan_serialization_is_cmd_present_queue(cmd, false);
 
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 error:
 	return status;
 }
@@ -53,15 +78,40 @@ bool wlan_serialization_is_cmd_present_in_active_queue(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_serialization_command *cmd)
 {
-	bool status;
+	bool status = false;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+	struct wlan_serialization_pdev_queue *pdev_queue;
 
 	if (!cmd) {
 		ser_err("invalid cmd");
-		status = false;
 		goto error;
 	}
 
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	if (!pdev) {
+		ser_err("invalid pdev");
+		goto error;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser pdev obj");
+		goto error;
+	}
+
+	pdev_queue = wlan_serialization_get_pdev_queue_obj(ser_pdev_obj,
+							   cmd->cmd_type);
+	if (!pdev_queue) {
+		ser_err("pdev_queue is invalid");
+		goto error;
+	}
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
 	status = wlan_serialization_is_cmd_present_queue(cmd, true);
+
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 error:
 	return status;
