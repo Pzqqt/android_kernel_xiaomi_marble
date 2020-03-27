@@ -18,35 +18,50 @@
 #define _IOT_SIM_CMN_API_I_H_
 
 #include "iot_sim_defs_i.h"
+#include <qdf_net_types.h>
 
+#define MAX_BUFFER_SIZE 2048
 /*
- * wlan_iot_sim_psoc_obj_create_handler() - handler for psoc object create
- * @psoc: reference to global psoc object
+ *                   IOT SIM User Buf Format
+ *
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * | FrmType/subtype |  Seq  | Offset | Length | content | Mac Addr |
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * |     1Byte       | 2Byte | 2Bytes | 2Bytes | Length  | 6 Bytes  |
+ *
+ */
+#define USER_BUF_LEN (1 + 2 + 2 + 2 + MAX_BUFFER_SIZE + 6)
+#define IOT_SIM_SET_OP_BIT(bitmap, oper) ((bitmap) |= 1 << (oper))
+#define IOT_SIM_CLEAR_OP_BIT(bitmap, oper) (((bitmap) &= ~(1 << (oper))) == 0)
+
+/**
+ * wlan_iot_sim_pdev_obj_create_handler() - handler for pdev object create
+ * @pdev: reference to global pdev object
  * @arg:  reference to argument provided during registration of handler
  *
- * This is a handler to indicate psoc object created. Hence iot_sim_context
- * object can be created and attached to psoc component list.
+ * This is a handler to indicate pdev object created. Hence iot_sim_context
+ * object can be created and attached to pdev component list.
  *
  * Return: QDF_STATUS_SUCCESS on success
- *         QDF_STATUS_E_FAILURE if psoc is null
+ *         QDF_STATUS_E_FAILURE if pdev is null
  *         QDF_STATUS_E_NOMEM on failure of iot_sim object allocation
  */
-QDF_STATUS wlan_iot_sim_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_iot_sim_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 						void *arg);
 
-/*
- * wlan_iot_sim_psoc_obj_destroy_handler() - handler for psoc object delete
- * @psoc: reference to global psoc object
+/**
+ * wlan_iot_sim_pdev_obj_destroy_handler() - handler for pdev object delete
+ * @pdev: reference to global pdev object
  * @arg:  reference to argument provided during registration of handler
  *
- * This is a handler to indicate psoc object going to be deleted.
- * Hence iot_sim_context object can be detached from psoc component list.
+ * This is a handler to indicate pdev object going to be deleted.
+ * Hence iot_sim_context object can be detached from pdev component list.
  * Then iot_sim_context object can be deleted.
  *
  * Return: QDF_STATUS_SUCCESS on success
  *         QDF_STATUS_E_FAILURE on failure
  */
-QDF_STATUS wlan_iot_sim_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 						 void *arg);
 
 /*
@@ -61,16 +76,34 @@ QDF_STATUS wlan_iot_sim_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
  *
  */
 static inline struct iot_sim_context *
-iot_sim_get_ctx_from_psoc(struct wlan_objmgr_psoc *psoc)
+iot_sim_get_ctx_from_pdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct iot_sim_context *isc = NULL;
 
-	if (psoc) {
-		isc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+	if (pdev) {
+		isc = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 							    WLAN_IOT_SIM_COMP);
 	}
 
 	return isc;
 }
 
+char*
+iot_sim_print_mac(struct qdf_mac_addr *mac);
+
+QDF_STATUS
+iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
+			    enum iot_sim_operations oper,
+			    unsigned short seq,
+			    unsigned char type,
+			    unsigned char subtype,
+			    struct qdf_mac_addr *mac);
+
+QDF_STATUS
+iot_sim_parse_user_input_content_change(struct iot_sim_context *isc,
+					char *userbuf, ssize_t count,
+					uint8_t *t_st, uint16_t *seq,
+					uint16_t *offset, uint16_t *length,
+					uint8_t **content,
+					struct qdf_mac_addr *mac);
 #endif /* _IOT_SIM_CMN_API_I_H_ */

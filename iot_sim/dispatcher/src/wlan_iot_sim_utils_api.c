@@ -22,16 +22,16 @@
 QDF_STATUS
 wlan_iot_sim_init(void)
 {
-	if (wlan_objmgr_register_psoc_create_handler(
+	if (wlan_objmgr_register_pdev_create_handler(
 		WLAN_IOT_SIM_COMP,
-		wlan_iot_sim_psoc_obj_create_handler,
+		wlan_iot_sim_pdev_obj_create_handler,
 		NULL) !=
 	    QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (wlan_objmgr_register_psoc_destroy_handler(
+	if (wlan_objmgr_register_pdev_destroy_handler(
 		WLAN_IOT_SIM_COMP,
-		wlan_iot_sim_psoc_obj_destroy_handler,
+		wlan_iot_sim_pdev_obj_destroy_handler,
 		NULL) !=
 	    QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
@@ -43,16 +43,16 @@ wlan_iot_sim_init(void)
 QDF_STATUS
 wlan_iot_sim_deinit(void)
 {
-	if (wlan_objmgr_unregister_psoc_create_handler(
+	if (wlan_objmgr_unregister_pdev_create_handler(
 		WLAN_IOT_SIM_COMP,
-		wlan_iot_sim_psoc_obj_create_handler,
+		wlan_iot_sim_pdev_obj_create_handler,
 		NULL) !=
 	    QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (wlan_objmgr_unregister_psoc_destroy_handler(
+	if (wlan_objmgr_unregister_pdev_destroy_handler(
 		WLAN_IOT_SIM_COMP,
-		wlan_iot_sim_psoc_obj_destroy_handler,
+		wlan_iot_sim_pdev_obj_destroy_handler,
 		NULL) !=
 	    QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_E_FAILURE;

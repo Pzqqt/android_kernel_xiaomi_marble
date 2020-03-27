@@ -18,18 +18,18 @@
 #include <wlan_iot_sim_utils_api.h>
 
 void *
-tgt_get_target_handle(struct wlan_objmgr_psoc *psoc)
+tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 {
 	struct iot_sim_context *isc;
 
-	if (!psoc) {
-		iot_sim_err("psoc is NULL!");
+	if (!pdev) {
+		iot_sim_err("pdev is NULL!");
 		return NULL;
 	}
-	isc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+	isc = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						    WLAN_IOT_SIM_COMP);
 	if (!isc) {
-		iot_sim_err("psoc IOT_SIM object is NULL!");
+		iot_sim_err("pdev IOT_SIM object is NULL!");
 		return NULL;
 	}
 	return isc->p_iot_sim_target_handle;
