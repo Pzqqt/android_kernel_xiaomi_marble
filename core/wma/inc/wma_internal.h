@@ -1809,16 +1809,6 @@ int wma_fill_beacon_interval_reset_req(tp_wma_handle wma, uint8_t vdev_id,
  */
 bool wma_is_vdev_valid(uint32_t vdev_id);
 
-/*
- * wma_is_vdev_started() - check whether vdev is started or not
- * @vdev: pointer to vdev object
- *
- * This function verifies the vdev is started nor not
- *
- * Return: 'true' if vdev is started else 'false'
- */
-bool wma_is_vdev_started(struct wlan_objmgr_vdev *vdev);
-
 /**
  * wma_vdev_obss_detection_info_handler - event handler to handle obss detection
  * @handle: the wma handle

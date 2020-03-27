@@ -7619,7 +7619,7 @@ static void wma_set_arp_req_stats(WMA_HANDLE handle,
 		return;
 	}
 
-	if (!wma_is_vdev_started(vdev)) {
+	if (!wma_is_vdev_up(req_buf->vdev_id)) {
 		WMA_LOGD("vdev id:%d is not started", req_buf->vdev_id);
 		goto release_ref;
 	}

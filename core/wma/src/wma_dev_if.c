@@ -1356,14 +1356,6 @@ bool wma_is_vdev_valid(uint32_t vdev_id)
 	return wma_handle->interfaces[vdev_id].vdev_active;
 }
 
-bool wma_is_vdev_started(struct wlan_objmgr_vdev *vdev)
-{
-	if (WLAN_VDEV_S_START == wlan_vdev_mlme_get_state(vdev))
-		return true;
-	else
-		return false;
-}
-
 /**
  * wma_vdev_set_param() - set per vdev params in fw
  * @wmi_handle: wmi handle
