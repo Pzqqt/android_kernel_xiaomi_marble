@@ -2497,7 +2497,7 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 };
 
 static int tx_macro_register_event_listener(struct snd_soc_component *component,
-					    bool enable)
+					    bool enable, bool is_dmic_sva)
 {
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
@@ -2524,10 +2524,12 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
 				SWR_REGISTER_WAKEUP, NULL);
-			msm_cdc_pinctrl_set_wakeup_capable(
+			if (!is_dmic_sva)
+				msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, false);
 		} else {
-			msm_cdc_pinctrl_set_wakeup_capable(
+			if (!is_dmic_sva)
+				msm_cdc_pinctrl_set_wakeup_capable(
 					tx_priv->tx_swr_gpio_p, true);
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
