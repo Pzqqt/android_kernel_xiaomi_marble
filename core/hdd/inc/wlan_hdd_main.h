@@ -767,6 +767,8 @@ enum bss_state {
  *    When a STA is disassociated userspace thread can wait on this
  *    event. The event will be set when the STA Disassociation
  *    processing in UMAC has completed.
+ * @qdf_sta_eap_frm_done_event: Event to synchronize P2P GO disassoc
+ *    frame and EAP frame.
  * @qdf_status: Used to communicate state from other threads to the
  *    userspace thread.
  */
@@ -775,6 +777,7 @@ struct hdd_hostapd_state {
 	qdf_event_t qdf_event;
 	qdf_event_t qdf_stop_bss_event;
 	qdf_event_t qdf_sta_disassoc_event;
+	qdf_event_t qdf_sta_eap_frm_done_event;
 	QDF_STATUS qdf_status;
 };
 

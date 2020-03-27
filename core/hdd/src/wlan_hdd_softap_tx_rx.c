@@ -239,6 +239,106 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
+#define IEEE8021X_AUTH_TYPE_EAP 0
+#define EAP_CODE_OFFSET 18
+#define EAP_CODE_FAILURE 4
+
+/* Wait EAP Failure frame timeout in (MS) */
+#define EAP_FRM_TIME_OUT 80
+
+/**
+ * hdd_softap_inspect_tx_eap_pkt() - Inspect eap pkt tx/tx-completion
+ * @adapter: pointer to hdd adapter
+ * @skb: sk_buff
+ * @tx_comp: tx sending or tx completion
+ *
+ * Inspect the EAP-Failure pkt tx sending and tx completion.
+ *
+ * Return: void
+ */
+static void hdd_softap_inspect_tx_eap_pkt(struct hdd_adapter *adapter,
+					  struct sk_buff *skb,
+					  bool tx_comp)
+{
+	struct qdf_mac_addr *mac_addr;
+	uint8_t *data;
+	uint8_t auth_type, eap_code;
+	struct hdd_station_info *sta_info;
+	struct hdd_hostapd_state *hapd_state;
+
+	if (qdf_likely(QDF_NBUF_CB_GET_PACKET_TYPE(skb) !=
+	    QDF_NBUF_CB_PACKET_TYPE_EAPOL) || skb->len < (EAP_CODE_OFFSET + 1))
+		return;
+
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
+	    cds_is_load_or_unload_in_progress()) {
+		hdd_debug("Recovery/(Un)load in Progress. Ignore!!!");
+		return;
+	}
+	if (adapter->device_mode != QDF_P2P_GO_MODE)
+		return;
+	hapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	if (!hapd_state || hapd_state->bss_state != BSS_START) {
+		hdd_debug("Hostapd State is not START");
+		return;
+	}
+	data = skb->data;
+	auth_type = *(uint8_t *)(data + EAPOL_PACKET_TYPE_OFFSET);
+	if (auth_type != IEEE8021X_AUTH_TYPE_EAP)
+		return;
+	eap_code = *(uint8_t *)(data + EAP_CODE_OFFSET);
+	if (eap_code != EAP_CODE_FAILURE)
+		return;
+	mac_addr = (struct qdf_mac_addr *)skb->data;
+	sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+					   mac_addr->bytes);
+	if (!sta_info)
+		return;
+	if (tx_comp) {
+		hdd_debug("eap_failure frm tx done %pM", mac_addr);
+		qdf_atomic_clear_bit(PENDING_TYPE_EAP_FAILURE,
+				     &sta_info->pending_eap_frm_type);
+		qdf_event_set(&hapd_state->qdf_sta_eap_frm_done_event);
+	} else {
+		hdd_debug("eap_failure frm tx pending %pM", mac_addr);
+		qdf_event_reset(&hapd_state->qdf_sta_eap_frm_done_event);
+		qdf_atomic_set_bit(PENDING_TYPE_EAP_FAILURE,
+				   &sta_info->pending_eap_frm_type);
+		QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 1;
+	}
+	hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
+}
+
+void hdd_softap_check_wait_for_tx_eap_pkt(struct hdd_adapter *adapter,
+					  struct qdf_mac_addr *mac_addr)
+{
+	struct hdd_station_info *sta_info;
+	QDF_STATUS qdf_status;
+	struct hdd_hostapd_state *hapd_state;
+
+	if (adapter->device_mode != QDF_P2P_GO_MODE)
+		return;
+	hapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	if (!hapd_state || hapd_state->bss_state != BSS_START) {
+		hdd_err("Hostapd State is not START");
+		return;
+	}
+	sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
+					   mac_addr->bytes);
+	if (!sta_info)
+		return;
+	if (qdf_atomic_test_bit(PENDING_TYPE_EAP_FAILURE,
+				&sta_info->pending_eap_frm_type)) {
+		hdd_debug("eap_failure frm pending %pM", mac_addr);
+		qdf_status = qdf_wait_for_event_completion(
+				&hapd_state->qdf_sta_eap_frm_done_event,
+				EAP_FRM_TIME_OUT);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_debug("eap_failure tx timeout");
+	}
+	hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
+}
+
 #ifdef SAP_DHCP_FW_IND
 /**
  * hdd_post_dhcp_ind() - Send DHCP START/STOP indication to FW
@@ -576,6 +676,7 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(skb) = 0;
 
 	hdd_softap_inspect_dhcp_packet(adapter, skb, QDF_TX);
+	hdd_softap_inspect_tx_eap_pkt(adapter, skb, false);
 
 	hdd_event_eapol_log(skb, QDF_TX);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
@@ -817,6 +918,9 @@ static void hdd_softap_notify_tx_compl_cbk(struct sk_buff *skb,
 	if (QDF_NBUF_CB_PACKET_TYPE_DHCP == QDF_NBUF_CB_GET_PACKET_TYPE(skb)) {
 		hdd_debug("sending DHCP indication");
 		hdd_softap_notify_dhcp_ind(context, skb);
+	} else if (QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+						QDF_NBUF_CB_PACKET_TYPE_EAPOL) {
+		hdd_softap_inspect_tx_eap_pkt(adapter, skb, true);
 	}
 }
 

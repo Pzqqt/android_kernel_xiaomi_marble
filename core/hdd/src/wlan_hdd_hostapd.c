@@ -3479,6 +3479,12 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 		goto error_deinit_sap_session;
 	}
 
+	status = qdf_event_create(&phostapdBuf->qdf_sta_eap_frm_done_event);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Hostapd HDD sta eap frm done event init failed!!");
+		goto error_deinit_sap_session;
+	}
+
 	/* Register as a wireless device */
 	hdd_register_hostapd_wext(adapter->dev);
 

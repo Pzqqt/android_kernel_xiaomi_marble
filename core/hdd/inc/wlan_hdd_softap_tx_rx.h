@@ -258,4 +258,16 @@ int hdd_softap_inspect_dhcp_packet(struct hdd_adapter *adapter,
 }
 #endif
 
+/**
+ * hdd_softap_check_wait_for_tx_eap_pkt() - Check and wait for eap failure
+ * pkt completion event
+ * @adapter: pointer to hdd adapter
+ * @mac_addr: mac address of peer
+ *
+ * Check and wait for eap failure pkt tx completion.
+ *
+ * Return: void
+ */
+void hdd_softap_check_wait_for_tx_eap_pkt(struct hdd_adapter *adapter,
+					  struct qdf_mac_addr *mac_addr);
 #endif /* end #if !defined(WLAN_HDD_SOFTAP_TX_RX_H) */

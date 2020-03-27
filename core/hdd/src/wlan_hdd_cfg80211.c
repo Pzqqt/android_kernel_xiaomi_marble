@@ -20767,6 +20767,10 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 								     param)))
 			goto fn_end;
 	} else {
+		if (param->reason_code == eSIR_MAC_1X_AUTH_FAILURE_REASON)
+			hdd_softap_check_wait_for_tx_eap_pkt(
+					adapter, (struct qdf_mac_addr *)mac);
+
 		sta_info = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
 						   mac);
 

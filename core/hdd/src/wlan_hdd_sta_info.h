@@ -68,6 +68,12 @@ enum dhcp_nego_status {
 };
 
 /**
+ * Pending frame type of EAP_FAILURE, bit number used in "pending_eap_frm_type"
+ * of sta_info.
+ */
+#define PENDING_TYPE_EAP_FAILURE  0
+
+/**
  * struct hdd_station_info - Per station structure kept in HDD for
  *                                     multiple station support for SoftAP
  * @in_use: Is the station entry in use?
@@ -123,6 +129,7 @@ enum dhcp_nego_status {
  * @sta_info: The sta_info node for the station info list maintained in adapter
  * @assoc_req_ies: Assoc request IEs of the peer station
  * @ref_cnt: Reference count to synchronize sta_info access
+ * @pending_eap_frm_type: EAP frame type in tx queue without tx completion
  */
 struct hdd_station_info {
 	bool in_use;
@@ -173,6 +180,7 @@ struct hdd_station_info {
 	struct qdf_ht_entry sta_node;
 	struct wlan_ies assoc_req_ies;
 	qdf_atomic_t ref_cnt;
+	unsigned long pending_eap_frm_type;
 };
 
 /**
