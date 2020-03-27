@@ -5480,6 +5480,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	else if (hif_get_target_status(soc->hif_handle) == TARGET_STATUS_RESET)
 		dp_vdev_flush_peers((struct cdp_vdev *)vdev, true);
 
+	dp_rx_vdev_detach(vdev);
 	/*
 	 * Use peer_ref_mutex while accessing peer_list, in case
 	 * a peer is in the process of being removed from the list.
@@ -5531,8 +5532,6 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	dp_tx_vdev_detach(vdev);
-	dp_rx_vdev_detach(vdev);
-
 free_vdev:
 	if (wlan_op_mode_monitor == vdev->opmode) {
 		if (soc->intr_mode == DP_INTR_POLL)
