@@ -3520,6 +3520,8 @@ static void hdd_wlan_unregister_pm_qos_notifier(struct hdd_context *hdd_ctx)
 	}
 
 	qdf_spin_unlock_irqrestore(&hdd_ctx->pm_qos_lock);
+
+	qdf_spinlock_destroy(&hdd_ctx->pm_qos_lock);
 }
 #else
 static int hdd_wlan_register_pm_qos_notifier(struct hdd_context *hdd_ctx)

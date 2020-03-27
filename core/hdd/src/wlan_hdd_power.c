@@ -935,7 +935,7 @@ int wlan_hdd_pm_qos_notify(struct notifier_block *nb, unsigned long curr_val,
 		hdd_ctx->runtime_pm_prevented = true;
 	} else if (hdd_ctx->runtime_pm_prevented &&
 		   curr_val == PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE) {
-		hif_pm_runtime_put_noidle(hif_ctx);
+		hif_pm_runtime_put(hif_ctx);
 		hdd_ctx->runtime_pm_prevented = false;
 	}
 
