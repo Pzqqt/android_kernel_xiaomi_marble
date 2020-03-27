@@ -39,6 +39,9 @@
 #include "hif.h"
 #include "multibus.h"
 #include "hif_unit_test_suspend_i.h"
+#ifdef HIF_CE_LOG_INFO
+#include "qdf_notifier.h"
+#endif
 
 #define HIF_MIN_SLEEP_INACTIVITY_TIME_MS     50
 #define HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS 60
@@ -239,6 +242,9 @@ struct hif_softc {
 	qdf_shared_mem_t *ipa_ce_ring;
 #endif
 	struct hif_cfg ini_cfg;
+#ifdef HIF_CE_LOG_INFO
+	qdf_notif_block hif_recovery_notifier;
+#endif
 };
 
 static inline

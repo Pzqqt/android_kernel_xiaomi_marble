@@ -4219,10 +4219,9 @@ int ce_get_index_info(struct hif_softc *scn, void *ce_state,
 	return hif_state->ce_services->ce_get_index_info(scn, ce_state, info);
 }
 
-void hif_log_ce_info(struct hif_opaque_softc *hif_ctx, uint8_t *data,
+void hif_log_ce_info(struct hif_softc *scn, uint8_t *data,
 		     unsigned int *offset)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hang_event_info info = {0};
 	static uint32_t tracked_ce = BIT(CE_ID_1) | BIT(CE_ID_2) |
 		BIT(CE_ID_3) | BIT(CE_ID_4) | BIT(CE_ID_9) | BIT(CE_ID_10);
