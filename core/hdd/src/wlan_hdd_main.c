@@ -185,6 +185,7 @@
 #include <wlan_hdd_dcs.h>
 #include "wlan_hdd_debugfs_unit_test.h"
 #include "wlan_hdd_debugfs_mibstat.h"
+#include <wlan_hdd_hang_event.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -12572,6 +12573,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 
 	hdd_hastings_bt_war_initialize(hdd_ctx);
 
+	wlan_hdd_hang_event_notifier_register(hdd_ctx);
 	return 0;
 
 cds_disable:
@@ -12596,6 +12598,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
+	wlan_hdd_hang_event_notifier_unregister();
 	/* De-init features */
 	hdd_features_deinit(hdd_ctx);
 
