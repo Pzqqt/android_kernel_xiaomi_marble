@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,8 @@
 #include "htc_internal.h"
 #include "htc_credit_history.h"
 #include <qdf_lock.h>
+#include <qdf_hang_event_notifier.h>
+#include <qdf_notifier.h>
 
 struct HTC_CREDIT_HISTORY {
 	enum htc_credit_exchange_type type;
@@ -27,6 +29,11 @@ struct HTC_CREDIT_HISTORY {
 	uint32_t tx_credit;
 	uint32_t htc_tx_queue_depth;
 };
+
+struct htc_hang_data_fixed_param {
+	uint32_t tlv_header;
+	struct HTC_CREDIT_HISTORY credit_hist;
+} qdf_packed;
 
 static qdf_spinlock_t g_htc_credit_lock;
 static uint32_t g_htc_credit_history_idx;
@@ -135,3 +142,56 @@ void htc_print_credit_history(HTC_HANDLE htc, uint32_t count,
 
 	qdf_spin_unlock_bh(&g_htc_credit_lock);
 }
+
+#ifdef WLAN_HANG_EVENT
+void htc_log_hang_credit_history(struct notifier_block *block, void *data)
+{
+	qdf_notif_block *notif_block = qdf_container_of(block, qdf_notif_block,
+							notif_block);
+	struct qdf_notifer_data *htc_hang_data = data;
+	uint32_t count = 3, idx, total_len;
+	HTC_HANDLE htc;
+	struct htc_hang_data_fixed_param *cmd;
+	uint8_t *htc_buf_ptr;
+
+	htc = notif_block->priv_data;
+
+	if (!htc)
+		return;
+
+	if (!htc_hang_data)
+		return;
+
+	if (htc_hang_data->offset >= QDF_WLAN_MAX_HOST_OFFSET)
+		return;
+
+	total_len = sizeof(struct htc_hang_data_fixed_param);
+	qdf_spin_lock_bh(&g_htc_credit_lock);
+
+	if (count > HTC_CREDIT_HISTORY_MAX)
+		count = HTC_CREDIT_HISTORY_MAX;
+	if (count > g_htc_credit_history_length)
+		count = g_htc_credit_history_length;
+
+	idx = HTC_CREDIT_HISTORY_MAX + g_htc_credit_history_idx - count;
+	idx %= HTC_CREDIT_HISTORY_MAX;
+
+	qdf_spin_unlock_bh(&g_htc_credit_lock);
+
+	while (count) {
+		struct HTC_CREDIT_HISTORY *hist =
+						&htc_credit_history_buffer[idx];
+		htc_buf_ptr = htc_hang_data->hang_data + htc_hang_data->offset;
+		cmd = (struct htc_hang_data_fixed_param *)htc_buf_ptr;
+		QDF_HANG_EVT_SET_HDR(&cmd->tlv_header,
+				     HANG_EVT_TAG_HTC_CREDIT_HIST,
+		QDF_HANG_GET_STRUCT_TLVLEN(struct htc_hang_data_fixed_param));
+		qdf_mem_copy(&cmd->credit_hist, hist, sizeof(*hist));
+		--count;
+		++idx;
+		if (idx >= HTC_CREDIT_HISTORY_MAX)
+			idx = 0;
+		htc_hang_data->offset += total_len;
+	}
+}
+#endif

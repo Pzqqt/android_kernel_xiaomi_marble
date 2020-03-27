@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,24 @@
 void htc_credit_history_init(void);
 void htc_credit_record(enum htc_credit_exchange_type type, uint32_t tx_credit,
 			uint32_t htc_tx_queue_depth);
-
+#ifdef WLAN_HANG_EVENT
+/**
+ * htc_log_hang_credit_history: Log the credit history into a buffer
+ * @block: Notifier block
+ * @data: Private data of the block.
+ *
+ * HTC hang event notifier callback inovked when the recovery is triggered
+ * to log the credit information to understand the reason for recovery.
+ *
+ * Return: none
+ */
+void htc_log_hang_credit_history(struct notifier_block *block, void *data);
+#else
+static inline
+void htc_log_hang_credit_history(struct notifier_block *block, void *data)
+{
+}
+#endif
 #else /* FEATURE_HTC_CREDIT_HISTORY */
 
 static inline
