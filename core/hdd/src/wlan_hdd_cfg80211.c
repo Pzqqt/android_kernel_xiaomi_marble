@@ -2544,10 +2544,10 @@ static int hdd_get_external_acs_event_len(uint32_t channel_count)
 int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				   uint8_t reason)
 {
-	struct sk_buff *skb;
+	struct sk_buff *skb = NULL;
 	struct sap_config *sap_config;
 	uint32_t channel_count = 0, status = -EINVAL;
-	uint32_t freq_list[NUM_CHANNELS] = {0};
+	uint32_t *freq_list;
 	uint32_t vendor_pcl_list[NUM_CHANNELS] = {0};
 	uint8_t vendor_weight_list[NUM_CHANNELS] = {0};
 	struct hdd_vendor_acs_chan_params acs_chan_params;
@@ -2596,6 +2596,10 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 
 	hdd_get_scan_band(hdd_ctx, &adapter->session.ap.sap_config, &band);
 
+	freq_list = qdf_mem_malloc(sizeof(uint32_t) * NUM_CHANNELS);
+	if (!freq_list)
+		return -ENOMEM;
+
 	if (sap_config->acs_cfg.freq_list) {
 		/* Copy INI or hostapd provided ACS channel range*/
 		for (i = 0; i < sap_config->acs_cfg.ch_list_count; i++)
@@ -2612,8 +2616,10 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	sap_config->channel_info = qdf_mem_malloc(
 					sizeof(struct hdd_channel_info) *
 					channel_count);
-	if (!sap_config->channel_info)
-		return -ENOMEM;
+	if (!sap_config->channel_info) {
+		status = -ENOMEM;
+		goto fail;
+	}
 
 	hdd_update_reg_chan_info(adapter, channel_count, freq_list);
 
@@ -2626,8 +2632,8 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 					  len, id, GFP_KERNEL);
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
-		qdf_mem_free(sap_config->channel_info);
-		return -ENOMEM;
+		status = -ENOMEM;
+		goto fail;
 	}
 	/*
 	 * Application expects pcl to be a subset of channel list
@@ -2706,11 +2712,14 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		goto fail;
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	qdf_mem_free(freq_list);
 	qdf_mem_free(sap_config->channel_info);
 
 	return 0;
 fail:
-	qdf_mem_free(sap_config->channel_info);
+	qdf_mem_free(freq_list);
+	if (sap_config->channel_info)
+		qdf_mem_free(sap_config->channel_info);
 	if (skb)
 		kfree_skb(skb);
 	return status;
