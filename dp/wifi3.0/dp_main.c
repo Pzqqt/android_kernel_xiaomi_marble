@@ -5503,6 +5503,7 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * which is REO2TCL ring. for this reason we should
 	 * not setup reo_queues and default route for bss_peer.
 	 */
+	dp_peer_tx_init(pdev, peer);
 	if (peer->bss_peer && vdev->opmode == wlan_op_mode_ap) {
 		status = QDF_STATUS_E_FAILURE;
 		goto fail;
@@ -5520,7 +5521,6 @@ dp_peer_setup_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	qdf_atomic_set(&peer->is_default_route_set, 1);
 
 	dp_peer_rx_init(pdev, peer);
-	dp_peer_tx_init(pdev, peer);
 
 	dp_peer_ppdu_delayed_ba_init(peer);
 

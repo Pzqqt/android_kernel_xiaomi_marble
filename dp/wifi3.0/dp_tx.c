@@ -3608,6 +3608,7 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 			HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_GET(
 					htt_desc[1]);
 
+		ts.tsf = htt_desc[3];
 		ts.first_msdu = 1;
 		ts.last_msdu = 1;
 		tid = ts.tid;
