@@ -869,16 +869,83 @@ void hif_enable_ce_latency_stats(struct hif_opaque_softc *hif_ctx,
 #endif
 void hif_display_stats(struct hif_opaque_softc *hif_ctx);
 void hif_clear_stats(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * enum wlan_rtpm_dbgid - runtime pm put/get debug id
+ * @RTPM_ID_RESVERD:       Reserved
+ * @RTPM_ID_WMI:           WMI sending msg, expect put happen at
+ *                         tx completion from CE level directly.
+ * @RTPM_ID_HTC:           pkt sending by HTT_DATA_MSG_SVC, expect
+ *                         put from fw response or just in
+ *                         htc_issue_packets
+ * @RTPM_ID_QOS_NOTIFY:    pm qos notifer
+ * @RTPM_ID_DP_TX_DESC_ALLOC_FREE:      tx desc alloc/free
+ * @RTPM_ID_CE_SEND_FAST:  operation in ce_send_fast, not include
+ *                         the pkt put happens outside this function
+ * @RTPM_ID_SUSPEND_RESUME:     suspend/resume in hdd
+ * @RTPM_ID_DW_TX_HW_ENQUEUE:   operation in functin dp_tx_hw_enqueue
+ * @RTPM_ID_HAL_REO_CMD:        HAL_REO_CMD operation
+ * @RTPM_ID_DP_PRINT_RING_STATS:  operation in dp_print_ring_stats
+ */
+/* New value added to the enum must also be reflected in function
+ *  rtpm_string_from_dbgid()
+ */
+typedef enum {
+	RTPM_ID_RESVERD   = 0,
+	RTPM_ID_WMI       = 1,
+	RTPM_ID_HTC       = 2,
+	RTPM_ID_QOS_NOTIFY  = 3,
+	RTPM_ID_DP_TX_DESC_ALLOC_FREE  = 4,
+	RTPM_ID_CE_SEND_FAST       = 5,
+	RTPM_ID_SUSPEND_RESUME     = 6,
+	RTPM_ID_DW_TX_HW_ENQUEUE   = 7,
+	RTPM_ID_HAL_REO_CMD        = 8,
+	RTPM_ID_DP_PRINT_RING_STATS  = 9,
+
+	RTPM_ID_MAX,
+} wlan_rtpm_dbgid;
+
+/**
+ * rtpm_string_from_dbgid() - Convert dbgid to respective string
+ * @id -  debug id
+ *
+ * Debug support function to convert  dbgid to string.
+ * Please note to add new string in the array at index equal to
+ * its enum value in wlan_rtpm_dbgid.
+ */
+static inline char *rtpm_string_from_dbgid(wlan_rtpm_dbgid id)
+{
+	static const char *strings[] = { "RTPM_ID_RESVERD",
+					"RTPM_ID_WMI",
+					"RTPM_ID_HTC",
+					"RTPM_ID_QOS_NOTIFY",
+					"RTPM_ID_DP_TX_DESC_ALLOC_FREE",
+					"RTPM_ID_CE_SEND_FAST",
+					"RTPM_ID_SUSPEND_RESUME",
+					"RTPM_ID_DW_TX_HW_ENQUEUE",
+					"RTPM_ID_HAL_REO_CMD",
+					"RTPM_ID_DP_PRINT_RING_STATS",
+					"RTPM_ID_MAX"};
+
+	return (char *)strings[id];
+}
+
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx,
+			    wlan_rtpm_dbgid rtpm_dbgid);
+int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
+				    wlan_rtpm_dbgid rtpm_dbgid);
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx);
-void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx);
-int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
+		       wlan_rtpm_dbgid rtpm_dbgid);
+void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
+				 wlan_rtpm_dbgid rtpm_dbgid);
+int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
+		       wlan_rtpm_dbgid rtpm_dbgid);
+int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
+			      wlan_rtpm_dbgid rtpm_dbgid);
 void hif_pm_runtime_mark_last_busy(struct hif_opaque_softc *hif_ctx);
 int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name);
 void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
@@ -902,22 +969,31 @@ struct hif_pm_runtime_lock {
 	const char *name;
 };
 static inline void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
-static inline int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx)
+static inline int
+hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx,
+			wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline int
-hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx)
+hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
+				wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline int
 hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 { return 0; }
-static inline void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
+static inline void
+hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
+			    wlan_rtpm_dbgid rtpm_dbgid)
 {}
 
-static inline int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
+static inline int
+hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx, wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
-static inline int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
+static inline int
+hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx, wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
-static inline int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx)
+static inline int
+hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
+			  wlan_rtpm_dbgid rtpm_dbgid)
 { return 0; }
 static inline void
 hif_pm_runtime_mark_last_busy(struct hif_opaque_softc *hif_ctx) {};

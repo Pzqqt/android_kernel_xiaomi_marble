@@ -448,7 +448,7 @@ QDF_STATUS qdf_runtime_pm_get(void)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = hif_pm_runtime_get(ol_sc);
+	ret = hif_pm_runtime_get(ol_sc, RTPM_ID_RESVERD);
 
 	if (ret)
 		return QDF_STATUS_E_FAILURE;
@@ -481,7 +481,7 @@ QDF_STATUS qdf_runtime_pm_put(void)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = hif_pm_runtime_put(ol_sc);
+	ret = hif_pm_runtime_put(ol_sc, RTPM_ID_RESVERD);
 
 	if (ret)
 		return QDF_STATUS_E_FAILURE;

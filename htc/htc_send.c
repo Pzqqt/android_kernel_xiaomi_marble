@@ -913,7 +913,8 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			break;
 		}
 		if (rt_put) {
-			hif_pm_runtime_put(target->hif_dev);
+			hif_pm_runtime_put(target->hif_dev,
+					   RTPM_ID_HTC);
 			rt_put = false;
 		}
 	}
@@ -988,6 +989,40 @@ static void queue_htc_pm_packets(HTC_ENDPOINT *endpoint,
 #endif
 
 /**
+ * htc_send_pkts_rtpm_dbgid_get() - get runtime pm dbgid by service_id
+ * @service_id: service for endpoint
+ *
+ * For service_id HTT_DATA_MSG_SVC, HTT message donot have a tx complete
+ * from CE level, so they need runtime put which only can happen in fw
+ * response. runtime put will happens at 2 ways.
+ *    1 if packet tag HTC_TX_PACKET_TAG_RUNTIME_PUT, runtime put
+ *      will be just in htc_issue_packets. as such pkt doesn't have
+ *      a response from fw.
+ *    2 other pkt must have a response from fw, it will be handled
+ *      by fw response using htc_pm_runtime_put.
+ *
+ * For other service_id, they have tx_completion from CE, so they will be
+ * handled in htc_tx_completion_handler, except packet tag as
+ * HTC_TX_PACKET_TAG_AUTO_PM, pm related wmi cmd don't need a runtime
+ * put/get.
+ *
+ *
+ * Return: rtpm_dbgid to trace who use it
+ */
+static wlan_rtpm_dbgid
+htc_send_pkts_rtpm_dbgid_get(HTC_SERVICE_ID service_id)
+{
+	wlan_rtpm_dbgid rtpm_dbgid;
+
+	if (service_id == HTT_DATA_MSG_SVC)
+		rtpm_dbgid = RTPM_ID_HTC;
+	else
+		rtpm_dbgid = RTPM_ID_WMI;
+
+	return rtpm_dbgid;
+}
+
+/**
  * get_htc_send_packets_credit_based() - get packets based on available credits
  * @target: HTC target on which packets need to be sent
  * @pEndpoint: logical endpoint on which packets needs to be sent
@@ -1010,6 +1045,7 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 	HTC_PACKET_QUEUE *tx_queue;
 	HTC_PACKET_QUEUE pm_queue;
 	bool do_pm_get = false;
+	wlan_rtpm_dbgid rtpm_dbgid = 0;
 	int ret;
 
 	/*** NOTE : the TX lock is held when this function is called ***/
@@ -1027,28 +1063,24 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 
 	/* loop until we can grab as many packets out of the queue as we can */
 	while (true) {
-		if (do_pm_get) {
-			ret = hif_pm_runtime_get(target->hif_dev);
-			if (ret) {
-				/* bus suspended, runtime resume issued */
-				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
-				if (ret == -EAGAIN) {
-					pPacket = htc_get_pkt_at_head(tx_queue);
-					if (!pPacket)
-						break;
-					log_packet_info(target, pPacket);
-				}
-				break;
-			}
-		}
-
 		sendFlags = 0;
 		/* get packet at head, but don't remove it */
 		pPacket = htc_get_pkt_at_head(tx_queue);
-		if (!pPacket) {
-			if (do_pm_get)
-				hif_pm_runtime_put(target->hif_dev);
+		if (!pPacket)
 			break;
+
+		if (do_pm_get) {
+			rtpm_dbgid =
+				htc_send_pkts_rtpm_dbgid_get(
+					pEndpoint->service_id);
+			ret = hif_pm_runtime_get(target->hif_dev,
+						 rtpm_dbgid);
+			if (ret) {
+				/* bus suspended, runtime resume issued */
+				if (ret == -EAGAIN)
+					log_packet_info(target, pPacket);
+				break;
+			}
 		}
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
@@ -1091,7 +1123,8 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 						 creditsRequired));
 #endif
 				if (do_pm_get)
-					hif_pm_runtime_put(target->hif_dev);
+					hif_pm_runtime_put(target->hif_dev,
+							   rtpm_dbgid);
 				break;
 			}
 
@@ -1150,6 +1183,7 @@ static void get_htc_send_packets(HTC_TARGET *target,
 	HTC_PACKET_QUEUE *tx_queue;
 	HTC_PACKET_QUEUE pm_queue;
 	bool do_pm_get = false;
+	wlan_rtpm_dbgid rtpm_dbgid;
 	int ret;
 
 	/*** NOTE : the TX lock is held when this function is called ***/
@@ -1169,26 +1203,22 @@ static void get_htc_send_packets(HTC_TARGET *target,
 	while (Resources > 0) {
 		int num_frags;
 
+		pPacket = htc_packet_dequeue(tx_queue);
+		if (!pPacket)
+			break;
+
 		if (do_pm_get) {
-			ret = hif_pm_runtime_get(target->hif_dev);
+			rtpm_dbgid =
+				htc_send_pkts_rtpm_dbgid_get(
+					pEndpoint->service_id);
+			ret = hif_pm_runtime_get(target->hif_dev,
+						 rtpm_dbgid);
 			if (ret) {
 				/* bus suspended, runtime resume issued */
-				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
-				if (ret == -EAGAIN) {
-					pPacket = htc_get_pkt_at_head(tx_queue);
-					if (!pPacket)
-						break;
+				if (ret == -EAGAIN)
 					log_packet_info(target, pPacket);
-				}
 				break;
 			}
-		}
-
-		pPacket = htc_packet_dequeue(tx_queue);
-		if (!pPacket) {
-			if (do_pm_get)
-				hif_pm_runtime_put(target->hif_dev);
-			break;
 		}
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 				(" Got packet:%pK , New Queue Depth: %d\n",
@@ -1507,6 +1537,7 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 		status = htc_issue_packets(target, pEndpoint, &sendQueue);
 		if (status) {
 			int i;
+			wlan_rtpm_dbgid rtpm_dbgid;
 
 			result = HTC_SEND_QUEUE_DROP;
 
@@ -1528,8 +1559,13 @@ static enum HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 				break;
 			}
 
+			rtpm_dbgid =
+				htc_send_pkts_rtpm_dbgid_get(
+					pEndpoint->service_id);
 			for (i = HTC_PACKET_QUEUE_DEPTH(&sendQueue); i > 0; i--)
-				hif_pm_runtime_put(target->hif_dev);
+				hif_pm_runtime_put(target->hif_dev,
+						   rtpm_dbgid);
+
 			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
 			}
@@ -1815,6 +1851,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE htc_hdl, qdf_nbuf_t netbuf, int ep_id,
 	int tx_resources;
 	uint32_t data_attr = 0;
 	int htc_payload_len = actual_length;
+	wlan_rtpm_dbgid rtpm_dbgid;
 
 	pEndpoint = &target->endpoint[ep_id];
 
@@ -1833,7 +1870,9 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE htc_hdl, qdf_nbuf_t netbuf, int ep_id,
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	if (hif_pm_runtime_get(target->hif_dev))
+	rtpm_dbgid =
+		htc_send_pkts_rtpm_dbgid_get(pEndpoint->service_id);
+	if (hif_pm_runtime_get(target->hif_dev, rtpm_dbgid))
 		return QDF_STATUS_E_FAILURE;
 
 	p_htc_hdr = (HTC_FRAME_HDR *)qdf_nbuf_get_frag_vaddr(netbuf, 0);
@@ -2276,7 +2315,8 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 			break;
 		}
 		if (pPacket->PktInfo.AsTx.Tag != HTC_TX_PACKET_TAG_AUTO_PM)
-			hif_pm_runtime_put(target->hif_dev);
+			hif_pm_runtime_put(target->hif_dev,
+					   RTPM_ID_WMI);
 
 		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_BUNDLED) {
 			HTC_PACKET *pPacketTemp;

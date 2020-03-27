@@ -147,7 +147,8 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	 * Request runtime PM resume if it has already suspended and make
 	 * sure there is no PCIe link access.
 	 */
-	if (hif_pm_runtime_get(hif_hdl) != 0)
+	if (hif_pm_runtime_get(hif_hdl,
+			       RTPM_ID_CE_SEND_FAST) != 0)
 		ok_to_send = false;
 
 	if (ok_to_send) {
@@ -190,7 +191,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		struct CE_src_desc *shadow_src_desc =
 			CE_SRC_RING_TO_DESC(shadow_base, write_index);
 
-		hif_pm_runtime_get_noresume(hif_hdl);
+		hif_pm_runtime_get_noresume(hif_hdl, RTPM_ID_HTC);
 
 		/*
 		 * First fill out the ring descriptor for the HTC HTT frame
@@ -280,7 +281,7 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		} else {
 			ce_state->state = CE_PENDING;
 		}
-		hif_pm_runtime_put(hif_hdl);
+		hif_pm_runtime_put(hif_hdl, RTPM_ID_CE_SEND_FAST);
 	}
 
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);

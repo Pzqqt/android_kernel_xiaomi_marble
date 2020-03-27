@@ -415,7 +415,9 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 			 * success of allocating one descriptor. It will be
 			 * decremented after the packet has been sent.
 			 */
-			hif_pm_runtime_get_noresume(soc->hif_handle);
+			hif_pm_runtime_get_noresume(
+				soc->hif_handle,
+				RTPM_ID_DP_TX_DESC_ALLOC_FREE);
 		} else {
 			pool->pkt_drop_no_desc++;
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
@@ -482,7 +484,8 @@ out:
 	 * Decrement PM usage count if the packet has been sent. This
 	 * should be tied with the success of freeing one descriptor.
 	 */
-	hif_pm_runtime_put(soc->hif_handle);
+	hif_pm_runtime_put(soc->hif_handle,
+			   RTPM_ID_DP_TX_DESC_ALLOC_FREE);
 }
 
 #endif /* QCA_AC_BASED_FLOW_CONTROL */

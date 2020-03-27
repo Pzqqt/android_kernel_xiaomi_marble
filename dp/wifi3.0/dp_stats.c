@@ -4884,7 +4884,8 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 	int mac_id;
 	int lmac_id;
 
-	if (hif_pm_runtime_get_sync(pdev->soc->hif_handle))
+	if (hif_pm_runtime_get_sync(pdev->soc->hif_handle,
+				    RTPM_ID_DP_PRINT_RING_STATS))
 		return;
 
 	dp_print_ring_stat_from_hal(pdev->soc,
@@ -4955,7 +4956,8 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 					    [lmac_id],
 					    RXDMA_DST);
 	}
-	hif_pm_runtime_put(pdev->soc->hif_handle);
+	hif_pm_runtime_put(pdev->soc->hif_handle,
+			   RTPM_ID_DP_PRINT_RING_STATS);
 }
 
 /**

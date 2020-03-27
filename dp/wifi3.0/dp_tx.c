@@ -1237,9 +1237,11 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	status = QDF_STATUS_SUCCESS;
 
 ring_access_fail:
-	if (hif_pm_runtime_get(soc->hif_handle) == 0) {
+	if (hif_pm_runtime_get(soc->hif_handle,
+			       RTPM_ID_DW_TX_HW_ENQUEUE) == 0) {
 		hal_srng_access_end(soc->hal_soc, hal_ring_hdl);
-		hif_pm_runtime_put(soc->hif_handle);
+		hif_pm_runtime_put(soc->hif_handle,
+				   RTPM_ID_DW_TX_HW_ENQUEUE);
 	} else {
 		hal_srng_access_end_reap(soc->hal_soc, hal_ring_hdl);
 	}

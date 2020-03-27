@@ -1146,14 +1146,16 @@ int htc_pm_runtime_get(HTC_HANDLE htc_handle)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 
-	return hif_pm_runtime_get(target->hif_dev);
+	return hif_pm_runtime_get(target->hif_dev,
+				  RTPM_ID_HTC);
 }
 
 int htc_pm_runtime_put(HTC_HANDLE htc_handle)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 
-	return hif_pm_runtime_put(target->hif_dev);
+	return hif_pm_runtime_put(target->hif_dev,
+				  RTPM_ID_HTC);
 }
 #endif
 
