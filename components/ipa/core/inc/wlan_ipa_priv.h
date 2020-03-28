@@ -56,7 +56,11 @@
 #define WLAN_IPA_CLIENT_MAX_IFACE           3
 #define WLAN_IPA_MAX_SYSBAM_PIPE            4
 #define WLAN_IPA_MAX_SESSION                5
+#ifdef WLAN_MAX_CLIENTS_ALLOWED
+#define WLAN_IPA_MAX_STA_COUNT              WLAN_MAX_CLIENTS_ALLOWED
+#else
 #define WLAN_IPA_MAX_STA_COUNT              41
+#endif
 
 #define WLAN_IPA_RX_PIPE                    WLAN_IPA_MAX_IFACE
 #define WLAN_IPA_ENABLE_MASK                BIT(0)
