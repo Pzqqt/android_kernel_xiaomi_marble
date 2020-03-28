@@ -7976,6 +7976,8 @@ typedef struct {
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
     A_UINT32 key_type; /* use standard cipher types - see WMI_CIPHER_ defs */
+    /** key index **/
+    A_UINT32 key_ix;
 } wmi_peer_tx_pn_request_cmd_fixed_param;
 
 typedef struct {
@@ -7992,6 +7994,8 @@ typedef struct {
     * how many bytes within pn[] are filled with valid data.
     */
     A_UINT8 pn[16];
+    /** key index **/
+    A_UINT32 key_ix;
 } wmi_peer_tx_pn_response_event_fixed_param;
 
 typedef struct {
