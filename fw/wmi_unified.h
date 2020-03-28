@@ -4573,9 +4573,19 @@ typedef struct {
 } wmi_roam_fils_synch_tlv_param;
 
 /*
-* If FW has multiple active channels due to MCC(multi channel concurrency),
-* then these stats are combined stats for all the active channels.
-*/
+ * FW sends PMK cache of roamed candidate to host to sync pmk cache with host
+ */
+typedef struct {
+    A_UINT32  tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_pmk_cache_synch_tlv_param */
+    A_UINT32  pmk_len;
+    A_UINT8  pmk[WMI_MAX_PMK_LEN];
+    A_UINT8  pmkid[WMI_MAX_PMKID_LEN];
+} wmi_roam_pmk_cache_synch_tlv_param;
+
+/*
+ * If FW has multiple active channels due to MCC(multi channel concurrency),
+ * then these stats are combined stats for all the active channels.
+ */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_update_whal_mib_stats_event_fixed_param */
     /** ack count, it is an incremental number, not accumulated number */
