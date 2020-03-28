@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef IPA_QMI_SERVICE_H
@@ -334,7 +334,7 @@ int ipa3_qmi_get_per_client_packet_stats(
 int ipa3_qmi_send_mhi_ready_indication(
 	struct ipa_mhi_ready_indication_msg_v01 *req);
 
-int ipa3_qmi_send_rsc_pipe_indication(
+int ipa3_qmi_send_wan_pipe_indication(
 	struct ipa_endp_desc_indication_msg_v01 *req);
 
 int ipa3_qmi_send_mhi_cleanup_request(struct ipa_mhi_cleanup_req_msg_v01 *req);
@@ -478,7 +478,7 @@ static inline int ipa3_qmi_send_mhi_ready_indication(
 	return -EPERM;
 }
 
-static inline int ipa3_qmi_send_rsc_pipe_indication(
+static inline int ipa3_qmi_send_wan_pipe_indication(
 	struct ipa_endp_desc_indication_msg_v01 *req)
 {
 	return -EPERM;

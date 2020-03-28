@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/ipa_mhi.h>
@@ -368,6 +368,19 @@ struct ipa_api_controller {
 
 	const struct ipa_gsi_ep_config *(*ipa_get_gsi_ep_info)
 		(enum ipa_client_type client);
+
+	int (*ipa_register_rmnet_ctl_cb)(
+		void (*ipa_rmnet_ctl_ready_cb)(void *user_data1),
+		void *user_data1,
+		void (*ipa_rmnet_ctl_stop_cb)(void *user_data2),
+		void *user_data2,
+		void (*ipa_rmnet_ctl_rx_notify_cb)(
+		void *user_data3, void *rx_data),
+		void *user_data3);
+
+	int (*ipa_unregister_rmnet_ctl_cb)(void);
+
+	int (*ipa_rmnet_ctl_xmit)(struct sk_buff *skb);
 
 	void (*ipa_inc_client_enable_clks)(
 		struct ipa_active_client_logging_info *id);

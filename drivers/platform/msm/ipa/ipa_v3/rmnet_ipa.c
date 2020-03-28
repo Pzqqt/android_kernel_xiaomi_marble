@@ -51,6 +51,13 @@
 #define IPA_UPSTEAM_WLAN_IFACE_NAME "wlan0"
 #define IPA_UPSTEAM_WLAN1_IFACE_NAME "wlan1"
 
+enum ipa_ap_ingress_ep_enum {
+	IPA_AP_INGRESS_NONE = 0,
+	IPA_AP_INGRESS_EP_DEFAULT = 1 << 0,
+	IPA_AP_INGRESS_EP_COALS = 1 << 1,
+	IPA_AP_INGRESS_EP_LOW_LAT = 1 << 2,
+};
+
 #define IPA_WWAN_RX_SOFTIRQ_THRESH 16
 
 #define INVALID_MUX_ID 0xFF
@@ -1395,7 +1402,7 @@ static void apps_ipa_packet_receive_notify(void *priv,
 
 		if (result)	{
 			pr_err_ratelimited(DEV_NAME " %s:%d fail on netif_receive_skb\n",
-							   __func__, __LINE__);
+				__func__, __LINE__);
 			dev->stats.rx_dropped++;
 		}
 		dev->stats.rx_packets++;
@@ -1406,23 +1413,52 @@ static void apps_ipa_packet_receive_notify(void *priv,
 }
 
 /* Send RSC endpoint info to modem using QMI indication message */
-
-static int ipa_send_rsc_pipe_ind_to_modem(void)
+static int ipa_send_wan_pipe_ind_to_modem(int ingress_eps_mask)
 {
 	struct ipa_endp_desc_indication_msg_v01 req;
 	struct ipa_ep_id_type_v01 *ep_info;
 
+	if (ingress_eps_mask == IPA_AP_INGRESS_NONE)
+		return 0;
+
 	memset(&req, 0, sizeof(struct ipa_endp_desc_indication_msg_v01));
-	req.ep_info_len = 1;
-	req.ep_info_valid = true;
-	req.num_eps_valid = true;
-	req.num_eps = 1;
-	ep_info = &req.ep_info[req.ep_info_len - 1];
-	ep_info->ep_id = rmnet_ipa3_ctx->ipa3_to_apps_hdl;
-	ep_info->ic_type = DATA_IC_TYPE_AP_V01;
-	ep_info->ep_type = DATA_EP_DESC_TYPE_RSC_PROD_V01;
-	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
-	return ipa3_qmi_send_rsc_pipe_indication(&req);
+	if (ingress_eps_mask & IPA_AP_INGRESS_EP_COALS) {
+		req.ep_info_len++;
+		req.ep_info_valid = true;
+		req.num_eps_valid = true;
+		req.num_eps++;
+		ep_info = &req.ep_info[req.ep_info_len - 1];
+		ep_info->ep_id = rmnet_ipa3_ctx->ipa3_to_apps_hdl;
+		ep_info->ic_type = DATA_IC_TYPE_AP_V01;
+		ep_info->ep_type = DATA_EP_DESC_TYPE_RSC_PROD_V01;
+		ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
+	}
+
+	if (ingress_eps_mask & IPA_AP_INGRESS_EP_LOW_LAT) {
+		req.ep_info_len++;
+		req.ep_info_valid = true;
+		req.num_eps_valid = true;
+		req.num_eps++;
+		ep_info = &req.ep_info[req.ep_info_len - 1];
+		ep_info->ep_id = ipa3_get_ep_mapping(
+			IPA_CLIENT_APPS_WAN_LOW_LAT_CONS);
+		ep_info->ic_type = DATA_IC_TYPE_AP_V01;
+		ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_PROD_V01;
+		ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
+		req.ep_info_len++;
+		req.num_eps++;
+		ep_info = &req.ep_info[req.ep_info_len - 1];
+		ep_info->ep_id = ipa3_get_ep_mapping(
+			IPA_CLIENT_APPS_WAN_LOW_LAT_PROD);
+		ep_info->ic_type = DATA_IC_TYPE_AP_V01;
+		ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_CONS_V01;
+		ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
+	}
+
+	if (req.num_eps > 0)
+		return ipa3_qmi_send_wan_pipe_indication(&req);
+	else
+		return 0;
 }
 
 static int handle3_ingress_format(struct net_device *dev,
@@ -1431,6 +1467,7 @@ static int handle3_ingress_format(struct net_device *dev,
 	int ret = 0;
 	struct ipa_sys_connect_params *ipa_wan_ep_cfg;
 	int ep_idx;
+	int ingress_eps_mask = IPA_AP_INGRESS_NONE;
 
 	IPAWANDBG("Get RMNET_IOCTL_SET_INGRESS_DATA_FORMAT\n");
 
@@ -1490,10 +1527,13 @@ static int handle3_ingress_format(struct net_device *dev,
 	ipa_wan_ep_cfg->ipa_ep_cfg.metadata_mask.metadata_mask = 0xFF000000;
 
 	ipa_wan_ep_cfg->client = IPA_CLIENT_APPS_WAN_CONS;
+	ingress_eps_mask |= IPA_AP_INGRESS_EP_DEFAULT;
 
-	if (dev->features & NETIF_F_GRO_HW)
+	if (dev->features & NETIF_F_GRO_HW) {
 	 /* Setup coalescing pipes */
 		ipa_wan_ep_cfg->client = IPA_CLIENT_APPS_WAN_COAL_CONS;
+		ingress_eps_mask |= IPA_AP_INGRESS_EP_COALS;
+	}
 
 	ipa_wan_ep_cfg->notify = apps_ipa_packet_receive_notify;
 	ipa_wan_ep_cfg->priv = dev;
@@ -1511,12 +1551,24 @@ static int handle3_ingress_format(struct net_device *dev,
 		return -EFAULT;
 	}
 	ret = ipa_setup_sys_pipe(&rmnet_ipa3_ctx->ipa_to_apps_ep_cfg,
-	   &rmnet_ipa3_ctx->ipa3_to_apps_hdl);
+		&rmnet_ipa3_ctx->ipa3_to_apps_hdl);
 
-	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
-	if (ret)
+	if (ret) {
+		mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 		goto end;
+	}
+	IPAWANDBG("ingress WAN pipe setup successfully\n");
 
+	ret = ipa3_setup_apps_low_lat_cons_pipe();
+	if (ret)
+		goto low_lat_fail;
+
+	ingress_eps_mask |= IPA_AP_INGRESS_EP_LOW_LAT;
+
+	IPAWANDBG("ingress low latency pipe setup successfully\n");
+
+low_lat_fail:
+	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 	/* construct default WAN RT tbl for IPACM */
 	ret = ipa3_setup_a7_qmap_hdr();
 	if (ret)
@@ -1526,9 +1578,11 @@ static int handle3_ingress_format(struct net_device *dev,
 	if (ret)
 		ipa3_del_a7_qmap_hdr();
 
-	/* Sending QMI indication message share RSC pipe details*/
-	if (dev->features & NETIF_F_GRO_HW)
-		ipa_send_rsc_pipe_ind_to_modem();
+	/* notify rmnet_ctl pipes are ready to ues */
+	ipa3_rmnet_ctl_ready_notifier();
+
+	/* Sending QMI indication message share RSC/QMAP pipe details*/
+	ipa_send_wan_pipe_ind_to_modem(ingress_eps_mask);
 end:
 	if (ret)
 		IPAWANERR("failed to configure ingress\n");
@@ -1630,12 +1684,21 @@ static int handle3_egress_format(struct net_device *dev,
 	rc = ipa_setup_sys_pipe(
 		ipa_wan_ep_cfg, &rmnet_ipa3_ctx->apps_to_ipa3_hdl);
 	if (rc) {
-		IPAWANERR("failed to config egress endpoint\n");
+		IPAWANERR("failed to setup egress endpoint\n");
 		mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 		return rc;
 	}
+	IPAWANDBG("engress WAN pipe setup successfully\n");
+	rc = ipa3_setup_apps_low_lat_prod_pipe();
+	if (rc) {
+		IPAWANERR("failed to setup egress low lat endpoint\n");
+		mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
+		goto low_lat_fail;
+	}
+	IPAWANDBG("engress low lat pipe setup successfully\n");
 	mutex_unlock(&rmnet_ipa3_ctx->pipe_handle_guard);
 
+low_lat_fail:
 	if (rmnet_ipa3_ctx->num_q6_rules != 0) {
 		/* already got Q6 UL filter rules*/
 		if (!ipa3_qmi_ctx->modem_cfg_emb_pipe_flt) {
@@ -1997,6 +2060,18 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 				ext_ioctl_data.u.offload_params.mux_id,
 				tcp_en || udp_en, tcp_en, udp_en);
 			break;
+		/* vote ipa clock on/off */
+		case RMNET_IOCTL_SET_SLEEP_STATE:
+			if (ext_ioctl_data.u.data) {
+				/* Request to enable LPM */
+				IPAWANDBG("ioctl: unvote IPA clock\n");
+				IPA_ACTIVE_CLIENTS_DEC_SPECIAL("NETMGR");
+			} else {
+				/* Request to disable LPM */
+				IPAWANDBG("ioctl: vote IPA clock\n");
+				IPA_ACTIVE_CLIENTS_INC_SPECIAL("NETMGR");
+			}
+			break;
 		default:
 			IPAWANERR("[%s] unsupported extended cmd[%d]",
 				dev->name,
@@ -2313,9 +2388,12 @@ static int ipa3_wwan_register_netdev_pm_client(struct net_device *dev)
 	pm_reg.group = IPA_PM_GROUP_APPS;
 	result = ipa_pm_register(&pm_reg, &rmnet_ipa3_ctx->pm_hdl);
 	if (result) {
-		IPAERR("failed to create IPA PM client %d\n", result);
-			return result;
+		IPAWANERR("failed to create IPA PM client %d\n", result);
+		return result;
 	}
+
+	IPAWANERR("%s register done\n", pm_reg.name);
+
 	return 0;
 }
 
@@ -2519,6 +2597,9 @@ static int ipa3_wwan_remove(struct platform_device *pdev)
 
 	IPAWANINFO("rmnet_ipa started deinitialization\n");
 	mutex_lock(&rmnet_ipa3_ctx->pipe_handle_guard);
+	ret = ipa3_teardown_apps_low_lat_pipes();
+	if (ret < 0)
+		IPAWANERR("Failed to teardown IPA->APPS qmap pipe\n");
 	ret = ipa3_teardown_sys_pipe(rmnet_ipa3_ctx->ipa3_to_apps_hdl);
 	if (ret < 0)
 		IPAWANERR("Failed to teardown IPA->APPS pipe\n");

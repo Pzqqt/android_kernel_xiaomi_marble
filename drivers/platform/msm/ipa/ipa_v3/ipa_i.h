@@ -1881,6 +1881,7 @@ struct ipa3_app_clock_vote {
  * @icc_num_paths - number of paths icc would vote for bw
  * @icc_clk - table for icc bw clock value
  * @coal_cmd_pyld: holds the coslescing close frame command payload
+ * @rmnet_ctl_enable: enable pipe support fow low latency data
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
@@ -2061,6 +2062,7 @@ struct ipa3_context {
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld;
 	struct ipa3_app_clock_vote app_clock_vote;
 	bool clients_registered;
+	bool rmnet_ctl_enable;
 };
 
 struct ipa3_plat_drv_res {
@@ -2113,6 +2115,7 @@ struct ipa3_plat_drv_res {
 	u32 icc_num_paths;
 	const char *icc_path_name[IPA_ICC_PATH_MAX];
 	u32 icc_clk_val[IPA_ICC_LVL_MAX][IPA_ICC_MAX];
+	bool rmnet_ctl_enable;
 };
 
 /**
@@ -2839,6 +2842,8 @@ int ipa3_get_smmu_params(struct ipa_smmu_in_params *in,
 
 bool ipa3_get_lan_rx_napi(void);
 
+bool ipa3_get_qmap_pipe_enable(void);
+
 /* internal functions */
 
 int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
@@ -3130,6 +3135,21 @@ int emulator_load_fws(
 	u32 transport_mem_base,
 	u32 transport_mem_size,
 	enum gsi_ver);
+int ipa3_rmnet_ctl_init(void);
+int ipa3_register_rmnet_ctl_cb(
+	void (*ipa_rmnet_ctl_ready_cb)(void *user_data1),
+	void *user_data1,
+	void (*ipa_rmnet_ctl_stop_cb)(void *user_data2),
+	void *user_data2,
+	void (*ipa_rmnet_ctl_rx_notify_cb)(
+	void *user_data3, void *rx_data),
+	void *user_data3);
+int ipa3_unregister_rmnet_ctl_cb(void);
+int ipa3_rmnet_ctl_xmit(struct sk_buff *skb);
+int ipa3_setup_apps_low_lat_prod_pipe(void);
+int ipa3_setup_apps_low_lat_cons_pipe(void);
+int ipa3_teardown_apps_low_lat_pipes(void);
+void ipa3_rmnet_ctl_ready_notifier(void);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);
 int ipa3_rx_poll(u32 clnt_hdl, int budget);

@@ -207,8 +207,11 @@ const char *ipa_clients_strings[IPA_CLIENT_MAX] = {
 	__stringify(IPA_CLIENT_MHI_PRIME_TETH_PROD),
 	__stringify(IPA_CLIENT_MHI_PRIME_TETH_CONS),
 	__stringify(IPA_CLIENT_MHI_PRIME_DPL_PROD),
+	__stringify(RESERVERD_CONS_101),
 	__stringify(IPA_CLIENT_AQC_ETHERNET_PROD),
 	__stringify(IPA_CLIENT_AQC_ETHERNET_CONS),
+	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_PROD),
+	__stringify(IPA_CLIENT_APPS_WAN_LOW_LAT_CONS),
 };
 
 /**
@@ -3193,6 +3196,47 @@ static int ipa_ap_resume(struct device *dev)
 
 	return ret;
 }
+
+int ipa_register_rmnet_ctl_cb(
+	void (*ipa_rmnet_ctl_ready_cb)(void *user_data1),
+	void *user_data1,
+	void (*ipa_rmnet_ctl_stop_cb)(void *user_data2),
+	void *user_data2,
+	void (*ipa_rmnet_ctl_rx_notify_cb)(
+	void *user_data3, void *rx_data),
+	void *user_data3)
+{
+	int ret;
+
+	IPA_API_DISPATCH_RETURN(ipa_register_rmnet_ctl_cb,
+		ipa_rmnet_ctl_ready_cb, user_data1,
+		ipa_rmnet_ctl_stop_cb, user_data2,
+		ipa_rmnet_ctl_rx_notify_cb, user_data3);
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_register_rmnet_ctl_cb);
+
+int ipa_unregister_rmnet_ctl_cb(void)
+{
+	int ret;
+
+	IPA_API_DISPATCH_RETURN(ipa_unregister_rmnet_ctl_cb);
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_unregister_rmnet_ctl_cb);
+
+int ipa_rmnet_ctl_xmit(struct sk_buff *skb)
+{
+	int ret;
+
+	IPA_API_DISPATCH_RETURN(ipa_rmnet_ctl_xmit,
+				skb);
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_rmnet_ctl_xmit);
 
 /**
  * ipa_inc_client_enable_clks() - Increase active clients counter, and

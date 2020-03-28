@@ -6658,6 +6658,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->do_ram_collection_on_crash =
 		resource_p->do_ram_collection_on_crash;
 	ipa3_ctx->lan_rx_napi_enable = resource_p->lan_rx_napi_enable;
+	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 
 	if (ipa3_ctx->secure_debug_check_action == USE_SCM) {
 		if (ipa_is_mem_dump_allowed())
@@ -7089,6 +7090,8 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_enable_napi_netdev();
 
 	ipa3_wwan_init();
+
+	ipa3_rmnet_ctl_init();
 
 	mutex_init(&ipa3_ctx->app_clock_vote.mutex);
 
@@ -7527,6 +7530,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		"qcom,lan-rx-napi");
 	IPADBG(": Enable LAN rx NAPI = %s\n",
 		ipa_drv_res->lan_rx_napi_enable
+		? "True" : "False");
+
+	ipa_drv_res->rmnet_ctl_enable =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,rmnet-ctl-enable");
+	IPADBG(": Enable rmnet ctl = %s\n",
+		ipa_drv_res->rmnet_ctl_enable
 		? "True" : "False");
 
 	/* Get IPA wrapper address */

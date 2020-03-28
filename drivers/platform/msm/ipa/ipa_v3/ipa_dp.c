@@ -37,7 +37,7 @@
 
 #define IPA_GSB_AGGR_BYTE_LIMIT 14
 #define IPA_GSB_RX_BUFF_BASE_SZ 16384
-
+#define IPA_QMAP_RX_BUFF_BASE_SZ 512
 #define IPA_GENERIC_RX_BUFF_BASE_SZ 8192
 #define IPA_REAL_GENERIC_RX_BUFF_SZ(X) (SKB_DATA_ALIGN(\
 		(X) + NET_SKB_PAD) +\
@@ -131,6 +131,7 @@ static int ipa_poll_gsi_n_pkt(struct ipa3_sys_context *sys,
 	int *actual_num);
 static unsigned long tag_to_pointer_wa(uint64_t tag);
 static uint64_t pointer_to_tag_wa(struct ipa3_tx_pkt_wrapper *tx_pkt);
+static void ipa3_tasklet_rx_notify(unsigned long data);
 
 static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit);
 
@@ -229,7 +230,6 @@ static void ipa3_tasklet_write_done(unsigned long data)
 	}
 	spin_unlock_bh(&sys->spinlock);
 }
-
 
 static void ipa3_send_nop_desc(struct work_struct *work)
 {
@@ -873,7 +873,7 @@ static void ipa3_switch_to_intr_rx_work_func(struct work_struct *work)
 	dwork = container_of(work, struct delayed_work, work);
 	sys = container_of(dwork, struct ipa3_sys_context, switch_to_intr_work);
 
-	if (sys->napi_obj) {
+	if (sys->napi_obj || IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
 		/* interrupt mode is done in ipa3_rx_poll context */
 		ipa_assert();
 	} else
@@ -926,6 +926,11 @@ static void ipa_pm_sys_pipe_cb(void *p, enum ipa_pm_cb_event event)
 			usleep_range(SUSPEND_MIN_SLEEP_RX,
 				SUSPEND_MAX_SLEEP_RX);
 			IPA_ACTIVE_CLIENTS_DEC_SPECIAL("PIPE_SUSPEND_COAL");
+		} else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) {
+			IPA_ACTIVE_CLIENTS_INC_SPECIAL("PIPE_SUSPEND_LOW_LAT");
+			usleep_range(SUSPEND_MIN_SLEEP_RX,
+				SUSPEND_MAX_SLEEP_RX);
+			IPA_ACTIVE_CLIENTS_DEC_SPECIAL("PIPE_SUSPEND_LOW_LAT");
 		} else
 			IPAERR("Unexpected event %d\n for client %d\n",
 				event, sys->ep->client);
@@ -1074,8 +1079,12 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	}
 
 	atomic_set(&ep->sys->xmit_eot_cnt, 0);
-	tasklet_init(&ep->sys->tasklet, ipa3_tasklet_write_done,
-			(unsigned long) ep->sys);
+	if (IPA_CLIENT_IS_PROD(sys_in->client))
+		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_write_done,
+				(unsigned long) ep->sys);
+	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
+		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_rx_notify,
+				(unsigned long) ep->sys);
 	ep->skip_ep_cfg = sys_in->skip_ep_cfg;
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
@@ -1780,6 +1789,9 @@ static void ipa3_wq_handle_rx(struct work_struct *work)
 	if (sys->napi_obj) {
 		ipa_pm_activate_sync(sys->pm_hdl);
 		napi_schedule(sys->napi_obj);
+	} else if (IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
+		ipa_pm_activate_sync(sys->pm_hdl);
+		tasklet_schedule(&sys->tasklet);
 	} else
 		ipa3_handle_rx(sys);
 }
@@ -3034,6 +3046,28 @@ static void ipa3_wan_rx_handle_splt_pyld(struct sk_buff *skb,
 	}
 }
 
+static int ipa3_low_lat_rx_pyld_hdlr(struct sk_buff *skb,
+		struct ipa3_sys_context *sys)
+{
+	if (skb->len == 0) {
+		IPAERR("ZLT\n");
+		goto bail;
+	}
+
+	IPA_DUMP_BUFF(skb->data, 0, skb->len);
+	if (!sys->ep->client_notify) {
+		IPAERR("client_notify is NULL");
+		goto bail;
+	}
+	sys->ep->client_notify(sys->ep->priv,
+		IPA_RECEIVE, (unsigned long)(skb));
+	return 0;
+
+bail:
+	sys->free_skb(skb);
+	return 0;
+}
+
 static int ipa3_wan_rx_pyld_hdlr(struct sk_buff *skb,
 		struct ipa3_sys_context *sys)
 {
@@ -3753,7 +3787,8 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 	} else {
 		if (in->client == IPA_CLIENT_APPS_LAN_CONS ||
 		    in->client == IPA_CLIENT_APPS_WAN_CONS ||
-		    in->client == IPA_CLIENT_APPS_WAN_COAL_CONS) {
+		    in->client == IPA_CLIENT_APPS_WAN_COAL_CONS ||
+		    in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) {
 			sys->ep->status.status_en = true;
 			sys->policy = IPA_POLICY_INTR_POLL_MODE;
 			INIT_WORK(&sys->work, ipa3_wq_handle_rx);
@@ -3828,6 +3863,21 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 					in->ipa_ep_cfg.aggr.aggr_pkt_limit
 						= IPA_GENERIC_AGGR_PKT_LIMIT;
 				}
+			} else if (in->client ==
+				IPA_CLIENT_APPS_WAN_LOW_LAT_CONS) {
+				INIT_WORK(&sys->repl_work, ipa3_wq_repl_rx);
+				sys->ep->status.status_en = false;
+				in->ipa_ep_cfg.aggr.aggr_en = IPA_BYPASS_AGGR;
+				in->ipa_ep_cfg.aggr.aggr_time_limit = 0;
+				sys->rx_buff_sz = IPA_GENERIC_RX_BUFF_SZ(
+					IPA_QMAP_RX_BUFF_BASE_SZ);
+				sys->pyld_hdlr = ipa3_low_lat_rx_pyld_hdlr;
+				sys->repl_hdlr =
+					ipa3_fast_replenish_rx_cache;
+				sys->free_rx_wrapper =
+					ipa3_free_rx_wrapper;
+				sys->rx_pool_sz =
+					ipa3_ctx->wan_rx_ring_size;
 			}
 		} else if (IPA_CLIENT_IS_WLAN_CONS(in->client)) {
 			IPADBG("assigning policy to client:%d",
@@ -4371,15 +4421,14 @@ void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys)
 	 * pm deactivate is done in wq context
 	 * or after NAPI poll
 	 */
-
 	clk_off = ipa_pm_activate(sys->pm_hdl);
-	if (!clk_off && sys->napi_obj) {
+	if (!clk_off && sys->napi_obj)
 		napi_schedule(sys->napi_obj);
-		return;
-	}
-	queue_work(sys->wq, &sys->work);
-	return;
-
+	else if (!clk_off &&
+		IPA_CLIENT_IS_LOW_LAT_CONS(sys->ep->client)) {
+		tasklet_schedule(&sys->tasklet);
+	} else
+		queue_work(sys->wq, &sys->work);
 }
 
 static void ipa_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
@@ -5153,3 +5202,31 @@ static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit)
 	aggr_byte_limit++;
 	return aggr_byte_limit >> 1;
 }
+
+static void ipa3_tasklet_rx_notify(unsigned long data)
+{
+	struct ipa3_sys_context *sys;
+	struct sk_buff *rx_skb;
+	struct gsi_chan_xfer_notify notify;
+	int ret;
+
+	sys = (struct ipa3_sys_context *)data;
+	atomic_set(&ipa3_ctx->transport_pm.eot_activity, 1);
+start_poll:
+	while (1) {
+		ret = ipa_poll_gsi_pkt(sys, &notify);
+		if (ret)
+			break;
+		rx_skb = handle_skb_completion(&notify, true);
+		if (rx_skb) {
+			sys->pyld_hdlr(rx_skb, sys);
+			sys->repl_hdlr(sys);
+		}
+	}
+
+	ret = ipa3_rx_switch_to_intr_mode(sys);
+	if (ret == -GSI_STATUS_PENDING_IRQ)
+		goto start_poll;
+	ipa_pm_deferred_deactivate(sys->pm_hdl);
+}
+
