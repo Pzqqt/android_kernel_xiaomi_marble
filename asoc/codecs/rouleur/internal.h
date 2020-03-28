@@ -170,4 +170,6 @@ extern int rouleur_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 extern int rouleur_get_micb_vout_ctl_val(u32 micb_mv);
 extern int rouleur_micbias_control(struct snd_soc_component *component,
 			int micb_num, int req, bool is_dapm);
+extern int rouleur_global_mbias_enable(struct snd_soc_component *component);
+extern int rouleur_global_mbias_disable(struct snd_soc_component *component);
 #endif

@@ -304,7 +304,7 @@ static int rouleur_rx_connect_port(struct snd_soc_component *component,
 	return ret;
 }
 
-static int rouleur_global_mbias_enable(struct snd_soc_component *component)
+int rouleur_global_mbias_enable(struct snd_soc_component *component)
 {
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
 
@@ -322,7 +322,7 @@ static int rouleur_global_mbias_enable(struct snd_soc_component *component)
 	return 0;
 }
 
-static int rouleur_global_mbias_disable(struct snd_soc_component *component)
+int rouleur_global_mbias_disable(struct snd_soc_component *component)
 {
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
 
