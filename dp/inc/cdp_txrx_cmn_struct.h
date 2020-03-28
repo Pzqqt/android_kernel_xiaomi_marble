@@ -43,6 +43,10 @@
 #include "cdp_txrx_extd_struct.h"
 #endif
 
+#ifdef WLAN_MAX_CLIENTS_ALLOWED
+#define OL_TXRX_NUM_LOCAL_PEER_IDS (WLAN_MAX_CLIENTS_ALLOWED + 1 + 1 + 1)
+#endif
+
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
 /*
  * Each AP will occupy one ID, so it will occupy two IDs for AP-AP mode.
