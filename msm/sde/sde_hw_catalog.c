@@ -1870,7 +1870,8 @@ static int sde_ctl_parse_dt(struct device_node *np,
 				ctl_prop[HW_DISP].prop_name, i, &disp_pref);
 		if (disp_pref && !strcmp(disp_pref, "primary"))
 			set_bit(SDE_CTL_PRIMARY_PREF, &ctl->features);
-		if (i < MAX_SPLIT_DISPLAY_CTL)
+		if ((i < MAX_SPLIT_DISPLAY_CTL) &&
+			!(IS_SDE_CTL_REV_100(sde_cfg->ctl_rev)))
 			set_bit(SDE_CTL_SPLIT_DISPLAY, &ctl->features);
 		if (i < MAX_PP_SPLIT_DISPLAY_CTL)
 			set_bit(SDE_CTL_PINGPONG_SPLIT, &ctl->features);

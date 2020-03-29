@@ -756,9 +756,10 @@ static void sde_encoder_phys_vid_enable(struct sde_encoder_phys *phys_enc)
 	vid_enc = to_sde_encoder_phys_vid(phys_enc);
 	intf = phys_enc->hw_intf;
 	ctl = phys_enc->hw_ctl;
-	if (!phys_enc->hw_intf || !phys_enc->hw_ctl) {
-		SDE_ERROR("invalid hw_intf %d hw_ctl %d\n",
-				!phys_enc->hw_intf, !phys_enc->hw_ctl);
+	if (!phys_enc->hw_intf || !phys_enc->hw_ctl || !phys_enc->hw_pp) {
+		SDE_ERROR("invalid hw_intf %d hw_ctl %d hw_pp %d\n",
+				!phys_enc->hw_intf, !phys_enc->hw_ctl,
+				!phys_enc->hw_pp);
 		return;
 	}
 	if (!ctl->ops.update_bitmask) {

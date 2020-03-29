@@ -4171,7 +4171,8 @@ end:
 static int _sde_crtc_check_secure_blend_config(struct drm_crtc *crtc,
 	struct drm_crtc_state *state, struct plane_state pstates[],
 	struct sde_crtc_state *cstate, struct sde_kms *sde_kms,
-	int cnt, int secure, int fb_ns, int fb_sec, int fb_sec_dir)
+	int cnt, int secure, int fb_ns, int fb_sec, int fb_sec_dir,
+	bool conn_secure, bool is_wb)
 {
 	struct drm_plane *plane;
 	int i;
@@ -4252,6 +4253,19 @@ static int _sde_crtc_check_secure_blend_config(struct drm_crtc *crtc,
 		}
 	}
 
+	/*
+	 * If any input buffers are secure,
+	 * the output buffer must also be secure.
+	 */
+	if (is_wb && fb_sec && !conn_secure) {
+		SDE_ERROR(
+			"crtc%d: input fb sec %d, output fb secure %d\n",
+			DRMID(crtc),
+			(fb_sec) ? 1 : 0,
+			(conn_secure) ? 1 : 0);
+		return -EINVAL;
+	}
+
 	return 0;
 }
 
@@ -4318,7 +4332,7 @@ static int _sde_crtc_check_secure_state_smmu_translation(struct drm_crtc *crtc,
 
 static int _sde_crtc_check_secure_state(struct drm_crtc *crtc,
 		struct drm_crtc_state *state, struct plane_state pstates[],
-		int cnt)
+		int cnt, bool conn_secure, bool is_wb)
 {
 	struct sde_crtc_state *cstate;
 	struct sde_kms *sde_kms;
@@ -4347,7 +4361,8 @@ static int _sde_crtc_check_secure_state(struct drm_crtc *crtc,
 		return rc;
 
 	rc = _sde_crtc_check_secure_blend_config(crtc, state, pstates, cstate,
-			sde_kms, cnt, secure, fb_ns, fb_sec, fb_sec_dir);
+			sde_kms, cnt, secure, fb_ns, fb_sec, fb_sec_dir,
+			conn_secure, is_wb);
 	if (rc)
 		return rc;
 
@@ -4538,7 +4553,8 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 static int _sde_crtc_atomic_check_pstates(struct drm_crtc *crtc,
 		struct drm_crtc_state *state,
 		struct plane_state *pstates,
-		struct sde_multirect_plane_states *multirect_plane)
+		struct sde_multirect_plane_states *multirect_plane,
+		bool conn_secure, bool is_wb)
 {
 	struct sde_crtc *sde_crtc;
 	struct sde_crtc_state *cstate;
@@ -4569,7 +4585,8 @@ static int _sde_crtc_atomic_check_pstates(struct drm_crtc *crtc,
 	if (rc)
 		return rc;
 
-	rc = _sde_crtc_check_secure_state(crtc, state, pstates, cnt);
+	rc = _sde_crtc_check_secure_state(crtc, state, pstates, cnt,
+			conn_secure, is_wb);
 	if (rc)
 		return rc;
 
@@ -4595,6 +4612,7 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	struct sde_crtc_state *cstate;
 	struct drm_display_mode *mode;
 	int rc = 0;
+	bool conn_secure = false, is_wb = false;
 	struct sde_multirect_plane_states *multirect_plane = NULL;
 	struct drm_connector *conn;
 	struct drm_connector_list_iter conn_iter;
@@ -4648,6 +4666,14 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		if (conn->state && conn->state->crtc == crtc &&
 				cstate->num_connectors < MAX_CONNECTORS) {
 			cstate->connectors[cstate->num_connectors++] = conn;
+
+			if (conn->connector_type ==
+					DRM_MODE_CONNECTOR_VIRTUAL)
+				is_wb = true;
+			if (sde_connector_get_property(conn->state,
+					CONNECTOR_PROP_FB_TRANSLATION_MODE) ==
+					SDE_DRM_FB_SEC)
+				conn_secure = true;
 		}
 	drm_connector_list_iter_end(&conn_iter);
 
@@ -4655,7 +4681,7 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	_sde_crtc_setup_lm_bounds(crtc, state);
 
 	rc = _sde_crtc_atomic_check_pstates(crtc, state, pstates,
-			multirect_plane);
+			multirect_plane, conn_secure, is_wb);
 	if (rc) {
 		SDE_ERROR("crtc%d failed pstate check %d\n", crtc->base.id, rc);
 		goto end;

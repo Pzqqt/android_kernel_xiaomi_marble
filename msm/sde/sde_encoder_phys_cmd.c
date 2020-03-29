@@ -1450,6 +1450,7 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 	int ret;
 	bool frame_pending = true;
 	struct sde_hw_ctl *ctl;
+	unsigned long lock_flags;
 
 	if (!phys_enc || !phys_enc->hw_ctl) {
 		SDE_ERROR("invalid argument(s)\n");
@@ -1474,6 +1475,28 @@ static int _sde_encoder_phys_cmd_wait_for_wr_ptr(
 			frame_pending = ctl->ops.get_start_state(ctl);
 
 		ret = frame_pending ? ret : 0;
+
+		/*
+		 * There can be few cases of ESD where CTL_START is cleared but
+		 * wr_ptr irq doesn't come. Signaling retire fence in these
+		 * cases to avoid freeze and dangling pending_retire_fence_cnt
+		 */
+		if (!ret) {
+			SDE_EVT32(DRMID(phys_enc->parent),
+				SDE_EVTLOG_FUNC_CASE1);
+
+			if (sde_encoder_phys_cmd_is_master(phys_enc) &&
+				atomic_add_unless(
+				&phys_enc->pending_retire_fence_cnt, -1, 0)) {
+				spin_lock_irqsave(phys_enc->enc_spinlock,
+					lock_flags);
+				phys_enc->parent_ops.handle_frame_done(
+				 phys_enc->parent, phys_enc,
+				 SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE);
+				spin_unlock_irqrestore(phys_enc->enc_spinlock,
+					lock_flags);
+			}
+		}
 	}
 
 	cmd_enc->wr_ptr_wait_success = (ret == 0) ? true : false;

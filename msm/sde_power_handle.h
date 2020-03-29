@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_POWER_HANDLE_H_
@@ -154,6 +154,7 @@ struct sde_power_handle {
 	struct sde_power_data_bus_handle data_bus_handle
 		[SDE_POWER_HANDLE_DBUS_ID_MAX];
 	struct list_head event_list;
+	u32 last_event_handled;
 	struct sde_rsc_client *rsc_client;
 	bool rsc_client_init;
 };
