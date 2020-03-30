@@ -2499,6 +2499,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	wmi_key_material_ext *key_ft;
 	struct wma_txrx_node *iface = NULL;
 	wmi_roam_fils_synch_tlv_param *fils_info;
+	wmi_roam_pmk_cache_synch_tlv_param *pmk_cache_info;
 	int status = -EINVAL;
 	uint8_t kck_len;
 	uint8_t kek_len;
@@ -2638,6 +2639,22 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		WMA_LOGD("Update ERP Seq Num %d, Next ERP Seq Num %d",
 			 roam_synch_ind_ptr->update_erp_next_seq_num,
 			 roam_synch_ind_ptr->next_erp_seq_num);
+	}
+
+	pmk_cache_info = param_buf->roam_pmk_cache_synch_info;
+	if (pmk_cache_info && (pmk_cache_info->pmk_len)) {
+		if (pmk_cache_info->pmk_len > SIR_PMK_LEN) {
+			WMA_LOGE("%s: Invalid pmk_len %d", __func__,
+				 pmk_cache_info->pmk_len);
+			wma_free_roam_synch_frame_ind(iface);
+			return status;
+		}
+
+		roam_synch_ind_ptr->pmk_len = pmk_cache_info->pmk_len;
+		qdf_mem_copy(roam_synch_ind_ptr->pmk,
+			     pmk_cache_info->pmk, pmk_cache_info->pmk_len);
+		qdf_mem_copy(roam_synch_ind_ptr->pmkid,
+			     pmk_cache_info->pmkid, PMKID_LEN);
 	}
 	wma_free_roam_synch_frame_ind(iface);
 	return 0;
