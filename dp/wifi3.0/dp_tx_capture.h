@@ -37,6 +37,8 @@ struct dp_tx_desc_s;
 
 #define SIFS_INTERVAL 16
 
+#define RTS_INTERVAL 40
+
 #define MAX_MGMT_PEER_FILTER 16
 struct dp_peer_mgmt_list {
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];

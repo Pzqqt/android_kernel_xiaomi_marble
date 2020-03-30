@@ -813,7 +813,7 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 		if (ts->tsf > ptr_msdu_info->tsf)
 			tsf_delta = ts->tsf - ptr_msdu_info->tsf;
 		else
-			tsf_delta = ptr_msdu_info->tsf - ts->tsf;
+			tsf_delta = LOWER_32_MASK - ptr_msdu_info->tsf + ts->tsf;
 
 		if (tsf_delta < MAX_MSDU_THRESHOLD_TSF)
 			break;
@@ -1900,7 +1900,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 	frame_ctrl_le =
 		qdf_cpu_to_le16(mpdu_info->frame_ctrl);
 	duration_le =
-		qdf_cpu_to_le16(ppdu_desc->bar_tx_duration);
+		qdf_cpu_to_le16(mpdu_info->tx_duration);
 	wh_min->i_fc[1] = (frame_ctrl_le & 0xFF00) >> 8;
 	wh_min->i_fc[0] = (frame_ctrl_le & 0xFF);
 	wh_min->i_aidordur[1] = (duration_le & 0xFF00) >> 8;
@@ -1991,6 +1991,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 				cur_ppdu_desc->ppdu_start_timestamp;
 		ppdu_desc->ppdu_end_timestamp =
 				cur_ppdu_desc->ppdu_end_timestamp;
+		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration;
 		ppdu_desc->user[0].peer_id = cur_ppdu_desc->user[0].peer_id;
 		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_RTS |
 					 IEEE80211_FC0_TYPE_CTL);
@@ -2015,6 +2016,8 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 				cur_ppdu_desc->ppdu_start_timestamp;
 		ppdu_desc->ppdu_end_timestamp =
 				cur_ppdu_desc->ppdu_end_timestamp;
+		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration -
+					 (RTS_INTERVAL + SIFS_INTERVAL);
 		ppdu_desc->user[0].peer_id = peer_id;
 		peer = dp_tx_cap_peer_find_by_id(pdev->soc, peer_id);
 		if (peer) {
@@ -2753,7 +2756,7 @@ get_mgmt_pkt_from_queue:
 				if (start_tsf > ptr_comp_info->tx_tsf)
 					tsf_delta = start_tsf - ptr_comp_info->tx_tsf;
 				else
-					tsf_delta = ptr_comp_info->tx_tsf - start_tsf;
+					tsf_delta = LOWER_32_MASK - ptr_comp_info->tx_tsf + start_tsf;
 
 				if (tsf_delta > MAX_MGMT_ENQ_DELAY) {
 					/*
