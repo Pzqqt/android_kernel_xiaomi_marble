@@ -71,6 +71,8 @@ QDF_STATUS hif_initialize_ipci_ops(struct hif_softc *hif_sc)
 		&hif_ipci_clear_stats;
 	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
 	bus_ops->hif_needs_bmi = &hif_ipci_needs_bmi;
+	bus_ops->hif_config_irq_affinity =
+		&hif_dummy_config_irq_affinity;
 
 	return QDF_STATUS_SUCCESS;
 }

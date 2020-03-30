@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,7 @@
 #define __HIF_EXEC_H__
 
 #include <hif.h>
+#include <hif_irq_affinity.h>
 #include <linux/cpumask.h>
 /*Number of buckets for latency*/
 #define HIF_SCHED_LATENCY_BUCKETS 8
@@ -107,6 +108,10 @@ struct hif_exec_context {
 	enum hif_exec_type type;
 	unsigned long long poll_start_time;
 	bool force_break;
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+	/* Stores the affinity hint mask for each WLAN IRQ */
+	qdf_cpu_mask new_cpu_mask[HIF_MAX_GRP_IRQ];
+#endif
 };
 
 /**
@@ -155,5 +160,24 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context);
 struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *hif,
 					  uint8_t id);
 void hif_exec_kill(struct hif_opaque_softc *scn);
+
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+/**
+ * hif_pci_irq_set_affinity_hint() - API to set IRQ affinity
+ * @hif_ext_group: hif_ext_group to extract the irq info
+ *
+ * This function will set the IRQ affinity to the gold cores
+ * only for defconfig builds
+ *
+ * Return: none
+ */
+void hif_pci_irq_set_affinity_hint(
+	struct hif_exec_context *hif_ext_group);
+#else
+static inline void hif_pci_irq_set_affinity_hint(
+	struct hif_exec_context *hif_ext_group)
+{
+}
+#endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */
 #endif
 

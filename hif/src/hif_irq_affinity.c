@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,9 +32,6 @@
 #include <linux/topology.h>
 #include <linux/interrupt.h>
 #include <linux/irq.h>
-#ifdef CONFIG_SCHED_CORE_CTL
-#include <linux/sched/core_ctl.h>
-#endif
 #include <linux/pm.h>
 #include <hif_napi.h>
 #include <hif_irq_affinity.h>
@@ -461,19 +458,6 @@ static inline void hif_exec_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 		HIF_DBG("%s: bl_flag %d CE %d", __func__, bl_flag, i);
 	}
 }
-
-#ifdef CONFIG_SCHED_CORE_CTL
-/* Enable this API only if kernel feature - CONFIG_SCHED_CORE_CTL is defined */
-static inline int hif_napi_core_ctl_set_boost(bool boost)
-{
-	return core_ctl_set_boost(boost);
-}
-#else
-static inline int hif_napi_core_ctl_set_boost(bool boost)
-{
-	return 0;
-}
-#endif
 
 /**
  * hif_napi_cpu_blacklist() - en(dis)ables blacklisting for NAPI RX interrupts.

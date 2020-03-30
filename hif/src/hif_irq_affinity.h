@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,6 +57,33 @@ static inline void hif_irq_affinity_remove(int os_irq)
 static inline int hif_exec_event(struct hif_opaque_softc     *hif,
 		   enum  qca_napi_event event,
 		   void                *data)
+{
+	return 0;
+}
+#endif
+
+/**
+ * hif_napi_core_ctl_set_boost() - This API is used to move
+ * tasks to CPUs with higher capacity
+ * @boost: If set move tasks to higher capacity CPUs
+ *
+ * This function moves tasks to higher capacity CPUs than those
+ * where the tasks would have  normally ended up
+ *
+ * Return:  None
+ */
+static inline int hif_napi_core_ctl_set_boost(bool boost)
+{
+	return qdf_core_ctl_set_boost(boost);
+}
+
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+static inline int hif_core_ctl_set_boost(bool boost)
+{
+	return hif_napi_core_ctl_set_boost(boost);
+}
+#else
+static inline int hif_core_ctl_set_boost(bool boost)
 {
 	return 0;
 }

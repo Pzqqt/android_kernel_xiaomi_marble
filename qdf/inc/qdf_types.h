@@ -37,6 +37,9 @@
 /* Preprocessor definitions and constants */
 #define QDF_MAX_SGLIST 4
 
+#define CPU_CLUSTER_TYPE_LITTLE 0
+#define CPU_CLUSTER_TYPE_PERF 1
+
 /**
  * struct qdf_sglist - scatter-gather list
  * @nsegs: total number of segments

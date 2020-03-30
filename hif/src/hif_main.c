@@ -514,6 +514,93 @@ QDF_STATUS hif_unregister_recovery_notifier(struct hif_softc *hif_handle)
 }
 #endif
 
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+/**
+ * __hif_cpu_hotplug_notify() - CPU hotplug event handler
+ * @cpu: CPU Id of the CPU generating the event
+ * @cpu_up: true if the CPU is online
+ *
+ * Return: None
+ */
+static void __hif_cpu_hotplug_notify(void *context,
+				     uint32_t cpu, bool cpu_up)
+{
+	struct hif_softc *scn = context;
+
+	if (!scn)
+		return;
+	if (hif_is_driver_unloading(scn) || hif_is_recovery_in_progress(scn))
+		return;
+
+	if (cpu_up) {
+		hif_config_irq_set_perf_affinity_hint(GET_HIF_OPAQUE_HDL(scn));
+		hif_debug("Setting affinity for online CPU: %d", cpu);
+	} else {
+		hif_debug("Skip setting affinity for offline CPU: %d", cpu);
+	}
+}
+
+/**
+ * hif_cpu_hotplug_notify - cpu core up/down notification
+ * handler
+ * @cpu: CPU generating the event
+ * @cpu_up: true if the CPU is online
+ *
+ * Return: None
+ */
+static void hif_cpu_hotplug_notify(void *context, uint32_t cpu, bool cpu_up)
+{
+	struct qdf_op_sync *op_sync;
+
+	if (qdf_op_protect(&op_sync))
+		return;
+
+	__hif_cpu_hotplug_notify(context, cpu, cpu_up);
+
+	qdf_op_unprotect(op_sync);
+}
+
+static void hif_cpu_online_cb(void *context, uint32_t cpu)
+{
+	hif_cpu_hotplug_notify(context, cpu, true);
+}
+
+static void hif_cpu_before_offline_cb(void *context, uint32_t cpu)
+{
+	hif_cpu_hotplug_notify(context, cpu, false);
+}
+
+static void hif_cpuhp_register(struct hif_softc *scn)
+{
+	if (!scn) {
+		hif_info_high("cannot register hotplug notifiers");
+		return;
+	}
+	qdf_cpuhp_register(&scn->cpuhp_event_handle,
+			   scn,
+			   hif_cpu_online_cb,
+			   hif_cpu_before_offline_cb);
+}
+
+static void hif_cpuhp_unregister(struct hif_softc *scn)
+{
+	if (!scn) {
+		hif_info_high("cannot unregister hotplug notifiers");
+		return;
+	}
+	qdf_cpuhp_unregister(&scn->cpuhp_event_handle);
+}
+
+#else
+static void hif_cpuhp_register(struct hif_softc *scn)
+{
+}
+
+static void hif_cpuhp_unregister(struct hif_softc *scn)
+{
+}
+#endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */
+
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 				  uint32_t mode,
 				  enum qdf_bus_type bus_type,
@@ -556,7 +643,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx,
 		qdf_mem_free(scn);
 		scn = NULL;
 	}
-
+	hif_cpuhp_register(scn);
 	return GET_HIF_OPAQUE_HDL(scn);
 }
 
@@ -606,6 +693,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_uninit_rri_on_ddr(scn);
+	hif_cpuhp_unregister(scn);
 
 	hif_bus_close(scn);
 

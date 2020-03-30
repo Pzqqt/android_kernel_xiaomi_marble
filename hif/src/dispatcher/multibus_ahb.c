@@ -71,6 +71,8 @@ QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_needs_bmi = &hif_ahb_needs_bmi;
 	bus_ops->hif_display_stats = &hif_ahb_display_stats;
 	bus_ops->hif_clear_stats = &hif_ahb_clear_stats;
+	bus_ops->hif_config_irq_affinity =
+		&hif_dummy_config_irq_affinity;
 	return QDF_STATUS_SUCCESS;
 }
 

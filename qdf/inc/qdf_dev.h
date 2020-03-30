@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,9 +28,9 @@
 #include <qdf_types.h>
 #include "i_qdf_dev.h"
 
-struct qdf_cpu_mask;
-struct qdf_devm;
-struct qdf_dev;
+#define qdf_cpumask_pr_args(maskp) __qdf_cpumask_pr_args(maskp)
+#define qdf_for_each_possible_cpu(cpu) __qdf_for_each_possible_cpu(cpu)
+#define qdf_for_each_online_cpu(cpu) __qdf_for_each_online_cpu(cpu)
 
 #ifdef ENHANCED_OS_ABSTRACTION
 /**
@@ -112,4 +112,26 @@ qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask)
 	return __qdf_dev_set_irq_affinity(irnum, cpmask);
 }
 #endif
+
+static inline int qdf_topology_physical_package_id(unsigned int cpu)
+{
+	return __qdf_topology_physical_package_id(cpu);
+}
+
+static inline int qdf_cpumask_subset(qdf_cpu_mask *srcp1,
+				     const qdf_cpu_mask *srcp2)
+{
+	return __qdf_cpumask_subset(srcp1, srcp2);
+}
+
+static inline int qdf_cpumask_intersects(qdf_cpu_mask *srcp1,
+					 const qdf_cpu_mask *srcp2)
+{
+	return __qdf_cpumask_intersects(srcp1, srcp2);
+}
+
+static inline int qdf_core_ctl_set_boost(bool boost)
+{
+	return __qdf_core_ctl_set_boost(boost);
+}
 #endif /* __QDF_DEV_H */

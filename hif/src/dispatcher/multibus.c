@@ -58,6 +58,8 @@ static void hif_initialize_default_ops(struct hif_softc *hif_sc)
 	bus_ops->hif_bus_late_resume = &hif_dummy_bus_resume;
 	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
 	bus_ops->hif_grp_irq_configure = &hif_dummy_grp_irq_configure;
+	bus_ops->hif_config_irq_affinity =
+		&hif_dummy_config_irq_affinity;
 }
 
 #define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
@@ -525,3 +527,8 @@ bool hif_needs_bmi(struct hif_opaque_softc *scn)
 }
 qdf_export_symbol(hif_needs_bmi);
 #endif /* WLAN_FEATURE_BMI */
+
+void hif_config_irq_affinity(struct hif_softc *hif_sc)
+{
+	hif_sc->bus_ops.hif_config_irq_affinity(hif_sc);
+}

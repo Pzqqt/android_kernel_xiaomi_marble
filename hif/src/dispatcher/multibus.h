@@ -80,6 +80,7 @@ struct hif_bus_ops {
 	int (*hif_map_ce_to_irq)(struct hif_softc *hif_sc, int ce_id);
 	int (*hif_addr_in_boundary)(struct hif_softc *scn, uint32_t offset);
 	bool (*hif_needs_bmi)(struct hif_softc *hif_sc);
+	void (*hif_config_irq_affinity)(struct hif_softc *hif_sc);
 };
 
 #ifdef HIF_SNOC
@@ -229,4 +230,15 @@ static inline int hif_usb_get_context_size(void)
 	return 0;
 }
 #endif /* HIF_USB */
+
+/**
+ * hif_config_irq_affinity() - Set IRQ affinity for WLAN IRQs
+ * @hif_sc - hif context
+ *
+ * Set IRQ affinity hint for WLAN IRQs in order to affine to
+ * gold cores.
+ *
+ * Return: None
+ */
+void hif_config_irq_affinity(struct hif_softc *hif_sc);
 #endif /* _MULTIBUS_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,3 +59,4 @@ void hif_dummy_set_bundle_mode(struct hif_softc *hif_ctx,
 int hif_dummy_bus_reset_resume(struct hif_softc *hif_ctx);
 int hif_dummy_map_ce_to_irq(struct hif_softc *scn, int ce_id);
 int hif_dummy_addr_in_boundary(struct hif_softc *scn, uint32_t offset);
+void hif_dummy_config_irq_affinity(struct hif_softc *scn);

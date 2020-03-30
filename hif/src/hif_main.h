@@ -245,6 +245,10 @@ struct hif_softc {
 #ifdef HIF_CE_LOG_INFO
 	qdf_notif_block hif_recovery_notifier;
 #endif
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+	/* The CPU hotplug event registration handle */
+	struct qdf_cpuhp_handler *cpuhp_event_handle;
+#endif
 };
 
 static inline

@@ -3563,6 +3563,80 @@ const char *hif_pci_get_irq_name(int irq_no)
 	return "pci-dummy";
 }
 
+#ifdef HIF_CPU_PERF_AFFINE_MASK
+/**
+ * hif_pci_irq_set_affinity_hint() - API to set IRQ affinity
+ * @hif_ext_group: hif_ext_group to extract the irq info
+ *
+ * This function will set the IRQ affinity to the gold cores
+ * only for defconfig builds
+ *
+ * @hif_ext_group: hif_ext_group to extract the irq info
+ *
+ * Return: none
+ */
+void hif_pci_irq_set_affinity_hint(
+	struct hif_exec_context *hif_ext_group)
+{
+	int i, ret;
+	unsigned int cpus;
+	bool mask_set = false;
+
+	for (i = 0; i < hif_ext_group->numirq; i++)
+		qdf_cpumask_clear(&hif_ext_group->new_cpu_mask[i]);
+
+	for (i = 0; i < hif_ext_group->numirq; i++) {
+		qdf_for_each_online_cpu(cpus) {
+			if (qdf_topology_physical_package_id(cpus) ==
+				CPU_CLUSTER_TYPE_PERF) {
+				qdf_cpumask_set_cpu(cpus,
+						    &hif_ext_group->
+						    new_cpu_mask[i]);
+				mask_set = true;
+			}
+		}
+	}
+	for (i = 0; i < hif_ext_group->numirq; i++) {
+		if (mask_set) {
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  IRQ_NO_BALANCING, 0);
+			ret = qdf_dev_set_irq_affinity(hif_ext_group->os_irq[i],
+						       (struct qdf_cpu_mask *)
+						       &hif_ext_group->
+						       new_cpu_mask[i]);
+			qdf_dev_modify_irq_status(hif_ext_group->os_irq[i],
+						  0, IRQ_NO_BALANCING);
+			if (ret)
+				qdf_err("Set affinity %*pbl fails for IRQ %d ",
+					qdf_cpumask_pr_args(&hif_ext_group->
+							    new_cpu_mask[i]),
+					hif_ext_group->os_irq[i]);
+			else
+				qdf_debug("Set affinity %*pbl for IRQ: %d",
+					  qdf_cpumask_pr_args(&hif_ext_group->
+							      new_cpu_mask[i]),
+					  hif_ext_group->os_irq[i]);
+		} else {
+			qdf_err("Offline CPU: Set affinity fails for IRQ: %d",
+				hif_ext_group->os_irq[i]);
+		}
+	}
+}
+#endif /* #ifdef HIF_CPU_PERF_AFFINE_MASK */
+
+void hif_pci_config_irq_affinity(struct hif_softc *scn)
+{
+	int i;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+
+	hif_core_ctl_set_boost(true);
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+		hif_pci_irq_set_affinity_hint(hif_ext_group);
+	}
+}
+
 int hif_pci_configure_grp_irq(struct hif_softc *scn,
 			      struct hif_exec_context *hif_ext_group)
 {

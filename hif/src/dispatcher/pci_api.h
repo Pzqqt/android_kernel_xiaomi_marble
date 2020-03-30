@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,4 +53,14 @@ void hif_pci_clear_stats(struct hif_softc *hif_ctx);
 int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id);
 bool hif_pci_needs_bmi(struct hif_softc *scn);
 const char *hif_pci_get_irq_name(int irq_no);
+
+/** hif_pci_config_irq_affinity() - Set the IRQ affinity
+ * @scn: hif context
+ *
+ * Set IRQ affinity hint for WLAN IRQs to gold cores only for
+ * defconfig builds.
+ *
+ * Return: None
+ */
+void hif_pci_config_irq_affinity(struct hif_softc *scn);
 #endif /* _PCI_API_H_ */

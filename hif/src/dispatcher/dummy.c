@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -368,3 +368,12 @@ int hif_dummy_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 	return 0;
 }
 
+/**
+ * hif_dummy_config_irq_affinity - dummy call
+ * @scn: hif context
+ *
+ * Return: None
+ */
+void hif_dummy_config_irq_affinity(struct hif_softc *scn)
+{
+}
