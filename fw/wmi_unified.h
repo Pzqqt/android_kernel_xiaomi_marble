@@ -13655,6 +13655,7 @@ typedef struct {
     A_UINT32 max_mlme_sw_retries; /* maximum number of software retries for preauth and reassoc req */
     A_UINT32 no_ack_timeout; /* In msec. duration to wait before another SW retry made if no ack seen for previous frame */
     A_UINT32 roam_candidate_validity_time; /* In msec. validity duration of each entry in roam cache.  If the value is 0x0, this field should be disregarded. */
+    A_UINT32 roam_to_current_bss_disable; /* Disable roaming to current bss */
 } wmi_roam_offload_tlv_param;
 
 
