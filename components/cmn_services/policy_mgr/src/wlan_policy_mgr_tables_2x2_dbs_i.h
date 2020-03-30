@@ -2263,6 +2263,12 @@ static policy_mgr_next_action_three_connection_table_type
 	[PM_P2P_GO_P2P_GO_MCC_5_1x1] = {PM_DBS, PM_SBS},
 	[PM_P2P_GO_P2P_GO_MCC_5_2x2] = {PM_DBS, PM_SBS_DOWNGRADE},
 	[PM_P2P_GO_P2P_GO_SBS_5_1x1] = {PM_DBS_UPGRADE, PM_NOP},
+
+	[PM_P2P_GO_SAP_SCC_5_1x1] = {PM_DBS, PM_SBS},
+	[PM_P2P_GO_SAP_SCC_5_2x2] = {PM_DBS, PM_SBS_DOWNGRADE},
+	[PM_P2P_GO_SAP_MCC_5_1x1] = {PM_DBS, PM_SBS},
+	[PM_P2P_GO_SAP_MCC_5_2x2] = {PM_DBS, PM_SBS_DOWNGRADE},
+	[PM_P2P_GO_SAP_SBS_5_1x1] = {PM_DBS_UPGRADE, PM_NOP},
 };
 
 #endif
