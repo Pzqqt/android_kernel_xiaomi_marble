@@ -25,8 +25,6 @@
 #include "wcd938x.h"
 #include "internal.h"
 
-
-#define WCD938X_DRV_NAME "wcd938x_codec"
 #define NUM_SWRS_DT_PARAMS 5
 #define WCD938X_VARIANT_ENTRY_SIZE 32
 
@@ -47,6 +45,18 @@
 #define DAPM_MICBIAS2_STANDALONE "MIC BIAS2 Standalone"
 #define DAPM_MICBIAS3_STANDALONE "MIC BIAS3 Standalone"
 #define DAPM_MICBIAS4_STANDALONE "MIC BIAS4 Standalone"
+
+#define WCD938X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+			SNDRV_PCM_RATE_384000)
+/* Fractional Rates */
+#define WCD938X_FRAC_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |\
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800)
+
+#define WCD938X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+		SNDRV_PCM_FMTBIT_S24_LE |\
+		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
 
 enum {
 	CODEC_TX = 0,
@@ -3796,6 +3806,30 @@ static irqreturn_t wcd938x_wd_handle_irq(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
+static struct snd_soc_dai_driver wcd938x_dai[] = {
+	{
+		.name = "wcd938x_cdc",
+		.playback = {
+			.stream_name = "WCD938X_AIF Playback",
+                        .rates = WCD938X_RATES | WCD938X_FRAC_RATES,
+			.formats = WCD938X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
+		},
+		.capture = {
+			.stream_name = "WCD938X_AIF Capture",
+                        .rates = WCD938X_RATES | WCD938X_FRAC_RATES,
+			.formats = WCD938X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
+		},
+	},
+};
+
 static int wcd938x_bind(struct device *dev)
 {
 	int ret = 0, i = 0;
@@ -3878,7 +3912,7 @@ static int wcd938x_bind(struct device *dev)
 	wcd_disable_irq(&wcd938x->irq_info, WCD938X_IRQ_AUX_PDM_WD_INT);
 
 	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd938x,
-					NULL, 0);
+					wcd938x_dai, ARRAY_SIZE(wcd938x_dai));
 	if (ret) {
 		dev_err(dev, "%s: Codec registration failed\n",
 				__func__);

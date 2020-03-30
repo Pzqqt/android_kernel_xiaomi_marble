@@ -130,6 +130,9 @@ struct wsa883x_priv {
 	int num_supplies;
 	struct regulator_bulk_data *supplies;
 	unsigned long status_mask;
+	char *wsa883x_name_prefix;
+	struct snd_soc_dai_driver *dai_driver;
+	struct snd_soc_component_driver *driver;
 };
 
 #endif /* WSA883X_INTERNAL_H */
