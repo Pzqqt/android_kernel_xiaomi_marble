@@ -1364,7 +1364,7 @@ static int sde_cp_crtc_checkfeature(struct sde_cp_node *prop_node,
 	bool feature_enabled = false;
 	feature_wrapper check_feature = NULL;
 
-	if (!prop_node || !sde_crtc || !sde_crtc_state) {
+	if (!prop_node) {
 		DRM_ERROR("invalid arguments");
 		return -EINVAL;
 	}

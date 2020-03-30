@@ -1246,7 +1246,7 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 {
 	struct sde_hw_pixel_ext *pe;
 	uint32_t chroma_subsmpl_h, chroma_subsmpl_v;
-	const struct drm_format_info *info = drm_format_info(fmt->base.pixel_format);
+	const struct drm_format_info *info = NULL;
 
 	if (!psde || !fmt || !pstate) {
 		SDE_ERROR("invalid arg(s), plane %d fmt %d state %d\n",
@@ -1254,6 +1254,7 @@ static void _sde_plane_setup_scaler(struct sde_plane *psde,
 		return;
 	}
 
+	info = drm_format_info(fmt->base.pixel_format);
 	pe = &pstate->pixel_ext;
 
 	psde->pipe_cfg.horz_decimation =

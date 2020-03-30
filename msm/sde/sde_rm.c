@@ -1808,7 +1808,7 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 	}
 
 	while (_sde_rm_get_hw_locked(rm, &iter_dsc)) {
-		if (!ctl->ops.read_active_status &&
+		if (ctl->ops.read_active_status &&
 				!(ctl->ops.read_active_status(ctl,
 					SDE_HW_BLK_DSC,
 					iter_dsc.blk->id)))
