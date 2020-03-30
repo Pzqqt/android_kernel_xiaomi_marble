@@ -693,11 +693,11 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 
 	if (ie_len) {
 		if (nla_put(skb, BEACON_IES, ie_len, ies)) {
-			hdd_err("Failed to put beacon IEs");
+			hdd_err("Failed to put beacon IEs: bytes left: %d, ie_len: %u total buf_len: %u",
+				skb_tailroom(skb), ie_len, nl_buf_len);
 			goto fail;
 		}
 		qdf_mem_free(ies);
-		ie_len = 0;
 	}
 
 	return cfg80211_vendor_cmd_reply(skb);
@@ -705,7 +705,6 @@ fail:
 	if (skb)
 		kfree_skb(skb);
 	qdf_mem_free(ies);
-	ie_len = 0;
 	return -EINVAL;
 }
 
