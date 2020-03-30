@@ -537,7 +537,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 		 && pBeaconStruct->HTCaps.present);
 
 	/* Assign default configured nss value in the new session */
-	if (wlan_reg_is_5ghz_ch_freq(ft_session->curr_op_freq))
+	if (!wlan_reg_is_24ghz_ch_freq(ft_session->curr_op_freq))
 		ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
 	else
 		ft_session->vdev_nss = mac->vdev_type_nss_2g.sta;
