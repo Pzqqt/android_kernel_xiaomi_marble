@@ -110,6 +110,10 @@
 
 #define REO_CMD_EVENT_HIST_MAX 64
 
+/* 2G PHYB */
+#define PHYB_2G_LMAC_ID 2
+#define PHYB_2G_TARGET_PDEV_ID 2
+
 #ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
@@ -1260,6 +1264,8 @@ struct dp_soc {
 	qdf_atomic_t num_tx_outstanding;
 	/* Num Tx allowed */
 	uint32_t num_tx_allowed;
+	/* Preferred HW mode */
+	uint8_t preferred_hw_mode;
 
 	/**
 	 * Flag to indicate whether WAR to address single cache entry
@@ -1486,6 +1492,9 @@ struct dp_pdev {
 
 	/* LMAC Id */
 	int lmac_id;
+
+	/* Target pdev  Id */
+	int target_pdev_id;
 
 	/* TXRX SOC handle */
 	struct dp_soc *soc;

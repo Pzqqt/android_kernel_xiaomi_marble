@@ -3764,6 +3764,14 @@ static inline QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, pdev_id);
 	soc->pdev_count++;
 
+	pdev->target_pdev_id =
+		dp_calculate_target_pdev_id_from_host_pdev_id(soc, pdev_id);
+
+	if (soc->preferred_hw_mode == WMI_HOST_HW_MODE_2G_PHYB &&
+	    pdev->lmac_id == PHYB_2G_LMAC_ID) {
+		pdev->target_pdev_id = PHYB_2G_TARGET_PDEV_ID;
+	}
+
 	TAILQ_INIT(&pdev->vdev_list);
 	qdf_spinlock_create(&pdev->vdev_list_lock);
 	pdev->vdev_count = 0;
@@ -8616,7 +8624,9 @@ dp_set_psoc_param(struct cdp_soc_t *cdp_soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  FL("nss-wifi<0> nss config is enabled"));
 		break;
-
+	case CDP_SET_PREFERRED_HW_MODE:
+		soc->preferred_hw_mode = val.cdp_psoc_param_preferred_hw_mode;
+		break;
 	default:
 		break;
 	}
