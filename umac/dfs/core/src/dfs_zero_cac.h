@@ -897,8 +897,8 @@ bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_is_precac_done_on_ht20_40_80_chan_for_freq() - Is precac done on a
- *                                                    VHT20/40/80 channel.
+ * dfs_is_precac_done_on_ht20_40_80_160_165_chan_for_freq() - Is precac done on
+ * a VHT20/40/80/160/165 channel.
  *@dfs: Pointer to wlan_dfs structure.
  *@chan: Channel frequency
  *
@@ -907,14 +907,15 @@ bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
  * * False: If CAC is not done on channel.
  */
 #ifdef CONFIG_CHAN_FREQ_API
-bool dfs_is_precac_done_on_ht20_40_80_chan_for_freq(struct wlan_dfs *dfs,
-						    uint16_t chan_freq);
+bool
+dfs_is_precac_done_on_ht20_40_80_160_165_chan_for_freq(struct wlan_dfs *dfs,
+						       uint16_t chan_freq);
 #endif
 
 /**
- * dfs_is_precac_done_on_ht8080_ht160_chan() - Is precac done on
- *                                             VHT80+80 or VHT160
- *                                             channel.
+ * dfs_is_precac_done_on_ht8080_chan() - Is precac done on VHT80+80 channel
+ *                                       channel other than the restricted
+ *                                       80+80 channel.
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Pointer to dfs_channel for which preCAC done is checked.
  *
@@ -922,8 +923,8 @@ bool dfs_is_precac_done_on_ht20_40_80_chan_for_freq(struct wlan_dfs *dfs,
  * * True:  If CAC is done on channel.
  * * False: If CAC is not done on channel.
  */
-bool dfs_is_precac_done_on_ht8080_ht160_chan(struct wlan_dfs *dfs,
-					     struct dfs_channel *chan);
+bool dfs_is_precac_done_on_ht8080_chan(struct wlan_dfs *dfs,
+				       struct dfs_channel *chan);
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
 /**
