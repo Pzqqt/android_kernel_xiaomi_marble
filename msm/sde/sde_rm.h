@@ -88,6 +88,7 @@ enum sde_rm_qsync_modes {
  * @num_intf: number of interface used
  * @num_ctl: number of control path used
  * @needs_split_display: If set split display is enabled
+ * @comp_type: type of compression supported
  */
 struct sde_rm_topology_def {
 	enum sde_rm_topology_name top_name;
@@ -95,7 +96,8 @@ struct sde_rm_topology_def {
 	int num_comp_enc;
 	int num_intf;
 	int num_ctl;
-	int needs_split_display;
+	bool needs_split_display;
+	enum msm_display_compression_type comp_type;
 };
 
 /**
@@ -156,11 +158,12 @@ struct sde_rm_hw_request {
 
 /**
  * sde_rm_get_topology_name - get the name of the given topology config
+ * @rm: SDE resource manager handle
  * @topology: msm_display_topology topology config
  * @Return: name of the given topology
  */
-enum sde_rm_topology_name sde_rm_get_topology_name(
-	struct msm_display_topology topology);
+enum sde_rm_topology_name sde_rm_get_topology_name(struct sde_rm *rm,
+		struct msm_display_topology topology);
 
 
 /**
@@ -273,11 +276,13 @@ int sde_rm_cont_splash_res_init(struct msm_drm_private *priv,
 
 /**
  * sde_rm_update_topology - sets topology property of the connector
+ * @rm: SDE resource manager handle
  * @conn_state: drm state of the connector
  * @topology: topology selected for the display
  * @return: 0 on success or error
  */
-int sde_rm_update_topology(struct drm_connector_state *conn_state,
+int sde_rm_update_topology(struct sde_rm *rm,
+	struct drm_connector_state *conn_state,
 	struct msm_display_topology *topology);
 
 /**

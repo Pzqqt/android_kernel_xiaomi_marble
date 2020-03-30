@@ -31,40 +31,61 @@
 #define RM_RQ_CWB(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_CWB))
 #define RM_IS_TOPOLOGY_MATCH(t, r) ((t).num_lm == (r).num_lm && \
 				(t).num_comp_enc == (r).num_enc && \
-				(t).num_intf == (r).num_intf)
+				(t).num_intf == (r).num_intf && \
+				(t).comp_type == (r).comp_type)
 
 /**
  * toplogy information to be used when ctl path version does not
  * support driving more than one interface per ctl_path
  */
-static const struct sde_rm_topology_def g_top_table[] = {
-	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 2, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 2, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true  },
+static const struct sde_rm_topology_def g_top_table[SDE_RM_TOPOLOGY_MAX] = {
+	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 2, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 2, true,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
 };
 
 /**
  * topology information to be used when the ctl path version
  * is SDE_CTL_CFG_VERSION_1_0_0
  */
-static const struct sde_rm_topology_def g_ctl_ver_1_top_table[] = {
-	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 1, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 1, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true  },
+static const struct sde_rm_topology_def g_top_table_v1[SDE_RM_TOPOLOGY_MAX] = {
+	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_VDC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_VDC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
 };
 
 
@@ -308,14 +329,15 @@ void sde_rm_init_hw_iter(
 	iter->type = type;
 }
 
-enum sde_rm_topology_name sde_rm_get_topology_name(
-	struct msm_display_topology topology)
+enum sde_rm_topology_name sde_rm_get_topology_name(struct sde_rm *rm,
+		struct msm_display_topology topology)
 {
 	int i;
 
 	for (i = 0; i < SDE_RM_TOPOLOGY_MAX; i++)
-		if (RM_IS_TOPOLOGY_MATCH(g_top_table[i], topology))
-			return g_top_table[i].top_name;
+		if (RM_IS_TOPOLOGY_MATCH(rm->topology_tbl[i],
+					topology))
+			return rm->topology_tbl[i].top_name;
 
 	return SDE_RM_TOPOLOGY_NONE;
 }
@@ -714,7 +736,7 @@ int sde_rm_init(struct sde_rm *rm,
 	rm->dev = dev;
 
 	if (IS_SDE_CTL_REV_100(cat->ctl_rev))
-		rm->topology_tbl = g_ctl_ver_1_top_table;
+		rm->topology_tbl = g_top_table_v1;
 	else
 		rm->topology_tbl = g_top_table;
 
@@ -2035,7 +2057,8 @@ static struct drm_connector *_sde_rm_get_connector(
 	return conn;
 }
 
-int sde_rm_update_topology(struct drm_connector_state *conn_state,
+int sde_rm_update_topology(struct sde_rm *rm,
+	struct drm_connector_state *conn_state,
 	struct msm_display_topology *topology)
 {
 	int i, ret = 0;
@@ -2048,8 +2071,8 @@ int sde_rm_update_topology(struct drm_connector_state *conn_state,
 	if (topology) {
 		top = *topology;
 		for (i = 0; i < SDE_RM_TOPOLOGY_MAX; i++)
-			if (RM_IS_TOPOLOGY_MATCH(g_top_table[i], top)) {
-				top_name = g_top_table[i].top_name;
+			if (RM_IS_TOPOLOGY_MATCH(rm->topology_tbl[i], top)) {
+				top_name = rm->topology_tbl[i].top_name;
 				break;
 			}
 	}

@@ -2303,8 +2303,8 @@ static int sde_connector_populate_mode_info(struct drm_connector *conn,
 		sde_kms_info_add_keyint(info, "bit_clk_rate",
 					mode_info.clk_rate);
 
-		topology_idx = (int)sde_rm_get_topology_name(
-							mode_info.topology);
+		topology_idx = (int)sde_rm_get_topology_name(&sde_kms->rm,
+					mode_info.topology);
 		if (topology_idx < SDE_RM_TOPOLOGY_MAX) {
 			sde_kms_info_add_keystr(info, "topology",
 					e_topology_name[topology_idx].name);

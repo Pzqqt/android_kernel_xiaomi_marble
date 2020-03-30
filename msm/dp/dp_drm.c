@@ -425,6 +425,7 @@ int dp_connector_get_mode_info(struct drm_connector *connector,
 			sizeof(mode_info->comp_info));
 
 		topology->num_enc = topology->num_lm;
+		topology->comp_type = mode_info->comp_info.comp_type;
 	}
 
 	return 0;

@@ -512,14 +512,14 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 	memcpy(&mode_info->topology, &dsi_mode.priv_info->topology,
 			sizeof(struct msm_display_topology));
 
-	mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_NONE;
-
 	if (dsi_mode.priv_info->dsc_enabled) {
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
+		mode_info->topology.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
 		memcpy(&mode_info->comp_info.dsc_info, &dsi_mode.priv_info->dsc,
 			sizeof(dsi_mode.priv_info->dsc));
 	} else if (dsi_mode.priv_info->vdc_enabled) {
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_VDC;
+		mode_info->topology.comp_type = MSM_DISPLAY_COMPRESSION_VDC;
 		memcpy(&mode_info->comp_info.vdc_info, &dsi_mode.priv_info->vdc,
 			sizeof(dsi_mode.priv_info->vdc));
 	}
