@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef BOLERO_CDC_H
@@ -50,6 +50,12 @@ enum {
 	BOLERO_MACRO_EVT_BCS_CLK_OFF
 };
 
+enum {
+	DMIC_TX = 0,
+	DMIC_VA = 1,
+
+};
+
 struct macro_ops {
 	int (*init)(struct snd_soc_component *component);
 	int (*exit)(struct snd_soc_component *component);
@@ -63,6 +69,7 @@ struct macro_ops {
 	int (*set_port_map)(struct snd_soc_component *component, u32 uc,
 			    u32 size, void *data);
 	int (*clk_switch)(struct snd_soc_component *component);
+	int (*clk_div_get)(struct snd_soc_component *component);
 	int (*reg_evt_listener)(struct snd_soc_component *component, bool en);
 	char __iomem *io_base;
 	u16 clk_id_req;
@@ -93,6 +100,8 @@ int bolero_register_event_listener(struct snd_soc_component *component,
 void bolero_wsa_pa_on(struct device *dev);
 bool bolero_check_core_votes(struct device *dev);
 int bolero_get_version(struct device *dev);
+int bolero_dmic_clk_enable(struct snd_soc_component *component,
+			   u32 dmic, u32 tx_mode, bool enable);
 #else
 static inline int bolero_register_res_clk(struct device *dev, rsc_clk_cb_t cb)
 {
@@ -174,6 +183,12 @@ static inline bool bolero_check_core_votes(struct device *dev)
 }
 
 static int bolero_get_version(struct device *dev)
+{
+	return 0;
+}
+
+static int bolero_dmic_clk_enable(struct snd_soc_component *component,
+			   u32 dmic, u32 tx_mode, bool enable)
 {
 	return 0;
 }

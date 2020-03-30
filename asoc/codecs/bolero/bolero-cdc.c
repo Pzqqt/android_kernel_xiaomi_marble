@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -476,6 +476,129 @@ void bolero_unregister_res_clk(struct device *dev)
 }
 EXPORT_SYMBOL(bolero_unregister_res_clk);
 
+static u8 bolero_dmic_clk_div_get(struct snd_soc_component *component,
+				   int mode)
+{
+	struct bolero_priv* priv = snd_soc_component_get_drvdata(component);
+	int macro = (mode ? VA_MACRO : TX_MACRO);
+	int ret = 0;
+
+	if (priv->macro_params[macro].clk_div_get) {
+		ret = priv->macro_params[macro].clk_div_get(component);
+		if (ret > 0)
+			return ret;
+	}
+
+	return 1;
+}
+
+int bolero_dmic_clk_enable(struct snd_soc_component *component,
+			   u32 dmic, u32 tx_mode, bool enable)
+{
+	struct bolero_priv* priv = snd_soc_component_get_drvdata(component);
+	u8  dmic_clk_en = 0x01;
+	u16 dmic_clk_reg = 0;
+	s32 *dmic_clk_cnt = NULL;
+	u8 *dmic_clk_div = NULL;
+	u8 freq_change_mask = 0;
+	u8 clk_div = 0;
+
+	dev_dbg(component->dev, "%s: enable: %d, tx_mode:%d, dmic: %d\n",
+		__func__, enable, tx_mode, dmic);
+
+	switch (dmic) {
+	case 0:
+	case 1:
+		dmic_clk_cnt = &(priv->dmic_0_1_clk_cnt);
+		dmic_clk_div = &(priv->dmic_0_1_clk_div);
+		dmic_clk_reg = BOLERO_CDC_VA_TOP_CSR_DMIC0_CTL;
+		freq_change_mask = 0x01;
+		break;
+	case 2:
+	case 3:
+		dmic_clk_cnt = &(priv->dmic_2_3_clk_cnt);
+		dmic_clk_div = &(priv->dmic_2_3_clk_div);
+		dmic_clk_reg = BOLERO_CDC_VA_TOP_CSR_DMIC1_CTL;
+		freq_change_mask = 0x02;
+		break;
+	case 4:
+	case 5:
+		dmic_clk_cnt = &(priv->dmic_4_5_clk_cnt);
+		dmic_clk_div = &(priv->dmic_4_5_clk_div);
+		dmic_clk_reg = BOLERO_CDC_VA_TOP_CSR_DMIC2_CTL;
+		freq_change_mask = 0x04;
+		break;
+	case 6:
+	case 7:
+		dmic_clk_cnt = &(priv->dmic_6_7_clk_cnt);
+		dmic_clk_div = &(priv->dmic_6_7_clk_div);
+		dmic_clk_reg = BOLERO_CDC_VA_TOP_CSR_DMIC3_CTL;
+		freq_change_mask = 0x08;
+		break;
+	default:
+		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
+			__func__);
+		return -EINVAL;
+	}
+	dev_dbg(component->dev, "%s: DMIC%d dmic_clk_cnt %d\n",
+			__func__, dmic, *dmic_clk_cnt);
+	if (enable) {
+		clk_div = bolero_dmic_clk_div_get(component, tx_mode);
+		(*dmic_clk_cnt)++;
+		if (*dmic_clk_cnt == 1) {
+			snd_soc_component_update_bits(component,
+					BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+					0x80, 0x00);
+			snd_soc_component_update_bits(component, dmic_clk_reg,
+						0x0E, clk_div << 0x1);
+			snd_soc_component_update_bits(component, dmic_clk_reg,
+					dmic_clk_en, dmic_clk_en);
+		} else {
+			if (*dmic_clk_div > clk_div) {
+				snd_soc_component_update_bits(component,
+						BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+						freq_change_mask, freq_change_mask);
+				snd_soc_component_update_bits(component, dmic_clk_reg,
+						0x0E, clk_div << 0x1);
+				snd_soc_component_update_bits(component,
+						BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+						freq_change_mask, 0x00);
+			} else {
+				clk_div = *dmic_clk_div;
+			}
+		}
+		*dmic_clk_div = clk_div;
+	} else {
+		(*dmic_clk_cnt)--;
+		if (*dmic_clk_cnt  == 0) {
+			snd_soc_component_update_bits(component, dmic_clk_reg,
+					dmic_clk_en, 0);
+			clk_div = 0;
+			snd_soc_component_update_bits(component, dmic_clk_reg,
+							0x0E, clk_div << 0x1);
+		} else {
+			clk_div = bolero_dmic_clk_div_get(component, tx_mode);
+			if (*dmic_clk_div > clk_div) {
+				clk_div = bolero_dmic_clk_div_get(component, !tx_mode);
+				snd_soc_component_update_bits(component,
+							BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+							freq_change_mask, freq_change_mask);
+				snd_soc_component_update_bits(component, dmic_clk_reg,
+								0x0E, clk_div << 0x1);
+				snd_soc_component_update_bits(component,
+							BOLERO_CDC_VA_TOP_CSR_DMIC_CFG,
+							freq_change_mask, 0x00);
+			} else {
+				clk_div = *dmic_clk_div;
+			}
+		}
+		*dmic_clk_div = clk_div;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(bolero_dmic_clk_enable);
+
 /**
  * bolero_register_macro - Registers macro to bolero
  *
@@ -524,6 +647,9 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
 	}
+	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
+		priv->macro_params[macro_id].clk_div_get = ops->clk_div_get;
+
 	if (priv->version == BOLERO_VERSION_2_1) {
 		if (macro_id == VA_MACRO)
 			priv->macro_params[macro_id].reg_wake_irq =
@@ -594,6 +720,8 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		priv->macro_params[macro_id].clk_switch = NULL;
 		priv->macro_params[macro_id].reg_evt_listener = NULL;
 	}
+	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
+		priv->macro_params[macro_id].clk_div_get = NULL;
 
 	priv->num_dais -= priv->macro_params[macro_id].num_dais;
 	priv->num_macros_registered--;
