@@ -39,6 +39,7 @@ void q6asm_in_cb(uint32_t opcode, uint32_t token,
 		wake_up(&audio->write_wait);
 		break;
 	case ASM_DATA_EVENT_RENDERED_EOS:
+	case ASM_DATA_EVENT_RENDERED_EOS_V2:
 		audio->eos_rsp = 1;
 		wake_up(&audio->read_wait);
 		break;
