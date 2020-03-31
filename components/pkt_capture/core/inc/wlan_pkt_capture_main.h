@@ -185,4 +185,15 @@ uint32_t pkt_capture_drop_nbuf_list(qdf_nbuf_t buf_list);
  * Return: None
  */
 void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pkt_capture_mon() - Wrapper function to invoke mon cb
+ * @cb_ctx: packet capture callback context
+ * @msdu: packet
+ *
+ * Return: None
+ */
+void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx,
+		     qdf_nbuf_t msdu);
+
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
