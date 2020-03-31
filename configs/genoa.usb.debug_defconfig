@@ -51,7 +51,6 @@ CONFIG_LEAK_DETECTION := y
 endif
 
 # Genoa features vs Rome
-CONFIG_RX_PN_CHECK_OFFLOAD := y
 CONFIG_HTT_PADDR64 := y
 
 CONFIG_QCA_WIFI_FTM := y
