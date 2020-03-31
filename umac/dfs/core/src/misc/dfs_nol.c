@@ -370,16 +370,16 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 	nol = dfs->dfs_nol;
 	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL, "NOL");
 	while (nol) {
-		diff_ms = qdf_system_ticks_to_msecs(qdf_system_ticks() -
-				nol->nol_start_ticks);
+		diff_ms = qdf_do_div(qdf_get_monotonic_boottime() -
+				     nol->nol_start_us, 1000);
 		diff_ms = (nol->nol_timeout_ms - diff_ms);
 		remaining_sec = diff_ms / 1000; /* Convert to seconds */
 		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol starttick=%llu",
+			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol start_us=%llu",
 			i++, nol->nol_freq,
 			nol->nol_chwidth,
 			remaining_sec,
-			(uint64_t)nol->nol_start_ticks);
+			nol->nol_start_us);
 		nol = nol->nol_next;
 	}
 }
@@ -434,7 +434,7 @@ void dfs_get_nol(struct wlan_dfs *dfs,
 	while (nol) {
 		dfs_nol[*nchan].nol_freq = nol->nol_freq;
 		dfs_nol[*nchan].nol_chwidth = nol->nol_chwidth;
-		dfs_nol[*nchan].nol_start_ticks = nol->nol_start_ticks;
+		dfs_nol[*nchan].nol_start_us = nol->nol_start_us;
 		dfs_nol[*nchan].nol_timeout_ms = nol->nol_timeout_ms;
 		++(*nchan);
 		nol = nol->nol_next;
@@ -457,9 +457,8 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 	}
 
 	for (i = 0; i < nchan; i++) {
-		nol_time_lft_ms =
-			qdf_system_ticks_to_msecs(qdf_system_ticks() -
-				dfs_nol[i].nol_start_ticks);
+		nol_time_lft_ms = qdf_do_div(qdf_get_monotonic_boottime() -
+					     dfs_nol[i].nol_start_us, 1000);
 
 		if (nol_time_lft_ms < dfs_nol[i].nol_timeout_ms) {
 			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
@@ -496,9 +495,8 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 	}
 
 	for (i = 0; i < nchan; i++) {
-		nol_time_left_ms =
-			qdf_system_ticks_to_msecs(qdf_system_ticks() -
-				dfs_nol[i].nol_start_ticks);
+		nol_time_left_ms = qdf_do_div(qdf_get_monotonic_boottime() -
+					      dfs_nol[i].nol_start_us, 1000);
 
 		if (nol_time_left_ms < dfs_nol[i].nol_timeout_ms) {
 			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
@@ -540,7 +538,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	while (nol) {
 		if ((nol->nol_freq == freq) &&
 				(nol->nol_chwidth == ch_width)) {
-			nol->nol_start_ticks = qdf_system_ticks();
+			nol->nol_start_us = qdf_get_monotonic_boottime();
 			nol->nol_timeout_ms = dfs_nol_timeout * TIME_IN_MS;
 
 			dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
@@ -565,7 +563,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	elem->nol_dfs = dfs;
 	elem->nol_freq = freq;
 	elem->nol_chwidth = ch_width;
-	elem->nol_start_ticks = qdf_system_ticks();
+	elem->nol_start_us = qdf_get_monotonic_boottime();
 	elem->nol_timeout_ms = dfs_nol_timeout*TIME_IN_MS;
 	elem->nol_next = NULL;
 	if (prev) {
@@ -1005,9 +1003,9 @@ void dfs_save_dfs_nol_in_psoc(struct wlan_dfs *dfs,
 	num_chans = nolinfo->dfs_ch_nchans;
 	for (i = 0; i < tmp_nolinfo.dfs_ch_nchans; i++) {
 		/* Figure out the completed duration of each NOL. */
-		uint32_t nol_completed_ms =
-			qdf_system_ticks_to_msecs(qdf_system_ticks() -
-					tmp_nolinfo.dfs_nol[i].nol_start_ticks);
+		uint32_t nol_completed_ms = qdf_do_div(
+			qdf_get_monotonic_boottime() -
+			tmp_nolinfo.dfs_nol[i].nol_start_us, 1000);
 
 		nolinfo->dfs_nol[num_chans] = tmp_nolinfo.dfs_nol[i];
 		/* Remember the remaining NOL time in the timeout
@@ -1050,7 +1048,8 @@ void dfs_reinit_nol_from_psoc_copy(struct wlan_dfs *dfs,
 			 * current time to avoid losing entries which might
 			 * have timed out during the pause and resume mechanism.
 			 */
-			nol->dfs_nol[i].nol_start_ticks = qdf_system_ticks();
+			nol->dfs_nol[i].nol_start_us =
+				qdf_get_monotonic_boottime();
 			req_nol.dfs_nol[j++] = nol->dfs_nol[i];
 		}
 	}

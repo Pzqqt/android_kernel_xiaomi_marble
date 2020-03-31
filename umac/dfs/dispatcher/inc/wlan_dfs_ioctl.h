@@ -84,14 +84,14 @@
  * struct dfsreq_nolelem - NOL elements.
  * @nol_freq:          NOL channel frequency.
  * @nol_chwidth:       NOL channel width.
- * @nol_start_ticks:   OS ticks when the NOL timer started.
+ * @nol_start_us:      OS microseconds when the NOL timer started.
  * @nol_timeout_ms:    Nol timeout value in msec.
  */
 
 struct dfsreq_nolelem {
 	uint16_t        nol_freq;
 	uint16_t        nol_chwidth;
-	unsigned long   nol_start_ticks;
+	uint64_t        nol_start_us;
 	uint32_t        nol_timeout_ms;
 };
 
