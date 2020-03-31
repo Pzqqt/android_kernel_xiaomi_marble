@@ -659,7 +659,7 @@ static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 	}
 }
 
-static void
+void
 blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
 			      struct blm_config *cfg)
@@ -694,12 +694,6 @@ blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			     &reject_params.num_of_reject_bssid,
 			     DRIVER_AVOID_TYPE,
 			     PDEV_MAX_NUM_BSSID_DISALLOW_LIST, cfg);
-
-	if (!reject_params.num_of_reject_bssid) {
-		blm_debug("no candidate present in reject ap list.");
-		qdf_mem_free(reject_params.bssid_list);
-		return;
-	}
 
 	status = tgt_blm_send_reject_list_to_fw(pdev, &reject_params);
 

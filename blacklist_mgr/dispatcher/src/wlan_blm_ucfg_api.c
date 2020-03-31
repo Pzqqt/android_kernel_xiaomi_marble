@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -144,6 +144,9 @@ void
 ucfg_blm_wifi_off(struct wlan_objmgr_pdev *pdev)
 {
 	struct blm_pdev_priv_obj *blm_ctx;
+	struct blm_psoc_priv_obj *blm_psoc_obj;
+	struct blm_config *cfg;
+	QDF_STATUS status;
 
 	if (!pdev) {
 		blm_err("pdev is NULL");
@@ -151,10 +154,22 @@ ucfg_blm_wifi_off(struct wlan_objmgr_pdev *pdev)
 	}
 
 	blm_ctx = blm_get_pdev_obj(pdev);
-	if (!blm_ctx) {
-		blm_err("blm_ctx is NULL");
+	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
+
+	if (!blm_ctx || !blm_psoc_obj) {
+		blm_err("blm_ctx or blm_psoc_obj is NULL");
+		return ;
+	}
+
+	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		blm_err("failed to acquire reject_ap_list_lock");
 		return;
 	}
 
+	cfg = &blm_psoc_obj->blm_cfg;
+
 	blm_flush_reject_ap_list(blm_ctx);
+	blm_send_reject_ap_list_to_fw(pdev, &blm_ctx->reject_ap_list, cfg);
+	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 }
