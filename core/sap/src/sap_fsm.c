@@ -2727,6 +2727,13 @@ sap_fsm_state_stopping(struct sap_context *sap_ctx,
 		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 					eSAP_STOP_BSS_EVENT,
 					(void *)eSAP_STATUS_SUCCESS);
+	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
+		/*
+		 * In case the SAP is already in stopping case and
+		 * we get a STOP request, return success.
+		 */
+		sap_debug("SAP already in Stopping state");
+		qdf_status = QDF_STATUS_SUCCESS;
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
