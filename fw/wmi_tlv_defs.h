@@ -1056,6 +1056,7 @@ typedef enum {
     WMITLV_TAG_STRUC_WMI_MAC_PHY_CAPABILITIES_EXT,
     WMITLV_TAG_STRUC_WMI_HAL_REG_CAPABILITIES_EXT2,
     WMITLV_TAG_STRUC_wmi_roam_pmk_cache_synch_tlv_param,
+    WMITLV_TAG_STRUC_wmi_mdns_set_staIP_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1255,6 +1256,7 @@ typedef enum {
     OP(WMI_MDNS_SET_FQDN_CMDID) \
     OP(WMI_MDNS_SET_RESPONSE_CMDID) \
     OP(WMI_MDNS_GET_STATS_CMDID) \
+    OP(WMI_MDNS_SET_STAIP_CMDID) \
     OP(WMI_SET_ANTENNA_DIVERSITY_CMDID) \
     OP(WMI_SAP_OFL_ENABLE_CMDID) \
     OP(WMI_APFIND_CMDID) \
@@ -3476,6 +3478,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MDNS_SET_RESPONSE_CMDID);
 #define WMITLV_TABLE_WMI_MDNS_GET_STATS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mdns_get_stats_cmd_fixed_param, wmi_mdns_get_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_MDNS_GET_STATS_CMDID);
+
+#define WMITLV_TABLE_WMI_MDNS_SET_STAIP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_mdns_set_staIP_cmd_fixed_param, wmi_mdns_set_staIP_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_MDNS_SET_STAIP_CMDID);
 
 /* roam invoke Cmd */
 #define WMITLV_TABLE_WMI_ROAM_INVOKE_CMDID(id,op,buf,len) \
