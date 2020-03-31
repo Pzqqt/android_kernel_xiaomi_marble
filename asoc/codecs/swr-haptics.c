@@ -46,9 +46,9 @@ static struct reg_default swr_hap_reg_defaults[] = {
 
 enum {
 	PORT_ID_DT_IDX,
+	NUM_CH_DT_IDX,
 	CH_MASK_DT_IDX,
 	CH_RATE_DT_IDX,
-	NUM_CH_DT_IDX,
 	PORT_TYPE_DT_IDX,
 	NUM_SWR_PORT_DT_PARAMS,
 };
@@ -254,9 +254,9 @@ static int swr_haptics_parse_port_mapping(struct swr_device *sdev)
 	}
 
 	swr_hap->port.port_id = (u8) port_cfg[PORT_ID_DT_IDX];
+	swr_hap->port.num_ch = (u8) port_cfg[NUM_CH_DT_IDX];
 	swr_hap->port.ch_mask = (u8) port_cfg[CH_MASK_DT_IDX];
 	swr_hap->port.ch_rate = port_cfg[CH_RATE_DT_IDX];
-	swr_hap->port.num_ch = (u8) port_cfg[NUM_CH_DT_IDX];
 	swr_hap->port.port_type = (u8) port_cfg[PORT_TYPE_DT_IDX];
 
 	dev_dbg(swr_hap->dev, "%s: port_id = %d, ch_mask = %d, ch_rate = %d, num_ch = %d, port_type = %d\n",
