@@ -5592,6 +5592,9 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_PRINT_STATS("hal ring access fail: %u msdus",
 			       pdev->soc->stats.rx.err.hal_ring_access_fail);
 
+		DP_PRINT_STATS("hal ring access full fail: %u msdus",
+			       pdev->soc->stats.rx.err.hal_ring_access_full_fail);
+
 		for (error_code = 0; error_code < HAL_REO_ERR_MAX;
 				error_code++) {
 			if (!pdev->soc->stats.rx.err.reo_error[error_code])
@@ -6068,6 +6071,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 		       soc->stats.rx.err.rx_invalid_peer.num);
 	DP_PRINT_STATS("HAL Ring Access Fail = %d",
 		       soc->stats.rx.err.hal_ring_access_fail);
+	DP_PRINT_STATS("HAL Ring Access Full Fail = %d",
+		       soc->stats.rx.err.hal_ring_access_full_fail);
 	DP_PRINT_STATS("MSDU Done failures = %d",
 		       soc->stats.rx.err.msdu_done_fail);
 	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);

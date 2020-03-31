@@ -775,6 +775,8 @@ struct dp_soc_stats {
 			struct cdp_pkt_info rx_invalid_pkt_len;
 			/* HAL ring access Fail error count */
 			uint32_t hal_ring_access_fail;
+			/* HAL ring access full Fail error count */
+			uint32_t hal_ring_access_full_fail;
 			/* RX DMA error count */
 			uint32_t rxdma_error[HAL_RXDMA_ERR_MAX];
 			/* RX REO DEST Desc Invalid Magic count */

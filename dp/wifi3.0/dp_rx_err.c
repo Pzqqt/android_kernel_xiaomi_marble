@@ -201,12 +201,18 @@ dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("WBM Release Ring (Id %d) Full"), srng->ring_id);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x",
-			*srng->u.src_ring.hp_addr, srng->u.src_ring.reap_hp,
-			*srng->u.src_ring.tp_addr, srng->u.src_ring.cached_tp);
+
+		DP_STATS_INC(soc, rx.err.hal_ring_access_full_fail, 1);
+
+		dp_info_rl("WBM Release Ring (Id %d) Full(Fail CNT %u)",
+			   srng->ring_id,
+			   soc->stats.rx.err.hal_ring_access_full_fail);
+		dp_info_rl("HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x",
+			   *srng->u.src_ring.hp_addr,
+			   srng->u.src_ring.reap_hp,
+			   *srng->u.src_ring.tp_addr,
+			   srng->u.src_ring.cached_tp);
+		qdf_assert(0);
 	}
 done:
 	hal_srng_access_end(hal_soc, wbm_rel_srng);
