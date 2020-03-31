@@ -655,6 +655,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_ROAM_SCAN_CH_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 414)
 
 #define SIR_HAL_REQ_SEND_DELBA_REQ_IND     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 415)
+#define SIR_HAL_SEND_MAX_TX_POWER          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 416)
 
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 

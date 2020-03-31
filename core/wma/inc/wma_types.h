@@ -175,6 +175,7 @@
 #define WMA_SET_TX_POWER_REQ                    SIR_HAL_SET_TX_POWER_REQ
 #define WMA_SET_TX_POWER_RSP                    SIR_HAL_SET_TX_POWER_RSP
 #define WMA_GET_TX_POWER_REQ                    SIR_HAL_GET_TX_POWER_REQ
+#define WMA_SEND_MAX_TX_POWER                   SIR_HAL_SEND_MAX_TX_POWER
 
 #define WMA_ENABLE_UAPSD_REQ            SIR_HAL_ENABLE_UAPSD_REQ
 #define WMA_DISABLE_UAPSD_REQ           SIR_HAL_DISABLE_UAPSD_REQ

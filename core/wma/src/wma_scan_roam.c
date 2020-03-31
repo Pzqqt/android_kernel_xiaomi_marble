@@ -3218,6 +3218,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	struct wma_txrx_node *iface = NULL;
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
+	struct vdev_mlme_obj *mlme_obj;
 
 	if (!event) {
 		wma_err_rl("event param null");
@@ -3242,6 +3243,11 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	}
 
 	iface = &wma->interfaces[synch_event->vdev_id];
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (mlme_obj)
+		mlme_obj->mgmt.generic.tx_pwrlimit =
+				synch_event->max_allowed_tx_power;
+
 	qdf_status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 						   WLAN_VDEV_SM_EV_ROAM,
 						   len,

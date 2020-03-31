@@ -1285,6 +1285,11 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_SUCCESS;
 	}
 
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->mgmt.generic.tx_pwrlimit = rsp->max_allowed_tx_power;
 	if (iface->type == WMI_VDEV_TYPE_STA)
 		assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
 
@@ -1297,11 +1302,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		if (QDF_IS_STATUS_ERROR(status))
 			return QDF_STATUS_E_FAILURE;
 	}  else if (iface->type == WMI_VDEV_TYPE_OCB) {
-		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
-		if (!mlme_obj) {
-			WMA_LOGE("%s: Failed to get mlme obj", __func__);
-			return QDF_STATUS_E_INVAL;
-		}
 		mlme_obj->proto.sta.assoc_id = iface->aid;
 		if (vdev_mgr_up_send(mlme_obj) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
@@ -1317,11 +1317,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 			mlme_get_vdev_bss_peer_mac_addr(iface->vdev, &bss_peer);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s: Failed to get bssid", __func__);
-			return QDF_STATUS_E_INVAL;
-		}
-		mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
-		if (!mlme_obj) {
-			WMA_LOGE("%s: Failed to get mlme obj", __func__);
 			return QDF_STATUS_E_INVAL;
 		}
 		qdf_mem_copy(mlme_obj->mgmt.generic.bssid, bss_peer.bytes,

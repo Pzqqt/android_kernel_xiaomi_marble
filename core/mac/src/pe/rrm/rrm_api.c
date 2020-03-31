@@ -229,6 +229,7 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	tpSirMacMgmtHdr pHdr;
 	int8_t currentRSSI = 0;
 	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
+	struct vdev_mlme_obj *mlme_obj;
 
 	pe_debug("Received Link measurement request");
 
@@ -242,6 +243,15 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	tx_pwr_attr.ap_tx_power = pLinkReq->MaxTxPower.maxTxPower;
 
 	LinkReport.txPower = lim_get_max_tx_power(mac, &tx_pwr_attr);
+
+	/** If firmware updated max tx power is non zero, respond to rrm link
+	 *  measurement request with min of firmware updated ap tx power and
+	 *  max power derived from lim_get_max_tx_power API.
+	 */
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (mlme_obj && mlme_obj->mgmt.generic.tx_pwrlimit)
+		LinkReport.txPower = QDF_MIN(LinkReport.txPower,
+					mlme_obj->mgmt.generic.tx_pwrlimit);
 
 	if ((LinkReport.txPower != (uint8_t) (pe_session->maxTxPower)) &&
 	    (QDF_STATUS_SUCCESS == rrm_send_set_max_tx_power_req(mac,

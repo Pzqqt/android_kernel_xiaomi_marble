@@ -3727,6 +3727,7 @@ lim_send_tpc_report_frame(struct mac_context *mac,
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
 	QDF_STATUS qdf_status;
+	struct vdev_mlme_obj *mlme_obj;
 
 	qdf_mem_zero((uint8_t *) &frm, sizeof(frm));
 
@@ -3734,7 +3735,10 @@ lim_send_tpc_report_frame(struct mac_context *mac,
 	frm.Action.action = ACTION_SPCT_TPC_RPRT;
 	frm.DialogToken.token = pTpcReqFrame->actionHeader.dialogToken;
 
-	frm.TPCReport.tx_power = 0;
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (mlme_obj)
+		frm.TPCReport.tx_power = mlme_obj->mgmt.generic.tx_pwrlimit;
+
 	frm.TPCReport.link_margin = 0;
 	frm.TPCReport.present = 1;
 

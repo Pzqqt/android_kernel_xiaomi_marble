@@ -1417,6 +1417,8 @@ populate_dot11f_power_caps(struct mac_context *mac,
 			   tDot11fIEPowerCaps *pCaps,
 			   uint8_t nAssocType, struct pe_session *pe_session)
 {
+	struct vdev_mlme_obj *mlme_obj;
+
 	if (nAssocType == LIM_REASSOC) {
 		pCaps->minTxPower =
 			pe_session->pLimReAssocReq->powerCap.minTxPower;
@@ -1429,6 +1431,11 @@ populate_dot11f_power_caps(struct mac_context *mac,
 			pe_session->lim_join_req->powerCap.maxTxPower;
 
 	}
+
+	/* Use firmware updated max tx power if non zero */
+	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
+	if (mlme_obj && mlme_obj->mgmt.generic.tx_pwrlimit)
+		pCaps->maxTxPower = mlme_obj->mgmt.generic.tx_pwrlimit;
 
 	pCaps->present = 1;
 } /* End populate_dot11f_power_caps. */
