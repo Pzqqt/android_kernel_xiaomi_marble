@@ -1133,12 +1133,6 @@ send_reject_ap_list_cmd_tlv(wmi_unified_t wmi_handle,
 	struct reject_ap_config_params *reject_list = reject_params->bssid_list;
 	uint8_t num_of_reject_bssid = reject_params->num_of_reject_bssid;
 
-	if (!num_of_reject_bssid) {
-		WMI_LOGD("%s : invalid number of channels %d", __func__,
-			 num_of_reject_bssid);
-		return QDF_STATUS_E_EMPTY;
-	}
-
 	list_tlv_len = sizeof(*chan_list) * num_of_reject_bssid;
 
 	len = sizeof(*chan_list_fp) + list_tlv_len + WMI_TLV_HDR_SIZE;
