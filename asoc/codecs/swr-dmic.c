@@ -701,9 +701,6 @@ static struct swr_driver swr_dmic_driver = {
 	.probe = swr_dmic_probe,
 	.remove = swr_dmic_remove,
 	.id_table = swr_dmic_id,
-	.device_up = swr_dmic_up,
-	.device_down = swr_dmic_down,
-	.reset_device = swr_dmic_reset,
 };
 
 static int __init swr_dmic_init(void)
