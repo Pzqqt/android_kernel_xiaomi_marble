@@ -1426,15 +1426,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		cmd->ht_flag = 1;
 		cmd->qos_flag = 1;
 		cmd->peer_rate_caps |= WMI_RC_HT_FLAG;
-
-		if (params->ch_width) {
-			cmd->bw_40 = 1;
-			cmd->peer_rate_caps |= WMI_RC_CW40_FLAG;
-			if (params->fShortGI40Mhz)
-				cmd->peer_rate_caps |= WMI_RC_SGI_FLAG;
-		} else if (params->fShortGI20Mhz) {
-			cmd->peer_rate_caps |= WMI_RC_SGI_FLAG;
-		}
 	}
 
 	if (params->vhtCapable) {
@@ -1442,6 +1433,15 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		cmd->qos_flag = 1;
 		cmd->vht_flag = 1;
 		cmd->peer_rate_caps |= WMI_RC_HT_FLAG;
+	}
+
+	if (params->ch_width) {
+		cmd->bw_40 = 1;
+		cmd->peer_rate_caps |= WMI_RC_CW40_FLAG;
+		if (params->fShortGI40Mhz)
+			cmd->peer_rate_caps |= WMI_RC_SGI_FLAG;
+	} else if (params->fShortGI20Mhz) {
+		cmd->peer_rate_caps |= WMI_RC_SGI_FLAG;
 	}
 
 	if (params->ch_width == CH_WIDTH_80MHZ)
