@@ -982,20 +982,17 @@ wlan_hdd_set_rxmgmt_external_auth_flag(enum nl80211_rxmgmt_flags *nl80211_flag)
  * @flag: flags set by driver(SME/PE) from enum rxmgmt_flags
  *
  * Convert driver internal RXMGMT flag value to nl80211 defined RXMGMT flag
- * Return: 0 on success, -EINVAL on invalid value
+ * Return: void
  */
-static int
+static void
 wlan_hdd_cfg80211_convert_rxmgmt_flags(enum rxmgmt_flags flag,
 				       enum nl80211_rxmgmt_flags *nl80211_flag)
 {
-	int ret = -EINVAL;
 
 	if (flag & RXMGMT_FLAG_EXTERNAL_AUTH) {
 		wlan_hdd_set_rxmgmt_external_auth_flag(nl80211_flag);
-		ret = 0;
 	}
 
-	return ret;
 }
 
 static void
@@ -1092,9 +1089,7 @@ __hdd_indicate_mgmt_frame_to_user(struct hdd_adapter *adapter,
 	hdd_debug("Indicate Frame over NL80211 sessionid : %d, idx :%d",
 		   adapter->vdev_id, adapter->dev->ifindex);
 
-	if (wlan_hdd_cfg80211_convert_rxmgmt_flags(rx_flags, &nl80211_flag))
-		hdd_debug("Failed to convert RXMGMT flags :0x%x to nl80211 format",
-			  rx_flags);
+	wlan_hdd_cfg80211_convert_rxmgmt_flags(rx_flags, &nl80211_flag);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
 	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr,
