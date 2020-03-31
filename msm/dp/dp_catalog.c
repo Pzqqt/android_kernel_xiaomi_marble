@@ -74,6 +74,34 @@ static u8 const vm_voltage_swing[4][4] = {
 	{0xFF, 0xFF, 0xFF, 0xFF}  /* sw1, 1.2 v, optional */
 };
 
+static u8 const vm_pre_emphasis_hbr3_hbr2[4][4] = {
+	{0x00, 0x0C, 0x15, 0x1A},
+	{0x02, 0x0E, 0x16, 0xFF},
+	{0x02, 0x11, 0xFF, 0xFF},
+	{0x04, 0xFF, 0xFF, 0xFF}
+};
+
+static u8 const vm_voltage_swing_hbr3_hbr2[4][4] = {
+	{0x02, 0x12, 0x16, 0x1A},
+	{0x09, 0x19, 0x1F, 0xFF},
+	{0x10, 0x1F, 0xFF, 0xFF},
+	{0x1F, 0xFF, 0xFF, 0xFF}
+};
+
+static u8 const vm_pre_emphasis_hbr_rbr[4][4] = {
+	{0x00, 0x0C, 0x14, 0x19},
+	{0x00, 0x0B, 0x12, 0xFF},
+	{0x00, 0x0B, 0xFF, 0xFF},
+	{0x04, 0xFF, 0xFF, 0xFF}
+};
+
+static u8 const vm_voltage_swing_hbr_rbr[4][4] = {
+	{0x08, 0x0F, 0x16, 0x1F},
+	{0x11, 0x1E, 0x1F, 0xFF},
+	{0x19, 0x1F, 0xFF, 0xFF},
+	{0x1F, 0xFF, 0xFF, 0xFF}
+};
+
 enum dp_flush_bit {
 	DP_PPS_FLUSH,
 	DP_DHDR_FLUSH,
@@ -1722,6 +1750,7 @@ static void dp_catalog_ctrl_update_vx_px(struct dp_catalog_ctrl *ctrl,
 	struct dp_catalog_private *catalog;
 	struct dp_io_data *io_data;
 	u8 value0, value1;
+	u32 version;
 
 	if (!ctrl) {
 		DP_ERR("invalid input\n");
@@ -1732,8 +1761,21 @@ static void dp_catalog_ctrl_update_vx_px(struct dp_catalog_ctrl *ctrl,
 
 	DP_DEBUG("hw: v=%d p=%d\n", v_level, p_level);
 
-	value0 = vm_voltage_swing[v_level][p_level];
-	value1 = vm_pre_emphasis[v_level][p_level];
+	io_data = catalog->io.dp_ahb;
+	version = dp_read(DP_HW_VERSION);
+
+	if (version == 0x10020004) {
+		if (high) {
+			value0 = vm_voltage_swing_hbr3_hbr2[v_level][p_level];
+			value1 = vm_pre_emphasis_hbr3_hbr2[v_level][p_level];
+		} else {
+			value0 = vm_voltage_swing_hbr_rbr[v_level][p_level];
+			value1 = vm_pre_emphasis_hbr_rbr[v_level][p_level];
+		}
+	} else {
+		value0 = vm_voltage_swing[v_level][p_level];
+		value1 = vm_pre_emphasis[v_level][p_level];
+	}
 
 	/* program default setting first */
 
