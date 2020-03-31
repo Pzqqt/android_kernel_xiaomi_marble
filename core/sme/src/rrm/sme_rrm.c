@@ -498,7 +498,8 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 				     filter, &result_handle);
 	qdf_mem_free(filter);
 
-	sme_debug("RRM Measurement Done %d", measurementdone);
+	sme_debug("RRM Measurement Done %d for index:%d",
+		  measurementdone, measurement_index);
 	if (!result_handle) {
 		/*
 		 * no scan results
@@ -848,7 +849,7 @@ sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
 		scan_type = sme_rrm_ctx->measMode[0];
 
 	if ((eSIR_ACTIVE_SCAN == scan_type) ||
-			(eSIR_PASSIVE_SCAN == scan_type)) {
+	    (eSIR_PASSIVE_SCAN == scan_type)) {
 		uint32_t max_chan_time;
 		uint64_t current_time;
 		struct scan_start_request *req;
@@ -981,25 +982,34 @@ sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
 		 */
 		rrm_scan_timer = 0;
 		freq_list = sme_rrm_ctx->channelList.freq_list;
+		if (!freq_list) {
+			sme_err("[802.11 RRM]: Global freq list is null");
+			sme_reset_ese_bcn_req_in_progress(sme_rrm_ctx);
+			status = QDF_STATUS_E_FAILURE;
+			goto send_ind;
+		}
+
 		ch_idx = sme_rrm_ctx->currentIndex;
-		if ((ch_idx + 1) < sme_rrm_ctx->channelList.numOfChannels) {
-			sme_rrm_send_scan_result(mac_ctx, idx, 1,
-						 &freq_list[ch_idx], false);
-			/* Advance the current index. */
-			sme_rrm_ctx->currentIndex++;
-			sme_rrm_issue_scan_req(mac_ctx, idx);
-#ifdef FEATURE_WLAN_ESE
-			sme_rrm_ctx->eseBcnReqInProgress = false;
-#endif
-			return status;
-		} else {
-			/*
-			 * Done with the measurement. Clean up all context and
-			 * send a message to PE with measurement done flag set.
-			 */
-			sme_rrm_send_scan_result(mac_ctx, idx, 1,
-						 &freq_list[ch_idx], true);
-			goto free_ch_lst;
+		for (; ch_idx < sme_rrm_ctx->channelList.numOfChannels; ch_idx++) {
+			if ((ch_idx + 1) <
+			    sme_rrm_ctx->channelList.numOfChannels) {
+				sme_rrm_send_scan_result(mac_ctx, idx, 1,
+							 &freq_list[ch_idx],
+							 false);
+				/* Advance the current index. */
+				sme_rrm_ctx->currentIndex++;
+			} else {
+				/*
+				 * Done with the measurement. Clean up all
+				 * context and send a message to PE with
+				 * measurement done flag set.
+				 */
+				sme_rrm_send_scan_result(mac_ctx, idx, 1,
+							 &freq_list[ch_idx],
+							 true);
+				sme_reset_ese_bcn_req_in_progress(sme_rrm_ctx);
+				goto free_ch_lst;
+			}
 		}
 	}
 
