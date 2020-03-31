@@ -428,6 +428,15 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	desc->vdev_id = wlan_vdev_get_id(vdev);
 	desc->context = context;
 
+	if (psoc->soc_cb.rx_ops.iot_sim_rx_ops.iot_sim_cmd_handler) {
+		status = psoc->soc_cb.rx_ops.iot_sim_rx_ops.iot_sim_cmd_handler(
+								     vdev, buf);
+		if (status) {
+			mgmt_txrx_err("iot_sim_cmd_handler returned failure, dropping the frame");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
 	if (!psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.mgmt_tx_send) {
 		mgmt_txrx_err(
 				"mgmt txrx txop to send mgmt frame is NULL for psoc: %pK",

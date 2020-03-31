@@ -23,7 +23,16 @@
 /* Forward Declarations */
 struct wmi_iot_sim_cmd_ops;
 
-/*
+/**
+ * iot_sim_cmd_handler() - IOT SIM frame handler function
+ * @vdev - vdev object.
+ * @buf - skb
+ *
+ * Return : QDF_STATUS_E_SUCCESS/QDF_STATUS_E_FAILURE.
+ */
+QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t buf);
+
+/**
  * wlan_iot_sim_init() - API to init iot_sim component
  *
  * This API is invoked from dispatcher init during all component init.
@@ -47,7 +56,18 @@ QDF_STATUS wlan_iot_sim_init(void);
  */
 QDF_STATUS wlan_iot_sim_deinit(void);
 
-/*
+/**
+ * wlan_lmac_if_iot_sim_register_rx_ops() - Register lmac interface Rx
+ * operations
+ * @rx_ops: Pointer to lmac interface Rx operations structure
+ *
+ * API to register iot_sim related lmac interface Rx operations
+ *
+ * Return: None
+ */
+void wlan_lmac_if_iot_sim_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
+
+/**
  * wlan_register_wmi_iot_sim_cmd_ops() - Register operations related to wmi
  * commands on iot_sim parameters
  * @pdev    - the physical device object

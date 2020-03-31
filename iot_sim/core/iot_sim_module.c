@@ -33,6 +33,8 @@ static int __init iot_sim_init_module(void)
 {
 	wlan_iot_sim_init();
 	iot_sim_info("qca_iot_sim module loaded");
+	wlan_lmac_if_iot_sim_set_rx_ops_register_cb(
+					wlan_lmac_if_iot_sim_register_rx_ops);
 	return 0;
 }
 

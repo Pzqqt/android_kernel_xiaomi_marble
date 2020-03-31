@@ -1382,6 +1382,13 @@ struct wlan_lmac_if_sptrl_rx_ops {
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+struct wlan_lmac_if_iot_sim_rx_ops {
+	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
+					  qdf_nbuf_t n_buf);
+};
+#endif
+
 #ifdef WIFI_POS_CONVERGED
 /**
  * struct wlan_lmac_if_wifi_pos_rx_ops - structure of rx function
@@ -1724,6 +1731,10 @@ struct wlan_lmac_if_rx_ops {
 	 struct wlan_lmac_if_scan_rx_ops scan;
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_rx_ops p2p;
+#endif
+
+#ifdef WLAN_IOT_SIM_SUPPORT
+	struct wlan_lmac_if_iot_sim_rx_ops iot_sim_rx_ops;
 #endif
 
 #ifdef WLAN_ATF_ENABLE

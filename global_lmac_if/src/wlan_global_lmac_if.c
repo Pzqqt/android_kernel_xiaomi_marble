@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -78,6 +78,34 @@ static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif /*WLAN_CONV_SPECTRAL_ENABLE*/
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+/* Function pointer for iot_sim rx_ops registration function */
+void (*wlan_lmac_if_iot_sim_rx_ops)(struct wlan_lmac_if_rx_ops *rx_ops);
+
+QDF_STATUS wlan_lmac_if_iot_sim_set_rx_ops_register_cb(void (*handler)
+				(struct wlan_lmac_if_rx_ops *))
+{
+	wlan_lmac_if_iot_sim_rx_ops = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(wlan_lmac_if_iot_sim_set_rx_ops_register_cb);
+
+static void wlan_iot_sim_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	if (wlan_lmac_if_iot_sim_rx_ops)
+		wlan_lmac_if_iot_sim_rx_ops(rx_ops);
+	else
+		qdf_print("\n***** IOT SIM MODULE NOT LOADED *****\n");
+}
+
+#else
+static void wlan_iot_sim_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
 /**
  * wlan_global_lmac_if_rx_ops_register() - Global lmac_if
  * rx handler register
@@ -104,6 +132,9 @@ wlan_global_lmac_if_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* spectral rx_ops registration*/
 	wlan_spectral_register_rx_ops(rx_ops);
+
+	/* iot_sim rx_ops registration*/
+	wlan_iot_sim_register_rx_ops(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }
