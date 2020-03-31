@@ -111,6 +111,7 @@ struct vdev_response_timer {
  * @mac_id: mac id
  * @cfgd_tx_streams: configured tx streams
  * @cfgd_rx_streams: configured rx streams
+ * @max_allowed_tx_power: max tx power allowed
  */
 struct vdev_start_response {
 	uint8_t vdev_id;
@@ -122,6 +123,7 @@ struct vdev_start_response {
 	uint32_t mac_id;
 	uint32_t cfgd_tx_streams;
 	uint32_t cfgd_rx_streams;
+	uint32_t max_allowed_tx_power;
 };
 
 /**
