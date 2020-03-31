@@ -112,6 +112,20 @@ struct pkt_capture_mon_context {
 };
 
 /**
+ * struct radiotap_header - base radiotap header
+ * @it_version: radiotap version, always 0
+ * @it_pad: padding (or alignment)
+ * @it_len: overall radiotap header length
+ * @it_present: (first) present word
+ */
+struct radiotap_header {
+	uint8_t it_version;
+	uint8_t it_pad;
+	__le16 it_len;
+	__le32 it_present;
+} __packed;
+
+/**
  * pkt_capture_suspend_mon_thread() - suspend packet capture mon thread
  * vdev: pointer to vdev object manager
  *

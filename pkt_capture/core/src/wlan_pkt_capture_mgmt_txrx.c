@@ -100,11 +100,7 @@ pkt_capture_mgmtpkt_cb(void *context, void *ppdev, void *nbuf_list,
 	while (msdu) {
 		next_buf = qdf_nbuf_queue_next(msdu);
 		qdf_nbuf_set_next(msdu, NULL);   /* Add NULL terminator */
-		if (QDF_STATUS_SUCCESS !=
-		    cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu)) {
-			pkt_capture_err("Frame Rx to HDD failed");
-			qdf_nbuf_free(msdu);
-		}
+		pkt_capture_mon(cb_ctx, msdu);
 		msdu = next_buf;
 	}
 

@@ -528,12 +528,7 @@ pkt_capture_rx_data_cb(
 		 */
 		headroom = qdf_nbuf_headroom(msdu);
 		qdf_nbuf_update_radiotap(&rx_status, msdu, headroom);
-
-		if (QDF_STATUS_SUCCESS !=
-		    cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu)) {
-			pkt_capture_err("Frame Rx to HDD failed");
-			qdf_nbuf_free(msdu);
-		}
+		pkt_capture_mon(cb_ctx, msdu);
 		msdu = next_buf;
 	}
 
@@ -706,13 +701,7 @@ pkt_capture_tx_data_cb(
 		 */
 		headroom = qdf_nbuf_headroom(msdu);
 		qdf_nbuf_update_radiotap(&tx_status, msdu, headroom);
-
-		if (QDF_STATUS_SUCCESS !=
-		    cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu)) {
-			pkt_capture_err("Frame Tx to HDD failed");
-			qdf_nbuf_free(msdu);
-		}
-
+		pkt_capture_mon(cb_ctx, msdu);
 		msdu = next_buf;
 	}
 	return;
