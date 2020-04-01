@@ -1275,9 +1275,15 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 								bank));
 
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK(mport->sinterval,
+			val[len++] = SWR_REG_VAL_PACK(mport->sinterval & 0xFF,
 					port_req->dev_num, 0x00,
 					SWRS_DP_SAMPLE_CONTROL_1_BANK(slv_id,
+								bank));
+
+			reg[len] = SWRM_CMD_FIFO_WR_CMD;
+			val[len++] = SWR_REG_VAL_PACK((mport->sinterval >> 8)& 0xFF,
+					port_req->dev_num, 0x00,
+					SWRS_DP_SAMPLE_CONTROL_2_BANK(slv_id,
 								bank));
 			/* Assumption: If different channels in the same port
 			 * on master is enabled for different slaves, then each
