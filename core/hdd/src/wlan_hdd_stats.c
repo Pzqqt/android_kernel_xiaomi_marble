@@ -1034,6 +1034,7 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 {
 	struct hdd_ll_stats_priv *priv = osif_request_priv(request);
 	struct hdd_ll_stats *stats = NULL;
+	size_t stat_size = 0;
 
 	if (!(priv->request_bitmap & results->paramId))
 		return;
@@ -1043,15 +1044,16 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		if (!stats)
 			goto exit;
 
+		stat_size = sizeof(struct wifi_radio_stats) *
+			    results->num_radio;
 		stats->result_param_id = WMI_LINK_STATS_RADIO;
-		stats->result = qdf_mem_malloc(sizeof(struct wifi_radio_stats));
+		stats->result = qdf_mem_malloc(stat_size);
 		if (!stats->result) {
 			qdf_mem_free(stats);
 			goto exit;
 		}
 
-		qdf_mem_copy(stats->result, results->results,
-			     sizeof(struct wifi_radio_stats));
+		qdf_mem_copy(stats->result, results->results, stat_size);
 		stats->stats_nradio_npeer.no_of_radios = results->num_radio;
 		stats->more_data = results->moreResultToFollow;
 		if (!results->moreResultToFollow)
@@ -1075,12 +1077,30 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 			priv->request_bitmap &= ~(WMI_LINK_STATS_ALL_PEER);
 		priv->request_bitmap &= ~stats->result_param_id;
 	} else if (results->paramId & WMI_LINK_STATS_ALL_PEER) {
+		struct wifi_peer_stat *peer_stat = (struct wifi_peer_stat *)
+						   results->results;
+		struct wifi_peer_info *peer_info = NULL;
+		u32 num_rate = 0, peers, rates;
+		int i;
 		stats = qdf_mem_malloc(sizeof(*stats));
 		if (!stats)
 			goto exit;
 
+		peer_info = (struct wifi_peer_info *)peer_stat->peer_info;
+		for (i = 1; i <= peer_stat->num_peers; i++) {
+			num_rate += peer_info->num_rate;
+			peer_info = (struct wifi_peer_info *)((uint8_t *)
+				    peer_info + sizeof(struct wifi_peer_info) +
+				    (peer_info->num_rate *
+				    sizeof(struct wifi_rate_stat)));
+		}
+
+		peers = sizeof(struct wifi_peer_info) * peer_stat->num_peers;
+		rates = sizeof(struct wifi_rate_stat) * num_rate;
+		stat_size = sizeof(struct wifi_peer_stat) + peers + rates;
 		stats->result_param_id = WMI_LINK_STATS_ALL_PEER;
-		stats->result = qdf_mem_malloc(sizeof(struct wifi_peer_stat));
+
+		stats->result = qdf_mem_malloc(stat_size);
 		if (!stats->result) {
 			qdf_mem_free(stats);
 			goto exit;
