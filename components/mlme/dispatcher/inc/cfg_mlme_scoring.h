@@ -642,12 +642,17 @@
  *
  * @Min: 1
  * @Max: 15
- * @Default: 4
+ * @Default: 8
  *
  * Number of slots in which the esp/qbss load will be divided. Max 15. index 0
  * is used for 'not_present. Num_slot will equally divide 100. e.g, if
  * num_slot = 4 slot 1 = 0-25% load, slot 2 = 26-50% load, slot 3 = 51-75% load,
  * slot 4 = 76-100% load. Remaining unused index can be 0.
+ * Following is load percentage, score percentage and score of num_slot = 8,
+ * weight=25.
+ * 0-12% 13-25% 26-38% 39-50% 51-63 %64-75% 76-88% 87-100% Not Present
+ * 100%  90%    80%    70%    50%   25%     10%    5%      50%
+ * 2500  2250   2000   1750   1250  625     250    125     1250
  *
  * Usage: External
  *
@@ -657,7 +662,7 @@
 	"num_esp_qbss_slots", \
 	1, \
 	15, \
-	4, \
+	8, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Num ESP QPSS Slots")
 
@@ -666,7 +671,7 @@
  * esp_qbss_score_idx3_to_0 - percentage for  esp/qbss load for slots 0-3
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x19326432
+ * @Default: 0x505A6432
  *
  * This INI give percentage value of channel_congestion_weightage to be used as
  * index in which the load value falls. Index 0 is for percentage when ESP/QBSS
@@ -691,7 +696,7 @@
 	"esp_qbss_score_idx3_to_0", \
 	0x00000000, \
 	0x64646464, \
-	0x19326432, \
+	0x505A6432, \
 	CFG_VALUE_OR_DEFAULT, \
 	"ESP QPSS Score Index 3 to 0")
 
@@ -700,7 +705,7 @@
  * esp_qbss_score_idx7_to_4 - percentage for  esp/qbss load for slots 4-7
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x0000000A
+ * @Default: 0x0A193246
  *
  * This INI give percentage value of channel_congestion_weightage to be used as
  * index in which the load value falls. Used only if num_esp_qbss_slots is
@@ -725,7 +730,7 @@
 	"esp_qbss_score_idx7_to_4", \
 	0x00000000, \
 	0x64646464, \
-	0x0000000A, \
+	0x0A193246, \
 	CFG_VALUE_OR_DEFAULT, \
 	"ESP QPSS Score Index 7 to 4")
 
@@ -734,7 +739,7 @@
  * esp_qbss_score_idx11_to_8 - percentage for  esp/qbss load for slots 8-11
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x00000000
+ * @Default: 0x00000005
  *
  * This INI give percentage value of channel_congestion_weightage to be used as
  * index in which the load value falls. Used only if num_esp_qbss_slots is
@@ -759,7 +764,7 @@
 	"esp_qbss_score_idx11_to_8", \
 	0x00000000, \
 	0x64646464, \
-	0x00000000, \
+	0x00000005, \
 	CFG_VALUE_OR_DEFAULT, \
 	"ESP QPSS Score Index 11 to 8")
 
