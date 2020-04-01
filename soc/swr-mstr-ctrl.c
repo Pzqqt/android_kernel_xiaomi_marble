@@ -690,6 +690,10 @@ static int swrm_pcm_port_config(struct swr_mstr_ctrl *swrm, u8 port_num,
 				SWRM_DOUT_DP_PCM_PORT_CTRL(port_num));
 	swr_master_write(swrm, reg_addr, enable);
 
+	if (enable)
+		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x1E);
+	else
+		swr_master_write(swrm, SWRM_COMP_FEATURE_CFG, 0x6);
 	return 0;
 }
 
