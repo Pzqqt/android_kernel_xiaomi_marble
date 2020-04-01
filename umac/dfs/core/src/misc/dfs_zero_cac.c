@@ -3705,6 +3705,19 @@ static bool dfs_is_pcac_on_weather_channel_for_freq(struct wlan_dfs *dfs,
 		first_subch = precac_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
 		last_subch = precac_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
 		break;
+	case CH_WIDTH_160MHZ:
+		first_subch = precac_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		last_subch = precac_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		/* The restricted 80P80MHz channel or the 165MHz channel
+		 * does not include any of the weather radar channels.
+		 * Even though other 80P80 channels might include the weather
+		 * radar channels, it is not currently possible for Agile
+		 * detector to operate in a 80P80MHz channel except in the
+		 * restricted 80P80MHz channel.
+		 */
+		return false;
 	default:
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"Precac channel width invalid!");
