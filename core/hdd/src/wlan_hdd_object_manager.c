@@ -37,6 +37,8 @@
 #define HIGH_5GHZ_FREQ 5930
 #endif
 
+#define HIGH_5GHZ_FREQ_NO_6GHZ 5930
+
 static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
@@ -156,12 +158,18 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 	reg_cap_ptr->low_5ghz_chan = LOW_5GHZ_FREQ;
 	reg_cap_ptr->high_5ghz_chan = HIGH_5GHZ_FREQ;
 
+	if (!wlan_reg_is_6ghz_supported(psoc)) {
+		hdd_debug("disabling 6ghz channels");
+		reg_cap_ptr->high_5ghz_chan = HIGH_5GHZ_FREQ_NO_6GHZ;
+	}
+
 	pdev = wlan_objmgr_pdev_obj_create(psoc, priv);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
 		status = QDF_STATUS_E_NOMEM;
 		goto free_priv;
 	}
+
 
 	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_HDD_ID_OBJ_MGR);
 	if (QDF_IS_STATUS_ERROR(status)) {

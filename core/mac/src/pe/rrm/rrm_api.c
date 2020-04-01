@@ -371,7 +371,7 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 		fMobilityDomain =
 			pNeighborRep->NeighborReport[i].MobilityDomain;
 
-		if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+		if (!wlan_reg_is_6ghz_supported(mac->psoc) &&
 		    (wlan_reg_is_6ghz_op_class(mac->pdev,
 					       pNeighborRep->NeighborReport[i].
 					       regulatoryClass))) {
@@ -660,7 +660,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 		SYS_TU_TO_MS(pBeaconReq->measurement_request.Beacon.randomization);
 	psbrr->measurement_idx = pCurrentReq->measurement_idx;
 
-	if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+	if (!wlan_reg_is_6ghz_supported(mac->psoc) &&
 	    (wlan_reg_is_6ghz_op_class(mac->pdev,
 			 pBeaconReq->measurement_request.Beacon.regClass))) {
 		pe_nofl_err("RX: [802.11 BCN_RPT] Ch belongs to 6 ghz spectrum, abort");
@@ -723,7 +723,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 		for (tmp_idx = 0;
 		     tmp_idx < ie_ap_chan_rpt->num_channelList;
 		     tmp_idx++) {
-			if (!wlan_reg_is_6ghz_supported(mac->pdev) &&
+			if (!wlan_reg_is_6ghz_supported(mac->psoc) &&
 			    (wlan_reg_is_6ghz_op_class(mac->pdev,
 					    ie_ap_chan_rpt->regulatoryClass))) {
 				pe_nofl_err("RX: [802.11 BCN_RPT] Ch belongs to 6 ghz spectrum, abort");

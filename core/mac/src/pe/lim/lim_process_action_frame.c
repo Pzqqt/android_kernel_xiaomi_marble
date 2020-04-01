@@ -160,7 +160,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		  status, frame_len);
 	}
 
-	if (!wlan_reg_is_6ghz_supported(mac_ctx->pdev) &&
+	if (!wlan_reg_is_6ghz_supported(mac_ctx->psoc) &&
 	    (wlan_reg_is_6ghz_op_class(mac_ctx->pdev,
 				       ext_channel_switch_frame->
 				       ext_chan_switch_ann_action.op_class))) {
