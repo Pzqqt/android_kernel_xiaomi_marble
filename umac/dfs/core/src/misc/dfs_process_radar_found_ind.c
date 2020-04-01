@@ -152,8 +152,13 @@ int dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
 /**
  * dfs_radar_add_channel_list_to_nol_for_freq()- Add given channels to nol
  * @dfs: Pointer to wlan_dfs structure.
- * @freq_list: Pointer to list of frequency.
- * @num_channels: Number of channels in the list.
+ * @freq_list: Pointer to list of frequency(has both nonDFS and DFS channels).
+ * Input frequency list.
+ * @nol_freq_list: Pointer to list of NOL frequencies. Output frequency list.
+ * @num_channels: Pointer to number of channels in the list. It is both input
+ * and output to this function.
+ * *Input: Number of subchannels in @freq_list.
+ * *Output: Number of subchannels in @nol_freq_list.
  *
  * Add list of channels to nol, only if the channel is dfs.
  *
@@ -163,20 +168,20 @@ int dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
 static QDF_STATUS
 dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 					   uint16_t *freq_list,
-					   uint8_t num_channels)
+					   uint16_t *nol_freq_list,
+					   uint8_t *num_channels)
 {
 	int i;
 	uint16_t last_chan_freq = 0;
-	uint16_t nol_freq_list[NUM_CHANNELS_160MHZ];
 	uint8_t num_ch = 0;
 
-	if (num_channels > NUM_CHANNELS_160MHZ) {
+	if (*num_channels > NUM_CHANNELS_160MHZ) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
-			"Invalid num channels: %d", num_channels);
+			"Invalid num channels: %d", *num_channels);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (i = 0; i < num_channels; i++) {
+	for (i = 0; i < *num_channels; i++) {
 		if (freq_list[i] == 0 ||
 		    freq_list[i] == last_chan_freq)
 			continue;
@@ -203,6 +208,7 @@ dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
 			"dfs channels not found in channel list");
 		return QDF_STATUS_E_FAILURE;
 	}
+	*num_channels = num_ch;
 
 	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
 					     nol_freq_list, num_ch,
@@ -911,6 +917,7 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 	uint8_t num_subchans;
 	uint8_t bits = 0x01;
 	uint16_t radar_subchans[NUM_CHANNELS_160MHZ];
+	uint16_t nol_freq_list[NUM_CHANNELS_160MHZ];
 	bool should_nol_ie_be_sent = true;
 
 	qdf_mem_zero(radar_subchans, sizeof(radar_subchans));
@@ -946,7 +953,8 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 	}
 
 	dfs_radar_add_channel_list_to_nol_for_freq(dfs, radar_subchans,
-						   num_subchans);
+						   nol_freq_list,
+						   &num_subchans);
 	return should_nol_ie_be_sent;
 }
 #endif
@@ -1050,6 +1058,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 {
 	bool wait_for_csa = false;
 	uint16_t freq_list[NUM_CHANNELS_160MHZ];
+	uint16_t nol_freq_list[NUM_CHANNELS_160MHZ];
 	uint8_t num_channels;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t freq_center;
@@ -1183,7 +1192,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	status = dfs_radar_add_channel_list_to_nol_for_freq(dfs,
 							    freq_list,
-							    num_channels);
+							    nol_freq_list,
+							    &num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar event received on invalid channel");
@@ -1197,7 +1207,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		(dfs->dfs_is_rcsa_ie_sent = true);
 	if (dfs->dfs_use_nol_subchannel_marking) {
 		dfs_reset_nol_ie_bitmap(dfs);
-		dfs_prepare_nol_ie_bitmap_for_freq(dfs, radar_found, freq_list,
+		dfs_prepare_nol_ie_bitmap_for_freq(dfs, radar_found,
+						   nol_freq_list,
 						   num_channels);
 		dfs->dfs_is_nol_ie_sent = true;
 	}
@@ -1225,7 +1236,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	dfs_mark_precac_nol_for_freq(dfs,
 				     dfs->is_radar_found_on_secondary_seg,
 				     radar_found->detector_id,
-				     freq_list,
+				     nol_freq_list,
 				     num_channels);
 	/*
 	 * This calls into the umac DFS code, which sets the umac
