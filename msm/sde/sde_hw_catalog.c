@@ -4657,6 +4657,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->sui_ns_allowed = true;
 		sde_cfg->sui_misr_supported = true;
 		sde_cfg->sui_block_xin_mask = 0x3F71;
+		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->has_3d_merge_reset = true;
 		sde_cfg->has_hdr = true;
 		sde_cfg->has_hdr_plus = true;
