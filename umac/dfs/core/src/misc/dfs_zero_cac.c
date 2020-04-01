@@ -1530,8 +1530,8 @@ void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs, uint16_t chan_freq)
 		TAILQ_FOREACH_SAFE(pcac_entry, &dfs->dfs_precac_list,
 				   pe_list, tmp_precac_entry) {
 			if (IS_WITHIN_RANGE(chan_freq,
-					    pcac_entry->vht80_ch_freq,
-					    VHT80_FREQ_OFFSET)) {
+					    pcac_entry->center_ch_freq,
+					    VHT160_FREQ_OFFSET)) {
 				dfs_unmark_tree_node_as_nol_for_freq(dfs,
 								     pcac_entry,
 								     chan_freq);
