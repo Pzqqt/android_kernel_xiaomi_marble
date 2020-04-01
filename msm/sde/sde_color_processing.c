@@ -204,6 +204,20 @@ static struct sde_kms *get_kms(struct drm_crtc *crtc)
 	return to_sde_kms(priv->kms);
 }
 
+static void update_pu_feature_enable(struct sde_crtc *sde_crtc,
+		u32 feature, bool enable)
+{
+	if (!sde_crtc || feature > SDE_CP_CRTC_MAX_PU_FEATURES) {
+		DRM_ERROR("invalid args feature %d\n", feature);
+		return;
+	}
+
+	if (enable)
+		sde_crtc->cp_pu_feature_mask |= BIT(feature);
+	else
+		sde_crtc->cp_pu_feature_mask &= ~BIT(feature);
+}
+
 static int set_dspp_vlut_feature(struct sde_hw_dspp *hw_dspp,
 				 struct sde_hw_cp_cfg *hw_cfg,
 				 struct sde_crtc *hw_crtc)
@@ -741,6 +755,8 @@ static int set_rc_mask_feature(struct sde_hw_dspp *hw_dspp,
 		}
 	}
 
+	update_pu_feature_enable(sde_crtc, SDE_CP_CRTC_DSPP_RC_PU,
+			hw_cfg->payload != NULL);
 exit:
 	return ret;
 }
@@ -1642,7 +1658,8 @@ static int sde_cp_crtc_check_pu_features(struct drm_crtc *crtc)
 		feature_wrapper check_pu_feature =
 				check_crtc_pu_feature_wrappers[i];
 
-		if (!check_pu_feature)
+		if (!check_pu_feature ||
+				!(sde_crtc->cp_pu_feature_mask & BIT(i)))
 			continue;
 
 		for (j = 0; j < hw_cfg.num_of_mixers; j++) {
@@ -1801,7 +1818,8 @@ static int sde_cp_crtc_set_pu_features(struct drm_crtc *crtc, bool *need_flush)
 		feature_wrapper set_pu_feature =
 				set_crtc_pu_feature_wrappers[i];
 
-		if (!set_pu_feature)
+		if (!set_pu_feature ||
+				!(sde_crtc->cp_pu_feature_mask & BIT(i)))
 			continue;
 
 		for (j = 0; j < hw_cfg.num_of_mixers; j++) {

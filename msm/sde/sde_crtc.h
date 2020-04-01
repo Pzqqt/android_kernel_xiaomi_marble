@@ -245,6 +245,7 @@ struct sde_crtc_misr_info {
  * @cur_perf      : current performance committed to clock/bandwidth driver
  * @plane_mask_old: keeps track of the planes used in the previous commit
  * @frame_trigger_mode: frame trigger mode
+ * @cp_pu_feature_mask: mask indicating cp feature enable for partial update
  * @ltm_buffer_cnt  : number of ltm buffers
  * @ltm_buffers     : struct stores ltm buffer related data
  * @ltm_buf_free    : list of LTM buffers that are available
@@ -322,6 +323,8 @@ struct sde_crtc {
 	/* blob for histogram data */
 	struct drm_property_blob *hist_blob;
 	enum frame_trigger_mode_type frame_trigger_mode;
+
+	u32 cp_pu_feature_mask;
 
 	u32 ltm_buffer_cnt;
 	struct sde_ltm_buffer *ltm_buffers[LTM_BUFFER_SIZE];
