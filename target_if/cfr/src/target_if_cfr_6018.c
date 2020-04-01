@@ -804,7 +804,7 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	struct look_up_table *lut = NULL;
 	struct csi_cfr_header *header = NULL;
 	void *mu_rx_user_info = NULL, *freeze_tlv = NULL;
-	uint8_t capture_type;
+	uint8_t capture_type = CFR_TYPE_METHOD_AUTO;
 	uint8_t *peer_macaddr = NULL;
 	struct wlan_lmac_if_cfr_rx_ops *cfr_rx_ops = NULL;
 	struct cfr_metadata_version_3 *meta = NULL;
@@ -880,15 +880,19 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		meta->sts_count = (dma_hdr.nss + 1);
 		if (!dma_hdr.mu_rx_data_incl) {
 			/* extract peer addr from freeze tlv */
-			peer_macaddr =
-				meta->peer_addr.su_peer_addr;
-			extract_peer_mac_from_freeze_tlv(freeze_tlv,
-							 peer_macaddr);
+			peer_macaddr = meta->peer_addr.su_peer_addr;
+			if (dma_hdr.freeze_data_incl) {
+				extract_peer_mac_from_freeze_tlv(freeze_tlv,
+								 peer_macaddr);
+			}
 		}
 	}
 
-	dump_enh_dma_hdr(&dma_hdr, freeze_tlv, mu_rx_user_info,
-			 header, 0, cookie);
+	if (dma_hdr.freeze_data_incl) {
+		dump_enh_dma_hdr(&dma_hdr, freeze_tlv, mu_rx_user_info,
+				 header, 0, cookie);
+	}
+
 	status = correlate_and_relay_enh(pdev, cookie, lut,
 					 CORRELATE_DBR_MODULE_ID);
 	if (status == STATUS_STREAM_AND_RELEASE) {
