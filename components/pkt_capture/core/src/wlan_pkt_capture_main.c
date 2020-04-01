@@ -83,6 +83,7 @@ pkt_capture_register_callbacks(struct wlan_objmgr_vdev *vdev,
 
 	target_if_pkt_capture_register_tx_ops(&vdev_priv->tx_ops);
 	target_if_pkt_capture_register_rx_ops(&vdev_priv->rx_ops);
+	pkt_capture_record_channel(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

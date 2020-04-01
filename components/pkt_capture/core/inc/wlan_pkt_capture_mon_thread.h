@@ -41,7 +41,7 @@
 typedef void (*pkt_capture_mon_thread_cb)(
 			void *context, void *ppdev, void *monpkt,
 			uint8_t vdev_id, uint8_t tid,
-			uint8_t status, bool pkt_format,
+			uint16_t status, bool pkt_format,
 			uint8_t *bssid,
 			uint8_t tx_retry_cnt);
 
@@ -66,7 +66,7 @@ struct pkt_capture_mon_pkt {
 	void *monpkt;
 	uint8_t vdev_id;
 	uint8_t tid;
-	uint8_t status;
+	uint16_t status;
 	bool pkt_format;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t tx_retry_cnt;

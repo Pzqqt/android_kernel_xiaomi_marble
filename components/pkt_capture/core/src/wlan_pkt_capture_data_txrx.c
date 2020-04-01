@@ -434,7 +434,7 @@ static void
 pkt_capture_rx_data_cb(
 		void *context, void *ppdev, void *nbuf_list,
 		uint8_t vdev_id, uint8_t tid,
-		uint8_t status, bool pkt_format,
+		uint16_t status, bool pkt_format,
 		uint8_t *bssid, uint8_t tx_retry_cnt)
 {
 	struct pkt_capture_vdev_priv *vdev_priv;
@@ -528,7 +528,7 @@ pkt_capture_rx_data_cb(
 		 */
 		headroom = qdf_nbuf_headroom(msdu);
 		qdf_nbuf_update_radiotap(&rx_status, msdu, headroom);
-		pkt_capture_mon(cb_ctx, msdu);
+		pkt_capture_mon(cb_ctx, msdu, vdev, 0);
 		msdu = next_buf;
 	}
 
@@ -556,7 +556,7 @@ free_buf:
 static void
 pkt_capture_tx_data_cb(
 		void *context, void *ppdev, void *nbuf_list, uint8_t vdev_id,
-		uint8_t tid, uint8_t status, bool pkt_format,
+		uint8_t tid, uint16_t status, bool pkt_format,
 		uint8_t *bssid, uint8_t tx_retry_cnt)
 {
 	qdf_nbuf_t msdu, next_buf;
@@ -701,7 +701,7 @@ pkt_capture_tx_data_cb(
 		 */
 		headroom = qdf_nbuf_headroom(msdu);
 		qdf_nbuf_update_radiotap(&tx_status, msdu, headroom);
-		pkt_capture_mon(cb_ctx, msdu);
+		pkt_capture_mon(cb_ctx, msdu, vdev, 0);
 		msdu = next_buf;
 	}
 	return;
