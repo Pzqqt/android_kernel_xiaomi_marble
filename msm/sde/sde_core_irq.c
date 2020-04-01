@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -115,24 +115,26 @@ static int _sde_core_irq_enable(struct sde_kms *sde_kms, int irq_idx)
 
 	SDE_EVT32(irq_idx,
 			atomic_read(&sde_kms->irq_obj.enable_counts[irq_idx]));
-	spin_lock_irqsave(&sde_kms->hw_intr->irq_lock, irq_flags);
-	if (atomic_inc_return(&sde_kms->irq_obj.enable_counts[irq_idx]) == 1)
+
+	if (atomic_inc_return(&sde_kms->irq_obj.enable_counts[irq_idx]) == 1) {
+		spin_lock_irqsave(&sde_kms->irq_obj.cb_lock, irq_flags);
+		/* empty callback list but interrupt is being enabled */
+		if (list_empty(&sde_kms->irq_obj.irq_cb_tbl[irq_idx]))
+			SDE_ERROR("enabling irq_idx=%d with no callback\n",
+					irq_idx);
+		spin_unlock_irqrestore(&sde_kms->irq_obj.cb_lock, irq_flags);
+
+		spin_lock_irqsave(&sde_kms->hw_intr->irq_lock, irq_flags);
 		ret = sde_kms->hw_intr->ops.enable_irq_nolock(
 				sde_kms->hw_intr, irq_idx);
-	spin_unlock_irqrestore(&sde_kms->hw_intr->irq_lock, irq_flags);
+		spin_unlock_irqrestore(&sde_kms->hw_intr->irq_lock, irq_flags);
+	}
+
 	if (ret)
 		SDE_ERROR("Fail to enable IRQ for irq_idx:%d\n", irq_idx);
 
 	SDE_DEBUG("irq_idx=%d ret=%d\n", irq_idx, ret);
 
-	if (atomic_read(&sde_kms->irq_obj.enable_counts[irq_idx]) == 1) {
-		spin_lock_irqsave(&sde_kms->irq_obj.cb_lock, irq_flags);
-		/* empty callback list but interrupt is enabled */
-		if (list_empty(&sde_kms->irq_obj.irq_cb_tbl[irq_idx]))
-			SDE_ERROR("irq_idx=%d enabled with no callback\n",
-					irq_idx);
-		spin_unlock_irqrestore(&sde_kms->irq_obj.cb_lock, irq_flags);
-	}
 	return ret;
 }
 
