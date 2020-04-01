@@ -577,7 +577,8 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 				WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_L,
 				0x0F, 0x06);
-		snd_soc_component_update_bits(component,
+		if (wcd937x->comp1_enable)
+			snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_CDC_COMP_CTL_0,
 				0x02, 0x02);
 		usleep_range(5000, 5010);
@@ -595,6 +596,10 @@ static int wcd937x_codec_ear_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_component_update_bits(component,
 				WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_L,
 				0x0F, 0x01);
+		if (wcd937x->comp1_enable)
+			snd_soc_component_update_bits(component,
+				WCD937X_DIGITAL_CDC_COMP_CTL_0,
+				0x02, 0x00);
 		break;
 	};
 	return 0;
