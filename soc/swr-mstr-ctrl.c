@@ -1353,9 +1353,9 @@ static void swrm_apply_port_config(struct swr_master *master)
 	dev_dbg(swrm->dev, "%s: enter bank: %d master_ports: %d\n",
 		__func__, bank, master->num_port);
 
-
-	swrm_cmd_fifo_wr_cmd(swrm, 0x01, 0xF, 0x00,
-			SWRS_SCP_HOST_CLK_DIV2_CTL_BANK(bank));
+	if (!swrm->disable_div2_clk_switch)
+		swrm_cmd_fifo_wr_cmd(swrm, 0x01, 0xF, 0x00,
+				SWRS_SCP_HOST_CLK_DIV2_CTL_BANK(bank));
 
 	swrm_copy_data_port_config(master, bank);
 }
@@ -2502,6 +2502,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->state = SWR_MSTR_UP;
 	swrm->ipc_wakeup = false;
 	swrm->ipc_wakeup_triggered = false;
+	swrm->disable_div2_clk_switch = FALSE;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
 	init_completion(&swrm->clk_off_complete);
@@ -2522,6 +2523,12 @@ static int swrm_probe(struct platform_device *pdev)
 
 	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
 		INIT_LIST_HEAD(&swrm->mport_cfg[i].port_req_list);
+
+	if (of_property_read_u32(pdev->dev.of_node,
+			"qcom,disable-div2-clk-switch",
+			&swrm->disable_div2_clk_switch)) {
+		swrm->disable_div2_clk_switch = FALSE;
+	}
 
 	/* Register LPASS core hw vote */
 	lpass_core_hw_vote = devm_clk_get(&pdev->dev, "lpass_core_hw_vote");
