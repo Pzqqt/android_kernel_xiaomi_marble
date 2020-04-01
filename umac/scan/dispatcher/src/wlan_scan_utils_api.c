@@ -238,10 +238,12 @@ static struct he_oper_6g_param *util_scan_get_he_6g_params(uint8_t *he_ops)
 
 static void
 util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
-				     uint8_t *chan_idx)
+				     uint8_t *chan_idx, bool *he_6g_dup_bcon)
 {
 	struct he_oper_6g_param *he_6g_params;
 	uint8_t *he_ops;
+
+	*he_6g_dup_bcon = false;
 
 	he_ops = util_scan_entry_heop(scan_params);
 	if (!util_scan_entry_hecap(scan_params) || !he_ops)
@@ -252,6 +254,7 @@ util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
 		return;
 
 	*chan_idx = he_6g_params->primary_channel;
+	*he_6g_dup_bcon = he_6g_params->duplicate_beacon ? true : false;
 }
 
 static enum wlan_phymode
@@ -311,7 +314,7 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 #else
 static void
 util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
-				     uint8_t *chan_idx)
+				     uint8_t *chan_idx, bool *he_6g_dup_bcon)
 {}
 static inline enum wlan_phymode
 util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
@@ -1410,6 +1413,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	struct qbss_load_ie *qbss_load;
 	struct scan_cache_node *scan_node;
 	uint8_t i, chan_idx = 0;
+	bool he_6g_dup_bcon = false;
 
 	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
@@ -1507,7 +1511,8 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 		scan_entry->is_p2p = true;
 
 	if (!chan_idx && util_scan_entry_hecap(scan_entry))
-		util_scan_get_chan_from_he_6g_params(scan_entry, &chan_idx);
+		util_scan_get_chan_from_he_6g_params(scan_entry, &chan_idx,
+						     &he_6g_dup_bcon);
 
 	if (chan_idx) {
 		uint8_t band_mask = BIT(wlan_reg_freq_to_band(
@@ -1523,7 +1528,8 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 		scan_entry->channel.chan_freq = rx_param->chan_freq;
 	} else if (rx_param->chan_freq !=
 	   scan_entry->channel.chan_freq) {
-		if (!wlan_reg_is_49ghz_freq(scan_entry->channel.chan_freq))
+		if (!wlan_reg_is_49ghz_freq(scan_entry->channel.chan_freq) &&
+		    !he_6g_dup_bcon)
 			scan_entry->channel_mismatch = true;
 	}
 
