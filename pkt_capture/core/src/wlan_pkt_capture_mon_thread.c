@@ -23,13 +23,19 @@
 #include "wlan_pkt_capture_mon_thread.h"
 #include <linux/kthread.h>
 #include "cds_ieee80211_common.h"
+#include "wlan_mgmt_txrx_utils_api.h"
+#include "cdp_txrx_ctrl.h"
+#include "cfg_ucfg_api.h"
 
-void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx,
-		     qdf_nbuf_t msdu)
+void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
+		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq)
 {
 	struct radiotap_header *rthdr;
 	uint8_t rtlen, type, sub_type;
 	struct ieee80211_frame *wh;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	cdp_config_param_type val;
 
 	rthdr = (struct radiotap_header *)qdf_nbuf_data(msdu);
 	rtlen = rthdr->it_len;
@@ -42,6 +48,20 @@ void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx,
 		qdf_nbuf_free(msdu);
 		return;
 	}
+
+	if ((type == IEEE80211_FC0_TYPE_MGT) &&
+	    (sub_type == MGMT_SUBTYPE_AUTH)) {
+		uint8_t chan = wlan_freq_to_chan(ch_freq);
+
+		val.cdp_pdev_param_monitor_chan = chan;
+		cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+					CDP_MONITOR_CHANNEL, val);
+
+		val.cdp_pdev_param_mon_freq = ch_freq;
+		cdp_txrx_set_pdev_param(soc, wlan_objmgr_pdev_get_pdev_id(pdev),
+					CDP_MONITOR_FREQUENCY, val);
+	}
+
 	if (cb_ctx->mon_cb(cb_ctx->mon_ctx, msdu) != QDF_STATUS_SUCCESS) {
 		pkt_capture_err("Frame Rx to HDD failed");
 		qdf_nbuf_free(msdu);

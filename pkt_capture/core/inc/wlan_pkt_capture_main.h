@@ -190,10 +190,12 @@ void pkt_capture_record_channel(struct wlan_objmgr_vdev *vdev);
  * pkt_capture_mon() - Wrapper function to invoke mon cb
  * @cb_ctx: packet capture callback context
  * @msdu: packet
+ * @vdev: pointer to vdev
+ * @ch_freq: channel frequency
  *
  * Return: None
  */
-void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx,
-		     qdf_nbuf_t msdu);
+void pkt_capture_mon(struct pkt_capture_cb_context *cb_ctx, qdf_nbuf_t msdu,
+		     struct wlan_objmgr_vdev *vdev, uint16_t ch_freq);
 
 #endif /* end of _WLAN_PKT_CAPTURE_MAIN_H_ */
