@@ -112,7 +112,6 @@ struct sde_plane {
 	struct sde_hw_pipe_cfg pipe_cfg;
 	struct sde_hw_sharp_cfg sharp_cfg;
 	struct sde_hw_pipe_qos_cfg pipe_qos_cfg;
-	struct sde_vbif_set_qos_params cached_qos_params;
 	uint32_t color_fill;
 	bool is_error;
 	bool is_rt_pipe;
@@ -468,9 +467,8 @@ static void _sde_plane_set_ot_limit(struct drm_plane *plane,
 /**
  * _sde_plane_set_vbif_qos - set vbif QoS for the given plane
  * @plane:		Pointer to drm plane
- * @force:		Force update of vbif QoS
  */
-static void _sde_plane_set_qos_remap(struct drm_plane *plane, bool force)
+static void _sde_plane_set_qos_remap(struct drm_plane *plane)
 {
 	struct sde_plane *psde;
 	struct sde_vbif_set_qos_params qos_params;
@@ -502,15 +500,6 @@ static void _sde_plane_set_qos_remap(struct drm_plane *plane, bool force)
 	qos_params.num = psde->pipe_hw->idx - SSPP_VIG0;
 	qos_params.client_type = psde->is_rt_pipe ?
 					VBIF_RT_CLIENT : VBIF_NRT_CLIENT;
-
-	if (!force && !memcmp(&qos_params, &psde->cached_qos_params,
-			sizeof(struct sde_vbif_set_qos_params))) {
-		return;
-	}
-	SDE_DEBUG("changes in vbif QoS parameters, remap it\n");
-
-	memcpy(&psde->cached_qos_params, &qos_params,
-			sizeof(struct sde_vbif_set_qos_params));
 
 	SDE_DEBUG("plane%d pipe:%d vbif:%d xin:%d rt:%d, clk_ctrl:%d\n",
 			plane->base.id, qos_params.num,
@@ -1606,7 +1595,7 @@ void sde_plane_secure_ctrl_xin_client(struct drm_plane *plane,
 		return;
 
 	/* do all VBIF programming for the sec-ui allowed SSPP */
-	_sde_plane_set_qos_remap(plane, true);
+	_sde_plane_set_qos_remap(plane);
 	_sde_plane_set_ot_limit(plane, crtc);
 }
 
@@ -3121,10 +3110,7 @@ static void _sde_plane_update_properties(struct drm_plane *plane,
 			_sde_plane_set_ts_prefill(plane, pstate);
 	}
 
-	if ((pstate->dirty & SDE_PLANE_DIRTY_ALL) == SDE_PLANE_DIRTY_ALL)
-		_sde_plane_set_qos_remap(plane, true);
-	else
-		_sde_plane_set_qos_remap(plane, false);
+	_sde_plane_set_qos_remap(plane);
 
 	/* clear dirty */
 	pstate->dirty = 0x0;
