@@ -18777,6 +18777,7 @@ typedef enum {
     WMI_NDP_END_TYPE_UNSPECIFIED = 0x00,
     WMI_NDP_END_TYPE_PEER_UNAVAILABLE = 0x01,
     WMI_NDP_END_TYPE_OTA_FRAME = 0x02,
+    WMI_NDP_END_TYPE_DATA_INACTIVITY = 0x03,
 } wmi_ndp_end_type_PROTOTYPE;
 
 #define wmi_ndp_end_type wmi_ndp_end_type_PROTOTYPE
@@ -18788,6 +18789,7 @@ typedef enum {
     WMI_NDP_END_REASON_UNSPECIFIED = 0x00,
     WMI_NDP_END_REASON_INACTIVITY = 0x01,
     WMI_NDP_END_REASON_PEER_DATA_END = 0x02,
+    WMI_NDP_END_REASON_DATA_INACTIVITY = 0x03,
 } wmi_ndp_end_reason_code_PROTOTYPE;
 
 #define wmi_ndp_end_reason_code wmi_ndp_end_reason_code_PROTOTYPE
