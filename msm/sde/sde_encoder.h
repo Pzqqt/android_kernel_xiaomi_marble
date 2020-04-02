@@ -528,4 +528,24 @@ void sde_encoder_needs_hw_reset(struct drm_encoder *enc);
  */
 void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable);
 
+/**
+ * sde_encoder_get_kms - retrieve the kms from encoder
+ * @drm_enc:    Pointer to drm encoder structure
+ */
+static inline struct sde_kms *sde_encoder_get_kms(struct drm_encoder *drm_enc)
+{
+	struct msm_drm_private *priv;
+
+	if (!drm_enc || !drm_enc->dev) {
+		SDE_ERROR("invalid encoder\n");
+		return NULL;
+	}
+	priv = drm_enc->dev->dev_private;
+	if (!priv || !priv->kms) {
+		SDE_ERROR("invalid kms\n");
+		return NULL;
+	}
+
+	return to_sde_kms(priv->kms);
+}
 #endif /* __SDE_ENCODER_H__ */

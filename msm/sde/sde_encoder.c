@@ -863,7 +863,6 @@ static int sde_encoder_virt_atomic_check(
 	struct drm_connector_state *conn_state)
 {
 	struct sde_encoder_virt *sde_enc;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	const struct drm_display_mode *mode;
 	struct drm_display_mode *adj_mode;
@@ -882,8 +881,10 @@ static int sde_encoder_virt_atomic_check(
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return -EINVAL;
+
 	mode = &crtc_state->mode;
 	adj_mode = &crtc_state->adjusted_mode;
 	sde_conn = to_sde_connector(conn_state->connector);
@@ -993,10 +994,8 @@ void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
 			u32 vsync_source, bool is_dummy)
 {
 	struct sde_vsync_source_cfg vsync_cfg = { 0 };
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_hw_mdp *hw_mdptop;
-	struct drm_encoder *drm_enc;
 	struct sde_encoder_virt *sde_enc;
 	int i;
 
@@ -1012,11 +1011,7 @@ void sde_encoder_helper_vsync_config(struct sde_encoder_phys *phys_enc,
 		return;
 	}
 
-	drm_enc = &sde_enc->base;
-	/* this pointers are checked in virt_enable_helper */
-	priv = drm_enc->dev->dev_private;
-
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
 	if (!sde_kms) {
 		SDE_ERROR("invalid sde_kms\n");
 		return;
@@ -1384,15 +1379,15 @@ struct sde_rsc_client *sde_encoder_get_rsc_client(struct drm_encoder *drm_enc)
 static int _sde_encoder_resource_control_helper(struct drm_encoder *drm_enc,
 		bool enable)
 {
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_encoder_virt *sde_enc;
 	int rc;
 	bool is_cmd_mode = false;
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return -EINVAL;
 
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
@@ -2043,7 +2038,6 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 				      struct drm_display_mode *adj_mode)
 {
 	struct sde_encoder_virt *sde_enc;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *conn = NULL, *conn_search;
@@ -2070,8 +2064,9 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;
 
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return;
 
 	SDE_EVT32(DRMID(drm_enc));
 
@@ -2380,7 +2375,6 @@ static int _sde_encoder_input_handler(
 static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 
 	if (!drm_enc || !drm_enc->dev || !drm_enc->dev->dev_private) {
@@ -2388,12 +2382,9 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 		return;
 	}
 
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
-	if (!sde_kms) {
-		SDE_ERROR("invalid sde_kms\n");
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
 		return;
-	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	if (!sde_enc || !sde_enc->cur_master) {
@@ -2654,7 +2645,6 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	enum sde_intf_mode intf_mode;
 	int i = 0;
@@ -2678,8 +2668,10 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
+	if (!sde_kms)
+		return;
+
 	intf_mode = sde_encoder_get_intf_mode(drm_enc);
 
 	SDE_EVT32(DRMID(drm_enc));
@@ -3398,14 +3390,12 @@ static void _sde_encoder_kickoff_phys(struct sde_encoder_virt *sde_enc)
 	_sde_encoder_trigger_start(sde_enc->cur_master);
 
 	if (sde_enc->elevated_ahb_vote) {
+		sde_kms = sde_encoder_get_kms(&sde_enc->base);
 		priv = sde_enc->base.dev->dev_private;
-		if (priv != NULL) {
-			sde_kms = to_sde_kms(priv->kms);
-			if (sde_kms != NULL) {
-				sde_power_scale_reg_bus(&priv->phandle,
-						VOTE_INDEX_LOW,
-						false);
-			}
+		if (sde_kms != NULL) {
+			sde_power_scale_reg_bus(&priv->phandle,
+					VOTE_INDEX_LOW,
+					false);
 		}
 		sde_enc->elevated_ahb_vote = false;
 	}
@@ -3941,7 +3931,6 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	struct sde_encoder_phys *phys;
 	struct sde_kms *sde_kms = NULL;
 	struct sde_crtc *sde_crtc;
-	struct msm_drm_private *priv = NULL;
 	bool needs_hw_reset = false, is_cmd_mode;
 	int i, rc, ret = 0;
 	struct msm_display_info *disp_info;
@@ -3952,8 +3941,10 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 		return -EINVAL;
 	}
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return -EINVAL;
+
 	disp_info = &sde_enc->disp_info;
 	sde_crtc = to_sde_crtc(sde_enc->crtc);
 
@@ -4341,7 +4332,6 @@ static ssize_t _sde_encoder_misr_setup(struct file *file,
 	char buf[MISR_BUFF_SIZE + 1];
 	size_t buff_copy;
 	u32 frame_count, enable;
-	struct msm_drm_private *priv = NULL;
 	struct sde_kms *sde_kms = NULL;
 	struct drm_encoder *drm_enc;
 
@@ -4349,11 +4339,13 @@ static ssize_t _sde_encoder_misr_setup(struct file *file,
 		return -EINVAL;
 
 	sde_enc = file->private_data;
-	priv = sde_enc->base.dev->dev_private;
-	if (!sde_enc || !priv || !priv->kms)
+	if (!sde_enc)
 		return -EINVAL;
 
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
+	if (!sde_kms)
+		return -EINVAL;
+
 	drm_enc = &sde_enc->base;
 
 	if (sde_kms_is_secure_session_inprogress(sde_kms)) {
@@ -4385,7 +4377,6 @@ static ssize_t _sde_encoder_misr_read(struct file *file,
 		char __user *user_buff, size_t count, loff_t *ppos)
 {
 	struct sde_encoder_virt *sde_enc;
-	struct msm_drm_private *priv = NULL;
 	struct sde_kms *sde_kms = NULL;
 	struct drm_encoder *drm_enc;
 	int i = 0, len = 0;
@@ -4399,9 +4390,9 @@ static ssize_t _sde_encoder_misr_read(struct file *file,
 		return -EINVAL;
 
 	sde_enc = file->private_data;
-	priv = sde_enc->base.dev->dev_private;
-	if (priv != NULL)
-		sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
+	if (!sde_kms)
+		return -EINVAL;
 
 	if (sde_kms_is_secure_session_inprogress(sde_kms)) {
 		SDE_DEBUG_ENC(sde_enc, "misr read not allowed\n");
@@ -4467,7 +4458,6 @@ end:
 static int _sde_encoder_init_debugfs(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	int i;
 
@@ -4486,14 +4476,17 @@ static int _sde_encoder_init_debugfs(struct drm_encoder *drm_enc)
 
 	char name[SDE_NAME_SIZE];
 
-	if (!drm_enc || !drm_enc->dev || !drm_enc->dev->dev_private) {
-		SDE_ERROR("invalid encoder or kms\n");
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
 		return -EINVAL;
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
-	priv = drm_enc->dev->dev_private;
-	sde_kms = to_sde_kms(priv->kms);
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms) {
+		SDE_ERROR("invalid sde_kms\n");
+		return -EINVAL;
+	}
 
 	snprintf(name, SDE_NAME_SIZE, "encoder%u", drm_enc->base.id);
 
@@ -5116,19 +5109,15 @@ int sde_encoder_update_caps_for_cont_splash(struct drm_encoder *encoder,
 		return -EINVAL;
 	}
 
-	if (!encoder->dev || !encoder->dev->dev_private) {
-		SDE_ERROR("drm device invalid\n");
+	sde_enc = to_sde_encoder_virt(encoder);
+	sde_kms = sde_encoder_get_kms(&sde_enc->base);
+	if (!sde_kms) {
+		SDE_ERROR("invalid sde_kms\n");
 		return -EINVAL;
 	}
 
 	priv = encoder->dev->dev_private;
-	if (!priv->kms) {
-		SDE_ERROR("invalid kms\n");
-		return -EINVAL;
-	}
 
-	sde_kms = to_sde_kms(priv->kms);
-	sde_enc = to_sde_encoder_virt(encoder);
 	if (!priv->num_connectors) {
 		SDE_ERROR_ENC(sde_enc, "No connectors registered\n");
 		return -EINVAL;
