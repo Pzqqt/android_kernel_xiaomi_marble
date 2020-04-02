@@ -285,10 +285,10 @@ next_token:
 static bool fwol_validate_ie_bitmaps(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_fwol_ie_whitelist *whitelist)
 {
-	if (!(whitelist->ie_bitmap_0 && whitelist->ie_bitmap_1 &&
-	      whitelist->ie_bitmap_2 && whitelist->ie_bitmap_3 &&
-	      whitelist->ie_bitmap_4 && whitelist->ie_bitmap_5 &&
-	      whitelist->ie_bitmap_6 && whitelist->ie_bitmap_7))
+	if (!(whitelist->ie_bitmap_0 || whitelist->ie_bitmap_1 ||
+	      whitelist->ie_bitmap_2 || whitelist->ie_bitmap_3 ||
+	      whitelist->ie_bitmap_4 || whitelist->ie_bitmap_5 ||
+	      whitelist->ie_bitmap_6 || whitelist->ie_bitmap_7))
 		return false;
 
 	/*
