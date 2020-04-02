@@ -4588,6 +4588,7 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* Enable Roaming on STA interface which was disabled before CSA */
 	if (adapter->device_mode == QDF_STA_MODE)
@@ -4605,6 +4606,10 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 	chan_change.chan_params.mhz_freq_seg1 =
 		roam_info->chan_info.band_center_freq2;
 
+	/* Flush AP on old channel before adding it again */
+	wlan_hdd_cfg80211_unlink_bss(adapter, sta_ctx->conn_info.bssid.bytes,
+				     sta_ctx->conn_info.ssid.SSID.ssId,
+				     sta_ctx->conn_info.ssid.SSID.length);
 	bss = wlan_hdd_cfg80211_update_bss_db(adapter, roam_info);
 	if (!bss)
 		hdd_err("%s: unable to create BSS entry", adapter->dev->name);

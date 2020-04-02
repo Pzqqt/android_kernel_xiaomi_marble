@@ -12233,16 +12233,25 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 	roam_info->chan_info.sec_ch_offset =
 				pSwitchChnInd->chan_params.sec_ch_offset;
 	roam_info->chan_info.band_center_freq1 =
-				pSwitchChnInd->chan_params.center_freq_seg0;
+				pSwitchChnInd->chan_params.mhz_freq_seg0;
 	roam_info->chan_info.band_center_freq2 =
-				pSwitchChnInd->chan_params.center_freq_seg1;
+				pSwitchChnInd->chan_params.mhz_freq_seg1;
 
-	if (CSR_IS_PHY_MODE_11ac(mac_ctx->roam.configParam.phyMode))
-		roam_info->mode = SIR_SME_PHY_MODE_VHT;
-	else if (CSR_IS_PHY_MODE_11n(mac_ctx->roam.configParam.phyMode))
+	switch (session->bssParams.uCfgDot11Mode) {
+	case eCSR_CFG_DOT11_MODE_11N:
+	case eCSR_CFG_DOT11_MODE_11N_ONLY:
 		roam_info->mode = SIR_SME_PHY_MODE_HT;
-	else
+		break;
+	case eCSR_CFG_DOT11_MODE_11AC:
+	case eCSR_CFG_DOT11_MODE_11AC_ONLY:
+	case eCSR_CFG_DOT11_MODE_11AX:
+	case eCSR_CFG_DOT11_MODE_11AX_ONLY:
+		roam_info->mode = SIR_SME_PHY_MODE_VHT;
+		break;
+	default:
 		roam_info->mode = SIR_SME_PHY_MODE_LEGACY;
+		break;
+	}
 
 	status = csr_roam_call_callback(mac_ctx, sessionId, roam_info, 0,
 					eCSR_ROAM_STA_CHANNEL_SWITCH,

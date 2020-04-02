@@ -2188,6 +2188,8 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	struct switch_channel_ind *pSirSmeSwitchChInd;
+	enum reg_wifi_band band;
+	uint8_t band_mask;
 
 	pe_session->curr_op_freq = pe_session->curr_req_chan_freq;
 	/* We need to restore pre-channelSwitch state on the STA */
@@ -2214,6 +2216,19 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 			pe_session->gLimChannelSwitch.ch_center_freq_seg0;
 	pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
 			pe_session->gLimChannelSwitch.ch_center_freq_seg1;
+	band = wlan_reg_freq_to_band(pSirSmeSwitchChInd->freq);
+	band_mask = 1 << band;
+
+	if (pe_session->gLimChannelSwitch.ch_center_freq_seg0)
+		pSirSmeSwitchChInd->chan_params.mhz_freq_seg0 =
+			wlan_reg_chan_band_to_freq(mac->pdev,
+			    pe_session->gLimChannelSwitch.ch_center_freq_seg0,
+			    band_mask);
+	if (pe_session->gLimChannelSwitch.ch_center_freq_seg1)
+		pSirSmeSwitchChInd->chan_params.mhz_freq_seg1 =
+			wlan_reg_chan_band_to_freq(mac->pdev,
+			    pe_session->gLimChannelSwitch.ch_center_freq_seg1,
+			    band_mask);
 
 	pSirSmeSwitchChInd->status = status;
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,
