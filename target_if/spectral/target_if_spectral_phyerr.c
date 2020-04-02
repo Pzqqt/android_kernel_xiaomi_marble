@@ -1857,6 +1857,8 @@ target_if_consume_spectral_report_gen3(
 	/* Advance buf pointer to the search fft report */
 	data += sizeof(struct spectral_sscan_summary_report_gen3);
 	data += spectral->rparams.ssumaary_padding_bytes;
+	params.vhtop_ch_freq_seg1 = report->cfreq1;
+	params.vhtop_ch_freq_seg2 = report->cfreq2;
 
 	if (is_primaryseg_expected(spectral, spectral_mode)) {
 		/* RSSI is in 1/2 dBm steps, Covert it to dBm scale */
@@ -1961,10 +1963,12 @@ target_if_consume_spectral_report_gen3(
 
 		params.freq = p_sops->get_current_channel(spectral);
 
-		if (spectral_mode == SPECTRAL_SCAN_MODE_AGILE)
-			params.agile_freq =
-				spectral->params[spectral_mode].ss_frequency;
-
+		if (spectral_mode == SPECTRAL_SCAN_MODE_AGILE) {
+			params.agile_freq1 = spectral->params[spectral_mode].
+					     ss_frequency.cfreq1;
+			params.agile_freq2 = spectral->params[spectral_mode].
+					     ss_frequency.cfreq2;
+		}
 		params.noise_floor =
 			report->noisefloor[chn_idx_lowest_enabled];
 		temp = (uint8_t *)p_fft_report + SPECTRAL_FFT_BINS_POS;
@@ -2091,9 +2095,6 @@ target_if_consume_spectral_report_gen3(
 			target_if_dump_fft_report_gen3(spectral, spectral_mode,
 						       p_fft_report, p_sfft);
 
-		params.vhtop_ch_freq_seg1 = 0;
-		params.vhtop_ch_freq_seg2 = 0;
-
 		params.rssi_sec80 = rssi;
 
 		vdev = target_if_spectral_get_vdev(spectral);
@@ -2169,6 +2170,9 @@ int target_if_spectral_process_report_gen3(
 			     qdf_min(sizeof(report.noisefloor),
 				     sizeof(payload->meta_data.noisefloor)));
 		report.reset_delay = payload->meta_data.reset_delay;
+		report.cfreq1 = payload->meta_data.cfreq1;
+		report.cfreq2 = payload->meta_data.cfreq2;
+		report.ch_width = payload->meta_data.ch_width;
 	}
 
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4)) {

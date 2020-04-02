@@ -41,7 +41,8 @@
 
 #include <spectral_defs_i.h>
 
-#define FREQ_OFFSET_10MHZ 10
+#define FREQ_OFFSET_10MHZ (10)
+#define FREQ_OFFSET_40MHZ (40)
 #ifndef SPECTRAL_USE_NL_BCAST
 #define SPECTRAL_USE_NL_BCAST  (0)
 #endif
@@ -411,11 +412,17 @@ struct spectral_sscan_summary_report_gen3 {
  * @data: Report buffer
  * @noisefloor: Noise floor values
  * @reset_delay: Time taken for warm reset in us
+ * @cfreq1: center frequency 1
+ * @cfreq2: center frequency 2
+ * @ch_width: channel width
  */
 struct spectral_report {
 	uint8_t *data;
 	int32_t noisefloor[DBR_MAX_CHAINS];
 	uint32_t reset_delay;
+	uint32_t cfreq1;
+	uint32_t cfreq2;
+	uint32_t ch_width;
 };
 #endif
 /* END of spectral GEN III HW specific details */
@@ -531,6 +538,7 @@ struct spectral_fft_bin_markers_165mhz {
  * of FFT bins.
  * @fragmentation_160: This indicates whether Spectral reports in 160/80p80 is
  * fragmented.
+ * @max_agile_ch_width: Maximum agile BW supported by the target
  * @detid_mode_table: Detector ID to Spectral scan mode table
  * @num_spectral_detectors: Total number of Spectral detectors
  * @marker: Describes the boundaries of pri80, 5 MHz and sec80 bins
@@ -540,6 +548,7 @@ struct spectral_report_params {
 	uint8_t ssumaary_padding_bytes;
 	uint8_t fft_report_hdr_len;
 	bool fragmentation_160[SPECTRAL_SCAN_MODE_MAX];
+	enum phy_ch_width max_agile_ch_width;
 	enum spectral_scan_mode detid_mode_table[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_spectral_detectors;
 	struct spectral_fft_bin_markers_165mhz
@@ -1110,8 +1119,13 @@ struct target_if_spectral {
  * @freq: Center frequency of primary 20MHz channel in MHz
  * @vhtop_ch_freq_seg1: VHT operation first segment center frequency in MHz
  * @vhtop_ch_freq_seg2: VHT operation second segment center frequency in MHz
- * @agile_freq: Center frequency in MHz of the entire span across which Agile
- * Spectral is carried out. Applicable only for Agile Spectral samples.
+ * @agile_freq1:        Center frequency in MHz of the entire span(for 80+80 MHz
+ *                      agile Scan it is primary 80 MHz span) across which
+ *                      Agile Spectral is carried out. Applicable only for Agile
+ *                      Spectral samples.
+ * @agile_freq2:        Center frequency in MHz of the secondary 80 MHz span
+ *                      across which Agile Spectral is carried out. Applicable
+ *                      only for Agile Spectral samples in 80+80 MHz mode.
  * @freq_loading: spectral control duty cycles
  * @noise_floor:  current noise floor (except for secondary 80 segment)
  * @noise_floor_sec80:  current noise floor for secondary 80 segment
@@ -1172,7 +1186,8 @@ struct target_if_samp_msg_params {
 	uint16_t   freq;
 	uint16_t   vhtop_ch_freq_seg1;
 	uint16_t   vhtop_ch_freq_seg2;
-	uint16_t   agile_freq;
+	uint16_t   agile_freq1;
+	uint16_t   agile_freq2;
 	uint16_t   freq_loading;
 	int16_t     noise_floor;
 	int16_t     noise_floor_sec80;
@@ -1974,8 +1989,7 @@ void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
 /**
  * target_if_set_spectral_config() - Set spectral config
  * @pdev:       Pointer to pdev object
- * @threshtype: config type
- * @value:      config value
+ * @param: Spectral parameter id and value
  * @smode: Spectral scan mode
  * @err: Pointer to Spectral error code
  *
@@ -1984,8 +1998,7 @@ void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
  * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
-					 const uint32_t threshtype,
-					 const uint32_t value,
+					 const struct spectral_cp_param *param,
 					 const enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
 

@@ -73,8 +73,10 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 
 		spec_samp_msg->signature = SPECTRAL_SIGNATURE;
 		spec_samp_msg->freq = params->freq;
-		if (params->smode == SPECTRAL_SCAN_MODE_AGILE)
-			spec_samp_msg->agile_freq = params->agile_freq;
+		if (params->smode == SPECTRAL_SCAN_MODE_AGILE) {
+			spec_samp_msg->agile_freq1 = params->agile_freq1;
+			spec_samp_msg->agile_freq2 = params->agile_freq2;
+		}
 		spec_samp_msg->freq_loading = params->freq_loading;
 		samp_data->spectral_mode = params->smode;
 		samp_data->spectral_data_len = params->datalen;

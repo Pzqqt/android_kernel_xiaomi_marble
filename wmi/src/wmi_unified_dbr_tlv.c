@@ -187,6 +187,9 @@ static QDF_STATUS extract_dbr_buf_metadata_tlv(
 		     qdf_min(sizeof(entry->noise_floor),
 			     sizeof(param->noisefloor)));
 	param->reset_delay = entry->reset_delay;
+	param->cfreq1 = entry->freq1;
+	param->cfreq2 = entry->freq2;
+	param->ch_width = entry->ch_width;
 
 	return QDF_STATUS_SUCCESS;
 }

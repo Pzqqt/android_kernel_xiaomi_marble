@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -240,6 +240,21 @@ enum spectral_cp_error_code {
 enum spectral_dma_debug {
 	SPECTRAL_DMA_RING_DEBUG,
 	SPECTRAL_DMA_BUFFER_DEBUG,
+};
+
+/**
+ * struct spectral_cp_param - Spectral control path data structure which
+ * contains parameter and its value
+ * @id: Parameter ID
+ * @value: Single parameter value
+ * @freq: Spectral scan frequency
+ */
+struct spectral_cp_param {
+	uint32_t id;
+	union {
+		uint32_t value;
+		struct spectral_config_frequency freq;
+	};
 };
 
 /**
