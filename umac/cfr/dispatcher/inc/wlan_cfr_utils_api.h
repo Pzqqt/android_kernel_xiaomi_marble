@@ -585,22 +585,4 @@ uint8_t count_set_bits(uint32_t value);
  */
 void wlan_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
 #endif
-
-/**
- * mac2str() - convert mac address array to string
- *
- * @mac: pointer to mac array
- *
- * Return: string
- */
-static inline const char *
-mac2str(const uint8_t mac[6])
-{
-	static char str[32];
-
-	qdf_snprintf(str, sizeof(str), QDF_MAC_ADDR_STR,
-		     QDF_MAC_ADDR_ARRAY(mac));
-
-	return str;
-}
 #endif
