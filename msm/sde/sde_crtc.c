@@ -1340,9 +1340,11 @@ static void __sde_crtc_assign_active_cfg(struct sde_crtc *sdecrtc,
 	u8 found = 0;
 	int i;
 
-	for (i = 0; i < SDE_STAGE_MAX && !found; i++) {
-		if (sdecrtc->active_cfg.stage[i][0] == SSPP_NONE)
+	for (i = 0; i < SDE_STAGE_MAX; i++) {
+		if (sdecrtc->active_cfg.stage[i][0] == SSPP_NONE) {
 			found = 1;
+			break;
+		}
 	}
 	if (!found) {
 		SDE_ERROR("All active configs are allocated\n");
