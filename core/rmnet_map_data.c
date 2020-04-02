@@ -1247,7 +1247,7 @@ static void rmnet_map_flush_tx_packet_work(struct work_struct *work)
 			skb = port->agg_skb;
 			port->agg_skb = NULL;
 			port->agg_count = 0;
-			memset(&port->agg_time, 0, sizeof(struct timespec));
+			memset(&port->agg_time, 0, sizeof(port->agg_time));
 		}
 		port->agg_state = 0;
 	}
@@ -1437,7 +1437,7 @@ void rmnet_map_tx_aggregate(struct sk_buff *skb, struct rmnet_port *port)
 
 new_packet:
 	spin_lock_irqsave(&port->agg_lock, flags);
-	memcpy(&last, &port->agg_last, sizeof(struct timespec));
+	memcpy(&last, &port->agg_last, sizeof(last));
 	ktime_get_real_ts64(&port->agg_last);
 
 	if ((port->data_format & RMNET_EGRESS_FORMAT_PRIORITY) &&
@@ -1469,7 +1469,7 @@ new_packet:
 		if (!port->agg_skb) {
 			port->agg_skb = 0;
 			port->agg_count = 0;
-			memset(&port->agg_time, 0, sizeof(struct timespec));
+			memset(&port->agg_time, 0, sizeof(port->agg_time));
 			spin_unlock_irqrestore(&port->agg_lock, flags);
 			skb->protocol = htons(ETH_P_MAP);
 			dev_queue_xmit(skb);
@@ -1570,7 +1570,7 @@ void rmnet_map_tx_aggregate_exit(struct rmnet_port *port)
 			kfree_skb(port->agg_skb);
 			port->agg_skb = NULL;
 			port->agg_count = 0;
-			memset(&port->agg_time, 0, sizeof(struct timespec));
+			memset(&port->agg_time, 0, sizeof(port->agg_time));
 		}
 
 		port->agg_state = 0;
@@ -1594,7 +1594,7 @@ void rmnet_map_tx_qmap_cmd(struct sk_buff *qmap_skb)
 			agg_skb = port->agg_skb;
 			port->agg_skb = 0;
 			port->agg_count = 0;
-			memset(&port->agg_time, 0, sizeof(struct timespec));
+			memset(&port->agg_time, 0, sizeof(port->agg_time));
 			port->agg_state = 0;
 			spin_unlock_irqrestore(&port->agg_lock, flags);
 			hrtimer_cancel(&port->hrtimer);

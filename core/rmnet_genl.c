@@ -168,7 +168,7 @@ void rmnet_boost_for_pid(pid_t pid, int boost_enable,
 static void rmnet_create_pid_bps_resp(struct rmnet_core_pid_bps_resp
 				      *pid_bps_resp_ptr)
 {
-	struct timespec time;
+	struct timespec64 time;
 	struct hlist_node *tmp;
 	struct rmnet_pid_node_s *node_p;
 	unsigned long ht_flags;
@@ -176,7 +176,7 @@ static void rmnet_create_pid_bps_resp(struct rmnet_core_pid_bps_resp
 	int i;
 	u16 bkt;
 
-	(void)getnstimeofday(&time);
+	ktime_get_real_ts64(&time);
 	pid_bps_resp_ptr->timestamp = RMNET_GENL_SEC_TO_NSEC(time.tv_sec) +
 		   time.tv_nsec;
 
