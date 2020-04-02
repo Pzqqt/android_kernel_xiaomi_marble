@@ -207,6 +207,7 @@ struct sde_crtc_misr_info {
  * @property_defaults : Array of default values for generic property support
  * @output_fence  : output release fence context
  * @stage_cfg     : H/w mixer stage configuration
+ * @active_cfg    : H/w pipes active that shouldn't be staged
  * @debugfs_root  : Parent of debugfs node
  * @priv_handle   : Pointer to external private handle, if present
  * @vblank_cb_count : count of vblank callback since last reset
@@ -276,6 +277,7 @@ struct sde_crtc {
 	struct sde_fence_context *output_fence;
 
 	struct sde_hw_stage_cfg stage_cfg;
+	struct sde_hw_stage_cfg active_cfg;
 	struct dentry *debugfs_root;
 	void *priv_handle;
 

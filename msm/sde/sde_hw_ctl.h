@@ -426,9 +426,11 @@ struct sde_hw_ctl_ops {
 	 * @ctx       : ctl path ctx pointer
 	 * @lm        : layer mixer enumeration
 	 * @cfg       : blend stage configuration
+	 * @active_cfg: active no blend stage configuration
 	 */
 	void (*setup_blendstage)(struct sde_hw_ctl *ctx,
-		enum sde_lm lm, struct sde_hw_stage_cfg *cfg);
+		enum sde_lm lm, struct sde_hw_stage_cfg *cfg,
+		struct sde_hw_stage_cfg *active_cfg);
 
 	/**
 	 * Get all the sspp staged on a layer mixer

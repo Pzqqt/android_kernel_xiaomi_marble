@@ -284,6 +284,22 @@ static void dspp_spr(struct sde_hw_dspp *c)
 	}
 }
 
+static void dspp_demura(struct sde_hw_dspp *c)
+{
+	int ret;
+
+	if (c->cap->sblk->demura.version == SDE_COLOR_PROCESS_VER(0x1, 0x0)) {
+		ret = reg_dmav1_init_dspp_op_v4(SDE_DSPP_DEMURA, c->idx);
+		c->ops.setup_demura_cfg = NULL;
+		c->ops.setup_demura_backlight_cfg = NULL;
+		if (!ret) {
+			c->ops.setup_demura_cfg = reg_dmav1_setup_demurav1;
+			c->ops.setup_demura_backlight_cfg =
+				sde_demura_backlight_cfg;
+		}
+	}
+}
+
 static void (*dspp_blocks[SDE_DSPP_MAX])(struct sde_hw_dspp *c);
 
 static void _init_dspp_ops(void)
@@ -302,6 +318,7 @@ static void _init_dspp_ops(void)
 	dspp_blocks[SDE_DSPP_LTM] = dspp_ltm;
 	dspp_blocks[SDE_DSPP_RC] = dspp_rc;
 	dspp_blocks[SDE_DSPP_SPR] = dspp_spr;
+	dspp_blocks[SDE_DSPP_DEMURA] = dspp_demura;
 }
 
 static void _setup_dspp_ops(struct sde_hw_dspp *c, unsigned long features)
@@ -389,6 +406,16 @@ struct sde_hw_dspp *sde_hw_dspp_init(enum sde_dspp idx,
 				c->hw.blk_off + cfg->sblk->spr.base,
 				c->hw.blk_off + cfg->sblk->spr.base +
 				cfg->sblk->spr.len, c->hw.xin_id);
+	}
+
+	if ((cfg->sblk->demura.id == SDE_DSPP_DEMURA) &&
+			cfg->sblk->demura.base) {
+		snprintf(buf, ARRAY_SIZE(buf), "%s_%d", "demura",
+				c->idx - DSPP_0);
+		sde_dbg_reg_register_dump_range(SDE_DBG_NAME, buf,
+				c->hw.blk_off + cfg->sblk->demura.base,
+				c->hw.blk_off + cfg->sblk->demura.base +
+				cfg->sblk->demura.len, c->hw.xin_id);
 	}
 	return c;
 

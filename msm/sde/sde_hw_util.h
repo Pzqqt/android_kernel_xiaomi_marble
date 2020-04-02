@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_UTIL_H
@@ -12,6 +12,7 @@
 #include "sde_hw_catalog.h"
 
 #define REG_MASK(n)                     ((BIT(n)) - 1)
+#define REG_MASK_SHIFT(n, shift) ((REG_MASK(n)) << (shift))
 #define LP_DDR4_TYPE			0x7
 
 struct sde_format_extended;

@@ -770,6 +770,7 @@ struct sde_dspp_sub_blks {
 	struct sde_pp_blk spr;
 	struct sde_pp_blk vlut;
 	struct sde_dspp_rc rc;
+	struct sde_pp_blk demura;
 };
 
 struct sde_pingpong_sub_blks {
@@ -1418,6 +1419,7 @@ struct sde_limit_cfg {
  * @inline_disable_const_clr     Disable constant color during inline rotate
  * @dither_luma_mode_support   Enables dither luma mode
  * @has_base_layer     Supports staging layer as base layer
+ * @demura_supported   Demura pipe support flag(~0x00 - Not supported)
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1436,6 +1438,7 @@ struct sde_limit_cfg {
  * @inline_rot_formats	formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
  * @rc_count	number of rounded corner hardware instances
+ * @demura_count number of demura hardware instances
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
@@ -1480,6 +1483,8 @@ struct sde_mdss_cfg {
 	bool inline_disable_const_clr;
 	bool dither_luma_mode_support;
 	bool has_base_layer;
+	bool has_demura;
+	u32 demura_supported[SSPP_MAX][2];
 
 	struct sde_sc_cfg sc_cfg;
 
@@ -1551,6 +1556,7 @@ struct sde_mdss_cfg {
 	u32 ltm_count;
 	u32 rc_count;
 	u32 spr_count;
+	u32 demura_count;
 
 	u32 merge_3d_count;
 	struct sde_merge_3d_cfg merge_3d[MAX_BLOCKS];

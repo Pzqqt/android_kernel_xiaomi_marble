@@ -358,6 +358,7 @@ enum sde_connector_events {
 	SDE_CONN_EVENT_CMD_DONE, /* command mode frame done */
 	SDE_CONN_EVENT_VID_FIFO_OVERFLOW, /* dsi fifo overflow error */
 	SDE_CONN_EVENT_CMD_FIFO_UNDERFLOW, /* dsi fifo underflow error */
+	SDE_CONN_EVENT_PANEL_ID, /* returns read panel id from ddic  */
 	SDE_CONN_EVENT_COUNT,
 };
 
@@ -406,6 +407,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @blob_ext_hdr: Pointer to blob structure for 'ext_hdr_properties' property
  * @blob_dither: Pointer to blob structure for default dither config
  * @blob_mode_info: Pointer to blob structure for mode info
+ * @blob_panel_id: Pointer to blob structure for blob_panel_id
  * @fb_kmap: true if kernel mapping of framebuffer is requested
  * @event_table: Array of registered events
  * @event_lock: Lock object for event_table
@@ -429,7 +431,7 @@ struct sde_connector_dyn_hdr_metadata {
  * @qsync_mode: Cached Qsync mode, 0=disabled, 1=continuous mode
  * @qsync_updated: Qsync settings were updated
  * @colorspace_updated: Colorspace property was updated
- * last_cmd_tx_sts: status of the last command transfer
+ * @last_cmd_tx_sts: status of the last command transfer
  * @hdr_capable: external hdr support present
  * @core_clk_rate: MDP core clk rate used for dynamic HDR packet calculation
  */
@@ -461,6 +463,7 @@ struct sde_connector {
 	struct drm_property_blob *blob_ext_hdr;
 	struct drm_property_blob *blob_dither;
 	struct drm_property_blob *blob_mode_info;
+	struct drm_property_blob *blob_panel_id;
 
 	bool fb_kmap;
 	struct sde_connector_evt event_table[SDE_CONN_EVENT_COUNT];

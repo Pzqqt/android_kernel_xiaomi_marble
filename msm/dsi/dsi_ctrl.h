@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_CTRL_H_
@@ -195,6 +195,7 @@ struct dsi_ctrl_interrupts {
  * @clk_cb:		 Callback for DSI clock control.
  * @irq_info:            Interrupt information.
  * @recovery_cb:         Recovery call back to SDE.
+ * @panel_id_cb:         Callback for reporting panel id.
  * @clk_info:            Clock information.
  * @clk_freq:            DSi Link clock frequency information.
  * @pwr_info:            Power information.
@@ -247,6 +248,7 @@ struct dsi_ctrl {
 
 	struct dsi_ctrl_interrupts irq_info;
 	struct dsi_event_cb_info recovery_cb;
+	struct dsi_event_cb_info panel_id_cb;
 
 	/* Clock and power states */
 	struct dsi_ctrl_clk_info clk_info;

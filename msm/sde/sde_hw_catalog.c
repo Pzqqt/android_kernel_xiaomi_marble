@@ -408,6 +408,13 @@ enum {
 };
 
 enum {
+	DEMURA_OFF,
+	DEMURA_LEN,
+	DEMURA_VERSION,
+	DEMURA_PROP_MAX,
+};
+
+enum {
 	MIXER_OFF,
 	MIXER_LEN,
 	MIXER_PAIR_MASK,
@@ -870,6 +877,15 @@ static struct sde_prop_type limit_usecase_prop[] = {
 	{LIMIT_ID, "qcom,sde-limit-ids", false, PROP_TYPE_U32_ARRAY},
 	{LIMIT_VALUE, "qcom,sde-limit-values", false,
 			PROP_TYPE_BIT_OFFSET_ARRAY},
+};
+
+static struct sde_prop_type demura_prop[] = {
+	[DEMURA_OFF] = {DEMURA_OFF, "qcom,sde-dspp-demura-off", false,
+			PROP_TYPE_U32_ARRAY},
+	[DEMURA_LEN] = {DEMURA_LEN, "qcom,sde-dspp-demura-size", false,
+			PROP_TYPE_U32},
+	[DEMURA_VERSION] = {DEMURA_VERSION, "qcom,sde-dspp-demura-version",
+			false, PROP_TYPE_U32},
 };
 
 /*************************************************************
@@ -2529,6 +2545,46 @@ end:
 	return rc;
 }
 
+static int _sde_dspp_demura_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int off_count, i;
+	struct sde_dt_props *props;
+	struct sde_dspp_cfg *dspp;
+	struct sde_dspp_sub_blks *sblk;
+
+	props = sde_get_dt_props(np, DEMURA_PROP_MAX, demura_prop,
+			ARRAY_SIZE(demura_prop), &off_count);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
+
+	sde_cfg->demura_count = off_count;
+	if (off_count > sde_cfg->dspp_count) {
+		SDE_ERROR("limiting %d demura blocks to %d DSPP instances\n",
+				off_count, sde_cfg->dspp_count);
+		sde_cfg->demura_count = sde_cfg->dspp_count;
+	}
+
+	for (i = 0; i < sde_cfg->dspp_count; i++) {
+		dspp = &sde_cfg->dspp[i];
+		sblk = sde_cfg->dspp[i].sblk;
+
+		sblk->demura.id = SDE_DSPP_DEMURA;
+		if (props->exists[DEMURA_OFF] && i < off_count) {
+			sblk->demura.base = PROP_VALUE_ACCESS(props->values,
+					DEMURA_OFF, i);
+			sblk->demura.len = PROP_VALUE_ACCESS(props->values,
+					DEMURA_LEN, 0);
+			sblk->demura.version = PROP_VALUE_ACCESS(props->values,
+					DEMURA_VERSION, 0);
+			set_bit(SDE_DSPP_DEMURA, &dspp->features);
+		}
+	}
+
+	sde_put_dt_props(props);
+	return 0;
+}
+
 static int _sde_dspp_spr_parse_dt(struct device_node *np,
 		struct sde_mdss_cfg *sde_cfg)
 {
@@ -2750,6 +2806,10 @@ static int sde_dspp_parse_dt(struct device_node *np,
 		goto end;
 
 	rc = _sde_dspp_spr_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_dspp_demura_parse_dt(np, sde_cfg);
 	if (rc)
 		goto end;
 
@@ -4510,7 +4570,7 @@ static void _sde_hw_setup_uidle(struct sde_uidle_cfg *uidle_cfg)
 
 static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 {
-	int rc = 0;
+	int rc = 0, i;
 
 	if (!sde_cfg)
 		return -EINVAL;
@@ -4518,6 +4578,11 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 	/* default settings for *MOST* targets */
 	sde_cfg->has_mixer_combined_alpha = true;
 	sde_cfg->mdss_hw_block_size = DEFAULT_MDSS_HW_BLOCK_SIZE;
+
+	for (i = 0; i < SSPP_MAX; i++) {
+		sde_cfg->demura_supported[i][0] = ~0x0;
+		sde_cfg->demura_supported[i][1] = ~0x0;
+	}
 
 	/* target specific settings */
 	if (IS_MSM8996_TARGET(hw_rev)) {
@@ -4684,6 +4749,11 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->has_sui_blendstage = true;
 		sde_cfg->vbif_disable_inner_outer_shareable = true;
 	} else if (IS_LAHAINA_TARGET(hw_rev)) {
+		sde_cfg->has_demura = true;
+		sde_cfg->demura_supported[SSPP_DMA1][0] = 0;
+		sde_cfg->demura_supported[SSPP_DMA1][1] = 1;
+		sde_cfg->demura_supported[SSPP_DMA3][0] = 0;
+		sde_cfg->demura_supported[SSPP_DMA3][1] = 1;
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_wb_ubwc = true;
 		sde_cfg->has_qsync = true;

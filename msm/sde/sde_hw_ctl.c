@@ -806,7 +806,8 @@ static void sde_hw_ctl_clear_all_blendstages(struct sde_hw_ctl *ctx)
 }
 
 static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
-	enum sde_lm lm, struct sde_hw_stage_cfg *stage_cfg)
+	enum sde_lm lm, struct sde_hw_stage_cfg *stage_cfg,
+	struct sde_hw_stage_cfg *active_cfg)
 {
 	struct sde_hw_blk_reg_map *c;
 	u32 mixercfg = 0, mixercfg_ext = 0, mix, ext;
@@ -936,6 +937,18 @@ static void sde_hw_ctl_setup_blendstage(struct sde_hw_ctl *ctx,
 
 			if (fetch_tbl[pipe] != CTL_INVALID_BIT)
 				active_fetch_pipes |= BIT(fetch_tbl[pipe]);
+		}
+	}
+
+	for (i = 0; i <= stages && active_cfg; i++) {
+		enum sde_sspp pipe = active_cfg->stage[i][0];
+
+		if (pipe == SSPP_NONE)
+			break;
+		if (fetch_tbl[pipe] != CTL_INVALID_BIT) {
+			active_fetch_pipes |= BIT(fetch_tbl[pipe]);
+			SDE_DEBUG("fetch pipe %d active pipes %x\n",
+				pipe, active_fetch_pipes);
 		}
 	}
 

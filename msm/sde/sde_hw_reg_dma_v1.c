@@ -810,6 +810,7 @@ int init_v12(struct sde_hw_reg_dma *cfg)
 			GRP_MDSS_HW_BLK_SELECT);
 	v1_supported[SPR_INIT] = (GRP_DSPP_HW_BLK_SELECT |
 			GRP_MDSS_HW_BLK_SELECT);
+	v1_supported[DEMURA_CFG] = MDSS | DSPP0 | DSPP1;
 
 	return 0;
 }

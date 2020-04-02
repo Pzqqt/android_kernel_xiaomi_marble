@@ -93,6 +93,8 @@ static struct sde_crtc_custom_events custom_events[] = {
 #define MAX_FRAME_COUNT			1000
 #define MILI_TO_MICRO			1000
 
+#define SKIP_STAGING_PIPE_ZPOS		255
+
 static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
 {
 	struct msm_drm_private *priv;
@@ -491,6 +493,11 @@ static void _sde_crtc_setup_blend_cfg(struct sde_crtc_mixer *mixer,
 			}
 		}
 		break;
+
+	case SDE_DRM_BLEND_OP_SKIP:
+		SDE_ERROR("skip the blending for plane\n");
+		return;
+
 	default:
 		/* do nothing */
 		break;
@@ -1326,6 +1333,24 @@ static void _sde_crtc_set_src_split_order(struct drm_crtc *crtc,
 			cur_pstate->sde_pstate->pipe_order_flags);
 	}
 }
+
+static void __sde_crtc_assign_active_cfg(struct sde_crtc *sdecrtc,
+				struct drm_plane *plane)
+{
+	u8 found = 0;
+	int i;
+
+	for (i = 0; i < SDE_STAGE_MAX && !found; i++) {
+		if (sdecrtc->active_cfg.stage[i][0] == SSPP_NONE)
+			found = 1;
+	}
+	if (!found) {
+		SDE_ERROR("All active configs are allocated\n");
+		return;
+	}
+	sdecrtc->active_cfg.stage[i][0] = sde_plane_pipe(plane);
+}
+
 static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 		struct drm_crtc_state *old_state, struct sde_crtc *sde_crtc,
 		struct sde_crtc_mixer *mixer)
@@ -1345,6 +1370,7 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 	int zpos_cnt[SDE_STAGE_MAX + 1] = { 0 };
 	int i, cnt = 0;
 	bool bg_alpha_enable = false;
+	u32 blend_type;
 
 	if (!sde_crtc || !crtc->state || !mixer) {
 		SDE_ERROR("invalid sde_crtc or mixer\n");
@@ -1388,38 +1414,50 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 			goto end;
 		}
 
-		if (pstate->stage == SDE_STAGE_BASE && format->alpha_enable)
-			bg_alpha_enable = true;
+		blend_type = sde_plane_get_property(pstate,
+					PLANE_PROP_BLEND_OP);
 
-		SDE_EVT32(DRMID(crtc), DRMID(plane),
-				state->fb ? state->fb->base.id : -1,
-				state->src_x >> 16, state->src_y >> 16,
-				state->src_w >> 16, state->src_h >> 16,
-				state->crtc_x, state->crtc_y,
-				state->crtc_w, state->crtc_h,
-				pstate->rotation);
+		if (blend_type == SDE_DRM_BLEND_OP_SKIP) {
+			__sde_crtc_assign_active_cfg(sde_crtc, plane);
+		} else {
+			if (pstate->stage == SDE_STAGE_BASE &&
+					format->alpha_enable)
+				bg_alpha_enable = true;
 
-		stage_idx = zpos_cnt[pstate->stage]++;
-		stage_cfg->stage[pstate->stage][stage_idx] =
-					sde_plane_pipe(plane);
-		stage_cfg->multirect_index[pstate->stage][stage_idx] =
-					pstate->multirect_index;
+			SDE_EVT32(DRMID(crtc), DRMID(plane),
+					state->fb ? state->fb->base.id : -1,
+					state->src_x >> 16, state->src_y >> 16,
+					state->src_w >> 16, state->src_h >> 16,
+					state->crtc_x, state->crtc_y,
+					state->crtc_w, state->crtc_h,
+					pstate->rotation);
 
-		SDE_EVT32(DRMID(crtc), DRMID(plane), stage_idx,
-			sde_plane_pipe(plane) - SSPP_VIG0, pstate->stage,
-			pstate->multirect_index, pstate->multirect_mode,
-			format->base.pixel_format, fb ? fb->modifier : 0);
+			stage_idx = zpos_cnt[pstate->stage]++;
+			stage_cfg->stage[pstate->stage][stage_idx] =
+						sde_plane_pipe(plane);
+			stage_cfg->multirect_index[pstate->stage][stage_idx] =
+						pstate->multirect_index;
 
-		/* blend config update */
-		for (lm_idx = 0; lm_idx < sde_crtc->num_mixers; lm_idx++) {
-			_sde_crtc_setup_blend_cfg(mixer + lm_idx, pstate,
-								format);
+			SDE_EVT32(DRMID(crtc), DRMID(plane), stage_idx,
+				sde_plane_pipe(plane) - SSPP_VIG0,
+				pstate->stage,
+				pstate->multirect_index,
+				pstate->multirect_mode,
+				format->base.pixel_format,
+				fb ? fb->modifier : 0);
 
-			if (bg_alpha_enable && !format->alpha_enable)
-				mixer[lm_idx].mixer_op_mode = 0;
-			else
-				mixer[lm_idx].mixer_op_mode |=
-						1 << pstate->stage;
+			/* blend config update */
+			for (lm_idx = 0; lm_idx < sde_crtc->num_mixers;
+							lm_idx++) {
+				_sde_crtc_setup_blend_cfg(mixer + lm_idx,
+						pstate, format);
+
+				if (bg_alpha_enable && !format->alpha_enable)
+					mixer[lm_idx].mixer_op_mode = 0;
+				else
+					mixer[lm_idx].mixer_op_mode |=
+							1 << pstate->stage;
+			}
 		}
 
 		if (cnt >= SDE_PSTATES_MAX)
@@ -1427,7 +1465,11 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 		pstates[cnt].sde_pstate = pstate;
 		pstates[cnt].drm_pstate = state;
-		pstates[cnt].stage = sde_plane_get_property(
+
+		if (blend_type == SDE_DRM_BLEND_OP_SKIP)
+			pstates[cnt].stage = SKIP_STAGING_PIPE_ZPOS;
+		else
+			pstates[cnt].stage = sde_plane_get_property(
 				pstates[cnt].sde_pstate, PLANE_PROP_ZPOS);
 		pstates[cnt].pipe_id = sde_plane_pipe(plane);
 
@@ -1562,6 +1604,7 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 
 	/* initialize stage cfg */
 	memset(&sde_crtc->stage_cfg, 0, sizeof(struct sde_hw_stage_cfg));
+	memset(&sde_crtc->active_cfg, 0, sizeof(sde_crtc->active_cfg));
 
 	if (add_planes)
 		_sde_crtc_blend_setup_mixer(crtc, old_state, sde_crtc, mixer);
@@ -1593,7 +1636,7 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 			cfg.pending_flush_mask);
 
 		ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
-			&sde_crtc->stage_cfg);
+			&sde_crtc->stage_cfg, &sde_crtc->active_cfg);
 	}
 
 	_sde_crtc_program_lm_output_roi(crtc);
