@@ -1041,7 +1041,7 @@
  * AP and roam candidate AP.
  * @Min: 0
  * @Max: 10000
- * @Default: 1850
+ * @Default: 0
  *
  * This ini is used during CU and low rssi based roam triggers, consider
  * AP as roam candidate only if its roam score is better than connected
@@ -1065,7 +1065,7 @@
 			"min_roam_score_delta", \
 			0, \
 			10000, \
-			1850, \
+			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Diff between connected AP's and candidate AP's roam score")
 
