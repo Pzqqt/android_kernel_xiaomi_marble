@@ -5715,11 +5715,15 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	wlansap_reset_sap_config_add_ie(config, eUPDATE_IE_ALL);
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status) ||
-	    !QDF_IS_STATUS_SUCCESS(hostapd_state->qdf_status)) {
+	if (QDF_IS_STATUS_ERROR(qdf_status) ||
+	    QDF_IS_STATUS_ERROR(hostapd_state->qdf_status)) {
 		mutex_unlock(&hdd_ctx->sap_lock);
-
-		hdd_err("qdf wait for single_event failed!!");
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("Wait for start BSS failed status %d",
+				qdf_status);
+		else
+			hdd_err("Start BSS failed status %d",
+				hostapd_state->qdf_status);
 		hdd_set_connection_in_progress(false);
 		sme_get_command_q_status(mac_handle);
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));

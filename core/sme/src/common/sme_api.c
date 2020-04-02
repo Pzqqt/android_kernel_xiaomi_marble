@@ -8308,8 +8308,8 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 	if (pEntry)
 		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 
-	sme_err("WLAN_BUG_RCA: Currently smeCmdActiveList has command (0x%X)",
-			(pTempCmd) ? pTempCmd->command : eSmeNoCommand);
+	sme_info("smeCmdActiveList has command (0x%X)",
+		 (pTempCmd) ? pTempCmd->command : eSmeNoCommand);
 	if (pTempCmd) {
 		if (eSmeCsrCommandMask & pTempCmd->command)
 			/* CSR command is stuck. See what the reason code is
@@ -8318,8 +8318,8 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 			dump_csr_command_info(mac, pTempCmd);
 	} /* if(pTempCmd) */
 
-	sme_err("Currently smeCmdPendingList has %d commands",
-		wlan_serialization_get_pending_list_count(mac->psoc, false));
+	sme_info("smeCmdPendingList has %d commands",
+		 wlan_serialization_get_pending_list_count(mac->psoc, false));
 
 }
 
