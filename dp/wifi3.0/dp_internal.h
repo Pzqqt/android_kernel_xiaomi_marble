@@ -109,6 +109,23 @@ extern uint8_t
 dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS_MAX];
 #endif
 
+#define DP_MAX_TIMER_EXEC_TIME_TICKS \
+		(QDF_LOG_TIMESTAMP_CYCLES_PER_10_US * 100 * 20)
+
+/**
+ * enum timer_yield_status - yield status code used in monitor mode timer.
+ * @DP_TIMER_NO_YIELD: do not yield
+ * @DP_TIMER_WORK_DONE: yield because work is done
+ * @DP_TIMER_WORK_EXHAUST: yield because work quota is exhausted
+ * @DP_TIMER_TIME_EXHAUST: yield due to time slot exhausted
+ */
+enum timer_yield_status {
+	DP_TIMER_NO_YIELD,
+	DP_TIMER_WORK_DONE,
+	DP_TIMER_WORK_EXHAUST,
+	DP_TIMER_TIME_EXHAUST,
+};
+
 #if DP_PRINT_ENABLE
 #include <stdarg.h>       /* va_list */
 #include <qdf_types.h> /* qdf_vprint */
@@ -130,7 +147,6 @@ enum {
 	/* INFO2 - include non-fundamental but infrequent events */
 	DP_PRINT_LEVEL_INFO2,
 };
-
 
 #define dp_print(level, fmt, ...) do { \
 	if (level <= g_txrx_print_level) \

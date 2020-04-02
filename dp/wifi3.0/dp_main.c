@@ -1538,6 +1538,29 @@ void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
+/*
+ * dp_should_timer_irq_yield() - Decide if the bottom half should yield
+ * @soc: DP soc handle
+ * @work_done: work done in softirq context
+ * @start_time: start time for the softirq
+ *
+ * Return: enum with yield code
+ */
+static enum timer_yield_status
+dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
+			  uint64_t start_time)
+{
+	uint32_t cur_time = qdf_get_log_timestamp();
+
+	if (!work_done)
+		return DP_TIMER_WORK_DONE;
+
+	if (cur_time - start_time > DP_MAX_TIMER_EXEC_TIME_TICKS)
+		return DP_TIMER_TIME_EXHAUST;
+
+	return DP_TIMER_TIME_EXHAUST;
+}
+
 /**
  * dp_process_lmac_rings() - Process LMAC rings
  * @int_ctx: interrupt context
@@ -1751,17 +1774,48 @@ budget_done:
 static void dp_interrupt_timer(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *) arg;
+	enum timer_yield_status yield = DP_TIMER_NO_YIELD;
+	uint32_t work_done  = 0, total_work_done = 0;
+	int budget = 0xffff;
+	uint32_t remaining_quota = budget;
+	uint64_t start_time;
 	int i;
 
 	if (!qdf_atomic_read(&soc->cmn_init_done))
 		return;
 
-	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
-		if (soc->intr_ctx[i].rx_mon_ring_mask)
-			dp_process_lmac_rings(&soc->intr_ctx[i], 0xffff);
+	start_time = qdf_get_log_timestamp();
+
+	while (yield == DP_TIMER_NO_YIELD) {
+		for (i = 0;
+		     i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+			if (!soc->intr_ctx[i].rx_mon_ring_mask)
+				continue;
+
+			work_done = dp_process_lmac_rings(&soc->intr_ctx[i],
+							  remaining_quota);
+			if (work_done) {
+				budget -=  work_done;
+				if (budget <= 0) {
+					yield = DP_TIMER_WORK_EXHAUST;
+					goto budget_done;
+				}
+				remaining_quota = budget;
+				total_work_done += work_done;
+			}
+		}
+
+		yield = dp_should_timer_irq_yield(soc, total_work_done,
+						  start_time);
+		total_work_done = 0;
 	}
 
-	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+budget_done:
+	if (yield == DP_TIMER_WORK_EXHAUST ||
+	    yield == DP_TIMER_TIME_EXHAUST)
+		qdf_timer_mod(&soc->int_timer, 1);
+	else
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 }
 
 /*
