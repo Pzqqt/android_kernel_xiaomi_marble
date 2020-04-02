@@ -173,6 +173,26 @@ wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static enum capture_type convert_vendor_cfr_capture_type(
+			enum qca_wlan_vendor_cfr_capture_type type)
+{
+	switch (type) {
+	case QCA_WLAN_VENDOR_CFR_DIRECT_FTM:
+		return RCC_DIRECTED_FTM_FILTER;
+	case QCA_WLAN_VENDOR_CFR_ALL_FTM_ACK:
+		return RCC_ALL_FTM_ACK_FILTER;
+	case QCA_WLAN_VENDOR_CFR_DIRECT_NDPA_NDP:
+		return RCC_DIRECTED_NDPA_NDP_FILTER;
+	case QCA_WLAN_VENDOR_CFR_TA_RA:
+		return RCC_TA_RA_FILTER;
+	case QCA_WLAN_VENDOR_CFR_ALL_PACKET:
+		return RCC_NDPA_NDP_ALL_FILTER;
+	default:
+		hdd_err("invalid capture type");
+		return RCC_DIS_ALL_MODE;
+	}
+}
+
 static int
 wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 			     struct nlattr *tb[])
@@ -181,6 +201,7 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 	struct nlattr *group_list;
 	struct cfr_wlanconfig_param params = { 0 };
 	enum capture_type type;
+	enum qca_wlan_vendor_cfr_capture_type vendor_capture_type;
 	int rem = 0;
 	int maxtype;
 	int attr;
@@ -201,8 +222,15 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_CAPTURE_TYPE]) {
-		type = nla_get_u32(tb[
+		vendor_capture_type = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_CAPTURE_TYPE]);
+		if ((vendor_capture_type < QCA_WLAN_VENDOR_CFR_DIRECT_FTM) ||
+		    (vendor_capture_type > QCA_WLAN_VENDOR_CFR_ALL_PACKET)) {
+			hdd_err_rl("invalid capture type %d",
+				   vendor_capture_type);
+			return -EINVAL;
+		}
+		type = convert_vendor_cfr_capture_type(vendor_capture_type);
 		ucfg_cfr_set_rcc_mode(vdev, type, 1);
 		hdd_debug("type %d", type);
 	}
