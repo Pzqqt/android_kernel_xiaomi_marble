@@ -19881,6 +19881,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 
 	csr_fill_cmd_timeout(cmd);
 
+	cmd->source = WLAN_UMAC_COMP_MLME;
 	cmd->cmd_cb = sme_ser_cmd_callback;
 	cmd->is_high_priority = high_priority;
 	cmd->is_blocking = true;

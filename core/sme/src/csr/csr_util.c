@@ -445,7 +445,7 @@ tListElem *csr_nonscan_active_ll_peek_head(struct mac_context *mac_ctx,
 
 	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac_ctx->psoc,
 								 false);
-	if (!cmd)
+	if (!cmd || cmd->source != WLAN_UMAC_COMP_MLME)
 		return NULL;
 
 	sme_cmd = cmd->umac_cmd;
@@ -461,12 +461,16 @@ tListElem *csr_nonscan_pending_ll_peek_head(struct mac_context *mac_ctx,
 
 	cmd = wlan_serialization_peek_head_pending_cmd_using_psoc(mac_ctx->psoc,
 								  false);
-	if (!cmd)
-		return NULL;
+	while (cmd) {
+		if (cmd->source == WLAN_UMAC_COMP_MLME) {
+			sme_cmd = cmd->umac_cmd;
+			return &sme_cmd->Link;
+		}
+		cmd = wlan_serialization_get_pending_list_next_node_using_psoc(
+						mac_ctx->psoc, cmd, false);
+	}
 
-	sme_cmd = cmd->umac_cmd;
-
-	return &sme_cmd->Link;
+	return NULL;
 }
 
 bool csr_nonscan_active_ll_remove_entry(struct mac_context *mac_ctx,
@@ -499,12 +503,16 @@ tListElem *csr_nonscan_pending_ll_next(struct mac_context *mac_ctx,
 				mac_ctx->psoc, &cmd, false);
 	if (cmd.vdev)
 		wlan_objmgr_vdev_release_ref(cmd.vdev, WLAN_LEGACY_SME_ID);
-	if (!tcmd) {
-		sme_err("No cmd found");
-		return NULL;
+	while (tcmd) {
+		if (tcmd->source == WLAN_UMAC_COMP_MLME) {
+			sme_cmd = tcmd->umac_cmd;
+			return &sme_cmd->Link;
+		}
+		tcmd = wlan_serialization_get_pending_list_next_node_using_psoc(
+						mac_ctx->psoc, tcmd, false);
 	}
-	sme_cmd = tcmd->umac_cmd;
-	return &sme_cmd->Link;
+
+	return NULL;
 }
 
 bool csr_get_bss_id_bss_desc(struct bss_description *pSirBssDesc,

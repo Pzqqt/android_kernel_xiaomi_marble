@@ -8296,31 +8296,32 @@ QDF_STATUS sme_set_wlm_latency_level(mac_handle_t mac_handle,
 void sme_get_command_q_status(mac_handle_t mac_handle)
 {
 	tSmeCmd *pTempCmd = NULL;
-	tListElem *pEntry;
 	struct mac_context *mac;
+	struct wlan_serialization_command *cmd;
 
 	if (!mac_handle)
 		return;
 
 	mac = MAC_CONTEXT(mac_handle);
 
-	pEntry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
-	if (pEntry)
-		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+	sme_info("smeCmdPendingList has %d commands",
+		 wlan_serialization_get_pending_list_count(mac->psoc, false));
+	cmd = wlan_serialization_peek_head_active_cmd_using_psoc(mac->psoc,
+								 false);
+	if (cmd)
+		sme_info("Active commaned is %d cmd id %d source %d",
+			 cmd->cmd_type, cmd->cmd_id, cmd->source);
+	if (!cmd || cmd->source != WLAN_UMAC_COMP_MLME)
+		return;
 
-	sme_info("smeCmdActiveList has command (0x%X)",
-		 (pTempCmd) ? pTempCmd->command : eSmeNoCommand);
+	pTempCmd = cmd->umac_cmd;
 	if (pTempCmd) {
 		if (eSmeCsrCommandMask & pTempCmd->command)
 			/* CSR command is stuck. See what the reason code is
 			 * for that command
 			 */
 			dump_csr_command_info(mac, pTempCmd);
-	} /* if(pTempCmd) */
-
-	sme_info("smeCmdPendingList has %d commands",
-		 wlan_serialization_get_pending_list_count(mac->psoc, false));
-
+	}
 }
 
 #ifdef WLAN_FEATURE_DSRC
