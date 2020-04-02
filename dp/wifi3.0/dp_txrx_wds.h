@@ -132,9 +132,9 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast = soc->ast_table[sa_idx];
-	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if (!ast) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
 		/*
 		 * In HKv1, it is possible that HW retains the AST entry in
 		 * GSE cache on 1 radio , even after the AST entry is deleted
@@ -199,8 +199,10 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 
 
 	if ((ast->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
-	    (ast->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+	    (ast->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC)) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
 		return;
+	}
 
 	/*
 	 * Ensure we are updating the right AST entry by
@@ -226,15 +228,12 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 				 * and rptr2 connected to ROOT AP over 2G
 				 * radio
 				 */
-				qdf_spin_lock_bh(&soc->ast_lock);
 				dp_peer_del_ast(soc, ast);
-				qdf_spin_unlock_bh(&soc->ast_lock);
 			} else {
 				/* this case is when a STA roams from one
 				 * reapter to another repeater, but inside
 				 * same radio.
 				 */
-				qdf_spin_lock_bh(&soc->ast_lock);
 				/* For HKv2 do not update the AST entry if
 				 * new ta_peer is on STA vap as SRC port
 				 * learning is disable on STA vap
@@ -255,9 +254,11 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 		 * clients and looped back (intrabss) by Root AP
 		 */
 		if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
 			return;
 		}
 
+		qdf_spin_unlock_bh(&soc->ast_lock);
 		/*
 		 * Kickout, when direct associated peer(SA) roams
 		 * to another AP and reachable via TA peer
@@ -275,7 +276,10 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 					wds_src_mac);
 			}
 		}
+		return;
 	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
 /**
