@@ -2631,6 +2631,15 @@ typedef struct {
  */
 } wmi_service_available_event_fixed_param;
 
+/*
+ * HDL version GET/SET APIs  
+ */
+#define WMI_HDL_VERSION_BITPOS    0
+#define WMI_HDL_VERSION_NUM_BITS 10
+
+#define WMI_HDL_VERSION_GET(dword) WMI_GET_BITS(dword, WMI_HDL_VERSION_BITPOS, WMI_HDL_VERSION_NUM_BITS)
+#define WMI_HDL_VERSION_SET(dword, value) WMI_SET_BITS(dword, WMI_HDL_VERSION_BITPOS, WMI_HDL_VERSION_NUM_BITS, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SERVICE_EXT_READY_EVENT */
     /* which WMI_DBS_CONC_SCAN_CFG setting the FW is initialized with */
@@ -2651,7 +2660,8 @@ typedef struct {
     A_UINT32 max_bssid_rx_filters;
     /*
      * Extended FW build version information:
-     * bits 27:0  -> reserved
+     * bits  9:0  -> HDL version info
+     * bits 27:10 -> reserved
      * bits 31:28 -> CRM sub ID
      */
     A_UINT32 fw_build_vers_ext;
