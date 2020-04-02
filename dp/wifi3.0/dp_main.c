@@ -348,6 +348,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_INTERRUPT_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_FSE_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_HAL_REG_WRITE_STATS},
+	{HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT, TXRX_HOST_STATS_INVALID}
 };
 
 /* MCL specific functions */
@@ -9432,9 +9433,16 @@ static int dp_fw_stats_process(struct dp_vdev *vdev,
 		req->param0 = HTT_DBG_EXT_STATS_SET_VDEV_MASK(vdev->vdev_id);
 	}
 
-	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
+	if (req->stats == (uint8_t)HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT) {
+		return dp_h2t_ext_stats_msg_send(pdev,
+				HTT_DBG_EXT_STATS_PDEV_RX_RATE_EXT,
+				req->param0, req->param1, req->param2,
+				req->param3, 0, 0, mac_id);
+	} else {
+		return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
 				req->param1, req->param2, req->param3,
 				0, 0, mac_id);
+	}
 }
 
 /**
