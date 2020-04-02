@@ -1538,6 +1538,75 @@ void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
+/**
+ * dp_process_lmac_rings() - Process LMAC rings
+ * @int_ctx: interrupt context
+ * @total_budget: budget of work which can be done
+ *
+ * Return: work done
+ */
+static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
+{
+	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
+	struct dp_soc *soc = int_ctx->soc;
+	uint32_t remaining_quota = total_budget;
+	struct dp_pdev *pdev = NULL;
+	uint32_t work_done  = 0;
+	int budget = total_budget;
+	int ring = 0;
+
+	/* Process LMAC interrupts */
+	for  (ring = 0 ; ring < MAX_NUM_LMAC_HW; ring++) {
+		int mac_for_pdev = ring;
+
+		pdev = dp_get_pdev_for_lmac_id(soc, mac_for_pdev);
+		if (!pdev)
+			continue;
+		if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
+			work_done = dp_mon_process(soc, mac_for_pdev,
+						   remaining_quota);
+			if (work_done)
+				intr_stats->num_rx_mon_ring_masks++;
+			budget -= work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+
+		if (int_ctx->rxdma2host_ring_mask &
+				(1 << mac_for_pdev)) {
+			work_done = dp_rxdma_err_process(int_ctx, soc,
+							 mac_for_pdev,
+							 remaining_quota);
+			if (work_done)
+				intr_stats->num_rxdma2host_ring_masks++;
+			budget -=  work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+
+		if (int_ctx->host2rxdma_ring_mask &
+					(1 << mac_for_pdev)) {
+			union dp_rx_desc_list_elem_t *desc_list = NULL;
+			union dp_rx_desc_list_elem_t *tail = NULL;
+			struct dp_srng *rx_refill_buf_ring =
+				&soc->rx_refill_buf_ring[mac_for_pdev];
+
+			intr_stats->num_host2rxdma_ring_masks++;
+			DP_STATS_INC(pdev, replenish.low_thresh_intrs,
+				     1);
+			dp_rx_buffers_replenish(soc, mac_for_pdev,
+						rx_refill_buf_ring,
+						&soc->rx_desc_buf[mac_for_pdev],
+						0, &desc_list, &tail);
+		}
+	}
+
+budget_done:
+	return total_budget - budget;
+}
+
 /*
  * dp_service_srngs() - Top level interrupt handler for DP Ring interrupts
  * @dp_ctx: DP SOC handle
@@ -1559,7 +1628,6 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint8_t rx_wbm_rel_mask = int_ctx->rx_wbm_rel_ring_mask;
 	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
 	uint32_t remaining_quota = dp_budget;
-	struct dp_pdev *pdev = NULL;
 
 	dp_verbose_debug("tx %x rx %x rx_err %x rx_wbm_rel %x reo_status %x rx_mon_ring %x host2rxdma %x rxdma2host %x\n",
 			 tx_mask, rx_mask, rx_err_mask, rx_wbm_rel_mask,
@@ -1658,53 +1726,12 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			int_ctx->intr_stats.num_reo_status_ring_masks++;
 	}
 
-	/* Process LMAC interrupts */
-	for  (ring = 0 ; ring < MAX_NUM_LMAC_HW; ring++) {
-		int mac_for_pdev = ring;
-
-		pdev = dp_get_pdev_for_lmac_id(soc, mac_for_pdev);
-		if (!pdev)
-			continue;
-		if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
-			work_done = dp_mon_process(soc, mac_for_pdev,
-						   remaining_quota);
-			if (work_done)
-				intr_stats->num_rx_mon_ring_masks++;
-			budget -= work_done;
-			if (budget <= 0)
-				goto budget_done;
-			remaining_quota = budget;
-		}
-
-		if (int_ctx->rxdma2host_ring_mask &
-				(1 << mac_for_pdev)) {
-			work_done = dp_rxdma_err_process(int_ctx, soc,
-							 mac_for_pdev,
-							 remaining_quota);
-			if (work_done)
-				intr_stats->num_rxdma2host_ring_masks++;
-			budget -=  work_done;
-			if (budget <= 0)
-				goto budget_done;
-			remaining_quota = budget;
-		}
-
-		if (int_ctx->host2rxdma_ring_mask &
-					(1 << mac_for_pdev)) {
-			union dp_rx_desc_list_elem_t *desc_list = NULL;
-			union dp_rx_desc_list_elem_t *tail = NULL;
-			struct dp_srng *rx_refill_buf_ring =
-				&soc->rx_refill_buf_ring[mac_for_pdev];
-
-			intr_stats->num_host2rxdma_ring_masks++;
-			DP_STATS_INC(pdev, replenish.low_thresh_intrs,
-				     1);
-			dp_rx_buffers_replenish(soc, mac_for_pdev,
-						rx_refill_buf_ring,
-						&soc->rx_desc_buf[mac_for_pdev],
-						0, &desc_list, &tail);
-
-		}
+	work_done = dp_process_lmac_rings(int_ctx, remaining_quota);
+	if (work_done) {
+		budget -=  work_done;
+		if (budget <= 0)
+			goto budget_done;
+		remaining_quota = budget;
 	}
 
 	qdf_lro_flush(int_ctx->lro_ctx);
@@ -1726,13 +1753,15 @@ static void dp_interrupt_timer(void *arg)
 	struct dp_soc *soc = (struct dp_soc *) arg;
 	int i;
 
-	if (qdf_atomic_read(&soc->cmn_init_done)) {
-		for (i = 0;
-			i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
-			dp_service_srngs(&soc->intr_ctx[i], 0xffff);
+	if (!qdf_atomic_read(&soc->cmn_init_done))
+		return;
 
-		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
+		if (soc->intr_ctx[i].rx_mon_ring_mask)
+			dp_process_lmac_rings(&soc->intr_ctx[i], 0xffff);
 	}
+
+	qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 }
 
 /*
