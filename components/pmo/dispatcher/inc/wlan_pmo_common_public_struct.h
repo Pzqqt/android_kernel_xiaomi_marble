@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -85,11 +85,11 @@ enum pmo_beacon_dtim_policy {
  * @pmo_sta_ps_param_inactivity_time: TX/RX inactivity time in msec before
     going to sleep.
  * @pmo_sta_ps_param_uapsd: Set uapsd configuration.
- * @pmo_sta_ps_param_qpower_pspoll_count: No of PS-Poll to send before
-    STA wakes up in QPower Mode.
- * @pmo_sta_ps_enable_qpower:  Enable QPower
- * @pmo_sta_ps_param_qpower_max_tx_before_wake: Number of TX frames before the
-    entering the Active state
+ * @pmo_sta_ps_param_advanced_power_pspoll_count: No of PS-Poll to send before
+    STA wakes up in Advanced Power Save Mode.
+ * @pmo_sta_ps_enable_advanced_power:  Enable Advanced Power Save
+ * @pmo_sta_ps_param_advanced_power_max_tx_before_wake: Number of TX frames
+    before the entering the Active state
  * @pmo_sta_ps_param_ito_repeat_count: Indicates ito repeated count
  */
 enum pmo_sta_powersave_param {
@@ -98,40 +98,10 @@ enum pmo_sta_powersave_param {
 	pmo_sta_ps_param_pspoll_count = 2,
 	pmo_sta_ps_param_inactivity_time = 3,
 	pmo_sta_ps_param_uapsd = 4,
-	pmo_sta_ps_param_qpower_pspoll_count = 5,
-	pmo_sta_ps_enable_qpower = 6,
-	pmo_sta_ps_param_qpower_max_tx_before_wake = 7,
+	pmo_sta_ps_param_advanced_power_pspoll_count = 5,
+	pmo_sta_ps_enable_advanced_power = 6,
+	pmo_sta_ps_param_advanced_power_max_tx_before_wake = 7,
 	pmo_sta_ps_param_ito_repeat_count = 8,
-};
-
-/**
- * enum powersave_qpower_mode: QPOWER modes
- * @pmo_qpower_disabled: Qpower is disabled
- * @pmo_qpower_enabled: Qpower is enabled
- * @pmo_qpower_duty_cycling: Qpower is enabled with duty cycling
- */
-enum pmo_power_save_qpower_mode {
-	pmo_qpower_disabled = 0,
-	pmo_qpower_enabled = 1,
-	pmo_qpower_duty_cycling = 2
-};
-
-/**
- * enum powersave_qpower_mode: powersave_mode
- * @pmo_ps_not_supported: Power save is not supported
- * @pmo_ps_legacy_no_deep_sleep: Legacy pwr save enabled and deep sleep disabled
- * @pmo_ps_qpower_no_deep_sleep: QPOWER enabled and deep sleep disabled
- * @pmo_ps_legacy_deep_sleep: Legacy power save enabled and deep sleep enabled
- * @pmo_ps_qpower_deep_sleep: QPOWER enabled and deep sleep enabled
- * @pmo_ps_duty_cycling_qpower: QPOWER enabled in duty cycling mode
- */
-enum pmo_powersave_mode {
-	pmo_ps_not_supported = 0,
-	pmo_ps_legacy_no_deep_sleep = 1,
-	pmo_ps_qpower_no_deep_sleep = 2,
-	pmo_ps_legacy_deep_sleep = 3,
-	pmo_ps_qpower_deep_sleep = 4,
-	pmo_ps_duty_cycling_qpower = 5
 };
 
 /**
@@ -183,21 +153,13 @@ enum pmo_wow_enable_type {
 };
 
 /**
- * enum powersave_qpower_mode: powersave_mode
- * @PS_NOT_SUPPORTED: Power save is not supported
- * @PS_LEGACY_NODEEPSLEEP: Legacy power save enabled and deep sleep disabled
- * @PS_QPOWER_NODEEPSLEEP: QPOWER enabled and deep sleep disabled
- * @PS_LEGACY_DEEPSLEEP: Legacy power save enabled and deep sleep enabled
- * @PS_QPOWER_DEEPSLEEP: QPOWER enabled and deep sleep enabled
- * @PS_DUTY_CYCLING_QPOWER: QPOWER enabled in duty cycling mode
+ * enum powersave_mode - powersave_mode
+ * @PMO_PS_ADVANCED_POWER_SAVE_DISABLE: Disable advanced power save mode
+ * @PMO_PS_ADVANCED_POWER_SAVE_ENABLE: Enable power save mode
  */
 enum powersave_mode {
-	PS_NOT_SUPPORTED = 0,
-	PS_LEGACY_NODEEPSLEEP = 1,
-	PS_QPOWER_NODEEPSLEEP = 2,
-	PS_LEGACY_DEEPSLEEP = 3,
-	PS_QPOWER_DEEPSLEEP = 4,
-	PS_DUTY_CYCLING_QPOWER = 5
+	PMO_PS_ADVANCED_POWER_SAVE_DISABLE = 0,
+	PMO_PS_ADVANCED_POWER_SAVE_ENABLE = 1
 };
 
 #define PMO_TARGET_SUSPEND_TIMEOUT   6000

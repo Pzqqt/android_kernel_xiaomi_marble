@@ -441,16 +441,15 @@ int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 			  unsigned long data, void *arg);
 
 /**
- * hdd_set_qpower_config() - set qpower config to firmware
+ * hdd_set_power_config() - set power config to firmware
  * @hddctx: HDD context
  * @adapter: HDD adapter
- * @qpower: new qpower config value
+ * @power: new power config value
  *
  * Return: 0 on success; Errno on failure
  */
-int hdd_set_qpower_config(struct hdd_context *hddctx,
-			  struct hdd_adapter *adapter,
-			  uint8_t qpower);
+int hdd_set_power_config(struct hdd_context *hddctx,
+			 struct hdd_adapter *adapter, uint8_t power);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**

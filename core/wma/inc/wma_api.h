@@ -426,13 +426,13 @@ QDF_STATUS wma_send_coex_config_cmd(WMA_HANDLE wma_handle,
 QDF_STATUS wma_send_ocl_cmd(WMA_HANDLE wma_handle,
 			    struct ocl_cmd_params *ocl_params);
 /**
- * wma_set_qpower_config() - update qpower config in wma
+ * wma_set_power_config() - update power config in wma
  * @vdev_id:	the Id of the vdev to configure
- * @qpower:	new qpower value
+ * @power:	new power value
  *
  * Return: QDF_STATUS_SUCCESS on success, error number otherwise
  */
-QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
+QDF_STATUS wma_set_power_config(uint8_t vdev_id, enum powersave_mode power);
 
 #ifdef FEATURE_WLAN_D0WOW
 static inline bool wma_d0_wow_is_supported(void)

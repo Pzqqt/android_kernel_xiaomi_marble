@@ -4432,18 +4432,6 @@ struct sir_qos_params {
 };
 
 /**
- * enum powersave_qpower_mode: QPOWER modes
- * @QPOWER_DISABLED: Qpower is disabled
- * @QPOWER_ENABLED: Qpower is enabled
- * @QPOWER_DUTY_CYCLING: Qpower is enabled with duty cycling
- */
-enum powersave_qpower_mode {
-	QPOWER_DISABLED = 0,
-	QPOWER_ENABLED = 1,
-	QPOWER_DUTY_CYCLING = 2
-};
-
-/**
  * struct sir_sme_ext_change_chan_req - channel change request
  * @message_type: message id
  * @length: msg length

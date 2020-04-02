@@ -558,14 +558,14 @@ static inline uint32_t wma_get_uapsd_mask(tpUapsd_Params uapsd_params)
  * @wma: wma handle
  * @vdev_id: vdev id
  * @enable: enable/disable
- * @qpower_config: qpower configuration
+ * @power_config: power configuration
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 				uint32_t vdev_id,
 				uint8_t enable,
-				enum powersave_qpower_mode qpower_config,
+				enum powersave_mode power_config,
 				bool enable_ps)
 {
 	QDF_STATUS ret;
@@ -616,21 +616,21 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 	}
 
 	/*
-	 * QPower is enabled by default in Firmware
-	 * So Disable QPower explicitly
+	 * Advanced power save is enabled by default in Firmware
+	 * So Disable advanced power save explicitly
 	 */
 	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
 					   WMI_STA_PS_ENABLE_QPOWER,
-					   qpower_config);
+					   power_config);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("%s(%d) QPower Failed vdevId %d",
-			qpower_config ? "Enable" : "Disable",
-			qpower_config, vdev_id);
+		WMA_LOGE("%s(%d) Power Failed vdevId %d",
+			power_config ? "Enable" : "Disable",
+			power_config, vdev_id);
 		return ret;
 	}
-	WMA_LOGD("QPower %s(%d) vdevId %d",
-			qpower_config ? "Enabled" : "Disabled",
-			qpower_config, vdev_id);
+	WMA_LOGD("Power %s(%d) vdevId %d",
+		 power_config ? "Enabled" : "Disabled",
+		 power_config, vdev_id);
 
 	/* Set the Wake Policy to WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD */
 	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
@@ -708,48 +708,18 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wma_get_qpower_config() - get qpower configuration
- * @wma: WMA handle
- *
- * Power Save Offload configuration:
- * 0 -> Power save offload is disabled
- * 1 -> Legacy Power save enabled + Deep sleep Disabled
- * 2 -> QPower enabled + Deep sleep Disabled
- * 3 -> Legacy Power save enabled + Deep sleep Enabled
- * 4 -> QPower enabled + Deep sleep Enabled
- * 5 -> Duty cycling QPower enabled
- *
- * Return: enum powersave_qpower_mode with below values
- * QPOWER_DISABLED if QPOWER is disabled
- * QPOWER_ENABLED if QPOWER is enabled
- * QPOWER_DUTY_CYCLING if DUTY CYCLING QPOWER is enabled
- */
-static enum powersave_qpower_mode wma_get_qpower_config(tp_wma_handle wma)
+static uint8_t wma_get_power_config(tp_wma_handle wma)
 {
-	switch (wma->powersave_mode) {
-	case PS_QPOWER_NODEEPSLEEP:
-	case PS_QPOWER_DEEPSLEEP:
-		WMA_LOGD("QPOWER is enabled in power save mode %d",
-			 wma->powersave_mode);
-		return QPOWER_ENABLED;
-	case PS_DUTY_CYCLING_QPOWER:
-		WMA_LOGD("DUTY cycling QPOWER is enabled in power save mode %d",
-			 wma->powersave_mode);
-		return QPOWER_DUTY_CYCLING;
+	WMA_LOGD("POWER mode is %d", wma->powersave_mode);
 
-	default:
-		WMA_LOGD("QPOWER is disabled in power save mode %d",
-			 wma->powersave_mode);
-		return QPOWER_DISABLED;
-	}
+	return wma->powersave_mode;
 }
 
 void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 {
 	uint32_t vdev_id = ps_req->sessionid;
 	QDF_STATUS ret;
-	enum powersave_qpower_mode qpower_config;
+	enum powersave_mode power_config;
 	struct wma_txrx_node *iface;
 	t_wma_handle *wma_handle;
 
@@ -766,11 +736,11 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 		return;
 	}
 
-	qpower_config = wma_get_qpower_config(wma_handle);
+	power_config = wma_get_power_config(wma_handle);
 	if (eSIR_ADDON_NOTHING == ps_req->psSetting) {
-		if (qpower_config && iface->uapsd_cached_val) {
-			qpower_config = 0;
-			WMA_LOGD("Qpower is disabled");
+		if (power_config && iface->uapsd_cached_val) {
+			power_config = 0;
+			WMA_LOGD("Advanced power save is disabled");
 		}
 		WMA_LOGD("Enable Sta Mode Ps vdevId %d", vdev_id);
 		ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
@@ -782,7 +752,7 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 		}
 
 		ret = wma_set_force_sleep(wma_handle, vdev_id, false,
-					  qpower_config, true);
+					  power_config, true);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Sta Ps Failed vdevId %d", vdev_id);
 			return;
@@ -811,13 +781,13 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 					vdev_id, uapsd_val);
 		}
 
-		if (qpower_config && iface->uapsd_cached_val) {
-			qpower_config = 0;
+		if (power_config && iface->uapsd_cached_val) {
+			power_config = 0;
 			WMA_LOGD("Qpower is disabled");
 		}
 		WMA_LOGD("Enable Forced Sleep vdevId %d", vdev_id);
 		ret = wma_set_force_sleep(wma_handle, vdev_id, true,
-					  qpower_config, true);
+					  power_config, true);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Forced Sleep Failed vdevId %d",
@@ -894,7 +864,7 @@ void wma_disable_sta_ps_mode(tpDisablePsParams ps_req)
 	}
 }
 
-QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower)
+QDF_STATUS wma_set_power_config(uint8_t vdev_id, enum powersave_mode power)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -903,12 +873,12 @@ QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMA_LOGI("configuring qpower: %d", qpower);
-	wma->powersave_mode = qpower;
+	WMA_LOGI("configuring power: %d", power);
+	wma->powersave_mode = power;
 	return wma_unified_set_sta_ps_param(wma->wmi_handle,
 					    vdev_id,
 					    WMI_STA_PS_ENABLE_QPOWER,
-					    wma_get_qpower_config(wma));
+					    wma_get_power_config(wma));
 }
 
 void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
@@ -916,7 +886,7 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	QDF_STATUS ret;
 	uint32_t vdev_id = ps_req->sessionid;
 	uint32_t uapsd_val = 0;
-	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
+	enum powersave_mode power_config = wma_get_power_config(wma);
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
 	if (!iface->vdev) {
@@ -941,14 +911,14 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 		return;
 	}
 
-	if (qpower_config && uapsd_val) {
-		qpower_config = 0;
-		WMA_LOGD("Disable Qpower %d", vdev_id);
+	if (power_config && uapsd_val) {
+		power_config = 0;
+		WMA_LOGD("Disable power %d", vdev_id);
 	}
 	iface->uapsd_cached_val = uapsd_val;
 	WMA_LOGD("Enable Forced Sleep vdevId %d", vdev_id);
 	ret = wma_set_force_sleep(wma, vdev_id, true,
-			qpower_config, ps_req->uapsdParams.enable_ps);
+			power_config, ps_req->uapsdParams.enable_ps);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Enable Forced Sleep Failed vdevId %d", vdev_id);
 		return;
@@ -968,7 +938,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 {
 	QDF_STATUS ret;
 	uint32_t vdev_id = ps_req->sessionid;
-	enum powersave_qpower_mode qpower_config = wma_get_qpower_config(wma);
+	enum powersave_mode power_config = wma_get_power_config(wma);
 
 	WMA_LOGD("Disable Uapsd vdevId %d", vdev_id);
 
@@ -988,7 +958,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 
 	/* Re enable Sta Mode Powersave with proper configuration */
 	ret = wma_set_force_sleep(wma, vdev_id, false,
-			qpower_config, true);
+			power_config, true);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Disable Forced Sleep Failed vdevId %d", vdev_id);
 		return;

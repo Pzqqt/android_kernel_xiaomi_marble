@@ -7383,15 +7383,15 @@ static int hdd_config_scan_enable(struct hdd_adapter *adapter,
 	return 0;
 }
 
-static int hdd_config_qpower(struct hdd_adapter *adapter,
-			     const struct nlattr *attr)
+static int hdd_config_power(struct hdd_adapter *adapter,
+			    const struct nlattr *attr)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint8_t qpower;
+	uint8_t power;
 
-	qpower = nla_get_u8(attr);
+	power = nla_get_u8(attr);
 
-	return hdd_set_qpower_config(hdd_ctx, adapter, qpower);
+	return hdd_set_power_config(hdd_ctx, adapter, power);
 }
 
 static int hdd_config_stats_avg_factor(struct hdd_adapter *adapter,
@@ -7999,7 +7999,7 @@ static const struct independent_setters independent_setters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE,
 	 hdd_config_scan_enable},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER,
-	 hdd_config_qpower},
+	 hdd_config_power},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR,
 	 hdd_config_stats_avg_factor},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME,

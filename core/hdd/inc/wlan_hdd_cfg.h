@@ -323,7 +323,6 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx);
  * gRuntimePM=0
  * gWlanAutoShutdown = 0
  * gEnableSuspend=0
- * gEnablePowerSaveOffload=0
  * gEnableWoW=0
  *
  * Return: None
