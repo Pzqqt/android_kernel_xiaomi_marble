@@ -13273,6 +13273,8 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 		goto exit;
 	}
 
+	hdd_update_sta_arp_stats(adapter);
+
 	if (nla_put_u16(skb, COUNT_FROM_NETDEV,
 			adapter->hdd_stats.hdd_arp_stats.tx_arp_req_count) ||
 	    nla_put_u16(skb, COUNT_TO_LOWER_MAC,

@@ -43,6 +43,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
 #include "cdp_txrx_misc.h"
+#include "cdp_txrx_host_stats.h"
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -6197,3 +6198,34 @@ void wlan_hdd_register_cp_stats_cb(struct hdd_context *hdd_ctx)
 }
 #endif
 
+QDF_STATUS hdd_update_sta_arp_stats(struct hdd_adapter *adapter)
+{
+	struct cdp_peer_stats *peer_stats;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_arp_stats_s *arp_stats;
+	QDF_STATUS status;
+
+	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
+	if (!peer_stats)
+		return QDF_STATUS_E_NOMEM;
+
+	status = cdp_host_get_peer_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					 adapter->vdev_id,
+					 sta_ctx->conn_info.bssid.bytes,
+					 peer_stats);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(peer_stats);
+		return status;
+	}
+
+	arp_stats = &adapter->hdd_stats.hdd_arp_stats;
+
+	arp_stats->tx_host_fw_sent =
+			arp_stats->tx_arp_req_count - arp_stats->tx_dropped;
+	arp_stats->tx_ack_cnt = arp_stats->tx_host_fw_sent -
+				peer_stats->tx.no_ack_count[QDF_PROTO_ARP_REQ];
+	qdf_mem_free(peer_stats);
+
+	return QDF_STATUS_SUCCESS;
+}
