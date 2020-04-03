@@ -10,6 +10,7 @@
 #include "sde_kms.h"
 #include "sde_connector.h"
 #include "sde_encoder.h"
+#include "msm_cooling_device.h"
 #include <linux/backlight.h>
 #include <linux/string.h>
 #include "dsi_drm.h"
@@ -90,6 +91,8 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	display = (struct dsi_display *) c_conn->display;
 	if (brightness > display->panel->bl_config.bl_max_level)
 		brightness = display->panel->bl_config.bl_max_level;
+	if (brightness > c_conn->thermal_max_brightness)
+		brightness = c_conn->thermal_max_brightness;
 
 	/* map UI brightness into driver backlight level with rounding */
 	bl_lvl = mult_frac(brightness, display->panel->bl_config.bl_max_level,
@@ -129,6 +132,20 @@ static const struct backlight_ops sde_backlight_device_ops = {
 	.get_brightness = sde_backlight_device_get_brightness,
 };
 
+static int sde_backlight_cooling_cb(struct notifier_block *nb,
+					unsigned long val, void *data)
+{
+	struct sde_connector *c_conn;
+	struct backlight_device *bd = (struct backlight_device *)data;
+
+	c_conn = bl_get_data(bd);
+	SDE_DEBUG("bl: thermal max brightness cap:%lu\n", val);
+	c_conn->thermal_max_brightness = val;
+
+	sde_backlight_device_update_status(bd);
+	return 0;
+}
+
 static int sde_backlight_setup(struct sde_connector *c_conn,
 					struct drm_device *dev)
 {
@@ -160,6 +177,17 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 	if (IS_ERR_OR_NULL(c_conn->bl_device)) {
 		SDE_ERROR("Failed to register backlight: %ld\n",
 				    PTR_ERR(c_conn->bl_device));
+		c_conn->bl_device = NULL;
+		return -ENODEV;
+	}
+	c_conn->thermal_max_brightness = bl_config->brightness_max_level;
+	c_conn->n.notifier_call = sde_backlight_cooling_cb;
+	c_conn->cdev = backlight_cdev_register(dev->dev, c_conn->bl_device,
+							&c_conn->n);
+	if (IS_ERR_OR_NULL(c_conn->cdev)) {
+		SDE_ERROR("Failed to register backlight cdev: %ld\n",
+				    PTR_ERR(c_conn->cdev));
+		backlight_device_unregister(c_conn->bl_device);
 		c_conn->bl_device = NULL;
 		return -ENODEV;
 	}
@@ -945,6 +973,8 @@ void sde_connector_destroy(struct drm_connector *connector)
 	if (c_conn->blob_ext_hdr)
 		drm_property_blob_put(c_conn->blob_ext_hdr);
 
+	if (c_conn->cdev)
+		backlight_cdev_unregister(c_conn->cdev);
 	if (c_conn->bl_device)
 		backlight_device_unregister(c_conn->bl_device);
 	drm_connector_unregister(connector);
