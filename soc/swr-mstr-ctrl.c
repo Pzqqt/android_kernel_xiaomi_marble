@@ -1567,8 +1567,7 @@ static int swrm_connect_port(struct swr_master *master,
 		mport->req_ch |= mstr_ch_msk;
 		master->port_en_mask |= (1 << mstr_port_id);
 		if (swrm->clk_stop_mode0_supp &&
-				swrm->dynamic_port_map_supported &&
-				(mport->ch_rate < portinfo->ch_rate[i])) {
+			(mport->ch_rate < portinfo->ch_rate[i])) {
 			mport->ch_rate = portinfo->ch_rate[i];
 			swrm_update_bus_clk(swrm);
 		}
@@ -1634,9 +1633,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 		}
 		port_req->req_ch &= ~portinfo->ch_en[i];
 		mport->req_ch &= ~mstr_ch_mask;
-		if (swrm->clk_stop_mode0_supp &&
-				swrm->dynamic_port_map_supported &&
-				!mport->req_ch) {
+		if (swrm->clk_stop_mode0_supp && !mport->req_ch) {
 			mport->ch_rate = 0;
 			swrm_update_bus_clk(swrm);
 		}
@@ -2329,15 +2326,6 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
 		goto err_pdata_fail;
 	}
-	ret = of_property_read_u32(pdev->dev.of_node, "qcom,dynamic-port-map-supported",
-				&swrm->dynamic_port_map_supported);
-	if (ret) {
-		dev_dbg(&pdev->dev,
-			"%s: failed to get dynamic port map support, use default\n",
-			__func__);
-		swrm->dynamic_port_map_supported = 1;
-	}
-
 	if (!(of_property_read_u32(pdev->dev.of_node,
 			"swrm-io-base", &swrm->swrm_base_reg)))
 		ret = of_property_read_u32(pdev->dev.of_node,
