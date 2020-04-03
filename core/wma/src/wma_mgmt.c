@@ -4031,8 +4031,7 @@ void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 	}
 
 	dev = wlan_psoc_get_qdf_dev(psoc);
-	if (wlan_psoc_nif_fw_ext_cap_get(psoc, WLAN_SOC_CEXT_WMI_MGMT_REF))
-		qdf_nbuf_unmap_single(dev, buf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_unmap_single(dev, buf, QDF_DMA_TO_DEVICE);
 }
 
 QDF_STATUS wma_mgmt_frame_fill_peer_cb(struct wlan_objmgr_peer *peer,
