@@ -1082,9 +1082,9 @@ bool wlan_reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
 	return reg_is_6ghz_op_class(pdev, op_class);
 }
 
-bool wlan_reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev)
+bool wlan_reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 {
-	return reg_is_6ghz_supported(pdev);
+	return reg_is_6ghz_supported(psoc);
 }
 
 #ifdef HOST_OPCLASS_EXT

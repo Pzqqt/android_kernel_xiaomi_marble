@@ -999,9 +999,9 @@ bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
 /**
  * reg_is_6ghz_supported() - Whether 6ghz is supported
  *
- * @pdev: pointer to pdev
+ * @psoc: pointer to psoc
  */
-bool reg_is_6ghz_supported(struct wlan_objmgr_pdev *pdev);
+bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
  * reg_get_unii_5g_bitmap() - get unii_5g_bitmap value
