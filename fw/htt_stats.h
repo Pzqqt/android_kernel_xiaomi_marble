@@ -1941,6 +1941,7 @@ typedef struct {
     A_UINT32 ax_mu_mimo_ndpa_queued;
     A_UINT32 ax_mu_mimo_ndp_queued;
     A_UINT32 ax_mu_mimo_brpoll_queued[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    A_UINT32 ax_ul_mumimo_trigger[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_selfgen_ax_stats_tlv;
 
 typedef struct {
@@ -2059,6 +2060,7 @@ typedef struct {
     A_UINT32 ax_mu_mimo_ndpa_flushed;
     A_UINT32 ax_mu_mimo_ndp_flushed;
     A_UINT32 ax_mu_mimo_brpoll_flushed[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS - 1];
+    A_UINT32 ax_ul_mumimo_trigger_err[HTT_TX_PDEV_STATS_NUM_AX_MUMIMO_USER_STATS];
 } htt_tx_selfgen_ax_err_stats_tlv;
 
 typedef struct {
