@@ -2119,7 +2119,6 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	bool is_etsi13_srd_chan_allowed_in_mas_mode = true;
 	uint32_t i = 0, j = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	bool sta_sap_scc_on_dfs_chan;
 	uint32_t *channel_list, *channel_list_24, *channel_list_5,
 		 *sbs_channel_list, *channel_list_6;
 
@@ -2166,20 +2165,9 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	/*
-	 * if you have atleast one STA connection then don't fill DFS channels
-	 * in the preferred channel list
-	 */
-	sta_sap_scc_on_dfs_chan =
-		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
 	if ((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE)) {
-		if ((policy_mgr_mode_specific_connection_count(psoc,
-							       PM_STA_MODE,
-							       NULL) > 0) &&
-		    (!sta_sap_scc_on_dfs_chan)) {
-			policy_mgr_debug("skip DFS ch from pcl for SAP/Go");
-			skip_dfs_channel = true;
-		}
+		policy_mgr_skip_dfs_ch(psoc,
+				       &skip_dfs_channel);
 		is_etsi13_srd_chan_allowed_in_mas_mode =
 			wlan_reg_is_etsi13_srd_chan_allowed_master_mode(pm_ctx->
 									pdev);

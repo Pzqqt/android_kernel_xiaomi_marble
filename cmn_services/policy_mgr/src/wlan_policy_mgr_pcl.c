@@ -403,15 +403,8 @@ uint32_t policy_mgr_get_channel(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
-/**
- * policy_mgr_skip_dfs_ch() - skip dfs channel or not
- * @psoc: pointer to soc
- * @skip_dfs_channel: pointer to result
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS policy_mgr_skip_dfs_ch(struct wlan_objmgr_psoc *psoc,
-					 bool *skip_dfs_channel)
+QDF_STATUS policy_mgr_skip_dfs_ch(struct wlan_objmgr_psoc *psoc,
+				  bool *skip_dfs_channel)
 {
 	bool sta_sap_scc_on_dfs_chan;
 	bool dfs_master_capable;
@@ -434,11 +427,23 @@ static QDF_STATUS policy_mgr_skip_dfs_ch(struct wlan_objmgr_psoc *psoc,
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
-	if ((policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
-						       NULL) > 0) &&
-	    !sta_sap_scc_on_dfs_chan) {
-		policy_mgr_debug("SAP/Go skips DFS ch if sta connects");
-		*skip_dfs_channel = true;
+
+	if (policy_mgr_is_hw_dbs_capable(psoc)) {
+		if ((policy_mgr_is_special_mode_active_5g(psoc,
+							  PM_P2P_CLIENT_MODE) ||
+		     policy_mgr_is_special_mode_active_5g(psoc, PM_STA_MODE)) &&
+		    !sta_sap_scc_on_dfs_chan) {
+			policy_mgr_debug("skip DFS ch from pcl for DBS SAP/Go");
+			*skip_dfs_channel = true;
+		}
+	} else {
+		if ((policy_mgr_mode_specific_connection_count(psoc,
+							       PM_STA_MODE,
+							       NULL) > 0) &&
+		    !sta_sap_scc_on_dfs_chan) {
+			policy_mgr_debug("skip DFS ch from pcl for non-DBS SAP/Go");
+			*skip_dfs_channel = true;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;

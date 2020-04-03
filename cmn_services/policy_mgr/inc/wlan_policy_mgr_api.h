@@ -628,6 +628,16 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 		enum QDF_OPMODE mode, uint8_t session_id);
 
 /**
+ * policy_mgr_skip_dfs_ch() - skip dfs channel or not
+ * @psoc: pointer to soc
+ * @skip_dfs_channel: pointer to result
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_skip_dfs_ch(struct wlan_objmgr_psoc *psoc,
+				  bool *skip_dfs_channel);
+
+/**
  * policy_mgr_get_channel() - provide channel number of given mode and vdevid
  * @psoc: PSOC object information
  * @mode: given  mode
@@ -3008,6 +3018,17 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
  */
 bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_is_special_mode_active_5g() - check if given mode active in 5g
+ * @psoc: pointer to soc
+ * @mode: operating mode of interface to be checked
+ *
+ * Return: true if given mode is active in 5g
+ */
+bool policy_mgr_is_special_mode_active_5g(struct wlan_objmgr_psoc *psoc,
+					  enum policy_mgr_con_mode mode);
+
 /**
  * policy_mgr_is_sta_connected_2g() - check if sta connected in 2g
  * @psoc: pointer to soc

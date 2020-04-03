@@ -3932,6 +3932,32 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 	return status;
 }
 
+bool policy_mgr_is_special_mode_active_5g(struct wlan_objmgr_psoc *psoc,
+					  enum policy_mgr_con_mode mode)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t conn_index;
+	bool ret = false;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return ret;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if (pm_conc_connection_list[conn_index].mode == mode &&
+		    pm_conc_connection_list[conn_index].freq >=
+					WLAN_REG_MIN_5GHZ_CHAN_FREQ &&
+		    pm_conc_connection_list[conn_index].in_use)
+			ret = true;
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+
+	return ret;
+}
+
 bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
