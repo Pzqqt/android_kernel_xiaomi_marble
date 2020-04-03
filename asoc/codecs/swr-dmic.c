@@ -496,11 +496,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			strlen(swr_dmic_name_prefix_of));
 	component->name_prefix = prefix_name;
 
-	if (swr_dmic->is_en_supply == 1) {
-		enable_wcd_codec_supply(swr_dmic, false);
-		--swr_dmic->is_en_supply;
-	}
-
 	return 0;
 
 dev_err:
