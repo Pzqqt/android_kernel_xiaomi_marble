@@ -24369,7 +24369,7 @@ typedef enum {
 
 typedef enum wmi_hw_mode_config_type {
     WMI_HW_MODE_SINGLE      = 0, /* Only one PHY is active. */
-    WMI_HW_MODE_DBS         = 1, /* Both PHYs are active in different bands, one in 2G and another in 5G. */
+    WMI_HW_MODE_DBS         = 1, /* Both PHYs are active in different bands, PHYB in 2G and PHYA in 5G. */
     WMI_HW_MODE_SBS_PASSIVE = 2, /* Both PHYs are in passive mode (only rx) in same band; no tx allowed. */
     WMI_HW_MODE_SBS         = 3, /* Both PHYs are active in the same band.
                                   * Support for both PHYs within one band is planned for 5G only
@@ -24381,6 +24381,8 @@ typedef enum wmi_hw_mode_config_type {
                                   * as in WMI_HW_MODE_SBS, and 3rd on the other band
                                   */
     WMI_HW_MODE_DBS_OR_SBS  = 5, /* One PHY is on 5G and the other PHY can be in 2G or 5G. */
+    WMI_HW_MODE_DBS_2G_5G   = 6, /* Both PHYs are active in different bands. PhyA 2G and PhyB 5G */
+    WMI_HW_MODE_2G_PHYB     = 7, /* Ony PhyB 2G active */
 } WMI_HW_MODE_CONFIG_TYPE;
 
 #define WMI_SUPPORT_11B_GET(flags) WMI_GET_BITS(flags, 0, 1)
