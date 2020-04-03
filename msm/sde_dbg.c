@@ -76,6 +76,8 @@
 #define DUMP_LINE_SIZE			256
 #define DUMP_MAX_LINES_PER_BLK		512
 
+#define SDE_HW_REV_MAJOR(rev) ((rev) >> 28)
+
 /**
  * struct sde_dbg_reg_offset - tracking for start and end of region
  * @start: start offset
@@ -5941,7 +5943,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 	memset(&dbg->dbgbus_sde, 0, sizeof(dbg->dbgbus_sde));
 	memset(&dbg->dbgbus_vbif_rt, 0, sizeof(dbg->dbgbus_vbif_rt));
 
-	if (IS_LAHAINA_TARGET(hwversion)) {
+	if (SDE_HW_REV_MAJOR(hwversion) == 0x7) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_lahaina;
 		dbg->dbgbus_sde.cmn.entries_size =
 				ARRAY_SIZE(dbg_bus_sde_lahaina);
@@ -5956,7 +5958,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 		dbg->dbgbus_dsi.size = ARRAY_SIZE(dsi_dbg_bus_kona);
 		dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 		dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
-	} else if (IS_KONA_TARGET(hwversion) || IS_SAIPAN_TARGET(hwversion)) {
+	} else if (SDE_HW_REV_MAJOR(hwversion) == 0x6) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_kona;
 		dbg->dbgbus_sde.cmn.entries_size =
 				ARRAY_SIZE(dbg_bus_sde_kona);
@@ -5971,9 +5973,7 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 		dbg->dbgbus_dsi.size = ARRAY_SIZE(dsi_dbg_bus_kona);
 		dbg->dbgbus_vbif_rt.cmn.name = DBGBUS_NAME_VBIF_RT;
 		dbg->dbgbus_vbif_rt.cmn.enable_mask = DEFAULT_DBGBUS_VBIFRT;
-	} else if (IS_SM8150_TARGET(hwversion) || IS_SM6150_TARGET(hwversion) ||
-				IS_SDMMAGPIE_TARGET(hwversion) ||
-				IS_SDMTRINKET_TARGET(hwversion)) {
+	} else if (SDE_HW_REV_MAJOR(hwversion) == 0x5) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_sm8150;
 		dbg->dbgbus_sde.cmn.entries_size =
 				ARRAY_SIZE(dbg_bus_sde_sm8150);
