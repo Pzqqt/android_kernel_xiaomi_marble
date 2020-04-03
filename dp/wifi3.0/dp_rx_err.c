@@ -212,7 +212,7 @@ dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
 			   srng->u.src_ring.reap_hp,
 			   *srng->u.src_ring.tp_addr,
 			   srng->u.src_ring.cached_tp);
-		qdf_assert(0);
+		QDF_BUG(0);
 	}
 done:
 	hal_srng_access_end(hal_soc, wbm_rel_srng);
