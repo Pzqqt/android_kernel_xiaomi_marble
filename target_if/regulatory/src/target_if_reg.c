@@ -378,6 +378,85 @@ tgt_if_regulatory_send_ctl_info(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+/**
+ * tgt_if_regulatory_get_phy_id_from_pdev_id() - Get phy_id from pdev_id
+ * @psoc: Pointer to psoc
+ * @pdev_id: Pdev id
+ * @phy_id: phy_id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS tgt_if_regulatory_get_phy_id_from_pdev_id(
+	struct wlan_objmgr_psoc *psoc, uint8_t pdev_id, uint8_t *phy_id)
+{
+	struct target_psoc_info *tgt_if_handle = psoc->tgt_if_handle;
+	uint8_t ret;
+
+	if (pdev_id >= WLAN_UMAC_MAX_PDEVS) {
+		target_if_err("pdev_id is greater than WLAN_UMAC_MAX_PDEVS");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* By default pdev_id and phy_id have one to one mapping */
+	*phy_id = pdev_id;
+
+	if (!(tgt_if_handle &&
+	      tgt_if_handle->info.is_pdevid_to_phyid_map))
+		return QDF_STATUS_SUCCESS;
+
+	ret = tgt_if_handle->info.pdev_id_to_phy_id_map[pdev_id];
+
+	if (ret < PSOC_MAX_PHY_REG_CAP) {
+		*phy_id = ret;
+	} else {
+		target_if_err("phy_id is greater than PSOC_MAX_PHY_REG_CAP");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * tgt_if_regulatory_get_pdev_id_from_phy_id() - Get pdev_id for phy_id
+ * @psoc: Pointer to psoc
+ * @phy_id: Phy id
+ * @pdev_id: Pdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS tgt_if_regulatory_get_pdev_id_from_phy_id(
+	struct wlan_objmgr_psoc *psoc, uint8_t phy_id, uint8_t *pdev_id)
+{
+	struct target_psoc_info *tgt_if_handle = psoc->tgt_if_handle;
+	uint8_t i;
+
+	if (phy_id >= PSOC_MAX_PHY_REG_CAP) {
+		target_if_err("phy_id is greater than PSOC_MAX_PHY_REG_CAP");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* By default pdev_id and phy_id have one to one mapping */
+	*pdev_id = phy_id;
+
+	if (!(tgt_if_handle &&
+	      tgt_if_handle->info.is_pdevid_to_phyid_map))
+		return QDF_STATUS_SUCCESS;
+
+	for (i = 0; i < WLAN_UMAC_MAX_PDEVS; i++) {
+		if (tgt_if_handle->info.pdev_id_to_phy_id_map[i] == phy_id)
+			break;
+	}
+
+	if (i < WLAN_UMAC_MAX_PDEVS) {
+		*pdev_id = i;
+	} else {
+		target_if_err("pdev_id is greater than WLAN_UMAC_MAX_PDEVS");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS target_if_register_regulatory_tx_ops(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -418,6 +497,12 @@ QDF_STATUS target_if_register_regulatory_tx_ops(
 		tgt_if_regulatory_unregister_ch_avoid_event_handler;
 
 	reg_ops->send_ctl_info = tgt_if_regulatory_send_ctl_info;
+
+	reg_ops->get_phy_id_from_pdev_id =
+			tgt_if_regulatory_get_phy_id_from_pdev_id;
+
+	reg_ops->get_pdev_id_from_phy_id =
+			tgt_if_regulatory_get_pdev_id_from_phy_id;
 
 	return QDF_STATUS_SUCCESS;
 }

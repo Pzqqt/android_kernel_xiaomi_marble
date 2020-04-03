@@ -209,6 +209,8 @@ struct tgt_info {
 	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
 	struct wlan_psoc_host_hw_mode_caps hw_mode_cap;
 	struct target_supported_modes hw_modes;
+	uint8_t pdev_id_to_phy_id_map[WLAN_UMAC_MAX_PDEVS];
+	bool is_pdevid_to_phyid_map;
 };
 
 /**
@@ -817,6 +819,28 @@ static inline void target_psoc_set_num_radios(
 		return;
 
 	psoc_info->info.num_radios = num_radios;
+}
+
+/**
+ * target_psoc_set_pdev_id_to_phy_id_map() - set pdev to phy id mapping
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @pdev_id: pdev id
+ * @phy_id: phy_id
+ *
+ * API to set pdev id to phy id mapping
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_pdev_id_to_phy_id_map(
+		struct target_psoc_info *psoc_info,
+		uint8_t *phy_id_map)
+{
+	if (!psoc_info)
+		return;
+
+	psoc_info->info.is_pdevid_to_phyid_map = true;
+	qdf_mem_copy(psoc_info->info.pdev_id_to_phy_id_map, phy_id_map,
+		     PSOC_MAX_PHY_REG_CAP);
 }
 
 /**

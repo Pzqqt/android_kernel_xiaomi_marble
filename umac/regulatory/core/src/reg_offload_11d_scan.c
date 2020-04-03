@@ -43,6 +43,7 @@ QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	uint8_t pdev_id;
+	uint8_t phy_id;
 
 	if (!country) {
 		reg_err("Null country code");
@@ -71,7 +72,13 @@ QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_copy(country_code.country, country, REG_ALPHA2_LEN + 1);
 	country_code.pdev_id = pdev_id;
 
-	psoc_priv_obj->new_11d_ctry_pending[pdev_id] = true;
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (tx_ops->get_phy_id_from_pdev_id)
+		tx_ops->get_phy_id_from_pdev_id(psoc, pdev_id, &phy_id);
+	else
+		phy_id = pdev_id;
+
+	psoc_priv_obj->new_11d_ctry_pending[phy_id] = true;
 
 	if (psoc_priv_obj->offload_enabled) {
 		tx_ops = reg_get_psoc_tx_ops(psoc);
@@ -79,7 +86,7 @@ QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
 			tx_ops->set_country_code(psoc, &country_code);
 		} else {
 			reg_err("country set fw handler not present");
-			psoc_priv_obj->new_11d_ctry_pending[pdev_id] = false;
+			psoc_priv_obj->new_11d_ctry_pending[phy_id] = false;
 			return QDF_STATUS_E_FAULT;
 		}
 		status = QDF_STATUS_SUCCESS;

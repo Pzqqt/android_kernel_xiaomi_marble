@@ -1940,6 +1940,7 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	uint8_t pdev_id;
+	uint8_t phy_id;
 	QDF_STATUS err;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
@@ -1968,8 +1969,14 @@ QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,
 
 		pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 		tx_ops = reg_get_psoc_tx_ops(psoc);
+
+		if (tx_ops->get_phy_id_from_pdev_id)
+			tx_ops->get_phy_id_from_pdev_id(psoc, pdev_id, &phy_id);
+		else
+			phy_id = pdev_id;
+
 		if (tx_ops->set_user_country_code) {
-			psoc_priv_obj->new_init_ctry_pending[pdev_id] = true;
+			psoc_priv_obj->new_init_ctry_pending[phy_id] = true;
 			return tx_ops->set_user_country_code(psoc, pdev_id, rd);
 		}
 
@@ -2063,6 +2070,8 @@ QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 	uint16_t index;
 	int num_reg_dmn;
 	uint8_t phy_id;
+	uint8_t pdev_id;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	psoc_priv_obj = reg_get_psoc_obj(psoc);
@@ -2071,7 +2080,14 @@ QDF_STATUS reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	phy_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (tx_ops->get_phy_id_from_pdev_id)
+		tx_ops->get_phy_id_from_pdev_id(psoc, pdev_id, &phy_id);
+	else
+		phy_id = pdev_id;
+
 	cur_regdmn->regdmn_pair_id =
 		psoc_priv_obj->mas_chan_params[phy_id].reg_dmn_pair;
 
