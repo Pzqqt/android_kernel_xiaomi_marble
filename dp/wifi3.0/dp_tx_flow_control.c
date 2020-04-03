@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -575,7 +575,7 @@ QDF_STATUS dp_tx_flow_pool_map(struct cdp_soc_t *handle, uint8_t pdev_id,
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(handle);
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3(soc, pdev_id);
-	int tx_ring_size = wlan_cfg_tx_ring_size(soc->wlan_cfg_ctx);
+	int tx_ring_size = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 
 	if (!pdev) {
 		dp_err("pdev is NULL");
