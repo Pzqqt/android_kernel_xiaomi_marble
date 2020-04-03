@@ -5057,6 +5057,17 @@ static int dsi_display_bind(struct device *dev,
 		}
 	}
 
+	/* Remove the panel vote that was added during dsi display probe */
+	if (display->panel) {
+		rc = dsi_pwr_enable_regulator(&display->panel->power_info,
+								false);
+		if (rc) {
+			DSI_ERR("[%s] failed to disable vregs, rc=%d\n",
+					display->panel->name, rc);
+			goto error_host_deinit;
+		}
+	}
+
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
 
@@ -5165,6 +5176,24 @@ static int dsi_display_init(struct dsi_display *display)
 	if (rc) {
 		DSI_ERR("device init failed, rc=%d\n", rc);
 		goto end;
+	}
+
+	/*
+	 * Vote on panel regulator is added to make sure panel regulators
+	 * are ON until dsi bind is completed for cont-splash enabled usecase.
+	 * This panel regulator vote will be removed after bind is done.
+	 * For GKI, adding this vote will make sure that sync_state
+	 * kernel driver doesn't disable the panel regulators before
+	 * splash_config() function adds vote for these regulators.
+	 */
+	if (display->panel) {
+		rc = dsi_pwr_enable_regulator(&display->panel->power_info,
+								true);
+		if (rc) {
+			DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
+					display->panel->name, rc);
+			return rc;
+		}
 	}
 
 	rc = component_add(&pdev->dev, &dsi_display_comp_ops);
