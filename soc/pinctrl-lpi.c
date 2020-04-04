@@ -635,7 +635,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	ret = of_property_read_u32(dev->of_node, "qcom,num-gpios", &npins);
+	ret = of_property_read_u32(dev->of_node, "qcom,gpios-count", &npins);
 	if (ret < 0)
 		return ret;
 

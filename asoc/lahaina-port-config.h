@@ -45,7 +45,7 @@ static struct port_params rx_frame_params_dsd[SWR_MSTR_PORT_LEN] = {
 static struct port_params tx_frame_params_default[SWR_MSTR_PORT_LEN] = {
 	{3,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0},  /* TX1 */
 	{3,  2,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0},  /* TX2 */
-	{3,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0},  /* TX3 */
+	{7,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0},  /* TX3 */
 };
 
 /* TX UC1: TX1: 1ch, TX2: 2chs, TX3: 1ch(MBHC) */

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -4338,6 +4338,7 @@ struct asm_aac_frame_size_control_t {
 struct asm_aac_enc_cfg_t {
 	struct asm_aac_enc_cfg_v2_t aac_cfg;
 	struct asm_aac_frame_size_control_t frame_ctl;
+	struct asm_aac_frame_size_control_t frame_ctl_v2;
 } __packed;
 
 /* FMT ID for apt-X Classic */
@@ -12681,6 +12682,12 @@ struct afe_doa_tracking_mon_get_param_resp {
 #define AUDPROC_MODULE_ID_FFECNS 0x00010952
 #define AUDPROC_MODULE_ID_FFNS 0x00010962
 #define AUDPROC_PARAM_ID_FFV_DOA_TRACKING_PARAM 0x0001097C
+
+/*
+* ID of the DTMF Detection Module.
+*/
+#define AUDPROC_MODULE_ID_DTMF_DETECTION        0x00010940
+
 #define AUDPROC_PARAM_ID_FFV_DOA_TRACKING_MONITOR 0x0001097D
 
 struct admx_sec_primary_mic_ch {

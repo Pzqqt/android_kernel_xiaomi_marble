@@ -25,6 +25,7 @@
 #include <soc/swr-common.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
+#include <soc/soundwire.h>
 #include "device_event.h"
 #include "msm-pcm-routing-v2.h"
 #include "asoc/msm-cdc-pinctrl.h"
@@ -189,6 +190,7 @@ struct msm_asoc_mach_data {
 	struct device_node *fsa_handle;
 	struct clk *lpass_audio_hw_vote;
 	int core_audio_vote_count;
+	u32 wsa_max_devs;
 };
 
 struct tdm_port {
@@ -204,21 +206,6 @@ enum {
 	EXT_DISP_RX_IDX_DP = 0,
 	EXT_DISP_RX_IDX_DP1,
 	EXT_DISP_RX_IDX_MAX,
-};
-
-struct msm_wsa883x_dev_info {
-	struct device_node *of_node;
-	u32 index;
-};
-
-struct aux_codec_dev_info {
-	struct device_node *of_node;
-	u32 index;
-};
-
-struct msm_swr_dmic_dev_info {
-	struct device_node *of_node;
-	u32 index;
 };
 
 struct dev_config {
@@ -875,18 +862,15 @@ static SOC_ENUM_SINGLE_EXT_DECL(afe_loopback_tx_chs, afe_loopback_tx_ch_text);
 
 static bool is_initial_boot;
 static bool codec_reg_done;
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-static struct snd_soc_aux_dev *msm_aux_dev;
-static struct snd_soc_codec_conf *msm_codec_conf;
-#endif /* CONFIG_AUDIO_QGKI */
 static struct snd_soc_card snd_soc_card_lahaina_msm;
 static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 static int dmic_4_5_gpio_cnt;
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static void *def_wcd_mbhc_cal(void);
-#endif /* CONFIG_AUDIO_QGKI */
+
+static int msm_aux_codec_init(struct snd_soc_pcm_runtime*);
+static int msm_int_audrx_init(struct snd_soc_pcm_runtime*);
 
 /*
  * Need to report LINEIN
@@ -5325,106 +5309,6 @@ static struct snd_info_entry *msm_snd_info_create_subdir(struct module *mod,
 	return entry;
 }
 
-static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
-{
-	int ret = -EINVAL;
-	struct snd_soc_component *component;
-	struct snd_soc_dapm_context *dapm;
-	struct snd_card *card;
-	struct snd_info_entry *entry;
-	struct msm_asoc_mach_data *pdata =
-				snd_soc_card_get_drvdata(rtd->card);
-
-	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
-	if (!component) {
-		pr_err("%s: could not find component for bolero_codec\n",
-			__func__);
-		return ret;
-	}
-
-	dapm = snd_soc_component_get_dapm(component);
-
-	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
-				ARRAY_SIZE(msm_int_snd_controls));
-	if (ret < 0) {
-		pr_err("%s: add_component_controls failed: %d\n",
-			__func__, ret);
-		return ret;
-	}
-	ret = snd_soc_add_component_controls(component, msm_common_snd_controls,
-				ARRAY_SIZE(msm_common_snd_controls));
-	if (ret < 0) {
-		pr_err("%s: add common snd controls failed: %d\n",
-			__func__, ret);
-		return ret;
-	}
-
-	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
-				ARRAY_SIZE(msm_int_dapm_widgets));
-
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic0");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic1");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic2");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic3");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic4");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic5");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic6");
-	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic7");
-
-	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic1");
-	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic2");
-	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic3");
-	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
-	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
-
-	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "WSA AIF VI");
-	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
-
-	snd_soc_dapm_sync(dapm);
-
-	/*
-	 * Send speaker configuration only for WSA8810.
-	 * Default configuration is for WSA8815.
-	 */
-	dev_dbg(component->dev, "%s: Number of aux devices: %d\n",
-		__func__, rtd->card->num_aux_devs);
-	if (rtd->card->num_aux_devs &&
-	    !list_empty(&rtd->card->component_dev_list)) {
-		if (pdata->lito_v2_enabled) {
-			/*
-			 * Enable tx data line3 for saipan version v2 amd
-			 * write corresponding lpi register.
-			 */
-			bolero_set_port_map(component, ARRAY_SIZE(sm_port_map_v2),
-					sm_port_map_v2);
-		} else {
-			bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
-					sm_port_map);
-		}
-	}
-	card = rtd->card->snd_card;
-	if (!pdata->codec_root) {
-		entry = msm_snd_info_create_subdir(card->module, "codecs",
-						 card->proc_root);
-		if (!entry) {
-			pr_debug("%s: Cannot create codecs module entry\n",
-				 __func__);
-			ret = 0;
-			goto err;
-		}
-		pdata->codec_root = entry;
-	}
-	bolero_info_create_codec_entry(pdata->codec_root, component);
-	bolero_register_wake_irq(component, false);
-	codec_reg_done = true;
-	return 0;
-err:
-	return ret;
-}
-
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static void *def_wcd_mbhc_cal(void)
 {
 	void *wcd_mbhc_cal;
@@ -5453,7 +5337,6 @@ static void *def_wcd_mbhc_cal(void)
 
 	return wcd_mbhc_cal;
 }
-#endif /* CONFIG_AUDIO_QGKI */
 
 /* Digital audio interface glue - connects codec <---> CPU */
 static struct snd_soc_dai_link msm_common_dai_links[] = {
@@ -5987,6 +5870,7 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_cdcdma5_tx),
+		.num_codecs = ARRAY_SIZE(tx_cdcdma5_tx_codecs),
 	},
 };
 
@@ -6291,6 +6175,7 @@ static struct snd_soc_dai_link msm_wcn_btfm_be_dai_links[] = {
 	},
 };
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 	/* DISP PORT BACK END DAI Link */
 	{
@@ -6317,6 +6202,7 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 		SND_SOC_DAILINK_REG(display_port1),
 	},
 };
+#endif
 
 static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 	{
@@ -6609,13 +6495,14 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.stream_name = "WSA CDC DMA0 Playback",
 		.no_pcm = 1,
 		.dpcm_playback = 1,
-		.init = &msm_int_audrx_init,
 		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx0),
+		.init = &msm_int_audrx_init,
+		.num_codecs = ARRAY_SIZE(wsa_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
@@ -6628,6 +6515,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx1),
+		.num_codecs = ARRAY_SIZE(wsa_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
@@ -6639,6 +6527,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_tx1),
+		.num_codecs = ARRAY_SIZE(wsa_dma_tx1_codecs),
 	},
 };
 
@@ -6658,6 +6547,8 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx0),
+		.init = &msm_aux_codec_init,
+		.num_codecs = ARRAY_SIZE(rx_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
@@ -6673,6 +6564,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+		.num_codecs = ARRAY_SIZE(rx_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -6688,6 +6580,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx2),
+		.num_codecs = ARRAY_SIZE(rx_dma_rx2_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_3,
@@ -6703,6 +6596,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
+		.num_codecs = ARRAY_SIZE(rx_dma_rx3_codecs),
 	},
 	/* TX CDC DMA Backend DAI Links */
 	{
@@ -6715,6 +6609,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx3),
+		.num_codecs = ARRAY_SIZE(tx_dma_tx3_codecs),
 	},
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
@@ -6726,6 +6621,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx4),
+		.num_codecs = ARRAY_SIZE(tx_dma_tx4_codecs),
 	},
 };
 
@@ -6789,7 +6685,9 @@ static struct snd_soc_dai_link msm_lahaina_dai_links[
 			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
 			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			ARRAY_SIZE(ext_disp_be_dai_link) +
+#endif
 			ARRAY_SIZE(msm_wcn_be_dai_links) +
 			ARRAY_SIZE(msm_afe_rxtx_lb_be_dai_link) +
 			ARRAY_SIZE(msm_wcn_btfm_be_dai_links)];
@@ -6797,7 +6695,7 @@ static struct snd_soc_dai_link msm_lahaina_dai_links[
 static int msm_populate_dai_link_component_of_node(
 					struct snd_soc_card *card)
 {
-	int i, index, ret = 0;
+	int i, j, index, ret = 0;
 	struct device *cdev = card->dev;
 	struct snd_soc_dai_link *dai_link = card->dai_link;
 	struct device_node *np;
@@ -6857,22 +6755,30 @@ static int msm_populate_dai_link_component_of_node(
 		}
 
 		/* populate codec_of_node for snd card dai links */
-		if (dai_link[i].codecs->name && !dai_link[i].codecs->of_node) {
-			index = of_property_match_string(cdev->of_node,
-						 "asoc-codec-names",
-						 dai_link[i].codecs->name);
-			if (index < 0)
-				continue;
-			np = of_parse_phandle(cdev->of_node, "asoc-codec",
-					      index);
-			if (!np) {
-				dev_err(cdev, "%s: retrieving phandle for codec %s failed\n",
-					__func__, dai_link[i].codecs->name);
-				ret = -ENODEV;
-				goto err;
+		if (dai_link[i].num_codecs > 0) {
+			for (j = 0; j < dai_link[i].num_codecs; j++) {
+				if (dai_link[i].codecs[j].of_node ||
+						!dai_link[i].codecs[j].name)
+					continue;
+
+				index = of_property_match_string(cdev->of_node,
+						"asoc-codec-names",
+						dai_link[i].codecs[j].name);
+				if (index < 0)
+					continue;
+				np = of_parse_phandle(cdev->of_node,
+						      "asoc-codec",
+						      index);
+				if (!np) {
+					dev_err(cdev, "%s: retrieving phandle for codec %s failed\n",
+						__func__,
+						dai_link[i].codecs[j].name);
+					ret = -ENODEV;
+					goto err;
+				}
+				dai_link[i].codecs[j].of_node = np;
+				dai_link[i].codecs[j].name = NULL;
 			}
-			dai_link[i].codecs->of_node = np;
-			dai_link[i].codecs->name = NULL;
 		}
 	}
 
@@ -7023,16 +6929,16 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
 		memcpy(msm_lahaina_dai_links + total_links,
-		       msm_wsa_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
-
-		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_rx_tx_cdc_dma_be_dai_links,
 		       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
+
+		memcpy(msm_lahaina_dai_links + total_links,
+		       msm_wsa_cdc_dma_be_dai_links,
+		       sizeof(msm_wsa_cdc_dma_be_dai_links));
+		total_links +=
+			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
 
 		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_va_cdc_dma_be_dai_links,
@@ -7071,6 +6977,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			}
 		}
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		rc = of_property_read_u32(dev->of_node,
 					   "qcom,ext-disp-audio-rx", &val);
 		if (!rc && val) {
@@ -7081,6 +6988,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			       sizeof(ext_disp_be_dai_link));
 			total_links += ARRAY_SIZE(ext_disp_be_dai_link);
 		}
+#endif
 
 		rc = of_property_read_u32(dev->of_node, "qcom,wcn-bt", &val);
 		if (!rc && val) {
@@ -7141,8 +7049,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	return card;
 }
 
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-static int msm_wsa883x_init(struct snd_soc_component *component)
+static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	u8 spkleft_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
 	u8 spkright_ports[WSA883X_MAX_SWR_PORTS] = {0, 1, 2, 3};
@@ -7150,75 +7057,149 @@ static int msm_wsa883x_init(struct snd_soc_component *component)
 						SPKR_L_BOOST, SPKR_L_VI};
 	u8 spkright_port_types[WSA883X_MAX_SWR_PORTS] = {SPKR_R, SPKR_R_COMP,
 						SPKR_R_BOOST, SPKR_R_VI};
-	unsigned int ch_rate[WSA883X_MAX_SWR_PORTS] = {2400, 600, 300, 1200};
+	unsigned int ch_rate[WSA883X_MAX_SWR_PORTS] = {SWR_CLK_RATE_2P4MHZ, SWR_CLK_RATE_0P6MHZ,
+							SWR_CLK_RATE_0P3MHZ, SWR_CLK_RATE_1P2MHZ};
 	unsigned int ch_mask[WSA883X_MAX_SWR_PORTS] = {0x1, 0xF, 0x3, 0x3};
-	struct msm_asoc_mach_data *pdata;
-	struct snd_soc_dapm_context *dapm;
-	struct snd_card *card;
-	struct snd_info_entry *entry;
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dapm_context *dapm = NULL;
+	struct snd_card *card = NULL;
+	struct snd_info_entry *entry = NULL;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
 
-	if (!component) {
-		pr_err("%s component is NULL\n", __func__);
-		return -EINVAL;
-	}
+        if (pdata->wsa_max_devs > 0) {
+		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
+		if (!component) {
+			pr_err("%s: wsa-codec.1 component is NULL\n", __func__);
+			return -EINVAL;
+		}
 
-	card = component->card->snd_card;
-	dapm = snd_soc_component_get_dapm(component);
+		dapm = snd_soc_component_get_dapm(component);
 
-	if (!strcmp(component->name_prefix, "SpkrLeft")) {
-		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
-			__func__, component->name);
 		wsa883x_set_channel_map(component, &spkleft_ports[0],
 				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkleft_port_types[0]);
+
 		if (dapm->component) {
-			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft IN");
-			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft SPKR");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft IN");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
 		}
-	} else if (!strcmp(component->name_prefix, "SpkrRight")) {
-		dev_dbg(component->dev, "%s: setting right ch map to codec %s\n",
-			__func__, component->name);
+
+		/*TODO: create codec entry for wsa1 */
+	}
+
+        /* If current platform has more than one WSA */
+        if (pdata->wsa_max_devs > 1) {
+		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.2");
+		if (!component) {
+			pr_err("%s: wsa-codec.2 component is NULL\n", __func__);
+			return -EINVAL;
+		}
+
+		dapm = snd_soc_component_get_dapm(component);
+
 		wsa883x_set_channel_map(component, &spkright_ports[0],
 				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkright_port_types[0]);
+
 		if (dapm->component) {
-			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight IN");
-			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight SPKR");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrRight IN");
+			snd_soc_dapm_ignore_suspend(dapm, "spkrRight SPKR");
 		}
-	} else {
-		dev_err(component->dev, "%s: wrong codec name %s\n", __func__,
-			component->name);
-		ret = -EINVAL;
-		goto err;
+
+		/*TODO: create codec entry for wsa2 */
 	}
-	pdata = snd_soc_card_get_drvdata(component->card);
+
+	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
+	if (!component) {
+		pr_err("%s: could not find component for bolero_codec\n",
+			__func__);
+		return ret;
+	}
+
+	dapm = snd_soc_component_get_dapm(component);
+
+	ret = snd_soc_add_component_controls(component, msm_int_snd_controls,
+				ARRAY_SIZE(msm_int_snd_controls));
+	if (ret < 0) {
+		pr_err("%s: add_component_controls failed: %d\n",
+			__func__, ret);
+		return ret;
+	}
+	ret = snd_soc_add_component_controls(component, msm_common_snd_controls,
+				ARRAY_SIZE(msm_common_snd_controls));
+	if (ret < 0) {
+		pr_err("%s: add common snd controls failed: %d\n",
+			__func__, ret);
+		return ret;
+	}
+
+	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
+				ARRAY_SIZE(msm_int_dapm_widgets));
+
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic0");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic1");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic2");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic3");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic4");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic5");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic6");
+	snd_soc_dapm_ignore_suspend(dapm, "Digital Mic7");
+
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic1");
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic2");
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic3");
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic4");
+	snd_soc_dapm_ignore_suspend(dapm, "Analog Mic5");
+
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA AIF VI");
+	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
+
+	snd_soc_dapm_sync(dapm);
+
+	bolero_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
+
+	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
 		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
 		if (!entry) {
-			pr_err("%s: Cannot create codecs module entry\n",
+			pr_debug("%s: Cannot create codecs module entry\n",
 				 __func__);
 			ret = 0;
 			goto err;
 		}
 		pdata->codec_root = entry;
 	}
-	wsa883x_codec_info_create_codec_entry(pdata->codec_root,
-					      component);
+	bolero_info_create_codec_entry(pdata->codec_root, component);
+	bolero_register_wake_irq(component, false);
+	codec_reg_done = true;
+
 err:
 	return ret;
 }
 
-static int msm_aux_codec_init(struct snd_soc_component *component)
+static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 {
-	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dapm_context *dapm = NULL;
 	int ret = 0;
 	int codec_variant = -1;
 	void *mbhc_calibration;
 	struct snd_info_entry *entry;
-	struct snd_card *card = component->card->snd_card;
+	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
+
+	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
+		return -EINVAL;
+	}
+	dapm = snd_soc_component_get_dapm(component);
+	card = component->card->snd_card;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
@@ -7278,477 +7259,6 @@ err_hs_detect:
 	kfree(mbhc_calibration);
 	return ret;
 }
-
-static int msm_swr_dmic_init(struct snd_soc_component *component)
-{
-	/* TODO: add sound wire dmic initialization */
-
-	if (NULL == component) {
-		pr_err("%s: swr dmic component is NULL\n", __func__);
-		return 0;
-	}
-
-	return 0;
-}
-
-static int msm_init_aux_dev(struct platform_device *pdev,
-				struct snd_soc_card *card)
-{
-	struct device_node *wsa_of_node;
-	struct device_node *aux_codec_of_node;
-	struct device_node *swr_dmic_of_node;
-	u32 wsa_max_devs;
-	u32 wsa_dev_cnt;
-	u32 codec_max_aux_devs = 0;
-	u32 codec_aux_dev_cnt = 0;
-	u32 swr_dmic_max_devs = 0;
-	u32 swr_dmic_dev_cnt = 0;
-	int swr_dmic_index = 0;
-	int i;
-	struct msm_wsa883x_dev_info *wsa883x_dev_info;
-	struct aux_codec_dev_info *aux_cdc_dev_info = NULL;
-	struct msm_swr_dmic_dev_info *swr_dmic_dev_info = NULL;
-	struct snd_soc_dai_link_component *dlc;
-	const char *auxdev_name_prefix[1];
-	char *dev_name_str = NULL;
-	int found = 0;
-	int codecs_found = 0;
-	int dmics_found = 0;
-	int ret = 0;
-
-	dlc = devm_kcalloc(&pdev->dev, 1,
-			sizeof(struct snd_soc_dai_link_component),
-			GFP_KERNEL);
-
-	/* Get maximum WSA device count for this platform */
-	ret = of_property_read_u32(pdev->dev.of_node,
-				   "qcom,wsa-max-devs", &wsa_max_devs);
-	if (ret) {
-		dev_info(&pdev->dev,
-			 "%s: wsa-max-devs property missing in DT %s, ret = %d\n",
-			 __func__, pdev->dev.of_node->full_name, ret);
-		wsa_max_devs = 0;
-		goto codec_aux_dev;
-	}
-	if (wsa_max_devs == 0) {
-		dev_warn(&pdev->dev,
-			 "%s: Max WSA devices is 0 for this target?\n",
-			 __func__);
-		goto codec_aux_dev;
-	}
-
-	/* Get count of WSA device phandles for this platform */
-	wsa_dev_cnt = of_count_phandle_with_args(pdev->dev.of_node,
-						 "qcom,wsa-devs", NULL);
-	if (wsa_dev_cnt == -ENOENT) {
-		dev_warn(&pdev->dev, "%s: No wsa device defined in DT.\n",
-			 __func__);
-		goto err;
-	} else if (wsa_dev_cnt <= 0) {
-		dev_err(&pdev->dev,
-			"%s: Error reading wsa device from DT. wsa_dev_cnt = %d\n",
-			__func__, wsa_dev_cnt);
-		ret = -EINVAL;
-		goto err;
-	}
-
-	/*
-	 * Expect total phandles count to be NOT less than maximum possible
-	 * WSA count. However, if it is less, then assign same value to
-	 * max count as well.
-	 */
-	if (wsa_dev_cnt < wsa_max_devs) {
-		dev_dbg(&pdev->dev,
-			"%s: wsa_max_devs = %d cannot exceed wsa_dev_cnt = %d\n",
-			__func__, wsa_max_devs, wsa_dev_cnt);
-		wsa_max_devs = wsa_dev_cnt;
-	}
-
-	/* Make sure prefix string passed for each WSA device */
-	ret = of_property_count_strings(pdev->dev.of_node,
-					"qcom,wsa-aux-dev-prefix");
-	if (ret != wsa_dev_cnt) {
-		dev_err(&pdev->dev,
-			"%s: expecting %d wsa prefix. Defined only %d in DT\n",
-			__func__, wsa_dev_cnt, ret);
-		ret = -EINVAL;
-		goto err;
-	}
-
-	/*
-	 * Alloc mem to store phandle and index info of WSA device, if already
-	 * registered with ALSA core
-	 */
-	wsa883x_dev_info = devm_kcalloc(&pdev->dev, wsa_max_devs,
-					sizeof(struct msm_wsa883x_dev_info),
-					GFP_KERNEL);
-	if (!wsa883x_dev_info) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	/*
-	 * search and check whether all WSA devices are already
-	 * registered with ALSA core or not. If found a node, store
-	 * the node and the index in a local array of struct for later
-	 * use.
-	 */
-	for (i = 0; i < wsa_dev_cnt; i++) {
-		wsa_of_node = of_parse_phandle(pdev->dev.of_node,
-					    "qcom,wsa-devs", i);
-		if (unlikely(!wsa_of_node)) {
-			/* we should not be here */
-			dev_err(&pdev->dev,
-				"%s: wsa dev node is not present\n",
-				__func__);
-			ret = -EINVAL;
-			goto err;
-		}
-		dlc->of_node = wsa_of_node;
-		dlc->name = NULL;
-		if (soc_find_component(dlc)) {
-			/* WSA device registered with ALSA core */
-			wsa883x_dev_info[found].of_node = wsa_of_node;
-			wsa883x_dev_info[found].index = i;
-			found++;
-			if (found == wsa_max_devs)
-				break;
-		}
-	}
-
-	if (found < wsa_max_devs) {
-		dev_dbg(&pdev->dev,
-			"%s: failed to find %d components. Found only %d\n",
-			__func__, wsa_max_devs, found);
-		return -EPROBE_DEFER;
-	}
-	dev_info(&pdev->dev,
-		"%s: found %d wsa883x devices registered with ALSA core\n",
-		__func__, found);
-
-codec_aux_dev:
-	/* Get maximum aux codec device count for this platform */
-	ret = of_property_read_u32(pdev->dev.of_node,
-				   "qcom,codec-max-aux-devs",
-				   &codec_max_aux_devs);
-	if (ret) {
-		dev_err(&pdev->dev,
-			 "%s: codec-max-aux-devs property missing in DT %s, ret = %d\n",
-			 __func__, pdev->dev.of_node->full_name, ret);
-		codec_max_aux_devs = 0;
-		goto dmic_aux_dev;
-	}
-	if (codec_max_aux_devs == 0) {
-		dev_dbg(&pdev->dev,
-			 "%s: Max aux codec devices is 0 for this target?\n",
-			 __func__);
-		goto dmic_aux_dev;
-	}
-
-	/* Get count of aux codec device phandles for this platform */
-	codec_aux_dev_cnt = of_count_phandle_with_args(
-				pdev->dev.of_node,
-				"qcom,codec-aux-devs", NULL);
-	if (codec_aux_dev_cnt == -ENOENT) {
-		dev_warn(&pdev->dev, "%s: No aux codec defined in DT.\n",
-			 __func__);
-		goto err;
-	} else if (codec_aux_dev_cnt <= 0) {
-		dev_err(&pdev->dev,
-			"%s: Error reading aux codec device from DT, dev_cnt=%d\n",
-			__func__, codec_aux_dev_cnt);
-		ret = -EINVAL;
-		goto err;
-	}
-
-	/*
-	 * Expect total phandles count to be NOT less than maximum possible
-	 * AUX device count. However, if it is less, then assign same value to
-	 * max count as well.
-	 */
-	if (codec_aux_dev_cnt < codec_max_aux_devs) {
-		dev_dbg(&pdev->dev,
-			"%s: codec_max_aux_devs = %d cannot exceed codec_aux_dev_cnt = %d\n",
-			__func__, codec_max_aux_devs,
-			codec_aux_dev_cnt);
-		codec_max_aux_devs = codec_aux_dev_cnt;
-	}
-
-	/*
-	 * Alloc mem to store phandle and index info of aux codec
-	 * if already registered with ALSA core
-	 */
-	aux_cdc_dev_info = devm_kcalloc(&pdev->dev, codec_aux_dev_cnt,
-				sizeof(struct aux_codec_dev_info),
-				GFP_KERNEL);
-	if (!aux_cdc_dev_info) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	/*
-	 * search and check whether all aux codecs are already
-	 * registered with ALSA core or not. If found a node, store
-	 * the node and the index in a local array of struct for later
-	 * use.
-	 */
-	for (i = 0; i < codec_aux_dev_cnt; i++) {
-		aux_codec_of_node = of_parse_phandle(pdev->dev.of_node,
-					    "qcom,codec-aux-devs", i);
-		if (unlikely(!aux_codec_of_node)) {
-			/* we should not be here */
-			dev_err(&pdev->dev,
-				"%s: aux codec dev node is not present\n",
-				__func__);
-			ret = -EINVAL;
-			goto err;
-		}
-		dlc->of_node = aux_codec_of_node;
-		dlc->name = NULL;
-		if (soc_find_component(dlc)) {
-			/* AUX codec registered with ALSA core */
-			aux_cdc_dev_info[codecs_found].of_node =
-						aux_codec_of_node;
-			aux_cdc_dev_info[codecs_found].index = i;
-			codecs_found++;
-		}
-	}
-
-	if (codecs_found < codec_aux_dev_cnt) {
-		dev_dbg(&pdev->dev,
-			"%s: failed to find %d components. Found only %d\n",
-			__func__, codec_aux_dev_cnt, codecs_found);
-		return -EPROBE_DEFER;
-	}
-	dev_info(&pdev->dev,
-		"%s: found %d AUX codecs registered with ALSA core\n",
-		__func__, codecs_found);
-
-dmic_aux_dev:
-	/* Get maximum WSA device count for this platform */
-	ret = of_property_read_u32(pdev->dev.of_node,
-				   "qcom,swr-dmic-max-devs",
-				   &swr_dmic_max_devs);
-	if (ret) {
-		dev_info(&pdev->dev,
-			 "%s: swr-dmic-max-devs property missing in DT %s,"
-			 " ret = %d\n",
-			 __func__, pdev->dev.of_node->full_name, ret);
-		swr_dmic_max_devs = 0;
-		goto aux_dev_register;
-	}
-	if (swr_dmic_max_devs == 0) {
-		dev_warn(&pdev->dev,
-			 "%s: Max SWR DMIC devices is 0 for this target?\n",
-			 __func__);
-		goto aux_dev_register;
-	}
-
-	/* Get count of SWR DMIC device phandles for this platform */
-	swr_dmic_dev_cnt = of_count_phandle_with_args(pdev->dev.of_node,
-						 "qcom,swr-dmic-devs", NULL);
-	if (swr_dmic_dev_cnt == -ENOENT) {
-		dev_warn(&pdev->dev, "%s: No swr_dmic device defined in DT.\n",
-			 __func__);
-		goto err;
-	} else if (swr_dmic_dev_cnt <= 0) {
-		dev_err(&pdev->dev,
-			"%s: Error reading swr_dmic device from DT."
-			" swr_dmic_dev_cnt = %d\n",
-			__func__, swr_dmic_dev_cnt);
-		ret = -EINVAL;
-		goto err;
-	}
-
-	/*
-	 * Expect total phandles count to be NOT less than maximum possible
-	 * SWR DMIC count. However, if it is less, then assign same value to
-	 * max count as well.
-	 */
-	if (swr_dmic_dev_cnt < swr_dmic_max_devs) {
-		dev_dbg(&pdev->dev,
-			"%s: swr_dmic_max_devs = %d cannot exceed "
-			"swr_dmic_dev_cnt = %d\n",
-			__func__, swr_dmic_max_devs, swr_dmic_dev_cnt);
-		swr_dmic_max_devs = swr_dmic_dev_cnt;
-	}
-
-	/* Make sure prefix string passed for each WSA device */
-	ret = of_property_count_strings(pdev->dev.of_node,
-					"qcom,swr-dmic-prefix");
-	if (ret != swr_dmic_dev_cnt) {
-		dev_err(&pdev->dev,
-			"%s: expecting %d swr_dmic prefix. Defined only %d "
-			"in DT\n", __func__, swr_dmic_dev_cnt, ret);
-		ret = -EINVAL;
-		goto err;
-	}
-
-	/*
-	 * Alloc mem to store phandle and index info of WSA device, if already
-	 * registered with ALSA core
-	 */
-	swr_dmic_dev_info = devm_kcalloc(&pdev->dev, swr_dmic_max_devs,
-					sizeof(struct msm_swr_dmic_dev_info),
-					GFP_KERNEL);
-	if (!swr_dmic_dev_info) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	/*
-	 * search and check whether all WSA devices are already
-	 * registered with ALSA core or not. If found a node, store
-	 * the node and the index in a local array of struct for later
-	 * use.
-	 */
-	for (i = 0; i < swr_dmic_max_devs; i++) {
-		swr_dmic_of_node = of_parse_phandle(pdev->dev.of_node,
-					    "qcom,swr-dmic-devs", i);
-		if (unlikely(!swr_dmic_of_node)) {
-			/* we should not be here */
-			dev_err(&pdev->dev,
-				"%s: swr_dmic dev node is not present\n",
-				__func__);
-			ret = -EINVAL;
-			goto err;
-		}
-		dlc->of_node = swr_dmic_of_node;
-		dlc->name = NULL;
-		if (soc_find_component(dlc)) {
-			/* WSA device registered with ALSA core */
-			swr_dmic_dev_info[dmics_found].of_node =
-							swr_dmic_of_node;
-			swr_dmic_dev_info[dmics_found].index = i;
-			dmics_found++;
-			if (dmics_found == swr_dmic_max_devs)
-				break;
-		}
-	}
-
-	if (dmics_found < swr_dmic_max_devs) {
-		dev_err(&pdev->dev,
-			"%s: failed to find %d components. Found only %d\n",
-			__func__, swr_dmic_max_devs, dmics_found);
-		return -EPROBE_DEFER;
-	}
-	dev_info(&pdev->dev,
-		"%s: found %d swr_dmic devices registered with ALSA core\n",
-		__func__, dmics_found);
-
-aux_dev_register:
-	card->num_aux_devs = wsa_max_devs + codec_aux_dev_cnt +
-				swr_dmic_max_devs;
-	card->num_configs = card->num_aux_devs;
-
-	/* Alloc array of AUX devs struct */
-	msm_aux_dev = devm_kcalloc(&pdev->dev, card->num_aux_devs,
-				       sizeof(struct snd_soc_aux_dev),
-				       GFP_KERNEL);
-	if (!msm_aux_dev) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	/* Alloc array of codec conf struct */
-	msm_codec_conf = devm_kcalloc(&pdev->dev, card->num_configs,
-					  sizeof(struct snd_soc_codec_conf),
-					  GFP_KERNEL);
-	if (!msm_codec_conf) {
-		ret = -ENOMEM;
-		goto err;
-	}
-
-	for (i = 0; i < wsa_max_devs; i++) {
-		dev_name_str = devm_kzalloc(&pdev->dev, DEV_NAME_STR_LEN,
-					    GFP_KERNEL);
-		if (!dev_name_str) {
-			ret = -ENOMEM;
-			goto err;
-		}
-
-		ret = of_property_read_string_index(pdev->dev.of_node,
-						    "qcom,wsa-aux-dev-prefix",
-						    wsa883x_dev_info[i].index,
-						    auxdev_name_prefix);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: failed to read wsa aux dev prefix, "
-				"ret = %d\n", __func__, ret);
-			ret = -EINVAL;
-			goto err;
-		}
-
-		msm_aux_dev[i].dlc.name = NULL;
-		msm_aux_dev[i].dlc.dai_name = NULL;
-		msm_aux_dev[i].dlc.of_node =
-					wsa883x_dev_info[i].of_node;
-		msm_aux_dev[i].init = msm_wsa883x_init;
-		msm_codec_conf[i].dev_name = NULL;
-		msm_codec_conf[i].name_prefix = auxdev_name_prefix[0];
-		msm_codec_conf[i].of_node =
-				wsa883x_dev_info[i].of_node;
-	}
-
-	for (i = 0; i < codec_aux_dev_cnt; i++) {
-		msm_aux_dev[wsa_max_devs + i].dlc.name = NULL;
-		msm_aux_dev[wsa_max_devs + i].dlc.dai_name = NULL;
-		msm_aux_dev[wsa_max_devs + i].dlc.of_node =
-					aux_cdc_dev_info[i].of_node;
-		msm_aux_dev[wsa_max_devs + i].init =  msm_aux_codec_init;
-		msm_codec_conf[wsa_max_devs + i].dev_name = NULL;
-		msm_codec_conf[wsa_max_devs + i].name_prefix =
-						NULL;
-		msm_codec_conf[wsa_max_devs + i].of_node =
-				aux_cdc_dev_info[i].of_node;
-	}
-
-	for (i = 0; i < swr_dmic_max_devs; i++) {
-		dev_name_str = devm_kzalloc(&pdev->dev, DEV_NAME_STR_LEN,
-					    GFP_KERNEL);
-		if (!dev_name_str) {
-			ret = -ENOMEM;
-			goto err;
-		}
-
-		ret = of_property_read_string_index(pdev->dev.of_node,
-						    "qcom,swr-dmic-prefix",
-						    swr_dmic_dev_info[i].index,
-						    auxdev_name_prefix);
-		if (ret) {
-			dev_err(&pdev->dev,
-				"%s: failed to read swr dmic dev prefix, "
-				"ret = %d\n", __func__, ret);
-			ret = -EINVAL;
-			goto err;
-		}
-		swr_dmic_index = wsa_max_devs + codec_aux_dev_cnt + i;
-
-		msm_aux_dev[swr_dmic_index].dlc.name = NULL;
-		msm_aux_dev[swr_dmic_index].dlc.dai_name = NULL;
-		msm_aux_dev[swr_dmic_index].dlc.of_node =
-					swr_dmic_dev_info[i].of_node;
-		msm_aux_dev[swr_dmic_index].init = msm_swr_dmic_init;
-		msm_codec_conf[swr_dmic_index].dev_name = NULL;
-		msm_codec_conf[swr_dmic_index].name_prefix =
-						auxdev_name_prefix[0];
-		msm_codec_conf[swr_dmic_index].of_node =
-						swr_dmic_dev_info[i].of_node;
-	}
-
-	card->codec_conf = msm_codec_conf;
-	card->aux_dev = msm_aux_dev;
-err:
-	return ret;
-}
-#else
-static int msm_init_aux_dev(struct platform_device *pdev,
-				struct snd_soc_card *card)
-{
-
-	return 0;
-}
-#endif /* CONFIG_AUDIO_QGKI */
 
 static void msm_i2s_auxpcm_init(struct platform_device *pdev)
 {
@@ -7925,9 +7435,15 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 
-	ret = msm_init_aux_dev(pdev, card);
-	if (ret)
-		goto err;
+        /* Get maximum WSA device count for this platform */
+        ret = of_property_read_u32(pdev->dev.of_node,
+                                   "qcom,wsa-max-devs", &pdata->wsa_max_devs);
+        if (ret) {
+                dev_info(&pdev->dev,
+                         "%s: wsa-max-devs property missing in DT %s, ret = %d\n",
+                         __func__, pdev->dev.of_node->full_name, ret);
+                pdata->wsa_max_devs = 0;
+        }
 
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret == -EPROBE_DEFER) {

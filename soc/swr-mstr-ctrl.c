@@ -1182,10 +1182,13 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 	struct swr_port_info *port_req;
 	int i;
 	struct swrm_mports *mport;
+	struct swrm_mports *prev_mport = NULL;
 	u32 reg[SWRM_MAX_PORT_REG];
 	u32 val[SWRM_MAX_PORT_REG];
 	int len = 0;
 	u8 hparams;
+	u8 offset1 = 0;
+
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
 
 	if (!swrm) {
@@ -1217,9 +1220,18 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 					port_req->dev_num, 0x00,
 					SWRS_DP_SAMPLE_CONTROL_1_BANK(slv_id,
 								bank));
-
+			/* Assumption: If different channels in the same port
+			 * on master is enabled for different slaves, then each
+			 * slave offset should be configured differently.
+			 */
+			if (prev_mport == mport)
+				offset1 += mport->offset1;
+			else {
+				offset1 = mport->offset1;
+				prev_mport = mport;
+			}
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK(mport->offset1,
+			val[len++] = SWR_REG_VAL_PACK(offset1,
 					port_req->dev_num, 0x00,
 					SWRS_DP_OFFSET_CONTROL_1_BANK(slv_id,
 								bank));
@@ -1567,8 +1579,8 @@ static int swrm_connect_port(struct swr_master *master,
 		mport->req_ch |= mstr_ch_msk;
 		master->port_en_mask |= (1 << mstr_port_id);
 		if (swrm->clk_stop_mode0_supp &&
-			(mport->ch_rate < portinfo->ch_rate[i])) {
-			mport->ch_rate = portinfo->ch_rate[i];
+				swrm->dynamic_port_map_supported) {
+			mport->ch_rate += portinfo->ch_rate[i];
 			swrm_update_bus_clk(swrm);
 		}
 	}
@@ -1633,7 +1645,9 @@ static int swrm_disconnect_port(struct swr_master *master,
 		}
 		port_req->req_ch &= ~portinfo->ch_en[i];
 		mport->req_ch &= ~mstr_ch_mask;
-		if (swrm->clk_stop_mode0_supp && !mport->req_ch) {
+		if (swrm->clk_stop_mode0_supp &&
+				swrm->dynamic_port_map_supported &&
+				!mport->req_ch) {
 			mport->ch_rate = 0;
 			swrm_update_bus_clk(swrm);
 		}
@@ -1679,9 +1693,12 @@ static void swrm_enable_slave_irq(struct swr_mstr_ctrl *swrm)
 	}
 	dev_dbg(swrm->dev, "%s: slave status: 0x%x\n", __func__, status);
 	for (i = 0; i < (swrm->master.num_dev + 1); i++) {
-		if (status & SWRM_MCP_SLV_STATUS_MASK)
+		if (status & SWRM_MCP_SLV_STATUS_MASK) {
+			swrm_cmd_fifo_wr_cmd(swrm, 0xFF, i, 0x0,
+					SWRS_SCP_INT_STATUS_CLEAR_1);
 			swrm_cmd_fifo_wr_cmd(swrm, 0x4, i, 0x0,
-						SWRS_SCP_INT_STATUS_MASK_1);
+					SWRS_SCP_INT_STATUS_MASK_1);
+		}
 		status >>= 2;
 	}
 }
@@ -1807,6 +1824,17 @@ handle_irq:
 				dev_dbg(swrm->dev,
 					"%s: device %d got detached\n",
 					__func__, devnum);
+				if (devnum == 0) {
+					/*
+					 * enable host irq if device 0 detached
+					 * as hw will mask host_irq at slave
+					 * but will not unmask it afterwards.
+					 */
+					swrm_cmd_fifo_wr_cmd(swrm, 0xFF, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_CLEAR_1);
+					swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
+						SWRS_SCP_INT_STATUS_MASK_1);
+				}
 				break;
 			case SWR_ATTACHED_OK:
 				dev_dbg(swrm->dev,
@@ -2326,6 +2354,15 @@ static int swrm_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: failed to get master id\n", __func__);
 		goto err_pdata_fail;
 	}
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,dynamic-port-map-supported",
+				&swrm->dynamic_port_map_supported);
+	if (ret) {
+		dev_dbg(&pdev->dev,
+			"%s: failed to get dynamic port map support, use default\n",
+			__func__);
+		swrm->dynamic_port_map_supported = 1;
+	}
+
 	if (!(of_property_read_u32(pdev->dev.of_node,
 			"swrm-io-base", &swrm->swrm_base_reg)))
 		ret = of_property_read_u32(pdev->dev.of_node,

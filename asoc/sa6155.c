@@ -1,13 +1,4 @@
-/* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 and
- * only version 2 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+/* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  */
 /*
  * Copyright 2011, The Android Open Source Project
@@ -213,7 +204,7 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 	},
 	{ /* QUAT TDM */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8}, /* RX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8}, /* RX_1 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_2 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_3 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
@@ -222,10 +213,10 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
 	},
 	{ /* QUIN TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_1 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_2 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_3 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 6}, /* RX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_2 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_3 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
@@ -276,9 +267,9 @@ static struct dev_config tdm_tx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
 	},
 	{ /* QUIN TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 6}, /* TX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_1 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_2 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 4}, /* TX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_2 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_3 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_4 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_5 */
@@ -415,20 +406,20 @@ static unsigned int tdm_rx_slot_offset
 		{0xFFFF}, /* not used */
 	},
 	{/* QUAT TDM */
-		{0, 4, 8, 12, 16, 20, 24, 28, 0xFFFF},/*AMP OUT*/
+		{0, 8, 16, 24, 32, 40, 48, 56, 0xFFFF}, /*8 CH SPKR*/
+		{4, 12, 20, 28, 36, 44, 52, 60, 0xFFFF}, /*8 CH SPKR*/
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
-		{28,0xFFFF},
+		{60,0xFFFF},
 	},
 	{/* QUIN TDM */
-		{0, 4, 0xFFFF},/*STEREO SPKR1*/
-		{8, 12, 0xFFFF},/*STEREO SPKR2*/
-		{16, 20, 0xFFFF},/*STEREO SPKR3*/
-		{24, 28, 0xFFFF},/*STEREO SPKR4*/
+		{0, 4, 8, 12, 16, 20, 0xFFFF},
+		{24, 0xFFFF},
+		{28, 0xFFFF},
+		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
@@ -480,14 +471,14 @@ static unsigned int tdm_tx_slot_offset
 		{60,0xFFFF},
 	},
 	{/* QUIN TDM */
-		{0, 4, 8, 12, 16, 20, 0xFFFF},/*EC/ANC REF*/
+		{0, 4, 8, 12, 0xFFFF},
+		{16, 20, 0xFFFF},
+		{24, 28, 0xFFFF},
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
-		{20, 0xFFFF},
+		{28, 0xFFFF},
 	}
 };
 

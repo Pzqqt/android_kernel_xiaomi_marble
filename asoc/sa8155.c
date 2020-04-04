@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  */
 /*
  * Copyright 2011, The Android Open Source Project
@@ -174,14 +174,14 @@ struct tdm_conf {
 /* TDM default config */
 static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 	{ /* PRI TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_1 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_2 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_3 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_0 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_2 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_3 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
 	},
 	{ /* SEC TDM */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_0 */
@@ -205,7 +205,7 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 	},
 	{ /* QUAT TDM */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8}, /* RX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8}, /* RX_1 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_2 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_3 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
@@ -214,10 +214,10 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
 	},
 	{ /* QUIN TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_1 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_2 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* RX_3 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 16}, /* RX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_2 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_3 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
@@ -228,14 +228,14 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 /* TDM default config */
 static struct dev_config tdm_tx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 	{ /* PRI TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_0 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_1 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_2 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_3 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_4 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_5 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_6 */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_0 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_1 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_2 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 2}, /* TX_3 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_4 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_5 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_6 */
+		{SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
 	},
 	{ /* SEC TDM */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 6}, /* TX_0 */
@@ -268,7 +268,7 @@ static struct dev_config tdm_tx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
 	},
 	{ /* QUIN TDM */
-		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 6}, /* TX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 16}, /* TX_0 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_1 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_2 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_3 */
@@ -343,7 +343,7 @@ struct tdm_slot_cfg {
 
 static struct tdm_slot_cfg tdm_slot[TDM_INTERFACE_MAX] = {
 	/* PRI TDM */
-	{32, 8},
+	{16, 16},
 	/* SEC TDM */
 	{32, 8},
 	/* TERT TDM */
@@ -377,11 +377,11 @@ static struct tdm_slot_cfg tdm_slot_custom[TDM_INTERFACE_MAX] = {
 static unsigned int tdm_rx_slot_offset
 	[TDM_INTERFACE_MAX][TDM_PORT_MAX][TDM_SLOT_OFFSET_MAX] = {
 	{/* PRI TDM */
-		{0, 4, 0xFFFF},
-		{8, 12, 0xFFFF},
-		{16, 20, 0xFFFF},
-		{24, 28, 0xFFFF},
-		{0xFFFF}, /* not used */
+		{0, 0xFFFF},
+		{2, 0xFFFF},
+		{4, 6, 0xFFFF},
+		{8, 10, 0xFFFF},
+		{12, 14, 0xFFFF},
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
@@ -407,35 +407,36 @@ static unsigned int tdm_rx_slot_offset
 		{0xFFFF}, /* not used */
 	},
 	{/* QUAT TDM */
-		{0, 4, 8, 12, 16, 20, 24, 28, 0xFFFF},/*AMP OUT*/
+		{0, 8, 16, 24, 32, 40, 48, 56, 0xFFFF}, /*8 CH SPKR*/
+		{4, 12, 20, 28, 36, 44, 52, 60, 0xFFFF}, /*8 CH SPKR*/
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{0xFFFF}, /* not used */
-		{28,0xFFFF},
+		{60,0xFFFF},
 	},
 	{/* QUIN TDM */
-		{0, 4, 0xFFFF},/*STEREO SPKR1*/
-		{8, 12, 0xFFFF},/*STEREO SPKR2*/
-		{16, 20, 0xFFFF},/*STEREO SPKR3*/
-		{24, 28, 0xFFFF},/*STEREO SPKR4*/
+		{0, 8, 16, 24, 32, 40, 48, 56,
+			4, 12, 20, 28, 36, 44, 52, 60, 0xFFFF}, /*16 CH SPKR*/
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{28, 0xFFFF},
+		{0xFFFF}, /* not used */
+		{0xFFFF}, /* not used */
+		{0xFFFF}, /* not used */
+		{60, 0xFFFF},
 	}
 };
 
 static unsigned int tdm_tx_slot_offset
 	[TDM_INTERFACE_MAX][TDM_PORT_MAX][TDM_SLOT_OFFSET_MAX] = {
 	{/* PRI TDM */
-		{0, 4, 0xFFFF},
-		{8, 12, 0xFFFF},
-		{16, 20, 0xFFFF},
-		{24, 28, 0xFFFF},
-		{0xFFFF}, /* not used */
+		{0, 0xFFFF},
+		{2, 0xFFFF},
+		{4, 6, 0xFFFF},
+		{8, 10, 0xFFFF},
+		{12, 14, 0xFFFF},
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
@@ -462,7 +463,7 @@ static unsigned int tdm_tx_slot_offset
 	},
 	{/* QUAT TDM */
 		{0, 4, 8, 12, 16, 20, 24, 28,
-			32, 36, 40, 44, 48, 52, 56, 60, 0xFFFF},/*MIC ARR*/
+			32, 36, 40, 44, 48, 52, 56, 60, 0xFFFF},/*16 CH MIC ARR1*/
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
@@ -472,14 +473,15 @@ static unsigned int tdm_tx_slot_offset
 		{60,0xFFFF},
 	},
 	{/* QUIN TDM */
-		{0, 4, 8, 12, 16, 20, 0xFFFF},/*EC/ANC REF*/
+		{0, 4, 8, 12, 16, 20, 24, 28,
+			32, 36, 40, 44, 48, 52, 56, 60, 0xFFFF},/*16 CH MIC ARR2*/
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
 		{0xFFFF}, /* not used */
-		{20, 0xFFFF},
+		{60, 0xFFFF},
 	}
 };
 
@@ -5895,6 +5897,40 @@ static struct snd_soc_dai_link msm_auto_fe_dai_links[] = {
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA23
+	},
+	{
+		.name = MSM_DAILINK_NAME(Media24),
+		.stream_name = "MultiMedia24",
+		.cpu_dai_name = "MultiMedia24",
+		.platform_name = "msm-pcm-loopback",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA24
+	},
+	{
+		.name = MSM_DAILINK_NAME(Media25),
+		.stream_name = "MultiMedia25",
+		.cpu_dai_name = "MultiMedia25",
+		.platform_name = "msm-pcm-loopback",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA25
 	},
 };
 

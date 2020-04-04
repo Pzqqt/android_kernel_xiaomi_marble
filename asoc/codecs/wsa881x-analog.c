@@ -397,9 +397,14 @@ static int wsa881x_boost_ctrl(struct snd_soc_component *component, bool enable)
 			snd_soc_component_update_bits(component,
 					WSA881X_BOOST_SLOPE_COMP_ISENSE_FB,
 					0x03, 0x00);
-			snd_soc_component_update_bits(component,
-						WSA881X_BOOST_PRESET_OUT1,
-						0xF0, 0x70);
+			if (snd_soc_component_read32(component, WSA881X_OTP_REG_0))
+				snd_soc_component_update_bits(component,
+					WSA881X_BOOST_PRESET_OUT1,
+					0xF0, 0x70);
+			else
+				snd_soc_component_update_bits(component,
+					WSA881X_BOOST_PRESET_OUT1,
+					0xF0, 0xB0);
 			snd_soc_component_update_bits(component,
 						WSA881X_ANA_CTL, 0x03, 0x01);
 			snd_soc_component_update_bits(component,

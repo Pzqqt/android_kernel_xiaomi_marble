@@ -31,6 +31,7 @@
 #include "asoc/wcd-mbhc-v2.h"
 #include "codecs/wcd938x/wcd938x-mbhc.h"
 #include "codecs/wsa881x.h"
+#include "codecs/wsa883x/wsa883x.h"
 #include "codecs/wcd938x/wcd938x.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
@@ -7165,9 +7166,14 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	if (!strcmp(component->name_prefix, "SpkrLeft")) {
 		dev_dbg(component->dev, "%s: setting left ch map to codec %s\n",
 			__func__, component->name);
-		wsa881x_set_channel_map(component, &spkleft_ports[0],
-				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
-				&ch_rate[0], &spkleft_port_types[0]);
+		if (strnstr(component->name, "wsa883x", sizeof(component->name)))
+			wsa883x_set_channel_map(component, &spkleft_ports[0],
+					WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+					&ch_rate[0], &spkleft_port_types[0]);
+		else
+			wsa881x_set_channel_map(component, &spkleft_ports[0],
+					WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+					&ch_rate[0], &spkleft_port_types[0]);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft IN");
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrLeft SPKR");
@@ -7175,9 +7181,14 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 	} else if (!strcmp(component->name_prefix, "SpkrRight")) {
 		dev_dbg(component->dev, "%s: setting right ch map to codec %s\n",
 			__func__, component->name);
-		wsa881x_set_channel_map(component, &spkright_ports[0],
-				WSA881X_MAX_SWR_PORTS, &ch_mask[0],
-				&ch_rate[0], &spkright_port_types[0]);
+		if (strnstr(component->name, "wsa883x", sizeof(component->name)))
+			wsa883x_set_channel_map(component, &spkright_ports[0],
+					WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+					&ch_rate[0], &spkright_port_types[0]);
+		else
+			wsa881x_set_channel_map(component, &spkright_ports[0],
+					WSA881X_MAX_SWR_PORTS, &ch_mask[0],
+					&ch_rate[0], &spkright_port_types[0]);
 		if (dapm->component) {
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight IN");
 			snd_soc_dapm_ignore_suspend(dapm, "SpkrRight SPKR");
@@ -7200,8 +7211,12 @@ static int msm_wsa881x_init(struct snd_soc_component *component)
 		}
 		pdata->codec_root = entry;
 	}
-	wsa881x_codec_info_create_codec_entry(pdata->codec_root,
-					      component);
+	if (strnstr(component->name, "wsa883x", sizeof(component->name)))
+		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
+						      component);
+	else
+		wsa881x_codec_info_create_codec_entry(pdata->codec_root,
+						      component);
 err:
 	return ret;
 }
@@ -7854,8 +7869,11 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 					"qcom,quin-mi2s-gpios", 0);
 	pdata->mi2s_gpio_p[SEN_MI2S] = of_parse_phandle(pdev->dev.of_node,
 					"qcom,sen-mi2s-gpios", 0);
-	for (index = PRIM_MI2S; index < MI2S_MAX; index++)
+	for (index = PRIM_MI2S; index < MI2S_MAX; index++) {
+		if (pdata->mi2s_gpio_p[index])
+			msm_cdc_pinctrl_set_wakeup_capable(pdata->mi2s_gpio_p[index], false);
 		atomic_set(&(pdata->mi2s_gpio_ref_count[index]), 0);
+	}
 
 	/* Register LPASS audio hw vote */
 	lpass_audio_hw_vote = devm_clk_get(&pdev->dev, "lpass_audio_hw_vote");

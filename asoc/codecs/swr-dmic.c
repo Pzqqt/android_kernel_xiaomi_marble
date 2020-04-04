@@ -56,6 +56,7 @@ struct swr_dmic_priv {
 	struct swr_device *swr_slave;
 	struct snd_soc_component *component;
 	struct snd_soc_component_driver *driver;
+	struct snd_soc_dai_driver *dai_driver;
 	struct snd_soc_component *supply_component;
 	u32 micb_num;
 	struct device_node *wcd_handle;
@@ -66,10 +67,10 @@ struct swr_dmic_priv {
 };
 
 const char *codec_name_list[] = {
-	"swr-dmic-01",
-	"swr-dmic-02",
-	"swr-dmic-03",
-	"swr-dmic-04",
+	"swr-dmic.01",
+	"swr-dmic.02",
+	"swr-dmic.03",
+	"swr-dmic.04",
 };
 
 const char *dai_name_list[] = {
@@ -80,10 +81,10 @@ const char *dai_name_list[] = {
 };
 
 const char *aif_name_list[] = {
-	"SWR_DMIC_AIF0 Playback",
-	"SWR_DMIC_AIF1 Playback",
-	"SWR_DMIC_AIF2 Playback",
-	"SWR_DMIC_AIF3 Playback",
+	"SWR_DMIC_AIF0 Capture",
+	"SWR_DMIC_AIF1 Capture",
+	"SWR_DMIC_AIF2 Capture",
+	"SWR_DMIC_AIF3 Capture",
 };
 
 static int swr_dmic_reset(struct swr_device *pdev);
@@ -169,6 +170,34 @@ static int swr_dmic_tx_master_port_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int swr_dmic_port_enable(struct snd_soc_dapm_widget *w,
+			 struct snd_kcontrol *kcontrol, int event)
+{
+	int ret = 0;
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	struct swr_dmic_priv *swr_dmic =
+			snd_soc_component_get_drvdata(component);
+
+	u8 ch_mask = 0x01; // only DpnChannelEN1 register is available
+	u8 num_port = 1;
+	u8 port_id = swr_dmic->port_type;
+	u8 port_type = swr_dmic->tx_master_port_map[port_id];
+
+	switch (event) {
+	case SND_SOC_DAPM_POST_PMU:
+		ret = swr_slvdev_datapath_control(swr_dmic->swr_slave,
+			swr_dmic->swr_slave->dev_num, true);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		ret = swr_disconnect_port(swr_dmic->swr_slave,
+				&port_id, num_port, &ch_mask, &port_type);
+		break;
+	};
+
+	return ret;
+}
+
 static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 			 struct snd_kcontrol *kcontrol, int event)
 {
@@ -189,12 +218,15 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 	 * Port 1 is high quality / 2.4 or 3.072 Mbps
 	 * Port 2 is listen low power / 0.6 or 0.768 Mbps
 	 */
-	if(swr_dmic->port_type)
+	if(swr_dmic->port_type == SWR_DMIC_HIFI_PORT)
 		ch_rate = SWR_CLK_RATE_2P4MHZ;
 	else
-		ch_rate = SWR_CLK_RATE_4P8MHZ;
+		ch_rate = SWR_CLK_RATE_0P6MHZ;
 
 	port_type = swr_dmic->tx_master_port_map[port_id];
+
+	dev_dbg(component->dev, "%s port_type: %d event: %d\n", __func__,
+		port_type, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
@@ -202,17 +234,9 @@ static int dmic_swr_ctrl(struct snd_soc_dapm_widget *w,
 					num_port, &ch_mask, &ch_rate,
 					&num_ch, &port_type);
 		break;
-	case SND_SOC_DAPM_POST_PMU:
-		ret = swr_slvdev_datapath_control(swr_dmic->swr_slave,
-			swr_dmic->swr_slave->dev_num, true);
-		break;
-	case SND_SOC_DAPM_PRE_PMD:
+	case SND_SOC_DAPM_POST_PMD:
 		ret = swr_slvdev_datapath_control(swr_dmic->swr_slave,
 			swr_dmic->swr_slave->dev_num, false);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		ret = swr_disconnect_port(swr_dmic->swr_slave,
-				&port_id, num_port, &ch_mask, &port_type);
 		break;
 	};
 
@@ -276,8 +300,7 @@ static const struct snd_kcontrol_new dmic_switch[] = {
 static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER_E("SWR_DMIC_MIXER", SND_SOC_NOPM, 0, 0,
 			dmic_switch, ARRAY_SIZE(dmic_switch), dmic_swr_ctrl,
-			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
-			SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	SND_SOC_DAPM_INPUT("SWR_DMIC"),
 
@@ -285,14 +308,17 @@ static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 				swr_dmic_enable_supply,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 				SND_SOC_DAPM_POST_PMD),
-
+	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
+				swr_dmic_port_enable,
+				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
 	SND_SOC_DAPM_OUTPUT("SWR_DMIC_OUTPUT"),
 };
 
 static const struct snd_soc_dapm_route swr_dmic_audio_map[] = {
 	{"SWR_DMIC", NULL, "SMIC_SUPPLY"},
 	{"SWR_DMIC_MIXER", "Switch", "SWR_DMIC"},
-	{"SWR_DMIC_OUTPUT", NULL, "SWR_DMIC_MIXER"},
+	{"SMIC_PORT_EN", NULL, "SWR_DMIC_MIXER"},
+	{"SWR_DMIC_OUTPUT", NULL, "SMIC_PORT_EN"},
 };
 
 static int swr_dmic_codec_probe(struct snd_soc_component *component)
@@ -365,6 +391,26 @@ static int swr_dmic_parse_supply(struct device_node *np,
 
 	return 0;
 }
+
+static struct snd_soc_dai_driver swr_dmic_dai[] = {
+	{
+		.name = "",
+		.id = 0,
+		.capture = {
+			.stream_name = "",
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000),
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S32_LE),
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+	},
+};
 
 static int swr_dmic_probe(struct swr_device *pdev)
 {
@@ -472,10 +518,24 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		goto dev_err;
 	}
 
-	swr_dmic->driver->name = dai_name_list[dev_index];
+	swr_dmic->driver->name = codec_name_list[dev_index];
 
+	swr_dmic->dai_driver = devm_kzalloc(&pdev->dev,
+			sizeof(struct snd_soc_dai_driver), GFP_KERNEL);
+	if (!swr_dmic->dai_driver) {
+		ret = -ENOMEM;
+		goto dev_err;
+	}
+
+	memcpy(swr_dmic->dai_driver, swr_dmic_dai,
+			sizeof(struct snd_soc_dai_driver));
+	swr_dmic->dai_driver->id = dev_index;
+	swr_dmic->dai_driver->name = dai_name_list[dev_index];
+	swr_dmic->dai_driver->capture.stream_name = aif_name_list[dev_index];
+
+	/* Number of DAI's used is 1 */
 	ret = snd_soc_register_component(&pdev->dev, swr_dmic->driver,
-				NULL, 0);
+				swr_dmic->dai_driver, 1);
 	if (ret) {
 		dev_err(&pdev->dev, "%s: Codec registration failed\n",
 			__func__);
@@ -486,15 +546,20 @@ static int swr_dmic_probe(struct swr_device *pdev)
 						swr_dmic->driver->name);
 	swr_dmic->component = component;
 	prefix_name = devm_kzalloc(&pdev->dev,
-					strlen(swr_dmic_name_prefix_of),
+					strlen(swr_dmic_name_prefix_of) + 1,
 					GFP_KERNEL);
 	if (!prefix_name) {
 		ret = -ENOMEM;
 		goto dev_err;
 	}
 	strlcpy(prefix_name, swr_dmic_name_prefix_of,
-			strlen(swr_dmic_name_prefix_of));
+			strlen(swr_dmic_name_prefix_of) + 1);
 	component->name_prefix = prefix_name;
+
+	if (swr_dmic->is_en_supply == 1) {
+		enable_wcd_codec_supply(swr_dmic, false);
+		--swr_dmic->is_en_supply;
+	}
 
 	return 0;
 
@@ -585,6 +650,7 @@ static int swr_dmic_reset(struct swr_device *pdev)
 		usleep_range(1000, 1100);
 	}
 	pdev->dev_num = devnum;
+	dev_dbg(&pdev->dev, "%s: devnum: %d\n", __func__, devnum);
 
 	return 0;
 }

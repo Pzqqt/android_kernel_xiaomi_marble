@@ -25,8 +25,6 @@
 #include "wcd938x.h"
 #include "internal.h"
 
-
-#define WCD938X_DRV_NAME "wcd938x_codec"
 #define NUM_SWRS_DT_PARAMS 5
 #define WCD938X_VARIANT_ENTRY_SIZE 32
 
@@ -47,6 +45,18 @@
 #define DAPM_MICBIAS2_STANDALONE "MIC BIAS2 Standalone"
 #define DAPM_MICBIAS3_STANDALONE "MIC BIAS3 Standalone"
 #define DAPM_MICBIAS4_STANDALONE "MIC BIAS4 Standalone"
+
+#define WCD938X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+			SNDRV_PCM_RATE_384000)
+/* Fractional Rates */
+#define WCD938X_FRAC_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |\
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800)
+
+#define WCD938X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+		SNDRV_PCM_FMTBIT_S24_LE |\
+		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
 
 enum {
 	CODEC_TX = 0,
@@ -72,6 +82,16 @@ enum {
 	ADC_MODE_LP,
 	ADC_MODE_ULP1,
 	ADC_MODE_ULP2,
+};
+
+static u8 tx_mode_bit[] = {
+	[ADC_MODE_INVALID] = 0x00,
+	[ADC_MODE_HIFI] = 0x01,
+	[ADC_MODE_LO_HIF] = 0x02,
+	[ADC_MODE_NORMAL] = 0x04,
+	[ADC_MODE_LP] = 0x08,
+	[ADC_MODE_ULP1] = 0x10,
+	[ADC_MODE_ULP2] = 0x20,
 };
 
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
@@ -146,26 +166,56 @@ static int wcd938x_swr_slv_get_current_bank(struct swr_device *dev, u8 devnum)
 	return ((bank & 0x40) ? 1: 0);
 }
 
-static int wcd938x_swr_slv_set_host_clk_div2(struct swr_device *dev,
-						u8 devnum, int bank)
+static int wcd938x_get_clk_rate(int mode)
 {
-	u8 val = (bank ? 1 : 0);
+	int rate;
 
-	return (swr_write(dev, devnum,
-		(SWR_SCP_HOST_CLK_DIV2_CTL_BANK + (0x10 * bank)), &val));
+	switch (mode) {
+	case ADC_MODE_ULP2:
+		rate = SWR_CLK_RATE_0P6MHZ;
+		break;
+	case ADC_MODE_ULP1:
+		rate = SWR_CLK_RATE_1P2MHZ;
+		break;
+	case ADC_MODE_LP:
+		rate = SWR_CLK_RATE_4P8MHZ;
+		break;
+	case ADC_MODE_NORMAL:
+	case ADC_MODE_LO_HIF:
+	case ADC_MODE_HIFI:
+	case ADC_MODE_INVALID:
+	default:
+		rate = SWR_CLK_RATE_9P6MHZ;
+		break;
+	}
+
+	return rate;
 }
 
 static int wcd938x_set_swr_clk_rate(struct snd_soc_component *component,
-					int mode, int bank)
+					int rate, int bank)
 {
 	u8 mask = (bank ? 0xF0 : 0x0F);
 	u8 val = 0;
 
-	if ((mode == ADC_MODE_ULP1) || (mode == ADC_MODE_ULP2))
+	switch (rate) {
+	case SWR_CLK_RATE_0P6MHZ:
 		val = (bank ? 0x60 : 0x06);
-	else
+		break;
+	case SWR_CLK_RATE_1P2MHZ:
+		val = (bank ? 0x50 : 0x05);
+		break;
+	case SWR_CLK_RATE_2P4MHZ:
+		val = (bank ? 0x30 : 0x03);
+		break;
+	case SWR_CLK_RATE_4P8MHZ:
+		val = (bank ? 0x10 : 0x01);
+		break;
+	case SWR_CLK_RATE_9P6MHZ:
+	default:
 		val = 0x00;
-
+		break;
+	}
 	snd_soc_component_update_bits(component,
 				      WCD938X_DIGITAL_SWR_TX_CLK_RATE,
 				      mask, val);
@@ -359,7 +409,8 @@ err_port_map:
 }
 
 static int wcd938x_tx_connect_port(struct snd_soc_component *component,
-					u8 slv_port_type, u8 enable)
+					u8 slv_port_type, int clk_rate,
+					u8 enable)
 {
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 	u8 port_id, num_ch, ch_mask;
@@ -374,6 +425,9 @@ static int wcd938x_tx_connect_port(struct snd_soc_component *component,
 				&ch_type, CODEC_TX);
 	if (ret)
 		return ret;
+
+	if (clk_rate)
+		ch_rate = clk_rate;
 
 	slave_ch_idx = wcd938x_slave_get_slave_ch_val(slv_port_type);
 	if (slave_ch_idx != -EINVAL)
@@ -1329,10 +1383,12 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 		/* enable clock scaling */
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DMIC_CTL, 0x06, 0x06);
-		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), true);
+		wcd938x_tx_connect_port(component, DMIC0 + (w->shift),
+					SWR_CLK_RATE_2P4MHZ, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), false);
+		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), 0,
+					false);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_AMIC_CTL,
 				(0x01 << dmic_ctl_shift),
@@ -1453,32 +1509,54 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 	int ret = 0;
 	int bank = 0;
-	int mode = 0;
+	u8 mode = 0;
+	int i = 0;
+	int rate = 0;
 
-	bank = wcd938x_swr_slv_get_current_bank(wcd938x->tx_swr_dev,
-						wcd938x->tx_swr_dev->dev_num);
-	wcd938x_swr_slv_set_host_clk_div2(wcd938x->tx_swr_dev,
-					  wcd938x->tx_swr_dev->dev_num, bank);
+	bank = (wcd938x_swr_slv_get_current_bank(wcd938x->tx_swr_dev,
+					wcd938x->tx_swr_dev->dev_num) ? 0 : 1);
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
+			if (test_bit(WCD_ADC1, &wcd938x->status_mask))
+				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC1]];
+			if (test_bit(WCD_ADC2, &wcd938x->status_mask))
+				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC2]];
+			if (test_bit(WCD_ADC3, &wcd938x->status_mask))
+				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC3]];
+			if (test_bit(WCD_ADC4, &wcd938x->status_mask))
+				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC4]];
+
+			if (mode != 0) {
+				for (i = 0; i < ADC_MODE_ULP2; i++) {
+					if (mode & (1 << i)) {
+						i++;
+						break;
+					}
+				}
+			}
+			rate = wcd938x_get_clk_rate(i);
+			wcd938x_set_swr_clk_rate(component, rate, bank);
+		}
 		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
 		    wcd938x->tx_swr_dev->dev_num,
 		    true);
-		if (test_bit(WCD_ADC1, &wcd938x->status_mask))
-			mode |= wcd938x->tx_mode[WCD_ADC1];
-		if (test_bit(WCD_ADC2, &wcd938x->status_mask))
-			mode |= wcd938x->tx_mode[WCD_ADC2];
-		if (test_bit(WCD_ADC3, &wcd938x->status_mask))
-			mode |= wcd938x->tx_mode[WCD_ADC3];
-		if (test_bit(WCD_ADC4, &wcd938x->status_mask))
-			mode |= wcd938x->tx_mode[WCD_ADC4];
-		wcd938x_set_swr_clk_rate(component, mode, bank);
+		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
+			/* Copy clk settings to active bank */
+			wcd938x_set_swr_clk_rate(component, rate, !bank);
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
+		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
+			rate = wcd938x_get_clk_rate(ADC_MODE_INVALID);
+			wcd938x_set_swr_clk_rate(component, rate, !bank);
+		}
 		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
 		    wcd938x->tx_swr_dev->dev_num,
 		    false);
-		wcd938x_set_swr_clk_rate(component, ADC_MODE_INVALID, bank);
+		if (strnstr(w->name, "ADC", sizeof("ADC")))
+			wcd938x_set_swr_clk_rate(component, rate, bank);
 		break;
 	};
 
@@ -1525,6 +1603,7 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	int clk_rate = 0;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1536,19 +1615,25 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
 		set_bit(w->shift, &wcd938x->status_mask);
+		clk_rate = wcd938x_get_clk_rate(wcd938x->tx_mode[w->shift]);
 		/* Enable BCS for Headset mic */
 		if (w->shift == 1 && !(snd_soc_component_read32(component,
 				WCD938X_TX_NEW_AMIC_MUX_CFG) & 0x80)) {
-			wcd938x_tx_connect_port(component, MBHC, true);
+			if (!wcd938x->bcs_dis)
+				wcd938x_tx_connect_port(component, MBHC,
+						SWR_CLK_RATE_4P8MHZ, true);
 			set_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
 		}
-		wcd938x_tx_connect_port(component, ADC1 + (w->shift), true);
+		wcd938x_tx_connect_port(component, ADC1 + (w->shift), clk_rate,
+					true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		wcd938x_tx_connect_port(component, ADC1 + (w->shift), false);
+		wcd938x_tx_connect_port(component, ADC1 + (w->shift), 0, false);
 		if (w->shift == 1 &&
 			test_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask)) {
-			wcd938x_tx_connect_port(component, MBHC, false);
+			if (!wcd938x->bcs_dis)
+				wcd938x_tx_connect_port(component, MBHC, 0,
+							false);
 			clear_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
 		}
 		snd_soc_component_update_bits(component,
@@ -2568,6 +2653,29 @@ static int wcd938x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 		wcd938x->tx_master_ch_map[slave_ch_idx] =
 				wcd938x_slave_get_master_ch(
 					ucontrol->value.enumerated.item[0]);
+	return 0;
+}
+
+static int wcd938x_bcs_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.integer.value[0] = wcd938x->bcs_dis;
+
+	return 0;
+}
+
+static int wcd938x_bcs_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	wcd938x->bcs_dis = ucontrol->value.integer.value[0];
 
 	return 0;
 }
@@ -2658,6 +2766,9 @@ static const struct snd_kcontrol_new wcd938x_snd_controls[] = {
 
 	SOC_SINGLE_EXT("LDOH Enable", SND_SOC_NOPM, 0, 1, 0,
 		wcd938x_ldoh_get, wcd938x_ldoh_put),
+
+	SOC_SINGLE_EXT("ADC2_BCS Disable", SND_SOC_NOPM, 0, 1, 0,
+		wcd938x_bcs_get, wcd938x_bcs_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD938X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD938X_HPH_R_EN, 0, 20, 1, line_gain),
@@ -3695,6 +3806,30 @@ static irqreturn_t wcd938x_wd_handle_irq(int irq, void *data)
 	return IRQ_HANDLED;
 }
 
+static struct snd_soc_dai_driver wcd938x_dai[] = {
+	{
+		.name = "wcd938x_cdc",
+		.playback = {
+			.stream_name = "WCD938X_AIF Playback",
+                        .rates = WCD938X_RATES | WCD938X_FRAC_RATES,
+			.formats = WCD938X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
+		},
+		.capture = {
+			.stream_name = "WCD938X_AIF Capture",
+                        .rates = WCD938X_RATES | WCD938X_FRAC_RATES,
+			.formats = WCD938X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
+		},
+	},
+};
+
 static int wcd938x_bind(struct device *dev)
 {
 	int ret = 0, i = 0;
@@ -3777,7 +3912,7 @@ static int wcd938x_bind(struct device *dev)
 	wcd_disable_irq(&wcd938x->irq_info, WCD938X_IRQ_AUX_PDM_WD_INT);
 
 	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd938x,
-					NULL, 0);
+					wcd938x_dai, ARRAY_SIZE(wcd938x_dai));
 	if (ret) {
 		dev_err(dev, "%s: Codec registration failed\n",
 				__func__);

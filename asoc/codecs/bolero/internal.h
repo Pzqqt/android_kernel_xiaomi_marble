@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _BOLERO_INTERNAL_H
@@ -82,6 +82,14 @@ struct bolero_priv {
 	struct blocking_notifier_head notifier;
 	struct device *clk_dev;
 	rsc_clk_cb_t rsc_clk_cb;
+	s32 dmic_0_1_clk_cnt;
+	s32 dmic_2_3_clk_cnt;
+	s32 dmic_4_5_clk_cnt;
+	s32 dmic_6_7_clk_cnt;
+	u8 dmic_0_1_clk_div;
+	u8 dmic_2_3_clk_div;
+	u8 dmic_4_5_clk_div;
+	u8 dmic_6_7_clk_div;
 };
 
 struct regmap *bolero_regmap_init(struct device *dev,

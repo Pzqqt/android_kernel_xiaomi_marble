@@ -10,6 +10,7 @@
 
 #define WCD938X_MAX_SLAVE_CH_TYPES 13
 #define ZERO 0
+#define WCD938X_DRV_NAME "wcd938x_codec"
 
 enum {
 	WCD9380 = 0,

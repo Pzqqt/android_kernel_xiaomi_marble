@@ -65,6 +65,7 @@ enum {
 	BOLERO_WSA_EVT_PA_OFF_PRE_SSR,
 	BOLERO_WSA_EVT_SSR_DOWN,
 	BOLERO_WSA_EVT_SSR_UP,
+	BOLERO_WSA_EVT_PA_ON_POST_FSCLK,
 };
 
 struct wsa_ctrl_platform_data {
@@ -128,6 +129,10 @@ struct wsa883x_priv {
 	struct cdc_regulator *regulator;
 	int num_supplies;
 	struct regulator_bulk_data *supplies;
+	unsigned long status_mask;
+	char *wsa883x_name_prefix;
+	struct snd_soc_dai_driver *dai_driver;
+	struct snd_soc_component_driver *driver;
 };
 
 #endif /* WSA883X_INTERNAL_H */

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -2552,7 +2552,7 @@ void *q6asm_is_cpu_buf_avail(int dir, struct audio_client *ac, uint32_t *size,
 			/* To make it more robust, we could loop and get the
 			 * next avail buf, its risky though
 			 */
-			pr_err("%s: Next buf idx[0x%x] not available, dir[%d]\n",
+			pr_debug("%s: Next buf idx[0x%x] not available, dir[%d]\n",
 			 __func__, idx, dir);
 			mutex_unlock(&port->lock);
 			return NULL;
@@ -10907,14 +10907,23 @@ EXPORT_SYMBOL(q6asm_get_path_delay);
 
 int q6asm_get_apr_service_id(int session_id)
 {
+	int service_id;
+
 	pr_debug("%s:\n", __func__);
 
 	if (session_id <= 0 || session_id > ASM_ACTIVE_STREAMS_ALLOWED) {
 		pr_err("%s: invalid session_id = %d\n", __func__, session_id);
 		return -EINVAL;
 	}
-
-	return ((struct apr_svc *)(session[session_id].ac)->apr)->id;
+	mutex_lock(&session[session_id].mutex_lock_per_session);
+	if (session[session_id].ac != NULL)
+		if ((session[session_id].ac)->apr != NULL) {
+			service_id = ((struct apr_svc *)(session[session_id].ac)->apr)->id;
+			mutex_unlock(&session[session_id].mutex_lock_per_session);
+			return service_id;
+	}
+	mutex_unlock(&session[session_id].mutex_lock_per_session);
+	return -EINVAL;
 }
 
 uint8_t q6asm_get_asm_stream_id(int session_id)
