@@ -92,8 +92,8 @@ enum SDE_POWER_HANDLE_DBUS_ID {
 
 /**
  * struct sde_power_bus_scaling_data: struct for bus setting
- * @ab: average bandwidth in kilobytes per second
- * @ib: peak bandwidth in kilobytes per second
+ * @ab: average bandwidth in bytes per second
+ * @ib: peak bandwidth in bytes per second
  */
 struct sde_power_bus_scaling_data {
 	uint64_t ab; /* Arbitrated bandwidth */
@@ -111,6 +111,18 @@ struct sde_power_data_bus_handle {
 	struct sde_power_bus_scaling_data curr_val;
 	u32 data_paths_cnt;
 	bool bus_active_only;
+};
+
+/**
+ * struct sde_power_reg_bus_handle: power handle struct for reg bus
+ * @reg_bus_hdl: reg bus interconnect path handle
+ * @curr_idx : use-case index in to scale_table for the current vote
+ * @scale_table: bus scaling bandwidth vote table
+ */
+struct sde_power_reg_bus_handle {
+	struct icc_path *reg_bus_hdl;
+	enum mdss_bus_vote_type curr_idx;
+	struct sde_power_bus_scaling_data scale_table[VOTE_INDEX_MAX];
 };
 
 /*
@@ -136,9 +148,7 @@ struct sde_power_event {
  * @mp:		module power for clock and regulator
  * @phandle_lock: lock to synchronize the enable/disable
  * @dev: pointer to device structure
- * @usecase_ndx: current usecase index
- * @reg_bus_hdl: current register bus handle
- * @reg_bus_curr_val: save currecnt reg bus value
+ * @reg_bus_handle: context structure for reg bus control
  * @data_bus_handle: context structure for data bus control
  * @event_list: current power handle event list
  * @rsc_client: sde rsc client pointer
@@ -148,9 +158,7 @@ struct sde_power_handle {
 	struct dss_module_power mp;
 	struct mutex phandle_lock;
 	struct device *dev;
-	u32 current_usecase_ndx;
-	struct icc_path *reg_bus_hdl;
-	struct sde_power_bus_scaling_data reg_bus_curr_val;
+	struct sde_power_reg_bus_handle reg_bus_handle;
 	struct sde_power_data_bus_handle data_bus_handle
 		[SDE_POWER_HANDLE_DBUS_ID_MAX];
 	struct list_head event_list;

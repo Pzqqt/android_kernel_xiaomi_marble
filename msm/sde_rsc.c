@@ -433,9 +433,7 @@ static int sde_rsc_resource_disable(struct sde_rsc_priv *rsc)
 	phandle = &rsc->phandle;
 	mp = &phandle->mp;
 	msm_dss_enable_clk(mp->clk_config, mp->num_clk, false);
-	if (phandle->reg_bus_hdl)
-		sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
-
+	sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
 	msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, false);
 
 	return 0;
@@ -463,12 +461,10 @@ static int sde_rsc_resource_enable(struct sde_rsc_priv *rsc)
 		goto end;
 	}
 
-	if (phandle->reg_bus_hdl) {
-		rc = sde_power_scale_reg_bus(phandle, VOTE_INDEX_LOW, false);
-		if (rc) {
-			pr_err("failed to set reg bus vote rc=%d\n", rc);
-			goto reg_bus_hdl_err;
-		}
+	rc = sde_power_scale_reg_bus(phandle, VOTE_INDEX_LOW, false);
+	if (rc) {
+		pr_err("failed to set reg bus vote rc=%d\n", rc);
+		goto reg_bus_hdl_err;
 	}
 
 	rc = msm_dss_enable_clk(mp->clk_config, mp->num_clk, true);
@@ -480,8 +476,7 @@ static int sde_rsc_resource_enable(struct sde_rsc_priv *rsc)
 	return rc;
 
 clk_err:
-	if (phandle->reg_bus_hdl)
-		sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
+	sde_power_scale_reg_bus(phandle, VOTE_INDEX_DISABLE, false);
 
 reg_bus_hdl_err:
 	msm_dss_enable_vreg(mp->vreg_config, mp->num_vreg, false);

@@ -21,12 +21,7 @@
 #include "sde_trace.h"
 #include "sde_dbg.h"
 
-static const struct sde_power_bus_scaling_data sde_reg_bus_table[] = {
-	{0, 0},
-	{0, 76800},
-	{0, 150000},
-	{0, 300000},
-};
+#define KBPS2BPS(x) ((x) * 1000ULL)
 
 static const char *data_bus_name[SDE_POWER_HANDLE_DBUS_ID_MAX] = {
 	[SDE_POWER_HANDLE_DBUS_ID_MNOC] = "qcom,sde-data-bus",
@@ -395,6 +390,46 @@ end:
 	return 0;
 }
 
+static int sde_power_reg_bus_parse(struct platform_device *pdev,
+		struct sde_power_reg_bus_handle *reg_bus)
+{
+	const char *bus_name = "qcom,sde-reg-bus";
+	const u32 *vec_arr = NULL;
+	int rc, len, i, vec_idx = 0;
+	u32 paths = 0;
+
+	rc = sde_power_icc_get(pdev, bus_name, &reg_bus->reg_bus_hdl, &paths);
+	if (rc)
+		return rc;
+
+	if (!paths) {
+		pr_debug("%s not defined for pdev %s\n", bus_name, pdev->name ?
+				pdev->name : "<unknown>");
+		return 0;
+	}
+
+	vec_arr = of_get_property(pdev->dev.of_node,
+			"qcom,sde-reg-bus,vectors-KBps", &len);
+	if (!vec_arr) {
+		pr_err("%s scale table property not found\n", bus_name);
+		return -EINVAL;
+	}
+
+	if (len / sizeof(*vec_arr) != VOTE_INDEX_MAX * 2) {
+		pr_err("wrong size for %s vector table\n", bus_name);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < VOTE_INDEX_MAX; ++i) {
+		reg_bus->scale_table[i].ab = (u64)KBPS2BPS(be32_to_cpu(
+				vec_arr[vec_idx++]));
+		reg_bus->scale_table[i].ib = (u64)KBPS2BPS(be32_to_cpu(
+				vec_arr[vec_idx++]));
+	}
+
+	return rc;
+}
+
 static int sde_power_mnoc_bus_parse(struct platform_device *pdev,
 	struct sde_power_data_bus_handle *pdbus, const char *name)
 {
@@ -426,11 +461,10 @@ static int sde_power_bus_parse(struct platform_device *pdev,
 {
 	int i, j, rc = 0;
 	bool active_only = false;
-	const char *bus_name = "qcom,sde-reg-bus";
 	struct sde_power_data_bus_handle *pdbus = phandle->data_bus_handle;
 
 	/* reg bus */
-	rc = sde_power_icc_get(pdev, bus_name, &phandle->reg_bus_hdl, NULL);
+	rc = sde_power_reg_bus_parse(pdev, &phandle->reg_bus_handle);
 	if (rc)
 		return rc;
 
@@ -469,10 +503,11 @@ static int sde_power_bus_parse(struct platform_device *pdev,
 static void sde_power_bus_unregister(struct sde_power_handle *phandle)
 {
 	int i, j;
+	struct sde_power_reg_bus_handle *reg_bus = &phandle->reg_bus_handle;
 	struct sde_power_data_bus_handle *pdbus = phandle->data_bus_handle;
 
-	icc_put(phandle->reg_bus_hdl);
-	phandle->reg_bus_hdl = NULL;
+	icc_put(reg_bus->reg_bus_hdl);
+	reg_bus->reg_bus_hdl = NULL;
 
 	for (i = SDE_POWER_HANDLE_DBUS_ID_MAX - 1;
 			i >= SDE_POWER_HANDLE_DBUS_ID_MNOC; i--) {
@@ -485,21 +520,30 @@ static void sde_power_bus_unregister(struct sde_power_handle *phandle)
 	}
 }
 
-static int sde_power_reg_bus_update(struct icc_path *reg_bus_hdl,
+static int sde_power_reg_bus_update(struct sde_power_reg_bus_handle *reg_bus,
 	u32 usecase_ndx)
 {
 	int rc = 0;
+	u64 ab_quota, ib_quota;
 
-	if (reg_bus_hdl) {
+	ab_quota = reg_bus->scale_table[usecase_ndx].ab;
+	ib_quota = reg_bus->scale_table[usecase_ndx].ib;
+
+	if (reg_bus->reg_bus_hdl) {
 		SDE_ATRACE_BEGIN("msm_bus_scale_req");
-		rc = icc_set_bw(reg_bus_hdl,
-			sde_reg_bus_table[usecase_ndx].ab,
-			sde_reg_bus_table[usecase_ndx].ib);
+		rc = icc_set_bw(reg_bus->reg_bus_hdl, Bps_to_icc(ab_quota),
+				Bps_to_icc(ib_quota));
 		SDE_ATRACE_END("msm_bus_scale_req");
 	}
 
 	if (rc)
-		pr_err("failed to set reg bus vote rc=%d\n", rc);
+		pr_err("failed to set reg bus vote to index %d, rc=%d\n",
+				usecase_ndx, rc);
+	else {
+		reg_bus->curr_idx = usecase_ndx;
+		pr_debug("reg-bus vote set to index=%d, ab=%llu, ib=%llu\n",
+				usecase_ndx, ab_quota, ib_quota);
+	}
 
 	return rc;
 }
@@ -629,43 +673,22 @@ int sde_power_scale_reg_bus(struct sde_power_handle *phandle,
 {
 	int rc = 0;
 
+	if (!phandle->reg_bus_handle.reg_bus_hdl)
+		return 0;
+
 	if (!skip_lock)
 		mutex_lock(&phandle->phandle_lock);
 
 	pr_debug("%pS: requested:%d\n",
 		__builtin_return_address(0), usecase_ndx);
 
-	rc = sde_power_reg_bus_update(phandle->reg_bus_hdl,
+	rc = sde_power_reg_bus_update(&phandle->reg_bus_handle,
 						usecase_ndx);
-	if (rc)
-		pr_err("failed to set reg bus vote rc=%d\n", rc);
-	else {
-		phandle->reg_bus_curr_val.ab =
-			sde_reg_bus_table[usecase_ndx].ab;
-		phandle->reg_bus_curr_val.ib =
-			sde_reg_bus_table[usecase_ndx].ib;
-		phandle->current_usecase_ndx = usecase_ndx;
-	}
 
 	if (!skip_lock)
 		mutex_unlock(&phandle->phandle_lock);
 
 	return rc;
-}
-
-static inline bool _resource_changed(u32 current_usecase_ndx,
-		u32 max_usecase_ndx)
-{
-	WARN_ON((current_usecase_ndx >= VOTE_INDEX_MAX)
-		|| (max_usecase_ndx >= VOTE_INDEX_MAX));
-
-	if (((current_usecase_ndx >= VOTE_INDEX_LOW) && /* enabled */
-		(max_usecase_ndx == VOTE_INDEX_DISABLE)) || /* max disabled */
-		((current_usecase_ndx == VOTE_INDEX_DISABLE) && /* disabled */
-		(max_usecase_ndx >= VOTE_INDEX_LOW))) /* max enabled */
-		return true;
-
-	return false;
 }
 
 int sde_power_resource_enable(struct sde_power_handle *phandle, bool enable)
