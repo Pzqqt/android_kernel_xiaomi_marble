@@ -726,6 +726,24 @@ dp_tx_is_desc_id_valid(struct dp_soc *soc, uint32_t tx_desc_id)
 }
 #endif /* QCA_DP_TX_DESC_ID_CHECK */
 
+#ifdef QCA_DP_TX_DESC_FAST_COMP_ENABLE
+static inline void dp_tx_desc_update_fast_comp_flag(struct dp_soc *soc,
+						    struct dp_tx_desc_s *desc,
+						    uint8_t allow_fast_comp)
+{
+	if (qdf_likely(!(desc->flags & DP_TX_DESC_FLAG_TO_FW)) &&
+	    qdf_likely(allow_fast_comp)) {
+		desc->flags |= DP_TX_DESC_FLAG_SIMPLE;
+	}
+}
+#else
+static inline void dp_tx_desc_update_fast_comp_flag(struct dp_soc *soc,
+						    struct dp_tx_desc_s *desc,
+						    uint8_t allow_fast_comp)
+{
+}
+#endif /* QCA_DP_TX_DESC_FAST_COMP_ENABLE */
+
 /**
  * dp_tx_desc_find() - find dp tx descriptor from cokie
  * @soc - handle for the device sending the data

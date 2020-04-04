@@ -384,15 +384,19 @@ struct dp_tx_ext_desc_pool_s {
 struct dp_tx_desc_s {
 	struct dp_tx_desc_s *next;
 	qdf_nbuf_t nbuf;
+	uint16_t length;
+	uint16_t flags;
+	qdf_dma_addr_t dma_addr;
 	uint32_t id;
 	struct dp_vdev *vdev;
 	struct dp_pdev *pdev;
-	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
-	uint16_t flags;
-	uint16_t tx_encap_type;
+	uint8_t tx_encap_type;
 	uint8_t frm_type;
 	uint8_t pkt_offset;
 	uint8_t  pool_id;
+	uint16_t peer_id;
+	uint16_t tx_status;
+	struct dp_tx_ext_desc_elem_s *msdu_ext_desc;
 	void *me_buffer;
 	void *tso_desc;
 	void *tso_num_desc;
