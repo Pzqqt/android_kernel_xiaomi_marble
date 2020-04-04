@@ -24039,6 +24039,10 @@ typedef enum wmi_coex_config_type {
      * enable WLAN throughput shaping while BT scanning
      */
     WMI_COEX_CONFIG_ENABLE_TPUT_SHAPING = 45,
+    /* WMI_COEX_CONFIG_ENABLE_TXBF
+     * enable WLAN tx beamforming during coex case
+     */
+    WMI_COEX_CONFIG_ENABLE_TXBF = 46,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
