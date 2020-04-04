@@ -16422,6 +16422,7 @@ typedef struct {
 typedef enum {
     QUICK_OCAC = 0,
     EXTENSIVE_OCAC,
+    QUICK_RCAC,
 } WMI_ADFS_OCAC_MODE;
 
 typedef struct {
