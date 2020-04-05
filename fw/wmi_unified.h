@@ -7078,6 +7078,7 @@ typedef enum {
     /* 0x10 used by deprecated DBG_PRINT */
     WMI_PKTLOG_EVENT_SMART_ANTENNA = 0x20, /* To support Smart Antenna */
     WMI_PKTLOG_EVENT_SW = 0x40, /* To support SW defined events */
+    WMI_PKTLOG_EVENT_PHY = 0x80, /* To support PHY stats */
 } WMI_PKTLOG_EVENT;
 
 typedef enum {
