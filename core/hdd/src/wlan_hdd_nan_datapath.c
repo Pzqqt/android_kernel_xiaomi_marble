@@ -706,8 +706,10 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_info *roam_info;
+	struct bss_description tmp_bss_descp = {0};
 	uint16_t ndp_inactivity_timeout = 0;
 	uint16_t ndp_keep_alive_period;
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -760,6 +762,10 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 			ndi_rsp->reason /* create_reason */);
 	}
 
+	hdd_save_peer(sta_ctx, &bc_mac_addr);
+	qdf_copy_macaddr(&roam_info->bssid, &bc_mac_addr);
+	hdd_roam_register_sta(adapter, roam_info, &tmp_bss_descp);
+
 	qdf_mem_free(roam_info);
 }
 
@@ -788,6 +794,7 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
+	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -806,6 +813,9 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 		hdd_err("sta_ctx is null");
 		return;
 	}
+
+	hdd_roam_deregister_sta(adapter, adapter->mac_addr);
+	hdd_delete_peer(sta_ctx, &bc_mac_addr);
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
