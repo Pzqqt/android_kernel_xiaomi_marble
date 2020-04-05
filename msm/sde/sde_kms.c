@@ -1222,6 +1222,8 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 0);
 
+	sde_kms_vm_trusted_resource_deinit(sde_kms);
+
 	if (vm_ops->vm_release)
 		rc = vm_ops->vm_release(sde_kms);
 
@@ -4128,6 +4130,82 @@ struct msm_kms *sde_kms_init(struct drm_device *dev)
 	sde_kms->dev = dev;
 
 	return &sde_kms->base;
+}
+
+void sde_kms_vm_trusted_resource_deinit(struct sde_kms *sde_kms)
+{
+	struct dsi_display *display;
+	struct sde_splash_display *handoff_display;
+	int i;
+
+	for (i = 0; i < sde_kms->dsi_display_count; i++) {
+		handoff_display = &sde_kms->splash_data.splash_display[i];
+		display = (struct dsi_display *)sde_kms->dsi_displays[i];
+
+		if (handoff_display->cont_splash_enabled)
+			_sde_kms_free_splash_display_data(sde_kms,
+						handoff_display);
+		dsi_display_set_active_state(display, false);
+	}
+
+	memset(&sde_kms->splash_data, 0, sizeof(struct sde_splash_data));
+}
+
+int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
+{
+	struct drm_device *dev;
+	struct msm_drm_private *priv;
+	struct sde_splash_display *handoff_display;
+	struct dsi_display *display;
+	int ret, i;
+
+	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private) {
+		SDE_ERROR("invalid params\n");
+		return -EINVAL;
+	}
+
+	if (!sde_kms->vm->vm_ops.vm_owns_hw(sde_kms)) {
+		SDE_DEBUG(
+		   "skipping sde res init as device assign is not completed\n");
+		return 0;
+	}
+
+	if (sde_kms->dsi_display_count != 1) {
+		SDE_ERROR("no. of displays not supported:%d\n",
+				sde_kms->dsi_display_count);
+		return -EINVAL;
+	}
+
+	dev = sde_kms->dev;
+	priv = dev->dev_private;
+	sde_kms->splash_data.type = SDE_VM_HANDOFF;
+	sde_kms->splash_data.num_splash_displays = sde_kms->dsi_display_count;
+
+	ret = sde_rm_cont_splash_res_init(priv, &sde_kms->rm,
+				&sde_kms->splash_data, sde_kms->catalog);
+
+	for (i = 0; i < sde_kms->dsi_display_count; i++) {
+		handoff_display = &sde_kms->splash_data.splash_display[i];
+		display = (struct dsi_display *)sde_kms->dsi_displays[i];
+		if (!handoff_display->cont_splash_enabled || ret)
+			_sde_kms_free_splash_display_data(sde_kms,
+							handoff_display);
+		else
+			dsi_display_set_active_state(display, true);
+	}
+
+	ret = sde_kms_cont_splash_config(&sde_kms->base);
+	if (ret) {
+		SDE_ERROR("error in setting handoff configs\n");
+		goto error;
+	}
+
+	return 0;
+
+error:
+	sde_kms_vm_trusted_resource_deinit(sde_kms);
+
+	return ret;
 }
 
 static int _sde_kms_register_events(struct msm_kms *kms,

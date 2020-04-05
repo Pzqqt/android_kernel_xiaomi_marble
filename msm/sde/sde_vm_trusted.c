@@ -69,6 +69,7 @@ void sde_vm_irq_lend_notification_handler(void *req, enum hh_irq_label label)
 	struct sde_vm_irq_entry irq_temp, *found = NULL;
 	struct irq_data *exp_irq_data, *acc_irq_data;
 	int accepted_irq, expected_irq;
+	int rc;
 
 	if (!req) {
 		SDE_ERROR("invalid data on lend notification\n");
@@ -121,6 +122,10 @@ void sde_vm_irq_lend_notification_handler(void *req, enum hh_irq_label label)
 			exp_irq_data->hwirq);
 
 	atomic_inc(&sde_vm->base.n_irq_lent);
+
+	rc = sde_kms_vm_trusted_resource_init(sde_kms);
+	if (rc)
+		SDE_ERROR("vm resource init failed\n");
 end:
 	mutex_unlock(&sde_vm->base.vm_res_lock);
 }
@@ -185,6 +190,10 @@ static void sde_vm_mem_lend_notification_handler(enum hh_mem_notifier_tag tag,
 
 	SDE_INFO("mem accept succeeded for tag: %d label: %d\n", tag,
 				payload->label);
+
+	rc = sde_kms_vm_trusted_resource_init(sde_kms);
+	if (rc)
+		SDE_ERROR("vm resource init failed\n");
 
 accept_fail:
 	kfree(acl_desc);
