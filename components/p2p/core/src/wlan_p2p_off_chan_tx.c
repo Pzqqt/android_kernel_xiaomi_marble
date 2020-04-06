@@ -46,7 +46,7 @@
 static inline struct wlan_lmac_if_p2p_tx_ops *
 p2p_psoc_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.tx_ops.p2p;
+	return &psoc->soc_cb.tx_ops->p2p;
 }
 
 /**

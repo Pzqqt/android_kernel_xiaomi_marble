@@ -1964,22 +1964,6 @@ static void wma_target_if_open(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_target_if_close() - Detach UMAC modules' interface with wmi layer
- * @wma_handle: wma handle
- *
- * Return: None
- */
-static void wma_target_if_close(tp_wma_handle wma_handle)
-{
-	struct wlan_objmgr_psoc *psoc = wma_handle->psoc;
-
-	if (!psoc)
-		return;
-
-	wlan_global_lmac_if_close(psoc);
-}
-
-/**
  * wma_legacy_service_ready_event_handler() - legacy (ext)service ready handler
  * @event_id: event_id
  * @handle: wma handle
@@ -4519,7 +4503,6 @@ QDF_STATUS wma_close(void)
 
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
-	wma_target_if_close(wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
 	return QDF_STATUS_SUCCESS;

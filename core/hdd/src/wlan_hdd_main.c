@@ -186,6 +186,7 @@
 #include "wlan_hdd_debugfs_unit_test.h"
 #include "wlan_hdd_debugfs_mibstat.h"
 #include <wlan_hdd_hang_event.h>
+#include "wlan_global_lmac_if_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -12868,6 +12869,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_err("Failed to destroy pdev; errno:%d", ret);
 			QDF_ASSERT(0);
 		}
+		/* pdev close and destroy use tx rx ops so call this here */
+		wlan_global_lmac_if_close(hdd_ctx->psoc);
 	}
 
 	/*

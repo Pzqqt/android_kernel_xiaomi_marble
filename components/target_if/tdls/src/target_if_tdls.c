@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,7 @@
 static inline struct wlan_lmac_if_tdls_rx_ops *
 target_if_tdls_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.rx_ops.tdls_rx_ops;
+	return &psoc->soc_cb.rx_ops->tdls_rx_ops;
 }
 
 static int
