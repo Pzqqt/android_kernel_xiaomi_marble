@@ -390,14 +390,17 @@ static void hal_process_reg_write_q_elem(struct hal_soc *hal,
 	srng->reg_write_in_progress = false;
 	srng->wstats.dequeues++;
 
-	if (srng->ring_dir == HAL_SRNG_SRC_RING)
+	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+		q_elem->dequeue_val = srng->u.src_ring.hp;
 		hal_write_address_32_mb(hal,
 					srng->u.src_ring.hp_addr,
 					srng->u.src_ring.hp, false);
-	else
+	} else {
+		q_elem->dequeue_val = srng->u.dst_ring.tp;
 		hal_write_address_32_mb(hal,
 					srng->u.dst_ring.tp_addr,
 					srng->u.dst_ring.tp, false);
+	}
 
 	SRNG_UNLOCK(&srng->lock);
 }
@@ -458,17 +461,17 @@ static void hal_reg_write_work(void *arg)
 		delta_us = qdf_log_timestamp_to_usecs(q_elem->dequeue_time -
 						      q_elem->enqueue_time);
 		hal_reg_write_fill_sched_delay_hist(hal, delta_us);
-		hal_verbose_debug("read_idx %u srng 0x%x, addr 0x%pK val %u sched delay %llu us",
-				  hal->read_idx,
-				  q_elem->srng->ring_id,
-				  q_elem->addr,
-				  q_elem->val,
-				  delta_us);
 
 		hal->stats.wstats.dequeues++;
 		qdf_atomic_dec(&hal->stats.wstats.q_depth);
 
 		hal_process_reg_write_q_elem(hal, q_elem);
+		hal_verbose_debug("read_idx %u srng 0x%x, addr 0x%pK dequeue_val %u sched delay %llu us",
+				  hal->read_idx,
+				  q_elem->srng->ring_id,
+				  q_elem->addr,
+				  q_elem->dequeue_val,
+				  delta_us);
 
 		q_elem->valid = 0;
 		hal->read_idx = (hal->read_idx + 1) &
@@ -538,7 +541,7 @@ static void hal_reg_write_enqueue(struct hal_soc *hal_soc,
 
 	q_elem->srng = srng;
 	q_elem->addr = addr;
-	q_elem->val = value;
+	q_elem->enqueue_val = value;
 	q_elem->enqueue_time = qdf_get_log_timestamp();
 
 	q_elem->valid = true;
