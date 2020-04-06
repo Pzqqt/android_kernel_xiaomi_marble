@@ -1435,6 +1435,12 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	mon_mpdu = dp_rx_mon_restitch_mpdu(soc, mac_id, head_msdu,
 					   tail_msdu, rs);
 
+	/* If MPDU restitch fails, free buffers*/
+	if (!mon_mpdu) {
+		dp_info("MPDU restitch failed, free buffers");
+		goto mon_deliver_fail;
+	}
+
 	/* monitor vap cannot be present when mcopy is enabled
 	 * hence same skb can be consumed
 	 */
