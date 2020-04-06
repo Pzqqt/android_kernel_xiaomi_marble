@@ -720,7 +720,7 @@ QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle, uint32_t rx_pipe_handle)
 	ol_txrx_pdev_handle pdev =
 		ol_txrx_get_pdev_from_pdev_id(soc, OL_TXRX_PDEV_ID);
 
-	if (!pdev) {
+	if (!pdev || !osdev) {
 		ol_txrx_err("%s invalid instance", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
