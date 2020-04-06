@@ -10939,6 +10939,11 @@ typedef struct {
     A_UINT32 cfgd_tx_streams;
     /** Configured Receive Streams **/
     A_UINT32 cfgd_rx_streams;
+    /**
+     * maximum allowed Tx power (in dBm) for this connection.
+     * max_allowed_tx_power = 0 dBm means value is not specified.
+     */
+    A_INT32 max_allowed_tx_power;
 } wmi_vdev_start_response_event_fixed_param;
 
 typedef struct {
@@ -19435,6 +19440,11 @@ typedef struct {
     A_UINT32 reassoc_rsp_len;
     /** the length of reassoc req */
     A_UINT32 reassoc_req_len;
+    /**
+     * maximum allowed Tx power (in dBm) for this connection.
+     * max_allowed_tx_power = 0 dBm means value is not specified.
+     */
+    A_INT32 max_allowed_tx_power;
     /**
      * TLV (tag length value) parameters follows roam_synch_event
      * The TLV's are:
