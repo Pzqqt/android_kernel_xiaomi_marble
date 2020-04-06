@@ -901,6 +901,14 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 			     sizeof(beacon2->he_op));
 	}
 
+	if (beacon2->he_6ghz_band_cap.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					DOT11F_EID_HE_6GHZ_BAND_CAP);
+		qdf_mem_copy((void *)&prb_rsp->he_6ghz_band_cap,
+			     (void *)&beacon2->he_6ghz_band_cap,
+			     sizeof(beacon2->he_6ghz_band_cap));
+	}
+
 }
 
 void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
