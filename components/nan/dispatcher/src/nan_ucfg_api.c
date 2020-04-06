@@ -1081,19 +1081,6 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					    HW_MODE_20_MHZ);
 }
 
-bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
-{
-	struct nan_psoc_priv_obj *psoc_nan_obj;
-
-	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
-	if (!psoc_nan_obj) {
-		nan_err("psoc_nan_obj is null");
-		return false;
-	}
-
-	return psoc_nan_obj->nan_caps.nan_vdev_allowed;
-}
-
 bool
 ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
 {
@@ -1108,14 +1095,15 @@ ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
 	return psoc_nan_obj->nan_caps.sta_nan_ndi_ndi_allowed;
 }
 
-bool ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc)
+static inline bool
+ucfg_nan_is_vdev_creation_supp_by_fw(struct nan_psoc_priv_obj *psoc_nan_obj)
 {
-	struct nan_psoc_priv_obj *nan_obj = nan_get_psoc_priv_obj(psoc);
+	return psoc_nan_obj->nan_caps.nan_vdev_allowed;
+}
 
-	if (!nan_obj) {
-		nan_err("NAN obj null");
-		return false;
-	}
+static inline bool
+ucfg_nan_is_vdev_creation_supp_by_host(struct nan_psoc_priv_obj *nan_obj)
+{
 	return nan_obj->cfg_param.nan_separate_iface_support;
 }
 
@@ -1146,4 +1134,36 @@ QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_free(nan_req);
 	return status;
+}
+
+bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	bool support = false;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return false;
+	}
+
+	if (ucfg_nan_is_vdev_creation_supp_by_fw(psoc_nan_obj) &&
+	    ucfg_nan_is_vdev_creation_supp_by_host(psoc_nan_obj))
+		support = true;
+
+	return support;
+}
+
+void
+ucfg_nan_set_vdev_creation_supp_by_fw(struct wlan_objmgr_psoc *psoc, bool set)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return;
+	}
+
+	psoc_nan_obj->nan_caps.nan_vdev_allowed = set;
 }

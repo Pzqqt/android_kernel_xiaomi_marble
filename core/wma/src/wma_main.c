@@ -6744,8 +6744,10 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		ucfg_ftm_time_sync_set_enable(wma_handle->psoc, false);
 	}
 
-	if (wmi_service_enabled(wma_handle->wmi_handle, wmi_service_nan_vdev) &&
-	    ucfg_nan_get_is_separate_nan_iface(wma_handle->psoc))
+	if (wmi_service_enabled(wma_handle->wmi_handle, wmi_service_nan_vdev))
+		ucfg_nan_set_vdev_creation_supp_by_fw(wma_handle->psoc, true);
+
+	if (ucfg_nan_is_vdev_creation_allowed(wma_handle->psoc))
 		wlan_res_cfg->nan_separate_iface_support = true;
 
 	wma_init_dbr_params(wma_handle);

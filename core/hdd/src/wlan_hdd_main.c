@@ -13239,8 +13239,7 @@ hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
 	 * Create separate interface (wifi-aware0) for NAN. All NAN commands
 	 * should go on this new interface.
 	 */
-	if (ucfg_nan_is_vdev_creation_allowed(hdd_ctx->psoc) &&
-	    ucfg_nan_get_is_separate_nan_iface(hdd_ctx->psoc)) {
+	if (ucfg_nan_is_vdev_creation_allowed(hdd_ctx->psoc)) {
 		mac_addr = wlan_hdd_get_intf_addr(hdd_ctx, QDF_NAN_DISC_MODE);
 		status = hdd_open_adapter_no_trans(hdd_ctx, QDF_NAN_DISC_MODE,
 						   "wifi-aware%d", mac_addr);
