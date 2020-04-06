@@ -39,6 +39,7 @@
 #include "../dfs_process_radar_found_ind.h"
 #include "../dfs_partial_offload_radar.h"
 #endif
+#include <qdf_types.h>
 
 void dfs_set_update_nol_flag(struct wlan_dfs *dfs, bool val)
 {
@@ -763,12 +764,16 @@ void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
 	DFS_GET_NOL_LOCKED(dfs, nolinfo->dfs_nol, &(nolinfo->dfs_ch_nchans));
 }
 
+#if !defined(QCA_MCL_DFS_SUPPORT)
 #ifdef CONFIG_CHAN_FREQ_API
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 {
 	struct dfs_channel *chan_list;
-	int nchans = 0;
+	int nchans;
 	bool sta_opmode;
+	int i;
+	qdf_freq_t *nol_freq_list = NULL;
+	int num_nol_history_chans;
 
 	if (!dfs->dfs_is_stadfs_enabled)
 		return;
@@ -779,31 +784,57 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 
 	nchans = dfs_get_num_chans();
 
+	if (!nchans) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
+		return;
+	}
+
 	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
 	if (!chan_list)
 		return;
 
 	utils_dfs_get_nol_history_chan_list(dfs->dfs_pdev_obj,
-					    (void *)chan_list, &nchans);
-	if (!nchans) {
+					    (void *)chan_list,
+					    &num_nol_history_chans);
+
+	if (!num_nol_history_chans) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
 		qdf_mem_free(chan_list);
 		return;
 	}
 
-	utils_dfs_reg_update_nol_history_chan_for_freq(dfs->dfs_pdev_obj,
-						     (void *)chan_list, nchans,
-						     DFS_NOL_HISTORY_RESET);
+	if (num_nol_history_chans > nchans)
+		num_nol_history_chans = nchans;
 
+	nol_freq_list =
+		qdf_mem_malloc(num_nol_history_chans * sizeof(qdf_freq_t));
+
+	if (!nol_freq_list) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Unable to alloc memory for freq list");
+		qdf_mem_free(chan_list);
+		return;
+	}
+
+	for (i = 0; i < num_nol_history_chans; i++)
+		nol_freq_list[i] = chan_list[i].dfs_ch_freq;
+
+	utils_dfs_reg_update_nol_history_chan_for_freq(dfs->dfs_pdev_obj,
+						       nol_freq_list,
+						       num_nol_history_chans,
+						       DFS_NOL_HISTORY_RESET);
 	qdf_mem_free(chan_list);
+	qdf_mem_free(nol_freq_list);
 }
 #else
 #ifdef CONFIG_CHAN_NUM_API
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 {
 	struct dfs_channel *chan_list;
-	int nchans = 0;
+	int nchans;
 	bool sta_opmode;
+	int i;
+	uint8_t *nol_chan_ieee_list = NULL;
+	int num_nol_history_chans;
 
 	if (!dfs->dfs_is_stadfs_enabled)
 		return;
@@ -814,24 +845,49 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 
 	nchans = dfs_get_num_chans();
 
+	if (!nchans) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
+		return;
+	}
+
 	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
 	if (!chan_list)
 		return;
 
 	utils_dfs_get_nol_history_chan_list(dfs->dfs_pdev_obj,
-					    (void *)chan_list, &nchans);
-	if (!nchans) {
+					    (void *)chan_list,
+					    &num_nol_history_chans);
+
+	if (!num_nol_history_chans) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
 		qdf_mem_free(chan_list);
 		return;
 	}
 
+	if (num_nol_history_chans > nchans)
+		num_nol_history_chans = nchans;
+
+	nol_chan_ieee_list =
+		qdf_mem_malloc(num_nol_history_chans * sizeof(uint8_t));
+
+	if (!nol_chan_ieee_list) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Unable to alloc memory for ieee list");
+		qdf_mem_free(chan_list);
+		return;
+	}
+
+	for (i = 0; i < num_nol_history_chans; i++)
+		nol_chan_ieee_list[i] = chan_list[i].dfs_ch_ieee;
+
 	utils_dfs_reg_update_nol_history_ch(dfs->dfs_pdev_obj,
-					    (void *)chan_list, nchans,
+					    nol_chan_ieee_list,
+					    num_nol_history_chans,
 					    DFS_NOL_HISTORY_RESET);
 
 	qdf_mem_free(chan_list);
+	qdf_mem_free(nol_chan_ieee_list);
 }
+#endif
 #endif
 #endif
 

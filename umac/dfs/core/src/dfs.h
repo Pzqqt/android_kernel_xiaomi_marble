@@ -2156,7 +2156,14 @@ int dfs_override_cac_timeout(struct wlan_dfs *dfs,
  *                          all the channels in dfs_ch_channels.
  * @dfs: Pointer to wlan_dfs structure.
  */
+#if !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_clear_nolhistory(struct wlan_dfs *dfs);
+#else
+static inline void
+dfs_clear_nolhistory(struct wlan_dfs *dfs)
+{
+}
+#endif
 
 /**
  * ol_if_dfs_configure() - Initialize the RADAR table for offload chipsets.
