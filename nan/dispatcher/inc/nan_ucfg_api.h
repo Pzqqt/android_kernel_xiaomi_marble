@@ -362,10 +362,22 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_vdev *vdev);
 
 /**
+ * ucfg_nan_set_vdev_creation_supp_by_fw()- Set the NAN separate vdev psoc param
+ * @psoc: pointer to psoc object
+ * @set: True if firmware supports NAN separate vdev feature
+ *
+ * Cache the value of set in NAN psoc object param.
+ *
+ * Return: None
+ */
+void
+ucfg_nan_set_vdev_creation_supp_by_fw(struct wlan_objmgr_psoc *psoc, bool set);
+
+/**
  * ucfg_nan_is_vdev_creation_allowed()- Get support for NAN vdev creation
  * @psoc: pointer to psoc object
  *
- * Return: True if NAN vdev creation is allowed else false
+ * Return: True if NAN vdev creation is allowed by host and firmware else false
  */
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
 
@@ -377,15 +389,6 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc);
  * Return: True if 4 port concurrency allowed or not.
  */
 bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc);
-
-/**
- * ucfg_nan_get_is_separate_nan_iface() - get is_separate_nan_iface value
- * @psoc: pointer to psoc object
- *
- * Return: True if host supports separate vdev for NAN, false otherwise
- */
-bool
-ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_disable_nan_discovery() - Disable NAN discovery
@@ -453,6 +456,11 @@ bool ucfg_nan_is_sta_ndp_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 	return false;
 }
 
+static inline void
+ucfg_nan_set_vdev_creation_supp_by_fw(struct wlan_objmgr_psoc *psoc, bool set)
+{
+}
+
 static inline
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 {
@@ -461,12 +469,6 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 
 static inline
 bool ucfg_nan_is_sta_nan_ndi_4_port_allowed(struct wlan_objmgr_psoc *psoc)
-{
-	return false;
-}
-
-static inline
-bool ucfg_nan_get_is_separate_nan_iface(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
