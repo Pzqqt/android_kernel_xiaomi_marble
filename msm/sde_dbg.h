@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef SDE_DBG_H_
@@ -318,6 +318,14 @@ void sde_dbg_reg_register_dump_range(const char *base_name,
 		uint32_t xin_id);
 
 /**
+ * sde_dbg_dsi_ctrl_register - register a dsi ctrl for debugbus dumping
+ * @base:	iomem base address for dsi controller
+ * @name:	name of the dsi controller
+ * Returns:	0 or -ERROR
+ */
+int sde_dbg_dsi_ctrl_register(void __iomem *base, const char *name);
+
+/**
  * sde_dbg_set_sde_top_offset - set the target specific offset from mdss base
  *	address of the top registers. Used for accessing debug bus controls.
  * @blk_off: offset from mdss base of the top block
@@ -353,13 +361,6 @@ static inline void sde_rsc_debug_dump(u32 mux_sel)
  */
 void sde_rsc_debug_dump(u32 mux_sel);
 #endif
-
-/**
- * dsi_ctrl_debug_dump - dump dsi debug dump status
- * @entries:	array of debug bus control values
- * @size:	size of the debug bus control array
- */
-void dsi_ctrl_debug_dump(u32 *entries, u32 size);
 
 #else
 static inline struct sde_dbg_evtlog *sde_evtlog_init(void)
@@ -433,6 +434,11 @@ static inline void sde_dbg_reg_register_dump_range(const char *base_name,
 {
 }
 
+int sde_dbg_register_dsi_ctrl(void __iomem *base, const char *name)
+{
+	return 0;
+}
+
 void sde_dbg_set_sde_top_offset(u32 blk_off)
 {
 }
@@ -449,10 +455,6 @@ static inline int sde_evtlog_get_filter(struct sde_dbg_evtlog *evtlog,
 }
 
 static inline void sde_rsc_debug_dump(u32 mux_sel)
-{
-}
-
-static inline void dsi_ctrl_debug_dump(u32 entries, u32 size)
 {
 }
 

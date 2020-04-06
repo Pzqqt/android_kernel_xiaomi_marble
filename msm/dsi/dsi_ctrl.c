@@ -1887,6 +1887,7 @@ static int dsi_ctrl_dev_probe(struct platform_device *pdev)
 	}
 
 	item->ctrl = dsi_ctrl;
+	sde_dbg_dsi_ctrl_register(dsi_ctrl->hw.base, dsi_ctrl->name);
 
 	mutex_lock(&dsi_ctrl_list_lock);
 	list_add(&item->list, &dsi_ctrl_list);
@@ -1962,29 +1963,6 @@ static struct platform_driver dsi_ctrl_driver = {
 	},
 };
 
-#if defined(CONFIG_DEBUG_FS)
-
-void dsi_ctrl_debug_dump(u32 *entries, u32 size)
-{
-	struct list_head *pos, *tmp;
-	struct dsi_ctrl *ctrl = NULL;
-
-	if (!entries || !size)
-		return;
-
-	mutex_lock(&dsi_ctrl_list_lock);
-	list_for_each_safe(pos, tmp, &dsi_ctrl_list) {
-		struct dsi_ctrl_list_item *n;
-
-		n = list_entry(pos, struct dsi_ctrl_list_item, list);
-		ctrl = n->ctrl;
-		DSI_ERR("dsi ctrl:%d\n", ctrl->cell_index);
-		ctrl->hw.ops.debug_bus(&ctrl->hw, entries, size);
-	}
-	mutex_unlock(&dsi_ctrl_list_lock);
-}
-
-#endif
 /**
  * dsi_ctrl_get() - get a dsi_ctrl handle from an of_node
  * @of_node:    of_node of the DSI controller.
