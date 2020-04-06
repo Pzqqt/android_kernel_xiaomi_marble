@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@
 static inline struct wlan_lmac_if_p2p_rx_ops *
 target_if_psoc_get_p2p_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &(psoc->soc_cb.rx_ops.p2p);
+	return &(psoc->soc_cb.rx_ops->p2p);
 }
 
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD

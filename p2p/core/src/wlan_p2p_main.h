@@ -30,6 +30,7 @@
 #include <qdf_lock.h>
 #include <qdf_idr.h>
 #include <qdf_mc_timer.h>
+#include <wlan_scan_public_structs.h>
 
 #define MAX_QUEUE_LENGTH 20
 #define P2P_NOA_ATTR_IND 0x1090
