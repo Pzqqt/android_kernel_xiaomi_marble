@@ -2346,7 +2346,7 @@ int sde_rm_reserve(
 	 * comes again after earlier commit gets processed.
 	 */
 
-	if (test_only && rsvp_nxt) {
+	if (test_only && rsvp_cur && rsvp_nxt) {
 		SDE_ERROR("cur %d nxt %d enc %d conn %d\n", rsvp_cur->seq,
 			 rsvp_nxt->seq, enc->base.id,
 			 conn_state->connector->base.id);
