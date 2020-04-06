@@ -3885,6 +3885,7 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	struct dp_ast_entry *ast_entry;
 	uint32_t peer_id;
 	struct dp_peer *peer;
+	struct dp_vdev *vdev = NULL;
 
 	if (rx_user_status->ast_index >=
 	    wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
@@ -3913,6 +3914,21 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL, peer->mac_addr.raw)) {
 		dp_peer_unref_del_find_by_id(peer);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS) {
+		int8_t match = 0;
+
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (!qdf_mem_cmp(vdev->mac_addr.raw,
+					 ppdu_info->rx_info.mac_addr1,
+					 QDF_MAC_ADDR_SIZE)) {
+				match = 1;
+				break;
+			}
+		}
+		if (!match)
+			return QDF_STATUS_E_FAILURE;
 	}
 
 	set_mpdu_info(&tx_capture_info,
@@ -4090,6 +4106,11 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 
 	rx_status = &ppdu_info->rx_status;
 
+	if (ppdu_info->sw_frame_group_id ==
+	    HAL_MPDU_SW_FRAME_GROUP_CTRL_RTS) {
+		return dp_send_cts_frame_to_stack(soc, pdev, ppdu_info);
+	}
+
 	if (!rx_status->rxpcu_filter_pass)
 		return QDF_STATUS_SUCCESS;
 
@@ -4103,10 +4124,6 @@ QDF_STATUS dp_send_ack_frame_to_stack(struct dp_soc *soc,
 	    (ppdu_info->rx_info.mac_addr1[0] & 1)) {
 		return QDF_STATUS_SUCCESS;
 	}
-
-	if (ppdu_info->sw_frame_group_id ==
-	    HAL_MPDU_SW_FRAME_GROUP_CTRL_RTS)
-		return dp_send_cts_frame_to_stack(soc, pdev, ppdu_info);
 
 	if (ppdu_info->sw_frame_group_id == HAL_MPDU_SW_FRAME_GROUP_CTRL_BAR)
 		return QDF_STATUS_SUCCESS;
