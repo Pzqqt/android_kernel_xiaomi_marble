@@ -3367,6 +3367,48 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 	dp_tx_comp_free_buf(soc, desc);
 }
 
+#ifdef DISABLE_DP_STATS
+/**
+ * dp_tx_update_connectivity_stats() - update tx connectivity stats
+ * @soc: core txrx main context
+ * @tx_desc: tx desc
+ * @status: tx status
+ *
+ * Return: none
+ */
+static inline
+void dp_tx_update_connectivity_stats(struct dp_soc *soc,
+				     struct dp_tx_desc_s *tx_desc,
+				     uint8_t status)
+{
+}
+#else
+static inline
+void dp_tx_update_connectivity_stats(struct dp_soc *soc,
+				     struct dp_tx_desc_s *tx_desc,
+				     uint8_t status)
+{
+	void *osif_dev;
+	ol_txrx_stats_rx_fp stats_cbk;
+	uint8_t pkt_type;
+
+	qdf_assert(tx_desc);
+
+	if (!tx_desc->vdev ||
+	    !tx_desc->vdev->osif_vdev ||
+	    !tx_desc->vdev->stats_cb)
+		return;
+
+	osif_dev = tx_desc->vdev->osif_vdev;
+	stats_cbk = tx_desc->vdev->stats_cb;
+
+	stats_cbk(tx_desc->nbuf, osif_dev, PKT_TYPE_TX_HOST_FW_SENT, &pkt_type);
+	if (status == HAL_TX_TQM_RR_FRAME_ACKED)
+		stats_cbk(tx_desc->nbuf, osif_dev, PKT_TYPE_TX_ACK_CNT,
+			  &pkt_type);
+}
+#endif
+
 /**
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @tx_desc: software descriptor head pointer
@@ -3434,6 +3476,8 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				ts->transmit_cnt, ts->tid, ts->peer_id);
 
 	soc = vdev->pdev->soc;
+
+	dp_tx_update_connectivity_stats(soc, tx_desc, ts->status);
 
 	/* Update SoC level stats */
 	DP_STATS_INCC(soc, tx.dropped_fw_removed, 1,

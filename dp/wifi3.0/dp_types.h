@@ -2123,6 +2123,9 @@ struct dp_vdev {
 
 	/* vap bss peer mac addr */
 	uint8_t vap_bss_peer_mac_addr[QDF_MAC_ADDR_SIZE];
+
+	/* callback to collect connectivity stats */
+	ol_txrx_stats_rx_fp stats_cb;
 };
 
 

@@ -4819,6 +4819,7 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc,
 	vdev->osif_rx_mon = txrx_ops->rx.mon;
 	vdev->osif_tx_free_ext = txrx_ops->tx.tx_free_ext;
 	vdev->tx_comp = txrx_ops->tx.tx_comp;
+	vdev->stats_cb = txrx_ops->rx.stats_rx;
 #ifdef notyet
 #if ATH_SUPPORT_WAPI
 	vdev->osif_check_wai = txrx_ops->rx.wai_check;
