@@ -3578,61 +3578,14 @@ void sde_encoder_trigger_kickoff_pending(struct drm_encoder *drm_enc)
 	sde_enc->idle_pc_restore = false;
 }
 
-static u32 _sde_encoder_calculate_linetime(struct sde_encoder_virt *sde_enc,
-		struct drm_display_mode *mode)
-{
-	u64 pclk_rate;
-	u32 pclk_period;
-	u32 line_time;
-
-	/*
-	 * For linetime calculation, only operate on master encoder.
-	 */
-	if (!sde_enc->cur_master)
-		return 0;
-
-	if (!sde_enc->cur_master->ops.get_line_count) {
-		SDE_ERROR("get_line_count function not defined\n");
-		return 0;
-	}
-
-	pclk_rate = mode->clock; /* pixel clock in kHz */
-	if (pclk_rate == 0) {
-		SDE_ERROR("pclk is 0, cannot calculate line time\n");
-		return 0;
-	}
-
-	pclk_period = DIV_ROUND_UP_ULL(1000000000ull, pclk_rate);
-	if (pclk_period == 0) {
-		SDE_ERROR("pclk period is 0\n");
-		return 0;
-	}
-
-	/*
-	 * Line time calculation based on Pixel clock and HTOTAL.
-	 * Final unit is in ns.
-	 */
-	line_time = (pclk_period * mode->htotal) / 1000;
-	if (line_time == 0) {
-		SDE_ERROR("line time calculation is 0\n");
-		return 0;
-	}
-
-	SDE_DEBUG_ENC(sde_enc,
-			"clk_rate=%lldkHz, clk_period=%d, linetime=%dns\n",
-			pclk_rate, pclk_period, line_time);
-
-	return line_time;
-}
-
 static int _sde_encoder_wakeup_time(struct drm_encoder *drm_enc,
 		ktime_t *wakeup_time)
 {
 	struct drm_display_mode *mode;
 	struct sde_encoder_virt *sde_enc;
-	u32 cur_line;
-	u32 line_time;
-	u32 vtotal, time_to_vsync;
+	u32 cur_line, lines_left;
+	u32 line_time, mdp_transfer_time_us;
+	u32 vtotal, time_to_vsync_us, threshold_time_us = 0;
 	ktime_t cur_time;
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
@@ -3642,31 +3595,43 @@ static int _sde_encoder_wakeup_time(struct drm_encoder *drm_enc,
 	}
 
 	mode = &sde_enc->cur_master->cached_mode;
+	mdp_transfer_time_us = sde_enc->mode_info.mdp_transfer_time_us;
 
-	line_time = _sde_encoder_calculate_linetime(sde_enc, mode);
-	if (!line_time)
+	vtotal = mode->vtotal;
+	if (!mdp_transfer_time_us) {
+		/* mdp_transfer_time set to 0 for video mode */
+		line_time = (1000000 / sde_enc->mode_info.frame_rate) / vtotal;
+	} else {
+		line_time = mdp_transfer_time_us / vtotal;
+		threshold_time_us = ((1000000 / sde_enc->mode_info.frame_rate)
+						- mdp_transfer_time_us);
+	}
+
+	if (!sde_enc->cur_master->ops.get_line_count) {
+		SDE_DEBUG_ENC(sde_enc, "can't get master line count\n");
 		return -EINVAL;
+	}
 
 	cur_line = sde_enc->cur_master->ops.get_line_count(sde_enc->cur_master);
 
-	vtotal = mode->vtotal;
-	if (cur_line >= vtotal)
-		time_to_vsync = line_time * vtotal;
-	else
-		time_to_vsync = line_time * (vtotal - cur_line);
+	lines_left = (cur_line >= vtotal) ? vtotal : (vtotal - cur_line);
 
-	if (time_to_vsync == 0) {
+	time_to_vsync_us = line_time * lines_left;
+
+	if (!time_to_vsync_us) {
 		SDE_ERROR("time to vsync should not be zero, vtotal=%d\n",
 				vtotal);
 		return -EINVAL;
 	}
 
 	cur_time = ktime_get();
-	*wakeup_time = ktime_add_ns(cur_time, time_to_vsync);
+	*wakeup_time = ktime_add_us(cur_time, time_to_vsync_us);
+	if (threshold_time_us)
+		*wakeup_time = ktime_add_us(*wakeup_time, threshold_time_us);
 
 	SDE_DEBUG_ENC(sde_enc,
 			"cur_line=%u vtotal=%u time_to_vsync=%u, cur_time=%lld, wakeup_time=%lld\n",
-			cur_line, vtotal, time_to_vsync,
+			cur_line, vtotal, time_to_vsync_us,
 			ktime_to_ms(cur_time),
 			ktime_to_ms(*wakeup_time));
 	return 0;
