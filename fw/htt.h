@@ -202,9 +202,10 @@
  * 3.78 Add htt_ppdu_id def.
  * 3.79 Add HTT_NUM_AC_WMM def.
  * 3.80 Add add WDS_FREE_COUNT bitfield in T2H PEER_UNMAP_V2 msg.
+ * 3.81 Add ppdu_start_tsf field in HTT_TX_WBM_COMPLETION_V2
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 80
+#define HTT_CURRENT_VERSION_MINOR 81
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -2446,7 +2447,9 @@ PREPACK struct htt_tx_wbm_transmit_status {
                               */
        reserved0:        8;
    A_UINT32
-       reserved1:       32;
+       ppdu_start_tsf:  32;  /* PPDU Start timestamp added for multicast
+                              * packets in the wbm completion path
+                              */
 } POSTPACK;
 
 /* DWORD 4 */
