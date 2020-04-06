@@ -4654,15 +4654,15 @@ static void _sde_dbg_dump_sde_dbg_bus(struct sde_dbg_sde_debug_bus *bus)
 			bus->cmn.name);
 }
 
-static void _sde_dbg_dump_vbif_debug_bus_entry(
+static int _sde_dbg_dump_vbif_debug_bus_entry(
 		struct vbif_debug_bus_entry *head, void __iomem *mem_base,
 		u32 *dump_addr, bool in_log)
 {
-	int i, j;
+	int i, j, count = 0;
 	u32 val;
 
 	if (!dump_addr && !in_log)
-		return;
+		return 0;
 
 	for (i = 0; i < head->block_cnt; i++) {
 		writel_relaxed(1 << (i + head->bit_offset),
@@ -4679,6 +4679,7 @@ static void _sde_dbg_dump_vbif_debug_bus_entry(
 				*dump_addr++ = i;
 				*dump_addr++ = j;
 				*dump_addr++ = val;
+				count += DUMP_CLMN_COUNT;
 			}
 			if (in_log)
 				dev_info(sde_dbg_base.dev,
@@ -4686,6 +4687,8 @@ static void _sde_dbg_dump_vbif_debug_bus_entry(
 					head->block_bus_addr, i, j, val);
 		}
 	}
+
+	return count;
 }
 
 static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
@@ -4701,7 +4704,7 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 	struct vbif_debug_bus_entry *dbg_bus;
 	u32 bus_size;
 	struct sde_dbg_reg_base *reg_base;
-	int rc;
+	int rc, count;
 
 	if (!bus || !bus->cmn.entries_size)
 		return;
@@ -4719,23 +4722,23 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 
 	dbg_bus = bus->entries;
 	bus_size = bus->cmn.entries_size;
-	list_size = bus->cmn.entries_size;
 	dump_mem = &bus->cmn.dumped_content;
 
 	dev_info(sde_dbg_base.dev, "======== start %s dump =========\n",
 			bus->cmn.name);
 
-	if (!dump_mem || !dbg_bus || !bus_size || !list_size)
+	if (!dump_mem || !dbg_bus || !bus_size)
 		return;
 
 	/* allocate memory for each test point */
 	for (i = 0; i < bus_size; i++) {
 		head = dbg_bus + i;
-		list_size += (head->block_cnt * head->test_pnt_cnt);
+		list_size += (head->block_cnt * (head->test_pnt_cnt -
+				head->test_pnt_start));
 	}
 
 	/* 4 bytes * 4 entries for each test point*/
-	list_size *= 16;
+	list_size *= DUMP_CLMN_COUNT * sizeof(u32);
 
 	in_log = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_LOG);
 	in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
@@ -4810,10 +4813,10 @@ static void _sde_dbg_dump_vbif_dbg_bus(struct sde_dbg_vbif_debug_bus *bus)
 		/* make sure that other bus is off */
 		wmb();
 
-		_sde_dbg_dump_vbif_debug_bus_entry(head, mem_base, dump_addr,
-				in_log);
-		if (dump_addr)
-			dump_addr += (head->block_cnt * head->test_pnt_cnt * 4);
+		count = _sde_dbg_dump_vbif_debug_bus_entry(head, mem_base,
+				dump_addr, in_log);
+		if (dump_addr && (count > 0))
+			dump_addr += count;
 	}
 
 	pm_runtime_put_sync(sde_dbg_base.dev);
