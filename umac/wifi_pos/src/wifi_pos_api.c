@@ -28,6 +28,7 @@
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_lmac_if_def.h"
 
 QDF_STATUS wifi_pos_init(void)
 {

@@ -162,8 +162,14 @@ int target_if_cfr_get_target_type(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t target_type = 0;
 	struct wlan_lmac_if_target_tx_ops *target_type_tx_ops;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
-	target_type_tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cfr_err("tx_ops is NULL");
+		return target_type;
+	}
+	target_type_tx_ops = &tx_ops->target_tx_ops;
 
 	if (target_type_tx_ops->tgt_get_tgt_type)
 		target_type = target_type_tx_ops->tgt_get_tgt_type(psoc);
@@ -468,8 +474,15 @@ void target_if_cfr_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 void target_if_cfr_set_cfr_support(struct wlan_objmgr_psoc *psoc,
 				   uint8_t value)
 {
-	if (psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_support_set)
-		psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_support_set(psoc, value);
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		cfr_err("rx_ops is NULL");
+		return;
+	}
+	if (rx_ops->cfr_rx_ops.cfr_support_set)
+		rx_ops->cfr_rx_ops.cfr_support_set(psoc, value);
 }
 
 void target_if_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
@@ -477,11 +490,16 @@ void target_if_cfr_info_send(struct wlan_objmgr_pdev *pdev, void *head,
 			     size_t tlen)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	if (psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send)
-		psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send(pdev, head, hlen,
-							     data, dlen, tail,
-							     tlen);
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		cfr_err("rx_ops is NULL");
+		return;
+	}
+	if (rx_ops->cfr_rx_ops.cfr_info_send)
+		rx_ops->cfr_rx_ops.cfr_info_send(pdev, head, hlen, data, dlen,
+						 tail, tlen);
 }

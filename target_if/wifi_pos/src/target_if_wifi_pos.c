@@ -321,12 +321,20 @@ void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
 						struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
 	if (!psoc) {
 		target_if_err("passed psoc is NULL");
 		return NULL;
 	}
 
-	return &psoc->soc_cb.rx_ops.wifi_pos_rx_ops;
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		target_if_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->wifi_pos_rx_ops;
 }
 
 QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)

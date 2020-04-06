@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,6 +70,7 @@ wlan_psoc_get_green_ap_tx_ops(struct wlan_pdev_green_ap_ctx *green_ap_ctx)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev = green_ap_ctx->pdev;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	if (!pdev) {
 		green_ap_err("pdev context obtained is NULL");
@@ -82,7 +83,13 @@ wlan_psoc_get_green_ap_tx_ops(struct wlan_pdev_green_ap_ctx *green_ap_ctx)
 		return NULL;
 	}
 
-	return &((psoc->soc_cb.tx_ops.green_ap_tx_ops));
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		green_ap_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->green_ap_tx_ops;
 }
 
 bool wlan_is_egap_enabled(struct wlan_pdev_green_ap_ctx *green_ap_ctx)

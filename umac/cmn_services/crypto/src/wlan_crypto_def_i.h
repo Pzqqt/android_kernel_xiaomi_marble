@@ -161,18 +161,18 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 	a[7] = val & 0xff;
 }
 
-#define WLAN_CRYPTO_TX_OPS_ALLOCKEY(psoc) \
-		(psoc->soc_cb.tx_ops.crypto_tx_ops.allockey)
-#define WLAN_CRYPTO_TX_OPS_SETKEY(psoc) \
-		(psoc->soc_cb.tx_ops.crypto_tx_ops.setkey)
-#define WLAN_CRYPTO_TX_OPS_DELKEY(psoc) \
-		(psoc->soc_cb.tx_ops.crypto_tx_ops.delkey)
-#define WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc) \
-		(psoc->soc_cb.tx_ops.crypto_tx_ops.defaultkey)
-#define WLAN_CRYPTO_TX_OPS_SET_KEY(psoc) \
-		((psoc)->soc_cb.tx_ops.crypto_tx_ops.set_key)
-#define WLAN_CRYPTO_TX_OPS_GETPN(psoc) \
-		((psoc)->soc_cb.tx_ops.crypto_tx_ops.getpn)
+#define WLAN_CRYPTO_TX_OPS_ALLOCKEY(tx_ops) \
+	((tx_ops)->crypto_tx_ops.allockey)
+#define WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops) \
+	((tx_ops)->crypto_tx_ops.setkey)
+#define WLAN_CRYPTO_TX_OPS_DELKEY(tx_ops) \
+	((tx_ops)->crypto_tx_ops.delkey)
+#define WLAN_CRYPTO_TX_OPS_DEFAULTKEY(tx_ops) \
+	((tx_ops)->crypto_tx_ops.defaultkey)
+#define WLAN_CRYPTO_TX_OPS_SET_KEY(tx_ops) \
+	((tx_ops)->crypto_tx_ops.set_key)
+#define WLAN_CRYPTO_TX_OPS_GETPN(tx_ops) \
+	((tx_ops)->crypto_tx_ops.getpn)
 
 /* unalligned little endian access */
 #ifndef LE_READ_2

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -28,7 +28,15 @@
 static inline struct wlan_lmac_if_ftm_tx_ops *
 wlan_psoc_get_ftm_txops(struct wlan_objmgr_psoc *psoc)
 {
-	return &((psoc->soc_cb.tx_ops.ftm_tx_ops));
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		ftm_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->ftm_tx_ops;
 }
 
 static QDF_STATUS
@@ -122,6 +130,10 @@ wlan_ftm_testmode_attach(struct wlan_objmgr_psoc *psoc)
 	struct wlan_lmac_if_ftm_tx_ops *ftm_tx_ops;
 
 	ftm_tx_ops = wlan_psoc_get_ftm_txops(psoc);
+	if (!ftm_tx_ops) {
+		ftm_err("ftm_tx_ops is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
 
 	if (ftm_tx_ops->ftm_attach)
 		return ftm_tx_ops->ftm_attach(psoc);
@@ -135,6 +147,10 @@ wlan_ftm_testmode_detach(struct wlan_objmgr_psoc *psoc)
 	struct wlan_lmac_if_ftm_tx_ops *ftm_tx_ops;
 
 	ftm_tx_ops = wlan_psoc_get_ftm_txops(psoc);
+	if (!ftm_tx_ops) {
+		ftm_err("ftm_tx_ops is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
 
 	if (ftm_tx_ops->ftm_detach)
 		return ftm_tx_ops->ftm_detach(psoc);
@@ -154,6 +170,10 @@ wlan_ftm_cmd_send(struct wlan_objmgr_pdev *pdev, uint8_t *buf,
 		return QDF_STATUS_E_NOENT;
 
 	ftm_tx_ops = wlan_psoc_get_ftm_txops(psoc);
+	if (!ftm_tx_ops) {
+		ftm_err("ftm_tx_ops is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
 
 	if (ftm_tx_ops->ftm_cmd_send)
 		return ftm_tx_ops->ftm_cmd_send(pdev, buf, len, pdev_id);

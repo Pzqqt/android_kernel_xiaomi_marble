@@ -114,7 +114,15 @@ static inline bool target_if_vdev_mgr_is_panic_on_bug(void)
 static inline struct wlan_lmac_if_mlme_rx_ops *
 target_if_vdev_mgr_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.rx_ops.mops;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		qdf_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->mops;
 }
 
 /**

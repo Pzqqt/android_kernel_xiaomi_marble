@@ -641,6 +641,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 	enum QDF_OPMODE vdev_mode;
 	uint8_t igtk_idx = 0;
 	uint8_t bigtk_idx = 0;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	if (!vdev || !req_key || req_key->keylen > (sizeof(req_key->keydata))) {
 		crypto_err("Invalid params vdev%pK, req_key%pK", vdev, req_key);
@@ -935,14 +936,20 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		crypto_err("tx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	qdf_mem_copy(key->keyval, req_key->keydata, sizeof(key->keyval));
 	key->valid = 1;
 	if ((IS_MGMT_CIPHER(req_key->type))) {
 		if (HAS_CIPHER_CAP(crypto_params,
 					WLAN_CRYPTO_CAP_PMF_OFFLOAD) ||
 					is_bigtk(req_key->keyix)) {
-			if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-				WLAN_CRYPTO_TX_OPS_SETKEY(psoc)(vdev,
+			if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+				WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)(vdev,
 						key, macaddr, req_key->type);
 			}
 		}
@@ -953,9 +960,9 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 		/* Take request key object to FILS setkey */
 		key->private = req_key;
 	} else {
-		if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-			WLAN_CRYPTO_TX_OPS_SETKEY(psoc)(vdev, key,
-							macaddr, req_key->type);
+		if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+			WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)(vdev, key, macaddr,
+							  req_key->type);
 		}
 	}
 	status = cipher->setkey(key);
@@ -1094,6 +1101,7 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_cipher *cipher_table;
 	struct wlan_crypto_key *key;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE] =
 			{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
@@ -1129,10 +1137,17 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_E_NOENT;
 		}
 		key = wlan_crypto_peer_getkey(peer, req_key->keyix);
-		if (WLAN_CRYPTO_TX_OPS_GETPN(psoc) &&
+
+		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+		if (!tx_ops) {
+			crypto_err("tx_ops is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		if (WLAN_CRYPTO_TX_OPS_GETPN(tx_ops) &&
 		    (req_key->flags & WLAN_CRYPTO_KEY_GET_PN))
-			WLAN_CRYPTO_TX_OPS_GETPN(psoc)(vdev, mac_addr,
-						       req_key->type);
+			WLAN_CRYPTO_TX_OPS_GETPN(tx_ops)(vdev, mac_addr,
+							 req_key->type);
 		wlan_objmgr_peer_release_ref(peer, WLAN_CRYPTO_ID);
 		if (!key)
 			return QDF_STATUS_E_INVAL;
@@ -1187,6 +1202,7 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_key *key;
 	struct wlan_crypto_cipher *cipher_table;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 	uint8_t bssid_mac[QDF_MAC_ADDR_SIZE];
 
 	if (!vdev || !macaddr ||
@@ -1266,10 +1282,16 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		cipher_table = (struct wlan_crypto_cipher *)key->cipher_table;
 		qdf_mem_zero(key->keyval, sizeof(key->keyval));
 
+		tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+		if (!tx_ops) {
+			crypto_err("tx_ops is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+
 		if (!IS_FILS_CIPHER(cipher_table->cipher) &&
-		    WLAN_CRYPTO_TX_OPS_DELKEY(psoc)) {
-			WLAN_CRYPTO_TX_OPS_DELKEY(psoc)(vdev, key,
-						macaddr, cipher_table->cipher);
+		    WLAN_CRYPTO_TX_OPS_DELKEY(tx_ops)) {
+			WLAN_CRYPTO_TX_OPS_DELKEY(tx_ops)(vdev, key, macaddr,
+							  cipher_table->cipher);
 		} else if (IS_FILS_CIPHER(cipher_table->cipher)) {
 			if (key->private)
 				qdf_mem_free(key->private);
@@ -1294,16 +1316,22 @@ static QDF_STATUS wlan_crypto_set_default_key(struct wlan_objmgr_vdev *vdev,
 					      uint8_t key_idx, uint8_t *macaddr)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		crypto_err("psoc is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
-	if (WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)) {
-		WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)(vdev, key_idx,
-						    macaddr);
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		crypto_err("tx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
 	}
+
+	if (WLAN_CRYPTO_TX_OPS_DEFAULTKEY(tx_ops))
+		WLAN_CRYPTO_TX_OPS_DEFAULTKEY(tx_ops)(vdev, key_idx, macaddr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3318,6 +3346,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_key *sta_key;
 	struct wlan_crypto_cipher *cipher_table;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 	uint8_t *mac_addr;
 	int i;
 	enum QDF_OPMODE opmode;
@@ -3379,6 +3408,12 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 							key->cipher_table;
 
 			if (cipher_table->cipher == WLAN_CRYPTO_CIPHER_WEP) {
+				tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+				if (!tx_ops) {
+					crypto_err("tx_ops is NULL");
+					return QDF_STATUS_E_INVAL;
+				}
+
 				sta_key = qdf_mem_malloc(
 						sizeof(struct wlan_crypto_key));
 				if (!sta_key) {
@@ -3401,19 +3436,21 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 				/* setting the broadcast/multicast key for sta*/
 				if (opmode == QDF_STA_MODE ||
 						opmode == QDF_IBSS_MODE){
-					if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-						WLAN_CRYPTO_TX_OPS_SETKEY(psoc)(
-							vdev, sta_key, mac_addr,
+					if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+						WLAN_CRYPTO_TX_OPS_SETKEY(
+							tx_ops)(vdev, sta_key,
+							mac_addr,
 							cipher_table->cipher);
 					}
 				}
 
 				/* setting unicast key */
 				sta_key->flags &= ~WLAN_CRYPTO_KEY_GROUP;
-				if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-					WLAN_CRYPTO_TX_OPS_SETKEY(psoc)(vdev,
-						sta_key, mac_addr,
-						cipher_table->cipher);
+				if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+					WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)(
+							vdev, sta_key,
+							mac_addr,
+							cipher_table->cipher);
 				}
 			}
 		}
@@ -3456,8 +3493,16 @@ QDF_STATUS wlan_crypto_register_crypto_rx_ops(
 struct wlan_lmac_if_crypto_rx_ops *wlan_crypto_get_crypto_rx_ops(
 					struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
-	return &(psoc->soc_cb.rx_ops.crypto_rx_ops);
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+
+	if (!rx_ops) {
+		crypto_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->crypto_rx_ops;
 }
 qdf_export_symbol(wlan_crypto_get_crypto_rx_ops);
 
@@ -3755,6 +3800,7 @@ static void crypto_plumb_peer_keys(struct wlan_objmgr_vdev *vdev,
 	struct wlan_crypto_comp_priv *crypto_priv;
 	struct wlan_crypto_params *crypto_params;
 	struct wlan_crypto_key *key = NULL;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 	int i;
 
 	if ((!peer) || (!vdev) || (!psoc)) {
@@ -3773,8 +3819,14 @@ static void crypto_plumb_peer_keys(struct wlan_objmgr_vdev *vdev,
 	for (i = 0; i < WLAN_CRYPTO_MAXKEYIDX; i++) {
 		key = crypto_priv->key[i];
 		if (key && key->valid) {
-			if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-				WLAN_CRYPTO_TX_OPS_SETKEY(psoc)
+			tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+
+			if (!tx_ops) {
+				crypto_err("tx_ops is NULL");
+				return;
+			}
+			if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+				WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)
 					(
 					 vdev,
 					 key,
@@ -3805,6 +3857,7 @@ void wlan_crypto_restore_keys(struct wlan_objmgr_vdev *vdev)
 			{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	psoc = wlan_vdev_get_psoc(vdev);
@@ -3833,8 +3886,13 @@ void wlan_crypto_restore_keys(struct wlan_objmgr_vdev *vdev)
 			}
 			key = crypto_priv->key[i];
 			if (key && key->valid) {
-				if (WLAN_CRYPTO_TX_OPS_SETKEY(psoc)) {
-					WLAN_CRYPTO_TX_OPS_SETKEY(psoc)
+				tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+				if (!tx_ops) {
+					crypto_err("tx_ops is NULL");
+					return;
+				}
+				if (WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)) {
+					WLAN_CRYPTO_TX_OPS_SETKEY(tx_ops)
 						(
 						 vdev,
 						 key,
@@ -4317,10 +4375,18 @@ QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 				   enum wlan_crypto_key_type key_type)
 {
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_vdev_get_psoc(vdev);
-	if (psoc && WLAN_CRYPTO_TX_OPS_SET_KEY(psoc))
-		WLAN_CRYPTO_TX_OPS_SET_KEY(psoc)(vdev, req, key_type);
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		crypto_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (psoc && WLAN_CRYPTO_TX_OPS_SET_KEY(tx_ops))
+		WLAN_CRYPTO_TX_OPS_SET_KEY(tx_ops)(vdev, req, key_type);
 	else
 		return QDF_STATUS_E_FAILURE;
 

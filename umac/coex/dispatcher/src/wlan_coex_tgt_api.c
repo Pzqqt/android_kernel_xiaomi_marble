@@ -26,7 +26,15 @@
 static inline struct wlan_lmac_if_coex_tx_ops *
 wlan_psoc_get_coex_txops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.tx_ops.coex_ops;
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		coex_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->coex_ops;
 }
 
 static inline struct wlan_lmac_if_coex_tx_ops *

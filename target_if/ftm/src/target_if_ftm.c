@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -32,7 +32,15 @@
 static inline struct wlan_lmac_if_ftm_rx_ops *
 target_if_ftm_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.rx_ops.ftm_rx_ops;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		ftm_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->ftm_rx_ops;
 }
 
 static int
@@ -89,7 +97,10 @@ target_if_ftm_process_utf_event(ol_scn_t sc, uint8_t *event_buf, uint32_t len)
 	}
 
 	ftm_rx_ops = target_if_ftm_get_rx_ops(psoc);
-
+	if (!ftm_rx_ops) {
+		ftm_err("ftm_rx_ops is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	if (ftm_rx_ops->ftm_ev_handler) {
 		status = ftm_rx_ops->ftm_ev_handler(pdev,
 				event.data, event.datalen);

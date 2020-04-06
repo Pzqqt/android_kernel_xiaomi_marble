@@ -80,12 +80,20 @@ static bool wifi_pos_get_tlv_support(struct wlan_objmgr_psoc *psoc)
 struct wlan_lmac_if_wifi_pos_tx_ops *
 	wifi_pos_get_tx_ops(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_tx_ops *tx_ops;
+
 	if (!psoc) {
 		wifi_pos_err("psoc is null");
 		return NULL;
 	}
 
-	return &psoc->soc_cb.tx_ops.wifi_pos_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		wifi_pos_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	return &tx_ops->wifi_pos_tx_ops;
 }
 
 #ifdef CNSS_GENL

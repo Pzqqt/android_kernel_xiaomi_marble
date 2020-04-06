@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -61,10 +61,18 @@ QDF_STATUS wlan_lmac_if_set_umac_txops_registration_cb
 static inline struct wlan_lmac_if_mgmt_txrx_rx_ops *
 wlan_lmac_if_get_mgmt_txrx_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
 	if (!psoc)
 		return NULL;
 
-	return &psoc->soc_cb.rx_ops.mgmt_txrx_rx_ops;
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		qdf_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->mgmt_txrx_rx_ops;
 }
 
 /**
@@ -78,10 +86,18 @@ wlan_lmac_if_get_mgmt_txrx_rx_ops(struct wlan_objmgr_psoc *psoc)
 static inline struct wlan_lmac_if_dfs_rx_ops *
 wlan_lmac_if_get_dfs_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
 	if (!psoc)
 		return NULL;
 
-    return &psoc->soc_cb.rx_ops.dfs_rx_ops;
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		qdf_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->dfs_rx_ops;
 }
 
 /**
@@ -95,10 +111,18 @@ wlan_lmac_if_get_dfs_rx_ops(struct wlan_objmgr_psoc *psoc)
 static inline struct wlan_lmac_if_reg_rx_ops *
 wlan_lmac_if_get_reg_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
 	if (!psoc)
 		return NULL;
 
-	return &psoc->soc_cb.rx_ops.reg_rx_ops;
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		qdf_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->reg_rx_ops;
 }
 
 #ifdef WLAN_SUPPORT_GREEN_AP
@@ -113,10 +137,18 @@ wlan_lmac_if_get_reg_rx_ops(struct wlan_objmgr_psoc *psoc)
 static inline struct wlan_lmac_if_green_ap_rx_ops *
 wlan_lmac_if_get_green_ap_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
 	if (!psoc)
 		return NULL;
 
-	return &psoc->soc_cb.rx_ops.green_ap_rx_ops;
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		qdf_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->green_ap_rx_ops;
 }
 #endif
 

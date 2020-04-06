@@ -30,6 +30,8 @@
 #include "service_ready_param.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_mgmt_txrx_utils_api.h"
+#include <wlan_dfs_public_struct.h>
+#include <wlan_crypto_global_def.h>
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include "wmi_unified_pmo_api.h"
 #endif

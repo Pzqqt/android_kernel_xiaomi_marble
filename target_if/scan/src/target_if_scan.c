@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,15 @@
 static inline struct wlan_lmac_if_scan_rx_ops *
 target_if_scan_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 {
-	return &psoc->soc_cb.rx_ops.scan;
+	struct wlan_lmac_if_rx_ops *rx_ops;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		target_if_err("rx_ops is NULL");
+		return NULL;
+	}
+
+	return &rx_ops->scan;
 }
 
 static int
@@ -73,6 +81,11 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	}
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (!scan_rx_ops) {
+		target_if_err("scan_rx_ops is NULL");
+		return -EINVAL;
+	}
+
 	if (scan_rx_ops->scan_ev_handler) {
 		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -130,6 +143,11 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 			event_info->event.vdev_id);
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (!scan_rx_ops) {
+		target_if_err("scan_rx_ops is NULL");
+		return -EINVAL;
+	}
+
 	if (scan_rx_ops->scan_ev_handler) {
 		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -185,6 +203,11 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 			event_info->event.vdev_id);
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (!scan_rx_ops) {
+		target_if_err("scan_rx_ops is NULL");
+		return -EINVAL;
+	}
+
 	if (scan_rx_ops->scan_ev_handler) {
 		status = scan_rx_ops->scan_ev_handler(psoc, event_info);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -444,6 +467,11 @@ target_if_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	scan_rx_ops = target_if_scan_get_rx_ops(psoc);
+	if (!scan_rx_ops) {
+		target_if_err("scan_rx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (scan_rx_ops->scan_set_max_active_scans) {
 		status = scan_rx_ops->scan_set_max_active_scans(psoc,
 				max_active_scans);

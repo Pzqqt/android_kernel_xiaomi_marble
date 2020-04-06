@@ -736,6 +736,11 @@ static QDF_STATUS dispatcher_dbr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		qdf_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (tx_ops->dbr_tx_ops.direct_buf_rx_register_events)
 		return tx_ops->dbr_tx_ops.direct_buf_rx_register_events(psoc);
 
@@ -747,6 +752,11 @@ static QDF_STATUS dispatcher_dbr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		qdf_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (tx_ops->dbr_tx_ops.direct_buf_rx_unregister_events)
 		return tx_ops->dbr_tx_ops.direct_buf_rx_unregister_events(psoc);
 
