@@ -955,6 +955,8 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 	if (radiostat->num_channels) {
 		ret = hdd_llstats_radio_fill_channels(adapter, radiostat,
 						      vendor_event);
+		qdf_mem_free(radiostat->channels);
+		radiostat->channels = NULL;
 		if (ret)
 			goto failure;
 	}
@@ -1041,6 +1043,9 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		return;
 
 	if (results->paramId & WMI_LINK_STATS_RADIO) {
+		struct wifi_radio_stats *rs_results, *stat_result;
+		u64 channel_size = 0;
+		int i;
 		stats = qdf_mem_malloc(sizeof(*stats));
 		if (!stats)
 			goto exit;
@@ -1048,13 +1053,37 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		stat_size = sizeof(struct wifi_radio_stats) *
 			    results->num_radio;
 		stats->result_param_id = WMI_LINK_STATS_RADIO;
-		stats->result = qdf_mem_malloc(stat_size);
-		if (!stats->result) {
+		stat_result = qdf_mem_malloc(stat_size);
+		if (!stat_result) {
 			qdf_mem_free(stats);
 			goto exit;
 		}
-
+		stats->result = stat_result;
+		rs_results = (struct wifi_radio_stats *)results->results;
 		qdf_mem_copy(stats->result, results->results, stat_size);
+		for (i = 0; i < results->num_radio; i++) {
+			channel_size = rs_results->num_channels *
+				       sizeof(struct wifi_channel_stats);
+			if (channel_size) {
+				stat_result->channels =
+						qdf_mem_malloc(channel_size);
+				if (!stat_result->channels) {
+					while (i-- > 0) {
+						stat_result--;
+						qdf_mem_free(stat_result->
+							     channels);
+					}
+					qdf_mem_free(stats->result);
+					qdf_mem_free(stats);
+					goto exit;
+				}
+				qdf_mem_copy(stat_result->channels,
+					     rs_results->channels,
+					     channel_size);
+			}
+			rs_results++;
+			stat_result++;
+		}
 		stats->stats_nradio_npeer.no_of_radios = results->num_radio;
 		stats->more_data = results->moreResultToFollow;
 		if (!results->moreResultToFollow)
@@ -1081,7 +1110,7 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		struct wifi_peer_stat *peer_stat = (struct wifi_peer_stat *)
 						   results->results;
 		struct wifi_peer_info *peer_info = NULL;
-		u32 num_rate = 0, peers, rates;
+		u64 num_rate = 0, peers, rates;
 		int i;
 		stats = qdf_mem_malloc(sizeof(*stats));
 		if (!stats)
@@ -1107,8 +1136,7 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 			goto exit;
 		}
 
-		qdf_mem_copy(stats->result, results->results,
-			     sizeof(struct wifi_peer_stat));
+		qdf_mem_copy(stats->result, results->results, stat_size);
 		stats->more_data = results->moreResultToFollow;
 		if (!results->moreResultToFollow)
 			priv->request_bitmap &= ~stats->result_param_id;
@@ -1398,14 +1426,26 @@ const struct nla_policy qca_wlan_vendor_ll_get_policy[
 };
 
 static void wlan_hdd_handle_ll_stats(struct hdd_adapter *adapter,
-				     struct hdd_ll_stats *stats)
+				     struct hdd_ll_stats *stats,
+				     int ret)
 {
 	switch (stats->result_param_id) {
 	case WMI_LINK_STATS_RADIO:
+	{
+		struct wifi_radio_stats *radio_stat = stats->result;
+		int i, num_radio = stats->stats_nradio_npeer.no_of_radios;
+
+		if (ret == -ETIMEDOUT) {
+			for (i = 0; i < num_radio; i++) {
+				if (radio_stat->num_channels)
+					qdf_mem_free(radio_stat->channels);
+				radio_stat++;
+			}
+			return;
+		}
 		hdd_link_layer_process_radio_stats(adapter, stats->more_data,
-						   stats->result,
-						   stats->stats_nradio_npeer.
-						   no_of_radios);
+						   radio_stat, num_radio);
+	}
 		break;
 	case WMI_LINK_STATS_IFACE:
 		hdd_link_layer_process_iface_stats(adapter, stats->result,
@@ -1477,8 +1517,7 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	while (QDF_IS_STATUS_SUCCESS(status)) {
 		stats =  qdf_container_of(ll_node, struct hdd_ll_stats,
 					  ll_stats_node);
-		if (ret != -ETIMEDOUT)
-			wlan_hdd_handle_ll_stats(adapter, stats);
+		wlan_hdd_handle_ll_stats(adapter, stats, ret);
 		qdf_mem_free(stats->result);
 		qdf_mem_free(stats);
 		qdf_spin_lock(&priv->ll_stats_lock);
