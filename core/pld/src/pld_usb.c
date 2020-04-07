@@ -225,7 +225,7 @@ static void pld_usb_shutdown(struct usb_interface *interface)
 static void pld_usb_uevent(struct usb_interface *interface, uint32_t status)
 {
 	struct pld_context *pld_context;
-	struct pld_uevent_data data;
+	struct pld_uevent_data data = {0};
 	struct usb_device *pdev = interface_to_usbdev(interface);
 
 	pld_context = pld_get_global_context();

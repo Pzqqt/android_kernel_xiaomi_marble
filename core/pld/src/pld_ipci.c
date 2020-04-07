@@ -245,7 +245,7 @@ static int pld_ipci_uevent(struct device *dev,
 {
 	struct pld_context *pld_context;
 	struct icnss_uevent_fw_down_data *uevent_data = NULL;
-	struct pld_uevent_data data;
+	struct pld_uevent_data data = {0};
 
 	pld_context = pld_get_global_context();
 	if (!pld_context)

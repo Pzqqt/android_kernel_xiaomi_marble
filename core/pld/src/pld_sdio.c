@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -338,7 +338,7 @@ static void pld_sdio_uevent(struct sdio_func *sdio_func, uint32_t status)
 {
 	struct pld_context *pld_context;
 	struct device *dev = &sdio_func->dev;
-	struct pld_uevent_data data;
+	struct pld_uevent_data data = {0};
 
 	pld_context = pld_get_global_context();
 

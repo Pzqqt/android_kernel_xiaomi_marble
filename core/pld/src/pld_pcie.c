@@ -242,7 +242,7 @@ static void pld_pcie_notify_handler(struct pci_dev *pdev, int state)
 static void pld_pcie_uevent(struct pci_dev *pdev, uint32_t status)
 {
 	struct pld_context *pld_context;
-	struct pld_uevent_data data;
+	struct pld_uevent_data data = {0};
 
 	pld_context = pld_get_global_context();
 	if (!pld_context)
