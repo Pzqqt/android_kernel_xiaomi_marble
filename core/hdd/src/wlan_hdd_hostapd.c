@@ -1504,7 +1504,6 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	 * should always be true.
 	 */
 	is_dot11_mode_abgn = true;
-	stainfo->support_mode |= is_dot11_mode_abgn << HDD_80211_MODE_ABGN;
 
 	if (event->vht_caps.present) {
 		stainfo->vht_present = true;
@@ -1520,6 +1519,11 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	stainfo->support_mode |=
 			(event->he_caps_present << HDD_80211_MODE_AX);
 
+	if (event->he_caps_present && !(event->vht_caps.present ||
+					event->ht_caps.present))
+		is_dot11_mode_abgn = false;
+
+	stainfo->support_mode |= is_dot11_mode_abgn << HDD_80211_MODE_ABGN;
 	/* Initialize DHCP info */
 	stainfo->dhcp_phase = DHCP_PHASE_ACK;
 	stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
