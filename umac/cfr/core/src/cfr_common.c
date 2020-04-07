@@ -302,3 +302,25 @@ QDF_STATUS cfr_streamfs_flush(struct pdev_cfr *pa)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS cfr_stop_indication(struct wlan_objmgr_vdev *vdev)
+{
+	struct pdev_cfr *pa;
+	uint32_t status;
+	struct wlan_objmgr_pdev *pdev;
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
+	if (!pa) {
+		cfr_err("pdev_cfr is NULL\n");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = cfr_streamfs_write(pa, (const void *)CFR_STOP_STR,
+				    sizeof(CFR_STOP_STR));
+
+	status = cfr_streamfs_flush(pa);
+	cfr_debug("stop indication done");
+
+	return status;
+}

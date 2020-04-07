@@ -311,6 +311,16 @@ int ucfg_cfr_list_peers(struct wlan_objmgr_pdev *pdev)
 	return 0;
 }
 
+QDF_STATUS ucfg_cfr_stop_indication(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		cfr_err("null vdev");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return cfr_stop_indication(vdev);
+}
+
 #ifdef WLAN_ENH_CFR_ENABLE
 
 static inline

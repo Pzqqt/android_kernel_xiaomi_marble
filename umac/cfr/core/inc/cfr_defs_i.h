@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,8 @@
 #include <qdf_util.h>
 #include <qdf_types.h>
 #include <wlan_cfr_utils_api.h>
+
+#define CFR_STOP_STR           "CFR-CAPTURE-STOPPED"
 
 /**
  * wlan_cfr_psoc_obj_create_handler() - psoc object create handler for cfr
@@ -129,5 +131,15 @@ cfr_streamfs_write(struct pdev_cfr *pa, const void *write_data,
  */
 QDF_STATUS
 cfr_streamfs_flush(struct pdev_cfr *pa);
+
+/**
+ * cfr_stop_indication() - write cfr stop string
+ * @vdev - pointer to vdev object
+ *
+ * Write stop string and indicate to up layer.
+ *
+ * Return: status of write CFR stop string
+ */
+QDF_STATUS cfr_stop_indication(struct wlan_objmgr_vdev *vdev);
 
 #endif

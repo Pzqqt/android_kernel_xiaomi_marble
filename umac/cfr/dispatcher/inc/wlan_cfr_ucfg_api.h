@@ -96,6 +96,16 @@ int ucfg_cfr_set_timer(struct wlan_objmgr_pdev *pdev, uint32_t value);
  */
 int ucfg_cfr_get_timer(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ucfg_cfr_stop_indication() - User space API to write cfr stop string
+ * @vdev - pointer to vdev object
+ *
+ * Write stop string and indicate to up layer.
+ *
+ * Return: status of write CFR stop string
+ */
+QDF_STATUS ucfg_cfr_stop_indication(struct wlan_objmgr_vdev *vdev);
+
 #ifdef WLAN_ENH_CFR_ENABLE
 /* Channel capture recipe filters */
 enum capture_type {
