@@ -910,7 +910,13 @@ dfs_mark_leaking_ch(struct wlan_dfs *dfs,
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
+
+#ifdef CONFIG_BAND_6GHZ
+#define END_CHAN_INDEX CHAN_ENUM_7115
+#else
 #define END_CHAN_INDEX CHAN_ENUM_5720
+#endif
+
 #define START_CHAN_INDEX CHAN_ENUM_5180
 QDF_STATUS
 dfs_mark_leaking_chan_for_freq(struct wlan_dfs *dfs,
@@ -1538,6 +1544,37 @@ static uint8_t dfs_find_ch_with_fallback(
 }
 #endif
 
+#ifdef CONFIG_BAND_6GHZ
+/**
+ * dfs_assign_6g_channels()- Assign the center frequency of the first 20 MHZ
+ * channel in every 80MHz channel, present in the 6G band.
+ * @ch_map: Pointer to ch_map.
+ *
+ * Return: Void
+ */
+static void dfs_assign_6g_channels(struct  chan_bonding_bitmap *ch_map)
+{
+	ch_map->chan_bonding_set[6].start_chan_freq = 5955;
+	ch_map->chan_bonding_set[7].start_chan_freq = 6035;
+	ch_map->chan_bonding_set[8].start_chan_freq = 6115;
+	ch_map->chan_bonding_set[9].start_chan_freq = 6195;
+	ch_map->chan_bonding_set[10].start_chan_freq = 6275;
+	ch_map->chan_bonding_set[11].start_chan_freq = 6355;
+	ch_map->chan_bonding_set[12].start_chan_freq = 6435;
+	ch_map->chan_bonding_set[13].start_chan_freq = 6515;
+	ch_map->chan_bonding_set[14].start_chan_freq = 6595;
+	ch_map->chan_bonding_set[15].start_chan_freq = 6675;
+	ch_map->chan_bonding_set[16].start_chan_freq = 6755;
+	ch_map->chan_bonding_set[17].start_chan_freq = 6835;
+	ch_map->chan_bonding_set[18].start_chan_freq = 6915;
+	ch_map->chan_bonding_set[19].start_chan_freq = 6995;
+}
+#else
+static inline void dfs_assign_6g_channels(struct  chan_bonding_bitmap *ch_map)
+{
+}
+#endif
+
 /**
  * dfs_find_ch_with_fallback_for_freq()- find random channel
  * @dfs: Pointer to DFS structure.
@@ -1574,6 +1611,7 @@ static uint16_t dfs_find_ch_with_fallback_for_freq(struct wlan_dfs *dfs,
 	ch_map.chan_bonding_set[4].start_chan_freq = 5660;
 	ch_map.chan_bonding_set[5].start_chan_freq = 5745;
 
+	dfs_assign_6g_channels(&ch_map);
 	for (i = 0; i < num_chan; i++) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			  "channel = %d added to bitmap", freq_lst[i]);
