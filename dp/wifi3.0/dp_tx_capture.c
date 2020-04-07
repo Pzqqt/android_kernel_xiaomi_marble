@@ -865,6 +865,16 @@ QDF_STATUS dp_tx_add_to_comp_queue(struct dp_soc *soc,
 		if (ts->ofdma)
 			return ret;
 
+		if (qdf_unlikely(desc->pkt_offset != 0) &&
+		    (qdf_nbuf_pull_head(
+				desc->nbuf, desc->pkt_offset) == NULL)) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "netbuf %pK offset %d",
+				desc->nbuf, desc->pkt_offset);
+			return ret;
+		}
+
 		ret = dp_update_msdu_to_list(soc, pdev, peer, ts, desc->nbuf);
 	}
 
