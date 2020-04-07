@@ -25,9 +25,9 @@ CONFIG_QCA_CLD_WLAN_PROFILE ?= $(WLAN_PROFILE)
 
 ifeq ($(KERNEL_BUILD), n)
 ifneq ($(ANDROID_BUILD_TOP),)
-      override WLAN_ROOT := $(ANDROID_BUILD_TOP)/$(WLAN_ROOT)
-      override WLAN_COMMON_INC := $(ANDROID_BUILD_TOP)/$(WLAN_COMMON_INC)
-      override WLAN_FW_API := $(ANDROID_BUILD_TOP)/$(WLAN_FW_API)
+      override WLAN_ROOT := $(shell realpath --relative-to $(CURDIR) $(ANDROID_BUILD_TOP)/$(WLAN_ROOT))
+      override WLAN_COMMON_INC := $(shell realpath --relative-to $(CURDIR) $(ANDROID_BUILD_TOP)/$(WLAN_COMMON_INC))
+      override WLAN_FW_API := $(shell realpath --relative-to $(CURDIR) $(ANDROID_BUILD_TOP)/$(WLAN_FW_API))
 endif
 endif
 
