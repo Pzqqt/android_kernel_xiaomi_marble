@@ -287,6 +287,7 @@ struct sde_hw_dspp_ops {
  * @cap: Pointer to layer_cfg
  * @sb_dma_in_use: hint indicating if sb dma is being used for this dspp
  * @ops: Pointer to operations possible for this DSPP
+ * @ltm_checksum_support: flag to check if checksum present
  */
 struct sde_hw_dspp {
 	struct sde_hw_blk base;
@@ -299,6 +300,7 @@ struct sde_hw_dspp {
 	enum sde_dspp idx;
 	const struct sde_dspp_cfg *cap;
 	bool sb_dma_in_use;
+	bool ltm_checksum_support;
 
 	/* Ops */
 	struct sde_hw_dspp_ops ops;
