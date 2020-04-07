@@ -477,9 +477,6 @@ void lim_deactivate_timers(struct mac_context *mac_ctx)
 
 	lim_deactivate_timers_host_roam(mac_ctx);
 
-	/* Deactivate channel switch timer. */
-	tx_timer_deactivate(&lim_timer->gLimChannelSwitchTimer);
-
 	/* Deactivate addts response timer. */
 	tx_timer_deactivate(&lim_timer->gLimAddtsRspTimer);
 
@@ -566,8 +563,6 @@ void lim_cleanup_mlm(struct mac_context *mac_ctx)
 		lim_deactivate_timers(mac_ctx);
 
 		lim_delete_timers_host_roam(mac_ctx);
-		/* Delete channel switch timer. */
-		tx_timer_delete(&lim_timer->gLimChannelSwitchTimer);
 
 		/* Delete addts response timer. */
 		tx_timer_delete(&lim_timer->gLimAddtsRspTimer);
@@ -1871,9 +1866,7 @@ static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 		   (pe_session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
 		   (pe_session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
 			pe_err("Invalid channel! Disconnect");
-			lim_tear_down_link_with_ap(mac,
-					   mac->lim.lim_timers.
-					   gLimChannelSwitchTimer.sessionId,
+			lim_tear_down_link_with_ap(mac, pe_session->peSessionId,
 					   eSIR_MAC_UNSUPPORTED_CHANNEL_CSA,
 					   eLIM_LINK_MONITORING_DISASSOC);
 			return;
@@ -1931,16 +1924,14 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 	}
 }
 
-void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
+void lim_process_channel_switch(struct mac_context *mac_ctx, uint8_t vdev_id)
 {
 	struct pe_session *session_entry;
 	QDF_STATUS status;
 
-	session_entry = pe_find_session_by_session_id(
-		mac_ctx,
-		mac_ctx->lim.lim_timers.gLimChannelSwitchTimer.sessionId);
+	session_entry = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session_entry) {
-		pe_err("Session does not exist for given sessionID");
+		pe_err("Session does not exist for given vdev_id %d", vdev_id);
 		return;
 	}
 
@@ -1953,144 +1944,6 @@ void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 					session_entry);
 	if (QDF_IS_STATUS_ERROR(status))
 		mlme_set_chan_switch_in_progress(session_entry->vdev, false);
-}
-
-/**
- * lim_update_channel_switch() - This Function updates channel switch
- * @mac_ctx: pointer to Global MAC structure
- * @beacon: pointer to tpSirProbeRespBeacon
- * @psessionentry: pointer to struct pe_session *
- *
- * This function is invoked whenever Station receives
- * either 802.11h channel switch IE or airgo proprietary
- * channel switch IE.
- *
- * Return: none
- */
-void
-lim_update_channel_switch(struct mac_context *mac_ctx,
-			tpSirProbeRespBeacon beacon,
-			struct pe_session *psession_entry)
-{
-	uint16_t beacon_period;
-	tDot11fIEChanSwitchAnn *chnl_switch;
-	tLimChannelSwitchInfo *ch_switch_params;
-	tDot11fIEWiderBWChanSwitchAnn *widerchnl_switch;
-
-	beacon_period = psession_entry->beaconParams.beaconInterval;
-
-	/* 802.11h standard channel switch IE */
-	chnl_switch = &(beacon->channelSwitchIE);
-	ch_switch_params = &psession_entry->gLimChannelSwitch;
-	ch_switch_params->primaryChannel =
-		chnl_switch->newChannel;
-	ch_switch_params->sw_target_freq =
-		wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
-					     chnl_switch->newChannel);
-	ch_switch_params->switchCount = chnl_switch->switchCount;
-	ch_switch_params->switchTimeoutValue =
-		SYS_MS_TO_TICKS(beacon_period) * (chnl_switch->switchCount);
-	ch_switch_params->switchMode = chnl_switch->switchMode;
-	widerchnl_switch = &(beacon->WiderBWChanSwitchAnn);
-	if (beacon->WiderBWChanSwitchAnnPresent) {
-		psession_entry->gLimWiderBWChannelSwitch.newChanWidth =
-				widerchnl_switch->newChanWidth;
-		psession_entry->gLimWiderBWChannelSwitch.newCenterChanFreq0 =
-				widerchnl_switch->newCenterChanFreq0;
-		psession_entry->gLimWiderBWChannelSwitch.newCenterChanFreq1 =
-				widerchnl_switch->newCenterChanFreq1;
-	}
-	/* Only primary channel switch element is present */
-	ch_switch_params->state =
-			eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-	ch_switch_params->ch_width = CH_WIDTH_20MHZ;
-
-	/*
-	 * Do not bother to look and operate on extended channel switch element
-	 * if our own channel-bonding state is not enabled
-	 */
-	if (psession_entry->htSupportedChannelWidthSet &&
-			beacon->sec_chan_offset_present) {
-		if (beacon->sec_chan_offset.secondaryChannelOffset ==
-					PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
-			ch_switch_params->state =
-				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-			ch_switch_params->ch_width = CH_WIDTH_40MHZ;
-			ch_switch_params->ch_center_freq_seg0 =
-				ch_switch_params->primaryChannel + 2;
-		} else if (beacon->sec_chan_offset.secondaryChannelOffset ==
-				PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
-			ch_switch_params->state =
-				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-			ch_switch_params->ch_width = CH_WIDTH_40MHZ;
-			ch_switch_params->ch_center_freq_seg0 =
-				ch_switch_params->primaryChannel - 2;
-		}
-		if (psession_entry->vhtCapability &&
-			beacon->WiderBWChanSwitchAnnPresent) {
-			ch_switch_params->ch_width =
-				widerchnl_switch->newChanWidth + 1;
-			ch_switch_params->ch_center_freq_seg0 =
-				psession_entry->gLimWiderBWChannelSwitch.
-						newCenterChanFreq0;
-			ch_switch_params->ch_center_freq_seg1 =
-				psession_entry->gLimWiderBWChannelSwitch.
-						newCenterChanFreq1;
-		}
-	}
-	if (QDF_STATUS_SUCCESS != lim_start_channel_switch(mac_ctx, psession_entry))
-		pe_warn("Could not start Channel Switch");
-
-	pe_debug("session: %d primary chl: %d freq %d ch_width: %d count: %d (%d ticks)",
-		 psession_entry->peSessionId,
-		 psession_entry->gLimChannelSwitch.primaryChannel,
-		 psession_entry->gLimChannelSwitch.sw_target_freq,
-		 psession_entry->gLimChannelSwitch.ch_width,
-		 psession_entry->gLimChannelSwitch.switchCount,
-		 psession_entry->gLimChannelSwitch.switchTimeoutValue);
-	return;
-}
-
-/**
- * lim_cancel_dot11h_channel_switch
- *
- ***FUNCTION:
- * This function is called when STA does not send updated channel-swith IE
- * after indicating channel-switch start. This will cancel the channel-swith
- * timer which is already running.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac    - Pointer to Global MAC structure
- *
- * @return None
- */
-void lim_cancel_dot11h_channel_switch(struct mac_context *mac,
-				      struct pe_session *pe_session)
-{
-	if (!LIM_IS_STA_ROLE(pe_session))
-		return;
-
-	pe_debug("Received a beacon without channel switch IE");
-
-	MTRACE(mac_trace
-		       (mac, TRACE_CODE_TIMER_DEACTIVATE,
-		       pe_session->peSessionId, eLIM_CHANNEL_SWITCH_TIMER));
-
-	if (tx_timer_deactivate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("tx_timer_deactivate failed!");
-	}
-
-	/* We need to restore pre-channelSwitch state on the STA */
-	if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("LIM: Could not restore pre-channelSwitch (11h) state, resetting the system");
-	}
 }
 
 /** ------------------------------------------------------------------------ **/

@@ -19,7 +19,6 @@
 #if !defined(__LIM_SESSION_UTILS_H)
 #define __LIM_SESSION_UTILS_H
 
-uint8_t lim_is_chan_switch_running(struct mac_context *mac);
 uint8_t lim_is_in_mcc(struct mac_context *mac);
 uint8_t pe_get_current_stas_count(struct mac_context *mac);
 

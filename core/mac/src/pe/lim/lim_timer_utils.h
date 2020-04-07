@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,5 +73,4 @@ void lim_activate_cnf_timer(struct mac_context *, uint16_t, struct pe_session *)
 void lim_activate_auth_rsp_timer(struct mac_context *, tLimPreAuthNode *);
 void lim_update_olbc_cache_timer_handler(void *, uint32_t);
 void lim_addts_response_timer_handler(void *, uint32_t);
-void lim_channel_switch_timer_handler(void *, uint32_t);
 #endif /* __LIM_TIMER_UTILS_H */

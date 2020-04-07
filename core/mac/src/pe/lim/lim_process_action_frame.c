@@ -80,7 +80,6 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		return;
 	}
 
-	mac->lim.lim_timers.gLimChannelSwitchTimer.sessionId = sessionId;
 	status = policy_mgr_check_and_set_hw_mode_for_channel_switch(mac->psoc,
 				pe_session->smeSessionId,
 				pe_session->gLimChannelSwitch.sw_target_freq,
@@ -107,209 +106,9 @@ void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId)
 		pe_info("Channel change will continue after HW mode change");
 		return;
 	}
-	/* change the channel immediately only if
-	 * the channel switch count is 0
-	 */
-	if (pe_session->gLimChannelSwitch.switchCount == 0) {
-		lim_process_channel_switch_timeout(mac);
-		return;
-	}
-	MTRACE(mac_trace
-		       (mac, TRACE_CODE_TIMER_ACTIVATE, sessionId,
-		       eLIM_CHANNEL_SWITCH_TIMER));
 
-	if (tx_timer_activate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
-	    TX_SUCCESS) {
-		pe_err("tx_timer_activate failed");
-	}
-	return;
-}
+	lim_process_channel_switch(mac, pe_session->smeSessionId);
 
-/**------------------------------------------------------------
-   \fn     lim_start_channel_switch
-   \brief  Switches the channel if switch count == 0, otherwise
-   starts the timer for channel switch and stops BG scan
-   and heartbeat timer tempororily.
-
-   \param  mac
-   \param  pe_session
-   \return NONE
-   ------------------------------------------------------------*/
-QDF_STATUS lim_start_channel_switch(struct mac_context *mac,
-				       struct pe_session *pe_session)
-{
-	pe_debug("Starting the channel switch");
-
-	/*If channel switch is already running and it is on a different session, just return */
-	/*This need to be removed for MCC */
-	if ((lim_is_chan_switch_running(mac) &&
-	     pe_session->gLimSpecMgmt.dot11hChanSwState !=
-	     eLIM_11H_CHANSW_RUNNING) || pe_session->csaOffloadEnable) {
-		pe_warn("Ignoring channel switch on session: %d",
-			pe_session->peSessionId);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	/* Deactivate and change reconfigure the timeout value */
-	/* lim_deactivate_and_change_timer(mac, eLIM_CHANNEL_SWITCH_TIMER); */
-	MTRACE(mac_trace
-		       (mac, TRACE_CODE_TIMER_DEACTIVATE, pe_session->peSessionId,
-		       eLIM_CHANNEL_SWITCH_TIMER));
-	if (tx_timer_deactivate(&mac->lim.lim_timers.gLimChannelSwitchTimer) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("tx_timer_deactivate failed!");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (tx_timer_change(&mac->lim.lim_timers.gLimChannelSwitchTimer,
-			    pe_session->gLimChannelSwitch.switchTimeoutValue,
-			    0) != TX_SUCCESS) {
-		pe_err("tx_timer_change failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Prepare for 11h channel switch */
-	lim_prepare_for11h_channel_switch(mac, pe_session);
-
-	/** Dont add any more statements here as we posted finish scan request
-	 * to HAL, wait till we get the response
-	 */
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- *  __lim_process_channel_switch_action_frame() - to process channel switch
- * @mac_ctx: Pointer to Global MAC structure
- * @rx_pkt_info: A pointer to packet info structure
- *
- * This routine will be called to process channel switch action frame
- *
- * Return: None
- */
-
-static void __lim_process_channel_switch_action_frame(struct mac_context *mac_ctx,
-			  uint8_t *rx_pkt_info, struct pe_session *session)
-{
-	tpSirMacMgmtHdr mac_hdr;
-	uint8_t *body_ptr;
-	tDot11fChannelSwitch *chnl_switch_frame;
-	uint16_t bcn_period;
-	uint32_t val, frame_len, status;
-	tLimChannelSwitchInfo *ch_switch_params;
-	struct sDot11fIEWiderBWChanSwitchAnn *wbw_chnlswitch_ie = NULL;
-	struct sLimWiderBWChannelSwitch *lim_wbw_chnlswitch_info = NULL;
-	struct sDot11fIEsec_chan_offset_ele *sec_chnl_offset = NULL;
-
-	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
-	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-
-	pe_debug("Received Channel switch action frame");
-	if (!session->lim11hEnable)
-		return;
-
-	chnl_switch_frame = qdf_mem_malloc(sizeof(*chnl_switch_frame));
-	if (!chnl_switch_frame)
-		return;
-
-	/* Unpack channel switch frame */
-	status = dot11f_unpack_channel_switch(mac_ctx, body_ptr, frame_len,
-			chnl_switch_frame, false);
-
-	if (DOT11F_FAILED(status)) {
-		pe_err("Failed to unpack and parse (0x%08x, %d bytes)",
-			status, frame_len);
-		qdf_mem_free(chnl_switch_frame);
-		return;
-	} else if (DOT11F_WARNED(status)) {
-		pe_warn("warning: unpack 11h-CHANSW Req(0x%08x, %d bytes)",
-			status, frame_len);
-	}
-
-	if (qdf_mem_cmp((uint8_t *) &session->bssId,
-			(uint8_t *) &mac_hdr->sa, sizeof(tSirMacAddr))) {
-		pe_warn("Rcvd action frame not from our BSS, dropping");
-		qdf_mem_free(chnl_switch_frame);
-		return;
-	}
-	/* copy the beacon interval from session */
-	val = session->beaconParams.beaconInterval;
-	ch_switch_params = &session->gLimChannelSwitch;
-	bcn_period = (uint16_t)val;
-	ch_switch_params->primaryChannel =
-		chnl_switch_frame->ChanSwitchAnn.newChannel;
-	ch_switch_params->sw_target_freq = wlan_reg_legacy_chan_to_freq
-			(mac_ctx->pdev,
-			chnl_switch_frame->ChanSwitchAnn.newChannel);
-	ch_switch_params->switchCount =
-		chnl_switch_frame->ChanSwitchAnn.switchCount;
-	ch_switch_params->switchTimeoutValue =
-		SYS_MS_TO_TICKS(bcn_period) *
-		session->gLimChannelSwitch.switchCount;
-	ch_switch_params->switchMode =
-		chnl_switch_frame->ChanSwitchAnn.switchMode;
-
-	/* Only primary channel switch element is present */
-	ch_switch_params->state = eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
-	ch_switch_params->ch_width = CH_WIDTH_20MHZ;
-
-	if (chnl_switch_frame->WiderBWChanSwitchAnn.present
-			&& session->vhtCapability) {
-		wbw_chnlswitch_ie = &chnl_switch_frame->WiderBWChanSwitchAnn;
-		session->gLimWiderBWChannelSwitch.newChanWidth =
-			wbw_chnlswitch_ie->newChanWidth;
-		session->gLimWiderBWChannelSwitch.newCenterChanFreq0 =
-			wbw_chnlswitch_ie->newCenterChanFreq0;
-		session->gLimWiderBWChannelSwitch.newCenterChanFreq1 =
-			wbw_chnlswitch_ie->newCenterChanFreq1;
-	}
-	pe_debug("Rcv Chnl Swtch Frame: Timeout in %d ticks",
-		session->gLimChannelSwitch.switchTimeoutValue);
-	if (session->htSupportedChannelWidthSet) {
-		sec_chnl_offset = &chnl_switch_frame->sec_chan_offset_ele;
-		if (sec_chnl_offset->secondaryChannelOffset ==
-				PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
-			ch_switch_params->state =
-				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-			ch_switch_params->ch_width = CH_WIDTH_40MHZ;
-			ch_switch_params->ch_center_freq_seg0 =
-				ch_switch_params->primaryChannel + 2;
-		} else if (sec_chnl_offset->secondaryChannelOffset ==
-				PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
-			ch_switch_params->state =
-				eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
-			ch_switch_params->ch_width = CH_WIDTH_40MHZ;
-			ch_switch_params->ch_center_freq_seg0 =
-				ch_switch_params->primaryChannel - 2;
-
-		}
-		if (session->vhtCapability &&
-			chnl_switch_frame->WiderBWChanSwitchAnn.present) {
-			wbw_chnlswitch_ie =
-				&chnl_switch_frame->WiderBWChanSwitchAnn;
-			ch_switch_params->ch_width =
-				wbw_chnlswitch_ie->newChanWidth + 1;
-			lim_wbw_chnlswitch_info =
-				&session->gLimWiderBWChannelSwitch;
-			ch_switch_params->ch_center_freq_seg0 =
-				lim_wbw_chnlswitch_info->newCenterChanFreq0;
-			ch_switch_params->ch_center_freq_seg1 =
-				lim_wbw_chnlswitch_info->newCenterChanFreq1;
-
-		}
-	}
-
-	if (CH_WIDTH_20MHZ == ch_switch_params->ch_width) {
-		session->htSupportedChannelWidthSet =
-			WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-		session->htRecommendedTxWidthSet =
-			session->htSupportedChannelWidthSet;
-	}
-
-	if (QDF_STATUS_SUCCESS != lim_start_channel_switch(mac_ctx, session))
-		pe_err("Could not start channel switch");
-
-	qdf_mem_free(chnl_switch_frame);
 	return;
 }
 
@@ -1850,11 +1649,6 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 						rx_pkt_info, session);
 			break;
 #endif
-		case ACTION_SPCT_CHL_SWITCH:
-			if (LIM_IS_STA_ROLE(session))
-				__lim_process_channel_switch_action_frame(
-					mac_ctx, rx_pkt_info, session);
-			break;
 		default:
 			pe_warn("Spectrum mgmt action id: %d not handled",
 				action_hdr->actionID);

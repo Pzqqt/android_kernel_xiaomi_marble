@@ -1881,9 +1881,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		/* Does not receive CNF or dummy packet */
 		lim_handle_cnf_wait_timeout(mac_ctx, (uint16_t) msg->bodyval);
 		break;
-	case SIR_LIM_CHANNEL_SWITCH_TIMEOUT:
-		lim_process_channel_switch_timeout(mac_ctx);
-		break;
 	case SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT:
 		lim_handle_update_olbc_cache(mac_ctx);
 		break;

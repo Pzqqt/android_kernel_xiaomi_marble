@@ -318,16 +318,13 @@ uint8_t lim_is_null_ssid(tSirMacSSid *pSsid);
 void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId);
 
 /**
- * lim_process_channel_switch_timeout() - Process chanel switch timeout
+ * lim_process_channel_switch() - Process chanel switch
  * @mac: pointer to Global MAC structure
+ * @vdev_id: Vdev on which CSA is happening
  *
  * Return: none
  */
-void lim_process_channel_switch_timeout(struct mac_context *);
-QDF_STATUS lim_start_channel_switch(struct mac_context *mac,
-		struct pe_session *pe_session);
-void lim_update_channel_switch(struct mac_context *, tpSirProbeRespBeacon,
-		struct pe_session *pe_session);
+void lim_process_channel_switch(struct mac_context *mac, uint8_t vdev_id);
 
 /**
  * lim_switch_primary_channel() - switch primary channel of session
@@ -372,8 +369,6 @@ void lim_update_sta_run_time_ht_capability(struct mac_context *mac,
 		tDot11fIEHTCaps *pHTCaps);
 void lim_update_sta_run_time_ht_info(struct mac_context *mac,
 		tDot11fIEHTInfo *pRcvdHTInfo,
-		struct pe_session *pe_session);
-void lim_cancel_dot11h_channel_switch(struct mac_context *mac,
 		struct pe_session *pe_session);
 
 /**

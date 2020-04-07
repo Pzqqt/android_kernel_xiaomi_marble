@@ -6182,7 +6182,7 @@ void lim_send_csa_restart_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 void lim_continue_sta_csa_req(struct mac_context *mac_ctx, uint8_t vdev_id)
 {
 	pe_info("Continue CSA for STA vdev id %d", vdev_id);
-	lim_process_channel_switch_timeout(mac_ctx);
+	lim_process_channel_switch(mac_ctx, vdev_id);
 }
 
 void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,

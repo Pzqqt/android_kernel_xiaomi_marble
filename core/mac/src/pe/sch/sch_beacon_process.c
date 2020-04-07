@@ -828,26 +828,6 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 		lim_update_sta_run_time_ht_switch_chnl_params(mac_ctx,
 						&bcn->HTInfo, session);
 
-	if ((LIM_IS_STA_ROLE(session) && !wma_is_csa_offload_enabled())
-	    || LIM_IS_IBSS_ROLE(session)) {
-		/* Channel Switch information element updated */
-		if (bcn->channelSwitchPresent) {
-			/*
-			 * on receiving channel switch announcement from AP,
-			 * delete all TDLS peers before leaving BSS and proceed
-			 * for channel switch
-			 */
-			if (LIM_IS_STA_ROLE(session)) {
-				lim_update_tdls_set_state_for_fw(session,
-								 false);
-				lim_delete_tdls_peers(mac_ctx, session);
-			}
-			lim_update_channel_switch(mac_ctx, bcn, session);
-		} else if (session->gLimSpecMgmt.dot11hChanSwState ==
-				eLIM_11H_CHANSW_RUNNING) {
-			lim_cancel_dot11h_channel_switch(mac_ctx, session);
-		}
-	}
 	if (LIM_IS_STA_ROLE(session)
 	    || LIM_IS_IBSS_ROLE(session))
 		sch_bcn_process_sta_ibss(mac_ctx, bcn,

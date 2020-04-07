@@ -281,7 +281,6 @@ typedef struct sLimTimers {
 	/* Update OLBC Cache Timer */
 	TX_TIMER gLimUpdateOlbcCacheTimer;
 
-	TX_TIMER gLimChannelSwitchTimer;
 	TX_TIMER gLimFTPreAuthRspTimer;
 
 	TX_TIMER gLimPeriodicJoinProbeReqTimer;

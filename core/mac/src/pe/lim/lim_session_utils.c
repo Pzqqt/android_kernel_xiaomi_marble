@@ -33,25 +33,6 @@
 #include "lim_utils.h"
 
 /**
- * lim_is_chan_switch_running() - check if channel switch is happening
- * @mac_ctx: Global MAC context.
- *
- * Return: 1 - if channel switch is happening on any session.
- *         0 - if channel switch is not happening.
- **/
-uint8_t lim_is_chan_switch_running(struct mac_context *mac_ctx)
-{
-	uint8_t i;
-
-	for (i = 0; i < mac_ctx->lim.maxBssId; i++)
-		if (mac_ctx->lim.gpSession[i].valid &&
-			mac_ctx->lim.gpSession[i].gLimSpecMgmt.dot11hChanSwState
-			== eLIM_11H_CHANSW_RUNNING)
-			return 1;
-	return 0;
-}
-
-/**
  * lim_is_in_mcc() - check if device is in MCC
  * @mac_ctx: Global MAC context.
  *
