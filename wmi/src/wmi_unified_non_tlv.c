@@ -3425,7 +3425,7 @@ static QDF_STATUS send_smart_ant_enable_tx_feedback_cmd_non_tlv(
 			WMI_LOGE("%s:wmi_buf_alloc failed", __func__);
 			return QDF_STATUS_E_FAILURE;
 		}
-		if (!wmi_unified_cmd_send(wmi_handle, buf, len,
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
 					WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
