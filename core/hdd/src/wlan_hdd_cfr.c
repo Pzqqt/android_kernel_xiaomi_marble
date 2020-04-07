@@ -350,6 +350,11 @@ wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
 	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
 				     is_start_capture);
 	ucfg_cfr_committed_rcc_config(vdev);
+	if (!is_start_capture) {
+		ucfg_cfr_stop_indication(vdev);
+		hdd_debug("stop indication done");
+	}
+
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 
 	return 0;
