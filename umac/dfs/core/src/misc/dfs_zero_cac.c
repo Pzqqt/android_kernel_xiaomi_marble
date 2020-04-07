@@ -261,6 +261,14 @@
 /* Given a bandwidth, find the number of subchannels in that bandwidth */
 #define N_SUBCHS_FOR_BANDWIDTH(_bw) ((_bw) / MIN_DFS_SUBCHAN_BW)
 
+#ifdef CONFIG_CHAN_FREQ_API
+#define DFS_160MHZ_SECSEG_CHAN_OFFSET 40
+#else
+#ifdef CONFIG_CHAN_NUM_API
+#define DFS_160MHZ_SECSEG_CHAN_OFFSET 8
+#endif
+#endif
+
  /*dfs_zero_cac_reset() - Reset zero cac variables.
   *@dfs: Pointer to wlan_dfs
   */
@@ -315,10 +323,12 @@ bool dfs_is_legacy_precac_enabled(struct wlan_dfs *dfs)
 	return dfs->dfs_legacy_precac_ucfg;
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
 bool dfs_is_agile_precac_enabled(struct wlan_dfs *dfs)
 {
 	return (dfs->dfs_agile_precac_ucfg && dfs->dfs_fw_adfs_support_non_160);
 }
+#endif
 
 /* dfs_descend_precac_tree() - Descend into the precac BSTree based on the
  *                             channel provided. If the channel is less than
@@ -775,7 +785,6 @@ void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
  * @dfs: Pointer to wlan_dfs.
  */
 #ifdef CONFIG_CHAN_FREQ_API
-#define DFS_160MHZ_SECSEG_CHAN_OFFSET 40
 void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -858,7 +867,6 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 }
 #else
 #ifdef CONFIG_CHAN_NUM_API
-#define DFS_160MHZ_SECSEG_CHAN_OFFSET 8
 void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 {
 	struct wlan_objmgr_psoc *psoc;
