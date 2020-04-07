@@ -13792,10 +13792,14 @@ typedef struct {
     A_UINT32 notif;
     /** roam notification param
      *  Refer to WMI_ROAM_NOTIF_ defs to interpret the notif_params value.
+     *  notif_params contains roam invoke fail reason from
+     *  wmi_roam_invoke_error_t if reason is WMI_ROAM_REASON_INVOKE_ROAM_FAIL.
      */
     A_UINT32 notif_params;
     /** roam notification param1
      *  Refer to WMI_ROAM_NOTIF_ defs to interpret the notif_params1 value.
+     *  notif_params1 is exact frame length of deauth or disassoc if reason
+     *  is WMI_ROAM_REASON_DEAUTH.
      */
     A_UINT32 notif_params1;
 } wmi_roam_event_fixed_param;
@@ -27251,6 +27255,27 @@ typedef enum {
     WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,  /* Roam scan triggered due to Low rssi periodic timer */
     WMI_ROAM_TRIGGER_SUB_REASON_CU_PERIODIC,        /* Roam scan triggered due to CU periodic timer */
 } WMI_ROAM_TRIGGER_SUB_REASON_ID;
+
+typedef enum wmi_roam_invoke_status_error {
+    WMI_ROAM_INVOKE_STATUS_SUCCESS = 0,
+    WMI_ROAM_INVOKE_STATUS_VDEV_INVALID = 0x11,    /* Invalid VDEV */
+    WMI_ROAM_INVOKE_STATUS_BSS_INVALID,            /* Invalid VDEV BSS */
+    WMI_ROAM_INVOKE_STATUS_VDEV_DOWN,              /* VDEV is not UP */
+    WMI_ROAM_INVOKE_STATUS_ROAM_HANDLE_INVALID,    /* VDEV ROAM handle is invalid */
+    WMI_ROAM_INVOKE_STATUS_OFFLOAD_DISABLE,        /* Roam offload is not enabled */
+    WMI_ROAM_INVOKE_STATUS_AP_SSID_LENGTH_INVALID, /* Connected AP profile SSID length is zero */
+    WMI_ROAM_INVOKE_STATUS_HO_DISALLOW,            /* Already FW internal roaming is in progress */
+    WMI_ROAM_INVOKE_STATUS_ALREADY_RUNNING,        /* Roam Invoke already in progress either from internal FW BTM request or from host*/
+    WMI_ROAM_INVOKE_STATUS_NON_ROAMABLE_AP,        /* Roam HO is not triggered due to non roamable AP */
+    WMI_ROAM_INVOKE_STATUS_HO_INTERNAL_FAIL,       /* Candidate AP save failed */
+    WMI_ROAM_INVOKE_STATUS_DISALLOW,               /* Roam invoke trigger is not enabled */
+    WMI_ROAM_INVOKE_STATUS_SCAN_FAIL,              /* Scan start fail */
+    WMI_ROAM_INVOKE_STATUS_START_HO_FAIL,          /* Roam HO start fail */
+    WMI_ROAM_INVOKE_STATUS_INVALID_PARAMS,         /* Roam invoke params are invalid */
+    WMI_ROAM_INVOKE_STATUS_INVALID_SCAN_MODE,      /* Roam scan mode is invalid */
+    WMI_ROAM_INVOKE_STATUS_NO_CAND_AP,             /* No candidate AP found to roam to */
+    WMI_ROAM_INVOKE_STATUS_HO_FAIL,                /* handoff failed */
+} wmi_roam_invoke_status_error_t;
 
 typedef struct {
     A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_trigger_reason_tlv_param */
