@@ -597,7 +597,6 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	uint16_t ch_freq;
 	uint32_t ch_cfreq1;
 	uint32_t ch_cfreq2;
-	uint8_t rx_chainmask;
 	struct wlan_objmgr_vdev *vdev = NULL;
 	int i, status = 0;
 	QDF_STATUS retval = 0;
@@ -684,7 +683,6 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	ch_cfreq1 = bss_chan->ch_cfreq1;
 	ch_cfreq2 = bss_chan->ch_cfreq2;
 	ch_phymode = bss_chan->ch_phymode;
-	rx_chainmask = wlan_vdev_mlme_get_rxchainmask(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
 
 	pcfr->rx_tlv_evt_cnt++;
@@ -704,13 +702,11 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	header->Reserved               = 0;
 
 	meta->status       = 1;
-	meta->capture_bw   = cdp_rx_ppdu->u.bw;
 	meta->phy_mode = ch_phymode;
 	meta->prim20_chan  = ch_freq;
 	meta->center_freq1 = ch_cfreq1;
 	meta->center_freq2 = ch_cfreq2;
 	meta->capture_mode = 0;
-	meta->num_rx_chain = rx_chainmask;
 
 	meta->timestamp = cdp_rx_ppdu->timestamp;
 	meta->is_mu_ppdu = (cdp_rx_ppdu->u.ppdu_type == CDP_RX_TYPE_SU) ? 0 : 1;
@@ -884,6 +880,7 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	header = &lut->header;
 	meta = &header->u.meta_v3;
 	meta->channel_bw = dma_hdr.upload_pkt_bw;
+	meta->num_rx_chain = dma_hdr.num_chains;
 	meta->length = length;
 	/* For Tx based captures, capture type is sent from FW */
 	if (capture_type != CFR_TYPE_METHOD_ACK_RESP_TO_TM_FTM) {
