@@ -700,7 +700,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	header->vendorid               = 0x8cfdf0;
 	header->cfr_metadata_version   = CFR_META_VERSION_3;
 	header->cfr_data_version       = CFR_DATA_VERSION_1;
-	header->chip_type              = CFR_CAPTURE_RADIO_CYP;
+	header->chip_type              = pcfr->chip_type;
 	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
 	header->Reserved               = 0;
 
@@ -1580,6 +1580,7 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
 	pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
 	pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;
+	pcfr->chip_type = CFR_CAPTURE_RADIO_CYP;
 
 	if (!pcfr->lut_timer_init) {
 		qdf_timer_init(NULL,

@@ -125,6 +125,7 @@ QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 	struct wmi_unified *wmi_handle = NULL;
 	bool is_cfr_disabled;
 	bool cfr_capable;
+	QDF_STATUS status;
 
 	if (!psoc || !pdev) {
 		cfr_err("null pdev or psoc");
@@ -169,7 +170,10 @@ QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	return cfr_6018_init_pdev(psoc, pdev);
+	status = cfr_6018_init_pdev(psoc, pdev);
+	cfr_pdev->chip_type = CFR_CAPTURE_RADIO_HSP;
+
+	return status;
 }
 
 QDF_STATUS cfr_6490_deinit_pdev(struct wlan_objmgr_psoc *psoc,

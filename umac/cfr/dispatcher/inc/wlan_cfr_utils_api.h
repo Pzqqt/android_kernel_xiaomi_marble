@@ -88,6 +88,7 @@ enum cfrradiotype {
 	CFR_CAPTURE_RADIO_BESRA,
 	CFR_CAPTURE_RADIO_HKV2,
 	CFR_CAPTURE_RADIO_CYP,
+	CFR_CAPTURE_RADIO_HSP,
 	CFR_CAPTURE_RADIO_MAX = 0xFF,
 };
 
@@ -426,6 +427,7 @@ struct cfr_rcc_param {
  * pdev_obj: pointer to pdev object
  * is_cfr_capable: flag to determine if cfr is enabled or not
  * cfr_timer_enable: flag to enable/disable timer
+ * chip_type: chip type which is defined in enum cfrradiotype
  * cfr_mem_chunk: Region of memory used for storing cfr data
  * cfr_max_sta_count: Maximum stations supported in one-shot capture mode
  * num_subbufs: No. of sub-buffers used in relayfs
@@ -467,6 +469,7 @@ struct pdev_cfr {
 	struct wlan_objmgr_pdev *pdev_obj;
 	uint8_t is_cfr_capable;
 	uint8_t cfr_timer_enable;
+	uint8_t chip_type;
 	struct cfr_wmi_host_mem_chunk cfr_mem_chunk;
 	uint16_t cfr_max_sta_count;
 	uint16_t cfr_current_sta_count;
