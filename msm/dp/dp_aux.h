@@ -50,7 +50,7 @@ struct dp_aux {
 	void (*init)(struct dp_aux *aux, struct dp_aux_cfg *aux_cfg);
 	void (*deinit)(struct dp_aux *aux);
 	void (*reconfig)(struct dp_aux *aux);
-	void (*abort)(struct dp_aux *aux);
+	void (*abort)(struct dp_aux *aux, bool abort);
 	void (*dpcd_updated)(struct dp_aux *aux);
 	void (*set_sim_mode)(struct dp_aux *aux, bool en, u8 *edid, u8 *dpcd);
 	int (*aux_switch)(struct dp_aux *aux, bool enable, int orientation);

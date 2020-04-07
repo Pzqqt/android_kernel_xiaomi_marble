@@ -3069,6 +3069,7 @@ error:
 void dp_panel_put(struct dp_panel *dp_panel)
 {
 	struct dp_panel_private *panel;
+	struct sde_connector *sde_conn;
 
 	if (!dp_panel)
 		return;
@@ -3076,5 +3077,9 @@ void dp_panel_put(struct dp_panel *dp_panel)
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
 
 	dp_panel_edid_deregister(panel);
+	sde_conn = to_sde_connector(dp_panel->connector);
+	if (sde_conn)
+		sde_conn->drv_panel = NULL;
+
 	devm_kfree(panel->dev, panel);
 }

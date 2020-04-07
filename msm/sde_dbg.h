@@ -34,6 +34,7 @@ enum sde_dbg_evtlog_flag {
 	SDE_EVTLOG_CRITICAL = BIT(0),
 	SDE_EVTLOG_IRQ = BIT(1),
 	SDE_EVTLOG_VERBOSE = BIT(2),
+	SDE_EVTLOG_EXTERNAL = BIT(3),
 	SDE_EVTLOG_ALWAYS = -1
 };
 
@@ -48,7 +49,8 @@ enum sde_dbg_dump_context {
 	SDE_DBG_DUMP_CLK_ENABLED_CTX,
 };
 
-#define SDE_EVTLOG_DEFAULT_ENABLE (SDE_EVTLOG_CRITICAL | SDE_EVTLOG_IRQ)
+#define SDE_EVTLOG_DEFAULT_ENABLE (SDE_EVTLOG_CRITICAL | SDE_EVTLOG_IRQ | \
+		SDE_EVTLOG_EXTERNAL)
 
 /*
  * evtlog will print this number of entries when it is called through
@@ -62,7 +64,7 @@ enum sde_dbg_dump_context {
  * number must be greater than print entry to prevent out of bound evtlog
  * entry array access.
  */
-#define SDE_EVTLOG_ENTRY	(SDE_EVTLOG_PRINT_ENTRY * 8)
+#define SDE_EVTLOG_ENTRY	(SDE_EVTLOG_PRINT_ENTRY * 32)
 #define SDE_EVTLOG_MAX_DATA 15
 #define SDE_EVTLOG_BUF_MAX 512
 #define SDE_EVTLOG_BUF_ALIGN 32
@@ -123,6 +125,14 @@ extern struct sde_dbg_evtlog *sde_dbg_base_evtlog;
  */
 #define SDE_EVT32_IRQ(...) sde_evtlog_log(sde_dbg_base_evtlog, __func__, \
 		__LINE__, SDE_EVTLOG_IRQ, ##__VA_ARGS__, \
+		SDE_EVTLOG_DATA_LIMITER)
+
+/**
+ * SDE_EVT32_EXTERNAL - Write a list of 32bit values for external display events
+ * ... - variable arguments
+ */
+#define SDE_EVT32_EXTERNAL(...) sde_evtlog_log(sde_dbg_base_evtlog, __func__, \
+		__LINE__, SDE_EVTLOG_EXTERNAL, ##__VA_ARGS__, \
 		SDE_EVTLOG_DATA_LIMITER)
 
 /**

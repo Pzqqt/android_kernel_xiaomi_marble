@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -766,6 +766,12 @@ static int dp_audio_off(struct dp_audio *dp_audio)
 	}
 
 	audio = container_of(dp_audio, struct dp_audio_private, dp_audio);
+
+	if (!atomic_read(&audio->session_on)) {
+		DP_DEBUG("audio already off\n");
+		return rc;
+	}
+
 	ext = &audio->ext_audio_data;
 
 	work_pending = cancel_delayed_work_sync(&audio->notify_delayed_work);

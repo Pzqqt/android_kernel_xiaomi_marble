@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[sde-hdcp-2x] %s: " fmt, __func__
@@ -41,6 +41,9 @@
 
 #define REAUTH_REQ BIT(3)
 #define LINK_INTEGRITY_FAILURE BIT(4)
+
+/* Temporary define to override wrong TZ value */
+#define AKE_SEND_CERT_MSG_DELAY 100
 
 struct sde_hdcp_2x_ctrl {
 	DECLARE_KFIFO(cmd_q, enum sde_hdcp_2x_wakeup_cmd, 8);
@@ -100,49 +103,49 @@ static const struct sde_hdcp_2x_msg_data
 				hdcp_msg_lookup[HDCP2P2_MAX_MESSAGES] = {
 	[AKE_INIT] = { 2,
 		{ {"rtx", 0x69000, 8}, {"TxCaps", 0x69008, 3} },
-		0 },
+		0, 0 },
 	[AKE_SEND_CERT] = { 3,
 		{ {"cert-rx", 0x6900B, 522}, {"rrx", 0x69215, 8},
 			{"RxCaps", 0x6921D, 3} },
-		0 },
+		0, 110 },
 	[AKE_NO_STORED_KM] = { 1,
 		{ {"Ekpub_km", 0x69220, 128} },
-		0 },
+		0, 0 },
 	[AKE_STORED_KM] = { 2,
 		{ {"Ekh_km", 0x692A0, 16}, {"m", 0x692B0, 16} },
-		0 },
+		0, 0 },
 	[AKE_SEND_H_PRIME] = { 1,
 		{ {"H'", 0x692C0, 32} },
-		(1 << 1) },
+		(1 << 1), 7 },
 	[AKE_SEND_PAIRING_INFO] =  { 1,
 		{ {"Ekh_km", 0x692E0, 16} },
-		(1 << 2) },
+		(1 << 2), 5 },
 	[LC_INIT] = { 1,
 		{ {"rn", 0x692F0, 8} },
-		0 },
+		0, 0 },
 	[LC_SEND_L_PRIME] = { 1,
 		{ {"L'", 0x692F8, 32} },
-		0 },
+		0, 0 },
 	[SKE_SEND_EKS] = { 2,
 		{ {"Edkey_ks", 0x69318, 16}, {"riv", 0x69328, 8} },
-		0 },
+		0, 0 },
 	[SKE_SEND_TYPE_ID] = { 1,
 		{ {"type", 0x69494, 1} },
-		0 },
+		0, 0 },
 	[REP_SEND_RECV_ID_LIST] = { 4,
 		{ {"RxInfo", 0x69330, 2}, {"seq_num_V", 0x69332, 3},
 			{"V'", 0x69335, 16}, {"ridlist", 0x69345, 155} },
-		(1 << 0) },
+		(1 << 0), 0 },
 	[REP_SEND_ACK] = { 1,
 		{ {"V", 0x693E0, 16} },
-		0 },
+		0, 0 },
 	[REP_STREAM_MANAGE] = { 3,
 		{ {"seq_num_M", 0x693F0, 3}, {"k", 0x693F3, 2},
 			{"streamID_Type", 0x693F5, 126} },
-		0 },
+		0, 0 },
 	[REP_STREAM_READY] = { 1,
 		{ {"M'", 0x69473, 32} },
-		0 },
+		0, 7 },
 };
 
 static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
@@ -247,6 +250,29 @@ static void sde_hdcp_2x_wait_for_response(struct sde_hdcp_2x_ctrl *hdcp)
 	hdcp->wait_timeout_ms = 0;
 }
 
+static void sde_hdcp_2x_adjust_transaction_params(
+		struct sde_hdcp_2x_ctrl *hdcp,
+		struct hdcp_transport_wakeup_data *data)
+{
+	switch (hdcp->last_msg) {
+	case AKE_SEND_CERT:
+		data->transaction_delay = AKE_SEND_CERT_MSG_DELAY;
+		break;
+	case REP_STREAM_READY:
+		break;
+	default:
+		data->transaction_delay = 0;
+		break;
+	}
+
+	data->transaction_timeout =
+			hdcp_msg_lookup[hdcp->last_msg].transaction_timeout;
+
+	pr_debug("%s: transaction delay: %ums, transaction timeout: %ums\n",
+			sde_hdcp_2x_message_name(hdcp->last_msg),
+			data->transaction_delay, data->transaction_timeout);
+}
+
 static void sde_hdcp_2x_wakeup_client(struct sde_hdcp_2x_ctrl *hdcp,
 				struct hdcp_transport_wakeup_data *data)
 {
@@ -271,6 +297,8 @@ static void sde_hdcp_2x_wakeup_client(struct sde_hdcp_2x_ctrl *hdcp,
 		data->message_data = &hdcp_msg_lookup[hdcp->last_msg];
 	}
 
+	sde_hdcp_2x_adjust_transaction_params(hdcp, data);
+
 	rc = hdcp->client_ops->wakeup(data);
 	if (rc)
 		pr_err("error sending %s to client\n",
@@ -285,7 +313,7 @@ static inline void sde_hdcp_2x_send_message(struct sde_hdcp_2x_ctrl *hdcp)
 					HDCP_TRANSPORT_CMD_SEND_MESSAGE };
 
 	cdata.context = hdcp->client_data;
-	cdata.timeout = hdcp->app_data.timeout;
+	cdata.transaction_delay = hdcp->app_data.timeout;
 	cdata.buf_len = hdcp->app_data.response.length;
 
 	/* ignore the first byte as it contains the message id */
@@ -436,7 +464,7 @@ static void sde_hdcp_2x_initialize_command(struct sde_hdcp_2x_ctrl *hdcp,
 		struct hdcp_transport_wakeup_data *cdata)
 {
 		cdata->cmd = cmd;
-		cdata->timeout = hdcp->timeout_left;
+		cdata->transaction_delay = hdcp->timeout_left;
 		cdata->buf = hdcp->app_data.request.data + 1;
 }
 
@@ -492,7 +520,7 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 		break;
 	default:
 		cdata.cmd = HDCP_TRANSPORT_CMD_RECV_MESSAGE;
-		cdata.timeout = hdcp->timeout_left;
+		cdata.transaction_delay = hdcp->app_data.timeout;
 		cdata.buf = hdcp->app_data.request.data + 1;
 	}
 
@@ -593,7 +621,7 @@ static void sde_hdcp_2x_msg_recvd(struct sde_hdcp_2x_ctrl *hdcp)
 
 	if (msg[0] == AKE_SEND_H_PRIME && hdcp->no_stored_km) {
 		cdata.cmd = HDCP_TRANSPORT_CMD_RECV_MESSAGE;
-		cdata.timeout = hdcp->app_data.timeout;
+		cdata.transaction_delay = hdcp->app_data.timeout;
 		cdata.buf = hdcp->app_data.request.data + 1;
 		goto exit;
 	}
@@ -653,7 +681,7 @@ static void sde_hdcp_2x_msg_recvd(struct sde_hdcp_2x_ctrl *hdcp)
 		cdata.cmd = HDCP_TRANSPORT_CMD_SEND_MESSAGE;
 		cdata.buf = hdcp->app_data.response.data + 1;
 		cdata.buf_len = hdcp->app_data.response.length;
-		cdata.timeout = hdcp->app_data.timeout;
+		cdata.transaction_delay = hdcp->app_data.timeout;
 	}
 exit:
 	sde_hdcp_2x_wakeup_client(hdcp, &cdata);
@@ -876,8 +904,10 @@ static int sde_hdcp_2x_wakeup(struct sde_hdcp_2x_wakeup_data *data)
 		break;
 	case HDCP_2X_CMD_MIN_ENC_LEVEL:
 		hdcp->min_enc_level = data->min_enc_level;
-		kfifo_put(&hdcp->cmd_q, data->cmd);
-		wake_up(&hdcp->wait_q);
+		if (hdcp->authenticated) {
+			kfifo_put(&hdcp->cmd_q, data->cmd);
+			wake_up(&hdcp->wait_q);
+		}
 		break;
 	default:
 		kfifo_put(&hdcp->cmd_q, data->cmd);
