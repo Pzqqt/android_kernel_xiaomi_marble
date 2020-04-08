@@ -1447,7 +1447,12 @@ static inline int
 dp_get_target_pdev_id_for_host_pdev_id
 	(struct dp_soc *soc, uint32_t mac_for_pdev)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_for_pdev];
+	struct dp_pdev *pdev;
+
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return DP_SW2HW_MACID(mac_for_pdev);
+
+	pdev = soc->pdev_list[mac_for_pdev];
 
 	return pdev->target_pdev_id;
 }
