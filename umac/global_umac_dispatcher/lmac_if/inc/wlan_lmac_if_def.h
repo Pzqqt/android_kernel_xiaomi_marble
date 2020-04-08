@@ -806,6 +806,10 @@ struct wlan_lmac_if_reg_tx_ops {
 			struct wlan_objmgr_psoc *psoc, void *arg);
 	QDF_STATUS (*send_ctl_info)(struct wlan_objmgr_psoc *psoc,
 				    struct reg_ctl_params *params);
+	QDF_STATUS (*get_phy_id_from_pdev_id)(struct wlan_objmgr_psoc *psoc,
+					      uint8_t pdev_id, uint8_t *phy_id);
+	QDF_STATUS (*get_pdev_id_from_phy_id)(struct wlan_objmgr_psoc *psoc,
+					      uint8_t phy_id, uint8_t *pdev_id);
 };
 
 /**

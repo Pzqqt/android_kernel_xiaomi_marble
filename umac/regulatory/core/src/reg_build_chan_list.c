@@ -820,7 +820,8 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	enum direction *dir = arg;
-	uint32_t pdev_id;
+	uint8_t pdev_id;
+	uint8_t phy_id;
 	struct wlan_lmac_if_reg_tx_ops *reg_tx_ops;
 	struct reg_rule_info *psoc_reg_rules;
 
@@ -841,17 +842,23 @@ void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	}
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
+	if (reg_tx_ops->get_phy_id_from_pdev_id)
+		reg_tx_ops->get_phy_id_from_pdev_id(psoc, pdev_id, &phy_id);
+	else
+		phy_id = pdev_id;
+
 	reg_init_pdev_mas_chan_list(
 			pdev_priv_obj,
-			&psoc_priv_obj->mas_chan_params[pdev_id]);
-	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[pdev_id].reg_rules;
+			&psoc_priv_obj->mas_chan_params[phy_id]);
+	psoc_reg_rules = &psoc_priv_obj->mas_chan_params[phy_id].reg_rules;
 	reg_save_reg_rules_to_pdev(psoc_reg_rules, pdev_priv_obj);
 	reg_modify_chan_list_for_japan(pdev);
 	pdev_priv_obj->chan_list_recvd =
-		psoc_priv_obj->chan_list_recvd[pdev_id];
+		psoc_priv_obj->chan_list_recvd[phy_id];
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
-	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
 	if (reg_tx_ops->fill_umac_legacy_chanlist) {
 		reg_tx_ops->fill_umac_legacy_chanlist(
 				pdev, pdev_priv_obj->cur_chan_list);
@@ -981,6 +988,7 @@ QDF_STATUS reg_process_master_chan_list(
 	wlan_objmgr_ref_dbgid dbg_id;
 	enum direction dir;
 	uint8_t phy_id;
+	uint8_t pdev_id;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	struct reg_rule_info *reg_rules;
@@ -996,6 +1004,11 @@ QDF_STATUS reg_process_master_chan_list(
 
 	tx_ops = reg_get_psoc_tx_ops(psoc);
 	phy_id = regulat_info->phy_id;
+
+	if (tx_ops->get_pdev_id_from_phy_id)
+		tx_ops->get_pdev_id_from_phy_id(psoc, phy_id, &pdev_id);
+	else
+		pdev_id = phy_id;
 
 	if (reg_ignore_default_country(soc_reg, regulat_info)) {
 		status = reg_set_curr_country(soc_reg, regulat_info, tx_ops);
@@ -1186,7 +1199,7 @@ QDF_STATUS reg_process_master_chan_list(
 		}
 	}
 
-	pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, pdev_id, dbg_id);
 	if (pdev) {
 		reg_propagate_mas_chan_list_to_pdev(psoc, pdev, &dir);
 		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
