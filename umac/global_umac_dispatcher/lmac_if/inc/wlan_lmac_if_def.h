@@ -1626,6 +1626,16 @@ struct wlan_lmac_if_dfs_rx_ops {
 					uint16_t low_5g_freq,
 					uint16_t high_5g_freq);
 	void (*dfs_complete_deferred_tasks)(struct wlan_objmgr_pdev *pdev);
+#ifdef QCA_SUPPORT_ADFS_RCAC
+	QDF_STATUS (*dfs_set_rcac_enable)(struct wlan_objmgr_pdev *pdev,
+					  bool rcac_en);
+	QDF_STATUS (*dfs_get_rcac_enable)(struct wlan_objmgr_pdev *pdev,
+					  uint8_t *rcac_en);
+	QDF_STATUS (*dfs_set_rcac_freq)(struct wlan_objmgr_pdev *pdev,
+					qdf_freq_t rcac_freq);
+	QDF_STATUS (*dfs_get_rcac_freq)(struct wlan_objmgr_pdev *pdev,
+					qdf_freq_t *rcac_freq);
+#endif
 };
 
 /**
