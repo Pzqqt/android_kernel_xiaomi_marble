@@ -1090,6 +1090,7 @@ struct dfs_mode_switch_defer_params {
  * @dfs_legacy_precac_ucfg:          User configuration for legacy preCAC in
  *                                   partial offload chipsets.
  * @dfs_agile_precac_ucfg:           User configuration for agile preCAC.
+ * @dfs_agile_rcac_ucfg:             User configuration for Rolling CAC.
  * @dfs_fw_adfs_support_non_160:     Target Agile DFS support for non-160 BWs.
  * @dfs_fw_adfs_support_160:         Target Agile DFS support for 160 BW.
  * @dfs_allow_hw_pulses:             Allow/Block HW pulses. When synthetic
@@ -1101,6 +1102,8 @@ struct dfs_mode_switch_defer_params {
  * @dfs_defer_params:                DFS deferred event parameters (allocated
  *                                   only for the duration of defer alone).
  * @dfs_agile_detector_id:           Agile detector ID for the DFS object.
+ * @dfs_agile_rcac_freq:             User programmed Rolling CAC frequency in
+ *                                   MHZ.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1259,6 +1262,9 @@ struct wlan_dfs {
 	bool           dfs_is_nol_ie_sent;
 	uint8_t        dfs_legacy_precac_ucfg:1,
 		       dfs_agile_precac_ucfg:1,
+#if defined(QCA_SUPPORT_ADFS_RCAC)
+		       dfs_agile_rcac_ucfg:1,
+#endif
 		       dfs_fw_adfs_support_non_160:1,
 		       dfs_fw_adfs_support_160:1;
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(WLAN_DFS_SYNTHETIC_RADAR)
@@ -1266,6 +1272,9 @@ struct wlan_dfs {
 #endif
 	struct dfs_mode_switch_defer_params dfs_defer_params;
 	uint8_t        dfs_agile_detector_id;
+#if defined(QCA_SUPPORT_ADFS_RCAC)
+	uint16_t       dfs_agile_rcac_freq;
+#endif
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
@@ -1297,6 +1306,8 @@ struct wlan_dfs_priv {
  * @dfs_precac_timer_running: precac timer running flag
  * @ocac_status: Off channel CAC complete status
  * @dfs_nol_ctx: dfs NOL data for all radios.
+ * @dfs_rcac_timer: Agile RCAC (Rolling CAC) timer.
+ * @dfs_rcac_timer_running: RCAC (Rolling CAC) timer running flag.
  */
 struct dfs_soc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -1312,6 +1323,10 @@ struct dfs_soc_priv_obj {
 	bool ocac_status;
 #endif
 	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
+#if defined(QCA_SUPPORT_ADFS_RCAC)
+	qdf_timer_t dfs_rcac_timer;
+	bool dfs_rcac_timer_running;
+#endif
 };
 
 /**

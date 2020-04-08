@@ -596,4 +596,77 @@ static inline QDF_STATUS ucfg_dfs_reset_agile_config(struct wlan_objmgr_psoc
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * ucfg_dfs_set_rcac_enable() - Set rcac enable flag.
+ * @pdev: Pointer to DFS pdev object.
+ * @rcac_en: User input value to enable/disable rolling cac feature.
+ *
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS ucfg_dfs_set_rcac_enable(struct wlan_objmgr_pdev *pdev,
+				    bool rcac_en);
+#else
+static inline QDF_STATUS
+ucfg_dfs_set_rcac_enable(struct wlan_objmgr_pdev *pdev,
+			 bool rcac_en)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * ucfg_dfs_get_rcac_enable() - Get rcac enable flag.
+ * @pdev: Pointer to DFS pdev object.
+ * @rcac_en: Pointer to hold the "rcac" config.
+ *
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *rcac_en);
+#else
+static inline QDF_STATUS
+ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
+			 uint8_t *rcac_en)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * ucfg_dfs_set_rcac_freq() - Set rcac freq.
+ * @pdev: Pointer to DFS pdev object.
+ * @rcac_freq: User configured rcac freq in MHZ.
+ *
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS ucfg_dfs_set_rcac_freq(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t rcac_freq);
+#else
+static inline QDF_STATUS
+ucfg_dfs_set_rcac_freq(struct wlan_objmgr_pdev *pdev,
+		       qdf_freq_t rcac_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * ucfg_dfs_get_rcac_freq() - Get rcac freq.
+ * @pdev: Pointer to DFS pdev object.
+ * @rcac_freq: Pointer to store the user configured rcac freq in MHZ.
+ *
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS ucfg_dfs_get_rcac_freq(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t *rcac_freq);
+#else
+static inline QDF_STATUS
+ucfg_dfs_get_rcac_freq(struct wlan_objmgr_pdev *pdev,
+		       qdf_freq_t *rcac_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif /* _WLAN_DFS_UCFG_API_H_ */

@@ -195,6 +195,9 @@ static QDF_STATUS dfs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc
 	/* Initialize precac timer here*/
 	dfs_zero_cac_timer_init(dfs_soc_obj);
 
+	/* Initialize Rolling CAC timer */
+	dfs_rcac_timer_init(dfs_soc_obj);
+
 	dfs_debug(NULL, WLAN_DEBUG_DFS1,
 		"DFS obj attach to psoc successfully");
 
@@ -222,6 +225,7 @@ static QDF_STATUS dfs_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *pso
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	dfs_rcac_timer_deinit(dfs_soc_obj);
 	dfs_zero_cac_timer_detach(dfs_soc_obj);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,

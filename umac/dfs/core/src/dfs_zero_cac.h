@@ -1143,4 +1143,117 @@ static inline bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 
 #endif
 
+/**
+ * dfs_set_rcac_enable() - Set rcac enable flag.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rcac_en: input value to configure rolling cac feature.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs,
+			       bool rcac_en);
+#else
+static inline QDF_STATUS
+dfs_set_rcac_enable(struct wlan_dfs *dfs,
+		    bool rcac_en)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * dfs_get_rcac_enable() - Get rcac enable flag.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rcac_en: Variable to hold the current rcac config.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS dfs_get_rcac_enable(struct wlan_dfs *dfs,
+			       uint8_t *rcac_en);
+#else
+static inline QDF_STATUS
+dfs_get_rcac_enable(struct wlan_dfs *dfs,
+		    uint8_t *rcac_en)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * dfs_set_rcac_freq() - Set user configured rolling CAC frequency.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rcac_freq: User preferred rolling cac frequency.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS dfs_set_rcac_freq(struct wlan_dfs *dfs,
+			     qdf_freq_t rcac_freq);
+#else
+static inline QDF_STATUS
+dfs_set_rcac_freq(struct wlan_dfs *dfs,
+		  qdf_freq_t rcac_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * dfs_get_rcac_freq() - Get user configured rolling CAC frequency.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rcac_freq: Variable to store the user preferred rolling cac frequency.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+QDF_STATUS dfs_get_rcac_freq(struct wlan_dfs *dfs,
+			     qdf_freq_t *rcac_freq);
+#else
+static inline QDF_STATUS
+dfs_get_rcac_freq(struct wlan_dfs *dfs,
+		  qdf_freq_t *rcac_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * dfs_rcac_timer_init() - Initialize rolling cac timer.
+ * @dfs_soc_obj: Pointer to DFS SOC object structure.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+void dfs_rcac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj);
+#else
+static inline void
+dfs_rcac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+}
+#endif
+
+/**
+ * dfs_rcac_timer_deinit() - Free rolling cac timer object.
+ * @dfs_soc_obj: Pointer to dfs_soc_priv_obj structure.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+void dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj);
+#else
+static inline void
+dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+}
+#endif
+
+/**
+ * dfs_is_host_agile_rcac_config_enabled() - Check if agile rCAC is enabled.
+ * This considers the user config and DFS domain of the pdev to
+ * to decide if agile RCAC is supported or not.
+ * @dfs: Pointer to the wlan_dfs object.
+ *
+ * Return: True if agile DFS is enabled, else false.
+ *
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+bool dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs);
+#else
+static inline bool
+dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif
+
 #endif /* _DFS_ZERO_CAC_H_ */
