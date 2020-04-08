@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,10 +33,6 @@
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #include <wlan_cfg80211.h>
-#else
-
-/** ptt Process ID */
-static int32_t ptt_pid = INVALID_PID;
 #endif
 
 #define PTT_SOCK_DEBUG
@@ -169,84 +165,6 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	return err;
 }
 
-#ifndef CNSS_GENL
-/*
- * Process tregisteration request and send registration response messages
- * to the PTT Socket App in user space
- */
-static void ptt_sock_proc_reg_req(tAniHdr *wmsg, int radio)
-{
-	struct sAniAppRegReq *reg_req;
-	struct sAniNlAppRegRsp rspmsg;
-
-	reg_req = (struct sAniAppRegReq *) (wmsg + 1);
-	memset((char *)&rspmsg, 0, sizeof(rspmsg));
-	/* send reg response message to the application */
-	rspmsg.ret = ANI_NL_MSG_OK;
-	rspmsg.regReq.type = reg_req->type;
-	/*Save the pid */
-	ptt_pid = reg_req->pid;
-	rspmsg.regReq.pid = reg_req->pid;
-	rspmsg.wniHdr.type = cpu_to_be16(ANI_MSG_APP_REG_RSP);
-	rspmsg.wniHdr.length = cpu_to_be16(sizeof(rspmsg));
-	if (ptt_sock_send_msg_to_app((tAniHdr *) &rspmsg.wniHdr, radio,
-				     ANI_NL_MSG_PUMAC, ptt_pid) < 0) {
-		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
-			  "%s: Error sending ANI_MSG_APP_REG_RSP to pid[%d]\n",
-			  __func__, ptt_pid);
-	}
-}
-
-/*
- * Process all the messages from the PTT Socket App in user space
- */
-static void ptt_proc_pumac_msg(struct sk_buff *skb, tAniHdr *wmsg, int radio)
-{
-	u16 ani_msg_type = be16_to_cpu(wmsg->type);
-
-	switch (ani_msg_type) {
-	case ANI_MSG_APP_REG_REQ:
-		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
-			  "%s: Received ANI_MSG_APP_REG_REQ [0x%X]\n", __func__,
-			  ani_msg_type);
-		ptt_sock_proc_reg_req(wmsg, radio);
-		break;
-	default:
-		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
-			  "%s: Received Unknown Msg Type[0x%X]\n", __func__,
-			  ani_msg_type);
-		break;
-	}
-}
-
-/*
- * Process all the Netlink messages from PTT Socket app in user space
- */
-static int ptt_sock_rx_nlink_msg(struct sk_buff *skb)
-{
-	tAniNlHdr *wnl;
-	int radio;
-	int type;
-
-	wnl = (tAniNlHdr *) skb->data;
-	radio = wnl->radio;
-	type = wnl->nlh.nlmsg_type;
-	switch (type) {
-	case ANI_NL_MSG_PUMAC:  /* Message from the PTT socket APP */
-		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
-			  "%s: Received ANI_NL_MSG_PUMAC Msg [0x%X]\n",
-			  __func__, type);
-		ptt_proc_pumac_msg(skb, &wnl->wmsg, radio);
-		break;
-	default:
-		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s: Unknown NL Msg [0x%X]\n",
-			  __func__, type);
-		break;
-	}
-	return 0;
-}
-#endif
-
 #ifdef CNSS_GENL
 /**
  * ptt_cmd_handler() - Handler function for PTT commands
@@ -326,21 +244,6 @@ void ptt_sock_deactivate_svc(void)
 {
 	deregister_cld_cmd_cb(ANI_NL_MSG_PTT);
 	deregister_cld_cmd_cb(ANI_NL_MSG_PUMAC);
-}
-#else
-
-void ptt_sock_activate_svc(void)
-{
-	ptt_pid = INVALID_PID;
-	nl_srv_register(ANI_NL_MSG_PUMAC, ptt_sock_rx_nlink_msg);
-	nl_srv_register(ANI_NL_MSG_PTT, ptt_sock_rx_nlink_msg);
-}
-
-void ptt_sock_deactivate_svc(void)
-{
-	nl_srv_unregister(ANI_NL_MSG_PTT, ptt_sock_rx_nlink_msg);
-	nl_srv_unregister(ANI_NL_MSG_PUMAC, ptt_sock_rx_nlink_msg);
-	ptt_pid = INVALID_PID;
 }
 #endif
 #endif /* PTT_SOCK_SVC_ENABLE */

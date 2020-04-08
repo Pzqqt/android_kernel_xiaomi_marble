@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,7 +87,7 @@
  * Length      : 4 bytes [LEN_PAYLOAD]
  * Payload     : LEN_PAYLOAD bytes
  */
-#ifdef PTT_SOCK_SVC_ENABLE
+#if defined(PTT_SOCK_SVC_ENABLE) && defined(CNSS_GENL)
 /**
  * ptt_sock_activate_svc() - API to register PTT/PUMAC command handlers
  *
@@ -105,23 +105,17 @@ void ptt_sock_activate_svc(void);
  * Return: None
  */
 void ptt_sock_deactivate_svc(void);
-int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid);
+
 #else
 static inline void ptt_sock_activate_svc(void)
 {
 }
-
 static inline void ptt_sock_deactivate_svc(void)
 {
 }
-
-static inline int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio,
-					   int src_mod, int pid)
-{
-	return 0;
-}
 #endif
 
+int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid);
 /*
  * Format of message exchanged between the PTT Socket App in userspace and the
  * WLAN Driver, in either direction. Each msg will begin with this header and
