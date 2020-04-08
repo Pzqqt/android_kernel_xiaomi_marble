@@ -666,13 +666,24 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
 	return false;
 }
 
-uint32_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
+uint32_t sap_select_default_oper_chan(struct mac_context *mac_ctx,
+				      struct sap_acs_cfg *acs_cfg)
 {
 	uint16_t i;
 
-	if (!acs_cfg || !acs_cfg->freq_list || !acs_cfg->ch_list_count)
+	if (!acs_cfg)
 		return 0;
 
+	if (!acs_cfg->ch_list_count || !acs_cfg->freq_list) {
+		if (mac_ctx->mlme_cfg->acs.force_sap_start) {
+			sap_debug("SAP forced, freq selected %d",
+				  acs_cfg->master_freq_list[0]);
+			return acs_cfg->master_freq_list[0];
+		} else {
+			sap_debug("No channel left for operation");
+			return 0;
+		}
+	}
 	/*
 	 * There could be both 2.4Ghz and 5ghz channels present in the list
 	 * based upon the Hw mode received from hostapd, it is always better
@@ -954,7 +965,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 				  FL("SAP Configuring default ch, Ch_freq=%d"),
 				  sap_context->chan_freq);
 			default_op_freq = sap_select_default_oper_chan(
-						sap_context->acs_cfg);
+						mac_ctx, sap_context->acs_cfg);
 			wlansap_set_acs_ch_freq(sap_context, default_op_freq);
 
 			if (sap_context->freq_list) {

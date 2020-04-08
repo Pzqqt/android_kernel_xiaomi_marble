@@ -319,21 +319,24 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 
 	wlan_sap_filter_non_preferred_channels(mac_ctx->pdev, sap_ctx);
 	if (!sap_ctx->acs_cfg->ch_list_count) {
-		sap_err("No channel left for SAP operation, hotspot fail");
-		sap_ctx->chan_freq = SAP_CHANNEL_NOT_SELECTED;
-		sap_ctx->acs_cfg->pri_ch_freq = SAP_CHANNEL_NOT_SELECTED;
-		sap_config_acs_result(mac_handle, sap_ctx, 0);
+		oper_channel =
+			sap_select_default_oper_chan(mac_ctx,
+						     sap_ctx->acs_cfg);
+		sap_ctx->chan_freq = oper_channel;
+		sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
+		sap_config_acs_result(mac_handle, sap_ctx,
+				      sap_ctx->acs_cfg->ht_sec_ch_freq);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
-		sap_ctx->sap_status = eSAP_START_BSS_CHANNEL_NOT_SELECTED;
+		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
-
 	}
 	if (eCSR_SCAN_SUCCESS != scan_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("CSR scan_status = eCSR_SCAN_ABORT/FAILURE (%d), choose default channel"),
 			scan_status);
 		oper_channel =
-			sap_select_default_oper_chan(sap_ctx->acs_cfg);
+			sap_select_default_oper_chan(mac_ctx,
+						     sap_ctx->acs_cfg);
 		wlansap_set_acs_ch_freq(sap_ctx, oper_channel);
 		sap_ctx->acs_cfg->pri_ch_freq = oper_channel;
 		sap_config_acs_result(mac_handle, sap_ctx,
@@ -351,7 +354,8 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 	if (oper_channel == SAP_CHANNEL_NOT_SELECTED) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("No suitable channel, so select default channel"));
-		oper_channel = sap_select_default_oper_chan(sap_ctx->acs_cfg);
+		oper_channel = sap_select_default_oper_chan(mac_ctx,
+							    sap_ctx->acs_cfg);
 	}
 
 	wlansap_set_acs_ch_freq(sap_ctx, oper_channel);

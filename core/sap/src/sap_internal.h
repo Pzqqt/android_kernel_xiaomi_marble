@@ -452,6 +452,7 @@ static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 
 /**
  * sap_select_default_oper_chan() - Select AP mode default operating channel
+ * @mac_ctx: mac context
  * @acs_cfg: pointer to ACS config info
  *
  * Select AP mode default operating channel based on ACS hw mode and channel
@@ -460,7 +461,8 @@ static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
  *
  * Return: Selected operating channel frequency
  */
-uint32_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
+uint32_t sap_select_default_oper_chan(struct mac_context *mac_ctx,
+				      struct sap_acs_cfg *acs_cfg);
 
 /*
  * sap_is_dfs_cac_wait_state() - check if sap is in cac wait state
