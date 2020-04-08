@@ -1405,8 +1405,8 @@ static inline struct dp_pdev *
 }
 
 /**
- * dp_get_target_pdev_id_for_host_pdev_id() - Return target pdev corresponding
- *                                         to host pdev id
+ * dp_calculate_target_pdev_id_from_host_pdev_id() - Return target pdev
+ *                                          corresponding to host pdev id
  * @soc: soc pointer
  * @mac_for_pdev: pdev_id corresponding to host pdev for WIN, mac id for MCL
  *
@@ -1419,7 +1419,7 @@ static inline struct dp_pdev *
  * For MCL, return the offset-1 translated mac_id
  */
 static inline int
-dp_get_target_pdev_id_for_host_pdev_id
+dp_calculate_target_pdev_id_from_host_pdev_id
 	(struct dp_soc *soc, uint32_t mac_for_pdev)
 {
 	struct dp_pdev *pdev;
@@ -1431,6 +1431,25 @@ dp_get_target_pdev_id_for_host_pdev_id
 
 	/*non-MCL case, get original target_pdev mapping*/
 	return wlan_cfg_get_target_pdev_id(soc->wlan_cfg_ctx, pdev->lmac_id);
+}
+
+/**
+ * dp_get_target_pdev_id_for_host_pdev_id() - Return target pdev corresponding
+ *                                         to host pdev id
+ * @soc: soc pointer
+ * @mac_for_pdev: pdev_id corresponding to host pdev for WIN, mac id for MCL
+ *
+ * returns target pdev_id for host pdev id.
+ * For WIN, return the value stored in pdev object.
+ * For MCL, return the offset-1 translated mac_id.
+ */
+static inline int
+dp_get_target_pdev_id_for_host_pdev_id
+	(struct dp_soc *soc, uint32_t mac_for_pdev)
+{
+	struct dp_pdev *pdev = soc->pdev_list[mac_for_pdev];
+
+	return pdev->target_pdev_id;
 }
 
 /**
