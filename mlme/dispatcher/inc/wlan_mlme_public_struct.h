@@ -1227,6 +1227,8 @@ struct acs_weight_range {
  * @normalize_weight_num_chan: Number of freq items for normalization.
  * @normalize_weight_range: Frequency range for weight normalization
  * @num_weight_range: num of ranges provided by user
+ * @force_sap_start: Force SAP start when no channel is found suitable
+ * by ACS
  */
 struct wlan_mlme_acs {
 	bool is_acs_with_more_param;
@@ -1238,6 +1240,7 @@ struct wlan_mlme_acs {
 	uint16_t normalize_weight_num_chan;
 	struct acs_weight_range normalize_weight_range[MAX_ACS_WEIGHT_RANGE];
 	uint16_t num_weight_range;
+	bool force_sap_start;
 };
 
 /*

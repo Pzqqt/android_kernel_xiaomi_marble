@@ -1305,6 +1305,8 @@ static void mlme_init_acs_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	acs->is_vendor_acs_support =
 		cfg_get(psoc, CFG_USER_AUTO_CHANNEL_SELECTION);
+	acs->force_sap_start =
+		cfg_get(psoc, CFG_ACS_FORCE_START_SAP);
 	acs->is_acs_support_for_dfs_ltecoex =
 		cfg_get(psoc, CFG_USER_ACS_DFS_LTE);
 	acs->is_external_acs_policy =

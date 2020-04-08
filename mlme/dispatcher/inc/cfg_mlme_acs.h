@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -179,12 +179,36 @@
 		"5940-7105=0, 5965=100, 6045=100, 6125=100, 6205=100, 6285=100, 6365=100, 6605=100, 6685=100, 6765=100, 6845=100", \
 		"Used to specify the channel weights")
 
+/*
+ * <ini>
+ * force_start_sap- Enable the SAP even if no channel is suitable for SAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable the SAP even if no channel is found suitable
+ * for SAP by ACS.
+ *
+ * Related: NA
+ *
+ * Supported Feature: ACS
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ACS_FORCE_START_SAP CFG_INI_BOOL( \
+		"force_start_sap", \
+		0, \
+		"Force start SAP")
+
 #define CFG_ACS_ALL \
 	CFG(CFG_ACS_WITH_MORE_PARAM) \
 	CFG(CFG_AUTO_CHANNEL_SELECT_WEIGHT) \
 	CFG(CFG_USER_AUTO_CHANNEL_SELECTION) \
 	CFG(CFG_USER_ACS_DFS_LTE) \
 	CFG(CFG_EXTERNAL_ACS_POLICY) \
-	CFG(CFG_NORMALIZE_ACS_WEIGHT)
+	CFG(CFG_NORMALIZE_ACS_WEIGHT) \
+	CFG(CFG_ACS_FORCE_START_SAP)
 
 #endif /* __CFG_MLME_ACS_H */
