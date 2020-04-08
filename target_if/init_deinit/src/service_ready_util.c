@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -243,9 +243,9 @@ static int get_sar_version(wmi_unified_t handle, uint8_t *evt,
 static bool new_hw_mode_preferred(uint32_t current_hw_mode,
 				  uint32_t new_hw_mode)
 {
-	uint8_t hw_mode_id_precedence[WMI_HOST_HW_MODE_MAX + 1] = { 5, 1, 4,
-								    3, 0, 2,
-								    6 };
+	uint8_t hw_mode_id_precedence[WMI_HOST_HW_MODE_MAX + 1] = { 6, 2, 5,
+								    4, 1, 3,
+								    7, 0, 8};
 
 	if (current_hw_mode > WMI_HOST_HW_MODE_MAX ||
 	    new_hw_mode > WMI_HOST_HW_MODE_MAX)
