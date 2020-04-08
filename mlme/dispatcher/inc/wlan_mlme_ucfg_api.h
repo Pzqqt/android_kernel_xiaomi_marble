@@ -1244,25 +1244,6 @@ QDF_STATUS
 ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val);
 
-#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * ucfg_mlme_update_sae_single_pmk_info() - Update sae_single_pmk_info
- * @vdev: pointer to VDEV common object
- * @pmk_info:  Pointer mlme pmkid info
- *
- * Return: None
- */
-void
-ucfg_mlme_update_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
-				     struct mlme_pmk_info *pmk_info);
-#else
-static inline void
-ucfg_mlme_update_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
-				     struct mlme_pmk_info *pmk_info)
-{
-}
-#endif
-
 /**
  * ucfg_mlme_get_roam_bmiss_first_bcnt() - Get roam bmiss final count
  * @psoc: pointer to psoc object
