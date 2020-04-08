@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_CTRL_H_
@@ -12,7 +12,7 @@
 #include "dsi_ctrl_hw.h"
 #include "dsi_clk.h"
 #include "dsi_pwr.h"
-#include "drm_mipi_dsi.h"
+#include "drm/drm_mipi_dsi.h"
 
 /*
  * DSI Command transfer modifiers

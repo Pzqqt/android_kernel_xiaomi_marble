@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DP_AUX_H_
 #define _DP_AUX_H_
 
 #include "dp_catalog.h"
-#include "drm_dp_helper.h"
+#include "drm/drm_dp_helper.h"
 
 #define DP_STATE_NOTIFICATION_SENT          BIT(0)
 #define DP_STATE_TRAIN_1_STARTED            BIT(1)

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
@@ -619,6 +619,7 @@ static void sde_rot_evtlog_debug_work(struct work_struct *work)
 		sde_rot_dbg_evtlog.work_rot_dbgbus);
 }
 
+#if defined(CONFIG_MSM_SDE_ROTATOR_EVTLOG_DEBUG) && defined(CONFIG_DEBUG_FS)
 /*
  * sde_rot_evtlog_tout_handler - log dump timeout handler
  * @queue: boolean indicate putting log dump into queue
@@ -716,6 +717,7 @@ void sde_rot_evtlog(const char *name, int line, int flag, ...)
 
 	spin_unlock_irqrestore(&sde_rot_xlock, flags);
 }
+#endif
 
 /*
  * sde_rotator_stat_show - Show statistics on read to this debugfs file
