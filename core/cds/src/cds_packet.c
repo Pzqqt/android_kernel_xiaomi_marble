@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,7 +97,7 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
       Allocate a network buffer for TX
    ---------------------------------------------------------------------------*/
 QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
-				  uint8_t *file_name, uint32_t line_num)
+				  const char *func_name, uint32_t line_num)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	qdf_nbuf_t nbuf;
@@ -105,7 +105,7 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 	nbuf = qdf_nbuf_alloc_debug(NULL,
 		roundup(size + TX_PKT_MIN_HEADROOM, 4),
 		TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false,
-				     file_name, line_num);
+				     func_name, line_num);
 
 	if (nbuf) {
 		qdf_nbuf_put_tail(nbuf, size);

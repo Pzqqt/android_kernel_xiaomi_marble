@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,10 +70,10 @@ QDF_STATUS cds_pkt_get_packet_length(cds_pkt_t *pPacket,
  */
 #ifdef MEMORY_DEBUG
 #define cds_packet_alloc(s, d, p)	\
-	cds_packet_alloc_debug(s, d, p, __FILE__, __LINE__)
+	cds_packet_alloc_debug(s, d, p, __func__, __LINE__)
 
 QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
-				  uint8_t *file_name, uint32_t line_num);
+				  const char *func_name, uint32_t line_num);
 #else
 QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket);
 #endif
