@@ -385,6 +385,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_PKT_CAPTURE: PACKET CAPTURE module ID
  * @QDF_MODULE_ID_MON_FILTER: Monitor filter related config module ID
  * @QDF_MODULE_ID_DCS: DCS module ID
+ * @QDF_MODULE_ID_RPTR: Repeater module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -508,6 +509,7 @@ typedef enum {
 	QDF_MODULE_ID_PKT_CAPTURE,
 	QDF_MODULE_ID_MON_FILTER,
 	QDF_MODULE_ID_DCS,
+	QDF_MODULE_ID_RPTR,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

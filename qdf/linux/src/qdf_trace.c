@@ -3160,6 +3160,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_MON_FILTER] = {"Monitor Filter"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 	[QDF_MODULE_ID_PKT_CAPTURE] = {"pkt_capture"},
+	[QDF_MODULE_ID_RPTR] = {"RPTR"},
 };
 qdf_export_symbol(g_qdf_category_name);
 
@@ -3622,6 +3623,7 @@ static void set_default_trace_levels(struct category_info *cinfo)
 		[QDF_MODULE_ID_MON_FILTER] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_ANY] = QDF_TRACE_LEVEL_INFO,
 		[QDF_MODULE_ID_PKT_CAPTURE] = QDF_TRACE_LEVEL_NONE,
+		[QDF_MODULE_ID_RPTR] = QDF_TRACE_LEVEL_INFO,
 	};
 
 	for (i = 0; i < MAX_SUPPORTED_CATEGORY; i++) {
