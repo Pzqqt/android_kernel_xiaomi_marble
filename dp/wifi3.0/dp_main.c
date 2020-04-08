@@ -1550,7 +1550,7 @@ static enum timer_yield_status
 dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
 			  uint64_t start_time)
 {
-	uint32_t cur_time = qdf_get_log_timestamp();
+	uint64_t cur_time = qdf_get_log_timestamp();
 
 	if (!work_done)
 		return DP_TIMER_WORK_DONE;
@@ -1558,7 +1558,7 @@ dp_should_timer_irq_yield(struct dp_soc *soc, uint32_t work_done,
 	if (cur_time - start_time > DP_MAX_TIMER_EXEC_TIME_TICKS)
 		return DP_TIMER_TIME_EXHAUST;
 
-	return DP_TIMER_TIME_EXHAUST;
+	return DP_TIMER_NO_YIELD;
 }
 
 /**
