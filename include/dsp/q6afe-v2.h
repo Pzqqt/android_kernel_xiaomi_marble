@@ -45,7 +45,8 @@
 #define AFE_API_VERSION_V4		4
 /* for VAD enable */
 #define AFE_API_VERSION_V6		6
-
+/* for Speaker Protection V4 */
+#define AFE_API_VERSION_V9		9
 
 typedef int (*routing_cb)(int port);
 

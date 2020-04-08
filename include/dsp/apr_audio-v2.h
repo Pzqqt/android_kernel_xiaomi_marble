@@ -11004,19 +11004,6 @@ struct afe_sp_rx_limiter_th_param {
 	uint32_t lim_thr_per_calib_q27[SP_V2_NUM_MAX_SPKR];
 } __packed;
 
-union afe_spkr_prot_config {
-	struct asm_fbsp_mode_rx_cfg mode_rx_cfg;
-	struct asm_spkr_calib_vi_proc_cfg vi_proc_cfg;
-	struct asm_feedback_path_cfg feedback_path_cfg;
-	struct asm_mode_vi_proc_cfg mode_vi_proc_cfg;
-	struct afe_sp_th_vi_mode_cfg th_vi_mode_cfg;
-	struct afe_sp_th_vi_ftm_cfg th_vi_ftm_cfg;
-	struct afe_sp_th_vi_v_vali_cfg th_vi_v_vali_cfg;
-	struct afe_sp_ex_vi_mode_cfg ex_vi_mode_cfg;
-	struct afe_sp_ex_vi_ftm_cfg ex_vi_ftm_cfg;
-	struct afe_sp_rx_limiter_th_param limiter_th_cfg;
-} __packed;
-
 struct afe_spkr_prot_get_vi_calib {
 	struct apr_hdr hdr;
 	struct mem_mapping_hdr mem_hdr;
@@ -11028,6 +11015,366 @@ struct afe_spkr_prot_calib_get_resp {
 	uint32_t status;
 	struct param_hdr_v3 pdata;
 	struct asm_calib_res_cfg res_cfg;
+} __packed;
+
+
+#define AFE_MODULE_SPEAKER_PROTECTION_V4_RX       0x000102C7
+#define AFE_PARAM_ID_SP_V4_OP_MODE                0x000102C9
+#define AFE_PARAM_ID_SP_V4_RX_TMAX_XMAX_LOGGING   0x000102D2
+
+struct afe_sp_v4_param_op_mode {
+	uint32_t mode;
+} __packed;
+
+struct afe_sp_v4_channel_tmax_xmax_params {
+	/*
+	 * Maximum excursion since the last grasp of xmax in mm.
+	 */
+	int32_t max_excursion;
+	/*
+	 * Number of periods when the monitored excursion exceeds to and
+	 * stays at Xmax during logging_count_period.
+	 */
+	uint32_t count_exceeded_excursion;
+	/*
+	 * Maximum temperature since the last grasp of tmax in C.
+	 */
+	int32_t max_temperature;
+	/*
+	 * Number of periods when the monitored temperature exceeds to and
+	 * stays at Tmax during logging_count_period
+	 */
+	uint32_t count_exceeded_temperature;
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures of
+ * type afe_sp_v4_channel_tmax_xmax_params.
+ */
+struct afe_sp_v4_param_tmax_xmax_logging {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_tmax_xmax_params ch_tmax_xmax[0];
+} __packed;
+
+#define AFE_MODULE_SPEAKER_PROTECTION_V4_VI     0x000102D3
+#define AFE_PARAM_ID_SP_V4_VI_OP_MODE_CFG       0x000102D4
+#define AFE_PARAM_ID_SP_V4_VI_R0T0_CFG          0x000102D5
+#define AFE_PARAM_ID_SP_V4_CALIB_RES_CFG        0x000102D8
+#define AFE_PARAM_ID_SP_V4_TH_VI_FTM_CFG        0x000102D9
+#define AFE_PARAM_ID_SP_V4_TH_VI_FTM_PARAMS     0x000102DA
+#define AFE_PARAM_ID_SP_V4_TH_VI_V_VALI_CFG     0x000102DB
+#define AFE_PARAM_ID_SP_V4_TH_VI_V_VALI_PARAMS  0x000102DC
+#define AFE_PARAM_ID_SP_V4_EX_VI_MODE_CFG       0x000102DF
+#define AFE_PARAM_ID_SP_V4_EX_VI_FTM_CFG        0x000102E0
+#define AFE_PARAM_ID_SP_V4_EX_VI_FTM_PARAMS     0x000102E1
+#define AFE_PARAM_ID_SP_V4_VI_CHANNEL_MAP_CFG   0x000102E5
+
+struct afe_sp_v4_param_vi_op_mode_cfg {
+	uint32_t num_speakers;
+	/* Number of channels for Rx signal.
+	 */
+	uint32_t th_operation_mode;
+	/*
+	 * Operation mode of thermal VI module.
+	 *   0 -- Normal Running mode
+	 *   1 -- Calibration mode
+	 *   2 -- FTM mode
+	 *   3 -- V-Validation mode
+	 */
+	uint32_t th_quick_calib_flag;
+	/*
+	 * Indicates whether calibration is to be done in quick mode or not.
+	 * This field is valid only in Calibration mode (operation_mode = 1).
+	 * 0 -- Disabled
+	 * 1 -- Enabled
+	 */
+	uint32_t th_r0t0_selection_flag[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Specifies which set of R0, T0 values the algorithm will use.
+	 * This field is valid only in Normal mode (operation_mode = 0).
+	 * 0 -- Use calibrated R0, T0 value
+	 * 1 -- Use safe R0, T0 value
+	 */
+} __packed;
+
+struct afe_sp_v4_channel_r0t0 {
+	int32_t r0_cali_q24;
+	/*
+	 * Calibration point resistance per device. This field is valid
+	 * only in Normal mode (operation_mode = 0).
+	 * values 33554432 to 1073741824 Ohms (in Q24 format)
+	 */
+	int16_t t0_cali_q6;
+	/*
+	 * Calibration point temperature per device. This field is valid
+	 * in both Normal mode and Calibration mode.
+	 * values -1920 to 5120 degrees C (in Q6 format)
+	 */
+	uint16_t reserved;
+
+} __packed;
+
+/* Followed by this structure are 'num_speaakers' number of structures
+ *  of type afe_sp_v4_channel_r0t0.
+ */
+struct afe_sp_v4_param_th_vi_r0t0_cfg {
+	uint32_t num_speakers;
+	/* Number of channels for Rx signal.
+	 */
+
+	struct afe_sp_v4_channel_r0t0 ch_r0t0[0];
+} __packed;
+
+struct afe_sp_v4_param_th_vi_calib_res_cfg {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+	uint32_t th_vi_ca_state;
+	/*
+	 * Represents the calibration state for both speakers.
+	 * 0 -- Incorrect operation mode.
+	 * 1 -- Inactive mode.
+	 * 2 -- Wait state.
+	 * 3 -- Calibration in progress state.
+	 * 4 -- Calibration success.
+	 * 5 -- Calibration failed.
+	 */
+	int32_t	r0_cali_q24[SP_V2_NUM_MAX_SPKR];
+	/* Calibration resistance per device.
+	 */
+} __packed;
+
+struct afe_sp_v4_th_vi_calib_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct afe_sp_v4_param_th_vi_calib_res_cfg res_cfg;
+} __packed;
+
+struct afe_sp_v4_channel_ftm_cfg {
+	uint32_t wait_time_ms;
+	/*
+	 * Wait time to heat up speaker before collecting statistics
+	 * for ftm mode in ms.
+	 * values 0 to 4294967295 ms
+	 */
+	uint32_t ftm_time_ms;
+	/*
+	 * duration for which FTM statistics are collected in ms.
+	 * values 0 to 2000 ms
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures
+ * of type afe_sp_v4_channel_ftm_cfg.
+ */
+struct afe_sp_v4_param_th_vi_ftm_cfg {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_ftm_cfg ch_ftm_cfg[0];
+} __packed;
+
+struct afe_sp_v4_channel_ftm_params {
+	int32_t dc_res_q24;
+	/*
+	 * DC resistance value in q24 format
+	 * values 0 to 2147483647 Ohms (in Q24 format)
+	 */
+	int32_t temp_q22;
+	/*
+	 * temperature value in q22 format
+	 * values -125829120 to 2147483647 degC (in Q22 format)
+	 */
+	uint32_t status;
+	/*
+	 * FTM packet status
+	 * 0 - Incorrect operation mode.This status is returned
+	 *     when GET_PARAM is called in non FTM Mode
+	 * 1 - Inactive mode -- Port is not yet started.
+	 * 2 - Wait state. wait_time_ms has not yet elapsed
+	 * 3 - In progress state. ftm_time_ms has not yet elapsed.
+	 * 4 - Success.
+	 * 5 - Failed.
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures
+ * of type afe_sp_v4_channel_ftm_params.
+ */
+struct afe_sp_v4_param_th_vi_ftm_params {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_ftm_params ch_ftm_params[0];
+} __packed;
+
+struct afe_sp_v4_gen_get_param_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+} __packed;
+
+struct afe_sp_v4_channel_v_vali_cfg {
+	uint32_t wait_time_ms;
+	/*
+	 * Wait time to heat up speaker before collecting statistics
+	 * for V validation mode in ms.
+	 * values 100 to 1000 ms
+	 */
+	uint32_t vali_time_ms;
+	/*
+	 * duration for which V VALIDATION statistics are collected in ms.
+	 * values 1000 to 3000 ms
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures
+ * of type afe_sp_v4_channel_v_vali_cfg.
+ */
+struct afe_sp_v4_param_th_vi_v_vali_cfg {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_v_vali_cfg ch_v_vali_cfg[0];
+} __packed;
+
+struct afe_sp_v4_channel_v_vali_params {
+	uint32_t vrms_q24;
+	/*
+	 * Vrms value in q24 format
+	 * values [0 33554432] Q24 (0 - 2Vrms)
+	 */
+	uint32_t status;
+	/*
+	 * v-vali packet status
+	 * 0 - Failed.
+	 * 1 - Success.
+	 * 2 - Incorrect operation mode.This status is returned
+	 *     when GET_PARAM is called in non v-vali Mode
+	 * 3 - Inactive mode -- Port is not yet started.
+	 * 4 - Wait state. wait_time_ms has not yet elapsed
+	 * 5 - In progress state. ftm_time_ms has not yet elapsed.
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures
+ * of type afe_sp_v4_channel_v_vali_params.
+ */
+struct afe_sp_v4_param_th_vi_v_vali_params {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_v_vali_params ch_v_vali_params[0];
+} __packed;
+
+struct afe_sp_v4_param_ex_vi_mode_cfg {
+	uint32_t operation_mode;
+	/*
+	 * Operation mode of Excursion VI module.
+	 * 0 - Normal Running mode
+	 * 2 - FTM mode
+	 */
+} __packed;
+
+struct afe_sp_v4_channel_ex_vi_ftm {
+	uint32_t wait_time_ms;
+	/*
+	 * Wait time to heat up speaker before collecting statistics
+	 * for ftm mode in ms.
+	 * values 0 to 4294967295 ms
+	 */
+	uint32_t ftm_time_ms;
+	/*
+	 * duration for which FTM statistics are collected in ms.
+	 * values 0 to 2000 ms
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures
+ * of type afe_sp_v4_channel_ex_vi_ftm.
+ */
+struct afe_sp_v4_param_ex_vi_ftm_cfg {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_ex_vi_ftm ch_ex_vi_ftm[0];
+} __packed;
+
+struct afe_sp_v4_channel_ex_vi_ftm_params {
+	int32_t ftm_re_q24;
+	/*
+	 * DC resistance of voice coil at room temperature
+	 * or small signal level in Ohm.
+	 */
+	int32_t ftm_Bl_q24;
+	/* Force factor.
+	 */
+	int32_t ftm_Rms_q24;
+	/* Mechanical damping or resistance of loudspeaker in Kg/sec.
+	 */
+	int32_t ftm_Kms_q24;
+	/* Mechanical stiffness of driver suspension in N/mm.
+	 */
+	int32_t ftm_Fres_q20;
+	/* Resonance frequency in Hz.
+	 */
+	int32_t ftm_Qms_q24;
+	/* Mechanical Q-factor.
+	 */
+	uint32_t status;
+	/*
+	 * FTM packet status
+	 * 0 - Incorrect operation mode.This status is returned
+	 *      when GET_PARAM is called in non FTM Mode.
+	 * 1 - Inactive mode -- Port is not yet started.
+	 * 2 - Wait state. wait_time_ms has not yet elapsed
+	 * 3 - In progress state. ftm_time_ms has not yet elapsed.
+	 * 4 - Success.
+	 * 5 - Failed.
+	 */
+} __packed;
+
+/* This structure is followed by 'num_ch' number of structures of
+ * type afe_sp_v4_channel_ex_vi_ftm_params.
+ */
+struct afe_sp_v4_param_ex_vi_ftm_params {
+	uint32_t num_ch;
+	/* Number of channels for Rx signal.
+	 */
+
+	 struct afe_sp_v4_channel_ex_vi_ftm_params ch_ex_vi_ftm_params[0];
+} __packed;
+
+struct afe_sp_v4_param_vi_channel_map_cfg {
+	int32_t	num_channels;
+	int32_t	chan_info[4];
+} __packed;
+
+union afe_spkr_prot_config {
+	struct asm_fbsp_mode_rx_cfg mode_rx_cfg;
+	struct asm_spkr_calib_vi_proc_cfg vi_proc_cfg;
+	struct asm_feedback_path_cfg feedback_path_cfg;
+	struct asm_mode_vi_proc_cfg mode_vi_proc_cfg;
+	struct afe_sp_th_vi_mode_cfg th_vi_mode_cfg;
+	struct afe_sp_th_vi_ftm_cfg th_vi_ftm_cfg;
+	struct afe_sp_th_vi_v_vali_cfg th_vi_v_vali_cfg;
+	struct afe_sp_ex_vi_mode_cfg ex_vi_mode_cfg;
+	struct afe_sp_ex_vi_ftm_cfg ex_vi_ftm_cfg;
+	struct afe_sp_rx_limiter_th_param limiter_th_cfg;
+	struct afe_sp_v4_param_op_mode v4_op_mode;
+	struct afe_sp_v4_param_vi_op_mode_cfg v4_vi_op_mode;
+	struct afe_sp_v4_param_th_vi_r0t0_cfg v4_r0t0_cfg;
+	struct afe_sp_v4_param_th_vi_ftm_cfg v4_th_vi_ftm_cfg;
+	struct afe_sp_v4_param_th_vi_v_vali_cfg v4_v_vali_cfg;
+	struct afe_sp_v4_param_ex_vi_mode_cfg v4_ex_vi_mode_cfg;
+	struct afe_sp_v4_param_ex_vi_ftm_cfg v4_ex_vi_ftm_cfg;
+	struct afe_sp_v4_param_vi_channel_map_cfg v4_ch_map_cfg;
 } __packed;
 
 
@@ -11702,7 +12049,7 @@ struct afe_clk_set {
 	 * for enable and disable clock.
 	 *	"clk_freq_in_hz", "clk_attri", and "clk_root"
 	 *	are ignored in disable clock case.
-	 *	@values 
+	 *	@values
 	 *	- 0 -- Disabled
 	 *	- 1 -- Enabled  @tablebulletend
 	 */
