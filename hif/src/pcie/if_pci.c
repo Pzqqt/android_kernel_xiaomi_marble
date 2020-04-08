@@ -50,6 +50,7 @@
 
 #include "pci_api.h"
 #include "ahb_api.h"
+#include "wlan_cfg.h"
 
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
@@ -61,6 +62,22 @@
  * use TargetCPU warm reset * instead of SOC_GLOBAL_RESET
  */
 #define CPU_WARM_RESET_WAR
+
+const char *dp_irqname[WLAN_CFG_INT_NUM_CONTEXTS] = {
+"WLAN_GRP_DP_0",
+"WLAN_GRP_DP_1",
+"WLAN_GRP_DP_2",
+"WLAN_GRP_DP_3",
+"WLAN_GRP_DP_4",
+"WLAN_GRP_DP_5",
+"WLAN_GRP_DP_6",
+#if !defined(WLAN_MAX_PDEVS)
+"WLAN_GRP_DP_7",
+"WLAN_GRP_DP_8",
+"WLAN_GRP_DP_9",
+"WLAN_GRP_DP_10",
+#endif
+};
 
 /*
  * Top-level interrupt handler for all PCI interrupts from a Target.
@@ -3658,7 +3675,7 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 				scn->qdf_dev->dev, irq,
 				hif_ext_group_interrupt_handler,
 				IRQF_SHARED | IRQF_NO_SUSPEND,
-				"wlan_EXT_GRP",
+				dp_irqname[hif_ext_group->grp_id],
 				hif_ext_group);
 		if (ret) {
 			HIF_ERROR("%s: request_irq failed ret = %d",
