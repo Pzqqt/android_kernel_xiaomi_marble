@@ -763,10 +763,13 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					   p2p_device_address.bytes,
 					   name_assign_type, true);
 	} else {
+		uint8_t *device_address =
+					wlan_hdd_get_intf_addr(hdd_ctx, mode);
 		adapter = hdd_open_adapter(hdd_ctx, mode, name,
-					   wlan_hdd_get_intf_addr(hdd_ctx,
-								  mode),
+					   device_address,
 					   name_assign_type, true);
+		if (!adapter)
+			wlan_hdd_release_intf_addr(hdd_ctx, device_address);
 	}
 
 	if (!adapter) {
