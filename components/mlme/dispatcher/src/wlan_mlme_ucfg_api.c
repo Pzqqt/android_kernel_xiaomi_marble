@@ -980,14 +980,6 @@ ucfg_mlme_get_delay_before_vdev_stop(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
-void ucfg_mlme_update_sae_single_pmk_info(struct wlan_objmgr_vdev *vdev,
-					  struct mlme_pmk_info *sae_single_pmk)
-{
-	wlan_mlme_update_sae_single_pmk(vdev, sae_single_pmk);
-}
-#endif
-
 QDF_STATUS
 ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val)

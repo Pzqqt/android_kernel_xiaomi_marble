@@ -3200,19 +3200,23 @@ void sme_get_pmk_info(mac_handle_t mac_handle, uint8_t session_id,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
- * \fn sme_roam_set_psk_pmk
- * \brief a wrapper function to request CSR to save PSK/PMK
- *  This is a synchronous call.
- * \param mac_handle - Global structure
- * \param sessionId - SME sessionId
- * \param pPSK_PMK - pointer to an array of Psk[]/Pmk
- * \param pmk_len - Length could be only 16 bytes in case if LEAP
- *                  connections. Need to pass this information to
- *                  firmware.
- * \return QDF_STATUS -status whether PSK/PMK is set or not
+ * sme_roam_set_psk_pmk() - a wrapper function to request CSR to save PSK/PMK
+ * This is a synchronous call.
+ * @mac_handle:  Global structure
+ * @sessionId:   SME sessionId
+ * @pPSK_PMK:    pointer to an array of Psk[]/Pmk
+ * @pmk_len:     Length could be only 16 bytes in case if LEAP
+ *               connections. Need to pass this information to
+ *               firmware.
+ * @update_to_fw: True - send RSO update to firmware after updating
+ *                       session->psk_pmk.
+ *                False - Copy the pmk to session->psk_pmk and return
+ *
+ * Return: QDF_STATUS -status whether PSK/PMK is set or not
  */
 QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
-				uint8_t *pPSK_PMK, size_t pmk_len)
+				uint8_t *psk_pmk, size_t pmk_len,
+				bool update_to_fw)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -3220,8 +3224,8 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_set_psk_pmk(mac, sessionId, pPSK_PMK,
-						     pmk_len);
+			status = csr_roam_set_psk_pmk(mac, sessionId, psk_pmk,
+						      pmk_len, update_to_fw);
 		else
 			status = QDF_STATUS_E_INVAL;
 		sme_release_global_lock(&mac->sme);
