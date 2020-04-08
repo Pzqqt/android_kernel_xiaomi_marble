@@ -1139,8 +1139,10 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 			tx_exc_metadata->sec_type : vdev->sec_type);
 
 	/* Return Buffer Manager ID */
-	uint8_t bm_id = ring_id;
-	hal_ring_handle_t hal_ring_hdl = soc->tcl_data_ring[ring_id].hal_srng;
+	uint8_t bm_id = dp_tx_get_rbm_id(soc, ring_id);
+
+	hal_ring_handle_t hal_ring_hdl = NULL;
+
 	QDF_STATUS status = QDF_STATUS_E_RESOURCES;
 
 	if (!dp_tx_is_desc_id_valid(soc, tx_desc->id)) {
@@ -1210,7 +1212,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 			 length, type, (uint64_t)dma_addr,
 			 tx_desc->pkt_offset, tx_desc->id);
 
-	hal_ring_hdl = soc->tcl_data_ring[ring_id].hal_srng;
+	hal_ring_hdl = dp_tx_get_hal_ring_hdl(soc, ring_id);
+
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_ring_hdl))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s %d : HAL RING Access Failed -- %pK",
