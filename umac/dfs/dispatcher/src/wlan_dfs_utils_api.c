@@ -1618,3 +1618,27 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev)
 
 	dfs_reset_dfs_prevchan(dfs);
 }
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is null");
+		return;
+	}
+
+	dfs_rcac_sm_deliver_evt(dfs->dfs_soc_obj,
+				event,
+				event_data_len,
+				event_data);
+}
+#endif /* QCA_SUPPORT_ADFS_RCAC */

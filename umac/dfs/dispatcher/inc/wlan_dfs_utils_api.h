@@ -977,4 +977,29 @@ void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
  * Return: None.
  */
 void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+/**
+ * utils_dfs_rcac_sm_deliver_evt() - API to post events to DFS rolling CAC SM.
+ * @pdev:           Pointer to DFS pdev object.
+ * @event:          Event to be posted to DFS RCAC SM.
+ * @event_data_len: Length of event data.
+ * @event_data:     Pointer to event data.
+ *
+ * Return: None.
+ */
+void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data);
+#else
+static inline
+void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data)
+{
+}
+#endif /* QCA_SUPPORT_ADFS_RCAC */
+
 #endif /* _WLAN_DFS_UTILS_API_H_ */

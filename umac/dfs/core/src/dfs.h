@@ -1308,6 +1308,9 @@ struct wlan_dfs_priv {
  * @dfs_nol_ctx: dfs NOL data for all radios.
  * @dfs_rcac_timer: Agile RCAC (Rolling CAC) timer.
  * @dfs_rcac_timer_running: RCAC (Rolling CAC) timer running flag.
+ * @dfs_rcac_sm_hdl: DFS Rolling CAC state machine handle.
+ * @dfs_rcac_curr_state: Current state of DFS rolling CAC state machine.
+ * @dfs_rcac_sm_lock: DFS Rolling CAC state machine lock.
  */
 struct dfs_soc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -1326,6 +1329,9 @@ struct dfs_soc_priv_obj {
 #if defined(QCA_SUPPORT_ADFS_RCAC)
 	qdf_timer_t dfs_rcac_timer;
 	bool dfs_rcac_timer_running;
+	wlan_sm *dfs_rcac_sm_hdl;
+	enum dfs_rcac_sm_state dfs_rcac_curr_state;
+	qdf_spinlock_t dfs_rcac_sm_lock;
 #endif
 };
 
@@ -1362,6 +1368,7 @@ enum {
 	WLAN_DEBUG_DFS_FALSE_DET  = 0x00080000,
 	WLAN_DEBUG_DFS_FALSE_DET2 = 0x00100000,
 	WLAN_DEBUG_DFS_RANDOM_CHAN = 0x00200000,
+	WLAN_DEBUG_DFS_RCAC       = 0x00400000,
 	WLAN_DEBUG_DFS_MAX        = 0x80000000,
 	WLAN_DEBUG_DFS_ALWAYS     = WLAN_DEBUG_DFS_MAX
 };

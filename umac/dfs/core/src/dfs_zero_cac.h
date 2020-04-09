@@ -1256,4 +1256,77 @@ dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs)
 }
 #endif
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
+#define DFS_RCAC_SM_SPIN_LOCK(_soc_obj) \
+	qdf_spin_lock_bh((_soc_obj)->dfs_rcac_sm_lock)
+#define DFS_RCAC_SM_SPIN_UNLOCK(_soc_obj) \
+	qdf_spin_unlock_bh((_soc_obj)->dfs_rcac_sm_lock)
+
+/**
+ * enum dfs_rcac_sm_state - DFS Rolling CAC SM states.
+ * @DFS_RCAC_S_INIT:     Default state, where RCAC not in progress.
+ * @DFS_RCAC_S_RUNNING:  RCAC is in progress.
+ * @DFS_RCAC_S_COMPLETE: RCAC is completed.
+ * @DFS_RCAC_S_MAX:      Max (invalid) state.
+ */
+enum dfs_rcac_sm_state {
+	DFS_RCAC_S_INIT,
+	DFS_RCAC_S_RUNNING,
+	DFS_RCAC_S_COMPLETE,
+	DFS_RCAC_S_MAX,
+};
+
+/**
+ * dfs_rcac_sm_deliver_evt() - Deliver the event to RCAC SM.
+ * @dfs_soc_obj: Pointer to DFS soc object that holds the SM handle.
+ * @event: Event ID.
+ * @event_data_len: Length of event data.
+ * @event_data: pointer to event data.
+ *
+ * Return: Success if event is handled, else failure.
+ */
+QDF_STATUS dfs_rcac_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data);
+
+/**
+ * dfs_rcac_sm_create() - Create the Rolling CAC state machine.
+ * @dfs_soc_obj: Pointer to dfs_soc object that holds the SM handle.
+ *
+ * Return: QDF_STATUS_SUCCESS if successful, else failure status.
+ */
+QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj);
+
+/**
+ * dfs_rcac_sm_destroy() - Destroy the Rolling CAC state machine.
+ * @dfs_soc_obj: Pointer to dfs_soc object that holds the SM handle.
+ *
+ * Return: QDF_STATUS_SUCCESS if successful, else failure status.
+ */
+QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj);
+
+#else
+static inline
+QDF_STATUS dfs_rcac_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* QCA_SUPPORT_ADFS_RCAC */
+
 #endif /* _DFS_ZERO_CAC_H_ */
