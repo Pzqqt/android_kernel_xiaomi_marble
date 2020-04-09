@@ -4569,6 +4569,49 @@ int adm_set_ffecns_effect(int effect)
 EXPORT_SYMBOL(adm_set_ffecns_effect);
 
 /**
+ * adm_set_ffecns_freeze_event -
+ *      command to set event for ffecns module
+ *
+ * @event: send ffecns freeze event true or false
+ *
+ * Returns 0 on success or error on failure
+ */
+int adm_set_ffecns_freeze_event(bool ffecns_freeze_event)
+{
+	struct ffv_spf_freeze_param_t ffv_param;
+	struct param_hdr_v3 param_hdr;
+	int rc = 0;
+	int copp_idx = 0;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	memset(&ffv_param, 0, sizeof(ffv_param));
+
+	ffv_param.freeze = ffecns_freeze_event ? 1 : 0;
+	ffv_param.source_id = 0; /*default value*/
+
+	copp_idx = adm_get_default_copp_idx(this_adm.ffecns_port_id);
+	if ((copp_idx < 0) || (copp_idx >= MAX_COPPS_PER_PORT)) {
+		pr_err("%s, no active copp to query rms copp_idx:%d\n",
+			__func__, copp_idx);
+		return -EINVAL;
+	}
+
+	param_hdr.module_id = FFECNS_MODULE_ID;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = PARAM_ID_FFV_SPF_FREEZE;
+	param_hdr.param_size = sizeof(ffv_param);
+
+	rc = adm_pack_and_set_one_pp_param(this_adm.ffecns_port_id, copp_idx,
+					param_hdr, (uint8_t *) &ffv_param);
+	if (rc)
+		pr_err("%s: Failed to set ffecns imc event, err %d\n",
+		       __func__, rc);
+
+	return rc;
+}
+EXPORT_SYMBOL(adm_set_ffecns_freeze_event);
+
+/**
  * adm_param_enable -
  *      command to send params to ADM for given module
  *
