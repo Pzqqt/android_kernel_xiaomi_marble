@@ -2032,6 +2032,7 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd938x->dev_up = false;
+		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
 		mbhc = &wcd938x->mbhc->wcd_mbhc;
 		wcd938x_mbhc_ssr_down(wcd938x->mbhc, component);
 		wcd938x_reset_low(wcd938x->dev);
@@ -2056,6 +2057,7 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		} else {
 			wcd938x_mbhc_hs_detect(component, mbhc->mbhc_cfg);
 		}
+		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		wcd938x->dev_up = true;
 		break;
 	case BOLERO_WCD_EVT_CLK_NOTIFY:
