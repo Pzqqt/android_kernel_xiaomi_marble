@@ -5870,7 +5870,6 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_cdcdma5_tx),
-		.num_codecs = ARRAY_SIZE(tx_cdcdma5_tx_codecs),
 	},
 	{/* hw:x,40 */
 		.name = MSM_DAILINK_NAME(Media31),
@@ -6534,7 +6533,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx0),
 		.init = &msm_int_audrx_init,
-		.num_codecs = ARRAY_SIZE(wsa_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
@@ -6547,7 +6545,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx1),
-		.num_codecs = ARRAY_SIZE(wsa_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
@@ -6559,7 +6556,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_tx1),
-		.num_codecs = ARRAY_SIZE(wsa_dma_tx1_codecs),
 	},
 };
 
@@ -6580,7 +6576,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx0),
 		.init = &msm_aux_codec_init,
-		.num_codecs = ARRAY_SIZE(rx_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
@@ -6596,7 +6591,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -6612,7 +6606,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx2),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx2_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_3,
@@ -6628,7 +6621,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx3_codecs),
 	},
 	/* TX CDC DMA Backend DAI Links */
 	{
@@ -6641,7 +6633,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx3),
-		.num_codecs = ARRAY_SIZE(tx_dma_tx3_codecs),
 	},
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
@@ -6653,7 +6644,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx4),
-		.num_codecs = ARRAY_SIZE(tx_dma_tx4_codecs),
 	},
 };
 
