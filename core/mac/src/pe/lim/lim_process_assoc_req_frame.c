@@ -2647,6 +2647,39 @@ static void fill_mlm_assoc_ind_vht(tpSirAssocReq assocreq,
 	}
 }
 
+/**
+ *lim_convert_channel_width_enum() - map between two channel width enums
+ *@ch_width: channel width of enum type phy_ch_width
+ *
+ *Return: channel width of enum type tSirMacHTChannelWidth
+ */
+static tSirMacHTChannelWidth
+lim_convert_channel_width_enum(enum phy_ch_width ch_width)
+{
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		return eHT_CHANNEL_WIDTH_20MHZ;
+	case CH_WIDTH_40MHZ:
+		return eHT_CHANNEL_WIDTH_40MHZ;
+	case CH_WIDTH_80MHZ:
+		return eHT_CHANNEL_WIDTH_80MHZ;
+	case CH_WIDTH_160MHZ:
+		return eHT_CHANNEL_WIDTH_160MHZ;
+	case CH_WIDTH_80P80MHZ:
+		return eHT_CHANNEL_WIDTH_80P80MHZ;
+	case CH_WIDTH_MAX:
+		return eHT_MAX_CHANNEL_WIDTH;
+	case CH_WIDTH_5MHZ:
+		break;
+	case CH_WIDTH_10MHZ:
+		break;
+	case CH_WIDTH_INVALID:
+		break;
+	}
+	pe_debug("invalid enum: %d", ch_width);
+	return eHT_CHANNEL_WIDTH_20MHZ;
+}
+
 bool lim_fill_lim_assoc_ind_params(
 		tpLimMlmAssocInd assoc_ind,
 		struct mac_context *mac_ctx,
@@ -2867,7 +2900,10 @@ bool lim_fill_lim_assoc_ind_params(
 	assoc_ind->he_caps_present = assoc_req->he_cap.present;
 	assoc_ind->is_sae_authenticated =
 				assoc_req->is_sae_authenticated;
-
+	/* updates HE bandwidth in assoc indication */
+	if (wlan_reg_is_6ghz_chan_freq(session_entry->curr_op_freq))
+		assoc_ind->ch_width =
+			lim_convert_channel_width_enum(sta_ds->ch_width);
 	return true;
 }
 
