@@ -347,6 +347,20 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	}
 }
 
+#ifdef WLAN_FEATURE_11AX
+static void lim_add_he_info(struct parsed_ies *parsed_ies,
+			    struct join_rsp *sme_join_rsp)
+{
+	if (parsed_ies->he_operation.present)
+		sme_join_rsp->he_operation = parsed_ies->he_operation;
+}
+#else
+static inline void lim_add_he_info(struct parsed_ies *parsed_ies,
+				   struct join_rsp *sme_join_rsp)
+{
+}
+#endif
+
 /**
  * lim_add_bss_info() - copy data from session entry to join rsp
  * @sta_ds: Station dph entry
@@ -369,6 +383,7 @@ static void lim_add_bss_info(tpDphHashNode sta_ds,
 		sme_join_rsp->ht_operation = parsed_ies->ht_operation;
 	if (parsed_ies->vht_operation.present)
 		sme_join_rsp->vht_operation = parsed_ies->vht_operation;
+	lim_add_he_info(parsed_ies, sme_join_rsp);
 }
 
 #ifdef WLAN_FEATURE_FILS_SK

@@ -1045,6 +1045,9 @@ struct join_rsp {
 	tDot11fIEVHTCaps vht_caps;
 	tDot11fIEHTInfo ht_operation;
 	tDot11fIEVHTOperation vht_operation;
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEhe_op he_operation;
+#endif
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	bool is_fils_connection;
 	uint16_t fils_seq_num;

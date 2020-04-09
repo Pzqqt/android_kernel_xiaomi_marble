@@ -555,6 +555,20 @@ static uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
 	return NSS_1x1_MODE;
 }
 
+#ifdef WLAN_FEATURE_11AX
+static void lim_process_he_info(tpSirProbeRespBeacon beacon,
+				tpDphHashNode sta_ds)
+{
+	if (beacon->he_op.present)
+		sta_ds->parsed_ies.he_operation = beacon->he_op;
+}
+#else
+static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
+				       tpDphHashNode sta_ds)
+{
+}
+#endif
+
 /**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
@@ -1053,6 +1067,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		sta_ds->parsed_ies.ht_operation = beacon->HTInfo;
 	if (beacon->VHTOperation.present)
 		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
+
+	lim_process_he_info(beacon, sta_ds);
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 	    MLME_FORCE_POLICY_PROTECTION_DISABLE)

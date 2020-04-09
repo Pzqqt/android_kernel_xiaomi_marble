@@ -68,6 +68,8 @@
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HT_OPERATION
 #define VHT_OPERATION \
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_VHT_OPERATION
+#define HE_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HE_OPERATION
 #define INFO_ASSOC_FAIL_REASON \
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_FAIL_REASON
 #define REMOTE_MAX_PHY_RATE \
@@ -581,6 +583,43 @@ fail:
 	return -EINVAL;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
+     defined(WLAN_FEATURE_11AX)
+static int32_t hdd_add_he_oper_info(
+				struct sk_buff *skb,
+				struct hdd_station_ctx *hdd_sta_ctx)
+{
+	int32_t ret = 0;
+
+	if (nla_put(skb, HE_OPERATION,
+		    hdd_sta_ctx->cache_conn_info.he_oper_len,
+		     hdd_sta_ctx->cache_conn_info.he_operation))
+		ret = -EINVAL;
+
+	qdf_mem_free(hdd_sta_ctx->cache_conn_info.he_operation);
+	hdd_sta_ctx->cache_conn_info.he_operation = NULL;
+	hdd_sta_ctx->cache_conn_info.he_oper_len = 0;
+	return ret;
+}
+
+static int32_t hdd_get_he_op_len(struct hdd_station_ctx *hdd_sta_ctx)
+{
+	return hdd_sta_ctx->cache_conn_info.he_oper_len;
+}
+#else
+static inline uint32_t hdd_add_he_oper_info(
+					struct sk_buff *skb,
+					struct hdd_station_ctx *hdd_sta_ctx)
+{
+	return 0;
+}
+
+static uint32_t hdd_get_he_op_len(struct hdd_station_ctx *hdd_sta_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_get_station_info() - send BSS information to supplicant
  * @hdd_ctx: pointer to hdd context
@@ -593,7 +632,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 {
 	struct sk_buff *skb = NULL;
 	uint8_t *tmp_hs20 = NULL, *ies = NULL;
-	uint32_t nl_buf_len, ie_len = 0;
+	uint32_t nl_buf_len, ie_len = 0, hdd_he_op_len = 0;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	QDF_STATUS status;
 
@@ -633,6 +672,9 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 						&ies, &ie_len);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		nl_buf_len += ie_len;
+
+	hdd_he_op_len = hdd_get_he_op_len(hdd_sta_ctx);
+	nl_buf_len += hdd_he_op_len;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
@@ -676,6 +718,10 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 			hdd_err("put fail");
 			goto fail;
 		}
+	if (hdd_add_he_oper_info(skb, hdd_sta_ctx)) {
+		hdd_err("put fail");
+		goto fail;
+	}
 	if (hdd_sta_ctx->cache_conn_info.conn_flag.hs20_present)
 		if (nla_put(skb, AP_INFO_HS20_INDICATION,
 			    (sizeof(hdd_sta_ctx->cache_conn_info.hs20vendor_ie)

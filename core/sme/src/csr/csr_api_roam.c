@@ -7641,6 +7641,19 @@ static inline void csr_process_fils_join_rsp(struct mac_context *mac_ctx,
 {}
 #endif
 
+#ifdef WLAN_FEATURE_11AX
+static void csr_roam_process_he_info(struct join_rsp *sme_join_rsp,
+				     struct csr_roam_info *roam_info)
+{
+	roam_info->he_operation = sme_join_rsp->he_operation;
+}
+#else
+static inline void csr_roam_process_he_info(struct join_rsp *sme_join_rsp,
+					    struct csr_roam_info *roam_info)
+{
+}
+#endif
+
 /**
  * csr_roam_process_join_res() - Process the Join results
  * @mac_ctx:          Global MAC Context
@@ -7949,6 +7962,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 			roam_info->hs20vendor_ie = join_rsp->hs20vendor_ie;
 			roam_info->ht_operation = join_rsp->ht_operation;
 			roam_info->vht_operation = join_rsp->vht_operation;
+			csr_roam_process_he_info(join_rsp, roam_info);
 		} else {
 			if (cmd->u.roamCmd.fReassoc) {
 				roam_info->fReassocReq =

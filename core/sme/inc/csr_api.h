@@ -1085,6 +1085,9 @@ struct csr_roam_info {
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	tDot11fIEVHTOperation vht_operation;
 	tDot11fIEHTInfo ht_operation;
+#ifdef WLAN_FEATURE_11AX
+	tDot11fIEhe_op he_operation;
+#endif
 	bool reassoc;
 	bool ampdu;
 	bool sgi_enable;

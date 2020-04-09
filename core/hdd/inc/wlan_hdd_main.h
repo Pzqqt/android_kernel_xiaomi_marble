@@ -4326,4 +4326,34 @@ hdd_monitor_mode_qdf_create_event(struct hdd_adapter *adapter,
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
+     defined(WLAN_FEATURE_11AX)
+/**
+ * hdd_cleanup_conn_info() - Cleanup connectin info
+ * @adapter: Adapter upon which the command was received
+ *
+ * This function frees the memory allocated for the connection
+ * info structure
+ *
+ * Return: none
+ */
+void hdd_cleanup_conn_info(struct hdd_adapter *adapter);
+/**
+ * hdd_sta_destroy_ctx_all() - cleanup all station contexts
+ * @hdd_ctx: Global HDD context
+ *
+ * This function destroys all the station contexts
+ *
+ * Return: none
+ */
+void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx);
+#else
+static inline void hdd_cleanup_conn_info(struct hdd_adapter *adapter)
+{
+}
+static inline void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

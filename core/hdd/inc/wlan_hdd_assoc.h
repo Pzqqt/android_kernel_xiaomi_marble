@@ -197,6 +197,11 @@ struct hdd_connection_info {
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	struct ieee80211_ht_operation ht_operation;
 	struct ieee80211_vht_operation vht_operation;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) \
+     && defined(WLAN_FEATURE_11AX)
+	struct ieee80211_he_operation *he_operation;
+	uint32_t he_oper_len;
+#endif
 	uint32_t roam_count;
 	int8_t signal;
 	int32_t assoc_status_code;

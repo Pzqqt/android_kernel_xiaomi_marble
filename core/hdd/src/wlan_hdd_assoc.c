@@ -177,6 +177,21 @@ static const int beacon_filter_table[] = {
 #endif
 };
 
+/* HE operation BIT positins */
+#if defined(WLAN_FEATURE_11AX)
+#define HE_OPERATION_DFLT_PE_DURATION_POS 0
+#define HE_OPERATION_TWT_REQUIRED_POS 3
+#define HE_OPERATION_RTS_THRESHOLD_POS 4
+#define HE_OPERATION_VHT_OPER_POS 14
+#define HE_OPERATION_CO_LOCATED_BSS_POS 15
+#define HE_OPERATION_ER_SU_DISABLE_POS 16
+#define HE_OPERATION_OPER_INFO_6G_POS 17
+#define HE_OPERATION_RESERVED_POS 18
+#define HE_OPERATION_BSS_COLOR_POS 24
+#define HE_OPERATION_PARTIAL_BSS_COLOR_POS 30
+#define HE_OPERATION_BSS_COL_DISABLED_POS 31
+#endif
+
 #if defined(WLAN_FEATURE_SAE) && \
 		defined(CFG80211_EXTERNAL_AUTH_SUPPORT)
 /**
@@ -901,6 +916,112 @@ static void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
 	hdd_vht_ops->basic_mcs_set = roam_vht_ops->basicMCSSet;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 0)) && \
+     defined(WLAN_FEATURE_11AX)
+static void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+				  struct csr_roam_info *roam_info)
+{
+	tDot11fIEhe_op *roam_he_operation = &roam_info->he_operation;
+	struct ieee80211_he_operation *hdd_he_operation;
+	uint32_t he_oper_params = 0;
+	uint32_t len = 0, filled = 0;
+	uint8_t he_oper_6g_params = 0;
+	uint32_t he_oper_len;
+
+	if (!roam_he_operation->present)
+		return;
+	if (roam_he_operation->vht_oper_present)
+		len += 3;
+	if (roam_he_operation->co_located_bss)
+		len += 1;
+	if (roam_he_operation->oper_info_6g_present)
+		len += 5;
+
+	he_oper_len = sizeof(struct ieee80211_he_operation) + len;
+
+	hdd_he_operation = qdf_mem_malloc(he_oper_len);
+	if (!hdd_he_operation)
+		return;
+
+	/* Fill he_oper_params */
+	he_oper_params |= roam_he_operation->default_pe <<
+					HE_OPERATION_DFLT_PE_DURATION_POS;
+	he_oper_params |= roam_he_operation->twt_required <<
+					HE_OPERATION_TWT_REQUIRED_POS;
+	he_oper_params |= roam_he_operation->txop_rts_threshold <<
+					HE_OPERATION_RTS_THRESHOLD_POS;
+	he_oper_params |= roam_he_operation->vht_oper_present <<
+					HE_OPERATION_VHT_OPER_POS;
+	he_oper_params |= roam_he_operation->co_located_bss <<
+					HE_OPERATION_CO_LOCATED_BSS_POS;
+	he_oper_params |= roam_he_operation->er_su_disable <<
+					HE_OPERATION_ER_SU_DISABLE_POS;
+	he_oper_params |= roam_he_operation->oper_info_6g_present <<
+					HE_OPERATION_OPER_INFO_6G_POS;
+	he_oper_params |= roam_he_operation->reserved2 <<
+					HE_OPERATION_RESERVED_POS;
+	he_oper_params |= roam_he_operation->bss_color <<
+					HE_OPERATION_BSS_COLOR_POS;
+	he_oper_params |= roam_he_operation->partial_bss_col <<
+					HE_OPERATION_PARTIAL_BSS_COLOR_POS;
+	he_oper_params |= roam_he_operation->bss_col_disabled <<
+					HE_OPERATION_BSS_COL_DISABLED_POS;
+
+	hdd_he_operation->he_oper_params = he_oper_params;
+
+	/* Fill he_mcs_nss set */
+	qdf_mem_copy(&hdd_he_operation->he_mcs_nss_set,
+		     roam_he_operation->basic_mcs_nss,
+		     sizeof(hdd_he_operation->he_mcs_nss_set));
+
+	/* Fill he_params_optional fields */
+
+	if (roam_he_operation->vht_oper_present) {
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->vht_oper.info.chan_width;
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->vht_oper.info.center_freq_seg0;
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->vht_oper.info.center_freq_seg1;
+	}
+	if (roam_he_operation->co_located_bss)
+		hdd_he_operation->optional[filled++] =
+				roam_he_operation->maxbssid_ind.info.data;
+
+	if (roam_he_operation->oper_info_6g_present) {
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->oper_info_6g.info.primary_ch;
+		he_oper_6g_params |=
+			roam_he_operation->oper_info_6g.info.ch_width << 0;
+		he_oper_6g_params |=
+			roam_he_operation->oper_info_6g.info.dup_bcon << 2;
+		he_oper_6g_params |=
+			roam_he_operation->oper_info_6g.info.reserved << 3;
+
+		hdd_he_operation->optional[filled++] = he_oper_6g_params;
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->oper_info_6g.info.center_freq_seg0;
+		hdd_he_operation->optional[filled++] =
+			roam_he_operation->oper_info_6g.info.center_freq_seg1;
+		hdd_he_operation->optional[filled] =
+				roam_he_operation->oper_info_6g.info.min_rate;
+	}
+
+	if (hdd_sta_ctx->cache_conn_info.he_operation) {
+		qdf_mem_free(hdd_sta_ctx->cache_conn_info.he_operation);
+		hdd_sta_ctx->cache_conn_info.he_operation = NULL;
+	}
+
+	hdd_sta_ctx->cache_conn_info.he_oper_len = he_oper_len;
+
+	hdd_sta_ctx->cache_conn_info.he_operation = hdd_he_operation;
+}
+#else
+static inline void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
+					 struct csr_roam_info *roam_info)
+{
+}
+#endif
 
 /**
  * hdd_save_bss_info() - save connection info in hdd sta ctx
@@ -952,9 +1073,15 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 	} else {
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = false;
 	}
+
+	/* Cleanup already existing he info */
+	hdd_cleanup_conn_info(adapter);
+
 	/* Cache last connection info */
 	qdf_mem_copy(&hdd_sta_ctx->cache_conn_info, &hdd_sta_ctx->conn_info,
 		     sizeof(hdd_sta_ctx->cache_conn_info));
+
+	hdd_copy_he_operation(hdd_sta_ctx, roam_info);
 }
 
 /**
