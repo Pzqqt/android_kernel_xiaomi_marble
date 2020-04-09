@@ -5243,6 +5243,36 @@ static int __reg_dmav1_setup_demurav1_en(struct sde_hw_dspp *ctx,
 	return rc;
 }
 
+static int __reg_dmav1_setup_demurav1_dual_pipe(struct sde_hw_dspp *ctx,
+		struct sde_hw_cp_cfg *hw_cfg,
+		struct sde_reg_dma_setup_ops_cfg *dma_write_cfg,
+		struct sde_hw_reg_dma_ops *dma_ops)
+{
+	struct sde_hw_dspp *dspp;
+	u32 temp;
+	int rc;
+	u32 demura_base = ctx->cap->sblk->demura.base + ctx->hw.blk_off;
+
+	dspp = hw_cfg->dspp[0];
+
+	if (dspp->idx == ctx->idx)
+		return 0;
+
+	if (hw_cfg->displayh < hw_cfg->displayv)
+		temp = (8 * (1 << 21)) / hw_cfg->displayh;
+	else
+		temp = (16 * (1 << 21)) / hw_cfg->displayh;
+
+	temp = temp * (hw_cfg->displayh >> 1);
+	REG_DMA_SETUP_OPS(*dma_write_cfg, demura_base + 0x58,
+		&temp, sizeof(temp), REG_SINGLE_WRITE, 0, 0, 0);
+	rc = dma_ops->setup_payload(dma_write_cfg);
+	if (rc)
+		DRM_ERROR("0x58: REG_SINGLE_WRITE failed ret %d\n", rc);
+
+	return rc;
+}
+
 void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 {
 	struct drm_msm_dem_cfg *dcfg;
@@ -5302,6 +5332,13 @@ void reg_dmav1_setup_demurav1(struct sde_hw_dspp *ctx, void *cfx)
 		dma_ops);
 	if (rc) {
 		DRM_ERROR("failed setup_demurav1_cfg5 rc %d", rc);
+		return;
+	}
+
+	rc = __reg_dmav1_setup_demurav1_dual_pipe(ctx, cfx, &dma_write_cfg,
+		dma_ops);
+	if (rc) {
+		DRM_ERROR("failed setup_demurav1_dual_pipe rc %d", rc);
 		return;
 	}
 
