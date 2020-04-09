@@ -1442,8 +1442,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
-			   body_ptr, frame_len);
+	QDF_TRACE_HEX_DUMP_DEBUG_RL(QDF_MODULE_ID_PE, body_ptr, frame_len);
 
 	addba_req = qdf_mem_malloc(sizeof(*addba_req));
 	if (!addba_req)
