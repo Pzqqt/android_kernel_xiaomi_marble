@@ -497,10 +497,16 @@ static void dp_mon_filter_set_status_cmn(struct dp_pdev *pdev,
 	filter->tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
 	filter->tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
 	filter->tlv_filter.fp_data_filter = FILTER_DATA_ALL;
-	filter->tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
-	filter->tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
-	filter->tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 	filter->tlv_filter.offset_valid = false;
+
+	if (pdev->mon_filter_mode & MON_FILTER_OTHER) {
+		filter->tlv_filter.enable_mo = 1;
+		filter->tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+		filter->tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+		filter->tlv_filter.mo_data_filter = FILTER_DATA_ALL;
+	} else {
+		filter->tlv_filter.enable_mo = 0;
+	}
 }
 
 #ifdef FEATURE_PERPKT_INFO
@@ -855,8 +861,6 @@ void dp_mon_filter_setup_mon_mode(struct dp_pdev *pdev)
 	/* Enabled the filter */
 	filter.valid = true;
 	dp_mon_filter_set_status_cmn(pdev, &filter);
-	filter.tlv_filter.enable_mo = 1;
-
 	dp_mon_filter_show_filter(pdev, mode, &filter);
 
 	/* Store the above filter */
