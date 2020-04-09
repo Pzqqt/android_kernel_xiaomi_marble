@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -14,6 +14,7 @@
 #include <linux/input.h>
 #include <linux/of_device.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/nvmem-consumer.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -260,6 +261,7 @@ static u32 mi2s_ebit_clk[MI2S_MAX] = {
 };
 
 static struct mi2s_conf mi2s_intf_conf[MI2S_MAX];
+static bool va_disable;
 
 /* Default configuration of TDM channels */
 static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
@@ -3824,6 +3826,8 @@ static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		if (va_disable)
+			break;
 		ret = bengal_send_island_va_config(dai_link->id);
 		if (ret)
 			pr_err("%s: send island va cfg failed, err: %d\n",
@@ -6508,6 +6512,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	const char *mbhc_audio_jack_type = NULL;
 	int ret = 0;
 	uint index = 0;
+	struct nvmem_cell *cell;
+	size_t len;
+	u32 *buf;
+	u32 adsp_var_idx = 0;
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev,
@@ -6657,7 +6665,23 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			__func__, ret);
 
 	is_initial_boot = true;
+	/* get adsp variant idx */
+	cell = nvmem_cell_get(&pdev->dev, "adsp_variant");
+	if (IS_ERR_OR_NULL(cell)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to get nvmem cell \n", __func__);
+		goto ret;
+	}
+	buf = nvmem_cell_read(cell, &len);
+	nvmem_cell_put(cell);
+	if (IS_ERR_OR_NULL(buf) || len <= 0 || len > sizeof(32)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to read nvmem cell \n", __func__);
+		goto ret;
+	}
+	memcpy(&adsp_var_idx, buf, len);
+	kfree(buf);
+	va_disable = adsp_var_idx;
 
+ret:
 	return 0;
 err:
 	devm_kfree(&pdev->dev, pdata);
