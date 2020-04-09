@@ -40,6 +40,7 @@
 #include "sde_power_handle.h"
 #include "sde_irq.h"
 #include "sde_core_perf.h"
+#include "sde_vm.h"
 
 #define DRMID(x) ((x) ? (x)->base.id : -1)
 
@@ -310,6 +311,9 @@ struct sde_kms {
 	cpumask_t irq_cpu_mask;
 	struct dev_pm_qos_request pm_qos_irq_req[NR_CPUS];
 	struct irq_affinity_notify affinity_notify;
+
+	struct sde_vm_ops vm_ops;
+	struct sde_vm *vm;
 };
 
 struct vsync_info {
