@@ -60,7 +60,7 @@ do {									      \
 #define MODULE_NAME "audio-pkt"
 #define MINOR_NUMBER_COUNT 1
 #define AUDPKT_DRIVER_NAME "aud_pasthru_adsp"
-#define CHANNEL_NAME "to_apps"
+#define CHANNEL_NAME "adsp_apps"
 
 
 enum audio_pkt_state {
