@@ -957,6 +957,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		/* QCN9000 has the support enabled */
 		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
 			mpdu_done = true;
+			nbuf->next = NULL;
 			/* Trigger invalid peer handler wrapper */
 			dp_rx_process_invalid_peer_wrapper(soc,
 					nbuf, mpdu_done, pool_id);
@@ -1617,9 +1618,7 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint8_t tid = 0;
 	uint8_t msdu_continuation = 0;
 	bool first_msdu_in_sg = false;
-	bool is_raw_mode = false;
 	uint32_t msdu_len = 0;
-
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -1820,14 +1819,14 @@ done:
 		if (qdf_nbuf_is_rx_chfrag_cont(nbuf)) {
 			nbuf = dp_rx_sg_create(nbuf);
 			next = nbuf->next;
-			is_raw_mode = HAL_IS_DECAP_FORMAT_RAW(soc->hal_soc, qdf_nbuf_data(nbuf));
-			if (!is_raw_mode) {
-				/* Free the pacckets in case of 802.3 SG */
-				qdf_nbuf_free(nbuf);
-				dp_info_rl("scattered 802.3 msdu dropped");
-				nbuf = next;
-				continue;
-			}
+			/*
+			 * SG error handling is not done correctly,
+			 * drop SG frames for now.
+			 */
+			qdf_nbuf_free(nbuf);
+			dp_info_rl("scattered msdu dropped");
+			nbuf = next;
+			continue;
 		}
 
 		if (wbm_err_info.wbm_err_src == HAL_RX_WBM_ERR_SRC_REO) {
