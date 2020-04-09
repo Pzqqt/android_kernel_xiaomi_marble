@@ -440,7 +440,7 @@ struct wlan_crypto_comp_priv {
 	struct wlan_crypto_key *key[WLAN_CRYPTO_MAX_VLANKEYIX];
 	struct wlan_crypto_key *igtk_key[WLAN_CRYPTO_MAXIGTKKEYIDX];
 	struct wlan_crypto_key *bigtk_key[WLAN_CRYPTO_MAXBIGTKKEYIDX];
-	uint32_t igtk_key_type;
+	enum wlan_crypto_cipher_type igtk_key_type;
 	uint8_t def_tx_keyid;
 	uint8_t def_igtk_tx_keyid;
 	uint8_t def_bigtk_tx_keyid;

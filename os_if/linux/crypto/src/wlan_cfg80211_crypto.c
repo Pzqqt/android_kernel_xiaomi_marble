@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -119,17 +119,17 @@ int wlan_cfg80211_store_key(struct wlan_objmgr_vdev *vdev,
 		crypto_key = qdf_mem_malloc(sizeof(*crypto_key));
 		if (!crypto_key)
 			return -EINVAL;
-		status = wlan_crypto_save_key(vdev, key_index, crypto_key);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			osif_err("Failed to save key");
-			qdf_mem_free(crypto_key);
-			return -EINVAL;
-		}
 	}
 
 	wlan_cfg80211_translate_key(vdev, key_index, key_type, mac_addr,
 				    params, crypto_key);
 
+	status = wlan_crypto_save_key(vdev, key_index, crypto_key);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to save key");
+		qdf_mem_free(crypto_key);
+		return -EINVAL;
+	}
 	return 0;
 }
 
