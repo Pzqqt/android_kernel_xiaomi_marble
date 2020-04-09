@@ -2821,7 +2821,7 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 		}
 	}
 
-	qdf_nbuf_unmap_nbytes_single(vdev->osdev, nbuf,
+	qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 				     QDF_DMA_TO_DEVICE, nbuf->len);
 
 	if (qdf_unlikely(!vdev)) {
