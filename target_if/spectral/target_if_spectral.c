@@ -1444,16 +1444,9 @@ target_if_init_spectral_param_properties(struct target_if_spectral *spectral)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * target_if_init_spectral_capability() - Initialize Spectral capability
- * @spectral: Pointer to Spectral target_if internal private data
- *
- * This is a workaround.
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS
-target_if_init_spectral_capability(struct target_if_spectral *spectral)
+target_if_init_spectral_capability(struct target_if_spectral *spectral,
+				   uint32_t target_type)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -1539,6 +1532,17 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral)
 				scaling_params[param_idx].default_agc_max_gain;
 			break;
 		}
+	}
+
+	pcap->num_detectors_20mhz = 1;
+	pcap->num_detectors_40mhz = 1;
+	pcap->num_detectors_80mhz = 1;
+	if (target_type == TARGET_TYPE_QCN9000) {
+		pcap->num_detectors_160mhz = 1;
+		pcap->num_detectors_80p80mhz = 1;
+	} else {
+		pcap->num_detectors_160mhz = 2;
+		pcap->num_detectors_80p80mhz = 2;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -2326,7 +2330,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 
 	target_if_init_spectral_param_properties(spectral);
 	/* Init spectral capability */
-	if (target_if_init_spectral_capability(spectral) !=
+	if (target_if_init_spectral_capability(spectral, target_type) !=
 					QDF_STATUS_SUCCESS) {
 		qdf_mem_free(spectral);
 		return NULL;

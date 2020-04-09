@@ -2014,14 +2014,17 @@ uint32_t target_if_spectral_sops_get_params(
 
 /**
  * target_if_init_spectral_capability() - Initialize Spectral capability
+ *
  * @spectral: Pointer to Spectral target_if internal private data
+ * @target_type: target type
  *
  * This is a workaround.
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-target_if_init_spectral_capability(struct target_if_spectral *spectral);
+target_if_init_spectral_capability(struct target_if_spectral *spectral,
+				   uint32_t target_type);
 
 /**
  * target_if_start_spectral_scan() - Start spectral scan
