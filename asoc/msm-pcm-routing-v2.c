@@ -68,7 +68,7 @@ static int quin_mi2s_switch_enable;
 static int sen_mi2s_switch_enable;
 static int fm_pcmrx_switch_enable;
 static int usb_switch_enable;
-static int lsm_port_index;
+static int lsm_port_index[MAX_LSM_SESSIONS];
 static int slim0_rx_aanc_fb_port;
 static int msm_route_ec_ref_rx;
 static int msm_ec_ref_ch = 4;
@@ -1384,9 +1384,11 @@ static bool route_check_fe_id_adm_support(int fe_id)
 	if ((fe_id >= MSM_FRONTEND_DAI_LSM1) &&
 		 (fe_id <= MSM_FRONTEND_DAI_LSM8)) {
 		/* fe id is listen while port is set to afe */
-		if (lsm_port_index != ADM_LSM_PORT_INDEX) {
+		if (lsm_port_index[fe_id - MSM_FRONTEND_DAI_LSM1] !=
+				ADM_LSM_PORT_INDEX) {
 			pr_debug("%s: fe_id %d, lsm mux slim port %d\n",
-				__func__, fe_id, lsm_port_index);
+				__func__, fe_id,
+				lsm_port_index[fe_id - MSM_FRONTEND_DAI_LSM1]);
 			rc = false;
 		}
 	}
@@ -2977,10 +2979,44 @@ static int msm_routing_put_fm_pcmrx_switch_mixer(struct snd_kcontrol *kcontrol,
 	return 1;
 }
 
+static void msm_routing_get_lsm_fe_idx(struct snd_kcontrol *kcontrol,
+						u8 *fe_idx)
+{
+	int fe_id = MSM_FRONTEND_DAI_LSM1;
+
+	if (strnstr(kcontrol->id.name, "LSM1", sizeof("LSM1"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM1;
+	} else if (strnstr(kcontrol->id.name, "LSM2", sizeof("LSM2"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM2;
+	} else if (strnstr(kcontrol->id.name, "LSM3", sizeof("LSM3"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM3;
+	} else if (strnstr(kcontrol->id.name, "LSM4", sizeof("LSM4"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM4;
+	} else if (strnstr(kcontrol->id.name, "LSM5", sizeof("LSM5"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM5;
+	} else if (strnstr(kcontrol->id.name, "LSM6", sizeof("LSM6"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM6;
+	} else if (strnstr(kcontrol->id.name, "LSM7", sizeof("LSM7"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM7;
+	} else if (strnstr(kcontrol->id.name, "LSM8", sizeof("LSM8"))) {
+		fe_id = MSM_FRONTEND_DAI_LSM8;
+	} else {
+		pr_err("%s: Invalid kcontrol name:%s\n", __func__,
+				kcontrol->id.name);
+		return;
+	}
+
+	*fe_idx = fe_id - MSM_FRONTEND_DAI_LSM1;
+	pr_debug("%s: fe_id: %d, fe_idx:%d\n", __func__, fe_id, *fe_idx);
+}
+
 static int msm_routing_lsm_port_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = lsm_port_index;
+	u8 fe_idx = 0;
+
+	msm_routing_get_lsm_fe_idx(kcontrol, &fe_idx);
+	ucontrol->value.integer.value[0] = lsm_port_index[fe_idx];
 	return 0;
 }
 
@@ -2990,6 +3026,7 @@ static int msm_routing_lsm_port_put(struct snd_kcontrol *kcontrol,
 	struct soc_enum *e = (struct soc_enum *)kcontrol->private_value;
 	int mux = ucontrol->value.enumerated.item[0];
 	int lsm_port = AFE_PORT_ID_SLIMBUS_MULTI_CHAN_5_TX;
+	u8 fe_idx = 0;
 
 	if (mux >= e->items) {
 		pr_err("%s: Invalid mux value %d\n", __func__, mux);
@@ -3052,7 +3089,8 @@ static int msm_routing_lsm_port_put(struct snd_kcontrol *kcontrol,
 		break;
 	}
 	set_lsm_port(lsm_port);
-	lsm_port_index = ucontrol->value.integer.value[0];
+	msm_routing_get_lsm_fe_idx(kcontrol, &fe_idx);
+	lsm_port_index[fe_idx] = ucontrol->value.integer.value[0];
 
 	return 0;
 }
