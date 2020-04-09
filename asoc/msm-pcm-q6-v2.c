@@ -176,6 +176,7 @@ static void event_handler(uint32_t opcode,
 		break;
 	}
 	case ASM_DATA_EVENT_RENDERED_EOS:
+	case ASM_DATA_EVENT_RENDERED_EOS_V2:
 		pr_debug("ASM_DATA_EVENT_RENDERED_EOS\n");
 		clear_bit(CMD_EOS, &prtd->cmd_pending);
 		wake_up(&the_locks.eos_wait);

@@ -7247,6 +7247,9 @@ struct asm_data_cmd_read_v2 {
 #define ASM_DATA_EVENT_RENDERED_EOS    0x00010C1C
 #define ASM_DATA_EVENT_EOS             0x00010BDD
 
+#define ASM_DATA_CMD_EOS_V2            0x00012F3C
+#define ASM_DATA_EVENT_RENDERED_EOS_V2 0x00012F3D
+
 #define ASM_DATA_EVENT_WRITE_DONE_V2 0x00010D99
 struct asm_data_event_write_done_v2 {
 	u32                  buf_addr_lsw;
