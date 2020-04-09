@@ -1442,8 +1442,10 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 		return -ENOMEM;
 
 	ret = wsa883x_enable_supplies(&pdev->dev, wsa883x);
-	if (ret)
-		return -EINVAL;
+	if (ret) {
+		ret = -EPROBE_DEFER;
+		goto err;
+	}
 
 	wsa883x->wsa_rst_np = of_parse_phandle(pdev->dev.of_node,
 					     "qcom,spkr-sd-n-node", 0);
@@ -1466,7 +1468,8 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 		dev_dbg(&pdev->dev,
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, pdev->addr);
-		goto dev_err;
+		ret = -EPROBE_DEFER;
+		goto err;
 	}
 	pdev->dev_num = devnum;
 
@@ -1675,6 +1678,7 @@ dev_err:
 		wsa883x_gpio_ctrl(wsa883x, false);
 	swr_remove_device(pdev);
 err:
+	swr_set_dev_data(pdev, NULL);
 	return ret;
 }
 
