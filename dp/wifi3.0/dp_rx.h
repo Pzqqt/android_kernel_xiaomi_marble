@@ -1192,4 +1192,51 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 			    qdf_nbuf_t nbuf_head,
 			    qdf_nbuf_t nbuf_tail);
 
+#ifdef QCA_OL_RX_LOCK_LESS_ACCESS
+/*
+ * dp_rx_ring_access_start()- Wrapper function to log access start of a hal ring
+ * @int_ctx: pointer to DP interrupt context
+ * @dp_soc - DP soc structure pointer
+ * @hal_ring_hdl - HAL ring handle
+ *
+ * Return: 0 on success; error on failure
+ */
+static inline int
+dp_rx_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *soc,
+			hal_ring_handle_t hal_ring_hdl)
+{
+	return hal_srng_access_start_unlocked(soc->hal_soc, hal_ring_hdl);
+}
+
+/*
+ * dp_rx_ring_access_end()- Wrapper function to log access end of a hal ring
+ * @int_ctx: pointer to DP interrupt context
+ * @dp_soc - DP soc structure pointer
+ * @hal_ring_hdl - HAL ring handle
+ *
+ * Return - None
+ */
+static inline void
+dp_rx_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *soc,
+		      hal_ring_handle_t hal_ring_hdl)
+{
+	hal_srng_access_end_unlocked(soc->hal_soc, hal_ring_hdl);
+}
+#else
+static inline int
+dp_rx_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *soc,
+			hal_ring_handle_t hal_ring_hdl)
+{
+	return dp_srng_access_start(int_ctx, soc, hal_ring_hdl);
+}
+
+static inline void
+dp_rx_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *soc,
+		      hal_ring_handle_t hal_ring_hdl)
+{
+	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
+}
+
+#endif
+
 #endif /* _DP_RX_H */

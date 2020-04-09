@@ -1886,7 +1886,7 @@ more_data:
 	qdf_mem_zero(head, sizeof(head));
 	qdf_mem_zero(tail, sizeof(tail));
 
-	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
+	if (qdf_unlikely(dp_rx_srng_access_start(int_ctx, soc, hal_ring_hdl))) {
 
 		/*
 		 * Need API to convert from hal_ring pointer to
@@ -2081,7 +2081,7 @@ more_data:
 			break;
 	}
 done:
-	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
+	dp_rx_srng_access_end(int_ctx, soc, hal_ring_hdl);
 
 	for (mac_id = 0; mac_id < MAX_PDEV_CNT; mac_id++) {
 		/*
