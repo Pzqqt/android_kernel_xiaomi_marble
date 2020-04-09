@@ -3138,7 +3138,7 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	wma_debug("key_cipher %d key_id %d", iface->key.key_cipher, key_id);
 
-	igtk = wma_get_igtk(iface, &key_len);
+	igtk = wma_get_igtk(iface, &key_len, key_id);
 	switch (iface->key.key_cipher) {
 	case WMI_CIPHER_AES_CMAC:
 		if (wmi_service_enabled(wma_handle->wmi_handle,

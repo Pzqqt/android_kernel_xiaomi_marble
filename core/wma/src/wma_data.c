@@ -2352,13 +2352,20 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 }
 
 #ifdef WLAN_FEATURE_11W
-uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
+uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len,
+		      uint16_t igtk_key_idx)
 {
 	struct wlan_crypto_key *crypto_key;
 
-	crypto_key = wlan_crypto_get_key(iface->vdev, WMA_IGTK_KEY_INDEX_4);
+	if (!(igtk_key_idx == WMA_IGTK_KEY_INDEX_4 ||
+	    igtk_key_idx == WMA_IGTK_KEY_INDEX_5)) {
+		wma_err("Invalid igtk_key_idx %d", igtk_key_idx);
+		*key_len = 0;
+		return NULL;
+	}
+	crypto_key = wlan_crypto_get_key(iface->vdev, igtk_key_idx);
 	if (!crypto_key) {
-		wma_err("IGTK not found");
+		wma_err("IGTK not found for igtk_idx %d", igtk_key_idx);
 		*key_len = 0;
 		return NULL;
 	}
@@ -2513,6 +2520,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 						(qdf_nbuf_data(tx_frame));
 			}
 		} else {
+			int8_t igtk_key_id;
+
 			/* Allocate extra bytes for MMIE */
 			newFrmLen = frmLen + IEEE80211_MMIE_LEN;
 			qdf_status = cds_packet_alloc((uint16_t) newFrmLen,
@@ -2536,16 +2545,23 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			qdf_mem_copy(pFrame, wh, sizeof(*wh));
 			qdf_mem_copy(pFrame + sizeof(*wh),
 				     pData + sizeof(*wh), frmLen - sizeof(*wh));
-			igtk = wma_get_igtk(iface, &key_len);
+			igtk_key_id =
+				wlan_crypto_get_default_key_idx(iface->vdev,
+								true);
+			/* Get actual igtk key id adding 4 */
+			igtk_key_id += WMA_IGTK_KEY_INDEX_4;
+			igtk = wma_get_igtk(iface, &key_len, igtk_key_id);
 			if (!igtk) {
-				wma_alert("IGTK not present");
+				wma_err_rl("IGTK not present for igtk_key_id %d",
+					   igtk_key_id);
 				cds_packet_free((void *)tx_frame);
 				cds_packet_free((void *)pPacket);
 				goto error;
 			}
-			if (!cds_attach_mmie(igtk,
-					     iface->key.key_id[0].ipn,
-					     WMA_IGTK_KEY_INDEX_4,
+			if (!cds_attach_mmie(igtk, iface->key.key_id[
+					     igtk_key_id -
+					     WMA_IGTK_KEY_INDEX_4].ipn,
+					     igtk_key_id,
 					     pFrame,
 					     pFrame + newFrmLen, newFrmLen)) {
 				wma_alert("Failed to attach MMIE");

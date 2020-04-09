@@ -2455,10 +2455,12 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
  * wma_get_igtk() - Get the IGTK that was stored in the session earlier
  * @iface: Interface for which the key is being requested
  * @key_len: key length
+ * @igtk_key_idx: igtk key idx
  *
  * Return: Pointer to the key
  */
-uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len);
+uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len,
+		      uint16_t igtk_key_idx);
 
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 /**
