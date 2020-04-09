@@ -5160,6 +5160,10 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 
 	hdd_send_ocl_cmd(hdd_ctx, adapter);
 
+	/* Configure vdev params */
+	ucfg_fwol_configure_vdev_params(hdd_ctx->psoc, hdd_ctx->pdev,
+					adapter->device_mode, adapter->vdev_id);
+
 	hdd_nofl_debug("vdev %d created successfully", adapter->vdev_id);
 
 	return errno;
@@ -11929,6 +11933,11 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 		goto out;
 
 	ret = hdd_set_ani_enabled(hdd_ctx);
+	if (ret)
+		goto out;
+
+	/* Configure global firmware params */
+	ret = ucfg_fwol_configure_global_params(hdd_ctx->psoc, hdd_ctx->pdev);
 	if (ret)
 		goto out;
 

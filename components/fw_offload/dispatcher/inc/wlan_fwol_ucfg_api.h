@@ -584,6 +584,36 @@ QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * ucfg_fwol_configure_global_params - API to configure global params
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ *
+ * Used to configure global firmware params. This is invoked from hdd during
+ * bootup.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
+					     struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_fwol_configure_vdev_params - API to configure vdev specific params
+ * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
+ * @device_mode: device mode
+ * @vdev_id: vdev ID
+ *
+ * Used to configure per vdev firmware params based on device mode. This is
+ * invoked from hdd during vdev creation.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_configure_vdev_params(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_objmgr_pdev *pdev,
+					   enum QDF_OPMODE device_mode,
+					   uint8_t vdev_id);
 #else
 static inline QDF_STATUS ucfg_fwol_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
@@ -877,6 +907,21 @@ ucfg_fwol_get_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* FEATURE_WLAN_RA_FILTERING */
+
+static inline QDF_STATUS
+ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+
+static inline QDF_STATUS
+ucfg_fwol_configure_vdev_params(struct wlan_objmgr_psoc *psoc,
+				struct wlan_objmgr_pdev *pdev,
+				enum QDF_OPMODE device_mode, uint8_t vdev_id)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 
 #endif /* WLAN_FW_OFFLOAD */
 
