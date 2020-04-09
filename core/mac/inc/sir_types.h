@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016,2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016,2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,7 +68,18 @@ typedef struct opaque_mac_handle *mac_handle_t;
 struct opaque_hdd_handle;
 typedef struct opaque_hdd_handle *hdd_handle_t;
 
+#ifndef WLAN_MAX_CLIENTS_ALLOWED
 #define HAL_NUM_ASSOC_STA           32
 #define HAL_NUM_STA                 41
+#else
+#define HAL_NUM_ASSOC_STA WLAN_MAX_CLIENTS_ALLOWED
+/*
+ * Sync with OL_TXRX_NUM_LOCAL_PEER_IDS definition.
+ * Each AP will occupy one ID, so it will occupy two IDs for AP-AP mode.
+ * Clients will be assigned max 64 IDs.
+ * STA(associated)/P2P DEV(self-PEER) will get one ID.
+ */
+#define HAL_NUM_STA (WLAN_MAX_CLIENTS_ALLOWED + 1 + 1 + 1)
+#endif
 
 #endif /* __SIR_TYPES_H */

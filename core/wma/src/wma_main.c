@@ -186,6 +186,11 @@ struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma)
 
 #define MAX_SUPPORTED_PEERS_REV1_1 14
 #define MAX_SUPPORTED_PEERS_REV1_3 32
+#ifdef WLAN_MAX_CLIENTS_ALLOWED
+#define MAX_SUPPORTED_PEERS WLAN_MAX_CLIENTS_ALLOWED
+#else
+#define MAX_SUPPORTED_PEERS 32
+#endif
 #define MIN_NO_OF_PEERS 1
 
 /**
@@ -1616,17 +1621,28 @@ static uint8_t wma_init_max_no_of_peers(tp_wma_handle wma_handle,
 	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 	uint32_t tgt_version = hif_get_target_info_handle(scn)->target_version;
 	uint8_t max_no_of_peers;
-	uint8_t max_supported_peers = (tgt_version == AR6320_REV1_1_VERSION) ?
-			MAX_SUPPORTED_PEERS_REV1_1 : MAX_SUPPORTED_PEERS_REV1_3;
+	uint8_t max_supported_peers;
 
 	if (!cfg) {
 		WMA_LOGE("%s: NULL WMA ini handle", __func__);
 		return 0;
 	}
 
+	switch (tgt_version) {
+	case AR6320_REV1_1_VERSION:
+		max_supported_peers = MAX_SUPPORTED_PEERS_REV1_1;
+		break;
+	case AR6320_REV1_3_VERSION:
+		max_supported_peers = MAX_SUPPORTED_PEERS_REV1_3;
+		break;
+	default:
+		max_supported_peers = MAX_SUPPORTED_PEERS;
+		break;
+	}
 	max_no_of_peers = (max_peers > max_supported_peers) ?
 				max_supported_peers : max_peers;
 	cfg->max_no_of_peers = max_no_of_peers;
+
 	return max_no_of_peers;
 }
 
