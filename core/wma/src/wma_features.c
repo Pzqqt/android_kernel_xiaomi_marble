@@ -5404,12 +5404,6 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 		return;
 	}
 
-	if (cipher_type == WLAN_CRYPTO_CIPHER_AES_GMAC ||
-	    cipher_type == WLAN_CRYPTO_CIPHER_AES_GMAC_256 ||
-	    cipher_type == WLAN_CRYPTO_CIPHER_AES_CMAC)
-		iface->key.key_cipher =
-			wlan_crypto_cipher_to_wmi_cipher(cipher_type);
-
 	if (iface) {
 		wma_reset_ipn(iface, key_index);
 		iface->is_waiting_for_key = false;

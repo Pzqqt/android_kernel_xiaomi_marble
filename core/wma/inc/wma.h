@@ -647,7 +647,6 @@ typedef struct {
 /**
  * struct wma_igtk_key_t - GTK key
  * @key_id: key id
- * @key_cipher: key type
  */
 typedef struct {
 	/* IPN is maintained per iGTK keyID
@@ -655,7 +654,6 @@ typedef struct {
 	 * 1st index for iGTK KeyID = 5
 	 */
 	wma_igtk_ipn_t key_id[2];
-	uint32_t key_cipher;
 } wma_igtk_key_t;
 
 struct roam_synch_frame_ind {

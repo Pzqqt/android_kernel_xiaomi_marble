@@ -3105,16 +3105,29 @@ int wma_process_bip(tp_wma_handle wma_handle,
 	uint8_t *efrm;
 	uint8_t *igtk;
 	uint16_t key_len;
+	int32_t mgmtcipherset;
+	enum wlan_crypto_cipher_type key_cipher;
 
 	efrm = qdf_nbuf_data(wbuf) + qdf_nbuf_len(wbuf);
 
-	if (iface->key.key_cipher == WMI_CIPHER_AES_CMAC) {
+	mgmtcipherset = wlan_crypto_get_param(iface->vdev,
+					      WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+	if (!mgmtcipherset || mgmtcipherset < 0) {
+		wma_err("Invalid key cipher %d", mgmtcipherset);
+		return -EINVAL;
+	}
+
+	if (mgmtcipherset & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) {
+		key_cipher = WLAN_CRYPTO_CIPHER_AES_CMAC;
 		mmie_size = cds_get_mmie_size();
-	} else if (iface->key.key_cipher == WMI_CIPHER_AES_GMAC ||
-		   iface->key.key_cipher == WMI_CIPHER_BIP_GMAC_256) {
+	} else if (mgmtcipherset & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC)) {
+		key_cipher = WLAN_CRYPTO_CIPHER_AES_GMAC;
+		mmie_size = cds_get_gmac_mmie_size();
+	} else if (mgmtcipherset & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
+		key_cipher = WLAN_CRYPTO_CIPHER_AES_GMAC_256;
 		mmie_size = cds_get_gmac_mmie_size();
 	} else {
-		WMA_LOGE(FL("Invalid key cipher %d"), iface->key.key_cipher);
+		wma_err("Invalid key cipher %d", mgmtcipherset);
 		return -EINVAL;
 	}
 
@@ -3131,65 +3144,42 @@ int wma_process_bip(tp_wma_handle wma_handle,
 		return -EINVAL;
 	}
 
-	wma_debug("key_cipher %d key_id %d", iface->key.key_cipher, key_id);
+	wma_debug("key_cipher %d key_id %d", key_cipher, key_id);
 
 	igtk = wma_get_igtk(iface, &key_len, key_id);
-	switch (iface->key.key_cipher) {
-	case WMI_CIPHER_AES_CMAC:
-		if (wmi_service_enabled(wma_handle->wmi_handle,
-				wmi_service_sta_pmf_offload)) {
-			/*
-			 * if 11w offload is enabled then mmie validation is
-			 * performed in firmware, host just need to trim the
-			 * mmie.
-			 */
-			qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
-		} else {
-			if (cds_is_mmie_valid(igtk, iface->key.key_id[
-					      key_id -
-					      WMA_IGTK_KEY_INDEX_4].ipn,
-					      (uint8_t *)wh, efrm)) {
-				wma_debug("Protected BC/MC frame MMIE validation successful");
-				/* Remove MMIE */
-				qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
-			} else {
+	switch (key_cipher) {
+	case WLAN_CRYPTO_CIPHER_AES_CMAC:
+		if (!wmi_service_enabled(wma_handle->wmi_handle,
+					 wmi_service_sta_pmf_offload)) {
+			if (!cds_is_mmie_valid(igtk, iface->key.key_id[
+					       key_id -
+					       WMA_IGTK_KEY_INDEX_4].ipn,
+					       (uint8_t *)wh, efrm)) {
 				wma_debug("BC/MC MIC error or MMIE not present, dropping the frame");
 				return -EINVAL;
 			}
 		}
 		break;
-
-	case WMI_CIPHER_AES_GMAC:
-	case WMI_CIPHER_BIP_GMAC_256:
-		if (wmi_service_enabled(wma_handle->wmi_handle,
-				wmi_service_gmac_offload_support)) {
-			/*
-			 * if gmac offload is enabled then mmie validation is
-			 * performed in firmware, host just need to trim the
-			 * mmie.
-			 */
-			wma_debug("Trim GMAC MMIE");
-			qdf_nbuf_trim_tail(wbuf, cds_get_gmac_mmie_size());
-		} else {
-			if (cds_is_gmac_mmie_valid(igtk,
-			   iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
-			   (uint8_t *) wh, efrm, key_len)) {
-				wma_debug("Protected BC/MC frame GMAC MMIE validation successful");
-				/* Remove MMIE */
-				qdf_nbuf_trim_tail(wbuf,
-						   cds_get_gmac_mmie_size());
-			} else {
+	case WLAN_CRYPTO_CIPHER_AES_GMAC:
+	case WLAN_CRYPTO_CIPHER_AES_GMAC_256:
+		if (!wmi_service_enabled(wma_handle->wmi_handle,
+					 wmi_service_gmac_offload_support)) {
+			if (!cds_is_gmac_mmie_valid(igtk,
+						    iface->key.key_id[key_id -
+						    WMA_IGTK_KEY_INDEX_4].ipn,
+						    (uint8_t *)wh, efrm,
+						    key_len)) {
 				wma_debug("BC/MC GMAC MIC error or MMIE not present, dropping the frame");
 				return -EINVAL;
 			}
 		}
 		break;
-
 	default:
-		WMA_LOGE(FL("Unsupported key cipher %d"),
-			iface->key.key_cipher);
+		wma_err("Invalid key_type %d", key_cipher);
+		return -EINVAL;
 	}
 
+	qdf_nbuf_trim_tail(wbuf, mmie_size);
 
 	return 0;
 }
