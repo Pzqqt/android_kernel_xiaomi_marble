@@ -202,7 +202,7 @@ static int va_macro_clk_div_get(struct snd_soc_component *component)
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
-	if ((va_priv->version == BOLERO_VERSION_2_1)
+	if ((va_priv->version >= BOLERO_VERSION_2_0)
 		&& !va_priv->lpi_enable
 		&& (va_priv->dmic_clk_div == VA_MACRO_CLK_DIV_16))
 		return VA_MACRO_CLK_DIV_8;
