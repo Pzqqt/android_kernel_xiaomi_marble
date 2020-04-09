@@ -280,6 +280,9 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 				WCD938X_MICB4_TEST_CTL_1, 0xE0, 0xE0);
 	snd_soc_component_update_bits(component,
 				WCD938X_TX_3_4_TEST_BLK_EN2, 0x01, 0x00);
+	snd_soc_component_update_bits(component, WCD938X_SLEEP_CTL, 0x0E,
+				((snd_soc_component_read32(component,
+				WCD938X_DIGITAL_EFUSE_REG_30) & 0x07) << 1));
 
 	return 0;
 }
