@@ -14,6 +14,15 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 
+#define HAPTICS_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+		SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+		SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+		SNDRV_PCM_RATE_384000)
+
+#define HAPTICS_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+		SNDRV_PCM_FMTBIT_S24_LE |\
+		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
+
 /* SWR register definition */
 #define SWR_HAP_ACCESS_BASE		0x3000
 #define FIFO_WR_READY_REG		(SWR_HAP_ACCESS_BASE + 0x8)
@@ -153,8 +162,13 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		swr_device_wakeup_vote(swr_hap->swr_slave);
 		swr_connect_port(swr_hap->swr_slave, &port_id, num_port,
 				&ch_mask, &ch_rate, &num_ch, &port_type);
+		break;
+	case SND_SOC_DAPM_POST_PMU:
+		swr_slvdev_datapath_control(swr_hap->swr_slave,
+				swr_hap->swr_slave->dev_num, true);
 		/* trigger SWR play */
 		val = SWR_PLAY_BIT | SWR_BRAKE_EN_BIT | SWR_PLAY_SRC_VAL_SWR;
 		rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
@@ -163,9 +177,10 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					__func__, rc);
 			return rc;
 		}
-
-		swr_slvdev_datapath_control(swr_hap->swr_slave,
-				swr_hap->swr_slave->dev_num, true);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
+				&ch_mask, &port_type);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		swr_slvdev_datapath_control(swr_hap->swr_slave,
@@ -178,9 +193,7 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					__func__, rc);
 			return rc;
 		}
-
-		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
-				&ch_mask, &port_type);
+		swr_device_wakeup_unvote(swr_hap->swr_slave);
 		break;
 	default:
 		break;
@@ -237,6 +250,21 @@ static const struct snd_soc_component_driver swr_haptics_component = {
 	.num_dapm_widgets = ARRAY_SIZE(haptics_comp_dapm_widgets),
 	.dapm_routes = haptics_comp_dapm_route,
 	.num_dapm_routes = ARRAY_SIZE(haptics_comp_dapm_route),
+};
+
+static struct snd_soc_dai_driver haptics_dai[] = {
+	{
+		.name = "swr_haptics",
+		.playback = {
+			.stream_name = "HAPTICS_AIF Playback",
+			.rates = HAPTICS_RATES,
+			.formats = HAPTICS_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 1,
+		},
+	},
 };
 
 static int swr_haptics_parse_port_mapping(struct swr_device *sdev)
@@ -308,7 +336,8 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	if (rc) {
 		dev_err(swr_hap->dev, "%s: failed to get devnum for swr-haptics, rc=%d\n",
 				__func__, rc);
-		goto dev_err;
+		rc = -EPROBE_DEFER;
+		goto clean;
 	}
 
 	sdev->dev_num = devnum;
@@ -321,7 +350,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	}
 
 	rc = snd_soc_register_component(&sdev->dev,
-			&swr_haptics_component, NULL, 0);
+			&swr_haptics_component, haptics_dai, ARRAY_SIZE(haptics_dai));
 	if (rc) {
 		dev_err(swr_hap->dev, "%s: register swr_haptics component failed, rc=%d\n",
 				__func__, rc);
