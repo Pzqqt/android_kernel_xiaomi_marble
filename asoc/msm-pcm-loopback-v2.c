@@ -307,6 +307,7 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 			dev_err(component->dev,
 				"%s: pcm out open failed\n", __func__);
 			q6asm_audio_client_free(pcm->audio_client);
+			pcm->audio_client = NULL;
 			mutex_unlock(&pcm->lock);
 			return -ENOMEM;
 		}
@@ -346,8 +347,10 @@ static void stop_pcm(struct msm_pcm_loopback *pcm)
 	struct snd_soc_pcm_runtime *soc_pcm_rx;
 	struct snd_soc_pcm_runtime *soc_pcm_tx;
 
-	if (pcm->audio_client == NULL)
+	if (pcm->audio_client == NULL) {
+		pr_err("%s: audio client freed\n", __func__);
 		return;
+	}
 
 	mutex_lock(&loopback_session_lock);
 	q6asm_cmd(pcm->audio_client, CMD_CLOSE);
@@ -444,6 +447,12 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 
 	dev_dbg(component->dev, "%s: ASM loopback stream:%d\n",
 		__func__, substream->stream);
+
+	if (!pcm || !pcm->audio_client) {
+		mutex_unlock(&pcm->lock);
+		pr_err("%s: private data null or audio client freed\n", __func__);
+		return -EINVAL;
+	}
 
 	if (pcm->playback_start && pcm->capture_start) {
 		mutex_unlock(&pcm->lock);
