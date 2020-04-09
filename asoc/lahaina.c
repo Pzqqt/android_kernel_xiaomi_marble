@@ -7831,6 +7831,7 @@ static struct platform_driver lahaina_asoc_machine_driver = {
 };
 module_platform_driver(lahaina_asoc_machine_driver);
 
+MODULE_SOFTDEP("pre: bt_fm_slim");
 MODULE_DESCRIPTION("ALSA SoC msm");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
