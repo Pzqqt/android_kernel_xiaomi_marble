@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -3372,7 +3372,7 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 		ret = wait_event_timeout(this_adm.copp.wait[port_idx][copp_idx],
 			atomic_read(&this_adm.copp.stat
 			[port_idx][copp_idx]) >= 0,
-			msecs_to_jiffies(TIMEOUT_MS));
+			msecs_to_jiffies(2 * TIMEOUT_MS));
 		if (!ret) {
 			pr_err("%s: ADM open timedout for port_id: 0x%x for [0x%x]\n",
 						__func__, tmp_port, port_id);
