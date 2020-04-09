@@ -1132,7 +1132,7 @@ static void swrm_disable_ports(struct swr_master *master,
 			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
 		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, i, mport->dir, false);
+			swrm_pcm_port_config(swrm, (i + 1), mport->dir, false);
 	}
 }
 
@@ -1205,7 +1205,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 			continue;
 
 		if (mport->stream_type == SWR_PCM)
-			swrm_pcm_port_config(swrm, i, mport->dir, true);
+			swrm_pcm_port_config(swrm, (i + 1), mport->dir, true);
 
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
 			slv_id = port_req->slave_port_id;
@@ -1295,7 +1295,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 					<< SWRM_DP_PORT_CTRL_OFFSET2_SHFT);
 		value |= ((mport->offset1)
 				<< SWRM_DP_PORT_CTRL_OFFSET1_SHFT);
-		value |= mport->sinterval;
+		value |= (mport->sinterval & 0xFF);
 
 
 		reg[len] = SWRM_DP_PORT_CTRL_BANK((i + 1), bank);
@@ -1303,6 +1303,9 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
 			__func__, i,
 			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
+
+		reg[len] = SWRM_DP_SAMPLECTRL2_BANK((i + 1), bank);
+		val[len++] = ((mport->sinterval >> 8) & 0xFF);
 
 		if (mport->lane_ctrl != SWR_INVALID_PARAM) {
 			reg[len] = SWRM_DP_PORT_CTRL_2_BANK((i + 1), bank);

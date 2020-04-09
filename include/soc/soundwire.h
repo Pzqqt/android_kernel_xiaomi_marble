@@ -106,7 +106,7 @@ struct swr_port_info {
 	u8 slave_port_id;
 	u8 offset1;
 	u8 offset2;
-	u8 sinterval;
+	u16 sinterval;
 	struct list_head list;
 	u8 master_port_id;
 	u8 hstart;
