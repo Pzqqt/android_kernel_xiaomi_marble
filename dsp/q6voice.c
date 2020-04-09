@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/kthread.h>
@@ -1273,7 +1273,6 @@ static int voice_unmap_cal_block(struct voice_data *v, int cal_index)
 		goto unlock;
 	}
 
-	mutex_lock(&common.common_lock);
 	result = voice_send_mvm_unmap_memory_physical_cmd(
 		v, cal_block->map_data.q6map_handle);
 	if (result)
@@ -1281,7 +1280,6 @@ static int voice_unmap_cal_block(struct voice_data *v, int cal_index)
 			__func__, v->session_id, result);
 
 	cal_block->map_data.q6map_handle = 0;
-	mutex_unlock(&common.common_lock);
 unlock:
 	mutex_unlock(&common.cal_data[cal_index]->lock);
 done:
