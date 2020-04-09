@@ -45,6 +45,7 @@
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 #define VA_MACRO_SWR_MIC_MUX_SEL_MASK 0xF
 #define VA_MACRO_ADC_MUX_CFG_OFFSET 0x8
+#define VA_MACRO_ADC_MODE_CFG0_SHIFT 1
 
 #define BOLERO_CDC_VA_TX_DMIC_UNMUTE_DELAY_MS       40
 #define BOLERO_CDC_VA_TX_AMIC_UNMUTE_DELAY_MS       100
@@ -170,6 +171,7 @@ struct va_macro_priv {
 	int tx_clk_status;
 	bool lpi_enable;
 	bool register_event_listener;
+	int dec_mode[VA_MACRO_NUM_DECIMATORS];
 };
 
 static bool va_macro_get_data(struct snd_soc_component *component,
@@ -405,7 +407,12 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
 
-	dev_dbg(va_dev, "%s: event = %d\n", __func__, event);
+	dev_dbg(va_dev, "%s: event = %d, lpi_enable = %d\n",
+		__func__, event, va_priv->lpi_enable);
+
+	if (!va_priv->lpi_enable)
+		return ret;
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (va_priv->lpass_audio_hw_vote) {
@@ -416,7 +423,7 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					__func__);
 		}
 		if (!ret)
-			if (bolero_tx_clk_switch(component))
+			if (bolero_tx_clk_switch(component, CLK_SRC_VA_RCG))
 				dev_dbg(va_dev, "%s: clock switch failed\n",
 					__func__);
 		if (va_priv->lpi_enable) {
@@ -429,7 +436,7 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			va_priv->register_event_listener = false;
 			bolero_register_event_listener(component, false);
 		}
-		if (bolero_tx_clk_switch(component))
+		if (bolero_tx_clk_switch(component, CLK_SRC_TX_RCG))
 			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
 			clk_disable_unprepare(va_priv->lpass_audio_hw_vote);
@@ -489,12 +496,14 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			ret = bolero_tx_mclk_enable(component, 1);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (bolero_tx_clk_switch(component))
-			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
-		if (va_priv->lpi_enable)
+		if (va_priv->lpi_enable) {
+			if (bolero_tx_clk_switch(component, CLK_SRC_TX_RCG))
+				dev_dbg(va_dev, "%s: clock switch failed\n",
+					__func__);
 			va_macro_mclk_enable(va_priv, 0, true);
-		else
+		} else {
 			bolero_tx_mclk_enable(component, 0);
+		}
 
 		if (va_priv->tx_clk_status > 0) {
 			bolero_clk_rsc_request_clock(va_priv->dev,
@@ -1066,6 +1075,9 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		snd_soc_component_update_bits(component,
+			dec_cfg_reg, 0x06, va_priv->dec_mode[decimator] <<
+			VA_MACRO_ADC_MODE_CFG0_SHIFT);
 		/* Enable TX PGA Mute */
 		snd_soc_component_update_bits(component,
 				tx_vol_ctl_reg, 0x10, 0x10);
@@ -1213,8 +1225,6 @@ static int va_macro_enable_tx(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
-		if (bolero_tx_clk_switch(component))
-			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->tx_clk_status > 0) {
 			ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						   va_priv->default_clk_id,
@@ -1304,6 +1314,90 @@ static int va_macro_enable_micbias(struct snd_soc_dapm_widget *w,
 		regulator_set_load(va_priv->micb_supply, 0);
 		break;
 	}
+	return 0;
+}
+
+static inline int va_macro_path_get(const char *wname,
+				    unsigned int *path_num)
+{
+	int ret = 0;
+	char *widget_name = NULL;
+	char *w_name = NULL;
+	char *path_num_char = NULL;
+	char *path_name = NULL;
+
+	widget_name = kstrndup(wname, 10, GFP_KERNEL);
+	if (!widget_name)
+		return -EINVAL;
+
+	w_name = widget_name;
+
+	path_name = strsep(&widget_name, " ");
+	if (!path_name) {
+		pr_err("%s: Invalid widget name = %s\n",
+			__func__, widget_name);
+		ret = -EINVAL;
+		goto err;
+	}
+	path_num_char = strpbrk(path_name, "01234567");
+	if (!path_num_char) {
+		pr_err("%s: va path index not found\n",
+			__func__);
+		ret = -EINVAL;
+		goto err;
+	}
+	ret = kstrtouint(path_num_char, 10, path_num);
+	if (ret < 0)
+		pr_err("%s: Invalid tx path = %s\n",
+			__func__, w_name);
+
+err:
+	kfree(w_name);
+	return ret;
+}
+
+static int va_macro_dec_mode_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct va_macro_priv *priv = NULL;
+	struct device *va_dev = NULL;
+	int ret = 0;
+	int path = 0;
+
+	if (!va_macro_get_data(component, &va_dev, &priv, __func__))
+		return -EINVAL;
+
+	ret = va_macro_path_get(kcontrol->id.name, &path);
+	if (ret)
+		return ret;
+
+	ucontrol->value.integer.value[0] = priv->dec_mode[path];
+
+	return 0;
+}
+
+static int va_macro_dec_mode_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct va_macro_priv *priv = NULL;
+	struct device *va_dev = NULL;
+	int value = ucontrol->value.integer.value[0];
+	int ret = 0;
+	int path = 0;
+
+	if (!va_macro_get_data(component, &va_dev, &priv, __func__))
+		return -EINVAL;
+
+	ret = va_macro_path_get(kcontrol->id.name, &path);
+	if (ret)
+		return ret;
+
+	priv->dec_mode[path] = value;
+
 	return 0;
 }
 
@@ -2344,7 +2438,23 @@ static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA SWR_ADC1", NULL, "VA_SWR_PWR"},
 	{"VA SWR_ADC2", NULL, "VA_SWR_PWR"},
 	{"VA SWR_ADC3", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC0", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC1", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC2", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC3", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC4", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC5", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC6", NULL, "VA_SWR_PWR"},
+	{"VA SWR_MIC7", NULL, "VA_SWR_PWR"},
 };
+
+static const char * const dec_mode_mux_text[] = {
+	"ADC_DEFAULT", "ADC_LOW_PWR", "ADC_HIGH_PERF",
+};
+
+static const struct soc_enum dec_mode_mux_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(dec_mode_mux_text),
+			    dec_mode_mux_text);
 
 static const struct snd_kcontrol_new va_macro_snd_controls[] = {
 	SOC_SINGLE_SX_TLV("VA_DEC0 Volume",
@@ -2373,6 +2483,18 @@ static const struct snd_kcontrol_new va_macro_snd_controls[] = {
 			  0, -84, 40, digital_gain),
 	SOC_SINGLE_EXT("LPI Enable", 0, 0, 1, 0,
 		va_macro_lpi_get, va_macro_lpi_put),
+
+	SOC_ENUM_EXT("VA_DEC0 MODE", dec_mode_mux_enum,
+			va_macro_dec_mode_get, va_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("VA_DEC1 MODE", dec_mode_mux_enum,
+			va_macro_dec_mode_get, va_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("VA_DEC2 MODE", dec_mode_mux_enum,
+			va_macro_dec_mode_get, va_macro_dec_mode_put),
+
+	SOC_ENUM_EXT("VA_DEC3 MODE", dec_mode_mux_enum,
+			va_macro_dec_mode_get, va_macro_dec_mode_put),
 };
 
 static const struct snd_kcontrol_new va_macro_snd_controls_common[] = {
