@@ -68,7 +68,7 @@
 #define CFG_ASSOC_STA_LIMIT CFG_UINT( \
 			"cfg_assoc_sta_limit", \
 			1, \
-			32, \
+			64, \
 			10, \
 			CFG_VALUE_OR_DEFAULT, \
 			"CFG_ASSOC_STA_LIMIT")
@@ -260,7 +260,7 @@
  * <ini>
  * gSoftApMaxPeers - Set Max peers connected for SAP
  * @Min: 1
- * @Max: 32
+ * @Max: 64
  * @Default: 32
  *
  * This ini is used to set Max peers connected for SAP
@@ -276,7 +276,7 @@
  #define CFG_SAP_MAX_NO_PEERS CFG_INI_UINT( \
 			"gSoftApMaxPeers", \
 			1, \
-			32, \
+			64, \
 			32, \
 			CFG_VALUE_OR_DEFAULT, \
 			"max no of peers")
