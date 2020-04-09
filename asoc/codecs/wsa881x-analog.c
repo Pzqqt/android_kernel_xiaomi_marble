@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2016, 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -1032,7 +1033,8 @@ static int wsa881x_shutdown(struct wsa881x_pdata *pdata)
 		return ret;
 	}
 
-	clk_disable_unprepare(pdata->wsa_mclk);
+	if (__clk_is_enabled(pdata->wsa_mclk))
+		clk_disable_unprepare(pdata->wsa_mclk);
 
 	ret = msm_cdc_pinctrl_select_sleep_state(pdata->wsa_clk_gpio_p);
 	if (ret) {
