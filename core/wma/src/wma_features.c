@@ -5390,15 +5390,6 @@ void wma_set_peer_ucast_cipher(uint8_t *mac_addr,
 		  1 << cipher_cap, mac_addr);
 }
 
-static void wma_reset_ipn(struct wma_txrx_node *iface, uint8_t key_index)
-{
-	if (key_index == WMA_IGTK_KEY_INDEX_4 ||
-	    key_index == WMA_IGTK_KEY_INDEX_5)
-		qdf_mem_zero(iface->key.key_id[key_index -
-				WMA_IGTK_KEY_INDEX_4].ipn,
-				CMAC_IPN_LEN);
-}
-
 void wma_update_set_key(uint8_t session_id, bool pairwise,
 			uint8_t key_index,
 			enum wlan_crypto_cipher_type cipher_type)
@@ -5416,10 +5407,9 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
 		return;
 	}
 
-	if (iface) {
-		wma_reset_ipn(iface, key_index);
+	if (iface)
 		iface->is_waiting_for_key = false;
-	}
+
 	if (!pairwise && iface) {
 		/* Its GTK release the wake lock */
 		wma_debug("Release set key wake lock");

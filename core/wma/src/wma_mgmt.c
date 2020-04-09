@@ -3092,19 +3092,12 @@ wma_is_ccmp_pn_replay_attack(tp_wma_handle wma, struct ieee80211_frame *wh,
  *
  * Return: 0 for success or error code
  */
-
 static
-int wma_process_bip(tp_wma_handle wma_handle,
-	struct wma_txrx_node *iface,
-	struct ieee80211_frame *wh,
-	qdf_nbuf_t wbuf
-)
+int wma_process_bip(tp_wma_handle wma_handle, struct wma_txrx_node *iface,
+		    struct ieee80211_frame *wh, qdf_nbuf_t wbuf)
 {
 	uint16_t mmie_size;
-	uint16_t key_id;
 	uint8_t *efrm;
-	uint8_t *igtk;
-	uint16_t key_len;
 	int32_t mgmtcipherset;
 	enum wlan_crypto_cipher_type key_cipher;
 
@@ -3112,7 +3105,7 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	mgmtcipherset = wlan_crypto_get_param(iface->vdev,
 					      WLAN_CRYPTO_PARAM_MGMT_CIPHER);
-	if (!mgmtcipherset || mgmtcipherset < 0) {
+	if (mgmtcipherset <= 0) {
 		wma_err("Invalid key cipher %d", mgmtcipherset);
 		return -EINVAL;
 	}
@@ -3133,28 +3126,16 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	/* Check if frame is invalid length */
 	if (efrm - (uint8_t *)wh < sizeof(*wh) + mmie_size) {
-		WMA_LOGE(FL("Invalid frame length"));
+		wma_err("Invalid frame length");
 		return -EINVAL;
 	}
 
-	key_id = (uint16_t)*(efrm - mmie_size + 2);
-	if (!((key_id == WMA_IGTK_KEY_INDEX_4)
-	     || (key_id == WMA_IGTK_KEY_INDEX_5))) {
-		WMA_LOGE(FL("Invalid KeyID(%d) dropping the frame"), key_id);
-		return -EINVAL;
-	}
-
-	wma_debug("key_cipher %d key_id %d", key_cipher, key_id);
-
-	igtk = wma_get_igtk(iface, &key_len, key_id);
 	switch (key_cipher) {
 	case WLAN_CRYPTO_CIPHER_AES_CMAC:
 		if (!wmi_service_enabled(wma_handle->wmi_handle,
 					 wmi_service_sta_pmf_offload)) {
-			if (!cds_is_mmie_valid(igtk, iface->key.key_id[
-					       key_id -
-					       WMA_IGTK_KEY_INDEX_4].ipn,
-					       (uint8_t *)wh, efrm)) {
+			if (!wlan_crypto_is_mmie_valid(iface->vdev,
+						       (uint8_t *)wh, efrm)) {
 				wma_debug("BC/MC MIC error or MMIE not present, dropping the frame");
 				return -EINVAL;
 			}
@@ -3164,11 +3145,8 @@ int wma_process_bip(tp_wma_handle wma_handle,
 	case WLAN_CRYPTO_CIPHER_AES_GMAC_256:
 		if (!wmi_service_enabled(wma_handle->wmi_handle,
 					 wmi_service_gmac_offload_support)) {
-			if (!cds_is_gmac_mmie_valid(igtk,
-						    iface->key.key_id[key_id -
-						    WMA_IGTK_KEY_INDEX_4].ipn,
-						    (uint8_t *)wh, efrm,
-						    key_len)) {
+			if (!wlan_crypto_is_mmie_valid(iface->vdev,
+						       (uint8_t *)wh, efrm)) {
 				wma_debug("BC/MC GMAC MIC error or MMIE not present, dropping the frame");
 				return -EINVAL;
 			}

@@ -2351,30 +2351,6 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 		     tx_param->preamble_type);
 }
 
-#ifdef WLAN_FEATURE_11W
-uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len,
-		      uint16_t igtk_key_idx)
-{
-	struct wlan_crypto_key *crypto_key;
-
-	if (!(igtk_key_idx == WMA_IGTK_KEY_INDEX_4 ||
-	    igtk_key_idx == WMA_IGTK_KEY_INDEX_5)) {
-		wma_err("Invalid igtk_key_idx %d", igtk_key_idx);
-		*key_len = 0;
-		return NULL;
-	}
-	crypto_key = wlan_crypto_get_key(iface->vdev, igtk_key_idx);
-	if (!crypto_key) {
-		wma_err("IGTK not found for igtk_idx %d", igtk_key_idx);
-		*key_len = 0;
-		return NULL;
-	}
-	*key_len = crypto_key->keylen;
-
-	return &crypto_key->keyval[0];
-}
-#endif
-
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
@@ -2397,8 +2373,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint8_t *pFrame = NULL;
 	void *pPacket = NULL;
 	uint16_t newFrmLen = 0;
-	uint8_t *igtk;
-	uint16_t key_len;
 #endif /* WLAN_FEATURE_11W */
 	struct wma_txrx_node *iface;
 	struct mac_context *mac;
@@ -2520,10 +2494,24 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 						(qdf_nbuf_data(tx_frame));
 			}
 		} else {
-			int8_t igtk_key_id;
+			uint16_t mmie_size;
+			int32_t mgmtcipherset;
+
+			mgmtcipherset = wlan_crypto_get_param(iface->vdev,
+						WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+			if (mgmtcipherset <= 0) {
+				wma_err("Invalid key cipher %d", mgmtcipherset);
+				cds_packet_free((void *)tx_frame);
+				return -EINVAL;
+			}
+
+			if (mgmtcipherset & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC))
+				mmie_size = cds_get_mmie_size();
+			else
+				mmie_size = cds_get_gmac_mmie_size();
 
 			/* Allocate extra bytes for MMIE */
-			newFrmLen = frmLen + IEEE80211_MMIE_LEN;
+			newFrmLen = frmLen + mmie_size;
 			qdf_status = cds_packet_alloc((uint16_t) newFrmLen,
 						      (void **)&pFrame,
 						      (void **)&pPacket);
@@ -2539,31 +2527,16 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			/*
 			 * Initialize the frame with 0's and only fill
 			 * MAC header and data. MMIE field will be
-			 * filled by cds_attach_mmie API
+			 * filled by wlan_crypto_add_mmie API
 			 */
 			qdf_mem_zero(pFrame, newFrmLen);
 			qdf_mem_copy(pFrame, wh, sizeof(*wh));
 			qdf_mem_copy(pFrame + sizeof(*wh),
 				     pData + sizeof(*wh), frmLen - sizeof(*wh));
-			igtk_key_id =
-				wlan_crypto_get_default_key_idx(iface->vdev,
-								true);
-			/* Get actual igtk key id adding 4 */
-			igtk_key_id += WMA_IGTK_KEY_INDEX_4;
-			igtk = wma_get_igtk(iface, &key_len, igtk_key_id);
-			if (!igtk) {
-				wma_err_rl("IGTK not present for igtk_key_id %d",
-					   igtk_key_id);
-				cds_packet_free((void *)tx_frame);
-				cds_packet_free((void *)pPacket);
-				goto error;
-			}
-			if (!cds_attach_mmie(igtk, iface->key.key_id[
-					     igtk_key_id -
-					     WMA_IGTK_KEY_INDEX_4].ipn,
-					     igtk_key_id,
-					     pFrame,
-					     pFrame + newFrmLen, newFrmLen)) {
+
+			/* The API expect length without the mmie size */
+			if (!wlan_crypto_add_mmie(iface->vdev, pFrame,
+						  frmLen)) {
 				wma_alert("Failed to attach MMIE");
 				/* Free the original packet memory */
 				cds_packet_free((void *)tx_frame);

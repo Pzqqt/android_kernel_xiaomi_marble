@@ -2235,17 +2235,6 @@ static void wma_send_vdev_down_req(tp_wma_handle wma,
 				      sizeof(*resp), resp);
 }
 
-#ifdef WLAN_FEATURE_11W
-static void wma_clear_iface_key(struct wma_txrx_node *iface)
-{
-	qdf_mem_zero(&iface->key, sizeof(iface->key));
-}
-#else
-static void wma_clear_iface_key(struct wma_txrx_node *iface)
-{
-}
-#endif
-
 QDF_STATUS
 __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 {
@@ -2288,8 +2277,6 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* Clear key information */
-	wma_clear_iface_key(iface);
 	status = mlme_get_vdev_stop_type(iface->vdev, &vdev_stop_type);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to get wma req msg type for vdev id %d",

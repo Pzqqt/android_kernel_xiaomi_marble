@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -101,23 +101,7 @@ uint8_t cds_freq_to_chan(uint32_t freq);
 enum cds_band_type cds_chan_to_band(uint32_t chan);
 
 #ifdef WLAN_FEATURE_11W
-bool cds_is_mmie_valid(uint8_t *key, uint8_t *ipn,
-		       uint8_t *frm, uint8_t *efrm);
-bool cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
-		     uint8_t *frm, uint8_t *efrm, uint16_t frmLen);
 uint8_t cds_get_mmie_size(void);
-/**
- * cds_is_gmac_mmie_valid: Validates GMAC MIC
- * @igtk: integrity group temporal key
- * @ipn: IGTK packet number
- * @frm: IEEE 802.11 frame
- * @efrm: End of frame
- * @key_length: Length of IGTK
- *
- * Return: True if MIC validation is successful, false otherwise
- */
-bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
-			    uint8_t *efrm, uint16_t key_length);
 
 /**
  * cds_get_gmac_mmie_size: Gives length of GMAC MMIE size
