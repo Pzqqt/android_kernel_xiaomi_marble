@@ -503,8 +503,10 @@ typedef enum {
     WMI_VDEV_AUDIO_SYNC_QTIMER_CMDID,
     /** Preferred channel list for each vdev */
     WMI_VDEV_SET_PCL_CMDID,
-    /** Get per vdev BIG DATA stats */
+    /** VDEV_GET_BIG_DATA_CMD IS DEPRECATED - DO NOT USE */
     WMI_VDEV_GET_BIG_DATA_CMDID,
+    /** Get per vdev BIG DATA stats phase 2 */
+    WMI_VDEV_GET_BIG_DATA_P2_CMDID,
 
     /* peer specific commands */
 
@@ -1478,8 +1480,10 @@ typedef enum {
     WMI_VDEV_AUDIO_SYNC_START_STOP_EVENTID,
     /** Sends the final offset in the QTIMERs of both master and slave */
     WMI_VDEV_AUDIO_SYNC_Q_MASTER_SLAVE_OFFSET_EVENTID,
-    /* send BIG DATA stats to host */
+    /** VDEV_SEND_BIG_DATA_EVENT IS DEPRECATED - DO NOT USE */
     WMI_VDEV_SEND_BIG_DATA_EVENTID,
+    /** send BIG DATA stats to host phase 2 */
+    WMI_VDEV_SEND_BIG_DATA_P2_EVENTID,
 
 
     /* peer specific events */
@@ -25802,6 +25806,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_FRAME_INJECT_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_TBTT_OFFSET_SYNC_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_P2_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -27642,6 +27647,28 @@ typedef struct {
     /* Number of RX Data multicast frames dropped by the HW */
     A_UINT32 rx_data_mc_frame_filtered_count;
 } wmi_vdev_send_big_data_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_p2_cmd_fixed_param */
+    A_UINT32 vdev_id;
+} wmi_vdev_get_big_data_p2_cmd_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_send_big_data_p2_event_fixed_param */
+    A_UINT32 vdev_id;
+    /** param list **/
+    /* total number of TSF out of sync */
+    A_UINT32 tsf_out_of_sync;
+
+    /*
+     * This fixed_param TLV is followed by the below TLVs:
+     * List of datapath big data stats. This stat is not interpreted by
+     * host. This gets directly updated on big data server and later FW
+     * team will analyze this data.
+     *
+     * A_UINT32 bd_datapath_stats[];
+     */
+} wmi_vdev_send_big_data_p2_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals wmi_txpower_query_cmd_fixed_param  */
