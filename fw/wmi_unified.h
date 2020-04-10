@@ -1290,6 +1290,8 @@ typedef enum {
     WMI_AUDIO_AGGR_SET_GROUP_AUTO_RATE_CMDID,
     WMI_AUDIO_AGGR_SET_GROUP_PROBE_CMDID,
     WMI_AUDIO_AGGR_UPDATE_STA_GROUP_INFO_CMDID,
+    WMI_AUDIO_AGGR_GET_STATISTICS_CMDID,
+    WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID,
 
     /** WMI commands related to Channel Frequency Response Capture **/
     WMI_CFR_CAPTURE_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
@@ -1966,6 +1968,10 @@ typedef enum {
 
     /** WMI events related to Estimation of Service Parameters (802.11mc) */
     WMI_ESP_ESTIMATE_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_ESP),
+
+    /** WMI events related to Audio Frame aggregation feature **/
+    WMI_AUDIO_AGGR_REPORT_STATISTICS_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_AUDIO),
+
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -25807,6 +25813,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_FRAME_INJECT_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_TBTT_OFFSET_SYNC_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_P2_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_GET_STATISTICS_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -29426,6 +29434,26 @@ typedef struct {
 } wmi_audio_aggr_update_sta_group_info_cmd_fixed_param;
 
 typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /*
+     * Identifier from Host to indicate how many this cmd been sent to FW.
+     * This value will be echoed back in the response_id field
+     * of the WMI_AUDIO_AGGR_REPORT_STATISTICS_EVENTID.
+     */
+    A_UINT32 request_id;
+} wmi_audio_aggr_get_statistics_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+} wmi_audio_aggr_reset_statistics_cmd_fixed_param;
+
+typedef struct {
     /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param */
     A_UINT32 tlv_header;
@@ -29931,6 +29959,108 @@ typedef struct {
      * A_UINT32 vdev_ids_bitmap[]; <--- Array of VDEV id bitmap.
      */
 } wmi_pdev_multiple_vdev_restart_resp_event_fixed_param;
+
+/** WMI event for Firmware to report soundbar audio frame statistics to Host **/
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    A_UINT32 vdev_id; /* ID of the vdev this response belongs to */
+    /** identify which request this resposend to **/
+    A_UINT32 response_id;
+    /* audio frame statistics part -
+     * Use subsequent TLV arrays to list group_stats and peer_stats.
+     */
+
+/*
+ * The TLVs listing group_stats, will follow this TLV.
+ * The number of group_stats can be calculated by dividing the
+ * TLV array length by the TLV array element length.
+ *
+ * The fixed_param TLV is directly followed by a list of
+ * wmi_audio_aggr_group_stats elements:
+ *     wmi_audio_aggr_group_stats group_stats[0];
+ *     wmi_audio_aggr_group_stats group_stats[1];
+ *     ...
+ *     wmi_audio_aggr_group_stats group_stats[N];
+ *
+ * After the list of wmi_audio_aggr_group_stats is a list of peer_stats.
+ *     wmi_audio_aggr_peer_stats peer_stats[0];
+ *     wmi_audio_aggr_peer_stats peer_stats[1];
+ *     ...
+ *     wmi_audio_aggr_peer_stats peer_stats[N];
+ *
+ */
+} wmi_audio_aggr_statistics_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    /* Group mac_address */
+    wmi_mac_addr group_addr;
+    /* Group indentify */
+    A_UINT32 group_id;
+    /* Multicast MSDU Data Packets received from Host for this Group */
+    A_UINT32 mcast_tx;
+    /*
+     * Multicast MSDU Data Packets sent to OTA.
+     * Customer defined SW Retry Packets not included, as these
+     * SW Retry packets generated in FW locally, but not from Host.
+     */
+    A_UINT32 mcast_tx_ok;
+    /*
+     * Multicast MSDU Data Packets sent to OTA.
+     * Only include Customer defined SW Retry Packets.
+     */
+    A_UINT32 mcast_tx_ok_retry;
+    /*
+     * Multicast MSDU Data Packets not sent to OTA,
+     * discarded by tbd function due to timeout.
+     * Customer defined SW Retry Packets not included.
+     */
+    A_UINT32 mcast_tx_tbd_lost;
+    /*
+     * Multicast MSDU Data Packets not sent to OTA,
+     * discarded by tbd function due to timeout.
+     * Only include Customer defined SW Retry Packets.
+     */
+    A_UINT32 mcast_tx_tbd_lost_retry;
+} wmi_audio_aggr_group_stats;
+
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    /* STA mac_address */
+    wmi_mac_addr peer_addr;
+    /* Unicast MSDU Data Packets received from peer STA */
+    A_UINT32 ucast_rx;
+    /* Unicast MSDU Data Packets received from Host for Peer STA */
+    A_UINT32 ucast_tx;
+    /*
+     * Unicast MSDU Data Packets received from Host,
+     * and SW retry times for these packets.
+     */
+    A_UINT32 ucast_tx_retry;
+    /*
+     * Unicast MSDU Data Packets received from Host,
+     * and sent to Peer STA successfully.
+     */
+    A_UINT32 ucast_tx_ok;
+    /*
+     * Unicast MSDU Data Packets received from Host,
+     * but sent to Peer STA fail. not OTA, or no ACK from Peer.
+     */
+    A_UINT32 ucast_tx_lost;
+    /*
+     * Periodic NULL Data frames for multicast tx rate auto control.
+     * Generated by FW locally, and sent to Peer STA successfully.
+     */
+    A_UINT32 null_frame_tx;
+    /*
+     * Periodic NULL Data frames for multicast tx rate auto control.
+     * Generated by FW locally, but sent to Peer STA fail.
+     */
+    A_UINT32 null_frame_tx_lost;
+} wmi_audio_aggr_peer_stats;
 
 
 /* ADD NEW DEFS HERE */
