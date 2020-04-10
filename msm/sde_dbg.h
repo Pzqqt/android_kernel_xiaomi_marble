@@ -247,10 +247,10 @@ int sde_dbg_init(struct device *dev);
 
 /**
  * sde_dbg_debugfs_register - register entries at the given debugfs dir
- * @debugfs_root:	debugfs root in which to create sde debug entries
+ * @dev:	pointer to device
  * Returns:	0 or -ERROR
  */
-int sde_dbg_debugfs_register(struct dentry *debugfs_root);
+int sde_dbg_debugfs_register(struct device *dev);
 
 /**
  * sde_dbg_destroy - destroy the global sde debug facilities
@@ -404,6 +404,12 @@ static inline ssize_t sde_evtlog_dump_to_buffer(struct sde_dbg_evtlog *evtlog,
 	return 0;
 }
 
+static inline int sde_dbg_dsi_ctrl_register(void __iomem *base,
+		const char *name)
+{
+	return 0;
+}
+
 static inline void sde_dbg_init_dbg_buses(u32 hwversion)
 {
 }
@@ -414,7 +420,7 @@ static inline int sde_dbg_init(struct device *dev,
 	return 0;
 }
 
-static inline int sde_dbg_debugfs_register(struct dentry *debugfs_root)
+static inline int sde_dbg_debugfs_register(struct device *dev)
 {
 	return 0;
 }
