@@ -414,8 +414,7 @@ static inline void sde_dbg_init_dbg_buses(u32 hwversion)
 {
 }
 
-static inline int sde_dbg_init(struct device *dev,
-		struct sde_dbg_power_ctrl *power_ctrl)
+static inline int sde_dbg_init(struct device *dev)
 {
 	return 0;
 }
@@ -429,7 +428,7 @@ static inline void sde_dbg_destroy(void)
 {
 }
 
-static inline void sde_dbg_dump(enum sde_dbg_dump_context,
+static inline void sde_dbg_dump(enum sde_dbg_dump_context mode,
 	const char *name, ...)
 {
 }
@@ -455,7 +454,7 @@ int sde_dbg_register_dsi_ctrl(void __iomem *base, const char *name)
 	return 0;
 }
 
-void sde_dbg_set_sde_top_offset(u32 blk_off)
+static inline void sde_dbg_set_sde_top_offset(u32 blk_off)
 {
 }
 
