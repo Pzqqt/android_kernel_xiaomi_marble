@@ -494,6 +494,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 			else
 				session->gLimOperatingMode.chanWidth =
 					CH_WIDTH_160MHZ;
+			session->gLimOperatingMode.rxNSS = session->nss - 1;
 		} else {
 			pe_err("AP does not support op_mode rx");
 		}
