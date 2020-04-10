@@ -481,7 +481,8 @@ static int dsi_panel_wled_register(struct dsi_panel *panel,
 
 	bd = backlight_device_get_by_type(BACKLIGHT_RAW);
 	if (!bd) {
-		DSI_ERR("[%s] fail raw backlight register\n", panel->name);
+		DSI_ERR("[%s] fail raw backlight register rc=%d\n",
+				panel->name, -EPROBE_DEFER);
 		return -EPROBE_DEFER;
 	}
 

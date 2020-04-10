@@ -571,7 +571,8 @@ struct msm_dsi_phy *dsi_phy_get(struct device_node *of_node)
 	mutex_unlock(&dsi_phy_list_lock);
 
 	if (!phy) {
-		DSI_PHY_ERR(phy, "Device with of node not found\n");
+		DSI_PHY_ERR(phy, "Device with of node not found rc=%d\n",
+				-EPROBE_DEFER);
 		phy = ERR_PTR(-EPROBE_DEFER);
 		return phy;
 	}
