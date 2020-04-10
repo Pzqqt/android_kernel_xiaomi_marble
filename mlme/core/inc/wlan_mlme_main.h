@@ -61,11 +61,17 @@ struct wlan_disconnect_info {
 
 /**
  * struct peer_mlme_priv_obj - peer MLME component object
+ * @last_pn_valid if last PN is valid
+ * @last_pn: last pn received
+ * @rmf_pn_replays: rmf pn replay count
  * @is_pmf_enabled: True if PMF is enabled
  * @last_assoc_received_time: last assoc received time
  * @last_disassoc_deauth_received_time: last disassoc/deauth received time
  */
 struct peer_mlme_priv_obj {
+	uint8_t last_pn_valid;
+	uint64_t last_pn;
+	uint32_t rmf_pn_replays;
 	bool is_pmf_enabled;
 	qdf_time_t last_assoc_received_time;
 	qdf_time_t last_disassoc_deauth_received_time;
