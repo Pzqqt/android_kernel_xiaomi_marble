@@ -197,87 +197,111 @@ static void sde_hw_intf_setup_timing_engine(struct sde_hw_intf *ctx,
 	u32 hsync_period, vsync_period;
 	u32 display_v_start, display_v_end;
 	u32 hsync_start_x, hsync_end_x;
+	u32 hsync_data_start_x, hsync_data_end_x;
 	u32 active_h_start, active_h_end;
 	u32 active_v_start, active_v_end;
 	u32 active_hctl, display_hctl, hsync_ctl;
 	u32 polarity_ctl, den_polarity, hsync_polarity, vsync_polarity;
 	u32 panel_format;
-	u32 intf_cfg, intf_cfg2;
+	u32 intf_cfg, intf_cfg2 = 0;
 	u32 display_data_hctl = 0, active_data_hctl = 0;
+	u32 data_width;
 	bool dp_intf = false;
 
 	/* read interface_cfg */
 	intf_cfg = SDE_REG_READ(c, INTF_CONFIG);
-	hsync_period = p->hsync_pulse_width + p->h_back_porch + p->width +
-	p->h_front_porch;
-	vsync_period = p->vsync_pulse_width + p->v_back_porch + p->height +
-	p->v_front_porch;
-
-	display_v_start = ((p->vsync_pulse_width + p->v_back_porch) *
-	hsync_period) + p->hsync_skew;
-	display_v_end = ((vsync_period - p->v_front_porch) * hsync_period) +
-	p->hsync_skew - 1;
-
-	hsync_start_x = p->h_back_porch + p->hsync_pulse_width;
-	hsync_end_x = hsync_period - p->h_front_porch - 1;
 
 	if (ctx->cap->type == INTF_EDP || ctx->cap->type == INTF_DP)
 		dp_intf = true;
 
-	if (p->width != p->xres) {
-		active_h_start = hsync_start_x;
-		active_h_end = active_h_start + p->xres - 1;
-	} else {
-		active_h_start = 0;
-		active_h_end = 0;
-	}
+	hsync_period = p->hsync_pulse_width + p->h_back_porch + p->width +
+			p->h_front_porch;
+	vsync_period = p->vsync_pulse_width + p->v_back_porch + p->height +
+			p->v_front_porch;
 
-	if (p->height != p->yres) {
-		active_v_start = display_v_start;
-		active_v_end = active_v_start + (p->yres * hsync_period) - 1;
-	} else {
-		active_v_start = 0;
-		active_v_end = 0;
-	}
-
-	if (active_h_end) {
-		active_hctl = (active_h_end << 16) | active_h_start;
-		intf_cfg |= BIT(29);	/* ACTIVE_H_ENABLE */
-	} else {
-		active_hctl = 0;
-	}
-
-	if (active_v_end)
-		intf_cfg |= BIT(30); /* ACTIVE_V_ENABLE */
+	display_v_start = ((p->vsync_pulse_width + p->v_back_porch) *
+			hsync_period) + p->hsync_skew;
+	display_v_end = ((vsync_period - p->v_front_porch) * hsync_period) +
+			p->hsync_skew - 1;
 
 	hsync_ctl = (hsync_period << 16) | p->hsync_pulse_width;
-	display_hctl = (hsync_end_x << 16) | hsync_start_x;
 
-	if (dp_intf) {
-		active_h_start = hsync_start_x;
-		active_h_end = active_h_start + p->xres - 1;
-		active_v_start = display_v_start;
-		active_v_end = active_v_start + (p->yres * hsync_period) - 1;
+	hsync_start_x = p->h_back_porch + p->hsync_pulse_width;
+	hsync_end_x = hsync_period - p->h_front_porch - 1;
 
-		display_v_start += p->hsync_pulse_width + p->h_back_porch;
+	/*
+	 * DATA_HCTL_EN controls data timing which can be different from
+	 * video timing. It is recommended to enable it for all cases, except
+	 * if compression is enabled in 1 pixel per clock mode
+	 */
+	if (!p->compression_en || p->wide_bus_en)
+		intf_cfg2 |= BIT(4);
 
-		active_hctl = (active_h_end << 16) | active_h_start;
-		display_hctl = active_hctl;
+	if (p->wide_bus_en)
+		intf_cfg2 |= BIT(0);
+
+	/*
+	 * If widebus is disabled:
+	 * For uncompressed stream, the data is valid for the entire active
+	 * window period.
+	 * For compressed stream, data is valid for a shorter time period
+	 * inside the active window depending on the compression ratio.
+	 *
+	 * If widebus is enabled:
+	 * For uncompressed stream, data is valid for only half the active
+	 * window, since the data rate is doubled in this mode.
+	 * p->width holds the adjusted width for DP but unadjusted width for DSI
+	 * For compressed stream, data validity window needs to be adjusted for
+	 * compression ratio and then further halved.
+	 */
+	data_width = p->width;
+
+	if (p->compression_en) {
+		data_width = DIV_ROUND_UP(p->dce_bytes_per_line, 3);
+
+		if (p->wide_bus_en)
+			data_width >>= 1;
+	} else if (!dp_intf && p->wide_bus_en) {
+		data_width = p->width >> 1;
+	} else {
+		data_width = p->width;
 	}
 
-	intf_cfg2 = 0;
+	hsync_data_start_x = hsync_start_x;
+	hsync_data_end_x =  hsync_start_x + data_width - 1;
+
+	display_hctl = (hsync_end_x << 16) | hsync_start_x;
+	display_data_hctl = (hsync_data_end_x << 16) | hsync_data_start_x;
+
+	if (dp_intf) {
+		// DP timing adjustment
+		display_v_start += p->hsync_pulse_width + p->h_back_porch;
+		display_v_end   -= p->h_front_porch;
+	}
+
+	intf_cfg |= BIT(29);	/* ACTIVE_H_ENABLE */
+	intf_cfg |= BIT(30);	/* ACTIVE_V_ENABLE */
+	active_h_start = hsync_start_x;
+	active_h_end = active_h_start + p->xres - 1;
+	active_v_start = display_v_start;
+	active_v_end = active_v_start + (p->yres * hsync_period) - 1;
+
+	active_hctl = (active_h_end << 16) | active_h_start;
+
+	if (dp_intf) {
+		display_hctl = active_hctl;
+
+		if (p->compression_en) {
+			active_data_hctl = (hsync_start_x +
+					 p->extra_dto_cycles) << 16;
+			active_data_hctl += hsync_start_x;
+
+			display_data_hctl = active_data_hctl;
+		}
+	}
 
 	_check_and_set_comp_bit(ctx, p->dsc_4hs_merge, p->compression_en,
 			&intf_cfg2);
-
-	if (dp_intf && p->compression_en) {
-		active_data_hctl = (hsync_start_x + p->extra_dto_cycles) << 16;
-		active_data_hctl += hsync_start_x;
-
-		display_data_hctl = active_data_hctl;
-
-		intf_cfg2 |= BIT(4);
-	}
 
 	den_polarity = 0;
 	if (ctx->cap->type == INTF_HDMI) {
@@ -730,6 +754,24 @@ static void sde_hw_intf_enable_compressed_input(struct sde_hw_intf *intf,
 	SDE_REG_WRITE(c, INTF_CONFIG2, intf_cfg2);
 }
 
+static void sde_hw_intf_enable_wide_bus(struct sde_hw_intf *intf,
+		bool enable)
+{
+	struct sde_hw_blk_reg_map *c;
+	u32 intf_cfg2;
+
+	if (!intf)
+		return;
+
+	c = &intf->hw;
+	intf_cfg2 = SDE_REG_READ(c, INTF_CONFIG2);
+	intf_cfg2 &= ~BIT(0);
+
+	intf_cfg2 |= enable ? BIT(0) : 0;
+
+	SDE_REG_WRITE(c, INTF_CONFIG2, intf_cfg2);
+}
+
 static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 		unsigned long cap)
 {
@@ -745,6 +787,7 @@ static void _setup_intf_ops(struct sde_hw_intf_ops *ops,
 	ops->avr_trigger = sde_hw_intf_avr_trigger;
 	ops->avr_ctrl = sde_hw_intf_avr_ctrl;
 	ops->enable_compressed_input = sde_hw_intf_enable_compressed_input;
+	ops->enable_wide_bus = sde_hw_intf_enable_wide_bus;
 
 	if (cap & BIT(SDE_INTF_INPUT_CTRL))
 		ops->bind_pingpong_blk = sde_hw_intf_bind_pingpong_blk;

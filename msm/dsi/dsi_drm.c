@@ -58,6 +58,9 @@ static void convert_to_dsi_mode(const struct drm_display_mode *drm_mode,
 	if (dsi_mode->priv_info) {
 		dsi_mode->timing.dsc_enabled = dsi_mode->priv_info->dsc_enabled;
 		dsi_mode->timing.dsc = &dsi_mode->priv_info->dsc;
+		dsi_mode->timing.vdc_enabled = dsi_mode->priv_info->vdc_enabled;
+		dsi_mode->timing.vdc = &dsi_mode->priv_info->vdc;
+		dsi_mode->timing.pclk_scale = dsi_mode->priv_info->pclk_scale;
 	}
 
 	if (msm_is_mode_seamless(drm_mode))
@@ -470,7 +473,6 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 {
 	struct dsi_display_mode dsi_mode;
 	struct dsi_mode_info *timing;
-	int chroma_format;
 	int src_bpp, tar_bpp;
 
 	if (!drm_mode || !mode_info)
@@ -497,26 +499,23 @@ int dsi_conn_get_mode_info(struct drm_connector *connector,
 			sizeof(struct msm_display_topology));
 
 	mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_NONE;
+
 	if (dsi_mode.priv_info->dsc_enabled) {
-		chroma_format = dsi_mode.priv_info->dsc.chroma_format;
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_DSC;
 		memcpy(&mode_info->comp_info.dsc_info, &dsi_mode.priv_info->dsc,
 			sizeof(dsi_mode.priv_info->dsc));
-		tar_bpp = dsi_mode.priv_info->dsc.config.bits_per_pixel >> 4;
-		src_bpp = msm_get_src_bpc(chroma_format,
-			dsi_mode.priv_info->dsc.config.bits_per_component);
-		mode_info->comp_info.comp_ratio = mult_frac(1, src_bpp,
-				tar_bpp);
 	} else if (dsi_mode.priv_info->vdc_enabled) {
-		chroma_format = dsi_mode.priv_info->vdc.chroma_format;
 		mode_info->comp_info.comp_type = MSM_DISPLAY_COMPRESSION_VDC;
 		memcpy(&mode_info->comp_info.vdc_info, &dsi_mode.priv_info->vdc,
 			sizeof(dsi_mode.priv_info->vdc));
-		tar_bpp = dsi_mode.priv_info->vdc.bits_per_pixel >> 4;
-		src_bpp = msm_get_src_bpc(chroma_format,
-			dsi_mode.priv_info->vdc.bits_per_component);
+	}
+
+	if (mode_info->comp_info.comp_type) {
+		tar_bpp = dsi_mode.priv_info->pclk_scale.numer;
+		src_bpp = dsi_mode.priv_info->pclk_scale.denom;
 		mode_info->comp_info.comp_ratio = mult_frac(1, src_bpp,
 				tar_bpp);
+		mode_info->wide_bus_en = dsi_mode.priv_info->widebus_support;
 	}
 
 	if (dsi_mode.priv_info->roi_caps.enabled) {

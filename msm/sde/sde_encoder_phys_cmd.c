@@ -1146,6 +1146,10 @@ static void sde_encoder_phys_cmd_enable_helper(
 				(phys_enc->comp_type !=
 				 MSM_DISPLAY_COMPRESSION_NONE), false);
 
+	if (hw_intf->ops.enable_wide_bus)
+		hw_intf->ops.enable_wide_bus(hw_intf,
+			sde_encoder_is_widebus_enabled(phys_enc->parent));
+
 	/*
 	 * For pp-split, skip setting the flush bit for the slave intf, since
 	 * both intfs use same ctl and HW will only flush the master.

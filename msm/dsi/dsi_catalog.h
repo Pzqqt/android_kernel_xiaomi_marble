@@ -170,7 +170,7 @@ void dsi_ctrl_hw_cmn_cmd_engine_en(struct dsi_ctrl_hw *ctrl, bool on);
 
 void dsi_ctrl_hw_cmn_setup_cmd_stream(struct dsi_ctrl_hw *ctrl,
 				     struct dsi_mode_info *mode,
-				     u32 h_stride,
+				     struct dsi_host_common_cfg *cfg,
 				     u32 vc_id,
 				     struct dsi_rect *roi);
 void dsi_ctrl_hw_cmn_phy_sw_reset(struct dsi_ctrl_hw *ctrl);

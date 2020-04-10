@@ -2255,7 +2255,7 @@ int dsi_ctrl_timing_setup(struct dsi_ctrl *dsi_ctrl)
 
 		dsi_ctrl->hw.ops.setup_cmd_stream(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.video_timing,
-				dsi_ctrl->host_config.video_timing.h_active * 3,
+				&dsi_ctrl->host_config.common_config,
 				0x0,
 				&dsi_ctrl->roi);
 		dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, true);
@@ -2714,7 +2714,7 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl)
 		if (dsi_ctrl->hw.ops.setup_cmd_stream)
 			dsi_ctrl->hw.ops.setup_cmd_stream(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.video_timing,
-				dsi_ctrl->host_config.video_timing.h_active * 3,
+				&dsi_ctrl->host_config.common_config,
 				0x0, NULL);
 	} else {
 		DSI_CTRL_ERR(dsi_ctrl, "invalid panel mode for resolution switch\n");
@@ -2802,7 +2802,7 @@ int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled)
 
 			dsi_ctrl->hw.ops.setup_cmd_stream(&dsi_ctrl->hw,
 				&dsi_ctrl->host_config.video_timing,
-				dsi_ctrl->host_config.video_timing.h_active * 3,
+				&dsi_ctrl->host_config.common_config,
 				0x0,
 				NULL);
 		} else {

@@ -5277,7 +5277,7 @@ end:
 
 int dsi_display_dev_remove(struct platform_device *pdev)
 {
-	int rc = 0i, i = 0;
+	int rc = 0, i = 0;
 	struct dsi_display *display;
 	struct dsi_display_ctrl *ctrl;
 
@@ -6142,6 +6142,10 @@ int dsi_display_get_modes(struct dsi_display *display,
 		}
 
 		is_cmd_mode = (display_mode.panel_mode == DSI_OP_CMD_MODE);
+
+		/* Setup widebus support */
+		display_mode.priv_info->widebus_support =
+				ctrl->ctrl->hw.widebus_support;
 
 		/* Calculate dsi frame transfer time */
 		if (is_cmd_mode) {

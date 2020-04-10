@@ -270,8 +270,8 @@ struct sde_encoder_irq {
  * @comp_ratio:		Compression ratio
  * @dsc_extra_pclk_cycle_cnt: Extra pclk cycle count for DSC over DP
  * @dsc_extra_disp_width: Additional display width for DSC over DP
- * @wide_bus_en:	Wide-bus configuraiton
  * @poms_align_vsync:   poms with vsync aligned
+ * @dce_bytes_per_line:	Compressed bytes per line
  * @enc_spinlock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
  * @enable_state:	Enable state tracking
  * @vblank_refcount:	Reference count of vblank request
@@ -317,8 +317,8 @@ struct sde_encoder_phys {
 	u32 comp_ratio;
 	u32 dsc_extra_pclk_cycle_cnt;
 	u32 dsc_extra_disp_width;
-	bool wide_bus_en;
 	bool poms_align_vsync;
+	u32 dce_bytes_per_line;
 	spinlock_t *enc_spinlock;
 	enum sde_enc_enable_state enable_state;
 	struct mutex *vblank_ctl_lock;
@@ -758,6 +758,7 @@ void sde_encoder_helper_phys_disable(struct sde_encoder_phys *phys_enc,
 
 /**
  * sde_encoder_helper_setup_misr - helper function to setup misr
+ * @phys_enc: Pointer to physical encoder structure
  * @enable: enable/disable flag
  * @frame_count: frame count for misr
  */
@@ -766,6 +767,7 @@ void sde_encoder_helper_setup_misr(struct sde_encoder_phys *phys_enc,
 
 /**
  * sde_encoder_helper_collect_misr - helper function to collect misr
+ * @phys_enc: Pointer to physical encoder structure
  * @nonblock:  blocking/non-blocking flag
  * @misr_value:  pointer to misr value
  * @Return: zero on success

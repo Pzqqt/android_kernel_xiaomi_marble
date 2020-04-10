@@ -2635,7 +2635,6 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 
 		phys->comp_type = comp_info->comp_type;
 		phys->comp_ratio = comp_info->comp_ratio;
-		phys->wide_bus_en = sde_enc->mode_info.wide_bus_en;
 		phys->frame_trigger_mode = sde_enc->frame_trigger_mode;
 		phys->poms_align_vsync = disp_info->poms_align_vsync;
 		if (phys->comp_type == MSM_DISPLAY_COMPRESSION_DSC) {
@@ -2643,7 +2642,15 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 				comp_info->dsc_info.pclk_per_line;
 			phys->dsc_extra_disp_width =
 				comp_info->dsc_info.extra_width;
+			phys->dce_bytes_per_line =
+				comp_info->dsc_info.bytes_per_pkt *
+				comp_info->dsc_info.pkt_per_line;
+		} else if (phys->comp_type == MSM_DISPLAY_COMPRESSION_VDC) {
+			phys->dce_bytes_per_line =
+				comp_info->vdc_info.bytes_per_pkt *
+				comp_info->vdc_info.pkt_per_line;
 		}
+
 		if (phys != sde_enc->cur_master) {
 			/**
 			 * on DMS request, the encoder will be enabled

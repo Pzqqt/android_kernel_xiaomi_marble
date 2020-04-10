@@ -78,17 +78,8 @@ static void drm_mode_to_intf_timing_params(
 	 * <----------------- [hv]sync_end ------->
 	 * <---------------------------- [hv]total ------------->
 	 */
-	timing->width = mode->hdisplay;	/* active width */
-
-	if (phys_enc->hw_intf->cap->type != INTF_DP) {
-		if ((vid_enc->base.comp_type == MSM_DISPLAY_COMPRESSION_DSC) ||
-				(vid_enc->base.comp_type ==
-				MSM_DISPLAY_COMPRESSION_VDC))
-			timing->width = DIV_ROUND_UP(timing->width,
-					vid_enc->base.comp_ratio);
-	}
-
 	timing->poms_align_vsync = phys_enc->poms_align_vsync;
+	timing->width = mode->hdisplay;	/* active width */
 	timing->height = mode->vdisplay;	/* active height */
 	timing->xres = timing->width;
 	timing->yres = timing->height;
@@ -104,8 +95,11 @@ static void drm_mode_to_intf_timing_params(
 	timing->underflow_clr = 0xff;
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
-	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE)
+
+	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE) {
 		timing->compression_en = true;
+		timing->dce_bytes_per_line = vid_enc->base.dce_bytes_per_line;
+	}
 
 	/* DSI controller cannot handle active-low sync signals. */
 	if (phys_enc->hw_intf->cap->type == INTF_DSI) {
@@ -122,7 +116,7 @@ static void drm_mode_to_intf_timing_params(
 		timing->v_front_porch = 0;
 	}
 
-	timing->wide_bus_en = vid_enc->base.wide_bus_en;
+	timing->wide_bus_en = sde_encoder_is_widebus_enabled(phys_enc->parent);
 
 	/*
 	 * for DP, divide the horizonal parameters by 2 when
@@ -146,6 +140,22 @@ static void drm_mode_to_intf_timing_params(
 			timing->h_back_porch +=
 				vid_enc->base.dsc_extra_disp_width;
 		}
+	}
+
+	/*
+	 * for DSI, if compression is enabled, then divide the horizonal active
+	 * timing parameters by compression ratio.
+	 */
+	if ((phys_enc->hw_intf->cap->type != INTF_DP) &&
+			((vid_enc->base.comp_type ==
+			MSM_DISPLAY_COMPRESSION_DSC) ||
+			(vid_enc->base.comp_type ==
+			MSM_DISPLAY_COMPRESSION_VDC))) {
+		// adjust active dimensions
+		timing->width = DIV_ROUND_UP(timing->width,
+			vid_enc->base.comp_ratio);
+		timing->xres = DIV_ROUND_UP(timing->xres,
+			vid_enc->base.comp_ratio);
 	}
 
 	/*
