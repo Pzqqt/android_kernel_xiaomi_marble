@@ -48,6 +48,8 @@ struct rmnet_bearer_map {
 	u8  ack_req;
 	u32 last_grant;
 	u16 last_seq;
+	u32 bytes_in_flight;
+	u32 last_adjusted_grant;
 	bool tcp_bidir;
 	bool rat_switch;
 	bool tx_off;
@@ -92,6 +94,7 @@ struct qmi_info {
 	void *wda_pending;
 	void *dfc_clients[MAX_CLIENT_NUM];
 	void *dfc_pending[MAX_CLIENT_NUM];
+	bool dfc_client_exiting[MAX_CLIENT_NUM];
 	unsigned long ps_work_active;
 	bool ps_enabled;
 	bool dl_msg_active;
