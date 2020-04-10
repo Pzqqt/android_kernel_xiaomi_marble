@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -772,13 +772,6 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 
 	lpi_dev = &pdev->dev;
 	lpi_dev_up = true;
-	ret = audio_notifier_register("lpi_tlmm", AUDIO_NOTIFIER_ADSP_DOMAIN,
-				      &service_nb);
-	if (ret < 0) {
-		pr_err("%s: Audio notifier register failed ret = %d\n",
-			__func__, ret);
-		goto err_range;
-	}
 
 	ret = snd_event_client_register(dev, &lpi_pinctrl_ssr_ops, NULL);
 	if (!ret) {
@@ -786,7 +779,15 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	} else {
 		dev_err(dev, "%s: snd_event registration failed, ret [%d]\n",
 			__func__, ret);
-		goto err_snd_evt;
+		goto err_range;
+	}
+
+	ret = audio_notifier_register("lpi_tlmm", AUDIO_NOTIFIER_ADSP_DOMAIN,
+				      &service_nb);
+	if (ret < 0) {
+		pr_err("%s: Audio notifier register failed ret = %d\n",
+			__func__, ret);
+		goto err_range;
 	}
 
 	/* Register LPASS core hw vote */
@@ -819,8 +820,8 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 
 	return 0;
 
-err_snd_evt:
-	audio_notifier_deregister("lpi_tlmm");
+//err_snd_evt:
+//	audio_notifier_deregister("lpi_tlmm");
 err_range:
 	gpiochip_remove(&state->chip);
 err_chip:

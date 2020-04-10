@@ -89,11 +89,6 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 
 	mutex_lock(&g_prm.lock);
 	pr_debug("%s: enter",__func__);
-	if (!g_prm.is_adsp_up) {
-		pr_err("%s: ADSP is not up\n", __func__);
-		mutex_unlock(&g_prm.lock);
-		return -ENODEV;
-	}
 
 	if (g_prm.adev == NULL) {
 		pr_err("%s: apr is unregistered\n", __func__);
@@ -302,27 +297,6 @@ EXPORT_SYMBOL(audio_prm_set_lpass_clk_cfg);
 
 
 
-static int prm_ssr_enable(struct device *dev, void *data)
-{
-        mutex_lock(&g_prm.lock);
-        g_prm.is_adsp_up = true;
-        mutex_unlock(&g_prm.lock);
-	return 0;
-}
-
-static void prm_ssr_disable(struct device *dev, void *data)
-{
-        mutex_lock(&g_prm.lock);
-        g_prm.is_adsp_up = true;
-        mutex_unlock(&g_prm.lock);
-
-}
-
-static const struct snd_event_ops prm_ssr_ops = {
-        .enable = prm_ssr_enable,
-        .disable = prm_ssr_disable,
-};
-
 static int audio_prm_probe(struct gpr_device *adev)
 {
 	int ret = 0;
@@ -331,18 +305,11 @@ static int audio_prm_probe(struct gpr_device *adev)
 
 	mutex_init(&g_prm.lock);
 	g_prm.adev = adev;
-        g_prm.is_adsp_up = true;
 
 	init_waitqueue_head(&g_prm.wait);
 
-	ret = snd_event_client_register(&adev->dev, &prm_ssr_ops, NULL);
-	if (ret) {
-		pr_err("%s: Registration with snd event failed \n",__func__);
-		goto err;
-	}
 
 	pr_err("%s: prm probe success\n", __func__);
-err:
 	return ret;
 }
 
@@ -351,15 +318,8 @@ static int audio_prm_remove(struct gpr_device *adev)
 	int ret = 0;
 
 	mutex_lock(&g_prm.lock);
-	ret = snd_event_client_deregister(&adev->dev);
-	if (ret) {
-		pr_err("%s: Deregistration from SNF failed \n",__func__);
-		goto err;
-	}
 	g_prm.adev = NULL;
-	g_prm.is_adsp_up = false;
 	mutex_unlock(&g_prm.lock);
-err:
 	return ret;
 }
 
