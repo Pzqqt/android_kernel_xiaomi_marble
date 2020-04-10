@@ -5098,6 +5098,9 @@ lim_set_protected_bit(struct mac_context *mac,
 		 */
 		if (sta->rmfEnabled && sta->is_key_installed)
 			pMacHdr->fc.wep = 1;
+
+		pe_debug("wep:%d rmf:%d is_key_set:%d", pMacHdr->fc.wep,
+			 sta->rmfEnabled, sta->is_key_installed);
 	}
 } /*** end lim_set_protected_bit() ***/
 #endif

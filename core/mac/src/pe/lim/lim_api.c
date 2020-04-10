@@ -2602,6 +2602,12 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	ft_session_ptr->bRoamSynchInProgress = true;
 
+	if (roam_sync_ind_ptr->authStatus ==
+	    CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
+		ft_session_ptr->is_key_installed = true;
+		curr_sta_ds->is_key_installed = true;
+	}
+
 	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
 				    LIM_REASSOC, ft_session_ptr);
 
@@ -2674,8 +2680,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		qdf_mem_free(mac_ctx->roam.pReassocResp);
 	mac_ctx->roam.pReassocResp = NULL;
 
-	if (roam_sync_ind_ptr->authStatus == CSR_ROAM_AUTH_STATUS_AUTHENTICATED)
-		ft_session_ptr->is_key_installed = true;
 
 	return QDF_STATUS_SUCCESS;
 }
