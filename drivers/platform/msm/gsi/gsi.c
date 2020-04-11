@@ -909,6 +909,13 @@ static uint32_t gsi_get_max_channels(enum gsi_ver ver)
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_BMSK) >>
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_SHFT;
 		break;
+	case GSI_VER_2_11:
+		reg = gsi_readl(gsi_ctx->base +
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_OFFS(gsi_ctx->per.ee));
+		reg = (reg &
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_BMSK) >>
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_SHFT;
+		break;
 	default:
 		GSIERR("GSI version is not supported %d\n", ver);
 		break;
@@ -982,6 +989,13 @@ static uint32_t gsi_get_max_event_rings(enum gsi_ver ver)
 		reg = (reg &
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_BMSK) >>
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_SHFT;
+		break;
+	case GSI_VER_2_11:
+		reg = gsi_readl(gsi_ctx->base +
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_OFFS(gsi_ctx->per.ee));
+		reg = (reg &
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_BMSK) >>
+			GSI_V2_11_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_SHFT;
 		break;
 	default:
 		GSIERR("GSI version is not supported %d\n", ver);
@@ -1112,6 +1126,7 @@ int gsi_register_device(struct gsi_per_props *props, unsigned long *dev_hdl)
 	case GSI_VER_2_5:
 	case GSI_VER_2_7:
 	case GSI_VER_2_9:
+	case GSI_VER_2_11:
 		needed_reg_ver = GSI_REGISTER_VER_2;
 		break;
 	case GSI_VER_ERR:
@@ -4136,6 +4151,9 @@ static void gsi_configure_ieps(void *base, enum gsi_ver ver)
 	if (ver >= GSI_VER_2_5)
 		gsi_writel(17,
 			gsi_base + GSI_V2_5_GSI_IRAM_PTR_TLV_CH_NOT_FULL_OFFS);
+	if (ver >= GSI_VER_2_11)
+		gsi_writel(18, gsi_base + GSI_GSI_IRAM_PTR_MSI_DB_OFFS);
+
 }
 
 static void gsi_configure_bck_prs_matrix(void *base)
@@ -4292,6 +4310,9 @@ void gsi_get_inst_ram_offset_and_size(unsigned long *base_offset,
 		break;
 	case GSI_VER_2_9:
 		maxn = GSI_V2_9_GSI_INST_RAM_n_MAXn;
+		break;
+	case GSI_VER_2_11:
+		maxn = GSI_V2_11_GSI_INST_RAM_n_MAXn;
 		break;
 	case GSI_VER_ERR:
 	case GSI_VER_MAX:
