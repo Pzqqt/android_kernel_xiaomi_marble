@@ -1042,6 +1042,9 @@ typedef enum {
     /* Txbf configuration command */
     WMI_TXBF_CMDID,
 
+    /* Antenna Controller, connected to wlan debug uart/GPIO. */
+    WMI_ANT_CONTROLLER_CMDID,
+
     /* FWTEST Commands */
     WMI_FWTEST_VDEV_MCC_SET_TBTT_MODE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_FWTEST),
     /** set NoA descs **/
@@ -16274,6 +16277,12 @@ typedef struct {
     A_UINT32 gpio_num; /* GPIO number which changed state */
 } wmi_gpio_input_event_fixed_param;
 
+/* WMI_ANT_CONTROLLER_CMDID */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ant_controller_cmd_fixed_param */
+    A_UINT32 ant_controller_enable;
+} wmi_ant_controller_cmd_fixed_param;
+
 /* WMI_P2P_DISC_EVENTID */
 enum {
     P2P_DISC_SEARCH_PROB_REQ_HIT = 0, /* prob req hit the p2p find pattern */
@@ -25815,6 +25824,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_GET_BIG_DATA_P2_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_GET_STATISTICS_CMDID);
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID);
+        WMI_RETURN_STRING(WMI_ANT_CONTROLLER_CMDID);
     }
 
     return "Invalid WMI cmd";
