@@ -3400,15 +3400,10 @@ dp_clear_peer(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 		return QDF_STATUS_E_FAULT;
 
 	peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, peer_addr.bytes);
-	if (!peer)
+	if (!peer || !peer->valid)
 		return QDF_STATUS_E_FAULT;
 
-	qdf_spin_lock_bh(&peer->peer_info_lock);
-	peer->state = OL_TXRX_PEER_STATE_DISC;
-	qdf_spin_unlock_bh(&peer->peer_info_lock);
-
-	dp_rx_flush_rx_cached(peer, true);
-
+	dp_clear_peer_internal(soc, peer);
 	return QDF_STATUS_SUCCESS;
 }
 

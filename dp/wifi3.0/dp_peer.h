@@ -89,6 +89,31 @@ dp_peer_find_by_id(struct dp_soc *soc,
 }
 #endif /* PEER_LOCK_REF_PROTECT */
 
+#ifdef PEER_CACHE_RX_PKTS
+/**
+ * dp_rx_flush_rx_cached() - flush cached rx frames
+ * @peer: peer
+ * @drop: set flag to drop frames
+ *
+ * Return: None
+ */
+void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop);
+#else
+static inline void dp_rx_flush_rx_cached(struct dp_peer *peer, bool drop)
+{
+}
+#endif
+
+static inline void
+dp_clear_peer_internal(struct dp_soc *soc, struct dp_peer *peer)
+{
+	qdf_spin_lock_bh(&peer->peer_info_lock);
+	peer->state = OL_TXRX_PEER_STATE_DISC;
+	qdf_spin_unlock_bh(&peer->peer_info_lock);
+
+	dp_rx_flush_rx_cached(peer, true);
+}
+
 void dp_print_ast_stats(struct dp_soc *soc);
 void dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 			    uint16_t hw_peer_id, uint8_t vdev_id,
