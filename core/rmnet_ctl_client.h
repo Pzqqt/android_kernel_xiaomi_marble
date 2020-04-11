@@ -9,6 +9,19 @@
 #define _RMNET_CTL_CLIENT_H_
 
 #include <linux/skbuff.h>
+#include "rmnet_ctl.h"
+
+void rmnet_ctl_log(enum rmnet_ctl_log_lvl lvl, const char *msg,
+		   int rc, const void *data, unsigned int len);
+
+#define rmnet_ctl_log_err(msg, rc, data, len) \
+		rmnet_ctl_log(RMNET_CTL_LOG_ERR, msg, rc, data, len)
+
+#define rmnet_ctl_log_info(msg, data, len) \
+		rmnet_ctl_log(RMNET_CTL_LOG_INFO, msg, 0, data, len)
+
+#define rmnet_ctl_log_debug(msg, data, len) \
+		rmnet_ctl_log(RMNET_CTL_LOG_DEBUG, msg, 0, data, len)
 
 struct rmnet_ctl_stats {
 	u64 rx_pkts;

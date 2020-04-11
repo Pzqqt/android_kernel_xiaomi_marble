@@ -200,3 +200,11 @@ void rmnet_ctl_log(enum rmnet_ctl_log_lvl lvl, const char *msg,
 	}
 }
 EXPORT_SYMBOL(rmnet_ctl_log);
+
+struct rmnet_ctl_client_if rmnet_ctl_if = {
+	.reg = rmnet_ctl_register_client,
+	.dereg = rmnet_ctl_unregister_client,
+	.send = rmnet_ctl_send_client,
+	.log = rmnet_ctl_log,
+};
+EXPORT_SYMBOL(rmnet_ctl_if);

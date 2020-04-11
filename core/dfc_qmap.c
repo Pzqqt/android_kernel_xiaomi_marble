@@ -4,6 +4,7 @@
  */
 
 #include <net/pkt_sched.h>
+#include <linux/module.h>
 #include "rmnet_ctl.h"
 #include "dfc_defs.h"
 #include "rmnet_qmi.h"
@@ -127,6 +128,9 @@ static struct dfc_qmi_data __rcu *qmap_dfc_data;
 static atomic_t qmap_txid;
 static void *rmnet_ctl_handle;
 
+extern struct rmnet_ctl_client_if rmnet_ctl_if;
+static struct rmnet_ctl_client_if *rmnet_ctl;
+
 static void dfc_qmap_send_end_marker_cnf(struct qos_info *qos,
 					 u8 bearer_id, u16 seq, u32 tx_id);
 
@@ -134,7 +138,8 @@ static void dfc_qmap_send_cmd(struct sk_buff *skb)
 {
 	trace_dfc_qmap(skb->data, skb->len, false);
 
-	if (rmnet_ctl_send_client(rmnet_ctl_handle, skb)) {
+	if (unlikely(!rmnet_ctl || !rmnet_ctl->send) ||
+	    rmnet_ctl->send(rmnet_ctl_handle, skb)) {
 		pr_err("Failed to send to rmnet ctl\n");
 		kfree_skb(skb);
 	}
@@ -150,7 +155,9 @@ static void dfc_qmap_send_inband_ack(struct dfc_qmi_data *dfc,
 	skb->protocol = htons(ETH_P_MAP);
 	skb->dev = rmnet_get_real_dev(dfc->rmnet_port);
 
-	rmnet_ctl_log_debug("TXI", skb->data, skb->len);
+	if (likely(rmnet_ctl && rmnet_ctl->log))
+		rmnet_ctl->log(RMNET_CTL_LOG_DEBUG, "TXI", 0,
+			       skb->data, skb->len);
 	trace_dfc_qmap(skb->data, skb->len, false);
 	dev_queue_xmit(skb);
 }
@@ -446,7 +453,9 @@ static void dfc_qmap_send_end_marker_cnf(struct qos_info *qos,
 	skb->dev = qos->real_dev;
 
 	/* This cmd needs to be sent in-band */
-	rmnet_ctl_log_info("TXI", skb->data, skb->len);
+	if (likely(rmnet_ctl && rmnet_ctl->log))
+		rmnet_ctl->log(RMNET_CTL_LOG_INFO, "TXI", 0,
+			       skb->data, skb->len);
 	trace_dfc_qmap(skb->data, skb->len, false);
 	rmnet_map_tx_qmap_cmd(skb);
 }
@@ -490,7 +499,16 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 
 	atomic_set(&qmap_txid, 0);
 
-	rmnet_ctl_handle = rmnet_ctl_register_client(&cb);
+	if (!rmnet_ctl)
+		rmnet_ctl = symbol_get(rmnet_ctl_if);
+	if (!rmnet_ctl) {
+		pr_err("rmnet_ctl module not loaded\n");
+		goto out;
+	}
+
+	if (rmnet_ctl->reg)
+		rmnet_ctl_handle = rmnet_ctl->reg(&cb);
+
 	if (!rmnet_ctl_handle)
 		pr_err("Failed to register with rmnet ctl\n");
 
@@ -501,6 +519,7 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 
 	dfc_qmap_send_config(data);
 
+out:
 	return 0;
 }
 
@@ -515,13 +534,20 @@ void dfc_qmap_client_exit(void *dfc_data)
 
 	trace_dfc_client_state_down(data->index, 0);
 
-	rmnet_ctl_unregister_client(rmnet_ctl_handle);
+	if (rmnet_ctl && rmnet_ctl->dereg)
+		rmnet_ctl->dereg(rmnet_ctl_handle);
+	rmnet_ctl_handle = NULL;
 
 	WRITE_ONCE(data->restart_state, 1);
 	RCU_INIT_POINTER(qmap_dfc_data, NULL);
 	synchronize_rcu();
 
 	kfree(data);
+
+	if (rmnet_ctl) {
+		symbol_put(rmnet_ctl_if);
+		rmnet_ctl = NULL;
+	}
 
 	pr_info("DFC QMAP exit\n");
 }
