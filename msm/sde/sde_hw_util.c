@@ -549,9 +549,12 @@ uint32_t sde_copy_formats(
 /**
  * sde_get_linetime   - returns the line time for a given mode
  * @mode:          pointer to drm mode to calculate the line time
+ * @src_bpp:       source bpp
+ * @target_bpp:    target bpp
  * Return:         line time of display mode in nS
  */
-uint32_t sde_get_linetime(struct drm_display_mode *mode)
+uint32_t sde_get_linetime(struct drm_display_mode *mode,
+		int src_bpp, int target_bpp)
 {
 	u64 pclk_rate;
 	u32 pclk_period;
@@ -570,10 +573,12 @@ uint32_t sde_get_linetime(struct drm_display_mode *mode)
 	}
 
 	/*
-	 * Line time calculation based on Pixel clock and HTOTAL.
-	 * Final unit is in ns.
+	 * Line time calculation based on Pixel clock, HTOTAL, and comp_ratio.
+	 * Compression ratio found by src_bpp/target_bpp. Final unit is in ns.
 	 */
-	line_time = (pclk_period * mode->htotal) / 1000;
+	line_time = pclk_period * mode->htotal;
+	line_time = DIV_ROUND_UP(mult_frac(line_time, target_bpp,
+			src_bpp), 1000);
 	if (line_time == 0) {
 		SDE_ERROR("line time calculation is 0\n");
 		return 0;

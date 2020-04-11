@@ -2134,6 +2134,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	/* store the mode_info */
 	sde_connector_state_get_mode_info(conn->state, &sde_enc->mode_info);
 
+	sde_encoder_dce_set_bpp(sde_enc->mode_info, sde_enc->crtc);
+
 	/* release resources before seamless mode change */
 	if (msm_is_mode_seamless_dms(adj_mode) ||
 			(msm_is_mode_seamless_dyn_clk(adj_mode) &&

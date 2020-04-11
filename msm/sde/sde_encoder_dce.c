@@ -842,6 +842,46 @@ void _dce_helper_flush_vdc(struct sde_encoder_virt *sde_enc)
 	}
 }
 
+void sde_encoder_dce_set_bpp(struct msm_mode_info mode_info,
+		struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	enum msm_display_compression_type comp_type;
+	int src_bpp, target_bpp;
+
+	if (!sde_crtc) {
+		SDE_DEBUG("invalid sde_crtc\n");
+		return;
+	}
+
+	comp_type = mode_info.comp_info.comp_type;
+	/**
+	 * In cases where DSC or VDC compression type is not found, set
+	 * src and target bpp to get compression ratio 8/8 (default).
+	 */
+	if (comp_type == MSM_DISPLAY_COMPRESSION_DSC) {
+		struct msm_display_dsc_info dsc_info =
+				mode_info.comp_info.dsc_info;
+		src_bpp = msm_get_src_bpc(dsc_info.chroma_format,
+				dsc_info.config.bits_per_component);
+		target_bpp = dsc_info.config.bits_per_pixel >> 4;
+	} else if (comp_type == MSM_DISPLAY_COMPRESSION_VDC) {
+		struct msm_display_vdc_info vdc_info =
+				mode_info.comp_info.vdc_info;
+		src_bpp = msm_get_src_bpc(vdc_info.chroma_format,
+				vdc_info.bits_per_component);
+		target_bpp = vdc_info.bits_per_pixel >> 4;
+	} else {
+		src_bpp = 8;
+		target_bpp = 8;
+	}
+
+	sde_crtc_set_bpp(sde_crtc, src_bpp, target_bpp);
+
+	SDE_DEBUG("sde_crtc src_bpp = %d, target_bpp = %d\n",
+			sde_crtc->src_bpp, sde_crtc->target_bpp);
+}
+
 void sde_encoder_dce_disable(struct sde_encoder_virt *sde_enc)
 {
 	enum msm_display_compression_type comp_type;
