@@ -2526,6 +2526,48 @@ static int _sde_plane_validate_shared_crtc(struct sde_plane *psde,
 
 }
 
+static int _sde_plane_sspp_atomic_check_helper(struct sde_plane *psde,
+		const struct sde_format *fmt,
+		struct sde_rect src, struct sde_rect dst,
+		u32 width, u32 height)
+{
+	int ret = 0;
+	u32 min_src_size = SDE_FORMAT_IS_YUV(fmt) ? 2 : 1;
+
+	if (SDE_FORMAT_IS_YUV(fmt) &&
+			(!(psde->features & SDE_SSPP_SCALER) ||
+			 !(psde->features & (BIT(SDE_SSPP_CSC)
+					     | BIT(SDE_SSPP_CSC_10BIT))))) {
+		SDE_ERROR_PLANE(psde,
+				"plane doesn't have scaler/csc for yuv\n");
+		ret = -EINVAL;
+
+	/* check src bounds */
+	} else if (width > MAX_IMG_WIDTH || height > MAX_IMG_HEIGHT ||
+			src.w < min_src_size || src.h < min_src_size ||
+			CHECK_LAYER_BOUNDS(src.x, src.w, width) ||
+			CHECK_LAYER_BOUNDS(src.y, src.h, height)) {
+		SDE_ERROR_PLANE(psde, "invalid source %u, %u, %ux%u\n",
+			src.x, src.y, src.w, src.h);
+		ret = -E2BIG;
+
+	/* valid yuv image */
+	} else if (SDE_FORMAT_IS_YUV(fmt) && ((src.x & 0x1) || (src.y & 0x1) ||
+			 (src.w & 0x1) || (src.h & 0x1))) {
+		SDE_ERROR_PLANE(psde, "invalid yuv source %u, %u, %ux%u\n",
+				src.x, src.y, src.w, src.h);
+		ret = -EINVAL;
+
+	/* min dst support */
+	} else if (dst.w < 0x1 || dst.h < 0x1) {
+		SDE_ERROR_PLANE(psde, "invalid dest rect %u, %u, %ux%u\n",
+				dst.x, dst.y, dst.w, dst.h);
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
 static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 		struct drm_plane_state *state)
 {
@@ -2535,7 +2577,6 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 	const struct msm_format *msm_fmt;
 	const struct sde_format *fmt;
 	struct sde_rect src, dst;
-	uint32_t min_src_size;
 	bool q16_data = true;
 	struct drm_framebuffer *fb;
 	u32 width;
@@ -2580,57 +2621,22 @@ static int sde_plane_sspp_atomic_check(struct drm_plane *plane,
 	msm_fmt = msm_framebuffer_format(fb);
 	fmt = to_sde_format(msm_fmt);
 
-	min_src_size = SDE_FORMAT_IS_YUV(fmt) ? 2 : 1;
-
-	if (SDE_FORMAT_IS_YUV(fmt) &&
-		(!(psde->features & SDE_SSPP_SCALER) ||
-		 !(psde->features & (BIT(SDE_SSPP_CSC)
-		 | BIT(SDE_SSPP_CSC_10BIT))))) {
-		SDE_ERROR_PLANE(psde,
-				"plane doesn't have scaler/csc for yuv\n");
-		ret = -EINVAL;
-
-	/* check src bounds */
-	} else if (width > MAX_IMG_WIDTH ||
-		height > MAX_IMG_HEIGHT ||
-		src.w < min_src_size || src.h < min_src_size ||
-		CHECK_LAYER_BOUNDS(src.x, src.w, width) ||
-		CHECK_LAYER_BOUNDS(src.y, src.h, height)) {
-		SDE_ERROR_PLANE(psde, "invalid source %u, %u, %ux%u\n",
-			src.x, src.y, src.w, src.h);
-		ret = -E2BIG;
-
-	/* valid yuv image */
-	} else if (SDE_FORMAT_IS_YUV(fmt) && ((src.x & 0x1) || (src.y & 0x1) ||
-			 (src.w & 0x1) || (src.h & 0x1))) {
-		SDE_ERROR_PLANE(psde, "invalid yuv source %u, %u, %ux%u\n",
-				src.x, src.y, src.w, src.h);
-		ret = -EINVAL;
-
-	/* min dst support */
-	} else if (dst.w < 0x1 || dst.h < 0x1) {
-		SDE_ERROR_PLANE(psde, "invalid dest rect %u, %u, %ux%u\n",
-				dst.x, dst.y, dst.w, dst.h);
-		ret = -EINVAL;
-	}
-
+	ret = _sde_plane_sspp_atomic_check_helper(psde, fmt, src, dst, width,
+			height);
 	if (ret)
 		return ret;
 
 	ret = _sde_atomic_check_decimation_scaler(state, psde, fmt, pstate,
 		&src, &dst, width, height);
-
 	if (ret)
 		return ret;
 
 	ret = _sde_atomic_check_excl_rect(psde, pstate,
 		&src, fmt, ret);
-
 	if (ret)
 		return ret;
 
 	ret = _sde_plane_validate_shared_crtc(psde, state);
-
 	if (ret)
 		return ret;
 
