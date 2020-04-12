@@ -117,6 +117,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 	struct lsm_client *client = (struct lsm_client *)priv;
 	uint32_t token;
 	uint32_t *payload;
+	unsigned long flags;
 
 	if (!client || !data) {
 		pr_err("%s: client %pK data %pK\n",
@@ -150,6 +151,13 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 		return 0;
 	}
 
+	spin_lock_irqsave(&lsm_session_lock, flags);
+	if (!client || !q6lsm_is_valid_lsm_client(client)) {
+		pr_err("%s: client already freed/invalid, return\n",
+			__func__);
+		spin_unlock_irqrestore(&lsm_session_lock, flags);
+		return -EINVAL;
+	}
 	payload = data->payload;
 	pr_debug("%s: Session %d opcode 0x%x token 0x%x payload size %d\n"
 			 "payload [0] = 0x%x\n", __func__, client->session,
@@ -163,6 +171,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 			pr_err("%s: read done error payload size %d expected size %zd\n",
 				__func__, data->payload_size,
 				sizeof(read_done));
+			spin_unlock_irqrestore(&lsm_session_lock, flags);
 			return -EINVAL;
 		}
 		pr_debug("%s: opcode %x status %x lsw %x msw %x mem_map handle %x\n",
@@ -179,6 +188,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 					(void *)&read_done,
 					sizeof(read_done),
 					client->priv);
+		spin_unlock_irqrestore(&lsm_session_lock, flags);
 		return 0;
 	} else if (data->opcode == APR_BASIC_RSP_RESULT) {
 		token = data->token;
@@ -203,11 +213,13 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 				LSM_SESSION_CMD_DEREGISTER_SOUND_MODEL) {
 				pr_err("%s: Invalid session %d receivced expected %d\n",
 					__func__, token, client->session);
+				spin_unlock_irqrestore(&lsm_session_lock, flags);
 				return -EINVAL;
 			}
 			if (data->payload_size < 2 * sizeof(payload[0])) {
 				pr_err("%s: payload has invalid size[%d]\n",
 					__func__, data->payload_size);
+				spin_unlock_irqrestore(&lsm_session_lock, flags);
 				return -EINVAL;
 			}
 			client->cmd_err_code = payload[1];
@@ -225,6 +237,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 				__func__, payload[0]);
 			break;
 		}
+		spin_unlock_irqrestore(&lsm_session_lock, flags);
 		return 0;
 	}
 
@@ -232,6 +245,7 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 		client->cb(data->opcode, data->token, data->payload,
 				data->payload_size, client->priv);
 
+	spin_unlock_irqrestore(&lsm_session_lock, flags);
 	return 0;
 }
 
