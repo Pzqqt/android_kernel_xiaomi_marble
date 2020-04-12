@@ -3571,106 +3571,104 @@ end:
 	return rc;
 }
 
-static int _sde_parse_prop_check(struct sde_mdss_cfg *cfg,
-	bool prop_exists[SDE_PROP_MAX], struct sde_prop_value *prop_value)
+static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
+	struct sde_dt_props *props)
 {
-	cfg->max_sspp_linewidth = PROP_VALUE_ACCESS(prop_value,
-			SSPP_LINEWIDTH, 0);
-	if (!prop_exists[SSPP_LINEWIDTH])
-		cfg->max_sspp_linewidth = DEFAULT_SDE_LINE_WIDTH;
+	int i;
 
-	cfg->vig_sspp_linewidth = PROP_VALUE_ACCESS(prop_value,
-			VIG_SSPP_LINEWIDTH, 0);
-	if (!prop_exists[VIG_SSPP_LINEWIDTH])
-		cfg->vig_sspp_linewidth = cfg->max_sspp_linewidth;
+	cfg->max_sspp_linewidth = props->exists[SSPP_LINEWIDTH] ?
+			PROP_VALUE_ACCESS(props->values, SSPP_LINEWIDTH, 0) :
+			DEFAULT_SDE_LINE_WIDTH;
 
-	cfg->scaling_linewidth = PROP_VALUE_ACCESS(prop_value,
-			SCALING_LINEWIDTH, 0);
-	if (!prop_exists[SCALING_LINEWIDTH])
-		cfg->scaling_linewidth = cfg->vig_sspp_linewidth;
+	cfg->vig_sspp_linewidth = props->exists[VIG_SSPP_LINEWIDTH] ?
+			PROP_VALUE_ACCESS(props->values, VIG_SSPP_LINEWIDTH,
+			0) : cfg->max_sspp_linewidth;
 
-	cfg->max_mixer_width = PROP_VALUE_ACCESS(prop_value,
-			MIXER_LINEWIDTH, 0);
-	if (!prop_exists[MIXER_LINEWIDTH])
-		cfg->max_mixer_width = DEFAULT_SDE_LINE_WIDTH;
+	cfg->scaling_linewidth = props->exists[SCALING_LINEWIDTH] ?
+			PROP_VALUE_ACCESS(props->values, SCALING_LINEWIDTH,
+			0) : cfg->vig_sspp_linewidth;
 
-	cfg->max_mixer_blendstages = PROP_VALUE_ACCESS(prop_value,
-			MIXER_BLEND, 0);
-	if (!prop_exists[MIXER_BLEND])
-		cfg->max_mixer_blendstages = DEFAULT_SDE_MIXER_BLENDSTAGES;
+	cfg->max_wb_linewidth = props->exists[WB_LINEWIDTH] ?
+			PROP_VALUE_ACCESS(props->values, WB_LINEWIDTH, 0) :
+			DEFAULT_SDE_LINE_WIDTH;
 
-	cfg->max_wb_linewidth = PROP_VALUE_ACCESS(prop_value, WB_LINEWIDTH, 0);
-	if (!prop_exists[WB_LINEWIDTH])
-		cfg->max_wb_linewidth = DEFAULT_SDE_LINE_WIDTH;
+	cfg->max_mixer_width = props->exists[MIXER_LINEWIDTH] ?
+			PROP_VALUE_ACCESS(props->values, MIXER_LINEWIDTH, 0) :
+			DEFAULT_SDE_LINE_WIDTH;
 
-	cfg->ubwc_version = SDE_HW_UBWC_VER(PROP_VALUE_ACCESS(prop_value,
-			 UBWC_VERSION, 0));
-	if (!prop_exists[UBWC_VERSION])
-		cfg->ubwc_version = DEFAULT_SDE_UBWC_VERSION;
+	cfg->max_mixer_blendstages = props->exists[MIXER_BLEND] ?
+			PROP_VALUE_ACCESS(props->values, MIXER_BLEND, 0) :
+			DEFAULT_SDE_MIXER_BLENDSTAGES;
 
-	cfg->mdp[0].highest_bank_bit = PROP_VALUE_ACCESS(prop_value,
-			BANK_BIT, 0);
-	if (!prop_exists[BANK_BIT])
-		cfg->mdp[0].highest_bank_bit = DEFAULT_SDE_HIGHEST_BANK_BIT;
+	cfg->ubwc_version = props->exists[UBWC_VERSION] ?
+			SDE_HW_UBWC_VER(PROP_VALUE_ACCESS(props->values,
+			UBWC_VERSION, 0)) : DEFAULT_SDE_UBWC_VERSION;
+
+	cfg->mdp[0].highest_bank_bit = props->exists[BANK_BIT] ?
+			PROP_VALUE_ACCESS(props->values, BANK_BIT, 0) :
+			DEFAULT_SDE_HIGHEST_BANK_BIT;
 
 	if (cfg->ubwc_version == SDE_HW_UBWC_VER_40 &&
 			of_fdt_get_ddrtype() == LP_DDR4_TYPE)
 		cfg->mdp[0].highest_bank_bit = 0x02;
 
-	cfg->macrotile_mode = PROP_VALUE_ACCESS(prop_value, MACROTILE_MODE, 0);
-	if (!prop_exists[MACROTILE_MODE])
-		cfg->macrotile_mode = DEFAULT_SDE_UBWC_MACROTILE_MODE;
+	cfg->macrotile_mode = props->exists[MACROTILE_MODE] ?
+			PROP_VALUE_ACCESS(props->values, MACROTILE_MODE, 0) :
+			DEFAULT_SDE_UBWC_MACROTILE_MODE;
 
 	cfg->ubwc_bw_calc_version =
-		PROP_VALUE_ACCESS(prop_value, UBWC_BW_CALC_VERSION, 0);
+		PROP_VALUE_ACCESS(props->values, UBWC_BW_CALC_VERSION, 0);
 
-	cfg->mdp[0].ubwc_static = PROP_VALUE_ACCESS(prop_value, UBWC_STATIC, 0);
-	if (!prop_exists[UBWC_STATIC])
-		cfg->mdp[0].ubwc_static = DEFAULT_SDE_UBWC_STATIC;
+	cfg->mdp[0].ubwc_static = props->exists[UBWC_STATIC] ?
+			PROP_VALUE_ACCESS(props->values, UBWC_STATIC, 0) :
+			DEFAULT_SDE_UBWC_STATIC;
 
-	cfg->mdp[0].ubwc_swizzle = PROP_VALUE_ACCESS(prop_value,
-			UBWC_SWIZZLE, 0);
-	if (!prop_exists[UBWC_SWIZZLE])
-		cfg->mdp[0].ubwc_swizzle = DEFAULT_SDE_UBWC_SWIZZLE;
+	cfg->mdp[0].ubwc_swizzle = props->exists[UBWC_SWIZZLE] ?
+			PROP_VALUE_ACCESS(props->values, UBWC_SWIZZLE, 0) :
+			DEFAULT_SDE_UBWC_SWIZZLE;
 
 	cfg->mdp[0].has_dest_scaler =
-		PROP_VALUE_ACCESS(prop_value, DEST_SCALER, 0);
+		PROP_VALUE_ACCESS(props->values, DEST_SCALER, 0);
 
 	cfg->mdp[0].smart_panel_align_mode =
-		PROP_VALUE_ACCESS(prop_value, SMART_PANEL_ALIGN_MODE, 0);
-	return 0;
+		PROP_VALUE_ACCESS(props->values, SMART_PANEL_ALIGN_MODE, 0);
+
+	if (props->exists[SEC_SID_MASK]) {
+		cfg->sec_sid_mask_count = props->counts[SEC_SID_MASK];
+		for (i = 0; i < cfg->sec_sid_mask_count; i++)
+			cfg->sec_sid_mask[i] = PROP_VALUE_ACCESS(props->values,
+					SEC_SID_MASK, i);
+	}
+
+	cfg->has_src_split = PROP_VALUE_ACCESS(props->values, SRC_SPLIT, 0);
+	cfg->has_dim_layer = PROP_VALUE_ACCESS(props->values, DIM_LAYER, 0);
+	cfg->has_idle_pc = PROP_VALUE_ACCESS(props->values, IDLE_PC, 0);
+	cfg->pipe_order_type = PROP_VALUE_ACCESS(props->values,
+			PIPE_ORDER_VERSION, 0);
+	cfg->has_base_layer = PROP_VALUE_ACCESS(props->values, BASE_LAYER, 0);
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 {
-	int rc, i, dma_rc, len, prop_count[SDE_PROP_MAX];
-	struct sde_prop_value *prop_value = NULL;
-	bool prop_exists[SDE_PROP_MAX];
+	int rc = 0, dma_rc, len;
+	struct sde_dt_props *props;
 	const char *type;
 	u32 major_version;
 
-	if (!cfg) {
-		SDE_ERROR("invalid argument\n");
-		return -EINVAL;
-	}
+	props = sde_get_dt_props(np, SDE_PROP_MAX, sde_prop,
+			ARRAY_SIZE(sde_prop), &len);
+	if (IS_ERR(props))
+		return PTR_ERR(props);
 
-	prop_value = kzalloc(SDE_PROP_MAX *
-			sizeof(struct sde_prop_value), GFP_KERNEL);
-	if (!prop_value)
-		return -ENOMEM;
-
-	rc = _validate_dt_entry(np, sde_prop, ARRAY_SIZE(sde_prop), prop_count,
-		&len);
-	if (rc)
-		goto end;
-
+	/* revalidate arrays not bound to off_count elements */
 	rc = _validate_dt_entry(np, &sde_prop[SEC_SID_MASK], 1,
-				&prop_count[SEC_SID_MASK], NULL);
+			&props->counts[SEC_SID_MASK], NULL);
 	if (rc)
 		goto end;
 
-	rc = _read_dt_entry(np, sde_prop, ARRAY_SIZE(sde_prop), prop_count,
-		prop_exists, prop_value);
+	/* update props with newly validated arrays */
+	rc = _read_dt_entry(np, sde_prop, ARRAY_SIZE(sde_prop), props->counts,
+			props->exists, props->values);
 	if (rc)
 		goto end;
 
@@ -3683,15 +3681,12 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	cfg->mdp_count = 1;
 	cfg->mdp[0].id = MDP_TOP;
 	snprintf(cfg->mdp[0].name, SDE_HW_BLK_NAME_LEN, "top_%u",
-		cfg->mdp[0].id - MDP_TOP);
-	cfg->mdp[0].base = PROP_VALUE_ACCESS(prop_value, SDE_OFF, 0);
-	cfg->mdp[0].len = PROP_VALUE_ACCESS(prop_value, SDE_LEN, 0);
-	if (!prop_exists[SDE_LEN])
-		cfg->mdp[0].len = DEFAULT_SDE_HW_BLOCK_LEN;
+			cfg->mdp[0].id - MDP_TOP);
+	cfg->mdp[0].base = PROP_VALUE_ACCESS(props->values, SDE_OFF, 0);
+	cfg->mdp[0].len = props->exists[SDE_LEN] ? PROP_VALUE_ACCESS(
+			props->values, SDE_LEN, 0) : DEFAULT_SDE_HW_BLOCK_LEN;
 
-	rc = _sde_parse_prop_check(cfg, prop_exists, prop_value);
-	if (rc)
-		SDE_ERROR("sde parse property check failed\n");
+	_sde_top_parse_dt_helper(cfg, props);
 
 	major_version = SDE_HW_MAJOR(cfg->hwversion);
 	if (major_version < SDE_HW_MAJOR(SDE_HW_VER_500))
@@ -3712,33 +3707,34 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	if (rc)
 		goto end;
 
-	if (prop_exists[SEC_SID_MASK]) {
-		cfg->sec_sid_mask_count = prop_count[SEC_SID_MASK];
-		for (i = 0; i < cfg->sec_sid_mask_count; i++)
-			cfg->sec_sid_mask[i] =
-				PROP_VALUE_ACCESS(prop_value, SEC_SID_MASK, i);
-	}
-
 	rc = of_property_read_string(np, sde_prop[QSEED_TYPE].prop_name, &type);
-	if (!rc && !strcmp(type, "qseedv3")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3;
-	} else if (!rc && !strcmp(type, "qseedv3lite")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3LITE;
-	} else if (!rc && !strcmp(type, "qseedv2")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED2;
-	} else if (rc) {
-		SDE_DEBUG("invalid QSEED configuration\n");
+	if (rc) {
+		SDE_DEBUG("invalid %s node in device tree: %d\n",
+				sde_prop[QSEED_TYPE].prop_name, rc);
 		rc = 0;
+	} else if (!strcmp(type, "qseedv3")) {
+		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3;
+	} else if (!strcmp(type, "qseedv3lite")) {
+		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3LITE;
+	} else if (!strcmp(type, "qseedv2")) {
+		cfg->qseed_type = SDE_SSPP_SCALER_QSEED2;
+	} else {
+		SDE_DEBUG("Unknown type %s for property %s\n", type,
+				sde_prop[QSEED_TYPE].prop_name);
 	}
 
 	rc = of_property_read_string(np, sde_prop[CSC_TYPE].prop_name, &type);
-	if (!rc && !strcmp(type, "csc")) {
-		cfg->csc_type = SDE_SSPP_CSC;
-	} else if (!rc && !strcmp(type, "csc-10bit")) {
-		cfg->csc_type = SDE_SSPP_CSC_10BIT;
-	} else if (rc) {
-		SDE_DEBUG("invalid csc configuration\n");
+	if (rc) {
+		SDE_DEBUG("invalid %s node in device tree: %d\n",
+				sde_prop[CSC_TYPE].prop_name, rc);
 		rc = 0;
+	} else if (!strcmp(type, "csc")) {
+		cfg->csc_type = SDE_SSPP_CSC;
+	} else if (!strcmp(type, "csc-10bit")) {
+		cfg->csc_type = SDE_SSPP_CSC_10BIT;
+	} else {
+		SDE_DEBUG("Unknown type %s for property %s\n", type,
+				sde_prop[CSC_TYPE].prop_name);
 	}
 
 	/*
@@ -3749,8 +3745,8 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	dma_rc = of_property_read_string(np, sde_prop[SMART_DMA_REV].prop_name,
 			&type);
 	if (dma_rc) {
-		SDE_DEBUG("invalid SMART_DMA_REV node in device tree: %d\n",
-				dma_rc);
+		SDE_DEBUG("invalid %s node in device tree: %d\n",
+				sde_prop[SMART_DMA_REV].prop_name, dma_rc);
 	} else if (!strcmp(type, "smart_dma_v2p5")) {
 		cfg->smart_dma_rev = SDE_SSPP_SMART_DMA_V2p5;
 	} else if (!strcmp(type, "smart_dma_v2")) {
@@ -3758,18 +3754,11 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	} else if (!strcmp(type, "smart_dma_v1")) {
 		SDE_ERROR("smart dma 1.0 is not supported in SDE\n");
 	} else {
-		SDE_DEBUG("unknown smart dma version\n");
+		SDE_DEBUG("unknown smart dma version %s\n", type);
 	}
 
-	cfg->has_src_split = PROP_VALUE_ACCESS(prop_value, SRC_SPLIT, 0);
-	cfg->has_dim_layer = PROP_VALUE_ACCESS(prop_value, DIM_LAYER, 0);
-	cfg->has_idle_pc = PROP_VALUE_ACCESS(prop_value, IDLE_PC, 0);
-	cfg->pipe_order_type = PROP_VALUE_ACCESS(prop_value,
-		PIPE_ORDER_VERSION, 0);
-	cfg->has_base_layer = PROP_VALUE_ACCESS(prop_value, BASE_LAYER, 0);
-
 end:
-	kfree(prop_value);
+	sde_put_dt_props(props);
 	return rc;
 }
 
