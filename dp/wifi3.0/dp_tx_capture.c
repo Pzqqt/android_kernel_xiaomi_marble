@@ -419,8 +419,8 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			ptr_mgmt_hdr->ppdu_id, wh->i_fc[1], wh->i_fc[0],
 			wh->i_dur[1], wh->i_dur[0]);
 	} else {
-		qdf_nbuf_free(nbuf);
-		return;
+		if (!pdev->bpr_enable)
+			qdf_nbuf_free(nbuf);
 	}
 }
 
