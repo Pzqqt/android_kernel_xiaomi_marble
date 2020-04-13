@@ -132,7 +132,7 @@ QDF_STATUS ucfg_policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS
 ucfg_policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
-				     uint8_t *enable_mcc_adaptive_sch);
+				     bool *enable_mcc_adaptive_sch);
 
 /**
  * ucfg_policy_mgr_get_dynamic_mcc_adaptive_sch() - to get dynamic mcc adaptive
