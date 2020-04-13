@@ -3008,7 +3008,8 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 				     nbuf, HTT_INVALID_PEER,
 				     WDI_NO_VAL, pdev->pdev_id);
 	} else {
-		qdf_nbuf_free(nbuf);
+		if (!pdev->bpr_enable)
+			qdf_nbuf_free(nbuf);
 	}
 }
 #endif
