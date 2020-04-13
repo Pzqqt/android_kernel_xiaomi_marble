@@ -1055,7 +1055,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rx_buf)
 QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				     struct hdd_station_info **sta_info)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
 	struct qdf_mac_addr *mac_addr;
 	struct hdd_station_info *sta = *sta_info;
@@ -1090,25 +1089,6 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 		mac_addr = &adapter->mac_addr;
 	else
 		mac_addr = &sta->sta_mac;
-
-	/* Clear station in TL and then update HDD data
-	 * structures. This helps to block RX frames from other
-	 * station to this station.
-	 */
-
-	hdd_debug("Deregistering sta: " QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(sta->sta_mac.bytes));
-
-	qdf_status = cdp_clear_peer(
-			cds_get_context(QDF_MODULE_ID_SOC),
-			OL_TXRX_PDEV_ID,
-			*mac_addr);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_debug("cdp_clear_peer failed for sta: " QDF_MAC_ADDR_STR
-			", Status=%d [0x%08X]",
-			QDF_MAC_ADDR_ARRAY(mac_addr->bytes), qdf_status,
-			qdf_status);
-	}
 
 	if (ucfg_ipa_is_enabled()) {
 		if (ucfg_ipa_wlan_evt(hdd_ctx->pdev, adapter->dev,

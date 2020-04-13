@@ -438,17 +438,6 @@ bool hdd_save_peer(struct hdd_station_ctx *sta_ctx,
 void hdd_delete_peer(struct hdd_station_ctx *sta_ctx,
 		     struct qdf_mac_addr *peer_mac_addr);
 
-/**
- * hdd_roam_deregister_sta() - deregister station
- * @adapter: pointer to adapter
- * @sta_id: station identifier
- * @mac_addr: peer mac address
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter,
-				   struct qdf_mac_addr mac_addr);
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS
 hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
