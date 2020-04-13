@@ -80,6 +80,15 @@ struct s_nss_update_cmd {
 	uint32_t original_vdev_id;
 };
 
+/**
+ * struct sir_disconnect_stats_cmd: command structure to get disconnect stats
+ * @peer_mac_addr: MAC address of the peer disconnected
+ *
+ */
+struct sir_disconnect_stats_cmd {
+	struct qdf_mac_addr peer_mac_addr;
+};
+
 typedef struct tagSmeCmd {
 	tListElem Link;
 	eSmeCommandType command;
@@ -94,6 +103,7 @@ typedef struct tagSmeCmd {
 		struct s_nss_update_cmd nss_update_cmd;
 		struct policy_mgr_dual_mac_config set_dual_mac_cmd;
 		struct sir_antenna_mode_param set_antenna_mode_cmd;
+		struct sir_disconnect_stats_cmd disconnect_stats_cmd;
 	} u;
 } tSmeCmd;
 
@@ -144,6 +154,28 @@ void csr_roam_wm_status_change_complete(struct mac_context *mac_ctx,
 					uint8_t session_id);
 void csr_roam_process_wm_status_change_command(struct mac_context *mac,
 		tSmeCmd *pCommand);
+
+/**
+ * csr_roam_get_disconnect_stats_complete() - Remove get disconnect stats
+ * command from SME active command list
+ * @mac_ctx: global mac context
+ * This API removes get disconnect stats command from SME active command list
+ * if present.
+ *
+ * Return: void
+ */
+void csr_roam_get_disconnect_stats_complete(struct mac_context *mac_ctx);
+
+/**
+ * csr_roam_process_get_disconnect_stats_command() - Process get disconnect
+ * stats
+ * @mac_ctx: global mac context
+ * @pCommand: Command to be processed
+ *
+ * Return: void
+ */
+void csr_roam_process_get_disconnect_stats_command(struct mac_context *mac,
+						   tSmeCmd *cmd);
 void csr_reinit_roam_cmd(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(struct mac_context *mac,
 				     tSmeCmd *pCommand);
