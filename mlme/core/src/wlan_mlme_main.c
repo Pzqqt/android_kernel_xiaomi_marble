@@ -2582,6 +2582,57 @@ bool mlme_get_follow_ap_edca_flag(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->follow_ap_edca;
 }
 
+void mlme_set_reconn_after_assoc_timeout_flag(struct wlan_objmgr_psoc *psoc,
+					      uint8_t vdev_id, bool flag)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	if (!psoc)
+		return;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		return;
+	}
+
+	mlme_priv->reconn_after_assoc_timeout = flag;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+}
+
+bool mlme_get_reconn_after_assoc_timeout_flag(struct wlan_objmgr_psoc *psoc,
+					      uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	bool reconn_after_assoc_timeout;
+
+	if (!psoc)
+		return false;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_MAC_ID);
+	if (!vdev)
+		return false;
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+		return false;
+	}
+
+	reconn_after_assoc_timeout = mlme_priv->reconn_after_assoc_timeout;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
+
+	return reconn_after_assoc_timeout;
+}
+
 void mlme_set_peer_pmf_status(struct wlan_objmgr_peer *peer,
 			      bool is_pmf_enabled)
 {
