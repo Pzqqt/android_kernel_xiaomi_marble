@@ -653,4 +653,55 @@ int msm_pcm_routing_set_channel_mixer_runtime(
 	int be_id, int session_id,
 	int session_type,
 	struct msm_pcm_channel_mixer *params);
+
+#ifndef SND_PCM_ADD_VOLUME_CTL
+/* PCM Volume control API
+ */
+/* array element of volume */
+struct snd_pcm_volume_elem {
+      int volume;
+};
+ /* pp information; retrieved via snd_kcontrol_chip() */
+struct snd_pcm_volume {
+      struct snd_pcm *pcm;    /* assigned PCM instance */
+      int stream;             /* PLAYBACK or CAPTURE */
+      struct snd_kcontrol *kctl;
+      const struct snd_pcm_volume_elem *volume;
+      int max_length;
+      void *private_data;     /* optional: private data pointer */
+};
+
+int snd_pcm_add_volume_ctls(struct snd_pcm *pcm, int stream,
+		const struct snd_pcm_volume_elem *volume,
+		int max_length,
+		unsigned long private_value,
+		struct snd_pcm_volume **info_ret);
+
+#endif
+
+#ifndef SND_PCM_ADD_USR_CTL
+/*
+ * PCM User control API	1450
+ */
+/* array element of usr elem */
+struct snd_pcm_usr_elem {
+	   int val[128];
+};
+
+/* pp information; retrieved via snd_kcontrol_chip() */
+struct snd_pcm_usr {
+   struct snd_pcm *pcm;   /* assigned PCM instance */
+   int stream;      /* PLAYBACK or CAPTURE */
+   struct snd_kcontrol *kctl;
+   const struct snd_pcm_usr_elem *usr;
+   int max_length;
+   void *private_data;   /* optional: private data pointer */
+};
+
+int snd_pcm_add_usr_ctls(struct snd_pcm *pcm, int stream,
+    const struct snd_pcm_usr_elem *usr,
+    int max_length, int max_control_str_len,
+    unsigned long private_value,
+    struct snd_pcm_usr **info_ret);
+#endif
 #endif /*_MSM_PCM_H*/

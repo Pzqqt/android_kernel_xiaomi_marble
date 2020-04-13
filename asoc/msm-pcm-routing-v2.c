@@ -49,6 +49,9 @@
 #define DS2_ADM_COPP_TOPOLOGY_ID 0xFFFFFFFF
 #endif
 
+#define STRING_LENGTH_OF_INT 12
+#define MAX_USR_CTRL_CNT 128
+
 static struct mutex routing_lock;
 
 static struct cal_type_data *cal_data[MAX_ROUTING_CAL_TYPES];
@@ -166,6 +169,187 @@ static int msm_routing_send_device_pp_params(int port_id,  int copp_idx,
 
 static void msm_routing_load_topology(size_t data_size, void *data);
 static void msm_routing_unload_topology(uint32_t topology_id);
+
+#ifndef SND_PCM_ADD_VOLUME_CTL
+static int pcm_volume_ctl_info(struct snd_kcontrol *kcontrol,
+				struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = 1;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0x2000;
+	return 0;
+}
+
+static void pcm_volume_ctl_private_free(struct snd_kcontrol *kcontrol)
+{
+	struct snd_pcm_volume *info = snd_kcontrol_chip(kcontrol);
+
+	kfree(info);
+}
+
+/**
+ * snd_pcm_add_volume_ctls - create volume control elements
+ * @pcm: the assigned PCM instance
+ * @stream: stream direction
+ * @max_length: the max length of the volume parameter of stream
+ * @private_value: the value passed to each kcontrol's private_value field
+ * @info_ret: store struct snd_pcm_volume instance if non-NULL
+ *
+ * Create volume control elements assigned to the given PCM stream(s).
+ * Returns zero if succeed, or a negative error value.
+ */
+int snd_pcm_add_volume_ctls(struct snd_pcm *pcm, int stream,
+			   const struct snd_pcm_volume_elem *volume,
+			   int max_length,
+			   unsigned long private_value,
+			   struct snd_pcm_volume **info_ret)
+{
+	int err = 0;
+	int size = 0;
+	struct snd_pcm_volume *info;
+	struct snd_kcontrol_new knew = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.access = SNDRV_CTL_ELEM_ACCESS_TLV_READ |
+			SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.info = pcm_volume_ctl_info,
+	};
+
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
+	info->pcm = pcm;
+	info->stream = stream;
+	info->volume = volume;
+	info->max_length = max_length;
+	size = sizeof("Playback ") + sizeof(" Volume") +
+		STRING_LENGTH_OF_INT*sizeof(char) + 1;
+	knew.name = kzalloc(size, GFP_KERNEL);
+	if (!knew.name) {
+		kfree(info);
+		return -ENOMEM;
+	}
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK)
+		snprintf((char *)knew.name, size, "%s %d %s",
+			"Playback", pcm->device, "Volume");
+	else
+		snprintf((char *)knew.name, size, "%s %d %s",
+			"Capture", pcm->device, "Volume");
+	knew.device = pcm->device;
+	knew.count = pcm->streams[stream].substream_count;
+	knew.private_value = private_value;
+	info->kctl = snd_ctl_new1(&knew, info);
+	if (!info->kctl) {
+		kfree(info);
+		kfree(knew.name);
+		return -ENOMEM;
+	}
+	info->kctl->private_free = pcm_volume_ctl_private_free;
+	err = snd_ctl_add(pcm->card, info->kctl);
+	if (err < 0) {
+		kfree(info);
+		kfree(knew.name);
+		return -ENOMEM;
+	}
+	if (info_ret)
+		*info_ret = info;
+	kfree(knew.name);
+	return 0;
+}
+EXPORT_SYMBOL(snd_pcm_add_volume_ctls);
+#endif
+
+#ifndef SND_PCM_ADD_USR_CTL
+static int pcm_usr_ctl_info(struct snd_kcontrol *kcontrol,
+			    struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = MAX_USR_CTRL_CNT;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = INT_MAX;
+	return 0;
+}
+
+static void pcm_usr_ctl_private_free(struct snd_kcontrol *kcontrol)
+{
+	struct snd_pcm_usr *info = snd_kcontrol_chip(kcontrol);
+
+	kfree(info);
+}
+
+/**
+ * snd_pcm_add_usr_ctls - create user control elements
+ * @pcm: the assigned PCM instance
+ * @stream: stream direction
+ * @max_length: the max length of the user parameter of stream
+ * @private_value: the value passed to each kcontrol's private_value field
+ * @info_ret: store struct snd_pcm_usr instance if non-NULL
+ *
+ * Create usr control elements assigned to the given PCM stream(s).
+ * Returns zero if succeed, or a negative error value.
+ */
+int snd_pcm_add_usr_ctls(struct snd_pcm *pcm, int stream,
+			 const struct snd_pcm_usr_elem *usr,
+			 int max_length, int max_kctrl_str_len,
+			 unsigned long private_value,
+			 struct snd_pcm_usr **info_ret)
+{
+	int err = 0;
+	char *buf = NULL;
+	struct snd_pcm_usr *info;
+	struct snd_kcontrol_new knew = {
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.info = pcm_usr_ctl_info,
+	};
+
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (!info)
+		return -ENOMEM;
+
+	info->pcm = pcm;
+	info->stream = stream;
+	info->usr = usr;
+	info->max_length = max_length;
+	buf = kzalloc(max_kctrl_str_len, GFP_KERNEL);
+	if (!buf) {
+		pr_err("%s: buffer allocation failed\n", __func__);
+		kfree(info);
+		return -ENOMEM;
+	}
+	knew.name = buf;
+	if (stream == SNDRV_PCM_STREAM_PLAYBACK)
+		snprintf(buf, max_kctrl_str_len, "%s %d %s",
+			"Playback", pcm->device, "User kcontrol");
+	else
+		snprintf(buf, max_kctrl_str_len, "%s %d %s",
+			"Capture", pcm->device, "User kcontrol");
+	knew.device = pcm->device;
+	knew.count = pcm->streams[stream].substream_count;
+	knew.private_value = private_value;
+	info->kctl = snd_ctl_new1(&knew, info);
+	if (!info->kctl) {
+		kfree(info);
+		kfree(knew.name);
+		pr_err("%s: snd_ctl_new failed\n", __func__);
+		return -ENOMEM;
+	}
+	info->kctl->private_free = pcm_usr_ctl_private_free;
+	err = snd_ctl_add(pcm->card, info->kctl);
+	if (err < 0) {
+		kfree(info);
+		kfree(knew.name);
+		pr_err("%s: snd_ctl_add failed:%d\n", __func__,
+			err);
+		return -ENOMEM;
+	}
+	if (info_ret)
+		*info_ret = info;
+	kfree(knew.name);
+	return 0;
+}
+EXPORT_SYMBOL(snd_pcm_add_usr_ctls);
+#endif
 
 static int msm_routing_get_bit_width(unsigned int format)
 {
