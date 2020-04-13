@@ -882,9 +882,15 @@ int dsi_connector_get_modes(struct drm_connector *connector, void *data,
 		}
 		m->width_mm = connector->display_info.width_mm;
 		m->height_mm = connector->display_info.height_mm;
-		/* set the first mode in list as preferred */
-		if (i == 0)
+
+		if (display->cmdline_timing != NO_OVERRIDE) {
+			/* get the preferred mode from dsi display mode */
+			if (modes[i].is_preferred)
+				m->type |= DRM_MODE_TYPE_PREFERRED;
+		} else if (i == 0) {
+			/* set the first mode in list as preferred */
 			m->type |= DRM_MODE_TYPE_PREFERRED;
+		}
 		drm_mode_probed_add(connector, m);
 	}
 
