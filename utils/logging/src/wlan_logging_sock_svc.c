@@ -182,7 +182,10 @@ struct wlan_logging {
 	qdf_spinlock_t flush_timer_lock;
 };
 
-static struct wlan_logging gwlan_logging;
+/* This global variable is intentionally not marked static because it
+ * is used by offline tools. Please do not use it outside this file.
+ */
+struct wlan_logging gwlan_logging;
 static struct pkt_stats_msg *gpkt_stats_buffers;
 
 #ifdef WLAN_LOGGING_BUFFERS_DYNAMICALLY
