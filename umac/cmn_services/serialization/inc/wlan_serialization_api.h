@@ -192,6 +192,7 @@ typedef QDF_STATUS (*wlan_ser_umac_cmd_cb)(void *umac_cmd);
  * @WLAN_SER_CMD_VDEV_RESTART: Cmd to restart a VDEV
  * @WLAN_SER_CMD_PDEV_RESTART: Cmd to restart all VDEVs of a PDEV
  * @WLAN_SER_CMD_PDEV_CSA_RESTART: Cmd to CSA restart all AP VDEVs of a PDEV
+ * @WLAN_SER_CMD_GET_DISCONNECT_STATS: Cmd to get peer stats on disconnection
  */
 enum wlan_serialization_cmd_type {
 	/* all scan command before non-scan */
@@ -229,6 +230,7 @@ enum wlan_serialization_cmd_type {
 	WLAN_SER_CMD_VDEV_RESTART,
 	WLAN_SER_CMD_PDEV_RESTART,
 	WLAN_SER_CMD_PDEV_CSA_RESTART,
+	WLAN_SER_CMD_GET_DISCONNECT_STATS,
 	WLAN_SER_CMD_MAX
 };
 
