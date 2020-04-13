@@ -2173,7 +2173,7 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	struct drm_connector *conn = NULL;
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
-	uint64_t top_ctrl;
+	uint64_t top_ctrl = 0;
 
 	if (!rm || !enc) {
 		SDE_ERROR("invalid params\n");
@@ -2206,8 +2206,10 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 
 	conn = _sde_rm_get_connector(enc);
 	if (!conn) {
-		SDE_ERROR("failed to get connector for enc %d, nxt %d",
+		SDE_DEBUG("failed to get connector for enc %d, nxt %d",
 				enc->base.id, nxt);
+		SDE_EVT32(enc->base.id, 0x0, 0xffffffff);
+		_sde_rm_release_rsvp(rm, rsvp, conn);
 		goto end;
 	}
 
