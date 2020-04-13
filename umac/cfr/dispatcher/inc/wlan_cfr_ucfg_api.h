@@ -38,6 +38,16 @@ int ucfg_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 			   struct cfr_capture_params *cfr_params);
 
 /**
+ * ucfg_cfr_get_capture_status() - function to populate capture status
+ * @pdev: pointer to pdev object
+ * @status: capture status
+ *
+ * Return: none
+ */
+void ucfg_cfr_get_capture_status(struct wlan_objmgr_pdev *pdev,
+				 enum cfr_capt_status *status);
+
+/**
  * ucfg_cfr_stop_capture() - function to stop cfr capture for connected client
  * @pdev: pointer to pdev object
  * @peer: pointer to peer object

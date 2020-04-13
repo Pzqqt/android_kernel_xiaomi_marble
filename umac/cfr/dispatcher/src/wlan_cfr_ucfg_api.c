@@ -267,6 +267,49 @@ int ucfg_cfr_get_timer(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(ucfg_cfr_get_timer);
 
+static void cfr_iter_peer_handler(struct wlan_objmgr_pdev *pdev,
+				  void *object, void *arg)
+{
+	struct wlan_objmgr_peer *peer = (struct wlan_objmgr_peer *)object;
+	struct peer_cfr *pe;
+	int *cfr_capt_status = (int *)arg;
+
+	if (*cfr_capt_status == PEER_CFR_CAPTURE_ENABLE)
+		return;
+
+	if (!peer || !pdev) {
+		cfr_err("peer or pdev object is NULL");
+		return;
+	}
+
+	if (wlan_vdev_get_selfpeer(peer->peer_objmgr.vdev) == peer)
+		return;
+
+	pe = wlan_objmgr_peer_get_comp_private_obj(peer, WLAN_UMAC_COMP_CFR);
+	if (!pe) {
+		cfr_err("PEER cfr object is NULL!");
+		return;
+	}
+
+	if (pe->request == PEER_CFR_CAPTURE_ENABLE) {
+		*cfr_capt_status = pe->request;
+		cfr_debug("CFR capture running for peer "
+			  QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(peer->macaddr));
+	}
+}
+
+void ucfg_cfr_get_capture_status(struct wlan_objmgr_pdev *pdev,
+				 enum cfr_capt_status *status)
+{
+	*status = PEER_CFR_CAPTURE_DISABLE;
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_PEER_OP,
+					  cfr_iter_peer_handler,
+					  status, 1, WLAN_CFR_ID);
+}
+qdf_export_symbol(ucfg_cfr_get_capture_status);
+
 int ucfg_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 			  struct wlan_objmgr_peer *peer)
 {
