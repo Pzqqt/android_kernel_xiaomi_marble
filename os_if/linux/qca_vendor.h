@@ -936,6 +936,8 @@ enum qca_wlan_auth_type {
  *  mac address of peer station when it disconnects. Host driver sends
  *  assoc request frame of the given station. Host driver doesn't provide
  *  the IEs when the peer station is still in connected state.
+ * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HE_OPERATION: Attribute type for
+ * sending HE operation info.
  * @QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST: After last
  */
 enum qca_wlan_vendor_attr_get_station_info {
@@ -978,6 +980,7 @@ enum qca_wlan_vendor_attr_get_station_info {
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_BEACON_IES,
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_DRIVER_DISCONNECT_REASON,
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_ASSOC_REQ_IES,
+	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_HE_OPERATION,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_GET_STATION_INFO_AFTER_LAST,
