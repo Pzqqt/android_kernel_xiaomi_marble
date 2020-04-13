@@ -1699,11 +1699,6 @@ static int sde_cp_crtc_check_pu_features(struct drm_crtc *crtc)
 			DRM_ERROR("invalid ctl in mixer %d\n", i);
 			return -EINVAL;
 		}
-
-		if (!sde_crtc->mixers[i].hw_dspp) {
-			DRM_ERROR("invalid dspp in mixer %d\n", i);
-			return -EINVAL;
-		}
 	}
 
 	/* early return when not a partial update frame */
@@ -1844,11 +1839,6 @@ static int sde_cp_crtc_set_pu_features(struct drm_crtc *crtc, bool *need_flush)
 
 		if (!sde_crtc->mixers[i].hw_ctl) {
 			DRM_ERROR("invalid ctl in mixer %d\n", i);
-			return -EINVAL;
-		}
-
-		if (!sde_crtc->mixers[i].hw_dspp) {
-			DRM_ERROR("invalid dspp in mixer %d\n", i);
 			return -EINVAL;
 		}
 	}
