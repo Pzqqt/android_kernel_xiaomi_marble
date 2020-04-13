@@ -9481,6 +9481,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	uint32_t len = 0, roamId = 0, reason_code = 0;
 	bool is_dis_pending;
 	bool use_same_bss = false;
+	bool retry_same_bss = false;
 
 	if (!pSmeJoinRsp) {
 		sme_err("Sme Join Response is NULL");
@@ -9573,7 +9574,6 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	 * AP.
 	 */
 	if (reason_code == eSIR_MAC_INVALID_PMKID) {
-		struct tag_csrscan_result *scan_result;
 		pmksa = qdf_mem_malloc(sizeof(*pmksa));
 		if (!pmksa)
 			return;
@@ -9586,16 +9586,26 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 		sme_roam_del_pmkid_from_cache(mac_handle, session_ptr->vdev_id,
 					      pmksa, false);
 		qdf_mem_free(pmksa);
-		if (pCommand && pCommand->u.roamCmd.pRoamBssEntry) {
-			scan_result =
-				GET_BASE_ADDR(pCommand->u.roamCmd.pRoamBssEntry,
-					      struct tag_csrscan_result, Link);
-			/* Retry with same BSSID without PMKID */
-			if (!scan_result->retry_count) {
-				sme_info("Retry once again with same BSSID without PMKID");
-				scan_result->retry_count = 1;
-				use_same_bss = true;
-			}
+		retry_same_bss = true;
+	}
+	if (pSmeJoinRsp->messageType == eWNI_SME_JOIN_RSP &&
+	    pSmeJoinRsp->status_code == eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE &&
+	    mlme_get_reconn_after_assoc_timeout_flag(mac->psoc,
+						     pSmeJoinRsp->vdev_id))
+		retry_same_bss = true;
+
+	if (retry_same_bss && pCommand && pCommand->u.roamCmd.pRoamBssEntry) {
+		struct tag_csrscan_result *scan_result;
+
+		scan_result =
+			GET_BASE_ADDR(pCommand->u.roamCmd.pRoamBssEntry,
+				      struct tag_csrscan_result, Link);
+		/* Retry with same BSSID without PMKID */
+		if (!scan_result->retry_count) {
+			sme_info("Retry once with same BSSID, status %d reason %d",
+				 pSmeJoinRsp->status_code, reason_code);
+			scan_result->retry_count = 1;
+			use_same_bss = true;
 		}
 	}
 
@@ -15426,6 +15436,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint8_t ap_nss;
 	struct wlan_objmgr_vdev *vdev;
 	bool follow_ap_edca;
+	bool reconn_after_assoc_timeout = false;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15606,6 +15617,14 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		follow_ap_edca = ucfg_action_oui_search(mac->psoc,
 					    &vendor_ap_search_attr,
 					    ACTION_OUI_DISABLE_AGGRESSIVE_EDCA);
+
+		if (messageType == eWNI_SME_JOIN_REQ &&
+		    ucfg_action_oui_search(mac->psoc, &vendor_ap_search_attr,
+					   ACTION_OUI_HOST_RECONN))
+			reconn_after_assoc_timeout = true;
+		mlme_set_reconn_after_assoc_timeout_flag(
+				mac->psoc, sessionId,
+				reconn_after_assoc_timeout);
 
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc,
 							sessionId,

@@ -1224,6 +1224,39 @@ struct dhcp_server {
 	"", \
 	"Used to specify action OUIs to control edca configuration")
 
+/*
+ * <ini>
+ * gActionOUIReconnAssocTimeout - Used to specify action OUIs to
+ * reconnect to same BSSID when wait for association response timeout
+ *
+ * This ini is used to specify AP OUIs. Some of AP doesn't response our
+ * first association request, but it would response our second association
+ * request. Add such OUI configuration INI to apply reconnect logic when
+ * association timeout happends with such AP.
+ * For default:
+ *     gActionOUIReconnAssocTimeout=00E04C 00 01
+ *          Explain: 00E04C: OUI
+ *                   00: data length is 0
+ *                   01: info mask, only OUI present in Info mask
+ * Note: User should strictly add new action OUIs at the end of this
+ * default value.
+ * Refer to gEnableActionOUI for more detail about the format.
+ *
+ * Related: gEnableActionOUI
+ *
+ * Supported Feature: Action OUIs
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACTION_OUI_RECONN_ASSOCTIMEOUT CFG_INI_STRING( \
+	"gActionOUIReconnAssocTimeout", \
+	0, \
+	ACTION_OUI_MAX_STR_LEN, \
+	"00E04C 00 01", \
+	"Used to specify action OUIs to reconnect when assoc timeout")
+
 /* End of action oui inis */
 
 #ifdef ENABLE_MTRACE_LOG
@@ -1552,6 +1585,7 @@ enum host_log_level {
 	CFG(CFG_ACTION_OUI_FORCE_MAX_NSS) \
 	CFG(CFG_ACTION_OUI_DISABLE_AGGRESSIVE_EDCA) \
 	CFG(CFG_ACTION_OUI_SWITCH_TO_11N_MODE) \
+	CFG(CFG_ACTION_OUI_RECONN_ASSOCTIMEOUT) \
 	CFG(CFG_ADVERTISE_CONCURRENT_OPERATION) \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
 	CFG(CFG_DBS_SCAN_SELECTION) \
