@@ -4320,4 +4320,69 @@ void wlan_crypto_update_set_key_peer(struct wlan_objmgr_vdev *vdev,
 
 	qdf_mem_copy(crypto_key->macaddr, peer_mac, QDF_MAC_ADDR_SIZE);
 }
+
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+void wlan_crypto_selective_clear_sae_single_pmk_entries(
+			struct wlan_objmgr_vdev *vdev,
+			struct qdf_mac_addr *conn_bssid)
+{
+	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	int i;
+
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+
+		if (crypto_params->pmksa[i]->single_pmk_supported &&
+		    !qdf_is_macaddr_equal(conn_bssid,
+					  &crypto_params->pmksa[i]->bssid)) {
+			qdf_mem_zero(crypto_params->pmksa[i],
+				     sizeof(struct wlan_crypto_pmksa));
+			qdf_mem_free(crypto_params->pmksa[i]);
+			crypto_params->pmksa[i] = NULL;
+		}
+	}
+}
+
+void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
+					    struct qdf_mac_addr *bssid,
+					    bool single_pmk_capable_bss)
+{
+	struct wlan_crypto_params *crypto_params;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	int i;
+
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+
+		if (qdf_is_macaddr_equal(bssid,
+					 &crypto_params->pmksa[i]->bssid))
+			crypto_params->pmksa[i]->single_pmk_supported =
+					single_pmk_capable_bss;
+	}
+}
+#endif
+
 #endif

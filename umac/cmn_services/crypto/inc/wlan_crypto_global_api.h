@@ -923,4 +923,42 @@ QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_crypto_pmksa *pmksa,
 				     bool set);
 
+#if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_crypto_selective_clear_sae_single_pmk_entries - Clear the PMK entries
+ * for BSS which have the single PMK flag set other than the current connected
+ * AP
+ * @vdev:       Vdev
+ * @conn_bssid: Connected bssid
+ */
+void
+wlan_crypto_selective_clear_sae_single_pmk_entries(
+		struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *conn_bssid);
+
+/**
+ * wlan_crypto_set_sae_single_pmk_bss_cap - Set the peer SAE sinlge pmk
+ * feature supported status
+ * @vdev: Vdev
+ * @bssid: BSSID for which the flag is to be set
+ * @single_pmk_capable_bss: Flag to indicate Sae single pmk supported BSSID or
+ * not
+ */
+void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
+					    struct qdf_mac_addr *bssid,
+					    bool single_pmk_capable_bss);
+#else
+static inline void
+wlan_crypto_selective_clear_sae_single_pmk_entries(
+		struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *conn_bssid)
+{
+}
+
+static inline
+void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
+					    struct qdf_mac_addr *bssid,
+					    bool single_pmk_capable_bss)
+{
+}
+#endif
+
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */
