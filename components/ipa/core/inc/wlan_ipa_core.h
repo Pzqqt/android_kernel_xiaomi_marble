@@ -750,5 +750,16 @@ void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx);
  */
 void wlan_ipa_fw_rejuvenate_send_msg(struct wlan_ipa_priv *ipa_ctx);
 
+/**
+ * wlan_ipa_flush_pending_vdev_events() - flush pending vdev ipa events
+ * @ipa_ctx: IPA context
+ * vdev_id: vdev id
+ *
+ * This function is to flush vdev wlan ipa pending events
+ *
+ * Return: None
+ */
+void wlan_ipa_flush_pending_vdev_events(struct wlan_ipa_priv *ipa_ctx,
+					uint8_t vdev_id);
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

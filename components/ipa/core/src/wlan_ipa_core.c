@@ -3749,3 +3749,23 @@ void wlan_ipa_fw_rejuvenate_send_msg(struct wlan_ipa_priv *ipa_ctx)
 	}
 	ipa_ctx->stats.num_send_msg++;
 }
+
+void wlan_ipa_flush_pending_vdev_events(struct wlan_ipa_priv *ipa_ctx,
+					uint8_t vdev_id)
+{
+	struct wlan_ipa_uc_pending_event *event;
+	struct wlan_ipa_uc_pending_event *next_event;
+
+	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
+
+	qdf_list_for_each_del(&ipa_ctx->pending_event, event, next_event,
+			      node) {
+		if (event->session_id == vdev_id) {
+			qdf_list_remove_node(&ipa_ctx->pending_event,
+					     &event->node);
+			qdf_mem_free(event);
+		}
+	}
+
+	qdf_mutex_release(&ipa_ctx->ipa_lock);
+}

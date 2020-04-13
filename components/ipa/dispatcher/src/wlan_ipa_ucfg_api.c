@@ -223,3 +223,9 @@ void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
 {
 	ipa_update_tx_stats(pdev, sta_tx, ap_tx);
 }
+
+void ucfg_ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id)
+{
+	ipa_flush_pending_vdev_events(pdev, vdev_id);
+}
