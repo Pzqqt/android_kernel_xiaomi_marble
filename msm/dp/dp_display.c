@@ -723,6 +723,7 @@ static void dp_display_send_hpd_event(struct dp_display_private *dp)
 
 	if (dp->mst.mst_active) {
 		DP_DEBUG("skip notification for mst mode\n");
+		dp_display_state_remove(DP_STATE_DISCONNECT_NOTIFIED);
 		return;
 	}
 
