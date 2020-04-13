@@ -258,14 +258,13 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
-#define CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME CFG_INI_UINT(\
+#define CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME CFG_INI_BOOL(\
 					"gEnableMCCAdaptiveScheduler", \
-					0, 1, 1, \
-					CFG_VALUE_OR_DEFAULT, \
+					true, \
 					"Enable/Disable MCC Adaptive Scheduler")
 
 /*

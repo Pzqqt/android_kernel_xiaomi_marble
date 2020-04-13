@@ -262,7 +262,7 @@ struct policy_mgr_cfg {
 	uint8_t max_conc_cxns;
 	uint8_t conc_rule1;
 	uint8_t conc_rule2;
-	uint8_t enable_mcc_adaptive_sch;
+	bool enable_mcc_adaptive_sch;
 	uint8_t allow_mcc_go_diff_bi;
 	uint8_t enable_overlap_chnl;
 	uint8_t dual_mac_feature;

@@ -379,7 +379,7 @@ QDF_STATUS policy_mgr_set_dynamic_mcc_adaptive_sch(
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
-					   uint8_t *enable_mcc_adaptive_sch);
+					   bool *enable_mcc_adaptive_sch);
 
 /**
  * policy_mgr_get_sta_cxn_5g_band() - to get STA's connection in 5G config

@@ -1146,7 +1146,7 @@ static void wlan_hdd_update_mcc_p2p_quota(struct hdd_adapter *adapter,
 int32_t wlan_hdd_set_mas(struct hdd_adapter *adapter, uint8_t mas_value)
 {
 	struct hdd_context *hdd_ctx;
-	uint8_t enable_mcc_adaptive_sch = 0;
+	bool enable_mcc_adaptive_sch = false;
 
 	if (!adapter) {
 		hdd_err("Adapter is NULL");

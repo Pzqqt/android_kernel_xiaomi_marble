@@ -373,7 +373,7 @@ QDF_STATUS policy_mgr_get_dynamic_mcc_adaptive_sch(
 }
 
 QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
-					   uint8_t *enable_mcc_adaptive_sch)
+					   bool *enable_mcc_adaptive_sch)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 

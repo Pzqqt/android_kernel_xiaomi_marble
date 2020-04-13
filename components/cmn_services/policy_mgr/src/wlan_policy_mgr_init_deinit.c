@@ -410,7 +410,7 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	uint8_t enable_mcc_adaptive_sch = 0;
+	bool enable_mcc_adaptive_sch = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
