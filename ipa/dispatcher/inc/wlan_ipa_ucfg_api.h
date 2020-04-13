@@ -374,7 +374,15 @@ uint32_t ucfg_ipa_get_tx_buf_count(void);
  */
 void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
 			      uint64_t ap_tx);
-
+/**
+ * ucfg_ipa_flush_pending_vdev_events() - flush pending vdev wlan ipa events
+ * @pdev: pdev obj
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void ucfg_ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -589,6 +597,12 @@ uint32_t ucfg_ipa_get_tx_buf_count(void)
 static inline
 void ucfg_ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
 			      uint64_t ap_tx)
+{
+}
+
+static inline
+void ucfg_ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id)
 {
 }
 #endif /* IPA_OFFLOAD */

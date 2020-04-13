@@ -675,3 +675,20 @@ void ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
 
 	wlan_ipa_update_tx_stats(ipa_obj, sta_tx, ap_tx);
 }
+
+void ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	if (!ipa_config_is_enabled())
+		return;
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	wlan_ipa_flush_pending_vdev_events(ipa_obj, vdev_id);
+}

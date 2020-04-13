@@ -716,7 +716,7 @@ struct wlan_ipa_priv {
 
 #define BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
-#define IPA_RESOURCE_COMP_WAIT_TIME	100
+#define IPA_RESOURCE_COMP_WAIT_TIME	500
 
 #ifdef FEATURE_METERING
 #define IPA_UC_SHARING_STATES_WAIT_TIME	500
