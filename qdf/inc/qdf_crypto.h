@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,6 +47,7 @@ extern "C" {
 #define FIXED_PARAM_OFFSET_ASSOC_REQ 4
 #define FIXED_PARAM_OFFSET_ASSOC_RSP 6
 
+#define CMAC_TLEN 8             /* CMAC TLen = 64 bits (8 octets) */
 #define AAD_LEN 20
 #define IEEE80211_MMIE_GMAC_MICLEN  16
 
@@ -152,9 +153,21 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
  *
  * Return: 0 if success else Error number
  */
-int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
-			uint8_t *iv, uint8_t *aad, uint8_t *data,
-			uint16_t data_len, uint8_t *mic);
+int qdf_crypto_aes_gmac(const uint8_t *key, uint16_t key_length,
+			uint8_t *iv, const uint8_t *aad,
+			const uint8_t *data, uint16_t data_len, uint8_t *mic);
+
+/**
+ * qdf_crypto_aes_128_cmac: This API calculates MIC for AES 128 CMAC
+ * @key: key used for operation
+ * @data: Pointer to data
+ * @len: Length of data
+ * @mic: Pointer to MIC
+ *
+ * Return: 0 if success else Error number
+ */
+int qdf_crypto_aes_128_cmac(const uint8_t *key, const uint8_t *data,
+			    uint16_t len, uint8_t *mic);
 
 #ifdef __cplusplus
 }

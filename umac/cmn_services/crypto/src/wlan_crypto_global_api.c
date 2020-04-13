@@ -2068,7 +2068,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 					uint8_t *frm,
 					uint8_t *efrm){
 	struct wlan_crypto_mmie   *mmie = NULL;
-	uint8_t *ipn, *aad, *buf, mic[16], nounce[12];
+	uint8_t *ipn, *aad, *buf, *mic, nounce[12];
 	struct wlan_crypto_key *key;
 	struct wlan_frame_hdr *hdr;
 	uint16_t mic_len, hdrlen, len;
@@ -2160,7 +2160,11 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	 */
 	qdf_mem_copy(buf + 20, frm + hdrlen, len - hdrlen);
 	qdf_mem_zero(buf + (len - hdrlen + 20 - mic_len), mic_len);
-	qdf_mem_zero(mic, 16);
+	mic = qdf_mem_malloc(mic_len);
+	if (!mic) {
+		qdf_mem_free(buf);
+		return false;
+	}
 	if (crypto_priv->igtk_key_type == WLAN_CRYPTO_CIPHER_AES_CMAC) {
 		ret = omac1_aes_128(key->keyval, buf,
 					len - hdrlen + aad_len, mic);
@@ -2181,16 +2185,19 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_free(buf);
 
 	if (ret < 0) {
+		qdf_mem_free(mic);
 		crypto_err("genarate mmie failed");
 		return false;
 	}
 
 	if (qdf_mem_cmp(mic, mmie->mic, mic_len) != 0) {
+		qdf_mem_free(mic);
 		crypto_err("mmie mismatch");
 		/* MMIE MIC mismatch */
 		return false;
 	}
 
+	qdf_mem_free(mic);
 	/* Update the receive sequence number */
 	qdf_mem_copy(key->keyrsc, ipn, 6);
 	crypto_debug("mmie matched");

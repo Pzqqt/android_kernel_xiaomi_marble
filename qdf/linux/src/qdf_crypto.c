@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -93,6 +93,136 @@ void qdf_update_dbl(uint8_t *d)
 
 	if (msb)
 		d[AES_BLOCK_SIZE - 1] ^= 0x87;
+}
+
+static inline void xor_128(const uint8_t *a, const uint8_t *b, uint8_t *out)
+{
+	uint8_t i;
+
+	for (i = 0; i < AES_BLOCK_SIZE; i++)
+		out[i] = a[i] ^ b[i];
+}
+
+static inline void leftshift_onebit(const uint8_t *input, uint8_t *output)
+{
+	int i, overflow = 0;
+
+	for (i = (AES_BLOCK_SIZE - 1); i >= 0; i--) {
+		output[i] = input[i] << 1;
+		output[i] |= overflow;
+		overflow = (input[i] & 0x80) ? 1 : 0;
+	}
+}
+
+static void generate_subkey(struct crypto_cipher *tfm, uint8_t *k1, uint8_t *k2)
+{
+	uint8_t l[AES_BLOCK_SIZE], tmp[AES_BLOCK_SIZE];
+	const uint8_t const_rb[AES_BLOCK_SIZE] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x87
+	};
+	const uint8_t const_zero[AES_BLOCK_SIZE] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	crypto_cipher_encrypt_one(tfm, l, const_zero);
+
+	if ((l[0] & 0x80) == 0) {       /* If MSB(l) = 0, then k1 = l << 1 */
+		leftshift_onebit(l, k1);
+	} else {                /* Else k1 = ( l << 1 ) (+) Rb */
+		leftshift_onebit(l, tmp);
+		xor_128(tmp, const_rb, k1);
+	}
+
+	if ((k1[0] & 0x80) == 0) {
+		leftshift_onebit(k1, k2);
+	} else {
+		leftshift_onebit(k1, tmp);
+		xor_128(tmp, const_rb, k2);
+	}
+}
+
+static inline void padding(const uint8_t *lastb, uint8_t *pad, uint16_t length)
+{
+	uint8_t j;
+
+	/* original last block */
+	for (j = 0; j < AES_BLOCK_SIZE; j++) {
+		if (j < length)
+			pad[j] = lastb[j];
+		else if (j == length)
+			pad[j] = 0x80;
+		else
+			pad[j] = 0x00;
+	}
+}
+
+int qdf_crypto_aes_128_cmac(const uint8_t *key, const uint8_t *data,
+			    uint16_t len, uint8_t *mic)
+{
+	uint8_t x[AES_BLOCK_SIZE], y[AES_BLOCK_SIZE];
+	uint8_t m_last[AES_BLOCK_SIZE], padded[AES_BLOCK_SIZE];
+	uint8_t k1[AES_KEYSIZE_128], k2[AES_KEYSIZE_128];
+	int cmp_blk;
+	int i, num_block = (len + 15) / AES_BLOCK_SIZE;
+	struct crypto_cipher *tfm;
+	int ret;
+
+	/*
+	 * Calculate MIC and then copy
+	 */
+	tfm = crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
+	if (IS_ERR(tfm)) {
+		ret = PTR_ERR(tfm);
+		qdf_err("crypto_alloc_cipher failed (%d)", ret);
+		return ret;
+	}
+
+	ret = crypto_cipher_setkey(tfm, key, AES_KEYSIZE_128);
+	if (ret) {
+		qdf_err("crypto_cipher_setkey failed (%d)", ret);
+		crypto_free_cipher(tfm);
+		return ret;
+	}
+
+	generate_subkey(tfm, k1, k2);
+
+	if (num_block == 0) {
+		num_block = 1;
+		cmp_blk = 0;
+	} else {
+		cmp_blk = ((len % AES_BLOCK_SIZE) == 0) ? 1 : 0;
+	}
+
+	if (cmp_blk) {
+		/* Last block is complete block */
+		xor_128(&data[AES_BLOCK_SIZE * (num_block - 1)], k1, m_last);
+	} else {
+		/* Last block is not complete block */
+		padding(&data[AES_BLOCK_SIZE * (num_block - 1)], padded,
+			len % AES_BLOCK_SIZE);
+		xor_128(padded, k2, m_last);
+	}
+
+	for (i = 0; i < AES_BLOCK_SIZE; i++)
+		x[i] = 0;
+
+	for (i = 0; i < (num_block - 1); i++) {
+		/* y = Mi (+) x */
+		xor_128(x, &data[AES_BLOCK_SIZE * i], y);
+		/* x = AES-128(KEY, y) */
+		crypto_cipher_encrypt_one(tfm, x, y);
+	}
+
+	xor_128(x, m_last, y);
+	crypto_cipher_encrypt_one(tfm, x, y);
+
+	crypto_free_cipher(tfm);
+
+	memcpy(mic, x, CMAC_TLEN);
+
+	return 0;
 }
 
 /**
@@ -377,9 +507,9 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 #endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
-int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
-			uint8_t *iv, uint8_t *aad, uint8_t *data,
-			uint16_t data_len, uint8_t *mic)
+int qdf_crypto_aes_gmac(const uint8_t *key, uint16_t key_length,
+			uint8_t *iv, const uint8_t *aad,
+			const uint8_t *data, uint16_t data_len, uint8_t *mic)
 {
 	struct crypto_aead *tfm;
 	int ret = 0;

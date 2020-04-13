@@ -23,6 +23,7 @@
 #define _WLAN_CRYPTO_GLOBAL_API_H_
 
 #include "wlan_crypto_global_def.h"
+#include <qdf_crypto.h>
 /**
  * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
  * @vdev: vdev
@@ -726,18 +727,22 @@ QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 						uint16_t ie_len);
 #ifdef WLAN_CRYPTO_GCM_OS_DERIVATIVE
 static inline int wlan_crypto_aes_gmac(const uint8_t *key, size_t key_len,
-				       const uint8_t *iv, size_t iv_len,
+				       uint8_t *iv, size_t iv_len,
 				       const uint8_t *aad, size_t aad_len,
 				       uint8_t *tag)
 {
-	return 0;
+	return qdf_crypto_aes_gmac(key, key_len, iv, aad,
+				   aad + AAD_LEN,
+				   aad_len - AAD_LEN -
+				   IEEE80211_MMIE_GMAC_MICLEN,
+				   tag);
 }
 #endif
 #ifdef WLAN_CRYPTO_OMAC1_OS_DERIVATIVE
 static inline int omac1_aes_128(const uint8_t *key, const uint8_t *data,
 				size_t data_len, uint8_t *mac)
 {
-	return 0;
+	return qdf_crypto_aes_128_cmac(key, data, data_len, mac);
 }
 
 static inline int omac1_aes_256(const uint8_t *key, const uint8_t *data,
