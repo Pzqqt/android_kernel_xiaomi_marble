@@ -1992,6 +1992,18 @@ QDF_STATUS wmi_unified_smart_ant_enable_tx_feedback_cmd_send(
 			struct smart_ant_enable_tx_feedback_params *param);
 
 /**
+ *  wmi_unified_simulation_test_cmd_send() -
+ *  WMI simulation test command
+ *  @wmi_handle: handle to WMI.
+ *  @param: pointer to hold simulation test param
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_simulation_test_cmd_send(wmi_unified_t wmi_handle,
+						struct simulation_test_params
+						*param);
+
+/**
  *  wmi_unified_vdev_spectral_configure_cmd_send() -
  *					WMI set spectral config function
  *  @wmi_handle: handle to WMI.

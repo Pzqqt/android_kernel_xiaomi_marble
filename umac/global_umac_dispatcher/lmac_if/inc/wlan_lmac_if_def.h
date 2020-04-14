@@ -663,6 +663,13 @@ struct wlan_lmac_if_sptrl_tx_ops {
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+struct simulation_test_params;
+
+struct wlan_lmac_if_iot_sim_tx_ops {
+	QDF_STATUS (*iot_sim_send_cmd)(struct wlan_objmgr_pdev *pdev,
+				       struct simulation_test_params *param);
+};
+
 #ifdef WIFI_POS_CONVERGED
 /*
  * struct wlan_lmac_if_wifi_pos_tx_ops - structure of firmware tx function
@@ -1008,6 +1015,7 @@ struct wlan_lmac_if_tx_ops {
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_tx_ops p2p;
 #endif
+	struct wlan_lmac_if_iot_sim_tx_ops iot_sim_tx_ops;
 #ifdef QCA_SUPPORT_SON
 	struct wlan_lmac_if_son_tx_ops son_tx_ops;
 #endif
@@ -1382,12 +1390,10 @@ struct wlan_lmac_if_sptrl_rx_ops {
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
-#ifdef WLAN_IOT_SIM_SUPPORT
 struct wlan_lmac_if_iot_sim_rx_ops {
 	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
 					  qdf_nbuf_t n_buf);
 };
-#endif
 
 #ifdef WIFI_POS_CONVERGED
 /**
@@ -1732,10 +1738,7 @@ struct wlan_lmac_if_rx_ops {
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_rx_ops p2p;
 #endif
-
-#ifdef WLAN_IOT_SIM_SUPPORT
 	struct wlan_lmac_if_iot_sim_rx_ops iot_sim_rx_ops;
-#endif
 
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;

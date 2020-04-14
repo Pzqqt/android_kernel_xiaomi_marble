@@ -1297,6 +1297,19 @@ wmi_unified_smart_ant_enable_tx_feedback_cmd_send(
 qdf_export_symbol(wmi_unified_smart_ant_enable_tx_feedback_cmd_send);
 
 QDF_STATUS
+wmi_unified_simulation_test_cmd_send(
+		wmi_unified_t wmi_handle,
+		struct simulation_test_params *param)
+{
+	if (wmi_handle->ops->send_simulation_test_cmd)
+		return wmi_handle->ops->send_simulation_test_cmd(
+							wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+qdf_export_symbol(wmi_unified_simulation_test_cmd_send);
+
+QDF_STATUS
 wmi_unified_vdev_spectral_configure_cmd_send(
 		wmi_unified_t wmi_handle,
 		struct vdev_spectral_configure_params *param)

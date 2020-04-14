@@ -64,6 +64,19 @@ QDF_STATUS wlan_iot_sim_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 						 void *arg);
 
+/**
+ * iot_sim_frame_update() - Management frame update
+ * @pdev: reference to global pdev object
+ * @nbuf: frame buffer
+ *
+ * This function updates the outgoing management frame with
+ * the content stored in iot_sim_context.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ * QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf);
+
 /*
  * iot_sim_get_ctx_from_pdev() - API to get iot_sim context object
  *                               from pdev

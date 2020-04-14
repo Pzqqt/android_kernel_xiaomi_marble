@@ -1201,6 +1201,9 @@ QDF_STATUS (*send_smart_ant_set_node_config_cmd)(wmi_unified_t wmi_handle,
 		struct smart_ant_node_config_params *param);
 #endif
 
+QDF_STATUS (*send_simulation_test_cmd)(wmi_unified_t wmi_handle,
+				       struct simulation_test_params *param);
+
 QDF_STATUS (*send_smart_ant_enable_tx_feedback_cmd)(wmi_unified_t wmi_handle,
 		struct smart_ant_enable_tx_feedback_params *param);
 

@@ -35,6 +35,10 @@
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include "target_if_spectral.h"
 #endif
+
+#ifdef WLAN_IOT_SIM_SUPPORT
+#include <target_if_iot_sim.h>
+#endif
 #include <target_if_reg.h>
 #include <target_if_scan.h>
 #include <target_if_ftm.h>
@@ -308,6 +312,19 @@ static void target_if_sptrl_tx_ops_register(
 }
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+static void target_if_iot_sim_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_iot_sim_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_iot_sim_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
+
 #ifdef DIRECT_BUF_RX_ENABLE
 static void target_if_direct_buf_rx_tx_ops_register(
 				struct wlan_lmac_if_tx_ops *tx_ops)
@@ -496,6 +513,8 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_sptrl_tx_ops_register(tx_ops);
+
+	target_if_iot_sim_tx_ops_register(tx_ops);
 
 	/* Register direct buffer rx component tx ops here */
 	target_if_direct_buf_rx_tx_ops_register(tx_ops);

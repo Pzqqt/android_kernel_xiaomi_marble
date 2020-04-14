@@ -100,7 +100,7 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/cmn_dev/umac/mlme/pdev_mgr/dispatcher/inc \
         -I$(obj)/$(DEPTH)/direct_attach/hal/linux \
 
-#INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/iot_sim
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/iot_sim
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc
 #end of offload related defines
 
@@ -122,15 +122,13 @@ ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_iot_sim.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_iot_sim)"
 endif
 
-IOT_SIM_TIF_OBJS +=
-
 IOT_SIM_CMN_OBJS +=  core/iot_sim_common.o \
                      dispatcher/src/wlan_iot_sim_utils_api.o \
                      dispatcher/src/wlan_iot_sim_tgt_api.o \
-                     core/iot_sim_module.o
+		     core/iot_sim_utils.o \
+		     core/iot_sim_module.o
 
-qca_iot_sim-objs +=  ${IOT_SIM_CMN_OBJS} \
-                     ${IOT_SIM_TIF_OBJS}
+qca_iot_sim-objs +=  ${IOT_SIM_CMN_OBJS}
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 all: qca_iot_sim.ko

@@ -19,6 +19,7 @@
 
 #include <wlan_objmgr_cmn.h>
 #include <wlan_lmac_if_def.h>
+#include <wmi_unified_param.h>
 
 /* Forward Declarations */
 struct wmi_iot_sim_cmd_ops;

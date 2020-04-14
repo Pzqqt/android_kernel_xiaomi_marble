@@ -14,14 +14,30 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _WLAN_IOT_SIM_TGT_API_H_
-#define _WLAN_IOT_SIM_TGT_API_H_
+#include <wmi_unified_api.h>
+#include <target_if_iot_sim.h>
+#include <init_deinit_lmac.h>
+#include <target_if.h>
+#include <qdf_module.h>
 
-#include <wlan_objmgr_cmn.h>
-#include <qdf_types.h>
-#include "../../core/iot_sim_cmn_api_i.h"
+QDF_STATUS
+target_if_iot_sim_send_cmd(struct wlan_objmgr_pdev *pdev,
+			   struct simulation_test_params *param)
+{
+	if (pdev && pdev->tgt_if_handle) {
+		struct wmi_unified *wmi_hdl;
 
-QDF_STATUS tgt_send_simulation_cmd(struct wlan_objmgr_pdev *pdev,
-				   struct simulation_test_params *param);
+		wmi_hdl = pdev->tgt_if_handle->wmi_handle;
+		return wmi_unified_simulation_test_cmd_send(wmi_hdl, param);
+	} else
+		return QDF_STATUS_E_FAILURE;
+}
 
-#endif /* _WLAN_IOT_SIM_TGT_API_H_ */
+void target_if_iot_sim_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	tx_ops->iot_sim_tx_ops.iot_sim_send_cmd =
+						target_if_iot_sim_send_cmd;
+}
+
+qdf_export_symbol(target_if_iot_sim_register_tx_ops);
+

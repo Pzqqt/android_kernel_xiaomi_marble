@@ -6400,6 +6400,72 @@ send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_simulation_test_cmd_tlv() - send simulation test command to fw
+ *
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold simulation test parameter
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS send_simulation_test_cmd_tlv(wmi_unified_t wmi_handle,
+					       struct simulation_test_params
+					       *param)
+{
+	wmi_simulation_test_cmd_fixed_param *cmd;
+	u32 wmi_buf_len;
+	wmi_buf_t buf;
+	u8 *buf_ptr;
+	u32 aligned_len = 0;
+
+	wmi_buf_len = sizeof(*cmd);
+	if (param->buf_len) {
+		aligned_len = roundup(param->buf_len, sizeof(A_UINT32));
+		wmi_buf_len += WMI_TLV_HDR_SIZE + aligned_len;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, wmi_buf_len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(buf);
+	cmd = (wmi_simulation_test_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_simulation_test_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+					wmi_simulation_test_cmd_fixed_param));
+	cmd->pdev_id = param->pdev_id;
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac, &cmd->peer_macaddr);
+	cmd->test_cmd_type = param->test_cmd_type;
+	cmd->test_subcmd_type = param->test_subcmd_type;
+	WMI_SIM_FRAME_TYPE_SET(cmd->frame_type_subtype_seq, param->frame_type);
+	WMI_SIM_FRAME_SUBTYPE_SET(cmd->frame_type_subtype_seq,
+				  param->frame_subtype);
+	WMI_SIM_FRAME_SEQ_SET(cmd->frame_type_subtype_seq, param->seq);
+	WMI_SIM_FRAME_OFFSET_SET(cmd->frame_offset_length, param->offset);
+	WMI_SIM_FRAME_LENGTH_SET(cmd->frame_offset_length, param->frame_length);
+	cmd->buf_len = param->buf_len;
+
+	if (param->buf_len) {
+		buf_ptr += sizeof(*cmd);
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, aligned_len);
+		buf_ptr += WMI_TLV_HDR_SIZE;
+		qdf_mem_copy(buf_ptr, param->bufp, param->buf_len);
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, wmi_buf_len,
+				 WMI_SIMULATION_TEST_CMDID)) {
+		WMI_LOGE("%s: Failed to send test simulation cmd", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_vdev_spectral_configure_cmd_tlv() - send VDEV spectral configure
  * command to fw
  * @wmi_handle: wmi handle
@@ -13740,6 +13806,7 @@ struct wmi_ops tlv_ops =  {
 	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_tlv,
 	.send_periodic_chan_stats_config_cmd =
 		send_periodic_chan_stats_config_cmd_tlv,
+	.send_simulation_test_cmd = send_simulation_test_cmd_tlv,
 	.send_vdev_spectral_configure_cmd =
 				send_vdev_spectral_configure_cmd_tlv,
 	.send_vdev_spectral_enable_cmd =

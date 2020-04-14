@@ -14,14 +14,26 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _WLAN_IOT_SIM_TGT_API_H_
-#define _WLAN_IOT_SIM_TGT_API_H_
+#ifndef _TARGET_IF_IOT_SIM_H_
+#define _TARGET_IOT_SIM_H_
 
 #include <wlan_objmgr_cmn.h>
-#include <qdf_types.h>
-#include "../../core/iot_sim_cmn_api_i.h"
+#include <wlan_objmgr_pdev_obj.h>
 
-QDF_STATUS tgt_send_simulation_cmd(struct wlan_objmgr_pdev *pdev,
-				   struct simulation_test_params *param);
+#ifdef WLAN_IOT_SIM_SUPPORT
+#include <wlan_iot_sim_utils_api.h>
 
-#endif /* _WLAN_IOT_SIM_TGT_API_H_ */
+/**
+ * target_if_iot_sim_register_tx_ops() - Register IOT Sim target_if Tx Ops
+ * @tx_ops: Tx Ops
+ *
+ * Return: void
+ */
+void target_if_iot_sim_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+
+QDF_STATUS
+target_if_iot_sim_send_cmd(struct wlan_objmgr_pdev *pdev,
+			   struct simulation_test_params *param);
+
+#endif
+#endif

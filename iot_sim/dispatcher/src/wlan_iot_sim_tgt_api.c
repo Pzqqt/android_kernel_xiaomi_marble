@@ -34,3 +34,12 @@ tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 	}
 	return isc->p_iot_sim_target_handle;
 }
+
+QDF_STATUS tgt_send_simulation_cmd(struct wlan_objmgr_pdev *pdev,
+				   struct simulation_test_params *param)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	return psoc->soc_cb.tx_ops.iot_sim_tx_ops.iot_sim_send_cmd(pdev, param);
+}
