@@ -3197,6 +3197,18 @@ wmi_start(wmi_unified_t wmi_handle)
 }
 
 /**
+ * wmi_is_blocked() - generic function to check if WMI is blocked
+ * @wmi_handle: handle to WMI.
+ *
+ * @Return: true, if blocked, false if not blocked
+ */
+bool
+wmi_is_blocked(wmi_unified_t wmi_handle)
+{
+	return (!(!wmi_handle->wmi_stopinprogress));
+}
+
+/**
  * API to flush all the previous packets  associated with the wmi endpoint
  *
  * @param wmi_handle      : handle to WMI.
