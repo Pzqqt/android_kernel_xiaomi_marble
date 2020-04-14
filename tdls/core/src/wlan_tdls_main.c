@@ -514,11 +514,6 @@ static QDF_STATUS tdls_process_reset_all_peers(struct wlan_objmgr_vdev *vdev)
 
 		tdls_reset_peer(tdls_vdev, curr_peer->peer_mac.bytes);
 
-		if (tdls_soc->tdls_dereg_peer)
-			tdls_soc->tdls_dereg_peer(
-					tdls_soc->tdls_peer_context,
-					wlan_vdev_get_id(vdev),
-					&curr_peer->peer_mac);
 		tdls_decrement_peer_count(tdls_soc);
 		tdls_soc->tdls_conn_info[staidx].valid_entry = false;
 		tdls_soc->tdls_conn_info[staidx].session_id = 255;

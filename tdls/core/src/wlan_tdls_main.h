@@ -172,7 +172,6 @@ struct tdls_set_state_info {
  * @tdls_evt_cb_data: tdls event user data
  * @tdls_peer_context: userdata for register/deregister TDLS peer
  * @tdls_reg_peer: register tdls peer with datapath
- * @tdls_dereg_peer: deregister tdls peer from datapath
  * @tx_q_ack: queue for tx frames waiting for ack
  * @tdls_con_cap: tdls concurrency support
  * @tdls_send_mgmt_req: store eWNI_SME_TDLS_SEND_MGMT_REQ value
@@ -215,7 +214,6 @@ struct tdls_soc_priv_obj {
 	void *tdls_evt_cb_data;
 	void *tdls_peer_context;
 	tdls_register_peer_callback tdls_reg_peer;
-	tdls_deregister_peer_callback tdls_dereg_peer;
 	tdls_dp_vdev_update_flags_callback tdls_dp_vdev_update;
 	qdf_list_t tx_q_ack;
 	enum tdls_conc_cap tdls_con_cap;

@@ -298,7 +298,6 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 
 	/* Save callbacks to register/deregister TDLS sta with datapath */
 	soc_obj->tdls_reg_peer = req->tdls_reg_peer;
-	soc_obj->tdls_dereg_peer = req->tdls_dereg_peer;
 	soc_obj->tdls_peer_context = req->tdls_peer_context;
 
 	/* Save legacy PE/WMA commands in TDLS soc object */
