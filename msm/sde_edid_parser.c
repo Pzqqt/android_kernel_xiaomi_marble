@@ -578,12 +578,12 @@ sde_parse_clrmetry_db(struct drm_connector *connector, const u8 *db)
 	/* Byte 3 Bit 2: sYCC_601 */
 	if (db[2] & BIT(2))
 		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_sYCC_601;
-	/* Byte 3 Bit 3: ADBYCC_601 */
+	/* Byte 3 Bit 3: ADOBE_YCC_601 */
 	if (db[2] & BIT(3))
-		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADBYCC_601;
-	/* Byte 3 Bit 4: ADB_RGB */
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADOBE_YCC_601;
+	/* Byte 3 Bit 4: ADOBE_RGB */
 	if (db[2] & BIT(4))
-		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADB_RGB;
+		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_ADOBE_RGB;
 	/* Byte 3 Bit 5: BT2020_CYCC */
 	if (db[2] & BIT(5))
 		c_conn->color_enc_fmt |= DRM_EDID_CLRMETRY_BT2020_CYCC;
