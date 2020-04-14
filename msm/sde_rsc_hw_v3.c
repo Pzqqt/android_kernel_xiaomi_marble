@@ -108,13 +108,13 @@ static int _rsc_hw_seq_memory_init_v3(struct sde_rsc_priv *rsc)
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x18,
 						0xbdf9b9a0, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x1c,
-						0x38999afe, rsc->debug_mode);
+						0xa13899fe, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x20,
-						0xac81e1a1, rsc->debug_mode);
+						0xe0ac81e1, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x24,
-						0x82e2a2e0, rsc->debug_mode);
+						0x3982e2a2, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x28,
-						0x8cfd9d39, rsc->debug_mode);
+						0x208cfd9d, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x2c,
 						0x20202020, rsc->debug_mode);
 	dss_reg_w(&rsc->drv_io, SDE_RSCC_SEQ_MEM_0_DRV0 + 0x30,
