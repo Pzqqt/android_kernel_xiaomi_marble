@@ -21,15 +21,22 @@ uint16_t
 dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf,
 			    uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-			    uint8_t new_mac_cnt);
+			    uint8_t new_mac_cnt, uint8_t tid);
 void dp_tx_me_alloc_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
 void dp_tx_me_free_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
 void dp_tx_me_exit(struct dp_pdev *pdev);
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
+QDF_STATUS
+dp_tx_prepare_send_igmp_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 extern int
 dp_me_mcast_convert(struct cdp_soc_t *soc,
 		    uint8_t vdev_id,
 		    uint8_t pdev_id,
 		    qdf_nbuf_t wbuf);
+extern int
+dp_igmp_me_mcast_convert(struct cdp_soc_t *soc,
+			 uint8_t vdev_id,
+			 uint8_t pdev_id,
+			 qdf_nbuf_t wbuf);
 #endif

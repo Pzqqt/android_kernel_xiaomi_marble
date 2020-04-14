@@ -210,6 +210,24 @@ dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * dp_tx_prepare_send_igmp_me(): Call to check igmp ,convert mcast to ucast
+ * @vdev: DP VDEV handle
+ * @nbuf: Multicast buffer
+ *
+ * Return: no of packets transmitted
+ */
+QDF_STATUS
+dp_tx_prepare_send_igmp_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
+{
+	if (dp_igmp_me_mcast_convert((struct cdp_soc_t *)(vdev->pdev->soc),
+				     vdev->vdev_id, vdev->pdev->pdev_id,
+				     nbuf) > 0)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /*
  * dp_tx_me_mem_free(): Function to free allocated memory in mcast enahncement
  * pdev: pointer to DP PDEV structure
@@ -249,6 +267,7 @@ static void dp_tx_me_mem_free(struct dp_pdev *pdev,
  * @nbuf: Multicast nbuf
  * @newmac: Table of the clients to which packets have to be sent
  * @new_mac_cnt: No of clients
+ * @tid: desired tid
  *
  * return: no of converted packets
  */
@@ -256,7 +275,7 @@ uint16_t
 dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf,
 			    uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-			    uint8_t new_mac_cnt)
+			    uint8_t new_mac_cnt, uint8_t tid)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
 	struct dp_pdev *pdev;
@@ -414,10 +433,14 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	msdu_info.num_seg = new_mac_cnt;
 	msdu_info.frm_type = dp_tx_frm_me;
 
-	msdu_info.tid = HTT_INVALID_TID;
-	if (qdf_unlikely(vdev->mcast_enhancement_en > 0) &&
-	    qdf_unlikely(pdev->hmmc_tid_override_en))
-		msdu_info.tid = pdev->hmmc_tid;
+	if (tid == HTT_INVALID_TID) {
+		msdu_info.tid = HTT_INVALID_TID;
+		if (qdf_unlikely(vdev->mcast_enhancement_en > 0) &&
+		    qdf_unlikely(pdev->hmmc_tid_override_en))
+			msdu_info.tid = pdev->hmmc_tid;
+	} else {
+		msdu_info.tid = tid;
+	}
 
 	DP_STATS_INC(vdev, tx_i.mcast_en.ucast, new_mac_cnt);
 	dp_tx_send_msdu_multiple(vdev, nbuf, &msdu_info);
