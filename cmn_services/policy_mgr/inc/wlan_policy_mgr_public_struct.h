@@ -980,9 +980,10 @@ enum set_hw_mode_status {
 	SET_HW_MODE_STATUS_ALREADY,
 };
 
-typedef void (*dual_mac_cb)(enum set_hw_mode_status status,
-		uint32_t scan_config,
-		uint32_t fw_mode_config);
+typedef void (*dual_mac_cb)(struct wlan_objmgr_psoc *psoc,
+			    enum set_hw_mode_status status,
+			    uint32_t scan_config,
+			    uint32_t fw_mode_config);
 /**
  * enum policy_mgr_hw_mode_change - identify the HW mode switching to.
  *
