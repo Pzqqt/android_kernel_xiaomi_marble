@@ -7891,6 +7891,15 @@ static const struct snd_kcontrol_new wsa_cdc_dma_rx_0_mixer_controls[] = {
 	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+
 };
 
 static const struct snd_kcontrol_new wsa_cdc_dma_rx_1_mixer_controls[] = {
@@ -7961,6 +7970,14 @@ static const struct snd_kcontrol_new wsa_cdc_dma_rx_1_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
 			MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
 
@@ -8033,6 +8050,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_0_mixer_controls[] = {
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
 };
 
 static const struct snd_kcontrol_new rx_cdc_dma_rx_1_mixer_controls[] = {
@@ -8103,6 +8128,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_1_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_1,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_1,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_1,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
 
@@ -8175,6 +8208,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_2_mixer_controls[] = {
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_2,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_2,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_2,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
 };
 
 static const struct snd_kcontrol_new rx_cdc_dma_rx_3_mixer_controls[] = {
@@ -8245,6 +8286,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_3_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_3,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_3,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_3,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
 
@@ -8317,6 +8366,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_4_mixer_controls[] = {
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_4,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_4,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_4,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
 };
 
 static const struct snd_kcontrol_new rx_cdc_dma_rx_5_mixer_controls[] = {
@@ -8387,6 +8444,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_5_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_5,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_5,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_5,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
 
@@ -8459,6 +8524,15 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_6_mixer_controls[] = {
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_6,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_6,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_6,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+
 };
 
 static const struct snd_kcontrol_new rx_cdc_dma_rx_7_mixer_controls[] = {
@@ -8529,6 +8603,14 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_7_mixer_controls[] = {
 	SOC_DOUBLE_EXT("MultiMedia26", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_RX_CDC_DMA_RX_7,
 	MSM_FRONTEND_DAI_MULTIMEDIA26, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia31", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_7,
+	MSM_FRONTEND_DAI_MULTIMEDIA31, 1, 0, msm_routing_get_audio_mixer,
+	msm_routing_put_audio_mixer),
+	SOC_DOUBLE_EXT("MultiMedia32", SND_SOC_NOPM,
+	MSM_BACKEND_DAI_RX_CDC_DMA_RX_7,
+	MSM_FRONTEND_DAI_MULTIMEDIA32, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 };
 
@@ -23652,6 +23734,8 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_AIF_IN("MM_DL24", "MultiMedia24 Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_IN("MM_DL25", "MultiMedia25 Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_IN("MM_DL26", "MultiMedia26 Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_IN("MM_DL31", "MultiMedia31 Playback", 0, 0, 0, 0),
+	SND_SOC_DAPM_AIF_IN("MM_DL32", "MultiMedia32 Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_IN("VOIP_DL", "VoIP Playback", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL1", "MultiMedia1 Capture", 0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("MM_UL2", "MultiMedia2 Capture", 0, 0, 0, 0),
@@ -25345,6 +25429,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"WSA_CDC_DMA_RX_0 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"WSA_CDC_DMA_RX_0 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"WSA_CDC_DMA_RX_0 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"WSA_CDC_DMA_RX_0 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"WSA_CDC_DMA_RX_0 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"WSA_CDC_DMA_RX_0", NULL, "WSA_CDC_DMA_RX_0 Audio Mixer"},
 
 	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25364,6 +25450,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"WSA_CDC_DMA_RX_1 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"WSA_CDC_DMA_RX_1", NULL, "WSA_CDC_DMA_RX_1 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25383,6 +25471,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_0 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_0", NULL, "RX_CDC_DMA_RX_0 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25402,6 +25492,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_1 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_1", NULL, "RX_CDC_DMA_RX_1 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25421,6 +25513,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_2 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_2", NULL, "RX_CDC_DMA_RX_2 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25440,6 +25534,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_3 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_3", NULL, "RX_CDC_DMA_RX_3 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25459,6 +25555,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_4 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_4", NULL, "RX_CDC_DMA_RX_4 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25478,6 +25576,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_5 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_5", NULL, "RX_CDC_DMA_RX_5 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25497,6 +25597,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_6 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_6", NULL, "RX_CDC_DMA_RX_6 Audio Mixer"},
 
 	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia1", "MM_DL1"},
@@ -25516,6 +25618,8 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia15", "MM_DL15"},
 	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia16", "MM_DL16"},
 	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia26", "MM_DL26"},
+	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia31", "MM_DL31"},
+	{"RX_CDC_DMA_RX_7 Audio Mixer", "MultiMedia32", "MM_DL32"},
 	{"RX_CDC_DMA_RX_7", NULL, "RX_CDC_DMA_RX_7 Audio Mixer"},
 
 	{"HDMI Mixer", "MultiMedia1", "MM_DL1"},

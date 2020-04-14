@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -2917,6 +2917,44 @@ static struct snd_soc_dai_driver msm_fe_dais[] = {
 		.ops = &msm_fe_Multimedia_dai_ops,
 		.compress_new = snd_soc_new_compress,
 		.name = "MultiMedia30",
+		.probe = fe_dai_probe,
+	},
+	{
+		.playback = {
+			.stream_name = "MultiMedia31 Playback",
+			.aif_name = "MM_DL31",
+			.rates = (SNDRV_PCM_RATE_8000_384000|
+				SNDRV_PCM_RATE_KNOT),
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S24_3LE |
+				SNDRV_PCM_FMTBIT_S32_LE),
+			.channels_min = 1,
+			.channels_max = 32,
+			.rate_min =     8000,
+			.rate_max =     384000,
+		},
+		.ops = &msm_fe_Multimedia_dai_ops,
+		.name = "MultiMedia31",
+		.probe = fe_dai_probe,
+	},
+	{
+		.playback = {
+			.stream_name = "MultiMedia32 Playback",
+			.aif_name = "MM_DL32",
+			.rates = (SNDRV_PCM_RATE_8000_384000|
+				SNDRV_PCM_RATE_KNOT),
+			.formats = (SNDRV_PCM_FMTBIT_S16_LE |
+				SNDRV_PCM_FMTBIT_S24_LE |
+				SNDRV_PCM_FMTBIT_S24_3LE |
+				SNDRV_PCM_FMTBIT_S32_LE),
+			.channels_min = 1,
+			.channels_max = 32,
+			.rate_min =     8000,
+			.rate_max =     384000,
+		},
+		.ops = &msm_fe_Multimedia_dai_ops,
+		.name = "MultiMedia32",
 		.probe = fe_dai_probe,
 	},
 };
