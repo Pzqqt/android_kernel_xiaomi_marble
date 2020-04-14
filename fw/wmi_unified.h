@@ -13810,6 +13810,13 @@ typedef struct {
     A_UINT32 psk_msk_ext_len; /**length of psk_msk_ext*/
     A_UINT32 psk_msk_ext[ROAM_OFFLOAD_PSK_MSK_BYTES>>2];
     A_UINT32 adaptive_11r; /* FW needs to perform adaptive 11r roaming */
+    /*
+     * FW needs to perform FT initial moiblity association instead of
+     * FT roaming for deauth roam trigger
+     *     0 - To disable FT-IM
+     *     1 - To enable FT-IM
+     */
+    A_UINT32 ft_im_for_deauth;
 } wmi_roam_11r_offload_tlv_param;
 
 /* This TLV will be filled only in case of ESE */
