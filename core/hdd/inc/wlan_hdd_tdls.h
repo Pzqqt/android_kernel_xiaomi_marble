@@ -206,9 +206,6 @@ int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 				  const uint8_t *mac, uint8_t qos);
 
-QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
-				    struct qdf_mac_addr *peer_mac);
-
 /**
  * hdd_init_tdls_config() - initialize tdls config
  * @tdls_cfg: pointer to tdls_start_params structure
@@ -249,13 +246,6 @@ static inline int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 static inline
 QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 				  const uint8_t *mac, uint8_t qos)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
-				    struct qdf_mac_addr *peer_mac)
 {
 	return QDF_STATUS_SUCCESS;
 }

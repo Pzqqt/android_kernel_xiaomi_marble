@@ -341,23 +341,6 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
  */
 QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     const uint8_t *peerMac, uint8_t qos);
-/**
- * hdd_roam_deregister_tdlssta() - deregister new TDLS station
- * @adapter: pointer to adapter
- * @peer_mac: peer mac address
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-				       struct qdf_mac_addr *peer_mac);
-
-#else
-static
-inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-					      struct qdf_mac_addr *peer_mac)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 #ifdef FEATURE_WLAN_ESE

@@ -4142,17 +4142,6 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 	return qdf_status;
 }
 
-QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
-				       struct qdf_mac_addr *peer_mac)
-{
-	QDF_STATUS qdf_status;
-
-	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-				    OL_TXRX_PDEV_ID, *peer_mac);
-
-	return qdf_status;
-}
-
 #endif
 
 #ifdef WLAN_FEATURE_11W
