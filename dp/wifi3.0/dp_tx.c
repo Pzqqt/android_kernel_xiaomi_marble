@@ -2658,6 +2658,13 @@ qdf_nbuf_t dp_tx_send(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 					QDF_STATUS_SUCCESS) {
 				return NULL;
 			}
+
+			if (qdf_unlikely(vdev->igmp_mcast_enhanc_en > 0)) {
+				if (dp_tx_prepare_send_igmp_me(vdev, nbuf) ==
+					QDF_STATUS_SUCCESS) {
+					return NULL;
+				}
+			}
 		}
 	}
 #endif

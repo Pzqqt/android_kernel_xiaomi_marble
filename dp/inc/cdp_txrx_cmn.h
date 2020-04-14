@@ -2600,6 +2600,7 @@ cdp_tx_send_exc(ol_txrx_soc_handle soc,
  * @vdev_id: vdev id
  * @newmac: Table of the clients mac
  * @mac_cnt: No. of MACs required
+ * @limit: Limit the number of clients
  *
  * return: no of clients
  */
@@ -2607,7 +2608,7 @@ static inline uint16_t
 cdp_vdev_get_peer_mac_list(ol_txrx_soc_handle soc,
 			   uint8_t vdev_id,
 			   uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-			   uint16_t mac_cnt)
+			   uint16_t mac_cnt, bool limit)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -2621,7 +2622,7 @@ cdp_vdev_get_peer_mac_list(ol_txrx_soc_handle soc,
 		return 0;
 
 	return soc->ops->cmn_drv_ops->get_peer_mac_list
-			(soc, vdev_id, newmac, mac_cnt);
+			(soc, vdev_id, newmac, mac_cnt, limit);
 }
 
 /*

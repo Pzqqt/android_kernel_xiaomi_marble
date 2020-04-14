@@ -1194,7 +1194,7 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 uint16_t dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc, uint8_t vdev_id,
 				     qdf_nbuf_t nbuf,
 				     uint8_t newmac[][QDF_MAC_ADDR_SIZE],
-				     uint8_t new_mac_cnt);
+				     uint8_t new_mac_cnt, uint8_t tid);
 void dp_tx_me_alloc_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
 
 void dp_tx_me_free_descriptor(struct cdp_soc_t *soc, uint8_t pdev_id);
@@ -2222,12 +2222,13 @@ QDF_STATUS dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
  * @vdev_id: vdev id
  * @newmac: Table of the clients mac
  * @mac_cnt: No. of MACs required
+ * @limit: Limit the number of clients
  *
  * return: no of clients
  */
 uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
-			      u_int16_t mac_cnt);
+			      u_int16_t mac_cnt, bool limit);
 /*
  * dp_is_hw_dbs_enable() - Procedure to check if DBS is supported
  * @soc:		DP SoC context

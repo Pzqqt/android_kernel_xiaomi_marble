@@ -1148,6 +1148,7 @@ typedef union cdp_config_param_t {
 	bool cdp_vdev_param_update_multipass;
 	uint8_t cdp_vdev_param_da_war;
 	uint8_t cdp_vdev_param_mcast_en;
+	uint8_t cdp_vdev_param_igmp_mcast_en;
 	uint8_t cdp_vdev_param_tidmap_prty;
 	uint8_t cdp_vdev_param_tidmap_tbl_id;
 	uint32_t cdp_vdev_param_aging_tmr;
@@ -1266,6 +1267,7 @@ enum cdp_pdev_bpr_param {
  * @CDP_MESH_MODE: set mesh mode
  * @CDP_SAFEMODE: set safe mode
  * @CDP_DROP_UNENC: set drop unencrypted flag
+ * @CDP_ENABLE_IGMP_MCAST_EN: enable/disable igmp multicast enhancement
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1291,6 +1293,7 @@ enum cdp_vdev_param_type {
 	CDP_SAFEMODE,
 	CDP_DROP_UNENC,
 	CDP_ENABLE_CSUM,
+	CDP_ENABLE_IGMP_MCAST_EN,
 };
 
 /*

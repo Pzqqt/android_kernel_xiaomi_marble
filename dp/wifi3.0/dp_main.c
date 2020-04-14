@@ -5190,6 +5190,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->dscp_tid_map_id = 0;
 	vdev->mcast_enhancement_en = 0;
+	vdev->igmp_mcast_enhanc_en = 0;
 	vdev->raw_mode_war = wlan_cfg_get_raw_mode_war(soc->wlan_cfg_ctx);
 	vdev->prev_tx_enq_tstamp = 0;
 	vdev->prev_rx_deliver_tstamp = 0;
@@ -8451,6 +8452,12 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 	case CDP_ENABLE_DA_WAR:
 		val->cdp_vdev_param_da_war = vdev->pdev->soc->da_war_enabled;
 		break;
+	case CDP_ENABLE_IGMP_MCAST_EN:
+		val->cdp_vdev_param_igmp_mcast_en = vdev->igmp_mcast_enhanc_en;
+		break;
+	case CDP_ENABLE_MCAST_EN:
+		val->cdp_vdev_param_mcast_en = vdev->mcast_enhancement_en;
+		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "param value %d is wrong\n",
@@ -8510,6 +8517,9 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 	case CDP_ENABLE_MCAST_EN:
 		vdev->mcast_enhancement_en = val.cdp_vdev_param_mcast_en;
+		break;
+	case CDP_ENABLE_IGMP_MCAST_EN:
+		vdev->igmp_mcast_enhanc_en = val.cdp_vdev_param_igmp_mcast_en;
 		break;
 	case CDP_ENABLE_PROXYSTA:
 		vdev->proxysta_vdev = val.cdp_vdev_param_proxysta;
@@ -12149,12 +12159,13 @@ void dp_update_delay_stats(struct dp_pdev *pdev, uint32_t delay,
  * @vdev_id: vdev id
  * @newmac: Table of the clients mac
  * @mac_cnt: No. of MACs required
+ * @limit: Limit the number of clients
  *
  * return: no of clients
  */
 uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 			      u_int8_t newmac[][QDF_MAC_ADDR_SIZE],
-			      u_int16_t mac_cnt)
+			      u_int16_t mac_cnt, bool limit)
 {
 	struct dp_soc *dp_soc = (struct dp_soc *)soc;
 	struct dp_vdev *vdev =
@@ -12164,6 +12175,9 @@ uint16_t dp_get_peer_mac_list(ol_txrx_soc_handle soc, uint8_t vdev_id,
 
 	if (!vdev)
 		return new_mac_cnt;
+
+	if (limit && (vdev->num_peers > mac_cnt))
+		return 0;
 
 	qdf_spin_lock_bh(&vdev->peer_list_lock);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {

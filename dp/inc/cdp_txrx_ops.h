@@ -543,7 +543,8 @@ struct cdp_cmn_ops {
 
 	uint16_t (*get_peer_mac_list)
 		 (ol_txrx_soc_handle soc, uint8_t vdev_id,
-		  u_int8_t newmac[][QDF_MAC_ADDR_SIZE], uint16_t mac_cnt);
+		  u_int8_t newmac[][QDF_MAC_ADDR_SIZE], uint16_t mac_cnt,
+		  bool limit);
 };
 
 struct cdp_ctrl_ops {
@@ -768,7 +769,7 @@ struct cdp_me_ops {
 
 	uint16_t (*tx_me_convert_ucast)(struct cdp_soc_t *soc, uint8_t vdev_id,
 					qdf_nbuf_t wbuf, u_int8_t newmac[][6],
-					uint8_t newmaccnt);
+					uint8_t newmaccnt, uint8_t tid);
 };
 
 struct cdp_mon_ops {

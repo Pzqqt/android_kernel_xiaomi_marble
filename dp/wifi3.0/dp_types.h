@@ -2130,6 +2130,9 @@ struct dp_vdev {
 	/* Multicast enhancement enabled */
 	uint8_t mcast_enhancement_en;
 
+	/* IGMP multicast enhancement enabled */
+	uint8_t igmp_mcast_enhanc_en;
+
 	/* HW TX Checksum Enabled Flag */
 	uint8_t csum_enabled;
 
