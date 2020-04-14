@@ -1324,11 +1324,14 @@ static int _sde_rm_reserve_dsc(
 		reserve_mask |= (1 << iter_i.blk->id);
 		dsc[alloc_count++] = iter_i.blk;
 
+		/* Return if peer is not needed */
+		if (alloc_count == num_dsc_enc)
+			break;
+
 		/* Valid first dsc found, find matching peers */
 		sde_rm_init_hw_iter(&iter_j, 0, SDE_HW_BLK_DSC);
 
-		while (alloc_count != num_dsc_enc &&
-				_sde_rm_get_hw_locked(rm, &iter_j)) {
+		while (_sde_rm_get_hw_locked(rm, &iter_j)) {
 			if (reserve_mask & (1 << iter_j.blk->id))
 				continue;
 
