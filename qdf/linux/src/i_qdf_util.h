@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,6 +76,8 @@ typedef wait_queue_head_t __qdf_wait_queue_head_t;
 
 #define __qdf_unlikely(_expr)   unlikely(_expr)
 #define __qdf_likely(_expr)     likely(_expr)
+
+#define __qdf_bitmap(name, bits) DECLARE_BITMAP(name, bits)
 
 /**
  * __qdf_set_bit() - set bit in address

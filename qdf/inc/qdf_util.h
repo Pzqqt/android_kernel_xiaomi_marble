@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -132,6 +132,14 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 #define qdf_ewma_rx_rssi_read(rx_rssi) \
 	__qdf_ewma_rx_rssi_read(rx_rssi)
+
+#define QDF_CHAR_BIT 8
+
+/**
+ * qdf_bitmap - Define a bitmap
+ */
+#define qdf_bitmap(name, bits) __qdf_bitmap(name, bits)
+
 /**
  * qdf_set_bit() - set bit in address
  * @nr: bit number to be set
