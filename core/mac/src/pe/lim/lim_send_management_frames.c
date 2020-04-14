@@ -692,6 +692,11 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
 		populate_dot11f_vht_operation(mac_ctx, pe_session,
 			&frm->VHTOperation);
+		populate_dot11f_vht_tx_power_env(
+				mac_ctx,
+				&frm->vht_transmit_power_env,
+				pe_session->ch_width,
+				pe_session->curr_op_freq);
 		/*
 		 * we do not support multi users yet.
 		 * populate_dot11f_vht_ext_bss_load( mac_ctx,

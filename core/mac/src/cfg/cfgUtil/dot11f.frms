@@ -3939,6 +3939,8 @@ FRAME ProbeResponse                       // 7.2.3.9
 
     OPTIE  VHTCaps;
     OPTIE  VHTOperation;
+    OPTIE  vht_transmit_power_env;
+    OPTIE  ChannelSwitchWrapper;
     OPTIE  VHTExtBssLoad;
     OPTIE  ExtCap;
     OPTIE  OBSSScanParameters;
@@ -3947,7 +3949,6 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  vendor_vht_ie;
     OPTIE  Vendor3IE;
     OPTIE  hs20vendor_ie;
-    OPTIE  ChannelSwitchWrapper;
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
     OPTIE  MBO_IE;
