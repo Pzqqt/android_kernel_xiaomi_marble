@@ -142,6 +142,10 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 
 /**
  * qdf_bitmap - Define a bitmap
+ * @name: name of the bitmap
+ * @bits: num of bits in the bitmap
+ *
+ * Return: none
  */
 #define qdf_bitmap(name, bits) __qdf_bitmap(name, bits)
 
