@@ -213,4 +213,17 @@ void sde_cp_crtc_res_change(struct drm_crtc *crtc_drm);
  */
 void sde_cp_crtc_vm_primary_handoff(struct drm_crtc *crtc);
 
+/**
+ * sde_cp_crtc_enable(): enable color processing info in the crtc.
+ *                     Should be called during crtc enable.
+ * @crtc:  Pointer to drm_crtc.
+ */
+void sde_cp_crtc_enable(struct drm_crtc *crtc);
+
+/**
+ * sde_cp_crtc_disable(): disable color processing info in the crtc.
+ *                     Should be called during crtc disable.
+ * @crtc:  Pointer to drm_crtc.
+ */
+void sde_cp_crtc_disable(struct drm_crtc *crtc);
 #endif /*_SDE_COLOR_PROCESSING_H */

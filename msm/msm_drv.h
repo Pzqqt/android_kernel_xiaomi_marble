@@ -147,6 +147,7 @@ enum msm_mdp_crtc_property {
 	CRTC_PROP_DEST_SCALER_LUT_ED,
 	CRTC_PROP_DEST_SCALER_LUT_CIR,
 	CRTC_PROP_DEST_SCALER_LUT_SEP,
+	CRTC_PROP_DSPP_INFO,
 
 	/* # of blob properties */
 	CRTC_PROP_BLOBCOUNT,
