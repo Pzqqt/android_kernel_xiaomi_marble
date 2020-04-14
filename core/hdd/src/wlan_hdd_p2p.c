@@ -612,48 +612,6 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 }
 
 /**
- * wlan_hdd_allow_sap_add() - check to add new sap interface
- * @hdd_ctx: pointer to hdd context
- * @name: name of the new interface
- * @sap_dev: output pointer to hold existing interface
- *
- * Return: If able to add interface return true else false
- */
-static bool
-wlan_hdd_allow_sap_add(struct hdd_context *hdd_ctx, const char *name,
-		       struct wireless_dev **sap_dev)
-{
-	struct hdd_adapter *adapter;
-
-	*sap_dev = NULL;
-
-	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if (adapter->device_mode == QDF_SAP_MODE &&
-		    test_bit(NET_DEVICE_REGISTERED, &adapter->event_flags) &&
-		    adapter->dev &&
-		    !strncmp(adapter->dev->name, name, IFNAMSIZ)) {
-			struct hdd_beacon_data *beacon =
-						adapter->session.ap.beacon;
-
-			hdd_debug("iface already registered");
-			if (beacon) {
-				adapter->session.ap.beacon = NULL;
-				qdf_mem_free(beacon);
-			}
-			if (adapter->dev->ieee80211_ptr) {
-				*sap_dev = adapter->dev->ieee80211_ptr;
-				return false;
-			}
-
-			hdd_err("ieee80211_ptr points to NULL");
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
  * __wlan_hdd_add_virtual_intf() - Add virtual interface
  * @wiphy: wiphy pointer
  * @name: User-visible name of the interface
@@ -733,18 +691,6 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		if (adapter) {
 			hdd_exit();
 			return adapter->dev->ieee80211_ptr;
-		}
-	}
-
-	if (mode == QDF_SAP_MODE) {
-		struct wireless_dev *sap_dev;
-		bool allow_add_sap = wlan_hdd_allow_sap_add(hdd_ctx, name,
-							    &sap_dev);
-		if (!allow_add_sap) {
-			if (sap_dev)
-				return sap_dev;
-
-			return ERR_PTR(-EINVAL);
 		}
 	}
 
