@@ -1065,6 +1065,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_audio_aggr_group_stats,
     WMITLV_TAG_STRUC_wmi_audio_aggr_peer_stats,
     WMITLV_TAG_STRUC_wmi_ant_controller_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_srg_bss_color_bitmap_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_srg_partial_bssid_bitmap_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1501,6 +1503,8 @@ typedef enum {
     OP(WMI_AUDIO_AGGR_GET_STATISTICS_CMDID) \
     OP(WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID) \
     OP(WMI_ANT_CONTROLLER_CMDID) \
+    OP(WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID) \
+    OP(WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4351,6 +4355,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_FRAME_INJECT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_tbtt_offset_sync_cmd_fixed_param, wmi_pdev_tbtt_offset_sync_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_rnr_bss_tbtt_info, rnr_tbtt_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_TBTT_OFFSET_SYNC_CMDID);
+
+/* SRG BSS color Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_srg_bss_color_bitmap_cmd_fixed_param, wmi_pdev_srg_bss_color_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID);
+
+/* SRG Partial BSSid Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_srg_partial_bssid_bitmap_cmd_fixed_param, wmi_pdev_srg_partial_bssid_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
