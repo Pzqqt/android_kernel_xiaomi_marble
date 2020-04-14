@@ -1063,12 +1063,6 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 
 	/* loop until we can grab as many packets out of the queue as we can */
 	while (true) {
-		sendFlags = 0;
-		/* get packet at head, but don't remove it */
-		pPacket = htc_get_pkt_at_head(tx_queue);
-		if (!pPacket)
-			break;
-
 		if (do_pm_get) {
 			rtpm_dbgid =
 				htc_send_pkts_rtpm_dbgid_get(
@@ -1077,10 +1071,25 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 						 rtpm_dbgid);
 			if (ret) {
 				/* bus suspended, runtime resume issued */
-				if (ret == -EAGAIN)
+				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
+				if (ret == -EAGAIN) {
+					pPacket = htc_get_pkt_at_head(tx_queue);
+					if (!pPacket)
+						break;
 					log_packet_info(target, pPacket);
+				}
 				break;
 			}
+		}
+
+		sendFlags = 0;
+		/* get packet at head, but don't remove it */
+		pPacket = htc_get_pkt_at_head(tx_queue);
+		if (!pPacket) {
+			if (do_pm_get)
+				hif_pm_runtime_put(target->hif_dev,
+						   rtpm_dbgid);
+			break;
 		}
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
@@ -1183,7 +1192,7 @@ static void get_htc_send_packets(HTC_TARGET *target,
 	HTC_PACKET_QUEUE *tx_queue;
 	HTC_PACKET_QUEUE pm_queue;
 	bool do_pm_get = false;
-	wlan_rtpm_dbgid rtpm_dbgid;
+	wlan_rtpm_dbgid rtpm_dbgid = 0;
 	int ret;
 
 	/*** NOTE : the TX lock is held when this function is called ***/
@@ -1203,10 +1212,6 @@ static void get_htc_send_packets(HTC_TARGET *target,
 	while (Resources > 0) {
 		int num_frags;
 
-		pPacket = htc_packet_dequeue(tx_queue);
-		if (!pPacket)
-			break;
-
 		if (do_pm_get) {
 			rtpm_dbgid =
 				htc_send_pkts_rtpm_dbgid_get(
@@ -1215,10 +1220,22 @@ static void get_htc_send_packets(HTC_TARGET *target,
 						 rtpm_dbgid);
 			if (ret) {
 				/* bus suspended, runtime resume issued */
-				if (ret == -EAGAIN)
+				QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
+				if (ret == -EAGAIN) {
+					pPacket = htc_get_pkt_at_head(tx_queue);
+					if (!pPacket)
+						break;
 					log_packet_info(target, pPacket);
+				}
 				break;
 			}
+		}
+
+		pPacket = htc_packet_dequeue(tx_queue);
+		if (!pPacket) {
+			if (do_pm_get)
+				hif_pm_runtime_put(target->hif_dev, rtpm_dbgid);
+			break;
 		}
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 				(" Got packet:%pK , New Queue Depth: %d\n",
