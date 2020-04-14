@@ -271,7 +271,9 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 			goto error_free;
 		}
 
-		pdev_queue->vdev_active_cmd_bitmap = 0;
+		qdf_mem_zero(pdev_queue->vdev_active_cmd_bitmap,
+			     sizeof(pdev_queue->vdev_active_cmd_bitmap));
+
 		pdev_queue->blocking_cmd_active = 0;
 		pdev_queue->blocking_cmd_waiting = 0;
 	}

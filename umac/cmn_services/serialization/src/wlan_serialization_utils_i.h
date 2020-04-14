@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,7 +103,7 @@ struct wlan_serialization_pdev_queue {
 	qdf_list_t active_list;
 	qdf_list_t pending_list;
 	qdf_list_t cmd_pool_list;
-	uint32_t vdev_active_cmd_bitmap;
+	qdf_bitmap(vdev_active_cmd_bitmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 	bool blocking_cmd_active;
 	uint16_t blocking_cmd_waiting;
 	qdf_spinlock_t pdev_queue_lock;
@@ -680,6 +680,15 @@ wlan_serialization_create_lock(qdf_spinlock_t *lock);
  */
 QDF_STATUS
 wlan_serialization_destroy_lock(qdf_spinlock_t *lock);
+
+/**
+ * wlan_serialization_any_vdev_cmd_active() - Check any vdev cmd active for pdev
+ * @pdev_queue: serialization pdev queue object
+ *
+ * Return: true or false
+ */
+bool wlan_serialization_any_vdev_cmd_active(
+		struct wlan_serialization_pdev_queue *pdev_queue);
 
 /**
  * wlan_ser_update_cmd_history() - Update serialization queue history

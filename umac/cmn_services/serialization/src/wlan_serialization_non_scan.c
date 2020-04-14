@@ -27,6 +27,7 @@
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_utils_i.h"
 #include "wlan_serialization_non_scan_i.h"
+#include "qdf_util.h"
 
 bool
 wlan_serialization_is_non_scan_pending_queue_empty(
@@ -69,7 +70,7 @@ wlan_serialization_is_active_non_scan_cmd_allowed(
 {
 	struct wlan_serialization_pdev_queue *pdev_queue;
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
-	uint32_t vdev_active_cmd_bitmap;
+	unsigned long *vdev_active_cmd_bitmap;
 	bool blocking_cmd_active = 0;
 	uint8_t blocking_cmd_waiting = 0;
 	bool status = false;
@@ -82,6 +83,7 @@ wlan_serialization_is_active_non_scan_cmd_allowed(
 							   cmd->cmd_type);
 
 	vdev_active_cmd_bitmap = pdev_queue->vdev_active_cmd_bitmap;
+
 	blocking_cmd_active = pdev_queue->blocking_cmd_active;
 	blocking_cmd_waiting = pdev_queue->blocking_cmd_waiting;
 
@@ -93,7 +95,8 @@ wlan_serialization_is_active_non_scan_cmd_allowed(
 		 * For blocking commands, no other
 		 * commands from any vdev should be active
 		 */
-		if (vdev_active_cmd_bitmap) {
+
+		if (wlan_serialization_any_vdev_cmd_active(pdev_queue)) {
 			status = false;
 			pdev_queue->blocking_cmd_waiting++;
 		} else {
@@ -114,8 +117,13 @@ wlan_serialization_is_active_non_scan_cmd_allowed(
 		 * If not active, put to active else pending queue
 		 */
 			vdev_id = wlan_vdev_get_id(cmd->vdev);
-			status = vdev_active_cmd_bitmap & (1 << vdev_id)
+			status = qdf_test_bit(vdev_id, vdev_active_cmd_bitmap)
 						? false : true;
+
+			ser_debug_hex(
+				vdev_active_cmd_bitmap,
+				sizeof(pdev_queue->vdev_active_cmd_bitmap));
+
 		}
 	}
 	return status;
@@ -193,6 +201,7 @@ pdev_error:
 			ser_pdev_obj, &pcmd_list,
 			&cmd_list->cmd,
 			is_cmd_for_active_queue);
+		goto vdev_error;
 	} else {
 		status = pdev_status;
 	}
@@ -201,7 +210,7 @@ pdev_error:
 		pdev_queue = wlan_serialization_get_pdev_queue_obj(
 				ser_pdev_obj, cmd_list->cmd.cmd_type);
 		vdev_id = wlan_vdev_get_id(cmd_list->cmd.vdev);
-		pdev_queue->vdev_active_cmd_bitmap |= (1 << vdev_id);
+		qdf_set_bit(vdev_id, pdev_queue->vdev_active_cmd_bitmap);
 
 		if (cmd_list->cmd.is_blocking)
 			pdev_queue->blocking_cmd_active = 1;
@@ -293,13 +302,13 @@ wlan_ser_move_non_scan_pending_to_active(
 		}
 
 		vdev_id = wlan_vdev_get_id(pending_cmd_list->cmd.vdev);
-		vdev_cmd_active =
-			pdev_queue->vdev_active_cmd_bitmap &
-			(1 << vdev_id);
+		vdev_cmd_active = qdf_test_bit(
+				vdev_id, pdev_queue->vdev_active_cmd_bitmap);
 
 		if (!vdev_queue_lookup) {
 			if (pending_cmd_list->cmd.is_blocking &&
-			    pdev_queue->vdev_active_cmd_bitmap) {
+			    wlan_serialization_any_vdev_cmd_active(
+					pdev_queue)) {
 				break;
 			}
 			if (vdev_cmd_active)
@@ -439,7 +448,7 @@ QDF_STATUS wlan_ser_remove_non_scan_cmd(
 			pdev_queue->blocking_cmd_active = 0;
 
 		vdev_id = wlan_vdev_get_id(cmd->vdev);
-		pdev_queue->vdev_active_cmd_bitmap &= ~(1 << vdev_id);
+		qdf_clear_bit(vdev_id, pdev_queue->vdev_active_cmd_bitmap);
 	}
 
 	status = QDF_STATUS_SUCCESS;
@@ -649,10 +658,14 @@ wlan_ser_cancel_non_scan_cmd(
 		if (is_active_queue) {
 			if (is_blocking)
 				pdev_q->blocking_cmd_active = 0;
-			pdev_q->vdev_active_cmd_bitmap &= ~(1 << vdev_id);
-			ser_debug("pdev_q->vdev_active_cmd_bitmap %x after reseting for vdev %d",
-				  pdev_q->vdev_active_cmd_bitmap,
+
+			qdf_clear_bit(vdev_id, pdev_q->vdev_active_cmd_bitmap);
+
+			ser_debug("active_cmd_bitmap after resetting vdev %d",
 				  vdev_id);
+			ser_debug_hex(pdev_q->vdev_active_cmd_bitmap,
+				      sizeof(pdev_q->vdev_active_cmd_bitmap));
+
 		} else {
 			if (is_blocking)
 				pdev_q->blocking_cmd_waiting--;
