@@ -100,6 +100,14 @@
 /* Schedule id counter mask in ppdu_id */
 #define SCH_ID_MASK 0xFF
 
+#define IEEE80211_IS_ZERO(_a)				\
+	((_a)[0] == 0x00 &&				\
+	 (_a)[1] == 0x00 &&				\
+	 (_a)[2] == 0x00 &&				\
+	 (_a)[3] == 0x00 &&				\
+	 (_a)[4] == 0x00 &&				\
+	 (_a)[5] == 0x00)
+
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 
 /**
@@ -3990,6 +3998,9 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 		ptr_mac_addr = &ppdu_info->nac_info.mac_addr2[0];
 		if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
 						    NULL, ptr_mac_addr))
+			return;
+
+		if (IEEE80211_IS_ZERO(ppdu_info->nac_info.mac_addr2))
 			return;
 
 		set_mpdu_info(&tx_capture_info,
