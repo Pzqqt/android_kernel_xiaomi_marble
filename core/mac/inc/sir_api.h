@@ -3335,6 +3335,7 @@ struct auto_shutdown_cmd {
 };
 #endif
 
+#ifdef WLAN_POWER_DEBUG
 /**
  * struct power_stats_response - Power stats response
  * @cumulative_sleep_time_ms: cumulative sleep time in ms
@@ -3354,6 +3355,7 @@ struct power_stats_response {
 	uint32_t num_debug_register;
 	uint32_t *debug_registers;
 };
+#endif
 
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
 #define MAX_BCNMISS_BITMAP 8

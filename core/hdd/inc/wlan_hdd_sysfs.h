@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -48,6 +48,7 @@ void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc);
  * Return: none
  */
 void hdd_sysfs_destroy_version_interface(void);
+#ifdef WLAN_POWER_DEBUG
 /**
  * hdd_sysfs_create_powerstats_interface() - create power_stats interface
  *
@@ -62,6 +63,17 @@ void hdd_sysfs_create_powerstats_interface(void);
 void hdd_sysfs_destroy_powerstats_interface(void);
 #else
 static inline
+void hdd_sysfs_create_powerstats_interface(void)
+{
+}
+
+static inline
+void hdd_sysfs_destroy_powerstats_interface(void)
+{
+}
+#endif /*End of WLAN_POWER_DEBUG */
+#else
+static inline
 void hdd_sysfs_create_driver_root_obj(void)
 {
 }
@@ -72,22 +84,22 @@ void hdd_sysfs_destroy_driver_root_obj(void)
 }
 
 static inline
-void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
-{
-}
-
-static inline
-void hdd_sysfs_destroy_version_interface(void)
-{
-}
-
-static inline
 void hdd_sysfs_create_powerstats_interface(void)
 {
 }
 
 static inline
 void hdd_sysfs_destroy_powerstats_interface(void)
+{
+}
+
+static inline
+void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline
+void hdd_sysfs_destroy_version_interface(void)
 {
 }
 #endif

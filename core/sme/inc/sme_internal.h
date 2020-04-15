@@ -299,9 +299,11 @@ struct sme_context {
 	link_layer_stats_cb link_layer_stats_cb;
 	void (*link_layer_stats_ext_cb)(hdd_handle_t callback_ctx,
 					tSirLLStatsResults *rsp);
+#ifdef WLAN_POWER_DEBUG
 	void *power_debug_stats_context;
 	void (*power_stats_resp_callback)(struct power_stats_response *rsp,
 						void *callback_context);
+#endif
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
 	void *beacon_stats_context;
 	void (*beacon_stats_resp_callback)(struct bcn_reception_stats_rsp *rsp,
