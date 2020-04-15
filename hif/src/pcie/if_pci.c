@@ -1004,6 +1004,11 @@ static void hif_pci_runtime_pm_warn(struct hif_pci_softc *sc, const char *msg)
 			       ctx->name, ctx->timeout);
 	}
 
+	if (qdf_is_fw_down()) {
+		hif_err("fw is down");
+		return;
+	}
+
 	QDF_DEBUG_PANIC("hif_pci_runtime_pm_warn");
 }
 
