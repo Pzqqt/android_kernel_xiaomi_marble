@@ -1346,74 +1346,62 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 }
 #endif
 
-/**
- * dp_srng_setup() - Internal function to setup SRNG rings used by data path
- * @soc: datapath soc handle
- * @srng: srng handle
- * @ring_type: ring that needs to be configured
- * @mac_id: mac number
- * @num_entries: Total number of entries for a given ring
+/*
+ * dp_srng_free() - Free SRNG memory
+ * @soc  : Data path soc handle
+ * @srng : SRNG pointer
  *
- * Return: non-zero - failure/zero - success
+ * return: None
  */
-static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
-			 int ring_type, int ring_num, int mac_id,
-			 uint32_t num_entries, bool cached)
+
+static void dp_srng_free(struct dp_soc *soc, struct dp_srng *srng)
+{
+	if (srng->alloc_size && srng->base_vaddr_unaligned) {
+		if (!srng->cached) {
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+						srng->alloc_size,
+						srng->base_vaddr_unaligned,
+						srng->base_paddr_unaligned, 0);
+		} else {
+			qdf_mem_free(srng->base_vaddr_unaligned);
+		}
+		srng->alloc_size = 0;
+		srng->base_vaddr_unaligned = NULL;
+	}
+	srng->hal_srng = NULL;
+}
+
+/*
+ * dp_srng_init() - Initialize SRNG
+ * @soc  : Data path soc handle
+ * @srng : SRNG pointer
+ * @ring_type : Ring Type
+ * @ring_num: Ring number
+ * @mac_id: mac_id
+ *
+ * return: QDF_STATUS
+ */
+static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
+			       int ring_type, int ring_num, int mac_id)
 {
 	hal_soc_handle_t hal_soc = soc->hal_soc;
-	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
-	/* TODO: See if we should get align size from hal */
-	uint32_t ring_base_align = 8;
 	struct hal_srng_params ring_params;
-	uint32_t max_entries = hal_srng_max_entries(hal_soc, ring_type);
 
-	/* TODO: Currently hal layer takes care of endianness related settings.
-	 * See if these settings need to passed from DP layer
-	 */
-	ring_params.flags = 0;
-
-	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
-	srng->hal_srng = NULL;
-	srng->alloc_size = num_entries * entry_size;
-	srng->num_entries = num_entries;
-
-	if (!dp_is_soc_reinit(soc)) {
-		if (!cached) {
-			ring_params.ring_base_vaddr =
-			    qdf_aligned_mem_alloc_consistent(
-						soc->osdev, &srng->alloc_size,
-						&srng->base_vaddr_unaligned,
-						&srng->base_paddr_unaligned,
-						&ring_params.ring_base_paddr,
-						ring_base_align);
-		} else {
-			ring_params.ring_base_vaddr = qdf_aligned_malloc(
-					&srng->alloc_size,
-					&srng->base_vaddr_unaligned,
-					&srng->base_paddr_unaligned,
-					&ring_params.ring_base_paddr,
-					ring_base_align);
-		}
-
-		if (!ring_params.ring_base_vaddr) {
-			dp_err("alloc failed - ring_type: %d, ring_num %d",
-					ring_type, ring_num);
-			return QDF_STATUS_E_NOMEM;
-		}
+	if (srng->hal_srng) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Ring type: %d, num:%d is already initialized"),
+			  ring_type, ring_num);
+		return QDF_STATUS_SUCCESS;
 	}
 
-	ring_params.ring_base_paddr = (qdf_dma_addr_t)qdf_align(
-			(unsigned long)(srng->base_paddr_unaligned),
-			ring_base_align);
+	/* memset the srng ring to zero */
+	qdf_mem_zero(srng->base_vaddr_unaligned, srng->alloc_size);
 
-	ring_params.ring_base_vaddr = (void *)(
-			(unsigned long)(srng->base_vaddr_unaligned) +
-			((unsigned long)(ring_params.ring_base_paddr) -
-			 (unsigned long)(srng->base_paddr_unaligned)));
+	ring_params.flags = 0;
+	ring_params.ring_base_paddr = srng->base_paddr_aligned;
+	ring_params.ring_base_vaddr = srng->base_vaddr_aligned;
 
-	qdf_assert_always(ring_params.ring_base_vaddr);
-
-	ring_params.num_entries = num_entries;
+	ring_params.num_entries = srng->num_entries;
 
 	dp_verbose_debug("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u",
 			 ring_type, ring_num,
@@ -1435,28 +1423,96 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 
 	dp_srng_configure_interrupt_thresholds(soc, &ring_params,
 					       ring_type, ring_num,
-					       num_entries);
+					       srng->num_entries);
 
-	if (cached) {
+	if (srng->cached)
 		ring_params.flags |= HAL_SRNG_CACHED_DESC;
-		srng->cached = 1;
-	}
 
 	srng->hal_srng = hal_srng_setup(hal_soc, ring_type, ring_num,
-		mac_id, &ring_params);
+					mac_id, &ring_params);
 
 	if (!srng->hal_srng) {
-		if (cached) {
-			qdf_mem_free(srng->base_vaddr_unaligned);
-		} else {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-						srng->alloc_size,
-						srng->base_vaddr_unaligned,
-						srng->base_paddr_unaligned, 0);
-		}
+		dp_srng_free(soc, srng);
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_srng_alloc() - Allocate memory for SRNG
+ * @soc  : Data path soc handle
+ * @srng : SRNG pointer
+ * @ring_type : Ring Type
+ * @num_entries: Number of entries
+ * @cached: cached flag variable
+ *
+ * return: QDF_STATUS
+ */
+static QDF_STATUS dp_srng_alloc(struct dp_soc *soc, struct dp_srng *srng,
+				int ring_type, uint32_t num_entries,
+				bool cached)
+{
+	hal_soc_handle_t hal_soc = soc->hal_soc;
+	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
+	uint32_t ring_base_align = 32;
+	uint32_t max_entries = hal_srng_max_entries(hal_soc, ring_type);
+
+	if (srng->base_vaddr_unaligned) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Ring type: %d, is already allocated"), ring_type);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
+	srng->hal_srng = NULL;
+	srng->alloc_size = num_entries * entry_size;
+	srng->num_entries = num_entries;
+	srng->cached = cached;
+
+	if (!cached) {
+		srng->base_vaddr_aligned =
+		    qdf_aligned_mem_alloc_consistent(
+					soc->osdev, &srng->alloc_size,
+					&srng->base_vaddr_unaligned,
+					&srng->base_paddr_unaligned,
+					&srng->base_paddr_aligned,
+					ring_base_align);
+	} else {
+		srng->base_vaddr_aligned = qdf_aligned_malloc(
+					&srng->alloc_size,
+					&srng->base_vaddr_unaligned,
+					&srng->base_paddr_unaligned,
+					&srng->base_paddr_aligned,
+					ring_base_align);
+	}
+
+	if (!srng->base_vaddr_aligned)
+		return QDF_STATUS_E_NOMEM;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_srng_setup() - Internal function to setup SRNG rings used by data path
+ * @soc: datapath soc handle
+ * @srng: srng handle
+ * @ring_type: ring that needs to be configured
+ * @mac_id: mac number
+ * @num_entries: Total number of entries for a given ring
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
+ */
+static QDF_STATUS dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
+				int ring_type, int ring_num, int mac_id,
+				uint32_t num_entries, bool cached)
+{
+	if (!dp_is_soc_reinit(soc)) {
+		if (dp_srng_alloc(soc, srng, ring_type, num_entries, cached))
+			return QDF_STATUS_E_FAILURE;
+	}
+
+	return dp_srng_init(soc, srng, ring_type, ring_num, mac_id);
 }
 
 /*
@@ -1488,35 +1544,11 @@ static void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
  * before calling this function.
  */
 static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
-	int ring_type, int ring_num)
+			    int ring_type, int ring_num)
 {
-	if (!dp_is_soc_reinit(soc)) {
-		if (!srng->hal_srng && (srng->alloc_size == 0)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL("Ring type: %d, num:%d not setup"),
-				  ring_type, ring_num);
-			return;
-		}
+	dp_srng_deinit(soc, srng, ring_type, ring_num);
 
-		if (srng->hal_srng) {
-			hal_srng_cleanup(soc->hal_soc, srng->hal_srng);
-			srng->hal_srng = NULL;
-		}
-	}
-
-	if (srng->alloc_size && srng->base_vaddr_unaligned) {
-		if (!srng->cached) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-						srng->alloc_size,
-						srng->base_vaddr_unaligned,
-						srng->base_paddr_unaligned, 0);
-		} else {
-			qdf_mem_free(srng->base_vaddr_unaligned);
-		}
-		srng->alloc_size = 0;
-		srng->base_vaddr_unaligned = NULL;
-	}
-	srng->hal_srng = NULL;
+	dp_srng_free(soc, srng);
 }
 
 /* TODO: Need this interface from HIF */
@@ -2468,28 +2500,24 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 	int i;
 	struct qdf_mem_multi_page_t *pages;
 
-	if (soc->wbm_idle_link_ring.hal_srng) {
-		wlan_minidump_remove(
-			soc->wbm_idle_link_ring.base_vaddr_unaligned);
-		dp_srng_cleanup(soc, &soc->wbm_idle_link_ring,
-			WBM_IDLE_LINK, 0);
-	}
+	wlan_minidump_remove(soc->wbm_idle_link_ring.base_vaddr_unaligned);
+	dp_srng_cleanup(soc, &soc->wbm_idle_link_ring, WBM_IDLE_LINK, 0);
 
 	for (i = 0; i < MAX_IDLE_SCATTER_BUFS; i++) {
 		if (soc->wbm_idle_scatter_buf_base_vaddr[i]) {
 			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				soc->wbm_idle_scatter_buf_size,
-				soc->wbm_idle_scatter_buf_base_vaddr[i],
-				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
+					soc->wbm_idle_scatter_buf_size,
+					soc->wbm_idle_scatter_buf_base_vaddr[i],
+					soc->wbm_idle_scatter_buf_base_paddr[i],
+					0);
 			soc->wbm_idle_scatter_buf_base_vaddr[i] = NULL;
 		}
 	}
 
 	pages = &soc->link_desc_pages;
-	wlan_minidump_remove(
-		(void *)pages->dma_pages->page_v_addr_start);
+	wlan_minidump_remove((void *)pages->dma_pages->page_v_addr_start);
 	qdf_mem_multi_pages_free(soc->osdev,
-				 pages, 0, false);
+			pages, 0, false);
 }
 
 #ifdef IPA_OFFLOAD
@@ -4163,7 +4191,41 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 
 }
 
+/**
+ * dp_mon_ring_deinit() - Deinitialize monitor rings
+ * @soc: DP soc handle
+ * @pdev: DP pdev handle
+ * mac_id: Mac ID
+ *
+ * Return: void
+ */
 #if !defined(DISABLE_MON_CONFIG)
+static
+void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
+			int mac_id)
+{
+	if (soc->wlan_cfg_ctx->rxdma1_enable) {
+		dp_srng_deinit(soc,
+			       &soc->rxdma_mon_buf_ring[mac_id],
+			       RXDMA_MONITOR_BUF, 0);
+
+		dp_srng_deinit(soc,
+			       &soc->rxdma_mon_dst_ring[mac_id],
+			       RXDMA_MONITOR_DST, 0);
+
+		dp_srng_deinit(soc,
+			       &soc->rxdma_mon_status_ring[mac_id],
+			       RXDMA_MONITOR_STATUS, 0);
+
+		dp_srng_deinit(soc,
+			       &soc->rxdma_mon_desc_ring[mac_id],
+			       RXDMA_MONITOR_DESC, 0);
+	} else {
+		dp_srng_deinit(soc,
+			       &soc->rxdma_mon_status_ring[mac_id],
+			       RXDMA_MONITOR_STATUS, 0);
+	}
+}
 
 static
 void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
@@ -4205,28 +4267,34 @@ void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
 				&soc->rxdma_err_dst_ring[mac_id],
 				RXDMA_DST, 0);
 	}
-
 }
 #else
-static void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
-				int mac_id)
-{
-}
-#endif
-
 /**
- * dp_mon_ring_deinit() - Placeholder to deinitialize Monitor rings
+ * dp_mon_ring_deinit() - Deinitialize monitor rings
+ * @soc: DP soc handle
+ * @pdev: DP pdev handle
+ * mac_id: Mac ID
  *
- * @soc: soc handle
- * @pdev: datapath physical dev handle
- * @mac_id: mac number
- *
- * Return: None
+ * Return: void
  */
 static void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
 			       int mac_id)
 {
 }
+
+/**
+ * dp_mon_ring_cleanup() - Cleanup all monitor rings
+ * @soc: DP soc handle
+ * @pdev: DP pdev handle
+ * mac_id: Mac ID
+ *
+ * Return: void
+ */
+static void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
+				int mac_id)
+{
+}
+#endif
 
 /**
  * dp_pdev_mem_reset() - Reset txrx pdev memory
@@ -4603,8 +4671,10 @@ static void dp_soc_deinit(void *txrx_soc)
 
 	dp_peer_find_detach(soc);
 
-	/* Free the ring memories */
+	/* de-initialize srng rings */
 	/* Common rings */
+	dp_srng_deinit(soc, &soc->wbm_idle_link_ring, WBM_IDLE_LINK, 0);
+
 	dp_srng_deinit(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
 
 	/* Tx data rings */

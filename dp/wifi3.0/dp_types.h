@@ -500,10 +500,24 @@ struct dp_txrx_pool_stats {
 	uint16_t pkt_drop_no_pool;
 };
 
+/**
+ * struct dp_srng - DP srng structure
+ * @hal_srng: hal_srng handle
+ * @base_vaddr_unaligned: un-aligned virtual base address of the srng ring
+ * @base_vaddr_aligned: aligned virtual base address of the srng ring
+ * @base_paddr_unaligned: un-aligned physical base address of the srng ring
+ * @base_paddr_aligned: aligned physical base address of the srng ring
+ * @alloc_size: size of the srng ring
+ * @cached: is the srng ring memory cached or un-cached memory
+ * @irq: irq number of the srng ring
+ * @num_entries: number of entries in the srng ring
+ */
 struct dp_srng {
 	hal_ring_handle_t hal_srng;
 	void *base_vaddr_unaligned;
+	void *base_vaddr_aligned;
 	qdf_dma_addr_t base_paddr_unaligned;
+	qdf_dma_addr_t base_paddr_aligned;
 	uint32_t alloc_size;
 	uint8_t cached;
 	int irq;
