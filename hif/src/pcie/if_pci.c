@@ -39,6 +39,7 @@
 #include <linux/seq_file.h>
 #include "qdf_status.h"
 #include "qdf_atomic.h"
+#include "qdf_platform.h"
 #include "pld_common.h"
 #include "mp_dev.h"
 #include "hif_debug.h"
@@ -1273,6 +1274,25 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
 	INIT_LIST_HEAD(&sc->prevent_suspend_list);
 }
 
+static void  hif_check_for_get_put_out_of_sync(struct hif_pci_softc *sc)
+{
+	int32_t i;
+	int32_t get_count, put_count;
+
+	if (qdf_is_fw_down())
+		return;
+
+	for (i = 0; i < RTPM_ID_MAX; i++) {
+		get_count = qdf_atomic_read(&sc->pm_stats.runtime_get_dbgid[i]);
+		put_count = qdf_atomic_read(&sc->pm_stats.runtime_put_dbgid[i]);
+		if (get_count != put_count) {
+			QDF_DEBUG_PANIC("%s get-put out of sync. get %d put %d",
+					rtpm_string_from_dbgid(i),
+					get_count, put_count);
+		}
+	}
+}
+
 /**
  * hif_pm_runtime_sanitize_on_exit(): sanitize the pm usage count and state
  * @sc: pci context
@@ -1288,6 +1308,8 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
 static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 {
 	struct hif_pm_runtime_lock *ctx, *tmp;
+
+	hif_check_for_get_put_out_of_sync(sc);
 
 	if (atomic_read(&sc->dev->power.usage_count) != 2)
 		hif_pci_runtime_pm_warn(sc, "Driver Module Closing");
