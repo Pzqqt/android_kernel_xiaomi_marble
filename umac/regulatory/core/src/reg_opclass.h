@@ -294,7 +294,7 @@ uint8_t reg_dmn_get_opclass_from_freq_width(uint8_t *country,
 }
 
 static inline
-uint8_t reg_get_band_cap_from_op_class(uint8_t *country,
+uint8_t reg_get_band_cap_from_op_class(const uint8_t *country,
 				       uint8_t num_of_opclass,
 				       const uint8_t *opclass)
 {
