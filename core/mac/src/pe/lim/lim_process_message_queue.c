@@ -874,7 +874,7 @@ static QDF_STATUS lim_allocate_and_get_bcn(
 	tSchBeaconStruct *bcn_l = NULL;
 	cds_pkt_t *pkt_l = NULL;
 
-	pkt_l = qdf_mem_malloc(sizeof(cds_pkt_t));
+	pkt_l = qdf_mem_malloc_atomic(sizeof(cds_pkt_t));
 	if (!pkt_l)
 		return QDF_STATUS_E_FAILURE;
 
@@ -885,7 +885,7 @@ static QDF_STATUS lim_allocate_and_get_bcn(
 		goto free;
 	}
 
-	bcn_l = qdf_mem_malloc(sizeof(tSchBeaconStruct));
+	bcn_l = qdf_mem_malloc_atomic(sizeof(tSchBeaconStruct));
 	if (!bcn_l)
 		goto free;
 

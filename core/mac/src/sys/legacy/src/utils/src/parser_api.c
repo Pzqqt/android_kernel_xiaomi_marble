@@ -4172,7 +4172,7 @@ sir_convert_beacon_frame2_struct(struct mac_context *mac,
 	/* Zero-init our [out] parameter, */
 	qdf_mem_zero((uint8_t *) pBeaconStruct, sizeof(tSirProbeRespBeacon));
 
-	pBeacon = qdf_mem_malloc(sizeof(tDot11fBeacon));
+	pBeacon = qdf_mem_malloc_atomic(sizeof(tDot11fBeacon));
 	if (!pBeacon)
 		return QDF_STATUS_E_NOMEM;
 
