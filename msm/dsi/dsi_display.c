@@ -5967,6 +5967,10 @@ void dsi_display_adjust_mode_timing(
 {
 	u64 new_htotal, new_vtotal, htotal, vtotal, old_htotal, div;
 
+	/* Constant FPS is not supported on command mode */
+	if (dsi_mode->panel_mode == DSI_OP_CMD_MODE)
+		return;
+
 	if (!dyn_clk_caps->maintain_const_fps)
 		return;
 	/*
