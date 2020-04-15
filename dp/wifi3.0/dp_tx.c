@@ -1238,6 +1238,8 @@ ring_access_fail:
 				   RTPM_ID_DW_TX_HW_ENQUEUE);
 	} else {
 		dp_tx_hal_ring_access_end_reap(soc, hal_ring_hdl);
+		hal_srng_set_event(hal_ring_hdl, HAL_SRNG_FLUSH_EVENT);
+		hal_srng_inc_flush_cnt(hal_ring_hdl);
 	}
 
 	return status;
