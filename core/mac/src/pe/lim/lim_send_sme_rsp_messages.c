@@ -307,7 +307,7 @@ static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 
 		if (mac_ctx->roam.configParam.is_force_1x1 &&
 		    is_vendor_ap_1_present && (session_entry->nss == 2) &&
-		    (mac_ctx->lteCoexAntShare == 0 ||
+		    (!mac_ctx->mlme_cfg->gen.as_enabled ||
 		     wlan_reg_is_5ghz_ch_freq(session_entry->curr_op_freq))) {
 			/* SET vdev param */
 			pe_debug("sending SMPS intolrent vdev_param");

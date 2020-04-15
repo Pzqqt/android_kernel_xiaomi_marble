@@ -15869,7 +15869,8 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (is_vendor_ap_present &&
 		    !policy_mgr_is_hw_dbs_2x2_capable(mac->psoc) &&
 		    ((mac->roam.configParam.is_force_1x1 ==
-		    FORCE_1X1_ENABLED_FOR_AS && mac->lteCoexAntShare) ||
+		    FORCE_1X1_ENABLED_FOR_AS &&
+		    mac->mlme_cfg->gen.as_enabled) ||
 		    mac->roam.configParam.is_force_1x1 ==
 		    FORCE_1X1_ENABLED_FORCED)) {
 			pSession->supported_nss_1x1 = true;
@@ -15908,7 +15909,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 					       &vendor_ap_search_attr,
 					       ACTION_OUI_SWITCH_TO_11N_MODE);
 		if (mac->roam.configParam.is_force_1x1 &&
-		    mac->lteCoexAntShare &&
+		    mac->mlme_cfg->gen.as_enabled &&
 		    is_vendor_ap_present &&
 		    (dot11mode == MLME_DOT11_MODE_ALL ||
 		     dot11mode == MLME_DOT11_MODE_11AC ||

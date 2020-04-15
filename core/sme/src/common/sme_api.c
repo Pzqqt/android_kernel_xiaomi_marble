@@ -4010,7 +4010,7 @@ sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 	 * If target supports Antenna sharing, set NSS to 1 for 2.4GHz band for
 	 * NDI vdev.
 	 */
-	if (device_mode == QDF_NDI_MODE && mac_ctx->lteCoexAntShare &&
+	if (device_mode == QDF_NDI_MODE && mac_ctx->mlme_cfg->gen.as_enabled &&
 	    band == NSS_CHAINS_BAND_2GHZ)
 		max_supported_nss = NSS_1x1_MODE;
 
@@ -12779,7 +12779,6 @@ void sme_update_tgt_services(mac_handle_t mac_handle,
 
 	mac_ctx->obss_scan_offload = cfg->obss_scan_offload;
 	sme_debug("obss_scan_offload: %d", mac_ctx->obss_scan_offload);
-	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
 	mac_ctx->mlme_cfg->gen.as_enabled = cfg->lte_coex_ant_share;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
 	mac_ctx->pmf_offload = cfg->pmf_offload;

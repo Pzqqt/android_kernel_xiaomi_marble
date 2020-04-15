@@ -774,7 +774,6 @@ struct mac_context {
 	struct csr_roamstruct roam;
 	tRrmContext rrm;
 	uint8_t isCoalesingInIBSSAllowed;
-	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
 	bool pmf_offload;
 	bool is_fils_roaming_supported;
