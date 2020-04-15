@@ -514,8 +514,11 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 	ppdu_type = ppdu->u.ppdu_type;
 
 	for (i = 0; i < ppdu->num_users; i++) {
+		peer = NULL;
 		ppdu_user = &ppdu->user[i];
-		peer = dp_peer_find_by_id(soc, ppdu_user->peer_id);
+		if (ppdu_user->peer_id != HTT_INVALID_PEER)
+			peer = dp_peer_find_hash_find(soc, ppdu_user->mac_addr,
+						      0, ppdu_user->vdev_id);
 
 		if (!peer)
 			peer = pdev->invalid_peer;
@@ -687,7 +690,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 				     &peer->stats, ppdu->peer_id,
 				     UPDATE_PEER_STATS, pdev->pdev_id);
 #endif
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 }
 #endif
