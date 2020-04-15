@@ -17120,13 +17120,8 @@ QDF_STATUS csr_prepare_vdev_delete(struct mac_context *mac_ctx,
 					 vdev_id);
 	}
 
-	/*
-	 * Flush only scan commands. Non scan commands should go in sequence
-	 * as expected by firmware and should not be flushed.
-	 */
-	csr_purge_vdev_all_scan_ser_cmd_list(mac_ctx, vdev_id);
-	/* Flush all the pending commands */
-	csr_purge_vdev_pending_ser_cmd_list(mac_ctx, vdev_id);
+	/* Flush all the commands for vdev */
+	wlan_serialization_purge_all_cmd_by_vdev_id(mac_ctx->pdev, vdev_id);
 	if (!mac_ctx->session_close_cb) {
 		sme_err("no close session callback registered");
 		return QDF_STATUS_E_FAILURE;
