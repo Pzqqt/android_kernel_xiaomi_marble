@@ -524,8 +524,11 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->limRFBand = lim_get_rf_band(ft_session->curr_op_freq);
 
 	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct);
-
 	pe_debug("dot11mode: %d", ft_session->dot11mode);
+
+	if (IS_DOT11_MODE_HE(ft_session->dot11mode))
+		lim_update_session_he_capable(mac, ft_session);
+
 	ft_session->vhtCapability =
 		(IS_DOT11_MODE_VHT(ft_session->dot11mode)
 		 && IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps));
