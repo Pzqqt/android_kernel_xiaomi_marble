@@ -411,13 +411,13 @@ enum {
 };
 
 /** VDC sub-blocks/features
- * @SDE_VDC_HW_REV_1_1         vdc block supports vdc 1.1 only
+ * @SDE_VDC_HW_REV_1_2         vdc block supports vdc 1.2 only
  * @SDE_VDC_ENC                vdc encoder sub block
  * @SDE_VDC_CTL                 vdc ctl sub block
  * @SDE_VDC_MAX
  */
 enum {
-	SDE_VDC_HW_REV_1_1,
+	SDE_VDC_HW_REV_1_2,
 	SDE_VDC_ENC,
 	SDE_VDC_CTL,
 	SDE_VDC_MAX

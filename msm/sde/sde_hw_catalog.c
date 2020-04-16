@@ -3060,10 +3060,10 @@ static int sde_vdc_parse_dt(struct device_node *np,
 
 	rc = of_property_read_string(np, vdc_prop[VDC_REV].prop_name, &rev);
 	if ((rc == -EINVAL) || (rc == -ENODATA)) {
-		vdc_rev = SDE_VDC_HW_REV_1_1;
+		vdc_rev = SDE_VDC_HW_REV_1_2;
 		rc = 0;
-	} else if (!rc && !strcmp(rev, "vdc_1_1")) {
-		vdc_rev = SDE_VDC_HW_REV_1_1;
+	} else if (!rc && !strcmp(rev, "vdc_1_2")) {
+		vdc_rev = SDE_VDC_HW_REV_1_2;
 		rc = 0;
 	} else {
 		SDE_ERROR("invalid vdc configuration\n");
@@ -3102,7 +3102,7 @@ static int sde_vdc_parse_dt(struct device_node *np,
 			VDC_CTL, i);
 		sblk->ctl.len = PROP_VALUE_ACCESS(prop_value,
 			VDC_CTL_LEN, 0);
-		set_bit(SDE_VDC_HW_REV_1_1, &vdc->features);
+		set_bit(vdc_rev, &vdc->features);
 	}
 
 end:

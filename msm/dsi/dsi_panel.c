@@ -2466,7 +2466,7 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 	rc = utils->read_u32(utils->data, "qcom,vdc-version", &data);
 	if (rc) {
 		priv_info->vdc.version_major = 0x1;
-		priv_info->vdc.version_minor = 0x1;
+		priv_info->vdc.version_minor = 0x2;
 		priv_info->vdc.version_release = 0x0;
 		rc = 0;
 	} else {
@@ -2477,7 +2477,7 @@ static int dsi_panel_parse_vdc_params(struct dsi_display_mode *mode,
 		priv_info->vdc.version_minor = data & 0x0F;
 		if ((priv_info->vdc.version_major != 0x1) &&
 				((priv_info->vdc.version_minor
-				  != 0x1))) {
+				  != 0x2))) {
 			DSI_ERR("%s:unsupported major:%d minor:%d version\n",
 					__func__,
 					priv_info->vdc.version_major,
