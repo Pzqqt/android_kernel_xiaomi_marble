@@ -283,6 +283,8 @@ static int wcd938x_init_reg(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component, WCD938X_SLEEP_CTL, 0x0E,
 				((snd_soc_component_read32(component,
 				WCD938X_DIGITAL_EFUSE_REG_30) & 0x07) << 1));
+	snd_soc_component_update_bits(component,
+				WCD938X_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
 
 	return 0;
 }
