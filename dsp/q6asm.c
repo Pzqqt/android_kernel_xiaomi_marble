@@ -145,24 +145,6 @@ struct generic_get_data_ {
 };
 static struct generic_get_data_ *generic_get_data;
 
-#ifdef CONFIG_DEBUG_FS
-#define OUT_BUFFER_SIZE 56
-#define IN_BUFFER_SIZE 24
-
-static struct timeval out_cold_tv;
-static struct timeval out_warm_tv;
-static struct timeval out_cont_tv;
-static struct timeval in_cont_tv;
-static long out_enable_flag;
-static long in_enable_flag;
-static struct dentry *out_dentry;
-static struct dentry *in_dentry;
-static int in_cont_index;
-/*This var is used to keep track of first write done for cold output latency */
-static int out_cold_index;
-static char *out_buffer;
-static char *in_buffer;
-
 static uint32_t adsp_reg_event_opcode[] = {
 	ASM_STREAM_CMD_REGISTER_PP_EVENTS,
 	ASM_STREAM_CMD_REGISTER_ENCDEC_EVENTS,
@@ -194,18 +176,11 @@ static int is_adsp_raise_event(uint32_t cmd)
 	}
 	return -EINVAL;
 }
-
 static inline void q6asm_set_flag_in_token(union asm_token_struct *asm_token,
 					   int flag, int flag_offset)
 {
 	if (flag)
 		ASM_SET_BIT(asm_token->_token.flags, flag_offset);
-}
-
-static inline int q6asm_get_flag_from_token(union asm_token_struct *asm_token,
-					    int flag_offset)
-{
-	return ASM_TEST_BIT(asm_token->_token.flags, flag_offset);
 }
 
 static inline void q6asm_update_token(u32 *token, u8 session_id, u8 stream_id,
@@ -222,7 +197,6 @@ static inline void q6asm_update_token(u32 *token, u8 session_id, u8 stream_id,
 				  ASM_CMD_NO_WAIT_OFFSET);
 	*token = asm_token.token;
 }
-
 static inline uint32_t q6asm_get_pcm_format_id(uint32_t media_format_block_ver)
 {
 	uint32_t pcm_format_id;
@@ -244,7 +218,6 @@ static inline uint32_t q6asm_get_pcm_format_id(uint32_t media_format_block_ver)
 	}
 	return pcm_format_id;
 }
-
 /*
  * q6asm_get_buf_index_from_token:
  *       Retrieve buffer index from token.
@@ -260,7 +233,6 @@ uint8_t q6asm_get_buf_index_from_token(uint32_t token)
 	return asm_token._token.buf_index;
 }
 EXPORT_SYMBOL(q6asm_get_buf_index_from_token);
-
 /*
  * q6asm_get_stream_id_from_token:
  *       Retrieve stream id from token.
@@ -276,6 +248,31 @@ uint8_t q6asm_get_stream_id_from_token(uint32_t token)
 	return asm_token._token.stream_id;
 }
 EXPORT_SYMBOL(q6asm_get_stream_id_from_token);
+
+static inline int q6asm_get_flag_from_token(union asm_token_struct *asm_token,
+					    int flag_offset)
+{
+	return ASM_TEST_BIT(asm_token->_token.flags, flag_offset);
+}
+
+
+#ifdef CONFIG_DEBUG_FS
+#define OUT_BUFFER_SIZE 56
+#define IN_BUFFER_SIZE 24
+
+static struct timeval out_cold_tv;
+static struct timeval out_warm_tv;
+static struct timeval out_cont_tv;
+static struct timeval in_cont_tv;
+static long out_enable_flag;
+static long in_enable_flag;
+static struct dentry *out_dentry;
+static struct dentry *in_dentry;
+static int in_cont_index;
+/*This var is used to keep track of first write done for cold output latency */
+static int out_cold_index;
+static char *out_buffer;
+static char *in_buffer;
 
 static int audio_output_latency_dbgfs_open(struct inode *inode,
 							struct file *file)
@@ -553,7 +550,8 @@ static void config_debug_fs_write_cb(void)
 static void config_debug_fs_init(void)
 {
 }
-#endif
+
+#endif /*CONFIG_DEBUG_FS*/
 
 int q6asm_mmap_apr_dereg(void)
 {

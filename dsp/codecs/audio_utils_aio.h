@@ -218,4 +218,14 @@ int enable_volume_ramp(struct q6audio_aio *audio);
 int audio_aio_debug_open(struct inode *inode, struct file *file);
 ssize_t audio_aio_debug_read(struct file *file, char __user *buf,
 			size_t count, loff_t *ppos);
+#else
+static inline int audio_aio_debug_open(struct inode *inode, struct file *file)
+{
+       return 0;
+}
+static inline ssize_t audio_aio_debug_read(struct file *file, char __user *buf,
+                       size_t count, loff_t *ppos)
+{
+       return 0;
+}
 #endif
