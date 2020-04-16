@@ -75,10 +75,6 @@ struct dbr_module_config;
 #include "wlan_tdls_public_structs.h"
 #endif
 
-#ifdef QCA_SUPPORT_CP_STATS
-#include <wlan_cp_stats_mc_defs.h>
-#endif /* QCA_SUPPORT_CP_STATS */
-
 #include <wlan_vdev_mgr_tgt_if_tx_defs.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 
@@ -87,6 +83,28 @@ struct dbr_module_config;
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
+
+/**
+ * typedef cp_stats_event - Definition of cp stats event
+ * Define stats_event from external cp stats component to cp_stats_event
+ */
+typedef struct stats_event cp_stats_event;
+/**
+ * typedef stats_request_type - Definition of stats_req_type enum
+ * Define stats_req_type from external cp stats component to stats_request_type
+ */
+typedef enum stats_req_type stats_request_type;
+/**
+ * typedef stats_req_info - Definition of cp stats req info
+ * Define request_info from external cp stats component to stats_req_info
+ */
+typedef struct request_info stats_req_info;
+/**
+ * typedef stats_wake_lock - Definition of cp stats wake lock
+ * Define wake_lock_stats from external cp stats component to stats_wake_lock
+ */
+typedef struct wake_lock_stats stats_wake_lock;
+
 /**
  * struct wlan_lmac_if_cp_stats_tx_ops - defines southbound tx callbacks for
  * control plane statistics component
@@ -96,14 +114,12 @@ struct dbr_module_config;
 struct wlan_lmac_if_cp_stats_tx_ops {
 	QDF_STATUS (*cp_stats_attach)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*cp_stats_detach)(struct wlan_objmgr_psoc *posc);
-#ifdef CONFIG_MCL
 	void (*inc_wake_lock_stats)(uint32_t reason,
-				    struct wake_lock_stats *stats,
+				    stats_wake_lock *stats,
 				    uint32_t *unspecified_wake_count);
 	QDF_STATUS (*send_req_stats)(struct wlan_objmgr_psoc *psoc,
 				     enum stats_req_type type,
-				     struct request_info *req);
-#endif
+				     stats_req_info *req);
 };
 
 /**
@@ -113,10 +129,8 @@ struct wlan_lmac_if_cp_stats_tx_ops {
  */
 struct wlan_lmac_if_cp_stats_rx_ops {
 	QDF_STATUS (*cp_stats_rx_event_handler)(struct wlan_objmgr_vdev *vdev);
-#ifdef CONFIG_MCL
 	QDF_STATUS (*process_stats_event)(struct wlan_objmgr_psoc *psoc,
-					  struct stats_event *ev);
-#endif
+					  cp_stats_event *ev);
 };
 #endif
 

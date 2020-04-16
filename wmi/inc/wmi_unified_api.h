@@ -33,6 +33,9 @@
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 #include "wmi_unified_pmo_api.h"
 #endif
+#ifdef WLAN_FEATURE_MIB_STATS
+#include "wlan_cp_stats_mc_defs.h"
+#endif
 #include "wlan_scan_public_structs.h"
 #ifdef WLAN_FEATURE_ACTION_OUI
 #include "wlan_action_oui_public_struct.h"
