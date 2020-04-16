@@ -2338,6 +2338,13 @@ static QDF_STATUS sap_fsm_state_init(struct sap_context *sap_ctx,
 		if (!QDF_IS_STATUS_ERROR(qdf_status))
 			sap_err("sap_goto_starting failed");
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
+		if (sap_ctx->is_chan_change_inprogress) {
+			sap_ctx->is_chan_change_inprogress = false;
+			sap_signal_hdd_event(sap_ctx,
+					     NULL,
+					     eSAP_CHANNEL_CHANGE_EVENT,
+					     (void *)eSAP_STATUS_SUCCESS);
+		}
 		qdf_status = sap_fsm_cac_start(sap_ctx, mac_ctx, mac_handle);
 	} else {
 		sap_err("in state %s, event msg %d", "SAP_INIT", msg);
