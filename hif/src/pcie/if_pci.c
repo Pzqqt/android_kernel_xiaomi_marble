@@ -1178,6 +1178,8 @@ static void hif_runtime_exit(struct device *dev)
 {
 	pm_runtime_get_noresume(dev);
 	pm_runtime_set_active(dev);
+	/* Symmetric call to make sure default usage count == 2 */
+	pm_runtime_forbid(dev);
 }
 
 static void hif_pm_runtime_lock_timeout_fn(void *data);
@@ -1244,7 +1246,6 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 
 	hif_runtime_pm_debugfs_remove(sc);
 	qdf_timer_free(&sc->runtime_timer);
-	/* doesn't wait for penting trafic unlike cld-2.0 */
 }
 
 /**
@@ -1288,8 +1289,8 @@ static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 {
 	struct hif_pm_runtime_lock *ctx, *tmp;
 
-	if (atomic_read(&sc->dev->power.usage_count) != 1)
-		hif_pci_runtime_pm_warn(sc, "Driver UnLoaded");
+	if (atomic_read(&sc->dev->power.usage_count) != 2)
+		hif_pci_runtime_pm_warn(sc, "Driver Module Closing");
 	else
 		return;
 
@@ -1301,14 +1302,14 @@ static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 	}
 	spin_unlock_bh(&sc->runtime_lock);
 
-	/* ensure 1 and only 1 usage count so that when the wlan
-	 * driver is re-insmodded runtime pm won't be
-	 * disabled also ensures runtime pm doesn't get
-	 * broken on by being less than 1.
+	/* Since default usage count is 2 so ensure 2 and only 2 usage count
+	 * when exit so that when the WLAN driver module is re-enabled runtime
+	 * PM won't be disabled also ensures runtime PM doesn't get broken on
+	 * by being less than 2.
 	 */
-	if (atomic_read(&sc->dev->power.usage_count) <= 0)
-		atomic_set(&sc->dev->power.usage_count, 1);
-	while (atomic_read(&sc->dev->power.usage_count) > 1)
+	if (atomic_read(&sc->dev->power.usage_count) <= 1)
+		atomic_set(&sc->dev->power.usage_count, 2);
+	while (atomic_read(&sc->dev->power.usage_count) > 2)
 		hif_pm_runtime_put_auto(sc->dev);
 }
 
@@ -1345,10 +1346,6 @@ static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 
 	qdf_runtime_lock_deinit(&sc->prevent_linkdown_lock);
-	if (qdf_atomic_read(&sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE)
-		return;
-
-	hif_pm_runtime_stop(sc);
 
 	hif_is_recovery_in_progress(scn) ?
 		hif_pm_runtime_sanitize_on_ssr_exit(sc) :
