@@ -55,9 +55,9 @@ process_offload_pktlog_wifi3(struct cdp_pdev *pdev, void *data)
 			ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
 	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
 
-	pl_hdr.type_specific_data = *(pl_tgt_hdr +
-				    ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
-
+	pktlog_hdr_set_specific_data(&pl_hdr,
+				     *(pl_tgt_hdr +
+				     ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET));
 	if (pl_hdr.size > MAX_PKTLOG_RECV_BUF_SIZE) {
 		pl_dev->invalid_packets++;
 		return A_ERROR;
