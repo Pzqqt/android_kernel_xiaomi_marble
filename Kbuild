@@ -1655,24 +1655,27 @@ WIFI_POS_OBJS := $(WIFI_POS_CORE_DIR)/wifi_pos_api.o \
 endif
 
 ###### CP STATS ########
-CP_STATS_OS_IF_SRC      := $(WLAN_COMMON_ROOT)/os_if/linux/cp_stats/src
-CP_STATS_TGT_SRC        := $(WLAN_COMMON_ROOT)/target_if/cp_stats/src
-CP_STATS_CORE_SRC       := $(WLAN_COMMON_ROOT)/umac/cp_stats/core/src
-CP_STATS_DISPATCHER_SRC := $(WLAN_COMMON_ROOT)/umac/cp_stats/dispatcher/src
+CP_MC_STATS_OS_IF_SRC           := os_if/cp_stats/src
+CP_STATS_TGT_SRC                := $(WLAN_COMMON_ROOT)/target_if/cp_stats/src
+CP_STATS_CORE_SRC               := $(WLAN_COMMON_ROOT)/umac/cp_stats/core/src
+CP_STATS_DISPATCHER_SRC         := $(WLAN_COMMON_ROOT)/umac/cp_stats/dispatcher/src
+CP_MC_STATS_COMPONENT_SRC       := components/cp_stats/dispatcher/src
+CP_MC_STATS_COMPONENT_TGT_SRC   := $(CLD_TARGET_IF_DIR)/cp_stats/src
 
-CP_STATS_OS_IF_INC      := -I$(WLAN_COMMON_INC)/os_if/linux/cp_stats/inc
-CP_STATS_TGT_INC        := -I$(WLAN_COMMON_INC)/target_if/cp_stats/inc
-CP_STATS_DISPATCHER_INC := -I$(WLAN_COMMON_INC)/umac/cp_stats/dispatcher/inc
+CP_STATS_OS_IF_INC              := -I$(WLAN_COMMON_INC)/os_if/linux/cp_stats/inc
+CP_STATS_TGT_INC                := -I$(WLAN_COMMON_INC)/target_if/cp_stats/inc
+CP_STATS_DISPATCHER_INC         := -I$(WLAN_COMMON_INC)/umac/cp_stats/dispatcher/inc
+CP_MC_STATS_COMPONENT_INC       := -I$(WLAN_ROOT)/components/cp_stats/dispatcher/inc
 
 ifeq ($(CONFIG_CP_STATS), y)
-CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
-		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_comp_handler.o           \
-		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_obj_mgr_handler.o        \
-		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_ol_api.o                 \
-		 $(CP_STATS_OS_IF_SRC)/wlan_cfg80211_mc_cp_stats.o           \
-		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o        \
-		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_tgt_api.o       \
-		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_mc_ucfg_api.o
+CP_STATS_OBJS := $(CP_MC_STATS_COMPONENT_SRC)/wlan_cp_stats_mc_tgt_api.o	\
+		 $(CP_MC_STATS_COMPONENT_SRC)/wlan_cp_stats_mc_ucfg_api.o	\
+		 $(CP_MC_STATS_COMPONENT_TGT_SRC)/target_if_mc_cp_stats.o	\
+		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_comp_handler.o		\
+		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_obj_mgr_handler.o		\
+		 $(CP_STATS_CORE_SRC)/wlan_cp_stats_ol_api.o			\
+		 $(CP_MC_STATS_OS_IF_SRC)/wlan_cfg80211_mc_cp_stats.o		\
+		 $(CP_STATS_DISPATCHER_SRC)/wlan_cp_stats_utils_api.o
 endif
 
 ###### DCS ######
@@ -1690,9 +1693,6 @@ DCS_OBJS := $(DCS_TGT_IF_SRC)/target_if_dcs.o \
 	$(DCS_DISP_SRC)/wlan_dcs_ucfg_api.o \
 	$(DCS_DISP_SRC)/wlan_dcs_tgt_api.o
 endif
-
-###### COMPONENT CP STATS ########
-COMP_CP_STATS_DISPATCHER_INC := -I$(WLAN_ROOT)/components/cp_stats/dispatcher/inc
 
 ###### INTEROP ISSUES AP ########
 INTEROP_ISSUES_AP_OS_IF_SRC      := os_if/interop_issues_ap/src
@@ -2136,7 +2136,7 @@ INCS +=		$(WIFI_POS_OS_IF_INC)
 INCS +=		$(CP_STATS_OS_IF_INC)
 INCS +=		$(CP_STATS_TGT_INC)
 INCS +=		$(CP_STATS_DISPATCHER_INC)
-INCS += 	$(COMP_CP_STATS_DISPATCHER_INC)
+INCS +=		$(CP_MC_STATS_COMPONENT_INC)
 ################ Dynamic ACS ####################
 INCS +=		$(DCS_TGT_IF_INC)
 INCS +=		$(DCS_DISP_INC)
