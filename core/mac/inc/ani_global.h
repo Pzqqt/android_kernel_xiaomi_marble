@@ -104,6 +104,10 @@ static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 #define HIGH_SEQ_NUM_OFFSET                             4
 #define DEF_HE_AUTO_SGI_LTF                             0x0F07
 
+#define PMF_WEP_DISABLE 2
+#define PMF_INCORRECT_KEY 1
+#define PMF_CORRECT_KEY 0
+
 /**
  * enum log_event_type - Type of event initiating bug report
  * @WLAN_LOG_TYPE_NON_FATAL: Non fatal event
@@ -797,6 +801,7 @@ struct mac_context {
 	bool he_om_ctrl_cfg_tx_nsts_set;
 	uint8_t he_om_ctrl_cfg_tx_nsts;
 	bool he_om_ctrl_ul_mu_data_dis;
+	uint8_t is_usr_cfg_pmf_wep;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;

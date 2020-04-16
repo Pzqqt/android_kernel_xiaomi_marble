@@ -2606,6 +2606,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	mgmt_param.use_6mbps = use_6mbps;
 	mgmt_param.tx_type = tx_frm_index;
+	if (tx_flag & HAL_USE_INCORRECT_KEY_PMF)
+		mgmt_param.tx_flags |= MGMT_TX_USE_INCORRECT_KEY;
 
 	/*
 	 * Update the tx_params TLV only for rates

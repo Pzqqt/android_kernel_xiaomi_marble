@@ -3354,7 +3354,13 @@ lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 	/* Prepare the BSSID */
 	sir_copy_mac_addr(pMacHdr->bssId, pe_session->bssId);
 
-	lim_set_protected_bit(mac, pe_session, peer, pMacHdr);
+	if (mac->is_usr_cfg_pmf_wep != PMF_WEP_DISABLE)
+		lim_set_protected_bit(mac, pe_session, peer, pMacHdr);
+	else
+		pe_debug("Skip WEP bit setting per usr cfg");
+
+	if (mac->is_usr_cfg_pmf_wep == PMF_INCORRECT_KEY)
+		txFlag |= HAL_USE_INCORRECT_KEY_PMF;
 
 	nStatus = dot11f_pack_disassociation(mac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),

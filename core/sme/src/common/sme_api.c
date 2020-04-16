@@ -15147,6 +15147,13 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
 	return true;
 }
 
+void sme_set_pmf_wep_cfg(mac_handle_t mac_handle, uint8_t pmf_wep)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	mac_ctx->is_usr_cfg_pmf_wep = pmf_wep;
+}
+
 void sme_set_amsdu(mac_handle_t mac_handle, bool enable)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -15257,6 +15264,7 @@ void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed to set enable bcast probe resp in FW, %d",
 			status);
+	mac_ctx->is_usr_cfg_pmf_wep = PMF_CORRECT_KEY;
 }
 #endif
 

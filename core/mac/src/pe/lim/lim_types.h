@@ -113,6 +113,9 @@
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40      /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_PEER_STA_REQUESTED_MASK   0x80  /* bit 7 will be used to control frames for p2p interface */
 #define HAL_USE_PMF   0x20
+#define HAL_USE_INCORRECT_KEY_PMF   0x10
+
+#define MGMT_TX_USE_INCORRECT_KEY   BIT(0)
 
 #define LIM_DOS_PROTECTION_TIME 1000 //1000ms
 #define LIM_MIN_RSSI 0 /* 0dbm */

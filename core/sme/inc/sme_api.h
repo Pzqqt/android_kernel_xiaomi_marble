@@ -3584,6 +3584,15 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
  */
 void sme_set_amsdu(mac_handle_t mac_handle, bool enable);
 
+/**
+ * sme_set_pmf_wep_cfg() - set user cfg for PMF setting
+ * @mac_handle: Opaque handle to the global MAC context
+ * @pmf_wep_cfg: PMF configuration
+ *
+ * Return: None
+ */
+void sme_set_pmf_wep_cfg(mac_handle_t mac_handle, uint8_t pmf_wep_cfg);
+
 #ifdef WLAN_FEATURE_11AX
 void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id);
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id);

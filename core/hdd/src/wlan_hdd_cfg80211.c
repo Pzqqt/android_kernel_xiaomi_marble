@@ -6902,6 +6902,10 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_NESTED},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TWT_REQ_SUPPORT] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_PMF_PROTECTION] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX] = {
+			.type = NLA_FLAG},
 };
 
 /**
@@ -9304,6 +9308,8 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
 	uint32_t cmd_id;
+	struct hdd_station_ctx *hdd_sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_enter_dev(dev);
 
@@ -9901,8 +9907,6 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_TWT_TERMINATE]) {
 		struct wmi_twt_del_dialog_param params = {0};
-		struct hdd_station_ctx *hdd_sta_ctx =
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		if ((adapter->device_mode != QDF_STA_MODE &&
 		     adapter->device_mode != QDF_P2P_CLIENT_MODE) ||
@@ -9934,6 +9938,21 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 							cfg_val);
 	}
 
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_PMF_PROTECTION;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("pmf cfg: val %d", cfg_val);
+		sme_set_pmf_wep_cfg(hdd_ctx->mac_handle, cfg_val);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_DISASSOC_TX;
+	if (tb[cmd_id]) {
+		hdd_info("Send disassoc mgmt frame");
+		sme_send_disassoc_req_frame(hdd_ctx->mac_handle,
+					    adapter->vdev_id,
+					    hdd_sta_ctx->conn_info.bssid.bytes,
+					    1, false);
+	}
 	if (update_sme_cfg)
 		sme_update_config(mac_handle, sme_config);
 
