@@ -291,14 +291,14 @@ static void rouleur_mbhc_hph_l_pull_up_control(
 	/* Default pull up current to 2uA */
 	if (pull_up_cur < I_OFF || pull_up_cur > I_3P0_UA ||
 	    pull_up_cur == I_DEFAULT)
-		pull_up_cur = I_2P0_UA;
+		pull_up_cur = I_3P0_UA;
 
 	dev_dbg(component->dev, "%s: HS pull up current:%d\n",
 		__func__, pull_up_cur);
 
 	snd_soc_component_update_bits(component,
 				ROULEUR_ANA_MBHC_PLUG_DETECT_CTL,
-				0xC0, pull_up_cur);
+				0xC0, pull_up_cur << 6);
 }
 
 static int rouleur_mbhc_request_micbias(struct snd_soc_component *component,

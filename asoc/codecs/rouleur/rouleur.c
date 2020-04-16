@@ -2392,7 +2392,7 @@ static void rouleur_unbind(struct device *dev)
 }
 
 static const struct of_device_id rouleur_dt_match[] = {
-	{ .compatible = "qcom,rouleur-codec" },
+	{ .compatible = "qcom,rouleur-codec" , .data = "rouleur" },
 	{}
 };
 
