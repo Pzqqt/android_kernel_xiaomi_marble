@@ -75,6 +75,7 @@
 #define N_FRAME_SUBTYPE 0xF
 #define MAX_SEQ 0x4
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
+#define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
 
 /*
  * struct iot_sim_debugfs - contains dentry pointer for opened

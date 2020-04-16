@@ -16,9 +16,11 @@
 
 #include "iot_sim_cmn_api_i.h"
 #include "iot_sim_defs_i.h"
+#include "wlan_iot_sim_tgt_api.h"
 #include <qdf_mem.h>
 #include <qdf_types.h>
 #include <qdf_util.h>
+#include <wmi_unified_param.h>
 
 /*
  * iot_sim_validate_content - function to validate frame content. User provided
@@ -290,6 +292,38 @@ iot_sim_del_cnt_cng_rule_peer(struct iot_sim_rule_per_peer *peer,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool
+iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
+{
+	switch (type << IEEE80211_FC0_TYPE_SHIFT) {
+	case IEEE80211_FC0_TYPE_MGT:
+		switch (subtype << IEEE80211_FC0_SUBTYPE_SHIFT) {
+		case IEEE80211_FC0_SUBTYPE_BEACON:
+				return true;
+		default:
+				return false;
+		}
+	case IEEE80211_FC0_TYPE_CTL:
+		switch (subtype << IEEE80211_FC0_SUBTYPE_SHIFT) {
+		case IEEE80211_FC0_SUBTYPE_TRIGGER:
+		case IEEE80211_FC0_SUBTYPE_BAR:
+		case IEEE80211_FC0_SUBTYPE_CTS:
+		case IEEE80211_FC0_SUBTYPE_ACK:
+		case IEEE80211_FC0_SUBTYPE_NDPA:
+			return true;
+		default:
+			return false;
+		}
+	case IEEE80211_FC0_TYPE_DATA:
+		switch (subtype << IEEE80211_FC0_SUBTYPE_SHIFT) {
+		default:
+			return true;
+		}
+	default:
+		return false;
+	}
+}
+
 /*
  * iot_sim_delete_rule_for_mac - function to delete content change rule
  *				 for given peer mac
@@ -310,6 +344,7 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			    struct qdf_mac_addr *mac)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+	struct simulation_test_params param;
 
 	if (qdf_is_macaddr_zero(mac))
 		iot_sim_info("Rule deletion for all peers");
@@ -355,6 +390,23 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 	} else if (oper == DELAY) {
 		/* TBD */
 	}
+
+	if (iot_sim_frame_supported_by_fw(type, subtype)) {
+		qdf_mem_zero(&param, sizeof(struct simulation_test_params));
+		param.pdev_id = wlan_objmgr_pdev_get_pdev_id(isc->pdev_obj);
+		qdf_mem_copy(param.peer_mac, mac, QDF_MAC_ADDR_SIZE);
+		param.test_cmd_type = oper;
+		/* subtype_cmd: Rule:- set:0 clear:1 */
+		param.test_subcmd_type = 1;
+		param.frame_type = type;
+		param.frame_subtype = subtype;
+		param.seq = seq;
+		param.bufp = NULL;
+		if (QDF_IS_STATUS_ERROR(tgt_send_simulation_cmd(isc->pdev_obj,
+								&param)))
+			iot_sim_info("Sending del rule to fw failed!");
+	}
+
 	return ret;
 }
 
@@ -372,7 +424,8 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
  * Return: QDF_STATUS_SUCCESS on success, failure otherwise
  */
 QDF_STATUS
-iot_sim_add_cnt_cng_rule_peer(struct iot_sim_rule_per_peer *peer,
+iot_sim_add_cnt_cng_rule_peer(struct iot_sim_context *isc,
+			      struct iot_sim_rule_per_peer *peer,
 			      uint8_t type, uint8_t subtype,
 			      uint16_t seq, uint8_t *frm,
 			      uint16_t offset, uint16_t len,
@@ -380,6 +433,30 @@ iot_sim_add_cnt_cng_rule_peer(struct iot_sim_rule_per_peer *peer,
 {
 	struct iot_sim_rule_per_seq *s_e = NULL;
 	struct iot_sim_rule *f_e = NULL;
+	struct simulation_test_params param;
+	QDF_STATUS status;
+
+	if (iot_sim_frame_supported_by_fw(type, subtype)) {
+		qdf_mem_zero(&param, sizeof(struct simulation_test_params));
+		param.pdev_id = wlan_objmgr_pdev_get_pdev_id(isc->pdev_obj);
+		qdf_mem_copy(param.peer_mac, &peer->addr, QDF_MAC_ADDR_SIZE);
+		param.test_cmd_type = oper;
+		/* subtype_cmd: Rule:- set:0 clear:1 */
+		param.test_subcmd_type = 0;
+		param.frame_type = type;
+		param.frame_subtype = subtype;
+		param.seq = seq;
+		param.offset = offset;
+		param.frame_length = len;
+		param.buf_len = len;
+		param.bufp = frm;
+		if (QDF_IS_STATUS_ERROR(tgt_send_simulation_cmd(isc->pdev_obj,
+								&param)))
+			iot_sim_info("Sending del rule to fw failed!");
+
+		if (!FRAME_TYPE_IS_BEACON(type, subtype))
+			return status;
+	}
 
 	qdf_spin_lock(&peer->iot_sim_lock);
 	s_e = peer->rule_per_seq[seq];
@@ -473,8 +550,8 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 		}
 
 		if (qdf_is_macaddr_broadcast(mac)) {
-			iot_sim_add_cnt_cng_rule_peer(&isc->bcast_peer, type,
-						      subtype, seq, frm,
+			iot_sim_add_cnt_cng_rule_peer(isc, &isc->bcast_peer,
+						      type, subtype, seq, frm,
 						      offset, len, oper);
 		} else {
 			/*
