@@ -2465,4 +2465,64 @@ hal_rx_msdu_packet_metadata_get_generic(uint8_t *buf,
 	msdu_metadata->sa_sw_peer_id =
 		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
 }
-#endif /* _HAL_GENERIC_API_H_ */
+
+/**
+ * hal_rx_msdu_end_offset_get_generic(): API to get the
+ * msdu_end structure offset rx_pkt_tlv structure
+ *
+ * NOTE: API returns offset of msdu_end TLV from structure
+ * rx_pkt_tlvs
+ */
+static uint32_t hal_rx_msdu_end_offset_get_generic(void)
+{
+	return RX_PKT_TLV_OFFSET(msdu_end_tlv);
+}
+
+/**
+ * hal_rx_attn_offset_get_generic(): API to get the
+ * msdu_end structure offset rx_pkt_tlv structure
+ *
+ * NOTE: API returns offset of attn TLV from structure
+ * rx_pkt_tlvs
+ */
+static uint32_t hal_rx_attn_offset_get_generic(void)
+{
+	return RX_PKT_TLV_OFFSET(attn_tlv);
+}
+
+/**
+ * hal_rx_msdu_start_offset_get_generic(): API to get the
+ * msdu_start structure offset rx_pkt_tlv structure
+ *
+ * NOTE: API returns offset of attn TLV from structure
+ * rx_pkt_tlvs
+ */
+static uint32_t hal_rx_msdu_start_offset_get_generic(void)
+{
+	return RX_PKT_TLV_OFFSET(msdu_start_tlv);
+}
+
+/**
+ * hal_rx_mpdu_start_offset_get_generic(): API to get the
+ * mpdu_start structure offset rx_pkt_tlv structure
+ *
+ * NOTE: API returns offset of attn TLV from structure
+ * rx_pkt_tlvs
+ */
+static uint32_t	hal_rx_mpdu_start_offset_get_generic(void)
+{
+	return RX_PKT_TLV_OFFSET(mpdu_start_tlv);
+}
+
+/**
+ * hal_rx_mpdu_end_offset_get_generic(): API to get the
+ * mpdu_end structure offset rx_pkt_tlv structure
+ *
+ * NOTE: API returns offset of attn TLV from structure
+ * rx_pkt_tlvs
+ */
+static uint32_t	hal_rx_mpdu_end_offset_get_generic(void)
+{
+	return RX_PKT_TLV_OFFSET(mpdu_end_tlv);
+}
+#endif /* HAL_GENERIC_API_H_ */

@@ -5055,15 +5055,15 @@ dp_rxdma_ring_sel_cfg(struct dp_soc *soc)
 	/*Not subscribing rx_pkt_header*/
 	htt_tlv_filter.rx_header_offset = 0;
 	htt_tlv_filter.rx_mpdu_start_offset =
-				HAL_RX_PKT_TLV_MPDU_START_OFFSET(soc->hal_soc);
+				hal_rx_mpdu_start_offset_get(soc->hal_soc);
 	htt_tlv_filter.rx_mpdu_end_offset =
-				HAL_RX_PKT_TLV_MPDU_END_OFFSET(soc->hal_soc);
+				hal_rx_mpdu_end_offset_get(soc->hal_soc);
 	htt_tlv_filter.rx_msdu_start_offset =
-				HAL_RX_PKT_TLV_MSDU_START_OFFSET(soc->hal_soc);
+				hal_rx_msdu_start_offset_get(soc->hal_soc);
 	htt_tlv_filter.rx_msdu_end_offset =
-				HAL_RX_PKT_TLV_MSDU_END_OFFSET(soc->hal_soc);
+				hal_rx_msdu_end_offset_get(soc->hal_soc);
 	htt_tlv_filter.rx_attn_offset =
-				HAL_RX_PKT_TLV_ATTN_OFFSET(soc->hal_soc);
+				hal_rx_attn_offset_get(soc->hal_soc);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];

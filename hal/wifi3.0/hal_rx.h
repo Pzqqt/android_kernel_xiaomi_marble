@@ -3731,4 +3731,109 @@ bool hal_rx_is_buf_addr_info_valid(
 	return (HAL_RX_BUFFER_ADDR_31_0_GET(buf_addr_info) == 0) ?
 						false : true;
 }
+
+/**
+ * hal_rx_msdu_end_offset_get(): Get the MSDU end offset from
+ * rx_pkt_tlvs structure
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * return: msdu_end_tlv offset value
+ */
+static inline
+uint32_t hal_rx_msdu_end_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_msdu_end_offset_get();
+}
+
+/**
+ * hal_rx_msdu_start_offset_get(): Get the MSDU start offset from
+ * rx_pkt_tlvs structure
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * return: msdu_start_tlv offset value
+ */
+static inline
+uint32_t hal_rx_msdu_start_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_msdu_start_offset_get();
+}
+
+/**
+ * hal_rx_mpdu_start_offset_get(): Get the MPDU start offset from
+ * rx_pkt_tlvs structure
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * return: mpdu_start_tlv offset value
+ */
+static inline
+uint32_t hal_rx_mpdu_start_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_mpdu_start_offset_get();
+}
+
+/**
+ * hal_rx_mpdu_end_offset_get(): Get the MPDU end offset from
+ * rx_pkt_tlvs structure
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * return: mpdu_end_tlv offset value
+ */
+static inline
+uint32_t hal_rx_mpdu_end_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_mpdu_end_offset_get();
+}
+
+/**
+ * hal_rx_attn_offset_get(): Get the ATTENTION offset from
+ * rx_pkt_tlvs structure
+ *
+ * @hal_soc_hdl: HAL SOC handle
+ * return: attn_tlv offset value
+ */
+static inline
+uint32_t hal_rx_attn_offset_get(hal_soc_handle_t hal_soc_hdl)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	if (!hal_soc || !hal_soc->ops) {
+		hal_err("hal handle is NULL");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	return hal_soc->ops->hal_rx_attn_offset_get();
+}
 #endif /* _HAL_RX_H */

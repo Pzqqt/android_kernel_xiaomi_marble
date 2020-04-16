@@ -594,6 +594,11 @@ struct hal_hw_txrx_ops {
 	void (*hal_rx_sw_mon_desc_info_get)(hal_ring_desc_t rxdma_dst_ring_desc,
 					    hal_rx_mon_desc_info_t mon_desc_info);
 	uint8_t (*hal_rx_wbm_err_msdu_continuation_get)(void *ring_desc);
+	uint32_t (*hal_rx_msdu_end_offset_get)(void);
+	uint32_t (*hal_rx_attn_offset_get)(void);
+	uint32_t (*hal_rx_msdu_start_offset_get)(void);
+	uint32_t (*hal_rx_mpdu_start_offset_get)(void);
+	uint32_t (*hal_rx_mpdu_end_offset_get)(void);
 };
 
 /**

@@ -1436,6 +1436,22 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	hal_rx_get_rx_sequence_5018,
 	NULL,
 	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	/* rx - TLV struct offsets */
+	hal_rx_msdu_end_offset_get_generic,
+	hal_rx_attn_offset_get_generic,
+	hal_rx_msdu_start_offset_get_generic,
+	hal_rx_mpdu_start_offset_get_generic,
+	hal_rx_mpdu_end_offset_get_generic
 };
 
 struct hal_hw_srng_config hw_srng_table_5018[] = {
