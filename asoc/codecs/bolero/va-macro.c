@@ -226,19 +226,19 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 
 	mutex_lock(&va_priv->mclk_lock);
 	if (mclk_enable) {
+		ret = bolero_clk_rsc_request_clock(va_priv->dev,
+						   va_priv->default_clk_id,
+						   va_priv->clk_id,
+						   true);
+		if (ret < 0) {
+			dev_err(va_priv->dev,
+				"%s: va request clock en failed\n",
+				__func__);
+			goto exit;
+		}
+		bolero_clk_rsc_fs_gen_request(va_priv->dev,
+					      true);
 		if (va_priv->va_mclk_users == 0) {
-			ret = bolero_clk_rsc_request_clock(va_priv->dev,
-							   va_priv->default_clk_id,
-							   va_priv->clk_id,
-							   true);
-			if (ret < 0) {
-				dev_err(va_priv->dev,
-					"%s: va request clock en failed\n",
-					__func__);
-				goto exit;
-			}
-			bolero_clk_rsc_fs_gen_request(va_priv->dev,
-						  true);
 			regcache_mark_dirty(regmap);
 			regcache_sync_region(regmap,
 					VA_START_OFFSET,
@@ -253,14 +253,12 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 			goto exit;
 		}
 		va_priv->va_mclk_users--;
-		if (va_priv->va_mclk_users == 0) {
-			bolero_clk_rsc_fs_gen_request(va_priv->dev,
-						  false);
-			bolero_clk_rsc_request_clock(va_priv->dev,
-						va_priv->default_clk_id,
-						va_priv->clk_id,
-						false);
-		}
+		bolero_clk_rsc_fs_gen_request(va_priv->dev,
+					  false);
+		bolero_clk_rsc_request_clock(va_priv->dev,
+					va_priv->default_clk_id,
+					va_priv->clk_id,
+					false);
 	}
 exit:
 	mutex_unlock(&va_priv->mclk_lock);
