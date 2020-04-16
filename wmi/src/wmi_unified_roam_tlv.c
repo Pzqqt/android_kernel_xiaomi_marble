@@ -1311,6 +1311,9 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 					roam_req->mdid.mobility_domain;
 				roam_offload_11r->adaptive_11r =
 					roam_req->is_adaptive_11r;
+				roam_offload_11r->ft_im_for_deauth =
+					roam_req->enable_ft_im_roaming;
+
 				if (auth_mode == WMI_AUTH_OPEN) {
 					/* If FT-Open ensure pmk length
 					   and r0khid len are zero */
