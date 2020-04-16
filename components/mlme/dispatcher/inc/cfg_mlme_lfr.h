@@ -2601,6 +2601,31 @@
 
 /*
  * <ini>
+ * enable_ft_im_roaming - FW needs to perform FT initial moiblity association
+ * instead of FT roaming for deauth roam trigger
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to FT roaming for deauth roam trigger behavior from HOST
+ * 0 - To disable FT-IM
+ * 1 - To enable FT-IM
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_FT_IM_ROAMING CFG_INI_BOOL( \
+		"enable_ft_im_roaming", \
+		1, \
+		"FT roaming for deauth roam trigger")
+
+/*
+ * <ini>
  * roam_scan_inactivity_time - Device inactivity monitoring time in
  * milliseconds for which the device is considered to be inactive with data
  * packets count is less than configured roam_inactive_data_count.
@@ -2805,6 +2830,7 @@
 	CFG(CFG_LFR_ROAM_FORCE_RSSI_TRIGGER) \
 	CFG(CFG_ROAM_SCAN_SCAN_POLICY) \
 	CFG(CFG_ROAM_SCAN_INACTIVITY_TIME) \
+	CFG(CFG_FT_IM_ROAMING) \
 	CFG(CFG_ROAM_INACTIVE_COUNT) \
 	CFG(CFG_POST_INACTIVITY_ROAM_SCAN_PERIOD) \
 	CFG(CFG_BSS_LOAD_TRIG_5G_RSSI_THRES) \

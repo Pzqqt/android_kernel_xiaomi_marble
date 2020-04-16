@@ -2236,7 +2236,7 @@ struct roam_offload_scan_req {
 	struct pmkid_mode_bits pmkid_modes;
 	bool is_adaptive_11r_connection;
 	bool is_sae_single_pmk;
-
+	bool enable_ft_im_roaming;
 	/* Idle/Disconnect roam parameters */
 	struct wmi_idle_roam_params idle_roam_params;
 	struct wmi_disconnect_roam_params disconnect_roam_params;
