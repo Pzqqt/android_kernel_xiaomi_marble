@@ -163,4 +163,7 @@ qdf_nbuf_deinit_replenish_timer(void)
 	__qdf_nbuf_deinit_replenish_timer();
 }
 
+static inline void
+__qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end) {}
+
 #endif /*_I_QDF_NBUF_M_H */

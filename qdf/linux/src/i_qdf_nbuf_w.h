@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,5 +133,18 @@ static inline uint8_t *__qdf_nbuf_pull_head(struct sk_buff *skb, size_t size)
 
 static inline void qdf_nbuf_init_replenish_timer(void) {}
 static inline void qdf_nbuf_deinit_replenish_timer(void) {}
+
+/**
+ * __qdf_nbuf_dma_inv_range() - nbuf invalidate
+ * @buf_start: from
+ * @buf_end: to address to invalidate
+ *
+ * Return: none
+ */
+static inline void
+__qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
+{
+	dmac_inv_range(buf_start, buf_end);
+}
 
 #endif /*_I_QDF_NBUF_W_H */
