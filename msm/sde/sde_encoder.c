@@ -1644,9 +1644,10 @@ static int _sde_encoder_rc_kickoff(struct drm_encoder *drm_enc,
 			SDE_ENC_RC_STATE_ON, SDE_EVTLOG_FUNC_CASE1);
 	sde_enc->rc_state = SDE_ENC_RC_STATE_ON;
 
+end:
 	/* restart delayed off work, if required */
 	_sde_encoder_rc_restart_delayed(sde_enc, sw_event);
-end:
+
 	mutex_unlock(&sde_enc->rc_lock);
 	return ret;
 }
