@@ -5919,7 +5919,8 @@ int dsi_display_get_info(struct drm_connector *connector,
 		break;
 	}
 
-	if (display->panel->esd_config.esd_enabled)
+	if (display->panel->esd_config.esd_enabled &&
+			!display->sw_te_using_wd)
 		info->capabilities |= MSM_DISPLAY_ESD_ENABLED;
 
 	info->te_source = display->te_source;
