@@ -2973,6 +2973,28 @@ wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_send_self_srg_bss_color_bitmap_set_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_srg_bss_color_bitmap_set)
+		return wmi_handle->ops->send_self_srg_bss_color_bitmap_set(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_self_srg_partial_bssid_bitmap_set_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_srg_partial_bssid_bitmap_set)
+		return wmi_handle->ops->send_self_srg_partial_bssid_bitmap_set(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,

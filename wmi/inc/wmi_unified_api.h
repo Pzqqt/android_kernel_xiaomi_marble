@@ -3688,6 +3688,33 @@ QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(
 	wmi_unified_t wmi_handle,
 	struct wmi_host_obss_spatial_reuse_set_def_thresh *thresh);
 
+/**
+ * wmi_unified_send_self_srg_bss_color_bitmap_set_cmd() - Send 64-bit BSS color
+ * bitmap to be used by SRG based Spatial Reuse feature
+ * @wmi_handle: wmi handle
+ * @bitmap_0: lower 32 bits in BSS color bitmap
+ * @bitmap_1: upper 32 bits in BSS color bitmap
+ * @pdev_id: pdev ID
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_self_srg_bss_color_bitmap_set_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
+
+/**
+ * wmi_unified_send_self_srg_partial_bssid_bitmap_set_cmd() - Send 64-bit
+ * partial BSSID bitmap to be used by SRG based Spatial Reuse feature
+ * @wmi_handle: wmi handle
+ * @bitmap_0: lower 32 bits in partial BSSID bitmap
+ * @bitmap_1: upper 32 bits in partial BSSID bitmap
+ * @pdev_id: pdev ID
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_self_srg_partial_bssid_bitmap_set_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
 #endif /* OBSS_PD */
 
 /**
