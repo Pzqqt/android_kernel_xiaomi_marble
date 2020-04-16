@@ -3284,7 +3284,7 @@ void qdf_trace_msg_cmn(unsigned int idx,
 #if defined(WLAN_LOGGING_SOCK_SVC_ENABLE)
 		wlan_log_to_user(verbose, (char *)str_buffer,
 				 strlen(str_buffer));
-		if (qdf_likely(qdf_log_dump_at_kernel_enable))
+		if (qdf_unlikely(qdf_log_dump_at_kernel_enable))
 			print_to_console(str_buffer);
 #else
 		pr_err("%s\n", str_buffer);
