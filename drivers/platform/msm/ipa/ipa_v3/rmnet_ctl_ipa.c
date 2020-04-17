@@ -104,6 +104,7 @@ int ipa3_rmnet_ctl_init(void)
 	skb_queue_head_init(&rmnet_ctl_ipa3_ctx->tx_queue);
 	rmnet_ctl_ipa3_ctx->state = IPA_RMNET_CTL_NOT_REG;
 	mutex_init(&rmnet_ctl_ipa3_ctx->lock);
+	spin_lock_init(&rmnet_ctl_ipa3_ctx->tx_lock);
 	return 0;
 }
 
