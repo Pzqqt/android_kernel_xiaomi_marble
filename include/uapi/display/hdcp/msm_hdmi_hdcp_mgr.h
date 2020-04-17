@@ -6,6 +6,8 @@
 #ifndef _UAPI__MSM_HDMI_HDCP_MGR_H
 #define _UAPI__MSM_HDMI_HDCP_MGR_H
 
+#include <linux/types.h>
+
 enum DS_TYPE {  /* type of downstream device */
 	DS_UNKNOWN,
 	DS_RECEIVER,
@@ -47,13 +49,13 @@ enum SOURCE_ID {
 
 struct HDCP_V2V1_MSG_TOPOLOGY {
 	/* indicates downstream's type */
-	uint32_t ds_type;
-	uint8_t bksv[5];
-	uint8_t dev_count;
-	uint8_t depth;
-	uint8_t ksv_list[5 * 127];
-	uint32_t max_cascade_exceeded;
-	uint32_t max_dev_exceeded;
+	__u32 ds_type;
+	__u8 bksv[5];
+	__u8 dev_count;
+	__u8 depth;
+	__u8 ksv_list[5 * 127];
+	__u32 max_cascade_exceeded;
+	__u32 max_dev_exceeded;
 };
 
 #endif /* _UAPI__MSM_HDMI_HDCP_MGR_H */
