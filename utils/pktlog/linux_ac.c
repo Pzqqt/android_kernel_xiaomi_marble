@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,11 +76,19 @@ static int pktlog_release(struct inode *i, struct file *f);
 static ssize_t pktlog_read(struct file *file, char *buf, size_t nbytes,
 			   loff_t *ppos);
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops pktlog_fops = {
+	.proc_open = pktlog_open,
+	.proc_release = pktlog_release,
+	.proc_read = pktlog_read,
+};
+#else
 static struct file_operations pktlog_fops = {
 	open:  pktlog_open,
 	release:pktlog_release,
 	read : pktlog_read,
 };
+#endif
 
 void pktlog_disable_adapter_logging(struct hif_opaque_softc *scn)
 {
