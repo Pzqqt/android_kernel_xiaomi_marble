@@ -354,9 +354,14 @@ nan_increment_ndp_sessions(struct wlan_objmgr_psoc *psoc,
 	 * Store the first channel info in NDP Confirm as the home channel info
 	 * and store it in the peer private object.
 	 */
-	qdf_mem_copy(&peer_nan_obj->home_chan_info, ndp_chan_info,
-		     sizeof(struct nan_datapath_channel_info));
+	if (!peer_nan_obj->active_ndp_sessions)
+		qdf_mem_copy(&peer_nan_obj->home_chan_info, ndp_chan_info,
+			     sizeof(struct nan_datapath_channel_info));
+
 	peer_nan_obj->active_ndp_sessions++;
+	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_STR"",
+		  peer_nan_obj->active_ndp_sessions,
+		  QDF_MAC_ADDR_ARRAY(peer_ndi_mac->bytes));
 	qdf_spin_unlock_bh(&peer_nan_obj->lock);
 	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 
@@ -393,6 +398,9 @@ static QDF_STATUS nan_decrement_ndp_sessions(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 	peer_nan_obj->active_ndp_sessions--;
+	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_STR"",
+		  peer_nan_obj->active_ndp_sessions,
+		  QDF_MAC_ADDR_ARRAY(peer_ndi_mac->bytes));
 	qdf_spin_unlock_bh(&peer_nan_obj->lock);
 	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 

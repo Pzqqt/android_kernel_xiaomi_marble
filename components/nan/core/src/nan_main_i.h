@@ -59,7 +59,7 @@ struct scheduler_msg;
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_NAN, params)
 
 /* Maximum number of NDP instances supported on each NAN Peer */
-#define MAX_NDP_INSTANCES_PER_PEER 1
+#define MAX_NDP_INSTANCES_PER_PEER 2
 
 /**
  * enum nan_disc_state - NAN Discovery states
