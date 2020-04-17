@@ -1300,6 +1300,8 @@ struct dp_soc {
 	struct wlan_srng_cfg *wlan_srng_cfg;
 	/* Num Tx outstanding on device */
 	qdf_atomic_t num_tx_outstanding;
+	/* Num Tx exception on device */
+	qdf_atomic_t num_tx_exception;
 	/* Num Tx allowed */
 	uint32_t num_tx_allowed;
 	/* Preferred HW mode */
@@ -1336,6 +1338,8 @@ struct dp_soc {
 		qdf_nbuf_t wbm_sg_nbuf_tail;
 		uint32_t wbm_sg_desc_msdu_len;
 	} wbm_sg_param;
+	/* Number of msdu exception descriptors */
+	uint32_t num_msdu_exception_desc;
 };
 
 #ifdef IPA_OFFLOAD

@@ -2223,6 +2223,26 @@ cdp_peer_map_attach(ol_txrx_soc_handle soc, uint32_t max_peers,
 	return QDF_STATUS_SUCCESS;
 }
 
+/* cdp_soc_set_param() - CDP API to set soc parameters
+ * @soc: opaque soc handle
+ * @param: parameter type
+ * @value: parameter value
+ *
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_soc_set_param(ol_txrx_soc_handle soc, enum cdp_soc_param_t param,
+		  uint32_t value)
+{
+	if (soc && soc->ops && soc->ops->cmn_drv_ops &&
+	    soc->ops->cmn_drv_ops->set_soc_param)
+		return soc->ops->cmn_drv_ops->set_soc_param(soc, param,
+							value);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /* cdp_txrx_classify_and_update() - To classify the packet and update stats
  * @soc: opaque soc handle
  * @vdev: opaque dp vdev handle

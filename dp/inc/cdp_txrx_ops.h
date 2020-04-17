@@ -492,6 +492,10 @@ struct cdp_cmn_ops {
 					   uint32_t max_ast_index,
 					   bool peer_map_unmap_v2);
 
+	QDF_STATUS (*set_soc_param)(ol_txrx_soc_handle soc,
+				    enum cdp_soc_param_t param,
+				    uint32_t value);
+
 	ol_txrx_tx_fp tx_send;
 	/**
 	 * txrx_get_os_rx_handles_from_vdev() - Return function, osif vdev

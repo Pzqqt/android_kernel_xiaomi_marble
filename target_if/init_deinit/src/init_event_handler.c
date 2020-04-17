@@ -198,6 +198,11 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	target_if_reg_set_offloaded_info(psoc);
 	target_if_reg_set_6ghz_info(psoc);
 
+	/* Send num_msdu_desc to DP layer */
+	cdp_soc_set_param(wlan_psoc_get_dp_handle(psoc),
+			  DP_SOC_PARAM_MSDU_EXCEPTION_DESC,
+			  tgt_hdl->info.target_caps.num_msdu_desc);
+
 	if (wmi_service_enabled(wmi_handle, wmi_service_ext_msg)) {
 		target_if_debug("Wait for EXT message");
 	} else {

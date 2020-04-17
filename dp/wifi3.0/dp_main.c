@@ -9358,6 +9358,26 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS dp_soc_set_param(struct cdp_soc_t  *soc_hdl,
+				   enum cdp_soc_param_t param,
+				   uint32_t value)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	switch (param) {
+	case DP_SOC_PARAM_MSDU_EXCEPTION_DESC:
+		soc->num_msdu_exception_desc = value;
+		dp_info("num_msdu exception_desc %u",
+			value);
+		break;
+	default:
+		dp_info("not handled param %d ", param);
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static void dp_soc_set_rate_stats_ctx(struct cdp_soc_t *soc_handle,
 				      void *stats_ctx)
 {
@@ -9697,6 +9717,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,
 	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 	.txrx_peer_map_attach = dp_peer_map_attach_wifi3,
+	.set_soc_param = dp_soc_set_param,
 	.txrx_get_os_rx_handles_from_vdev =
 					dp_get_os_rx_handles_from_vdev_wifi3,
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,
@@ -10729,6 +10750,7 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	qdf_mem_zero(&soc->vdev_id_map, sizeof(soc->vdev_id_map));
 	qdf_atomic_init(&soc->num_tx_outstanding);
+	qdf_atomic_init(&soc->num_tx_exception);
 	soc->num_tx_allowed =
 		wlan_cfg_get_dp_soc_tx_device_limit(soc->wlan_cfg_ctx);
 
