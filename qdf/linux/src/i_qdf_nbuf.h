@@ -336,8 +336,15 @@ struct qdf_nbuf_cb {
 	} u;
 }; /* struct qdf_nbuf_cb: MAX 48 bytes */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0))
 QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
-	(sizeof(struct qdf_nbuf_cb)) <= FIELD_SIZEOF(struct sk_buff, cb));
+			(sizeof(struct qdf_nbuf_cb)) <=
+			sizeof_field(struct sk_buff, cb));
+#else
+QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
+			(sizeof(struct qdf_nbuf_cb)) <=
+			FIELD_SIZEOF(struct sk_buff, cb));
+#endif
 
 /**
  *  access macros to qdf_nbuf_cb
