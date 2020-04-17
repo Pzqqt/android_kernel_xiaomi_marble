@@ -2758,6 +2758,24 @@ QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
 	return status;
 }
 
+QDF_STATUS reg_update_pdev_wireless_modes(struct wlan_objmgr_pdev *pdev,
+					  uint32_t wireless_modes)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+							      WLAN_UMAC_COMP_REGULATORY);
+
+	if (!pdev_priv_obj) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	pdev_priv_obj->wireless_modes = wireless_modes;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef DISABLE_UNII_SHARED_BANDS
 /**
  * reg_is_reg_unii_band_1_or_reg_unii_band_2a() - Check the input bitmap
