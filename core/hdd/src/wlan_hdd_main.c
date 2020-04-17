@@ -3471,6 +3471,7 @@ static int hdd_wlan_register_pm_qos_notifier(struct hdd_context *hdd_ctx)
  */
 static void hdd_wlan_unregister_pm_qos_notifier(struct hdd_context *hdd_ctx)
 {
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int ret;
 
 	if (hdd_ctx->config->runtime_pm != hdd_runtime_pm_dynamic) {
@@ -3486,7 +3487,7 @@ static void hdd_wlan_unregister_pm_qos_notifier(struct hdd_context *hdd_ctx)
 	qdf_spin_lock_irqsave(&hdd_ctx->pm_qos_lock);
 
 	if (hdd_ctx->runtime_pm_prevented) {
-		pm_runtime_put_noidle(hdd_ctx->parent_dev);
+		hif_pm_runtime_put_noidle(hif_ctx, RTPM_ID_QOS_NOTIFY);
 		hdd_ctx->runtime_pm_prevented = false;
 	}
 
