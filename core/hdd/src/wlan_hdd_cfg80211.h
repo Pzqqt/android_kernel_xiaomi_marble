@@ -159,10 +159,17 @@ extern const struct nla_policy wlan_hdd_wisa_cmd_policy[
 #define WLAN_AKM_SUITE_DPP_RSN 0x506f9a02
 #endif
 
+#ifndef WLAN_AKM_SUITE_OWE
 #define WLAN_AKM_SUITE_OWE 0x000FAC12
-#define WLAN_AKM_SUITE_EAP_SHA256 0x000FAC0B
-#define WLAN_AKM_SUITE_EAP_SHA384 0x000FAC0C
+#endif
 
+#ifndef WLAN_AKM_SUITE_EAP_SHA256
+#define WLAN_AKM_SUITE_EAP_SHA256 0x000FAC0B
+#endif
+
+#ifndef WLAN_AKM_SUITE_EAP_SHA384
+#define WLAN_AKM_SUITE_EAP_SHA384 0x000FAC0C
+#endif
 
 #ifndef WLAN_AKM_SUITE_SAE
 #define WLAN_AKM_SUITE_SAE 0x000FAC08
