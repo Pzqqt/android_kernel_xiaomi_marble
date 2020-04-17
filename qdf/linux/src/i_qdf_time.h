@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -288,6 +288,16 @@ static inline uint64_t __qdf_get_log_timestamp(void)
  *
  * Return: system tick for non MSM platfroms
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
+static inline uint64_t __qdf_get_log_timestamp(void)
+{
+	struct timespec64 ts;
+
+	ktime_get_real_ts64(&ts);
+
+	return ((uint64_t)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+}
+#else
 static inline uint64_t __qdf_get_log_timestamp(void)
 {
 	struct timespec ts;
@@ -296,6 +306,7 @@ static inline uint64_t __qdf_get_log_timestamp(void)
 
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
+#endif
 #endif
 
 /**
