@@ -1137,6 +1137,17 @@ QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
  */
 QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t ignore_cac);
+/**
+ * wlansap_get_dfs_cac_state() - Get cac_state value
+ * @mac_handle: Opaque handle to the global MAC context
+ * @cac_state: Location to store cac_state value
+ *
+ * This API is used to Get the value of ignore_cac value
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_get_dfs_cac_state(mac_handle_t mac_handle,
+				     eSapDfsCACState_t *cac_state);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS

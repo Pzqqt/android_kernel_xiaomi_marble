@@ -1908,6 +1908,22 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlansap_get_dfs_cac_state(mac_handle_t mac_handle,
+				     eSapDfsCACState_t *cac_state)
+{
+	struct mac_context *mac = NULL;
+
+	if (mac_handle) {
+		mac = MAC_CONTEXT(mac_handle);
+	} else {
+		sap_err("Invalid mac_handle pointer");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	*cac_state = mac->sap.SapDfsInfo.cac_state;
+	return QDF_STATUS_SUCCESS;
+}
+
 bool sap_is_auto_channel_select(struct sap_context *sapcontext)
 {
 	if (!sapcontext) {
