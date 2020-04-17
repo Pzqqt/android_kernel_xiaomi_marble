@@ -3000,9 +3000,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->sap.sap_channel_avoidance =
 			pParam->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
-		mac->dual_mac_feature_disable =
-			pParam->dual_mac_feature_disable;
 		mac->sta_sap_scc_on_dfs_chan =
 			pParam->sta_sap_scc_on_dfs_chan;
 		mac->roam.configParam.sta_roam_policy.dfs_mode =
@@ -3098,8 +3095,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->sap_channel_avoidance = mac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	pParam->max_intf_count = mac->sme.max_intf_count;
-	pParam->dual_mac_feature_disable =
-		mac->dual_mac_feature_disable;
 	pParam->sta_sap_scc_on_dfs_chan =
 		mac->sta_sap_scc_on_dfs_chan;
 	pParam->f_sta_miracast_mcc_rest_time_val =

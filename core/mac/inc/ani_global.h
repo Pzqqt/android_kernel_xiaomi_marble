@@ -793,9 +793,6 @@ struct mac_context {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
-	/* Based on INI parameter */
-	uint32_t dual_mac_feature_disable;
-
 	enum  country_src reg_hint_src;
 	uint32_t rx_packet_drop_counter;
 	enum auth_tx_ack_status auth_ack_status;
