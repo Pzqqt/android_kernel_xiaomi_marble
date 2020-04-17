@@ -704,7 +704,6 @@ static struct msm_kms *_msm_drm_component_init_helper(
 		return kms;
 	}
 	priv->kms = kms;
-	pm_runtime_enable(dev);
 
 	/**
 	 * Since kms->funcs->hw_init(kms) might call
@@ -762,6 +761,14 @@ static int msm_drm_device_init(struct platform_device *pdev,
 		goto dbg_init_fail;
 	}
 
+	pm_runtime_enable(dev);
+
+	ret = pm_runtime_get_sync(dev);
+	if (ret < 0) {
+		dev_err(dev, "resource enable failed: %d\n", ret);
+		goto pm_runtime_error;
+	}
+
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
 		sde_power_data_bus_set_quota(&priv->phandle, i,
 			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
@@ -769,6 +776,8 @@ static int msm_drm_device_init(struct platform_device *pdev,
 
 	return ret;
 
+pm_runtime_error:
+	sde_dbg_destroy();
 dbg_init_fail:
 	sde_power_resource_deinit(pdev, &priv->phandle);
 power_init_fail:

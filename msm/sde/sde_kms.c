@@ -3491,15 +3491,9 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	if (rc)
 		SDE_DEBUG("sde splash data fetch failed: %d\n", rc);
 
-	rc = pm_runtime_get_sync(sde_kms->dev->dev);
-	if (rc < 0) {
-		SDE_ERROR("resource enable failed: %d\n", rc);
-		goto error;
-	}
-
 	rc = _sde_kms_hw_init_blocks(sde_kms, dev, priv);
 	if (rc)
-		goto hw_init_err;
+		goto error;
 
 	dev->mode_config.min_width = sde_kms->catalog->min_display_width;
 	dev->mode_config.min_height = sde_kms->catalog->min_display_height;
@@ -3546,8 +3540,6 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 
 	return 0;
 
-hw_init_err:
-	pm_runtime_put_sync(sde_kms->dev->dev);
 error:
 	_sde_kms_hw_destroy(sde_kms, platformdev);
 end:
