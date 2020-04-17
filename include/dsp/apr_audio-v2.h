@@ -4876,6 +4876,9 @@ struct avs_dec_congestion_buffer_param_t {
 /* Payload of the AFE_PARAM_ID_ISLAND_CONFIG parameter used by
  * AFE_MODULE_AUDIO_DEV_INTERFACE.
  */
+
+#define AFE_PARAM_ID_POWER_MODE_CONFIG		0x0002002c
+#define AFE_API_VERSION_POWER_MODE_CONFIG		0x1
 struct afe_param_id_island_cfg_t {
 	uint32_t	island_cfg_minor_version;
 	/* Tracks the configuration of this parameter.
@@ -4883,6 +4886,19 @@ struct afe_param_id_island_cfg_t {
 	 */
 
 	uint32_t	island_enable;
+	/* Specifies whether island mode should be enabled or disabled for the
+	 * use-case being setup.
+	 * Supported values: 0 - Disable, 1 - Enable
+	 */
+} __packed;
+
+struct afe_param_id_power_mode_cfg_t {
+	uint32_t	power_mode_cfg_minor_version;
+	/* Tracks the configuration of this parameter
+         * Supported values: #AFE_API_VERSION_POWER_MODE_CONFIG
+	 */
+
+	uint32_t	power_mode_enable;
 	/* Specifies whether island mode should be enabled or disabled for the
 	 * use-case being setup.
 	 * Supported values: 0 - Disable, 1 - Enable

@@ -176,6 +176,7 @@ struct afe_ctl {
 	/* cal info for AFE */
 	struct afe_fw_info *fw_data;
 	u32 island_mode[AFE_MAX_PORTS];
+	u32 power_mode[AFE_MAX_PORTS];
 	struct vad_config vad_cfg[AFE_MAX_PORTS];
 	struct work_struct afe_dc_work;
 	struct notifier_block event_notifier;
@@ -2843,6 +2844,81 @@ done:
 
 }
 
+static int afe_get_power_mode(u16 port_id, u32 *power_mode)
+{
+	int ret = 0;
+	int index = 0;
+	*power_mode = 0;
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+			 __func__, index);
+		return -EINVAL;
+	}
+	*power_mode = this_afe.power_mode[index];
+	return ret;
+}
+
+/**
+ * afe_send_port_power_mode -
+ *          for sending power mode to AFE
+ *
+ * @port_id: AFE port id number
+ * Returns 0 on success or error on failure.
+ */
+int afe_send_port_power_mode(u16 port_id)
+{
+	struct afe_param_id_power_mode_cfg_t power_mode_cfg;
+	struct param_hdr_v3 param_info;
+	u32 power_mode = 0;
+	int ret = 0;
+
+	if (!(q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4)) {
+		pr_debug("%s: AFE port[%d] API version is invalid!\n",
+			__func__, port_id);
+		return 0;
+	}
+
+	memset(&power_mode_cfg, 0, sizeof(power_mode_cfg));
+	memset(&param_info, 0, sizeof(param_info));
+
+	ret = afe_get_power_mode(port_id, &power_mode);
+	if (ret) {
+		pr_err("%s: AFE port[%d] get power mode is invalid!\n",
+			__func__, port_id);
+		return ret;
+	}
+	if (power_mode == 0) {
+		pr_debug("%s: AFE port[%d] power mode is not enabled\n",
+			__func__, port_id);
+		return ret;
+	}
+	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_POWER_MODE_CONFIG;
+	param_info.param_size = sizeof(power_mode_cfg);
+
+	power_mode_cfg.power_mode_cfg_minor_version =
+					AFE_API_VERSION_POWER_MODE_CONFIG;
+	power_mode_cfg.power_mode_enable = power_mode;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_info, (u8 *) &power_mode_cfg);
+	if (ret) {
+		pr_err("%s: AFE set power mode enable for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		return ret;
+	}
+	pr_debug("%s: AFE set power mode 0x%x  enable for port 0x%x ret %d\n",
+			__func__, power_mode, port_id, ret);
+	trace_printk("%s: AFE set power mode 0x%x  enable for port 0x%x ret %d\n",
+			__func__, power_mode, port_id, ret);
+	return ret;
+}
+EXPORT_SYMBOL(afe_send_port_power_mode);
 
 static int afe_get_island_mode(u16 port_id, u32 *island_mode)
 {
@@ -2890,6 +2966,11 @@ int afe_send_port_island_mode(u16 port_id)
 	if (ret) {
 		pr_err("%s: AFE port[%d] get island mode is invalid!\n",
 				__func__, port_id);
+		return ret;
+	}
+	if (island_mode == 0) {
+		pr_debug("%s: AFE port[%d] island mode is not enabled\n",
+			__func__, port_id);
 		return ret;
 	}
 	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
@@ -4238,6 +4319,55 @@ void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag)
 			__func__, this_afe.island_mode[port_index], port_id);
 }
 EXPORT_SYMBOL(afe_set_island_mode_cfg);
+
+/**
+ * afe_get_power_mode_cfg -
+ *         get power mode configuration
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ */
+int afe_get_power_mode_cfg(u16 port_id, u32 *enable_flag)
+{
+	uint16_t port_index;
+	int ret = 0;
+
+	if (enable_flag) {
+		port_index = afe_get_port_index(port_id);
+		if (port_index < 0 || port_index >= AFE_MAX_PORTS) {
+			pr_err("%s: AFE port index[%d] invalid!\n",
+				__func__, port_index);
+			return -EINVAL;
+		}
+		*enable_flag = this_afe.power_mode[port_index];
+	}
+	return ret;
+}
+EXPORT_SYMBOL(afe_get_power_mode_cfg);
+
+/**
+ * afe_set_power_mode_cfg -
+ *         set power mode configuration
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ */
+int afe_set_power_mode_cfg(u16 port_id, u32 enable_flag)
+{
+	uint16_t port_index;
+	int  ret= 0;
+
+	port_index = afe_get_port_index(port_id);
+	if (port_index < 0 || port_index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+			__func__, port_index);
+		return -EINVAL;
+	}
+	this_afe.power_mode[port_index] = enable_flag;
+
+	trace_printk("%s: set power mode cfg 0x%x for port 0x%x\n",
+			__func__, this_afe.power_mode[port_index], port_id);
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_power_mode_cfg);
 
 /**
  * afe_set_routing_callback -
@@ -10199,6 +10329,7 @@ int __init afe_init(void)
 		this_afe.afe_sample_rates[i] = 0;
 		this_afe.dev_acdb_id[i] = 0;
 		this_afe.island_mode[i] = 0;
+		this_afe.power_mode[i] = 0;
 		this_afe.vad_cfg[i].is_enable = 0;
 		this_afe.vad_cfg[i].pre_roll = 0;
 		init_waitqueue_head(&this_afe.wait[i]);

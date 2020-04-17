@@ -396,6 +396,8 @@ void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag);
 void afe_get_island_mode_cfg(u16 port_id, u32 *enable_flag);
 int afe_send_cdc_dma_data_align(u16 port_id, u32 cdc_dma_data_align);
+int afe_set_power_mode_cfg(u16 port_id, u32 enable_flag);
+int afe_get_power_mode_cfg(u16 port_id, u32 *enable_flag);
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	u32 rate);
 int afe_set_tws_channel_mode(u32 foramt, u16 port_id, u32 channel_mode);
@@ -482,6 +484,7 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 		u16 port_id);
 int afe_cal_init_hwdep(void *card);
 int afe_send_port_island_mode(u16 port_id);
+int afe_send_port_power_mode(u16 port_id);
 int afe_send_port_vad_cfg_params(u16 port_id);
 int afe_send_cmd_wakeup_register(void *handle, bool enable);
 void afe_register_wakeup_irq_callback(

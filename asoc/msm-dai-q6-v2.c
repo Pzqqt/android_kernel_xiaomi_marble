@@ -1279,6 +1279,83 @@ static int msm_dai_q6_dai_auxpcm_remove(struct snd_soc_dai *dai)
 	return 0;
 }
 
+static int msm_dai_q6_power_mode_put(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	int value = ucontrol->value.integer.value[0];
+	u16 port_id = (u16)kcontrol->private_value;
+
+	pr_debug("%s: power mode = %d\n", __func__, value);
+	trace_printk("%s: power mode = %d\n", __func__, value);
+
+	afe_set_power_mode_cfg(port_id, value);
+	return 0;
+}
+
+static int msm_dai_q6_power_mode_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	int value;
+	u16 port_id = (u16)kcontrol->private_value;
+
+	afe_get_power_mode_cfg(port_id, &value);
+	ucontrol->value.integer.value[0] = value;
+	return 0;
+}
+
+static void power_mode_mx_ctl_private_free(struct snd_kcontrol *kcontrol)
+{
+	struct snd_kcontrol_new *knew = snd_kcontrol_chip(kcontrol);
+	kfree(knew);
+}
+
+static int msm_dai_q6_add_power_mode_mx_ctls(struct snd_card *card,
+					 const char *dai_name,
+					 int dai_id, void *dai_data)
+{
+	const char *mx_ctl_name = "Power Mode";
+	char *mixer_str = NULL;
+	int dai_str_len = 0, ctl_len = 0;
+	int rc = 0;
+	struct snd_kcontrol_new *knew = NULL;
+	struct snd_kcontrol *kctl = NULL;
+
+	dai_str_len = strlen(dai_name) + 1;
+
+	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+	if (!mixer_str)
+		return -ENOMEM;
+
+	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
+
+	knew = kzalloc(sizeof(struct snd_kcontrol_new), GFP_KERNEL);
+	if (!knew) {
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	knew->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	knew->info = snd_ctl_boolean_mono_info;
+	knew->get = msm_dai_q6_power_mode_get;
+	knew->put = msm_dai_q6_power_mode_put;
+	knew->name = mixer_str;
+	knew->private_value = dai_id;
+	kctl = snd_ctl_new1(knew, knew);
+	if (!kctl) {
+		kfree(knew);
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	kctl->private_free = power_mode_mx_ctl_private_free;
+	rc = snd_ctl_add(card, kctl);
+	if (rc < 0)
+		pr_err("%s: err add config ctl, DAI = %s\n",
+			__func__, dai_name);
+	kfree(mixer_str);
+
+	return rc;
+}
+
 static int msm_dai_q6_island_mode_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
@@ -1324,6 +1401,54 @@ static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 	dai_str_len = strlen(dai_name) + 1;
 
 	/* Add island related mixer controls */
+	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+	if (!mixer_str)
+		return -ENOMEM;
+
+	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
+
+	knew = kzalloc(sizeof(struct snd_kcontrol_new), GFP_KERNEL);
+	if (!knew) {
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	knew->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	knew->info = snd_ctl_boolean_mono_info;
+	knew->get = msm_dai_q6_island_mode_get;
+	knew->put = msm_dai_q6_island_mode_put;
+	knew->name = mixer_str;
+	knew->private_value = dai_id;
+	kctl = snd_ctl_new1(knew, knew);
+	if (!kctl) {
+		kfree(knew);
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	kctl->private_free = island_mx_ctl_private_free;
+	rc = snd_ctl_add(card, kctl);
+	if (rc < 0)
+		pr_err("%s: err add config ctl, DAI = %s\n",
+			__func__, dai_name);
+	kfree(mixer_str);
+
+	return rc;
+}
+
+static int msm_dai_q6_add_isconfig_config_mx_ctls(struct snd_card *card,
+						const char *dai_name,
+						int dai_id, void *dai_data)
+
+{
+	const char *mx_ctl_name = "Island Config";
+	char *mixer_str = NULL;
+	int dai_str_len = 0, ctl_len = 0;
+	int rc = 0;
+	struct snd_kcontrol_new *knew = NULL;
+	struct snd_kcontrol *kctl = NULL;
+
+	dai_str_len = strlen(dai_name) + 1;
+
 	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
 	if (!mixer_str)
@@ -12195,6 +12320,14 @@ static int msm_dai_q6_dai_cdc_dma_probe(struct snd_soc_dai *dai)
 						dai->component->card->snd_card,
 						dai->name, dai->id,
 						(void *)dai_data);
+	rc = msm_dai_q6_add_power_mode_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai->id,
+						(void *)dai_data);
+	rc= msm_dai_q6_add_isconfig_config_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai->id,
+						(void *)dai_data);
 
 	rc = msm_dai_q6_dai_add_route(dai);
 	return rc;
@@ -12624,6 +12757,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "RX_CDC_DMA_RX_0",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_RX_CODEC_DMA_RX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12674,6 +12808,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "RX_CDC_DMA_RX_1",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_RX_CODEC_DMA_RX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12798,6 +12933,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "TX_CDC_DMA_TX_3",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_TX_CODEC_DMA_TX_3,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12848,6 +12984,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "TX_CDC_DMA_TX_4",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_TX_CODEC_DMA_TX_4,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
