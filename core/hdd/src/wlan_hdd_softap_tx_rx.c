@@ -814,7 +814,11 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	}
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+void hdd_softap_tx_timeout(struct net_device *net_dev, unsigned int txqueue)
+#else
 void hdd_softap_tx_timeout(struct net_device *net_dev)
+#endif
 {
 	struct osif_vdev_sync *vdev_sync;
 
