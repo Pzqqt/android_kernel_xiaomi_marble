@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,9 +207,15 @@ static ssize_t hdd_driver_memdump_read(struct file *file, char __user *buf,
  * This structure initialize the file operation handle for memory
  * dump feature
  */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops driver_dump_fops = {
+	.proc_read = hdd_driver_memdump_read,
+};
+#else
 static const struct file_operations driver_dump_fops = {
 	.read = hdd_driver_memdump_read,
 };
+#endif
 
 /**
  * hdd_driver_memdump_procfs_init() - Initialize procfs for driver memory dump
