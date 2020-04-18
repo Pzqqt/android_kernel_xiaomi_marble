@@ -1301,6 +1301,7 @@ typedef enum {
     WMI_AUDIO_AGGR_UPDATE_STA_GROUP_INFO_CMDID,
     WMI_AUDIO_AGGR_GET_STATISTICS_CMDID,
     WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID,
+    WMI_AUDIO_AGGR_SET_RTSCTS_CONFIG_CMDID,
 
     /** WMI commands related to Channel Frequency Response Capture **/
     WMI_CFR_CAPTURE_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
@@ -25916,6 +25917,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID);
         WMI_RETURN_STRING(WMI_ANT_CONTROLLER_CMDID);
         WMI_RETURN_STRING(WMI_SIMULATION_TEST_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_RTSCTS_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -29553,6 +29555,22 @@ typedef struct {
     /* VDEV identifier */
     A_UINT32 vdev_id;
 } wmi_audio_aggr_reset_statistics_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+
+    /*
+     * The user_mode and user_profile fields are passed through
+     * the host driver to the target FW, but are never interpreted
+     * by the host driver. The values for these fields are opaque
+     * to the host, and are only interpreted by the FW.
+     */
+    A_UINT32 user_mode;
+    A_UINT32 user_profile;
+} wmi_audio_aggr_set_rtscts_config_cmd_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
