@@ -362,4 +362,89 @@ RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_DETAILS_RESERVED_0A_OFFSET))
 		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_OFFSET)),	\
 		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_MASK,	\
 		RX_MSDU_END_11_DA_IDX_OR_SW_PEER_ID_LSB))
+
+#define HAL_RX_TLV_GET_FLOW_AGGR_CONT(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+		RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_OFFSET)),	\
+		RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_MASK,	\
+		RX_MSDU_END_15_FLOW_AGGREGATION_CONTINUATION_LSB))
+
+#define HAL_RX_TLV_GET_FLOW_AGGR_COUNT(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+		RX_MSDU_END_15_AGGREGATION_COUNT_OFFSET)),	\
+		RX_MSDU_END_15_AGGREGATION_COUNT_MASK,	\
+		RX_MSDU_END_15_AGGREGATION_COUNT_LSB))
+
+#define HAL_RX_TLV_GET_FISA_TIMEOUT(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+		RX_MSDU_END_15_FISA_TIMEOUT_OFFSET)),	\
+		RX_MSDU_END_15_FISA_TIMEOUT_MASK,	\
+		RX_MSDU_END_15_FISA_TIMEOUT_LSB))
+
+#define HAL_RX_TLV_GET_FISA_CUMULATIVE_L4_CHECKSUM(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+		RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_OFFSET)),	\
+		RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_MASK,	\
+		RX_MSDU_END_16_CUMULATIVE_L4_CHECKSUM_LSB))
+
+#define HAL_RX_TLV_GET_FISA_CUMULATIVE_IP_LENGTH(buf) \
+	(_HAL_MS( \
+		 (*_OFFSET_TO_WORD_PTR(&(((struct rx_pkt_tlvs *)(buf))->\
+			 msdu_end_tlv.rx_msdu_end), \
+		RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_OFFSET)),	\
+		RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_MASK,	\
+		RX_MSDU_END_16_CUMULATIVE_IP_LENGTH_LSB))
+
+#if defined(QCA_WIFI_QCA6750) && defined(WLAN_CFR_ENABLE) && \
+    defined(WLAN_ENH_CFR_ENABLE)
+static inline
+void hal_rx_get_bb_info_6750(void *rx_tlv,
+			     void *ppdu_info_hdl)
+{
+	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
+
+	ppdu_info->cfr_info.bb_captured_channel =
+	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_CHANNEL);
+
+	ppdu_info->cfr_info.bb_captured_timeout =
+	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_TIMEOUT);
+
+	ppdu_info->cfr_info.bb_captured_reason =
+	  HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_REASON);
+}
+
+static inline
+void hal_rx_get_rtt_info_6750(void *rx_tlv,
+			      void *ppdu_info_hdl)
+{
+	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
+
+	ppdu_info->cfr_info.rx_location_info_valid =
+		HAL_RX_GET(rx_tlv, PHYRX_PKT_END_13_RX_PKT_END_DETAILS,
+			   RX_LOCATION_INFO_DETAILS_RX_LOCATION_INFO_VALID);
+
+	ppdu_info->cfr_info.rtt_che_buffer_pointer_low32 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_12_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_CHE_BUFFER_POINTER_LOW32);
+
+	ppdu_info->cfr_info.rtt_che_buffer_pointer_high8 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_11_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_CHE_BUFFER_POINTER_HIGH8);
+
+	ppdu_info->cfr_info.chan_capture_status =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_13_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RESERVED_8);
+}
+#endif
 #endif

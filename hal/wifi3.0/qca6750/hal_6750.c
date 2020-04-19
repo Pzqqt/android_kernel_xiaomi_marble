@@ -314,8 +314,9 @@ static void hal_rx_dump_msdu_end_tlv_6750(void *msduend,
 					  uint8_t dbg_level)
 {
 	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-		  "rx_msdu_end tlv (1/2) - "
+		  "rx_msdu_end tlv (1/3) - "
 		  "rxpcu_mpdu_filter_in_category: %x "
 		  "sw_frame_group_id: %x "
 		  "phy_ppdu_id: %x "
@@ -354,8 +355,9 @@ static void hal_rx_dump_msdu_end_tlv_6750(void *msduend,
 		  msdu_end->flow_idx_invalid,
 		  msdu_end->wifi_parser_error,
 		  msdu_end->amsdu_parser_error);
+
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-		  "rx_msdu_end tlv (2/2)- "
+		  "rx_msdu_end tlv (2/3)- "
 		  "sa_is_valid: %x "
 		  "da_is_valid: %x "
 		  "da_is_mcbc: %x "
@@ -404,6 +406,18 @@ static void hal_rx_dump_msdu_end_tlv_6750(void *msduend,
 		  msdu_end->fse_metadata,
 		  msdu_end->cce_metadata,
 		  msdu_end->sa_sw_peer_id);
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+		  "rx_msdu_end tlv (3/3)"
+		  "aggregation_count %x "
+		  "flow_aggregation_continuation %x "
+		  "fisa_timeout %x "
+		  "cumulative_l4_checksum %x "
+		  "cumulative_ip_length %x",
+		  msdu_end->aggregation_count,
+		  msdu_end->flow_aggregation_continuation,
+		  msdu_end->fisa_timeout,
+		  msdu_end->cumulative_l4_checksum,
+		  msdu_end->cumulative_ip_length);
 }
 
 /*
@@ -1254,6 +1268,30 @@ hal_rx_msdu_cce_metadata_get_6750(uint8_t *buf)
 }
 
 /**
+ * hal_rx_msdu_get_flow_params_6750: API to get flow index, flow index invalid
+ * and flow index timeout from rx_msdu_end TLV
+ * @buf: pointer to the start of RX PKT TLV headers
+ * @flow_invalid: pointer to return value of flow_idx_valid
+ * @flow_timeout: pointer to return value of flow_idx_timeout
+ * @flow_index: pointer to return value of flow_idx
+ *
+ * Return: none
+ */
+static inline void
+hal_rx_msdu_get_flow_params_6750(uint8_t *buf,
+				 bool *flow_invalid,
+				 bool *flow_timeout,
+				 uint32_t *flow_index)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+
+	*flow_invalid = HAL_RX_MSDU_END_FLOW_IDX_INVALID_GET(msdu_end);
+	*flow_timeout = HAL_RX_MSDU_END_FLOW_IDX_TIMEOUT_GET(msdu_end);
+	*flow_index = HAL_RX_MSDU_END_FLOW_IDX_GET(msdu_end);
+}
+
+/**
  * hal_rx_tlv_get_tcp_chksum_6750() - API to get tcp checksum
  * @buf: rx_tlv_hdr
  *
@@ -1322,6 +1360,117 @@ static inline qdf_iomem_t hal_get_window_address_6750(struct hal_soc *hal_soc,
 	return new_addr;
 }
 
+/**
+ * hal_rx_get_fisa_cumulative_l4_checksum_6750() - Retrieve cumulative
+ *                                                 checksum
+ * @buf: buffer pointer
+ *
+ * Return: cumulative checksum
+ */
+static inline
+uint16_t hal_rx_get_fisa_cumulative_l4_checksum_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_FISA_CUMULATIVE_L4_CHECKSUM(buf);
+}
+
+/**
+ * hal_rx_get_fisa_cumulative_ip_length_6750() - Retrieve cumulative
+ *                                               ip length
+ * @buf: buffer pointer
+ *
+ * Return: cumulative length
+ */
+static inline
+uint16_t hal_rx_get_fisa_cumulative_ip_length_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_FISA_CUMULATIVE_IP_LENGTH(buf);
+}
+
+/**
+ * hal_rx_get_udp_proto_6750() - Retrieve udp proto value
+ * @buf: buffer
+ *
+ * Return: udp proto bit
+ */
+static inline
+bool hal_rx_get_udp_proto_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_UDP_PROTO(buf);
+}
+
+/**
+ * hal_rx_get_flow_agg_continuation_6750() - retrieve flow agg
+ *                                           continuation
+ * @buf: buffer
+ *
+ * Return: flow agg
+ */
+static inline
+bool hal_rx_get_flow_agg_continuation_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_FLOW_AGGR_CONT(buf);
+}
+
+/**
+ * hal_rx_get_flow_agg_count_6750()- Retrieve flow agg count
+ * @buf: buffer
+ *
+ * Return: flow agg count
+ */
+static inline
+uint8_t hal_rx_get_flow_agg_count_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_FLOW_AGGR_COUNT(buf);
+}
+
+/**
+ * hal_rx_get_fisa_timeout_6750() - Retrieve fisa timeout
+ * @buf: buffer
+ *
+ * Return: fisa timeout
+ */
+static inline
+bool hal_rx_get_fisa_timeout_6750(uint8_t *buf)
+{
+	return HAL_RX_TLV_GET_FISA_TIMEOUT(buf);
+}
+
+/**
+ * hal_reo_set_err_dst_remap_6750(): Function to set REO error destination
+ *				     ring remap register
+ * @hal_soc: Pointer to hal_soc
+ *
+ * Return: none.
+ */
+static void
+hal_reo_set_err_dst_remap_6750(void *hal_soc)
+{
+	/*
+	 * Set REO error 2k jump (error code 5) / OOR (error code 7)
+	 * frame routed to REO2TCL ring.
+	 */
+	uint32_t dst_remap_ix0 =
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 0) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 1) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 2) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 3) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 4) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 5) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_RELEASE, 6) |
+		HAL_REO_ERR_REMAP_IX0(REO_REMAP_TCL, 7);
+
+		HAL_REG_WRITE(hal_soc,
+			      HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			      SEQ_WCSS_UMAC_REO_REG_OFFSET),
+			      dst_remap_ix0);
+
+		hal_info("HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0 0x%x",
+			 HAL_REG_READ(
+			 hal_soc,
+			 HWIO_REO_R0_ERROR_DESTINATION_MAPPING_IX_0_ADDR(
+			 SEQ_WCSS_UMAC_REO_REG_OFFSET)));
+}
+
 struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
@@ -1330,7 +1479,7 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 	hal_get_window_address_6750,
-	NULL,
+	hal_reo_set_err_dst_remap_6750,
 
 	/* tx */
 	hal_tx_desc_set_dscp_tid_table_id_6750,
@@ -1409,19 +1558,25 @@ struct hal_hw_txrx_ops qca6750_hal_hw_txrx_ops = {
 	hal_rx_msdu_flow_idx_timeout_6750,
 	hal_rx_msdu_fse_metadata_get_6750,
 	hal_rx_msdu_cce_metadata_get_6750,
-	NULL,
+	hal_rx_msdu_get_flow_params_6750,
 	hal_rx_tlv_get_tcp_chksum_6750,
 	hal_rx_get_rx_sequence_6750,
+#if defined(QCA_WIFI_QCA6750) && defined(WLAN_CFR_ENABLE) && \
+    defined(WLAN_ENH_CFR_ENABLE)
+	hal_rx_get_bb_info_6750,
+	hal_rx_get_rtt_info_6750,
+#else
 	NULL,
 	NULL,
+#endif
 	/* rx - msdu end fast path info fields */
 	hal_rx_msdu_packet_metadata_get_generic,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
+	hal_rx_get_fisa_cumulative_l4_checksum_6750,
+	hal_rx_get_fisa_cumulative_ip_length_6750,
+	hal_rx_get_udp_proto_6750,
+	hal_rx_get_flow_agg_continuation_6750,
+	hal_rx_get_flow_agg_count_6750,
+	hal_rx_get_fisa_timeout_6750,
 	NULL,
 	NULL,
 	NULL,
@@ -1813,7 +1968,11 @@ struct hal_hw_srng_config hw_srng_table_6750[] = {
 	},
 	{ /* DIR_BUF_RX_DMA_SRC */
 		.start_ring_id = HAL_SRNG_DIR_BUF_RX_SRC_DMA_RING,
-		.max_rings = 1,
+		/*
+		 * one ring is for spectral scan
+		 * the other is for cfr
+		 */
+		.max_rings = 2,
 		.entry_size = 2,
 		.lmac_ring = TRUE,
 		.ring_dir = HAL_SRNG_SRC_RING,
