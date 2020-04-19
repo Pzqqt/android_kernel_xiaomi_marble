@@ -1098,7 +1098,7 @@ ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 static inline uint32_t
 ucfg_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 {
-	return 0;
+	return 0xffff;
 }
 #endif
 
