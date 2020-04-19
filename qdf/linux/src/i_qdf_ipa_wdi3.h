@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -97,6 +97,10 @@ typedef struct ipa_wdi_reg_intf_in_params  __qdf_ipa_wdi_reg_intf_in_params_t;
 	(((struct ipa_wdi_reg_intf_in_params *)(in))->meta_data)
 #define __QDF_IPA_WDI_REG_INTF_IN_PARAMS_META_DATA_MASK(in)	\
 	(((struct ipa_wdi_reg_intf_in_params *)(in))->meta_data_mask)
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define __QDF_IPA_WDI_REG_INTF_IN_PARAMS_IS_TX1_USED(in)	\
+	(((struct ipa_wdi_reg_intf_in_params *)(in))->is_tx1_used)
+#endif
 
 typedef struct ipa_ep_cfg __qdf_ipa_ep_cfg_t;
 
@@ -207,6 +211,14 @@ typedef struct ipa_wdi_conn_in_params  __qdf_ipa_wdi_conn_in_params_t;
 	(((struct ipa_wdi_conn_in_params *)(pipe_in))->u_tx.tx)
 #define __QDF_IPA_WDI_CONN_IN_PARAMS_TX_SMMU(pipe_in)	\
 	(((struct ipa_wdi_conn_in_params *)(pipe_in))->u_tx.tx_smmu)
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define __QDF_IPA_WDI_CONN_IN_PARAMS_IS_TX1_USED(pipe_in)	\
+	(((struct ipa_wdi_conn_in_params *)(pipe_in))->is_tx1_used)
+#define __QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE(pipe_in)	\
+	(((struct ipa_wdi_conn_in_params *)(pipe_in))->u_tx1.tx)
+#define __QDF_IPA_WDI_CONN_IN_PARAMS_TX_ALT_PIPE_SMMU(pipe_in)	\
+	(((struct ipa_wdi_conn_in_params *)(pipe_in))->u_tx1.tx_smmu)
+#endif
 #define __QDF_IPA_WDI_CONN_IN_PARAMS_RX(pipe_in)	\
 	(((struct ipa_wdi_conn_in_params *)(pipe_in))->u_rx.rx)
 #define __QDF_IPA_WDI_CONN_IN_PARAMS_RX_SMMU(pipe_in)	\
@@ -220,6 +232,10 @@ typedef struct ipa_wdi_conn_out_params  __qdf_ipa_wdi_conn_out_params_t;
 
 #define __QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_DB_PA(pipe_out)	\
 	(((struct ipa_wdi_conn_out_params *)(pipe_out))->tx_uc_db_pa)
+#ifdef IPA_WDI3_TX_TWO_PIPES
+#define __QDF_IPA_WDI_CONN_OUT_PARAMS_TX_UC_ALT_DB_PA(pipe_out)	\
+	(((struct ipa_wdi_conn_out_params *)(pipe_out))->tx1_uc_db_pa)
+#endif
 #define __QDF_IPA_WDI_CONN_OUT_PARAMS_RX_UC_DB_PA(pipe_out)	\
 	(((struct ipa_wdi_conn_out_params *)(pipe_out))->rx_uc_db_pa)
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
