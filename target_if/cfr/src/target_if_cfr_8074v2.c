@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -213,6 +213,7 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	struct pdev_cfr *pdev_cfrobj;
 	struct look_up_table *lut = NULL;
 	struct csi_cfr_header *header = NULL;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	if ((!pdev) || (!payload)) {
 		cfr_err("pdev or payload is null");
@@ -265,7 +266,13 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		 * Message format
 		 *  Meta data Header + actual payload + trailer
 		 */
-		status = psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send(pdev, &lut->header,
+		rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+		if (!rx_ops) {
+			cfr_err("rx_ops is NULL");
+			return true;
+		}
+
+		status = rx_ops->cfr_rx_ops.cfr_info_send(pdev, &lut->header,
 			sizeof(struct csi_cfr_header),
 			lut->data, lut->data_len, &end_magic, 4);
 		release_lut_entry(pdev, lut);
@@ -343,10 +350,17 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	wmi_cfr_peer_tx_event_param tx_evt_param = {0};
 	qdf_dma_addr_t buf_addr = 0, buf_addr_temp = 0;
 	int status;
+	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	psoc = scn->psoc_obj;
 	if (!psoc) {
 		cfr_err("psoc is null");
+		return -EINVAL;
+	}
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (!rx_ops) {
+		cfr_err("rx_ops is NULL");
 		return -EINVAL;
 	}
 
@@ -414,9 +428,9 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 			  ether_sprintf(&tx_evt_param.peer_mac_addr.bytes[0]));
 
 		prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
-		psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send(pdev, &header_error,
-				sizeof(struct csi_cfr_header),
-				NULL, 0, &end_magic, 4);
+		rx_ops->cfr_rx_ops.cfr_info_send(pdev, &header_error,
+						 sizeof(struct csi_cfr_header),
+						 NULL, 0, &end_magic, 4);
 
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
@@ -501,7 +515,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	status = correlate_and_relay(pdev, cookie, lut,
 				     CORRELATE_TX_EV_MODULE_ID);
 	if (status == STATUS_STREAM_AND_RELEASE) {
-		status = psoc->soc_cb.rx_ops.cfr_rx_ops.cfr_info_send(pdev, &lut->header,
+		status = rx_ops->cfr_rx_ops.cfr_info_send(pdev, &lut->header,
 				sizeof(struct csi_cfr_header),
 				lut->data, lut->data_len, &end_magic, 4);
 		release_lut_entry(pdev, lut);
@@ -585,9 +599,16 @@ target_if_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
 	struct dbr_module_config dbr_config;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cfr_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dbr_tx_ops = &tx_ops->dbr_tx_ops;
 	dbr_config.num_resp_per_event = DBR_NUM_RESP_PER_EVENT_CFR;
 	dbr_config.event_timeout_in_ms = DBR_EVENT_TIMEOUT_IN_MS_CFR;
 	if (dbr_tx_ops->direct_buf_rx_module_register) {
@@ -604,9 +625,16 @@ target_if_unregister_to_dbr(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cfr_err("tx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dbr_tx_ops = &tx_ops->dbr_tx_ops;
 	if (dbr_tx_ops->direct_buf_rx_module_unregister) {
 		return dbr_tx_ops->direct_buf_rx_module_unregister
 			(pdev, DBR_MODULE_CFR);
@@ -621,9 +649,16 @@ target_if_dbr_get_ring_params(struct wlan_objmgr_pdev *pdev)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_direct_buf_rx_tx_ops *dbr_tx_ops = NULL;
 	struct module_ring_params *param = {0};
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	dbr_tx_ops = &psoc->soc_cb.tx_ops.dbr_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		cfr_err("tx_ops is NULL");
+		return NULL;
+	}
+
+	dbr_tx_ops = &tx_ops->dbr_tx_ops;
 
 	if(dbr_tx_ops->direct_buf_rx_get_ring_params)
 		dbr_tx_ops->direct_buf_rx_get_ring_params(pdev, param,

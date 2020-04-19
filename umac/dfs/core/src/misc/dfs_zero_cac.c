@@ -5556,10 +5556,11 @@ void dfs_find_vht80_chan_for_precac_for_freq(struct wlan_dfs *dfs,
 void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 {
 	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	struct wlan_lmac_if_target_tx_ops *tgt_tx_ops;
 	uint32_t target_type;
 	struct target_psoc_info *tgt_hdl;
 	struct tgt_info *info;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	if (!psoc) {
@@ -5569,7 +5570,13 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 		return;
 	}
 
-	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "tx_ops is NULL");
+		return;
+	}
+
+	tgt_tx_ops = &tx_ops->target_tx_ops;
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
@@ -5603,7 +5610,7 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 
 	if ((1 == value) &&
 	    (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN)) {
-		if (tx_ops->tgt_is_tgt_type_qca9984(target_type))
+		if (tgt_tx_ops->tgt_is_tgt_type_qca9984(target_type))
 			dfs->dfs_legacy_precac_ucfg = value;
 		else
 			dfs->dfs_agile_precac_ucfg = value;
