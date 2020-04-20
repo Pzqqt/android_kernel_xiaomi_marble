@@ -4902,13 +4902,6 @@ int wma_unified_power_debug_stats_event_handler(void *handle,
 	qdf_mem_free(power_stats_results);
 	return 0;
 }
-#else
-int wma_unified_power_debug_stats_event_handler(void *handle,
-						uint8_t *cmd_param_info,
-						uint32_t len)
-{
-	return 0;
-}
 #endif
 
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS

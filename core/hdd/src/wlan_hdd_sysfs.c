@@ -522,6 +522,7 @@ void hdd_sysfs_destroy_powerstats_interface(void)
 	}
 	sysfs_remove_file(driver_kobject, &power_stats_attribute.attr);
 }
+#endif
 
 void hdd_sysfs_create_driver_root_obj(void)
 {
@@ -551,7 +552,6 @@ void hdd_sysfs_destroy_driver_root_obj(void)
 		driver_kobject = NULL;
 	}
 }
-#endif
 
 #ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
 static int hdd_sysfs_create_bcn_reception_interface(struct hdd_adapter
