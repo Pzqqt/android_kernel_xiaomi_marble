@@ -2501,6 +2501,21 @@ ucfg_mlme_get_vht_enable2x2(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 /**
+ * ucfg_mlme_get_force_sap_enabled() - Get the value of force SAP enabled
+ * @psoc: psoc context
+ * @value: data to get
+ *
+ * Get the value of force SAP enabled
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_force_sap_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_get_force_sap_enabled(psoc, value);
+}
+
+/**
  * ucfg_mlme_set_vht_enable2x2() - Enables/disables VHT Tx/Rx MCS values for 2x2
  * @psoc: psoc context
  * @value: data to be set
