@@ -24,24 +24,30 @@
 
 /*
  * <ini>
- * cfr_disable - disable channel frequence response(CFR) feature
+ * cfr_disable - Bitmap denoting the PDEVs for which CFR needs to be
+ * disabled
  * @Min: 0
- * @Max: 1
+ * @Max: Bitmap with no. of set bits equal to total no. of PDEVs in the SOC
  * @Default: 0
  *
- * This ini is used to disable cfr feature.
+ * This ini is used to disable CFR feature for PDEV.
  *
  * Related: None
  *
- * Supported Feature: cfr
+ * Supported Feature: CFR
  *
  * Usage: External
  *
  * </ini>
  */
-#define CFG_CFR_DISABLE \
-	CFG_INI_BOOL("cfr_disable", false, \
-			"CFR disable")
+#define CFG_CFR_DISABLE\
+	CFG_INI_UINT("cfr_disable", \
+		0, \
+		0x7, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"cfr disable bitmap")
+
 
 #define CFG_CFR_ALL \
 	CFG(CFG_CFR_DISABLE)

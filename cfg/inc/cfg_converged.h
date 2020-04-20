@@ -38,6 +38,11 @@
 #else
 #define CFG_DCS_ALL
 #endif
+#ifdef WLAN_CFR_ENABLE
+#include "cfr_cfg.h"
+#else
+#define CFG_CFR_ALL
+#endif
 
 #define CFG_CONVERGED_ALL \
 		CFG_SCAN_ALL \
@@ -46,7 +51,9 @@
 		CFG_GREEN_AP_ALL \
 		CFG_SPECTRAL_ALL \
 		CFG_HIF \
-		CFG_DCS_ALL
+		CFG_DCS_ALL \
+		CFG_CFR_ALL
+
 
 #endif /* __CFG_CONVERGED_H */
 
