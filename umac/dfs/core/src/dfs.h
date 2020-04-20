@@ -42,6 +42,9 @@
 #include <osdep.h>
 #include <wlan_cmn.h>
 #include "target_type.h"
+#ifdef QCA_SUPPORT_ADFS_RCAC
+#include <wlan_sm_engine.h> /* for struct wlan_sm */
+#endif
 
 /* File Line and Submodule String */
 #define FLSM(x, str)   #str " : " FL(x)
@@ -933,6 +936,33 @@ struct dfs_mode_switch_defer_params {
 	bool is_radar_detected;
 };
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
+#define DFS_PSOC_NO_IDX 0xFF
+/**
+ * enum dfs_rcac_sm_state - DFS Rolling CAC SM states.
+ * @DFS_RCAC_S_INIT:     Default state, where RCAC not in progress.
+ * @DFS_RCAC_S_RUNNING:  RCAC is in progress.
+ * @DFS_RCAC_S_COMPLETE: RCAC is completed.
+ * @DFS_RCAC_S_MAX:      Max (invalid) state.
+ */
+enum dfs_rcac_sm_state {
+	DFS_RCAC_S_INIT,
+	DFS_RCAC_S_RUNNING,
+	DFS_RCAC_S_COMPLETE,
+	DFS_RCAC_S_MAX,
+};
+
+/**
+ * struct dfs_rcac_params - DFS Rolling CAC channel parameters.
+ * @rcac_pri_freq: Rolling CAC channel's primary frequency.
+ * @rcac_ch_params: Rolling CAC channel parameters.
+ */
+struct dfs_rcac_params {
+	qdf_freq_t rcac_pri_freq;
+	struct ch_params rcac_ch_params;
+};
+#endif
+
 /**
  * struct wlan_dfs -                 The main dfs structure.
  * @dfs_debug_mask:                  Current debug bitmask.
@@ -1104,8 +1134,8 @@ struct dfs_mode_switch_defer_params {
  * @dfs_agile_detector_id:           Agile detector ID for the DFS object.
  * @dfs_agile_rcac_freq_ucfg:        User programmed Rolling CAC frequency in
  *                                   MHZ.
- * @dfs_rcac_ch_params:              Channel params of the selected RCAC
- *                                   channel.
+ * @dfs_rcac_param:                  Primary frequency and Channel params of
+ *                                   the selected RCAC channel.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1276,7 +1306,7 @@ struct wlan_dfs {
 	uint8_t        dfs_agile_detector_id;
 #if defined(QCA_SUPPORT_ADFS_RCAC)
 	uint16_t       dfs_agile_rcac_freq_ucfg;
-	struct ch_params dfs_rcac_ch_params;
+	struct dfs_rcac_params dfs_rcac_param;
 #endif
 	uint16_t       dfs_lowest_pri_limit;
 };
@@ -1331,7 +1361,7 @@ struct dfs_soc_priv_obj {
 	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
 #if defined(QCA_SUPPORT_ADFS_RCAC)
 	qdf_timer_t dfs_rcac_timer;
-	wlan_sm *dfs_rcac_sm_hdl;
+	struct wlan_sm *dfs_rcac_sm_hdl;
 	enum dfs_rcac_sm_state dfs_rcac_curr_state;
 	qdf_spinlock_t dfs_rcac_sm_lock;
 #endif
@@ -2466,6 +2496,7 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
  * @dfs_chan_mhz_freq_seg1: Channel center frequency of primary segment in MHZ.
  * @dfs_chan_mhz_freq_seg2: Channel center frequency of secondary segment in MHZ
  *                          applicable only for 80+80MHZ mode of operation.
+ * @is_channel_updated: boolean to represent channel update.
  */
 void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
 				      uint16_t dfs_chan_freq,
@@ -2475,7 +2506,8 @@ void dfs_set_current_channel_for_freq(struct wlan_dfs *dfs,
 				      uint8_t dfs_chan_vhtop_freq_seg1,
 				      uint8_t dfs_chan_vhtop_freq_seg2,
 				      uint16_t dfs_chan_mhz_freq_seg1,
-				      uint16_t dfs_chan_mhz_freq_seg2);
+				      uint16_t dfs_chan_mhz_freq_seg2,
+				      bool *is_channel_updated);
 
 #endif
 /**

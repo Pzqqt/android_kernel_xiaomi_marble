@@ -124,6 +124,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	enum QDF_OPMODE op_mode;
+	bool is_dfs_chan_updated = false;
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
@@ -156,7 +157,16 @@ static QDF_STATUS vdev_mgr_start_param_update(
 						     des_chan->ch_freq_seg1,
 						     des_chan->ch_freq_seg2,
 						     des_chan->ch_cfreq1,
-						     des_chan->ch_cfreq2);
+						     des_chan->ch_cfreq2,
+						     &is_dfs_chan_updated);
+
+	/* The RCAC state machine should be stopped only once for the channel
+	 * change. If  the same channel is being sent to the FW then do
+	 * not send unnecessary STOP to the state machine.
+	 */
+	if (is_dfs_chan_updated)
+		utils_dfs_rcac_sm_deliver_evt(pdev,
+					      DFS_RCAC_SM_EV_RCAC_STOP);
 
 	param->beacon_interval = mlme_obj->proto.generic.beacon_interval;
 	param->dtim_period = mlme_obj->proto.generic.dtim_period;

@@ -171,9 +171,16 @@ void dfs_process_cac_completion(struct wlan_dfs *dfs)
 							     &ch_width,
 							     &primary_chan_freq,
 							     &sec_chan_freq);
-		/* Mark the current channel as preCAC done */
-		dfs_mark_precac_done_for_freq(dfs, primary_chan_freq,
-					      sec_chan_freq, ch_width);
+
+		/* ETSI allows the driver to cache the CAC ( Once CAC done,
+		 * it can be used in future).
+		 * Therefore mark the current channel CAC done.
+		 */
+		if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN)
+			dfs_mark_precac_done_for_freq(dfs,
+						      primary_chan_freq,
+						      sec_chan_freq,
+						      ch_width);
 	}
 
 	dfs_clear_cac_started_chan(dfs);

@@ -983,22 +983,37 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
  * utils_dfs_rcac_sm_deliver_evt() - API to post events to DFS rolling CAC SM.
  * @pdev:           Pointer to DFS pdev object.
  * @event:          Event to be posted to DFS RCAC SM.
- * @event_data_len: Length of event data.
- * @event_data:     Pointer to event data.
  *
  * Return: None.
  */
 void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				   enum dfs_rcac_sm_evt event,
-				   uint16_t event_data_len,
-				   void *event_data);
+				   enum dfs_rcac_sm_evt event);
+
+/**
+ * utils_dfs_get_rcac_channel() - Get the completed Rolling CAC channel if
+ *                                available.
+ * @pdev: Pointer to DFS pdev object.
+ * @ch_params: current channel params.
+ * @target_chan: Pointer to target_chan freq.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
+				      struct ch_params *chan_params,
+				      qdf_freq_t *target_chan_freq);
 #else
 static inline
 void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				   enum dfs_rcac_sm_evt event,
-				   uint16_t event_data_len,
-				   void *event_data)
+				   enum dfs_rcac_sm_evt event)
 {
+}
+
+static inline
+QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
+				      struct ch_params *chan_params,
+				      qdf_freq_t *target_chan_freq)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* QCA_SUPPORT_ADFS_RCAC */
 

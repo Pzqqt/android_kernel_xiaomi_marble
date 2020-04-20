@@ -1123,7 +1123,9 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	/* Sanity checks for radar on Agile detector */
 	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs) &&
-	    (!dfs_is_agile_precac_enabled(dfs) || !dfs->dfs_agile_precac_freq_mhz))
+	    ((!dfs_is_agile_precac_enabled(dfs) &&
+	      !dfs_is_agile_rcac_enabled(dfs)) ||
+	      !dfs->dfs_agile_precac_freq_mhz))
 	{
 		dfs_err(dfs, WLAN_DEBUG_DFS,
 			"radar on Agile detector when ADFS is not running");
@@ -1238,6 +1240,11 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				     radar_found->detector_id,
 				     nol_freq_list,
 				     num_channels);
+
+	if (dfs_is_agile_rcac_enabled(dfs) &&
+	    radar_found->detector_id == dfs_get_agile_detector_id(dfs))
+		utils_dfs_rcac_sm_deliver_evt(dfs->dfs_pdev_obj,
+					      DFS_RCAC_SM_EV_ADFS_RADAR_FOUND);
 	/*
 	 * This calls into the umac DFS code, which sets the umac
 	 * related radar flags and begins the channel change

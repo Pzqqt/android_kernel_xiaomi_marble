@@ -151,6 +151,7 @@ QDF_STATUS tgt_dfs_set_current_channel(struct wlan_objmgr_pdev *pdev,
  * @dfs_ch_mhz_freq_seg1:  Channel center frequency of primary segment in MHZ.
  * @dfs_ch_mhz_freq_seg2:  Channel center frequency of secondary segment in MHZ
  *                         applicable only for 80+80MHZ mode of operation.
+ * @is_channel_updated: Boolean to represent channel update.
  */
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS
@@ -162,7 +163,8 @@ tgt_dfs_set_current_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 				     uint8_t dfs_ch_vhtop_ch_freq_seg1,
 				     uint8_t dfs_ch_vhtop_ch_freq_seg2,
 				     uint16_t dfs_ch_mhz_freq_seg1,
-				     uint16_t dfs_ch_mhz_freq_seg2);
+				     uint16_t dfs_ch_mhz_freq_seg2,
+				     bool *is_channel_updated);
 #endif
 
 /**

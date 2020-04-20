@@ -114,7 +114,8 @@ tgt_dfs_set_current_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 				     uint8_t dfs_chan_vhtop_freq_seg1,
 				     uint8_t dfs_chan_vhtop_freq_seg2,
 				     uint16_t dfs_chan_mhz_freq_seg1,
-				     uint16_t dfs_chan_mhz_freq_seg2)
+				     uint16_t dfs_chan_mhz_freq_seg2,
+				     bool *is_channel_updated)
 {
 	struct wlan_dfs *dfs;
 
@@ -135,7 +136,8 @@ tgt_dfs_set_current_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 					 dfs_chan_vhtop_freq_seg1,
 					 dfs_chan_vhtop_freq_seg2,
 					 dfs_chan_mhz_freq_seg1,
-					 dfs_chan_mhz_freq_seg2);
+					 dfs_chan_mhz_freq_seg2,
+					 is_channel_updated);
 
 	return QDF_STATUS_SUCCESS;
 }

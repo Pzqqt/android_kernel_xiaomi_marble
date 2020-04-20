@@ -1568,7 +1568,8 @@ struct wlan_lmac_if_dfs_rx_ops {
 						uint8_t ic_vhtop_ch_freq_seg1,
 						uint8_t ic_vhtop_ch_freq_seg2,
 						uint16_t dfs_ch_mhz_freq_seg1,
-						uint16_t dfs_ch_mhz_freq_seg2);
+						uint16_t dfs_ch_mhz_freq_seg2,
+						bool *is_channel_updated);
 #endif
 #ifdef DFS_COMPONENT_ENABLE
 	QDF_STATUS (*dfs_process_radar_ind)(struct wlan_objmgr_pdev *pdev,
@@ -1639,9 +1640,7 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_rcac_freq)(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t *rcac_freq);
 	void (*dfs_rcac_sm_deliver_evt)(struct wlan_objmgr_pdev *pdev,
-					enum dfs_rcac_sm_evt event,
-					uint16_t event_data_len,
-					void *event_data);
+					enum dfs_rcac_sm_evt event);
 #endif
 };
 

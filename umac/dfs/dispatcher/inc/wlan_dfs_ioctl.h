@@ -362,17 +362,15 @@ struct seq_store {
 /**
  * enum dfs_rcac_sm_evt - DFS Rolling CAC SM events.
  * @DFS_RCAC_SM_EV_RCAC_START: Event to start RCAC.
- * @DFS_RCAC_SM_EV_NOL_EXPIRY: Event to try starting RCAC after NOL expiry.
  * @DFS_RCAC_SM_EV_RCAC_DOWN:  Event to stop RCAC.
  * @DFS_RCAC_SM_EV_RCAC_DONE:  Event to complete RCAC.
  * @DFS_RCAC_SM_EV_ADFS_RADAR: Event to restart RCAC after radar in agile.
  */
 enum dfs_rcac_sm_evt {
 	DFS_RCAC_SM_EV_RCAC_START = 0,
-	DFS_RCAC_SM_EV_NOL_EXPIRY = 1,
-	DFS_RCAC_SM_EV_RCAC_STOP = 2,
-	DFS_RCAC_SM_EV_RCAC_DONE = 3,
-	DFS_RCAC_SM_EV_ADFS_RADAR_FOUND = 4,
+	DFS_RCAC_SM_EV_RCAC_STOP = 1,
+	DFS_RCAC_SM_EV_RCAC_DONE = 2,
+	DFS_RCAC_SM_EV_ADFS_RADAR_FOUND = 3,
 };
 
 #endif  /* _DFS_IOCTL_H_ */

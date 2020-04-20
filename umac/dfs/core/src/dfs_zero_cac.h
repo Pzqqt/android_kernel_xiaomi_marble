@@ -1262,23 +1262,9 @@ dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs)
 
 #ifdef QCA_SUPPORT_ADFS_RCAC
 #define DFS_RCAC_SM_SPIN_LOCK(_soc_obj) \
-	qdf_spin_lock_bh((_soc_obj)->dfs_rcac_sm_lock)
+	qdf_spin_lock_bh(&((_soc_obj)->dfs_rcac_sm_lock))
 #define DFS_RCAC_SM_SPIN_UNLOCK(_soc_obj) \
-	qdf_spin_unlock_bh((_soc_obj)->dfs_rcac_sm_lock)
-
-/**
- * enum dfs_rcac_sm_state - DFS Rolling CAC SM states.
- * @DFS_RCAC_S_INIT:     Default state, where RCAC not in progress.
- * @DFS_RCAC_S_RUNNING:  RCAC is in progress.
- * @DFS_RCAC_S_COMPLETE: RCAC is completed.
- * @DFS_RCAC_S_MAX:      Max (invalid) state.
- */
-enum dfs_rcac_sm_state {
-	DFS_RCAC_S_INIT,
-	DFS_RCAC_S_RUNNING,
-	DFS_RCAC_S_COMPLETE,
-	DFS_RCAC_S_MAX,
-};
+	qdf_spin_unlock_bh(&((_soc_obj)->dfs_rcac_sm_lock))
 
 /**
  * dfs_rcac_sm_deliver_evt() - Deliver the event to RCAC SM.
@@ -1310,6 +1296,31 @@ QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj);
  */
 QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj);
 
+/**
+ * dfs_is_agile_rcac_enabled() - Determine if Rolling CAC is supported or not.
+ * @dfs: Pointer to struct wlan_dfs.
+ *
+ * Following are the conditions needed to assertain that rolling CAC
+ * is enabled:
+ * 1. DFS domain of the PDEV must be FCC or MKK.
+ * 2. User has enabled Rolling CAC configuration.
+ * 3. FW capability to support ADFS. Only non-160 capability is checked here.
+ *    If we happen to choose the next RCAC channel as 160/80-80,
+ *    'dfs_fw_adfs_support_160' is also verified.
+ *
+ *
+ * Return: True if RCAC support is enabled, false otherwise.
+ */
+bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs);
+
+/**
+ * dfs_prepare_agile_rcac_channel() - Prepare agile RCAC channel.
+ * @dfs: Pointer to struct wlan_dfs.
+ * @is_rcac_chan_available: Flag to indicate if a valid RCAC channel is
+ *                          found.
+ */
+void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
+				    bool *is_rcac_chan_available);
 #else
 static inline
 QDF_STATUS dfs_rcac_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
@@ -1331,22 +1342,17 @@ QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* QCA_SUPPORT_ADFS_RCAC */
 
-/**
- * dfs_prepare_agile_rcac_channel() - Prepare agile RCAC channel.
- * @dfs: Pointer to struct wlan_dfs.
- * @is_rcac_chan_available: Flag to indicate if a valid RCAC channel is
- *                          found.
- */
-#ifdef QCA_SUPPORT_ADFS_RCAC
-void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
-				    bool *is_rcac_chan_available);
-#else
+static inline bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
+{
+	return false;
+}
+
 static inline void
 dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 			       bool *is_rcac_chan_available)
 {
 }
-#endif
+#endif /* QCA_SUPPORT_ADFS_RCAC */
+
 #endif /* _DFS_ZERO_CAC_H_ */
