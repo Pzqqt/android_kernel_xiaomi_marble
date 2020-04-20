@@ -2922,6 +2922,7 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 {
 	uint16_t i, sta_count;
 	uint32_t acs_chan_default = 0;
+	bool force_sap_allowed = false;
 
 	if (!acs_ch_list_count || *acs_ch_list_count > 0 ||
 	    !acs_freq_list) {
@@ -2936,7 +2937,9 @@ static void wlan_hdd_handle_zero_acs_list(struct hdd_context *hdd_ctx,
 			(hdd_ctx->psoc, PM_STA_MODE, NULL);
 	sta_count += policy_mgr_mode_specific_connection_count
 			(hdd_ctx->psoc, PM_P2P_CLIENT_MODE, NULL);
-	if (!sta_count)
+
+	ucfg_mlme_get_force_sap_enabled(hdd_ctx->psoc, &force_sap_allowed);
+	if (!sta_count && !force_sap_allowed)
 		return;
 
 	for (i = 0; i < org_ch_list_count; i++) {

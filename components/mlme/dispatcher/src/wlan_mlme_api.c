@@ -2992,6 +2992,20 @@ wlan_mlme_get_vht_enable2x2(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 QDF_STATUS
+wlan_mlme_get_force_sap_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	*value = mlme_obj->cfg.acs.force_sap_start;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 wlan_mlme_set_vht_enable2x2(struct wlan_objmgr_psoc *psoc, bool value)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
