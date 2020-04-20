@@ -2127,6 +2127,18 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		return false;
 	}
 
+	if (LIM_IS_AP_ROLE(session)) {
+		if ((assoc_req->wpaPresent || assoc_req->rsnPresent) &&
+		    !session->privacy) {
+			lim_reject_association(mac_ctx, hdr->sa, sub_type,
+					       true, auth_type, peer_idx,
+					       true,
+					       eSIR_MAC_UNSPEC_FAILURE_STATUS,
+					       session);
+			return false;
+		}
+	}
+
 send_ind_to_sme:
 	if (!lim_update_sta_ds(mac_ctx, hdr, session, assoc_req,
 			       sub_type, sta_ds, auth_type, akm_type,
