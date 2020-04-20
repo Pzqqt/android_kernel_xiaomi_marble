@@ -257,7 +257,6 @@
 #include "dfs_process_radar_found_ind.h"
 #include "target_if.h"
 #include "wlan_dfs_init_deinit_api.h"
-#include "wlan_sm_engine.h"
 
 /* Given a bandwidth, find the number of subchannels in that bandwidth */
 #define N_SUBCHS_FOR_BANDWIDTH(_bw) ((_bw) / MIN_DFS_SUBCHAN_BW)
@@ -1232,6 +1231,129 @@ void dfs_mark_precac_done(struct wlan_dfs *dfs,
 }
 #endif
 
+/**
+ * dfs_find_subchannels_for_center_freq() - API to find the subchannels given
+ * the center frequencies and ch_width.
+ * @pri_center_freq: It is the center of 20/40/80/160Mhz band and for 80+80Mhz
+ *                   it is the center of the first 80Mhz band.
+ * @sec_center_freq: It is used only for 80+80Mhz and denotes the center
+ *                   of the second 80Mhz band.
+ * @ch_width: Channel width.
+ * @channels: List of subchannels.
+ *
+ * Return: Number of subchannels.
+ */
+static uint8_t
+dfs_find_subchannels_for_center_freq(qdf_freq_t pri_center_freq,
+				     qdf_freq_t sec_center_freq,
+				     enum phy_ch_width ch_width,
+				     qdf_freq_t *channels)
+{
+	uint8_t nchannels = 0;
+
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
+		nchannels = 1;
+		channels[0] = pri_center_freq;
+		break;
+	case CH_WIDTH_40MHZ:
+		nchannels = 2;
+		channels[0] = pri_center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[1] = pri_center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		break;
+	case CH_WIDTH_80MHZ:
+		nchannels = 4;
+		channels[0] = pri_center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		channels[1] = pri_center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[2] = pri_center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[3] = pri_center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		nchannels = 8;
+		channels[0] = pri_center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		channels[1] = pri_center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[2] = pri_center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[3] = pri_center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		/* secondary channels */
+		channels[4] = sec_center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		channels[5] = sec_center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[6] = sec_center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[7] = sec_center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		break;
+	case CH_WIDTH_160MHZ:
+		nchannels = 8;
+		channels[0] = pri_center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		channels[1] = pri_center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+		channels[2] = pri_center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		channels[3] = pri_center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[4] = pri_center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+		channels[5] = pri_center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		channels[6] = pri_center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+		channels[7] = pri_center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		break;
+	default:
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "invalid channel width");
+		break;
+	}
+
+	return nchannels;
+}
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+/**
+ * dfs_unmark_rcac_done() - Unmark the CAC done channels from the RCAC list.
+ * @dfs: Pointer to wlan_dfs object.
+ */
+static void dfs_unmark_rcac_done(struct wlan_dfs *dfs)
+{
+	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
+	qdf_freq_t channels[NUM_CHANNELS_160MHZ];
+	uint8_t i, nchannels = 0;
+	qdf_freq_t pri_ch_freq =
+		dfs->dfs_rcac_param.rcac_ch_params.mhz_freq_seg0;
+	qdf_freq_t sec_ch_freq =
+		dfs->dfs_rcac_param.rcac_ch_params.mhz_freq_seg1;
+	enum phy_ch_width ch_width =
+		dfs->dfs_rcac_param.rcac_ch_params.ch_width;
+
+	if (ch_width == CH_WIDTH_160MHZ) {
+		pri_ch_freq = sec_ch_freq;
+		sec_ch_freq = 0;
+	}
+
+	if (!pri_ch_freq)
+		return;
+
+	nchannels = dfs_find_subchannels_for_center_freq(pri_ch_freq,
+							 sec_ch_freq,
+							 ch_width,
+							 channels);
+	if (!nchannels)
+		return;
+
+	PRECAC_LIST_LOCK(dfs);
+	if (TAILQ_EMPTY(&dfs->dfs_precac_list)) {
+		PRECAC_LIST_UNLOCK(dfs);
+		return;
+	}
+	for (i = 0; i < nchannels; i++) {
+		TAILQ_FOREACH_SAFE(precac_entry,
+				   &dfs->dfs_precac_list,
+				   pe_list,
+				   tmp_precac_entry) {
+			if (IS_WITHIN_RANGE(channels[i],
+					    precac_entry->center_ch_freq,
+					    VHT160_FREQ_OFFSET)) {
+				dfs_unmark_tree_node_as_cac_done_for_freq
+					(precac_entry, channels[i]);
+				break;
+			}
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
+}
+#endif
+
 /*
  * dfs_mark_precac_done_for_freq() - Mark a frequency as preCAC done.
  * @dfs: Pointer to wlan_dfs.
@@ -1251,50 +1373,13 @@ void dfs_mark_precac_done_for_freq(struct wlan_dfs *dfs,
 
 	if (!pri_ch_freq)
 		return;
-	switch (ch_width) {
-	case CH_WIDTH_20MHZ:
-		nchannels = 1;
-		channels[0] = pri_ch_freq;
-		break;
-	case CH_WIDTH_40MHZ:
-		nchannels = 2;
-		channels[0] = pri_ch_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[1] = pri_ch_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		break;
-	case CH_WIDTH_80MHZ:
-		nchannels = 4;
-		channels[0] = pri_ch_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		channels[1] = pri_ch_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[2] = pri_ch_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[3] = pri_ch_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		break;
-	case CH_WIDTH_80P80MHZ:
-		nchannels = 8;
-		channels[0] = pri_ch_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		channels[1] = pri_ch_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[2] = pri_ch_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[3] = pri_ch_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		/* secondary channels */
-		channels[4] = sec_ch_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		channels[5] = sec_ch_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[6] = sec_ch_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[7] = sec_ch_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		break;
-	case CH_WIDTH_160MHZ:
-		nchannels = 8;
-		channels[0] = pri_ch_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-		channels[1] = pri_ch_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		channels[2] = pri_ch_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		channels[3] = pri_ch_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[4] = pri_ch_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		channels[5] = pri_ch_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		channels[6] = pri_ch_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		channels[7] = pri_ch_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-		break;
-	default:
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "invalid channel width");
+
+	nchannels = dfs_find_subchannels_for_center_freq(pri_ch_freq,
+							 sec_ch_freq,
+							 ch_width,
+							 channels);
+	if (!nchannels)
 		return;
-	}
 
 	PRECAC_LIST_LOCK(dfs);
 	if (TAILQ_EMPTY(&dfs->dfs_precac_list)) {
@@ -2900,12 +2985,6 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	QDF_STATUS status;
 	struct dfs_channel_bw *dfs_max_bw_info;
 	int num_precac_roots;
-
-	/* Right now, only ETSI domain supports preCAC. Check if current
-	 * DFS domain is ETSI and only then build the preCAC list.
-	 */
-	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) != DFS_ETSI_DOMAIN)
-		return;
 
 	/*
 	 * We need to prepare list of uniquee center frequencies of maximum
@@ -4733,54 +4812,8 @@ static void dfs_fill_des_rcac_chan_params(struct wlan_dfs *dfs,
 	ch_params->mhz_freq_seg0 = chan->dfs_ch_mhz_freq_seg1;
 	ch_params->mhz_freq_seg1 = chan->dfs_ch_mhz_freq_seg2;
 }
-
-/* dfs_get_random_rcac_chan() - Get a random rolling CAC frequency (MHZ).
- * @dfs: Pointer to wlan_dfs structure.
- * @des_chwidth: Desired channel width.
- * @flags: Flags provided to the DFS Random channel algorithm.
- *
- * Return: Frequency in MHZ of type qdf_freq_t.
- */
-static qdf_freq_t
-dfs_get_random_rcac_chan(struct wlan_dfs *dfs, enum phy_ch_width des_chwidth,
-			 uint16_t flags)
-{
-	struct ch_params ch_params;
-	qdf_freq_t target_chan_freq = 0;
-
-	qdf_mem_zero(&ch_params, sizeof(struct ch_params));
-	dfs_fill_des_rcac_chan_params(dfs, &ch_params, des_chwidth);
-
-	/* The current dfs channel width may not be supported by the agile
-	 * engine. For example, some chips may support 160/80+80Mhz mode
-	 * for its operating channel (Tx/Rx), however, the agile engine
-	 * may support up to a maximum of 80Mhz bandwidth.
-	 * Therefore, we need to compute the agile channel width.
-	 * The function dfs_compute_agile_chan_width calculated the agile
-	 * channel width elsewhere and the agile channel width is
-	 * passed to the utils_dfs_get_random_channel_for_freq through
-	 * ch_params->ch_width.
-	 */
-	utils_dfs_get_random_channel_for_freq(dfs->dfs_pdev_obj, flags,
-					      &ch_params, NULL,
-					      &target_chan_freq, NULL);
-	return target_chan_freq;
-}
 #endif
 
-/* dfs_is_agile_rcac_enabled() - Determine if Rolling CAC is supported
- * or not. Following are the conditions needed to assertain that rolling CAC
- * is enabled:
- * 1. DFS domain of the PDEV must be FCC or MKK.
- * 2. User has enabled Rolling CAC configuration.
- * 3. FW capability to support ADFS. Only non-160 capability is checked here.
- * If we happen to choose the next RCAC channel as 160/80-80,
- * 'dfs_fw_adfs_support_160' is also verified.
- *
- * @dfs: Pointer to struct wlan_dfs.
- *
- * Return: True if RCAC support is enabled, false otherwise.
- */
 #ifdef QCA_SUPPORT_ADFS_RCAC
 bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 {
@@ -4793,11 +4826,6 @@ bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 	    rcac_enabled = true;
 
 	return rcac_enabled;
-}
-#else
-bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
-{
-	return false;
 }
 #endif
 
@@ -4830,6 +4858,7 @@ dfs_convert_chwidth_to_wlan_phymode(enum phy_ch_width chwidth)
  *                               compute a dfs channel structure.
  * @dfs: Pointer to struct wlan_dfs.
  * @freq: Frequency in MHZ.
+ * @center_freq_seg2: Secondary center frequency in MHZ.
  * @chwidth: Channel width.
  * @chan: Pointer to struct dfs_channel to be filled.
  *
@@ -4837,7 +4866,9 @@ dfs_convert_chwidth_to_wlan_phymode(enum phy_ch_width chwidth)
  *         return status as QDF_STATUS_E_FAILURE.
  */
 static QDF_STATUS
-dfs_find_dfschan_for_freq(struct wlan_dfs *dfs, qdf_freq_t freq,
+dfs_find_dfschan_for_freq(struct wlan_dfs *dfs,
+			  qdf_freq_t freq,
+			  qdf_freq_t center_freq_seg2,
 			  enum phy_ch_width chwidth,
 			  struct dfs_channel *chan)
 {
@@ -4858,7 +4889,7 @@ dfs_find_dfschan_for_freq(struct wlan_dfs *dfs, qdf_freq_t freq,
 	}
 	status =
 	    dfs_mlme_find_dot11_chan_for_freq(dfs->dfs_pdev_obj,
-					      freq, 0, mode,
+					      freq, center_freq_seg2, mode,
 					      &chan->dfs_ch_freq,
 					      &chan->dfs_ch_flags,
 					      &chan->dfs_ch_flagext,
@@ -4939,8 +4970,9 @@ dfs_is_subchans_of_rcac_chan_in_nol(struct wlan_dfs *dfs,
 	return is_nol;
 }
 
-/* dfs_is_rcac_chan_valid() - Find out if the given frequency is
- *                            a valid RCAC channel.
+/* dfs_is_rcac_chan_valid() - Find out if the band identified by the given
+ *                            primary channel frequency and the width is
+ *                            supported by the agile engine.
  * @dfs: Pointer to struct wlan_dfs.
  * @chwidth: Agile channel width
  * @rcac_freq: Rolling CAC frequency.
@@ -4954,13 +4986,19 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	struct dfs_channel rcac_chan;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (chwidth == CH_WIDTH_80P80MHZ) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"RCAC cannot be started for 80P80MHz with single chan");
+		return false;
+	}
+
 	qdf_mem_zero(&rcac_chan, sizeof(struct dfs_channel));
 
 	/* 1. Find a valid channel pointer with rcac freq and
 	 * agile channel width. If a valid channel pointer does not exists,
 	 * return failure.
 	 */
-	status = dfs_find_dfschan_for_freq(dfs, rcac_freq, chwidth,
+	status = dfs_find_dfschan_for_freq(dfs, rcac_freq, 0, chwidth,
 					   &rcac_chan);
 	if (status != QDF_STATUS_SUCCESS) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -4989,19 +5027,26 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
  *                             This ch_params is used in 80211_dfs_action
  *                             as the next channel after radar detect.
  * @dfs: Pointer to struct wlan_dfs.
- * @chwidth: Agile channel width.
+ * @rcac_ch_params: Rolling CAC channel parameters.
  * @rcac_freq: Rolling CAC frequency.
  */
 static void
 dfs_save_rcac_ch_params(struct wlan_dfs *dfs, struct ch_params rcac_ch_params,
-			enum phy_ch_width rcac_width)
+			qdf_freq_t rcac_freq)
 {
-    dfs->dfs_rcac_ch_params.ch_width = rcac_width;
-    dfs->dfs_rcac_ch_params.sec_ch_offset = rcac_ch_params.sec_ch_offset;
-    dfs->dfs_rcac_ch_params.center_freq_seg0 = rcac_ch_params.center_freq_seg0;
-    dfs->dfs_rcac_ch_params.center_freq_seg1 = rcac_ch_params.center_freq_seg1;
-    dfs->dfs_rcac_ch_params.mhz_freq_seg0 = rcac_ch_params.mhz_freq_seg0;
-    dfs->dfs_rcac_ch_params.mhz_freq_seg1 = rcac_ch_params.mhz_freq_seg1;
+	struct dfs_rcac_params *rcac_param = &dfs->dfs_rcac_param;
+
+	rcac_param->rcac_pri_freq = rcac_freq;
+	rcac_param->rcac_ch_params.ch_width = rcac_ch_params.ch_width;
+	rcac_param->rcac_ch_params.sec_ch_offset = rcac_ch_params.sec_ch_offset;
+	rcac_param->rcac_ch_params.center_freq_seg0 =
+			rcac_ch_params.center_freq_seg0;
+	rcac_param->rcac_ch_params.center_freq_seg1 =
+			rcac_ch_params.center_freq_seg1;
+	rcac_param->rcac_ch_params.mhz_freq_seg0 =
+			rcac_ch_params.mhz_freq_seg0;
+	rcac_param->rcac_ch_params.mhz_freq_seg1 =
+			rcac_ch_params.mhz_freq_seg1;
 }
 
 /* dfs_find_rcac_chan() - Find out a rolling CAC channel.
@@ -5018,7 +5063,6 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 	qdf_freq_t rcac_freq, rcac_center_freq = 0;
 	struct dfs_channel dfs_chan;
 	struct ch_params nxt_chan_params;
-	enum phy_ch_width nextchan_width = CH_WIDTH_INVALID;
 
 	qdf_mem_zero(&dfs_chan, sizeof(struct dfs_channel));
 	qdf_mem_zero(&nxt_chan_params, sizeof(struct ch_params));
@@ -5035,42 +5079,84 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 
 	if (is_user_rcac_chan_valid) {
 		rcac_freq = dfs->dfs_agile_rcac_freq_ucfg;
+		if (dfs_find_dfschan_for_freq(dfs, rcac_freq, 0,
+					      curchan_chwidth,
+					      &dfs_chan) != QDF_STATUS_SUCCESS)
+			goto exit;
+
+		nxt_chan_params.ch_width = curchan_chwidth;
+		/* Get the ch_params from regulatory. ch_width and rcac_freq
+		 * are the input given to fetch other params of struct
+		 * ch_params.
+		 */
+		wlan_reg_set_channel_params_for_freq(dfs->dfs_pdev_obj,
+				rcac_freq, 0, &nxt_chan_params);
 	} else {
 		/* Invoke Random channel selection and select only
 		 * DFS channels.
 		 */
 		uint16_t flags = DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH;
 
-		rcac_freq =
-			dfs_get_random_rcac_chan(dfs, curchan_chwidth, flags);
-	}
-	if (dfs_find_dfschan_for_freq(dfs, rcac_freq, curchan_chwidth,
-				      &dfs_chan) != QDF_STATUS_SUCCESS)
-		return 0;
+		dfs_fill_des_rcac_chan_params(dfs,
+					      &nxt_chan_params,
+					      curchan_chwidth);
 
-	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(&dfs_chan))
-	    return 0;
+		/* The current dfs channel width may not be supported by the
+		 * agile engine. For example, some chips may support
+		 * 160/80+80Mhz mode for its operating channel (Tx/Rx),
+		 * however, the agile engine may support up to a maximum of
+		 * 80Mhz bandwidth.
+		 * Therefore, we need to compute the agile channel width.
+		 * The function dfs_compute_agile_chan_width calculated the
+		 * agile channel width elsewhere and the agile channel width is
+		 * passed to the utils_dfs_get_random_channel_for_freq through
+		 * ch_params->ch_width.
+		 */
+		utils_dfs_get_random_channel_for_freq(dfs->dfs_pdev_obj, flags,
+				&nxt_chan_params, NULL,
+				&rcac_freq, NULL);
+
+		if (dfs_find_dfschan_for_freq(dfs, rcac_freq,
+					      nxt_chan_params.mhz_freq_seg1,
+					      nxt_chan_params.ch_width,
+					      &dfs_chan) != QDF_STATUS_SUCCESS)
+			goto exit;
+	}
 
 	/* Store the random channel ch params for future use on
 	 * radar detection.
 	 */
+	dfs_save_rcac_ch_params(dfs, nxt_chan_params, rcac_freq);
 
-	nxt_chan_params.ch_width = curchan_chwidth;
-	/* Get the ch_params from regulatory. ch_width and rcac_freq are the
-	 * input given to fetch other params of struct ch_params.
-	 */
-	wlan_reg_set_channel_params_for_freq(dfs->dfs_pdev_obj, rcac_freq, 0,
-					     &nxt_chan_params);
-	nextchan_width = dfs_map_to_agile_width(dfs, nxt_chan_params.ch_width);
-	if (nextchan_width != dfs->dfs_precac_chwidth) {
+	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(&dfs_chan))
+	    return 0;
+
+	if (nxt_chan_params.ch_width != dfs->dfs_precac_chwidth) {
 	    return 0;
 	}
 	/* Store the rcac chan params in dfs */
-	dfs_save_rcac_ch_params(dfs, nxt_chan_params, nextchan_width);
-	rcac_center_freq = dfs_chan.dfs_ch_mhz_freq_seg1;
+	rcac_center_freq = nxt_chan_params.mhz_freq_seg0;
+	switch (nxt_chan_params.ch_width) {
+	case CH_WIDTH_160MHZ:
+		rcac_center_freq = nxt_chan_params.mhz_freq_seg1;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		if ((rcac_center_freq ==
+		     RESTRICTED_80P80_LEFT_80_CENTER_FREQ) ||
+		    (rcac_center_freq ==
+		     RESTRICTED_80P80_RIGHT_80_CENTER_FREQ))
+			rcac_center_freq = RESTRICTED_80P80_CHAN_CENTER_FREQ;
+		break;
+	default:
+		break;
+	}
 
 	return rcac_center_freq;
+exit:
+	qdf_mem_zero(&dfs->dfs_rcac_param, sizeof(struct dfs_rcac_params));
+	return 0;
 }
+
 #else
 static inline qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 					    enum phy_ch_width curchan_chwidth)
@@ -5675,6 +5761,40 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
 	PRECAC_LIST_UNLOCK(dest_dfs);
 }
 
+/* dfs_start_agile_engine() - Prepare ADFS params and program the agile
+ *                            engine sending agile config cmd to FW.
+ * @dfs: Pointer to struct wlan_dfs.
+ */
+void dfs_start_agile_engine(struct wlan_dfs *dfs)
+{
+	struct dfs_agile_cac_params adfs_param;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
+
+	/* Fill the RCAC ADFS params and send it to FW.
+	 * FW does not use RCAC timeout values for RCAC feature.
+	 * FW runs an infinite timer.
+	 */
+	dfs_fill_adfs_chan_params(dfs, &adfs_param);
+	adfs_param.min_precac_timeout = MIN_RCAC_DURATION;
+	adfs_param.max_precac_timeout = MAX_RCAC_DURATION;
+	adfs_param.ocac_mode = QUICK_RCAC_MODE;
+
+	qdf_info("%s : %d RCAC channel request sent for pdev: %pK "
+			 "ch_freq: %d", __func__, __LINE__, dfs->dfs_pdev_obj,
+			 dfs->dfs_agile_precac_freq_mhz);
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(dfs_soc_obj->psoc);
+
+	if (dfs_tx_ops && dfs_tx_ops->dfs_agile_ch_cfg_cmd)
+		dfs_tx_ops->dfs_agile_ch_cfg_cmd(dfs->dfs_pdev_obj,
+						 &adfs_param);
+	else
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"dfs_tx_ops=%pK", dfs_tx_ops);
+}
+
+
 #ifdef QCA_SUPPORT_ADFS_RCAC
 /**
  * --------------------- ROLLING CAC STATE MACHINE ----------------------
@@ -5705,8 +5825,8 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
  *            |                      |                     |
  *            |                      |                     |
  *            | [EV_RCAC_STOP]       | [EV_RCAC_START]     | [EV_RCAC_STOP]
- *            | [EV_RCAC_START]      | [EV_NOL_EXPIRY]     | [EV_RCAC_START]
  *            | [EV_ADFS_RADAR]      |                     | [EV_ADFS_RADAR]
+ *            |                      |                     |
  *            |                      |                     |
  *    ________|________              |             ________|________
  *   |                 |             |----------->|                 |
@@ -5736,14 +5856,6 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
  *        b. Check if a new RCAC channel can be found,
  *           - If no, do not transition.
  *           - If yes, transition to RUNNING.
- *   2. RUNNING handler:
- *        a. Check if RCAC was running for this pdev,
- *           - If yes, transition to INIT and post same event.
- *           - If no, ignore.
- *   3. COMPLETE handler:
- *        a. Check if RCAC was running for this pdev,
- *           - If yes, transition to INIT and post same event.
- *           - If no, ignore.
  *
  * EV_RCAC_STOP:
  *   Posted from last vap down or config disable, handled by RUNNING
@@ -5753,19 +5865,6 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
  *        b. Send wmi_adfs_abort_cmd to FW and transition to INIT.
  *   2. COMPLETE handler:
  *        a. Send wmi_adfs_abort_cmd to FW and transition to INIT.
- *
- * EV_NOL_EXPIRY:
- *   Posted from NOL expiry and is handled by INIT.
- *   1. INIT handler (same as EV_RCAC_START):
- *        a. Check if RCAC is already running,
- *           - If yes, do not transition.
- *           - If no, go to step b.
- *        b. Check if a new RCAC channel can be found,
- *           - If no, do not transition.
- *           - If yes, transition to RUNNING.
- *
- *   Note: EV_NOL_EXPIRY is a trigger to start RCAC if possible and only if
- *         not running, hence is not handled in RUNNING or COMPLETE.
  *
  * EV_ADFS_RADAR:
  *   Posted from radar detection and is handled in RUNNING and COMPLETE.
@@ -5804,6 +5903,31 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
  *      or by bringing down all vaps, or if no channel is available.
  *   3. Once RCAC is stopped for a pdev, it can be started in the other pdev
  *      by restarting it's vap (i.e. a vdev response).
+ *
+ *   A working sequence of RCAC is as follows:
+ *     - Consider that the channel configured during bring up is 52HT80.
+ *       1. The First VAP's vdev_start_resp posts an event EV_RCAC_START to the
+ *          RCAC state machine.
+ *       2. The RCAC state machine which is in INIT state (default) receives the
+ *          event, picks a channel to do rolling CAC on, e.g. channel 100HT80.
+ *          The SM is then transitioned to RUNNING state.
+ *       3. In the entry of RUNNING state, a host timer is started and agile
+ *          cfg cmd to FW is sent.
+ *       4. When the HOST timer expires, it posts the EV_RCAC_DONE event to
+ *          the state machine.
+ *       5. EV_RCAC_DONE event received in RUNNING state, transitions the SM
+ *          to COMPLETE.
+ *       6. In the entry of COMPLETE, the RCAC channel is marked as CAC done
+ *          in the precac tree.
+ *       7. If radar is detected on primary channel, the new channel is the
+ *          RCAC channel (100HT80) which does not require CAC if the preCAC
+ *          tree is marked as CAC done.
+ *          Before sending vdev_start, an EV_RCAC_STOP is posted
+ *          which moves the SM to INIT state clearing all the params and
+ *          bringing down the agile detector.
+ *          (CAC decisions are taken before).
+ *       8. After vdev_resp, another EV_RCAC_START is sent to restart the
+ *          RCAC SM with a new RCAC channel if available.
  *
  *   A future enhancement will be triggering RCAC_START at user level.
  */
@@ -5876,6 +6000,53 @@ QDF_STATUS dfs_rcac_sm_deliver_event(struct dfs_soc_priv_obj *dfs_soc_obj,
 				event_data);
 }
 
+/* dfs_start_agile_rcac_timer() - Start host agile RCAC timer.
+ *
+ * @dfs: Pointer to struct wlan_dfs.
+ */
+void dfs_start_agile_rcac_timer(struct wlan_dfs *dfs)
+{
+	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
+	uint32_t rcac_timeout = MIN_RCAC_DURATION;
+
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "Host RCAC timeout = %d ms", rcac_timeout);
+
+	qdf_timer_mod(&dfs_soc_obj->dfs_rcac_timer,
+		      rcac_timeout);
+}
+
+
+/* dfs_stop_agile_rcac_timer() - Cancel the RCAC timer.
+ *
+ * @dfs: Pointer to struct wlan_dfs.
+ */
+void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs)
+{
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	qdf_timer_sync_cancel(&dfs_soc_obj->dfs_rcac_timer);
+}
+
+static void dfs_abort_agile_rcac(struct wlan_dfs *dfs)
+{
+
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+
+	dfs_stop_agile_rcac_timer(dfs);
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_ocac_abort_cmd)
+		dfs_tx_ops->dfs_ocac_abort_cmd(dfs->dfs_pdev_obj);
+
+	qdf_mem_zero(&dfs->dfs_rcac_param, sizeof(struct dfs_rcac_params));
+	dfs->dfs_agile_precac_freq_mhz = 0;
+	dfs->dfs_precac_chwidth = CH_WIDTH_INVALID;
+	dfs->dfs_soc_obj->cur_precac_dfs_index = DFS_PSOC_NO_IDX;
+}
+
 /**
  * dfs_rcac_state_init_entry() - Entry API for INIT state
  * @ctx: DFS SoC private object
@@ -5923,27 +6094,28 @@ static bool dfs_rcac_state_init_event(void *ctx,
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	bool status;
+	struct wlan_dfs *dfs;
+	bool is_rcac_chan_available = false;
+
+	if (!event_data)
+		return false;
+
+	dfs = (struct wlan_dfs *)event_data;
 
 	switch (event) {
-	case DFS_RCAC_SM_EV_NOL_EXPIRY:
-	/* NOL expiry is a special case wherein the RCAC SM is started
-	 * only if it's not already running/complete.
-	 * In cases where certain channels are now available for RCAC
-	 * after NOL expiry, the SM needs to be started and is handled by
-	 * this event. If there is already a channel configured, do not
-	 * handle it.
-	 * Since the DFS_RCAC_SM_EV_RCAC_START event is also handled by other
-	 * states and moves the SM to init, they will not be used during
-	 * NOL expiry for restart and instead, this special event
-	 * (DFS_RCAC_SM_EV_NOL_EXPIRY) will be used. The handling is
-	 * similar to DFS_RCAC_SM_EV_RCAC_START, hence the follow through.
-	 */
 	case DFS_RCAC_SM_EV_RCAC_START:
 		/* Check if feature is enabled for this DFS and if RCAC channel
 		 * is valid, if those are true, send appropriate WMIs to FW
 		 * and only then transition to the state as follows.
 		 */
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_RUNNING);
+
+		if (dfs_soc->cur_precac_dfs_index != DFS_PSOC_NO_IDX)
+			return true;
+		dfs_prepare_agile_rcac_channel(dfs, &is_rcac_chan_available);
+		if (is_rcac_chan_available) {
+			dfs_soc->cur_precac_dfs_index = dfs->dfs_psoc_idx;
+			dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_RUNNING);
+		}
 		status = true;
 		break;
 	default:
@@ -5965,8 +6137,12 @@ static bool dfs_rcac_state_init_event(void *ctx,
 static void dfs_rcac_state_running_entry(void *ctx)
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+	struct wlan_dfs *dfs =
+		dfs_soc->dfs_priv[dfs_soc->cur_precac_dfs_index].dfs;
 
 	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_RUNNING);
+	dfs_start_agile_rcac_timer(dfs);
+	dfs_start_agile_engine(dfs);
 }
 
 /**
@@ -6001,6 +6177,15 @@ static bool dfs_rcac_state_running_event(void *ctx,
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	bool status;
+	struct wlan_dfs *dfs;
+
+	if (!event_data)
+		return false;
+
+	dfs = (struct wlan_dfs *)event_data;
+
+	if (dfs->dfs_psoc_idx != dfs_soc->cur_precac_dfs_index)
+		return false;
 
 	switch (event) {
 	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
@@ -6013,7 +6198,9 @@ static bool dfs_rcac_state_running_event(void *ctx,
 		 * Instead we move the state to INIT and post the event
 		 * "DFS_RCAC_SM_EV_RCAC_START" so INIT handles the case of
 		 * channel not found and stay in that state.
+		 * Abort the existing RCAC and restart from INIT state.
 		 */
+		dfs_abort_agile_rcac(dfs);
 		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
 		dfs_rcac_sm_deliver_event(dfs_soc,
 					  DFS_RCAC_SM_EV_RCAC_START,
@@ -6021,18 +6208,8 @@ static bool dfs_rcac_state_running_event(void *ctx,
 					  event_data);
 		status = true;
 		break;
-	case DFS_RCAC_SM_EV_RCAC_START:
-		/* Reset dfs_cur_rcac_index to default here, so that it may try
-		 * to start RCAC again in init event handler.
-		 */
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
-		dfs_rcac_sm_deliver_event(dfs_soc,
-					  event,
-					  event_data_len,
-					  event_data);
-		status = true;
-		break;
 	case DFS_RCAC_SM_EV_RCAC_STOP:
+		dfs_abort_agile_rcac(dfs);
 		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
 		status = true;
 		break;
@@ -6057,9 +6234,18 @@ static bool dfs_rcac_state_running_event(void *ctx,
  */
 static void dfs_rcac_state_complete_entry(void *ctx)
 {
-	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+	struct dfs_soc_priv_obj *dfs_soc_obj = (struct dfs_soc_priv_obj *)ctx;
+	struct wlan_dfs *dfs;
 
-	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_COMPLETE);
+	dfs_rcac_set_curr_state(dfs_soc_obj, DFS_RCAC_S_COMPLETE);
+
+	if (!(dfs_soc_obj->cur_precac_dfs_index < WLAN_UMAC_MAX_PDEVS))
+		return;
+
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+
+	/* Mark the RCAC channel as CAC done. */
+	dfs_mark_adfs_chan_as_cac_done(dfs);
 }
 
 /**
@@ -6072,7 +6258,7 @@ static void dfs_rcac_state_complete_entry(void *ctx)
  */
 static void dfs_rcac_state_complete_exit(void *ctx)
 {
-	/* NO OPS */
+	/* NO OPs. */
 }
 
 /**
@@ -6094,9 +6280,25 @@ static bool dfs_rcac_state_complete_event(void *ctx,
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	bool status;
+	struct wlan_dfs *dfs;
+
+	if (!event_data)
+		return false;
+
+	dfs = (struct wlan_dfs *)event_data;
+
+	if (dfs->dfs_psoc_idx != dfs_soc->cur_precac_dfs_index)
+		return false;
 
 	switch (event) {
 	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
+		/* Reset the RCAC done state for this RCAC chan of this dfs.
+		 * Unmark the channels for RCAC done before calling abort API as
+		 * the abort API invalidates the cur_precac_dfs_index.
+		 */
+		dfs_unmark_rcac_done(dfs);
+		/* Abort the existing RCAC and restart from INIT state. */
+		dfs_abort_agile_rcac(dfs);
 		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
 		dfs_rcac_sm_deliver_event(dfs_soc,
 					  DFS_RCAC_SM_EV_RCAC_START,
@@ -6104,15 +6306,13 @@ static bool dfs_rcac_state_complete_event(void *ctx,
 					  event_data);
 		status = true;
 		break;
-	case DFS_RCAC_SM_EV_RCAC_START:
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
-		dfs_rcac_sm_deliver_event(dfs_soc,
-					  event,
-					  event_data_len,
-					  event_data);
-		status = true;
-		break;
 	case DFS_RCAC_SM_EV_RCAC_STOP:
+		/* Reset the RCAC done state for this RCAC chan of this dfs.
+		 * Unmark the channels for RCAC done before calling abort API as
+		 * the abort API invalidates the cur_precac_dfs_index.
+		 */
+		dfs_unmark_rcac_done(dfs);
+		dfs_abort_agile_rcac(dfs);
 		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
 		status = true;
 		break;
@@ -6159,7 +6359,6 @@ static struct wlan_sm_state_info dfs_rcac_sm_info[] = {
 
 static const char *dfs_rcac_sm_event_names[] = {
 	"EV_RCAC_START",
-	"EV_NOL_EXPIRY",
 	"EV_RCAC_STOP",
 	"EV_RCAC_DONE",
 	"EV_ADFS_RADAR_FOUND",
@@ -6176,6 +6375,9 @@ static void dfs_rcac_sm_print_state(struct dfs_soc_priv_obj *dfs_soc_obj)
 	enum dfs_rcac_sm_state state;
 
 	state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	if (!(state < DFS_RCAC_S_MAX))
+		return;
+
 	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "->[%s] %s",
 		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
 		  dfs_rcac_sm_info[state].name);
@@ -6195,6 +6397,9 @@ static void dfs_rcac_sm_print_state_event(struct dfs_soc_priv_obj *dfs_soc_obj,
 	enum dfs_rcac_sm_state state;
 
 	state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	if (!(state < DFS_RCAC_S_MAX))
+		return;
+
 	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "[%s]%s, %s",
 		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
 		  dfs_rcac_sm_info[state].name,
@@ -6245,6 +6450,9 @@ QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
 	dfs_soc_obj->dfs_rcac_sm_hdl = sm;
 
 	qdf_spinlock_create(&dfs_soc_obj->dfs_rcac_sm_lock);
+
+	/* Initialize the RCAC DFS index to default (no index). */
+	dfs_soc_obj->cur_precac_dfs_index = DFS_PSOC_NO_IDX;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -6259,7 +6467,8 @@ QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
 QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs, bool rcac_en)
 {
 	if (rcac_en == dfs->dfs_agile_rcac_ucfg) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "Rolling CAC: %d is already configured", rcac_en);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Rolling CAC: %d is already configured", rcac_en);
 		return QDF_STATUS_SUCCESS;
 	}
 	dfs->dfs_agile_rcac_ucfg = rcac_en;
@@ -6267,6 +6476,12 @@ QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs, bool rcac_en)
 	/* RCAC config is changed. Reset the preCAC tree. */
 	dfs_reset_precac_lists(dfs);
 
+	if (!rcac_en) {
+		dfs_rcac_sm_deliver_evt(dfs->dfs_soc_obj,
+					DFS_RCAC_SM_EV_RCAC_STOP,
+					0,
+					(void *)dfs);
+	}
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "rolling cac is %d", rcac_en);
 
 	return QDF_STATUS_SUCCESS;
@@ -6315,7 +6530,10 @@ static os_timer_func(dfs_rcac_timeout)
 
 	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
 
-	dfs_mark_adfs_chan_as_cac_done(dfs);
+	dfs_rcac_sm_deliver_evt(dfs_soc_obj,
+				DFS_RCAC_SM_EV_RCAC_DONE,
+				0,
+				(void *)dfs);
 }
 
 void dfs_rcac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
@@ -6329,55 +6547,6 @@ void dfs_rcac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
 void dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 	qdf_timer_free(&dfs_soc_obj->dfs_rcac_timer);
-}
-
-/* dfs_start_agile_engine() - Prepare ADFS params and program the agile
- *                            engine sending agile config cmd to FW.
- * @dfs: Pointer to struct wlan_dfs.
- */
-void dfs_start_agile_engine(struct wlan_dfs *dfs)
-{
-	struct dfs_agile_cac_params adfs_param;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
-
-	/* Fill the RCAC ADFS params and send it to FW.
-	 * FW does not use RCAC timeout values for RCAC feature.
-	 * FW runs an infinite timer.
-	 */
-	dfs_fill_adfs_chan_params(dfs, &adfs_param);
-	adfs_param.min_precac_timeout = MIN_RCAC_DURATION;
-	adfs_param.max_precac_timeout = MAX_RCAC_DURATION;
-	adfs_param.ocac_mode = QUICK_RCAC_MODE;
-
-	qdf_info("%s : %d RCAC channel request sent for pdev: %pK "
-			 "ch_freq: %d", __func__, __LINE__, dfs->dfs_pdev_obj,
-			 dfs->dfs_agile_precac_freq_mhz);
-
-	dfs_tx_ops = wlan_psoc_get_dfs_txops(dfs_soc_obj->psoc);
-
-	if (dfs_tx_ops && dfs_tx_ops->dfs_agile_ch_cfg_cmd)
-		dfs_tx_ops->dfs_agile_ch_cfg_cmd(dfs->dfs_pdev_obj,
-						 &adfs_param);
-	else
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			"dfs_tx_ops=%pK", dfs_tx_ops);
-}
-
-/* dfs_start_agile_rcac_timer() - Start host agile RCAC timer.
- *
- * @dfs: Pointer to struct wlan_dfs.
- */
-void dfs_start_agile_rcac_timer(struct wlan_dfs *dfs)
-{
-	struct dfs_soc_priv_obj *dfs_soc_obj = dfs->dfs_soc_obj;
-	uint32_t rcac_timeout = MIN_RCAC_DURATION;
-
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		 "Host RCAC timeout = %d ms", rcac_timeout);
-
-	qdf_timer_mod(&dfs_soc_obj->dfs_rcac_timer,
-		      rcac_timeout);
 }
 
 /* dfs_prepare_agile_rcac_channel() - Find a valid Rolling CAC channel if
@@ -6401,17 +6570,5 @@ void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 	 * variables.
 	 */
 	*is_rcac_chan_available = rcac_ch_freq ? true : false;
-}
-
-/* dfs_stop_agile_rcac_timer() - Cancel the RCAC timer.
- *
- * @dfs: Pointer to struct wlan_dfs.
- */
-void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs)
-{
-	struct dfs_soc_priv_obj *dfs_soc_obj;
-
-	dfs_soc_obj = dfs->dfs_soc_obj;
-	qdf_timer_sync_cancel(&dfs_soc_obj->dfs_rcac_timer);
 }
 #endif
