@@ -72,6 +72,8 @@
 #define MIN_WEATHER_PRECAC_DURATION          (60 * 60 * 1000) /* 1 hour */
 #define MAX_PRECAC_DURATION              (4 * 60 * 60 * 1000) /* 4 hours */
 #define MAX_WEATHER_PRECAC_DURATION     (24 * 60 * 60 * 1000) /* 24 hours */
+#define MIN_RCAC_DURATION                     (62 * 1000) /* 62 seconds */
+#define MAX_RCAC_DURATION                     0xffffffff
 
 #define PCAC_DFS_INDEX_ZERO               0
 #define PCAC_TIMER_NOT_RUNNING            0
@@ -594,7 +596,7 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 #endif
 
 /**
- * dfs_get_ieeechan_for_agilecac_for_freq() - Find chan freq for agile CAC.
+ * dfs_set_agilecac_chan_for_freq() - Find chan freq for agile CAC.
  * @dfs:         Pointer to wlan_dfs structure.
  * @chan_freq:     Pointer to channel freq for agile set request.
  * @pri_chan_freq: Current primary IEEE channel freq.
@@ -604,10 +606,10 @@ void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
  * channels (indicated by pri_chan_freq, sec_chan_freq).
  */
 #ifdef CONFIG_CHAN_FREQ_API
-void dfs_get_ieeechan_for_agilecac_for_freq(struct wlan_dfs *dfs,
-					    uint16_t *chan_freq,
-					    uint16_t pri_chan_freq,
-					    uint16_t sec_chan_freq);
+void dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
+				    uint16_t *chan_freq,
+				    uint16_t pri_chan_freq,
+				    uint16_t sec_chan_freq);
 #endif
 
 /**
@@ -670,10 +672,10 @@ static inline void dfs_get_ieeechan_for_agilecac(struct wlan_dfs *dfs,
 
 #ifdef CONFIG_CHAN_FREQ_API
 static inline void
-dfs_get_ieeechan_for_agilecac_for_freq(struct wlan_dfs *dfs,
-				       uint16_t *chan_freq,
-				       uint16_t pri_chan_freq,
-				       uint16_t sec_chan_freq)
+dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
+			       uint16_t *chan_freq,
+			       uint16_t pri_chan_freq,
+			       uint16_t sec_chan_freq)
 {
 }
 #endif
@@ -946,18 +948,20 @@ void dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
 
 #ifdef CONFIG_CHAN_FREQ_API
 /**
- * dfs_find_chwidth_and_center_chan_for_freq() - Find the channel width enum and
- *                                      primary and secondary center channel
- *                                      value of the current channel.
+ * dfs_find_curchwidth_and_center_chan_for_freq() - Find the channel width
+ *                                                  enum, primary and secondary
+ *                                                  center channel value of
+ *                                                  the current channel.
  * @dfs:                  Pointer to wlan_dfs structure.
  * @chwidth:              Channel width enum of current channel.
  * @primary_chan_freq:    Primary IEEE channel freq.
  * @secondary_chan_freq:  Secondary IEEE channel freq (in HT80_80 mode).
  */
-void dfs_find_chwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
-					       enum phy_ch_width *chwidth,
-					       uint16_t *primary_chan_freq,
-					       uint16_t *secondary_chan_freq);
+void
+dfs_find_curchwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
+					     enum phy_ch_width *chwidth,
+					     uint16_t *primary_chan_freq,
+					     uint16_t *secondary_chan_freq);
 #endif
 
 /**
@@ -1051,10 +1055,10 @@ dfs_find_chwidth_and_center_chan(struct wlan_dfs *dfs,
 
 #ifdef CONFIG_CHAN_FREQ_API
 static inline void
-dfs_find_chwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
-					  enum phy_ch_width *chwidth,
-					  uint16_t *primary_chan_freq,
-					  uint16_t *secondary_chan_freq)
+dfs_find_curchwidth_and_center_chan_for_freq(struct wlan_dfs *dfs,
+					     enum phy_ch_width *chwidth,
+					     uint16_t *primary_chan_freq,
+					     uint16_t *secondary_chan_freq)
 {
 }
 #endif
@@ -1329,4 +1333,20 @@ QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
 }
 #endif /* QCA_SUPPORT_ADFS_RCAC */
 
+/**
+ * dfs_prepare_agile_rcac_channel() - Prepare agile RCAC channel.
+ * @dfs: Pointer to struct wlan_dfs.
+ * @is_rcac_chan_available: Flag to indicate if a valid RCAC channel is
+ *                          found.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
+				    bool *is_rcac_chan_available);
+#else
+static inline void
+dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
+			       bool *is_rcac_chan_available)
+{
+}
+#endif
 #endif /* _DFS_ZERO_CAC_H_ */

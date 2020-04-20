@@ -33,7 +33,6 @@
 
 #if defined(QCA_SUPPORT_AGILE_DFS)
 #include <wlan_mlme_dispatcher.h>
-#define QUICK_OCAC_MODE 0
 #endif
 /**
  * target_if_dfs_cac_complete_event_handler() - CAC complete indication.
@@ -372,7 +371,7 @@ QDF_STATUS target_send_agile_ch_cfg_cmd(struct wlan_objmgr_pdev *pdev,
 
 	qdf_mem_set(&param, sizeof(param), 0);
 	param.vdev_id = wlan_vdev_get_id(vdev);
-	param.ocac_mode = QUICK_OCAC_MODE;
+	param.ocac_mode = adfs_param->ocac_mode;
 	param.min_duration_ms = adfs_param->min_precac_timeout;
 	param.max_duration_ms = adfs_param->max_precac_timeout;
 	param.chan_freq = adfs_param->precac_center_freq_1;

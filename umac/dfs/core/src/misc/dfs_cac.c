@@ -125,7 +125,7 @@ static void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 void dfs_process_cac_completion(struct wlan_dfs *dfs)
 {
 	enum phy_ch_width ch_width = CH_WIDTH_INVALID;
-	uint16_t primary_chan_freq = 0, secondary_chan_freq = 0;
+	uint16_t primary_chan_freq = 0, sec_chan_freq = 0;
 	struct dfs_channel *dfs_curchan;
 
 	dfs->dfs_cac_timer_running = 0;
@@ -167,13 +167,13 @@ void dfs_process_cac_completion(struct wlan_dfs *dfs)
 				      dfs->dfs_cac_valid_time * 1000);
 		}
 
-		dfs_find_chwidth_and_center_chan_for_freq(dfs,
-							  &ch_width,
-							  &primary_chan_freq,
-							  &secondary_chan_freq);
+		dfs_find_curchwidth_and_center_chan_for_freq(dfs,
+							     &ch_width,
+							     &primary_chan_freq,
+							     &sec_chan_freq);
 		/* Mark the current channel as preCAC done */
 		dfs_mark_precac_done_for_freq(dfs, primary_chan_freq,
-					      secondary_chan_freq, ch_width);
+					      sec_chan_freq, ch_width);
 	}
 
 	dfs_clear_cac_started_chan(dfs);
@@ -440,7 +440,7 @@ dfs_is_subset_channel_for_freq(uint16_t *old_subchans_freq,
 #endif
 
 #ifdef CONFIG_CHAN_FREQ_API
-static uint8_t
+uint8_t
 dfs_find_dfs_sub_channels_for_freq(struct wlan_dfs *dfs,
 				   struct dfs_channel *chan,
 				   uint16_t *subchan_arr)
@@ -472,16 +472,8 @@ dfs_find_dfs_sub_channels_for_freq(struct wlan_dfs *dfs,
 }
 #endif
 
-/* dfs_is_new_chan_subset_of_old_chan() - Find if new channel is subset of
- * old channel.
- * @dfs: Pointer to wlan_dfs structure.
- * @new_chan: Pointer to new channel of dfs_channel structure.
- * @old_chan: Pointer to old channel of dfs_channel structure.
- *
- * Return: True if new channel is subset of old channel, else false.
- */
 #ifdef CONFIG_CHAN_FREQ_API
-static bool
+bool
 dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
 				   struct dfs_channel *new_chan,
 				   struct dfs_channel *old_chan)

@@ -1102,8 +1102,10 @@ struct dfs_mode_switch_defer_params {
  * @dfs_defer_params:                DFS deferred event parameters (allocated
  *                                   only for the duration of defer alone).
  * @dfs_agile_detector_id:           Agile detector ID for the DFS object.
- * @dfs_agile_rcac_freq:             User programmed Rolling CAC frequency in
+ * @dfs_agile_rcac_freq_ucfg:        User programmed Rolling CAC frequency in
  *                                   MHZ.
+ * @dfs_rcac_ch_params:              Channel params of the selected RCAC
+ *                                   channel.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1273,7 +1275,8 @@ struct wlan_dfs {
 	struct dfs_mode_switch_defer_params dfs_defer_params;
 	uint8_t        dfs_agile_detector_id;
 #if defined(QCA_SUPPORT_ADFS_RCAC)
-	uint16_t       dfs_agile_rcac_freq;
+	uint16_t       dfs_agile_rcac_freq_ucfg;
+	struct ch_params dfs_rcac_ch_params;
 #endif
 };
 
@@ -1307,7 +1310,6 @@ struct wlan_dfs_priv {
  * @ocac_status: Off channel CAC complete status
  * @dfs_nol_ctx: dfs NOL data for all radios.
  * @dfs_rcac_timer: Agile RCAC (Rolling CAC) timer.
- * @dfs_rcac_timer_running: RCAC (Rolling CAC) timer running flag.
  * @dfs_rcac_sm_hdl: DFS Rolling CAC state machine handle.
  * @dfs_rcac_curr_state: Current state of DFS rolling CAC state machine.
  * @dfs_rcac_sm_lock: DFS Rolling CAC state machine lock.
@@ -1328,7 +1330,6 @@ struct dfs_soc_priv_obj {
 	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
 #if defined(QCA_SUPPORT_ADFS_RCAC)
 	qdf_timer_t dfs_rcac_timer;
-	bool dfs_rcac_timer_running;
 	wlan_sm *dfs_rcac_sm_hdl;
 	enum dfs_rcac_sm_state dfs_rcac_curr_state;
 	qdf_spinlock_t dfs_rcac_sm_lock;
@@ -2919,4 +2920,31 @@ static inline uint8_t dfs_get_agile_detector_id(struct wlan_dfs *dfs)
 	return INVALID_DETECTOR_ID;
 }
 #endif
+
+/**
+ * dfs_is_new_chan_subset_of_old_chan() - Find if new channel is subset of
+ *                                        old channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @new_chan: Pointer to new channel of dfs_channel structure.
+ * @old_chan: Pointer to old channel of dfs_channel structure.
+ *
+ * Return: True if new channel is subset of old channel, else false.
+ */
+bool dfs_is_new_chan_subset_of_old_chan(struct wlan_dfs *dfs,
+					struct dfs_channel *new_chan,
+					struct dfs_channel *old_chan);
+
+/**
+ * dfs_find_dfs_sub_channels_for_freq() - Given a dfs channel, find its
+ *                                        HT20 subset channels.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to dfs_channel structure.
+ * @subchan_arr: Pointer to subchannels array.
+ *
+ * Return: Number of sub channels.
+ */
+uint8_t dfs_find_dfs_sub_channels_for_freq(struct  wlan_dfs *dfs,
+					   struct dfs_channel *chan,
+					   uint16_t *subchan_arr);
+
 #endif  /* _DFS_H_ */
