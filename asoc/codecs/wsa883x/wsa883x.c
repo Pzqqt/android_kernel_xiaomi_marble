@@ -1587,6 +1587,11 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wsa883x->wsa883x_name_prefix = kstrndup(wsa883x_name_prefix_of,
 			strlen(wsa883x_name_prefix_of), GFP_KERNEL);
 	component = snd_soc_lookup_component(&pdev->dev, wsa883x->driver->name);
+	if (!component) {
+		dev_err(&pdev->dev, "%s: component is NULL \n", __func__);
+		ret = -EINVAL;
+		goto err_mem;
+	}
 	component->name_prefix = wsa883x->wsa883x_name_prefix;
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
@@ -1654,10 +1659,16 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	return 0;
 
 err_mem:
-	if (wsa883x->dai_driver)
+	kfree(wsa883x->wsa883x_name_prefix);
+	if (wsa883x->dai_driver) {
+		kfree(wsa883x->dai_driver->name);
+		kfree(wsa883x->dai_driver->playback.stream_name);
 		kfree(wsa883x->dai_driver);
-	if (wsa883x->driver)
+	}
+	if (wsa883x->driver) {
+		kfree(wsa883x->driver->name);
 		kfree(wsa883x->driver);
+	}
 err_irq:
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR, NULL);
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF, NULL);
@@ -1709,13 +1720,15 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 	mutex_destroy(&wsa883x->res_lock);
 	snd_soc_unregister_component(&pdev->dev);
 	kfree(wsa883x->wsa883x_name_prefix);
-	kfree(wsa883x->driver->name);
-	kfree(wsa883x->dai_driver->name);
-	kfree(wsa883x->dai_driver->playback.stream_name);
-	if (wsa883x->dai_driver)
+	if (wsa883x->dai_driver) {
+		kfree(wsa883x->dai_driver->name);
+		kfree(wsa883x->dai_driver->playback.stream_name);
 		kfree(wsa883x->dai_driver);
-	if (wsa883x->driver)
+	}
+	if (wsa883x->driver) {
+		kfree(wsa883x->driver->name);
 		kfree(wsa883x->driver);
+	}
 	swr_set_dev_data(pdev, NULL);
 	return 0;
 }
