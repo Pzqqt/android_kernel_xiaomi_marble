@@ -1229,6 +1229,7 @@ static void map_nl_reg_rule_flags(uint16_t drv_reg_rule_flag,
 		*regd_rule_flag |= NL80211_RRF_NO_OUTDOOR;
 	if (drv_reg_rule_flag & REGULATORY_CHAN_NO_OFDM)
 		*regd_rule_flag |= NL80211_RRF_NO_OFDM;
+	*regd_rule_flag |= NL80211_RRF_AUTO_BW;
 }
 
 /**
