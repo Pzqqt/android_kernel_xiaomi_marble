@@ -74,7 +74,7 @@ __wlan_cfg80211_coex_set_btc_chain_mode(struct wlan_objmgr_vdev *vdev,
 	}
 
 	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev_tmp) {
-		status = ucfg_coex_send_btc_chain_mode(vdev, mode);
+		status = ucfg_coex_send_btc_chain_mode(vdev_tmp, mode);
 		err = qdf_status_to_os_return(status);
 		if (err) {
 			coex_err("Failed to set btc chain mode to %d for vdev %d",
@@ -87,7 +87,7 @@ __wlan_cfg80211_coex_set_btc_chain_mode(struct wlan_objmgr_vdev *vdev,
 		if (!do_restart)
 			continue;
 
-		wlan_coex_config_updated(vdev, COEX_CONFIG_BTC_CHAIN_MODE);
+		wlan_coex_config_updated(vdev_tmp, COEX_CONFIG_BTC_CHAIN_MODE);
 	}
 
 	return 0;
