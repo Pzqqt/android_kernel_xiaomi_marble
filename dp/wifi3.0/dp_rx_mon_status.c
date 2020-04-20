@@ -1689,7 +1689,9 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		uint8_t *status_buf;
 		qdf_dma_addr_t paddr;
 		uint64_t buf_addr;
+		struct rx_desc_pool *rx_desc_pool;
 
+		rx_desc_pool = &soc->rx_desc_status[mac_id];
 		buf_addr =
 			(HAL_RX_BUFFER_ADDR_31_0_GET(
 				rxdma_mon_status_ring_entry) |
@@ -1741,8 +1743,9 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 			}
 			qdf_nbuf_set_pktlen(status_nbuf, RX_DATA_BUFFER_SIZE);
 
-			qdf_nbuf_unmap_single(soc->osdev, status_nbuf,
-				QDF_DMA_FROM_DEVICE);
+			qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
+						     QDF_DMA_FROM_DEVICE,
+						     rx_desc_pool->buf_size);
 
 			/* Put the status_nbuf to queue */
 			qdf_nbuf_queue_add(&pdev->rx_status_q, status_nbuf);
@@ -1750,10 +1753,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		} else {
 			union dp_rx_desc_list_elem_t *desc_list = NULL;
 			union dp_rx_desc_list_elem_t *tail = NULL;
-			struct rx_desc_pool *rx_desc_pool;
 			uint32_t num_alloc_desc;
-
-			rx_desc_pool = &soc->rx_desc_status[mac_id];
 
 			num_alloc_desc = dp_rx_get_free_desc_list(soc, mac_id,
 							rx_desc_pool,
@@ -2005,8 +2005,9 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"[%s][%d] rxdma_ring_entry is NULL, count - %d",
 					__func__, __LINE__, count);
-			qdf_nbuf_unmap_single(dp_soc->osdev, rx_netbuf,
-					      QDF_DMA_FROM_DEVICE);
+			qdf_nbuf_unmap_nbytes_single(dp_soc->osdev, rx_netbuf,
+						     QDF_DMA_FROM_DEVICE,
+						     rx_desc_pool->buf_size);
 			qdf_nbuf_free(rx_netbuf);
 			break;
 		}

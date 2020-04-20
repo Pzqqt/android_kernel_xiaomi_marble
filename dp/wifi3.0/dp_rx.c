@@ -247,8 +247,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 			break;
 		}
 
-		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
-					  QDF_DMA_FROM_DEVICE);
+		ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev, rx_netbuf,
+						 QDF_DMA_FROM_DEVICE, buf_size);
+
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 			qdf_nbuf_free(rx_netbuf);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
@@ -1992,14 +1993,6 @@ more_data:
 
 		}
 
-		/*
-		 * move unmap after scattered msdu waiting break logic
-		 * in case double skb unmap happened.
-		 */
-		qdf_nbuf_unmap_single(soc->osdev, rx_desc->nbuf,
-				      QDF_DMA_FROM_DEVICE);
-		rx_desc->unmapped = 1;
-
 		core_id = smp_processor_id();
 		DP_STATS_INC(soc, rx.ring_packets[core_id][ring_id], 1);
 
@@ -2057,6 +2050,15 @@ more_data:
 
 		QDF_NBUF_CB_RX_CTX_ID(rx_desc->nbuf) = reo_ring_num;
 
+		/*
+		 * move unmap after scattered msdu waiting break logic
+		 * in case double skb unmap happened.
+		 */
+		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		qdf_nbuf_unmap_nbytes_single(soc->osdev, rx_desc->nbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
+		rx_desc->unmapped = 1;
 		DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, rx_desc->nbuf);
 
 		/*
@@ -2500,8 +2502,10 @@ dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
 		return ret;
 	}
 
-	ret = qdf_nbuf_map_single(dp_soc->osdev, *nbuf,
-				  QDF_DMA_FROM_DEVICE);
+	ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev, *nbuf,
+					 QDF_DMA_FROM_DEVICE,
+					 rx_desc_pool->buf_size);
+
 	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 		qdf_nbuf_free(*nbuf);
 		dp_err("nbuf map failed");
@@ -2513,8 +2517,9 @@ dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
 
 	ret = check_x86_paddr(dp_soc, nbuf, &paddr, rx_desc_pool);
 	if (ret == QDF_STATUS_E_FAILURE) {
-		qdf_nbuf_unmap_single(dp_soc->osdev, *nbuf,
-				      QDF_DMA_FROM_DEVICE);
+		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev, *nbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
 		qdf_nbuf_free(*nbuf);
 		dp_err("nbuf check x86 failed");
 		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
@@ -2751,8 +2756,9 @@ dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
 
 		memset(buf, 0, RX_DATA_BUFFER_SIZE);
 
-		ret = qdf_nbuf_map_single(soc->osdev, nbuf,
-				    QDF_DMA_FROM_DEVICE);
+		ret = qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
+						 QDF_DMA_FROM_DEVICE,
+						 RX_DATA_BUFFER_SIZE);
 
 		/* nbuf map failed */
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
