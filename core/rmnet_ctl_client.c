@@ -135,6 +135,8 @@ void *rmnet_ctl_register_client(struct rmnet_ctl_client_hooks *hook)
 
 	spin_unlock(&client_lock);
 
+	rmnet_ctl_set_dbgfs(true);
+
 	return client;
 }
 EXPORT_SYMBOL(rmnet_ctl_register_client);
@@ -156,6 +158,8 @@ int rmnet_ctl_unregister_client(void *handle)
 
 	synchronize_rcu();
 	kfree(client);
+
+	rmnet_ctl_set_dbgfs(false);
 
 	return 0;
 }
