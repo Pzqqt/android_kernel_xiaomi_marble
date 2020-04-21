@@ -1371,6 +1371,7 @@ enum qdf_context_mode {
  * @QDF_TX_RX_STATUS_FW_DISCARD: packet not sent
  * @QDF_TX_RX_STATUS_NO_ACK: packet sent but no ack
  * @QDF_TX_RX_STATUS_DROP: packet dropped in host
+ * @QDF_TX_RX_STATUS_DOWNLOAD_SUCC: packet delivered to target
  */
 enum qdf_dp_tx_rx_status {
 	QDF_TX_RX_STATUS_INVALID,
@@ -1378,6 +1379,7 @@ enum qdf_dp_tx_rx_status {
 	QDF_TX_RX_STATUS_FW_DISCARD,
 	QDF_TX_RX_STATUS_NO_ACK,
 	QDF_TX_RX_STATUS_DROP,
+	QDF_TX_RX_STATUS_DOWNLOAD_SUCC,
 	QDF_TX_RX_STATUS_MAX,
 };
 
