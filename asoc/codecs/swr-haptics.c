@@ -170,7 +170,7 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 		swr_slvdev_datapath_control(swr_hap->swr_slave,
 				swr_hap->swr_slave->dev_num, true);
 		/* trigger SWR play */
-		val = SWR_PLAY_BIT | SWR_BRAKE_EN_BIT | SWR_PLAY_SRC_VAL_SWR;
+		val = SWR_PLAY_BIT | SWR_PLAY_SRC_VAL_SWR;
 		rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
 		if (rc) {
 			dev_err(swr_hap->dev, "%s: Enable SWR_PLAY failed, rc=%d\n",
