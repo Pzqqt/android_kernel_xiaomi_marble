@@ -708,9 +708,10 @@ typedef qdf_nbuf_t (*ol_txrx_tx_exc_fp)(struct cdp_soc_t *soc, uint8_t vdev_id,
  * for tx completion
  * @skb: skb data
  * @osif_dev: the virtual device's OS shim object
+ * @flag: flag
  */
 typedef void (*ol_txrx_completion_fp)(qdf_nbuf_t skb,
-				      void *osif_dev);
+				      void *osif_dev, uint16_t flag);
 /**
  * ol_txrx_tx_flow_control_fp - tx flow control notification
  * function from txrx to OS shim

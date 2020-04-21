@@ -3331,15 +3331,18 @@ void dp_tx_flow_pool_unlock(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc)
  * @soc: core txrx main context
  * @tx_desc: tx desc
  * @netbuf:  buffer
+ * @status: tx status
  *
  * Return: none
  */
 static inline void dp_tx_notify_completion(struct dp_soc *soc,
 					   struct dp_tx_desc_s *tx_desc,
-					   qdf_nbuf_t netbuf)
+					   qdf_nbuf_t netbuf,
+					   uint8_t status)
 {
 	void *osif_dev;
 	ol_txrx_completion_fp tx_compl_cbk = NULL;
+	uint16_t flag = BIT(QDF_TX_RX_STATUS_DOWNLOAD_SUCC);
 
 	qdf_assert(tx_desc);
 
@@ -3355,8 +3358,11 @@ static inline void dp_tx_notify_completion(struct dp_soc *soc,
 	tx_compl_cbk = tx_desc->vdev->tx_comp;
 	dp_tx_flow_pool_unlock(soc, tx_desc);
 
+	if (status == HAL_TX_TQM_RR_FRAME_ACKED)
+		flag |= BIT(QDF_TX_RX_STATUS_OK);
+
 	if (tx_compl_cbk)
-		tx_compl_cbk(netbuf, osif_dev);
+		tx_compl_cbk(netbuf, osif_dev, flag);
 }
 
 /** dp_tx_sojourn_stats_process() - Collect sojourn stats
@@ -3691,7 +3697,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		netbuf = desc->nbuf;
 		/* check tx complete notification */
 		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(netbuf))
-			dp_tx_notify_completion(soc, desc, netbuf);
+			dp_tx_notify_completion(soc, desc, netbuf, ts.status);
 
 		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
