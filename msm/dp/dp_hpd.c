@@ -46,21 +46,21 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 
 	if (parser->no_aux_switch && parser->lphw_hpd) {
 		dp_hpd = dp_lphw_hpd_get(dev, parser, catalog, cb);
-		if (IS_ERR(dp_hpd)) {
+		if (IS_ERR_OR_NULL(dp_hpd)) {
 			DP_ERR("failed to get lphw hpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_LPHW;
 	} else if (parser->no_aux_switch) {
 		dp_hpd = dp_gpio_hpd_get(dev, cb);
-		if (IS_ERR(dp_hpd)) {
+		if (IS_ERR_OR_NULL(dp_hpd)) {
 			DP_ERR("failed to get gpio hpd\n");
 			return dp_hpd;
 		}
 		dp_hpd->type = DP_HPD_GPIO;
 	} else {
 		dp_hpd = dp_altmode_get(dev, cb);
-		if (!IS_ERR(dp_hpd)) {
+		if (!IS_ERR_OR_NULL(dp_hpd)) {
 			dp_hpd->type = DP_HPD_ALTMODE;
 			goto config;
 		}
@@ -68,7 +68,7 @@ struct dp_hpd *dp_hpd_get(struct device *dev, struct dp_parser *parser,
 				PTR_ERR(dp_hpd));
 
 		dp_hpd = dp_usbpd_get(dev, cb);
-		if (IS_ERR(dp_hpd)) {
+		if (IS_ERR_OR_NULL(dp_hpd)) {
 			DP_ERR("failed to get usbpd\n");
 			return dp_hpd;
 		}

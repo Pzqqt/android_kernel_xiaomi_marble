@@ -321,10 +321,10 @@ static void _sde_encoder_phys_cmd_setup_irq_hw_idx(
 		struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_irq *irq;
-	struct sde_kms *sde_kms = phys_enc->sde_kms;
+	struct sde_kms *sde_kms;
 	int ret = 0;
 
-	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_ctl) {
+	if (!phys_enc->sde_kms || !phys_enc->hw_pp || !phys_enc->hw_ctl) {
 		SDE_ERROR("invalid args %d %d\n", !phys_enc,
 			phys_enc ? !phys_enc->hw_pp : 0);
 		return;
@@ -334,6 +334,8 @@ static void _sde_encoder_phys_cmd_setup_irq_hw_idx(
 		SDE_ERROR("invalid intf configuration\n");
 		return;
 	}
+
+	sde_kms = phys_enc->sde_kms;
 
 	mutex_lock(&sde_kms->vblank_ctl_global_lock);
 
