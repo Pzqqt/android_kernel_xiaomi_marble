@@ -337,6 +337,9 @@ struct hal_srng {
 	/* Interrupt batch counter threshold – in number of ring entries */
 	uint32_t intr_batch_cntr_thres_entries;
 
+	/* Applicable only for CE dest ring */
+	uint32_t prefetch_timer;
+
 	/* MSI Address */
 	qdf_dma_addr_t msi_addr;
 

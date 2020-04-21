@@ -643,6 +643,12 @@ enum hal_ring_type {
 #define HAL_SRNG_MSI_INTR				0x00020000
 #define HAL_SRNG_CACHED_DESC		0x00040000
 
+#ifdef QCA_WIFI_QCA6490
+#define HAL_SRNG_PREFETCH_TIMER 1
+#else
+#define HAL_SRNG_PREFETCH_TIMER 0
+#endif
+
 #define PN_SIZE_24 0
 #define PN_SIZE_48 1
 #define PN_SIZE_128 2
@@ -748,6 +754,8 @@ struct hal_srng_params {
 	uint32_t entry_size;
 	/* hw register base address */
 	void *hwreg_base[MAX_SRNG_REG_GROUPS];
+	/* prefetch timer config - in micro seconds */
+	uint32_t prefetch_timer;
 };
 
 /* hal_construct_shadow_config() - initialize the shadow registers for dp rings

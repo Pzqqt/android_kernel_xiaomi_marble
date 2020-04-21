@@ -40,6 +40,7 @@
 #include "ce_stat_desc.h"
 #ifdef QCA_WIFI_QCA6490
 #include "wfss_ce_channel_dst_reg_seq_hwioreg.h"
+#include "wfss_ce_channel_src_reg_seq_hwioreg.h"
 #else
 #include "wfss_ce_reg_seq_hwioreg.h"
 #endif /* QCA_WIFI_QCA6490 */

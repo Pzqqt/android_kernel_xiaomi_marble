@@ -739,8 +739,8 @@ static void ce_srng_msi_ring_params_setup(struct hif_softc *scn, uint32_t ce_id,
 }
 
 static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
-			struct CE_ring_state *src_ring,
-			struct CE_attr *attr)
+				   struct CE_ring_state *src_ring,
+				   struct CE_attr *attr)
 {
 	struct hal_srng_params ring_params = {0};
 
@@ -761,6 +761,7 @@ static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 
 		ring_params.intr_timer_thres_us = 0;
 		ring_params.intr_batch_cntr_thres_entries = 1;
+		ring_params.prefetch_timer = HAL_SRNG_PREFETCH_TIMER;
 	}
 
 	src_ring->srng_ctx = hal_srng_setup(scn->hal_soc, CE_SRC, ce_id, 0,
@@ -786,8 +787,9 @@ static void ce_srng_src_ring_setup(struct hif_softc *scn, uint32_t ce_id,
  * fails to post the last entry due to the race condition.
  */
 static void ce_srng_initialize_dest_timer_interrupt_war(
-		struct CE_ring_state *dest_ring,
-		struct hal_srng_params *ring_params) {
+					struct CE_ring_state *dest_ring,
+					struct hal_srng_params *ring_params)
+{
 	int num_buffers_when_fully_posted = dest_ring->nentries - 2;
 
 	ring_params->low_threshold = num_buffers_when_fully_posted - 1;
@@ -796,9 +798,10 @@ static void ce_srng_initialize_dest_timer_interrupt_war(
 	ring_params->flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
 }
 
-static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
-				struct CE_ring_state *dest_ring,
-				struct CE_attr *attr)
+static void ce_srng_dest_ring_setup(struct hif_softc *scn,
+				    uint32_t ce_id,
+				    struct CE_ring_state *dest_ring,
+				    struct CE_attr *attr)
 {
 	struct hal_srng_params ring_params = {0};
 	bool status_ring_timer_thresh_work_arround = true;
@@ -822,6 +825,7 @@ static void ce_srng_dest_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			ring_params.intr_batch_cntr_thres_entries = 0;
 			ring_params.flags |= HAL_SRNG_LOW_THRES_INTR_ENABLE;
 		}
+		ring_params.prefetch_timer = HAL_SRNG_PREFETCH_TIMER;
 	}
 
 	/*Dest ring is also source ring*/
