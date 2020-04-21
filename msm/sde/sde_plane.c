@@ -817,8 +817,11 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 		struct sde_plane_state *pstate, const struct sde_format *fmt,
 		uint32_t chroma_subsmpl_h, uint32_t chroma_subsmpl_v)
 {
-	uint32_t decimated, i, src_w, src_h, dst_w, dst_h;
+	uint32_t decimated, i, src_w, src_h, dst_w, dst_h, src_h_pre_down;
 	struct sde_hw_scaler3_cfg *scale_cfg;
+	struct sde_hw_inline_pre_downscale_cfg *pd_cfg;
+	bool pre_down_supported = (psde->features & BIT(SDE_SSPP_PREDOWNSCALE));
+	bool inline_rotation = (pstate->rotation & DRM_MODE_ROTATE_90);
 
 	if (!psde || !pstate || !fmt ||
 			!chroma_subsmpl_h || !chroma_subsmpl_v) {
@@ -829,6 +832,7 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	}
 
 	scale_cfg = &pstate->scaler3_cfg;
+	pd_cfg = &pstate->pre_down;
 	src_w = psde->pipe_cfg.src_rect.w;
 	src_h = psde->pipe_cfg.src_rect.h;
 	dst_w = psde->pipe_cfg.dst_rect.w;
@@ -843,7 +847,7 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	 * need pre-rotation settings, this will be corrected below
 	 * when calculating pixel extension settings.
 	 */
-	if (pstate->rotation & DRM_MODE_ROTATE_90)
+	if (inline_rotation)
 		swap(src_w, src_h);
 
 	decimated = DECIMATED_DIMENSION(src_w,
@@ -872,9 +876,21 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 		scale_cfg->phase_step_y[SDE_SSPP_COMP_0];
 
 	for (i = 0; i < SDE_MAX_PLANES; i++) {
+		/*
+		 * For inline rotation cases with pre-downscaling enabled
+		 * set x pre-downscale value if required. Only x direction
+		 * is currently supported. Use src_h as values have been swapped
+		 * and x direction corresponds to height value.
+		 */
+		src_h_pre_down = src_h;
+		if (pre_down_supported && inline_rotation) {
+			if (i == 0 && (src_h > mult_frac(dst_h, 11, 5)))
+				src_h_pre_down = src_h / 2;
+		}
+
 		scale_cfg->src_width[i] = DECIMATED_DIMENSION(src_w,
 				psde->pipe_cfg.horz_decimation);
-		scale_cfg->src_height[i] = DECIMATED_DIMENSION(src_h,
+		scale_cfg->src_height[i] = DECIMATED_DIMENSION(src_h_pre_down,
 				psde->pipe_cfg.vert_decimation);
 		if (i == SDE_SSPP_COMP_1_2 || i == SDE_SSPP_COMP_2) {
 			scale_cfg->src_width[i] /= chroma_subsmpl_h;
@@ -884,7 +900,7 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 		scale_cfg->preload_y[i] = psde->pipe_sblk->scaler_blk.v_preload;
 
 		/* For pixel extension we need the pre-rotated orientation */
-		if (pstate->rotation & DRM_MODE_ROTATE_90) {
+		if (inline_rotation) {
 			pstate->pixel_ext.num_ext_pxls_top[i] =
 				scale_cfg->src_width[i];
 			pstate->pixel_ext.num_ext_pxls_left[i] =
@@ -898,7 +914,8 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	}
 
 	if ((!(SDE_FORMAT_IS_YUV(fmt)) && (src_h == dst_h)
-		&& (src_w == dst_w)) || pstate->multirect_mode)
+		&& (src_w == dst_w) && !inline_rotation) ||
+		pstate->multirect_mode)
 		return;
 
 	SDE_DEBUG_PLANE(psde,
@@ -1711,6 +1728,12 @@ int sde_plane_validate_multirect_v2(struct sde_multirect_plane_states *plane)
 			return -EINVAL;
 		}
 
+		if (pstate[i]->rotation & DRM_MODE_ROTATE_90) {
+			SDE_ERROR_PLANE(sde_plane[i],
+				"inline rotation is not supported in mulirect mode\n");
+			return -EINVAL;
+		}
+
 		if (SDE_FORMAT_IS_YUV(fmt[i])) {
 			SDE_ERROR_PLANE(sde_plane[i],
 				"Unsupported format for multirect mode\n");
@@ -2311,8 +2334,8 @@ static int _sde_atomic_check_pre_downscale(struct sde_plane *psde,
 }
 
 static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
-		struct sde_plane_state *pstate, bool rt_client,
-		u32 *max_numer_w, u32 *max_denom_w,
+		struct sde_plane_state *pstate, bool rt_client, u32 dst_h,
+		u32 src_h, u32 *max_numer_w, u32 *max_denom_w,
 		u32 *max_numer_h, u32 *max_denom_h)
 {
 	bool rotated, has_predown;
@@ -2336,6 +2359,8 @@ static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
 	 **/
 	if (rotated) {
 		if (rt_client && has_predown) {
+			pd->pre_downscale_x_0 = (src_h >
+					mult_frac(dst_h, 11, 5)) ? 2 : 0;
 			*max_numer_h = pd->pre_downscale_x_0 ?
 				sblk->in_rot_maxdwnscale_rt_num :
 				sblk->in_rot_maxdwnscale_rt_nopd_num;
@@ -2395,8 +2420,8 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	new_cstate = drm_atomic_get_new_crtc_state(state->state, crtc);
 	rt_client = sde_crtc_is_rt_client(crtc, new_cstate);
 
-	_sde_plane_get_max_downscale_limits(psde, pstate, rt_client,
-		&max_downscale_num_w, &max_downscale_denom_w,
+	_sde_plane_get_max_downscale_limits(psde, pstate, rt_client, dst->h,
+		scaler_src_h, &max_downscale_num_w, &max_downscale_denom_w,
 		&max_downscale_num_h, &max_downscale_denom_h);
 
 	/* decimation validation */
