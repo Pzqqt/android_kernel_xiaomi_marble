@@ -349,6 +349,8 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 					int crtc_id, bool enable)
 {
 	struct vblank_work *cur_work;
+	struct drm_crtc *crtc;
+	struct kthread_worker *worker;
 
 	if (!priv || crtc_id >= priv->num_crtcs)
 		return -EINVAL;
@@ -357,14 +359,23 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 	if (!cur_work)
 		return -ENOMEM;
 
+	crtc = priv->crtcs[crtc_id];
+
 	kthread_init_work(&cur_work->work, vblank_ctrl_worker);
 	cur_work->crtc_id = crtc_id;
 	cur_work->enable = enable;
 	cur_work->priv = priv;
 
-	kthread_queue_work(&priv->event_thread[crtc_id].worker,
-						&cur_work->work);
+	/* During modeset scenario, vblank request is queued to
+	 * display thread to avoid enabling irq resulting in
+	 * vblank refcount mismatch
+	 */
+	if (crtc->state && drm_atomic_crtc_needs_modeset(crtc->state))
+		worker = &priv->disp_thread[crtc_id].worker;
+	else
+		worker = &priv->event_thread[crtc_id].worker;
 
+	kthread_queue_work(worker, &cur_work->work);
 	return 0;
 }
 
