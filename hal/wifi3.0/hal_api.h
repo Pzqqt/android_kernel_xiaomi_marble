@@ -269,6 +269,12 @@ static inline void hal_write32_mb(struct hal_soc *hal_soc, uint32_t offset,
 	unsigned long flags;
 	qdf_iomem_t new_addr;
 
+	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
+					hal_soc->hif_handle))) {
+		hal_err_rl("%s: target access is not allowed", __func__);
+		return;
+	}
+
 	/* Region < BAR + 4K can be directly accessed */
 	if (offset < MAPPED_REF_OFF) {
 		qdf_iowrite32(hal_soc->dev_base_addr + offset, value);
@@ -322,6 +328,12 @@ static inline void hal_write32_mb_confirm(struct hal_soc *hal_soc,
 	int ret;
 	unsigned long flags;
 	qdf_iomem_t new_addr;
+
+	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
+					hal_soc->hif_handle))) {
+		hal_err_rl("%s: target access is not allowed", __func__);
+		return;
+	}
 
 	/* Region < BAR + 4K can be directly accessed */
 	if (offset < MAPPED_REF_OFF) {
@@ -476,6 +488,12 @@ uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 	uint32_t ret;
 	unsigned long flags;
 	qdf_iomem_t new_addr;
+
+	if (!TARGET_ACCESS_ALLOWED(HIF_GET_SOFTC(
+					hal_soc->hif_handle))) {
+		hal_err_rl("%s: target access is not allowed", __func__);
+		return 0;
+	}
 
 	/* Region < BAR + 4K can be directly accessed */
 	if (offset < MAPPED_REF_OFF)

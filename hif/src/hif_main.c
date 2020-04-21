@@ -94,6 +94,15 @@ void hif_srng_init_phase(struct hif_opaque_softc *hif_ctx,
 }
 #endif /* FORCE_WAKE */
 
+#ifdef HIF_IPCI
+void hif_shutdown_notifier_cb(void *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->recovery = true;
+}
+#endif
+
 /**
  * hif_vote_link_down(): unvote for link up
  *

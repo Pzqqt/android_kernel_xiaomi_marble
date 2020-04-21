@@ -1516,6 +1516,21 @@ void hif_srng_init_phase(struct hif_opaque_softc *hif_ctx,
 }
 #endif /* FORCE_WAKE */
 
+#ifdef HIF_IPCI
+/**
+ * hif_shutdown_notifier_cb - Call back for shutdown notifier
+ * @ctx: hif handle
+ *
+ * Return:  None
+ */
+void hif_shutdown_notifier_cb(void *ctx);
+#else
+static inline
+void hif_shutdown_notifier_cb(void *ctx)
+{
+}
+#endif /* HIF_IPCI */
+
 #ifdef HIF_CE_LOG_INFO
 /**
  * hif_log_ce_info() - API to log ce info
