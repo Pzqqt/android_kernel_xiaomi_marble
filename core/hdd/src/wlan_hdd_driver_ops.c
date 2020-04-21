@@ -58,6 +58,9 @@
 #define SSR_MAX_FAIL_CNT 3
 static uint8_t re_init_fail_cnt, probe_fail_cnt;
 
+/* An atomic flag to check if SSR cleanup has been done or not */
+static qdf_atomic_t is_recovery_cleanup_done;
+
 /*
  * In BMI Phase we are only sending small chunk (256 bytes) of the FW image at
  * a time, and wait for the completion interrupt to start the next transfer.
@@ -753,13 +756,18 @@ static void hdd_psoc_shutdown_notify(struct hdd_context *hdd_ctx)
 	hdd_wlan_ssr_shutdown_event();
 }
 
-static void __hdd_soc_recovery_shutdown(void)
+/**
+ * hdd_soc_recovery_cleanup() - Perform SSR related cleanup activities.
+ *
+ * This function will perform cleanup activities related to when driver
+ * undergoes SSR. Activities inclues stopping idle timer and invoking shutdown
+ * notifier.
+ *
+ * Return: None
+ */
+static void hdd_soc_recovery_cleanup(void)
 {
 	struct hdd_context *hdd_ctx;
-	void *hif_ctx;
-
-	/* recovery starts via firmware down indication; ensure we got one */
-	QDF_BUG(cds_is_driver_recovering());
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -782,6 +790,35 @@ static void __hdd_soc_recovery_shutdown(void)
 		return;
 	}
 
+	hdd_psoc_shutdown_notify(hdd_ctx);
+}
+
+static void __hdd_soc_recovery_shutdown(void)
+{
+	struct hdd_context *hdd_ctx;
+	void *hif_ctx;
+
+	/* recovery starts via firmware down indication; ensure we got one */
+	QDF_BUG(cds_is_driver_recovering());
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	/*
+	 * Perform SSR related cleanup if it has not already been done as a
+	 * part of receiving the uevent.
+	 */
+	if (!qdf_atomic_read(&is_recovery_cleanup_done))
+		hdd_soc_recovery_cleanup();
+	else
+		qdf_atomic_set(&is_recovery_cleanup_done, 0);
+
+	if (!hdd_wait_for_debugfs_threads_completion())
+		hdd_err("Debufs threads are still pending, attempting SSR anyway");
+
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Failed to get HIF context, ignore SSR shutdown");
@@ -790,11 +827,6 @@ static void __hdd_soc_recovery_shutdown(void)
 
 	/* mask the host controller interrupts */
 	hif_mask_interrupt_call(hif_ctx);
-
-	hdd_psoc_shutdown_notify(hdd_ctx);
-
-	if (!hdd_wait_for_debugfs_threads_completion())
-		hdd_err("Debufs threads are still pending, attempting SSR anyway");
 
 	if (!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		hif_disable_isr(hif_ctx);
@@ -1720,21 +1752,24 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 	case PLD_FW_DOWN:
 		hdd_info("Received firmware down indication");
 
-		/* NOTE! SSR cleanup logic goes in pld shutdown, not here */
-
 		cds_set_target_ready(false);
 		cds_set_recovery_in_progress(true);
 
-		/* SSR cleanup happens in pld shutdown, which is serialized by
-		 * the platform driver. Other operations are also serialized by
-		 * platform driver, such as probe, remove, and reinit. If the
-		 * firmware goes down during one of these operations, the driver
-		 * would normally have to wait for a timeout before shutdown
-		 * could begin. Instead, forcefully complete events waiting on
-		 * firmware with a "reset" status to avoid waiting to time out
-		 * on a firmware we already know is down.
+		/*
+		 * In case of some platforms, uevent will come to the driver in
+		 * process context. In that case, it is safe to complete the
+		 * SSR cleanup activities in the same context. In case of
+		 * other platforms, it will be invoked in interrupt context.
+		 * Performing the cleanup in interrupt context is not ideal,
+		 * thus defer the cleanup to be done during
+		 * hdd_soc_recovery_shutdown
 		 */
-		qdf_complete_wait_events();
+		if (qdf_in_interrupt())
+			break;
+
+		hdd_soc_recovery_cleanup();
+		qdf_atomic_set(&is_recovery_cleanup_done, 1);
+
 		break;
 	case PLD_FW_HANG_EVENT:
 		hdd_info("Received fimrware hang event");
@@ -1760,6 +1795,7 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 		hdd_send_hang_data(hang_evt_data.hang_data,
 				   QDF_HANG_EVENT_DATA_SIZE);
 		qdf_mem_free(hang_evt_data.hang_data);
+
 		break;
 	default:
 		/* other events intentionally not handled */
