@@ -74,8 +74,16 @@
 #define N_FRAME_TYPE 0x4
 #define N_FRAME_SUBTYPE 0xF
 #define MAX_SEQ 0x4
+#define MAX_ACTION 0x3
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
 #define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
+#define FRAME_TYPE_IS_ACTION(type, subtype) ((type) == 0 && (subtype) == 13)
+
+enum iot_sim_action_cat_type {
+	CAT_BA,
+	CAT_SA_QUERY,
+	IOT_SIM_MAX_CAT,
+};
 
 /*
  * struct iot_sim_debugfs - contains dentry pointer for opened
@@ -114,6 +122,7 @@ struct iot_sim_rule {
  */
 struct iot_sim_rule_per_seq {
 	struct iot_sim_rule *rule_per_type[N_FRAME_TYPE][N_FRAME_SUBTYPE];
+	struct iot_sim_rule *rule_per_action_frm[IOT_SIM_MAX_CAT][MAX_ACTION];
 	uint8_t use_count;
 };
 

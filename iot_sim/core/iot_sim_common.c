@@ -23,6 +23,31 @@
 #include <wmi_unified_param.h>
 
 /*
+ * iot_sim_convert_offset_to_hex_str - function to convert offset into binary
+ * @offset: user provided offset value while action frame rule deletion
+ * @hex: buffer to store converted value
+ * @count: size of hex buffer
+ *
+ * Return: string pointer
+ */
+QDF_STATUS
+iot_sim_convert_offset_to_hex_str(uint16_t offset, uint8_t *hex, int8_t count)
+{
+	uint8_t temp[5];
+	int ret;
+
+	snprintf(temp, sizeof(temp), "%04u", offset);
+
+	ret = qdf_hex_str_to_binary(hex, temp, count);
+	if (ret == -1) {
+		iot_sim_err("offset to hex conversion failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * iot_sim_validate_content - function to validate frame content. User provided
  *			      content must be either full frame or full frame
  *			      body or valid TLV formatted data.
@@ -244,6 +269,86 @@ err:
 	return status;
 }
 
+QDF_STATUS
+iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
+				 uint8_t *act)
+{
+	uint8_t category, action;
+
+	category = ((struct ieee80211_action *)(frm))->ia_category;
+	action = ((struct ieee80211_action *)(frm))->ia_action;
+
+	iot_sim_info("category %x action %x", category, action);
+
+	switch (category) {
+	case IEEE80211_ACTION_CAT_BA:
+		switch (action) {
+		case IEEE80211_ACTION_BA_ADDBA_REQUEST:
+		case IEEE80211_ACTION_BA_ADDBA_RESPONSE:
+		case IEEE80211_ACTION_BA_DELBA:
+			*cat = CAT_BA;
+			*act = action;
+			break;
+		default:
+			return QDF_STATUS_E_FAULT;
+		}
+		break;
+	case IEEE80211_ACTION_CAT_SA_QUERY:
+		switch (action) {
+		case IEEE80211_ACTION_SA_QUERY_REQUEST:
+		case IEEE80211_ACTION_SA_QUERY_RESPONSE:
+			*cat = CAT_SA_QUERY;
+			*act = action;
+			break;
+		default:
+			return QDF_STATUS_E_FAULT;
+		}
+		break;
+	default:
+		return QDF_STATUS_E_FAULT;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+iot_sim_del_cnt_cng_rule_peer_action(struct iot_sim_rule_per_peer *peer,
+				     uint16_t seq, enum iot_sim_operations oper,
+				     uint8_t cat, uint8_t act)
+{
+	/* seq entries and frame entries */
+	struct iot_sim_rule_per_seq *s_e;
+	struct iot_sim_rule *f_e;
+	uint8_t bm;
+
+	qdf_spin_lock(&peer->iot_sim_lock);
+	s_e = peer->rule_per_seq[seq];
+	if (!s_e) {
+		qdf_spin_unlock(&peer->iot_sim_lock);
+		iot_sim_err("s_e is null");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	f_e = s_e->rule_per_action_frm[cat][act];
+	if (f_e && f_e->frm_content) {
+		qdf_mem_free(f_e->frm_content);
+		f_e->frm_content = NULL;
+		bm = f_e->rule_bitmap;
+		s_e->use_count--;
+		if (IOT_SIM_CLEAR_OP_BIT(bm, oper)) {
+			qdf_mem_free(f_e);
+			s_e->rule_per_action_frm[cat][act] = NULL;
+		}
+	}
+	if (s_e->use_count == 0) {
+		qdf_mem_free(s_e);
+		peer->rule_per_seq[seq] = NULL;
+	}
+	qdf_spin_unlock(&peer->iot_sim_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /*
  * iot_sim_del_cnt_cng_rule_peer - function to delete content change rule
  * @peer: iot sim peer
@@ -251,18 +356,32 @@ err:
  * @subtype: 802.11 frame subtype
  * @seq: authentication sequence number, mostly 0 for non-authentication frame
  * @oper: iot sim operation
+ * @cat: action category code
+ * @act: action code
+ * @action: boolean to indicate action frame
  *
  * Return: QDF_STATUS_SUCCESS
  */
 QDF_STATUS
 iot_sim_del_cnt_cng_rule_peer(struct iot_sim_rule_per_peer *peer,
 			      uint8_t type, uint8_t subtype,
-			      uint16_t seq, enum iot_sim_operations oper)
+			      uint16_t seq, enum iot_sim_operations oper,
+			      uint8_t cat, uint8_t act, bool action)
 {
 	/* seq entries and frame entries */
 	struct iot_sim_rule_per_seq *s_e;
 	struct iot_sim_rule *f_e;
 	uint8_t bm;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (action) {
+		status = iot_sim_del_cnt_cng_rule_peer_action(peer, seq, oper,
+							      cat, act);
+		if (QDF_IS_STATUS_ERROR(status))
+			iot_sim_err("Rule deletion for action frame failed");
+
+		return status;
+	}
 
 	qdf_spin_lock(&peer->iot_sim_lock);
 	s_e = peer->rule_per_seq[seq];
@@ -292,6 +411,13 @@ iot_sim_del_cnt_cng_rule_peer(struct iot_sim_rule_per_peer *peer,
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * iot_sim_frame_supported_by_fw - function to find if frame is supported by fw
+ * @type: 802.11 frame type
+ * @subtype: 802.11 frame subtype
+ *
+ * Return: true if supported else false
+ */
 bool
 iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
 {
@@ -333,6 +459,9 @@ iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
  * @type: 802.11 frame type
  * @subtype: 802.11 frame subtype
  * @mac: peer mac address
+ * @cat: action category code
+ * @act: action code
+ * @action: boolean to indicate action frame
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
@@ -340,8 +469,8 @@ QDF_STATUS
 iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			    enum iot_sim_operations oper,
 			    uint16_t seq, uint8_t type,
-			    uint8_t subtype,
-			    struct qdf_mac_addr *mac)
+			    uint8_t subtype, struct qdf_mac_addr *mac,
+			    uint8_t cat, uint8_t act, bool action)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct simulation_test_params param;
@@ -351,8 +480,12 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 	else
 		iot_sim_info("Rule deletion for " QDF_MAC_ADDR_STR,
 			     QDF_MAC_ADDR_ARRAY(mac->bytes));
-	iot_sim_info("oper:%u type:%hu subtype:%hu seq:%hu", oper, type,
-		     subtype, seq);
+	if (action)
+		iot_sim_info("oper:%u cat type:%hu act type:%hu seq:%hu",
+			     oper, cat, act, seq);
+	else
+		iot_sim_info("oper:%u type:%hu subtype:%hu seq:%hu", oper, type,
+			     subtype, seq);
 
 	if (!isc) {
 		iot_sim_err("iot_sim: isc is null");
@@ -366,7 +499,8 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			 */
 			ret = iot_sim_del_cnt_cng_rule_peer(&isc->bcast_peer,
 							    type, subtype,
-							    seq, oper);
+							    seq, oper, cat, act,
+							    action);
 		} else if (qdf_is_macaddr_zero(mac)) {
 			/*
 			 * Zero mac address, rules will be deleted
@@ -378,7 +512,8 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			 */
 			ret = iot_sim_del_cnt_cng_rule_peer(&isc->bcast_peer,
 							    type, subtype,
-							    seq, oper);
+							    seq, oper, cat, act,
+							    action);
 			/* Clear rules for individual peer
 			 * TBD
 			 */
@@ -411,6 +546,80 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 }
 
 /*
+ * iot_sim_add_cnt_cng_rule_peer_action - function to add content change rule
+ *					  for action frame
+ * @isc: iot sim context
+ * @peer: iot sim peer
+ * @seq: authentication sequence number, mostly 0 for non-authentication frame
+ * @frm: frame content to store
+ * @offset: offset value
+ * @len: length of frame content
+ * @oper: iot sim operation
+ * @cat: iot sim category code for action frame
+ * @act: iot sim action code for action frame
+ *
+ * Return: QDF_STATUS_SUCCESS on success, failure otherwise
+ */
+QDF_STATUS
+iot_sim_add_cnt_cng_rule_peer_action(struct iot_sim_context *isc,
+				     struct iot_sim_rule_per_peer *peer,
+				     uint16_t seq, uint8_t *frm,
+				     uint16_t offset, uint16_t len,
+				     enum iot_sim_operations oper,
+				     uint8_t cat, uint8_t act)
+{
+	struct iot_sim_rule_per_seq *s_e = NULL;
+	struct iot_sim_rule *f_e = NULL;
+
+	qdf_spin_lock(&peer->iot_sim_lock);
+	s_e = peer->rule_per_seq[seq];
+	if (s_e) {
+		f_e = s_e->rule_per_action_frm[cat][act];
+		if (!f_e) {
+			f_e = qdf_mem_malloc(sizeof(struct iot_sim_rule));
+			if (!f_e) {
+				iot_sim_err("can't allocate f_e for action frm");
+				qdf_spin_unlock(&peer->iot_sim_lock);
+				return QDF_STATUS_E_NOMEM;
+			}
+			s_e->rule_per_action_frm[cat][act] = f_e;
+		}
+	} else {
+		s_e = qdf_mem_malloc(sizeof(struct iot_sim_rule_per_seq));
+		if (!s_e) {
+			qdf_spin_unlock(&peer->iot_sim_lock);
+			iot_sim_err("can't allocate s_e for action");
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		f_e = qdf_mem_malloc(sizeof(struct iot_sim_rule));
+		if (!f_e) {
+			qdf_mem_free(s_e);
+			peer->rule_per_seq[seq] = NULL;
+			qdf_spin_unlock(&peer->iot_sim_lock);
+			iot_sim_err("iot_sim: f_e is null");
+			return QDF_STATUS_E_NOMEM;
+		}
+		s_e->rule_per_action_frm[cat][act] = f_e;
+		peer->rule_per_seq[seq] = s_e;
+	}
+
+	s_e->use_count++;
+	f_e->frm_content = qdf_mem_malloc(len);
+	qdf_mem_copy(f_e->frm_content, frm, len);
+	f_e->len = len;
+	f_e->offset = offset;
+	IOT_SIM_SET_OP_BIT(f_e->rule_bitmap, oper);
+	qdf_spin_unlock(&peer->iot_sim_lock);
+
+	iot_sim_info("iot_sim: Rule added for oper:%u", oper);
+	iot_sim_info("cat:%x act:%x sq:%hu off:%hu len:%hu",
+		     cat, act, seq, offset, len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * iot_sim_add_cnt_cng_rule_peer - function to add content change rule on peer
  * @peer: iot sim peer
  * @type: 802.11 frame type
@@ -420,6 +629,9 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
  * @offset: offset value
  * @len: length of frame content
  * @oper: iot sim operation
+ * @cat: action category code
+ * @act: action code
+ * @action: boolean to indicate action frame
  *
  * Return: QDF_STATUS_SUCCESS on success, failure otherwise
  */
@@ -429,12 +641,13 @@ iot_sim_add_cnt_cng_rule_peer(struct iot_sim_context *isc,
 			      uint8_t type, uint8_t subtype,
 			      uint16_t seq, uint8_t *frm,
 			      uint16_t offset, uint16_t len,
-			      enum iot_sim_operations oper)
+			      enum iot_sim_operations oper,
+			      uint8_t cat, uint8_t act, bool is_action)
 {
 	struct iot_sim_rule_per_seq *s_e = NULL;
 	struct iot_sim_rule *f_e = NULL;
 	struct simulation_test_params param;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (iot_sim_frame_supported_by_fw(type, subtype)) {
 		qdf_mem_zero(&param, sizeof(struct simulation_test_params));
@@ -456,6 +669,17 @@ iot_sim_add_cnt_cng_rule_peer(struct iot_sim_context *isc,
 
 		if (!FRAME_TYPE_IS_BEACON(type, subtype))
 			return status;
+	}
+
+	if (is_action) {
+		status = iot_sim_add_cnt_cng_rule_peer_action(isc, peer,
+							      seq, frm,
+							      offset, len,
+							      oper, cat, act);
+		if (QDF_IS_STATUS_ERROR(status))
+			iot_sim_err("Add action rule failed!");
+
+		return status;
 	}
 
 	qdf_spin_lock(&peer->iot_sim_lock);
@@ -520,6 +744,9 @@ iot_sim_add_cnt_cng_rule_peer(struct iot_sim_context *isc,
  * @offset: user provided offset
  * @frm: user provided frame content
  * @length: length of frm
+ * @cat: action category code
+ * @act: action code
+ * @action: boolean to indicate action frame
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
@@ -529,7 +756,8 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 			 struct qdf_mac_addr *mac,
 			 uint8_t type, uint8_t subtype,
 			 uint16_t seq, uint16_t offset,
-			 uint8_t *frm, uint16_t len)
+			 uint8_t *frm, uint16_t len,
+			 uint8_t cat, uint8_t act, bool is_action)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -543,7 +771,8 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 			return status;
 
 		status = iot_sim_delete_rule_for_mac(isc, oper, seq,
-						     type, subtype, mac);
+						     type, subtype, mac,
+						     cat, act, is_action);
 		if (status == QDF_STATUS_E_FAILURE) {
 			iot_sim_err("iot_sim: Rule removed - Fail");
 			return status;
@@ -552,7 +781,8 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 		if (qdf_is_macaddr_broadcast(mac)) {
 			iot_sim_add_cnt_cng_rule_peer(isc, &isc->bcast_peer,
 						      type, subtype, seq, frm,
-						      offset, len, oper);
+						      offset, len, oper,
+						      cat, act, is_action);
 		} else {
 			/*
 			 * Add entry to peer with MAC 'mac'
@@ -593,14 +823,16 @@ iot_sim_debug_content_change_write(struct file *file,
 				   const char __user *buf,
 				   size_t count, loff_t *ppos)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	unsigned char t_st, type, subtype, *content = NULL;
 	uint16_t offset = 0, length = 0, seq = 0;
-	char *locbuf;
+	char *locbuf, *ptr, hex[2];
 	enum iot_sim_operations oper = CONTENT_CHANGE;
 	struct qdf_mac_addr mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 	struct iot_sim_context *isc =
 			((struct seq_file *)file->private_data)->private;
+	uint8_t act_t = 0, cat_t = 0;
+	bool is_action_frm = 0;
 
 	if ((!buf) || (count > USER_BUF_LEN) || (count < 7))
 		return -EFAULT;
@@ -632,11 +864,48 @@ iot_sim_debug_content_change_write(struct file *file,
 		return -EFAULT;
 	}
 
+	if (FRAME_TYPE_IS_ACTION(type, subtype)) {
+		if (!length) {
+			status = iot_sim_convert_offset_to_hex_str(offset,
+								   hex,
+								   sizeof(hex));
+			if (QDF_IS_STATUS_ERROR(status)) {
+				qdf_mem_free(locbuf);
+				return count;
+			}
+
+			/* Offset represet category type and action type */
+			status = iot_sim_get_index_for_action_frm(hex,
+								  &cat_t,
+								  &act_t);
+			if (status == QDF_STATUS_E_FAULT) {
+				iot_sim_err("Get indices for action failed");
+				goto free;
+			}
+		} else if (length && content) {
+			/* if offset is zero, move ptr post header */
+			if (offset == 0) {
+				ptr = content + sizeof(struct ieee80211_frame);
+			} else if (offset == sizeof(struct ieee80211_frame)) {
+				ptr = content;
+			} else {
+				iot_sim_err("wrong offset for action frm cnt");
+				goto free;
+			}
+			status = iot_sim_get_index_for_action_frm(ptr,
+								  &cat_t,
+								  &act_t);
+		}
+		is_action_frm = 1;
+	}
+
 	/* check for rule removal */
 	if (!length || !content) {
 		status = iot_sim_delete_rule_for_mac(isc, oper, seq,
 						     type, subtype,
-						     &mac_addr);
+						     &mac_addr,
+						     cat_t, act_t,
+						     is_action_frm);
 		if (QDF_IS_STATUS_ERROR(status))
 			iot_sim_err("iot_sim: Rule removed - Fail");
 		else
@@ -647,11 +916,12 @@ iot_sim_debug_content_change_write(struct file *file,
 	}
 
 	status = iot_sim_add_rule_for_mac(isc, oper, &mac_addr, type, subtype,
-					  seq, offset, content, length);
+					  seq, offset, content, length,
+					  cat_t, act_t, is_action_frm);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		iot_sim_err("iot_sim: Rule Add - Fail");
-
+free:
 	qdf_mem_free(content);
 	qdf_mem_free(locbuf);
 	return count;
@@ -818,15 +1088,25 @@ iot_sim_remove_all_oper_rules(struct iot_sim_context *isc,
 			      enum iot_sim_operations oper)
 {
 	uint16_t seq;
-	uint8_t type, subtype;
+	uint8_t type, subtype, cat = 0, act = 0;
 	struct qdf_mac_addr zero_mac_addr = QDF_MAC_ADDR_ZERO_INIT;
 
+	/* Remove rules for non-action type frames */
 	for (seq = 0; seq < MAX_SEQ; seq++)
 		for (type = 0; type < N_FRAME_TYPE; type++)
 			for (subtype = 0; subtype < N_FRAME_SUBTYPE; subtype++)
 				iot_sim_delete_rule_for_mac(isc, oper, seq,
 							    type, subtype,
-							    &zero_mac_addr);
+							    &zero_mac_addr,
+							    cat, act, 0);
+	/* Remove rules for action frames */
+	for (seq = 0; seq < MAX_SEQ; seq++)
+		for (cat = 0; cat < IOT_SIM_MAX_CAT; cat++)
+			for (act = 0; act < MAX_ACTION; act++)
+				iot_sim_delete_rule_for_mac(isc, oper, seq,
+							    type, subtype,
+							    &zero_mac_addr,
+							    cat, act, 1);
 }
 
 /*

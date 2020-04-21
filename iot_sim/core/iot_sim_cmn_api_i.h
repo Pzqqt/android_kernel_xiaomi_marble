@@ -65,6 +65,20 @@ QDF_STATUS wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 						 void *arg);
 
 /**
+ * iot_sim_get_index_for_action_frm - Provides the action frame index
+ * @frm: action frame
+ * @cat: action frame category
+ * @act: action frame details
+ *
+ * Provides the simulation database index for the action frame.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
+					    uint8_t *act);
+
+/**
  * iot_sim_frame_update() - Management frame update
  * @pdev: reference to global pdev object
  * @nbuf: frame buffer
@@ -101,16 +115,14 @@ iot_sim_get_ctx_from_pdev(struct wlan_objmgr_pdev *pdev)
 	return isc;
 }
 
-char*
-iot_sim_print_mac(struct qdf_mac_addr *mac);
-
 QDF_STATUS
 iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			    enum iot_sim_operations oper,
 			    unsigned short seq,
 			    unsigned char type,
 			    unsigned char subtype,
-			    struct qdf_mac_addr *mac);
+			    struct qdf_mac_addr *mac,
+			    uint8_t cat, uint8_t act, bool action);
 
 QDF_STATUS
 iot_sim_parse_user_input_content_change(struct iot_sim_context *isc,
