@@ -172,6 +172,7 @@ bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
  * @peer: pointer to DP peer
  * @nbuf: pointer to the skb of RX frame
  * @frame_mask: the mask for speical frame needed
+ * @rx_tlv_hdr: start of rx tlv header
  *
  * note: Msdu_len must have been stored in QDF_NBUF_CB_RX_PKT_LEN(nbuf) and
  * single nbuf is expected.
@@ -179,7 +180,8 @@ bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
  * return: true - nbuf has been delivered to stack, false - not.
  */
 bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
-				 qdf_nbuf_t nbuf, uint32_t frame_mask);
+				 qdf_nbuf_t nbuf, uint32_t frame_mask,
+				 uint8_t *rx_tlv_hdr);
 #else
 static inline
 bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
@@ -189,7 +191,8 @@ bool dp_rx_is_special_frame(qdf_nbuf_t nbuf, uint32_t frame_mask)
 
 static inline
 bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
-				 qdf_nbuf_t nbuf, uint32_t frame_mask)
+				 qdf_nbuf_t nbuf, uint32_t frame_mask,
+				 uint8_t *rx_tlv_hdr)
 {
 	return false;
 }
