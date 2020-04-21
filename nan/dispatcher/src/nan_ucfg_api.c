@@ -807,7 +807,7 @@ void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 	nan_debug("NAN Disabled successfully");
 }
 
-static QDF_STATUS
+QDF_STATUS
 ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id)
 {
 	enum nan_datapath_state curr_ndi_state;
@@ -842,9 +842,12 @@ ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id)
 
 	qdf_spin_lock_bh(&ndi_vdev_priv->lock);
 	curr_ndi_state = ndi_vdev_priv->state;
-	/* Nothing to do if NDI is in DELETING or DATA_END state */
-	if (curr_ndi_state == NAN_DATA_NDI_DELETING_STATE ||
-	    curr_ndi_state == NAN_DATA_END_STATE) {
+	/*
+	 * Nothing to do if NDI is in DATA_END state.
+	 * Continue cleanup in NAN_DATA_NDI_DELETING_STATE as this API
+	 * can be called from hdd_ndi_delete.
+	 */
+	if (curr_ndi_state == NAN_DATA_END_STATE) {
 		qdf_spin_unlock_bh(&ndi_vdev_priv->lock);
 		wlan_objmgr_vdev_release_ref(ndi_vdev, WLAN_NAN_ID);
 		return QDF_STATUS_SUCCESS;
