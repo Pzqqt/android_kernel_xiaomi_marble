@@ -576,7 +576,8 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					he_cap->min_frag_size;
 	if (cfg_in_range(CFG_HE_TRIG_PAD, he_cap->trigger_frm_mac_pad))
 		mlme_obj->cfg.he_caps.dot11_he_cap.trigger_frm_mac_pad =
-				he_cap->trigger_frm_mac_pad;
+			QDF_MIN(he_cap->trigger_frm_mac_pad,
+				mlme_obj->cfg.he_caps.dot11_he_cap.trigger_frm_mac_pad);
 	if (cfg_in_range(CFG_HE_MTID_AGGR_RX, he_cap->multi_tid_aggr_rx_supp))
 		mlme_obj->cfg.he_caps.dot11_he_cap.multi_tid_aggr_rx_supp =
 					he_cap->multi_tid_aggr_rx_supp;
