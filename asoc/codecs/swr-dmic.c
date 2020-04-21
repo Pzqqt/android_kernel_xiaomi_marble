@@ -544,6 +544,11 @@ static int swr_dmic_probe(struct swr_device *pdev)
 
 	component = snd_soc_lookup_component(&pdev->dev,
 						swr_dmic->driver->name);
+	if (!component) {
+		dev_err(&pdev->dev, "%s: could not find swr_dmic component\n",
+			__func__);
+		goto dev_err;
+	}
 	swr_dmic->component = component;
 	prefix_name = devm_kzalloc(&pdev->dev,
 					strlen(swr_dmic_name_prefix_of) + 1,
