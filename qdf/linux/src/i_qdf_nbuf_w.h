@@ -141,10 +141,16 @@ static inline void qdf_nbuf_deinit_replenish_timer(void) {}
  *
  * Return: none
  */
+#if (defined(__LINUX_ARM_ARCH__))
 static inline void
 __qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
 {
 	dmac_inv_range(buf_start, buf_end);
 }
-
+#else
+static inline void
+__qdf_nbuf_dma_inv_range(const void *buf_start, const void *buf_end)
+{
+}
+#endif
 #endif /*_I_QDF_NBUF_W_H */
