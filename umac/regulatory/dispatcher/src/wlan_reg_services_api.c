@@ -1031,6 +1031,8 @@ void wlan_reg_freq_width_to_chan_op_class_auto(struct wlan_objmgr_pdev *pdev,
 					     chan_num);
 }
 
+qdf_export_symbol(wlan_reg_freq_width_to_chan_op_class_auto);
+
 void wlan_reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 				    qdf_freq_t freq,
 				    bool global_tbl_lookup,
