@@ -293,6 +293,7 @@ struct sde_encoder_irq {
  *				programming ROT and MDP fetch start
  * @frame_trigger_mode:		frame trigger mode indication for command
  *				mode display
+ * @recovered:			flag set to true when recovered from pp timeout
  */
 struct sde_encoder_phys {
 	struct drm_encoder *parent;
@@ -335,6 +336,7 @@ struct sde_encoder_phys {
 	bool in_clone_mode;
 	int vfp_cached;
 	enum frame_trigger_mode_type frame_trigger_mode;
+	bool recovered;
 };
 
 static inline int sde_encoder_phys_inc_pending(struct sde_encoder_phys *phys)
