@@ -80,7 +80,7 @@ struct meta_rnr_channel *scm_get_chan_meta(struct wlan_objmgr_psoc *psoc,
 	if (!rnr_channel_db)
 		return NULL;
 
-	for (i = 0; i <= NUM_6GHZ_CHANNELS; i++)
+	for (i = 0; i < QDF_ARRAY_SIZE(rnr_channel_db->channel); i++)
 		if (rnr_channel_db->channel[i].chan_freq == chan_freq)
 			return &rnr_channel_db->channel[i];
 
@@ -1570,7 +1570,7 @@ QDF_STATUS scm_channel_list_db_init(struct wlan_objmgr_psoc *psoc)
 	if (!rnr_channel_db)
 		return QDF_STATUS_E_INVAL;
 
-	for (j = 0; j < NUM_6GHZ_CHANNELS; j++) {
+	for (j = 0; j < QDF_ARRAY_SIZE(rnr_channel_db->channel); j++) {
 		if (i >= min_freq && i <= max_freq)
 			rnr_channel_db->channel[j].chan_freq = i;
 		i += 20;
@@ -1593,7 +1593,7 @@ QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 	if (!rnr_channel_db)
 		return QDF_STATUS_E_INVAL;
 
-	for (i = 0; i < NUM_6GHZ_CHANNELS; i++) {
+	for (i = 0; i < QDF_ARRAY_SIZE(rnr_channel_db->channel); i++) {
 		channel = &rnr_channel_db->channel[i];
 		channel->chan_freq = 0;
 		channel->beacon_probe_last_time_found = 0;
@@ -1632,7 +1632,7 @@ QDF_STATUS scm_rnr_db_flush(struct wlan_objmgr_psoc *psoc)
 	if (!rnr_channel_db)
 		return QDF_STATUS_E_INVAL;
 
-	for (i = 0; i < NUM_6GHZ_CHANNELS; i++) {
+	for (i = 0; i < QDF_ARRAY_SIZE(rnr_channel_db->channel); i++) {
 		channel = &rnr_channel_db->channel[i];
 		cur_node = NULL;
 		qdf_list_peek_front(&channel->rnr_list, &cur_node);
