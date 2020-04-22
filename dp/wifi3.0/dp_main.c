@@ -5849,9 +5849,15 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	soc->vdev_id_map[vdev->vdev_id] = NULL;
 
-	if (wlan_op_mode_sta == vdev->opmode)
-		dp_peer_delete_wifi3((struct cdp_soc_t *)soc, vdev->vdev_id,
-				     vdev->vap_self_peer->mac_addr.raw, 0);
+	if (wlan_op_mode_sta == vdev->opmode) {
+		if (vdev->vap_self_peer)
+			dp_peer_delete_wifi3((struct cdp_soc_t *)soc,
+					     vdev->vdev_id,
+					     vdev->vap_self_peer->mac_addr.raw,
+					     0);
+		else
+			dp_err("vdev self peer is NULL");
+	}
 
 	/*
 	 * If Target is hung, flush all peers before detaching vdev
