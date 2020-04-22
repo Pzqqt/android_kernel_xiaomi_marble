@@ -25,20 +25,18 @@
 #if !defined(__WLAN_HDD_STA_INFO_H)
 #define __WLAN_HDD_STA_INFO_H
 
+#include <wlan_hdd_main.h>
 #include "qdf_lock.h"
 #include "qdf_types.h"
-#include "qdf_hashtable.h"
+#include "qdf_list.h"
 #include "sap_api.h"
 #include "cdp_txrx_cmn_struct.h"
 #include "sir_mac_prot_def.h"
 #include <linux/ieee80211.h>
 #include <wlan_mlme_public_struct.h>
 
-/* A bucket size of 2^4 = 16 */
-#define WLAN_HDD_STA_INFO_SIZE 4
-
 /* Opaque handle for abstraction */
-#define hdd_sta_info_entry qdf_ht_entry
+#define hdd_sta_info_entry qdf_list_node_t
 
 /**
  * struct dhcp_phase - Per Peer DHCP Phases
@@ -177,7 +175,7 @@ struct hdd_station_info {
 	uint8_t support_mode;
 	uint32_t rx_retry_cnt;
 	uint32_t rx_mc_bc_cnt;
-	struct qdf_ht_entry sta_node;
+	qdf_list_node_t sta_node;
 	struct wlan_ies assoc_req_ies;
 	qdf_atomic_t ref_cnt;
 	unsigned long pending_eap_frm_type;
@@ -189,41 +187,199 @@ struct hdd_station_info {
  * @sta_obj_lock: Lock to protect the sta_obj read/write access
  */
 struct hdd_sta_info_obj {
-	qdf_ht_declare(sta_obj, WLAN_HDD_STA_INFO_SIZE);
+	qdf_list_t sta_obj;
 	qdf_spinlock_t sta_obj_lock;
 };
 
 /**
- * hdd_for_each_station - Iterate over each station stored in the sta info
- *                        container
+ * hdd_put_sta_info_ref() - Release sta_info ref for synchronization
  * @sta_info_container: The station info container obj that stores and maintains
  *                      the sta_info obj.
- * @sta_info: The station info structure that acts as the iterator object.
- * @index: The current index in which the current station is present.
+ * @sta_info: Station info structure to be released.
  *
- * The sta_info will contain the structure that is fetched for that particular
- * iteration. The index of the current iterator object in the container
- * represents the bucket at which the given station info is stored.
+ * Return: None
  */
-#define hdd_for_each_station(sta_info_container, sta_info, index) \
-	  qdf_ht_for_each(sta_info_container.sta_obj, index, sta_info, sta_node)
+void hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
+			  struct hdd_station_info **sta_info,
+			  bool lock_required);
 
 /**
- * hdd_for_each_station_safe - Iterate over each station stored in the sta info
- *                           container being safe for removal of the sta info
+ * hdd_take_sta_info_ref() - Increment sta info ref.
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @sta_info: Station info structure to be released.
+ *
+ * This function has to be accompanied by hdd_put_sta_info when the work with
+ * the sta info is done. Failure to do so will result in a mem leak.
+ *
+ * Return: None
+ */
+void hdd_take_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
+			   struct hdd_station_info *sta_info,
+			   bool lock_required);
+
+/**
+ * hdd_get_front_sta_info_no_lock() - Get the first sta_info from the sta list
+ * This API doesnot use any lock in it's implementation. It is the caller's
+ * directive to ensure concurrency safety.
+ *
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @out_sta_info: The station info structure that acts as the container object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+hdd_get_front_sta_info_no_lock(struct hdd_sta_info_obj *sta_info_container,
+			       struct hdd_station_info **out_sta_info);
+
+/**
+ * hdd_get_next_sta_info_no_lock() - Get the next sta_info from the sta list
+ * This API doesnot use any lock in it's implementation. It is the caller's
+ * directive to ensure concurrency safety.
+ *
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @out_sta_info: The station info structure that acts as the container object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+hdd_get_next_sta_info_no_lock(struct hdd_sta_info_obj *sta_info_container,
+			      struct hdd_station_info *current_sta_info,
+			      struct hdd_station_info **out_sta_info);
+
+/* Abstract wrapper to check sta_info validity */
+#define __hdd_is_station_valid(sta_info) sta_info
+
+/**
+ * __hdd_take_ref_and_fetch_front_sta_info - Helper macro to lock, fetch front
+ * sta_info, take ref and unlock.
  * @sta_info_container: The station info container obj that stores and maintains
  *                      the sta_info obj.
  * @sta_info: The station info structure that acts as the iterator object.
- * @index: The current index in which the current station is present.
- * @tmp: A &struct for temporary storage
+ */
+#define __hdd_take_ref_and_fetch_front_sta_info(sta_info_container, sta_info) \
+	qdf_spin_lock_bh(&sta_info_container.sta_obj_lock), \
+	hdd_get_front_sta_info_no_lock(&sta_info_container, &sta_info), \
+	(sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
+					   sta_info, false) : (false), \
+	qdf_spin_unlock_bh(&sta_info_container.sta_obj_lock)
+
+/**
+ * __hdd_take_ref_and_fetch_next_sta_info - Helper macro to lock, fetch next
+ * sta_info, take ref and unlock.
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @sta_info: The station info structure that acts as the iterator object.
+ */
+#define __hdd_take_ref_and_fetch_next_sta_info(sta_info_container, sta_info) \
+	qdf_spin_lock_bh(&sta_info_container.sta_obj_lock), \
+	hdd_get_next_sta_info_no_lock(&sta_info_container, sta_info, \
+				      &sta_info), \
+	(sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
+					   sta_info, false) : (false), \
+	qdf_spin_unlock_bh(&sta_info_container.sta_obj_lock)
+
+/**
+ * hdd_for_each_sta_ref - Iterate over each station stored in the sta info
+ *                        container with ref taken
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @sta_info: The station info structure that acts as the iterator object.
  *
  * The sta_info will contain the structure that is fetched for that particular
- * iteration. The index of the current iterator object in the container
- * represents the bucket at which the given station info is stored.
+ * iteration.
+ *
+ *			     ***** NOTE *****
+ * Before the end of each iteration, dev_put(adapter->dev) must be
+ * called. Not calling this will keep hold of a reference, thus preventing
+ * unregister of the netdevice.
+ *
+ * Usage example:
+ *	    hdd_for_each_sta_ref(sta_info_container, sta_info) {
+ *		    <work involving station>
+ *		    <some more work>
+ *		    hdd_put_sta_info_ref(sta_info_container, sta_info, true)
+ *	    }
  */
-#define hdd_for_each_station_safe(sta_info_container, sta_info, index, tmp) \
-	qdf_ht_for_each_safe(sta_info_container.sta_obj, index, tmp, \
-			     sta_info, sta_node)
+#define hdd_for_each_sta_ref(sta_info_container, sta_info) \
+	for (__hdd_take_ref_and_fetch_front_sta_info(sta_info_container, \
+						     sta_info); \
+	     __hdd_is_station_valid(sta_info); \
+	     __hdd_take_ref_and_fetch_next_sta_info(sta_info_container, \
+						    sta_info))
+
+/**
+ * __hdd_take_ref_and_fetch_front_sta_info_safe - Helper macro to lock, fetch
+ * front sta_info, take ref and unlock in a delete safe manner.
+ * @sta_info_container: The station info container obj that stores and maintains
+ *			the sta_info obj.
+ * @sta_info: The station info structure that acts as the iterator object.
+ */
+#define __hdd_take_ref_and_fetch_front_sta_info_safe(sta_info_container, \
+						     sta_info, next_sta_info) \
+	qdf_spin_lock_bh(&sta_info_container.sta_obj_lock), \
+	hdd_get_front_sta_info_no_lock(&sta_info_container, &sta_info), \
+	(sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
+					   sta_info, false) : (false), \
+	hdd_get_next_sta_info_no_lock(&sta_info_container, sta_info, \
+				      &next_sta_info), \
+	(next_sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
+						next_sta_info, false) : \
+						(false), \
+	qdf_spin_unlock_bh(&sta_info_container.sta_obj_lock)
+
+/**
+ * __hdd_take_ref_and_fetch_next_sta_info_safe - Helper macro to lock, fetch
+ * next sta_info, take ref and unlock.
+ * @sta_info_container: The station info container obj that stores and maintains
+ *			the sta_info obj.
+ * @sta_info: The station info structure that acts as the iterator object.
+ */
+#define __hdd_take_ref_and_fetch_next_sta_info_safe(sta_info_container, \
+						    sta_info, next_sta_info) \
+	sta_info = next_sta_info, \
+	qdf_spin_lock_bh(&sta_info_container.sta_obj_lock), \
+	hdd_get_next_sta_info_no_lock(&sta_info_container, sta_info, \
+				      &next_sta_info), \
+	(next_sta_info) ? hdd_take_sta_info_ref(&sta_info_container, \
+					     next_sta_info, false) : (false), \
+	qdf_spin_unlock_bh(&sta_info_container.sta_obj_lock)
+
+/**
+ * hdd_for_each_sta_ref_safe - Iterate over each station stored in the sta info
+ *                             container in a delete safe manner
+ * @sta_info_container: The station info container obj that stores and maintains
+ *                      the sta_info obj.
+ * @sta_info: The station info structure that acts as the iterator object.
+ * @next_sta_info: A temporary node for maintaing del safe.
+ *
+ * The sta_info will contain the structure that is fetched for that particular
+ * iteration. The next_sta_info is used to store the next station before the
+ * current station is deleted so as to provide a safe way to iterate the list
+ * while deletion is undergoing.
+ *
+ *			     ***** NOTE *****
+ * Before the end of each iteration, hdd_put_sta_info_ref must be
+ * called. Not calling this will keep hold of a reference, thus preventing
+ * deletion of the station info
+ *
+ * Usage example:
+ *	hdd_for_each_sta_ref_safe(sta_info_container, sta_info, next_sta_info) {
+ *		<work involving station>
+ *		<some more work>
+ *		hdd_put_sta_info_ref(sta_info_container, sta_info, true)
+ *	}
+ */
+#define hdd_for_each_sta_ref_safe(sta_info_container, sta_info, next_sta_info) \
+	for (__hdd_take_ref_and_fetch_front_sta_info_safe(sta_info_container, \
+							  sta_info, \
+							  next_sta_info); \
+	     __hdd_is_station_valid(sta_info); \
+	     __hdd_take_ref_and_fetch_next_sta_info_safe(sta_info_container, \
+							 sta_info, \
+							 next_sta_info))
 
 /**
  * wlan_sta_info_init() - Initialise the wlan hdd station info container obj
@@ -281,23 +437,12 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 				const uint8_t *mac_addr);
 
 /**
- * hdd_put_sta_info() - Release sta_info for synchronization
- * @sta_info_container: The station info container obj that stores and maintains
- *                      the sta_info obj.
- * @sta_info: Station info structure to be released.
- *
- * Return: None
- */
-void hdd_put_sta_info(struct hdd_sta_info_obj *sta_info_container,
-		      struct hdd_station_info **sta_info, bool lock_required);
-
-/**
  * hdd_clear_cached_sta_info() - Clear the cached sta info from the container
  * @sta_info_container: The station info container obj that stores and maintains
  *                      the sta_info obj.
  *
  * Return: None
  */
-void hdd_clear_cached_sta_info(struct hdd_sta_info_obj *sta_info_container);
+void hdd_clear_cached_sta_info(struct hdd_adapter *hdd_adapter);
 
 #endif /* __WLAN_HDD_STA_INFO_H */

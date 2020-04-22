@@ -776,13 +776,13 @@ static void hdd_clear_sta(struct hdd_adapter *adapter,
 
 static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
-	uint8_t index = 0;
 	struct hdd_station_info *sta_info;
 
 	hdd_enter_dev(adapter->dev);
 
-	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+	hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
 		hdd_clear_sta(adapter, sta_info);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
 }
 
@@ -1453,7 +1453,6 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 {
 	struct hdd_station_info *stainfo, *cache_sta_info;
 	struct hdd_station_info *oldest_disassoc_sta_info = NULL;
-	uint8_t index = 0;
 	qdf_time_t oldest_disassoc_sta_ts = 0;
 	bool is_dot11_mode_abgn;
 
@@ -1504,6 +1503,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	 * should always be true.
 	 */
 	is_dot11_mode_abgn = true;
+	stainfo->ecsa_capable = event->ecsa_capable;
 
 	if (event->vht_caps.present) {
 		stainfo->vht_present = true;
@@ -1545,8 +1545,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 				     event->ies, event->ies_len);
 			cache_sta_info->assoc_req_ies.len = event->ies_len;
 		}
-		qdf_mem_zero(&cache_sta_info->sta_node,
-			     sizeof(cache_sta_info->sta_node));
+		qdf_atomic_init(&cache_sta_info->ref_cnt);
 
 		/*
 		 * If cache_sta_info is not present and cache limit is not
@@ -1560,12 +1559,14 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 			qdf_atomic_inc(&adapter->cache_sta_count);
 		} else {
 			struct hdd_station_info *temp_sta_info;
+			struct hdd_sta_info_obj *sta_list =
+						&adapter->cache_sta_info_list;
 
 			hdd_debug("reached max caching, removing oldest");
 
 			/* Find the oldest cached station */
-			hdd_for_each_station(adapter->cache_sta_info_list,
-					     temp_sta_info, index) {
+			hdd_for_each_sta_ref(adapter->cache_sta_info_list,
+					     temp_sta_info) {
 				if (temp_sta_info->disassoc_ts &&
 				    (!oldest_disassoc_sta_ts ||
 				    qdf_system_time_after(
@@ -1576,6 +1577,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 					oldest_disassoc_sta_info =
 						temp_sta_info;
 				}
+				hdd_put_sta_info_ref(sta_list, &temp_sta_info,
+						     true);
 			}
 
 			/* Remove the oldest and store the current */
@@ -1585,8 +1588,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 					    cache_sta_info);
 		}
 	} else {
-		hdd_put_sta_info(&adapter->cache_sta_info_list,
-				 &cache_sta_info, true);
+		hdd_put_sta_info_ref(&adapter->cache_sta_info_list,
+				     &cache_sta_info, true);
 	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
@@ -1608,7 +1611,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		  stainfo->rx_mcs_map,
 		  stainfo->tx_mcs_map);
 exit:
-	hdd_put_sta_info(&adapter->sta_info_list, &stainfo, true);
+	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
 	return;
 }
 
@@ -1798,7 +1801,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	int ret = 0;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	struct hdd_station_info *stainfo, *cache_stainfo;
-	uint8_t index = 0;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
 
@@ -2287,18 +2289,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_fill_station_info(adapter, event);
 
-		stainfo = hdd_get_sta_info_by_mac(
-					&adapter->sta_info_list,
-					(uint8_t *)&wrqu.addr.sa_data);
-
-		if (stainfo) {
-			stainfo->ecsa_capable = event->ecsa_capable;
-			hdd_put_sta_info(&adapter->sta_info_list, &stainfo,
-					 true);
-		} else {
-			hdd_err("Station not found");
-		}
-
 		if (ucfg_ipa_is_enabled()) {
 			status = ucfg_ipa_wlan_evt(hdd_ctx->pdev,
 						   adapter->dev,
@@ -2400,8 +2390,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				  cache_stainfo->tx_rate,
 				  cache_stainfo->rx_rate,
 				  cache_stainfo->reason_code);
-			hdd_put_sta_info(&adapter->cache_sta_info_list,
-					 &cache_stainfo, true);
+			hdd_put_sta_info_ref(&adapter->cache_sta_info_list,
+					     &cache_stainfo, true);
 		}
 		hdd_nofl_info("SAP disassociated " QDF_MAC_ADDR_STR,
 			      QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
@@ -2438,18 +2428,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					  WMA_DHCP_STOP_IND);
 		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
-		hdd_put_sta_info(&adapter->sta_info_list, &stainfo, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
 		hdd_softap_deregister_sta(adapter, &stainfo);
 
 		ap_ctx->ap_active = false;
 
-		hdd_for_each_station(adapter->sta_info_list, stainfo,
-				     index) {
+		hdd_for_each_sta_ref(adapter->sta_info_list, stainfo) {
 			if (!qdf_is_macaddr_broadcast(
 			    &stainfo->sta_mac)) {
 				ap_ctx->ap_active = true;
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						     &stainfo, true);
 				break;
 			}
+			hdd_put_sta_info_ref(&adapter->sta_info_list,
+					     &stainfo, true);
 		}
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -6770,10 +6763,8 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 {
 	struct sap_event sap_event;
-	uint8_t index = 0;
 	struct sap_context *sap_ctx;
-	struct hdd_station_info *sta_info;
-	struct hdd_sta_info_entry *tmp;
+	struct hdd_station_info *sta_info, *tmp = NULL;
 
 	hdd_enter();
 
@@ -6783,13 +6774,14 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		return;
 	}
 
-	hdd_for_each_station_safe(adapter->sta_info_list, sta_info, index,
-				  tmp) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
 		hdd_debug("sta_mac: " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 
 		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
 			hdd_softap_deregister_sta(adapter, &sta_info);
+			hdd_put_sta_info_ref(&adapter->sta_info_list,
+					     &sta_info, true);
 			continue;
 		}
 
@@ -6804,6 +6796,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		sap_event.sapevt.sapStationDisassocCompleteEvent.status_code =
 				QDF_STATUS_E_RESOURCES;
 		hdd_hostapd_sap_event_cb(&sap_event, sap_ctx->user_context);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
 
 	hdd_exit();
@@ -6812,7 +6805,6 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 			    struct qdf_mac_addr *mac_addr)
 {
-	uint8_t index = 0;
 	bool is_associated = false;
 	struct hdd_station_info *sta_info;
 
@@ -6821,12 +6813,15 @@ bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+	hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
 		if (!qdf_mem_cmp(&sta_info->sta_mac, mac_addr,
 				 QDF_MAC_ADDR_SIZE)) {
 			is_associated = true;
+			hdd_put_sta_info_ref(&adapter->sta_info_list,
+					     &sta_info, true);
 			break;
 		}
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
 
 	return is_associated;

@@ -10497,7 +10497,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		nss = sta_info->nss;
 		freq = (WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_chan_freq;
 		rate_flags = sta_info->rate_flags;
-		hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	} else {
 		hdd_err("Not Associated! with mac "QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(peer_mac));
@@ -20695,7 +20695,6 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 					 struct hdd_hostapd_state *hapd_state,
 					 struct csr_del_sta_params *param)
 {
-	uint8_t index = 0;
 	qdf_event_t *disassoc_event = &hapd_state->qdf_sta_disassoc_event;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS qdf_status;
@@ -20721,9 +20720,11 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 
 	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		if(qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
-			hdd_for_each_station(adapter->sta_info_list,
-					     sta_info, index)
+			hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
 				sta_info->is_deauth_in_progress = true;
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						     &sta_info, true);
+			}
 		} else {
 			sta_info->is_deauth_in_progress = true;
 		}
@@ -20755,7 +20756,6 @@ QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 				     struct hdd_hostapd_state *hapd_state,
 				     struct csr_del_sta_params *param)
 {
-	uint8_t index = 0;
 	QDF_STATUS status;
 	bool is_sap_bcast_deauth_enabled = false;
 	struct hdd_context *hdd_ctx;
@@ -20780,16 +20780,20 @@ QDF_STATUS hdd_softap_deauth_all_sta(struct hdd_adapter *adapter,
 						     hapd_state, param);
 	}
 
-	hdd_for_each_station(adapter->sta_info_list, sta_info, index) {
+	hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
 		if (!sta_info->is_deauth_in_progress) {
 			hdd_debug("Delete STA with MAC:" QDF_MAC_ADDR_STR,
 				  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 			status =
 			    hdd_softap_deauth_current_sta(adapter, sta_info,
 							  hapd_state, param);
-			if (QDF_IS_STATUS_ERROR(status))
+			if (QDF_IS_STATUS_ERROR(status)) {
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						     &sta_info, true);
 				return status;
+			}
 		}
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -20872,8 +20876,8 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			hdd_debug("Skip DEL STA as deauth is in progress::"
 				  QDF_MAC_ADDR_STR,
 				  QDF_MAC_ADDR_ARRAY(mac));
-			hdd_put_sta_info(&adapter->sta_info_list, &sta_info,
-					 true);
+			hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info,
+					     true);
 			return -ENOENT;
 		}
 
@@ -20881,7 +20885,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			  QDF_MAC_ADDR_ARRAY(mac));
 		hdd_softap_deauth_current_sta(adapter, sta_info, hapd_state,
 					      param);
-		hdd_put_sta_info(&adapter->sta_info_list, &sta_info, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
 
 fn_end:

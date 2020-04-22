@@ -6644,7 +6644,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		}
 
 		/* Clear all the cached sta info */
-		hdd_clear_cached_sta_info(&adapter->cache_sta_info_list);
+		hdd_clear_cached_sta_info(adapter);
 
 		/*
 		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
@@ -16413,7 +16413,6 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 					void *ctx)
 {
 	struct hdd_station_ctx *hdd_sta_ctx;
-	uint8_t index = 0;
 	uint8_t *sta_mac;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
@@ -16485,11 +16484,13 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 		}
 	} else if ((QDF_SAP_MODE == adapter->device_mode) ||
 			(QDF_P2P_GO_MODE == adapter->device_mode)) {
-		hdd_for_each_station(adapter->sta_info_list, sta_info,
-				     index) {
+		hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
 			if (sta_info->peer_state !=
-				OL_TXRX_PEER_STATE_CONN)
+				OL_TXRX_PEER_STATE_CONN) {
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						     &sta_info, true);
 				continue;
+			}
 
 			sta_mac = sta_info->sta_mac.bytes;
 			hdd_debug("client " QDF_MAC_ADDR_STR
@@ -16499,6 +16500,9 @@ static QDF_STATUS hdd_is_connection_in_progress_iterator(
 			context->out_vdev_id = adapter->vdev_id;
 			context->out_reason = SAP_EAPOL_IN_PROGRESS;
 			context->connection_in_progress = true;
+
+			hdd_put_sta_info_ref(&adapter->sta_info_list,
+					     &sta_info, true);
 
 			return QDF_STATUS_E_ABORTED;
 		}
