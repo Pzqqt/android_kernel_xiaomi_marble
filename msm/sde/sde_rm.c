@@ -1273,21 +1273,28 @@ static bool _sde_rm_check_vdc(struct sde_rm *rm,
 static int _sde_rm_reserve_dsc(
 		struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
-		struct msm_display_dsc_info *dsc_info,
-		const struct sde_rm_topology_def *top,
+		struct sde_rm_requirements *reqs,
 		u8 *_dsc_ids)
 {
 	struct sde_rm_hw_iter iter_i, iter_j;
 	struct sde_rm_hw_blk *dsc[MAX_BLOCKS];
 	u32 reserve_mask = 0;
 	int alloc_count = 0;
-	int num_dsc_enc = top->num_comp_enc;
+	int num_dsc_enc;
+	struct msm_display_dsc_info *dsc_info;
 	int i;
 
-	if ((!top->num_comp_enc) || !dsc_info) {
+	if (reqs->hw_res.comp_info->comp_type != MSM_DISPLAY_COMPRESSION_DSC) {
+		SDE_DEBUG("compression blk dsc not required\n");
+		return 0;
+	}
+
+	num_dsc_enc = reqs->topology->num_comp_enc;
+	dsc_info = &reqs->hw_res.comp_info->dsc_info;
+
+	if ((!num_dsc_enc) || !dsc_info) {
 		SDE_DEBUG("invalid topoplogy params: %d, %d\n",
-				top->num_comp_enc,
-				!(dsc_info == NULL));
+				num_dsc_enc, !(dsc_info == NULL));
 		return 0;
 	}
 
@@ -1309,7 +1316,7 @@ static int _sde_rm_reserve_dsc(
 			continue;
 
 		/* if this hw block does not support required feature */
-		if ((dsc_info->config.native_422 ||
+		if (!_dsc_ids && (dsc_info->config.native_422 ||
 			dsc_info->config.native_420) && !has_422_420_support)
 			continue;
 
@@ -1680,9 +1687,7 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 				i, splash_display->dsc_ids[i]);
 	}
 
-	return  _sde_rm_reserve_dsc(rm, rsvp,
-			&reqs->hw_res.comp_info->dsc_info,
-			reqs->topology, hw_ids);
+	return  _sde_rm_reserve_dsc(rm, rsvp, reqs, hw_ids);
 
 }
 
@@ -1906,8 +1911,6 @@ static int _sde_rm_populate_requirements(
 {
 	const struct drm_display_mode *mode = &crtc_state->mode;
 	int i;
-
-	memset(reqs, 0, sizeof(*reqs));
 
 	reqs->top_ctrl = sde_connector_get_property(conn_state,
 			CONNECTOR_PROP_TOPOLOGY_CONTROL);
@@ -2207,9 +2210,10 @@ int sde_rm_reserve(
 		bool test_only)
 {
 	struct sde_rm_rsvp *rsvp_cur, *rsvp_nxt;
-	struct sde_rm_requirements reqs;
+	struct sde_rm_requirements reqs = {0,};
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
+	struct msm_compression_info *comp_info;
 	int ret;
 
 	if (!rm || !enc || !crtc_state || !conn_state) {
@@ -2232,6 +2236,10 @@ int sde_rm_reserve(
 	if (!_sde_rm_is_display_in_cont_splash(sde_kms, enc) &&
 			!drm_atomic_crtc_needs_modeset(crtc_state))
 		return 0;
+
+	comp_info = kzalloc(sizeof(*comp_info), GFP_KERNEL);
+	if (!comp_info)
+		return -ENOMEM;
 
 	SDE_DEBUG("reserving hw for conn %d enc %d crtc %d test_only %d\n",
 			conn_state->connector->base.id, enc->base.id,
@@ -2265,6 +2273,7 @@ int sde_rm_reserve(
 	if (!test_only && rsvp_nxt)
 		goto commit_rsvp;
 
+	reqs.hw_res.comp_info = comp_info;
 	ret = _sde_rm_populate_requirements(rm, enc, crtc_state,
 			conn_state, &reqs);
 	if (ret) {
@@ -2332,6 +2341,7 @@ commit_rsvp:
 	ret = _sde_rm_commit_rsvp(rm, rsvp_nxt, conn_state);
 
 end:
+	kfree(comp_info);
 	_sde_rm_print_rsvps(rm, SDE_RM_STAGE_FINAL);
 	mutex_unlock(&rm->rm_lock);
 

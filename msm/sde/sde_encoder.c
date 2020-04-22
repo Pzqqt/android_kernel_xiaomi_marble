@@ -510,22 +510,22 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 		struct drm_connector_state *conn_state)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
-	struct msm_mode_info mode_info;
-	int i = 0;
+	int ret, i = 0;
 
-	if (!hw_res || !drm_enc || !conn_state) {
-		SDE_ERROR("invalid argument(s), drm_enc %d, res %d, state %d\n",
-				!drm_enc, !hw_res, !conn_state);
+	if (!hw_res || !drm_enc || !conn_state || !hw_res->comp_info) {
+		SDE_ERROR("rc %d, drm_enc %d, res %d, state %d, comp-info %d\n",
+				-EINVAL, !drm_enc, !hw_res, !conn_state,
+				hw_res ? !hw_res->comp_info : 0);
 		return;
 	}
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
 
-	/* Query resources used by phys encs, expected to be without overlap */
-	memset(hw_res, 0, sizeof(*hw_res));
 	hw_res->display_num_of_h_tiles = sde_enc->display_num_of_h_tiles;
+	hw_res->display_type = sde_enc->disp_info.display_type;
 
+	/* Query resources used by phys encs, expected to be without overlap */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
@@ -538,10 +538,14 @@ void sde_encoder_get_hw_resources(struct drm_encoder *drm_enc,
 	 * called from atomic_check phase. Use the below API to get mode
 	 * information of the temporary conn_state passed
 	 */
-	sde_connector_state_get_mode_info(conn_state, &mode_info);
-	hw_res->topology = mode_info.topology;
-	hw_res->comp_info = &sde_enc->mode_info.comp_info;
-	hw_res->display_type = sde_enc->disp_info.display_type;
+	ret = sde_connector_state_get_topology(conn_state, &hw_res->topology);
+	if (ret)
+		SDE_ERROR("failed to get topology ret %d\n", ret);
+
+	ret = sde_connector_state_get_compression_info(conn_state,
+			hw_res->comp_info);
+	if (ret)
+		SDE_ERROR("failed to get compression info ret %d\n", ret);
 }
 
 void sde_encoder_destroy(struct drm_encoder *drm_enc)
