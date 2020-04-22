@@ -2122,6 +2122,8 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
+	sde_crtc_set_qos_dirty(sde_enc->crtc);
+
 	if (!conn) {
 		SDE_ERROR_ENC(sde_enc, "failed to find attached connector\n");
 		return;

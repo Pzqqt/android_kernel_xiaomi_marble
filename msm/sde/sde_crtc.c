@@ -5332,6 +5332,23 @@ exit:
 	return ret;
 }
 
+void sde_crtc_set_qos_dirty(struct drm_crtc *crtc)
+{
+	struct drm_plane *plane;
+	struct drm_plane_state *state;
+	struct sde_plane_state *pstate;
+
+	drm_atomic_crtc_for_each_plane(plane, crtc) {
+		state = plane->state;
+		if (!state)
+			continue;
+
+		pstate = to_sde_plane_state(state);
+
+		pstate->dirty |= SDE_PLANE_DIRTY_QOS;
+	}
+}
+
 /**
  * sde_crtc_atomic_get_property - retrieve a crtc drm property
  * @crtc: Pointer to drm crtc structure

@@ -820,6 +820,13 @@ void sde_crtc_update_cont_splash_settings(
 		struct drm_crtc *crtc);
 
 /**
+ * sde_crtc_set_qos_dirty - update plane dirty flag to include
+ *	QoS reprogramming which is required during fps switch
+ * @crtc: Pointer to drm crtc structure
+ */
+void sde_crtc_set_qos_dirty(struct drm_crtc *crtc);
+
+/**
  * sde_crtc_misr_setup - to configure and enable/disable MISR
  * @crtc: Pointer to drm crtc structure
  * @enable: boolean to indicate enable/disable misr
