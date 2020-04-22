@@ -136,7 +136,14 @@ static void ipa3_tasklet_rx_notify(unsigned long data);
 
 static u32 ipa_adjust_ra_buff_base_sz(u32 aggr_byte_limit);
 
-static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
+/**
+ * ipa3_wq_write_done_common() - this function is responsible on freeing
+ * all tx_pkt_wrappers related to a skb
+ * @tx_pkt: the first tx_pkt_warpper related to a certain skb
+ * @sys:points to the ipa3_sys_context the EOT was received on
+ * returns the number of tx_pkt_wrappers that were freed
+ */
+static int ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 				struct ipa3_tx_pkt_wrapper *tx_pkt)
 {
 	struct ipa3_tx_pkt_wrapper *next_pkt;
@@ -147,16 +154,16 @@ static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 
 	if (unlikely(tx_pkt == NULL)) {
 		IPAERR("tx_pkt is NULL\n");
-		return;
+		return 0;
 	}
 
 	cnt = tx_pkt->cnt;
-	IPADBG_LOW("cnt: %d\n", cnt);
 	for (i = 0; i < cnt; i++) {
 		spin_lock_bh(&sys->spinlock);
 		if (unlikely(list_empty(&sys->head_desc_list))) {
 			spin_unlock_bh(&sys->spinlock);
-			return;
+			IPAERR_RL("list is empty missing descriptors");
+			return i;
 		}
 		next_pkt = list_next_entry(tx_pkt, link);
 		list_del(&tx_pkt->link);
@@ -192,6 +199,7 @@ static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 			(*callback)(user1, user2);
 		tx_pkt = next_pkt;
 	}
+	return i;
 }
 
 static void ipa3_wq_write_done_status(int src_pipe,
@@ -246,6 +254,54 @@ static void ipa3_tasklet_write_done(unsigned long data)
 	spin_unlock_bh(&sys->spinlock);
 }
 
+static int ipa3_poll_tx_complete(struct ipa3_sys_context *sys, int budget)
+{
+	struct ipa3_tx_pkt_wrapper *this_pkt = NULL;
+	bool xmit_done = false;
+	int entry_budget = budget;
+
+	spin_lock_bh(&sys->spinlock);
+	while (budget > 0 && atomic_read(&sys->xmit_eot_cnt) > 0) {
+		if (unlikely(list_empty(&sys->head_desc_list))) {
+			IPADBG_LOW("list is empty");
+			break;
+		}
+		this_pkt = list_first_entry(&sys->head_desc_list,
+			struct ipa3_tx_pkt_wrapper, link);
+		xmit_done = this_pkt->xmit_done;
+		spin_unlock_bh(&sys->spinlock);
+		budget -= ipa3_wq_write_done_common(sys, this_pkt);
+		spin_lock_bh(&sys->spinlock);
+		if (xmit_done)
+			atomic_add_unless(&sys->xmit_eot_cnt, -1, 0);
+	}
+	spin_unlock_bh(&sys->spinlock);
+	return entry_budget - budget;
+}
+
+static int ipa3_aux_poll_tx_complete(struct napi_struct *napi_tx, int budget)
+{
+	struct ipa3_sys_context *sys = container_of(napi_tx,
+		struct ipa3_sys_context, napi_tx);
+	int tx_done = 0;
+
+poll_tx:
+	tx_done += ipa3_poll_tx_complete(sys, budget - tx_done);
+	if (tx_done < budget) {
+		napi_complete(napi_tx);
+		atomic_set(&sys->in_napi_context, 0);
+
+		/*if we got an EOT while we marked NAPI as complete*/
+		if (atomic_read(&sys->xmit_eot_cnt) > 0 &&
+		    !atomic_cmpxchg(&sys->in_napi_context, 0, 1)
+		    && napi_reschedule(napi_tx)) {
+		    goto poll_tx;
+		}
+	}
+	IPADBG_LOW("the number of tx completions is: %d", tx_done);
+	return min(tx_done, budget);
+}
+
 static void ipa3_send_nop_desc(struct work_struct *work)
 {
 	struct ipa3_sys_context *sys = container_of(work,
@@ -283,6 +339,7 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 		return;
 	}
 	list_add_tail(&tx_pkt->link, &sys->head_desc_list);
+	sys->len++;
 	sys->nop_pending = false;
 
 	memset(&nop_xfer, 0, sizeof(nop_xfer));
@@ -452,7 +509,7 @@ int ipa3_send(struct ipa3_sys_context *sys,
 		tx_pkt->xmit_done = false;
 
 		list_add_tail(&tx_pkt->link, &sys->head_desc_list);
-
+		sys->len++;
 		gsi_xfer[i].addr = tx_pkt->mem.phys_base;
 
 		/*
@@ -1120,6 +1177,22 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 	if (sys_in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
 		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_rx_notify,
 				(unsigned long) ep->sys);
+
+	if (ipa3_ctx->tx_napi_enable) {
+		if (sys_in->client != IPA_CLIENT_APPS_WAN_PROD) {
+			netif_tx_napi_add(&ipa3_ctx->generic_ndev,
+			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,
+			NAPI_TX_WEIGHT);
+		} else {
+			netif_tx_napi_add((struct net_device *)sys_in->priv,
+			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,
+			NAPI_TX_WEIGHT);
+		}
+		napi_enable(&ep->sys->napi_tx);
+		IPADBG("napi_enable on producer client %d completed",
+			sys_in->client);
+	}
+
 	ep->skip_ep_cfg = sys_in->skip_ep_cfg;
 	if (ipa3_assign_policy(sys_in, ep->sys)) {
 		IPAERR("failed to sys ctx for client %d\n", sys_in->client);
@@ -4454,7 +4527,13 @@ static void ipa_gsi_irq_tx_notify_cb(struct gsi_chan_xfer_notify *notify)
 		tx_pkt = notify->xfer_user_data;
 		tx_pkt->xmit_done = true;
 		atomic_inc(&tx_pkt->sys->xmit_eot_cnt);
-		tasklet_schedule(&tx_pkt->sys->tasklet);
+
+		if (ipa3_ctx->tx_napi_enable) {
+		    if(!atomic_cmpxchg(&tx_pkt->sys->in_napi_context, 0, 1))
+			napi_schedule(&tx_pkt->sys->napi_tx);
+		}
+		else
+			tasklet_schedule(&tx_pkt->sys->tasklet);
 		break;
 	default:
 		IPAERR("received unexpected event id %d\n", notify->evt_id);

@@ -6568,8 +6568,8 @@ static int ipa3_lan_poll(struct napi_struct *napi, int budget)
 static inline void ipa3_enable_napi_netdev(void)
 {
 	if (ipa3_ctx->lan_rx_napi_enable) {
-		init_dummy_netdev(&ipa3_ctx->lan_ndev);
-		netif_napi_add(&ipa3_ctx->lan_ndev, &ipa3_ctx->napi_lan_rx,
+		init_dummy_netdev(&ipa3_ctx->generic_ndev);
+		netif_napi_add(&ipa3_ctx->generic_ndev, &ipa3_ctx->napi_lan_rx,
 				ipa3_lan_poll, NAPI_WEIGHT);
 	}
 }
@@ -6701,6 +6701,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	ipa3_ctx->do_ram_collection_on_crash =
 		resource_p->do_ram_collection_on_crash;
 	ipa3_ctx->lan_rx_napi_enable = resource_p->lan_rx_napi_enable;
+	ipa3_ctx->tx_napi_enable = resource_p->tx_napi_enable;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
@@ -7695,6 +7696,13 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 		"qcom,lan-rx-napi");
 	IPADBG(": Enable LAN rx NAPI = %s\n",
 		ipa_drv_res->lan_rx_napi_enable
+		? "True" : "False");
+
+	ipa_drv_res->tx_napi_enable =
+		of_property_read_bool(pdev->dev.of_node,
+			"qcom,tx-napi");
+	IPADBG(": Enable tx NAPI = %s\n",
+		ipa_drv_res->tx_napi_enable
 		? "True" : "False");
 
 	ipa_drv_res->rmnet_ctl_enable =

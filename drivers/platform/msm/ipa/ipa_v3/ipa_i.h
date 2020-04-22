@@ -77,6 +77,8 @@
 
 #define NAPI_WEIGHT 60
 
+#define NAPI_TX_WEIGHT 64
+
 #define IPADBG(fmt, args...) \
 	do { \
 		pr_debug(DRV_NAME " %s:%d " fmt, __func__, __LINE__, ## args);\
@@ -1028,6 +1030,9 @@ struct ipa3_repl_ctx {
  * @ep: IPA EP context
  * @xmit_eot_cnt: count of pending eot for tasklet to process
  * @tasklet: tasklet for eot write_done handle (tx_complete)
+ * @napi_tx: napi for eot write done handle (tx_complete) - to replace tasklet
+ * @in_napi_context: an atomic variable used for non-blocking locking,
+ * preventing from multiple napi_sched to be called.
  *
  * IPA context specific to the GPI pipes a.k.a LAN IN/OUT and WAN
  */
@@ -1063,6 +1068,8 @@ struct ipa3_sys_context {
 	struct tasklet_struct tasklet;
 	bool skip_eot;
 	u32 eob_drop_cnt;
+	struct napi_struct napi_tx;
+	atomic_t in_napi_context;
 
 	/* ordering is important - mutable fields go above */
 	struct ipa3_ep_context *ep;
@@ -1894,7 +1901,7 @@ struct ipa3_app_clock_vote {
  * @app_vote: holds userspace application clock vote count
  * IPA context - holds all relevant info about IPA driver and its state
  * @lan_rx_napi_enable: flag if NAPI is enabled on the LAN dp
- * @lan_ndev: dummy netdev for LAN rx NAPI
+ * @generic_ndev: dummy netdev for LAN rx NAPI and tx NAPI
  * @napi_lan_rx: NAPI object for LAN rx
  * @ipa_wan_skb_page - page recycling enabled on wwan data path
  * @icc_num_cases - number of icc scaling level supported
@@ -2077,7 +2084,8 @@ struct ipa3_context {
 	struct ipacm_fnr_info fnr_info;
 	/* dummy netdev for lan RX NAPI */
 	bool lan_rx_napi_enable;
-	struct net_device lan_ndev;
+	bool tx_napi_enable;
+	struct net_device generic_ndev;
 	struct napi_struct napi_lan_rx;
 	u32 icc_num_cases;
 	u32 icc_num_paths;
@@ -2122,6 +2130,7 @@ struct ipa3_plat_drv_res {
 	bool gsi_ch20_wa;
 	bool tethered_flow_control;
 	bool lan_rx_napi_enable;
+	bool tx_napi_enable;
 	u32 mhi_evid_limits[2]; /* start and end values */
 	bool ipa_mhi_dynamic_config;
 	u32 ipa_tz_unlock_reg_num;
