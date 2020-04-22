@@ -295,8 +295,7 @@ struct sde_crtc {
 
 	/* output fence support */
 	struct sde_fence_context *output_fence;
-
-	struct sde_hw_stage_cfg stage_cfg;
+	struct sde_hw_stage_cfg stage_cfg[MAX_LAYOUTS_PER_CRTC];
 	struct dentry *debugfs_root;
 	void *priv_handle;
 

@@ -2093,6 +2093,32 @@ int sde_rm_update_topology(struct sde_rm *rm,
 	return ret;
 }
 
+bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
+		struct drm_crtc_state *state)
+{
+	int i;
+	struct sde_crtc_state *cstate;
+	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
+
+	if ((!rm) || (!state)) {
+		pr_err("invalid arguments: rm:%d state:%d\n",
+				rm == NULL, state == NULL);
+		return false;
+	}
+
+	cstate = to_sde_crtc_state(state);
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		struct drm_connector *conn = cstate->connectors[i];
+
+		topology = sde_connector_get_topology_name(conn);
+		if (TOPOLOGY_QUADPIPE_MERGE_MODE(topology))
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * _sde_rm_release_rsvp - release resources and release a reservation
  * @rm:	KMS handle
