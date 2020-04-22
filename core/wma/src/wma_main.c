@@ -6918,6 +6918,7 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 					       WMA_READY_EVENTID_TIMEOUT);
 	if (!tgt_hdl->info.wmi_ready) {
 		wma_err("Error in pdev creation");
+		QDF_DEBUG_PANIC("FW ready event timed out");
 		return QDF_STATUS_E_INVAL;
 	}
 
