@@ -912,6 +912,12 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 
+	if (!mac_phy_cap) {
+		WMA_LOGE(FL("Invalid MAC PHY capabilities handle"));
+		he_cap->present = false;
+		return;
+	}
+
 	if (!num_hw_modes) {
 		WMA_LOGE(FL("No extended HE cap for current SOC"));
 		he_cap->present = false;

@@ -4950,6 +4950,12 @@ static void wma_update_target_ext_ht_cap(struct target_psoc_info *tgt_hdl,
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return;
+	}
+
 	/*
 	 * for legacy device extended cap might not even come, so in that case
 	 * don't overwrite legacy values
@@ -5117,7 +5123,12 @@ static void wma_update_target_ext_vht_cap(struct target_psoc_info *tgt_hdl,
 
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return;
+	}
 
 	/*
 	 * for legacy device extended cap might not even come, so in that case
@@ -5421,10 +5432,15 @@ wma_is_dbs_mandatory(struct wlan_objmgr_psoc *psoc,
 
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return false;
+	}
+
 
 	for (i = 0; i < total_mac_phy_cnt; i++) {
 		mac_cap = &mac_phy_cap[i];
-		if (mac_cap->phy_id == 0)
+		if (mac_cap && (mac_cap->phy_id == 0))
 			supported_band |= mac_cap->supported_bands;
 	}
 
@@ -6092,6 +6108,16 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
 
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!tgt_cap_info) {
+		WMA_LOGE("Invalid target capabilities handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if (!num_hw_modes) {
 		WMA_LOGD("Invalid number of hw modes, use legacy HT/VHT caps");
 		caps_per_phy->ht_2g = ht_cap_info;
@@ -6314,15 +6340,23 @@ static void wma_print_populate_soc_caps(struct target_psoc_info *tgt_hdl)
 	/* print number of hw modes */
 	WMA_LOGD("%s: num of hw modes [%d]", __func__, num_hw_modes);
 	WMA_LOGD("%s: num mac_phy_cnt [%d]", __func__, total_mac_phy_cnt);
+
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return;
+	}
+
 	WMA_LOGD("%s: <====== HW mode cap printing starts ======>", __func__);
 	/* print cap of each hw mode */
 	for (i = 0; i < total_mac_phy_cnt; i++) {
-		WMA_LOGD("====>: hw mode id[%d], phy id[%d]",
-			 mac_phy_cap[i].hw_mode_id,
-			 mac_phy_cap[i].phy_id);
-		tmp = &mac_phy_cap[i];
-		wma_print_mac_phy_capabilities(tmp, i);
+		if (&mac_phy_cap[i]) {
+			WMA_LOGD("====>: hw mode id[%d], phy id[%d]",
+				 mac_phy_cap[i].hw_mode_id,
+				 mac_phy_cap[i].phy_id);
+			tmp = &mac_phy_cap[i];
+			wma_print_mac_phy_capabilities(tmp, i);
+		}
 	}
 	WMA_LOGD("%s: <====== HW mode cap printing ends ======>\n", __func__);
 }
@@ -9525,6 +9559,10 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 	    (wma_handle->new_hw_mode_index < num_hw_modes))
 		hw_mode_idx = wma_handle->new_hw_mode_index;
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	if (!mac_phy_cap) {
+		WMA_LOGE("Invalid MAC PHY capabilities handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	for (idx = 0; idx < total_mac_phy_cnt; idx++) {
 		if (mac_phy_cap[idx].hw_mode_id != hw_mode_idx)
 			continue;
