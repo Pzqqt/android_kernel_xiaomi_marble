@@ -2111,6 +2111,9 @@ void wlan_mlme_update_oce_flags(struct wlan_objmgr_pdev *pdev)
 	wlan_util_get_peer_count_for_mode(pdev, QDF_P2P_GO_MODE);
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 
+	if (!mlme_obj)
+		return;
+
 	if (sap_connected_peer || go_connected_peer) {
 		updated_fw_value = mlme_obj->cfg.oce.feature_bitmap;
 		updated_fw_value &=
