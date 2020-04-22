@@ -1469,6 +1469,32 @@ void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
 
 /**
+ * qdf_net_buf_debug_update_map_node() - update nbuf in debug
+ * hash table with the mapping function info
+ * @nbuf: network buffer
+ * @func: function name that requests for mapping the nbuf
+ * @line_num: function line number
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_update_map_node(qdf_nbuf_t net_buf,
+				       const char *func_name,
+				       uint32_t line_num);
+
+/**
+ * qdf_net_buf_debug_update_unmap_node() - update nbuf in debug
+ * hash table with the unmap function info
+ * @nbuf:   network buffer
+ * @func: function name that requests for unmapping the nbuf
+ * @line_num: function line number
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_update_unmap_node(qdf_nbuf_t net_buf,
+					 const char *func_name,
+					 uint32_t line_num);
+
+/**
  * qdf_net_buf_debug_acquire_skb() - acquire skb to avoid memory leak
  * @net_buf: Network buf holding head segment (single)
  * @func_name: pointer to function name
@@ -1572,6 +1598,19 @@ qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 {
 }
 
+static inline void
+qdf_net_buf_debug_update_map_node(qdf_nbuf_t net_buf,
+				  const char *func_name,
+				  uint32_t line_num)
+{
+}
+
+static inline void
+qdf_net_buf_debug_update_unmap_node(qdf_nbuf_t net_buf,
+				    const char *func_name,
+				    uint32_t line_num)
+{
+}
 /* Nbuf allocation rouines */
 
 #define qdf_nbuf_alloc(osdev, size, reserve, align, prio) \

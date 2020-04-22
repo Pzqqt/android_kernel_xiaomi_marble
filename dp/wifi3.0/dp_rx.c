@@ -1943,6 +1943,20 @@ more_data:
 		status = dp_rx_desc_sanity(soc, hal_soc, hal_ring_hdl,
 					   ring_desc, rx_desc);
 		if (QDF_IS_STATUS_ERROR(status)) {
+			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
+				qdf_assert_always(rx_desc->unmapped);
+				qdf_nbuf_unmap_nbytes_single(
+							soc->osdev,
+							rx_desc->nbuf,
+							QDF_DMA_FROM_DEVICE,
+							RX_DATA_BUFFER_SIZE);
+				rx_desc->unmapped = 1;
+				qdf_nbuf_free(rx_desc->nbuf);
+				dp_rx_add_to_free_desc_list(
+							&head[rx_desc->pool_id],
+							&tail[rx_desc->pool_id],
+							rx_desc);
+			}
 			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
@@ -2464,7 +2478,7 @@ QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev)
 
 	if (vdev->osif_rx_flush) {
 		ret = vdev->osif_rx_flush(vdev->osif_vdev, vdev->vdev_id);
-		if (!ret) {
+		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			dp_err("Failed to flush rx pkts for vdev %d\n",
 			       vdev->vdev_id);
 			return ret;

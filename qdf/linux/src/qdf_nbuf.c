@@ -671,6 +671,8 @@ QDF_STATUS qdf_nbuf_map_debug(qdf_device_t osdev,
 	status = __qdf_nbuf_map(osdev, buf, dir);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_nbuf_untrack_map(buf, func, line);
+	else
+		qdf_net_buf_debug_update_map_node(buf, func, line);
 
 	return status;
 }
@@ -685,6 +687,7 @@ void qdf_nbuf_unmap_debug(qdf_device_t osdev,
 {
 	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
+	qdf_net_buf_debug_update_unmap_node(buf, func, line);
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_debug);
@@ -704,6 +707,8 @@ QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
 	status = __qdf_nbuf_map_single(osdev, buf, dir);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_nbuf_untrack_map(buf, func, line);
+	else
+		qdf_net_buf_debug_update_map_node(buf, func, line);
 
 	return status;
 }
@@ -718,6 +723,7 @@ void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
 {
 	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_single(osdev, buf, dir);
+	qdf_net_buf_debug_update_unmap_node(buf, func, line);
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_single_debug);
@@ -738,6 +744,8 @@ QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
 	status = __qdf_nbuf_map_nbytes(osdev, buf, dir, nbytes);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_nbuf_untrack_map(buf, func, line);
+	else
+		qdf_net_buf_debug_update_map_node(buf, func, line);
 
 	return status;
 }
@@ -753,6 +761,7 @@ void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
 {
 	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes);
+	qdf_net_buf_debug_update_unmap_node(buf, func, line);
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_nbytes_debug);
@@ -773,6 +782,8 @@ QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
 	status = __qdf_nbuf_map_nbytes_single(osdev, buf, dir, nbytes);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_nbuf_untrack_map(buf, func, line);
+	else
+		qdf_net_buf_debug_update_map_node(buf, func, line);
 
 	return status;
 }
@@ -788,6 +799,7 @@ void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
 {
 	qdf_nbuf_untrack_map(buf, func, line);
 	__qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
+	qdf_net_buf_debug_update_unmap_node(buf, func, line);
 }
 
 qdf_export_symbol(qdf_nbuf_unmap_nbytes_single_debug);
@@ -2074,6 +2086,11 @@ qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
  * @func_name: Function name
  * @line_num: Line number
  * @size: Size
+ * @map_func_name: nbuf mapping function name
+ * @map_line_num: mapping function line number
+ * @unmap_func_name: nbuf unmapping function name
+ * @unmap_line_num: mapping function line number
+ * @is_nbuf_mapped: indicate mapped/unmapped nbuf
  */
 struct qdf_nbuf_track_t {
 	struct qdf_nbuf_track_t *p_next;
@@ -2081,6 +2098,11 @@ struct qdf_nbuf_track_t {
 	char func_name[QDF_MEM_FUNC_NAME_SIZE];
 	uint32_t line_num;
 	size_t size;
+	char map_func_name[QDF_MEM_FUNC_NAME_SIZE];
+	uint32_t map_line_num;
+	char unmap_func_name[QDF_MEM_FUNC_NAME_SIZE];
+	uint32_t unmap_line_num;
+	bool is_nbuf_mapped;
 };
 
 static spinlock_t g_qdf_net_buf_track_lock[QDF_NET_BUF_TRACK_MAX_SIZE];
@@ -2393,6 +2415,13 @@ void qdf_net_buf_debug_exit(void)
 			qdf_info("SKB buf memory Leak@ Func %s, @Line %d, size %zu, nbuf %pK",
 				 p_prev->func_name, p_prev->line_num,
 				 p_prev->size, p_prev->net_buf);
+			qdf_info(
+				 "SKB leak map %s, line %d, unmap %s line %d mapped=%d",
+				 p_prev->map_func_name,
+				 p_prev->map_line_num,
+				 p_prev->unmap_func_name,
+				 p_prev->unmap_line_num,
+				 p_prev->is_nbuf_mapped);
 			qdf_nbuf_track_free(p_prev);
 		}
 		spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
@@ -2523,6 +2552,56 @@ void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, const char *func_name,
 }
 
 qdf_export_symbol(qdf_net_buf_debug_update_node);
+
+void qdf_net_buf_debug_update_map_node(qdf_nbuf_t net_buf,
+				       const char *func_name,
+				       uint32_t line_num)
+{
+	uint32_t i;
+	unsigned long irq_flag;
+	QDF_NBUF_TRACK *p_node;
+
+	if (is_initial_mem_debug_disabled)
+		return;
+
+	i = qdf_net_buf_debug_hash(net_buf);
+	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
+
+	p_node = qdf_net_buf_debug_look_up(net_buf);
+
+	if (p_node) {
+		qdf_str_lcopy(p_node->map_func_name, func_name,
+			      QDF_MEM_FUNC_NAME_SIZE);
+		p_node->map_line_num = line_num;
+		p_node->is_nbuf_mapped = true;
+	}
+	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
+}
+
+void qdf_net_buf_debug_update_unmap_node(qdf_nbuf_t net_buf,
+					 const char *func_name,
+					 uint32_t line_num)
+{
+	uint32_t i;
+	unsigned long irq_flag;
+	QDF_NBUF_TRACK *p_node;
+
+	if (is_initial_mem_debug_disabled)
+		return;
+
+	i = qdf_net_buf_debug_hash(net_buf);
+	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
+
+	p_node = qdf_net_buf_debug_look_up(net_buf);
+
+	if (p_node) {
+		qdf_str_lcopy(p_node->unmap_func_name, func_name,
+			      QDF_MEM_FUNC_NAME_SIZE);
+		p_node->unmap_line_num = line_num;
+		p_node->is_nbuf_mapped = false;
+	}
+	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
+}
 
 /**
  * qdf_net_buf_debug_delete_node() - remove skb from debug hash table
