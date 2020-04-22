@@ -1046,14 +1046,12 @@ enum band_info csr_get_rf_band(uint8_t channel);
  * @mac: pointer to mac
  * @session: sme session pointer
  * @pmk_cache: pointer to pmk cache
- * @index: index value needs to be seached
  *
  * Return: true if pmkid is found else false
  */
 bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 					struct csr_roam_session *session,
-					tPmkidCacheInfo *pmk_cache,
-					uint32_t *index);
+					tPmkidCacheInfo *pmk_cache);
 
 /**
  * csr_is_pmkid_found_for_peer() - check if pmkid sent by peer is present
