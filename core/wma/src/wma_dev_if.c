@@ -1017,7 +1017,8 @@ static void wma_sap_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 	peer_mac_addr = wlan_peer_get_macaddr(peer);
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(vdev_chan->ch_freq)) {
-		if (vdev_chan->ch_phymode == WLAN_PHYMODE_11B)
+		if (vdev_chan->ch_phymode == WLAN_PHYMODE_11B ||
+		    old_peer_phymode == WLAN_PHYMODE_11B)
 			nw_type = eSIR_11B_NW_TYPE;
 		else
 			nw_type = eSIR_11G_NW_TYPE;
@@ -1043,9 +1044,9 @@ static void wma_sap_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 	wma_set_peer_param(wma, peer_mac_addr, WMI_PEER_CHWIDTH,
 			   max_ch_width_supported, vdev_id);
 
-	wma_debug("old phymode %d new phymode %d bw %d macaddr "QDF_MAC_ADDR_STR,
-		  old_peer_phymode, new_phymode, max_ch_width_supported,
-		  QDF_MAC_ADDR_ARRAY(peer_mac_addr));
+	wma_debug("FW phymode %d old phymode %d new phymode %d bw %d macaddr "QDF_MAC_ADDR_STR,
+		  fw_phymode, old_peer_phymode, new_phymode,
+		  max_ch_width_supported, QDF_MAC_ADDR_ARRAY(peer_mac_addr));
 }
 
 static void
