@@ -2793,6 +2793,8 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
 
 	des_chan->ch_phymode = bss_phymode;
+	if (!vdev_mlme)
+		return;
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
 	vdev_mlme->mgmt.generic.phy_mode = wma_host_to_fw_phymode(bss_phymode);
 
