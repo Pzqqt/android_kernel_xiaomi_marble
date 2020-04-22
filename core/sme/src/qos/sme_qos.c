@@ -4726,7 +4726,8 @@ static bool sme_qos_ft_handoff_required(struct mac_context *mac,
 
 	csr_roam_session = CSR_GET_SESSION(mac, session_id);
 
-	if (csr_roam_session->roam_synch_in_progress &&
+	if (csr_roam_session &&
+	    csr_roam_session->roam_synch_in_progress &&
 	    csr_roam_is_ese_assoc(mac, session_id) &&
 	    csr_roam_session->connectedInfo.nTspecIeLength)
 		return true;
