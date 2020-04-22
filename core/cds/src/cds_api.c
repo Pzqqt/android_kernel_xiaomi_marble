@@ -891,6 +891,26 @@ close:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef HIF_USB
+static inline void cds_suspend_target(tp_wma_handle wma_handle)
+{
+	QDF_STATUS status;
+	/* Suspend the target and disable interrupt */
+	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 0);
+	if (status)
+		cds_err("Failed to suspend target, status = %d", status);
+}
+#else
+static inline void cds_suspend_target(tp_wma_handle wma_handle)
+{
+	QDF_STATUS status;
+	/* Suspend the target and disable interrupt */
+	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 1);
+	if (status)
+		cds_err("Failed to suspend target, status = %d", status);
+}
+#endif /* HIF_USB */
+
 /**
  * cds_pre_enable() - pre enable cds
  *
@@ -963,6 +983,12 @@ QDF_STATUS cds_pre_enable(void)
 	return QDF_STATUS_SUCCESS;
 
 stop_wmi:
+	/* Send pdev suspend to fw otherwise FW is not aware that
+	 * host is freeing resources.
+	 */
+	if (!(cds_is_driver_recovering() || cds_is_driver_in_bad_state()))
+		cds_suspend_target(gp_cds_context->wma_context);
+
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx)
 		cds_err("%s: Failed to get hif_handle!", __func__);
@@ -1127,26 +1153,6 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 
 	return qdf_status;
 }
-
-#ifdef HIF_USB
-static inline void cds_suspend_target(tp_wma_handle wma_handle)
-{
-	QDF_STATUS status;
-	/* Suspend the target and disable interrupt */
-	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 0);
-	if (status)
-		cds_err("Failed to suspend target, status = %d", status);
-}
-#else
-static inline void cds_suspend_target(tp_wma_handle wma_handle)
-{
-	QDF_STATUS status;
-	/* Suspend the target and disable interrupt */
-	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 1);
-	if (status)
-		cds_err("Failed to suspend target, status = %d", status);
-}
-#endif /* HIF_USB */
 
 /**
  * cds_post_disable() - post disable cds module
