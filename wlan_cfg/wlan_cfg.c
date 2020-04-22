@@ -166,43 +166,79 @@ static const int tx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_3};
 
 static const int rx_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					0,
 					WLAN_CFG_RX_RING_MASK_0,
 					WLAN_CFG_RX_RING_MASK_1,
 					WLAN_CFG_RX_RING_MASK_2,
 					WLAN_CFG_RX_RING_MASK_3};
 
 static const int rx_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-					0, 0, 0};
+					0,
+					0,
+					0,
+					WLAN_CFG_RX_MON_RING_MASK_0,
+					WLAN_CFG_RX_MON_RING_MASK_1,
+					WLAN_CFG_RX_MON_RING_MASK_2};
 
 static const int host2rxdma_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-					0, 0, 0, 0};
+					0,
+					0,
+					0,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_3};
 
 static const int rxdma2host_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
-					0, 0, 0, 0};
+					0,
+					0,
+					0,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
+					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
 
 static const int host2rxdma_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
 					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
 					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
 					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2};
 
 static const int rxdma2host_mon_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
 					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
 					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
 					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2};
 
 static const int rx_err_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
 					WLAN_CFG_RX_ERR_RING_MASK_0,
 					WLAN_CFG_RX_ERR_RING_MASK_1,
 					WLAN_CFG_RX_ERR_RING_MASK_2,
 					WLAN_CFG_RX_ERR_RING_MASK_3};
 
 static const int rx_wbm_rel_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
 					WLAN_CFG_RX_WBM_REL_RING_MASK_0,
 					WLAN_CFG_RX_WBM_REL_RING_MASK_1,
 					WLAN_CFG_RX_WBM_REL_RING_MASK_2,
 					WLAN_CFG_RX_WBM_REL_RING_MASK_3};
 
 static const int reo_status_ring_mask_msi[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
 					WLAN_CFG_REO_STATUS_RING_MASK_0,
 					WLAN_CFG_REO_STATUS_RING_MASK_1,
 					WLAN_CFG_REO_STATUS_RING_MASK_2,
