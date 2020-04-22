@@ -433,11 +433,9 @@ struct sde_hw_ctl_ops {
 	 * @ctx       : ctl path ctx pointer
 	 * @lm        : layer mixer enumeration
 	 * @cfg       : blend stage configuration
-	 * @active_cfg: active no blend stage configuration
 	 */
 	void (*setup_blendstage)(struct sde_hw_ctl *ctx,
-		enum sde_lm lm, struct sde_hw_stage_cfg *cfg,
-		struct sde_hw_stage_cfg *active_cfg);
+		enum sde_lm lm, struct sde_hw_stage_cfg *cfg);
 
 	/**
 	 * Get all the sspp staged on a layer mixer
@@ -465,6 +463,14 @@ struct sde_hw_ctl_ops {
 	 * @Return: error code
 	 */
 	int (*get_start_state)(struct sde_hw_ctl *ctx);
+
+	/**
+	 * set the active fetch pipes attached to this CTL
+	 * @ctx         : ctl path ctx pointer
+	 * @fetch_active: bitmap of enum sde_sspp pipes attached
+	 */
+	void (*set_active_pipes)(struct sde_hw_ctl *ctx,
+			unsigned long *fetch_active);
 };
 
 /**
