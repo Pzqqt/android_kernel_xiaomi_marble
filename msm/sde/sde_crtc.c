@@ -1485,9 +1485,12 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 
 	if (lm && lm->ops.setup_dim_layer) {
 		cstate = to_sde_crtc_state(crtc->state);
-		for (i = 0; i < cstate->num_dim_layers; i++)
-			_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
-					mixer, &cstate->dim_layer[i]);
+		if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty)) {
+			for (i = 0; i < cstate->num_dim_layers; i++)
+				_sde_crtc_setup_dim_layer_cfg(crtc, sde_crtc,
+						mixer, &cstate->dim_layer[i]);
+			clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
+		}
 	}
 
 	_sde_crtc_program_lm_output_roi(crtc);
@@ -1598,10 +1601,13 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		}
 		mixer[i].mixer_op_mode = 0;
 
-		/* clear dim_layer settings */
-		lm = mixer[i].hw_lm;
-		if (lm->ops.clear_dim_layer)
-			lm->ops.clear_dim_layer(lm);
+		if (test_bit(SDE_CRTC_DIRTY_DIM_LAYERS,
+				sde_crtc_state->dirty)) {
+			/* clear dim_layer settings */
+			lm = mixer[i].hw_lm;
+			if (lm->ops.clear_dim_layer)
+				lm->ops.clear_dim_layer(lm);
+		}
 	}
 
 	_sde_crtc_swap_mixers_for_right_partial_update(crtc);
@@ -2039,7 +2045,6 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 	u32 op_mode = 0;
 	u32 lm_idx = 0, num_mixers = 0;
 	int i, count = 0;
-	bool ds_dirty = false;
 
 	if (!crtc)
 		return;
@@ -2051,20 +2056,10 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 	count = cstate->num_ds;
 
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
-	SDE_EVT32(DRMID(crtc), num_mixers, count, cstate->ds_dirty,
-		sde_crtc->ds_reconfig, cstate->num_ds_enabled);
+	SDE_EVT32(DRMID(crtc), num_mixers, count, cstate->dirty[0],
+		cstate->num_ds_enabled);
 
-	/**
-	 * destination scaler configuration will be done either
-	 * or on set property or on power collapse (idle/suspend)
-	 */
-	ds_dirty = (cstate->ds_dirty || sde_crtc->ds_reconfig);
-	if (sde_crtc->ds_reconfig) {
-		SDE_DEBUG("reconfigure dest scaler block\n");
-		sde_crtc->ds_reconfig = false;
-	}
-
-	if (!ds_dirty) {
+	if (!test_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty)) {
 		SDE_DEBUG("no change in settings, skip commit\n");
 	} else if (!kms || !kms->catalog) {
 		SDE_ERROR("crtc%d:invalid parameters\n", crtc->base.id);
@@ -2508,7 +2503,7 @@ static void _sde_crtc_set_dim_layer_v1(struct drm_crtc *crtc,
 		/* usr_ptr is null when setting the default property value */
 		_sde_crtc_clear_dim_layers_v1(cstate);
 		SDE_DEBUG("dim_layer data removed\n");
-		return;
+		goto clear;
 	}
 
 	kms = _sde_crtc_get_kms(crtc);
@@ -2560,6 +2555,8 @@ static void _sde_crtc_set_dim_layer_v1(struct drm_crtc *crtc,
 				dim_layer[i].color_fill.color_2,
 				dim_layer[i].color_fill.color_3);
 	}
+clear:
+	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 }
 
 /**
@@ -2651,8 +2648,8 @@ static int _sde_crtc_set_dest_scaler(struct sde_crtc *sde_crtc,
 	}
 
 	cstate->num_ds = count;
-	cstate->ds_dirty = true;
-	SDE_EVT32_VERBOSE(DRMID(&sde_crtc->base), count, cstate->ds_dirty);
+	set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
+	SDE_EVT32_VERBOSE(DRMID(&sde_crtc->base), count);
 
 	return 0;
 }
@@ -2817,7 +2814,7 @@ static void _sde_crtc_check_dest_scaler_data_disable(struct drm_crtc *crtc,
 	SDE_DEBUG("dest scaler status : %d -> %d\n",
 		cstate->num_ds_enabled, num_ds_enable);
 	SDE_EVT32_VERBOSE(DRMID(crtc), cstate->num_ds_enabled, num_ds_enable,
-			cstate->num_ds, cstate->ds_dirty);
+			cstate->num_ds, cstate->dirty[0]);
 
 	if (cstate->num_ds_enabled != num_ds_enable) {
 		/* Disabling destination scaler */
@@ -2832,10 +2829,10 @@ static void _sde_crtc_check_dest_scaler_data_disable(struct drm_crtc *crtc,
 			}
 		}
 		cstate->num_ds_enabled = num_ds_enable;
-		cstate->ds_dirty = true;
+		set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 	} else {
 		if (!cstate->num_ds_enabled)
-			cstate->ds_dirty = false;
+			clear_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 	}
 }
 
@@ -2868,7 +2865,7 @@ static int _sde_crtc_check_dest_scaler_data(struct drm_crtc *crtc,
 
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
-	if (!cstate->ds_dirty) {
+	if (!test_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty)) {
 		SDE_DEBUG("dest scaler property not set, skip validation\n");
 		return 0;
 	}
@@ -2934,7 +2931,7 @@ disable:
 	return 0;
 
 err:
-	cstate->ds_dirty = false;
+	clear_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 	return ret;
 }
 
@@ -3776,7 +3773,7 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 			&cstate->property_state, cstate->property_values);
 
 	/* clear destination scaler dirty bit */
-	cstate->ds_dirty = false;
+	clear_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 
 	/* duplicate base helper */
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &cstate->base);
@@ -3918,12 +3915,8 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 
 		sde_cp_crtc_suspend(crtc);
 
-		/**
-		 * destination scaler if enabled should be reconfigured
-		 * in the next frame update
-		 */
-		if (cstate->num_ds_enabled)
-			sde_crtc->ds_reconfig = true;
+		/* reconfigure everything on next frame update */
+		bitmap_fill(cstate->dirty, SDE_CRTC_DIRTY_MAX);
 
 		event.type = DRM_EVENT_SDE_POWER;
 		event.length = sizeof(power_on);
@@ -3988,9 +3981,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
 
-	/* destination scaler if enabled should be reconfigured on resume */
-	if (cstate->num_ds_enabled)
-		sde_crtc->ds_reconfig = true;
+	bitmap_fill(cstate->dirty, SDE_CRTC_DIRTY_MAX);
 
 	_sde_crtc_flush_event_thread(crtc);
 
