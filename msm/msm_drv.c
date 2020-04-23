@@ -1927,6 +1927,30 @@ static const struct component_master_ops msm_drm_ops = {
 	.unbind = msm_drm_unbind,
 };
 
+static int msm_drm_component_dependency_check(struct device *dev)
+{
+	struct device_node *node;
+	struct device_node *np = dev->of_node;
+	unsigned int i;
+
+	if (!of_device_is_compatible(dev->of_node, "qcom,sde-kms"))
+		return 0;
+
+	for (i = 0; ; i++) {
+		node = of_parse_phandle(np, "connectors", i);
+		if (!node)
+			break;
+
+		if (of_node_name_eq(node,"qcom,sde_rscc") &&
+		    of_device_is_available(node) &&
+		    !of_node_check_flag(node, OF_POPULATED)) {
+			dev_err(dev, "qcom,sde_rscc device not probed yet\n");
+			return -EPROBE_DEFER;
+		}
+	}
+
+	return 0;
+}
 /*
  * Platform driver:
  */
@@ -1935,6 +1959,10 @@ static int msm_pdev_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct component_match *match = NULL;
+
+	ret = msm_drm_component_dependency_check(&pdev->dev);
+	if (ret)
+		return ret;
 
 	ret = msm_drm_device_init(pdev, &msm_driver);
 	if (ret)

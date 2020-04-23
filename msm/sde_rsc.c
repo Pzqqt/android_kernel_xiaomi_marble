@@ -928,11 +928,7 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 	caller_client->crtc_id = crtc_id;
 	caller_client->current_state = state;
 
-	if (rsc->master_drm == NULL) {
-		pr_err("invalid master component binding\n");
-		rc = -EINVAL;
-		goto end;
-	} else if ((rsc->current_state == state) && !config) {
+	if ((rsc->current_state == state) && !config) {
 		pr_debug("no state change: %d\n", state);
 		goto end;
 	}
@@ -1636,10 +1632,6 @@ static int sde_rsc_bind(struct device *dev,
 		return -EINVAL;
 	}
 
-	mutex_lock(&rsc->client_lock);
-	rsc->master_drm = drm;
-	mutex_unlock(&rsc->client_lock);
-
 	sde_dbg_reg_register_base(SDE_RSC_DRV_DBG_NAME, rsc->drv_io.base,
 							rsc->drv_io.len);
 	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME,
@@ -1669,10 +1661,6 @@ static void sde_rsc_unbind(struct device *dev,
 		pr_err("invalid display rsc\n");
 		return;
 	}
-
-	mutex_lock(&rsc->client_lock);
-	rsc->master_drm = NULL;
-	mutex_unlock(&rsc->client_lock);
 }
 
 static const struct component_ops sde_rsc_comp_ops = {
