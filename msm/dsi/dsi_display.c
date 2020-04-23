@@ -5967,6 +5967,10 @@ void dsi_display_adjust_mode_timing(
 {
 	u64 new_htotal, new_vtotal, htotal, vtotal, old_htotal, div;
 
+	/* Constant FPS is not supported on command mode */
+	if (dsi_mode->panel_mode == DSI_OP_CMD_MODE)
+		return;
+
 	if (!dyn_clk_caps->maintain_const_fps)
 		return;
 	/*
@@ -6130,8 +6134,6 @@ int dsi_display_get_modes(struct dsi_display *display,
 
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 
-	num_dfps_rates = !dfps_caps.dfps_support ? 1 : dfps_caps.dfps_list_len;
-
 	timing_mode_count = display->panel->num_timing_nodes;
 
 	for (mode_idx = 0; mode_idx < timing_mode_count; mode_idx++) {
@@ -6158,6 +6160,8 @@ int dsi_display_get_modes(struct dsi_display *display,
 		/* Setup widebus support */
 		display_mode.priv_info->widebus_support =
 				ctrl->ctrl->hw.widebus_support;
+		num_dfps_rates = ((!dfps_caps.dfps_support ||
+			is_cmd_mode) ? 1 : dfps_caps.dfps_list_len);
 
 		/* Calculate dsi frame transfer time */
 		if (is_cmd_mode) {
@@ -6220,9 +6224,16 @@ int dsi_display_get_modes(struct dsi_display *display,
 		}
 		end = array_idx;
 		/*
-		 * if dynamic clk switch is supported then update all the bit
-		 * clk rates.
+		 * if POMS is enabled and boot up mode is video mode,
+		 * skip bit clk rates update for command mode,
+		 * else if dynamic clk switch is supported then update all
+		 * the bit clk rates.
 		 */
+
+		if (is_cmd_mode &&
+			(display->panel->panel_mode == DSI_OP_VIDEO_MODE))
+			continue;
+
 		_dsi_display_populate_bit_clks(display, start, end, &array_idx);
 	}
 
