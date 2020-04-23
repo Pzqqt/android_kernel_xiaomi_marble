@@ -819,7 +819,6 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 {
 	uint32_t decimated, i, src_w, src_h, dst_w, dst_h, src_h_pre_down;
 	struct sde_hw_scaler3_cfg *scale_cfg;
-	struct sde_hw_inline_pre_downscale_cfg *pd_cfg;
 	bool pre_down_supported = (psde->features & BIT(SDE_SSPP_PREDOWNSCALE));
 	bool inline_rotation = (pstate->rotation & DRM_MODE_ROTATE_90);
 
@@ -832,7 +831,6 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	}
 
 	scale_cfg = &pstate->scaler3_cfg;
-	pd_cfg = &pstate->pre_down;
 	src_w = psde->pipe_cfg.src_rect.w;
 	src_h = psde->pipe_cfg.src_rect.h;
 	dst_w = psde->pipe_cfg.dst_rect.w;
@@ -2338,7 +2336,7 @@ static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
 		u32 src_h, u32 *max_numer_w, u32 *max_denom_w,
 		u32 *max_numer_h, u32 *max_denom_h)
 {
-	bool rotated, has_predown;
+	bool rotated, has_predown, default_scale;
 	const struct sde_sspp_sub_blks *sblk;
 	struct sde_hw_inline_pre_downscale_cfg *pd;
 
@@ -2353,13 +2351,18 @@ static void _sde_plane_get_max_downscale_limits(struct sde_plane *psde,
 	if (has_predown)
 		pd = &pstate->pre_down;
 
+	default_scale = psde->debugfs_default_scale ||
+	    (pstate->scaler_check_state != SDE_PLANE_SCLCHECK_SCALER_V2 &&
+	    pstate->scaler_check_state != SDE_PLANE_SCLCHECK_SCALER_V2_CHECK);
+
 	/**
 	 * Inline rotation has different max vertical downscaling limits since
 	 * the source-width becomes the scaler's pre-downscaled source-height.
 	 **/
 	if (rotated) {
 		if (rt_client && has_predown) {
-			pd->pre_downscale_x_0 = (src_h >
+			if (default_scale)
+				pd->pre_downscale_x_0 = (src_h >
 					mult_frac(dst_h, 11, 5)) ? 2 : 0;
 			*max_numer_h = pd->pre_downscale_x_0 ?
 				sblk->in_rot_maxdwnscale_rt_num :
