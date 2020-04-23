@@ -1381,7 +1381,8 @@ bool policy_mgr_is_sap_restart_required_after_sta_disconnect(
 	uint8_t num_cxn_del = 0;
 	QDF_STATUS status;
 
-	*intf_ch_freq = 0;
+	if (intf_ch_freq)
+		*intf_ch_freq = 0;
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid pm context");
