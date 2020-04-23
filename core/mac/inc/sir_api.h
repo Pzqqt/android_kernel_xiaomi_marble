@@ -322,6 +322,7 @@ struct fils_join_rsp_params {
 
 struct rrm_config_param {
 	uint8_t rrm_enabled;
+	bool sap_rrm_enabled;
 	uint8_t max_randn_interval;
 	uint8_t rm_capability[RMENABLEDCAP_MAX_LEN];
 };

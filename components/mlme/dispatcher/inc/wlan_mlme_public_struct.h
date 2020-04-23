@@ -2153,12 +2153,14 @@ struct wlan_mlme_fe_wlm {
 
 /**
  * struct wlan_mlme_fe_rrm - RRM related configs
- * @rrm_enabled: Flag to check if RRM is enabled
+ * @rrm_enabled: Flag to check if RRM is enabled for STA
+ * @sap_rrm_enabled: Flag to check if RRM is enabled for SAP
  * @rrm_rand_interval: RRM randomization interval
  * @rm_capability: RM enabled capabilities IE
  */
 struct wlan_mlme_fe_rrm {
 	bool rrm_enabled;
+	bool sap_rrm_enabled;
 	uint8_t rrm_rand_interval;
 	uint8_t rm_capability[MLME_RMENABLEDCAP_MAX_LEN];
 };

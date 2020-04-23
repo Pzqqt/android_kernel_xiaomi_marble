@@ -1686,6 +1686,8 @@ static void rrm_change_default_config_param(struct mac_context *mac)
 {
 	mac->rrm.rrmConfig.rrm_enabled =
 			mac->mlme_cfg->rrm_config.rrm_enabled;
+	mac->rrm.rrmConfig.sap_rrm_enabled =
+			mac->mlme_cfg->rrm_config.sap_rrm_enabled;
 	mac->rrm.rrmConfig.max_randn_interval =
 			mac->mlme_cfg->rrm_config.rrm_rand_interval;
 
