@@ -1528,39 +1528,83 @@ static void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
 
 /**
  * dp_non_std_tx_comp_free_buff() - Free the non std tx packet buffer
+ * @soc: dp_soc handle
  * @tx_desc: TX descriptor
  * @vdev: datapath vdev handle
  *
  * Return: None
  */
-static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
+static void dp_non_std_tx_comp_free_buff(struct dp_soc *soc,
+					 struct dp_tx_desc_s *tx_desc,
 					 struct dp_vdev *vdev)
 {
 	struct hal_tx_completion_status ts = {0};
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 
 	if (qdf_unlikely(!vdev)) {
-		dp_err("vdev is null!");
-		return;
+		dp_err_rl("vdev is null!");
+		goto error;
 	}
 
 	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 	if (vdev->tx_non_std_data_callback.func) {
-		qdf_nbuf_set_next(tx_desc->nbuf, NULL);
+		qdf_nbuf_set_next(nbuf, NULL);
 		vdev->tx_non_std_data_callback.func(
 				vdev->tx_non_std_data_callback.ctxt,
 				nbuf, ts.status);
 		return;
+	} else {
+		dp_err_rl("callback func is null");
 	}
+
+error:
+	qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_free(nbuf);
+}
+
+/**
+ * dp_tx_msdu_single_map() - do nbuf map
+ * @vdev: DP vdev handle
+ * @tx_desc: DP TX descriptor pointer
+ * @nbuf: skb pointer
+ *
+ * For TDLS frame, use qdf_nbuf_map_single() to align with the unmap
+ * operation done in other component.
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS dp_tx_msdu_single_map(struct dp_vdev *vdev,
+					       struct dp_tx_desc_s *tx_desc,
+					       qdf_nbuf_t nbuf)
+{
+	if (qdf_likely(!(tx_desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)))
+		return qdf_nbuf_map_nbytes_single(vdev->osdev,
+						  nbuf,
+						  QDF_DMA_TO_DEVICE,
+						  nbuf->len);
+	else
+		return qdf_nbuf_map_single(vdev->osdev, nbuf,
+					   QDF_DMA_TO_DEVICE);
 }
 #else
 static inline void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
 {
 }
 
-static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
+static inline void dp_non_std_tx_comp_free_buff(struct dp_soc *soc,
+						struct dp_tx_desc_s *tx_desc,
 						struct dp_vdev *vdev)
 {
+}
+
+static inline QDF_STATUS dp_tx_msdu_single_map(struct dp_vdev *vdev,
+					       struct dp_tx_desc_s *tx_desc,
+					       qdf_nbuf_t nbuf)
+{
+	return qdf_nbuf_map_nbytes_single(vdev->osdev,
+					  nbuf,
+					  QDF_DMA_TO_DEVICE,
+					  nbuf->len);
 }
 #endif
 
@@ -1660,11 +1704,9 @@ dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 1);
 
 	if (qdf_unlikely(QDF_STATUS_SUCCESS !=
-		qdf_nbuf_map_nbytes_single(vdev->osdev, nbuf,
-					   QDF_DMA_TO_DEVICE, nbuf->len))) {
+			 dp_tx_msdu_single_map(vdev, tx_desc, nbuf))) {
 		/* Handle failure */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "qdf_nbuf_map failed");
+		dp_err("qdf_nbuf_map failed");
 		DP_STATS_INC(vdev, tx_i.dropped.dma_error, 1);
 		drop_code = TX_DMA_MAP_ERR;
 		goto release_desc;
@@ -2808,7 +2850,7 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 
 	/* If it is TDLS mgmt, don't unmap or free the frame */
 	if (desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)
-		return dp_non_std_tx_comp_free_buff(desc, vdev);
+		return dp_non_std_tx_comp_free_buff(soc, desc, vdev);
 
 	/* 0 : MSDU buffer, 1 : MLE */
 	if (desc->msdu_ext_desc) {
