@@ -1653,7 +1653,7 @@ void sde_cp_dspp_flush_helper(struct sde_crtc *sde_crtc, u32 feature)
 				dspp->sb_dma_in_use = false;
 
 				_flush_sb_dma_hw(active_ctls, ctl,
-						sizeof(active_ctls));
+						ARRAY_SIZE(active_ctls));
 				ctl->ops.update_bitmask_dspp_subblk(ctl,
 						dspp->idx, sub_blk, true);
 			} else {
