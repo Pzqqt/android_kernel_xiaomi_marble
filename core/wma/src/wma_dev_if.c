@@ -2742,15 +2742,37 @@ enum mlme_bcn_tx_rate_code wma_get_bcn_rate_code(uint16_t rate)
 QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *intr = wma->interfaces;
+	struct wma_txrx_node *intr;
 	struct mac_context *mac_ctx =  cds_get_context(QDF_MODULE_ID_PE);
-	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 	struct wlan_mlme_nss_chains *ini_cfg;
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_objmgr_vdev *vdev = intr[vdev_id].vdev;
+	struct wlan_objmgr_vdev *vdev;
 	struct wlan_channel *des_chan;
 	QDF_STATUS status;
 	uint8_t btc_chain_mode;
+
+	if (!wma) {
+		wma_err("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!mac_ctx) {
+		wma_err("Invalid mac context");
+		return QDF_STATUS_E_FAILURE;
+	}
+	intr = wma->interfaces;
+	if (!intr) {
+		wma_err("Invalid interface");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		wma_err("Invalid vdev id");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev = intr[vdev_id].vdev;
+	if (!vdev) {
+		wma_err("Invalid vdev");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
@@ -2759,7 +2781,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	}
 	des_chan = vdev->vdev_mlme.des_chan;
 
-	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
+	ini_cfg = mlme_get_ini_vdev_config(vdev);
 	if (!ini_cfg) {
 		wma_err("nss chain ini config NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -3387,6 +3409,14 @@ QDF_STATUS wma_pre_vdev_start_setup(uint8_t vdev_id,
 	struct vdev_mlme_obj *mlme_obj;
 	uint8_t *mac_addr;
 
+	if (!soc) {
+		wma_err("Invalid soc");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!wma) {
+		wma_err("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	iface = &wma->interfaces[vdev_id];
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
@@ -3443,11 +3473,21 @@ QDF_STATUS wma_post_vdev_start_setup(uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *intr;
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_objmgr_vdev *vdev = intr->vdev;
+	struct wlan_objmgr_vdev *vdev;
 	uint8_t bss_power;
 
+	if (!wma) {
+		wma_err("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	intr = &wma->interfaces[vdev_id];
+	if (!intr) {
+		wma_err("Invalid interface");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev = intr->vdev;
 	if (!vdev) {
 		wma_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
