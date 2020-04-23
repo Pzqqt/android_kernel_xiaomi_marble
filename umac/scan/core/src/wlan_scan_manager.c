@@ -964,6 +964,7 @@ static void scm_sort_6ghz_channel_list(struct wlan_objmgr_vdev *vdev,
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
 		scm_err("Psoc is NULL");
+		qdf_mem_free(rnr_chan_info);
 		return;
 	}
 
