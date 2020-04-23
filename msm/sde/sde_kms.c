@@ -736,7 +736,7 @@ no_ops:
 	return 0;
 }
 
-static int _sde_kms_release_splash_buffer(unsigned int mem_addr,
+static int _sde_kms_release_shared_buffer(unsigned int mem_addr,
 					unsigned int splash_buffer_size,
 					unsigned int ramdump_base,
 					unsigned int ramdump_buffer_size)
@@ -815,15 +815,24 @@ static int _sde_kms_map_all_splash_regions(struct sde_kms *sde_kms)
 {
 	int i = 0;
 	int ret = 0;
+	struct sde_splash_mem *region;
 
 	if (!sde_kms)
 		return -EINVAL;
 
 	for (i = 0; i < sde_kms->splash_data.num_splash_displays; i++) {
-		ret = _sde_kms_splash_mem_get(sde_kms,
-				sde_kms->splash_data.splash_display[i].splash);
+		region = sde_kms->splash_data.splash_display[i].splash;
+		ret = _sde_kms_splash_mem_get(sde_kms, region);
 		if (ret)
 			return ret;
+
+		/* Demura is optional and need not exist */
+		region = sde_kms->splash_data.splash_display[i].demura;
+		if (region) {
+			ret = _sde_kms_splash_mem_get(sde_kms, region);
+			if (ret)
+				return ret;
+		}
 	}
 
 	return ret;
@@ -854,7 +863,7 @@ static int _sde_kms_splash_mem_put(struct sde_kms *sde_kms,
 	if (!splash->ref_cnt) {
 		mmu->funcs->one_to_one_unmap(mmu, splash->splash_buf_base,
 				splash->splash_buf_size);
-		rc = _sde_kms_release_splash_buffer(splash->splash_buf_base,
+		rc = _sde_kms_release_shared_buffer(splash->splash_buf_base,
 				splash->splash_buf_size, splash->ramdump_base,
 				splash->ramdump_size);
 		splash->splash_buf_base = 0;
@@ -867,17 +876,35 @@ static int _sde_kms_splash_mem_put(struct sde_kms *sde_kms,
 static int _sde_kms_unmap_all_splash_regions(struct sde_kms *sde_kms)
 {
 	int i = 0;
-	int ret = 0;
+	int ret = 0, failure = 0;
+	struct sde_splash_mem *region;
 
 	if (!sde_kms || !sde_kms->splash_data.num_splash_regions)
 		return -EINVAL;
 
 	for (i = 0; i < sde_kms->splash_data.num_splash_displays; i++) {
-		ret = _sde_kms_splash_mem_put(sde_kms,
-				sde_kms->splash_data.splash_display[i].splash);
-		if (ret)
-			return ret;
+		region = sde_kms->splash_data.splash_display[i].splash;
+		ret = _sde_kms_splash_mem_put(sde_kms, region);
+		if (ret) {
+			failure = 1;
+			pr_err("Error unmapping splash mem for display %d\n",
+					i);
+		}
+
+		/* Demura is optional and need not exist */
+		region = sde_kms->splash_data.splash_display[i].demura;
+		if (region) {
+			ret = _sde_kms_splash_mem_put(sde_kms, region);
+			if (ret) {
+				failure = 1;
+				pr_err("Error unmapping demura mem for display %d\n",
+						i);
+			}
+		}
 	}
+
+	if (failure)
+		ret = -EINVAL;
 
 	return ret;
 }
@@ -1187,8 +1214,12 @@ static void _sde_kms_free_splash_display_data(struct sde_kms *sde_kms,
 			!sde_kms->splash_data.num_splash_displays)
 		return;
 
-	if (sde_kms->splash_data.num_splash_regions)
+	if (sde_kms->splash_data.num_splash_regions) {
 		_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
+		if (splash_display->demura)
+			_sde_kms_splash_mem_put(sde_kms,
+					splash_display->demura);
+	}
 	sde_kms->splash_data.num_splash_displays--;
 	SDE_DEBUG("cont_splash handoff done, remaining:%d\n",
 				sde_kms->splash_data.num_splash_displays);
@@ -2889,6 +2920,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	struct msm_drm_private *priv;
 	struct drm_plane *plane;
 	struct sde_splash_mem *splash;
+	struct sde_splash_mem *demura;
 	struct sde_plane_state *pstate;
 	enum sde_sspp plane_id;
 	bool is_virtual;
@@ -2905,6 +2937,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 		plane_id = sde_plane_pipe(plane);
 		is_virtual = is_sde_plane_virtual(plane);
 		splash = splash_display->splash;
+		demura = splash_display->demura;
 
 		for (j = 0; j < splash_display->pipe_cnt; j++) {
 			if ((plane_id != splash_display->pipes[j].sspp) ||
@@ -2915,8 +2948,12 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 			if (splash && sde_plane_validate_src_addr(plane,
 						splash->splash_buf_base,
 						splash->splash_buf_size)) {
-				SDE_ERROR("invalid adr on pipe:%d crtc:%d\n",
-						plane_id, crtc->base.id);
+				if (!demura || sde_plane_validate_src_addr(
+						plane, demura->splash_buf_base,
+						demura->splash_buf_size)) {
+					SDE_ERROR("invalid adr on pipe:%d crtc:%d\n",
+							plane_id, DRMID(crtc));
+				}
 			}
 
 			plane->state->crtc = crtc;
@@ -2924,7 +2961,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 			pstate = to_sde_plane_state(plane->state);
 			pstate->cont_splash_populated = true;
 			SDE_DEBUG("set crtc:%d for plane:%d rect:%d\n",
-					crtc->base.id, plane_id, is_virtual);
+					DRMID(crtc), plane_id, is_virtual);
 		}
 	}
 
@@ -3812,7 +3849,7 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 			ret = _sde_kms_map_all_splash_regions(sde_kms);
 			if (ret) {
 				SDE_ERROR("failed to map ret:%d\n", ret);
-				goto fail;
+				goto early_map_fail;
 			}
 		}
 
@@ -4062,6 +4099,76 @@ static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 	return 0;
 }
 
+static int _sde_kms_get_demura_plane_data(struct sde_splash_data *data)
+{
+	int i = 0;
+	int ret = 0;
+	int count = 0;
+	struct device_node *parent, *node;
+	struct resource r;
+	const int STRING_LIMIT = 32;
+	char node_name[STRING_LIMIT];
+	struct sde_splash_mem *mem;
+	struct sde_splash_display *splash_display;
+
+	if (!data->num_splash_displays) {
+		SDE_DEBUG("no splash displays. skipping\n");
+		return 0;
+	}
+
+	/**
+	 * It is expected that each active demura block will have
+	 * its own memory region defined.
+	 */
+	parent = of_find_node_by_path("/reserved-memory");
+
+	for (i = 0; i < data->num_splash_displays; i++) {
+		splash_display = &data->splash_display[i];
+		snprintf(&node_name[0], STRING_LIMIT, "demura_region_%d", i);
+
+		splash_display->demura = NULL;
+		node = of_find_node_by_name(parent, node_name);
+		if (!node) {
+			SDE_DEBUG("no Demura node %s! disp count: %d\n",
+					node_name, data->num_splash_displays);
+			continue;
+		} else if (of_address_to_resource(node, i, &r)) {
+			SDE_ERROR("invalid data for:%s\n", node_name);
+			ret = -EINVAL;
+			break;
+		}
+
+		mem = &data->demura_mem[i];
+		mem->splash_buf_base = (unsigned long)r.start;
+		mem->splash_buf_size = (r.end - r.start) + 1;
+
+		if (!mem->splash_buf_base && !mem->splash_buf_size) {
+			SDE_DEBUG("dummy splash mem for disp %d. Skipping\n",
+					(i+1));
+			continue;
+
+		} else if (!mem->splash_buf_base || !mem->splash_buf_size) {
+			SDE_ERROR("mem for disp %d invalid: add:%lx size:%lx\n",
+					(i+1), mem->splash_buf_base,
+					mem->splash_buf_size);
+			continue;
+		}
+
+		mem->ref_cnt = 0;
+		splash_display->demura = mem;
+		count++;
+
+		SDE_DEBUG("demura mem for disp:%d add:%lx size:%x\n", (i + 1),
+				mem->splash_buf_base,
+				mem->splash_buf_size);
+	}
+
+	if (!ret && !count)
+		SDE_DEBUG("no demura regions for cont. splash found!\n");
+
+	return ret;
+}
+
 static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 {
 	int i = 0;
@@ -4146,7 +4253,7 @@ static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 	}
 
 	data->type = SDE_SPLASH_HANDOFF;
-
+	ret = _sde_kms_get_demura_plane_data(data);
 	return ret;
 }
 

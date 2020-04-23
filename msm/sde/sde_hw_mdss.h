@@ -641,7 +641,8 @@ struct sde_sspp_index_info {
  * used in continuous splash on a specific display.
  * @cont_splash_enabled:  Stores the cont_splash status (enabled/disabled)
  * @encoder:	Pointer to the drm encoder object used for this display
- * @splash:     Pointer to struct sde_splash_mem used for this display
+ * @splash:	Pointer to struct sde_splash_mem used for this display
+ * @demura:	Pointer to struct sde_splash_mem used for demura cont splash
  * @ctl_ids:	Stores the valid MDSS ctl block ids for the current mode
  * @lm_ids:	Stores the valid MDSS layer mixer block ids for the current mode
  * @dsc_ids:	Stores the valid MDSS DSC block ids for the current mode
@@ -657,6 +658,7 @@ struct sde_splash_display {
 	bool cont_splash_enabled;
 	struct drm_encoder *encoder;
 	struct sde_splash_mem *splash;
+	struct sde_splash_mem *demura;
 	u8 ctl_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 lm_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 dsc_ids[MAX_DATA_PATH_PER_DSIPLAY];
@@ -681,6 +683,7 @@ enum sde_handoff_type {
  * @num_splash_regions:  Indicates number of splash memory regions from dtsi
  * @num_splash_displays: Indicates count of active displays in continuous splash
  * @splash_mem:          Array of all struct sde_splash_mem listed from dtsi
+ * @demura_mem:          Array of all demura memory regions listed from dtsi
  * @splash_display:      Array of all struct sde_splash_display
  */
 struct sde_splash_data {
@@ -688,6 +691,7 @@ struct sde_splash_data {
 	u32 num_splash_regions;
 	u32 num_splash_displays;
 	struct sde_splash_mem splash_mem[MAX_DSI_DISPLAYS];
+	struct sde_splash_mem demura_mem[MAX_DSI_DISPLAYS];
 	struct sde_splash_display splash_display[MAX_DSI_DISPLAYS];
 };
 
