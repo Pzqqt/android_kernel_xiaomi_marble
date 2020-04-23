@@ -13056,9 +13056,14 @@ extract_roam_scan_ap_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint8_t i;
 
 	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
-	if (!param_buf || ap_idx >= param_buf->num_roam_ap_info) {
-		WMI_LOGE("Invalid roam scan AP tlv ap_idx:%d total_ap:%d",
-			 ap_idx, param_buf->num_roam_ap_info);
+	if (!param_buf) {
+		wmi_err("Param buf is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (ap_idx >= param_buf->num_roam_ap_info) {
+		wmi_err("Invalid roam scan AP tlv ap_idx:%d total_ap:%d",
+			ap_idx, param_buf->num_roam_ap_info);
 		return QDF_STATUS_E_FAILURE;
 	}
 
