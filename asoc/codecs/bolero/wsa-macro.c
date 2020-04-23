@@ -241,6 +241,7 @@ struct wsa_macro_priv {
 	struct wsa_macro_bcl_pmic_params bcl_pmic_params;
 	char __iomem *mclk_mode_muxsel;
 	u16 default_clk_id;
+	u32 pcm_rate_vi;
 	int wsa_digital_mute_status[WSA_MACRO_RX_MAX];
 };
 
@@ -747,6 +748,15 @@ static int wsa_macro_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_component *component = dai->component;
 	int ret;
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	wsa_priv = dev_get_drvdata(wsa_dev);
+	if (!wsa_priv)
+		return -EINVAL;
 
 	dev_dbg(component->dev,
 		"%s: dai_name = %s DAI-ID %x rate %d num_ch %d\n", __func__,
@@ -764,6 +774,8 @@ static int wsa_macro_hw_params(struct snd_pcm_substream *substream,
 		}
 		break;
 	case SNDRV_PCM_STREAM_CAPTURE:
+		if (dai->id == WSA_MACRO_AIF_VI)
+			wsa_priv->pcm_rate_vi = params_rate(params);
 	default:
 		break;
 	}
@@ -1049,9 +1061,23 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 			snd_soc_dapm_to_component(w->dapm);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
+	u8 val = 0x0;
 
 	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
+
+	switch (wsa_priv->pcm_rate_vi) {
+		case 48000:
+			val = 0x04;
+			break;
+		case 24000:
+			val = 0x02;
+			break;
+		case 8000:
+		default:
+			val = 0x00;
+			break;
+	}
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
@@ -1067,10 +1093,10 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 				0x20, 0x20);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX0_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX1_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX0_SPKR_PROT_PATH_CTL,
 				0x10, 0x10);
@@ -1096,10 +1122,10 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 				0x20, 0x20);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX2_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX3_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX2_SPKR_PROT_PATH_CTL,
 				0x10, 0x10);
