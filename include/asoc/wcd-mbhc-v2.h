@@ -456,6 +456,12 @@ struct wcd_mbhc_register {
 };
 
 struct wcd_mbhc_cb {
+	void (*mbhc_micb_pullup_control)
+		(struct snd_soc_component *component, bool enable);
+	void (*get_micbias_val)
+		(struct wcd_mbhc *mbhc, int *mb);
+	void (*hs_vref_max_update)
+		(struct wcd_mbhc *mbhc);
 	void (*bcs_enable)
 		(struct wcd_mbhc *mbhc, bool bcs_enable);
 	int (*enable_mb_source)(struct wcd_mbhc *mbhc, bool turn_on);

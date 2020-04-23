@@ -1146,6 +1146,7 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 	int post_on_event = 0, post_dapm_off = 0;
 	int post_dapm_on = 0;
 	u8 pullup_mask = 0, enable_mask = 0;
+	int ret = 0;
 
 	if ((micb_index < 0) || (micb_index > ROULEUR_MAX_MICBIAS - 1)) {
 		dev_err(component->dev, "%s: Invalid micbias index, micb_ind:%d\n",
@@ -1181,6 +1182,12 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 
 	switch (req) {
 	case MICB_PULLUP_ENABLE:
+		if (!rouleur->dev_up) {
+			dev_dbg(component->dev, "%s: enable req %d wcd device down\n",
+				__func__, req);
+			ret = -ENODEV;
+			goto done;
+		}
 		rouleur->pullup_ref[micb_index]++;
 		if ((rouleur->pullup_ref[micb_index] == 1) &&
 		    (rouleur->micb_ref[micb_index] == 0))
@@ -1188,6 +1195,12 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 				pullup_mask, pullup_mask);
 		break;
 	case MICB_PULLUP_DISABLE:
+		if (!rouleur->dev_up) {
+			dev_dbg(component->dev, "%s: enable req %d wcd device down\n",
+				__func__, req);
+			ret = -ENODEV;
+			goto done;
+		}
 		if (rouleur->pullup_ref[micb_index] > 0)
 			rouleur->pullup_ref[micb_index]--;
 		if ((rouleur->pullup_ref[micb_index] == 0) &&
@@ -1196,11 +1209,15 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 				pullup_mask, 0x00);
 		break;
 	case MICB_ENABLE:
+		if (!rouleur->dev_up) {
+			dev_dbg(component->dev, "%s: enable req %d wcd device down\n",
+				__func__, req);
+			ret = -ENODEV;
+			goto done;
+		}
 		rouleur->micb_ref[micb_index]++;
 		if (rouleur->micb_ref[micb_index] == 1) {
 			rouleur_global_mbias_enable(component);
-			snd_soc_component_update_bits(component, micb_reg,
-				0x80, 0x80);
 			snd_soc_component_update_bits(component,
 				micb_reg, enable_mask, enable_mask);
 			if (post_on_event)
@@ -1216,16 +1233,27 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 	case MICB_DISABLE:
 		if (rouleur->micb_ref[micb_index] > 0)
 			rouleur->micb_ref[micb_index]--;
+		if (!rouleur->dev_up) {
+			dev_dbg(component->dev, "%s: enable req %d wcd device down\n",
+				__func__, req);
+			ret = -ENODEV;
+			goto done;
+		}
 		if ((rouleur->micb_ref[micb_index] == 0) &&
-			 (rouleur->pullup_ref[micb_index] == 0)) {
+		    (rouleur->pullup_ref[micb_index] > 0)) {
+			snd_soc_component_update_bits(component, micb_reg,
+				pullup_mask, pullup_mask);
+                        snd_soc_component_update_bits(component, micb_reg,
+                                enable_mask, 0x00);
+			rouleur_global_mbias_disable(component);
+		} else if ((rouleur->micb_ref[micb_index] == 0) &&
+			   (rouleur->pullup_ref[micb_index] == 0)) {
 			if (pre_off_event && rouleur->mbhc)
 				blocking_notifier_call_chain(
 					&rouleur->mbhc->notifier, pre_off_event,
 					&rouleur->mbhc->wcd_mbhc);
                         snd_soc_component_update_bits(component, micb_reg,
                                 enable_mask, 0x00);
-			snd_soc_component_update_bits(component, micb_reg,
-				0x80, 0x00);
 			rouleur_global_mbias_disable(component);
 			if (post_off_event && rouleur->mbhc)
 				blocking_notifier_call_chain(
@@ -1243,8 +1271,8 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 	dev_dbg(component->dev, "%s: micb_num:%d, micb_ref: %d, pullup_ref: %d\n",
 		__func__, micb_num, rouleur->micb_ref[micb_index],
 		rouleur->pullup_ref[micb_index]);
+done:
 	mutex_unlock(&rouleur->micb_lock);
-
 	return 0;
 }
 EXPORT_SYMBOL(rouleur_micbias_control);
@@ -1313,6 +1341,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 				0x80, 0x00);
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
+		rouleur->dev_up = false;
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = true;
 		mbhc = &rouleur->mbhc->wcd_mbhc;
 		rouleur_mbhc_ssr_down(rouleur->mbhc, component);
@@ -1338,6 +1367,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 			rouleur_mbhc_hs_detect(component, mbhc->mbhc_cfg);
 		}
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = false;
+		rouleur->dev_up = true;
 		break;
 	default:
 		dev_err(component->dev, "%s: invalid event %d\n", __func__,
@@ -1969,6 +1999,7 @@ static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 			return ret;
 		}
 	}
+	rouleur->dev_up = true;
 done:
 	return ret;
 }

@@ -33,16 +33,20 @@ static int wcd_mbhc_get_micbias(struct wcd_mbhc *mbhc)
 	int micbias = 0;
 	u8 vout_ctl = 0;
 
-	/* Read MBHC Micbias (Mic Bias2) voltage */
-	WCD_MBHC_REG_READ(WCD_MBHC_MICB2_VOUT, vout_ctl);
+	if (mbhc->mbhc_cb->get_micbias_val) {
+		mbhc->mbhc_cb->get_micbias_val(mbhc, &micbias);
+		pr_debug("%s: micbias: %d\n",  __func__, micbias);
+	} else {
+		/* Read MBHC Micbias (Mic Bias2) voltage */
+		WCD_MBHC_REG_READ(WCD_MBHC_MICB2_VOUT, vout_ctl);
 
-	/* Formula for getting micbias from vout
-	 * micbias = 1.0V + VOUT_CTL * 50mV
-	 */
-	micbias = 1000 + (vout_ctl * 50);
-	pr_debug("%s: vout_ctl: %d, micbias: %d\n",
-		 __func__, vout_ctl, micbias);
-
+		/* Formula for getting micbias from vout
+		 * micbias = 1.0V + VOUT_CTL * 50mV
+		 */
+		micbias = 1000 + (vout_ctl * 50);
+		pr_debug("%s: vout_ctl: %d, micbias: %d\n",
+			 __func__, vout_ctl, micbias);
+	}
 	return micbias;
 }
 

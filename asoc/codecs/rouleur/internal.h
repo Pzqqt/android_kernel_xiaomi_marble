@@ -82,6 +82,7 @@ struct rouleur_priv {
 	int mbias_cnt;
 	struct mutex rx_clk_lock;
 	struct mutex main_bias_lock;
+	bool dev_up;
 };
 
 struct rouleur_micbias_setting {

@@ -820,6 +820,42 @@ static void rouleur_mbhc_bcs_enable(struct wcd_mbhc *mbhc,
 		rouleur_disable_bcs_before_slow_insert(mbhc->component, true);
 }
 
+static void rouleur_mbhc_hs_vref_max_update(struct wcd_mbhc *mbhc)
+{
+	struct snd_soc_component *component = mbhc->component;
+
+	/* Update the HS Vref max voltage to 1.7V */
+	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_CTL_2,
+				      0x03, 0x03);
+}
+
+static void rouleur_mbhc_get_micbias_val(struct wcd_mbhc *mbhc, int *mb)
+{
+	u8 vout_ctl = 0;
+
+	/* Read MBHC Micbias (Mic Bias2) voltage */
+	WCD_MBHC_REG_READ(WCD_MBHC_MICB2_VOUT, vout_ctl);
+
+	/* Formula for getting micbias from vout
+	 * micbias = 1.6V + VOUT_CTL * 50mV
+	 */
+	*mb = 1600 + (vout_ctl * 50);
+	pr_debug("%s: vout_ctl: %d, micbias: %d\n", __func__, vout_ctl, *mb);
+}
+
+static void rouleur_mbhc_micb_pullup_control(
+				struct snd_soc_component *component,
+				bool pullup_enable)
+{
+	if (pullup_enable)
+		rouleur_micbias_control(component, MIC_BIAS_2,
+					MICB_PULLUP_ENABLE, false);
+	else
+		rouleur_micbias_control(component, MIC_BIAS_2,
+					MICB_PULLUP_DISABLE, false);
+
+}
+
 static const struct wcd_mbhc_cb mbhc_cb = {
 	.request_irq = rouleur_mbhc_request_irq,
 	.irq_control = rouleur_mbhc_irq_control,
@@ -844,6 +880,9 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.mbhc_get_moisture_status = rouleur_mbhc_get_moisture_status,
 	.mbhc_moisture_detect_en = rouleur_mbhc_moisture_detect_en,
 	.bcs_enable = rouleur_mbhc_bcs_enable,
+	.hs_vref_max_update = rouleur_mbhc_hs_vref_max_update,
+	.get_micbias_val = rouleur_mbhc_get_micbias_val,
+	.mbhc_micb_pullup_control = rouleur_mbhc_micb_pullup_control,
 };
 
 static int rouleur_get_hph_type(struct snd_kcontrol *kcontrol,
