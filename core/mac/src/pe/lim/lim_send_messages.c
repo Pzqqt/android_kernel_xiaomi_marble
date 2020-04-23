@@ -96,6 +96,10 @@ QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 	struct vdev_start_response rsp = {0};
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
+	if (!wma) {
+		pe_err("Invalid wma handle");
+		return QDF_STATUS_E_FAILURE;
+	}
 	if (!session) {
 		pe_err("session is NULL");
 		return QDF_STATUS_E_FAILURE;
