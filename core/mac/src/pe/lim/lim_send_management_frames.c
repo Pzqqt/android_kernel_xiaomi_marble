@@ -350,13 +350,18 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 				SIR_MAC_QCN_OUI_TYPE_SIZE,
 				additional_ie, addn_ielen);
 	}
+
 	/* Add qcn_ie only if qcn ie is not present in additional_ie */
-	if (!qcn_ie)
-		populate_dot11f_qcn_ie(mac_ctx, pesession,
-				       &pr.qcn_ie, QCN_IE_ATTR_ID_ALL);
-	else
-		populate_dot11f_qcn_ie(mac_ctx, pesession,
-				       &pr.qcn_ie, QCN_IE_ATTR_ID_VHT_MCS11);
+	if (pesession) {
+		if (!qcn_ie)
+			populate_dot11f_qcn_ie(mac_ctx, pesession,
+					       &pr.qcn_ie,
+					       QCN_IE_ATTR_ID_ALL);
+		else
+			populate_dot11f_qcn_ie(mac_ctx, pesession,
+					       &pr.qcn_ie,
+					       QCN_IE_ATTR_ID_VHT_MCS11);
+	}
 
 	/*
 	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
