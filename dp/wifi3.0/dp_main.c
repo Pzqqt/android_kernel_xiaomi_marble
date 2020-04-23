@@ -5701,34 +5701,6 @@ static QDF_STATUS dp_vdev_register_wifi3(struct cdp_soc_t *soc,
 }
 
 /**
- * dp_peer_flush_ast_entry() - Forcibily flush all AST entry of peer
- * @soc: Datapath soc handle
- * @peer: Datapath peer handle
- * @peer_id: Peer ID
- * @vdev_id: Vdev ID
- *
- * Return: void
- */
-static void dp_peer_flush_ast_entry(struct dp_soc *soc,
-				    struct dp_peer *peer,
-				    uint16_t peer_id,
-				    uint8_t vdev_id)
-{
-	struct dp_ast_entry *ase, *tmp_ase;
-
-	if (soc->is_peer_map_unmap_v2) {
-		DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
-				dp_rx_peer_unmap_handler
-						(soc, peer_id,
-						 vdev_id,
-						 ase->mac_addr.raw,
-						 1,
-						 DP_PEER_WDS_COUNT_INVALID);
-		}
-	}
-}
-
-/**
  * dp_vdev_flush_peers() - Forcibily Flush peers of vdev
  * @vdev: Datapath VDEV handle
  * @unmap_only: Flag to indicate "only unmap"
@@ -5807,10 +5779,6 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 		SET_PEER_REF_CNT_ONE(peer);
 		dp_info("peer: %pM is getting unmap",
 			peer->mac_addr.raw);
-		/* free AST entries of peer */
-		dp_peer_flush_ast_entry(soc, peer,
-					peer_ids[i],
-					vdev->vdev_id);
 
 		dp_rx_peer_unmap_handler(soc, peer_ids[i],
 					 vdev->vdev_id,
