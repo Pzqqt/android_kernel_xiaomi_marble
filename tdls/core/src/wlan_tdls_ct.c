@@ -522,8 +522,12 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 		return;
 	}
 
-	if (TDLS_LINK_CONNECTED != curr_peer->link_status)
+	if (curr_peer->link_status != TDLS_LINK_CONNECTED) {
+		tdls_err("link state %d peer:" QDF_MAC_ADDR_STR,
+			 curr_peer->link_status,
+			 QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 		return;
+	}
 
 	tdls_set_peer_link_status(curr_peer,
 				  TDLS_LINK_TEARING,

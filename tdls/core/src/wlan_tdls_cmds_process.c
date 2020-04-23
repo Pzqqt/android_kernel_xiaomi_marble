@@ -490,8 +490,11 @@ static QDF_STATUS tdls_activate_add_peer(struct tdls_add_peer_request *req)
 				  TDLS_LINK_CONNECTING, TDLS_LINK_SUCCESS);
 
 	status = tdls_pe_add_peer(req);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err(QDF_MAC_ADDR_STR " add peer failed with status %d",
+			 QDF_MAC_ADDR_ARRAY(mac), status);
 		goto setlink;
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -950,8 +953,11 @@ tdls_activate_update_peer(struct tdls_update_peer_request *req)
 
 	tdls_set_peer_caps(vdev_obj, mac, &req->update_peer_req);
 	status = tdls_pe_update_peer(req);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err(QDF_MAC_ADDR_STR " update peer failed with status %d",
+			 QDF_MAC_ADDR_ARRAY(mac), status);
 		goto setlink;
+	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1178,6 +1184,13 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 		tdls_err(QDF_MAC_ADDR_STR
 			 " not found, ignore NL80211_TDLS_ENABLE_LINK",
 			 QDF_MAC_ADDR_ARRAY(mac));
+		status = QDF_STATUS_E_INVAL;
+		goto error;
+	}
+
+	if (!peer->valid_entry) {
+		tdls_err("invalid peer:" QDF_MAC_ADDR_STR " link state %d",
+			 QDF_MAC_ADDR_ARRAY(mac), peer->link_status);
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}

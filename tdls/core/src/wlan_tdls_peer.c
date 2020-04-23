@@ -613,6 +613,9 @@ void tdls_set_peer_link_status(struct tdls_peer *peer,
 	struct tdls_soc_priv_obj *soc_obj;
 	struct tdls_vdev_priv_obj *vdev_obj;
 
+	tdls_debug("state %d reason %d peer:" QDF_MAC_ADDR_STR,
+		   link_status, link_reason,
+		   QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
 	peer->link_status = link_status;
 
 	if (link_status >= TDLS_LINK_DISCOVERED)
