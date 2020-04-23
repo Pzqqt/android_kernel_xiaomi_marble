@@ -29,6 +29,13 @@
 #define DSI_CMD_PPS_HDR_SIZE 7
 #define DSI_MODE_MAX 32
 
+/*
+ * Defining custom dsi msg flag,
+ * continued from drm_mipi_dsi.h
+ * Override to use async transfer
+ */
+#define MIPI_DSI_MSG_ASYNC_OVERRIDE BIT(4)
+
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
 	DSI_PANEL_ROTATE_HV_FLIP,
