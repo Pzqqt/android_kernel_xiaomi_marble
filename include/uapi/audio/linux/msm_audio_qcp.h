@@ -2,6 +2,7 @@
 #define _UAPI_MSM_AUDIO_QCP_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 #define AUDIO_SET_QCELP_ENC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \
 	0, struct msm_audio_qcelp_enc_config)
@@ -23,15 +24,15 @@
 #define CDMA_RATE_ERASURE	0x05
 
 struct msm_audio_qcelp_enc_config {
-	uint32_t cdma_rate;
-	uint32_t min_bit_rate;
-	uint32_t max_bit_rate;
+	__u32 cdma_rate;
+	__u32 min_bit_rate;
+	__u32 max_bit_rate;
 };
 
 struct msm_audio_evrc_enc_config {
-	uint32_t cdma_rate;
-	uint32_t min_bit_rate;
-	uint32_t max_bit_rate;
+	__u32 cdma_rate;
+	__u32 min_bit_rate;
+	__u32 max_bit_rate;
 };
 
 #endif /* _UAPI_MSM_AUDIO_QCP_H */

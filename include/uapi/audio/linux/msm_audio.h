@@ -2,7 +2,7 @@
 /*
  *
  * Copyright (C) 2008 Google, Inc.
- * Copyright (c) 2012, 2014, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014, 2017, 2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _UAPI_LINUX_MSM_AUDIO_H
@@ -160,30 +160,30 @@
 #define VOC_REC_BOTH		0x02
 
 struct msm_audio_config {
-	uint32_t buffer_size;
-	uint32_t buffer_count;
-	uint32_t channel_count;
-	uint32_t sample_rate;
-	uint32_t type;
-	uint32_t meta_field;
-	uint32_t bits;
-	uint32_t unused[3];
+	__u32 buffer_size;
+	__u32 buffer_count;
+	__u32 channel_count;
+	__u32 sample_rate;
+	__u32 type;
+	__u32 meta_field;
+	__u32 bits;
+	__u32 unused[3];
 };
 
 struct msm_audio_stream_config {
-	uint32_t buffer_size;
-	uint32_t buffer_count;
+	__u32 buffer_size;
+	__u32 buffer_count;
 };
 
 struct msm_audio_buf_cfg {
-	uint32_t meta_info_enable;
-	uint32_t frames_per_buf;
+	__u32 meta_info_enable;
+	__u32 frames_per_buf;
 };
 
 struct msm_audio_stats {
-	uint32_t byte_count;
-	uint32_t sample_count;
-	uint32_t unused[2];
+	__u32 byte_count;
+	__u32 sample_count;
+	__u32 unused[2];
 };
 
 struct msm_audio_ion_info {
@@ -198,8 +198,8 @@ struct msm_audio_pmem_info {
 
 struct msm_audio_aio_buf {
 	void *buf_addr;
-	uint32_t buf_len;
-	uint32_t data_len;
+	__u32 buf_len;
+	__u32 data_len;
 	void *private_data;
 	unsigned short mfield_sz; /*only useful for data has meta field */
 };
@@ -212,23 +212,23 @@ struct msm_audio_aio_buf {
 #define SND_MUTE_MUTED   1
 
 struct msm_mute_info {
-	uint32_t mute;
-	uint32_t path;
+	__u32 mute;
+	__u32 path;
 };
 
 struct msm_vol_info {
-	uint32_t vol;
-	uint32_t path;
+	__u32 vol;
+	__u32 path;
 };
 
 struct msm_voicerec_mode {
-	uint32_t rec_mode;
+	__u32 rec_mode;
 };
 
 struct msm_snd_device_config {
-	uint32_t device;
-	uint32_t ear_mute;
-	uint32_t mic_mute;
+	__u32 device;
+	__u32 ear_mute;
+	__u32 mic_mute;
 };
 
 #define SND_SET_DEVICE _IOW(SND_IOCTL_MAGIC, 2, struct msm_device_config *)
@@ -242,15 +242,15 @@ enum cad_device_path_type {
 };
 
 struct cad_devices_type {
-	uint32_t rx_device;
-	uint32_t tx_device;
+	__u32 rx_device;
+	__u32 tx_device;
 	enum cad_device_path_type pathtype;
 };
 
 struct msm_cad_device_config {
 	struct cad_devices_type device;
-	uint32_t ear_mute;
-	uint32_t mic_mute;
+	__u32 ear_mute;
+	__u32 mic_mute;
 };
 
 #define CAD_SET_DEVICE _IOW(SND_IOCTL_MAGIC, 2, struct msm_cad_device_config *)
@@ -259,17 +259,17 @@ struct msm_cad_device_config {
 #define SND_METHOD_MIDI 4
 
 struct msm_snd_volume_config {
-	uint32_t device;
-	uint32_t method;
-	uint32_t volume;
+	__u32 device;
+	__u32 method;
+	__u32 volume;
 };
 
 #define SND_SET_VOLUME _IOW(SND_IOCTL_MAGIC, 3, struct msm_snd_volume_config *)
 
 struct msm_cad_volume_config {
 	struct cad_devices_type device;
-	uint32_t method;
-	uint32_t volume;
+	__u32 method;
+	__u32 volume;
 };
 
 #define CAD_SET_VOLUME _IOW(SND_IOCTL_MAGIC, 3, struct msm_cad_volume_config *)
@@ -315,9 +315,9 @@ struct msm_cad_endpoint {
 #define CAD_GET_ENDPOINT _IOWR(SND_IOCTL_MAGIC, 5, struct msm_cad_endpoint *)
 
 struct msm_audio_pcm_config {
-	uint32_t pcm_feedback;	/* 0 - disable > 0 - enable */
-	uint32_t buffer_count;	/* Number of buffers to allocate */
-	uint32_t buffer_size;	/* Size of buffer for capturing of
+	__u32 pcm_feedback;	/* 0 - disable > 0 - enable */
+	__u32 buffer_count;	/* Number of buffers to allocate */
+	__u32 buffer_size;	/* Size of buffer for capturing of
 				 * PCM samples
 				 */
 };
@@ -333,18 +333,18 @@ struct msm_audio_pcm_config {
 #define AUDIO_CODEC_TYPE_AAC 1
 
 struct msm_audio_bitstream_info {
-	uint32_t codec_type;
-	uint32_t chan_info;
-	uint32_t sample_rate;
-	uint32_t bit_stream_info;
-	uint32_t bit_rate;
-	uint32_t unused[3];
+	__u32 codec_type;
+	__u32 chan_info;
+	__u32 sample_rate;
+	__u32 bit_stream_info;
+	__u32 bit_rate;
+	__u32 unused[3];
 };
 
 struct msm_audio_bitstream_error_info {
-	uint32_t dec_id;
-	uint32_t err_msg_indicator;
-	uint32_t err_type;
+	__u32 dec_id;
+	__u32 err_msg_indicator;
+	__u32 err_type;
 };
 
 union msm_audio_event_payload {
@@ -365,24 +365,24 @@ struct msm_audio_event {
 #define MSM_SNDDEV_CAP_VOICE 0x4
 
 struct msm_snd_device_info {
-	uint32_t dev_id;
-	uint32_t dev_cap; /* bitmask describe capability of device */
+	__u32 dev_id;
+	__u32 dev_cap; /* bitmask describe capability of device */
 	char dev_name[64];
 };
 
 struct msm_snd_device_list {
-	uint32_t  num_dev; /* Indicate number of device info to be retrieved */
+	__u32  num_dev; /* Indicate number of device info to be retrieved */
 	struct msm_snd_device_info *list;
 };
 
 struct msm_dtmf_config {
-	uint16_t path;
-	uint16_t dtmf_hi;
-	uint16_t dtmf_low;
-	uint16_t duration;
-	uint16_t tx_gain;
-	uint16_t rx_gain;
-	uint16_t mixing;
+	__u16 path;
+	__u16 dtmf_hi;
+	__u16 dtmf_low;
+	__u16 duration;
+	__u16 tx_gain;
+	__u16 rx_gain;
+	__u16 mixing;
 };
 
 #define AUDIO_ROUTE_STREAM_VOICE_RX 0
@@ -391,37 +391,37 @@ struct msm_dtmf_config {
 #define AUDIO_ROUTE_STREAM_REC      3
 
 struct msm_audio_route_config {
-	uint32_t stream_type;
-	uint32_t stream_id;
-	uint32_t dev_id;
+	__u32 stream_type;
+	__u32 stream_id;
+	__u32 dev_id;
 };
 
 #define AUDIO_MAX_EQ_BANDS 12
 
 struct msm_audio_eq_band {
-	uint16_t     band_idx; /* The band index, 0 .. 11 */
-	uint32_t     filter_type; /* Filter band type */
-	uint32_t     center_freq_hz; /* Filter band center frequency */
-	uint32_t     filter_gain; /* Filter band initial gain (dB) */
+	__u16     band_idx; /* The band index, 0 .. 11 */
+	__u32     filter_type; /* Filter band type */
+	__u32     center_freq_hz; /* Filter band center frequency */
+	__u32     filter_gain; /* Filter band initial gain (dB) */
 			/* Range is +12 dB to -12 dB with 1dB increments. */
-	uint32_t     q_factor;
+	__u32     q_factor;
 } __attribute__ ((packed));
 
 struct msm_audio_eq_stream_config {
-	uint32_t	enable; /* Number of consequtive bands specified */
-	uint32_t	num_bands;
+	__u32	enable; /* Number of consequtive bands specified */
+	__u32	num_bands;
 	struct msm_audio_eq_band	eq_bands[AUDIO_MAX_EQ_BANDS];
 } __attribute__ ((packed));
 
 struct msm_acdb_cmd_device {
-	uint32_t     command_id;
-	uint32_t     device_id;
-	uint32_t     network_id;
-	uint32_t     sample_rate_id;      /* Actual sample rate value */
-	uint32_t     interface_id;        /* See interface id's above */
-	uint32_t     algorithm_block_id;  /* See enumerations above */
-	uint32_t     total_bytes;         /* Length in bytes used by buffer */
-	uint32_t     *phys_buf;           /* Physical Address of data */
+	__u32     command_id;
+	__u32     device_id;
+	__u32     network_id;
+	__u32     sample_rate_id;      /* Actual sample rate value */
+	__u32     interface_id;        /* See interface id's above */
+	__u32     algorithm_block_id;  /* See enumerations above */
+	__u32     total_bytes;         /* Length in bytes used by buffer */
+	__u32     *phys_buf;           /* Physical Address of data */
 };
 
 struct msm_hwacc_data_config {

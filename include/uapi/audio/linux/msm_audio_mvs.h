@@ -2,6 +2,7 @@
 #define _UAPI_MSM_AUDIO_MVS_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 #define AUDIO_GET_MVS_CONFIG _IOW(AUDIO_IOCTL_MAGIC, \
 	(AUDIO_MAX_COMMON_IOCTL_NUM + 0), unsigned int)
@@ -106,50 +107,50 @@ enum msm_audio_g729a_frame_type {
 };
 
 struct min_max_rate {
-	uint32_t min_rate;
-	uint32_t max_rate;
+	__u32 min_rate;
+	__u32 max_rate;
 };
 
 struct msm_audio_mvs_config {
-	uint32_t mvs_mode;
-	uint32_t rate_type;
+	__u32 mvs_mode;
+	__u32 rate_type;
 	struct min_max_rate min_max_rate;
-	uint32_t dtx_mode;
+	__u32 dtx_mode;
 };
 
 #define MVS_MAX_VOC_PKT_SIZE 640
 
 struct gsm_header {
-	uint8_t bfi;
-	uint8_t sid;
-	uint8_t taf;
-	uint8_t ufi;
+	__u8 bfi;
+	__u8 sid;
+	__u8 taf;
+	__u8 ufi;
 };
 
 struct q6_msm_audio_mvs_frame {
 	union {
-	uint32_t frame_type;
-	uint32_t packet_rate;
+	__u32 frame_type;
+	__u32 packet_rate;
 	struct gsm_header gsm_frame_type;
 	} header;
-	uint32_t len;
-	uint8_t voc_pkt[MVS_MAX_VOC_PKT_SIZE];
+	__u32 len;
+	__u8 voc_pkt[MVS_MAX_VOC_PKT_SIZE];
 
 };
 
 struct msm_audio_mvs_frame {
-	uint32_t frame_type;
-	uint32_t len;
-	uint8_t voc_pkt[MVS_MAX_VOC_PKT_SIZE];
+	__u32 frame_type;
+	__u32 len;
+	__u8 voc_pkt[MVS_MAX_VOC_PKT_SIZE];
 
 };
 
 #define Q5V2_MVS_MAX_VOC_PKT_SIZE 320
 
 struct q5v2_msm_audio_mvs_frame {
-	uint32_t frame_type;
-	uint32_t len;
-	uint8_t voc_pkt[Q5V2_MVS_MAX_VOC_PKT_SIZE];
+	__u32 frame_type;
+	__u32 len;
+	__u8 voc_pkt[Q5V2_MVS_MAX_VOC_PKT_SIZE];
 
 };
 #endif /* _UAPI_MSM_AUDIO_MVS_H */
