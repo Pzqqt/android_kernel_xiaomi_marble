@@ -8344,9 +8344,13 @@ QDF_STATUS lim_set_ch_phy_mode(struct wlan_objmgr_vdev *vdev, uint8_t dot11mode)
 	enum channel_state ch_state;
 	uint32_t start_ch_freq;
 
+	if (!mac_ctx) {
+		pe_err("Invalid mac context");
+		return QDF_STATUS_E_FAILURE;
+	}
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
-		wma_err("vdev component object is NULL");
+		pe_err("vdev component object is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	des_chan = vdev->vdev_mlme.des_chan;
