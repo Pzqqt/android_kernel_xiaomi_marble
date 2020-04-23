@@ -100,8 +100,14 @@ struct dp_peer_tx_capture {
 	 * for each ppdu, we update and used on rest of mpdu
 	 */
 	uint32_t tx_wifi_ppdu_id;
-	struct ieee80211_frame tx_wifi_hdr;
-	struct ieee80211_qoscntl tx_qoscntl;
+	union {
+		struct ieee80211_frame tx_wifi_hdr;
+		struct ieee80211_qosframe tx_wifi_qos_hdr;
+	};
+	union {
+		struct ieee80211_frame_addr4 tx_wifi_addr4_hdr;
+		struct ieee80211_qosframe_addr4 tx_wifi_addr4_qos_hdr;
+	};
 };
 
 /*
