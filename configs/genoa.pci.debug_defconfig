@@ -24,9 +24,13 @@ CONFIG_DATA_CE_SW_INDEX_NO_INLINE_UPDATE := n
 
 ifeq ($(CONFIG_IPA), y)
 CONFIG_IPA_OFFLOAD := y
+else
+CONFIG_IPA_DISABLE_OVERRIDE=y
 endif
 ifeq ($(CONFIG_IPA3), y)
 CONFIG_IPA_OFFLOAD := y
+else
+CONFIG_IPA_DISABLE_OVERRIDE=y
 endif
 
 # Debug specific features
