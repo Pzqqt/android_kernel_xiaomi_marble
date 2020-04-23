@@ -257,6 +257,7 @@
 #include "dfs_process_radar_found_ind.h"
 #include "target_if.h"
 #include "wlan_dfs_init_deinit_api.h"
+#include "wlan_sm_engine.h"
 
 /* Given a bandwidth, find the number of subchannels in that bandwidth */
 #define N_SUBCHS_FOR_BANDWIDTH(_bw) ((_bw) / MIN_DFS_SUBCHAN_BW)
@@ -5266,3 +5267,585 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
 	PRECAC_LIST_UNLOCK(src_dfs);
 	PRECAC_LIST_UNLOCK(dest_dfs);
 }
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+/**
+ * --------------------- ROLLING CAC STATE MACHINE ----------------------
+ *
+ * Rolling CAC is a feature where in, a separate hardware (Agile detector)
+ * will be brought up in a channel that is not the current operating channel
+ * and will continue to monitor the channel non-stop, until the next
+ * channel change or radar in this RCAC channel.
+ *
+ * Now if the Rolling CAC channel was radar free for a minimum duration
+ * (1 min.) and the device is now switching to this channel, no CAC is required.
+ *
+ * I.e. let's say the current operating channel is 64 HT80 and we are starting
+ * the agile detector in 100 HT80. After a minute of being up in 100 HT80, we
+ * switch the radio to 100 HT80. This operating channel change will not
+ * require CAC now since the channel was radar free for the last 1 minute,
+ * as determined by the agile detector.
+ *
+ * Introduction of a rolling CAC state machine:
+ *
+ * To acheive the rolling CAC feature using the agile detector, a trivial
+ * state machine is implemented, as represented below:
+ *
+ *                           _________________
+ *                          |                 |
+ *            |------------>|       INIT      |<-----------|
+ *            |             |_________________|            |
+ *            |                      |                     |
+ *            |                      |                     |
+ *            | [EV_RCAC_STOP]       | [EV_RCAC_START]     | [EV_RCAC_STOP]
+ *            | [EV_RCAC_START]      | [EV_NOL_EXPIRY]     | [EV_RCAC_START]
+ *            | [EV_ADFS_RADAR]      |                     | [EV_ADFS_RADAR]
+ *            |                      |                     |
+ *    ________|________              |             ________|________
+ *   |                 |             |----------->|                 |
+ *   |    COMPLETE     |                          |     RUNNING     |
+ *   |_________________|<-------------------------|_________________|
+ *                             [EV_RCAC_DONE]
+ *
+ *
+ *
+ * Legend:
+ *     _________________
+ *    |                 |
+ * 1. |   RCAC STATES   |
+ *    |_________________|
+ *
+ * 2. [RCAC_EVENTS]
+ *
+ *
+ * Event triggers and handlers description:
+ *
+ * EV_RCAC_START:
+ *   Posted from vdev response and is handled by all three states.
+ *   1. INIT handler:
+ *        a. Check if RCAC is already running,
+ *           - If yes, do not transition.
+ *           - If no, go to step b.
+ *        b. Check if a new RCAC channel can be found,
+ *           - If no, do not transition.
+ *           - If yes, transition to RUNNING.
+ *   2. RUNNING handler:
+ *        a. Check if RCAC was running for this pdev,
+ *           - If yes, transition to INIT and post same event.
+ *           - If no, ignore.
+ *   3. COMPLETE handler:
+ *        a. Check if RCAC was running for this pdev,
+ *           - If yes, transition to INIT and post same event.
+ *           - If no, ignore.
+ *
+ * EV_RCAC_STOP:
+ *   Posted from last vap down or config disable, handled by RUNNING
+ *   and COMPLETE.
+ *   1. RUNNING handler:
+ *        a. Stop the HOST RCAC timer.
+ *        b. Send wmi_adfs_abort_cmd to FW and transition to INIT.
+ *   2. COMPLETE handler:
+ *        a. Send wmi_adfs_abort_cmd to FW and transition to INIT.
+ *
+ * EV_NOL_EXPIRY:
+ *   Posted from NOL expiry and is handled by INIT.
+ *   1. INIT handler (same as EV_RCAC_START):
+ *        a. Check if RCAC is already running,
+ *           - If yes, do not transition.
+ *           - If no, go to step b.
+ *        b. Check if a new RCAC channel can be found,
+ *           - If no, do not transition.
+ *           - If yes, transition to RUNNING.
+ *
+ *   Note: EV_NOL_EXPIRY is a trigger to start RCAC if possible and only if
+ *         not running, hence is not handled in RUNNING or COMPLETE.
+ *
+ * EV_ADFS_RADAR:
+ *   Posted from radar detection and is handled in RUNNING and COMPLETE.
+ *   1. RUNNING handler (same as EV_RCAC_START):
+ *        a. Check if RCAC was running for this pdev,
+ *           - If yes, transition to INIT and post EV_RCAC_START event.
+ *           - If no, ignore.
+ *   2. COMPLETE handler (same as EV_RCAC_START):
+ *        a. Check if RCAC was running for this pdev,
+ *           - If yes, transition to INIT and post EV_RCAC_START event.
+ *           - If no, ignore.
+ *
+ *   Note: EV_ADFS_RADAR works same as EV_RCAC_START event right now, but
+ *         will change in future, where, based on user preference, either
+ *         a new RCAC channel will be picked (requiring the transition to
+ *         INIT like present), or RCAC will be restarted on the same channel.
+ *
+ * EV_RCAC_DONE:
+ *   Posted from host RCAC timer completion and is handled in RUNNING.
+ *   1. RUNNING handler:
+ *      a. mark RCAC done and transition to COMPLETE.
+ *
+ * Epilogue:
+ *   Rolling CAC state machine is for the entire psoc and since the
+ *   agile detector can run for one pdev at a time, sharing of resource is
+ *   required.
+ *   In case of ETSI preCAC, sharing was done in a round robin fashion where
+ *   each pdev runs ADFS for it's channels alternatively. However, in RCAC, the
+ *   CAC period is not defined is continuous till the next channel change.
+ *
+ *   Hence ADFS detector is shared as follows:
+ *   1. First come first serve: the pdev that is brought up first, i.e, for
+ *      the first vdev response, an RCAC_START is posted and this pdev will
+ *      hold the agile detector and run RCAC till it is stopped.
+ *   2. Stopping the RCAC can be either by disabling user config "rcac_en 0"
+ *      or by bringing down all vaps, or if no channel is available.
+ *   3. Once RCAC is stopped for a pdev, it can be started in the other pdev
+ *      by restarting it's vap (i.e. a vdev response).
+ *
+ *   A future enhancement will be triggering RCAC_START at user level.
+ */
+
+/**
+ * dfs_rcac_set_curr_state() - API to set the current state of RCAC SM.
+ * @dfs_soc_obj: Pointer to DFS soc private object.
+ * @state: value of current state.
+ *
+ * Return: void.
+ */
+static void dfs_rcac_set_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj,
+				    enum dfs_rcac_sm_state state)
+{
+	if (state < DFS_RCAC_S_MAX) {
+		dfs_soc_obj->dfs_rcac_curr_state = state;
+	} else {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"DFS RCAC state (%d) is invalid", state);
+		QDF_BUG(0);
+	}
+}
+
+/**
+ * dfs_rcac_get_curr_state() - API to get current state of RCAC SM.
+ * @dfs_soc_obj: Pointer to DFS soc private object.
+ *
+ * Return: current state enum of type, dfs_rcac_sm_state.
+ */
+static enum dfs_rcac_sm_state
+dfs_rcac_get_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	return dfs_soc_obj->dfs_rcac_curr_state;
+}
+
+/**
+ * dfs_rcac_sm_transition_to() - Wrapper API to transition the RCAC SM state.
+ * @dfs_soc_obj: Pointer to dfs soc private object that hold the SM handle.
+ * @state: State to which the SM is transitioning to.
+ *
+ * Return: void.
+ */
+static void dfs_rcac_sm_transition_to(struct dfs_soc_priv_obj *dfs_soc_obj,
+				      enum dfs_rcac_sm_state state)
+{
+	wlan_sm_transition_to(dfs_soc_obj->dfs_rcac_sm_hdl, state);
+}
+
+/**
+ * dfs_rcac_sm_deliver_event() - API to post events to RCAC SM.
+ * @dfs_soc_obj: Pointer to dfs soc private object.
+ * @event: Event to be posted to the RCAC SM.
+ * @event_data_len: Length of event data.
+ * @event_data: Pointer to event data.
+ *
+ * Return: QDF_STATUS_SUCCESS on handling the event, else failure.
+ *
+ * Note: This version of event posting API is not under lock and hence
+ * should only be called for posting events within the SM and not be
+ * under a dispatcher API without a lock.
+ */
+static
+QDF_STATUS dfs_rcac_sm_deliver_event(struct dfs_soc_priv_obj *dfs_soc_obj,
+				     enum dfs_rcac_sm_evt event,
+				     uint16_t event_data_len, void *event_data)
+{
+	return wlan_sm_dispatch(dfs_soc_obj->dfs_rcac_sm_hdl,
+				event,
+				event_data_len,
+				event_data);
+}
+
+/**
+ * dfs_rcac_state_init_entry() - Entry API for INIT state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving to INIT state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_init_entry(void *ctx)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+
+	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_INIT);
+}
+
+/**
+ * dfs_rcac_state_init_exit() - Exit API for INIT state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving out of INIT state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_init_exit(void *ctx)
+{
+	/* NO OPS */
+}
+
+/**
+ * dfs_rcac_state_init_event() - INIT State event handler
+ * @ctx: DFS SoC private object
+ * @event: Event posted to the SM.
+ * @event_data_len: Length of event data.
+ * @event_data: Pointer to event data.
+ *
+ * API to handle events in INIT state
+ *
+ * Return: TRUE:  on handling event
+ *         FALSE: on ignoring the event
+ */
+static bool dfs_rcac_state_init_event(void *ctx,
+				      uint16_t event,
+				      uint16_t event_data_len,
+				      void *event_data)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+	bool status;
+
+	switch (event) {
+	case DFS_RCAC_SM_EV_NOL_EXPIRY:
+	/* NOL expiry is a special case wherein the RCAC SM is started
+	 * only if it's not already running/complete.
+	 * In cases where certain channels are now available for RCAC
+	 * after NOL expiry, the SM needs to be started and is handled by
+	 * this event. If there is already a channel configured, do not
+	 * handle it.
+	 * Since the DFS_RCAC_SM_EV_RCAC_START event is also handled by other
+	 * states and moves the SM to init, they will not be used during
+	 * NOL expiry for restart and instead, this special event
+	 * (DFS_RCAC_SM_EV_NOL_EXPIRY) will be used. The handling is
+	 * similar to DFS_RCAC_SM_EV_RCAC_START, hence the follow through.
+	 */
+	case DFS_RCAC_SM_EV_RCAC_START:
+		/* Check if feature is enabled for this DFS and if RCAC channel
+		 * is valid, if those are true, send appropriate WMIs to FW
+		 * and only then transition to the state as follows.
+		 */
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_RUNNING);
+		status = true;
+		break;
+	default:
+		status = false;
+		break;
+	}
+
+	return status;
+}
+
+/**
+ * dfs_rcac_state_running_entry() - Entry API for running state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving to running state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_running_entry(void *ctx)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+
+	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_RUNNING);
+}
+
+/**
+ * dfs_rcac_state_running_exit() - Exit API for RUNNING state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving out of RUNNING state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_running_exit(void *ctx)
+{
+	/* NO OPS */
+}
+
+/**
+ * dfs_rcac_state_running_event() - RUNNING State event handler
+ * @ctx: DFS SoC private object
+ * @event: Event posted to the SM.
+ * @event_data_len: Length of event data.
+ * @event_data: Pointer to event data.
+ *
+ * API to handle events in RUNNING state
+ *
+ * Return: TRUE:  on handling event
+ *         FALSE: on ignoring the event
+ */
+static bool dfs_rcac_state_running_event(void *ctx,
+					 uint16_t event,
+					 uint16_t event_data_len,
+					 void *event_data)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+	bool status;
+
+	switch (event) {
+	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
+		/* After radar is found on the Agile channel we need to find
+		 * a new channel and then start Agile CAC on that.
+		 * On receiving the "DFS_RCAC_SM_EV_ADFS_RADAR_FOUND" if
+		 * we change the state from [RUNNING] -> [RUNNING] then
+		 * [RUNNING] should handle case in which a channel is not found
+		 * and bring the state machine back to INIT.
+		 * Instead we move the state to INIT and post the event
+		 * "DFS_RCAC_SM_EV_RCAC_START" so INIT handles the case of
+		 * channel not found and stay in that state.
+		 */
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_rcac_sm_deliver_event(dfs_soc,
+					  DFS_RCAC_SM_EV_RCAC_START,
+					  event_data_len,
+					  event_data);
+		status = true;
+		break;
+	case DFS_RCAC_SM_EV_RCAC_START:
+		/* Reset dfs_cur_rcac_index to default here, so that it may try
+		 * to start RCAC again in init event handler.
+		 */
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_rcac_sm_deliver_event(dfs_soc,
+					  event,
+					  event_data_len,
+					  event_data);
+		status = true;
+		break;
+	case DFS_RCAC_SM_EV_RCAC_STOP:
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		status = true;
+		break;
+	case DFS_RCAC_SM_EV_RCAC_DONE:
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_COMPLETE);
+		status = true;
+	default:
+		status = false;
+		break;
+	}
+
+	return status;
+}
+
+/**
+ * dfs_rcac_state_complete_entry() - Entry API for complete state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving to complete state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_complete_entry(void *ctx)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+
+	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_COMPLETE);
+}
+
+/**
+ * dfs_rcac_state_complete_exit() - Exit API for complete state
+ * @ctx: DFS SoC private object
+ *
+ * API to perform operations on moving out of complete state
+ *
+ * Return: void
+ */
+static void dfs_rcac_state_complete_exit(void *ctx)
+{
+	/* NO OPS */
+}
+
+/**
+ * dfs_rcac_state_complete_event() - COMPLETE State event handler
+ * @ctx: DFS SoC private object
+ * @event: Event posted to the SM.
+ * @event_data_len: Length of event data.
+ * @event_data: Pointer to event data.
+ *
+ * API to handle events in COMPLETE state
+ *
+ * Return: TRUE:  on handling event
+ *         FALSE: on ignoring the event
+ */
+static bool dfs_rcac_state_complete_event(void *ctx,
+					  uint16_t event,
+					  uint16_t event_data_len,
+					  void *event_data)
+{
+	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
+	bool status;
+
+	switch (event) {
+	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_rcac_sm_deliver_event(dfs_soc,
+					  DFS_RCAC_SM_EV_RCAC_START,
+					  event_data_len,
+					  event_data);
+		status = true;
+		break;
+	case DFS_RCAC_SM_EV_RCAC_START:
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_rcac_sm_deliver_event(dfs_soc,
+					  event,
+					  event_data_len,
+					  event_data);
+		status = true;
+		break;
+	case DFS_RCAC_SM_EV_RCAC_STOP:
+		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		status = true;
+		break;
+	default:
+		status = false;
+		break;
+	}
+
+	return status;
+}
+
+static struct wlan_sm_state_info dfs_rcac_sm_info[] = {
+	{
+		(uint8_t)DFS_RCAC_S_INIT,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		false,
+		"INIT",
+		dfs_rcac_state_init_entry,
+		dfs_rcac_state_init_exit,
+		dfs_rcac_state_init_event
+	},
+	{
+		(uint8_t)DFS_RCAC_S_RUNNING,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		false,
+		"RUNNING",
+		dfs_rcac_state_running_entry,
+		dfs_rcac_state_running_exit,
+		dfs_rcac_state_running_event
+	},
+	{
+		(uint8_t)DFS_RCAC_S_COMPLETE,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
+		false,
+		"COMPLETE",
+		dfs_rcac_state_complete_entry,
+		dfs_rcac_state_complete_exit,
+		dfs_rcac_state_complete_event
+	},
+};
+
+static const char *dfs_rcac_sm_event_names[] = {
+	"EV_RCAC_START",
+	"EV_NOL_EXPIRY",
+	"EV_RCAC_STOP",
+	"EV_RCAC_DONE",
+	"EV_ADFS_RADAR_FOUND",
+};
+
+/**
+ * dfs_rcac_sm_print_state() - API to log the current state.
+ * @dfs_soc_obj: Pointer to dfs soc private object.
+ *
+ * Return: void.
+ */
+static void dfs_rcac_sm_print_state(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	enum dfs_rcac_sm_state state;
+
+	state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "->[%s] %s",
+		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
+		  dfs_rcac_sm_info[state].name);
+}
+
+/**
+ * dfs_rcac_sm_print_state_event() - API to log the current state and event
+ *                                   received.
+ * @dfs_soc_obj: Pointer to dfs soc private object.
+ * @event: Event posted to RCAC SM.
+ *
+ * Return: void.
+ */
+static void dfs_rcac_sm_print_state_event(struct dfs_soc_priv_obj *dfs_soc_obj,
+					  enum dfs_rcac_sm_evt event)
+{
+	enum dfs_rcac_sm_state state;
+
+	state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "[%s]%s, %s",
+		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
+		  dfs_rcac_sm_info[state].name,
+		  dfs_rcac_sm_event_names[event]);
+}
+
+QDF_STATUS dfs_rcac_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
+				   enum dfs_rcac_sm_evt event,
+				   uint16_t event_data_len,
+				   void *event_data)
+{
+	enum dfs_rcac_sm_state old_state, new_state;
+	QDF_STATUS status;
+
+	DFS_RCAC_SM_SPIN_LOCK(dfs_soc_obj);
+	old_state = dfs_rcac_get_curr_state(dfs_soc_obj);
+
+	/* Print current state and event received */
+	dfs_rcac_sm_print_state_event(dfs_soc_obj, event);
+
+	status = dfs_rcac_sm_deliver_event(dfs_soc_obj, event,
+					   event_data_len, event_data);
+
+	new_state = dfs_rcac_get_curr_state(dfs_soc_obj);
+
+	/* Print new state after event if transition happens */
+	if (old_state != new_state)
+		dfs_rcac_sm_print_state(dfs_soc_obj);
+	DFS_RCAC_SM_SPIN_UNLOCK(dfs_soc_obj);
+
+	return status;
+}
+
+QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	struct wlan_sm *sm;
+
+	sm = wlan_sm_create("DFS_RCAC", dfs_soc_obj,
+			    DFS_RCAC_S_INIT,
+			    dfs_rcac_sm_info,
+			    QDF_ARRAY_SIZE(dfs_rcac_sm_info),
+			    dfs_rcac_sm_event_names,
+			    QDF_ARRAY_SIZE(dfs_rcac_sm_event_names));
+	if (!sm) {
+		qdf_err("DFS RCAC SM allocation failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	dfs_soc_obj->dfs_rcac_sm_hdl = sm;
+
+	qdf_spinlock_create(&dfs_soc_obj->dfs_rcac_sm_lock);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	wlan_sm_delete(dfs_soc_obj->dfs_rcac_sm_hdl);
+	qdf_spinlock_destroy(&dfs_soc_obj->dfs_rcac_sm_lock);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* QCA_SUPPORT_ADFS_RCAC */
