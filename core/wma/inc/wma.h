@@ -1737,6 +1737,9 @@ QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 				  uint32_t peer_id_cnt,
 				  uint16_t *peer_id_list);
 
+bool wma_objmgr_peer_exist(tp_wma_handle wma,
+			   uint8_t *peer_addr, uint8_t *peer_vdev_id);
+
 /**
  * wma_get_cca_stats() - send request to fw to get CCA
  * @wmi_hdl: wma handle

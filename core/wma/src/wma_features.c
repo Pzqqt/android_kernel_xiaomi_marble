@@ -3812,6 +3812,15 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		goto end_tdls_peer_state;
 	}
 
+
+	if (!wma_objmgr_peer_exist(wma_handle,
+				   peer_state->peer_macaddr, NULL)) {
+		wma_err("peer:" QDF_MAC_ADDR_STR "doesn't exist",
+			QDF_MAC_ADDR_ARRAY(peer_state->peer_macaddr));
+		ret = -EINVAL;
+		goto end_tdls_peer_state;
+	}
+
 	peer_cap = &peer_state->peer_cap;
 
 	/* peer capability info is valid only when peer state is connected */
