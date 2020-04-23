@@ -324,6 +324,28 @@ dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
 	 */
 	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs)) {
 		*freq_center = dfs->dfs_agile_precac_freq_mhz;
+		if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ) {
+			if (radar_found->segment_id == PRIMARY_SEG)
+				*freq_center -= DFS_160MHZ_SECOND_SEG_OFFSET;
+			else
+				*freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
+		} else if (dfs->dfs_precac_chwidth == CH_WIDTH_80P80MHZ &&
+			   dfs->dfs_agile_precac_freq_mhz ==
+				RESTRICTED_80P80_CHAN_CENTER_FREQ) {
+			/*
+			 * The reason why left and right offsets
+			 * are different.
+			 * Center of 165 is 5730MHz.
+			 * Center of left 80 is 5690MHz.
+			 * Center of right 80 is 5775MHz.
+			 */
+			if (radar_found->segment_id == PRIMARY_SEG)
+				*freq_center -=
+				    DFS_165MHZ_SECOND_SEG_OFFSET_LEFT;
+			else
+				*freq_center +=
+				    DFS_165MHZ_SECOND_SEG_OFFSET_RIGHT;
+		}
 	} else if (!radar_found->segment_id) {
 		*freq_center = curchan->dfs_ch_mhz_freq_seg1;
 	} else {
@@ -621,6 +643,105 @@ dfs_get_bonding_channel_without_seg_info_for_freq(struct dfs_channel *chan,
 }
 #endif
 
+#ifdef CONFIG_CHAN_FREQ_API
+/*
+ * dfs_get_80mhz_bonding_channels() - Get bonding frequency list of 80MHz
+ * channel.
+ * @center_freq: Center frequency of the 80MHz channel.
+ * @freq_list: Pointer to frequency list.
+ */
+static
+void dfs_get_80mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+}
+
+/*
+ * dfs_get_160mhz_bonding_channels() - Get bonding frequency list of 160MHz
+ * channel.
+ * @center_freq: Center frequency of the 160MHz channel.
+ * @freq_list: Pointer to frequency list.
+ */
+static
+void dfs_get_160mhz_bonding_channels(uint16_t center_freq, uint16_t *freq_list)
+{
+	freq_list[0] = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+	freq_list[1] = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+	freq_list[2] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[3] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[4] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[5] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[6] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
+	freq_list[7] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+}
+
+/*
+ * dfs_get_165mhz_bonding_channels() - Get bonding frequency list of restricted
+ * 80P80MHz/165MHz channel.
+ *
+ * @freq_list: Pointer to frequency list.
+ */
+static
+void dfs_get_165mhz_bonding_channels(uint16_t *freq_list)
+{
+	uint16_t center_freq = RESTRICTED_80P80_LEFT_80_CENTER_FREQ;
+
+	freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+
+	center_freq = RESTRICTED_80P80_RIGHT_80_CENTER_FREQ;
+	freq_list[4] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+	freq_list[5] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[6] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
+	freq_list[7] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+}
+
+/*
+ * dfs_get_agile_subchans_for_curchan_160() - Get bonding frequency list of
+ * agile channels when current operating channel is 160MHz.
+ *
+ * @dfs: Pointer to DFS structure.
+ * @center_freq: Center frequency of the channel.
+ * @freq_list: Pointer to frequency list.
+ * @nchannels: Number of subchannel.
+ */
+static void
+dfs_get_agile_subchans_for_curchan_160(struct wlan_dfs *dfs,
+				       uint16_t center_freq,
+				       uint16_t *freq_list,
+				       uint8_t *nchannels)
+{
+	if (dfs->dfs_precac_chwidth == CH_WIDTH_80MHZ) {
+		/*
+		 * The current operating channel is 160MHz and
+		 * the agile channel is 80MHz. This can happen
+		 * in HK only.
+		 */
+		*nchannels = 4;
+		dfs_get_80mhz_bonding_channels(center_freq,
+					       freq_list);
+	} else if (dfs->dfs_precac_chwidth == CH_WIDTH_160MHZ)
+		/*
+		 * The current operating channel is 160MHz and
+		 * the agile channel is 160MHz.
+		 * Pine ADFS specific.
+		 */
+		dfs_get_160mhz_bonding_channels(center_freq,
+						freq_list);
+	else if (dfs->dfs_precac_chwidth == CH_WIDTH_80P80MHZ)
+		/*
+		 * The current operating channel is 160MHz and
+		 * the agile channel is 165MHz(restricted
+		 * 80P80MHZ). Pine ADFS specific.
+		 */
+		dfs_get_165mhz_bonding_channels(freq_list);
+}
+
 /*
  * dfs_get_bonding_channels_for_freq() - Get bonding channel frequency.
  * @dfs: Pointer to wlan_dfs.
@@ -629,7 +750,6 @@ dfs_get_bonding_channel_without_seg_info_for_freq(struct dfs_channel *chan,
  * @detector_id: Detector ID.
  * @freq_list: Pointer to frequency list.
  */
-#ifdef CONFIG_CHAN_FREQ_API
 uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 					  struct dfs_channel *curchan,
 					  uint32_t segment_id,
@@ -661,30 +781,29 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 		nchannels = 2;
 		freq_list[0] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
 		freq_list[1] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
-			 WLAN_IS_CHAN_MODE_80_80(curchan) ||
-			 detector_id == dfs_get_agile_detector_id(dfs)) {
-		/* If the current channel's bandwidth is 80/80+80/160Mhz,
-		 * the corresponding agile Detector's bandwidth will be 80Mhz.
-		 * Therefore, if radar is found on the agile detector find
-		 * subchannels for 80Mhz bandwidth.
-		 */
+	} else if (WLAN_IS_CHAN_MODE_80(curchan)) {
 		nchannels = 4;
-		freq_list[0] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[2] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[3] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
+		dfs_get_80mhz_bonding_channels(center_freq, freq_list);
 	} else if (WLAN_IS_CHAN_MODE_160(curchan)) {
 		nchannels = 8;
-		center_freq = curchan->dfs_ch_mhz_freq_seg2;
-		freq_list[0] = center_freq - DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
-		freq_list[1] = center_freq - DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		freq_list[2] = center_freq - DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[3] = center_freq - DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[4] = center_freq + DFS_5GHZ_NEXT_CHAN_FREQ_OFFSET;
-		freq_list[5] = center_freq + DFS_5GHZ_2ND_CHAN_FREQ_OFFSET;
-		freq_list[6] = center_freq + DFS_5GHZ_3RD_CHAN_FREQ_OFFSET;
-		freq_list[7] = center_freq + DFS_5GHZ_4TH_CHAN_FREQ_OFFSET;
+		if (detector_id == dfs_get_agile_detector_id(dfs))
+			dfs_get_agile_subchans_for_curchan_160(dfs,
+							       center_freq,
+							       freq_list,
+							       &nchannels);
+		else
+			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
+	} else if (WLAN_IS_CHAN_MODE_165(dfs, curchan)) {
+		nchannels = 8;
+		/*
+		 * If the current channel's bandwidth is 80P80MHz,
+		 * the corresponding agile Detector's bandwidth will be 160MHz
+		 * in case of Pine ADFS.
+		 */
+		if (detector_id == dfs_get_agile_detector_id(dfs))
+			dfs_get_160mhz_bonding_channels(center_freq, freq_list);
+		else
+			dfs_get_165mhz_bonding_channels(freq_list);
 	}
 
 	return nchannels;
