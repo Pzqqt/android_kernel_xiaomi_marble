@@ -1334,6 +1334,9 @@ typedef enum {
     /** Scan specific events */
     WMI_SCAN_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SCAN),
 
+    /** Spectral scan FW params to host */
+    WMI_PDEV_SSCAN_FW_PARAM_EVENTID,
+
     /* PDEV specific events */
     /** TPC config for the current operating channel */
     WMI_PDEV_TPC_CONFIG_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PDEV),
@@ -5682,12 +5685,26 @@ typedef struct {
     A_UINT32 spectral_scan_chn_mask;
     /* See enum wmi_spectral_scan_mode */
     A_UINT32 spectral_scan_mode;
-    /* agile span center frequency (MHz), 0 for normal scan*/
-    A_UINT32 spectral_scan_center_freq;
+    union {
+        /**
+         * Two center frequencies are required for agile channel switch
+         * supporting True 160 and Restricted 160 ((80+80) or 165) MHz.
+         * This parameter specifies the center frequency for cases with a
+         * contiguous channel, and the center frequency of the primary
+         * portion of a non-contiguous (80+80 or 165 MHz) channel.
+         */
+        A_UINT32 spectral_scan_center_freq;
+        A_UINT32 spectral_scan_center_freq1;
+    };
     /* agile span primary channel frequency (MHz), 0 for normal scan*/
     A_UINT32 spectral_scan_chan_freq;
     /* agile scan bandwidth (20, 40, 80, 80+80, 160), enum wmi_channel_width */
     A_UINT32 spectral_scan_chan_width;
+    /**
+     * Adding freq2 to support True 160 and restricted 160 ((80+80) or 165) MHz.
+     * agile span center frequency2 (MHz), 0 for normal scan.
+     */
+    A_UINT32 spectral_scan_center_freq2;
 } wmi_vdev_spectral_configure_cmd_fixed_param;
 
 /*
@@ -5711,6 +5728,61 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_tx_power_cmd_fixed_param */
     A_UINT32 vdev_id;
 } wmi_vdev_get_tx_power_cmd_fixed_param;
+
+/* Primary 80 bin values */
+#define WMI_SSCAN_PRI80_START_BIN_GET(pri80_bins)        WMI_GET_BITS(pri80_bins, 0, 16)
+#define WMI_SSCAN_PRI80_START_BIN_SET(pri80_bins, value) WMI_SET_BITS(pri80_bins, 0, 16, value)
+#define WMI_SSCAN_PRI80_END_BIN_GET(pri80_bins)          WMI_GET_BITS(pri80_bins, 16, 16)
+#define WMI_SSCAN_PRI80_END_BIN_SET(pri80_bins, value)   WMI_SET_BITS(pri80_bins, 16, 16, value)
+
+/* Secondary 80 bin values */
+#define WMI_SSCAN_SEC80_START_BIN_GET(sec80_bins)        WMI_GET_BITS(sec80_bins, 0, 16)
+#define WMI_SSCAN_SEC80_START_BIN_SET(sec80_bins, value) WMI_SET_BITS(sec80_bins, 0, 16, value)
+#define WMI_SSCAN_SEC80_END_BIN_GET(sec80_bins)          WMI_GET_BITS(sec80_bins, 16, 16)
+#define WMI_SSCAN_SEC80_END_BIN_SET(sec80_bins, value)   WMI_SET_BITS(sec80_bins, 16, 16, value)
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_fw_cmd_fixed_param */
+    A_UINT32 pdev_id;
+
+    /* See enum wmi_spectral_scan_mode */
+    A_UINT32 spectral_scan_mode;
+
+    /**
+      * This fixed_param TLV is followed by the below TLVs:
+      *
+      * wmi_pdev_sscan_fft_bin_index fft_bin_index[]; // array len = 0 or 1
+      *     If present (array length is 1) this TLV specifies the primary
+      *     and secondary channels FFT bin indices for True 160 and
+      *     Restricted 160 (80+80 or 165) MHz BW cases.
+      */
+} wmi_pdev_sscan_fw_cmd_fixed_param;
+
+/**
+ * The below structure is used only to send the FFT bin numbers for
+ * True 160 and Restricted 160(80+80 or 165) MHz from FW to HOST
+ */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_fft_bin_index */
+
+    /**
+      * Bit 15 -  0 : primary 80 start bin number
+      * Bit 31 - 16 : primary 80 end bin number
+      * Refer to WMI_SSCAN_PRI80_[START,END]_BIN_[GET,SET] macros.
+      * Only for True 160 and Restricted 160(80+80 or 165) MHz this
+      * will be filled.
+      */
+    A_UINT32 pri80_bins;
+
+    /**
+      * Bit 15 -  0 : secondary 80 start bin number
+      * Bit 31 - 16 : secondary 80 end bin number
+      * Refer to WMI_SSCAN_SEC80_[START,END]_BIN_[GET,SET] macros.
+      * Only for True 160 and Restricted 160(80+80 or 165) MHz this
+      * will be filled.
+      */
+    A_UINT32 sec80_bins;
+} wmi_pdev_sscan_fft_bin_index;
 
 #define WMI_BEACON_CTRL_TX_DISABLE  0
 #define WMI_BEACON_CTRL_TX_ENABLE   1
