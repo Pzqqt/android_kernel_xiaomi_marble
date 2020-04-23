@@ -10389,6 +10389,7 @@ QDF_STATUS csr_roam_lfr2_issue_connect(struct mac_context *mac,
 		qdf_mem_free(cur_roam_profile);
 		return QDF_STATUS_SUCCESS;
 	} else {
+		sme_err("malloc failed");
 		QDF_ASSERT(0);
 		csr_dequeue_command(mac);
 	}
@@ -10404,18 +10405,18 @@ QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info)
+	if (!roam_info) {
+		sme_err("malloc failed");
 		return QDF_STATUS_E_NOMEM;
-
+	}
 	scan_handle_roam_ap =
 		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap;
-	if (!scan_handle_roam_ap)
+	if (!scan_handle_roam_ap) {
+		sme_err("no roam target ap");
 		goto POST_ROAM_FAILURE;
-
-	if ((mac->roam.roamSession[session_id].connectState ==
-				eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED) ||
-	    (mac->roam.roamSession[session_id].connectState ==
-				eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING)) {
+	}
+	if(is_disconnect_pending(mac, session_id)) {
+		sme_err("disconnect pending");
 		goto purge_scan_result;
 	}
 
