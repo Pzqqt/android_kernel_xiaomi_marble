@@ -2245,6 +2245,7 @@ static void mlme_init_fe_rrm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	qdf_size_t len;
 
 	rrm_config->rrm_enabled = cfg_get(psoc, CFG_RRM_ENABLE);
+	rrm_config->sap_rrm_enabled = cfg_get(psoc, CFG_SAP_RRM_ENABLE);
 	rrm_config->rrm_rand_interval = cfg_get(psoc, CFG_RRM_MEAS_RAND_INTVL);
 
 	qdf_uint8_array_parse(cfg_get(psoc, CFG_RM_CAPABILITY),

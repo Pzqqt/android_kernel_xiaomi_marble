@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,25 +25,47 @@
 
 /*
  * <ini>
- * gRrmEnable - Enable/Disable RRM
+ * gRrmEnable - Enable/Disable RRM on STA
  * @Min: 0
  * @Max: 1
  * @Default: 0
  *
  * This ini is used to controls the capabilities (11 k) included
- * in the capabilities field.
+ * in the capabilities field for STA.
  *
  * Related: None.
  *
  * Supported Feature: 11k
  *
- * Usage: Internal/External
+ * Usage: Internal
  *
  * </ini>
  */
 #define CFG_RRM_ENABLE CFG_INI_BOOL("gRrmEnable", \
 				    0, \
 				    "Enable/Disable RRM")
+
+/*
+ * <ini>
+ * sap_rrm_enable - Enable/Disable RRM on SAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to control the capabilities (11 k) included
+ * in the capabilities field for SAP.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SAP_RRM_ENABLE CFG_INI_BOOL("sap_rrm_enable", \
+					0, \
+					"Enable/Disable RRM on SAP")
 
 /*
  * <ini>
@@ -100,6 +122,7 @@
 
 #define CFG_FE_RRM_ALL \
 	CFG(CFG_RRM_ENABLE) \
+	CFG(CFG_SAP_RRM_ENABLE) \
 	CFG(CFG_RRM_MEAS_RAND_INTVL) \
 	CFG(CFG_RM_CAPABILITY)
 
