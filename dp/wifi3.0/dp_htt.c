@@ -3029,6 +3029,39 @@ dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
 	dp_peer_unref_del_find_by_id(peer);
 }
 
+/**
+ * dp_process_ppdu_stats_sch_cmd_status_tlv: Process schedule command status tlv
+ * Here we are not going to process the buffer.
+ * @pdev: DP PDEV handle
+ * @ppdu_info: per ppdu tlv structure
+ *
+ * return:void
+ */
+static void
+dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
+					 struct ppdu_info *ppdu_info)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	uint8_t num_users;
+	uint8_t i;
+
+	ppdu_desc = (struct cdp_tx_completion_ppdu *)
+				qdf_nbuf_data(ppdu_info->nbuf);
+
+	num_users = ppdu_desc->num_users;
+
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
+		for (i = 0; i < num_users; i++) {
+			if (ppdu_desc->user[i].user_pos == 0) {
+				/* update phy mode for bar frame */
+				ppdu_desc->phy_mode =
+					ppdu_desc->user[i].preamble;
+				break;
+			}
+		}
+	}
+}
+
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
 /*
  * dp_deliver_mgmt_frm: Process
@@ -3254,6 +3287,9 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 						    tlv_expected_size, tlv_len);
 		dp_process_ppdu_stats_user_compltn_flush_tlv(pdev, tlv_desc,
 							     ppdu_info);
+		break;
+	case HTT_PPDU_STATS_SCH_CMD_STATUS_TLV:
+		dp_process_ppdu_stats_sch_cmd_status_tlv(pdev, ppdu_info);
 		break;
 	default:
 		break;
