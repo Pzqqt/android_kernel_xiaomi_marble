@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,8 @@
 #define QCA9379_REV1_VERSION            0x5040000
 #define AR6320_DEV_VERSION              0x1000000
 #define QCA9377_REV1_1_VERSION          0x5020001
+#define QCA6390_V1                      0x50040000
+#define QCA6490_V1                      0x50060000
 #define WCN3990_v1                      0x40000000
 #define WCN3990_v2                      0x40010000
 #define WCN3990_v2_1                    0x40010002
