@@ -215,6 +215,11 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 	struct pdev_cfr *pa;
 	struct psoc_cfr *cfr_sc;
 
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_err("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa == NULL)
 		return QDF_STATUS_E_FAILURE;
@@ -252,6 +257,11 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_objmgr_pdev *pdev)
 {
 	uint32_t target_type;
+
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_err("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	target_type = target_if_cfr_get_target_type(psoc);
 

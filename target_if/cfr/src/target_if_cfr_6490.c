@@ -123,7 +123,6 @@ QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 	struct pdev_cfr *cfr_pdev;
 	struct psoc_cfr *cfr_psoc;
 	struct wmi_unified *wmi_handle = NULL;
-	bool is_cfr_disabled;
 	bool cfr_capable;
 	QDF_STATUS status;
 
@@ -153,8 +152,7 @@ QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	is_cfr_disabled = cfg_get(psoc, CFG_CFR_DISABLE);
-	if (is_cfr_disabled) {
+	if (wlan_cfr_is_feature_disabled(pdev)) {
 		cfr_pdev->is_cfr_capable = 0;
 		cfr_psoc->is_cfr_capable = 0;
 		cfr_info("cfr disabled");
