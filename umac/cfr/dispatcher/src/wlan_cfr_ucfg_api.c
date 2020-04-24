@@ -233,6 +233,11 @@ int ucfg_cfr_set_timer(struct wlan_objmgr_pdev *pdev, uint32_t value)
 {
 	struct pdev_cfr *pa;
 
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_err("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa == NULL) {
 		cfr_err("PDEV cfr object is NULL!");
@@ -251,6 +256,11 @@ qdf_export_symbol(ucfg_cfr_set_timer);
 int ucfg_cfr_get_timer(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pa;
+
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_err("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa == NULL) {

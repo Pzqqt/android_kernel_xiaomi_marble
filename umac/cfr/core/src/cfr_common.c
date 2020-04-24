@@ -25,6 +25,37 @@
 #include <qdf_streamfs.h>
 #include <target_if.h>
 #include <wlan_osif_priv.h>
+#include <cfg_ucfg_api.h>
+#include "cfr_cfg.h"
+
+/**
+ * wlan_cfr_is_ini_disabled() - Check if cfr feature is disabled
+ * @pdev - the physical device object.
+ *
+ * Return : true if cfr is disabled, else false.
+ */
+static bool
+wlan_cfr_is_ini_disabled(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t cfr_disable_bitmap;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		cfr_err("psoc is null");
+		return true;
+	}
+
+	cfr_disable_bitmap = cfg_get(psoc, CFG_CFR_DISABLE);
+
+	if (cfr_disable_bitmap & (1 << wlan_objmgr_pdev_get_pdev_id(pdev))) {
+		cfr_info("cfr is disabled for pdev[%d]",
+			 wlan_objmgr_pdev_get_pdev_id(pdev));
+		return true;
+	}
+
+	return false;
+}
 
 QDF_STATUS
 wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
@@ -73,6 +104,13 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (wlan_cfr_is_ini_disabled(pdev)) {
+		wlan_pdev_nif_feat_ext_cap_clear(pdev, WLAN_PDEV_FEXT_CFR_EN);
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	wlan_pdev_nif_feat_ext_cap_set(pdev, WLAN_PDEV_FEXT_CFR_EN);
+
 	pa = (struct pdev_cfr *)qdf_mem_malloc(sizeof(struct pdev_cfr));
 	if (NULL == pa) {
 		cfr_err("Failed to allocate pdev_cfr object\n");
@@ -97,6 +135,11 @@ wlan_cfr_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_info("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (NULL != pa) {
 		wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_CFR,
@@ -111,10 +154,26 @@ QDF_STATUS
 wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 {
 	struct peer_cfr *pe = NULL;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev = NULL;
 
 	if (NULL == peer) {
 		cfr_err("PEER is NULL\n");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev = wlan_peer_get_vdev(peer);
+	if (vdev)
+		pdev = wlan_vdev_get_pdev(vdev);
+
+	if (!pdev) {
+		cfr_err("PDEV is NULL\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_info("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	pe = (struct peer_cfr *)qdf_mem_malloc(sizeof(struct peer_cfr));
@@ -147,6 +206,11 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	vdev = wlan_peer_get_vdev(peer);
 	if (vdev)
 		pdev = wlan_vdev_get_pdev(vdev);
+
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_info("cfr is disabled");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	if (pdev)
 		pa = wlan_objmgr_pdev_get_comp_private_obj(pdev,
@@ -214,6 +278,11 @@ QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_info("cfr is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 
 	if (pa == NULL) {
@@ -258,6 +327,11 @@ QDF_STATUS cfr_streamfs_init(struct wlan_objmgr_pdev *pdev)
 QDF_STATUS cfr_streamfs_remove(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_cfr *pa = NULL;
+
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_info("cfr is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa) {

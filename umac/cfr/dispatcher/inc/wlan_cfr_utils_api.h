@@ -588,6 +588,14 @@ QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev);
  */
 uint8_t count_set_bits(uint32_t value);
 
+/**
+ * wlan_cfr_is_feature_disabled() - Check if cfr feature is disabled
+ * @pdev - the physical device object.
+ *
+ * Return : true if cfr is disabled, else false.
+ */
+bool wlan_cfr_is_feature_disabled(struct wlan_objmgr_pdev *pdev);
+
 #ifdef WLAN_ENH_CFR_ENABLE
 /**
  * wlan_cfr_rx_tlv_process() - Process PPDU status TLVs and store info in
