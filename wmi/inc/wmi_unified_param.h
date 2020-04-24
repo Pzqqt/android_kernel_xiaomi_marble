@@ -4776,6 +4776,8 @@ typedef enum {
 	wmi_pdev_param_set_cmd_obss_pd_per_ac,
 	wmi_pdev_param_set_cong_ctrl_max_msdus,
 	wmi_pdev_param_enable_fw_dynamic_he_edca,
+	wmi_pdev_param_enable_srp,
+	wmi_pdev_param_enable_sr_prohibit,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -4912,6 +4914,8 @@ typedef enum {
 	wmi_vdev_param_enable_mcast_rc,
 	wmi_vdev_param_6ghz_params,
 	wmi_vdev_param_enable_disable_roam_reason_vsie,
+	wmi_vdev_param_set_cmd_obss_pd_threshold,
+	wmi_vdev_param_set_cmd_obss_pd_per_ac,
 } wmi_conv_vdev_param_id;
 
 /**
