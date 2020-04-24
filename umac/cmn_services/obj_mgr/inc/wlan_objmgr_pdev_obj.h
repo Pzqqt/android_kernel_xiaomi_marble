@@ -92,6 +92,10 @@
 /* PDEV BEacon Protection */
 #define WLAN_PDEV_F_BEACON_PROTECTION       0x80000000
 
+/* PDEV ext flags */
+/* CFR support enabled */
+#define WLAN_PDEV_FEXT_CFR_EN       0x00000001
+
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */
@@ -137,6 +141,7 @@ struct osif_pdev_priv;
  * struct wlan_objmgr_pdev_nif  - pdev object nif structure
  * @pdev_fw_caps:       radio specific FW capabilities
  * @pdev_feature_caps:  radio specific feature capabilities
+ * @pdev_feature_ext_caps:  radio specific feature capabilities extended
  * @pdev_ospriv:        OS specific pointer
  * @macaddr[]:          MAC address
  * @notified_ap_vdev:   ap vdev
@@ -144,6 +149,7 @@ struct osif_pdev_priv;
 struct wlan_objmgr_pdev_nif {
 	uint32_t pdev_fw_caps;
 	uint32_t pdev_feature_caps;
+	uint32_t pdev_feature_ext_caps;
 	struct pdev_osif_priv *pdev_ospriv;
 	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t notified_ap_vdev;
@@ -652,6 +658,54 @@ static inline uint8_t wlan_pdev_nif_feat_cap_get(struct wlan_objmgr_pdev *pdev,
 				uint32_t cap)
 {
 	return (pdev->pdev_nif.pdev_feature_caps & cap) ? 1 : 0;
+}
+
+/**
+ * wlan_pdev_nif_feat_ext_cap_set() - set feature ext caps
+ * @pdev: PDEV object
+ * @cap: capability flag to be set
+ *
+ * API to set feat ext caps in pdev
+ *
+ * Return: void
+ */
+static inline
+void wlan_pdev_nif_feat_ext_cap_set(struct wlan_objmgr_pdev *pdev,
+				    uint32_t cap)
+{
+	pdev->pdev_nif.pdev_feature_ext_caps |= cap;
+}
+
+/**
+ * wlan_pdev_nif_feat_ext_cap_clear() - clear feature ext caps
+ * @pdev: PDEV object
+ * @cap: capability flag to be cleared
+ *
+ * API to clear feat ext caps in pdev
+ *
+ * Return: void
+ */
+static inline
+void wlan_pdev_nif_feat_ext_cap_clear(struct wlan_objmgr_pdev *pdev,
+				      uint32_t cap)
+{
+	pdev->pdev_nif.pdev_feature_ext_caps &= ~cap;
+}
+
+/**
+ * wlan_pdev_nif_feat_ext_cap_get() - get feature ext caps
+ * @pdev: PDEV object
+ * @cap: capability flag to be checked
+ *
+ * API to know, whether particular feat ext caps flag is set in pdev
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline
+uint8_t wlan_pdev_nif_feat_ext_cap_get(struct wlan_objmgr_pdev *pdev,
+				       uint32_t cap)
+{
+	return (pdev->pdev_nif.pdev_feature_ext_caps & cap) ? 1 : 0;
 }
 
 /**
