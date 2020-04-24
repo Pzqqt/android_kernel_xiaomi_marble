@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of.h>
@@ -179,14 +179,15 @@ static int dsi_pwr_enable_vregs(struct dsi_regulator_info *regs, bool enable)
 				usleep_range((pre_off_ms * 1000),
 						(pre_off_ms * 1000) + 10);
 
-			if (regs->vregs[i].off_min_voltage)
-				(void)regulator_set_voltage(regs->vregs[i].vreg,
-						regs->vregs[i].off_min_voltage,
-						regs->vregs[i].max_voltage);
-
 			(void)regulator_set_load(regs->vregs[i].vreg,
 						regs->vregs[i].disable_load);
 			(void)regulator_disable(regs->vregs[i].vreg);
+
+			num_of_v = regulator_count_voltages(vreg->vreg);
+			if (num_of_v > 0)
+				(void)regulator_set_voltage(regs->vregs[i].vreg,
+						regs->vregs[i].off_min_voltage,
+						regs->vregs[i].max_voltage);
 
 			if (post_off_ms)
 				usleep_range((post_off_ms * 1000),

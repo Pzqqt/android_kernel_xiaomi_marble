@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012, 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_IO_UTIL_H__
@@ -89,8 +89,8 @@ void msm_dss_iounmap(struct dss_io_data *io_data);
 int msm_dss_enable_gpio(struct dss_gpio *in_gpio, int num_gpio, int enable);
 int msm_dss_gpio_enable(struct dss_gpio *in_gpio, int num_gpio, int enable);
 
-int msm_dss_config_vreg(struct device *dev, struct dss_vreg *in_vreg,
-	int num_vreg, int config);
+int msm_dss_get_vreg(struct device *dev, struct dss_vreg *in_vreg,
+	int num_vreg, int enable);
 int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg,	int enable);
 
 int msm_dss_get_clk(struct device *dev, struct dss_clk *clk_arry, int num_clk);

@@ -129,17 +129,16 @@ void msm_dss_iounmap(struct dss_io_data *io_data)
 } /* msm_dss_iounmap */
 EXPORT_SYMBOL(msm_dss_iounmap);
 
-int msm_dss_config_vreg(struct device *dev, struct dss_vreg *in_vreg,
-	int num_vreg, int config)
+int msm_dss_get_vreg(struct device *dev, struct dss_vreg *in_vreg,
+	int num_vreg, int enable)
 {
 	int i = 0, rc = 0;
 	struct dss_vreg *curr_vreg = NULL;
-	enum dss_vreg_type type;
 
 	if (!in_vreg || !num_vreg)
 		return rc;
 
-	if (config) {
+	if (enable) {
 		for (i = 0; i < num_vreg; i++) {
 			curr_vreg = &in_vreg[i];
 			curr_vreg->vreg = regulator_get(dev,
@@ -152,33 +151,11 @@ int msm_dss_config_vreg(struct device *dev, struct dss_vreg *in_vreg,
 				curr_vreg->vreg = NULL;
 				goto vreg_get_fail;
 			}
-			type = (regulator_count_voltages(curr_vreg->vreg) > 0)
-					? DSS_REG_LDO : DSS_REG_VS;
-			if (type == DSS_REG_LDO) {
-				rc = regulator_set_voltage(
-					curr_vreg->vreg,
-					curr_vreg->min_voltage,
-					curr_vreg->max_voltage);
-				if (rc < 0) {
-					DEV_ERR("%pS->%s: %s set vltg fail\n",
-						__builtin_return_address(0),
-						__func__,
-						curr_vreg->vreg_name);
-					goto vreg_set_voltage_fail;
-				}
-			}
 		}
 	} else {
 		for (i = num_vreg-1; i >= 0; i--) {
 			curr_vreg = &in_vreg[i];
 			if (curr_vreg->vreg) {
-				type = (regulator_count_voltages(
-					curr_vreg->vreg) > 0)
-					? DSS_REG_LDO : DSS_REG_VS;
-				if (type == DSS_REG_LDO) {
-					regulator_set_voltage(curr_vreg->vreg,
-						0, curr_vreg->max_voltage);
-				}
 				regulator_put(curr_vreg->vreg);
 				curr_vreg->vreg = NULL;
 			}
@@ -186,24 +163,16 @@ int msm_dss_config_vreg(struct device *dev, struct dss_vreg *in_vreg,
 	}
 	return 0;
 
-vreg_unconfig:
-if (type == DSS_REG_LDO)
-	regulator_set_load(curr_vreg->vreg, 0);
-
-vreg_set_voltage_fail:
-	regulator_put(curr_vreg->vreg);
-	curr_vreg->vreg = NULL;
-
 vreg_get_fail:
 	for (i--; i >= 0; i--) {
 		curr_vreg = &in_vreg[i];
-		type = (regulator_count_voltages(curr_vreg->vreg) > 0)
-			? DSS_REG_LDO : DSS_REG_VS;
-		goto vreg_unconfig;
+		regulator_set_load(curr_vreg->vreg, 0);
+		regulator_put(curr_vreg->vreg);
+		curr_vreg->vreg = NULL;
 	}
 	return rc;
-} /* msm_dss_config_vreg */
-EXPORT_SYMBOL(msm_dss_config_vreg);
+} /* msm_dss_get_vreg */
+EXPORT_SYMBOL(msm_dss_get_vreg);
 
 static bool msm_dss_is_hw_controlled(struct dss_vreg in_vreg)
 {
@@ -255,6 +224,10 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 					in_vreg[i].vreg_name);
 				goto vreg_set_opt_mode_fail;
 			}
+			if (regulator_count_voltages(in_vreg[i].vreg) > 0)
+				regulator_set_voltage(in_vreg[i].vreg,
+						in_vreg[i].min_voltage,
+						in_vreg[i].max_voltage);
 			rc = regulator_enable(in_vreg[i].vreg);
 			if (in_vreg[i].post_on_sleep && need_sleep)
 				usleep_range(in_vreg[i].post_on_sleep * 1000,
@@ -277,6 +250,9 @@ int msm_dss_enable_vreg(struct dss_vreg *in_vreg, int num_vreg, int enable)
 			regulator_set_load(in_vreg[i].vreg,
 				in_vreg[i].disable_load);
 			regulator_disable(in_vreg[i].vreg);
+			if (regulator_count_voltages(in_vreg[i].vreg) > 0)
+				regulator_set_voltage(in_vreg[i].vreg, 0,
+						in_vreg[i].max_voltage);
 			if (in_vreg[i].post_off_sleep)
 				usleep_range(in_vreg[i].post_off_sleep * 1000,
 				(in_vreg[i].post_off_sleep * 1000) + 10);

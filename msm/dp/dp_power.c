@@ -39,14 +39,14 @@ static int dp_power_regulator_init(struct dp_power_private *power)
 	pdev = power->pdev;
 
 	for (i = DP_CORE_PM; !rc && (i < DP_MAX_PM); i++) {
-		rc = msm_dss_config_vreg(&pdev->dev,
+		rc = msm_dss_get_vreg(&pdev->dev,
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, 1);
 		if (rc) {
 			DP_ERR("failed to init vregs for %s\n",
 				dp_parser_pm_name(i));
 			for (j = i - 1; j >= DP_CORE_PM; j--) {
-				msm_dss_config_vreg(&pdev->dev,
+				msm_dss_get_vreg(&pdev->dev,
 				parser->mp[j].vreg_config,
 				parser->mp[j].num_vreg, 0);
 			}
@@ -68,7 +68,7 @@ static void dp_power_regulator_deinit(struct dp_power_private *power)
 	pdev = power->pdev;
 
 	for (i = DP_CORE_PM; (i < DP_MAX_PM); i++) {
-		rc = msm_dss_config_vreg(&pdev->dev,
+		rc = msm_dss_get_vreg(&pdev->dev,
 			parser->mp[i].vreg_config,
 			parser->mp[i].num_vreg, 0);
 		if (rc)

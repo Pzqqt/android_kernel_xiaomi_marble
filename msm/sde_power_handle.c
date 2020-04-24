@@ -574,10 +574,10 @@ int sde_power_resource_init(struct platform_device *pdev,
 		goto parse_vreg_err;
 	}
 
-	rc = msm_dss_config_vreg(&pdev->dev,
+	rc = msm_dss_get_vreg(&pdev->dev,
 				mp->vreg_config, mp->num_vreg, 1);
 	if (rc) {
-		pr_err("vreg config failed rc=%d\n", rc);
+		pr_err("get config failed rc=%d\n", rc);
 		goto vreg_err;
 	}
 
@@ -613,7 +613,7 @@ bus_err:
 clkset_err:
 	msm_dss_put_clk(mp->clk_config, mp->num_clk);
 clkget_err:
-	msm_dss_config_vreg(&pdev->dev, mp->vreg_config, mp->num_vreg, 0);
+	msm_dss_get_vreg(&pdev->dev, mp->vreg_config, mp->num_vreg, 0);
 vreg_err:
 	if (mp->vreg_config)
 		devm_kfree(&pdev->dev, mp->vreg_config);
@@ -653,7 +653,7 @@ void sde_power_resource_deinit(struct platform_device *pdev,
 
 	msm_dss_put_clk(mp->clk_config, mp->num_clk);
 
-	msm_dss_config_vreg(&pdev->dev, mp->vreg_config, mp->num_vreg, 0);
+	msm_dss_get_vreg(&pdev->dev, mp->vreg_config, mp->num_vreg, 0);
 
 	if (mp->clk_config)
 		devm_kfree(&pdev->dev, mp->clk_config);
