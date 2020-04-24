@@ -438,6 +438,7 @@ typedef  enum  {
     WMI_SERVICE_HOST_SCAN_STOP_VDEV_ALL_SUPPORT = 243, /* Indicates FW supports scan stop mode WMI_SCN_STOP_HOST_VAP_ALL */
     WMI_SERVICE_BEACON_PROTECTION_SUPPORT = 244, /* Indicates FW supports WPA3 Beacon protection */
     WMI_SERVICE_EMA_AP_SUPPORT = 245, /* FW supports EMA AP feature */
+    WMI_SERVICE_PEER_POWER_SAVE_DURATION_SUPPORT = 246, /* Support for adding Power save duration per client */
 
 
     /******* ADD NEW SERVICES UP TO 256 HERE *******/

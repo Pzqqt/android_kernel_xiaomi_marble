@@ -23565,10 +23565,34 @@ typedef struct wmi_wds_addr_event {
     A_UINT32 vdev_id; /* ID of the vdev this peer belongs to */
 } wmi_wds_addr_event_fixed_param;
 
+/*
+ * Enum values for WMI_PEER_PS_SUPPORTED_BITMAP field,
+ * in wmi_peer_sta_ps_statechange_event structure.
+ */
+typedef enum {
+   /* Used to indicate that peer_ps_valid is valid */
+   WMI_PEER_PS_VALID_SUPPORTED =     0x00000001,
+   /* Used to indicate that peer_ps_timestamp field is valid */
+   WMI_PEER_PS_TIMESTAMP_SUPPORTED = 0x00000002,
+} WMI_PEER_PS_SUPPORTED_BITMAP;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_sta_ps_statechange_event_fixed_param */
     wmi_mac_addr peer_macaddr;
     A_UINT32 peer_ps_state;
+    /* Start of extended structure */
+    /* Bitmap to indicate which fields in the extended structure are valid.
+     * Bitmap values correspond to enum WMI_PEER_PS_SUPPORTED_BITMAP
+     */
+    A_UINT32 peer_ps_supported_bitmap;
+    /* This field is used to indicate host of a valid PS state change.
+     * 1 - indicates a valid PS state change.
+     * 0 - indicates an invalid PS state change.
+     * Host to ignore the power save duration calculation when peer_ps_valid = 0
+     */
+    A_UINT32 peer_ps_valid;
+    /* This field indicates the time since target boot-up in MilliSeconds. */
+    A_UINT32 peer_ps_timestamp;
 } wmi_peer_sta_ps_statechange_event_fixed_param;
 
 /* WMI_PDEV_FIPS_EVENTID */
