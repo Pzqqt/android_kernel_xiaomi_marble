@@ -1618,9 +1618,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 					pdev->mon_chan_freq;
 			}
 
-			if (qdf_unlikely(soc->full_mon_mode))
-				dp_rx_mon_process(soc, mac_id, quota);
-			else
+			if (!soc->full_mon_mode)
 				dp_rx_mon_dest_process(soc, mac_id, quota);
 
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
@@ -1831,7 +1829,7 @@ done:
 
  * Return: uint32_t: No. of ring entry that is processed.
  */
-static inline uint32_t
+uint32_t
 dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 	uint32_t work_done;
 
@@ -1854,6 +1852,9 @@ dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
  */
 uint32_t
 dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
+	if (qdf_unlikely(soc->full_mon_mode))
+		return dp_rx_mon_process(soc, mac_id, quota);
+
 	return dp_rx_mon_status_process(soc, mac_id, quota);
 }
 
