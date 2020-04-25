@@ -125,30 +125,24 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint8_t status_buf_count;
-	uint32_t work_done;
+	uint32_t work_done = 0;
 
 	status_buf_count = desc_info->status_buf_count;
 
-	qdf_mem_copy(&pdev->mon_desc, desc_info,
-		     sizeof(struct hal_rx_mon_desc_info));
-
-	work_done = dp_rx_mon_status_process(soc, mac_id, status_buf_count);
+status_reap:
+	work_done += dp_rx_mon_status_process(soc, mac_id, status_buf_count);
 
 	if (desc_info->ppdu_id != pdev->ppdu_info.com_info.ppdu_id) {
-		qdf_err("DEBUG: count: %d quota: %d", status_buf_count, quota);
-		dp_print_ring_stats(pdev);
-		qdf_assert_always(0);
-	}
+		pdev->rx_mon_stats.ppdu_id_mismatch++;
 
-	/* DEBUG */
-	if (work_done != status_buf_count) {
-		qdf_err("Reaped status ring buffers are not equal to "
-			"status buf count from destination ring work_done:"
-			" %d status_buf_count: %d",
-			work_done, status_buf_count);
+		qdf_err("count: %d quota: %d work_done: %d status_ppdu_id: %d"
+			 "dest_ppdu_id: %d ", status_buf_count, quota,
+					      work_done,
+					      pdev->ppdu_info.com_info.ppdu_id,
+					      desc_info->ppdu_id);
 
-		dp_print_ring_stats(pdev);
-		qdf_assert_always(0);
+		if (desc_info->ppdu_id > pdev->ppdu_info.com_info.ppdu_id)
+			goto status_reap;
 	}
 
 	return work_done;
@@ -339,12 +333,11 @@ next_msdu:
 						   mac_id,
 						   HAL_BM_ACTION_PUT_IN_IDLE_LIST)
 				!= QDF_STATUS_SUCCESS) {
-			dp_print_ring_stats(pdev);
-			qdf_assert_always(0);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				  "dp_rx_monitor_link_desc_return failed");
 		}
 	}
+	pdev->rx_mon_stats.dest_mpdu_done++;
 
 	if (last_msdu)
 		qdf_nbuf_set_next(last_msdu, NULL);
@@ -384,7 +377,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	QDF_STATUS status;
 
 	if (qdf_unlikely(!dp_soc_is_full_mon_enable(pdev)))
-		return quota;
+		return dp_rx_mon_status_process(soc, mac_id, quota);
 
 	mon_dest_srng = dp_rxdma_get_mon_dst_ring(pdev, mac_for_pdev);
 
@@ -427,8 +420,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		 * are zero.
 		 */
 		if (qdf_unlikely(!desc_info->end_of_ppdu && !rx_bufs_reaped)) {
-			dp_print_ring_stats(pdev);
-			qdf_assert_always(0);
+			qdf_err("end_of_ppdu and rx_bufs_reaped are zero");
 		}
 
 		rx_mon_stats->mon_rx_bufs_reaped_dest += rx_bufs_reaped;
@@ -468,6 +460,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			if (!head_msdu) {
 				ring_desc = hal_srng_dst_get_next(hal_soc,
 								  mon_dest_srng);
+
 				continue;
 			}
 
@@ -508,9 +501,11 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		 */
 		rx_mon_stats->dest_ppdu_done++;
 
+#if 0
 		if (pdev->ppdu_info.com_info.ppdu_id !=
 		    pdev->mon_desc->ppdu_id) {
 			pdev->rx_mon_stats.ppdu_id_mismatch++;
+
 			qdf_err("PPDU id mismatch, status_ppdu_id: %d"
 				"dest_ppdu_id: %d status_ppdu_done: %d "
 				"dest_ppdu_done: %d ppdu_id_mismatch_cnt: %u"
@@ -562,7 +557,10 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 				  ring_desc);
 				goto done2;
 		}
+#endif
 
+		quota -= dp_rx_mon_reap_status_ring(soc, mac_id,
+							quota, desc_info);
 		/* Deliver all MPDUs for a PPDU */
 		dp_rx_monitor_deliver_ppdu(soc, mac_id);
 
@@ -570,7 +568,6 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		break;
 	}
 
-done2:
 	hal_srng_access_end(hal_soc, mon_dest_srng);
 
 done1:
