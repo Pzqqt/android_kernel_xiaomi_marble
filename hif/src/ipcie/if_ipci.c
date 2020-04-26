@@ -82,10 +82,25 @@ QDF_STATUS hif_ipci_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 	return hif_ce_open(hif_ctx);
 }
 
+/**
+ * hif_ce_msi_map_ce_to_irq() - map CE to IRQ
+ * @scn: hif context
+ * @ce_id: CE Id
+ *
+ * Return: IRQ number
+ */
+static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
+{
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+
+	return ipci_scn->ce_msi_irq_num[ce_id];
+}
+
 int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+	uint8_t wake_ce_id;
 
 	hif_ce_prepare_config(hif_sc);
 
@@ -108,9 +123,18 @@ int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 	if (status)
 		goto disable_wlan;
 
+	status = hif_get_wake_ce_id(hif_sc, &wake_ce_id);
+	if (status)
+		goto unconfig_ce;
+
 	status = hif_configure_irq(hif_sc);
 	if (status < 0)
 		goto unconfig_ce;
+
+	hif_sc->wake_irq = hif_ce_msi_map_ce_to_irq(hif_sc, wake_ce_id);
+
+	HIF_INFO("expecting wake from ce %d, irq %d",
+		 wake_ce_id, hif_sc->wake_irq);
 
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
 
@@ -340,20 +364,6 @@ static irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 
 extern const char *ce_name[];
 
-/**
- * hif_ce_msi_map_ce_to_irq() - map CE to IRQ
- * @scn: hif context
- * @ce_id: CE Id
- *
- * Return: IRQ number
- */
-static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
-{
-	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
-
-	return ipci_scn->ce_msi_irq_num[ce_id];
-}
-
 /* hif_ce_srng_msi_irq_disable() - disable the irq for msi
  * @hif_sc: hif context
  * @ce_id: which ce to disable copy complete interrupts for
@@ -394,6 +404,11 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	uint32_t msi_irq_start;
 	struct HIF_CE_state *ce_sc = HIF_GET_CE_STATE(scn);
 	struct hif_ipci_softc *ipci_sc = HIF_GET_IPCI_SOFTC(scn);
+	uint8_t wake_ce_id;
+
+	ret = hif_get_wake_ce_id(scn, &wake_ce_id);
+	if (ret)
+		return ret;
 
 	/* do ce irq assignments */
 	ret = pld_get_user_msi_assignment(scn->qdf_dev->dev, "CE",
@@ -410,6 +425,7 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 	 * used in the srng parameter configuration
 	 */
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
+		unsigned long irqflags = IRQF_SHARED;
 		unsigned int msi_data = (ce_id % msi_data_count) +
 			msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
@@ -421,10 +437,13 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		if (!ce_sc->tasklets[ce_id].inited)
 			continue;
 
+		if (ce_id == wake_ce_id)
+			irqflags |= IRQF_NO_SUSPEND;
+
 		ipci_sc->ce_msi_irq_num[ce_id] = irq;
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
 				       irq, hif_ce_interrupt_handler,
-				       IRQF_SHARED,
+				       irqflags,
 				       ce_name[ce_id],
 				       &ce_sc->tasklets[ce_id]);
 		if (ret)
