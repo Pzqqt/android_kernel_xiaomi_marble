@@ -38,6 +38,8 @@
 #define WCD937X_VERSION_ENTRY_SIZE 32
 #define EAR_RX_PATH_AUX 1
 
+#define NUM_ATTEMPTS 5
+
 enum {
 	CODEC_TX = 0,
 	CODEC_RX,
@@ -1544,14 +1546,18 @@ static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
 {
 	int ret = 0;
 	uint8_t devnum = 0;
+	int num_retry = NUM_ATTEMPTS;
 
-	ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
-	if (ret) {
-		dev_err(&swr_dev->dev,
-			"%s get devnum %d for dev addr %lx failed\n",
-			__func__, devnum, swr_dev->addr);
-		return ret;
-	}
+	do {
+		ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
+		if (ret) {
+			dev_err(&swr_dev->dev,
+				"%s get devnum %d for dev addr %lx failed\n",
+				__func__, devnum, swr_dev->addr);
+			/* retry after 1ms */
+			usleep_range(1000, 1010);
+		}
+	} while (ret && --num_retry);
 	swr_dev->dev_num = devnum;
 	return 0;
 }
