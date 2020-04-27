@@ -110,6 +110,9 @@ static int rouleur_init_reg(struct snd_soc_component *component)
 	/* Enable surge protection */
 	snd_soc_component_update_bits(component, ROULEUR_ANA_SURGE_EN,
 					0xC0, 0xC0);
+	/* Disable mic bias pull down */
+	snd_soc_component_update_bits(component, ROULEUR_ANA_MICBIAS_MICB_1_2_EN,
+					0x01, 0x00);
 	return 0;
 }
 
@@ -432,6 +435,12 @@ static int rouleur_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		rouleur_rx_clk_enable(component);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_HPHPA_CNP_CTL_1,
+				0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				ROULEUR_SWR_HPHPA_HD2,
+				0x38, 0x38);
 		set_bit(HPH_COMP_DELAY, &rouleur->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
@@ -497,6 +506,12 @@ static int rouleur_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		rouleur_rx_clk_enable(component);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_HPHPA_CNP_CTL_1,
+				0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				ROULEUR_SWR_HPHPA_HD2,
+				0x07, 0x07);
 		set_bit(HPH_COMP_DELAY, &rouleur->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
@@ -1204,6 +1219,8 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 		rouleur->micb_ref[micb_index]++;
 		if (rouleur->micb_ref[micb_index] == 1) {
 			rouleur_global_mbias_enable(component);
+			snd_soc_component_update_bits(component, micb_reg,
+				0x80, 0x80);
 			snd_soc_component_update_bits(component,
 				micb_reg, enable_mask, enable_mask);
 			if (post_on_event)
@@ -1225,8 +1242,10 @@ int rouleur_micbias_control(struct snd_soc_component *component,
 				blocking_notifier_call_chain(
 					&rouleur->mbhc->notifier, pre_off_event,
 					&rouleur->mbhc->wcd_mbhc);
+                        snd_soc_component_update_bits(component, micb_reg,
+                                enable_mask, 0x00);
 			snd_soc_component_update_bits(component, micb_reg,
-				enable_mask, 0x00);
+				0x80, 0x00);
 			rouleur_global_mbias_disable(component);
 			if (post_off_event && rouleur->mbhc)
 				blocking_notifier_call_chain(

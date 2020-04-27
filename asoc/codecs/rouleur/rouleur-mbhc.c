@@ -320,11 +320,11 @@ static void rouleur_mbhc_micb_ramp_control(struct snd_soc_component *component,
 					0x1C, 0x0C);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0x80, 0x80);
+					0xA0, 0x80);
 	} else {
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0x80, 0x00);
+					0xA0, 0x00);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
 					0x1C, 0x00);
