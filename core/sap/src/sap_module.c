@@ -1230,10 +1230,22 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		if (sap_context->csr_roamProfile.phyMode ==
 		    eCSR_DOT11_MODE_11ac ||
 		    sap_context->csr_roamProfile.phyMode ==
-		    eCSR_DOT11_MODE_11ac_ONLY)
+		    eCSR_DOT11_MODE_11ac_ONLY ||
+		    sap_context->csr_roamProfile.phyMode ==
+		    eCSR_DOT11_MODE_11ax ||
+		    sap_context->csr_roamProfile.phyMode ==
+		    eCSR_DOT11_MODE_11ax_ONLY) {
 			bw = BW80;
-		else
+		} else if (sap_context->csr_roamProfile.phyMode ==
+			   eCSR_DOT11_MODE_11n ||
+			   sap_context->csr_roamProfile.phyMode ==
+			   eCSR_DOT11_MODE_11n_ONLY) {
 			bw = BW40_HIGH_PRIMARY;
+		} else {
+			/* For legacy 11a mode return 20MHz */
+			mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_20MHZ;
+			return QDF_STATUS_SUCCESS;
+		}
 
 		for (; bw >= BW20; bw--) {
 			uint16_t op_class;
