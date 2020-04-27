@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2019, Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, Linux Foundation. All rights reserved.
  */
 #include <linux/fs.h>
 #include <linux/mutex.h>
@@ -2393,7 +2393,7 @@ int q6lsm_lab_control(struct lsm_client *client, u32 enable,
 	lab_config_hdr.param_id = LSM_PARAM_ID_LAB_CONFIG;
 	lab_config_hdr.param_size = sizeof(lab_config);
 	lab_config.minor_version = 1;
-	lab_config.wake_up_latency_ms = 250;
+	lab_config.wake_up_latency_ms = 40;
 	rc = q6lsm_pack_and_set_params(client, &lab_config_hdr,
 				       (uint8_t *) &lab_config,
 				       LSM_SESSION_CMD_SET_PARAMS);
