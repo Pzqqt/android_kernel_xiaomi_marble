@@ -335,6 +335,7 @@ struct policy_mgr_cfg {
  * @user_config_sap_ch_freq: SAP channel freq configured by user application
  * @cfg: Policy manager config data
  * @dynamic_mcc_adaptive_sched: disable/enable mcc adaptive scheduler feature
+ * @dynamic_dfs_master_disabled: current state of dynamic dfs master
  * @dual_mac_configuration_complete_evt: qdf event to synchronize dual mac
  *					 configuration setting
  */
@@ -378,6 +379,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint32_t valid_ch_freq_list[NUM_CHANNELS];
 	uint32_t valid_ch_freq_list_count;
 	bool dynamic_mcc_adaptive_sched;
+	bool dynamic_dfs_master_disabled;
 	qdf_event_t dual_mac_configuration_complete_evt;
 };
 
