@@ -89,7 +89,7 @@ struct swrm_mports {
 	u8 req_ch;
 	u8 offset1;
 	u8 offset2;
-	u8 sinterval;
+	u16 sinterval;
 	u8 hstart;
 	u8 hstop;
 	u8 blk_grp_count;
