@@ -15530,8 +15530,14 @@ static void hdd_driver_unload(void)
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
-	if (hdd_ctx)
+	if (hdd_ctx) {
 		hdd_psoc_idle_timer_stop(hdd_ctx);
+		/*
+		 * Runtime PM sync resume may have started the bus bandwidth
+		 * periodic work hence stop it.
+		 */
+		hdd_bus_bw_compute_timer_stop(hdd_ctx);
+	}
 
 	/* trigger SoC remove */
 	wlan_hdd_unregister_driver();
