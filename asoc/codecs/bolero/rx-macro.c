@@ -1138,6 +1138,13 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d active_mask: 0x%x\n",
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
 		break;
+	case RX_MACRO_AIF6_PB:
+		*rx_slot = 0x1;
+		*rx_num = 0x01;
+		dev_dbg(rx_priv->dev,
+			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d\n",
+			__func__, dai->id, *rx_slot, *rx_num);
+		break;
 	case RX_MACRO_AIF_ECHO:
 		val = snd_soc_component_read32(component,
 			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4);
@@ -3298,7 +3305,7 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_OUTPUT("HPHL_OUT"),
 	SND_SOC_DAPM_OUTPUT("HPHR_OUT"),
 	SND_SOC_DAPM_OUTPUT("AUX_OUT"),
-	SND_SOC_DAPM_SINK("PCM_OUT"),
+	SND_SOC_DAPM_OUTPUT("PCM_OUT"),
 
 	SND_SOC_DAPM_INPUT("RX_TX DEC0_INP"),
 	SND_SOC_DAPM_INPUT("RX_TX DEC1_INP"),
