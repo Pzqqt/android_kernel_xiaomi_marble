@@ -41,12 +41,6 @@
 #define CFG_NAN_ALL
 #endif
 
-#ifdef WLAN_CFR_ENABLE
-#include "cfr_cfg.h"
-#else
-#define CFG_CFR_ALL
-#endif
-
 #include "cfg_ftm_time_sync.h"
 
 #include "wlan_pmo_cfg.h"
@@ -72,5 +66,4 @@
 	CFG_PMO_ALL \
 	CFG_TDLS_ALL \
 	CFG_PKT_CAPTURE_MODE_ALL \
-	CFG_TIME_SYNC_FTM_ALL \
-	CFG_CFR_ALL
+	CFG_TIME_SYNC_FTM_ALL
