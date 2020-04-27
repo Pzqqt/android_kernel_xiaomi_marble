@@ -1677,7 +1677,7 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 static QDF_STATUS wma_update_thermal_mitigation_to_fw(tp_wma_handle wma,
 						      u_int8_t thermal_level)
 {
-	struct thermal_mitigation_params therm_data;
+	struct thermal_mitigation_params therm_data = {0};
 
 	/* Check if vdev is in mcc, if in mcc set dc value as 10, else 100 */
 	therm_data.dc = 100;
