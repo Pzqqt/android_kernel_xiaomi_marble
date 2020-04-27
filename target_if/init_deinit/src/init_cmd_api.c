@@ -69,12 +69,13 @@ static uint32_t init_deinit_alloc_host_mem_chunk(struct wlan_objmgr_psoc *psoc,
 		return 0;
 
 	/*
-	 * We have skip smaller chunks memory allocation for TXBF_CV buffer
-	 * as Firmware is expecting continuous memory
+	 * We have skip smaller chunks memory allocation for TXBF_CV and
+	 * CFR_CAPTURE buffer as Firmware is expecting continuous memory
 	 */
 	if (!((num_unit_info & HOST_CONTIGUOUS_MEM_CHUNK_REQUIRED) &&
 	      (req_id == TXBF_CV_POOL0 || req_id == TXBF_CV_POOL1 ||
-	      req_id == TXBF_CV_POOL2))) {
+	      req_id == TXBF_CV_POOL2 ||
+	      req_id == CFR_CAPTURE_HOST_MEM_REQ_ID))) {
 		ichunk = ((num_units * unit_len) >>
 			HOST_MEM_CHUNK_MAX_SIZE_POWER2);
 		if (ichunk)

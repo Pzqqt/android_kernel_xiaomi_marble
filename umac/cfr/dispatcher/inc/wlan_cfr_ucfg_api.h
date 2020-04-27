@@ -22,6 +22,7 @@
 #include <wlan_objmgr_peer_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_cfr_public_structs.h>
+#include <wlan_cfr_utils_api.h>
 
 #define MAX_CFR_PRD        (10*60*1000)        /* 10 minutes */
 

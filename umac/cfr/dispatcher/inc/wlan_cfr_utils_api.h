@@ -44,6 +44,8 @@
 #define DBR_EVENT_TIMEOUT_IN_MS_CFR 1
 #define DBR_NUM_RESP_PER_EVENT_CFR 1
 #define MAX_CFR_ENABLED_CLIENTS 10
+#define CFR_CAPTURE_HOST_MEM_REQ_ID 9
+#define CFR_HOST_MEM_READ_INDEX_DEFAULT 8
 #ifdef WLAN_ENH_CFR_ENABLE
 #define MAX_CFR_MU_USERS 4
 #define NUM_CHAN_CAPTURE_STATUS 4
@@ -93,6 +95,7 @@ enum cfrradiotype {
 	CFR_CAPTURE_RADIO_CYP,
 	CFR_CAPTURE_RADIO_HSP,
 	CFR_CAPTURE_RADIO_PINE,
+	CFR_CAPTURE_RADIO_ADRASTEA,
 	CFR_CAPTURE_RADIO_MAX = 0xFF,
 };
 
@@ -234,7 +237,7 @@ struct psoc_cfr {
  */
 struct cfr_wmi_host_mem_chunk {
 	uint32_t *vaddr;
-	uint32_t paddr;
+	qdf_dma_addr_t paddr;
 	uint32_t len;
 	uint32_t req_id;
 };

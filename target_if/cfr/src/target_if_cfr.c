@@ -29,6 +29,7 @@
 #include <target_if_cfr_6018.h>
 #ifdef CFR_USE_FIXED_FOLDER
 #include "target_if_cfr_6490.h"
+#include "target_if_cfr_adrastea.h"
 #include "wlan_reg_services_api.h"
 #else
 #include <target_if_cfr_8074v2.h>
@@ -205,6 +206,8 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 
 	if (target_type == TARGET_TYPE_QCA6490) {
 		status = cfr_6490_init_pdev(psoc, pdev);
+	} else if (target_type == TARGET_TYPE_ADRASTEA) {
+		status = cfr_adrastea_init_pdev(psoc, pdev);
 	} else {
 		cfr_info("unsupport chip");
 		status = QDF_STATUS_SUCCESS;
@@ -223,6 +226,8 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 
 	if (target_type == TARGET_TYPE_QCA6490) {
 		status = cfr_6490_deinit_pdev(psoc, pdev);
+	} else if (target_type == TARGET_TYPE_ADRASTEA) {
+		status = cfr_adrastea_deinit_pdev(psoc, pdev);
 	} else {
 		cfr_info("unsupport chip");
 		status = QDF_STATUS_SUCCESS;
