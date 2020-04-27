@@ -130,6 +130,7 @@ struct va_macro_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
+	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 struct va_macro_priv {
@@ -3229,6 +3230,7 @@ static int va_macro_probe(struct platform_device *pdev)
 		va_priv->swr_plat_data.clk = va_macro_swrm_clock;
 		va_priv->swr_plat_data.core_vote = va_macro_core_vote;
 		va_priv->swr_plat_data.handle_irq = NULL;
+		va_priv->swr_plat_data.pinctrl_setup = NULL;
 		mutex_init(&va_priv->swr_clk_lock);
 	}
 	va_priv->is_used_va_swr_gpio = is_used_va_swr_gpio;
