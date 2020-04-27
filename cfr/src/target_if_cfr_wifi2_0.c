@@ -100,6 +100,12 @@ QDF_STATUS ol_txrx_htt_cfr_rx_ind_handler(void *pdev_ptr,
 		return status;
 	}
 
+	if (wlan_cfr_is_feature_disabled(pdev)) {
+		cfr_err("cfr is disabled");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
 	if (pa == NULL) {
 		cfr_err("pdev_cfr is NULL\n");
