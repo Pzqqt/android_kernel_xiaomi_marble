@@ -2539,7 +2539,7 @@ struct stats_ext_params {
  */
 struct wmi_host_mem_chunk {
 	uint32_t *vaddr;
-	uint32_t paddr;
+	qdf_dma_addr_t paddr;
 	qdf_dma_mem_context(memctx);
 	uint32_t len;
 	uint32_t req_id;
@@ -5216,6 +5216,7 @@ typedef enum {
 	wmi_service_sta_nan_ndi_four_port,
 	wmi_service_host_scan_stop_vdev_all,
 	wmi_service_ema_ap_support,
+	wmi_support_extend_address,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

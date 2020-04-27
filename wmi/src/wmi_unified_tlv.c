@@ -8337,6 +8337,41 @@ QDF_STATUS send_adfs_ocac_abort_cmd_tlv(wmi_unified_t wmi_handle,
 #endif
 
 /**
+ * is_service_enabled_tlv() - Check if service enabled
+ * @param wmi_handle: wmi handle
+ * @param service_id: service identifier
+ *
+ * Return: 1 enabled, 0 disabled
+ */
+static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
+				   uint32_t service_id)
+{
+	struct wmi_soc *soc = wmi_handle->soc;
+
+	if (!soc->wmi_service_bitmap) {
+		WMI_LOGE("WMI service bit map is not saved yet");
+		return false;
+	}
+
+	/* if wmi_service_enabled was received with extended bitmap,
+	 * use WMI_SERVICE_EXT_IS_ENABLED to check the services.
+	 */
+	if (soc->wmi_ext_service_bitmap)
+		return WMI_SERVICE_EXT_IS_ENABLED(soc->wmi_service_bitmap,
+				soc->wmi_ext_service_bitmap,
+				service_id);
+
+	if (service_id >= WMI_MAX_SERVICE) {
+		WMI_LOGE("Service id %d but WMI ext service bitmap is NULL",
+			 service_id);
+		return false;
+	}
+
+	return WMI_SERVICE_IS_ENABLED(soc->wmi_service_bitmap,
+				service_id);
+}
+
+/**
  * init_cmd_send_tlv() - send initialization cmd to fw
  * @wmi_handle: wmi handle
  * @param param: pointer to wmi init param
@@ -8394,6 +8429,11 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 		host_mem_chunks[idx].ptr = param->mem_chunks[idx].paddr;
 		host_mem_chunks[idx].size = param->mem_chunks[idx].len;
 		host_mem_chunks[idx].req_id = param->mem_chunks[idx].req_id;
+		if (is_service_enabled_tlv(wmi_handle,
+					   WMI_SERVICE_SUPPORT_EXTEND_ADDRESS))
+			host_mem_chunks[idx].ptr_high =
+				qdf_get_upper_32_bits(
+					param->mem_chunks[idx].paddr);
 		QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_DEBUG,
 				"chunk %d len %d requested ,ptr  0x%x ",
 				idx, host_mem_chunks[idx].size,
@@ -8950,40 +8990,6 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			(WMI_SERVICE_SEGMENT_BM_SIZE32 * sizeof(uint32_t)));
 
 	return QDF_STATUS_SUCCESS;
-}
-/**
- * is_service_enabled_tlv() - Check if service enabled
- * @param wmi_handle: wmi handle
- * @param service_id: service identifier
- *
- * Return: 1 enabled, 0 disabled
- */
-static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
-		uint32_t service_id)
-{
-	struct wmi_soc *soc = wmi_handle->soc;
-
-	if (!soc->wmi_service_bitmap) {
-		WMI_LOGE("WMI service bit map is not saved yet");
-		return false;
-	}
-
-	/* if wmi_service_enabled was received with extended bitmap,
-	 * use WMI_SERVICE_EXT_IS_ENABLED to check the services.
-	 */
-	if (soc->wmi_ext_service_bitmap)
-		return WMI_SERVICE_EXT_IS_ENABLED(soc->wmi_service_bitmap,
-				soc->wmi_ext_service_bitmap,
-				service_id);
-
-	if (service_id >= WMI_MAX_SERVICE) {
-		WMI_LOGE("Service id %d but WMI ext service bitmap is NULL",
-			 service_id);
-		return false;
-	}
-
-	return WMI_SERVICE_IS_ENABLED(soc->wmi_service_bitmap,
-				service_id);
 }
 
 static inline void copy_ht_cap_info(uint32_t ev_target_cap,
@@ -14806,6 +14812,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_NDI_NDI_STA_SUPPORT;
 	wmi_service[wmi_service_host_scan_stop_vdev_all] =
 		WMI_SERVICE_HOST_SCAN_STOP_VDEV_ALL_SUPPORT;
+	wmi_service[wmi_support_extend_address] =
+			WMI_SERVICE_SUPPORT_EXTEND_ADDRESS;
 }
 
 /**
