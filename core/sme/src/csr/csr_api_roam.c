@@ -9305,6 +9305,20 @@ QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessio
 	return status;
 }
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static void
+csr_disable_roaming_offload(struct mac_context *mac_ctx, uint32_t vdev_id)
+{
+	sme_stop_roaming(MAC_HANDLE(mac_ctx), vdev_id,
+			 REASON_DRIVER_DISABLED,
+			 RSO_INVALID_REQUESTOR);
+}
+#else
+static inline void
+csr_disable_roaming_offload(struct mac_context *mac_ctx, uint32_t session_id)
+{}
+#endif
+
 QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 			       eCsrRoamDisconnectReason reason,
 			       tSirMacReasonCodes mac_reason)
@@ -9317,7 +9331,10 @@ QDF_STATUS csr_roam_disconnect(struct mac_context *mac_ctx, uint32_t session_id,
 	}
 
 	session->discon_in_progress = true;
+
 	csr_roam_cancel_roaming(mac_ctx, session_id);
+	csr_disable_roaming_offload(mac_ctx, session_id);
+
 	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrForcedDisassoc);
 
@@ -21701,13 +21718,14 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	case SIR_ROAMING_INVOKE_FAIL:
 		sme_debug("Roaming triggered failed source %d nud behaviour %d",
 			  vdev_roam_params->source, mac_ctx->nud_fail_behaviour);
+
+		/* Userspace roam req fail, disconnect with AP */
 		if (vdev_roam_params->source == USERSPACE_INITIATED ||
-		    mac_ctx->nud_fail_behaviour == DISCONNECT_AFTER_ROAM_FAIL) {
-			/* Userspace roam req fail, disconnect with AP */
+		    mac_ctx->nud_fail_behaviour == DISCONNECT_AFTER_ROAM_FAIL)
 			csr_roam_disconnect(mac_ctx, session_id,
-					eCSR_DISCONNECT_REASON_DEAUTH,
-					eSIR_MAC_USER_TRIGGERED_ROAM_FAILURE);
-		}
+				    eCSR_DISCONNECT_REASON_DEAUTH,
+				    eSIR_MAC_USER_TRIGGERED_ROAM_FAILURE);
+
 		vdev_roam_params->roam_invoke_in_progress = false;
 		goto end;
 	case SIR_ROAM_SYNCH_PROPAGATION:

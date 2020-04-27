@@ -6538,10 +6538,9 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (reason == REASON_DRIVER_DISABLED && requestor) {
-		mlme_set_operations_bitmap(mac_ctx->psoc, session_id, requestor,
-					   false);
-	}
+	if (reason == REASON_DRIVER_DISABLED && requestor)
+		mlme_set_operations_bitmap(mac_ctx->psoc, session_id,
+					   requestor, false);
 
 	status = csr_post_roam_state_change(mac_ctx, session_id,
 					    ROAM_RSO_STOPPED,
