@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -785,4 +785,19 @@ static inline int ol_txrx_distribute_group_credits(struct ol_txrx_pdev_t *pdev,
 	* FEATURE_HL_GROUP_CREDIT_FLOW_CONTROL &&
 	* FEATURE_HL_DBS_GROUP_CREDIT_SHARING
 	*/
+
+#ifdef WLAN_CFR_ENABLE
+/**
+ * ol_rx_cfr_capture_msg_handler() - handler for HTT_PEER_CFR_CAPTURE_MSG_TYPE_1
+ * @htt_t2h_msg: htt msg data
+ *
+ * Return: None
+ */
+void ol_rx_cfr_capture_msg_handler(qdf_nbuf_t htt_t2h_msg);
+#else
+static inline void ol_rx_cfr_capture_msg_handler(qdf_nbuf_t htt_t2h_msg)
+{
+}
+#endif
+
 #endif /* _OL_TXRX_HTT_API__H_ */

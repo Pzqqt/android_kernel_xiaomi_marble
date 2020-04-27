@@ -1997,3 +1997,59 @@ void ol_ath_add_vow_extstats(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 }
 
 #endif
+
+#ifdef WLAN_CFR_ENABLE
+void ol_rx_cfr_capture_msg_handler(qdf_nbuf_t htt_t2h_msg)
+{
+	HTT_PEER_CFR_CAPTURE_MSG_TYPE cfr_type;
+	struct htt_cfr_dump_compl_ind *cfr_dump;
+	struct htt_cfr_dump_ind_type_1 cfr_ind;
+	struct csi_cfr_header cfr_hdr = {};
+	uint32_t mem_index, vdev_id;
+	uint32_t *msg_word;
+	uint8_t *mac_addr;
+
+	msg_word = (uint32_t *)qdf_nbuf_data(htt_t2h_msg);
+
+	/* First payload word */
+	msg_word++;
+	cfr_dump = (struct htt_cfr_dump_compl_ind *)msg_word;
+	cfr_type = cfr_dump->msg_type;
+	if (cfr_type != HTT_PEER_CFR_CAPTURE_MSG_TYPE_1) {
+		ol_txrx_err("Unsupported cfr msg type 0x%x", cfr_type);
+		return;
+	}
+
+	/* Second payload word */
+	msg_word++;
+	cfr_hdr.start_magic_num = 0xDEADBEAF;
+	cfr_hdr.u.meta_v1.status = HTT_T2H_CFR_DUMP_TYPE1_STATUS_GET(
+					*msg_word);
+	cfr_hdr.u.meta_v1.capture_bw = HTT_T2H_CFR_DUMP_TYPE1_CAP_BW_GET(
+					*msg_word);
+	cfr_hdr.u.meta_v1.capture_mode = HTT_T2H_CFR_DUMP_TYPE1_MODE_GET(
+					*msg_word);
+	cfr_hdr.u.meta_v1.sts_count = HTT_T2H_CFR_DUMP_TYPE1_STS_GET(
+					*msg_word);
+	cfr_hdr.u.meta_v1.channel_bw = HTT_T2H_CFR_DUMP_TYPE1_CHAN_BW_GET(
+					*msg_word);
+	cfr_hdr.u.meta_v1.capture_type = HTT_T2H_CFR_DUMP_TYPE1_CAP_TYPE_GET(
+					*msg_word);
+
+	vdev_id = HTT_T2H_CFR_DUMP_TYPE1_VDEV_ID_GET(*msg_word);
+
+	mac_addr = (uint8_t *)(msg_word + 1);
+	qdf_mem_copy(cfr_hdr.u.meta_v1.peer_addr, mac_addr, QDF_MAC_ADDR_SIZE);
+
+	cfr_ind = cfr_dump->htt_cfr_dump_compl_ind_type_1;
+
+	cfr_hdr.u.meta_v1.prim20_chan = cfr_ind.chan.chan_mhz;
+	cfr_hdr.u.meta_v1.center_freq1 = cfr_ind.chan.band_center_freq1;
+	cfr_hdr.u.meta_v1.center_freq2 = cfr_ind.chan.band_center_freq2;
+	cfr_hdr.u.meta_v1.phy_mode = cfr_ind.chan.chan_mode;
+	cfr_hdr.u.meta_v1.length = cfr_ind.length;
+	cfr_hdr.u.meta_v1.timestamp = cfr_ind.timestamp;
+
+	mem_index = cfr_ind.index;
+}
+#endif

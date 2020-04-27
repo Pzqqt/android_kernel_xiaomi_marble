@@ -209,6 +209,7 @@ static int htt_t2h_adjust_bus_target_delta(struct htt_pdev_t *pdev,
 #endif
 
 #define MAX_TARGET_TX_CREDIT    204800
+#define HTT_CFR_DUMP_COMPL_HEAD_SZ	4
 
 /* Target to host Msg/event  handler  for low priority messages*/
 static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
@@ -706,7 +707,23 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 		}
 		}
 	}
+#ifdef WLAN_CFR_ENABLE
+	case HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND:
+	{
+		int expected_len;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
 
+		expected_len = HTT_CFR_DUMP_COMPL_HEAD_SZ +
+				sizeof(struct htt_cfr_dump_compl_ind);
+		if (msg_len < expected_len) {
+			qdf_print("Invalid length of CFR capture event");
+			break;
+		}
+
+		ol_rx_cfr_capture_msg_handler(htt_t2h_msg);
+		break;
+	}
+#endif
 	default:
 		break;
 	};
