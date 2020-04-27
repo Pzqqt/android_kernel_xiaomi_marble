@@ -968,7 +968,7 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 
 bool utils_dfs_can_ignore_radar_event(struct wlan_objmgr_pdev *pdev)
 {
-	return !policy_mgr_get_dfs_master_dynamic_enabled(
+	return policy_mgr_get_can_skip_radar_event(
 		wlan_pdev_get_psoc(pdev), INVALID_VDEV_ID);
 }
 #endif
