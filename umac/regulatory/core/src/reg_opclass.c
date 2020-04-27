@@ -224,7 +224,7 @@ static const struct reg_dmn_op_class_map_t japan_op_class[] = {
 	 {36, 40, 44, 48} },
 	{30, 25, BW20, BIT(BEHAV_NONE), 2407,
 	 {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
-	{31, 25, BW20, BIT(BEHAV_NONE), 2407,
+	{31, 25, BW20, BIT(BEHAV_NONE), 2414,
 	 {14} },
 	{32, 20, BW20, BIT(BEHAV_NONE), 5000,
 	 {52, 56, 60, 64} },
