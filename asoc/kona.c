@@ -655,6 +655,32 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 	},
+	{
+		.name = LPASS_BE_RT_PROXY_PCM_RX,
+		.stream_name = LPASS_BE_RT_PROXY_PCM_RX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_RT_PROXY_PCM_TX,
+		.stream_name = LPASS_BE_RT_PROXY_PCM_TX,
+		.cpu_dai_name = "snd-soc-dummy-dai",
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+	},
 };
 
 static struct snd_soc_dai_link msm_kona_dai_links[
