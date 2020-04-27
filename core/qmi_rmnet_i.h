@@ -27,8 +27,6 @@
 #define ACK_MQ_OFFSET (MAX_MQ_NUM - 1)
 #define INVALID_MQ 0xFF
 
-#define DFC_MODE_FLOW_ID 2
-#define DFC_MODE_MQ_NUM 3
 #define DFC_MODE_SA 4
 
 #define CONFIG_QTI_QMI_RMNET 1

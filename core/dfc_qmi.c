@@ -1479,16 +1479,10 @@ void dfc_qmi_burst_check(struct net_device *dev, struct qos_info *qos,
 
 	spin_lock_bh(&qos->qos_lock);
 
-	if (dfc_mode == DFC_MODE_MQ_NUM) {
-		/* Mark is mq num */
-		if (likely(mark < MAX_MQ_NUM))
-			bearer = qos->mq[mark].bearer;
-	} else {
-		/* Mark is flow_id */
-		itm = qmi_rmnet_get_flow_map(qos, mark, ip_type);
-		if (likely(itm))
-			bearer = itm->bearer;
-	}
+	/* Mark is flow_id */
+	itm = qmi_rmnet_get_flow_map(qos, mark, ip_type);
+	if (likely(itm))
+		bearer = itm->bearer;
 
 	if (unlikely(!bearer))
 		goto out;

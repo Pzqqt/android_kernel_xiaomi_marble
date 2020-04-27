@@ -39,14 +39,12 @@
 #define FLAG_TO_MODE(f) ((f) & FLAG_DFC_MASK)
 
 #define DFC_SUPPORTED_MODE(m) \
-	((m) == DFC_MODE_FLOW_ID || (m) == DFC_MODE_MQ_NUM || \
-	 (m) == DFC_MODE_SA)
+	((m) == DFC_MODE_SA)
 
 #define FLAG_TO_QMAP(f) ((f) & FLAG_QMAP_MASK)
 
 int dfc_mode;
 int dfc_qmap;
-#define IS_ANCILLARY(type) ((type) != AF_INET && (type) != AF_INET6)
 
 unsigned int rmnet_wq_frequency __read_mostly = 1000;
 
@@ -312,10 +310,7 @@ static void __qmi_rmnet_update_mq(struct net_device *dev,
 			bearer->mq_idx = itm->mq_idx;
 			bearer->ack_mq_idx = itm->mq_idx + ACK_MQ_OFFSET;
 		} else {
-			if (IS_ANCILLARY(itm->ip_type))
-				bearer->ack_mq_idx = itm->mq_idx;
-			else
-				bearer->mq_idx = itm->mq_idx;
+			bearer->mq_idx = itm->mq_idx;
 		}
 
 		qmi_rmnet_flow_control(dev, itm->mq_idx,
@@ -855,34 +850,19 @@ int qmi_rmnet_get_queue(struct net_device *dev, struct sk_buff *skb)
 	if (!qos)
 		return 0;
 
-	/* If mark is mq num return it */
-	if (dfc_mode == DFC_MODE_MQ_NUM)
-		return mark;
-
-	if (dfc_mode == DFC_MODE_SA)
+	if (likely(dfc_mode == DFC_MODE_SA))
 		return qmi_rmnet_get_queue_sa(qos, skb);
-
-	/* Default flows */
-	if (!mark) {
-		if (qmi_rmnet_is_tcp_ack(skb))
-			return 1;
-		else
-			return 0;
-	}
 
 	ip_type = (skb->protocol == htons(ETH_P_IPV6)) ? AF_INET6 : AF_INET;
 
-	/* Dedicated flows */
 	spin_lock_bh(&qos->qos_lock);
 
 	itm = qmi_rmnet_get_flow_map(qos, mark, ip_type);
-	if (unlikely(!itm))
-		goto done;
+	if (itm)
+		txq = itm->mq_idx;
 
-	txq = itm->mq_idx;
-
-done:
 	spin_unlock_bh(&qos->qos_lock);
+
 	return txq;
 }
 EXPORT_SYMBOL(qmi_rmnet_get_queue);

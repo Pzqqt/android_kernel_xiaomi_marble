@@ -486,6 +486,11 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 	if (!port || !qmi)
 		return -EINVAL;
 
+	/* Prevent double init */
+	data = rcu_dereference(qmap_dfc_data);
+	if (data)
+		return -EINVAL;
+
 	data = kzalloc(sizeof(struct dfc_qmi_data), GFP_KERNEL);
 	if (!data)
 		return -ENOMEM;
@@ -499,8 +504,7 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 
 	atomic_set(&qmap_txid, 0);
 
-	if (!rmnet_ctl)
-		rmnet_ctl = symbol_get(rmnet_ctl_if);
+	rmnet_ctl = symbol_get(rmnet_ctl_if);
 	if (!rmnet_ctl) {
 		pr_err("rmnet_ctl module not loaded\n");
 		goto out;
