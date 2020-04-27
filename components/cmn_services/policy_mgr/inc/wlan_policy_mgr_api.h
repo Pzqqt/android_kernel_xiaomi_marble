@@ -217,6 +217,20 @@ policy_mgr_get_dfs_master_dynamic_enabled(struct wlan_objmgr_psoc *psoc,
 					  uint8_t vdev_id);
 
 /**
+ * policy_mgr_get_can_skip_radar_event - Can skip DFS Radar event or not
+ * @psoc: soc obj
+ * @vdev_id: sap vdev id
+ *
+ * This API is used by dfs component to get decision whether to ignore
+ * the radar event or not.
+ *
+ * Return: true if Radar event should be ignored.
+ */
+bool
+policy_mgr_get_can_skip_radar_event(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id);
+
+/**
  * policy_mgr_get_sta_sap_scc_lte_coex_chnl() - to find out if STA & SAP
  *						     SCC is allowed on LTE COEX
  * @psoc: pointer to psoc
