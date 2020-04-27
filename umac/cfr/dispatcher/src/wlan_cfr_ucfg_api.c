@@ -374,6 +374,93 @@ QDF_STATUS ucfg_cfr_stop_indication(struct wlan_objmgr_vdev *vdev)
 	return cfr_stop_indication(vdev);
 }
 
+#ifdef WLAN_CFR_ADRASTEA
+void ucfg_cfr_capture_data(struct wlan_objmgr_psoc *psoc, uint32_t vdev_id,
+			   struct csi_cfr_header *hdr, uint32_t mem_index)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_cfr *pcfr;
+	uint32_t end_magic_num = 0xBEAFDEAD;
+	void *vaddr, *payload;
+	u32 *rindex, *windex, payload_len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_CFR_ID);
+	if (!vdev) {
+		cfr_err("vdev is NULL");
+		return;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		cfr_err("pdev is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return;
+	}
+
+	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_CFR_ID);
+	if (status != QDF_STATUS_SUCCESS) {
+		cfr_err("Failed to get pdev reference");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return;
+	}
+
+	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						     WLAN_UMAC_COMP_CFR);
+	if (!pcfr) {
+		cfr_err("pdev is NULL");
+		goto exit;
+	}
+
+	if (!pcfr->is_cfr_capable) {
+		cfr_err("CFR not supported on this chip");
+		goto exit;
+	}
+
+	hdr->vendorid               = CFR_VENDOR_ID;
+	hdr->cfr_metadata_version   = CFR_META_VERSION_1;
+	hdr->cfr_data_version       = CFR_DATA_VERSION_1;
+	hdr->chip_type              = CFR_CAPTURE_RADIO_ADRASTEA;
+	hdr->pltform_type           = CFR_PLATFORM_TYPE_ARM;
+	hdr->Reserved               = 0;
+
+	vaddr = pcfr->cfr_mem_chunk.vaddr;
+	rindex = (u32 *)vaddr;
+	windex = rindex + 1;
+
+	/*
+	 * mem_index is having the index of the address where CFR dump wrriten,
+	 * find data pointer from mem index and start address of memory.
+	 */
+	payload = vaddr + mem_index;
+	payload_len = hdr->u.meta_v1.length;
+
+	/* Write data into streamfs */
+	tgt_cfr_info_send(pdev, hdr, sizeof(struct csi_cfr_header),
+			  payload, payload_len, &end_magic_num,
+			  sizeof(uint32_t));
+
+	/*
+	 * Updating the read index to the number of bytes read by host, it will
+	 * help in writing next capture.
+	 * ignoring 4 byte for FW magic number from the actual allocated memory
+	 * length to avoid corruption in magic number. This memory is circular
+	 * so after complation of one round, Skipping the first 8 byte as they
+	 * are for read index and write index.
+	 */
+	if (((*rindex) + payload_len) <= (pcfr->cfr_mem_chunk.len - 4))
+		(*rindex) += payload_len;
+	else if (((*rindex) + payload_len) > (pcfr->cfr_mem_chunk.len - 4))
+		(*rindex) = (payload_len + 8);
+
+exit:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+}
+#endif
+
 #ifdef WLAN_ENH_CFR_ENABLE
 
 static inline
