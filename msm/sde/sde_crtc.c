@@ -567,7 +567,7 @@ static void _sde_crtc_setup_dim_layer_cfg(struct drm_crtc *crtc,
 						cstate->lm_roi[i].y;
 		}
 
-		SDE_EVT32_VERBOSE(DRMID(crtc),
+		SDE_EVT32(DRMID(crtc), dim_layer->stage,
 				cstate->lm_roi[i].x,
 				cstate->lm_roi[i].y,
 				cstate->lm_roi[i].w,
