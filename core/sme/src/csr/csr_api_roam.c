@@ -16622,7 +16622,7 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac,
 	}
 	pMsg->reasonCode = reasonCode;
 	pMsg->process_ho_fail = (pSession->disconnect_reason ==
-		eCSR_DISCONNECT_REASON_ROAM_HO_FAIL) ? true : false;
+		eSIR_MAC_FW_TRIGGERED_ROAM_FAILURE) ? true : false;
 
 	/* Update the disconnect stats */
 	pSession->disconnect_stats.disconnection_cnt++;

@@ -623,7 +623,7 @@ struct csr_roam_session {
 	bool nss_forced_1x1;
 	bool disable_hi_rssi;
 	bool dhcp_done;
-	uint8_t disconnect_reason;
+	tSirMacReasonCodes disconnect_reason;
 	uint8_t uapsd_mask;
 	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;
