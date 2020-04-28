@@ -5143,6 +5143,15 @@ typedef struct {
 #define WMI_TX_SEND_PARAM_CFR_CAPTURE_GET(tx_param_dword1) WMI_GET_BITS(tx_param_dword1, 21, 1)
 #define WMI_TX_SEND_PARAM_CFR_CAPTURE_SET(tx_param_dword1, value) WMI_SET_BITS(tx_param_dword1, 21, 1, value)
 
+/* TX_SEND flags:
+ * Bit 0: set wrong txkey
+ *     There is one special WFA test case in STA or AP, setting wrong txkey
+ *     in disassoc or deauth with PMF enabled to verify if peer disconnected
+ */
+#define WMI_TX_SEND_FLAG_SET_WRONG_KEY    0x00000001
+#define WMI_TX_SEND_FLAG_SET_WRONG_KEY_GET(tx_flags) WMI_GET_BITS(tx_flags, 0, 1)
+#define WMI_TX_SEND_FLAG_SET_WRONG_KEY_SET(tx_flags, value) WMI_SET_BITS(tx_flags, 0, 1, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tx_send_params */
 
@@ -5306,6 +5315,12 @@ typedef struct {
      * frame, as it will be tx'ed on non-pause tid
      */
     A_UINT32 tx_params_valid;
+    /* tx_flags:
+     * Extra flags when tx_params_valid is 0.
+     * Refer to WMI_TX_SEND_FLAG_xxx defs regarding the meaning of the
+     * bits within this field.
+     */
+    A_UINT32 tx_flags;
 /* This TLV is followed by array of bytes: First 64 bytes of management frame
  *   A_UINT8 bufp[];
  */

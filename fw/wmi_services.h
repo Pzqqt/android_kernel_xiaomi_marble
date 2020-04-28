@@ -439,6 +439,8 @@ typedef  enum  {
     WMI_SERVICE_BEACON_PROTECTION_SUPPORT = 244, /* Indicates FW supports WPA3 Beacon protection */
     WMI_SERVICE_EMA_AP_SUPPORT = 245, /* FW supports EMA AP feature */
     WMI_SERVICE_PEER_POWER_SAVE_DURATION_SUPPORT = 246, /* Support for adding Power save duration per client */
+    WMI_SERVICE_5_DOT_9GHZ_SUPPORT = 247, /* Indicates FW supports new 5.9GHZ (scan, connection and so on) */
+    WMI_SERVICE_MU_PREAMBLE_PUNCTURE_SUPPORT = 248, /* Indicates FW supports MU preamble puncture */
 
 
     /******* ADD NEW SERVICES UP TO 256 HERE *******/
