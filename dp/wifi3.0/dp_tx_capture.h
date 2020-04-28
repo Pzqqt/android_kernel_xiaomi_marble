@@ -40,11 +40,47 @@ struct dp_tx_desc_s;
 #define RTS_INTERVAL 40
 
 #define MAX_MGMT_PEER_FILTER 16
+
+/* stats */
+enum CDP_PEER_MSDU_DESC {
+	PEER_MSDU_SUCC,
+	PEER_MSDU_ENQ,
+	PEER_MSDU_DEQ,
+	PEER_MSDU_FLUSH,
+	PEER_MSDU_DROP,
+	PEER_MSDU_XRETRY,
+	PEER_MSDU_DESC_MAX,
+};
+
+enum CDP_PEER_MPDU_DESC {
+	PEER_MPDU_TRI,
+	PEER_MPDU_SUCC,
+	PEER_MPDU_RESTITCH,
+	PEER_MPDU_ARR,
+	PEER_MPDU_CLONE,
+	PEER_MPDU_TO_STACK,
+	PEER_MPDU_DESC_MAX,
+};
+
+#ifdef WLAN_TX_PKT_CAPTURE_ENH_DEBUG
+struct dp_peer_tx_capture_stats {
+	/* mpdu success and restich count */
+	uint32_t mpdu[PEER_MPDU_DESC_MAX];
+	/*msdu success and restich count */
+	uint32_t msdu[PEER_MSDU_DESC_MAX];
+};
+#endif
+
 struct dp_peer_mgmt_list {
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t mgmt_pkt_counter;
 	uint16_t peer_id;
 	bool avail;
+};
+
+struct dp_tx_cap_nbuf_list {
+	qdf_nbuf_t nbuf_ppdu;
+	uint8_t ref_cnt;
 };
 
 struct dp_pdev_tx_capture {
@@ -64,8 +100,10 @@ struct dp_pdev_tx_capture {
 	qdf_spinlock_t msdu_comp_q_list_lock;
 	uint32_t missed_ppdu_id;
 	uint32_t last_msdu_id;
+	uint16_t last_peer_id;
 	qdf_event_t miss_ppdu_event;
 	uint32_t ppdu_dropped;
+	uint32_t pend_ppdu_dropped;
 	qdf_nbuf_queue_t ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_nbuf_queue_t retries_ctl_mgmt_q[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
 	qdf_spinlock_t ctl_mgmt_lock[TXCAP_MAX_TYPE][TXCAP_MAX_SUBTYPE];
@@ -80,10 +118,14 @@ struct dp_pdev_tx_capture {
 struct dp_tx_tid {
 	/* TID */
 	uint8_t tid;
+	/* peer id */
+	uint16_t peer_id;
 	/* max ppdu_id in a tid */
 	uint32_t max_ppdu_id;
 	/* tx_tid lock */
 	qdf_spinlock_t tid_lock;
+	qdf_spinlock_t tasklet_tid_lock;
+	qdf_nbuf_queue_t defer_msdu_q;
 	qdf_nbuf_queue_t msdu_comp_q;
 	qdf_nbuf_queue_t pending_ppdu_q;
 	struct cdp_tx_completion_ppdu xretry_ppdu;
@@ -108,7 +150,18 @@ struct dp_peer_tx_capture {
 		struct ieee80211_frame_addr4 tx_wifi_addr4_hdr;
 		struct ieee80211_qosframe_addr4 tx_wifi_addr4_qos_hdr;
 	};
+#ifdef WLAN_TX_PKT_CAPTURE_ENH_DEBUG
+	struct dp_peer_tx_capture_stats stats;
+#endif
 };
+
+/*
+ * dp_peer_tid_peer_id_update() – update peer_id to tid structure
+ * @peer: Datapath peer
+ * @peer_id: peer_id
+ *
+ */
+void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id);
 
 /*
  * dp_peer_tid_queue_init() – Initialize ppdu stats queue per TID
