@@ -2414,7 +2414,13 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 	}
 	sblk = psde->pipe_sblk;
 	max_upscale = sblk->maxupscale;
-	max_linewidth = sblk->maxlinewidth;
+
+	if (inline_rotation)
+		max_linewidth = sblk->in_rot_maxheight;
+	else if (scaler_src_w != state->crtc_w || scaler_src_h != state->crtc_h)
+		max_linewidth = sblk->scaling_linewidth;
+	else
+		max_linewidth = sblk->maxlinewidth;
 
 	crtc = state->crtc;
 	new_cstate = drm_atomic_get_new_crtc_state(state->state, crtc);
@@ -2443,11 +2449,11 @@ static int _sde_atomic_check_decimation_scaler(struct drm_plane_state *state,
 			src->w, src->h, dst->w, dst->h);
 		ret = -EINVAL;
 
-	/* check decimated source width */
-	} else if (src_deci_w > max_linewidth) {
+	/* check scaler source width */
+	} else if (scaler_src_w > max_linewidth) {
 		SDE_ERROR_PLANE(psde,
-				"invalid src w:%u, deci w:%u, line w:%u\n",
-				src->w, src_deci_w, max_linewidth);
+			"invalid src w:%u, scaler w:%u, line w:%u, rot: %d\n",
+			src->w, scaler_src_w, max_linewidth, inline_rotation);
 		ret = -E2BIG;
 
 	/* check max scaler capability */

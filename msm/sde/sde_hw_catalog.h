@@ -649,6 +649,8 @@ enum sde_qos_lut_usage {
 
 /**
  * struct sde_sspp_sub_blks : SSPP sub-blocks
+ * @maxlinewidth: max source pipe line width support
+ * @scaling_linewidth: max vig source pipe linewidth for scaling usecases
  * @maxdwnscale: max downscale ratio supported(without DECIMATION)
  * @maxupscale:  maxupscale ratio supported
  * @maxwidth:    max pixelwidth supported by this pipe
@@ -690,6 +692,7 @@ enum sde_qos_lut_usage {
  */
 struct sde_sspp_sub_blks {
 	u32 maxlinewidth;
+	u32 scaling_linewidth;
 	u32 creq_vblank;
 	u32 danger_vblank;
 	u32 pixel_ram_size;
@@ -1378,6 +1381,7 @@ struct sde_limit_cfg {
  *
  * @max_sspp_linewidth max source pipe line width support.
  * @vig_sspp_linewidth max vig source pipe line width support.
+ * @scaling_linewidth max vig source pipe linewidth for scaling usecases
  * @max_mixer_width    max layer mixer line width support.
  * @max_mixer_blendstages max layer mixer blend stages or
  *                       supported z order
@@ -1447,6 +1451,7 @@ struct sde_mdss_cfg {
 
 	u32 max_sspp_linewidth;
 	u32 vig_sspp_linewidth;
+	u32 scaling_linewidth;
 	u32 max_mixer_width;
 	u32 max_mixer_blendstages;
 	u32 max_wb_linewidth;
