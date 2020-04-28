@@ -142,17 +142,24 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 {
 	struct snd_soc_component *swr_hap_comp =
 		snd_soc_dapm_to_component(w->dapm);
-	struct swr_haptics_dev *swr_hap =
-		snd_soc_component_get_drvdata(swr_hap_comp);
+	struct swr_haptics_dev *swr_hap;
 	u8 port_id, ch_mask, num_ch, port_type, num_port;
 	u32 ch_rate;
 	unsigned int val;
 	int rc;
 
-	dev_dbg(swr_hap->dev, "%s: %s event %d\n", __func__, w->name, event);
-	if (!swr_hap)
-		return -ENODEV;
+	if (!swr_hap_comp) {
+		pr_err("%s: swr_hap_component is NULL\n", __func__);
+		return -EINVAL;
+	}
 
+	swr_hap = snd_soc_component_get_drvdata(swr_hap_comp);
+	if (!swr_hap) {
+		pr_err("%s: get swr_haptics_dev failed\n", __func__);
+		return -ENODEV;
+	}
+
+	dev_dbg(swr_hap->dev, "%s: %s event %d\n", __func__, w->name, event);
 	num_port = 1;
 	port_id = swr_hap->port.port_id;
 	ch_mask = swr_hap->port.ch_mask;
@@ -224,8 +231,10 @@ static int haptics_comp_probe(struct snd_soc_component *component)
 	struct swr_haptics_dev *swr_hap =
 		snd_soc_component_get_drvdata(component);
 
-	if (!swr_hap)
+	if (!swr_hap) {
+		pr_err("%s: get swr_haptics_dev failed\n", __func__);
 		return -EINVAL;
+	}
 
 	snd_soc_component_init_regmap(component, swr_hap->regmap);
 
@@ -272,6 +281,12 @@ static int swr_haptics_parse_port_mapping(struct swr_device *sdev)
 	struct swr_haptics_dev *swr_hap = swr_get_dev_data(sdev);
 	u32 port_cfg[NUM_SWR_PORT_DT_PARAMS];
 	int rc;
+
+	if (!swr_hap) {
+		dev_err(&sdev->dev, "%s: get swr_haptics_dev failed\n",
+				__func__);
+		return -EINVAL;
+	}
 
 	rc = of_property_read_u32_array(sdev->dev.of_node, "qcom,rx_swr_ch_map",
 			port_cfg, NUM_SWR_PORT_DT_PARAMS);
@@ -373,7 +388,8 @@ static int swr_haptics_remove(struct swr_device *sdev)
 
 	swr_hap = swr_get_dev_data(sdev);
 	if (!swr_hap) {
-		dev_err(swr_hap->dev, "%s: no data for swr_hap\n", __func__);
+		dev_err(&sdev->dev, "%s: no data for swr_hap\n", __func__);
+		rc = -ENODEV;
 		goto clean;
 	}
 
@@ -396,7 +412,7 @@ static int swr_haptics_device_up(struct swr_device *sdev)
 
 	swr_hap = swr_get_dev_data(sdev);
 	if (!swr_hap) {
-		dev_err(swr_hap->dev, "%s: no data for swr_hap\n", __func__);
+		dev_err(&sdev->dev, "%s: no data for swr_hap\n", __func__);
 		return -ENODEV;
 	}
 
@@ -418,7 +434,7 @@ static int swr_haptics_device_down(struct swr_device *sdev)
 	unsigned int val;
 
 	if (!swr_hap) {
-		dev_err(swr_hap->dev, "%s: no data for swr_hap\n", __func__);
+		dev_err(&sdev->dev, "%s: no data for swr_hap\n", __func__);
 		return -ENODEV;
 	}
 
@@ -448,6 +464,10 @@ static int swr_haptics_suspend(struct device *dev)
 	int rc;
 
 	swr_hap = swr_get_dev_data(to_swr_device(dev));
+	if (!swr_hap) {
+		dev_err(dev, "%s: no data for swr_hap\n", __func__);
+		return -ENODEV;
+	}
 
 	/* Put SWR slave into reset */
 	rc = regulator_disable(swr_hap->vdd);
@@ -466,6 +486,10 @@ static int swr_haptics_resume(struct device *dev)
 	int rc;
 
 	swr_hap = swr_get_dev_data(to_swr_device(dev));
+	if (!swr_hap) {
+		dev_err(dev, "%s: no data for swr_hap\n", __func__);
+		return -ENODEV;
+	}
 
 	/* Take SWR slave out of reset */
 	rc = regulator_enable(swr_hap->vdd);
