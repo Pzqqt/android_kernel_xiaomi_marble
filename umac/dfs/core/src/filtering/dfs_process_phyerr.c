@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -655,7 +655,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		 * BIN 5 chirping pulses are only for FCC or Japan MMK4 domain
 		 */
 		if (((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
-			    (dfs->dfsdomain == DFS_MKK4_DOMAIN)) &&
+			    (dfs->dfsdomain == DFS_MKK4_DOMAIN) ||
+			    (dfs->dfsdomain == DFS_MKKN_DOMAIN)) &&
 			(e.dur >= MAYBE_BIN5_DUR) && (e.dur < MAX_BIN5_DUR)) {
 			int add_dur;
 			int slope = 0, dc_found = 0;
@@ -693,7 +694,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			 * MAX_BIN5_DUR or less than MAYBE_BIN5_DUR
 			 */
 			if ((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
-					(dfs->dfsdomain == DFS_MKK4_DOMAIN)) {
+					(dfs->dfsdomain == DFS_MKK4_DOMAIN) ||
+					(dfs->dfsdomain == DFS_MKKN_DOMAIN)) {
 				/*
 				 * Would this result in very large pulses
 				 * wrapping around to become short pulses?

@@ -119,7 +119,8 @@ static inline void dfs_dur_check(
 	uint32_t diff_ts)
 {
 	if ((dfs->dfsdomain == DFS_FCC_DOMAIN ||
-	     dfs->dfsdomain == DFS_MKK4_DOMAIN) &&
+	     dfs->dfsdomain == DFS_MKK4_DOMAIN ||
+		 dfs->dfsdomain == DFS_MKKN_DOMAIN) &&
 	    ((chan->dfs_ch_flags & WLAN_CHAN_VHT80) == WLAN_CHAN_VHT80) &&
 	    (DFS_DIFF(chan->dfs_ch_freq, chan->dfs_ch_mhz_freq_seg1) ==
 	    DFS_WAR_30_MHZ_SEPARATION) &&
@@ -750,7 +751,8 @@ static inline int dfs_handle_missing_pulses(
 		struct wlan_dfs *dfs,
 		struct dfs_channel *chan)
 {
-	if ((dfs->dfsdomain  == DFS_MKK4_DOMAIN) &&
+	if ((dfs->dfsdomain  == DFS_MKK4_DOMAIN ||
+	     dfs->dfsdomain == DFS_MKKN_DOMAIN) &&
 			(dfs->dfs_caps.wlan_chip_is_bb_tlv) &&
 			(chan->dfs_ch_freq < FREQ_5500_MHZ)) {
 		dfs->dfs_pri_multiplier = DFS_W53_DEFAULT_PRI_MULTIPLIER;
