@@ -2103,8 +2103,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	bool track_arp = false;
 	struct wlan_objmgr_vdev *vdev;
 	enum qdf_proto_subtype subtype = QDF_PROTO_INVALID;
-	bool is_eapol = false;
-	bool is_dhcp = false;
+	bool is_eapol;
+	bool is_dhcp;
 
 	/* Sanity check on inputs */
 	if (unlikely((!adapter_context) || (!rxBuf))) {
@@ -2136,6 +2136,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		skb = next;
 		next = skb->next;
 		skb->next = NULL;
+		is_eapol = false;
+		is_dhcp = false;
 
 		if (qdf_nbuf_is_ipv4_arp_pkt(skb)) {
 			if (qdf_nbuf_data_is_arp_rsp(skb) &&
