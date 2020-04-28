@@ -657,6 +657,12 @@ QDF_STATUS wlan_reg_get_chip_mode(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_reg_get_phybitmap(struct wlan_objmgr_pdev *pdev,
+				  uint16_t *phybitmap)
+{
+	return reg_get_phybitmap(pdev, phybitmap);
+}
+
 bool wlan_reg_is_11d_scan_inprogress(struct wlan_objmgr_psoc *psoc)
 {
 	return reg_is_11d_scan_inprogress(psoc);

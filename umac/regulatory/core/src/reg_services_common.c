@@ -2788,6 +2788,23 @@ bool reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev)
 	return reg_en302_502_regdmn(cur_reg_dmn.regdmn_pair_id);
 }
 
+QDF_STATUS reg_get_phybitmap(struct wlan_objmgr_pdev *pdev,
+			     uint16_t *phybitmap)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!pdev_priv_obj) {
+		reg_err("reg pdev private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	*phybitmap = pdev_priv_obj->phybitmap;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;

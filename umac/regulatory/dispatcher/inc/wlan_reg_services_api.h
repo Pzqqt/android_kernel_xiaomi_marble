@@ -978,6 +978,16 @@ bool wlan_reg_is_regdmn_en302502_applicable(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS wlan_reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * wlan_reg_get_phybitmap() - Get phybitmap from regulatory pdev_priv_obj
+ * @pdev: pdev pointer
+ * @phybitmap: pointer to phybitmap
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS wlan_reg_get_phybitmap(struct wlan_objmgr_pdev *pdev,
+				  uint16_t *phybitmap);
+
+/**
  * wlan_reg_update_pdev_wireless_modes() - Update the wireless_modes in the
  * pdev_priv_obj with the input wireless_modes
  * @pdev: pointer to wlan_objmgr_pdev.

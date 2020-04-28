@@ -802,6 +802,16 @@ QDF_STATUS reg_modify_pdev_chan_range(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS reg_update_pdev_wireless_modes(struct wlan_objmgr_pdev *pdev,
 					  uint32_t wireless_modes);
+
+/**
+ * reg_get_phybitmap() - Get phybitmap from regulatory pdev_priv_obj
+ * @pdev: pdev pointer
+ * @phybitmap: pointer to phybitmap
+ *
+ * Return: QDF STATUS
+ */
+QDF_STATUS reg_get_phybitmap(struct wlan_objmgr_pdev *pdev,
+			     uint16_t *phybitmap);
 #ifdef DISABLE_UNII_SHARED_BANDS
 /**
  * reg_disable_chan_coex() - Disable Coexisting channels based on the input
