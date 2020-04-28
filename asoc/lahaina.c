@@ -6840,7 +6840,12 @@ static int msm_populate_dai_link_component_of_node(
 				codecs_comp = devm_kzalloc(cdev,
 				    sizeof(struct snd_soc_dai_link_component)
 				    * codecs_enabled, GFP_KERNEL);
-
+				if (!codecs_comp) {
+					dev_err(cdev, "%s: %s dailink codec component alloc failed\n",
+						__func__, dai_link[i].name);
+					ret = -ENOMEM;
+					goto err;
+				}
 				index = 0;
 				for (j = 0; j < dai_link[i].num_codecs; j++) {
 					if(dai_link[i].codecs[j].of_node) {
