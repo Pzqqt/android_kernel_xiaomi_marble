@@ -1262,7 +1262,7 @@
 
 /*
  * <ini>
- * CFG_OCE_AP_TX_PWR_WEIGHTAGE - update scoring param based on ap tx power
+ * oce_ap_tx_pwr_weightage - update scoring param based on ap tx power
  * @Min: 0
  * @Max: 10
  * @Default: 5
@@ -1284,6 +1284,42 @@
 		5, \
 		CFG_VALUE_OR_DEFAULT,\
 		"AP weigtage for OCE ap tx power")
+
+/*
+ * <ini>
+ * oce_subnet_id_weightage - update scoring param based on subnet id
+ * @Min: 0
+ * @Max: 10
+ * @Default: 3
+ *
+ * This ini is used to calculate subnet id weightage in roam score.
+ * If the MBO-OCE ie has "IP subnet indication attribute", then host
+ * considers 50% of the "oce_subnet_id_weightage" value to calculate
+ * roam score for the initial connection and 100% of the
+ * "oce_subnet_id_weightage" value to calculate roam score for roaming
+ * case.
+ * "oce_ap_tx_pwr_weightage" adds a small amount of percentage advantage
+ * in roam score while selection of an AP candidate within the same subnet
+ * ID. If "oce_ap_tx_pwr_weightage" value is 0(min), roam score doesn't
+ * include percentage weightage for subnet id and if "oce_ap_tx_pwr_weightage"
+ * value is 10(max), then the weightage given because of same subnet ID is
+ * more in roam score. This ini is also used for WFA certification.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_SUBNET_ID_WEIGHTAGE CFG_INI_UINT( \
+		"oce_subnet_id_weightage", \
+		0, \
+		10, \
+		3, \
+		CFG_VALUE_OR_DEFAULT,\
+		"AP weigtage for OCE subnet id")
 
 #define CFG_SCORING_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
@@ -1329,5 +1365,6 @@
 	CFG(CFG_BTM_ROAM_SCORE_DELTA) \
 	CFG(CFG_VENDOR_ROAM_SCORE_ALGORITHM) \
 	CFG(CFG_OCE_AP_TX_PWR_WEIGHTAGE) \
+	CFG(CFG_OCE_SUBNET_ID_WEIGHTAGE) \
 
 #endif /* __CFG_MLME_SCORING_H */

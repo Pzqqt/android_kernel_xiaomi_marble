@@ -1818,7 +1818,6 @@ struct wlan_mlme_wmm_params {
 /**
  * struct wlan_mlme_weight_config - weight params to
  * calculate best candidate
- *
  * @rssi_weightage: RSSI weightage
  * @ht_caps_weightage: HT caps weightage
  * @vht_caps_weightage: VHT caps weightage
@@ -1831,6 +1830,7 @@ struct wlan_mlme_wmm_params {
  * @channel_congestion_weightage: channel congestion weightage
  * @oce_wan_weightage: OCE WAN metrics weightage
  * @oce_ap_tx_pwr_weightage: weightage based on ap tx power
+ * @oce_subnet_id_weightage: weightage based on subnet id
  */
 struct  wlan_mlme_weight_config {
 	uint8_t rssi_weightage;
@@ -1845,12 +1845,12 @@ struct  wlan_mlme_weight_config {
 	uint8_t channel_congestion_weightage;
 	uint8_t oce_wan_weightage;
 	uint8_t oce_ap_tx_pwr_weightage;
+	uint8_t oce_subnet_id_weightage;
 };
 
 /**
  * struct wlan_mlme_rssi_cfg_score - RSSI params to
  * calculate best candidate
- *
  * @best_rssi_threshold: Best RSSI threshold
  * @good_rssi_threshold: Good RSSI threshold
  * @bad_rssi_threshold: Bad RSSI threshold

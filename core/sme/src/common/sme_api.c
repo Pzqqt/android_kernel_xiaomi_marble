@@ -15206,6 +15206,8 @@ void sme_update_score_config(mac_handle_t mac_handle,
 		mlme_scoring_cfg->weight_cfg.oce_wan_weightage;
 	score_config->weight_cfg.oce_ap_tx_pwr_weightage =
 		mlme_scoring_cfg->weight_cfg.oce_ap_tx_pwr_weightage;
+	score_config->weight_cfg.oce_subnet_id_weightage =
+		mlme_scoring_cfg->weight_cfg.oce_subnet_id_weightage;
 
 	score_config->bandwidth_weight_per_index =
 		mlme_scoring_cfg->bandwidth_weight_per_index;
