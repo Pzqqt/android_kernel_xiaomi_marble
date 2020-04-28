@@ -201,25 +201,34 @@ static void lim_check_he_ldpc_cap(struct pe_session *session,
 	}
 }
 
-void lim_update_he_bw_cap_mcs(struct pe_session *session)
+void lim_update_he_bw_cap_mcs(struct pe_session *session,
+			      tSirProbeRespBeacon *beacon)
 {
+	uint8_t is_80mhz;
+
 	if (!session->he_capable)
 		return;
 
-	if (session->ch_width <= CH_WIDTH_80MHZ) {
-		*(uint16_t *)session->he_config.rx_he_mcs_map_160 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.tx_he_mcs_map_160 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.rx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.tx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
+	if ((session->opmode == QDF_STA_MODE ||
+	     session->opmode == QDF_P2P_CLIENT_MODE) &&
+	    beacon && beacon->he_cap.present) {
+		if (!beacon->he_cap.chan_width_2)
+			is_80mhz = 1;
+		else if (beacon->he_cap.chan_width_2 &&
+			 (*(uint16_t *)beacon->he_cap.rx_he_mcs_map_160 ==
+			  HE_MCS_ALL_DISABLED))
+			is_80mhz = 1;
+		else
+			is_80mhz = 0;
+	} else {
+		is_80mhz = 1;
+	}
+
+	if (session->ch_width <= CH_WIDTH_80MHZ && is_80mhz) {
+		session->he_config.chan_width_2 = 0;
+		session->he_config.chan_width_3 = 0;
 	} else if (session->ch_width == CH_WIDTH_160MHZ) {
-		*(uint16_t *)session->he_config.rx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
-		*(uint16_t *)session->he_config.tx_he_mcs_map_80_80 =
-							HE_MCS_ALL_DISABLED;
+		session->he_config.chan_width_3 = 0;
 	}
 	/* Reset the > 20MHz caps for 20MHz connection */
 	if (session->ch_width == CH_WIDTH_20MHZ) {
@@ -233,6 +242,33 @@ void lim_update_he_bw_cap_mcs(struct pe_session *session)
 		session->he_config.he_ppdu_20_in_40Mhz_2G = 0;
 		session->he_config.he_ppdu_20_in_160_80p80Mhz = 0;
 		session->he_config.he_ppdu_80_in_160_80p80Mhz = 0;
+	}
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(session->curr_op_freq)) {
+		session->he_config.chan_width_1 = 0;
+		session->he_config.chan_width_2 = 0;
+		session->he_config.chan_width_3 = 0;
+		session->he_config.chan_width_5 = 0;
+		session->he_config.chan_width_6 = 0;
+	} else {
+		session->he_config.chan_width_0 = 0;
+		session->he_config.chan_width_4 = 0;
+		session->he_config.chan_width_6 = 0;
+	}
+	if (!session->he_config.chan_width_2) {
+		session->he_config.bfee_sts_gt_80 = 0;
+		session->he_config.num_sounding_gt_80 = 0;
+		session->he_config.he_ppdu_20_in_160_80p80Mhz = 0;
+		session->he_config.he_ppdu_80_in_160_80p80Mhz = 0;
+		*(uint16_t *)session->he_config.rx_he_mcs_map_160 =
+							HE_MCS_ALL_DISABLED;
+		*(uint16_t *)session->he_config.tx_he_mcs_map_160 =
+							HE_MCS_ALL_DISABLED;
+	}
+	if (!session->he_config.chan_width_3) {
+		*(uint16_t *)session->he_config.rx_he_mcs_map_80_80 =
+							HE_MCS_ALL_DISABLED;
+		*(uint16_t *)session->he_config.tx_he_mcs_map_80_80 =
+							HE_MCS_ALL_DISABLED;
 	}
 }
 #else
@@ -501,7 +537,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	}
 	lim_check_he_ldpc_cap(session, beacon_struct);
 	lim_extract_he_op(session, beacon_struct);
-	lim_update_he_bw_cap_mcs(session);
+	lim_update_he_bw_cap_mcs(session, beacon_struct);
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;

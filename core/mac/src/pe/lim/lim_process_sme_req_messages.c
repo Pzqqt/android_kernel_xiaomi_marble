@@ -789,7 +789,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 				sme_start_bss_req->center_freq_seg0;
 			session->ch_center_freq_seg1 =
 				sme_start_bss_req->center_freq_seg1;
-			lim_update_he_bw_cap_mcs(session);
+			lim_update_he_bw_cap_mcs(session, NULL);
 		}
 
 		/* Delete pre-auth list if any */
