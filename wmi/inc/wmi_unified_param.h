@@ -5129,6 +5129,7 @@ typedef enum {
 	wmi_beacon_protection_support,
 	wmi_service_sta_nan_ndi_four_port,
 	wmi_service_host_scan_stop_vdev_all,
+	wmi_service_ema_ap_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5266,6 +5267,8 @@ struct wmi_host_fw_abi_ver {
  * @nan_separate_iface_support: Separate iface creation for NAN
  * @time_sync_ftm: enable ftm based time sync
  * @max_rnr_neighbours: Max supported RNR neighbors in multisoc APs
+ * @ema_max_vap_cnt: Number of maximum EMA tx-vaps at any instance of time
+ * @ema_max_profile_period: Maximum EMA profile periodicity on any pdev
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5365,6 +5368,8 @@ typedef struct {
 	bool nan_separate_iface_support;
 	bool time_sync_ftm;
 	uint32_t max_rnr_neighbours;
+	uint32_t ema_max_vap_cnt;
+	uint32_t ema_max_profile_period;
 } target_resource_config;
 
 /**
