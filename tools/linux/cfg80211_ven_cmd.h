@@ -758,6 +758,9 @@ enum {
 	IEEE80211_PARAM_HE_DL_MU_OFDMA_BFER        = 693, /* Sets 11ax - HE DL MU OFDMA + TxBF*/
 	IEEE80211_PARAM_SEND_PROBE_REQ             = 694, /* Send bcast probe request with current ssid */
 	IEEE80211_PARAM_ASSOC_MIN_RSSI             = 695,
+	IEEE80211_PARAM_OCE_TX_POWER               = 696, /* Enables tx power to be advertised as OCE attribute in Beacon and  Probe response frame */
+	IEEE80211_PARAM_OCE_IP_SUBNET_ID           = 697, /* IP subnet identifier value to be advertised as OCE attribute in Beacon and  Probe response frame */
+	IEEE80211_PARAM_OCE_ADD_ESS_RPT            = 698, /* Add ESS Report */
 };
 
 enum {
@@ -2147,6 +2150,10 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"sendprobereq",        IEEE80211_PARAM_SEND_PROBE_REQ, GET_PARAM, 0},
 	{"min_asoc_rssi",       IEEE80211_PARAM_ASSOC_MIN_RSSI, SET_PARAM, 1},
 	{"g_min_asoc_rssi",     IEEE80211_PARAM_ASSOC_MIN_RSSI, GET_PARAM, 0},
+	{"oce_txpower",         IEEE80211_PARAM_OCE_TX_POWER, SET_PARAM, 2},
+	{"g_oce_txpower",       IEEE80211_PARAM_OCE_TX_POWER, GET_PARAM, 0},
+	{"oce_subnet_id",       IEEE80211_PARAM_OCE_IP_SUBNET_ID, SET_PARAM, 2},
+	{"oce_ess_report",      IEEE80211_PARAM_OCE_ADD_ESS_RPT, SET_PARAM, 2},
 	{"setiebuf",            35828, SET_PARAM, 1},
 	{"getiebuf",            35827, GET_PARAM, 0},
 	{"dbgreq",              35832, SET_PARAM, 1},
