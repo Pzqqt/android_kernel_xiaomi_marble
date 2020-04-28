@@ -265,15 +265,6 @@ QDF_STATUS scm_channel_list_db_deinit(struct wlan_objmgr_psoc *psoc)
 #endif
 
 /**
- * scm_validate_scoring_config() - validate score config
- * @score_cfg: config to be validated
- *
- * Return: void
- */
-void scm_validate_scoring_config(
-			struct scoring_config *score_cfg);
-
-/**
  * scm_scan_update_mlme_by_bssinfo() - updates scan entry with mlme data
  * @pdev: pdev object
  * @bss_info: BSS information
