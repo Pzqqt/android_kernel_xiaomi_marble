@@ -3790,16 +3790,6 @@ void hdd_dp_trace_init(struct hdd_config *config) {}
 void hdd_set_rx_mode_rps(bool enable);
 
 /**
- * hdd_limit_max_per_index_score() -check if per index score doesn't exceed 100%
- * (0x64). If it exceed make it 100%
- *
- * @per_index_score: per_index_score as input
- *
- * Return: per_index_score within the max limit
- */
-uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score);
-
-/**
  * hdd_update_score_config - API to update candidate scoring related params
  * configuration parameters
  * @score_config: score config to update

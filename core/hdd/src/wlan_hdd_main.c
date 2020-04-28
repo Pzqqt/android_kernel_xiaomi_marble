@@ -16133,20 +16133,6 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 		ie_whitelist->voui[i] = whitelist.probe_req_voui[i];
 }
 
-uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)
-{
-	uint8_t i, score;
-
-	for (i = 0; i < MAX_INDEX_PER_INI; i++) {
-		score = WLAN_GET_SCORE_PERCENTAGE(per_index_score, i);
-		if (score > MAX_INDEX_SCORE)
-			WLAN_SET_SCORE_PERCENTAGE(per_index_score,
-				MAX_INDEX_SCORE, i);
-	}
-
-	return per_index_score;
-}
-
 QDF_STATUS hdd_update_score_config(
 	struct scoring_config *score_config, struct hdd_context *hdd_ctx)
 {
