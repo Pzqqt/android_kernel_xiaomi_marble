@@ -1733,9 +1733,9 @@ mlme_limit_max_per_index_score(uint32_t per_index_score)
 
 	for (i = 0; i < MAX_INDEX_PER_INI; i++) {
 		score = WLAN_GET_SCORE_PERCENTAGE(per_index_score, i);
-		if (score > MAX_INDEX_SCORE)
+		if (score > MAX_PCT_SCORE)
 			WLAN_SET_SCORE_PERCENTAGE(per_index_score,
-				MAX_INDEX_SCORE, i);
+				MAX_PCT_SCORE, i);
 	}
 
 	return per_index_score;
