@@ -6338,12 +6338,16 @@ static void csr_get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 {
 	struct mac_context *mac = (struct mac_context *)cookie;
 
-	if (!mac)
-		goto disconnect_stats_complete;
+	if (!mac) {
+		sme_err("Invalid mac ctx");
+		return;
+	}
+
 	if (!ev->peer_stats) {
 		sme_debug("%s no peer stats\n", __func__);
 		goto disconnect_stats_complete;
 	}
+
 	mac->peer_rssi = ev->peer_stats->peer_rssi;
 	mac->peer_txrate = ev->peer_stats->tx_rate;
 	mac->peer_rxrate = ev->peer_stats->rx_rate;
