@@ -298,7 +298,7 @@ static bool dfs_is_real_radar(struct wlan_dfs *dfs,
 			 * We do not give score to PRI that is lower then the
 			 * limit.
 			 */
-			if (search_bin < DFS_INVALID_PRI_LIMIT)
+			if (search_bin < dfs->dfs_lowest_pri_limit)
 				break;
 
 			/*
@@ -1248,7 +1248,7 @@ static inline void dfs_conditional_clear_delaylines(
 	 * false detects.
 	 */
 
-	if (diff_ts < DFS_INVALID_PRI_LIMIT) {
+	if (diff_ts < dfs->dfs_lowest_pri_limit) {
 		dfs->dfs_seq_num = 0;
 		dfs_reset_alldelaylines(dfs);
 		dfs_reset_radarq(dfs);

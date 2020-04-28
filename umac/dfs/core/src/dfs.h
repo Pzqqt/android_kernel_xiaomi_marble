@@ -1278,6 +1278,7 @@ struct wlan_dfs {
 	uint16_t       dfs_agile_rcac_freq_ucfg;
 	struct ch_params dfs_rcac_ch_params;
 #endif
+	uint16_t       dfs_lowest_pri_limit;
 };
 
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)

@@ -25,6 +25,12 @@
 #include "dfs_internal.h"
 
 #define DFS_INVALID_PRI_LIMIT 100  /* should we use 135? */
+/* The time interval between two sucessive pulses
+ * in case of w53 chirp type can be as low as 50us.
+ * Experimentally the PRI limit was found to be as
+ * low as 15us.
+ */
+#define DFS_INVALID_PRI_LIMIT_MKKN 15
 #define FRAC_PRI_SCORE_ARRAY_SIZE 40
 
 /**

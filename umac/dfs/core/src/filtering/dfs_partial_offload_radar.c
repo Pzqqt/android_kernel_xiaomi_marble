@@ -437,6 +437,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		dfs_debug(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_CN_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -452,6 +453,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_ETSI_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
@@ -469,6 +471,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		}
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_KR_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -487,6 +490,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	case DFS_MKKN_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKKN domain");
@@ -494,6 +498,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT_MKKN;
 		break;
 	case DFS_MKK4_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
@@ -501,6 +506,7 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		dfs_assign_mkk_bin5_radars(&rinfo, target_type, tx_ops);
+		dfs->dfs_lowest_pri_limit = DFS_INVALID_PRI_LIMIT;
 		break;
 	default:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
