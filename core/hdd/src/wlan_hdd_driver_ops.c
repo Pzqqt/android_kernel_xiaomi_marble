@@ -84,9 +84,13 @@ static inline void hdd_remove_pm_qos(struct device *dev)
  */
 static int hdd_get_bandwidth_level(void *data)
 {
+	int ret = PLD_BUS_WIDTH_NONE;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	return hdd_get_current_throughput_level(hdd_ctx);
+	if (hdd_ctx)
+		ret = hdd_get_current_throughput_level(hdd_ctx);
+
+	return ret;
 }
 
 /**
