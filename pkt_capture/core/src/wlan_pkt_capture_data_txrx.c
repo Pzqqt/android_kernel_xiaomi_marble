@@ -219,7 +219,6 @@ pkt_capture_update_tx_status(
 			struct pkt_capture_tx_hdr_elem_t *pktcapture_hdr)
 {
 	struct mon_channel *ch_info = &pdev->mon_ch_info;
-	uint16_t channel_flags = 0;
 
 	tx_status->tsft = (u_int64_t)(pktcapture_hdr->timestamp);
 	tx_status->chan_freq = ch_info->ch_freq;
@@ -228,15 +227,10 @@ pkt_capture_update_tx_status(
 	pkt_capture_tx_get_phy_info(pktcapture_hdr, tx_status);
 
 	if (pktcapture_hdr->preamble == 0)
-		channel_flags |= IEEE80211_CHAN_OFDM;
+		tx_status->ofdm_flag = 1;
 	else if (pktcapture_hdr->preamble == 1)
-		channel_flags |= IEEE80211_CHAN_CCK;
+		tx_status->cck_flag = 1;
 
-	channel_flags |=
-		(wlan_reg_chan_to_band(ch_info->ch_num) == BAND_2G ?
-		IEEE80211_CHAN_2GHZ : IEEE80211_CHAN_5GHZ);
-
-	tx_status->chan_flags = channel_flags;
 	tx_status->ant_signal_db = pktcapture_hdr->rssi_comb;
 	tx_status->rssi_comb = pktcapture_hdr->rssi_comb;
 	tx_status->tx_status = pktcapture_hdr->status;
