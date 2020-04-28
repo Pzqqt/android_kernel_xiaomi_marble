@@ -2559,6 +2559,88 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
+		struct rnr_tbtt_multisoc_sync_param *param)
+{
+	wmi_pdev_tbtt_offset_sync_cmd_fixed_param *tbtt_sync_cmd;
+	wmi_buf_t buf;
+	wmi_pdev_rnr_bss_tbtt_info *bss_tbtt_info;
+	int32_t len = 0;
+	int idx;
+	uint8_t *buf_ptr = NULL;
+
+	switch (param->cmd_type) {
+	case WMI_PDEV_GET_TBTT_OFFSET:
+		len = sizeof(wmi_pdev_tbtt_offset_sync_cmd_fixed_param);
+		break;
+	case WMI_PDEV_SET_TBTT_OFFSET:
+		len = sizeof(wmi_pdev_tbtt_offset_sync_cmd_fixed_param) +
+			WMI_TLV_HDR_SIZE +
+			(param->rnr_vap_count *
+			 sizeof(wmi_pdev_rnr_bss_tbtt_info));
+		break;
+	default:
+		WMI_LOGP("%s: cmd_type: %d invalid", __func__, param->cmd_type);
+		return QDF_STATUS_E_FAILURE;
+	}
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = wmi_buf_data(buf);
+	tbtt_sync_cmd = (wmi_pdev_tbtt_offset_sync_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&tbtt_sync_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_tbtt_offset_sync_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_tbtt_offset_sync_cmd_fixed_param));
+
+	tbtt_sync_cmd->cmd_type = param->cmd_type;
+	tbtt_sync_cmd->pdev_id = wmi->ops->convert_host_pdev_id_to_target(
+							wmi,
+							param->pdev_id);
+	if (tbtt_sync_cmd->cmd_type == WMI_PDEV_SET_TBTT_OFFSET &&
+	    param->rnr_vap_count) {
+		buf_ptr += sizeof(wmi_pdev_tbtt_offset_sync_cmd_fixed_param);
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			       (param->rnr_vap_count *
+			       sizeof(wmi_pdev_rnr_bss_tbtt_info)));
+		bss_tbtt_info = (wmi_pdev_rnr_bss_tbtt_info *)(buf_ptr +
+				 WMI_TLV_HDR_SIZE);
+		for (idx = 0; idx < param->rnr_vap_count; idx++) {
+			WMITLV_SET_HDR(&bss_tbtt_info->tlv_header,
+				WMITLV_TAG_STRUC_wmi_pdev_rnr_bss_tbtt_info,
+				WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_rnr_bss_tbtt_info));
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(param->rnr_bss_tbtt->bss_mac,
+					&bss_tbtt_info->bss_mac);
+			bss_tbtt_info->beacon_intval =
+				param->rnr_bss_tbtt->beacon_intval;
+			bss_tbtt_info->opclass = param->rnr_bss_tbtt->opclass;
+			bss_tbtt_info->chan_idx =
+				param->rnr_bss_tbtt->chan_idx;
+			bss_tbtt_info->next_qtime_tbtt_high =
+				param->rnr_bss_tbtt->next_qtime_tbtt_high;
+			bss_tbtt_info->next_qtime_tbtt_low =
+				param->rnr_bss_tbtt->next_qtime_tbtt_low;
+			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+				  "Beacon Intval: %d, Chan: %d, opclass: %d",
+				  bss_tbtt_info->beacon_intval,
+				  bss_tbtt_info->chan_idx,
+				  bss_tbtt_info->opclass);
+			bss_tbtt_info++;
+			param->rnr_bss_tbtt++;
+		}
+	}
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+		  "Cmd Type: %d, Pdev id: %d Vap count: %d", tbtt_sync_cmd->cmd_type,
+		  tbtt_sync_cmd->pdev_id, param->rnr_vap_count);
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PDEV_TBTT_OFFSET_SYNC_CMDID)) {
+		WMI_LOGP("%s: Failed to send multisoc tbtt sync command", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2630,4 +2712,5 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_peer_vlan_config_cmd = send_peer_vlan_config_cmd_tlv;
 	ops->extract_multi_vdev_restart_resp_event =
 				extract_multi_vdev_restart_resp_event_tlv;
+	ops->multisoc_tbtt_sync_cmd = send_multisoc_tbtt_sync_cmd_tlv;
 }
