@@ -1326,6 +1326,16 @@ struct dp_soc {
 	/* SG supported for msdu continued packets from wbm release ring */
 	bool wbm_release_desc_rx_sg_support;
 	bool peer_map_attach_success;
+
+	struct {
+		/* 1st msdu in sg for msdu continued packets in wbm rel ring */
+		bool wbm_is_first_msdu_in_sg;
+		/* Wbm sg list head */
+		qdf_nbuf_t wbm_sg_nbuf_head;
+		/* Wbm sg list tail */
+		qdf_nbuf_t wbm_sg_nbuf_tail;
+		uint32_t wbm_sg_desc_msdu_len;
+	} wbm_sg_param;
 };
 
 #ifdef IPA_OFFLOAD

@@ -4109,6 +4109,9 @@ static void dp_soc_deinit(void *txrx_soc)
 
 	htt_soc_detach(htt_soc);
 
+	/* Free wbm sg list and reset flags in down path */
+	dp_rx_wbm_sg_list_deinit(soc);
+
 	wlan_minidump_remove(soc);
 }
 
@@ -10556,6 +10559,9 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	soc->osdev = qdf_osdev;
 	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
 
+	/* Reset wbm sg list and flags */
+	dp_rx_wbm_sg_list_reset(soc);
+
 	wlan_set_srng_cfg(&soc->wlan_srng_cfg);
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {
@@ -10639,6 +10645,9 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 		goto fail2;
 
 	dp_soc_cfg_init(soc);
+
+	/* Reset/Initialize wbm sg list and flags */
+	dp_rx_wbm_sg_list_reset(soc);
 
 	/* Note: Any SRNG ring initialization should happen only after
 	 * Interrupt mode is set and followed by filling up the

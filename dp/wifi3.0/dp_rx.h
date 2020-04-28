@@ -690,6 +690,19 @@ void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		qdf_nbuf_set_next((tail), NULL);                      \
 	} while (0)
 
+#define DP_RX_MERGE_TWO_LIST(phead, ptail, chead, ctail) \
+	do {                                                          \
+		if (!(phead)) {                                       \
+			(phead) = (chead);                            \
+		} else {                                              \
+			qdf_nbuf_set_next((ptail), (chead));          \
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(phead) += \
+			QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(chead);   \
+		}                                                     \
+		(ptail) = (ctail);                                    \
+		qdf_nbuf_set_next((ptail), NULL);                     \
+	} while (0)
+
 /*for qcn9000 emulation the pcie is complete phy and no address restrictions*/
 #if !defined(BUILD_X86) || defined(QCA_WIFI_QCN9000)
 static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
@@ -1238,7 +1251,37 @@ dp_rx_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *soc,
 {
 	dp_srng_access_end(int_ctx, soc, hal_ring_hdl);
 }
-
 #endif
 
+/*
+ * dp_rx_wbm_sg_list_reset() - Initialize sg list
+ *
+ * This api should be called at soc init and afterevery sg processing.
+ *@soc: DP SOC handle
+ */
+static inline void dp_rx_wbm_sg_list_reset(struct dp_soc *soc)
+{
+	if (soc) {
+		soc->wbm_sg_param.wbm_is_first_msdu_in_sg = false;
+		soc->wbm_sg_param.wbm_sg_nbuf_head = NULL;
+		soc->wbm_sg_param.wbm_sg_nbuf_tail = NULL;
+		soc->wbm_sg_param.wbm_sg_desc_msdu_len = 0;
+	}
+}
+
+/*
+ * dp_rx_wbm_sg_list_deinit() - De-initialize sg list
+ *
+ * This api should be called in down path, to avoid any leak.
+ *@soc: DP SOC handle
+ */
+static inline void dp_rx_wbm_sg_list_deinit(struct dp_soc *soc)
+{
+	if (soc) {
+		if (soc->wbm_sg_param.wbm_sg_nbuf_head)
+			qdf_nbuf_list_free(soc->wbm_sg_param.wbm_sg_nbuf_head);
+
+		dp_rx_wbm_sg_list_reset(soc);
+	}
+}
 #endif /* _DP_RX_H */

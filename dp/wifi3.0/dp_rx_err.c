@@ -1617,6 +1617,22 @@ static inline bool dp_handle_rxdma_decrypt_err(void)
 }
 #endif
 
+static inline bool
+dp_rx_is_sg_formation_required(struct hal_wbm_err_desc_info *info)
+{
+	/*
+	 * Currently Null Queue and Unencrypted error handlers has support for
+	 * SG. Other error handler do not deal with SG buffer.
+	 */
+	if (((info->wbm_err_src == HAL_RX_WBM_ERR_SRC_REO) &&
+	     (info->reo_err_code == HAL_REO_ERR_QUEUE_DESC_ADDR_0)) ||
+	    ((info->wbm_err_src == HAL_RX_WBM_ERR_SRC_RXDMA) &&
+	     (info->rxdma_err_code == HAL_RXDMA_ERR_UNENCRYPTED)))
+		return true;
+
+	return false;
+}
+
 uint32_t
 dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		      hal_ring_handle_t hal_ring_hdl, uint32_t quota)
@@ -1642,8 +1658,7 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint8_t pool_id;
 	uint8_t tid = 0;
 	uint8_t msdu_continuation = 0;
-	bool first_msdu_in_sg = false;
-	uint32_t msdu_len = 0;
+	bool process_sg_buf = false;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -1742,28 +1757,34 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 						   ring_desc, rx_desc);
 		}
 
-		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
+		hal_rx_wbm_err_info_get(ring_desc, &wbm_err_info, hal_soc);
+
+		if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support &&
+				 dp_rx_is_sg_formation_required(&wbm_err_info))) {
 			/* SG is detected from continuation bit */
 			msdu_continuation = hal_rx_wbm_err_msdu_continuation_get(hal_soc,
 					ring_desc);
-			if (msdu_continuation && !first_msdu_in_sg) {
+			if (msdu_continuation &&
+			    !(soc->wbm_sg_param.wbm_is_first_msdu_in_sg)) {
 				/* Update length from first buffer in SG */
-				msdu_len = hal_rx_msdu_start_msdu_len_get(
+				soc->wbm_sg_param.wbm_sg_desc_msdu_len =
+					hal_rx_msdu_start_msdu_len_get(
 						qdf_nbuf_data(rx_desc->nbuf));
-				first_msdu_in_sg = true;
-				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
+				soc->wbm_sg_param.wbm_is_first_msdu_in_sg = true;
 			}
 
 			if (msdu_continuation) {
 				/* MSDU continued packets */
 				qdf_nbuf_set_rx_chfrag_cont(rx_desc->nbuf, 1);
-				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
+				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) =
+					soc->wbm_sg_param.wbm_sg_desc_msdu_len;
 			} else {
 				/* This is the terminal packet in SG */
 				qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
 				qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
-				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) = msdu_len;
-				first_msdu_in_sg = false;
+				QDF_NBUF_CB_RX_PKT_LEN(rx_desc->nbuf) =
+					soc->wbm_sg_param.wbm_sg_desc_msdu_len;
+				process_sg_buf = true;
 			}
 		}
 
@@ -1774,14 +1795,27 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 		 * save the wbm desc info in nbuf TLV. We will need this
 		 * info when we do the actual nbuf processing
 		 */
-		hal_rx_wbm_err_info_get(ring_desc, &wbm_err_info, hal_soc);
 		wbm_err_info.pool_id = rx_desc->pool_id;
 		hal_rx_wbm_err_info_set_in_tlv(qdf_nbuf_data(nbuf),
 								&wbm_err_info);
 
 		rx_bufs_reaped[rx_desc->pool_id]++;
 
-		DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, rx_desc->nbuf);
+		if (qdf_nbuf_is_rx_chfrag_cont(nbuf) || process_sg_buf) {
+			DP_RX_LIST_APPEND(soc->wbm_sg_param.wbm_sg_nbuf_head,
+					  soc->wbm_sg_param.wbm_sg_nbuf_tail,
+					  nbuf);
+			if (process_sg_buf) {
+				DP_RX_MERGE_TWO_LIST(nbuf_head, nbuf_tail,
+						     soc->wbm_sg_param.wbm_sg_nbuf_head,
+						     soc->wbm_sg_param.wbm_sg_nbuf_tail);
+				dp_rx_wbm_sg_list_reset(soc);
+				process_sg_buf = false;
+			}
+		} else {
+			DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, nbuf);
+		}
+
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 						&tail[rx_desc->pool_id],
 						rx_desc);
