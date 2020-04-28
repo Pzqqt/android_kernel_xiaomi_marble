@@ -462,7 +462,6 @@ void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
 			      struct htt_host_rx_desc_base *rx_desc,
 			      struct mon_rx_status *rx_status)
 {
-	uint16_t channel_flags = 0;
 	struct mon_channel *ch_info = &pdev->mon_ch_info;
 
 	rx_status->tsft = (u_int64_t)TSF_TIMESTAMP(rx_desc);
@@ -470,13 +469,12 @@ void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
 	rx_status->chan_num = ch_info->ch_num;
 	htt_mon_rx_get_phy_info(rx_desc, rx_status);
 	rx_status->rtap_flags |= htt_mon_rx_get_rtap_flags(rx_desc);
-	channel_flags |= rx_desc->ppdu_start.l_sig_rate_select ?
-		IEEE80211_CHAN_CCK : IEEE80211_CHAN_OFDM;
-	channel_flags |=
-		(cds_chan_to_band(ch_info->ch_num) == CDS_BAND_2GHZ ?
-		IEEE80211_CHAN_2GHZ : IEEE80211_CHAN_5GHZ);
 
-	rx_status->chan_flags = channel_flags;
+	if (rx_desc->ppdu_start.l_sig_rate_select)
+		rx_status->cck_flag = 1;
+	else
+		rx_status->ofdm_flag = 1;
+
 	rx_status->ant_signal_db = rx_desc->ppdu_start.rssi_comb;
 	rx_status->rssi_comb = rx_desc->ppdu_start.rssi_comb;
 	rx_status->chan_noise_floor = pdev->txrx_pdev->chan_noise_floor;
