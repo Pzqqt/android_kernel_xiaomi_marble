@@ -488,8 +488,8 @@ lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_r
 }
 
 #ifdef WLAN_FEATURE_11AX
-static void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
-					  struct pe_session *session)
+void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
+				   struct pe_session *session)
 {
 	struct add_ie_params *add_ie = &session->add_ie_params;
 	QDF_STATUS status;
@@ -517,8 +517,8 @@ static void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
 		pe_debug("Failed to strip HE op IE status: %d", status);
 }
 #else
-static inline void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
-						 struct pe_session *session)
+void lim_strip_he_ies_from_add_ies(struct mac_context *mac_ctx,
+				   struct pe_session *session)
 {
 }
 #endif
