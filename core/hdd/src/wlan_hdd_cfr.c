@@ -281,6 +281,119 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+#ifdef WLAN_CFR_ADRASTEA
+static QDF_STATUS
+wlan_cfg80211_peer_cfr_capture_cfg_adrastea(struct hdd_adapter *adapter,
+					    struct nlattr **tb)
+{
+	struct cfr_capture_params params = { 0 };
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_psoc *psoc;
+	struct qdf_mac_addr peer_addr;
+	bool is_start_capture = false;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_CFR_PEER_MAC_ADDR]) {
+		hdd_err("peer mac addr not given");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	nla_memcpy(peer_addr.bytes, tb[QCA_WLAN_VENDOR_ATTR_CFR_PEER_MAC_ADDR],
+		   QDF_MAC_ADDR_SIZE);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]) {
+		is_start_capture = nla_get_flag(tb[
+			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]);
+	}
+
+	vdev = adapter->vdev;
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_CFR_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to get vdev");
+		return status;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		hdd_err("failed to get pdev");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		hdd_err("Failed to get psoc");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	peer = wlan_objmgr_get_peer_by_mac(psoc, peer_addr.bytes, WLAN_CFR_ID);
+	if (!peer) {
+		hdd_err("No peer object found");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (is_start_capture) {
+		if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_PERIODICITY]) {
+			params.period = nla_get_u32(tb[
+				QCA_WLAN_VENDOR_ATTR_PEER_CFR_PERIODICITY]);
+			hdd_debug("params.periodicity %d", params.period);
+			/* Set the periodic CFR */
+			if (params.period)
+				ucfg_cfr_set_timer(pdev, params.period);
+		}
+
+		if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_METHOD]) {
+			params.method = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_PEER_CFR_METHOD]);
+			/* Adrastea supports only QOS NULL METHOD */
+			if (params.method !=
+					QCA_WLAN_VENDOR_CFR_METHOD_QOS_NULL) {
+				hdd_err_rl("invalid capture method %d",
+					   params.method);
+				status = QDF_STATUS_E_INVAL;
+				goto exit;
+			}
+		}
+
+		if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_BANDWIDTH]) {
+			params.bandwidth = nla_get_u8(tb[
+				QCA_WLAN_VENDOR_ATTR_PEER_CFR_BANDWIDTH]);
+			/* Adrastea supports only 20Mhz bandwidth CFR capture */
+			if (params.bandwidth != NL80211_CHAN_WIDTH_20_NOHT) {
+				hdd_err_rl("invalid capture bandwidth %d",
+					   params.bandwidth);
+				status = QDF_STATUS_E_INVAL;
+				goto exit;
+			}
+		}
+		ucfg_cfr_start_capture(pdev, peer, &params);
+	} else {
+		/* Disable the periodic CFR if enabled */
+		if (ucfg_cfr_get_timer(pdev))
+			ucfg_cfr_set_timer(pdev, 0);
+
+		/* Disable the peer CFR capture */
+		ucfg_cfr_stop_capture(pdev, peer);
+	}
+exit:
+	wlan_objmgr_peer_release_ref(peer, WLAN_CFR_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+
+	return status;
+}
+#else
+static QDF_STATUS
+wlan_cfg80211_peer_cfr_capture_cfg_adrastea(struct hdd_adapter *adapter,
+					    struct nlattr **tb)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 static int
 wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 				   struct nlattr **tb)
@@ -352,6 +465,7 @@ wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
 {
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX + 1];
 	uint8_t version = 0;
+	QDF_STATUS status;
 
 	if (wlan_cfg80211_nla_parse(
 			tb,
@@ -367,7 +481,11 @@ wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
 		version = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_VERSION]);
 		hdd_debug("version %d", version);
-		if (version != ENHANCED_CFR_VERSION) {
+		if (version == LEGACY_CFR_VERSION) {
+			status = wlan_cfg80211_peer_cfr_capture_cfg_adrastea(
+								adapter, tb);
+			return qdf_status_to_os_return(status);
+		} else if (version != ENHANCED_CFR_VERSION) {
 			hdd_err("unsupported version");
 			return -EFAULT;
 		}
