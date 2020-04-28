@@ -2020,8 +2020,6 @@ more_data:
 			continue;
 		}
 
-		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
-
 		/*
 		 * this is a unlikely scenario where the host is reaping
 		 * a descriptor which it already reaped just a while ago
@@ -2040,6 +2038,8 @@ more_data:
 			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
 			continue;
 		}
+
+		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
 
 		if (qdf_unlikely(!dp_rx_desc_check_magic(rx_desc))) {
 			dp_err("Invalid rx_desc cookie=%d", rx_buf_cookie);
