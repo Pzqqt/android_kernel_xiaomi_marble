@@ -138,6 +138,8 @@
 #define WLAN_SOC_RESTRICTED_80P80_SUPPORT 0x00100000
 	/* Indicates Firmware supports sending NSS ratio info to host */
 #define WLAN_SOC_NSS_RATIO_TO_HOST_SUPPORT 0x00200000
+	/* EMA AP Support */
+#define WLAN_SOC_CEXT_EMA_AP           0x00400000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

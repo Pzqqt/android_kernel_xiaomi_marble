@@ -54,6 +54,7 @@ struct vdev_mlme_obj;
 #define WLAN_VDEV_MLME_FLAGS_NON_MBSSID_AP      0x00000001
 #define WLAN_VDEV_MLME_FLAGS_TRANSMIT_AP        0x00000002
 #define WLAN_VDEV_MLME_FLAGS_NON_TRANSMIT_AP    0x00000004
+#define WLAN_VDEV_MLME_FLAGS_EMA_MODE           0x00000008
 
 /**
  * struct vdev_mlme_proto_generic - generic mlme proto structure

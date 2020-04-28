@@ -94,8 +94,9 @@
 
 /* PDEV ext flags */
 /* CFR support enabled */
-#define WLAN_PDEV_FEXT_CFR_EN       0x00000001
-
+#define WLAN_PDEV_FEXT_CFR_EN               0x00000001
+/* EMA AP support enable */
+#define WLAN_PDEV_FEXT_EMA_AP_ENABLE        0x00000002
 
 /* PDEV op flags */
    /* Enable htrate for wep and tkip */
