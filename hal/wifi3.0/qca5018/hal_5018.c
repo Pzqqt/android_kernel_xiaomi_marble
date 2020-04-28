@@ -194,6 +194,24 @@ static uint8_t hal_rx_get_tlv_5018(void *rx_tlv)
 }
 
 /**
+ * hal_rx_mpdu_start_tlv_tag_valid_5018 () - API to check if RX_MPDU_START
+ * tlv tag is valid
+ *
+ *@rx_tlv_hdr: start address of rx_pkt_tlvs
+ *
+ * Return: true if RX_MPDU_START is valied, else false.
+ */
+uint8_t hal_rx_mpdu_start_tlv_tag_valid_5018(void *rx_tlv_hdr)
+{
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)rx_tlv_hdr;
+	uint32_t tlv_tag;
+
+	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(&rx_desc->mpdu_start_tlv);
+
+	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
+}
+
+/**
  * hal_rx_proc_phyrx_other_receive_info_tlv_5018(): API to get tlv info
  *
  * Return: uint32_t
@@ -918,19 +936,17 @@ static uint32_t hal_rx_tid_get_5018(hal_soc_handle_t hal_soc_hdl, uint8_t *buf)
 
 /**
  * hal_rx_hw_desc_get_ppduid_get_5018(): retrieve ppdu id
- * @hw_desc_addr: hw addr
+ * @rx_tlv_hdr: rx tlv header
+ * @rxdma_dst_ring_desc: rxdma HW descriptor
  *
  * Return: ppdu id
  */
-static uint32_t hal_rx_hw_desc_get_ppduid_get_5018(void *hw_desc_addr)
+static uint32_t hal_rx_hw_desc_get_ppduid_get_5018(void *rx_tlv_hdr,
+						   void *rxdma_dst_ring_desc)
 {
-	struct rx_mpdu_info *rx_mpdu_info;
-	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
+	struct reo_entrance_ring *reo_ent = rxdma_dst_ring_desc;
 
-	rx_mpdu_info =
-		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
-
-	return HAL_RX_GET(rx_mpdu_info, RX_MPDU_INFO_9, PHY_PPDU_ID);
+	return HAL_RX_REO_ENT_PHY_PPDU_ID_GET(reo_ent);
 }
 
 /**
@@ -1130,7 +1146,13 @@ static uint8_t hal_rx_get_filter_category_5018(uint8_t *buf)
 static uint32_t
 hal_rx_get_ppdu_id_5018(uint8_t *buf)
 {
-	return HAL_RX_GET_PPDU_ID(buf);
+	struct rx_mpdu_info *rx_mpdu_info;
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)buf;
+
+	rx_mpdu_info =
+		&rx_desc->mpdu_start_tlv.rx_mpdu_start.rx_mpdu_info_details;
+
+	return HAL_RX_GET_PPDU_ID(rx_mpdu_info);
 }
 
 /**
@@ -1343,6 +1365,30 @@ static inline void hal_write_window_register(struct hal_soc *hal_soc)
 		      WINDOW_CONFIGURATION_VALUE_5018);
 }
 
+/**
+ * hal_rx_msdu_packet_metadata_get_5018(): API to get the
+ * msdu information from rx_msdu_end TLV
+ *
+ * @ buf: pointer to the start of RX PKT TLV headers
+ * @ hal_rx_msdu_metadata: pointer to the msdu info structure
+ */
+static void
+hal_rx_msdu_packet_metadata_get_5018(uint8_t *buf,
+				     void *msdu_pkt_metadata)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_msdu_end *msdu_end = &pkt_tlvs->msdu_end_tlv.rx_msdu_end;
+	struct hal_rx_msdu_metadata *msdu_metadata =
+		(struct hal_rx_msdu_metadata *)msdu_pkt_metadata;
+
+	msdu_metadata->l3_hdr_pad =
+		HAL_RX_MSDU_END_L3_HEADER_PADDING_GET(msdu_end);
+	msdu_metadata->sa_idx = HAL_RX_MSDU_END_SA_IDX_GET(msdu_end);
+	msdu_metadata->da_idx = HAL_RX_MSDU_END_DA_IDX_GET(msdu_end);
+	msdu_metadata->sa_sw_peer_id =
+		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
+}
+
 struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1436,16 +1482,18 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	hal_rx_get_rx_sequence_5018,
 	NULL,
 	NULL,
+	/* rx - msdu fast path info fields */
+	hal_rx_msdu_packet_metadata_get_5018,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
+	hal_rx_mpdu_start_tlv_tag_valid_5018,
 	NULL,
 	NULL,
-	NULL,
-	NULL,
+
 	/* rx - TLV struct offsets */
 	hal_rx_msdu_end_offset_get_generic,
 	hal_rx_attn_offset_get_generic,
