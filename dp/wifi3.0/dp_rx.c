@@ -1369,6 +1369,70 @@ dp_rx_enqueue_rx(struct dp_peer *peer, qdf_nbuf_t rx_buf_list)
 }
 #endif
 
+#ifndef DELIVERY_TO_STACK_STATUS_CHECK
+/**
+ * dp_rx_check_delivery_to_stack() - Deliver pkts to network
+ * using the appropriate call back functions.
+ * @soc: soc
+ * @vdev: vdev
+ * @peer: peer
+ * @nbuf_head: skb list head
+ * @nbuf_tail: skb list tail
+ *
+ * Return: None
+ */
+static void dp_rx_check_delivery_to_stack(struct dp_soc *soc,
+					  struct dp_vdev *vdev,
+					  struct dp_peer *peer,
+					  qdf_nbuf_t nbuf_head)
+{
+	/* Function pointer initialized only when FISA is enabled */
+	if (vdev->osif_fisa_rx)
+		/* on failure send it via regular path */
+		vdev->osif_fisa_rx(soc, vdev, nbuf_head);
+	else
+		vdev->osif_rx(vdev->osif_vdev, nbuf_head);
+}
+
+#else
+/**
+ * dp_rx_check_delivery_to_stack() - Deliver pkts to network
+ * using the appropriate call back functions.
+ * @soc: soc
+ * @vdev: vdev
+ * @peer: peer
+ * @nbuf_head: skb list head
+ * @nbuf_tail: skb list tail
+ *
+ * Check the return status of the call back function and drop
+ * the packets if the return status indicates a failure.
+ *
+ * Return: None
+ */
+static void dp_rx_check_delivery_to_stack(struct dp_soc *soc,
+					  struct dp_vdev *vdev,
+					  struct dp_peer *peer,
+					  qdf_nbuf_t nbuf_head)
+{
+	int num_nbuf = 0;
+	QDF_STATUS ret_val = QDF_STATUS_E_FAILURE;
+
+	/* Function pointer initialized only when FISA is enabled */
+	if (vdev->osif_fisa_rx)
+		/* on failure send it via regular path */
+		ret_val = vdev->osif_fisa_rx(soc, vdev, nbuf_head);
+	else if (vdev->osif_rx)
+		ret_val = vdev->osif_rx(vdev->osif_vdev, nbuf_head);
+
+	if (!QDF_IS_STATUS_SUCCESS(ret_val)) {
+		num_nbuf = dp_rx_drop_nbuf_list(vdev->pdev, nbuf_head);
+		DP_STATS_INC(soc, rx.err.rejected, num_nbuf);
+		if (peer)
+			DP_STATS_DEC(peer, rx.to_stack.num, num_nbuf);
+	}
+}
+#endif /* ifdef DELIVERY_TO_STACK_STATUS_CHECK */
+
 void dp_rx_deliver_to_stack(struct dp_soc *soc,
 			    struct dp_vdev *vdev,
 			    struct dp_peer *peer,
@@ -1409,12 +1473,7 @@ void dp_rx_deliver_to_stack(struct dp_soc *soc,
 				&nbuf_tail, peer->mac_addr.raw);
 	}
 
-	/* Function pointer initialized only when FISA is enabled */
-	if (vdev->osif_fisa_rx)
-		/* on failure send it via regular path */
-		vdev->osif_fisa_rx(soc, vdev, nbuf_head);
-	else
-		vdev->osif_rx(vdev->osif_vdev, nbuf_head);
+	dp_rx_check_delivery_to_stack(soc, vdev, peer, nbuf_head);
 }
 
 /**
