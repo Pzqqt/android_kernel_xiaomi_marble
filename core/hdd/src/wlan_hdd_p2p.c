@@ -709,8 +709,12 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					   p2p_device_address.bytes,
 					   name_assign_type, true);
 	} else {
-		uint8_t *device_address =
-					wlan_hdd_get_intf_addr(hdd_ctx, mode);
+		uint8_t *device_address;
+
+		device_address = wlan_hdd_get_intf_addr(hdd_ctx, mode);
+		if (!device_address)
+			return ERR_PTR(-EINVAL);
+
 		adapter = hdd_open_adapter(hdd_ctx, mode, name,
 					   device_address,
 					   name_assign_type, true);
