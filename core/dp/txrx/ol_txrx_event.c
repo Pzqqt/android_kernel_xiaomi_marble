@@ -72,20 +72,23 @@ wdi_event_handler(enum WDI_EVENT event,
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
 	struct ol_txrx_soc_t *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	ol_txrx_pdev_handle txrx_pdev =
-		ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
+	ol_txrx_pdev_handle txrx_pdev;
 
 	/*
 	 * Input validation
 	 */
 	if (!event) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid WDI event in %s\n", __func__);
+		ol_txrx_err("Invalid WDI event");
 		return;
 	}
+	if (!soc) {
+		ol_txrx_err("Invalid soc");
+		return;
+	}
+
+	txrx_pdev = ol_txrx_get_pdev_from_pdev_id(soc, pdev_id);
 	if (!txrx_pdev) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid pdev in WDI event handler\n");
+		ol_txrx_err("Invalid pdev");
 		return;
 	}
 	/*
