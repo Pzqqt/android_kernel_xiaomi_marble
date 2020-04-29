@@ -80,17 +80,13 @@ static void wcd_program_hs_vref(struct wcd_mbhc *mbhc)
 	struct snd_soc_component *component = mbhc->component;
 	u32 reg_val;
 
-	if (mbhc->mbhc_cb->hs_vref_max_update) {
-		mbhc->mbhc_cb->hs_vref_max_update(mbhc);
-	} else {
-		plug_type_cfg = WCD_MBHC_CAL_PLUG_TYPE_PTR(
-					mbhc->mbhc_cfg->calibration);
-		reg_val = ((plug_type_cfg->v_hs_max - HS_VREF_MIN_VAL) / 100);
+	plug_type_cfg = WCD_MBHC_CAL_PLUG_TYPE_PTR(
+				mbhc->mbhc_cfg->calibration);
+	reg_val = ((plug_type_cfg->v_hs_max - HS_VREF_MIN_VAL) / 100);
 
-		dev_dbg(component->dev, "%s: reg_val  = %x\n",
-				__func__, reg_val);
-		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_VREF, reg_val);
-	}
+	dev_dbg(component->dev, "%s: reg_val  = %x\n",
+		__func__, reg_val);
+	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HS_VREF, reg_val);
 }
 
 static void wcd_program_btn_threshold(const struct wcd_mbhc *mbhc, bool micbias)
@@ -999,14 +995,6 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 			mbhc->mbhc_cb->enable_mb_source(mbhc, true);
 		mbhc->btn_press_intr = false;
 		mbhc->is_btn_press = false;
-		/*
-		 * When current source mode doesn't work properly
-		 * use mic bias pull up mode for button interrupts
-		 * to function properly
-		 */
-		if (mbhc->mbhc_cb->mbhc_micb_pullup_control)
-			mbhc->mbhc_cb->mbhc_micb_pullup_control(component,
-								true);
 		if (mbhc->mbhc_fn)
 			mbhc->mbhc_fn->wcd_mbhc_detect_plug_type(mbhc);
 	} else if ((mbhc->current_plug != MBHC_PLUG_TYPE_NONE)
@@ -1083,10 +1071,6 @@ static void wcd_mbhc_swch_irq_handler(struct wcd_mbhc *mbhc)
 				mbhc->mbhc_cb->mbhc_moisture_detect_en(mbhc,
 									false);
 		}
-
-		if (mbhc->mbhc_cb->mbhc_micb_pullup_control)
-			mbhc->mbhc_cb->mbhc_micb_pullup_control(component,
-								false);
 
 	} else if (!detection_type) {
 		/* Disable external voltage source to micbias if present */
@@ -1856,6 +1840,8 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_component *component,
 	mbhc->hph_type = WCD_MBHC_HPH_NONE;
 	mbhc->wcd_mbhc_regs = wcd_mbhc_regs;
 	mbhc->swap_thr = GND_MIC_SWAP_THRESHOLD;
+	mbhc->hphl_cross_conn_thr = HPHL_CROSS_CONN_THRESHOLD;
+	mbhc->hphr_cross_conn_thr = HPHR_CROSS_CONN_THRESHOLD;
 
 	if (mbhc->intr_ids == NULL) {
 		pr_err("%s: Interrupt mapping not provided\n", __func__);

@@ -37,6 +37,10 @@
 #define ROULEUR_MBHC_ZDET_CONST         (86 * 16384)
 #define ROULEUR_MBHC_MOISTURE_RREF      R_24_KOHM
 
+/* Cross connection thresholds in mV */
+#define ROULEUR_HPHL_CROSS_CONN_THRESHOLD 200
+#define ROULEUR_HPHR_CROSS_CONN_THRESHOLD 200
+
 static struct wcd_mbhc_register
 	wcd_mbhc_registers[WCD_MBHC_REG_FUNC_MAX] = {
 	WCD_MBHC_REGISTER("WCD_MBHC_L_DET_EN",
@@ -320,11 +324,11 @@ static void rouleur_mbhc_micb_ramp_control(struct snd_soc_component *component,
 					0x1C, 0x0C);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0xA0, 0x80);
+					0x80, 0x80);
 	} else {
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0xA0, 0x00);
+					0x80, 0x00);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
 					0x1C, 0x00);
@@ -820,15 +824,6 @@ static void rouleur_mbhc_bcs_enable(struct wcd_mbhc *mbhc,
 		rouleur_disable_bcs_before_slow_insert(mbhc->component, true);
 }
 
-static void rouleur_mbhc_hs_vref_max_update(struct wcd_mbhc *mbhc)
-{
-	struct snd_soc_component *component = mbhc->component;
-
-	/* Update the HS Vref max voltage to 1.7V */
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_CTL_2,
-				      0x03, 0x03);
-}
-
 static void rouleur_mbhc_get_micbias_val(struct wcd_mbhc *mbhc, int *mb)
 {
 	u8 vout_ctl = 0;
@@ -843,17 +838,38 @@ static void rouleur_mbhc_get_micbias_val(struct wcd_mbhc *mbhc, int *mb)
 	pr_debug("%s: vout_ctl: %d, micbias: %d\n", __func__, vout_ctl, *mb);
 }
 
-static void rouleur_mbhc_micb_pullup_control(
-				struct snd_soc_component *component,
-				bool pullup_enable)
+static void rouleur_mbhc_comp_autozero_control(struct wcd_mbhc *mbhc,
+						bool az_enable)
 {
-	if (pullup_enable)
-		rouleur_micbias_control(component, MIC_BIAS_2,
-					MICB_PULLUP_ENABLE, false);
+	if (az_enable)
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_MBHC_MCLK, 0x08, 0x08);
 	else
-		rouleur_micbias_control(component, MIC_BIAS_2,
-					MICB_PULLUP_DISABLE, false);
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_MBHC_MCLK, 0x08, 0x00);
 
+}
+
+static void rouleur_mbhc_surge_control(struct wcd_mbhc *mbhc,
+						bool surge_enable)
+{
+	if (surge_enable)
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_SURGE_EN, 0xC0, 0xC0);
+	else
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_SURGE_EN, 0xC0, 0x00);
+
+}
+
+static void rouleur_mbhc_update_cross_conn_thr(struct wcd_mbhc *mbhc)
+{
+	mbhc->hphl_cross_conn_thr = ROULEUR_HPHL_CROSS_CONN_THRESHOLD;
+	mbhc->hphr_cross_conn_thr = ROULEUR_HPHR_CROSS_CONN_THRESHOLD;
+
+	pr_debug("%s: Cross connection threshold for hphl: %d, hphr: %d\n",
+			__func__, mbhc->hphl_cross_conn_thr,
+			mbhc->hphr_cross_conn_thr);
 }
 
 static const struct wcd_mbhc_cb mbhc_cb = {
@@ -880,9 +896,10 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.mbhc_get_moisture_status = rouleur_mbhc_get_moisture_status,
 	.mbhc_moisture_detect_en = rouleur_mbhc_moisture_detect_en,
 	.bcs_enable = rouleur_mbhc_bcs_enable,
-	.hs_vref_max_update = rouleur_mbhc_hs_vref_max_update,
 	.get_micbias_val = rouleur_mbhc_get_micbias_val,
-	.mbhc_micb_pullup_control = rouleur_mbhc_micb_pullup_control,
+	.mbhc_comp_autozero_control = rouleur_mbhc_comp_autozero_control,
+	.mbhc_surge_ctl = rouleur_mbhc_surge_control,
+	.update_cross_conn_thr = rouleur_mbhc_update_cross_conn_thr,
 };
 
 static int rouleur_get_hph_type(struct snd_kcontrol *kcontrol,

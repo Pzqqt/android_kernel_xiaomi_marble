@@ -80,8 +80,22 @@ static int wcd_measure_adc_continuous(struct wcd_mbhc *mbhc)
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 0);
 	/* Set the MUX selection to IN2P */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_MUX_CTL, MUX_CTL_IN2P);
+
+	/*
+	 * Current source mode requires Auto zeroing to be enabled
+	 * automatically. If HW doesn't do it, SW has to take care of this
+	 * for button interrupts to work fine and to avoid
+	 * fake electrical removal interrupts by enabling autozero before FSM
+	 * enable and disable it after FSM enable
+	 */
+	if (mbhc->mbhc_cb->mbhc_comp_autozero_control)
+		mbhc->mbhc_cb->mbhc_comp_autozero_control(mbhc,
+							true);
 	/* Enable MBHC FSM */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 1);
+	if (mbhc->mbhc_cb->mbhc_comp_autozero_control)
+		mbhc->mbhc_cb->mbhc_comp_autozero_control(mbhc,
+							false);
 	/* Enable ADC_ENABLE bit */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ADC_EN, 1);
 
@@ -294,6 +308,10 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 	WCD_MBHC_REG_READ(WCD_MBHC_ELECT_SCHMT_ISRC, elect_ctl);
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ELECT_SCHMT_ISRC, 0x00);
 
+	/* Disable surge detection before ADC measurement */
+	if (mbhc->mbhc_cb->mbhc_surge_ctl)
+		mbhc->mbhc_cb->mbhc_surge_ctl(mbhc, false);
+
 	/* Read and set ADC to single measurement */
 	WCD_MBHC_REG_READ(WCD_MBHC_ADC_MODE, adc_mode);
 	/* Read ADC Enable bit to restore after adc measurement */
@@ -317,7 +335,12 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 		goto done;
 	}
 
-	if (hphl_adc_res > 100 || hphr_adc_res > 100) {
+	/* Update cross connection threshold voltages if needed */
+	if (mbhc->mbhc_cb->update_cross_conn_thr)
+		mbhc->mbhc_cb->update_cross_conn_thr(mbhc);
+
+	if (hphl_adc_res > mbhc->hphl_cross_conn_thr ||
+	    hphr_adc_res > mbhc->hphr_cross_conn_thr) {
 		plug_type = MBHC_PLUG_TYPE_GND_MIC_SWAP;
 		pr_debug("%s: Cross connection identified\n", __func__);
 	} else {
@@ -338,6 +361,10 @@ done:
 
 	/* Restore FSM state */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, fsm_en);
+
+	/* Restore surge detection */
+	if (mbhc->mbhc_cb->mbhc_surge_ctl)
+		mbhc->mbhc_cb->mbhc_surge_ctl(mbhc, true);
 
 	/* Restore electrical detection */
 	WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_ELECT_SCHMT_ISRC, elect_ctl);
