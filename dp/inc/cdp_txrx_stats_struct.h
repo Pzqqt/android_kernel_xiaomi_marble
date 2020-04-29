@@ -1732,8 +1732,8 @@ struct cdp_pdev_stats {
 	struct cdp_cfr_rcc_stats rcc;
 
 	uint64_t tx_ppdu_proc;
-	uint32_t ack_ba_comes_twice;
-	uint32_t ppdu_drop;
+	uint64_t ack_ba_comes_twice;
+	uint64_t ppdu_drop;
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT
