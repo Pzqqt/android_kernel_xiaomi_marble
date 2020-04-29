@@ -12710,6 +12710,9 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		return 0;
 	}
 
+	if (hdd_is_roaming_in_progress(hdd_ctx))
+		return -EINVAL;
+
 	err = wlan_cfg80211_nla_parse(tb, STATS_SET_MAX, data, data_len,
 				      qca_wlan_vendor_set_nud_stats_policy);
 	if (err) {
