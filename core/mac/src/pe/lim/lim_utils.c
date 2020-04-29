@@ -5851,6 +5851,33 @@ QDF_STATUS lim_strip_supp_op_class_update_struct(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+uint8_t lim_op_class_from_bandwidth(struct mac_context *mac_ctx,
+				    uint16_t channel_freq,
+				    enum phy_ch_width ch_bandwidth,
+				    enum offset_t offset)
+{
+	uint8_t op_class = 0;
+	uint16_t ch_behav_limit = BEHAV_NONE;
+	uint8_t channel;
+
+	if (ch_bandwidth == CH_WIDTH_40MHZ &&
+	    wlan_reg_is_24ghz_ch_freq(channel_freq)) {
+		if (offset == BW40_LOW_PRIMARY)
+			ch_behav_limit = BEHAV_BW40_LOW_PRIMARY;
+		else
+			ch_behav_limit = BEHAV_BW40_HIGH_PRIMARY;
+	} else if (ch_bandwidth == CH_WIDTH_80P80MHZ) {
+		ch_behav_limit = BEHAV_BW80_PLUS;
+	}
+	wlan_reg_freq_width_to_chan_op_class_auto
+		(mac_ctx->pdev, channel_freq,
+		 ch_width_in_mhz(ch_bandwidth),
+		 true, BIT(ch_behav_limit), &op_class,
+		 &channel);
+
+	return op_class;
+}
+
 /**
  * lim_update_extcap_struct() - poputlate the dot11f structure
  * @mac_ctx: global MAC context
@@ -7690,7 +7717,7 @@ void lim_process_ap_ecsa_timeout(void *data)
 {
 	struct pe_session *session = (struct pe_session *)data;
 	struct mac_context *mac_ctx;
-	uint8_t bcn_int, ch_width, offset;
+	uint8_t bcn_int, ch_width;
 	uint32_t ch_freq;
 	QDF_STATUS status;
 
@@ -7723,17 +7750,16 @@ void lim_process_ap_ecsa_timeout(void *data)
 
 		ch_freq = session->gLimChannelSwitch.sw_target_freq;
 		ch_width = session->gLimChannelSwitch.ch_width;
-		offset = session->gLimChannelSwitch.sec_ch_offset;
 		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_beacon_tx_enhanced) {
 			if (WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq)) {
 				send_extended_chan_switch_action_frame
 					(mac_ctx, ch_freq, ch_width,
-					 offset, session);
+					 session);
 			} else {
 				/* Send Action frame after updating beacon */
 				lim_send_chan_switch_action_frame
 					(mac_ctx, ch_freq, ch_width,
-					 offset, session);
+					 session);
 			}
 		}
 

@@ -627,6 +627,13 @@ struct pe_session *lim_is_ibss_session_active(struct mac_context *mac)
 }
 #endif
 
+/**
+ * ch_width_in_mhz() - API to get channel space in MHz
+ *
+ * For CH_WIDTH_80P80MHZ, the channel space is max channel space of one
+ * segment - 80MHz.
+ *
+ */
 static inline uint8_t ch_width_in_mhz(enum phy_ch_width ch_width)
 {
 	switch (ch_width) {
@@ -637,7 +644,7 @@ static inline uint8_t ch_width_in_mhz(enum phy_ch_width ch_width)
 	case CH_WIDTH_160MHZ:
 		return 160;
 	case CH_WIDTH_80P80MHZ:
-		return 160;
+		return 80;
 	case CH_WIDTH_5MHZ:
 		return 5;
 	case CH_WIDTH_10MHZ:
@@ -1689,7 +1696,6 @@ void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
  * @mac_ctx: pointer to global mac structure
  * @new_channel_freq: new channel freq(Mhz) to switch to.
  * @ch_bandwidth: ch bw of enum phy_ch_width
- * @offset: BW of type enum offset_t
  * @session_entry: pe session
  *
  * Return: void
@@ -1697,7 +1703,6 @@ void lim_send_start_bss_confirm(struct mac_context *mac_ctx,
 void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 				       uint16_t new_channel_freq,
 				       enum phy_ch_width ch_bandwidth,
-				       enum offset_t offset,
 				       struct pe_session *session_entry);
 
 /**
@@ -1707,7 +1712,6 @@ void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
  * @mac_ctx: pointer to global mac structure
  * @new_channel_freq: new channel to switch to.
  * @ch_bandwidth: channel bw of type enum phy_ch_width
- * @offset: BW of enum offset_t
  * @session_entry: pe session
  *
  * This function is called to send ECSA frame for STA/CLI and SAP/GO.
@@ -1717,7 +1721,6 @@ void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 					    uint16_t new_channel_freq,
 					    enum phy_ch_width ch_bandwidth,
-					    enum offset_t offset,
 					    struct pe_session *session_entry);
 
 /**
@@ -2028,6 +2031,23 @@ QDF_STATUS lim_mon_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 				   struct pe_session *pe_session);
+
+/**
+ * lim_op_class_from_bandwidth() - get op class from bandwidth
+ * @mac_ctx: mac context
+ * @channel_freq: channel frequency MHz
+ * @ch_bandwidth: channel bandwidth
+ * @offset: second channel offfset
+ *
+ * This API can get the operating class based on channel freq,
+ * bandwidth and second channel offset.
+ *
+ * Return: op class
+ */
+uint8_t lim_op_class_from_bandwidth(struct mac_context *mac_ctx,
+				    uint16_t channel_freq,
+				    enum phy_ch_width ch_bandwidth,
+				    enum offset_t offset);
 
 /**
  * lim_flush_bssid() - flush bssid from scan cache

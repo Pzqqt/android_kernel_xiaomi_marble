@@ -179,34 +179,19 @@ void populate_dot_11_f_ext_chann_switch_ann(struct mac_context *mac_ptr,
 		struct pe_session *session_entry)
 {
 	uint8_t ch_offset;
-	uint8_t op_class = 0;
-	uint8_t chan_num = 0;
 	uint32_t sw_target_freq;
 	uint8_t primary_channel;
 	enum phy_ch_width ch_width;
 
 	ch_width = session_entry->gLimChannelSwitch.ch_width;
-	if (ch_width == CH_WIDTH_80MHZ)
-		ch_offset = BW80;
-	else
-		ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
+	ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
 
 	dot_11_ptr->switch_mode = session_entry->gLimChannelSwitch.switchMode;
 	sw_target_freq = session_entry->gLimChannelSwitch.sw_target_freq;
 	primary_channel = session_entry->gLimChannelSwitch.primaryChannel;
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sw_target_freq)) {
-		wlan_reg_freq_width_to_chan_op_class
-			(mac_ptr->pdev, sw_target_freq,
-			 ch_width_in_mhz(ch_width),
-			 true, BIT(BEHAV_NONE), &op_class, &chan_num);
-		dot_11_ptr->new_reg_class = op_class;
-	} else {
-		dot_11_ptr->new_reg_class =
-			wlan_reg_dmn_get_opclass_from_channel
-				(mac_ptr->scan.countryCodeCurrent,
-				 primary_channel, ch_offset);
-	}
-
+	dot_11_ptr->new_reg_class =
+		lim_op_class_from_bandwidth(mac_ptr, sw_target_freq, ch_width,
+					    ch_offset);
 	dot_11_ptr->new_channel =
 		session_entry->gLimChannelSwitch.primaryChannel;
 	dot_11_ptr->switch_count =
@@ -249,32 +234,31 @@ populate_dot11_supp_operating_classes(struct mac_context *mac_ptr,
 				tDot11fIESuppOperatingClasses *dot_11_ptr,
 				struct pe_session *session_entry)
 {
-	uint8_t ch_bandwidth;
+	uint8_t ch_offset;
 
 	if (session_entry->ch_width == CH_WIDTH_80MHZ) {
-		ch_bandwidth = BW80;
+		ch_offset = BW80;
 	} else {
 		switch (session_entry->htSecondaryChannelOffset) {
 		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-			ch_bandwidth = BW40_HIGH_PRIMARY;
+			ch_offset = BW40_HIGH_PRIMARY;
 			break;
 		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-			ch_bandwidth = BW40_LOW_PRIMARY;
+			ch_offset = BW40_LOW_PRIMARY;
 			break;
 		default:
-			ch_bandwidth = BW20;
+			ch_offset = BW20;
 			break;
 		}
 	}
 
 	wlan_reg_dmn_get_curr_opclasses(&dot_11_ptr->num_classes,
 					&dot_11_ptr->classes[1]);
-	dot_11_ptr->classes[0] = wlan_reg_dmn_get_opclass_from_channel(
-					mac_ptr->scan.countryCodeCurrent,
-					wlan_reg_freq_to_chan(
-					mac_ptr->pdev,
-					session_entry->curr_op_freq),
-					ch_bandwidth);
+	dot_11_ptr->classes[0] =
+		lim_op_class_from_bandwidth(mac_ptr,
+					    session_entry->curr_op_freq,
+					    session_entry->ch_width,
+					    ch_offset);
 	dot_11_ptr->num_classes++;
 	dot_11_ptr->present = 1;
 }

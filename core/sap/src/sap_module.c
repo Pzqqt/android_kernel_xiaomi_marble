@@ -1210,7 +1210,7 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 				  uint32_t chan_freq)
 {
 	struct mac_context *mac_ctx;
-	uint8_t bw;
+	uint32_t max_fw_bw;
 
 	mac_ctx = sap_get_mac_context();
 	if (!mac_ctx) {
@@ -1224,8 +1224,7 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		 * SAP coming up in HT40 on channel switch we are
 		 * disabling channel bonding in 2.4Ghz.
 		 */
-		mac_ctx->sap.SapDfsInfo.new_chanWidth = 0;
-
+		mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_20MHZ;
 	} else {
 		if (sap_context->csr_roamProfile.phyMode ==
 		    eCSR_DOT11_MODE_11ac ||
@@ -1235,48 +1234,22 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		    eCSR_DOT11_MODE_11ax ||
 		    sap_context->csr_roamProfile.phyMode ==
 		    eCSR_DOT11_MODE_11ax_ONLY) {
-			bw = BW80;
+			max_fw_bw = sme_get_vht_ch_width();
+			if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+					CH_WIDTH_160MHZ;
+			else
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+					CH_WIDTH_80MHZ;
 		} else if (sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n ||
 			   sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n_ONLY) {
-			bw = BW40_HIGH_PRIMARY;
+			mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_40MHZ;
 		} else {
 			/* For legacy 11a mode return 20MHz */
 			mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_20MHZ;
-			return QDF_STATUS_SUCCESS;
 		}
-
-		for (; bw >= BW20; bw--) {
-			uint16_t op_class;
-
-			op_class = wlan_reg_dmn_get_opclass_from_channel(
-					mac_ctx->scan.countryCodeCurrent,
-					wlan_reg_freq_to_chan(mac_ctx->pdev, chan_freq),
-					bw);
-			/*
-			 * Do not continue if bw is 20. This mean channel is not
-			 * found and thus set BW20 for the channel.
-			 */
-			if (!op_class && bw > BW20)
-				continue;
-
-			if (bw == BW80) {
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-					CH_WIDTH_80MHZ;
-			} else if (bw == BW40_HIGH_PRIMARY) {
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-					CH_WIDTH_40MHZ;
-			} else if (bw == BW40_LOW_PRIMARY) {
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-				   CH_WIDTH_40MHZ;
-			} else {
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-				   CH_WIDTH_20MHZ;
-			}
-			break;
-		}
-
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -5352,7 +5352,6 @@ end:
 void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 					    uint16_t new_channel_freq,
 					    enum phy_ch_width ch_bandwidth,
-					    enum offset_t offset,
 					    struct pe_session *session_entry)
 {
 	uint8_t op_class = 0;
@@ -5361,17 +5360,11 @@ void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	uint8_t switch_count;
 	uint8_t new_channel = 0;
 
+	op_class =
+		lim_op_class_from_bandwidth(mac_ctx, new_channel_freq,
+					    ch_bandwidth,
+					    session_entry->gLimChannelSwitch.sec_ch_offset);
 	new_channel = wlan_reg_freq_to_chan(mac_ctx->pdev, new_channel_freq);
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(new_channel_freq))
-		wlan_reg_freq_width_to_chan_op_class
-			(mac_ctx->pdev, new_channel_freq,
-			 ch_width_in_mhz(ch_bandwidth),
-			 true, BIT(BEHAV_NONE), &op_class,
-			 &new_channel);
-	else
-		op_class = wlan_reg_dmn_get_opclass_from_channel
-			(mac_ctx->scan.countryCodeCurrent, new_channel, offset);
-
 	if (LIM_IS_AP_ROLE(session_entry) &&
 		(mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false))
 		switch_mode = session_entry->gLimChannelSwitch.switchMode;
@@ -5401,7 +5394,6 @@ void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 				       uint16_t new_channel_freq,
 				       enum phy_ch_width ch_bandwidth,
-				       enum offset_t offset,
 				       struct pe_session *session_entry)
 {
 	uint8_t op_class = 0, new_channel;
@@ -5411,18 +5403,12 @@ void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 	tpDphHashNode dph_node_array_ptr;
 
 	dph_node_array_ptr = session_entry->dph.dphHashTable.pDphNodeArray;
-
+	op_class =
+		lim_op_class_from_bandwidth(mac_ctx, new_channel_freq,
+					    ch_bandwidth,
+					    session_entry->gLimChannelSwitch.sec_ch_offset);
 	new_channel = wlan_reg_freq_to_chan(mac_ctx->pdev, new_channel_freq);
-	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(new_channel_freq))
-		wlan_reg_freq_width_to_chan_op_class
-			(mac_ctx->pdev, new_channel_freq,
-			 ch_width_in_mhz(ch_bandwidth),
-			 true, BIT(BEHAV_NONE), &op_class,
-			 &new_channel);
-	else
-		op_class = wlan_reg_dmn_get_opclass_from_channel
-			(mac_ctx->scan.countryCodeCurrent,
-			 new_channel, offset);
+
 	if (LIM_IS_AP_ROLE(session_entry) &&
 	    (false == mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch))
 		switch_mode = session_entry->gLimChannelSwitch.switchMode;
@@ -5470,7 +5456,6 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
-	enum offset_t ch_offset;
 	QDF_STATUS status;
 	enum phy_ch_width ch_width;
 	uint32_t target_ch_freq;
@@ -5607,19 +5592,13 @@ skip_vht:
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("cannot start ap_ecsa_timer");
 
-	if (ch_width == CH_WIDTH_80MHZ || ch_width == CH_WIDTH_160MHZ ||
-	    ch_width == CH_WIDTH_80P80MHZ)
-		ch_offset = BW80;
-	else
-		ch_offset = dfs_csa_ie_req->ch_params.sec_ch_offset;
-
 	pe_debug("IE count:%d chan:%d freq %d width:%d wrapper:%d ch_offset:%d",
 		 session_entry->gLimChannelSwitch.switchCount,
 		 session_entry->gLimChannelSwitch.primaryChannel,
 		 session_entry->gLimChannelSwitch.sw_target_freq,
 		 session_entry->gLimChannelSwitch.ch_width,
 		 session_entry->dfsIncludeChanWrapperIe,
-		 ch_offset);
+		 session_entry->gLimChannelSwitch.sec_ch_offset);
 
 	/* Send ECSA/CSA Action frame after updating the beacon */
 	if (CHAN_HOP_ALL_BANDS_ENABLE &&
@@ -5627,10 +5606,10 @@ skip_vht:
 		lim_send_chan_switch_action_frame
 			(mac_ctx,
 			 session_entry->gLimChannelSwitch.primaryChannel,
-			 ch_width, ch_offset, session_entry);
+			 ch_width, session_entry);
 	else
 		send_extended_chan_switch_action_frame
-			(mac_ctx, target_ch_freq, ch_width, ch_offset,
+			(mac_ctx, target_ch_freq, ch_width,
 			 session_entry);
 }
 
@@ -5671,8 +5650,9 @@ static void lim_process_ext_change_channel(struct mac_context *mac_ctx,
 	new_ext_chan_freq =
 		wlan_reg_legacy_chan_to_freq(mac_ctx->pdev,
 					     ext_chng_channel->new_channel);
+	session_entry->gLimChannelSwitch.sec_ch_offset = 0;
 	send_extended_chan_switch_action_frame(mac_ctx, new_ext_chan_freq, 0,
-					       0, session_entry);
+					       session_entry);
 }
 
 /**
