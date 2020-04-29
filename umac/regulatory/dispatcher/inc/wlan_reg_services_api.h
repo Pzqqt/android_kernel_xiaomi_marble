@@ -142,6 +142,25 @@ bool wlan_reg_is_5ghz_ch_freq(qdf_freq_t freq);
 #define WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) wlan_reg_is_6ghz_chan_freq(freq)
 bool wlan_reg_is_6ghz_chan_freq(uint16_t freq);
 
+#ifdef CONFIG_6G_FREQ_OVERLAP
+/**
+ * wlan_reg_is_range_only6g() - Check if the given low_freq and high_freq
+ * is in the 6G range.
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 6G range,
+ * else false.
+ */
+bool wlan_reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+#else
+static inline bool wlan_reg_is_range_only6g(qdf_freq_t low_freq,
+					    qdf_freq_t high_freq)
+{
+	return false;
+}
+#endif
+
 /**
  * wlan_reg_is_6ghz_psc_chan_freq() - Check if the given 6GHz channel frequency
  * is preferred scanning channel frequency.
@@ -174,6 +193,12 @@ uint16_t wlan_reg_max_6ghz_chan_freq(void);
 
 #define WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) (false)
 static inline bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return false;
+}
+
+static inline bool wlan_reg_is_range_only6g(qdf_freq_t low_freq,
+					    qdf_freq_t high_freq)
 {
 	return false;
 }

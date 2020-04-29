@@ -74,7 +74,24 @@
 	(((freq) >= channel_map[MIN_5GHZ_CHANNEL].center_freq) &&	\
 	 ((freq) <= channel_map[MAX_5GHZ_CHANNEL].center_freq))
 
+/*
+ * It should be 2.5 MHz actually but since we are using integer use 2
+ * instead, which does not create any problem in the start edge calculation.
+ */
+#define HALF_5MHZ_BW     2
+#define HALF_20MHZ_BW    10
+
+#define FIVEG_STARTING_EDGE_FREQ (channel_map_global[MIN_49GHZ_CHANNEL]. \
+				  center_freq - HALF_5MHZ_BW)
+#define FIVEG_ENDING_EDGE_FREQ   (channel_map_global[MAX_5GHZ_CHANNEL]. \
+				  center_freq + HALF_20MHZ_BW)
+
 #ifdef CONFIG_BAND_6GHZ
+#define SIXG_STARTING_EDGE_FREQ  (channel_map_global[MIN_6GHZ_CHANNEL]. \
+				  center_freq - HALF_20MHZ_BW)
+#define SIXG_ENDING_EDGE_FREQ    (channel_map_global[MAX_6GHZ_CHANNEL]. \
+				  center_freq + HALF_20MHZ_BW)
+
 #define FREQ_LEFT_SHIFT         55
 #define SIXG_STARTING_FREQ      5940
 #define NUM_80MHZ_BAND_IN_6G    16
@@ -508,6 +525,20 @@ bool reg_is_5ghz_ch_freq(uint32_t freq);
  */
 bool reg_is_6ghz_chan_freq(uint16_t freq);
 
+#ifdef CONFIG_6G_FREQ_OVERLAP
+/**
+ * reg_is_range_only6g() - Check if the given low_freq and high_freq is in
+ * the 6G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 6G range,
+ * else false.
+ */
+bool reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+#endif
+
 /**
  * REG_IS_6GHZ_FREQ() - Check if the given channel frequency is 6GHz
  * @freq: Channel frequency
@@ -548,6 +579,14 @@ static inline bool reg_is_6ghz_chan_freq(uint16_t freq)
 {
 	return false;
 }
+
+#ifdef CONFIG_6G_FREQ_OVERLAP
+static inline bool reg_is_range_only6g(qdf_freq_t low_freq,
+				       qdf_freq_t high_freq)
+{
+	return false;
+}
+#endif
 
 static inline bool REG_IS_6GHZ_FREQ(uint16_t freq)
 {

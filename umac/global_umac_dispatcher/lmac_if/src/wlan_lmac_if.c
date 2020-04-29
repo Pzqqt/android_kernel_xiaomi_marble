@@ -346,6 +346,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 	rx_ops->reg_rx_ops.reg_update_pdev_wireless_modes =
 		wlan_reg_update_pdev_wireless_modes;
 
+	rx_ops->reg_rx_ops.reg_is_range_only6g =
+		wlan_reg_is_range_only6g;
+
 	rx_ops->reg_rx_ops.reg_ignore_fw_reg_offload_ind =
 		tgt_reg_ignore_fw_reg_offload_ind;
 

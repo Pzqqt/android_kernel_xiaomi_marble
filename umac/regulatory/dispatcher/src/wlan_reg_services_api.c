@@ -752,6 +752,13 @@ bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
 	return reg_is_6ghz_chan_freq(freq);
 }
 
+#ifdef CONFIG_6G_FREQ_OVERLAP
+bool wlan_reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	return reg_is_range_only6g(low_freq, high_freq);
+}
+#endif
+
 uint16_t wlan_reg_min_6ghz_chan_freq(void)
 {
 	return reg_min_6ghz_chan_freq();

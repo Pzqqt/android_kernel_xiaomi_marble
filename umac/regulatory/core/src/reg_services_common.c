@@ -2380,6 +2380,75 @@ bool reg_is_6ghz_chan_freq(uint16_t freq)
 	return REG_IS_6GHZ_FREQ(freq);
 }
 
+#ifdef CONFIG_6G_FREQ_OVERLAP
+/**
+ * reg_is_freq_in_between() - Check whether freq falls within low_freq and
+ * high_freq, inclusively.
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ * @freq - Frequency to be checked.
+ *
+ * Return: True if freq falls within low_freq and high_freq, else false.
+ */
+static bool reg_is_freq_in_between(qdf_freq_t low_freq, qdf_freq_t high_freq,
+				   qdf_freq_t freq)
+{
+	return (low_freq <= freq && freq <= high_freq);
+}
+
+static bool reg_is_ranges_overlap(qdf_freq_t low_freq, qdf_freq_t high_freq,
+				  qdf_freq_t start_edge_freq,
+				  qdf_freq_t end_edge_freq)
+{
+	return (reg_is_freq_in_between(start_edge_freq,
+				       end_edge_freq,
+				       low_freq) ||
+		reg_is_freq_in_between(start_edge_freq,
+				       end_edge_freq,
+				       high_freq) ||
+		reg_is_freq_in_between(low_freq,
+				       high_freq,
+				       start_edge_freq) ||
+		reg_is_freq_in_between(low_freq,
+				       high_freq,
+				       end_edge_freq));
+}
+
+static bool reg_is_range_overlap_6g(qdf_freq_t low_freq,
+				    qdf_freq_t high_freq)
+{
+	return reg_is_ranges_overlap(low_freq, high_freq,
+				     SIXG_STARTING_EDGE_FREQ,
+				     SIXG_ENDING_EDGE_FREQ);
+}
+
+static bool reg_is_range_overlap_5g(qdf_freq_t low_freq,
+				    qdf_freq_t high_freq)
+{
+	return reg_is_ranges_overlap(low_freq, high_freq,
+				     FIVEG_STARTING_EDGE_FREQ,
+				     FIVEG_ENDING_EDGE_FREQ);
+}
+
+bool reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	if (low_freq >= high_freq) {
+		reg_err_rl("Low freq is greater than or equal to high freq");
+		return false;
+	}
+
+	if (reg_is_range_overlap_6g(low_freq, high_freq) &&
+	    !reg_is_range_overlap_5g(low_freq, high_freq)) {
+		reg_debug_rl("The device is 6G only");
+		return true;
+	}
+
+	reg_debug_rl("The device is not 6G only");
+
+	return false;
+}
+#endif
+
 uint16_t reg_min_6ghz_chan_freq(void)
 {
 	return REG_MIN_6GHZ_CHAN_FREQ;
