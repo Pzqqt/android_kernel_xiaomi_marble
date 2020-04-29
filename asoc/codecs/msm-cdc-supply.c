@@ -60,9 +60,22 @@ static int msm_cdc_dt_parse_vreg_info(struct device *dev,
 	}
 	cdc_vreg->optimum_uA = prop_val;
 
-	dev_info(dev, "%s: %s: vol=[%d %d]uV, curr=[%d]uA, ond %d\n",
+	/* Parse supply - LPM or NOM mode(default NOM) */
+	snprintf(prop_name, CODEC_DT_MAX_PROP_SIZE, "qcom,%s-lpm-supported", name);
+	rc = of_property_read_u32(dev->of_node, prop_name, &prop_val);
+	if (rc) {
+		dev_dbg(dev, "%s: Looking up %s property in node %s failed",
+			__func__, prop_name, dev->of_node->full_name);
+		cdc_vreg->lpm_supported = 0;
+		rc = 0;
+	} else {
+		cdc_vreg->lpm_supported = prop_val;
+	}
+
+	dev_info(dev, "%s: %s: vol=[%d %d]uV, curr=[%d]uA, ond %d lpm %d\n",
 		 __func__, cdc_vreg->name, cdc_vreg->min_uV, cdc_vreg->max_uV,
-		 cdc_vreg->optimum_uA, cdc_vreg->ondemand);
+		 cdc_vreg->optimum_uA, cdc_vreg->ondemand,
+		 cdc_vreg->lpm_supported);
 
 done:
 	return rc;
@@ -259,6 +272,59 @@ int msm_cdc_enable_ondemand_supply(struct device *dev,
 	return rc;
 }
 EXPORT_SYMBOL(msm_cdc_enable_ondemand_supply);
+
+/*
+ * msm_cdc_set_supplies_lpm_mode:
+ *	Update load for given supply string
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @supply_name: supply name to be checked
+ * @min_max: Apply optimum or 0 current
+ *
+ * Return error code if set current fail
+ */
+int msm_cdc_set_supplies_lpm_mode(struct device *dev,
+				struct regulator_bulk_data *supplies,
+				struct cdc_regulator *cdc_vreg,
+				int num_supplies,
+				bool flag)
+{
+	int rc = 0, i;
+
+	if (!supplies) {
+		pr_err("%s: supplies is NULL\n",
+				__func__);
+		return -EINVAL;
+	}
+	/* input parameter validation */
+	rc = msm_cdc_check_supply_param(dev, cdc_vreg, num_supplies);
+	if (rc)
+		return rc;
+
+	for (i = 0; i < num_supplies; i++) {
+		if (cdc_vreg[i].lpm_supported) {
+			rc = regulator_set_load(
+				supplies[i].consumer,
+				flag ? 0 : cdc_vreg[i].optimum_uA);
+			if (rc)
+				dev_err(dev,
+					"%s: failed to set supply %s to %s, err:%d\n",
+					__func__, supplies[i].supply,
+					flag ? "LPM" : "NOM",
+					rc);
+			else
+				dev_dbg(dev, "%s: regulator %s load set to %s\n",
+					__func__, supplies[i].supply,
+					flag ? "LPM" : "NOM");
+		}
+	}
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_set_supplies_lpm_mode);
 
 /*
  * msm_cdc_disable_static_supplies:
