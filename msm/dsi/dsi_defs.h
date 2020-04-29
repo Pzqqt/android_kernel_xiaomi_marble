@@ -748,9 +748,8 @@ static inline u64 dsi_h_total_dce(struct dsi_mode_info *mode)
 {
 	u64 h_total = dsi_h_active_dce(mode);
 
-	h_total += DSI_H_SCALE(mode->h_back_porch, &mode->pclk_scale) +
-			DSI_H_SCALE(mode->h_front_porch, &mode->pclk_scale) +
-			DSI_H_SCALE(mode->h_sync_width, &mode->pclk_scale);
+	h_total += mode->h_back_porch + mode->h_front_porch +
+			mode->h_sync_width;
 	return h_total;
 }
 
