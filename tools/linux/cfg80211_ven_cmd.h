@@ -383,7 +383,7 @@ enum {
 							    Tx A-MSDU aggregation */
 	IEEE80211_PARAM_RAWMODE_PKT_SIM_STATS   = 368,   /* Get Raw mode packet simulation stats. */
 	IEEE80211_PARAM_CLR_RAWMODE_PKT_SIM_STATS = 369, /* Clear Raw mode packet simulation stats. */
-	IEEE80211_PARAM_RAWMODE_SIM_DEBUG       = 370,   /* Enable/disable raw mode simulation debug */
+	IEEE80211_PARAM_RAWMODE_SIM_DEBUG_LEVEL   = 370,   /* Set raw mode simulation debug level */
 #endif /* ATH_PERF_PWR_OFFLOAD && QCA_SUPPORT_RAWMODE_PKT_SIMULATION */
 	IEEE80211_PARAM_PROXY_STA               = 371,   /* set/get ProxySTA */
 	IEEE80211_PARAM_BW_NSS_RATEMASK         = 372,   /* Set ratemask with specific Bandwidth and NSS  */
@@ -767,6 +767,10 @@ enum {
 	IEEE80211_PARAM_ATF_STATS_TIMEOUT          = 702,
 #endif
 	IEEE80211_PARAM_OCE_VERSION_OVERRIDE       = 703, /* Support to override OCE release version to 2*/
+#if ATH_PERF_PWR_OFFLOAD && QCA_SUPPORT_RAWMODE_PKT_SIMULATION
+	IEEE80211_PARAM_RAWSIM_DEBUG_NUM_ENCAP_FRAMES   = 704, /* Sets the number of encap raw frames to dump when debug enabled */
+	IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES   = 705, /* Sets the number of decap raw frames to dump when debug enabled */
+#endif /* ATH_PERF_PWR_OFFLOAD && QCA_SUPPORT_RAWMODE_PKT_SIMULATION */
 };
 
 enum {
@@ -1669,8 +1673,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_rawsim_txagr",      IEEE80211_PARAM_RAWMODE_SIM_TXAGGR, GET_PARAM, 0},
 	{"rawsim_stats",        IEEE80211_PARAM_RAWMODE_PKT_SIM_STATS, GET_PARAM, 0},
 	{"clr_rawsim_stat",     IEEE80211_PARAM_CLR_RAWMODE_PKT_SIM_STATS, SET_PARAM, 1},
-	{"rawsim_debug",        IEEE80211_PARAM_RAWMODE_SIM_DEBUG, SET_PARAM, 1},
-	{"g_rawsim_debug",      IEEE80211_PARAM_RAWMODE_SIM_DEBUG, GET_PARAM, 0},
+	{"rawsim_debug",        IEEE80211_PARAM_RAWMODE_SIM_DEBUG_LEVEL, SET_PARAM, 1},
+	{"g_rawsim_debug",      IEEE80211_PARAM_RAWMODE_SIM_DEBUG_LEVEL, GET_PARAM, 0},
 #endif
 	{"get_proxysta",        IEEE80211_PARAM_PROXY_STA, GET_PARAM, 0},
 	{"bw_nss_rate",         IEEE80211_PARAM_BW_NSS_RATEMASK, SET_PARAM, 1},
@@ -2155,6 +2159,12 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"oce_subnet_id",       IEEE80211_PARAM_OCE_IP_SUBNET_ID, SET_PARAM, 2},
 	{"oce_ess_report",      IEEE80211_PARAM_OCE_ADD_ESS_RPT, SET_PARAM, 2},
 	{"rsnx_override",       IEEE80211_PARAM_RSNX_OVERRIDE, SET_PARAM, 1},
+#if ATH_PERF_PWR_OFFLOAD && QCA_SUPPORT_RAWMODE_PKT_SIMULATION
+	{"rsim_en_frmcnt",      IEEE80211_PARAM_RAWSIM_DEBUG_NUM_ENCAP_FRAMES, SET_PARAM, 1},
+	{"g_rsim_en_frmcnt",    IEEE80211_PARAM_RAWSIM_DEBUG_NUM_ENCAP_FRAMES, GET_PARAM, 0},
+	{"rsim_de_frmcnt",      IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES, SET_PARAM, 1},
+	{"g_rsim_de_frmcnt",    IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES, GET_PARAM, 0},
+#endif
 	{"setiebuf",            35828, SET_PARAM, 1},
 	{"getiebuf",            35827, GET_PARAM, 0},
 	{"dbgreq",              35832, SET_PARAM, 1},
