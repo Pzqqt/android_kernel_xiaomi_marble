@@ -2299,8 +2299,10 @@ static bool policy_mgr_allow_multiple_sta_connections(struct wlan_objmgr_psoc *p
 		return false;
 	}
 	if (!wmi_service_enabled(wmi_handle,
-				 wmi_service_sta_plus_sta_support))
+				 wmi_service_sta_plus_sta_support)) {
+		policy_mgr_rl_debug("STA+STA is not supported");
 		return false;
+	}
 
 	return true;
 }
@@ -2343,12 +2345,15 @@ static bool policy_mgr_is_6g_channel_allowed(
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-	if (!WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq))
+	if (!WLAN_REG_IS_6GHZ_CHAN_FREQ(ch_freq)) {
+		policy_mgr_rl_debug("Not a 6Ghz channel Freq");
 		return true;
-
+	}
 	/* Only STA/SAP is supported on 6Ghz currently */
-	if (!policy_mgr_is_6ghz_conc_mode_supported(psoc, mode))
+	if (!policy_mgr_is_6ghz_conc_mode_supported(psoc, mode)) {
+		policy_mgr_rl_debug("mode %d for 6ghz not supported", mode);
 		return false;
+	}
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
