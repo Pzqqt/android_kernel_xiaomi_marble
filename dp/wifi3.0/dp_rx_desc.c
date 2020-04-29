@@ -265,7 +265,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 
 	if (!(rx_desc_pool->array)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			  "%s: RX Desc Pool allocation failed");
+			  "RX Desc Pool allocation failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 	return QDF_STATUS_SUCCESS;
