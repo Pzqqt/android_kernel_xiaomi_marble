@@ -66,6 +66,7 @@
 #include "wlan_policy_mgr_i.h"
 #include "wlan_scan_utils_api.h"
 #include "wlan_p2p_cfg_api.h"
+#include "cfg_nan_api.h"
 
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
@@ -19624,6 +19625,7 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	bool prev_roaming_state;
 	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
+	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
 
 	sme_debug("RSO Command %d, vdev %d, Reason %d", command,
 		   session_id, reason);
@@ -19708,14 +19710,22 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		}
 	}
 
-	if (cfg_p2p_is_roam_config_disabled(mac_ctx->psoc) &&
-	    (command == ROAM_SCAN_OFFLOAD_START ||
-	     command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
-	    (policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+	p2p_disable_sta_roaming =
+		(cfg_p2p_is_roam_config_disabled(mac_ctx->psoc) &&
+		(policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
 						PM_P2P_CLIENT_MODE, NULL) ||
+		policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+						PM_P2P_GO_MODE, NULL)));
+	nan_disable_sta_roaming =
+	    (cfg_nan_is_roam_config_disabled(mac_ctx->psoc) &&
 	    policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
-						PM_P2P_GO_MODE, NULL))) {
-		sme_info("roaming not supported for active p2p connection");
+						PM_NDI_MODE, NULL));
+
+	if ((command == ROAM_SCAN_OFFLOAD_START ||
+	    command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
+	    (p2p_disable_sta_roaming || nan_disable_sta_roaming)) {
+		sme_info("roaming not supported for active %s connection",
+			 p2p_disable_sta_roaming ? "p2p" : "ndi");
 		return QDF_STATUS_E_FAILURE;
 	}
 	/*
