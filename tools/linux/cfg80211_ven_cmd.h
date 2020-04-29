@@ -16,6 +16,11 @@
 
 #ifndef _CFG80211_VEN_CMD_
 #define _CFG80211_VEN_CMD_
+
+#ifdef CONFIG_SUPPORT_LIBROXML
+#include <ieee80211_external_config.h>
+#endif
+
 /*
  * vendor_commands: Structure to maintain vendor command
  * @cmd_value: Corresponding macro for command
@@ -2451,6 +2456,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RSSI_THRESHOLD, SET_PARAM, 1},
 	{"gobss_rssi_th",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RSSI_THRESHOLD, GET_PARAM, 0},
+	{"obss_rxrssi_th",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD, SET_PARAM, 1},
+	{"gobss_rxrssi_th",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OBSS_RX_RSSI_THRESHOLD, GET_PARAM, 0},
 #if ATH_CHANNEL_BLOCKING
 	{"acs_bmode",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_BLOCK_MODE, SET_PARAM, 1},
