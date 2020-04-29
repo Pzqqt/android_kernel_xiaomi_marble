@@ -40,6 +40,7 @@
 #endif
 
 #include <spectral_defs_i.h>
+#include <wmi_unified_param.h>
 
 #define FREQ_OFFSET_10MHZ (10)
 #define FREQ_OFFSET_40MHZ (40)
@@ -502,31 +503,6 @@ struct spectral_fft_bin_len_adj_swar {
 };
 
 /**
- * struct spectral_fft_bin_markers_165mhz - Stores the start index and length of
- * FFT bins in 165 MHz/Restricted 80p80 mode
- * @start_pri80: Starting index of FFT bins corresponding to primary 80 MHz
- *               in 165 MHz/Restricted 80p80 mode
- * @num_pri80: Number of FFT bins corresponding to primary 80 MHz
- *             in 165 MHz/Restricted 80p80 mode
- * @start_5mhz: Starting index of FFT bins corresponding to extra 5 MHz
- *               in 165 MHz/Restricted 80p80 mode
- * @num_5mhz: Number of FFT bins corresponding to extra 5 MHz
- *             in 165 MHz/Restricted 80p80 mode
- * @start_sec80: Starting index of FFT bins corresponding to secondary 80 MHz
- *               in 165 MHz/Restricted 80p80 mode
- * @num_sec80: Number of FFT bins corresponding to secondary 80 MHz
- *             in 165 MHz/Restricted 80p80 mode
- */
-struct spectral_fft_bin_markers_165mhz {
-	size_t start_pri80;
-	size_t num_pri80;
-	size_t start_5mhz;
-	size_t num_5mhz;
-	size_t start_sec80;
-	size_t num_sec80;
-};
-
-/**
  * struct spectral_report_params - Parameters related to format of Spectral
  * report.
  * @version: This represents the report format version number within each
@@ -551,8 +527,8 @@ struct spectral_report_params {
 	enum phy_ch_width max_agile_ch_width;
 	enum spectral_scan_mode detid_mode_table[SPECTRAL_DETECTOR_ID_MAX];
 	uint8_t num_spectral_detectors;
-	struct spectral_fft_bin_markers_165mhz
-		marker[SPECTRAL_REPORT_MODE_MAX][SPECTRAL_FFT_SIZE_MAX];
+	struct spectral_fft_bin_markers_160_165mhz
+				marker[SPECTRAL_SCAN_MODE_MAX];
 };
 
 /**
@@ -846,21 +822,49 @@ struct vdev_spectral_configure_params;
 struct vdev_spectral_enable_params;
 
 /**
- * struct wmi_spectral_cmd_ops - structure used holding the operations
- * related to wmi commands on spectral parameters.
+ * struct spectral_wmi_ops - structure used holding the operations
+ * related to Spectral WMI
  * @wmi_spectral_configure_cmd_send: Configure Spectral parameters
  * @wmi_spectral_enable_cmd_send: Enable/Disable Spectral
  * @wmi_spectral_crash_inject: Inject FW crash
+ * @wmi_extract_pdev_sscan_fw_cmd_fixed_param: Extract Fixed params from
+ * start scan response event
+ * @wmi_extract_pdev_sscan_fft_bin_index: Extract TLV which describes FFT
+ * bin indices from start scan response event
+ * @wmi_unified_register_event_handler: Register WMI event handler
+ * @wmi_unified_unregister_event_handler: Unregister WMI event handler
  */
-struct wmi_spectral_cmd_ops {
+struct spectral_wmi_ops {
 	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
 		    wmi_unified_t wmi_hdl,
 		    struct vdev_spectral_configure_params *param);
 	QDF_STATUS (*wmi_spectral_enable_cmd_send)(
 		    wmi_unified_t wmi_hdl,
 		    struct vdev_spectral_enable_params *param);
-	QDF_STATUS(*wmi_spectral_crash_inject)(
+	QDF_STATUS (*wmi_spectral_crash_inject)(
 		wmi_unified_t wmi_handle, struct crash_inject *param);
+	QDF_STATUS (*wmi_extract_pdev_sscan_fw_cmd_fixed_param)(
+				wmi_unified_t wmi_handle, uint8_t *evt_buf,
+				struct spectral_startscan_resp_params *param);
+	QDF_STATUS (*wmi_extract_pdev_sscan_fft_bin_index)(
+			wmi_unified_t wmi_handle, uint8_t *evt_buf,
+			struct spectral_fft_bin_markers_160_165mhz *param);
+	int (*wmi_unified_register_event_handler)(
+				wmi_unified_t wmi_handle,
+				wmi_conv_event_id event_id,
+				wmi_unified_event_handler handler_func,
+				uint8_t rx_ctx);
+	int (*wmi_unified_unregister_event_handler)(wmi_unified_t wmi_handle,
+						    wmi_conv_event_id event_id);
+};
+
+/**
+ * struct spectral_tgt_ops - structure used holding the operations
+ * related to target operations
+ * @tgt_get_psoc_from_scn_hdl: Function to get psoc from scn
+ */
+struct spectral_tgt_ops {
+	struct wlan_objmgr_psoc *(*tgt_get_psoc_from_scn_hdl)(void *scn_handle);
 };
 
 /**
@@ -1067,7 +1071,6 @@ struct target_if_spectral {
 	uint8_t                                tag_sscan_summary_exp;
 	uint8_t                                tag_sscan_fft_exp;
 	uint8_t                                tlvhdr_size;
-	struct wmi_spectral_cmd_ops param_wmi_cmd_ops;
 	struct spectral_nl_cb nl_cb;
 	bool use_nl_bcast;
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev,
@@ -1082,6 +1085,16 @@ struct target_if_spectral {
 	uint32_t prev_tstamp;
 	struct spectral_report_params rparams;
 	struct spectral_param_min_max param_min_max;
+};
+
+/**
+ * struct target_if_psoc_spectral - Target if psoc Spectral object
+ * @psoc_obj:  psoc object
+ * @wmi_ops:  Spectral WMI operations
+ */
+struct target_if_psoc_spectral {
+	struct wlan_objmgr_psoc *psoc_obj;
+	struct spectral_wmi_ops wmi_ops;
 };
 
 /**
@@ -1428,9 +1441,35 @@ struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
 	}
 
 	spectral = (struct target_if_spectral *)
-		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_target_handle(
+		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_pdev_target_handle(
 		pdev);
 	return spectral;
+}
+
+/**
+ * get_target_if_spectral_handle_from_psoc() - Get handle to psoc target_if
+ * internal Spectral data
+ * @psoc: Pointer to psoc
+ *
+ * Return: Handle to target_if psoc internal Spectral data on success, NULL on
+ * failure
+ */
+static inline
+struct target_if_psoc_spectral *get_target_if_spectral_handle_from_psoc(
+	struct wlan_objmgr_psoc *psoc)
+{
+	struct target_if_psoc_spectral *psoc_spectral;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return NULL;
+	}
+
+	psoc_spectral = (struct target_if_psoc_spectral *)
+		psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_get_psoc_target_handle(
+		psoc);
+
+	return psoc_spectral;
 }
 
 /**
@@ -2147,10 +2186,6 @@ QDF_STATUS target_if_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
 					    struct spectral_diag_stats *stats);
-
-void target_if_register_wmi_spectral_cmd_ops(
-	struct wlan_objmgr_pdev *pdev,
-	struct wmi_spectral_cmd_ops *cmd_ops);
 
 QDF_STATUS
 target_if_160mhz_delivery_state_change(struct target_if_spectral *spectral,

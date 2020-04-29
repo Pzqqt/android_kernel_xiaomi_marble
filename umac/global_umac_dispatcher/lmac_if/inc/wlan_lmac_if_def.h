@@ -574,11 +574,14 @@ struct wlan_lmac_if_cfr_tx_ops {
 #endif /* WLAN_CFR_ENABLE */
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
-struct wmi_spectral_cmd_ops;
+struct spectral_wmi_ops;
+struct spectral_tgt_ops;
 /**
  * struct wlan_lmac_if_sptrl_tx_ops - Spectral south bound Tx operations
- * @sptrlto_spectral_init:          Initialize LMAC/target_if Spectral
- * @sptrlto_spectral_deinit:        De-initialize LMAC/target_if Spectral
+ * @sptrlto_pdev_spectral_init: Initialize target_if pdev Spectral object
+ * @sptrlto_pdev_spectral_deinit: De-initialize target_if pdev Spectral object
+ * @sptrlto_psoc_spectral_init: Initialize target_if psoc Spectral object
+ * @sptrlto_psoc_spectral_deinit: De-initialize target_if psoc Spectral object
  * @sptrlto_set_spectral_config:    Set Spectral configuration
  * @sptrlto_get_spectral_config:    Get Spectral configuration
  * @sptrlto_start_spectral_scan:    Start Spectral Scan
@@ -595,6 +598,8 @@ struct wmi_spectral_cmd_ops;
  * @sptrlto_clear_chaninfo:         Clear channel information
  * @sptrlto_get_spectral_capinfo:   Get Spectral capability information
  * @sptrlto_get_spectral_diagstats: Get Spectral diagnostic statistics
+ * @sptrlto_register_spectral_wmi_ops: Register Spectral WMI operations
+ * @sptrlto_register_spectral_tgt_ops: Register Spectral target operations
  * @sptrlto_register_netlink_cb: Register Spectral Netlink callbacks
  * @sptrlto_use_nl_bcast: Get whether to use Netlink broadcast/unicast
  * @sptrlto_deregister_netlink_cb: De-register Spectral Netlink callbacks
@@ -605,10 +610,14 @@ struct wmi_spectral_cmd_ops;
  *                                       on the previous state
  * @sptrlto_check_and_do_dbr_buff_debug: Start/Stop Spectral buffer debug based
  *                                       on the previous state
+ * @sptrlto_register_events: Registration of WMI events for Spectral
+ * @sptrlto_unregister_events: Unregistration of WMI events for Spectral
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
 	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlto_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
+	void *(*sptrlto_psoc_spectral_init)(struct wlan_objmgr_psoc *psoc);
+	void (*sptrlto_psoc_spectral_deinit)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*sptrlto_set_spectral_config)
 					(struct wlan_objmgr_pdev *pdev,
 					 const struct spectral_cp_param *param,
@@ -639,9 +648,12 @@ struct wlan_lmac_if_sptrl_tx_ops {
 	QDF_STATUS (*sptrlto_get_spectral_diagstats)
 					(struct wlan_objmgr_pdev *pdev,
 					 struct spectral_diag_stats *stats);
-	void (*sptrlto_register_wmi_spectral_cmd_ops)(
-		struct wlan_objmgr_pdev *pdev,
-		struct wmi_spectral_cmd_ops *cmd_ops);
+	QDF_STATUS (*sptrlto_register_spectral_wmi_ops)(
+					struct wlan_objmgr_psoc *psoc,
+					struct spectral_wmi_ops *wmi_ops);
+	QDF_STATUS (*sptrlto_register_spectral_tgt_ops)(
+					struct wlan_objmgr_psoc *psoc,
+					struct spectral_tgt_ops *tgt_ops);
 	void (*sptrlto_register_netlink_cb)(
 		struct wlan_objmgr_pdev *pdev,
 		struct spectral_nl_cb *nl_cb);
@@ -659,7 +671,8 @@ struct wlan_lmac_if_sptrl_tx_ops {
 		struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*sptrlto_check_and_do_dbr_buff_debug)(
 		struct wlan_objmgr_pdev *pdev);
-
+	QDF_STATUS (*sptrlto_register_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*sptrlto_unregister_events)(struct wlan_objmgr_psoc *psoc);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
@@ -1371,12 +1384,16 @@ struct wlan_lmac_if_cfr_rx_ops {
 /**
  * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
  *
- * @sptrlro_get_target_handle: Get Spectral handle for target/LMAC private data
+ * @sptrlro_get_pdev_target_handle: Get Spectral handle for pdev target
+ * private data
+ * @sptrlro_get_psoc_target_handle: Get Spectral handle for psoc target
+ * private data
  * @sptrlro_vdev_get_chan_freq_seg2: Get secondary 80 center frequency
  * @sptrlro_spectral_is_feature_disabled: Check if spectral feature is disabled
  */
 struct wlan_lmac_if_sptrl_rx_ops {
-	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
+	void * (*sptrlro_get_pdev_target_handle)(struct wlan_objmgr_pdev *pdev);
+	void * (*sptrlro_get_psoc_target_handle)(struct wlan_objmgr_psoc *psoc);
 	int16_t (*sptrlro_vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
 	int16_t (*sptrlro_vdev_get_chan_freq_seg2)
 					(struct wlan_objmgr_vdev *vdev);

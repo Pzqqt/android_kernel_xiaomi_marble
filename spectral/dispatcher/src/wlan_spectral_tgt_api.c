@@ -29,7 +29,7 @@
 #endif
 
 void *
-tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
+tgt_get_pdev_target_handle(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_spectral *ps;
 
@@ -44,6 +44,26 @@ tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 		return NULL;
 	}
 	return ps->psptrl_target_handle;
+}
+
+void *
+tgt_get_psoc_target_handle(struct wlan_objmgr_psoc *psoc)
+{
+	struct spectral_context *sc;
+
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return NULL;
+	}
+
+	sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						   WLAN_UMAC_COMP_SPECTRAL);
+	if (!sc) {
+		spectral_err("psoc Spectral object is NULL!");
+		return NULL;
+	}
+
+	return sc->psoc_target_handle;
 }
 
 QDF_STATUS
@@ -82,6 +102,29 @@ tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_pdev_spectral_deinit(pdev);
+}
+
+void *
+tgt_psoc_spectral_init(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return NULL;
+	}
+
+	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_psoc_spectral_init(
+		psoc);
+}
+
+void
+tgt_psoc_spectral_deinit(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return;
+	}
+
+	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_psoc_spectral_deinit(psoc);
 }
 
 QDF_STATUS
@@ -199,20 +242,47 @@ tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
 		pdev, stats);
 }
 
-void
-tgt_register_wmi_spectral_cmd_ops(
-	struct wlan_objmgr_pdev *pdev,
-	struct wmi_spectral_cmd_ops *cmd_ops)
+QDF_STATUS
+tgt_register_spectral_wmi_ops(struct wlan_objmgr_psoc *psoc,
+			      struct spectral_wmi_ops *wmi_ops)
 {
-	struct wlan_objmgr_psoc *psoc = NULL;
 	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
 
-	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!wmi_ops) {
+		spectral_err("WMI operations table is null");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
 
-	return psptrl_tx_ops->sptrlto_register_wmi_spectral_cmd_ops(pdev,
-								    cmd_ops);
+	return psptrl_tx_ops->sptrlto_register_spectral_wmi_ops(psoc, wmi_ops);
+}
+
+QDF_STATUS
+tgt_register_spectral_tgt_ops(struct wlan_objmgr_psoc *psoc,
+			      struct spectral_tgt_ops *tgt_ops)
+{
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!tgt_ops) {
+		spectral_err("Target operations table is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_register_spectral_tgt_ops(psoc,
+								    tgt_ops);
 }
 
 void
@@ -393,3 +463,34 @@ QDF_STATUS tgt_set_spectral_dma_debug(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS
+tgt_spectral_register_events(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_register_events(psoc);
+}
+
+QDF_STATUS
+tgt_spectral_unregister_events(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_unregister_events(psoc);
+}
+

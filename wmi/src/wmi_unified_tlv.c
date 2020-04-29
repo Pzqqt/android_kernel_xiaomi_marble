@@ -6512,10 +6512,11 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->spectral_scan_dBm_adj = param->dbm_adj;
 	cmd->spectral_scan_chn_mask = param->chn_mask;
 	cmd->spectral_scan_mode = param->mode;
-	cmd->spectral_scan_center_freq = param->center_freq;
+	cmd->spectral_scan_center_freq1 = param->center_freq1;
+	cmd->spectral_scan_center_freq2 = param->center_freq2;
+	cmd->spectral_scan_chan_width = param->chan_width;
 	/* Not used, fill with zeros */
 	cmd->spectral_scan_chan_freq = 0;
-	cmd->spectral_scan_chan_width = 0;
 
 	wmi_mtrace(WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -6549,7 +6550,8 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("spectral_scan_dBm_adj = %u", param->dbm_adj);
 	WMI_LOGI("spectral_scan_chn_mask = %u", param->chn_mask);
 	WMI_LOGI("spectral_scan_mode = %u", param->mode);
-	WMI_LOGI("spectral_scan_center_freq = %u", param->center_freq);
+	WMI_LOGI("spectral_scan_center_freq1 = %u", param->center_freq1);
+	WMI_LOGI("spectral_scan_center_freq2 = %u", param->center_freq2);
 	WMI_LOGI("spectral_scan_chan_freq = %u", param->chan_freq);
 	WMI_LOGI("spectral_scan_chan_width = %u", param->chan_width);
 	WMI_LOGI("%s: Status: %d", __func__, ret);
@@ -6621,6 +6623,87 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+static QDF_STATUS
+extract_pdev_sscan_fw_cmd_fixed_param_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *event, struct spectral_startscan_resp_params *param)
+{
+	WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_sscan_fw_cmd_fixed_param *ev;
+
+	if (!wmi_handle) {
+		WMI_LOGE("WMI handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!event) {
+		WMI_LOGE("WMI event is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!param) {
+		WMI_LOGE("Spectral startscan response params is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	ev = param_buf->fixed_param;
+	if (!ev)
+		return QDF_STATUS_E_INVAL;
+
+	param->pdev_id = wmi_handle->ops->convert_target_pdev_id_to_host(
+								wmi_handle,
+								ev->pdev_id);
+	param->smode = ev->spectral_scan_mode;
+	param->num_fft_bin_index = param_buf->num_fft_bin_index;
+	WMI_LOGD("%s:pdev id %u scan mode %u num_fft_bin_index %u", __func__,
+		 param->pdev_id, param->smode, param->num_fft_bin_index);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+extract_pdev_sscan_fft_bin_index_tlv(
+			wmi_unified_t wmi_handle, uint8_t *event,
+			struct spectral_fft_bin_markers_160_165mhz *param)
+{
+	WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_sscan_fft_bin_index *ev;
+
+	param_buf = (WMI_PDEV_SSCAN_FW_PARAM_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	ev = param_buf->fft_bin_index;
+	if (!ev)
+		return QDF_STATUS_E_INVAL;
+
+	param->start_pri80 = WMI_SSCAN_PRI80_START_BIN_GET(ev->pri80_bins);
+	param->num_pri80 = WMI_SSCAN_PRI80_END_BIN_GET(ev->pri80_bins) -
+			   param->start_pri80 + 1;
+	param->start_sec80 = WMI_SSCAN_SEC80_START_BIN_GET(ev->sec80_bins);
+	param->num_sec80 = WMI_SSCAN_SEC80_END_BIN_GET(ev->sec80_bins) -
+			   param->start_sec80 + 1;
+	param->start_5mhz = WMI_SSCAN_MID_5MHZ_START_BIN_GET(ev->mid_5mhz_bins);
+	param->num_5mhz = WMI_SSCAN_MID_5MHZ_END_BIN_GET(ev->mid_5mhz_bins) -
+			  param->start_5mhz + 1;
+	param->is_valid = true;
+
+	WMI_LOGD("%s:start_pri80 %u, num_pri80 %u", __func__,
+		 param->start_pri80, param->num_pri80);
+	WMI_LOGD("%s:start_sec80 %u, num_sec80 %u", __func__,
+		 param->start_sec80, param->num_sec80);
+	WMI_LOGD("%s:start_5mhz %u, num_5mhz %u", __func__,
+		 param->start_5mhz, param->num_5mhz);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 /**
  * send_thermal_mitigation_param_cmd_tlv() - configure thermal mitigation params
@@ -13846,6 +13929,12 @@ struct wmi_ops tlv_ops =  {
 				send_vdev_spectral_configure_cmd_tlv,
 	.send_vdev_spectral_enable_cmd =
 				send_vdev_spectral_enable_cmd_tlv,
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+	.extract_pdev_sscan_fw_cmd_fixed_param =
+				extract_pdev_sscan_fw_cmd_fixed_param_tlv,
+	.extract_pdev_sscan_fft_bin_index =
+				extract_pdev_sscan_fft_bin_index_tlv,
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
 	.send_thermal_mitigation_param_cmd =
 		send_thermal_mitigation_param_cmd_tlv,
 	.send_process_update_edca_param_cmd =
@@ -14415,6 +14504,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID;
 	event_ids[wmi_muedca_params_config_eventid] =
 			WMI_MUEDCA_PARAMS_CONFIG_EVENTID;
+	event_ids[wmi_pdev_sscan_fw_param_eventid] =
+			WMI_PDEV_SSCAN_FW_PARAM_EVENTID;
 }
 
 /**

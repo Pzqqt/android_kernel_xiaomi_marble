@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,9 +29,25 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 
-/* Function pointer for spectral pdev open handler */
-typedef QDF_STATUS (*spectral_pdev_open_handler)(
-		struct wlan_objmgr_pdev *pdev);
+/**
+ * struct dispatcher_spectral_ops - Spectral ops table
+ * @spectral_pdev_open_handler: Spectral pdev open handler
+ * @spectral_psoc_open_handler: Spectral psoc open handler
+ * @spectral_psoc_close_handler: Spectral psoc close handler
+ * @spectral_psoc_enable_handler: Spectral psoc enable handler
+ * @spectral_psoc_disable_handler: Spectral psoc disable handler
+ */
+struct dispatcher_spectral_ops {
+	QDF_STATUS(*spectral_pdev_open_handler)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS(*spectral_psoc_open_handler)(
+					struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS(*spectral_psoc_close_handler)(
+					struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS(*spectral_psoc_enable_handler)(
+					struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS(*spectral_psoc_disable_handler)(
+					struct wlan_objmgr_psoc *psoc);
+};
 
 /**
  * dispatcher_init(): API to init all new components
@@ -182,15 +198,15 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev);
 
 /**
- * dispatcher_register_spectral_pdev_open_handler():
- * API to register spectral pdev open handler
- * @handler: pdev open handler
+ * dispatcher_register_spectral_ops_handler(): API to register spectral
+ * operations
+ * @sops: pointer to Spectral ops table
  *
- * This API registers spectral pdev open handler.
+ * This API registers spectral pdev open handler, psoc enable handler and
+ * psoc disable handler, psoc open handler and psoc close handler.
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-QDF_STATUS dispatcher_register_spectral_pdev_open_handler(QDF_STATUS (*handler)
-				(struct wlan_objmgr_pdev *pdev));
-
+QDF_STATUS
+dispatcher_register_spectral_ops_handler(struct dispatcher_spectral_ops *sops);
 #endif /* End of  !defined(__DISPATCHER_INIT_H) */

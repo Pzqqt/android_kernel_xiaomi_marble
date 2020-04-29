@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -193,7 +193,10 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	struct wlan_lmac_if_sptrl_rx_ops *sptrl_rx_ops = &rx_ops->sptrl_rx_ops;
 
 	/* Spectral rx ops */
-	sptrl_rx_ops->sptrlro_get_target_handle = tgt_get_target_handle;
+	sptrl_rx_ops->sptrlro_get_pdev_target_handle =
+					tgt_get_pdev_target_handle;
+	sptrl_rx_ops->sptrlro_get_psoc_target_handle =
+					tgt_get_psoc_target_handle;
 	sptrl_rx_ops->sptrlro_vdev_get_chan_freq = spectral_vdev_get_chan_freq;
 	sptrl_rx_ops->sptrlro_vdev_get_chan_freq_seg2 =
 					spectral_vdev_get_chan_freq_seg2;
@@ -204,26 +207,122 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 		wlan_spectral_is_feature_disabled;
 }
 
-void
-wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
-				   struct wmi_spectral_cmd_ops *cmd_ops)
+QDF_STATUS
+wlan_register_spectral_wmi_ops(struct wlan_objmgr_psoc *psoc,
+			       struct spectral_wmi_ops *wmi_ops)
 {
 	struct spectral_context *sc;
 
-	if (!pdev) {
-		spectral_err("PDEV is NULL!");
-		return;
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return QDF_STATUS_E_INVAL;
 	}
 
-	sc = spectral_get_spectral_ctx_from_pdev(pdev);
+	sc = spectral_get_spectral_ctx_from_psoc(psoc);
 	if (!sc) {
 		spectral_err("spectral context is NULL!");
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return sc->sptrlc_register_wmi_spectral_cmd_ops(pdev, cmd_ops);
+	return sc->sptrlc_register_spectral_wmi_ops(psoc, wmi_ops);
 }
-qdf_export_symbol(wlan_register_wmi_spectral_cmd_ops);
+
+qdf_export_symbol(wlan_register_spectral_wmi_ops);
+
+QDF_STATUS
+wlan_register_spectral_tgt_ops(struct wlan_objmgr_psoc *psoc,
+			       struct spectral_tgt_ops *tgt_ops)
+{
+	struct spectral_context *sc;
+
+	if (!psoc) {
+		spectral_err("psoc is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	sc = spectral_get_spectral_ctx_from_psoc(psoc);
+	if (!sc) {
+		spectral_err("spectral context is NULL!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return sc->sptrlc_register_spectral_tgt_ops(psoc, tgt_ops);
+}
+
+qdf_export_symbol(wlan_register_spectral_tgt_ops);
+
+/**
+ * wlan_spectral_psoc_target_attach() - Spectral psoc target attach
+ * @psoc:  pointer to psoc object
+ *
+ * API to initialize Spectral psoc target object
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+static QDF_STATUS
+wlan_spectral_psoc_target_attach(struct wlan_objmgr_psoc *psoc)
+{
+	struct spectral_context *sc = NULL;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						   WLAN_UMAC_COMP_SPECTRAL);
+	if (!sc) {
+		spectral_err("Spectral context is null");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (sc->sptrlc_psoc_spectral_init) {
+		void *target_handle;
+
+		target_handle = sc->sptrlc_psoc_spectral_init(psoc);
+		if (!target_handle) {
+			spectral_err("Spectral psoc lmac object is NULL!");
+			return QDF_STATUS_E_FAILURE;
+		}
+		sc->psoc_target_handle = target_handle;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_spectral_psoc_target_detach() - Spectral psoc target detach
+ * @psoc:  pointer to psoc object
+ *
+ * API to destroy Spectral psoc target object
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+static QDF_STATUS
+wlan_spectral_psoc_target_detach(struct wlan_objmgr_psoc *psoc)
+{
+	struct spectral_context *sc = NULL;
+
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						   WLAN_UMAC_COMP_SPECTRAL);
+	if (!sc) {
+		spectral_err("Spectral context is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (sc->sptrlc_psoc_spectral_deinit)
+		sc->sptrlc_psoc_spectral_deinit(psoc);
+	sc->psoc_target_handle = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 #ifdef DIRECT_BUF_RX_ENABLE
 bool spectral_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
@@ -283,3 +382,63 @@ QDF_STATUS spectral_unregister_dbr(struct wlan_objmgr_pdev *pdev)
 }
 
 qdf_export_symbol(spectral_unregister_dbr);
+
+QDF_STATUS wlan_spectral_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
+	return wlan_spectral_psoc_target_attach(psoc);
+}
+
+QDF_STATUS wlan_spectral_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
+	return wlan_spectral_psoc_target_detach(psoc);
+}
+
+QDF_STATUS wlan_spectral_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
+	return tgt_spectral_register_events(psoc);
+}
+
+QDF_STATUS wlan_spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (wlan_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
+	return tgt_spectral_unregister_events(psoc);
+}

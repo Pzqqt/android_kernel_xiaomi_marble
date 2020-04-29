@@ -90,7 +90,7 @@
  * their actual handlers are ready
  */
 
-spectral_pdev_open_handler dispatcher_spectral_pdev_open_handler_cb;
+struct dispatcher_spectral_ops ops_spectral;
 
 #ifdef WLAN_CFR_ENABLE
 static QDF_STATUS dispatcher_init_cfr(void)
@@ -322,25 +322,47 @@ static QDF_STATUS dispatcher_regulatory_psoc_close(struct wlan_objmgr_psoc
 	return regulatory_psoc_close(psoc);
 }
 
-#if defined(WLAN_CONV_SPECTRAL_ENABLE) && defined(SPECTRAL_MODULIZED_ENABLE)
-QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
-			spectral_pdev_open_handler handler)
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+#ifdef SPECTRAL_MODULIZED_ENABLE
+QDF_STATUS
+dispatcher_register_spectral_ops_handler(struct dispatcher_spectral_ops *sops)
 {
-	dispatcher_spectral_pdev_open_handler_cb = handler;
+	qdf_mem_copy(&ops_spectral, sops,
+		     qdf_min(sizeof(*sops), sizeof(ops_spectral)));
 
 	return QDF_STATUS_SUCCESS;
 }
-qdf_export_symbol(dispatcher_register_spectral_pdev_open_handler);
 
-static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
-						  *pdev)
+qdf_export_symbol(dispatcher_register_spectral_ops_handler);
+
+static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
-	return dispatcher_spectral_pdev_open_handler_cb(pdev);
+	return ops_spectral.spectral_pdev_open_handler(pdev);
 }
 
 static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return ops_spectral.spectral_psoc_open_handler(psoc);
+}
+
+static QDF_STATUS spectral_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return ops_spectral.spectral_psoc_close_handler(psoc);
+}
+
+static QDF_STATUS spectral_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return ops_spectral.spectral_psoc_enable_handler(psoc);
+}
+
+static QDF_STATUS spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return ops_spectral.spectral_psoc_disable_handler(psoc);
 }
 #else
 static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
@@ -350,6 +372,58 @@ static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
 }
 
 static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_spectral_psoc_open(psoc);
+}
+
+static QDF_STATUS spectral_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_spectral_psoc_close(psoc);
+}
+
+static QDF_STATUS spectral_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_spectral_psoc_enable(psoc);
+}
+
+static QDF_STATUS spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_spectral_psoc_disable(psoc);
+}
+#endif
+#else
+static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS spectral_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1031,6 +1105,8 @@ qdf_export_symbol(dispatcher_disable);
 
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_psoc_open(psoc))
 		goto out;
 
@@ -1058,8 +1134,14 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != dcs_psoc_open(psoc))
 		goto dcs_psoc_open_fail;
 
+	status = spectral_psoc_open(psoc);
+	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
+		goto spectral_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+spectral_psoc_open_fail:
+	dcs_psoc_close(psoc);
 dcs_psoc_open_fail:
 	dispatcher_coex_psoc_close(psoc);
 coex_psoc_open_fail:
@@ -1084,6 +1166,8 @@ qdf_export_symbol(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+
 	QDF_BUG(QDF_STATUS_SUCCESS == dcs_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_coex_psoc_close(psoc));
@@ -1102,12 +1186,18 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_close(psoc));
 
+	status = spectral_psoc_close(psoc);
+	QDF_BUG((status == QDF_STATUS_SUCCESS) ||
+		(status == QDF_STATUS_COMP_DISABLED));
+
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(dispatcher_psoc_close);
 
 QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+
 	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_enable(psoc))
 		goto out;
 
@@ -1141,8 +1231,14 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != wlan_mlme_psoc_enable(psoc))
 		goto mlme_psoc_enable_fail;
 
+	status = spectral_psoc_enable(psoc);
+	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
+		goto spectral_psoc_enable_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+spectral_psoc_enable_fail:
+	wlan_mlme_psoc_disable(psoc);
 mlme_psoc_enable_fail:
 	dispatcher_dbr_psoc_disable(psoc);
 dbr_psoc_enable_fail:
@@ -1170,6 +1266,8 @@ qdf_export_symbol(dispatcher_psoc_enable);
 
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
+
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mlme_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_dbr_psoc_disable(psoc));
@@ -1189,6 +1287,10 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_psoc_disable(psoc));
+
+	status = spectral_psoc_disable(psoc);
+	QDF_BUG((status == QDF_STATUS_SUCCESS) ||
+		(status == QDF_STATUS_COMP_DISABLED));
 
 	return QDF_STATUS_SUCCESS;
 }

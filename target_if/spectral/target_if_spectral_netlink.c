@@ -78,6 +78,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 			spec_samp_msg->agile_freq2 = params->agile_freq2;
 		}
 		spec_samp_msg->freq_loading = params->freq_loading;
+		spec_samp_msg->vhtop_ch_freq_seg1 = params->vhtop_ch_freq_seg1;
+		spec_samp_msg->vhtop_ch_freq_seg2 = params->vhtop_ch_freq_seg2;
 		samp_data->spectral_mode = params->smode;
 		samp_data->spectral_data_len = params->datalen;
 		samp_data->spectral_rssi = params->rssi;
@@ -183,8 +185,6 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		}
 
 		samp_data = &spec_samp_msg->samp_data;
-		spec_samp_msg->vhtop_ch_freq_seg1 = params->vhtop_ch_freq_seg1;
-		spec_samp_msg->vhtop_ch_freq_seg2 = params->vhtop_ch_freq_seg2;
 		samp_data->spectral_rssi_sec80 =
 		    params->rssi_sec80;
 		samp_data->noise_floor_sec80 =

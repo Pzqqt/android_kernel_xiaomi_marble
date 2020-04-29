@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,7 +25,8 @@
 
 /* Forward declaration */
 struct direct_buf_rx_data;
-struct wmi_spectral_cmd_ops;
+struct spectral_wmi_ops;
+struct spectral_tgt_ops;
 
 /**
  * wlan_spectral_is_feature_disabled() - Check if spectral feature is disabled
@@ -71,19 +72,32 @@ void
 wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 
 /**
-* wlan_register_wmi_spectral_cmd_ops() - Register operations related to wmi
-* commands on spectral parameters
-* @pdev    - the physical device object
-* @cmd_ops - pointer to the structure holding the operations
-*	     related to wmi commands on spectral parameters
-*
-* API to register operations related to wmi commands on spectral parameters
-*
-* Return: None
+ * wlan_register_spectral_wmi_ops() - Register Spectral WMI operations
+ * @psoc - Pointer to psoc object
+ * @wmi_ops - pointer to the structure holding the Spectral WMI
+ *            operations
+ *
+ * API to register Spectral WMI operations
+ *
+ * Return: QDF_STATUS
 */
-void
-wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
-				   struct wmi_spectral_cmd_ops *cmd_ops);
+QDF_STATUS
+wlan_register_spectral_wmi_ops(struct wlan_objmgr_psoc *psoc,
+			       struct spectral_wmi_ops *wmi_ops);
+
+/**
+ * wlan_register_spectral_tgt_ops() - Register Spectral target operations
+ * @psoc - Pointer to psoc object
+ * @tgt_ops - pointer to the structure holding the Spectral target
+ *            operations
+ *
+ * API to register Spectral target operations
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_register_spectral_tgt_ops(struct wlan_objmgr_psoc *psoc,
+			       struct spectral_tgt_ops *tgt_ops);
 
 /**
  * struct spectral_legacy_cbacks - Spectral legacy callbacks
@@ -163,6 +177,50 @@ spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
  *         QDF_STATUS_E_FAILURE upon failure
  */
 QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_spectral_psoc_open() - Spectral psoc open handler
+ * @psoc:  pointer to psoc object
+ *
+ * API to execute operations on psoc open
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_psoc_close() - Spectral psoc close handler
+ * @psoc:  pointer to psoc object
+ *
+ * API to execute operations on psoc close
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_psoc_enable() - Spectral psoc enable handler
+ * @psoc:  pointer to psoc object
+ *
+ * API to execute operations on psoc enable
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_spectral_psoc_disable() - Spectral psoc disable handler
+ * @psoc:  pointer to psoc object
+ *
+ * API to execute operations on psoc disable
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS wlan_spectral_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * spectral_register_dbr() - register Spectral event handler with DDMA

@@ -2522,6 +2522,34 @@ QDF_STATUS wmi_extract_dbr_ring_cap_service_ready_ext2(
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+QDF_STATUS wmi_extract_pdev_sscan_fw_cmd_fixed_param(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct spectral_startscan_resp_params *param)
+{
+	if (wmi_handle->ops->extract_pdev_sscan_fw_cmd_fixed_param)
+		return wmi_handle->ops->extract_pdev_sscan_fw_cmd_fixed_param(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_pdev_sscan_fft_bin_index(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct spectral_fft_bin_markers_160_165mhz *param)
+{
+	if (wmi_handle->ops->extract_pdev_sscan_fft_bin_index)
+		return wmi_handle->ops->extract_pdev_sscan_fft_bin_index(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
+
 QDF_STATUS wmi_extract_spectral_scaling_params_service_ready_ext(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,

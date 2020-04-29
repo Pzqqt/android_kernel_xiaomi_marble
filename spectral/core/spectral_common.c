@@ -483,6 +483,8 @@ spectral_ctx_deinit(struct spectral_context *sc)
 		sc->sptrlc_ucfg_phyerr_config = NULL;
 		sc->sptrlc_pdev_spectral_init = NULL;
 		sc->sptrlc_pdev_spectral_deinit = NULL;
+		sc->sptrlc_psoc_spectral_init = NULL;
+		sc->sptrlc_psoc_spectral_deinit = NULL;
 		sc->sptrlc_set_spectral_config = NULL;
 		sc->sptrlc_get_spectral_config = NULL;
 		sc->sptrlc_start_spectral_scan = NULL;

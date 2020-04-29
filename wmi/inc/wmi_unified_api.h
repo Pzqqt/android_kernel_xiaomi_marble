@@ -2026,6 +2026,36 @@ QDF_STATUS wmi_unified_vdev_spectral_enable_cmd_send(
 			wmi_unified_t wmi_handle,
 			struct vdev_spectral_enable_params *param);
 
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
+/**
+ *  wmi_extract_pdev_sscan_fw_cmd_fixed_param() - Extract fixed params
+ *  from start scan response event
+ *  @wmi_handle: handle to WMI.
+ *  @evt_buf: Event buffer
+ *  @param: pointer to hold fixed params from fw params event
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_pdev_sscan_fw_cmd_fixed_param(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct spectral_startscan_resp_params *param);
+
+/**
+ *  wmi_extract_pdev_sscan_fft_bin_index() - Extract FFT bin indexes
+ *  from start scan response event
+ *  @wmi_handle: handle to WMI.
+ *  @evt_buf: Event buffer
+ *  @param: pointer to hold FFT bin indexes from fw params event
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_pdev_sscan_fft_bin_index(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct spectral_fft_bin_markers_160_165mhz *param);
+#endif /* WLAN_CONV_SPECTRAL_ENABLE */
+
 #if defined(WLAN_SUPPORT_FILS) || defined(CONFIG_BAND_6GHZ)
 /**
  *  wmi_unified_vdev_fils_enable_cmd_send() - WMI send fils enable command
