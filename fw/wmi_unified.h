@@ -3624,8 +3624,9 @@ typedef struct {
      */
     A_UINT32 max_rnr_neighbours;
 
-    /** @brief ema_max_vap_cnt - number of maximum ema vaps at any instance
-     * of time across SOC.
+    /** @brief ema_max_vap_cnt - number of maximum EMA Tx vaps (VAPs having both
+     *  VDEV_FLAGS_EMA_MODE and VDEV_FLAGS_TRANSMIT_AP set) at any instance
+     * of time across SOC. Legacy MBSS Vaps are not accounted in this field.
      */
     A_UINT32 ema_max_vap_cnt;
 
@@ -9093,6 +9094,11 @@ typedef struct {
 #define VDEV_FLAGS_NON_MBSSID_AP      0x00000001   /* legacy AP */
 #define VDEV_FLAGS_TRANSMIT_AP        0x00000002   /* indicate if this vdev is transmitting AP */
 #define VDEV_FLAGS_NON_TRANSMIT_AP    0x00000004   /* explicitly indicate this vdev is non-transmitting AP */
+#define VDEV_FLAGS_EMA_MODE           0x00000008   /* vdev is EMA and supports multiple beacon profiles.
+                                                    * Once this flag set, flags VDEV_FLAGS_TRANSMIT_AP and
+                                                    * VDEV_FLAGS_NON_TRANSMIT_AP classify it as either Tx vap
+                                                    * or non Tx vap.
+                                                    */
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_create_cmd_fixed_param */
@@ -11362,10 +11368,13 @@ typedef struct {
     A_UINT32 feature_enable_bitmap;
 
     /**
-     * @ema_params: This carries below information encoded each byte:
+     * @ema_params: Applicable only for EMA tx VAPs (VAPs having both flags
+     *         VDEV_FLAGS_EMA_MODE and VDEV_FLAGS_TRANSMIT_AP set) and should
+     *         remain 0 otherwise. For EMA vaps it carries below information
+     *         encoded in each byte:
      * Byte 0: (@ema_beacon_profile_periodicity) - beacon profile periodicity
      *         (number of beacons) after which nontransmitted MBSS info repeats.
-     *         Assumes values [1, N] inclusive. Shall be 1 for legacy Tx VAPs.
+     *         Assumes values [1, N] inclusive.
      *         Refer to WMI_BEACON_TMPLT_[SET,GET]_PROFILE_PERIOD macros.
      * Byte 1: (@ema_beacon_tmpl_idx) -  Specifies the position of beacon
      *         templates within profile periodicity.
