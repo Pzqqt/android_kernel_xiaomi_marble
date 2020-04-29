@@ -3149,6 +3149,9 @@ static bool hdd_is_cac_in_progress(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
+	if (!hdd_ctx)
+		return false;
+
 	return (hdd_ctx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS);
 }
 
