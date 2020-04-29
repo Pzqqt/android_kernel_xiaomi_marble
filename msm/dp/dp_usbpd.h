@@ -46,7 +46,7 @@ struct dp_usbpd {
 	bool debug_en;
 };
 
-#ifdef CONFIG_DRM_MSM_DP_USBPD_LEGACY
+#if IS_ENABLED(CONFIG_DRM_MSM_DP_USBPD_LEGACY)
 /**
  * dp_usbpd_get() - setup usbpd module
  *

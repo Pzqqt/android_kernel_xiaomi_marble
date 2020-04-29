@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef __SDE_WB_H__
@@ -60,7 +60,7 @@ int sde_wb_get_index(struct sde_wb_device *wb_dev)
 	return wb_dev ? wb_dev->index : -1;
 }
 
-#ifdef CONFIG_DRM_SDE_WB
+#if IS_ENABLED(CONFIG_DRM_SDE_WB)
 /**
  * sde_wb_get_output_fb - get framebuffer in current atomic state
  * @wb_dev:	Pointer to writeback device
@@ -357,6 +357,6 @@ int sde_wb_get_mode_info(struct drm_connector *connector,
 {
 	return 0;
 }
-#endif
+#endif /* CONFIG_DRM_SDE_WB */
 #endif /* __SDE_WB_H__ */
 

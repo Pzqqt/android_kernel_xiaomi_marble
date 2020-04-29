@@ -328,18 +328,12 @@ static struct platform_driver msm_hdcp_driver = {
 	}
 };
 
-static int __init msm_hdcp_init(void)
+void __init msm_hdcp_register(void)
 {
-	return platform_driver_register(&msm_hdcp_driver);
+	platform_driver_register(&msm_hdcp_driver);
 }
 
-static void __exit msm_hdcp_exit(void)
+void __exit msm_hdcp_unregister(void)
 {
-	return platform_driver_unregister(&msm_hdcp_driver);
+	platform_driver_unregister(&msm_hdcp_driver);
 }
-
-module_init(msm_hdcp_init);
-module_exit(msm_hdcp_exit);
-
-MODULE_DESCRIPTION("MSM HDCP driver");
-MODULE_LICENSE("GPL v2");

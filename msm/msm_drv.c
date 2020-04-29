@@ -704,7 +704,6 @@ static struct msm_kms *_msm_drm_component_init_helper(
 		return kms;
 	}
 	priv->kms = kms;
-	pm_runtime_enable(dev);
 
 	/**
 	 * Since kms->funcs->hw_init(kms) might call
@@ -762,6 +761,14 @@ static int msm_drm_device_init(struct platform_device *pdev,
 		goto dbg_init_fail;
 	}
 
+	pm_runtime_enable(dev);
+
+	ret = pm_runtime_get_sync(dev);
+	if (ret < 0) {
+		dev_err(dev, "resource enable failed: %d\n", ret);
+		goto pm_runtime_error;
+	}
+
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++)
 		sde_power_data_bus_set_quota(&priv->phandle, i,
 			SDE_POWER_HANDLE_CONT_SPLASH_BUS_AB_QUOTA,
@@ -769,6 +776,8 @@ static int msm_drm_device_init(struct platform_device *pdev,
 
 	return ret;
 
+pm_runtime_error:
+	sde_dbg_destroy();
 dbg_init_fail:
 	sde_power_resource_deinit(pdev, &priv->phandle);
 power_init_fail:
@@ -1927,6 +1936,30 @@ static const struct component_master_ops msm_drm_ops = {
 	.unbind = msm_drm_unbind,
 };
 
+static int msm_drm_component_dependency_check(struct device *dev)
+{
+	struct device_node *node;
+	struct device_node *np = dev->of_node;
+	unsigned int i;
+
+	if (!of_device_is_compatible(dev->of_node, "qcom,sde-kms"))
+		return 0;
+
+	for (i = 0; ; i++) {
+		node = of_parse_phandle(np, "connectors", i);
+		if (!node)
+			break;
+
+		if (of_node_name_eq(node,"qcom,sde_rscc") &&
+		    of_device_is_available(node) &&
+		    !of_node_check_flag(node, OF_POPULATED)) {
+			dev_err(dev, "qcom,sde_rscc device not probed yet\n");
+			return -EPROBE_DEFER;
+		}
+	}
+
+	return 0;
+}
 /*
  * Platform driver:
  */
@@ -1935,6 +1968,10 @@ static int msm_pdev_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct component_match *match = NULL;
+
+	ret = msm_drm_component_dependency_check(&pdev->dev);
+	if (ret)
+		return ret;
 
 	ret = msm_drm_device_init(pdev, &msm_driver);
 	if (ret)
@@ -2008,10 +2045,18 @@ static int __init msm_drm_register(void)
 		return -EINVAL;
 
 	DBG("init");
+	sde_rsc_rpmh_register();
+	sde_rsc_register();
+	dsi_display_register();
+	msm_hdcp_register();
+	dp_display_register();
 	msm_smmu_driver_init();
+	sde_rotator_register();
+	sde_rotator_smmu_driver_register();
 	msm_dsi_register();
 	msm_edp_register();
 	msm_hdmi_register();
+	sde_wb_register();
 	return platform_driver_register(&msm_platform_driver);
 }
 
@@ -2019,10 +2064,17 @@ static void __exit msm_drm_unregister(void)
 {
 	DBG("fini");
 	platform_driver_unregister(&msm_platform_driver);
+	sde_wb_unregister();
 	msm_hdmi_unregister();
 	msm_edp_unregister();
 	msm_dsi_unregister();
+	sde_rotator_smmu_driver_unregister();
+	sde_rotator_unregister();
 	msm_smmu_driver_cleanup();
+	msm_hdcp_unregister();
+	dp_display_unregister();
+	dsi_display_unregister();
+	sde_rsc_unregister();
 }
 
 module_init(msm_drm_register);

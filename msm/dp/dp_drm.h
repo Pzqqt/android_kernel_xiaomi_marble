@@ -24,7 +24,7 @@ struct dp_bridge {
 };
 
 
-#ifdef CONFIG_DRM_MSM_DP
+#if IS_ENABLED(CONFIG_DRM_MSM_DP)
 /**
  * dp_connector_config_hdr - callback to configure HDR
  * @connector: Pointer to drm connector structure
@@ -231,6 +231,6 @@ static inline void convert_to_drm_mode(const struct dp_display_mode *dp_mode,
 				struct drm_display_mode *drm_mode)
 {
 }
-#endif
+#endif /* CONFIG_DRM_MSM_DP */
 
 #endif /* _DP_DRM_H_ */

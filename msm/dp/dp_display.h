@@ -127,7 +127,7 @@ struct dp_display {
 			bool wakeup);
 };
 
-#ifdef CONFIG_DRM_MSM_DP
+#if IS_ENABLED(CONFIG_DRM_MSM_DP)
 int dp_display_get_num_of_displays(void);
 int dp_display_get_displays(void **displays, int count);
 int dp_display_get_num_of_streams(void);
@@ -149,5 +149,5 @@ static inline int dp_connector_update_pps(struct drm_connector *connector,
 {
 	return 0;
 }
-#endif
+#endif /* CONFIG_DRM_MSM_DP */
 #endif /* _DP_DISPLAY_H_ */

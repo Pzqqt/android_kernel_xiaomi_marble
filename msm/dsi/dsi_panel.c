@@ -3283,6 +3283,13 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 	if (rc)
 		DSI_DEBUG("failed to parse esd config, rc=%d\n", rc);
 
+	rc = dsi_panel_vreg_get(panel);
+	if (rc) {
+		DSI_ERR("[%s] failed to get panel regulators, rc=%d\n",
+		       panel->name, rc);
+		goto error;
+	}
+
 	panel->power_mode = SDE_MODE_DPMS_OFF;
 	drm_panel_init(&panel->drm_panel);
 	panel->drm_panel.dev = &panel->mipi_device.dev;
@@ -3290,11 +3297,13 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 
 	rc = drm_panel_add(&panel->drm_panel);
 	if (rc)
-		goto error;
+		goto error_vreg_put;
 
 	mutex_init(&panel->panel_lock);
 
 	return panel;
+error_vreg_put:
+	(void)dsi_panel_vreg_put(panel);
 error:
 	kfree(panel);
 	return ERR_PTR(rc);
@@ -3335,18 +3344,11 @@ int dsi_panel_drv_init(struct dsi_panel *panel,
 	dev->lanes = 4;
 
 	panel->host = host;
-	rc = dsi_panel_vreg_get(panel);
-	if (rc) {
-		DSI_ERR("[%s] failed to get panel regulators, rc=%d\n",
-		       panel->name, rc);
-		goto exit;
-	}
-
 	rc = dsi_panel_pinctrl_init(panel);
 	if (rc) {
 		DSI_ERR("[%s] failed to init pinctrl, rc=%d\n",
 				panel->name, rc);
-		goto error_vreg_put;
+		goto exit;
 	}
 
 	rc = dsi_panel_gpio_request(panel);
@@ -3370,8 +3372,6 @@ error_gpio_release:
 	(void)dsi_panel_gpio_release(panel);
 error_pinctrl_deinit:
 	(void)dsi_panel_pinctrl_deinit(panel);
-error_vreg_put:
-	(void)dsi_panel_vreg_put(panel);
 exit:
 	mutex_unlock(&panel->panel_lock);
 	return rc;

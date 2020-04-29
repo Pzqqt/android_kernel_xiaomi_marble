@@ -184,8 +184,6 @@ struct sde_rsc_bw_config {
  * mode_threshold_time_ns: time to wake TCS in mode-0, must be greater than
  *			backoff time
  * time_slot_0_ns:	time for sleep & wake TCS in mode-1
- * master_drm:		Primary client waits for vsync on this drm object based
- *			on crtc id
  * rsc_vsync_wait:   Refcount to indicate if we have to wait for the vsync.
  * rsc_vsync_waitq:   Queue to wait for the vsync.
  * bw_config:		check sde_rsc_bw_config structure description.
@@ -228,7 +226,6 @@ struct sde_rsc_priv {
 	u32 mode_threshold_time_ns;
 	u32 time_slot_0_ns;
 
-	struct drm_device *master_drm;
 	atomic_t rsc_vsync_wait;
 	wait_queue_head_t rsc_vsync_waitq;
 

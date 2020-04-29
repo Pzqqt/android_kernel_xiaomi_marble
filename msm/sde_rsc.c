@@ -928,11 +928,7 @@ int sde_rsc_client_state_update(struct sde_rsc_client *caller_client,
 	caller_client->crtc_id = crtc_id;
 	caller_client->current_state = state;
 
-	if (rsc->master_drm == NULL) {
-		pr_err("invalid master component binding\n");
-		rc = -EINVAL;
-		goto end;
-	} else if ((rsc->current_state == state) && !config) {
+	if ((rsc->current_state == state) && !config) {
 		pr_debug("no state change: %d\n", state);
 		goto end;
 	}
@@ -1636,10 +1632,6 @@ static int sde_rsc_bind(struct device *dev,
 		return -EINVAL;
 	}
 
-	mutex_lock(&rsc->client_lock);
-	rsc->master_drm = drm;
-	mutex_unlock(&rsc->client_lock);
-
 	sde_dbg_reg_register_base(SDE_RSC_DRV_DBG_NAME, rsc->drv_io.base,
 							rsc->drv_io.len);
 	sde_dbg_reg_register_base(SDE_RSC_WRAPPER_DBG_NAME,
@@ -1669,10 +1661,6 @@ static void sde_rsc_unbind(struct device *dev,
 		pr_err("invalid display rsc\n");
 		return;
 	}
-
-	mutex_lock(&rsc->client_lock);
-	rsc->master_drm = NULL;
-	mutex_unlock(&rsc->client_lock);
 }
 
 static const struct component_ops sde_rsc_comp_ops = {
@@ -1855,8 +1843,6 @@ static const struct of_device_id dt_match[] = {
 	{},
 };
 
-MODULE_DEVICE_TABLE(of, dt_match);
-
 static struct platform_driver sde_rsc_platform_driver = {
 	.probe      = sde_rsc_probe,
 	.remove     = sde_rsc_remove,
@@ -1881,21 +1867,17 @@ static struct platform_driver sde_rsc_rpmh_driver = {
 	},
 };
 
-static int __init sde_rsc_register(void)
+void __init sde_rsc_register(void)
 {
-	return platform_driver_register(&sde_rsc_platform_driver);
+	platform_driver_register(&sde_rsc_platform_driver);
 }
 
-static void __exit sde_rsc_unregister(void)
+void __exit sde_rsc_unregister(void)
 {
 	platform_driver_unregister(&sde_rsc_platform_driver);
 }
 
-static int __init sde_rsc_rpmh_register(void)
+void __init sde_rsc_rpmh_register(void)
 {
-	return platform_driver_register(&sde_rsc_rpmh_driver);
+	platform_driver_register(&sde_rsc_rpmh_driver);
 }
-
-subsys_initcall(sde_rsc_rpmh_register);
-module_init(sde_rsc_register);
-module_exit(sde_rsc_unregister);

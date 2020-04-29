@@ -5059,6 +5059,17 @@ static int dsi_display_bind(struct device *dev,
 		}
 	}
 
+	/* Remove the panel vote that was added during dsi display probe */
+	if (display->panel) {
+		rc = dsi_pwr_enable_regulator(&display->panel->power_info,
+								false);
+		if (rc) {
+			DSI_ERR("[%s] failed to disable vregs, rc=%d\n",
+					display->panel->name, rc);
+			goto error_host_deinit;
+		}
+	}
+
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
 
@@ -5167,6 +5178,24 @@ static int dsi_display_init(struct dsi_display *display)
 	if (rc) {
 		DSI_ERR("device init failed, rc=%d\n", rc);
 		goto end;
+	}
+
+	/*
+	 * Vote on panel regulator is added to make sure panel regulators
+	 * are ON until dsi bind is completed for cont-splash enabled usecase.
+	 * This panel regulator vote will be removed after bind is done.
+	 * For GKI, adding this vote will make sure that sync_state
+	 * kernel driver doesn't disable the panel regulators before
+	 * splash_config() function adds vote for these regulators.
+	 */
+	if (display->panel) {
+		rc = dsi_pwr_enable_regulator(&display->panel->power_info,
+								true);
+		if (rc) {
+			DSI_ERR("[%s] failed to enable vregs, rc=%d\n",
+					display->panel->name, rc);
+			return rc;
+		}
 	}
 
 	rc = component_add(&pdev->dev, &dsi_display_comp_ops);
@@ -7765,17 +7794,17 @@ int dsi_display_unprepare(struct dsi_display *display)
 	return rc;
 }
 
-static int __init dsi_display_register(void)
+void __init dsi_display_register(void)
 {
 	dsi_phy_drv_register();
 	dsi_ctrl_drv_register();
 
 	dsi_display_parse_boot_display_selection();
 
-	return platform_driver_register(&dsi_display_driver);
+	platform_driver_register(&dsi_display_driver);
 }
 
-static void __exit dsi_display_unregister(void)
+void __exit dsi_display_unregister(void)
 {
 	platform_driver_unregister(&dsi_display_driver);
 	dsi_ctrl_drv_unregister();
@@ -7789,5 +7818,3 @@ module_param_string(dsi_display1, dsi_display_secondary, MAX_CMDLINE_PARAM_LEN,
 								0600);
 MODULE_PARM_DESC(dsi_display1,
 	"msm_drm.dsi_display1=<display node>:<configX> where <display node> is 'secondary dsi display node name' and <configX> where x represents index in the topology list");
-module_init(dsi_display_register);
-module_exit(dsi_display_unregister);

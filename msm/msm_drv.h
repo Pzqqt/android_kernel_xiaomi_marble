@@ -1101,7 +1101,7 @@ struct drm_fb_helper *msm_fbdev_init(struct drm_device *dev);
 void msm_fbdev_free(struct drm_device *dev);
 
 struct hdmi;
-#ifdef CONFIG_DRM_MSM_HDMI
+#if IS_ENABLED(CONFIG_DRM_MSM_HDMI)
 int msm_hdmi_modeset_init(struct hdmi *hdmi, struct drm_device *dev,
 		struct drm_encoder *encoder);
 void __init msm_hdmi_register(void);
@@ -1113,10 +1113,10 @@ static inline void __init msm_hdmi_register(void)
 static inline void __exit msm_hdmi_unregister(void)
 {
 }
-#endif
+#endif /* CONFIG_DRM_MSM_HDMI */
 
 struct msm_edp;
-#ifdef CONFIG_DRM_MSM_EDP
+#if IS_ENABLED(CONFIG_DRM_MSM_EDP)
 void __init msm_edp_register(void);
 void __exit msm_edp_unregister(void);
 int msm_edp_modeset_init(struct msm_edp *edp, struct drm_device *dev,
@@ -1134,7 +1134,7 @@ static inline int msm_edp_modeset_init(struct msm_edp *edp,
 {
 	return -EINVAL;
 }
-#endif
+#endif /* CONFIG_DRM_MSM_EDP */
 
 struct msm_dsi;
 
@@ -1147,12 +1147,7 @@ struct msm_dsi;
  */
 void msm_mode_object_event_notify(struct drm_mode_object *obj,
 		struct drm_device *dev, struct drm_event *event, u8 *payload);
-#ifndef CONFIG_DRM_MSM_DSI
-void __init msm_dsi_register(void);
-void __exit msm_dsi_unregister(void);
-int msm_dsi_modeset_init(struct msm_dsi *msm_dsi, struct drm_device *dev,
-			 struct drm_encoder *encoder);
-#else
+#if IS_ENABLED(CONFIG_DRM_MSM_DSI)
 static inline void __init msm_dsi_register(void)
 {
 }
@@ -1165,9 +1160,14 @@ static inline int msm_dsi_modeset_init(struct msm_dsi *msm_dsi,
 {
 	return -EINVAL;
 }
-#endif
+#else
+void __init msm_dsi_register(void);
+void __exit msm_dsi_unregister(void);
+int msm_dsi_modeset_init(struct msm_dsi *msm_dsi, struct drm_device *dev,
+			 struct drm_encoder *encoder);
+#endif /* CONFIG_DRM_MSM_DSI */
 
-#ifdef CONFIG_DRM_MSM_MDP5
+#if IS_ENABLED(CONFIG_DRM_MSM_MDP5)
 void __init msm_mdp_register(void);
 void __exit msm_mdp_unregister(void);
 #else
@@ -1177,7 +1177,7 @@ static inline void __init msm_mdp_register(void)
 static inline void __exit msm_mdp_unregister(void)
 {
 }
-#endif
+#endif /* CONFIG_DRM_MSM_MDP5 */
 
 #ifdef CONFIG_DEBUG_FS
 void msm_gem_describe(struct drm_gem_object *obj, struct seq_file *m);
@@ -1199,6 +1199,94 @@ static inline void msm_rd_dump_submit(struct msm_rd_state *rd, struct msm_gem_su
 static inline void msm_rd_debugfs_cleanup(struct msm_drm_private *priv) {}
 static inline void msm_perf_debugfs_cleanup(struct msm_drm_private *priv) {}
 #endif
+
+#if IS_ENABLED(CONFIG_DRM_MSM_DSI)
+void __init dsi_display_register(void);
+void __exit dsi_display_unregister(void);
+#else
+static inline void __init dsi_display_register(void)
+{
+}
+static inline void __exit dsi_display_unregister(void)
+{
+}
+#endif /* CONFIG_DRM_MSM_DSI */
+
+#if IS_ENABLED(CONFIG_HDCP_QSEECOM)
+void __init msm_hdcp_register(void);
+void __exit msm_hdcp_unregister(void);
+#else
+static inline void __init msm_hdcp_register(void)
+{
+}
+static inline void __exit msm_hdcp_unregister(void)
+{
+}
+#endif /* CONFIG_HDCP_QSEECOM */
+
+#if IS_ENABLED(CONFIG_DRM_MSM_DP)
+void __init dp_display_register(void);
+void __exit dp_display_unregister(void);
+#else
+static inline void __init dp_display_register(void)
+{
+}
+static inline void __exit dp_display_unregister(void)
+{
+}
+#endif /* CONFIG_DRM_MSM_DP */
+
+#if IS_ENABLED(CONFIG_DRM_SDE_RSC)
+void __init sde_rsc_register(void);
+void __exit sde_rsc_unregister(void);
+void __init sde_rsc_rpmh_register(void);
+#else
+static inline void __init sde_rsc_register(void)
+{
+}
+static inline void __exit sde_rsc_unregister(void)
+{
+}
+static inline void __init sde_rsc_rpmh_register(void)
+{
+}
+#endif /* CONFIG_DRM_SDE_RSC */
+
+#if IS_ENABLED(CONFIG_DRM_SDE_WB)
+void __init sde_wb_register(void);
+void __exit sde_wb_unregister(void);
+#else
+static inline void __init sde_wb_register(void)
+{
+}
+static inline void __exit sde_wb_unregister(void)
+{
+}
+#endif /* CONFIG_DRM_SDE_WB */
+
+#if IS_ENABLED(CONFIG_MSM_SDE_ROTATOR)
+void  __init sde_rotator_register(void);
+void __exit sde_rotator_unregister(void);
+#else
+static inline void __init sde_rotator_register(void)
+{
+}
+static inline void __exit sde_rotator_unregister(void)
+{
+}
+#endif /* CONFIG_MSM_SDE_ROTATOR */
+
+#if IS_ENABLED(CONFIG_MSM_SDE_ROTATOR)
+void __init sde_rotator_smmu_driver_register(void);
+void __exit sde_rotator_smmu_driver_unregister(void);
+#else
+static inline void __init sde_rotator_smmu_driver_register(void)
+{
+}
+static inline void __exit sde_rotator_smmu_driver_unregister(void)
+{
+}
+#endif /* CONFIG_MSM_SDE_ROTATOR */
 
 struct clk *msm_clk_get(struct platform_device *pdev, const char *name);
 int msm_clk_bulk_get(struct device *dev, struct clk_bulk_data **bulk);

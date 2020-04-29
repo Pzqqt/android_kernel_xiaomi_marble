@@ -141,7 +141,7 @@ struct sde_rsc_cmd_config {
 	u32 prefill_lines;
 };
 
-#ifdef CONFIG_DRM_SDE_RSC
+#if IS_ENABLED(CONFIG_DRM_SDE_RSC)
 /**
  * sde_rsc_client_create() - create the client for sde rsc.
  * Different displays like DSI, HDMI, DP, WB, etc should call this
