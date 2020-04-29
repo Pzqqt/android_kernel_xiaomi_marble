@@ -9618,7 +9618,15 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		hdd_set_dump_dp_trace(value[1], value[2]);
 		break;
 	case WE_SET_MON_MODE_CHAN:
-		ret = wlan_hdd_set_mon_chan(adapter, value[1], value[2]);
+		if (value[1] > 256)
+			ret = wlan_hdd_set_mon_chan(adapter, value[1],
+						    value[2]);
+		else
+			ret = wlan_hdd_set_mon_chan(
+						adapter,
+						wlan_reg_legacy_chan_to_freq(
+						hdd_ctx->pdev, value[1]),
+						value[2]);
 		break;
 	case WE_SET_WLAN_SUSPEND:
 		ret = hdd_wlan_fake_apps_suspend(hdd_ctx->wiphy, dev,
