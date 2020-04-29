@@ -761,6 +761,7 @@ enum {
 	IEEE80211_PARAM_OCE_TX_POWER               = 696, /* Enables tx power to be advertised as OCE attribute in Beacon and  Probe response frame */
 	IEEE80211_PARAM_OCE_IP_SUBNET_ID           = 697, /* IP subnet identifier value to be advertised as OCE attribute in Beacon and  Probe response frame */
 	IEEE80211_PARAM_OCE_ADD_ESS_RPT            = 698, /* Add ESS Report */
+	IEEE80211_PARAM_RSNX_OVERRIDE              = 700,
 };
 
 enum {
@@ -2154,6 +2155,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_oce_txpower",       IEEE80211_PARAM_OCE_TX_POWER, GET_PARAM, 0},
 	{"oce_subnet_id",       IEEE80211_PARAM_OCE_IP_SUBNET_ID, SET_PARAM, 2},
 	{"oce_ess_report",      IEEE80211_PARAM_OCE_ADD_ESS_RPT, SET_PARAM, 2},
+	{"rsnx_override",       IEEE80211_PARAM_RSNX_OVERRIDE, SET_PARAM, 1},
 	{"setiebuf",            35828, SET_PARAM, 1},
 	{"getiebuf",            35827, GET_PARAM, 0},
 	{"dbgreq",              35832, SET_PARAM, 1},
