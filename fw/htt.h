@@ -204,9 +204,10 @@
  * 3.80 Add add WDS_FREE_COUNT bitfield in T2H PEER_UNMAP_V2 msg.
  * 3.81 Add ppdu_start_tsf field in HTT_TX_WBM_COMPLETION_V2.
  * 3.82 Add WIN_SIZE field to HTT_T2H_MSG_TYPE_RX_DELBA msg.
+ * 3.83 Shrink seq_idx field in HTT PPDU ID from 3 bits to 2.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 82
+#define HTT_CURRENT_VERSION_MINOR 83
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -14044,10 +14045,10 @@ PREPACK struct htt_chan_caldata_msg {
  *    The following field definitions describe the format of the PPDU ID.
  *    The PPDU ID is truncated to 24 bits for TLVs from TQM.
  *
- *  |31 30|29        24|     23|    22|21   19|18  17|16     12|11            0|
- *  +---------------------------------------------------------------------------
- *  |rsvd |seq_cmd_type|tqm_cmd| rsvd |seq_idx|mac_id| hwq_ id |      sch id   |
- *  +---------------------------------------------------------------------------
+ *  |31 30|29        24|     23|22 21|20   19|18  17|16     12|11            0|
+ *  +--------------------------------------------------------------------------
+ *  |rsvd |seq_cmd_type|tqm_cmd|rsvd |seq_idx|mac_id| hwq_ id |      sch id   |
+ *  +--------------------------------------------------------------------------
  *
  *   sch id :Schedule command id
  *   Bits [11 : 0] : monotonically increasing counter to track the
@@ -14075,8 +14076,8 @@ PREPACK struct htt_ppdu_id {
         sch_id:         12,
         hwq_id:          5,
         mac_id:          2,
-        seq_idx:         3,
-        reserved1:       1,
+        seq_idx:         2,
+        reserved1:       2,
         tqm_cmd:         1,
         seq_cmd_type:    6,
         reserved2:       2;
@@ -14116,7 +14117,7 @@ PREPACK struct htt_ppdu_id {
     } while (0)
 
 #define HTT_PPDU_ID_SEQ_IDX_S    19
-#define HTT_PPDU_ID_SEQ_IDX_M    0x00380000
+#define HTT_PPDU_ID_SEQ_IDX_M    0x00180000
 #define HTT_PPDU_ID_SEQ_IDX_GET(_var) \
     (((_var) & HTT_PPDU_ID_SEQ_IDX_M) >> HTT_PPDU_ID_SEQ_IDX_S)
 
