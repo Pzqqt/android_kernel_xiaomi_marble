@@ -13652,6 +13652,12 @@ typedef struct {
      * oce_ap_tx_pwr_weightage_pcnt != 0.
      */
     A_UINT32 oce_ap_tx_pwr_weightage_pcnt;
+    /*
+     * For OCE Release 2, give weightage to roam candidate based on
+     * advertised subnet id.
+     * Only used if oce_ap_subnet_id_weightage_pcnt != 0.
+     */
+    A_UINT32 oce_ap_subnet_id_weightage_pcnt;
 } wmi_roam_cnd_scoring_param;
 
 typedef struct {
@@ -27301,6 +27307,7 @@ typedef enum {
  */
 typedef enum {
     WMI_ROAM_TRIGGER_REASON_STA_KICKOUT = WMI_ROAM_TRIGGER_REASON_MAX,
+    WMI_ROAM_TRIGGER_REASON_ESS_RSSI,
 
     WMI_ROAM_TRIGGER_EXT_REASON_MAX
 } WMI_ROAM_TRIGGER_EXT_REASON_ID;
