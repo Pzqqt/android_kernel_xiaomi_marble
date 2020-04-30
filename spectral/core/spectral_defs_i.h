@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -132,8 +132,7 @@ struct spectral_context {
 	void (*sptrlc_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*sptrlc_set_spectral_config)
 				(struct wlan_objmgr_pdev *pdev,
-				 const uint32_t threshtype,
-				 const uint32_t value,
+				 const struct spectral_cp_param *param,
 				 const enum spectral_scan_mode smode,
 				 enum spectral_cp_error_code *err);
 	QDF_STATUS (*sptrlc_get_spectral_config)

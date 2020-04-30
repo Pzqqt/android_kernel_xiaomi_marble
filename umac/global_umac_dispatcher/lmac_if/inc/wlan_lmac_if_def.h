@@ -611,8 +611,7 @@ struct wlan_lmac_if_sptrl_tx_ops {
 	void (*sptrlto_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*sptrlto_set_spectral_config)
 					(struct wlan_objmgr_pdev *pdev,
-					 const u_int32_t threshtype,
-					 const u_int32_t value,
+					 const struct spectral_cp_param *param,
 					 const enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
 	QDF_STATUS (*sptrlto_get_spectral_config)

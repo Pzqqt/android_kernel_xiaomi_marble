@@ -122,10 +122,16 @@ struct direct_buf_rx_cfg_req {
  *
  * @noisefloor: noisefloor
  * @reset_delay: reset delay
+ * @cfreq1: center frequency 1
+ * @cfreq2: center frequency 2
+ * @ch_width: channel width
  */
 struct direct_buf_rx_metadata {
 	int32_t noisefloor[WMI_HOST_MAX_NUM_CHAINS];
 	uint32_t reset_delay;
+	uint32_t cfreq1;
+	uint32_t cfreq2;
+	uint32_t ch_width;
 };
 
 /**

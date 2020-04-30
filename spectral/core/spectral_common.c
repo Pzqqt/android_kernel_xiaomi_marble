@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -126,6 +126,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 	enum spectral_scan_mode smode = sscan_req->ss_mode;
 	enum spectral_cp_error_code *err;
 	QDF_STATUS ret;
+	struct spectral_cp_param param;
 
 	if (!pdev) {
 		spectral_err("PDEV is NULL!");
@@ -142,191 +143,172 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		err =  &sscan_req->config_req.sscan_err_code;
 		sp_in = &sscan_req->config_req.sscan_config;
 		if (sp_in->ss_count != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_SCAN_COUNT;
+			param.value = sp_in->ss_count;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_SCAN_COUNT,
-						 sp_in->ss_count, smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_fft_period != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_FFT_PERIOD;
+			param.value = sp_in->ss_fft_period;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_FFT_PERIOD,
-						 sp_in->ss_fft_period,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_period != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_SCAN_PERIOD;
+			param.value = sp_in->ss_period;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_SCAN_PERIOD,
-						 sp_in->ss_period, smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_short_report != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_SHORT_REPORT;
+			param.value = (uint32_t)sp_in->ss_short_report ? 1 : 0;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_SHORT_REPORT,
-						 (uint32_t)
-						 sp_in->ss_short_report ? 1 : 0,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_spectral_pri != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_SPECT_PRI;
+			param.value = (uint32_t)sp_in->ss_spectral_pri;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_SPECT_PRI,
-						(uint32_t)
-						(sp_in->ss_spectral_pri),
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_fft_size != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_FFT_SIZE;
+			param.value = sp_in->ss_fft_size;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_FFT_SIZE,
-						 sp_in->ss_fft_size,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_gc_ena != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_GC_ENA;
+			param.value = sp_in->ss_gc_ena;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_GC_ENA,
-						 sp_in->ss_gc_ena,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_restart_ena != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_RESTART_ENA;
+			param.value = sp_in->ss_restart_ena;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_RESTART_ENA,
-						 sp_in->ss_restart_ena,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_noise_floor_ref != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_NOISE_FLOOR_REF;
+			param.value = sp_in->ss_noise_floor_ref;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_NOISE_FLOOR_REF,
-						 sp_in->ss_noise_floor_ref,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_init_delay != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_INIT_DELAY;
+			param.value = sp_in->ss_init_delay;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_INIT_DELAY,
-						 sp_in->ss_init_delay,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_nb_tone_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_NB_TONE_THR;
+			param.value = sp_in->ss_nb_tone_thr;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_NB_TONE_THR,
-						 sp_in->ss_nb_tone_thr,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_str_bin_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_STR_BIN_THR;
+			param.value = sp_in->ss_str_bin_thr;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_STR_BIN_THR,
-						 sp_in->ss_str_bin_thr,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_wb_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_WB_RPT_MODE;
+			param.value = sp_in->ss_wb_rpt_mode;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_WB_RPT_MODE,
-						 sp_in->ss_wb_rpt_mode,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_rssi_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_RSSI_RPT_MODE;
+			param.value = sp_in->ss_rssi_rpt_mode;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_RSSI_RPT_MODE,
-						 sp_in->ss_rssi_rpt_mode,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_rssi_thr != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_RSSI_THR;
+			param.value = sp_in->ss_rssi_thr;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_RSSI_THR,
-						 sp_in->ss_rssi_thr,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_pwr_format != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_PWR_FORMAT;
+			param.value = sp_in->ss_pwr_format;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_PWR_FORMAT,
-						 sp_in->ss_pwr_format,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_rpt_mode != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_RPT_MODE;
+			param.value = sp_in->ss_rpt_mode;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_RPT_MODE,
-						 sp_in->ss_rpt_mode,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_bin_scale != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_BIN_SCALE;
+			param.value = sp_in->ss_bin_scale;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_BIN_SCALE,
-						 sp_in->ss_bin_scale,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
 
 		if (sp_in->ss_dbm_adj != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_DBM_ADJ;
+			param.value = sp_in->ss_dbm_adj;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_DBM_ADJ,
-						 sp_in->ss_dbm_adj,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}
@@ -349,22 +331,21 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 				spectral_err("Invalid Spectral Chainmask - Inactive Rx antenna chain cannot be an active spectral chain");
 				goto bad;
 			} else {
+				param.id = SPECTRAL_PARAM_CHN_MASK;
+				param.value = sp_in->ss_chn_mask;
 				ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_CHN_MASK,
-						 sp_in->ss_chn_mask,
-						 smode, err);
+						(pdev, &param, smode, err);
 				if (QDF_IS_STATUS_ERROR(ret))
 					goto bad;
 			}
 		}
 
-		if (sp_in->ss_frequency != SPECTRAL_PHYERR_PARAM_NOVAL) {
+		if (sp_in->ss_frequency.cfreq1 != SPECTRAL_PHYERR_PARAM_NOVAL) {
+			param.id = SPECTRAL_PARAM_FREQUENCY;
+			param.freq.cfreq1 = sp_in->ss_frequency.cfreq1;
+			param.freq.cfreq2 = sp_in->ss_frequency.cfreq2;
 			ret = sc->sptrlc_set_spectral_config
-						(pdev,
-						 SPECTRAL_PARAM_FREQUENCY,
-						 sp_in->ss_frequency,
-						 smode, err);
+						(pdev, &param, smode, err);
 			if (QDF_IS_STATUS_ERROR(ret))
 				goto bad;
 		}

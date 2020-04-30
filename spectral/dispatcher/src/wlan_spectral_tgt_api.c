@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -86,7 +86,7 @@ tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS
 tgt_set_spectral_config(struct wlan_objmgr_pdev *pdev,
-			const u_int32_t threshtype, const u_int32_t value,
+			const struct spectral_cp_param *param,
 			const enum spectral_scan_mode smode,
 			enum spectral_cp_error_code *err)
 {
@@ -94,7 +94,7 @@ tgt_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_spectral_config(
-		pdev, threshtype, value, smode, err);
+		pdev, param, smode, err);
 }
 
 QDF_STATUS

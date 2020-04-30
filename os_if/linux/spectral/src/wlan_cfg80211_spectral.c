@@ -82,6 +82,8 @@ const struct nla_policy spectral_scan_policy[
 							.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY] = {
 							.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2] = {
+							.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_MODE] = {
 							.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DMA_RING_DEBUG] = {
@@ -112,7 +114,8 @@ static void wlan_spectral_intit_config(struct spectral_config *config_req)
 	config_req->ss_bin_scale =       SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_dbm_adj =         SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_chn_mask =        SPECTRAL_PHYERR_PARAM_NOVAL;
-	config_req->ss_frequency =       SPECTRAL_PHYERR_PARAM_NOVAL;
+	config_req->ss_frequency.cfreq1 = SPECTRAL_PHYERR_PARAM_NOVAL;
+	config_req->ss_frequency.cfreq2 = SPECTRAL_PHYERR_PARAM_NOVAL;
 }
 
 /**
@@ -345,8 +348,13 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_SHORT_REPORT]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY])
-		config_req.ss_frequency = nla_get_u32(tb
+		config_req.ss_frequency.cfreq1 = nla_get_u32(tb
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY]);
+
+	config_req.ss_frequency.cfreq2 = 0;
+	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2])
+		config_req.ss_frequency.cfreq2 = nla_get_u32(tb
+		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_MODE]) {
 		status = convert_spectral_mode_nl_to_internal(nla_get_u32(tb
@@ -645,7 +653,11 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 			sconfig->ss_short_report) ||
 	    nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY,
-			sconfig->ss_frequency))
+			sconfig->ss_frequency.cfreq1) ||
+	    nla_put_u32(skb,
+			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_FREQUENCY_2,
+			sconfig->ss_frequency.cfreq2))
+
 		goto fail;
 
 	sscan_req.ss_mode = sscan_mode;
