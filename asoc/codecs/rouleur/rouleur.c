@@ -1118,7 +1118,7 @@ int rouleur_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 	 */
 	cur_vout_ctl = (snd_soc_component_read32(component,
 				ROULEUR_ANA_MICBIAS_LDO_1_SETTING)) & 0xF8;
-
+	cur_vout_ctl = cur_vout_ctl >> 3;
 	req_vout_ctl = rouleur_get_micb_vout_ctl_val(req_volt);
 	if (req_vout_ctl < 0) {
 		ret = -EINVAL;
@@ -1138,7 +1138,7 @@ int rouleur_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 					      pullup_mask);
 
 	snd_soc_component_update_bits(component,
-		ROULEUR_ANA_MICBIAS_LDO_1_SETTING, 0xF8, req_vout_ctl);
+		ROULEUR_ANA_MICBIAS_LDO_1_SETTING, 0xF8, req_vout_ctl << 3);
 
 	if (micb_en == 0x1) {
 		snd_soc_component_update_bits(component, micb_reg,
@@ -1911,7 +1911,7 @@ static int rouleur_set_micbias_data(struct rouleur_priv *rouleur,
 		goto done;
 	}
 	regmap_update_bits(rouleur->regmap, ROULEUR_ANA_MICBIAS_LDO_1_SETTING,
-			   0xF8, vout_ctl);
+			   0xF8, vout_ctl << 3);
 done:
 	return rc;
 }
