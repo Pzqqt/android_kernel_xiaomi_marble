@@ -448,12 +448,6 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 	dev_dbg(component->dev, "%s: ASM loopback stream:%d\n",
 		__func__, substream->stream);
 
-	if (!pcm || !pcm->audio_client) {
-		mutex_unlock(&pcm->lock);
-		pr_err("%s: private data null or audio client freed\n", __func__);
-		return -EINVAL;
-	}
-
 	if (pcm->playback_start && pcm->capture_start) {
 		mutex_unlock(&pcm->lock);
 		return ret;
@@ -474,6 +468,12 @@ static int msm_pcm_prepare(struct snd_pcm_substream *substream)
 			pcm->capture_substream->private_data;
 		event.event_func = msm_pcm_route_event_handler;
 		event.priv_data = (void *) pcm;
+
+		if (!pcm->audio_client) {
+			mutex_unlock(&pcm->lock);
+			pr_err("%s: audio client freed\n", __func__);
+			return -EINVAL;
+		}
 		msm_pcm_routing_reg_phy_stream(soc_pcm_tx->dai_link->id,
 			pcm->audio_client->perf_mode,
 			pcm->session_id, pcm->capture_substream->stream);
