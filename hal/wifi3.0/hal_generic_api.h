@@ -401,8 +401,10 @@ static inline void
 hal_get_mac_addr1(uint8_t *rx_mpdu_start,
 		  struct hal_rx_ppdu_info *ppdu_info)
 {
-	if (ppdu_info->sw_frame_group_id
-	    == HAL_MPDU_SW_FRAME_GROUP_MGMT_PROBE_REQ) {
+	if ((ppdu_info->sw_frame_group_id
+	     == HAL_MPDU_SW_FRAME_GROUP_MGMT_PROBE_REQ) ||
+	    (ppdu_info->sw_frame_group_id ==
+	     HAL_MPDU_SW_FRAME_GROUP_CTRL_RTS)) {
 		ppdu_info->rx_info.mac_addr1_valid =
 				HAL_RX_GET_MAC_ADDR1_VALID(rx_mpdu_start);
 
@@ -410,6 +412,13 @@ hal_get_mac_addr1(uint8_t *rx_mpdu_start,
 			HAL_RX_GET(rx_mpdu_start,
 				   RX_MPDU_INFO_15,
 				   MAC_ADDR_AD1_31_0);
+		if (ppdu_info->sw_frame_group_id ==
+		    HAL_MPDU_SW_FRAME_GROUP_CTRL_RTS) {
+			*(uint32_t *)&ppdu_info->rx_info.mac_addr1[4] =
+				HAL_RX_GET(rx_mpdu_start,
+					   RX_MPDU_INFO_16,
+					   MAC_ADDR_AD1_47_32);
+		}
 	}
 }
 #else
