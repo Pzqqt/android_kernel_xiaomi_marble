@@ -33,6 +33,7 @@
 				(t).num_comp_enc == (r).num_enc && \
 				(t).num_intf == (r).num_intf && \
 				(t).comp_type == (r).comp_type)
+#define IS_COMPATIBLE_PP_DSC(p, d) (p % 2 == d % 2)
 
 /* ~one vsync poll time for rsvp_nxt to cleared by modeset from commit thread */
 #define RM_NXT_CLEAR_POLL_TIMEOUT_US 16600
@@ -1277,7 +1278,8 @@ static int _sde_rm_reserve_ctls(
 static bool _sde_rm_check_dsc(struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
 		struct sde_rm_hw_blk *dsc,
-		struct sde_rm_hw_blk *paired_dsc)
+		struct sde_rm_hw_blk *paired_dsc,
+		struct sde_rm_hw_blk *pp_blk)
 {
 	const struct sde_dsc_cfg *dsc_cfg = to_sde_hw_dsc(dsc->hw)->caps;
 
@@ -1286,6 +1288,14 @@ static bool _sde_rm_check_dsc(struct sde_rm *rm,
 		SDE_DEBUG("dsc %d already reserved\n", dsc_cfg->id);
 		return false;
 	}
+
+	/**
+	 * This check is required for routing even numbered DSC
+	 * blks to any of the even numbered PP blks and odd numbered
+	 * DSC blks to any of the odd numbered PP blks.
+	 */
+	if (!pp_blk || !IS_COMPATIBLE_PP_DSC(pp_blk->id, dsc->id))
+		return false;
 
 	/* Check if this dsc is a peer of the proposed paired DSC */
 	if (paired_dsc) {
@@ -1317,6 +1327,22 @@ static bool _sde_rm_check_vdc(struct sde_rm *rm,
 	return true;
 }
 
+static void sde_rm_get_rsvp_nxt_hw_blks(
+		struct sde_rm *rm,
+		struct sde_rm_rsvp *rsvp,
+		int type,
+		struct sde_rm_hw_blk **blk_arr)
+{
+	struct sde_rm_hw_blk *blk;
+	int i = 0;
+
+	list_for_each_entry(blk, &rm->hw_blks[type], list) {
+		if (blk->rsvp_nxt && blk->rsvp_nxt->seq ==
+					rsvp->seq)
+			blk_arr[i++] = blk;
+	}
+}
+
 static int _sde_rm_reserve_dsc(
 		struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
@@ -1326,6 +1352,7 @@ static int _sde_rm_reserve_dsc(
 	struct sde_rm_hw_iter iter_i, iter_j;
 	struct sde_rm_hw_blk *dsc[MAX_BLOCKS];
 	u32 reserve_mask = 0;
+	struct sde_rm_hw_blk *pp[MAX_BLOCKS];
 	int alloc_count = 0;
 	int num_dsc_enc;
 	struct msm_display_dsc_info *dsc_info;
@@ -1346,6 +1373,7 @@ static int _sde_rm_reserve_dsc(
 	}
 
 	sde_rm_init_hw_iter(&iter_i, 0, SDE_HW_BLK_DSC);
+	sde_rm_get_rsvp_nxt_hw_blks(rm, rsvp, SDE_HW_BLK_PINGPONG, pp);
 
 	/* Find a first DSC */
 	while (alloc_count != num_dsc_enc &&
@@ -1367,7 +1395,8 @@ static int _sde_rm_reserve_dsc(
 			dsc_info->config.native_420) && !has_422_420_support)
 			continue;
 
-		if (!_sde_rm_check_dsc(rm, rsvp, iter_i.blk, NULL))
+		if (!_sde_rm_check_dsc(rm, rsvp, iter_i.blk, NULL,
+					 pp[alloc_count]))
 			continue;
 
 		SDE_DEBUG("blk id = %d, _dsc_ids[%d] = %d\n",
@@ -1393,8 +1422,8 @@ static int _sde_rm_reserve_dsc(
 					_dsc_ids[alloc_count]))
 				continue;
 
-			if (!_sde_rm_check_dsc(rm, rsvp,
-					iter_j.blk, iter_i.blk))
+			if (!_sde_rm_check_dsc(rm, rsvp, iter_j.blk,
+					 iter_i.blk, pp[alloc_count]))
 				continue;
 
 			SDE_DEBUG("blk id = %d, _dsc_ids[%d] = %d\n",
