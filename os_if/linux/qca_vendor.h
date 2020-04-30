@@ -4089,8 +4089,14 @@ enum qca_wlan_vendor_attr_config {
 	 * wiphy.
 	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX = 24,
-	/* 8-bit unsigned value to trigger QPower: 1-Enable, 0-Disable */
-	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
+	/*
+	 * 8-bit unsigned value to trigger Advanced Power Save Mode:
+	 * 1-Enable, 0-Disable
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_ADVANCED_POWER_SAVE_MODE = 25,
+	/* Deprecated old name */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER =
+		QCA_WLAN_VENDOR_ATTR_CONFIG_ADVANCED_POWER_SAVE_MODE,
 	/*
 	 * 8-bit unsigned value to configure the driver and below layers to
 	 * ignore the assoc disallowed set by APs while connecting
