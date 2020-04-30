@@ -381,12 +381,16 @@ static int msm_compr_set_volume(struct snd_compr_stream *cstream,
 	}
 
 	pdata = snd_soc_component_get_drvdata(component);
+	if (!pdata)
+		return -EINVAL;
 
 	if (prtd->compr_passthr != LEGACY_PCM) {
 		pr_debug("%s: No volume config for passthrough %d\n",
 			 __func__, prtd->compr_passthr);
 		return rc;
 	}
+	if (!rtd->dai_link || !pdata->ch_map[rtd->dai_link->id])
+		return -EINVAL;
 
 	use_default = !(pdata->ch_map[rtd->dai_link->id]->set_ch_map);
 	chmap = pdata->ch_map[rtd->dai_link->id]->channel_map;
