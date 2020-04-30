@@ -798,6 +798,9 @@ QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg)
 
 	mac->lim.maxBssId = cds_cfg->max_bssid;
 	mac->lim.maxStation = cds_cfg->max_station;
+	mac->lim.max_sta_of_pe_session =
+			(cds_cfg->max_station > SIR_SAP_MAX_NUM_PEERS) ?
+				SIR_SAP_MAX_NUM_PEERS : cds_cfg->max_station;
 	qdf_spinlock_create(&mac->sys.bbt_mgmt_lock);
 
 	if ((mac->lim.maxBssId == 0) || (mac->lim.maxStation == 0)) {
@@ -2437,7 +2440,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	}
 	status = QDF_STATUS_E_FAILURE;
 	ft_session_ptr = pe_create_session(mac_ctx, bss_desc->bssId,
-					   &session_id, mac_ctx->lim.maxStation,
+					   &session_id,
+					   mac_ctx->lim.max_sta_of_pe_session,
 					   session_ptr->bssType,
 					   session_ptr->vdev_id,
 					   session_ptr->opmode);
@@ -2792,7 +2796,7 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
 
 	psession_entry = pe_create_session(mac_ptr, msg->bss_id.bytes,
 					   &session_id,
-					   mac_ptr->lim.maxStation,
+					   mac_ptr->lim.max_sta_of_pe_session,
 					   eSIR_MONITOR_MODE,
 					   msg->vdev_id,
 					   QDF_MONITOR_MODE);

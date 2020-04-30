@@ -624,6 +624,7 @@ typedef struct sAniSirLim {
 	/* wsc info required to form the wsc IE */
 	tLimWscIeInfo wscIeInfo;
 	struct pe_session *gpSession;  /* Pointer to  session table */
+	uint8_t max_sta_of_pe_session;
 
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;

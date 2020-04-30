@@ -439,7 +439,8 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 		      pe_session->ftPEContext.pFTPreAuthReq->pbssDescription;
 		ft_session =
 			pe_create_session(mac, pbssDescription->bssId,
-					  &sessionId, mac->lim.maxStation,
+					  &sessionId,
+					  mac->lim.max_sta_of_pe_session,
 					  pe_session->bssType,
 					  pe_session->vdev_id,
 					  pe_session->opmode);

@@ -53,7 +53,7 @@
 void lim_init_peer_idxpool(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint8_t i;
-	uint8_t maxAssocSta = mac->lim.maxStation;
+	uint8_t maxAssocSta = mac->lim.max_sta_of_pe_session;
 
 	pe_session->gpLimPeerIdxpool[0] = 0;
 

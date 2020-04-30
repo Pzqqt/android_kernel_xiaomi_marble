@@ -585,7 +585,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		} else {
 			session = pe_create_session(mac_ctx,
 					sme_start_bss_req->bssid.bytes,
-					&session_id, mac_ctx->lim.maxStation,
+					&session_id,
+					mac_ctx->lim.max_sta_of_pe_session,
 					sme_start_bss_req->bssType,
 					sme_start_bss_req->vdev_id,
 					sme_start_bss_req->bssPersona);
@@ -1233,7 +1234,8 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			 * Try to Create a new session
 			 */
 			session = pe_create_session(mac_ctx, bss_desc->bssId,
-					&session_id, mac_ctx->lim.maxStation,
+					&session_id,
+					mac_ctx->lim.max_sta_of_pe_session,
 					eSIR_INFRASTRUCTURE_MODE,
 					sme_join_req->vdev_id,
 					sme_join_req->staPersona);
@@ -5245,7 +5247,7 @@ void send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 	switch_count = session_entry->gLimChannelSwitch.switchCount;
 
 	if (LIM_IS_AP_ROLE(session_entry)) {
-		for (i = 0; i <= mac_ctx->lim.maxStation; i++) {
+		for (i = 0; i <= mac_ctx->lim.max_sta_of_pe_session; i++) {
 			psta =
 			  session_entry->dph.dphHashTable.pDphNodeArray + i;
 			if (psta && psta->added)
@@ -5289,7 +5291,7 @@ void lim_send_chan_switch_action_frame(struct mac_context *mac_ctx,
 	switch_count = session_entry->gLimChannelSwitch.switchCount;
 
 	if (LIM_IS_AP_ROLE(session_entry)) {
-		for (i = 0; i < mac_ctx->lim.maxStation; i++) {
+		for (i = 0; i <= mac_ctx->lim.max_sta_of_pe_session; i++) {
 			psta = dph_node_array_ptr + i;
 			if (!(psta && psta->added))
 				continue;

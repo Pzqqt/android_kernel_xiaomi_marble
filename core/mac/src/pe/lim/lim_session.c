@@ -210,7 +210,7 @@ static void pe_reset_protection_callback(void *ptr)
 
 	qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 	/* index 0, is self node, peers start from 1 */
-	for (i = 1 ; i <= mac_ctx->mlme_cfg->sap_cfg.assoc_sta_limit ; i++) {
+	for (i = 1 ; i <= mac_ctx->lim.max_sta_of_pe_session; i++) {
 		station_hash_node = dph_get_hash_entry(mac_ctx, i,
 					&pe_session_entry->dph.dphHashTable);
 		if (!station_hash_node)
