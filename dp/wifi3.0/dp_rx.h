@@ -510,6 +510,7 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 void dp_rx_desc_pool_init(struct dp_soc *soc, uint32_t pool_id,
 			  uint32_t pool_size,
 			  struct rx_desc_pool *rx_desc_pool);
+void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
 
 void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 				union dp_rx_desc_list_elem_t **local_desc_list,

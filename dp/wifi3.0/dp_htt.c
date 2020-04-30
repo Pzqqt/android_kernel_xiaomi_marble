@@ -490,7 +490,7 @@ htt_htc_pkt_free(struct htt_soc *soc, struct dp_htt_htc_pkt *pkt)
  * htt_htc_pkt_pool_free() - Free HTC packet pool
  * @htt_soc:	HTT SOC handle
  */
-static void
+void
 htt_htc_pkt_pool_free(struct htt_soc *soc)
 {
 	struct dp_htt_htc_pkt_union *pkt, *next;
@@ -3925,9 +3925,10 @@ struct htt_soc *htt_soc_attach(struct dp_soc *soc, HTC_HANDLE htc_handle)
 	}
 	if (i != MAX_PDEV_CNT) {
 		for (j = 0; j < i; j++) {
-			qdf_mem_free(htt_soc->pdevid_tt[i].umac_ttt);
-			qdf_mem_free(htt_soc->pdevid_tt[i].lmac_ttt);
+			qdf_mem_free(htt_soc->pdevid_tt[j].umac_ttt);
+			qdf_mem_free(htt_soc->pdevid_tt[j].lmac_ttt);
 		}
+		qdf_mem_free(htt_soc);
 		return NULL;
 	}
 

@@ -31,7 +31,7 @@ A_COMPILE_TIME_ASSERT(cookie_size_check,
  *
  * @rx_desc_pool: rx descriptor pool pointer
  * Return: QDF_STATUS  QDF_STATUS_SUCCESS
- *			QDF_STATUS_E_NOMEM
+ *		       QDF_STATUS_E_NOMEM
  */
 QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
 {
@@ -233,7 +233,7 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
  * @rx_desc_pool: rx descriptor pool pointer
  *
  * Return: QDF_STATUS  QDF_STATUS_SUCCESS
- *			QDF_STATUS_E_NOMEM
+ *		       QDF_STATUS_E_NOMEM
  */
 QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool)
 {
@@ -377,6 +377,7 @@ void dp_rx_desc_pool_deinit(struct dp_soc *soc,
 }
 
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
+
 /*
  * dp_rx_get_free_desc_list() - provide a list of descriptors from
  *				the free rx desc pool.

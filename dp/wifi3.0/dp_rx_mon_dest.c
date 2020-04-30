@@ -1092,9 +1092,9 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 				sizeof(pdev->ppdu_info.rx_status));
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					  "%s %d ppdu_id %x != ppdu_info.com_info .ppdu_id %x",
-					  __func__, __LINE__,
-					  ppdu_id, pdev->ppdu_info.com_info.ppdu_id);
+				  "%s %d ppdu_id %x != ppdu_info.com_info.ppdu_id %x",
+				  __func__, __LINE__,
+				  ppdu_id, pdev->ppdu_info.com_info.ppdu_id);
 			break;
 		}
 
@@ -1121,27 +1121,208 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	}
 }
 
-#ifndef DISABLE_MON_CONFIG
-#if !defined(QCA_WIFI_QCA6390) && !defined(QCA_WIFI_QCA6490) && \
-    !defined(QCA_WIFI_QCA6750)
-/**
- * dp_rx_pdev_mon_buf_attach() - Allocate the monitor descriptor pool
- *
- * @pdev: physical device handle
- * @mac_id: mac id
- *
- * Return: QDF_STATUS
- */
-#define MON_BUF_MIN_ALLOC_ENTRIES 128
-static QDF_STATUS
-dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
+QDF_STATUS
+dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
+				 bool delayed_replenish)
+{
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_srng *mon_buf_ring;
 	uint32_t num_entries;
 	struct rx_desc_pool *rx_desc_pool;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	mon_buf_ring = &soc->rxdma_mon_buf_ring[mac_id];
+
+	num_entries = mon_buf_ring->num_entries;
+
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	dp_debug("Mon RX Desc Pool[%d] entries=%u", pdev_id, num_entries);
+
+	/* Replenish RXDMA monitor buffer ring with 8 buffers only
+	 * delayed_replenish_entries is actually 8 but when we call
+	 * dp_pdev_rx_buffers_attach() we pass 1 less than 8, hence
+	 * added 1 to delayed_replenish_entries to ensure we have 8
+	 * entries. Once the monitor VAP is configured we replenish
+	 * the complete RXDMA monitor buffer ring.
+	 */
+	if (delayed_replenish)
+		num_entries = soc_cfg_ctx->delayed_replenish_entries + 1;
+	else
+		num_entries -= soc_cfg_ctx->delayed_replenish_entries;
+
+	return dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
+					 rx_desc_pool, num_entries - 1);
+}
+
+static QDF_STATUS
+dp_rx_pdev_mon_cmn_buffers_alloc(struct dp_pdev *pdev, int mac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_for_pdev;
+	bool delayed_replenish;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t rx_desc_pool_size, replenish_size;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	delayed_replenish = soc_cfg_ctx->delayed_replenish_entries ? 1 : 0;
+	mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id, pdev_id);
+	status = dp_rx_pdev_mon_status_buffers_alloc(pdev, mac_for_pdev);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("%s: dp_rx_pdev_mon_status_desc_pool_alloc() failed",
+		       __func__);
+		goto fail;
+	}
+
+	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+		return status;
+
+	status = dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
+						  delayed_replenish);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("%s: dp_rx_pdev_mon_buf_desc_pool_alloc() failed\n",
+		       __func__);
+		goto mon_stat_buf_dealloc;
+	}
+
+	return status;
+
+mon_stat_buf_dealloc:
+	dp_rx_pdev_mon_status_buffers_free(pdev, mac_for_pdev);
+fail:
+	return status;
+}
+
+static void
+dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_srng *mon_buf_ring;
+	uint32_t num_entries;
+	struct rx_desc_pool *rx_desc_pool;
+	uint32_t rx_desc_pool_size;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	mon_buf_ring = &soc->rxdma_mon_buf_ring[mac_id];
+
+	num_entries = mon_buf_ring->num_entries;
+
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	dp_debug("Mon RX Desc buf Pool[%d] init entries=%u",
+		 pdev_id, num_entries);
+
+	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc_cfg_ctx) *
+		num_entries;
+
+	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
+	rx_desc_pool->buf_size = RX_MONITOR_BUFFER_SIZE;
+	rx_desc_pool->buf_alignment = RX_MONITOR_BUFFER_ALIGNMENT;
+
+	dp_rx_desc_pool_init(soc, mac_id, rx_desc_pool_size, rx_desc_pool);
+
+	pdev->mon_last_linkdesc_paddr = 0;
+
+	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
+	qdf_spinlock_create(&pdev->mon_lock);
+}
+
+static void
+dp_rx_pdev_mon_cmn_desc_pool_init(struct dp_pdev *pdev, int mac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+	uint32_t mac_for_pdev;
+
+	mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev->pdev_id);
+	dp_rx_pdev_mon_status_desc_pool_init(pdev, mac_for_pdev);
+
+	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+		return;
+
+	dp_rx_pdev_mon_buf_desc_pool_init(pdev, mac_for_pdev);
+	dp_link_desc_ring_replenish(soc, mac_for_pdev);
+}
+
+static void
+dp_rx_pdev_mon_buf_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
+
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	dp_debug("Mon RX Desc buf Pool[%d] deinit", pdev_id);
+
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+	qdf_spinlock_destroy(&pdev->mon_lock);
+}
+
+static void
+dp_rx_pdev_mon_cmn_desc_pool_deinit(struct dp_pdev *pdev, int mac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+
+	dp_rx_pdev_mon_status_desc_pool_deinit(pdev, mac_for_pdev);
+	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+		return;
+
+	dp_rx_pdev_mon_buf_desc_pool_deinit(pdev, mac_for_pdev);
+}
+
+static void
+dp_rx_pdev_mon_buf_desc_pool_free(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
+
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	dp_debug("Mon RX Buf Desc Pool Free pdev[%d]", pdev_id);
+
+	dp_rx_desc_pool_free(soc, rx_desc_pool);
+}
+
+static void
+dp_rx_pdev_mon_cmn_desc_pool_free(struct dp_pdev *pdev, int mac_id)
+{
+	struct dp_soc *soc = pdev->soc;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+
+	dp_rx_pdev_mon_status_desc_pool_free(pdev, mac_for_pdev);
+	dp_rx_pdev_mon_buf_desc_pool_free(pdev, mac_for_pdev);
+	dp_hw_link_desc_pool_banks_free(soc, mac_for_pdev);
+}
+
+void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
+
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+
+	dp_debug("Mon RX Buf buffers Free pdev[%d]", pdev_id);
+
+	dp_rx_desc_nbuf_free(soc, rx_desc_pool);
+}
+
+static QDF_STATUS
+dp_rx_pdev_mon_buf_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_srng *mon_buf_ring;
+	uint32_t num_entries;
+	struct rx_desc_pool *rx_desc_pool;
+	uint32_t rx_desc_pool_size;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
 
 	mon_buf_ring = &soc->rxdma_mon_buf_ring[mac_id];
 
@@ -1151,320 +1332,147 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 
 	dp_debug("Mon RX Desc Pool[%d] entries=%u",
 		 pdev_id, num_entries);
-	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx) * num_entries;
 
-	if (!dp_is_soc_reinit(soc)) {
-		status = dp_rx_desc_pool_alloc(soc, rx_desc_pool_size,
-					       rx_desc_pool);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			return status;
-	}
+	rx_desc_pool_size = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc_cfg_ctx) *
+		num_entries;
 
-	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
-	rx_desc_pool->buf_size = RX_MONITOR_BUFFER_SIZE;
-	rx_desc_pool->buf_alignment = RX_MONITOR_BUFFER_ALIGNMENT;
-
-	replenish_size = ((num_entries - 1) < MON_BUF_MIN_ALLOC_ENTRIES) ?
-			  (num_entries - 1) : MON_BUF_MIN_ALLOC_ENTRIES;
-
-	dp_rx_desc_pool_init(soc, mac_id, rx_desc_pool_size, rx_desc_pool);
-
-	status = dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
-					   rx_desc_pool, replenish_size);
-
-	return status;
+	return dp_rx_desc_pool_alloc(soc, rx_desc_pool_size, rx_desc_pool);
 }
 
 static QDF_STATUS
-dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
+dp_rx_pdev_mon_cmn_desc_pool_alloc(struct dp_pdev *pdev, int mac_id)
 {
 	struct dp_soc *soc = pdev->soc;
-	struct rx_desc_pool *rx_desc_pool;
-
-	rx_desc_pool = &soc->rx_desc_mon[mac_id];
-	if (rx_desc_pool->pool_size != 0) {
-		if (!dp_is_soc_reinit(soc))
-			dp_rx_desc_nbuf_and_pool_free(soc, mac_id,
-						      rx_desc_pool);
-		else
-			dp_rx_desc_nbuf_free(soc, rx_desc_pool);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * dp_mon_link_desc_pool_setup(): Allocate and setup link descriptor pool
- *				  that will be used by HW for various link
- *				  and queue descriptorsand managed by WBM
- *
- * @soc: soc handle
- * @mac_id: mac id
- *
- * Return: QDF_STATUS
- */
-static
-QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t lmac_id)
-{
-	if (!dp_is_soc_reinit(soc))
-		if (dp_hw_link_desc_pool_banks_alloc(soc, lmac_id))
-			return QDF_STATUS_E_FAILURE;
-
-	dp_link_desc_ring_replenish(soc, lmac_id);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/*
- * Free link descriptor pool that was setup HW
- */
-static
-void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
-{
-	dp_hw_link_desc_pool_banks_free(soc, mac_id);
-}
-
-/**
- * dp_mon_buf_delayed_replenish() - Helper routine to replenish monitor dest buf
- * @pdev: DP pdev object
- *
- * Return: None
- */
-void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
-{
-	struct dp_soc *soc;
+	uint8_t pdev_id = pdev->pdev_id;
 	uint32_t mac_for_pdev;
-	union dp_rx_desc_list_elem_t *tail = NULL;
-	union dp_rx_desc_list_elem_t *desc_list = NULL;
-	uint32_t num_entries;
-	uint32_t id;
-
-	soc = pdev->soc;
-	num_entries = wlan_cfg_get_dma_mon_buf_ring_size(pdev->wlan_cfg_ctx);
-
-	for (id = 0; id < NUM_RXDMA_RINGS_PER_PDEV; id++) {
-		/*
-		 * Get mac_for_pdev appropriately for both MCL & WIN,
-		 * since MCL have multiple mon buf rings and WIN just
-		 * has one mon buffer ring mapped per pdev, below API
-		 * helps identify accurate buffer_ring for both cases
-		 *
-		 */
-		mac_for_pdev =
-			dp_get_lmac_id_for_pdev_id(soc, id, pdev->pdev_id);
-
-		dp_rx_buffers_replenish(soc, mac_for_pdev,
-					dp_rxdma_get_mon_buf_ring(pdev,
-								  mac_for_pdev),
-					dp_rx_get_mon_desc_pool(soc,
-								mac_for_pdev,
-								pdev->pdev_id),
-					num_entries, &desc_list, &tail);
-	}
-}
-#else
-static
-QDF_STATUS dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS
-dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static
-void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
-{
-}
-
-static QDF_STATUS
-dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
-{}
-#endif
-
-/**
- * dp_rx_pdev_mon_cmn_detach() - detach dp rx for monitor mode
- * @pdev: core txrx pdev context
- * @mac_id: mac_id for which deinit is to be done
- *
- * This function will free DP Rx resources for
- * monitor mode
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-static QDF_STATUS
-dp_rx_pdev_mon_cmn_detach(struct dp_pdev *pdev, int mac_id) {
-	struct dp_soc *soc = pdev->soc;
-	uint8_t pdev_id = pdev->pdev_id;
-	int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
-
-	dp_mon_link_desc_pool_cleanup(soc, lmac_id);
-	dp_rx_pdev_mon_status_detach(pdev, lmac_id);
-	dp_rx_pdev_mon_buf_detach(pdev, lmac_id);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * dp_rx_pdev_mon_cmn_attach() - attach DP RX for monitor mode
- * @pdev: core txrx pdev context
- * @mac_id: mac_id for which init is to be done
- *
- * This function Will allocate dp rx resource and
- * initialize resources for monitor mode.
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-static QDF_STATUS
-dp_rx_pdev_mon_cmn_attach(struct dp_pdev *pdev, int mac_id) {
-	struct dp_soc *soc = pdev->soc;
-	uint8_t pdev_id = pdev->pdev_id;
-	int lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 	QDF_STATUS status;
 
-	status = dp_rx_pdev_mon_buf_attach(pdev, lmac_id);
+	mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
+
+	/* Allocate sw rx descriptor pool for monitor status ring */
+	status = dp_rx_pdev_mon_status_desc_pool_alloc(pdev, mac_for_pdev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		dp_err("%s: dp_rx_pdev_mon_buf_attach() failed\n", __func__);
+		dp_err("%s: dp_rx_pdev_mon_status_desc_pool_alloc() failed",
+		       __func__);
 		goto fail;
 	}
 
-	status = dp_rx_pdev_mon_status_attach(pdev, lmac_id);
+	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+		return status;
+
+	/* Allocate sw rx descriptor pool for monitor RxDMA buffer ring */
+	status = dp_rx_pdev_mon_buf_desc_pool_alloc(pdev, mac_for_pdev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		dp_err("%s: dp_rx_pdev_mon_status_attach() failed", __func__);
-		goto mon_buf_detach;
+		dp_err("%s: dp_rx_pdev_mon_buf_desc_pool_alloc() failed\n",
+		       __func__);
+		goto mon_status_dealloc;
 	}
 
-	status = dp_mon_link_desc_pool_setup(soc, lmac_id);
+	/* Allocate link descriptors for the monitor link descriptor ring */
+	status = dp_hw_link_desc_pool_banks_alloc(soc, mac_for_pdev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		dp_err("%s: dp_mon_link_desc_pool_setup() failed", __func__);
-		goto mon_status_detach;
+		dp_err("%s: dp_hw_link_desc_pool_banks_alloc() failed",
+		       __func__);
+		goto mon_buf_dealloc;
 	}
-
 	return status;
 
-mon_status_detach:
-	dp_rx_pdev_mon_status_detach(pdev, lmac_id);
-
-mon_buf_detach:
-	dp_rx_pdev_mon_buf_detach(pdev, lmac_id);
-
+mon_buf_dealloc:
+	dp_rx_pdev_mon_buf_desc_pool_free(pdev, mac_for_pdev);
+mon_status_dealloc:
+	dp_rx_pdev_mon_status_desc_pool_free(pdev, mac_for_pdev);
 fail:
 	return status;
 }
 
-/**
- * dp_rx_pdev_mon_attach() - attach DP RX for monitor mode
- * @pdev: core txrx pdev context
- *
- * This function will attach a DP RX for monitor mode instance into
- * the main device (SOC) context. Will allocate dp rx resource and
- * initialize resources.
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS
-dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
-	QDF_STATUS status;
-	uint8_t pdev_id = pdev->pdev_id;
-	int mac_id;
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-			"%s: pdev attach id=%d", __func__, pdev_id);
-
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		status = dp_rx_pdev_mon_cmn_attach(pdev, mac_id);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_ERROR,
-				  "%s: dp_rx_pdev_mon_cmn_attach(%d) failed\n",
-				  __func__, mac_id);
-			goto fail;
-		}
-	}
-	pdev->mon_last_linkdesc_paddr = 0;
-	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
-	qdf_spinlock_create(&pdev->mon_lock);
-
-	/* Attach full monitor mode resources */
-	dp_full_mon_attach(pdev);
-	return QDF_STATUS_SUCCESS;
-
-fail:
-	for (mac_id = mac_id - 1; mac_id >= 0; mac_id--)
-		dp_rx_pdev_mon_cmn_detach(pdev, mac_id);
-
-	return status;
-}
-
-QDF_STATUS
-dp_mon_link_free(struct dp_pdev *pdev) {
+static void
+dp_rx_pdev_mon_cmn_buffers_free(struct dp_pdev *pdev, int mac_id)
+{
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
-	int mac_id, lmac_id;
+	int mac_for_pdev;
+
+	mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc, mac_id, pdev_id);
+	dp_rx_pdev_mon_status_buffers_free(pdev, mac_for_pdev);
+
+	if (!soc->wlan_cfg_ctx->rxdma1_enable)
+		return;
+
+	dp_rx_pdev_mon_buf_buffers_free(pdev, mac_for_pdev);
+}
+
+QDF_STATUS
+dp_rx_pdev_mon_desc_pool_alloc(struct dp_pdev *pdev)
+{
+	QDF_STATUS status;
+	int mac_id, count;
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		lmac_id = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
-		dp_mon_link_desc_pool_cleanup(soc, lmac_id);
-	}
+		status = dp_rx_pdev_mon_cmn_desc_pool_alloc(pdev, mac_id);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_ERROR, "%s: %d failed\n",
+				  __func__, mac_id);
 
-	return QDF_STATUS_SUCCESS;
+			for (count = 0; count < mac_id; count++)
+				dp_rx_pdev_mon_cmn_desc_pool_free(pdev, count);
+
+			return status;
+		}
+	}
+	return status;
 }
-/**
- * dp_rx_pdev_mon_detach() - detach dp rx for monitor mode
- * @pdev: core txrx pdev context
- *
- * This function will detach DP RX for monitor mode from
- * main device context. will free DP Rx resources for
- * monitor mode
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS
-dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
-	uint8_t pdev_id = pdev->pdev_id;
+
+void
+dp_rx_pdev_mon_desc_pool_init(struct dp_pdev *pdev)
+{
 	int mac_id;
 
-	qdf_spinlock_destroy(&pdev->mon_lock);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
+		dp_rx_pdev_mon_cmn_desc_pool_init(pdev, mac_id);
+}
+
+void
+dp_rx_pdev_mon_desc_pool_deinit(struct dp_pdev *pdev)
+{
+	int mac_id;
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
+		dp_rx_pdev_mon_cmn_desc_pool_deinit(pdev, mac_id);
+}
+
+void dp_rx_pdev_mon_desc_pool_free(struct dp_pdev *pdev)
+{
+	int mac_id;
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
+		dp_rx_pdev_mon_cmn_desc_pool_free(pdev, mac_id);
+}
+
+void
+dp_rx_pdev_mon_buffers_free(struct dp_pdev *pdev)
+{
+	int mac_id;
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
+		dp_rx_pdev_mon_cmn_buffers_free(pdev, mac_id);
+}
+
+QDF_STATUS
+dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev)
+{
+	int mac_id;
+	QDF_STATUS status;
+
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
-		int mac_for_pdev = dp_get_lmac_id_for_pdev_id(pdev->soc,
-							   mac_id, pdev_id);
-
-		dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
-		dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+		status = dp_rx_pdev_mon_cmn_buffers_alloc(pdev, mac_id);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_ERROR, "%s: %d failed\n",
+				  __func__, mac_id);
+			return status;
+		}
 	}
-	/* Detach full monitor mode resources */
-	dp_full_mon_detach(pdev);
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-QDF_STATUS
-dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
-QDF_STATUS
-dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS
-dp_mon_link_free(struct dp_pdev *pdev) {
-	return QDF_STATUS_SUCCESS;
-}
-
-void dp_mon_buf_delayed_replenish(struct dp_pdev *pdev)
-{}
-#endif /* DISABLE_MON_CONFIG */

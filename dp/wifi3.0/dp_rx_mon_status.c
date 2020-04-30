@@ -34,6 +34,16 @@
 #include "dp_ratetable.h"
 #endif
 
+static inline
+QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
+					      uint32_t mac_id,
+					      struct dp_srng *dp_rxdma_srng,
+					      struct rx_desc_pool *rx_desc_pool,
+					      uint32_t num_req_buffers,
+					      union dp_rx_desc_list_elem_t **desc_list,
+					      union dp_rx_desc_list_elem_t **tail,
+					      uint8_t owner);
+
 static inline void
 dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
 				 struct hal_rx_ppdu_info *ppdu_info,
@@ -1903,6 +1913,7 @@ done:
 	return work_done;
 
 }
+
 /*
  * dp_rx_mon_status_process() - Process monitor status ring and
  *	TLV in status ring.
@@ -1923,6 +1934,7 @@ dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 
 	return work_done;
 }
+
 /**
  * dp_mon_process() - Main monitor mode processing roution.
  *	This call monitor status ring process then monitor
@@ -1942,34 +1954,143 @@ dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 	return dp_rx_mon_status_process(soc, mac_id, quota);
 }
 
-/**
- * dp_rx_pdev_mon_status_detach() - detach dp rx for status ring
- * @pdev: core txrx pdev context
- * @mac_id: mac_id/pdev_id correspondinggly for MCL and WIN
- *
- * This function will detach DP RX status ring from
- * main device context. will free DP Rx resources for
- * status ring
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
 QDF_STATUS
-dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
+dp_rx_pdev_mon_status_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id)
 {
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_srng *mon_status_ring;
+	uint32_t num_entries;
+	struct rx_desc_pool *rx_desc_pool;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+	union dp_rx_desc_list_elem_t *desc_list = NULL;
+	union dp_rx_desc_list_elem_t *tail = NULL;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+	mon_status_ring = &soc->rxdma_mon_status_ring[mac_id];
+
+	num_entries = mon_status_ring->num_entries;
+
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+
+	dp_debug("Mon RX Desc Pool[%d] entries=%u",
+		 pdev_id, num_entries);
+
+	return dp_rx_mon_status_buffers_replenish(soc, mac_id, mon_status_ring,
+						  rx_desc_pool, num_entries,
+						  &desc_list, &tail,
+						  HAL_RX_BUF_RBM_SW3_BM);
+}
+
+QDF_STATUS
+dp_rx_pdev_mon_status_desc_pool_alloc(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_srng *mon_status_ring;
+	uint32_t num_entries;
+	struct rx_desc_pool *rx_desc_pool;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+	mon_status_ring = &soc->rxdma_mon_status_ring[mac_id];
+
+	num_entries = mon_status_ring->num_entries;
+
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+
+	dp_debug("Mon RX Desc Pool[%d] entries=%u", pdev_id, num_entries);
+
+	return dp_rx_desc_pool_alloc(soc, num_entries + 1, rx_desc_pool);
+}
+
+void
+dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint32_t i;
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_srng *mon_status_ring;
+	uint32_t num_entries;
+	struct rx_desc_pool *rx_desc_pool;
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+	mon_status_ring = &soc->rxdma_mon_status_ring[mac_id];
+
+	num_entries = mon_status_ring->num_entries;
+
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+
+	dp_debug("Mon RX Desc status Pool[%d] init entries=%u",
+		 pdev_id, num_entries);
+
+	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
+	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
+	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
+
+	dp_rx_desc_pool_init(soc, mac_id, num_entries + 1, rx_desc_pool);
+
+	qdf_nbuf_queue_init(&pdev->rx_status_q);
+
+	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+
+	qdf_mem_zero(&pdev->ppdu_info.rx_status,
+		     sizeof(pdev->ppdu_info.rx_status));
+
+	qdf_mem_zero(&pdev->rx_mon_stats, sizeof(pdev->rx_mon_stats));
+
+	dp_rx_mon_init_dbg_ppdu_stats(&pdev->ppdu_info,
+				      &pdev->rx_mon_stats);
+
+	for (i = 0; i < MAX_MU_USERS; i++) {
+		qdf_nbuf_queue_init(&pdev->mpdu_q[i]);
+		pdev->is_mpdu_hdr[i] = true;
+	}
+
+	qdf_mem_zero(pdev->msdu_list, sizeof(pdev->msdu_list[MAX_MU_USERS]));
+
+	pdev->rx_enh_capture_mode = CDP_RX_ENH_CAPTURE_DISABLED;
+}
+
+void
+dp_rx_pdev_mon_status_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id) {
+	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	struct rx_desc_pool *rx_desc_pool;
 
 	rx_desc_pool = &soc->rx_desc_status[mac_id];
-	if (rx_desc_pool->pool_size != 0) {
-		if (!dp_is_soc_reinit(soc))
-			dp_rx_desc_nbuf_and_pool_free(soc, mac_id,
-						      rx_desc_pool);
-		else
-			dp_rx_desc_nbuf_free(soc, rx_desc_pool);
-	}
 
-	return QDF_STATUS_SUCCESS;
+	dp_debug("Mon RX Desc status Pool[%d] deinit", pdev_id);
+
+	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
+}
+
+void
+dp_rx_pdev_mon_status_desc_pool_free(struct dp_pdev *pdev, uint32_t mac_id) {
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
+
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+
+	dp_debug("Mon RX Status Desc Pool Free pdev[%d]", pdev_id);
+
+	dp_rx_desc_pool_free(soc, rx_desc_pool);
+}
+
+void
+dp_rx_pdev_mon_status_buffers_free(struct dp_pdev *pdev, uint32_t mac_id)
+{
+	uint8_t pdev_id = pdev->pdev_id;
+	struct dp_soc *soc = pdev->soc;
+	struct rx_desc_pool *rx_desc_pool;
+
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+
+	dp_debug("Mon RX Status Desc Pool Free pdev[%d]", pdev_id);
+
+	dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 }
 
 /*
@@ -2129,83 +2250,6 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		dp_rx_add_desc_list_to_free_list(dp_soc, desc_list, tail,
 			mac_id, rx_desc_pool);
 	}
-
-	return QDF_STATUS_SUCCESS;
-}
-/**
- * dp_rx_pdev_mon_status_attach() - attach DP RX monitor status ring
- * @pdev: core txrx pdev context
- * @ring_id: ring number
- * This function will attach a DP RX monitor status ring into pDEV
- * and replenish monitor status ring with buffer.
- *
- * Return: QDF_STATUS_SUCCESS: success
- *         QDF_STATUS_E_RESOURCES: Error return
- */
-QDF_STATUS
-dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
-	struct dp_soc *soc = pdev->soc;
-	union dp_rx_desc_list_elem_t *desc_list = NULL;
-	union dp_rx_desc_list_elem_t *tail = NULL;
-	struct dp_srng *mon_status_ring;
-	uint32_t num_entries;
-	uint32_t i;
-	struct rx_desc_pool *rx_desc_pool;
-	QDF_STATUS status;
-
-	mon_status_ring = &soc->rxdma_mon_status_ring[ring_id];
-
-	num_entries = mon_status_ring->num_entries;
-
-	rx_desc_pool = &soc->rx_desc_status[ring_id];
-
-	dp_info("Mon RX Status Pool[%d] entries=%d",
-		ring_id, num_entries);
-
-	if (!dp_is_soc_reinit(soc)) {
-		status = dp_rx_desc_pool_alloc(soc, num_entries + 1,
-					       rx_desc_pool);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			return status;
-	}
-
-	dp_rx_desc_pool_init(soc, ring_id, num_entries + 1, rx_desc_pool);
-
-	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
-	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
-
-	dp_debug("Mon RX Status Buffers Replenish ring_id=%d", ring_id);
-
-	status = dp_rx_mon_status_buffers_replenish(soc, ring_id,
-						    mon_status_ring,
-						    rx_desc_pool,
-						    num_entries,
-						    &desc_list, &tail,
-						    HAL_RX_BUF_RBM_SW3_BM);
-
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
-
-	qdf_nbuf_queue_init(&pdev->rx_status_q);
-
-	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
-
-	qdf_mem_zero(&(pdev->ppdu_info.rx_status),
-		     sizeof(pdev->ppdu_info.rx_status));
-
-	qdf_mem_zero(&pdev->rx_mon_stats,
-		     sizeof(pdev->rx_mon_stats));
-
-	dp_rx_mon_init_dbg_ppdu_stats(&pdev->ppdu_info,
-				      &pdev->rx_mon_stats);
-
-	for (i = 0; i < MAX_MU_USERS; i++) {
-		qdf_nbuf_queue_init(&pdev->mpdu_q[i]);
-		pdev->is_mpdu_hdr[i] = true;
-	}
-	qdf_mem_zero(pdev->msdu_list, sizeof(pdev->msdu_list[MAX_MU_USERS]));
-
-	pdev->rx_enh_capture_mode = CDP_RX_ENH_CAPTURE_DISABLED;
 
 	return QDF_STATUS_SUCCESS;
 }

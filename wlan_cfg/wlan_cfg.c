@@ -635,6 +635,18 @@ wlan_cfg_pdev_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	return wlan_cfg_ctx;
 }
 
+void wlan_cfg_set_mon_delayed_replenish_entries(
+					struct wlan_cfg_dp_soc_ctxt *cfg,
+					uint32_t val)
+{
+	cfg->delayed_replenish_entries = val;
+}
+
+int wlan_cfg_get_mon_delayed_replenish_entries(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->delayed_replenish_entries;
+}
+
 void wlan_cfg_pdev_detach(struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx)
 {
 	if (wlan_cfg_ctx)
@@ -1224,6 +1236,17 @@ wlan_cfg_get_dp_caps(struct wlan_cfg_dp_soc_ctxt *cfg,
 	default:
 		return false;
 	}
+}
+
+void wlan_cfg_set_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg,
+					bool val)
+{
+	cfg->is_tso_desc_attach_defer = val;
+}
+
+bool wlan_cfg_is_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->is_tso_desc_attach_defer;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

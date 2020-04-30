@@ -1123,15 +1123,6 @@ struct dp_soc {
 	struct dp_txrx_pool_stats pool_stats;
 #endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 
-	/*
-	 * Re-use memory section ends. reuse memory indicator.
-	 * Everything above this variable "dp_soc_reinit" is retained across
-	 * WiFi up/down for AP use-cases.
-	 * Everything below this variable "dp_soc_reinit" is reset during
-	 * dp_soc_deinit.
-	 */
-	bool dp_soc_reinit;
-
 	uint32_t wbm_idle_scatter_buf_size;
 
 	/* VDEVs on this SOC */
@@ -1328,11 +1319,11 @@ struct dp_soc {
 	uint8_t fisa_enable;
 #endif
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG || WLAN_SUPPORT_RX_FISA */
-
 	/* Full monitor mode support */
 	bool full_mon_mode;
 	/* SG supported for msdu continued packets from wbm release ring */
 	bool wbm_release_desc_rx_sg_support;
+	bool peer_map_attach_success;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1547,12 +1538,6 @@ struct dp_pdev {
 	/* Stuck count on monitor destination ring MPDU process */
 	uint32_t mon_dest_ring_stuck_cnt;
 
-	/*
-	 * re-use memory section ends
-	 * reuse memory/deinit indicator
-	 *
-	 * DO NOT CHANGE NAME OR MOVE THIS VARIABLE
-	 */
 	bool pdev_deinit;
 
 	/* pdev status down or up required to handle dynamic hw

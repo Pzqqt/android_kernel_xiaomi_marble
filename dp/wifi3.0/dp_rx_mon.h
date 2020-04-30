@@ -19,6 +19,8 @@
 #ifndef _DP_RX_MON_H_
 #define _DP_RX_MON_H_
 
+#define MON_BUF_MIN_ENTRIES 8
+
 /*
  * dp_rx_mon_status_process() - Process monitor status ring and
  *>.....TLV in status ring.
@@ -47,10 +49,28 @@ dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota);
 
-QDF_STATUS dp_rx_pdev_mon_attach(struct dp_pdev *pdev);
-QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
-QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
-QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
+QDF_STATUS dp_rx_pdev_mon_desc_pool_alloc(struct dp_pdev *pdev);
+QDF_STATUS dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev);
+void dp_rx_pdev_mon_buffers_free(struct dp_pdev *pdev);
+void dp_rx_pdev_mon_desc_pool_init(struct dp_pdev *pdev);
+void dp_rx_pdev_mon_desc_pool_deinit(struct dp_pdev *pdev);
+void dp_rx_pdev_mon_desc_pool_free(struct dp_pdev *pdev);
+void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
+
+QDF_STATUS dp_rx_pdev_mon_status_buffers_alloc(struct dp_pdev *pdev,
+					       uint32_t mac_id);
+QDF_STATUS dp_rx_pdev_mon_status_desc_pool_alloc(struct dp_pdev *pdev,
+						 uint32_t mac_id);
+void dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev,
+					  uint32_t mac_id);
+void dp_rx_pdev_mon_status_desc_pool_deinit(struct dp_pdev *pdev,
+					    uint32_t mac_id);
+void dp_rx_pdev_mon_status_desc_pool_free(struct dp_pdev *pdev,
+					  uint32_t mac_id);
+void dp_rx_pdev_mon_status_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
+QDF_STATUS
+dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
+				 bool delayed_replenish);
 
 #ifdef QCA_SUPPORT_FULL_MON
 

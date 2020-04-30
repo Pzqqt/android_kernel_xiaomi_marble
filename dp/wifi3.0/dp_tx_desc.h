@@ -78,17 +78,32 @@ do {                                                   \
 #define MAX_POOL_BUFF_COUNT 10000
 
 QDF_STATUS dp_tx_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
-		uint16_t num_elem);
-QDF_STATUS dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+				 uint16_t num_elem);
+QDF_STATUS dp_tx_desc_pool_init(struct dp_soc *soc, uint8_t pool_id,
+				uint16_t num_elem);
+void dp_tx_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+void dp_tx_desc_pool_deinit(struct dp_soc *soc, uint8_t pool_id);
+
 QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
-		uint16_t num_elem);
-QDF_STATUS dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+				     uint16_t num_elem);
+QDF_STATUS dp_tx_ext_desc_pool_init(struct dp_soc *soc, uint8_t pool_id,
+				    uint16_t num_elem);
+void dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+void dp_tx_ext_desc_pool_deinit(struct dp_soc *soc, uint8_t pool_id);
+
 QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
-		uint16_t num_elem);
+				     uint16_t num_elem);
+QDF_STATUS dp_tx_tso_desc_pool_init(struct dp_soc *soc, uint8_t pool_id,
+				    uint16_t num_elem);
 void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id);
+void dp_tx_tso_desc_pool_deinit(struct dp_soc *soc, uint8_t pool_id);
+
 QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 		uint16_t num_elem);
+QDF_STATUS dp_tx_tso_num_seg_pool_init(struct dp_soc *soc, uint8_t pool_id,
+				       uint16_t num_elem);
 void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t pool_id);
+void dp_tx_tso_num_seg_pool_deinit(struct dp_soc *soc, uint8_t pool_id);
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 void dp_tx_flow_control_init(struct dp_soc *);

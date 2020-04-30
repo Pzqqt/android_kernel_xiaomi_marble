@@ -353,6 +353,11 @@ struct cdp_cmn_ops {
 			       HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			       struct ol_if_ops *ol_ops, uint16_t device_id);
 
+	QDF_STATUS (*txrx_pdev_init)(ol_txrx_soc_handle soc,
+				     HTC_HANDLE htc_handle,
+				     qdf_device_t qdf_osdev,
+				     uint8_t pdev_id);
+
 	/**
 	 * txrx_tso_soc_attach() - TSO attach handler triggered during
 	 * dynamic tso activation
@@ -1075,6 +1080,7 @@ struct ol_if_ops {
 	int  (*peer_ast_flowid_map)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
 			       uint16_t peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
 #endif
+	int (*get_soc_nss_cfg)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 
 };

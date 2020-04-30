@@ -1514,8 +1514,6 @@ static inline int dp_get_mac_id_for_mac(struct dp_soc *soc, uint32_t mac_id)
 	return 0;
 }
 
-bool dp_is_soc_reinit(struct dp_soc *soc);
-
 /*
  * dp_is_subtype_data() - check if the frame subtype is data
  *

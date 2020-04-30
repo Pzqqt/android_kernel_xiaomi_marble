@@ -63,6 +63,8 @@ int htt_wbm_event_record(struct htt_logger *h, uint8_t tx_status,
 
 #endif
 
+void htt_htc_pkt_pool_free(struct htt_soc *soc);
+
 #define HTT_TX_MUTEX_TYPE qdf_spinlock_t
 
 #define HTT_TX_MUTEX_INIT(_mutex)				\

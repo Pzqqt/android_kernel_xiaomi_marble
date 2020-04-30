@@ -274,6 +274,12 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 		return NULL;
 	}
 
+	if (dp_tx_desc_pool_init(soc, flow_pool_id, flow_pool_size)) {
+		dp_tx_desc_pool_free(soc, flow_pool_id);
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
+		return NULL;
+	}
+
 	stop_threshold = wlan_cfg_get_tx_flow_stop_queue_th(soc->wlan_cfg_ctx);
 	start_threshold = stop_threshold +
 		wlan_cfg_get_tx_flow_start_queue_offset(soc->wlan_cfg_ctx);
@@ -338,6 +344,7 @@ int dp_tx_delete_flow_pool(struct dp_soc *soc, struct dp_tx_desc_pool_s *pool,
 	}
 
 	/* We have all the descriptors for the pool, we can delete the pool */
+	dp_tx_desc_pool_deinit(soc, pool->flow_pool_id);
 	dp_tx_desc_pool_free(soc, pool->flow_pool_id);
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 	return 0;
@@ -529,8 +536,8 @@ static inline void dp_tx_desc_pool_dealloc(struct dp_soc *soc)
 		if (!tx_desc_pool->desc_pages.num_pages)
 			continue;
 
-		if (dp_tx_desc_pool_free(soc, i) != QDF_STATUS_SUCCESS)
-			dp_err("Tx Desc Pool:%d Free failed", i);
+		dp_tx_desc_pool_deinit(soc, i);
+		dp_tx_desc_pool_free(soc, i);
 	}
 }
 

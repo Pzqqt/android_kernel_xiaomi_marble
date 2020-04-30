@@ -1211,6 +1211,39 @@ cdp_soc_init(ol_txrx_soc_handle soc, u_int16_t devid,
 }
 
 /**
+ * cdp_soc_init() - Initialize txrx SOC
+ * @soc: ol_txrx_soc_handle handle
+ * @devid: Device ID
+ * @hif_handle: Opaque HIF handle
+ * @psoc: Opaque Objmgr handle
+ * @htc_handle: Opaque HTC handle
+ * @qdf_dev: QDF device
+ * @dp_ol_if_ops: Offload Operations
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+static inline QDF_STATUS
+cdp_pdev_init(ol_txrx_soc_handle soc,
+	      HTC_HANDLE htc_handle, qdf_device_t qdf_dev,
+	      uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_pdev_init)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_pdev_init(soc,
+						     htc_handle, qdf_dev,
+						     pdev_id);
+}
+
+/**
  * cdp_soc_deinit() - Deinitialize txrx SOC
  * @soc: Opaque DP SOC handle
  *
