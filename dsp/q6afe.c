@@ -3037,6 +3037,63 @@ unlock:
 	return ret;
 }
 
+static int afe_port_topology_deregister(u16 port_id)
+{
+	struct param_hdr_v3 param_info;
+	int ret = 0;
+	uint32_t build_major_version = 0;
+	uint32_t build_minor_version = 0;
+	uint32_t build_branch_version = 0;
+	uint32_t afe_api_version = 0;
+
+	ret = q6core_get_avcs_avs_build_version_info(&build_major_version,
+						     &build_minor_version,
+						     &build_branch_version);
+	if (ret < 0) {
+		pr_err("%s: get AVS build versions failed %d\n",
+		       __func__, ret);
+		goto done;
+	}
+
+	afe_api_version = q6core_get_avcs_api_version_per_service(
+					APRV2_IDS_SERVICE_ID_ADSP_AFE_V);
+	if (afe_api_version < 0) {
+		ret = -EINVAL;
+		goto done;
+	}
+	pr_debug("%s: major: %u, minor: %u, branch: %u, afe_api: %u\n",
+		 __func__, build_major_version, build_minor_version,
+		 build_branch_version, afe_api_version);
+
+	if (build_major_version != AVS_BUILD_MAJOR_VERSION_V2 ||
+	    build_minor_version != AVS_BUILD_MINOR_VERSION_V9 ||
+	    (build_branch_version != AVS_BUILD_BRANCH_VERSION_V0 &&
+	     build_branch_version != AVS_BUILD_BRANCH_VERSION_V3) ||
+	    afe_api_version < AFE_API_VERSION_V9) {
+		ret = -EINVAL;
+		pr_err("%s: AVS build versions mismatched %d\n",
+		       __func__, ret);
+		goto done;
+	}
+
+	memset(&param_info, 0, sizeof(param_info));
+	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_DEREGISTER_TOPOLOGY;
+	param_info.param_size =  0;
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_info, NULL);
+	if (ret < 0)
+		pr_err("%s: AFE deregister topology for port 0x%x failed %d\n",
+		       __func__, port_id, ret);
+
+done:
+	pr_debug("%s: AFE port 0x%x deregister topology, ret %d\n",
+		 __func__, port_id, ret);
+	return ret;
+}
+
 static int afe_send_port_topology_id(u16 port_id)
 {
 	struct afe_param_id_set_topology_cfg topology;
@@ -5518,6 +5575,14 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	if (!(this_afe.afe_cal_mode[port_index] == AFE_CAL_MODE_NONE)) {
 		/* One time call: only for first time */
 		afe_send_custom_topology();
+		/*
+		 * Deregister existing afe topology before
+		 * sending a new one for VA use cases only
+		 */
+		if (port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_0 ||
+		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_1 ||
+		    port_id == AFE_PORT_ID_VA_CODEC_DMA_TX_2)
+			afe_port_topology_deregister(port_id);
 		afe_send_port_topology_id(port_id);
 		afe_send_cal(port_id);
 		afe_send_hw_delay(port_id, rate);
