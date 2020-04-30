@@ -1071,6 +1071,10 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_audio_aggr_set_rtscts_config,
     WMITLV_TAG_STRUC_wmi_pdev_sscan_fw_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_sscan_fft_bin_index,
+    WMITLV_TAG_STRUC_wmi_pdev_srg_obss_color_enable_bitmap_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_srg_obss_bssid_enable_bitmap_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_color_enable_bitmap_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1511,6 +1515,10 @@ typedef enum {
     OP(WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID) \
     OP(WMI_SIMULATION_TEST_CMDID) \
     OP(WMI_AUDIO_AGGR_SET_RTSCTS_CONFIG_CMDID) \
+    OP(WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID) \
+    OP(WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID) \
+    OP(WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID) \
+    OP(WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -4382,6 +4390,26 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_simulation_test_cmd_fixed_param, wmi_simulation_test_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SIMULATION_TEST_CMDID);
+
+/* SRG OBSS color Enable Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_srg_obss_color_enable_bitmap_cmd_fixed_param, wmi_pdev_srg_obss_color_enable_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID);
+
+/* SRG OBSS BSSID Enable Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_srg_obss_bssid_enable_bitmap_cmd_fixed_param, wmi_pdev_srg_obss_bssid_enable_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID);
+
+/* Non_SRG OBSS color Enable Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_color_enable_bitmap_cmd_fixed_param, wmi_pdev_non_srg_obss_color_enable_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID);
+
+/* Non_SRG OBSS BSSID Enable Bitmap */
+#define WMITLV_TABLE_WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param, wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

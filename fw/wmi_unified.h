@@ -426,6 +426,14 @@ typedef enum {
     WMI_PDEV_SET_SRG_BSS_COLOR_BITMAP_CMDID,
     /** Partial BSSID bitmap for SRG based spatial reuse feature */
     WMI_PDEV_SET_SRG_PARTIAL_BSSID_BITMAP_CMDID,
+    /** OBSS color enable bitmap for SRG based spatial reuse feature */
+    WMI_PDEV_SET_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID,
+    /** OBSS BSSID enable bitmap for SRG based spatial reuse feature */
+    WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID,
+    /** OBSS color enable bitmap for NON_SRG based spatial reuse feature */
+    WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID,
+    /** OBSS BSSID enable bitmap for NON_SRG based spatial reuse feature */
+    WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -10862,6 +10870,9 @@ typedef enum {
      * the pdev that the vdev belongs to.
      */
     WMI_VDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
+
+    /* Parameter used to enable/disable SRP feature */
+    WMI_VDEV_PARAM_ENABLE_SRP,
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
@@ -30332,6 +30343,70 @@ typedef struct {
      */
     A_UINT32 srg_partial_bssid_bitmap[2];
 } wmi_pdev_srg_partial_bssid_bitmap_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_srg_obss_color_enable_bitmap_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /* 64 bit SRG obss color enable bitmap used by SRG based spatial reuse feature
+     * bitmap[0] contains lower 32 bits and bitmap[1] contains
+     * upper 32 bits.
+     */
+    A_UINT32 srg_obss_en_color_bitmap[2];
+} wmi_pdev_srg_obss_color_enable_bitmap_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_srg_obss_bssid_enable_bitmap_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /* 64 bit obss bssid enable bitmap used by SRG based spatial reuse feature
+     * bitmap[0] contains lower 32 bits and bitmap[1] contains
+     * upper 32 bits.
+     */
+    A_UINT32 srg_obss_en_bssid_bitmap[2];
+} wmi_pdev_srg_obss_bssid_enable_bitmap_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_color_enable_bitmap_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /* 64 bit Non_SRG obss color enable bitmap used by Non_SRG based spatial reuse feature
+     * bitmap[0] contains lower 32 bits and bitmap[1] contains
+     * upper 32 bits.
+     */
+    A_UINT32 non_srg_obss_en_color_bitmap[2];
+} wmi_pdev_non_srg_obss_color_enable_bitmap_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /* 64 bit obss bssid enable bitmap used by Non_SRG based spatial reuse feature
+     * bitmap[0] contains lower 32 bits and bitmap[1] contains
+     * upper 32 bits.
+     */
+    A_UINT32 non_srg_obss_en_bssid_bitmap[2];
+} wmi_pdev_non_srg_obss_bssid_enable_bitmap_cmd_fixed_param;
 
 typedef enum {
     /* Simulation test command types */
