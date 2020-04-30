@@ -207,6 +207,16 @@ SND_SOC_DAILINK_DEFS(tx_cdcdma5_tx,
 			   COMP_CODEC("wcd938x_codec", "wcd938x_cdc")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-hostless")));
 
+SND_SOC_DAILINK_DEFS(multimedia31,
+	DAILINK_COMP_ARRAY(COMP_CPU("MultiMedia31")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-dsp.0")));
+
+SND_SOC_DAILINK_DEFS(multimedia32,
+	DAILINK_COMP_ARRAY(COMP_CPU("MultiMedia32")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("snd-soc-dummy", "snd-soc-dummy-dai")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-dsp.0")));
+
 /* BE dai-links */
 SND_SOC_DAILINK_DEFS(afe_pcm_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.224")),

@@ -5872,6 +5872,38 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		SND_SOC_DAILINK_REG(tx_cdcdma5_tx),
 		.num_codecs = ARRAY_SIZE(tx_cdcdma5_tx_codecs),
 	},
+	{/* hw:x,40 */
+		.name = MSM_DAILINK_NAME(Media31),
+		.stream_name = "MultiMedia31",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA31,
+		SND_SOC_DAILINK_REG(multimedia31),
+	},
+	{/* hw:x,41 */
+		.name = MSM_DAILINK_NAME(Media32),
+		.stream_name = "MultiMedia32",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		/* this dainlink has playback support */
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA32,
+		SND_SOC_DAILINK_REG(multimedia32),
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
