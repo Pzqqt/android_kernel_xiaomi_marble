@@ -22337,9 +22337,6 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	int ret;
 	enum phy_ch_width ch_width;
 
-	hdd_debug("Set Freq %d",
-		  csa_params->chandef.chan->center_freq);
-
 	if (wlan_hdd_validate_vdev_id(adapter->vdev_id))
 		return -EINVAL;
 
@@ -22356,6 +22353,9 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 				    CSA_REASON_USER_INITIATED);
 
 	ch_width = hdd_map_nl_chan_width(csa_params->chandef.width);
+	hdd_debug("Freq %d width %d ch_width %d",
+		  csa_params->chandef.chan->center_freq,
+		  csa_params->chandef.width, ch_width);
 
 	ret =
 	    hdd_softap_set_channel_change(dev,
