@@ -38,6 +38,7 @@
 #endif
 #include "osif_sync.h"
 #include <wlan_hdd_sysfs_set_fw_mode_cfg.h>
+#include <wlan_hdd_sysfs_reassoc.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -597,22 +598,37 @@ static int hdd_sysfs_create_bcn_reception_interface(struct hdd_adapter
 	return error;
 }
 
-void hdd_sysfs_create_adapter_root_obj(struct hdd_adapter *adapter)
-{
-	hdd_sysfs_create_bcn_reception_interface(adapter);
-}
-
 static void hdd_sysfs_destroy_bcn_reception_interface(struct hdd_adapter
 						      *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_beacon_stats);
 }
 
-void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter)
+#endif
+
+static void
+hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_create_bcn_reception_interface(adapter);
+	hdd_sysfs_reassoc_create(adapter);
+}
+
+static void
+hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
+{
+	hdd_sysfs_reassoc_destroy(adapter);
 	hdd_sysfs_destroy_bcn_reception_interface(adapter);
 }
-#endif
+
+static void
+hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
+{
+}
+
+static void
+hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
+{
+}
 
 void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 {
@@ -630,3 +646,35 @@ void hdd_destroy_sysfs_files(void)
 	hdd_sysfs_destroy_driver_root_obj();
 }
 
+void hdd_create_adapter_sysfs_files(struct hdd_adapter *adapter)
+{
+	int device_mode = adapter->device_mode;
+
+	switch (device_mode){
+	case QDF_STA_MODE:
+	case QDF_P2P_DEVICE_MODE:
+		hdd_sysfs_create_sta_adapter_root_obj(adapter);
+		break;
+	case QDF_SAP_MODE:
+		hdd_sysfs_create_sap_adapter_root_obj(adapter);
+		break;
+	default:
+		break;
+	}
+}
+
+void hdd_destroy_adapter_sysfs_files(struct hdd_adapter *adapter)
+{
+	int device_mode = adapter->device_mode;
+
+	switch (device_mode){
+	case QDF_STA_MODE:
+		hdd_sysfs_destroy_sta_adapter_root_obj(adapter);
+		break;
+	case QDF_SAP_MODE:
+		hdd_sysfs_destroy_sap_adapter_root_obj(adapter);
+		break;
+	default:
+		break;
+	}
+}

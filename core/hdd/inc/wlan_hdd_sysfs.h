@@ -38,21 +38,6 @@ hdd_sysfs_validate_and_copy_buf(char *dest_buf, size_t dest_buf_size,
 				char const *src_buf, size_t src_buf_size);
 
 /**
- * hdd_sysfs_create_adapter_root_obj() - create adapter sysfs entries
- * @adapter: HDD adapter
- *
- * Return: none
- */
-void hdd_sysfs_create_adapter_root_obj(struct hdd_adapter *adapter);
-/**
- * hdd_sysfs_destroy_adapter_root_obj() - Destroy adapter sysfs entries
- * @adapter: HDD adapter
- *
- * Return: none
- */
-void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter);
-
-/**
  * hdd_create_sysfs_files() - create sysfs files
  * @hdd_ctx: pointer to hdd context
  *
@@ -67,6 +52,21 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx);
  */
 void hdd_destroy_sysfs_files(void);
 
+/**
+ * hdd_create_adapter_sysfs_files - create adapter sysfs files
+ * @adapter: pointer to adapter
+ *
+ * Return: none
+ */
+void hdd_create_adapter_sysfs_files(struct hdd_adapter *adapter);
+
+/**
+ * hdd_destroy_adapter_sysfs_files - destroy adapter sysfs files
+ * @adapter: pointer to adapter
+ *
+ * Return: none
+ */
+void hdd_destroy_adapter_sysfs_files(struct hdd_adapter *adapter);
 #else
 static inline int
 hdd_sysfs_validate_and_copy_buf(char *dest_buf, size_t dest_buf_size,
@@ -93,7 +93,13 @@ void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter)
 {
 }
 
+static void hdd_create_adapter_sysfs_files(struct hdd_adapter *adapter)
+{
+}
 
+static void hdd_destroy_adapter_sysfs_files(struct hdd_adapter *adapter)
+{
+}
 #endif /* End of WLAN SYSFS*/
 
 #endif /* End of _WLAN_HDD_SYSFS_H_ */
