@@ -2535,17 +2535,15 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 	HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
@@ -2590,16 +2588,15 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 	HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
@@ -2642,17 +2639,15 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	ppdu_desc->last_usr_index = curr_user_index;
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->completion_status =
@@ -2777,17 +2772,15 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
@@ -2826,17 +2819,15 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
-
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
@@ -2872,12 +2863,15 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
-	if (!peer)
-		return;
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
-
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
+	if (peer) {
+		ppdu_desc->vdev_id = peer->vdev->vdev_id;
+		qdf_mem_copy(ppdu_user_desc->mac_addr,
+			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
+		dp_peer_unref_del_find_by_id(peer);
+	}
 	if (!ppdu_user_desc->ack_ba_tlv) {
 		ppdu_user_desc->ack_ba_tlv = 1;
 	} else {
@@ -2886,10 +2880,6 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 		return;
 	}
 
-	ppdu_desc->vdev_id = peer->vdev->vdev_id;
-	qdf_mem_copy(ppdu_user_desc->mac_addr,
-		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	dp_peer_unref_del_find_by_id(peer);
 	ppdu_user_desc->peer_id = peer_id;
 
 	tag_buf++;
