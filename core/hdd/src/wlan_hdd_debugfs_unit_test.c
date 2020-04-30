@@ -32,9 +32,13 @@
 #include "wma.h"
 #include "wlan_hdd_power.h"
 
+/* strlen("5 1 1") + 1(\n) */
+#define MIN_USER_COMMAND_SIZE_UNIT_TEST_TARGET 6
 #define MAX_USER_COMMAND_SIZE_UNIT_TEST_TARGET 256
 
 #ifdef WLAN_UNIT_TEST
+/* strlen("all") + 1(\n) */
+#define MIN_USER_COMMAND_SIZE_UNIT_TEST_HOST 4
 #define MAX_USER_COMMAND_SIZE_UNIT_TEST_HOST 32
 
 /**
@@ -56,8 +60,11 @@ static ssize_t __wlan_hdd_write_unit_test_host_debugfs(
 	char name[MAX_USER_COMMAND_SIZE_UNIT_TEST_HOST + 1];
 	int ret;
 
-	if (count > MAX_USER_COMMAND_SIZE_UNIT_TEST_HOST) {
-		hdd_err_rl("Command length is larger than %d bytes",
+	if (count < MIN_USER_COMMAND_SIZE_UNIT_TEST_HOST ||
+	    count > MAX_USER_COMMAND_SIZE_UNIT_TEST_HOST) {
+		hdd_err_rl("Command length (%zu) is invalid, expected [%d, %d]",
+			   count,
+			   MIN_USER_COMMAND_SIZE_UNIT_TEST_HOST,
 			   MAX_USER_COMMAND_SIZE_UNIT_TEST_HOST);
 		return -EINVAL;
 	}
@@ -136,6 +143,7 @@ int wlan_hdd_debugfs_unit_test_host_create(struct hdd_context *hdd_ctx)
 #endif /* WLAN_UNIT_TEST */
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
+#define MIN_USER_COMMAND_SIZE_SUSPEND 4
 #define MAX_USER_COMMAND_SIZE_SUSPEND 32
 
 /**
@@ -173,8 +181,11 @@ static ssize_t __wlan_hdd_write_suspend_debugfs(
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
-	if (count > MAX_USER_COMMAND_SIZE_SUSPEND) {
-		hdd_err_rl("Command length is larger than %d bytes",
+	if (count < MIN_USER_COMMAND_SIZE_SUSPEND ||
+	    count > MAX_USER_COMMAND_SIZE_SUSPEND) {
+		hdd_err_rl("Command length (%zu) is invalid, expected [%d, %d]",
+			   count,
+			   MIN_USER_COMMAND_SIZE_SUSPEND,
 			   MAX_USER_COMMAND_SIZE_SUSPEND);
 		return -EINVAL;
 	}
@@ -402,8 +413,11 @@ static ssize_t __wlan_hdd_write_unit_test_target_debugfs(
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
-	if (count > MAX_USER_COMMAND_SIZE_UNIT_TEST_TARGET) {
-		hdd_err_rl("Command length is larger than %d bytes",
+	if (count < MIN_USER_COMMAND_SIZE_UNIT_TEST_TARGET ||
+	    count > MAX_USER_COMMAND_SIZE_UNIT_TEST_TARGET) {
+		hdd_err_rl("Command length (%zu) is invalid, expected [%d, %d]",
+			   count,
+			   MIN_USER_COMMAND_SIZE_UNIT_TEST_TARGET,
 			   MAX_USER_COMMAND_SIZE_UNIT_TEST_TARGET);
 		return -EINVAL;
 	}

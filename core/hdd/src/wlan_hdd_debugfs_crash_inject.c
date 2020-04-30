@@ -26,6 +26,8 @@
 #include "osif_vdev_sync.h"
 #include "wlan_hdd_debugfs_crash_inject.h"
 
+/* strlen("1 1") + 1(\n) */
+#define MIN_USER_COMMAND_SIZE_CRASH_INJECT 4
 #define MAX_USER_COMMAND_SIZE_CRASH_INJECT 32
 
 /**
@@ -64,8 +66,11 @@ static ssize_t __wlan_hdd_write_crash_inject_debugfs(
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
-	if (count > MAX_USER_COMMAND_SIZE_CRASH_INJECT) {
-		hdd_err_rl("Command length is larger than %d bytes",
+	if (count < MIN_USER_COMMAND_SIZE_CRASH_INJECT ||
+	    count > MAX_USER_COMMAND_SIZE_CRASH_INJECT) {
+		hdd_err_rl("Command length (%zu) is invalid, expected [%d, %d]",
+			   count,
+			   MIN_USER_COMMAND_SIZE_CRASH_INJECT,
 			   MAX_USER_COMMAND_SIZE_CRASH_INJECT);
 		return -EINVAL;
 	}
