@@ -2368,7 +2368,6 @@ void dp_update_frame_ctrl_from_frame_type(void *desc)
 					 IEEE80211_FC0_TYPE_CTL);
 	break;
 	case HTT_STATS_FTYPE_SGEN_BRP:
-	case HTT_STATS_FTYPE_SGEN_MU_BRP:
 		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_BRPOLL |
 					 IEEE80211_FC0_TYPE_CTL);
 	break;
@@ -2387,6 +2386,7 @@ void dp_update_frame_ctrl_from_frame_type(void *desc)
 	break;
 	case HTT_STATS_FTYPE_SGEN_MU_TRIG:
 	case HTT_STATS_FTYPE_SGEN_MU_BAR:
+	case HTT_STATS_FTYPE_SGEN_MU_BRP:
 		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_TRIGGER |
 					 IEEE80211_FC0_TYPE_CTL);
 	break;
@@ -3533,7 +3533,8 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	user = &ppdu_desc->user[0];
 
 	ppdu_desc_frame_ctrl = ppdu_desc->frame_ctrl;
-	if (ppdu_desc->htt_frame_type == HTT_STATS_FTYPE_SGEN_MU_BAR)
+	if ((ppdu_desc->htt_frame_type == HTT_STATS_FTYPE_SGEN_MU_BAR) ||
+	    (ppdu_desc->htt_frame_type == HTT_STATS_FTYPE_SGEN_MU_BRP))
 		ppdu_desc_frame_ctrl = (IEEE80211_FC0_SUBTYPE_TRIGGER |
 					IEEE80211_FC0_TYPE_CTL);
 
