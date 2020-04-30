@@ -44,6 +44,8 @@
 #define MBO_OCE_OUI_SIZE 4
 #define REDUCED_WAN_METRICS_ATTR 103
 #define AP_TX_PWR_ATTR 107
+#define OCE_SUBNET_ID_ATTR 108
+#define OCE_SUBNET_ID_LEN 6
 
 /* WCN IE */
 /* Microsoft OUI */
@@ -1894,6 +1896,56 @@ wlan_parse_oce_reduced_wan_metrics_ie(uint8_t *mbo_oce_ie,
 			wan_metrics->uplink_av_cap = ie[2] >> 4;
 			return true;
 		}
+
+		ie += (attribute_len + 2);
+		len -= attribute_len;
+	}
+
+	return false;
+}
+
+/**
+ * wlan_parse_oce_subnet_id_ie() - parse oce subnet id IE
+ * @mbo_oce_ie: MBO/OCE IE pointer
+ *
+ * While parsing vendor IE, is_mbo_oce_oui() API does sanity of
+ * length and attribute ID for MBO_OCE_OUI and after passing the
+ * sanity only mbo_oce IE is stored in scan cache.
+ * It is a callers responsiblity to get the mbo_oce_ie pointer
+ * using util_scan_entry_mbo_oce() API, which points to mbo_oce
+ * stored in scan cache. Thus caller is responsible for ensuring
+ * the length of the IE is consistent with the embedded length.
+ *
+ * Return: true if oce subnet id is present, else false
+ */
+static inline bool
+wlan_parse_oce_subnet_id_ie(uint8_t *mbo_oce_ie)
+{
+	uint8_t len, attribute_len, attribute_id;
+	uint8_t *ie;
+
+	if (!mbo_oce_ie)
+		return false;
+
+	ie = mbo_oce_ie;
+	len = ie[1];
+	ie += 2;
+
+	if (len <= MBO_OCE_OUI_SIZE)
+		return false;
+
+	ie += MBO_OCE_OUI_SIZE;
+	len -= MBO_OCE_OUI_SIZE;
+
+	while (len > 2) {
+		attribute_id = ie[0];
+		attribute_len = ie[1];
+		len -= 2;
+		if (attribute_len > len)
+			return false;
+
+		if (attribute_id == OCE_SUBNET_ID_ATTR)
+			return true;
 
 		ie += (attribute_len + 2);
 		len -= attribute_len;

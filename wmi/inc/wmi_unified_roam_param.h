@@ -376,6 +376,7 @@ struct param_slot_scoring {
  * @pcl_weightage: PCL weightage out of total score in %.
  * @oce_wan_weightage OCE WAN metrics weightage out of total score in %.
  * @oce_ap_tx_pwr_weightage: OCE AP TX power score in %
+ * @oce_subnet_id_weightage: OCE subnet id score in %
  * @bw_index_score: channel BW scoring percentage information.
  *                 BITS 0-7   :- It contains scoring percentage of 20MHz   BW
  *                 BITS 8-15  :- It contains scoring percentage of 40MHz   BW
@@ -418,6 +419,7 @@ struct scoring_param {
 	int32_t pcl_weightage;
 	int32_t oce_wan_weightage;
 	uint32_t oce_ap_tx_pwr_weightage;
+	uint32_t oce_subnet_id_weightage;
 	uint32_t bw_index_score;
 	uint32_t band_index_score;
 	uint32_t nss_index_score;

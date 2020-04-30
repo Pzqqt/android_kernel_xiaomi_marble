@@ -1612,10 +1612,12 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 			ap_profile->param.oce_wan_weightage;
 	score_param->oce_ap_tx_pwr_weightage_pcnt =
 				ap_profile->param.oce_ap_tx_pwr_weightage;
+	score_param->oce_ap_subnet_id_weightage_pcnt =
+				ap_profile->param.oce_subnet_id_weightage;
 	score_param->vendor_roam_score_algorithm_id =
 			ap_profile->param.vendor_roam_score_algorithm;
 
-	WMI_LOGD("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d APTX %d roam score algo %d",
+	WMI_LOGD("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d APTX %d roam score algo %d subnet id %d",
 		 score_param->disable_bitmap, score_param->rssi_weightage_pcnt,
 		 score_param->ht_weightage_pcnt,
 		 score_param->vht_weightage_pcnt,
@@ -1627,7 +1629,8 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 		 score_param->pcl_weightage_pcnt,
 		 score_param->oce_wan_weightage_pcnt,
 		 score_param->oce_ap_tx_pwr_weightage_pcnt,
-		 score_param->vendor_roam_score_algorithm_id);
+		 score_param->vendor_roam_score_algorithm_id,
+		 score_param->oce_ap_subnet_id_weightage_pcnt);
 
 	score_param->bw_scoring.score_pcnt = ap_profile->param.bw_index_score;
 	score_param->band_scoring.score_pcnt =
