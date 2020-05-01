@@ -1988,6 +1988,63 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 	return cfgDot11ModeToUse;
 }
 
+enum reg_phymode csr_convert_to_reg_phy_mode(eCsrPhyMode csr_phy_mode,
+				       qdf_freq_t freq)
+{
+	if (csr_phy_mode == eCSR_DOT11_MODE_AUTO)
+		return REG_PHYMODE_MAX - 1;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11ax ||
+		 csr_phy_mode == eCSR_DOT11_MODE_11ax_ONLY)
+		return REG_PHYMODE_11AX;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11ac ||
+		 csr_phy_mode == eCSR_DOT11_MODE_11ac_ONLY)
+		return REG_PHYMODE_11AC;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11n ||
+		 csr_phy_mode == eCSR_DOT11_MODE_11n_ONLY)
+		return REG_PHYMODE_11N;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11a)
+		return REG_PHYMODE_11A;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11g ||
+		 csr_phy_mode == eCSR_DOT11_MODE_11g_ONLY)
+		return REG_PHYMODE_11G;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_11b ||
+		 csr_phy_mode == eCSR_DOT11_MODE_11b_ONLY)
+		return REG_PHYMODE_11B;
+	else if (csr_phy_mode == eCSR_DOT11_MODE_abg) {
+		if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+			return REG_PHYMODE_11G;
+		else
+			return REG_PHYMODE_11A;
+	} else {
+		sme_err("Invalid eCsrPhyMode");
+		return REG_PHYMODE_INVALID;
+	}
+}
+
+eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode)
+{
+	switch (phymode) {
+	case REG_PHYMODE_INVALID:
+		return eCSR_DOT11_MODE_AUTO;
+	case REG_PHYMODE_11B:
+		return eCSR_DOT11_MODE_11b;
+	case REG_PHYMODE_11G:
+		return eCSR_DOT11_MODE_11g;
+	case REG_PHYMODE_11A:
+		return eCSR_DOT11_MODE_11a;
+	case REG_PHYMODE_11N:
+		return eCSR_DOT11_MODE_11n;
+	case REG_PHYMODE_11AC:
+		return eCSR_DOT11_MODE_11ac;
+	case REG_PHYMODE_11AX:
+		return eCSR_DOT11_MODE_11ax;
+	case REG_PHYMODE_MAX:
+		return eCSR_DOT11_MODE_AUTO;
+	default:
+		return eCSR_DOT11_MODE_AUTO;
+	}
+}
+
 uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
 				     tDot11fIEPowerConstraints *constraints)
 {

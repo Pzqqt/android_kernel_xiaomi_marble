@@ -1419,4 +1419,29 @@ void
 csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
 					  struct scan_filter *filter);
 #endif
+
+/*
+ * csr_convert_to_reg_phy_mode() - CSR API to convert CSR phymode into
+ * regulatory phymode
+ * @csr_phy_mode: csr phymode with type eCsrPhyMode
+ * @freq: current operating frequency
+ *
+ * This API is used to convert a phymode from CSR to a phymode from regulatory
+ *
+ * Return: regulatory phymode that is comparable to input
+ */
+enum reg_phymode csr_convert_to_reg_phy_mode(eCsrPhyMode csr_phy_mode,
+				       qdf_freq_t freq);
+
+/*
+ * csr_convert_from_reg_phy_mode() - CSR API to convert regulatory phymode into
+ * CSR phymode
+ * @reg_phymode: regulatory phymode
+ *
+ * This API is used to convert a regulatory phymode to a CSR phymode
+ *
+ * Return: eCSR phymode that is comparable to input
+ */
+eCsrPhyMode csr_convert_from_reg_phy_mode(enum reg_phymode phymode);
+
 #endif
