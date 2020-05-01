@@ -5,7 +5,6 @@
 #define LSM_EVENT_TIMESTAMP_MODE_SUPPORT
 
 #include <linux/types.h>
-#include <sound/asound.h>
 
 #define SNDRV_LSM_VERSION SNDRV_PROTOCOL_VERSION(0, 3, 1)
 

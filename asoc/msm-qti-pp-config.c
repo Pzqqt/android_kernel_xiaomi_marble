@@ -7,7 +7,6 @@
 #include <linux/bitops.h>
 #include <linux/mutex.h>
 #include <sound/control.h>
-#include <sound/asound.h>
 #include <sound/tlv.h>
 #include <dsp/q6adm-v2.h>
 #include <dsp/q6asm-v2.h>
