@@ -71,12 +71,6 @@
 /* Maximum number of VSYNC wait attempts for RSC state transition */
 #define MAX_RSC_WAIT	5
 
-#define TOPOLOGY_DUALPIPE_MERGE_MODE(x) \
-		(((x) == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE) || \
-		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE) || \
-		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC) || \
-		((x) == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC))
-
 /**
  * enum sde_enc_rc_events - events for resource control state machine
  * @SDE_ENC_RC_EVENT_KICKOFF:
@@ -2220,6 +2214,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms;
 	struct drm_connector *conn;
 	int i = 0, ret;
+	int num_lm, num_intf, num_pp_per_intf;
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -2281,17 +2276,25 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	/* assign the reserved HW blocks to this encoder */
 	_sde_encoder_virt_populate_hw_res(drm_enc);
 
+	/* determine left HW PP block to map to INTF */
+	num_lm = sde_enc->mode_info.topology.num_lm;
+	num_intf = sde_enc->mode_info.topology.num_intf;
+	num_pp_per_intf = num_lm / num_intf;
+	if (!num_pp_per_intf)
+		num_pp_per_intf = 1;
+
 	/* perform mode_set on phys_encs */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
 		if (phys) {
-			if (!sde_enc->hw_pp[i] && sde_enc->topology.num_intf) {
-				SDE_ERROR_ENC(sde_enc,
-				    "invalid pingpong block for the encoder\n");
+			if (!sde_enc->hw_pp[i * num_pp_per_intf] &&
+				sde_enc->topology.num_intf) {
+				SDE_ERROR_ENC(sde_enc, "invalid hw_pp[%d]\n",
+						i * num_pp_per_intf);
 				return;
 			}
-			phys->hw_pp = sde_enc->hw_pp[i];
+			phys->hw_pp = sde_enc->hw_pp[i * num_pp_per_intf];
 			phys->connector = conn->state->connector;
 			if (phys->ops.mode_set)
 				phys->ops.mode_set(phys, mode, adj_mode);
@@ -2498,6 +2501,7 @@ static void _sde_encoder_virt_enable_helper(struct drm_encoder *drm_enc)
 
 static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 {
+	struct sde_kms *sde_kms;
 	void *dither_cfg = NULL;
 	int ret = 0, i = 0;
 	size_t len = 0;
@@ -2507,9 +2511,14 @@ static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 	struct sde_encoder_virt *sde_enc;
 	struct sde_hw_pingpong *hw_pp;
 	u32 bpp, bpc;
+	int num_lm;
 
 	if (!phys || !phys->connector || !phys->hw_pp ||
 			!phys->hw_pp->ops.setup_dither || !phys->parent)
+		return;
+
+	sde_kms = sde_encoder_get_kms(phys->parent);
+	if (!sde_kms)
 		return;
 
 	topology = sde_connector_get_topology_name(phys->connector);
@@ -2538,15 +2547,10 @@ static void _sde_encoder_setup_dither(struct sde_encoder_phys *phys)
 	if (ret && ret == -ENODATA)
 		return;
 
-	if (TOPOLOGY_DUALPIPE_MERGE_MODE(topology)) {
-		for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
-			hw_pp = sde_enc->hw_pp[i];
-			phys->hw_pp->ops.setup_dither(hw_pp,
-					dither_cfg, len);
-		}
-
-	} else {
-		phys->hw_pp->ops.setup_dither(phys->hw_pp,
+	num_lm = sde_rm_topology_get_num_lm(&sde_kms->rm, topology);
+	for (i = 0; i < num_lm; i++) {
+		hw_pp = sde_enc->hw_pp[i];
+		phys->hw_pp->ops.setup_dither(hw_pp,
 				dither_cfg, len);
 	}
 }
