@@ -1226,7 +1226,7 @@ exit:
 	return rc;
 }
 
-static void _dspp_pccv4_off(struct sde_hw_dspp *ctx, void *cfg)
+static void _dspp_pcc_common_off(struct sde_hw_dspp *ctx, void *cfg)
 {
 	struct sde_reg_dma_kickoff_cfg kick_off;
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
@@ -1274,7 +1274,7 @@ static void _dspp_pccv4_off(struct sde_hw_dspp *ctx, void *cfg)
 		DRM_ERROR("failed to kick off ret %d\n", rc);
 }
 
-void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
+void reg_dmav1_setup_dspp_pcc_common(struct sde_hw_dspp *ctx, void *cfg)
 {
 	struct sde_hw_reg_dma_ops *dma_ops;
 	struct sde_reg_dma_kickoff_cfg kick_off;
@@ -1293,7 +1293,7 @@ void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable pcc feature\n");
-		_dspp_pccv4_off(ctx, cfg);
+		_dspp_pcc_common_off(ctx, cfg);
 		return;
 	}
 
@@ -1374,7 +1374,11 @@ void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
 		goto exit;
 	}
 
+
 	reg = PCC_EN;
+	if (pcc_cfg->flags & PCC_BEFORE)
+		reg |= BIT(16);
+
 	REG_DMA_SETUP_OPS(dma_write_cfg,
 		ctx->cap->sblk->pcc.base,
 		&reg, sizeof(reg), REG_SINGLE_WRITE, 0, 0, 0);
@@ -1392,6 +1396,31 @@ void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
 
 exit:
 	kfree(data);
+
+}
+
+void reg_dmav1_setup_dspp_pccv4(struct sde_hw_dspp *ctx, void *cfg)
+{
+	struct drm_msm_pcc *pcc_cfg;
+	struct sde_hw_cp_cfg *hw_cfg = cfg;
+
+	if (hw_cfg->payload) {
+		if (hw_cfg->len != sizeof(struct drm_msm_pcc)) {
+			DRM_ERROR("invalid size of payload len %d exp %zd\n",
+					hw_cfg->len,
+					sizeof(struct drm_msm_pcc));
+			return;
+		}
+		//Flags unsupported for PCCv4
+		pcc_cfg = hw_cfg->payload;
+		pcc_cfg->flags = 0;
+	}
+	reg_dmav1_setup_dspp_pcc_common(ctx, cfg);
+}
+
+void reg_dmav1_setup_dspp_pccv5(struct sde_hw_dspp *ctx, void *cfg)
+{
+	reg_dmav1_setup_dspp_pcc_common(ctx, cfg);
 }
 
 void reg_dmav1_setup_dspp_pa_hsicv17(struct sde_hw_dspp *ctx, void *cfg)
