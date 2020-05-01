@@ -8,7 +8,7 @@
 #include <linux/list.h>
 #include <linux/msm_ion.h>
 #include <dsp/apr_audio-v2.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 #include <ipc/apr.h>
 
 #define MAX_NUM_CONFIDENCE 20

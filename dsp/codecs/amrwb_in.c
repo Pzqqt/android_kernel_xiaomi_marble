@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2011-2012, 2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2016-2017, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/dma-mapping.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/miscdevice.h>
-#include <linux/msm_audio_amrwb.h>
+#include <audio/linux/msm_audio_amrwb.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/uaccess.h>

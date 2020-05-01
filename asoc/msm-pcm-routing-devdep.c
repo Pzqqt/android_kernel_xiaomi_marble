@@ -7,7 +7,7 @@
 #include <linux/err.h>
 #include <linux/module.h>
 #include <sound/hwdep.h>
-#include <sound/devdep_params.h>
+#include <audio/sound/devdep_params.h>
 #include "msm-pcm-routing-devdep.h"
 #include "msm-ds2-dap-config.h"
 

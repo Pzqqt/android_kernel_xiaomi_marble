@@ -20,7 +20,7 @@
 #include <linux/regmap.h>
 #include <linux/spi/spi.h>
 #include <linux/regulator/consumer.h>
-#include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <soc/swr-wcd.h>
 #include <soc/snd_event.h>
 #include <sound/pcm.h>

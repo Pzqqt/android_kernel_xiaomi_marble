@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2009-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2018, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/fs.h>
@@ -11,7 +11,7 @@
 #include <linux/sched.h>
 #include <linux/uaccess.h>
 #include <linux/wait.h>
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 #include <linux/debugfs.h>
 #include <linux/list.h>
 #include <linux/slab.h>

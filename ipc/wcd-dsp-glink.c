@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -16,7 +16,7 @@
 #include <linux/of_device.h>
 #include <linux/vmalloc.h>
 #include <linux/rpmsg.h>
-#include "sound/wcd-dsp-glink.h"
+#include "audio/sound/wcd-dsp-glink.h"
 
 #define WDSP_GLINK_DRIVER_NAME "wcd-dsp-glink"
 #define WDSP_MAX_WRITE_SIZE (256 * 1024)

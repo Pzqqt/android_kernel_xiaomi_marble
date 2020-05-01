@@ -15,7 +15,7 @@
 #include <linux/sched.h>
 #include <linux/freezer.h>
 #include <sound/soc.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 #include <sound/pcm_params.h>
 #include "msm-slim-dma.h"
 #include "codecs/cpe_core.h"

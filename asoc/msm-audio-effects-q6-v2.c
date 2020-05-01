@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
 #include <linux/ratelimit.h>
 #include <sound/compress_params.h>
-#include <sound/devdep_params.h>
+#include <audio/sound/devdep_params.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6asm-v2.h>
 #include <dsp/msm-audio-effects-q6-v2.h>

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6afe-v2.h>
-#include <linux/msm_audio_calibration.h>
+#include <audio/linux/msm_audio_calibration.h>
 #include <dsp/sp_params.h>
 #include <linux/kernel.h>
 #include <linux/module.h>

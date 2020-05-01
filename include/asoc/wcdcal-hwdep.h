@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2014, 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2018, 2020 The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD9XXX_HWDEP_H__
 #define __WCD9XXX_HWDEP_H__
-#include <sound/msmcal-hwdep.h>
+#include <audio/sound/msmcal-hwdep.h>
 
 enum wcd_cal_states {
 	WCDCAL_UNINITIALISED,

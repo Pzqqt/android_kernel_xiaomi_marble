@@ -19,7 +19,7 @@
 #include <sound/timer.h>
 #include <sound/initval.h>
 #include <sound/control.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 #include <sound/pcm_params.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6lsm.h>

@@ -27,6 +27,7 @@ USERINCLUDE     += \
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
 LINUXINCLUDE    += \
+                -I$(srctree)/techpack/audio/include/uapi \
                 -I$(srctree)/techpack/audio/include/uapi/audio \
                 -I$(srctree)/techpack/audio/include
 

@@ -20,7 +20,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/kernel.h>
 #include <linux/gpio.h>
-#include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <soc/swr-wcd.h>
 #include <soc/snd_event.h>
 #include <sound/pcm.h>
