@@ -4513,10 +4513,10 @@ static int __hif_pm_runtime_prevent_suspend(struct hif_pci_softc
 
 	qdf_atomic_inc(&hif_sc->pm_stats.prevent_suspend);
 
-	HIF_ERROR("%s: in pm_state:%s ret: %d", __func__,
-		hif_pm_runtime_state_to_string(
-			qdf_atomic_read(&hif_sc->pm_state)),
-					ret);
+	hif_debug("%s: in pm_state:%s ret: %d", __func__,
+		  hif_pm_runtime_state_to_string(
+			  qdf_atomic_read(&hif_sc->pm_state)),
+		  ret);
 
 	return ret;
 }
@@ -4561,10 +4561,10 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
 	hif_pm_runtime_mark_last_busy(hif_ctx);
 	ret = hif_pm_runtime_put_auto(hif_sc->dev);
 
-	HIF_ERROR("%s: in pm_state:%s ret: %d", __func__,
-		hif_pm_runtime_state_to_string(
-			qdf_atomic_read(&hif_sc->pm_state)),
-					ret);
+	hif_debug("%s: in pm_state:%s ret: %d", __func__,
+		  hif_pm_runtime_state_to_string(
+			  qdf_atomic_read(&hif_sc->pm_state)),
+		  ret);
 
 	qdf_atomic_inc(&hif_sc->pm_stats.allow_suspend);
 	return ret;
