@@ -5765,6 +5765,12 @@ typedef struct {
 #define WMI_SSCAN_SEC80_END_BIN_GET(sec80_bins)          WMI_GET_BITS(sec80_bins, 16, 16)
 #define WMI_SSCAN_SEC80_END_BIN_SET(sec80_bins, value)   WMI_SET_BITS(sec80_bins, 16, 16, value)
 
+/* 5MHz bin values */
+#define WMI_SSCAN_MID_5MHZ_START_BIN_GET(mid_5mhz_bins)        WMI_GET_BITS(mid_5mhz_bins, 0, 16)
+#define WMI_SSCAN_MID_5MHZ_START_BIN_SET(mid_5mhz_bins, value) WMI_SET_BITS(mid_5mhz_bins, 0, 16, value)
+#define WMI_SSCAN_MID_5MHZ_END_BIN_GET(mid_5mhz_bins)          WMI_GET_BITS(mid_5mhz_bins, 16, 16)
+#define WMI_SSCAN_MID_5MHZ_END_BIN_SET(mid_5mhz_bins, value)   WMI_SET_BITS(mid_5mhz_bins, 16, 16, value)
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_fw_cmd_fixed_param */
     A_UINT32 pdev_id;
@@ -5790,22 +5796,30 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_sscan_fft_bin_index */
 
     /**
-      * Bit 15 -  0 : primary 80 start bin number
-      * Bit 31 - 16 : primary 80 end bin number
-      * Refer to WMI_SSCAN_PRI80_[START,END]_BIN_[GET,SET] macros.
-      * Only for True 160 and Restricted 160(80+80 or 165) MHz this
-      * will be filled.
-      */
+     * Bit 15 -  0 : primary 80 start bin number
+     * Bit 31 - 16 : primary 80 end bin number
+     * Refer to WMI_SSCAN_PRI80_[START,END]_BIN_[GET,SET] macros.
+     * Only for True 160 and Restricted 160(80+80 or 165) MHz this
+     * will be filled.
+     */
     A_UINT32 pri80_bins;
 
     /**
-      * Bit 15 -  0 : secondary 80 start bin number
-      * Bit 31 - 16 : secondary 80 end bin number
-      * Refer to WMI_SSCAN_SEC80_[START,END]_BIN_[GET,SET] macros.
-      * Only for True 160 and Restricted 160(80+80 or 165) MHz this
-      * will be filled.
-      */
+     * Bit 15 -  0 : secondary 80 start bin number
+     * Bit 31 - 16 : secondary 80 end bin number
+     * Refer to WMI_SSCAN_SEC80_[START,END]_BIN_[GET,SET] macros.
+     * Only for True 160 and Restricted 160(80+80 or 165) MHz this
+     * will be filled.
+     */
     A_UINT32 sec80_bins;
+
+    /**
+     * Bit 15 -  0 : 5Mhz start bin number
+     * Bit 31 - 16 : 5Mhz end bin number
+     * Refer to WMI_SSCAN_MID_5MHZ_[START,END]_BIN_[GET,SET] macros.
+     * Only for Restricted 160(80+80 or 165), otherwise 0.
+     */
+    A_UINT32 mid_5mhz_bins;
 } wmi_pdev_sscan_fft_bin_index;
 
 #define WMI_BEACON_CTRL_TX_DISABLE  0
