@@ -1792,7 +1792,7 @@ static inline void dp_srng_dst_inv_cached_descs(struct dp_soc *dp_soc,
 {
 	hal_soc_handle_t hal_soc = dp_soc->hal_soc;
 
-	hal_srng_dst_inv_cached_descs(soc->hal_soc, hal_ring_hdl, num_entries);
+	hal_srng_dst_inv_cached_descs(hal_soc, hal_ring_hdl, num_entries);
 }
 #else
 static inline void *dp_srng_dst_get_next(struct dp_soc *dp_soc,
