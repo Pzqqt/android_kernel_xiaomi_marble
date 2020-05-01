@@ -4224,8 +4224,9 @@ int hif_pm_runtime_get_sync(struct hif_opaque_softc *hif_ctx,
 int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 				    wlan_rtpm_dbgid rtpm_dbgid)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-	int usage_count, pm_state;
+	int usage_count;
 	char *err = NULL;
 
 	if (!sc)
@@ -4235,13 +4236,10 @@ int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 		return 0;
 
 	usage_count = atomic_read(&sc->dev->power.usage_count);
-	if (usage_count == 1) {
-		pm_state = qdf_atomic_read(&sc->pm_state);
-		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
-			err = "Ignore unexpected Put as runtime PM is disabled";
-	} else if (usage_count == 0) {
-		err = "Put without a Get Operation";
-	}
+	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
+		err = "Uexpected PUT when runtime PM is disabled";
+	else if (usage_count == 0)
+		err = "PUT without a GET Operation";
 
 	if (err) {
 		hif_pci_runtime_pm_warn(sc, err);
@@ -4393,7 +4391,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-	int pm_state, usage_count;
+	int usage_count;
 	char *error = NULL;
 
 	if (!scn) {
@@ -4406,16 +4404,10 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 		return 0;
 
 	usage_count = atomic_read(&sc->dev->power.usage_count);
-
-	if (usage_count == 1) {
-		pm_state = qdf_atomic_read(&sc->pm_state);
-
-		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
-			error = "Ignoring unexpected put when runtime pm is disabled";
-
-	} else if (usage_count == 0) {
-		error = "PUT Without a Get Operation";
-	}
+	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
+		error = "Unexpected PUT when runtime PM is disabled";
+	else if (usage_count == 0)
+		error = "PUT without a GET operation";
 
 	if (error) {
 		hif_pci_runtime_pm_warn(sc, error);
@@ -4442,8 +4434,9 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
 			      wlan_rtpm_dbgid rtpm_dbgid)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-	int usage_count, pm_state;
+	int usage_count;
 	char *err = NULL;
 
 	if (!sc)
@@ -4453,13 +4446,10 @@ int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
 		return 0;
 
 	usage_count = atomic_read(&sc->dev->power.usage_count);
-	if (usage_count == 1) {
-		pm_state = qdf_atomic_read(&sc->pm_state);
-		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
-			err = "Ignore unexpected Put as runtime PM is disabled";
-	} else if (usage_count == 0) {
-		err = "Put without a Get Operation";
-	}
+	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
+		err = "Unexpected PUT when runtime PM is disabled";
+	else if (usage_count == 0)
+		err = "PUT without a GET operation";
 
 	if (err) {
 		hif_pci_runtime_pm_warn(sc, err);
@@ -4533,6 +4523,7 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
 		struct hif_pm_runtime_lock *lock)
 {
 	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(hif_sc);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	int ret = 0;
 	int usage_count;
 
@@ -4545,17 +4536,13 @@ static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
 	usage_count = atomic_read(&hif_sc->dev->power.usage_count);
 
 	/*
-	 * During Driver unload, platform driver increments the usage
-	 * count to prevent any runtime suspend getting called.
-	 * So during driver load in HIF_PM_RUNTIME_STATE_NONE state the
-	 * usage_count should be one. Ideally this shouldn't happen as
-	 * context->active should be active for allow suspend to happen
-	 * Handling this case here to prevent any failures.
+	 * For runtime PM enabled case, the usage count should never be 0
+	 * at this point. For runtime PM disabled case, it should never be
+	 * 2 at this point. Catch unexpected PUT without GET here.
 	 */
-	if ((qdf_atomic_read(&hif_sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE
-				&& usage_count == 1) || usage_count == 0) {
-		hif_pci_runtime_pm_warn(hif_sc,
-				"Allow without a prevent suspend");
+	if ((usage_count == 2 && !scn->hif_config.enable_runtime_pm) ||
+	    usage_count == 0) {
+		hif_pci_runtime_pm_warn(hif_sc, "PUT without a GET Operation");
 		return -EINVAL;
 	}
 
