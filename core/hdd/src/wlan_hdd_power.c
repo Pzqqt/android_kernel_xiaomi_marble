@@ -2268,9 +2268,13 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		break;
 
 	case NL80211_TX_POWER_FIXED:    /* Fix TX power to the mBm parameter */
-		hdd_err("NL80211_TX_POWER_FIXED not supported");
-		return -EOPNOTSUPP;
-
+		status = sme_set_tx_power(mac_handle, adapter->vdev_id,
+					  bssid, adapter->device_mode, dbm);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Setting tx power failed, %d", status);
+			return -EIO;
+		}
+		break;
 	default:
 		hdd_err("Invalid power setting type %d", type);
 		return -EIO;
