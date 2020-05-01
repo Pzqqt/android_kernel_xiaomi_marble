@@ -301,20 +301,97 @@ static inline bool _dce_check_half_panel_update(int num_lm,
 	return (hweight_long(affected_displays) != num_lm);
 }
 
+static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
+		struct msm_display_dsc_info *dsc,
+		unsigned long affected_displays, int index,
+		const struct sde_rect *roi, int dsc_common_mode,
+		bool merge_3d, bool disable_merge_3d, bool mode_3d,
+		bool half_panel_partial_update, int ich_res)
+{
+	struct sde_hw_ctl *hw_ctl;
+	struct sde_hw_dsc *hw_dsc;
+	struct sde_hw_pingpong *hw_pp;
+	struct sde_hw_pingpong *hw_dsc_pp;
+	struct sde_hw_intf_cfg_v1 cfg;
+	bool active = !!((1 << index) & affected_displays);
+
+	hw_ctl = sde_enc->cur_master->hw_ctl;
+
+	/*
+	 * in 3d_merge and half_panel partial update dsc should be
+	 * bound to the pp which is driving the update, else in
+	 * 3d_merge dsc should be bound to left side of the pipe
+	 */
+	if (merge_3d && half_panel_partial_update)
+		hw_pp = (active) ? sde_enc->hw_pp[0] : sde_enc->hw_pp[1];
+	else
+		hw_pp = sde_enc->hw_pp[index];
+
+	hw_dsc = sde_enc->hw_dsc[index];
+	hw_dsc_pp = sde_enc->hw_dsc_pp[index];
+
+	if (!hw_pp || !hw_dsc) {
+		SDE_ERROR_DCE(sde_enc, "DSC: invalid params %d %d\n", !!hw_pp,
+				!!hw_dsc);
+		SDE_EVT32(DRMID(&sde_enc->base), !hw_pp, !hw_dsc,
+				SDE_EVTLOG_ERROR);
+		return -EINVAL;
+	}
+
+	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h, dsc_common_mode,
+			index, active, merge_3d, disable_merge_3d);
+
+	_dce_dsc_pipe_cfg(hw_dsc, hw_pp, dsc, dsc_common_mode, ich_res,
+			hw_dsc_pp, mode_3d, disable_merge_3d, active);
+
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.dsc[cfg.dsc_count++] = hw_dsc->idx;
+
+	if (hw_ctl->ops.update_intf_cfg)
+		hw_ctl->ops.update_intf_cfg(hw_ctl, &cfg, active);
+
+	if (hw_ctl->ops.update_bitmask)
+		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_DSC,
+				hw_dsc->idx, active);
+
+	SDE_DEBUG_DCE(sde_enc, "update_intf_cfg hw_ctl[%d], dsc:%d, %s",
+			hw_ctl->idx, cfg.dsc[0],
+			active ? "enabled" : "disabled");
+
+	if (mode_3d) {
+		memset(&cfg, 0, sizeof(cfg));
+
+		cfg.merge_3d[cfg.merge_3d_count++] = hw_pp->merge_3d->idx;
+
+		if (hw_ctl->ops.update_intf_cfg)
+			hw_ctl->ops.update_intf_cfg(hw_ctl, &cfg,
+					!disable_merge_3d);
+
+		if (hw_ctl->ops.update_bitmask)
+			hw_ctl->ops.update_bitmask(
+					hw_ctl, SDE_HW_FLUSH_MERGE_3D,
+					hw_pp->merge_3d->idx, true);
+
+		SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
+				!disable_merge_3d ? "enabled" : "disabled",
+				hw_ctl->idx - CTL_0, hw_pp->idx - PINGPONG_0,
+				hw_pp->merge_3d ?
+				hw_pp->merge_3d->idx - MERGE_3D_0 :
+				-1);
+	}
+
+	return 0;
+}
+
 static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 		unsigned long affected_displays,
 		enum sde_rm_topology_name topology)
 {
 	struct sde_kms *sde_kms;
 	struct sde_encoder_phys *enc_master;
-	struct sde_hw_dsc *hw_dsc[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_pp[MAX_CHANNELS_PER_ENC];
-	struct sde_hw_pingpong *hw_dsc_pp[MAX_CHANNELS_PER_ENC];
 	struct msm_display_dsc_info *dsc = NULL;
 	const struct sde_rm_topology_def *def;
 	const struct sde_rect *roi;
-	struct sde_hw_ctl *hw_ctl;
-	struct sde_hw_intf_cfg_v1 cfg;
 	enum sde_3d_blend_mode mode_3d;
 	bool half_panel_partial_update, dsc_merge, merge_3d;
 	bool disable_merge_3d = false;
@@ -324,6 +401,7 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	int ich_res;
 	int dsc_common_mode = 0;
 	int i;
+	int rc = 0;
 
 	sde_kms = sde_encoder_get_kms(&sde_enc->base);
 
@@ -333,21 +411,20 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 
 	enc_master = sde_enc->cur_master;
 	roi = &sde_enc->cur_conn_roi;
-	hw_ctl = enc_master->hw_ctl;
 	dsc = &sde_enc->mode_info.comp_info.dsc_info;
 	num_dsc = def->num_comp_enc;
 	num_intf = def->num_intf;
 	mode_3d = (topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC) ?
-		BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
+			BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
 	num_lm = def->num_lm;
 
 	half_panel_partial_update = _dce_check_half_panel_update(num_lm,
-		affected_displays);
+			affected_displays);
 	merge_3d = (mode_3d != BLEND_3D_NONE) ? true : false;
 	dsc_merge = ((num_dsc > num_intf) && !half_panel_partial_update) ?
-		true : false;
+			true : false;
 	disable_merge_3d = (merge_3d && half_panel_partial_update) ?
-		false : true;
+			false : true;
 
 	/*
 	 * If this encoder is driving more than one DSC encoder, they
@@ -391,85 +468,15 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 				roi->w, roi->h, dsc_common_mode);
 
 	for (i = 0; i < num_dsc; i++) {
-		bool active = !!((1 << i) & affected_displays);
-
-		/*
-		 * in 3d_merge and half_panel partial update dsc should be
-		 * bound to the pp which is driving the update, else in
-		 * 3d_merge dsc should be bound to left side of the pipe
-		 */
-		if (merge_3d && half_panel_partial_update)
-			hw_pp[i] = (active) ? sde_enc->hw_pp[0]:
-				sde_enc->hw_pp[1];
-		else
-			hw_pp[i] = sde_enc->hw_pp[i];
-
-		hw_dsc[i] = sde_enc->hw_dsc[i];
-		hw_dsc_pp[i] = sde_enc->hw_dsc_pp[i];
-
-		if (!hw_pp[i] || !hw_dsc[i]) {
-			SDE_ERROR_DCE(sde_enc, "DSC: invalid params %d %d\n",
-					!!hw_pp[i], !!hw_dsc[i]);
-			SDE_EVT32(DRMID(&sde_enc->base), !hw_pp[i], !hw_dsc[i],
-					SDE_EVTLOG_ERROR);
-			return -EINVAL;
-		}
-
-		SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
-				dsc_common_mode, i, active, merge_3d,
-				disable_merge_3d);
-
-		_dce_dsc_pipe_cfg(hw_dsc[i], hw_pp[i], dsc,
-				dsc_common_mode, ich_res, hw_dsc_pp[i],
-				mode_3d, disable_merge_3d, active);
-
-		memset(&cfg, 0, sizeof(cfg));
-		cfg.dsc[cfg.dsc_count++] = hw_dsc[i]->idx;
-
-		if (hw_ctl->ops.update_intf_cfg)
-			hw_ctl->ops.update_intf_cfg(hw_ctl,
-					&cfg,
-					active);
-
-		if (hw_ctl->ops.update_bitmask)
-			hw_ctl->ops.update_bitmask(hw_ctl,
-					SDE_HW_FLUSH_DSC,
-					hw_dsc[i]->idx, active);
-
-		SDE_DEBUG_DCE(sde_enc,
-				"update_intf_cfg hw_ctl[%d], dsc:%d, %s",
-				hw_ctl->idx,
-				cfg.dsc[0],
-				active ? "enabled" : "disabled");
-
-		if (mode_3d) {
-			memset(&cfg, 0, sizeof(cfg));
-
-			cfg.merge_3d[cfg.merge_3d_count++] =
-				hw_pp[i]->merge_3d->idx;
-
-			if (hw_ctl->ops.update_intf_cfg)
-				hw_ctl->ops.update_intf_cfg(hw_ctl,
-						&cfg,
-						!disable_merge_3d);
-
-			if (hw_ctl->ops.update_bitmask)
-				hw_ctl->ops.update_bitmask(
-						hw_ctl, SDE_HW_FLUSH_MERGE_3D,
-						hw_pp[i]->merge_3d->idx, true);
-
-			SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
-					!disable_merge_3d ?
-					"enabled" : "disabled",
-					hw_ctl->idx - CTL_0,
-					hw_pp[i]->idx - PINGPONG_0,
-					hw_pp[i]->merge_3d ?
-					hw_pp[i]->merge_3d->idx - MERGE_3D_0 :
-					-1);
-		}
+		rc = _dce_dsc_setup_single(sde_enc, dsc, affected_displays, i,
+				roi, dsc_common_mode, merge_3d,
+				disable_merge_3d, mode_3d,
+				half_panel_partial_update, ich_res);
+		if (rc)
+			break;
 	}
 
-	return 0;
+	return rc;
 }
 
 static int _dce_dsc_setup(struct sde_encoder_virt *sde_enc,
