@@ -591,6 +591,10 @@ static int32_t hdd_add_he_oper_info(
 {
 	int32_t ret = 0;
 
+	if (!hdd_sta_ctx->cache_conn_info.he_oper_len ||
+	    !hdd_sta_ctx->cache_conn_info.he_operation)
+		return ret;
+
 	if (nla_put(skb, HE_OPERATION,
 		    hdd_sta_ctx->cache_conn_info.he_oper_len,
 		     hdd_sta_ctx->cache_conn_info.he_operation))
