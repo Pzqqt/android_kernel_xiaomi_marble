@@ -67,12 +67,10 @@ static inline void hdd_data_stall_send_event(uint32_t reason)
  *
  * Return: void
  */
-static QDF_STATUS hdd_data_stall_process_event(
+static void hdd_data_stall_process_event(
 			struct data_stall_event_info *data_stall_info)
 {
 	hdd_data_stall_send_event(data_stall_info->data_stall_type);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
