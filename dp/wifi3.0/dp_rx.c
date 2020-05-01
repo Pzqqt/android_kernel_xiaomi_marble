@@ -2901,7 +2901,7 @@ dp_rx_pdev_desc_pool_alloc(struct dp_pdev *pdev)
 {
 	struct dp_soc *soc = pdev->soc;
 	uint32_t rxdma_entries;
-	uint32_t rx_sw_desc_weight;
+	uint32_t rx_sw_desc_num;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	uint32_t status = QDF_STATUS_SUCCESS;
@@ -2918,10 +2918,10 @@ dp_rx_pdev_desc_pool_alloc(struct dp_pdev *pdev)
 	rxdma_entries = dp_rxdma_srng->num_entries;
 
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
-	rx_sw_desc_weight = wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx);
+	rx_sw_desc_num = wlan_cfg_get_dp_soc_rx_sw_desc_num(soc->wlan_cfg_ctx);
 
 	status = dp_rx_desc_pool_alloc(soc,
-				       rx_sw_desc_weight * rxdma_entries,
+				       rx_sw_desc_num,
 				       rx_desc_pool);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
@@ -2958,7 +2958,7 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 	int mac_for_pdev = pdev->lmac_id;
 	struct dp_soc *soc = pdev->soc;
 	uint32_t rxdma_entries;
-	uint32_t rx_sw_desc_weight;
+	uint32_t rx_sw_desc_num;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 
@@ -2977,16 +2977,15 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 
 	soc->process_rx_status = CONFIG_PROCESS_RX_STATUS;
 
-	rx_sw_desc_weight =
-	wlan_cfg_get_dp_soc_rx_sw_desc_weight(soc->wlan_cfg_ctx);
+	rx_sw_desc_num =
+	wlan_cfg_get_dp_soc_rx_sw_desc_num(soc->wlan_cfg_ctx);
 
 	rx_desc_pool->owner = DP_WBM2SW_RBM;
 	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
 
 	dp_rx_desc_pool_init(soc, mac_for_pdev,
-			     rx_sw_desc_weight * rxdma_entries,
-			     rx_desc_pool);
+			     rx_sw_desc_num, rx_desc_pool);
 	return QDF_STATUS_SUCCESS;
 }
 
