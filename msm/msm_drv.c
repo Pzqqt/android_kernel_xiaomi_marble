@@ -1951,10 +1951,17 @@ static int msm_drm_component_dependency_check(struct device *dev)
 			break;
 
 		if (of_node_name_eq(node,"qcom,sde_rscc") &&
-		    of_device_is_available(node) &&
-		    !of_node_check_flag(node, OF_POPULATED)) {
-			dev_err(dev, "qcom,sde_rscc device not probed yet\n");
-			return -EPROBE_DEFER;
+				of_device_is_available(node) &&
+				of_node_check_flag(node, OF_POPULATED)) {
+			struct platform_device *pdev =
+					of_find_device_by_node(node);
+			if (!platform_get_drvdata(pdev)) {
+				dev_err(dev,
+					"qcom,sde_rscc not probed yet\n");
+				return -EPROBE_DEFER;
+			} else {
+				return 0;
+			}
 		}
 	}
 
