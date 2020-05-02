@@ -320,6 +320,13 @@ struct sde_hw_ctl_ops {
 	int (*wait_reset_status)(struct sde_hw_ctl *ctx);
 
 	/**
+	 * update_bitmask_ctl: updates mask corresponding to ctl
+	 * @enable           : true to enable, false to disable
+	 */
+	int (*update_bitmask_ctl)(struct sde_hw_ctl *ctx,
+		bool enable);
+
+	/**
 	 * update_bitmask_sspp: updates mask corresponding to sspp
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
@@ -328,7 +335,7 @@ struct sde_hw_ctl_ops {
 		enum sde_sspp blk, bool enable);
 
 	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
+	 * update_bitmask_mixer: updates mask corresponding to mixer
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
 	 */
@@ -336,7 +343,7 @@ struct sde_hw_ctl_ops {
 		enum sde_lm blk, bool enable);
 
 	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
+	 * update_bitmask_dspp: updates mask corresponding to dspp
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
 	 */
@@ -344,7 +351,7 @@ struct sde_hw_ctl_ops {
 		enum sde_dspp blk, bool enable);
 
 	/**
-	 * update_bitmask_sspp: updates mask corresponding to sspp
+	 * update_bitmask_dspp_pavlut: updates mask corresponding to dspp pav
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
 	 */

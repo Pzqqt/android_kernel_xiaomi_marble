@@ -3295,7 +3295,7 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	struct msm_drm_thread *event_thread;
 	struct sde_crtc_state *cstate;
 	struct sde_kms *sde_kms;
-	int idle_time = 0;
+	int idle_time = 0, i;
 
 	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
 		SDE_ERROR("invalid crtc\n");
@@ -3334,6 +3334,12 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	event_thread = &priv->event_thread[crtc->index];
 	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
+	if (sde_crtc_get_property(cstate, CRTC_PROP_CACHE_STATE))
+		sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_WRITE,
+				false);
+	else
+		sde_crtc_static_img_control(crtc, CACHE_STATE_NORMAL, false);
+
 	/*
 	 * If no mixers has been allocated in sde_crtc_atomic_check(),
 	 * it means we are trying to flush a CRTC whose state is disabled:
@@ -3354,13 +3360,18 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	 * so during the perf update driver can activate/deactivate
 	 * the cache accordingly.
 	 */
-	sde_crtc->new_perf.llcc_active = false;
+	for (i = 0; i < SDE_SYS_CACHE_MAX; i++)
+		sde_crtc->new_perf.llcc_active[i] = false;
+
 	drm_atomic_crtc_for_each_plane(plane, crtc) {
 		sde_plane_restore(plane);
 
-		if (sde_plane_is_cache_required(plane))
-			sde_crtc->new_perf.llcc_active = true;
+		for (i = 0; i < SDE_SYS_CACHE_MAX; i++) {
+			if (sde_plane_is_cache_required(plane, i))
+				sde_crtc->new_perf.llcc_active[i] = true;
+		}
 	}
+	sde_core_perf_crtc_update_llcc(crtc);
 
 	/* wait for acquire fences before anything else is done */
 	_sde_crtc_wait_for_fences(crtc);
@@ -3969,6 +3980,22 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 	mutex_unlock(&sde_crtc->crtc_lock);
 }
 
+static void _sde_crtc_reset(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+
+	memset(sde_crtc->mixers, 0, sizeof(sde_crtc->mixers));
+	sde_crtc->num_mixers = 0;
+	sde_crtc->mixers_swapped = false;
+
+	/* disable clk & bw control until clk & bw properties are set */
+	cstate->bw_control = false;
+	cstate->bw_split_vote = false;
+
+	sde_crtc_static_img_control(crtc, CACHE_STATE_DISABLED, false);
+}
+
 static void sde_crtc_disable(struct drm_crtc *crtc)
 {
 	struct sde_kms *sde_kms;
@@ -4092,14 +4119,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 					ktime_get());
 	}
 
-	_sde_crtc_clear_all_blend_stages(sde_crtc);
-	memset(sde_crtc->mixers, 0, sizeof(sde_crtc->mixers));
-	sde_crtc->num_mixers = 0;
-	sde_crtc->mixers_swapped = false;
-
-	/* disable clk & bw control until clk & bw properties are set */
-	cstate->bw_control = false;
-	cstate->bw_split_vote = false;
+	_sde_crtc_reset(crtc);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 }
@@ -4168,6 +4188,9 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 			crtc->state->encoder_mask) {
 		sde_encoder_register_frame_event_callback(encoder,
 				sde_crtc_frame_event_cb, crtc);
+		sde_crtc_static_img_control(crtc, CACHE_STATE_NORMAL,
+				sde_encoder_check_curr_mode(encoder,
+				MSM_DISPLAY_VIDEO_MODE));
 	}
 
 	sde_crtc->enabled = true;
@@ -5124,6 +5147,11 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		{IDLE_PC_DISABLE, "idle_pc_disable"},
 	};
 
+	static const struct drm_prop_enum_list e_cache_state[] = {
+		{CACHE_STATE_DISABLED, "cache_state_disabled"},
+		{CACHE_STATE_ENABLED, "cache_state_enabled"},
+	};
+
 	SDE_DEBUG("\n");
 
 	if (!crtc || !catalog) {
@@ -5181,6 +5209,11 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			0x0, 0, e_secure_level,
 			ARRAY_SIZE(e_secure_level),
 			CRTC_PROP_SECURITY_LEVEL);
+
+	msm_property_install_enum(&sde_crtc->property_info, "cache_state",
+			0x0, 0, e_cache_state,
+			ARRAY_SIZE(e_cache_state),
+			CRTC_PROP_CACHE_STATE);
 
 	if (catalog->has_dim_layer) {
 		msm_property_install_volatile_range(&sde_crtc->property_info,
@@ -6143,6 +6176,121 @@ static int _sde_crtc_init_events(struct sde_crtc *sde_crtc)
 	return rc;
 }
 
+void sde_crtc_static_img_control(struct drm_crtc *crtc,
+		enum sde_crtc_cache_state state,
+		bool is_vidmode)
+{
+	struct drm_plane *plane;
+	struct sde_crtc *sde_crtc;
+
+	if (!crtc || !crtc->dev)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+
+	switch (state) {
+	case CACHE_STATE_NORMAL:
+		if (sde_crtc->cache_state == CACHE_STATE_DISABLED
+				&& !is_vidmode)
+			return;
+
+		kthread_cancel_delayed_work_sync(
+				&sde_crtc->static_cache_read_work);
+		break;
+	case CACHE_STATE_PRE_CACHE:
+		if (sde_crtc->cache_state != CACHE_STATE_NORMAL)
+			return;
+		break;
+	case CACHE_STATE_FRAME_WRITE:
+		if (sde_crtc->cache_state != CACHE_STATE_PRE_CACHE)
+			return;
+		break;
+	case CACHE_STATE_FRAME_READ:
+		if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE)
+			return;
+		break;
+	case CACHE_STATE_DISABLED:
+		break;
+	default:
+		return;
+	}
+
+	sde_crtc->cache_state = state;
+	drm_atomic_crtc_for_each_plane(plane, crtc)
+		sde_plane_static_img_control(plane, state);
+}
+
+/*
+ * __sde_crtc_static_cache_read_work - transition to cache read
+ */
+void __sde_crtc_static_cache_read_work(struct kthread_work *work)
+{
+	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
+			static_cache_read_work.work);
+	struct drm_crtc *crtc;
+	struct drm_plane *plane;
+	struct sde_crtc_mixer *mixer;
+	struct sde_hw_ctl *ctl;
+
+	if (!sde_crtc)
+		return;
+
+	crtc = &sde_crtc->base;
+	mixer = sde_crtc->mixers;
+	if (!mixer)
+		return;
+
+	ctl = mixer->hw_ctl;
+
+	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE ||
+			!ctl->ops.update_bitmask_ctl ||
+			!ctl->ops.trigger_flush)
+		return;
+
+	sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_READ, false);
+	drm_atomic_crtc_for_each_plane(plane, crtc) {
+		if (!plane->state)
+			continue;
+
+		sde_plane_ctl_flush(plane, ctl, true);
+	}
+	ctl->ops.update_bitmask_ctl(ctl, true);
+	ctl->ops.trigger_flush(ctl);
+}
+
+void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc)
+{
+	struct drm_device *dev;
+	struct msm_drm_private *priv;
+	struct msm_drm_thread *disp_thread;
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
+	u32 msecs_fps = 0;
+
+	if (!crtc)
+		return;
+
+	dev = crtc->dev;
+	sde_crtc = to_sde_crtc(crtc);
+	cstate = to_sde_crtc_state(crtc->state);
+
+	if (!dev || !dev->dev_private || !sde_crtc)
+		return;
+
+	priv = dev->dev_private;
+	disp_thread = &priv->disp_thread[crtc->index];
+
+	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE)
+		return;
+
+	msecs_fps = DIV_ROUND_UP((1 * 1000), sde_crtc_get_fps_mode(crtc));
+
+	/* Kickoff transition to read state after next vblank */
+	kthread_queue_delayed_work(&disp_thread->worker,
+			&sde_crtc->static_cache_read_work,
+			msecs_to_jiffies(msecs_fps));
+}
+
 /*
  * __sde_crtc_idle_notify_work - signal idle timeout to user space
  */
@@ -6164,6 +6312,8 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 				&event, (u8 *)&ret);
 
 		SDE_DEBUG("crtc[%d]: idle timeout notified\n", crtc->base.id);
+
+		sde_crtc_static_img_control(crtc, CACHE_STATE_PRE_CACHE, false);
 	}
 }
 
@@ -6252,11 +6402,15 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 	sde_cp_crtc_init(crtc);
 	sde_cp_crtc_install_properties(crtc);
 
-	sde_crtc->cur_perf.llcc_active = false;
-	sde_crtc->new_perf.llcc_active = false;
+	for (i = 0; i < SDE_SYS_CACHE_MAX; i++) {
+		sde_crtc->cur_perf.llcc_active[i] = false;
+		sde_crtc->new_perf.llcc_active[i] = false;
+	}
 
 	kthread_init_delayed_work(&sde_crtc->idle_notify_work,
 					__sde_crtc_idle_notify_work);
+	kthread_init_delayed_work(&sde_crtc->static_cache_read_work,
+			__sde_crtc_static_cache_read_work);
 
 	SDE_DEBUG("crtc=%d new_llcc=%d, old_llcc=%d\n",
 		crtc->base.id,

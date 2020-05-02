@@ -150,6 +150,18 @@ enum {
 #define SSPP_SYS_CACHE_NO_ALLOC	BIT(4)
 
 /**
+ * sde_sys_cache_type: Types of system cache supported
+ * SDE_SYS_CACHE_ROT: Rotator system cache
+ * SDE_SYS_CACHE_DISP: Static img system cache
+ */
+enum sde_sys_cache_type {
+	SDE_SYS_CACHE_ROT,
+	SDE_SYS_CACHE_DISP,
+	SDE_SYS_CACHE_MAX,
+	SDE_SYS_CACHE_NONE
+};
+
+/**
  * All INTRs relevant for a specific target should be enabled via
  * _add_to_irq_offset_list()
  */
@@ -1493,7 +1505,7 @@ struct sde_mdss_cfg {
 	bool has_demura;
 	u32 demura_supported[SSPP_MAX][2];
 
-	struct sde_sc_cfg sc_cfg;
+	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
 
 	bool sui_misr_supported;
 	u32 sui_block_xin_mask;

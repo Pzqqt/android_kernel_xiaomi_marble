@@ -1107,6 +1107,8 @@ static void sde_kms_wait_for_commit_done(struct msm_kms *kms,
 		sde_crtc_complete_flip(crtc, NULL);
 	}
 
+	sde_crtc_static_cache_read_kickoff(crtc);
+
 	SDE_ATRACE_END("sde_ksm_wait_for_commit_done");
 }
 

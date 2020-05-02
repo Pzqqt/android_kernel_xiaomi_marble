@@ -39,7 +39,7 @@ struct sde_core_perf_params {
 	u64 max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_MAX];
 	u64 bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MAX];
 	u64 core_clk_rate;
-	bool llcc_active;
+	bool llcc_active[SDE_SYS_CACHE_MAX];
 };
 
 /**
@@ -47,11 +47,13 @@ struct sde_core_perf_params {
  * @mode: performance mode
  * @min_core_clk: minimum core clock
  * @min_bus_vote: minimum bus vote
+ * @mode_changed: indicate if clock tuning strategy changed
  */
 struct sde_core_perf_tune {
 	u32 mode;
 	u64 min_core_clk;
 	u64 min_bus_vote;
+	bool mode_changed;
 };
 
 /**
@@ -92,9 +94,15 @@ struct sde_core_perf {
 	u32 bw_vote_mode;
 	bool sde_rsc_available;
 	bool bw_vote_mode_updated;
-	bool llcc_active;
+	bool llcc_active[SDE_SYS_CACHE_MAX];
 	bool uidle_enabled;
 };
+
+/**
+ * sde_core_perf_crtc_update_llcc - update llcc performance for crtc
+ * @crtc: Pointer to crtc
+ */
+void sde_core_perf_crtc_update_llcc(struct drm_crtc *crtc);
 
 /**
  * sde_core_perf_crtc_check - validate performance of the given crtc state

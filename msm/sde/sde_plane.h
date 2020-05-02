@@ -25,6 +25,7 @@
 #include "sde_kms.h"
 #include "sde_hw_mdss.h"
 #include "sde_hw_sspp.h"
+#include "sde_crtc.h"
 
 /* dirty bits for update function */
 #define SDE_PLANE_DIRTY_RECTS	0x1
@@ -81,6 +82,10 @@ enum sde_plane_sclcheck_state {
  * @scaler3_cfg: configuration data for scaler3
  * @pixel_ext: configuration data for pixel extensions
  * @scaler_check_state: indicates status of user provided pixel extension data
+ * @pre_down:		pre down scale configuration
+ * @sc_cfg:		system cache configuration
+ * @rotation:		rotation cache state
+ * @static_cache_state:	plane cache state for static image
  * @cdp_cfg:	CDP configuration
  */
 struct sde_plane_state {
@@ -108,6 +113,7 @@ struct sde_plane_state {
 	/* @sc_cfg: system_cache configuration */
 	struct sde_hw_pipe_sc_cfg sc_cfg;
 	uint32_t rotation;
+	uint32_t static_cache_state;
 
 	struct sde_hw_pipe_cdp_cfg cdp_cfg;
 };
@@ -305,8 +311,18 @@ void sde_plane_setup_src_split_order(struct drm_plane *plane,
 /* sde_plane_is_cache_required - indicates if the system cache is
  *	required for the plane.
  * @plane: Pointer to DRM plane object
+ * @type: sys cache type
  * Returns: true if sys cache is required, otherwise false.
  */
-bool sde_plane_is_cache_required(struct drm_plane *plane);
+bool sde_plane_is_cache_required(struct drm_plane *plane,
+		enum sde_sys_cache_type type);
+
+/**
+ * sde_plane_static_img_control - Switch the static image state
+ * @plane: Pointer to drm plane structure
+ * @state: state to set
+ */
+void sde_plane_static_img_control(struct drm_plane *plane,
+		enum sde_crtc_cache_state state);
 
 #endif /* _SDE_PLANE_H_ */

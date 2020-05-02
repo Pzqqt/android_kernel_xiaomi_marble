@@ -469,6 +469,11 @@ enum {
 };
 
 enum {
+	CACHE_CONTROLLER,
+	CACHE_CONTROLLER_PROP_MAX,
+};
+
+enum {
 	REG_DMA_OFF,
 	REG_DMA_ID,
 	REG_DMA_VERSION,
@@ -846,6 +851,10 @@ static struct sde_prop_type vbif_prop[] = {
 static struct sde_prop_type uidle_prop[] = {
 	{UIDLE_OFF, "qcom,sde-uidle-off", false, PROP_TYPE_U32},
 	{UIDLE_LEN, "qcom,sde-uidle-size", false, PROP_TYPE_U32},
+};
+
+static struct sde_prop_type cache_prop[] = {
+	{CACHE_CONTROLLER, "qcom,llcc-v2", false, PROP_TYPE_NODE},
 };
 
 static struct sde_prop_type reg_dma_prop[REG_DMA_PROP_MAX] = {
@@ -1392,6 +1401,7 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 	int i;
 	struct sde_dt_props *props;
 	struct device_node *snp = NULL;
+	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
 	int vig_count = 0;
 	const char *type;
 
@@ -1474,15 +1484,19 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 					MAX_DOWNSCALE_RATIO_INROT_NRT_DEFAULT;
 		}
 
-		if (sde_cfg->sc_cfg.has_sys_cache) {
+		if (sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache) {
 			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
-			sblk->llcc_scid = sde_cfg->sc_cfg.llcc_scid;
+			sblk->llcc_scid =
+				sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid;
 			sblk->llcc_slice_size =
-				sde_cfg->sc_cfg.llcc_slice_size;
+				sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size;
 		}
 
 		if (sde_cfg->inline_disable_const_clr)
 			set_bit(SDE_SSPP_INLINE_CONST_CLR, &sspp->features);
+
+		if (sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
+			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
 	}
 
 	sde_put_dt_props(props);
@@ -2355,62 +2369,6 @@ end:
 	return rc;
 }
 
-static int sde_rot_parse_dt(struct device_node *np,
-	struct sde_mdss_cfg *sde_cfg)
-{
-	struct platform_device *pdev;
-	struct of_phandle_args phargs;
-	struct llcc_slice_desc *slice;
-	int rc = 0;
-
-	rc = of_parse_phandle_with_args(np,
-		"qcom,sde-inline-rotator", "#list-cells",
-		0, &phargs);
-
-	if (rc) {
-		/*
-		 * This is not a fatal error, system cache can be disabled
-		 * in device tree
-		 */
-		SDE_DEBUG("sys cache will be disabled rc:%d\n", rc);
-		rc = 0;
-		goto exit;
-	}
-
-	if (!phargs.np || !phargs.args_count) {
-		SDE_ERROR("wrong phandle args %d %d\n",
-			!phargs.np, !phargs.args_count);
-		rc = -EINVAL;
-		goto exit;
-	}
-
-	pdev = of_find_device_by_node(phargs.np);
-	if (!pdev) {
-		SDE_ERROR("invalid sde rotator node\n");
-		goto exit;
-	}
-
-	slice = llcc_slice_getd(LLCC_ROTATOR);
-	if (IS_ERR_OR_NULL(slice))  {
-		SDE_ERROR("failed to get rotator slice!\n");
-		rc = -EINVAL;
-		goto cleanup;
-	}
-
-	sde_cfg->sc_cfg.llcc_scid = llcc_get_slice_id(slice);
-	sde_cfg->sc_cfg.llcc_slice_size = llcc_get_slice_size(slice);
-	llcc_slice_putd(slice);
-
-	sde_cfg->sc_cfg.has_sys_cache = true;
-
-	SDE_DEBUG("rotator llcc scid:%d slice_size:%zukb\n",
-		sde_cfg->sc_cfg.llcc_scid, sde_cfg->sc_cfg.llcc_slice_size);
-cleanup:
-	of_node_put(phargs.np);
-exit:
-	return rc;
-}
-
 static int sde_dspp_top_parse_dt(struct device_node *np,
 		struct sde_mdss_cfg *sde_cfg)
 {
@@ -3228,6 +3186,100 @@ end:
 	kfree(prop_value);
 	/* optional feature, so always return success */
 	return 0;
+}
+
+static int sde_cache_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	struct llcc_slice_desc *slice;
+	struct platform_device *pdev;
+	struct of_phandle_args phargs;
+	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
+	struct sde_dt_props *props;
+	int rc = 0;
+	u32 off_count;
+
+	if (!sde_cfg) {
+		SDE_ERROR("invalid argument\n");
+		return -EINVAL;
+	}
+
+	props = sde_get_dt_props(np, CACHE_CONTROLLER_PROP_MAX, cache_prop,
+			ARRAY_SIZE(cache_prop), &off_count);
+	if (IS_ERR_OR_NULL(props))
+		return PTR_ERR(props);
+
+	if (!props->exists[CACHE_CONTROLLER]) {
+		SDE_DEBUG("cache controller missing, will disable img cache:%d",
+				props->exists[CACHE_CONTROLLER]);
+		rc = 0;
+		goto end;
+	}
+
+	slice = llcc_slice_getd(LLCC_DISP);
+	if (IS_ERR_OR_NULL(slice)) {
+		SDE_ERROR("failed to get system cache %ld\n",
+				PTR_ERR(slice));
+	} else {
+		sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache = true;
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid = llcc_get_slice_id(slice);
+		sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size =
+				llcc_get_slice_size(slice);
+		SDE_DEBUG("img cache scid:%d slice_size:%zu kb\n",
+				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid,
+				sc_cfg[SDE_SYS_CACHE_DISP].llcc_slice_size);
+		llcc_slice_putd(slice);
+	}
+
+	/* Read inline rot node */
+	rc = of_parse_phandle_with_args(np,
+		"qcom,sde-inline-rotator", "#list-cells", 0, &phargs);
+	if (rc) {
+		/*
+		 * This is not a fatal error, system cache can be disabled
+		 * in device tree
+		 */
+		SDE_DEBUG("sys cache will be disabled rc:%d\n", rc);
+		rc = 0;
+		goto end;
+	}
+
+	if (!phargs.np || !phargs.args_count) {
+		SDE_ERROR("wrong phandle args %d %d\n",
+			!phargs.np, !phargs.args_count);
+		rc = -EINVAL;
+		goto end;
+	}
+
+	pdev = of_find_device_by_node(phargs.np);
+	if (!pdev) {
+		SDE_ERROR("invalid sde rotator node\n");
+		goto end;
+	}
+
+	slice = llcc_slice_getd(LLCC_ROTATOR);
+	if (IS_ERR_OR_NULL(slice))  {
+		SDE_ERROR("failed to get rotator slice!\n");
+		rc = -EINVAL;
+		goto cleanup;
+	}
+
+	sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid = llcc_get_slice_id(slice);
+	sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size =
+			llcc_get_slice_size(slice);
+	llcc_slice_putd(slice);
+
+	sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache = true;
+
+	SDE_DEBUG("rotator llcc scid:%d slice_size:%zukb\n",
+			sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid,
+			sc_cfg[SDE_SYS_CACHE_ROT].llcc_slice_size);
+
+cleanup:
+	of_node_put(phargs.np);
+end:
+	sde_put_dt_props(props);
+	return rc;
 }
 
 static int _sde_vbif_populate_ot_parsing(struct sde_vbif_cfg *vbif,
@@ -4952,15 +5004,15 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 	if (rc)
 		goto end;
 
-	rc = sde_rot_parse_dt(np, sde_cfg);
-	if (rc)
-		goto end;
-
 	/* uidle must be done before sspp and ctl,
 	 * so if something goes wrong, we won't
 	 * enable it in ctl and sspp.
 	 */
 	rc = sde_uidle_parse_dt(np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = sde_cache_parse_dt(np, sde_cfg);
 	if (rc)
 		goto end;
 

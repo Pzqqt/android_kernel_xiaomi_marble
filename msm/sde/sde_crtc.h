@@ -71,6 +71,24 @@ enum sde_crtc_idle_pc_state {
 };
 
 /**
+ * enum sde_crtc_cache_state: states of disp system cache
+ * CACHE_STATE_DISABLED: sys cache has been disabled
+ * CACHE_STATE_ENABLED: sys cache has been enabled
+ * CACHE_STATE_NORMAL: sys cache is normal state
+ * CACHE_STATE_PRE_CACHE: frame cache is being prepared
+ * CACHE_STATE_FRAME_WRITE: sys cache is being written to
+ * CACHE_STATE_FRAME_READ: sys cache is being read
+ */
+enum sde_crtc_cache_state {
+	CACHE_STATE_DISABLED,
+	CACHE_STATE_ENABLED,
+	CACHE_STATE_NORMAL,
+	CACHE_STATE_PRE_CACHE,
+	CACHE_STATE_FRAME_WRITE,
+	CACHE_STATE_FRAME_READ
+};
+
+/**
  * @connectors    : Currently associated drm connectors for retire event
  * @num_connectors: Number of associated drm connectors for retire event
  * @list:	event list
@@ -256,6 +274,8 @@ struct sde_crtc_misr_info {
  * @needs_hw_reset  : Initiate a hw ctl reset
  * @src_bpp         : source bpp used to calculate compression ratio
  * @target_bpp      : target bpp used to calculate compression ratio
+ * @static_cache_read_work: delayed worker to transition cache state to read
+ * @cache_state     : Current static image cache state
  */
 struct sde_crtc {
 	struct drm_crtc base;
@@ -340,6 +360,9 @@ struct sde_crtc {
 
 	int src_bpp;
 	int target_bpp;
+
+	struct kthread_delayed_work static_cache_read_work;
+	enum sde_crtc_cache_state cache_state;
 };
 
 enum sde_crtc_dirty_flags {
@@ -857,5 +880,20 @@ static inline void sde_crtc_set_bpp(struct sde_crtc *sde_crtc, int src_bpp,
 	sde_crtc->src_bpp = src_bpp;
 	sde_crtc->target_bpp = target_bpp;
 }
+
+/**
+ * sde_crtc_static_img_control - transition static img cache state
+ * @crtc: Pointer to drm crtc structure
+ * @state: cache state to transition to
+ * @is_vidmode: if encoder is video mode
+ */
+void sde_crtc_static_img_control(struct drm_crtc *crtc,
+		enum sde_crtc_cache_state state, bool is_vidmode);
+
+/**
+ * sde_crtc_static_cache_read_kickoff - kickoff cache read work
+ * @crtc: Pointer to drm crtc structure
+ */
+void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc);
 
 #endif /* _SDE_CRTC_H_ */

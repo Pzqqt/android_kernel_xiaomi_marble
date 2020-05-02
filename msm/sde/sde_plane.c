@@ -2753,31 +2753,75 @@ void sde_plane_set_error(struct drm_plane *plane, bool error)
 }
 
 static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
-	struct sde_plane_state *pstate, const struct sde_format *fmt)
+		struct sde_plane_state *pstate, bool is_tp10)
 {
+	struct sde_sc_cfg *sc_cfg = psde->catalog->sc_cfg;
+
 	if (!psde->pipe_hw->ops.setup_sys_cache ||
-	    !(psde->perf_features & BIT(SDE_PERF_SSPP_SYS_CACHE)))
+			!(psde->perf_features & BIT(SDE_PERF_SSPP_SYS_CACHE)))
 		return;
 
 	SDE_DEBUG("features:0x%x rotation:0x%x\n",
 		psde->features, pstate->rotation);
 
-	if ((pstate->rotation & DRM_MODE_ROTATE_90) &&
-			sde_format_is_tp10_ubwc(fmt)) {
+
+	pstate->sc_cfg.rd_en = false;
+	pstate->sc_cfg.rd_scid = 0x0;
+	pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
+			SSPP_SYS_CACHE_SCID;
+	pstate->sc_cfg.type = SDE_SYS_CACHE_NONE;
+
+	if (pstate->rotation & DRM_MODE_ROTATE_90) {
+		if (is_tp10 && sc_cfg[SDE_SYS_CACHE_ROT].has_sys_cache) {
+			pstate->sc_cfg.rd_en = true;
+			pstate->sc_cfg.rd_scid =
+					sc_cfg[SDE_SYS_CACHE_ROT].llcc_scid;
+			pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
+					SSPP_SYS_CACHE_SCID;
+			pstate->sc_cfg.type = SDE_SYS_CACHE_ROT;
+		}
+	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_WRITE &&
+			sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache) {
 		pstate->sc_cfg.rd_en = true;
 		pstate->sc_cfg.rd_scid =
-			psde->pipe_sblk->llcc_scid;
+				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
+		pstate->sc_cfg.rd_noallocate = false;
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
-			SSPP_SYS_CACHE_SCID;
-	} else {
-		pstate->sc_cfg.rd_en = false;
-		pstate->sc_cfg.rd_scid = 0x0;
+				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
+		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
+	} else if (pstate->static_cache_state == CACHE_STATE_FRAME_READ &&
+			sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache) {
+		pstate->sc_cfg.rd_en = true;
+		pstate->sc_cfg.rd_scid =
+				sc_cfg[SDE_SYS_CACHE_DISP].llcc_scid;
+		pstate->sc_cfg.rd_noallocate = true;
 		pstate->sc_cfg.flags = SSPP_SYS_CACHE_EN_FLAG |
-			SSPP_SYS_CACHE_SCID;
+				SSPP_SYS_CACHE_SCID | SSPP_SYS_CACHE_NO_ALLOC;
+		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
 	}
 
 	psde->pipe_hw->ops.setup_sys_cache(
 		psde->pipe_hw, &pstate->sc_cfg);
+}
+
+void sde_plane_static_img_control(struct drm_plane *plane,
+		enum sde_crtc_cache_state state)
+{
+	struct sde_plane *psde;
+	struct sde_plane_state *pstate;
+
+	if (!plane || !plane->state) {
+		SDE_ERROR("invalid plane\n");
+		return;
+	}
+
+	psde = to_sde_plane(plane);
+	pstate = to_sde_plane_state(plane->state);
+
+	pstate->static_cache_state = state;
+
+	if (state == CACHE_STATE_FRAME_READ)
+		_sde_plane_sspp_setup_sys_cache(psde, pstate, false);
 }
 
 static void _sde_plane_map_prop_to_dirty_bits(void)
@@ -3052,7 +3096,8 @@ static void _sde_plane_update_format_and_rects(struct sde_plane *psde,
 			   pstate->multirect_index);
 	}
 
-	_sde_plane_sspp_setup_sys_cache(psde, pstate, fmt);
+	_sde_plane_sspp_setup_sys_cache(psde, pstate,
+			sde_format_is_tp10_ubwc(fmt));
 
 	/* update csc */
 	if (SDE_FORMAT_IS_YUV(fmt))
@@ -3347,7 +3392,8 @@ void sde_plane_restore(struct drm_plane *plane)
 	sde_plane_atomic_update(plane, plane->state);
 }
 
-bool sde_plane_is_cache_required(struct drm_plane *plane)
+bool sde_plane_is_cache_required(struct drm_plane *plane,
+		enum sde_sys_cache_type type)
 {
 	struct sde_plane_state *pstate;
 
@@ -3359,7 +3405,7 @@ bool sde_plane_is_cache_required(struct drm_plane *plane)
 	pstate = to_sde_plane_state(plane->state);
 
 	/* check if llcc is required for the plane */
-	if (pstate->sc_cfg.rd_en)
+	if (pstate->sc_cfg.rd_en && (pstate->sc_cfg.type == type))
 		return true;
 	else
 		return false;

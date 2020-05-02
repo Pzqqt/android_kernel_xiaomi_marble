@@ -21,6 +21,7 @@
 #include "sde_trace.h"
 #include "sde_crtc.h"
 #include "sde_encoder.h"
+#include "sde_hw_catalog.h"
 #include "sde_core_perf.h"
 
 #define SDE_PERF_MODE_STRING_SIZE	128
@@ -293,19 +294,20 @@ static inline enum sde_crtc_client_type _get_sde_client_type(
 /**
  * @_sde_core_perf_activate_llcc() - Activates/deactivates the system llcc
  * @kms - pointer to the kms
- * @uid - ID for which the llcc would be activated
+ * @type - llcc type to be activated
  * @activate - boolean to indicate if activate/deactivate the LLCC
  *
  * Function assumes that caller has already acquired the "sde_core_perf_lock",
  * which would protect from any race condition between CRTC's
  */
 static int _sde_core_perf_activate_llcc(struct sde_kms *kms,
-	u32 uid, bool activate)
+	enum sde_sys_cache_type type, bool activate)
 {
 	struct llcc_slice_desc *slice;
 	struct drm_device *drm_dev;
 	struct device *dev;
 	struct platform_device *pdev;
+	u32 llcc_id[SDE_SYS_CACHE_MAX] = {LLCC_ROTATOR, LLCC_DISP};
 	int rc = 0;
 
 	if (!kms || !kms->dev || !kms->dev->dev) {
@@ -319,51 +321,57 @@ static int _sde_core_perf_activate_llcc(struct sde_kms *kms,
 	pdev = to_platform_device(dev);
 
 	/* If LLCC is already in the requested state, skip */
-	SDE_EVT32(activate, kms->perf.llcc_active);
-	if ((activate && kms->perf.llcc_active) ||
-		(!activate && !kms->perf.llcc_active)) {
-		SDE_DEBUG("skip llcc request:%d state:%d\n",
-			activate, kms->perf.llcc_active);
+	SDE_EVT32(activate, type, kms->perf.llcc_active[type]);
+	if ((activate && kms->perf.llcc_active[type]) ||
+		(!activate && !kms->perf.llcc_active[type])) {
+		SDE_DEBUG("skip llcc type:%d request:%d state:%d\n",
+			type, activate, kms->perf.llcc_active[type]);
 		goto exit;
 	}
 
-	SDE_DEBUG("activate/deactivate the llcc request:%d state:%d\n",
-		activate, kms->perf.llcc_active);
+	SDE_DEBUG("%sactivate the llcc type:%d state:%d\n",
+		activate ? "" : "de",
+		type, kms->perf.llcc_active[type]);
 
-	slice = llcc_slice_getd(uid);
+	slice = llcc_slice_getd(llcc_id[type]);
 	if (IS_ERR_OR_NULL(slice))  {
-		SDE_ERROR("failed to get llcc slice for uid:%d\n", uid);
+		SDE_ERROR("failed to get llcc slice for uid:%d\n",
+				llcc_id[type]);
 		rc = -EINVAL;
 		goto exit;
 	}
 
 	if (activate) {
 		llcc_slice_activate(slice);
-		kms->perf.llcc_active = true;
+		kms->perf.llcc_active[type] = true;
 	} else {
 		llcc_slice_deactivate(slice);
-		kms->perf.llcc_active = false;
+		kms->perf.llcc_active[type] = false;
 	}
 
 exit:
 	if (rc)
-		SDE_ERROR("error activating llcc:%d rc:%d\n",
-			activate, rc);
+		SDE_ERROR("error %sactivating llcc type:%d rc:%d\n",
+			activate ? "" : "de", type, rc);
 	return rc;
 
 }
 
-static void _sde_core_perf_crtc_update_llcc(struct sde_kms *kms,
-		struct drm_crtc *crtc)
+static void _sde_core_perf_crtc_set_llcc_cache_type(struct sde_kms *kms,
+		struct drm_crtc *crtc,
+		enum sde_sys_cache_type type)
 {
 	struct drm_crtc *tmp_crtc;
 	struct sde_crtc *sde_crtc;
+	struct sde_sc_cfg *sc_cfg = kms->perf.catalog->sc_cfg;
+	struct sde_core_perf_params *cur_perf;
 	enum sde_crtc_client_type curr_client_type
 					= sde_crtc_get_client_type(crtc);
-	u32 total_llcc_active = 0;
+	u32 llcc_active = 0;
 
-	if (!kms->perf.catalog->sc_cfg.has_sys_cache) {
-		SDE_DEBUG("System Cache is not enabled!. Won't use\n");
+	if (!sc_cfg[type].has_sys_cache) {
+		SDE_DEBUG("System Cache %d is not enabled!. Won't use\n",
+				type);
 		return;
 	}
 
@@ -374,22 +382,71 @@ static void _sde_core_perf_crtc_update_llcc(struct sde_kms *kms,
 
 			/* use current perf, which are the values voted */
 			sde_crtc = to_sde_crtc(tmp_crtc);
-			total_llcc_active |=
-			  sde_crtc->cur_perf.llcc_active;
+			cur_perf = &sde_crtc->cur_perf;
+			llcc_active |= cur_perf->llcc_active[type];
 
-			SDE_DEBUG("crtc=%d llcc:%u active:0x%x\n",
-				tmp_crtc->base.id,
-				sde_crtc->cur_perf.llcc_active,
-				total_llcc_active);
-
-			if (total_llcc_active)
-				break;
+			SDE_DEBUG("crtc=%d type:%d llcc:%u active:0x%x\n",
+				tmp_crtc->base.id, type,
+				cur_perf->llcc_active[type],
+				llcc_active);
 		}
 	}
 
-	_sde_core_perf_activate_llcc(kms, LLCC_ROTATOR,
-			total_llcc_active ? true : false);
+	_sde_core_perf_activate_llcc(kms, type,
+			llcc_active ? true : false);
 }
+
+void sde_core_perf_crtc_update_llcc(struct drm_crtc *crtc)
+{
+	struct sde_kms *kms;
+	struct sde_crtc *sde_crtc;
+	struct sde_core_perf_params *old, *new;
+	int update_llcc[SDE_SYS_CACHE_MAX] = {0, 0};
+	int i;
+
+	if (!crtc) {
+		SDE_ERROR("invalid crtc\n");
+		return;
+	}
+
+	kms = _sde_crtc_get_kms(crtc);
+	if (!kms || !kms->catalog) {
+		SDE_ERROR("invalid kms\n");
+		return;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+
+	old = &sde_crtc->cur_perf;
+	new = &sde_crtc->new_perf;
+
+	mutex_lock(&sde_core_perf_lock);
+
+	if (_sde_core_perf_crtc_is_power_on(crtc)) {
+		for (i = 0; i < SDE_SYS_CACHE_MAX; i++) {
+			if (new->llcc_active[i] != old->llcc_active[i]) {
+				SDE_DEBUG("crtc=%d llcc=%d new=%d old=%d",
+						crtc->base.id, i,
+						new->llcc_active[i],
+						old->llcc_active[i]);
+
+					old->llcc_active[i] =
+							new->llcc_active[i];
+					update_llcc[i] = 1;
+			}
+		}
+	} else {
+		for (i = 0; i < SDE_SYS_CACHE_MAX; i++)
+			update_llcc[i] = 1;
+	}
+
+	for (i = 0; i < SDE_SYS_CACHE_MAX; i++) {
+		if (update_llcc[i])
+			_sde_core_perf_crtc_set_llcc_cache_type(kms, crtc, i);
+	}
+
+	mutex_unlock(&sde_core_perf_lock);
+};
 
 static void _sde_core_uidle_setup_wd(struct sde_kms *kms,
 	bool enable)
@@ -749,11 +806,98 @@ static u64 _sde_core_perf_get_core_clk_rate(struct sde_kms *kms)
 	return clk_rate;
 }
 
+static void _sde_core_perf_crtc_update_check(struct drm_crtc *crtc,
+		int params_changed,
+		int *update_bus, int *update_clk)
+{
+	struct sde_kms *kms = _sde_crtc_get_kms(crtc);
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_core_perf_params *old = &sde_crtc->cur_perf;
+	struct sde_core_perf_params *new = &sde_crtc->new_perf;
+	int i;
+
+	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
+		/*
+		 * cases for bus bandwidth update.
+		 * 1. new bandwidth vote - "ab or ib vote" is higher
+		 *    than current vote for update request.
+		 * 2. new bandwidth vote - "ab or ib vote" is lower
+		 *    than current vote at end of commit or stop.
+		 */
+
+		if ((params_changed &&
+				(new->bw_ctl[i] > old->bw_ctl[i])) ||
+				(!params_changed &&
+				(new->bw_ctl[i] < old->bw_ctl[i]))) {
+
+			SDE_DEBUG(
+				"crtc=%d p=%d new_bw=%llu,old_bw=%llu\n",
+				crtc->base.id, params_changed,
+				new->bw_ctl[i], old->bw_ctl[i]);
+			old->bw_ctl[i] = new->bw_ctl[i];
+			*update_bus |= BIT(i);
+		}
+
+		if ((params_changed &&
+				(new->max_per_pipe_ib[i] >
+				 old->max_per_pipe_ib[i])) ||
+				(!params_changed &&
+				(new->max_per_pipe_ib[i] <
+				old->max_per_pipe_ib[i]))) {
+
+			SDE_DEBUG(
+				"crtc=%d p=%d new_ib=%llu,old_ib=%llu\n",
+				crtc->base.id, params_changed,
+				new->max_per_pipe_ib[i],
+				old->max_per_pipe_ib[i]);
+			old->max_per_pipe_ib[i] =
+					new->max_per_pipe_ib[i];
+			*update_bus |= BIT(i);
+		}
+
+		/* display rsc override during solver mode */
+		if (kms->perf.bw_vote_mode == DISP_RSC_MODE &&
+				get_sde_rsc_current_state(SDE_RSC_INDEX) !=
+				SDE_RSC_CLK_STATE) {
+			/* update new bandwidth in all cases */
+			if (params_changed && ((new->bw_ctl[i] !=
+					old->bw_ctl[i]) ||
+					(new->max_per_pipe_ib[i] !=
+					old->max_per_pipe_ib[i]))) {
+				old->bw_ctl[i] = new->bw_ctl[i];
+				old->max_per_pipe_ib[i] =
+						new->max_per_pipe_ib[i];
+				*update_bus |= BIT(i);
+			/*
+			 * reduce bw vote is not required in solver
+			 * mode
+			 */
+			} else if (!params_changed) {
+				*update_bus &= ~BIT(i);
+			}
+		}
+	}
+
+	if (kms->perf.perf_tune.mode_changed &&
+			kms->perf.perf_tune.min_core_clk)
+		new->core_clk_rate = kms->perf.perf_tune.min_core_clk;
+
+	if ((params_changed &&
+			(new->core_clk_rate > old->core_clk_rate)) ||
+			(!params_changed && new->core_clk_rate &&
+			(new->core_clk_rate < old->core_clk_rate)) ||
+			kms->perf.perf_tune.mode_changed) {
+		old->core_clk_rate = new->core_clk_rate;
+		*update_clk = 1;
+		kms->perf.perf_tune.mode_changed = false;
+	}
+}
+
 void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 		int params_changed, bool stop_req)
 {
 	struct sde_core_perf_params *new, *old;
-	int update_bus = 0, update_clk = 0, update_llcc = 0;
+	int update_bus = 0, update_clk = 0;
 	u64 clk_rate = 0;
 	struct sde_crtc *sde_crtc;
 	struct sde_crtc_state *sde_cstate;
@@ -793,104 +937,14 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 	new = &sde_crtc->new_perf;
 
 	if (_sde_core_perf_crtc_is_power_on(crtc) && !stop_req) {
-
-		/*
-		 * cases for the llcc update.
-		 * 1. llcc is transitioning: 'inactive->active' during kickoff,
-		 *	for current request.
-		 * 2. llcc is transitioning: 'active->inactive'at the end of the
-		 *	commit or during stop
-		 */
-
-		if ((params_changed &&
-			 new->llcc_active && !old->llcc_active) ||
-		    (!params_changed &&
-			!new->llcc_active && old->llcc_active)) {
-
-			SDE_DEBUG("crtc=%d p=%d new_llcc=%d, old_llcc=%d\n",
-				crtc->base.id, params_changed,
-				new->llcc_active, old->llcc_active);
-
-			old->llcc_active = new->llcc_active;
-			update_llcc = 1;
-		}
-
-		for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
-			/*
-			 * cases for bus bandwidth update.
-			 * 1. new bandwidth vote - "ab or ib vote" is higher
-			 *    than current vote for update request.
-			 * 2. new bandwidth vote - "ab or ib vote" is lower
-			 *    than current vote at end of commit or stop.
-			 */
-
-			if ((params_changed &&
-				(new->bw_ctl[i] > old->bw_ctl[i])) ||
-			    (!params_changed &&
-				(new->bw_ctl[i] < old->bw_ctl[i]))) {
-
-				SDE_DEBUG(
-					"crtc=%d p=%d new_bw=%llu,old_bw=%llu\n",
-					crtc->base.id, params_changed,
-					new->bw_ctl[i], old->bw_ctl[i]);
-				old->bw_ctl[i] = new->bw_ctl[i];
-				update_bus |= BIT(i);
-			}
-
-			if ((params_changed &&
-				(new->max_per_pipe_ib[i] >
-				 old->max_per_pipe_ib[i])) ||
-			    (!params_changed &&
-				(new->max_per_pipe_ib[i] <
-				old->max_per_pipe_ib[i]))) {
-
-				SDE_DEBUG(
-					"crtc=%d p=%d new_ib=%llu,old_ib=%llu\n",
-					crtc->base.id, params_changed,
-					new->max_per_pipe_ib[i],
-					old->max_per_pipe_ib[i]);
-				old->max_per_pipe_ib[i] =
-						new->max_per_pipe_ib[i];
-				update_bus |= BIT(i);
-			}
-
-			/* display rsc override during solver mode */
-			if (kms->perf.bw_vote_mode == DISP_RSC_MODE &&
-				get_sde_rsc_current_state(SDE_RSC_INDEX) !=
-						SDE_RSC_CLK_STATE) {
-				/* update new bandwidth in all cases */
-				if (params_changed && ((new->bw_ctl[i] !=
-						old->bw_ctl[i]) ||
-				      (new->max_per_pipe_ib[i] !=
-						old->max_per_pipe_ib[i]))) {
-					old->bw_ctl[i] = new->bw_ctl[i];
-					old->max_per_pipe_ib[i] =
-							new->max_per_pipe_ib[i];
-					update_bus |= BIT(i);
-				/*
-				 * reduce bw vote is not required in solver
-				 * mode
-				 */
-				} else if (!params_changed) {
-					update_bus &= ~BIT(i);
-				}
-			}
-		}
-
-		if ((params_changed &&
-				(new->core_clk_rate > old->core_clk_rate)) ||
-				(!params_changed && new->core_clk_rate &&
-				(new->core_clk_rate < old->core_clk_rate))) {
-			old->core_clk_rate = new->core_clk_rate;
-			update_clk = 1;
-		}
+		_sde_core_perf_crtc_update_check(crtc, params_changed,
+				&update_bus, &update_clk);
 	} else {
 		SDE_DEBUG("crtc=%d disable\n", crtc->base.id);
 		memset(old, 0, sizeof(*old));
 		memset(new, 0, sizeof(*new));
 		update_bus = ~0;
 		update_clk = 1;
-		update_llcc = 1;
 	}
 	trace_sde_perf_crtc_update(crtc->base.id,
 		new->bw_ctl[SDE_POWER_HANDLE_DBUS_ID_MNOC],
@@ -901,9 +955,6 @@ void sde_core_perf_crtc_update(struct drm_crtc *crtc,
 		new->max_per_pipe_ib[SDE_POWER_HANDLE_DBUS_ID_EBI],
 		new->core_clk_rate, stop_req,
 		update_bus, update_clk, params_changed);
-
-	if (update_llcc)
-		_sde_core_perf_crtc_update_llcc(kms, crtc);
 
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
 		if (update_bus & BIT(i))
@@ -1056,6 +1107,7 @@ static ssize_t _sde_core_perf_mode_write(struct file *file,
 		DRM_INFO("normal performance mode\n");
 	}
 	perf->perf_tune.mode = perf_mode;
+	perf->perf_tune.mode_changed = true;
 
 	return count;
 }
