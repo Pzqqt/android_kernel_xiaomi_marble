@@ -1443,6 +1443,7 @@ struct bss_load_trigger {
 #define AKM_FT_FILS          2
 #define AKM_SAE              3
 #define AKM_OWE              4
+#define AKM_SUITEB           5
 
 #define LFR3_STA_ROAM_DISABLE_BY_P2P BIT(0)
 #define LFR3_STA_ROAM_DISABLE_BY_NAN BIT(1)
