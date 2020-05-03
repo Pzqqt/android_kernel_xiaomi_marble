@@ -2669,6 +2669,9 @@ typedef struct {
     A_UINT32 desc_threshold;
     A_UINT32 hwsch_tqm_invalid_status;
     A_UINT32 missed_tqm_gen_mpdus;
+    A_UINT32 tqm_active_tids;
+    A_UINT32 tqm_inactive_tids;
+    A_UINT32 tqm_active_msduq_flows;
 } htt_tx_tqm_cmn_stats_tlv;
 
 typedef struct {
