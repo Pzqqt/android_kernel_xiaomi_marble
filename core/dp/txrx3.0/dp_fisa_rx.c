@@ -41,18 +41,19 @@ static void hex_dump_skb_data(qdf_nbuf_t nbuf, bool dump)
 	if (!nbuf)
 		return;
 
-	dp_fisa_debug("%ps: skb: %pk skb->next:%pk frag_list %pk skb->data:%pk len %d data_len%d",
-	       (void *)_RET_IP_, nbuf, qdf_nbuf_next(nbuf),
-	       skb_shinfo(nbuf)->frag_list, qdf_nbuf_data(nbuf), nbuf->len,
-	       nbuf->data_len);
+	dp_fisa_debug("%ps: skb: %pK skb->next:%pK frag_list %pK skb->data:%pK len %d data_len %d",
+		      (void *)_RET_IP_, nbuf, qdf_nbuf_next(nbuf),
+		      skb_shinfo(nbuf)->frag_list, qdf_nbuf_data(nbuf),
+		      nbuf->len, nbuf->data_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR, nbuf->data,
 			   64);
 
 	next_nbuf = skb_shinfo(nbuf)->frag_list;
 	while (next_nbuf) {
-		dp_fisa_debug("%d nbuf:%pk nbuf->next:%pK nbuf->data:%pk len %d", i,
-		       next_nbuf, qdf_nbuf_next(next_nbuf),
-		       qdf_nbuf_data(next_nbuf), qdf_nbuf_len(next_nbuf));
+		dp_fisa_debug("%d nbuf:%pK nbuf->next:%pK nbuf->data:%pK len %d",
+			      i, next_nbuf, qdf_nbuf_next(next_nbuf),
+			      qdf_nbuf_data(next_nbuf),
+			      qdf_nbuf_len(next_nbuf));
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				   qdf_nbuf_data(next_nbuf), 64);
 		next_nbuf = qdf_nbuf_next(next_nbuf);
@@ -186,7 +187,7 @@ get_flow_tuple_from_nbuf(hal_soc_handle_t hal_soc_hdl,
 
 	qdf_nbuf_push_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
 
-	dp_fisa_debug("head_skb: %pk head_skb->next:%pk head_skb->data:%pk len %d data_len %d",
+	dp_fisa_debug("head_skb: %pK head_skb->next:%pK head_skb->data:%pK len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
 		      nbuf->data_len);
 }
@@ -226,7 +227,6 @@ dp_rx_fisa_setup_hw_fse(struct dp_rx_fst *fisa_hdl,
 	flow.reo_destination_handler = HAL_RX_FSE_REO_DEST_FT;
 	hw_fse = hal_rx_flow_setup_fse(fisa_hdl->hal_rx_fst, hashed_flow_idx,
 				       &flow);
-	dp_rx_dump_fisa_table(fisa_hdl->soc_hdl);
 
 	return hw_fse;
 }
@@ -451,7 +451,7 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 			 */
 		}
 	}
-	dp_fisa_debug("sw_ft_entry %pk", sw_ft_entry);
+	dp_fisa_debug("sw_ft_entry %pK", sw_ft_entry);
 	return sw_ft_entry;
 }
 
@@ -497,7 +497,7 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
 				    &flow_timeout, &flow_idx);
 
-	dp_fisa_debug("nbuf %pk fl_idx %d fl_inv %d fl_timeout %d",
+	dp_fisa_debug("nbuf %pK fl_idx %d fl_inv %d fl_timeout %d",
 		      nbuf, flow_idx, flow_invalid, flow_timeout);
 
 	flow_idx_valid = is_flow_idx_valid(flow_invalid, flow_timeout);
@@ -611,7 +611,7 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	uint32_t payload_offset;
 
 	if (!head_skb) {
-		dp_fisa_debug("first head skb nbuf %pk", nbuf);
+		dp_fisa_debug("first head skb nbuf %pK", nbuf);
 		/* First nbuf for the flow */
 		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
 		fisa_flow->head_skb = nbuf;
@@ -644,7 +644,7 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	fisa_flow->last_skb = nbuf;
 	fisa_flow->aggr_count++;
 
-	dp_fisa_debug("Stiched head skb fisa_flow %pk", fisa_flow);
+	dp_fisa_debug("Stiched head skb fisa_flow %pK", fisa_flow);
 	hex_dump_skb_data(fisa_flow->head_skb, false);
 
 	/* move it to while flushing the flow, that is update before flushing */
@@ -669,7 +669,7 @@ static qdf_nbuf_t dp_fisa_rx_linear_skb(struct dp_vdev *vdev,
 	if (!linear_skb)
 		return NULL;
 
-	dp_fisa_debug("head %pk data %pk tail %pk\n", head_skb->head,
+	dp_fisa_debug("head %pK data %pK tail %pK\n", head_skb->head,
 		      head_skb->data, head_skb->tail);
 	ext_skb = skb_shinfo(head_skb)->frag_list;
 	if (ext_skb) {
@@ -696,7 +696,7 @@ done:
 	linear_skb->pkt_type = PACKET_HOST;
 	skb_set_mac_header(linear_skb, 0);
 	linear_skb->ip_summed = CHECKSUM_PARTIAL;
-	dp_fisa_debug("linear skb %pk len %d gso_size %d mac_len %d net_header %d mac_header %d",
+	dp_fisa_debug("linear skb %pK len %d gso_size %d mac_len %d net_header %d mac_header %d",
 		      linear_skb, linear_skb->len,
 		      skb_shinfo(linear_skb)->gso_size,	linear_skb->mac_len,
 		      linear_skb->network_header, linear_skb->mac_header);
@@ -724,7 +724,7 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 	qdf_nbuf_t linear_skb;
 	struct dp_vdev *fisa_flow_vdev;
 
-	dp_fisa_debug("head_skb %pk", head_skb);
+	dp_fisa_debug("head_skb %pK", head_skb);
 	dp_fisa_debug("cumulative ip length %d",
 		      fisa_flow->adjusted_cumulative_ip_length);
 	if (!head_skb) {
@@ -743,11 +743,11 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 			      fisa_flow->adjusted_cumulative_ip_length);
 		head_skb_iph = (struct iphdr *)(qdf_nbuf_data(head_skb) +
 					fisa_flow->head_skb_ip_hdr_offset);
-		dp_fisa_debug("iph ptr %pk", head_skb_iph);
+		dp_fisa_debug("iph ptr %pK", head_skb_iph);
 		head_skb_udp_hdr = (struct udphdr *)(qdf_nbuf_data(head_skb) +
 					fisa_flow->head_skb_ip_hdr_offset +
 					fisa_flow->head_skb_l4_hdr_offset);
-		dp_fisa_debug("udph ptr %pk", head_skb_udp_hdr);
+		dp_fisa_debug("udph ptr %pK", head_skb_udp_hdr);
 
 		dp_fisa_debug("tot_len 0x%x", qdf_ntohs(head_skb_iph->tot_len));
 
@@ -903,7 +903,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 
 	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_ERROR);
-	dp_fisa_debug("nbuf: %pk nbuf->next:%pk nbuf->data:%pk len %d data_len %d",
+	dp_fisa_debug("nbuf: %pK nbuf->next:%pK nbuf->data:%pK len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
 		      nbuf->data_len);
 
@@ -915,7 +915,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 		/* Start of new aggregation for the flow
 		 * Flush previous aggregates for this flow
 		 */
-		dp_fisa_debug("no fgc nbuf %pK, flush %pk napi %d", nbuf,
+		dp_fisa_debug("no fgc nbuf %pK, flush %pK napi %d", nbuf,
 			      fisa_flow, QDF_NBUF_CB_RX_CTX_ID(nbuf));
 		dp_rx_fisa_flush_flow(vdev, fisa_flow);
 		/* Clear of previoud context values */
@@ -947,7 +947,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	}
 	hal_rx_msdu_get_flow_params(hal_soc_hdl, rx_tlv_hdr, &flow_invalid,
 				    &flow_timeout, &flow_idx);
-	dp_fisa_debug("nbuf %pk cumulat_ip_length %d flow %pk fl aggr cont %d",
+	dp_fisa_debug("nbuf %pK cumulat_ip_length %d flow %pK fl aggr cont %d",
 		      nbuf, hal_cumultive_ip_len, fisa_flow, flow_aggr_cont);
 
 	fisa_flow->aggr_count++;
@@ -980,7 +980,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 		      fisa_flow->cur_aggr);
 
 	if (fisa_flow->adjusted_cumulative_ip_length > 24000) {
-		dp_err("fisa_flow %pk nbuf %pk", fisa_flow, nbuf);
+		dp_err("fisa_flow %pK nbuf %pK", fisa_flow, nbuf);
 		dp_err("fisa_flow->adjusted_cumulative_ip_length %d",
 		       fisa_flow->adjusted_cumulative_ip_length);
 		dp_err("HAL cumulative_ip_length %d", hal_cumultive_ip_len);
@@ -1116,7 +1116,7 @@ QDF_STATUS dp_rx_fisa_flush(struct dp_soc *soc, int napi_id)
 	for (i = 0; i < ft_size; i++) {
 		if (sw_ft_entry[i].napi_id == napi_id &&
 		    sw_ft_entry[i].is_populated) {
-			dp_fisa_debug("flushing %d %pk napi_id %d", i,
+			dp_fisa_debug("flushing %d %pK napi_id %d", i,
 				      &sw_ft_entry[i], napi_id);
 			/* Save the ip_len and checksum as hardware assist is
 			 * always based on his start of aggregation
