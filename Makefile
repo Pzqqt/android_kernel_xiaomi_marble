@@ -17,11 +17,12 @@ LINUXINCLUDE    += -include $(srctree)/techpack/display/config/lahainadispconf.h
 		include $(srctree)/techpack/display/config/gki_lahainadisp.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_lahainadispconf.h
      endif
+endif
+
 LINUXINCLUDE    += \
 		   -I$(srctree)/techpack/display/include/uapi/display \
 		   -I$(srctree)/techpack/display/include
 USERINCLUDE     += -I$(srctree)/techpack/display/include/uapi/display
-endif
 
 ifeq ($(CONFIG_ARCH_LITO), y)
 include $(srctree)/techpack/display/config/saipdisp.conf
