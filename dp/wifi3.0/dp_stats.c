@@ -6212,6 +6212,10 @@ dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
 		       rx_mon_stats->ppdu_id_mismatch);
 	DP_PRINT_STATS("mpdu_ppdu_id_match_cnt = %d",
 		       rx_mon_stats->ppdu_id_match);
+	DP_PRINT_STATS("ppdus dropped frm status ring = %d",
+		       rx_mon_stats->status_ppdu_drop);
+	DP_PRINT_STATS("ppdus dropped frm dest ring = %d",
+		       rx_mon_stats->dest_ppdu_drop);
 	stat_ring_ppdu_ids =
 		(uint32_t *)qdf_mem_malloc(sizeof(uint32_t) * MAX_PPDU_ID_HIST);
 	dest_ring_ppdu_ids =

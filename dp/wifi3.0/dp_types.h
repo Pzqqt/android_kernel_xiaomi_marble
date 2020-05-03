@@ -1884,6 +1884,12 @@ struct dp_pdev {
 	struct hal_rx_mon_desc_info *mon_desc;
 #endif
 	qdf_nbuf_t mcopy_status_nbuf;
+
+	/* Flag to hold on to monitor destination ring */
+	bool hold_mon_dest_ring;
+
+	/* Maintains first status buffer's paddr of a PPDU */
+	uint64_t status_buf_addr;
 };
 
 struct dp_peer;

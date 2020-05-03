@@ -179,6 +179,8 @@
  * @status_buf:              for a PPDU, status buffers can span acrosss
  *                           multiple buffers, status_buf points to first
  *                           status buffer address of PPDU
+ * @drop_ppdu:               flag to indicate current destination
+ *                           ring ppdu drop
  */
 struct hal_rx_mon_desc_info {
 	uint16_t ppdu_id;
@@ -189,6 +191,7 @@ struct hal_rx_mon_desc_info {
 	uint8_t end_of_ppdu;
 	struct hal_buf_info link_desc;
 	struct hal_buf_info status_buf;
+	bool drop_ppdu;
 };
 
 /*
