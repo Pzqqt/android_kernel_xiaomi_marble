@@ -2066,54 +2066,13 @@ static void sde_encoder_virt_mode_switch(struct drm_encoder *drm_enc,
 	}
 }
 
-static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
-				      struct drm_display_mode *mode,
-				      struct drm_display_mode *adj_mode)
+static struct drm_connector *_sde_encoder_get_connector(
+		struct drm_device *dev, struct drm_encoder *drm_enc)
 {
-	struct sde_encoder_virt *sde_enc;
-	struct sde_kms *sde_kms;
 	struct drm_connector_list_iter conn_iter;
 	struct drm_connector *conn = NULL, *conn_search;
-	struct sde_rm_hw_iter dsc_iter, pp_iter, qdss_iter;
-	struct sde_rm_hw_iter vdc_iter;
-	struct sde_rm_hw_request request_hw;
-	enum sde_intf_mode intf_mode;
-	bool is_cmd_mode = false;
-	int i = 0, ret;
 
-	if (!drm_enc) {
-		SDE_ERROR("invalid encoder\n");
-		return;
-	}
-
-	if (!sde_kms_power_resource_is_enabled(drm_enc->dev)) {
-		SDE_ERROR("power resource is not enabled\n");
-		return;
-	}
-
-	sde_enc = to_sde_encoder_virt(drm_enc);
-	SDE_DEBUG_ENC(sde_enc, "\n");
-
-	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
-		is_cmd_mode = true;
-
-	sde_kms = sde_encoder_get_kms(drm_enc);
-	if (!sde_kms)
-		return;
-
-	SDE_EVT32(DRMID(drm_enc));
-
-	/*
-	 * cache the crtc in sde_enc on enable for duration of use case
-	 * for correctly servicing asynchronous irq events and timers
-	 */
-	if (!drm_enc->crtc) {
-		SDE_ERROR("invalid crtc\n");
-		return;
-	}
-	sde_enc->crtc = drm_enc->crtc;
-
-	drm_connector_list_iter_begin(sde_kms->dev, &conn_iter);
+	drm_connector_list_iter_begin(dev, &conn_iter);
 	drm_for_each_connector_iter(conn_search, &conn_iter) {
 		if (conn_search->encoder == drm_enc) {
 			conn = conn_search;
@@ -2122,56 +2081,17 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 	drm_connector_list_iter_end(&conn_iter);
 
-	sde_crtc_set_qos_dirty(sde_enc->crtc);
+	return conn;
+}
 
-	if (!conn) {
-		SDE_ERROR_ENC(sde_enc, "failed to find attached connector\n");
-		return;
-	} else if (!conn->state) {
-		SDE_ERROR_ENC(sde_enc, "invalid connector state\n");
-		return;
-	}
-
-	intf_mode = sde_encoder_get_intf_mode(drm_enc);
-
-	/* store the mode_info */
-	sde_connector_state_get_mode_info(conn->state, &sde_enc->mode_info);
-
-	sde_encoder_dce_set_bpp(sde_enc->mode_info, sde_enc->crtc);
-
-	/* release resources before seamless mode change */
-	if (msm_is_mode_seamless_dms(adj_mode) ||
-			(msm_is_mode_seamless_dyn_clk(adj_mode) &&
-			 is_cmd_mode)) {
-		/* restore resource state before releasing them */
-		ret = sde_encoder_resource_control(drm_enc,
-				SDE_ENC_RC_EVENT_PRE_MODESET);
-		if (ret) {
-			SDE_ERROR_ENC(sde_enc,
-					"sde resource control failed: %d\n",
-					ret);
-			return;
-		}
-
-		/*
-		 * Disable dce before switch the mode and after pre_modeset,
-		 * to guarantee that previous kickoff finished.
-		 */
-		sde_encoder_dce_disable(sde_enc);
-	} else if (msm_is_mode_seamless_poms(adj_mode)) {
-		_sde_encoder_modeset_helper_locked(drm_enc,
-					SDE_ENC_RC_EVENT_PRE_MODESET);
-		sde_encoder_virt_mode_switch(drm_enc, intf_mode, adj_mode);
-	}
-
-	/* Reserve dynamic resources now. Indicating non-AtomicTest phase */
-	ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state,
-			conn->state, false);
-	if (ret) {
-		SDE_ERROR_ENC(sde_enc,
-				"failed to reserve hw resources, %d\n", ret);
-		return;
-	}
+static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	struct sde_kms *sde_kms = sde_encoder_get_kms(drm_enc);
+	struct sde_rm_hw_iter pp_iter, qdss_iter;
+	struct sde_rm_hw_iter dsc_iter, vdc_iter;
+	struct sde_rm_hw_request request_hw;
+	int i;
 
 	sde_rm_init_hw_iter(&pp_iter, drm_enc->base.id, SDE_HW_BLK_PINGPONG);
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
@@ -2233,7 +2153,129 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 		else
 			sde_enc->hw_dsc_pp[i] = NULL;
 	}
+}
 
+static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
+		struct drm_display_mode *adj_mode, bool pre_modeset)
+{
+	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
+	enum sde_intf_mode intf_mode;
+	int ret;
+	bool is_cmd_mode;
+
+	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+		is_cmd_mode = true;
+
+	if (pre_modeset) {
+		intf_mode = sde_encoder_get_intf_mode(drm_enc);
+		if (msm_is_mode_seamless_dms(adj_mode) ||
+				(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+				 is_cmd_mode)) {
+			/* restore resource state before releasing them */
+			ret = sde_encoder_resource_control(drm_enc,
+					SDE_ENC_RC_EVENT_PRE_MODESET);
+			if (ret) {
+				SDE_ERROR_ENC(sde_enc,
+					"sde resource control failed: %d\n",
+					ret);
+				return ret;
+			}
+
+			/*
+			 * Disable dce before switching the mode and after pre-
+			 * modeset to guarantee previous kickoff has finished.
+			 */
+			sde_encoder_dce_disable(sde_enc);
+		} else if (msm_is_mode_seamless_poms(adj_mode)) {
+			_sde_encoder_modeset_helper_locked(drm_enc,
+					SDE_ENC_RC_EVENT_PRE_MODESET);
+			sde_encoder_virt_mode_switch(drm_enc, intf_mode,
+					adj_mode);
+		}
+	} else {
+		if (msm_is_mode_seamless_dms(adj_mode) ||
+				(msm_is_mode_seamless_dyn_clk(adj_mode) &&
+				is_cmd_mode))
+			sde_encoder_resource_control(&sde_enc->base,
+					SDE_ENC_RC_EVENT_POST_MODESET);
+		else if (msm_is_mode_seamless_poms(adj_mode))
+			_sde_encoder_modeset_helper_locked(drm_enc,
+					SDE_ENC_RC_EVENT_POST_MODESET);
+	}
+
+	return 0;
+}
+
+static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
+				      struct drm_display_mode *mode,
+				      struct drm_display_mode *adj_mode)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct sde_kms *sde_kms;
+	struct drm_connector *conn;
+	int i = 0, ret;
+
+	if (!drm_enc) {
+		SDE_ERROR("invalid encoder\n");
+		return;
+	}
+
+	if (!sde_kms_power_resource_is_enabled(drm_enc->dev)) {
+		SDE_ERROR("power resource is not enabled\n");
+		return;
+	}
+
+	sde_kms = sde_encoder_get_kms(drm_enc);
+	if (!sde_kms)
+		return;
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	SDE_DEBUG_ENC(sde_enc, "\n");
+	SDE_EVT32(DRMID(drm_enc));
+
+	/*
+	 * cache the crtc in sde_enc on enable for duration of use case
+	 * for correctly servicing asynchronous irq events and timers
+	 */
+	if (!drm_enc->crtc) {
+		SDE_ERROR("invalid crtc\n");
+		return;
+	}
+
+	sde_enc->crtc = drm_enc->crtc;
+	sde_crtc_set_qos_dirty(drm_enc->crtc);
+
+	/* get and store the mode_info */
+	conn = _sde_encoder_get_connector(sde_kms->dev, drm_enc);
+	if (!conn) {
+		SDE_ERROR_ENC(sde_enc, "failed to find attached connector\n");
+		return;
+	} else if (!conn->state) {
+		SDE_ERROR_ENC(sde_enc, "invalid connector state\n");
+		return;
+	}
+
+	sde_connector_state_get_mode_info(conn->state, &sde_enc->mode_info);
+	sde_encoder_dce_set_bpp(sde_enc->mode_info, sde_enc->crtc);
+
+	/* release resources before seamless mode change */
+	ret = sde_encoder_virt_modeset_rc(drm_enc, adj_mode, true);
+	if (ret)
+		return;
+
+	/* reserve dynamic resources now, indicating non test-only */
+	ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state,
+			conn->state, false);
+	if (ret) {
+		SDE_ERROR_ENC(sde_enc,
+				"failed to reserve hw resources, %d\n", ret);
+		return;
+	}
+
+	/* assign the reserved HW blocks to this encoder */
+	_sde_encoder_virt_populate_hw_res(drm_enc);
+
+	/* perform mode_set on phys_encs */
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
@@ -2251,14 +2293,7 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	}
 
 	/* update resources after seamless mode change */
-	if (msm_is_mode_seamless_dms(adj_mode) ||
-			(msm_is_mode_seamless_dyn_clk(adj_mode) &&
-			is_cmd_mode))
-		sde_encoder_resource_control(&sde_enc->base,
-						SDE_ENC_RC_EVENT_POST_MODESET);
-	else if (msm_is_mode_seamless_poms(adj_mode))
-		_sde_encoder_modeset_helper_locked(drm_enc,
-						SDE_ENC_RC_EVENT_POST_MODESET);
+	sde_encoder_virt_modeset_rc(drm_enc, adj_mode, false);
 }
 
 void sde_encoder_control_te(struct drm_encoder *drm_enc, bool enable)
