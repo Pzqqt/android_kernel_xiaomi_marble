@@ -615,7 +615,7 @@
  * Indexes are defined in this way.
  *     0 Index (BITS 0-7): 2.4GHz - Def 10%
  *     1 Index (BITS 8-15): 5GHz - Def 20%
- *     2 Index (BITS 16-23): Reserved
+ *     2 Index (BITS 16-23): 6Ghz - Def - 100%
  *     3 Index (BITS 24-31): Reserved
  * These percentage values are stored in HEX. For any index max value, can be 64
  *
@@ -631,7 +631,7 @@
 	"band_weight_per_index", \
 	0x00000000, \
 	0x64646464, \
-	0x0000644B, \
+	0x00644B32, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Band weight per index")
 
