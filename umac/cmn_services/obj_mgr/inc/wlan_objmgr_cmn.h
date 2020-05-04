@@ -67,6 +67,10 @@
 #define objmgr_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_OBJ_MGR, params)
 
+#define obj_mgr_debug_hex(ptr, size) \
+	qdf_trace_hex_dump(QDF_MODULE_ID_OBJ_MGR, \
+			   QDF_TRACE_LEVEL_DEBUG, ptr, size)
+
 /**
  * enum WLAN_OBJ_STATE - State of Object
  * @WLAN_OBJ_STATE_ALLOCATED:           Common object is allocated, but not

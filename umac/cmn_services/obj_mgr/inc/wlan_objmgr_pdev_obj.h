@@ -830,6 +830,9 @@ static inline void wlan_pdev_reset_ospriv(struct wlan_objmgr_pdev *pdev)
 static inline void wlan_pdev_set_max_vdev_count(struct wlan_objmgr_pdev *pdev,
 					   uint8_t max_vdev_count)
 {
+	if (max_vdev_count > WLAN_UMAC_PDEV_MAX_VDEVS)
+		QDF_BUG(0);
+
 	pdev->pdev_objmgr.max_vdev_count = max_vdev_count;
 }
 

@@ -305,7 +305,7 @@ struct wlan_objmgr_psoc_objmgr {
 	uint16_t temp_peer_count;
 	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
 	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
-	uint32_t wlan_vdev_id_map[2];
+	qdf_bitmap(wlan_vdev_id_map, WLAN_UMAC_PSOC_MAX_VDEVS);
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
@@ -1555,6 +1555,9 @@ static inline void wlan_psoc_set_qdf_dev(
 static inline void wlan_psoc_set_max_vdev_count(struct wlan_objmgr_psoc *psoc,
 						uint8_t max_vdev_count)
 {
+	if (max_vdev_count > WLAN_UMAC_PSOC_MAX_VDEVS)
+		QDF_BUG(0);
+
 	psoc->soc_objmgr.max_vdev_count = max_vdev_count;
 }
 
@@ -1584,6 +1587,9 @@ static inline uint8_t wlan_psoc_get_max_vdev_count(
 static inline void wlan_psoc_set_max_peer_count(struct wlan_objmgr_psoc *psoc,
 						uint16_t max_peer_count)
 {
+	if (max_peer_count > WLAN_UMAC_PSOC_MAX_PEERS)
+		QDF_BUG(0);
+
 	psoc->soc_objmgr.max_peer_count = max_peer_count;
 }
 
