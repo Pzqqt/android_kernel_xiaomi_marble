@@ -102,11 +102,11 @@ static void dsi_catalog_cmn_init(struct dsi_ctrl_hw *ctrl,
 	case DSI_CTRL_VERSION_2_5:
 		ctrl->ops.phy_reset_config = dsi_ctrl_hw_22_phy_reset_config;
 		ctrl->ops.config_clk_gating = dsi_ctrl_hw_22_config_clk_gating;
-		ctrl->ops.setup_lane_map = dsi_ctrl_hw_20_setup_lane_map;
+		ctrl->ops.setup_lane_map = dsi_ctrl_hw_22_setup_lane_map;
 		ctrl->ops.wait_for_lane_idle =
-			dsi_ctrl_hw_20_wait_for_lane_idle;
+			dsi_ctrl_hw_22_wait_for_lane_idle;
 		ctrl->ops.reg_dump_to_buffer =
-			dsi_ctrl_hw_20_reg_dump_to_buffer;
+			dsi_ctrl_hw_22_reg_dump_to_buffer;
 		ctrl->ops.ulps_ops.ulps_request = dsi_ctrl_hw_cmn_ulps_request;
 		ctrl->ops.ulps_ops.ulps_exit = dsi_ctrl_hw_cmn_ulps_exit;
 		ctrl->ops.ulps_ops.get_lanes_in_ulps =

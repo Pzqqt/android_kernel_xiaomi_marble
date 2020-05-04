@@ -243,6 +243,12 @@ void dsi_ctrl_hw_kickoff_non_embedded_mode(struct dsi_ctrl_hw *ctrl,
 					u32 flags);
 
 /* Definitions specific to 2.2 DSI controller hardware */
+void dsi_ctrl_hw_22_setup_lane_map(struct dsi_ctrl_hw *ctrl,
+		       struct dsi_lane_map *lane_map);
+int dsi_ctrl_hw_22_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl, u32 lanes);
+ssize_t dsi_ctrl_hw_22_reg_dump_to_buffer(struct dsi_ctrl_hw *ctrl,
+					  char *buf, u32 size);
+
 void dsi_ctrl_hw_22_config_clk_gating(struct dsi_ctrl_hw *ctrl, bool enable,
 		enum dsi_clk_gate_type clk_selection);
 
