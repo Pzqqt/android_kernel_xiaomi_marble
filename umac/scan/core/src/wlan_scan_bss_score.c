@@ -41,6 +41,8 @@
 
 #define SCM_BAND_2G_INDEX                   0
 #define SCM_BAND_5G_INDEX                   1
+#define SCM_BAND_6G_INDEX                   2
+
 /* 2 and 3 are reserved */
 #define SCM_MAX_BAND_INDEX                  4
 
@@ -648,6 +650,35 @@ static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+/**
+ * scm_get_band_score() - Get band prefernce weightage
+ * freq: Operating frequency of the AP
+ * @score_config: Score configuration
+ *
+ * Return : Band score for AP.
+ */
+static int
+scm_get_band_score(uint32_t freq, struct scoring_config *score_config)
+{
+	uint8_t band_index;
+	struct weight_config *weight_config;
+
+	weight_config = &score_config->weight_cfg;
+
+	if (WLAN_REG_IS_5GHZ_CH_FREQ(freq))
+		band_index = SCM_BAND_5G_INDEX;
+	else if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		band_index = SCM_BAND_2G_INDEX;
+	else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(freq))
+		band_index = SCM_BAND_6G_INDEX;
+	else
+		return 0;
+
+	return weight_config->chan_band_weightage *
+	       WLAN_GET_SCORE_PERCENTAGE(score_config->band_weight_per_index,
+					 band_index);
+}
+
 int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 		struct scan_default_params *params,
 		struct scan_cache_entry *entry,
@@ -700,8 +731,15 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	prorated_pcnt = scm_roam_calculate_prorated_pcnt_by_rssi(
 				&score_config->rssi_score, entry->rssi_raw,
 				weight_config->rssi_weightage);
-	/* If device and AP supports HT caps, extra 10% score will be added */
-	if (score_config->ht_cap && entry->ie_list.htcap)
+
+	/*
+	 * Add HT weight if HT is supported by the AP. In case
+	 * of 6 GHZ AP, HT and VHT won't be supported so that
+	 * these weightage to the same by default to match
+	 * with 2.4/5 GHZ APs where HT, VHT is supported
+	 */
+	if (score_config->ht_cap && (entry->ie_list.htcap ||
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(entry->channel.chan_freq)))
 		ht_score = prorated_pcnt *
 				weight_config->ht_caps_weightage;
 	score += ht_score;
@@ -712,11 +750,10 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	} else if (score_config->vht_cap) {
 		is_vht = true;
 	}
-	/*
-	 * If device and AP supports VHT caps, Extra 6% score will
-	 * be added to score
-	 */
-	if (is_vht && entry->ie_list.vhtcap)
+
+	/* Add VHT score to 6 GHZ AP to match with 2.4/5 GHZ APs */
+	if (is_vht && (entry->ie_list.vhtcap ||
+	    WLAN_REG_IS_6GHZ_CHAN_FREQ(entry->channel.chan_freq)))
 		vht_score = prorated_pcnt *
 				 weight_config->vht_caps_weightage;
 	score += vht_score;
@@ -757,25 +794,23 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	 */
 	if (congestion_pct < CONGESTION_THRSHOLD_FOR_BAND_OCE_SCORE) {
 		/*
-		 * If AP is on 5Ghz channel , extra weigtage is added to BSS
+		 * If AP is on 5/6 GHZ channel , extra weigtage is added to BSS
 		 * score. if RSSI is greater tha 5g rssi threshold or fall in
-		 * same bucket else give weigtage to 2.4 GH.
+		 * same bucket else give weigtage to 2.4 GHZ AP.
 		 */
 		if ((entry->rssi_raw > rssi_pref_5g_rssi_thresh) &&
 		    !same_bucket) {
-			if (WLAN_REG_IS_5GHZ_CH_FREQ(entry->channel.chan_freq))
-				band_score =
-					weight_config->chan_band_weightage *
-					    WLAN_GET_SCORE_PERCENTAGE(
-					    score_config->band_weight_per_index,
-					    SCM_BAND_5G_INDEX);
+			if (!WLAN_REG_IS_24GHZ_CH_FREQ(entry->channel.chan_freq))
+				band_score = scm_get_band_score(
+						entry->channel.chan_freq,
+						score_config);
 		} else if (WLAN_REG_IS_24GHZ_CH_FREQ(
-						entry->channel.chan_freq)) {
-			band_score = weight_config->chan_band_weightage *
-					WLAN_GET_SCORE_PERCENTAGE(
-					score_config->band_weight_per_index,
-					SCM_BAND_2G_INDEX);
+			   entry->channel.chan_freq)) {
+			band_score =
+				scm_get_band_score(entry->channel.chan_freq,
+						   score_config);
 		}
+
 		score += band_score;
 
 		oce_wan_score = scm_calculate_oce_wan_score(entry,
