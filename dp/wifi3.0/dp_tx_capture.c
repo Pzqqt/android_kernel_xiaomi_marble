@@ -107,6 +107,8 @@
 	 (_a)[3] == 0x00 &&				\
 	 (_a)[4] == 0x00 &&				\
 	 (_a)[5] == 0x00)
+/* Maximum number of retries */
+#define MAX_RETRY_Q_COUNT 20
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 
@@ -3391,7 +3393,6 @@ dp_send_mgmt_ctrl_to_stack(struct dp_pdev *pdev,
 	subtype = (ppdu_desc->frame_ctrl &
 		IEEE80211_FC0_SUBTYPE_MASK) >>
 		IEEE80211_FC0_SUBTYPE_SHIFT;
-
 	if (is_payload) {
 		wh = (struct ieee80211_frame *)qdf_nbuf_data(mgmt_ctl_nbuf);
 
@@ -3526,6 +3527,7 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	uint64_t start_tsf;
 	uint64_t end_tsf;
 	uint16_t ppdu_desc_frame_ctrl;
+	struct dp_peer *peer;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 		qdf_nbuf_data(nbuf_ppdu_desc);
@@ -3571,12 +3573,33 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 		subtype = 0;
 	}
 
-	if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL,
-					    ppdu_desc->user[0].mac_addr)) {
-		qdf_nbuf_free(nbuf_ppdu_desc);
-		status = 0;
-		goto free_ppdu_desc;
+	peer = dp_tx_cap_peer_find_by_id(pdev->soc, ppdu_desc->user[0].peer_id);
+	if (peer && !peer->bss_peer) {
+		if (!dp_peer_or_pdev_tx_cap_enabled(pdev, peer,
+						    ppdu_desc->user[0].mac_addr
+						    )) {
+			qdf_nbuf_free(nbuf_ppdu_desc);
+			status = 0;
+			dp_tx_cap_peer_unref_del(peer);
+			goto free_ppdu_desc;
+		}
+		dp_tx_cap_peer_unref_del(peer);
+	} else {
+		if (peer)
+			dp_tx_cap_peer_unref_del(peer);
+		if (!(type == IEEE80211_FC0_TYPE_MGT &&
+		    (subtype == MGMT_SUBTYPE_PROBE_RESP >> 4 ||
+		     subtype == MGMT_SUBTYPE_DISASSOC >> 4))) {
+			if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL,
+							    ppdu_desc->user[0]
+							    .mac_addr)) {
+				qdf_nbuf_free(nbuf_ppdu_desc);
+				status = 0;
+				goto free_ppdu_desc;
+			}
+		}
 	}
+
 	switch (ppdu_desc->htt_frame_type) {
 	case HTT_STATS_FTYPE_TIDQ_DATA_SU:
 	case HTT_STATS_FTYPE_TIDQ_DATA_MU:
@@ -3665,7 +3688,30 @@ get_mgmt_pkt_from_queue:
 				goto insert_mgmt_buf_to_queue;
 			}
 
+			/* check for max retry count */
+			if (qdf_nbuf_queue_len(retries_q) >=
+			    MAX_RETRY_Q_COUNT) {
+				qdf_nbuf_t nbuf_retry_ppdu;
+
+				nbuf_retry_ppdu =
+					qdf_nbuf_queue_remove(retries_q);
+				qdf_nbuf_free(nbuf_retry_ppdu);
+			}
+
+			/*
+			 * add the ppdu_desc into retry queue
+			 */
 			qdf_nbuf_queue_add(retries_q, nbuf_ppdu_desc);
+
+			/* flushing retry queue since completion status is
+			 * in final state. meaning that even though ppdu_id are
+			 * different there is a payload already.
+			 */
+			if (qdf_unlikely(ppdu_desc->user[0].completion_status ==
+					 HTT_PPDU_STATS_USER_STATUS_OK)) {
+				qdf_nbuf_queue_free(retries_q);
+			}
+
 			status = 0;
 
 insert_mgmt_buf_to_queue:
@@ -3705,6 +3751,33 @@ insert_mgmt_buf_to_queue:
 				qdf_nbuf_free(mgmt_ctl_nbuf);
 				status = 0;
 				goto free_ppdu_desc;
+			}
+
+			/* pull head based on sgen pkt or mgmt pkt */
+			if (NULL == qdf_nbuf_pull_head(mgmt_ctl_nbuf,
+						       head_size)) {
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_FATAL,
+					  " No Head space to pull !!\n");
+				qdf_assert_always(0);
+			}
+
+			wh = (struct ieee80211_frame *)
+				(qdf_nbuf_data(mgmt_ctl_nbuf));
+
+			if (type == IEEE80211_FC0_TYPE_MGT &&
+			    (subtype == MGMT_SUBTYPE_PROBE_RESP >> 4 ||
+			     subtype == MGMT_SUBTYPE_DISASSOC >> 4)) {
+				if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
+								    NULL,
+								    wh->i_addr1
+								    )) {
+					qdf_nbuf_free(nbuf_ppdu_desc);
+					qdf_nbuf_free(mgmt_ctl_nbuf);
+					qdf_nbuf_queue_free(retries_q);
+					status = 0;
+					goto free_ppdu_desc;
+				}
 			}
 
 			while (qdf_nbuf_queue_len(retries_q)) {
@@ -3748,16 +3821,6 @@ insert_mgmt_buf_to_queue:
 					continue;
 				}
 
-				/* pull head based on sgen pkt or mgmt pkt */
-				if (NULL ==
-				    qdf_nbuf_pull_head(tmp_mgmt_ctl_nbuf,
-						       head_size)) {
-					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-						  QDF_TRACE_LEVEL_FATAL,
-						  " No Head space to pull !!\n");
-					qdf_assert_always(0);
-				}
-
 				/*
 				 * frame control from ppdu_desc has
 				 * retry flag set
@@ -3795,14 +3858,6 @@ insert_mgmt_buf_to_queue:
 
 			tx_capture_info.mpdu_info.ppdu_id =
 				*(uint32_t *)qdf_nbuf_data(mgmt_ctl_nbuf);
-			/* pull head based on sgen pkt or mgmt pkt */
-			if (NULL == qdf_nbuf_pull_head(mgmt_ctl_nbuf,
-						       head_size)) {
-				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
-					  QDF_TRACE_LEVEL_FATAL,
-					  " No Head space to pull !!\n");
-				qdf_assert_always(0);
-			}
 
 			/* frame control from ppdu_desc has retry flag set */
 			frame_ctrl_le = qdf_cpu_to_le16(ppdu_desc_frame_ctrl);
@@ -3831,10 +3886,31 @@ insert_mgmt_buf_to_queue:
 			status = 0;
 			goto free_ppdu_desc;
 		}
+
+		/* check for max retry count */
+		if (qdf_nbuf_queue_len(retries_q) >= MAX_RETRY_Q_COUNT) {
+			qdf_nbuf_t nbuf_retry_ppdu;
+
+			nbuf_retry_ppdu =
+				qdf_nbuf_queue_remove(retries_q);
+			qdf_nbuf_free(nbuf_retry_ppdu);
+		}
+
 		/*
 		 * add the ppdu_desc into retry queue
 		 */
+
 		qdf_nbuf_queue_add(retries_q, nbuf_ppdu_desc);
+
+		/* flushing retry queue since completion status is
+		 * in final state. meaning that even though ppdu_id are
+		 * different there is a payload already.
+		 */
+		if (qdf_unlikely(ppdu_desc->user[0].completion_status ==
+				 HTT_PPDU_STATS_USER_STATUS_OK)) {
+			qdf_nbuf_queue_free(retries_q);
+		}
+
 		status = 0;
 	} else if ((ppdu_desc_frame_ctrl &
 		   IEEE80211_FC0_TYPE_MASK) ==
