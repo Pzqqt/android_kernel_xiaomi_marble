@@ -49,6 +49,7 @@
 #include <wlan_hdd_sysfs_wow_ito.h>
 #include <wlan_hdd_sysfs_wowl_add_ptrn.h>
 #include <wlan_hdd_sysfs_set_scan_cfg.h>
+#include <wlan_hdd_sysfs_set_mon_chan.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -668,6 +669,18 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_sta_info_interface_destroy(adapter);
 }
 
+static void
+hdd_sysfs_create_monitor_adapter_root_obj(struct hdd_adapter *adapter)
+{
+	hdd_sysfs_set_mon_chan_create(adapter);
+}
+
+static void
+hdd_sysfs_destroy_monitor_adapter_root_obj(struct hdd_adapter *adapter)
+{
+	hdd_sysfs_set_mon_chan_destroy(adapter);
+}
+
 void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 {
 	hdd_sysfs_create_driver_root_obj();
@@ -706,6 +719,9 @@ void hdd_create_adapter_sysfs_files(struct hdd_adapter *adapter)
 	case QDF_SAP_MODE:
 		hdd_sysfs_create_sap_adapter_root_obj(adapter);
 		break;
+	case QDF_MONITOR_MODE:
+		hdd_sysfs_create_monitor_adapter_root_obj(adapter);
+		break;
 	default:
 		break;
 	}
@@ -721,6 +737,9 @@ void hdd_destroy_adapter_sysfs_files(struct hdd_adapter *adapter)
 		break;
 	case QDF_SAP_MODE:
 		hdd_sysfs_destroy_sap_adapter_root_obj(adapter);
+		break;
+	case QDF_MONITOR_MODE:
+		hdd_sysfs_destroy_monitor_adapter_root_obj(adapter);
 		break;
 	default:
 		break;
