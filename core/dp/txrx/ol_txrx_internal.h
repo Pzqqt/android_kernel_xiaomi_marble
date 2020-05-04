@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -169,7 +169,12 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 	msdu = mpdu_list;
 	while (!htt_rx_msdu_desc_completes_mpdu
 		       (htt_pdev, htt_rx_msdu_desc_retrieve(htt_pdev, msdu))) {
-		msdu = qdf_nbuf_next(msdu);
+		if (!qdf_nbuf_next(msdu)) {
+			qdf_err("last-msdu bit not set!");
+			break;
+		} else {
+			msdu = qdf_nbuf_next(msdu);
+		}
 		TXRX_ASSERT2(msdu);
 	}
 	/* msdu now points to the last MSDU within the first MPDU */
