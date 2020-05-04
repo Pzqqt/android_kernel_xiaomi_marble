@@ -317,6 +317,10 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 		dat_snr = vdev_stats.vdev_snr.dat_snr;
 		ev->vdev_summary_stats[i].vdev_id = vdev_stats.vdev_id;
 
+		cp_stats_debug("vdev %d SNR bcn: %d data: %d",
+			       ev->vdev_summary_stats[i].vdev_id, bcn_snr,
+			       dat_snr);
+
 		for (j = 0; j < 4; j++) {
 			ev->vdev_summary_stats[i].stats.tx_frm_cnt[j]
 					= vdev_stats.tx_frm_cnt[j];
