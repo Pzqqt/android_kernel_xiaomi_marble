@@ -470,6 +470,7 @@ struct scoring_param {
  * current connected AP.
  * ROAM_TRIGGER_REASON_IDLE: Roam triggered due to inactivity of the device.
  * ROAM_TRIGGER_REASON_STA_KICKOUT: Roam triggered due to sta kickout event.
+ * ROAM_TRIGGER_REASON_ESS_RSSI: Roam triggered due to ess rssi
  * ROAM_TRIGGER_REASON_MAX: Maximum number of roam triggers
  */
 enum roam_trigger_reason {
@@ -489,6 +490,7 @@ enum roam_trigger_reason {
 	ROAM_TRIGGER_REASON_DEAUTH,
 	ROAM_TRIGGER_REASON_IDLE,
 	ROAM_TRIGGER_REASON_STA_KICKOUT,
+	ROAM_TRIGGER_REASON_ESS_RSSI,
 	ROAM_TRIGGER_REASON_MAX,
 };
 

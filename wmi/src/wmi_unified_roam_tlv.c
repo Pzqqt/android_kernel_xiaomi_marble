@@ -2550,6 +2550,9 @@ convert_control_roam_trigger_reason_bitmap(uint32_t trigger_reason_bitmap)
 	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_STA_KICKOUT))
 		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_STA_KICKOUT);
 
+	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_ESS_RSSI))
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_ESS_RSSI);
+
 	return fw_trigger_bitmap;
 }
 
