@@ -325,8 +325,6 @@ struct pmo_psoc_cfg {
 	bool deauth_enable;
 	bool disassoc_enable;
 	bool lpass_enable;
-	bool wowlan_deauth_enable;
-	bool wowlan_disassoc_enable;
 	uint8_t max_ps_poll;
 	uint8_t sta_dynamic_dtim;
 	uint8_t sta_mod_dtim;
