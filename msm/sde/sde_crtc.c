@@ -5003,8 +5003,6 @@ static void sde_crtc_install_perf_properties(struct sde_crtc *sde_crtc,
 static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 		struct sde_mdss_cfg *catalog)
 {
-	int i, j;
-
 	sde_kms_info_reset(info);
 
 	sde_kms_info_add_keyint(info, "hw_version", catalog->hwversion);
@@ -5050,36 +5048,6 @@ static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 	if (catalog->uidle_cfg.uidle_rev)
 		sde_kms_info_add_keyint(info, "has_uidle",
 			true);
-
-	for (i = 0; i < catalog->limit_count; i++) {
-		sde_kms_info_add_keyint(info,
-			catalog->limit_cfg[i].name,
-			catalog->limit_cfg[i].lmt_case_cnt);
-
-		for (j = 0; j < catalog->limit_cfg[i].lmt_case_cnt; j++) {
-			sde_kms_info_add_keyint(info,
-				catalog->limit_cfg[i].vector_cfg[j].usecase,
-				catalog->limit_cfg[i].vector_cfg[j].value);
-		}
-
-		if (!strcmp(catalog->limit_cfg[i].name,
-			"sspp_linewidth_usecases"))
-			sde_kms_info_add_keyint(info,
-				"sspp_linewidth_values",
-				catalog->limit_cfg[i].lmt_vec_cnt);
-		else if (!strcmp(catalog->limit_cfg[i].name,
-			"sde_bwlimit_usecases"))
-			sde_kms_info_add_keyint(info,
-				"sde_bwlimit_values",
-				catalog->limit_cfg[i].lmt_vec_cnt);
-
-		for (j = 0; j < catalog->limit_cfg[i].lmt_vec_cnt; j++) {
-			sde_kms_info_add_keyint(info, "limit_usecase",
-				catalog->limit_cfg[i].value_cfg[j].use_concur);
-			sde_kms_info_add_keyint(info, "limit_value",
-				catalog->limit_cfg[i].value_cfg[j].value);
-		}
-	}
 
 	sde_kms_info_add_keystr(info, "core_ib_ff",
 			catalog->perf.core_ib_ff);
