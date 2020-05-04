@@ -1430,6 +1430,10 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 			uint32_t *binptr_32 = (uint32_t *)&p_fft_report->buf;
 
 			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
+			if (!fft_bin_buf) {
+				spectral_err("Failed to allocate memory");
+				return;
+			}
 			for (idx = 0; idx < fft_bin_count; idx++)
 				fft_bin_buf[idx] = *(binptr_32++);
 		} else if (spectral->len_adj_swar.fftbin_size_war ==
@@ -1437,6 +1441,10 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 			uint16_t *binptr_16 = (uint16_t *)&p_fft_report->buf;
 
 			fft_bin_buf = (uint8_t *)qdf_mem_malloc(MAX_NUM_BINS);
+			if (!fft_bin_buf) {
+				spectral_err("Failed to allocate memory");
+				return;
+			}
 			for (idx = 0; idx < fft_bin_count; idx++)
 				fft_bin_buf[idx] = *(binptr_16++);
 		} else {
