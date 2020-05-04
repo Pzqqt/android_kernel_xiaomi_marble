@@ -3147,7 +3147,7 @@ mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc, struct wma_tgt_vht_cap *cfg)
 
 	 /* Set HW RX LDPC capability */
 	hw_rx_ldpc_enabled = !!cfg->vht_rx_ldpc;
-	if (hw_rx_ldpc_enabled != vht_cap_info->ldpc_coding_cap)
+	if (vht_cap_info->ldpc_coding_cap && !hw_rx_ldpc_enabled)
 		vht_cap_info->ldpc_coding_cap = hw_rx_ldpc_enabled;
 
 	/* set the Guard interval 80MHz */
