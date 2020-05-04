@@ -686,24 +686,6 @@ ucfg_pmo_set_wow_enable(struct wlan_objmgr_psoc *psoc,
 			enum pmo_wow_enable_type val);
 
 /**
- * ucfg_pmo_is_wowlan_deauth_enabled() - Get wowlan deauth enable
- * @psoc: pointer to psoc object
- *
- * Return: wowlan deauth enable or not
- */
-bool
-ucfg_pmo_is_wowlan_deauth_enabled(struct wlan_objmgr_psoc *psoc);
-
-/**
- * ucfg_pmo_is_wowlan_disassoc_enabled() - Get wowlan disassoc enable
- * @psoc: pointer to psoc object
- *
- * Return: wowlan disassoc enable
- */
-bool
-ucfg_pmo_is_wowlan_disassoc_enabled(struct wlan_objmgr_psoc *psoc);
-
-/**
  * ucfg_pmo_get_gtk_rsp(): API to send gtk response request to fwr
  * @vdev: objmgr vdev handle
  * @gtk_rsp: pmo gtk response request

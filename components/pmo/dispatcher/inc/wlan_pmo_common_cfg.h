@@ -265,46 +265,6 @@
 					0, 3, 3, \
 					CFG_VALUE_OR_DEFAULT, \
 					"Enable WoW Support")
-/*
- * <ini>
- * wowlan_deauth_enable - Enable/Disable wowlan deauth enable
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable wowlan deauth enable.
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PMO_WOWLAN_DEAUTH_ENABLE CFG_INI_BOOL("wowlan_deauth_enable", \
-						  1, \
-						  "Enable WoWLan deauth")
-/*
- * <ini>
- * wowlan_disassoc_enable - Enable/Disable wowlan disassoc enable
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable wowlan disassoc enable.
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PMO_WOWLAN_DISASSOC_ENABLE CFG_INI_BOOL("wowlan_disassoc_enable", \
-						    1, \
-						    "Enable WoW Support")
 
 /*
  * <ini>
@@ -427,8 +387,6 @@
 	CFG(CFG_PMO_MC_ADDR_LIST_ENABLE) \
 	CFG(CFG_PMO_POWERSAVE_MODE) \
 	CFG(CFG_PMO_MAX_PS_POLL) \
-	CFG(CFG_PMO_WOWLAN_DEAUTH_ENABLE) \
-	CFG(CFG_PMO_WOWLAN_DISASSOC_ENABLE) \
 	CFG(CFG_PMO_WOW_ENABLE) \
 	CFG(CFG_PMO_ACTIVE_MODE) \
 	CFG(CFG_PMO_PWR_FAILURE) \
