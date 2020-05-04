@@ -222,7 +222,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
-	int hw_macid_pdev_id_map[MAX_PDEV_CNT];
+	int hw_macid_pdev_id_map[MAX_NUM_LMAC_HW];
 	int base_hw_macid;
 	bool rx_hash;
 	bool tso_enabled;
