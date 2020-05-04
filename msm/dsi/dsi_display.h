@@ -188,6 +188,8 @@ struct dsi_display_ext_bridge {
  * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
  *				wait sequence.
  * @is_active:        status of the display
+ * @trusted_vm_env:   Set to true, it the executing VM is Trusted VM.
+ *                    Set to false, otherwise.
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -281,6 +283,8 @@ struct dsi_display {
 	/* panel id of the display */
 	u64 panel_id;
 	bool is_active;
+
+	bool trusted_vm_env;
 };
 
 int dsi_display_dev_probe(struct platform_device *pdev);

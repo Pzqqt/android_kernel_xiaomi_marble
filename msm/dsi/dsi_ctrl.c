@@ -2792,7 +2792,8 @@ int dsi_ctrl_update_host_state(struct dsi_ctrl *dsi_ctrl,
 /**
  * dsi_ctrl_host_init() - Initialize DSI host hardware.
  * @dsi_ctrl:        DSI controller handle.
- * @is_splash_enabled:        boolean signifying splash status.
+ * @skip_op:         Boolean to indicate few operations can be skipped.
+ *                   Set during the cont-splash or trusted-vm enable case.
  *
  * Initializes DSI controller hardware with host configuration provided by
  * dsi_ctrl_update_host_config(). Initialization can be performed only during
@@ -2801,7 +2802,7 @@ int dsi_ctrl_update_host_state(struct dsi_ctrl *dsi_ctrl,
  *
  * Return: error code.
  */
-int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled)
+int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool skip_op)
 {
 	int rc = 0;
 
@@ -2818,10 +2819,11 @@ int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled)
 		goto error;
 	}
 
-	/* For Splash usecases we omit hw operations as bootloader
-	 * already takes care of them
+	/*
+	 * For continuous splash/trusted vm usecases we omit hw operations
+	 * as bootloader/primary vm takes care of them respectively
 	 */
-	if (!is_splash_enabled) {
+	if (!skip_op) {
 		dsi_ctrl->hw.ops.setup_lane_map(&dsi_ctrl->hw,
 					&dsi_ctrl->host_config.lane_map);
 
@@ -2850,8 +2852,8 @@ int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled)
 	dsi_ctrl->hw.ops.enable_status_interrupts(&dsi_ctrl->hw, 0x0);
 	dsi_ctrl_enable_error_interrupts(dsi_ctrl);
 
-	DSI_CTRL_DEBUG(dsi_ctrl, "Host initialization complete, continuous splash status:%d\n",
-		is_splash_enabled);
+	DSI_CTRL_DEBUG(dsi_ctrl, "Host initialization complete, skip op: %d\n",
+			skip_op);
 	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_HOST_INIT, 0x1);
 error:
 	mutex_unlock(&dsi_ctrl->ctrl_lock);
@@ -3250,42 +3252,6 @@ int dsi_ctrl_get_host_engine_init_state(struct dsi_ctrl *dsi_ctrl,
 }
 
 /**
- * dsi_ctrl_update_host_engine_state_for_cont_splash() -
- *            set engine state for dsi controller during continuous splash
- * @dsi_ctrl:          DSI controller handle.
- * @state:             Engine state.
- *
- * Set host engine state for DSI controller during continuous splash.
- *
- * Return: error code.
- */
-int dsi_ctrl_update_host_engine_state_for_cont_splash(struct dsi_ctrl *dsi_ctrl,
-					enum dsi_engine_state state)
-{
-	int rc = 0;
-
-	if (!dsi_ctrl || (state >= DSI_CTRL_ENGINE_MAX)) {
-		DSI_CTRL_ERR(dsi_ctrl, "Invalid params\n");
-		return -EINVAL;
-	}
-
-	mutex_lock(&dsi_ctrl->ctrl_lock);
-
-	rc = dsi_ctrl_check_state(dsi_ctrl, DSI_CTRL_OP_HOST_ENGINE, state);
-	if (rc) {
-		DSI_CTRL_ERR(dsi_ctrl, "Controller state check failed, rc=%d\n",
-				rc);
-		goto error;
-	}
-
-	DSI_CTRL_DEBUG(dsi_ctrl, "Set host engine state = %d\n", state);
-	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_HOST_ENGINE, state);
-error:
-	mutex_unlock(&dsi_ctrl->ctrl_lock);
-	return rc;
-}
-
-/**
  * dsi_ctrl_set_power_state() - set power state for dsi controller
  * @dsi_ctrl:          DSI controller handle.
  * @state:             Power state.
@@ -3392,6 +3358,8 @@ error:
  * dsi_ctrl_set_host_engine_state() - set host engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Host engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON and cmd, video engines are disabled.
@@ -3399,7 +3367,7 @@ error:
  * Return: error code.
  */
 int dsi_ctrl_set_host_engine_state(struct dsi_ctrl *dsi_ctrl,
-				   enum dsi_engine_state state)
+				   enum dsi_engine_state state, bool skip_op)
 {
 	int rc = 0;
 
@@ -3417,10 +3385,12 @@ int dsi_ctrl_set_host_engine_state(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	if (state == DSI_CTRL_ENGINE_ON)
-		dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, true);
-	else
-		dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, false);
+	if (!skip_op) {
+		if (state == DSI_CTRL_ENGINE_ON)
+			dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, true);
+		else
+			dsi_ctrl->hw.ops.ctrl_en(&dsi_ctrl->hw, false);
+	}
 
 	DSI_CTRL_DEBUG(dsi_ctrl, "Set host engine state = %d\n", state);
 	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_HOST_ENGINE, state);
@@ -3433,6 +3403,8 @@ error:
  * dsi_ctrl_set_cmd_engine_state() - set command engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Command engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -3440,7 +3412,7 @@ error:
  * Return: error code.
  */
 int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state)
+				  enum dsi_engine_state state, bool skip_op)
 {
 	int rc = 0;
 
@@ -3456,12 +3428,15 @@ int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	if (state == DSI_CTRL_ENGINE_ON)
-		dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, true);
-	else
-		dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, false);
+	if (!skip_op) {
+		if (state == DSI_CTRL_ENGINE_ON)
+			dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, true);
+		else
+			dsi_ctrl->hw.ops.cmd_engine_en(&dsi_ctrl->hw, false);
+	}
 
-	DSI_CTRL_DEBUG(dsi_ctrl, "Set cmd engine state = %d\n", state);
+	DSI_CTRL_DEBUG(dsi_ctrl, "Set cmd engine state:%d, skip_op:%d\n",
+					state, skip_op);
 	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_CMD_ENGINE, state);
 error:
 	return rc;
@@ -3471,6 +3446,8 @@ error:
  * dsi_ctrl_set_vid_engine_state() - set video engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Video engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -3478,7 +3455,7 @@ error:
  * Return: error code.
  */
 int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state)
+				  enum dsi_engine_state state, bool skip_op)
 {
 	int rc = 0;
 	bool on;
@@ -3497,14 +3474,18 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
 		goto error;
 	}
 
-	on = (state == DSI_CTRL_ENGINE_ON) ? true : false;
-	dsi_ctrl->hw.ops.video_engine_en(&dsi_ctrl->hw, on);
 
-	/* perform a reset when turning off video engine */
-	if (!on)
-		dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
+	if (!skip_op) {
+		on = (state == DSI_CTRL_ENGINE_ON) ? true : false;
+		dsi_ctrl->hw.ops.video_engine_en(&dsi_ctrl->hw, on);
 
-	DSI_CTRL_DEBUG(dsi_ctrl, "Set video engine state = %d\n", state);
+		/* perform a reset when turning off video engine */
+		if (!on)
+			dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
+	}
+
+	DSI_CTRL_DEBUG(dsi_ctrl, "Set video engine state:%d, skip_op:%d\n",
+					state, skip_op);
 	dsi_ctrl_update_state(dsi_ctrl, DSI_CTRL_OP_VID_ENGINE, state);
 error:
 	mutex_unlock(&dsi_ctrl->ctrl_lock);

@@ -170,6 +170,18 @@ struct dsi_panel_spr_info {
 	enum msm_display_spr_pack_type pack_type;
 };
 
+struct dsi_panel;
+
+struct dsi_panel_ops {
+	int (*pinctrl_init)(struct dsi_panel *panel);
+	int (*gpio_request)(struct dsi_panel *panel);
+	int (*pinctrl_deinit)(struct dsi_panel *panel);
+	int (*gpio_release)(struct dsi_panel *panel);
+	int (*bl_register)(struct dsi_panel *panel);
+	int (*bl_unregister)(struct dsi_panel *panel);
+	int (*parse_gpios)(struct dsi_panel *panel);
+};
+
 struct dsi_panel {
 	const char *name;
 	const char *type;
@@ -227,6 +239,8 @@ struct dsi_panel {
 	int panel_test_gpio;
 	int power_mode;
 	enum dsi_panel_physical_type panel_type;
+
+	struct dsi_panel_ops panel_ops;
 };
 
 static inline bool dsi_panel_ulps_feature_enabled(struct dsi_panel *panel)
@@ -258,7 +272,8 @@ struct dsi_panel *dsi_panel_get(struct device *parent,
 				struct device_node *of_node,
 				struct device_node *parser_node,
 				const char *type,
-				int topology_override);
+				int topology_override,
+				bool trusted_vm_env);
 
 int dsi_panel_trigger_esd_attack(struct dsi_panel *panel);
 

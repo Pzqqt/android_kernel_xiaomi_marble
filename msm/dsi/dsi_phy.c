@@ -872,7 +872,8 @@ error:
  * @config:             DSI host configuration.
  * @pll_source:         Source PLL for PHY clock.
  * @skip_validation:    Validation will not be performed on parameters.
- * @is_cont_splash_enabled:    check whether continuous splash enabled.
+ * @skip_op:            Skip re-enabling dsi phy hw during usecases like
+ *                      cont-splash/trusted-vm if set to true.
  *
  * Validates and enables DSI PHY.
  *
@@ -882,7 +883,7 @@ int dsi_phy_enable(struct msm_dsi_phy *phy,
 		   struct dsi_host_config *config,
 		   enum dsi_phy_pll_source pll_source,
 		   bool skip_validation,
-		   bool is_cont_splash_enabled)
+		   bool skip_op)
 {
 	int rc = 0;
 
@@ -917,7 +918,7 @@ int dsi_phy_enable(struct msm_dsi_phy *phy,
 		goto error;
 	}
 
-	if (!is_cont_splash_enabled) {
+	if (!skip_op) {
 		dsi_phy_enable_hw(phy);
 		DSI_PHY_DBG(phy, "cont splash not enabled, phy enable required\n");
 	}
@@ -968,10 +969,12 @@ int dsi_phy_lane_reset(struct msm_dsi_phy *phy)
 /**
  * dsi_phy_disable() - disable DSI PHY hardware.
  * @phy:        DSI PHY handle.
+ * @skip_op:    Skip disabling dsi phy hw during usecases like
+ *              trusted-vm if set to true.
  *
  * Return: error code.
  */
-int dsi_phy_disable(struct msm_dsi_phy *phy)
+int dsi_phy_disable(struct msm_dsi_phy *phy, bool skip_op)
 {
 	int rc = 0;
 
@@ -981,7 +984,8 @@ int dsi_phy_disable(struct msm_dsi_phy *phy)
 	}
 
 	mutex_lock(&phy->phy_lock);
-	dsi_phy_disable_hw(phy);
+	if (!skip_op)
+		dsi_phy_disable_hw(phy);
 	phy->dsi_phy_state = DSI_PHY_ENGINE_OFF;
 	mutex_unlock(&phy->phy_lock);
 
