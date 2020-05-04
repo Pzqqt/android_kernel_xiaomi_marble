@@ -43,8 +43,9 @@ void audio_aio_cb(uint32_t opcode, uint32_t token,
 {
 	struct q6audio_aio *audio = (struct q6audio_aio *)priv;
 	union msm_audio_event_payload e_payload;
+	unsigned long flags = 0;
 
-	spin_lock(&enc_dec_lock);
+	spin_lock_irqsave(&enc_dec_lock, flags);
 	if (audio == NULL) {
 		pr_err("%s: failed to get q6audio value\n", __func__);
 		goto error;
@@ -115,7 +116,7 @@ void audio_aio_cb(uint32_t opcode, uint32_t token,
 		break;
 	}
 error:
-	spin_unlock(&enc_dec_lock);
+	spin_unlock_irqrestore(&enc_dec_lock, flags);
 }
 
 int extract_meta_out_info(struct q6audio_aio *audio,

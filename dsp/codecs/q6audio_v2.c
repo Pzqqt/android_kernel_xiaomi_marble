@@ -20,8 +20,9 @@ void q6asm_in_cb(uint32_t opcode, uint32_t token,
 {
 	struct q6audio_in *audio = (struct q6audio_in *)priv;
 	unsigned long flags;
+	unsigned long en_de_flags;
 
-	spin_lock(&enc_dec_lock);
+	spin_lock_irqsave(&enc_dec_lock, en_de_flags);
 	if (audio == NULL) {
 		pr_err("%s: failed to get q6audio value\n", __func__);
 		goto error;
@@ -65,7 +66,7 @@ void q6asm_in_cb(uint32_t opcode, uint32_t token,
 	}
 	spin_unlock_irqrestore(&audio->dsp_lock, flags);
 error:
-	spin_unlock(&enc_dec_lock);
+	spin_unlock_irqrestore(&enc_dec_lock, en_de_flags);
 }
 
 void  audio_in_get_dsp_frames(void *priv,
