@@ -220,6 +220,30 @@ QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *country_code);
 
 /**
+ * reg_get_ctry_idx_max_bw_from_country_code() - Get the max 5G bandwidth
+ * from country code
+ * @cc : Country Code
+ * @max_bw_5g : Max 5G bandwidth supported by the country
+ *
+ * Return : QDF_STATUS
+ */
+
+QDF_STATUS reg_get_max_5g_bw_from_country_code(uint16_t cc,
+					       uint16_t *max_bw_5g);
+
+/**
+ * reg_get_max_5g_bw_from_regdomain() - Get the max 5G bandwidth
+ * supported by the regdomain
+ * @orig_regdmn : Regdomain pair value
+ * @max_bw_5g : Max 5G bandwidth supported by the country
+ *
+ * Return : QDF_STATUS
+ */
+
+QDF_STATUS reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
+					    uint16_t *max_bw_5g);
+
+/**
  * reg_get_current_dfs_region () - Get the current dfs region
  * @pdev: Pointer to pdev
  * @dfs_reg: pointer to dfs region

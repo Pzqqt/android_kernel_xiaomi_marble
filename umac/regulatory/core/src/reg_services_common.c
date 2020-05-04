@@ -1547,6 +1547,53 @@ QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS reg_get_max_5g_bw_from_country_code(uint16_t cc,
+					       uint16_t *max_bw_5g)
+{
+	uint16_t i;
+	int num_countries;
+
+	*max_bw_5g = 0;
+	reg_get_num_countries(&num_countries);
+
+	for (i = 0; i < num_countries; i++) {
+		if (g_all_countries[i].country_code == cc)
+			break;
+	}
+
+	if (i == num_countries)
+		return QDF_STATUS_E_FAILURE;
+
+	*max_bw_5g = g_all_countries[i].max_bw_5g;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
+					    uint16_t *max_bw_5g)
+{
+	uint16_t i;
+	int num_reg_dmn;
+
+	*max_bw_5g = 0;
+	reg_get_num_reg_dmn_pairs(&num_reg_dmn);
+
+	for (i = 0; i < num_reg_dmn; i++) {
+		if (g_reg_dmn_pairs[i].reg_dmn_pair_id == regdmn)
+			break;
+	}
+
+	if (i == num_reg_dmn)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!regdomains_5g[g_reg_dmn_pairs[i].dmn_id_5g].num_reg_rules)
+		*max_bw_5g = 0;
+	else
+		*max_bw_5g = BW_160_MHZ;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void reg_get_current_dfs_region(struct wlan_objmgr_pdev *pdev,
 				enum dfs_reg *dfs_reg)
 {

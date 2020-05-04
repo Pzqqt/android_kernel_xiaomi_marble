@@ -84,6 +84,24 @@ QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
 	return reg_read_current_country(psoc, country);
 }
 
+QDF_STATUS wlan_reg_get_max_5g_bw_from_country_code(uint16_t cc,
+						    uint16_t *max_bw_5g)
+{
+	/*
+	 * Get the max 5G bandwidth from country code
+	 */
+	return reg_get_max_5g_bw_from_country_code(cc, max_bw_5g);
+}
+
+QDF_STATUS wlan_reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
+						 uint16_t *max_bw_5g)
+{
+	/*
+	 * Get the max 5G bandwidth from regdomain pair value
+	 */
+	return reg_get_max_5g_bw_from_regdomain(regdmn, max_bw_5g);
+}
+
 #ifdef CONFIG_CHAN_NUM_API
 /**
  * wlan_reg_get_channel_state() - Get channel state from regulatory

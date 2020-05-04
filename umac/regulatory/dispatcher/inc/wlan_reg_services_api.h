@@ -337,6 +337,29 @@ QDF_STATUS wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
 
 /**
+ * wlan_reg_get_ctry_idx_max_bw_from_country_code() - Get the max 5G
+ * bandwidth from country code
+ * @cc : Country Code
+ * @max_bw_5g : Max 5G bandwidth supported by the country
+ *
+ * Return : QDF_STATUS
+ */
+
+QDF_STATUS wlan_reg_get_max_5g_bw_from_country_code(uint16_t cc,
+						    uint16_t *max_bw_5g);
+
+/**
+ * wlan_reg_get_max_5g_bw_from_regdomain() - Get the max 5G bandwidth
+ * supported by the regdomain
+ * @orig_regdmn : Regdomain Pair value
+ * @max_bw_5g : Max 5G bandwidth supported by the country
+ *
+ * Return : QDF_STATUS
+ */
+QDF_STATUS wlan_reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
+						 uint16_t *max_bw_5g);
+
+/**
  * wlan_reg_get_fcc_constraint() - Check FCC constraint on given frequency
  * @pdev: physical dev to get
  * @freq: frequency to be checked
