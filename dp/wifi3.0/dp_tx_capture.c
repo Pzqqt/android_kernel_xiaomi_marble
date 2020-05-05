@@ -3474,20 +3474,23 @@ dp_update_tx_cap_info(struct dp_pdev *pdev,
 	mpdu_info->ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
 	mpdu_info->ppdu_end_timestamp = ppdu_desc->ppdu_end_timestamp;
 	mpdu_info->tx_duration = ppdu_desc->tx_duration;
+
+	/* update cdp_tx_indication_mpdu_info */
+	dp_tx_update_user_mpdu_info(ppdu_desc->ppdu_id,
+				    &tx_capture_info->mpdu_info,
+				    user);
+
 	if (bar_frm_with_data) {
 		mpdu_info->ppdu_start_timestamp =
 			ppdu_desc->bar_ppdu_start_timestamp;
 		mpdu_info->ppdu_end_timestamp =
 			ppdu_desc->bar_ppdu_end_timestamp;
 		mpdu_info->tx_duration = ppdu_desc->bar_tx_duration;
+		mpdu_info->preamble = ppdu_desc->phy_mode;
 	}
+
 	mpdu_info->seq_no = user->start_seq;
 	mpdu_info->num_msdu = ppdu_desc->num_msdu;
-
-	/* update cdp_tx_indication_mpdu_info */
-	dp_tx_update_user_mpdu_info(ppdu_desc->ppdu_id,
-				    &tx_capture_info->mpdu_info,
-				    user);
 	tx_capture_info->ppdu_desc = ppdu_desc;
 	tx_capture_info->mpdu_info.channel_num = pdev->operating_channel.num;
 
