@@ -835,12 +835,14 @@ dp_rx_fisa_flush_tcp_flow(struct dp_vdev *vdev,
 {
 	qdf_nbuf_t head_skb = fisa_flow->head_skb;
 	struct iphdr *head_skb_iph;
-	struct skb_shared_info *shinfo = skb_shinfo(head_skb);
+	struct skb_shared_info *shinfo;
 
 	if (!head_skb) {
 		dp_fisa_debug("Already flushed");
 		return;
 	}
+
+	shinfo = skb_shinfo(head_skb);
 
 	/* Update the head_skb before flush */
 	head_skb->hash = fisa_flow->flow_hash;
