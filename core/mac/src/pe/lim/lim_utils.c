@@ -538,6 +538,12 @@ void lim_deactivate_timers(struct mac_context *mac_ctx)
 	}
 	tx_timer_deactivate(&lim_timer->gLimDeauthAckTimer);
 
+	if (tx_timer_running(&lim_timer->sae_auth_timer)) {
+		pe_err("SAE Auth failure timer running call the timeout API");
+		/* Cleanup as if SAE auth timer expired */
+		lim_timer_handler(mac_ctx, SIR_LIM_AUTH_SAE_TIMEOUT);
+	}
+
 	tx_timer_deactivate(&lim_timer->sae_auth_timer);
 }
 
