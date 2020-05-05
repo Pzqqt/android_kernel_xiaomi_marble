@@ -705,10 +705,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 			}
 
 			if (ndi_present) {
-				req->scan_req.burst_duration =
-					scm_scan_get_burst_duration(
-						req->scan_req.dwell_time_active,
-						scan_obj->miracast_enabled);
+				req->scan_req.burst_duration = 0;
 				break;
 			}
 		} while (0);
