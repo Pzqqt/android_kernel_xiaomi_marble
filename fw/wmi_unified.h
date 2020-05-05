@@ -11678,6 +11678,12 @@ WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL = 9,
  * after AP has set the TIM bit
  */
 WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX = 10,
+
+/**
+ * Flag to enable/disable Powersave Optimization
+ * in WOW
+ */
+WMI_STA_PS_PARAM_ENABLE_PS_OPT_IN_WOW = 11,
 };
 
 typedef struct {
