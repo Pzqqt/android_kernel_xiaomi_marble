@@ -709,7 +709,6 @@ struct csr_roam_profile {
 	uint8_t MFPRequired;
 	uint8_t MFPCapable;
 #endif
-	tAniEdType mgmt_encryption_type;
 	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
 	uint32_t op_freq;
@@ -806,8 +805,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	tCsrEncryptionList EncryptionInfo;
 	eCsrEncryptionType mcEncryptionType;
 	tCsrEncryptionList mcEncryptionInfo;
-	/* group management cipher suite used for 11w */
-	tAniEdType mgmt_encryption_type;
 	uint8_t country_code[WNI_CFG_COUNTRY_CODE_LEN];
 	uint32_t vht_channel_width;
 	tCsrKeys Keys;

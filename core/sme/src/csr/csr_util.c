@@ -2627,68 +2627,6 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
 }
 #endif /* FEATURE_WLAN_WAPI */
 
-#ifdef WLAN_FEATURE_11W
-static bool csr_is_wpa_oui_equal(struct mac_context *mac, uint8_t *Oui1,
-				 uint8_t *Oui2)
-{
-	return !qdf_mem_cmp(Oui1, Oui2, CSR_WPA_OUI_SIZE);
-}
-
-static bool csr_is_oui_match(struct mac_context *mac,
-			     uint8_t AllCyphers[][CSR_WPA_OUI_SIZE],
-			   uint8_t cAllCyphers, uint8_t Cypher[], uint8_t Oui[])
-{
-	bool fYes = false;
-	uint8_t idx;
-
-	for (idx = 0; idx < cAllCyphers; idx++) {
-		if (csr_is_wpa_oui_equal(mac, AllCyphers[idx], Cypher)) {
-			fYes = true;
-			break;
-		}
-	}
-
-	if (fYes && Oui)
-		qdf_mem_copy(Oui, AllCyphers[idx], CSR_WPA_OUI_SIZE);
-
-	return fYes;
-}
-
-/*
- * csr_is_group_mgmt_gmac_128() - check whether oui is GMAC_128
- * @mac: Global MAC context
- * @all_suites: pointer to all supported akm suites
- * @suite_count: all supported akm suites count
- * @oui: Oui needs to be matched
- *
- * Return: True if OUI is GMAC_128, false otherwise
- */
-static bool csr_is_group_mgmt_gmac_128(struct mac_context *mac,
-				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
-				uint8_t cAllSuites, uint8_t Oui[])
-{
-	return csr_is_oui_match(mac, AllSuites, cAllSuites,
-				csr_group_mgmt_oui[ENUM_GMAC_128], Oui);
-}
-
-/*
- * csr_is_group_mgmt_gmac_256() - check whether oui is GMAC_256
- * @mac: Global MAC context
- * @all_suites: pointer to all supported akm suites
- * @suite_count: all supported akm suites count
- * @oui: Oui needs to be matched
- *
- * Return: True if OUI is GMAC_256, false otherwise
- */
-static bool csr_is_group_mgmt_gmac_256(struct mac_context *mac,
-				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
-				uint8_t cAllSuites, uint8_t Oui[])
-{
-	return csr_is_oui_match(mac, AllSuites, cAllSuites,
-				csr_group_mgmt_oui[ENUM_GMAC_256], Oui);
-}
-#endif
-
 bool csr_is_pmkid_found_for_peer(struct mac_context *mac,
 				 struct csr_roam_session *session,
 				 tSirMacAddr peer_mac_addr,
@@ -2976,78 +2914,6 @@ uint8_t csr_retrieve_wpa_ie(struct mac_context *mac, uint8_t session_id,
 	return cbWpaIe;
 }
 
-#ifdef WLAN_FEATURE_11W
-/**
- * csr_get_mc_mgmt_cipher(): Get mcast management cipher from profile rsn
- * @mac: mac ctx
- * @profile: connect profile
- * @bss: ap scan entry
- * @ap_ie: AP IE's
- *
- * Return: none
- */
-static void csr_get_mc_mgmt_cipher(struct mac_context *mac,
-				   struct csr_roam_profile *profile,
-				   struct bss_description *bss,
-				   tDot11fBeaconIEs *ap_ie)
-{
-	int ret;
-	tDot11fIERSN rsn_ie = {0};
-	uint8_t n_mgmt_cipher = 1;
-	struct rsn_caps rsn_caps;
-	tDot11fBeaconIEs *local_ap_ie = ap_ie;
-	uint8_t grp_mgmt_arr[CSR_RSN_MAX_MULTICAST_CYPHERS][CSR_RSN_OUI_SIZE];
-
-	if (!profile->MFPEnabled)
-		return;
-
-	if (!local_ap_ie &&
-	    (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies
-				    (mac, bss, &local_ap_ie))))
-		return;
-
-	qdf_mem_copy(&rsn_caps, local_ap_ie->RSN.RSN_Cap, sizeof(rsn_caps));
-
-	if (!ap_ie && local_ap_ie)
-		/* locally allocated */
-		qdf_mem_free(local_ap_ie);
-
-	/* if AP is not PMF capable return */
-	if (!rsn_caps.MFPCapable)
-		return;
-
-	ret = dot11f_unpack_ie_rsn(mac, profile->pRSNReqIE + 2,
-				   profile->nRSNReqIELength -2,
-				   &rsn_ie, false);
-	if (DOT11F_FAILED(ret))
-		return;
-
-	qdf_mem_copy(&rsn_caps, rsn_ie.RSN_Cap, sizeof(rsn_caps));
-
-	/* if self cap is not PMF capable return */
-	if (!rsn_caps.MFPCapable)
-		return;
-
-	qdf_mem_copy(grp_mgmt_arr, rsn_ie.gp_mgmt_cipher_suite,
-		     CSR_RSN_OUI_SIZE);
-	if (csr_is_group_mgmt_gmac_128(mac, grp_mgmt_arr, n_mgmt_cipher, NULL))
-		profile->mgmt_encryption_type = eSIR_ED_AES_GMAC_128;
-	else if (csr_is_group_mgmt_gmac_256(mac, grp_mgmt_arr,
-		 n_mgmt_cipher, NULL))
-		profile->mgmt_encryption_type = eSIR_ED_AES_GMAC_256;
-	else
-		/* Default is CMAC */
-		profile->mgmt_encryption_type = eSIR_ED_AES_128_CMAC;
-}
-#else
-static inline
-void csr_get_mc_mgmt_cipher(struct mac_context *mac,
-			    struct csr_roam_profile *profile,
-			    struct bss_description *bss,
-			    tDot11fBeaconIEs *ap_ie)
-{
-}
-#endif
 /* If a RSNIE exists in the profile, just use it. Or else construct
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
@@ -3071,8 +2937,6 @@ uint8_t csr_retrieve_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
 				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
 					     cbRsnIe);
-				csr_get_mc_mgmt_cipher(mac, pProfile,
-						       pSirBssDesc, pIes);
 			} else {
 				sme_warn("Invalid RSN IE length: %d",
 					 pProfile->nRSNReqIELength);

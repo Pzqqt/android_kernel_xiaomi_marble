@@ -944,10 +944,6 @@ struct join_req {
 	tAniEdType MCEncryptionType;
 	enum ani_akm_type akm;
 
-#ifdef WLAN_FEATURE_11W
-	tAniEdType MgmtEncryptionType;
-#endif
-
 	bool is11Rconnection;
 	bool is_adaptive_11r_connection;
 #ifdef FEATURE_WLAN_ESE

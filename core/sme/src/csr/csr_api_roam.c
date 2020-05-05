@@ -9389,8 +9389,6 @@ csr_roam_save_connected_information(struct mac_context *mac,
 		pConnectProfile->mcEncryptionType =
 			pProfile->negotiatedMCEncryptionType;
 		pConnectProfile->mcEncryptionInfo = pProfile->mcEncryptionType;
-		pConnectProfile->mgmt_encryption_type =
-				pProfile->mgmt_encryption_type;
 		pConnectProfile->BSSType = pProfile->BSSType;
 		pConnectProfile->modifyProfileFields.uapsd_mask =
 			pProfile->uapsd_mask;
@@ -15269,55 +15267,6 @@ static QDF_STATUS csr_set_ldpc_exception(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_11W
-/**
- * csr_is_mfpc_capable() - is MFPC capable
- * @ies: AP information element
- *
- * Return: true if MFPC capable, false otherwise
- */
-bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
-{
-	bool mfpc_capable = false;
-
-	if (rsn && rsn->present &&
-	    ((rsn->RSN_Cap[0] >> 7) & 0x01))
-		mfpc_capable = true;
-
-	return mfpc_capable;
-}
-
-/**
- * csr_set_mgmt_enc_type() - set mgmt enc type for PMF
- * @profile: roam profile
- * @ies: AP ie
- * @csr_join_req: csr join req
- *
- * Return: void
- */
-static void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
-				  tDot11fBeaconIEs *ies,
-				  struct join_req *csr_join_req)
-{
-	if (profile->MFPEnabled)
-		csr_join_req->MgmtEncryptionType =
-					profile->mgmt_encryption_type;
-	else
-		csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
-
-	if (profile->MFPEnabled &&
-	   !(profile->MFPRequired) &&
-	   !csr_is_mfpc_capable(&ies->RSN))
-		csr_join_req->MgmtEncryptionType = eSIR_ED_NONE;
-}
-#else
-static inline void csr_set_mgmt_enc_type(struct csr_roam_profile *profile,
-					 tDot11fBeaconIEs *pIes,
-					 struct join_req *csr_join_req)
-{
-}
-#endif
-
 #ifdef WLAN_FEATURE_FILS_SK
 /*
  * csr_update_fils_connection_info: Copy fils connection info to join request
@@ -16224,7 +16173,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		csr_join_req->MCEncryptionType =
 				csr_translate_encrypt_type_to_ed_type
 					(pProfile->negotiatedMCEncryptionType);
-	csr_set_mgmt_enc_type(pProfile, pIes, csr_join_req);
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  mac->mlme_cfg->lfr.ese_enabled;
 #endif

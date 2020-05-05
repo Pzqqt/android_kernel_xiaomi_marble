@@ -1020,15 +1020,6 @@ csr_roam_set_bss_config_cfg(struct mac_context *mac_ctx, uint32_t session_id,
 void csr_prune_channel_list_for_mode(struct mac_context *mac,
 				     struct csr_channel *pChannelList);
 
-#ifdef WLAN_FEATURE_11W
-bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn);
-#else
-static inline bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
-{
-	return false;
-}
-#endif
-
 /**
  * csr_get_rf_band()
  *

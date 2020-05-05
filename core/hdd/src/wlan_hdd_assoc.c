@@ -5375,8 +5375,10 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 			hdd_translate_rsn_to_csr_encryption_type(
 					dot11_rsn_ie.gp_cipher_suite);
 #ifdef WLAN_FEATURE_11W
-		*mfp_required = (dot11_rsn_ie.RSN_Cap[0] >> 6) & 0x1;
-		*mfp_capable = csr_is_mfpc_capable(&dot11_rsn_ie);
+		*mfp_required = dot11_rsn_ie.RSN_Cap[0] &
+					WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+		*mfp_capable =  dot11_rsn_ie.RSN_Cap[0] &
+					WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
 #endif
 		qdf_mem_copy(&rsn_cap, dot11_rsn_ie.RSN_Cap, sizeof(rsn_cap));
 		wlan_crypto_set_vdev_param(adapter->vdev,
