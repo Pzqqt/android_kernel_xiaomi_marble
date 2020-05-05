@@ -1179,7 +1179,7 @@ enum _ol_ath_param_t {
 	/* Prioritize scan over CAC time */
 	OL_ATH_SCAN_OVER_CAC = 441,
 #endif
-
+	OL_ATH_PARAM_CFR_CAPTURE_STATUS = 442,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3057,6 +3057,9 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"setHALparam",         35808, SET_PARAM, 1},
 	{"getHALparam",         35809, GET_PARAM, 0},
 	{"get_aggr_burst",      35821, GET_PARAM, 0},
+	{"get_cfr_capture_status",
+	 OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_CFR_CAPTURE_STATUS, GET_PARAM, 0},
+
 };
 #endif
 #endif
