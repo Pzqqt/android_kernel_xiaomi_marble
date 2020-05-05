@@ -116,12 +116,6 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 			diff = (lut->dbr_tstamp > lut->txrx_tstamp) ?
 				(lut->dbr_tstamp - lut->txrx_tstamp) :
 				(lut->txrx_tstamp - lut->dbr_tstamp);
-			cfr_err("idx:%d dbrevnt: %d txrxevent: %d "
-				"dbrppdu:0x%x txrxppdu:0x%x dbr_tstamp: %llu "
-				"txrx_tstamp: %llu diff: %llu\n",
-				i, lut->dbr_recv, lut->tx_recv,
-				lut->dbr_ppdu_id, lut->tx_ppdu_id,
-				lut->dbr_tstamp, lut->txrx_tstamp, diff);
 		}
 
 	}
@@ -744,12 +738,6 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		release_lut_entry_enh(pdev, lut);
 		target_if_dbr_buf_release(pdev, DBR_MODULE_CFR, buf_addr,
 					  cookie, srng_id);
-		cfr_debug("Data sent to upper layers, release look up table");
-	} else if (status == STATUS_HOLD) {
-		cfr_debug("HOLD for buffer address: 0x%pK cookie: %u",
-			  (void *)((uintptr_t)buf_addr), cookie);
-	} else {
-		cfr_debug("Correlation returned invalid status!!");
 	}
 
 unlock:
@@ -920,14 +908,10 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 							   &end_magic, 4);
 		dump_metadata(header, cookie);
 		release_lut_entry_enh(pdev, lut);
-		cfr_debug("Data sent to upper layers, released look up table");
 		status = true;
 	} else if (status == STATUS_HOLD) {
-		cfr_debug("TxRx event not received yet. "
-			  "Buffer is not released");
 		status = false;
 	} else {
-		cfr_debug("Correlation returned invalid status!!");
 		status = true;
 	}
 
@@ -1265,13 +1249,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		release_lut_entry_enh(pdev, lut);
 		target_if_dbr_buf_release(pdev, DBR_MODULE_CFR, buf_addr,
 					  cookie, 0);
-		cfr_debug("Data sent to upper layers, "
-			  "releasing look up table");
-	} else if (status == STATUS_HOLD) {
-		cfr_debug("HOLD for buffer address: 0x%pK cookie: %u",
-			  (void *)((uintptr_t)buf_addr), cookie);
 	} else {
-		cfr_debug("Correlation returned invalid status!!");
 		retval = -EINVAL;
 	}
 
@@ -1400,10 +1378,6 @@ static os_timer_func(lut_ageout_timer_task)
 		if (lut->dbr_recv && !lut->tx_recv) {
 			diff = cur_tstamp - lut->dbr_tstamp;
 			if (diff > LUT_AGE_THRESHOLD) {
-				cfr_debug("<%d>TXRX event not received for "
-					  "%llu ms, release lut entry : "
-					  "dma_addr = 0x%pK\n", i, diff,
-					  (void *)((uintptr_t)lut->dbr_address));
 				target_if_dbr_buf_release(pdev, DBR_MODULE_CFR,
 							  lut->dbr_address,
 							  i, srng_id);
