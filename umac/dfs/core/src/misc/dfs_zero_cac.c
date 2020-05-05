@@ -2779,6 +2779,19 @@ struct dfs_channel_bw {
 	uint16_t dfs_max_bw;
 };
 
+/* dfs_calculate_bw_for_same_pri_ch() - When the primary channel is a new
+ * channel initialize the center channel frequency and bandwidth and when the
+ * primary is same as previous channel update the center frequency and the
+ * bandwith.
+ * @dfs:               WLAN DFS structure
+ * @dfs_max_bw_info:   Structure to store precac tree root channel's
+ * information.
+ * @index:             The index that is manipulated.
+ * @ichan:             The DFS channel structure that holds the primary channel
+ *                     number, center frquency and channel bandwidth.
+ * @delimiter:         Band gap in MHz from the current primary channel to next
+ *                     primary channel.
+ */
 static void
 dfs_calculate_bw_for_same_pri_ch(struct wlan_dfs *dfs,
 				 struct dfs_channel_bw *dfs_max_bw_info,
@@ -2787,9 +2800,10 @@ dfs_calculate_bw_for_same_pri_ch(struct wlan_dfs *dfs,
 				 int *delimiter)
 {
 	uint8_t temp_bw = 0;
+	uint16_t tmp_center_freq;
 
 	dfs_max_bw_info[index].dfs_pri_ch_freq = ichan->dfs_ch_freq;
-	dfs_max_bw_info[index].dfs_center_ch_freq = ichan->dfs_ch_mhz_freq_seg1;
+	tmp_center_freq = ichan->dfs_ch_mhz_freq_seg1;
 
 	if (WLAN_IS_CHAN_MODE_20(ichan)) {
 		temp_bw = DFS_CHWIDTH_20_VAL;
@@ -2805,18 +2819,18 @@ dfs_calculate_bw_for_same_pri_ch(struct wlan_dfs *dfs,
 	    (ichan->dfs_ch_vhtop_ch_freq_seg2 ==
 	     RESTRICTED_80P80_RIGHT_80_CENTER_CHAN)) {
 		temp_bw = DFS_CHWIDTH_165_VAL;
-		dfs_max_bw_info[index].dfs_center_ch_freq =
-			RESTRICTED_80P80_CHAN_CENTER_FREQ;
+		tmp_center_freq = RESTRICTED_80P80_CHAN_CENTER_FREQ;
 		}
 	} else if (WLAN_IS_CHAN_MODE_160(ichan)) {
 		temp_bw = DFS_CHWIDTH_160_VAL;
-		dfs_max_bw_info[index].dfs_center_ch_freq =
-			ichan->dfs_ch_mhz_freq_seg2;
+		tmp_center_freq = ichan->dfs_ch_mhz_freq_seg2;
 	}
-	if (temp_bw > dfs_max_bw_info[index].dfs_max_bw)
+	if (temp_bw > dfs_max_bw_info[index].dfs_max_bw) {
 		dfs_max_bw_info[index].dfs_max_bw = temp_bw;
-	*delimiter = dfs_max_bw_info[index].dfs_pri_ch_freq +
-	dfs_max_bw_info[index].dfs_max_bw;
+		*delimiter = dfs_max_bw_info[index].dfs_pri_ch_freq +
+			     dfs_max_bw_info[index].dfs_max_bw;
+		dfs_max_bw_info[index].dfs_center_ch_freq = tmp_center_freq;
+	}
 }
 
 /* dfs_fill_max_bw_for_chan() - Finds unique precac tree node in the channel
@@ -2832,11 +2846,19 @@ static void dfs_fill_max_bw_for_chan(struct wlan_dfs *dfs,
 				     struct dfs_channel_bw *dfs_max_bw_info,
 				     int *num_precac_roots)
 {
-	int nchans = 0, i, j = 0, prev_ch_freq = 0, delimiter = 0;
+	int i;
+	int n_total_chans = 0;
+	int  n_chanseg_found = 0;
+	int prev_ch_freq = 0;
+	int delimiter = 0;
 
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-	for (i = 0; i < nchans; i++) {
+	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &n_total_chans);
+	for (i = 0; i < n_total_chans; i++) {
 		struct dfs_channel *ichan = NULL, lc;
+		/* The array index of the bandwidth list that needs to be
+		 * updated.
+		 */
+		int index_to_update;
 
 		ichan = &lc;
 		dfs_mlme_get_dfs_channels_for_freq
@@ -2853,19 +2875,42 @@ static void dfs_fill_max_bw_for_chan(struct wlan_dfs *dfs,
 		if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(ichan))
 			continue;
 		if (ichan->dfs_ch_freq == prev_ch_freq) {
+			/* When the primary channels are common for consecutive
+			 * channels, for example 36HT20, 36HT40, 36HT80,...,
+			 * only the center frequecy and the bandwidth have to be
+			 * updated.
+			 */
+			index_to_update = n_chanseg_found - 1;
 			dfs_calculate_bw_for_same_pri_ch(dfs,
 							 dfs_max_bw_info,
-							 j,
+							 index_to_update,
 							 ichan,
 							 &delimiter);
 		} else if (ichan->dfs_ch_freq < delimiter) {
 			continue;
 		} else {
 			prev_ch_freq = ichan->dfs_ch_freq;
-			j++;
+			/* When the primary channels are unique and consecutive
+			 * like 149HT20, 153HT20, 157HT20,..., the new element
+			 * has to be initialized here.
+			 */
+			index_to_update = n_chanseg_found;
+			dfs_calculate_bw_for_same_pri_ch(dfs,
+							 dfs_max_bw_info,
+							 n_chanseg_found,
+							 ichan,
+							 &delimiter);
+			n_chanseg_found++;
 		}
 	}
-	*num_precac_roots = j + 1;
+	*num_precac_roots = n_chanseg_found;
+	for (i = 0; i < *num_precac_roots; i++)
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "index = %d pri: %d centr: %d bw: %d",
+			  i,
+			  dfs_max_bw_info[i].dfs_pri_ch_freq,
+			  dfs_max_bw_info[i].dfs_center_ch_freq,
+			  dfs_max_bw_info[i].dfs_max_bw);
 }
 
 static QDF_STATUS
@@ -2888,15 +2933,13 @@ dfs_precac_create_precac_entry(struct wlan_dfs *dfs,
 					    precac_entry->center_ch_freq,
 					    &precac_entry->tree_root,
 					    precac_entry->bw);
-	if (status) {
+	if (status)
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "PreCAC entry for channel %d not created",
 			  precac_entry->center_ch_ieee);
-	} else {
-	    TAILQ_INSERT_TAIL(
-		    &dfs->dfs_precac_list,
-		    precac_entry, pe_list);
-	}
+	else
+	    TAILQ_INSERT_TAIL(&dfs->dfs_precac_list, precac_entry, pe_list);
+
 	return status;
 }
 
