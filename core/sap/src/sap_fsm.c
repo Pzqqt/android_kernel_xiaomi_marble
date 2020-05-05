@@ -3407,6 +3407,10 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 					mac_ctx->psoc,
 					WLAN_REG_CH_TO_FREQ(loop_count)))
 				continue;
+			normalize_factor =
+				MLME_GET_DFS_CHAN_WEIGHT(
+				mac_ctx->mlme_cfg->acs.np_chan_weightage);
+			freq_present_in_list = true;
 		}
 
 		/* Dont scan ETSI13 SRD channels if the ETSI13 SRD channels

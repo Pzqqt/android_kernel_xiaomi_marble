@@ -202,6 +202,44 @@
 		0, \
 		"Force start SAP")
 
+/*
+ * <ini>
+ * np_chan_weight - chan weightage for non preferred channels
+ * @Min: 0x00000000
+ * @Max: 0x64646464
+ * @Default: 0x00000000
+ *
+ * This INI give percentage value of weights to be considered in the ACS algo
+ * for the non preferred channels. the distribution of the channel type is:-
+ * Example:- If the percentage of lets say DFS channels is set to 50%, and
+ * the weight comes out to be x, then we would increase the weight of DFS
+ * channels by 50% ( 100 - y% set in INI), so that it gets de-prioritized in
+ * the ACS sorted channel list, the lesser the weight, the better the channel.
+ * So the channel with more weight is less likely to be selected. So by default
+ * the np chan weightage for DFS is set to 0, that is it will be assigned max
+ * weightage, so no probality of getting selected, as for standlaone, DFS is not
+ * recommended (it takes 60 sec/10min to start depending upon channel type).
+ *
+ * Indexes are defined in this way.
+ *     0 Index (BITS 0-7): DFS - Def 0%
+ *     1 Index (BITS 8-15): Reserved
+ *     2 Index (BITS 16-23): Reserved
+ *     3 Index (BITS 24-31): Reserved
+ * These percentage values are stored in HEX. Max can be 0x64
+ * Supported Feature: ACS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ACS_NP_CHAN_WEIGHT CFG_INI_UINT( \
+		"np_chan_weight", \
+		0x00000000, \
+		0x64646464, \
+		0x00000000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"np chan weight")
+
 #define CFG_ACS_ALL \
 	CFG(CFG_ACS_WITH_MORE_PARAM) \
 	CFG(CFG_AUTO_CHANNEL_SELECT_WEIGHT) \
@@ -209,6 +247,7 @@
 	CFG(CFG_USER_ACS_DFS_LTE) \
 	CFG(CFG_EXTERNAL_ACS_POLICY) \
 	CFG(CFG_NORMALIZE_ACS_WEIGHT) \
-	CFG(CFG_ACS_FORCE_START_SAP)
+	CFG(CFG_ACS_FORCE_START_SAP) \
+	CFG(CFG_ACS_NP_CHAN_WEIGHT)
 
 #endif /* __CFG_MLME_ACS_H */
