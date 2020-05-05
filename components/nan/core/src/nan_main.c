@@ -341,15 +341,8 @@ nan_increment_ndp_sessions(struct wlan_objmgr_psoc *psoc,
 		wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
 	qdf_spin_lock_bh(&peer_nan_obj->lock);
-	if (peer_nan_obj->active_ndp_sessions == MAX_NDP_INSTANCES_PER_PEER) {
-		qdf_spin_unlock_bh(&peer_nan_obj->lock);
-		nan_err("Already reached Max limit(%d) for NDP's per peer!",
-			MAX_NDP_INSTANCES_PER_PEER);
-		wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
-		return QDF_STATUS_E_FAILURE;
-	}
+
 	/*
 	 * Store the first channel info in NDP Confirm as the home channel info
 	 * and store it in the peer private object.
