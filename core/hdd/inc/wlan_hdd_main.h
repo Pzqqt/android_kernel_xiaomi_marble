@@ -1974,6 +1974,9 @@ struct hdd_context {
 	uint8_t val_pkt_capture_mode;
 #endif
 	bool roam_ch_from_fw_supported;
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	uint8_t dutycycle_off_percent;
+#endif
 };
 
 /**

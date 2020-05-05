@@ -144,6 +144,15 @@ __wlan_hdd_cfg80211_set_thermal_mitigation_policy(struct wiphy *wiphy,
 					      target_temp);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err_rl("Failed to set throttle configuration %d", status);
+	else {
+		/*
+		 * After SSR, the thermal mitigation level is lost.
+		 * As SSR is hidden from userland, this command will not come
+		 * from userspace after a SSR. To restore this configuration,
+		 * save this in hdd context and restore after re-init.
+		 */
+		hdd_ctx->dutycycle_off_percent = dc_off_percent;
+	}
 
 	return qdf_status_to_os_return(status);
 }
@@ -182,5 +191,39 @@ wlan_hdd_cfg80211_set_thermal_mitigation_policy(struct wiphy *wiphy,
 bool wlan_hdd_thermal_config_support(void)
 {
 	return true;
+}
+
+QDF_STATUS hdd_restore_thermal_mitigation_config(struct hdd_context *hdd_ctx)
+{
+	bool enable = true;
+	uint32_t dc, dc_off_percent = 0;
+	uint32_t prio = 0, target_temp = 0;
+	struct wlan_fwol_thermal_temp thermal_temp = {0};
+	QDF_STATUS status;
+
+	status = ucfg_fwol_get_thermal_temp(hdd_ctx->psoc, &thermal_temp);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err_rl("Failed to get fwol thermal obj");
+		return status;
+	}
+
+	dc_off_percent = hdd_ctx->dutycycle_off_percent;
+	dc = thermal_temp.thermal_sampling_time;
+
+	if (!dc_off_percent)
+		enable = false;
+
+	hdd_debug("dc %d dc_off_per %d enable %d", dc, dc_off_percent, enable);
+
+	status = sme_set_thermal_throttle_cfg(hdd_ctx->mac_handle,
+					      enable,
+					      dc,
+					      dc_off_percent,
+					      prio,
+					      target_temp);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err_rl("Failed to set throttle configuration %d", status);
+
+	return status;
 }
 
