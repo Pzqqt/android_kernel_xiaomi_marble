@@ -7909,15 +7909,16 @@ static QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
 	wmi_pdev_nfcal_power_all_channels_event *event =
 	    (wmi_pdev_nfcal_power_all_channels_event *)evt_buf;
 
-	if ((sizeof(event->nfdBr) == sizeof(param->nfdbr)) &&
-	    (sizeof(event->nfdBm) == sizeof(param->nfdbm)) &&
-	    (sizeof(event->freqNum) == sizeof(param->freqnum))) {
-		qdf_mem_copy(param->nfdbr, event->nfdBr, sizeof(param->nfdbr));
-		qdf_mem_copy(param->nfdbm, event->nfdBm, sizeof(param->nfdbm));
+	if ((sizeof(event->nfdBr) <= sizeof(param->nfdbr)) &&
+	    (sizeof(event->nfdBm) <= sizeof(param->nfdbm)) &&
+	    (sizeof(event->freqNum) <= sizeof(param->freqnum))) {
+		qdf_mem_copy(param->nfdbr, event->nfdBr, sizeof(event->nfdBr));
+		qdf_mem_copy(param->nfdbm, event->nfdBm, sizeof(event->nfdBm));
 		qdf_mem_copy(param->freqnum, event->freqNum,
-			     sizeof(param->freqnum));
+			     sizeof(event->freqNum));
 	} else {
-		WMI_LOGE("%s: %d Failed copy out of bound memory!\n", __func__, __LINE__);
+		WMI_LOGE("%s: %d Failed copy out of bound memory!\n", __func__,
+			 __LINE__);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
