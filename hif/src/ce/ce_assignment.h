@@ -919,7 +919,7 @@ static struct CE_pipe_config target_ce_config_wlan_adrastea[] = {
 	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 };
 
-#define QCA_5018_CE_COUNT 9
+#define QCA_5018_CE_COUNT 6
 static struct CE_attr host_ce_config_wlan_qca5018[] = {
 	/* host->target HTC control and raw streams */
 	{/*CE0*/ (CE_ATTR_FLAGS), 0, 16, 2048, 0, NULL,},
