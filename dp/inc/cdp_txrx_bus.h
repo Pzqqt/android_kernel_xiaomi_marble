@@ -92,4 +92,26 @@ static inline void cdp_process_wow_ack_rsp(ol_txrx_soc_handle soc,
 		return soc->ops->bus_ops->process_wow_ack_rsp(soc, pdev_id);
 }
 
+/**
+ * cdp_process_target_suspend_req() - Process target suspend request
+ * @soc: data path soc handle
+ * @pdev_id: id of dp pdev handle
+ *
+ * Complete the datapath specific work before target suspend
+ *
+ * Return: None
+ */
+static inline void cdp_process_target_suspend_req(ol_txrx_soc_handle soc,
+						  uint8_t pdev_id)
+{
+	if (!soc || !soc->ops || !soc->ops->bus_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->bus_ops->process_target_suspend_req)
+		return soc->ops->bus_ops->process_target_suspend_req(soc,
+								     pdev_id);
+}
 #endif /* _CDP_TXRX_BUS_H_ */
