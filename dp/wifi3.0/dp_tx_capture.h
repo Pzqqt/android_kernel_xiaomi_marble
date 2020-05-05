@@ -319,6 +319,15 @@ void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
  */
 void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev);
 
+/*
+ * dp_iterate_print_tid_qlen_per_peer()- API to print peer tid msdu queue
+ * @pdev_handle: DP_PDEV handle
+ * @consolidated: consolidated flag
+ *
+ * Return: void
+ */
+void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated);
+
 /**
  * dp_send_ack_frame_to_stack(): Function to generate BA or ACK frame and
  * send to upper layer on received unicast frame

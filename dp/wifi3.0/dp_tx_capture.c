@@ -282,12 +282,15 @@ void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
  *
  * Return: void
  */
-void dp_print_tid_qlen_per_peer(void *pdev_hdl)
+void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = NULL;
 	struct dp_peer *peer = NULL;
+	uint64_t c_defer_msdu_len = 0;
+	uint64_t c_tasklet_msdu_len = 0;
+	uint64_t c_pending_q_len = 0;
 
 	DP_PRINT_STATS("pending peer msdu and ppdu:");
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
@@ -308,6 +311,14 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl)
 				qdf_nbuf_queue_len(&tx_tid->msdu_comp_q);
 				ppdu_len =
 				qdf_nbuf_queue_len(&tx_tid->pending_ppdu_q);
+
+				c_defer_msdu_len += msdu_len;
+				c_tasklet_msdu_len += tasklet_msdu_len;
+				c_pending_q_len += ppdu_len;
+
+				if (consolidated)
+					continue;
+
 				if (!msdu_len && !ppdu_len && !tasklet_msdu_len)
 					continue;
 				DP_PRINT_STATS(" peer_id[%d] tid[%d] msdu_comp_q[%d] defer_msdu_q[%d] pending_ppdu_q[%d]",
@@ -315,9 +326,15 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl)
 					       tasklet_msdu_len,
 					       msdu_len, ppdu_len);
 			}
-			dp_tx_capture_print_stats(peer);
+
+			if (!consolidated)
+				dp_tx_capture_print_stats(peer);
 		}
 	}
+
+	DP_PRINT_STATS("consolidated: msdu_comp_q[%d] defer_msdu_q[%d] pending_ppdu_q[%d]",
+		       c_tasklet_msdu_len, c_defer_msdu_len,
+		       c_pending_q_len);
 
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
@@ -408,7 +425,7 @@ void dp_print_pdev_tx_capture_stats(struct dp_pdev *pdev)
 			       i, ptr_tx_cap->htt_frame_type[i]);
 	}
 
-	dp_print_tid_qlen_per_peer(pdev);
+	dp_print_tid_qlen_per_peer(pdev, 0);
 }
 
 /**
@@ -1012,20 +1029,21 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 }
 
 #define MAX_MSDU_THRESHOLD_TSF 100000
-#define MAX_MSDU_ENQUEUE_THRESHOLD 10000
+#define MAX_MSDU_ENQUEUE_THRESHOLD 4096
 
 /**
  * dp_drop_enq_msdu_on_thresh(): Function to drop msdu when exceed
  * storing threshold limit
  * @peer: dp_peer
+ * @tx_tid: tx tid
  * @ptr_msdu_comp_q: pointer to skb queue, it can be either tasklet or WQ msdu q
  * @tsf: current timestamp
  *
- * this function must be called inside lock of corresponding msdu_q
  * return: status
  */
 QDF_STATUS
 dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
+			   struct dp_tx_tid *tx_tid,
 			   qdf_nbuf_queue_t *ptr_msdu_comp_q,
 			   uint32_t tsf)
 {
@@ -1035,6 +1053,8 @@ dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
 	uint32_t tsf_delta;
 	uint32_t qlen;
 
+	/* take lock here */
+	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
 	while ((head_msdu = qdf_nbuf_queue_first(ptr_msdu_comp_q))) {
 		ptr_msdu_info =
 		(struct msdu_completion_info *)qdf_nbuf_data(head_msdu);
@@ -1060,16 +1080,46 @@ dp_drop_enq_msdu_on_thresh(struct dp_peer *peer,
 
 	/* get queue length */
 	qlen = qdf_nbuf_queue_len(ptr_msdu_comp_q);
+	/* release lock here */
+	qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
+
+	/* take lock here */
+	qdf_spin_lock_bh(&tx_tid->tid_lock);
+	qlen += qdf_nbuf_queue_len(&tx_tid->defer_msdu_q);
 	if (qlen > MAX_MSDU_ENQUEUE_THRESHOLD) {
-		/* free head */
-		nbuf = qdf_nbuf_queue_remove(ptr_msdu_comp_q);
-		if (qdf_unlikely(!nbuf)) {
-			qdf_assert_always(0);
-			return QDF_STATUS_E_ABORTED;
+		qdf_nbuf_t nbuf = NULL;
+
+		/* free head, nbuf will be NULL if queue empty */
+		nbuf = qdf_nbuf_queue_remove(&tx_tid->defer_msdu_q);
+		/* release lock here */
+		qdf_spin_unlock_bh(&tx_tid->tid_lock);
+		if (qdf_likely(nbuf)) {
+			qdf_nbuf_free(nbuf);
+			dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
+			return QDF_STATUS_SUCCESS;
 		}
 
-		qdf_nbuf_free(nbuf);
-		dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
+		/* take lock here */
+		qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
+		if (!qdf_nbuf_is_queue_empty(ptr_msdu_comp_q)) {
+			/* free head, nbuf will be NULL if queue empty */
+			nbuf = qdf_nbuf_queue_remove(ptr_msdu_comp_q);
+			/* release lock here */
+			qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
+			if (qdf_unlikely(!nbuf)) {
+				qdf_assert_always(0);
+				return QDF_STATUS_E_ABORTED;
+			}
+
+			qdf_nbuf_free(nbuf);
+			dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_DROP, 1);
+		} else {
+			/* release lock here */
+			qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
+		}
+	} else {
+		/* release lock here */
+		qdf_spin_unlock_bh(&tx_tid->tid_lock);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1137,12 +1187,12 @@ dp_update_msdu_to_list(struct dp_soc *soc,
 	msdu_comp_info->tsf = ts->tsf;
 	msdu_comp_info->status = ts->status;
 
-	/* lock here */
-	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
 	if (tx_tid->max_ppdu_id != ts->ppdu_id)
-		dp_drop_enq_msdu_on_thresh(peer, &tx_tid->msdu_comp_q,
+		dp_drop_enq_msdu_on_thresh(peer, tx_tid, &tx_tid->msdu_comp_q,
 					   ts->tsf);
 
+	/* lock here */
+	qdf_spin_lock_bh(&tx_tid->tasklet_tid_lock);
 	/* add nbuf to tail queue per peer tid */
 	qdf_nbuf_queue_add(&tx_tid->msdu_comp_q, netbuf);
 	dp_tx_cap_stats_msdu_update(peer, PEER_MSDU_ENQ, 1);
@@ -2064,10 +2114,10 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 	qdf_spin_unlock_bh(&tx_tid->tasklet_tid_lock);
 
 	/* lock here */
-	qdf_spin_lock(&tx_tid->tid_lock);
+	qdf_spin_lock_bh(&tx_tid->tid_lock);
 
 	if (qdf_nbuf_is_queue_empty(&tx_tid->defer_msdu_q)) {
-		qdf_spin_unlock(&tx_tid->tid_lock);
+		qdf_spin_unlock_bh(&tx_tid->tid_lock);
 		return 0;
 	}
 
@@ -2137,7 +2187,7 @@ uint32_t dp_tx_msdu_dequeue(struct dp_peer *peer, uint32_t ppdu_id,
 
 	}
 
-	qdf_spin_unlock(&tx_tid->tid_lock);
+	qdf_spin_unlock_bh(&tx_tid->tid_lock);
 
 	return matched;
 }
