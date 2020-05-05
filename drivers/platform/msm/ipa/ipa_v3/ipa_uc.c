@@ -561,6 +561,11 @@ static void ipa3_event_ring_hdlr(void)
 				e_h->Value.holb_notify_param.ipaProdGsiChid,
 				e_h->Value.holb_notify_param.qTimerMSB,
 				e_h->Value.holb_notify_param.qTimerLSB);
+			ipa3_uc_holb_event_log(
+				e_h->Value.holb_notify_param.ipaProdGsiChid,
+				true,
+				e_h->Value.holb_notify_param.qTimerLSB,
+				e_h->Value.holb_notify_param.qTimerMSB);
 		} else if (((struct eventElement_t *) rp_va)->Opcode
 				== IPA_HOLB_PERIPHERAL_RECOVERED_EVENT) {
 			e_h = ((struct eventElement_t *) rp_va);
@@ -568,6 +573,11 @@ static void ipa3_event_ring_hdlr(void)
 				e_h->Value.holb_notify_param.ipaProdGsiChid,
 				e_h->Value.holb_notify_param.qTimerMSB,
 				e_h->Value.holb_notify_param.qTimerLSB);
+			ipa3_uc_holb_event_log(
+				e_h->Value.holb_notify_param.ipaProdGsiChid,
+				false,
+				e_h->Value.holb_notify_param.qTimerLSB,
+				e_h->Value.holb_notify_param.qTimerMSB);
 		}
 		ipa3_ctx->uc_ctx.ering_rp_local += offset;
 		ipa3_ctx->uc_ctx.ering_rp_local %=

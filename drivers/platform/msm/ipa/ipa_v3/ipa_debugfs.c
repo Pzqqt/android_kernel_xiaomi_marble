@@ -489,6 +489,61 @@ static ssize_t ipa3_read_keep_awake(struct file *file, char __user *ubuf,
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
 }
 
+static ssize_t ipa3_read_holb_events(struct file *file, char __user *ubuf, size_t count,
+		loff_t *ppos)
+{
+	int nbytes = 0;
+	int client_idx;
+	int event_id;
+	bool enable;
+	int num_clients = ipa3_ctx->uc_ctx.holb_monitor.num_holb_clients;
+	struct ipa_uc_holb_client_info *holb_client;
+	uint32_t qtimer_lsb;
+	uint32_t qtimer_msb;
+
+	mutex_lock(&ipa3_ctx->lock);
+	for (client_idx = 0; client_idx < num_clients; client_idx++) {
+		holb_client =
+			&(ipa3_ctx->uc_ctx.holb_monitor.client[client_idx]);
+		event_id = holb_client->current_idx;
+		nbytes += scnprintf(
+			dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"========================\n");
+		nbytes += scnprintf(
+			dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"GSI ch %d cur event_id %d ",
+			holb_client->gsi_chan_hdl, holb_client->current_idx);
+		nbytes += scnprintf(
+			dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"enable cnt %d disable cnt %d\n",
+			holb_client->enable_cnt, holb_client->disable_cnt);
+		for (event_id = 0; event_id < IPA_HOLB_EVENT_LOG_MAX; event_id++) {
+			enable = holb_client->events[event_id].enable;
+			qtimer_lsb = holb_client->events[event_id].qTimerLSB;
+			qtimer_msb = holb_client->events[event_id].qTimerMSB;
+			nbytes += scnprintf(
+				dbg_buff + nbytes,
+				IPA_MAX_MSG_LEN - nbytes,
+				"event id %d: %s QTimer %u %u\n",
+				event_id,
+				enable ? "Bad Periph event" : "Recovered Periph event",
+				qtimer_lsb,
+				qtimer_msb);
+		}
+		nbytes += scnprintf(
+			dbg_buff + nbytes,
+			IPA_MAX_MSG_LEN - nbytes,
+			"===============\n");
+	}
+
+	mutex_unlock(&ipa3_ctx->lock);
+
+	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
+}
+
 static ssize_t ipa3_read_hdr(struct file *file, char __user *ubuf, size_t count,
 		loff_t *ppos)
 {
@@ -2692,6 +2747,10 @@ static const struct ipa3_debugfs_file debugfs_files[] = {
 	}, {
 		"holb_monitor_client_add_del", IPA_WRITE_ONLY_MODE, NULL, {
 			.write = ipa3_write_holb_monitor_client_add_del,
+		}
+	}, {
+		"holb_events", IPA_READ_ONLY_MODE, NULL, {
+			.read = ipa3_read_holb_events,
 		}
 	}, {
 		"hdr", IPA_READ_ONLY_MODE, NULL, {

@@ -197,7 +197,6 @@ int ipa3_uc_client_del_holb_monitor(uint16_t gsi_ch, uint8_t ee)
 		ret = ipa3_uc_del_holb_monitor(holb_client->gsi_chan_hdl,
 		ee);
 		holb_client->state = IPA_HOLB_DEL;
-
 	} else if (!ipa3_uc_holb_enabled_check() &&
 			holb_client->state == IPA_HOLB_ADD_PENDING) {
 		IPADBG("GSI chan %d going from ADD_PENDING to DEL state\n",
@@ -207,4 +206,36 @@ int ipa3_uc_client_del_holb_monitor(uint16_t gsi_ch, uint8_t ee)
 
 	mutex_unlock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
 	return ret;
+}
+
+void ipa3_uc_holb_event_log(uint16_t gsi_ch, bool enable,
+	uint32_t qtimer_lsb, uint32_t qtimer_msb)
+{
+	struct ipa_uc_holb_client_info *holb_client;
+	int client_idx;
+	int current_idx;
+
+	if (!ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor)
+		return;
+
+	mutex_lock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
+	client_idx = ipa3_get_holb_client_idx_by_ch(gsi_ch);
+	if (client_idx == -EINVAL) {
+		IPAERR("Invalid client with GSI chan %d\n", gsi_ch);
+		mutex_unlock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
+		return;
+	}
+	holb_client = &(ipa3_ctx->uc_ctx.holb_monitor.client[client_idx]);
+	current_idx = holb_client->current_idx;
+
+	holb_client->events[current_idx].enable = enable;
+	holb_client->events[current_idx].qTimerLSB = qtimer_lsb;
+	holb_client->events[current_idx].qTimerMSB = qtimer_msb;
+	if (enable)
+		holb_client->enable_cnt++;
+	else
+		holb_client->disable_cnt++;
+	holb_client->current_idx = (holb_client->current_idx + 1) %
+		IPA_HOLB_EVENT_LOG_MAX;
+	mutex_unlock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
 }

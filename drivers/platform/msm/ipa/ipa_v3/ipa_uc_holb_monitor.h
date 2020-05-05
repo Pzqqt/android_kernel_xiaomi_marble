@@ -12,6 +12,7 @@
 #define NOTIFY_AP_ON_HOLB 0x2
 #define HOLB_MONITOR_MASK (HOLB_OP | NOTIFY_AP_ON_HOLB)
 #define IPA_HOLB_CLIENT_MAX 30
+#define IPA_HOLB_EVENT_LOG_MAX 20
 #define IPA_CLIENT_IS_HOLB_CONS(x) \
 (x == IPA_CLIENT_USB_CONS || x == IPA_CLIENT_WLAN2_CONS || \
 x == IPA_CLIENT_WLAN1_CONS || x == IPA_CLIENT_WIGIG1_CONS || \
@@ -33,6 +34,18 @@ enum ipa_holb_client_state {
 };
 
 /**
+ * struct ipa_holb_events - HOLB enable/disable events log
+ * @qTimerLSB: LSB for event qtimer
+ * @qTimerMSB: MSB for event qtimer
+ * @enable: Even for enable/disable
+ */
+struct ipa_holb_events {
+	uint32_t qTimerLSB;
+	uint32_t qTimerMSB;
+	bool enable;
+};
+
+/**
  * struct  ipa_uc_holb_client_info - Client info needed for HOLB callback
  * @gsi_chan_hdl: GSI Channel of the client to be monitored
  * @action_mask: HOLB action mask
@@ -40,7 +53,10 @@ enum ipa_holb_client_state {
  * @ee: EE that the chid belongs to
  * @debugfs_param: If debugfs is used to set the client parameters
  * @state: Client state
- *
+ * @events: HOLB enable/disable events log
+ * @current_idx: index of current event
+ * @enable_cnt: accumulate count for enable
+ * @disable_cnt: accumulate count for disable
  */
 struct ipa_uc_holb_client_info {
 	uint16_t gsi_chan_hdl;
@@ -49,6 +65,10 @@ struct ipa_uc_holb_client_info {
 	uint8_t ee;
 	bool debugfs_param;
 	enum ipa_holb_client_state state;
+	struct ipa_holb_events events[IPA_HOLB_EVENT_LOG_MAX];
+	uint32_t current_idx;
+	uint32_t enable_cnt;
+	uint32_t disable_cnt;
 };
 
 /**
@@ -106,4 +126,16 @@ int ipa3_uc_client_del_holb_monitor(uint16_t gsi_ch, uint8_t ee);
  *
  */
 void ipa3_set_holb_client_by_ch(struct ipa_uc_holb_client_info client);
+
+/**
+ * ipa3_uc_holb_event_log() - Log HOLB event for specific gsi
+ * channel
+ * @gsi_ch: Client values to be set for the gsi channel
+ * @enable: event is for enable/disable
+ * @qtimer_lsb: msb for event qtimer
+ * @qtimer_msb: lsb for event qtimer
+ */
+void ipa3_uc_holb_event_log(uint16_t gsi_ch, bool enable,
+	uint32_t qtimer_lsb, uint32_t qtimer_msb);
+
 #endif /* IPA_UC_HOLB_MONITOR_H */
