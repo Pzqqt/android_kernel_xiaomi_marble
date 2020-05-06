@@ -137,25 +137,25 @@ struct sde_drm_pix_ext_v1 {
 	 * Number of pixels ext in left, right, top and bottom direction
 	 * for all color components.
 	 */
-	int32_t num_ext_pxls_lr[SDE_MAX_PLANES];
-	int32_t num_ext_pxls_tb[SDE_MAX_PLANES];
+	__s32 num_ext_pxls_lr[SDE_MAX_PLANES];
+	__s32 num_ext_pxls_tb[SDE_MAX_PLANES];
 
 	/*
 	 * Number of pixels needs to be overfetched in left, right, top
 	 * and bottom directions from source image for scaling.
 	 */
-	int32_t left_ftch[SDE_MAX_PLANES];
-	int32_t right_ftch[SDE_MAX_PLANES];
-	int32_t top_ftch[SDE_MAX_PLANES];
-	int32_t btm_ftch[SDE_MAX_PLANES];
+	__s32 left_ftch[SDE_MAX_PLANES];
+	__s32 right_ftch[SDE_MAX_PLANES];
+	__s32 top_ftch[SDE_MAX_PLANES];
+	__s32 btm_ftch[SDE_MAX_PLANES];
 	/*
 	 * Number of pixels needs to be repeated in left, right, top and
 	 * bottom directions for scaling.
 	 */
-	int32_t left_rpt[SDE_MAX_PLANES];
-	int32_t right_rpt[SDE_MAX_PLANES];
-	int32_t top_rpt[SDE_MAX_PLANES];
-	int32_t btm_rpt[SDE_MAX_PLANES];
+	__s32 left_rpt[SDE_MAX_PLANES];
+	__s32 right_rpt[SDE_MAX_PLANES];
+	__s32 top_rpt[SDE_MAX_PLANES];
+	__s32 btm_rpt[SDE_MAX_PLANES];
 
 };
 
@@ -178,17 +178,17 @@ struct sde_drm_scaler_v1 {
 	/*
 	 * Phase settings
 	 */
-	int32_t init_phase_x[SDE_MAX_PLANES];
-	int32_t phase_step_x[SDE_MAX_PLANES];
-	int32_t init_phase_y[SDE_MAX_PLANES];
-	int32_t phase_step_y[SDE_MAX_PLANES];
+	__s32 init_phase_x[SDE_MAX_PLANES];
+	__s32 phase_step_x[SDE_MAX_PLANES];
+	__s32 init_phase_y[SDE_MAX_PLANES];
+	__s32 phase_step_y[SDE_MAX_PLANES];
 
 	/*
 	 * Filter type to be used for scaling in horizontal and vertical
 	 * directions
 	 */
-	uint32_t horz_filter[SDE_MAX_PLANES];
-	uint32_t vert_filter[SDE_MAX_PLANES];
+	__u32 horz_filter[SDE_MAX_PLANES];
+	__u32 vert_filter[SDE_MAX_PLANES];
 };
 
 /**
@@ -208,19 +208,19 @@ struct sde_drm_scaler_v1 {
  * @adjust_c:       Mapping curves C coefficients
  */
 struct sde_drm_de_v1 {
-	uint32_t enable;
-	int16_t sharpen_level1;
-	int16_t sharpen_level2;
-	uint16_t clip;
-	uint16_t limit;
-	uint16_t thr_quiet;
-	uint16_t thr_dieout;
-	uint16_t thr_low;
-	uint16_t thr_high;
-	uint16_t prec_shift;
-	int16_t adjust_a[SDE_MAX_DE_CURVES];
-	int16_t adjust_b[SDE_MAX_DE_CURVES];
-	int16_t adjust_c[SDE_MAX_DE_CURVES];
+	__u32 enable;
+	__s16 sharpen_level1;
+	__s16 sharpen_level2;
+	__u16 clip;
+	__u16 limit;
+	__u16 thr_quiet;
+	__u16 thr_dieout;
+	__u16 thr_low;
+	__u16 thr_high;
+	__u16 prec_shift;
+	__s16 adjust_a[SDE_MAX_DE_CURVES];
+	__s16 adjust_b[SDE_MAX_DE_CURVES];
+	__s16 adjust_c[SDE_MAX_DE_CURVES];
 };
 
 /*
@@ -275,8 +275,8 @@ struct sde_drm_scaler_v2 {
 	/*
 	 * General definitions
 	 */
-	uint32_t enable;
-	uint32_t dir_en;
+	__u32 enable;
+	__u32 dir_en;
 
 	/*
 	 * Pix ext settings
@@ -286,55 +286,55 @@ struct sde_drm_scaler_v2 {
 	/*
 	 * Decimation settings
 	 */
-	uint32_t horz_decimate;
-	uint32_t vert_decimate;
+	__u32 horz_decimate;
+	__u32 vert_decimate;
 
 	/*
 	 * Phase settings
 	 */
-	int32_t init_phase_x[SDE_MAX_PLANES];
-	int32_t phase_step_x[SDE_MAX_PLANES];
-	int32_t init_phase_y[SDE_MAX_PLANES];
-	int32_t phase_step_y[SDE_MAX_PLANES];
+	__s32 init_phase_x[SDE_MAX_PLANES];
+	__s32 phase_step_x[SDE_MAX_PLANES];
+	__s32 init_phase_y[SDE_MAX_PLANES];
+	__s32 phase_step_y[SDE_MAX_PLANES];
 
-	uint32_t preload_x[SDE_MAX_PLANES];
-	uint32_t preload_y[SDE_MAX_PLANES];
-	uint32_t src_width[SDE_MAX_PLANES];
-	uint32_t src_height[SDE_MAX_PLANES];
+	__u32 preload_x[SDE_MAX_PLANES];
+	__u32 preload_y[SDE_MAX_PLANES];
+	__u32 src_width[SDE_MAX_PLANES];
+	__u32 src_height[SDE_MAX_PLANES];
 
-	uint32_t dst_width;
-	uint32_t dst_height;
+	__u32 dst_width;
+	__u32 dst_height;
 
-	uint32_t y_rgb_filter_cfg;
-	uint32_t uv_filter_cfg;
-	uint32_t alpha_filter_cfg;
-	uint32_t blend_cfg;
+	__u32 y_rgb_filter_cfg;
+	__u32 uv_filter_cfg;
+	__u32 alpha_filter_cfg;
+	__u32 blend_cfg;
 
-	uint32_t lut_flag;
-	uint32_t dir_lut_idx;
+	__u32 lut_flag;
+	__u32 dir_lut_idx;
 
 	/* for Y(RGB) and UV planes*/
-	uint32_t y_rgb_cir_lut_idx;
-	uint32_t uv_cir_lut_idx;
-	uint32_t y_rgb_sep_lut_idx;
-	uint32_t uv_sep_lut_idx;
+	__u32 y_rgb_cir_lut_idx;
+	__u32 uv_cir_lut_idx;
+	__u32 y_rgb_sep_lut_idx;
+	__u32 uv_sep_lut_idx;
 
 	/*
 	 * Detail enhancer settings
 	 */
 	struct sde_drm_de_v1 de;
-	uint32_t dir_weight;
-	uint32_t unsharp_mask_blend;
-	uint32_t de_blend;
-	uint32_t flags;
+	__u32 dir_weight;
+	__u32 unsharp_mask_blend;
+	__u32 de_blend;
+	__u32 flags;
 
 	/*
 	 * Inline pre-downscale settings
 	 */
-	uint32_t pre_downscale_x_0;
-	uint32_t pre_downscale_x_1;
-	uint32_t pre_downscale_y_0;
-	uint32_t pre_downscale_y_1;
+	__u32 pre_downscale_x_0;
+	__u32 pre_downscale_x_1;
+	__u32 pre_downscale_y_0;
+	__u32 pre_downscale_y_1;
 };
 
 /* Number of dest scalers supported */
@@ -359,11 +359,11 @@ struct sde_drm_scaler_v2 {
  *              Userspace pointer to struct sde_drm_scaler_v2
  */
 struct sde_drm_dest_scaler_cfg {
-	uint32_t flags;
-	uint32_t index;
-	uint32_t lm_width;
-	uint32_t lm_height;
-	uint64_t scaler_cfg;
+	__u32 flags;
+	__u32 index;
+	__u32 lm_width;
+	__u32 lm_height;
+	__u64 scaler_cfg;
 };
 
 /**
@@ -372,7 +372,7 @@ struct sde_drm_dest_scaler_cfg {
  * @ds_cfg:          Destination scaler block configuration
  */
 struct sde_drm_dest_scaler_data {
-	uint32_t num_dest_scaler;
+	__u32 num_dest_scaler;
 	struct sde_drm_dest_scaler_cfg ds_cfg[SDE_MAX_DS_COUNT];
 };
 
@@ -392,11 +392,11 @@ struct sde_drm_dest_scaler_data {
  * @post_clamp:         Post-clamp array values
  */
 struct sde_drm_csc_v1 {
-	int64_t ctm_coeff[SDE_CSC_MATRIX_COEFF_SIZE];
-	uint32_t pre_bias[SDE_CSC_BIAS_SIZE];
-	uint32_t post_bias[SDE_CSC_BIAS_SIZE];
-	uint32_t pre_clamp[SDE_CSC_CLAMP_SIZE];
-	uint32_t post_clamp[SDE_CSC_CLAMP_SIZE];
+	__s64 ctm_coeff[SDE_CSC_MATRIX_COEFF_SIZE];
+	__u32 pre_bias[SDE_CSC_BIAS_SIZE];
+	__u32 post_bias[SDE_CSC_BIAS_SIZE];
+	__u32 pre_clamp[SDE_CSC_CLAMP_SIZE];
+	__u32 post_clamp[SDE_CSC_CLAMP_SIZE];
 };
 
 /**
@@ -407,10 +407,10 @@ struct sde_drm_csc_v1 {
  * @color_3: Color 3 value
  */
 struct sde_drm_color {
-	uint32_t color_0;
-	uint32_t color_1;
-	uint32_t color_2;
-	uint32_t color_3;
+	__u32 color_0;
+	__u32 color_1;
+	__u32 color_2;
+	__u32 color_3;
 };
 
 /* Total number of supported dim layers */
@@ -430,8 +430,8 @@ struct sde_drm_color {
  * @rect:          Dim layer coordinates
  */
 struct sde_drm_dim_layer_cfg {
-	uint32_t flags;
-	uint32_t stage;
+	__u32 flags;
+	__u32 stage;
 	struct sde_drm_color color_fill;
 	struct drm_clip_rect rect;
 };
@@ -442,7 +442,7 @@ struct sde_drm_dim_layer_cfg {
  * @layer:         Dim layer user cfgs ptr for the num_layers
  */
 struct sde_drm_dim_layer_v1 {
-	uint32_t num_layers;
+	__u32 num_layers;
 	struct sde_drm_dim_layer_cfg layer_cfg[SDE_MAX_DIM_LAYERS];
 };
 
@@ -460,10 +460,10 @@ struct sde_drm_dim_layer_v1 {
  * @modes:		Pointer to struct drm_mode_modeinfo
  */
 struct sde_drm_wb_cfg {
-	uint32_t flags;
-	uint32_t connector_id;
-	uint32_t count_modes;
-	uint64_t modes;
+	__u32 flags;
+	__u32 connector_id;
+	__u32 count_modes;
+	__u64 modes;
 };
 
 #define SDE_MAX_ROI_V1	4
@@ -474,7 +474,7 @@ struct sde_drm_wb_cfg {
  * @roi: list of roi rectangles
  */
 struct sde_drm_roi_v1 {
-	uint32_t num_rects;
+	__u32 num_rects;
 	struct drm_clip_rect roi[SDE_MAX_ROI_V1];
 };
 
