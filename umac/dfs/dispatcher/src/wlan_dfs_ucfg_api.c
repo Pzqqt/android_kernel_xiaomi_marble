@@ -469,7 +469,7 @@ QDF_STATUS ucfg_dfs_set_rcac_enable(struct wlan_objmgr_pdev *pdev,
 qdf_export_symbol(ucfg_dfs_set_rcac_enable);
 
 QDF_STATUS ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
-				    uint8_t *rcac_en)
+				    bool *rcac_en)
 {
 	struct wlan_dfs *dfs;
 
@@ -521,4 +521,19 @@ QDF_STATUS ucfg_dfs_get_rcac_freq(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(ucfg_dfs_get_rcac_freq);
+
+bool ucfg_dfs_is_agile_rcac_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return false;
+	}
+
+	return dfs_is_agile_rcac_enabled(dfs);
+}
+
+qdf_export_symbol(ucfg_dfs_is_agile_rcac_enabled);
 #endif

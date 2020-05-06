@@ -1636,13 +1636,14 @@ struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_set_rcac_enable)(struct wlan_objmgr_pdev *pdev,
 					  bool rcac_en);
 	QDF_STATUS (*dfs_get_rcac_enable)(struct wlan_objmgr_pdev *pdev,
-					  uint8_t *rcac_en);
+					  bool *rcac_en);
 	QDF_STATUS (*dfs_set_rcac_freq)(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t rcac_freq);
 	QDF_STATUS (*dfs_get_rcac_freq)(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t *rcac_freq);
 	void (*dfs_rcac_sm_deliver_evt)(struct wlan_objmgr_pdev *pdev,
 					enum dfs_rcac_sm_evt event);
+	bool (*dfs_is_agile_rcac_enabled)(struct wlan_objmgr_pdev *pdev);
 #endif
 };
 

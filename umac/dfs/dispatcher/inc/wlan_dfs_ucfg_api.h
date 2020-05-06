@@ -623,11 +623,11 @@ ucfg_dfs_set_rcac_enable(struct wlan_objmgr_pdev *pdev,
  */
 #ifdef QCA_SUPPORT_ADFS_RCAC
 QDF_STATUS ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
-				    uint8_t *rcac_en);
+				    bool *rcac_en);
 #else
 static inline QDF_STATUS
 ucfg_dfs_get_rcac_enable(struct wlan_objmgr_pdev *pdev,
-			 uint8_t *rcac_en)
+			 bool *rcac_en)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -666,6 +666,29 @@ ucfg_dfs_get_rcac_freq(struct wlan_objmgr_pdev *pdev,
 		       qdf_freq_t *rcac_freq)
 {
 	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * ucfg_dfs_is_agile_rcac_enabled() - Determine if Rolling CAC is supported
+ * or not.
+ * @pdev: Pointer to struct wlan_objmgr_pdev.
+ *
+ * Following are the conditions needed to assertain that rolling CAC
+ * is enabled:
+ * 1. DFS domain of the PDEV must be FCC or MKK.
+ * 2. User has enabled Rolling CAC configuration.
+ * 3. FW capability to support ADFS.
+ *
+ * Return: True if RCAC support is enabled, false otherwise.
+ */
+#ifdef QCA_SUPPORT_ADFS_RCAC
+bool ucfg_dfs_is_agile_rcac_enabled(struct wlan_objmgr_pdev *pdev);
+#else
+static inline bool
+ucfg_dfs_is_agile_rcac_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	return false;
 }
 #endif
 

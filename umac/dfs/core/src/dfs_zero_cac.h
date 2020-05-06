@@ -1171,11 +1171,11 @@ dfs_set_rcac_enable(struct wlan_dfs *dfs,
  */
 #ifdef QCA_SUPPORT_ADFS_RCAC
 QDF_STATUS dfs_get_rcac_enable(struct wlan_dfs *dfs,
-			       uint8_t *rcac_en);
+			       bool *rcac_en);
 #else
 static inline QDF_STATUS
 dfs_get_rcac_enable(struct wlan_dfs *dfs,
-		    uint8_t *rcac_en)
+		    bool *rcac_en)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1238,25 +1238,6 @@ void dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj);
 static inline void
 dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-}
-#endif
-
-/**
- * dfs_is_host_agile_rcac_config_enabled() - Check if agile rCAC is enabled.
- * This considers the user config and DFS domain of the pdev to
- * to decide if agile RCAC is supported or not.
- * @dfs: Pointer to the wlan_dfs object.
- *
- * Return: True if agile DFS is enabled, else false.
- *
- */
-#ifdef QCA_SUPPORT_ADFS_RCAC
-bool dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs);
-#else
-static inline bool
-dfs_is_host_agile_rcac_config_enabled(struct wlan_dfs *dfs)
-{
-	return false;
 }
 #endif
 

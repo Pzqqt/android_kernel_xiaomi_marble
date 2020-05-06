@@ -500,6 +500,7 @@ static void register_rcac_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 	rx_ops->dfs_set_rcac_freq = ucfg_dfs_set_rcac_freq;
 	rx_ops->dfs_get_rcac_freq = ucfg_dfs_get_rcac_freq;
 	rx_ops->dfs_rcac_sm_deliver_evt = utils_dfs_rcac_sm_deliver_evt;
+	rx_ops->dfs_is_agile_rcac_enabled = ucfg_dfs_is_agile_rcac_enabled;
 }
 #else
 static inline void
