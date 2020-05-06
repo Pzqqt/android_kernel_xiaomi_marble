@@ -711,6 +711,7 @@ struct bss_description {
 #endif
 	uint32_t assoc_disallowed;
 	uint32_t adaptive_11r_ap;
+	uint32_t mbo_oce_enabled_ap;
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	uint32_t is_single_pmk;
 #endif

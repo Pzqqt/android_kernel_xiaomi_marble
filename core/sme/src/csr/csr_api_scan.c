@@ -2394,6 +2394,9 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 							     scan_entry);
 	bss_desc->adaptive_11r_ap = scan_entry->adaptive_11r_ap;
 
+	bss_desc->mbo_oce_enabled_ap =
+			util_scan_entry_mbo_oce(scan_entry) ? true : false;
+
 	csr_fill_single_pmk_ap_cap_from_scan_entry(bss_desc, scan_entry);
 
 	qdf_mem_copy(&bss_desc->mbssid_info, &scan_entry->mbssid_info,

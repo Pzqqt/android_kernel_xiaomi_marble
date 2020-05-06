@@ -18130,22 +18130,38 @@ void csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 #endif
 
 /**
- * csr_get_peer_pmf_status() - Get the PMF capability of peer
+ * csr_update_btm_offload_config() - Update btm config param to fw
  * @mac_ctx: Global mac ctx
+ * @command: Roam offload command
+ * @req_buf: roam offload scan request
  * @session: roam session
  *
- * Return: True if PMF is enabled, false otherwise.
+ * Return: None
  */
-static bool csr_get_peer_pmf_status(struct mac_context *mac_ctx,
-				    struct csr_roam_session *session)
+static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
+					  uint8_t command,
+					  struct roam_offload_scan_req *req_buf,
+					  struct csr_roam_session *session)
 {
 	struct wlan_objmgr_peer *peer;
 	bool is_pmf_enabled;
 
+	req_buf->btm_offload_config =
+			mac_ctx->mlme_cfg->btm.btm_offload_config;
+
+	/* Return if INI is disabled */
+	if (!req_buf->btm_offload_config)
+		return;
+
+	/* For RSO Stop Disable BTM offload to firmware */
+	if (command == ROAM_SCAN_OFFLOAD_STOP) {
+		req_buf->btm_offload_config = 0;
+		return;
+	}
 
 	if (!session->pConnectBssDesc) {
 		sme_err("Connected Bss Desc is NULL");
-		return false;
+		return;
 	}
 
 	peer = wlan_objmgr_get_peer(mac_ctx->psoc,
@@ -18155,7 +18171,7 @@ static bool csr_get_peer_pmf_status(struct mac_context *mac_ctx,
 	if (!peer) {
 		sme_debug("Peer of peer_mac %pM not found",
 			  session->pConnectBssDesc->bssId);
-		return false;
+		return;
 	}
 
 	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
@@ -18163,7 +18179,12 @@ static bool csr_get_peer_pmf_status(struct mac_context *mac_ctx,
 	sme_debug("get is_pmf_enabled %d for %pM", is_pmf_enabled,
 		  session->pConnectBssDesc->bssId);
 
-	return is_pmf_enabled;
+	/* If peer does not support PMF in case of OCE/MBO
+	 * Connection, Disable BTM offload to firmware.
+	 */
+	if (session->pConnectBssDesc->mbo_oce_enabled_ap &&
+	    !is_pmf_enabled)
+		req_buf->btm_offload_config = 0;
 }
 
 /**
@@ -18437,15 +18458,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
 
-	/* For RSO Stop or if peer does not support PMF, Disable BTM offload
-	 * to firmware.
-	 */
-	if (command == ROAM_SCAN_OFFLOAD_STOP ||
-	    !csr_get_peer_pmf_status(mac_ctx, session))
-		req_buf->btm_offload_config = 0;
-	else
-		req_buf->btm_offload_config =
-			mac_ctx->mlme_cfg->btm.btm_offload_config;
+	csr_update_btm_offload_config(mac_ctx, command, req_buf, session);
 
 	req_buf->btm_solicited_timeout =
 		mac_ctx->mlme_cfg->btm.btm_solicited_timeout;
