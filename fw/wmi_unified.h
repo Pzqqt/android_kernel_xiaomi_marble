@@ -1649,6 +1649,8 @@ typedef enum {
     WMI_ROAM_STATS_EVENTID,
     /** Roam scan channels list */
     WMI_ROAM_SCAN_CHANNEL_LIST_EVENTID,
+    /** Firmware roam capability information */
+    WMI_ROAM_CAPABILITY_REPORT_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -27845,6 +27847,35 @@ typedef struct {
  * A_UINT32 channel_list[];
  */
 } wmi_roam_scan_channel_list_event_fixed_param;
+
+typedef enum {
+    WMI_ROAM_CND_RSSI_SCORING             = 0x00000001, /* FW considers RSSI scoring */
+    WMI_ROAM_CND_HT_SCORING               = 0x00000002, /* FW considers HT scoring */
+    WMI_ROAM_CND_VHT_SCORING              = 0x00000004, /* FW considers VHT scoring */
+    WMI_ROAM_CND_HE_SCORING               = 0x00000008, /* FW considers 11ax scoring */
+    WMI_ROAM_CND_BW_SCORING               = 0x00000010, /* FW considers Bandwidth scoring */
+    WMI_ROAM_CND_BAND_SCORING             = 0x00000020, /* FW considers Band(2G/5G) scoring */
+    WMI_ROAM_CND_NSS_SCORING              = 0x00000040, /* FW considers NSS(1x1 / 2x2) scoring */
+    WMI_ROAM_CND_CHAN_CONGESTION_SCORING  = 0x00000080, /* FW considers ESP/QBSS scoring */
+    WMI_ROAM_CND_BEAMFORMING_SCORING      = 0x00000100, /* FW considers Beamforming scoring */
+    WMI_ROAM_CND_PCL_SCORING              = 0x00000200, /* FW considers PCL scoring */
+    WMI_ROAM_CND_OCE_WAN_SCORING          = 0x00000400, /* FW considers OCE WAN metrics scoring */
+    WMI_ROAM_CND_OCE_AP_TX_PWR_SCORING    = 0x00000800, /* FW considers OCE AP Tx power scoring */
+    WMI_ROAM_CND_OCE_AP_SUBNET_ID_SCORING = 0x00001000, /* FW considers OCE AP subnet id scoring */
+} WMI_ROAM_CND_SCORING_PARAMS;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_capability_report_event_fixed_param */
+    /*
+     * This event is sent asynchronously during FW init.
+     * It indicates FW roam related capabilites to host.
+     *
+     * scoring_capability_bitmap = Indicates firmware candidate scoring
+     *                             capabilities. It's a bitmap of values
+     *                             from enum WMI_ROAM_CND_SCORING_PARAMS.
+     */
+    A_UINT32 scoring_capability_bitmap;
+} wmi_roam_capability_report_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_big_data_cmd_fixed_param */
