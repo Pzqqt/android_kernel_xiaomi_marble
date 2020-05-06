@@ -3701,16 +3701,18 @@ static void lim_ht_switch_chnl_params(struct pe_session *pe_session)
 	pe_session->curr_req_chan_freq = pe_session->curr_op_freq;
 	pe_session->ch_center_freq_seg0 = center_freq;
 	pe_session->gLimChannelSwitch.ch_center_freq_seg0 = center_freq;
-	pe_session->gLimChannelSwitch.sw_target_freq = center_freq;
+	pe_session->gLimChannelSwitch.sw_target_freq =
+						pe_session->curr_op_freq;
 	pe_session->ch_width = ch_width;
 	pe_session->gLimChannelSwitch.ch_width = ch_width;
 	pe_session->gLimChannelSwitch.sec_ch_offset =
 		pe_session->htSecondaryChannelOffset;
 	pe_session->gLimChannelSwitch.ch_center_freq_seg1 = 0;
 
-	pe_debug("HT IE changed: Primary Channel: %d center chan: %d Channel Width: %d",
+	pe_debug("HT IE changed: Primary Channel: %d center chan: %d Channel Width: %d cur op freq %d",
 		 primary_channel, center_freq,
-		 pe_session->htRecommendedTxWidthSet);
+		 pe_session->htRecommendedTxWidthSet,
+		 pe_session->gLimChannelSwitch.sw_target_freq);
 	pe_session->channelChangeReasonCode =
 			LIM_SWITCH_CHANNEL_HT_WIDTH;
 	mac->lim.gpchangeChannelCallback = lim_switch_channel_cback;
