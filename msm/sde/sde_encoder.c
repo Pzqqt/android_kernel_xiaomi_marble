@@ -1564,11 +1564,6 @@ static void _sde_encoder_rc_restart_delayed(struct sde_encoder_virt *sde_enc,
 	struct msm_drm_private *priv;
 	unsigned int lp, idle_pc_duration;
 	struct msm_drm_thread *disp_thread;
-	bool autorefresh_enabled = false;
-
-	autorefresh_enabled = _sde_encoder_is_autorefresh_enabled(sde_enc);
-	if (autorefresh_enabled)
-		return;
 
 	/* set idle timeout based on master connector's lp value */
 	if (sde_enc->cur_master)
@@ -1590,7 +1585,6 @@ static void _sde_encoder_rc_restart_delayed(struct sde_encoder_virt *sde_enc,
 			&sde_enc->delayed_off_work,
 			msecs_to_jiffies(idle_pc_duration));
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
-			autorefresh_enabled,
 			idle_pc_duration, SDE_EVTLOG_FUNC_CASE2);
 	SDE_DEBUG_ENC(sde_enc, "sw_event:%d, work scheduled\n",
 			sw_event);
@@ -1603,6 +1597,15 @@ static void _sde_encoder_rc_cancel_delayed(struct sde_encoder_virt *sde_enc,
 			&sde_enc->delayed_off_work))
 		SDE_DEBUG_ENC(sde_enc, "sw_event:%d, work cancelled\n",
 				sw_event);
+}
+
+static void _sde_encoder_rc_kickoff_delayed(struct sde_encoder_virt *sde_enc,
+	u32 sw_event)
+{
+	if (_sde_encoder_is_autorefresh_enabled(sde_enc))
+		_sde_encoder_rc_cancel_delayed(sde_enc, sw_event);
+	else
+		_sde_encoder_rc_restart_delayed(sde_enc, sw_event);
 }
 
 static int _sde_encoder_rc_kickoff(struct drm_encoder *drm_enc,
@@ -1650,8 +1653,7 @@ static int _sde_encoder_rc_kickoff(struct drm_encoder *drm_enc,
 	sde_enc->rc_state = SDE_ENC_RC_STATE_ON;
 
 end:
-	/* restart delayed off work, if required */
-	_sde_encoder_rc_restart_delayed(sde_enc, sw_event);
+	_sde_encoder_rc_kickoff_delayed(sde_enc, sw_event);
 
 	mutex_unlock(&sde_enc->rc_lock);
 	return ret;
@@ -1866,8 +1868,7 @@ static int _sde_encoder_rc_idle(struct drm_encoder *drm_enc,
 		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
 			sde_crtc_frame_pending(sde_enc->crtc),
 			SDE_EVTLOG_ERROR);
-		_sde_encoder_rc_restart_delayed(sde_enc,
-				SDE_ENC_RC_EVENT_ENTER_IDLE);
+		_sde_encoder_rc_kickoff_delayed(sde_enc, sw_event);
 		goto end;
 	}
 
