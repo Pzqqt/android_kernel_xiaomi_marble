@@ -135,6 +135,9 @@ void dsi_ctrl_hw_cmn_host_setup(struct dsi_ctrl_hw *ctrl,
 
 	DSI_W32(ctrl, DSI_CTRL, reg_value);
 
+	if (cfg->phy_type == DSI_PHY_TYPE_CPHY)
+		DSI_W32(ctrl, DSI_CPHY_MODE_CTRL, BIT(0));
+
 	if (ctrl->phy_isolation_enabled)
 		DSI_W32(ctrl, DSI_DEBUG_CTRL, BIT(28));
 	DSI_CTRL_HW_DBG(ctrl, "Host configuration complete\n");
