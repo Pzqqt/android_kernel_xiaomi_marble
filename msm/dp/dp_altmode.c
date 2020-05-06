@@ -309,6 +309,7 @@ void dp_altmode_put(struct dp_hpd *dp_hpd)
 			dp_altmode);
 
 	altmode_deregister_client(altmode->amclient);
+	altmode_deregister_notifier(altmode->dev, altmode);
 
 	kfree(altmode);
 }
