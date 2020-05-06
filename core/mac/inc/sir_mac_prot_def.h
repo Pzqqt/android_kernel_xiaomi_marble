@@ -251,7 +251,10 @@
 #define SIR_MAC_B_PR_SSID_OFFSET             12
 
 /* Association/Reassociation offsets */
-#define SIR_MAC_REASSOC_SSID_OFFSET          10
+#define SIR_MAC_REASSOC_REQ_SSID_OFFSET      10
+
+/* Association Request offsets */
+#define SIR_MAC_ASSOC_REQ_SSID_OFFSET        4
 
 /* / Transaction sequence number definitions (used in Authentication frames) */
 #define    SIR_MAC_AUTH_FRAME_1        1

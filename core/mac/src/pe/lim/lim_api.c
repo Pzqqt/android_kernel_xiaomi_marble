@@ -2457,6 +2457,35 @@ lim_fill_fils_ft(struct pe_session *src_session,
 {}
 #endif
 
+/**
+ * lim_check_ft_initial_im_association() - To check FT initial mobility(im)
+ * association
+ * @roam_synch: A pointer to roam sync ind structure
+ * @session_entry: pe session
+ *
+ * This function is to check ft_initial_im_association.
+ *
+ * Return: None
+ */
+void
+lim_check_ft_initial_im_association(struct roam_offload_synch_ind *roam_synch,
+				    struct pe_session *session_entry)
+{
+	tpSirMacMgmtHdr hdr;
+	uint8_t *assoc_req_ptr;
+
+	assoc_req_ptr = (uint8_t *) roam_synch + roam_synch->reassoc_req_offset;
+	hdr = (tpSirMacMgmtHdr) assoc_req_ptr;
+
+	if (hdr->fc.type == SIR_MAC_MGMT_FRAME &&
+	    hdr->fc.subType == SIR_MAC_MGMT_ASSOC_REQ &&
+	    session_entry->is11Rconnection) {
+		pe_debug("Frame subtype: %d and connection is %d",
+			 hdr->fc.subType, session_entry->is11Rconnection);
+		roam_synch->is_ft_im_roam = true;
+	}
+}
+
 QDF_STATUS
 pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct roam_offload_synch_ind *roam_sync_ind_ptr,
@@ -2620,6 +2649,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
 				    LIM_REASSOC, ft_session_ptr);
+
+	lim_check_ft_initial_im_association(roam_sync_ind_ptr, ft_session_ptr);
 
 	lim_copy_and_free_hlp_data_from_session(ft_session_ptr,
 						roam_sync_ind_ptr);

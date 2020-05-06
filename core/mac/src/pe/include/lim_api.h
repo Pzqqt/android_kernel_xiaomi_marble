@@ -328,6 +328,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		       struct bss_description *bss_desc_ptr,
 		       enum sir_roam_op_code reason);
 
+void
+lim_check_ft_initial_im_association(struct roam_offload_synch_ind *roam_synch,
+				    struct pe_session *session_entry);
+
 /**
  * pe_disconnect_callback() - Callback to handle deauth event is received
  * from firmware

@@ -2945,6 +2945,7 @@ struct roam_offload_synch_ind {
 	struct qdf_mac_addr src_mac;
 	uint16_t hlp_data_len;
 	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
+	bool is_ft_im_roam;
 };
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
