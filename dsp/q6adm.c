@@ -2149,7 +2149,8 @@ static struct cal_block_data *adm_find_cal_by_path(int cal_index, int path)
 
 		if (cal_index == ADM_AUDPROC_CAL ||
 		    cal_index == ADM_LSM_AUDPROC_CAL ||
-		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL) {
+		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL ||
+		    cal_index == ADM_AUDPROC_PERSISTENT_CAL) {
 			audproc_cal_info = cal_block->cal_info;
 			if ((audproc_cal_info->path == path) &&
 			    (cal_block->cal_data.size > 0))
@@ -2187,7 +2188,8 @@ static struct cal_block_data *adm_find_cal_by_app_type(int cal_index, int path,
 
 		if (cal_index == ADM_AUDPROC_CAL ||
 		    cal_index == ADM_LSM_AUDPROC_CAL ||
-		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL) {
+		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL ||
+		    cal_index == ADM_AUDPROC_PERSISTENT_CAL) {
 			audproc_cal_info = cal_block->cal_info;
 			if ((audproc_cal_info->path == path) &&
 			    (audproc_cal_info->app_type == app_type) &&
@@ -2228,7 +2230,8 @@ static struct cal_block_data *adm_find_cal(int cal_index, int path,
 
 		if (cal_index == ADM_AUDPROC_CAL ||
 		    cal_index == ADM_LSM_AUDPROC_CAL ||
-		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL) {
+		    cal_index == ADM_LSM_AUDPROC_PERSISTENT_CAL||
+		    cal_index == ADM_AUDPROC_PERSISTENT_CAL) {
 			audproc_cal_info = cal_block->cal_info;
 			if ((audproc_cal_info->path == path) &&
 			    (audproc_cal_info->app_type == app_type) &&
@@ -2319,6 +2322,9 @@ static void send_adm_cal(int port_id, int copp_idx, int path, int perf_mode,
 	if (passthr_mode != LISTEN) {
 		send_adm_cal_type(ADM_AUDPROC_CAL, path, port_id, copp_idx,
 				perf_mode, app_type, acdb_id, sample_rate);
+		send_adm_cal_type(ADM_AUDPROC_PERSISTENT_CAL, path,
+				  port_id, copp_idx, perf_mode, app_type,
+				  acdb_id, sample_rate);
 	} else {
 		send_adm_cal_type(ADM_LSM_AUDPROC_CAL, path, port_id, copp_idx,
 				  perf_mode, app_type, acdb_id, sample_rate);
@@ -4134,6 +4140,9 @@ static int get_cal_type_index(int32_t cal_type)
 	case ADM_LSM_AUDPROC_PERSISTENT_CAL_TYPE:
 		ret = ADM_LSM_AUDPROC_PERSISTENT_CAL;
 		break;
+	case ADM_AUDPROC_PERSISTENT_CAL_TYPE:
+		ret = ADM_AUDPROC_PERSISTENT_CAL;
+		break;
 	default:
 		pr_err("%s: invalid cal type %d!\n", __func__, cal_type);
 	}
@@ -4357,6 +4366,12 @@ static int adm_init_cal_data(void)
 		cal_utils_match_buf_num} },
 
 		{{ADM_LSM_AUDPROC_PERSISTENT_CAL_TYPE,
+		 {adm_alloc_cal, adm_dealloc_cal, NULL,
+		  adm_set_cal, NULL, NULL} },
+		 {adm_map_cal_data, adm_unmap_cal_data,
+		  cal_utils_match_buf_num} },
+
+		{{ADM_AUDPROC_PERSISTENT_CAL_TYPE,
 		 {adm_alloc_cal, adm_dealloc_cal, NULL,
 		  adm_set_cal, NULL, NULL} },
 		 {adm_map_cal_data, adm_unmap_cal_data,
@@ -4922,7 +4937,15 @@ int adm_store_cal_data(int port_id, int copp_idx, int path, int perf_mode,
 			rc = -ENOMEM;
 			goto unlock;
 		}
-	} else if (cal_index == ADM_AUDVOL_CAL) {
+	} else if (cal_index == ADM_AUDPROC_PERSISTENT_CAL) {
+		if (cal_block->cal_data.size > AUD_PROC_PERSIST_BLOCK_SIZE) {
+			pr_err("%s:persist invalid size exp/actual[%zd, %d]\n",
+				__func__, cal_block->cal_data.size, *size);
+			rc = -ENOMEM;
+			goto unlock;
+		}
+	}
+	else if (cal_index == ADM_AUDVOL_CAL) {
 		if (cal_block->cal_data.size > AUD_VOL_BLOCK_SIZE) {
 			pr_err("%s:aud_vol:invalid size exp/actual[%zd, %d]\n",
 				__func__, cal_block->cal_data.size, *size);
