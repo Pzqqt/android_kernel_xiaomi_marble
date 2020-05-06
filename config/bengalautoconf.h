@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #define CONFIG_PINCTRL_LPI 1
@@ -42,3 +42,4 @@
 #define CONFIG_TDM_DISABLE 1
 #define CONFIG_MI2S_DISABLE 1
 #define CONFIG_AUXPCM_DISABLE 1
+#define CONFIG_DIGITAL_CDC_RSC_MGR 1
