@@ -850,6 +850,7 @@ void ucfg_mc_cp_stats_free_stats_resources(struct stats_event *ev)
 	qdf_mem_free(ev->vdev_summary_stats);
 	qdf_mem_free(ev->vdev_chain_rssi);
 	qdf_mem_free(ev->peer_extended_stats);
+	qdf_mem_free(ev->peer_stats_info_ext);
 	qdf_mem_zero(ev, sizeof(*ev));
 }
 
