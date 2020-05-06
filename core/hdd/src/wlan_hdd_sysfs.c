@@ -41,6 +41,7 @@
 #include "wlan_hdd_sysfs_get_channel.h"
 #include <wlan_hdd_sysfs_set_fw_mode_cfg.h>
 #include <wlan_hdd_sysfs_reassoc.h>
+#include <wlan_hdd_sysfs_mem_stats.h>
 #include "wlan_hdd_sysfs_crash_inject.h"
 #include "wlan_hdd_sysfs_suspend_resume.h"
 #include "wlan_hdd_sysfs_unit_test.h"
@@ -767,6 +768,7 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 {
 	hdd_sysfs_create_driver_root_obj();
 	hdd_sysfs_create_version_interface(hdd_ctx->psoc);
+	hdd_sysfs_mem_stats_create(wlan_kobject);
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
 		hdd_sysfs_create_powerstats_interface();
 		hdd_sysfs_set_fw_mode_cfg_create(driver_kobject);
@@ -799,6 +801,7 @@ void hdd_destroy_sysfs_files(void)
 		hdd_sysfs_set_fw_mode_cfg_destroy(driver_kobject);
 		hdd_sysfs_destroy_powerstats_interface();
 	}
+	hdd_sysfs_mem_stats_destroy(wlan_kobject);
 	hdd_sysfs_destroy_version_interface();
 	hdd_sysfs_destroy_driver_root_obj();
 }
