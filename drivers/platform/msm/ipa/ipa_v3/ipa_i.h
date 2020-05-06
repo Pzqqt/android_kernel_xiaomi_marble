@@ -1857,6 +1857,7 @@ struct ipa3_app_clock_vote {
  * @disconnect_lock: protects LAN_CONS packet receive notification CB
  * @ipa3_active_clients: structure for reference counting connected IPA clients
  * @ipa_hw_type: type of IPA HW type (e.g. IPA 1.0, IPA 1.1 etc')
+ * @ipa_hw_type_index: index of IPA HW type (e.g. IPA_4_0, IPA_4_0_MHI etc')
  * @ipa3_hw_mode: mode of IPA HW mode (e.g. Normal, Virtual or over PCIe)
  * @use_ipa_teth_bridge: use tethering bridge driver
  * @modem_cfg_emb_pipe_flt: modem configure embedded pipe filtering rules
@@ -1975,6 +1976,7 @@ struct ipa3_context {
 	struct mutex msg_wlan_client_lock;
 	wait_queue_head_t msg_waitq;
 	enum ipa_hw_type ipa_hw_type;
+	u8 hw_type_index;
 	enum ipa3_hw_mode ipa3_hw_mode;
 	enum ipa3_platform_type platform_type;
 	bool ipa_config_is_mhi;
@@ -2877,6 +2879,8 @@ bool ipa3_get_lan_rx_napi(void);
 bool ipa3_get_qmap_pipe_enable(void);
 
 /* internal functions */
+
+u8 ipa3_get_hw_type_index(void);
 
 int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	struct ipa_api_controller *api_ctrl);
