@@ -645,11 +645,13 @@ struct msm_compression_info {
  * @num_lm:       number of layer mixers used
  * @num_enc:      number of compression encoder blocks used
  * @num_intf:     number of interfaces the panel is mounted on
+ * @comp_type:    type of compression supported
  */
 struct msm_display_topology {
 	u32 num_lm;
 	u32 num_enc;
 	u32 num_intf;
+	enum msm_display_compression_type comp_type;
 };
 
 /**

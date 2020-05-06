@@ -31,40 +31,61 @@
 #define RM_RQ_CWB(r) ((r)->top_ctrl & BIT(SDE_RM_TOPCTL_CWB))
 #define RM_IS_TOPOLOGY_MATCH(t, r) ((t).num_lm == (r).num_lm && \
 				(t).num_comp_enc == (r).num_enc && \
-				(t).num_intf == (r).num_intf)
+				(t).num_intf == (r).num_intf && \
+				(t).comp_type == (r).comp_type)
 
 /**
  * toplogy information to be used when ctl path version does not
  * support driving more than one interface per ctl_path
  */
-static const struct sde_rm_topology_def g_top_table[] = {
-	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 2, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 2, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true  },
+static const struct sde_rm_topology_def g_top_table[SDE_RM_TOPOLOGY_MAX] = {
+	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 2, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 2, true,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
 };
 
 /**
  * topology information to be used when the ctl path version
  * is SDE_CTL_CFG_VERSION_1_0_0
  */
-static const struct sde_rm_topology_def g_ctl_ver_1_top_table[] = {
-	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,       1, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 1, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 1, true  },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC, 2, 1, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false },
-	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true  },
+static const struct sde_rm_topology_def g_top_table_v1[SDE_RM_TOPOLOGY_MAX] = {
+	{   SDE_RM_TOPOLOGY_NONE,                 0, 0, 0, 0, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE,           1, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_DSC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_SINGLEPIPE_VDC,       1, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_VDC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE,             2, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSC,         2, 2, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE,     2, 0, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC, 2, 1, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_VDC },
+	{   SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,    2, 2, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true,
+			MSM_DISPLAY_COMPRESSION_NONE },
 };
 
 
@@ -308,14 +329,15 @@ void sde_rm_init_hw_iter(
 	iter->type = type;
 }
 
-enum sde_rm_topology_name sde_rm_get_topology_name(
-	struct msm_display_topology topology)
+enum sde_rm_topology_name sde_rm_get_topology_name(struct sde_rm *rm,
+		struct msm_display_topology topology)
 {
 	int i;
 
 	for (i = 0; i < SDE_RM_TOPOLOGY_MAX; i++)
-		if (RM_IS_TOPOLOGY_MATCH(g_top_table[i], topology))
-			return g_top_table[i].top_name;
+		if (RM_IS_TOPOLOGY_MATCH(rm->topology_tbl[i],
+					topology))
+			return rm->topology_tbl[i].top_name;
 
 	return SDE_RM_TOPOLOGY_NONE;
 }
@@ -714,7 +736,7 @@ int sde_rm_init(struct sde_rm *rm,
 	rm->dev = dev;
 
 	if (IS_SDE_CTL_REV_100(cat->ctl_rev))
-		rm->topology_tbl = g_ctl_ver_1_top_table;
+		rm->topology_tbl = g_top_table_v1;
 	else
 		rm->topology_tbl = g_top_table;
 
@@ -1273,21 +1295,28 @@ static bool _sde_rm_check_vdc(struct sde_rm *rm,
 static int _sde_rm_reserve_dsc(
 		struct sde_rm *rm,
 		struct sde_rm_rsvp *rsvp,
-		struct msm_display_dsc_info *dsc_info,
-		const struct sde_rm_topology_def *top,
+		struct sde_rm_requirements *reqs,
 		u8 *_dsc_ids)
 {
 	struct sde_rm_hw_iter iter_i, iter_j;
 	struct sde_rm_hw_blk *dsc[MAX_BLOCKS];
 	u32 reserve_mask = 0;
 	int alloc_count = 0;
-	int num_dsc_enc = top->num_comp_enc;
+	int num_dsc_enc;
+	struct msm_display_dsc_info *dsc_info;
 	int i;
 
-	if ((!top->num_comp_enc) || !dsc_info) {
+	if (reqs->hw_res.comp_info->comp_type != MSM_DISPLAY_COMPRESSION_DSC) {
+		SDE_DEBUG("compression blk dsc not required\n");
+		return 0;
+	}
+
+	num_dsc_enc = reqs->topology->num_comp_enc;
+	dsc_info = &reqs->hw_res.comp_info->dsc_info;
+
+	if ((!num_dsc_enc) || !dsc_info) {
 		SDE_DEBUG("invalid topoplogy params: %d, %d\n",
-				top->num_comp_enc,
-				!(dsc_info == NULL));
+				num_dsc_enc, !(dsc_info == NULL));
 		return 0;
 	}
 
@@ -1309,7 +1338,7 @@ static int _sde_rm_reserve_dsc(
 			continue;
 
 		/* if this hw block does not support required feature */
-		if ((dsc_info->config.native_422 ||
+		if (!_dsc_ids && (dsc_info->config.native_422 ||
 			dsc_info->config.native_420) && !has_422_420_support)
 			continue;
 
@@ -1680,9 +1709,7 @@ static int _sde_rm_make_dsc_rsvp(struct sde_rm *rm, struct sde_rm_rsvp *rsvp,
 				i, splash_display->dsc_ids[i]);
 	}
 
-	return  _sde_rm_reserve_dsc(rm, rsvp,
-			&reqs->hw_res.comp_info->dsc_info,
-			reqs->topology, hw_ids);
+	return  _sde_rm_reserve_dsc(rm, rsvp, reqs, hw_ids);
 
 }
 
@@ -1907,8 +1934,6 @@ static int _sde_rm_populate_requirements(
 	const struct drm_display_mode *mode = &crtc_state->mode;
 	int i;
 
-	memset(reqs, 0, sizeof(*reqs));
-
 	reqs->top_ctrl = sde_connector_get_property(conn_state,
 			CONNECTOR_PROP_TOPOLOGY_CONTROL);
 	sde_encoder_get_hw_resources(enc, &reqs->hw_res, conn_state);
@@ -2032,7 +2057,8 @@ static struct drm_connector *_sde_rm_get_connector(
 	return conn;
 }
 
-int sde_rm_update_topology(struct drm_connector_state *conn_state,
+int sde_rm_update_topology(struct sde_rm *rm,
+	struct drm_connector_state *conn_state,
 	struct msm_display_topology *topology)
 {
 	int i, ret = 0;
@@ -2045,8 +2071,8 @@ int sde_rm_update_topology(struct drm_connector_state *conn_state,
 	if (topology) {
 		top = *topology;
 		for (i = 0; i < SDE_RM_TOPOLOGY_MAX; i++)
-			if (RM_IS_TOPOLOGY_MATCH(g_top_table[i], top)) {
-				top_name = g_top_table[i].top_name;
+			if (RM_IS_TOPOLOGY_MATCH(rm->topology_tbl[i], top)) {
+				top_name = rm->topology_tbl[i].top_name;
 				break;
 			}
 	}
@@ -2207,9 +2233,10 @@ int sde_rm_reserve(
 		bool test_only)
 {
 	struct sde_rm_rsvp *rsvp_cur, *rsvp_nxt;
-	struct sde_rm_requirements reqs;
+	struct sde_rm_requirements reqs = {0,};
 	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
+	struct msm_compression_info *comp_info;
 	int ret;
 
 	if (!rm || !enc || !crtc_state || !conn_state) {
@@ -2232,6 +2259,10 @@ int sde_rm_reserve(
 	if (!_sde_rm_is_display_in_cont_splash(sde_kms, enc) &&
 			!drm_atomic_crtc_needs_modeset(crtc_state))
 		return 0;
+
+	comp_info = kzalloc(sizeof(*comp_info), GFP_KERNEL);
+	if (!comp_info)
+		return -ENOMEM;
 
 	SDE_DEBUG("reserving hw for conn %d enc %d crtc %d test_only %d\n",
 			conn_state->connector->base.id, enc->base.id,
@@ -2265,6 +2296,7 @@ int sde_rm_reserve(
 	if (!test_only && rsvp_nxt)
 		goto commit_rsvp;
 
+	reqs.hw_res.comp_info = comp_info;
 	ret = _sde_rm_populate_requirements(rm, enc, crtc_state,
 			conn_state, &reqs);
 	if (ret) {
@@ -2332,6 +2364,7 @@ commit_rsvp:
 	ret = _sde_rm_commit_rsvp(rm, rsvp_nxt, conn_state);
 
 end:
+	kfree(comp_info);
 	_sde_rm_print_rsvps(rm, SDE_RM_STAGE_FINAL);
 	mutex_unlock(&rm->rm_lock);
 
