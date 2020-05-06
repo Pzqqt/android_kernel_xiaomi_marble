@@ -2326,7 +2326,7 @@ static QDF_STATUS sap_fsm_state_init(struct sap_context *sap_ctx,
 		 * request so, set the third to false.
 		 */
 		qdf_status = sap_validate_chan(sap_ctx, false, true);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL("channel is not valid!"));
@@ -2335,7 +2335,7 @@ static QDF_STATUS sap_fsm_state_init(struct sap_context *sap_ctx,
 
 		qdf_status = sap_goto_starting(sap_ctx, sap_event,
 					       mac_ctx, mac_handle);
-		if (!QDF_IS_STATUS_ERROR(qdf_status))
+		if (QDF_IS_STATUS_ERROR(qdf_status))
 			sap_err("sap_goto_starting failed");
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		if (sap_ctx->is_chan_change_inprogress) {
