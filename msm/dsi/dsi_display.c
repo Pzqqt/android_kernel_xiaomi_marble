@@ -3306,11 +3306,15 @@ static int dsi_display_clocks_init(struct dsi_display *display)
 	const char *mux_byte = "mux_byte", *mux_pixel = "mux_pixel";
 	const char *cphy_byte = "cphy_byte", *cphy_pixel = "cphy_pixel";
 	const char *shadow_byte = "shadow_byte", *shadow_pixel = "shadow_pixel";
+	const char *shadow_cphybyte = "shadow_cphybyte",
+		   *shadow_cphypixel = "shadow_cphypixel";
 	struct clk *dsi_clk;
 	struct dsi_clk_link_set *src = &display->clock_info.src_clks;
 	struct dsi_clk_link_set *mux = &display->clock_info.mux_clks;
 	struct dsi_clk_link_set *cphy = &display->clock_info.cphy_clks;
 	struct dsi_clk_link_set *shadow = &display->clock_info.shadow_clks;
+	struct dsi_clk_link_set *shadow_cphy =
+				&display->clock_info.shadow_cphy_clks;
 	struct dsi_dyn_clk_caps *dyn_clk_caps = &(display->panel->dyn_clk_caps);
 	char *dsi_clock_name;
 
@@ -3369,6 +3373,12 @@ static int dsi_display_clocks_init(struct dsi_display *display)
 				if (dsi_display_check_prefix(shadow_pixel,
 							clk_name))
 					shadow->pixel_clk = NULL;
+				if (dsi_display_check_prefix(shadow_cphybyte,
+							clk_name))
+					shadow_cphy->byte_clk = NULL;
+				if (dsi_display_check_prefix(shadow_cphypixel,
+							clk_name))
+					shadow_cphy->pixel_clk = NULL;
 
 				dyn_clk_caps->dyn_clk_support = false;
 			}
@@ -3411,6 +3421,16 @@ static int dsi_display_clocks_init(struct dsi_display *display)
 
 		if (dsi_display_check_prefix(shadow_pixel, clk_name)) {
 			shadow->pixel_clk = dsi_clk;
+			continue;
+		}
+
+		if (dsi_display_check_prefix(shadow_cphybyte, clk_name)) {
+			shadow_cphy->byte_clk = dsi_clk;
+			continue;
+		}
+
+		if (dsi_display_check_prefix(shadow_cphypixel, clk_name)) {
+			shadow_cphy->pixel_clk = dsi_clk;
 			continue;
 		}
 	}
@@ -4278,12 +4298,12 @@ static int dsi_display_update_dsi_bitrate(struct dsi_display *display,
 			byte_intf_clk_div = host_cfg->byte_intf_clk_div;
 			do_div(byte_intf_clk_rate, byte_intf_clk_div);
 		} else {
-			do_div(bit_rate, bits_per_symbol);
-			bit_rate *= num_of_symbols;
-			bit_rate_per_lane = bit_rate;
-			do_div(bit_rate_per_lane, num_of_lanes);
-			byte_clk_rate = bit_rate_per_lane;
-			do_div(byte_clk_rate, 7);
+			bit_rate_per_lane = bit_clk_rate;
+			pclk_rate *= bits_per_symbol;
+			do_div(pclk_rate, num_of_symbols);
+			byte_clk_rate = bit_clk_rate;
+			do_div(byte_clk_rate, num_of_symbols);
+
 			/* For CPHY, byte_intf_clk is same as byte_clk */
 			byte_intf_clk_rate = byte_clk_rate;
 		}
@@ -4367,6 +4387,17 @@ static void _dsi_display_calc_pipe_delay(struct dsi_display *display,
 	delay->pll_delay = ((130 * esc_clk_rate_hz) / 1000000) * 2;
 }
 
+/*
+ * dsi_display_is_type_cphy - check if panel type is cphy
+ * @display: Pointer to private display structure
+ * Returns: True if panel type is cphy
+ */
+static inline bool dsi_display_is_type_cphy(struct dsi_display *display)
+{
+	return (display->panel->host_config.phy_type ==
+		DSI_PHY_TYPE_CPHY) ? true : false;
+}
+
 static int _dsi_display_dyn_update_clks(struct dsi_display *display,
 					struct link_clk_freq *bkp_freq)
 {
@@ -4374,17 +4405,26 @@ static int _dsi_display_dyn_update_clks(struct dsi_display *display,
 	u8 ctrl_version;
 	struct dsi_display_ctrl *m_ctrl, *ctrl;
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
+	struct dsi_clk_link_set *parent_clk, *enable_clk;
 
 	m_ctrl = &display->ctrl[display->clk_master_idx];
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
 	ctrl_version = m_ctrl->ctrl->version;
 
-	dsi_clk_prepare_enable(&display->clock_info.src_clks);
+	if (dsi_display_is_type_cphy(display)) {
+		enable_clk = &display->clock_info.cphy_clks;
+		parent_clk = &display->clock_info.shadow_cphy_clks;
+	} else {
+		enable_clk = &display->clock_info.src_clks;
+		parent_clk = &display->clock_info.shadow_clks;
+	}
 
-	rc = dsi_clk_update_parent(&display->clock_info.shadow_clks,
-			      &display->clock_info.mux_clks);
+	dsi_clk_prepare_enable(enable_clk);
+
+	rc = dsi_clk_update_parent(parent_clk,
+				&display->clock_info.mux_clks);
 	if (rc) {
-		DSI_ERR("failed update mux parent to shadow\n");
+		DSI_ERR("failed to update mux parent\n");
 		goto exit;
 	}
 
@@ -4443,12 +4483,12 @@ static int _dsi_display_dyn_update_clks(struct dsi_display *display,
 	}
 
 defer_dfps_wait:
-	rc = dsi_clk_update_parent(&display->clock_info.src_clks,
-			      &display->clock_info.mux_clks);
+	rc = dsi_clk_update_parent(enable_clk,
+			&display->clock_info.mux_clks);
 	if (rc)
 		DSI_ERR("could not switch back to src clks %d\n", rc);
 
-	dsi_clk_disable_unprepare(&display->clock_info.src_clks);
+	dsi_clk_disable_unprepare(enable_clk);
 
 	return rc;
 

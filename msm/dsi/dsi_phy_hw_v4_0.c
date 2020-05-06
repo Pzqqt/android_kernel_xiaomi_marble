@@ -667,6 +667,8 @@ void dsi_phy_hw_v4_0_dyn_refresh_config(struct dsi_phy_hw *phy,
 					struct dsi_phy_cfg *cfg, bool is_master)
 {
 	u32 reg;
+	bool is_cphy = (cfg->phy_type == DSI_PHY_TYPE_CPHY) ?
+			true : false;
 
 	if (is_master) {
 		DSI_DYN_REF_REG_W(phy->dyn_pll_base, DSI_DYN_REFRESH_PLL_CTRL19,
@@ -692,7 +694,7 @@ void dsi_phy_hw_v4_0_dyn_refresh_config(struct dsi_phy_hw *phy,
 			  cfg->timing.lane_v4[12], cfg->timing.lane_v4[13]);
 		DSI_DYN_REF_REG_W(phy->dyn_pll_base, DSI_DYN_REFRESH_PLL_CTRL26,
 			  DSIPHY_CMN_CTRL_0, DSIPHY_CMN_LANE_CTRL0,
-			  0x7f, 0x1f);
+			  0x7f, is_cphy ? 0x17 : 0x1f);
 
 	} else {
 		reg = DSI_R32(phy, DSIPHY_CMN_CLK_CFG1);
@@ -727,7 +729,7 @@ void dsi_phy_hw_v4_0_dyn_refresh_config(struct dsi_phy_hw *phy,
 			  cfg->timing.lane_v4[13], 0x7f);
 		DSI_DYN_REF_REG_W(phy->dyn_pll_base, DSI_DYN_REFRESH_PLL_CTRL9,
 			  DSIPHY_CMN_LANE_CTRL0, DSIPHY_CMN_CTRL_2,
-			  0x1f, 0x40);
+			  is_cphy ? 0x17 : 0x1f, 0x40);
 		/*
 		 * fill with dummy register writes since controller will blindly
 		 * send these values to DSI PHY.
@@ -736,7 +738,7 @@ void dsi_phy_hw_v4_0_dyn_refresh_config(struct dsi_phy_hw *phy,
 		while (reg <= DSI_DYN_REFRESH_PLL_CTRL29) {
 			DSI_DYN_REF_REG_W(phy->dyn_pll_base, reg,
 				  DSIPHY_CMN_LANE_CTRL0, DSIPHY_CMN_CTRL_0,
-				  0x1f, 0x7f);
+				  is_cphy ? 0x17 : 0x1f, 0x7f);
 			reg += 0x4;
 		}
 

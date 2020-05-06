@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "dsi_phy_timing_calc.h"
 
-void dsi_phy_hw_v2_0_get_default_phy_params(struct phy_clk_params *params)
+void dsi_phy_hw_v2_0_get_default_phy_params(struct phy_clk_params *params,
+					    u32 phy_type)
 {
 	params->clk_prep_buf = 50;
 	params->clk_zero_buf = 2;
@@ -77,7 +78,7 @@ void dsi_phy_hw_v2_0_calc_hs_trail(struct phy_clk_params *clk_params,
 
 void dsi_phy_hw_v2_0_update_timing_params(
 	struct dsi_phy_per_lane_cfgs *timing,
-	struct phy_timing_desc *desc)
+	struct phy_timing_desc *desc, u32 phy_type)
 {
 	int i = 0;
 
