@@ -2189,7 +2189,7 @@ int sde_connector_esd_status(struct drm_connector *conn)
 		return -ETIMEDOUT;
 	}
 	ret = sde_conn->ops.check_status(&sde_conn->base,
-					 sde_conn->display, true);
+					 sde_conn->display, false);
 	mutex_unlock(&sde_conn->lock);
 
 	if (ret <= 0) {
