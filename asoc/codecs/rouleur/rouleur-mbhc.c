@@ -664,10 +664,10 @@ static void rouleur_mbhc_hph_pull_down_ctrl(struct snd_soc_component *component,
 	if (enable) {
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,
-				    0x30, 0x10);
+				    0x30, 0x20);
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,
-				    0x0C, 0x04);
+				    0x0C, 0x08);
 	} else {
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,

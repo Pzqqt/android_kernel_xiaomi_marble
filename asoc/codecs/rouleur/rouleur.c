@@ -472,7 +472,7 @@ static int rouleur_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX0_CTL,
-				0x7C, 0x7C);
+				0x80, 0x00);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x04, 0x04);
@@ -486,6 +486,9 @@ static int rouleur_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x04, 0x00);
+		snd_soc_component_update_bits(component,
+				ROULEUR_DIG_SWR_CDC_RX0_CTL,
+				0x80, 0x80);
 		if (rouleur->comp1_enable)
 			snd_soc_component_update_bits(component,
 					ROULEUR_DIG_SWR_CDC_COMP_CTL_0,
@@ -544,7 +547,7 @@ static int rouleur_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX1_CTL,
-				0x7C, 0x7C);
+				0x80, 0x00);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x08, 0x08);
@@ -557,6 +560,9 @@ static int rouleur_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x08, 0x00);
+		snd_soc_component_update_bits(component,
+				ROULEUR_DIG_SWR_CDC_RX1_CTL,
+				0x80, 0x80);
 		if (rouleur->comp2_enable)
 			snd_soc_component_update_bits(component,
 					ROULEUR_DIG_SWR_CDC_COMP_CTL_0,
@@ -583,7 +589,7 @@ static int rouleur_codec_ear_lo_dac_event(struct snd_soc_dapm_widget *w,
 		rouleur_rx_clk_enable(component);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX0_CTL,
-				0x7C, 0x7C);
+				0x80, 0x00);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x04, 0x04);
@@ -599,6 +605,9 @@ static int rouleur_codec_ear_lo_dac_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
 				0x04, 0x00);
+		snd_soc_component_update_bits(component,
+				ROULEUR_DIG_SWR_CDC_RX0_CTL,
+				0x80, 0x80);
 
 		break;
 	};
