@@ -357,6 +357,17 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_STA_11AX_UL_STATS = 33,
 
+    /* HTT_DBG_EXT_VDEV_RTT_RESP_STATS
+     * PARAMS:
+     *   - config_param0:
+     *      [Bit7 : Bit0]   vdev_id:8
+     *      [Bit31 : Bit8]  rsvd:24
+     * RESP MSG:
+     *   -
+     */
+    HTT_DBG_EXT_VDEV_RTT_RESP_STATS = 34,
+
+
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
 };
@@ -499,6 +510,7 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_BRP_STATS_TAG             = 115, /* htt_txbf_ofdma_brp_stats_tlv */
     HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
     HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
+    HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -4987,6 +4999,28 @@ typedef struct {
 typedef struct {
     htt_sta_ul_ofdma_stats_tlv ul_ofdma_sta_stats;
 } htt_sta_11ax_ul_stats_t;
+
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    /* No of Fine Timing Measurement frames transmitted successfully */
+    A_UINT32 tx_ftm_suc;
+    /* No of Fine Timing Measurement frames transmitted successfully after retry */
+    A_UINT32 tx_ftm_suc_retry;
+    /* No of Fine Timing Measurement frames not transmitted successfully */
+    A_UINT32 tx_ftm_fail;
+    /* No of Fine Timing Measurement Request frames received, including initial, non-initial, and duplicates */
+    A_UINT32 rx_ftmr_cnt;
+    /* No of duplicate Fine Timing Measurement Request frames received, including both initial and non-initial */
+    A_UINT32 rx_ftmr_dup_cnt;
+    /* No of initial Fine Timing Measurement Request frames received */
+    A_UINT32 rx_iftmr_cnt;
+    /* No of duplicate initial Fine Timing Measurement Request frames received */
+    A_UINT32 rx_iftmr_dup_cnt;
+} htt_vdev_rtt_resp_stats_tlv;
+
+typedef struct {
+    htt_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
+} htt_vdev_rtt_resp_stats_t;
 
 
 #endif /* __HTT_STATS_H__ */
