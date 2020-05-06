@@ -93,7 +93,9 @@
 				  center_freq + HALF_20MHZ_BW)
 
 #define FREQ_LEFT_SHIFT         55
-#define SIXG_STARTING_FREQ      5940
+#define SIX_GHZ_NON_ORPHAN_START_FREQ \
+	(channel_map_global[MIN_6GHZ_NON_ORPHAN_CHANNEL].center_freq  - 5)
+#define CHAN_FREQ_5935          5935
 #define NUM_80MHZ_BAND_IN_6G    16
 #define NUM_PSC_FREQ            15
 #define PSC_BAND_MHZ (FREQ_TO_CHAN_SCALE * NUM_80MHZ_BAND_IN_6G)
@@ -101,7 +103,8 @@
 #define REG_MAX_6GHZ_CHAN_FREQ channel_map[MAX_6GHZ_CHANNEL].center_freq
 #else
 #define FREQ_LEFT_SHIFT         0
-#define SIXG_STARTING_FREQ      0
+#define SIX_GHZ_NON_ORPHAN_START_FREQ       0
+#define CHAN_FREQ_5935          0
 #define NUM_80MHZ_BAND_IN_6G    0
 #define NUM_PSC_FREQ            0
 #define PSC_BAND_MHZ (FREQ_TO_CHAN_SCALE * NUM_80MHZ_BAND_IN_6G)
@@ -115,7 +118,7 @@
 /* EEPROM setting is a country code */
 #define    COUNTRY_ERD_FLAG     0x8000
 #define MIN_6GHZ_OPER_CLASS 131
-#define MAX_6GHZ_OPER_CLASS 135
+#define MAX_6GHZ_OPER_CLASS 136
 
 extern const struct chan_map *channel_map;
 extern const struct chan_map channel_map_us[];
