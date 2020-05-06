@@ -44,21 +44,13 @@
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
 
-/* Timeout in ms for peer info request commpletion */
-#define IBSS_PEER_INFO_REQ_TIMOEUT 1000
-
 #define INVALID_PEER_IDX -1
 
 /**
  * enum eConnectionState - connection state values at HDD
- * @eConnectionState_NotConnected: Not associated in Infra or participating in
- *			in an IBSS / Ad-hoc network
+ * @eConnectionState_NotConnected: Not associated in Infra
  * @eConnectionState_Connecting: While connection in progress
  * @eConnectionState_Associated: Associated in an Infrastructure network
- * @eConnectionState_IbssDisconnected: Participating in an IBSS network though
- *			disconnected (no partner stations in the IBSS)
- * @eConnectionState_IbssConnected: Participating in an IBSS network with
- *			partner stations also present
  * @eConnectionState_Disconnecting: Disconnecting in an Infrastructure network.
  * @eConnectionState_NdiDisconnected: NDI in disconnected state - no peers
  * @eConnectionState_NdiConnected: NDI in connected state - at least one peer
@@ -67,8 +59,6 @@ typedef enum {
 	eConnectionState_NotConnected,
 	eConnectionState_Connecting,
 	eConnectionState_Associated,
-	eConnectionState_IbssDisconnected,
-	eConnectionState_IbssConnected,
 	eConnectionState_Disconnecting,
 	eConnectionState_NdiDisconnected,
 	eConnectionState_NdiConnected,

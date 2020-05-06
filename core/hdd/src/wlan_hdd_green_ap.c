@@ -134,7 +134,6 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 	switch (mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
-	case QDF_IBSS_MODE:
 		if (!num_sap_sessions && !num_p2p_go_sessions)
 			return 0;
 

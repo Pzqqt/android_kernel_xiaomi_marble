@@ -75,8 +75,6 @@ static uint8_t wlan_hdd_valid_type_of_persona(uint32_t sub_type)
 	switch (sub_type) {
 	case PM_STA_MODE:
 		return WMI_VDEV_TYPE_STA;
-	case PM_IBSS_MODE:
-		return WMI_VDEV_TYPE_IBSS;
 	case PM_SAP_MODE:
 	case PM_P2P_CLIENT_MODE:
 	case PM_P2P_GO_MODE:
@@ -105,7 +103,6 @@ static const char *device_mode_to_string(uint8_t idx)
 	CASE_RETURN_STRING(PM_SAP_MODE);
 	CASE_RETURN_STRING(PM_P2P_CLIENT_MODE);
 	CASE_RETURN_STRING(PM_P2P_GO_MODE);
-	CASE_RETURN_STRING(PM_IBSS_MODE);
 	default:
 		return "none";
 	}

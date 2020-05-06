@@ -514,15 +514,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	}
 
 	/*
-	 * IBSS vdev does not need to scan to establish
-	 * IBSS connection. If IBSS vdev need to support scan,
-	 * Firmware need to make the change to add self peer
-	 * per mac for IBSS vdev.
 	 * NDI does not need scan from userspace to establish connection
 	 * and it does not support scan request either.
 	 */
-	if (QDF_IBSS_MODE == adapter->device_mode ||
-	    QDF_NDI_MODE == adapter->device_mode) {
+	if (QDF_NDI_MODE == adapter->device_mode) {
 		hdd_err("Scan not supported for %s",
 			qdf_opmode_str(adapter->device_mode));
 		return -EINVAL;

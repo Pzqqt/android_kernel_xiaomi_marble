@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,8 +60,6 @@
 	ENUM(TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY) \
 	ENUM(TRACE_CODE_HDD_CFG80211_CONNECT) \
 	ENUM(TRACE_CODE_HDD_CFG80211_DISCONNECT) \
-	ENUM(TRACE_CODE_HDD_CFG80211_JOIN_IBSS) \
-	ENUM(TRACE_CODE_HDD_CFG80211_LEAVE_IBSS) \
 	ENUM(TRACE_CODE_HDD_CFG80211_SET_WIPHY_PARAMS) \
 	ENUM(TRACE_CODE_HDD_CFG80211_SET_TXPOWER) \
 	ENUM(TRACE_CODE_HDD_CFG80211_GET_TXPOWER) \

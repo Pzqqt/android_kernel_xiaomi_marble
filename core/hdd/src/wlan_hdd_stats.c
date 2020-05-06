@@ -567,8 +567,6 @@ static tSirWifiInterfaceMode hdd_map_device_to_ll_iface_mode(int device_mode)
 		return WIFI_INTERFACE_P2P_CLIENT;
 	case QDF_P2P_GO_MODE:
 		return WIFI_INTERFACE_P2P_GO;
-	case QDF_IBSS_MODE:
-		return WIFI_INTERFACE_IBSS;
 	default:
 		/* Return Interface Mode as STA for all the unsupported modes */
 		return WIFI_INTERFACE_STA;

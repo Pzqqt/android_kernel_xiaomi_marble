@@ -1144,8 +1144,7 @@ static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 
 	conn_state = sta_ctx->conn_info.conn_state;
 
-	if (conn_state == eConnectionState_Associated ||
-			conn_state == eConnectionState_IbssConnected)
+	if (conn_state == eConnectionState_Associated)
 		*conn_state_mask |= (1 << adapter->vdev_id);
 }
 

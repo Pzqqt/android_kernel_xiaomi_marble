@@ -134,7 +134,6 @@ void hdd_ipa_set_tx_flow_info(void)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 			}
 			break;
-		case QDF_IBSS_MODE:
 		default:
 			break;
 		}

@@ -761,13 +761,6 @@ struct hdd_mon_set_ch_info {
  * @conn_info: current connection information
  * @roam_info: current roaming information
  * @ft_carrier_on: is carrier on
- * @ibss_sta_generation: current ibss generation. Incremented whenever
- *    ibss New peer joins and departs the network
- * @ibss_enc_key_installed: is the ibss wep/wpa-none encryptions key
- *    installed?
- * @ibss_enc_key: current ibss wep/wpa-none encryption key (if
- *    @ibss_enc_key_installed is %true)
- * @ibss_peer_info: information about the ibss peer
  * @hdd_reassoc_scenario: is station in the middle of reassociation?
  * @sta_debug_state: STA context debug variable
  * @broadcast_sta_id: STA ID assigned for broadcast frames
@@ -785,10 +778,6 @@ struct hdd_station_ctx {
 	struct hdd_connection_info conn_info;
 	struct hdd_connection_info cache_conn_info;
 	int ft_carrier_on;
-	int ibss_sta_generation;
-	bool ibss_enc_key_installed;
-	tCsrRoamSetKey ibss_enc_key;
-	tSirPeerInfoRspParams ibss_peer_info;
 	bool hdd_reassoc_scenario;
 	int sta_debug_state;
 	struct hdd_mon_set_ch_info ch_info;
@@ -1192,8 +1181,6 @@ struct hdd_adapter {
 	struct completion tx_action_cnf_event;
 
 	struct completion sta_authorized_event;
-
-	struct completion ibss_peer_info_comp;
 
 	/* Track whether the linkup handling is needed  */
 	bool is_link_up_service_needed;
@@ -2468,27 +2455,6 @@ struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx);
 
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
-
-#ifdef QCA_IBSS_SUPPORT
-/**
- * hdd_set_ibss_power_save_params() - update IBSS Power Save params to WMA.
- * @struct hdd_adapter Hdd adapter.
- *
- * This function sets the IBSS power save config parameters to WMA
- * which will send it to firmware if FW supports IBSS power save
- * before vdev start.
- *
- * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and QDF_STATUS_E_FAILURE
- *         on failure.
- */
-QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter);
-#else
-static inline QDF_STATUS
-hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 /**
  * wlan_hdd_validate_context() - check the HDD context
