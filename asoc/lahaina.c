@@ -7167,7 +7167,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
 		}
 
-		/*TODO: create codec entry for wsa1 */
+		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
+							component);
 	}
 
         /* If current platform has more than one WSA */
@@ -7189,7 +7190,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			snd_soc_dapm_ignore_suspend(dapm, "spkrRight SPKR");
 		}
 
-		/*TODO: create codec entry for wsa2 */
+		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
+							component);
 	}
 
 	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
