@@ -2,6 +2,7 @@
 #define _UAPI_MSM_AUDIO_SBC_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 #define AUDIO_SET_SBC_ENC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \
 	(AUDIO_MAX_COMMON_IOCTL_NUM+0), struct msm_audio_sbc_enc_config)
@@ -25,12 +26,12 @@
 #define AUDIO_SBC_BLOCKS_16		0x3
 
 struct msm_audio_sbc_enc_config {
-	uint32_t channels;
-	uint32_t sample_rate;
-	uint32_t bit_allocation;
-	uint32_t number_of_subbands;
-	uint32_t number_of_blocks;
-	uint32_t bit_rate;
-	uint32_t mode;
+	__u32 channels;
+	__u32 sample_rate;
+	__u32 bit_allocation;
+	__u32 number_of_subbands;
+	__u32 number_of_blocks;
+	__u32 bit_rate;
+	__u32 mode;
 };
 #endif /* _UAPI_MSM_AUDIO_SBC_H */

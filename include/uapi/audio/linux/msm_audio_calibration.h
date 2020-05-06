@@ -137,22 +137,22 @@ enum {
 /* common structures */
 
 struct audio_cal_header {
-	int32_t		data_size;
-	int32_t		version;
-	int32_t		cal_type;
-	int32_t		cal_type_size;
+	__s32		data_size;
+	__s32		version;
+	__s32		cal_type;
+	__s32		cal_type_size;
 };
 
 struct audio_cal_type_header {
-	int32_t		version;
-	int32_t		buffer_number;
+	__s32		version;
+	__s32		buffer_number;
 };
 
 struct audio_cal_data {
 	/* Size of cal data at mem_handle allocation or at vaddr */
-	int32_t		cal_size;
+	__s32		cal_size;
 	/* If mem_handle if shared memory is used*/
-	int32_t		mem_handle;
+	__s32		mem_handle;
 	/* size of virtual memory if shared memory not used */
 };
 
@@ -207,7 +207,7 @@ struct audio_cal_post {
 /*AUDIO_CORE_META_INFO */
 
 struct audio_cal_info_metainfo {
-	uint32_t nKey;
+	__u32 nKey;
 };
 
 /* Cal info types */
@@ -218,75 +218,75 @@ enum {
 };
 
 struct audio_cal_info_adm_top {
-	int32_t		topology;
-	int32_t		acdb_id;
+	__s32		topology;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		app_type;
-	int32_t		sample_rate;
+	__s32		path;
+	__s32		app_type;
+	__s32		sample_rate;
 };
 
 struct audio_cal_info_audproc {
-	int32_t		acdb_id;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		app_type;
-	int32_t		sample_rate;
+	__s32		path;
+	__s32		app_type;
+	__s32		sample_rate;
 };
 
 struct audio_cal_info_audvol {
-	int32_t		acdb_id;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		app_type;
-	int32_t		vol_index;
+	__s32		path;
+	__s32		app_type;
+	__s32		vol_index;
 };
 
 struct audio_cal_info_afe {
-	int32_t		acdb_id;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		sample_rate;
+	__s32		path;
+	__s32		sample_rate;
 };
 
 struct audio_cal_info_afe_top {
-	int32_t		topology;
-	int32_t		acdb_id;
+	__s32		topology;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		sample_rate;
+	__s32		path;
+	__s32		sample_rate;
 };
 
 struct audio_cal_info_asm_top {
-	int32_t		topology;
-	int32_t		app_type;
+	__s32		topology;
+	__s32		app_type;
 };
 
 struct audio_cal_info_audstrm {
-	int32_t		app_type;
+	__s32		app_type;
 };
 
 struct audio_cal_info_aanc {
-	int32_t		acdb_id;
+	__s32		acdb_id;
 };
 
 #define MAX_HW_DELAY_ENTRIES	25
 
 struct audio_cal_hw_delay_entry {
-	uint32_t sample_rate;
-	uint32_t delay_usec;
+	__u32 sample_rate;
+	__u32 delay_usec;
 };
 
 struct audio_cal_hw_delay_data {
-	uint32_t				num_entries;
+	__u32				num_entries;
 	struct audio_cal_hw_delay_entry		entry[MAX_HW_DELAY_ENTRIES];
 };
 
 struct audio_cal_info_hw_delay {
-	int32_t					acdb_id;
+	__s32					acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t					path;
-	int32_t					property_type;
+	__s32					path;
+	__s32					property_type;
 	struct audio_cal_hw_delay_data		data;
 };
 
@@ -309,18 +309,18 @@ enum msm_spkr_count {
 };
 
 struct audio_cal_info_spk_prot_cfg {
-	int32_t		r0[SP_V2_NUM_MAX_SPKRS];
-	int32_t		t0[SP_V2_NUM_MAX_SPKRS];
-	uint32_t	quick_calib_flag;
-	uint32_t	mode;
+	__s32		r0[SP_V2_NUM_MAX_SPKRS];
+	__s32		t0[SP_V2_NUM_MAX_SPKRS];
+	__u32	quick_calib_flag;
+	__u32	mode;
 	/*
 	 * 0 - Start spk prot
 	 * 1 - Start calib
 	 * 2 - Disable spk prot
 	 */
 #ifdef MSM_SPKR_PROT_SPV3
-	uint32_t	sp_version;
-	int32_t	limiter_th[SP_V2_NUM_MAX_SPKRS];
+	__u32	sp_version;
+	__s32	limiter_th[SP_V2_NUM_MAX_SPKRS];
 #endif
 };
 
@@ -330,14 +330,14 @@ struct audio_cal_info_sp_th_vi_ftm_cfg {
 	 * we use this mode(first 4 bytes) to differentiate
 	 * whether it is TH_VI FTM or v-validation.
 	 */
-	uint32_t	mode;
+	__u32	mode;
 	/*
 	 * 0 - normal running mode
 	 * 1 - Calibration
 	 * 2 - FTM mode
 	 */
-	uint32_t	wait_time[SP_V2_NUM_MAX_SPKRS];
-	uint32_t	ftm_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	wait_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	ftm_time[SP_V2_NUM_MAX_SPKRS];
 };
 
 struct audio_cal_info_sp_th_vi_v_vali_cfg {
@@ -346,22 +346,22 @@ struct audio_cal_info_sp_th_vi_v_vali_cfg {
 	 * we use this mode(first 4 bytes) to differentiate
 	 * whether it is TH_VI FTM or v-validation.
 	 */
-	uint32_t	mode;
+	__u32	mode;
 	/*
 	 * 0 - normal running mode
 	 * 1 - Calibration
 	 * 2 - FTM mode
 	 * 3 - V-Validation mode
 	 */
-	uint32_t	wait_time[SP_V2_NUM_MAX_SPKRS];
-	uint32_t	vali_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	wait_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	vali_time[SP_V2_NUM_MAX_SPKRS];
 
 };
 
 struct audio_cal_info_sp_ex_vi_ftm_cfg {
-	uint32_t	wait_time[SP_V2_NUM_MAX_SPKRS];
-	uint32_t	ftm_time[SP_V2_NUM_MAX_SPKRS];
-	uint32_t	mode;
+	__u32	wait_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	ftm_time[SP_V2_NUM_MAX_SPKRS];
+	__u32	mode;
 	/*
 	 * 0 - normal running mode
 	 * 2 - FTM mode
@@ -369,10 +369,10 @@ struct audio_cal_info_sp_ex_vi_ftm_cfg {
 };
 
 struct audio_cal_info_sp_ex_vi_param {
-	int32_t		freq_q20[SP_V2_NUM_MAX_SPKRS];
-	int32_t		resis_q24[SP_V2_NUM_MAX_SPKRS];
-	int32_t		qmct_q24[SP_V2_NUM_MAX_SPKRS];
-	int32_t		status[SP_V2_NUM_MAX_SPKRS];
+	__s32		freq_q20[SP_V2_NUM_MAX_SPKRS];
+	__s32		resis_q24[SP_V2_NUM_MAX_SPKRS];
+	__s32		qmct_q24[SP_V2_NUM_MAX_SPKRS];
+	__s32		status[SP_V2_NUM_MAX_SPKRS];
 };
 
 struct audio_cal_info_sp_th_vi_param {
@@ -381,10 +381,10 @@ struct audio_cal_info_sp_th_vi_param {
 	 * we use this mode(first 4 bytes) to differentiate
 	 * whether it is TH_VI FTM or v-validation.
 	 */
-	uint32_t	mode;
-	int32_t		r_dc_q24[SP_V2_NUM_MAX_SPKRS];
-	int32_t		temp_q22[SP_V2_NUM_MAX_SPKRS];
-	int32_t		status[SP_V2_NUM_MAX_SPKRS];
+	__u32	mode;
+	__s32		r_dc_q24[SP_V2_NUM_MAX_SPKRS];
+	__s32		temp_q22[SP_V2_NUM_MAX_SPKRS];
+	__s32		status[SP_V2_NUM_MAX_SPKRS];
 };
 
 struct audio_cal_info_sp_th_vi_v_vali_param {
@@ -393,68 +393,68 @@ struct audio_cal_info_sp_th_vi_v_vali_param {
 	 * we use this mode(first 4 bytes) to differentiate
 	 * whether it is TH_VI FTM or v-validation.
 	 */
-	uint32_t	mode;
-	uint32_t	vrms_q24[SP_V2_NUM_MAX_SPKRS];
-	int32_t		status[SP_V2_NUM_MAX_SPKRS];
+	__u32	mode;
+	__u32	vrms_q24[SP_V2_NUM_MAX_SPKRS];
+	__s32		status[SP_V2_NUM_MAX_SPKRS];
 };
 
 struct audio_cal_info_msm_spk_prot_status {
-	int32_t		r0[SP_V2_NUM_MAX_SPKRS];
-	int32_t		status;
+	__s32		r0[SP_V2_NUM_MAX_SPKRS];
+	__s32		status;
 };
 
 struct audio_cal_info_sidetone {
-	uint16_t	enable;
-	uint16_t	gain;
-	int32_t		tx_acdb_id;
-	int32_t		rx_acdb_id;
-	int32_t		mid;
-	int32_t		pid;
+	__u16	enable;
+	__u16	gain;
+	__s32		tx_acdb_id;
+	__s32		rx_acdb_id;
+	__s32		mid;
+	__s32		pid;
 };
 
 #define MAX_SIDETONE_IIR_DATA_SIZE   224
 #define MAX_NO_IIR_FILTER_STAGE      10
 
 struct audio_cal_info_sidetone_iir {
-	uint16_t	iir_enable;
-	uint16_t	num_biquad_stages;
-	uint16_t	pregain;
-	int32_t	        tx_acdb_id;
-	int32_t	        rx_acdb_id;
-	int32_t	        mid;
-	int32_t	        pid;
-	uint8_t	        iir_config[MAX_SIDETONE_IIR_DATA_SIZE];
+	__u16	iir_enable;
+	__u16	num_biquad_stages;
+	__u16	pregain;
+	__s32	        tx_acdb_id;
+	__s32	        rx_acdb_id;
+	__s32	        mid;
+	__s32	        pid;
+	__u8	        iir_config[MAX_SIDETONE_IIR_DATA_SIZE];
 };
 struct audio_cal_info_lsm_top {
-	int32_t		topology;
-	int32_t		acdb_id;
-	int32_t		app_type;
+	__s32		topology;
+	__s32		acdb_id;
+	__s32		app_type;
 };
 
 
 struct audio_cal_info_lsm {
-	int32_t		acdb_id;
+	__s32		acdb_id;
 	/* RX_DEVICE or TX_DEVICE */
-	int32_t		path;
-	int32_t		app_type;
+	__s32		path;
+	__s32		app_type;
 };
 
 #define VSS_NUM_CHANNELS_MAX	32
 
 struct audio_cal_info_voc_top {
-	int32_t		topology;
-	int32_t		acdb_id;
+	__s32		topology;
+	__s32		acdb_id;
 #ifdef TOPOLOGY_SPECIFIC_CHANNEL_INFO
-	uint32_t	num_channels;
-	uint8_t		channel_mapping[VSS_NUM_CHANNELS_MAX];
+	__u32	num_channels;
+	__u8		channel_mapping[VSS_NUM_CHANNELS_MAX];
 #endif
 };
 
 struct audio_cal_info_vocproc {
-	int32_t		tx_acdb_id;
-	int32_t		rx_acdb_id;
-	int32_t		tx_sample_rate;
-	int32_t		rx_sample_rate;
+	__s32		tx_acdb_id;
+	__s32		rx_acdb_id;
+	__s32		tx_sample_rate;
+	__s32		rx_sample_rate;
 };
 
 enum {
@@ -463,41 +463,41 @@ enum {
 };
 
 struct audio_cal_info_vocvol {
-	int32_t		tx_acdb_id;
-	int32_t		rx_acdb_id;
+	__s32		tx_acdb_id;
+	__s32		rx_acdb_id;
 	/* DEFAULT_ or VOL_BOOST_FEATURE_SET */
-	int32_t		feature_set;
+	__s32		feature_set;
 };
 
 struct audio_cal_info_vocdev_cfg {
-	int32_t		tx_acdb_id;
-	int32_t		rx_acdb_id;
+	__s32		tx_acdb_id;
+	__s32		rx_acdb_id;
 };
 
 #define MAX_VOICE_COLUMNS	20
 
 union audio_cal_col_na {
-	uint8_t		val8;
-	uint16_t	val16;
-	uint32_t	val32;
-	uint64_t	val64;
+	__u8		val8;
+	__u16	val16;
+	__u32	val32;
+	__u64	val64;
 } __packed;
 
 struct audio_cal_col {
-	uint32_t		id;
-	uint32_t		type;
+	__u32		id;
+	__u32		type;
 	union audio_cal_col_na	na_value;
 } __packed;
 
 struct audio_cal_col_data {
-	uint32_t		num_columns;
+	__u32		num_columns;
 	struct audio_cal_col	column[MAX_VOICE_COLUMNS];
 } __packed;
 
 struct audio_cal_info_voc_col {
-	int32_t				table_id;
-	int32_t				tx_acdb_id;
-	int32_t				rx_acdb_id;
+	__s32				table_id;
+	__s32				tx_acdb_id;
+	__s32				rx_acdb_id;
 	struct audio_cal_col_data	data;
 };
 

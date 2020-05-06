@@ -1,18 +1,20 @@
 #ifndef _DEV_DEP_H
 #define _DEV_DEP_H
 
+#include <linux/types.h>
+
 struct dolby_param_data {
-	int32_t version;
-	int32_t device_id;
-	int32_t be_id;
-	int32_t param_id;
-	int32_t length;
-	int32_t __user *data;
+	__s32 version;
+	__s32 device_id;
+	__s32 be_id;
+	__s32 param_id;
+	__s32 length;
+	__s32 __user *data;
 };
 
 struct dolby_param_license {
-	int32_t dmid;
-	int32_t license_key;
+	__s32 dmid;
+	__s32 license_key;
 };
 
 #define SNDRV_DEVDEP_DAP_IOCTL_SET_PARAM\
@@ -47,24 +49,24 @@ struct dolby_param_license {
 #define DTS_EAGLE_FLAG_ALSA_GET			(1<<31)
 
 struct dts_eagle_param_desc {
-	uint32_t id;
-	uint32_t size;
-	int32_t offset;
-	uint32_t device;
+	__u32 id;
+	__u32 size;
+	__s32 offset;
+	__u32 device;
 } __packed;
 
 #define HWDEP_FE_BASE                   3000 /*unique base for FE hw dep nodes*/
 struct snd_pcm_mmap_fd {
-	int32_t dir;
-	int32_t fd;
-	int32_t size;
-	int32_t actual_size;
+	__s32 dir;
+	__s32 fd;
+	__s32 size;
+	__s32 actual_size;
 };
 
 struct snd_pcm_prsnt_position {
-	uint64_t timestamp;
-	uint64_t frames;
-	int32_t clock_id;
+	__u64 timestamp;
+	__u64 frames;
+	__s32 clock_id;
 };
 
 #define SNDRV_PCM_IOCTL_MMAP_DATA_FD    _IOWR('U', 0xd2, struct snd_pcm_mmap_fd)
