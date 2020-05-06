@@ -4919,14 +4919,14 @@ dfs_find_dfschan_for_freq(struct wlan_dfs *dfs,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!freq) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Input freq is 0!!");
+		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC, "Input freq is 0!!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	mode = dfs_convert_chwidth_to_wlan_phymode(chwidth);
 
 	if (mode == WLAN_PHYMODE_MAX) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "Invalid RCAC mode, user "
+		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC, "Invalid RCAC mode, user "
 				"rcac channel invalid!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5030,7 +5030,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (chwidth == CH_WIDTH_80P80MHZ) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
 			"RCAC cannot be started for 80P80MHz with single chan");
 		return false;
 	}
@@ -5044,7 +5044,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	status = dfs_find_dfschan_for_freq(dfs, rcac_freq, 0, chwidth,
 					   &rcac_chan);
 	if (status != QDF_STATUS_SUCCESS) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
 			"RCAC Channel %d not found for agile width %d",
 			dfs->dfs_agile_rcac_freq_ucfg,
 			chwidth);
@@ -5055,12 +5055,21 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	 * channel or if the RCAC channel is non-DFS.
 	 */
 	if (dfs_is_new_chan_subset_of_old_chan(dfs, &rcac_chan,
-					       dfs->dfs_curchan))
+					       dfs->dfs_curchan)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+			"RCAC Channel %d is either a subset of the current"
+			"operating channel or is a non-dfs channel",
+			dfs->dfs_agile_rcac_freq_ucfg);
 		return false;
+	}
 
 	/* 3. Reject the RCAC channel if it has NOL channel as its subset. */
-	if (dfs_is_subchans_of_rcac_chan_in_nol(dfs, &rcac_chan))
+	if (dfs_is_subchans_of_rcac_chan_in_nol(dfs, &rcac_chan)) {
+	    dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+		    "RCAC Channel %d has NOL channels as its subset",
+		    dfs->dfs_agile_rcac_freq_ucfg);
 		return false;
+	}
 
 	return true;
 }
@@ -5090,6 +5099,12 @@ dfs_save_rcac_ch_params(struct wlan_dfs *dfs, struct ch_params rcac_ch_params,
 			rcac_ch_params.mhz_freq_seg0;
 	rcac_param->rcac_ch_params.mhz_freq_seg1 =
 			rcac_ch_params.mhz_freq_seg1;
+	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+		  "Saved rcac params: prim_freq: %d, width: %d, cfreq0: %d"
+		  "cfreq1: %d", rcac_param->rcac_pri_freq,
+		  rcac_param->rcac_ch_params.ch_width,
+		  rcac_param->rcac_ch_params.center_freq_seg0,
+		  rcac_param->rcac_ch_params.center_freq_seg1);
 }
 
 /* dfs_find_rcac_chan() - Find out a rolling CAC channel.
@@ -5171,11 +5186,21 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 	 */
 	dfs_save_rcac_ch_params(dfs, nxt_chan_params, rcac_freq);
 
-	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(&dfs_chan))
-	    return 0;
+	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(&dfs_chan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+			  "Not picking an RCAC channel as the random channel"
+			  "cfreq1: %d, cfreq2:%d chosen in non-DFS",
+			  dfs_chan.dfs_ch_vhtop_ch_freq_seg1,
+			  dfs_chan.dfs_ch_vhtop_ch_freq_seg2);
+		return 0;
+	}
 
 	if (nxt_chan_params.ch_width != dfs->dfs_precac_chwidth) {
-	    return 0;
+		dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+			  "Not picking an RCAC channel as next channel"
+			  "width: %d is not an agile supported width: %d",
+			  nxt_chan_params.ch_width, dfs->dfs_precac_chwidth);
+		return 0;
 	}
 	/* Store the rcac chan params in dfs */
 	rcac_center_freq = nxt_chan_params.mhz_freq_seg0;
@@ -5280,6 +5305,10 @@ void dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
 		dfs->dfs_precac_chwidth = CH_WIDTH_80P80MHZ;
 
 	*ch_freq = dfs->dfs_agile_precac_freq_mhz;
+
+	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC, "Current channel width: %d,"
+		  "Agile channel width: %d",
+		  curchan_chwidth, agile_chwidth);
 
 	if (!*ch_freq)
 		qdf_info("%s: No valid Agile channels available in the current pdev", __func__);
@@ -6530,7 +6559,7 @@ QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs, bool rcac_en)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dfs_get_rcac_enable(struct wlan_dfs *dfs, uint8_t *rcacen)
+QDF_STATUS dfs_get_rcac_enable(struct wlan_dfs *dfs, bool *rcacen)
 {
 	*rcacen = dfs->dfs_agile_rcac_ucfg;
 
@@ -6613,5 +6642,7 @@ void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 	 * variables.
 	 */
 	*is_rcac_chan_available = rcac_ch_freq ? true : false;
+	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC, "Chosen rcac channel: %d",
+		  rcac_ch_freq);
 }
 #endif
