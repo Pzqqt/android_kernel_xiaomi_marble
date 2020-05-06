@@ -416,11 +416,12 @@ static void process_reorder(ol_txrx_pdev_handle pdev,
 	enum htt_rx_status mpdu_status;
 	int reorder_idx;
 
-	reorder_idx = htt_rx_mpdu_desc_reorder_idx(htt_pdev, rx_mpdu_desc);
+	reorder_idx = htt_rx_mpdu_desc_reorder_idx(htt_pdev, rx_mpdu_desc,
+						   true);
 	OL_RX_REORDER_TRACE_ADD(pdev, tid,
 				reorder_idx,
 				htt_rx_mpdu_desc_seq_num(htt_pdev,
-							 rx_mpdu_desc),
+							 rx_mpdu_desc, false),
 				1);
 	ol_rx_mpdu_rssi_update(peer, rx_mpdu_desc);
 	/*
@@ -476,7 +477,7 @@ static void process_reorder(ol_txrx_pdev_handle pdev,
 		if (peer->tids_rx_reorder[tid].win_sz_mask == 0) {
 			peer->tids_last_seq[tid] = htt_rx_mpdu_desc_seq_num(
 				htt_pdev,
-				rx_mpdu_desc);
+				rx_mpdu_desc, false);
 		}
 	}
 } /* process_reorder */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -767,7 +767,8 @@ htt_rx_mpdu_desc_retry_ll(htt_pdev_handle pdev, void *mpdu_desc)
 }
 
 static uint16_t htt_rx_mpdu_desc_seq_num_ll(htt_pdev_handle pdev,
-					    void *mpdu_desc)
+					    void *mpdu_desc,
+					    bool update_seq_num)
 {
 	struct htt_host_rx_desc_base *rx_desc =
 		(struct htt_host_rx_desc_base *)mpdu_desc;

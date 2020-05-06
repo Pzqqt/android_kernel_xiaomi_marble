@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -385,12 +385,17 @@ htt_rx_offload_msdu_pop_hl(htt_pdev_handle pdev,
 }
 
 static uint16_t
-htt_rx_mpdu_desc_seq_num_hl(htt_pdev_handle pdev, void *mpdu_desc)
+htt_rx_mpdu_desc_seq_num_hl(htt_pdev_handle pdev, void *mpdu_desc,
+			    bool update_seq_num)
 {
 	if (pdev->rx_desc_size_hl) {
-		return pdev->cur_seq_num_hl =
-			(u_int16_t)(HTT_WORD_GET(*(u_int32_t *)mpdu_desc,
-						HTT_HL_RX_DESC_MPDU_SEQ_NUM));
+		if (update_seq_num)
+			return pdev->cur_seq_num_hl =
+			       (u_int16_t)(HTT_WORD_GET(*(u_int32_t *)mpdu_desc,
+					   HTT_HL_RX_DESC_MPDU_SEQ_NUM));
+		else
+			return (u_int16_t)(HTT_WORD_GET(*(u_int32_t *)mpdu_desc,
+					   HTT_HL_RX_DESC_MPDU_SEQ_NUM));
 	} else {
 		return (u_int16_t)(pdev->cur_seq_num_hl);
 	}

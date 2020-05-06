@@ -357,7 +357,8 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 				htt_rx_mpdu_desc_list_next(htt_pdev,
 							   rx_frag_ind_msg);
 		}
-		seq_num = htt_rx_mpdu_desc_seq_num(htt_pdev, rx_mpdu_desc);
+		seq_num = htt_rx_mpdu_desc_seq_num(htt_pdev,
+						   rx_mpdu_desc, true);
 		OL_RX_ERR_STATISTICS_1(pdev, peer->vdev, peer, rx_mpdu_desc,
 				       OL_RX_ERR_NONE_FRAG);
 		ol_rx_send_pktlog_event(pdev, peer, head_msdu, pktlog_bit);

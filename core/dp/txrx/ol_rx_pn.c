@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2013-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -171,7 +171,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 				   new_pn.pn128[1], new_pn.pn128[0],
 				   new_pn.pn128[0] & 0xffffffffffffULL,
 				   htt_rx_mpdu_desc_seq_num(pdev->htt_pdev,
-							    rx_desc));
+							    rx_desc, false));
 			} else {
 				ol_txrx_dbg(
 				   "PN check failed - TID %d, peer %pK "
@@ -190,7 +190,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 				   new_pn.pn128[1], new_pn.pn128[0],
 				   new_pn.pn128[0] & 0xffffffffffffULL,
 				   htt_rx_mpdu_desc_seq_num(pdev->htt_pdev,
-							    rx_desc));
+							    rx_desc, false));
 			}
 #if defined(ENABLE_RX_PN_TRACE)
 			ol_rx_pn_trace_display(pdev, 1);
@@ -300,7 +300,7 @@ ol_rx_pn_trace_add(struct ol_txrx_pdev_t *pdev,
 
 	htt_rx_mpdu_desc_pn(pdev->htt_pdev, rx_desc, &pn, 48);
 	pn32 = pn.pn48 & 0xffffffff;
-	seq_num = htt_rx_mpdu_desc_seq_num(pdev->htt_pdev, rx_desc);
+	seq_num = htt_rx_mpdu_desc_seq_num(pdev->htt_pdev, rx_desc, false);
 	unicast = !htt_rx_msdu_is_wlan_mcast(pdev->htt_pdev, rx_desc);
 
 	pdev->rx_pn_trace.data[idx].peer = peer;

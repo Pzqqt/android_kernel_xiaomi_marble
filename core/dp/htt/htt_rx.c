@@ -186,7 +186,8 @@ void * (*htt_rx_mpdu_desc_list_next)(htt_pdev_handle pdev,
 
 bool (*htt_rx_mpdu_desc_retry)(htt_pdev_handle pdev, void *mpdu_desc);
 
-uint16_t (*htt_rx_mpdu_desc_seq_num)(htt_pdev_handle pdev, void *mpdu_desc);
+uint16_t (*htt_rx_mpdu_desc_seq_num)(htt_pdev_handle pdev, void *mpdu_desc,
+				     bool update_seq_num);
 
 void (*htt_rx_mpdu_desc_pn)(htt_pdev_handle pdev,
 			    void *mpdu_desc,

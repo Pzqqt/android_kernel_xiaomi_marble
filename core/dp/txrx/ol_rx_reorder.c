@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -162,7 +162,7 @@ ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
 	uint16_t seq_num = IEEE80211_SEQ_MAX;
 	bool retry = 0;
 
-	seq_num = htt_rx_mpdu_desc_seq_num(pdev->htt_pdev, rx_mpdu_desc);
+	seq_num = htt_rx_mpdu_desc_seq_num(pdev->htt_pdev, rx_mpdu_desc, false);
 
 	 /* For mcast packets, we only the dup-detection, not re-order check */
 
@@ -294,7 +294,7 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 		seq_num = htt_rx_mpdu_desc_seq_num(
 			htt_pdev,
 			htt_rx_msdu_desc_retrieve(htt_pdev,
-						  head_msdu));
+						  head_msdu), false);
 		peer->tids_last_seq[tid] = seq_num;
 		/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
 		qdf_nbuf_set_next(tail_msdu, NULL);
@@ -379,7 +379,7 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 
 		seq_num = htt_rx_mpdu_desc_seq_num(
 			htt_pdev,
-			htt_rx_msdu_desc_retrieve(htt_pdev, head_msdu));
+			htt_rx_msdu_desc_retrieve(htt_pdev, head_msdu), false);
 		peer->tids_last_seq[tid] = seq_num;
 		/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
 		qdf_nbuf_set_next(tail_msdu, NULL);
@@ -770,7 +770,8 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,
 					   htt_rx_mpdu_desc_seq_num(htt_pdev,
-								    rx_desc));
+								    rx_desc,
+								    false));
 				} else {
 					ol_txrx_dbg(
 					   "Tgt PN check failed - TID %d, peer %pK "
@@ -783,7 +784,8 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,
 					   htt_rx_mpdu_desc_seq_num(htt_pdev,
-								    rx_desc));
+								    rx_desc,
+								    false));
 				}
 				ol_rx_err(pdev->ctrl_pdev, vdev->vdev_id,
 					  peer->mac_addr.raw, tid,
