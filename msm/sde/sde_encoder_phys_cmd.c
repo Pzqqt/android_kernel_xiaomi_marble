@@ -173,10 +173,13 @@ static void _sde_encoder_phys_cmd_update_intf_cfg(
 static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 {
 	struct sde_encoder_phys *phys_enc = arg;
+	struct sde_encoder_phys_cmd *cmd_enc;
 	u32 event = 0;
 
 	if (!phys_enc || !phys_enc->hw_pp)
 		return;
+
+	cmd_enc = to_sde_encoder_phys_cmd(phys_enc);
 
 	SDE_ATRACE_BEGIN("pp_done_irq");
 
@@ -188,6 +191,8 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 		spin_lock(phys_enc->enc_spinlock);
 		phys_enc->parent_ops.handle_frame_done(phys_enc->parent,
 				phys_enc, event);
+		if (cmd_enc->pp_timeout_report_cnt)
+			phys_enc->recovered = true;
 		spin_unlock(phys_enc->enc_spinlock);
 	}
 
@@ -482,11 +487,12 @@ static void sde_encoder_phys_cmd_mode_set(
 }
 
 static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
-		struct sde_encoder_phys *phys_enc,
-		bool recovery_events)
+		struct sde_encoder_phys *phys_enc)
 {
 	struct sde_encoder_phys_cmd *cmd_enc =
 			to_sde_encoder_phys_cmd(phys_enc);
+	bool recovery_events = sde_encoder_recovery_events_enabled(
+			phys_enc->parent);
 	u32 frame_event = SDE_ENCODER_FRAME_EVENT_ERROR
 				| SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE;
 	struct drm_connector *conn;
@@ -728,10 +734,7 @@ static bool _sde_encoder_phys_cmd_is_scheduler_idle(
 static int _sde_encoder_phys_cmd_wait_for_idle(
 		struct sde_encoder_phys *phys_enc)
 {
-	struct sde_encoder_phys_cmd *cmd_enc =
-			to_sde_encoder_phys_cmd(phys_enc);
 	struct sde_encoder_wait_info wait_info = {0};
-	bool recovery_events;
 	int ret;
 
 	if (!phys_enc) {
@@ -745,8 +748,6 @@ static int _sde_encoder_phys_cmd_wait_for_idle(
 	wait_info.wq = &phys_enc->pending_kickoff_wq;
 	wait_info.atomic_cnt = &phys_enc->pending_kickoff_cnt;
 	wait_info.timeout_ms = KICKOFF_TIMEOUT_MS;
-	recovery_events = sde_encoder_recovery_events_enabled(
-			phys_enc->parent);
 
 	/* slave encoder doesn't enable for ppsplit */
 	if (_sde_encoder_phys_is_ppsplit_slave(phys_enc))
@@ -761,18 +762,7 @@ static int _sde_encoder_phys_cmd_wait_for_idle(
 		if (_sde_encoder_phys_cmd_is_scheduler_idle(phys_enc))
 			return 0;
 
-		_sde_encoder_phys_cmd_handle_ppdone_timeout(phys_enc,
-				recovery_events);
-	} else if (!ret) {
-		if (cmd_enc->pp_timeout_report_cnt && recovery_events) {
-			struct drm_connector *conn = phys_enc->connector;
-
-			sde_connector_event_notify(conn,
-					DRM_EVENT_SDE_HW_RECOVERY,
-					sizeof(uint8_t),
-					SDE_RECOVERY_SUCCESS);
-		}
-		cmd_enc->pp_timeout_report_cnt = 0;
+		_sde_encoder_phys_cmd_handle_ppdone_timeout(phys_enc);
 	}
 
 	return ret;
@@ -1379,6 +1369,7 @@ static int sde_encoder_phys_cmd_prepare_for_kickoff(
 			to_sde_encoder_phys_cmd(phys_enc);
 	int ret = 0;
 	u32 extra_frame_trigger_time;
+	bool recovery_events;
 
 	if (!phys_enc || !phys_enc->hw_pp) {
 		SDE_ERROR("invalid encoder\n");
@@ -1405,6 +1396,19 @@ static int sde_encoder_phys_cmd_prepare_for_kickoff(
 					phys_enc->hw_pp->idx - PINGPONG_0);
 			SDE_ERROR("failed wait_for_idle: %d\n", ret);
 		}
+	}
+
+	if (phys_enc->recovered) {
+		recovery_events = sde_encoder_recovery_events_enabled(
+				phys_enc->parent);
+		if (cmd_enc->pp_timeout_report_cnt && recovery_events)
+			sde_connector_event_notify(phys_enc->connector,
+					DRM_EVENT_SDE_HW_RECOVERY,
+					sizeof(uint8_t),
+					SDE_RECOVERY_SUCCESS);
+
+		cmd_enc->pp_timeout_report_cnt = 0;
+		phys_enc->recovered = false;
 	}
 
 	if (sde_connector_is_qsync_updated(phys_enc->connector)) {
