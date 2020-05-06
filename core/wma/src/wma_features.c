@@ -723,60 +723,6 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
-				struct sir_peer_info_ext_req *peer_info_req)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle)handle;
-	wmi_request_peer_stats_info_cmd_fixed_param *cmd;
-	wmi_buf_t  wmi_buf;
-	uint32_t  len;
-	uint8_t *buf_ptr;
-
-	if (!wma_handle || !wma_handle->wmi_handle) {
-		wma_err("WMA is closed, can not issue get rssi");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	wma_debug("send WMI_REQUEST_PEER_STATS_INFO_CMDID");
-
-	len  = sizeof(wmi_request_peer_stats_info_cmd_fixed_param);
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf)
-		return QDF_STATUS_E_NOMEM;
-
-	buf_ptr = (uint8_t *)wmi_buf_data(wmi_buf);
-
-	cmd = (wmi_request_peer_stats_info_cmd_fixed_param *)buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_request_peer_stats_info_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(
-			wmi_request_peer_stats_info_cmd_fixed_param));
-	cmd->vdev_id = peer_info_req->sessionid;
-	cmd->request_type = WMI_REQUEST_ONE_PEER_STATS_INFO;
-	wma_handle->get_one_peer_info = true;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_info_req->peer_macaddr.bytes,
-			&cmd->peer_macaddr);
-	cmd->reset_after_request = peer_info_req->reset_after_request;
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-				WMI_REQUEST_PEER_STATS_INFO_CMDID)) {
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wma_info("vdev_id %d, mac %pM, req_type %x, reset %x",
-		cmd->vdev_id,
-		peer_info_req->peer_macaddr.bytes,
-		cmd->request_type,
-		cmd->reset_after_request);
-
-	qdf_mem_copy(&(wma_handle->peer_macaddr),
-					&(peer_info_req->peer_macaddr),
-					QDF_MAC_ADDR_SIZE);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS wma_get_isolation(tp_wma_handle wma)
 {
 	wmi_coex_get_antenna_isolation_cmd_fixed_param *cmd;

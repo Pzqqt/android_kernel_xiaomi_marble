@@ -309,10 +309,6 @@ struct sme_context {
 	sme_link_speed_cb link_speed_cb;
 	void *link_speed_context;
 
-	/* get extended peer info callback */
-	void (*pget_peer_info_ext_ind_cb)(struct sir_peer_info_ext_resp *param,
-		void *pcontext);
-	void *pget_peer_info_ext_cb_context;
 	sme_get_isolation_cb get_isolation_cb;
 	void *get_isolation_cb_context;
 #ifdef FEATURE_WLAN_EXTSCAN

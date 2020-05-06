@@ -4195,7 +4195,7 @@ static uint8_t hdd_get_rate_flags(uint32_t rate,
  * Return: None
  */
 static void wlan_hdd_fill_rate_info(struct hdd_fw_txrx_stats *txrx_stats,
-				    struct sir_peer_info_ext *peer_info)
+				    struct peer_stats_info_ext_event *peer_info)
 {
 	uint8_t flags;
 	uint32_t rate_code;
@@ -4280,8 +4280,7 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hddctx = wiphy_priv(wiphy);
 	struct hdd_station_info *stainfo = NULL;
-	struct qdf_mac_addr macaddr;
-	struct sir_peer_info_ext peer_info;
+	struct stats_event *stats;
 	struct hdd_fw_txrx_stats txrx_stats;
 	int status;
 
@@ -4298,9 +4297,10 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	qdf_mem_copy(macaddr.bytes, mac, QDF_MAC_ADDR_SIZE);
-	status = wlan_hdd_get_peer_info(adapter, macaddr, &peer_info);
-	if (status) {
+	stats = wlan_cfg80211_mc_cp_stats_get_peer_stats(adapter->vdev,
+							 mac, &status);
+	if (status || !stats) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
 				     STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
 		hdd_err("fail to get peer info from fw");
@@ -4308,15 +4308,17 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	}
 
 	qdf_mem_zero(&txrx_stats, sizeof(txrx_stats));
-	txrx_stats.tx_packets = peer_info.tx_packets;
-	txrx_stats.tx_bytes = peer_info.tx_bytes;
-	txrx_stats.rx_packets = peer_info.rx_packets;
-	txrx_stats.rx_bytes = peer_info.rx_bytes;
-	txrx_stats.tx_retries = peer_info.tx_retries;
-	txrx_stats.tx_failed = peer_info.tx_failed;
-	txrx_stats.rssi = peer_info.rssi + WLAN_HDD_TGT_NOISE_FLOOR_DBM;
-	wlan_hdd_fill_rate_info(&txrx_stats, &peer_info);
+	txrx_stats.tx_packets = stats->peer_stats_info_ext->tx_packets;
+	txrx_stats.tx_bytes = stats->peer_stats_info_ext->tx_bytes;
+	txrx_stats.rx_packets = stats->peer_stats_info_ext->rx_packets;
+	txrx_stats.rx_bytes = stats->peer_stats_info_ext->rx_bytes;
+	txrx_stats.tx_retries = stats->peer_stats_info_ext->tx_retries;
+	txrx_stats.tx_failed = stats->peer_stats_info_ext->tx_failed;
+	txrx_stats.rssi = stats->peer_stats_info_ext->rssi
+			+ WLAN_HDD_TGT_NOISE_FLOOR_DBM;
+	wlan_hdd_fill_rate_info(&txrx_stats, stats->peer_stats_info_ext);
 	wlan_hdd_fill_station_info(hddctx->psoc, sinfo, stainfo, &txrx_stats);
+	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
 			     STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
 
@@ -6004,117 +6006,6 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
 		*link_speed = (*link_speed) / 500;
 	}
 	return 0;
-}
-
-struct peer_info_priv {
-	struct sir_peer_sta_ext_info peer_sta_ext_info;
-};
-
-/**
- * wlan_hdd_get_peer_info_cb() - get peer info callback
- * @sta_info: pointer of peer information
- * @context: get peer info callback context
- *
- * This function will fill stats info to peer info priv
- *
- */
-static void wlan_hdd_get_peer_info_cb(struct sir_peer_info_ext_resp *sta_info,
-				      void *context)
-{
-	struct osif_request *request;
-	struct peer_info_priv *priv;
-	uint8_t sta_num;
-
-	if ((!sta_info) || (!context)) {
-		hdd_err("Bad param, sta_info [%pK] context [%pK]",
-			sta_info, context);
-		return;
-	}
-
-	if (!sta_info->count) {
-		hdd_err("Fail to get remote peer info");
-		return;
-	}
-
-	if (sta_info->count > MAX_PEER_STA) {
-		hdd_warn("Exceed max peer number %d", sta_info->count);
-		sta_num = MAX_PEER_STA;
-	} else {
-		sta_num = sta_info->count;
-	}
-
-	request = osif_request_get(context);
-	if (!request) {
-		hdd_err("Obsolete request");
-		return;
-	}
-
-	priv = osif_request_priv(request);
-
-	priv->peer_sta_ext_info.sta_num = sta_num;
-	qdf_mem_copy(&priv->peer_sta_ext_info.info,
-		     sta_info->info,
-		     sta_num * sizeof(sta_info->info[0]));
-
-	osif_request_complete(request);
-	osif_request_put(request);
-}
-
-int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
-			   struct qdf_mac_addr macaddress,
-			   struct sir_peer_info_ext *peer_info_ext)
-{
-	QDF_STATUS status;
-	void *cookie;
-	int ret;
-	struct sir_peer_info_ext_req peer_info_req;
-	struct osif_request *request;
-	struct peer_info_priv *priv;
-	static const struct osif_request_params params = {
-		.priv_size = sizeof(*priv),
-		.timeout_ms = WLAN_WAIT_TIME_STATS,
-	};
-
-	if (!adapter) {
-		hdd_err("adapter is NULL");
-		return -EFAULT;
-	}
-
-	request = osif_request_alloc(&params);
-	if (!request) {
-		hdd_err("Request allocation failure");
-		return -ENOMEM;
-	}
-
-	cookie = osif_request_cookie(request);
-	priv = osif_request_priv(request);
-
-	qdf_mem_copy(&peer_info_req.peer_macaddr, &macaddress,
-		     QDF_MAC_ADDR_SIZE);
-	peer_info_req.sessionid = adapter->vdev_id;
-	peer_info_req.reset_after_request = 0;
-	status = sme_get_peer_info_ext(adapter->hdd_ctx->mac_handle,
-				       &peer_info_req,
-				       cookie,
-				       wlan_hdd_get_peer_info_cb);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("Unable to retrieve statistics for peer info");
-		ret = -EFAULT;
-	} else {
-		ret = osif_request_wait_for_response(request);
-		if (ret) {
-			hdd_err("SME timed out while retrieving peer info");
-			ret = -EFAULT;
-		} else {
-			/* only support one peer by now */
-			*peer_info_ext = priv->peer_sta_ext_info.info[0];
-			ret = 0;
-		}
-	}
-
-	osif_request_put(request);
-
-	return ret;
 }
 
 int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)

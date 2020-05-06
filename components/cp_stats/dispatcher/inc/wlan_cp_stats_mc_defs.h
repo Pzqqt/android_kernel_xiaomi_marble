@@ -28,6 +28,8 @@
 
 #include "wlan_cmn.h"
 #include "qdf_event.h"
+/* For WMI_MAX_CHAINS */
+#include "wmi_unified.h"
 
 #ifdef WLAN_SUPPORT_TWT
 
@@ -53,12 +55,14 @@
  * @TYPE_STATION_STATS: station stats was requested
  * @TYPE_PEER_STATS: peer stats was requested
  * @TYPE_MIB_STATS: MIB stats was requested
+ * @TYPE_PEER_STATS_INFO_EXT: peer stats info ext was requested
  */
 enum stats_req_type {
 	TYPE_CONNECTION_TX_POWER = 0,
 	TYPE_STATION_STATS,
 	TYPE_PEER_STATS,
 	TYPE_MIB_STATS,
+	TYPE_PEER_STATS_INFO_EXT,
 	TYPE_MAX,
 };
 
@@ -184,6 +188,8 @@ struct request_info {
 					     void *cookie);
 		void (*get_mib_stats_cb)(struct stats_event *ev,
 					 void *cookie);
+		void (*get_peer_stats_cb)(struct stats_event *ev,
+					  void *cookie);
 	} u;
 	uint32_t vdev_id;
 	uint32_t pdev_id;
@@ -498,6 +504,40 @@ struct chain_rssi_event {
 };
 
 /**
+ * struct peer_stats_info_ext_event - peer extended stats info
+ * @peer_macaddr: MAC address
+ * @tx_packets: packets transmitted to this station
+ * @tx_bytes: bytes transmitted to this station
+ * @rx_packets: packets received from this station
+ * @rx_bytes: bytes received from this station
+ * @tx_retries: cumulative retry counts
+ * @tx_failed: the number of failed frames
+ * @tx_succeed: the number of succeed frames
+ * @rssi: the signal strength
+ * @tx_rate: last used tx bitrate (kbps)
+ * @tx_rate_code: last tx rate code (last_tx_rate_code of wmi_peer_stats_info)
+ * @rx_rate: last used rx bitrate (kbps)
+ * @rx_rate_code: last rx rate code (last_rx_rate_code of wmi_peer_stats_info)
+ * @peer_rssi_per_chain: the average value of RSSI (dbm) per chain
+ */
+struct peer_stats_info_ext_event {
+	struct qdf_mac_addr peer_macaddr;
+	uint32_t tx_packets;
+	uint64_t tx_bytes;
+	uint32_t rx_packets;
+	uint64_t rx_bytes;
+	uint32_t tx_retries;
+	uint32_t tx_failed;
+	uint32_t tx_succeed;
+	int32_t rssi;
+	uint32_t tx_rate;
+	uint32_t tx_rate_code;
+	uint32_t rx_rate;
+	uint32_t rx_rate_code;
+	int32_t peer_rssi_per_chain[WMI_MAX_CHAINS];
+};
+
+/**
  * struct stats_event - parameters populated by stats event
  * @num_pdev_stats: num pdev stats
  * @pdev_stats: if populated array indicating pdev stats (index = pdev_id)
@@ -518,6 +558,8 @@ struct chain_rssi_event {
  * @tx_rate_flags: tx rate flags, (enum tx_rate_info)
  * @last_event: The LSB indicates if the event is the last event or not and the
  *              MSB indicates if this feature is supported by FW or not.
+ * @num_peer_stats_info_ext: number of peer extended stats info
+ * @peer_stats_info_ext: peer extended stats info
  */
 struct stats_event {
 	uint32_t num_pdev_stats;
@@ -541,6 +583,56 @@ struct stats_event {
 	uint32_t rx_rate;
 	enum tx_rate_info tx_rate_flags;
 	uint32_t last_event;
+	uint32_t num_peer_stats_info_ext;
+	struct peer_stats_info_ext_event *peer_stats_info_ext;
 };
+
+/**
+ * struct peer_stats_request_params - peer stats request parameter
+ * @request_type: request type, one peer or all peers of the vdev
+ * @vdev_id: vdev id
+ * @peer_mac_addr: peer mac address, omitted if request type is all peers
+ * @reset_after_request: whether reset stats after request
+ */
+struct peer_stats_request_params {
+	uint32_t request_type;
+	uint32_t vdev_id;
+	uint8_t peer_mac_addr[QDF_MAC_ADDR_SIZE];
+	uint32_t reset_after_request;
+};
+
+/**
+ * struct wmi_host_peer_stats_info - WMI peer stats info
+ * @peer_macaddr: peer mac address
+ * @tx_bytes: tx_bytes
+ * @tx_packets: tx packets
+ * @rx_bytes: rx_bytes
+ * @rx_packets: rx packets
+ * @tx_retries: tx retries of MPDU
+ * @tx_failed: tx failed MPDU
+ * @last_tx_rate_code: rate code of the last tx
+ * @last_rx_rate_code: rate code of the last rx
+ * @last_tx_bitrate_kbps: bitrate in bps of the last tx
+ * @last_rx_bitrate_kbps: bitrate in bps of the last rx
+ * @peer_rssi: peer rssi
+ * @tx_succeed: tx succeed MPDU
+ * @peer_rssi_per_chain: peer rssi per chain
+ */
+typedef struct {
+	struct qdf_mac_addr peer_macaddr;
+	uint64_t tx_bytes;
+	uint32_t tx_packets;
+	uint64_t rx_bytes;
+	uint32_t rx_packets;
+	uint32_t tx_retries;
+	uint32_t tx_failed;
+	uint32_t last_tx_rate_code;
+	uint32_t last_rx_rate_code;
+	uint32_t last_tx_bitrate_kbps;
+	uint32_t last_rx_bitrate_kbps;
+	int32_t peer_rssi;
+	uint32_t tx_succeed;
+	int32_t peer_rssi_per_chain[WMI_MAX_CHAINS];
+} wmi_host_peer_stats_info;
 
 #endif /* __WLAN_CP_STATS_MC_DEFS_H__ */

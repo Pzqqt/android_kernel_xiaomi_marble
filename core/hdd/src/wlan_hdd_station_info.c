@@ -29,6 +29,7 @@
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 #include <linux/if_ether.h>
+#include <wlan_cfg80211_mc_cp_stats.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include <wlan_hdd_stats.h>
 #include <wlan_hdd_hostapd.h>
@@ -1219,10 +1220,11 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 {
 	struct sk_buff *skb = NULL;
 	uint32_t nl_buf_len;
-	struct sir_peer_info_ext peer_info;
-	bool txrx_rate = true;
+	struct stats_event *stats;
+	bool txrx_rate = false;
 	bool value;
 	QDF_STATUS status;
+	int ret;
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len += (sizeof(stainfo->max_phy_rate) + NLA_HDRLEN) +
@@ -1236,15 +1238,24 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 	status = ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Unable to fetch sap ger peer info");
-	if (!value ||
-	    wlan_hdd_get_peer_info(adapter, mac_addr, &peer_info)) {
-		hdd_err("fail to get tx/rx rate");
-		txrx_rate = false;
-	} else {
-		stainfo->tx_rate = peer_info.tx_rate;
-		stainfo->rx_rate = peer_info.rx_rate;
+	if (value) {
+		stats = wlan_cfg80211_mc_cp_stats_get_peer_stats(adapter->vdev,
+								 mac_addr.bytes,
+								 &ret);
+		if (ret || !stats) {
+			hdd_err("fail to get tx/rx rate");
+			wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+		} else {
+			txrx_rate = true;
+		}
+	}
+
+	if (txrx_rate) {
+		stainfo->tx_rate = stats->peer_stats_info_ext->tx_rate;
+		stainfo->rx_rate = stats->peer_stats_info_ext->rx_rate;
 		nl_buf_len += (sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
 			(sizeof(stainfo->rx_rate) + NLA_HDRLEN);
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 	}
 
 	/* below info is only valid for HT/VHT mode */

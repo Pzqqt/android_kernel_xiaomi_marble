@@ -1247,18 +1247,6 @@ void wma_process_link_status_req(tp_wma_handle wma,
 				 tAniGetLinkStatus *pGetLinkStatus);
 
 /**
- * wma_get_peer_info_ext() - get peer info
- * @handle: wma interface
- * @peer_info_req: get peer info request information
- *
- * This function will send WMI_REQUEST_PEER_STATS_INFO_CMDID to FW
- *
- * Return: 0 on success, otherwise error value
- */
-QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
-				struct sir_peer_info_ext_req *peer_info_req);
-
-/**
  * wma_get_isolation() - get antenna isolation
  * @handle: wma interface
  *
@@ -1267,19 +1255,6 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
  * Return: 0 on success, otherwise error value
  */
 QDF_STATUS wma_get_isolation(tp_wma_handle wma);
-
-/**
- * wma_peer_info_event_handler() - Handler for WMI_PEER_STATS_INFO_EVENTID
- * @handle: WMA global handle
- * @cmd_param_info: Command event data
- * @len: Length of cmd_param_info
- *
- * This function will handle WMI_PEER_STATS_INFO_EVENTID
- *
- * Return: 0 on success, error code otherwise
- */
-int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
-				   u_int32_t len);
 
 int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 				       uint32_t len);

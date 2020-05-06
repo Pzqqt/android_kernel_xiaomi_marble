@@ -722,7 +722,13 @@ CLD_WMI_ROAM_OBJS +=	$(WMI_DIR)/src/wmi_unified_roam_tlv.o \
 			$(WMI_DIR)/src/wmi_unified_roam_api.o
 endif
 
-CLD_WMI_OBJS :=	$(CLD_WMI_ROAM_OBJS)
+ifeq ($(CONFIG_CP_STATS), y)
+CLD_WMI_MC_CP_STATS_OBJS :=	$(WMI_DIR)/src/wmi_unified_mc_cp_stats_tlv.o \
+				$(WMI_DIR)/src/wmi_unified_mc_cp_stats_api.o
+endif
+
+CLD_WMI_OBJS :=	$(CLD_WMI_ROAM_OBJS) \
+		$(CLD_WMI_MC_CP_STATS_OBJS)
 
 ############ Qca-wifi-host-cmn ############
 QDF_OS_DIR :=	qdf
@@ -1560,6 +1566,11 @@ endif
 ifeq ($(CONFIG_WLAN_CFR_ENABLE), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cfr_tlv.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cfr_api.o
+endif
+
+ifeq ($(CONFIG_CP_STATS), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cp_stats_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_cp_stats_tlv.o
 endif
 
 ########### FWLOG ###########
@@ -2553,6 +2564,7 @@ cppflags-$(CONFIG_WLAN_LOGGING_SOCK_SVC) += -DWLAN_LOGGING_SOCK_SVC_ENABLE
 cppflags-$(CONFIG_WLAN_LOGGING_BUFFERS_DYNAMICALLY) += -DWLAN_LOGGING_BUFFERS_DYNAMICALLY
 cppflags-$(CONFIG_WLAN_FEATURE_FILS) += -DWLAN_FEATURE_FILS_SK
 cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_CP_STATS
+cppflags-$(CONFIG_CP_STATS) += -DQCA_SUPPORT_MC_CP_STATS
 cppflags-$(CONFIG_DCS) += -DDCS_INTERFERENCE_DETECTION
 cppflags-$(CONFIG_FEATURE_INTEROP_ISSUES_AP) += -DWLAN_FEATURE_INTEROP_ISSUES_AP
 cppflags-$(CONFIG_FEATURE_MEMDUMP_ENABLE) += -DWLAN_FEATURE_MEMDUMP_ENABLE

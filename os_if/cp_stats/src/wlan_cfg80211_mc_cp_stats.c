@@ -72,6 +72,7 @@ static void wlan_cfg80211_mc_cp_stats_dealloc(void *priv)
 	qdf_mem_free(stats->vdev_summary_stats);
 	qdf_mem_free(stats->vdev_chain_rssi);
 	qdf_mem_free(stats->peer_adv_stats);
+	qdf_mem_free(stats->peer_stats_info_ext);
 	wlan_free_mib_stats(stats);
 }
 
@@ -718,6 +719,127 @@ get_mib_stats_fail:
 }
 #endif
 
+/**
+ * get_peer_stats_cb() - get_peer_stats_cb callback function
+ * @ev: peer stats buffer
+ * @cookie: a cookie for the request context
+ *
+ * Return: None
+ */
+static void get_peer_stats_cb(struct stats_event *ev, void *cookie)
+{
+	struct stats_event *priv;
+	struct osif_request *request;
+	uint32_t peer_stats_info_size;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		osif_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+	peer_stats_info_size = sizeof(*ev->peer_stats_info_ext) *
+			       ev->num_peer_stats_info_ext;
+
+	if (priv->peer_stats_info_ext) {
+		osif_err("invalid context cookie %pK request %pK",
+			 cookie, request);
+		goto peer_stats_cb_fail;
+	}
+
+	priv->peer_stats_info_ext = qdf_mem_malloc(peer_stats_info_size);
+	if (!priv->peer_stats_info_ext)
+		goto peer_stats_cb_fail;
+
+	qdf_mem_copy(priv->peer_stats_info_ext, ev->peer_stats_info_ext,
+		     peer_stats_info_size);
+
+peer_stats_cb_fail:
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
+					 const uint8_t *mac_addr,
+					 int *errno)
+{
+	void *cookie;
+	QDF_STATUS status;
+	struct stats_event *priv, *out;
+	struct osif_request *request;
+	struct request_info info = {0};
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = 2 * CP_STATS_WAIT_TIME_STAT,
+		.dealloc = wlan_cfg80211_mc_cp_stats_dealloc,
+	};
+
+	osif_debug("Enter");
+
+	out = qdf_mem_malloc(sizeof(*out));
+	if (!out) {
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		qdf_mem_free(out);
+		*errno = -ENOMEM;
+		return NULL;
+	}
+
+	cookie = osif_request_cookie(request);
+	priv = osif_request_priv(request);
+	info.cookie = cookie;
+	info.u.get_peer_stats_cb = get_peer_stats_cb;
+	info.vdev_id = wlan_vdev_get_id(vdev);
+	info.pdev_id = wlan_objmgr_pdev_get_pdev_id(wlan_vdev_get_pdev(vdev));
+	qdf_mem_copy(info.peer_mac_addr, mac_addr, QDF_MAC_ADDR_SIZE);
+	status = ucfg_mc_cp_stats_send_stats_request(vdev,
+						     TYPE_PEER_STATS_INFO_EXT,
+						     &info);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		osif_err("Failed to send stats request status: %d", status);
+		*errno = qdf_status_to_os_return(status);
+		goto get_peer_stats_fail;
+	}
+
+	*errno = osif_request_wait_for_response(request);
+	if (*errno) {
+		osif_err("wait failed or timed out ret: %d", *errno);
+		goto get_peer_stats_fail;
+	}
+
+	if (!priv->peer_stats_info_ext || priv->num_peer_stats_info_ext == 0) {
+		osif_err("Invalid stats");
+		osif_err("Peer stats info ext %d:%pK",
+			 priv->num_peer_stats_info_ext,
+			 priv->peer_stats_info_ext);
+		*errno = -EINVAL;
+		goto get_peer_stats_fail;
+	}
+
+	out->num_peer_stats_info_ext = priv->num_peer_stats_info_ext;
+	out->peer_stats_info_ext = priv->peer_stats_info_ext;
+	priv->peer_stats_info_ext = NULL;
+	osif_request_put(request);
+
+	osif_debug("Exit");
+
+	return out;
+
+get_peer_stats_fail:
+	osif_request_put(request);
+	wlan_cfg80211_mc_cp_stats_free_stats_event(out);
+
+	osif_debug("Exit");
+
+	return NULL;
+}
+
 void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 {
 	if (!stats)
@@ -730,5 +852,6 @@ void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *stats)
 	qdf_mem_free(stats->vdev_chain_rssi);
 	qdf_mem_free(stats->peer_adv_stats);
 	wlan_free_mib_stats(stats);
+	qdf_mem_free(stats->peer_stats_info_ext);
 	qdf_mem_free(stats);
 }

@@ -584,6 +584,35 @@ static void tgt_mc_cp_stats_extract_mib_stats(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+static void
+tgt_mc_cp_stats_extract_peer_stats_info_ext(struct wlan_objmgr_psoc *psoc,
+					    struct stats_event *ev)
+{
+	QDF_STATUS status;
+	struct request_info last_req = {0};
+	bool pending = false;
+
+	if (!ev->peer_stats_info_ext || ev->num_peer_stats_info_ext == 0) {
+		cp_stats_debug("no peer_stats_info_ext");
+		return;
+	}
+
+	status = ucfg_mc_cp_stats_get_pending_req(psoc,
+						  TYPE_PEER_STATS_INFO_EXT,
+						  &last_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cp_stats_err("ucfg_mc_cp_stats_get_pending_req failed");
+		return;
+	}
+
+	ucfg_mc_cp_stats_reset_pending_req(psoc, TYPE_PEER_STATS_INFO_EXT,
+					   &last_req, &pending);
+	if (last_req.u.get_peer_stats_cb && pending) {
+		last_req.u.get_peer_stats_cb(ev, last_req.cookie);
+		last_req.u.get_peer_stats_cb = NULL;
+	}
+}
+
 static void tgt_mc_cp_stats_extract_cca_stats(struct wlan_objmgr_psoc *psoc,
 						  struct stats_event *ev)
 {
@@ -915,6 +944,9 @@ QDF_STATUS tgt_mc_cp_stats_process_stats_event(struct wlan_objmgr_psoc *psoc,
 	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_MIB_STATS))
 		tgt_mc_cp_stats_extract_mib_stats(psoc, ev);
 
+	if (ucfg_mc_cp_stats_is_req_pending(psoc, TYPE_PEER_STATS_INFO_EXT))
+		tgt_mc_cp_stats_extract_peer_stats_info_ext(psoc, ev);
+
 	tgt_mc_cp_stats_extract_cca_stats(psoc, ev);
 
 	tgt_mc_cp_send_lost_link_stats(psoc, ev);
@@ -942,12 +974,29 @@ QDF_STATUS tgt_send_mc_cp_stats_req(struct wlan_objmgr_psoc *psoc,
 				    struct request_info *req)
 {
 	struct wlan_lmac_if_cp_stats_tx_ops *tx_ops;
+	QDF_STATUS status;
 
 	tx_ops = target_if_cp_stats_get_tx_ops(psoc);
-	if (!tx_ops || !tx_ops->send_req_stats) {
+	if (!tx_ops) {
 		cp_stats_err("could not get tx_ops");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	return tx_ops->send_req_stats(psoc, type, req);
+	switch (type) {
+	case TYPE_PEER_STATS_INFO_EXT:
+		if (!tx_ops->send_req_peer_stats) {
+			cp_stats_err("could not get send_req_peer_stats");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+		status = tx_ops->send_req_peer_stats(psoc, req);
+		break;
+	default:
+		if (!tx_ops->send_req_stats) {
+			cp_stats_err("could not get send_req_stats");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+		status = tx_ops->send_req_stats(psoc, type, req);
+	}
+
+	return status;
 }

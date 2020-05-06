@@ -3098,12 +3098,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	/* register for fw state response event */
 	wma_register_fw_state_events(wma_handle->wmi_handle);
 
-	/* register for peer info response event */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_peer_stats_info_event_id,
-					   wma_peer_info_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-
 #ifdef WLAN_POWER_DEBUG
 	/* register for Chip Power stats event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -8567,10 +8561,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_SET_SAP_INTRABSS_DIS:
 		wma_set_vdev_intrabss_fwd(wma_handle,
 					  (tDisableIntraBssFwd *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_GET_PEER_INFO_EXT:
-		wma_get_peer_info_ext(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_GET_ISOLATION:

@@ -598,9 +598,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 /*
  * Unused SIR_HAL_ITC_MSG_TYPES_BEGIN + 382 to
- * SIR_HAL_ITC_MSG_TYPES_BEGIN + 386
+ * SIR_HAL_ITC_MSG_TYPES_BEGIN + 387
  */
-#define SIR_HAL_GET_PEER_INFO_EXT           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 387)
 
 /* ARP Debug stats */
 #define SIR_HAL_SET_ARP_STATS_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 388)
