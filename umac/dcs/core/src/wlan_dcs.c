@@ -126,6 +126,13 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 	dcs_tx_ops = target_if_dcs_get_tx_ops(psoc);
 
 	if (dcs_tx_ops->dcs_cmd_send) {
+		if (dcs_enable & CAP_DCS_WLANIM) {
+			qdf_timer_stop(&dcs_pdev_priv->dcs_disable_timer);
+			qdf_mem_set(&dcs_pdev_priv->dcs_im_stats,
+				    sizeof(dcs_pdev_priv->dcs_im_stats), 0);
+			dcs_pdev_priv->dcs_freq_ctrl_params.
+						disable_delay_process = false;
+		}
 		dcs_info("dcs_enable: %u, pdev_id: %u", dcs_enable, pdev_id);
 		return dcs_tx_ops->dcs_cmd_send(psoc,
 						pdev_id,
