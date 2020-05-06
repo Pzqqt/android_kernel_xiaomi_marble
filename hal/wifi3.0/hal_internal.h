@@ -718,6 +718,7 @@ struct hal_soc {
 	/* read index used by worker thread to dequeue/write registers */
 	uint32_t read_idx;
 #endif
+	qdf_atomic_t active_work_cnt;
 };
 
 #ifdef FEATURE_HAL_DELAYED_REG_WRITE

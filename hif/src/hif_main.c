@@ -700,6 +700,74 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	qdf_mem_free(scn);
 }
 
+/**
+ * hif_get_num_active_tasklets() - get the number of active
+ *		tasklets pending to be completed.
+ * @scn: HIF context
+ *
+ * Returns: the number of tasklets which are active
+ */
+static inline int hif_get_num_active_tasklets(struct hif_softc *scn)
+{
+	return qdf_atomic_read(&scn->active_tasklet_cnt);
+}
+
+/**
+ * hif_get_num_active_grp_tasklets() - get the number of active
+ *		datapath group tasklets pending to be completed.
+ * @scn: HIF context
+ *
+ * Returns: the number of datapath group tasklets which are active
+ */
+static inline int hif_get_num_active_grp_tasklets(struct hif_softc *scn)
+{
+	return qdf_atomic_read(&scn->active_grp_tasklet_cnt);
+}
+
+#if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
+	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
+	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \
+	defined(QCA_WIFI_QCA6750) || defined(QCA_WIFI_QCA5018))
+/**
+ * hif_get_num_pending_work() - get the number of entries in
+ *		the workqueue pending to be completed.
+ * @scn: HIF context
+ *
+ * Returns: the number of tasklets which are active
+ */
+static inline int hif_get_num_pending_work(struct hif_softc *scn)
+{
+	return hal_get_reg_write_pending_work(scn->hal_soc);
+}
+#else
+
+static inline int hif_get_num_pending_work(struct hif_softc *scn)
+{
+	return 0;
+}
+#endif
+
+QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
+{
+	uint32_t task_drain_wait_cnt = 0;
+	int tasklet = 0, grp_tasklet = 0, work = 0;
+
+	while ((tasklet = hif_get_num_active_tasklets(scn)) ||
+	       (grp_tasklet = hif_get_num_active_grp_tasklets(scn)) ||
+	       (work = hif_get_num_pending_work(scn))) {
+		if (++task_drain_wait_cnt > HIF_TASK_DRAIN_WAIT_CNT) {
+			hif_err("pending tasklets %d grp tasklets %d work %d",
+				tasklet, grp_tasklet, work);
+			return QDF_STATUS_E_FAULT;
+		}
+		hif_info("waiting for tasklets %d grp tasklets %d work %d",
+			 tasklet, grp_tasklet, work);
+		msleep(10);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \
 	defined(QCA_WIFI_QCN9000) || defined(QCA_WIFI_QCA6490) || \

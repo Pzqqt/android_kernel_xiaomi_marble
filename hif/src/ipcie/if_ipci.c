@@ -289,9 +289,12 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 
 int hif_ipci_bus_suspend(struct hif_softc *scn)
 {
+	QDF_STATUS ret;
+
 	hif_apps_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
 
-	if (hif_drain_tasklets(scn)) {
+	ret = hif_try_complete_tasks(scn);
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		hif_apps_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
 		return -EBUSY;
 	}

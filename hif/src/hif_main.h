@@ -262,6 +262,25 @@ void *hif_get_hal_handle(struct hif_opaque_softc *hif_hdl)
 	return sc->hal_soc;
 }
 
+/**
+ * Max waiting time during Runtime PM suspend to finish all
+ * the tasks. This is in the multiple of 10ms.
+ */
+#define HIF_TASK_DRAIN_WAIT_CNT 25
+
+/**
+ * hif_try_complete_tasks() - Try to complete all the pending tasks
+ * @scn: HIF context
+ *
+ * Try to complete all the pending datapath tasks, i.e. tasklets,
+ * DP group tasklets and works which are queued, in a given time
+ * slot.
+ *
+ * Returns: QDF_STATUS_SUCCESS if all the tasks were completed
+ *	QDF error code, if the time slot exhausted
+ */
+QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn);
+
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
 static inline bool hif_is_nss_wifi_enabled(struct hif_softc *sc)
 {
