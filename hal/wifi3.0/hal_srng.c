@@ -337,6 +337,8 @@ static void hal_target_based_configure(struct hal_soc *hal)
 #endif
 #ifdef QCA_WIFI_QCA5018
 	case TARGET_TYPE_QCA5018:
+		hal->use_register_windowing = true;
+		hal->static_window_map = true;
 		hal_qca5018_attach(hal);
 	break;
 #endif
@@ -739,7 +741,8 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 		goto fail0;
 	}
 	hal->hif_handle = hif_handle;
-	hal->dev_base_addr = hif_get_dev_ba(hif_handle);
+	hal->dev_base_addr = hif_get_dev_ba(hif_handle); /* UMAC */
+	hal->dev_base_addr_ce = hif_get_dev_ba_ce(hif_handle); /* CE */
 	hal->qdf_dev = qdf_dev;
 	hal->shadow_rdptr_mem_vaddr = (uint32_t *)qdf_mem_alloc_consistent(
 		qdf_dev, qdf_dev->dev, sizeof(*(hal->shadow_rdptr_mem_vaddr)) *

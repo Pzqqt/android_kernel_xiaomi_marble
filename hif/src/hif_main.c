@@ -414,6 +414,21 @@ void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle)
 }
 qdf_export_symbol(hif_get_dev_ba);
 
+/**
+ * hif_get_dev_ba_ce(): API to get device ce base address.
+ * @scn: scn
+ *
+ * Return: dev mem base address for CE
+ */
+void *hif_get_dev_ba_ce(struct hif_opaque_softc *hif_handle)
+{
+	struct hif_softc *scn = (struct hif_softc *)hif_handle;
+
+	return scn->mem_ce;
+}
+
+qdf_export_symbol(hif_get_dev_ba_ce);
+
 #ifdef WLAN_CE_INTERRUPT_THRESHOLD_CONFIG
 /**
  * hif_get_cfg_from_psoc() - Retrieve ini cfg from psoc

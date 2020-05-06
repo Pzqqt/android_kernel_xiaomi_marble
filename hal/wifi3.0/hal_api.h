@@ -727,6 +727,12 @@ struct hal_mem_info {
 	void *dev_base_addr;
 	/* dev base physical addr */
 	void *dev_base_paddr;
+	/* dev base ce virutal addr - applicable only for qca5018  */
+	/* In qca5018 CE register are outside wcss block */
+	/* using a separate address space to access CE registers */
+	void *dev_base_addr_ce;
+	/* dev base ce physical addr */
+	void *dev_base_paddr_ce;
 	/* Remote virtual pointer memory for HW/FW updates */
 	void *shadow_rdptr_mem_vaddr;
 	/* Remote physical pointer memory for HW/FW updates */

@@ -111,6 +111,8 @@
 		 (UMAC_WINDOW_ADDRESS_5018 << 12) | \
 		 WINDOW_ENABLE_BIT)
 
+#define HOST_CE_MASK_VALUE 0xFF000000
+
 #include <hal_5018_tx.h>
 #include <hal_5018_rx.h>
 #include <hal_generic_api.h>
@@ -1336,26 +1338,23 @@ static inline qdf_iomem_t hal_get_window_address_5018(struct hal_soc *hal_soc,
 	qdf_iomem_t new_offset;
 
 	/*
-	 * If offset lies within DP register range, use 3rd window to write
-	 * into DP region.
-	 */
-	if ((offset ^ SEQ_WCSS_UMAC_OFFSET) < WINDOW_RANGE_MASK) {
-		new_offset = (hal_soc->dev_base_addr + (3 * WINDOW_START) +
-			  (offset & WINDOW_RANGE_MASK));
-	/*
-	 * If offset lies within CE register range, use 2nd window to write
+	 * Check if offset lies within CE register range(0x08400000)
+	 * or UMAC/DP register range (0x00A00000).
+	 * If offset  lies within CE register range, map it
 	 * into CE region.
 	 */
-	} else if ((offset ^ WFSS_CE_REG_BASE) < WINDOW_RANGE_MASK) {
-		new_offset = (hal_soc->dev_base_addr + (2 * WINDOW_START) +
-			  (offset & WINDOW_RANGE_MASK));
+	if (offset & HOST_CE_MASK_VALUE) {
+		offset = offset - WFSS_CE_REG_BASE;
+		new_offset = (hal_soc->dev_base_addr_ce + offset);
+
+		return new_offset;
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: ERROR: Accessing Wrong register\n", __func__);
-		qdf_assert_always(0);
-		return 0;
+	/*
+	 * If offset lies within DP register range,
+	 * return the address as such
+	 */
+		return addr;
 	}
-	return new_offset;
 }
 
 static inline void hal_write_window_register(struct hal_soc *hal_soc)
@@ -1955,6 +1954,4 @@ void hal_qca5018_attach(struct hal_soc *hal_soc)
 	hal_soc->hw_srng_table = hw_srng_table_5018;
 	hal_soc->hal_hw_reg_offset = hal_hw_reg_offset_qca5018;
 	hal_soc->ops = &qca5018_hal_hw_txrx_ops;
-	if (hal_soc->static_window_map)
-		hal_write_window_register(hal_soc);
 }

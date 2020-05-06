@@ -495,6 +495,11 @@ void hif_ahb_disable_bus(struct hif_softc *scn)
 
 			hif_ahb_device_reset(scn);
 		}
+		if (tgt_info->target_type == TARGET_TYPE_QCA5018) {
+			iounmap(sc->mem_ce);
+			sc->mem_ce = NULL;
+			scn->mem_ce = NULL;
+		}
 		mem = (void __iomem *)sc->mem;
 		if (mem) {
 			pfrm_devm_iounmap(&pdev->dev, mem);
@@ -605,11 +610,25 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	tgt_info->target_type = target_type;
 	hif_register_tbl_attach(ol_sc, hif_type);
 	hif_target_register_tbl_attach(ol_sc, target_type);
+	/*
+	 * In QCA5018 CE region moved to SOC outside WCSS block.
+	 * Allocate separate I/O remap to access CE registers.
+	 */
+	if (tgt_info->target_type == TARGET_TYPE_QCA5018) {
+		struct hif_softc *scn = HIF_GET_SOFTC(sc);
+
+		sc->mem_ce = ioremap_nocache(HOST_CE_ADDRESS, HOST_CE_SIZE);
+		if (IS_ERR(sc->mem_ce)) {
+			HIF_INFO("CE: ioremap failed\n");
+			return PTR_ERR(sc->mem_ce);
+		}
+		ol_sc->mem_ce = sc->mem_ce;
+	}
 
 	if ((tgt_info->target_type != TARGET_TYPE_QCA8074) &&
-	    (tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
-	    (tgt_info->target_type != TARGET_TYPE_QCA5018) &&
-	    (tgt_info->target_type != TARGET_TYPE_QCA6018)) {
+			(tgt_info->target_type != TARGET_TYPE_QCA8074V2) &&
+			(tgt_info->target_type != TARGET_TYPE_QCA5018) &&
+			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			HIF_INFO("error in enabling soc\n");
 			return -EIO;
@@ -718,22 +737,23 @@ void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct CE_pipe_config *target_ce_conf = &hif_state->target_ce_config[ce_id];
 	struct hif_target_info *tgt_info = &scn->target_info;
+	void *mem = scn->mem_ce ? scn->mem_ce : scn->mem;
 
 	if (scn->per_ce_irq) {
 		if (target_ce_conf->pipedir & PIPEDIR_OUT) {
 			reg_offset = HOST_IE_ADDRESS;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn, scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, mem + reg_offset);
 			regval |= HOST_IE_REG1_CE_BIT(ce_id);
-			hif_write32_mb(scn, scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, mem + reg_offset, regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 		if (target_ce_conf->pipedir & PIPEDIR_IN) {
 			reg_offset = HOST_IE_ADDRESS_2;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn, scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, mem + reg_offset);
 			regval |= HOST_IE_REG2_CE_BIT(ce_id);
-			hif_write32_mb(scn, scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
@@ -741,11 +761,11 @@ void hif_ahb_irq_enable(struct hif_softc *scn, int ce_id)
 				/* Enable destination ring interrupts for
 				 * 8074, 8074V2, 6018 and 50xx
 				 */
-				regval = hif_read32_mb(scn, scn->mem +
+				regval = hif_read32_mb(scn, mem +
 					HOST_IE_ADDRESS_3);
 				regval |= HOST_IE_REG3_CE_BIT(ce_id);
 
-				hif_write32_mb(scn, scn->mem +
+				hif_write32_mb(scn, mem +
 					       HOST_IE_ADDRESS_3, regval);
 			}
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
@@ -769,22 +789,23 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct CE_pipe_config *target_ce_conf = &hif_state->target_ce_config[ce_id];
 	struct hif_target_info *tgt_info = &scn->target_info;
+	void *mem = scn->mem_ce ? scn->mem_ce : scn->mem;
 
 	if (scn->per_ce_irq) {
 		if (target_ce_conf->pipedir & PIPEDIR_OUT) {
 			reg_offset = HOST_IE_ADDRESS;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn, scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, mem + reg_offset);
 			regval &= ~HOST_IE_REG1_CE_BIT(ce_id);
-			hif_write32_mb(scn, scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, mem + reg_offset, regval);
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);
 		}
 		if (target_ce_conf->pipedir & PIPEDIR_IN) {
 			reg_offset = HOST_IE_ADDRESS_2;
 			qdf_spin_lock_irqsave(&hif_state->irq_reg_lock);
-			regval = hif_read32_mb(scn, scn->mem + reg_offset);
+			regval = hif_read32_mb(scn, mem + reg_offset);
 			regval &= ~HOST_IE_REG2_CE_BIT(ce_id);
-			hif_write32_mb(scn, scn->mem + reg_offset, regval);
+			hif_write32_mb(scn, mem + reg_offset, regval);
 			if (tgt_info->target_type == TARGET_TYPE_QCA8074 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA8074V2 ||
 			    tgt_info->target_type == TARGET_TYPE_QCA5018 ||
@@ -792,11 +813,11 @@ void hif_ahb_irq_disable(struct hif_softc *scn, int ce_id)
 				/* Disable destination ring interrupts for
 				 * 8074, 8074V2, 6018 and 50xx
 				 */
-				regval = hif_read32_mb(scn, scn->mem +
+				regval = hif_read32_mb(scn, mem +
 					HOST_IE_ADDRESS_3);
 				regval &= ~HOST_IE_REG3_CE_BIT(ce_id);
 
-				hif_write32_mb(scn, scn->mem +
+				hif_write32_mb(scn, mem +
 					       HOST_IE_ADDRESS_3, regval);
 			}
 			qdf_spin_unlock_irqrestore(&hif_state->irq_reg_lock);

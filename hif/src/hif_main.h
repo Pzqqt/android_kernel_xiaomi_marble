@@ -173,6 +173,7 @@ struct hif_softc {
 	struct hif_config_info hif_config;
 	struct hif_target_info target_info;
 	void __iomem *mem;
+	void __iomem *mem_ce;
 	enum qdf_bus_type bus_type;
 	struct hif_bus_ops bus_ops;
 	void *ce_id_to_state[CE_COUNT_MAX];

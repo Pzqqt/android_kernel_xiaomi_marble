@@ -665,6 +665,8 @@ struct hal_soc {
 
 	/* Device base address */
 	void *dev_base_addr;
+	/* Device base address for ce - qca5018 target */
+	void *dev_base_addr_ce;
 
 	/* HAL internal state for all SRNG rings.
 	 * TODO: See if this is required

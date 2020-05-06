@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -210,6 +210,7 @@
 #define HOST_IE_ADDRESS_3         (scn->target_ce_def->d_HOST_IE_ADDRESS_3)
 #define HOST_IE_REG3_CE_LSB       (scn->target_ce_def->d_HOST_IE_REG3_CE_LSB)
 #define HOST_IS_ADDRESS           (scn->target_ce_def->d_HOST_IS_ADDRESS)
+#define HOST_CE_ADDRESS           (scn->target_ce_def->d_HOST_CE_ADDRESS)
 
 #define SRC_WATERMARK_LOW_SET(x) \
 	(((x) << SRC_WATERMARK_LOW_LSB) & SRC_WATERMARK_LOW_MASK)

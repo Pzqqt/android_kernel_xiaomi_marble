@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,7 @@
 #define TCSR_WCSS0_HALTACK 0x52010
 #define TCSR_WCSS1_HALTACK 0x52014
 #define ATH_AHB_RESET_WAIT_MAX 10 /* Ms */
+#define HOST_CE_SIZE 0x200000
 
 irqreturn_t hif_ahb_interrupt_handler(int irq, void *context);
 
