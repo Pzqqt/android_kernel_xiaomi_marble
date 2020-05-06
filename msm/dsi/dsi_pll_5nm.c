@@ -2184,6 +2184,7 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 	struct clk_onecell_data *clk_data;
 	int num_clks = ARRAY_SIZE(dsi_pllcc_5nm);
 	struct regmap *rmap;
+	struct regmap_config *rmap_config;
 
 	if (!pdev || !pdev->dev.of_node ||
 		!pll_res || !pll_res->pll_base || !pll_res->phy_base) {
@@ -2215,34 +2216,45 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 
 	clk_data->clk_num = num_clks;
 
+	rmap_config = devm_kmemdup(&pdev->dev, &dsi_pll_5nm_config,
+			sizeof(struct regmap_config), GFP_KERNEL);
+	if (!rmap_config)
+		return -ENOMEM;
+
 	/* Establish client data */
 	if (ndx == 0) {
+		rmap_config->name = "pll_out";
 		rmap = devm_regmap_init(&pdev->dev, &pll_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_pll_out_div.clkr.regmap = rmap;
 		dsi0pll_shadow_pll_out_div.clkr.regmap = rmap;
 
+		rmap_config->name = "bitclk_src";
 		rmap = devm_regmap_init(&pdev->dev, &bitclk_src_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_bitclk_src.clkr.regmap = rmap;
 		dsi0pll_shadow_bitclk_src.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_src";
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_pclk_src.clkr.regmap = rmap;
 		dsi0pll_shadow_pclk_src.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_pclk_mux.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_src_mux";
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_pclk_src_mux.clkr.regmap = rmap;
 		dsi0pll_shadow_pclk_src_mux.clkr.regmap = rmap;
 
+		rmap_config->name = "byteclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi0pll_byteclk_mux.clkr.regmap = rmap;
 
 		dsi0pll_vco_clk.priv = pll_res;
@@ -2271,32 +2283,38 @@ int dsi_pll_clock_register_5nm(struct platform_device *pdev,
 		rc = of_clk_add_provider(pdev->dev.of_node,
 				of_clk_src_onecell_get, clk_data);
 	} else {
+		rmap_config->name = "pll_out";
 		rmap = devm_regmap_init(&pdev->dev, &pll_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_pll_out_div.clkr.regmap = rmap;
 		dsi1pll_shadow_pll_out_div.clkr.regmap = rmap;
 
+		rmap_config->name = "bitclk_src";
 		rmap = devm_regmap_init(&pdev->dev, &bitclk_src_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_bitclk_src.clkr.regmap = rmap;
 		dsi1pll_shadow_bitclk_src.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_src";
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_pclk_src.clkr.regmap = rmap;
 		dsi1pll_shadow_pclk_src.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_mux";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_pclk_mux.clkr.regmap = rmap;
 
+		rmap_config->name = "pclk_src_mux";
 		rmap = devm_regmap_init(&pdev->dev, &pclk_src_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_pclk_src_mux.clkr.regmap = rmap;
 		dsi1pll_shadow_pclk_src_mux.clkr.regmap = rmap;
 
+		rmap_config->name = "byteclk_mut";
 		rmap = devm_regmap_init(&pdev->dev, &dsi_mux_regmap_bus,
-				pll_res, &dsi_pll_5nm_config);
+				pll_res, rmap_config);
 		dsi1pll_byteclk_mux.clkr.regmap = rmap;
 
 		dsi1pll_vco_clk.priv = pll_res;
