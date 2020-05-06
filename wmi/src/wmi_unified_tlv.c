@@ -9063,6 +9063,40 @@ static inline uint32_t convert_wireless_modes_tlv(uint32_t target_wireless_mode)
 	return wireless_modes;
 }
 
+/* convert_phybitmap_tlv() - Convert  WMI_REGULATORY_PHYBITMAP values sent by
+ * target to host internal REGULATORY_PHYMODE values.
+ *
+ * @target_target_phybitmap: target phybitmap received in the message.
+ *
+ * Return: returns the host internal REGULATORY_PHYMODE.
+ */
+static uint32_t convert_phybitmap_tlv(uint32_t target_phybitmap)
+{
+	uint32_t phybitmap = 0;
+
+	WMI_LOGD("Target phybitmap: 0x%x", target_phybitmap);
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11A)
+		phybitmap |= REGULATORY_PHYMODE_NO11A;
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11B)
+		phybitmap |= REGULATORY_PHYMODE_NO11B;
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11G)
+		phybitmap |= REGULATORY_PHYMODE_NO11G;
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11N)
+		phybitmap |= REGULATORY_CHAN_NO11N;
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11AC)
+		phybitmap |= REGULATORY_PHYMODE_NO11AC;
+
+	if (target_phybitmap & WMI_REGULATORY_PHYMODE_NO11AX)
+		phybitmap |= REGULATORY_PHYMODE_NO11AX;
+
+	return phybitmap;
+}
+
 /**
  * extract_hal_reg_cap_tlv() - extract HAL registered capabilities
  * @wmi_handle: wmi handle
@@ -11514,7 +11548,8 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
 		     REG_ALPHA2_LEN);
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
-	reg_info->phybitmap = chan_list_event_hdr->phybitmap;
+	reg_info->phybitmap = convert_phybitmap_tlv(
+			chan_list_event_hdr->phybitmap);
 	reg_info->offload_enabled = true;
 	reg_info->num_phy = chan_list_event_hdr->num_phy;
 	reg_info->phy_id = wmi_handle->ops->convert_phy_id_target_to_host(
