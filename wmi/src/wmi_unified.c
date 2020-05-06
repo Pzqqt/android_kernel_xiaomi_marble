@@ -3123,6 +3123,7 @@ bool wmi_is_target_suspended(struct wmi_unified *wmi_handle)
 {
 	return qdf_atomic_read(&wmi_handle->is_target_suspended);
 }
+qdf_export_symbol(wmi_is_target_suspended);
 
 #ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
 void wmi_set_qmi_stats(wmi_unified_t wmi_handle, bool val)

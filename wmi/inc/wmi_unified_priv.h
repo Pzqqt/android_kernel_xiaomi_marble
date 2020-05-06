@@ -463,6 +463,11 @@ QDF_STATUS (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
 				uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				struct stats_request_params *param);
 
+#ifdef QCA_SUPPORT_MC_CP_STATS
+QDF_STATUS (*send_request_peer_stats_info_cmd)(wmi_unified_t wmi_handle,
+				struct peer_stats_request_params *param);
+#endif /* QCA_SUPPORT_MC_CP_STATS */
+
 QDF_STATUS (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
 
@@ -1789,6 +1794,14 @@ QDF_STATUS (*extract_vdev_nac_rssi_stats)(wmi_unified_t wmi_handle, void *evt_bu
 QDF_STATUS (*extract_bcn_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 		uint32_t index, wmi_host_bcn_stats *bcn_stats);
 
+#ifdef QCA_SUPPORT_MC_CP_STATS
+QDF_STATUS (*extract_peer_stats_count)(wmi_unified_t wmi_handle, void *evt_buf,
+				       wmi_host_stats_event *stats_param);
+
+QDF_STATUS (*extract_peer_stats_info)(wmi_unified_t wmi_handle, void *evt_buf,
+		uint32_t index, wmi_host_peer_stats_info *peer_stats_info);
+#endif /* QCA_SUPPORT_MC_CP_STATS */
+
 #ifdef OL_ATH_SMART_LOGGING
 QDF_STATUS (*extract_smartlog_event)(wmi_unified_t wmi_handle, void *evt_buf,
 				     struct wmi_debug_fatal_events *event);
@@ -2940,4 +2953,20 @@ static inline void wmi_cfr_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif
+
+#ifdef QCA_SUPPORT_CP_STATS
+void wmi_cp_stats_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_cp_stats_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif /* QCA_SUPPORT_CP_STATS */
+
+#ifdef QCA_SUPPORT_MC_CP_STATS
+void wmi_mc_cp_stats_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_mc_cp_stats_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif /* QCA_SUPPORT_MC_CP_STATS */
 #endif

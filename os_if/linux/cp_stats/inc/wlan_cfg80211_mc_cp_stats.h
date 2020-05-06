@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,6 +105,22 @@ void wlan_cfg80211_mc_cp_stats_free_stats_event(struct stats_event *info);
 struct stats_event *
 wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 					uint8_t *macaddress, int *errno);
+
+/**
+ * wlan_cfg80211_mc_cp_stats_get_peer_stats() - API to get peer
+ * statistics from firmware
+ * @vdev:    Pointer to vdev
+ * @mac_addr: mac address
+ * @errno:   error type in case of failure
+ *
+ * Call of this API must call wlan_cfg80211_mc_cp_stats_free_stats_event
+ * API when done with information provided by info.
+ * Return: stats buffer on success, Null on failure
+ */
+struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
+					 const uint8_t *mac_addr,
+					 int *errno);
 #else
 static inline int wlan_cfg80211_mc_cp_stats_get_tx_power(
 				struct wlan_objmgr_vdev *vdev,
@@ -134,6 +150,14 @@ static inline void wlan_cfg80211_mc_cp_stats_free_stats_event(
 static inline struct stats_event *
 wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 					    int *errno)
+{
+	return NULL;
+}
+
+static inline struct stats_event *
+wlan_cfg80211_mc_cp_stats_get_peer_stats(struct wlan_objmgr_vdev *vdev,
+					 const uint8_t *mac_addr,
+					 int *errno)
 {
 	return NULL;
 }

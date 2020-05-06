@@ -411,25 +411,6 @@ QDF_STATUS wmi_unified_sifs_trigger_send(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- *  wmi_unified_stats_request_send() - WMI request stats function
- *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
- *  @param param    : pointer to hold stats request parameter
- *
- *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
-					  uint8_t macaddr[QDF_MAC_ADDR_SIZE],
-					  struct stats_request_params *param)
-{
-	if (wmi_handle->ops->send_stats_request_cmd)
-		return wmi_handle->ops->send_stats_request_cmd(wmi_handle,
-				   macaddr, param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS
 wmi_unified_packet_log_enable_send(wmi_unified_t wmi_handle,
 				   WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT,
@@ -2124,28 +2105,6 @@ wmi_extract_composite_phyerr(wmi_unified_t wmi_handle, void *evt_buf,
 }
 
 QDF_STATUS
-wmi_extract_stats_param(wmi_unified_t wmi_handle, void *evt_buf,
-			wmi_host_stats_event *stats_param)
-{
-	if (wmi_handle->ops->extract_all_stats_count)
-		return wmi_handle->ops->extract_all_stats_count(wmi_handle,
-			evt_buf, stats_param);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wmi_extract_pdev_stats(wmi_unified_t wmi_handle, void *evt_buf,
-		       uint32_t index, wmi_host_pdev_stats *pdev_stats)
-{
-	if (wmi_handle->ops->extract_pdev_stats)
-		return wmi_handle->ops->extract_pdev_stats(wmi_handle,
-			evt_buf, index, pdev_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
 wmi_extract_unit_test(wmi_unified_t wmi_handle, void *evt_buf,
 		      wmi_unit_test_event *unit_test, uint32_t maxspace)
 {
@@ -2164,40 +2123,6 @@ wmi_extract_pdev_ext_stats(wmi_unified_t wmi_handle, void *evt_buf,
 	if (wmi_handle->ops->extract_pdev_ext_stats)
 		return wmi_handle->ops->extract_pdev_ext_stats(wmi_handle,
 			evt_buf, index, pdev_ext_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wmi_extract_peer_stats(wmi_unified_t wmi_handle, void *evt_buf,
-		       uint32_t index, wmi_host_peer_stats *peer_stats)
-{
-	if (wmi_handle->ops->extract_peer_stats)
-		return wmi_handle->ops->extract_peer_stats(wmi_handle,
-			evt_buf, index, peer_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS
-wmi_extract_vdev_stats(wmi_unified_t wmi_handle, void *evt_buf,
-		       uint32_t index, wmi_host_vdev_stats *vdev_stats)
-{
-	if (wmi_handle->ops->extract_vdev_stats)
-		return wmi_handle->ops->extract_vdev_stats(wmi_handle,
-			evt_buf, index, vdev_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS wmi_extract_per_chain_rssi_stats(
-		wmi_unified_t wmi_handle, void *evt_buf,
-		uint32_t index,
-		struct wmi_host_per_chain_rssi_stats *rssi_stats)
-{
-	if (wmi_handle->ops->extract_per_chain_rssi_stats)
-		return wmi_handle->ops->extract_per_chain_rssi_stats(wmi_handle,
-			evt_buf, index, rssi_stats);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2234,18 +2159,6 @@ QDF_STATUS wmi_extract_rtt_ev(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS
-wmi_extract_peer_extd_stats(wmi_unified_t wmi_handle, void *evt_buf,
-			    uint32_t index,
-			    wmi_host_peer_extd_stats *peer_extd_stats)
-{
-	if (wmi_handle->ops->extract_peer_extd_stats)
-		return wmi_handle->ops->extract_peer_extd_stats(wmi_handle,
-			evt_buf, index, peer_extd_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 QDF_STATUS wmi_extract_peer_retry_stats(
 	wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t index, struct wmi_host_peer_retry_stats *peer_retry_stats)
@@ -2253,17 +2166,6 @@ QDF_STATUS wmi_extract_peer_retry_stats(
 	if (wmi_handle->ops->extract_peer_retry_stats)
 		return wmi_handle->ops->extract_peer_retry_stats(wmi_handle,
 			evt_buf, index, peer_retry_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-
-QDF_STATUS wmi_extract_peer_adv_stats(
-		wmi_unified_t wmi_handle, void *evt_buf,
-		struct wmi_host_peer_adv_stats *peer_adv_stats)
-{
-	if (wmi_handle->ops->extract_peer_adv_stats)
-		return wmi_handle->ops->extract_peer_adv_stats(wmi_handle,
-			evt_buf, peer_adv_stats);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2289,19 +2191,6 @@ wmi_extract_chan_stats(wmi_unified_t wmi_handle, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
-#ifdef WLAN_FEATURE_MIB_STATS
-QDF_STATUS wmi_extract_mib_stats(wmi_unified_t wmi_handle, void *evt_buf,
-				 struct mib_stats_metrics *mib_stats)
-{
-	if (wmi_handle->ops->extract_mib_stats)
-		return wmi_handle->ops->extract_mib_stats(wmi_handle,
-							  evt_buf,
-							  mib_stats);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
 
 QDF_STATUS wmi_extract_thermal_stats(wmi_unified_t wmi_handle, void *evt_buf,
 				     uint32_t *temp, uint32_t *level,
