@@ -489,8 +489,6 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
-		/* Minimum 1 clk cycle delay is required as per HW spec */
-		usleep_range(1000, 1010);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x01);
 	} else {
@@ -1005,10 +1003,6 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				< BOLERO_ADC_MAX))
 				snd_soc_component_update_bits(component,
 					hpf_gate_reg, 0x03, 0x00);
-			/*
-			 * Minimum 1 clk cycle delay is required as per HW spec
-			 */
-			usleep_range(1000, 1010);
 			snd_soc_component_update_bits(component,
 					hpf_gate_reg, 0x03, 0x01);
 			/*
