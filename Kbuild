@@ -259,6 +259,9 @@ endif
 
 ifeq ($(CONFIG_WLAN_SYSFS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs.o
+ifeq ($(CONFIG_WLAN_SYSFS_GET_CHANNEL), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_channel.o
+endif
 ifeq ($(CONFIG_WLAN_SET_FW_MODE_CFG), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_fw_mode_cfg.o
 endif
@@ -2655,6 +2658,7 @@ cppflags-$(CONFIG_DFS_FCC_TYPE4_DURATION_CHECK) += -DDFS_FCC_TYPE4_DURATION_CHEC
 endif
 
 cppflags-$(CONFIG_WLAN_SYSFS) += -DWLAN_SYSFS
+cppflags-$(CONFIG_WLAN_SYSFS_GET_CHANNEL) += -DWLAN_SYSFS_GET_CHANNEL
 cppflags-$(CONFIG_FEATURE_BECN_STATS) += -DWLAN_FEATURE_BEACON_RECEPTION_STATS
 
 cppflags-$(CONFIG_WLAN_SYSFS_CONNECT_INFO) += -DWLAN_SYSFS_CONNECT_INFO
