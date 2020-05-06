@@ -14,6 +14,12 @@
 #define SINGLE_CTL	1
 #define DUAL_CTL	2
 
+#define TOPOLOGY_QUADPIPE_MERGE_MODE(x) \
+	(x == SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE ||\
+		x == SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE)
+
 /**
  * enum sde_rm_topology_name - HW resource use case in use by connector
  * @SDE_RM_TOPOLOGY_NONE:                 No topology in use currently
@@ -27,6 +33,10 @@
  * @SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC: 2 LM, 2 PP, 3DMux, 1 VDC, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE:    2 LM, 2 PP, 2 DSC Merge, 1 INTF/WB
  * @SDE_RM_TOPOLOGY_PPSPLIT:              1 LM, 2 PPs, 2 INTF/WB
+ * @SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE      4 LM, 4 PP, 3DMux, 2 INTF
+ * @SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC  4 LM, 4 PP, 3DMux, 3 DSC, 2 INTF
+ * @SDE_RM_TOPOLOGY_QUADPIPE_DSCMERE      4 LM, 4 PP, 4 DSC Merge, 2 INTF
+ * @SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE  4 LM, 4 PP, 4 DSC Merge, 1 INTF
  */
 enum sde_rm_topology_name {
 	SDE_RM_TOPOLOGY_NONE = 0,
@@ -40,6 +50,10 @@ enum sde_rm_topology_name {
 	SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC,
 	SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE,
 	SDE_RM_TOPOLOGY_PPSPLIT,
+	SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE,
+	SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC,
+	SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE,
+	SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE,
 	SDE_RM_TOPOLOGY_MAX,
 };
 
@@ -328,6 +342,16 @@ static inline int sde_rm_topology_get_num_lm(struct sde_rm *rm,
 
 	return rm->topology_tbl[topology].num_lm;
 }
+
+/**
+ * sde_rm_topology_is_quad_pipe - check if the topology used
+ *	is a quad-pipe mode one
+ * @rm: SDE Resource Manager handle
+ * @state: drm state of the crtc
+ * @return: true if attached connector is in quad-pipe mode
+ */
+bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
+		struct drm_crtc_state *state);
 
 /**
  * sde_rm_ext_blk_create_reserve - Create external HW blocks

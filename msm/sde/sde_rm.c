@@ -86,6 +86,14 @@ static const struct sde_rm_topology_def g_top_table_v1[SDE_RM_TOPOLOGY_MAX] = {
 			MSM_DISPLAY_COMPRESSION_DSC },
 	{   SDE_RM_TOPOLOGY_PPSPLIT,              1, 0, 2, 1, true,
 			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE,     4, 0, 2, 1, false,
+			MSM_DISPLAY_COMPRESSION_NONE },
+	{   SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC, 4, 3, 2, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE,    4, 4, 2, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
+	{   SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE, 4, 4, 1, 1, false,
+			MSM_DISPLAY_COMPRESSION_DSC },
 };
 
 
@@ -2083,6 +2091,32 @@ int sde_rm_update_topology(struct sde_rm *rm,
 			CONNECTOR_PROP_TOPOLOGY_NAME, top_name);
 
 	return ret;
+}
+
+bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
+		struct drm_crtc_state *state)
+{
+	int i;
+	struct sde_crtc_state *cstate;
+	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
+
+	if ((!rm) || (!state)) {
+		pr_err("invalid arguments: rm:%d state:%d\n",
+				rm == NULL, state == NULL);
+		return false;
+	}
+
+	cstate = to_sde_crtc_state(state);
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		struct drm_connector *conn = cstate->connectors[i];
+
+		topology = sde_connector_get_topology_name(conn);
+		if (TOPOLOGY_QUADPIPE_MERGE_MODE(topology))
+			return true;
+	}
+
+	return false;
 }
 
 /**
