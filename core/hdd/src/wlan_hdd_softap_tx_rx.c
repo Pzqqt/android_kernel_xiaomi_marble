@@ -733,8 +733,11 @@ netdev_tx_t hdd_softap_hard_start_xmit(struct sk_buff *skb,
 {
 	struct osif_vdev_sync *vdev_sync;
 
-	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
+	if (osif_vdev_sync_op_start(net_dev, &vdev_sync)) {
+		hdd_debug_rl("Operation on net_dev is not permitted");
+		kfree_skb(skb);
 		return NETDEV_TX_OK;
+	}
 
 	__hdd_softap_hard_start_xmit(skb, net_dev);
 
