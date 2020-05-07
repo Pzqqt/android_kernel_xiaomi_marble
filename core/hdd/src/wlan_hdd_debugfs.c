@@ -559,12 +559,6 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 	if (wlan_hdd_debugfs_unit_test_target_create(adapter))
 		return QDF_STATUS_E_FAILURE;
 
-	if (wlan_hdd_debugfs_suspend_create(adapter))
-		return QDF_STATUS_E_FAILURE;
-
-	if (wlan_hdd_debugfs_resume_create(adapter))
-		return QDF_STATUS_E_FAILURE;
-
 	return QDF_STATUS_SUCCESS;
 }
 

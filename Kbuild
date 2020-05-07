@@ -269,6 +269,9 @@ endif
 ifeq ($(CONFIG_WLAN_DEBUG_CRASH_INJECT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_crash_inject.o
 endif
+ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_suspend_resume.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
