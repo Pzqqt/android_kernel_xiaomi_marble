@@ -1180,6 +1180,8 @@ enum _ol_ath_param_t {
 	OL_ATH_SCAN_OVER_CAC = 441,
 #endif
 	OL_ATH_PARAM_CFR_CAPTURE_STATUS = 442,
+	/* Non-inheritance IE enable */
+	OL_ATH_PARAM_NON_INHERIT_ENABLE = 443,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3059,7 +3061,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"get_aggr_burst",      35821, GET_PARAM, 0},
 	{"get_cfr_capture_status",
 	 OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_CFR_CAPTURE_STATUS, GET_PARAM, 0},
-
+	{"non_inherit_enable",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NON_INHERIT_ENABLE, SET_PARAM, 1},
+	{"g_non_inherit_enable",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NON_INHERIT_ENABLE, GET_PARAM, 0},
 };
 #endif
 #endif
