@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,21 @@ struct dp_txrx_handle {
 	struct dp_rx_tm_handle rx_tm_hdl;
 	struct dp_txrx_config config;
 };
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+/**
+ * dp_rx_napi_gro_flush() - do gro flush
+ * @napi: napi used to do gro flush
+ *
+ * if there is RX GRO_NORMAL packets pending in napi
+ * rx_list, flush them manually right after napi_gro_flush.
+ *
+ * return: none
+ */
+void dp_rx_napi_gro_flush(struct napi_struct *napi);
+#else
+#define dp_rx_napi_gro_flush(_napi) napi_gro_flush((_napi), false)
+#endif
 
 #ifdef FEATURE_WLAN_DP_RX_THREADS
 /**
