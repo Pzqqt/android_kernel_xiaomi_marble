@@ -3365,6 +3365,7 @@ int ol_peer_recovery_notifier_cb(struct notifier_block *block,
 	if (!peer)
 		return -EINVAL;
 
+	hang_data.peer_timeout_bitmask = 0;
 	QDF_HANG_EVT_SET_HDR(&hang_data.tlv_header,
 			     HANG_EVT_TAG_DP_PEER_INFO,
 			     QDF_HANG_GET_STRUCT_TLVLEN(struct peer_hang_data));
