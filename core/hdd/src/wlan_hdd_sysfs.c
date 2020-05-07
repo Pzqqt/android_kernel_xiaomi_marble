@@ -50,6 +50,7 @@
 #include <wlan_hdd_sysfs_wowl_add_ptrn.h>
 #include <wlan_hdd_sysfs_set_scan_cfg.h>
 #include <wlan_hdd_sysfs_set_mon_chan.h>
+#include <wlan_hdd_sysfs_set_radar.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -655,11 +656,13 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_unit_test_target_create(adapter);
 	hdd_sysfs_modify_acl_create(adapter);
 	hdd_sysfs_connect_info_interface_create(adapter);
+	hdd_sysfs_set_radar_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_set_radar_destroy(adapter);
 	hdd_sysfs_connect_info_interface_destroy(adapter);
 	hdd_sysfs_modify_acl_destroy(adapter);
 	hdd_sysfs_unit_test_target_destroy(adapter);
