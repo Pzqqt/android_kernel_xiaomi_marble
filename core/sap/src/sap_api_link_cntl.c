@@ -427,18 +427,24 @@ wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_get_channel_state_for_freq(mac_ctx->pdev, target_chan_freq) ==
+		if (wlan_reg_get_channel_state_for_freq(
+						mac_ctx->pdev,
+						target_chan_freq) ==
 		    CHANNEL_STATE_DFS ||
-		    wlan_reg_get_channel_state(mac_ctx->pdev,
-			    sap_ctx->ch_params.center_freq_seg1 -
-					  SIR_80MHZ_START_CENTER_CH_DIFF) ==
-							CHANNEL_STATE_DFS)
+		    wlan_reg_get_channel_state_for_freq(
+					mac_ctx->pdev,
+					sap_ctx->ch_params.mhz_freq_seg1) ==
+				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	} else {
-		if (wlan_reg_get_channel_state_for_freq(mac_ctx->pdev, target_chan_freq) ==
+		if (wlan_reg_get_channel_state_for_freq(
+						mac_ctx->pdev,
+						target_chan_freq) ==
 		    CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
 	}
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(sap_ctx->chan_freq))
+		is_ch_dfs = false;
 
 	sap_ctx->chan_freq = target_chan_freq;
 	/* check if currently selected channel is a DFS channel */

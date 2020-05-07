@@ -2532,7 +2532,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 			is_dfs = wlan_reg_get_5g_bonded_channel_state_for_freq(
 					mac_ctx->pdev, sap_chan_freq,
-					CH_WIDTH_160MHZ);
+					CH_WIDTH_160MHZ) == CHANNEL_STATE_DFS;
 		} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
 			if (wlan_reg_get_channel_state_for_freq(
 							mac_ctx->pdev,

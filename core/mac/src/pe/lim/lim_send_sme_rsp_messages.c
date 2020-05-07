@@ -1972,10 +1972,10 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 {
 	struct scheduler_msg mmhMsg = {0};
 	struct sSirChanChangeResponse *chan_change_rsp;
-	uint8_t channelId;
 	bool is_ch_dfs = false;
 	enum phy_ch_width ch_width;
-	uint8_t ch_center_freq_seg1;
+	uint32_t ch_cfreq1 = 0;
+	enum reg_wifi_band band;
 
 	qdf_runtime_pm_allow_suspend(&pe_session->ap_ecsa_runtime_lock);
 	qdf_wake_lock_release(&pe_session->ap_ecsa_wakelock, 0);
@@ -2011,23 +2011,34 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 	 * upper layers to start the beacon transmission .
 	 */
 	ch_width = pe_session->ch_width;
-	ch_center_freq_seg1 = pe_session->ch_center_freq_seg1;
-	channelId = wlan_reg_freq_to_chan(mac->pdev, pe_session->curr_op_freq);
+	band = wlan_reg_freq_to_band(pe_session->curr_op_freq);
+	if (pe_session->ch_center_freq_seg1)
+		ch_cfreq1 = wlan_reg_chan_band_to_freq(
+				mac->pdev,
+				pe_session->ch_center_freq_seg1,
+				BIT(band));
+
 	if (ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;
 	} else if (ch_width == CH_WIDTH_80P80MHZ) {
-		if (wlan_reg_get_channel_state(mac->pdev, channelId) ==
-				CHANNEL_STATE_DFS ||
-		    wlan_reg_get_channel_state(mac->pdev,
-			    ch_center_freq_seg1 -
-			    SIR_80MHZ_START_CENTER_CH_DIFF) ==
-							CHANNEL_STATE_DFS)
-			is_ch_dfs = true;
-	} else {
-		if (wlan_reg_get_channel_state(mac->pdev, channelId) ==
+		if (wlan_reg_get_channel_state_for_freq(
+						mac->pdev,
+						pe_session->curr_op_freq) ==
+		    CHANNEL_STATE_DFS ||
+		    wlan_reg_get_channel_state_for_freq(
+						mac->pdev,
+						ch_cfreq1) ==
 				CHANNEL_STATE_DFS)
 			is_ch_dfs = true;
+	} else {
+		if (wlan_reg_get_channel_state_for_freq(
+						mac->pdev,
+						pe_session->curr_op_freq) ==
+		    CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
 	}
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pe_session->curr_op_freq))
+		is_ch_dfs = false;
 
 	if (is_ch_dfs) {
 		lim_sap_move_to_cac_wait_state(pe_session);
