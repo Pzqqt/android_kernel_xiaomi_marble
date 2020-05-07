@@ -80,17 +80,52 @@ static char sde_dsc_rc_range_max_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	{2, 5, 5, 6, 6, 7, 7, 8, 9, 9, 10, 11, 11, 12, 13},
 	};
 
-
 /*
  * Rate control - bpg offset values
  */
 static char sde_dsc_rc_range_bpg_offset[DSC_NUM_BUF_RANGES] =
 	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12};
 
+/**
+ * Maps to lookup the sde_dsc_ratio_type index used in rate control tables
+ */
+static struct sde_dsc_v1_1_table_index_lut {
+	int scr_ver;
+	u32 bpc;
+	u32 bpp;
+	enum sde_dsc_ratio_type type;
+} sde_dsc_v1_1_index_map[] = {
+	{0, 8, 8, DSC_V11_8BPC_8BPP},
+	{0, 10, 8, DSC_V11_10BPC_8BPP},
+	{0, 10, 10, DSC_V11_10BPC_10BPP},
+
+	{1, 8, 8, DSC_V11_SCR1_8BPC_8BPP},
+	{1, 10, 8, DSC_V11_SCR1_10BPC_8BPP},
+	{1, 10, 10, DSC_V11_SCR1_10BPC_10BPP},
+};
+
+static struct sde_dsc_v1_2_table_index_lut {
+	u32 fmt;
+	u32 bpc;
+	u32 bpp;
+	enum sde_dsc_ratio_type type;
+} sde_dsc_v1_2_index_map[] = {
+	{MSM_CHROMA_444, 8, 8, DSC_V12_444_8BPC_8BPP},
+	{MSM_CHROMA_444, 10, 8, DSC_V12_444_10BPC_8BPP},
+	{MSM_CHROMA_444, 10, 10, DSC_V12_444_10BPC_10BPP},
+
+	{MSM_CHROMA_422, 8, 7, DSC_V12_422_8BPC_7BPP},
+	{MSM_CHROMA_422, 8, 8, DSC_V12_422_8BPC_8BPP},
+	{MSM_CHROMA_422, 10, 7, DSC_V12_422_10BPC_7BPP},
+	{MSM_CHROMA_422, 10, 10, DSC_V12_422_10BPC_10BPP},
+
+	{MSM_CHROMA_420, 8, 6, DSC_V12_420_8BPC_6BPP},
+	{MSM_CHROMA_420, 10, 6, DSC_V12_420_10BPC_6BPP},
+};
 
 static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
 {
-	int bpp, bpc;
+	u32 bpp, bpc, i, fmt = MSM_CHROMA_444;
 
 	if (dsc->dsc_version_major != 0x1) {
 		SDE_ERROR("unsupported major version %d\n",
@@ -98,55 +133,34 @@ static int _get_rc_table_index(struct drm_dsc_config *dsc, int scr_ver)
 		return -EINVAL;
 	}
 
-	bpp = DSC_BPP(*dsc);
 	bpc = dsc->bits_per_component;
+	bpp = DSC_BPP(*dsc);
 
-	if ((dsc->dsc_version_minor == 0x1) && (scr_ver == 0x0)) {
-		if ((bpc == 8) && (bpp == 8))
-			return  DSC_V11_8BPC_8BPP;
-		if ((bpc == 10) && (bpp == 8))
-			return DSC_V11_10BPC_10BPP;
-		else if ((bpc == 10) && (bpp == 10))
-			return DSC_V11_10BPC_10BPP;
-		else
-			SDE_ERROR("unsupported bpc:%d, bpp:%d\n", bpc, bpp);
-	} else if (((dsc->dsc_version_minor == 0x1) && (scr_ver == 0x1)) ||
-			((dsc->dsc_version_minor = 0x2) &&
-			 !dsc->native_422 & !dsc->native_420)) {
-		if ((bpc == 8) && (bpp == 8))
-			return  DSC_V11_SCR1_8BPC_8BPP;
-		if ((bpc == 10) && (bpp == 8))
-			return DSC_V11_SCR1_10BPC_8BPP;
-		else if ((bpc == 10) && (bpp == 10))
-			return DSC_V11_SCR1_10BPC_10BPP;
-		else
-			SDE_ERROR("unsupported bpc:%d, bpp:%d\n", bpc, bpp);
-	} else if ((dsc->dsc_version_minor = 0x2) && dsc->native_422) {
-		if ((bpc == 8) && (bpp == 7))
-			return DSC_V12_422_8BPC_7BPP;
-		else if ((bpc == 8) && (bpp == 8))
-			return DSC_V12_422_8BPC_8BPP;
-		else if ((bpc == 10) && (bpp == 7))
-			return DSC_V12_422_10BPC_7BPP;
-		else if ((bpc == 10) && (bpp == 10))
-			return DSC_V12_422_10BPC_10BPP;
-		else
-			SDE_ERROR("unsupported bpc:%d, bpp:%d\n", bpc, bpp);
-	} else if ((dsc->dsc_version_minor = 0x2) && dsc->native_420) {
-		if ((bpc == 8) && (bpp == 6))
-			return DSC_V12_420_8BPC_6BPP;
-		else if ((bpc == 10) && (bpp == 6))
-			return DSC_V12_420_10BPC_6BPP;
-		else
-			SDE_ERROR("unsupported bpc:%d, bpp:%d\n", bpc, bpp);
+	if (dsc->native_422)
+		fmt = MSM_CHROMA_422;
+	else if (dsc->native_420)
+		fmt = MSM_CHROMA_420;
+
+	if (dsc->dsc_version_minor == 0x1) {
+		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_1_index_map); i++) {
+			if (bpc == sde_dsc_v1_1_index_map[i].bpc &&
+			    bpp == sde_dsc_v1_1_index_map[i].bpp &&
+			    scr_ver == sde_dsc_v1_1_index_map[i].scr_ver)
+				return sde_dsc_v1_1_index_map[i].type;
+		}
+	} else if (dsc->dsc_version_minor == 0x2) {
+		for (i = 0; i < ARRAY_SIZE(sde_dsc_v1_2_index_map); i++) {
+			if (bpc == sde_dsc_v1_2_index_map[i].bpc &&
+			    bpp == sde_dsc_v1_2_index_map[i].bpp &&
+			    fmt == sde_dsc_v1_2_index_map[i].fmt)
+				return sde_dsc_v1_2_index_map[i].type;
+		}
 	}
 
-	SDE_ERROR("unsupported DSC version %d, %d %d\n",
-			dsc->dsc_version_major,
-			dsc->dsc_version_minor,
-			scr_ver);
+	SDE_ERROR("unsupported DSC v%d.%dr%d, bpc:%d, bpp:%d, fmt:0x%x\n",
+			dsc->dsc_version_major, dsc->dsc_version_minor,
+			scr_ver, bpc, bpp, fmt);
 	return -EINVAL;
-
 }
 
 int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
