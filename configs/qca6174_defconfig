@@ -644,6 +644,9 @@ CONFIG_WMI_STA_SUPPORT := y
 #Flag to enable LTE COEX feature
 CONFIG_LTE_COEX := y
 
+#Flag to enable/disable TARGET 11d scan
+CONFIG_TARGET_11D_SCAN := y
+
 #Flag to enable HOST OPCLASS feature
 CONFIG_HOST_OPCLASS := y
 
