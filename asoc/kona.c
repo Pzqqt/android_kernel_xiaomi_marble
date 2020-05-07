@@ -14,6 +14,7 @@
 #include <linux/input.h>
 #include <linux/of_device.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <sound/control.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -113,19 +114,6 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.enable_anc_mic_detect = false,
 	.moisture_duty_cycle_en = true,
 };
-
-static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
-				struct snd_pcm_hw_params *params)
-{
-	struct snd_soc_dai_link *dai_link = rtd->dai_link;
-	int rc = 0;
-
-	pr_debug("%s: dai_id= %d, format = %d, rate = %d\n",
-		  __func__, dai_link->id, params_format(params),
-		  params_rate(params));
-
-	return rc;
-}
 
 static bool msm_usbc_swap_gnd_mic(struct snd_soc_component *component, bool active)
 {
@@ -371,6 +359,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	bolero_info_create_codec_entry(pdata->codec_root, component);
 	bolero_register_wake_irq(component, false);
 	codec_reg_done = true;
+	msm_common_dai_link_init(rtd);
 	return 0;
 err:
 	return ret;
@@ -410,9 +399,15 @@ static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
 	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160};
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	int ret = 0;
 
-	return snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
+	ret =  snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
 			tx_ch, ARRAY_SIZE(rx_ch), rx_ch);
+	if (ret)
+		return ret;
+
+	msm_common_dai_link_init(rtd);
+	return ret;
 }
 
 static struct snd_soc_ops msm_common_be_ops = {
@@ -434,7 +429,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_name = "bolero_codec",
 		.init = &msm_int_audrx_init,
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -450,7 +444,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "wsa_macro_rx_mix",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -466,10 +459,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "wsa_macro_echo",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_0,
@@ -482,7 +472,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "rx_macro_rx1",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -498,7 +487,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "rx_macro_rx2",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -514,7 +502,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "rx_macro_rx3",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -530,7 +517,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "rx_macro_rx4",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
@@ -546,10 +532,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "tx_macro_tx1",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
@@ -562,10 +545,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "tx_macro_tx2",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_0,
@@ -578,10 +558,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "va_macro_tx1",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_1,
@@ -594,10 +571,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "va_macro_tx2",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_2,
@@ -610,10 +584,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.codec_dai_name = "va_macro_tx3",
 		.codec_name = "bolero_codec",
 		.ops = &msm_common_be_ops,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
-		/* this dainlink has playback support */
-		.ignore_pmdown_time = 1,
 	},
 	{
 		.name = LPASS_BE_SLIMBUS_7_RX,
@@ -629,6 +600,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_suspend = 1,
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
+		.init = &msm_wcn_init,
 	},
 	{
 		.name = LPASS_BE_SLIMBUS_7_TX,
@@ -642,8 +614,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ops = &msm_common_be_ops,
 		.codec_dai_name = "btfm_bt_sco_slim_tx",
 		.ignore_suspend = 1,
-		.ignore_pmdown_time = 1,
-		.init = &msm_wcn_init,
 	},
 	{
 		.name = LPASS_BE_DISPLAY_PORT_RX,
@@ -669,7 +639,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
-		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
 		.ops = &msm_common_be_ops,
 	},
@@ -705,53 +674,8 @@ static int msm_populate_dai_link_component_of_node(
 	}
 
 	for (i = 0; i < card->num_links; i++) {
-		if (dai_link[i].platform_of_node && dai_link[i].cpu_of_node)
-			continue;
-
-		/* populate platform_of_node for snd card dai links */
-		if (dai_link[i].platform_name &&
-		    !dai_link[i].platform_of_node) {
-			index = of_property_match_string(cdev->of_node,
-						"asoc-platform-names",
-						dai_link[i].platform_name);
-			if (index < 0) {
-				dev_err(cdev, "%s: No match found for platform name: %s\n",
-					__func__, dai_link[i].platform_name);
-				ret = index;
-				goto err;
-			}
-			np = of_parse_phandle(cdev->of_node, "asoc-platform",
-					      index);
-			if (!np) {
-				dev_err(cdev, "%s: retrieving phandle for platform %s, index %d failed\n",
-					__func__, dai_link[i].platform_name,
-					index);
-				ret = -ENODEV;
-				goto err;
-			}
-			dai_link[i].platform_of_node = np;
-			dai_link[i].platform_name = NULL;
-		}
-
-		/* populate cpu_of_node for snd card dai links */
-		if (dai_link[i].cpu_dai_name && !dai_link[i].cpu_of_node) {
-			index = of_property_match_string(cdev->of_node,
-						 "asoc-cpu-names",
-						 dai_link[i].cpu_dai_name);
-			if (index >= 0) {
-				np = of_parse_phandle(cdev->of_node, "asoc-cpu",
-						index);
-				if (!np) {
-					dev_err(cdev, "%s: retrieving phandle for cpu dai %s failed\n",
-						__func__,
-						dai_link[i].cpu_dai_name);
-					ret = -ENODEV;
-					goto err;
-				}
-				dai_link[i].cpu_of_node = np;
-				dai_link[i].cpu_dai_name = NULL;
-			}
-		}
+		if (dai_link[i].init == NULL)
+			dai_link[i].init = &msm_common_dai_link_init;
 
 		/* populate codec_of_node for snd card dai links */
 		if (dai_link[i].codec_name && !dai_link[i].codec_of_node) {
@@ -806,7 +730,6 @@ static struct snd_soc_dai_link msm_stub_be_dai_links[] = {
 		.codec_dai_name = "msm-stub-rx",
 		.dpcm_playback = 1,
 		.init = &msm_audrx_stub_init,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
 		.ops = &msm_stub_be_ops,
@@ -818,7 +741,6 @@ static struct snd_soc_dai_link msm_stub_be_dai_links[] = {
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-tx",
 		.dpcm_capture = 1,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		.ops = &msm_stub_be_ops,
 	},

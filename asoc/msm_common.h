@@ -54,4 +54,6 @@ int msm_common_snd_init(struct platform_device *pdev,
 			struct snd_soc_card *card);
 
 void msm_common_snd_deinit(struct msm_common_pdata *pdata);
+
+int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd);
 #endif

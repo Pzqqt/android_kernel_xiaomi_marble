@@ -15,9 +15,14 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/of_device.h>
+#include <sound/control.h>
+#include <sound/core.h>
+#include <sound/soc.h>
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dsp/gecko-core.h>
 #include <dsp/msm_audio_ion.h>
+#include <sound/info.h>
+
 #include "msm_common.h"
 
 #define to_asoc_mach_common_pdata(kobj) \
@@ -29,6 +34,19 @@
 static struct attribute device_state_attr = {
 	.name = "state",
 	.mode = 0660,
+};
+
+#define MAX_PORT 20
+#define CODEC_CHMAP "Channel Map"
+
+enum backend_id {
+	SLIM = 1,
+	CODEC_DMA,
+};
+
+struct chmap_pdata {
+	int id;
+	struct snd_soc_dai *dai;
 };
 
 #define MAX_USR_INPUT 10
@@ -264,4 +282,178 @@ void msm_common_snd_deinit(struct msm_common_pdata *common_pdata)
 	for (count = 0; count < MI2S_TDM_AUXPCM_MAX; count++) {
 		mutex_destroy(&common_pdata->lock[count]);
 	}
+}
+
+int msm_channel_map_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(uint32_t) * MAX_PORT;
+
+	return 0;
+}
+
+int msm_channel_map_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct chmap_pdata *kctl_pdata =
+			(struct chmap_pdata *)kcontrol->private_data;
+	struct snd_soc_dai *codec_dai = kctl_pdata->dai;
+	int backend_id = kctl_pdata->id;
+	uint32_t rx_ch[MAX_PORT], tx_ch[MAX_PORT];
+	uint32_t rx_ch_cnt = 0, tx_ch_cnt = 0;
+	uint32_t *chmap_data = NULL;
+	int ret = 0, len = 0;
+
+	if (kctl_pdata == NULL) {
+		pr_debug("%s: chmap_pdata is not initialized\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = snd_soc_dai_get_channel_map(codec_dai,
+			&tx_ch_cnt, tx_ch, &rx_ch_cnt, rx_ch);
+	if (ret || (tx_ch_cnt == 0 && rx_ch_cnt == 0)) {
+		pr_err("%s: get channel map failed for %d\n",
+				__func__, backend_id);
+		return ret;
+	}
+	switch (backend_id) {
+	case SLIM: {
+		uint32_t *chmap;
+		uint32_t ch_cnt, i;
+
+		if (rx_ch_cnt) {
+			chmap = rx_ch;
+			ch_cnt = rx_ch_cnt;
+		} else {
+			chmap = tx_ch;
+			ch_cnt = tx_ch_cnt;
+		}
+		len = sizeof(uint32_t) * (ch_cnt + 1);
+		chmap_data = kzalloc(len, GFP_KERNEL);
+		if (!chmap_data)
+			return -ENOMEM;
+
+		chmap_data[0] = ch_cnt;
+		for (i = 0; i < ch_cnt; i++)
+			chmap_data[i+1] = chmap[i];
+
+		memcpy(ucontrol->value.bytes.data, chmap_data, len);
+		break;
+	}
+	case CODEC_DMA: {
+		chmap_data = kzalloc(sizeof(uint32_t) * 2, GFP_KERNEL);
+		if (!chmap_data)
+			return -ENOMEM;
+
+		if (rx_ch_cnt) {
+			chmap_data[0] = rx_ch_cnt;
+			chmap_data[1] = rx_ch[0];
+		} else {
+			chmap_data[0] = tx_ch_cnt;
+			chmap_data[1] = tx_ch[0];
+		}
+		memcpy(ucontrol->value.bytes.data, chmap_data,
+					sizeof(uint32_t) * 2);
+		break;
+	}
+	default:
+		pr_err("%s, Invalid backend %d\n", __func__, backend_id);
+		ret = -EINVAL;
+		break;
+	}
+	kfree(chmap_data);
+
+	return ret;
+}
+
+void msm_common_get_backend_name(const char *stream_name, char **backend_name)
+{
+	char arg[21] = {0};
+	char value[61] = {0};
+
+	sscanf(stream_name, "%20[^-]-%60s", arg, value);
+	*backend_name = kzalloc(strlen(arg)+1, GFP_KERNEL);
+	if (!(*backend_name))
+		return;
+
+	strlcpy(*backend_name, arg, strlen(arg)+1);
+}
+
+int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
+{
+	struct snd_soc_dai *codec_dai = rtd->codec_dai;
+	struct snd_soc_component *component = NULL;
+	struct snd_soc_dai_link *dai_link = rtd->dai_link;
+	struct device *dev = rtd->card->dev;
+
+	int ret = 0;
+	const char *mixer_ctl_name = CODEC_CHMAP;
+	char *mixer_str = NULL;
+	char *backend_name = NULL;
+	uint32_t ctl_len = 0;
+	struct chmap_pdata *pdata;
+	struct snd_kcontrol *kctl;
+	struct snd_kcontrol_new msm_common_channel_map[1] = {
+		{
+			.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+			.name = "?",
+			.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+			.info = msm_channel_map_info,
+			.get = msm_channel_map_get,
+			.private_value = 0,
+		}
+	};
+
+	if (!codec_dai) {
+		pr_err("%s: failed to get codec dai", __func__);
+		return -EINVAL;
+	}
+	component = codec_dai->component;
+
+	msm_common_get_backend_name(dai_link->stream_name, &backend_name);
+	if (!backend_name) {
+		pr_err("%s: failed to get backend name", __func__);
+		return -EINVAL;
+	}
+
+	pdata = devm_kzalloc(dev, sizeof(struct chmap_pdata), GFP_KERNEL);
+	if (!pdata)
+		return -ENOMEM;
+
+	if ((!strncmp(backend_name, "SLIM", strlen("SLIM"))) ||
+		(!strncmp(backend_name, "CODEC_DMA", strlen("CODEC_DMA")))) {
+		ctl_len = strlen(dai_link->stream_name) + 1 +
+				strlen(mixer_ctl_name) + 1;
+		mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+		if (!mixer_str)
+			return -ENOMEM;
+
+		snprintf(mixer_str, ctl_len, "%s %s", dai_link->stream_name,
+				mixer_ctl_name);
+		msm_common_channel_map[0].name = mixer_str;
+		msm_common_channel_map[0].private_value = 0;
+		pr_debug("Registering new mixer ctl %s\n", mixer_str);
+		ret = snd_soc_add_component_controls(component,
+				msm_common_channel_map,
+				ARRAY_SIZE(msm_common_channel_map));
+		kctl = snd_soc_card_get_kcontrol(rtd->card, mixer_str);
+		if (!kctl) {
+			pr_err("failed to get kctl %s\n", mixer_str);
+			ret = -EINVAL;
+			goto free_mixer_str;
+		}
+		if (!strncmp(backend_name, "SLIM", strlen("SLIM")))
+			pdata->id = SLIM;
+		else
+			pdata->id = CODEC_DMA;
+
+		pdata->dai = codec_dai;
+		kctl->private_data = pdata;
+free_mixer_str:
+		kfree(backend_name);
+		kfree(mixer_str);
+	}
+
+	return ret;
 }
