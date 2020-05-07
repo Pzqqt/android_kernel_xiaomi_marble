@@ -41,7 +41,7 @@ static inline void dp_rx_tm_walk_skb_list(qdf_nbuf_t nbuf_list)
 
 	nbuf = nbuf_list;
 	while (nbuf) {
-		dp_debug("%d nbuf:%pk nbuf->next:%pK nbuf->data:%pk ", i,
+		dp_debug("%d nbuf:%pK nbuf->next:%pK nbuf->data:%pK", i,
 			 nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf));
 		nbuf = qdf_nbuf_next(nbuf);
 		i++;
