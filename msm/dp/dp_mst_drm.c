@@ -71,7 +71,7 @@ struct dp_drm_mst_fw_helper_ops {
 		bool mst_state);
 	int (*atomic_release_vcpi_slots)(struct drm_atomic_state *state,
 				     struct drm_dp_mst_topology_mgr *mgr,
-				     int slots);
+				     struct drm_dp_mst_port *port);
 	void (*get_vcpi_info)(struct drm_dp_mst_topology_mgr *mgr,
 		int vcpi, int *start_slot, int *num_slots);
 	void (*reset_vcpi_slots)(struct drm_dp_mst_topology_mgr *mgr,
@@ -158,10 +158,26 @@ struct dp_mst_encoder_info_cache {
 struct dp_mst_private dp_mst;
 struct dp_mst_encoder_info_cache dp_mst_enc_cache;
 
+static void dp_mst_hotplug(struct drm_dp_mst_topology_mgr *mgr)
+{
+	struct dp_mst_private *mst = container_of(mgr, struct dp_mst_private,
+							mst_mgr);
+	struct drm_device *dev = mst->dp_display->drm_dev;
+	char event_string[] = "HOTPLUG=1";
+	char *envp[2];
+
+	envp[0] = event_string;
+	envp[1] = NULL;
+
+	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
+
+	DP_MST_INFO_LOG("mst hot plug event\n");
+}
+
 static void dp_mst_sim_destroy_port(struct kref *ref)
 {
 	struct drm_dp_mst_port *port = container_of(ref,
-			struct drm_dp_mst_port, kref);
+			struct drm_dp_mst_port, topology_kref);
 	struct drm_dp_mst_topology_mgr *mgr = port->mgr;
 
 	if (port->cached_edid)
@@ -169,7 +185,7 @@ static void dp_mst_sim_destroy_port(struct kref *ref)
 
 	if (port->connector) {
 		mutex_lock(&mgr->destroy_connector_lock);
-		kref_get(&port->parent->kref);
+		kref_get(&port->parent->topology_kref);
 		list_add(&port->next, &mgr->destroy_connector_list);
 		mutex_unlock(&mgr->destroy_connector_lock);
 		schedule_work(&mgr->destroy_connector_work);
@@ -191,7 +207,7 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 	port = kzalloc(sizeof(*port), GFP_KERNEL);
 	if (!port)
 		return;
-	kref_init(&port->kref);
+	kref_init(&port->topology_kref);
 	port->parent = mstb;
 	port->port_num = port_msg->port_number;
 	port->mgr = mstb->mgr;
@@ -208,7 +224,7 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 	port->num_sdp_stream_sinks = port_msg->num_sdp_stream_sinks;
 
 	mutex_lock(&mstb->mgr->lock);
-	kref_get(&port->kref);
+	kref_get(&port->topology_kref);
 	list_add(&port->next, &mstb->ports);
 	mutex_unlock(&mstb->mgr->lock);
 
@@ -223,14 +239,14 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 			mutex_lock(&mstb->mgr->lock);
 			list_del(&port->next);
 			mutex_unlock(&mstb->mgr->lock);
-			kref_put(&port->kref, dp_mst_sim_destroy_port);
+			kref_put(&port->topology_kref, dp_mst_sim_destroy_port);
 			goto put_port;
 		}
 		(*mstb->mgr->cbs->register_connector)(port->connector);
 	}
 
 put_port:
-	kref_put(&port->kref, dp_mst_sim_destroy_port);
+	kref_put(&port->topology_kref, dp_mst_sim_destroy_port);
 }
 
 static void dp_mst_sim_link_probe_work(struct work_struct *work)
@@ -271,7 +287,7 @@ static void dp_mst_sim_link_probe_work(struct work_struct *work)
 		dp_mst_sim_add_port(mst, &port_data);
 	}
 
-	mst->mst_mgr.cbs->hotplug(&mst->mst_mgr);
+	dp_mst_hotplug(&mst->mst_mgr);
 	DP_MST_DEBUG("completed\n");
 }
 
@@ -493,7 +509,7 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 			}
 		}
 
-		kref_put(&port->kref, dp_mst_sim_destroy_port);
+		kref_put(&port->topology_kref, dp_mst_sim_destroy_port);
 	}
 }
 
@@ -1400,7 +1416,7 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 	struct dp_mst_bridge *bridge = NULL;
 	struct dp_display *dp_display = display;
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
-	struct sde_connector *c_conn;
+	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct dp_display_mode dp_mode;
 
 	DP_MST_DEBUG("enter:\n");
@@ -1446,7 +1462,7 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 	slots = bridge->num_slots;
 	if (drm_atomic_crtc_needs_modeset(crtc_state) && slots > 0) {
 		rc = mst->mst_fw_cbs->atomic_release_vcpi_slots(state,
-				&mst->mst_mgr, slots);
+				&mst->mst_mgr, c_conn->mst_port);
 		if (rc) {
 			DP_ERR("failed releasing %d vcpi slots rc:%d\n",
 					slots, rc);
@@ -1461,8 +1477,6 @@ mode_set:
 	crtc_state = drm_atomic_get_new_crtc_state(state, new_conn_state->crtc);
 
 	if (drm_atomic_crtc_needs_modeset(crtc_state) && crtc_state->active) {
-		c_conn = to_sde_connector(connector);
-
 		dp_display->convert_to_dp_mode(dp_display, c_conn->drv_panel,
 				&crtc_state->mode, &dp_mode);
 
@@ -1904,26 +1918,10 @@ dp_mst_drm_fixed_connector_init(struct dp_display *dp_display,
 	return connector;
 }
 
-static void dp_mst_hotplug(struct drm_dp_mst_topology_mgr *mgr)
-{
-	struct dp_mst_private *mst = container_of(mgr, struct dp_mst_private,
-							mst_mgr);
-	struct drm_device *dev = mst->dp_display->drm_dev;
-	char event_string[] = "MST_HOTPLUG=1";
-	char *envp[2];
-
-	envp[0] = event_string;
-	envp[1] = NULL;
-
-	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
-
-	DP_MST_INFO_LOG("mst hot plug event\n");
-}
-
 static void dp_mst_hpd_event_notify(struct dp_mst_private *mst, bool hpd_status)
 {
 	struct drm_device *dev = mst->dp_display->drm_dev;
-	char event_string[] = "MST_HOTPLUG=1";
+	char event_string[] = "HOTPLUG=1";
 	char status[HPD_STRING_SIZE];
 	char *envp[3];
 
@@ -2071,14 +2069,12 @@ static const struct drm_dp_mst_topology_cbs dp_mst_drm_cbs = {
 	.add_connector = dp_mst_add_connector,
 	.register_connector = dp_mst_register_connector,
 	.destroy_connector = dp_mst_destroy_connector,
-	.hotplug = dp_mst_hotplug,
 };
 
 static const struct drm_dp_mst_topology_cbs dp_mst_fixed_drm_cbs = {
 	.add_connector = dp_mst_add_fixed_connector,
 	.register_connector = dp_mst_register_fixed_connector,
 	.destroy_connector = dp_mst_destroy_fixed_connector,
-	.hotplug = dp_mst_hotplug,
 };
 
 static void dp_mst_sim_init(struct dp_mst_private *mst)

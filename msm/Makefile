@@ -26,10 +26,11 @@ msm_drm-$(CONFIG_DRM_MSM_DP) += dp/dp_altmode.o \
 	sde_hdcp_1x.o \
 	sde_hdcp_2x.o \
 	dp/dp_pll.o \
-	dp/dp_pll_5nm.o \
+	dp/dp_pll_5nm.o
 
-msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o \
-msm_drm-$(CONFIG_DRM_MSM_DP_USBPD_LEGACY) += dp/dp_usbpd.o \
+msm_drm-$(CONFIG_DRM_MSM_DP_MST) += dp/dp_mst_drm.o
+
+msm_drm-$(CONFIG_DRM_MSM_DP_USBPD_LEGACY) += dp/dp_usbpd.o
 
 msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_encoder.o \
@@ -79,17 +80,17 @@ msm_drm-$(CONFIG_DRM_MSM_SDE) += sde/sde_crtc.o \
 	sde/sde_hw_qdss.o \
 	sde_dsc_helper.o \
 	sde_vdc_helper.o \
-	sde/sde_hw_rc.o \
+	sde/sde_hw_rc.o
 
 msm_drm-$(CONFIG_DEBUG_FS) += sde_dbg.o \
 	sde_dbg_evtlog.o \
 
 msm_drm-$(CONFIG_DRM_SDE_WB) += sde/sde_wb.o \
-	sde/sde_encoder_phys_wb.o \
+	sde/sde_encoder_phys_wb.o
 
 msm_drm-$(CONFIG_DRM_SDE_RSC) += sde_rsc.o \
 	sde_rsc_hw.o \
-	sde_rsc_hw_v3.o \
+	sde_rsc_hw_v3.o
 
 msm_drm-$(CONFIG_DRM_MSM_DSI) += dsi/dsi_phy.o \
 	dsi/dsi_pwr.o \
@@ -113,9 +114,9 @@ msm_drm-$(CONFIG_DRM_MSM_DSI) += dsi/dsi_phy.o \
 	dsi/dsi_display.o \
 	dsi/dsi_panel.o \
 	dsi/dsi_clk_manager.o \
-	dsi/dsi_display_test.o \
+	dsi/dsi_display_test.o
 
-msm_drm-$(CONFIG_DSI_PARSER) += dsi/dsi_parser.o \
+msm_drm-$(CONFIG_DSI_PARSER) += dsi/dsi_parser.o
 
 msm_drm-$(CONFIG_DRM_MSM) += \
 	msm_atomic.o \
@@ -126,7 +127,7 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 	msm_gem_prime.o \
 	msm_gem_vma.o \
 	msm_smmu.o \
-	msm_prop.o \
+	msm_prop.o
 
 msm_drm-$(CONFIG_HDCP_QSEECOM) += ../hdcp/msm_hdcp.o \
 
