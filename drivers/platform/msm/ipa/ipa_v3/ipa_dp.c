@@ -16,6 +16,7 @@
 #include "ipahal/ipahal.h"
 #include "ipahal/ipahal_fltrt.h"
 
+#define IPA_GSI_EVENT_RP_SIZE 8
 #define IPA_WAN_AGGR_PKT_CNT 5
 #define IPA_WAN_NAPI_MAX_FRAMES (NAPI_WEIGHT / IPA_WAN_AGGR_PKT_CNT)
 #define IPA_WAN_PAGE_ORDER 3
@@ -1521,6 +1522,16 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 			ep->gsi_mem_info.evt_ring_len,
 			ep->gsi_mem_info.evt_ring_base_vaddr,
 			ep->gsi_mem_info.evt_ring_base_addr);
+
+		if (ep->gsi_mem_info.evt_ring_rp_vaddr) {
+			dma_free_coherent(ipa3_ctx->pdev,
+				IPA_GSI_EVENT_RP_SIZE,
+				ep->gsi_mem_info.evt_ring_rp_vaddr,
+				ep->gsi_mem_info.evt_ring_rp_addr);
+				ep->gsi_mem_info.evt_ring_rp_addr = 0;
+				ep->gsi_mem_info.evt_ring_rp_vaddr = 0;
+		}
+
 		result = gsi_dealloc_evt_ring(ep->gsi_evt_ring_hdl);
 		if (WARN(result != GSI_STATUS_SUCCESS, "deall evt %d", result))
 			return result;
@@ -4634,6 +4645,7 @@ int ipa3_alloc_common_event_ring(void)
 {
 	struct gsi_evt_ring_props gsi_evt_ring_props;
 	dma_addr_t evt_dma_addr;
+	dma_addr_t evt_rp_dma_addr;
 	int result;
 
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
@@ -4654,7 +4666,23 @@ int ipa3_alloc_common_event_ring(void)
 	gsi_evt_ring_props.ring_base_addr = evt_dma_addr;
 	gsi_evt_ring_props.int_modt = 0;
 	gsi_evt_ring_props.int_modc = 1; /* moderation comes from channel*/
-	gsi_evt_ring_props.rp_update_addr = 0;
+
+	if (ipa3_ctx->ipa_gpi_event_rp_ddr) {
+		gsi_evt_ring_props.rp_update_vaddr =
+			dma_alloc_coherent(ipa3_ctx->pdev,
+					   IPA_GSI_EVENT_RP_SIZE,
+					   &evt_rp_dma_addr, GFP_KERNEL);
+		if (!gsi_evt_ring_props.rp_update_vaddr) {
+			IPAERR("fail to dma alloc %u bytes\n",
+			       IPA_GSI_EVENT_RP_SIZE);
+			result = -ENOMEM;
+			goto fail_alloc_rp;
+		}
+		gsi_evt_ring_props.rp_update_addr = evt_rp_dma_addr;
+	} else {
+		gsi_evt_ring_props.rp_update_addr = 0;
+	}
+
 	gsi_evt_ring_props.exclusive = false;
 	gsi_evt_ring_props.err_cb = ipa_gsi_evt_ring_err_cb;
 	gsi_evt_ring_props.user_data = NULL;
@@ -4663,11 +4691,22 @@ int ipa3_alloc_common_event_ring(void)
 		ipa3_ctx->gsi_dev_hdl, &ipa3_ctx->gsi_evt_comm_hdl);
 	if (result) {
 		IPAERR("gsi_alloc_evt_ring failed %d\n", result);
-		return result;
+		goto fail_alloc_evt_ring;
 	}
 	ipa3_ctx->gsi_evt_comm_ring_rem = IPA_COMMON_EVENT_RING_SIZE;
 
 	return 0;
+fail_alloc_evt_ring:
+	if (gsi_evt_ring_props.rp_update_vaddr) {
+		dma_free_coherent(ipa3_ctx->pdev, IPA_GSI_EVENT_RP_SIZE,
+				  gsi_evt_ring_props.rp_update_vaddr,
+				  evt_rp_dma_addr);
+	}
+fail_alloc_rp:
+	dma_free_coherent(ipa3_ctx->pdev, gsi_evt_ring_props.ring_len,
+			  gsi_evt_ring_props.ring_base_vaddr,
+			  evt_dma_addr);
+	return result;
 }
 
 static int ipa_gsi_setup_channel(struct ipa_sys_connect_params *in,
@@ -4754,9 +4793,11 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 {
 	struct gsi_evt_ring_props gsi_evt_ring_props;
 	dma_addr_t evt_dma_addr;
+	dma_addr_t evt_rp_dma_addr;
 	int result;
 
 	evt_dma_addr = 0;
+	evt_rp_dma_addr = 0;
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));
 	gsi_evt_ring_props.intf = GSI_EVT_CHTYPE_GPI_EV;
 	gsi_evt_ring_props.intr = GSI_INTR_IRQ;
@@ -4791,7 +4832,28 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 		ep->client,
 		gsi_evt_ring_props.int_modt,
 		gsi_evt_ring_props.int_modc);
-	gsi_evt_ring_props.rp_update_addr = 0;
+	if (ipa3_ctx->ipa_gpi_event_rp_ddr) {
+		gsi_evt_ring_props.rp_update_vaddr =
+			dma_alloc_coherent(ipa3_ctx->pdev,
+					   IPA_GSI_EVENT_RP_SIZE,
+					   &evt_rp_dma_addr, GFP_KERNEL);
+		if (!gsi_evt_ring_props.rp_update_vaddr) {
+			IPAERR("fail to dma alloc %u bytes\n",
+				IPA_GSI_EVENT_RP_SIZE);
+			result = -ENOMEM;
+			goto fail_alloc_rp;
+		}
+		gsi_evt_ring_props.rp_update_addr = evt_rp_dma_addr;
+	} else {
+		gsi_evt_ring_props.rp_update_addr = 0;
+	}
+
+	/* copy mem info */
+	ep->gsi_mem_info.evt_ring_rp_addr =
+		gsi_evt_ring_props.rp_update_addr;
+	ep->gsi_mem_info.evt_ring_rp_vaddr =
+		gsi_evt_ring_props.rp_update_vaddr;
+
 	gsi_evt_ring_props.exclusive = true;
 	gsi_evt_ring_props.err_cb = ipa_gsi_evt_ring_err_cb;
 	gsi_evt_ring_props.user_data = NULL;
@@ -4804,6 +4866,14 @@ static int ipa_gsi_setup_event_ring(struct ipa3_ep_context *ep,
 	return 0;
 
 fail_alloc_evt_ring:
+	if (gsi_evt_ring_props.rp_update_vaddr) {
+		dma_free_coherent(ipa3_ctx->pdev, IPA_GSI_EVENT_RP_SIZE,
+				  gsi_evt_ring_props.rp_update_vaddr,
+				  evt_rp_dma_addr);
+		ep->gsi_mem_info.evt_ring_rp_addr = 0;
+		ep->gsi_mem_info.evt_ring_rp_vaddr = 0;
+	}
+fail_alloc_rp:
 	if (ep->gsi_mem_info.evt_ring_base_vaddr)
 		dma_free_coherent(ipa3_ctx->pdev, ep->gsi_mem_info.evt_ring_len,
 			ep->gsi_mem_info.evt_ring_base_vaddr,

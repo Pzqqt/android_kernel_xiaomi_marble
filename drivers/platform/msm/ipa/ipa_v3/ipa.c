@@ -6702,6 +6702,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		resource_p->do_ram_collection_on_crash;
 	ipa3_ctx->lan_rx_napi_enable = resource_p->lan_rx_napi_enable;
 	ipa3_ctx->tx_napi_enable = resource_p->tx_napi_enable;
+	ipa3_ctx->ipa_gpi_event_rp_ddr = resource_p->ipa_gpi_event_rp_ddr;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
 	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
 			resource_p->tx_wrapper_cache_max_size);
@@ -7469,6 +7470,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	ipa_drv_res->ipa_fltrt_not_hashable = false;
 	ipa_drv_res->ipa_endp_delay_wa = false;
 	ipa_drv_res->skip_ieob_mask_wa = false;
+	ipa_drv_res->ipa_gpi_event_rp_ddr = false;
 
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
@@ -7697,6 +7699,12 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Enable LAN rx NAPI = %s\n",
 		ipa_drv_res->lan_rx_napi_enable
 		? "True" : "False");
+
+	ipa_drv_res->ipa_gpi_event_rp_ddr =
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,ipa-gpi-event-rp-ddr");
+	IPADBG(": Read GPI or GCI Event RP from DDR = %s\n",
+	       ipa_drv_res->ipa_gpi_event_rp_ddr ? "True" : "False");
 
 	ipa_drv_res->tx_napi_enable =
 		of_property_read_bool(pdev->dev.of_node,

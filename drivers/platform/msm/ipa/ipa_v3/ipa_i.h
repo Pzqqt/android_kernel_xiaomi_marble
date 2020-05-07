@@ -911,6 +911,8 @@ struct ipa_gsi_ep_mem_info {
 	u16 chan_ring_len;
 	u64 chan_ring_base_addr;
 	void *chan_ring_base_vaddr;
+	u64 evt_ring_rp_addr;
+	void *evt_ring_rp_vaddr;
 };
 
 struct ipa3_status_stats {
@@ -1908,6 +1910,7 @@ struct ipa3_app_clock_vote {
  * @icc_num_paths - number of paths icc would vote for bw
  * @icc_clk - table for icc bw clock value
  * @coal_cmd_pyld: holds the coslescing close frame command payload
+ * @ipa_gpi_event_rp_ddr: use DDR to access event RP for GPI channels
  * @rmnet_ctl_enable: enable pipe support fow low latency data
  * @gsi_fw_file_name: GSI IPA fw file name
  * @uc_fw_file_name: uC IPA fw file name
@@ -2094,6 +2097,7 @@ struct ipa3_context {
 	u32 tx_wrapper_cache_max_size;
 	struct ipa3_app_clock_vote app_clock_vote;
 	bool clients_registered;
+	bool ipa_gpi_event_rp_ddr;
 	bool rmnet_ctl_enable;
 	char *gsi_fw_file_name;
 	char *uc_fw_file_name;
@@ -2150,6 +2154,7 @@ struct ipa3_plat_drv_res {
 	u32 icc_num_paths;
 	const char *icc_path_name[IPA_ICC_PATH_MAX];
 	u32 icc_clk_val[IPA_ICC_LVL_MAX][IPA_ICC_MAX];
+	bool ipa_gpi_event_rp_ddr;
 	bool rmnet_ctl_enable;
 	bool ipa_use_uc_holb_monitor;
 	u32 ipa_holb_monitor_poll_period;

@@ -659,8 +659,8 @@ static void gsi_handle_ieob(int ee)
 check_again:
 			cntr = 0;
 			empty = true;
-			rp = gsi_readl(gsi_ctx->base +
-				GSI_EE_n_EV_CH_k_CNTXT_4_OFFS(i, ee));
+			rp = ctx->props.gsi_read_event_ring_rp(&ctx->props,
+							       ctx->id, ee);
 			rp |= ctx->ring.rp & 0xFFFFFFFF00000000;
 
 			ctx->ring.rp = rp;
@@ -1646,6 +1646,38 @@ static int gsi_cleanup_xfer_user_data(unsigned long chan_hdl,
 	return 0;
 }
 
+/**
+ * gsi_read_event_ring_rp_ddr - function returns the RP value of the event
+ *      ring read from the ring context register.
+ *
+ * @props: Props structere of the event channel
+ * @id: Event channel index
+ * @ee: EE
+ *
+ * @Return pointer to the read pointer
+ */
+static inline uint64_t gsi_read_event_ring_rp_ddr(struct gsi_evt_ring_props* props,
+	uint8_t id, int ee)
+{
+	return gsi_readl(props->rp_update_vaddr);
+}
+
+/**
+ * gsi_read_event_ring_rp_reg - function returns the RP value of the event ring
+ *      read from the DDR.
+ *
+ * @props: Props structere of the event channel
+ * @id: Event channel index
+ * @ee: EE
+ *
+ * @Return pointer to the read pointer
+ */
+static inline uint64_t gsi_read_event_ring_rp_reg(struct gsi_evt_ring_props* props,
+	uint8_t id, int ee)
+{
+	return gsi_readl(gsi_ctx->base + GSI_EE_n_EV_CH_k_CNTXT_4_OFFS(id, ee));
+}
+
 int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 		unsigned long *evt_ring_hdl)
 {
@@ -1688,6 +1720,19 @@ int gsi_alloc_evt_ring(struct gsi_evt_ring_props *props, unsigned long dev_hdl,
 		evt_id = props->evchid;
 	}
 	GSIDBG("Using %lu as virt evt id\n", evt_id);
+
+	if (props->rp_update_addr != 0) {
+		GSIDBG("Using DDR to read event RP for virt evt id: %lu\n",
+			evt_id);
+		props->gsi_read_event_ring_rp =
+			gsi_read_event_ring_rp_ddr;
+	}
+	else {
+		GSIDBG("Using CONTEXT reg to read event RP for virt evt id: %lu\n",
+			evt_id);
+		props->gsi_read_event_ring_rp =
+			gsi_read_event_ring_rp_reg;
+	}
 
 	ctx = &gsi_ctx->evtr[evt_id];
 	memset(ctx, 0, sizeof(*ctx));
@@ -3781,8 +3826,8 @@ int gsi_poll_n_channel(unsigned long chan_hdl,
 	spin_lock_irqsave(&ctx->evtr->ring.slock, flags);
 	if (ctx->evtr->ring.rp == ctx->evtr->ring.rp_local) {
 		/* update rp to see of we have anything new to process */
-		rp = gsi_readl(gsi_ctx->base +
-			GSI_EE_n_EV_CH_k_CNTXT_4_OFFS(ctx->evtr->id, ee));
+		rp = ctx->evtr->props.gsi_read_event_ring_rp(
+			&ctx->evtr->props, ctx->evtr->id, ee);
 		rp |= ctx->ring.rp & 0xFFFFFFFF00000000ULL;
 
 		ctx->evtr->ring.rp = rp;
@@ -3793,9 +3838,8 @@ int gsi_poll_n_channel(unsigned long chan_hdl,
 				GSI_EE_n_CNTXT_SRC_IEOB_IRQ_CLR_OFFS(ee));
 			/* do another read to close a small window */
 			__iowmb();
-			rp = gsi_readl(gsi_ctx->base +
-				GSI_EE_n_EV_CH_k_CNTXT_4_OFFS(
-				ctx->evtr->id, ee));
+			rp = ctx->evtr->props.gsi_read_event_ring_rp(
+				&ctx->evtr->props, ctx->evtr->id, ee);
 			rp |= ctx->ring.rp & 0xFFFFFFFF00000000ULL;
 			ctx->evtr->ring.rp = rp;
 			if (rp == ctx->evtr->ring.rp_local) {
