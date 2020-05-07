@@ -26,8 +26,7 @@
 #include "sir_api.h"
 #include "host_diag_core_event.h"
 #include "wlan_objmgr_vdev_obj.h"
-#include "osif_psoc_sync.h"
-#include <wlan_cfg80211.h>
+#include "qdf_platform.h"
 
 static struct wlan_ipa_priv *gp_ipa;
 static void wlan_ipa_set_pending_tx_timer(struct wlan_ipa_priv *ipa_ctx);
@@ -3429,27 +3428,12 @@ static void __wlan_ipa_uc_fw_op_event_handler(void *data)
  */
 static void wlan_ipa_uc_fw_op_event_handler(void *data)
 {
-	int ret;
-	struct osif_psoc_sync *psoc_sync;
-	struct uc_op_work_struct *uc_op_work =
-		(struct uc_op_work_struct *)data;
-
-	if (!uc_op_work || !uc_op_work->osdev) {
-		ipa_err("Invalid op work");
-		return;
-	}
-
-	/* This event handler needs to wait for psoc transition */
-	ret = osif_psoc_sync_trans_start_wait(uc_op_work->osdev->dev,
-					      &psoc_sync);
-	if (ret) {
-		ipa_err("op start ret: %d", ret);
+	if (qdf_is_recovering()) {
+		ipa_err("in recovering");
 		return;
 	}
 
 	__wlan_ipa_uc_fw_op_event_handler(data);
-
-	osif_psoc_sync_trans_stop(psoc_sync);
 }
 
 /**
