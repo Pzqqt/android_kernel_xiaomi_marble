@@ -3675,7 +3675,7 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
 		dsi_ctrl->hw.ops.video_engine_en(&dsi_ctrl->hw, on);
 
 		/* perform a reset when turning off video engine */
-		if (!on)
+		if (!on && dsi_ctrl->version < DSI_CTRL_VERSION_1_3)
 			dsi_ctrl->hw.ops.soft_reset(&dsi_ctrl->hw);
 	}
 
