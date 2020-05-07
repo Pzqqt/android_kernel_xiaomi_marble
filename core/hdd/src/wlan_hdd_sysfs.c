@@ -46,6 +46,7 @@
 #include "wlan_hdd_sysfs_connect_info.h"
 #include <wlan_hdd_sysfs_scan_disable.h>
 #include <wlan_hdd_sysfs_wow_ito.h>
+#include <wlan_hdd_sysfs_wowl_add_ptrn.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -623,11 +624,13 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_resume_create(adapter);
 	hdd_sysfs_unit_test_target_create(adapter);
 	hdd_sysfs_connect_info_interface_create(adapter);
+	hdd_sysfs_wowl_add_ptrn_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_wowl_add_ptrn_destroy(adapter);
 	hdd_sysfs_connect_info_interface_destroy(adapter);
 	hdd_sysfs_unit_test_target_destroy(adapter);
 	hdd_sysfs_resume_destroy(adapter);
