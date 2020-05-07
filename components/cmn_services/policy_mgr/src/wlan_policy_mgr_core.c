@@ -1025,10 +1025,6 @@ static uint32_t policy_mgr_dump_current_concurrency_one_connection(
 		count = strlcat(cc_mode, "P2P GO",
 					length);
 		break;
-	case PM_IBSS_MODE:
-		count = strlcat(cc_mode, "IBSS",
-					length);
-		break;
 	case PM_NAN_DISC_MODE:
 		count = strlcat(cc_mode, "NAN DISC", length);
 		break;
@@ -1086,12 +1082,6 @@ static uint32_t policy_mgr_dump_current_concurrency_two_connection(
 		count += strlcat(cc_mode, "+P2P GO",
 					length);
 		break;
-	case PM_IBSS_MODE:
-		count = policy_mgr_dump_current_concurrency_one_connection(
-				cc_mode, length);
-		count += strlcat(cc_mode, "+IBSS",
-					length);
-		break;
 	case PM_NDI_MODE:
 		count = policy_mgr_dump_current_concurrency_one_connection(
 				cc_mode, length);
@@ -1147,12 +1137,6 @@ static uint32_t policy_mgr_dump_current_concurrency_three_connection(
 		count = policy_mgr_dump_current_concurrency_two_connection(
 				cc_mode, length);
 		count += strlcat(cc_mode, "+P2P GO",
-					length);
-		break;
-	case PM_IBSS_MODE:
-		count = policy_mgr_dump_current_concurrency_two_connection(
-				cc_mode, length);
-		count += strlcat(cc_mode, "+IBSS",
 					length);
 		break;
 	case PM_NAN_DISC_MODE:
@@ -1340,9 +1324,6 @@ QDF_STATUS policy_mgr_pdev_get_pcl(struct wlan_objmgr_psoc *psoc,
 		break;
 	case QDF_SAP_MODE:
 		con_mode = PM_SAP_MODE;
-		break;
-	case QDF_IBSS_MODE:
-		con_mode = PM_IBSS_MODE;
 		break;
 	default:
 		policy_mgr_err("Unable to set PCL to FW: %d", mode);
@@ -1552,8 +1533,6 @@ enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
 				subtype, type);
 			break;
 		}
-	} else if (type == WMI_VDEV_TYPE_IBSS) {
-		mode = PM_IBSS_MODE;
 	} else if (type == WMI_VDEV_TYPE_NAN) {
 		mode = PM_NAN_DISC_MODE;
 	} else if (type == WMI_VDEV_TYPE_NDI) {

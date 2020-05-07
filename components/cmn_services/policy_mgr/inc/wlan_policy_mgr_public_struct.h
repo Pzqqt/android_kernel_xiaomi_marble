@@ -255,7 +255,6 @@ enum policy_mgr_conc_priority_mode {
  * @PM_SAP_MODE: SAP mode
  * @PM_P2P_CLIENT_MODE: P2P client mode
  * @PM_P2P_GO_MODE: P2P Go mode
- * @PM_IBSS_MODE: IBSS mode
  * @PM_NDI_MODE: NDI mode
  * @PM_NAN_DISC_MODE: NAN Discovery mode
  * @PM_MAX_NUM_OF_MODE: max value place holder
@@ -265,7 +264,6 @@ enum policy_mgr_con_mode {
 	PM_SAP_MODE,
 	PM_P2P_CLIENT_MODE,
 	PM_P2P_GO_MODE,
-	PM_IBSS_MODE,
 	PM_NDI_MODE,
 	PM_NAN_DISC_MODE,
 	PM_MAX_NUM_OF_MODE
@@ -371,10 +369,6 @@ enum policy_mgr_pcl_type {
  * @PM_SAP_24_2x2: SAP connection using 2x2@2.4 Ghz
  * @PM_SAP_5_1x1: SAP connection using 1x1@5 Ghz
  * @PM_SAP_5_1x1: SAP connection using 2x2@5 Ghz
- * @PM_IBSS_24_1x1:  IBSS connection using 1x1@2.4 Ghz
- * @PM_IBSS_24_2x2:  IBSS connection using 2x2@2.4 Ghz
- * @PM_IBSS_5_1x1:  IBSS connection using 1x1@5 Ghz
- * @PM_IBSS_5_2x2:  IBSS connection using 2x2@5 Ghz
  * @PM_NAN_DISC_24_1x1:  NAN Discovery using 1x1@2.4 Ghz
  * @PM_NAN_DISC_24_2x2:  NAN Discovery using 2x2@2.4 Ghz
  * @PM_NDI_24_1x1:  NAN Datapath using 1x1@2.4 Ghz
@@ -403,10 +397,6 @@ enum policy_mgr_one_connection_mode {
 	PM_SAP_24_2x2,
 	PM_SAP_5_1x1,
 	PM_SAP_5_2x2,
-	PM_IBSS_24_1x1,
-	PM_IBSS_24_2x2,
-	PM_IBSS_5_1x1,
-	PM_IBSS_5_2x2,
 	PM_NAN_DISC_24_1x1,
 	PM_NAN_DISC_24_2x2,
 	PM_NDI_24_1x1,
@@ -897,7 +887,6 @@ enum policy_mgr_band {
 /**
  * enum policy_mgr_conn_update_reason: Reason for conc connection update
  * @POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
- * @POLICY_MGR_UPDATE_REASON_JOIN_IBSS: Join IBSS
  * @POLICY_MGR_UPDATE_REASON_UT: Unit test related
  * @POLICY_MGR_UPDATE_REASON_START_AP: Start AP
  * @POLICY_MGR_UPDATE_REASON_NORMAL_STA: Connection to Normal STA
@@ -916,7 +905,6 @@ enum policy_mgr_band {
  */
 enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN,
-	POLICY_MGR_UPDATE_REASON_JOIN_IBSS,
 	POLICY_MGR_UPDATE_REASON_UT,
 	POLICY_MGR_UPDATE_REASON_START_AP,
 	POLICY_MGR_UPDATE_REASON_NORMAL_STA,

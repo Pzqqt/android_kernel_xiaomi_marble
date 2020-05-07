@@ -1019,19 +1019,6 @@ policy_mgr_get_preferred_dbs_action_table(
 	enum policy_mgr_conn_update_reason reason);
 
 /**
- * policy_mgr_is_ibss_conn_exist() - to check if IBSS connection already present
- * @psoc: PSOC object information
- * @ibss_ch_freq: pointer to ibss channel which needs to be filled
- *
- * this routine will check if IBSS connection already exist or no. If it
- * exist then this routine will return true and fill the ibss_channel value.
- *
- * Return: true if ibss connection exist else false
- */
-bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
-				   uint32_t *ibss_ch_freq);
-
-/**
  * policy_mgr_get_conn_info() - get the current connections list
  * @len: length of the list
  *
