@@ -35,7 +35,6 @@
 #include <wlan_hdd_debugfs_llstat.h>
 #include <wlan_hdd_debugfs_mibstat.h>
 #include "wlan_hdd_debugfs_unit_test.h"
-#include "wlan_hdd_debugfs_crash_inject.h"
 
 
 #define MAX_USER_COMMAND_SIZE_WOWL_ENABLE 8
@@ -564,9 +563,6 @@ QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 		return QDF_STATUS_E_FAILURE;
 
 	if (wlan_hdd_debugfs_resume_create(adapter))
-		return QDF_STATUS_E_FAILURE;
-
-	if (wlan_hdd_debugfs_crash_inject_create(adapter))
 		return QDF_STATUS_E_FAILURE;
 
 	return QDF_STATUS_SUCCESS;
