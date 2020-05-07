@@ -3879,7 +3879,8 @@ static int ipa3_assign_policy(struct ipa_sys_connect_params *in,
 	bool apps_wan_cons_agg_gro_flag;
 	unsigned long aggr_byte_limit;
 
-	if (in->client == IPA_CLIENT_APPS_CMD_PROD) {
+	if (in->client == IPA_CLIENT_APPS_CMD_PROD ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_PROD) {
 		sys->policy = IPA_POLICY_INTR_MODE;
 		sys->use_comm_evt_ring = false;
 		return 0;
@@ -4719,6 +4720,8 @@ static int ipa_gsi_setup_channel(struct ipa_sys_connect_params *in,
 
 	if (in->client == IPA_CLIENT_APPS_WAN_CONS ||
 		in->client == IPA_CLIENT_APPS_WAN_COAL_CONS ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS ||
+		in->client == IPA_CLIENT_APPS_WAN_LOW_LAT_PROD ||
 		in->client == IPA_CLIENT_APPS_WAN_PROD)
 		mem_flag = GFP_ATOMIC;
 
