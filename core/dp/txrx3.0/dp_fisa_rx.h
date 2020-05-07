@@ -46,15 +46,23 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *dp_fisa_rx_hdl, struct dp_vdev *vdev,
 		      qdf_nbuf_t nbuf_list);
 
 /**
- * dp_rx_fisa_flush() - FISA Rx flush function to flush aggregation at end of
- *			NAPI
+ * dp_rx_fisa_flush_by_ctx_id() - FISA Rx flush function to flush
+ *				  aggregation at end of NAPI
  * @soc: core txrx main context
  * @napi_id: Flows which are rxed on the NAPI ID to be flushed
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS dp_rx_fisa_flush(struct dp_soc *soc, int napi_id);
+QDF_STATUS dp_rx_fisa_flush_by_ctx_id(struct dp_soc *soc, int napi_id);
 
+/**
+ * dp_rx_fisa_flush_by_vdev_id() - Flush fisa aggregates per vdev id
+ * @soc: core txrx main context
+ * @vdev_id: vdev ID
+ *
+ * Return: Success on flushing the flows for the vdev
+ */
+QDF_STATUS dp_rx_fisa_flush_by_vdev_id(struct dp_soc *soc, uint8_t vdev_id);
 #else
 static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 {

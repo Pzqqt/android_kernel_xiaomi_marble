@@ -127,13 +127,29 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context, qdf_nbuf_t rxBuf);
 QDF_STATUS hdd_rx_fisa_cbk(void *dp_soc, void *dp_vdev, qdf_nbuf_t rxbuf_list);
 
 /**
- * hdd_rx_fisa_flush() - Flush function to end of context flushing of aggregates
+ * hdd_rx_fisa_flush_by_ctx_id() - Flush function to end of context
+ *				   flushing of aggregates
  * @soc: core txrx main context
- * @napi_id: REO number to flush the flow Rxed on the REO
+ * @ring_num: REO number to flush the flow Rxed on the REO
  *
  * Return: Success on flushing the flows for the REO
  */
-QDF_STATUS hdd_rx_fisa_flush(void *dp_soc, int ring_num);
+QDF_STATUS hdd_rx_fisa_flush_by_ctx_id(void *dp_soc, int ring_num);
+
+/**
+ * hdd_rx_fisa_flush_by_vdev_id() - Flush fisa aggregates per vdev id
+ * @soc: core txrx main context
+ * @vdev_id: vdev ID
+ *
+ * Return: Success on flushing the flows for the vdev
+ */
+QDF_STATUS hdd_rx_fisa_flush_by_vdev_id(void *dp_soc, uint8_t vdev_id);
+#else
+static inline QDF_STATUS hdd_rx_fisa_flush_by_vdev_id(void *dp_soc,
+						      uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 /**

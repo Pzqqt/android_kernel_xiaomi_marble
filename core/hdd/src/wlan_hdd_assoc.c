@@ -2151,7 +2151,7 @@ static inline void
 hdd_rx_register_fisa_ops(struct ol_txrx_ops *txrx_ops)
 {
 	txrx_ops->rx.osif_fisa_rx = hdd_rx_fisa_cbk;
-	txrx_ops->rx.osif_fisa_flush = hdd_rx_fisa_flush;
+	txrx_ops->rx.osif_fisa_flush = hdd_rx_fisa_flush_by_ctx_id;
 }
 #else
 static inline void

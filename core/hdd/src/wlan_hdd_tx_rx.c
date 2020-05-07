@@ -2062,6 +2062,9 @@ QDF_STATUS hdd_rx_flush_packet_cbk(void *adapter_context, uint8_t vdev_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* do fisa flush for this vdev */
+	hdd_rx_fisa_flush_by_vdev_id(soc, vdev_id);
+
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_flush_pkts_by_vdev_id(soc, vdev_id);
 
@@ -2077,9 +2080,14 @@ QDF_STATUS hdd_rx_fisa_cbk(void *dp_soc, void *dp_vdev, qdf_nbuf_t nbuf_list)
 			  nbuf_list);
 }
 
-QDF_STATUS hdd_rx_fisa_flush(void *dp_soc, int ring_num)
+QDF_STATUS hdd_rx_fisa_flush_by_ctx_id(void *dp_soc, int ring_num)
 {
-	return dp_rx_fisa_flush((struct dp_soc *)dp_soc, ring_num);
+	return dp_rx_fisa_flush_by_ctx_id((struct dp_soc *)dp_soc, ring_num);
+}
+
+QDF_STATUS hdd_rx_fisa_flush_by_vdev_id(void *dp_soc, uint8_t vdev_id)
+{
+	return dp_rx_fisa_flush_by_vdev_id((struct dp_soc *)dp_soc, vdev_id);
 }
 #endif
 
