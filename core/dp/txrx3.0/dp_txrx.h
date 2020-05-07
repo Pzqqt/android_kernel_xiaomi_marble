@@ -46,6 +46,21 @@ struct dp_txrx_handle {
 	struct dp_txrx_config config;
 };
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+/**
+ * dp_rx_napi_gro_flush() - do gro flush
+ * @napi: napi used to do gro flush
+ *
+ * if there is RX GRO_NORMAL packets pending in napi
+ * rx_list, flush them manually right after napi_gro_flush.
+ *
+ * return: none
+ */
+void dp_rx_napi_gro_flush(struct napi_struct *napi);
+#else
+#define dp_rx_napi_gro_flush(_napi) napi_gro_flush((_napi), false)
+#endif
+
 #ifdef FEATURE_WLAN_DP_RX_THREADS
 /**
  * dp_txrx_get_cmn_hdl_frm_ext_hdl() - conversion func ext_hdl->txrx_handle_cmn

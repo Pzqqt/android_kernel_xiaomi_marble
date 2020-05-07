@@ -352,7 +352,7 @@ static void dp_rx_thread_gro_flush(struct dp_rx_thread *rx_thread)
 	dp_debug("flushing packets for thread %u", rx_thread->id);
 
 	local_bh_disable();
-	napi_gro_flush(&rx_thread->napi, false);
+	dp_rx_napi_gro_flush(&rx_thread->napi);
 	local_bh_enable();
 
 	rx_thread->stats.gro_flushes++;
@@ -953,3 +953,17 @@ QDF_STATUS dp_rx_tm_set_cpu_mask(struct dp_rx_tm_handle *rx_tm_hdl,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+void dp_rx_napi_gro_flush(struct napi_struct *napi)
+{
+	if (napi->poll) {
+		napi_gro_flush(napi, false);
+		if (napi->rx_count) {
+			netif_receive_skb_list(&napi->rx_list);
+			qdf_init_list_head(&napi->rx_list);
+			napi->rx_count = 0;
+		}
+	}
+}
+#endif
