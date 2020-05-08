@@ -3268,6 +3268,17 @@ wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 }
 
+#else
+void wlan_hdd_cfg80211_stats_ext_callback(hdd_handle_t hdd_handle,
+					  struct stats_ext_event *data)
+{
+}
+
+void
+wlan_hdd_cfg80211_stats_ext2_callback(hdd_handle_t hdd_handle,
+				      struct sir_sme_rx_aggr_hole_ind *pmsg)
+{
+}
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
 #ifdef LINKSPEED_DEBUG_ENABLED
