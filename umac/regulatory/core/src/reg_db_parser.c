@@ -189,7 +189,7 @@ QDF_STATUS reg_get_rdpair_from_country_code(uint16_t cc,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
+static inline QDF_STATUS reg_get_reginfo_from_country_code_and_regdmn_pair(
 		struct cur_regulatory_info *reg_info,
 		uint16_t country_index,
 		uint16_t regdmn_pair)
@@ -220,9 +220,21 @@ static inline QDF_STATUS reg_get_reginfo_form_country_code_and_regdmn_pair(
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap =
 			g_all_countries[country_index].phymode_bitmap;
+		if (g_all_countries[country_index].max_bw_2g <
+		    regdomains_2g[dmn_id_2g].max_bw)
+			reg_info->max_bw_2g =
+				g_all_countries[country_index].max_bw_2g;
+		else
+			reg_info->max_bw_2g =
+				regdomains_2g[dmn_id_2g].max_bw;
 
-		reg_info->max_bw_2g = g_all_countries[country_index].max_bw_2g;
-		reg_info->max_bw_5g = g_all_countries[country_index].max_bw_5g;
+		if (g_all_countries[country_index].max_bw_5g <
+		    regdomains_5g[dmn_id_5g].max_bw)
+			reg_info->max_bw_5g =
+				g_all_countries[country_index].max_bw_5g;
+		else
+			reg_info->max_bw_5g =
+				regdomains_5g[dmn_id_5g].max_bw;
 
 		reg_info->min_bw_2g = regdomains_2g[dmn_id_2g].min_bw;
 		reg_info->min_bw_5g = regdomains_5g[dmn_id_5g].min_bw;
@@ -304,7 +316,7 @@ reg_update_alpha2_from_domain(struct cur_regulatory_info *reg_info)
 }
 #endif
 
-static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
+static inline QDF_STATUS reg_get_reginfo_from_regdmn_pair(
 		struct cur_regulatory_info *reg_info,
 		uint16_t regdmn_pair)
 {
@@ -334,8 +346,8 @@ static inline QDF_STATUS reg_get_reginfo_form_regdmn_pair(
 		reg_info->dfs_region = regdomains_5g[dmn_id_5g].dfs_region;
 		reg_info->phybitmap = 0;
 
-		reg_info->max_bw_2g = 40;
-		reg_info->max_bw_5g = 160;
+		reg_info->max_bw_2g = regdomains_2g[dmn_id_2g].max_bw;
+		reg_info->max_bw_5g = regdomains_5g[dmn_id_5g].max_bw;
 
 		reg_info->min_bw_2g = regdomains_2g[dmn_id_2g].min_bw;
 		reg_info->min_bw_5g = regdomains_5g[dmn_id_5g].min_bw;
@@ -377,10 +389,10 @@ QDF_STATUS reg_get_cur_reginfo(struct cur_regulatory_info *reg_info,
 {
 	if ((country_index != (uint16_t)(-1)) &&
 	    (regdmn_pair != (uint16_t)(-1)))
-		return reg_get_reginfo_form_country_code_and_regdmn_pair(
+		return reg_get_reginfo_from_country_code_and_regdmn_pair(
 				reg_info, country_index, regdmn_pair);
 	else if (regdmn_pair != (uint16_t)(-1))
-		return reg_get_reginfo_form_regdmn_pair(reg_info, regdmn_pair);
+		return reg_get_reginfo_from_regdmn_pair(reg_info, regdmn_pair);
 	else
 		return QDF_STATUS_E_FAILURE;
 

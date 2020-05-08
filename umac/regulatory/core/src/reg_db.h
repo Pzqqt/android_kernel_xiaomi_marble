@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -49,6 +49,7 @@ struct regulatory_rule {
  * @ctl_val: CTL value
  * @dfs_region: dfs region
  * @min_bw: minimum bandwidth
+ * @max_bw: maximum bandwidth
  * @num_reg_rules: number of regulatory rules
  * @reg_rules_id: regulatory rule index
  */
@@ -56,6 +57,7 @@ struct regdomain   {
 	uint8_t ctl_val;
 	enum dfs_reg dfs_region;
 	uint16_t min_bw;
+	uint16_t max_bw;
 	uint8_t ant_gain;
 	uint8_t num_reg_rules;
 	uint8_t reg_rule_id[MAX_REG_RULES];

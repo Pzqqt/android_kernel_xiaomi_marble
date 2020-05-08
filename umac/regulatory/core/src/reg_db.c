@@ -1131,20 +1131,23 @@ const struct regulatory_rule reg_rules_2g[] = {
 
 const struct regdomain regdomains_2g[] = {
 
-	[FCCA] = {CTL_FCC, DFS_UNINIT_REGION, 0, 6, 1, {CHAN_1_11_1} },
-	[FCCB] = {CTL_FCC, DFS_UNINIT_REGION, 0, 6, 1, {CHAN_1_11_3} },
-	[WORLD] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_13_1} },
-	[MKKA] = {CTL_MKK, DFS_UNINIT_REGION, 0, 0, 2, {CHAN_1_13_4,
-							CHAN_14_1} },
-	[MKKC] = {CTL_MKK, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_13_4} },
-	[ETSIC] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_13_2} },
-	[ETSID] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_13_5} },
-	[KRRA]  = {CTL_KOR, DFS_UNINIT_REGION, 0, 0, 1,  {CHAN_1_13_4} },
-	[WORLD_2G_1] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 1, {CHAN_1_11_2} },
-	[WORLD_2G_2] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 2,
-			{CHAN_1_11_2, CHAN_12_13_1} },
-	[WORLD_2G_3] = {CTL_NONE, DFS_UNINIT_REGION, 0, 0, 2,
-			{CHAN_1_11_2, CHAN_12_12_1} },
+	[FCCA] = {CTL_FCC, DFS_UNINIT_REGION, 0, 40, 6, 1, {CHAN_1_11_1} },
+	[FCCB] = {CTL_FCC, DFS_UNINIT_REGION, 0, 40, 6, 1, {CHAN_1_11_3} },
+	[WORLD] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 40, 0, 1, {CHAN_1_13_1} },
+	[MKKA] = {CTL_MKK, DFS_UNINIT_REGION, 0, 40, 0, 2, {CHAN_1_13_4,
+							    CHAN_14_1} },
+	[MKKC] = {CTL_MKK, DFS_UNINIT_REGION, 0, 40, 0, 1, {CHAN_1_13_4} },
+	[ETSIC] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 40, 0, 1, {CHAN_1_13_2} },
+	[ETSID] = {CTL_ETSI, DFS_UNINIT_REGION, 0, 20, 0, 1, {CHAN_1_13_5} },
+	[KRRA]  = {CTL_KOR, DFS_UNINIT_REGION, 0, 40, 0, 1,  {CHAN_1_13_4} },
+	[WORLD_2G_1] = {CTL_NONE, DFS_UNINIT_REGION, 0, 40, 0, 1, {CHAN_1_11_2}
+								   },
+	[WORLD_2G_2] = {CTL_NONE, DFS_UNINIT_REGION, 0, 40, 0, 2, {CHAN_1_11_2,
+								   CHAN_12_13_1}
+								   },
+	[WORLD_2G_3] = {CTL_NONE, DFS_UNINIT_REGION, 0, 40, 0, 2, {CHAN_1_11_2,
+								   CHAN_12_12_1}
+								   },
 };
 
 
@@ -1342,234 +1345,255 @@ const struct regulatory_rule reg_rules_5g[] = {
 
 const struct regdomain regdomains_5g[] = {
 
-	[FCC1] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 3, {CHAN_5170_5250_1,
-						     CHAN_5250_5330_1,
-						     CHAN_5735_5835_2} },
+	[FCC1] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 3, {CHAN_5170_5250_1,
+							  CHAN_5250_5330_1,
+							  CHAN_5735_5835_2} },
 
-	[FCC2] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 3, {CHAN_5170_5250_2,
-						     CHAN_5250_5330_1,
-						     CHAN_5735_5835_2} },
+	[FCC2] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 3, {CHAN_5170_5250_2,
+							  CHAN_5250_5330_1,
+							  CHAN_5735_5835_2} },
 
-	[FCC3] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 4, {CHAN_5170_5250_5,
-						     CHAN_5250_5330_7,
-						     CHAN_5490_5730_1,
-						     CHAN_5735_5835_2} },
+	[FCC3] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_5170_5250_5,
+							  CHAN_5250_5330_7,
+							  CHAN_5490_5730_1,
+							  CHAN_5735_5835_2} },
 
-	[FCC4] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 1, {CHAN_4940_4990_1} },
+	[FCC4] = {CTL_FCC, DFS_FCC_REGION, 2, 20, 6, 1, {CHAN_4940_4990_1} },
 
-	[FCC5] = {CTL_FCC, DFS_UNINIT_REGION, 2, 6, 2, {CHAN_5170_5250_4,
-							CHAN_5735_5835_2} },
+	[FCC5] = {CTL_FCC, DFS_UNINIT_REGION, 2, 80, 6, 2, {CHAN_5170_5250_4,
+							    CHAN_5735_5835_2} },
 
-	[FCC6] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 5, {CHAN_5170_5250_5,
-						     CHAN_5250_5330_7,
-						     CHAN_5490_5590_1,
-						     CHAN_5650_5730_1,
-						     CHAN_5735_5835_2} },
+	[FCC6] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 5, {CHAN_5170_5250_5,
+							  CHAN_5250_5330_7,
+							  CHAN_5490_5590_1,
+							  CHAN_5650_5730_1,
+							  CHAN_5735_5835_2} },
 
-	[FCC8] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 4, {CHAN_5170_5250_4,
-						     CHAN_5250_5330_7,
-						     CHAN_5490_5730_1,
-						     CHAN_5735_5835_2} },
+	[FCC8] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_5170_5250_4,
+							  CHAN_5250_5330_7,
+							  CHAN_5490_5730_1,
+							  CHAN_5735_5835_2} },
 
-	[FCC10] = {CTL_FCC, DFS_FCC_REGION, 2, 0, 5, {CHAN_5170_5250_4,
-						      CHAN_5250_5330_7,
-						      CHAN_5490_5730_1,
-						      CHAN_5735_5835_2,
-						      CHAN_5850_5925_1} },
+	[FCC10] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 5, {CHAN_5170_5250_4,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5835_2,
+							   CHAN_5850_5925_1} },
 
-	[FCC11] = {CTL_FCC, DFS_FCC_REGION, 2, 6, 4, {CHAN_5170_5250_5,
-						      CHAN_5250_5330_7,
-						      CHAN_5490_5650_2,
-						      CHAN_5735_5835_6} },
+	[FCC11] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_5170_5250_5,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5650_2,
+							   CHAN_5735_5835_6} },
 
-	[FCC13] = {CTL_FCC, DFS_UNINIT_REGION, 2, 0, 4, {CHAN_5170_5330_2,
-							 CHAN_5250_5330_10,
-							 CHAN_5490_5730_4,
-							 CHAN_5735_5835_2} },
+	[FCC13] = {CTL_FCC, DFS_UNINIT_REGION, 2, 160, 0, 4, {CHAN_5170_5330_2,
+							      CHAN_5250_5330_10,
+							      CHAN_5490_5730_4,
+							      CHAN_5735_5835_2}
+							      },
 
-	[FCC14] = {CTL_FCC, DFS_UNINIT_REGION, 2, 0, 4, {CHAN_5170_5250_4,
-							 CHAN_5250_5330_10,
-							 CHAN_5490_5730_4,
-							 CHAN_5735_5835_2} },
+	[FCC14] = {CTL_FCC, DFS_UNINIT_REGION, 2, 160, 0, 4, {CHAN_5170_5250_4,
+							      CHAN_5250_5330_10,
+							      CHAN_5490_5730_4,
+							      CHAN_5735_5835_2}
+							      },
 
 #ifdef CONFIG_BAND_6GHZ
-	[FCC15] = {CTL_FCC, DFS_FCC_REGION, 2, 0, 8, {CHAN_5170_5250_5,
-							 CHAN_5250_5330_7,
-							 CHAN_5490_5730_1,
-							 CHAN_5735_5835_2,
-							 CHAN_5935_6435_1,
-							 CHAN_6435_6535_1,
-							 CHAN_6535_6875_1,
-							 CHAN_6875_7115_1} },
+	[FCC15] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 8, {CHAN_5170_5250_5,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5835_2,
+							   CHAN_5935_6435_1,
+							   CHAN_6435_6535_1,
+							   CHAN_6535_6875_1,
+							   CHAN_6875_7115_1} },
 
-	[FCC16] = {CTL_FCC, DFS_FCC_REGION, 2, 0, 8, {CHAN_5170_5250_4,
-							CHAN_5250_5330_7,
-							CHAN_5490_5730_1,
-							CHAN_5735_5835_2,
-							CHAN_5935_6435_2,
-							CHAN_6435_6535_2,
-							CHAN_6535_6875_2,
-							CHAN_6875_7115_2} },
+	[FCC16] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 8, {CHAN_5170_5250_4,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5835_2,
+							   CHAN_5935_6435_2,
+							   CHAN_6435_6535_2,
+							   CHAN_6535_6875_2,
+							   CHAN_6875_7115_2} },
 
-	[FCC17] = {CTL_FCC, DFS_FCC_REGION, 2, 0, 6, {CHAN_5170_5250_4,
-							CHAN_5250_5330_7,
-							CHAN_5490_5730_1,
-							CHAN_5735_5835_2,
-							CHAN_5935_6435_2,
-							CHAN_6535_6875_2} },
+	[FCC17] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 6, {CHAN_5170_5250_4,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5835_2,
+							   CHAN_5935_6435_2,
+							   CHAN_6535_6875_2} },
 #endif
+	[ETSI1] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 3, {CHAN_5170_5250_8,
+							     CHAN_5250_5330_12,
+							     CHAN_5490_5710_1}
+							     },
 
-	[ETSI1] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 3, {CHAN_5170_5250_8,
-							CHAN_5250_5330_12,
-							CHAN_5490_5710_1} },
+	[ETSI3] = {CTL_ETSI, DFS_ETSI_REGION, 5, 160, 0, 2, {CHAN_5170_5250_2,
+							     CHAN_5250_5330_1}
+							     },
 
-	[ETSI3] = {CTL_ETSI, DFS_ETSI_REGION, 5, 0, 2, {CHAN_5170_5250_2,
-							CHAN_5250_5330_1} },
+	[ETSI4] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 2, {CHAN_5170_5250_6,
+							     CHAN_5250_5330_3}
+							     },
 
-	[ETSI4] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 2, {CHAN_5170_5250_6,
-							CHAN_5250_5330_3} },
-
-	[ETSI8] = {CTL_ETSI, DFS_UNINIT_REGION, 20, 0, 4, {CHAN_5170_5250_2,
-							   CHAN_5250_5330_5,
-							   CHAN_5490_5730_3,
-							   CHAN_5735_5835_2} },
-
-	[ETSI9] = {CTL_ETSI, DFS_ETSI_REGION, 20, 0, 4, {CHAN_5170_5250_2,
-							 CHAN_5250_5330_1,
-							 CHAN_5490_5710_5,
-							 CHAN_5735_5835_6} },
-
-	[ETSI10] = {CTL_ETSI, DFS_ETSI_REGION, 10, 0, 4, {CHAN_5170_5250_7,
-							  CHAN_5250_5330_14,
-							  CHAN_5490_5710_3,
-							  CHAN_5850_5925_2} },
-
-	[ETSI11] = {CTL_ETSI, DFS_ETSI_REGION, 10, 0, 4, {CHAN_5170_5250_10,
-							  CHAN_5250_5330_15,
-							  CHAN_5490_5710_8,
-							  CHAN_5735_5875_1} },
-
-	[ETSI12] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 4, {CHAN_5170_5250_7,
-							 CHAN_5250_5330_14,
-							 CHAN_5490_5730_6,
-							 CHAN_5735_5835_8} },
-
-	[ETSI13] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 4, {CHAN_5170_5250_8,
-							 CHAN_5250_5330_12,
-							 CHAN_5490_5730_5,
-							 CHAN_5735_5875_4} },
-
-	[ETSI14] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 4, {CHAN_5170_5250_2,
-							 CHAN_5250_5330_1,
-							 CHAN_5490_5730_7,
-							 CHAN_5735_5875_5} },
-
-	[ETSI15] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 4, {CHAN_5170_5250_2,
-							 CHAN_5250_5330_1,
-							 CHAN_5490_5730_5,
-							 CHAN_5735_5815_2} },
-
-	[APL1] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 0, 1, {CHAN_5735_5835_2} },
-
-	[APL2] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 0, 1, {CHAN_5735_5815_4} },
-
-	[APL4] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 0, 2, {CHAN_5170_5250_2,
-							 CHAN_5735_5835_1} },
-
-	[APL6] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 3, {CHAN_5170_5250_3,
-						       CHAN_5250_5330_2,
-						       CHAN_5735_5835_3} },
-
-	[APL8] = {CTL_FCC, DFS_ETSI_REGION, 2, 0, 2, {CHAN_5250_5330_4,
-						      CHAN_5735_5835_2} },
-
-	[APL9] = {CTL_MKK, DFS_KR_REGION, 2, 6, 4,   {CHAN_5170_5250_2,
-						      CHAN_5250_5330_1,
-						      CHAN_5490_5730_6,
-						      CHAN_5735_5835_1} },
-
-	[APL10] = {CTL_ETSI, DFS_FCC_REGION, 2, 6, 4, {CHAN_5170_5250_2,
-						       CHAN_5250_5330_4,
-						       CHAN_5490_5710_1,
-						       CHAN_5735_5815_1} },
-
-	[APL11] = { CTL_ETSI, DFS_FCC_REGION, 2, 0, 4, {CHAN_5170_5250_9,
-							 CHAN_5250_5330_13,
-							 CHAN_5490_5710_4,
-							 CHAN_5735_5875_2} },
-
-	[APL12] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 3, {CHAN_5170_5250_2,
-							CHAN_5490_5570_1,
-							CHAN_5735_5775_1} },
-
-	[APL13] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 3, {CHAN_5170_5250_2,
-							CHAN_5250_5330_1,
-							CHAN_5490_5670_2} },
-
-	[APL14] = {CTL_MKK, DFS_CN_REGION, 2, 0, 3, {CHAN_5170_5250_2,
-						     CHAN_5250_5330_1,
-						     CHAN_5735_5835_4} },
-
-	[APL15] = {CTL_FCC, DFS_UNINIT_REGION, 2, 0, 3, {CHAN_5170_5250_8,
-							 CHAN_5250_5330_16,
-							 CHAN_5735_5835_4} },
-
-	[APL16] = {CTL_FCC, DFS_UNINIT_REGION, 2, 0, 5, {CHAN_5170_5250_1,
-							 CHAN_5250_5330_6,
-							 CHAN_5490_5590_2,
-							 CHAN_5650_5730_2,
+	[ETSI8] = {CTL_ETSI, DFS_UNINIT_REGION, 20, 160, 0, 4,
+							{CHAN_5170_5250_2,
+							 CHAN_5250_5330_5,
+							 CHAN_5490_5730_3,
 							 CHAN_5735_5835_2} },
 
-	[APL17] = {CTL_FCC, DFS_UNINIT_REGION, 2, 0, 5, {CHAN_5170_5250_2,
-							 CHAN_5250_5330_8,
-							 CHAN_5490_5590_3,
-							 CHAN_5650_5730_3,
-							 CHAN_5735_5835_7} },
+	[ETSI9] = {CTL_ETSI, DFS_ETSI_REGION, 20, 160, 0, 4, {CHAN_5170_5250_2,
+							      CHAN_5250_5330_1,
+							      CHAN_5490_5710_5,
+							      CHAN_5735_5835_6}
+							      },
 
-	[APL19] = {CTL_FCC, DFS_FCC_REGION, 2, 0, 4, {CHAN_5170_5250_4,
-						       CHAN_5250_5330_7,
-						       CHAN_5490_5730_1,
-						       CHAN_5735_5875_3} },
+	[ETSI10] = {CTL_ETSI, DFS_ETSI_REGION, 10, 160, 0, 4,
+							{CHAN_5170_5250_7,
+							 CHAN_5250_5330_14,
+							 CHAN_5490_5710_3,
+							 CHAN_5850_5925_2} },
 
-	[APL20] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 4, {CHAN_5170_5250_8,
-							CHAN_5250_5330_12,
-							CHAN_5490_5730_5,
-							CHAN_5735_5835_4} },
+	[ETSI11] = {CTL_ETSI, DFS_ETSI_REGION, 10, 20, 0, 4, {CHAN_5170_5250_7,
+							      CHAN_5250_5330_14,
+							      CHAN_5490_5710_3,
+							      CHAN_5735_5875_1}
+							      },
 
-	[APL23] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 0, 3, {CHAN_5170_5250_7,
-							  CHAN_5250_5330_11,
-							  CHAN_5735_5835_3} },
+	[ETSI12] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 4, {CHAN_5170_5250_7,
+							      CHAN_5250_5330_14,
+							      CHAN_5490_5730_6,
+							      CHAN_5735_5835_8}
+							      },
 
-	[APL24] = {CTL_ETSI, DFS_ETSI_REGION, 2, 0, 3, {CHAN_5170_5250_8,
-							CHAN_5250_5330_12,
-							CHAN_5735_5815_3} },
+	[ETSI13] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 4, {CHAN_5170_5250_8,
+							      CHAN_5250_5330_12,
+							      CHAN_5490_5730_5,
+							      CHAN_5735_5875_4}
+							      },
 
-	[MKK3] = {CTL_MKK, DFS_UNINIT_REGION, 2, 0, 1, {CHAN_5170_5250_3} },
+	[ETSI14] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 4, {CHAN_5170_5250_2,
+							      CHAN_5250_5330_1,
+							      CHAN_5490_5730_7,
+							      CHAN_5735_5875_5}
+							      },
 
-	[MKK5] = {CTL_MKK, DFS_MKK_REGION, 2, 0, 3, {CHAN_5170_5250_8,
-						     CHAN_5250_5330_12,
-						     CHAN_5490_5710_7} },
+	[ETSI15] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 4, {CHAN_5170_5250_2,
+							      CHAN_5250_5330_1,
+							      CHAN_5490_5730_5,
+							      CHAN_5735_5815_2}
+							      },
 
-	[MKK11] = {CTL_MKK, DFS_MKK_REGION, 2, 0, 5, {CHAN_4910_4990_1,
-						      CHAN_5170_5250_2,
-						      CHAN_5030_5090_1,
-						      CHAN_5250_5330_1,
-						      CHAN_5490_5710_7} },
+	[APL1] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 80, 0, 1, {CHAN_5735_5835_2}
+							     },
 
-	[MKK16] = {CTL_MKK, DFS_MKK_REGION, 2, 0, 1, {CHAN_5490_5710_6} },
+	[APL2] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 20, 0, 1, {CHAN_5735_5815_4}
+							     },
 
-	[MKK17] = {CTL_MKK, DFS_MKKN_REGION, 2, 0, 3, {CHAN_5170_5250_8,
-						      CHAN_5250_5330_12,
-						      CHAN_5490_5730_6} },
+	[APL4] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 80, 0, 2, {CHAN_5170_5250_2,
+							     CHAN_5735_5835_1}
+							     },
 
-	[WORLD_5G_1] = {CTL_NONE, DFS_UNINIT_REGION, 2, 0, 2,
-			{CHAN_5170_5330_1,
-			 CHAN_5735_5835_5} },
+	[APL6] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 3, {CHAN_5170_5250_3,
+							    CHAN_5250_5330_2,
+							    CHAN_5735_5835_3} },
 
-	[WORLD_5G_2] = {CTL_NONE, DFS_UNINIT_REGION, 2, 0, 3,
-			{CHAN_5170_5330_1,
-			 CHAN_5490_5730_2,
-			 CHAN_5735_5835_5} },
+	[APL8] = {CTL_FCC, DFS_ETSI_REGION, 2, 80, 0, 2, {CHAN_5250_5330_4,
+							  CHAN_5735_5835_2} },
+
+	[APL9] = {CTL_MKK, DFS_KR_REGION, 2, 160, 6, 4,   {CHAN_5170_5250_2,
+							   CHAN_5250_5330_1,
+							   CHAN_5490_5730_6,
+							   CHAN_5735_5835_1} },
+
+	[APL10] = {CTL_ETSI, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_5170_5250_2,
+							    CHAN_5250_5330_4,
+							    CHAN_5490_5710_1,
+							    CHAN_5735_5815_1} },
+
+	[APL11] = { CTL_ETSI, DFS_FCC_REGION, 2, 40, 0, 4, {CHAN_5170_5250_9,
+							    CHAN_5250_5330_13,
+							    CHAN_5490_5710_4,
+							    CHAN_5735_5875_2} },
+
+	[APL12] = {CTL_ETSI, DFS_ETSI_REGION, 2, 80, 0, 3, {CHAN_5170_5250_2,
+							    CHAN_5490_5570_1,
+							    CHAN_5735_5775_1} },
+
+	[APL13] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 3, {CHAN_5170_5250_2,
+							     CHAN_5250_5330_1,
+							     CHAN_5490_5670_2}
+							     },
+
+	[APL14] = {CTL_MKK, DFS_CN_REGION, 2, 160, 0, 3, {CHAN_5170_5250_2,
+							  CHAN_5250_5330_1,
+							  CHAN_5735_5835_4} },
+
+	[APL15] = {CTL_FCC, DFS_UNINIT_REGION, 2, 160, 0, 3, {CHAN_5170_5250_2,
+							      CHAN_5250_5330_5,
+							      CHAN_5735_5835_4}
+							      },
+
+	[APL16] = {CTL_FCC, DFS_UNINIT_REGION, 2, 160, 0, 5, {CHAN_5170_5250_1,
+							      CHAN_5250_5330_6,
+							      CHAN_5490_5590_2,
+							      CHAN_5650_5730_2,
+							      CHAN_5735_5835_2}
+							      },
+
+	[APL17] = {CTL_FCC, DFS_UNINIT_REGION, 2, 160, 0, 5, {CHAN_5170_5250_2,
+							      CHAN_5250_5330_8,
+							      CHAN_5490_5590_3,
+							      CHAN_5650_5730_3,
+							      CHAN_5735_5835_7}
+							      },
+
+	[APL19] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 0, 4, {CHAN_5170_5250_4,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5875_3} },
+
+	[APL20] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 4, {CHAN_5170_5250_8,
+							     CHAN_5250_5330_12,
+							     CHAN_5490_5730_5,
+							     CHAN_5735_5835_4}
+							     },
+
+	[APL23] = {CTL_ETSI, DFS_UNINIT_REGION, 2, 160, 0, 3,
+							{CHAN_5170_5250_7,
+							 CHAN_5250_5330_11,
+							 CHAN_5735_5835_3} },
+
+	[APL24] = {CTL_ETSI, DFS_ETSI_REGION, 2, 80, 0, 3, {CHAN_5170_5250_8,
+							    CHAN_5250_5330_12,
+							    CHAN_5735_5815_3} },
+
+	[MKK3] = {CTL_MKK, DFS_UNINIT_REGION, 2, 80, 0, 1, {CHAN_5170_5250_3} },
+
+	[MKK5] = {CTL_MKK, DFS_MKK_REGION, 2, 160, 0, 3, {CHAN_5170_5250_8,
+							  CHAN_5250_5330_12,
+							  CHAN_5490_5710_7} },
+
+	[MKK11] = {CTL_MKK, DFS_MKK_REGION, 2, 160, 0, 5, {CHAN_4910_4990_1,
+							   CHAN_5170_5250_2,
+							   CHAN_5030_5090_1,
+							   CHAN_5250_5330_1,
+							   CHAN_5490_5710_7} },
+
+	[MKK16] = {CTL_MKK, DFS_MKK_REGION, 2, 160, 0, 1, {CHAN_5490_5710_6} },
+
+	[MKK17] = {CTL_MKK, DFS_MKKN_REGION, 2, 160, 0, 3, {CHAN_5170_5250_8,
+							    CHAN_5250_5330_12,
+							    CHAN_5490_5730_6} },
+
+	[WORLD_5G_1] = {CTL_NONE, DFS_UNINIT_REGION, 2, 160, 0, 2,
+							{CHAN_5170_5330_1,
+							 CHAN_5735_5835_5} },
+
+	[WORLD_5G_2] = {CTL_NONE, DFS_UNINIT_REGION, 2, 160, 0, 3,
+							{CHAN_5170_5330_1,
+							 CHAN_5490_5730_2,
+							 CHAN_5735_5835_5} },
 };
 
 #ifdef CONFIG_REG_CLIENT
