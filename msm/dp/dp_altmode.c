@@ -27,10 +27,7 @@ struct dp_altmode_private {
 	struct dp_hpd_cb *dp_cb;
 	struct dp_altmode dp_altmode;
 	struct altmode_client *amclient;
-	struct altmode_client_data altmode;
-	const char *parent_name;
 	bool connected;
-	struct notifier_block nb;
 };
 
 enum dp_altmode_pin_assignment {
@@ -201,25 +198,23 @@ ack:
 	return rc;
 }
 
-static int dp_altmode_register(struct notifier_block *nb, unsigned long ebt,
-		void *pdev)
+static void dp_altmode_register(void *priv)
 {
-	int rc;
-	struct platform_device *altmode_pdev = pdev;
-	struct dp_altmode_private *altmode = container_of(nb,
-			struct dp_altmode_private, nb);
+	struct dp_altmode_private *altmode = priv;
+	struct altmode_client_data cd = {
+		.callback	= &dp_altmode_notify,
+	};
 
-	altmode->amclient = altmode_register_client(&altmode_pdev->dev,
-			&altmode->altmode);
-	if (IS_ERR_OR_NULL(altmode->amclient)) {
-		rc = PTR_ERR(altmode->amclient);
-		DP_ERR("failed to register dp altmode client: %d\n", rc);
-		return -EINVAL;
-	}
+	cd.name = "displayport";
+	cd.svid = USB_SID_DISPLAYPORT;
+	cd.priv = altmode;
 
-	DP_DEBUG("success\n");
-
-	return 0;
+	altmode->amclient = altmode_register_client(altmode->dev, &cd);
+	if (IS_ERR_OR_NULL(altmode->amclient))
+		DP_ERR("failed to register as client: %d\n",
+				PTR_ERR(altmode->amclient));
+	else
+		DP_DEBUG("success\n");
 }
 
 static int dp_altmode_simulate_connect(struct dp_hpd *dp_hpd, bool hpd)
@@ -269,10 +264,6 @@ struct dp_hpd *dp_altmode_get(struct device *dev, struct dp_hpd_cb *cb)
 	int rc = 0;
 	struct dp_altmode_private *altmode;
 	struct dp_altmode *dp_altmode;
-	const char *altmode_str = "qcom,altmode-parent";
-	struct altmode_client_data client_data = {
-		.callback	= &dp_altmode_notify,
-	};
 
 	if (!cb) {
 		DP_ERR("invalid cb data\n");
@@ -286,28 +277,12 @@ struct dp_hpd *dp_altmode_get(struct device *dev, struct dp_hpd_cb *cb)
 	altmode->dev = dev;
 	altmode->dp_cb = cb;
 
-	client_data.name = "displayport";
-	client_data.svid = USB_SID_DISPLAYPORT;
-	client_data.priv = altmode;
-
-	altmode->altmode = client_data;
-
 	dp_altmode = &altmode->dp_altmode;
 	dp_altmode->base.register_hpd = NULL;
 	dp_altmode->base.simulate_connect = dp_altmode_simulate_connect;
 	dp_altmode->base.simulate_attention = dp_altmode_simulate_attention;
 
-	rc = of_property_read_string(altmode->dev->of_node, altmode_str,
-			&altmode->parent_name);
-	if (rc < 0) {
-		DP_ERR("No altmode parent device specified\n");
-		goto error;
-	}
-
-	DP_DEBUG("parent_name=%s\n", altmode->parent_name);
-
-	altmode->nb.notifier_call = dp_altmode_register;
-	rc = altmode_register_notifier(altmode->parent_name, &altmode->nb);
+	rc = altmode_register_notifier(dev, dp_altmode_register, altmode);
 	if (rc < 0) {
 		DP_ERR("altmode probe notifier registration failed: %d\n", rc);
 		goto error;
