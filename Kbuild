@@ -309,6 +309,9 @@ endif
 ifeq ($(CONFIG_WLAN_GET_RANGE_EXT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_range_ext.o
 endif
+ifeq ($(CONFIG_WLAN_GET_TDLS_PEERS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_tdls_peers.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
@@ -2578,6 +2581,7 @@ endif
 
 #normally, TDLS negative behavior is not needed
 cppflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
+cppflags-$(CONFIG_WLAN_GET_TDLS_PEERS) += -DWLAN_GET_TDLS_PEERS
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
