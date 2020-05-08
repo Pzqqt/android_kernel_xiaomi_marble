@@ -970,7 +970,10 @@ static void msm_postclose(struct drm_device *dev, struct drm_file *file)
 	struct msm_file_private *ctx = file->driver_priv;
 	struct msm_kms *kms = priv->kms;
 
-	if (kms && kms->funcs && kms->funcs->postclose)
+	if (!kms)
+		return;
+
+	if (kms->funcs && kms->funcs->postclose)
 		kms->funcs->postclose(kms, file);
 
 	mutex_lock(&dev->struct_mutex);
@@ -994,11 +997,14 @@ static void msm_lastclose(struct drm_device *dev)
 	struct msm_kms *kms = priv->kms;
 	int i, rc;
 
+	if (!kms)
+		return;
+
 	/* check for splash status before triggering cleanup
 	 * if we end up here with splash status ON i.e before first
 	 * commit then ignore the last close call
 	 */
-	if (kms && kms->funcs && kms->funcs->check_for_splash
+	if (kms->funcs && kms->funcs->check_for_splash
 		&& kms->funcs->check_for_splash(kms))
 		return;
 
@@ -1026,7 +1032,7 @@ static void msm_lastclose(struct drm_device *dev)
 			DRM_ERROR("client modeset commit failed: %d\n", rc);
 	}
 
-	if (kms && kms->funcs && kms->funcs->lastclose)
+	if (kms->funcs && kms->funcs->lastclose)
 		kms->funcs->lastclose(kms);
 }
 
