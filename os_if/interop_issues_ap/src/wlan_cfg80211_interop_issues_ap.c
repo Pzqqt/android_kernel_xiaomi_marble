@@ -180,6 +180,11 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 	struct wlan_interop_issues_ap_info interop_issues_ap = {0};
 	struct wlan_objmgr_psoc *psoc;
 
+	if (!adapter->vdev) {
+		osif_err("Invalid vdev");
+		return -EINVAL;
+	}
+
 	psoc = wlan_vdev_get_psoc(adapter->vdev);
 	if (!psoc) {
 		osif_err("Invalid psoc");
