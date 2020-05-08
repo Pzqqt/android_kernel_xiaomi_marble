@@ -5007,6 +5007,7 @@ typedef enum {
 	wmi_vdev_param_enable_disable_roam_reason_vsie,
 	wmi_vdev_param_set_cmd_obss_pd_threshold,
 	wmi_vdev_param_set_cmd_obss_pd_per_ac,
+	wmi_vdev_param_enable_srp,
 } wmi_conv_vdev_param_id;
 
 /**
@@ -5222,6 +5223,7 @@ typedef enum {
 	wmi_service_host_scan_stop_vdev_all,
 	wmi_service_ema_ap_support,
 	wmi_support_extend_address,
+	wmi_service_srg_srp_spatial_reuse_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

@@ -3036,6 +3036,54 @@ QDF_STATUS wmi_unified_send_self_srg_partial_bssid_bitmap_set_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_send_self_srg_obss_color_enable_bitmap_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_srg_obss_color_enable_bitmap)
+		return wmi_handle->ops->
+			send_self_srg_obss_color_enable_bitmap(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_self_srg_obss_bssid_enable_bitmap_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_srg_obss_bssid_enable_bitmap)
+		return wmi_handle->ops->
+			send_self_srg_obss_bssid_enable_bitmap(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_self_non_srg_obss_color_enable_bitmap_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_non_srg_obss_color_enable_bitmap)
+		return wmi_handle->ops->
+			send_self_non_srg_obss_color_enable_bitmap(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_self_non_srg_obss_bssid_enable_bitmap_cmd(
+	wmi_unified_t wmi_handle,  uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id)
+{
+	if (wmi_handle->ops->send_self_non_srg_obss_bssid_enable_bitmap)
+		return wmi_handle->ops->
+			send_self_non_srg_obss_bssid_enable_bitmap(
+				wmi_handle, bitmap_0, bitmap_1, pdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,

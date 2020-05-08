@@ -2169,6 +2169,22 @@ QDF_STATUS (*send_self_srg_bss_color_bitmap_set)(
 QDF_STATUS (*send_self_srg_partial_bssid_bitmap_set)(
 	wmi_unified_t wmi_handle, uint32_t bitmap_0,
 	uint32_t bitmap_1, uint8_t pdev_id);
+
+QDF_STATUS (*send_self_srg_obss_color_enable_bitmap)(
+	wmi_unified_t wmi_handle, uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
+
+QDF_STATUS (*send_self_srg_obss_bssid_enable_bitmap)(
+	wmi_unified_t wmi_handle, uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
+
+QDF_STATUS (*send_self_non_srg_obss_color_enable_bitmap)(
+	wmi_unified_t wmi_handle, uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
+
+QDF_STATUS (*send_self_non_srg_obss_bssid_enable_bitmap)(
+	wmi_unified_t wmi_handle, uint32_t bitmap_0,
+	uint32_t bitmap_1, uint8_t pdev_id);
 #endif
 
 QDF_STATUS
