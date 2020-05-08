@@ -113,6 +113,18 @@ static inline unsigned long __qdf_find_first_bit(unsigned long *addr,
 	return find_first_bit(addr, nbits);
 }
 
+static inline bool __qdf_bitmap_empty(unsigned long *addr,
+				      unsigned long nbits)
+{
+	return bitmap_empty(addr, nbits);
+}
+
+static inline int __qdf_bitmap_and(unsigned long *dst, unsigned long *src1,
+				   unsigned long *src2, unsigned long nbits)
+{
+	return bitmap_and(dst, src1, src2, nbits);
+}
+
 /**
  * __qdf_set_macaddr_broadcast() - set a QDF MacAddress to the 'broadcast'
  * @mac_addr: pointer to the qdf MacAddress to set to broadcast

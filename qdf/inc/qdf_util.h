@@ -194,6 +194,27 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
  */
 #define qdf_find_first_bit(addr, nbits)    __qdf_find_first_bit(addr, nbits)
 
+/**
+ * qdf_bitmap_empty() - Check if bitmap is empty
+ * @addr: Address buffer pointer
+ * @nbits: Number of bits
+ *
+ * Return: True if no bit set, else false
+ */
+#define qdf_bitmap_empty(addr, nbits)    __qdf_bitmap_empty(addr, nbits)
+
+/**
+ * qdf_bitmap_and() - AND operation on the bitmap
+ * @dst: Destination buffer pointer
+ * @src1: First source buffer pointer
+ * @src2: Second source buffer pointer
+ * @nbits: Number of bits
+ *
+ * Return: Bitwise and of src1 and src2 in dst
+ */
+#define qdf_bitmap_and(dst, src1, src2, nbits) \
+		__qdf_bitmap_and(dst, src1, src2, nbits)
+
 #define qdf_wait_queue_interruptible(wait_queue, condition) \
 		__qdf_wait_queue_interruptible(wait_queue, condition)
 
