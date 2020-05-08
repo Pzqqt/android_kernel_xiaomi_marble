@@ -240,6 +240,11 @@ bool wlan_util_map_index_is_set(unsigned long *map, uint8_t id)
 	return qdf_test_bit(id, map);
 }
 
+bool wlan_util_map_is_any_index_set(unsigned long *map, unsigned long nbytes)
+{
+	return !qdf_bitmap_empty(map, QDF_CHAR_BIT * nbytes);
+}
+
 static void wlan_vdev_chan_change_pending(struct wlan_objmgr_pdev *pdev,
 					  void *object, void *arg)
 {

@@ -212,6 +212,15 @@ void wlan_util_change_map_index(unsigned long *map, uint8_t id, uint8_t set);
 bool wlan_util_map_index_is_set(unsigned long *map, uint8_t id);
 
 /**
+ * wlan_util_map_is_any_index_set() - Check if any bit is set in given bitmap
+ * @map: bitmap
+ * @nbytes: number of bytes in bitmap
+ *
+ * Return: true, if any of the bit is set, otherwise false
+ */
+bool wlan_util_map_is_any_index_set(unsigned long *map, unsigned long nbytes);
+
+/**
  * wlan_pdev_chan_change_pending_vdevs() - function to test/set channel change
  *                                         pending flag
  * @pdev: pdev object

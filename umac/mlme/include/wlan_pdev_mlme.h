@@ -31,7 +31,7 @@
  */
 struct pdev_restart_attr {
 	struct wlan_objmgr_vdev *vdev;
-	unsigned long restart_bmap[2];
+	qdf_bitmap(restart_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 };
 
 /**
@@ -51,8 +51,8 @@ struct pdev_mlme_obj {
 	QDF_STATUS (*mlme_register_ops)(struct vdev_mlme_obj *vdev_mlme);
 	qdf_spinlock_t vdev_restart_lock;
 	qdf_timer_t restart_req_timer;
-	unsigned long restart_pend_vdev_bmap[2];
-	unsigned long restart_send_vdev_bmap[2];
+	qdf_bitmap(restart_pend_vdev_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
+	qdf_bitmap(restart_send_vdev_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 	unsigned long start_send_vdev_arr[2];
 	struct pdev_restart_attr pdev_restart;
 	qdf_atomic_t multivdev_restart_wait_cnt;
