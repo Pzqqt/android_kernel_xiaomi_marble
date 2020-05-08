@@ -5387,6 +5387,35 @@ typedef struct {
     A_UINT32 conformance_test_limit_2G;
     A_UINT32 conformance_test_limit_5G;
     A_UINT32 dfs_domain;
+
+    /**
+     * The below conformance_test_limit index fields are for supporting the
+     * 5G sub-band CTL feature.
+     * Conformance test limits (CTLs) are the product-specific
+     * regulatory-compliant powers stored in the board data file (BDF).
+     * These CTLs within the BDF are identified by CTL index values.
+     * For example, the BDF file is expected to contain CTL data for
+     * FCC (CTL index = 0x10), ETSI (CTL index = 0x30),
+     * Japan/MKK (CTL index = 0x40), Korea (CTL index = 0x50),
+     * and China (CTL index = 0x60) CTL regions.
+     * The target FW will use the CTL indices specified in this message to
+     * find a BDF CTL entry with a matching CTL index value, and then use
+     * that CTL as one of the inputs into the tx power limit computation.
+     * A CTL index value of 0x0 is invalid, and will be ignored by the FW.
+     */
+    A_UINT32 conformance_test_limit_5G_subband_UNII1;
+    A_UINT32 conformance_test_limit_5G_subband_UNII2a;
+    A_UINT32 conformance_test_limit_5G_subband_UNII2c;
+    A_UINT32 conformance_test_limit_5G_subband_UNII3;
+    A_UINT32 conformance_test_limit_5G_subband_UNII4;
+    /**
+     * The below conformance_test_limit index fields are like the above,
+     * but are for supporting the 6G sub-band CTL feature.
+     */
+    A_UINT32 conformance_test_limit_6G_subband_UNII5;
+    A_UINT32 conformance_test_limit_6G_subband_UNII6;
+    A_UINT32 conformance_test_limit_6G_subband_UNII7;
+    A_UINT32 conformance_test_limit_6G_subband_UNII8;
 } wmi_pdev_set_regdomain_cmd_fixed_param;
 
 typedef struct {
