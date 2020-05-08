@@ -1057,7 +1057,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				/* If a client is deleted from white list and it is connected, send deauth */
 				wlansap_populate_del_sta_params(peer_sta_mac,
 					eCsrForcedDeauthSta,
-					(SIR_MAC_MGMT_DEAUTH >> 4),
+					SIR_MAC_MGMT_DEAUTH,
 					&delStaParams);
 				wlansap_deauth_sta(sap_ctx, &delStaParams);
 				QDF_TRACE(QDF_MODULE_ID_SAP,
@@ -1106,7 +1106,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			/* If we are adding a client to the black list; if its connected, send deauth */
 			wlansap_populate_del_sta_params(peer_sta_mac,
 				eCsrForcedDeauthSta,
-				(SIR_MAC_MGMT_DEAUTH >> 4),
+				SIR_MAC_MGMT_DEAUTH,
 				&delStaParams);
 			wlansap_deauth_sta(sap_ctx, &delStaParams);
 			sap_info("... Now add to black list");
@@ -2369,11 +2369,10 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 	else
 		params->reason_code = reason_code;
 
-	if (subtype == (SIR_MAC_MGMT_DEAUTH >> 4) ||
-	    subtype == (SIR_MAC_MGMT_DISASSOC >> 4))
+	if (subtype == SIR_MAC_MGMT_DEAUTH || subtype == SIR_MAC_MGMT_DISASSOC)
 		params->subtype = subtype;
 	else
-		params->subtype = (SIR_MAC_MGMT_DEAUTH >> 4);
+		params->subtype = SIR_MAC_MGMT_DEAUTH;
 
 	sap_debug("Delete STA with RC:%hu subtype:%hhu MAC::" QDF_MAC_ADDR_STR,
 		  params->reason_code, params->subtype,
