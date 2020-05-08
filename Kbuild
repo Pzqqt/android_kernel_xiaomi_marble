@@ -272,6 +272,7 @@ endif
 ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_suspend_resume.o
 endif
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_unit_test.o
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
