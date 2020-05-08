@@ -495,6 +495,13 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			is_frag = qdf_nbuf_is_frag(nbuf);
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
 
+			/* If the source or destination peer in the isolation
+			 * list then dont forward instead push to bridge stack.
+			 */
+			if (dp_get_peer_isolation(ta_peer) ||
+			    dp_get_peer_isolation(da_peer))
+				return false;
+
 			/* linearize the nbuf just before we send to
 			 * dp_tx_send()
 			 */
@@ -542,6 +549,12 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	else if (qdf_unlikely((qdf_nbuf_is_da_mcbc(nbuf) &&
 			       !ta_peer->bss_peer))) {
 		if (!dp_rx_check_ndi_mdns_fwding(ta_peer, nbuf))
+			goto end;
+
+		/* If the source peer in the isolation list
+		 * then dont forward instead push to bridge stack
+		 */
+		if (dp_get_peer_isolation(ta_peer))
 			goto end;
 
 		nbuf_copy = qdf_nbuf_copy(nbuf);

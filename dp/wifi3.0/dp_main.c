@@ -5227,6 +5227,9 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		 * update tx_cap_enabled flag to support peer filter.
 		 */
 		dp_peer_tx_capture_filter_check(pdev, peer);
+
+		dp_set_peer_isolation(peer, false);
+
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/*
@@ -5353,6 +5356,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * update tx_cap_enabled flag to support peer filter.
 	 */
 	dp_peer_tx_capture_filter_check(pdev, peer);
+
+	dp_set_peer_isolation(peer, false);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7687,6 +7692,9 @@ static QDF_STATUS dp_set_peer_param(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,
 		break;
 	case CDP_CONFIG_NAC:
 		peer->nac = !!(val.cdp_peer_param_nac);
+		break;
+	case CDP_CONFIG_ISOLATION:
+		dp_set_peer_isolation(peer, val.cdp_peer_param_isolation);
 		break;
 	default:
 		break;

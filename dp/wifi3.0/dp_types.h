@@ -2240,6 +2240,10 @@ struct dp_peer {
 		rx_cap_enabled:1, /* Peer's rx-capture is enabled */
 		valid:1; /* valid bit */
 
+#ifdef QCA_SUPPORT_PEER_ISOLATION
+	bool isolation; /* enable peer isolation for this peer */
+#endif
+
 	/* MCL specific peer local id */
 	uint16_t local_id;
 	enum ol_txrx_peer_state state;
