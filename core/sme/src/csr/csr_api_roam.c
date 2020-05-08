@@ -17666,6 +17666,10 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 				     struct csr_roam_session *session)
 {
 	uint32_t pmkid_modes = mac_ctx->mlme_cfg->sta.pmkid_modes;
+	struct sCsrNeighborRoamControlInfo *neighbor_roam_info;
+
+	neighbor_roam_info =
+			&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
 
 	req_buf->roam_offload_enabled = csr_is_roam_offload_enabled(mac_ctx);
 	if (!req_buf->roam_offload_enabled)
@@ -17708,8 +17712,10 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->lfr.min_delay_btw_roam_scans;
 	req_buf->roam_trigger_reason_bitmask =
 			mac_ctx->mlme_cfg->lfr.roam_trigger_reason_bitmask;
+	/* Do not force RSSI triggers in case controlled roaming enable */
 	req_buf->roam_force_rssi_trigger =
-			mac_ctx->mlme_cfg->lfr.roam_force_rssi_trigger;
+		(!neighbor_roam_info->roam_control_enable &&
+			mac_ctx->mlme_cfg->lfr.roam_force_rssi_trigger);
 	csr_update_roam_req_adaptive_11r(session, mac_ctx, req_buf);
 
 	/* fill bss load triggered roam related configs */
