@@ -4946,8 +4946,6 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	pdev = vdev->pdev;
 
-	soc->vdev_id_map[vdev->vdev_id] = NULL;
-
 	if (wlan_op_mode_sta == vdev->opmode) {
 		if (vdev->vap_self_peer)
 			dp_peer_delete_wifi3((struct cdp_soc_t *)soc,
@@ -4969,6 +4967,12 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 		dp_vdev_flush_peers((struct cdp_vdev *)vdev, true);
 
 	dp_rx_vdev_detach(vdev);
+	/*
+	 * move it after dp_rx_vdev_detach(),
+	 * as the call back done in dp_rx_vdev_detach()
+	 * still need to get vdev pointer by vdev_id.
+	 */
+	soc->vdev_id_map[vdev->vdev_id] = NULL;
 	/*
 	 * Use peer_ref_mutex while accessing peer_list, in case
 	 * a peer is in the process of being removed from the list.
