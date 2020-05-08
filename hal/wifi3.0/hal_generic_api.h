@@ -1549,11 +1549,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 	}
 	case WIFIRX_MPDU_START_E:
 	{
-		uint8_t *rx_mpdu_start =
-			(uint8_t *)rx_tlv + HAL_RX_OFFSET(UNIFIED_RX_MPDU_START_0,
-					RX_MPDU_INFO_RX_MPDU_INFO_DETAILS);
-		uint32_t ppdu_id =
-				HAL_RX_GET_PPDU_ID(rx_mpdu_start);
+		uint8_t *rx_mpdu_start = (uint8_t *)rx_tlv;
+		uint32_t ppdu_id = HAL_RX_GET_PPDU_ID(rx_mpdu_start);
 		uint8_t filter_category = 0;
 
 		ppdu_info->nac_info.fc_valid =
@@ -1602,7 +1599,7 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 		} else {
 			ppdu_info->rx_status.ppdu_len +=
 				HAL_RX_GET(rx_mpdu_start, RX_MPDU_INFO_13,
-				MPDU_LENGTH);
+					   MPDU_LENGTH);
 		}
 
 		filter_category =
