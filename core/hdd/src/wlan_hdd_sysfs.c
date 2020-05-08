@@ -37,6 +37,7 @@
 #include <sir_api.h>
 #endif
 #include "osif_sync.h"
+#include "wlan_hdd_sysfs_get_sta_info.h"
 #include <wlan_hdd_sysfs_set_fw_mode_cfg.h>
 #include <wlan_hdd_sysfs_reassoc.h>
 #include "wlan_hdd_sysfs_crash_inject.h"
@@ -617,6 +618,7 @@ static void hdd_sysfs_destroy_bcn_reception_interface(struct hdd_adapter
 static void
 hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_get_sta_info_interface_create(adapter);
 	hdd_sysfs_create_bcn_reception_interface(adapter);
 	hdd_sysfs_reassoc_create(adapter);
 	hdd_sysfs_crash_inject_create(adapter);
@@ -638,11 +640,13 @@ hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_crash_inject_destroy(adapter);
 	hdd_sysfs_reassoc_destroy(adapter);
 	hdd_sysfs_destroy_bcn_reception_interface(adapter);
+	hdd_sysfs_get_sta_info_interface_destroy(adapter);
 }
 
 static void
 hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_get_sta_info_interface_create(adapter);
 	hdd_sysfs_crash_inject_create(adapter);
 	hdd_sysfs_suspend_create(adapter);
 	hdd_sysfs_resume_create(adapter);
@@ -660,6 +664,7 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_resume_destroy(adapter);
 	hdd_sysfs_suspend_destroy(adapter);
 	hdd_sysfs_crash_inject_destroy(adapter);
+	hdd_sysfs_get_sta_info_interface_destroy(adapter);
 }
 
 void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
