@@ -1296,9 +1296,10 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 
 	switch (event) {
 	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
-		snd_soc_component_update_bits(wsa883x->component,
-					WSA883X_PA_FSM_CTL,
-					0x01, 0x00);
+		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+			snd_soc_component_update_bits(wsa883x->component,
+						WSA883X_PA_FSM_CTL,
+						0x01, 0x00);
 		wsa883x_swr_down(wsa883x);
 		break;
 
