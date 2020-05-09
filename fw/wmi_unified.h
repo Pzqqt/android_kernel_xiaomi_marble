@@ -2812,6 +2812,12 @@ typedef struct {
      * are not specified.
      */
     A_UINT32 hw_min_max_tx_power_5g;
+
+    /*
+     * Number of peers supported per WMI_PEER_CHAN_WIDTH_SWITCH_CMDID
+     * 0 - not enabled
+     */
+    A_UINT32 chwidth_num_peer_caps;
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
