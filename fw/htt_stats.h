@@ -771,6 +771,10 @@ typedef struct {
     A_UINT32 num_mu_peer_blacklisted;
     /* Num of times mu_ofdma seq posted */
     A_UINT32 mu_ofdma_seq_posted;
+    /* Num of times UL MU MIMO seq posted */
+    A_UINT32 ul_mumimo_seq_posted;
+    /* Num of times UL OFDMA seq posted */
+    A_UINT32 ul_ofdma_seq_posted;
 } htt_tx_pdev_stats_cmn_tlv;
 
 #define HTT_TX_PDEV_STATS_URRN_TLV_SZ(_num_elems) (sizeof(A_UINT32) * (_num_elems))
