@@ -125,7 +125,6 @@ struct wsa883x_priv {
 	void *handle;
 	int (*register_notifier)(void *handle,
 				struct notifier_block *nblock, bool enable);
-	struct delayed_work vbat_work;
 	struct cdc_regulator *regulator;
 	int num_supplies;
 	struct regulator_bulk_data *supplies;

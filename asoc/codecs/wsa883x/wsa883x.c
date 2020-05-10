@@ -36,7 +36,6 @@
 #define HIGH_TEMP_THRESHOLD 45
 #define TEMP_INVALID	0xFFFF
 #define WSA883X_TEMP_RETRY 3
-#define WSA883X_VBAT_TIMER_SEC    2
 
 #define MAX_NAME_LEN	30
 #define WSA883X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
@@ -50,10 +49,6 @@
 #define WSA883X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
 		SNDRV_PCM_FMTBIT_S24_LE |\
 		SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
-
-static int wsa883x_vbat_timer_sec = WSA883X_VBAT_TIMER_SEC;
-module_param(wsa883x_vbat_timer_sec, int, 0664);
-MODULE_PARM_DESC(wsa883x_vbat_timer_sec, "timer for VBAT monitor polling");
 
 enum {
 	WSA_4OHMS =4,
@@ -996,24 +991,9 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
-		snd_soc_component_update_bits(component,
-				WSA883X_VBAT_ADC_FLT_CTL,
-				0x0E, 0x06);
-		snd_soc_component_update_bits(component,
-				WSA883X_VBAT_ADC_FLT_CTL,
-				0x01, 0x01);
-		schedule_delayed_work(&wsa883x->vbat_work,
-			msecs_to_jiffies(wsa883x_vbat_timer_sec * 1000));
 		set_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		cancel_delayed_work_sync(&wsa883x->vbat_work);
-		snd_soc_component_update_bits(component,
-				WSA883X_VBAT_ADC_FLT_CTL,
-				0x01, 0x00);
-		snd_soc_component_update_bits(component,
-				WSA883X_VBAT_ADC_FLT_CTL,
-				0x0E, 0x00);
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
@@ -1196,37 +1176,6 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 	return ret;
 }
 
-static void wsa883x_vbat_monitor_work(struct work_struct *work)
-{
-	struct wsa883x_priv *wsa883x;
-	struct delayed_work *dwork;
-	struct snd_soc_component *component;
-	u16 val = 0, vbat_code = 0;
-	int vbat_val = 0;
-
-	dwork = to_delayed_work(work);
-	wsa883x = container_of(dwork, struct wsa883x_priv, vbat_work);
-	component = wsa883x->component;
-
-	val = snd_soc_component_read32(component, WSA883X_VBAT_DIN_MSB);
-	vbat_code = (val << 2);
-	val = (snd_soc_component_read32(component, WSA883X_VBAT_DIN_LSB)
-		& 0xC0);
-	vbat_code |= (val >> 6);
-	vbat_val = ((vbat_code * 5) / 1023);
-	dev_dbg(component->dev, "%s: instant vbat code = %d val = %d\n",
-		__func__, vbat_code, vbat_val);
-
-	val = snd_soc_component_read32(component, WSA883X_VBAT_DOUT);
-	vbat_val = ((val * 5) / 255);
-
-	dev_dbg(component->dev, "%s: low pass vbat code = %d val = %d\n",
-		__func__, val, vbat_val);
-
-	schedule_delayed_work(&wsa883x->vbat_work,
-			msecs_to_jiffies(wsa883x_vbat_timer_sec * 1000));
-}
-
 static int wsa883x_codec_probe(struct snd_soc_component *component)
 {
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
@@ -1250,7 +1199,6 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
-	INIT_DELAYED_WORK(&wsa883x->vbat_work, wsa883x_vbat_monitor_work);
 
 	return 0;
 }
@@ -1348,8 +1296,6 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 
 	switch (event) {
 	case BOLERO_WSA_EVT_PA_OFF_PRE_SSR:
-		if (delayed_work_pending(&wsa883x->vbat_work))
-			cancel_delayed_work_sync(&wsa883x->vbat_work);
 		snd_soc_component_update_bits(wsa883x->component,
 					WSA883X_PA_FSM_CTL,
 					0x01, 0x00);
