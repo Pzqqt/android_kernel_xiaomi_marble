@@ -6000,12 +6000,17 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 				return NULL;
 			}
 		}
-		/* Check for max no of supported VDEVs before creating
-		 * another one.
+
+	/* fall through */
+	case QDF_P2P_CLIENT_MODE:
+
+		/* Check for max no of supported STA/P2PCLI VDEVs before
+		 * creating another one.
 		 */
-		intf_count = hdd_get_mode_specific_interface_count(
-								hdd_ctx,
-								session_type);
+		intf_count += hdd_get_mode_specific_interface_count(hdd_ctx,
+							QDF_STA_MODE);
+		intf_count += hdd_get_mode_specific_interface_count(hdd_ctx,
+							QDF_P2P_CLIENT_MODE);
 		if (CFG_TGT_DEFAULT_MAX_STA_VDEVS &&
 		    (intf_count >= CFG_TGT_DEFAULT_MAX_STA_VDEVS)) {
 			hdd_err("Max limit reached sta vdev-current %d max %d",
@@ -6014,7 +6019,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		}
 
 	/* fall through */
-	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
 	case QDF_NDI_MODE:
