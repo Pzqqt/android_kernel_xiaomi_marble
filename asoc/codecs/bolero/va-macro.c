@@ -787,23 +787,31 @@ done:
 	return ret;
 }
 
-static int is_amic_enabled(struct snd_soc_component *component, int decimator)
+static bool is_amic_enabled(struct snd_soc_component *component, int decimator)
 {
 	u16 adc_mux_reg = 0, adc_reg = 0;
 	u16 adc_n = BOLERO_ADC_MAX;
+	bool ret = false;
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+
+	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
+		return ret;
 
 	adc_mux_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG1 +
 			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 	if (snd_soc_component_read32(component, adc_mux_reg) & SWR_MIC) {
+		if (va_priv->version == BOLERO_VERSION_2_1)
+			return true;
 		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
 			VA_MACRO_ADC_MUX_CFG_OFFSET * decimator;
 		adc_n = snd_soc_component_read32(component, adc_reg) &
 				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
-		if (adc_n >= BOLERO_ADC_MAX)
-			adc_n = BOLERO_ADC_MAX;
+		if (adc_n < BOLERO_ADC_MAX)
+			return true;
 	}
 
-	return adc_n;
+	return ret;
 }
 
 static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
@@ -814,7 +822,7 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	struct snd_soc_component *component;
 	u16 dec_cfg_reg, hpf_gate_reg;
 	u8 hpf_cut_off_freq;
-	u16 adc_n = 0;
+	u16 adc_reg = 0, adc_n = 0;
 
 	hpf_delayed_work = to_delayed_work(work);
 	hpf_work = container_of(hpf_delayed_work, struct hpf_work, dwork);
@@ -830,8 +838,11 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 	dev_dbg(va_priv->dev, "%s: decimator %u hpf_cut_of_freq 0x%x\n",
 		__func__, hpf_work->decimator, hpf_cut_off_freq);
 
-	adc_n = is_amic_enabled(component, hpf_work->decimator);
-	if (adc_n < BOLERO_ADC_MAX) {
+	if (is_amic_enabled(component, hpf_work->decimator)) {
+		adc_reg = BOLERO_CDC_VA_INP_MUX_ADC_MUX0_CFG0 +
+			VA_MACRO_ADC_MUX_CFG_OFFSET * hpf_work->decimator;
+		adc_n = snd_soc_component_read32(component, adc_reg) &
+				VA_MACRO_SWR_MIC_MUX_SEL_MASK;
 		/* analog mic clear TX hold */
 		bolero_clear_amic_tx_hold(component->dev, adc_n);
 		snd_soc_component_update_bits(component,
@@ -1134,7 +1145,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		/* Enable TX CLK */
 		snd_soc_component_update_bits(component,
 				tx_vol_ctl_reg, 0x20, 0x20);
-		if (!(is_amic_enabled(component, decimator) < BOLERO_ADC_MAX)) {
+		if (!is_amic_enabled(component, decimator)) {
 			snd_soc_component_update_bits(component,
 				hpf_gate_reg, 0x01, 0x00);
 			/*
@@ -1161,7 +1172,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 		}
 		snd_soc_component_update_bits(component,
 				hpf_gate_reg, 0x03, 0x02);
-		if (!(is_amic_enabled(component, decimator) < BOLERO_ADC_MAX))
+		if (!is_amic_enabled(component, decimator))
 			snd_soc_component_update_bits(component,
 				hpf_gate_reg, 0x03, 0x00);
 		/*
@@ -1225,8 +1236,7 @@ static int va_macro_enable_dec(struct snd_soc_dapm_widget *w,
 						dec_cfg_reg,
 						TX_HPF_CUT_OFF_FREQ_MASK,
 						hpf_cut_off_freq << 5);
-				if (is_amic_enabled(component, decimator) <
-					BOLERO_ADC_MAX)
+				if (is_amic_enabled(component, decimator))
 					snd_soc_component_update_bits(component,
 						hpf_gate_reg,
 						0x03, 0x02);
