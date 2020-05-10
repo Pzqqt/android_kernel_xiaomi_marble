@@ -83,8 +83,10 @@
 #include <wlan_pmo_ucfg_api.h>
 #include "wifi_pos_api.h"
 #include "hif_main.h"
+#ifdef WLAN_CONV_SPECTRAL_ENABLE
 #include <target_if_spectral.h>
 #include <wlan_spectral_utils_api.h>
+#endif
 #include "init_event_handler.h"
 #include "init_deinit_lmac.h"
 #include "target_if_green_ap.h"
@@ -3988,13 +3990,13 @@ static void wma_send_time_stamp_sync_cmd(void *data)
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 static void wma_register_spectral_cmds(tp_wma_handle wma_handle)
 {
-	struct wmi_spectral_cmd_ops cmd_ops;
+	struct spectral_wmi_ops cmd_ops;
 
 	cmd_ops.wmi_spectral_configure_cmd_send =
 			wmi_unified_vdev_spectral_configure_cmd_send;
 	cmd_ops.wmi_spectral_enable_cmd_send =
 			wmi_unified_vdev_spectral_enable_cmd_send;
-	wlan_register_wmi_spectral_cmd_ops(wma_handle->pdev, &cmd_ops);
+	wlan_register_spectral_wmi_ops(wma_handle->psoc, &cmd_ops);
 }
 #else
 static void wma_register_spectral_cmds(tp_wma_handle wma_handle)
