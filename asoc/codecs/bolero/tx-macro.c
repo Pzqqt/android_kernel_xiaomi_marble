@@ -378,9 +378,6 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 		if (tx_priv->swr_ctrl_data) {
 			swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEVICE_DOWN, NULL);
-			swrm_wcd_notify(
-				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
 				SWR_DEVICE_SSR_DOWN, NULL);
 		}
 		if ((!pm_runtime_enabled(tx_dev) ||

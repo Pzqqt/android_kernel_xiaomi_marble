@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1396,9 +1396,6 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		trace_printk("%s, enter SSR down\n", __func__);
 		rx_priv->dev_up = false;
 		if (rx_priv->swr_ctrl_data) {
-			swrm_wcd_notify(
-				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
-				SWR_DEVICE_DOWN, NULL);
 			swrm_wcd_notify(
 				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 				SWR_DEVICE_SSR_DOWN, NULL);
