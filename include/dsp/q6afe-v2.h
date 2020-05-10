@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #ifndef __Q6AFE_V2_H__
 #define __Q6AFE_V2_H__
@@ -284,6 +284,9 @@ enum {
 	/* IDX 208-> 209 */
 	IDX_AFE_PORT_ID_PRIMARY_META_MI2S_RX,
 	IDX_AFE_PORT_ID_SECONDARY_META_MI2S_RX,
+	/* IDX 210-> 211 */
+	IDX_RT_PROXY_PORT_002_RX,
+	IDX_RT_PROXY_PORT_002_TX,
 	AFE_MAX_PORTS
 };
 
