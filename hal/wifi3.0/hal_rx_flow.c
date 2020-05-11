@@ -539,7 +539,7 @@ hal_rx_fst_attach(qdf_device_t qdf_dev,
 	fst->hash_mask = max_entries - 1;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "HAL FST allocation %x %d * %d\n", fst,
+		  "HAL FST allocation %pK %d * %d\n", fst,
 		  fst->max_entries, HAL_RX_FST_ENTRY_SIZE);
 
 	fst->base_vaddr = (uint8_t *)qdf_mem_alloc_consistent(qdf_dev,
@@ -548,7 +548,7 @@ hal_rx_fst_attach(qdf_device_t qdf_dev,
 				&fst->base_paddr);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		  "hal_rx_fst base address 0x%x", fst->base_paddr);
+		  "hal_rx_fst base address 0x%pK", (void *)fst->base_paddr);
 	if (!fst->base_vaddr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  FL("hal fst->base_vaddr allocation failed"));
