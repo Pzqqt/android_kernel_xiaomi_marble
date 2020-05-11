@@ -936,15 +936,22 @@ static int hdd_llstats_post_radio_stats(struct hdd_adapter *adapter,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
 			radiostat->num_channels)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR put fail");
+
 		goto failure;
 	}
 
 	if (radiostat->total_num_tx_power_levels) {
-		if (nla_put(vendor_event,
+		ret =
+		    nla_put(vendor_event,
 			    QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_TX_TIME_PER_LEVEL,
 			    sizeof(u32) *
 			    radiostat->total_num_tx_power_levels,
-			    radiostat->tx_time_per_power_level)) {
+			    radiostat->tx_time_per_power_level);
+		qdf_mem_free(radiostat->tx_time_per_power_level);
+		radiostat->tx_time_per_power_level = NULL;
+		if (ret) {
+			qdf_mem_free(radiostat->channels);
+			radiostat->channels = NULL;
 			hdd_err("nla_put fail");
 			goto failure;
 		}
@@ -1044,7 +1051,7 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 
 	if (results->paramId & WMI_LINK_STATS_RADIO) {
 		struct wifi_radio_stats *rs_results, *stat_result;
-		u64 channel_size = 0;
+		u64 channel_size = 0, pwr_lvl_size = 0;
 		int i;
 		stats = qdf_mem_malloc(sizeof(*stats));
 		if (!stats)
@@ -1064,12 +1071,39 @@ static void hdd_process_ll_stats(tSirLLStatsResults *results,
 		for (i = 0; i < results->num_radio; i++) {
 			channel_size = rs_results->num_channels *
 				       sizeof(struct wifi_channel_stats);
+			pwr_lvl_size = sizeof(uint32_t) *
+				       rs_results->total_num_tx_power_levels;
+
+			if (rs_results->total_num_tx_power_levels &&
+			    rs_results->tx_time_per_power_level) {
+				stat_result->tx_time_per_power_level =
+						qdf_mem_malloc(pwr_lvl_size);
+				if (!stat_result->tx_time_per_power_level) {
+					while (i-- > 0) {
+						stat_result--;
+						qdf_mem_free(stat_result->
+						    tx_time_per_power_level);
+						qdf_mem_free(stat_result->
+							     channels);
+					}
+					qdf_mem_free(stat_result);
+					qdf_mem_free(stats);
+					goto exit;
+				}
+			      qdf_mem_copy(stat_result->tx_time_per_power_level,
+					   rs_results->tx_time_per_power_level,
+					   pwr_lvl_size);
+			}
 			if (channel_size) {
 				stat_result->channels =
 						qdf_mem_malloc(channel_size);
 				if (!stat_result->channels) {
+					qdf_mem_free(stat_result->
+						     tx_time_per_power_level);
 					while (i-- > 0) {
 						stat_result--;
+						qdf_mem_free(stat_result->
+						    tx_time_per_power_level);
 						qdf_mem_free(stat_result->
 							     channels);
 					}
@@ -1439,6 +1473,9 @@ static void wlan_hdd_handle_ll_stats(struct hdd_adapter *adapter,
 			for (i = 0; i < num_radio; i++) {
 				if (radio_stat->num_channels)
 					qdf_mem_free(radio_stat->channels);
+				if (radio_stat->total_num_tx_power_levels)
+					qdf_mem_free(radio_stat->
+						     tx_time_per_power_level);
 				radio_stat++;
 			}
 			return;
