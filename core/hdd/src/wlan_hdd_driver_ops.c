@@ -1072,6 +1072,12 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		goto resume_pmo;
 	}
 
+	/*
+	 * Remove bus votes at the very end, after making sure there are no
+	 * pending bus transactions from WLAN SOC for TX/RX.
+	 */
+	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
+
 	hdd_info("bus suspend succeeded");
 	return 0;
 
@@ -1217,6 +1223,12 @@ int wlan_hdd_bus_resume(void)
 		hdd_err("Failed to get hif context");
 		return -EINVAL;
 	}
+
+	/*
+	 * Add bus votes at the beginning, before making sure there are any
+	 * bus transactions from WLAN SOC for TX/RX.
+	 */
+	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
 
 	status = hif_bus_resume(hif_ctx);
 	if (status) {
