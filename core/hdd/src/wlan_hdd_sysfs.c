@@ -53,6 +53,7 @@
 #include <wlan_hdd_sysfs_set_radar.h>
 #include <wlan_hdd_sysfs_txrx_fw_stats.h>
 #include <wlan_hdd_sysfs_txrx_stats.h>
+#include <wlan_hdd_sysfs_set_dp_trace.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -704,12 +705,14 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 		hdd_sysfs_scan_disable_create(driver_kobject);
 		hdd_sysfs_wow_ito_create(driver_kobject);
 		hdd_sysfs_set_scan_cfg_create(driver_kobject);
+		hdd_sysfs_set_dp_trace_create(driver_kobject);
 	}
 }
 
 void hdd_destroy_sysfs_files(void)
 {
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
+		hdd_sysfs_set_dp_trace_destroy(driver_kobject);
 		hdd_sysfs_set_scan_cfg_destroy(driver_kobject);
 		hdd_sysfs_wow_ito_destroy(driver_kobject);
 		hdd_sysfs_scan_disable_destroy(driver_kobject);
