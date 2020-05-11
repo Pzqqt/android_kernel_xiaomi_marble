@@ -5315,10 +5315,11 @@ static void lim_process_sme_dfs_csa_ie_request(struct mac_context *mac_ctx,
 			 dfs_csa_ie_req->ch_switch_mode;
 
 	/*
-	 * Validate if SAP is operating HT or VHT mode and set the Channel
+	 * Validate if SAP is operating HT or VHT/HE mode and set the Channel
 	 * Switch Wrapper element with the Wide Band Switch subelement.
 	 */
-	if (true != session_entry->vhtCapability)
+	if (!(session_entry->vhtCapability ||
+	      lim_is_session_he_capable(session_entry)))
 		goto skip_vht;
 
 	/* Now encode the Wider Ch BW element depending on the ch width */

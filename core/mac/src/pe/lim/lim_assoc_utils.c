@@ -1773,7 +1773,7 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 
 	if (IS_DOT11_MODE_HE(pe_session->dot11mode) && he_caps) {
 		lim_calculate_he_nss(pRates, pe_session);
-	} else if (IS_DOT11_MODE_VHT(pe_session->dot11mode)) {
+	} else if (pe_session->vhtCapability) {
 		if ((pRates->vhtRxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
 			pe_session->nss = NSS_1x1_MODE;
 	} else if (pRates->supportedMCSSet[1] == 0) {
@@ -2741,7 +2741,7 @@ lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 		pAddStaParams->fShortGI20Mhz = pe_session->ht_config.ht_sgi20;
 		pAddStaParams->fShortGI40Mhz = pe_session->ht_config.ht_sgi40;
 	}
-	pAddStaParams->vhtCapable = IS_DOT11_MODE_VHT(selfStaDot11Mode);
+	pAddStaParams->vhtCapable = pe_session->vhtCapability;
 	if (pAddStaParams->vhtCapable)
 		pAddStaParams->ch_width =
 			pe_session->ch_width;
@@ -2752,7 +2752,7 @@ lim_add_sta_self(struct mac_context *mac, uint8_t updateSta,
 		pe_session->vht_config.su_beam_former;
 
 	/* In 11ac mode, the hardware is capable of supporting 128K AMPDU size */
-	if (IS_DOT11_MODE_VHT(selfStaDot11Mode))
+	if (pe_session->vhtCapability)
 		pAddStaParams->maxAmpduSize =
 		mac->mlme_cfg->vht_caps.vht_cap_info.ampdu_len_exponent;
 
@@ -3130,8 +3130,8 @@ lim_check_and_announce_join_success(struct mac_context *mac_ctx,
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
 			     (uint32_t *) &mlm_join_cnf);
 
-	if ((IS_DOT11_MODE_VHT(session_entry->dot11mode)) &&
-		beacon_probe_rsp->vendor_vht_ie.VHTCaps.present) {
+	if (session_entry->vhtCapability &&
+	    beacon_probe_rsp->vendor_vht_ie.VHTCaps.present) {
 		session_entry->is_vendor_specific_vhtcaps = true;
 		session_entry->vendor_specific_vht_ie_sub_type =
 			beacon_probe_rsp->vendor_vht_ie.sub_type;

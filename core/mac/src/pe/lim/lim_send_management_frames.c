@@ -202,7 +202,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * if gEnableVhtFor24GHzBand is false and dot11mode is 11ac
 	 * set it to 11n.
 	 */
-	if (channel <= SIR_11B_CHANNEL_END &&
+	if (wlan_reg_is_24ghz_ch_freq(chan_freq) &&
 	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 	    (MLME_DOT11_MODE_11AC == dot11mode ||
 	     MLME_DOT11_MODE_11AC_ONLY == dot11mode))
@@ -268,7 +268,6 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	populate_dot11f_wfatpc(mac_ctx, &pr.WFATPC, txPower, 0);
 
 	if (pesession) {
-		pesession->htCapability = IS_DOT11_MODE_HT(dot11mode);
 		/* Include HT Capability IE */
 		if (pesession->htCapability &&
 		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq)))
@@ -283,8 +282,7 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 	 * Set channelbonding information as "disabled" when tunned to a
 	 * 2.4 GHz channel
 	 */
-	if (channel <= SIR_11B_CHANNEL_END &&
-	    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {
+	if (wlan_reg_is_24ghz_ch_freq(chan_freq)) {
 		if (mac_ctx->roam.configParam.channelBondingMode24GHz
 		    == PHY_SINGLE_CHANNEL_CENTERED) {
 			pr.HTCaps.supportedChannelWidthSet =
@@ -296,7 +294,6 @@ lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 		}
 	}
 	if (pesession) {
-		pesession->vhtCapability = IS_DOT11_MODE_VHT(dot11mode);
 		/* Include VHT Capability IE */
 		if (pesession->vhtCapability &&
 		    !(WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq))) {

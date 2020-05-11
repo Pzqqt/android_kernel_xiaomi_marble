@@ -1631,7 +1631,7 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->non_ecsa_capable = 1;
 
 	if (sta_ds->mlmStaContext.vhtCapability &&
-	    IS_DOT11_MODE_VHT(session->dot11mode)) {
+	    session->vhtCapability) {
 		sta_ds->htMaxRxAMpduFactor =
 				vht_caps->maxAMPDULenExp;
 		sta_ds->vhtLdpcCapable =

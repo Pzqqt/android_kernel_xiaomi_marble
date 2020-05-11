@@ -156,8 +156,7 @@ void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	else if (assoc_rsp->vendor_vht_ie.VHTCaps.present)
 		vht_caps = &assoc_rsp->vendor_vht_ie.VHTCaps;
 
-	if ((IS_DOT11_MODE_VHT(session_entry->dot11mode)) &&
-	    ((vht_caps) && vht_caps->present)) {
+	if (session_entry->vhtCapability && (vht_caps && vht_caps->present)) {
 		sta_ds->mlmStaContext.vhtCapability =
 			vht_caps->present;
 		/*

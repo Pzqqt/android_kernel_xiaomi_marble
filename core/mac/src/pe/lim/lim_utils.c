@@ -7041,6 +7041,10 @@ void lim_update_session_he_capable(struct mac_context *mac, struct pe_session *s
 		session->vhtCapability = 0;
 		session->he_6ghz_band = 1;
 	}
+	if (wlan_reg_is_24ghz_ch_freq(session->curr_op_freq) &&
+	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
+		session->vhtCapability = 0;
+
 	pe_debug("he_capable: %d", session->he_capable);
 }
 
@@ -7061,9 +7065,21 @@ void lim_update_session_he_capable_chan_switch(struct mac_context *mac,
 		session->he_6ghz_band = 1;
 	}
 
-	pe_debug("he_capable: %d ht %d vht %d 6ghz_band %d new freq %d",
+	/*
+	 * If new channel is 2.4gh set VHT as per the b24ghz_band INI
+	 * if new channel is 5Ghz set the vht, this will happen if we move from
+	 * 2.4Ghz to 5Ghz.
+	 */
+	if (wlan_reg_is_24ghz_ch_freq(new_chan_freq) &&
+	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
+		session->vhtCapability = 0;
+	else if (wlan_reg_is_5ghz_ch_freq(new_chan_freq))
+		session->vhtCapability = 1;
+
+	pe_debug("he_capable: %d ht %d vht %d 6ghz_band %d new freq %d vht in 2.4gh %d",
 		 session->he_capable, session->htCapability,
-		 session->vhtCapability, session->he_6ghz_band, new_chan_freq);
+		 session->vhtCapability, session->he_6ghz_band, new_chan_freq,
+		 mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band);
 }
 
 void lim_set_he_caps(struct mac_context *mac, struct pe_session *session,
