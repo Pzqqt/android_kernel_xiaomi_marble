@@ -1594,10 +1594,7 @@ QDF_STATUS reg_get_max_5g_bw_from_regdomain(uint16_t regdmn,
 	if (i == num_reg_dmn)
 		return QDF_STATUS_E_FAILURE;
 
-	if (!regdomains_5g[g_reg_dmn_pairs[i].dmn_id_5g].num_reg_rules)
-		*max_bw_5g = 0;
-	else
-		*max_bw_5g = BW_160_MHZ;
+	*max_bw_5g = regdomains_5g[g_reg_dmn_pairs[i].dmn_id_5g].max_bw;
 
 	return QDF_STATUS_SUCCESS;
 }
