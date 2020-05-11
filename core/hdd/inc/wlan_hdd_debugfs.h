@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,15 +25,13 @@
 
 /**
  * enum hdd_debugfs_file_id - Debugfs file Identifier
- * @HDD_DEBUFS_FILE_ID_CONNECT_INFO: connect_info file id
  * @HDD_DEBUFS_FILE_ID_ROAM_SCAN_STATS_INFO: roam_scan_stats file id
  * @HDD_DEBUFS_FILE_ID_OFFLOAD_INFO: offload_info file id
  * @HDD_DEBUGFS_FILE_ID_MAX: maximum id of csr debugfs file
  */
 enum hdd_debugfs_file_id {
-	HDD_DEBUFS_FILE_ID_CONNECT_INFO = 0,
-	HDD_DEBUFS_FILE_ID_ROAM_SCAN_STATS_INFO = 1,
-	HDD_DEBUFS_FILE_ID_OFFLOAD_INFO = 2,
+	HDD_DEBUFS_FILE_ID_ROAM_SCAN_STATS_INFO = 0,
+	HDD_DEBUFS_FILE_ID_OFFLOAD_INFO = 1,
 
 	HDD_DEBUGFS_FILE_ID_MAX,
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,7 +30,6 @@
 
 #ifdef WLAN_DEBUGFS
 
-#define DEBUGFS_CONNECT_INFO_BUF_SIZE    (4 * 1024)
 #define DEBUGFS_OFFLOAD_INFO_BUF_SIZE    (4 * 1024)
 #define DEBUGFS_ROAM_SCAN_STATS_INFO_BUF_SIZE (4 * 1024)
 
@@ -88,19 +87,6 @@ ssize_t
 wlan_hdd_current_time_info_debugfs(uint8_t *buf, ssize_t buf_avail_len);
 
 /**
- * wlan_hdd_debugfs_update_connect_info() - API to get connect info
- * into user buffer
- * @buf: output buffer to hold connect info
- * @buf_avail_len: available buffer length
- *
- * Return: No.of bytes copied
- */
-ssize_t
-wlan_hdd_debugfs_update_connect_info(struct hdd_context *hdd_ctx,
-				     struct hdd_adapter *adapter,
-				     uint8_t *buf, ssize_t buf_avail_len);
-
-/**
  * wlan_hdd_debugfs_update_filters_info() - API to get offload info
  * into user buffer
  * @buf: output buffer to hold offload info
@@ -156,22 +142,6 @@ static inline void wlan_hdd_debugfs_csr_deinit(struct hdd_adapter *adapter)
  */
 static inline ssize_t
 wlan_hdd_current_time_info_debugfs(uint8_t *buf, ssize_t buf_avail_len)
-{
-	return 0;
-}
-
-/**
- * wlan_hdd_debugfs_update_connect_info() - API to get connect info
- * into user buffer
- * @buf: output buffer to hold connect info
- * @buf_avail_len: available buffer length
- *
- * Return: No.of bytes copied
- */
-static inline ssize_t
-wlan_hdd_debugfs_update_connect_info(struct hdd_context *hdd_ctx,
-				     struct hdd_adapter *adapter,
-				     uint8_t *buf, ssize_t buf_avail_len)
 {
 	return 0;
 }

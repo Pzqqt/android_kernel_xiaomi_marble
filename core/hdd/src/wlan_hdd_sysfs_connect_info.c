@@ -1,37 +1,33 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
- * DOC: wlan_hdd_debugfs_connect.c
+ * DOC: wlan_hdd_sysfs_connect_info.c
  *
- * WLAN Host Device Driver implementation to update
- * debugfs with connect information
+ * WLAN Host Device Driver implementation to update sysfs with connect
+ * information
  */
 
-#include <wlan_hdd_debugfs_csr.h>
-#include <wlan_hdd_main.h>
-#include <cds_sched.h>
-#include <wma_api.h>
+#include <wlan_hdd_includes.h>
+#include "osif_vdev_sync.h"
+#include "wlan_hdd_sysfs_connect_info.h"
 #include "qwlan_version.h"
-#include "wmi_unified_param.h"
 
 /**
- * wlan_hdd_version_info_debugfs() - Populate driver, FW and HW version
+ * wlan_hdd_version_info() - Populate driver, FW and HW version
  * @hdd_ctx: pointer to hdd context
  * @buf: output buffer to hold version info
  * @buf_avail_len: available buffer length
@@ -39,8 +35,8 @@
  * Return: No.of bytes populated by this function in buffer
  */
 static ssize_t
-wlan_hdd_version_info_debugfs(struct hdd_context *hdd_ctx, uint8_t *buf,
-			      ssize_t buf_avail_len)
+wlan_hdd_version_info(struct hdd_context *hdd_ctx, uint8_t *buf,
+		      ssize_t buf_avail_len)
 {
 	ssize_t length = 0;
 	int ret_val;
@@ -305,16 +301,15 @@ uint8_t *hdd_ch_width_str(enum phy_ch_width ch_width)
 }
 
 /**
- * wlan_hdd_connect_info_debugfs() - Populate connect info
+ * wlan_hdd_connect_info() - Populate connect info
  * @adapter: pointer to sta adapter for which connect info is required
  * @buf: output buffer to hold version info
  * @buf_avail_len: available buffer length
  *
  * Return: No.of bytes populated by this function in buffer
  */
-static ssize_t
-wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
-			      ssize_t buf_avail_len)
+static ssize_t wlan_hdd_connect_info(struct hdd_adapter *adapter, uint8_t *buf,
+				     ssize_t buf_avail_len)
 {
 	ssize_t length = 0;
 	struct hdd_station_ctx *hdd_sta_ctx;
@@ -410,47 +405,114 @@ wlan_hdd_connect_info_debugfs(struct hdd_adapter *adapter, uint8_t *buf,
 	return length;
 }
 
-ssize_t
-wlan_hdd_debugfs_update_connect_info(struct hdd_context *hdd_ctx,
-				     struct hdd_adapter *adapter,
-				     uint8_t *buf, ssize_t buf_avail_len)
+static ssize_t
+wlan_hdd_current_time_info(uint8_t *buf, ssize_t buf_avail_len)
 {
+	ssize_t length;
+	char time_buffer[HDD_TIME_STRING_LEN];
+	int ret_val;
+
+	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buffer,
+						   sizeof(time_buffer));
+	ret_val = scnprintf(buf, buf_avail_len,
+			    "\nTime at which this file generated = %s\n",
+			    time_buffer);
+	if (ret_val < 0)
+		return 0;
+	length = ret_val;
+
+	return length;
+}
+
+static ssize_t __show_connect_info(struct net_device *net_dev, char *buf,
+				   ssize_t buf_avail_len)
+{
+	struct hdd_adapter *adapter = netdev_priv(net_dev);
+	struct hdd_context *hdd_ctx;
 	ssize_t len;
 	int ret_val;
 
-	hdd_enter();
+	hdd_enter_dev(net_dev);
 
-	len = wlan_hdd_current_time_info_debugfs(buf, buf_avail_len);
+	len = wlan_hdd_current_time_info(buf, buf_avail_len);
 	if (len >= buf_avail_len) {
 		hdd_err("No sufficient buf_avail_len");
-		return buf_avail_len;
+		len = buf_avail_len;
+		goto exit;
 	}
+
+	ret_val = hdd_validate_adapter(adapter);
+	if (0 != ret_val)
+		return len;
 
 	if (adapter->device_mode != QDF_STA_MODE) {
 		ret_val = scnprintf(buf + len, buf_avail_len - len,
 				    "Interface is not operating STA Mode\n");
 		if (ret_val <= 0)
-			return len;
+			goto exit;
 
 		len += ret_val;
-		return len;
+		goto exit;
 	}
 
 	if (len >= buf_avail_len) {
 		hdd_err("No sufficient buf_avail_len");
-		return buf_avail_len;
+		len = buf_avail_len;
+		goto exit;
 	}
-	len += wlan_hdd_version_info_debugfs(hdd_ctx, buf + len,
-					     buf_avail_len - len);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret_val)
+		goto exit;
+
+	len += wlan_hdd_version_info(hdd_ctx, buf + len, buf_avail_len - len);
 
 	if (len >= buf_avail_len) {
 		hdd_err("No sufficient buf_avail_len");
-		return buf_avail_len;
+		len = buf_avail_len;
+		goto exit;
 	}
-	len += wlan_hdd_connect_info_debugfs(adapter, buf + len,
-					     buf_avail_len - len);
+	len += wlan_hdd_connect_info(adapter, buf + len, buf_avail_len - len);
 
+exit:
 	hdd_exit();
-
 	return len;
 }
+
+static ssize_t show_connect_info(struct device *dev,
+				 struct device_attribute *attr,
+				 char *buf)
+{
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
+	ssize_t buf_avail_len = SYSFS_CONNECT_INFO_BUF_SIZE;
+
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
+
+	err_size = __show_connect_info(net_dev, buf, buf_avail_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
+}
+
+static DEVICE_ATTR(connect_info, 0444, show_connect_info, NULL);
+
+void hdd_sysfs_connect_info_interface_create(struct hdd_adapter *adapter)
+{
+	int error;
+
+	error = device_create_file(&adapter->dev->dev, &dev_attr_connect_info);
+	if (error)
+		hdd_err("could not create connect_info sysfs file");
+}
+
+void hdd_sysfs_connect_info_interface_destroy(struct hdd_adapter *adapter)
+{
+	device_remove_file(&adapter->dev->dev, &dev_attr_connect_info);
+}
+
