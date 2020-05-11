@@ -19,7 +19,12 @@
 #ifndef _DP_RX_MON_H_
 #define _DP_RX_MON_H_
 
-#define MON_BUF_MIN_ENTRIES 8
+/*
+ * MON_BUF_MIN_ENTRIES macro defines minimum number of network buffers
+ * to be refilled in the RXDMA monitor buffer ring at init, remaining
+ * buffers are replenished at the time of monitor vap creation
+ */
+#define MON_BUF_MIN_ENTRIES 64
 
 /*
  * dp_rx_mon_status_process() - Process monitor status ring and
