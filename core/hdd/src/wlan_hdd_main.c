@@ -2861,6 +2861,8 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 	wlan_hdd_update_dbs_scan_and_fw_mode_config();
 
 exit_with_success:
+	hdd_create_adapter_sysfs_files(adapter);
+
 	hdd_exit();
 
 	return 0;
@@ -5421,8 +5423,6 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 
 	wlan_hdd_debugfs_csr_deinit(adapter);
 
-	hdd_destroy_adapter_sysfs_files(adapter);
-
 	hdd_debugfs_exit(adapter);
 
 	/*
@@ -6228,8 +6228,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	hdd_periodic_sta_stats_init(adapter);
 
-	hdd_create_adapter_sysfs_files(adapter);
-
 	return adapter;
 
 err_free_netdev:
@@ -6399,6 +6397,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	enum eSirMacReasonCodes reason = eSIR_MAC_IFACE_DOWN;
 
 	hdd_enter();
+
+	hdd_destroy_adapter_sysfs_files(adapter);
 
 	if (adapter->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		wlan_hdd_cfg80211_deregister_frames(adapter);
