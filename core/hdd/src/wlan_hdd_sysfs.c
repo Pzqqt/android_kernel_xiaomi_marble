@@ -653,14 +653,18 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 {
 	hdd_sysfs_create_driver_root_obj();
 	hdd_sysfs_create_version_interface(hdd_ctx->psoc);
-	hdd_sysfs_create_powerstats_interface();
-	hdd_sysfs_set_fw_mode_cfg_create(driver_kobject);
+	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
+		hdd_sysfs_create_powerstats_interface();
+		hdd_sysfs_set_fw_mode_cfg_create(driver_kobject);
+	}
 }
 
 void hdd_destroy_sysfs_files(void)
 {
-	hdd_sysfs_set_fw_mode_cfg_destroy(driver_kobject);
-	hdd_sysfs_destroy_powerstats_interface();
+	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
+		hdd_sysfs_set_fw_mode_cfg_destroy(driver_kobject);
+		hdd_sysfs_destroy_powerstats_interface();
+	}
 	hdd_sysfs_destroy_version_interface();
 	hdd_sysfs_destroy_driver_root_obj();
 }
