@@ -449,11 +449,6 @@ static inline void sde_dbg_reg_register_dump_range(const char *base_name,
 {
 }
 
-int sde_dbg_register_dsi_ctrl(void __iomem *base, const char *name)
-{
-	return 0;
-}
-
 static inline void sde_dbg_set_sde_top_offset(u32 blk_off)
 {
 }
