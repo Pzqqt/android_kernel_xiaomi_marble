@@ -273,6 +273,12 @@ error:
 
 static void hal_target_based_configure(struct hal_soc *hal)
 {
+	/**
+	 * Indicate Initialization of srngs to avoid force wake
+	 * as umac power collapse is not enabled yet
+	 */
+	hal->init_phase = true;
+
 	switch (hal->target_type) {
 #ifdef QCA_WIFI_QCA6290
 	case TARGET_TYPE_QCA6290:
@@ -290,6 +296,7 @@ static void hal_target_based_configure(struct hal_soc *hal)
 	case TARGET_TYPE_QCA6490:
 		hal->use_register_windowing = true;
 		hal_qca6490_attach(hal);
+		hal->init_phase = false;
 	break;
 #endif
 #ifdef QCA_WIFI_QCA6750
@@ -771,12 +778,6 @@ void *hal_attach(struct hif_opaque_softc *hif_handle, qdf_device_t qdf_dev)
 	hal_target_based_configure(hal);
 
 	hal_reg_write_fail_history_init(hal);
-
-	/**
-	 * Indicate Initialization of srngs to avoid force wake
-	 * as umac power collapse is not enabled yet
-	 */
-	hal->init_phase = true;
 
 	qdf_minidump_log(hal, sizeof(*hal), "hal_soc");
 
