@@ -2796,11 +2796,13 @@ struct peer_chan_width_switch_info {
 /**
  * struct peer_chan_width_switch_params - Peer channel width capability wrapper
  * @num_peers: Total number of peers connected to AP
+ * @max_peers_per_cmd: Peer limit per WMI command
  * @chan_width_peer_list: List of capabilities for all connected peers
  */
 
 struct peer_chan_width_switch_params {
 	uint32_t num_peers;
+	uint32_t max_peers_per_cmd;
 	struct peer_chan_width_switch_info *chan_width_peer_list;
 };
 

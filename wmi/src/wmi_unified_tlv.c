@@ -11094,6 +11094,7 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 	param->bdf_reg_db_version_minor =
 			WMI_BDF_REG_DB_VERSION_MINOR_GET(
 				ev->reg_db_version);
+	param->chwidth_num_peer_caps = ev->chwidth_num_peer_caps;
 
 	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
 	return QDF_STATUS_SUCCESS;
