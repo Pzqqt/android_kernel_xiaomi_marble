@@ -1023,6 +1023,9 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 	while (head_nbuf) {
 		next_nbuf = head_nbuf->next;
 		qdf_nbuf_set_next(head_nbuf, NULL);
+		/* bypass FISA for non-regular RX frame */
+		if (qdf_nbuf_is_exc_frame(head_nbuf))
+			goto deliver_nbuf;
 
 		qdf_nbuf_push_head(head_nbuf, RX_PKT_TLVS_LEN +
 				   QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(head_nbuf));
