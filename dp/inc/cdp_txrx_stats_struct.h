@@ -25,6 +25,7 @@
 #define _CDP_TXRX_STATS_STRUCT_H_
 
 #include <qdf_types.h>
+#include <cdp_txrx_hist_struct.h>
 
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1
@@ -75,6 +76,11 @@
 #define CDP_MAX_TX_COMP_RINGS 3  /* max tx completion rings */
 #define CDP_MAX_TX_TQM_STATUS 9  /* max tx tqm completion status */
 #define CDP_MAX_TX_HTT_STATUS 7  /* max tx htt completion status */
+
+/*
+ * Max of TxRx context
+ */
+#define CDP_MAX_TXRX_CTX CDP_MAX_RX_RINGS
 
 /* TID level VoW stats macros
  * to add and get stats
@@ -507,6 +513,45 @@ struct cdp_tid_stats {
 					    [CDP_MAX_DATA_TIDS];
 	struct cdp_tid_rx_stats tid_rx_stats[CDP_MAX_RX_RINGS]
 					    [CDP_MAX_DATA_TIDS];
+};
+
+/*
+ * struct cdp_delay_tx_stats: Tx delay stats
+ * @tx_swq_delay: software enqueue delay
+ * @hwtx_delay: HW enque to completion delay
+ */
+struct cdp_delay_tx_stats {
+	struct cdp_hist_stats    tx_swq_delay;
+	struct cdp_hist_stats    hwtx_delay;
+};
+
+/*
+ * struct cdp_delay_rx_stats: Rx delay stats
+ * @to_stack_delay: To stack delay
+ */
+struct cdp_delay_rx_stats {
+	struct cdp_hist_stats    to_stack_delay;
+};
+
+/*
+ * struct cdp_delay_tid_stats: Delay tid stats
+ * @tx_delay: Tx delay related stats
+ * @rx_delay: Rx delay related stats
+ */
+struct cdp_delay_tid_stats {
+	struct cdp_delay_tx_stats  tx_delay;
+	struct cdp_delay_rx_stats  rx_delay;
+};
+
+/*
+ * cdp_peer_ext_stats: Peer extended stats
+ * @delay_stats: Per TID delay stats
+ */
+struct cdp_peer_ext_stats {
+	struct cdp_delay_tid_stats delay_stats[CDP_MAX_DATA_TIDS]
+						[CDP_MAX_TXRX_CTX];
+
+	/*Customer can add MSDU level Tx/Rx stats */
 };
 
 /* struct cdp_pkt_info - packet info

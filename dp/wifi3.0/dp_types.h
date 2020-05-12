@@ -2275,6 +2275,9 @@ struct dp_peer {
 	/* Peer Stats */
 	struct cdp_peer_stats stats;
 
+	/* Peer extended stats */
+	struct cdp_peer_ext_stats *pext_stats;
+
 	TAILQ_HEAD(, dp_ast_entry) ast_entry_list;
 	/* TBD */
 
