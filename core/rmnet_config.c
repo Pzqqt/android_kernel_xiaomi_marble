@@ -761,6 +761,8 @@ static int __init rmnet_init(void)
 	}
 
 	rmnet_core_genl_init();
+
+	try_module_get(THIS_MODULE);
 	return rc;
 }
 
@@ -769,6 +771,8 @@ static void __exit rmnet_exit(void)
 	unregister_netdevice_notifier(&rmnet_dev_notifier);
 	rtnl_link_unregister(&rmnet_link_ops);
 	rmnet_core_genl_deinit();
+
+	module_put(THIS_MODULE);
 }
 
 module_init(rmnet_init)
