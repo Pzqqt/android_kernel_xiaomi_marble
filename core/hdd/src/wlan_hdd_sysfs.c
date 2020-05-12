@@ -54,6 +54,7 @@
 #include <wlan_hdd_sysfs_txrx_fw_stats.h>
 #include <wlan_hdd_sysfs_txrx_stats.h>
 #include <wlan_hdd_sysfs_set_dp_trace.h>
+#include <wlan_hdd_sysfs_get_range_ext.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -635,11 +636,13 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_wowl_add_ptrn_create(adapter);
 	hdd_sysfs_txrx_fw_stats_create(adapter);
 	hdd_sysfs_txrx_stats_create(adapter);
+	hdd_sysfs_get_range_ext_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_get_range_ext_destroy(adapter);
 	hdd_sysfs_txrx_stats_destroy(adapter);
 	hdd_sysfs_txrx_fw_stats_destroy(adapter);
 	hdd_sysfs_wowl_add_ptrn_destroy(adapter);
