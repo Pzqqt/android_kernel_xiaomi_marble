@@ -918,6 +918,58 @@ static int dsi_display_ctrl_get_host_init_state(struct dsi_display *dsi_display,
 	return rc;
 }
 
+static int dsi_display_cmd_rx(struct dsi_display *display,
+			      struct dsi_cmd_desc *cmd)
+{
+	struct dsi_display_ctrl *m_ctrl = NULL;
+	u32 mask = 0, flags = 0;
+	int rc = 0;
+
+	if (!display || !display->panel)
+		return -EINVAL;
+
+	m_ctrl = &display->ctrl[display->cmd_master_idx];
+	if (!m_ctrl || !m_ctrl->ctrl)
+		return -EINVAL;
+
+	/* acquire panel_lock to make sure no commands are in progress */
+	dsi_panel_acquire_panel_lock(display->panel);
+	if (!display->panel->panel_initialized) {
+		DSI_DEBUG("panel not initialized\n");
+		goto release_panel_lock;
+	}
+
+	rc = dsi_display_clk_ctrl(display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_ON);
+	if (rc)
+		goto release_panel_lock;
+
+	mask = BIT(DSI_FIFO_OVERFLOW) | BIT(DSI_FIFO_UNDERFLOW);
+	dsi_display_mask_ctrl_error_interrupts(display, mask, true);
+	rc = dsi_display_cmd_engine_enable(display);
+	if (rc) {
+		DSI_ERR("cmd engine enable failed rc = %d\n", rc);
+		goto error;
+	}
+
+	flags |= (DSI_CTRL_CMD_FETCH_MEMORY | DSI_CTRL_CMD_READ |
+			DSI_CTRL_CMD_CUSTOM_DMA_SCHED);
+	rc = dsi_ctrl_cmd_transfer(m_ctrl->ctrl, &cmd->msg, &flags);
+	if (rc <= 0)
+		DSI_ERR("rx cmd transfer failed rc = %d\n", rc);
+
+	dsi_display_cmd_engine_disable(display);
+
+error:
+	dsi_display_mask_ctrl_error_interrupts(display, mask, false);
+	dsi_display_clk_ctrl(display->dsi_clk_handle,
+		DSI_ALL_CLKS, DSI_CLK_OFF);
+release_panel_lock:
+	dsi_panel_release_panel_lock(display->panel);
+	return rc;
+}
+
+
 int dsi_display_cmd_transfer(struct drm_connector *connector,
 		void *display, const char *cmd_buf,
 		u32 cmd_buf_len)
@@ -982,6 +1034,48 @@ static void _dsi_display_continuous_clk_ctrl(struct dsi_display *display,
 		ctrl = &display->ctrl[i];
 		dsi_ctrl_set_continuous_clk(ctrl->ctrl, enable);
 	}
+}
+
+int dsi_display_cmd_receive(void *display, const char *cmd_buf,
+		u32 cmd_buf_len,  u8 *recv_buf, u32 recv_buf_len)
+{
+	struct dsi_display *dsi_display = display;
+	struct dsi_cmd_desc cmd = {};
+	u8 cmd_payload[MAX_CMD_PAYLOAD_SIZE] = {0};
+	bool state = false;
+	int rc = -1;
+
+	if (!dsi_display || !cmd_buf || !recv_buf) {
+		DSI_ERR("[DSI] invalid params\n");
+		return -EINVAL;
+	}
+
+	rc = dsi_display_cmd_prepare(cmd_buf, cmd_buf_len,
+			&cmd, cmd_payload, MAX_CMD_PAYLOAD_SIZE);
+	if (rc) {
+		DSI_ERR("[DSI] command prepare failed, rc = %d\n", rc);
+		return rc;
+	}
+
+	cmd.msg.rx_buf = recv_buf;
+	cmd.msg.rx_len = recv_buf_len;
+
+	mutex_lock(&dsi_display->display_lock);
+	rc = dsi_display_ctrl_get_host_init_state(dsi_display, &state);
+	if (rc || !state) {
+		DSI_ERR("[DSI] Invalid host state = %d rc = %d\n",
+			state, rc);
+		rc = -EPERM;
+		goto end;
+	}
+
+	rc = dsi_display_cmd_rx(dsi_display, &cmd);
+	if (rc <= 0)
+		DSI_ERR("[DSI] Display command receive failed, rc=%d\n", rc);
+
+end:
+	mutex_unlock(&dsi_display->display_lock);
+	return rc;
 }
 
 int dsi_display_soft_reset(void *display)
