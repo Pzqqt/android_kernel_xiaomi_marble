@@ -15,7 +15,8 @@
 #include <crypto/internal/scompress.h>
 
 
-#define ZSTD_DEF_LEVEL	1
+uint compression_level = 1;
+module_param(compression_level, uint, 0644);
 
 struct zstd_ctx {
 	zstd_cctx *cctx;
@@ -26,7 +27,11 @@ struct zstd_ctx {
 
 static zstd_parameters zstd_params(void)
 {
-	return zstd_get_params(ZSTD_DEF_LEVEL, PAGE_SIZE);
+	if (compression_level == 0)
+		compression_level = 1;
+	if (compression_level > zstd_max_clevel())
+		compression_level = zstd_max_clevel();
+	return zstd_get_params(compression_level, PAGE_SIZE);
 }
 
 static int zstd_comp_init(struct zstd_ctx *ctx)
