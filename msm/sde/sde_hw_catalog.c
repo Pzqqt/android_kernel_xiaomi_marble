@@ -3010,6 +3010,7 @@ static int sde_vdc_parse_dt(struct device_node *np,
 		rc = 0;
 	} else {
 		SDE_ERROR("invalid vdc configuration\n");
+		goto end;
 	}
 
 	rc = _read_dt_entry(np, vdc_prop, ARRAY_SIZE(vdc_prop), prop_count,
