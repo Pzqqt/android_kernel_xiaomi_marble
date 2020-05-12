@@ -3386,6 +3386,7 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
+	uint8_t dp_status;
 
 	if (!vdev || !nbuf) {
 		dp_info_rl("invalid tx descriptor. vdev or nbuf NULL");
@@ -3394,13 +3395,14 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 
 	eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
 
+	dp_status = qdf_dp_get_status_from_htt(ts->status);
 	DPTRACE(qdf_dp_trace_ptr(tx_desc->nbuf,
 				 QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD,
 				 QDF_TRACE_DEFAULT_PDEV_ID,
 				 qdf_nbuf_data_addr(nbuf),
 				 sizeof(qdf_nbuf_data(nbuf)),
 				 tx_desc->id,
-				 ts->status));
+				 dp_status));
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"

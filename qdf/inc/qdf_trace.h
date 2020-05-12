@@ -773,6 +773,20 @@ qdf_dp_display_data_pkt_record(struct qdf_dp_trace_record_s *record,
 			       uint16_t rec_index, uint8_t pdev_id,
 			       uint8_t info);
 
+/**
+ * qdf_dp_get_status_from_htt() - Convert htt tx status to qdf dp status
+ * @status : htt_tx_status which needs to be converted
+ *
+ * Return : the status that from qdf_dp_tx_rx_status
+ */
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_htt(uint8_t status);
+/**
+ * qdf_dp_get_status_from_a_status() - Convert A_STATUS to qdf dp status
+ * @status : A_STATUS which needs to be converted
+ *
+ * Return : the status that from qdf_dp_tx_rx_status
+ */
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_a_status(uint8_t status);
 void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 		      uint8_t pdev_id, uint8_t *data, uint8_t size,
 		      uint16_t msdu_id, uint16_t status);
@@ -1032,6 +1046,18 @@ void qdf_dp_log_proto_pkt_info(uint8_t *sa, uint8_t *da, uint8_t type,
 static inline
 void qdf_dp_track_noack_check(qdf_nbuf_t nbuf, enum qdf_proto_subtype *subtype)
 {
+}
+
+static inline
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_htt(uint8_t status)
+{
+	return QDF_TX_RX_STATUS_OK;
+}
+
+static inline
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_a_status(uint8_t status)
+{
+	return QDF_TX_RX_STATUS_OK;
 }
 #endif
 

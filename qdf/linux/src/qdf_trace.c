@@ -2265,6 +2265,35 @@ void qdf_dp_track_noack_check(qdf_nbuf_t nbuf, enum qdf_proto_subtype *subtype)
 }
 qdf_export_symbol(qdf_dp_track_noack_check);
 
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_htt(uint8_t status)
+{
+	switch (status) {
+	case QDF_TX_COMP_STATUS_OK:
+		return QDF_TX_RX_STATUS_OK;
+	case QDF_TX_COMP_STATUS_STAT_DISCARD:
+	case QDF_TX_COMP_STATUS_STAT_DROP:
+		return QDF_TX_RX_STATUS_FW_DISCARD;
+	case QDF_TX_COMP_STATUS_STAT_NO_ACK:
+		return QDF_TX_RX_STATUS_NO_ACK;
+	default:
+		return QDF_TX_RX_STATUS_MAX;
+	}
+}
+
+qdf_export_symbol(qdf_dp_get_status_from_htt);
+
+enum qdf_dp_tx_rx_status qdf_dp_get_status_from_a_status(uint8_t status)
+{
+	if (status == QDF_A_STATUS_ERROR)
+		return QDF_TX_RX_STATUS_INVALID;
+	else if (status == QDF_A_STATUS_OK)
+		return QDF_TX_RX_STATUS_OK;
+	else
+		return QDF_TX_RX_STATUS_MAX;
+}
+
+qdf_export_symbol(qdf_dp_get_status_from_a_status);
+
 /**
  * qdf_dp_trace_ptr() - record dptrace
  * @code: dptrace code
@@ -2287,12 +2316,12 @@ void qdf_dp_trace_ptr(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	pkt_type = qdf_dp_get_pkt_proto_type(nbuf);
 	if ((code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD ||
 	     code == QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD) &&
-	    qdf_dp_proto_log_enable_check(pkt_type, status + 1))
+	    qdf_dp_proto_log_enable_check(pkt_type, status))
 		qdf_dp_log_proto_pkt_info(nbuf->data + QDF_NBUF_SRC_MAC_OFFSET,
 					 nbuf->data + QDF_NBUF_DEST_MAC_OFFSET,
 					 pkt_type,
 					 qdf_dp_get_pkt_subtype(nbuf, pkt_type),
-					 QDF_TX, msdu_id, status + 1);
+					 QDF_TX, msdu_id, status);
 
 	if (qdf_dp_enable_check(nbuf, code, QDF_TX) == false)
 		return;
