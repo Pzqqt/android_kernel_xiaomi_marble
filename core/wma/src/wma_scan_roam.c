@@ -6236,6 +6236,7 @@ QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
 				sizeof(uint32_t));
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
 			qdf_roundup(1, sizeof(uint32_t)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	buf_ptr += qdf_roundup(sizeof(uint8_t) * 1, sizeof(uint32_t));
 
