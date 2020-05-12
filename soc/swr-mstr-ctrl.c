@@ -2204,14 +2204,12 @@ static void swrm_device_wakeup_vote(struct swr_master *mstr)
 		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
 		return;
 	}
-	mutex_lock(&swrm->reslock);
 	if (swrm_request_hw_vote(swrm, LPASS_HW_CORE, true))
 		dev_err(swrm->dev, "%s:lpass core hw enable failed\n",
 			__func__);
 	if (swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, true))
 		dev_err(swrm->dev, "%s:lpass audio hw enable failed\n",
 			__func__);
-	mutex_unlock(&swrm->reslock);
 
 	pm_runtime_get_sync(swrm->dev);
 }
@@ -2228,10 +2226,8 @@ static void swrm_device_wakeup_unvote(struct swr_master *mstr)
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
 
-	mutex_lock(&swrm->reslock);
 	swrm_request_hw_vote(swrm, LPASS_AUDIO_CORE, false);
 	swrm_request_hw_vote(swrm, LPASS_HW_CORE, false);
-	mutex_unlock(&swrm->reslock);
 
 	swrm_unlock_sleep(swrm);
 }
