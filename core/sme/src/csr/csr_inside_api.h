@@ -61,7 +61,6 @@ enum csr_roamcomplete_result {
 	eCsrNothingToJoin,
 	eCsrStartBssSuccess,
 	eCsrStartBssFailure,
-	eCsrSilentlyStopRoaming,
 	eCsrSilentlyStopRoamingSaveState,
 	eCsrJoinFailureDueToConcurrency,
 	eCsrStopBssSuccess,
@@ -589,17 +588,6 @@ void csr_get_vdev_type_nss(enum QDF_OPMODE dev_mode, uint8_t *nss_2g,
 #define WLAN_SCAN_STATUS_SUCCESS        0
 #define WLAN_SCAN_STATUS_FAILURE        1
 #define WLAN_SCAN_STATUS_ABORT          2
-
-/* Ibss */
-#define WLAN_IBSS_EVENT_START_IBSS_REQ      0
-#define WLAN_IBSS_EVENT_START_IBSS_RSP      1
-#define WLAN_IBSS_EVENT_JOIN_IBSS_REQ       2
-#define WLAN_IBSS_EVENT_JOIN_IBSS_RSP       3
-#define WLAN_IBSS_EVENT_COALESCING          4
-#define WLAN_IBSS_EVENT_PEER_JOIN           5
-#define WLAN_IBSS_EVENT_PEER_LEAVE          6
-#define WLAN_IBSS_EVENT_STOP_REQ            7
-#define WLAN_IBSS_EVENT_STOP_RSP            8
 
 #define AUTO_PICK       0
 #define SPECIFIED       1

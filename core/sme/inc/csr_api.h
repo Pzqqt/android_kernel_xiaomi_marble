@@ -131,16 +131,12 @@ typedef enum {
  * enum eCsrRoamBssType - BSS type in CSR operations
  * @eCSR_BSS_TYPE_INFRASTRUCTURE: Infrastructure station
  * @eCSR_BSS_TYPE_INFRA_AP: SoftAP
- * @eCSR_BSS_TYPE_IBSS: IBSS network we'll not start
- * @eCSR_BSS_TYPE_START_IBSS: IBSS network we'll start if no partners found
  * @eCSR_BSS_TYPE_NDI: NAN datapath interface
  * @eCSR_BSS_TYPE_ANY: any BSS type (IBSS or Infrastructure)
  */
 typedef enum {
 	eCSR_BSS_TYPE_INFRASTRUCTURE,
 	eCSR_BSS_TYPE_INFRA_AP,
-	eCSR_BSS_TYPE_IBSS,
-	eCSR_BSS_TYPE_START_IBSS,
 	eCSR_BSS_TYPE_NDI,
 	eCSR_BSS_TYPE_ANY,
 } eCsrRoamBssType;
@@ -321,8 +317,6 @@ typedef enum {
 	 * to struct mic_failure_ind
 	 */
 	eCSR_ROAM_MIC_ERROR_IND,
-	/* IBSS indications. */
-	eCSR_ROAM_IBSS_IND,
 	/*
 	 * Update the connection status, useful for IBSS: new peer added,
 	 * network is active etc.
@@ -330,7 +324,6 @@ typedef enum {
 	eCSR_ROAM_CONNECT_STATUS_UPDATE,
 	eCSR_ROAM_GEN_INFO,
 	eCSR_ROAM_SET_KEY_COMPLETE,
-	eCSR_ROAM_IBSS_LEAVE,   /* IBSS indications. */
 	/* BSS in SoftAP mode status indication */
 	eCSR_ROAM_INFRA_IND,
 	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
@@ -363,8 +356,6 @@ typedef enum {
 #ifdef WLAN_FEATURE_11W
 	eCSR_ROAM_UNPROT_MGMT_FRAME_IND,
 #endif
-
-	eCSR_ROAM_IBSS_PEER_INFO_COMPLETE,
 
 #ifdef FEATURE_WLAN_ESE
 	eCSR_ROAM_TSM_IE_IND,
@@ -411,39 +402,6 @@ typedef enum {
 	eCSR_ROAM_RESULT_DISASSOC_IND,
 	eCSR_ROAM_RESULT_DEAUTH_IND,
 	eCSR_ROAM_RESULT_CAP_CHANGED,
-	/*
-	 * This means we starts an IBSS struct csr_roam_info's
-	 * bss_desc may pass back
-	 */
-	eCSR_ROAM_RESULT_IBSS_STARTED,
-	eCSR_ROAM_RESULT_IBSS_START_FAILED,
-	eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS,
-	eCSR_ROAM_RESULT_IBSS_JOIN_FAILED,
-	eCSR_ROAM_RESULT_IBSS_CONNECT,
-	eCSR_ROAM_RESULT_IBSS_INACTIVE,
-	/*
-	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION struct
-	 * csr_roam_info's bss_desc may pass back and the peer's MAC
-	 * address in peerMacOrBssid. If roamStatus is
-	 * eCSR_ROAM_IBSS_IND, the peer's MAC address in
-	 * peerMacOrBssid and a beacon frame of the IBSS in pbFrames
-	 */
-	eCSR_ROAM_RESULT_IBSS_NEW_PEER,
-	/*
-	 * Peer departed from IBSS, Callback may get a pointer tSmeIbssPeerInd
-	 * in pIbssPeerInd
-	 */
-	eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED,
-	/*
-	 * Coalescing in the IBSS network (joined an IBSS network)
-	 * Callback pass a BSSID in peerMacOrBssid
-	 */
-	eCSR_ROAM_RESULT_IBSS_COALESCED,
-	/*
-	 * If roamStatus is eCSR_ROAM_ROAMING_START, callback may get a pointer
-	 * to tCsrConnectedProfile used to connect.
-	 */
-	eCSR_ROAM_RESULT_IBSS_STOP,
 	eCSR_ROAM_RESULT_LOSTLINK,
 	eCSR_ROAM_RESULT_MIC_ERROR_UNICAST,
 	eCSR_ROAM_RESULT_MIC_ERROR_GROUP,
@@ -481,9 +439,6 @@ typedef enum {
 	eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN,
 	eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED,
 	eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION,
-
-	eCSR_ROAM_RESULT_IBSS_PEER_INFO_SUCCESS,
-	eCSR_ROAM_RESULT_IBSS_PEER_INFO_FAILED,
 	eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND,
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS,
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE,
@@ -514,7 +469,6 @@ typedef enum {
 	eCSR_DISCONNECT_REASON_DISASSOC,
 	eCSR_DISCONNECT_REASON_DEAUTH,
 	eCSR_DISCONNECT_REASON_HANDOFF,
-	eCSR_DISCONNECT_REASON_IBSS_LEAVE,
 	eCSR_DISCONNECT_REASON_STA_HAS_LEFT,
 	eCSR_DISCONNECT_REASON_NDI_DELETE,
 	eCSR_DISCONNECT_REASON_ROAM_HO_FAIL,
@@ -525,10 +479,6 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED,
 	/* Associated in an Infrastructure network. */
 	eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED,
-	/* Participating in IBSS network though disconnection */
-	eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED,
-	/* Participating in IBSS network with partner stations also present */
-	eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED,
 	/* Participating in WDS network in AP/STA mode but not connected yet */
 	eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED,
 	/* Participating in a WDS network and connected peer to peer */
@@ -938,7 +888,6 @@ struct csr_config_params {
 	uint8_t fEnableDFSChnlScan;
 	bool send_smps_action;
 
-	uint8_t isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
@@ -996,10 +945,6 @@ struct csr_roam_info {
 	bool fReassocReq;       /* set to true if for re-association */
 	bool fReassocRsp;       /* set to true if for re-association */
 	struct qdf_mac_addr bssid;
-	/*
-	 * Only valid in IBSS. this is the peers MAC address for
-	 * eCSR_ROAM_RESULT_IBSS_NEW_PEER or PEER_DEPARTED
-	 */
 	struct qdf_mac_addr peerMac;
 	tSirResultCodes status_code;
 	/* this'd be our own defined or sent from otherBSS(per 802.11spec) */
@@ -1291,12 +1236,6 @@ typedef QDF_STATUS (*csr_session_open_cb)(uint8_t session_id,
 					  QDF_STATUS qdf_status);
 typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 
-#define CSR_IS_START_IBSS(pProfile) (eCSR_BSS_TYPE_START_IBSS == \
-				     (pProfile)->BSSType)
-#define CSR_IS_JOIN_TO_IBSS(pProfile) (eCSR_BSS_TYPE_IBSS == \
-				       (pProfile)->BSSType)
-#define CSR_IS_IBSS(pProfile) (CSR_IS_START_IBSS(pProfile) || \
-			       CSR_IS_JOIN_TO_IBSS(pProfile))
 #define CSR_IS_INFRASTRUCTURE(pProfile) (eCSR_BSS_TYPE_INFRASTRUCTURE == \
 					 (pProfile)->BSSType)
 #define CSR_IS_ANY_BSS_TYPE(pProfile) (eCSR_BSS_TYPE_ANY == \

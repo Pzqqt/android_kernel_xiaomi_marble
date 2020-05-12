@@ -1837,94 +1837,6 @@ QDF_STATUS sme_get_roam_scan_ch(mac_handle_t mac_handle,
 }
 #endif
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * sme_ibss_peer_info_response_handler() - Handler for ibss peer info
- * @mac: Global MAC pointer
- * @sme_ibss_peer_info_response_handler: ibss peer info params
- *
- * Return: QDF_STATUS
- */
-static
-QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
-					       tpSirIbssGetPeerInfoRspParams
-					       pIbssPeerInfoParams)
-{
-	struct ibss_peer_info_cb_info *cb_info;
-
-	if (!mac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: mac is null", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	cb_info = &mac->sme.peer_info_cb_info;
-	if (!cb_info->peer_info_cb) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD callback is null", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	cb_info->peer_info_cb(cb_info->peer_info_cb_context,
-			      &pIbssPeerInfoParams->ibssPeerInfoRspParams);
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle, void *cb_context,
-				      ibss_peer_info_cb peer_info_cb,
-				      bool allPeerInfoReqd, uint8_t *mac_addr)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
-	struct ibss_peer_info_cb_info *cb_info;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (status == QDF_STATUS_SUCCESS) {
-		cb_info = &mac->sme.peer_info_cb_info;
-		cb_info->peer_info_cb = peer_info_cb;
-		cb_info->peer_info_cb_context = cb_context;
-
-		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
-			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
-		if (!pIbssInfoReqParams) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
-		qdf_mem_copy(pIbssInfoReqParams->peer_mac.bytes, mac_addr,
-			     QDF_MAC_ADDR_SIZE);
-
-		message.type = WMA_GET_IBSS_PEER_INFO_REQ;
-		message.bodyptr = pIbssInfoReqParams;
-		message.reserved = 0;
-
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post WMA_GET_IBSS_PEER_INFO_REQ MSG failed",
-				  __func__);
-			qdf_mem_free(pIbssInfoReqParams);
-			qdf_status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return qdf_status;
-}
-#else
-static inline
-QDF_STATUS sme_ibss_peer_info_response_handler(struct mac_context *mac,
-					       tpSirIbssGetPeerInfoRspParams
-					       pIbssPeerInfoParams)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 /**
  * sme_process_dual_mac_config_resp() - Process set Dual mac config response
  * @mac: Global MAC pointer
@@ -2191,15 +2103,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		status = csr_roam_offload_scan_rsp_hdlr((void *)mac,
 							pMsg->bodyptr);
 		qdf_mem_free(pMsg->bodyptr);
-		break;
-	case eWNI_SME_IBSS_PEER_INFO_RSP:
-		if (pMsg->bodyptr) {
-			sme_ibss_peer_info_response_handler(mac,
-							    pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
 		break;
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	case eWNI_SME_READY_TO_EXTWOW_IND:
@@ -4811,11 +4714,7 @@ QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
 		if ((pSession->connectedProfile.BSSType ==
 		     eCSR_BSS_TYPE_INFRASTRUCTURE)
 		    || (pSession->connectedProfile.BSSType ==
-			eCSR_BSS_TYPE_IBSS)
-		    || (pSession->connectedProfile.BSSType ==
-			eCSR_BSS_TYPE_INFRA_AP)
-		    || (pSession->connectedProfile.BSSType ==
-			eCSR_BSS_TYPE_START_IBSS)) {
+			eCSR_BSS_TYPE_INFRA_AP)) {
 			*chan_freq = pSession->connectedProfile.op_freq;
 			return QDF_STATUS_SUCCESS;
 		}

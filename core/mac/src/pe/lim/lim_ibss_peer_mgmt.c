@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -359,30 +359,6 @@ static void ibss_coalesce_free(struct mac_context *mac)
 	mac->lim.ibss_info.mac_hdr = NULL;
 	qdf_mem_free(mac->lim.ibss_info.beacon);
 	mac->lim.ibss_info.beacon = NULL;
-}
-
-/*
- * save the beacon params for use when adding the bss
- */
-static void
-ibss_coalesce_save(struct mac_context *mac,
-		   tpSirMacMgmtHdr pHdr, tpSchBeaconStruct pBeacon)
-{
-	/* get rid of any saved info */
-	ibss_coalesce_free(mac);
-
-	mac->lim.ibss_info.mac_hdr = qdf_mem_malloc(sizeof(*pHdr));
-	if (!mac->lim.ibss_info.mac_hdr)
-		return;
-
-	mac->lim.ibss_info.beacon = qdf_mem_malloc(sizeof(*pBeacon));
-	if (!mac->lim.ibss_info.beacon) {
-		ibss_coalesce_free(mac);
-		return;
-	}
-
-	qdf_mem_copy(mac->lim.ibss_info.mac_hdr, pHdr, sizeof(*pHdr));
-	qdf_mem_copy(mac->lim.ibss_info.beacon, pBeacon, sizeof(*pBeacon));
 }
 
 static QDF_STATUS lim_ibss_add_bss(
@@ -1283,20 +1259,6 @@ end:
 	}
 }
 
-static void lim_ibss_bss_delete(struct mac_context *mac,
-				struct pe_session *pe_session)
-{
-	QDF_STATUS status;
-
-	status = wlan_vdev_mlme_sm_deliver_evt(
-				pe_session->vdev,
-				WLAN_VDEV_SM_EV_DOWN,
-				sizeof(*pe_session),
-				pe_session);
-	if (QDF_IS_STATUS_ERROR(status))
-		pe_err("Deliver WLAN_VDEV_SM_EV_DOWN failed");
-}
-
 QDF_STATUS
 lim_ibss_coalesce(struct mac_context *mac,
 		  tpSirMacMgmtHdr pHdr,
@@ -1317,49 +1279,6 @@ lim_ibss_coalesce(struct mac_context *mac,
 	pe_debug("Current BSSID :" QDF_MAC_ADDR_STR " Received BSSID :"
 		   QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(currentBssId),
 		QDF_MAC_ADDR_ARRAY(pHdr->bssId));
-
-	/* Check for IBSS Coalescing only if Beacon is from different BSS */
-	if (qdf_mem_cmp(currentBssId, pHdr->bssId, sizeof(tSirMacAddr))
-	    && pe_session->isCoalesingInIBSSAllowed) {
-		/*
-		 * If STA entry is already available in the LIM hash table, then it is
-		 * possible that the peer may have left and rejoined within the heartbeat
-		 * timeout. In the offloaded case with 32 peers, the HB timeout is whopping
-		 * 128 seconds. In that case, the FW will not let any frames come in until
-		 * atleast the last sequence number is received before the peer is left
-		 * Hence, if the coalescing peer is already there in the peer list and if
-		 * the BSSID matches then, invoke delSta() to cleanup the entries. We will
-		 * let the peer coalesce when we receive next beacon from the peer
-		 */
-		pPeerNode = ibss_peer_find(mac, pHdr->sa);
-		if (pPeerNode) {
-			lim_ibss_delete_peer(mac, pe_session,
-							  pHdr->sa, true);
-			pe_warn("Peer attempting to reconnect before HB timeout, deleted");
-			return QDF_STATUS_E_INVAL;
-		}
-
-		if (!fTsfLater) { /* No Coalescing happened. */
-			pe_warn("No Coalescing happened");
-			return QDF_STATUS_E_INVAL;
-		}
-		/*
-		 * IBSS Coalescing happened.
-		 * save the received beacon, and delete the current BSS. The rest of the
-		 * processing will be done in the delBss response processing
-		 */
-		mac->lim.gLimIbssCoalescingHappened = true;
-		ibss_coalesce_save(mac, pHdr, pBeacon);
-		pe_debug("IBSS Coalescing happened Delete BSSID :" QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(currentBssId));
-		lim_ibss_bss_delete(mac, pe_session);
-
-		return QDF_STATUS_SUCCESS;
-	} else {
-		if (qdf_mem_cmp
-			    (currentBssId, pHdr->bssId, sizeof(tSirMacAddr)))
-			return QDF_STATUS_E_INVAL;
-	}
 
 	/* STA in IBSS mode and SSID matches with ours */
 	pPeerNode = ibss_peer_find(mac, pHdr->sa);

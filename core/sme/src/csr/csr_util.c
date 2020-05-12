@@ -254,11 +254,9 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_LOSTLINK);
 		CASE_RETURN_STR(eCSR_ROAM_LOSTLINK_DETECTED);
 		CASE_RETURN_STR(eCSR_ROAM_MIC_ERROR_IND);
-		CASE_RETURN_STR(eCSR_ROAM_IBSS_IND);
 		CASE_RETURN_STR(eCSR_ROAM_CONNECT_STATUS_UPDATE);
 		CASE_RETURN_STR(eCSR_ROAM_GEN_INFO);
 		CASE_RETURN_STR(eCSR_ROAM_SET_KEY_COMPLETE);
-		CASE_RETURN_STR(eCSR_ROAM_IBSS_LEAVE);
 		CASE_RETURN_STR(eCSR_ROAM_INFRA_IND);
 		CASE_RETURN_STR(eCSR_ROAM_WPS_PBC_PROBE_REQ_IND);
 		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
@@ -280,9 +278,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_SEND_P2P_STOP_BSS);
 #ifdef WLAN_FEATURE_11W
 		CASE_RETURN_STR(eCSR_ROAM_UNPROT_MGMT_FRAME_IND);
-#endif
-#ifdef WLAN_FEATURE_RMC
-		CASE_RETURN_STR(eCSR_ROAM_IBSS_PEER_INFO_COMPLETE);
 #endif
 #ifdef FEATURE_WLAN_ESE
 		CASE_RETURN_STR(eCSR_ROAM_TSM_IE_IND);
@@ -320,16 +315,6 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_DISASSOC_IND);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_DEAUTH_IND);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_CAP_CHANGED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_STARTED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_START_FAILED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_JOIN_FAILED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_CONNECT);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_INACTIVE);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_NEW_PEER);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_COALESCED);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_STOP);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_LOSTLINK);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_MIC_ERROR_UNICAST);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_MIC_ERROR_GROUP);
@@ -359,8 +344,6 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED);
 		CASE_RETURN_STR
 			(eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_PEER_INFO_SUCCESS);
-		CASE_RETURN_STR(eCSR_ROAM_RESULT_IBSS_PEER_INFO_FAILED);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS);
 		CASE_RETURN_STR(eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE);
@@ -566,9 +549,8 @@ bool csr_is_conn_state_connected_infra(struct mac_context *mac_ctx,
 
 bool csr_is_conn_state_connected(struct mac_context *mac, uint32_t sessionId)
 {
-	return csr_is_conn_state_connected_ibss(mac, sessionId) ||
-		csr_is_conn_state_connected_infra(mac, sessionId) ||
-		csr_is_conn_state_connected_wds(mac, sessionId);
+	return csr_is_conn_state_connected_infra(mac, sessionId) ||
+	       csr_is_conn_state_connected_wds(mac, sessionId);
 }
 
 bool csr_is_conn_state_infra(struct mac_context *mac, uint32_t sessionId)
@@ -587,42 +569,6 @@ static tSirMacCapabilityInfo csr_get_bss_capabilities(struct bss_description *
 
 	return dot11Caps;
 }
-
-#ifdef QCA_IBSS_SUPPORT
-bool csr_is_conn_state_connected_ibss(struct mac_context *mac_ctx,
-				      uint32_t session_id)
-{
-	return csr_is_conn_state(mac_ctx, session_id,
-				 eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED);
-}
-
-bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac_ctx,
-					 uint32_t session_id)
-{
-	return csr_is_conn_state(mac_ctx, session_id,
-				 eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED);
-}
-
-bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
-{
-	return csr_is_conn_state_connected_ibss(mac, sessionId) ||
-	       csr_is_conn_state_disconnected_ibss(mac, sessionId);
-}
-
-bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
-{
-	return (bool)
-		(eCSR_BSS_TYPE_START_IBSS == bssType
-		 || eCSR_BSS_TYPE_IBSS == bssType);
-}
-
-bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
-{
-	tSirMacCapabilityInfo dot11Caps = csr_get_bss_capabilities(pSirBssDesc);
-
-	return (bool) dot11Caps.ibss;
-}
-#endif
 
 bool csr_is_conn_state_connected_wds(struct mac_context *mac_ctx,
 				     uint32_t session_id)
@@ -672,7 +618,6 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 	for (i = 0; i < WLAN_MAX_VDEVS; i++) {
 		if (CSR_IS_SESSION_VALID(mac, i) &&
 		    (csr_is_conn_state_infra(mac, i) ||
-		     csr_is_conn_state_ibss(mac, i) ||
 		     csr_is_conn_state_ap(mac, i))) {
 			return true;
 		}
@@ -3577,10 +3522,6 @@ enum bss_type csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 	case eCSR_BSS_TYPE_INFRASTRUCTURE:
 		ret = eSIR_INFRASTRUCTURE_MODE;
 		break;
-	case eCSR_BSS_TYPE_IBSS:
-	case eCSR_BSS_TYPE_START_IBSS:
-		ret = eSIR_IBSS_MODE;
-		break;
 	case eCSR_BSS_TYPE_INFRA_AP:
 		ret = eSIR_INFRA_AP_MODE;
 		break;
@@ -3840,8 +3781,6 @@ const char *sme_bss_type_to_string(const uint8_t bss_type)
 	switch (bss_type) {
 	CASE_RETURN_STRING(eCSR_BSS_TYPE_INFRASTRUCTURE);
 	CASE_RETURN_STRING(eCSR_BSS_TYPE_INFRA_AP);
-	CASE_RETURN_STRING(eCSR_BSS_TYPE_IBSS);
-	CASE_RETURN_STRING(eCSR_BSS_TYPE_START_IBSS);
 	CASE_RETURN_STRING(eCSR_BSS_TYPE_ANY);
 	default:
 		return "unknown bss type";

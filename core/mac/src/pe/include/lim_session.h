@@ -397,8 +397,6 @@ struct pe_session {
 	int8_t rssi;
 #endif
 	uint8_t max_amsdu_num;
-	uint8_t isCoalesingInIBSSAllowed;
-
 	struct ht_config ht_config;
 	struct sir_vht_config vht_config;
 	/*

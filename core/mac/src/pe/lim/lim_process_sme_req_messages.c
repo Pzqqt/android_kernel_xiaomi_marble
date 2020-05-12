@@ -464,8 +464,6 @@ lim_configure_ap_start_bss_session(struct mac_context *mac_ctx,
 			sme_start_bss_req->vendor_vht_sap;
 	lim_get_short_slot_from_phy_mode(mac_ctx, session, session->gLimPhyMode,
 		&session->shortSlotTimeSupported);
-	session->isCoalesingInIBSSAllowed =
-		sme_start_bss_req->isCoalesingInIBSSAllowed;
 
 	session->beacon_tx_rate = sme_start_bss_req->beacon_tx_rate;
 

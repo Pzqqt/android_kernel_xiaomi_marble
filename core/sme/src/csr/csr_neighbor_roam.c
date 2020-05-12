@@ -402,9 +402,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 
 	if (profile->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
 		filter->bss_type = WLAN_TYPE_BSS;
-	else if (profile->BSSType == eCSR_BSS_TYPE_IBSS ||
-		 profile->BSSType == eCSR_BSS_TYPE_START_IBSS)
-		filter->bss_type = WLAN_TYPE_IBSS;
 	else
 		filter->bss_type = WLAN_TYPE_ANY;
 

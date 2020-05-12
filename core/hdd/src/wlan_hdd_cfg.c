@@ -903,9 +903,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc, false);
 	}
 
-	sme_config->csr_config.isCoalesingInIBSSAllowed =
-						ibss_cfg.coalesing_enable;
-
 	/* Update maximum interfaces information */
 	sme_config->csr_config.max_intf_count = hdd_ctx->max_intf_count;
 

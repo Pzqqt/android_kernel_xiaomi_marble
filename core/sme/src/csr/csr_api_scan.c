@@ -256,28 +256,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac_ctx,
 
 	profile = session->scan_info.profile;
 
-	/*
-	 * Check whether it is for start ibss. No need to do anything if it
-	 * is a JOIN request
-	 */
-	if (profile && CSR_IS_START_IBSS(profile)) {
-		status = csr_roam_issue_connect(mac_ctx, session_id, profile, NULL,
-				eCsrHddIssued, session->scan_info.roam_id,
-				true, true);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("failed to issue startIBSS, session_id %d status: 0x%08X roam id %d",
-				session_id, status, session->scan_info.roam_id);
-			csr_roam_call_callback(mac_ctx, session_id, NULL,
-				session->scan_info.roam_id, eCSR_ROAM_FAILED,
-				eCSR_ROAM_RESULT_FAILURE);
-		}
-		return status;
-	}
 	roam_result = eCSR_ROAM_RESULT_FAILURE;
-	if (profile && csr_is_bss_type_ibss(profile->BSSType)) {
-		roam_result = eCSR_ROAM_RESULT_IBSS_START_FAILED;
-		goto roam_completion;
-	}
 
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
 	if (!roam_info)

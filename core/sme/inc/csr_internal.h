@@ -115,7 +115,6 @@ enum csr_roam_reason {
 	eCsrSmeIssuedDisassocForHandoff,
 	/* will be issued by Handoff logic to join a new AP with same profile */
 	eCsrSmeIssuedAssocToSimilarAP,
-	eCsrForcedIbssLeave,
 	eCsrStopBss,
 	eCsrSmeIssuedFTReassoc,
 	eCsrForcedDisassocSta,
@@ -159,8 +158,6 @@ enum csr_roam_state {
 enum csr_join_state {
 	eCsrContinueRoaming,
 	eCsrStopRoaming,
-	eCsrStartIbss,
-	eCsrStartIbssSameIbss,
 	eCsrReassocToSelfNoCapChange,
 	eCsrStopRoamingDueToConcurrency,
 
@@ -356,7 +353,6 @@ struct csr_config {
 	bool doBMPSWorkaround;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
-	uint8_t isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
@@ -834,59 +830,6 @@ bool csr_is_conn_state_connected(struct mac_context *mac,
 					       uint32_t sessionId);
 bool csr_is_conn_state_infra(struct mac_context *mac,
 					uint32_t sessionId);
-
-#ifdef QCA_IBSS_SUPPORT
-/**
- * csr_is_conn_state_ibss() - get the connection state for ibss session
- * @mac_ctx:  pointer to global mac structure
- * @sessionId: session id
- *
- *
- * Return: true if IBSS connected/disconnected state, else flase
- */
-bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId);
-
-/**
- * csr_is_conn_state_connected_ibss() - get the connected state for ibss
- * @mac_ctx:  pointer to global mac structure
- * @sessionId: session id
- *
- *
- * Return: true if IBSS connected state, else false
- */
-bool csr_is_conn_state_connected_ibss(struct mac_context *mac,
-				      uint32_t sessionId);
-
-/**
- * csr_is_conn_state_connected_ibss() - get the connected state for ibss
- * @mac_ctx:  pointer to global mac structure
- * @sessionId: session id
- *
- *
- * Return: true if IBSS disconnected state, else false
- */
-bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
-					 uint32_t sessionId);
-#else
-static inline bool
-csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
-{
-	return false;
-}
-
-static inline bool
-csr_is_conn_state_connected_ibss(struct mac_context *mac, uint32_t sessionId)
-{
-	return false;
-}
-
-static inline bool
-csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
-				    uint32_t sessionId)
-{
-	return false;
-}
-#endif
 
 bool csr_is_conn_state_wds(struct mac_context *mac, uint32_t sessionId);
 bool csr_is_conn_state_connected_wds(struct mac_context *mac,

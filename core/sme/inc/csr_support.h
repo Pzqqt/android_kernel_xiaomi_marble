@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -230,35 +230,6 @@ csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
 bool csr_is_infra_bss_desc(struct bss_description *pSirBssDesc);
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * csr_is_ibss_bss_desc() - API to check bss desc of ibss type
- * @pSirBssDesc:  pointer to pSirBssDesc structure
- *
- * Return: true if bss desc of ibss type, else false
- */
-bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc);
-
-/**
- * csr_is_ibss_bss_desc() - API to check bss desc of ibss type
- * @bssType:  bss type
- *
- * Return: true if bss type is ibss type, else false
- */
-bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
-#else
-static inline
-bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
-{
-	return false;
-}
-
-static inline
-bool csr_is_ibss_bss_desc(struct bss_description *pSirBssDesc)
-{
-	return false;
-}
-#endif
 tSirResultCodes csr_get_de_auth_rsp_status_code(struct deauth_rsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx);
 uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx);
