@@ -355,6 +355,9 @@ endif
 ifeq ($(CONFIG_WLAN_GTX_BW_MASK), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_gtx_bw_mask.o
 endif
+ifeq ($(CONFIG_IPA_OFFLOAD), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_ipa.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
