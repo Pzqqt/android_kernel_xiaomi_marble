@@ -9125,7 +9125,8 @@ dp_peer_teardown_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	 * for bss_peer, unless only 3 reference remains (peer map reference,
 	 * peer hash table reference and above local reference).
 	 */
-	if (peer->bss_peer && (qdf_atomic_read(&peer->ref_cnt) > 3)) {
+	if ((peer->vdev->opmode == wlan_op_mode_ap) && peer->bss_peer &&
+	    (qdf_atomic_read(&peer->ref_cnt) > 3)) {
 		status =  QDF_STATUS_E_FAILURE;
 		goto fail;
 	}
