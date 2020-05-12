@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,18 +59,17 @@ static inline int find_ptrn_len(const char *ptrn)
  */
 static void dump_hdd_wowl_ptrn(struct pmo_wow_add_pattern *ptrn)
 {
-	int i;
-
-	hdd_info("Pattern Id = 0x%x", ptrn->pattern_id);
-	hdd_info("Pattern Byte Offset = 0x%x", ptrn->pattern_byte_offset);
-	hdd_info("Pattern_size = 0x%x", ptrn->pattern_size);
-	hdd_info("Pattern_mask_size = 0x%x", ptrn->pattern_mask_size);
-	hdd_info("Pattern: ");
-	for (i = 0; i < ptrn->pattern_size; i++)
-		hdd_info(" %02X", ptrn->pattern[i]);
-	hdd_info("pattern_mask: ");
-	for (i = 0; i < ptrn->pattern_mask_size; i++)
-		hdd_info("%02X", ptrn->pattern_mask[i]);
+	hdd_debug("Dumping WOW pattern");
+	hdd_nofl_debug("Pattern Id = 0x%x", ptrn->pattern_id);
+	hdd_nofl_debug("Pattern Byte Offset = 0x%x", ptrn->pattern_byte_offset);
+	hdd_nofl_debug("Pattern_size = 0x%x", ptrn->pattern_size);
+	hdd_nofl_debug("Pattern_mask_size = 0x%x", ptrn->pattern_mask_size);
+	hdd_nofl_debug("Pattern: ");
+	qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			   ptrn->pattern, ptrn->pattern_size);
+	hdd_nofl_debug("pattern_mask: ");
+	qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			   ptrn->pattern_mask, ptrn->pattern_mask_size);
 }
 
 static QDF_STATUS
