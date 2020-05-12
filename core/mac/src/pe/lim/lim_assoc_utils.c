@@ -1580,7 +1580,7 @@ static bool lim_check_valid_mcs_for_nss(struct pe_session *session,
 	uint16_t mcs_map;
 	uint8_t mcs_count = 2, i;
 
-	if (!session->he_capable || !he_caps)
+	if (!session->he_capable || !he_caps || !he_caps->present)
 		return true;
 
 	mcs_map = he_caps->rx_he_mcs_map_lt_80;

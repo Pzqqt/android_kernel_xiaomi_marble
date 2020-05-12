@@ -162,8 +162,8 @@ static void lim_extract_he_op(struct pe_session *session,
 
 static bool lim_check_he_80_mcs11_supp(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct) {
-	uint8_t rx_mcs_map;
-	uint8_t tx_mcs_map;
+	uint16_t rx_mcs_map;
+	uint16_t tx_mcs_map;
 	rx_mcs_map = beacon_struct->he_cap.rx_he_mcs_map_lt_80;
 	tx_mcs_map = beacon_struct->he_cap.tx_he_mcs_map_lt_80;
 	if ((session->nss == NSS_1x1_MODE) &&
@@ -198,6 +198,31 @@ static void lim_check_he_ldpc_cap(struct pe_session *session,
 			session->dot11mode = MLME_DOT11_MODE_11N;
 			pe_debug("Update dot11mode to 11N");
 		}
+	}
+}
+
+static void lim_check_is_he_mcs_valid(struct pe_session *session,
+				      tSirProbeRespBeacon *beacon_struct)
+{
+	uint8_t i;
+	uint16_t mcs_map;
+
+	if (!session->he_capable || !beacon_struct->he_cap.present)
+		return;
+
+	mcs_map = beacon_struct->he_cap.rx_he_mcs_map_lt_80;
+	for (i = 0; i < session->nss; i++) {
+		if (((mcs_map >> (i * 2)) & 0x3) != 0x3)
+			return;
+	}
+	session->he_capable = false;
+	pe_err("AP does not have valid MCS map");
+	if (session->vhtCapability) {
+		session->dot11mode = MLME_DOT11_MODE_11AC;
+		pe_debug("Update dot11mode to 11ac");
+	} else {
+		session->dot11mode = MLME_DOT11_MODE_11N;
+		pe_debug("Update dot11mode to 11N");
 	}
 }
 
@@ -278,6 +303,10 @@ static inline void lim_extract_he_op(struct pe_session *session,
 static void lim_check_he_ldpc_cap(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
+static void lim_check_is_he_mcs_valid(struct pe_session *session,
+				      tSirProbeRespBeacon *beacon_struct)
+{
+}
 #endif
 
 void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
@@ -535,6 +564,7 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 			pe_err("AP does not support op_mode rx");
 		}
 	}
+	lim_check_is_he_mcs_valid(session, beacon_struct);
 	lim_check_he_ldpc_cap(session, beacon_struct);
 	lim_extract_he_op(session, beacon_struct);
 	lim_update_he_bw_cap_mcs(session, beacon_struct);
