@@ -1142,7 +1142,7 @@ QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
 bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 {
 	struct nan_psoc_priv_obj *psoc_nan_obj;
-	bool support = false;
+	bool host_support, fw_support;
 
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
 	if (!psoc_nan_obj) {
@@ -1150,11 +1150,15 @@ bool ucfg_nan_is_vdev_creation_allowed(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 
-	if (ucfg_nan_is_vdev_creation_supp_by_fw(psoc_nan_obj) &&
-	    ucfg_nan_is_vdev_creation_supp_by_host(psoc_nan_obj))
-		support = true;
+	host_support = ucfg_nan_is_vdev_creation_supp_by_host(psoc_nan_obj);
+	fw_support = ucfg_nan_is_vdev_creation_supp_by_fw(psoc_nan_obj);
+	if (!host_support || !fw_support) {
+		nan_debug("NAN separate vdev%s supported by host,%s supported by firmware",
+			  host_support ? "" : " not", fw_support ? "" : " not");
+		return false;
+	}
 
-	return support;
+	return true;
 }
 
 void
