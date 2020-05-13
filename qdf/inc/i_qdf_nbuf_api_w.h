@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017,2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017,2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,4 +110,14 @@ static inline uint16_t qdf_nbuf_get_rx_flow_tag(qdf_nbuf_t buf)
 	return __qdf_nbuf_get_rx_flow_tag(buf);
 }
 
+/**
+ * qdf_nbuf_set_exc_frame() - set exception frame flag
+ * @buf: Network buffer whose cb is to set exception frame flag
+ * @value: exception frame flag, value 0 or 1.
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_set_exc_frame(qdf_nbuf_t buf, uint8_t value)
+{
+}
 #endif /* _QDF_NBUF_W_H */
