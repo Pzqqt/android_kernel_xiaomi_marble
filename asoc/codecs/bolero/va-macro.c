@@ -297,8 +297,7 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 				"%s: va_mclk_users is non-zero still, audio SSR fail!!\n",
 				__func__);
 		break;
-	case BOLERO_MACRO_EVT_SSR_UP:
-		trace_printk("%s, enter SSR up\n", __func__);
+	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable VA_CORE_CLK to reset GFMUX reg */
 		ret = bolero_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
@@ -311,6 +310,9 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(va_priv->dev,
 						va_priv->default_clk_id,
 						VA_CORE_CLK, false);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
 		/* reset swr after ssr/pdr */
 		va_priv->reset_swr = true;
 		if (va_priv->swr_ctrl_data)

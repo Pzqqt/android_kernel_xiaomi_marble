@@ -411,6 +411,9 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 		else
 			tx_priv->hs_slow_insert_complete = false;
 		break;
+	default:
+		pr_debug("%s Invalid Event\n", __func__);
+		break;
 	}
 	return 0;
 }

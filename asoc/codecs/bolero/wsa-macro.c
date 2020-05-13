@@ -1022,10 +1022,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 			}
 		}
 		break;
-	case BOLERO_MACRO_EVT_SSR_UP:
-		trace_printk("%s, enter SSR up\n", __func__);
-		/* reset swr after ssr/pdr */
-		wsa_priv->reset_swr = true;
+	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
 		ret = bolero_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
@@ -1038,6 +1035,11 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(wsa_priv->dev,
 						wsa_priv->default_clk_id,
 						WSA_CORE_CLK, false);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
+		/* reset swr after ssr/pdr */
+		wsa_priv->reset_swr = true;
 		if (wsa_priv->swr_ctrl_data)
 			swrm_wcd_notify(
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
