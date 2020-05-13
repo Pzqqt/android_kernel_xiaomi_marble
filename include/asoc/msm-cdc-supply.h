@@ -27,6 +27,10 @@ struct cdc_wcd_supply {
 extern int msm_cdc_get_power_supplies(struct device *dev,
 				      struct cdc_regulator **cdc_vreg,
 				      int *total_num_supplies);
+extern bool msm_cdc_is_ondemand_supply(struct device *dev,
+				struct regulator_bulk_data *supplies,
+				struct cdc_regulator *cdc_vreg,
+				int num_supplies, char *supply_name);
 extern int msm_cdc_disable_ondemand_supply(struct device *dev,
 					struct regulator_bulk_data *supplies,
 					struct cdc_regulator *cdc_vreg,

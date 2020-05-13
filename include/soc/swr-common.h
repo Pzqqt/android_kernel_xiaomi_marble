@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015, 2017-2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _LINUX_SWR_COMMON_H
@@ -17,7 +17,7 @@ enum {
 };
 
 struct port_params {
-	u8 si;
+	u16 si;
 	u8 off1;
 	u8 off2;
 	u8 hstart;/* head start */

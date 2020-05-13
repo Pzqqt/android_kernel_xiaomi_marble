@@ -2,6 +2,7 @@
 #define _UAPI_MSM_AUDIO_VOICEMEMO_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 #define AUDIO_GET_VOICEMEMO_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \
 	(AUDIO_MAX_COMMON_IOCTL_NUM+0), unsigned int)
@@ -52,15 +53,15 @@ enum rpc_voc_pb_len_rate_var_type {
 };
 
 struct msm_audio_voicememo_config {
-	uint32_t rec_type;
-	uint32_t rec_interval_ms;
-	uint32_t auto_stop_ms;
-	uint32_t capability;
-	uint32_t max_rate;
-	uint32_t min_rate;
-	uint32_t frame_format;
-	uint32_t dtx_enable;
-	uint32_t data_req_ms;
+	__u32 rec_type;
+	__u32 rec_interval_ms;
+	__u32 auto_stop_ms;
+	__u32 capability;
+	__u32 max_rate;
+	__u32 min_rate;
+	__u32 frame_format;
+	__u32 dtx_enable;
+	__u32 data_req_ms;
 };
 
 #endif /* _UAPI_MSM_AUDIO_VOICEMEMO_H */

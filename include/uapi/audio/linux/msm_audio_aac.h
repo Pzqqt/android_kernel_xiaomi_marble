@@ -2,6 +2,7 @@
 #define _UAPI_MSM_AUDIO_AAC_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 #define AUDIO_SET_AAC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \
 	(AUDIO_MAX_COMMON_IOCTL_NUM+0), struct msm_audio_aac_config)
@@ -15,7 +16,7 @@
 	(AUDIO_MAX_COMMON_IOCTL_NUM+4), struct msm_audio_aac_enc_config)
 
 #define AUDIO_SET_AAC_MIX_CONFIG  _IOR(AUDIO_IOCTL_MAGIC, \
-	(AUDIO_MAX_COMMON_IOCTL_NUM+5), uint32_t)
+	(AUDIO_MAX_COMMON_IOCTL_NUM+5), __u32)
 
 #define AUDIO_AAC_FORMAT_ADTS		-1
 #define	AUDIO_AAC_FORMAT_RAW		0x0000
@@ -67,10 +68,10 @@ struct msm_audio_aac_config {
 };
 
 struct msm_audio_aac_enc_config {
-	uint32_t channels;
-	uint32_t sample_rate;
-	uint32_t bit_rate;
-	uint32_t stream_format;
+	__u32 channels;
+	__u32 sample_rate;
+	__u32 bit_rate;
+	__u32 stream_format;
 };
 
 #endif /* _UAPI_MSM_AUDIO_AAC_H */

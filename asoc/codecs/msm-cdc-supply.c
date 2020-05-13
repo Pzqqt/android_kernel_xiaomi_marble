@@ -120,6 +120,47 @@ static int msm_cdc_check_supply_param(struct device *dev,
 }
 
 /*
+ * msm_cdc_is_ondemand_supply:
+ *	return if ondemand supply true or not
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @supply_name: supply name to be checked
+ *
+ * Return true/false
+ */
+bool msm_cdc_is_ondemand_supply(struct device *dev,
+				struct regulator_bulk_data *supplies,
+				struct cdc_regulator *cdc_vreg,
+				int num_supplies,
+				char *supply_name)
+{
+	bool rc = false;
+	int ret, i;
+
+	if ((!supply_name) || (!supplies)) {
+		pr_err("%s: either dev or supplies or cdc_vreg is NULL\n",
+				__func__);
+		return rc;
+	}
+	/* input parameter validation */
+	ret = msm_cdc_check_supply_param(dev, cdc_vreg, num_supplies);
+	if (ret)
+		return rc;
+
+	for (i = 0; i < num_supplies; i++) {
+		if (cdc_vreg[i].ondemand &&
+			!strcmp(cdc_vreg[i].name, supply_name))
+			return true;
+	}
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_is_ondemand_supply);
+
+/*
  * msm_cdc_disable_ondemand_supply:
  *	Disable codec ondemand supply
  *

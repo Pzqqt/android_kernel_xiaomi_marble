@@ -145,24 +145,6 @@ struct generic_get_data_ {
 };
 static struct generic_get_data_ *generic_get_data;
 
-#ifdef CONFIG_DEBUG_FS
-#define OUT_BUFFER_SIZE 56
-#define IN_BUFFER_SIZE 24
-
-static struct timeval out_cold_tv;
-static struct timeval out_warm_tv;
-static struct timeval out_cont_tv;
-static struct timeval in_cont_tv;
-static long out_enable_flag;
-static long in_enable_flag;
-static struct dentry *out_dentry;
-static struct dentry *in_dentry;
-static int in_cont_index;
-/*This var is used to keep track of first write done for cold output latency */
-static int out_cold_index;
-static char *out_buffer;
-static char *in_buffer;
-
 static uint32_t adsp_reg_event_opcode[] = {
 	ASM_STREAM_CMD_REGISTER_PP_EVENTS,
 	ASM_STREAM_CMD_REGISTER_ENCDEC_EVENTS,
@@ -194,18 +176,11 @@ static int is_adsp_raise_event(uint32_t cmd)
 	}
 	return -EINVAL;
 }
-
 static inline void q6asm_set_flag_in_token(union asm_token_struct *asm_token,
 					   int flag, int flag_offset)
 {
 	if (flag)
 		ASM_SET_BIT(asm_token->_token.flags, flag_offset);
-}
-
-static inline int q6asm_get_flag_from_token(union asm_token_struct *asm_token,
-					    int flag_offset)
-{
-	return ASM_TEST_BIT(asm_token->_token.flags, flag_offset);
 }
 
 static inline void q6asm_update_token(u32 *token, u8 session_id, u8 stream_id,
@@ -222,7 +197,6 @@ static inline void q6asm_update_token(u32 *token, u8 session_id, u8 stream_id,
 				  ASM_CMD_NO_WAIT_OFFSET);
 	*token = asm_token.token;
 }
-
 static inline uint32_t q6asm_get_pcm_format_id(uint32_t media_format_block_ver)
 {
 	uint32_t pcm_format_id;
@@ -244,7 +218,6 @@ static inline uint32_t q6asm_get_pcm_format_id(uint32_t media_format_block_ver)
 	}
 	return pcm_format_id;
 }
-
 /*
  * q6asm_get_buf_index_from_token:
  *       Retrieve buffer index from token.
@@ -260,7 +233,6 @@ uint8_t q6asm_get_buf_index_from_token(uint32_t token)
 	return asm_token._token.buf_index;
 }
 EXPORT_SYMBOL(q6asm_get_buf_index_from_token);
-
 /*
  * q6asm_get_stream_id_from_token:
  *       Retrieve stream id from token.
@@ -276,6 +248,31 @@ uint8_t q6asm_get_stream_id_from_token(uint32_t token)
 	return asm_token._token.stream_id;
 }
 EXPORT_SYMBOL(q6asm_get_stream_id_from_token);
+
+static inline int q6asm_get_flag_from_token(union asm_token_struct *asm_token,
+					    int flag_offset)
+{
+	return ASM_TEST_BIT(asm_token->_token.flags, flag_offset);
+}
+
+
+#ifdef CONFIG_DEBUG_FS
+#define OUT_BUFFER_SIZE 56
+#define IN_BUFFER_SIZE 24
+
+static struct timeval out_cold_tv;
+static struct timeval out_warm_tv;
+static struct timeval out_cont_tv;
+static struct timeval in_cont_tv;
+static long out_enable_flag;
+static long in_enable_flag;
+static struct dentry *out_dentry;
+static struct dentry *in_dentry;
+static int in_cont_index;
+/*This var is used to keep track of first write done for cold output latency */
+static int out_cold_index;
+static char *out_buffer;
+static char *in_buffer;
 
 static int audio_output_latency_dbgfs_open(struct inode *inode,
 							struct file *file)
@@ -553,7 +550,8 @@ static void config_debug_fs_write_cb(void)
 static void config_debug_fs_init(void)
 {
 }
-#endif
+
+#endif /*CONFIG_DEBUG_FS*/
 
 int q6asm_mmap_apr_dereg(void)
 {
@@ -1984,6 +1982,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		data->token, data->payload_size, data->src_port,
 		data->dest_port);
 	if ((data->opcode != ASM_DATA_EVENT_RENDERED_EOS) &&
+	    (data->opcode != ASM_DATA_EVENT_RENDERED_EOS_V2) &&
 	    (data->opcode != ASM_DATA_EVENT_EOS) &&
 	    (data->opcode != ASM_SESSION_EVENTX_OVERFLOW) &&
 	    (data->opcode != ASM_SESSION_EVENT_RX_UNDERFLOW)) {
@@ -2010,6 +2009,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		case ASM_SESSION_CMD_PAUSE:
 		case ASM_SESSION_CMD_SUSPEND:
 		case ASM_DATA_CMD_EOS:
+		case ASM_DATA_CMD_EOS_V2:
 		case ASM_STREAM_CMD_CLOSE:
 		case ASM_STREAM_CMD_FLUSH:
 		case ASM_SESSION_CMD_RUN_V2:
@@ -2347,6 +2347,7 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 	}
 	case ASM_DATA_EVENT_EOS:
 	case ASM_DATA_EVENT_RENDERED_EOS:
+	case ASM_DATA_EVENT_RENDERED_EOS_V2:
 		pr_debug("%s: EOS ACK received: rxed session %d opcode 0x%x token 0x%x src %d dest %d\n",
 				__func__, ac->session,
 				data->opcode, data->token,
@@ -10374,7 +10375,7 @@ static int __q6asm_cmd(struct audio_client *ac, int cmd, uint32_t stream_id)
 		break;
 	case CMD_EOS:
 		pr_debug("%s: CMD_EOS\n", __func__);
-		hdr.opcode = ASM_DATA_CMD_EOS;
+		hdr.opcode = ASM_DATA_CMD_EOS_V2;
 		atomic_set(&ac->cmd_state, 0);
 		state = &ac->cmd_state;
 		break;
@@ -10524,7 +10525,7 @@ static int __q6asm_cmd_nowait(struct audio_client *ac, int cmd,
 		break;
 	case CMD_EOS:
 		pr_debug("%s: CMD_EOS\n", __func__);
-		hdr.opcode = ASM_DATA_CMD_EOS;
+		hdr.opcode = ASM_DATA_CMD_EOS_V2;
 		break;
 	case CMD_CLOSE:
 		pr_debug("%s: CMD_CLOSE\n", __func__);

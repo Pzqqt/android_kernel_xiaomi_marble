@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2016, 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
+#include <linux/clk-provider.h>
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -549,7 +550,6 @@ static void wsa881x_bandgap_ctrl(struct snd_soc_component *component,
 	} else {
 		--wsa881x->bg_cnt;
 		if (wsa881x->bg_cnt <= 0) {
-			WARN_ON(wsa881x->bg_cnt < 0);
 			wsa881x->bg_cnt = 0;
 			snd_soc_component_update_bits(component,
 						WSA881X_TEMP_OP, 0x04, 0x00);
@@ -587,7 +587,6 @@ static void wsa881x_clk_ctrl(struct snd_soc_component *component, bool enable)
 	} else {
 		--wsa881x->clk_cnt;
 		if (wsa881x->clk_cnt <= 0) {
-			WARN_ON(wsa881x->clk_cnt < 0);
 			wsa881x->clk_cnt = 0;
 			snd_soc_component_write(component,
 					WSA881X_CDC_ANA_CLK_CTL, 0x00);
@@ -1032,7 +1031,8 @@ static int wsa881x_shutdown(struct wsa881x_pdata *pdata)
 		return ret;
 	}
 
-	clk_disable_unprepare(pdata->wsa_mclk);
+	if (__clk_is_enabled(pdata->wsa_mclk))
+		clk_disable_unprepare(pdata->wsa_mclk);
 
 	ret = msm_cdc_pinctrl_select_sleep_state(pdata->wsa_clk_gpio_p);
 	if (ret) {

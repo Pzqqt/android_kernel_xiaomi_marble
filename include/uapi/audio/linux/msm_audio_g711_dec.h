@@ -2,9 +2,10 @@
 #define _UAPI_MSM_AUDIO_G711_H
 
 #include <linux/msm_audio.h>
+#include <linux/types.h>
 
 struct msm_audio_g711_dec_config {
-	uint32_t sample_rate;
+	__u32 sample_rate;
 };
 
 #define AUDIO_SET_G711_DEC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \

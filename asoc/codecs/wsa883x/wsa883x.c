@@ -79,6 +79,8 @@ struct wsa_reg_mask_val {
 
 static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_PA_FSM_BYP, 0x01, 0x00},
+	{WSA883X_ISENSE2, 0xE0, 0x40},
+	{WSA883X_ADC_6, 0x02, 0x02},
 	{WSA883X_CDC_SPK_DSM_A2_0, 0xFF, 0x0A},
 	{WSA883X_CDC_SPK_DSM_A2_1, 0x0F, 0x08},
 	{WSA883X_CDC_SPK_DSM_A3_0, 0xFF, 0xF3},
@@ -117,8 +119,12 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_OTP_REG_3, 0xFF, 0xC9},
 	{WSA883X_OTP_REG_4, 0xC0, 0x40},
 	{WSA883X_TAGC_CTL, 0x01, 0x01},
+	{WSA883X_ADC_2, 0x40, 0x00},
+	{WSA883X_ADC_7, 0x04, 0x04},
+	{WSA883X_ADC_7, 0x02, 0x02},
 	{WSA883X_CKWD_CTL_0, 0x60, 0x00},
 	{WSA883X_CKWD_CTL_1, 0x1F, 0x1B},
+	{WSA883X_GMAMP_SUP1, 0x60, 0x60},
 };
 
 static int wsa883x_get_temperature(struct snd_soc_component *component,
@@ -409,6 +415,14 @@ static const struct file_operations codec_debug_dump_ops = {
 };
 #endif
 
+static void wsa883x_regcache_sync(struct wsa883x_priv *wsa883x)
+{
+	mutex_lock(&wsa883x->res_lock);
+	regcache_mark_dirty(wsa883x->regmap);
+	regcache_sync(wsa883x->regmap);
+	mutex_unlock(&wsa883x->res_lock);
+}
+
 static irqreturn_t wsa883x_saf2war_handle_irq(int irq, void *data)
 {
 	pr_err_ratelimited("%s: interrupt for irq =%d triggered\n",
@@ -694,8 +708,8 @@ int wsa883x_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	}
 	card = component->card;
 
-	snprintf(name, sizeof(name), "%s.%x", "wsa883x",
-		 (u32)wsa883x->swr_slave->addr);
+	snprintf(name, sizeof(name), "%s.%llx", "wsa883x",
+		 wsa883x->swr_slave->addr);
 
 	wsa883x->entry = snd_info_create_module_entry(codec_root->module,
 						(const char *)name,
@@ -1283,6 +1297,45 @@ static int wsa883x_gpio_ctrl(struct wsa883x_priv *wsa883x, bool enable)
 	return ret;
 }
 
+static int wsa883x_swr_up(struct wsa883x_priv *wsa883x)
+{
+	int ret;
+
+	ret = wsa883x_gpio_ctrl(wsa883x, true);
+	if (ret)
+		dev_err(wsa883x->dev, "%s: Failed to enable gpio\n", __func__);
+
+	return ret;
+}
+
+static int wsa883x_swr_down(struct wsa883x_priv *wsa883x)
+{
+	int ret;
+
+	ret = wsa883x_gpio_ctrl(wsa883x, false);
+	if (ret)
+		dev_err(wsa883x->dev, "%s: Failed to disable gpio\n", __func__);
+
+	return ret;
+}
+
+static int wsa883x_swr_reset(struct wsa883x_priv *wsa883x)
+{
+	u8 retry = WSA883X_NUM_RETRY;
+	u8 devnum = 0;
+	struct swr_device *pdev;
+
+	pdev = wsa883x->swr_slave;
+	while (swr_get_logical_dev_num(pdev, pdev->addr, &devnum) && retry--) {
+		/* Retry after 1 msec delay */
+		usleep_range(1000, 1100);
+	}
+	pdev->dev_num = devnum;
+	wsa883x_regcache_sync(wsa883x);
+
+	return 0;
+}
+
 static int wsa883x_event_notify(struct notifier_block *nb,
 				unsigned long val, void *ptr)
 {
@@ -1300,7 +1353,16 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 		snd_soc_component_update_bits(wsa883x->component,
 					WSA883X_PA_FSM_CTL,
 					0x01, 0x00);
+		wsa883x_swr_down(wsa883x);
 		break;
+
+	case BOLERO_WSA_EVT_SSR_UP:
+		wsa883x_swr_up(wsa883x);
+		/* Add delay to allow enumerate */
+		usleep_range(20000, 20010);
+		wsa883x_swr_reset(wsa883x);
+		break;
+
 	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
 		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
 			snd_soc_component_update_bits(wsa883x->component,
@@ -1380,8 +1442,10 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 		return -ENOMEM;
 
 	ret = wsa883x_enable_supplies(&pdev->dev, wsa883x);
-	if (ret)
-		return -EINVAL;
+	if (ret) {
+		ret = -EPROBE_DEFER;
+		goto err;
+	}
 
 	wsa883x->wsa_rst_np = of_parse_phandle(pdev->dev.of_node,
 					     "qcom,spkr-sd-n-node", 0);
@@ -1404,7 +1468,8 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 		dev_dbg(&pdev->dev,
 			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, pdev->addr);
-		goto dev_err;
+		ret = -EPROBE_DEFER;
+		goto err;
 	}
 	pdev->dev_num = devnum;
 
@@ -1525,6 +1590,11 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wsa883x->wsa883x_name_prefix = kstrndup(wsa883x_name_prefix_of,
 			strlen(wsa883x_name_prefix_of), GFP_KERNEL);
 	component = snd_soc_lookup_component(&pdev->dev, wsa883x->driver->name);
+	if (!component) {
+		dev_err(&pdev->dev, "%s: component is NULL \n", __func__);
+		ret = -EINVAL;
+		goto err_mem;
+	}
 	component->name_prefix = wsa883x->wsa883x_name_prefix;
 
 	wsa883x->parent_np = of_parse_phandle(pdev->dev.of_node,
@@ -1592,10 +1662,16 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	return 0;
 
 err_mem:
-	if (wsa883x->dai_driver)
+	kfree(wsa883x->wsa883x_name_prefix);
+	if (wsa883x->dai_driver) {
+		kfree(wsa883x->dai_driver->name);
+		kfree(wsa883x->dai_driver->playback.stream_name);
 		kfree(wsa883x->dai_driver);
-	if (wsa883x->driver)
+	}
+	if (wsa883x->driver) {
+		kfree(wsa883x->driver->name);
 		kfree(wsa883x->driver);
+	}
 err_irq:
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR, NULL);
 	wcd_free_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF, NULL);
@@ -1613,6 +1689,7 @@ dev_err:
 		wsa883x_gpio_ctrl(wsa883x, false);
 	swr_remove_device(pdev);
 err:
+	swr_set_dev_data(pdev, NULL);
 	return ret;
 }
 
@@ -1647,13 +1724,15 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 	mutex_destroy(&wsa883x->res_lock);
 	snd_soc_unregister_component(&pdev->dev);
 	kfree(wsa883x->wsa883x_name_prefix);
-	kfree(wsa883x->driver->name);
-	kfree(wsa883x->dai_driver->name);
-	kfree(wsa883x->dai_driver->playback.stream_name);
-	if (wsa883x->dai_driver)
+	if (wsa883x->dai_driver) {
+		kfree(wsa883x->dai_driver->name);
+		kfree(wsa883x->dai_driver->playback.stream_name);
 		kfree(wsa883x->dai_driver);
-	if (wsa883x->driver)
+	}
+	if (wsa883x->driver) {
+		kfree(wsa883x->driver->name);
 		kfree(wsa883x->driver);
+	}
 	swr_set_dev_data(pdev, NULL);
 	return 0;
 }

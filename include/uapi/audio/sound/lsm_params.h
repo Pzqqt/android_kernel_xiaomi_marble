@@ -88,7 +88,7 @@ struct snd_lsm_ep_det_thres {
  */
 struct snd_lsm_detect_mode {
 	enum lsm_detection_mode mode;
-	bool detect_failure;
+	_Bool detect_failure;
 };
 
 /*
@@ -104,7 +104,7 @@ struct snd_lsm_gain {
  * @poll_en: Polling enable or disable
  */
 struct snd_lsm_poll_enable {
-	bool poll_en;
+	_Bool poll_en;
 };
 
 /*
@@ -123,7 +123,7 @@ struct snd_lsm_sound_model_v2 {
 	__u32 data_size;
 	enum lsm_detection_mode detection_mode;
 	__u8 num_confidence_levels;
-	bool detect_failure;
+	_Bool detect_failure;
 };
 
 struct snd_lsm_session_data {
@@ -178,8 +178,8 @@ struct snd_lsm_detection_params {
 	__u8 *conf_level;
 	enum lsm_detection_mode detect_mode;
 	__u8 num_confidence_levels;
-	bool detect_failure;
-	bool poll_enable;
+	_Bool detect_failure;
+	_Bool poll_enable;
 };
 
 /*
@@ -203,7 +203,7 @@ struct lsm_params_info {
 	__u32 param_id;
 	__u32 param_size;
 	__u8 __user *param_data;
-	uint32_t param_type;
+	__u32 param_type;
 };
 
 /*
@@ -233,7 +233,7 @@ struct lsm_params_info_v2 {
 	__u32 param_id;
 	__u32 param_size;
 	__u8 __user *param_data;
-	uint32_t param_type;
+	__u32 param_type;
 	__u16 instance_id;
 	__u16 stage_idx;
 };
@@ -292,7 +292,7 @@ struct snd_lsm_input_hw_params {
 #define SNDRV_LSM_SET_SESSION_DATA _IOW('U', 0x06, struct snd_lsm_session_data)
 #define SNDRV_LSM_REG_SND_MODEL_V2 _IOW('U', 0x07,\
 					struct snd_lsm_sound_model_v2)
-#define SNDRV_LSM_LAB_CONTROL	_IOW('U', 0x08, uint32_t)
+#define SNDRV_LSM_LAB_CONTROL	_IOW('U', 0x08, __u32)
 #define SNDRV_LSM_STOP_LAB	_IO('U', 0x09)
 #define SNDRV_LSM_SET_PARAMS	_IOW('U', 0x0A, \
 					struct snd_lsm_detection_params)
@@ -301,7 +301,7 @@ struct snd_lsm_input_hw_params {
 #define SNDRV_LSM_OUT_FORMAT_CFG _IOW('U', 0x0C, \
 				      struct snd_lsm_output_format_cfg)
 #define SNDRV_LSM_SET_PORT	_IO('U', 0x0D)
-#define SNDRV_LSM_SET_FWK_MODE_CONFIG	_IOW('U', 0x0E, uint32_t)
+#define SNDRV_LSM_SET_FWK_MODE_CONFIG	_IOW('U', 0x0E, __u32)
 #define SNDRV_LSM_EVENT_STATUS_V3	_IOW('U', 0x0F, \
 					struct snd_lsm_event_status_v3)
 #define SNDRV_LSM_GENERIC_DET_EVENT	_IOW('U', 0x10, struct snd_lsm_event_status)

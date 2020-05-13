@@ -646,6 +646,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 		priv->macro_params[macro_id].clk_switch = ops->clk_switch;
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
+		priv->macro_params[macro_id].clk_enable = ops->clk_enable;
 	}
 	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
 		priv->macro_params[macro_id].clk_div_get = ops->clk_div_get;
@@ -719,6 +720,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 		priv->macro_params[macro_id].reg_wake_irq = NULL;
 		priv->macro_params[macro_id].clk_switch = NULL;
 		priv->macro_params[macro_id].reg_evt_listener = NULL;
+		priv->macro_params[macro_id].clk_enable = NULL;
 	}
 	if (macro_id == TX_MACRO || macro_id == VA_MACRO)
 		priv->macro_params[macro_id].clk_div_get = NULL;
@@ -832,6 +834,7 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 				priv->component,
 				BOLERO_MACRO_EVT_CLK_RESET, 0x0);
 	}
+	trace_printk("%s: clk count reset\n", __func__);
 	regcache_cache_only(priv->regmap, false);
 	mutex_lock(&priv->clk_lock);
 	priv->dev_up = true;
@@ -842,6 +845,7 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 	/* Add a 100usec sleep to ensure last register write is done */
 	usleep_range(100,110);
 	bolero_clk_rsc_enable_all_clocks(priv->clk_dev, false);
+	trace_printk("%s: regcache_sync done\n", __func__);
 	/* call ssr event for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)
@@ -850,6 +854,7 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 			priv->component,
 			BOLERO_MACRO_EVT_SSR_UP, 0x0);
 	}
+	trace_printk("%s: SSR up events processed by all macros\n", __func__);
 	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_UP);
 	return 0;
 }
@@ -1003,9 +1008,11 @@ EXPORT_SYMBOL(bolero_register_wake_irq);
  *
  * @component: pointer to codec component instance.
  *
+ * @clk_src: 0 for TX_RCG and 1 for VA_RCG
+ *
  * Returns 0 on success or -EINVAL on error.
  */
-int bolero_tx_clk_switch(struct snd_soc_component *component)
+int bolero_tx_clk_switch(struct snd_soc_component *component, int clk_src)
 {
 	struct bolero_priv *priv = NULL;
 	int ret = 0;
@@ -1023,11 +1030,46 @@ int bolero_tx_clk_switch(struct snd_soc_component *component)
 	}
 
 	if (priv->macro_params[TX_MACRO].clk_switch)
-		ret = priv->macro_params[TX_MACRO].clk_switch(component);
+		ret = priv->macro_params[TX_MACRO].clk_switch(component,
+							      clk_src);
 
 	return ret;
 }
 EXPORT_SYMBOL(bolero_tx_clk_switch);
+
+/**
+ * bolero_tx_mclk_enable - Enable/Disable TX Macro mclk
+ *
+ * @component: pointer to codec component instance.
+ * @enable: set true to enable, otherwise false.
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
+int bolero_tx_mclk_enable(struct snd_soc_component *component,
+			  bool enable)
+{
+	struct bolero_priv *priv = NULL;
+	int ret = 0;
+
+	if (!component)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(component->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+
+	if (priv->macro_params[TX_MACRO].clk_enable)
+		ret = priv->macro_params[TX_MACRO].clk_enable(component,
+								enable);
+
+	return ret;
+}
+EXPORT_SYMBOL(bolero_tx_mclk_enable);
 
 /**
  * bolero_register_event_listener - Register/Deregister to event listener
@@ -1354,6 +1396,8 @@ int bolero_runtime_resume(struct device *dev)
 		}
 	}
 	priv->core_hw_vote_count++;
+	trace_printk("%s: hw vote count %d\n",
+		__func__, priv->core_hw_vote_count);
 
 audio_vote:
 	if (priv->lpass_audio_hw_vote == NULL) {
@@ -1370,6 +1414,8 @@ audio_vote:
 		}
 	}
 	priv->core_audio_vote_count++;
+	trace_printk("%s: audio vote count %d\n",
+		__func__, priv->core_audio_vote_count);
 
 done:
 	mutex_unlock(&priv->vote_lock);
@@ -1392,6 +1438,8 @@ int bolero_runtime_suspend(struct device *dev)
 		dev_dbg(dev, "%s: Invalid lpass core hw node\n",
 			__func__);
 	}
+	trace_printk("%s: hw vote count %d\n",
+		__func__, priv->core_hw_vote_count);
 
 	if (priv->lpass_audio_hw_vote != NULL) {
 		if (--priv->core_audio_vote_count == 0)
@@ -1402,6 +1450,8 @@ int bolero_runtime_suspend(struct device *dev)
 		dev_dbg(dev, "%s: Invalid lpass audio hw node\n",
 			__func__);
 	}
+	trace_printk("%s: audio vote count %d\n",
+		__func__, priv->core_audio_vote_count);
 
 	mutex_unlock(&priv->vote_lock);
 	return 0;

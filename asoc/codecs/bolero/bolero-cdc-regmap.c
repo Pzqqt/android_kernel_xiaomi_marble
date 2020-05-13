@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/regmap.h>
@@ -797,6 +797,10 @@ static bool bolero_is_volatile_register(struct device *dev,
 	case BOLERO_CDC_VA_TOP_CSR_CORE_ID_1:
 	case BOLERO_CDC_VA_TOP_CSR_CORE_ID_2:
 	case BOLERO_CDC_VA_TOP_CSR_CORE_ID_3:
+	case BOLERO_CDC_VA_TOP_CSR_DMIC0_CTL:
+	case BOLERO_CDC_VA_TOP_CSR_DMIC1_CTL:
+	case BOLERO_CDC_VA_TOP_CSR_DMIC2_CTL:
+	case BOLERO_CDC_VA_TOP_CSR_DMIC3_CTL:
 	case BOLERO_CDC_TX_TOP_CSR_SWR_DMIC0_CTL:
 	case BOLERO_CDC_TX_TOP_CSR_SWR_DMIC1_CTL:
 	case BOLERO_CDC_TX_TOP_CSR_SWR_DMIC2_CTL:

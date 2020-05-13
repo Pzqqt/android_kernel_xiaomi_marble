@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -14,6 +14,7 @@
 #include <linux/input.h>
 #include <linux/of_device.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/nvmem-consumer.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -30,8 +31,10 @@
 #include "asoc/msm-cdc-pinctrl.h"
 #include "asoc/wcd-mbhc-v2.h"
 #include "codecs/wcd937x/wcd937x-mbhc.h"
+#include "codecs/rouleur/rouleur-mbhc.h"
 #include "codecs/wsa881x-analog.h"
 #include "codecs/wcd937x/wcd937x.h"
+#include "codecs/rouleur/rouleur.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "bengal-port-config.h"
@@ -260,6 +263,7 @@ static u32 mi2s_ebit_clk[MI2S_MAX] = {
 };
 
 static struct mi2s_conf mi2s_intf_conf[MI2S_MAX];
+static bool va_disable;
 
 /* Default configuration of TDM channels */
 static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
@@ -3824,6 +3828,8 @@ static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		if (va_disable)
+			break;
 		ret = bengal_send_island_va_config(dai_link->id);
 		if (ret)
 			pr_err("%s: send island va cfg failed, err: %d\n",
@@ -6050,9 +6056,13 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	struct snd_info_entry *entry;
 	struct snd_card *card = component->card->snd_card;
 	struct msm_asoc_mach_data *pdata;
+	struct platform_device *pdev = NULL;
+	char *data = NULL;
+	int i = 0;
 
 	snd_soc_dapm_ignore_suspend(dapm, "EAR");
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
+	snd_soc_dapm_ignore_suspend(dapm, "LO");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
@@ -6073,14 +6083,49 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 		}
 		pdata->codec_root = entry;
 	}
-	wcd937x_info_create_codec_entry(pdata->codec_root, component);
+
+	for (i = 0; i < component->card->num_aux_devs; i++)
+	{
+		if (msm_aux_dev[i].name != NULL ) {
+			if (strstr(msm_aux_dev[i].name, "wsa"))
+				continue;
+		}
+
+		if (msm_aux_dev[i].codec_of_node) {
+			pdev = of_find_device_by_node(
+				msm_aux_dev[i].codec_of_node);
+			if (pdev)
+				data = (char*) of_device_get_match_data(
+							&pdev->dev);
+
+			if (data != NULL) {
+				if (!strncmp(data, "wcd937x",
+						sizeof("wcd937x"))) {
+					wcd937x_info_create_codec_entry(
+						pdata->codec_root, component);
+					break;
+				} else if (!strncmp(data, "rouleur",
+						sizeof("rouleur"))) {
+					rouleur_info_create_codec_entry(
+						pdata->codec_root, component);
+					break;
+				}
+			}
+		}
+	}
 
 mbhc_cfg_cal:
 	mbhc_calibration = def_wcd_mbhc_cal();
 	if (!mbhc_calibration)
 		return -ENOMEM;
 	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+        if (data != NULL) {
+                if (!strncmp(data, "wcd937x", sizeof("wcd937x")))
+                        ret = wcd937x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+                else if (!strncmp( data, "rouleur", sizeof("rouleur")))
+                        ret = rouleur_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+        }
+
 	if (ret) {
 		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
 			__func__, ret);
@@ -6508,6 +6553,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	const char *mbhc_audio_jack_type = NULL;
 	int ret = 0;
 	uint index = 0;
+	struct nvmem_cell *cell;
+	size_t len;
+	u32 *buf;
+	u32 adsp_var_idx = 0;
 
 	if (!pdev->dev.of_node) {
 		dev_err(&pdev->dev,
@@ -6657,7 +6706,23 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			__func__, ret);
 
 	is_initial_boot = true;
+	/* get adsp variant idx */
+	cell = nvmem_cell_get(&pdev->dev, "adsp_variant");
+	if (IS_ERR_OR_NULL(cell)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to get nvmem cell \n", __func__);
+		goto ret;
+	}
+	buf = nvmem_cell_read(cell, &len);
+	nvmem_cell_put(cell);
+	if (IS_ERR_OR_NULL(buf) || len <= 0 || len > sizeof(32)) {
+		dev_dbg(&pdev->dev, "%s: FAILED to read nvmem cell \n", __func__);
+		goto ret;
+	}
+	memcpy(&adsp_var_idx, buf, len);
+	kfree(buf);
+	va_disable = adsp_var_idx;
 
+ret:
 	return 0;
 err:
 	devm_kfree(&pdev->dev, pdata);

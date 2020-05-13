@@ -89,7 +89,7 @@ struct swrm_mports {
 	u8 req_ch;
 	u8 offset1;
 	u8 offset2;
-	u8 sinterval;
+	u16 sinterval;
 	u8 hstart;
 	u8 hstop;
 	u8 blk_grp_count;
@@ -187,6 +187,8 @@ struct swr_mstr_ctrl {
 	u32 swr_irq_wakeup_capable;
 	int hw_core_clk_en;
 	int aud_core_clk_en;
+	int clk_src;
+	u32 disable_div2_clk_switch;
 #ifdef CONFIG_DEBUG_FS
 	struct dentry *debugfs_swrm_dent;
 	struct dentry *debugfs_peek;

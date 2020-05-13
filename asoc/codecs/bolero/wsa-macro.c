@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -41,7 +41,7 @@
 #define NUM_INTERPOLATORS 2
 
 #define WSA_MACRO_MUX_INP_SHFT 0x3
-#define WSA_MACRO_MUX_INP_MASK1 0x38
+#define WSA_MACRO_MUX_INP_MASK1 0x07
 #define WSA_MACRO_MUX_INP_MASK2 0x38
 #define WSA_MACRO_MUX_CFG_OFFSET 0x8
 #define WSA_MACRO_MUX_CFG1_OFFSET 0x4
@@ -241,6 +241,7 @@ struct wsa_macro_priv {
 	struct wsa_macro_bcl_pmic_params bcl_pmic_params;
 	char __iomem *mclk_mode_muxsel;
 	u16 default_clk_id;
+	u32 pcm_rate_vi;
 	int wsa_digital_mute_status[WSA_MACRO_RX_MAX];
 };
 
@@ -620,10 +621,10 @@ static int wsa_macro_set_prim_interpolator_rate(struct snd_soc_dai *dai,
 			inp0_sel = int_mux_cfg0_val & WSA_MACRO_MUX_INP_MASK1;
 			inp1_sel = (int_mux_cfg0_val >>
 					WSA_MACRO_MUX_INP_SHFT) &
-					WSA_MACRO_MUX_INP_MASK2;
+					WSA_MACRO_MUX_INP_MASK1;
 			inp2_sel = (int_mux_cfg1_val >>
 					WSA_MACRO_MUX_INP_SHFT) &
-					WSA_MACRO_MUX_INP_MASK2;
+					WSA_MACRO_MUX_INP_MASK1;
 			if ((inp0_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0) ||
 			    (inp1_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0) ||
 			    (inp2_sel == int_1_mix1_inp + INTn_1_INP_SEL_RX0)) {
@@ -747,6 +748,15 @@ static int wsa_macro_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_component *component = dai->component;
 	int ret;
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	wsa_priv = dev_get_drvdata(wsa_dev);
+	if (!wsa_priv)
+		return -EINVAL;
 
 	dev_dbg(component->dev,
 		"%s: dai_name = %s DAI-ID %x rate %d num_ch %d\n", __func__,
@@ -764,6 +774,8 @@ static int wsa_macro_hw_params(struct snd_pcm_substream *substream,
 		}
 		break;
 	case SNDRV_PCM_STREAM_CAPTURE:
+		if (dai->id == WSA_MACRO_AIF_VI)
+			wsa_priv->pcm_rate_vi = params_rate(params);
 	default:
 		break;
 	}
@@ -994,6 +1006,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 
 	switch (event) {
 	case BOLERO_MACRO_EVT_SSR_DOWN:
+		trace_printk("%s, enter SSR down\n", __func__);
 		if (wsa_priv->swr_ctrl_data) {
 			swrm_wcd_notify(
 				wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
@@ -1013,6 +1026,7 @@ static int wsa_macro_event_handler(struct snd_soc_component *component,
 		}
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
 		/* reset swr after ssr/pdr */
 		wsa_priv->reset_swr = true;
 		/* enable&disable WSA_CORE_CLK to reset GFMUX reg */
@@ -1047,9 +1061,23 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 			snd_soc_dapm_to_component(w->dapm);
 	struct device *wsa_dev = NULL;
 	struct wsa_macro_priv *wsa_priv = NULL;
+	u8 val = 0x0;
 
 	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
+
+	switch (wsa_priv->pcm_rate_vi) {
+		case 48000:
+			val = 0x04;
+			break;
+		case 24000:
+			val = 0x02;
+			break;
+		case 8000:
+		default:
+			val = 0x00;
+			break;
+	}
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
@@ -1065,10 +1093,10 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 				0x20, 0x20);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX0_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX1_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX0_SPKR_PROT_PATH_CTL,
 				0x10, 0x10);
@@ -1094,10 +1122,10 @@ static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 				0x20, 0x20);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX2_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX3_SPKR_PROT_PATH_CTL,
-				0x0F, 0x00);
+				0x0F, val);
 			snd_soc_component_update_bits(component,
 				BOLERO_CDC_WSA_TX2_SPKR_PROT_PATH_CTL,
 				0x10, 0x10);
@@ -2715,10 +2743,10 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 static const struct wsa_macro_reg_mask_val wsa_macro_reg_init[] = {
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CFG1, 0x3F, 0x12},
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CFG2, 0x1C, 0x08},
-	{BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x18},
+	{BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x1E, 0x0C},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CFG1, 0x3F, 0x12},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CFG2, 0x1C, 0x08},
-	{BOLERO_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x18},
+	{BOLERO_CDC_WSA_COMPANDER1_CTL7, 0x1E, 0x0C},
 	{BOLERO_CDC_WSA_BOOST0_BOOST_CTL, 0x70, 0x58},
 	{BOLERO_CDC_WSA_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{BOLERO_CDC_WSA_RX0_RX_PATH_CFG1, 0x08, 0x08},
@@ -2729,8 +2757,6 @@ static const struct wsa_macro_reg_mask_val wsa_macro_reg_init[] = {
 	{BOLERO_CDC_WSA_TX1_SPKR_PROT_PATH_CFG0, 0x01, 0x01},
 	{BOLERO_CDC_WSA_TX2_SPKR_PROT_PATH_CFG0, 0x01, 0x01},
 	{BOLERO_CDC_WSA_TX3_SPKR_PROT_PATH_CFG0, 0x01, 0x01},
-	{BOLERO_CDC_WSA_COMPANDER0_CTL3, 0x80, 0x80},
-	{BOLERO_CDC_WSA_COMPANDER1_CTL3, 0x80, 0x80},
 	{BOLERO_CDC_WSA_COMPANDER0_CTL7, 0x01, 0x01},
 	{BOLERO_CDC_WSA_COMPANDER1_CTL7, 0x01, 0x01},
 	{BOLERO_CDC_WSA_RX0_RX_PATH_CFG0, 0x01, 0x01},
@@ -2832,6 +2858,9 @@ static int wsa_swrm_clock(void *handle, bool enable)
 
 	mutex_lock(&wsa_priv->swr_clk_lock);
 
+	trace_printk("%s: %s swrm clock %s\n",
+		dev_name(wsa_priv->dev), __func__,
+		(enable ? "enable" : "disable"));
 	dev_dbg(wsa_priv->dev, "%s: swrm clock %s\n",
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
@@ -2897,6 +2926,9 @@ static int wsa_swrm_clock(void *handle, bool enable)
 			}
 		}
 	}
+	trace_printk("%s: %s swrm clock users: %d\n",
+		dev_name(wsa_priv->dev), __func__,
+		wsa_priv->swr_clk_users);
 	dev_dbg(wsa_priv->dev, "%s: swrm clock users %d\n",
 		__func__, wsa_priv->swr_clk_users);
 exit:
