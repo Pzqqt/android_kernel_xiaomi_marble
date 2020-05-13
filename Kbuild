@@ -358,6 +358,9 @@ endif
 ifeq ($(CONFIG_IPA_OFFLOAD), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_ipa.o
 endif
+ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_pktlog.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)
