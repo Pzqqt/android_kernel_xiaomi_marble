@@ -18852,6 +18852,13 @@ typedef struct {
     A_UINT32 vdev_id;
     /** Actual length in byte of data[]. */
     A_UINT32 data_len;
+    /**
+     * pdev_vdev_flag - 0  follow old method (vdev_id is valid, ignore pdev_id)
+     * pdev_vdev_flag - 1  pdev_id is valid
+     */
+    A_UINT32 pdev_vdev_flag;
+    /** Unique id identifying the PDEV */
+    A_UINT32 pdev_id;
 /** This structure is used to send OEM DATA binary blobs from
  * application/service to firmware where Host driver is pass through.
  * The OEM-specific commands from OEM-specific userspace applications
