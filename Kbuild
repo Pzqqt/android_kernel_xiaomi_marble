@@ -297,6 +297,9 @@ endif
 ifeq ($(CONFIG_WLAN_GET_TX_STBC), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_tx_stbc.o
 endif
+ifeq ($(CONFIG_WLAN_GET_STATS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_stats.o
+endif
 ifeq ($(CONFIG_WLAN_SET_SCAN_CFG), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_scan_cfg.o
 endif
@@ -2559,6 +2562,7 @@ cppflags-$(CONFIG_WLAN_WOW_ITO) += -DCONFIG_WLAN_WOW_ITO
 cppflags-$(CONFIG_WLAN_WOWL_ADD_PTRN) += -DCONFIG_WLAN_WOWL_ADD_PTRN
 cppflags-$(CONFIG_WLAN_WOWL_DEL_PTRN) += -DCONFIG_WLAN_WOWL_DEL_PTRN
 cppflags-$(CONFIG_WLAN_GET_TX_STBC) += -DCONFIG_WLAN_GET_TX_STBC
+cppflags-$(CONFIG_WLAN_GET_STATS) += -DCONFIG_WLAN_GET_STATS
 cppflags-$(CONFIG_WLAN_SET_SCAN_CFG) += -DCONFIG_WLAN_SET_SCAN_CFG
 cppflags-$(CONFIG_WLAN_SET_MON_CHAN) += -DCONFIG_WLAN_SET_MON_CHAN
 cppflags-$(CONFIG_WLAN_SET_RADAR) += -DCONFIG_WLAN_SET_RADAR
