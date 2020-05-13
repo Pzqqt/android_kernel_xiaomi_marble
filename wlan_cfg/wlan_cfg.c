@@ -605,6 +605,7 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_RXDMA_MONITOR_RX_DROP_THRESHOLD);
 	wlan_cfg_ctx->is_rx_fisa_enabled = cfg_get(psoc, CFG_DP_RX_FISA_ENABLE);
 	wlan_cfg_ctx->reo_rings_mapping = cfg_get(psoc, CFG_DP_REO_RINGS_MAP);
+	wlan_cfg_ctx->pext_stats_enabled = cfg_get(psoc, CFG_DP_PEER_EXT_STATS);
 	return wlan_cfg_ctx;
 }
 
@@ -1355,4 +1356,17 @@ bool
 wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->is_rx_mon_protocol_flow_tag_enabled;
+}
+
+void
+wlan_cfg_set_peer_ext_stats(struct wlan_cfg_dp_soc_ctxt *cfg,
+			    bool val)
+{
+	cfg->pext_stats_enabled = val;
+}
+
+bool
+wlan_cfg_is_peer_ext_stats_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->pext_stats_enabled;
 }

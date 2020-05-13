@@ -183,7 +183,7 @@ struct wlan_srng_cfg {
  *                        5 tuple flow entry
  * @pktlog_buffer_size: packet log buffer size
  * @is_rx_fisa_enabled: flag to enable/disable FISA Rx
- * @reo_rings_mapping: reo destination ring bitmap
+ * @pext_stats_enabled: Flag to enable and disabled peer extended stats
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -285,6 +285,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool is_tso_desc_attach_defer;
 	uint32_t delayed_replenish_entries;
 	uint32_t reo_rings_mapping;
+	bool pext_stats_enabled;
 };
 
 /**
@@ -1340,3 +1341,26 @@ bool wlan_cfg_is_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: reo ring bitmap.
  */
 uint32_t wlan_cfg_get_reo_rings_mapping(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_set_peer_ext_stats() - set peer extended stats
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ * @val: Flag value read from INI
+ *
+ * Return: void
+ */
+void
+wlan_cfg_set_peer_ext_stats(struct wlan_cfg_dp_soc_ctxt *cfg,
+			    bool val);
+
+/**
+ * wlan_cfg_is_peer_ext_stats_enabled() - Check if peer extended
+ *                                        stats are enabled
+ *
+ * @wlan_cfg_dp_soc_ctxt: soc configuration context
+ *
+ * Return: bool
+ */
+bool
+wlan_cfg_is_peer_ext_stats_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);

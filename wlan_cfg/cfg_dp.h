@@ -846,6 +846,10 @@
 		WLAN_CFG_NUM_REO_RINGS_MAP, \
 		CFG_VALUE_OR_DEFAULT, "REO Destination Rings Mapping")
 
+#define CFG_DP_PEER_EXT_STATS \
+		CFG_INI_BOOL("peer_ext_stats", \
+		false, "Peer extended stats")
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -921,6 +925,7 @@
 		CFG(CFG_DP_PKTLOG_BUFFER_SIZE) \
 		CFG(CFG_DP_RX_FISA_ENABLE) \
 		CFG(CFG_DP_FULL_MON_MODE) \
-		CFG(CFG_DP_REO_RINGS_MAP)
+		CFG(CFG_DP_REO_RINGS_MAP) \
+		CFG(CFG_DP_PEER_EXT_STATS)
 
 #endif /* _CFG_DP_H_ */
