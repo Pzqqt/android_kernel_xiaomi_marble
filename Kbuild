@@ -1926,6 +1926,7 @@ endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
 		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
+		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_runtime_pm.o \
 		   $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
 
 ifneq ($(CONFIG_LITHIUM), y)
@@ -2534,10 +2535,8 @@ endif
 cppflags-$(CONFIG_NL80211_TESTMODE) += -DWLAN_NL80211_TESTMODE
 
 # Flag to enable bus auto suspend
-ifeq ($(CONFIG_HIF_PCI), y)
 ifeq ($(CONFIG_BUS_AUTO_SUSPEND), y)
 cppflags-y += -DFEATURE_RUNTIME_PM
-endif
 endif
 
 ifeq ($(CONFIG_ICNSS), y)
