@@ -148,14 +148,16 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
  *	       or NULL during dp rx initialization or out of buffer
  *	       interrupt.
  * @tail: tail of descs list
+ * @func_name: name of the caller function
  * Return: return success or failure
  */
-QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
+QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				struct dp_srng *dp_rxdma_srng,
 				struct rx_desc_pool *rx_desc_pool,
 				uint32_t num_req_buffers,
 				union dp_rx_desc_list_elem_t **desc_list,
-				union dp_rx_desc_list_elem_t **tail)
+				union dp_rx_desc_list_elem_t **tail,
+				const char *func_name)
 {
 	uint32_t num_alloc_desc;
 	uint16_t num_desc_to_free = 0;
@@ -285,7 +287,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		qdf_assert_always((*desc_list)->rx_desc.in_use == 0);
 
 		(*desc_list)->rx_desc.in_use = 1;
-
+		dp_rx_desc_update_dbg_info(&(*desc_list)->rx_desc,
+					   func_name, RX_DESC_REPLENISHED);
 		dp_verbose_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
 				 rx_netbuf, qdf_nbuf_data(rx_netbuf),
 				 (unsigned long long)paddr,
@@ -2703,6 +2706,10 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 
 			dp_rx_desc_prep(&desc_list->rx_desc, nbuf);
 			desc_list->rx_desc.in_use = 1;
+			dp_rx_desc_alloc_dbg_info(&desc_list->rx_desc);
+			dp_rx_desc_update_dbg_info(&desc_list->rx_desc,
+						   __func__,
+						   RX_DESC_REPLENISHED);
 
 			hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						     desc_list->rx_desc.cookie,
