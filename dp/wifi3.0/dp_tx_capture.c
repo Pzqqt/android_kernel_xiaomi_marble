@@ -5251,7 +5251,6 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 
 	set_mpdu_info(&tx_capture_info,
 		      &ppdu_info->rx_status, rx_user_status);
-	tx_capture_info.mpdu_info.mcs = rx_user_status->mcs;
 	/* ppdu_desc is not required for legacy frames */
 	tx_capture_info.ppdu_desc = NULL;
 
