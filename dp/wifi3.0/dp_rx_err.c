@@ -1077,44 +1077,37 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 		qdf_nbuf_set_next(nbuf, NULL);
 		dp_rx_deliver_raw(vdev, nbuf, peer);
 	} else {
-		if (vdev->osif_rx) {
-			qdf_nbuf_set_next(nbuf, NULL);
-			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
+		qdf_nbuf_set_next(nbuf, NULL);
+		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
+				 qdf_nbuf_len(nbuf));
+
+		/*
+		 * Update the protocol tag in SKB based on
+		 * CCE metadata
+		 */
+		dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
+					  EXCEPTION_DEST_RING_ID,
+					  true, true);
+
+		/* Update the flow tag in SKB based on FSE metadata */
+		dp_rx_update_flow_tag(soc, vdev, nbuf,
+				      rx_tlv_hdr, true);
+
+		if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
+				 soc->hal_soc, rx_tlv_hdr) &&
+				 (vdev->rx_decap_type ==
+				  htt_cmn_pkt_type_ethernet))) {
+			eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
+			DP_STATS_INC_PKT(peer, rx.multicast, 1,
 					 qdf_nbuf_len(nbuf));
 
-			/*
-			 * Update the protocol tag in SKB based on
-			 * CCE metadata
-			 */
-			dp_rx_update_protocol_tag(soc, vdev, nbuf, rx_tlv_hdr,
-						  EXCEPTION_DEST_RING_ID,
-						  true, true);
-
-			/* Update the flow tag in SKB based on FSE metadata */
-			dp_rx_update_flow_tag(soc, vdev, nbuf,
-					      rx_tlv_hdr, true);
-
-			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
-					soc->hal_soc, rx_tlv_hdr) &&
-					 (vdev->rx_decap_type ==
-					  htt_cmn_pkt_type_ethernet))) {
-				eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
-
-				DP_STATS_INC_PKT(peer, rx.multicast, 1,
+			if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost))
+				DP_STATS_INC_PKT(peer, rx.bcast, 1,
 						 qdf_nbuf_len(nbuf));
-				if (QDF_IS_ADDR_BROADCAST(eh->ether_dhost)) {
-					DP_STATS_INC_PKT(peer, rx.bcast, 1,
-							 qdf_nbuf_len(nbuf));
-				}
-			}
-
-			vdev->osif_rx(vdev->osif_vdev, nbuf);
-
-		} else {
-			dp_err_rl("INVALID osif_rx. vdev %pK", vdev);
-			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
-			goto drop_nbuf;
 		}
+
+		qdf_nbuf_set_exc_frame(nbuf, 1);
+		dp_rx_deliver_to_stack(soc, vdev, peer, nbuf, NULL);
 	}
 	return QDF_STATUS_SUCCESS;
 
@@ -1283,6 +1276,7 @@ process_rx:
 		/* Update the flow tag in SKB based on FSE metadata */
 		dp_rx_update_flow_tag(soc, vdev, nbuf, rx_tlv_hdr, true);
 		DP_STATS_INC(peer, rx.to_stack.num, 1);
+		qdf_nbuf_set_exc_frame(nbuf, 1);
 		dp_rx_deliver_to_stack(soc, vdev, peer, nbuf, NULL);
 	}
 

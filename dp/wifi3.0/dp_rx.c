@@ -1791,7 +1791,10 @@ void dp_rx_deliver_to_stack_no_peer(struct dp_soc *soc, qdf_nbuf_t nbuf)
 			   l2_hdr_offset);
 
 	if (dp_rx_is_special_frame(nbuf, frame_mask)) {
-		vdev->osif_rx(vdev->osif_vdev, nbuf);
+		qdf_nbuf_set_exc_frame(nbuf, 1);
+		if (QDF_STATUS_SUCCESS !=
+		    vdev->osif_rx(vdev->osif_vdev, nbuf))
+			goto deliver_fail;
 		DP_STATS_INC(soc, rx.err.pkt_delivered_no_peer, 1);
 		return;
 	}
@@ -2989,6 +2992,7 @@ bool dp_rx_deliver_special_frame(struct dp_soc *soc, struct dp_peer *peer,
 	qdf_nbuf_pull_head(nbuf, skip_len);
 
 	if (dp_rx_is_special_frame(nbuf, frame_mask)) {
+		qdf_nbuf_set_exc_frame(nbuf, 1);
 		dp_rx_deliver_to_stack(soc, peer->vdev, peer,
 				       nbuf, NULL);
 		return true;
