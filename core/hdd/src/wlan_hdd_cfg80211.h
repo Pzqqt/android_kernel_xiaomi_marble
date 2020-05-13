@@ -799,4 +799,21 @@ QDF_STATUS wlan_hdd_send_sta_authorized_event(
 					struct hdd_adapter *adapter,
 					struct hdd_context *hdd_ctx,
 					const struct qdf_mac_addr *mac_addr);
+
+/**
+ * wlan_hdd_set_wlm_mode() - Function to set pm_qos config in wlm mode
+ * @hdd_ctx: HDD context
+ * @latency level: latency value received
+ *
+ * Return: None
+ */
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level);
+#else
+static inline
+void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
+{
+}
+#endif
+
 #endif
