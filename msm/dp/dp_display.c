@@ -1948,8 +1948,8 @@ static int dp_display_prepare(struct dp_display *dp_display, void *panel)
 end:
 	mutex_unlock(&dp->session_lock);
 
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
-	return 0;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, rc);
+	return rc;
 }
 
 static int dp_display_set_stream_info(struct dp_display *dp_display,
@@ -2061,7 +2061,7 @@ static int dp_display_enable(struct dp_display *dp_display, void *panel)
 	dp_display_state_add(DP_STATE_ENABLED);
 end:
 	mutex_unlock(&dp->session_lock);
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, rc);
 	return rc;
 }
 

@@ -116,11 +116,9 @@ static void dp_bridge_pre_enable(struct drm_bridge *drm_bridge)
 	dp->set_stream_info(dp, bridge->dp_panel, 0, 0, 0, 0, 0);
 
 	rc = dp->enable(dp, bridge->dp_panel);
-	if (rc) {
+	if (rc)
 		DP_ERR("[%d] DP display enable failed, rc=%d\n",
 		       bridge->id, rc);
-		dp->unprepare(dp, bridge->dp_panel);
-	}
 }
 
 static void dp_bridge_enable(struct drm_bridge *drm_bridge)
