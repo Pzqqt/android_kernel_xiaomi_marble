@@ -4631,6 +4631,48 @@ typedef struct {
          */
         A_UINT32 num_sr_rx_ge_pd_rssi_thr;
     };
+
+    /*
+     * Count of number of times OBSS frames were aborted and non-SRG
+     * opportunities were created. Non-SRG opportunities are created when
+     * incoming OBSS RSSI is lesser than the global configured non-SRG RSSI
+     * threshold and non-SRG OBSS color / non-SRG OBSS BSSID registers
+     * allow non-SRG TX.
+     */
+    A_UINT32 num_non_srg_opportunities;
+    /*
+     * Count of number of times TX PPDU were transmitted using non-SRG
+     * opportunities created. Incoming OBSS frame RSSI is compared with per
+     * PPDU non-SRG RSSI threshold configured in each PPDU. If incoming OBSS
+     * RSSI < non-SRG RSSI threshold configured in each PPDU, then non-SRG
+     * tranmission happens.
+     */
+    A_UINT32 num_non_srg_ppdu_tried;
+    /*
+     * Count of number of times non-SRG based TX transmissions were successful
+     */
+    A_UINT32 num_non_srg_ppdu_success;
+    /*
+     * Count of number of times OBSS frames were aborted and SRG opportunities
+     * were created. Srg opportunities are created when incoming OBSS RSSI
+     * is less than the global configured SRG RSSI threshold and SRC OBSS
+     * color / SRG OBSS BSSID / SRG partial bssid / SRG BSS color bitmap
+     * registers allow SRG TX.
+     */
+    A_UINT32 num_srg_opportunities;
+    /*
+     * Count of number of times TX PPDU were transmitted using SRG
+     * opportunities created.
+     * Incoming OBSS frame RSSI is compared with per PPDU SRG RSSI
+     * threshold configured in each PPDU.
+     * If incoming OBSS RSSI < SRG RSSI threshold configured in each PPDU,
+     * then SRG tranmission happens.
+     */
+    A_UINT32 num_srg_ppdu_tried;
+    /*
+     * Count of number of times SRG based TX transmissions were successful
+     */
+    A_UINT32 num_srg_ppdu_success;
 } htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
