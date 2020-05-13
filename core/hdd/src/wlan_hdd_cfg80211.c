@@ -23604,6 +23604,108 @@ hdd_convert_cfgdot11mode_to_80211mode(enum csr_cfgdot11mode mode)
 	}
 }
 
+static int wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
+					 struct wireless_dev *wdev,
+					 struct cfg80211_chan_def *chandef)
+{
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx;
+	struct ch_params ch_params;
+	uint32_t chan_freq;
+	bool is_legacy_phymode = false;
+
+	if (hdd_validate_adapter(adapter))
+		return -EINVAL;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	qdf_mem_zero(&ch_params, sizeof(ch_params));
+	if ((adapter->device_mode == QDF_STA_MODE) ||
+	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		struct hdd_station_ctx *sta_ctx;
+
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if (sta_ctx->conn_info.dot11mode < eCSR_CFG_DOT11_MODE_11N)
+			is_legacy_phymode = true;
+
+		ch_params.ch_width = sta_ctx->conn_info.ch_width;
+		chan_freq = sta_ctx->conn_info.chan_freq;
+
+	} else if ((adapter->device_mode == QDF_SAP_MODE) ||
+			(adapter->device_mode == QDF_P2P_GO_MODE)) {
+		struct hdd_ap_ctx *ap_ctx;
+
+		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
+		if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+			hdd_err("SAP not started");
+			return -EINVAL;
+		}
+		chan_freq = ap_ctx->operating_chan_freq;
+		ch_params.ch_width = ap_ctx->sap_config.ch_width_orig;
+
+		switch (ap_ctx->sap_config.SapHw_mode) {
+		case eCSR_DOT11_MODE_11n:
+		case eCSR_DOT11_MODE_11n_ONLY:
+		case eCSR_DOT11_MODE_11ac:
+		case eCSR_DOT11_MODE_11ac_ONLY:
+		case eCSR_DOT11_MODE_11ax:
+		case eCSR_DOT11_MODE_11ax_ONLY:
+			is_legacy_phymode = false;
+			break;
+		default:
+			is_legacy_phymode = true;
+			break;
+		}
+	} else {
+		hdd_err("Invalid device mode");
+		return -EINVAL;
+	}
+
+	wlan_reg_set_channel_params_for_freq(hdd_ctx->pdev, chan_freq, 0,
+					     &ch_params);
+	chandef->center_freq1 = ch_params.mhz_freq_seg0;
+	chandef->center_freq2 = ch_params.mhz_freq_seg1;
+	chandef->chan = ieee80211_get_channel(wiphy, chan_freq);
+
+	switch (ch_params.ch_width) {
+	case CH_WIDTH_20MHZ:
+		if (is_legacy_phymode)
+			chandef->width = NL80211_CHAN_WIDTH_20_NOHT;
+		else
+			chandef->width = NL80211_CHAN_WIDTH_20;
+		break;
+	case CH_WIDTH_40MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_40;
+		break;
+	case CH_WIDTH_80MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_80;
+		break;
+	case CH_WIDTH_160MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_160;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_80P80;
+		break;
+	case CH_WIDTH_5MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_5;
+		break;
+	case CH_WIDTH_10MHZ:
+		chandef->width = NL80211_CHAN_WIDTH_10;
+		break;
+	default:
+		chandef->width = NL80211_CHAN_WIDTH_20;
+		break;
+	}
+
+	hdd_debug("ch_width:%d, center_freq1:%d, center_freq2:%d",
+		  chandef->width, chandef->center_freq1, chandef->center_freq2);
+	return 0;
+}
+
 /**
  * struct cfg80211_ops - cfg80211_ops
  *
@@ -23749,4 +23851,5 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 #endif
 	.set_antenna = wlan_hdd_cfg80211_set_chainmask,
 	.get_antenna = wlan_hdd_cfg80211_get_chainmask,
+	.get_channel = wlan_hdd_cfg80211_get_channel,
 };
