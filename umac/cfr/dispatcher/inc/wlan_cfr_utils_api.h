@@ -442,6 +442,7 @@ struct cfr_rcc_param {
  * dir_ptr: Parent directory of relayfs file
  * lut: lookup table used to store asynchronous DBR and TX/RX events for
  * correlation
+ * lut_num: Number of lut
  * dbr_buf_size: Size of DBR completion buffer
  * dbr_num_bufs: No. of DBR completions
  * tx_evt_cnt: No. of TX completion events till CFR stop was issued
@@ -483,7 +484,8 @@ struct pdev_cfr {
 	uint32_t subbuf_size;
 	qdf_streamfs_chan_t chan_ptr;
 	qdf_dentry_t dir_ptr;
-	struct look_up_table lut[MAX_LUT_ENTRIES];
+	struct look_up_table **lut;
+	uint32_t lut_num;
 	uint32_t dbr_buf_size;
 	uint32_t dbr_num_bufs;
 	uint64_t tx_evt_cnt;

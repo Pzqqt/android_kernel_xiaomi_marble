@@ -45,11 +45,13 @@ static u_int32_t end_magic = 0xBEAFDEAD;
 static struct look_up_table *get_lut_entry(struct pdev_cfr *pcfr,
 					   int offset)
 {
-	if (offset > NUM_LUT_ENTRIES) {
-		cfr_err("Invalid offset\n");
+	if (offset >= pcfr->lut_num) {
+		cfr_err("Invalid offset %d, lut_num %d",
+			offset, pcfr->lut_num);
 		return NULL;
 	}
-	return &pcfr->lut[offset];
+
+	return pcfr->lut[offset];
 }
 
 /**
@@ -108,7 +110,7 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 
 	qdf_spin_lock_bh(&pcfr->lut_lock);
 
-	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
+	for (i = 0; i < pcfr->lut_num; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
 			continue;
@@ -153,7 +155,7 @@ static void cfr_free_pending_dbr_events(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
+	for (i = 0; i < pcfr->lut_num; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
 			continue;
@@ -1400,7 +1402,7 @@ static os_timer_func(lut_ageout_timer_task)
 
 	qdf_spin_lock_bh(&pcfr->lut_lock);
 
-	for (i = 0; i < NUM_LUT_ENTRIES; i++) {
+	for (i = 0; i < pcfr->lut_num; i++) {
 		lut = get_lut_entry(pcfr, i);
 		if (!lut)
 			continue;

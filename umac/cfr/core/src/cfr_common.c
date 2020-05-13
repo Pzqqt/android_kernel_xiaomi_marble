@@ -24,6 +24,7 @@
 #include <wlan_cfr_tgt_api.h>
 #include <qdf_streamfs.h>
 #include <target_if.h>
+#include <target_if_direct_buf_rx_api.h>
 #include <wlan_osif_priv.h>
 #include <cfg_ucfg_api.h>
 #include "cfr_cfg.h"
@@ -57,18 +58,65 @@ wlan_cfr_is_ini_disabled(struct wlan_objmgr_pdev *pdev)
 	return false;
 }
 
+/**
+ * wlan_cfr_get_dbr_num_entries() - Get entry number of DBR ring
+ * @pdev - the physical device object.
+ *
+ * Return : Entry number of DBR ring.
+ */
+static uint32_t
+wlan_cfr_get_dbr_num_entries(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
+	uint8_t num_dbr_ring_caps, cap_idx, pdev_id;
+	struct target_psoc_info *tgt_psoc_info;
+	uint32_t num_entries = MAX_LUT_ENTRIES;
+
+	if (!pdev) {
+		cfr_err("Invalid pdev");
+		return num_entries;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		cfr_err("psoc is null");
+		return num_entries;
+	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_psoc_info) {
+		cfr_err("target_psoc_info is null");
+		return num_entries;
+	}
+
+	num_dbr_ring_caps = target_psoc_get_num_dbr_ring_caps(tgt_psoc_info);
+	dbr_ring_cap = target_psoc_get_dbr_ring_caps(tgt_psoc_info);
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	for (cap_idx = 0; cap_idx < num_dbr_ring_caps; cap_idx++) {
+		if (dbr_ring_cap[cap_idx].pdev_id == pdev_id &&
+		    dbr_ring_cap[cap_idx].mod_id == DBR_MODULE_CFR)
+			num_entries = dbr_ring_cap[cap_idx].ring_elems_min;
+	}
+
+	num_entries = QDF_MIN(num_entries, MAX_LUT_ENTRIES);
+	cfr_debug("pdev id %d, num_entries %d", pdev_id, num_entries);
+
+	return num_entries;
+}
+
 QDF_STATUS
 wlan_cfr_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
 	struct psoc_cfr *cfr_sc = NULL;
 
 	cfr_sc = (struct psoc_cfr *)qdf_mem_malloc(sizeof(struct psoc_cfr));
-	if (NULL == cfr_sc) {
+	if (!cfr_sc) {
 		cfr_err("Failed to allocate cfr_ctx object\n");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	qdf_mem_zero(cfr_sc, sizeof(struct psoc_cfr));
 	cfr_sc->psoc_obj = psoc;
 
 	wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_CFR,
@@ -85,7 +133,7 @@ wlan_cfr_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						       WLAN_UMAC_COMP_CFR);
-	if (NULL != cfr_sc) {
+	if (cfr_sc) {
 		wlan_objmgr_psoc_component_obj_detach(psoc, WLAN_UMAC_COMP_CFR,
 						      (void *)cfr_sc);
 		qdf_mem_free(cfr_sc);
@@ -98,8 +146,9 @@ QDF_STATUS
 wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 {
 	struct pdev_cfr *pa = NULL;
+	uint32_t idx;
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		cfr_err("PDEV is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -112,12 +161,26 @@ wlan_cfr_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	wlan_pdev_nif_feat_ext_cap_set(pdev, WLAN_PDEV_FEXT_CFR_EN);
 
 	pa = (struct pdev_cfr *)qdf_mem_malloc(sizeof(struct pdev_cfr));
-	if (NULL == pa) {
+	if (!pa) {
 		cfr_err("Failed to allocate pdev_cfr object\n");
 		return QDF_STATUS_E_NOMEM;
 	}
-	qdf_mem_zero(pa, sizeof(struct pdev_cfr));
 	pa->pdev_obj = pdev;
+	pa->lut_num = wlan_cfr_get_dbr_num_entries(pdev);
+	if (!pa->lut_num) {
+		cfr_err("lut num is 0");
+		return QDF_STATUS_E_INVAL;
+	}
+	pa->lut = (struct look_up_table **)qdf_mem_malloc(pa->lut_num *
+			sizeof(struct look_up_table *));
+	if (!pa->lut) {
+		cfr_err("Failed to allocate lut, lut num %d", pa->lut_num);
+		qdf_mem_free(pa);
+		return QDF_STATUS_E_NOMEM;
+	}
+	for (idx = 0; idx < pa->lut_num; idx++)
+		pa->lut[idx] = (struct look_up_table *)qdf_mem_malloc(
+			sizeof(struct look_up_table));
 
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_UMAC_COMP_CFR,
 					      (void *)pa, QDF_STATUS_SUCCESS);
@@ -129,8 +192,9 @@ QDF_STATUS
 wlan_cfr_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 {
 	struct pdev_cfr *pa = NULL;
+	uint32_t idx;
 
-	if (NULL == pdev) {
+	if (!pdev) {
 		cfr_err("PDEV is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -141,9 +205,14 @@ wlan_cfr_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	}
 
 	pa = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_UMAC_COMP_CFR);
-	if (NULL != pa) {
+	if (pa) {
 		wlan_objmgr_pdev_component_obj_detach(pdev, WLAN_UMAC_COMP_CFR,
 						      (void *)pa);
+		if (pa->lut) {
+			for (idx = 0; idx < pa->lut_num; idx++)
+				qdf_mem_free(pa->lut[idx]);
+			qdf_mem_free(pa->lut);
+		}
 		qdf_mem_free(pa);
 	}
 
@@ -157,7 +226,7 @@ wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev = NULL;
 
-	if (NULL == peer) {
+	if (!peer) {
 		cfr_err("PEER is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -177,7 +246,7 @@ wlan_cfr_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 	}
 
 	pe = (struct peer_cfr *)qdf_mem_malloc(sizeof(struct peer_cfr));
-	if (NULL == pe) {
+	if (!pe) {
 		cfr_err("Failed to allocate peer_cfr object\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -198,7 +267,7 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct pdev_cfr *pa = NULL;
 
-	if (NULL == peer) {
+	if (!peer) {
 		cfr_err("PEER is NULL\n");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -223,7 +292,7 @@ wlan_cfr_peer_obj_destroy_handler(struct wlan_objmgr_peer *peer, void *arg)
 			pa->cfr_current_sta_count--;
 	}
 
-	if (NULL != pe) {
+	if (pe) {
 		wlan_objmgr_peer_component_obj_detach(peer, WLAN_UMAC_COMP_CFR,
 						      (void *)pe);
 		qdf_mem_free(pe);
