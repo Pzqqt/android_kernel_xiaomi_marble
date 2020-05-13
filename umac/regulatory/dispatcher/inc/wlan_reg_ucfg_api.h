@@ -375,6 +375,17 @@ QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 			uint16_t phy_cnt);
 
 /**
+ * ucfg_reg_update_hal_reg_cap() - update hal reg cap
+ * @psoc: psoc ptr
+ * @wireless_modes: 11AX wireless modes
+ * @phy_id: phy id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+				       uint32_t wireless_modes, uint8_t phy_id);
+
+/**
  * ucfg_set_ignore_fw_reg_offload_ind() - API to set ignore regdb offload ind
  * @psoc: psoc ptr
  *

@@ -2268,6 +2268,28 @@ QDF_STATUS reg_set_hal_reg_cap(
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+				  uint32_t wireless_modes, uint8_t phy_id)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	if (!psoc) {
+		reg_err("psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc_priv_obj->reg_cap[phy_id].wireless_modes |= wireless_modes;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 bool reg_chan_in_range(struct regulatory_channel *chan_list,
 		       qdf_freq_t low_freq_2g, qdf_freq_t high_freq_2g,
 		       qdf_freq_t low_freq_5g, qdf_freq_t high_freq_5g,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -285,6 +285,14 @@ QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 	return reg_set_hal_reg_cap(psoc, hal_reg_cap, phy_cnt);
 }
 qdf_export_symbol(ucfg_reg_set_hal_reg_cap);
+
+QDF_STATUS ucfg_reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+				       uint32_t wireless_modes, uint8_t phy_id)
+{
+	return reg_update_hal_reg_cap(psoc, wireless_modes, phy_id);
+}
+
+qdf_export_symbol(ucfg_reg_update_hal_reg_cap);
 
 #ifdef DISABLE_CHANNEL_LIST
 #ifdef CONFIG_CHAN_FREQ_API

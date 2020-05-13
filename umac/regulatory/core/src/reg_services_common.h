@@ -463,6 +463,17 @@ QDF_STATUS reg_set_hal_reg_cap(
 		uint16_t phy_cnt);
 
 /**
+ * reg_update_hal_reg_cap() - Update HAL REG capabilities
+ * @psoc: psoc pointer
+ * @wireless_modes: 11AX wireless modes
+ * @phy_id: phy id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_update_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+				  uint32_t wireless_modes, uint8_t phy_id);
+
+/**
  * reg_chan_in_range() - Check if the given channel is in pdev's channel range
  * @chan_list: Pointer to regulatory channel list.
  * @low_freq_2g: Low frequency 2G.
