@@ -53,7 +53,7 @@ static void wlan_crypto_set_wapi_key(struct wlan_objmgr_vdev *vdev,
 						0x5c, 0x36, 0x5c, 0x36, 0x5c,
 						0x37};
 
-	if (cipher_type != WLAN_CRYPTO_CIPHER_WAPI_SMS4 ||
+	if (cipher_type != WLAN_CRYPTO_CIPHER_WAPI_SMS4 &&
 	    cipher_type != WLAN_CRYPTO_CIPHER_WAPI_GCM4)
 		return;
 
