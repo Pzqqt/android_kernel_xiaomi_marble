@@ -3014,7 +3014,30 @@ static inline void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
 }
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
-int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value);
+/**
+ * hdd_wlan_dump_stats() - display dump Stats
+ * @adapter: adapter handle
+ * @stats_id: stats id from user
+ *
+ * Return: 0 => success, error code on failure
+ */
+int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int stats_id);
+
+/**
+ * hdd_wlan_clear_stats() - clear Stats
+ * @adapter: adapter handle
+ * @stats_id: stats id from user
+ *
+ * Return: 0 => success, error code on failure
+ */
+int hdd_wlan_clear_stats(struct hdd_adapter *adapter, int stats_id);
+
+/**
+ * wlan_hdd_display_tx_rx_histogram() - display tx rx histogram
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
 void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx);
 

@@ -9316,13 +9316,114 @@ static uint8_t *convert_level_to_string(uint32_t level)
 	}
 }
 
-
+#define HDD_DUMP_STAT_HELP(STAT_ID) \
+	hdd_nofl_debug("%u -- %s", STAT_ID, (# STAT_ID))
 /**
- * wlan_hdd_display_tx_rx_histogram() - display tx rx histogram
- * @hdd_ctx: hdd context
+ * hdd_display_stats_help() - print statistics help
  *
  * Return: none
  */
+static void hdd_display_stats_help(void)
+{
+	hdd_nofl_debug("iwpriv wlan0 dumpStats [option] - dump statistics");
+	hdd_nofl_debug("iwpriv wlan0 clearStats [option] - clear statistics");
+	hdd_nofl_debug("options:");
+	HDD_DUMP_STAT_HELP(CDP_TXRX_PATH_STATS);
+	HDD_DUMP_STAT_HELP(CDP_TXRX_HIST_STATS);
+	HDD_DUMP_STAT_HELP(CDP_TXRX_TSO_STATS);
+	HDD_DUMP_STAT_HELP(CDP_HDD_NETIF_OPER_HISTORY);
+	HDD_DUMP_STAT_HELP(CDP_DUMP_TX_FLOW_POOL_INFO);
+	HDD_DUMP_STAT_HELP(CDP_TXRX_DESC_STATS);
+	HDD_DUMP_STAT_HELP(CDP_HIF_STATS);
+	HDD_DUMP_STAT_HELP(CDP_NAPI_STATS);
+	HDD_DUMP_STAT_HELP(CDP_DP_NAPI_STATS);
+	HDD_DUMP_STAT_HELP(CDP_DP_RX_THREAD_STATS);
+}
+
+int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int stats_id)
+{
+	int ret = 0;
+	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("stats_id %d", stats_id);
+
+	switch (stats_id) {
+	case CDP_TXRX_HIST_STATS:
+		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
+		break;
+	case CDP_HDD_NETIF_OPER_HISTORY:
+		wlan_hdd_display_adapter_netif_queue_history(adapter);
+		break;
+	case CDP_HIF_STATS:
+		hdd_display_hif_stats();
+		break;
+	case CDP_LRO_STATS:
+		hdd_lro_display_stats(hdd_ctx);
+		break;
+	case CDP_NAPI_STATS:
+		if (hdd_display_napi_stats()) {
+			hdd_err("error displaying napi stats");
+			ret = -EFAULT;
+		}
+		break;
+	case CDP_DP_RX_THREAD_STATS:
+		dp_txrx_ext_dump_stats(cds_get_context(QDF_MODULE_ID_SOC),
+				       CDP_DP_RX_THREAD_STATS);
+		break;
+	case CDP_DISCONNECT_STATS:
+		sme_display_disconnect_stats(hdd_ctx->mac_handle,
+					     adapter->vdev_id);
+		break;
+	default:
+		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					   stats_id,
+					   QDF_STATS_VERBOSITY_LEVEL_HIGH);
+		if (status == QDF_STATUS_E_INVAL) {
+			hdd_display_stats_help();
+			ret = -EINVAL;
+		}
+		break;
+	}
+	return ret;
+}
+
+int hdd_wlan_clear_stats(struct hdd_adapter *adapter, int stats_id)
+{
+	QDF_STATUS status;
+
+	hdd_debug("stats_id %d", stats_id);
+
+	switch (stats_id) {
+	case CDP_HDD_STATS:
+		memset(&adapter->stats, 0, sizeof(adapter->stats));
+		memset(&adapter->hdd_stats, 0, sizeof(adapter->hdd_stats));
+		break;
+	case CDP_TXRX_HIST_STATS:
+		wlan_hdd_clear_tx_rx_histogram(adapter->hdd_ctx);
+		break;
+	case CDP_HDD_NETIF_OPER_HISTORY:
+		wlan_hdd_clear_netif_queue_history(adapter->hdd_ctx);
+		break;
+	case CDP_HIF_STATS:
+		hdd_clear_hif_stats();
+		break;
+	case CDP_NAPI_STATS:
+		hdd_clear_napi_stats();
+		break;
+	default:
+		status = cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					 OL_TXRX_PDEV_ID,
+					 stats_id);
+		if (status != QDF_STATUS_SUCCESS)
+			hdd_debug("Failed to dump stats for stats_id: %d",
+				  stats_id);
+		break;
+	}
+
+	return 0;
+}
+
 void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	int i;
