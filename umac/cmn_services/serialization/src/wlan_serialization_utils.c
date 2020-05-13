@@ -906,18 +906,11 @@ wlan_serialization_destroy_lock(qdf_spinlock_t *lock)
 bool wlan_serialization_any_vdev_cmd_active(
 		struct wlan_serialization_pdev_queue *pdev_queue)
 {
-	bool status = false;
-	unsigned long any_vdev_active;
 	uint32_t vdev_bitmap_size;
 
 	vdev_bitmap_size =
 		(QDF_CHAR_BIT * sizeof(pdev_queue->vdev_active_cmd_bitmap));
 
-	any_vdev_active = qdf_find_first_bit(
-		pdev_queue->vdev_active_cmd_bitmap, vdev_bitmap_size);
-
-	if (any_vdev_active < vdev_bitmap_size)
-		status = true;
-
-	return status;
+	return !qdf_bitmap_empty(pdev_queue->vdev_active_cmd_bitmap,
+				 vdev_bitmap_size);
 }
