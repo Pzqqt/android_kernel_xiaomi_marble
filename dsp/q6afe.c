@@ -783,9 +783,8 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 				break;
 			case AFE_CMD_REMOTE_LPASS_CORE_HW_VOTE_REQUEST:
 			case AFE_CMD_REMOTE_LPASS_CORE_HW_DEVOTE_REQUEST:
-				atomic_set(&this_afe.clk_state, 0);
 				if (payload[1] != 0)
-					atomic_set(&this_afe.clk_status,
+					atomic_set(&this_afe.clk_state,
 						payload[1]);
 				wake_up(&this_afe.lpass_core_hw_wait);
 				break;
