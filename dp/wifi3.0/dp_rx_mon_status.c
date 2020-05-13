@@ -473,8 +473,11 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 		mcs = ppdu_user->mcs;
 
 	} else {
+		if (ppdu->u.nss == 0)
+			nss = 0;
+		else
+			nss = ppdu->u.nss - 1;
 		mcs = ppdu->u.mcs;
-		nss = ppdu->u.nss;
 	}
 
 	ratekbps = dp_getrateindex(ppdu->u.gi,
