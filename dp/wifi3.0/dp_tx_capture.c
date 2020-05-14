@@ -3564,13 +3564,13 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 			qdf_nbuf_t nbuf_ppdu_desc, bool bar_frm_with_data)
 {
 	struct cdp_tx_indication_info tx_capture_info;
-	qdf_nbuf_t mgmt_ctl_nbuf;
+	qdf_nbuf_t mgmt_ctl_nbuf, tmp_nbuf;
 	uint8_t type, subtype;
 	uint8_t fc_type, fc_subtype;
 	bool is_sgen_pkt;
 	struct cdp_tx_mgmt_comp_info *ptr_comp_info;
 	qdf_nbuf_queue_t *retries_q;
-	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu *ppdu_desc, *retry_ppdu;
 	struct cdp_tx_completion_ppdu_user *user;
 	uint32_t ppdu_id;
 	uint32_t desc_ppdu_id;
@@ -3669,6 +3669,16 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 	}
 
 	retries_q = &pdev->tx_capture.retries_ctl_mgmt_q[type][subtype];
+
+	if (!qdf_nbuf_is_queue_empty(retries_q)) {
+		tmp_nbuf  = qdf_nbuf_queue_first(retries_q);
+		retry_ppdu = (struct cdp_tx_completion_ppdu *)
+			      qdf_nbuf_data(tmp_nbuf);
+
+		if (ppdu_desc->sched_cmdid != retry_ppdu->sched_cmdid)
+			qdf_nbuf_queue_free(retries_q);
+	}
+
 get_mgmt_pkt_from_queue:
 	qdf_spin_lock_bh(
 		&pdev->tx_capture.ctl_mgmt_lock[type][subtype]);
