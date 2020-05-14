@@ -1188,6 +1188,9 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_NON_INHERIT_ENABLE = 443,
 	/* Set/Get next frequency for radar */
 	OL_ATH_PARAM_NXT_RDR_FREQ = 444,
+	/* set the flag for a radio with no backhaul */
+	OL_ATH_PARAM_NO_BACKHAUL_RADIO = 445,
+
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3071,6 +3074,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NON_INHERIT_ENABLE, SET_PARAM, 1},
 	{"g_non_inherit_enable",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NON_INHERIT_ENABLE, GET_PARAM, 0},
+	{"nobckhlradio",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, SET_PARAM, 1},
+	{"g_nobckhlradio",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, GET_PARAM, 0},
 };
 #endif
 #endif
