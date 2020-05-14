@@ -1233,6 +1233,12 @@ void dp_rx_dump_info_and_assert(struct dp_soc *soc,
 				struct dp_rx_desc *rx_desc);
 
 void dp_rx_compute_delay(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
+
+#ifdef QCA_PEER_EXT_STATS
+void dp_rx_compute_tid_delay(struct cdp_delay_tid_stats *stats,
+			     qdf_nbuf_t nbuf);
+#endif /* QCA_PEER_EXT_STATS */
+
 #ifdef RX_DESC_DEBUG_CHECK
 /**
  * dp_rx_desc_check_magic() - check the magic value in dp_rx_desc

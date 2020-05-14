@@ -32,6 +32,7 @@
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
+#include "dp_hist.h"
 
 #ifdef ATH_RX_PRI_SAVE
 #define DP_RX_TID_SAVE(_nbuf, _tid) \
@@ -1189,6 +1190,24 @@ qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf)
 	return parent;
 }
 
+#ifdef QCA_PEER_EXT_STATS
+/*
+ * dp_rx_compute_tid_delay - Computer per TID delay stats
+ * @peer: DP soc context
+ * @nbuf: NBuffer
+ *
+ * Return: Void
+ */
+void dp_rx_compute_tid_delay(struct cdp_delay_tid_stats *stats,
+			     qdf_nbuf_t nbuf)
+{
+	struct cdp_delay_rx_stats  *rx_delay = &stats->rx_delay;
+	uint32_t to_stack = qdf_nbuf_get_timedelta_ms(nbuf);
+
+	dp_hist_update_stats(&rx_delay->to_stack_delay, to_stack);
+}
+#endif /* QCA_PEER_EXT_STATS */
+
 /**
  * dp_rx_compute_delay() - Compute and fill in all timestamps
  *				to pass in correct fields
@@ -2283,7 +2302,9 @@ done:
 
 		rx_pdev = vdev->pdev;
 		DP_RX_TID_SAVE(nbuf, tid);
-		if (qdf_unlikely(rx_pdev->delay_stats_flag))
+		if (qdf_unlikely(rx_pdev->delay_stats_flag) ||
+		    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(
+				 soc->wlan_cfg_ctx)))
 			qdf_nbuf_set_timestamp(nbuf);
 
 		ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);

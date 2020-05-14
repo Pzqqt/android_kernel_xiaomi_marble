@@ -8013,6 +8013,34 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_PEER_EXT_STATS
+static void dp_rx_update_peer_delay_stats(struct dp_soc *soc,
+					  qdf_nbuf_t nbuf)
+{
+	struct dp_peer *peer = NULL;
+	uint16_t peer_id, ring_id;
+	uint8_t tid = qdf_nbuf_get_tid_val(nbuf);
+	struct cdp_peer_ext_stats *pext_stats = NULL;
+
+	peer_id = QDF_NBUF_CB_RX_PEER_ID(nbuf);
+	if (peer_id > soc->max_peers)
+		return;
+
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (qdf_unlikely(!peer) || qdf_unlikely(!peer->pext_stats))
+		return;
+
+	pext_stats = peer->pext_stats;
+	ring_id = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+	dp_rx_compute_tid_delay(&pext_stats->delay_stats[tid][ring_id], nbuf);
+}
+#else
+static inline void dp_rx_update_peer_delay_stats(struct dp_soc *soc,
+						 qdf_nbuf_t nbuf)
+{
+}
+#endif
+
 /*
  * dp_calculate_delay_stats: function to get rx delay stats
  * @cdp_soc: DP soc handle
@@ -8025,14 +8053,23 @@ static QDF_STATUS
 dp_calculate_delay_stats(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 			 qdf_nbuf_t nbuf)
 {
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	struct dp_vdev *vdev =
 		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)cdp_soc,
 						   vdev_id);
-	if (vdev) {
+
+	if (!vdev)
+		return QDF_STATUS_SUCCESS;
+
+	if (vdev->pdev->delay_stats_flag) {
 		dp_rx_compute_delay(vdev, nbuf);
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_SUCCESS;
 	}
 
+	/*
+	 * Update the per peer delay stats
+	 */
+	dp_rx_update_peer_delay_stats(soc, nbuf);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8255,6 +8292,21 @@ static QDF_STATUS dp_get_psoc_param(struct cdp_soc_t *cdp_soc,
 				    enum cdp_psoc_param_type param,
 				    cdp_config_param_type *val)
 {
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
+
+	if (!soc)
+		return QDF_STATUS_E_FAILURE;
+
+	switch (param) {
+	case CDP_CFG_PEER_EXT_STATS:
+		val->cdp_psoc_param_pext_stats =
+			wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx);
+		break;
+	default:
+		dp_warn("Invalid param");
+		break;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

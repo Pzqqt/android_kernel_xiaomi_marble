@@ -1165,6 +1165,7 @@ typedef union cdp_config_param_t {
 	bool cdp_psoc_param_en_rate_stats;
 	int cdp_psoc_param_en_nss_cfg;
 	int cdp_psoc_param_preferred_hw_mode;
+	bool cdp_psoc_param_pext_stats;
 } cdp_config_param_type;
 
 /**
@@ -1267,11 +1268,13 @@ enum cdp_vdev_param_type {
  * @CDP_ENABLE_RATE_STATS: set rate stats enable/disable
  * @CDP_SET_NSS_CFG: set nss cfg
  * @CDP_SET_PREFERRED_HW_MODE: set preferred hw mode
+ * @CDP_CFG_PEER_EXT_STATS: Peer extended stats mode.
  */
 enum cdp_psoc_param_type {
 	CDP_ENABLE_RATE_STATS,
 	CDP_SET_NSS_CFG,
 	CDP_SET_PREFERRED_HW_MODE,
+	CDP_CFG_PEER_EXT_STATS,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

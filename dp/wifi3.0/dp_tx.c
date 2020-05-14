@@ -40,6 +40,7 @@
 #ifdef ATH_SUPPORT_IQUE
 #include "dp_txrx_me.h"
 #endif
+#include "dp_hist.h"
 
 
 /* TODO Add support in TSO */
@@ -1225,8 +1226,10 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	if (tx_desc->flags & DP_TX_DESC_FLAG_MESH)
 		hal_tx_desc_set_mesh_en(soc->hal_soc, hal_tx_desc_cached, 1);
 
-	if (qdf_unlikely(vdev->pdev->delay_stats_flag))
-		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_get());
+	if (qdf_unlikely(vdev->pdev->delay_stats_flag) ||
+	    qdf_unlikely(wlan_cfg_is_peer_ext_stats_enabled(
+			 soc->wlan_cfg_ctx)))
+		tx_desc->timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
 
 	dp_verbose_debug("length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			 tx_desc->length, type, (uint64_t)tx_desc->dma_addr,
@@ -2986,6 +2989,84 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 
 #endif
 
+#ifdef QCA_PEER_EXT_STATS
+/*
+ * dp_tx_compute_tid_delay() - Compute per TID delay
+ * @stats: Per TID delay stats
+ * @tx_desc: Software Tx descriptor
+ *
+ * Compute the software enqueue and hw enqueue delays and
+ * update the respective histograms
+ *
+ * Return: void
+ */
+static void dp_tx_compute_tid_delay(struct cdp_delay_tid_stats *stats,
+				    struct dp_tx_desc_s *tx_desc)
+{
+	struct cdp_delay_tx_stats  *tx_delay = &stats->tx_delay;
+	int64_t current_timestamp, timestamp_ingress, timestamp_hw_enqueue;
+	uint32_t sw_enqueue_delay, fwhw_transmit_delay;
+
+	current_timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
+	timestamp_ingress = qdf_nbuf_get_timestamp(tx_desc->nbuf);
+	timestamp_hw_enqueue = tx_desc->timestamp;
+	sw_enqueue_delay = (uint32_t)(timestamp_hw_enqueue - timestamp_ingress);
+	fwhw_transmit_delay = (uint32_t)(current_timestamp -
+					 timestamp_hw_enqueue);
+
+	/*
+	 * Update the Tx software enqueue delay and HW enque-Completion delay.
+	 */
+	dp_hist_update_stats(&tx_delay->tx_swq_delay, sw_enqueue_delay);
+	dp_hist_update_stats(&tx_delay->hwtx_delay, fwhw_transmit_delay);
+}
+
+/*
+ * dp_tx_update_peer_ext_stats() - Update the peer extended stats
+ * @peer: DP peer context
+ * @tx_desc: Tx software descriptor
+ * @tid: Transmission ID
+ * @ring_id: Rx CPU context ID/CPU_ID
+ *
+ * Update the peer extended stats. These are enhanced other
+ * delay stats per msdu level.
+ *
+ * Return: void
+ */
+static void dp_tx_update_peer_ext_stats(struct dp_peer *peer,
+					struct dp_tx_desc_s *tx_desc,
+					uint8_t tid, uint8_t ring_id)
+{
+	struct dp_pdev *pdev = peer->vdev->pdev;
+	struct dp_soc *soc = NULL;
+	struct cdp_peer_ext_stats *pext_stats = NULL;
+
+	soc = pdev->soc;
+	if (qdf_likely(!wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx)))
+		return;
+
+	pext_stats = peer->pext_stats;
+
+	qdf_assert(pext_stats);
+	qdf_assert(ring < CDP_MAX_TXRX_CTX);
+
+	/*
+	 * For non-TID packets use the TID 9
+	 */
+	if (qdf_unlikely(tid >= CDP_MAX_DATA_TIDS))
+		tid = CDP_MAX_DATA_TIDS - 1;
+
+	dp_tx_compute_tid_delay(&pext_stats->delay_stats[tid][ring_id],
+				tx_desc);
+}
+#else
+static inline void dp_tx_update_peer_ext_stats(struct dp_peer *peer,
+					       struct dp_tx_desc_s *tx_desc,
+					       uint8_t tid, uint8_t ring_id)
+{
+}
+#endif
+
 /**
  * dp_tx_compute_delay() - Compute and fill in all timestamps
  *				to pass in correct fields
@@ -3006,7 +3087,7 @@ static void dp_tx_compute_delay(struct dp_vdev *vdev,
 	if (qdf_likely(!vdev->pdev->delay_stats_flag))
 		return;
 
-	current_timestamp = qdf_ktime_to_ms(qdf_ktime_get());
+	current_timestamp = qdf_ktime_to_ms(qdf_ktime_real_get());
 	timestamp_ingress = qdf_nbuf_get_timestamp(tx_desc->nbuf);
 	timestamp_hw_enqueue = tx_desc->timestamp;
 	sw_enqueue_delay = (uint32_t)(timestamp_hw_enqueue - timestamp_ingress);
@@ -3356,7 +3437,7 @@ dp_tx_comp_process_desc(struct dp_soc *soc,
 	 * scatter gather packets
 	 */
 	if (qdf_unlikely(!!desc->pdev->latency_capture_enable)) {
-		time_latency = (qdf_ktime_to_ms(qdf_ktime_get()) -
+		time_latency = (qdf_ktime_to_ms(qdf_ktime_real_get()) -
 				desc->timestamp);
 	}
 	if (!(desc->msdu_ext_desc)) {
@@ -3531,6 +3612,7 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 	}
 
 	dp_tx_update_peer_stats(tx_desc, ts, peer, ring_id);
+	dp_tx_update_peer_ext_stats(peer, tx_desc, ts->tid, ring_id);
 
 #ifdef QCA_SUPPORT_RDK_STATS
 	if (soc->wlanstats_enabled)
@@ -3723,7 +3805,6 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 		}
 
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
-
 		if (qdf_likely(peer))
 			dp_peer_unref_del_find_by_id(peer);
 
