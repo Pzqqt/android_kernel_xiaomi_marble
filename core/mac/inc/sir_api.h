@@ -1433,14 +1433,6 @@ typedef struct sAniDHCPStopInd {
 	struct qdf_mac_addr peerMacAddr;
 } tAniDHCPInd, *tpAniDHCPInd;
 
-typedef struct sAniTXFailMonitorInd {
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t tx_fail_count;
-	void *txFailIndCallback;
-} tAniTXFailMonitorInd, *tpAniTXFailMonitorInd;
-
-
 /**********************PE Statistics end*************************/
 
 typedef struct sSirP2PNoaAttr {
@@ -2670,44 +2662,6 @@ typedef struct sSirDelPeriodicTxPtrn {
 	struct qdf_mac_addr mac_address;
 	uint8_t ucPtrnId;       /* Pattern ID */
 } tSirDelPeriodicTxPtrn, *tpSirDelPeriodicTxPtrn;
-
-/*---------------------------------------------------------------------------
-* tSirIbssGetPeerInfoReqParams
-*--------------------------------------------------------------------------*/
-typedef struct {
-	bool allPeerInfoReqd;   /* If set, all IBSS peers stats are reported */
-	struct qdf_mac_addr peer_mac;
-	/* of peer with staIdx is reported */
-} tSirIbssGetPeerInfoReqParams, *tpSirIbssGetPeerInfoReqParams;
-
-/**
- * typedef struct - tSirIbssGetPeerInfoParams
- * @mac_addr: mac address received from target
- * @txRate: TX rate
- * @mcsIndex: MCS index
- * @rssi: RSSI
- */
-typedef struct {
-	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
-	uint32_t txRate;
-	uint32_t mcsIndex;
-	int8_t  rssi;
-} tSirIbssPeerInfoParams;
-
-typedef struct {
-	uint32_t status;
-	uint8_t numPeers;
-	tSirIbssPeerInfoParams peerInfoParams[32];
-} tSirPeerInfoRspParams, *tpSirIbssPeerInfoRspParams;
-
-/*---------------------------------------------------------------------------
-* tSirIbssGetPeerInfoRspParams
-*--------------------------------------------------------------------------*/
-typedef struct {
-	uint16_t mesgType;
-	uint16_t mesgLen;
-	tSirPeerInfoRspParams ibssPeerInfoRspParams;
-} tSirIbssGetPeerInfoRspParams, *tpSirIbssGetPeerInfoRspParams;
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef struct {

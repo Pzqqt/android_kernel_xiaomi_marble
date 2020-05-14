@@ -410,9 +410,6 @@
  */
 #define PROBE_REQ_TX_TIME_GAP 20
 
-typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
-
-
 /**
  * enum wma_rx_exec_ctx - wma rx execution context
  * @WMA_RX_WORK_CTX: work queue context execution
@@ -1007,7 +1004,6 @@ typedef struct {
 	bool enable_mc_list;
 	uint8_t ibss_started;
 	tSetBssKeyParams ibsskey_info;
-	txFailIndCallback hddTxFailCb;
 #ifdef FEATURE_WLAN_EXTSCAN
 	qdf_wake_lock_t extscan_wake_lock;
 #endif

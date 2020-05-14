@@ -4145,34 +4145,6 @@ QDF_STATUS wma_start(void)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
-	if (wmi_service_enabled(wmi_handle, wmi_service_rmc)) {
-
-		WMA_LOGD("FW supports cesium network, registering event handlers");
-
-		status = wmi_unified_register_event_handler(
-					wmi_handle,
-					wmi_peer_info_event_id,
-					wma_ibss_peer_info_event_handler,
-					WMA_RX_SERIALIZER_CTX);
-		if (status) {
-			WMA_LOGE("Failed to register ibss peer info event cb");
-			qdf_status = QDF_STATUS_E_FAILURE;
-			goto end;
-		}
-		status = wmi_unified_register_event_handler(
-					wmi_handle,
-					wmi_peer_tx_fail_cnt_thr_event_id,
-					wma_fast_tx_fail_event_handler,
-					WMA_RX_SERIALIZER_CTX);
-		if (status) {
-			WMA_LOGE("Failed to register peer fast tx failure event cb");
-			qdf_status = QDF_STATUS_E_FAILURE;
-			goto end;
-		}
-	} else {
-		WMA_LOGD("Target does not support cesium network");
-	}
-
 	qdf_status = wma_tx_attach(wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to register tx management", __func__);
@@ -8614,31 +8586,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_DHCP_STOP_IND:
 		wma_process_dhcp_ind(wma_handle, (tAniDHCPInd *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
-		break;
-
-	case WMA_IBSS_CESIUM_ENABLE_IND:
-		wma_process_cesium_enable_ind(wma_handle);
-		break;
-	case WMA_GET_IBSS_PEER_INFO_REQ:
-		wma_process_get_peer_info_req(wma_handle,
-					      (tSirIbssGetPeerInfoReqParams *)
-					      msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_TX_FAIL_MONITOR_IND:
-		wma_process_tx_fail_monitor_ind(wma_handle,
-				(tAniTXFailMonitorInd *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-
-	case WMA_RMC_ENABLE_IND:
-		wma_process_rmc_enable_ind(wma_handle);
-		break;
-	case WMA_RMC_DISABLE_IND:
-		wma_process_rmc_disable_ind(wma_handle);
-		break;
-	case WMA_RMC_ACTION_PERIOD_IND:
-		wma_process_rmc_action_period_ind(wma_handle);
 		break;
 	case WMA_INIT_THERMAL_INFO_CMD:
 		wma_process_init_thermal_info(wma_handle,

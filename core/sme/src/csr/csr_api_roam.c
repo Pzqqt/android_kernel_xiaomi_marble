@@ -3935,7 +3935,7 @@ QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* If no BSS description was found in this connection
-	 * (happens with start IBSS), then nix the BSS description
+	 * , then nix the BSS description
 	 * that we keep around for the connected BSS) and get out.
 	 */
 	if (!bss_desc) {
@@ -4219,7 +4219,6 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	} else {
 		pBssConfig->uShortSlotTime = 0;
 	}
-	/* power constraint. We don't support 11h on IBSS */
 	pBssConfig->f11hSupport = false;
 	pBssConfig->uPowerLimit = 0;
 	/* heartbeat */
@@ -5069,7 +5068,7 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 						false);
 		} else if (bss_desc || CSR_IS_INFRA_AP(roam_profile)) {
 			/*
-			 * Neither in IBSS nor in Infra. We can go ahead and set
+			 * Not in Infra. We can go ahead and set
 			 * the cfg for tne new network... nothing to stop.
 			 */
 			bool is_11r_roaming = false;
@@ -6944,7 +6943,6 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	roam_info->status_code =
 			session->joinFailStatusCode.status_code;
 	roam_info->reasonCode = session->joinFailStatusCode.reasonCode;
-	/* We start the IBSS (didn't find any matched IBSS out there) */
 	roam_info->bss_desc = bss_desc;
 	if (bss_desc)
 		qdf_mem_copy(roam_info->bssid.bytes, bss_desc->bssId,
@@ -10008,11 +10006,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 			/*
 			 * Successfully disassociated from the 'old' Bss.
 			 * We get Disassociate response in three conditions.
-			 * 1) The case where we are disasociating from an Infra
-			 *    Bss to start an IBSS.
-			 * 2) When we are disassociating from an Infra Bss to
-			 *    join an IBSS or a new infra network.
-			 * 3) Where we are doing an Infra to Infra roam between
+			 * Where we are doing an Infra to Infra roam between
 			 *    networks with different SSIDs.
 			 * In all cases, we set the new Bss configuration here
 			 * and attempt to join
@@ -13063,7 +13057,7 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			 * Auto=Global. dot11Mode && profile->channel is < 14,
 			 * then start the IBSS in b mode.
 			 *
-			 * Note: we used to have this start as an 11g IBSS for
+			 * Note: we used to have this start as for
 			 * best performance. now to specify that the user will
 			 * have to set the do11Mode in the property page to 11g
 			 * to force it.
@@ -13969,7 +13963,7 @@ void csr_roam_prepare_bss_params(struct mac_context *mac, uint32_t sessionId,
 	pProfile->op_freq = pSession->bssParams.operation_chan_freq;
 
 	if (pProfile->op_freq == 0)
-		sme_err("CSR cannot find a channel to start IBSS");
+		sme_err("CSR cannot find a channel to start");
 	else {
 		csr_roam_determine_max_rate_for_ad_hoc(mac,
 						       &pSession->bssParams.

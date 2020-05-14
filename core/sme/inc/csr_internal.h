@@ -39,7 +39,7 @@
 
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
-/* No of sessions to be supported, and a session is for Infra, IBSS or BT-AMP */
+/* No of sessions to be supported, and a session is for Infra, BT-AMP */
 #define CSR_IS_SESSION_VALID(mac, sessionId) \
 	((sessionId) < WLAN_MAX_VDEVS && \
 	 (mac)->roam.roamSession[(sessionId)].sessionActive)
@@ -220,7 +220,7 @@ struct csr_roamstart_bssparams {
 
 	/*
 	 * This is the BSSID for the party we want to
-	 * join (only use for IBSS or WDS).
+	 * join (only use for WDS).
 	 */
 	struct qdf_mac_addr bssid;
 	tSirNwType sirNwType;
@@ -540,12 +540,12 @@ struct csr_roam_session {
 	bool fRoaming;
 	/*
 	 * to remember some parameters needed for START_BSS.
-	 * All member must be set every time we try to join or start an IBSS
+	 * All member must be set every time we try to join
 	 */
 	struct csr_roamstart_bssparams bssParams;
 	/* the byte count of pWpaRsnIE; */
 	uint32_t nWpaRsnReqIeLength;
-	/* contain the WPA/RSN IE in assoc req or one sent in beacon(IBSS) */
+	/* contain the WPA/RSN IE in assoc req */
 	uint8_t *pWpaRsnReqIE;
 	/* the byte count for pWpaRsnRspIE */
 	uint32_t nWpaRsnRspIeLength;
@@ -554,7 +554,7 @@ struct csr_roam_session {
 #ifdef FEATURE_WLAN_WAPI
 	/* the byte count of pWapiReqIE; */
 	uint32_t nWapiReqIeLength;
-	/* this contain the WAPI IE in assoc req or one sent in beacon (IBSS) */
+	/* this contain the WAPI IE in assoc req */
 	uint8_t *pWapiReqIE;
 	/* the byte count for pWapiRspIE */
 	uint32_t nWapiRspIeLength;

@@ -753,9 +753,6 @@ QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_update_channel_list(mac_handle_t mac_handle);
 
-QDF_STATUS sme_tx_fail_monitor_start_stop_ind(mac_handle_t mac_handle,
-		uint8_t tx_fail_count,
-		void *txFailIndCallback);
 QDF_STATUS sme_dhcp_start_ind(mac_handle_t mac_handle,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
@@ -1204,16 +1201,6 @@ QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
 					 bool set_pmk);
 
 void sme_get_command_q_status(mac_handle_t mac_handle);
-
-#ifdef FEATURE_WLAN_RMC
-QDF_STATUS sme_enable_rmc(mac_handle_t mac_handle, uint32_t sessionId);
-QDF_STATUS sme_disable_rmc(mac_handle_t mac_handle, uint32_t sessionId);
-QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
-				      uint32_t sessionId);
-#endif
-
-QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
-				      uint32_t sessionId);
 
 /**
  * sme_set_wlm_latency_level_ind() - Used to set the latency level to fw

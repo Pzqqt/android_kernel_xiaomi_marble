@@ -680,18 +680,6 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 QDF_STATUS
 wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id);
 
-/**
- * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
- * @handle: wma handle
- * @data: event data
- * @len: length of data
- *
- * This function handles IBSS peer info event from FW.
- *
- * Return: 0 for success or error code
- */
-int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
-				     uint32_t len);
 #else
 /**
  * wma_is_vdev_in_ibss_mode(): dummy function
@@ -723,22 +711,6 @@ wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 {
 }
 
-/**
- * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
- * @handle: wma handle
- * @data: event data
- * @len: length of data
- *
- * This function is dummy
- *
- * Return: 0 for success or error code
- */
-static inline int
-wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
-				 uint32_t len)
-{
-	return 0;
-}
 
 /**
  * wma_set_ibss_pwrsave_params() - set ibss power save parameter to fw
@@ -1216,10 +1188,6 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 
 int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 					uint32_t len);
-
-int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
-					  uint32_t len);
-
 /*
  * wma_utils.c functions declarations
  */
@@ -1443,39 +1411,6 @@ void wma_config_plm(tp_wma_handle wma, struct plm_req_params *plm);
 
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 					   tSirRcvFltMcAddrList * mcbc_param);
-QDF_STATUS wma_process_cesium_enable_ind(tp_wma_handle wma);
-
-QDF_STATUS wma_process_get_peer_info_req
-	(tp_wma_handle wma, tSirIbssGetPeerInfoReqParams *pReq);
-
-QDF_STATUS wma_process_tx_fail_monitor_ind
-	(tp_wma_handle wma, tAniTXFailMonitorInd *pReq);
-
-#ifdef FEATURE_WLAN_RMC
-QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma);
-
-QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma);
-
-QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma);
-#else
-static inline
-QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirAddPeriodicTxPtrn *pattern);

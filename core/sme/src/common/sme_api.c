@@ -3651,58 +3651,6 @@ QDF_STATUS sme_dhcp_stop_ind(mac_handle_t mac_handle,
 }
 
 /*
- * sme_TXFailMonitorStopInd() -
- * API to signal the FW to start monitoring TX failures
- *
- * Return QDF_STATUS  SUCCESS.
- * FAILURE or RESOURCES  The API finished and failed.
- */
-QDF_STATUS sme_tx_fail_monitor_start_stop_ind(mac_handle_t mac_handle,
-					      uint8_t tx_fail_count,
-					      void *txFailIndCallback)
-{
-	QDF_STATUS status;
-	QDF_STATUS qdf_status;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	tAniTXFailMonitorInd *pMsg;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		pMsg = qdf_mem_malloc(sizeof(tAniTXFailMonitorInd));
-		if (!pMsg) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-
-		pMsg->msgType = WMA_TX_FAIL_MONITOR_IND;
-		pMsg->msgLen = (uint16_t) sizeof(tAniTXFailMonitorInd);
-
-		/* tx_fail_count = 0 should disable the Monitoring in FW */
-		pMsg->tx_fail_count = tx_fail_count;
-		pMsg->txFailIndCallback = txFailIndCallback;
-
-		message.type = WMA_TX_FAIL_MONITOR_IND;
-		message.bodyptr = pMsg;
-		message.reserved = 0;
-
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post TX Fail monitor Start MSG fail",
-				  __func__);
-			qdf_mem_free(pMsg);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
  * sme_neighbor_report_request() -
  * API to request neighbor report.
  *
@@ -4695,7 +4643,7 @@ QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t session_id,
 /*
  * sme_get_operation_channel() -
  * API to get current channel on which STA is parked his function gives
- * channel information only of infra station or IBSS station
+ * channel information only of infra station
  *
  * mac_handle, pointer to memory location and sessionId
  * Returns QDF_STATUS_SUCCESS
@@ -8007,133 +7955,6 @@ sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,
 		qdf_mem_free(req_msg);
 	}
 	sme_release_global_lock(&mac->sme);
-	return status;
-}
-
-#ifdef FEATURE_WLAN_RMC
-/*
- * sme_enable_rmc() - enables RMC
- * @mac_handle: Opaque handle to the global MAC context
- * @sessionId : Session ID
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_enable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-
-	SME_ENTER();
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		message.bodyptr = NULL;
-		message.type = WMA_RMC_ENABLE_IND;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			status = QDF_STATUS_E_FAILURE;
-
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
- * sme_disable_rmc() - disables RMC
- * @mac_handle: Opaque handle to the global MAC context
- * @sessionId : Session ID
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_disable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-
-	SME_ENTER();
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		message.bodyptr = NULL;
-		message.type = WMA_RMC_DISABLE_IND;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			status = QDF_STATUS_E_FAILURE;
-
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
- * sme_send_rmc_action_period() - sends RMC action period param to target
- * @mac_handle: Opaque handle to the global MAC context
- * @sessionId : Session ID
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
-				      uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		message.bodyptr = NULL;
-		message.type = WMA_RMC_ACTION_PERIOD_IND;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			status = QDF_STATUS_E_FAILURE;
-
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-#endif /* FEATURE_WLAN_RMC */
-
-/*
- * sme_send_cesium_enable_ind() -
- *  Used to send proprietary cesium enable indication to fw
- *
- * mac_handle
- * sessionId
- * Return QDF_STATUS
- */
-QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
-				      uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		message.bodyptr = NULL;
-		message.type = WMA_IBSS_CESIUM_ENABLE_IND;
-		status = scheduler_post_message(QDF_MODULE_ID_SME,
-						QDF_MODULE_ID_WMA,
-						QDF_MODULE_ID_WMA,
-						&message);
-		sme_release_global_lock(&mac->sme);
-	}
-
 	return status;
 }
 

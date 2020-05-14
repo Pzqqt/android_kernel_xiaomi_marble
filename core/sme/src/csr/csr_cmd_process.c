@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,7 +78,7 @@ QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 		 * To work-around an issue where checking for set/remove
 		 * key base on connection state is no longer workable
 		 * due to failure or finding the condition meets both
-		 * SAP and infra/IBSS requirement.
+		 * SAP and infra requirement.
 		 */
 		if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType ||
 		    eWNI_SME_DISCONNECT_DONE_IND ==

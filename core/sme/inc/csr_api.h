@@ -318,8 +318,7 @@ typedef enum {
 	 */
 	eCSR_ROAM_MIC_ERROR_IND,
 	/*
-	 * Update the connection status, useful for IBSS: new peer added,
-	 * network is active etc.
+	 * Update the connection status network is active etc.
 	 */
 	eCSR_ROAM_CONNECT_STATUS_UPDATE,
 	eCSR_ROAM_GEN_INFO,
