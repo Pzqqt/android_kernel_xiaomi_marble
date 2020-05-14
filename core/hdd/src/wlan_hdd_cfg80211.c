@@ -412,10 +412,16 @@ static void hdd_init_6ghz(struct hdd_context *hdd_ctx)
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_channel *chlist = hdd_channels_6_ghz;
 	uint32_t num = ARRAY_SIZE(hdd_channels_6_ghz);
+	uint16_t base_freq;
 
 	qdf_mem_zero(chlist, sizeof(*chlist) * num);
+	base_freq = wlan_reg_min_6ghz_chan_freq();
+
 	for (i = 0; i < num; i++)
-		HDD_SET_6GHZCHAN(chlist[i], 5945 + i * 20, 1 + i * 4, \
+		HDD_SET_6GHZCHAN(chlist[i],
+				 base_freq + i * 20,
+				 wlan_reg_freq_to_chan(hdd_ctx->pdev,
+						       base_freq + i * 20),
 				 IEEE80211_CHAN_DISABLED);
 	wiphy->bands[HDD_NL80211_BAND_6GHZ] = &wlan_hdd_band_6_ghz;
 	wiphy->bands[HDD_NL80211_BAND_6GHZ]->channels = chlist;

@@ -34,10 +34,10 @@
 #ifdef CONFIG_BAND_6GHZ
 #define HIGH_5GHZ_FREQ 7200
 #else
-#define HIGH_5GHZ_FREQ 5930
+#define HIGH_5GHZ_FREQ 5920
 #endif
 
-#define HIGH_5GHZ_FREQ_NO_6GHZ 5930
+#define HIGH_5GHZ_FREQ_NO_6GHZ 5920
 
 static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
