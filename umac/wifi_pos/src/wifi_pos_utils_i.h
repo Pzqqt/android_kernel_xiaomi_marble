@@ -207,6 +207,9 @@ struct wifi_pos_dma_rings_cfg {
 	void *srng;
 };
 
+typedef void (*wifi_pos_send_rsp_handler)(uint32_t, enum wifi_pos_cmd_ids,
+					  uint32_t, uint8_t *);
+
 /**
  * struct wifi_pos_psoc_priv_obj - psoc obj data for wifi_pos
  * @app_pid: pid of app registered to host driver
@@ -278,8 +281,7 @@ struct wifi_pos_psoc_priv_obj {
 	bool oem_6g_support_disable;
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
-	void (*wifi_pos_send_rsp)(uint32_t, enum wifi_pos_cmd_ids,
-				  uint32_t, uint8_t *);
+	wifi_pos_send_rsp_handler wifi_pos_send_rsp;
 	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
 	void (*wifi_pos_get_fw_phy_mode_for_freq)(uint32_t, uint32_t,
 						  uint32_t *);

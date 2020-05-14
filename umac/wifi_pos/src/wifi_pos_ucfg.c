@@ -26,9 +26,8 @@
 #include "wlan_ptt_sock_svc.h"
 
 QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
-		struct wifi_pos_req_msg *req,
-		void (*send_rsp_cb)(uint32_t, enum wifi_pos_cmd_ids,
-		uint32_t, uint8_t *))
+				     struct wifi_pos_req_msg *req,
+				     wifi_pos_send_rsp_handler send_rsp_cb)
 {
 	uint8_t err;
 	uint32_t app_pid;

@@ -25,6 +25,7 @@
 
 /* Include files */
 #include "wifi_pos_utils_pub.h"
+#include "../src/wifi_pos_utils_i.h"
 
 /* forward reference */
 struct wlan_objmgr_psoc;
@@ -159,8 +160,8 @@ struct wifi_pos_req_msg {
  * Return: status of operation
  */
 QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
-		struct wifi_pos_req_msg *req,
-		void (*send_rsp_cb)(uint32_t, uint32_t, uint32_t, uint8_t *));
+				     struct wifi_pos_req_msg *req,
+				     wifi_pos_send_rsp_handler send_rsp_cb);
 
 /**
  * wifi_pos_init: initializes WIFI POS component, called by dispatcher init

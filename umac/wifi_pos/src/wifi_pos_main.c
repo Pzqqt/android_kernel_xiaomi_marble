@@ -776,7 +776,7 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	uint32_t app_pid;
 	struct wifi_pos_psoc_priv_obj *priv =
 					wifi_pos_get_psoc_priv_obj(psoc);
-	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
+	wifi_pos_send_rsp_handler wifi_pos_send_rsp;
 
 	if (!priv) {
 		wifi_pos_err("private object is NULL");
