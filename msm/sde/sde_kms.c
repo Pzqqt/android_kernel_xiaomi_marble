@@ -3493,6 +3493,7 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 			mmu, "sde");
 		if (IS_ERR(aspace)) {
 			ret = PTR_ERR(aspace);
+			mmu->funcs->destroy(mmu);
 			goto fail;
 		}
 
@@ -3529,7 +3530,6 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 early_map_fail:
 	_sde_kms_unmap_all_splash_regions(sde_kms);
 fail:
-	mmu->funcs->destroy(mmu);
 	_sde_kms_mmu_destroy(sde_kms);
 
 	return ret;
