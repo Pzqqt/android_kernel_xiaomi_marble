@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/usb/usbpd.h>
@@ -246,7 +246,7 @@ static void dp_usbpd_connect_cb(struct usbpd_svid_handler *hdlr,
 		return;
 	}
 
-	DP_DEBUG("peer_usb_comm: %d\n");
+	DP_DEBUG("peer_usb_comm: %d\n", peer_usb_comm);
 	pd->dp_usbpd.base.peer_usb_comm = peer_usb_comm;
 	dp_usbpd_send_event(pd, DP_USBPD_EVT_DISCOVER);
 }
