@@ -1227,6 +1227,9 @@ dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 
 	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
 	qdf_spinlock_create(&pdev->mon_lock);
+
+	/* Attach full monitor mode resources */
+	dp_full_mon_attach(pdev);
 }
 
 static void
@@ -1258,6 +1261,9 @@ dp_rx_pdev_mon_buf_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id)
 
 	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
 	qdf_spinlock_destroy(&pdev->mon_lock);
+
+	/* Detach full monitor mode resources */
+	dp_full_mon_detach(pdev);
 }
 
 static void
