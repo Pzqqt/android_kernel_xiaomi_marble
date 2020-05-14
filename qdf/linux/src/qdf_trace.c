@@ -3937,11 +3937,13 @@ void qdf_logging_init(void)
 {
 	wlan_logging_sock_init_svc();
 	nl_srv_init(NULL, WLAN_NLINK_PROTO_FAMILY);
+	wlan_logging_notifier_init(qdf_log_dump_at_kernel_enable);
 	wlan_logging_set_flush_timer(qdf_log_flush_timer_period);
 }
 
 void qdf_logging_exit(void)
 {
+	wlan_logging_notifier_deinit(qdf_log_dump_at_kernel_enable);
 	nl_srv_exit();
 	wlan_logging_sock_deinit_svc();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,6 +45,28 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length);
  * Return: void
  */
 int wlan_logging_set_flush_timer(uint32_t milliseconds);
+
+/**
+ * wlan_logging_notifier_init() - registers to panic notifier chain
+ * @dump_at_kernel_enable: qdf logging at kernel level enabled
+ *
+ * This function registers an handler to panic notifier chain if
+ * qdf logging at kernel level is disabled.
+ *
+ * Return: 0 on success
+ */
+int wlan_logging_notifier_init(bool dump_at_kernel_enable);
+
+/**
+ * wlan_logging_notifier_deinit() - unregisters to panic notifier chain
+ * @dump_at_kernel_enable: qdf logging at kernel level enabled
+ *
+ * This function unregisters an handler to panic notifier chain if
+ * qdf logging at kernel level is disabled.
+ *
+ * Return: 0 on success
+ */
+int wlan_logging_notifier_deinit(bool dump_at_kernel_enable);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 void wlan_logging_set_per_pkt_stats(void);
