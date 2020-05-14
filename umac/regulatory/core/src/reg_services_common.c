@@ -3329,7 +3329,6 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	 * state. Also return the maximum bandwidth supported by the channel.
 	 */
 
-	enum phy_ch_width next_lower_bw;
 	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
 	enum channel_state chan_state2 = CHANNEL_STATE_ENABLE;
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
@@ -3346,11 +3345,8 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 		else
 			ch_params->ch_width = CH_WIDTH_160MHZ;
 	}
-	next_lower_bw = ch_params->ch_width;
 
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
-		ch_params->ch_width = next_lower_bw;
-		next_lower_bw = get_next_lower_bw[ch_params->ch_width];
 		bonded_chan_ptr = NULL;
 		bonded_chan_ptr2 = NULL;
 		chan_state = reg_get_5g_bonded_channel_for_freq(
@@ -3372,7 +3368,7 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 
 		if ((chan_state != CHANNEL_STATE_ENABLE) &&
 		    (chan_state != CHANNEL_STATE_DFS))
-			continue;
+			goto update_bw;
 		if (ch_params->ch_width <= CH_WIDTH_20MHZ) {
 			ch_params->sec_ch_offset = NO_SEC_CH;
 			ch_params->mhz_freq_seg0 = freq;
@@ -3391,7 +3387,7 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 			QDF_ARRAY_SIZE(bonded_chan_40mhz_list_freq),
 			&bonded_chan_ptr2);
 			if (!bonded_chan_ptr || !bonded_chan_ptr2)
-				continue;
+				goto update_bw;
 			if (freq == bonded_chan_ptr2->start_freq)
 				ch_params->sec_ch_offset = LOW_PRIMARY_CH;
 			else
@@ -3410,6 +3406,8 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 				 FIVEG_STARTING_FREQ) / FREQ_TO_CHAN_SCALE;
 			break;
 		}
+update_bw:
+		ch_params->ch_width = get_next_lower_bw[ch_params->ch_width];
 	}
 
 	if (ch_params->ch_width == CH_WIDTH_160MHZ) {
