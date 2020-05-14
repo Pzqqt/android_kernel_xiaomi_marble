@@ -13513,7 +13513,8 @@ typedef struct {
 
 #define WLAN_ROAM_SCORE_BAND_2G_INDEX                   0
 #define WLAN_ROAM_SCORE_BAND_5G_INDEX                   1
-/* 2 and 3 are reserved */
+#define WLAN_ROAM_SCORE_BAND_6G_INDEX                   2
+/* 3 is reserved */
 #define WLAN_ROAM_SCORE_MAX_BAND_INDEX                  4
 #define WMI_ROAM_GET_BAND_SCORE_PERCENTAGE(value32, band_index)                 WMI_GET_BITS(value32, (8 * (band_index)), 8)
 #define WMI_ROAM_SET_BAND_SCORE_PERCENTAGE(value32, score_pcnt, band_index)     WMI_SET_BITS(value32, (8 * (band_index)), 8, score_pcnt)
