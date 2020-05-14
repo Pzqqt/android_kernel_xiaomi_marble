@@ -141,11 +141,7 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 		data |= BIT(0);
 
 	if (mode & DSC_MODE_MULTIPLEX) {
-		if (dsc->dsc_4hsmerge_en)
-			slice_count_per_enc = dsc->config.slice_count >> 2;
-		else
-			slice_count_per_enc = dsc->config.slice_count >> 1;
-
+		slice_count_per_enc = dsc->config.slice_count >> 1;
 		data |= BIT(1);
 	}
 
@@ -257,11 +253,6 @@ static void sde_hw_dsc_config(struct sde_hw_dsc *hw_dsc,
 		data |= BIT(13);
 	if (!(mode & DSC_MODE_VIDEO))
 		data |= BIT(17);
-	if (dsc->dsc_4hsmerge_en) {
-		data |= dsc->dsc_4hsmerge_padding << 18;
-		data |= dsc->dsc_4hsmerge_alignment << 22;
-		data |= BIT(16);
-	}
 
 	SDE_REG_WRITE(dsc_c, DSC_CFG + idx, data);
 }

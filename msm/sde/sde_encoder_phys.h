@@ -603,28 +603,16 @@ void sde_encoder_helper_hw_reset(struct sde_encoder_phys *phys_enc);
 static inline enum sde_3d_blend_mode sde_encoder_helper_get_3d_blend_mode(
 		struct sde_encoder_phys *phys_enc)
 {
-	struct sde_kms *sde_kms;
 	enum sde_rm_topology_name topology;
-	const struct sde_rm_topology_def *def;
-	enum sde_enc_split_role split_role;
-	int num_lm;
-	bool mode_3d;
 
 	if (!phys_enc || phys_enc->enable_state == SDE_ENC_DISABLING)
 		return BLEND_3D_NONE;
 
-	sde_kms = sde_encoder_get_kms(phys_enc->parent);
 	topology = sde_connector_get_topology_name(phys_enc->connector);
-	def = sde_rm_topology_get_topology_def(&sde_kms->rm, topology);
-	num_lm = def->num_lm;
-	mode_3d = (num_lm > def->num_comp_enc) ? true : false;
-	split_role = phys_enc->split_role;
-
-	if (split_role == ENC_ROLE_SOLO && num_lm == 2 && mode_3d)
-		return BLEND_3D_H_ROW_INT;
-
-	if ((split_role == ENC_ROLE_MASTER || split_role == ENC_ROLE_SLAVE)
-			&& num_lm == 4 && mode_3d)
+	if (phys_enc->split_role == ENC_ROLE_SOLO &&
+			(topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE ||
+			 topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC ||
+			topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC))
 		return BLEND_3D_H_ROW_INT;
 
 	return BLEND_3D_NONE;
