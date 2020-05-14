@@ -285,6 +285,9 @@ endif
 ifeq ($(CONFIG_WLAN_SCAN_DISABLE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_scan_disable.o
 endif
+ifeq ($(CONFIG_WLAN_SYSFS_DCM), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dcm.o
+endif
 ifeq ($(CONFIG_WLAN_WOW_ITO), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_wow_ito.o
 endif
@@ -2586,6 +2589,7 @@ cppflags-$(CONFIG_WLAN_GET_TEMP) += -DCONFIG_WLAN_GET_TEMP
 cppflags-$(CONFIG_WLAN_THERMAL_CFG) += -DCONFIG_WLAN_THERMAL_CFG
 cppflags-$(CONFIG_FEATURE_UNIT_TEST_SUSPEND) += -DWLAN_SUSPEND_RESUME_TEST
 cppflags-$(CONFIG_FEATURE_WLM_STATS) += -DFEATURE_WLM_STATS
+cppflags-$(CONFIG_WLAN_SYSFS_DCM) += -DWLAN_SYSFS_DCM
 cppflags-$(CONFIG_WLAN_SYSFS_GET_STA_INFO) += -DWLAN_SYSFS_GET_STA_INFO
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
