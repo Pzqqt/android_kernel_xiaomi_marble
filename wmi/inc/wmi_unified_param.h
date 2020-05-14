@@ -1306,6 +1306,7 @@ struct tx_send_params {
  * @tx_param: TX send parameters
  * @tx_params_valid: Flag that indicates if TX params are valid
  * @use_6mbps: specify whether management frame to transmit should
+ * @tx_flags: additional configuration flags for mgmt frames
  *  use 6 Mbps rather than 1 Mbps min rate(for 5GHz band or P2P)
  */
 struct wmi_mgmt_params {
@@ -1321,6 +1322,7 @@ struct wmi_mgmt_params {
 	struct tx_send_params tx_param;
 	bool tx_params_valid;
 	uint8_t use_6mbps;
+	uint32_t tx_flags;
 };
 
 /**

@@ -3476,6 +3476,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->frame_len = param->frm_len;
 	cmd->buf_len = bufp_len;
 	cmd->tx_params_valid = param->tx_params_valid;
+	cmd->tx_flags = param->tx_flags;
 
 	wmi_mgmt_cmd_record(wmi_handle, WMI_MGMT_TX_SEND_CMDID,
 			bufp, cmd->vdev_id, cmd->chanfreq);
@@ -3564,6 +3565,7 @@ static QDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->frame_len = param->frm_len;
 	cmd->buf_len = bufp_len;
 	cmd->tx_params_valid = param->tx_params_valid;
+	cmd->tx_flags = param->tx_flags;
 
 	wmi_mgmt_cmd_record(wmi_handle, WMI_MGMT_TX_SEND_CMDID,
 			bufp, cmd->vdev_id, cmd->chanfreq);
