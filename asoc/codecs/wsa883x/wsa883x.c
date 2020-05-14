@@ -134,6 +134,7 @@ enum {
 enum {
 	SPKR_STATUS = 0,
 	WSA_SUPPLIES_LPM_MODE,
+	SPKR_ADIE_LB,
 };
 
 enum {
@@ -962,6 +963,7 @@ static int wsa883x_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					&port_type[0]);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		set_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		wsa883x_set_port(component, SWR_DAC_PORT,
@@ -1020,7 +1022,9 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
-		set_bit(SPKR_STATUS, &wsa883x->status_mask);
+		if (test_bit(SPKR_ADIE_LB, &wsa883x->status_mask))
+			snd_soc_component_update_bits(component,
+				WSA883X_PA_FSM_CTL, 0x01, 0x01);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
@@ -1028,6 +1032,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		clear_bit(SPKR_STATUS, &wsa883x->status_mask);
+		clear_bit(SPKR_ADIE_LB, &wsa883x->status_mask);
 		break;
 	}
 	return 0;
@@ -1379,6 +1384,10 @@ static int wsa883x_event_notify(struct notifier_block *nb,
 			snd_soc_component_update_bits(wsa883x->component,
 						WSA883X_PA_FSM_CTL,
 						0x01, 0x01);
+		break;
+	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB:
+		if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+			set_bit(SPKR_ADIE_LB, &wsa883x->status_mask);
 		break;
 	default:
 		dev_dbg(wsa883x->dev, "%s: unknown event %d\n",

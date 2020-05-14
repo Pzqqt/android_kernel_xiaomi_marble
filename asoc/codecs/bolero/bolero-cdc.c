@@ -735,7 +735,7 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
 
-void bolero_wsa_pa_on(struct device *dev)
+void bolero_wsa_pa_on(struct device *dev, bool adie_lb)
 {
 	struct bolero_priv *priv;
 
@@ -753,8 +753,12 @@ void bolero_wsa_pa_on(struct device *dev)
 		dev_err(dev, "%s: priv is null\n", __func__);
 		return;
 	}
-
-	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_ON_POST_FSCLK);
+	if (adie_lb)
+		bolero_cdc_notifier_call(priv,
+			BOLERO_WCD_EVT_PA_ON_POST_FSCLK_ADIE_LB);
+	else
+		bolero_cdc_notifier_call(priv,
+			BOLERO_WCD_EVT_PA_ON_POST_FSCLK);
 }
 EXPORT_SYMBOL(bolero_wsa_pa_on);
 

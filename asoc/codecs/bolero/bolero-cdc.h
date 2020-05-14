@@ -105,7 +105,7 @@ int bolero_set_port_map(struct snd_soc_component *component, u32 size, void *dat
 int bolero_tx_clk_switch(struct snd_soc_component *component, int clk_src);
 int bolero_register_event_listener(struct snd_soc_component *component,
 				   bool enable);
-void bolero_wsa_pa_on(struct device *dev);
+void bolero_wsa_pa_on(struct device *dev, bool adie_lb);
 bool bolero_check_core_votes(struct device *dev);
 int bolero_tx_mclk_enable(struct snd_soc_component *c, bool enable);
 int bolero_get_version(struct device *dev);
@@ -183,7 +183,7 @@ static inline int bolero_register_event_listener(
 	return 0;
 }
 
-static void bolero_wsa_pa_on(struct device *dev)
+static void bolero_wsa_pa_on(struct device *dev, bool adie_lb)
 {
 }
 
