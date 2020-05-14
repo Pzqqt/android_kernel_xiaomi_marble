@@ -47,6 +47,7 @@
 #include <wlan_hdd_main.h>
 #include <wlan_hdd_wext.h>
 #include <sme_qos_api.h>
+#include <qca_vendor.h>
 
 /*Maximum number of ACs */
 #define WLAN_MAX_AC                         4
@@ -401,4 +402,33 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter,
 QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter);
 
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter);
+
+extern const struct nla_policy
+config_tspec_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX + 1];
+
+/**
+ * wlan_hdd_cfg80211_config_tspec() - config tpsec
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to config tspec command parameters.
+ * @data_len: the length in byte of config tspec command parameters.
+ *
+ * Return: An error code or 0 on success.
+ */
+int wlan_hdd_cfg80211_config_tspec(struct wiphy *wiphy,
+				   struct wireless_dev *wdev,
+				   const void *data, int data_len);
+
+#define FEATURE_WMM_COMMANDS						\
+{									\
+	.info.vendor_id = QCA_NL80211_VENDOR_ID,			\
+	.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_CONFIG_TSPEC,		\
+	.flags = WIPHY_VENDOR_CMD_NEED_WDEV |				\
+		WIPHY_VENDOR_CMD_NEED_NETDEV |				\
+		WIPHY_VENDOR_CMD_NEED_RUNNING,				\
+	.doit = wlan_hdd_cfg80211_config_tspec,				\
+	vendor_command_policy(config_tspec_policy,			\
+			      QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX)	\
+},
+
 #endif /* #ifndef _WLAN_HDD_WMM_H */

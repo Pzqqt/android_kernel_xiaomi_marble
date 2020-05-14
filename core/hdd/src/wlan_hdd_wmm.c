@@ -72,6 +72,65 @@ const uint8_t hdd_wmm_up_to_ac_map[] = {
 	SME_AC_VO
 };
 
+#define CONFIG_TSPEC_OPERATION \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_OPERATION
+#define CONFIG_TSPEC_TSID \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_TSID
+#define CONFIG_TSPEC_DIRECTION \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_DIRECTION
+#define CONFIG_TSPEC_APSD \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_APSD
+#define CONFIG_TSPEC_USER_PRIORITY \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_USER_PRIORITY
+#define CONFIG_TSPEC_ACK_POLICY \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_ACK_POLICY
+#define CONFIG_TSPEC_NOMINAL_MSDU_SIZE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_NOMINAL_MSDU_SIZE
+#define CONFIG_TSPEC_MAXIMUM_MSDU_SIZE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAXIMUM_MSDU_SIZE
+#define CONFIG_TSPEC_MIN_SERVICE_INTERVAL \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MIN_SERVICE_INTERVAL
+#define CONFIG_TSPEC_MAX_SERVICE_INTERVAL \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX_SERVICE_INTERVAL
+#define CONFIG_TSPEC_INACTIVITY_INTERVAL \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_INACTIVITY_INTERVAL
+#define CONFIG_TSPEC_SUSPENSION_INTERVAL \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_SUSPENSION_INTERVAL
+#define CONFIG_TSPEC_MINIMUM_DATA_RATE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MINIMUM_DATA_RATE
+#define CONFIG_TSPEC_MEAN_DATA_RATE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MEAN_DATA_RATE
+#define CONFIG_TSPEC_PEAK_DATA_RATE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_PEAK_DATA_RATE
+#define CONFIG_TSPEC_BURST_SIZE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_BURST_SIZE
+#define CONFIG_TSPEC_MINIMUM_PHY_RATE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MINIMUM_PHY_RATE
+#define CONFIG_TSPEC_SURPLUS_BANDWIDTH_ALLOWANCE \
+	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_SURPLUS_BANDWIDTH_ALLOWANCE
+
+const struct nla_policy
+config_tspec_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX + 1] = {
+	[CONFIG_TSPEC_OPERATION] = {.type = NLA_U8},
+	[CONFIG_TSPEC_TSID] = {.type = NLA_U8},
+	[CONFIG_TSPEC_DIRECTION] = {.type = NLA_U8},
+	[CONFIG_TSPEC_APSD] = {.type = NLA_FLAG},
+	[CONFIG_TSPEC_USER_PRIORITY] = {.type = NLA_U8},
+	[CONFIG_TSPEC_ACK_POLICY] = {.type = NLA_U8},
+	[CONFIG_TSPEC_NOMINAL_MSDU_SIZE] = {.type = NLA_U16},
+	[CONFIG_TSPEC_MAXIMUM_MSDU_SIZE] = {.type = NLA_U16},
+	[CONFIG_TSPEC_MIN_SERVICE_INTERVAL] = {.type = NLA_U32},
+	[CONFIG_TSPEC_MAX_SERVICE_INTERVAL] = {.type = NLA_U32},
+	[CONFIG_TSPEC_INACTIVITY_INTERVAL] = {.type = NLA_U32},
+	[CONFIG_TSPEC_SUSPENSION_INTERVAL] = {.type = NLA_U32},
+	[CONFIG_TSPEC_MINIMUM_DATA_RATE] = {.type = NLA_U32},
+	[CONFIG_TSPEC_MEAN_DATA_RATE] = {.type = NLA_U32},
+	[CONFIG_TSPEC_PEAK_DATA_RATE] = {.type = NLA_U32},
+	[CONFIG_TSPEC_BURST_SIZE] = {.type = NLA_U32},
+	[CONFIG_TSPEC_MINIMUM_PHY_RATE] = {.type = NLA_U32},
+	[CONFIG_TSPEC_SURPLUS_BANDWIDTH_ALLOWANCE] = {.type = NLA_U16},
+};
+
 /**
  * enum hdd_wmm_linuxac: AC/Queue Index values for Linux Qdisc to
  * operate on different traffic.
@@ -2698,4 +2757,253 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter, uint32_t hand
 	}
 	mutex_unlock(&adapter->hdd_wmm_status.mutex);
 	return status;
+}
+
+/**
+ * __wlan_hdd_cfg80211_config_tspec() - config tspec
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to config tspec command parameters.
+ * @data_len: the length in byte of config tspec command parameters.
+ *
+ * Return: An error code or 0 on success.
+ */
+static int __wlan_hdd_cfg80211_config_tspec(struct wiphy *wiphy,
+					    struct wireless_dev *wdev,
+					    const void *data,
+					    int data_len)
+{
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct sme_qos_wmmtspecinfo tspec;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX + 1];
+	uint8_t oper, ts_id;
+	hdd_wlan_wmm_status_e status;
+	int ret;
+
+	hdd_enter_dev(wdev->netdev);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
+
+	ret = wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX,
+				      data, data_len, config_tspec_policy);
+	if (ret) {
+		hdd_err_rl("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[CONFIG_TSPEC_OPERATION] || !tb[CONFIG_TSPEC_TSID]) {
+		hdd_err_rl("Mandatory attributes are not present");
+		return -EINVAL;
+	}
+
+	memset(&tspec, 0, sizeof(tspec));
+
+	oper = nla_get_u8(tb[CONFIG_TSPEC_OPERATION]);
+	ts_id = nla_get_u8(tb[CONFIG_TSPEC_TSID]);
+
+	switch (oper) {
+	case QCA_WLAN_TSPEC_ADD:
+
+		tspec.ts_info.tid = ts_id;
+
+		/* Mandatory attributes */
+		if (tb[CONFIG_TSPEC_DIRECTION]) {
+			uint8_t direction = nla_get_u8(
+						    tb[CONFIG_TSPEC_DIRECTION]);
+
+			switch (direction) {
+			case QCA_WLAN_TSPEC_DIRECTION_UPLINK:
+				tspec.ts_info.direction =
+						SME_QOS_WMM_TS_DIR_UPLINK;
+				break;
+			case QCA_WLAN_TSPEC_DIRECTION_DOWNLINK:
+				tspec.ts_info.direction =
+						SME_QOS_WMM_TS_DIR_DOWNLINK;
+				break;
+			case QCA_WLAN_TSPEC_DIRECTION_BOTH:
+				tspec.ts_info.direction =
+						SME_QOS_WMM_TS_DIR_BOTH;
+				break;
+			default:
+				hdd_err_rl("Invalid direction %d", direction);
+				return -EINVAL;
+			}
+		} else {
+			hdd_err_rl("Direction is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_APSD])
+			tspec.ts_info.psb = 1;
+
+		if (tb[CONFIG_TSPEC_ACK_POLICY]) {
+			uint8_t ack_policy = nla_get_u8(
+						   tb[CONFIG_TSPEC_ACK_POLICY]);
+
+			switch (ack_policy) {
+			case QCA_WLAN_TSPEC_NORMAL_ACK:
+				tspec.ts_info.ack_policy =
+					SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
+				break;
+			case QCA_WLAN_TSPEC_BLOCK_ACK:
+				tspec.ts_info.ack_policy =
+			       SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK;
+				break;
+			default:
+				hdd_err_rl("Invalid ack policy %d", ack_policy);
+				return -EINVAL;
+			}
+		} else {
+			hdd_err_rl("ACK policy is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_NOMINAL_MSDU_SIZE]) {
+			tspec.nominal_msdu_size = nla_get_u16(
+					    tb[CONFIG_TSPEC_NOMINAL_MSDU_SIZE]);
+		} else {
+			hdd_err_rl("Nominal msdu size is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_MAXIMUM_MSDU_SIZE]) {
+			tspec.maximum_msdu_size = nla_get_u16(
+					    tb[CONFIG_TSPEC_MAXIMUM_MSDU_SIZE]);
+		} else {
+			hdd_err_rl("Maximum msdu size is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_MIN_SERVICE_INTERVAL]) {
+			tspec.min_service_interval = nla_get_u32(
+					 tb[CONFIG_TSPEC_MIN_SERVICE_INTERVAL]);
+		} else {
+			hdd_err_rl("Min service interval is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_MAX_SERVICE_INTERVAL]) {
+			tspec.max_service_interval = nla_get_u32(
+					 tb[CONFIG_TSPEC_MAX_SERVICE_INTERVAL]);
+		} else {
+			hdd_err_rl("Max service interval is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_INACTIVITY_INTERVAL]) {
+			tspec.inactivity_interval = nla_get_u32(
+					  tb[CONFIG_TSPEC_INACTIVITY_INTERVAL]);
+		} else {
+			hdd_err_rl("Inactivity interval is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_SUSPENSION_INTERVAL]) {
+			tspec.suspension_interval = nla_get_u32(
+					  tb[CONFIG_TSPEC_SUSPENSION_INTERVAL]);
+		} else {
+			hdd_err_rl("Suspension interval is not present");
+			return -EINVAL;
+		}
+
+		if (tb[CONFIG_TSPEC_SURPLUS_BANDWIDTH_ALLOWANCE]) {
+			tspec.surplus_bw_allowance = nla_get_u16(
+				  tb[CONFIG_TSPEC_SURPLUS_BANDWIDTH_ALLOWANCE]);
+		} else {
+			hdd_err_rl("Surplus bw allowance is not present");
+			return -EINVAL;
+		}
+
+		/* Optional attributes */
+		if (tb[CONFIG_TSPEC_USER_PRIORITY])
+			tspec.ts_info.up = nla_get_u8(
+						tb[CONFIG_TSPEC_USER_PRIORITY]);
+
+		if (tb[CONFIG_TSPEC_MINIMUM_DATA_RATE])
+			tspec.min_data_rate = nla_get_u32(
+					    tb[CONFIG_TSPEC_MINIMUM_DATA_RATE]);
+
+		if (tb[CONFIG_TSPEC_MEAN_DATA_RATE])
+			tspec.mean_data_rate = nla_get_u32(
+					       tb[CONFIG_TSPEC_MEAN_DATA_RATE]);
+
+		if (tb[CONFIG_TSPEC_PEAK_DATA_RATE])
+			tspec.peak_data_rate = nla_get_u32(
+					       tb[CONFIG_TSPEC_PEAK_DATA_RATE]);
+
+		if (tb[CONFIG_TSPEC_BURST_SIZE])
+			tspec.max_burst_size = nla_get_u32(
+						   tb[CONFIG_TSPEC_BURST_SIZE]);
+
+		if (tspec.max_burst_size)
+			tspec.ts_info.burst_size_defn = 1;
+
+		if (tb[CONFIG_TSPEC_MINIMUM_PHY_RATE])
+			tspec.min_phy_rate = nla_get_u32(
+					     tb[CONFIG_TSPEC_MINIMUM_PHY_RATE]);
+
+		status = hdd_wmm_addts(adapter, ts_id, &tspec);
+		if (status == HDD_WLAN_WMM_STATUS_SETUP_FAILED ||
+		    status == HDD_WLAN_WMM_STATUS_SETUP_FAILED_BAD_PARAM ||
+		    status == HDD_WLAN_WMM_STATUS_SETUP_FAILED_NO_WMM ||
+		    status == HDD_WLAN_WMM_STATUS_MODIFY_FAILED ||
+		    status == HDD_WLAN_WMM_STATUS_MODIFY_FAILED_BAD_PARAM ||
+		    status == HDD_WLAN_WMM_STATUS_SETUP_UAPSD_SET_FAILED ||
+		    status == HDD_WLAN_WMM_STATUS_MODIFY_UAPSD_SET_FAILED ||
+		    status == HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE) {
+			hdd_err_rl("hdd_wmm_addts failed %d", status);
+			return -EINVAL;
+		}
+		break;
+
+	case QCA_WLAN_TSPEC_DEL:
+
+		status = hdd_wmm_delts(adapter, ts_id);
+		if (status == HDD_WLAN_WMM_STATUS_RELEASE_FAILED ||
+		    status == HDD_WLAN_WMM_STATUS_RELEASE_FAILED_BAD_PARAM ||
+		    status == HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE) {
+			hdd_err_rl("hdd_wmm_delts failed %d", status);
+			return -EINVAL;
+		}
+		break;
+
+	case QCA_WLAN_TSPEC_GET:
+
+		status = hdd_wmm_checkts(adapter, ts_id);
+		if (status == HDD_WLAN_WMM_STATUS_LOST ||
+		    status == HDD_WLAN_WMM_STATUS_INTERNAL_FAILURE) {
+			hdd_err_rl("hdd_wmm_checkts failed %d", status);
+			return -EINVAL;
+		}
+		break;
+
+	default:
+		hdd_err_rl("Invalid operation %d", oper);
+		return -EINVAL;
+	}
+
+	hdd_exit();
+
+	return 0;
+}
+
+int wlan_hdd_cfg80211_config_tspec(struct wiphy *wiphy,
+				   struct wireless_dev *wdev,
+				   const void *data, int data_len)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_config_tspec(wiphy, wdev, data, data_len);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
