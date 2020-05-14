@@ -383,4 +383,22 @@ dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer)
 }
 #endif
 
+#ifdef QCA_PEER_EXT_STATS
+QDF_STATUS dp_peer_ext_stats_ctx_alloc(struct dp_soc *soc,
+				       struct dp_peer *peer);
+void dp_peer_ext_stats_ctx_dealloc(struct dp_soc *soc,
+				   struct dp_peer *peer);
+#else
+static inline QDF_STATUS dp_peer_ext_stats_ctx_alloc(struct dp_soc *soc,
+						     struct dp_peer *peer)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void dp_peer_ext_stats_ctx_dealloc(struct dp_soc *soc,
+						 struct dp_peer *peer)
+{
+}
+#endif
+
 #endif /* _DP_PEER_H_ */

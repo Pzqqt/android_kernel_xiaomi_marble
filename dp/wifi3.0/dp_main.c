@@ -5508,6 +5508,15 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	}
 
 	/*
+	 * Allocate peer extended stats context. Fall through in
+	 * case of failure as its not an implicit requirement to have
+	 * this object for regular statistics updates.
+	 */
+	if (dp_peer_ext_stats_ctx_alloc(soc, peer) !=
+			QDF_STATUS_SUCCESS)
+		dp_warn("peer ext_stats ctx alloc failed");
+
+	/*
 	 * In tx_monitor mode, filter may be set for unassociated peer
 	 * when unassociated peer get associated peer need to
 	 * update tx_cap_enabled flag to support peer filter.
@@ -6219,6 +6228,11 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 				  "peer:%pK not found in vdev:%pK peerlist:%pK",
 				  peer, vdev, &peer->vdev->peer_list);
 		}
+
+		/*
+		 * Deallocate the extended stats contenxt
+		 */
+		dp_peer_ext_stats_ctx_dealloc(soc, peer);
 
 		/* send peer destroy event to upper layer */
 		qdf_mem_copy(peer_cookie.mac_addr, peer->mac_addr.raw,
