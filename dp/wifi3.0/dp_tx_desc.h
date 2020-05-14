@@ -357,6 +357,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		break;
 	case FLOW_POOL_INVALID:
 		if (pool->avail_desc == pool->pool_size) {
+			dp_tx_desc_pool_deinit(soc, desc_pool_id);
 			dp_tx_desc_pool_free(soc, desc_pool_id);
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -476,6 +477,7 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 		break;
 	case FLOW_POOL_INVALID:
 		if (pool->avail_desc == pool->pool_size) {
+			dp_tx_desc_pool_deinit(soc, desc_pool_id);
 			dp_tx_desc_pool_free(soc, desc_pool_id);
 			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			qdf_print("%s %d pool is freed!!",
