@@ -49,6 +49,10 @@ int target_if_cfr_stop_capture(struct wlan_objmgr_pdev *pdev,
 		return -EINVAL;
 
 	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!pdev_wmi_handle) {
+		cfr_err("pdev wmi handle NULL");
+		return -EINVAL;
+	}
 	vdev = wlan_peer_get_vdev(peer);
 
 	qdf_mem_set(&param, sizeof(param), 0);
@@ -92,6 +96,10 @@ int target_if_cfr_start_capture(struct wlan_objmgr_pdev *pdev,
 	int retv = 0;
 
 	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!pdev_wmi_handle) {
+		cfr_err("pdev wmi handle NULL");
+		return -EINVAL;
+	}
 	vdev = wlan_peer_get_vdev(peer);
 	qdf_mem_set(&param, sizeof(param), 0);
 
@@ -112,16 +120,22 @@ int target_if_cfr_pdev_set_param(struct wlan_objmgr_pdev *pdev,
 {
 	struct pdev_params pparam;
 	uint32_t pdev_id;
+	struct wmi_unified *pdev_wmi_handle = NULL;
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	if (pdev_id < 0)
 		return -EINVAL;
 
+	pdev_wmi_handle = lmac_get_pdev_wmi_handle(pdev);
+	if (!pdev_wmi_handle) {
+		cfr_err("pdev wmi handle NULL");
+		return -EINVAL;
+	}
 	qdf_mem_set(&pparam, sizeof(pparam), 0);
 	pparam.param_id = param_id;
 	pparam.param_value = param_value;
 
-	return wmi_unified_pdev_param_send(lmac_get_pdev_wmi_handle(pdev),
+	return wmi_unified_pdev_param_send(pdev_wmi_handle,
 					   &pparam, pdev_id);
 }
 
