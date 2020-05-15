@@ -6924,6 +6924,11 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->ema_max_vap_cnt = tgt_res_cfg->ema_max_vap_cnt;
 	resource_cfg->ema_max_profile_period =
 			tgt_res_cfg->ema_max_profile_period;
+
+	if (tgt_res_cfg->max_ndp_sessions)
+		resource_cfg->max_ndp_sessions =
+				tgt_res_cfg->max_ndp_sessions;
+
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
 	if (tgt_res_cfg->mgmt_comp_evt_bundle_support)
@@ -11095,6 +11100,13 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 	param->chwidth_num_peer_caps = ev->chwidth_num_peer_caps;
 
 	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
+
+	if (param_buf->nan_cap)
+		param->max_ndp_sessions =
+			param_buf->nan_cap->max_ndp_sessions;
+	else
+		param->max_ndp_sessions = 0;
+
 	return QDF_STATUS_SUCCESS;
 }
 

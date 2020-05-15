@@ -412,6 +412,10 @@ void init_deinit_prepare_send_init_cmd(
 	if (ret_val != QDF_STATUS_SUCCESS)
 		return;
 
+	info->wlan_res_cfg.max_ndp_sessions =
+		QDF_MIN(info->wlan_res_cfg.max_ndp_sessions,
+			info->service_ext2_param.max_ndp_sessions);
+
 	target_if_debug("FW version 0x%x ", info->target_caps.fw_version);
 	if (init_deinit_is_service_ext_msg(psoc, tgt_hdl) == QDF_STATUS_SUCCESS)
 		target_if_debug("0x%x\n",
