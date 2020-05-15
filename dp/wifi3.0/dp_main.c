@@ -1372,6 +1372,15 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 		ring_params->intr_batch_cntr_thres_entries = 0;
 	}
 
+	/* During initialisation monitor rings are only filled with
+	 * MON_BUF_MIN_ENTRIES entries. So low threshold needs to be set to
+	 * a value less than that. Once HTT dynamic config of ring threshold
+	 * setting is enabled, then the low threshold updated should be
+	 * adjusted accrodingly.
+	 */
+	if (ring_type == RXDMA_MONITOR_BUF)
+		ring_params->low_threshold = MON_BUF_MIN_ENTRIES >> 1;
+
 	/* In case of PCI chipsets, we dont have PPDU end interrupts,
 	 * so MONITOR STATUS ring is reaped by receiving MSI from srng.
 	 * Keep batch threshold as 8 so that interrupt is received for
