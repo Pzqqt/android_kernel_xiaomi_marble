@@ -54,6 +54,8 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 	nan_obj->cfg_param.ndp_keep_alive_period =
 					cfg_get(psoc,
 						CFG_NDP_KEEP_ALIVE_PERIOD);
+	nan_obj->cfg_param.max_ndp_sessions = cfg_get(psoc,
+						      CFG_NDP_MAX_SESSIONS);
 }
 
 /**
