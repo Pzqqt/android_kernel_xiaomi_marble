@@ -1485,7 +1485,7 @@ new_packet:
 		goto schedule;
 	}
 	diff = timespec64_sub(port->agg_last, port->agg_time);
-	size = port->egress_agg_params.agg_size - port->agg_skb->len;
+	size = skb_tailroom(port->agg_skb);
 
 	if (skb->len > size ||
 	    port->agg_count >= port->egress_agg_params.agg_count ||
