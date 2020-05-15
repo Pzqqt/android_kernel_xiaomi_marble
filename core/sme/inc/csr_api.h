@@ -1211,19 +1211,6 @@ struct csr_del_sta_params {
 	uint8_t subtype;
 };
 
-/**
- * struct wep_update_default_key_idx: wep default key index structure
- * @session_id: session ID for the connection session
- * @default_idx: default key index for wep
- *
- * structure includes sesssion id for connection and default key
- * index used for wep
- */
-struct wep_update_default_key_idx {
-	uint8_t session_id;
-	uint8_t default_idx;
-};
-
 typedef QDF_STATUS (*csr_roam_complete_cb)(struct wlan_objmgr_psoc *psoc,
 					   uint8_t session_id,
 					   struct csr_roam_info *param,

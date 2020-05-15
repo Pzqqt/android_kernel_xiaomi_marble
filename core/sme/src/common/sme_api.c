@@ -3352,46 +3352,6 @@ QDF_STATUS sme_oem_get_capability(mac_handle_t mac_handle,
 }
 #endif
 
-/**
- * sme_roam_set_default_key_index - To set default wep key idx
- * @mac_handle: Opaque handle to the global MAC context
- * @session_id: session id
- * @default_idx: default wep key index
- *
- * This function prepares a message and post to WMA to set wep default
- * key index
- *
- * Return: Success:QDF_STATUS_SUCCESS Failure: Error value
- */
-QDF_STATUS sme_roam_set_default_key_index(mac_handle_t mac_handle,
-					  uint8_t session_id,
-					  uint8_t default_idx)
-{
-	struct scheduler_msg msg = {0};
-	struct wep_update_default_key_idx *update_key;
-
-	update_key = qdf_mem_malloc(sizeof(*update_key));
-	if (!update_key)
-		return QDF_STATUS_E_NOMEM;
-
-	update_key->session_id = session_id;
-	update_key->default_idx = default_idx;
-
-	msg.type = WMA_UPDATE_WEP_DEFAULT_KEY;
-	msg.reserved = 0;
-	msg.bodyptr = (void *)update_key;
-
-	if (QDF_STATUS_SUCCESS !=
-	    scheduler_post_message(QDF_MODULE_ID_SME,
-				   QDF_MODULE_ID_WMA,
-				   QDF_MODULE_ID_WMA, &msg)) {
-		qdf_mem_free(update_key);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /*
  * sme_get_snr() -
  * A wrapper function that client calls to register a callback to get SNR

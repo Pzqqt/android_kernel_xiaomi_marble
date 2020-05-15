@@ -7197,25 +7197,6 @@ void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_update_wep_default_key - To update default key id
- * @wma: pointer to wma handler
- * @update_def_key: pointer to wep_update_default_key_idx
- *
- * This function makes a copy of default key index to txrx node
- *
- * Return: Success
- */
-static QDF_STATUS wma_update_wep_default_key(tp_wma_handle wma,
-			struct wep_update_default_key_idx *update_def_key)
-{
-	struct wma_txrx_node *iface =
-		&wma->interfaces[update_def_key->session_id];
-	iface->wep_default_key_idx = update_def_key->default_idx;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_update_tx_fail_cnt_th() - Set threshold for TX pkt fail
  * @wma_handle: WMA handle
  * @tx_fail_cnt_th: sme_tx_fail_cnt_threshold parameter
@@ -8787,11 +8768,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case SIR_HAL_POWER_DBG_CMD:
 		wma_process_hal_pwr_dbg_cmd(wma_handle,
 					    msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_UPDATE_WEP_DEFAULT_KEY:
-		wma_update_wep_default_key(wma_handle,
-			(struct wep_update_default_key_idx *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SEND_FREQ_RANGE_CONTROL_IND:

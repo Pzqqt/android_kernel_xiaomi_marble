@@ -689,7 +689,6 @@ struct wma_invalid_peer_params {
  * @delay_before_vdev_stop: delay
  * @tx_streams: number of tx streams can be used by the vdev
  * @mac_id: the mac on which vdev is on
- * @wep_default_key_idx: wep default index for group key
  * @arp_offload_req: cached arp offload request
  * @ns_offload_req: cached ns offload request
  * @rcpi_req: rcpi request
@@ -743,7 +742,6 @@ struct wma_txrx_node {
 	uint32_t mac_id;
 	bool roaming_in_progress;
 	int32_t roam_synch_delay;
-	uint8_t wep_default_key_idx;
 	struct sme_rcpi_req *rcpi_req;
 	bool in_bmps;
 	struct beacon_filter_param beacon_filter;
