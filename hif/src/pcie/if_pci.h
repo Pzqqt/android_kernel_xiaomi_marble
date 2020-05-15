@@ -26,6 +26,7 @@
 #define ATH_DBG_DEFAULT   0
 #define DRAM_SIZE               0x000a8000
 #include "hif.h"
+#include "hif_runtime_pm.h"
 #include "cepci.h"
 #include "ce_main.h"
 
@@ -55,61 +56,6 @@ struct hif_tasklet_entry {
 	uint8_t id;        /* 0 - 9: maps to CE, 10: fw */
 	void *hif_handler; /* struct hif_pci_softc */
 };
-
-/**
- * enum hif_pm_runtime_state - Driver States for Runtime Power Management
- * HIF_PM_RUNTIME_STATE_NONE: runtime pm is off
- * HIF_PM_RUNTIME_STATE_ON: runtime pm is active and link is active
- * HIF_PM_RUNTIME_STATE_RESUMING: a runtime resume is in progress
- * HIF_PM_RUNTIME_STATE_SUSPENDING: a runtime suspend is in progress
- * HIF_PM_RUNTIME_STATE_SUSPENDED: the driver is runtime suspended
- */
-enum hif_pm_runtime_state {
-	HIF_PM_RUNTIME_STATE_NONE,
-	HIF_PM_RUNTIME_STATE_ON,
-	HIF_PM_RUNTIME_STATE_RESUMING,
-	HIF_PM_RUNTIME_STATE_SUSPENDING,
-	HIF_PM_RUNTIME_STATE_SUSPENDED,
-};
-
-#ifdef FEATURE_RUNTIME_PM
-
-/**
- * struct hif_pm_runtime_lock - data structure for preventing runtime suspend
- * @list - global list of runtime locks
- * @active - true if this lock is preventing suspend
- * @name - character string for tracking this lock
- */
-struct hif_pm_runtime_lock {
-	struct list_head list;
-	bool active;
-	uint32_t timeout;
-	const char *name;
-};
-
-/* Debugging stats for Runtime PM */
-struct hif_pci_pm_stats {
-	u32 suspended;
-	u32 suspend_err;
-	u32 resumed;
-	atomic_t runtime_get;
-	atomic_t runtime_put;
-	atomic_t runtime_get_dbgid[RTPM_ID_MAX];
-	atomic_t runtime_put_dbgid[RTPM_ID_MAX];
-	uint64_t runtime_get_timestamp_dbgid[RTPM_ID_MAX];
-	uint64_t runtime_put_timestamp_dbgid[RTPM_ID_MAX];
-	u32 request_resume;
-	atomic_t allow_suspend;
-	atomic_t prevent_suspend;
-	u32 prevent_suspend_timeout;
-	u32 allow_suspend_timeout;
-	u32 runtime_get_err;
-	void *last_resume_caller;
-	void *last_busy_marker;
-	qdf_time_t last_busy_timestamp;
-	unsigned long suspend_jiffies;
-};
-#endif
 
 /**
  * struct hif_msi_info - Structure to hold msi info
@@ -174,21 +120,7 @@ struct hif_pci_softc {
 	qdf_work_t reschedule_tasklet_work;
 	uint32_t lcr_val;
 #ifdef FEATURE_RUNTIME_PM
-	atomic_t pm_state;
-	atomic_t monitor_wake_intr;
-	uint32_t prevent_suspend_cnt;
-	struct hif_pci_pm_stats pm_stats;
-	struct work_struct pm_work;
-	spinlock_t runtime_lock;
-	qdf_timer_t runtime_timer;
-	struct list_head prevent_suspend_list;
-	unsigned long runtime_timer_expires;
-	qdf_runtime_lock_t prevent_linkdown_lock;
-	atomic_t pm_dp_rx_busy;
-	qdf_time_t dp_last_busy_timestamp;
-#ifdef WLAN_OPEN_SOURCE
-	struct dentry *pm_dentry;
-#endif
+	struct hif_runtime_pm_ctx rpm_ctx;
 #endif
 	int (*hif_enable_pci)(struct hif_pci_softc *sc, struct pci_dev *pdev,
 			      const struct pci_device_id *id);
@@ -254,24 +186,4 @@ void hif_print_pci_stats(struct hif_pci_softc *pci_scn)
 {
 }
 #endif /* FORCE_WAKE */
-
-#ifdef FEATURE_RUNTIME_PM
-#include <linux/pm_runtime.h>
-
-static inline int hif_pm_request_resume(struct device *dev)
-{
-	return pm_request_resume(dev);
-}
-
-static inline int __hif_pm_runtime_get(struct device *dev)
-{
-	return pm_runtime_get(dev);
-}
-
-static inline int hif_pm_runtime_put_auto(struct device *dev)
-{
-	return pm_runtime_put_autosuspend(dev);
-}
-
-#endif /* FEATURE_RUNTIME_PM */
 #endif /* __ATH_PCI_H__ */

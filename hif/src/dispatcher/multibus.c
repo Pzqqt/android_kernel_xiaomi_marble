@@ -267,6 +267,18 @@ void hif_disable_bus(struct hif_softc *hif_sc)
 	hif_sc->bus_ops.hif_disable_bus(hif_sc);
 }
 
+#ifdef FEATURE_RUNTIME_PM
+struct hif_runtime_pm_ctx *hif_bus_get_rpm_ctx(struct hif_softc *hif_sc)
+{
+	return hif_sc->bus_ops.hif_bus_get_rpm_ctx(hif_sc);
+}
+
+struct device *hif_bus_get_dev(struct hif_softc *hif_sc)
+{
+	return hif_sc->bus_ops.hif_bus_get_dev(hif_sc);
+}
+#endif
+
 int hif_bus_configure(struct hif_softc *hif_sc)
 {
 	return hif_sc->bus_ops.hif_bus_configure(hif_sc);

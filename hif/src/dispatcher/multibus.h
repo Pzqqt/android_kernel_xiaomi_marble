@@ -48,6 +48,11 @@ struct hif_bus_ops {
 				      const struct hif_bus_id *bid,
 				      enum hif_enable_type type);
 	void (*hif_disable_bus)(struct hif_softc *hif_sc);
+#ifdef FEATURE_RUNTIME_PM
+	struct hif_runtime_pm_ctx *(*hif_bus_get_rpm_ctx)(
+						struct hif_softc *hif_sc);
+	struct device *(*hif_bus_get_dev)(struct hif_softc *hif_sc);
+#endif
 	int (*hif_bus_configure)(struct hif_softc *hif_sc);
 	QDF_STATUS (*hif_get_config_item)(struct hif_softc *hif_sc,
 			     int opcode, void *config, uint32_t config_len);
