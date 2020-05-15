@@ -324,6 +324,9 @@ endif
 ifeq ($(CONFIG_WLAN_THERMAL_CFG), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_thermal_cfg.o
 endif
+ifeq ($(CONFIG_FEATURE_MOTION_DETECTION), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_motion_detection.o
+endif
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)

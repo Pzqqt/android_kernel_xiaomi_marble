@@ -60,6 +60,7 @@
 #include <wlan_hdd_sysfs_get_tdls_peers.h>
 #include <wlan_hdd_sysfs_get_temp.h>
 #include <wlan_hdd_sysfs_thermal_cfg.h>
+#include <wlan_hdd_sysfs_motion_detection.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -645,11 +646,13 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_range_ext_create(adapter);
 	hdd_sysfs_get_tdls_peers_interface_create(adapter);
 	hdd_sysfs_get_temp_create(adapter);
+	hdd_sysfs_motion_detection_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_motion_detection_destroy(adapter);
 	hdd_sysfs_get_temp_destroy(adapter);
 	hdd_sysfs_get_tdls_peers_interface_destroy(adapter);
 	hdd_sysfs_get_range_ext_destroy(adapter);
