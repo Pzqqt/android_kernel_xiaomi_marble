@@ -794,7 +794,7 @@ static int dsi_panel_parse_timing(struct dsi_mode_info *mode,
 	rc = utils->read_u32(utils->data, "qcom,mdss-dsi-h-sync-skew",
 				  &mode->h_skew);
 	if (rc)
-		DSI_ERR("qcom,mdss-dsi-h-sync-skew is not defined, rc=%d\n",
+		DSI_DEBUG("qcom,mdss-dsi-h-sync-skew is not defined, rc=%d\n",
 				rc);
 
 	DSI_DEBUG("panel horz active:%d front_portch:%d back_porch:%d sync_skew:%d\n",
@@ -2185,6 +2185,7 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 		DSI_DEBUG("[%s] brigheness-max-level unspecified, defaulting to 255\n",
 			 panel->name);
 		panel->bl_config.brightness_max_level = 255;
+		rc = 0;
 	} else {
 		panel->bl_config.brightness_max_level = val;
 	}
