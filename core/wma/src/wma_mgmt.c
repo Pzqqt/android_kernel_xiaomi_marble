@@ -19,7 +19,7 @@
 /**
  *  DOC:  wma_mgmt.c
  *
- *  This file contains STA/SAP/IBSS and protocol related functions.
+ *  This file contains STA/SAP and protocol related functions.
  */
 
 /* Header files */
@@ -1389,12 +1389,11 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 			     peer_ht_rates.num_rates);
 	}
 
-	/* in ap/ibss mode and for tdls peer, use mac address of the peer in
+	/* in ap mode and for tdls peer, use mac address of the peer in
 	 * the other end as the new peer address; in sta mode, use bss id to
 	 * be the new peer address
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, params->smesessionId))
-	    || (wma_is_vdev_in_ibss_mode(wma, params->smesessionId))
 #ifdef FEATURE_WLAN_TDLS
 	    || (STA_ENTRY_TDLS_PEER == params->staType)
 #endif /* FEATURE_WLAN_TDLS */
@@ -1894,93 +1893,6 @@ static inline void wma_fill_in_wapi_key_params(
 }
 #endif
 #endif
-
-#ifdef QCA_IBSS_SUPPORT
-/**
- * wma_calc_ibss_heart_beat_timer() - calculate IBSS heart beat timer
- * @peer_num: number of peers
- *
- * Return: heart beat timer value
- */
-static uint16_t wma_calc_ibss_heart_beat_timer(int16_t peer_num)
-{
-	/* heart beat timer value look-up table */
-	/* entry index : (the number of currently connected peers) - 1
-	 * entry value : the heart time threshold value in seconds for
-	 * detecting ibss peer departure
-	 */
-	static const uint16_t heart_beat_timer[MAX_PEERS] = {
-		4, 4, 4, 4, 4, 4, 4, 4,
-		8, 8, 8, 8, 8, 8, 8, 8,
-		12, 12, 12, 12, 12, 12, 12, 12,
-		16, 16, 16, 16, 16, 16, 16, 16
-	};
-
-	if (peer_num < 1 || peer_num > MAX_PEERS)
-		return 0;
-
-	return heart_beat_timer[peer_num - 1];
-}
-
-void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
-				      uint8_t vdev_id,
-				      int8_t peer_num_delta)
-{
-	int16_t new_peer_num;
-	uint16_t new_timer_value_sec;
-	uint32_t new_timer_value_ms;
-	QDF_STATUS status;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (peer_num_delta != 1 && peer_num_delta != -1) {
-		WMA_LOGE("Invalid peer_num_delta value %d", peer_num_delta);
-		return;
-	}
-
-	/* adjust peer numbers */
-	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(
-								soc, vdev_id,
-								peer_num_delta);
-	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
-		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
-		return;
-	}
-
-	/* reset timer value if all peers departed */
-	if (new_peer_num == 0) {
-		cdp_set_ibss_vdev_heart_beat_timer(soc, vdev_id, 0);
-		return;
-	}
-
-	/* calculate new timer value */
-	new_timer_value_sec = wma_calc_ibss_heart_beat_timer(new_peer_num);
-	if (new_timer_value_sec == 0) {
-		WMA_LOGE("timer value %d is invalid for peer number %d",
-			 new_timer_value_sec, new_peer_num);
-		return;
-	}
-	if (new_timer_value_sec ==
-	    cdp_set_ibss_vdev_heart_beat_timer(soc, vdev_id,
-					       new_timer_value_sec)) {
-		wma_nofl_debug("timer value %d stays same, no need to notify target",
-			       new_timer_value_sec);
-		return;
-	}
-
-	new_timer_value_ms = ((uint32_t)new_timer_value_sec) * 1000;
-
-	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-				    WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
-				    new_timer_value_ms);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to set IBSS link monitoring timer value");
-		return;
-	}
-
-	wma_nofl_debug("Set IBSS link monitor timer: peer_num = %d timer_value = %d",
-		       new_peer_num, new_timer_value_ms);
-}
-#endif /* QCA_IBSS_SUPPORT */
 
 /**
  * wma_process_update_edca_param_req() - update EDCA params

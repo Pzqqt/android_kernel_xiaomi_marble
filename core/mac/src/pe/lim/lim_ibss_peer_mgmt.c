@@ -157,11 +157,6 @@ ibss_peer_collect(struct mac_context *mac,
 	peer->wmeEdcaPresent = pBeacon->wmeEdcaPresent;
 	peer->wmeInfoPresent = pBeacon->wmeInfoPresent;
 
-	if (pBeacon->IBSSParams.present) {
-		peer->atimIePresent = pBeacon->IBSSParams.present;
-		peer->peerAtimWindowLength = pBeacon->IBSSParams.atim;
-	}
-
 	if (IS_DOT11_MODE_HT(pe_session->dot11mode) &&
 	    (pBeacon->HTCaps.present)) {
 		peer->htCapable = pBeacon->HTCaps.present;

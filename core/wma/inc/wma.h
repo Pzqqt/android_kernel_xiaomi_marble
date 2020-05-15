@@ -760,28 +760,6 @@ struct wma_txrx_node {
 };
 
 /**
- * struct ibss_power_save_params - IBSS power save parameters
- * @atimWindowLength: ATIM window length
- * @isPowerSaveAllowed: is power save allowed
- * @isPowerCollapseAllowed: is power collapsed allowed
- * @isAwakeonTxRxEnabled: is awake on tx/rx enabled
- * @inactivityCount: inactivity count
- * @txSPEndInactivityTime: tx SP end inactivity time
- * @ibssPsWarmupTime: IBSS power save warm up time
- * @ibssPs1RxChainInAtimEnable: IBSS power save rx chain in ATIM enable
- */
-typedef struct {
-	uint32_t atimWindowLength;
-	uint32_t isPowerSaveAllowed;
-	uint32_t isPowerCollapseAllowed;
-	uint32_t isAwakeonTxRxEnabled;
-	uint32_t inactivityCount;
-	uint32_t txSPEndInactivityTime;
-	uint32_t ibssPsWarmupTime;
-	uint32_t ibssPs1RxChainInAtimEnable;
-} ibss_power_save_params;
-
-/**
  * struct mac_ss_bw_info - hw_mode_list PHY/MAC params for each MAC
  * @mac_tx_stream: Max TX stream
  * @mac_rx_stream: Max RX stream
@@ -875,8 +853,6 @@ struct wma_wlm_stats_data {
  * @peer_macaddr: When @get_one_peer_info is true, the peer's mac address
  * @thermal_mgmt_info: Thermal mitigation related info
  * @enable_mc_list: To Check if Multicast list filtering is enabled in FW
- * @ibss_started: is IBSS started or not
- * @ibsskey_info: IBSS key info
  * @hddTxFailCb: tx fail indication callback
  * @extscan_wake_lock: extscan wake lock
  * @wow_wake_lock: wow wake lock
@@ -892,7 +868,6 @@ struct wma_wlm_stats_data {
  * @suitable_ap_hb_failure: better ap found
  * @suitable_ap_hb_failure_rssi: RSSI when suitable_ap_hb_failure
  *   triggered for later usage to report RSSI at beacon miss scenario
- * @wma_ibss_power_save_params: IBSS Power Save config Parameters
  * @IsRArateLimitEnabled: RA rate limiti s enabled or not
  * @RArateLimitInterval: RA rate limit interval
  * @is_lpass_enabled: Flag to indicate if LPASS feature is enabled or not
@@ -1002,8 +977,6 @@ typedef struct {
 	struct qdf_mac_addr peer_macaddr;
 	t_thermal_mgmt thermal_mgmt_info;
 	bool enable_mc_list;
-	uint8_t ibss_started;
-	tSetBssKeyParams ibsskey_info;
 #ifdef FEATURE_WLAN_EXTSCAN
 	qdf_wake_lock_t extscan_wake_lock;
 #endif
@@ -1020,7 +993,6 @@ typedef struct {
 	qdf_atomic_t is_wow_bus_suspended;
 	bool suitable_ap_hb_failure;
 	uint32_t suitable_ap_hb_failure_rssi;
-	ibss_power_save_params wma_ibss_power_save_params;
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif
@@ -1209,14 +1181,6 @@ typedef struct {
  * @WMA_VDEV_TXRX_FWSTATS_RESET_CMDID: txrx firmware stats reset command
  * @WMA_VDEV_MCC_SET_TIME_LATENCY: set MCC latency time
  * @WMA_VDEV_MCC_SET_TIME_QUOTA: set MCC time quota
- * @WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE: set IBSS ATIM window size
- * @WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED: set IBSS enable power save
- * @WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED: set IBSS power collapse enable
- * @WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX: awake IBSS on TX/RX
- * @WMA_VDEV_IBSS_SET_INACTIVITY_TIME: set IBSS inactivity time
- * @WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME: set IBSS TXSP
- * @WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS: set IBSS power save warmup time
- * @WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW: set IBSS power save ATIM
  * @WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID: get IPA microcontroller fw stats
  * @WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID: get IPA uC wifi-sharing stats
  * @WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID: set IPA uC quota limit
@@ -1229,14 +1193,6 @@ enum wma_cfg_cmd_id {
 	WMA_VDEV_TXRX_FWSTATS_RESET_CMDID,
 	WMA_VDEV_MCC_SET_TIME_LATENCY,
 	WMA_VDEV_MCC_SET_TIME_QUOTA,
-	WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE,
-	WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED,
-	WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED,
-	WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX,
-	WMA_VDEV_IBSS_SET_INACTIVITY_TIME,
-	WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME,
-	WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS,
-	WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW,
 	WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
 	WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID,
 	WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID,

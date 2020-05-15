@@ -164,8 +164,6 @@ struct sAniProbeRspStruct {
  * @vht_caps: VHT vapabalities
  * @nwType: NW Type
  * @maxTxPower: max tx power
- * @atimIePresent: Peer Atim Info
- * @peerAtimWindowLength: peer ATIM Window length
  * @nss: Return the number of spatial streams supported
  * @stbc_capable: stbc capable
  * @no_ptk_4_way: Do not need 4-way handshake
@@ -235,8 +233,6 @@ typedef struct {
 	uint32_t vht_caps;
 	tSirNwType nwType;
 	int8_t maxTxPower;
-	uint8_t atimIePresent;
-	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
 	uint32_t nss;
 #ifdef WLAN_FEATURE_11AX

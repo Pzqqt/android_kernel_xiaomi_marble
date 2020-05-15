@@ -2841,20 +2841,6 @@ QDF_STATUS ucfg_mlme_set_ibss_auto_bssid(struct wlan_objmgr_psoc *psoc,
 					 uint32_t auto_bssid);
 
 /**
- * ucfg_mlme_ibss_power_save_setup() - Set IBSS power save params
- * @psoc: pointer to psoc object
- * @vdev_id: IBSS Vdev ID
- *
- * Return: QDF Status
- */
-static inline
-QDF_STATUS ucfg_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
-					   uint32_t vdev_id)
-{
-	return wlan_mlme_ibss_power_save_setup(psoc, vdev_id);
-}
-
-/**
  * ucfg_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)
  * of UAPSD auto trigger.
  * @psoc: pointer to psoc object

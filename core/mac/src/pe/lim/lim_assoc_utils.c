@@ -2133,7 +2133,6 @@ lim_add_sta(struct mac_context *mac_ctx,
 	tSirMacAddr sta_mac, *sta_Addr;
 	tpSirAssocReq assoc_req;
 	uint8_t i, nw_type_11b = 0;
-	tLimIbssPeerNode *peer_node; /* for IBSS mode */
 	const uint8_t *p2p_ie = NULL;
 	tDot11fIEVHTCaps vht_caps;
 	struct mlme_vht_capabilities_info *vht_cap_info;
@@ -2372,46 +2371,8 @@ lim_add_sta(struct mac_context *mac_ctx,
 		lim_add_he_cap(mac_ctx, session_entry,
 			       add_sta_params, assoc_req);
 
-	} else if (LIM_IS_IBSS_ROLE(session_entry)) {
-
-		/*
-		 * in IBSS mode, use peer node as the source of ht_caps
-		 * and vht_caps
-		 */
-		peer_node = lim_ibss_peer_find(mac_ctx, *sta_Addr);
-		if (!peer_node) {
-			pe_err("Can't find IBSS peer node for ADD_STA");
-			return QDF_STATUS_E_NOENT;
-		}
-
-		if (peer_node->atimIePresent) {
-			add_sta_params->atimIePresent =
-				 peer_node->atimIePresent;
-			add_sta_params->peerAtimWindowLength =
-				peer_node->peerAtimWindowLength;
-		}
-
-		add_sta_params->ht_caps =
-			(peer_node->htSupportedChannelWidthSet <<
-			 SIR_MAC_HT_CAP_CHWIDTH40_S) |
-			(peer_node->htGreenfield <<
-			 SIR_MAC_HT_CAP_GREENFIELD_S) |
-			(peer_node->htShortGI20Mhz <<
-			 SIR_MAC_HT_CAP_SHORTGI20MHZ_S) |
-			(peer_node->htShortGI40Mhz <<
-			 SIR_MAC_HT_CAP_SHORTGI40MHZ_S) |
-			(SIR_MAC_TXSTBC <<
-			 SIR_MAC_HT_CAP_TXSTBC_S) |
-			(SIR_MAC_RXSTBC <<
-			 SIR_MAC_HT_CAP_RXSTBC_S) |
-			(peer_node->htMaxAmsduLength <<
-			 SIR_MAC_HT_CAP_MAXAMSDUSIZE_S) |
-			(peer_node->htDsssCckRate40MHzSupport <<
-			 SIR_MAC_HT_CAP_DSSSCCK40_S);
-
-		add_sta_params->vht_caps =
-			 lim_populate_vht_caps(peer_node->VHTCaps);
 	}
+
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == sta_ds->staType) {
 		add_sta_params->ht_caps = sta_ds->ht_caps;

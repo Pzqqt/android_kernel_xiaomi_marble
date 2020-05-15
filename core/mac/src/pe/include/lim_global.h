@@ -398,11 +398,6 @@ struct tLimIbssPeerNode {
 	tDot11fIEVHTCaps VHTCaps;
 	uint8_t vhtSupportedChannelWidthSet;
 	uint8_t vhtBeamFormerCapable;
-	/*
-	 * Peer Atim Info
-	 */
-	uint8_t atimIePresent;
-	uint32_t peerAtimWindowLength;
 };
 
 /* Enums used for channel switching. */
