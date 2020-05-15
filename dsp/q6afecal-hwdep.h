@@ -4,7 +4,7 @@
  */
 #ifndef __Q6AFECAL_HWDEP_H__
 #define __Q6AFECAL_HWDEP_H__
-#include <sound/msmcal-hwdep.h>
+#include <audio/sound/msmcal-hwdep.h>
 
 enum q6afe_cal_states {
 	Q6AFECAL_UNINITIALISED,

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2020 The Linux Foundation. All rights reserved.
  */
 
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 #include <linux/compat.h>
 #include "q6audio_common.h"
 #include <dsp/msm-audio-effects-q6-v2.h>

@@ -8,7 +8,7 @@
 #define _APR_AUDIO_V2_H_
 
 #include <ipc/apr.h>
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 
 /* size of header needed for passing data out of band */
 #define APR_CMD_OB_HDR_SZ  12

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -14,7 +14,7 @@
 #include <linux/dma-mapping.h>
 #include <sound/soc.h>
 #include <sound/info.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 #include <soc/qcom/pm.h>
 #include <dsp/audio_cal_utils.h>
 #include <asoc/core.h>

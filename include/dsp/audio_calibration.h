@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2014, 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2017, 2020 The Linux Foundation. All rights reserved.
  */
 #ifndef _AUDIO_CALIBRATION_H
 #define _AUDIO_CALIBRATION_H
 
-#include <linux/msm_audio_calibration.h>
+#include <audio/linux/msm_audio_calibration.h>
 
 /* Used by driver in buffer_number field to notify client
  * To update all blocks, for example: freeing all memory

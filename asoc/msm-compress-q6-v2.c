@@ -20,10 +20,10 @@
 #include <sound/initval.h>
 #include <sound/control.h>
 #include <sound/pcm_params.h>
-#include <sound/audio_effects.h>
+#include <audio/sound/audio_effects.h>
 #include <asm/dma.h>
 #include <linux/dma-mapping.h>
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 
 #include <sound/timer.h>
 #include <sound/tlv.h>

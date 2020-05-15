@@ -21,7 +21,7 @@
 #include <sound/asound.h>
 #include <sound/pcm_params.h>
 #include <sound/hwdep.h>
-#include <sound/audio_effects.h>
+#include <audio/sound/audio_effects.h>
 #include <dsp/msm-dts-srs-tm-config.h>
 #include <dsp/q6voice.h>
 #include <dsp/q6adm-v2.h>

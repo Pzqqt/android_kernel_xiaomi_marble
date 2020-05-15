@@ -27,7 +27,7 @@
 #include <asm/dma.h>
 #include <sound/tlv.h>
 #include <sound/pcm_params.h>
-#include <sound/devdep_params.h>
+#include <audio/sound/devdep_params.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6audio-v2.h>
 
