@@ -4003,6 +4003,7 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 				   wmi_vdev_custom_aggr_type_t aggr_type)
 {
 	tp_wma_handle wma_handle;
+	struct wma_txrx_node *intr;
 	wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd;
 	int32_t len;
 	wmi_buf_t buf;
@@ -4011,10 +4012,23 @@ QDF_STATUS wma_set_tx_rx_aggr_size(uint8_t vdev_id,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
-
 	if (!wma_handle) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		WMA_LOGE("%s: WMA context is invalid!", __func__);
 		return QDF_STATUS_E_INVAL;
+	}
+
+	intr = wma_handle->interfaces;
+	if (!intr) {
+		WMA_LOGE("%s: WMA interface is invalid!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (aggr_type == WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU) {
+		intr[vdev_id].config.tx_ampdu = tx_size;
+		intr[vdev_id].config.rx_ampdu = rx_size;
+	} else {
+		intr[vdev_id].config.tx_amsdu = tx_size;
+		intr[vdev_id].config.rx_amsdu = rx_size;
 	}
 
 	len = sizeof(*cmd);

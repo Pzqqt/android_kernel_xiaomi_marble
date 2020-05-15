@@ -585,6 +585,10 @@ typedef struct {
  * @gtx_info: GTX offload info
  * @dcm: DCM enable/disable
  * @range_ext: HE range extension enable/disable
+ * @tx_ampdu: tx ampdu size
+ * @rx_ampdu: rx ampdu size
+ * @tx_amsdu: tx amsdu size
+ * @rx_amsdu: rx amsdu size
  *
  * This structure stores vdev parameters.
  * Some of these parameters are set in fw and some
@@ -615,6 +619,10 @@ typedef struct {
 	uint8_t dcm;
 	uint8_t range_ext;
 #endif
+	uint32_t tx_ampdu;
+	uint32_t rx_ampdu;
+	uint32_t tx_amsdu;
+	uint32_t rx_amsdu;
 } vdev_cli_config_t;
 
 /**

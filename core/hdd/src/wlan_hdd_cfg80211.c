@@ -6710,6 +6710,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 		.type = NLA_BINARY,
 		.len = SIR_MAC_MAX_ADD_IE_LENGTH + 2},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MSDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION] = {.type = NLA_U8 },
 
 };
 
@@ -7185,6 +7187,45 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 					 tx_size,
 					 rx_size,
 					 WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU);
+
+	return qdf_status_to_os_return(status);
+}
+
+static int hdd_config_msdu_aggregation(struct hdd_adapter *adapter,
+				       struct nlattr *tb[])
+{
+	struct nlattr *tx_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MSDU_AGGREGATION];
+	struct nlattr *rx_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION];
+	uint8_t tx_size, rx_size;
+	QDF_STATUS status;
+
+	/* nothing to do if neither attribute is present */
+	if (!tx_attr && !rx_attr)
+		return 0;
+
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
+
+	tx_size = nla_get_u8(tx_attr);
+	rx_size = nla_get_u8(rx_attr);
+	if (!cfg_in_range(CFG_TX_AGGREGATION_SIZE, tx_size) ||
+	    !cfg_in_range(CFG_RX_AGGREGATION_SIZE, rx_size)) {
+		hdd_err("TX %d RX %d MSDU aggr size not in range",
+			tx_size, rx_size);
+
+		return -EINVAL;
+	}
+
+	status = wma_set_tx_rx_aggr_size(adapter->vdev_id,
+					 tx_size,
+					 rx_size,
+					 WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU);
 
 	return qdf_status_to_os_return(status);
 }
@@ -8133,6 +8174,126 @@ static int hdd_get_roam_reason_vsie_status(struct hdd_adapter *adapter,
 #endif
 
 /**
+ * hdd_get_tx_ampdu() - Get TX AMPDU
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_tx_ampdu(struct hdd_adapter *adapter,
+			    struct sk_buff *skb,
+			    const struct nlattr *attr)
+{
+	int value;
+
+	value = wma_cli_get_command(adapter->vdev_id, GEN_VDEV_PARAM_TX_AMPDU,
+				    GEN_CMD);
+	if (value < 0) {
+		hdd_err("Failed to get tx_ampdu");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION,
+		       (uint8_t)value)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_get_rx_ampdu() - Get RX AMPDU
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_rx_ampdu(struct hdd_adapter *adapter,
+			    struct sk_buff *skb,
+			    const struct nlattr *attr)
+{
+	int value;
+
+	value = wma_cli_get_command(adapter->vdev_id, GEN_VDEV_PARAM_RX_AMPDU,
+				    GEN_CMD);
+	if (value < 0) {
+		hdd_err("Failed to get rx_ampdu");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION,
+		       (uint8_t)value)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_get_tx_amsdu() - Get TX AMSDU
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_tx_amsdu(struct hdd_adapter *adapter,
+			    struct sk_buff *skb,
+			    const struct nlattr *attr)
+{
+	int value;
+
+	value = wma_cli_get_command(adapter->vdev_id, GEN_VDEV_PARAM_TX_AMSDU,
+				    GEN_CMD);
+	if (value < 0) {
+		hdd_err("Failed to get tx_amsdu");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MSDU_AGGREGATION,
+		       (uint8_t)value)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_get_rx_amsdu() - Get RX AMSDU
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_rx_amsdu(struct hdd_adapter *adapter,
+			    struct sk_buff *skb,
+			    const struct nlattr *attr)
+{
+	int value;
+
+	value = wma_cli_get_command(adapter->vdev_id, GEN_VDEV_PARAM_RX_AMSDU,
+				    GEN_CMD);
+	if (value < 0) {
+		hdd_err("Failed to get rx_amsdu");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION,
+		       (uint8_t)value)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * typedef config_getter_fn - get configuration handler
  * @adapter: The adapter being configured
  * @skb: sk buffer to hold nl80211 attributes
@@ -8167,6 +8328,18 @@ static const struct config_getters config_getters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON,
 	 sizeof(uint8_t),
 	 hdd_get_roam_reason_vsie_status},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION,
+	 sizeof(uint8_t),
+	 hdd_get_tx_ampdu},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION,
+	 sizeof(uint8_t),
+	 hdd_get_rx_ampdu},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MSDU_AGGREGATION,
+	 sizeof(uint8_t),
+	 hdd_get_tx_amsdu},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION,
+	 sizeof(uint8_t),
+	 hdd_get_rx_amsdu},
 };
 
 /**
@@ -8287,6 +8460,7 @@ static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_ant_div_snr_weight,
 	wlan_hdd_cfg80211_wifi_set_reorder_timeout,
 	wlan_hdd_cfg80211_wifi_set_rx_blocksize,
+	hdd_config_msdu_aggregation,
 };
 
 /**
