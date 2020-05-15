@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -104,6 +104,22 @@ void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
  * Return: none
  */
 void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
+
+#ifdef WLAN_FEATURE_NAN
+/**
+ * pmo_set_ndp_wow_bitmask() - set predefined NDP wow wakeup events
+ * @bitmask: bitmask field
+ * @wow_bitmask_size: bitmask field size
+ *
+ * Return: none
+ */
+void pmo_set_ndp_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size);
+#else
+static inline
+void pmo_set_ndp_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmask_size)
+{
+}
+#endif
 
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 

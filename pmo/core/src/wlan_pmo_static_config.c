@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,7 +36,6 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	uint32_t event_bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 	uint8_t vdev_id;
 	enum QDF_OPMODE  vdev_opmode;
-	const char *iface_type;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	pmo_is_device_in_low_pwr_mode is_low_pwr_mode;
 
@@ -65,12 +64,10 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
 	case QDF_MONITOR_MODE:
-		iface_type = "STA";
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
 		break;
 
 	case QDF_IBSS_MODE:
-		iface_type = "IBSS";
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
 		pmo_set_wow_event_bitmap(WOW_BEACON_EVENT,
 					 PMO_WOW_MAX_EVENT_BM_LEN,
@@ -79,22 +76,11 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
-		iface_type = "SAP";
 		pmo_set_sap_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
 		break;
 
 	case QDF_NDI_MODE:
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-		iface_type = "NAN";
-		/* wake up host when Nan Management Frame is received */
-		pmo_set_wow_event_bitmap(WOW_NAN_DATA_EVENT,
-					 PMO_WOW_MAX_EVENT_BM_LEN,
-					 event_bitmap);
-		/* wake up host when NDP data packet is received */
-		pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
-					 WMI_WOW_MAX_EVENT_BM_LEN,
-					 event_bitmap);
-#endif
+		pmo_set_ndp_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);
 		break;
 
 	default:
