@@ -123,6 +123,11 @@ struct ipa3_wwan_private {
 	struct napi_struct napi;
 };
 
+struct ipa3_netmgr_clock_vote {
+	struct mutex mutex;
+	uint32_t cnt;
+};
+
 struct rmnet_ipa_debugfs {
 	struct dentry *dent;
 	struct dentry *dfile_outstanding_high;
@@ -166,6 +171,7 @@ struct rmnet_ipa3_context {
 	atomic_t ap_suspend;
 	bool ipa_config_is_apq;
 	bool ipa_mhi_aggr_formet_set;
+	struct ipa3_netmgr_clock_vote clock_vote;
 };
 
 static struct rmnet_ipa3_context *rmnet_ipa3_ctx;
@@ -2062,15 +2068,24 @@ static int ipa3_wwan_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 			break;
 		/* vote ipa clock on/off */
 		case RMNET_IOCTL_SET_SLEEP_STATE:
+			mutex_lock(&rmnet_ipa3_ctx->clock_vote.mutex);
 			if (ext_ioctl_data.u.data) {
 				/* Request to enable LPM */
 				IPAWANDBG("ioctl: unvote IPA clock\n");
-				IPA_ACTIVE_CLIENTS_DEC_SPECIAL("NETMGR");
+				if (rmnet_ipa3_ctx->clock_vote.cnt) {
+					rmnet_ipa3_ctx->clock_vote.cnt--;
+					IPA_ACTIVE_CLIENTS_DEC_SPECIAL("NETMGR");
+				}
 			} else {
 				/* Request to disable LPM */
 				IPAWANDBG("ioctl: vote IPA clock\n");
-				IPA_ACTIVE_CLIENTS_INC_SPECIAL("NETMGR");
+				if ((rmnet_ipa3_ctx->clock_vote.cnt + 1)
+					<= IPA_APP_VOTE_MAX) {
+					IPA_ACTIVE_CLIENTS_INC_SPECIAL("NETMGR");
+					rmnet_ipa3_ctx->clock_vote.cnt++;
+				}
 			}
+			mutex_unlock(&rmnet_ipa3_ctx->clock_vote.mutex);
 			break;
 		default:
 			IPAWANERR("[%s] unsupported extended cmd[%d]",
@@ -4809,10 +4824,12 @@ int ipa3_wwan_init(void)
 
 	atomic_set(&rmnet_ipa3_ctx->is_initialized, 0);
 	atomic_set(&rmnet_ipa3_ctx->is_ssr, 0);
+	rmnet_ipa3_ctx->clock_vote.cnt = 0;
 
 	mutex_init(&rmnet_ipa3_ctx->pipe_handle_guard);
 	mutex_init(&rmnet_ipa3_ctx->add_mux_channel_lock);
 	mutex_init(&rmnet_ipa3_ctx->per_client_stats_guard);
+	mutex_init(&rmnet_ipa3_ctx->clock_vote.mutex);
 	/* Reset the Lan Stats. */
 	for (i = 0; i < IPACM_MAX_CLIENT_DEVICE_TYPES; i++) {
 		teth_ptr = &rmnet_ipa3_ctx->tether_device[i];
