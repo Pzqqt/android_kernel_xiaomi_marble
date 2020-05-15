@@ -1978,6 +1978,9 @@ static int msm_compr_playback_free(struct snd_compr_stream *cstream)
 		kfree(pdata->dec_params[soc_prtd->dai_link->id]);
 		pdata->dec_params[soc_prtd->dai_link->id] = NULL;
 	}
+	if (pdata->ch_map[soc_prtd->dai_link->id]) {
+		pdata->ch_map[soc_prtd->dai_link->id]->set_ch_map = false;
+	}
 	pdata->is_in_use[soc_prtd->dai_link->id] = false;
 	kfree(prtd);
 	runtime->private_data = NULL;
