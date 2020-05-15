@@ -260,33 +260,6 @@ bool pmo_is_vdev_in_ap_mode(struct wlan_objmgr_vdev *vdev)
 	return (mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) == 1 ? 1 : 0;
 }
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * pmo_is_vdev_in_ibss_mode() - check that vdev is in ibss mode or not
- * @vdev: objmgr vdev handle
- * @vdev_id: vdev id
- *
- * Helper function to know whether given vdev id
- * is in IBSS mode or not.
- *
- * Return: True/False
- */
-static inline
-bool pmo_is_vdev_in_ibss_mode(struct wlan_objmgr_vdev *vdev)
-{
-	enum QDF_OPMODE mode;
-
-	mode = pmo_get_vdev_opmode(vdev);
-
-	return (mode == QDF_IBSS_MODE) ? true : false;
-}
-#else
-static inline bool pmo_is_vdev_in_ibss_mode(struct wlan_objmgr_vdev *vdev)
-{
-	return false;
-}
-#endif /* QCA_IBSS_SUPPORT */
-
 /**
  * pmo_handle_initial_wake_up() - handle initial wake up
  * @cb_ctx: callback context
