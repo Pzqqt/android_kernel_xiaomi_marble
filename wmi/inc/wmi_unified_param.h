@@ -672,11 +672,17 @@ struct channel_param {
  * struct oem_data - oem data to be sent to firmware
  * @vdev_id: Unique identifier assigned to the vdev
  * @data_len: len of data
+ * @pdev_id: pdev id to identify the pdev
+ * @pdev_vdev_flag: 0 when vdev is valid, 1 when pdev is valid
+ * @is_host_pdev_id: 1 for host pdev id, 0 otherwise
  * @data: the pointer to the buffer containing data
  */
 struct oem_data {
 	uint8_t vdev_id;
 	size_t data_len;
+	uint8_t pdev_id;
+	bool pdev_vdev_flag;
+	bool is_host_pdev_id;
 	uint8_t *data;
 };
 #endif

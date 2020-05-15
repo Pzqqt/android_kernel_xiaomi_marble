@@ -5600,10 +5600,12 @@ static QDF_STATUS send_start_oemv2_data_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	QDF_STATUS ret;
 	wmi_oem_data_cmd_fixed_param *cmd;
+	struct wmi_ops *ops;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
 	uint16_t oem_data_len_aligned;
 	uint8_t *buf_ptr;
+	uint32_t pdev_id = oem_data->pdev_id;
 
 	if (!oem_data || !oem_data->data) {
 		wmi_err_rl("oem data is not valid");
@@ -5631,8 +5633,23 @@ static QDF_STATUS send_start_oemv2_data_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_oem_data_cmd_fixed_param));
 
+	if (oem_data->pdev_vdev_flag) {
+		ops = wmi_handle->ops;
+		if (oem_data->is_host_pdev_id)
+			pdev_id =
+				ops->convert_host_pdev_id_to_target(wmi_handle,
+								    pdev_id);
+		else
+			pdev_id =
+				ops->convert_pdev_id_host_to_target(wmi_handle,
+								    pdev_id);
+	}
+
 	cmd->vdev_id = oem_data->vdev_id;
 	cmd->data_len = oem_data->data_len;
+	cmd->pdev_vdev_flag = oem_data->pdev_vdev_flag;
+	cmd->pdev_id = pdev_id;
+
 	buf_ptr += sizeof(*cmd);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, oem_data_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
