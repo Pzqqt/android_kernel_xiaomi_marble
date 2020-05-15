@@ -638,7 +638,6 @@ static void hdd_sysfs_destroy_bcn_reception_interface(struct hdd_adapter
 static void
 hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
-	hdd_sysfs_get_sta_info_interface_create(adapter);
 	hdd_sysfs_create_bcn_reception_interface(adapter);
 	hdd_sysfs_reassoc_create(adapter);
 	hdd_sysfs_crash_inject_create(adapter);
@@ -686,7 +685,6 @@ hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_crash_inject_destroy(adapter);
 	hdd_sysfs_reassoc_destroy(adapter);
 	hdd_sysfs_destroy_bcn_reception_interface(adapter);
-	hdd_sysfs_get_sta_info_interface_destroy(adapter);
 }
 
 static void
