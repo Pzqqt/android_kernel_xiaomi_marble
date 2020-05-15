@@ -47,7 +47,7 @@ void target_if_vdev_mgr_handle_recovery(struct wlan_objmgr_psoc *psoc,
 				wlan_psoc_get_id(psoc), vdev_id);
 }
 
-void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
+void target_if_vdev_mgr_rsp_timer_cb(void *arg)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_mlme_rx_ops *rx_ops;
@@ -55,6 +55,7 @@ void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp)
 	struct vdev_stop_response stop_rsp = {0};
 	struct vdev_delete_response del_rsp = {0};
 	struct peer_delete_all_response peer_del_all_rsp = {0};
+	struct vdev_response_timer *vdev_rsp = arg;
 	enum qdf_hang_reason recovery_reason;
 	uint8_t vdev_id;
 	uint16_t rsp_pos = RESPONSE_BIT_MAX;
@@ -199,8 +200,16 @@ target_if_vdev_mgr_rsp_cb_mc_ctx(void *arg)
 
 	msg.type = SYS_MSG_ID_MC_TIMER;
 	msg.reserved = SYS_MSG_COOKIE;
-	msg.callback = target_if_vdev_mgr_rsp_timer_cb;
-	msg.bodyptr = vdev_rsp;
+
+	/* msg.callback will explicitly cast back to qdf_mc_timer_callback_t
+	 * in scheduler_timer_q_mq_handler.
+	 * but in future we do not want to introduce more this kind of
+	 * typecast by properly using QDF MC timer for MCC from get go in
+	 * common code.
+	 */
+	msg.callback =
+		(scheduler_msg_process_fn_t)target_if_vdev_mgr_rsp_timer_cb;
+	msg.bodyptr = arg;
 	msg.bodyval = 0;
 	msg.flush_callback = target_if_vdev_mgr_rsp_flush_cb;
 

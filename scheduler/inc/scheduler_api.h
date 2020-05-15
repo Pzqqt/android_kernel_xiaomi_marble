@@ -55,6 +55,10 @@ typedef enum {
 	SYS_MSG_ID_UMAC_STOP,
 } SYS_MSG_ID;
 
+struct scheduler_msg;
+typedef QDF_STATUS (*scheduler_msg_process_fn_t)(struct scheduler_msg *msg);
+typedef void (*hdd_suspend_callback)(void);
+
 /**
  * struct scheduler_msg: scheduler message structure
  * @type: message type
@@ -82,8 +86,8 @@ struct scheduler_msg {
 	uint16_t reserved;
 	uint32_t bodyval;
 	void *bodyptr;
-	void *callback;
-	void *flush_callback;
+	scheduler_msg_process_fn_t callback;
+	scheduler_msg_process_fn_t flush_callback;
 	qdf_list_node_t node;
 #ifdef WLAN_SCHED_HISTORY_SIZE
 	QDF_MODULE_ID queue_id;
@@ -100,9 +104,6 @@ struct scheduler_msg {
  * Return: None
  */
 void sched_history_print(void);
-
-typedef QDF_STATUS (*scheduler_msg_process_fn_t) (struct scheduler_msg  *msg);
-typedef void (*hdd_suspend_callback)(void);
 
 /**
  * scheduler_init() - initialize control path scheduler
