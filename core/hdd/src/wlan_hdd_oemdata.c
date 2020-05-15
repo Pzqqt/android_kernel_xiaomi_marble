@@ -1126,6 +1126,7 @@ oem_data_attr_policy[QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_MAX + 1] = {
 						    .len = OEM_DATA_MAX_SIZE
 	},
 
+	[QCA_WLAN_VENDOR_ATTR_OEM_DEVICE_INFO] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_OEM_DATA_RESPONSE_EXPECTED] = {.type = NLA_FLAG},
 };
 
@@ -1235,6 +1236,7 @@ __wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
 {
 	struct net_device *dev = wdev->netdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t mac_id;
 	int ret;
 	struct sk_buff *skb = NULL;
 	struct oem_data oem_data = {0};
@@ -1274,6 +1276,21 @@ __wlan_hdd_cfg80211_oem_data_handler(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (tb[QCA_WLAN_VENDOR_ATTR_OEM_DEVICE_INFO])
+		oem_data.pdev_vdev_flag =
+			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_OEM_DEVICE_INFO]);
+
+	if (oem_data.pdev_vdev_flag) {
+		status = policy_mgr_get_mac_id_by_session_id(hdd_ctx->psoc,
+							     adapter->vdev_id,
+							     &mac_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("get mac id failed");
+			return -EINVAL;
+		}
+		oem_data.pdev_id = mac_id;
+		oem_data.is_host_pdev_id = true;
+	}
 	oem_data.data_len =
 		nla_len(tb[QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA]);
 	if (!oem_data.data_len) {
