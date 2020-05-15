@@ -24,6 +24,8 @@
 #include "cfg_nan_api.h"
 #include "../../core/src/nan_main_i.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_ucfg_api.h"
+#include "cfg_nan.h"
 
 static inline struct nan_psoc_priv_obj
 		 *cfg_nan_get_priv_obj(struct wlan_objmgr_psoc *psoc)
@@ -93,6 +95,21 @@ QDF_STATUS cfg_nan_get_ndp_keepalive_period(struct wlan_objmgr_psoc *psoc,
 	}
 
 	*val = nan_obj->cfg_param.ndp_keep_alive_period;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cfg_nan_get_ndp_max_sessions(struct wlan_objmgr_psoc *psoc,
+					uint32_t *val)
+{
+	struct nan_psoc_priv_obj *nan_obj = cfg_nan_get_priv_obj(psoc);
+
+	if (!nan_obj) {
+		nan_err("NAN obj null");
+		*val = cfg_default(CFG_NDP_MAX_SESSIONS);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = nan_obj->cfg_param.max_ndp_sessions;
 	return QDF_STATUS_SUCCESS;
 }
 

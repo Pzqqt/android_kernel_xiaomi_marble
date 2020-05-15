@@ -170,6 +170,32 @@
 
 /*
  * <ini>
+ * ndp_max_sessions - To configure max ndp sessions
+ * supported by host.
+ *
+ * @Min: 1
+ * @Max: 8
+ * @Default: 8
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+
+#define CFG_NDP_MAX_SESSIONS CFG_INI_UINT( \
+			"ndp_max_sessions", \
+			1, \
+			8, \
+			8, \
+			CFG_VALUE_OR_DEFAULT, \
+			"max ndp sessions host supports")
+
+/*
+ * <ini>
  * gSupportMp0Discovery - To support discovery of NAN cluster with
  * Master Preference (MP) as 0 when a new device is enabling NAN.
  *
@@ -204,6 +230,7 @@
 #endif
 
 #define CFG_NAN_ALL     CFG_NAN_DISC \
-			CFG_NAN_DP
+			CFG_NAN_DP \
+			CFG(CFG_NDP_MAX_SESSIONS)
 
 #endif

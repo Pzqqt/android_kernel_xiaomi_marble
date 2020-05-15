@@ -347,6 +347,9 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;
 
+	cfg_nan_get_ndp_max_sessions(wma_handle->psoc,
+				     &tgt_cfg->max_ndp_sessions);
+
 	wma_set_ipa_disable_config(tgt_cfg);
 }
 

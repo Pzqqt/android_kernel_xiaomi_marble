@@ -83,6 +83,7 @@ enum nan_disc_state {
  * wait to kickout peer if peer is not reachable
  * @support_mp0_discovery: To support discovery of NAN cluster with Master
  * Preference (MP) as 0 when a new device is enabling NAN
+ * @max_ndp_sessions: max ndp sessions host supports
  */
 struct nan_cfg_params {
 	bool enable;
@@ -92,6 +93,7 @@ struct nan_cfg_params {
 	bool nan_separate_iface_support;
 	uint16_t ndp_keep_alive_period;
 	bool support_mp0_discovery;
+	uint32_t max_ndp_sessions;
 };
 
 /**
