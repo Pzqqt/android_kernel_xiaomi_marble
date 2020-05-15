@@ -832,15 +832,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
 #endif
-	struct wlan_mlme_ibss_cfg ibss_cfg = {0};
-
 	struct hdd_config *config = hdd_ctx->config;
-
-	if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_ibss_cfg(
-				hdd_ctx->psoc, &ibss_cfg))) {
-		hdd_err("Unable to get IBSS config params");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
 	if (!sme_config) {
@@ -876,8 +868,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	/* This param cannot be configured from INI */
 	sme_config->csr_config.send_smps_action = true;
-	sme_config->csr_config.ad_hoc_ch_freq_5g = ibss_cfg.adhoc_ch_5g;
-	sme_config->csr_config.ad_hoc_ch_freq_2g = ibss_cfg.adhoc_ch_2g;
 	sme_config->csr_config.ProprietaryRatesEnabled = 0;
 	sme_config->csr_config.HeartbeatThresh50 = 40;
 	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,

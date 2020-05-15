@@ -1430,38 +1430,6 @@ ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS ucfg_mlme_get_ibss_cfg(struct wlan_objmgr_psoc *psoc,
-				  struct wlan_mlme_ibss_cfg *ibss_cfg)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	if (!ibss_cfg)
-		return QDF_STATUS_E_FAILURE;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		mlme_legacy_err("MLME Obj null on get IBSS config");
-		mlme_init_ibss_cfg(psoc, ibss_cfg);
-		return QDF_STATUS_E_INVAL;
-	}
-	*ibss_cfg = mlme_obj->cfg.ibss;
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS ucfg_mlme_set_ibss_auto_bssid(struct wlan_objmgr_psoc *psoc,
-					 uint32_t auto_bssid)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		mlme_legacy_err("MLME Obj null on get IBSS config");
-		return QDF_STATUS_E_INVAL;
-	}
-	mlme_obj->cfg.ibss.auto_bssid = auto_bssid;
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef MWS_COEX
 QDF_STATUS
 ucfg_mlme_get_mws_coex_4g_quick_tdm(struct wlan_objmgr_psoc *psoc,

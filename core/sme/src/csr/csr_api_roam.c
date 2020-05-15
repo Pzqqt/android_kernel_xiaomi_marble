@@ -2553,10 +2553,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->HeartbeatThresh50;
 		mac->roam.configParam.ProprietaryRatesEnabled =
 			pParam->ProprietaryRatesEnabled;
-		mac->roam.configParam.ad_hoc_ch_freq_5g =
-						pParam->ad_hoc_ch_freq_5g;
-		mac->roam.configParam.ad_hoc_ch_freq_2g =
-						pParam->ad_hoc_ch_freq_2g;
 
 		mac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 
@@ -2682,8 +2678,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac,
 	pParam->phyMode = cfg_params->phyMode;
 	pParam->HeartbeatThresh50 = cfg_params->HeartbeatThresh50;
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
-	pParam->ad_hoc_ch_freq_5g = cfg_params->ad_hoc_ch_freq_5g;
-	pParam->ad_hoc_ch_freq_2g = cfg_params->ad_hoc_ch_freq_2g;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->fEnableDFSChnlScan = mac->scan.fEnableDFSChnlScan;
 	pParam->fEnableMCCMode = cfg_params->fenableMCCMode;

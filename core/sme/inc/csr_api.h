@@ -853,8 +853,6 @@ struct csr_config_params {
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool ProprietaryRatesEnabled;
-	uint32_t ad_hoc_ch_freq_5g;
-	uint32_t ad_hoc_ch_freq_2g;
 	/*
 	 * this number minus one is the number of times a scan doesn't find it
 	 * before it is removed
