@@ -7533,21 +7533,22 @@ typedef struct {
 } wmi_pdev_set_wmm_params_cmd_fixed_param;
 
 typedef enum {
-    WMI_REQUEST_PEER_STAT           = 0x0001,
-    WMI_REQUEST_AP_STAT             = 0x0002,
-    WMI_REQUEST_PDEV_STAT           = 0x0004,
-    WMI_REQUEST_VDEV_STAT           = 0x0008,
-    WMI_REQUEST_BCNFLT_STAT         = 0x0010,
-    WMI_REQUEST_VDEV_RATE_STAT      = 0x0020,
-    WMI_REQUEST_INST_STAT           = 0x0040,
-    WMI_REQUEST_MIB_STAT            = 0x0080,
-    WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x0100,
-    WMI_REQUEST_CONGESTION_STAT     = 0x0200,
-    WMI_REQUEST_PEER_EXTD_STAT      = 0x0400,
-    WMI_REQUEST_BCN_STAT            = 0x0800,
-    WMI_REQUEST_BCN_STAT_RESET      = 0x1000,
-    WMI_REQUEST_PEER_EXTD2_STAT     = 0x2000,
-    WMI_REQUEST_MIB_EXTD_STAT       = 0x4000,
+    WMI_REQUEST_PEER_STAT            = 0x0001,
+    WMI_REQUEST_AP_STAT              = 0x0002,
+    WMI_REQUEST_PDEV_STAT            = 0x0004,
+    WMI_REQUEST_VDEV_STAT            = 0x0008,
+    WMI_REQUEST_BCNFLT_STAT          = 0x0010,
+    WMI_REQUEST_VDEV_RATE_STAT       = 0x0020,
+    WMI_REQUEST_INST_STAT            = 0x0040,
+    WMI_REQUEST_MIB_STAT             = 0x0080,
+    WMI_REQUEST_RSSI_PER_CHAIN_STAT  = 0x0100,
+    WMI_REQUEST_CONGESTION_STAT      = 0x0200,
+    WMI_REQUEST_PEER_EXTD_STAT       = 0x0400,
+    WMI_REQUEST_BCN_STAT             = 0x0800,
+    WMI_REQUEST_BCN_STAT_RESET       = 0x1000,
+    WMI_REQUEST_PEER_EXTD2_STAT      = 0x2000,
+    WMI_REQUEST_MIB_EXTD_STAT        = 0x4000,
+    WMI_REQUEST_PMF_BCN_PROTECT_STAT = 0x8000,
 } wmi_stats_id;
 
 /*
@@ -8267,6 +8268,10 @@ typedef struct {
  * the data[] array also contains
  * num_mib_extd_stats * size of(struct wmi_mib_extd_stats)
  * following the information elements listed above.
+ */
+/* If WMI_REQUEST_PMF_BCN_PROTECT_STAT is set in stats_id, then TLV
+ * wmi_pmf_bcn_protect_stats pmf_bcn_protect_stats[]
+ * follows the other TLVs
  */
 } wmi_stats_event_fixed_param;
 
@@ -9121,6 +9126,17 @@ typedef struct {
     A_UINT32 rx_ampdu_deli_crc_err_cnt;  /*dot11AMPDUDelimiterCRCErrorCount*/
     A_UINT32 reserved[8];    /* Reserve more fields for future extension */
 } wmi_mib_extd_stats;
+
+/**
+ *  Beacon protection statistics.
+ */
+typedef struct {
+    A_UINT32 tlv_header;        /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pmf_bcn_protect_stats */
+    A_UINT32 igtk_mic_fail_cnt; /* MIC failure count of management packets using IGTK */
+    A_UINT32 igtk_replay_cnt;   /* Replay detection count of management packets using IGTK */
+    A_UINT32 bcn_mic_fail_cnt;  /* MIC failure count of beacon packets using BIGTK */
+    A_UINT32 bcn_replay_cnt;    /* Replay detection count of beacon packets using BIGTK */
+} wmi_pmf_bcn_protect_stats;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_rssi_stats */
