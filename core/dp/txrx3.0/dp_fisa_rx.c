@@ -1041,7 +1041,7 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 			dp_fisa_debug("Fragmented skb, will not be FISAed");
 			if (fisa_flow)
 				dp_rx_fisa_flush_flow(vdev, fisa_flow);
-			goto deliver_nbuf;
+			goto pull_nbuf;
 		}
 
 		if (!fisa_flow)
