@@ -239,8 +239,6 @@ struct pe_session {
 #endif
 	uint32_t encryptType;
 
-	bool bTkipCntrMeasActive;       /* Used to keep record of TKIP counter measures start/stop */
-
 	uint8_t gLimProtectionControl;  /* used for 11n protection */
 
 	uint8_t gHTNonGFDevicesPresent;

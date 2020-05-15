@@ -230,33 +230,6 @@ static bool lim_chk_sa_da(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 }
 
 /**
- * lim_chk_tkip() - checks TKIP counter measure is active
- * @mac_ctx: pointer to Global MAC structure
- * @hdr: pointer to the MAC head
- * @session: pointer to pe session entry
- * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
- *
- * Checks TKIP counter measure is active
- *
- * Return: true of no error, false otherwise
- */
-static bool lim_chk_tkip(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
-			 struct pe_session *session, uint8_t sub_type)
-{
-	/*
-	 * If TKIP counter measures active send Assoc Rsp frame to station
-	 * with eSIR_MAC_MIC_FAILURE_REASON
-	 */
-	if (!(session->bTkipCntrMeasActive && LIM_IS_AP_ROLE(session)))
-		return true;
-
-	pe_err("Assoc Req rejected: TKIP counter measure is active");
-	lim_send_assoc_rsp_mgmt_frame(mac_ctx, eSIR_MAC_MIC_FAILURE_REASON, 1,
-				      hdr->sa, sub_type, 0, session, false);
-	return false;
-}
-
-/**
  * lim_chk_assoc_req_parse_error() - checks for error in frame parsing
  * @mac_ctx: pointer to Global MAC structure
  * @hdr: pointer to the MAC head
@@ -2337,9 +2310,6 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 				(uint8_t *) frm_body, frame_len);
 
 	if (false == lim_chk_sa_da(mac_ctx, hdr, session, sub_type))
-		return;
-
-	if (false == lim_chk_tkip(mac_ctx, hdr, session, sub_type))
 		return;
 
 	/* check for the presence of vendor IE */

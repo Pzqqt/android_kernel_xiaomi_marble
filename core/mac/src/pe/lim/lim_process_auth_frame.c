@@ -1309,19 +1309,6 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	 * Note: WEP bit is set in FC of MAC header.
 	 */
 	if (mac_hdr->fc.wep) {
-		/*
-		 * If TKIP counter measures enabled then issue Deauth
-		 * frame to station
-		 */
-		if (pe_session->bTkipCntrMeasActive &&
-				LIM_IS_AP_ROLE(pe_session)) {
-			pe_err("Tkip counter enabled, send deauth to: %pM",
-				mac_hdr->sa);
-			lim_send_deauth_mgmt_frame(mac_ctx,
-					eSIR_MAC_MIC_FAILURE_REASON,
-					mac_hdr->sa, pe_session, false);
-			goto free;
-		}
 		if (frame_len < 4) {
 			pe_err("invalid frame len: %d", frame_len);
 			goto free;
