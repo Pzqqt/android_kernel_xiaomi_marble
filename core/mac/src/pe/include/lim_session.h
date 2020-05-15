@@ -180,7 +180,6 @@ struct pe_session {
 	/* Identifies the 40 MHz extension channel */
 	ePhyChanBondState htSecondaryChannelOffset;
 	enum reg_wifi_band limRFBand;
-	uint8_t limIbssActive;  /* TO SUPPORT CONCURRENCY */
 
 	/* These global varibales moved to session Table to support BT-AMP : Oct 9th review */
 	tAniAuthType limCurrentAuthType;
@@ -736,7 +735,6 @@ void pe_delete_fils_info(struct pe_session *session);
  *
  * @mac_ctx: pointer to global mac context
  * @session: pointer to the PE session
- * @ibss_ssid: SSID of the session for IBSS sessions
  * @sap_channel: Operating Channel of the session for SAP sessions
  *
  * Sets the beacon/probe filter in the global mac context to filter
@@ -746,7 +744,6 @@ void pe_delete_fils_info(struct pe_session *session);
  */
 void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session,
-				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel);
 
 /**

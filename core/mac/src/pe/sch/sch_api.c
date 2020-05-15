@@ -80,16 +80,11 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	qdf_mem_copy(beaconParams->bssId, pe_session->bssId,
 		     sizeof(pe_session->bssId));
 
-	if (LIM_IS_IBSS_ROLE(pe_session)) {
-		beaconParams->timIeOffset = 0;
-	} else {
-		beaconParams->timIeOffset = pe_session->schBeaconOffsetBegin;
-		if (pe_session->dfsIncludeChanSwIe) {
-			beaconParams->csa_count_offset =
-				mac->sch.csa_count_offset;
-			beaconParams->ecsa_count_offset =
-				mac->sch.ecsa_count_offset;
-		}
+
+	beaconParams->timIeOffset = pe_session->schBeaconOffsetBegin;
+	if (pe_session->dfsIncludeChanSwIe) {
+		beaconParams->csa_count_offset = mac->sch.csa_count_offset;
+		beaconParams->ecsa_count_offset = mac->sch.ecsa_count_offset;
 	}
 
 	beaconParams->vdev_id = pe_session->smeSessionId;

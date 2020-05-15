@@ -57,7 +57,6 @@
 typedef enum eLimSystemRole {
 	eLIM_UNKNOWN_ROLE,
 	eLIM_AP_ROLE,
-	eLIM_STA_IN_IBSS_ROLE,
 	eLIM_STA_ROLE,
 	eLIM_P2P_DEVICE_ROLE,
 	eLIM_P2P_DEVICE_GO,
@@ -329,76 +328,6 @@ typedef struct sLimNoShortSlotParams {
 	uint8_t numNonShortSlotSta;
 	tCacheParams staNoShortSlotCache[LIM_PROT_STA_CACHE_SIZE];
 } tLimNoShortSlotParams, *tpLimNoShortSlotParams;
-
-typedef struct tLimIbssPeerNode tLimIbssPeerNode;
-struct tLimIbssPeerNode {
-	tLimIbssPeerNode *next;
-	tSirMacAddr peerMacAddr;
-	uint8_t extendedRatesPresent:1;
-	uint8_t edcaPresent:1;
-	uint8_t wmeEdcaPresent:1;
-	uint8_t wmeInfoPresent:1;
-	uint8_t htCapable:1;
-	uint8_t vhtCapable:1;
-	uint8_t rsvd:2;
-	uint8_t htSecondaryChannelOffset;
-	tSirMacCapabilityInfo capabilityInfo;
-	tSirMacRateSet supportedRates;
-	tSirMacRateSet extendedRates;
-	uint8_t supportedMCSSet[SIZE_OF_SUPPORTED_MCS_SET];
-	tSirMacEdcaParamSetIE edcaParams;
-	uint8_t erpIePresent;
-
-	/* HT Capabilities of IBSS Peer */
-	uint8_t htGreenfield;
-	uint8_t htShortGI40Mhz;
-	uint8_t htShortGI20Mhz;
-
-	/* DSSS/CCK at 40 MHz: Enabled 1 or Disabled */
-	uint8_t htDsssCckRate40MHzSupport;
-
-	/* MIMO Power Save */
-	tSirMacHTMIMOPowerSaveState htMIMOPSState;
-
-	/* */
-	/* A-MPDU Density */
-	/* 000 - No restriction */
-	/* 001 - 1/8 usec */
-	/* 010 - 1/4 usec */
-	/* 011 - 1/2 usec */
-	/* 100 - 1 usec */
-	/* 101 - 2 usec */
-	/* 110 - 4 usec */
-	/* 111 - 8 usec */
-	/* */
-	uint8_t htAMpduDensity;
-
-	/* Maximum Rx A-MPDU factor */
-	uint8_t htMaxRxAMpduFactor;
-
-	/* Set to 0 for 3839 octets */
-	/* Set to 1 for 7935 octets */
-	uint8_t htMaxAmsduLength;
-
-	/* */
-	/* Recommended Tx Width Set */
-	/* 0 - use 20 MHz channel (control channel) */
-	/* 1 - use 40 Mhz channel */
-	/* */
-	uint8_t htSupportedChannelWidthSet;
-
-	uint8_t htLdpcCapable;
-
-	uint8_t beaconHBCount;
-	uint8_t heartbeatFailure;
-
-	uint8_t *beacon;        /* Hold beacon to be sent to HDD/CSR */
-	uint16_t beaconLen;
-
-	tDot11fIEVHTCaps VHTCaps;
-	uint8_t vhtSupportedChannelWidthSet;
-	uint8_t vhtBeamFormerCapable;
-};
 
 /* Enums used for channel switching. */
 typedef enum eLimChannelSwitchState {

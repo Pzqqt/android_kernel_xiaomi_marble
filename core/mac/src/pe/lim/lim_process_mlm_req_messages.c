@@ -490,8 +490,7 @@ static bool lim_is_auth_req_expected(struct mac_context *mac_ctx,
 	/*
 	 * Expect Auth request only when:
 	 * 1. STA joined/associated with a BSS or
-	 * 2. STA is in IBSS mode
-	 * and STA is going to authenticate with a unicast
+	 * 2. STA is going to authenticate with a unicast
 	 * address and requested authentication algorithm is
 	 * supported.
 	 */
@@ -499,10 +498,7 @@ static bool lim_is_auth_req_expected(struct mac_context *mac_ctx,
 	flag = (((LIM_IS_STA_ROLE(session) &&
 		 ((session->limMlmState == eLIM_MLM_JOINED_STATE) ||
 		  (session->limMlmState ==
-					eLIM_MLM_LINK_ESTABLISHED_STATE))) ||
-		  (LIM_IS_IBSS_ROLE(session) &&
-		  (session->limMlmState ==
-					eLIM_MLM_BSS_STARTED_STATE))) &&
+					eLIM_MLM_LINK_ESTABLISHED_STATE)))) &&
 		(!IEEE80211_IS_MULTICAST(
 			mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr)) &&
 		 lim_is_auth_algo_supported(mac_ctx,
@@ -976,8 +972,6 @@ lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 
 		}
 		break;
-	case eLIM_STA_IN_IBSS_ROLE:
-		break;
 	case eLIM_AP_ROLE:
 	case eLIM_P2P_DEVICE_GO:
 		if (true ==
@@ -1347,10 +1341,6 @@ lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 			goto end;
 		}
 		break;
-	case eLIM_STA_IN_IBSS_ROLE:
-		pe_err("received MLM_DEAUTH_REQ IBSS Mode");
-		mlm_deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
-		goto end;
 	case eLIM_AP_ROLE:
 	case eLIM_P2P_DEVICE_GO:
 		if (true ==
@@ -1805,7 +1795,7 @@ lim_process_auth_rsp_timeout(struct mac_context *mac_ctx, uint32_t auth_idx)
 				session, 0, AUTH_RESPONSE_TIMEOUT);
 #endif
 
-	if (LIM_IS_AP_ROLE(session) || LIM_IS_IBSS_ROLE(session)) {
+	if (LIM_IS_AP_ROLE(session)) {
 		if (auth_node->mlmState != eLIM_MLM_WT_AUTH_FRAME3_STATE) {
 			pe_err("received AUTH rsp timeout in unexpected "
 				   "state for MAC address: " QDF_MAC_ADDR_STR,

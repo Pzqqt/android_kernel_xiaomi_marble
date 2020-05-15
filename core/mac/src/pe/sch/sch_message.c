@@ -495,8 +495,7 @@ get_wmm_local_params(struct mac_context *mac_ctx,
  */
 void sch_edca_profile_update(struct mac_context *mac, struct pe_session *pe_session)
 {
-	if (LIM_IS_AP_ROLE(pe_session) ||
-	    LIM_IS_IBSS_ROLE(pe_session)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		sch_qos_update_local(mac, pe_session);
 		sch_qos_update_broadcast(mac, pe_session);
 	}

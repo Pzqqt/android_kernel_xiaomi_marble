@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016, 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016, 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,9 +45,7 @@
  * @pe_session: session entry
  *
  * This function is called while starting a BSS at AP
- * to initialize AID pool. This may also be called while
- * starting/joining an IBSS if 'Association' is allowed
- * in IBSS.
+ * to initialize AID pool.
  *
  * Return: None
  */
@@ -68,11 +66,6 @@ void lim_init_peer_idxpool(struct mac_context *mac, struct pe_session *pe_sessio
 	*/
 	if (LIM_IS_STA_ROLE(pe_session)) {
 		pe_session->freePeerIdxHead = DPH_STA_HASH_INDEX_PEER + 1;
-	} else
-#endif
-#ifdef QCA_IBSS_SUPPORT
-	if (LIM_IS_IBSS_ROLE(pe_session)) {
-		pe_session->freePeerIdxHead = LIM_START_PEER_IDX;
 	} else
 #endif
 	{
@@ -141,7 +134,7 @@ uint16_t lim_assign_peer_idx(struct mac_context *mac, struct pe_session *pe_sess
  *
  ***FUNCTION:
  * This function is called when a STA context is removed
- * at AP (or at a STA in IBSS mode or TDLS) to return peer Index
+ * at AP (or TDLS) to return peer Index
  * to free pool.
  *
  ***LOGIC:

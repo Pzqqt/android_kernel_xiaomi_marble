@@ -42,7 +42,6 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #include "host_diag_core_event.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-#include "lim_ibss_peer_mgmt.h"
 #include "lim_session_utils.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
@@ -1925,10 +1924,8 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 	   wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
 					 sizeof(*session), session);
-	if (!mac->lim.gLimIbssCoalescingHappened &&
-	    QDF_IS_STATUS_ERROR(status)) {
+	if (QDF_IS_STATUS_ERROR(status))
 		lim_send_stop_bss_failure_resp(mac, session);
-	}
 }
 
 void lim_process_channel_switch(struct mac_context *mac_ctx, uint8_t vdev_id)
@@ -3804,10 +3801,6 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		lim_delete_tdls_peers(mac, pe_session);
 
 		lim_ht_switch_chnl_req(pe_session);
-
-		/* In case of IBSS, if STA should update HT Info IE in its beacons. */
-		if (LIM_IS_IBSS_ROLE(pe_session))
-			sch_set_fixed_beacon_fields(mac, pe_session);
 	}
 
 } /* End limUpdateStaRunTimeHTParams. */
@@ -4437,10 +4430,7 @@ void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,
 void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 					       struct pe_session *psession_entry)
 {
-	if (psession_entry->valid == true) {
-		if (psession_entry->bssType == eSIR_IBSS_MODE)
-			lim_ibss_heart_beat_handle(mac_ctx, psession_entry);
-
+	if (psession_entry->valid) {
 		if ((psession_entry->bssType == eSIR_INFRASTRUCTURE_MODE) &&
 					(LIM_IS_STA_ROLE(psession_entry)))
 			lim_handle_heart_beat_failure(mac_ctx, psession_entry);
@@ -4487,9 +4477,7 @@ void lim_process_add_sta_rsp(struct mac_context *mac_ctx,
 		return;
 	}
 	session->csaOffloadEnable = add_sta_params->csaOffloadEnable;
-	if (LIM_IS_IBSS_ROLE(session))
-		(void)lim_ibss_add_sta_rsp(mac_ctx, msg->bodyptr, session);
-	else if (LIM_IS_NDI_ROLE(session))
+	if (LIM_IS_NDI_ROLE(session))
 		lim_ndp_add_sta_rsp(mac_ctx, session, msg->bodyptr);
 #ifdef FEATURE_WLAN_TDLS
 	else if (add_sta_params->staType == STA_ENTRY_TDLS_PEER)
@@ -4515,9 +4503,7 @@ void lim_update_beacon(struct mac_context *mac_ctx)
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if (mac_ctx->lim.gpSession[i].valid != true)
 			continue;
-		if (((mac_ctx->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE)
-			|| (mac_ctx->lim.gpSession[i].limSystemRole ==
-					eLIM_STA_IN_IBSS_ROLE))
+		if ((mac_ctx->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE)
 			&& (eLIM_SME_NORMAL_STATE ==
 				mac_ctx->lim.gpSession[i].limSmeState)) {
 
@@ -4607,25 +4593,6 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac_ctx)
 	 * tx_timer_deactivate(&mac->lim.lim_timers.gLimProbeAfterHBTimer);
 	 */
 }
-
-#ifdef QCA_IBSS_SUPPORT
-/*
- * This function assumes there will not be more than one IBSS session active at any time.
- */
-struct pe_session *lim_is_ibss_session_active(struct mac_context *mac)
-{
-	uint8_t i;
-
-	for (i = 0; i < mac->lim.maxBssId; i++) {
-		if ((mac->lim.gpSession[i].valid) &&
-		    (mac->lim.gpSession[i].limSystemRole ==
-		     eLIM_STA_IN_IBSS_ROLE))
-			return &mac->lim.gpSession[i];
-	}
-
-	return NULL;
-}
-#endif
 
 struct pe_session *lim_is_ap_session_active(struct mac_context *mac)
 {
@@ -6118,7 +6085,6 @@ const char *lim_bss_type_to_string(const uint16_t bss_type)
 	switch (bss_type) {
 	CASE_RETURN_STRING(eSIR_INFRASTRUCTURE_MODE);
 	CASE_RETURN_STRING(eSIR_INFRA_AP_MODE);
-	CASE_RETURN_STRING(eSIR_IBSS_MODE);
 	CASE_RETURN_STRING(eSIR_AUTO_MODE);
 	CASE_RETURN_STRING(eSIR_NDI_MODE);
 	default:
@@ -7041,7 +7007,7 @@ void lim_update_sta_he_capable(struct mac_context *mac,
 	tpAddStaParams add_sta_params, tpDphHashNode sta_ds,
 	struct pe_session *session_entry)
 {
-	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry))
+	if (LIM_IS_AP_ROLE(session_entry))
 		add_sta_params->he_capable = sta_ds->mlmStaContext.he_capable &&
 						session_entry->he_capable;
 #ifdef FEATURE_WLAN_TDLS
@@ -8003,7 +7969,6 @@ QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
 	struct pe_session *session;
-	tSirResultCodes ret;
 	tpLimMlmStartReq start_req = (tLimMlmStartReq *)data;
 	struct mac_context *mac_ctx;
 
@@ -8025,17 +7990,7 @@ QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (LIM_IS_IBSS_ROLE(session) &&
-	    session->mac_ctx->lim.gLimIbssCoalescingHappened) {
-		ibss_bss_add(session->mac_ctx, session);
-		ret = lim_mlm_add_bss(session->mac_ctx, start_req, session);
-		if (ret != eSIR_SME_SUCCESS) {
-			pe_err("AddBss failure");
-			return QDF_STATUS_E_INVAL;
-		}
-	} else {
-		lim_process_mlm_start_req(session->mac_ctx, start_req);
-	}
+	lim_process_mlm_start_req(session->mac_ctx, start_req);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8114,10 +8069,7 @@ QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (LIM_IS_IBSS_ROLE(session))
-		lim_ibss_delete_all_peers(session->mac_ctx, session);
-	else
-		lim_delete_all_peers(session);
+	lim_delete_all_peers(session);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8133,11 +8085,7 @@ QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (LIM_IS_IBSS_ROLE(session) &&
-	    session->mac_ctx->lim.gLimIbssCoalescingHappened)
-		ibss_bss_delete(session->mac_ctx, session);
-	else
-		status =  lim_send_vdev_stop(session);
+	status =  lim_send_vdev_stop(session);
 
 	return status;
 }
@@ -8232,9 +8180,7 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 	*pcap = 0;
 	pcap_info = (tpSirMacCapabilityInfo)pcap;
 
-	if (LIM_IS_IBSS_ROLE(pe_session))
-		pcap_info->ibss = 1;     /* IBSS bit */
-	else if (LIM_IS_AP_ROLE(pe_session) ||
+	if (LIM_IS_AP_ROLE(pe_session) ||
 		LIM_IS_STA_ROLE(pe_session))
 		pcap_info->ess = 1;      /* ESS bit */
 	else if (LIM_IS_P2P_DEVICE_ROLE(pe_session) ||
@@ -8292,7 +8238,7 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 	}
 
 	/* Spectrum Management bit */
-	if (!LIM_IS_IBSS_ROLE(pe_session) && pe_session->lim11hEnable) {
+	if (pe_session->lim11hEnable) {
 		if (mac->mlme_cfg->gen.enabled_11h)
 			pcap_info->spectrumMgt = 1;
 	}

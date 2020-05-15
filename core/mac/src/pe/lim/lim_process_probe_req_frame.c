@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -255,9 +255,7 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	tAniSSID ssid;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-	if (LIM_IS_AP_ROLE(session) ||
-		(LIM_IS_IBSS_ROLE(session) &&
-			 (WMA_GET_RX_BEACON_SENT(rx_pkt_info)))) {
+	if (LIM_IS_AP_ROLE(session)) {
 		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
 		pe_debug("Received Probe Request: %d bytes from",
@@ -490,8 +488,7 @@ lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 		if (LIM_IS_AP_ROLE(session))
 			lim_indicate_probe_req_to_hdd(mac_ctx,
 					buf_descr, session);
-		if (LIM_IS_AP_ROLE(session) ||
-			LIM_IS_IBSS_ROLE(session))
+		if (LIM_IS_AP_ROLE(session))
 			lim_process_probe_req_frame(mac_ctx,
 					buf_descr, session);
 	}

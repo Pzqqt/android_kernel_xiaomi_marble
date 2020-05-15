@@ -384,7 +384,6 @@ lim_get_peer_idxpool_size(uint16_t num_sta, enum bss_type bss_type)
 
 void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session,
-				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel)
 {
 	struct mgmt_beacon_probe_filter *filter;
@@ -414,18 +413,6 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 		sir_copy_mac_addr(filter->sta_bssid[session_id], *bssid);
 		pe_debug("Set filter for STA Session %d bssid "QDF_MAC_ADDR_STR,
 			session_id, QDF_MAC_ADDR_ARRAY(*bssid));
-	} else if (eSIR_IBSS_MODE == bss_type) {
-		if (!ibss_ssid) {
-			pe_err("IBSS Type with NULL SSID");
-			goto done;
-		}
-		filter->num_ibss_sessions++;
-		filter->ibss_ssid[session_id].length = ibss_ssid->length;
-		qdf_mem_copy(&filter->ibss_ssid[session_id].ssId,
-			     ibss_ssid->ssId,
-			     ibss_ssid->length);
-		pe_debug("Set filter for IBSS session %d ssid %s",
-			session_id, ibss_ssid->ssId);
 	} else if (eSIR_INFRA_AP_MODE == bss_type) {
 		if (!sap_channel) {
 			pe_err("SAP Type with invalid channel");
@@ -438,9 +425,8 @@ void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 	}
 
 done:
-	pe_debug("sta %d ibss %d sap %d",
-		filter->num_sta_sessions, filter->num_ibss_sessions,
-		filter->num_sap_sessions);
+	pe_debug("sta %d sap %d", filter->num_sta_sessions,
+		 filter->num_sap_sessions);
 }
 
 void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
@@ -472,13 +458,6 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 		qdf_mem_zero(&filter->sta_bssid[session_id],
 			    sizeof(tSirMacAddr));
 		pe_debug("Cleared STA Filter for session %d", session_id);
-	} else if (eSIR_IBSS_MODE == bss_type) {
-		if (filter->num_ibss_sessions)
-			filter->num_ibss_sessions--;
-		filter->ibss_ssid[session_id].length = 0;
-		qdf_mem_zero(&filter->ibss_ssid[session_id].ssId,
-			    WLAN_SSID_MAX_LEN);
-		pe_debug("Cleared IBSS Filter for session %d", session_id);
 	} else if (eSIR_INFRA_AP_MODE == bss_type) {
 		if (filter->num_sap_sessions)
 			filter->num_sap_sessions--;
@@ -486,9 +465,8 @@ void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 		pe_debug("Cleared SAP Filter for session %d", session_id);
 	}
 
-	pe_debug("sta %d ibss %d sap %d",
-		filter->num_sta_sessions, filter->num_ibss_sessions,
-		filter->num_sap_sessions);
+	pe_debug("sta %d sap %d", filter->num_sta_sessions,
+		 filter->num_sap_sessions);
 }
 
 void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
@@ -524,9 +502,8 @@ void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 			bss_type, session_id);
 	}
 
-	pe_debug("sta %d ibss %d sap %d",
-		filter->num_sta_sessions, filter->num_ibss_sessions,
-		filter->num_sap_sessions);
+	pe_debug("sta %d sap %d", filter->num_sta_sessions,
+		 filter->num_sap_sessions);
 }
 
 struct pe_session *pe_create_session(struct mac_context *mac,
@@ -614,7 +591,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 		 *sessionId, opmode, vdev_id, QDF_MAC_ADDR_ARRAY(bssid),
 		 numSta);
 
-	if (eSIR_INFRA_AP_MODE == bssType || eSIR_IBSS_MODE == bssType) {
+	if (bssType == eSIR_INFRA_AP_MODE) {
 		session_ptr->pSchProbeRspTemplate =
 			qdf_mem_malloc(SIR_MAX_PROBE_RESP_SIZE);
 		session_ptr->pSchBeaconFrameBegin =

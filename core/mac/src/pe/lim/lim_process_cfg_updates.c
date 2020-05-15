@@ -172,8 +172,7 @@ void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_sess
 	lim_set_cfg_protection(mac, pe_session);
 
 	/* Added for BT - AMP Support */
-	if (LIM_IS_AP_ROLE(pe_session) ||
-	    LIM_IS_IBSS_ROLE(pe_session)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		/* This check is required to ensure the beacon generation is not done
 		   as a part of join request for a BT-AMP station */
 
@@ -209,8 +208,7 @@ static void lim_update_config(struct mac_context *mac, struct pe_session *pe_ses
 					mac->mlme_cfg->ht_caps.short_preamble;
 
 	/* In STA case this parameter is filled during the join request */
-	if (LIM_IS_AP_ROLE(pe_session) ||
-		LIM_IS_IBSS_ROLE(pe_session)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		enabled = mac->mlme_cfg->wmm_params.wme_enabled;
 		pe_session->limWmeEnabled = enabled;
 	}
@@ -222,7 +220,7 @@ static void lim_update_config(struct mac_context *mac, struct pe_session *pe_ses
 		pe_session->limWsmEnabled = 0;
 	}
 	/* In STA , this parameter is filled during the join request */
-	if (LIM_IS_AP_ROLE(pe_session) || LIM_IS_IBSS_ROLE(pe_session)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		enabled = mac->mlme_cfg->wmm_params.qos_enabled;
 		pe_session->limQosEnabled = enabled;
 	}

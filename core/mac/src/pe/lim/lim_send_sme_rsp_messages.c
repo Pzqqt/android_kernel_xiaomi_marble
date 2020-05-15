@@ -41,7 +41,6 @@
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
 #include "lim_send_sme_rsp_messages.h"
-#include "lim_ibss_peer_mgmt.h"
 #include "lim_session_utils.h"
 #include "lim_types.h"
 #include "sir_api.h"
@@ -1168,9 +1167,6 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 	case eSIR_SME_AP_CAPS_CHANGED:
 		max_info_len = sizeof(struct ap_new_caps);
 		break;
-	case eSIR_SME_JOINED_NEW_BSS:
-		max_info_len = sizeof(struct new_bss_info);
-		break;
 	default:
 		max_info_len = sizeof(wm_status_change_ntf->statusChangeInfo);
 		break;
@@ -1413,40 +1409,6 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 } /*** end lim_send_sme_pe_ese_tsm_rsp() ***/
 
 #endif /* FEATURE_WLAN_ESE */
-
-#ifdef QCA_IBSS_SUPPORT
-void
-lim_send_sme_ibss_peer_ind(struct mac_context *mac,
-			   tSirMacAddr peerMacAddr,
-			   uint8_t *beacon,
-			   uint16_t beaconLen, uint16_t msgType, uint8_t sessionId)
-{
-	struct scheduler_msg mmhMsg = {0};
-	tSmeIbssPeerInd *pNewPeerInd;
-
-	pNewPeerInd = qdf_mem_malloc(sizeof(tSmeIbssPeerInd) + beaconLen);
-	if (!pNewPeerInd)
-		return;
-
-	qdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
-		     peerMacAddr, QDF_MAC_ADDR_SIZE);
-	pNewPeerInd->mesgLen = sizeof(tSmeIbssPeerInd) + beaconLen;
-	pNewPeerInd->mesgType = msgType;
-	pNewPeerInd->sessionId = sessionId;
-
-	if (beacon) {
-		qdf_mem_copy((void *)((uint8_t *) pNewPeerInd +
-				      sizeof(tSmeIbssPeerInd)), (void *)beacon,
-			     beaconLen);
-	}
-
-	mmhMsg.type = msgType;
-	mmhMsg.bodyptr = pNewPeerInd;
-	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, sessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
-
-}
-#endif
 
 /**
  * lim_process_csa_wbw_ie() - Process CSA Wide BW IE
@@ -1890,9 +1852,7 @@ void lim_handle_delete_bss_rsp(struct mac_context *mac,
 	 * not take the HO_FAIL path
 	 */
 	pe_session->process_ho_fail = false;
-	if (LIM_IS_IBSS_ROLE(pe_session))
-		lim_ibss_del_bss_rsp(mac, del_bss_rsp, pe_session);
-	else if (LIM_IS_UNKNOWN_ROLE(pe_session))
+	if (LIM_IS_UNKNOWN_ROLE(pe_session))
 		lim_process_sme_del_bss_rsp(mac, pe_session);
 	else if (LIM_IS_NDI_ROLE(pe_session))
 		lim_ndi_del_bss_rsp(mac, del_bss_rsp, pe_session);

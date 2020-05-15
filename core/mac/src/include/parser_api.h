@@ -779,9 +779,6 @@ QDF_STATUS
 populate_dot11f_ht_info(struct mac_context *mac,
 			tDot11fIEHTInfo *pDot11f, struct pe_session *pe_session);
 
-void populate_dot11f_ibss_params(struct mac_context *mac,
-				tDot11fIEIBSSParams *pDot11f,
-				struct pe_session *pe_session);
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS

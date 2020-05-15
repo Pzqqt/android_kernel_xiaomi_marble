@@ -603,30 +603,6 @@ void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac,
 		struct scheduler_msg *limMsgQ,
 		struct pe_session *pe_session);
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * lim_is_ibss_session_active() - API to check IBSS session active
- * @mac: Pointer to Global MAC structure
- *
- * Return: Pointer to active IBSS pe_session else NULL
- */
-struct pe_session *lim_is_ibss_session_active(struct mac_context *mac);
-#else
-/**
- * lim_is_ibss_session_active() - API to check IBSS session active
- * @mac: Pointer to Global MAC structure
- *
- * This function is dummy.
- *
- * Return: NULL
- */
-static inline
-struct pe_session *lim_is_ibss_session_active(struct mac_context *mac)
-{
-	return NULL;
-}
-#endif
-
 /**
  * ch_width_in_mhz() - API to get channel space in MHz
  *

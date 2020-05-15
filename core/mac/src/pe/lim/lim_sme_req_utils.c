@@ -368,8 +368,6 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 			start_bss_req->bssType);
 		return false;
 		break;
-	case eSIR_IBSS_MODE:
-		break;
 	case eSIR_INFRA_AP_MODE:
 		break;
 	case eSIR_NDI_MODE:
@@ -381,13 +379,6 @@ bool lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 		 */
 		pe_warn("Invalid bssType: %d in eWNI_SME_START_BSS_REQ",
 			start_bss_req->bssType);
-		return false;
-	}
-
-	if (start_bss_req->bssType == eSIR_IBSS_MODE
-	    && (!start_bss_req->ssId.length
-		|| start_bss_req->ssId.length > WLAN_SSID_MAX_LEN)) {
-		pe_warn("Invalid SSID length in eWNI_SME_START_BSS_REQ");
 		return false;
 	}
 

@@ -262,8 +262,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			break;
 		}
 	} else {
-		/* Received Disassociation frame in either IBSS */
-		/* or un-known role. Log and ignore it */
+		/* Received Disassoc in un-known role. Log and ignore it */
 		pe_err("received Disassoc frame with invalid reasonCode: %d in role:"
 				"%d in sme state: %d from " QDF_MAC_ADDR_STR, reasonCode,
 			GET_LIM_SYSTEM_ROLE(pe_session), pe_session->limSmeState,

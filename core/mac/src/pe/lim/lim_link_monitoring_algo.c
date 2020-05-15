@@ -63,10 +63,6 @@ static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext 
 
 	pe_debug("Deleting station: reasonCode: %d", msg->reasonCode);
 
-	if (LIM_IS_IBSS_ROLE(session_entry)) {
-		return;
-	}
-
 	stads = dph_lookup_hash_entry(mac_ctx, msg->addr2, &msg->assocId,
 				      &session_entry->dph.dphHashTable);
 

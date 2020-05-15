@@ -44,7 +44,6 @@
 #include "lim_ser_des_utils.h"
 #include "lim_admit_control.h"
 #include "lim_send_messages.h"
-#include "lim_ibss_peer_mgmt.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "lim_process_fils.h"
@@ -1804,7 +1803,6 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
  * processing on AP and while adding peer's context
  * in IBSS role to process the CFG rate sets and
  * the rate sets received in the Assoc request on AP
- * or Beacon/Probe Response from peer in IBSS.
  *
  * 1. It makes the intersection between our own rate Sat
  *    and extemcded rate set and the ones received in the
@@ -2149,8 +2147,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 	if (!add_sta_params)
 		return QDF_STATUS_E_NOMEM;
 
-	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry) ||
-		LIM_IS_NDI_ROLE(session_entry))
+	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_NDI_ROLE(session_entry))
 		sta_Addr = &sta_ds->staAddr;
 #ifdef FEATURE_WLAN_TDLS
 	/* SystemRole shouldn't be matter if staType is TDLS peer */
@@ -2201,8 +2198,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 	add_sta_params->status = QDF_STATUS_SUCCESS;
 
 	/* Update VHT/HT Capability */
-	if (LIM_IS_AP_ROLE(session_entry) ||
-	    LIM_IS_IBSS_ROLE(session_entry)) {
+	if (LIM_IS_AP_ROLE(session_entry)) {
 		add_sta_params->htCapable = sta_ds->mlmStaContext.htCapability;
 		add_sta_params->vhtCapable =
 			 sta_ds->mlmStaContext.vhtCapability;
@@ -2918,7 +2914,7 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 	 */
 	lim_util_count_sta_del(mac_ctx, sta_ds, session_entry);
 
-	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry)) {
+	if (LIM_IS_AP_ROLE(session_entry)) {
 		if (LIM_IS_AP_ROLE(session_entry)) {
 			if (session_entry->gLimProtectionControl !=
 				MLME_FORCE_POLICY_PROTECTION_DISABLE)
@@ -2936,10 +2932,6 @@ lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 					 session_entry->lim_non_ecsa_cap_num);
 			}
 		}
-
-		if (LIM_IS_IBSS_ROLE(session_entry))
-			lim_ibss_decide_protection_on_delete(mac_ctx, sta_ds,
-				     &beacon_params, session_entry);
 
 		lim_decide_short_preamble(mac_ctx, sta_ds, &beacon_params,
 					  session_entry);

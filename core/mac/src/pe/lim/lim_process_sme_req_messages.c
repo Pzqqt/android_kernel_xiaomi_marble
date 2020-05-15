@@ -39,7 +39,6 @@
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
 #include "lim_sme_req_utils.h"
-#include "lim_ibss_peer_mgmt.h"
 #include "lim_admit_control.h"
 #include "dph_hash_table.h"
 #include "lim_send_messages.h"
@@ -84,10 +83,6 @@ static void lim_update_add_ie_buffer(struct mac_context *mac,
 				     uint8_t **pDstData_buff,
 				     uint16_t *pDstDataLen,
 				     uint8_t *pSrcData_buff, uint16_t srcDataLen);
-static bool lim_update_ibss_prop_add_ies(struct mac_context *mac,
-					 uint8_t **pDstData_buff,
-					 uint16_t *pDstDataLen,
-					 tSirModifyIE *pModifyIE);
 static void lim_process_modify_add_ies(struct mac_context *mac, uint32_t *pMsg);
 
 static void lim_process_update_add_ies(struct mac_context *mac, uint32_t *pMsg);
@@ -540,8 +535,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 	tLimMlmStartReq *mlm_start_req = NULL;
 	struct start_bss_req *sme_start_bss_req = NULL;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
-	/* Flag Used in case of IBSS to Auto generate BSSID. */
-	uint32_t auto_gen_bssid = false;
 	uint8_t session_id;
 	struct pe_session *session = NULL;
 	uint8_t vdev_id = 0xFF;
@@ -604,7 +597,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 			/* Update the beacon/probe filter in mac_ctx */
 			lim_set_bcn_probe_filter(mac_ctx, session,
-						 &sme_start_bss_req->ssId,
 						 channel_number);
 		}
 
@@ -713,20 +705,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			else
 				session->vdev_nss = vdev_type_nss->p2p_go;
 			break;
-		case eSIR_IBSS_MODE:
-			session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
-			lim_get_short_slot_from_phy_mode(mac_ctx, session,
-				session->gLimPhyMode,
-				&session->shortSlotTimeSupported);
-
-			/*
-			 * initialize to "OPEN".
-			 * will be updated upon key installation
-			 */
-			session->encryptType = eSIR_ED_NONE;
-			session->vdev_nss = vdev_type_nss->ibss;
-
-			break;
 		case eSIR_NDI_MODE:
 			session->limSystemRole = eLIM_NDI_ROLE;
 			break;
@@ -800,9 +778,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(mac_ctx,
 				&sme_start_bss_req->rsnIE, session);
 
-		if (LIM_IS_AP_ROLE(session) ||
-		    LIM_IS_IBSS_ROLE(session) ||
-		    LIM_IS_NDI_ROLE(session)) {
+		if (LIM_IS_AP_ROLE(session) || LIM_IS_NDI_ROLE(session)) {
 			session->gLimProtectionControl =
 				sme_start_bss_req->protEnabled;
 			/*
@@ -836,51 +812,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		/* Fill PE session Id from the session Table */
 		mlm_start_req->sessionId = session->peSessionId;
 
-		if (mlm_start_req->bssType == eSIR_INFRA_AP_MODE ||
-		    mlm_start_req->bssType == eSIR_NDI_MODE) {
-			/*
-			 * Copy the BSSId from sessionTable to
-			 * mlmStartReq struct
-			 */
-			sir_copy_mac_addr(mlm_start_req->bssId, session->bssId);
-		} else {
-			/* ibss mode */
-			mac_ctx->lim.gLimIbssCoalescingHappened = false;
-			auto_gen_bssid = mac_ctx->mlme_cfg->ibss.auto_bssid;
-
-			if (!auto_gen_bssid) {
-				/*
-				 * We're not auto generating BSSID.
-				 * Instead, get it from session entry
-				 */
-				sir_copy_mac_addr(mlm_start_req->bssId,
-						  session->bssId);
-				/*
-				 * Start IBSS group BSSID
-				 * Auto Generating BSSID.
-				 */
-				auto_gen_bssid = ((mlm_start_req->bssId[0] &
-							0x01) ? true : false);
-			}
-
-			if (auto_gen_bssid) {
-				/*
-				 * if BSSID is not any uc id.
-				 * then use locally generated BSSID.
-				 * Autogenerate the BSSID
-				 */
-				lim_get_random_bssid(mac_ctx,
-						mlm_start_req->bssId);
-				mlm_start_req->bssId[0] = 0x02;
-
-				/*
-				 * Copy randomly generated BSSID
-				 * to the session Table
-				 */
-				sir_copy_mac_addr(session->bssId,
-						  mlm_start_req->bssId);
-			}
-		}
+		sir_copy_mac_addr(mlm_start_req->bssId, session->bssId);
 		/* store the channel num in mlmstart req structure */
 		mlm_start_req->oper_ch_freq = session->curr_op_freq;
 		mlm_start_req->cbMode = sme_start_bss_req->cbMode;
@@ -931,8 +863,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 
 		/* Initialize 11h Enable Flag */
 		session->lim11hEnable = 0;
-		if (mlm_start_req->bssType != eSIR_IBSS_MODE &&
-		    (CHAN_HOP_ALL_BANDS_ENABLE ||
+		if ((CHAN_HOP_ALL_BANDS_ENABLE ||
 		     REG_BAND_5G == session->limRFBand)) {
 			session->lim11hEnable =
 				mac_ctx->mlme_cfg->gen.enabled_11h;
@@ -1313,7 +1244,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 			}
 			/* Update the beacon/probe filter in mac_ctx */
 			lim_set_bcn_probe_filter(mac_ctx, session,
-						 &sme_join_req->ssId,
 						 bss_chan_id);
 		}
 		session->max_amsdu_num = sme_join_req->max_amsdu_num;
@@ -1580,11 +1510,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 				mac_ctx->mlme_cfg->gen.enabled_11h;
 		else
 			session->lim11hEnable = 0;
-		/*
-		 * To care of the scenario when STA transitions from
-		 * IBSS to Infrastructure mode.
-		 */
-		mac_ctx->lim.gLimIbssCoalescingHappened = false;
 
 		session->limPrevSmeState = session->limSmeState;
 		session->limSmeState = eLIM_SME_WT_JOIN_STATE;
@@ -2133,7 +2058,6 @@ static void __lim_process_sme_disassoc_req(struct mac_context *mac,
 		/* Fall through */
 		break;
 
-	case eLIM_STA_IN_IBSS_ROLE:
 	default:
 		/* eLIM_UNKNOWN_ROLE */
 		pe_err("received unexpected SME_DISASSOC_REQ for role %d",
@@ -2270,8 +2194,6 @@ void __lim_process_sme_disassoc_cnf(struct mac_context *mac, uint32_t *msg_buf)
 	case eLIM_AP_ROLE:
 		/* Fall through */
 		break;
-
-	case eLIM_STA_IN_IBSS_ROLE:
 	default:                /* eLIM_UNKNOWN_ROLE */
 		pe_err("received unexpected SME_DISASSOC_CNF role %d",
 			GET_LIM_SYSTEM_ROLE(pe_session));
@@ -2466,16 +2388,6 @@ static void __lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 			return;
 		}
 		break;
-
-	case eLIM_STA_IN_IBSS_ROLE:
-		pe_err("Deauth not allowed in IBSS");
-		if (mac_ctx->lim.gLimRspReqd) {
-			mac_ctx->lim.gLimRspReqd = false;
-			ret_code = eSIR_SME_INVALID_PARAMETERS;
-			deauth_trigger = eLIM_HOST_DEAUTH;
-			goto send_deauth;
-		}
-		return;
 	case eLIM_AP_ROLE:
 		break;
 	default:
@@ -2579,8 +2491,7 @@ void lim_delete_all_peers(struct pe_session *session)
 	tSirMacAddr bc_addr = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 	/* IBSS and NDI doesn't send Disassoc frame */
-	if (!LIM_IS_IBSS_ROLE(session) &&
-	    !LIM_IS_NDI_ROLE(session)) {
+	if (!LIM_IS_NDI_ROLE(session)) {
 		pe_debug("stop_bss_reason: %d", session->stop_bss_reason);
 		if (session->stop_bss_reason == eSIR_SME_MIC_COUNTER_MEASURES)
 			__lim_counter_measures(mac_ctx, session);
@@ -2752,12 +2663,6 @@ __lim_handle_sme_stop_bss_request(struct mac_context *mac, uint32_t *msg_buf)
 		qdf_mem_free(pe_session->add_ie_params.probeRespBCNData_buff);
 		pe_session->add_ie_params.probeRespBCNDataLen = 0;
 		pe_session->add_ie_params.probeRespBCNData_buff = NULL;
-
-		/*
-		 * lim_del_bss is also called as part of coalescing,
-		 * when we send DEL BSS followed by Add Bss msg.
-		 */
-		mac->lim.gLimIbssCoalescingHappened = false;
 	}
 
 	lim_delete_peers_and_send_vdev_stop(pe_session);
@@ -2789,7 +2694,6 @@ void lim_process_sme_del_bss_rsp(struct mac_context *mac,
 				 struct pe_session *pe_session)
 {
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	lim_ibss_delete(mac, pe_session);
 	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);
 	lim_delete_pre_auth_list(mac);
 	lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, eSIR_SME_SUCCESS,
@@ -5046,85 +4950,6 @@ lim_update_add_ie_buffer(struct mac_context *mac,
 
 }
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * lim_update_ibss_prop_add_ies() - update IBSS prop IE
- * @mac          : Pointer to Global MAC structure
- * @pDstData_buff : A pointer to pointer of  dst buffer
- * @pDstDataLen  :  A pointer to pointer of  dst buffer length
- * @pModifyIE    :  A pointer to tSirModifyIE
- *
- * This function replaces previous ibss prop_ie with new ibss prop_ie.
- *
- * Return:
- *  True or false depending upon whether IE is updated or not
- */
-static bool
-lim_update_ibss_prop_add_ies(struct mac_context *mac, uint8_t **pDstData_buff,
-			     uint16_t *pDstDataLen, tSirModifyIE *pModifyIE)
-{
-	int32_t oui_length;
-	uint8_t *ibss_ie = NULL;
-	uint8_t *vendor_ie;
-#define MAC_VENDOR_OUI  "\x00\x16\x32"
-#define MAC_VENDOR_SIZE 3
-
-	ibss_ie = pModifyIE->pIEBuffer;
-	oui_length = pModifyIE->oui_length;
-
-	if ((0 == oui_length) || (!ibss_ie)) {
-		pe_err("Invalid set IBSS vendor IE command length %d",
-			oui_length);
-		return false;
-	}
-
-	/*
-	 * Why replace only beacon OUI data here:
-	 * 1. other ie (such as wpa) shall not be overwritten here.
-	 * 2. per spec, beacon oui ie might be set twice and original one
-	 * shall be updated.
-	 */
-	vendor_ie = (uint8_t *)wlan_get_vendor_ie_ptr_from_oui(MAC_VENDOR_OUI,
-			MAC_VENDOR_SIZE, *pDstData_buff, *pDstDataLen);
-	if (vendor_ie) {
-		QDF_ASSERT((vendor_ie[1] + 2) == pModifyIE->ieBufferlength);
-		qdf_mem_copy(vendor_ie, pModifyIE->pIEBuffer,
-				pModifyIE->ieBufferlength);
-	} else {
-		uint16_t new_length;
-		uint8_t *new_ptr;
-
-		/*
-		 * check for uint16 overflow before using sum of two numbers as
-		 * length of size to malloc
-		 */
-		if (USHRT_MAX - pModifyIE->ieBufferlength < *pDstDataLen) {
-			pe_err("U16 overflow due to %d + %d",
-				pModifyIE->ieBufferlength, *pDstDataLen);
-			return false;
-		}
-
-		new_length = pModifyIE->ieBufferlength + *pDstDataLen;
-		new_ptr = qdf_mem_malloc(new_length);
-		if (!new_ptr)
-			return false;
-		qdf_mem_copy(new_ptr, *pDstData_buff, *pDstDataLen);
-		qdf_mem_copy(&new_ptr[*pDstDataLen], pModifyIE->pIEBuffer,
-				pModifyIE->ieBufferlength);
-		qdf_mem_free(*pDstData_buff);
-		*pDstDataLen = new_length;
-		*pDstData_buff = new_ptr;
-	}
-	return true;
-}
-#else
-static bool
-lim_update_ibss_prop_add_ies(struct mac_context *mac, uint8_t **pDstData_buff,
-			     uint16_t *pDstDataLen, tSirModifyIE *pModifyIE)
-{
-	return false;
-}
-#endif
 /*
 * lim_process_modify_add_ies() - process modify additional IE req.
 *
@@ -5175,12 +5000,6 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 	switch (modify_add_ies->updateType) {
 	case eUPDATE_IE_PROBE_RESP:
 		/* Probe resp */
-		if (LIM_IS_IBSS_ROLE(session_entry)) {
-			lim_update_ibss_prop_add_ies(mac_ctx,
-				&add_ie_params->probeRespData_buff,
-				&add_ie_params->probeRespDataLen,
-				&modify_add_ies->modifyIE);
-		}
 		break;
 	case eUPDATE_IE_ASSOC_RESP:
 		/* assoc resp IE */
@@ -5194,12 +5013,6 @@ static void lim_process_modify_add_ies(struct mac_context *mac_ctx,
 		break;
 	case eUPDATE_IE_PROBE_BCN:
 		/*probe beacon IE */
-		if (LIM_IS_IBSS_ROLE(session_entry)) {
-			ret = lim_update_ibss_prop_add_ies(mac_ctx,
-				&add_ie_params->probeRespBCNData_buff,
-				&add_ie_params->probeRespBCNDataLen,
-				&modify_add_ies->modifyIE);
-		}
 		if (ret == true && modify_add_ies->modifyIE.notify) {
 			lim_handle_param_update(mac_ctx,
 					modify_add_ies->updateType);

@@ -464,7 +464,6 @@ struct sir_set_antenna_mode {
  *
  * @eSIR_INFRASTRUCTURE_MODE: Infrastructure station
  * @eSIR_INFRA_AP_MODE: softAP mode
- * @eSIR_IBSS_MODE: IBSS mode
  * @eSIR_AUTO_MODE: Auto role
  * @eSIR_MONITOR_MODE: Monitor mode
  * @eSIR_NDI_MODE: NAN datapath mode
@@ -472,7 +471,6 @@ struct sir_set_antenna_mode {
 enum bss_type {
 	eSIR_INFRASTRUCTURE_MODE,
 	eSIR_INFRA_AP_MODE,
-	eSIR_IBSS_MODE,
 	eSIR_AUTO_MODE,
 	eSIR_MONITOR_MODE,
 	eSIR_NDI_MODE,
@@ -1163,10 +1161,6 @@ typedef enum eSirSmeStatusChangeCode {
 	eSIR_SME_DISASSOC_FROM_PEER,
 	eSIR_SME_LOST_LINK_WITH_PEER,
 	eSIR_SME_CHANNEL_SWITCH,
-	eSIR_SME_JOINED_NEW_BSS,
-	eSIR_SME_LEAVING_BSS,
-	eSIR_SME_IBSS_ACTIVE,
-	eSIR_SME_IBSS_INACTIVE,
 	eSIR_SME_RADAR_DETECTED,
 	eSIR_SME_AP_CAPS_CHANGED,
 } tSirSmeStatusChangeCode;
@@ -1194,13 +1188,6 @@ struct ap_new_caps {
  * eSIR_SME_DISASSOC_FROM_PEER      Reason code received in DISASSOC frame
  * eSIR_SME_LOST_LINK_WITH_PEER     None
  * eSIR_SME_CHANNEL_SWITCH          New channel number
- * eSIR_SME_JOINED_NEW_BSS          BSSID, SSID and channel number
- * eSIR_SME_LEAVING_BSS             None
- * eSIR_SME_IBSS_ACTIVE             Indicates that another STA joined
- *                                  IBSS apart from this STA that
- *                                  started IBSS
- * eSIR_SME_IBSS_INACTIVE           Indicates that only this STA is left
- *                                  in IBSS
  * eSIR_SME_RADAR_DETECTED          Indicates that radar is detected
  * eSIR_SME_AP_CAPS_CHANGED         Indicates that capabilities of the AP
  *                                  that STA is currently associated with
@@ -1222,11 +1209,6 @@ struct wm_status_change_ntf {
 		/* none for eSIR_SME_LOST_LINK_WITH_PEER */
 		/* eSIR_SME_CHANNEL_SWITCH */
 		uint32_t new_freq;
-		/* eSIR_SME_JOINED_NEW_BSS */
-		struct new_bss_info newBssInfo;
-		/* none for eSIR_SME_LEAVING_BSS */
-		/* none for eSIR_SME_IBSS_ACTIVE */
-		/* none for eSIR_SME_IBSS_INACTIVE */
 		/* none for eSIR_SME_RADAR_DETECTED */
 		/* eSIR_SME_AP_CAPS_CHANGED */
 		struct ap_new_caps apNewCaps;
@@ -1604,11 +1586,6 @@ typedef struct sSmeIbssPeerInd {
 
 	/* Beacon will be appended for new Peer indication. */
 } tSmeIbssPeerInd, *tpSmeIbssPeerInd;
-
-struct ibss_peer_inactivity_ind {
-	uint8_t bss_idx;
-	struct qdf_mac_addr peer_addr;
-};
 
 /**
  * struct lim_channel_status

@@ -5039,7 +5039,7 @@ QDF_STATUS csr_roam_stop_network(struct mac_context *mac, uint32_t sessionId,
 						    pBssConfig, pIes);
 		if (csr_is_conn_state_infra(mac, sessionId)) {
 			/*
-			 * the new Bss is an Ibss OR we are roaming from
+			 * we are roaming from
 			 * Infra to Infra across SSIDs
 			 * (roaming to a new SSID)...
 			 * Not worry about WDS connection for now
@@ -6854,15 +6854,6 @@ static void csr_roam_process_start_bss_success(struct mac_context *mac_ctx,
 	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	/*
-	 * on the StartBss Response, LIM is returning the Bss Description that
-	 * we are beaconing.  Add this Bss Description to our scan results and
-	 * chain the Profile to this Bss Description.  On a Start BSS, there was
-	 * no detected Bss description (no partner) so we issued the Start Bss
-	 * to start the Ibss without any Bss description.  Lim was kind enough
-	 * to return the Bss Description that we start beaconing for the newly
-	 * started Ibss.
-	 */
 	sme_debug("receives start BSS ok indication");
 	status = QDF_STATUS_E_FAILURE;
 	start_bss_rsp = (struct start_bss_rsp *) context;
@@ -13045,23 +13036,6 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 			}
 		} else if (WLAN_REG_IS_24GHZ_CH_FREQ(opr_ch_freq)) {
-			/*
-			 * WiFi tests require IBSS networks to start in 11b mode
-			 * without any change to the default parameter settings
-			 * on the adapter. We use ACU to start an IBSS through
-			 * creation of a startIBSS profile. This startIBSS
-			 * profile has Auto MACProtocol and the adapter property
-			 * setting for dot11Mode is also AUTO. So in this case,
-			 * let's start the IBSS network in 11b mode instead of
-			 * 11g mode. So this is for Auto=profile->MacProtocol &&
-			 * Auto=Global. dot11Mode && profile->channel is < 14,
-			 * then start the IBSS in b mode.
-			 *
-			 * Note: we used to have this start as for
-			 * best performance. now to specify that the user will
-			 * have to set the do11Mode in the property page to 11g
-			 * to force it.
-			 */
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 			*band = REG_BAND_2G;
 		} else {

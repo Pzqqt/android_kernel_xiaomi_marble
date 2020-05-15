@@ -646,7 +646,6 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 		mac_ctx, &frm->DSParams,
 		wlan_reg_freq_to_chan(mac_ctx->pdev,
 				      pe_session->curr_op_freq));
-	populate_dot11f_ibss_params(mac_ctx, &frm->IBSSParams, pe_session);
 
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		if (pe_session->wps_state != SAP_WPS_DISABLED)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -224,36 +224,6 @@ void lim_send_sme_delts_ind(struct mac_context *mac,
 
 #ifdef FEATURE_WLAN_ESE
 void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac, tAniGetTsmStatsRsp *pStats);
-#endif
-
-#ifdef QCA_IBSS_SUPPORT
-/*
- * lim_send_sme_ibss_peer_ind() - API to send ibss peer ind to sme
- * @mac_ctx: Global mac_ctx
- * @peerMacAddr: peer mac address
- * @staIndex: sta index
- * @beacon: pionter to beacon
- * @beaconLen: length of beacon buffer
- * @msg_type: msg_type
- * @sessionId: session id
- *
- *
- * Return: none
- */
-void lim_send_sme_ibss_peer_ind(struct mac_context *mac, tSirMacAddr peerMacAddr,
-				uint8_t *beacon,
-				uint16_t beaconLen, uint16_t msgType,
-				uint8_t sessionId);
-#else
-static inline void
-lim_send_sme_ibss_peer_ind(struct mac_context *mac,
-			   tSirMacAddr peerMacAddr,
-			   uint16_t staIndex,
-			   uint8_t *beacon,
-			   uint16_t beaconLen, uint16_t msgType,
-			   uint8_t sessionId)
-{
-}
 #endif
 
 void lim_send_sme_max_assoc_exceeded_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,

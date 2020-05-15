@@ -234,12 +234,6 @@ typedef void (*CHANGE_CHANNEL_CALLBACK)(struct mac_context *mac, QDF_STATUS stat
 					uint32_t *data,
 					struct pe_session *pe_session);
 
-/* / LIM global definitions */
-struct lim_ibss_info {
-	void *mac_hdr;
-	void *beacon;
-};
-
 typedef struct sDialogueToken {
 	/* bytes 0-3 */
 	uint16_t assocId;
@@ -337,20 +331,6 @@ typedef struct sAniSirLim {
 	void *gpLimMlmSetKeysReq;
 
 	/* ////////////////////////////////////////     BSS RELATED END /////////////////////////////////////////// */
-
-	/* ////////////////////////////////////////     IBSS RELATED START /////////////////////////////////////////// */
-	/* This indicates whether this STA coalesced and adapter to peer's capabilities or not. */
-	uint8_t gLimIbssCoalescingHappened;
-
-	/* / Definition for storing IBSS peers BSS description */
-	tLimIbssPeerNode *gLimIbssPeerList;
-	uint32_t gLimNumIbssPeers;
-	uint32_t ibss_retry_cnt;
-
-	/* ibss info - params for which ibss to join while coalescing */
-	struct lim_ibss_info ibss_info;
-
-	/* ////////////////////////////////////////     IBSS RELATED END /////////////////////////////////////////// */
 
 	/* ////////////////////////////////////////     STATS/COUNTER RELATED START /////////////////////////////////////////// */
 
@@ -728,8 +708,6 @@ struct vdev_type_nss {
  * struct mgmt_beacon_probe_filter
  * @num_sta_sessions: Number of active PE STA sessions
  * @sta_bssid: Array of PE STA session's peer BSSIDs
- * @num_ibss_sessions: Number of active PE IBSS sessions
- * @ibss_ssid: Array of PE IBSS session's SSID
  * @num_sap_session: Number of active PE SAP sessions
  * @sap_channel: Array of PE SAP session's channels
  *
@@ -739,8 +717,6 @@ struct vdev_type_nss {
 struct mgmt_beacon_probe_filter {
 	uint8_t num_sta_sessions;
 	tSirMacAddr sta_bssid[WLAN_MAX_VDEVS];
-	uint8_t num_ibss_sessions;
-	tSirMacSSid ibss_ssid[WLAN_MAX_VDEVS];
 	uint8_t num_sap_sessions;
 	uint8_t sap_channel[WLAN_MAX_VDEVS];
 };

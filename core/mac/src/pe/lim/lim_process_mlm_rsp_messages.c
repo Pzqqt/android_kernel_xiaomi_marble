@@ -29,7 +29,6 @@
 #include "lim_send_messages.h"
 #include "lim_admit_control.h"
 #include "lim_send_messages.h"
-#include "lim_ibss_peer_mgmt.h"
 #include "lim_ft.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
@@ -224,9 +223,8 @@ void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *msg_buf)
 					pe_session->ch_center_freq_seg1,
 					BIT(band));
 
-		if (!(LIM_IS_IBSS_ROLE(pe_session) ||
-			(LIM_IS_AP_ROLE(pe_session))))
-				return;
+		if (!LIM_IS_AP_ROLE(pe_session))
+			return;
 		if (pe_session->ch_width == CH_WIDTH_160MHZ) {
 			send_bcon_ind = false;
 		} else if (pe_session->ch_width == CH_WIDTH_80P80MHZ) {
@@ -844,8 +842,6 @@ void lim_process_mlm_disassoc_ind(struct mac_context *mac, uint32_t *msg_buf)
 		return;
 	}
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
-	case eLIM_STA_IN_IBSS_ROLE:
-		break;
 	case eLIM_STA_ROLE:
 		pe_session->limSmeState = eLIM_SME_WT_DISASSOC_STATE;
 		MTRACE(mac_trace
@@ -1093,8 +1089,6 @@ void lim_process_mlm_purge_sta_ind(struct mac_context *mac, uint32_t *msg_buf)
 	/* Purge STA indication from MLM */
 	resultCode = (tSirResultCodes) pMlmPurgeStaInd->reasonCode;
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
-	case eLIM_STA_IN_IBSS_ROLE:
-		break;
 	case eLIM_STA_ROLE:
 	default:        /* eLIM_AP_ROLE */
 		if (LIM_IS_STA_ROLE(pe_session) &&
@@ -1730,11 +1724,6 @@ void lim_process_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 				session_entry);
 		return;
 	}
-	if (LIM_IS_IBSS_ROLE(session_entry)) {
-		lim_process_ibss_del_sta_rsp(mac_ctx, msg,
-				session_entry);
-		return;
-	}
 	if (LIM_IS_NDI_ROLE(session_entry)) {
 		lim_process_ndi_del_sta_rsp(mac_ctx, msg, session_entry);
 		return;
@@ -1985,22 +1974,8 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 		MTRACE(mac_trace
 			       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
 			       pe_session->limMlmState));
-		if (eSIR_IBSS_MODE == pe_session->bssType) {
-			/** IBSS is 'active' when we receive
-			 * Beacon frames from other STAs that are part of same IBSS.
-			 * Mark internal state as inactive until then.
-			 */
-			pe_session->limIbssActive = false;
-			pe_session->statypeForBss = STA_ENTRY_PEER; /* to know session created for self/peer */
-			limResetHBPktCount(pe_session);
-		}
+		pe_session->limSystemRole = eLIM_AP_ROLE;
 
-		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
-
-		if (eSIR_INFRA_AP_MODE == pe_session->bssType)
-			pe_session->limSystemRole = eLIM_AP_ROLE;
-		else
-			pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
 		sch_edca_profile_update(mac, pe_session);
 		lim_init_pre_auth_list(mac);
 		/* Check the SAP security configuration.If configured to
@@ -2049,76 +2024,6 @@ static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 
 	lim_send_start_bss_confirm(mac, &mlmStartCnf);
 }
-
-#ifdef QCA_IBSS_SUPPORT
-/*
- * lim_process_ibss_mlm_add_bss_rsp: API to process add bss response
- * in IBSS role
- * @session_entry: pe session entry
- * @auth_mode: auth mode needs to be updated
- *
- * Return: None
- */
-static void
-lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
-				 struct add_bss_rsp *add_bss_rsp,
-				 struct pe_session *pe_session)
-{
-	tLimMlmStartCnf mlmStartCnf;
-
-	if (!add_bss_rsp) {
-		pe_err("add_bss_rsp is NULL");
-		return;
-	}
-	if (QDF_IS_STATUS_SUCCESS(add_bss_rsp->status)) {
-		pe_debug("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS");
-
-		/* Set MLME state */
-		pe_session->limMlmState = eLIM_MLM_BSS_STARTED_STATE;
-		MTRACE(mac_trace
-			       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
-			       pe_session->limMlmState));
-		/** IBSS is 'active' when we receive
-		 * Beacon frames from other STAs that are part of same IBSS.
-		 * Mark internal state as inactive until then.
-		 */
-		pe_session->limIbssActive = false;
-		limResetHBPktCount(pe_session);
-		pe_session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
-		pe_session->statypeForBss = STA_ENTRY_SELF;
-		sch_edca_profile_update(mac, pe_session);
-		if (0 == pe_session->freePeerIdxHead)
-			lim_init_peer_idxpool(mac, pe_session);
-
-		/* Apply previously set configuration at HW */
-		lim_apply_configuration(mac, pe_session);
-		mlmStartCnf.resultCode = eSIR_SME_SUCCESS;
-		/* If ADD BSS was issued as part of IBSS coalescing, don't send the message to SME, as that is internal to LIM */
-		if (true == mac->lim.gLimIbssCoalescingHappened) {
-			lim_ibss_add_bss_rsp_when_coalescing(mac,
-						pe_session->curr_op_freq,
-						pe_session);
-			return;
-		}
-	} else {
-		pe_err("WMA_ADD_BSS_REQ failed with status %d",
-			add_bss_rsp->status);
-		mlmStartCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
-	}
-	/* Send this message to SME, when ADD_BSS is initiated by SME */
-	/* If ADD_BSS is done as part of coalescing, this won't happen. */
-	/* Update PE session Id */
-	mlmStartCnf.sessionId = pe_session->peSessionId;
-	lim_send_start_bss_confirm(mac, &mlmStartCnf);
-}
-#else
-static inline void
-lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
-				 struct add_bss_rsp *add_bss_rsp,
-				 struct pe_session *pe_session)
-{
-}
-#endif
 
 #ifdef WLAN_FEATURE_FILS_SK
 /*
@@ -2349,10 +2254,7 @@ void lim_handle_add_bss_rsp(struct mac_context *mac_ctx,
 	bss_type = session_entry->bssType;
 	/* update PE session Id */
 	mlm_start_cnf.sessionId = session_entry->peSessionId;
-	if (eSIR_IBSS_MODE == bss_type) {
-		lim_process_ibss_mlm_add_bss_rsp(mac_ctx, add_bss_rsp,
-						 session_entry);
-	} else if (eSIR_NDI_MODE == session_entry->bssType) {
+	if (eSIR_NDI_MODE == session_entry->bssType) {
 		lim_process_ndi_mlm_add_bss_rsp(mac_ctx, add_bss_rsp,
 						session_entry);
 	} else {

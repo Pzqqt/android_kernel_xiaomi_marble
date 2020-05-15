@@ -202,8 +202,7 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			break;
 		}
 	} else {
-		/* Received Deauth frame in either IBSS */
-		/* or un-known role. Log and ignore it */
+		/* Received Deauth frame un-known role. Log and ignore it */
 		pe_err("received Deauth frame with reasonCode %d in role %d from "
 			QDF_MAC_ADDR_STR, reasonCode,
 			GET_LIM_SYSTEM_ROLE(pe_session),
@@ -481,9 +480,6 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 				QDF_MAC_ADDR_ARRAY(addr));
 			return;
 		}
-		break;
-
-	case eLIM_STA_IN_IBSS_ROLE:
 		break;
 
 	case eLIM_AP_ROLE:

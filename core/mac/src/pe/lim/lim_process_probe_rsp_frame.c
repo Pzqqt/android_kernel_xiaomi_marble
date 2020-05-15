@@ -262,12 +262,6 @@ lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info
 			lim_detect_change_in_ap_capabilities(
 				mac_ctx, probe_rsp, session_entry);
 		}
-	} else {
-		if (LIM_IS_IBSS_ROLE(session_entry) &&
-		    (session_entry->limMlmState ==
-				eLIM_MLM_BSS_STARTED_STATE))
-			lim_handle_ibss_coalescing(mac_ctx, probe_rsp,
-					rx_Packet_info, session_entry);
 	}
 	qdf_mem_free(probe_rsp);
 

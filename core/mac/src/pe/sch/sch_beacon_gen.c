@@ -306,7 +306,6 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	populate_dot11f_ds_params(mac_ctx, &bcn_1->DSParams,
 				  wlan_reg_freq_to_chan(
 				  mac_ctx->pdev, session->curr_op_freq));
-	populate_dot11f_ibss_params(mac_ctx, &bcn_1->IBSSParams, session);
 
 	offset = sizeof(tAniBeaconStruct);
 	ptr = session->pSchBeaconFrameBegin + offset;
@@ -485,9 +484,9 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 					&bcn_2->bss_color_change);
 	}
 
-	if (session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
-		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
-					session);
+
+	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
+				session);
 
 	populate_dot11f_ext_supp_rates(mac_ctx,
 				POPULATE_DOT11F_RATES_OPERATIONAL,
@@ -590,8 +589,7 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			pe_debug("extcap not extracted");
 		}
 		/* merge extcap IE */
-		if (extcap_present &&
-			session->limSystemRole != eLIM_STA_IN_IBSS_ROLE)
+		if (extcap_present)
 			lim_merge_extcap_struct(&bcn_2->ExtCap,
 						&extracted_extcap,
 						true);
@@ -727,7 +725,6 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(struct mac_context *mac,
 
 	}
 
-	/* IBSS params will not be present in the Beacons transmitted by AP */
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -736,8 +733,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 						     uint32_t *DefProbeRspIeBitmap,
 						     tDot11fProbeResponse *prb_rsp)
 {
-	/* IBSS parameter set - will not be present in probe response tx by AP */
-	/* country */
+
 	if (beacon2->Country.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, WLAN_ELEMID_COUNTRY);
 		qdf_mem_copy((void *)&prb_rsp->Country,
@@ -1074,18 +1070,6 @@ QDF_STATUS sch_process_pre_beacon_ind(struct mac_context *mac,
 	}
 
 	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
-
-	case eLIM_STA_IN_IBSS_ROLE:
-		/* generate IBSS parameter set */
-		if (pe_session->statypeForBss == STA_ENTRY_SELF)
-			status =
-			    write_beacon_to_memory(mac, (uint16_t) beaconSize,
-						   (uint16_t) beaconSize,
-						   pe_session, reason);
-		else
-			pe_err("can not send beacon for PEER session entry");
-		break;
-
 	case eLIM_AP_ROLE: {
 		uint8_t *ptr =
 			&pe_session->pSchBeaconFrameBegin[pe_session->

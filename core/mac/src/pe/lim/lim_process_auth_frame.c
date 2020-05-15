@@ -944,8 +944,7 @@ static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (LIM_IS_AP_ROLE(pe_session) ||
-			LIM_IS_IBSS_ROLE(pe_session)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		/*
 		 * Check if wep bit was set in FC. If not set,
 		 * reject with Authentication frame4 with

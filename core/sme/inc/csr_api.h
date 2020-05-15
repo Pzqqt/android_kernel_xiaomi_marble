@@ -116,7 +116,6 @@ typedef enum {
 	eCSR_DOT11_MODE_11ac_ONLY = 0x0200,
 	/*
 	 * This is for WIFI test. It is same as eWNIAPI_MAC_PROTOCOL_ALL
-	 * except when it starts IBSS in 11B of 2.4GHz
 	 * It is for CSR internal use
 	 */
 	eCSR_DOT11_MODE_AUTO = 0x0400,
@@ -132,7 +131,7 @@ typedef enum {
  * @eCSR_BSS_TYPE_INFRASTRUCTURE: Infrastructure station
  * @eCSR_BSS_TYPE_INFRA_AP: SoftAP
  * @eCSR_BSS_TYPE_NDI: NAN datapath interface
- * @eCSR_BSS_TYPE_ANY: any BSS type (IBSS or Infrastructure)
+ * @eCSR_BSS_TYPE_ANY: any BSS type
  */
 typedef enum {
 	eCSR_BSS_TYPE_INFRASTRUCTURE,
@@ -474,7 +473,7 @@ typedef enum {
 } eCsrRoamDisconnectReason;
 
 typedef enum {
-	/* Not associated in Infra or participating in an IBSS/Ad-hoc */
+	/* Not associated in Infra or participating in an Ad-hoc */
 	eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED,
 	/* Associated in an Infrastructure network. */
 	eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED,

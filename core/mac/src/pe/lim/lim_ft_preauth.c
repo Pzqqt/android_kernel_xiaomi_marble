@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -456,9 +456,7 @@ void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 				  pbssDescription->bssId);
 
 		/* Update the beacon/probe filter in mac_ctx */
-		lim_set_bcn_probe_filter(mac,
-					 ft_session,
-					 NULL, 0);
+		lim_set_bcn_probe_filter(mac, ft_session, 0);
 
 		if (ft_session->bssType == eSIR_INFRASTRUCTURE_MODE)
 			ft_session->limSystemRole = eLIM_STA_ROLE;
