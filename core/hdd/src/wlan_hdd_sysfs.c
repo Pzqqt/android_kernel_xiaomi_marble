@@ -54,6 +54,7 @@
 #include <wlan_hdd_sysfs_get_stats.h>
 #include <wlan_hdd_sysfs_set_wlan_dbg.h>
 #include <wlan_hdd_sysfs_txrx_fw_st_rst.h>
+#include <wlan_hdd_sysfs_gtx_bw_mask.h>
 #include <wlan_hdd_sysfs_set_scan_cfg.h>
 #include <wlan_hdd_sysfs_set_mon_chan.h>
 #include <wlan_hdd_sysfs_set_radar.h>
@@ -648,6 +649,7 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_tx_stbc_create(adapter);
 	hdd_sysfs_get_stats_create(adapter);
 	hdd_sysfs_txrx_fw_st_rst_create(adapter);
+	hdd_sysfs_gtx_bw_mask_create(adapter);
 	hdd_sysfs_txrx_fw_stats_create(adapter);
 	hdd_sysfs_txrx_stats_create(adapter);
 	hdd_sysfs_get_range_ext_create(adapter);
@@ -665,6 +667,7 @@ hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_range_ext_destroy(adapter);
 	hdd_sysfs_txrx_stats_destroy(adapter);
 	hdd_sysfs_txrx_fw_stats_destroy(adapter);
+	hdd_sysfs_gtx_bw_mask_destroy(adapter);
 	hdd_sysfs_txrx_fw_st_rst_destroy(adapter);
 	hdd_sysfs_get_stats_destroy(adapter);
 	hdd_sysfs_get_tx_stbc_destroy(adapter);
@@ -694,6 +697,7 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_tx_stbc_create(adapter);
 	hdd_sysfs_get_stats_create(adapter);
 	hdd_sysfs_txrx_fw_st_rst_create(adapter);
+	hdd_sysfs_gtx_bw_mask_create(adapter);
 	hdd_sysfs_set_radar_create(adapter);
 	hdd_sysfs_txrx_fw_stats_create(adapter);
 	hdd_sysfs_txrx_stats_create(adapter);
@@ -707,6 +711,7 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_txrx_stats_destroy(adapter);
 	hdd_sysfs_txrx_fw_stats_destroy(adapter);
 	hdd_sysfs_set_radar_destroy(adapter);
+	hdd_sysfs_gtx_bw_mask_destroy(adapter);
 	hdd_sysfs_txrx_fw_st_rst_destroy(adapter);
 	hdd_sysfs_get_stats_destroy(adapter);
 	hdd_sysfs_get_tx_stbc_destroy(adapter);
