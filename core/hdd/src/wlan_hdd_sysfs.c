@@ -738,7 +738,6 @@ void hdd_create_adapter_sysfs_files(struct hdd_adapter *adapter)
 
 	switch (device_mode){
 	case QDF_STA_MODE:
-	case QDF_P2P_DEVICE_MODE:
 		hdd_sysfs_create_sta_adapter_root_obj(adapter);
 		break;
 	case QDF_SAP_MODE:
