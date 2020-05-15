@@ -31,6 +31,15 @@
  *
  */
 #define USER_BUF_LEN (1 + 2 + 2 + 2 + MAX_BUFFER_SIZE + 6)
+/*
+ *		IOT SIM User Buf Format for Drop
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * |FrmType/subtype| Seq |category|action| drop |MacAddr|
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * |   2Characters |2char| 2chars |2chars| 1char|17chars|
+ *
+ */
+#define USER_BUF_LEN_DROP (2 + 2 + 2 + 2 + 1 + 17)
 
 /**
  * wlan_iot_sim_pdev_obj_create_handler() - handler for pdev object create
@@ -80,6 +89,7 @@ QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
  * iot_sim_frame_update() - Management frame update
  * @pdev: reference to global pdev object
  * @nbuf: frame buffer
+ * @direction: direction tx or rx
  *
  * This function updates the outgoing management frame with
  * the content stored in iot_sim_context.
@@ -87,7 +97,8 @@ QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
  * Return: QDF_STATUS_SUCCESS on success
  * QDF_STATUS_E_FAILURE on failure
  */
-QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf);
+QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev,
+				qdf_nbuf_t nbuf, bool direction);
 
 /*
  * iot_sim_get_ctx_from_pdev() - API to get iot_sim context object

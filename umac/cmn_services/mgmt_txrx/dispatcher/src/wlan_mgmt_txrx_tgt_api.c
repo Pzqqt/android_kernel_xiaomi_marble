@@ -908,6 +908,63 @@ mgmt_txrx_get_frm_type(uint8_t mgmt_subtype, uint8_t *mpdu_data_ptr)
 	return frm_type;
 }
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+static QDF_STATUS simulation_frame_update(struct wlan_objmgr_psoc *psoc,
+					  qdf_nbuf_t buf,
+					  struct mgmt_rx_event_params *rx_param)
+{
+	uint8_t *addr = NULL;
+	struct wlan_objmgr_vdev *vdev = NULL;
+	uint8_t pdevid = 0;
+	wlan_objmgr_ref_dbgid dbgid;
+	struct wlan_lmac_if_rx_ops *rx_ops = NULL;
+	struct wlan_objmgr_pdev *pdev;
+	struct ieee80211_frame *wh;
+	u_int8_t *data;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
+	if (rx_ops && rx_ops->iot_sim_rx_ops.iot_sim_cmd_handler) {
+		data = (uint8_t *)qdf_nbuf_data(buf);
+		wh = (struct ieee80211_frame *)data;
+		addr = (uint8_t *)wh->i_addr3;
+		pdevid = rx_param->pdev_id;
+		dbgid = WLAN_IOT_SIM_ID;
+		if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *)addr)) {
+			pdev = wlan_objmgr_get_pdev_by_id(psoc, pdevid,
+							  dbgid);
+			if (pdev) {
+				vdev = wlan_objmgr_pdev_get_first_vdev(pdev,
+								       dbgid);
+				wlan_objmgr_pdev_release_ref(pdev, dbgid);
+			}
+		} else
+			vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(psoc,
+									 pdevid,
+									 addr,
+									 dbgid);
+		if (vdev) {
+			status = rx_ops->iot_sim_rx_ops.
+					iot_sim_cmd_handler(vdev, buf, false);
+			if (status == QDF_STATUS_E_NULL_VALUE) {
+				wlan_objmgr_vdev_release_ref(vdev, dbgid);
+				mgmt_txrx_debug("iot_sim:Pkt processed at RX");
+				return status;
+			}
+			wlan_objmgr_vdev_release_ref(vdev, dbgid);
+		}
+	}
+	return status;
+}
+#else
+static QDF_STATUS simulation_frame_update(struct wlan_objmgr_psoc *psoc,
+					  qdf_nbuf_t buf,
+					  struct mgmt_rx_event_params *rx_param)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_mgmt_txrx_rx_handler_list_copy() - copies rx handler list
  * @rx_handler: pointer to rx handler list
@@ -1083,6 +1140,9 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 				(le16toh(*(uint16_t *)wh->i_seq) >>
 				WLAN_SEQ_SEQ_SHIFT), mgmt_rx_params->rssi,
 				mgmt_rx_params->tsf_delta);
+
+	if (simulation_frame_update(psoc, buf, mgmt_rx_params))
+		return QDF_STATUS_E_FAILURE;
 
 	mgmt_txrx_psoc_ctx = (struct mgmt_txrx_priv_psoc_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,

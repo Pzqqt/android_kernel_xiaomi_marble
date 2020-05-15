@@ -1424,7 +1424,7 @@ struct wlan_lmac_if_sptrl_rx_ops {
  **/
 struct wlan_lmac_if_iot_sim_rx_ops {
 	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
-					  qdf_nbuf_t n_buf);
+					  qdf_nbuf_t n_buf, bool tx);
 };
 #endif
 

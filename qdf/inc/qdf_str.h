@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,6 +168,18 @@ static inline int32_t
 qdf_str_ncmp(const char *str1, const char *str2, qdf_size_t limit)
 {
 	return __qdf_str_ncmp(str1, str2, limit);
+}
+
+/**
+ * qdf_str_sep - extract token from string
+ * @str: String buffer
+ * @delim: Delimitter
+ * Return: Pointer to the first token
+ *
+ */
+static inline char *qdf_str_sep(char **str, char *delim)
+{
+	return __qdf_str_sep(str, delim);
 }
 
 #endif /* __QDF_STR_H */

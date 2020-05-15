@@ -164,11 +164,26 @@ struct iot_sim_context {
  * @IOT_SIM_MAX_OPERATION - iot sim max operation
  */
 enum iot_sim_operations {
-	INVALID_OPERATION,
-	CONTENT_CHANGE = 1,
+	CONTENT_CHANGE,
 	DROP,
 	DELAY,
 	IOT_SIM_MAX_OPERATION
+};
+
+/* enum iot_sim_subcmd - iot sim FW related subcommands
+ *
+ * @ADD_RULE - Add Rule
+ * @DEL_RULE - Delete Rule
+ * @ADD_RULE_ACTION - Add rule for action frame
+ * @DEL_RULE_ACTION - Del rule for action frame
+ * @IOT_SIM_MAX_SUBCMD - iot sim max subcmd
+ */
+enum iot_sim_subcmd {
+	ADD_RULE = 0,
+	DEL_RULE,
+	ADD_RULE_ACTION,
+	DEL_RULE_ACTION,
+	IOT_SIM_MAX_SUBCMD,
 };
 
 #endif /* _IOT_SIM_DEFS_I_H_ */

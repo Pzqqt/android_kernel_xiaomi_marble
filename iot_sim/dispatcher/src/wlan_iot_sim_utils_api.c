@@ -23,11 +23,12 @@
 
 #define IEEE80211_FRAME_BODY_OFFSET 0x18
 
-QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t nbuf)
+QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t nbuf,
+			       bool tx)
 {
 	struct wlan_objmgr_pdev *pdev = vdev->vdev_objmgr.wlan_pdev;
 
-	return iot_sim_frame_update(pdev, nbuf);
+	return iot_sim_frame_update(pdev, nbuf, tx);
 }
 
 QDF_STATUS

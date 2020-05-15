@@ -20,6 +20,7 @@
 #include <qdf_mem.h>
 #include <qdf_types.h>
 #include <qdf_util.h>
+#include <qdf_str.h>
 #include <wmi_unified_param.h>
 
 /*
@@ -267,9 +268,9 @@ iot_sim_parse_user_input_content_change(struct iot_sim_context *isc,
 	int argc = -1, ret = 0;
 
 	qdf_mem_zero(argv, sizeof(argv));
-	userbuf = strim(userbuf);
+	userbuf = qdf_str_trim(userbuf);
 
-	while ((substr = strsep(&userbuf, delim)) != NULL) {
+	while ((substr = qdf_str_sep(&userbuf, delim)) != NULL) {
 		if (!isspace(*substr) && *substr != '\0')
 			argv[++argc] = substr;
 		if (argc >= 5)
@@ -360,6 +361,17 @@ err:
 	return status;
 }
 
+/*
+ * iot_sim_get_index_for_action_frm - function to convert 802.11 action frame
+ *				      category and action code into iot sim
+ *				      specific code.
+ *
+ * @frm: buf containing 802.11 action/category codes
+ * @cat_type: buf to hold converted category code
+ * @act_type: buf to hold converted action code
+ *
+ * Return: QDF_STATUS_SUCCESS on success, failure otherwise
+ */
 QDF_STATUS
 iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
 				 uint8_t *act_type)
@@ -406,6 +418,30 @@ iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
 }
 
 /*
+ * iot_sim_action_frame_supported_by_fw - function to find if action frame is
+ *					  supported by fw or not
+ * @category: iot_sim specific category code
+ * @action: iot_sim specific action code
+ *
+ * Return: true if supported else false
+ */
+bool
+iot_sim_action_frame_supported_by_fw(uint8_t category, uint8_t action)
+{
+	switch (category) {
+	case IEEE80211_ACTION_CAT_BA:
+		switch (action) {
+		case IEEE80211_ACTION_BA_ADDBA_REQUEST:
+			return true;
+		default:
+			return false;
+		}
+	default:
+		return false;
+	}
+}
+
+/*
  * iot_sim_frame_supported_by_fw - function to find if frame is supported by fw
  * @type: 802.11 frame type
  * @subtype: 802.11 frame subtype
@@ -413,8 +449,11 @@ iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
  * Return: true if supported else false
  */
 bool
-iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
+iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype, bool action)
 {
+	if (action)
+		return iot_sim_action_frame_supported_by_fw(type, subtype);
+
 	switch (type << IEEE80211_FC0_TYPE_SHIFT) {
 	case IEEE80211_FC0_TYPE_MGT:
 		switch (subtype << IEEE80211_FC0_SUBTYPE_SHIFT) {
@@ -445,6 +484,74 @@ iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
 }
 
 /*
+ * iot_sim_remap_type_subtype - function to convert rules for response
+ *				type frame into request type. This is
+ *				used for drop/delay operation. This function
+ *				will update the passed type and subtype value.
+ *
+ * @type: 802.11 frame type
+ * @subtype: 802.11 frame subtype
+ * @seq: authentication sequence number, mostly 0 for non-authentication frame
+ * @action: flag to indicate action frame
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS
+iot_sim_remap_type_subtype(uint8_t *type, uint8_t *subtype,
+			   uint16_t *seq, bool action)
+{
+	if (action) {
+		switch (*type) {
+		case CAT_BA:
+			switch (*subtype) {
+			case IEEE80211_ACTION_BA_ADDBA_RESPONSE:
+				*subtype = IEEE80211_ACTION_BA_ADDBA_REQUEST;
+				break;
+			default:
+				break;
+			}
+			break;
+		default:
+			break;
+		}
+		return QDF_STATUS_SUCCESS;
+	}
+
+	switch (*type << IEEE80211_FC0_TYPE_SHIFT) {
+	case IEEE80211_FC0_TYPE_MGT:
+		switch (*subtype << IEEE80211_FC0_SUBTYPE_SHIFT) {
+		case IEEE80211_FC0_SUBTYPE_ASSOC_RESP:
+			*subtype = IEEE80211_FC0_SUBTYPE_ASSOC_REQ;
+			*subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+			break;
+		case IEEE80211_FC0_SUBTYPE_REASSOC_RESP:
+			*subtype = IEEE80211_FC0_SUBTYPE_REASSOC_REQ;
+			*subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+			break;
+		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+			*subtype = IEEE80211_FC0_SUBTYPE_PROBE_REQ;
+			*subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+			break;
+		case IEEE80211_FC0_SUBTYPE_AUTH:
+			*subtype = IEEE80211_FC0_SUBTYPE_AUTH;
+			*subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+			/* If auth response (auth seq num 2) is marked as
+			 * drop, then drop the auth request (auth seq num 1)
+			 */
+			if (*seq == IEEE80211_AUTH_OPEN_RESPONSE)
+				*seq = IEEE80211_AUTH_OPEN_REQUEST;
+			break;
+		default:
+			break;
+		}
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
  * iot_sim_send_rule_to_fw - function to send iot_sim rule to fw
  *
  * @isc: iot sim context
@@ -456,6 +563,8 @@ iot_sim_frame_supported_by_fw(uint8_t type, uint8_t subtype)
  * @offset: user provided offset
  * @frm: user provided frame content
  * @length: length of frm
+ * @action: flag to indicate action frame
+ * @drop: flag to indicate set drop rule
  * @clear: flag to indicate set rule or clear
  *
  * Return: QDF_STATUS_SUCCESS
@@ -466,20 +575,30 @@ iot_sim_send_rule_to_fw(struct iot_sim_context *isc,
 			struct qdf_mac_addr *mac,
 			uint8_t type, uint8_t subtype,
 			uint16_t seq, uint16_t offset,
-			uint8_t *frm, uint16_t len, bool clear)
+			uint8_t *frm, uint16_t len,
+			bool action, bool clear)
 {
 	struct simulation_test_params param;
 
-	if (iot_sim_frame_supported_by_fw(type, subtype)) {
+	if (iot_sim_frame_supported_by_fw(type, subtype, action)) {
 		qdf_mem_zero(&param, sizeof(struct simulation_test_params));
 		param.pdev_id = wlan_objmgr_pdev_get_pdev_id(isc->pdev_obj);
 		qdf_mem_copy(param.peer_mac, mac, QDF_MAC_ADDR_SIZE);
 		param.test_cmd_type = oper;
-		/* subtype_cmd: Rule:- set:0 clear:1 */
-		param.test_subcmd_type = clear;
+		/* subtype_cmd: Set subcmd based on action and clear flag */
+		if (action) {
+			if (clear)
+				param.test_subcmd_type = DEL_RULE_ACTION;
+			else
+				param.test_subcmd_type = ADD_RULE_ACTION;
+		} else {
+			if (clear)
+				param.test_subcmd_type = DEL_RULE;
+			else
+				param.test_subcmd_type = ADD_RULE;
+		}
 		param.frame_type = type;
 		param.frame_subtype = subtype;
-
 		param.seq = seq;
 		param.offset = offset;
 		param.frame_length = len;
@@ -514,14 +633,18 @@ iot_sim_del_rule(struct iot_sim_rule_per_seq **s_e,
 		qdf_mem_free((*f_e)->frm_content);
 		(*f_e)->frm_content = NULL;
 	} else if (oper == DROP) {
-		/* TBD */
+		(*f_e)->drop = false;
 	} else if (oper == DELAY) {
 		/* TBD */
 	}
 
-	(*s_e)->use_count--;
-	qdf_clear_bit(oper, (unsigned long *)
-			    &(*f_e)->rule_bitmap);
+	if (qdf_test_bit(oper, (unsigned long *)
+			       &(*f_e)->rule_bitmap)) {
+		(*s_e)->use_count--;
+		qdf_clear_bit(oper, (unsigned long *)
+				    &(*f_e)->rule_bitmap);
+	}
+
 	if (!(*f_e)->rule_bitmap) {
 		qdf_mem_free(*f_e);
 		*f_e = NULL;
@@ -574,6 +697,9 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 		iot_sim_err("iot_sim: isc is null");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (oper == DROP || oper == DELAY)
+		iot_sim_remap_type_subtype(&type, &subtype, &seq, action);
 
 	peer = iot_sim_find_peer_from_mac(isc, mac);
 	if (peer) {
@@ -631,7 +757,7 @@ iot_sim_add_rule(struct iot_sim_rule_per_seq **s_e,
 		(*f_e)->len = len;
 		(*f_e)->offset = offset;
 	} else if (oper == DROP) {
-		/* TBD */
+		(*f_e)->drop = true;
 	} else if (oper == DELAY) {
 		/* TBD */
 	}
@@ -666,7 +792,7 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 			 uint8_t type, uint8_t subtype,
 			 uint16_t seq, uint16_t offset,
 			 uint8_t *frm, uint16_t len,
-			 bool action)
+			 uint8_t drop, bool action)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct iot_sim_rule_per_peer *peer;
@@ -685,6 +811,9 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 		iot_sim_err("iot_sim: Rule removed - Fail");
 		return status;
 	}
+
+	if (oper == DROP || oper == DELAY)
+		iot_sim_remap_type_subtype(&type, &subtype, &seq, action);
 
 	peer = iot_sim_find_peer_from_mac(isc, mac);
 	if (peer) {
@@ -800,7 +929,8 @@ iot_sim_debug_content_change_write(struct file *file,
 
 	clear = length ? false : true;
 	status = iot_sim_send_rule_to_fw(isc, oper, &mac_addr, type, subtype,
-					 seq, offset, content, length, clear);
+					 seq, offset, content, length,
+					 is_action, clear);
 	if (QDF_IS_STATUS_SUCCESS(status))
 		goto free;
 
@@ -814,7 +944,8 @@ iot_sim_debug_content_change_write(struct file *file,
 	} else {
 		status = iot_sim_add_rule_for_mac(isc, oper, &mac_addr,
 						  type, subtype, seq, offset,
-						  content, length, is_action);
+						  content, length, 0,
+						  is_action);
 	}
 	if (QDF_IS_STATUS_SUCCESS(status))
 		iot_sim_err("iot_sim: Content Change Operation - success");
@@ -846,6 +977,96 @@ iot_sim_debug_delay_write(struct file *file,
 }
 
 /*
+ * iot_sim_parse_user_input_drop - function to parse user input into
+ *				   predefined format for drop operation.
+ *				   All arguments passed will be filled
+ *				   upon success
+ * @isc: iot sim context
+ * @userbuf: local copy of user input
+ * @count: length of userbuf
+ * @t_st: address of type variable
+ * @seq: address of seq variable
+ * @cat_type: 802.11 action frame category code
+ * @act_type: 802.11 action frame action code
+ * @drop: address of drop variable to specify drop the frame or not
+ * @addr: pointer to mac address
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *	   QDF_STATUS_E_FAILURE otherwise
+ */
+QDF_STATUS
+iot_sim_parse_user_input_drop(struct iot_sim_context *isc,
+			      char *userbuf, ssize_t count,
+			      uint8_t *t_st, uint16_t *seq,
+			      uint8_t *cat_type, uint8_t *act_type,
+			      uint8_t *drop, struct qdf_mac_addr *addr)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	char *argv[6], *delim = " ", *substr;
+	int argc = -1, ret = 0;
+
+	qdf_mem_zero(argv, sizeof(argv));
+	userbuf = qdf_str_trim(userbuf);
+
+	while ((substr = qdf_str_sep(&userbuf, delim)) != NULL) {
+		if (!isspace(*substr) && *substr != '\0')
+			argv[++argc] = substr;
+		if (argc >= 5)
+			break;
+	}
+
+	if (argc < 3) {
+		iot_sim_err("Invalid argument count %d", (argc + 1));
+		return status;
+	}
+
+	if (!argv[0] || !argv[1] || !argv[2] || !argv[3] || !argv[4]) {
+		iot_sim_err("One or more arguments are null");
+		return status;
+	}
+	/*
+	 * User can send drop data in following format:
+	 * 1. Add drop rule for specific peer
+	 *	<t_st> <seq> <category_type> <action_type> <drop> <MAC>
+	 * 2. Add drop rule for broadcast peer
+	 *	<t_st> <seq> <category_type> <action_type> <drop>
+	 * 3. Remove drop rule for specific peer
+	 *	<t_st> <seq> <category_type> <action_type> <drop> <MAC>
+	 * 4. Remove drop rule for broadcast peer
+	 *	<t_st> <seq> <category_type> <action_type> <drop> <BCAST_MAC>
+	 * 5. Remove drop rule for all peer
+	 *	<t_st> <seq> <category_type> <action_type> <drop>
+	 */
+
+	ret = kstrtou8(argv[0], 16, t_st);
+	if (ret)
+		goto err;
+	ret = kstrtou16(argv[1], 10, seq);
+	if (ret)
+		goto err;
+	ret = kstrtou8(argv[2], 10, cat_type);
+	if (ret)
+		goto err;
+	ret = kstrtou8(argv[3], 10, act_type);
+	if (ret)
+		goto err;
+	ret = kstrtou8(argv[4], 10, drop);
+	if (ret)
+		goto err;
+
+	/*
+	 * If argv[5] is valid, this must be mac address
+	 */
+	if (argv[5])
+		status = qdf_mac_parse(argv[5], addr);
+
+	return status;
+err:
+	iot_sim_err("kstrtoXX failed: %d", ret);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
  * iot_sim_debug_drop_write - Write Handler for drop operation
  * @file: debugfs file pointer
  * @buf: buf of user input
@@ -859,7 +1080,81 @@ iot_sim_debug_drop_write(struct file *file,
 			 const char __user *buf,
 			 size_t count, loff_t *ppos)
 {
-	iot_sim_err("drop iot sim ops called");
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	unsigned char t_st, type, subtype;
+	uint16_t seq = 0;
+	char *locbuf = NULL;
+	enum iot_sim_operations oper = DROP;
+	struct qdf_mac_addr mac_addr = QDF_MAC_ADDR_BCAST_INIT;
+	struct iot_sim_context *isc =
+			((struct seq_file *)file->private_data)->private;
+	uint8_t action = 0, category = 0, tmp[2], drop = 0;
+	bool is_action = false, clear = false;
+
+	if ((!buf) || (count > USER_BUF_LEN_DROP) || (count < 6))
+		return -EFAULT;
+
+	locbuf = qdf_mem_malloc(USER_BUF_LEN_DROP + 1);
+	if (!locbuf)
+		return -ENOMEM;
+
+	if (copy_from_user(locbuf, buf, count)) {
+		qdf_mem_free(locbuf);
+		return -EFAULT;
+	}
+
+	status = iot_sim_parse_user_input_drop(isc, locbuf, count,
+					       &t_st, &seq, &category,
+					       &action, &drop, &mac_addr);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto free;
+
+	type = (t_st & IEEE80211_FC0_TYPE_MASK) >> IEEE80211_FC0_TYPE_SHIFT;
+	subtype = (t_st & IEEE80211_FC0_SUBTYPE_MASK);
+	subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+
+	if (type > N_FRAME_TYPE || subtype > N_FRAME_SUBTYPE || seq > MAX_SEQ)
+		goto free;
+
+	if (FRAME_TYPE_IS_ACTION(type, subtype)) {
+		tmp[0] = category;
+		tmp[1] = action;
+		/*
+		 * convert 802.11 category and action code to iot sim codes
+		 */
+		status = iot_sim_get_index_for_action_frm(tmp, &category,
+							  &action);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto free;
+
+		is_action = 1;
+		type = category;
+		subtype = action;
+	}
+
+	clear = drop ? false : true;
+	status = iot_sim_send_rule_to_fw(isc, oper, &mac_addr, type, subtype,
+					 seq, 0, NULL, 0, is_action, clear);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		goto free;
+
+	/* check for rule removal */
+	if (!drop) {
+		status = iot_sim_delete_rule_for_mac(isc, oper, seq,
+						     type, subtype,
+						     &mac_addr,
+						     is_action);
+	} else {
+		status = iot_sim_add_rule_for_mac(isc, oper, &mac_addr,
+						  type, subtype, seq, 0,
+						  NULL, 0, drop, is_action);
+	}
+	if (QDF_IS_STATUS_SUCCESS(status))
+		iot_sim_debug("iot_sim: Rule update Drop Operation - Success");
+	else
+		iot_sim_err("iot_sim: Rule update Drop Operation - Fail");
+free:
+	qdf_mem_free(locbuf);
 	return count;
 }
 

@@ -267,6 +267,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @FTM_TIME_SYNC_ID:           ftm time sync operations
  * @WLAN_PKT_CAPTURE_ID         Packet capture operations
  * @WLAN_DCS_ID:                DCS operations
+ * @WLAN_IOT_SIM_ID:            IOT Simulation feature
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -349,6 +350,7 @@ typedef enum {
 	FTM_TIME_SYNC_ID       = 73,
 	WLAN_PKT_CAPTURE_ID   = 74,
 	WLAN_DCS_ID           = 75,
+	WLAN_IOT_SIM_ID       = 76,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -437,7 +439,8 @@ static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_PSOC_TARGET_IF_ID",
 					"FTM_TIME_SYNC_ID",
 					"WLAN_PKT_CAPTURE_ID",
-					"WLAN_DCS_ID"};
+					"WLAN_DCS_ID",
+					"WLAN_IOT_SIM_ID"};
 
 	if (id >= WLAN_REF_ID_MAX)
 		return "Unknown";

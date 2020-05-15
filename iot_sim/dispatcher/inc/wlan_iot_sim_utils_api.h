@@ -28,10 +28,12 @@ struct wmi_iot_sim_cmd_ops;
  * iot_sim_cmd_handler() - IOT SIM frame handler function
  * @vdev - vdev object.
  * @buf - skb
+ * @tx - TRUE in case of Tx
  *
  * Return : QDF_STATUS_E_SUCCESS/QDF_STATUS_E_FAILURE.
  */
-QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t buf);
+QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t buf,
+			       bool tx);
 
 /**
  * wlan_iot_sim_init() - API to init iot_sim component
