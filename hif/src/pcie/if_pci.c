@@ -1389,27 +1389,20 @@ static void  hif_check_for_get_put_out_of_sync(struct hif_pci_softc *sc)
 }
 
 /**
- * hif_pm_runtime_sanitize_on_exit(): sanitize the pm usage count and state
+ * hif_pm_runtime_sanitize_on_exit(): sanitize runtime PM gets/puts from driver
  * @sc: pci context
  *
- * Ensure we have only one vote against runtime suspend before closing
- * the runtime suspend feature.
+ * Ensure all gets/puts are in sync before exiting runtime PM feature.
+ * Also make sure all runtime PM locks are deinitialized properly.
  *
- * all gets by the wlan driver should have been returned
- * one vote should remain as part of cnss_runtime_exit
+ * Return: void
  *
- * needs to be revisited if we share the root complex.
  */
 static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 {
 	struct hif_pm_runtime_lock *ctx, *tmp;
 
 	hif_check_for_get_put_out_of_sync(sc);
-
-	if (atomic_read(&sc->dev->power.usage_count) != 2)
-		hif_pci_runtime_pm_warn(sc, "Driver Module Closing");
-	else
-		return;
 
 	spin_lock_bh(&sc->runtime_lock);
 	list_for_each_entry_safe(ctx, tmp, &sc->prevent_suspend_list, list) {
@@ -1418,16 +1411,6 @@ static void hif_pm_runtime_sanitize_on_exit(struct hif_pci_softc *sc)
 		spin_lock_bh(&sc->runtime_lock);
 	}
 	spin_unlock_bh(&sc->runtime_lock);
-
-	/* Since default usage count is 2 so ensure 2 and only 2 usage count
-	 * when exit so that when the WLAN driver module is re-enabled runtime
-	 * PM won't be disabled also ensures runtime PM doesn't get broken on
-	 * by being less than 2.
-	 */
-	if (atomic_read(&sc->dev->power.usage_count) <= 1)
-		atomic_set(&sc->dev->power.usage_count, 2);
-	while (atomic_read(&sc->dev->power.usage_count) > 2)
-		hif_pm_runtime_put_auto(sc->dev);
 }
 
 static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
