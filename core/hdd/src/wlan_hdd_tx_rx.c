@@ -2063,7 +2063,8 @@ QDF_STATUS hdd_rx_flush_packet_cbk(void *adapter_context, uint8_t vdev_id)
 	}
 
 	/* do fisa flush for this vdev */
-	hdd_rx_fisa_flush_by_vdev_id(soc, vdev_id);
+	if (hdd_ctx->config->fisa_enable)
+		hdd_rx_fisa_flush_by_vdev_id(soc, vdev_id);
 
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_flush_pkts_by_vdev_id(soc, vdev_id);
