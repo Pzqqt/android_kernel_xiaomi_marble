@@ -1316,11 +1316,6 @@ IE TIM (EID_TIM)                          // 7.3.2.6
     vbmp[1..251];
 }
 
-IE IBSSParams (EID_IBSS_PARAM_SET)        // 7.3.2.7
-{
-    atim, 2;
-}
-
 IE ChallengeText (EID_CHALLENGE_TEXT)     // 7.3.2.8
 {
     text[1..253];
@@ -3467,7 +3462,6 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  FHParamSet;
     OPTIE  DSParams;
     OPTIE  CFParams;
-    OPTIE  IBSSParams;
     OPTIE  TIM;
     OPTIE  Country;
     OPTIE  FHParams;
@@ -3538,7 +3532,7 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
 // this: whenever  our config changes,  call schSetFixedBeaconFields.  There,
 // we serialize the following  Beacon fields into gSchBeaconFrameBegin (after
 // the power template & MAC header): TimeStamp, BeaconInterval, Capabilities,
-// SSID, SuppRates, DSParams, & IBSSParams.  It sets gSchBeaconOffsetBegin to
+// SSID, SuppRates, DSParams.  It sets gSchBeaconOffsetBegin to
 // the length of this buffer (incl. power template & MAC header).
 
 // Next, it serializes the following fields into gSchBeaconFrameEnd: Country,
@@ -3566,7 +3560,6 @@ FRAME Beacon1
     MANDIE SSID;
     MANDIE SuppRates;
     OPTIE  DSParams;
-    OPTIE  IBSSParams;
 }
 
 FRAME Beacon2
@@ -3637,7 +3630,6 @@ FRAME BeaconIEs
     OPTIE  FHParamSet;
     OPTIE  DSParams;
     OPTIE  CFParams;
-    OPTIE  IBSSParams;
     OPTIE  TIM;
     OPTIE  Country;
     OPTIE  FHParams;
@@ -3904,7 +3896,6 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  FHParamSet;
     OPTIE  DSParams;
     OPTIE  CFParams;
-    OPTIE  IBSSParams;
     OPTIE  Country;
     OPTIE  FHParams;
     OPTIE  FHPattTable;

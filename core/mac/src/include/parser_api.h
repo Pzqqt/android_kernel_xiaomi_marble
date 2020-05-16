@@ -267,7 +267,6 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	uint8_t Vendor3IEPresent;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
-	tDot11fIEIBSSParams IBSSParams;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tDot11fIEQComVendorIE   AvoidChannelIE;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -483,7 +482,6 @@ typedef struct sSirEseBcnReportMandatoryIe {
 	tSirMacFHParamSet fhParamSet;
 	tSirMacDsParamSetIE dsParamSet;
 	tSirMacCfParamSet cfParamSet;
-	tSirMacIBSSParams ibssParamSet;
 	tSirMacTim tim;
 	tSirMacRRMEnabledCap rmEnabledCapabilities;
 
@@ -492,7 +490,6 @@ typedef struct sSirEseBcnReportMandatoryIe {
 	uint8_t fhParamPresent;
 	uint8_t dsParamsPresent;
 	uint8_t cfPresent;
-	uint8_t ibssParamPresent;
 	uint8_t timPresent;
 	uint8_t rrmPresent;
 } tSirEseBcnReportMandatoryIe, *tpSirEseBcnReportMandatoryIe;
