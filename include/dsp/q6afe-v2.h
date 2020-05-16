@@ -395,6 +395,7 @@ void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 		     u32 port_id);
 void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag);
 void afe_get_island_mode_cfg(u16 port_id, u32 *enable_flag);
+int afe_send_cdc_dma_data_align(u16 port_id, u32 cdc_dma_data_align);
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	u32 rate);
 int afe_set_tws_channel_mode(u32 foramt, u16 port_id, u32 channel_mode);
