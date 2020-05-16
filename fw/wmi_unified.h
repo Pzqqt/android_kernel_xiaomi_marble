@@ -3651,6 +3651,13 @@ typedef struct {
      * for any EMA VAP on any pdev.
      */
     A_UINT32 ema_max_profile_period;
+    /** @brief max_ndp_sessions
+     * This is the max ndp sessions sent by the host which is the minimum
+     * of the value requested within the host's ini configurations and
+     * the max ndp sessions supported by the firmware (as reported in the
+     * SERVICE_READY_EXT2_EVENT message).
+     */
+    A_UINT32 max_ndp_sessions;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
@@ -19021,6 +19028,13 @@ typedef struct {
      * This data contains the string message which will be given to Host to dump it to kernel logs.
      */
 } wmi_nan_dmesg_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_nan_capabilities */
+    A_UINT32 tlv_header;
+    /** Maximum number of ndp sessions supported by the Firmware */
+    A_UINT32 max_ndp_sessions;
+} wmi_nan_capabilities;
 
 /** NAN DATA CMD's */
 
