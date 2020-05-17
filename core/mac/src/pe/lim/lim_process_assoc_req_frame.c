@@ -852,8 +852,11 @@ enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 			pe_err("vdev is NULL");
 			return eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		}
+		if ((peer_crypto_params.rsn_caps &
+		    WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) &&
+		    wlan_crypto_vdev_is_pmf_enabled(vdev))
+			*pmf_connection = true;
 
-		*pmf_connection = wlan_crypto_vdev_is_pmf_enabled(vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 		return lim_check_crypto_param(assoc_req, &peer_crypto_params);
 
