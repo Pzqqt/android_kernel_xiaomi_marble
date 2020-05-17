@@ -4746,6 +4746,7 @@ typedef struct {
 
 #define HTT_LATENCY_PROFILE_MAX_HIST        3
 #define HTT_STATS_MAX_PROF_STATS_NAME_LEN  32
+#define HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST 3
 typedef struct {
     htt_tlv_hdr_t   tlv_hdr;
     /* print_header:
@@ -4771,6 +4772,20 @@ typedef struct {
      */
     A_UINT32 hist_intvl;
     A_UINT32 hist[HTT_LATENCY_PROFILE_MAX_HIST];
+    A_UINT32 page_fault_max;   /* max page faults in any 1 sampling window */
+    A_UINT32 page_fault_total; /* summed over all sampling windows */
+    /* ignored_latency_count:
+     * ignore some of profile latency to avoid avg skewing
+     */
+    A_UINT32 ignored_latency_count;
+    /* interrupts_max: max interrupts within any single sampling window */
+    A_UINT32 interrupts_max;
+    /* interrupts_hist: histogram of interrupt rate
+     * bin0 contains the number of sampling windows that had 0 interrupts,
+     * bin1 contains the number of sampling windows that had 1-4 interrupts,
+     * bin2 contains the number of sampling windows that had > 4 interrupts
+     */
+    A_UINT32 interrupts_hist[HTT_INTERRUPTS_LATENCY_PROFILE_MAX_HIST];
 } htt_latency_prof_stats_tlv;
 
 typedef struct {
