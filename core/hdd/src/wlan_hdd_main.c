@@ -3836,6 +3836,7 @@ close:
 
 psoc_close:
 	hdd_component_psoc_close(hdd_ctx->psoc);
+	wlan_global_lmac_if_close(hdd_ctx->psoc);
 	cds_deinit_ini_config();
 
 cds_free:
