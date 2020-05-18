@@ -1300,6 +1300,15 @@ extern void hal_get_srng_params(hal_soc_handle_t hal_soc_hdl,
 }
 qdf_export_symbol(hal_get_srng_params);
 
+void hal_set_low_threshold(hal_ring_handle_t hal_ring_hdl,
+				 uint32_t low_threshold)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring_hdl;
+	srng->u.src_ring.low_threshold = low_threshold * srng->entry_size;
+}
+qdf_export_symbol(hal_set_low_threshold);
+
+
 #ifdef FORCE_WAKE
 void hal_set_init_phase(hal_soc_handle_t soc, bool init_phase)
 {

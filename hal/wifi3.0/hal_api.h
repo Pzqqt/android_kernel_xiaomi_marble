@@ -686,6 +686,9 @@ extern uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type);
  */
 uint32_t hal_srng_max_entries(void *hal_soc, int ring_type);
 
+void hal_set_low_threshold(hal_ring_handle_t hal_ring_hdl,
+				 uint32_t low_threshold);
+
 /**
  * hal_srng_dump - Dump ring status
  * @srng: hal srng pointer

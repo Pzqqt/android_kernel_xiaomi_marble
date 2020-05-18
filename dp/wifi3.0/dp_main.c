@@ -1374,9 +1374,8 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 
 	/* During initialisation monitor rings are only filled with
 	 * MON_BUF_MIN_ENTRIES entries. So low threshold needs to be set to
-	 * a value less than that. Once HTT dynamic config of ring threshold
-	 * setting is enabled, then the low threshold updated should be
-	 * adjusted accrodingly.
+	 * a value less than that. Low threshold value is reconfigured again
+	 * to 1/8th of the ring size when monitor vap is created.
 	 */
 	if (ring_type == RXDMA_MONITOR_BUF)
 		ring_params->low_threshold = MON_BUF_MIN_ENTRIES >> 1;
@@ -6461,6 +6460,8 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc,
 	uint32_t mac_id;
 	uint32_t mac_for_pdev;
 	struct dp_pdev *pdev;
+	uint32_t num_entries;
+	struct dp_srng *mon_buf_ring;
 	struct dp_vdev *vdev =
 		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
 						   vdev_id);
@@ -6499,6 +6500,17 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc,
 							  pdev->pdev_id);
 		dp_rx_pdev_mon_buf_buffers_alloc(pdev, mac_for_pdev,
 						 FALSE);
+		/*
+		 * Configure low interrupt threshld when monitor mode is
+		 * configured.
+		 */
+		mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
+		num_entries = mon_buf_ring->num_entries;
+		hal_set_low_threshold(pdev->soc->rxdma_mon_buf_ring[mac_for_pdev].hal_srng,
+				      num_entries >> 3);
+		htt_srng_setup(pdev->soc->htt_handle, pdev->pdev_id,
+			       pdev->soc->rxdma_mon_buf_ring[mac_for_pdev]
+			       .hal_srng, RXDMA_MONITOR_BUF);
 	}
 
 	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
