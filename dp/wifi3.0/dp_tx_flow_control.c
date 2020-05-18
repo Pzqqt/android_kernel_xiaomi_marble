@@ -90,8 +90,8 @@ dp_tx_flow_pool_reattach(struct dp_tx_desc_pool_s *pool)
 
 	if (pool->avail_desc > pool->start_th[DP_TH_BE_BK])
 		pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
-	if (pool->avail_desc <= pool->start_th[DP_TH_BE_BK] &&
-	    pool->avail_desc > pool->start_th[DP_TH_VI])
+	else if (pool->avail_desc <= pool->start_th[DP_TH_BE_BK] &&
+		 pool->avail_desc > pool->start_th[DP_TH_VI])
 		pool->status = FLOW_POOL_BE_BK_PAUSED;
 	else if (pool->avail_desc <= pool->start_th[DP_TH_VI] &&
 		 pool->avail_desc > pool->start_th[DP_TH_VO])
