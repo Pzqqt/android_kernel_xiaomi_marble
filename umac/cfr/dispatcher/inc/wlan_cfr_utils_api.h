@@ -451,6 +451,12 @@ struct cfr_rcc_param {
  * total_tx_evt_cnt: No. of Tx completion events since wifi was up
  * dbr_evt_cnt: No. of WMI DBR completion events
  * release_cnt: No. of CFR data buffers relayed to userspace
+ * tx_peer_status_cfr_fail: No. of tx events without tx status set to
+ * PEER_CFR_CAPTURE_EVT_STATUS_MASK indicating CFR capture failure on a peer.
+ * tx_evt_status_cfr_fail: No. of tx events without tx status set to
+ * CFR_TX_EVT_STATUS_MASK indicating CFR capture status failure.
+ * tx_dbr_cookie_lookup_fail: No. of dbr cookie lookup failures during tx event
+ * process.
  * rcc_param: Structure to store CFR config for the current commit session
  * global: Structure to store accumulated CFR config
  * rx_tlv_evt_cnt: Number of CFR WDI events from datapath
@@ -494,6 +500,9 @@ struct pdev_cfr {
 	uint64_t total_tx_evt_cnt;
 	uint64_t dbr_evt_cnt;
 	uint64_t release_cnt;
+	uint64_t tx_peer_status_cfr_fail;
+	uint64_t tx_evt_status_cfr_fail;
+	uint64_t tx_dbr_cookie_lookup_fail;
 #ifdef WLAN_ENH_CFR_ENABLE
 	struct cfr_rcc_param rcc_param;
 	struct ta_ra_cfr_cfg global[MAX_TA_RA_ENTRIES];

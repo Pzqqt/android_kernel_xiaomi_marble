@@ -882,6 +882,12 @@ QDF_STATUS ucfg_cfr_rcc_dump_dbg_counters(struct wlan_objmgr_vdev *vdev)
 		pcfr->invalid_dma_length_cnt);
 	cfr_err("flush_timeout_dbr_cnt = %llu\n",
 		pcfr->flush_timeout_dbr_cnt);
+	cfr_err("tx_peer_status_cfr_fail = %llu\n",
+		pcfr->tx_peer_status_cfr_fail);
+	cfr_err("tx_evt_status_cfr_fail = %llu\n",
+		pcfr->tx_evt_status_cfr_fail);
+	cfr_err("tx_dbr_cookie_lookup_fail = %llu\n",
+		pcfr->tx_dbr_cookie_lookup_fail);
 	cfr_err("PPDU id mismatch for same cookie:\n");
 	cfr_err("clear_txrx_event = %llu\n",
 		pcfr->clear_txrx_event);
@@ -954,6 +960,9 @@ QDF_STATUS ucfg_cfr_rcc_clr_dbg_counters(struct wlan_objmgr_vdev *vdev)
 	pcfr->invalid_dma_length_cnt = 0;
 	pcfr->clear_txrx_event = 0;
 	pcfr->cfr_dma_aborts = 0;
+	pcfr->tx_peer_status_cfr_fail = 0;
+	pcfr->tx_evt_status_cfr_fail = 0;
+	pcfr->tx_dbr_cookie_lookup_fail = 0;
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
 	return status;
