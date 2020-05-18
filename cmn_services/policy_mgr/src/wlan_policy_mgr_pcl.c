@@ -26,7 +26,6 @@
 /* Include files */
 
 #include "wlan_policy_mgr_api.h"
-#include "wlan_policy_mgr_tables_no_dbs_i.h"
 #include "wlan_policy_mgr_i.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
@@ -52,8 +51,14 @@ first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
 enum policy_mgr_pcl_type
 	(*second_connection_pcl_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
 			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
+enum policy_mgr_pcl_type const
+	(*second_connection_pcl_non_dbs_table)[PM_MAX_ONE_CONNECTION_MODE]
+			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
 pm_dbs_pcl_third_connection_table_type
 		*third_connection_pcl_dbs_table;
+enum policy_mgr_pcl_type const
+	(*third_connection_pcl_non_dbs_table)[PM_MAX_TWO_CONNECTION_MODE]
+			[PM_MAX_NUM_OF_MODE][PM_MAX_CONC_PRIORITY_MODE];
 policy_mgr_next_action_two_connection_table_type
 		*next_action_two_connection_table;
 policy_mgr_next_action_three_connection_table_type
@@ -815,7 +820,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			pcl = (*second_connection_pcl_dbs_table)
 				[second_index][mode][conc_system_pref];
 		} else {
-			pcl = second_connection_pcl_nodbs_table
+			pcl = (*second_connection_pcl_non_dbs_table)
 				[second_index][mode][conc_system_pref];
 		}
 
@@ -832,7 +837,7 @@ QDF_STATUS policy_mgr_get_pcl(struct wlan_objmgr_psoc *psoc,
 			pcl = (*third_connection_pcl_dbs_table)
 				[third_index][mode][conc_system_pref];
 		} else {
-			pcl = third_connection_pcl_nodbs_table
+			pcl = (*third_connection_pcl_non_dbs_table)
 				[third_index][mode][conc_system_pref];
 		}
 		break;

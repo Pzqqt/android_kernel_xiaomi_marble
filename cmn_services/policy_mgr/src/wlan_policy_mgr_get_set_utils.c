@@ -1050,6 +1050,27 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
+bool policy_mgr_is_interband_mcc_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct wmi_unified *wmi_handle;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return false;
+	}
+
+	return !wmi_service_enabled(wmi_handle,
+				    wmi_service_no_interband_mcc_support);
+}
+
 bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 {
 	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
@@ -2369,7 +2390,10 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 					policy_mgr_get_ch_width(bw));
 		if (chan_state == CHANNEL_STATE_DFS)
 			is_dfs_ch = true;
-		/* don't allow 3rd home channel on same MAC */
+		/* don't allow 3rd home channel on same MAC
+		 * also check for single mac target which doesn't
+		 * support interbad MCC as well
+		 */
 		if (!policy_mgr_allow_new_home_channel(psoc, mode, ch_freq,
 						       num_connections,
 						       is_dfs_ch))

@@ -26,7 +26,6 @@
 /* Include files */
 
 #include "wlan_policy_mgr_api.h"
-#include "wlan_policy_mgr_tables_no_dbs_i.h"
 #include "wlan_policy_mgr_i.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
@@ -2913,7 +2912,8 @@ enum policy_mgr_pcl_type policy_mgr_get_pcl_from_second_conn_table(
 	if (dbs_capable)
 		return (*second_connection_pcl_dbs_table)[idx][type][sys_pref];
 	else
-		return second_connection_pcl_nodbs_table[idx][type][sys_pref];
+		return (*second_connection_pcl_non_dbs_table)
+			[idx][type][sys_pref];
 }
 
 enum policy_mgr_pcl_type policy_mgr_get_pcl_from_third_conn_table(
@@ -2927,6 +2927,7 @@ enum policy_mgr_pcl_type policy_mgr_get_pcl_from_third_conn_table(
 	if (dbs_capable)
 		return (*third_connection_pcl_dbs_table)[idx][type][sys_pref];
 	else
-		return third_connection_pcl_nodbs_table[idx][type][sys_pref];
+		return (*third_connection_pcl_non_dbs_table)
+			[idx][type][sys_pref];
 }
 #endif

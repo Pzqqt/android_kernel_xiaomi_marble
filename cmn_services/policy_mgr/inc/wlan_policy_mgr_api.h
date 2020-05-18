@@ -2388,6 +2388,15 @@ bool policy_mgr_is_dbs_enable(struct wlan_objmgr_psoc *psoc);
 bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_is_interband_mcc_supported() - Checks for interband MCC support
+ * @psoc: PSOC object information
+ * Checks if target supports interband MCC or not
+ *
+ * Return: True if the target supports interband MCC else False
+ */
+bool policy_mgr_is_interband_mcc_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_dbs_scan_allowed() - Check if DBS scan is allowed or not
  * @psoc: PSOC object information
  * Checks if the DBS scan can be performed or not
