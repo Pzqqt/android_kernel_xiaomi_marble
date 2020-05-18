@@ -1621,7 +1621,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 			ce_event_type_to_str(event->type),
 			event->index, event->memory);
 #ifdef HIF_CE_DEBUG_DATA_BUF
-	len += snprintf(buf + len, PAGE_SIZE - len, ", Data len=%lu",
+	len += snprintf(buf + len, PAGE_SIZE - len, ", Data len=%zu",
 			event->actual_data_len);
 #endif
 
