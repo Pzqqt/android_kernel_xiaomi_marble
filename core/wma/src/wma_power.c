@@ -302,11 +302,10 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	if (mlme_get_tx_power(iface->vdev) != tx_pwr_params->power) {
 
 		/* tx_power changed, Push the tx_power to FW */
-		WMA_LOGI("%s: Set TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
-			__func__, tx_pwr_params->power);
+		wma_nofl_debug("TXP[W][set_tx_pwr]: %d", tx_pwr_params->power);
 		ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
-					      WMI_VDEV_PARAM_TX_PWRLIMIT,
-					      tx_pwr_params->power);
+					 WMI_VDEV_PARAM_TX_PWRLIMIT,
+					 tx_pwr_params->power);
 		if (ret == QDF_STATUS_SUCCESS)
 			mlme_set_tx_power(iface->vdev, tx_pwr_params->power);
 	} else {
@@ -340,6 +339,7 @@ void wma_send_max_tx_pwrlmt(WMA_HANDLE handle, uint8_t vdev_id)
 	if (!max_tx_pwr)
 		return;
 
+	wma_nofl_debug("TXP[W][send_max_tx_pwr]: %d", max_tx_pwr);
 	wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 			   WMI_VDEV_PARAM_TX_PWRLIMIT,
 			   max_tx_pwr);
@@ -397,8 +397,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 		ret = QDF_STATUS_SUCCESS;
 		goto end;
 	}
-	WMA_LOGI("Set MAX TX pwr limit [WMI_VDEV_PARAM_TX_PWRLIMIT] to %d",
-		 max_reg_power);
+	wma_nofl_debug("TXP[W][set_max_pwr_req]: %d", max_reg_power);
 	ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 				WMI_VDEV_PARAM_TX_PWRLIMIT,
 				max_reg_power);
