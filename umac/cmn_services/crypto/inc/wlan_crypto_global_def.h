@@ -53,7 +53,7 @@
 #ifndef WLAN_CRYPTO_MAX_VLANKEYIX
 #define WLAN_CRYPTO_MAX_VLANKEYIX    WLAN_CRYPTO_MAXKEYIDX
 #endif
-#define WLAN_CRYPTO_MAX_PMKID        (3)
+#define WLAN_CRYPTO_MAX_PMKID        (16)
 
 /* 40 bit wep key len */
 #define WLAN_CRYPTO_KEY_WEP40_LEN    (5)
