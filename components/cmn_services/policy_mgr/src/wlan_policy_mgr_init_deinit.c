@@ -26,6 +26,7 @@
 /* Include files */
 
 #include "wlan_policy_mgr_api.h"
+#include "wlan_policy_mgr_tables_no_dbs_i.h"
 #include "wlan_policy_mgr_tables_1x1_dbs_i.h"
 #include "wlan_policy_mgr_tables_2x2_dbs_i.h"
 #include "wlan_policy_mgr_tables_2x2_5g_1x1_2g.h"
@@ -406,6 +407,24 @@ static void policy_mgr_update_5g_scc_prefer(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
+#ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
+static void policy_mgr_init_non_dbs_pcl(void)
+{
+	second_connection_pcl_non_dbs_table =
+	&second_connection_pcl_nodbs_no_interband_mcc_table;
+	third_connection_pcl_non_dbs_table =
+	&third_connection_pcl_nodbs_no_interband_mcc_table;
+}
+#else
+static void policy_mgr_init_non_dbs_pcl(void)
+{
+	second_connection_pcl_non_dbs_table =
+	&second_connection_pcl_nodbs_table;
+	third_connection_pcl_non_dbs_table =
+	&third_connection_pcl_nodbs_table;
+}
+#endif
+
 QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
@@ -502,6 +521,9 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	else
 		third_connection_pcl_dbs_table =
 		&pm_third_connection_pcl_dbs_1x1_table;
+
+	/* Initialize non-DBS pcl table pointer to particular table*/
+	policy_mgr_init_non_dbs_pcl();
 
 	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
 	    policy_mgr_is_hw_dbs_required_for_band(psoc,

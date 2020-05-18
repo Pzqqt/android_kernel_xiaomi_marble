@@ -2677,7 +2677,8 @@ bool policy_mgr_allow_new_home_channel(
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
 		) && (pm_conc_connection_list[0].mac ==
 			pm_conc_connection_list[1].mac)) {
-			if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
+			if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+			    policy_mgr_is_interband_mcc_supported(psoc)) {
 				if (ch_freq !=
 				    pm_conc_connection_list[0].freq &&
 				    ch_freq !=
@@ -2716,7 +2717,8 @@ bool policy_mgr_allow_new_home_channel(
 		} else if (pm_conc_connection_list[0].mac ==
 			   pm_conc_connection_list[1].mac) {
 			/* Existing two connections are SCC */
-			if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
+			if (!policy_mgr_is_hw_dbs_capable(psoc) &&
+			    policy_mgr_is_interband_mcc_supported(psoc)) {
 				/* keep legacy chip "allow" as it is */
 				policy_mgr_rl_debug("allow 2 intf SCC + new intf ch %d for legacy hw",
 						    ch_freq);
@@ -2753,6 +2755,16 @@ bool policy_mgr_allow_new_home_channel(
 
 		policy_mgr_rl_debug("Existing DFS connection, new 2-port DFS connection is not allowed");
 		status = false;
+	} else if ((num_connections == 1) &&
+		   !policy_mgr_is_hw_dbs_capable(psoc) &&
+		   !policy_mgr_is_interband_mcc_supported(psoc)) {
+		/* For target which is single mac and doesn't support
+		 * interband MCC
+		 */
+		if ((pm_conc_connection_list[0].mode != PM_NAN_DISC_MODE) &&
+		    (mode != PM_NAN_DISC_MODE))
+			status = wlan_reg_is_same_band_freqs(ch_freq,
+				      pm_conc_connection_list[0].freq);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
