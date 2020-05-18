@@ -2522,6 +2522,15 @@ bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 QDF_STATUS __wlan_hdd_validate_mac_address(struct qdf_mac_addr *mac_addr,
 					   const char *func);
 
+/**
+ * hdd_is_any_adapter_connected() - Check if any adapter is in connected state
+ * @hdd_ctx: the global hdd context
+ *
+ * Returns: true, if any of the adapters is in connected state,
+ *	    false, if none of the adapters is in connected state.
+ */
+bool hdd_is_any_adapter_connected(struct hdd_context *hdd_ctx);
+
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
  * hdd_bus_bw_compute_prev_txrx_stats() - get tx and rx stats

@@ -1228,7 +1228,13 @@ int wlan_hdd_bus_resume(void)
 	 * Add bus votes at the beginning, before making sure there are any
 	 * bus transactions from WLAN SOC for TX/RX.
 	 */
-	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_MEDIUM);
+	if (hdd_is_any_adapter_connected(hdd_ctx)) {
+		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
+					  PLD_BUS_WIDTH_MEDIUM);
+	} else {
+		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
+					  PLD_BUS_WIDTH_NONE);
+	}
 
 	status = hif_bus_resume(hif_ctx);
 	if (status) {

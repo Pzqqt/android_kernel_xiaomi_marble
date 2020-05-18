@@ -14154,7 +14154,6 @@ hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 	return con_sap_adapter;
 }
 
-#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 static inline bool hdd_adapter_is_sta(struct hdd_adapter *adapter)
 {
 	return adapter->device_mode == QDF_STA_MODE ||
@@ -14167,7 +14166,7 @@ static inline bool hdd_adapter_is_ap(struct hdd_adapter *adapter)
 		adapter->device_mode == QDF_P2P_GO_MODE;
 }
 
-static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
+bool hdd_is_any_adapter_connected(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
@@ -14192,6 +14191,7 @@ static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 	return false;
 }
 
+#ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 static void __hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 {
 	qdf_periodic_work_start(&hdd_ctx->bus_bw_work,
@@ -14211,7 +14211,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 {
 	hdd_enter();
 
-	if (hdd_any_adapter_is_assoc(hdd_ctx))
+	if (hdd_is_any_adapter_connected(hdd_ctx))
 		__hdd_bus_bw_compute_timer_start(hdd_ctx);
 
 	hdd_exit();
@@ -14220,7 +14220,7 @@ void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
 	if (!qdf_periodic_work_stop_sync(&hdd_ctx->bus_bw_work))
-		return;
+		goto exit;
 
 	ucfg_ipa_set_perf_level(hdd_ctx->pdev, 0, 0);
 	hdd_reset_tcp_delack(hdd_ctx);
@@ -14228,6 +14228,18 @@ static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 				      OL_TXRX_PDEV_ID);
 	cdp_pdev_reset_bundle_require_flag(cds_get_context(QDF_MODULE_ID_SOC),
 					   OL_TXRX_PDEV_ID);
+
+exit:
+	/**
+	 * This check if for the case where the bus bw timer is forcibly
+	 * stopped. We should remove the bus bw voting, if no adapter is
+	 * connected
+	 */
+	if (!hdd_is_any_adapter_connected(hdd_ctx)) {
+		hdd_ctx->cur_vote_level = PLD_BUS_WIDTH_NONE;
+		pld_request_bus_bandwidth(hdd_ctx->parent_dev,
+					  PLD_BUS_WIDTH_NONE);
+	}
 }
 
 void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
@@ -14243,7 +14255,7 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 {
 	hdd_enter();
 
-	if (!hdd_any_adapter_is_assoc(hdd_ctx))
+	if (!hdd_is_any_adapter_connected(hdd_ctx))
 		__hdd_bus_bw_compute_timer_stop(hdd_ctx);
 
 	hdd_exit();
