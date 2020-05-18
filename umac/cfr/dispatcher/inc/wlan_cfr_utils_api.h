@@ -51,6 +51,7 @@
 #define MAX_TA_RA_ENTRIES 16
 #define MAX_RESET_CFG_ENTRY 0xFFFF
 #define CFR_INVALID_VDEV_ID 0xff
+#define DEFAULT_SRNGID_CFR 0
 #endif
 
 enum cfrmetaversion {
@@ -91,6 +92,7 @@ enum cfrradiotype {
 	CFR_CAPTURE_RADIO_HKV2,
 	CFR_CAPTURE_RADIO_CYP,
 	CFR_CAPTURE_RADIO_HSP,
+	CFR_CAPTURE_RADIO_PINE,
 	CFR_CAPTURE_RADIO_MAX = 0xFF,
 };
 

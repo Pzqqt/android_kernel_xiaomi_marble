@@ -75,6 +75,14 @@
 
 #define STREAMFS_NUM_SUBBUF_CYP 255
 
+/* Max size :
+ * 16886 = 310 bytes(csi header) + 192 bytes(cfr header) + 16384 bytes(cfr
+ * payload)
+ */
+#define STREAMFS_MAX_SUBBUF_PINE 16886
+
+#define STREAMFS_NUM_SUBBUF_PINE 255
+
 /*
  * @tag: ucode fills this with 0xBA
  *

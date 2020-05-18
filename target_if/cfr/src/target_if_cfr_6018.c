@@ -1039,13 +1039,19 @@ static void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
  */
 static void enh_prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param
 					    *tx_evt_param,
-					    struct csi_cfr_header *header)
+					    struct csi_cfr_header *header,
+					    uint32_t target_type)
 {
 	header->start_magic_num        = 0xDEADBEAF;
 	header->vendorid               = 0x8cfdf0;
 	header->cfr_metadata_version   = CFR_META_VERSION_3;
 	header->cfr_data_version       = CFR_DATA_VERSION_1;
-	header->chip_type              = CFR_CAPTURE_RADIO_CYP;
+
+	if (target_type == TARGET_TYPE_QCN9000)
+		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
+	else
+		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
+
 	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
 	header->Reserved               = 0;
 	header->u.meta_v3.status       = 0; /* failure */
@@ -1084,6 +1090,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	struct wlan_channel *bss_chan;
 	struct wlan_lmac_if_cfr_rx_ops *cfr_rx_ops = NULL;
 	struct wlan_lmac_if_rx_ops *rx_ops;
+	uint32_t target_type;
 
 	if (!sc || !data) {
 		cfr_err("sc or data is null");
@@ -1159,12 +1166,16 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		goto relref;
 	}
 
+	target_type = target_if_cfr_get_target_type(psoc);
+
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
 		cfr_err("CFR capture failed as peer is in powersave: "
 			QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(tx_evt_param.peer_mac_addr.bytes));
 
-		enh_prepare_cfr_header_txstatus(&tx_evt_param, &header_error);
+		enh_prepare_cfr_header_txstatus(&tx_evt_param,
+						&header_error,
+						target_type);
 		if (cfr_rx_ops->cfr_info_send)
 			cfr_rx_ops->cfr_info_send(pdev,
 						  &header_error,
@@ -1231,7 +1242,12 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	header->vendorid               = 0x8cfdf0;
 	header->cfr_metadata_version   = CFR_META_VERSION_3;
 	header->cfr_data_version       = CFR_DATA_VERSION_1;
-	header->chip_type              = CFR_CAPTURE_RADIO_CYP;
+
+	if (target_type == TARGET_TYPE_QCN9000)
+		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
+	else
+		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
+
 	header->pltform_type           = CFR_PLATFORM_TYPE_ARM;
 	header->Reserved               = 0;
 	header->u.meta_v3.status       = (tx_evt_param.status &
@@ -1539,9 +1555,15 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pdev_cfr *pcfr;
+	uint32_t target_type;
 
 	if (!pdev) {
 		cfr_err("PDEV is NULL!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!psoc) {
+		cfr_err("PSOC is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -1551,6 +1573,8 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 		cfr_err("pcfr is NULL!");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	target_type = target_if_cfr_get_target_type(psoc);
 
 #if DIRECT_BUF_RX_ENABLE
 	status = target_if_register_to_dbr_enh(pdev);
@@ -1571,7 +1595,7 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->rcc_param.modified_in_curr_session = MAX_RESET_CFG_ENTRY;
 	pcfr->rcc_param.num_grp_tlvs = MAX_TA_RA_ENTRIES;
 	pcfr->rcc_param.vdev_id = CFR_INVALID_VDEV_ID;
-	pcfr->rcc_param.srng_id = 0;
+	pcfr->rcc_param.srng_id = DEFAULT_SRNGID_CFR;
 
 	target_if_cfr_default_ta_ra_config(&pcfr->rcc_param,
 					   true, MAX_RESET_CFG_ENTRY);
@@ -1588,9 +1612,16 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->rcc_param.modified_in_curr_session = 0;
 
 	pcfr->cfr_max_sta_count = MAX_CFR_ENABLED_CLIENTS;
-	pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
-	pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;
-	pcfr->chip_type = CFR_CAPTURE_RADIO_CYP;
+
+	if (target_type == TARGET_TYPE_QCN9000) {
+		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_PINE;
+		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_PINE;
+		pcfr->chip_type = CFR_CAPTURE_RADIO_PINE;
+	} else {
+		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
+		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;
+		pcfr->chip_type = CFR_CAPTURE_RADIO_CYP;
+	}
 
 	if (!pcfr->lut_timer_init) {
 		qdf_timer_init(NULL,
