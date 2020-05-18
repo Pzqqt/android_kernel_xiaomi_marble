@@ -15041,6 +15041,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_SUPPORT_EXTEND_ADDRESS;
 	wmi_service[wmi_service_srg_srp_spatial_reuse_support] =
 		WMI_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT;
+	wmi_service[wmi_service_suiteb_roam_support] =
+			WMI_SERVICE_WPA3_SUITEB_ROAM_SUPPORT;
 }
 
 /**
