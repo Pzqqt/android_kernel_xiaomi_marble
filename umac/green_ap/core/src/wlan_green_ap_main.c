@@ -276,6 +276,8 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 		     green_ap_ctx->ps_mode == WLAN_GREEN_AP_MODE_NO_STA) ||
 		    (!green_ap_ctx->num_nodes_multistream &&
 		     green_ap_ctx->ps_mode == WLAN_GREEN_AP_MODE_NUM_STREAM)) {
+			if (event == WLAN_GREEN_AP_DEL_MULTISTREAM_STA_EVENT)
+				break;
 			if ((channel == 0) || (channel_flags == 0)) {
 				/*
 				 * Stay in the current state and restart the
