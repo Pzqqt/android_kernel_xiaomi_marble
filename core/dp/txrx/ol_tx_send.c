@@ -333,16 +333,17 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 	struct ol_txrx_pdev_t *pdev = txrx_pdev;
 	struct ol_tx_desc_t *tx_desc;
 	bool is_frame_freed;
+	uint8_t dp_status;
 
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	qdf_assert(tx_desc);
-
+	dp_status = qdf_dp_get_status_from_a_status(status);
 	DPTRACE(qdf_dp_trace_ptr(msdu,
 				 QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 				 QDF_TRACE_DEFAULT_PDEV_ID,
 				 qdf_nbuf_data_addr(msdu),
 				 sizeof(qdf_nbuf_data(msdu)), tx_desc->id,
-				 status));
+				 dp_status));
 
 	is_frame_freed = ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
@@ -1015,6 +1016,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	ol_tx_desc_list tx_descs;
 	uint64_t tx_tsf64;
 	uint8_t tid;
+	uint8_t dp_status;
 
 	TAILQ_INIT(&tx_descs);
 
@@ -1096,12 +1098,13 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 					      netbuf, status, TX_DATA_PKT);
 		}
 #endif
+		dp_status = qdf_dp_get_status_from_htt(status);
 
 		DPTRACE(qdf_dp_trace_ptr(netbuf,
 			QDF_DP_TRACE_FREE_PACKET_PTR_RECORD,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			qdf_nbuf_data_addr(netbuf),
-			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, status));
+			sizeof(qdf_nbuf_data(netbuf)), tx_desc->id, dp_status));
 		htc_pm_runtime_put(pdev->htt_pdev->htc_pdev);
 		/*
 		 * If credits are reported through credit_update_ind then do not
