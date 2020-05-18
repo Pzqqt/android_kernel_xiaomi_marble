@@ -526,6 +526,13 @@ void sde_encoder_needs_hw_reset(struct drm_encoder *enc);
 void sde_encoder_uidle_enable(struct drm_encoder *drm_enc, bool enable);
 
 /**
+ * sde_encoder_irq_control - control enable/disable of IRQ's
+ * @drm_enc:	Pointer to drm encoder structure
+ * @enable: enable/disable flag
+ */
+void sde_encoder_irq_control(struct drm_encoder *drm_enc, bool enable);
+
+/**
  * sde_encoder_get_kms - retrieve the kms from encoder
  * @drm_enc:    Pointer to drm encoder structure
  */
