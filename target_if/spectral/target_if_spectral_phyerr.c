@@ -1992,13 +1992,10 @@ target_if_consume_spectral_report_gen3(
 		params.max_mag  = p_sfft->fft_peak_mag;
 
 		params.freq = p_sops->get_current_channel(spectral);
-
-		if (spectral_mode == SPECTRAL_SCAN_MODE_AGILE) {
-			params.agile_freq1 = spectral->params[spectral_mode].
-					     ss_frequency.cfreq1;
-			params.agile_freq2 = spectral->params[spectral_mode].
-					     ss_frequency.cfreq2;
-		}
+		params.agile_freq1 = spectral->params[SPECTRAL_SCAN_MODE_AGILE].
+				     ss_frequency.cfreq1;
+		params.agile_freq2 = spectral->params[SPECTRAL_SCAN_MODE_AGILE].
+				     ss_frequency.cfreq2;
 		params.noise_floor =
 			report->noisefloor[chn_idx_lowest_enabled];
 		temp = (uint8_t *)p_fft_report + SPECTRAL_FFT_BINS_POS;
