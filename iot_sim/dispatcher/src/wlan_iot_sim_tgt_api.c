@@ -39,7 +39,18 @@ QDF_STATUS tgt_send_simulation_cmd(struct wlan_objmgr_pdev *pdev,
 				   struct simulation_test_params *param)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_tx_ops *tx_ops;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-	return psoc->soc_cb.tx_ops.iot_sim_tx_ops.iot_sim_send_cmd(pdev, param);
+
+	if (!psoc) {
+		iot_sim_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
+	if (!tx_ops) {
+		iot_sim_err("tx_ops is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	return tx_ops->iot_sim_tx_ops.iot_sim_send_cmd(pdev, param);
 }
