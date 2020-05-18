@@ -47,8 +47,8 @@ int dump_lut(struct wlan_objmgr_pdev *pdev)
 		return -EINVAL;
 	}
 
-	for (i = 0; i < 136; i++) {
-		lut = &pdev_cfrobj->lut[i];
+	for (i = 0; i < pdev_cfrobj->lut_num; i++) {
+		lut = pdev_cfrobj->lut[i];
 		cfr_info("idx:%d dbrevnt: %d txevent: %d dbrppdu:0x%x txppdu:0x%x",
 			 i, lut->dbr_recv, lut->tx_recv,
 			 lut->dbr_ppdu_id, lut->tx_ppdu_id);
@@ -249,7 +249,7 @@ bool cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 
 	length += tones * (dma_hdr.num_chains + 1);
 
-	lut = &pdev_cfrobj->lut[cookie];
+	lut = pdev_cfrobj->lut[cookie];
 	lut->data = data;
 	lut->data_len = length;
 	lut->dbr_ppdu_id = dma_hdr.phy_ppdu_id;
@@ -473,7 +473,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	cfr_debug("buffer address: 0x%pK cookie: %u",
 		  (void *)((uintptr_t)buf_addr), cookie);
 
-	lut = &pdev_cfrobj->lut[cookie];
+	lut = pdev_cfrobj->lut[cookie];
 	lut->tx_ppdu_id = (tx_evt_param.correlation_info_2 >> 16);
 	lut->tx_address1 = tx_evt_param.correlation_info_1;
 	lut->tx_address2 = tx_evt_param.correlation_info_2;
