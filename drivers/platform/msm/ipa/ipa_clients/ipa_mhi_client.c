@@ -10,10 +10,11 @@
 #include <linux/mutex.h>
 #include <linux/ipa.h>
 #include <linux/msm_gsi.h>
-#include <linux/ipa_qmi_service_v01.h>
 #include <linux/ipa_mhi.h>
 #include "../ipa_common_i.h"
 #include "../ipa_v3/ipa_pm.h"
+#include "../ipa_v3/ipa_i.h"
+#include <linux/ipa_fmwk.h>
 
 #define IPA_MHI_DRV_NAME "ipa_mhi_client"
 
@@ -62,16 +63,6 @@
 /* bit #40 in address should be asserted for MHI transfers over pcie */
 #define IPA_MHI_CLIENT_HOST_ADDR_COND(addr) \
 	((ipa_mhi_client_ctx->assert_bit40)?(IPA_MHI_HOST_ADDR(addr)):(addr))
-
-enum ipa_mhi_state {
-	IPA_MHI_STATE_INITIALIZED,
-	IPA_MHI_STATE_READY,
-	IPA_MHI_STATE_STARTED,
-	IPA_MHI_STATE_SUSPEND_IN_PROGRESS,
-	IPA_MHI_STATE_SUSPENDED,
-	IPA_MHI_STATE_RESUME_IN_PROGRESS,
-	IPA_MHI_STATE_MAX
-};
 
 static char *ipa_mhi_state_str[] = {
 	__stringify(IPA_MHI_STATE_INITIALIZED),
@@ -183,7 +174,7 @@ static int ipa_mhi_read_write_host(enum ipa_mhi_dma_dir dir, void *dev_addr,
 	IPA_MHI_FUNC_ENTRY();
 
 	if (ipa_mhi_client_ctx->use_ipadma) {
-		pdev = ipa_get_dma_dev();
+		pdev = ipa3_get_dma_dev();
 		host_addr = IPA_MHI_CLIENT_HOST_ADDR_COND(host_addr);
 
 		mem.size = size;
@@ -653,32 +644,6 @@ static int ipa_mhi_set_state(enum ipa_mhi_state new_state)
 	return res;
 }
 
-static void ipa_mhi_uc_ready_cb(void)
-{
-	IPA_MHI_FUNC_ENTRY();
-	ipa_mhi_set_state(IPA_MHI_STATE_READY);
-	IPA_MHI_FUNC_EXIT();
-}
-
-static void ipa_mhi_uc_wakeup_request_cb(void)
-{
-	unsigned long flags;
-
-	IPA_MHI_FUNC_ENTRY();
-	IPA_MHI_DBG("MHI state: %s\n",
-			MHI_STATE_STR(ipa_mhi_client_ctx->state));
-	spin_lock_irqsave(&ipa_mhi_client_ctx->state_lock, flags);
-	if (ipa_mhi_client_ctx->state == IPA_MHI_STATE_SUSPENDED)
-		ipa_mhi_notify_wakeup();
-	else if (ipa_mhi_client_ctx->state ==
-			IPA_MHI_STATE_SUSPEND_IN_PROGRESS)
-		/* wakeup event will be triggered after suspend finishes */
-		ipa_mhi_client_ctx->trigger_wakeup = true;
-
-	spin_unlock_irqrestore(&ipa_mhi_client_ctx->state_lock, flags);
-	IPA_MHI_FUNC_EXIT();
-}
-
 /**
  * ipa_mhi_start() - Start IPA MHI engine
  * @params: pcie addresses for MHI
@@ -691,7 +656,7 @@ static void ipa_mhi_uc_wakeup_request_cb(void)
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_start(struct ipa_mhi_start_params *params)
+static int ipa_mhi_start_internal(struct ipa_mhi_start_params *params)
 {
 	int res;
 	struct ipa_mhi_init_engine init_params;
@@ -1016,13 +981,8 @@ static bool ipa_mhi_wait_for_ul_empty_timeout(unsigned int msecs)
 		for (i = 0; i < IPA_MHI_MAX_UL_CHANNELS; i++) {
 			if (!ipa_mhi_client_ctx->ul_channels[i].valid)
 				continue;
-			if (ipa_get_transport_type() ==
-			    IPA_TRANSPORT_TYPE_GSI)
-				empty &= ipa_mhi_gsi_channel_empty(
-					&ipa_mhi_client_ctx->ul_channels[i]);
-			else
-				empty &= ipa_mhi_sps_channel_empty(
-				ipa_mhi_client_ctx->ul_channels[i].client);
+			empty &= ipa_mhi_gsi_channel_empty(
+				&ipa_mhi_client_ctx->ul_channels[i]);
 		}
 
 		if (time_after(jiffies, jiffies_start + jiffies_timeout)) {
@@ -1030,8 +990,7 @@ static bool ipa_mhi_wait_for_ul_empty_timeout(unsigned int msecs)
 			break;
 		}
 
-		if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI &&
-		    IPA_MHI_MAX_UL_CHANNELS == 1)
+		if (IPA_MHI_MAX_UL_CHANNELS == 1)
 			usleep_range(IPA_GSI_CHANNEL_STOP_SLEEP_MIN_USEC,
 			IPA_GSI_CHANNEL_STOP_SLEEP_MAX_USEC);
 	}
@@ -1098,45 +1057,6 @@ static int ipa_mhi_disable_force_clear(u32 request_id)
 	return 0;
 }
 
-static void ipa_mhi_set_holb_on_dl_channels(bool enable,
-	struct ipa_ep_cfg_holb old_holb[])
-{
-	int i;
-	struct ipa_ep_cfg_holb ep_holb;
-	int ep_idx;
-	int res;
-
-	for (i = 0; i < IPA_MHI_MAX_DL_CHANNELS; i++) {
-		if (!ipa_mhi_client_ctx->dl_channels[i].valid)
-			continue;
-		if (ipa_mhi_client_ctx->dl_channels[i].state ==
-			IPA_HW_MHI_CHANNEL_STATE_INVALID)
-			continue;
-		ep_idx = ipa_get_ep_mapping(
-			ipa_mhi_client_ctx->dl_channels[i].client);
-		if (-1 == ep_idx) {
-			IPA_MHI_ERR("Client %u is not mapped\n",
-				ipa_mhi_client_ctx->dl_channels[i].client);
-			ipa_assert();
-			return;
-		}
-		memset(&ep_holb, 0, sizeof(ep_holb));
-		if (enable) {
-			ipa_get_holb(ep_idx, &old_holb[i]);
-			ep_holb.en = 1;
-			ep_holb.tmr_val = 0;
-		} else {
-			ep_holb = old_holb[i];
-		}
-		res = ipa_cfg_ep_holb(ep_idx, &ep_holb);
-		if (res) {
-			IPA_MHI_ERR("ipa_cfg_ep_holb failed %d\n", res);
-			ipa_assert();
-			return;
-		}
-	}
-}
-
 static int ipa_mhi_suspend_gsi_channel(struct ipa_mhi_channel_ctx *channel)
 {
 	int clnt_hdl;
@@ -1147,7 +1067,7 @@ static int ipa_mhi_suspend_gsi_channel(struct ipa_mhi_channel_ctx *channel)
 	if (clnt_hdl < 0)
 		return -EFAULT;
 
-	res = ipa_stop_gsi_channel(clnt_hdl);
+	res = ipa3_stop_gsi_channel(clnt_hdl);
 	if (res != 0 && res != -GSI_STATUS_AGAIN &&
 	    res != -GSI_STATUS_TIMED_OUT) {
 		IPA_MHI_ERR("GSI stop channel failed %d\n", res);
@@ -1169,31 +1089,20 @@ static int ipa_mhi_reset_ul_channel(struct ipa_mhi_channel_ctx *channel)
 {
 	int res;
 	bool empty;
-	struct ipa_ep_cfg_holb old_ep_holb[IPA_MHI_MAX_DL_CHANNELS];
 
 	IPA_MHI_FUNC_ENTRY();
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		res = ipa_mhi_suspend_gsi_channel(channel);
-		if (res) {
-			IPA_MHI_ERR("ipa_mhi_suspend_gsi_channel failed %d\n",
-				 res);
-			return res;
-		}
-	} else {
-		res = ipa_uc_mhi_reset_channel(channel->index);
-		if (res) {
-			IPA_MHI_ERR("ipa_uc_mhi_reset_channel failed %d\n",
-				res);
-			return res;
-		}
+
+	res = ipa_mhi_suspend_gsi_channel(channel);
+	if (res) {
+		IPA_MHI_ERR("ipa_mhi_suspend_gsi_channel failed %d\n",
+			res);
+		return res;
 	}
 
 	empty = ipa_mhi_wait_for_ul_empty_timeout(
 			IPA_MHI_CH_EMPTY_TIMEOUT_MSEC);
 	if (!empty) {
-		IPA_MHI_DBG("%s not empty\n",
-			(ipa_get_transport_type() ==
-				IPA_TRANSPORT_TYPE_GSI) ? "GSI" : "BAM");
+		IPA_MHI_DBG("not empty\n");
 		res = ipa_mhi_enable_force_clear(
 				ipa_mhi_client_ctx->qmi_req_id, false);
 		if (res) {
@@ -1203,25 +1112,9 @@ static int ipa_mhi_reset_ul_channel(struct ipa_mhi_channel_ctx *channel)
 			return res;
 		}
 
-		if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-			empty = ipa_mhi_wait_for_ul_empty_timeout(
-				IPA_MHI_CH_EMPTY_TIMEOUT_MSEC);
-
-			IPA_MHI_DBG("empty=%d\n", empty);
-		} else {
-			/* enable packet drop on all DL channels */
-			ipa_mhi_set_holb_on_dl_channels(true, old_ep_holb);
-			ipa_generate_tag_process();
-			/* disable packet drop on all DL channels */
-			ipa_mhi_set_holb_on_dl_channels(false, old_ep_holb);
-
-			res = ipa_disable_sps_pipe(channel->client);
-			if (res) {
-				IPA_MHI_ERR("sps_pipe_disable fail %d\n", res);
-				ipa_assert();
-				return res;
-			}
-		}
+		empty = ipa_mhi_wait_for_ul_empty_timeout(
+			IPA_MHI_CH_EMPTY_TIMEOUT_MSEC);
+		IPA_MHI_DBG("empty=%d\n", empty);
 
 		res =
 		ipa_mhi_disable_force_clear(ipa_mhi_client_ctx->qmi_req_id);
@@ -1251,37 +1144,19 @@ static int ipa_mhi_reset_dl_channel(struct ipa_mhi_channel_ctx *channel)
 	int res;
 
 	IPA_MHI_FUNC_ENTRY();
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		res = ipa_mhi_suspend_gsi_channel(channel);
-		if (res) {
-			IPA_MHI_ERR("ipa_mhi_suspend_gsi_channel failed %d\n"
-					, res);
-			return res;
-		}
+	res = ipa_mhi_suspend_gsi_channel(channel);
+	if (res) {
+		IPA_MHI_ERR("ipa_mhi_suspend_gsi_channel failed %d\n"
+			, res);
+		return res;
+	}
 
-		res = ipa_mhi_reset_channel_internal(channel->client);
-		if (res) {
-			IPA_MHI_ERR(
-				"ipa_mhi_reset_ul_channel_internal failed %d\n"
-				, res);
-			return res;
-		}
-	} else {
-		res = ipa_mhi_reset_channel_internal(channel->client);
-		if (res) {
-			IPA_MHI_ERR(
-				"ipa_mhi_reset_ul_channel_internal failed %d\n"
-				, res);
-			return res;
-		}
-
-		res = ipa_uc_mhi_reset_channel(channel->index);
-		if (res) {
-			IPA_MHI_ERR("ipa_uc_mhi_reset_channel failed %d\n",
-				res);
-			ipa_mhi_start_channel_internal(channel->client);
-			return res;
-		}
+	res = ipa_mhi_reset_channel_internal(channel->client);
+	if (res) {
+		IPA_MHI_ERR(
+			"ipa_mhi_reset_ul_channel_internal failed %d\n"
+			, res);
+		return res;
 	}
 
 	IPA_MHI_FUNC_EXIT();
@@ -1305,8 +1180,7 @@ static int ipa_mhi_reset_channel(struct ipa_mhi_channel_ctx *channel,
 
 	channel->state = IPA_HW_MHI_CHANNEL_STATE_DISABLE;
 
-	if ((ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) &&
-		update_state) {
+	if (update_state) {
 		res = ipa_mhi_read_write_host(IPA_MHI_DMA_TO_HOST,
 			&channel->state, channel->channel_context_addr +
 				offsetof(struct ipa_mhi_ch_ctx, chstate),
@@ -1333,11 +1207,12 @@ static int ipa_mhi_reset_channel(struct ipa_mhi_channel_ctx *channel,
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_connect_pipe(struct ipa_mhi_connect_params *in, u32 *clnt_hdl)
+static int ipa_mhi_connect_pipe_internal(struct ipa_mhi_connect_params *in, u32 *clnt_hdl)
 {
 	int res;
 	unsigned long flags;
 	struct ipa_mhi_channel_ctx *channel = NULL;
+	struct ipa_mhi_connect_params_internal internal;
 
 	IPA_MHI_FUNC_ENTRY();
 
@@ -1395,71 +1270,55 @@ int ipa_mhi_connect_pipe(struct ipa_mhi_connect_params *in, u32 *clnt_hdl)
 	IPA_ACTIVE_CLIENTS_INC_EP(in->sys.client);
 
 	mutex_lock(&mhi_client_general_mutex);
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		struct ipa_mhi_connect_params_internal internal;
 
-		IPA_MHI_DBG("reading ch/ev context from host\n");
-		res = ipa_mhi_read_ch_ctx(channel);
-		if (res) {
-			IPA_MHI_ERR("ipa_mhi_read_ch_ctx failed %d\n", res);
-			goto fail_start_channel;
-		}
-
-		internal.channel_id = in->channel_id;
-		internal.sys = &in->sys;
-		internal.start.gsi.state = channel->state;
-		internal.start.gsi.msi = &ipa_mhi_client_ctx->msi;
-		internal.start.gsi.ev_ctx_host = &channel->ev_ctx_host;
-		internal.start.gsi.event_context_addr =
-				channel->event_context_addr;
-		internal.start.gsi.ch_ctx_host = &channel->ch_ctx_host;
-		internal.start.gsi.channel_context_addr =
-				channel->channel_context_addr;
-		internal.start.gsi.ch_err_cb = ipa_mhi_gsi_ch_err_cb;
-		internal.start.gsi.channel = (void *)channel;
-		internal.start.gsi.ev_err_cb = ipa_mhi_gsi_ev_err_cb;
-		internal.start.gsi.assert_bit40 =
-				ipa_mhi_client_ctx->assert_bit40;
-		internal.start.gsi.mhi = &channel->ch_scratch.mhi;
-		internal.start.gsi.cached_gsi_evt_ring_hdl =
-				&channel->cached_gsi_evt_ring_hdl;
-		internal.start.gsi.evchid = channel->index;
-
-		res = ipa_connect_mhi_pipe(&internal, clnt_hdl);
-		if (res) {
-			IPA_MHI_ERR("ipa_connect_mhi_pipe failed %d\n", res);
-			goto fail_connect_pipe;
-		}
-		channel->state = IPA_HW_MHI_CHANNEL_STATE_RUN;
-		channel->brstmode_enabled =
-				channel->ch_scratch.mhi.burst_mode_enabled;
-
-		res = ipa_mhi_read_write_host(IPA_MHI_DMA_TO_HOST,
-			&channel->state, channel->channel_context_addr +
-				offsetof(struct ipa_mhi_ch_ctx, chstate),
-				sizeof(((struct ipa_mhi_ch_ctx *)0)->chstate));
-		if (res) {
-			IPA_MHI_ERR("ipa_mhi_read_write_host failed\n");
-			mutex_unlock(&mhi_client_general_mutex);
-			IPA_ACTIVE_CLIENTS_DEC_EP(in->sys.client);
-			return res;
-
-		}
-	} else {
-		struct ipa_mhi_connect_params_internal internal;
-
-		internal.channel_id = in->channel_id;
-		internal.sys = &in->sys;
-		internal.start.uC.index = channel->index;
-		internal.start.uC.id = channel->id;
-		internal.start.uC.state = channel->state;
-		res = ipa_connect_mhi_pipe(&internal, clnt_hdl);
-		if (res) {
-			IPA_MHI_ERR("ipa_connect_mhi_pipe failed %d\n", res);
-			goto fail_connect_pipe;
-		}
-		channel->state = IPA_HW_MHI_CHANNEL_STATE_RUN;
+	IPA_MHI_DBG("reading ch/ev context from host\n");
+	res = ipa_mhi_read_ch_ctx(channel);
+	if (res) {
+		IPA_MHI_ERR("ipa_mhi_read_ch_ctx failed %d\n", res);
+		goto fail_start_channel;
 	}
+
+	internal.channel_id = in->channel_id;
+	internal.sys = &in->sys;
+	internal.start.gsi.state = channel->state;
+	internal.start.gsi.msi = &ipa_mhi_client_ctx->msi;
+	internal.start.gsi.ev_ctx_host = &channel->ev_ctx_host;
+	internal.start.gsi.event_context_addr =
+			channel->event_context_addr;
+	internal.start.gsi.ch_ctx_host = &channel->ch_ctx_host;
+	internal.start.gsi.channel_context_addr =
+			channel->channel_context_addr;
+	internal.start.gsi.ch_err_cb = ipa_mhi_gsi_ch_err_cb;
+	internal.start.gsi.channel = (void *)channel;
+	internal.start.gsi.ev_err_cb = ipa_mhi_gsi_ev_err_cb;
+	internal.start.gsi.assert_bit40 =
+			ipa_mhi_client_ctx->assert_bit40;
+	internal.start.gsi.mhi = &channel->ch_scratch.mhi;
+	internal.start.gsi.cached_gsi_evt_ring_hdl =
+			&channel->cached_gsi_evt_ring_hdl;
+	internal.start.gsi.evchid = channel->index;
+
+	res = ipa_connect_mhi_pipe(&internal, clnt_hdl);
+	if (res) {
+		IPA_MHI_ERR("ipa_connect_mhi_pipe failed %d\n", res);
+		goto fail_connect_pipe;
+	}
+	channel->state = IPA_HW_MHI_CHANNEL_STATE_RUN;
+	channel->brstmode_enabled =
+			channel->ch_scratch.mhi.burst_mode_enabled;
+
+	res = ipa_mhi_read_write_host(IPA_MHI_DMA_TO_HOST,
+		&channel->state, channel->channel_context_addr +
+			offsetof(struct ipa_mhi_ch_ctx, chstate),
+			sizeof(((struct ipa_mhi_ch_ctx *)0)->chstate));
+	if (res) {
+		IPA_MHI_ERR("ipa_mhi_read_write_host failed\n");
+		mutex_unlock(&mhi_client_general_mutex);
+		IPA_ACTIVE_CLIENTS_DEC_EP(in->sys.client);
+		return res;
+
+	}
+
 	mutex_unlock(&mhi_client_general_mutex);
 
 	if (!in->sys.keep_ipa_awake)
@@ -1490,7 +1349,7 @@ fail_start_channel:
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_disconnect_pipe(u32 clnt_hdl)
+static int ipa_mhi_disconnect_pipe_internal(u32 clnt_hdl)
 {
 	int res;
 	enum ipa_client_type client;
@@ -1503,7 +1362,7 @@ int ipa_mhi_disconnect_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	client = ipa_get_client_mapping(clnt_hdl);
+	client = ipa3_get_client_mapping(clnt_hdl);
 
 	if (!IPA_CLIENT_IS_MHI(client)) {
 		IPA_MHI_ERR("invalid IPA MHI client, client: %d\n", client);
@@ -1516,7 +1375,7 @@ int ipa_mhi_disconnect_pipe(u32 clnt_hdl)
 		return -EINVAL;
 	}
 
-	IPA_ACTIVE_CLIENTS_INC_EP(ipa_get_client_mapping(clnt_hdl));
+	IPA_ACTIVE_CLIENTS_INC_EP(client);
 
 	res = ipa_mhi_reset_channel(channel, false);
 	if (res) {
@@ -1534,7 +1393,7 @@ int ipa_mhi_disconnect_pipe(u32 clnt_hdl)
 	}
 	mutex_unlock(&mhi_client_general_mutex);
 
-	IPA_ACTIVE_CLIENTS_DEC_EP(ipa_get_client_mapping(clnt_hdl));
+	IPA_ACTIVE_CLIENTS_DEC_EP(client);
 
 	IPA_MHI_DBG("client (ep: %d) disconnected\n", clnt_hdl);
 	IPA_MHI_FUNC_EXIT();
@@ -1542,7 +1401,7 @@ int ipa_mhi_disconnect_pipe(u32 clnt_hdl)
 fail_disconnect_pipe:
 	mutex_unlock(&mhi_client_general_mutex);
 fail_reset_channel:
-	IPA_ACTIVE_CLIENTS_DEC_EP(ipa_get_client_mapping(clnt_hdl));
+	IPA_ACTIVE_CLIENTS_DEC_EP(client);
 	return res;
 }
 
@@ -1562,12 +1421,7 @@ static int ipa_mhi_suspend_channels(struct ipa_mhi_channel_ctx *channels,
 		IPA_MHI_DBG("suspending channel %d\n",
 			channels[i].id);
 
-		if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI)
-			res = ipa_mhi_suspend_gsi_channel(
-				&channels[i]);
-		else
-			res = ipa_uc_mhi_suspend_channel(
-				channels[i].index);
+		res = ipa_mhi_suspend_gsi_channel(&channels[i]);
 
 		if (res) {
 			IPA_MHI_ERR("failed to suspend channel %d error %d\n",
@@ -1585,31 +1439,6 @@ static int ipa_mhi_suspend_channels(struct ipa_mhi_channel_ctx *channels,
 static int ipa_mhi_stop_event_update_channels(
 		struct ipa_mhi_channel_ctx *channels, int max_channels)
 {
-	int i;
-	int res;
-
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI)
-		return 0;
-
-	IPA_MHI_FUNC_ENTRY();
-	for (i = 0; i < max_channels; i++) {
-		if (!channels[i].valid)
-			continue;
-		if (channels[i].state !=
-		    IPA_HW_MHI_CHANNEL_STATE_SUSPEND)
-			continue;
-		IPA_MHI_DBG("stop update event channel %d\n",
-			channels[i].id);
-		res = ipa_uc_mhi_stop_event_update_channel(
-			channels[i].index);
-		if (res) {
-			IPA_MHI_ERR("failed stop event channel %d error %d\n",
-				i, res);
-			return res;
-		}
-	}
-
-	IPA_MHI_FUNC_EXIT();
 	return 0;
 }
 
@@ -1732,8 +1561,7 @@ static int ipa_mhi_suspend_ul(bool force, bool *empty, bool *force_clear)
 			*empty = ipa_mhi_wait_for_ul_empty_timeout(
 				IPA_MHI_CH_EMPTY_TIMEOUT_MSEC);
 			IPA_MHI_DBG("empty=%d\n", *empty);
-			if (!*empty && ipa_get_transport_type()
-				== IPA_TRANSPORT_TYPE_GSI) {
+			if (!*empty) {
 				IPA_MHI_ERR("Failed to suspend UL channels\n");
 				if (ipa_mhi_client_ctx->test_mode) {
 					res = -EAGAIN;
@@ -1761,7 +1589,7 @@ static int ipa_mhi_suspend_ul(bool force, bool *empty, bool *force_clear)
 		ipa_mhi_client_ctx->qmi_req_id++;
 	}
 
-	if (!force && ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
+	if (!force) {
 		if (ipa_mhi_check_pending_packets_from_host()) {
 			res = -EAGAIN;
 			goto fail_suspend_ul_channel;
@@ -1906,15 +1734,13 @@ static int ipa_mhi_suspend_dl(bool force)
 		goto fail_stop_event_update_dl_channel;
 	}
 
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		if (ipa_mhi_has_open_aggr_frame()) {
-			IPA_MHI_DBG("There is an open aggr frame\n");
-			if (force) {
-				ipa_mhi_client_ctx->trigger_wakeup = true;
-			} else {
-				res = -EAGAIN;
-				goto fail_stop_event_update_dl_channel;
-			}
+	if (ipa_mhi_has_open_aggr_frame()) {
+		IPA_MHI_DBG("There is an open aggr frame\n");
+		if (force) {
+			ipa_mhi_client_ctx->trigger_wakeup = true;
+		} else {
+			res = -EAGAIN;
+			goto fail_stop_event_update_dl_channel;
 		}
 	}
 
@@ -1943,7 +1769,7 @@ fail_suspend_dl_channel:
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_suspend(bool force)
+static int ipa_mhi_suspend_internal(bool force)
 {
 	int res;
 	bool empty;
@@ -1971,8 +1797,7 @@ int ipa_mhi_suspend(bool force)
 		goto fail_suspend_ul_channel;
 	}
 
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI)
-		ipa_mhi_update_host_ch_state(true);
+	ipa_mhi_update_host_ch_state(true);
 
 	/*
 	 * hold IPA clocks and release them after all
@@ -2045,7 +1870,7 @@ fail_suspend_dl_channel:
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_resume(void)
+static int ipa_mhi_resume_internal(void)
 {
 	int res;
 
@@ -2087,8 +1912,7 @@ int ipa_mhi_resume(void)
 		goto fail_resume_dl_channels;
 	}
 
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI)
-		ipa_mhi_update_host_ch_state(false);
+	ipa_mhi_update_host_ch_state(false);
 
 	res = ipa_mhi_set_state(IPA_MHI_STATE_STARTED);
 	if (res) {
@@ -2131,7 +1955,7 @@ static int  ipa_mhi_destroy_channels(struct ipa_mhi_channel_ctx *channels,
 		if (channel->state != IPA_HW_MHI_CHANNEL_STATE_DISABLE) {
 			clnt_hdl = ipa_get_ep_mapping(channel->client);
 			IPA_MHI_DBG("disconnect pipe (ep: %d)\n", clnt_hdl);
-			res = ipa_mhi_disconnect_pipe(clnt_hdl);
+			res = ipa_mhi_disconnect_pipe_internal(clnt_hdl);
 			if (res) {
 				IPA_MHI_ERR(
 					"failed to disconnect pipe %d, err %d\n"
@@ -2211,7 +2035,7 @@ static void ipa_mhi_deregister_pm(void)
  * MHI resources.
  * When this function returns ipa_mhi can re-initialize.
  */
-void ipa_mhi_destroy(void)
+static void ipa_mhi_destroy_internal(void)
 {
 	int res;
 
@@ -2224,20 +2048,13 @@ void ipa_mhi_destroy(void)
 	ipa_deregister_client_callback(IPA_CLIENT_MHI_PROD);
 
 	/* reset all UL and DL acc channels and its accociated event rings */
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		res = ipa_mhi_destroy_all_channels();
-		if (res) {
-			IPA_MHI_ERR("ipa_mhi_destroy_all_channels failed %d\n",
-				res);
-			goto fail;
-		}
+	res = ipa_mhi_destroy_all_channels();
+	if (res) {
+		IPA_MHI_ERR("ipa_mhi_destroy_all_channels failed %d\n",
+			res);
+		goto fail;
 	}
 	IPA_MHI_DBG("All channels are disconnected\n");
-
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_SPS) {
-		IPA_MHI_DBG("cleanup uC MHI\n");
-		ipa_uc_mhi_cleanup();
-	}
 
 	ipa_mhi_deregister_pm();
 	ipa_dma_destroy();
@@ -2339,7 +2156,7 @@ fail_pm_cons:
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_init(struct ipa_mhi_init_params *params)
+static int ipa_mhi_init_internal(struct ipa_mhi_init_params *params)
 {
 	int res;
 
@@ -2411,15 +2228,7 @@ int ipa_mhi_init(struct ipa_mhi_init_params *params)
 		goto fail_pm;
 	}
 
-	if (ipa_get_transport_type() == IPA_TRANSPORT_TYPE_GSI) {
-		ipa_mhi_set_state(IPA_MHI_STATE_READY);
-	} else {
-		/* Initialize uC interface */
-		ipa_uc_mhi_init(ipa_mhi_uc_ready_cb,
-			ipa_mhi_uc_wakeup_request_cb);
-		if (ipa_uc_state_check() == 0)
-			ipa_mhi_set_state(IPA_MHI_STATE_READY);
-	}
+	ipa_mhi_set_state(IPA_MHI_STATE_READY);
 
 	ipa_register_client_callback(&ipa_mhi_set_lock_unlock, NULL,
 					IPA_CLIENT_MHI_PROD);
@@ -2441,21 +2250,6 @@ fail_alloc_ctx:
 	return res;
 }
 
-static void ipa_mhi_cache_dl_ul_sync_info(
-	struct ipa_config_req_msg_v01 *config_req)
-{
-	ipa_cached_dl_ul_sync_info.params.isDlUlSyncEnabled = true;
-	ipa_cached_dl_ul_sync_info.params.UlAccmVal =
-		(config_req->ul_accumulation_time_limit_valid) ?
-		config_req->ul_accumulation_time_limit : 0;
-	ipa_cached_dl_ul_sync_info.params.ulMsiEventThreshold =
-		(config_req->ul_msi_event_threshold_valid) ?
-		config_req->ul_msi_event_threshold : 0;
-	ipa_cached_dl_ul_sync_info.params.dlMsiEventThreshold =
-		(config_req->dl_msi_event_threshold_valid) ?
-		config_req->dl_msi_event_threshold : 0;
-}
-
 /**
  * ipa_mhi_handle_ipa_config_req() - hanle IPA CONFIG QMI message
  *
@@ -2466,23 +2260,12 @@ static void ipa_mhi_cache_dl_ul_sync_info(
  * Return codes: 0	  : success
  *		 negative : error
  */
-int ipa_mhi_handle_ipa_config_req(struct ipa_config_req_msg_v01 *config_req)
+static int ipa_mhi_handle_ipa_config_req_cb(struct ipa_config_req_msg_v01 *config_req)
 {
 	IPA_MHI_FUNC_ENTRY();
-
-	if (ipa_get_transport_type() != IPA_TRANSPORT_TYPE_GSI) {
-		ipa_mhi_cache_dl_ul_sync_info(config_req);
-		if (ipa_mhi_client_ctx &&
-				ipa_mhi_client_ctx->state !=
-						IPA_MHI_STATE_INITIALIZED)
-			ipa_uc_mhi_send_dl_ul_sync_info(
-				&ipa_cached_dl_ul_sync_info);
-	}
-
 	IPA_MHI_FUNC_EXIT();
 	return 0;
 }
-EXPORT_SYMBOL(ipa_mhi_handle_ipa_config_req);
 
 int ipa_mhi_is_using_dma(bool *flag)
 {
@@ -2498,12 +2281,25 @@ int ipa_mhi_is_using_dma(bool *flag)
 	IPA_MHI_FUNC_EXIT();
 	return 0;
 }
-EXPORT_SYMBOL(ipa_mhi_is_using_dma);
 
-const char *ipa_mhi_get_state_str(int state)
+void ipa_mhi_register(void)
 {
-	return MHI_STATE_STR(state);
+	struct ipa_mhi_data funcs;
+
+	funcs.ipa_mhi_init = ipa_mhi_init_internal;
+	funcs.ipa_mhi_start = ipa_mhi_start_internal;
+	funcs.ipa_mhi_connect_pipe = ipa_mhi_connect_pipe_internal;
+	funcs.ipa_mhi_disconnect_pipe = ipa_mhi_disconnect_pipe_internal;
+	funcs.ipa_mhi_suspend = ipa_mhi_suspend_internal;
+	funcs.ipa_mhi_resume = ipa_mhi_resume_internal;
+	funcs.ipa_mhi_destroy = ipa_mhi_destroy_internal;
+	funcs.ipa_mhi_handle_ipa_config_req = ipa_mhi_handle_ipa_config_req_cb;
+
+	if (ipa_fmwk_register_ipa_mhi(&funcs))
+		pr_err("failed to register ipa_mhi APIs\n");
 }
-EXPORT_SYMBOL(ipa_mhi_get_state_str);
+EXPORT_SYMBOL(ipa_mhi_register);
+
+
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("IPA MHI client driver");

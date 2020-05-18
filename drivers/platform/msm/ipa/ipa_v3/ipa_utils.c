@@ -4552,6 +4552,7 @@ enum ipa_client_type ipa3_get_client_mapping(int pipe_idx)
 
 	return ipa3_ctx->ep[pipe_idx].client;
 }
+EXPORT_SYMBOL(ipa3_get_client_mapping);
 
 /**
  * ipa3_get_client_by_pipe() - return client type relative to pipe
@@ -7026,6 +7027,7 @@ bool ipa3_is_client_handle_valid(u32 clnt_hdl)
 		return true;
 	return false;
 }
+EXPORT_SYMBOL(ipa3_is_client_handle_valid);
 
 /**
  * ipa3_proxy_clk_unvote() - called to remove IPA clock proxy vote
@@ -7064,6 +7066,7 @@ void ipa3_proxy_clk_vote(void)
 	}
 	mutex_unlock(&ipa3_ctx->q6_proxy_clk_vote_mutex);
 }
+EXPORT_SYMBOL(ipa3_proxy_clk_vote);
 
 /**
  * ipa3_get_smem_restr_bytes()- Return IPA smem restricted bytes
@@ -7104,6 +7107,7 @@ enum ipa_transport_type ipa3_get_transport_type(void)
 {
 	return IPA_TRANSPORT_TYPE_GSI;
 }
+EXPORT_SYMBOL(ipa3_get_transport_type);
 
 u32 ipa3_get_num_pipes(void)
 {
@@ -7196,9 +7200,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 		return -EPERM;
 	}
 
-	api_ctrl->ipa_reset_endpoint = NULL;
-	api_ctrl->ipa_clear_endpoint_delay = ipa3_clear_endpoint_delay;
-	api_ctrl->ipa_disable_endpoint = NULL;
 	api_ctrl->ipa_cfg_ep = ipa3_cfg_ep;
 	api_ctrl->ipa_cfg_ep_nat = ipa3_cfg_ep_nat;
 	api_ctrl->ipa_cfg_ep_conn_track = ipa3_cfg_ep_conn_track;
@@ -7215,18 +7216,10 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_cfg_ep_cfg = ipa3_cfg_ep_cfg;
 	api_ctrl->ipa_cfg_ep_metadata_mask = ipa3_cfg_ep_metadata_mask;
 	api_ctrl->ipa_cfg_ep_holb_by_client = ipa3_cfg_ep_holb_by_client;
-	api_ctrl->ipa_cfg_ep_ctrl = ipa3_cfg_ep_ctrl;
-	api_ctrl->ipa_add_hdr = ipa3_add_hdr;
 	api_ctrl->ipa_add_hdr_usr = ipa3_add_hdr_usr;
-	api_ctrl->ipa_del_hdr = ipa3_del_hdr;
-	api_ctrl->ipa_commit_hdr = ipa3_commit_hdr;
 	api_ctrl->ipa_reset_hdr = ipa3_reset_hdr;
-	api_ctrl->ipa_get_hdr = ipa3_get_hdr;
-	api_ctrl->ipa_put_hdr = ipa3_put_hdr;
-	api_ctrl->ipa_copy_hdr = ipa3_copy_hdr;
 	api_ctrl->ipa_add_hdr_proc_ctx = ipa3_add_hdr_proc_ctx;
 	api_ctrl->ipa_del_hdr_proc_ctx = ipa3_del_hdr_proc_ctx;
-	api_ctrl->ipa_add_rt_rule = ipa3_add_rt_rule;
 	api_ctrl->ipa_add_rt_rule_v2 = ipa3_add_rt_rule_v2;
 	api_ctrl->ipa_add_rt_rule_usr = ipa3_add_rt_rule_usr;
 	api_ctrl->ipa_add_rt_rule_usr_v2 = ipa3_add_rt_rule_usr_v2;
@@ -7234,7 +7227,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_commit_rt = ipa3_commit_rt;
 	api_ctrl->ipa_reset_rt = ipa3_reset_rt;
 	api_ctrl->ipa_get_rt_tbl = ipa3_get_rt_tbl;
-	api_ctrl->ipa_put_rt_tbl = ipa3_put_rt_tbl;
 	api_ctrl->ipa_query_rt_index = ipa3_query_rt_index;
 	api_ctrl->ipa_mdfy_rt_rule = ipa3_mdfy_rt_rule;
 	api_ctrl->ipa_mdfy_rt_rule_v2 = ipa3_mdfy_rt_rule_v2;
@@ -7258,50 +7250,16 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_del_nat_table = ipa3_del_nat_table;
 	api_ctrl->ipa_del_ipv6ct_table = ipa3_del_ipv6ct_table;
 	api_ctrl->ipa_nat_mdfy_pdn = ipa3_nat_mdfy_pdn;
-	api_ctrl->ipa_send_msg = ipa3_send_msg;
-	api_ctrl->ipa_register_pull_msg = ipa3_register_pull_msg;
-	api_ctrl->ipa_deregister_pull_msg = ipa3_deregister_pull_msg;
-	api_ctrl->ipa_register_intf = ipa3_register_intf;
-	api_ctrl->ipa_register_intf_ext = ipa3_register_intf_ext;
-	api_ctrl->ipa_deregister_intf = ipa3_deregister_intf;
-	api_ctrl->ipa_set_aggr_mode = ipa3_set_aggr_mode;
-	api_ctrl->ipa_set_qcncm_ndp_sig = ipa3_set_qcncm_ndp_sig;
-	api_ctrl->ipa_set_single_ndp_per_mbim = ipa3_set_single_ndp_per_mbim;
-	api_ctrl->ipa_tx_dp_mul = ipa3_tx_dp_mul;
-	api_ctrl->ipa_free_skb = ipa3_free_skb;
-	api_ctrl->ipa_setup_sys_pipe = ipa3_setup_sys_pipe;
-	api_ctrl->ipa_teardown_sys_pipe = ipa3_teardown_sys_pipe;
 	api_ctrl->ipa_sys_setup = ipa3_sys_setup;
 	api_ctrl->ipa_sys_teardown = ipa3_sys_teardown;
 	api_ctrl->ipa_sys_update_gsi_hdls = ipa3_sys_update_gsi_hdls;
-	api_ctrl->ipa_connect_wdi_pipe = ipa3_connect_wdi_pipe;
-	api_ctrl->ipa_disconnect_wdi_pipe = ipa3_disconnect_wdi_pipe;
-	api_ctrl->ipa_enable_wdi_pipe = ipa3_enable_wdi_pipe;
-	api_ctrl->ipa_disable_wdi_pipe = ipa3_disable_wdi_pipe;
-	api_ctrl->ipa_resume_wdi_pipe = ipa3_resume_wdi_pipe;
-	api_ctrl->ipa_suspend_wdi_pipe = ipa3_suspend_wdi_pipe;
-	api_ctrl->ipa_get_wdi_stats = ipa3_get_wdi_stats;
-	api_ctrl->ipa_uc_bw_monitor = ipa3_uc_bw_monitor;
 	api_ctrl->ipa_set_wlan_tx_info = ipa3_set_wlan_tx_info;
-	api_ctrl->ipa_get_smem_restr_bytes = ipa3_get_smem_restr_bytes;
-	api_ctrl->ipa_broadcast_wdi_quota_reach_ind =
-			ipa3_broadcast_wdi_quota_reach_ind;
-	api_ctrl->ipa_uc_wdi_get_dbpa = ipa3_uc_wdi_get_dbpa;
-	api_ctrl->ipa_uc_reg_rdyCB = ipa3_uc_reg_rdyCB;
-	api_ctrl->ipa_uc_dereg_rdyCB = ipa3_uc_dereg_rdyCB;
 	api_ctrl->teth_bridge_init = ipa3_teth_bridge_init;
 	api_ctrl->teth_bridge_disconnect = ipa3_teth_bridge_disconnect;
 	api_ctrl->teth_bridge_connect = ipa3_teth_bridge_connect;
 	api_ctrl->ipa_set_client = ipa3_set_client;
 	api_ctrl->ipa_get_client = ipa3_get_client;
 	api_ctrl->ipa_get_client_uplink = ipa3_get_client_uplink;
-	api_ctrl->ipa_dma_init = ipa3_dma_init;
-	api_ctrl->ipa_dma_enable = ipa3_dma_enable;
-	api_ctrl->ipa_dma_disable = ipa3_dma_disable;
-	api_ctrl->ipa_dma_sync_memcpy = ipa3_dma_sync_memcpy;
-	api_ctrl->ipa_dma_async_memcpy = ipa3_dma_async_memcpy;
-	api_ctrl->ipa_dma_uc_memcpy = ipa3_dma_uc_memcpy;
-	api_ctrl->ipa_dma_destroy = ipa3_dma_destroy;
 	api_ctrl->ipa_mhi_init_engine = ipa3_mhi_init_engine;
 	api_ctrl->ipa_connect_mhi_pipe = ipa3_connect_mhi_pipe;
 	api_ctrl->ipa_disconnect_mhi_pipe = ipa3_disconnect_mhi_pipe;
@@ -7329,33 +7287,10 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_uc_mhi_cleanup = ipa3_uc_mhi_cleanup;
 	api_ctrl->ipa_uc_state_check = ipa3_uc_state_check;
 	api_ctrl->ipa_write_qmap_id = ipa3_write_qmap_id;
-	api_ctrl->ipa_add_interrupt_handler = ipa3_add_interrupt_handler;
 	api_ctrl->ipa_remove_interrupt_handler = ipa3_remove_interrupt_handler;
-	api_ctrl->ipa_restore_suspend_handler = ipa3_restore_suspend_handler;
-	api_ctrl->ipa_bam_reg_dump = NULL;
-	api_ctrl->ipa_get_ep_mapping = ipa3_get_ep_mapping;
-	api_ctrl->ipa_is_ready = ipa3_is_ready;
-	api_ctrl->ipa_proxy_clk_vote = ipa3_proxy_clk_vote;
-	api_ctrl->ipa_proxy_clk_unvote = ipa3_proxy_clk_unvote;
-	api_ctrl->ipa_is_client_handle_valid = ipa3_is_client_handle_valid;
-	api_ctrl->ipa_get_client_mapping = ipa3_get_client_mapping;
-	api_ctrl->ipa_get_modem_cfg_emb_pipe_flt =
-		ipa3_get_modem_cfg_emb_pipe_flt;
-	api_ctrl->ipa_get_transport_type = ipa3_get_transport_type;
 	api_ctrl->ipa_ap_suspend = ipa3_ap_suspend;
 	api_ctrl->ipa_ap_resume = ipa3_ap_resume;
-	api_ctrl->ipa_get_smmu_domain = ipa3_get_smmu_domain;
-	api_ctrl->ipa_disable_apps_wan_cons_deaggr =
-		ipa3_disable_apps_wan_cons_deaggr;
-	api_ctrl->ipa_get_dma_dev = ipa3_get_dma_dev;
-	api_ctrl->ipa_release_wdi_mapping = ipa3_release_wdi_mapping;
-	api_ctrl->ipa_create_wdi_mapping = ipa3_create_wdi_mapping;
-	api_ctrl->ipa_get_gsi_ep_info = ipa3_get_gsi_ep_info;
-	api_ctrl->ipa_stop_gsi_channel = ipa3_stop_gsi_channel;
 	api_ctrl->ipa_start_gsi_channel = ipa3_start_gsi_channel;
-	api_ctrl->ipa_unregister_rmnet_ctl_cb = ipa3_unregister_rmnet_ctl_cb;
-	api_ctrl->ipa_register_rmnet_ctl_cb = ipa3_register_rmnet_ctl_cb;
-	api_ctrl->ipa_rmnet_ctl_xmit = ipa3_rmnet_ctl_xmit;
 	api_ctrl->ipa_inc_client_enable_clks = ipa3_inc_client_enable_clks;
 	api_ctrl->ipa_dec_client_disable_clks = ipa3_dec_client_disable_clks;
 	api_ctrl->ipa_inc_client_enable_clks_no_block =
@@ -7380,8 +7315,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 	api_ctrl->ipa_enable_wdi_pipes = ipa3_enable_wdi3_pipes;
 	api_ctrl->ipa_disable_wdi_pipes = ipa3_disable_wdi3_pipes;
 	api_ctrl->ipa_tz_unlock_reg = ipa3_tz_unlock_reg;
-	api_ctrl->ipa_get_smmu_params = ipa3_get_smmu_params;
-	api_ctrl->ipa_is_vlan_mode = ipa3_is_vlan_mode;
 	api_ctrl->ipa_wigig_internal_init = ipa3_wigig_internal_init;
 	api_ctrl->ipa_conn_wigig_rx_pipe_i = ipa3_conn_wigig_rx_pipe_i;
 	api_ctrl->ipa_conn_wigig_client_i = ipa3_conn_wigig_client_i;
@@ -7393,7 +7326,6 @@ int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
 		ipa3_register_client_callback;
 	api_ctrl->ipa_deregister_client_callback =
 		ipa3_deregister_client_callback;
-	api_ctrl->ipa_get_lan_rx_napi = ipa3_get_lan_rx_napi;
 	api_ctrl->ipa_uc_debug_stats_alloc =
 		ipa3_uc_debug_stats_alloc;
 	api_ctrl->ipa_uc_debug_stats_dealloc =

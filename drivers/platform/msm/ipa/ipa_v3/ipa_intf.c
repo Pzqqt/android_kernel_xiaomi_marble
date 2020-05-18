@@ -52,6 +52,7 @@ int ipa3_register_intf(const char *name, const struct ipa_tx_intf *tx,
 {
 	return ipa3_register_intf_ext(name, tx, rx, NULL);
 }
+EXPORT_SYMBOL(ipa3_register_intf);
 
 /**
  * ipa3_register_intf_ext() - register "logical" interface which has only
@@ -191,6 +192,7 @@ int ipa3_deregister_intf(const char *name)
 
 	return result;
 }
+EXPORT_SYMBOL(ipa3_deregister_intf);
 
 /**
  * ipa3_query_intf() - query logical interface properties

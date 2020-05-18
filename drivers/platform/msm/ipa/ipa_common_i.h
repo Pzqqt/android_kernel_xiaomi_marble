@@ -3,11 +3,10 @@
  * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/ipa_mhi.h>
-#include <linux/ipa_qmi_service_v01.h>
-
 #ifndef _IPA_COMMON_I_H_
 #define _IPA_COMMON_I_H_
+#include <linux/ipa_mhi.h>
+#include <linux/ipa_qmi_service_v01.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
 #include <linux/ipa.h>
@@ -226,6 +225,16 @@ enum ipa_hw_mhi_channel_states {
 	IPA_HW_MHI_CHANNEL_STATE_INVALID	= 0xFF
 };
 
+enum ipa_mhi_state {
+	IPA_MHI_STATE_INITIALIZED,
+	IPA_MHI_STATE_READY,
+	IPA_MHI_STATE_STARTED,
+	IPA_MHI_STATE_SUSPEND_IN_PROGRESS,
+	IPA_MHI_STATE_SUSPENDED,
+	IPA_MHI_STATE_RESUME_IN_PROGRESS,
+	IPA_MHI_STATE_MAX
+};
+
 /**
  * Structure holding the parameters for IPA_CPU_2_HW_CMD_MHI_DL_UL_SYNC_INFO
  * command. Parameters are sent as 32b immediate parameters.
@@ -375,12 +384,10 @@ bool ipa_mhi_sps_channel_empty(enum ipa_client_type client);
 int ipa_mhi_resume_channels_internal(enum ipa_client_type client,
 		bool LPTransitionRejected, bool brstmode_enabled,
 		union __packed gsi_channel_scratch ch_scratch, u8 index);
-int ipa_mhi_handle_ipa_config_req(struct ipa_config_req_msg_v01 *config_req);
 int ipa_mhi_query_ch_info(enum ipa_client_type client,
 		struct gsi_chan_info *ch_info);
 int ipa_mhi_destroy_channel(enum ipa_client_type client);
 int ipa_mhi_is_using_dma(bool *flag);
-const char *ipa_mhi_get_state_str(int state);
 
 /* MHI uC */
 int ipa_uc_mhi_send_dl_ul_sync_info(union IpaHwMhiDlUlSyncCmdData_t *cmd);
@@ -477,11 +484,209 @@ int ipa_wigig_send_msg(int msg_type,
 	const char *netdev_name, u8 *mac,
 	enum ipa_client_type client, bool to_wigig);
 
-int ipa_wigig_save_regs(void);
+int ipa_wigig_send_wlan_msg(enum ipa_wlan_event msg_type,
+	const char *netdev_name, u8 *mac);
 
 void ipa_register_client_callback(int (*client_cb)(bool is_lock),
 			bool (*teth_port_state)(void), u32 ipa_ep_idx);
 
 void ipa_deregister_client_callback(u32 ipa_ep_idx);
+
+/*
+* Configuration
+*/
+int ipa_cfg_ep(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg);
+
+int ipa_cfg_ep_nat(u32 clnt_hdl, const struct ipa_ep_cfg_nat *ipa_ep_cfg);
+
+int ipa_cfg_ep_conn_track(u32 clnt_hdl,
+	const struct ipa_ep_cfg_conn_track *ep_conn_track);
+
+int ipa_cfg_ep_hdr(u32 clnt_hdl, const struct ipa_ep_cfg_hdr *ipa_ep_cfg);
+
+int ipa_cfg_ep_hdr_ext(u32 clnt_hdl,
+	const struct ipa_ep_cfg_hdr_ext *ipa_ep_cfg);
+
+int ipa_cfg_ep_mode(u32 clnt_hdl, const struct ipa_ep_cfg_mode *ipa_ep_cfg);
+
+int ipa_cfg_ep_aggr(u32 clnt_hdl, const struct ipa_ep_cfg_aggr *ipa_ep_cfg);
+
+int ipa_cfg_ep_deaggr(u32 clnt_hdl,
+	const struct ipa_ep_cfg_deaggr *ipa_ep_cfg);
+
+int ipa_cfg_ep_route(u32 clnt_hdl, const struct ipa_ep_cfg_route *ipa_ep_cfg);
+
+int ipa_cfg_ep_holb(u32 clnt_hdl, const struct ipa_ep_cfg_holb *ipa_ep_cfg);
+
+int ipa_cfg_ep_cfg(u32 clnt_hdl, const struct ipa_ep_cfg_cfg *ipa_ep_cfg);
+
+int ipa_cfg_ep_metadata_mask(u32 clnt_hdl, const struct ipa_ep_cfg_metadata_mask
+	*ipa_ep_cfg);
+
+int ipa_cfg_ep_holb_by_client(enum ipa_client_type client,
+	const struct ipa_ep_cfg_holb *ipa_ep_cfg);
+
+/*
+* Header removal / addition
+*/
+int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
+
+int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
+
+int ipa_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
+
+int ipa_reset_hdr(bool user_only);
+
+/*
+* Header Processing Context
+*/
+int ipa_add_hdr_proc_ctx(struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs,
+	bool user_only);
+
+int ipa_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls);
+
+/*
+* Routing
+*/
+
+int ipa_add_rt_rule_v2(struct ipa_ioc_add_rt_rule_v2 *rules);
+
+int ipa_add_rt_rule_usr(struct ipa_ioc_add_rt_rule *rules, bool user_only);
+
+int ipa_add_rt_rule_usr_v2(struct ipa_ioc_add_rt_rule_v2 *rules,
+	bool user_only);
+
+int ipa_del_rt_rule(struct ipa_ioc_del_rt_rule *hdls);
+
+int ipa_commit_rt(enum ipa_ip_type ip);
+
+int ipa_reset_rt(enum ipa_ip_type ip, bool user_only);
+
+int ipa_get_rt_tbl(struct ipa_ioc_get_rt_tbl *lookup);
+
+int ipa_query_rt_index(struct ipa_ioc_get_rt_tbl_indx *in);
+
+int ipa_mdfy_rt_rule(struct ipa_ioc_mdfy_rt_rule *rules);
+
+int ipa_mdfy_rt_rule_v2(struct ipa_ioc_mdfy_rt_rule_v2 *rules);
+
+/*
+* Filtering
+*/
+int ipa_add_flt_rule(struct ipa_ioc_add_flt_rule *rules);
+
+int ipa_add_flt_rule_v2(struct ipa_ioc_add_flt_rule_v2 *rules);
+
+int ipa_add_flt_rule_usr(struct ipa_ioc_add_flt_rule *rules, bool user_only);
+
+int ipa_add_flt_rule_usr_v2(struct ipa_ioc_add_flt_rule_v2 *rules,
+	bool user_only);
+
+int ipa_del_flt_rule(struct ipa_ioc_del_flt_rule *hdls);
+
+int ipa_mdfy_flt_rule(struct ipa_ioc_mdfy_flt_rule *rules);
+
+int ipa_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
+
+int ipa_commit_flt(enum ipa_ip_type ip);
+
+int ipa_reset_flt(enum ipa_ip_type ip, bool user_only);
+
+/*
+* NAT\IPv6CT
+*/
+int ipa_allocate_nat_device(struct ipa_ioc_nat_alloc_mem *mem);
+int ipa_allocate_nat_table(struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
+int ipa_allocate_ipv6ct_table(
+	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
+
+int ipa_nat_init_cmd(struct ipa_ioc_v4_nat_init *init);
+int ipa_ipv6ct_init_cmd(struct ipa_ioc_ipv6ct_init *init);
+
+int ipa_nat_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
+int ipa_table_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
+
+int ipa_nat_del_cmd(struct ipa_ioc_v4_nat_del *del);
+int ipa_del_nat_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
+int ipa_del_ipv6ct_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
+
+int ipa_nat_mdfy_pdn(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
+
+/*
+* Data path
+*/
+int ipa_rx_poll(u32 clnt_hdl, int budget);
+void ipa_recycle_wan_skb(struct sk_buff *skb);
+
+/*
+* System pipes
+*/
+int ipa_set_wlan_tx_info(struct ipa_wdi_tx_info *info);
+
+/*
+* Tethering bridge (Rmnet / MBIM)
+*/
+int teth_bridge_init(struct teth_bridge_init_params *params);
+
+int teth_bridge_disconnect(enum ipa_client_type client);
+
+int teth_bridge_connect(struct teth_bridge_connect_params *connect_params);
+
+/*
+* Tethering client info
+*/
+void ipa_set_client(int index, enum ipacm_client_enum client, bool uplink);
+
+enum ipacm_client_enum ipa_get_client(int pipe_idx);
+
+bool ipa_get_client_uplink(int pipe_idx);
+
+/*
+* mux id
+*/
+int ipa_write_qmap_id(struct ipa_ioc_write_qmapid *param_in);
+
+/*
+* interrupts
+*/
+
+int ipa_remove_interrupt_handler(enum ipa_irq_type interrupt);
+
+/*
+* Interface
+*/
+int ipa3_register_intf(const char *name, const struct ipa_tx_intf *tx,
+	const struct ipa_rx_intf *rx);
+int ipa3_register_intf_ext(const char *name, const struct ipa_tx_intf *tx,
+	const struct ipa_rx_intf *rx,
+	const struct ipa_ext_intf *ext);
+int ipa3_deregister_intf(const char *name);
+
+/*
+* Miscellaneous
+*/
+
+int ipa_uc_debug_stats_alloc(
+	struct IpaHwOffloadStatsAllocCmdData_t cmdinfo);
+int ipa_uc_debug_stats_dealloc(uint32_t protocol);
+void ipa_get_gsi_stats(int prot_id,
+	struct ipa_uc_dbg_ring_stats *stats);
+int ipa_get_prot_id(enum ipa_client_type client);
+bool ipa_is_client_handle_valid(u32 clnt_hdl);
+
+/**
+* ipa_tz_unlock_reg - Unlocks memory regions so that they become accessible
+*	from AP.
+* @reg_info - Pointer to array of memory regions to unlock
+* @num_regs - Number of elements in the array
+*
+* Converts the input array of regions to a struct that TZ understands and
+* issues an SCM call.
+* Also flushes the memory cache to DDR in order to make sure that TZ sees the
+* correct data structure.
+*
+* Returns: 0 on success, negative on failure
+*/
+int ipa_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
 
 #endif /* _IPA_COMMON_I_H_ */

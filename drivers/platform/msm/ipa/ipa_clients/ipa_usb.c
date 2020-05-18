@@ -733,7 +733,7 @@ static int ipa_usb_set_lock_unlock(bool is_lock)
 	return 0;
 }
 
-static int ipa_usb_init_teth_prot_api(enum ipa_usb_teth_prot teth_prot,
+static int ipa_usb_init_teth_prot_internal(enum ipa_usb_teth_prot teth_prot,
 			   struct ipa_usb_teth_params *teth_params,
 			   int (*ipa_usb_notify_cb)(enum ipa_usb_notify_event,
 			   void *),
@@ -1828,7 +1828,7 @@ static void ipa_usb_debugfs_init(void){}
 static void ipa_usb_debugfs_remove(void){}
 #endif /* CONFIG_DEBUG_FS */
 
-static int ipa_usb_xdci_connect_api(struct ipa_usb_xdci_chan_params *ul_chan_params,
+static int ipa_usb_xdci_connect_internal(struct ipa_usb_xdci_chan_params *ul_chan_params,
 			 struct ipa_usb_xdci_chan_params *dl_chan_params,
 			 struct ipa_req_chan_out_params *ul_out_params,
 			 struct ipa_req_chan_out_params *dl_out_params,
@@ -1995,7 +1995,7 @@ static int ipa_usb_xdci_dismiss_channels(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	return 0;
 }
 
-static int ipa_usb_xdci_disconnect_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_disconnect_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 			    enum ipa_usb_teth_prot teth_prot)
 {
 	int result = 0;
@@ -2106,7 +2106,7 @@ bad_params:
 
 }
 
-static int ipa_usb_deinit_teth_prot_api(enum ipa_usb_teth_prot teth_prot)
+static int ipa_usb_deinit_teth_prot_internal(enum ipa_usb_teth_prot teth_prot)
 {
 	int result = -EFAULT;
 	enum ipa3_usb_transport_type ttype;
@@ -2292,7 +2292,7 @@ fail_exit:
 	return result;
 }
 
-static int ipa_usb_xdci_suspend_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_suspend_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	enum ipa_usb_teth_prot teth_prot, bool with_remote_wakeup)
 {
 	int result = 0;
@@ -2450,7 +2450,7 @@ fail_exit:
 	return result;
 }
 
-static int ipa_usb_xdci_resume_api(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
+static int ipa_usb_xdci_resume_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	enum ipa_usb_teth_prot teth_prot)
 {
 	int result = -EFAULT;
@@ -2605,12 +2605,12 @@ int ipa3_usb_init(void)
 
 	ipa_usb_debugfs_init();
 
-	funcs.ipa_usb_init_teth_prot = ipa_usb_init_teth_prot_api;
-	funcs.ipa_usb_xdci_connect = ipa_usb_xdci_connect_api;
-	funcs.ipa_usb_xdci_disconnect = ipa_usb_xdci_disconnect_api;
-	funcs.ipa_usb_deinit_teth_prot = ipa_usb_deinit_teth_prot_api;
-	funcs.ipa_usb_xdci_suspend = ipa_usb_xdci_suspend_api;
-	funcs.ipa_usb_xdci_resume = ipa_usb_xdci_resume_api;
+	funcs.ipa_usb_init_teth_prot = ipa_usb_init_teth_prot_internal;
+	funcs.ipa_usb_xdci_connect = ipa_usb_xdci_connect_internal;
+	funcs.ipa_usb_xdci_disconnect = ipa_usb_xdci_disconnect_internal;
+	funcs.ipa_usb_deinit_teth_prot = ipa_usb_deinit_teth_prot_internal;
+	funcs.ipa_usb_xdci_suspend = ipa_usb_xdci_suspend_internal;
+	funcs.ipa_usb_xdci_resume = ipa_usb_xdci_resume_internal;
 	if (ipa_fmwk_register_ipa_usb(&funcs)) {
 		pr_err("failed to register ipa_usb APIs\n");
 	}

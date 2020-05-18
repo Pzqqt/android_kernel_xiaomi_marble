@@ -2078,6 +2078,7 @@ dma_alloc_fail:
 fail:
 	return result;
 }
+EXPORT_SYMBOL(ipa3_connect_wdi_pipe);
 
 int ipa3_disconnect_gsi_wdi_pipe(u32 clnt_hdl)
 {
@@ -2190,6 +2191,7 @@ uc_timeout:
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
 	return result;
 }
+EXPORT_SYMBOL(ipa3_disconnect_wdi_pipe);
 
 int ipa3_enable_gsi_wdi_pipe(u32 clnt_hdl)
 {
@@ -2355,6 +2357,7 @@ uc_timeout:
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
 	return result;
 }
+EXPORT_SYMBOL(ipa3_enable_wdi_pipe);
 
 /**
  * ipa3_disable_wdi_pipe() - WDI client disable
@@ -2461,6 +2464,7 @@ uc_timeout:
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(clnt_hdl));
 	return result;
 }
+EXPORT_SYMBOL(ipa3_disable_wdi_pipe);
 
 int ipa3_resume_gsi_wdi_pipe(u32 clnt_hdl)
 {
@@ -2603,6 +2607,7 @@ int ipa3_resume_wdi_pipe(u32 clnt_hdl)
 uc_timeout:
 	return result;
 }
+EXPORT_SYMBOL(ipa3_resume_wdi_pipe);
 
 int ipa3_suspend_gsi_wdi_pipe(u32 clnt_hdl)
 {
@@ -2834,6 +2839,7 @@ int ipa3_suspend_wdi_pipe(u32 clnt_hdl)
 uc_timeout:
 	return result;
 }
+EXPORT_SYMBOL(ipa3_suspend_wdi_pipe);
 
 /**
  * ipa_broadcast_wdi_quota_reach_ind() - quota reach
@@ -2968,6 +2974,7 @@ int ipa3_uc_reg_rdyCB(
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_uc_reg_rdyCB);
 
 /**
  * ipa3_uc_dereg_rdyCB() - To de-register uC ready CB
@@ -3072,6 +3079,7 @@ int ipa3_create_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info)
 
 	return ret;
 }
+EXPORT_SYMBOL(ipa3_create_wdi_mapping);
 
 int ipa3_release_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info)
 {
@@ -3100,3 +3108,4 @@ int ipa3_release_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info)
 
 	return ret;
 }
+EXPORT_SYMBOL(ipa3_release_wdi_mapping);

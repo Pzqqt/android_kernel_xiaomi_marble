@@ -870,7 +870,7 @@ int ipa_pm_associate_ipa_cons_to_client(u32 hdl, enum ipa_client_type consumer)
 		return -EPERM;
 	}
 
-	idx = ipa_get_ep_mapping(consumer);
+	idx = ipa3_get_ep_mapping(consumer);
 
 	if (idx < 0) {
 		mutex_unlock(&ipa_pm_ctx->client_mutex);
