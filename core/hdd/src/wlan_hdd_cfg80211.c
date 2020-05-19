@@ -6710,6 +6710,9 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MSDU_AGGREGATION] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_LDPC] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC] = {.type = NLA_U8 },
 
 };
 
@@ -7096,6 +7099,45 @@ static int hdd_set_roam_reason_vsie_status(struct hdd_adapter *adapter,
 	return -ENOTSUPP;
 }
 #endif
+
+static int hdd_config_ldpc(struct hdd_adapter *adapter,
+			   const struct nlattr *attr)
+{
+	uint8_t ldpc;
+	int ret;
+
+	ldpc = nla_get_u8(attr);
+
+	ret = hdd_set_ldpc(adapter, ldpc);
+
+	return ret;
+}
+
+static int hdd_config_tx_stbc(struct hdd_adapter *adapter,
+			      const struct nlattr *attr)
+{
+	uint8_t tx_stbc;
+	int ret;
+
+	tx_stbc = nla_get_u8(attr);
+
+	ret = hdd_set_tx_stbc(adapter, tx_stbc);
+
+	return ret;
+}
+
+static int hdd_config_rx_stbc(struct hdd_adapter *adapter,
+			      const struct nlattr *attr)
+{
+	uint8_t rx_stbc;
+	int ret;
+
+	rx_stbc = nla_get_u8(attr);
+
+	ret = hdd_set_rx_stbc(adapter, rx_stbc);
+
+	return ret;
+}
 
 static int hdd_config_access_policy(struct hdd_adapter *adapter,
 				    struct nlattr *tb[])
@@ -8097,6 +8139,12 @@ static const struct independent_setters independent_setters[] = {
 #endif
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ROAM_REASON,
 	 hdd_set_roam_reason_vsie_status},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_LDPC,
+	 hdd_config_ldpc},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC,
+	 hdd_config_tx_stbc},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC,
+	 hdd_config_rx_stbc},
 };
 
 #ifdef WLAN_FEATURE_ELNA
@@ -8170,6 +8218,75 @@ static int hdd_get_roam_reason_vsie_status(struct hdd_adapter *adapter,
 	return -EINVAL;
 }
 #endif
+
+static int hdd_vendor_attr_ldpc_get(struct hdd_adapter *adapter,
+				    struct sk_buff *skb,
+				    const struct nlattr *attr)
+{
+	int ldpc;
+	int ret;
+
+	ret = hdd_get_ldpc(adapter, &ldpc);
+	if (ret) {
+		hdd_err("get ldpc failed");
+		return -EINVAL;
+	}
+
+	hdd_debug("ldpc %u", ldpc);
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_LDPC,
+		       (uint8_t)ldpc)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_vendor_attr_tx_stbc_get(struct hdd_adapter *adapter,
+				       struct sk_buff *skb,
+				       const struct nlattr *attr)
+{
+	int tx_stbc;
+	int ret;
+
+	ret = hdd_get_tx_stbc(adapter, &tx_stbc);
+	if (ret) {
+		hdd_err("get tx_stbc failed");
+		return -EINVAL;
+	}
+
+	hdd_debug("tx_stbc %u", tx_stbc);
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC,
+		       (uint8_t)tx_stbc)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_vendor_attr_rx_stbc_get(struct hdd_adapter *adapter,
+				       struct sk_buff *skb,
+				       const struct nlattr *attr)
+{
+	int rx_stbc;
+	int ret;
+
+	ret = hdd_get_rx_stbc(adapter, &rx_stbc);
+	if (ret) {
+		hdd_err("get rx_stbc failed");
+		return -EINVAL;
+	}
+
+	hdd_debug("rx_stbc %u", rx_stbc);
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC,
+		       (uint8_t)rx_stbc)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
 
 /**
  * hdd_get_tx_ampdu() - Get TX AMPDU
@@ -8338,6 +8455,15 @@ static const struct config_getters config_getters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MSDU_AGGREGATION,
 	 sizeof(uint8_t),
 	 hdd_get_rx_amsdu},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_LDPC,
+	 sizeof(uint8_t),
+	 hdd_vendor_attr_ldpc_get},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC,
+	 sizeof(uint8_t),
+	 hdd_vendor_attr_tx_stbc_get},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC,
+	 sizeof(uint8_t),
+	 hdd_vendor_attr_rx_stbc_get},
 };
 
 /**

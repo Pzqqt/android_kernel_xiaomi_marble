@@ -329,4 +329,58 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx);
  * Return: None
  */
 void hdd_override_all_ps(struct hdd_context *hdd_ctx);
-#endif
+
+/**
+ * hdd_get_ldpc() - Get adapter LDPC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
+
+/**
+ * hdd_set_ldpc() - Set adapter LDPC
+ * @adapter: adapter being modified
+ * @value: new LDPC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
+
+/**
+ * hdd_get_tx_stbc() - Get adapter TX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value);
+
+/**
+ * hdd_set_tx_stbc() - Set adapter TX STBC
+ * @adapter: adapter being modified
+ * @value: new TX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value);
+
+/**
+ * hdd_get_rx_stbc() - Get adapter RX STBC
+ * @adapter: adapter being queried
+ * @value: where to store the value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value);
+
+/**
+ * hdd_set_rx_stbc() - Set adapter RX STBC
+ * @adapter: adapter being modified
+ * @value: new RX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value);
+#endif /* end #if !defined(HDD_CONFIG_H__) */
