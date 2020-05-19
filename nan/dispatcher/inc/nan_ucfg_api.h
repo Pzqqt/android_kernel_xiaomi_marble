@@ -238,14 +238,14 @@ QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type);
 
 /**
- * ucfg_is_nan_disable_supported() - ucfg API to query NAN Disable support
+ * ucfg_is_nan_conc_control_supported() - is NAN concurrency controlled by host
  * @psoc: pointer to psoc object
  *
- * This function returns NAN Disable support status
+ * This function returns NAN concurrency support status
  *
- * Return: True if NAN Disable is supported, False otherwise
+ * Return: True if NAN concurrency is controlled by host, False otherwise
  */
-bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc);
+bool ucfg_is_nan_conc_control_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_is_nan_dbs_supported() - ucfg API to query NAN DBS support
@@ -529,7 +529,7 @@ ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id)
 }
 
 static inline
-bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
+bool ucfg_is_nan_conc_control_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }

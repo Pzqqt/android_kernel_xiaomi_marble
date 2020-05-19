@@ -565,7 +565,7 @@ void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 	psoc_priv->nan_caps = *nan_caps;
 }
 
-bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
+bool ucfg_is_nan_conc_control_supported(struct wlan_objmgr_psoc *psoc)
 {
 	struct nan_psoc_priv_obj *psoc_priv;
 
@@ -575,7 +575,7 @@ bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 
-	return (psoc_priv->nan_caps.nan_disable_supported == 1);
+	return (psoc_priv->nan_caps.nan_conc_control == 1);
 }
 
 bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
@@ -799,7 +799,7 @@ void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	if (!ucfg_is_nan_disable_supported(psoc))
+	if (!ucfg_is_nan_conc_control_supported(psoc))
 		return;
 
 	qdf_spin_lock_bh(&psoc_priv->lock);
