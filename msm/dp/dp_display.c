@@ -9,8 +9,8 @@
 #include <linux/debugfs.h>
 #include <linux/component.h>
 #include <linux/of_irq.h>
-#include <linux/extcon.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/usb/phy.h>
 
 #include "sde_connector.h"
 
@@ -1538,38 +1538,39 @@ static void dp_display_connect_work(struct work_struct *work)
 }
 
 static int dp_display_usb_notifier(struct notifier_block *nb,
-	unsigned long event, void *ptr)
+	unsigned long action, void *data)
 {
-	struct extcon_dev *edev = ptr;
 	struct dp_display_private *dp = container_of(nb,
 			struct dp_display_private, usb_nb);
-	if (!edev)
-		goto end;
 
-	if (!event && dp->debug->sim_mode) {
+	SDE_EVT32_EXTERNAL(dp->state, dp->debug->sim_mode, action);
+	if (!action && dp->debug->sim_mode) {
+		DP_WARN("usb disconnected during simulation\n");
 		dp_display_disconnect_sync(dp);
 		dp->debug->abort(dp->debug);
 	}
-end:
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, dp->state, NOTIFY_DONE);
 	return NOTIFY_DONE;
 }
 
-static int dp_display_get_usb_extcon(struct dp_display_private *dp)
+static void dp_display_register_usb_notifier(struct dp_display_private *dp)
 {
-	struct extcon_dev *edev;
-	int rc;
+	int rc = 0;
+	const char *phandle = "usb-phy";
+	struct usb_phy *usbphy;
 
-	edev = extcon_get_edev_by_phandle(&dp->pdev->dev, 0);
-	if (IS_ERR(edev))
-		return PTR_ERR(edev);
+	usbphy = devm_usb_get_phy_by_phandle(&dp->pdev->dev, phandle, 0);
+	if (IS_ERR_OR_NULL(usbphy)) {
+		DP_DEBUG("unable to get usbphy\n");
+		return;
+	}
 
 	dp->usb_nb.notifier_call = dp_display_usb_notifier;
 	dp->usb_nb.priority = 2;
-	rc = extcon_register_notifier(edev, EXTCON_USB, &dp->usb_nb);
+	rc = usb_register_notifier(usbphy, &dp->usb_nb);
 	if (rc)
-		DP_ERR("failed to register for usb event: %d\n", rc);
-
-	return rc;
+		DP_DEBUG("failed to register for usb event: %d\n", rc);
 }
 
 static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
@@ -1762,7 +1763,7 @@ static int dp_init_sub_modules(struct dp_display_private *dp)
 	dp->debug->hdcp_disabled = hdcp_disabled;
 	dp_display_update_hdcp_status(dp, true);
 
-	dp_display_get_usb_extcon(dp);
+	dp_display_register_usb_notifier(dp);
 
 	if (dp->hpd->register_hpd) {
 		rc = dp->hpd->register_hpd(dp->hpd);
