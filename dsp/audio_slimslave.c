@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2014, 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017-2018, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -9,7 +9,7 @@
 #include <linux/device.h>
 #include <linux/mutex.h>
 #include <linux/miscdevice.h>
-#include <sound/audio_slimslave.h>
+#include <audio/sound/audio_slimslave.h>
 #include <linux/slimbus/slimbus.h>
 #include <linux/pm_runtime.h>
 

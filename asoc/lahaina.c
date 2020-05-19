@@ -142,6 +142,7 @@ enum {
 	RX_CDC_DMA_RX_2,
 	RX_CDC_DMA_RX_3,
 	RX_CDC_DMA_RX_5,
+	RX_CDC_DMA_RX_6,
 	CDC_DMA_RX_MAX,
 };
 
@@ -634,11 +635,12 @@ static struct dev_config cdc_dma_rx_cfg[] = {
 	[RX_CDC_DMA_RX_2] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[RX_CDC_DMA_RX_3] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[RX_CDC_DMA_RX_5] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[RX_CDC_DMA_RX_6] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 };
 
 /* Default configuration of Codec DMA Interface TX */
 static struct dev_config cdc_dma_tx_cfg[] = {
-	[WSA_CDC_DMA_TX_0] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[WSA_CDC_DMA_TX_0] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[WSA_CDC_DMA_TX_1] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[WSA_CDC_DMA_TX_2] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TX_CDC_DMA_TX_0] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
@@ -776,6 +778,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_1_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_2_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_3_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_5_chs, cdc_dma_rx_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_6_chs, cdc_dma_rx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_1_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_chs, cdc_dma_tx_ch_text);
@@ -824,6 +827,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_1_format, cdc80_bit_format_text)
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_2_format, cdc80_bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_3_format, cdc80_bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_5_format, cdc80_bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_6_format, cdc80_bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_0_sample_rate,
 				cdc80_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_1_sample_rate,
@@ -834,12 +838,15 @@ static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_3_sample_rate,
 				cdc80_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_5_sample_rate,
 				cdc80_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc80_dma_rx_6_sample_rate,
+				cdc80_dma_sample_rate_text);
 /* WCD9385 */
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_0_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_1_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_2_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_3_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_5_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_6_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_0_sample_rate,
 				cdc_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_1_sample_rate,
@@ -849,6 +856,8 @@ static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_2_sample_rate,
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_3_sample_rate,
 				cdc_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_5_sample_rate,
+				cdc_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc85_dma_rx_6_sample_rate,
 				cdc_dma_sample_rate_text);
 
 static SOC_ENUM_SINGLE_EXT_DECL(ext_disp_rx_chs, ch_text);
@@ -2757,6 +2766,9 @@ static int cdc_dma_get_port_idx(struct snd_kcontrol *kcontrol)
 	else if (strnstr(kcontrol->id.name, "RX_CDC_DMA_RX_5",
 		sizeof("RX_CDC_DMA_RX_5")))
 		idx = RX_CDC_DMA_RX_5;
+	else if (strnstr(kcontrol->id.name, "RX_CDC_DMA_RX_6",
+		sizeof("RX_CDC_DMA_RX_6")))
+		idx = RX_CDC_DMA_RX_6;
 	else if (strnstr(kcontrol->id.name, "WSA_CDC_DMA_TX_0",
 		sizeof("WSA_CDC_DMA_TX_0")))
 		idx = WSA_CDC_DMA_TX_0;
@@ -3288,6 +3300,9 @@ static int msm_cdc_dma_get_idx_from_beid(int32_t be_id)
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
 		idx = RX_CDC_DMA_RX_5;
 		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
+		idx = RX_CDC_DMA_RX_6;
+		break;
 	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_0:
 		idx = TX_CDC_DMA_TX_0;
 		break;
@@ -3527,6 +3542,8 @@ static const struct snd_kcontrol_new msm_int_snd_controls[] = {
 			cdc_dma_rx_ch_get, cdc_dma_rx_ch_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_5 Channels", rx_cdc_dma_rx_5_chs,
 			cdc_dma_rx_ch_get, cdc_dma_rx_ch_put),
+	SOC_ENUM_EXT("RX_CDC_DMA_RX_6 Channels", rx_cdc_dma_rx_6_chs,
+			cdc_dma_rx_ch_get, cdc_dma_rx_ch_put),
 	SOC_ENUM_EXT("WSA_CDC_DMA_TX_0 Channels", wsa_cdc_dma_tx_0_chs,
 			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
 	SOC_ENUM_EXT("WSA_CDC_DMA_TX_1 Channels", wsa_cdc_dma_tx_1_chs,
@@ -3622,6 +3639,8 @@ static const struct snd_kcontrol_new msm_int_wcd9380_snd_controls[] = {
 			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_5 Format", rx_cdc80_dma_rx_5_format,
 			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
+	SOC_ENUM_EXT("RX_CDC_DMA_RX_6 Format", rx_cdc80_dma_rx_6_format,
+			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_0 SampleRate",
 			rx_cdc80_dma_rx_0_sample_rate,
 			cdc_dma_rx_sample_rate_get,
@@ -3642,6 +3661,10 @@ static const struct snd_kcontrol_new msm_int_wcd9380_snd_controls[] = {
 			rx_cdc80_dma_rx_5_sample_rate,
 			cdc_dma_rx_sample_rate_get,
 			cdc_dma_rx_sample_rate_put),
+	SOC_ENUM_EXT("RX_CDC_DMA_RX_6 SampleRate",
+			rx_cdc80_dma_rx_6_sample_rate,
+			cdc_dma_rx_sample_rate_get,
+			cdc_dma_rx_sample_rate_put),
 };
 
 static const struct snd_kcontrol_new msm_int_wcd9385_snd_controls[] = {
@@ -3654,6 +3677,8 @@ static const struct snd_kcontrol_new msm_int_wcd9385_snd_controls[] = {
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_3 Format", rx_cdc85_dma_rx_3_format,
 			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_5 Format", rx_cdc85_dma_rx_5_format,
+			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
+	SOC_ENUM_EXT("RX_CDC_DMA_RX_6 Format", rx_cdc85_dma_rx_6_format,
 			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_0 SampleRate",
 			rx_cdc85_dma_rx_0_sample_rate,
@@ -3673,6 +3698,10 @@ static const struct snd_kcontrol_new msm_int_wcd9385_snd_controls[] = {
 			cdc_dma_rx_sample_rate_put),
 	SOC_ENUM_EXT("RX_CDC_DMA_RX_5 SampleRate",
 			rx_cdc85_dma_rx_5_sample_rate,
+			cdc_dma_rx_sample_rate_get,
+			cdc_dma_rx_sample_rate_put),
+	SOC_ENUM_EXT("RX_CDC_DMA_RX_6 SampleRate",
+			rx_cdc85_dma_rx_6_sample_rate,
 			cdc_dma_rx_sample_rate_get,
 			cdc_dma_rx_sample_rate_put),
 };
@@ -4390,6 +4419,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
 		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
 				cdc_dma_rx_cfg[idx].bit_format);
@@ -4413,9 +4443,10 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		break;
 
 	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0:
+		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
 				SNDRV_PCM_FORMAT_S32_LE);
-		rate->min = rate->max = SAMPLING_RATE_8KHZ;
+		rate->min = rate->max = cdc_dma_tx_cfg[idx].sample_rate;
 		channels->min = channels->max = msm_vi_feed_tx_ch;
 		break;
 
@@ -4834,6 +4865,7 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 		case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
 		case MSM_BACKEND_DAI_RX_CDC_DMA_RX_4:
 		case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
+		case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
 		{
 			ch_id = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 			pr_debug("%s: id %d rx_ch=%d\n", __func__,
@@ -5870,7 +5902,6 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_cdcdma5_tx),
-		.num_codecs = ARRAY_SIZE(tx_cdcdma5_tx_codecs),
 	},
 	{/* hw:x,40 */
 		.name = MSM_DAILINK_NAME(Media31),
@@ -5903,6 +5934,13 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA32,
 		SND_SOC_DAILINK_REG(multimedia32),
+	},
+	{/* hw:x,42 */
+		.name = "MSM AFE-PCM TX1",
+		.stream_name = "AFE-PROXY TX1",
+		.dpcm_capture = 1,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(afepcm_tx1),
 	},
 };
 
@@ -5975,6 +6013,27 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
 		SND_SOC_DAILINK_REG(voice2_playback_tx),
+	},
+	/* Proxy Tx BACK END DAI Link */
+	{
+		.name = LPASS_BE_PROXY_TX,
+		.stream_name = "Proxy Capture",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_PROXY_TX,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(proxy_tx),
+	},
+	/* Proxy Rx BACK END DAI Link */
+	{
+		.name = LPASS_BE_PROXY_RX,
+		.stream_name = "Proxy Playback",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_PROXY_RX,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(proxy_rx),
 	},
 	{
 		.name = LPASS_BE_USB_AUDIO_RX,
@@ -6534,7 +6593,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx0),
 		.init = &msm_int_audrx_init,
-		.num_codecs = ARRAY_SIZE(wsa_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_RX_1,
@@ -6547,7 +6605,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_rx1),
-		.num_codecs = ARRAY_SIZE(wsa_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_WSA_CDC_DMA_TX_1,
@@ -6559,7 +6616,6 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_tx1),
-		.num_codecs = ARRAY_SIZE(wsa_dma_tx1_codecs),
 	},
 };
 
@@ -6580,7 +6636,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx0),
 		.init = &msm_aux_codec_init,
-		.num_codecs = ARRAY_SIZE(rx_dma_rx0_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_1,
@@ -6596,7 +6651,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx1_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -6612,7 +6666,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx2),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx2_codecs),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_3,
@@ -6628,7 +6681,21 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
-		.num_codecs = ARRAY_SIZE(rx_dma_rx3_codecs),
+	},
+	{
+		.name = LPASS_BE_RX_CDC_DMA_RX_6,
+		.stream_name = "RX CDC DMA6 Playback",
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.dynamic_be = 1,
+#endif /* CONFIG_AUDIO_QGKI */
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_6,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+		SND_SOC_DAILINK_REG(rx_dma_rx6),
 	},
 	/* TX CDC DMA Backend DAI Links */
 	{
@@ -6641,7 +6708,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx3),
-		.num_codecs = ARRAY_SIZE(tx_dma_tx3_codecs),
 	},
 	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_4,
@@ -6653,7 +6719,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_dma_tx4),
-		.num_codecs = ARRAY_SIZE(tx_dma_tx4_codecs),
 	},
 };
 
@@ -7167,7 +7232,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
 		}
 
-		/*TODO: create codec entry for wsa1 */
+		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
+							component);
 	}
 
         /* If current platform has more than one WSA */
@@ -7189,7 +7255,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			snd_soc_dapm_ignore_suspend(dapm, "spkrRight SPKR");
 		}
 
-		/*TODO: create codec entry for wsa2 */
+		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
+							component);
 	}
 
 	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");

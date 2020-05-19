@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #ifndef __Q6AFE_V2_H__
 #define __Q6AFE_V2_H__
@@ -34,6 +34,7 @@
 #define RT_PROXY_DAI_001_TX	0xF0
 #define RT_PROXY_DAI_002_RX	0xF1
 #define RT_PROXY_DAI_002_TX	0xE1
+#define RT_PROXY_DAI_003_TX	0xF2
 #define VIRTUAL_ID_TO_PORTID(val) ((val & 0xF) | 0x2000)
 
 #define AFE_CLK_VERSION_V1    1
@@ -45,7 +46,8 @@
 #define AFE_API_VERSION_V4		4
 /* for VAD enable */
 #define AFE_API_VERSION_V6		6
-
+/* for Speaker Protection V4 */
+#define AFE_API_VERSION_V9		9
 
 typedef int (*routing_cb)(int port);
 
@@ -284,6 +286,9 @@ enum {
 	/* IDX 208-> 209 */
 	IDX_AFE_PORT_ID_PRIMARY_META_MI2S_RX,
 	IDX_AFE_PORT_ID_SECONDARY_META_MI2S_RX,
+	/* IDX 210-> 211 */
+	IDX_RT_PROXY_PORT_002_RX,
+	IDX_RT_PROXY_PORT_002_TX,
 	AFE_MAX_PORTS
 };
 
@@ -384,7 +389,7 @@ int afe_unregister_get_events(u16 port_id);
 int afe_rt_proxy_port_write(phys_addr_t buf_addr_p,
 			u32 mem_map_handle, int bytes);
 int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
-			u32 mem_map_handle, int bytes);
+			u32 mem_map_handle, int bytes, int id);
 void afe_set_cal_mode(u16 port_id, enum afe_cal_mode afe_cal_mode);
 void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 		     u32 port_id);

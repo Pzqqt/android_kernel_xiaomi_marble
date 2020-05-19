@@ -3,7 +3,7 @@
  *
  * Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2010-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -15,7 +15,7 @@
  * GNU General Public License for more details.
  *
  */
-#include <linux/msm_audio_amrwbplus.h>
+#include <audio/linux/msm_audio_amrwbplus.h>
 #include <linux/compat.h>
 #include "audio_utils_aio.h"
 

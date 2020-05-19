@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -124,7 +124,9 @@ static enum hrtimer_restart afe_hrtimer_rec_callback(struct hrtimer *hrt)
 		container_of(hrt, struct pcm_afe_info, hrt);
 	struct snd_pcm_substream *substream = prtd->substream;
 	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	u32 mem_map_handle = 0;
+	int port_id = rtd->cpu_dai->id;
 	int ret;
 
 	mem_map_handle = afe_req_mmap_handle(prtd->audio_client);
@@ -138,7 +140,7 @@ static enum hrtimer_restart afe_hrtimer_rec_callback(struct hrtimer *hrt)
 		ret = afe_rt_proxy_port_read(
 		(prtd->dma_addr + (prtd->dsp_cnt
 		* snd_pcm_lib_period_bytes(prtd->substream))), mem_map_handle,
-		snd_pcm_lib_period_bytes(prtd->substream));
+		snd_pcm_lib_period_bytes(prtd->substream), port_id);
 		if (ret < 0) {
 			pr_err("%s: AFE port read fails: %d\n", __func__, ret);
 			prtd->start = 0;
@@ -256,15 +258,19 @@ static void pcm_afe_process_rx_pkt(uint32_t opcode,
 	unsigned long dsp_flags;
 	struct snd_pcm_substream *substream = NULL;
 	struct snd_pcm_runtime *runtime = NULL;
+	struct snd_soc_pcm_runtime *rtd = NULL;
 	uint16_t event;
 	uint64_t period_bytes;
 	uint64_t bytes_one_sec;
 	uint32_t mem_map_handle = 0;
+	int port_id = 0;
 
 	if (prtd == NULL)
 		return;
 	substream =  prtd->substream;
 	runtime = substream->runtime;
+	rtd = substream->private_data;
+	port_id = rtd->cpu_dai->id;
 	pr_debug("%s\n", __func__);
 	spin_lock_irqsave(&prtd->dsp_lock, dsp_flags);
 	switch (opcode) {
@@ -305,7 +311,8 @@ static void pcm_afe_process_rx_pkt(uint32_t opcode,
 						prtd->substream))),
 					mem_map_handle,
 					snd_pcm_lib_period_bytes(
-						prtd->substream));
+						prtd->substream),
+					port_id);
 				prtd->dsp_cnt++;
 			}
 			break;
@@ -543,6 +550,8 @@ static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	int port_id = rtd->cpu_dai->id;
 	char *hwbuf = runtime->dma_area + hwoff;
 	u32 mem_map_handle = 0;
 
@@ -562,7 +571,8 @@ static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
 				(prtd->dsp_cnt *
 				snd_pcm_lib_period_bytes(prtd->substream))),
 				mem_map_handle,
-				snd_pcm_lib_period_bytes(prtd->substream));
+				snd_pcm_lib_period_bytes(prtd->substream),
+				port_id);
 
 		if (ret) {
 			pr_err("%s: AFE proxy port read failed %d\n",

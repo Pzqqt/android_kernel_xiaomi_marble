@@ -1,7 +1,7 @@
 #ifndef WCD9320_REGISTERS_H
 #define WCD9320_REGISTERS_H
 
-#include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 
 #define TAIKO_A_CHIP_CTL			WCD9XXX_A_CHIP_CTL
 #define TAIKO_A_CHIP_CTL__POR			WCD9XXX_A_CHIP_CTL__POR

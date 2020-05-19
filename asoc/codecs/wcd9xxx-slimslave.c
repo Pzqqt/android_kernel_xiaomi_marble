@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  */
 #include <linux/slab.h>
 #include <linux/mutex.h>
-#include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
+#include <audio/linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <asoc/wcd9xxx-slimslave.h>
 
 struct wcd9xxx_slim_sch {

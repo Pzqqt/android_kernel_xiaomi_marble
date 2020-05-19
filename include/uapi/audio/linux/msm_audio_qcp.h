@@ -1,7 +1,7 @@
 #ifndef _UAPI_MSM_AUDIO_QCP_H
 #define _UAPI_MSM_AUDIO_QCP_H
 
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 #include <linux/types.h>
 
 #define AUDIO_SET_QCELP_ENC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \

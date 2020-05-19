@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/fs.h>
@@ -10,7 +10,7 @@
 #include <linux/uaccess.h>
 #include <linux/mutex.h>
 #include <linux/sched.h>
-#include <linux/msm_audio_calibration.h>
+#include <audio/linux/msm_audio_calibration.h>
 #include <linux/atomic.h>
 #include <linux/compat.h>
 #include <dsp/msm_audio_ion.h>

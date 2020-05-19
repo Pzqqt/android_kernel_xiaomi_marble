@@ -588,6 +588,7 @@ int enable_volume_ramp(struct q6audio_aio *audio)
 
 int audio_aio_release(struct inode *inode, struct file *file)
 {
+	unsigned long flags = 0;
 	struct q6audio_aio *audio = file->private_data;
 
 	pr_debug("%s[%pK]\n", __func__, audio);
@@ -631,11 +632,11 @@ int audio_aio_release(struct inode *inode, struct file *file)
 #ifdef CONFIG_DEBUG_FS
 	debugfs_remove(audio->dentry);
 #endif
-	spin_lock(&enc_dec_lock);
+	spin_lock_irqsave(&enc_dec_lock, flags);
 	kfree(audio->codec_cfg);
 	kfree(audio);
 	file->private_data = NULL;
-	spin_unlock(&enc_dec_lock);
+	spin_unlock_irqrestore(&enc_dec_lock, flags);
 	mutex_unlock(&lock);
 	return 0;
 }

@@ -164,6 +164,10 @@ static int wcd937x_set_port_params(struct snd_soc_component *component,
 		map = &wcd937x->tx_port_mapping;
 		num_ports = wcd937x->num_tx_ports;
 		break;
+	default:
+		dev_err(component->dev, "%s Invalid path selected %u\n",
+					__func__, path);
+		return -EINVAL;
 	}
 
 	for (i = 0; i <= num_ports; i++) {
@@ -208,6 +212,10 @@ static int wcd937x_parse_port_mapping(struct device *dev,
 		map = &wcd937x->tx_port_mapping;
 		num_ports = &wcd937x->num_tx_ports;
 		break;
+	default:
+		dev_err(dev, "%s Invalid path selected %u\n",
+				 __func__, path);
+		return -EINVAL;
 	}
 
 	if (!of_find_property(dev->of_node, prop,
@@ -1567,6 +1575,17 @@ static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
 	return 0;
 }
 
+static bool get_usbc_hs_status(struct snd_soc_component *component,
+			struct wcd_mbhc_config *mbhc_cfg)
+{
+	if (mbhc_cfg->enable_usbc_analog) {
+		if (!(snd_soc_component_read32(component, WCD937X_ANA_MBHC_MECH)
+			& 0x20))
+			return true;
+	}
+	return false;
+}
+
 static int wcd937x_event_notify(struct notifier_block *block,
 				unsigned long val,
 				void *data)
@@ -1602,6 +1621,8 @@ static int wcd937x_event_notify(struct notifier_block *block,
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd937x->mbhc->wcd_mbhc.deinit_in_progress = true;
 		mbhc = &wcd937x->mbhc->wcd_mbhc;
+		wcd937x->usbc_hs_status = get_usbc_hs_status(component,
+						mbhc->mbhc_cfg);
 		wcd937x_mbhc_ssr_down(wcd937x->mbhc, component);
 		wcd937x_reset_low(wcd937x->dev);
 		break;
@@ -1622,6 +1643,8 @@ static int wcd937x_event_notify(struct notifier_block *block,
 				__func__);
 		} else {
 			wcd937x_mbhc_hs_detect(component, mbhc->mbhc_cfg);
+			if (wcd937x->usbc_hs_status)
+				mdelay(500);
 		}
 		wcd937x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		break;

@@ -15,7 +15,7 @@
 #include <linux/debugfs.h>
 #include <linux/time.h>
 #include <linux/atomic.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 #include <asm/ioctls.h>
 #include <linux/memory.h>
 #include <dsp/msm_audio_ion.h>

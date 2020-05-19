@@ -20,10 +20,10 @@
 #include <sound/initval.h>
 #include <sound/control.h>
 #include <sound/pcm_params.h>
-#include <sound/audio_effects.h>
+#include <audio/sound/audio_effects.h>
 #include <asm/dma.h>
 #include <linux/dma-mapping.h>
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 
 #include <sound/timer.h>
 #include <sound/tlv.h>
@@ -1977,6 +1977,9 @@ static int msm_compr_playback_free(struct snd_compr_stream *cstream)
 	if (pdata->dec_params[soc_prtd->dai_link->id] != NULL) {
 		kfree(pdata->dec_params[soc_prtd->dai_link->id]);
 		pdata->dec_params[soc_prtd->dai_link->id] = NULL;
+	}
+	if (pdata->ch_map[soc_prtd->dai_link->id]) {
+		pdata->ch_map[soc_prtd->dai_link->id]->set_ch_map = false;
 	}
 	pdata->is_in_use[soc_prtd->dai_link->id] = false;
 	kfree(prtd);

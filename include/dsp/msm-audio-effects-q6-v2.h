@@ -1,12 +1,12 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MSM_AUDIO_EFFECTS_H
 #define _MSM_AUDIO_EFFECTS_H
 
-#include <sound/audio_effects.h>
+#include <audio/sound/audio_effects.h>
 
 #define MAX_PP_PARAMS_SZ   128
 

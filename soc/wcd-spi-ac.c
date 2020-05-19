@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -11,7 +11,7 @@
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/notifier.h>
-#include <linux/wcd-spi-ac-params.h>
+#include <audio/linux/wcd-spi-ac-params.h>
 #include <soc/wcd-spi-ac.h>
 #include <soc/qcom/msm_qmi_interface.h>
 

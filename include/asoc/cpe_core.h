@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  */
 
 #ifndef __CPE_CORE_H__
@@ -9,7 +9,7 @@
 #include <linux/types.h>
 #include <linux/wait.h>
 #include <linux/dma-mapping.h>
-#include <sound/lsm_params.h>
+#include <audio/sound/lsm_params.h>
 
 enum {
 	CMD_INIT_STATE = 0,

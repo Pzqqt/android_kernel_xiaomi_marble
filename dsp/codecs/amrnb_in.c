@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2010-2012, 2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2012, 2014, 2016-2017, 2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -11,7 +11,7 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 #include <linux/dma-mapping.h>
-#include <linux/msm_audio_amrnb.h>
+#include <audio/linux/msm_audio_amrnb.h>
 #include <linux/compat.h>
 #include <linux/atomic.h>
 #include <asm/ioctls.h>

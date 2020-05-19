@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2015, 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -12,7 +12,7 @@
 #include <linux/device.h>
 #include <linux/io.h>
 #include <linux/platform_device.h>
-#include <linux/avtimer.h>
+#include <audio/linux/avtimer.h>
 #include <linux/slab.h>
 #include <linux/of.h>
 #include <linux/wait.h>

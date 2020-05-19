@@ -1,7 +1,7 @@
 #ifndef _UAPI_MSM_AUDIO_SBC_H
 #define _UAPI_MSM_AUDIO_SBC_H
 
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 #include <linux/types.h>
 
 #define AUDIO_SET_SBC_ENC_CONFIG  _IOW(AUDIO_IOCTL_MAGIC, \

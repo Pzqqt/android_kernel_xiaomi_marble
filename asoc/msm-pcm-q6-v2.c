@@ -21,12 +21,12 @@
 #include <sound/timer.h>
 #include <asm/dma.h>
 #include <linux/dma-mapping.h>
-#include <linux/msm_audio.h>
+#include <audio/linux/msm_audio.h>
 
 #include <linux/of_device.h>
 #include <sound/tlv.h>
 #include <sound/pcm_params.h>
-#include <sound/devdep_params.h>
+#include <audio/sound/devdep_params.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6audio-v2.h>
 #include <dsp/q6core.h>
