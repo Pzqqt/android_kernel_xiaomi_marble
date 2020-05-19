@@ -3004,7 +3004,7 @@ static int _sde_kms_active_override(struct sde_kms *sde_kms, bool enable)
 	return 0;
 }
 
-static void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
+static void _sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 {
 	struct device *cpu_dev;
 	int cpu = 0;
@@ -3033,7 +3033,7 @@ static void sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 	}
 }
 
-static void sde_kms_remove_pm_qos_irq_request(struct sde_kms *sde_kms)
+static void _sde_kms_remove_pm_qos_irq_request(struct sde_kms *sde_kms)
 {
 	struct device *cpu_dev;
 	int cpu = 0;
@@ -3057,6 +3057,14 @@ static void sde_kms_remove_pm_qos_irq_request(struct sde_kms *sde_kms)
 	}
 }
 
+void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable)
+{
+	if (enable)
+		_sde_kms_update_pm_qos_irq_request(sde_kms);
+	else
+		_sde_kms_remove_pm_qos_irq_request(sde_kms);
+}
+
 static void sde_kms_irq_affinity_notify(
 		struct irq_affinity_notify *affinity_notify,
 		const cpumask_t *mask)
@@ -3077,7 +3085,7 @@ static void sde_kms_irq_affinity_notify(
 
 	// request vote with updated irq cpu mask
 	if (sde_kms->irq_enabled)
-		sde_kms_update_pm_qos_irq_request(sde_kms);
+		_sde_kms_update_pm_qos_irq_request(sde_kms);
 
 	mutex_unlock(&priv->phandle.phandle_lock);
 }
@@ -3104,9 +3112,7 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 		sde_kms_init_shared_hw(sde_kms);
 		_sde_kms_set_lutdma_vbif_remap(sde_kms);
 		sde_kms->first_kickoff = true;
-		sde_kms_update_pm_qos_irq_request(sde_kms);
 	} else if (event_type == SDE_POWER_EVENT_PRE_DISABLE) {
-		sde_kms_remove_pm_qos_irq_request(sde_kms);
 		sde_irq_update(msm_kms, false);
 		sde_kms->first_kickoff = false;
 		_sde_kms_active_override(sde_kms, true);

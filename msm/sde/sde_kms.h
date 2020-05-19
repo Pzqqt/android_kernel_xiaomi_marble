@@ -222,6 +222,8 @@ struct sde_irq_callback {
  * @enable_counts array of IRQ enable counts
  * @cb_lock:      callback lock
  * @debugfs_file: debugfs file for irq statistics
+ * @curr_irq_enable_count: Atomic counter keep track of total current irq enable
+ *                         It is used to keep pm_qos vote on CPU.
  */
 struct sde_irq {
 	u32 total_irqs;
@@ -230,6 +232,7 @@ struct sde_irq {
 	atomic_t *irq_counts;
 	spinlock_t cb_lock;
 	struct dentry *debugfs_file;
+	atomic_t curr_irq_enable_count;
 };
 
 /**
@@ -666,5 +669,13 @@ void sde_kms_timeline_status(struct drm_device *dev);
  * return: 0 on success; error code otherwise
  */
 int sde_kms_handle_recovery(struct drm_encoder *encoder);
+
+/**
+ * Notifies the irq enable on first interrupt enable and irq disable
+ * on last interrupt disable.
+ * @sde_kms: poiner to sde_kms structure
+ * @enable: true if irq enabled, false for disabled state.
+ */
+void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable);
 
 #endif /* __sde_kms_H__ */

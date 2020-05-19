@@ -97,6 +97,7 @@ static int _sde_core_irq_enable(struct sde_kms *sde_kms, int irq_idx)
 {
 	unsigned long irq_flags;
 	int ret = 0;
+	bool update_vote = false;
 
 	if (!sde_kms || !sde_kms->hw_intr ||
 			!sde_kms->irq_obj.enable_counts ||
@@ -127,11 +128,16 @@ static int _sde_core_irq_enable(struct sde_kms *sde_kms, int irq_idx)
 		spin_lock_irqsave(&sde_kms->hw_intr->irq_lock, irq_flags);
 		ret = sde_kms->hw_intr->ops.enable_irq_nolock(
 				sde_kms->hw_intr, irq_idx);
+		if (atomic_inc_return(&sde_kms->irq_obj.curr_irq_enable_count)
+				== 1)
+			update_vote = true;
 		spin_unlock_irqrestore(&sde_kms->hw_intr->irq_lock, irq_flags);
 	}
 
 	if (ret)
 		SDE_ERROR("Fail to enable IRQ for irq_idx:%d\n", irq_idx);
+	else if (update_vote)
+		sde_kms_irq_enable_notify(sde_kms, true);
 
 	SDE_DEBUG("irq_idx=%d ret=%d\n", irq_idx, ret);
 
@@ -162,6 +168,7 @@ static int _sde_core_irq_disable(struct sde_kms *sde_kms, int irq_idx)
 {
 	int ret = 0;
 	unsigned long irq_flags;
+	bool update_vote = false;
 
 	if (!sde_kms || !sde_kms->hw_intr || !sde_kms->irq_obj.enable_counts) {
 		SDE_ERROR("invalid params\n");
@@ -184,10 +191,16 @@ static int _sde_core_irq_disable(struct sde_kms *sde_kms, int irq_idx)
 		&& atomic_read(&sde_kms->irq_obj.enable_counts[irq_idx]) == 0)
 		ret = sde_kms->hw_intr->ops.disable_irq_nolock(
 				sde_kms->hw_intr, irq_idx);
+
+	if (atomic_add_unless(&sde_kms->irq_obj.curr_irq_enable_count, -1, 0)
+		&& atomic_read(&sde_kms->irq_obj.curr_irq_enable_count) == 0)
+		update_vote = true;
 	spin_unlock_irqrestore(&sde_kms->hw_intr->irq_lock, irq_flags);
 
 	if (ret)
 		SDE_ERROR("Fail to disable IRQ for irq_idx:%d\n", irq_idx);
+	else if (update_vote)
+		sde_kms_irq_enable_notify(sde_kms, false);
 	SDE_DEBUG("irq_idx=%d ret=%d\n", irq_idx, ret);
 
 	return ret;
@@ -484,6 +497,7 @@ void sde_core_irq_preinstall(struct sde_kms *sde_kms)
 		if (sde_kms->irq_obj.irq_counts)
 			atomic_set(&sde_kms->irq_obj.irq_counts[i], 0);
 	}
+	atomic_set(&sde_kms->irq_obj.curr_irq_enable_count, 0);
 }
 
 int sde_core_irq_postinstall(struct sde_kms *sde_kms)
