@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017,2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,11 +30,13 @@
  * qdf_event_t - manages events
  * @complete: instance to completion
  * @cookie: unsigned int
+ * @done: indicate completion
  * @force_set: indicate forceful completion
  */
 typedef struct qdf_evt {
 	struct completion complete;
 	uint32_t cookie;
+	bool done;
 	bool force_set;
 } __qdf_event_t;
 
