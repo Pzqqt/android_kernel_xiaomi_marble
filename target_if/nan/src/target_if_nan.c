@@ -28,19 +28,21 @@
 #include "wmi_unified_api.h"
 #include "scheduler_api.h"
 
-static void target_if_nan_event_flush_cb(struct scheduler_msg *msg)
+static QDF_STATUS target_if_nan_event_flush_cb(struct scheduler_msg *msg)
 {
 	struct wlan_objmgr_psoc *psoc;
 
 	if (!msg || !msg->bodyptr) {
 		target_if_err("Empty message for NAN Discovery event");
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	psoc = ((struct nan_event_params *)msg->bodyptr)->psoc;
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_NAN_ID);
 	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
