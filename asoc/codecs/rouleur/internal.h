@@ -83,6 +83,7 @@ struct rouleur_priv {
 	struct mutex rx_clk_lock;
 	struct mutex main_bias_lock;
 	bool dev_up;
+	bool usbc_hs_status;
 };
 
 struct rouleur_micbias_setting {

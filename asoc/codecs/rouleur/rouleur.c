@@ -1341,6 +1341,17 @@ static int rouleur_get_logical_addr(struct swr_device *swr_dev)
 	return 0;
 }
 
+static bool get_usbc_hs_status(struct snd_soc_component *component,
+			       struct wcd_mbhc_config *mbhc_cfg)
+{
+	if (mbhc_cfg->enable_usbc_analog) {
+		if (!(snd_soc_component_read32(component, ROULEUR_ANA_MBHC_MECH)
+			& 0x20))
+			return true;
+	}
+	return false;
+}
+
 static int rouleur_event_notify(struct notifier_block *block,
 				unsigned long val,
 				void *data)
@@ -1373,6 +1384,8 @@ static int rouleur_event_notify(struct notifier_block *block,
 		rouleur->dev_up = false;
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = true;
 		mbhc = &rouleur->mbhc->wcd_mbhc;
+		rouleur->usbc_hs_status = get_usbc_hs_status(component,
+						mbhc->mbhc_cfg);
 		rouleur_mbhc_ssr_down(rouleur->mbhc, component);
 		rouleur_reset(rouleur->dev, 0x01);
 		break;
@@ -1394,6 +1407,8 @@ static int rouleur_event_notify(struct notifier_block *block,
 				__func__);
 		} else {
 			rouleur_mbhc_hs_detect(component, mbhc->mbhc_cfg);
+			if (rouleur->usbc_hs_status)
+				mdelay(500);
 		}
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = false;
 		rouleur->dev_up = true;
