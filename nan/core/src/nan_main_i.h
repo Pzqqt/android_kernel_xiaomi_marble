@@ -186,9 +186,9 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg);
  * nan_discovery_flush_callback: callback to flush the NAN scheduler msg
  * @msg: pointer to msg
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void nan_discovery_flush_callback(struct scheduler_msg *msg);
+QDF_STATUS nan_discovery_flush_callback(struct scheduler_msg *msg);
 
 /**
  * nan_discovery_scheduled_handler: callback pointer to be called when scheduler
