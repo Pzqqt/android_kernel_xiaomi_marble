@@ -265,7 +265,7 @@ static QDF_STATUS tgt_if_regulatory_register_master_list_handler(
 
 	return wmi_unified_register_event_handler(
 			wmi_handle, wmi_reg_chan_list_cc_event_id,
-			tgt_reg_chan_list_update_handler, WMI_RX_UMAC_CTX);
+			tgt_reg_chan_list_update_handler, WMI_RX_WORK_CTX);
 }
 
 /**

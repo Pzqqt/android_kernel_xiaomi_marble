@@ -2122,31 +2122,6 @@ wmi_process_fw_event_sched_thread_ctx(struct wmi_unified *wmi,
 	struct wmi_process_fw_event_params *params_buf;
 	struct scheduler_msg msg = { 0 };
 	uint32_t event_id;
-	struct target_psoc_info *tgt_hdl;
-	bool is_wmi_ready = false;
-	struct wlan_objmgr_psoc *psoc;
-
-	psoc = target_if_get_psoc_from_scn_hdl(wmi->scn_handle);
-	if (!psoc) {
-		target_if_err("psoc is null");
-		qdf_nbuf_free(ev);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
-	if (!tgt_hdl) {
-		wmi_err("target_psoc_info is null");
-		qdf_nbuf_free(ev);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	is_wmi_ready = target_psoc_get_wmi_ready(tgt_hdl);
-	if (!is_wmi_ready) {
-		wmi_debug("fw event recvd before ready event processed");
-		wmi_debug("therefore use worker thread");
-		wmi_process_fw_event_worker_thread_ctx(wmi, ev);
-		return QDF_STATUS_E_INVAL;
-	}
 
 	params_buf = qdf_mem_malloc(sizeof(struct wmi_process_fw_event_params));
 	if (!params_buf) {
