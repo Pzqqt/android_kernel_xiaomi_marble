@@ -1358,7 +1358,10 @@ const struct regdomain regdomains_5g[] = {
 							  CHAN_5490_5730_1,
 							  CHAN_5735_5835_2} },
 
-	[FCC4] = {CTL_FCC, DFS_FCC_REGION, 2, 20, 6, 1, {CHAN_4940_4990_1} },
+	[FCC4] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_4940_4990_1,
+							  CHAN_5170_5250_1,
+							  CHAN_5250_5330_7,
+							  CHAN_5735_5835_2} },
 
 	[FCC5] = {CTL_FCC, DFS_UNINIT_REGION, 2, 80, 6, 2, {CHAN_5170_5250_4,
 							    CHAN_5735_5835_2} },
