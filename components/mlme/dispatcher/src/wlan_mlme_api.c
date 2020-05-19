@@ -1680,23 +1680,6 @@ QDF_STATUS wlan_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_set_rmc_action_period_freq(struct wlan_objmgr_psoc *psoc,
-						int value)
-{
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj)
-		return QDF_STATUS_E_FAILURE;
-
-	if (cfg_in_range(CFG_RMC_ACTION_PERIOD_FREQUENCY, value))
-		mlme_obj->cfg.sap_cfg.rmc_action_period_freq = value;
-	else
-		return QDF_STATUS_E_FAILURE;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS wlan_mlme_get_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
 					   bool *value)
 {
@@ -1792,7 +1775,7 @@ QDF_STATUS wlan_mlme_set_sap_max_peers(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	if (cfg_in_range(CFG_RMC_ACTION_PERIOD_FREQUENCY, value))
+	if (cfg_in_range(CFG_SAP_MAX_NO_PEERS, value))
 		mlme_obj->cfg.sap_cfg.sap_max_no_peers = value;
 	else
 		return QDF_STATUS_E_FAILURE;

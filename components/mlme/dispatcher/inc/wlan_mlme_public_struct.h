@@ -641,7 +641,6 @@ struct wlan_mlme_wps_params {
  * @sap_11g_policy:  Check if 11g support is enabled
  * @assoc_sta_limit: Limit on number of STA associated to SAP
  * @enable_lte_coex: Flag for LTE coexistence
- * @rmc_action_period_freq: rmc action period frequency
  * @rate_tx_mgmt: mgmt frame tx rate
  * @rate_tx_mgmt_2g: mgmt frame tx rate for 2G band
  * @rate_tx_mgmt_5g: mgmt frame tx rate for 5G band
@@ -676,7 +675,6 @@ struct wlan_mlme_cfg_sap {
 	bool sap_11g_policy;
 	uint8_t assoc_sta_limit;
 	bool enable_lte_coex;
-	uint16_t rmc_action_period_freq;
 	uint8_t rate_tx_mgmt;
 	uint8_t rate_tx_mgmt_2g;
 	uint8_t rate_tx_mgmt_5g;

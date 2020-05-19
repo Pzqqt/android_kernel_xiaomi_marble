@@ -525,16 +525,6 @@ QDF_STATUS wlan_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
 					 int value);
 
 /**
- * wlan_mlme_set_rmc_action_period_freq() - Set the rmc action period frequency
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_mlme_set_rmc_action_period_freq(struct wlan_objmgr_psoc *psoc,
-						int value);
-
-/**
  * wlan_mlme_set_sap_get_peer_info() - get the sap get peer info
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller

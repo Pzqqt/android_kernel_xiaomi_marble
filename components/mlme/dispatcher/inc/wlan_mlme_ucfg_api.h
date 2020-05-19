@@ -1394,22 +1394,6 @@ QDF_STATUS ucfg_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_set_rmc_action_period_freq() - Set the rmc action period frequency
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
- *
- * Inline UCFG API to be used by HDD/OSIF callers
- *
- * Return: QDF Status
- */
-static inline
-QDF_STATUS ucfg_mlme_set_rmc_action_period_freq(struct wlan_objmgr_psoc *psoc,
-						int value)
-{
-	return wlan_mlme_set_rmc_action_period_freq(psoc, value);
-}
-
-/**
  * ucfg_mlme_get_listen_interval() - Get listen interval
  * @psoc: pointer to psoc object
  * @value: Pointer to variable that needs to be filled by MLME

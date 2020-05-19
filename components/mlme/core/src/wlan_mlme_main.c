@@ -1127,8 +1127,6 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 	sap_cfg->sap_11g_policy = cfg_default(CFG_11G_ONLY_POLICY);
 	sap_cfg->assoc_sta_limit = cfg_default(CFG_ASSOC_STA_LIMIT);
 	sap_cfg->enable_lte_coex = cfg_get(psoc, CFG_ENABLE_LTE_COEX);
-	sap_cfg->rmc_action_period_freq =
-		cfg_default(CFG_RMC_ACTION_PERIOD_FREQUENCY);
 	sap_cfg->rate_tx_mgmt = cfg_get(psoc, CFG_RATE_FOR_TX_MGMT);
 	sap_cfg->rate_tx_mgmt_2g = cfg_get(psoc, CFG_RATE_FOR_TX_MGMT_2G);
 	sap_cfg->rate_tx_mgmt_5g = cfg_get(psoc, CFG_RATE_FOR_TX_MGMT_5G);
