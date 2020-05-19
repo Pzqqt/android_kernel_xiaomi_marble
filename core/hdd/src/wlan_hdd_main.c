@@ -14223,6 +14223,11 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err_rl("Register monitor mode callback failed");
 
+	status = sme_set_beacon_latency_event_cb(mac_handle,
+						 hdd_beacon_latency_event_cb);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err_rl("Register beacon latency event callback failed");
+
 	hdd_exit();
 
 	return ret;
@@ -17759,6 +17764,20 @@ free:
 		qdf_mem_free(sme_config);
 	return ret;
 }
+
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+void hdd_beacon_latency_event_cb(uint32_t latency_level)
+{
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err_rl("Invalid HDD_CTX");
+		return;
+	}
+	wlan_hdd_set_wlm_mode(hdd_ctx, latency_level);
+}
+#endif
 
 #ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
 int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)

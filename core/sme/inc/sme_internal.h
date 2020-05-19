@@ -389,6 +389,9 @@ struct sme_context {
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 	void (*monitor_mode_cb)(uint8_t vdev_id);
 #endif
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+	void (*beacon_latency_event_cb)(uint32_t latency_level);
+#endif
 };
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

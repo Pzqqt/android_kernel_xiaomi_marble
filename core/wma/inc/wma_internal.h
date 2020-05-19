@@ -1499,6 +1499,26 @@ int wma_unified_beacon_debug_stats_event_handler(void *handle,
 						 uint8_t *cmd_param_info,
 						 uint32_t len);
 
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+/**
+ * wma_vdev_bcn_latency_event_handler() - Get the latency info received in bcn
+ * @handle: WMA handle
+ * @event: data in event
+ * @len: length
+ *
+ * Return: 0 for success or error code
+ */
+int wma_vdev_bcn_latency_event_handler(void *handle, uint8_t *event,
+				       uint32_t len);
+#else
+static inline int wma_vdev_bcn_latency_event_handler(void *handle,
+						     uint8_t *event,
+						     uint32_t len)
+{
+	return 0;
+}
+#endif
+
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * wma_sta_kickout_event()- send sta kickout event

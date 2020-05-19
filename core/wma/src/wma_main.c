@@ -3134,6 +3134,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				WMA_RX_SERIALIZER_CTX);
 #endif
 
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   wmi_vdev_bcn_latency_event_id,
+					   wma_vdev_bcn_latency_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+#endif
 	/* register for linkspeed response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_peer_estimated_linkspeed_event_id,

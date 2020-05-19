@@ -4484,4 +4484,18 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
  */
 bool hdd_max_sta_vdev_count_reached(struct hdd_context *hdd_ctx);
 
+#if defined(CLD_PM_QOS) && defined(WLAN_FEATURE_LL_MODE)
+/**
+ * hdd_beacon_latency_event_cb() - Callback function to get latency level
+ * @latency_level: latency level received from firmware
+ *
+ * Return: None
+ */
+void hdd_beacon_latency_event_cb(uint32_t latency_level);
+#else
+static inline void hdd_beacon_latency_event_cb(uint32_t latency_level)
+{
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
