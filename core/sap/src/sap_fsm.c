@@ -2238,14 +2238,7 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 		&sap_ctx->csr_roamProfile.op_freq;
 	sap_ctx->csr_roamProfile.op_freq = sap_ctx->chan_freq;
 
-	sap_ctx->csr_roamProfile.ch_params.ch_width =
-				sap_ctx->ch_params.ch_width;
-	sap_ctx->csr_roamProfile.ch_params.center_freq_seg0 =
-			sap_ctx->ch_params.center_freq_seg0;
-	sap_ctx->csr_roamProfile.ch_params.center_freq_seg1 =
-			sap_ctx->ch_params.center_freq_seg1;
-	sap_ctx->csr_roamProfile.ch_params.sec_ch_offset =
-			sap_ctx->ch_params.sec_ch_offset;
+	sap_ctx->csr_roamProfile.ch_params = sap_ctx->ch_params;
 	sap_get_cac_dur_dfs_region(sap_ctx,
 				   &sap_ctx->csr_roamProfile.cac_duration_ms,
 				   &sap_ctx->csr_roamProfile.dfs_regdomain);
