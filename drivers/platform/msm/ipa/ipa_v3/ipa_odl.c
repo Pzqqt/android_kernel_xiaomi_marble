@@ -771,6 +771,26 @@ fail_mem_ctx:
 	return result;
 }
 
+void ipa_odl_cleanup(void)
+{
+	struct ipa3_odl_char_device_context *odl_cdev;
+
+	if (!ipa3_odl_ctx)
+		return;
+
+	odl_cdev = ipa3_odl_ctx->odl_cdev;
+
+	ipa_pm_deregister(ipa3_odl_ctx->odl_pm_hdl);
+	device_destroy(odl_cdev[1].class, odl_cdev[1].dev_num);
+	unregister_chrdev_region(odl_cdev[1].dev_num, 1);
+	class_destroy(odl_cdev[1].class);
+	device_destroy(odl_cdev[0].class, odl_cdev[0].dev_num);
+	unregister_chrdev_region(odl_cdev[0].dev_num, 1);
+	class_destroy(odl_cdev[0].class);
+	kfree(ipa3_odl_ctx);
+	ipa3_odl_ctx = NULL;
+}
+
 bool ipa3_is_odl_connected(void)
 {
 	return ipa3_odl_ctx->odl_state.odl_connected;
