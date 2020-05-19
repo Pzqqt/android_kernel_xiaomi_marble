@@ -31,6 +31,7 @@
 
 uint32_t
 dp_rx_mon_status_process(struct dp_soc *soc,
+			 struct dp_intr *int_ctx,
 			 uint32_t mac_id,
 			 uint32_t quota);
 
@@ -39,12 +40,15 @@ dp_rx_mon_status_process(struct dp_soc *soc,
  * against status buf addr given in monitor destination ring
  *
  * @pdev: DP pdev handle
+ * @int_ctx: Interrupt context
  * @mac_id: lmac id
  *
  * Return: QDF_STATUS
  */
 static inline enum dp_mon_reap_status
-dp_rx_mon_status_buf_validate(struct dp_pdev *pdev, uint32_t mac_id)
+dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
+			      struct dp_intr *int_ctx,
+			      uint32_t mac_id)
 {
 	struct dp_soc *soc = pdev->soc;
 	hal_soc_handle_t hal_soc;
@@ -302,12 +306,14 @@ dp_rx_monitor_deliver_ppdu(struct dp_soc *soc, uint32_t mac_id)
  * status ring.
  *
  * @soc: DP soc handle
+ * @int_ctx: interrupt context
  * @mac_id: mac id on which interrupt is received
  * @quota: number of status ring entries to be reaped
  * @desc_info: Rx ppdu desc info
  */
 static inline uint32_t
 dp_rx_mon_reap_status_ring(struct dp_soc *soc,
+			   struct dp_intr *int_ctx,
 			   uint32_t mac_id,
 			   uint32_t quota,
 			   struct hal_rx_mon_desc_info *desc_info)
@@ -320,7 +326,7 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
 	status_buf_count = desc_info->status_buf_count;
 	desc_info->drop_ppdu = false;
 
-	status = dp_rx_mon_status_buf_validate(pdev, mac_id);
+	status = dp_rx_mon_status_buf_validate(pdev, int_ctx, mac_id);
 	switch (status) {
 		case dp_mon_status_no_dma:
 			/* If DMA is not done for status ring entry,
@@ -355,7 +361,7 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
 			break;
 		case dp_mon_status_replenish:
 			/* If status ring hp entry is NULL, replenish it */
-			work_done = dp_rx_mon_status_process(soc, mac_id, 1);
+			work_done = dp_rx_mon_status_process(soc,  int_ctx, mac_id, 1);
 			break;
 		case dp_mon_status_match:
 			/* If status ppdu id matches with destnation,
@@ -376,6 +382,7 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
 	if (status == dp_mon_status_lag ||
 	    status == dp_mon_status_match) {
 		work_done = dp_rx_mon_status_process(soc,
+						     int_ctx,
 						     mac_id,
 						     status_buf_count);
 	}
@@ -586,6 +593,7 @@ next_msdu:
  * dp_rx_mon_deliver_prev_ppdu () - Deliver previous PPDU
  *
  * @pdev: DP pdev handle
+ * @int_ctx: interrupt context
  * @mac_id: lmac id
  * @quota: quota
  *
@@ -593,6 +601,7 @@ next_msdu:
  */
 static inline uint32_t
 dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
+			    struct dp_intr *int_ctx,
 			    uint32_t mac_id,
 			    uint32_t quota)
 {
@@ -604,7 +613,7 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
 	enum dp_mon_reap_status status;
 
 	while (pdev->hold_mon_dest_ring) {
-		status = dp_rx_mon_status_buf_validate(pdev, mac_id);
+		status = dp_rx_mon_status_buf_validate(pdev, int_ctx, mac_id);
 
 		switch (status) {
 			case dp_mon_status_no_dma:
@@ -640,7 +649,7 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
 			break;
 			case dp_mon_status_replenish:
 			/* If status ring hp entry is NULL, replenish it */
-			work = dp_rx_mon_status_process(soc, mac_id, 1);
+			work = dp_rx_mon_status_process(soc, int_ctx, mac_id, 1);
 			break;
 			case dp_mon_status_match:
 			/* If status ppdu id matches with destnation,
@@ -663,7 +672,7 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
 		}
 
 		if (status == dp_mon_status_lag) {
-			work = dp_rx_mon_status_process(soc, mac_id, 1);
+			work = dp_rx_mon_status_process(soc, int_ctx, mac_id, 1);
 
 			if (!work)
 				return 0;
@@ -679,7 +688,7 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
 			return work_done;
 		}
 
-		work_done += dp_rx_mon_status_process(soc, mac_id,
+		work_done += dp_rx_mon_status_process(soc, int_ctx, mac_id,
 				desc_info->status_buf_count);
 		dp_rx_monitor_deliver_ppdu(soc, mac_id);
 	}
@@ -694,12 +703,14 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
  * Called from bottom half (tasklet/NET_RX_SOFTIRQ)
  *
  * @soc: datapath soc context
+ * @int_ctx: interrupt context
  * @mac_id: mac_id on which interrupt is received
  * @quota: Number of status ring entry that can be serviced in one shot.
  *
  * @Return: Number of reaped status ring entries
  */
-uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
+uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			   uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	union dp_rx_desc_list_elem_t *head_desc = NULL;
@@ -725,7 +736,8 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
 	if (qdf_unlikely(!dp_soc_is_full_mon_enable(pdev))) {
-		work_done += dp_rx_mon_status_process(soc, mac_id, quota);
+		work_done += dp_rx_mon_status_process(soc, int_ctx,
+						      mac_id, quota);
 		qdf_spin_unlock_bh(&pdev->mon_lock);
 		return work_done;
 	}
@@ -734,7 +746,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	rx_mon_stats = &pdev->rx_mon_stats;
 
-	work_done = dp_rx_mon_deliver_prev_ppdu(pdev, mac_id, quota);
+	work_done = dp_rx_mon_deliver_prev_ppdu(pdev, int_ctx, mac_id, quota);
 
 	/* Do not proceed if work_done zero */
 	if (!work_done && pdev->hold_mon_dest_ring) {
@@ -756,8 +768,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	qdf_assert_always(hal_soc && pdev);
 
-
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dest_srng))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, mon_dest_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			  FL("HAL Monitor Destination Ring access Failed -- %pK"),
 			  mon_dest_srng);
@@ -878,7 +889,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		 */
 		rx_mon_stats->dest_ppdu_done++;
 
-		work_done += dp_rx_mon_reap_status_ring(soc, mac_id,
+		work_done += dp_rx_mon_reap_status_ring(soc, int_ctx, mac_id,
 							quota, desc_info);
 		/* Deliver all MPDUs for a PPDU */
 		if (desc_info->drop_ppdu)
@@ -891,7 +902,7 @@ next_entry:
 		break;
 	}
 
-	hal_srng_access_end(hal_soc, mon_dest_srng);
+	dp_srng_access_end(int_ctx, soc, mon_dest_srng);
 
 done1:
 	qdf_spin_unlock_bh(&pdev->mon_lock);
