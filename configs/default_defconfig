@@ -392,6 +392,12 @@ ifeq ($(CONFIG_SLUB_DEBUG), y)
 	CONFIG_LOCK_STATS_ON:= y
 endif
 
+ifeq ($(CONFIG_WLAN_SYSFS), y)
+ifeq ($(CONFIG_MPC_UT_FRAMEWORK), y)
+	CONFIG_WLAN_SET_RANGE_EXT := y
+endif
+endif
+
 ifeq (y,$(findstring y,$(CONFIG_QCA_WIFI_SDIO) $(CONFIG_HIF_USB)))
 CONFIG_HL_DP_SUPPORT := y
 else

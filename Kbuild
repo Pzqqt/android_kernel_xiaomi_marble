@@ -310,6 +310,9 @@ endif
 ifeq ($(CONFIG_WLAN_SET_MON_CHAN), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_mon_chan.o
 endif
+ifeq ($(CONFIG_WLAN_SET_RANGE_EXT), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_range_ext.o
+endif
 ifeq ($(CONFIG_WLAN_SET_RADAR), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_radar.o
 endif
@@ -2624,6 +2627,7 @@ endif
 #normally, TDLS negative behavior is not needed
 cppflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
 cppflags-$(CONFIG_WLAN_GET_TDLS_PEERS) += -DWLAN_GET_TDLS_PEERS
+cppflags-$(CONFIG_WLAN_SET_RANGE_EXT) += -DWLAN_SET_RANGE_EXT
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
