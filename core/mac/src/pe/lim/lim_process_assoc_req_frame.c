@@ -823,25 +823,18 @@ static
 enum mac_status_code lim_check_rsn_ie(struct pe_session *session,
 				      struct mac_context *mac_ctx,
 				      tpSirAssocReq assoc_req,
-				      tDot11fIERSN *rsn,
 				      bool *pmf_connection)
 {
 	struct wlan_objmgr_vdev *vdev;
-
-	uint8_t buffer[WLAN_MAX_IE_LEN];
-	uint32_t dot11f_status, written = 0, nbuffer = WLAN_MAX_IE_LEN;
 	tSirMacRsnInfo rsn_ie;
 	struct wlan_crypto_params peer_crypto_params;
 
-	dot11f_status = dot11f_pack_ie_rsn(mac_ctx, rsn, buffer,
-					   nbuffer, &written);
-	if (DOT11F_FAILED(dot11f_status)) {
-		pe_err("Failed to re-pack the RSN IE (0x%0x8)", dot11f_status);
-		return eSIR_MAC_INVALID_IE_STATUS;
-	}
+	rsn_ie.info[0] = WLAN_ELEMID_RSN;
+	rsn_ie.info[1] = assoc_req->rsn.length;
 
-	rsn_ie.length = (uint8_t) written;
-	qdf_mem_copy(&rsn_ie.info[0], buffer, rsn_ie.length);
+	rsn_ie.length = assoc_req->rsn.length + 2;
+	qdf_mem_copy(&rsn_ie.info[2], assoc_req->rsn.info,
+		     assoc_req->rsn.length);
 	if (wlan_crypto_check_rsn_match(mac_ctx->psoc, session->smeSessionId,
 					&rsn_ie.info[0], rsn_ie.length,
 					&peer_crypto_params)) {
@@ -997,7 +990,6 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 		if (SIR_MAC_OUI_VERSION_1 == dot11f_ie_rsn.version) {
 			/* check the groupwise and pairwise cipher suites */
 			status = lim_check_rsn_ie(session, mac_ctx, assoc_req,
-						  &dot11f_ie_rsn,
 						  pmf_connection);
 			if (eSIR_MAC_SUCCESS_STATUS != status) {
 				pe_warn("Re/Assoc rejected from: "
