@@ -1211,6 +1211,8 @@ static void hdd_debugfs_process_ll_stats(struct hdd_adapter *adapter,
 
 		if (!results->num_peers)
 			priv->request_bitmap &= ~(WMI_LINK_STATS_ALL_PEER);
+
+		priv->request_bitmap &= ~(WMI_LINK_STATS_IFACE);
 	} else if (results->paramId & WMI_LINK_STATS_ALL_PEER) {
 		hdd_debugfs_process_peer_stats(adapter, results->results);
 		if (!results->moreResultToFollow)
