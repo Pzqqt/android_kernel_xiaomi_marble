@@ -95,14 +95,6 @@
 			0, \
 			"enabled lte coex")
 
-#define CFG_RMC_ACTION_PERIOD_FREQUENCY CFG_UINT( \
-			"cfg_rcm_action_period_frequency", \
-			100, \
-			1000, \
-			300, \
-			CFG_VALUE_OR_DEFAULT, \
-			"CFG_RMC_ACTION_PERIOD_FREQUENCY")
-
 /*
  * <ini>
  * cfg_rate_for_tx_mgmt - Set rate for tx mgmt
@@ -774,7 +766,6 @@
 	CFG(CFG_11G_ONLY_POLICY) \
 	CFG(CFG_ASSOC_STA_LIMIT) \
 	CFG(CFG_ENABLE_LTE_COEX) \
-	CFG(CFG_RMC_ACTION_PERIOD_FREQUENCY) \
 	CFG(CFG_RATE_FOR_TX_MGMT) \
 	CFG(CFG_RATE_FOR_TX_MGMT_2G) \
 	CFG(CFG_RATE_FOR_TX_MGMT_5G) \
