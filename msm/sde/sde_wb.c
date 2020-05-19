@@ -97,9 +97,11 @@ int sde_wb_connector_get_modes(struct drm_connector *connector, void *display,
 			num_modes++;
 		}
 	} else {
-		u32 max_width = (wb_dev->wb_cfg && wb_dev->wb_cfg->sblk) ?
-				wb_dev->wb_cfg->sblk->maxlinewidth :
-				SDE_WB_MODE_MAX_WIDTH;
+		u32 max_width = SDE_WB_MODE_MAX_WIDTH;
+
+		if (wb_dev->wb_cfg && wb_dev->wb_cfg->sblk)
+			max_width = max(wb_dev->wb_cfg->sblk->maxlinewidth,
+				wb_dev->wb_cfg->sblk->maxlinewidth_linear);
 
 		num_modes = drm_add_modes_noedid(connector, max_width,
 				SDE_WB_MODE_MAX_HEIGHT);
@@ -298,11 +300,16 @@ int sde_wb_get_info(struct drm_connector *connector,
 		struct msm_display_info *info, void *display)
 {
 	struct sde_wb_device *wb_dev = display;
+	u32 max_width = SDE_WB_MODE_MAX_WIDTH;
 
 	if (!info || !wb_dev) {
 		pr_err("invalid params\n");
 		return -EINVAL;
 	}
+
+	if (wb_dev->wb_cfg && wb_dev->wb_cfg->sblk)
+		max_width = max(wb_dev->wb_cfg->sblk->maxlinewidth,
+				wb_dev->wb_cfg->sblk->maxlinewidth_linear);
 
 	memset(info, 0, sizeof(struct msm_display_info));
 	info->intf_type = DRM_MODE_CONNECTOR_VIRTUAL;
@@ -310,9 +317,7 @@ int sde_wb_get_info(struct drm_connector *connector,
 	info->h_tile_instance[0] = sde_wb_get_index(display);
 	info->is_connected = true;
 	info->capabilities = MSM_DISPLAY_CAP_HOT_PLUG | MSM_DISPLAY_CAP_EDID;
-	info->max_width = (wb_dev->wb_cfg && wb_dev->wb_cfg->sblk) ?
-			wb_dev->wb_cfg->sblk->maxlinewidth :
-			SDE_WB_MODE_MAX_WIDTH;
+	info->max_width = max_width;
 	info->max_height = SDE_WB_MODE_MAX_HEIGHT;
 	return 0;
 }
@@ -390,6 +395,10 @@ int sde_wb_connector_set_info_blob(struct drm_connector *connector,
 	sde_kms_info_add_keyint(info,
 			"maxlinewidth",
 			wb_dev->wb_cfg->sblk->maxlinewidth);
+
+	sde_kms_info_add_keyint(info,
+			"maxlinewidth_linear",
+			wb_dev->wb_cfg->sblk->maxlinewidth_linear);
 
 	sde_kms_info_start(info, "features");
 	if (wb_dev->wb_cfg && (wb_dev->wb_cfg->features & BIT(SDE_WB_UBWC)))

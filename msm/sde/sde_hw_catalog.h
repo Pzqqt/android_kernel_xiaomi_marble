@@ -817,6 +817,7 @@ struct sde_vdc_sub_blks {
 
 struct sde_wb_sub_blocks {
 	u32 maxlinewidth;
+	u32 maxlinewidth_linear;
 };
 
 struct sde_mdss_base_cfg {
@@ -1364,6 +1365,7 @@ struct sde_perf_cfg {
  * @max_mixer_blendstages max layer mixer blend stages or
  *                       supported z order
  * @max_wb_linewidth   max writeback line width support.
+ * @max_wb_linewidth_linear   max writeback line width for linear formats.
  * @max_display_width   maximum display width support.
  * @max_display_height  maximum display height support.
  * @max_lm_per_display  maximum layer mixer per display
@@ -1433,6 +1435,7 @@ struct sde_mdss_cfg {
 	u32 max_mixer_width;
 	u32 max_mixer_blendstages;
 	u32 max_wb_linewidth;
+	u32 max_wb_linewidth_linear;
 
 	u32 max_display_width;
 	u32 max_display_height;

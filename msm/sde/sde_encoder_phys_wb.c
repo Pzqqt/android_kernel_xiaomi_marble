@@ -24,6 +24,10 @@
 
 #define TO_S15D16(_x_)	((_x_) << 7)
 
+#define SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg) \
+	(SDE_FORMAT_IS_UBWC(fmt) ? wb_cfg->sblk->maxlinewidth : \
+	wb_cfg->sblk->maxlinewidth_linear)
+
 static const u32 cwb_irq_tbl[PINGPONG_MAX] = {SDE_NONE, INTR_IDX_PP1_OVFL,
 	INTR_IDX_PP2_OVFL, INTR_IDX_PP3_OVFL, INTR_IDX_PP4_OVFL,
 	INTR_IDX_PP5_OVFL, SDE_NONE, SDE_NONE};
@@ -766,9 +770,10 @@ static int sde_encoder_phys_wb_atomic_check(
 			SDE_ERROR("invalid roi y=%d, h=%d, fb h=%d\n",
 					wb_roi.y, wb_roi.h, fb->height);
 			return -EINVAL;
-		} else if (wb_roi.w > wb_cfg->sblk->maxlinewidth) {
-			SDE_ERROR("invalid roi w=%d, maxlinewidth=%u\n",
-					wb_roi.w, wb_cfg->sblk->maxlinewidth);
+		} else if (wb_roi.w > SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg)) {
+			SDE_ERROR("invalid roi ubwc=%d w=%d, maxlinewidth=%u\n",
+					SDE_FORMAT_IS_UBWC(fmt), wb_roi.w,
+					SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg));
 			return -EINVAL;
 		}
 	} else {
@@ -784,9 +789,10 @@ static int sde_encoder_phys_wb_atomic_check(
 			SDE_ERROR("invalid fb h=%d, mode h=%d\n", fb->height,
 					mode->vdisplay);
 			return -EINVAL;
-		} else if (fb->width > wb_cfg->sblk->maxlinewidth) {
-			SDE_ERROR("invalid fb w=%d, maxlinewidth=%u\n",
-					fb->width, wb_cfg->sblk->maxlinewidth);
+		} else if (fb->width > SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg)) {
+			SDE_ERROR("invalid fb ubwc=%d w=%d, maxlinewidth=%u\n",
+					SDE_FORMAT_IS_UBWC(fmt), fb->width,
+					SDE_WB_MAX_LINEWIDTH(fmt, wb_cfg));
 			return -EINVAL;
 		}
 	}
