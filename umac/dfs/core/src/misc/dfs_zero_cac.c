@@ -509,7 +509,7 @@ dfs_find_cac_status_for_chan_for_freq(struct dfs_precac_entry *precac_entry,
 				      uint16_t chan_freq)
 {
 	struct precac_tree_node *node = precac_entry->tree_root;
-	uint8_t n_cur_lvl_subchs = N_SUBCHANS_FOR_160BW;
+	uint8_t n_cur_lvl_subchs = node->n_valid_subchs;
 
 	while (node) {
 		if (node->ch_freq == chan_freq)
