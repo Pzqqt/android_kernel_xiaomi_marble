@@ -2071,12 +2071,12 @@ wmi_is_event_critical(struct wmi_unified *wmi_handle, uint32_t event_id)
 	return false;
 }
 
-static void wmi_discard_fw_event(struct scheduler_msg *msg)
+static QDF_STATUS wmi_discard_fw_event(struct scheduler_msg *msg)
 {
 	struct wmi_process_fw_event_params *event_param;
 
 	if (!msg->bodyptr)
-		return;
+		return QDF_STATUS_E_INVAL;
 
 	event_param = (struct wmi_process_fw_event_params *)msg->bodyptr;
 	qdf_nbuf_free(event_param->evt_buf);
@@ -2084,6 +2084,8 @@ static void wmi_discard_fw_event(struct scheduler_msg *msg)
 	msg->bodyptr = NULL;
 	msg->bodyval = 0;
 	msg->type = 0;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS wmi_process_fw_event_handler(struct scheduler_msg *msg)
