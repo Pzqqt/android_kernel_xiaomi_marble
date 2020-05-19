@@ -1200,7 +1200,7 @@ int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 	int ctl_len = 0, ret = 0;
 	struct dsp_stream_callback_list *new_event;
 	struct dsp_stream_callback_list *oldest_event;
-	unsigned long spin_flags;
+	unsigned long spin_flags = 0;
 	struct dsp_stream_callback_prtd *kctl_prtd = NULL;
 	struct msm_adsp_event_data *event_data = NULL;
 	const char *mixer_ctl_name = DSP_STREAM_CALLBACK;
@@ -1309,7 +1309,7 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 {
 	uint32_t payload_size = 0;
 	struct dsp_stream_callback_list *oldest_event;
-	unsigned long spin_flags;
+	unsigned long spin_flags = 0;
 	struct dsp_stream_callback_prtd *kctl_prtd = NULL;
 	int ret = 0;
 
