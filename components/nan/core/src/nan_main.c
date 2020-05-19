@@ -1387,5 +1387,5 @@ bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc)
 
 	return (psoc_nan_obj->nan_caps.nan_sap_supported &&
 		psoc_nan_obj->nan_caps.nan_dbs_supported &&
-		psoc_nan_obj->nan_caps.nan_disable_supported);
+		psoc_nan_obj->nan_caps.nan_conc_control);
 }

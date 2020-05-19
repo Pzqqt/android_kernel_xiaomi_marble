@@ -5228,7 +5228,7 @@ static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
 {
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				wmi_service_nan_disable_support))
-		tgt_cfg->nan_caps.nan_disable_supported = 1;
+		tgt_cfg->nan_caps.nan_conc_control = 1;
 
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				wmi_service_nan_dbs_support))

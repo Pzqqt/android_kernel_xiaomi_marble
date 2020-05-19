@@ -800,7 +800,9 @@ struct wlan_nan_rx_ops {
 
 /**
  * struct nan_tgt_caps - NAN Target capabilities
- * @nan_disable_supported: Target supports disabling NAN Discovery
+ * @nan_conc_control: Target supports disabling NAN Discovery from host
+ *		      so that host is able to handle(disable) NAN
+ *		      concurrencies.
  * @nan_dbs_supported: Target supports NAN Discovery with DBS
  * @ndi_dbs_supported: Target supports NAN Datapath with DBS
  * @nan_sap_supported: Target supports NAN Discovery with SAP concurrency
@@ -810,7 +812,7 @@ struct wlan_nan_rx_ops {
  * by Fw or not.
  */
 struct nan_tgt_caps {
-	uint32_t nan_disable_supported:1;
+	uint32_t nan_conc_control:1;
 	uint32_t nan_dbs_supported:1;
 	uint32_t ndi_dbs_supported:1;
 	uint32_t nan_sap_supported:1;

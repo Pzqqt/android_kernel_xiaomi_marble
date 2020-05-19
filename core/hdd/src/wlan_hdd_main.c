@@ -6656,7 +6656,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if ((adapter->device_mode == QDF_NAN_DISC_MODE ||
 		     (adapter->device_mode == QDF_STA_MODE &&
 		      !ucfg_nan_is_vdev_creation_allowed(hdd_ctx->psoc))) &&
-		    ucfg_is_nan_disable_supported(hdd_ctx->psoc) &&
+		    ucfg_is_nan_conc_control_supported(hdd_ctx->psoc) &&
 		    ucfg_is_nan_disc_active(hdd_ctx->psoc))
 			ucfg_disable_nan_discovery(hdd_ctx->psoc, NULL, 0);
 
