@@ -876,4 +876,11 @@ int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
  */
 int dsi_ctrl_get_io_resources(struct msm_io_res *io_res);
 
+/**
+ * dsi_ctrl_mask_overflow() -	API to mask/unmask overflow errors.
+ * @dsi_ctrl:			DSI controller handle.
+ * @enable:			variable to control masking/unmasking.
+ */
+void dsi_ctrl_mask_overflow(struct dsi_ctrl *dsi_ctrl, bool enable);
+
 #endif /* _DSI_CTRL_H_ */
