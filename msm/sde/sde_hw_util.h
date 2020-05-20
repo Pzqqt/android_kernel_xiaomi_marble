@@ -220,7 +220,7 @@ uint32_t sde_get_linetime(struct drm_display_mode *mode,
 
 static inline bool is_qseed3_rev_qseed3lite(struct sde_mdss_cfg *sde_cfg)
 {
-	return ((sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE) ?
+	return ((sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3LITE) ?
 			true : false);
 }
 #endif /* _SDE_HW_UTIL_H */

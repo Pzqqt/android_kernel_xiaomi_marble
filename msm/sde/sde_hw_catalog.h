@@ -674,7 +674,7 @@ enum sde_qos_lut_usage {
  * @smart_dma_priority: hw priority of rect1 of multirect pipe
  * @max_per_pipe_bw: maximum allowable bandwidth of this pipe in kBps
  * @max_per_pipe_bw_high: maximum allowable bandwidth of this pipe in kBps
- * 				in case of no VFE
+ *				in case of no VFE
  * @src_blk:
  * @scaler_blk:
  * @csc_blk:
@@ -1374,7 +1374,6 @@ struct sde_perf_cfg {
 
  * @min_display_width   minimum display width support.
  * @min_display_height  minimum display height support.
- * @qseed_type         qseed2 or qseed3 support.
  * @csc_type           csc or csc_10bit support.
  * @smart_dma_rev      Supported version of SmartDMA feature.
  * @ctl_rev            supported version of control path.
@@ -1409,6 +1408,7 @@ struct sde_perf_cfg {
  * @dither_luma_mode_support   Enables dither luma mode
  * @has_base_layer     Supports staging layer as base layer
  * @demura_supported   Demura pipe support flag(~0x00 - Not supported)
+ * @qseed_sw_lib_rev	qseed sw library type supporting the qseed hw
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1446,7 +1446,6 @@ struct sde_mdss_cfg {
 	u32 min_display_width;
 	u32 min_display_height;
 
-	u32 qseed_type;
 	u32 csc_type;
 	u32 smart_dma_rev;
 	u32 ctl_rev;
@@ -1476,6 +1475,7 @@ struct sde_mdss_cfg {
 	bool has_base_layer;
 	bool has_demura;
 	u32 demura_supported[SSPP_MAX][2];
+	u32 qseed_sw_lib_rev;
 
 	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
 
