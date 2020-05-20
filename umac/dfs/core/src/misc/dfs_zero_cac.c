@@ -5238,6 +5238,7 @@ static inline qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 
 #endif
 
+#ifdef QCA_SUPPORT_AGILE_DFS
 /* dfs_find_precac_chan() - Find out a channel to perform preCAC.
  *
  * @dfs: Pointer to struct wlan_dfs.
@@ -5316,6 +5317,7 @@ void dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
 	if (!*ch_freq)
 		qdf_info("%s: No valid Agile channels available in the current pdev", __func__);
 }
+#endif
 #endif
 
 #ifdef CONFIG_CHAN_NUM_API
@@ -5843,6 +5845,7 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
 	PRECAC_LIST_UNLOCK(dest_dfs);
 }
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
 /* dfs_start_agile_engine() - Prepare ADFS params and program the agile
  *                            engine sending agile config cmd to FW.
  * @dfs: Pointer to struct wlan_dfs.
@@ -5876,8 +5879,6 @@ void dfs_start_agile_engine(struct wlan_dfs *dfs)
 			"dfs_tx_ops=%pK", dfs_tx_ops);
 }
 
-
-#ifdef QCA_SUPPORT_ADFS_RCAC
 /**
  * --------------------- ROLLING CAC STATE MACHINE ----------------------
  *
