@@ -2441,6 +2441,17 @@ static int wma_wake_event_packet(
 				       packet, packet_len);
 		break;
 
+	case WOW_REASON_PAGE_FAULT:
+		/*
+		 * In case PAGE_FAULT occurs on non-DRV platform,
+		 * dump event buffer which contains more info regarding
+		 * current page fault.
+		 */
+		WMA_LOGD("PAGE_FAULT occurs during suspend:");
+		qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+				   packet, packet_len);
+		break;
+
 	default:
 		WMA_LOGE("Wake reason %s is not a packet event",
 			 wma_wow_wake_reason_str(wake_info->wake_reason));
