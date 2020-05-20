@@ -190,7 +190,8 @@ static QDF_STATUS sme_process_set_hw_mode_resp(struct mac_context *mac, uint8_t 
 			command->u.set_hw_mode_cmd.next_action,
 			command->u.set_hw_mode_cmd.reason,
 			command->u.set_hw_mode_cmd.session_id,
-			command->u.set_hw_mode_cmd.context);
+			command->u.set_hw_mode_cmd.context,
+			command->u.set_hw_mode_cmd.request_id);
 	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
 		sme_err("session %d is invalid", session_id);
 		goto end;
@@ -12205,10 +12206,12 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	cmd->u.set_hw_mode_cmd.next_action = msg.next_action;
 	cmd->u.set_hw_mode_cmd.action = msg.action;
 	cmd->u.set_hw_mode_cmd.context = msg.context;
+	cmd->u.set_hw_mode_cmd.request_id = msg.request_id;
 
-	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d",
-		cmd->u.set_hw_mode_cmd.session_id,
-		cmd->u.set_hw_mode_cmd.reason);
+	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d request_id: %d",
+		  cmd->u.set_hw_mode_cmd.session_id,
+		  cmd->u.set_hw_mode_cmd.reason,
+		  cmd->u.set_hw_mode_cmd.request_id);
 	csr_queue_sme_command(mac, cmd, false);
 
 	sme_release_global_lock(&mac->sme);

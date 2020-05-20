@@ -63,6 +63,9 @@
 #define MAX_NUMBER_OF_CONC_CONNECTIONS 3
 #endif
 
+/* Policy manager default request id */
+#define POLICY_MGR_DEF_REQ_ID 0
+
 typedef int (*send_mode_change_event_cb)(void);
 
 /**
@@ -1131,6 +1134,8 @@ struct policy_mgr_dual_mac_config {
  * @next_action: next action to happen at policy mgr
  * @action: current hw change action to be done
  * @context: psoc context
+ * @request_id: Request id provided by the requester, can be used while
+ * calling callback to the requester
  */
 struct policy_mgr_hw_mode {
 	uint32_t hw_mode_index;
@@ -1140,6 +1145,7 @@ struct policy_mgr_hw_mode {
 	uint8_t next_action;
 	enum policy_mgr_conc_next_action action;
 	struct wlan_objmgr_psoc *context;
+	uint32_t request_id;
 };
 
 /**

@@ -22326,7 +22326,7 @@ int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 
 	status = policy_mgr_current_connections_update(
 			hdd_ctx->psoc, adapter->vdev_id,
-			chan_freq, reason);
+			chan_freq, reason, POLICY_MGR_DEF_REQ_ID);
 	switch (status) {
 	case QDF_STATUS_E_FAILURE:
 		/*

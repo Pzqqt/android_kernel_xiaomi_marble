@@ -8389,7 +8389,8 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 
 			status = policy_mgr_handle_conc_multiport(
 					mac->psoc, sessionId, ch_freq,
-					POLICY_MGR_UPDATE_REASON_NORMAL_STA);
+					POLICY_MGR_UPDATE_REASON_NORMAL_STA,
+					POLICY_MGR_DEF_REQ_ID);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(mac, true))) {
 					sme_debug("conn update error");
@@ -9934,7 +9935,8 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 	status = policy_mgr_handle_conc_multiport(
 			mac->psoc, session_id,
 			bss_node->pBssDescription->chan_freq,
-			POLICY_MGR_UPDATE_REASON_LFR2_ROAM);
+			POLICY_MGR_UPDATE_REASON_LFR2_ROAM,
+			POLICY_MGR_DEF_REQ_ID);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap =
 							scan_handle_roam_ap;

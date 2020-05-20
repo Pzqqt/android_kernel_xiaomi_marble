@@ -1137,7 +1137,8 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 	case eCsrNextCheckAllowConc:
 		ret = policy_mgr_current_connections_update(
 				mac_ctx->psoc, session_id, chan_freq,
-				POLICY_MGR_UPDATE_REASON_HIDDEN_STA);
+				POLICY_MGR_UPDATE_REASON_HIDDEN_STA,
+				POLICY_MGR_DEF_REQ_ID);
 		sme_debug("channel freq: %d session: %d status: %d",
 			  chan_freq, session_id, ret);
 

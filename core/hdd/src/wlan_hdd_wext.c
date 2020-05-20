@@ -6780,7 +6780,7 @@ hdd_policy_mgr_set_hw_mode_ut(struct hdd_context *hdd_ctx,
 				    mac0_band_cap, dbs, HW_MODE_AGILE_DFS_NONE,
 				    HW_MODE_SBS_NONE,
 				    POLICY_MGR_UPDATE_REASON_UT, PM_NOP,
-				    action);
+				    action, POLICY_MGR_DEF_REQ_ID);
 }
 
 static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
@@ -6890,7 +6890,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		policy_mgr_current_connections_update(
 			hdd_ctx->psoc, adapter->vdev_id,
 			wlan_chan_to_freq(apps_args[0]),
-			POLICY_MGR_UPDATE_REASON_UT);
+			POLICY_MGR_UPDATE_REASON_UT, POLICY_MGR_DEF_REQ_ID);
 	}
 	break;
 
