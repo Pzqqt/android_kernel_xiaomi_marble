@@ -5978,14 +5978,16 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
  *
  * Flushes the send action frame in HE TB PPDU configuration message.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static void lim_send_action_frm_tb_ppdu_cfg_flush_cb(struct scheduler_msg *msg)
+static QDF_STATUS
+lim_send_action_frm_tb_ppdu_cfg_flush_cb(struct scheduler_msg *msg)
 {
 	if (msg->bodyptr) {
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
