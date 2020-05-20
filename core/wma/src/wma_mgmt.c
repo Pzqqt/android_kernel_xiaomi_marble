@@ -43,7 +43,7 @@
 #include "lim_session_utils.h"
 
 #include "cds_utils.h"
-
+#include "wlan_blm_api.h"
 #if !defined(REMOVE_PKT_LOG)
 #include "pktlog_ac.h"
 #else
@@ -331,6 +331,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	uint8_t *addr, *bssid;
 	struct wlan_objmgr_vdev *vdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct reject_ap_info ap_info;
 
 	param_buf = (WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *) event;
 	kickout_event = param_buf->fixed_param;
@@ -458,6 +459,11 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, (void *)del_sta_ctx,
 		     0);
 	wma_lost_link_info_handler(wma, vdev_id, del_sta_ctx->rssi);
+
+	qdf_mem_copy(&ap_info.bssid, macaddr, QDF_MAC_ADDR_SIZE);
+	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	wlan_blm_add_bssid_to_reject_list(wma->pdev, &ap_info);
+
 exit_handler:
 	return 0;
 }

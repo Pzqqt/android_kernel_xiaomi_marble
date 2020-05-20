@@ -20748,6 +20748,9 @@ csr_check_and_set_sae_single_pmk_cap(struct mac_context *mac_ctx,
 }
 #endif
 
+#define IS_ROAM_REASON_STA_KICKOUT(reason) ((reason & 0xF) == \
+	WMI_ROAM_TRIGGER_REASON_STA_KICKOUT)
+
 static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 		struct roam_offload_synch_ind *roam_synch_data,
 		struct bss_description *bss_desc, enum sir_roam_op_code reason)
@@ -20969,6 +20972,14 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	wlan_blm_update_bssid_connect_params(mac_ctx->pdev,
 					     session->connectedProfile.bssid,
 					     BLM_AP_DISCONNECTED);
+
+	if (IS_ROAM_REASON_STA_KICKOUT(roam_synch_data->roamReason)) {
+		struct reject_ap_info ap_info;
+
+		ap_info.bssid = session->connectedProfile.bssid;
+		ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+		wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
+	}
 
 	/* Remove old BSSID mlme info from scan cache */
 	csr_update_scan_entry_associnfo(mac_ctx, session,
