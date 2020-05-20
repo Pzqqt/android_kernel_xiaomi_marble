@@ -983,6 +983,8 @@ wlan_reg_get_5g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	return reg_get_5g_bonded_channel_state_for_freq(pdev, freq, bw);
 }
 
+qdf_export_symbol(wlan_reg_get_5g_bonded_channel_state_for_freq);
+
 enum channel_state
 wlan_reg_get_2g_bonded_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 					      qdf_freq_t freq,
@@ -1002,6 +1004,8 @@ void wlan_reg_set_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 {
 	reg_set_channel_params_for_freq(pdev, freq, sec_ch_2g_freq, ch_params);
 }
+
+qdf_export_symbol(wlan_reg_set_channel_params_for_freq);
 
 enum channel_state
 wlan_reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,

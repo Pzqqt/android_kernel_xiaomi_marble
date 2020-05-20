@@ -3026,6 +3026,74 @@ target_if_spectral_populate_chwidth(struct target_if_spectral *spectral,
 }
 
 /**
+ * target_if_spectral_is_valid_80p80_freq() - API to check whether given
+ * (cfreq1, cfreq2) pair forms a valid 80+80 combination
+ * @pdev: pointer to pdev
+ * @cfreq1: center frequency 1
+ * @cfreq2: center frequency 2
+ *
+ * API to check whether given (cfreq1, cfreq2) pair forms a valid 80+80
+ * combination
+ *
+ * Return: true or false
+ */
+static bool
+target_if_spectral_is_valid_80p80_freq(struct wlan_objmgr_pdev *pdev,
+				       uint32_t cfreq1, uint32_t cfreq2)
+{
+	struct ch_params ch_params;
+	enum channel_state chan_state1;
+	enum channel_state chan_state2;
+	struct wlan_objmgr_psoc *psoc;
+
+	qdf_assert_always(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+	qdf_assert_always(psoc);
+
+	/* In restricted 80P80 MHz enabled, only one 80+80 MHz
+	 * channel is supported with cfreq=5690 and cfreq=5775.
+	 */
+	if (wlan_psoc_nif_fw_ext_cap_get(
+				psoc, WLAN_SOC_RESTRICTED_80P80_SUPPORT))
+		return CHAN_WITHIN_RESTRICTED_80P80(cfreq1, cfreq2);
+
+	ch_params.center_freq_seg1 = wlan_reg_freq_to_chan(pdev, cfreq2);
+	ch_params.mhz_freq_seg1 = cfreq2;
+	ch_params.ch_width = CH_WIDTH_80P80MHZ;
+	wlan_reg_set_channel_params_for_freq(pdev, cfreq1 - FREQ_OFFSET_10MHZ,
+					     0, &ch_params);
+
+	if (ch_params.ch_width != CH_WIDTH_80P80MHZ)
+		return false;
+
+	if (ch_params.mhz_freq_seg0 != cfreq1 ||
+	    ch_params.mhz_freq_seg1 != cfreq2)
+		return false;
+
+	chan_state1 = wlan_reg_get_5g_bonded_channel_state_for_freq(
+				pdev,
+				ch_params.mhz_freq_seg0 - FREQ_OFFSET_10MHZ,
+				CH_WIDTH_80MHZ);
+	if ((chan_state1 == CHANNEL_STATE_DISABLE) ||
+	    (chan_state1 == CHANNEL_STATE_INVALID))
+		return false;
+
+	chan_state2 = wlan_reg_get_5g_bonded_channel_state_for_freq(
+				pdev,
+				ch_params.mhz_freq_seg1 - FREQ_OFFSET_10MHZ,
+				CH_WIDTH_80MHZ);
+	if ((chan_state2 == CHANNEL_STATE_DISABLE) ||
+	    (chan_state2 == CHANNEL_STATE_INVALID))
+		return false;
+
+	if (abs(ch_params.mhz_freq_seg0 - ch_params.mhz_freq_seg1) <=
+	    FREQ_OFFSET_80MHZ)
+		return false;
+
+	return true;
+}
+
+/**
  * _target_if_set_spectral_config() - Set spectral config
  * @spectral:       Pointer to spectral object
  * @param: Spectral parameter id and value
@@ -3273,6 +3341,23 @@ _target_if_set_spectral_config(struct target_if_spectral *spectral,
 				     center_freq.cfreq1, center_freq.cfreq2);
 			*err = SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE;
 			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (ch_width[smode] == CH_WIDTH_80P80MHZ) {
+			bool is_valid_80p80;
+
+			is_valid_80p80 = target_if_spectral_is_valid_80p80_freq(
+						spectral->pdev_obj,
+						center_freq.cfreq1,
+						center_freq.cfreq2);
+
+			if (!is_valid_80p80) {
+				spectral_err("Agile freq %u, %u is invalid 80+80 combination",
+					     center_freq.cfreq1,
+					     center_freq.cfreq2);
+				*err = SPECTRAL_SCAN_ERR_PARAM_INVALID_VALUE;
+				return QDF_STATUS_E_FAILURE;
+			}
 		}
 
 		sparams->ss_frequency.cfreq1 = center_freq.cfreq1;
