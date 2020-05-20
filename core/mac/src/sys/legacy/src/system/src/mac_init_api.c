@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,3 +196,17 @@ void mac_register_sesssion_open_close_cb(mac_handle_t mac_handle,
 	mac->session_close_cb = close_session;
 	mac->session_roam_complete_cb = callback;
 }
+
+#ifdef WLAN_BCN_RECV_FEATURE
+void mac_register_bcn_report_send_cb(struct mac_context *mac,
+				     beacon_report_cb cb)
+{
+	if (!mac) {
+		pe_err("Invalid MAC");
+		return;
+	}
+
+	mac->lim.sme_bcn_rcv_callback = cb;
+}
+#endif
+

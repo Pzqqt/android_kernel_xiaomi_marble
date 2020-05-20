@@ -952,8 +952,10 @@ void sch_send_beacon_report(struct mac_context *mac_ctx,
 			    struct pe_session *session)
 {
 	struct wlan_beacon_report beacon_report;
+	beacon_report_cb sme_bcn_cb;
 
-	if (!mac_ctx->lim.sme_bcn_rcv_callback)
+	sme_bcn_cb = mac_ctx->lim.sme_bcn_rcv_callback;
+	if (!sme_bcn_cb)
 		return;
 
 	if (!LIM_IS_STA_ROLE(session))
@@ -981,8 +983,7 @@ void sch_send_beacon_report(struct mac_context *mac_ctx,
 		beacon_report.vdev_id = session->vdev_id;
 
 		/* Send report to upper layer */
-		mac_ctx->lim.sme_bcn_rcv_callback(mac_ctx->hdd_handle,
-						  &beacon_report);
+		sme_bcn_cb(mac_ctx->hdd_handle, &beacon_report);
 	}
 }
 

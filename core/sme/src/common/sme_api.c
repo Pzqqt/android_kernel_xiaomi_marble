@@ -63,6 +63,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_psoc_mlme_api.h"
+#include "mac_init_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -1117,17 +1118,19 @@ QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle)
 QDF_STATUS
 sme_register_bcn_report_pe_cb(mac_handle_t mac_handle, beacon_report_cb cb)
 {
-	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
-	msg.type = WNI_SME_REGISTER_BCN_REPORT_SEND_CB;
-	msg.callback = cb;
+	if (!mac) {
+		sme_err("Invalid mac context");
+		return QDF_STATUS_E_INVAL;
+	}
 
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_PE,
-					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		sme_err("Failed to post message to LIM");
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac_register_bcn_report_send_cb(mac, cb);
+		sme_release_global_lock(&mac->sme);
+	}
 
 	return status;
 }
