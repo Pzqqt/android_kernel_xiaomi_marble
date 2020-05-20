@@ -50,6 +50,7 @@ struct rouleur_priv {
 
 	bool comp1_enable;
 	bool comp2_enable;
+	bool dapm_bias_off;
 
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
