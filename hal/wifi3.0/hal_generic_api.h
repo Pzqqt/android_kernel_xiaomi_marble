@@ -1784,6 +1784,29 @@ void hal_get_hw_hptp_generic(struct hal_soc *hal_soc,
 	}
 }
 
+#if defined(WBM_IDLE_LSB_WRITE_CONFIRM_WAR)
+/**
+ * hal_wbm_idle_lsb_write_confirm() - Check and update WBM_IDLE_LINK ring LSB
+ * @srng: srng handle
+ *
+ * Return: None
+ */
+static void hal_wbm_idle_lsb_write_confirm(struct hal_srng *srng)
+{
+	if (srng->ring_id == HAL_SRNG_WBM_IDLE_LINK) {
+		while (SRNG_SRC_REG_READ(srng, BASE_LSB) !=
+		       ((unsigned int)srng->ring_base_paddr & 0xffffffff))
+				SRNG_SRC_REG_WRITE(srng, BASE_LSB,
+						   srng->ring_base_paddr &
+						   0xffffffff);
+	}
+}
+#else
+static void hal_wbm_idle_lsb_write_confirm(struct hal_srng *srng)
+{
+}
+#endif
+
 /**
  * hal_srng_src_hw_init - Private function to initialize SRNG
  * source ring HW
@@ -1811,6 +1834,8 @@ void hal_srng_src_hw_init_generic(struct hal_soc *hal,
 	}
 
 	SRNG_SRC_REG_WRITE(srng, BASE_LSB, srng->ring_base_paddr & 0xffffffff);
+	hal_wbm_idle_lsb_write_confirm(srng);
+
 	reg_val = SRNG_SM(SRNG_SRC_FLD(BASE_MSB, RING_BASE_ADDR_MSB),
 		((uint64_t)(srng->ring_base_paddr) >> 32)) |
 		SRNG_SM(SRNG_SRC_FLD(BASE_MSB, RING_SIZE),
