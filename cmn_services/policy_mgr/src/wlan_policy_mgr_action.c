@@ -131,7 +131,8 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
 		enum policy_mgr_conn_update_reason reason,
-		uint8_t next_action, enum policy_mgr_conc_next_action action)
+		uint8_t next_action, enum policy_mgr_conc_next_action action,
+		uint32_t request_id)
 {
 	int8_t hw_mode_index;
 	struct policy_mgr_hw_mode msg;
@@ -183,9 +184,11 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	msg.next_action = next_action;
 	msg.action = action;
 	msg.context = psoc;
+	msg.request_id = request_id;
 
-	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d action %d",
-			 msg.hw_mode_index, msg.session_id, msg.reason, action);
+	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d action %d request_id %d",
+			 msg.hw_mode_index, msg.session_id, msg.reason, action,
+			 msg.request_id);
 
 	status = pm_ctx->sme_cbacks.sme_pdev_set_hw_mode(msg);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -397,7 +400,8 @@ QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
 		policy_mgr_err("clearing event failed");
 
 	status = policy_mgr_current_connections_update(
-			psoc, session_id, ch_freq, reason);
+			psoc, session_id, ch_freq, reason,
+			POLICY_MGR_DEF_REQ_ID);
 	if (QDF_STATUS_E_FAILURE == status) {
 		policy_mgr_err("connections update failed");
 		return QDF_STATUS_E_FAILURE;
@@ -906,7 +910,7 @@ QDF_STATUS
 policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 				      uint32_t session_id, uint32_t ch_freq,
 				      enum policy_mgr_conn_update_reason
-				      reason)
+				      reason, uint32_t request_id)
 {
 	enum policy_mgr_conc_next_action next_action = PM_NOP;
 	QDF_STATUS status;
@@ -923,7 +927,8 @@ policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 
 	if (PM_NOP != next_action)
 		status = policy_mgr_next_actions(psoc, session_id,
-						next_action, reason);
+						next_action, reason,
+						request_id);
 	else
 		status = QDF_STATUS_E_NOSUPPORT;
 
@@ -1059,7 +1064,8 @@ QDF_STATUS policy_mgr_next_actions(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		enum policy_mgr_conc_next_action action,
-		enum policy_mgr_conn_update_reason reason)
+		enum policy_mgr_conn_update_reason reason,
+		uint32_t request_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct dbs_nss nss_dbs = {0};
@@ -1102,7 +1108,8 @@ QDF_STATUS policy_mgr_next_actions(
 						     HW_MODE_DBS,
 						     HW_MODE_AGILE_DFS_NONE,
 						     HW_MODE_SBS_NONE,
-						     reason, PM_NOP, PM_DBS);
+						     reason, PM_NOP, PM_DBS,
+						     request_id);
 		break;
 	case PM_SINGLE_MAC_UPGRADE:
 		/*
@@ -1117,7 +1124,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
 						reason, PM_UPGRADE,
-						PM_SINGLE_MAC_UPGRADE);
+						PM_SINGLE_MAC_UPGRADE,
+						request_id);
 		break;
 	case PM_SINGLE_MAC:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -1128,7 +1136,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, PM_NOP, PM_SINGLE_MAC);
+						reason, PM_NOP, PM_SINGLE_MAC,
+						request_id);
 		break;
 	case PM_DBS_UPGRADE:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -1140,7 +1149,7 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
 						reason, PM_UPGRADE,
-						PM_DBS_UPGRADE);
+						PM_DBS_UPGRADE, request_id);
 		break;
 	case PM_SBS_DOWNGRADE:
 		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
@@ -1155,7 +1164,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS,
-						reason, PM_NOP, PM_SBS);
+						reason, PM_NOP, PM_SBS,
+						request_id);
 		break;
 	case PM_DOWNGRADE:
 		/*
@@ -1214,7 +1224,8 @@ QDF_STATUS policy_mgr_next_actions(
 					HW_MODE_DBS,
 					HW_MODE_AGILE_DFS_NONE,
 					HW_MODE_SBS_NONE,
-					reason, next_action, PM_DBS1);
+					reason, next_action, PM_DBS1,
+					request_id);
 		} else {
 			status = QDF_STATUS_E_ALREADY;
 		}
@@ -1240,7 +1251,8 @@ QDF_STATUS policy_mgr_next_actions(
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason, next_action, PM_DBS2);
+						reason, next_action, PM_DBS2,
+						request_id);
 		} else {
 			status = QDF_STATUS_E_ALREADY;
 		}
@@ -1269,7 +1281,8 @@ QDF_STATUS policy_mgr_next_actions(
 QDF_STATUS
 policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 				 uint8_t session_id, uint32_t ch_freq,
-				 enum policy_mgr_conn_update_reason reason)
+				 enum policy_mgr_conn_update_reason reason,
+				 uint32_t request_id)
 {
 	QDF_STATUS status;
 
@@ -1284,7 +1297,8 @@ policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("clearing event failed");
 
 	status = policy_mgr_current_connections_update(psoc, session_id,
-						       ch_freq, reason);
+						       ch_freq, reason,
+						       request_id);
 	if (QDF_STATUS_E_FAILURE == status) {
 		policy_mgr_err("connections update failed");
 		return status;
@@ -2510,7 +2524,8 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 
 	/* For DBS, we want to move right away to DBS mode */
 	status = policy_mgr_next_actions(psoc, session_id, action,
-			POLICY_MGR_UPDATE_REASON_AFTER_CHANNEL_SWITCH);
+			POLICY_MGR_UPDATE_REASON_AFTER_CHANNEL_SWITCH,
+			POLICY_MGR_DEF_REQ_ID);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		policy_mgr_err("no set hw mode command was issued");
 		goto done;
@@ -2579,7 +2594,8 @@ QDF_STATUS policy_mgr_check_and_set_hw_mode_for_channel_switch(
 
 	if (PM_NOP != next_action)
 		status = policy_mgr_next_actions(psoc, vdev_id,
-						next_action, reason);
+						 next_action, reason,
+						 POLICY_MGR_DEF_REQ_ID);
 	else
 		status = QDF_STATUS_E_NOSUPPORT;
 
@@ -2666,7 +2682,8 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 		if (action) {
 			qdf_event_reset(&pm_ctx->opportunistic_update_done_evt);
 			status = policy_mgr_next_actions(psoc, id, action,
-							 reason);
+							 reason,
+							 POLICY_MGR_DEF_REQ_ID);
 			if (status != QDF_STATUS_SUCCESS) {
 				policy_mgr_err("Failed in policy_mgr_next_actions");
 				return;

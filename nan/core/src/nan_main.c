@@ -595,7 +595,8 @@ static QDF_STATUS nan_handle_confirm(
 
 			status = policy_mgr_current_connections_update(
 				psoc, vdev_id, wlan_chan_to_freq(channel),
-				POLICY_MGR_UPDATE_REASON_NDP_UPDATE);
+				POLICY_MGR_UPDATE_REASON_NDP_UPDATE,
+				POLICY_MGR_DEF_REQ_ID);
 			if (QDF_STATUS_E_FAILURE == status) {
 				nan_err("connections update failed!!");
 				return status;
