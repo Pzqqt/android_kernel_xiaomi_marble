@@ -32,6 +32,7 @@
 #define DEFAULT_PANEL_JITTER_ARRAY_SIZE		2
 #define MAX_PANEL_JITTER		10
 #define DEFAULT_PANEL_PREFILL_LINES	25
+#define HIGH_REFRESH_RATE_THRESHOLD_TIME_US	500
 #define MIN_PREFILL_LINES      35
 
 static void dsi_dce_prepare_pps_header(char *buf, u32 pps_delay_ms)
@@ -3577,6 +3578,9 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	jitter_denom = display_mode->priv_info->panel_jitter_denom;
 
 	frame_time_us = mult_frac(1000, 1000, (timing->refresh_rate));
+
+	if (timing->refresh_rate >= 120)
+		frame_threshold_us = HIGH_REFRESH_RATE_THRESHOLD_TIME_US;
 
 	if (timing->dsc_enabled) {
 		nslices = (timing->h_active)/(dsc->config.slice_width);
