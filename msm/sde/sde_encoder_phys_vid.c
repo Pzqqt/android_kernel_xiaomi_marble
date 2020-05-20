@@ -1061,6 +1061,9 @@ static void sde_encoder_phys_vid_disable(struct sde_encoder_phys *phys_enc)
 		return;
 	}
 
+	if (sde_in_trusted_vm(phys_enc->sde_kms))
+		goto exit;
+
 	spin_lock_irqsave(phys_enc->enc_spinlock, lock_flags);
 	phys_enc->hw_intf->ops.enable_timing(phys_enc->hw_intf, 0);
 	sde_encoder_phys_inc_pending(phys_enc);

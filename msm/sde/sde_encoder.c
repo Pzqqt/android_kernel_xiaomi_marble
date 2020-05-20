@@ -2802,7 +2802,8 @@ static void sde_encoder_virt_disable(struct drm_encoder *drm_enc)
 	 * and after physical encoder is disabled, to make sure timing
 	 * engine is already disabled (for video mode).
 	 */
-	sde_encoder_dce_disable(sde_enc);
+	if (!sde_in_trusted_vm(sde_kms))
+		sde_encoder_dce_disable(sde_enc);
 
 	sde_encoder_resource_control(drm_enc, SDE_ENC_RC_EVENT_STOP);
 

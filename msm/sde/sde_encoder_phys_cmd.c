@@ -1315,13 +1315,16 @@ static void sde_encoder_phys_cmd_disable(struct sde_encoder_phys *phys_enc)
 		return;
 	}
 
-	if (phys_enc->has_intf_te && phys_enc->hw_intf->ops.enable_tearcheck)
-		phys_enc->hw_intf->ops.enable_tearcheck(
-				phys_enc->hw_intf,
-				false);
-	else if (phys_enc->hw_pp->ops.enable_tearcheck)
-		phys_enc->hw_pp->ops.enable_tearcheck(phys_enc->hw_pp,
-				false);
+	if (!sde_in_trusted_vm(phys_enc->sde_kms)) {
+		if (phys_enc->has_intf_te &&
+				phys_enc->hw_intf->ops.enable_tearcheck)
+			phys_enc->hw_intf->ops.enable_tearcheck(
+					phys_enc->hw_intf,
+					false);
+		else if (phys_enc->hw_pp->ops.enable_tearcheck)
+			phys_enc->hw_pp->ops.enable_tearcheck(phys_enc->hw_pp,
+					false);
+	}
 
 	phys_enc->enable_state = SDE_ENC_DISABLED;
 }
