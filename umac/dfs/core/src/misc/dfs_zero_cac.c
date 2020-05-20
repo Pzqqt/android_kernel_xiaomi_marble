@@ -540,6 +540,9 @@ dfs_find_cac_status_for_chan_for_freq(struct dfs_precac_entry *precac_entry,
 #define IS_WITHIN_RANGE(_A, _B, _C)  \
 	(((_A) >= ((_B)-(_C))) && ((_A) <= ((_B)+(_C))))
 
+#define IS_WITHIN_RANGE_STRICT(_A, _B, _C)  \
+	(((_A) > ((_B)-(_C))) && ((_A) < ((_B)+(_C))))
+
 #ifdef CONFIG_CHAN_NUM_API
 bool dfs_is_precac_done_on_ht20_40_80_chan(struct wlan_dfs *dfs,
 					   uint8_t chan)
@@ -599,9 +602,9 @@ dfs_is_precac_done_on_ht20_40_80_160_165_chan_for_freq(struct wlan_dfs *dfs,
 			/* Find if the channel frequency is
 			 * in this precac_list.
 			 */
-			if (IS_WITHIN_RANGE(chan_freq,
-					    precac_entry->center_ch_freq,
-					    VHT160_FREQ_OFFSET)) {
+			if (IS_WITHIN_RANGE_STRICT(chan_freq,
+					precac_entry->center_ch_freq,
+					(precac_entry->bw/2))) {
 				ret_val = dfs_find_cac_status_for_chan_for_freq(
 						precac_entry, chan_freq);
 				break;
@@ -1391,9 +1394,9 @@ void dfs_mark_precac_done_for_freq(struct wlan_dfs *dfs,
 				   &dfs->dfs_precac_list,
 				   pe_list,
 				   tmp_precac_entry) {
-			if (IS_WITHIN_RANGE(channels[i],
-					    precac_entry->center_ch_freq,
-					    VHT160_FREQ_OFFSET)) {
+			if (IS_WITHIN_RANGE_STRICT(channels[i],
+					precac_entry->center_ch_freq,
+					(precac_entry->bw/2))) {
 				dfs_mark_tree_node_as_cac_done_for_freq
 					(dfs, precac_entry, channels[i]);
 				break;
@@ -1638,9 +1641,9 @@ void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs, uint16_t chan_freq)
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_list)) {
 		TAILQ_FOREACH_SAFE(pcac_entry, &dfs->dfs_precac_list,
 				   pe_list, tmp_precac_entry) {
-			if (IS_WITHIN_RANGE(chan_freq,
-					    pcac_entry->center_ch_freq,
-					    VHT160_FREQ_OFFSET)) {
+			if (IS_WITHIN_RANGE_STRICT(chan_freq,
+					pcac_entry->center_ch_freq,
+					(pcac_entry->bw/2))) {
 				dfs_unmark_tree_node_as_nol_for_freq(dfs,
 								     pcac_entry,
 								     chan_freq);
@@ -1865,9 +1868,9 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 				   &dfs->dfs_precac_list,
 				   pe_list,
 				   tmp_precac_entry) {
-			if (IS_WITHIN_RANGE(freq_lst[i],
-					    precac_entry->center_ch_freq,
-					    VHT160_FREQ_OFFSET)) {
+			if (IS_WITHIN_RANGE_STRICT(freq_lst[i],
+					precac_entry->center_ch_freq,
+					(precac_entry->bw/2))) {
 				dfs_mark_tree_node_as_nol_for_freq(dfs,
 								   precac_entry,
 								   freq_lst[i]);
