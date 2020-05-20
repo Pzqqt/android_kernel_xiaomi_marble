@@ -922,6 +922,7 @@ struct cdp_tx_stats {
  * @rssi: RSSI of received signal
  * @last_rssi: Previous rssi
  * @multipass_rx_pkt_drop: Dropped multipass rx pkt
+ * @rx_mpdu_cnt: rx mpdu count per MCS rate
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -989,6 +990,7 @@ struct cdp_rx_stats {
 	uint8_t rssi;
 	uint8_t last_rssi;
 	uint32_t multipass_rx_pkt_drop;
+	uint32_t rx_mpdu_cnt[MAX_MCS];
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats

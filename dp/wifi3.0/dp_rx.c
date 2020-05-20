@@ -1596,6 +1596,10 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	nss = hal_rx_msdu_start_nss_get(soc->hal_soc, rx_tlv_hdr);
 	pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 
+	DP_STATS_INCC(peer, rx.rx_mpdu_cnt[mcs], 1,
+		      ((mcs < MAX_MCS) && QDF_NBUF_CB_RX_CHFRAG_START(nbuf)));
+	DP_STATS_INCC(peer, rx.rx_mpdu_cnt[MAX_MCS - 1], 1,
+		      ((mcs >= MAX_MCS) && QDF_NBUF_CB_RX_CHFRAG_START(nbuf)));
 	DP_STATS_INC(peer, rx.bw[bw], 1);
 	/*
 	 * only if nss > 0 and pkt_type is 11N/AC/AX,
