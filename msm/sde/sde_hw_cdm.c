@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_mdss.h"
@@ -341,7 +341,8 @@ struct sde_hw_cdm *sde_hw_cdm_init(enum sde_cdm idx,
 	 * Perform any default initialization for the chroma down module
 	 * @setup default csc coefficients
 	 */
-	sde_hw_cdm_setup_csc_10bit(c, &rgb2yuv_cfg);
+	if (!m->trusted_vm_env)
+		sde_hw_cdm_setup_csc_10bit(c, &rgb2yuv_cfg);
 
 	return c;
 

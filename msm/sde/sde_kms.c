@@ -3156,15 +3156,20 @@ static void sde_kms_handle_power_event(u32 event_type, void *usr)
 
 	if (event_type == SDE_POWER_EVENT_POST_ENABLE) {
 		sde_irq_update(msm_kms, true);
-		if (sde_kms->splash_data.num_splash_displays)
+		sde_kms->first_kickoff = true;
+		if (sde_kms->splash_data.num_splash_displays ||
+				sde_in_trusted_vm(sde_kms))
 			return;
+
 		sde_vbif_init_memtypes(sde_kms);
 		sde_kms_init_shared_hw(sde_kms);
 		_sde_kms_set_lutdma_vbif_remap(sde_kms);
-		sde_kms->first_kickoff = true;
 	} else if (event_type == SDE_POWER_EVENT_PRE_DISABLE) {
 		sde_irq_update(msm_kms, false);
 		sde_kms->first_kickoff = false;
+		if (sde_in_trusted_vm(sde_kms))
+			return;
+
 		_sde_kms_active_override(sde_kms, true);
 		if (!is_sde_rsc_available(SDE_RSC_INDEX))
 			sde_vbif_axi_halt_request(sde_kms);
