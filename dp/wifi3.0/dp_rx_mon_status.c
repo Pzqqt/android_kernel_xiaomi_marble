@@ -57,13 +57,15 @@ dp_rx_populate_cfr_non_assoc_sta(struct dp_pdev *pdev,
  * Called from bottom half (tasklet/NET_RX_SOFTIRQ)
  *
  * @soc: datapath soc context
+ * @int_ctx: interrupt context
  * @mac_id: mac_id on which interrupt is received
  * @quota: Number of status ring entry that can be serviced in one shot.
  *
  * @Return: Number of reaped status ring entries
  */
 static inline uint32_t
-dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
+dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+		  uint32_t mac_id, uint32_t quota)
 {
 	return quota;
 }
@@ -1568,16 +1570,18 @@ dp_rx_mon_handle_mu_ul_info(struct hal_rx_ppdu_info *ppdu_info)
 #endif
 
 /**
-* dp_rx_mon_status_process_tlv() - Process status TLV in status
-*	buffer on Rx status Queue posted by status SRNG processing.
-* @soc: core txrx main context
-* @mac_id: mac_id which is one of 3 mac_ids _ring
-*
-* Return: none
-*/
+ * dp_rx_mon_status_process_tlv() - Process status TLV in status
+ *	buffer on Rx status Queue posted by status SRNG processing.
+ * @soc: core txrx main context
+ * @int_ctx: interrupt context
+ * @mac_id: mac_id which is one of 3 mac_ids _ring
+ * @quota: amount of work which can be done
+ *
+ * Return: none
+ */
 static inline void
-dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
-	uint32_t quota)
+dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
+			     uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	struct hal_rx_ppdu_info *ppdu_info;
@@ -1718,7 +1722,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			}
 
 			if (!soc->full_mon_mode)
-				dp_rx_mon_dest_process(soc, mac_id, quota);
+				dp_rx_mon_dest_process(soc, int_ctx, mac_id,
+						       quota);
 
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 		}
@@ -1732,16 +1737,16 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
  *	processing when status ring is filled with status TLV.
  *	Allocate a new buffer to status ring if the filled buffer
  *	is posted.
- *
  * @soc: core txrx main context
+ * @int_ctx: interrupt context
  * @mac_id: mac_id which is one of 3 mac_ids
  * @quota: No. of ring entry that can be serviced in one shot.
 
  * Return: uint32_t: No. of ring entry that is processed.
  */
 static inline uint32_t
-dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
-	uint32_t quota)
+dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			      uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	hal_soc_handle_t hal_soc;
@@ -1771,7 +1776,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 
 	qdf_assert(hal_soc);
 
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_status_srng)))
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, mon_status_srng)))
 		goto done;
 
 	/* mon_status_ring_desc => WBM_BUFFER_RING STRUCT =>
@@ -1911,50 +1916,33 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	}
 done:
 
-	hal_srng_access_end(hal_soc, mon_status_srng);
+	dp_srng_access_end(int_ctx, soc, mon_status_srng);
 
 	return work_done;
 
 }
 
-/*
- * dp_rx_mon_status_process() - Process monitor status ring and
- *	TLV in status ring.
- *
- * @soc: core txrx main context
- * @mac_id: mac_id which is one of 3 mac_ids
- * @quota: No. of ring entry that can be serviced in one shot.
-
- * Return: uint32_t: No. of ring entry that is processed.
- */
 uint32_t
-dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
+dp_rx_mon_status_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			 uint32_t mac_id, uint32_t quota)
+{
 	uint32_t work_done;
 
-	work_done = dp_rx_mon_status_srng_process(soc, mac_id, quota);
+	work_done = dp_rx_mon_status_srng_process(soc, int_ctx, mac_id, quota);
 	quota -= work_done;
-	dp_rx_mon_status_process_tlv(soc, mac_id, quota);
+	dp_rx_mon_status_process_tlv(soc, int_ctx, mac_id, quota);
 
 	return work_done;
 }
 
-/**
- * dp_mon_process() - Main monitor mode processing roution.
- *	This call monitor status ring process then monitor
- *	destination ring process.
- *	Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
- * @soc: core txrx main context
- * @mac_id: mac_id which is one of 3 mac_ids
- * @quota: No. of status ring entry that can be serviced in one shot.
-
- * Return: uint32_t: No. of ring entry that is processed.
- */
 uint32_t
-dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
+dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+	       uint32_t mac_id, uint32_t quota)
+{
 	if (qdf_unlikely(soc->full_mon_mode))
-		return dp_rx_mon_process(soc, mac_id, quota);
+		return dp_rx_mon_process(soc, int_ctx, mac_id, quota);
 
-	return dp_rx_mon_status_process(soc, mac_id, quota);
+	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
 }
 
 QDF_STATUS

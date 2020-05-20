@@ -1102,6 +1102,8 @@ struct dp_soc {
 	/* DP Interrupts */
 	struct dp_intr intr_ctx[WLAN_CFG_INT_NUM_CONTEXTS];
 
+	/* Monitor mode mac id to dp_intr_id map */
+	int mon_intr_id_lmac_map[MAX_NUM_LMAC_HW];
 	/* Rx SW descriptor pool for RXDMA monitor buffer */
 	struct rx_desc_pool rx_desc_mon[MAX_RXDESC_POOLS];
 
@@ -1620,6 +1622,9 @@ struct dp_pdev {
 
 	/* Monitor mode operation frequency */
 	qdf_freq_t mon_chan_freq;
+
+	/* Monitor mode band */
+	enum reg_wifi_band mon_chan_band;
 
 	/* monitor mode lock */
 	qdf_spinlock_t mon_lock;

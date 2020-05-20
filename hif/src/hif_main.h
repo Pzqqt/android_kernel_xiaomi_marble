@@ -231,6 +231,10 @@ struct hif_softc {
 	/* Handle to pktlog device */
 	void *pktlog_dev;
 #endif
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+	/* Pointer to the srng event history */
+	struct hif_event_history *evt_hist[HIF_NUM_INT_CONTEXTS];
+#endif
 
 /*
  * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked

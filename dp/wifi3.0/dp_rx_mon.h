@@ -28,31 +28,34 @@
 
 /*
  * dp_rx_mon_status_process() - Process monitor status ring and
- *>.....TLV in status ring.
+ *			TLV in status ring.
  *
  * @soc: core txrx main context
+ * @int_ctx: interrupt context
  * @mac_id: mac_id which is one of 3 mac_ids
  * @quota: No. of ring entry that can be serviced in one shot.
 
  * Return: uint32_t: No. of ring entry that is processed.
  */
 uint32_t
-dp_rx_mon_status_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
+dp_rx_mon_status_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			 uint32_t mac_id, uint32_t quota);
 
 /**
-* dp_rx_mon_dest_process() - Brain of the Rx processing functionality
-*	Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
-* @soc: core txrx main context	164
-* @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
-* @quota: No. of units (packets) that can be serviced in one shot.
-*
-* This function implements the core of Rx functionality. This is
-* expected to handle only non-error frames.
-*
-* Return: uint32_t: No. of elements processed
-*/
-void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id,
-	uint32_t quota);
+ * dp_rx_mon_dest_process() - Brain of the Rx processing functionality
+ *	Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
+ * @soc: core txrx main contex
+ * @int_ctx: interrupt context
+ * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @quota: No. of units (packets) that can be serviced in one shot.
+ *
+ * This function implements the core of Rx functionality. This is
+ * expected to handle only non-error frames.
+ *
+ * Return: none
+ */
+void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota);
 
 QDF_STATUS dp_rx_pdev_mon_desc_pool_alloc(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_buffers_alloc(struct dp_pdev *pdev);
@@ -106,11 +109,13 @@ void dp_full_mon_detach(struct dp_pdev *pdev);
  * full monitor mode
  *
  * @soc: dp soc handle
+ * @int_ctx: interrupt context
  * @mac_id: lmac id
  * @quota: No. of ring entry that can be serviced in one shot.
  */
 
-uint32_t dp_rx_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
+uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			   uint32_t mac_id, uint32_t quota);
 
 #else
 /**
@@ -158,7 +163,21 @@ QDF_STATUS dp_reset_monitor_mode(struct cdp_soc_t *soc_hdl,
 QDF_STATUS dp_mon_link_free(struct dp_pdev *pdev);
 
 
-uint32_t dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
+/**
+ * dp_mon_process() - Main monitor mode processing roution.
+ * @soc: core txrx main context
+ * @int_ctx: interrupt context
+ * @mac_id: mac_id which is one of 3 mac_ids
+ * @quota: No. of status ring entry that can be serviced in one shot.
+ *
+ * This call monitor status ring process then monitor
+ * destination ring process.
+ * Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
+ *
+ * Return: uint32_t: No. of ring entry that is processed.
+ */
+uint32_t dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			uint32_t mac_id, uint32_t quota);
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu);
 /*

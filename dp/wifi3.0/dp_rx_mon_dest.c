@@ -996,19 +996,8 @@ mon_deliver_non_std_fail:
 	return QDF_STATUS_E_INVAL;
 }
 
-/**
-* dp_rx_mon_dest_process() - Brain of the Rx processing functionality
-*	Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
-* @soc: core txrx main contex
-* @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
-* @quota: No. of units (packets) that can be serviced in one shot.
-*
-* This function implements the core of Rx functionality. This is
-* expected to handle only non-error frames.
-*
-* Return: none
-*/
-void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
+void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+			    uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint8_t pdev_id;
@@ -1044,7 +1033,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	qdf_spin_lock_bh(&pdev->mon_lock);
 
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dst_srng))) {
+	if (qdf_unlikely(dp_srng_access_start(int_ctx, soc, mon_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring access Failed -- %pK",
 			__func__, __LINE__, mon_dst_srng);
@@ -1114,7 +1103,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
 			mon_dst_srng);
 	}
-	hal_srng_access_end(hal_soc, mon_dst_srng);
+
+	dp_srng_access_end(int_ctx, soc, mon_dst_srng);
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 

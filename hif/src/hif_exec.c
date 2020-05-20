@@ -47,25 +47,21 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 			   struct hif_event_record *event, uint8_t intr_grp_id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct hif_exec_context *hif_ext_group;
 	struct hif_event_history *hist_ev;
 	struct hif_event_record *record;
 	int record_index;
 
-	if (!hif_state->hif_num_extgroup)
-		return;
-
 	if (scn->event_disable_mask & BIT(event->type))
 		return;
 
-	if (intr_grp_id >= HIF_NUM_INT_CONTEXTS) {
+	if (qdf_unlikely(intr_grp_id >= HIF_NUM_INT_CONTEXTS)) {
 		hif_err("Invalid interrupt group id %d", intr_grp_id);
 		return;
 	}
 
-	hif_ext_group = hif_state->hif_ext_group[intr_grp_id];
-	hist_ev = hif_ext_group->evt_hist;
+	hist_ev = scn->evt_hist[intr_grp_id];
+	if (qdf_unlikely(!hist_ev))
+		return;
 
 	record_index = hif_get_next_record_index(
 			&hist_ev->index, HIF_EVENT_HIST_MAX);
@@ -80,14 +76,22 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 	record->type = event->type;
 }
 
-static void hif_event_history_init(struct hif_exec_context *hif_ext_grp)
+void hif_event_history_init(struct hif_opaque_softc *hif_ctx, uint8_t id)
 {
-	hif_ext_grp->evt_hist = &hif_event_desc_history[hif_ext_grp->grp_id];
-	qdf_atomic_set(&hif_ext_grp->evt_hist->index, -1);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->evt_hist[id] = &hif_event_desc_history[id];
+	qdf_atomic_set(&scn->evt_hist[id]->index, -1);
+
+	hif_info("SRNG events history initialized for group: %d", id);
 }
-#else
-static inline void hif_event_history_init(struct hif_exec_context *hif_ext_grp)
+
+void hif_event_history_deinit(struct hif_opaque_softc *hif_ctx, uint8_t id)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->evt_hist[id] = NULL;
+	hif_info("SRNG events history de-initialized for group: %d", id);
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
@@ -878,7 +882,6 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->hif = hif_ctx;
 	hif_ext_group->context_name = context_name;
 	hif_ext_group->type = type;
-	hif_event_history_init(hif_ext_group);
 
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;

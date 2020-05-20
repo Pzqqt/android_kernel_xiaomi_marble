@@ -427,7 +427,7 @@ static void dp_service_mon_rings(struct  dp_soc *soc, uint32_t quota)
 		pdev = dp_get_pdev_for_lmac_id(soc, ring);
 		if (!pdev)
 			continue;
-		work_done = dp_mon_process(soc, ring, quota);
+		work_done = dp_mon_process(soc, NULL, ring, quota);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("Reaped %d descs from Monitor rings"),
@@ -593,7 +593,7 @@ static void dp_service_lmac_rings(void *arg)
 
 		rx_refill_buf_ring = &soc->rx_refill_buf_ring[mac_for_pdev];
 
-		dp_mon_process(soc, mac_for_pdev,
+		dp_mon_process(soc, NULL, mac_for_pdev,
 			       QCA_NAPI_BUDGET);
 
 		for (i = 0;
@@ -1572,6 +1572,9 @@ int dp_srng_access_start(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
+	if (!int_ctx)
+		return hal_srng_access_start(hal_soc, hal_ring_hdl);
+
 	hal_get_sw_hptp(hal_soc, hal_ring_hdl, &tp, &hp);
 	ring_id = hal_srng_ring_id_get(hal_ring_hdl);
 
@@ -1588,6 +1591,9 @@ void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 	uint32_t hp, tp;
 	uint8_t ring_id;
 
+	if (!int_ctx)
+		return hal_srng_access_end(hal_soc, hal_ring_hdl);
+
 	hal_get_sw_hptp(hal_soc, hal_ring_hdl, &tp, &hp);
 	ring_id = hal_srng_ring_id_get(hal_ring_hdl);
 
@@ -1596,6 +1602,32 @@ void dp_srng_access_end(struct dp_intr *int_ctx, struct dp_soc *dp_soc,
 
 	return hal_srng_access_end(hal_soc, hal_ring_hdl);
 }
+
+static inline void dp_srng_record_timer_entry(struct dp_soc *dp_soc,
+					      uint8_t hist_group_id)
+{
+	hif_record_event(dp_soc->hif_handle, hist_group_id,
+			 0, 0, 0, HIF_EVENT_TIMER_ENTRY);
+}
+
+static inline void dp_srng_record_timer_exit(struct dp_soc *dp_soc,
+					     uint8_t hist_group_id)
+{
+	hif_record_event(dp_soc->hif_handle, hist_group_id,
+			 0, 0, 0, HIF_EVENT_TIMER_EXIT);
+}
+#else
+
+static inline void dp_srng_record_timer_entry(struct dp_soc *dp_soc,
+					      uint8_t hist_group_id)
+{
+}
+
+static inline void dp_srng_record_timer_exit(struct dp_soc *dp_soc,
+					     uint8_t hist_group_id)
+{
+}
+
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
 
 /*
@@ -1646,7 +1678,7 @@ static int dp_process_lmac_rings(struct dp_intr *int_ctx, int total_budget)
 		if (!pdev)
 			continue;
 		if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
-			work_done = dp_mon_process(soc, mac_for_pdev,
+			work_done = dp_mon_process(soc, int_ctx, mac_for_pdev,
 						   remaining_quota);
 			if (work_done)
 				intr_stats->num_rx_mon_ring_masks++;
@@ -1830,6 +1862,31 @@ budget_done:
 	return dp_budget - budget;
 }
 
+/**
+ * dp_mon_get_lmac_id_from_ch_band() - get the lmac id corresponding
+ *		to a particular channel band.
+ * @soc: Datapath soc handle
+ * @band: channel band configured
+ *
+ * Returns: lmac id corresponding to the channel band
+ *
+ * Currently the 5GHz/6GHz packets will be captured on lmac id 0
+ * and the 2.4GHz packets are captured on lmac id 1.
+ * This function returns the mapping on the basis of above information.
+ */
+static inline int dp_mon_get_lmac_id_from_ch_band(struct dp_soc *soc,
+						  enum reg_wifi_band band)
+{
+	if (band == REG_BAND_2G)
+		return DP_MON_2G_LMAC_ID;
+	else if (band == REG_BAND_5G)
+		return DP_MON_5G_LMAC_ID;
+	else if (band == REG_BAND_6G)
+		return DP_MON_6G_LMAC_ID;
+
+	return DP_MON_INVALID_LMAC_ID;
+}
+
 /* dp_interrupt_timer()- timer poll for interrupts
  *
  * @arg: SoC Handle
@@ -1840,35 +1897,44 @@ budget_done:
 static void dp_interrupt_timer(void *arg)
 {
 	struct dp_soc *soc = (struct dp_soc *) arg;
+	struct dp_pdev *pdev = soc->pdev_list[0];
 	enum timer_yield_status yield = DP_TIMER_NO_YIELD;
 	uint32_t work_done  = 0, total_work_done = 0;
 	int budget = 0xffff;
 	uint32_t remaining_quota = budget;
 	uint64_t start_time;
-	int i;
+	uint32_t lmac_id;
+	uint8_t dp_intr_id;
 
 	if (!qdf_atomic_read(&soc->cmn_init_done))
 		return;
 
+	if (pdev->mon_chan_band == REG_BAND_UNKNOWN) {
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+		return;
+	}
+
+	lmac_id = dp_mon_get_lmac_id_from_ch_band(soc, pdev->mon_chan_band);
+	if (qdf_unlikely(lmac_id == DP_MON_INVALID_LMAC_ID)) {
+		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+		return;
+	}
+
+	dp_intr_id = soc->mon_intr_id_lmac_map[lmac_id];
+	dp_srng_record_timer_entry(soc, dp_intr_id);
 	start_time = qdf_get_log_timestamp();
 
 	while (yield == DP_TIMER_NO_YIELD) {
-		for (i = 0;
-		     i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
-			if (!soc->intr_ctx[i].rx_mon_ring_mask)
-				continue;
-
-			work_done = dp_process_lmac_rings(&soc->intr_ctx[i],
-							  remaining_quota);
-			if (work_done) {
-				budget -=  work_done;
-				if (budget <= 0) {
-					yield = DP_TIMER_WORK_EXHAUST;
-					goto budget_done;
-				}
-				remaining_quota = budget;
-				total_work_done += work_done;
+		work_done = dp_mon_process(soc, &soc->intr_ctx[dp_intr_id],
+					   lmac_id, remaining_quota);
+		if (work_done) {
+			budget -=  work_done;
+			if (budget <= 0) {
+				yield = DP_TIMER_WORK_EXHAUST;
+				goto budget_done;
 			}
+			remaining_quota = budget;
+			total_work_done += work_done;
 		}
 
 		yield = dp_should_timer_irq_yield(soc, total_work_done,
@@ -1882,7 +1948,26 @@ budget_done:
 		qdf_timer_mod(&soc->int_timer, 1);
 	else
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+
+	dp_srng_record_timer_exit(soc, dp_intr_id);
 }
+
+#ifdef WLAN_FEATURE_DP_EVENT_HISTORY
+static inline bool dp_is_mon_mask_valid(struct dp_soc *soc,
+					struct dp_intr *intr_ctx)
+{
+	if (intr_ctx->rx_mon_ring_mask)
+		return true;
+
+	return false;
+}
+#else
+static inline bool dp_is_mon_mask_valid(struct dp_soc *soc,
+					struct dp_intr *intr_ctx)
+{
+	return false;
+}
+#endif
 
 /*
  * dp_soc_attach_poll() - Register handlers for DP interrupts
@@ -1898,7 +1983,10 @@ static QDF_STATUS dp_soc_attach_poll(struct cdp_soc_t *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
+	int lmac_id = 0;
 
+	qdf_mem_set(&soc->mon_intr_id_lmac_map,
+		    sizeof(soc->mon_intr_id_lmac_map), DP_MON_INVALID_LMAC_ID);
 	soc->intr_mode = DP_INTR_POLL;
 
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
@@ -1919,6 +2007,12 @@ static QDF_STATUS dp_soc_attach_poll(struct cdp_soc_t *txrx_soc)
 			wlan_cfg_get_rxdma2host_ring_mask(soc->wlan_cfg_ctx, i);
 		soc->intr_ctx[i].soc = soc;
 		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
+
+		if (dp_is_mon_mask_valid(soc, &soc->intr_ctx[i])) {
+			hif_event_history_init(soc->hif_handle, i);
+			soc->mon_intr_id_lmac_map[lmac_id] = i;
+			lmac_id++;
+		}
 	}
 
 	qdf_timer_init(soc->osdev, &soc->int_timer,
@@ -2153,6 +2247,9 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 	int i = 0;
 	int num_irq = 0;
 
+	qdf_mem_set(&soc->mon_intr_id_lmac_map,
+		    sizeof(soc->mon_intr_id_lmac_map), DP_MON_INVALID_LMAC_ID);
+
 	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++) {
 		int ret = 0;
 
@@ -2209,6 +2306,8 @@ static QDF_STATUS dp_soc_interrupt_attach(struct cdp_soc_t *txrx_soc)
 
 			return QDF_STATUS_E_FAILURE;
 		}
+
+		hif_event_history_init(soc->hif_handle, i);
 		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
 	}
 
@@ -2246,8 +2345,12 @@ static void dp_soc_interrupt_detach(struct cdp_soc_t *txrx_soc)
 		soc->intr_ctx[i].host2rxdma_ring_mask = 0;
 		soc->intr_ctx[i].host2rxdma_mon_ring_mask = 0;
 
+		hif_event_history_deinit(soc->hif_handle, i);
 		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
 	}
+
+	qdf_mem_set(&soc->mon_intr_id_lmac_map,
+		    REG_BAND_UNKNOWN * sizeof(int), DP_MON_INVALID_LMAC_ID);
 }
 
 #define AVG_MAX_MPDUS_PER_TID 128
@@ -7886,6 +7989,8 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		break;
 	case CDP_MONITOR_FREQUENCY:
 		pdev->mon_chan_freq = val.cdp_pdev_param_mon_freq;
+		pdev->mon_chan_band =
+				wlan_reg_freq_to_band(pdev->mon_chan_freq);
 		break;
 	case CDP_CONFIG_BSS_COLOR:
 		dp_mon_set_bsscolor(pdev, val.cdp_pdev_param_bss_color);
@@ -12397,6 +12502,7 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	TAILQ_INIT(&pdev->neighbour_peers_list);
 	pdev->neighbour_peers_added = false;
 	pdev->monitor_configured = false;
+	pdev->mon_chan_band = REG_BAND_UNKNOWN;
 
 	DP_STATS_INIT(pdev);
 

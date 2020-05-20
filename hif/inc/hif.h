@@ -315,12 +315,16 @@ struct hif_opaque_softc {
 /**
  * enum hif_event_type - Type of DP events to be recorded
  * @HIF_EVENT_IRQ_TRIGGER: IRQ trigger event
+ * @HIF_EVENT_TIMER_ENTRY: Monitor Timer entry event
+ * @HIF_EVENT_TIMER_EXIT: Monitor Timer exit event
  * @HIF_EVENT_BH_SCHED: NAPI POLL scheduled event
  * @HIF_EVENT_SRNG_ACCESS_START: hal ring access start event
  * @HIF_EVENT_SRNG_ACCESS_END: hal ring access end event
  */
 enum hif_event_type {
 	HIF_EVENT_IRQ_TRIGGER,
+	HIF_EVENT_TIMER_ENTRY,
+	HIF_EVENT_TIMER_EXIT,
 	HIF_EVENT_BH_SCHED,
 	HIF_EVENT_SRNG_ACCESS_START,
 	HIF_EVENT_SRNG_ACCESS_END,
@@ -380,6 +384,24 @@ void hif_hist_record_event(struct hif_opaque_softc *hif_ctx,
 			   uint8_t intr_grp_id);
 
 /**
+ * hif_event_history_init() - Initialize SRNG event history buffers
+ * @hif_ctx: HIF opaque context
+ * @id: context group ID for which history is recorded
+ *
+ * Returns: None
+ */
+void hif_event_history_init(struct hif_opaque_softc *hif_ctx, uint8_t id);
+
+/**
+ * hif_event_history_deinit() - De-initialize SRNG event history buffers
+ * @hif_ctx: HIF opaque context
+ * @id: context group ID for which history is recorded
+ *
+ * Returns: None
+ */
+void hif_event_history_deinit(struct hif_opaque_softc *hif_ctx, uint8_t id);
+
+/**
  * hif_record_event() - Wrapper function to form and record DP event
  * @hif_ctx: HIF opaque context
  * @intr_grp_id: interrupt group ID registered with hif
@@ -416,6 +438,16 @@ static inline void hif_record_event(struct hif_opaque_softc *hif_ctx,
 				    uint32_t hp,
 				    uint32_t tp,
 				    enum hif_event_type type)
+{
+}
+
+static inline void hif_event_history_init(struct hif_opaque_softc *hif_ctx,
+					  uint8_t id)
+{
+}
+
+static inline void hif_event_history_deinit(struct hif_opaque_softc *hif_ctx,
+					    uint8_t id)
 {
 }
 #endif /* WLAN_FEATURE_DP_EVENT_HISTORY */
