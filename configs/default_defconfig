@@ -249,6 +249,9 @@ endif
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
 CONFIG_QCACLD_FEATURE_METERING := y
 CONFIG_WDI3_STATS_UPDATE := y
+ifeq ($(CONFIG_CNSS_QCA6490), y)
+CONFIG_WBM_IDLE_LSB_WR_CNF_WAR := y
+endif
 endif
 
 #Flag to enable Fast Transition (11r) feature
