@@ -28,6 +28,8 @@
 
 #include <qdf_timer.h>
 #include <qdf_atomic.h>
+#include <qdf_util.h>
+#include <wlan_cmn.h>
 #ifdef FEATURE_RUNTIME_PM
 #include <wlan_pmo_common_public_struct.h>
 #endif
@@ -152,7 +154,6 @@ struct peer_delete_all_response {
 	uint8_t status;
 };
 
-#define VDEV_ID_BMAP_SIZE 3
 /**
  * struct multi_vdev_restart_resp - multi-vdev restart response structure
  * @pdev_id: pdev id
@@ -162,7 +163,7 @@ struct peer_delete_all_response {
 struct multi_vdev_restart_resp {
 	uint8_t pdev_id;
 	uint8_t status;
-	unsigned long vdev_id_bmap[VDEV_ID_BMAP_SIZE];
+	qdf_bitmap(vdev_id_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 };
 
 #endif /* __WLAN_VDEV_MGR_TGT_IF_RX_DEFS_H__ */

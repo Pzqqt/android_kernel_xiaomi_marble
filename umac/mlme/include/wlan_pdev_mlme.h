@@ -53,7 +53,7 @@ struct pdev_mlme_obj {
 	qdf_timer_t restart_req_timer;
 	qdf_bitmap(restart_pend_vdev_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
 	qdf_bitmap(restart_send_vdev_bmap, WLAN_UMAC_PSOC_MAX_VDEVS);
-	unsigned long start_send_vdev_arr[2];
+	qdf_bitmap(start_send_vdev_arr, WLAN_UMAC_PSOC_MAX_VDEVS);
 	struct pdev_restart_attr pdev_restart;
 	qdf_atomic_t multivdev_restart_wait_cnt;
 };
