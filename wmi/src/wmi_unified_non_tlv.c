@@ -10129,8 +10129,10 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_non_tlv(
 	qdf_mem_copy(param->vdev_id_bmap, &ev->requestor_id,
 		     sizeof(uint32_t));
 
-	WMI_LOGD("vdev_id_bmap :0x%x%x", param->vdev_id_bmap[1],
-		 param->vdev_id_bmap[0]);
+	WMI_LOGD("vdev_id_bmap is as follows");
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			param->vdev_id_bmap, sizeof(param->vdev_id_bmap));
+
 	return QDF_STATUS_SUCCESS;
 }
 
