@@ -1360,6 +1360,8 @@ struct sde_perf_cfg {
  * this HW version. Contains number of instances,
  * register offsets, capabilities of the all MDSS HW sub-blocks.
  *
+ * @trusted_vm_env	set to true, if the driver is executing in
+ *			the trusted VM. false, otherwise.
  * @max_sspp_linewidth max source pipe line width support.
  * @vig_sspp_linewidth max vig source pipe line width support.
  * @scaling_linewidth max vig source pipe linewidth for scaling usecases
@@ -1432,6 +1434,7 @@ struct sde_perf_cfg {
  */
 struct sde_mdss_cfg {
 	u32 hwversion;
+	bool trusted_vm_env;
 
 	u32 max_sspp_linewidth;
 	u32 vig_sspp_linewidth;

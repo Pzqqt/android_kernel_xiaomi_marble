@@ -642,6 +642,19 @@ static inline bool sde_kms_rect_is_null(const struct sde_rect *r)
 	return (!r->w || !r->h);
 }
 
+/*
+ * sde_in_trusted_vm - checks the executing VM
+ * return: true, if the device driver is executing in the trusted VM
+ *         false, if the device driver is executing in the primary VM
+ */
+static inline bool sde_in_trusted_vm(const struct sde_kms *sde_kms)
+{
+	if (sde_kms && sde_kms->catalog)
+		return sde_kms->catalog->trusted_vm_env;
+
+	return false;
+}
+
 /**
  * Vblank enable/disable functions
  */
