@@ -2211,7 +2211,7 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 		return;
 	}
 
-	if (wlan_vdev_is_up(vdev) != QDF_STATUS_SUCCESS) {
+	if (wlan_vdev_mlme_get_state(vdev) != WLAN_VDEV_S_UP) {
 		pe_err("SAP is not up, drop ASSOC REQ on sessionid: %d",
 		       session->peSessionId);
 
