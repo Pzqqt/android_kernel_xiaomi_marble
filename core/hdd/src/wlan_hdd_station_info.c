@@ -1135,11 +1135,13 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 		hdd_err("remote ch put fail");
 		goto fail;
 	}
-	if (nla_put_u32(skb, REMOTE_LAST_TX_RATE, stainfo->tx_rate)) {
+	/* Convert the data from kbps to mbps as expected by the user space */
+	if (nla_put_u32(skb, REMOTE_LAST_TX_RATE, stainfo->tx_rate / 1000)) {
 		hdd_err("tx rate put fail");
 		goto fail;
 	}
-	if (nla_put_u32(skb, REMOTE_LAST_RX_RATE, stainfo->rx_rate)) {
+	/* Convert the data from kbps to mbps as expected by the user space */
+	if (nla_put_u32(skb, REMOTE_LAST_RX_RATE, stainfo->rx_rate / 1000)) {
 		hdd_err("rx rate put fail");
 		goto fail;
 	}
