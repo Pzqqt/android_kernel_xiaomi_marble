@@ -392,7 +392,7 @@ dp_rx_enh_capture_is_peer_enabled(struct dp_soc *soc,
 		ast_entry = soc->ast_table[ast_index];
 		if (ast_entry) {
 			peer = ast_entry->peer;
-			if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER))
+			if (peer && (peer->peer_id != HTT_INVALID_PEER))
 				return peer->rx_cap_enabled;
 		}
 	}

@@ -213,7 +213,7 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 	if (ast->is_mapped && (ast->ast_idx == sa_idx))
 		ast->is_active = TRUE;
 
-	if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
+	if (sa_sw_peer_id != ta_peer->peer_id) {
 		sa_peer = ast->peer;
 
 		if ((ast->type != CDP_TXRX_AST_TYPE_STATIC) &&

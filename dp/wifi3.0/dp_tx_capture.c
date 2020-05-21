@@ -165,7 +165,7 @@ void dp_tx_capture_print_stats(struct dp_peer *peer)
 
 	stats = &peer->tx_capture.stats;
 	DP_PRINT_STATS(" peer_id[%d] MSDU[S:%u E:%u D:%u F:%u DP:%u X:%u] MPDU[T:%u S:%u R:%u A:%u C:%u ST:%u]",
-			peer->peer_ids[0],
+			peer->peer_id,
 			stats->msdu[PEER_MSDU_SUCC],
 			stats->msdu[PEER_MSDU_ENQ],
 			stats->msdu[PEER_MSDU_DEQ],
@@ -322,7 +322,7 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 				if (!msdu_len && !ppdu_len && !tasklet_msdu_len)
 					continue;
 				DP_PRINT_STATS(" peer_id[%d] tid[%d] msdu_comp_q[%d] defer_msdu_q[%d] pending_ppdu_q[%d]",
-					       peer->peer_ids[0], tid,
+					       peer->peer_id, tid,
 					       tasklet_msdu_len,
 					       msdu_len, ppdu_len);
 			}
@@ -2975,7 +2975,7 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 			qdf_nbuf_data(ppdu_nbuf);
 
 		usr_idx = dp_tx_find_usr_idx_from_peer_id(ppdu_desc,
-							  peer->peer_ids[0]);
+							  peer->peer_id);
 
 		user = &ppdu_desc->user[usr_idx];
 
@@ -5228,11 +5228,11 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 	}
 
 	peer = ast_entry->peer;
-	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
-	peer_id = peer->peer_ids[0];
+	peer_id = peer->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_find_by_id(soc, peer_id);
@@ -5367,11 +5367,11 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 	}
 
 	peer = ast_entry->peer;
-	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return;
 	}
-	peer_id = peer->peer_ids[0];
+	peer_id = peer->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_find_by_id(soc, peer_id);
@@ -5635,11 +5635,11 @@ QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
 	}
 
 	peer = ast_entry->peer;
-	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
-	peer_id = peer->peer_ids[0];
+	peer_id = peer->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_find_by_id(soc, peer_id);
@@ -5767,7 +5767,7 @@ void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 	if (!peer)
 		return;
 
-	if (dp_peer_tx_cap_search(pdev, peer->peer_ids[0],
+	if (dp_peer_tx_cap_search(pdev, peer->peer_id,
 				  peer->mac_addr.raw)) {
 		peer->tx_cap_enabled = 1;
 	}
