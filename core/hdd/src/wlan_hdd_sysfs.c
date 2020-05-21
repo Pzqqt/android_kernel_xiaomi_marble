@@ -776,12 +776,14 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 		hdd_sysfs_pktlog_create(driver_kobject);
 		hdd_sysfs_pm_cinfo_create(driver_kobject);
 		hdd_sysfs_pm_pcl_create(driver_kobject);
+		hdd_sysfs_pm_dbs_create(driver_kobject);
 	}
 }
 
 void hdd_destroy_sysfs_files(void)
 {
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
+		hdd_sysfs_pm_dbs_destroy(driver_kobject);
 		hdd_sysfs_pm_pcl_destroy(driver_kobject);
 		hdd_sysfs_pm_cinfo_destroy(driver_kobject);
 		hdd_sysfs_pktlog_destroy(driver_kobject);

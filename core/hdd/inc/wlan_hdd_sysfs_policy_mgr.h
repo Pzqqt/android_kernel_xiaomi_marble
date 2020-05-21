@@ -59,6 +59,28 @@ int hdd_sysfs_pm_pcl_create(struct kobject *driver_kobject);
  */
 void
 hdd_sysfs_pm_pcl_destroy(struct kobject *driver_kobject);
+
+/**
+ * hdd_sysfs_pm_dbs_create() - API to create pm_dbs
+ * @driver_kobject: sysfs driver kobject
+ *
+ * file path: /sys/kernel/wifi/pm_dbs
+ *
+ * usage:
+ *      echo [dbs] [system_pref] > pm_dbs
+ *
+ * Return: 0 on success and errno on failure
+ */
+int hdd_sysfs_pm_dbs_create(struct kobject *driver_kobject);
+
+/**
+ * hdd_sysfs_pm_dbs_destroy() -
+ *   API to destroy pm_dbs
+ *
+ * Return: none
+ */
+void
+hdd_sysfs_pm_dbs_destroy(struct kobject *driver_kobject);
 #else
 static inline int
 hdd_sysfs_pm_pcl_create(struct kobject *driver_kobject)
@@ -78,6 +100,17 @@ void hdd_sysfs_pm_cinfo_create(struct kobject *driver_kobject)
 
 static inline
 void hdd_sysfs_pm_cinfo_destroy(struct kobject *driver_kobject)
+{
+}
+
+static inline int
+hdd_sysfs_pm_dbs_create(struct kobject *driver_kobject)
+{
+	return 0;
+}
+
+static inline void
+hdd_sysfs_pm_dbs_destroy(struct kobject *driver_kobject)
 {
 }
 #endif
