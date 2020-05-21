@@ -360,7 +360,7 @@ static int rmnet_rtnl_validate(struct nlattr *tb[], struct nlattr *data[],
 
 		if (data[IFLA_RMNET_UL_AGG_PARAMS]) {
 			agg_params = nla_data(data[IFLA_RMNET_UL_AGG_PARAMS]);
-			if (agg_params->agg_time < 3000000)
+			if (agg_params->agg_time < 1000000)
 				return -EINVAL;
 		}
 	}
