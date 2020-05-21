@@ -343,6 +343,8 @@ int init_deinit_populate_hw_mode_capability(
 		if (hw_idx < WMI_HOST_HW_MODE_MAX) {
 			info->hw_modes.hw_mode_ids[hw_idx] =
 				hw_mode_caps[hw_idx].hw_mode_id;
+			info->hw_modes.phy_bit_map[hw_idx] =
+				hw_mode_caps[hw_idx].phy_id_map;
 			info->hw_modes.num_modes++;
 		}
 
@@ -645,6 +647,110 @@ int init_deinit_populate_phy_reg_cap(struct wlan_objmgr_psoc *psoc,
 	status = ucfg_reg_set_hal_reg_cap(psoc, reg_cap, num_phy_reg_cap);
 
 	return qdf_status_to_os_return(status);
+}
+
+int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t wmi_handle,
+					  uint8_t *event,
+					  struct tgt_info *info)
+{
+	struct wlan_psoc_host_mac_phy_caps_ext2
+		mac_phy_caps_ext2[PSOC_MAX_MAC_PHY_CAP] = {{0} };
+	uint32_t num_hw_modes;
+	uint8_t hw_idx;
+	uint32_t hw_mode_id;
+	uint32_t phy_bit_map;
+	uint8_t phy_id;
+	uint8_t mac_phy_count = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+
+	if (!event)
+		return -EINVAL;
+
+	num_hw_modes = info->hw_modes.num_modes;
+
+	for (hw_idx = 0; hw_idx < num_hw_modes; hw_idx++) {
+		hw_mode_id = info->hw_modes.hw_mode_ids[hw_idx];
+		phy_bit_map = info->hw_modes.phy_bit_map[hw_idx];
+
+		phy_id = info->mac_phy_cap[mac_phy_count].phy_id;
+		while (phy_bit_map) {
+			if (mac_phy_count >= info->total_mac_phy_cnt) {
+				target_if_err("total MAC PHY count exceeds max limit %d, mac_phy_count = %d",
+					      info->total_mac_phy_cnt,
+					      mac_phy_count);
+				return -EINVAL;
+			}
+
+			mac_phy_cap = &info->mac_phy_cap[mac_phy_count];
+			status = wmi_extract_mac_phy_cap_service_ready_ext2(
+					wmi_handle, event, hw_mode_id, phy_id,
+					mac_phy_cap->phy_idx,
+					&mac_phy_caps_ext2[mac_phy_count]);
+
+			if (QDF_IS_STATUS_ERROR(status)) {
+				target_if_err("failed to parse mac phy capability ext2");
+				return qdf_status_to_os_return(status);
+			}
+
+			mac_phy_cap->reg_cap_ext.wireless_modes |=
+				mac_phy_caps_ext2[phy_id].wireless_modes_ext;
+
+			mac_phy_count++;
+			phy_bit_map &= (phy_bit_map - 1);
+			phy_id++;
+		}
+	}
+
+	return 0;
+}
+
+int init_deinit_populate_hal_reg_cap_ext2(wmi_unified_t wmi_handle,
+					  uint8_t *event,
+					  struct tgt_info *info)
+{
+	struct wlan_psoc_host_hal_reg_capabilities_ext2
+		reg_cap[PSOC_MAX_PHY_REG_CAP] = {{0} };
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t num_phy_reg_cap;
+	uint8_t reg_idx;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!event) {
+		target_if_err("event buffer is null");
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(wmi_handle->scn_handle);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	num_phy_reg_cap = info->service_ext_param.num_phy;
+	if (num_phy_reg_cap > PSOC_MAX_PHY_REG_CAP) {
+		target_if_err("Invalid num_phy_reg_cap %d", num_phy_reg_cap);
+		return -EINVAL;
+	}
+
+	for (reg_idx = 0; reg_idx < num_phy_reg_cap; reg_idx++) {
+		status = wmi_extract_hal_reg_cap_ext2(
+				wmi_handle, event, reg_idx, &reg_cap[reg_idx]);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("failed to parse hal reg cap ext2");
+			return qdf_status_to_os_return(status);
+		}
+
+		status = ucfg_reg_update_hal_reg_cap(
+				psoc, reg_cap[reg_idx].wireless_modes_ext,
+				reg_idx);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Failed to update hal reg cap");
+			return qdf_status_to_os_return(status);
+		}
+	}
+
+	return 0;
 }
 
 static bool init_deinit_regdmn_160mhz_support(

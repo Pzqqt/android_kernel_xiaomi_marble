@@ -2336,6 +2336,22 @@ wmi_extract_hal_reg_cap(wmi_unified_t wmi_handle, void *evt_buf,
 			struct wlan_psoc_hal_reg_capability *hal_reg_cap);
 
 /**
+ * wmi_extract_hal_reg_cap_ext2() - Extract HAL reg capabilities from service
+ * ready ext2 event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer to event buffer
+ * @phy_idx: Phy id
+ * @wireless_modes: 11AX wireless modes
+ * @hal_reg_cap: pointer to hold HAL reg capabilities ext2 structure
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_hal_reg_cap_ext2(
+		wmi_unified_t wmi_handle, void *evt_buf, uint8_t phy_idx,
+		struct wlan_psoc_host_hal_reg_capabilities_ext2 *hal_reg_cap);
+
+/**
  * wmi_extract_num_mem_reqs_from_service_ready() - Extract number of memory
  *                                                 entries requested
  * @wmi_handle: wmi handle
@@ -3237,6 +3253,26 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 			uint8_t hw_mode_id,
 			uint8_t phy_id,
 			struct wlan_psoc_host_mac_phy_caps *param);
+
+/**
+ * wmi_extract_mac_phy_cap_service_ready_ext2() - Extract MAC phy cap from
+ * service ready ext2 event.
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @hw_mode_id: hw mode id of hw_mode_caps
+ * @phy_id: phy_id within hw_mode_cap
+ * @phy_idx: index to hw_mode_cap for the given hw_mode_id and phy_id
+ * @mac_phy_cap: Pointer to mac_phy_cap_ext2 structure
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext2(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
+			uint8_t phy_idx,
+			struct wlan_psoc_host_mac_phy_caps_ext2 *mac_phy_cap);
 
 /**
  * wmi_extract_reg_cap_service_ready_ext() -

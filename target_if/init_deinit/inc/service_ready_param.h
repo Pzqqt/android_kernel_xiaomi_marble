@@ -137,6 +137,7 @@ struct wlan_psoc_host_hal_reg_cap_ext {
  *        by hw_mode_id.
  * @pdev_id: pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
  * @phy_id: Starts with 0
+ * @phy_idx: Index to mac phy caps structure for the given hw_mode_id and phy_id
  * @hw_mode_config_type: holds the enum wmi_hw_mode_config_type
  * @bitmap of supported modulations
  * @supported_bands: supported bands, enum WLAN_BAND_CAPABILITY
@@ -188,6 +189,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
+	uint8_t phy_idx;
 	int hw_mode_config_type;
 	uint32_t supports_11b:1,
 		 supports_11g:1,
@@ -237,6 +239,20 @@ struct wlan_psoc_host_hw_mode_caps {
 	uint32_t hw_mode_id;
 	uint32_t phy_id_map;
 	uint32_t hw_mode_config_type;
+};
+
+/*
+ * struct wlan_psoc_host_mac_phy_caps_ext2 - Phy caps received in EXT2 service
+ * @hw_mode_id: HW mode id
+ * @pdev_id: Pdev id
+ * @phy_id: Phy id
+ * @wireless_modes_ext: Extended wireless modes
+ */
+struct wlan_psoc_host_mac_phy_caps_ext2 {
+	uint32_t hw_mode_id;
+	uint32_t pdev_id;
+	uint32_t phy_id;
+	uint32_t wireless_modes_ext;
 };
 
 /**

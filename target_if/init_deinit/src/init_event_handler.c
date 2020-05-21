@@ -32,6 +32,7 @@
 #include <service_ready_param.h>
 #include <init_cmd_api.h>
 #include <cdp_txrx_cmn.h>
+#include <wlan_reg_ucfg_api.h>
 
 static void init_deinit_set_send_init_cmd(struct wlan_objmgr_psoc *psoc,
 					  struct target_psoc_info *tgt_hdl)
@@ -226,23 +227,28 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 	struct tgt_info *info;
 
 	if (!scn_handle) {
-		target_if_err("scn handle NULL in service ready handler");
+		target_if_err("scn handle NULL in service ready ext2 handler");
 		return -EINVAL;
 	}
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
 	if (!psoc) {
-		target_if_err("psoc is null in service ready handler");
+		target_if_err("psoc is null in service ready ext2 handler");
 		return -EINVAL;
 	}
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
-		target_if_err("target_psoc_info is null in service ready ev");
+		target_if_err("target_psoc_info is null in service ready ext2 handler");
 		return -EINVAL;
 	}
 
 	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null in service ready ext2 handler");
+		return -EINVAL;
+	}
+
 	info = (&tgt_hdl->info);
 
 	err_code = init_deinit_populate_service_ready_ext2_param(wmi_handle,
@@ -258,6 +264,22 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 		if (err_code)
 			goto exit;
 	}
+
+	err_code = init_deinit_populate_hal_reg_cap_ext2(wmi_handle, event,
+							 info);
+	if (err_code) {
+		target_if_err("failed to populate hal reg cap ext2");
+		goto exit;
+	}
+
+	err_code = init_deinit_populate_mac_phy_cap_ext2(wmi_handle, event,
+							 info);
+	if (err_code) {
+		target_if_err("failed to populate mac phy cap ext2");
+		goto exit;
+	}
+
+	target_if_add_11ax_modes(psoc, tgt_hdl);
 
 	/* send init command */
 	init_deinit_set_send_init_cmd(psoc, tgt_hdl);
@@ -329,7 +351,12 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	if (err_code)
 		goto exit;
 
-	target_if_add_11ax_modes(psoc, tgt_hdl);
+	/* Host receives 11AX wireless modes from target in service ext2
+	 * message. Therefore, call target_if_add_11ax_modes() from service ext2
+	 * event handler as well.
+	 */
+	if (!wmi_service_enabled(wmi_handle, wmi_service_ext2_msg))
+		target_if_add_11ax_modes(psoc, tgt_hdl);
 
 	if (init_deinit_chainmask_table_alloc(
 				&(info->service_ext_param)) ==

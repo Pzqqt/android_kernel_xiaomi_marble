@@ -1332,8 +1332,13 @@ QDF_STATUS (*extract_fw_version)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_fw_abi_version)(wmi_unified_t wmi_handle,
 				void *ev, struct wmi_host_fw_abi_ver *fw_ver);
 
-QDF_STATUS (*extract_hal_reg_cap)(wmi_unified_t wmi_handle, void *evt_buf,
-	struct wlan_psoc_hal_reg_capability *hal_reg_cap);
+QDF_STATUS (*extract_hal_reg_cap)(
+		wmi_unified_t wmi_handle, void *evt_buf,
+		struct wlan_psoc_hal_reg_capability *hal_reg_cap);
+
+QDF_STATUS (*extract_hal_reg_cap_ext2)(
+		wmi_unified_t wmi_handle, void *evt_buf, uint8_t phy_idx,
+		struct wlan_psoc_host_hal_reg_capabilities_ext2 *hal_reg_cap);
 
 uint32_t (*extract_num_mem_reqs)(wmi_unified_t wmi_handle,
 				 void *evt_buf);
@@ -1800,6 +1805,14 @@ QDF_STATUS (*extract_mac_phy_cap_service_ready_ext)(
 			uint8_t hw_mode_id,
 			uint8_t phy_id,
 			struct wlan_psoc_host_mac_phy_caps *param);
+
+QDF_STATUS (*extract_mac_phy_cap_service_ready_ext2)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
+			uint8_t phy_idx,
+			struct wlan_psoc_host_mac_phy_caps_ext2 *mac_phy_cap);
 
 QDF_STATUS (*extract_reg_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,

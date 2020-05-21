@@ -396,6 +396,17 @@ struct wlan_psoc_host_hal_reg_capabilities_ext {
 };
 
 /**
+ * struct wlan_psoc_host_hal_reg_capabilities_ext2 - HAL reg capabilities
+ * from service ready ext2 event.
+ * @phy_id: phy id starts with 0
+ * @wireless_modes_ext: REGDMN MODE, see REGDMN_MODE_ enum
+ */
+struct wlan_psoc_host_hal_reg_capabilities_ext2 {
+	uint32_t phy_id;
+	uint32_t wireless_modes_ext;
+};
+
+/**
  ** APIs to Create/Delete Global object APIs
  */
 /**

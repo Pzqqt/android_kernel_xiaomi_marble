@@ -9406,6 +9406,43 @@ static uint32_t convert_phybitmap_tlv(uint32_t target_phybitmap)
 	return phybitmap;
 }
 
+static inline uint32_t convert_wireless_modes_ext_tlv(
+		uint32_t target_wireless_modes_ext)
+{
+	uint32_t wireless_modes_ext = 0;
+
+	WMI_LOGD("Target wireless mode: 0x%x", target_wireless_modes_ext);
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE20)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE40PLUS)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXG_HE40MINUS)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXG_HE40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE20)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE20;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE40PLUS)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE40PLUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE40MINUS)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE40MINUS;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE160)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE160;
+
+	if (target_wireless_modes_ext & REGDMN_MODE_U32_11AXA_HE80_80)
+		wireless_modes_ext |= WMI_HOST_REGDMN_MODE_11AXA_HE80_80;
+
+	return wireless_modes_ext;
+}
+
 /**
  * extract_hal_reg_cap_tlv() - extract HAL registered capabilities
  * @wmi_handle: wmi handle
@@ -9430,6 +9467,43 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 
 	cap->wireless_modes = convert_wireless_modes_tlv(
 			param_buf->hal_reg_capabilities->wireless_modes);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_hal_reg_cap_ext2_tlv() - extract HAL registered capability ext
+ * @wmi_handle: wmi handle
+ * @param evt_buf: Pointer to event buffer
+ * @param cap: pointer to hold HAL reg capabilities
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_hal_reg_cap_ext2_tlv(
+		wmi_unified_t wmi_handle, void *evt_buf, uint8_t phy_idx,
+		struct wlan_psoc_host_hal_reg_capabilities_ext2 *param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	WMI_HAL_REG_CAPABILITIES_EXT2 *reg_caps;
+
+	if (!evt_buf) {
+		WMI_LOGE("null evt_buf");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)evt_buf;
+
+	if (!param_buf->num_hal_reg_caps)
+		return QDF_STATUS_SUCCESS;
+
+	if (phy_idx >= param_buf->num_hal_reg_caps)
+		return QDF_STATUS_E_INVAL;
+
+	reg_caps = &param_buf->hal_reg_caps[phy_idx];
+
+	param->phy_id = reg_caps->phy_id;
+	param->wireless_modes_ext = convert_wireless_modes_ext_tlv(
+			reg_caps->wireless_modes_ext);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -11242,6 +11316,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	mac_phy_caps = &param_buf->mac_phy_caps[phy_idx];
 
 	param->hw_mode_id = mac_phy_caps->hw_mode_id;
+	param->phy_idx = phy_idx;
 	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							wmi_handle,
 							mac_phy_caps->pdev_id);
@@ -11306,6 +11381,44 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	param->nss_ratio_enabled = WMI_NSS_RATIO_ENABLE_DISABLE_GET(
 			mac_phy_caps->nss_ratio);
 	param->nss_ratio_info = WMI_NSS_RATIO_INFO_GET(mac_phy_caps->nss_ratio);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS extract_mac_phy_cap_service_ready_ext2_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
+			uint8_t phy_idx,
+			struct wlan_psoc_host_mac_phy_caps_ext2 *param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	WMI_MAC_PHY_CAPABILITIES_EXT *mac_phy_caps;
+
+	if (!event) {
+		WMI_LOGE("null evt_buf");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+
+	if (!param_buf->num_mac_phy_caps)
+		return QDF_STATUS_SUCCESS;
+
+	if (phy_idx >= param_buf->num_mac_phy_caps)
+		return QDF_STATUS_E_INVAL;
+
+	mac_phy_caps = &param_buf->mac_phy_caps[phy_idx];
+
+	if ((hw_mode_id != mac_phy_caps->hw_mode_id) ||
+	    (phy_id != mac_phy_caps->phy_id))
+		return QDF_STATUS_E_INVAL;
+
+	param->hw_mode_id = mac_phy_caps->hw_mode_id;
+	param->phy_id = mac_phy_caps->phy_id;
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+			wmi_handle, mac_phy_caps->pdev_id);
+	param->wireless_modes_ext = convert_wireless_modes_ext_tlv(
+			mac_phy_caps->wireless_modes_ext);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -14225,8 +14338,11 @@ struct wmi_ops tlv_ops =  {
 				extract_hw_mode_cap_service_ready_ext_tlv,
 	.extract_mac_phy_cap_service_ready_ext =
 				extract_mac_phy_cap_service_ready_ext_tlv,
+	.extract_mac_phy_cap_service_ready_ext2 =
+				extract_mac_phy_cap_service_ready_ext2_tlv,
 	.extract_reg_cap_service_ready_ext =
 				extract_reg_cap_service_ready_ext_tlv,
+	.extract_hal_reg_cap_ext2 = extract_hal_reg_cap_ext2_tlv,
 	.extract_dbr_ring_cap_service_ready_ext =
 				extract_dbr_ring_cap_service_ready_ext_tlv,
 	.extract_dbr_ring_cap_service_ready_ext2 =

@@ -134,10 +134,12 @@ struct comp_hdls {
  *
  * @num_modes: Number of modes supported
  * @hw_mode_ids: List of HW mode ids
+ * @phy_bit_map: List of Phy bit maps
  */
 struct target_supported_modes {
 	uint8_t num_modes;
 	uint32_t hw_mode_ids[WMI_HOST_HW_MODE_MAX];
+	uint32_t phy_bit_map[WMI_HOST_HW_MODE_MAX];
 };
 
 /**
@@ -2037,14 +2039,21 @@ static inline void target_if_print_service_ready_ext_param(
  *
  * Return: none
  */
+#ifdef QCA_HOST_ADD_11AX_MODE_WAR
 static inline void target_if_add_11ax_modes(struct wlan_objmgr_psoc *psoc,
-					struct target_psoc_info *tgt_hdl)
+					    struct target_psoc_info *tgt_hdl)
 {
 	if ((tgt_hdl->tif_ops) &&
 		(tgt_hdl->tif_ops->add_11ax_modes)) {
 		tgt_hdl->tif_ops->add_11ax_modes(psoc, tgt_hdl);
 	}
 }
+#else
+static inline void target_if_add_11ax_modes(struct wlan_objmgr_psoc *psoc,
+					    struct target_psoc_info *tgt_hdl)
+{
+}
+#endif
 
 /**
  * target_if_set_default_config - Set default config in init command

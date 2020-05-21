@@ -1660,6 +1660,18 @@ wmi_extract_hal_reg_cap(wmi_unified_t wmi_handle, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_extract_hal_reg_cap_ext2(
+		wmi_unified_t wmi_handle, void *evt_buf, uint8_t phy_idx,
+		struct wlan_psoc_host_hal_reg_capabilities_ext2 *hal_reg_cap)
+{
+	if (wmi_handle->ops->extract_hal_reg_cap_ext2)
+		return wmi_handle->ops->extract_hal_reg_cap_ext2(
+			wmi_handle, evt_buf, phy_idx, hal_reg_cap);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 uint32_t
 wmi_extract_num_mem_reqs_from_service_ready(
 		wmi_unified_t wmi_handle,
@@ -2479,6 +2491,22 @@ QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext(
 		return wmi_handle->ops->extract_mac_phy_cap_service_ready_ext(
 				wmi_handle,
 				evt_buf, hw_mode_id, phy_id, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_mac_phy_cap_service_ready_ext2(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			uint8_t hw_mode_id,
+			uint8_t phy_id,
+			uint8_t phy_idx,
+			struct wlan_psoc_host_mac_phy_caps_ext2 *mac_phy_cap)
+{
+	if (wmi_handle->ops->extract_mac_phy_cap_service_ready_ext2)
+		return wmi_handle->ops->extract_mac_phy_cap_service_ready_ext2(
+				wmi_handle, evt_buf, hw_mode_id, phy_id,
+				phy_idx, mac_phy_cap);
 
 	return QDF_STATUS_E_FAILURE;
 }
