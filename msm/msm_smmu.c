@@ -31,10 +31,12 @@
 
 struct msm_smmu_client {
 	struct device *dev;
+	const char *compat;
 	struct iommu_domain *domain;
 	const struct dma_map_ops *dma_ops;
 	bool domain_attached;
 	bool secure;
+	struct list_head smmu_list;
 };
 
 struct msm_smmu {
@@ -50,6 +52,12 @@ struct msm_smmu_domain {
 
 #define to_msm_smmu(x) container_of(x, struct msm_smmu, base)
 #define msm_smmu_to_client(smmu) (smmu->client)
+
+/* Serialization lock for smmu_list */
+static DEFINE_MUTEX(smmu_list_lock);
+
+/* List of all smmu devices installed */
+static LIST_HEAD(sde_smmu_list);
 
 static int msm_smmu_attach(struct msm_mmu *mmu, const char * const *names,
 		int cnt)
@@ -335,12 +343,36 @@ static const struct of_device_id msm_smmu_dt_match[] = {
 };
 MODULE_DEVICE_TABLE(of, msm_smmu_dt_match);
 
-static struct device *msm_smmu_device_create(struct device *dev,
+static struct msm_smmu_client *msm_smmu_get_smmu(const char *compat)
+{
+	struct msm_smmu_client *curr = NULL;
+	bool found = false;
+
+	if (!compat) {
+		pr_err("invalid param\n");
+		return ERR_PTR(-EINVAL);
+	}
+
+	mutex_lock(&smmu_list_lock);
+	list_for_each_entry(curr, &sde_smmu_list, smmu_list) {
+		if (of_compat_cmp(compat, curr->compat, strlen(compat)) == 0) {
+			DRM_DEBUG("found msm_smmu_client for %s\n", compat);
+			found = true;
+			break;
+		}
+	}
+	mutex_unlock(&smmu_list_lock);
+
+	if (!found)
+		return ERR_PTR(-ENODEV);
+
+	return curr;
+}
+
+static struct device *msm_smmu_device_add(struct device *dev,
 		enum msm_mmu_domain_type domain,
 		struct msm_smmu *smmu)
 {
-	struct device_node *child;
-	struct platform_device *pdev;
 	int i;
 	const char *compat = NULL;
 
@@ -357,22 +389,14 @@ static struct device *msm_smmu_device_create(struct device *dev,
 	}
 	DRM_DEBUG("found domain %d compat: %s\n", domain, compat);
 
-	child = of_find_compatible_node(dev->of_node, NULL, compat);
-	if (!child) {
-		DRM_DEBUG("unable to find compatible node for %s\n", compat);
+	smmu->client = msm_smmu_get_smmu(compat);
+	if (IS_ERR_OR_NULL(smmu->client)) {
+		DRM_ERROR("unable to find domain %d compat: %s\n", domain,
+				compat);
 		return ERR_PTR(-ENODEV);
 	}
 
-	pdev = of_platform_device_create(child, NULL, dev);
-	if (!pdev) {
-		DRM_ERROR("unable to create smmu platform dev for domain %d\n",
-				domain);
-		return ERR_PTR(-ENODEV);
-	}
-
-	smmu->client = platform_get_drvdata(pdev);
-
-	return &pdev->dev;
+	return smmu->client->dev;
 }
 
 struct msm_mmu *msm_smmu_new(struct device *dev,
@@ -385,8 +409,8 @@ struct msm_mmu *msm_smmu_new(struct device *dev,
 	if (!smmu)
 		return ERR_PTR(-ENOMEM);
 
-	client_dev = msm_smmu_device_create(dev, domain, smmu);
-	if (IS_ERR(client_dev)) {
+	client_dev = msm_smmu_device_add(dev, domain, smmu);
+	if (IS_ERR_OR_NULL(client_dev)) {
 		kfree(smmu);
 		return (void *)client_dev ? : ERR_PTR(-ENODEV);
 	}
@@ -424,6 +448,34 @@ static int msm_smmu_fault_handler(struct iommu_domain *domain,
 }
 
 /**
+ * msm_smmu_bind - bind smmu device with controlling device
+ * @dev:        Pointer to base of platform device
+ * @master:     Pointer to container of drm device
+ * @data:       Pointer to private data
+ * Returns:     Zero on success
+ */
+static int msm_smmu_bind(struct device *dev, struct device *master, void *data)
+{
+	return 0;
+}
+
+/**
+ * msm_smmu_unbind - unbind msm_smmu from controlling device
+ * @dev:        Pointer to base of platform device
+ * @master:     Pointer to container of drm device
+ * @data:       Pointer to private data
+ */
+static void msm_smmu_unbind(struct device *dev,
+		struct device *master, void *data)
+{
+}
+
+static const struct component_ops msm_smmu_comp_ops = {
+	.bind = msm_smmu_bind,
+	.unbind = msm_smmu_unbind,
+};
+
+/**
  * msm_smmu_probe()
  * @pdev: platform device
  *
@@ -437,6 +489,7 @@ static int msm_smmu_probe(struct platform_device *pdev)
 	const struct of_device_id *match;
 	struct msm_smmu_client *client;
 	const struct msm_smmu_domain *domain;
+	int ret;
 
 	match = of_match_device(msm_smmu_dt_match, &pdev->dev);
 	if (!match || !match->data) {
@@ -462,6 +515,7 @@ static int msm_smmu_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "iommu get domain for dev failed\n");
 		return -EINVAL;
 	}
+	client->compat = match->compatible;
 	client->secure = domain->secure;
 	client->domain_attached = true;
 
@@ -479,15 +533,33 @@ static int msm_smmu_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, client);
 
-	return 0;
+	mutex_lock(&smmu_list_lock);
+	list_add(&client->smmu_list, &sde_smmu_list);
+	mutex_unlock(&smmu_list_lock);
+
+	ret = component_add(&pdev->dev, &msm_smmu_comp_ops);
+	if (ret)
+		pr_err("component add failed\n");
+
+	return ret;
 }
 
 static int msm_smmu_remove(struct platform_device *pdev)
 {
 	struct msm_smmu_client *client;
+	struct msm_smmu_client *curr, *next;
 
 	client = platform_get_drvdata(pdev);
 	client->domain_attached = false;
+
+	mutex_lock(&smmu_list_lock);
+	list_for_each_entry_safe(curr, next, &sde_smmu_list, smmu_list) {
+		if (curr == client) {
+			list_del(&client->smmu_list);
+			break;
+		}
+	}
+	mutex_unlock(&smmu_list_lock);
 
 	return 0;
 }
