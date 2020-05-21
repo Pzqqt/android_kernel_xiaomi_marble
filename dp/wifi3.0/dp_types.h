@@ -1940,6 +1940,9 @@ struct dp_vdev {
 	/* Multicast enhancement enabled */
 	uint8_t mcast_enhancement_en;
 
+	/* HW TX Checksum Enabled Flag */
+	uint8_t csum_enabled;
+
 	/* vdev_id - ID used to specify a particular vdev to the target */
 	uint8_t vdev_id;
 

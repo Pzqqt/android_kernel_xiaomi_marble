@@ -1212,8 +1212,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
 
 	/* verify checksum offload configuration*/
-	if ((wlan_cfg_get_checksum_offload(soc->wlan_cfg_ctx)) &&
-		((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
+	if (vdev->csum_enabled &&
+	    ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
 		|| qdf_nbuf_is_tso(tx_desc->nbuf)))  {
 		hal_tx_desc_set_l3_checksum_en(hal_tx_desc_cached, 1);
 		hal_tx_desc_set_l4_checksum_en(hal_tx_desc_cached, 1);
@@ -4015,6 +4015,26 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 }
 #endif
 
+static void dp_tx_vdev_update_feature_flags(struct dp_vdev *vdev)
+{
+	struct wlan_cfg_dp_soc_ctxt *cfg;
+
+	struct dp_soc *soc;
+
+	soc = vdev->pdev->soc;
+	if (!soc)
+		return;
+
+	cfg = soc->wlan_cfg_ctx;
+	if (!cfg)
+		return;
+
+	if (vdev->opmode == wlan_op_mode_ndi)
+		vdev->csum_enabled = wlan_cfg_get_nan_checksum_offload(cfg);
+	else
+		vdev->csum_enabled = wlan_cfg_get_checksum_offload(cfg);
+}
+
 /**
  * dp_tx_vdev_attach() - attach vdev to dp tx
  * @vdev: virtual device instance
@@ -4045,6 +4065,8 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 
 	dp_tx_vdev_update_search_flags(vdev);
+
+	dp_tx_vdev_update_feature_flags(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

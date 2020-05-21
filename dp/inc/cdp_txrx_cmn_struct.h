@@ -2172,7 +2172,8 @@ struct cdp_rx_indication_msdu {
  * @lro_enable: Enable/Disable LRO
  * @gro_enable: Enable/Disable GRO
  * @flow_steering_enable: Enable/Disable Rx Hash based flow steering
- * @tcp_Udp_ChecksumOffload: Enable/Disable tcp-Udp checksum Offload
+ * @nan_tcp_udp_checksumoffload: Enable/Disable TCP/UDP Checksum Offload for NAN
+ * @tcp_udp_checksumoffload: Enable/Disable TCP/UDP Checksum Offload
  * @napi_enable: Enable/Disable Napi
  * @ipa_enable: Flag indicating if IPA is enabled or not
  * @tx_flow_stop_queue_threshold: Value to Pause tx queues
@@ -2187,6 +2188,7 @@ struct cdp_config_params {
 	unsigned int lro_enable:1;
 	unsigned int gro_enable:1;
 	unsigned int flow_steering_enable:1;
+	unsigned int nan_tcp_udp_checksumoffload:1;
 	unsigned int tcp_udp_checksumoffload:1;
 	unsigned int napi_enable:1;
 	unsigned int ipa_enable:1;
@@ -2246,6 +2248,9 @@ struct cdp_monitor_filter {
  */
 enum cdp_dp_cfg {
 	cfg_dp_enable_data_stall,
+	/* checksum offload for NAN interface */
+	cfg_dp_enable_nan_ip_tcp_udp_checksum_offload,
+	/* generic checksum offload for other interfaces */
 	cfg_dp_enable_ip_tcp_udp_checksum_offload,
 	cfg_dp_tso_enable,
 	cfg_dp_lro_enable,

@@ -141,6 +141,7 @@ struct wlan_srng_cfg {
  * @peer_flow_ctrl_enabled: Flag indicating if peer flow control is enabled
  * @napi_enabled: enable/disable interrupt mode for reaping tx and rx packets
  * @tcp_udp_checksumoffload: enable/disable checksum offload
+ * @nan_tcp_udp_checksumoffload: enable/disable checksum offload for NAN mode
  * @nss_cfg: nss configuration
  * @rx_defrag_min_timeout: rx defrag minimum timeout
  * @wbm_release_ring: wbm release ring size
@@ -234,6 +235,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool rawmode_enabled;
 	bool peer_flow_ctrl_enabled;
 	bool napi_enabled;
+	bool nan_tcp_udp_checksumoffload;
 	bool tcp_udp_checksumoffload;
 	bool defrag_timeout_check;
 	int nss_cfg;
@@ -996,6 +998,14 @@ int wlan_cfg_get_int_timer_threshold_mon(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: Checksum offload enable or disable
  */
 int wlan_cfg_get_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_nan_checksum_offload - Get checksum offload enable/disable val
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Checksum offload enable or disable value for NAN mode
+ */
+int wlan_cfg_get_nan_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_tx_ring_size - Get Tx DMA ring size (TCL Data Ring)

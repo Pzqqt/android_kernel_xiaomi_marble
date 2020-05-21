@@ -552,6 +552,32 @@
 	CFG_INI_BOOL("dp_napi_enabled", PLATFORM_VALUE(true, false), \
 	"DP Napi Enabled")
 
+/*
+ * <ini>
+ * gEnableNanIpTcpUdpChecksumOffload - Enable checksum offload for NAN mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD \
+		CFG_INI_BOOL("gEnableNanIpTcpUdpChecksumOffload", true, \
+		"DP TCP UDP Checksum Offload for NAN mode")
+
+/*
+ * <ini>
+ * gEnableIpTcpUdpChecksumOffload - Enable checksum offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_DP_TCP_UDP_CKSUM_OFFLOAD \
 	CFG_INI_BOOL("gEnableIpTcpUdpChecksumOffload", true, \
 	"DP TCP UDP Checksum Offload")
@@ -844,6 +870,7 @@
 		CFG(CFG_DP_PEER_FLOW_CTRL) \
 		CFG(CFG_DP_NAPI) \
 		CFG(CFG_DP_TCP_UDP_CKSUM_OFFLOAD) \
+		CFG(CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD) \
 		CFG(CFG_DP_DEFRAG_TIMEOUT_CHECK) \
 		CFG(CFG_DP_WBM_RELEASE_RING) \
 		CFG(CFG_DP_TCL_CMD_CREDIT_RING) \
