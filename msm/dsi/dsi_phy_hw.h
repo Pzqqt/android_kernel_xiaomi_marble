@@ -100,6 +100,7 @@ struct dsi_phy_per_lane_cfgs {
  * @pll_source:       PLL source.
  * @lane_map:         DSI logical to PHY lane mapping.
  * @force_clk_lane_hs:Boolean whether to force clock lane in HS mode.
+ * @phy_type:         Phy-type (Dphy/Cphy).
  * @bit_clk_rate_hz: DSI bit clk rate in HZ.
  */
 struct dsi_phy_cfg {
@@ -111,6 +112,7 @@ struct dsi_phy_cfg {
 	enum dsi_phy_pll_source pll_source;
 	struct dsi_lane_map lane_map;
 	bool force_clk_lane_hs;
+	enum dsi_phy_type phy_type;
 	unsigned long bit_clk_rate_hz;
 };
 
