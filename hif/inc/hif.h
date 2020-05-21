@@ -989,6 +989,7 @@ bool hif_pm_runtime_is_suspended(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_get_monitor_wake_intr(struct hif_opaque_softc *hif_ctx);
 void hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx,
 					  int val);
+void hif_pm_runtime_check_and_request_resume(struct hif_opaque_softc *hif_ctx);
 void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx);
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx);
@@ -1050,6 +1051,9 @@ hif_pm_runtime_get_monitor_wake_intr(struct hif_opaque_softc *hif_ctx)
 { return 0; }
 static inline void
 hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx, int val)
+{ return; }
+static inline void
+hif_pm_runtime_check_and_request_resume(struct hif_opaque_softc *hif_ctx)
 { return; }
 static inline void
 hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx) {};

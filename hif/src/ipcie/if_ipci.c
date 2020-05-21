@@ -46,13 +46,31 @@
 
 #include "ipci_api.h"
 
+#ifdef FEATURE_RUNTIME_PM
+inline struct hif_runtime_pm_ctx *hif_ipci_get_rpm_ctx(struct hif_softc *scn)
+{
+	struct hif_ipci_softc *sc = HIF_GET_IPCI_SOFTC(scn);
+
+	return &sc->rpm_ctx;
+}
+
+inline struct device *hif_ipci_get_dev(struct hif_softc *scn)
+{
+	struct hif_ipci_softc *sc = HIF_GET_IPCI_SOFTC(scn);
+
+	return sc->dev;
+}
+#endif
+
 void hif_ipci_enable_power_management(struct hif_softc *hif_sc,
 				      bool is_packet_log_enabled)
 {
+	hif_pm_runtime_start(hif_sc);
 }
 
 void hif_ipci_disable_power_management(struct hif_softc *hif_ctx)
 {
+	hif_pm_runtime_stop(hif_ctx);
 }
 
 void hif_ipci_display_stats(struct hif_softc *hif_ctx)
@@ -76,6 +94,7 @@ QDF_STATUS hif_ipci_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 	struct hif_ipci_softc *sc = HIF_GET_IPCI_SOFTC(hif_ctx);
 
 	hif_ctx->bus_type = bus_type;
+	hif_pm_runtime_open(hif_ctx);
 
 	qdf_spinlock_create(&sc->irq_lock);
 
@@ -157,6 +176,7 @@ timer_free:
 
 void hif_ipci_close(struct hif_softc *hif_sc)
 {
+	hif_pm_runtime_close(hif_sc);
 	hif_ce_close(hif_sc);
 }
 
@@ -274,6 +294,7 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 	int errno;
 
 	HIF_INFO("wlan: %s pcie power collapse", flag ? "disable" : "enable");
+	hif_runtime_prevent_linkdown(scn, flag);
 
 	errno = pld_wlan_pm_control(scn->qdf_dev->dev, flag);
 	if (errno)
@@ -284,6 +305,7 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	HIF_INFO("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
+	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
 
@@ -350,6 +372,8 @@ static irqreturn_t hif_ce_interrupt_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
 
+	hif_pm_runtime_check_and_request_resume(
+			GET_HIF_OPAQUE_HDL(tasklet_entry->hif_ce_state));
 	return ce_dispatch_interrupt(tasklet_entry->ce_id, tasklet_entry);
 }
 

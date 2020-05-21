@@ -26,6 +26,7 @@
 #include "hif.h"
 #include "cepci.h"
 #include "ce_main.h"
+#include "hif_runtime_pm.h"
 
 #ifdef FORCE_WAKE
 /**
@@ -76,6 +77,9 @@ struct hif_ipci_softc {
 	uint32_t register_window;
 	qdf_spinlock_t register_access_lock;
 	qdf_spinlock_t irq_lock;
+#ifdef FEATURE_RUNTIME_PM
+	struct hif_runtime_pm_ctx rpm_ctx;
+#endif
 
 	void (*hif_ipci_get_soc_info)(struct hif_ipci_softc *sc,
 				      struct device *dev);

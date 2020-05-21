@@ -1705,6 +1705,24 @@ void hif_pm_runtime_set_monitor_wake_intr(struct hif_opaque_softc *hif_ctx,
 }
 
 /**
+ * hif_pm_runtime_check_and_request_resume() - check if the device is runtime
+ *					       suspended and request resume.
+ * @hif_ctx: HIF context
+ *
+ * This function is to check if the device is runtime suspended and
+ * request for runtime resume.
+ *
+ * Return: void
+ */
+void hif_pm_runtime_check_and_request_resume(struct hif_opaque_softc *hif_ctx)
+{
+	if (hif_pm_runtime_get_monitor_wake_intr(hif_ctx)) {
+		hif_pm_runtime_set_monitor_wake_intr(hif_ctx, 0);
+		hif_pm_runtime_request_resume(hif_ctx);
+	}
+}
+
+/**
  * hif_pm_runtime_mark_dp_rx_busy() - Set last busy mark my data path
  * @hif_ctx: HIF context
  *
