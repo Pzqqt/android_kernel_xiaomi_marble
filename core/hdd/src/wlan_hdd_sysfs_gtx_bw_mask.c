@@ -45,6 +45,22 @@ static int hdd_sysfs_set_green_tx_param(struct hdd_adapter *adapter,
 #define hdd_sysfs_set_green_tx_param(adapter, id, value) \
 			hdd_sysfs_set_green_tx_param(adapter, id, #id, value)
 
+static int hdd_sysfs_get_green_tx_param(struct hdd_adapter *adapter,
+					green_tx_param id,
+					const char *id_string)
+{
+	int value;
+
+	value = wma_cli_get_command(adapter->vdev_id, id, GTX_CMD);
+
+	hdd_debug("%s %d", id_string, value);
+
+	return value;
+}
+
+#define hdd_sysfs_get_green_tx_param(adapter, id) \
+			hdd_sysfs_get_green_tx_param(adapter, id, #id)
+
 static ssize_t
 __hdd_sysfs_gtx_bw_mask_store(struct net_device *net_dev,
 			      char const *buf, size_t count)
@@ -120,8 +136,60 @@ hdd_sysfs_gtx_bw_mask_store(struct device *dev,
 	return errno_size;
 }
 
-static DEVICE_ATTR(gtx_bw_mask, 0220,
-		   NULL, hdd_sysfs_gtx_bw_mask_store);
+static ssize_t
+__hdd_sysfs_gtx_bw_mask_show(struct net_device *net_dev, char *buf)
+{
+	struct hdd_adapter *adapter = netdev_priv(net_dev);
+	struct hdd_context *hdd_ctx;
+	int ret, value;
+
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err_rl("adapter validate fail");
+		return -EINVAL;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
+
+	if (!wlan_hdd_validate_modules_state(hdd_ctx))
+		return -EINVAL;
+
+	value = hdd_sysfs_get_green_tx_param(adapter,
+					     WMI_VDEV_PARAM_GTX_BW_MASK);
+	if (value < 0) {
+		hdd_err_rl("failed to get green tx BW Mask");
+		return -EINVAL;
+	}
+
+	scnprintf(buf, PAGE_SIZE, "%d", value);
+
+	return ret;
+}
+
+static ssize_t
+hdd_sysfs_gtx_bw_mask_show(struct device *dev,
+			   struct device_attribute *attr,
+			   char *buf)
+{
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t errno_size;
+
+	errno_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno_size)
+		return errno_size;
+
+	errno_size = __hdd_sysfs_gtx_bw_mask_show(net_dev, buf);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno_size;
+}
+
+static DEVICE_ATTR(gtx_bw_mask, 0660, hdd_sysfs_gtx_bw_mask_show,
+		   hdd_sysfs_gtx_bw_mask_store);
 
 int hdd_sysfs_gtx_bw_mask_create(struct hdd_adapter *adapter)
 {

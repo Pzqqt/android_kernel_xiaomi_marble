@@ -33,6 +33,7 @@
  *                (wlanxx is adapter name)
  * usage:
  *      echo [arg_0] > gtx_bw_mask
+ *      cat gtx_bw_mask
  *
  * Return: 0 on success and errno on failure
  */
