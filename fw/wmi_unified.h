@@ -10947,7 +10947,7 @@ typedef enum {
      * take effect if the WMI_PDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD
      * setting is also set for the pdev that the vdev belongs to.
      */
-    WMI_VDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD,
+    WMI_VDEV_PARAM_SET_CMD_OBSS_PD_THRESHOLD, /* 0x9E */
 
     /* Parameter used to configure OBSS Packet Detection per Access Category
      * for SRP based and OBSS_PD based spatial reuse feature.
@@ -10971,7 +10971,14 @@ typedef enum {
      * if the WMI_PDEV_PARAM_SET_CMD_OBSS_PD_PER_AC setting is also set for
      * the pdev that the vdev belongs to.
      */
-    WMI_VDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
+    WMI_VDEV_PARAM_SET_CMD_OBSS_PD_PER_AC, /* 0x9F */
+
+    /**
+     * VDEV parameter to indicate RSN (Robust Security Network) capability.
+     * This value will be intersection of the local vdev's (STA's)
+     * RSN capability and the peer's (AP's) RSN capability.
+     */
+    WMI_VDEV_PARAM_RSN_CAPABILITY, /* 0xA0 */
 
     /* Parameter used to enable/disable SRP feature */
     WMI_VDEV_PARAM_ENABLE_SRP,
@@ -16140,6 +16147,10 @@ typedef struct {
     A_UINT8 gtk_keyLength; /* GTK key length */
     A_UINT8 gtk_keyRSC[GTK_REPLAY_COUNTER_BYTES]; /* GTK key replay sequence counter */
     A_UINT8 gtk_key[WMI_MAX_KEY_LEN]; /* GTK key data */
+    A_UINT8 bigtk_keyIndex; /* Use if IGTK_OFFLOAD is defined */
+    A_UINT8 bigtk_keyLength; /* Use if IGTK_OFFLOAD is defined */
+    A_UINT8 bigtk_keyRSC[IGTK_PN_SIZE]; /* key replay sequence counter *//* Use if IGTK_OFFLOAD is defined */
+    A_UINT8 bigtk_key[WMI_MAX_KEY_LEN]; /* Use if IGTK_OFFLOAD is defined */
 } WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param;
 
 typedef struct {
