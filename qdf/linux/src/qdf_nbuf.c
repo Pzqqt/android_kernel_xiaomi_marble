@@ -3047,7 +3047,6 @@ static inline void __qdf_nbuf_fill_tso_cmn_seg_info(
 
 	curr_seg->seg.tso_flags.syn = tso_cmn_info->tcphdr->syn;
 	curr_seg->seg.tso_flags.rst = tso_cmn_info->tcphdr->rst;
-	curr_seg->seg.tso_flags.psh = tso_cmn_info->tcphdr->psh;
 	curr_seg->seg.tso_flags.ack = tso_cmn_info->tcphdr->ack;
 	curr_seg->seg.tso_flags.urg = tso_cmn_info->tcphdr->urg;
 	curr_seg->seg.tso_flags.ece = tso_cmn_info->tcphdr->ece;
@@ -3159,6 +3158,10 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 		__qdf_nbuf_fill_tso_cmn_seg_info(curr_seg,
 						 &tso_cmn_info);
+
+		/* If TCP PSH flag is set, set it in the last or only segment */
+		if (num_seg == 1)
+			curr_seg->seg.tso_flags.psh = tso_cmn_info.tcphdr->psh;
 
 		if (unlikely(skb_proc == 0))
 			return tso_info->num_segs;
