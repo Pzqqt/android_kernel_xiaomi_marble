@@ -503,17 +503,6 @@ static inline int sde_crtc_get_mixer_height(struct sde_crtc *sde_crtc,
 }
 
 /**
- * sde_crtc_get_num_datapath - get the number of datapath active
- * @crtc: Pointer to drm crtc object
- */
-static inline int sde_crtc_get_num_datapath(struct drm_crtc *crtc)
-{
-	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
-
-	return sde_crtc ? sde_crtc->num_mixers : 0;
-}
-
-/**
  * sde_crtc_frame_pending - retun the number of pending frames
  * @crtc: Pointer to drm crtc object
  */
@@ -891,5 +880,14 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
  * @crtc: Pointer to drm crtc structure
  */
 void sde_crtc_static_cache_read_kickoff(struct drm_crtc *crtc);
+
+/**
+ * sde_crtc_get_num_datapath - get the number of datapath active
+ *				of primary connector
+ * @crtc: Pointer to DRM crtc object
+ * @connector: Pointer to DRM connector object of WB in CWB case
+ */
+int sde_crtc_get_num_datapath(struct drm_crtc *crtc,
+		struct drm_connector *connector);
 
 #endif /* _SDE_CRTC_H_ */
