@@ -606,6 +606,7 @@ static int __init audio_notifier_late_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_MSM_QDSP6_PDR
 static int __init audio_notifier_init(void)
 {
 	int ret;
@@ -624,6 +625,17 @@ static int __init audio_notifier_init(void)
 
 	return 0;
 }
+#else
+static int __init audio_notifier_init(void)
+{
+	audio_notifier_subsys_init();
+	audio_notifier_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
+
+	audio_notifier_late_init();
+
+	return 0;
+}
+#endif
 module_init(audio_notifier_init);
 
 static void __exit audio_notifier_exit(void)
