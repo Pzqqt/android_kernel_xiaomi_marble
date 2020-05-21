@@ -67,6 +67,15 @@ PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 PEER_CP_STATS_SET_FUNCS(tx_dropblock);
 #endif
 PEER_CP_STATS_SET_FUNCS(rx_decryptcrc);
+PEER_CP_STATS_SET_FUNCS(twt_event_type);
+PEER_CP_STATS_SET_FUNCS(twt_flow_id);
+PEER_CP_STATS_SET_FUNCS(twt_bcast);
+PEER_CP_STATS_SET_FUNCS(twt_trig);
+PEER_CP_STATS_SET_FUNCS(twt_announ);
+PEER_CP_STATS_SET_FUNCS(twt_dialog_id);
+PEER_CP_STATS_SET_FUNCS(twt_wake_dura_us);
+PEER_CP_STATS_SET_FUNCS(twt_wake_intvl_us);
+PEER_CP_STATS_SET_FUNCS(twt_sp_offset_us);
 
 #define PEER_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
