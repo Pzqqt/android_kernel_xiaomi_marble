@@ -3978,7 +3978,10 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		sde_cp_crtc_suspend(crtc);
 
 		/* reconfigure everything on next frame update */
-		bitmap_fill(cstate->dirty, SDE_CRTC_DIRTY_MAX);
+		set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
+
+		if (cstate->num_ds_enabled)
+			set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
 
 		event.type = DRM_EVENT_SDE_POWER;
 		event.length = sizeof(power_on);
