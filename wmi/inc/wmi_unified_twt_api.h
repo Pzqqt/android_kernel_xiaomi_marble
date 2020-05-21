@@ -246,6 +246,38 @@ QDF_STATUS wmi_extract_twt_btwt_remove_sta_comp_event(
 		struct wmi_twt_btwt_remove_sta_complete_event_param *params);
 #endif
 
+/**
+ * wmi_extract_twt_session_stats_event() - Extract WMI event params for TWT
+ *                               session stats event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_session_stats_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_session_stats_event_param *params);
+
+/**
+ * wmi_extract_twt_session_stats_data() - Extract one TWT session from TWT
+ *                               session stats event
+ * @wmi_handle: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @params: Parameters to extract
+ * @session: Session struct to save one TWT session
+ * @idx: TWT session index
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_twt_session_stats_data(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_session_stats_event_param *params,
+		struct wmi_host_twt_session_stats_info *session,
+		uint32_t idx);
+
 #ifdef WLAN_SUPPORT_TWT
 void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle);
 #else

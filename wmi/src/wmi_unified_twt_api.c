@@ -223,3 +223,29 @@ QDF_STATUS wmi_extract_twt_btwt_remove_sta_comp_event(
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+QDF_STATUS wmi_extract_twt_session_stats_event(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_session_stats_event_param *params)
+{
+	if (wmi_handle->ops->extract_twt_session_stats_event)
+		return wmi_handle->ops->extract_twt_session_stats_event(
+				wmi_handle, evt_buf, params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_twt_session_stats_data(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_session_stats_event_param *params,
+		struct wmi_host_twt_session_stats_info *session,
+		uint32_t idx)
+{
+	if (wmi_handle->ops->extract_twt_session_stats_data)
+		return wmi_handle->ops->extract_twt_session_stats_data(
+				wmi_handle, evt_buf, params, session, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}

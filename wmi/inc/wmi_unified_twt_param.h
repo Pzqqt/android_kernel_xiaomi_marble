@@ -124,6 +124,53 @@ struct wmi_twt_disable_complete_event {
 	uint32_t pdev_id;
 };
 
+/* TWT event types
+ *  refer to wmi_unified.h enum wmi_twt_session_stats_type
+ */
+enum host_twt_session_stats_type {
+	HOST_TWT_SESSION_SETUP     = 1,
+	HOST_TWT_SESSION_TEARDOWN  = 2,
+	HOST_TWT_SESSION_UPDATE    = 3,
+};
+
+/**
+ * struct wmi_host_twt_session_stats_info:
+ * @vdev_id: id of VDEV for twt session
+ * @peer_mac: MAC address of node
+ * @event_type: TWT event types
+ * @flow_id: TWT flow_id
+ * @bcast:  broadcast TWT
+ * @trig: trigger
+ * @announ: TWT announcement
+ * @dialog_id: Dialog_id of current session
+ * @wake_dura_us: wake duration in us
+ * @wake_intvl_us: wake time interval in us
+ * @sp_offset_us: Time until initial TWT SP occurs
+ */
+struct wmi_host_twt_session_stats_info {
+	uint32_t vdev_id;
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
+	uint32_t event_type;
+	uint32_t flow_id:16,
+			 bcast:1,
+			 trig:1,
+			 announ:1;
+	uint32_t dialog_id;
+	uint32_t wake_dura_us;
+	uint32_t wake_intvl_us;
+	uint32_t sp_offset_us;
+};
+
+/** struct wmi_twt_session_stats_event:
+ * @pdev_id: pdev_id for identifying the MAC.
+ * @num_sessions: number of TWT sessions
+ * @twt_sessions: received TWT sessions
+ */
+struct wmi_twt_session_stats_event_param {
+	uint32_t pdev_id;
+	uint32_t num_sessions;
+};
+
 /* from IEEE 802.11ah section 9.4.2.200 */
 enum WMI_HOST_TWT_COMMAND {
 	WMI_HOST_TWT_COMMAND_REQUEST_TWT    = 0,

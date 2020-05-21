@@ -666,6 +666,89 @@ wmi_twt_attach_bcast_twt_tlv(struct wmi_ops *ops)
 }
 #endif
 
+static QDF_STATUS
+extract_twt_session_stats_event_tlv(wmi_unified_t wmi_handle,
+				    uint8_t *evt_buf,
+				    struct wmi_twt_session_stats_event_param
+				    *params)
+{
+	WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_twt_session_stats_event_fixed_param *ev;
+
+	param_buf =
+		(WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->fixed_param;
+	params->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+							wmi_handle,
+							ev->pdev_id);
+	params->num_sessions = param_buf->num_twt_sessions;
+
+	WMI_LOGD("pdev_id=%d, num of TWT sessions=%d",
+		 params->pdev_id, params->num_sessions);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
+				     uint8_t *evt_buf,
+				     struct wmi_twt_session_stats_event_param
+				     *params,
+				     struct wmi_host_twt_session_stats_info
+				     *session,
+				     uint32_t idx)
+{
+	WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_twt_session_stats_info *twt_session;
+	uint32_t flags;
+	wmi_mac_addr *m1;
+	uint8_t *m2;
+
+	param_buf =
+		(WMI_TWT_SESSION_STATS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (idx >= param_buf->num_twt_sessions) {
+		WMI_LOGE("wrong idx, idx=%d, num_sessions=%d",
+			 idx, param_buf->num_twt_sessions);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	twt_session = &param_buf->twt_sessions[idx];
+
+	session->vdev_id = twt_session->vdev_id;
+	m1 = &twt_session->peer_mac;
+	m2 = session->peer_mac;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(m1, m2);
+	session->event_type = twt_session->event_type;
+	flags = twt_session->flow_id_flags;
+	session->flow_id = WMI_TWT_SESSION_FLAG_FLOW_ID_GET(flags);
+	session->bcast = WMI_TWT_SESSION_FLAG_BCAST_TWT_GET(flags);
+	session->trig = WMI_TWT_SESSION_FLAG_TRIGGER_TWT_GET(flags);
+	session->announ = WMI_TWT_SESSION_FLAG_ANNOUN_TWT_GET(flags);
+	session->dialog_id = twt_session->dialog_id;
+	session->wake_dura_us = twt_session->wake_dura_us;
+	session->wake_intvl_us = twt_session->wake_intvl_us;
+	session->sp_offset_us = twt_session->sp_offset_us;
+	WMI_LOGD("type=%d,id=%d,bcast=%d,trig=%d",
+		 session->event_type, session->flow_id,
+		 session->bcast, session->trig);
+	WMI_LOGD("announ=%d,diagid=%d,wake_dur=%ul",
+		 session->announ, session->dialog_id, session->wake_dura_us);
+	WMI_LOGD("wake_int=%ul,offset=%ul",
+		 session->wake_intvl_us, session->sp_offset_us);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -689,6 +772,10 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 				extract_twt_pause_dialog_comp_event_tlv;
 	ops->extract_twt_resume_dialog_comp_event =
 				extract_twt_resume_dialog_comp_event_tlv;
+	ops->extract_twt_session_stats_event =
+				extract_twt_session_stats_event_tlv;
+	ops->extract_twt_session_stats_data =
+				extract_twt_session_stats_event_data;
 
 	wmi_twt_attach_bcast_twt_tlv(ops);
 }

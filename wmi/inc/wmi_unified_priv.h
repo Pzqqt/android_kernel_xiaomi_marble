@@ -2187,6 +2187,20 @@ QDF_STATUS (*extract_twt_btwt_remove_sta_comp_event)(wmi_unified_t wmi_handle,
 		struct wmi_twt_btwt_remove_sta_complete_event_param *params);
 #endif
 
+QDF_STATUS(*extract_twt_session_stats_event)
+		(
+		 wmi_unified_t wmi_handle,
+		 uint8_t *evt_buf,
+		 struct wmi_twt_session_stats_event_param *params
+		);
+QDF_STATUS(*extract_twt_session_stats_data)
+		(
+		 wmi_unified_t wmi_handle,
+		 uint8_t *evt_buf,
+		 struct wmi_twt_session_stats_event_param *params,
+		 struct wmi_host_twt_session_stats_info *session,
+		 uint32_t idx
+		);
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
