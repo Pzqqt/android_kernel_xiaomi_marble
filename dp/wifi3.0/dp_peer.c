@@ -152,13 +152,10 @@ static int dp_peer_find_add_id_to_obj(
 	struct dp_peer *peer,
 	uint16_t peer_id)
 {
-	int i;
 
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		if (peer->peer_ids[i] == HTT_INVALID_PEER) {
-			peer->peer_ids[i] = peer_id;
-			return 0; /* success */
-		}
+	if (peer->peer_id == HTT_INVALID_PEER) {
+		peer->peer_id = peer_id;
+		return 0; /* success */
 	}
 	return QDF_STATUS_E_FAILURE; /* failure */
 }
@@ -533,7 +530,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	if (ast_entry || (peer->vdev && peer->vdev->proxysta_vdev)) {
 		if (soc->cdp_soc.ol_ops->peer_map_event) {
 			soc->cdp_soc.ol_ops->peer_map_event(
-			soc->ctrl_psoc, peer->peer_ids[0],
+			soc->ctrl_psoc, peer->peer_id,
 			hw_peer_id, vdev_id,
 			mac_addr, peer_type, ast_hash);
 		}
@@ -849,7 +846,7 @@ add_ast_entry:
 				soc->ctrl_psoc,
 				peer->vdev->vdev_id,
 				peer->mac_addr.raw,
-				peer->peer_ids[0],
+				peer->peer_id,
 				mac_addr,
 				next_node_mac,
 				flags,
@@ -1607,7 +1604,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 			/* TBDXXX: assert for now */
 			QDF_ASSERT(0);
 		} else {
-			dp_peer_tid_peer_id_update(peer, peer->peer_ids[0]);
+			dp_peer_tid_peer_id_update(peer, peer->peer_id);
 		}
 
 		return peer;
@@ -1668,7 +1665,7 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 				return;
 
 			dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
-				 peer, peer->peer_ids[0],
+				 peer, peer->peer_id,
 				 peer->mac_addr.raw, peer_mac_addr, vdev_id,
 				 is_wds);
 
@@ -1750,7 +1747,6 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			 uint8_t is_wds, uint32_t free_wds_count)
 {
 	struct dp_peer *peer;
-	uint8_t i;
 
 	peer = __dp_peer_find_by_id(soc, peer_id);
 
@@ -1771,7 +1767,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			return;
 
 		dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
-			 peer, peer->peer_ids[0],
+			 peer, peer->peer_id,
 			 peer->mac_addr.raw, mac_addr, vdev_id,
 			 is_wds);
 
@@ -1784,12 +1780,7 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 		soc, peer_id, peer);
 
 	soc->peer_id_to_obj_map[peer_id] = NULL;
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
-		if (peer->peer_ids[i] == peer_id) {
-			peer->peer_ids[i] = HTT_INVALID_PEER;
-			break;
-		}
-	}
+	peer->peer_id = HTT_INVALID_PEER;
 
 	/*
 	 * Reset ast flow mapping table

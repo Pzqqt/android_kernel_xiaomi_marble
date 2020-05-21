@@ -212,7 +212,7 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 				     rx_tid[rx_reorder->tid]);
 		qdf_spin_unlock_bh(&rx_reorder->tid_lock);
 
-		temp_peer = dp_peer_find_by_id(soc, peer->peer_ids[0]);
+		temp_peer = dp_peer_find_by_id(soc, peer->peer_id);
 		if (temp_peer == peer) {
 			qdf_spin_lock_bh(&rx_reorder->tid_lock);
 			dp_rx_reorder_flush_frag(peer, rx_reorder->tid);
@@ -1781,7 +1781,7 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 	if (!rx_reorder_array_elem) {
 		dp_verbose_debug(
 			"peer id:%d mac: %pM drop rx frame!",
-			peer->peer_ids[0],
+			peer->peer_id,
 			peer->mac_addr.raw);
 		DP_STATS_INC(soc, rx.err.defrag_peer_uninit, 1);
 		qdf_nbuf_free(nbuf);

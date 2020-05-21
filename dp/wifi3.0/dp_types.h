@@ -2208,9 +2208,8 @@ struct dp_peer {
 
 	qdf_atomic_t ref_cnt;
 
-	/* TODO: See if multiple peer IDs are required in wifi3.0 */
-	/* peer ID(s) for this peer */
-	uint16_t peer_ids[MAX_NUM_PEER_ID_PER_PEER];
+	/* peer ID for this peer */
+	uint16_t peer_id;
 
 	union dp_align_mac_addr mac_addr;
 

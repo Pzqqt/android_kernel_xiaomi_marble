@@ -1647,7 +1647,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 			return;
 
 		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
-				     &peer->stats, peer->peer_ids[0],
+				     &peer->stats, peer->peer_id,
 				     UPDATE_PEER_STATS,
 				     vdev->pdev->pdev_id);
 #endif

@@ -224,7 +224,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		}
 
 		peer = ast_entry->peer;
-		if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
@@ -279,7 +279,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 
 		qdf_mem_copy(rx_stats_peruser->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		rx_stats_peruser->peer_id = peer->peer_ids[0];
+		rx_stats_peruser->peer_id = peer->peer_id;
 		cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 		rx_stats_peruser->vdev_id = peer->vdev->vdev_id;
 		rx_stats_peruser->mu_ul_info_valid = 0;
@@ -376,7 +376,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 		goto end;
 	}
 	peer = ast_entry->peer;
-	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
 		cdp_rx_ppdu->num_users = 0;
 		goto end;
@@ -384,7 +384,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 
 	qdf_mem_copy(cdp_rx_ppdu->mac_addr,
 		     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
+	cdp_rx_ppdu->peer_id = peer->peer_id;
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
@@ -1080,7 +1080,7 @@ dp_rx_mon_handle_cfr_mu_info(struct dp_pdev *pdev,
 		}
 
 		peer = ast_entry->peer;
-		if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		if (!peer || peer->peer_id == HTT_INVALID_PEER) {
 			rx_stats_peruser->peer_id = HTT_INVALID_PEER;
 			continue;
 		}
@@ -1456,12 +1456,12 @@ dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 		ast_entry = soc->ast_table[ast_index];
 		if (ast_entry) {
 			peer = ast_entry->peer;
-			if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER)) {
+			if (peer && (peer->peer_id != HTT_INVALID_PEER)) {
 				if (peer->peer_based_pktlog_filter) {
 					dp_wdi_event_handler(
 							WDI_EVENT_RX_DESC, soc,
 							status_nbuf,
-							peer->peer_ids[0],
+							peer->peer_id,
 							WDI_NO_VAL, mac_id);
 				}
 			}

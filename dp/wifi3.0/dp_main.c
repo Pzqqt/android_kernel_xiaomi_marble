@@ -859,7 +859,7 @@ static bool dp_peer_get_ast_info_by_soc_wifi3
 	ast_entry_info->type = ast_entry->type;
 	ast_entry_info->pdev_id = ast_entry->pdev_id;
 	ast_entry_info->vdev_id = ast_entry->peer->vdev->vdev_id;
-	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+	ast_entry_info->peer_id = ast_entry->peer->peer_id;
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
 		     QDF_MAC_ADDR_SIZE);
@@ -904,7 +904,7 @@ static bool dp_peer_get_ast_info_by_pdevid_wifi3
 	ast_entry_info->type = ast_entry->type;
 	ast_entry_info->pdev_id = ast_entry->pdev_id;
 	ast_entry_info->vdev_id = ast_entry->peer->vdev->vdev_id;
-	ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+	ast_entry_info->peer_id = ast_entry->peer->peer_id;
 	qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
 		     &ast_entry->peer->mac_addr.raw[0],
 		     QDF_MAC_ADDR_SIZE);
@@ -1236,7 +1236,7 @@ void dp_print_ast_stats(struct dp_soc *soc)
 					    ++num_entries,
 					    ase->mac_addr.raw,
 					    ase->peer->mac_addr.raw,
-					    ase->peer->peer_ids[0],
+					    ase->peer->peer_id,
 					    type[ase->type],
 					    ase->next_hop,
 					    ase->is_active,
@@ -1291,7 +1291,7 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			       peer->tx_cap_enabled,
 			       peer->rx_cap_enabled,
 			       peer->delete_in_progress,
-			       peer->peer_ids[0]);
+			       peer->peer_id);
 	}
 }
 
@@ -4859,7 +4859,7 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 	uint8_t i = 0, j = 0;
 	uint8_t m = 0, n = 0;
 
-	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(peer_ids[0]));
+	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(*peer_ids));
 	if (!peer_ids) {
 		dp_err("DP alloc failure - unable to flush peers");
 		return;
@@ -4880,10 +4880,9 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 		if (!unmap_only && n < soc->max_peers)
 			peer_array[n++] = peer;
 
-		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
-			if (peer->peer_ids[i] != HTT_INVALID_PEER)
-				if (j < soc->max_peers)
-					peer_ids[j++] = peer->peer_ids[i];
+		if (peer->peer_id != HTT_INVALID_PEER)
+			if (j < soc->max_peers)
+				peer_ids[j++] = peer->peer_id;
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
@@ -5274,8 +5273,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 		&peer->mac_addr.raw[0], peer_mac_addr, QDF_MAC_ADDR_SIZE);
 
 	/* initialize the peer_id */
-	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
-		peer->peer_ids[i] = HTT_INVALID_PEER;
+	peer->peer_id = HTT_INVALID_PEER;
 
 	/* reset the ast index to flowid table */
 	dp_peer_reset_flowq_map(peer);
@@ -5337,7 +5335,7 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_PEER_CREATE, pdev->soc,
 			     (void *)&peer_cookie,
-			     peer->peer_ids[0], WDI_NO_VAL, pdev->pdev_id);
+			     peer->peer_id, WDI_NO_VAL, pdev->pdev_id);
 #endif
 	if (soc->wlanstats_enabled) {
 		if (!peer_cookie.ctx) {
@@ -6021,7 +6019,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	 */
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
-		peer_id = peer->peer_ids[0];
+		peer_id = peer->peer_id;
 		vdev_id = vdev->vdev_id;
 
 		/*
@@ -6070,7 +6068,7 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 		dp_wdi_event_handler(WDI_EVENT_PEER_DESTROY,
 				     pdev->soc,
 				     (void *)&peer_cookie,
-				     peer->peer_ids[0],
+				     peer->peer_id,
 				     WDI_NO_VAL,
 				     pdev->pdev_id);
 #endif
@@ -7066,7 +7064,7 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
-				     &peer->stats,  peer->peer_ids[0],
+				     &peer->stats,  peer->peer_id,
 				     UPDATE_PEER_STATS, vdev->pdev->pdev_id);
 #endif
 	}
@@ -9421,7 +9419,7 @@ static QDF_STATUS dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 				dp_wdi_event_handler(
 					WDI_EVENT_FLUSH_RATE_STATS_REQ,
 					soc, peer->wlanstats_ctx,
-					peer->peer_ids[0],
+					peer->peer_id,
 					WDI_NO_VAL, pdev_id);
 		}
 	}
