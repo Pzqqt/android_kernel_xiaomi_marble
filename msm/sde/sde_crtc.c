@@ -3834,9 +3834,6 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 			old_cstate, cstate,
 			&cstate->property_state, cstate->property_values);
 
-	/* clear destination scaler dirty bit */
-	clear_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
-
 	/* duplicate base helper */
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &cstate->base);
 
@@ -4061,8 +4058,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	power_on = 0;
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
-
-	bitmap_fill(cstate->dirty, SDE_CRTC_DIRTY_MAX);
 
 	_sde_crtc_flush_event_thread(crtc);
 
