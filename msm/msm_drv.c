@@ -394,6 +394,7 @@ static int msm_drm_uninit(struct device *dev)
 	struct drm_device *ddev = platform_get_drvdata(pdev);
 	struct msm_drm_private *priv = ddev->dev_private;
 	struct msm_kms *kms = priv->kms;
+	struct msm_vm_client_entry *client_entry, *tmp;
 	int i;
 
 	/* We must cancel and cleanup any pending vblank enable/disable
@@ -454,6 +455,17 @@ static int msm_drm_uninit(struct device *dev)
 	debugfs_remove_recursive(priv->debug_root);
 
 	sde_power_resource_deinit(pdev, &priv->phandle);
+
+	mutex_lock(&priv->vm_client_lock);
+
+	/* clean up any unregistered clients */
+	list_for_each_entry_safe(client_entry, tmp, &priv->vm_client_list,
+				 list) {
+		list_del(&client_entry->list);
+		kfree(client_entry);
+	}
+
+	mutex_unlock(&priv->vm_client_lock);
 
 	msm_mdss_destroy(ddev);
 
@@ -831,6 +843,9 @@ static int msm_drm_component_init(struct device *dev)
 
 	INIT_LIST_HEAD(&priv->client_event_list);
 	INIT_LIST_HEAD(&priv->inactive_list);
+	INIT_LIST_HEAD(&priv->vm_client_list);
+
+	mutex_init(&priv->vm_client_lock);
 
 	/* Bind all our sub-components: */
 	ret = msm_component_bind_all(dev, ddev);

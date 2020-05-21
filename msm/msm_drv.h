@@ -34,6 +34,7 @@
 #include <linux/of_graph.h>
 #include <linux/of_device.h>
 #include <linux/sde_io_util.h>
+#include <linux/sde_vm_event.h>
 #include <linux/sizes.h>
 #include <linux/kthread.h>
 
@@ -922,6 +923,9 @@ struct msm_drm_private {
 
 	/* update the flag when msm driver receives shutdown notification */
 	bool shutdown_in_progress;
+
+	struct mutex vm_client_lock;
+	struct list_head vm_client_list;
 };
 
 /* get struct msm_kms * from drm_device * */
