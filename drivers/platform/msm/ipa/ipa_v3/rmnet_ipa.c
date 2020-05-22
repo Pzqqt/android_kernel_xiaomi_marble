@@ -64,6 +64,7 @@ enum ipa_ap_ingress_ep_enum {
 #define IPA_QUOTA_REACH_ALERT_MAX_SIZE 64
 #define IPA_QUOTA_REACH_IF_NAME_MAX_SIZE 64
 #define IPA_UEVENT_NUM_EVNP 4 /* number of event pointers */
+#define IPA_UPSTREAM_ALERT_MAX_SIZE 64
 
 #define IPA_NETDEV() \
 	((rmnet_ipa3_ctx && rmnet_ipa3_ctx->wwan_priv) ? \
@@ -2184,6 +2185,12 @@ int ipa3_wwan_set_modem_state(struct wan_ioctl_notify_wan_state *state)
 {
 	uint32_t bw_mbps = 0;
 	int ret = 0;
+	char alert_msg[IPA_UPSTREAM_ALERT_MAX_SIZE];
+	char wan_iface[IPA_UPSTREAM_ALERT_MAX_SIZE];
+	char wan_state[IPA_UPSTREAM_ALERT_MAX_SIZE];
+	char *envp[IPA_UEVENT_NUM_EVNP] = {
+		alert_msg, wan_iface, wan_state, NULL};
+	int res;
 
 	if (!state)
 		return -EINVAL;
@@ -2211,6 +2218,43 @@ int ipa3_wwan_set_modem_state(struct wan_ioctl_notify_wan_state *state)
 		}
 		ret = ipa_pm_deactivate_sync(rmnet_ipa3_ctx->q6_teth_pm_hdl);
 	}
+
+	/* Send upstream state uevent if RSC/RSB is enabled. */
+	if (IPA_NETDEV() && (IPA_NETDEV()->features & NETIF_F_GRO_HW)) {
+		res = snprintf(alert_msg, IPA_UPSTREAM_ALERT_MAX_SIZE,
+			"ALERT_NAME=%s", "upstreamEvent");
+
+		if ((res >= IPA_UPSTREAM_ALERT_MAX_SIZE) || (res < 0)) {
+			IPAWANERR("alert message invalid (%d)", res);
+		} else {
+			state->upstreamIface[IFNAMSIZ - 1] = '\0';
+			res = snprintf(wan_iface,
+				IPA_UPSTREAM_ALERT_MAX_SIZE,
+				"UPSTREAM=%s", state->upstreamIface);
+			if ((res >= IPA_UPSTREAM_ALERT_MAX_SIZE) ||
+				(res < 0)) {
+				IPAWANERR("Iface name invalid (%d)", res);
+			} else {
+				res = snprintf(wan_state,
+					IPA_UPSTREAM_ALERT_MAX_SIZE,
+					"STATE=%s",
+					(state->up ? "UP" : "DOWN"));
+				if ((res >= IPA_UPSTREAM_ALERT_MAX_SIZE) ||
+					(res < 0)) {
+					IPAWANERR("Iface state invalid (%d)",
+						res);
+				} else {
+					IPAWANERR("nlmsg: <%s> <%s> <%s>\n",
+						alert_msg, wan_iface, wan_state);
+					if (IPA_NETDEV())
+						kobject_uevent_env(
+						&(IPA_NETDEV()->dev.kobj),
+						KOBJ_CHANGE, envp);
+				}
+			}
+		}
+	}
+
 	return ret;
 }
 
