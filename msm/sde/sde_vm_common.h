@@ -63,4 +63,16 @@ int sde_vm_get_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res);
  */
 void sde_vm_free_resources(struct msm_io_res *io_res);
 
+/**
+ * sde_vm_post_acquire - handle post_acquire events with all the VM clients
+ * @kms: handle to sde_kms
+ */
+int sde_vm_post_acquire(struct sde_kms *kms);
+
+/**
+ * sde_vm_pre_release - handle pre_release events with all the VM clients
+ * @kms: handle to sde_kms
+ */
+int sde_vm_pre_release(struct sde_kms *kms);
+
 #endif /* __SDE_VM_COMMON_H__ */

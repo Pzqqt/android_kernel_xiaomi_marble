@@ -254,6 +254,8 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 {
 	memset(ops, 0, sizeof(*ops));
 
+	ops->vm_client_pre_release = sde_vm_pre_release;
+	ops->vm_client_post_acquire = sde_vm_post_acquire;
 	ops->vm_release = _sde_vm_release;
 	ops->vm_owns_hw = sde_vm_owns_hw;
 	ops->vm_deinit = _sde_vm_deinit;

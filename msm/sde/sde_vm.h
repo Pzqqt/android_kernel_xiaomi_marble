@@ -119,6 +119,26 @@ struct sde_vm_ops {
 	 * @ops - primary VM specific ops functions
 	 */
 	void (*vm_deinit)(struct sde_kms *kms, struct sde_vm_ops *ops);
+
+	/**
+	 * vm_check - hook to check with vm_clients for its readiness to release
+		      the HW reasources
+	 */
+	int (*vm_check)(void);
+
+	/**
+	 * vm_client_pre_release - hook to invoke vm_client list for pre_release
+				   handling
+	 * @kms - handle to sde_kms
+	 */
+	int (*vm_client_pre_release)(struct sde_kms *kms);
+
+	/**
+	 * vm_client_post_acquire - hook to invoke vm_client list for
+	 *			    post_acquire resource handling
+	 * @kms - handle to sde_kms
+	 */
+	int (*vm_client_post_acquire)(struct sde_kms *kms);
 };
 
 /**

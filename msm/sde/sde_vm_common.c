@@ -211,3 +211,79 @@ void sde_vm_free_resources(struct msm_io_res *io_res)
 	msm_dss_clean_io_mem(&io_res->mem);
 	msm_dss_clean_io_irq(&io_res->irq);
 }
+
+int sde_vm_post_acquire(struct sde_kms *kms)
+{
+	struct msm_drm_private *priv = kms->dev->dev_private;
+	struct msm_vm_client_entry *entry;
+	int rc = 0;
+
+	list_for_each_entry(entry, &priv->vm_client_list, list) {
+		if (!entry->ops.vm_post_hw_acquire)
+			continue;
+
+		rc = entry->ops.vm_post_hw_acquire(entry->data);
+		if (rc) {
+			SDE_ERROR("post_acquire failed for device: %d\n",
+					   entry->dev->id);
+			goto post_acquire_rollback;
+		}
+	}
+
+	return rc;
+
+post_acquire_rollback:
+	list_for_each_entry_continue_reverse(entry, &priv->vm_client_list,
+			list) {
+		if (!entry->ops.vm_pre_hw_release)
+			continue;
+
+		rc = entry->ops.vm_pre_hw_release(entry->data);
+		if (rc) {
+			SDE_ERROR(
+				"post_acquire failed during rollback for device: %d\n",
+				entry->dev->id);
+			break;
+		}
+	}
+
+	return rc;
+}
+
+int sde_vm_pre_release(struct sde_kms *kms)
+{
+	struct msm_drm_private *priv = kms->dev->dev_private;
+	struct msm_vm_client_entry *entry;
+	int rc = 0;
+
+	list_for_each_entry(entry, &priv->vm_client_list, list) {
+		if (!entry->ops.vm_pre_hw_release)
+			continue;
+
+		rc = entry->ops.vm_pre_hw_release(entry->data);
+		if (rc) {
+			SDE_ERROR("pre_release failed for device: %d\n",
+					   entry->dev->id);
+			goto pre_release_rollback;
+		}
+	}
+
+	return rc;
+
+pre_release_rollback:
+	list_for_each_entry_continue_reverse(entry, &priv->vm_client_list,
+			list) {
+		if (!entry->ops.vm_post_hw_acquire)
+			continue;
+
+		rc = entry->ops.vm_post_hw_acquire(entry->data);
+		if (rc) {
+			SDE_ERROR(
+				"post_acquire failed during rollback for device: %d\n",
+				entry->dev->id);
+			break;
+		}
+	}
+
+	return rc;
+}
