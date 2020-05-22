@@ -1419,6 +1419,34 @@ static void apps_ipa_packet_receive_notify(void *priv,
 	}
 }
 
+/* Send MHI endpoint info to modem using QMI indication message */
+static int ipa_send_mhi_endp_ind_to_modem(void)
+{
+	struct ipa_endp_desc_indication_msg_v01 req;
+	struct ipa_ep_id_type_v01 *ep_info;
+	int ipa_mhi_prod_ep_idx =
+		ipa3_get_ep_mapping(IPA_CLIENT_MHI_LOW_LAT_PROD);
+	int ipa_mhi_cons_ep_idx =
+		ipa3_get_ep_mapping(IPA_CLIENT_MHI_LOW_LAT_CONS);
+
+	memset(&req, 0, sizeof(struct ipa_endp_desc_indication_msg_v01));
+	req.ep_info_len = 2;
+	req.ep_info_valid = true;
+	req.num_eps_valid = true;
+	req.num_eps = 2;
+	ep_info = &req.ep_info[0];
+	ep_info->ep_id = ipa_mhi_cons_ep_idx;
+	ep_info->ic_type = DATA_IC_TYPE_MHI_V01;
+	ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_PROD_V01;
+	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
+	ep_info = &req.ep_info[1];
+	ep_info->ep_id = ipa_mhi_prod_ep_idx;
+	ep_info->ic_type = DATA_IC_TYPE_MHI_V01;
+	ep_info->ep_type = DATA_EP_DESC_TYPE_EMB_FLOW_CTL_CONS_V01;
+	ep_info->ep_status = DATA_EP_STATUS_CONNECTED_V01;
+	return ipa3_qmi_send_endp_desc_indication(&req);
+}
+
 /* Send RSC endpoint info to modem using QMI indication message */
 static int ipa_send_wan_pipe_ind_to_modem(int ingress_eps_mask)
 {
@@ -1463,7 +1491,7 @@ static int ipa_send_wan_pipe_ind_to_modem(int ingress_eps_mask)
 	}
 
 	if (req.num_eps > 0)
-		return ipa3_qmi_send_wan_pipe_indication(&req);
+		return ipa3_qmi_send_endp_desc_indication(&req);
 	else
 		return 0;
 }
@@ -4256,8 +4284,7 @@ void ipa3_q6_handshake_complete(bool ssr_bootup)
 		 */
 		rmnet_ipa_get_network_stats_and_update();
 	}
-
-	imp_handle_modem_ready();
+		imp_handle_modem_ready();
 }
 
 static inline bool rmnet_ipa3_check_any_client_inited
