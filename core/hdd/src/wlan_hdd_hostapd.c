@@ -298,11 +298,10 @@ static int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		status = -EINVAL;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(sap_destroy_ctx(sap_ctx))) {
+	if (!hdd_sap_destroy_ctx(adapter)) {
 		hdd_err("Error closing the sap session");
 		status = -EINVAL;
 	}
-	adapter->session.ap.sap_context = NULL;
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_debug("sap has issue closing the session");
@@ -3384,8 +3383,18 @@ bool hdd_sap_create_ctx(struct hdd_adapter *adapter)
 
 bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter)
 {
+	struct sap_context *sap_ctx = adapter->session.ap.sap_context;
+
+	if (adapter->session.ap.beacon) {
+		qdf_mem_free(adapter->session.ap.beacon);
+		adapter->session.ap.beacon = NULL;
+	}
+
 	hdd_debug("destroying sap context");
-	sap_destroy_ctx(adapter->session.ap.sap_context);
+
+	if (QDF_IS_STATUS_ERROR(sap_destroy_ctx(sap_ctx)))
+		return false;
+
 	adapter->session.ap.sap_context = NULL;
 
 	return true;
