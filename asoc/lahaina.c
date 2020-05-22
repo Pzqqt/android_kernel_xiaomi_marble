@@ -908,6 +908,67 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.moisture_duty_cycle_en = true,
 };
 
+/* set audio task affinity to core 1 & 2 */
+static const unsigned int audio_core_list[] = {1, 2};
+static cpumask_t audio_cpu_map = CPU_MASK_NONE;
+static struct dev_pm_qos_request *msm_audio_req = NULL;
+static unsigned int qos_client_active_cnt = 0;
+
+static void msm_audio_add_qos_request()
+{
+	int i;
+	int cpu = 0;
+
+	msm_audio_req = kzalloc(sizeof(struct dev_pm_qos_request) * NR_CPUS,
+				 GFP_KERNEL);
+	if (!msm_audio_req) {
+		pr_err("%s failed to alloc mem for qos req.\n", __func__);
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
+		if (audio_core_list[i] >= NR_CPUS)
+			pr_err("%s incorrect cpu id: %d specified.\n", __func__, audio_core_list[i]);
+		else
+			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
+	}
+
+	for_each_cpu(cpu, &audio_cpu_map) {
+		dev_pm_qos_add_request(get_cpu_device(cpu),
+			&msm_audio_req[cpu],
+			DEV_PM_QOS_RESUME_LATENCY,
+			PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
+		pr_debug("%s set cpu affinity to core %d.\n", __func__, cpu);
+	}
+}
+
+static void msm_audio_remove_qos_request()
+{
+	int cpu = 0;
+
+	if (msm_audio_req) {
+		for_each_cpu(cpu, &audio_cpu_map) {
+			dev_pm_qos_remove_request(
+				&msm_audio_req[cpu]);
+			pr_debug("%s remove cpu affinity of core %d.\n", __func__, cpu);
+		}
+		kfree(msm_audio_req);
+	}
+}
+
+static void msm_audio_update_qos_request(u32 latency)
+{
+	int cpu = 0;
+
+	if (msm_audio_req) {
+		for_each_cpu(cpu, &audio_cpu_map) {
+			dev_pm_qos_update_request(
+				&msm_audio_req[cpu], latency);
+			pr_debug("%s update latency of core %d to %ul.\n", __func__, cpu, latency);
+		}
+	}
+}
+
 static inline int param_is_mask(int p)
 {
 	return (p >= SNDRV_PCM_HW_PARAM_FIRST_MASK) &&
@@ -4921,8 +4982,23 @@ err:
 
 static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
 {
-	pr_debug("%s: TODO: add new QOS implementation\n", __func__);
+	(void)substream;
+
+	qos_client_active_cnt++;
+	if (qos_client_active_cnt == 1)
+		msm_audio_update_qos_request(MSM_LL_QOS_VALUE);
+
 	return 0;
+}
+
+static void msm_fe_qos_shutdown(struct snd_pcm_substream *substream)
+{
+	(void)substream;
+
+	if (qos_client_active_cnt > 0)
+		qos_client_active_cnt--;
+	if (qos_client_active_cnt == 0)
+		msm_audio_update_qos_request(PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
 }
 
 void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
@@ -5189,6 +5265,7 @@ static struct snd_soc_ops msm_mi2s_be_ops = {
 
 static struct snd_soc_ops msm_fe_qos_ops = {
 	.prepare = msm_fe_qos_prepare,
+	.shutdown = msm_fe_qos_shutdown,
 };
 
 static struct snd_soc_ops msm_cdc_dma_be_ops = {
@@ -7720,6 +7797,9 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	is_initial_boot = true;
 
+	/* Add QoS request for audio tasks */
+	msm_audio_add_qos_request();
+
 	return 0;
 err:
 	devm_kfree(&pdev->dev, pdata);
@@ -7733,6 +7813,7 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	snd_event_master_deregister(&pdev->dev);
 	snd_soc_unregister_card(card);
 	msm_i2s_auxpcm_deinit();
+	msm_audio_remove_qos_request();
 
 	return 0;
 }

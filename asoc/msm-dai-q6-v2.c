@@ -284,6 +284,7 @@ struct msm_dai_q6_cdc_dma_dai_data {
 	u32 is_island_dai;
 	u32 xt_logging_disable;
 	union afe_port_config port_config;
+	u32 cdc_dma_data_align;
 };
 
 struct msm_dai_q6_auxpcm_dai_data {
@@ -12341,6 +12342,12 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 			dai_data->port_config.cdc_dma.data_format =
 				AFE_LINEAR_PCM_DATA_PACKED_16BIT;
 
+		rc = afe_send_cdc_dma_data_align(dai->id,
+				dai_data->cdc_dma_data_align);
+		if (rc)
+			pr_debug("%s: afe send data alignment failed %d\n",
+				__func__, rc);
+
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
 		if (rc < 0)
@@ -12986,6 +12993,12 @@ static int msm_dai_q6_cdc_dma_dev_probe(struct platform_device *pdev)
 				    &dai_data->is_island_dai);
 	if (rc)
 		dev_dbg(&pdev->dev, "island supported entry not found\n");
+
+	rc = of_property_read_u32(pdev->dev.of_node,
+				"qcom,msm-cdc-dma-data-align",
+				&dai_data->cdc_dma_data_align);
+	if (rc)
+		dev_dbg(&pdev->dev, "cdc dma data align supported entry not found\n");
 
 	dev_set_drvdata(&pdev->dev, dai_data);
 

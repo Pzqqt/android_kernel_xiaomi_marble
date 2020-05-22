@@ -2593,6 +2593,49 @@ done:
 	return;
 }
 
+/**
+ * afe_send_cdc_dma_data_align -
+ *		for sending codec dma data alignment
+ *
+ * @port_id: AFE port id number
+ */
+int afe_send_cdc_dma_data_align(u16 port_id, u32 cdc_dma_data_align)
+{
+	struct afe_param_id_cdc_dma_data_align data_align;
+	struct param_hdr_v3 param_info;
+	uint16_t port_index = 0;
+	int ret = -EINVAL;
+
+	memset(&data_align, 0, sizeof(data_align));
+	memset(&param_info, 0, sizeof(param_info));
+
+	port_index = afe_get_port_index(port_id);
+	if (port_index < 0 || port_index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+			__func__, port_index);
+		return -EINVAL;
+	}
+	data_align.cdc_dma_data_align =
+			cdc_dma_data_align;
+
+	pr_debug("%s: port_id %x, data_align %d\n", __func__,
+			port_id, data_align.cdc_dma_data_align);
+	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_CODEC_DMA_DATA_ALIGN;
+	param_info.param_size = sizeof(data_align);
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_info, (u8 *) &data_align);
+	if (ret)
+		pr_err("%s: AFE cdc cdc data alignment for port 0x%x failed %d\n",
+		       __func__, port_id, ret);
+
+	return ret;
+}
+EXPORT_SYMBOL(afe_send_cdc_dma_data_align);
+
 static int afe_send_hw_delay(u16 port_id, u32 rate)
 {
 	struct audio_cal_hw_delay_entry delay_entry;

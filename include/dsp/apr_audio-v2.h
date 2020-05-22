@@ -3951,6 +3951,12 @@ struct afe_param_id_set_topology_cfg {
 	u32		topology_id;
 } __packed;
 
+#define AFE_PARAM_ID_CODEC_DMA_DATA_ALIGN     0x000102EA
+
+struct afe_param_id_cdc_dma_data_align {
+	uint32_t	cdc_dma_data_align;
+} __packed;
+
 #define MAX_ABR_LEVELS 5
 
 struct afe_bit_rate_level_map_t {
