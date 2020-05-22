@@ -641,6 +641,16 @@ enum hdd_rate_info_bw {
 };
 
 /**
+ * hdd_chain_mode : Representation of Number of chains available.
+ * @HDD_CHAIN_MODE_1X1: Chain mask Not Configurable as only one chain available
+ * @HDD_CHAIN_MODE_2X2: Chain mask configurable as both chains available
+ */
+enum hdd_chain_mode {
+	HDD_CHAIN_MODE_1X1 = 1,
+	HDD_CHAIN_MODE_2X2 = 3,
+};
+
+/**
  * hdd_set_rate_bw(): Set the bandwidth for the given rate_info
  * @info: The rate info for which the bandwidth should be set
  * @hdd_bw: HDD representation of a rate info bandwidth

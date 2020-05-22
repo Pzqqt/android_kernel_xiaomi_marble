@@ -495,6 +495,15 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 					  uint8_t session_id);
 
 /**
+ * wlan_mlme_is_chain_mask_supported() - check if configure chainmask can
+ * be supported
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if supported else false
+ */
+bool wlan_mlme_is_chain_mask_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_mlme_get_listen_interval() - Get listen interval
  * @psoc: pointer to psoc object
  * @value: Pointer to value that needs to be filled by MLME

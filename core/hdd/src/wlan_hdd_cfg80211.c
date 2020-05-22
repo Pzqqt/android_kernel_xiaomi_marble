@@ -22618,6 +22618,110 @@ void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 }
 #endif
 
+static int __wlan_hdd_cfg80211_set_chainmask(struct wiphy *wiphy,
+					     uint32_t tx_mask,
+					     uint32_t rx_mask)
+{
+	int ret;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	enum hdd_chain_mode chains;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err_rl("Invalid Hdd Context");
+		return -EINVAL;
+	}
+	if (hdd_ctx->num_rf_chains != HDD_ANTENNA_MODE_2X2 ||
+	    !ucfg_mlme_is_chain_mask_supported(hdd_ctx->psoc)) {
+		hdd_info_rl("Chainmask can't be configured, num of rf chain %d",
+			    hdd_ctx->num_rf_chains);
+		return -ENOTSUPP;
+	}
+	chains = HDD_CHAIN_MODE_2X2;
+	if (!tx_mask || tx_mask > chains || !rx_mask || rx_mask > chains) {
+		hdd_err_rl("Invalid masks. txMask: %d rxMask: %d num_rf_chains: %d",
+			   tx_mask, rx_mask, hdd_ctx->num_rf_chains);
+
+		return -EINVAL;
+	}
+
+	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK,
+				  tx_mask, PDEV_CMD);
+	if (ret)
+		hdd_err_rl("Failed to set TX the mask");
+
+	ret = wma_cli_set_command(0, WMI_PDEV_PARAM_RX_CHAIN_MASK,
+				  rx_mask, PDEV_CMD);
+	if (ret)
+		hdd_err_rl("Failed to set RX the mask");
+
+	return ret;
+}
+
+static int wlan_hdd_cfg80211_set_chainmask(struct wiphy *wiphy,
+					   uint32_t tx_mask,
+					   uint32_t rx_mask)
+{
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_set_chainmask(wiphy, tx_mask, rx_mask);
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
+}
+
+static int __wlan_hdd_cfg80211_get_chainmask(struct wiphy *wiphy,
+					     uint32_t *tx_mask,
+					     uint32_t *rx_mask)
+
+{
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	int ret;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err_rl("Invalid Hdd Context");
+		return -EINVAL;
+	}
+	*tx_mask = wma_cli_get_command(0, WMI_PDEV_PARAM_TX_CHAIN_MASK,
+				       PDEV_CMD);
+	*rx_mask = wma_cli_get_command(0, WMI_PDEV_PARAM_RX_CHAIN_MASK,
+				       PDEV_CMD);
+
+	/* if 0 return max value as 0 mean no set cmnd received yet */
+	if (!*tx_mask)
+		*tx_mask = hdd_ctx->num_rf_chains == HDD_ANTENNA_MODE_2X2 ?
+				HDD_CHAIN_MODE_2X2 : HDD_CHAIN_MODE_1X1;
+	if (!*rx_mask)
+		*rx_mask = hdd_ctx->num_rf_chains == HDD_ANTENNA_MODE_2X2 ?
+				HDD_CHAIN_MODE_2X2 : HDD_CHAIN_MODE_1X1;
+	hdd_debug("tx_mask: %d rx_mask: %d", *tx_mask, *rx_mask);
+
+	return 0;
+}
+
+static int wlan_hdd_cfg80211_get_chainmask(struct wiphy *wiphy,
+					   uint32_t *tx_mask,
+					   uint32_t *rx_mask)
+{
+	struct osif_psoc_sync *psoc_sync;
+	int errno;
+
+	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_get_chainmask(wiphy, tx_mask, rx_mask);
+	osif_psoc_sync_op_stop(psoc_sync);
+
+	return errno;
+}
+
 /**
  * struct cfg80211_ops - cfg80211_ops
  *
@@ -22760,5 +22864,6 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.del_nan_func = wlan_hdd_cfg80211_del_nan_func,
 	.nan_change_conf = wlan_hdd_cfg80211_nan_change_conf,
 #endif
-
+	.set_antenna = wlan_hdd_cfg80211_set_chainmask,
+	.get_antenna = wlan_hdd_cfg80211_get_chainmask,
 };
