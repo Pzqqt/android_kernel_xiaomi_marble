@@ -881,28 +881,26 @@ QDF_STATUS wlan_mlme_get_num_11ag_tx_chains(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
-					  uint8_t session_id)
+
+static
+bool wlan_mlme_configure_chain_mask_supported(struct wlan_objmgr_psoc *psoc)
 {
-	int ret_val;
-	uint8_t ch_msk_val;
 	struct wma_caps_per_phy non_dbs_phy_cap = {0};
 	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	QDF_STATUS status;
-	bool enable2x2, as_enabled, enable_bt_chain_sep;
+	bool as_enabled, enable_bt_chain_sep, enable2x2;
 	uint8_t dual_mac_feature;
-	bool hw_dbs_2x2_cap, mrc_disabled_2g_rx, mrc_disabled_2g_tx;
-	bool mrc_disabled_5g_rx, mrc_disabled_5g_tx;
+	bool hw_dbs_2x2_cap;
 
 	if (!mlme_obj)
-		return QDF_STATUS_E_FAILURE;
+		return false;
 
 	status = wma_get_caps_for_phyidx_hwmode(&non_dbs_phy_cap,
 						HW_MODE_DBS_NONE,
 						CDS_BAND_ALL);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_legacy_err("couldn't get phy caps. skip chain mask programming");
-		return status;
+		return false;
 	}
 
 	if (non_dbs_phy_cap.tx_chain_mask_2G < 3 ||
@@ -910,32 +908,62 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 	    non_dbs_phy_cap.tx_chain_mask_5G < 3 ||
 	    non_dbs_phy_cap.rx_chain_mask_5G < 3) {
 		mlme_legacy_debug("firmware not capable. skip chain mask programming");
-		return 0;
+		return false;
 	}
 
-	enable2x2 = mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2;
 	enable_bt_chain_sep =
 			mlme_obj->cfg.chainmask_cfg.enable_bt_chain_separation;
 	as_enabled = mlme_obj->cfg.gen.as_enabled;
 	ucfg_policy_mgr_get_dual_mac_feature(psoc, &dual_mac_feature);
 
 	hw_dbs_2x2_cap = policy_mgr_is_hw_dbs_2x2_capable(psoc);
-	mrc_disabled_2g_rx =
-	  mlme_obj->cfg.nss_chains_ini_cfg.disable_rx_mrc[NSS_CHAINS_BAND_2GHZ];
-	mrc_disabled_2g_tx =
-	  mlme_obj->cfg.nss_chains_ini_cfg.disable_tx_mrc[NSS_CHAINS_BAND_2GHZ];
-	mrc_disabled_5g_rx =
-	  mlme_obj->cfg.nss_chains_ini_cfg.disable_rx_mrc[NSS_CHAINS_BAND_5GHZ];
-	mrc_disabled_5g_tx =
-	  mlme_obj->cfg.nss_chains_ini_cfg.disable_tx_mrc[NSS_CHAINS_BAND_5GHZ];
+	enable2x2 = mlme_obj->cfg.vht_caps.vht_cap_info.enable2x2;
 
-	mlme_legacy_debug("enable2x2 %d enable_bt_chain_sep %d dual mac feature %d antenna sharing %d HW 2x2 cap %d",
-			  enable2x2, enable_bt_chain_sep, dual_mac_feature,
-			  as_enabled, hw_dbs_2x2_cap);
+	if (!enable_bt_chain_sep || as_enabled || enable2x2 ||
+	   (!hw_dbs_2x2_cap && dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN)) {
+		mlme_legacy_debug("Cannot configure chainmask enable_bt_chain_sep %d as_enabled %d enable2x2 %d hw_dbs_2x2_cap %d dual_mac_feature %d",
+				  enable_bt_chain_sep, as_enabled, enable2x2,
+				  hw_dbs_2x2_cap, dual_mac_feature);
+		return false;
+	}
 
-	mlme_legacy_debug("MRC values TX:- 2g %d 5g %d RX:- 2g %d 5g %d",
-			  mrc_disabled_2g_tx, mrc_disabled_5g_tx,
-			  mrc_disabled_2g_rx, mrc_disabled_5g_rx);
+	return true;
+}
+
+bool wlan_mlme_is_chain_mask_supported(struct wlan_objmgr_psoc *psoc)
+
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj)
+		return false;
+
+	if (!wlan_mlme_configure_chain_mask_supported(psoc))
+		return false;
+
+	/* If user has configured 1x1 from INI */
+	if (mlme_obj->cfg.chainmask_cfg.txchainmask1x1 != 3 ||
+	    mlme_obj->cfg.chainmask_cfg.rxchainmask1x1 != 3) {
+		mlme_legacy_debug("txchainmask1x1 %d rxchainmask1x1 %d",
+				  mlme_obj->cfg.chainmask_cfg.txchainmask1x1,
+				  mlme_obj->cfg.chainmask_cfg.rxchainmask1x1);
+		return false;
+	}
+
+	return true;
+
+}
+QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
+					  uint8_t session_id)
+{
+	int ret_val;
+	uint8_t ch_msk_val;
+	struct wlan_mlme_psoc_ext_obj *mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	bool mrc_disabled_2g_rx, mrc_disabled_2g_tx;
+	bool mrc_disabled_5g_rx, mrc_disabled_5g_tx;
+
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	mlme_legacy_debug("txchainmask1x1: %d rxchainmask1x1: %d",
 			  mlme_obj->cfg.chainmask_cfg.txchainmask1x1,
@@ -947,11 +975,22 @@ QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 			  mlme_obj->cfg.chainmask_cfg.tx_chain_mask_5g,
 			  mlme_obj->cfg.chainmask_cfg.rx_chain_mask_5g);
 
-	if (enable2x2 || !enable_bt_chain_sep || as_enabled ||
-	   (!hw_dbs_2x2_cap && dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN)) {
-		mlme_legacy_debug("Cannot configure chainmask to FW");
+	mrc_disabled_2g_rx =
+	  mlme_obj->cfg.nss_chains_ini_cfg.disable_rx_mrc[NSS_CHAINS_BAND_2GHZ];
+	mrc_disabled_2g_tx =
+	  mlme_obj->cfg.nss_chains_ini_cfg.disable_tx_mrc[NSS_CHAINS_BAND_2GHZ];
+	mrc_disabled_5g_rx =
+	  mlme_obj->cfg.nss_chains_ini_cfg.disable_rx_mrc[NSS_CHAINS_BAND_5GHZ];
+	mrc_disabled_5g_tx =
+	  mlme_obj->cfg.nss_chains_ini_cfg.disable_tx_mrc[NSS_CHAINS_BAND_5GHZ];
+
+	mlme_legacy_debug("MRC values TX:- 2g %d 5g %d RX:- 2g %d 5g %d",
+			  mrc_disabled_2g_tx, mrc_disabled_5g_tx,
+			  mrc_disabled_2g_rx, mrc_disabled_5g_rx);
+
+	if (!wlan_mlme_configure_chain_mask_supported(psoc))
 		return QDF_STATUS_E_FAILURE;
-	}
+
 
 	if (mlme_obj->cfg.chainmask_cfg.txchainmask1x1) {
 		ch_msk_val = mlme_obj->cfg.chainmask_cfg.txchainmask1x1;

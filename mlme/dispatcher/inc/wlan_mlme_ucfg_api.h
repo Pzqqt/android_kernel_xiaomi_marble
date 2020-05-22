@@ -675,6 +675,19 @@ QDF_STATUS ucfg_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_configure_chain_mask(psoc, session_id);
 }
 
+/**
+ * ucfg_mlme_is_chain_mask_supported() - check if configure chainmask can
+ * be supported
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if supported else false
+ */
+static inline
+bool ucfg_mlme_is_chain_mask_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_is_chain_mask_supported(psoc);
+}
+
 /*
  * ucfg_mlme_get_sta_keep_alive_period() - Get the sta keep alive period
  * @psoc: pointer to psoc object
