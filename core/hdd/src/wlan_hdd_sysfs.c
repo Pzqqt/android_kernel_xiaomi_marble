@@ -61,6 +61,7 @@
 #include <wlan_hdd_sysfs_set_range_ext.h>
 #include <wlan_hdd_sysfs_set_radar.h>
 #include <wlan_hdd_sysfs_rts_cts.h>
+#include <wlan_hdd_sysfs_he_bss_color.h>
 #include <wlan_hdd_sysfs_txrx_fw_stats.h>
 #include <wlan_hdd_sysfs_txrx_stats.h>
 #include <wlan_hdd_sysfs_dp_trace.h>
@@ -715,6 +716,7 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_set_radar_create(adapter);
 	hdd_sysfs_rts_cts_create(adapter);
 	hdd_sysfs_stats_create(adapter);
+	hdd_sysfs_he_bss_color_create(adapter);
 	hdd_sysfs_txrx_fw_stats_create(adapter);
 	hdd_sysfs_txrx_stats_create(adapter);
 	hdd_sysfs_get_temp_create(adapter);
@@ -730,6 +732,7 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_get_temp_destroy(adapter);
 	hdd_sysfs_txrx_stats_destroy(adapter);
 	hdd_sysfs_txrx_fw_stats_destroy(adapter);
+	hdd_sysfs_he_bss_color_destroy(adapter);
 	hdd_sysfs_stats_destroy(adapter);
 	hdd_sysfs_rts_cts_destroy(adapter);
 	hdd_sysfs_set_radar_destroy(adapter);

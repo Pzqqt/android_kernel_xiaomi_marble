@@ -320,6 +320,9 @@ endif
 ifeq ($(CONFIG_WLAN_SYSFS_RTS_CTS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_rts_cts.o
 endif
+ifeq ($(CONFIG_WLAN_SYSFS_HE_BSS_COLOR), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_he_bss_color.o
+endif
 ifeq ($(CONFIG_WLAN_TXRX_FW_STATS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_txrx_fw_stats.o
 endif
@@ -2610,6 +2613,7 @@ cppflags-$(CONFIG_WLAN_THERMAL_CFG) += -DCONFIG_WLAN_THERMAL_CFG
 cppflags-$(CONFIG_FEATURE_UNIT_TEST_SUSPEND) += -DWLAN_SUSPEND_RESUME_TEST
 cppflags-$(CONFIG_FEATURE_WLM_STATS) += -DFEATURE_WLM_STATS
 cppflags-$(CONFIG_WLAN_SYSFS_DCM) += -DWLAN_SYSFS_DCM
+cppflags-$(CONFIG_WLAN_SYSFS_HE_BSS_COLOR) += -DWLAN_SYSFS_HE_BSS_COLOR
 cppflags-$(CONFIG_WLAN_SYSFS_GET_STA_INFO) += -DWLAN_SYSFS_GET_STA_INFO
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
