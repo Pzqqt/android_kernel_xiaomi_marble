@@ -200,22 +200,73 @@ static int _sde_kms_dump_clks_state(struct sde_kms *sde_kms)
 }
 #endif
 
+static bool _sde_kms_skip_vblank_op(struct sde_kms *sde_kms)
+{
+	struct sde_vm_ops *vm_ops = NULL;
+
+	if (!sde_kms->vm)
+		return false;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+	if (!vm_ops->vm_owns_hw(sde_kms))
+		return true;
+
+	return false;
+}
+
 static int sde_kms_enable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
 {
 	int ret = 0;
+	struct sde_kms *sde_kms;
+
+	if (!kms)
+		return -EINVAL;
+
+	sde_kms = to_sde_kms(kms);
+
+	if (sde_kms->vm)
+		mutex_lock(&sde_kms->vm->vm_res_lock);
+
+	if (_sde_kms_skip_vblank_op(sde_kms)) {
+		SDE_DEBUG("skipping vblank enable due to HW unavailablity\n");
+		mutex_unlock(&sde_kms->vm->vm_res_lock);
+		return 0;
+	}
 
 	SDE_ATRACE_BEGIN("sde_kms_enable_vblank");
 	ret = sde_crtc_vblank(crtc, true);
 	SDE_ATRACE_END("sde_kms_enable_vblank");
+
+	if (sde_kms->vm)
+		mutex_unlock(&sde_kms->vm->vm_res_lock);
 
 	return ret;
 }
 
 static void sde_kms_disable_vblank(struct msm_kms *kms, struct drm_crtc *crtc)
 {
+	struct sde_kms *sde_kms;
+
+	if (!kms)
+		return;
+
+	sde_kms = to_sde_kms(kms);
+
+	if (sde_kms->vm)
+		mutex_lock(&sde_kms->vm->vm_res_lock);
+
+	if (_sde_kms_skip_vblank_op(sde_kms)) {
+		SDE_DEBUG("skipping vblank disable due to HW unavailablity\n");
+		mutex_unlock(&sde_kms->vm->vm_res_lock);
+		return;
+	}
+
 	SDE_ATRACE_BEGIN("sde_kms_disable_vblank");
 	sde_crtc_vblank(crtc, false);
 	SDE_ATRACE_END("sde_kms_disable_vblank");
+
+	if (sde_kms->vm)
+		mutex_unlock(&sde_kms->vm->vm_res_lock);
 }
 
 static void sde_kms_wait_for_frame_transfer_complete(struct msm_kms *kms,
