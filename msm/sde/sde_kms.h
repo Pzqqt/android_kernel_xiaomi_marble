@@ -690,4 +690,12 @@ int sde_kms_handle_recovery(struct drm_encoder *encoder);
  */
 void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable);
 
+/**
+ * sde_kms_get_io_resources() - reads associated register range
+ * @kms: pointer to sde_kms structure
+ * @io_res: pointer to msm_io_res struct to populate the ranges
+ * Return: error code.
+ */
+int sde_kms_get_io_resources(struct sde_kms *kms, struct msm_io_res *io_res);
+
 #endif /* __sde_kms_H__ */

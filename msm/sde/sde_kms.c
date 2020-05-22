@@ -52,6 +52,7 @@
 #include <linux/qcom_scm.h>
 #include "soc/qcom/secure_buffer.h"
 #include <linux/qtee_shmbridge.h>
+#include <linux/haven/hh_irq_lend.h>
 
 #define CREATE_TRACE_POINTS
 #include "sde_trace.h"
@@ -3569,6 +3570,26 @@ drm_obj_init_err:
 hw_intr_init_err:
 perf_err:
 power_error:
+	return rc;
+}
+
+int sde_kms_get_io_resources(struct sde_kms *sde_kms, struct msm_io_res *io_res)
+{
+	struct platform_device *pdev = to_platform_device(sde_kms->dev->dev);
+	int rc = 0;
+
+	rc = msm_dss_get_io_mem(pdev, &io_res->mem);
+	if (rc) {
+		SDE_ERROR("failed to get io mem for KMS, rc = %d\n", rc);
+		return rc;
+	}
+
+	rc = msm_dss_get_io_irq(pdev, &io_res->irq, HH_IRQ_LABEL_SDE);
+	if (rc) {
+		SDE_ERROR("failed to get io irq for KMS");
+		return rc;
+	}
+
 	return rc;
 }
 
