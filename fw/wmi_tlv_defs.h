@@ -1078,6 +1078,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_capability_report_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_pmf_bcn_protect_stats,
     WMITLV_TAG_STRUC_wmi_nan_capabilities,
+    WMITLV_TAG_STRUC_wmi_request_ctrl_path_stats_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_ctrl_path_pdev_stats_struct,
 } WMITLV_TAG_ID;
 
 /*
@@ -1522,6 +1525,7 @@ typedef enum {
     OP(WMI_PDEV_SET_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID) \
     OP(WMI_PDEV_SET_NON_SRG_OBSS_COLOR_ENABLE_BITMAP_CMDID) \
     OP(WMI_PDEV_SET_NON_SRG_OBSS_BSSID_ENABLE_BITMAP_CMDID) \
+    OP(WMI_REQUEST_CTRL_PATH_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1772,6 +1776,7 @@ typedef enum {
     OP(WMI_AUDIO_AGGR_REPORT_STATISTICS_EVENTID) \
     OP(WMI_PDEV_SSCAN_FW_PARAM_EVENTID) \
     OP(WMI_ROAM_CAPABILITY_REPORT_EVENTID) \
+    OP(WMI_CTRL_PATH_STATS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3990,6 +3995,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_WLAN_STATS_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_peer_stats_info_cmd_fixed_param, wmi_request_peer_stats_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_PEER_STATS_INFO_CMDID);
 
+/* Request Control Path stats info cmd */
+#define WMITLV_TABLE_WMI_REQUEST_CTRL_PATH_STATS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_request_ctrl_path_stats_cmd_fixed_param, wmi_request_ctrl_path_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, pdev_ids, WMITLV_SIZE_VAR)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, mac_addr_list, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_CTRL_PATH_STATS_CMDID);
+
 /* Host sets the current country code */
 #define WMITLV_TABLE_WMI_SET_CURRENT_COUNTRY_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_set_current_country_cmd_fixed_param, wmi_set_current_country_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -5724,6 +5737,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_stats_info_event_fixed_param, wmi_peer_stats_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_stats_info, peer_stats_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATS_INFO_EVENTID);
+
+/* Update Control Path stats event */
+#define WMITLV_TABLE_WMI_CTRL_PATH_STATS_EVENTID(id, op, buf, len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ctrl_path_stats_event_fixed_param, wmi_ctrl_path_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_ctrl_path_pdev_stats_struct, ctrl_path_pdev_stats, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_CTRL_PATH_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_RADIO_CHAN_STATS_EVENTID(id, op, buf, len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_radio_chan_stats_event_fixed_param, wmi_radio_chan_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
