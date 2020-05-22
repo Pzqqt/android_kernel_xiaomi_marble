@@ -403,6 +403,8 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	cdp_cfg.enable_rxthread = hdd_ctx->enable_rxthread;
 	cdp_cfg.ip_tcp_udp_checksum_offload =
 		cfg_get(psoc, CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
+	cdp_cfg.nan_ip_tcp_udp_checksum_offload =
+		cfg_get(psoc, CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD);
 	cdp_cfg.ce_classify_enabled =
 		cfg_get(psoc, CFG_DP_CE_CLASSIFY_ENABLE);
 	cdp_cfg.tso_enable = cfg_get(psoc, CFG_DP_TSO);

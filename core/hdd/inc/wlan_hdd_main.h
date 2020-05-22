@@ -3247,6 +3247,16 @@ static inline void hdd_set_sg_flags(struct hdd_context *hdd_ctx,
 				struct net_device *wlan_dev){}
 #endif
 
+/**
+ * hdd_set_netdev_flags() - set netdev flags for adapter as per ini config
+ * @adapter: hdd adapter context
+ *
+ * This function sets netdev feature flags for the adapter.
+ *
+ * Return: none
+ */
+void hdd_set_netdev_flags(struct hdd_adapter *adapter);
+
 #ifdef FEATURE_TSO
 /**
  * hdd_set_tso_flags() - enable TSO flags in the network device

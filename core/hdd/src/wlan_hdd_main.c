@@ -6871,6 +6871,62 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+void hdd_set_netdev_flags(struct hdd_adapter *adapter)
+{
+	bool enable_csum = false;
+	enum QDF_OPMODE device_mode;
+	struct hdd_context *hdd_ctx;
+	ol_txrx_soc_handle soc;
+	uint64_t temp;
+
+	if (!adapter || !adapter->dev) {
+		hdd_err("invalid input!");
+		return;
+	}
+
+	hdd_ctx = adapter->hdd_ctx;
+	device_mode = adapter->device_mode;
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	/* Determine device_mode specific configuration */
+	switch (device_mode) {
+	case QDF_NDI_MODE:
+	case QDF_NAN_DISC_MODE:
+		if (cdp_cfg_get(soc,
+				cfg_dp_enable_nan_ip_tcp_udp_checksum_offload))
+			enable_csum = true;
+		break;
+	default:
+		if (cdp_cfg_get(soc,
+				cfg_dp_enable_ip_tcp_udp_checksum_offload))
+			enable_csum = true;
+	}
+
+	/* Set netdev flags */
+
+	/*
+	 * In case of USB tethering, LRO is disabled. If SSR happened
+	 * during that time, then as part of SSR init, do not enable
+	 * the LRO again. Keep the LRO state same as before SSR.
+	 */
+	if (cdp_cfg_get(soc, cfg_dp_lro_enable) &&
+	    !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
+		adapter->dev->features |= NETIF_F_LRO;
+
+	if (enable_csum)
+		adapter->dev->features |=
+			(NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM);
+
+	if (cdp_cfg_get(soc, cfg_dp_tso_enable) && enable_csum)
+		adapter->dev->features |=
+			 (NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_SG);
+
+	adapter->dev->features |= NETIF_F_RXCSUM;
+	temp = (uint64_t)adapter->dev->features;
+
+	hdd_debug("adapter mode %u dev feature 0x%llx", device_mode, temp);
+}
+
 static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 				     struct hdd_adapter *adapter)
 {
@@ -16332,6 +16388,9 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 	params.flow_steering_enable =
 		cfg_get(hdd_ctx->psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	params.napi_enable = hdd_ctx->napi_enable;
+	params.nan_tcp_udp_checksumoffload =
+		cfg_get(hdd_ctx->psoc,
+			CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD);
 	params.tcp_udp_checksumoffload =
 			cfg_get(hdd_ctx->psoc,
 				CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
