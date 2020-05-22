@@ -1554,18 +1554,23 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 		pcap->agile_spectral_cap_80p80 = false;
 	}
 
-	for (param_idx = 0; param_idx < num_bin_scaling_params; param_idx++) {
-		if (scaling_params[param_idx].pdev_id == pdev_id) {
-			pcap->is_scaling_params_populated = true;
-			pcap->formula_id = scaling_params[param_idx].formula_id;
-			pcap->low_level_offset =
-				scaling_params[param_idx].low_level_offset;
-			pcap->high_level_offset =
-				scaling_params[param_idx].high_level_offset;
-			pcap->rssi_thr = scaling_params[param_idx].rssi_thr;
-			pcap->default_agc_max_gain =
-				scaling_params[param_idx].default_agc_max_gain;
-			break;
+	if (scaling_params) {
+		for (param_idx = 0; param_idx < num_bin_scaling_params;
+		     param_idx++) {
+			if (scaling_params[param_idx].pdev_id == pdev_id) {
+				pcap->is_scaling_params_populated = true;
+				pcap->formula_id =
+				    scaling_params[param_idx].formula_id;
+				pcap->low_level_offset =
+				    scaling_params[param_idx].low_level_offset;
+				pcap->high_level_offset =
+				    scaling_params[param_idx].high_level_offset;
+				pcap->rssi_thr =
+				    scaling_params[param_idx].rssi_thr;
+				pcap->default_agc_max_gain =
+				 scaling_params[param_idx].default_agc_max_gain;
+				break;
+			}
 		}
 	}
 
