@@ -2617,6 +2617,24 @@ hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
 	return hdd_ctx->cur_vote_level;
 }
 
+/**
+ * hdd_set_current_throughput_level() - update the current vote
+ * level
+ * @hdd_ctx: the global hdd context
+ * @next_vote_level: pld_bus_width_type voting level
+ *
+ * This function updates the current vote level to the new level
+ * provided
+ *
+ * Return: None
+ */
+static inline void
+hdd_set_current_throughput_level(struct hdd_context *hdd_ctx,
+				 enum pld_bus_width_type next_vote_level)
+{
+	hdd_ctx->cur_vote_level = next_vote_level;
+}
+
 static inline bool
 hdd_is_low_tput_gro_enable(struct hdd_context *hdd_ctx)
 {
@@ -2672,6 +2690,12 @@ static inline enum pld_bus_width_type
 hdd_get_current_throughput_level(struct hdd_context *hdd_ctx)
 {
 	return PLD_BUS_WIDTH_NONE;
+}
+
+static inline void
+hdd_set_current_throughput_level(struct hdd_context *hdd_ctx,
+				 enum pld_bus_width_type next_vote_level)
+{
 }
 
 static inline bool
