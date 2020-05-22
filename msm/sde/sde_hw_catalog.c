@@ -4804,6 +4804,29 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->mdss_hw_block_size = 0x158;
 		sde_cfg->has_trusted_vm_support = true;
 		sde_cfg->syscache_supported = true;
+	} else if (IS_WAIPIO_TARGET(hw_rev)) {
+		sde_cfg->has_cwb_support = true;
+		sde_cfg->has_wb_ubwc = true;
+		sde_cfg->has_qsync = true;
+		sde_cfg->perf.min_prefill_lines = 40;
+		sde_cfg->vbif_qos_nlvl = 8;
+		sde_cfg->ts_prefill_rev = 2;
+		sde_cfg->ctl_rev = SDE_CTL_CFG_VERSION_1_0_0;
+		sde_cfg->delay_prg_fetch_start = true;
+		sde_cfg->sui_ns_allowed = true;
+		sde_cfg->sui_misr_supported = true;
+		sde_cfg->has_sui_blendstage = true;
+		sde_cfg->has_3d_merge_reset = true;
+		sde_cfg->has_hdr = true;
+		sde_cfg->has_hdr_plus = true;
+		set_bit(SDE_MDP_DHDR_MEMPOOL_4K, &sde_cfg->mdp[0].features);
+		sde_cfg->has_vig_p010 = true;
+		sde_cfg->true_inline_rot_rev = SDE_INLINE_ROT_VERSION_2_0_0;
+		sde_cfg->uidle_cfg.uidle_rev = SDE_UIDLE_VERSION_1_0_1;
+		sde_cfg->vbif_disable_inner_outer_shareable = true;
+		sde_cfg->dither_luma_mode_support = true;
+		sde_cfg->mdss_hw_block_size = 0x158;
+		sde_cfg->syscache_supported = true;
 	} else {
 		SDE_ERROR("unsupported chipset id:%X\n", hw_rev);
 		sde_cfg->perf.min_prefill_lines = 0xffff;
