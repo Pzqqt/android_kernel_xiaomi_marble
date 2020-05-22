@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -40,7 +40,7 @@
 #include <signal.h>
 
 #define CFR_DUMP_STREAMFS_FILE "/sys/kernel/debug/qdf/cfr%s/cfr_dump0"
-#define CFR_DUMP_FILE "/tmp/cfr_dump_%s.bin"
+#define CFR_DUMP_FILE "/tmp/cfr_dump_%s_%s.bin"
 
 #define MAX_FILE_SIZE          (8 * 1024 * 1024)
 #define MAX_CAPTURE_SIZE       (4096)
@@ -122,7 +122,7 @@ int initialize_cfr_dump_file(char *iface)
 	tm_val = localtime(&curtime);
 	if (tm_val) {
 		strftime(time, 50, "%Y_%m_%d_%T", tm_val);
-		snprintf(filename, sizeof(filename), CFR_DUMP_FILE, time);
+		snprintf(filename, sizeof(filename), CFR_DUMP_FILE, iface, time);
 		fd = open(filename, O_WRONLY | O_CREAT);
 	} else {
 		perror("Unable to get time value to generate filename \n");
