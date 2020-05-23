@@ -1226,7 +1226,6 @@ dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	pdev->mon_last_linkdesc_paddr = 0;
 
 	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
-	qdf_spinlock_create(&pdev->mon_lock);
 
 	/* Attach full monitor mode resources */
 	dp_full_mon_attach(pdev);
@@ -1260,7 +1259,6 @@ dp_rx_pdev_mon_buf_desc_pool_deinit(struct dp_pdev *pdev, uint32_t mac_id)
 	dp_debug("Mon RX Desc buf Pool[%d] deinit", pdev_id);
 
 	dp_rx_desc_pool_deinit(soc, rx_desc_pool);
-	qdf_spinlock_destroy(&pdev->mon_lock);
 
 	/* Detach full monitor mode resources */
 	dp_full_mon_detach(pdev);
@@ -1274,6 +1272,7 @@ dp_rx_pdev_mon_cmn_desc_pool_deinit(struct dp_pdev *pdev, int mac_id)
 	int mac_for_pdev = dp_get_lmac_id_for_pdev_id(soc, mac_id, pdev_id);
 
 	dp_rx_pdev_mon_status_desc_pool_deinit(pdev, mac_for_pdev);
+
 	if (!soc->wlan_cfg_ctx->rxdma1_enable)
 		return;
 
@@ -1433,9 +1432,9 @@ void
 dp_rx_pdev_mon_desc_pool_init(struct dp_pdev *pdev)
 {
 	int mac_id;
-
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
 		dp_rx_pdev_mon_cmn_desc_pool_init(pdev, mac_id);
+	qdf_spinlock_create(&pdev->mon_lock);
 }
 
 void
@@ -1445,6 +1444,7 @@ dp_rx_pdev_mon_desc_pool_deinit(struct dp_pdev *pdev)
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
 		dp_rx_pdev_mon_cmn_desc_pool_deinit(pdev, mac_id);
+	qdf_spinlock_destroy(&pdev->mon_lock);
 }
 
 void dp_rx_pdev_mon_desc_pool_free(struct dp_pdev *pdev)

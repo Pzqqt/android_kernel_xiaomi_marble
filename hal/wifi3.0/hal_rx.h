@@ -3670,7 +3670,10 @@ hal_rx_mpdu_start_tlv_tag_valid(hal_soc_handle_t hal_soc_hdl,
 {
 	struct hal_soc *hal = (struct hal_soc *)hal_soc_hdl;
 
-	return hal->ops->hal_rx_mpdu_start_tlv_tag_valid(rx_tlv_hdr);
+	if (hal->ops->hal_rx_mpdu_start_tlv_tag_valid)
+		return hal->ops->hal_rx_mpdu_start_tlv_tag_valid(rx_tlv_hdr);
+
+	return 0;
 }
 
 /**

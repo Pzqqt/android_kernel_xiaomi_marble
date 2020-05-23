@@ -976,6 +976,24 @@ uint16_t hal_rx_get_rx_sequence_6390(uint8_t *buf)
 }
 
 /**
+ * hal_rx_mpdu_start_tlv_tag_valid_6390 () - API to check if RX_MPDU_START
+ * tlv tag is valid
+ *
+ *@rx_tlv_hdr: start address of rx_pkt_tlvs
+ *
+ * Return: true if RX_MPDU_START is valied, else false.
+ */
+static uint8_t hal_rx_mpdu_start_tlv_tag_valid_6390(void *rx_tlv_hdr)
+{
+	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)rx_tlv_hdr;
+	uint32_t tlv_tag;
+
+	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(&rx_desc->mpdu_start_tlv);
+
+	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
+}
+
+/**
  * hal_get_window_address_6390(): Function to get hp/tp address
  * @hal_soc: Pointer to hal_soc
  * @addr: address offset of register
@@ -1126,7 +1144,7 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	NULL,
 	NULL,
 	NULL,
-	NULL,
+	hal_rx_mpdu_start_tlv_tag_valid_6390,
 	NULL,
 	NULL,
 
