@@ -193,31 +193,31 @@
 
 /*
  * <ini>
- * gAdvancedPowerSaveMode - Advanced Power Save Mode
+ * gOptimizedPowerManagement - Optimized Power Management
  * @Min: 0
  * @Max: 1
  * @Default: 1
  *
- * This ini is used to set Advanced Power Save Mode configuration:
- * Current values of gAdvancedPowerSaveMode:
- * 0 -> Disable advanced power save
- * 1 -> Enable advanced power save
+ * This ini is used to set Optimized Power Management configuration:
+ * Current values of gOptimizedPowerManagement:
+ * 0 -> Disable optimized power management
+ * 1 -> Enable optimized power management
  *
  * Related: None
  *
- * Supported Feature: Advanced Power Save
+ * Supported Feature: Optimized Power Management
  *
  * Usage: External
  *
  * </ini>
  */
 #define CFG_PMO_POWERSAVE_MODE CFG_INI_UINT( \
-	"gAdvancedPowerSaveMode", \
+	"gOptimizedPowerManagement", \
 	0, \
 	1, \
 	1, \
 	CFG_VALUE_OR_DEFAULT, \
-	"Advanced Power Save Mode")
+	"Optimized Power Management")
 
 /*
  * <ini>
