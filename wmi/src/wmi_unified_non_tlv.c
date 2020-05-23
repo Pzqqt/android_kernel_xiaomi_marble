@@ -1092,7 +1092,7 @@ send_peer_chan_width_switch_cmd_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	wmi_peer_chan_width_switch_cmd *cmd;
-	int len = sizeof(*cmd);
+	int len;
 	int max_peers_per_command;
 	struct chan_width_peer_list *cmd_peer_list;
 	int pending_peers = param->num_peers;
@@ -1104,13 +1104,14 @@ send_peer_chan_width_switch_cmd_non_tlv(wmi_unified_t wmi_handle,
 				 sizeof(*cmd)) / sizeof(*cmd_peer_list);
 
 	while (pending_peers > 0) {
+		len = sizeof(*cmd);
 		if (pending_peers >= max_peers_per_command) {
 			len += (max_peers_per_command * sizeof(*cmd_peer_list));
 		} else {
 			len += (pending_peers * sizeof(*cmd_peer_list));
 		}
 
-                buf = wmi_buf_alloc(wmi_handle, len);
+		buf = wmi_buf_alloc(wmi_handle, len);
 		if (!buf) {
 			WMI_LOGE("wmi_buf_alloc failed");
 			return QDF_STATUS_E_FAILURE;
