@@ -6793,6 +6793,16 @@ typedef enum {
     /* Parameter used to enable/disable SR prohibit feature */
     WMI_PDEV_PARAM_ENABLE_SR_PROHIBIT,
 
+    /*
+     * Parameter used to enable/disable UL OFDMA mBSSID support for
+     * trigger frames. It is disabled by default.
+     * bit | config_mode
+     * -----------------
+     *  0  | Enable/Disable mBSSID trigger support for basic triggers.
+     *  1  | Enable/Disable mBSSID trigger support for BSR triggers.
+     */
+    WMI_PDEV_PARAM_ENABLE_MBSSID_CTRL_FRAME,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
