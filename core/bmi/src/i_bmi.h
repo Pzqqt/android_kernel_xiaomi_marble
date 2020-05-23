@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,7 +72,7 @@
 #define AXI_SIZE                0x00020000
 #endif
 
-#define PCIE_READ_LIMIT         0x00005000
+#define PCIE_READ_LIMIT         0x00040000
 
 #define SHA256_DIGEST_SIZE      32
 
