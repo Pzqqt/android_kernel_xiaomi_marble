@@ -364,6 +364,9 @@ struct msm_roi_caps {
  * @det_thresh_flatness:     Flatness threshold.
  * @extra_width:             Extra width required in timing calculations.
  * @pps_delay_ms:            Post PPS command delay in milliseconds.
+ * @dsc_4hsmerge_en:         Using DSC 4HS merge topology
+ * @dsc_4hsmerge_padding     4HS merge DSC pair padding value in bytes
+ * @dsc_4hsmerge_alignment   4HS merge DSC alignment value in bytes
  */
 struct msm_display_dsc_info {
 	struct drm_dsc_config config;
@@ -382,6 +385,9 @@ struct msm_display_dsc_info {
 	int det_thresh_flatness;
 	u32 extra_width;
 	u32 pps_delay_ms;
+	bool dsc_4hsmerge_en;
+	u32 dsc_4hsmerge_padding;
+	u32 dsc_4hsmerge_alignment;
 };
 
 

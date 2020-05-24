@@ -678,25 +678,6 @@ static int _sde_crtc_set_roi_v1(struct drm_crtc_state *state,
 	return 0;
 }
 
-static bool _sde_crtc_setup_is_3dmux_dsc(struct drm_crtc_state *state)
-{
-	int i;
-	struct sde_crtc_state *cstate;
-	bool is_3dmux_dsc = false;
-
-	cstate = to_sde_crtc_state(state);
-
-	for (i = 0; i < cstate->num_connectors; i++) {
-		struct drm_connector *conn = cstate->connectors[i];
-
-		if (sde_connector_get_topology_name(conn) ==
-				SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC)
-			is_3dmux_dsc = true;
-	}
-
-	return is_3dmux_dsc;
-}
-
 static int _sde_crtc_set_crtc_roi(struct drm_crtc *crtc,
 		struct drm_crtc_state *state)
 {
@@ -836,6 +817,7 @@ static int _sde_crtc_check_autorefresh(struct drm_crtc *crtc,
 static int _sde_crtc_set_lm_roi(struct drm_crtc *crtc,
 		struct drm_crtc_state *state, int lm_idx)
 {
+	struct sde_kms *sde_kms;
 	struct sde_crtc *sde_crtc;
 	struct sde_crtc_state *crtc_state;
 	const struct sde_rect *crtc_roi;
@@ -844,6 +826,12 @@ static int _sde_crtc_set_lm_roi(struct drm_crtc *crtc,
 
 	if (!crtc || !state || lm_idx >= ARRAY_SIZE(crtc_state->lm_bounds))
 		return -EINVAL;
+
+	sde_kms = _sde_crtc_get_kms(crtc);
+	if (!sde_kms || !sde_kms->catalog) {
+		SDE_ERROR("invalid parameters\n");
+		return -EINVAL;
+	}
 
 	sde_crtc = to_sde_crtc(crtc);
 	crtc_state = to_sde_crtc_state(state);
@@ -864,7 +852,7 @@ static int _sde_crtc_set_lm_roi(struct drm_crtc *crtc,
 	 * hence, crtc roi must match the mixer dimensions.
 	 */
 	if (crtc_state->num_ds_enabled ||
-		_sde_crtc_setup_is_3dmux_dsc(state)) {
+		sde_rm_topology_is_3dmux_dsc(&sde_kms->rm, state)) {
 		if (memcmp(lm_roi, lm_bounds, sizeof(struct sde_rect))) {
 			SDE_ERROR("Unsupported: Dest scaler/3d mux DSC + PU\n");
 			return -EINVAL;

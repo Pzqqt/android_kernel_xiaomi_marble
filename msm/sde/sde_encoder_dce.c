@@ -313,7 +313,8 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 		unsigned long affected_displays, int index,
 		const struct sde_rect *roi, int dsc_common_mode,
 		bool merge_3d, bool disable_merge_3d, bool mode_3d,
-		bool half_panel_partial_update, int ich_res)
+		bool dsc_4hsmerge, bool half_panel_partial_update,
+		int ich_res)
 {
 	struct sde_hw_ctl *hw_ctl;
 	struct sde_hw_dsc *hw_dsc;
@@ -345,8 +346,9 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 		return -EINVAL;
 	}
 
-	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h, dsc_common_mode,
-			index, active, merge_3d, disable_merge_3d);
+	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
+			dsc_common_mode, index, active, merge_3d,
+			disable_merge_3d, dsc_4hsmerge);
 
 	_dce_dsc_pipe_cfg(hw_dsc, hw_pp, dsc, dsc_common_mode, ich_res,
 			hw_dsc_pp, mode_3d, disable_merge_3d, active,
@@ -401,15 +403,15 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	const struct sde_rm_topology_def *def;
 	const struct sde_rect *roi;
 	enum sde_3d_blend_mode mode_3d;
-	bool half_panel_partial_update, dsc_merge, merge_3d;
+	bool half_panel_partial_update, dsc_merge, merge_3d, dsc_4hsmerge;
 	bool disable_merge_3d = false;
 	int this_frame_slices;
 	int intf_ip_w, enc_ip_w;
 	int num_intf, num_dsc, num_lm;
 	int ich_res;
+	int dsc_pic_width;
 	int dsc_common_mode = 0;
-	int i;
-	int rc = 0;
+	int i, rc = 0;
 
 	sde_kms = sde_encoder_get_kms(&sde_enc->base);
 
@@ -420,33 +422,43 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	enc_master = sde_enc->cur_master;
 	roi = &sde_enc->cur_conn_roi;
 	dsc = &sde_enc->mode_info.comp_info.dsc_info;
+	num_lm = def->num_lm;
 	num_dsc = def->num_comp_enc;
 	num_intf = def->num_intf;
-	mode_3d = (topology == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC) ?
-			BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
-	num_lm = def->num_lm;
+	mode_3d = (num_lm > num_dsc) ? BLEND_3D_H_ROW_INT : BLEND_3D_NONE;
+	merge_3d = (mode_3d != BLEND_3D_NONE) ? true : false;
 
 	half_panel_partial_update = _dce_check_half_panel_update(num_lm,
 			affected_displays);
-	merge_3d = (mode_3d != BLEND_3D_NONE) ? true : false;
 	dsc_merge = ((num_dsc > num_intf) && !half_panel_partial_update) ?
 			true : false;
 	disable_merge_3d = (merge_3d && half_panel_partial_update) ?
 			false : true;
+	dsc_4hsmerge = (dsc_merge && num_dsc == 4 && num_intf == 1) ?
+			true : false;
 
 	/*
 	 * If this encoder is driving more than one DSC encoder, they
 	 * operate in tandem, same pic dimension needs to be used by
 	 * each of them.(pp-split is assumed to be not supported)
+	 *
+	 * If encoder is driving more than 2 DSCs, each DSC pair will operate
+	 * on half of the picture in tandem.
 	 */
-	_dce_dsc_update_pic_dim(dsc, roi->w, roi->h);
+	if (num_dsc > 2) {
+		dsc_pic_width = roi->w / 2;
+		dsc->dsc_4hsmerge_en = dsc_4hsmerge;
+	} else
+		dsc_pic_width = roi->w;
+
+	_dce_dsc_update_pic_dim(dsc, dsc_pic_width, roi->h);
 
 	this_frame_slices = roi->w / dsc->config.slice_width;
 	intf_ip_w = this_frame_slices * dsc->config.slice_width;
 	enc_ip_w = intf_ip_w;
 
 	if (!half_panel_partial_update)
-		intf_ip_w /= def->num_intf;
+		intf_ip_w /= num_intf;
 	if (!half_panel_partial_update && (num_dsc > 1))
 		dsc_common_mode |= DSC_MODE_SPLIT_PANEL;
 	if (dsc_merge) {
@@ -478,7 +490,7 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 	for (i = 0; i < num_dsc; i++) {
 		rc = _dce_dsc_setup_single(sde_enc, dsc, affected_displays, i,
 				roi, dsc_common_mode, merge_3d,
-				disable_merge_3d, mode_3d,
+				disable_merge_3d, mode_3d, dsc_4hsmerge,
 				half_panel_partial_update, ich_res);
 		if (rc)
 			break;
