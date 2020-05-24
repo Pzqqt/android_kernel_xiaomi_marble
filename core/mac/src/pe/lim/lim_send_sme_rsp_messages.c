@@ -1533,6 +1533,31 @@ prnt_log:
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
+static bool lim_is_csa_channel_allowed(struct mac_context *mac_ctx,
+				       qdf_freq_t ch_freq1,
+				       uint32_t ch_freq2)
+{
+	bool is_allowed = true;
+	u32 cnx_count = 0;
+
+	cnx_count = policy_mgr_get_connection_count(mac_ctx->psoc);
+	if ((cnx_count > 1) && !policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) &&
+	    !policy_mgr_is_interband_mcc_supported(mac_ctx->psoc)) {
+		is_allowed = wlan_reg_is_same_band_freqs(ch_freq1, ch_freq2);
+	}
+
+	return is_allowed;
+}
+#else
+static bool lim_is_csa_channel_allowed(struct mac_context *mac_ctx,
+				       qdf_freq_t ch_freq1,
+				       uint32_t ch_freq2)
+{
+	return true;
+}
+#endif
+
 /**
  * lim_handle_csa_offload_msg() - Handle CSA offload message
  * @mac_ctx:         pointer to global adapter context
@@ -1580,6 +1605,12 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 
 	if (!LIM_IS_STA_ROLE(session_entry)) {
 		pe_debug("Invalid role to handle CSA");
+		goto err;
+	}
+
+	if (!lim_is_csa_channel_allowed(mac_ctx, session_entry->curr_op_freq,
+					csa_params->csa_chan_freq)) {
+		pe_debug("Channel switch is not allowed");
 		goto err;
 	}
 	/*
