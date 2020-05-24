@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -14,8 +14,8 @@
 #include <linux/sched.h>
 #include <linux/atomic.h>
 #include <linux/ecm_ipa.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
 
 #define DRIVER_NAME "ecm_ipa"
 #define ECM_IPA_IPV4_HDR_NAME "ecm_eth_ipv4"

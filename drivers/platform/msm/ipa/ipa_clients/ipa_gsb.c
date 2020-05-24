@@ -19,9 +19,9 @@
 #include <linux/ipa.h>
 #include <linux/cdev.h>
 #include <linux/ipa_odu_bridge.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
-#include "../ipa_v3/ipa_i.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
+#include "ipa_i.h"
 #include <linux/ipa_fmwk.h>
 
 #define IPA_GSB_DRV_NAME "ipa_gsb"

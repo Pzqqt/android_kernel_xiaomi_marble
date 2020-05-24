@@ -13,7 +13,7 @@
 #include <linux/delay.h>
 #include <linux/log2.h>
 #include <linux/gfp.h>
-#include "../ipa_common_i.h"
+#include "ipa_common_i.h"
 #include "ipa_i.h"
 
 #define IPA_MPM_DRV_NAME "ipa_mpm"

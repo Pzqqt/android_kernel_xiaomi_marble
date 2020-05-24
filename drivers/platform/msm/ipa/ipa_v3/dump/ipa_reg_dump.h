@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 #if !defined(_IPA_REG_DUMP_H_)
 #define _IPA_REG_DUMP_H_
@@ -8,7 +8,7 @@
 #include <linux/types.h>
 #include <linux/string.h>
 
-#include "../ipa_i.h"
+#include "ipa_i.h"
 
 #include "ipa_pkt_cntxt.h"
 #include "ipa_hw_common_ex.h"

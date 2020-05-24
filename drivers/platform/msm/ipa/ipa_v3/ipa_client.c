@@ -7,7 +7,7 @@
 #include <linux/delay.h>
 #include <linux/device.h>
 #include "ipa_i.h"
-#include "linux/msm_gsi.h"
+#include <linux/msm_gsi.h>
 
 /*
  * These values were determined empirically and shows good E2E bi-

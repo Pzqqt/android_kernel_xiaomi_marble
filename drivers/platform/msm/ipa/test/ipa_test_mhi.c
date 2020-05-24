@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/delay.h>
 #include <linux/ipa_mhi.h>
 #include <linux/ipa.h>
-#include "../ipa_v3/ipa_i.h"
-#include "../../gsi/gsi.h"
-#include "../../gsi/gsi_reg.h"
+#include "ipa_i.h"
+#include "gsi.h"
+#include "gsi_reg.h"
 #include "ipa_ut_framework.h"
 
 #define IPA_MHI_TEST_NUM_CHANNELS		8

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/mutex.h>
@@ -8,7 +8,7 @@
 #include <linux/debugfs.h>
 #include <linux/device.h>
 #include <linux/ipa.h>
-#include "../ipa_v3/ipa_i.h"
+#include "ipa_i.h"
 #include "ipa_ut_framework.h"
 #include "ipa_ut_suite_list.h"
 #include "ipa_ut_i.h"

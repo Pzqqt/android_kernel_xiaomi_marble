@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_I_H_
 #define _IPAHAL_I_H_
 
 #include <linux/ipa.h>
-#include "../../ipa_common_i.h"
+#include "ipa_common_i.h"
 
 #define IPAHAL_DRV_NAME "ipahal"
 

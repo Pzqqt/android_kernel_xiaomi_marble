@@ -12,8 +12,8 @@
 #include <linux/rndis_ipa.h>
 #include <linux/ecm_ipa.h>
 #include <linux/ipa_fmwk.h>
-#include "../ipa_v3/ipa_i.h"
-#include "../ipa_rm_i.h"
+#include "ipa_i.h"
+#include "ipa_rm_i.h"
 
 #define IPA_USB_DEV_READY_TIMEOUT_MSEC 10000
 

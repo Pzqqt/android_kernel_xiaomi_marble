@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/ipa_wigig.h>
 #include <linux/debugfs.h>
 #include <linux/string.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
 #include <linux/ipa_fmwk.h>
 
 #define OFFLOAD_DRV_NAME "ipa_wigig"

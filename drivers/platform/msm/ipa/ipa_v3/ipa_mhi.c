@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/debugfs.h>
@@ -11,7 +11,7 @@
 #include <linux/ipa.h>
 #include <linux/msm_gsi.h>
 #include <linux/ipa_mhi.h>
-#include "../ipa_common_i.h"
+#include "ipa_common_i.h"
 #include "ipa_i.h"
 #include "ipa_qmi_service.h"
 

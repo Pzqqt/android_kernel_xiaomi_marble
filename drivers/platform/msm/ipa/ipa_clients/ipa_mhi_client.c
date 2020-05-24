@@ -11,9 +11,9 @@
 #include <linux/ipa.h>
 #include <linux/msm_gsi.h>
 #include <linux/ipa_mhi.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
-#include "../ipa_v3/ipa_i.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
+#include "ipa_i.h"
 #include <linux/ipa_fmwk.h>
 
 #define IPA_MHI_DRV_NAME "ipa_mhi_client"

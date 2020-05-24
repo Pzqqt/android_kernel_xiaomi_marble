@@ -13,8 +13,8 @@
 #include <net/sock.h>
 #include "ipa_i.h"
 #include "ipa_trace.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_fltrt.h"
+#include "ipahal.h"
+#include "ipahal_fltrt.h"
 
 #define IPA_GSI_EVENT_RP_SIZE 8
 #define IPA_WAN_AGGR_PKT_CNT 1

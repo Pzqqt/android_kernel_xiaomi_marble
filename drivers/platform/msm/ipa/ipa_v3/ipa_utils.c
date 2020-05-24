@@ -11,10 +11,10 @@
 #include <linux/msm_gsi.h>
 #include <linux/elf.h>
 #include "ipa_i.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_fltrt.h"
-#include "ipahal/ipahal_hw_stats.h"
-#include "../ipa_rm_i.h"
+#include "ipahal.h"
+#include "ipahal_fltrt.h"
+#include "ipahal_hw_stats.h"
+#include "ipa_rm_i.h"
 
 /*
  * The following for adding code (ie. for EMULATION) not found on x86.

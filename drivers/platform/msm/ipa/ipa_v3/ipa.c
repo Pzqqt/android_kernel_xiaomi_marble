@@ -47,9 +47,9 @@
 #define IPA_UC_SUBSYSTEM_NAME "ipa_uc"
 
 #include "ipa_i.h"
-#include "../ipa_rm_i.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_fltrt.h"
+#include "ipa_rm_i.h"
+#include "ipahal.h"
+#include "ipahal_fltrt.h"
 
 #define CREATE_TRACE_POINTS
 #include "ipa_trace.h"

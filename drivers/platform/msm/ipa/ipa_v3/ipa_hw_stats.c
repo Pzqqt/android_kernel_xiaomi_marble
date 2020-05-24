@@ -7,8 +7,8 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include "ipa_i.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_hw_stats.h"
+#include "ipahal.h"
+#include "ipahal_hw_stats.h"
 
 #define IPA_CLIENT_BIT_32(client) \
 	((ipa3_get_ep_mapping(client) >= 0 && \
