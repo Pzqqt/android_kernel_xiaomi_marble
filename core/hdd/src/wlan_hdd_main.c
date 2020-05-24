@@ -14454,6 +14454,7 @@ static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 
 	ucfg_ipa_set_perf_level(hdd_ctx->pdev, 0, 0);
 	hdd_reset_tcp_delack(hdd_ctx);
+	hdd_reset_tcp_adv_win_scale(hdd_ctx);
 	cdp_pdev_reset_driver_del_ack(cds_get_context(QDF_MODULE_ID_SOC),
 				      OL_TXRX_PDEV_ID);
 	cdp_pdev_reset_bundle_require_flag(cds_get_context(QDF_MODULE_ID_SOC),

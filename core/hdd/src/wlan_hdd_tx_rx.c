@@ -2990,6 +2990,17 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 	wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
 }
 
+void hdd_reset_tcp_adv_win_scale(struct hdd_context *hdd_ctx)
+{
+	enum wlan_tp_level next_level = WLAN_SVC_TP_NONE;
+	struct wlan_rx_tp_data rx_tp_data = {0};
+
+	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+	rx_tp_data.level = next_level;
+	hdd_ctx->cur_rx_level = WLAN_SVC_TP_NONE;
+	wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
+}
+
 /**
  * hdd_is_current_high_throughput() - Check if vote level is high
  * @hdd_ctx: Handle to hdd context
