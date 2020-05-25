@@ -2154,21 +2154,21 @@ wlansap_reset_sap_config_add_ie(struct sap_config *config,
 static void wlansap_update_start_range_6ghz(
 	uint32_t *start_ch_freq, uint32_t *bandStartChannel)
 {
-	*bandStartChannel = CHAN_ENUM_5945;
+	*bandStartChannel = MIN_6GHZ_CHANNEL;
 	*start_ch_freq = (*start_ch_freq - ACS_5G_EXTEND) >
-				wlan_reg_ch_to_freq(CHAN_ENUM_5945) ?
+				wlan_reg_ch_to_freq(MIN_6GHZ_CHANNEL) ?
 			   (*start_ch_freq - ACS_5G_EXTEND) :
-				wlan_reg_ch_to_freq(CHAN_ENUM_5945);
+				wlan_reg_ch_to_freq(MIN_6GHZ_CHANNEL);
 }
 
 static void wlansap_update_end_range_6ghz(
 	uint32_t *end_ch_freq, uint32_t *bandEndChannel)
 {
-	*bandEndChannel = CHAN_ENUM_7105;
+	*bandEndChannel = MAX_6GHZ_CHANNEL;
 	*end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
-			     wlan_reg_ch_to_freq(CHAN_ENUM_7105) ?
+			     wlan_reg_ch_to_freq(MAX_6GHZ_CHANNEL) ?
 			     (*end_ch_freq + ACS_5G_EXTEND) :
-			     wlan_reg_ch_to_freq(CHAN_ENUM_7105);
+			     wlan_reg_ch_to_freq(MAX_6GHZ_CHANNEL);
 }
 #else
 static void wlansap_update_start_range_6ghz(
