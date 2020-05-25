@@ -324,6 +324,23 @@ struct vsync_info {
 bool sde_is_custom_client(void);
 
 /**
+ * sde_kms_get_hw_version - get the hw revision - client is expected to
+ *    enable the power resources before making this call
+ * @dev: Pointer to drm device
+ */
+static inline u32 sde_kms_get_hw_version(struct drm_device *dev)
+{
+	struct sde_kms *sde_kms;
+
+	if (!ddev_to_msm_kms(dev))
+		return 0;
+
+	sde_kms = to_sde_kms(ddev_to_msm_kms(dev));
+
+	return readl_relaxed(sde_kms->mmio + 0x0);
+}
+
+/**
  * sde_kms_power_resource_is_enabled - whether or not power resource is enabled
  * @dev: Pointer to drm device
  * Return: true if power resource is enabled; false otherwise

@@ -162,6 +162,11 @@
  *  DTSI PROPERTY INDEX
  *************************************************************/
 enum {
+	SDE_HW_VERSION,
+	SDE_HW_PROP_MAX,
+};
+
+enum {
 	HW_OFF,
 	HW_LEN,
 	HW_DISP,
@@ -524,6 +529,10 @@ struct sde_dt_props {
 /*************************************************************
  * dts property list
  *************************************************************/
+static struct sde_prop_type sde_hw_prop[] = {
+	{SDE_HW_VERSION, "qcom,sde-hw-version", false, PROP_TYPE_U32},
+};
+
 static struct sde_prop_type sde_prop[] = {
 	{SDE_OFF, "qcom,sde-off", true, PROP_TYPE_U32},
 	{SDE_LEN, "qcom,sde-len", false, PROP_TYPE_U32},
@@ -4791,10 +4800,48 @@ void sde_hw_catalog_deinit(struct sde_mdss_cfg *sde_cfg)
 	kfree(sde_cfg);
 }
 
+static int sde_hw_ver_parse_dt(struct drm_device *dev, struct device_node *np,
+			struct sde_mdss_cfg *cfg)
+{
+	int rc, len, prop_count[SDE_HW_PROP_MAX];
+	struct sde_prop_value *prop_value = NULL;
+	bool prop_exists[SDE_HW_PROP_MAX];
+
+	if (!cfg) {
+		SDE_ERROR("invalid argument\n");
+		return -EINVAL;
+	}
+
+	prop_value = kzalloc(SDE_HW_PROP_MAX *
+			sizeof(struct sde_prop_value), GFP_KERNEL);
+	if (!prop_value)
+		return -ENOMEM;
+
+	rc = _validate_dt_entry(np, sde_hw_prop, ARRAY_SIZE(sde_hw_prop),
+			prop_count, &len);
+	if (rc)
+		goto end;
+
+	rc = _read_dt_entry(np, sde_hw_prop, ARRAY_SIZE(sde_hw_prop),
+			prop_count, prop_exists, prop_value);
+	if (rc)
+		goto end;
+
+	if (prop_exists[SDE_HW_VERSION])
+		cfg->hwversion = PROP_VALUE_ACCESS(prop_value,
+					SDE_HW_VERSION, 0);
+	else
+		cfg->hwversion = sde_kms_get_hw_version(dev);
+
+end:
+	kfree(prop_value);
+	return rc;
+}
+
 /*************************************************************
  * hardware catalog init
  *************************************************************/
-struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
+struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev)
 {
 	int rc;
 	struct sde_mdss_cfg *sde_cfg;
@@ -4807,10 +4854,13 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 	if (!sde_cfg)
 		return ERR_PTR(-ENOMEM);
 
-	sde_cfg->hwversion = hw_rev;
 	INIT_LIST_HEAD(&sde_cfg->irq_offset_list);
 
-	rc = _sde_hardware_pre_caps(sde_cfg, hw_rev);
+	rc = sde_hw_ver_parse_dt(dev, np, sde_cfg);
+	if (rc)
+		goto end;
+
+	rc = _sde_hardware_pre_caps(sde_cfg, sde_cfg->hwversion);
 	if (rc)
 		goto end;
 
@@ -4906,7 +4956,7 @@ struct sde_mdss_cfg *sde_hw_catalog_init(struct drm_device *dev, u32 hw_rev)
 	if (rc)
 		goto end;
 
-	rc = _sde_hardware_post_caps(sde_cfg, hw_rev);
+	rc = _sde_hardware_post_caps(sde_cfg, sde_cfg->hwversion);
 	if (rc)
 		goto end;
 

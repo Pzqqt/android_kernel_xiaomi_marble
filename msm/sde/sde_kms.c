@@ -837,7 +837,7 @@ static int _sde_kms_unmap_all_splash_regions(struct sde_kms *sde_kms)
 	int i = 0;
 	int ret = 0;
 
-	if (!sde_kms)
+	if (!sde_kms || !sde_kms->splash_data.num_splash_regions)
 		return -EINVAL;
 
 	for (i = 0; i < sde_kms->splash_data.num_splash_displays; i++) {
@@ -936,14 +936,15 @@ static void sde_kms_commit(struct msm_kms *kms,
 	SDE_ATRACE_END("sde_kms_commit");
 }
 
-static void _sde_kms_free_splash_region(struct sde_kms *sde_kms,
+static void _sde_kms_free_splash_display_data(struct sde_kms *sde_kms,
 		struct sde_splash_display *splash_display)
 {
 	if (!sde_kms || !splash_display ||
 			!sde_kms->splash_data.num_splash_displays)
 		return;
 
-	_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
+	if (sde_kms->splash_data.num_splash_regions)
+		_sde_kms_splash_mem_put(sde_kms, splash_display->splash);
 	sde_kms->splash_data.num_splash_displays--;
 	SDE_DEBUG("cont_splash handoff done, remaining:%d\n",
 				sde_kms->splash_data.num_splash_displays);
@@ -981,7 +982,7 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 	if (splash_display->cont_splash_enabled) {
 		sde_encoder_update_caps_for_cont_splash(splash_display->encoder,
 				splash_display, false);
-		_sde_kms_free_splash_region(sde_kms, splash_display);
+		_sde_kms_free_splash_display_data(sde_kms, splash_display);
 	}
 
 	/* remove the votes if all displays are done with splash */
@@ -2147,11 +2148,31 @@ _sde_kms_get_address_space(struct msm_kms *kms,
 static struct device *_sde_kms_get_address_space_device(struct msm_kms *kms,
 		unsigned int domain)
 {
-	struct msm_gem_address_space *aspace =
-		_sde_kms_get_address_space(kms, domain);
+	struct sde_kms *sde_kms;
+	struct device *dev;
+	struct msm_gem_address_space *aspace;
 
-	return (aspace && aspace->domain_attached) ?
-			msm_gem_get_aspace_device(aspace) : NULL;
+	if (!kms) {
+		SDE_ERROR("invalid kms\n");
+		return  NULL;
+	}
+
+	sde_kms = to_sde_kms(kms);
+	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev) {
+		SDE_ERROR("invalid params\n");
+		return NULL;
+	}
+
+	/* return default device, when IOMMU is not present */
+	if (!iommu_present(&platform_bus_type)) {
+		dev = sde_kms->dev->dev;
+	} else {
+		aspace = _sde_kms_get_address_space(kms, domain);
+		dev =  (aspace && aspace->domain_attached) ?
+				msm_gem_get_aspace_device(aspace) : NULL;
+	}
+
+	return dev;
 }
 
 static void _sde_kms_post_open(struct msm_kms *kms, struct drm_file *file)
@@ -2269,7 +2290,8 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		return -EINVAL;
 	}
 
-	if (!sde_kms->splash_data.num_splash_regions ||
+	if (((sde_kms->splash_data.type == SDE_SPLASH_HANDOFF)
+		&& (!sde_kms->splash_data.num_splash_regions)) ||
 			!sde_kms->splash_data.num_splash_displays) {
 		DRM_INFO("cont_splash feature not enabled\n");
 		return rc;
@@ -2839,12 +2861,6 @@ static const struct msm_kms_funcs kms_funcs = {
 	.get_mixer_count = sde_kms_get_mixer_count,
 };
 
-/* the caller api needs to turn on clock before calling it */
-static inline void _sde_kms_core_hw_rev_init(struct sde_kms *sde_kms)
-{
-	sde_kms->core_rev = readl_relaxed(sde_kms->mmio + 0x0);
-}
-
 static int _sde_kms_mmu_destroy(struct sde_kms *sde_kms)
 {
 	int i;
@@ -2934,7 +2950,7 @@ static void sde_kms_init_shared_hw(struct sde_kms *sde_kms)
 						sde_kms->catalog);
 
 	if (sde_kms->sid)
-		sde_hw_sid_rotator_set(sde_kms->hw_sid);
+		sde_hw_set_rotator_sid(sde_kms->hw_sid);
 }
 
 static void _sde_kms_set_lutdma_vbif_remap(struct sde_kms *sde_kms)
@@ -3115,7 +3131,8 @@ static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 	return 0;
 }
 
-static int _sde_kms_get_splash_data(struct sde_splash_data *data)
+static int _sde_kms_get_splash_data(struct sde_kms *sde_kms,
+			struct sde_splash_data *data)
 {
 	int i = 0;
 	int ret = 0;
@@ -3197,6 +3214,8 @@ static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 				splash_display->splash->splash_buf_base,
 				splash_display->splash->splash_buf_size);
 	}
+
+	sde_kms->splash_data.type = SDE_SPLASH_HANDOFF;
 
 	return ret;
 }
@@ -3325,11 +3344,7 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 	struct sde_rm *rm = NULL;
 	int i, rc = -EINVAL;
 
-	_sde_kms_core_hw_rev_init(sde_kms);
-
-	pr_info("sde hardware revision:0x%x\n", sde_kms->core_rev);
-
-	sde_kms->catalog = sde_hw_catalog_init(dev, sde_kms->core_rev);
+	sde_kms->catalog = sde_hw_catalog_init(dev);
 	if (IS_ERR_OR_NULL(sde_kms->catalog)) {
 		rc = PTR_ERR(sde_kms->catalog);
 		if (!sde_kms->catalog)
@@ -3338,6 +3353,9 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 		sde_kms->catalog = NULL;
 		goto power_error;
 	}
+	sde_kms->core_rev = sde_kms->catalog->hwversion;
+
+	pr_info("sde hardware revision:0x%x\n", sde_kms->core_rev);
 
 	/* initialize power domain if defined */
 	rc = _sde_kms_hw_init_power_helper(dev, sde_kms);
@@ -3400,7 +3418,8 @@ static int _sde_kms_hw_init_blocks(struct sde_kms *sde_kms,
 			 * cont-splash disabled case
 			 */
 			if (!display->cont_splash_enabled || ret)
-				_sde_kms_free_splash_region(sde_kms, display);
+				_sde_kms_free_splash_display_data(
+						sde_kms, display);
 		}
 	}
 
@@ -3515,7 +3534,7 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	if (rc)
 		goto error;
 
-	rc = _sde_kms_get_splash_data(&sde_kms->splash_data);
+	rc = _sde_kms_get_splash_data(sde_kms, &sde_kms->splash_data);
 	if (rc)
 		SDE_DEBUG("sde splash data fetch failed: %d\n", rc);
 

@@ -243,7 +243,7 @@ struct sde_hw_sid {
 };
 
 /**
- * sde_hw_sid_rotator_set - initialize the sid blk reg map
+ * sde_hw_sid_init - initialize the sid blk reg map
  * @addr: Mapped register io address
  * @sid_len: Length of block
  * @m: Pointer to mdss catalog data
@@ -252,10 +252,25 @@ struct sde_hw_sid *sde_hw_sid_init(void __iomem *addr,
 		u32 sid_len, const struct sde_mdss_cfg *m);
 
 /**
- * sde_hw_sid_rotator_set - set sid values for rotator
+ * sde_hw_set_rotator_sid - set sid values for rotator
  * sid: sde_hw_sid passed from kms
  */
-void sde_hw_sid_rotator_set(struct sde_hw_sid *sid);
+void sde_hw_set_rotator_sid(struct sde_hw_sid *sid);
+
+/**
+ * sde_hw_set_sspp_sid - set sid values for the pipes
+ * sid: sde_hw_sid passed from kms
+ * pipe: sspp id
+ * vm: vm id to set for SIDs
+ */
+void sde_hw_set_sspp_sid(struct sde_hw_sid *sid, u32 pipe, u32 vm);
+
+/**
+ * sde_hw_set_lutdma_sid - set sid values for the pipes
+ * sid: sde_hw_sid passed from kms
+ * vm: vm id to set for SIDs
+ */
+void sde_hw_set_lutdma_sid(struct sde_hw_sid *sid, u32 vm);
 
 /**
  * to_sde_hw_mdp - convert base object sde_hw_base to container

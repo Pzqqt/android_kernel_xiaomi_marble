@@ -187,6 +187,7 @@ struct dsi_display_ext_bridge {
  * @queue_cmd_waits   Indicates if wait for dma commands done has to be queued.
  * @dma_cmd_workq:	Pointer to the workqueue of DMA command transfer done
  *				wait sequence.
+ * @is_active:        status of the display
  */
 struct dsi_display {
 	struct platform_device *pdev;
@@ -279,6 +280,7 @@ struct dsi_display {
 
 	/* panel id of the display */
 	u64 panel_id;
+	bool is_active;
 };
 
 int dsi_display_dev_probe(struct platform_device *pdev);

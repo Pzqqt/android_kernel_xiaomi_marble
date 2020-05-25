@@ -1259,12 +1259,6 @@ struct drm_gem_object *msm_gem_import(struct drm_device *dev,
 	int ret;
 	unsigned long flags = 0;
 
-	/* if we don't have IOMMU, don't bother pretending we can import: */
-	if (!iommu_present(&platform_bus_type)) {
-		dev_err(dev->dev, "cannot import without IOMMU\n");
-		return ERR_PTR(-EINVAL);
-	}
-
 	size = PAGE_ALIGN(dmabuf->size);
 
 	ret = msm_gem_new_impl(dev, size, MSM_BO_WC, dmabuf->resv, &obj,

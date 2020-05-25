@@ -3784,6 +3784,8 @@ static int dsi_display_res_init(struct dsi_display *display)
 		goto error_ctrl_put;
 	}
 
+	display->is_active = true;
+
 	return 0;
 error_ctrl_put:
 	for (i = i - 1; i >= 0; i--) {
@@ -5447,6 +5449,16 @@ int dsi_display_get_active_displays(void **display_array, u32 max_display_count)
 	return count;
 }
 
+void dsi_display_set_active_state(struct dsi_display *display, bool is_active)
+{
+	if (!display)
+		return;
+
+	mutex_lock(&display->display_lock);
+	display->is_active = is_active;
+	mutex_unlock(&display->display_lock);
+}
+
 int dsi_display_drm_bridge_init(struct dsi_display *display,
 		struct drm_encoder *enc)
 {
@@ -5986,7 +5998,7 @@ int dsi_display_get_info(struct drm_connector *connector,
 	for (i = 0; i < info->num_of_h_tiles; i++)
 		info->h_tile_instance[i] = display->ctrl[i].ctrl->cell_index;
 
-	info->is_connected = true;
+	info->is_connected = display->is_active;
 
 	if (!strcmp(display->display_type, "primary"))
 		info->display_type = SDE_CONNECTOR_PRIMARY;

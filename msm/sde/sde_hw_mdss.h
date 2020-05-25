@@ -636,15 +636,22 @@ struct sde_splash_display {
 	u8 pipe_cnt;
 };
 
+enum sde_handoff_type {
+	SDE_SPLASH_HANDOFF,
+	SDE_VM_HANDOFF,
+};
+
 /**
  * struct sde_splash_data - Struct contains details of continuous splash
  *	for all the displays connected by probe time
+ * @type:                Indicates the type of handoff
  * @num_splash_regions:  Indicates number of splash memory regions from dtsi
  * @num_splash_displays: Indicates count of active displays in continuous splash
  * @splash_mem:          Array of all struct sde_splash_mem listed from dtsi
  * @splash_display:      Array of all struct sde_splash_display
  */
 struct sde_splash_data {
+	enum sde_handoff_type  type;
 	u32 num_splash_regions;
 	u32 num_splash_displays;
 	struct sde_splash_mem splash_mem[MAX_DSI_DISPLAYS];
