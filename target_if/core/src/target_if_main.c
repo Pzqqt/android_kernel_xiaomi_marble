@@ -456,6 +456,21 @@ void target_if_ftm_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 }
 #endif
+
+#ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
+static enum wmi_host_hw_mode_config_type
+target_if_get_default_pref_hw_mode(struct target_psoc_info *psoc_info)
+{
+	return WMI_HOST_HW_MODE_DETECT;
+}
+#else
+static enum wmi_host_hw_mode_config_type
+target_if_get_default_pref_hw_mode(struct target_psoc_info *psoc_info)
+{
+	return WMI_HOST_HW_MODE_MAX;
+}
+#endif
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -595,6 +610,7 @@ QDF_STATUS target_if_free_pdev_tgt_info(struct wlan_objmgr_pdev *pdev)
 QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_psoc_info;
+	enum wmi_host_hw_mode_config_type hw_mode;
 
 	if (!psoc) {
 		target_if_err("psoc is null");
@@ -607,7 +623,8 @@ QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_NOMEM;
 
 	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
-	target_psoc_set_preferred_hw_mode(tgt_psoc_info, WMI_HOST_HW_MODE_MAX);
+	hw_mode = target_if_get_default_pref_hw_mode(tgt_psoc_info);
+	target_psoc_set_preferred_hw_mode(tgt_psoc_info, hw_mode);
 	wlan_minidump_log(tgt_psoc_info,
 			  sizeof(*tgt_psoc_info), psoc,
 			  WLAN_MD_OBJMGR_PSOC_TGT_INFO, "target_psoc_info");

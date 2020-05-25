@@ -362,6 +362,9 @@ int init_deinit_populate_hw_mode_capability(
 		target_if_info("Preferred mode is not set, use mode id %d\n",
 			       selected_mode);
 		target_psoc_set_preferred_hw_mode(tgt_hdl, selected_mode);
+
+		/* Change default DBS hw mode as per selected one */
+		info->target_caps.default_dbs_hw_mode_index = selected_mode;
 	}
 
 	status = get_sar_version(wmi_handle, event, &info->service_ext_param);
