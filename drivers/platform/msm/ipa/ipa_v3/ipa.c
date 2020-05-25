@@ -3908,7 +3908,7 @@ static int ipa3_q6_set_ex_path_to_apps(void)
 	/* Set the exception path to AP */
 	for (client_idx = 0; client_idx < IPA_CLIENT_MAX; client_idx++) {
 		ep_idx = ipa3_get_ep_mapping(client_idx);
-		if (ep_idx == -1 || (ep_idx >= IPA3_MAX_NUM_PIPES))
+		if (ep_idx == -1 || (ep_idx >= ipa3_get_max_num_pipes()))
 			continue;
 
 		/* disable statuses for all modem controlled prod pipes */
@@ -6225,9 +6225,9 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 
 	ipa3_ctx->ipa_num_pipes = ipa3_get_num_pipes();
 	IPADBG("IPA Pipes num %u\n", ipa3_ctx->ipa_num_pipes);
-	if (ipa3_ctx->ipa_num_pipes > IPA3_MAX_NUM_PIPES) {
+	if (ipa3_ctx->ipa_num_pipes > IPA5_MAX_NUM_PIPES) {
 		IPAERR("IPA has more pipes then supported has %d, max %d\n",
-			ipa3_ctx->ipa_num_pipes, IPA3_MAX_NUM_PIPES);
+			ipa3_ctx->ipa_num_pipes, IPA5_MAX_NUM_PIPES);
 		result = -ENODEV;
 		goto fail_init_hw;
 	}
@@ -6293,7 +6293,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	 * entry will be returned from ipa3_get_hw_type_index()
 	 */
 	ipa_init_ep_flt_bitmap();
-	IPADBG("EP with flt support bitmap 0x%x (%u pipes)\n",
+	IPADBG("EP with flt support bitmap 0x%llx (%u pipes)\n",
 		ipa3_ctx->ep_flt_bitmap, ipa3_ctx->ep_flt_num);
 
 	/* Assign resource limitation to each group */

@@ -488,8 +488,8 @@ int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 		IPAERR("fail to alloc EP.\n");
 		return -EFAULT;
 	}
-	if (ipa_ep_idx_rx >= IPA3_MAX_NUM_PIPES ||
-		ipa_ep_idx_tx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx_rx >= ipa3_get_max_num_pipes() ||
+		ipa_ep_idx_tx >= ipa3_get_max_num_pipes()) {
 		IPAERR("ep out of range.\n");
 		return -EFAULT;
 	}
@@ -680,8 +680,9 @@ int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 	IPADBG("ep_tx = %d\n", ipa_ep_idx_tx);
 	IPADBG("ep_rx = %d\n", ipa_ep_idx_rx);
 
-	if (ipa_ep_idx_tx < 0 || ipa_ep_idx_tx >= IPA3_MAX_NUM_PIPES ||
-		ipa_ep_idx_rx < 0 || ipa_ep_idx_rx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx_tx < 0 || ipa_ep_idx_tx >= ipa3_get_max_num_pipes() ||
+		ipa_ep_idx_rx < 0 ||
+		ipa_ep_idx_rx >= ipa3_get_max_num_pipes()) {
 		IPAERR("invalid ipa ep index\n");
 		return -EINVAL;
 	}
@@ -843,6 +844,7 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 	int result = 0;
 	struct ipa3_ep_context *ep;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 	bool disable_force_clear = false;
 	struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
 
@@ -877,10 +879,10 @@ int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 	 * as IPA uC will fail to suspend the pipe otherwise.
 	 */
 	ep = &ipa3_ctx->ep[ipa_ep_idx_rx];
-	source_pipe_bitmask = 1 <<
-			ipa3_get_ep_mapping(ep->client);
+	source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx_rx);
+	source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx_rx);
 	result = ipa3_enable_force_clear(ipa_ep_idx_rx,
-			false, source_pipe_bitmask);
+			false, source_pipe_bitmask, source_pipe_reg_idx);
 	if (result) {
 		/*
 		 * assuming here modem SSR, AP can remove

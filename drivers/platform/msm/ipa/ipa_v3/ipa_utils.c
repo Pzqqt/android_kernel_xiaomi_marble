@@ -4871,7 +4871,7 @@ int ipa3_get_ep_mapping(enum ipa_client_type client)
 
 	ipa_ep_idx =
 		ipa3_ep_mapping[hw_idx][client].ipa_gsi_ep_info.ipa_ep_num;
-	if (ipa_ep_idx < 0 || (ipa_ep_idx >= IPA3_MAX_NUM_PIPES
+	if (ipa_ep_idx < 0 || (ipa_ep_idx >= ipa3_get_max_num_pipes()
 		&& client != IPA_CLIENT_DUMMY_CONS))
 		return IPA_EP_NOT_ALLOCATED;
 
@@ -4961,7 +4961,7 @@ void ipa3_set_client(int index, enum ipacm_client_enum client, bool uplink)
 {
 	if (client > IPACM_CLIENT_MAX || client < IPACM_CLIENT_USB) {
 		IPAERR("Bad client number! client =%d\n", client);
-	} else if (index >= IPA3_MAX_NUM_PIPES || index < 0) {
+	} else if (index >= ipa3_get_max_num_pipes() || index < 0) {
 		IPAERR("Bad pipe index! index =%d\n", index);
 	} else {
 		ipa3_ctx->ipacm_client[index].client_enum = client;
@@ -5028,7 +5028,7 @@ int ipa3_inform_wlan_bw(struct ipa_inform_wlan_bw *wdi_bw)
  */
 enum ipacm_client_enum ipa3_get_client(int pipe_idx)
 {
-	if (pipe_idx >= IPA3_MAX_NUM_PIPES || pipe_idx < 0) {
+	if (pipe_idx >= ipa3_get_max_num_pipes() || pipe_idx < 0) {
 		IPAERR("Bad pipe index! pipe_idx =%d\n", pipe_idx);
 		return IPACM_CLIENT_MAX;
 	} else {
@@ -5045,7 +5045,7 @@ EXPORT_SYMBOL(ipa3_get_client);
  */
 bool ipa3_get_client_uplink(int pipe_idx)
 {
-	if (pipe_idx < 0 || pipe_idx >= IPA3_MAX_NUM_PIPES) {
+	if (pipe_idx < 0 || pipe_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("invalid pipe idx %d\n", pipe_idx);
 		return false;
 	}
@@ -5109,7 +5109,7 @@ void ipa_init_ep_flt_bitmap(void)
 {
 	enum ipa_client_type cl;
 	u8 hw_idx;
-	u32 bitmap;
+	u64 bitmap;
 	u32 pipe_num;
 	const struct ipa_gsi_ep_config *gsi_ep_ptr;
 
@@ -7645,6 +7645,20 @@ enum ipa_transport_type ipa3_get_transport_type(void)
 	return IPA_TRANSPORT_TYPE_GSI;
 }
 EXPORT_SYMBOL(ipa3_get_transport_type);
+
+/**
+ * ipa3_get_max_num_pipes()
+ *
+ * Return value: maximal possible pipes num per hw_ver (not necessarily the
+ *	actual pipes num)
+ */
+u32 ipa3_get_max_num_pipes(void)
+{
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v5_0)
+		return IPA5_PIPES_NUM;
+	else
+		return IPA3_MAX_NUM_PIPES;
+}
 
 u32 ipa3_get_num_pipes(void)
 {

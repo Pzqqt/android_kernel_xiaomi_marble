@@ -39,11 +39,6 @@
 	IPA_PM_DBG_LOW("Client[%d] %s: %s\n", hdl, name, \
 		client_state_to_str[state])
 
-
-#if IPA_PM_MAX_CLIENTS > 32
-#error max client greater than 32 all bitmask types should be changed
-#endif
-
 /*
  * struct ipa_pm_exception_list - holds information about an exception
  * @pending: number of clients in exception that have not yet been adctivated
@@ -53,7 +48,7 @@
 struct ipa_pm_exception_list {
 	char clients[IPA_PM_MAX_EX_CL];
 	int pending;
-	u32 bitmask;
+	u32 bitmask[IPA5_PIPE_REG_NUM];
 	int threshold[IPA_PM_THRESHOLD_MAX];
 };
 
@@ -74,7 +69,7 @@ struct clk_scaling_db {
 	spinlock_t lock;
 	struct ipa_pm_exception_list exception_list[IPA_PM_EXCEPTION_MAX];
 	struct work_struct work;
-	u32 active_client_bitmask;
+	u32 active_client_bitmask[IPA5_PIPE_REG_NUM];
 	int threshold_size;
 	int exception_size;
 	int cur_vote;
@@ -164,7 +159,7 @@ struct ipa_pm_client {
  */
 struct ipa_pm_ctx {
 	struct ipa_pm_client *clients[IPA_PM_MAX_CLIENTS];
-	struct ipa_pm_client *clients_by_pipe[IPA3_MAX_NUM_PIPES];
+	struct ipa_pm_client *clients_by_pipe[IPA5_PIPES_NUM];
 	struct workqueue_struct *wq;
 	struct clk_scaling_db clk_scaling;
 	struct mutex client_mutex;
@@ -280,12 +275,14 @@ static int calculate_throughput(void)
 static void deactivate_client(u32 hdl)
 {
 	unsigned long flags;
+	int idx = ipahal_get_ep_reg_idx(hdl);
 
 	spin_lock_irqsave(&ipa_pm_ctx->clk_scaling.lock, flags);
-	ipa_pm_ctx->clk_scaling.active_client_bitmask &= ~(1 << hdl);
+	ipa_pm_ctx->clk_scaling.active_client_bitmask[idx] &=
+		~(ipahal_get_ep_bit(hdl));
 	spin_unlock_irqrestore(&ipa_pm_ctx->clk_scaling.lock, flags);
-	IPA_PM_DBG_LOW("active bitmask: %x\n",
-		ipa_pm_ctx->clk_scaling.active_client_bitmask);
+	IPA_PM_DBG_LOW("active bitmask (%d): %x\n",
+		idx, ipa_pm_ctx->clk_scaling.active_client_bitmask[idx]);
 }
 
 /**
@@ -296,12 +293,14 @@ static void deactivate_client(u32 hdl)
 static void activate_client(u32 hdl)
 {
 	unsigned long flags;
+	int idx = ipahal_get_ep_reg_idx(hdl);
 
 	spin_lock_irqsave(&ipa_pm_ctx->clk_scaling.lock, flags);
-	ipa_pm_ctx->clk_scaling.active_client_bitmask |= (1 << hdl);
+	ipa_pm_ctx->clk_scaling.active_client_bitmask[idx] |=
+		(ipahal_get_ep_bit(hdl));
 	spin_unlock_irqrestore(&ipa_pm_ctx->clk_scaling.lock, flags);
-	IPA_PM_DBG_LOW("active bitmask: %x\n",
-		ipa_pm_ctx->clk_scaling.active_client_bitmask);
+	IPA_PM_DBG_LOW("active bitmask (%d): %x\n",
+		idx, ipa_pm_ctx->clk_scaling.active_client_bitmask[idx]);
 }
 
 /**
@@ -321,8 +320,10 @@ static void set_current_threshold(void)
 	spin_lock_irqsave(&ipa_pm_ctx->clk_scaling.lock, flags);
 	for (i = 0; i < clk->exception_size; i++) {
 		exception = &clk->exception_list[i];
-		if (exception->pending == 0 && (exception->bitmask
-			& ~clk->active_client_bitmask) == 0) {
+		if (exception->pending == 0 && ((exception->bitmask[0]
+			& ~clk->active_client_bitmask[0]) == 0) &&
+			((exception->bitmask[1] &
+				~clk->active_client_bitmask[1]) == 0)) {
 			spin_unlock_irqrestore(&ipa_pm_ctx->clk_scaling.lock,
 				 flags);
 			clk->current_threshold = exception->threshold;
@@ -546,7 +547,8 @@ static int add_client_to_exception_list(u32 hdl)
 				mutex_unlock(&ipa_pm_ctx->client_mutex);
 				return -EPERM;
 			}
-			exception->bitmask |= (1 << hdl);
+			exception->bitmask[ipahal_get_ep_reg_idx(hdl)] |=
+				(ipahal_get_ep_bit(hdl));
 		}
 	}
 	IPA_PM_DBG("%s added to exception list\n",
@@ -567,14 +569,18 @@ static int remove_client_from_exception_list(u32 hdl)
 {
 	int i;
 	struct ipa_pm_exception_list *exception;
+	int idx;
+	u32 ep_bit;
 
+	idx = ipahal_get_ep_reg_idx(hdl);
+	ep_bit = ipahal_get_ep_bit(hdl);
 	for (i = 0; i < ipa_pm_ctx->clk_scaling.exception_size; i++) {
 		exception = &ipa_pm_ctx->clk_scaling.exception_list[i];
-		if (exception->bitmask & (1 << hdl)) {
+		if (exception->bitmask[idx] & (ep_bit)) {
 			exception->pending++;
 			IPA_PM_DBG("Pending: %d\n",
 			exception->pending);
-			exception->bitmask &= ~(1 << hdl);
+			exception->bitmask[idx] &= ~(ep_bit);
 		}
 	}
 	IPA_PM_DBG("Client %d removed from exception list\n", hdl);
@@ -823,7 +829,7 @@ int ipa_pm_deregister(u32 hdl)
 	mutex_lock(&ipa_pm_ctx->client_mutex);
 
 	/* nullify pointers in pipe array */
-	for (i = 0; i < IPA3_MAX_NUM_PIPES; i++) {
+	for (i = 0; i < ipa3_get_max_num_pipes(); i++) {
 		if (ipa_pm_ctx->clients_by_pipe[i] == ipa_pm_ctx->clients[hdl])
 			ipa_pm_ctx->clients_by_pipe[i] = NULL;
 	}
@@ -1224,7 +1230,7 @@ int ipa_pm_handle_suspend(u32 pipe_bitmask, u32 pipe_arr_idx)
 		return 0;
 
 	pipe_add = pipe_arr_idx * 32;
-	max_pipes = IPA3_MAX_NUM_PIPES;
+	max_pipes = ipa3_get_max_num_pipes();
 	mutex_lock(&ipa_pm_ctx->client_mutex);
 	for (i = 0; i < IPA_EP_PER_REG && (i + pipe_add) < max_pipes; i++) {
 		if (pipe_bitmask & (1 << i)) {
@@ -1370,7 +1376,7 @@ int ipa_pm_stat(char *buf, int size)
 			ipa_pm_group_to_str[client->group], tput);
 		cnt += result;
 
-		for (j = 0; j < IPA3_MAX_NUM_PIPES; j++) {
+		for (j = 0; j < ipa3_get_max_num_pipes(); j++) {
 			if (ipa_pm_ctx->clients_by_pipe[j] == client) {
 				result = scnprintf(buf + cnt, size - cnt,
 					"%d, ", j);
@@ -1418,9 +1424,9 @@ int ipa_pm_exceptions_stat(char *buf, int size)
 		}
 
 		result = scnprintf(buf + cnt, size - cnt,
-			"Exception %d: %s\nPending: %d Bitmask: %d Threshold: ["
+			"Exception %d: %s\nPending: %d Bitmask: %X %X Threshold: ["
 			, i, exception->clients, exception->pending,
-			exception->bitmask);
+			exception->bitmask[0], exception->bitmask[1]);
 		cnt += result;
 		for (j = 0; j < ipa_pm_ctx->clk_scaling.threshold_size; j++) {
 			result = scnprintf(buf + cnt, size - cnt,

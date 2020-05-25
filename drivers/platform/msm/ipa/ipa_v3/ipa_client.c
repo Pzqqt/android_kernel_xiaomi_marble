@@ -988,7 +988,7 @@ static int ipa3_is_xdci_channel_empty(struct ipa3_ep_context *ep,
 }
 
 int ipa3_enable_force_clear(u32 request_id, bool throttle_source,
-	u32 source_pipe_bitmask)
+	u32 source_pipe_bitmask, u32 source_pipe_reg_idx)
 {
 	struct ipa_enable_force_clear_datapath_req_msg_v01 req;
 	int result;
@@ -1116,8 +1116,8 @@ static int ipa3_xdci_stop_gsi_ch_brute_force(u32 clnt_hdl,
 
 /* Clocks should be voted for before invoking this function */
 static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
-		u32 source_pipe_bitmask, bool should_force_clear, u32 clnt_hdl,
-		bool remove_delay)
+		u32 source_pipe_bitmask, u32 source_pipe_reg_idx,
+		bool should_force_clear, u32 clnt_hdl, bool remove_delay)
 {
 	int result;
 	bool is_empty = false;
@@ -1188,7 +1188,7 @@ static int ipa3_stop_ul_chan_with_data_drain(u32 qmi_req_id,
 	/* if still stop_in_proc or not empty, activate force clear */
 	if (should_force_clear) {
 		result = ipa3_enable_force_clear(qmi_req_id, false,
-			source_pipe_bitmask);
+			source_pipe_bitmask, source_pipe_reg_idx);
 		if (result) {
 			struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
 
@@ -1457,6 +1457,7 @@ int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 	struct ipa3_ep_context *ep;
 	int result;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 
 	IPADBG("entry\n");
 	if (clnt_hdl >= ipa3_ctx->ipa_num_pipes ||
@@ -1475,11 +1476,11 @@ int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id)
 	if (!IPA_CLIENT_IS_CONS(ep->client)) {
 		IPADBG("Stopping PROD channel - hdl=%d clnt=%d\n",
 			clnt_hdl, ep->client);
-		source_pipe_bitmask = 1 <<
-			ipa3_get_ep_mapping(ep->client);
+		source_pipe_bitmask = ipahal_get_ep_bit(clnt_hdl);
+		source_pipe_reg_idx = ipahal_get_ep_reg_idx(clnt_hdl);
 		result = ipa3_stop_ul_chan_with_data_drain(qmi_req_id,
-			source_pipe_bitmask, should_force_clear, clnt_hdl,
-			true);
+			source_pipe_bitmask, source_pipe_reg_idx,
+			should_force_clear, clnt_hdl, true);
 		if (result) {
 			IPAERR("Fail to stop UL channel with data drain\n");
 			WARN_ON(1);
@@ -1562,6 +1563,7 @@ int ipa3_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 	struct ipa3_ep_context *dl_ep;
 	int result = -EFAULT;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 	bool dl_data_pending = true;
 	bool ul_data_pending = true;
 	int i;
@@ -1684,10 +1686,11 @@ int ipa3_xdci_suspend(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 
 	/* STOP UL channel */
 	if (!is_dpl) {
-		source_pipe_bitmask = 1 << ipa3_get_ep_mapping(ul_ep->client);
+		source_pipe_bitmask = ipahal_get_ep_bit(ul_clnt_hdl);
+		source_pipe_reg_idx = ipahal_get_ep_reg_idx(ul_clnt_hdl);
 		result = ipa3_stop_ul_chan_with_data_drain(qmi_req_id,
-			source_pipe_bitmask, should_force_clear, ul_clnt_hdl,
-			false);
+			source_pipe_bitmask, source_pipe_reg_idx,
+			should_force_clear, ul_clnt_hdl, false);
 		if (result) {
 			IPAERR("Error stopping UL channel: result = %d\n",
 				result);

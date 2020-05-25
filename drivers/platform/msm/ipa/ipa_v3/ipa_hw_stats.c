@@ -551,7 +551,7 @@ int ipa_get_quota_stats(struct ipa_quota_stats_all *out)
 	for (i = 0; i < IPA_CLIENT_MAX; i++) {
 		int ep_idx = ipa3_get_ep_mapping(i);
 
-		if (ep_idx == -1 || ep_idx >= IPA3_MAX_NUM_PIPES)
+		if (ep_idx == -1 || ep_idx >= ipa3_get_max_num_pipes())
 			continue;
 
 		if (ipa3_ctx->ep[ep_idx].client != i)
@@ -912,10 +912,12 @@ int ipa_get_teth_stats(void)
 			int prod_idx = ipa3_get_ep_mapping(i);
 			int cons_idx = ipa3_get_ep_mapping(j);
 
-			if (prod_idx == -1 || prod_idx >= IPA3_MAX_NUM_PIPES)
+			if (prod_idx == -1 ||
+				prod_idx >= ipa3_get_max_num_pipes())
 				continue;
 
-			if (cons_idx == -1 || cons_idx >= IPA3_MAX_NUM_PIPES)
+			if (cons_idx == -1 ||
+				cons_idx >= ipa3_get_max_num_pipes())
 				continue;
 
 			/* save hw-query result */
@@ -1804,7 +1806,7 @@ int ipa_get_drop_stats(struct ipa_drop_stats_all *out)
 	for (i = 0; i < IPA_CLIENT_MAX; i++) {
 		int ep_idx = ipa3_get_ep_mapping(i);
 
-		if (ep_idx == -1 || ep_idx >= IPA3_MAX_NUM_PIPES)
+		if (ep_idx == -1 || ep_idx >= ipa3_get_max_num_pipes())
 			continue;
 
 		if (ipa3_ctx->ep[ep_idx].client != i)

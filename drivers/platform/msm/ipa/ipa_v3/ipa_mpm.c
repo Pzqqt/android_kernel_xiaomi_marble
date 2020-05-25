@@ -1662,7 +1662,6 @@ static enum mhip_status_type ipa_mpm_start_stop_mhip_chan(
 	struct ipa3_ep_context *ep;
 	bool is_start;
 	enum ipa_client_type ul_chan, dl_chan;
-	u32 source_pipe_bitmask = 0;
 	enum gsi_status gsi_res = GSI_STATUS_SUCCESS;
 	int result;
 
@@ -1778,8 +1777,6 @@ static enum mhip_status_type ipa_mpm_start_stop_mhip_chan(
 		}
 
 		if (mhip_chan == IPA_MPM_MHIP_CHAN_UL) {
-			source_pipe_bitmask = 1 <<
-				ipa3_get_ep_mapping(ep->client);
 			/* First Stop UL GSI channel before unvote PCIe clock */
 			result = ipa3_stop_gsi_channel(ipa_ep_idx);
 

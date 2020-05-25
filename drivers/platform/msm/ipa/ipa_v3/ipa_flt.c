@@ -1166,7 +1166,7 @@ static int __ipa_add_ep_flt_rule(enum ipa_ip_type ip, enum ipa_client_type ep,
 	if (__ipa_add_flt_get_ep_idx(ep, &ipa_ep_idx))
 		return -EINVAL;
 
-	if (ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR_RL("invalid ipa_ep_idx=%d\n", ipa_ep_idx);
 		return -EINVAL;
 	}
@@ -1442,7 +1442,7 @@ int ipa3_add_flt_rule_after(struct ipa_ioc_add_flt_rule_after *rules)
 		goto bail;
 	}
 
-	if (ipa_ep_idx >= IPA3_MAX_NUM_PIPES || ipa_ep_idx < 0) {
+	if (ipa_ep_idx >= ipa3_get_max_num_pipes() || ipa_ep_idx < 0) {
 		IPAERR_RL("invalid ipa_ep_idx=%u\n", ipa_ep_idx);
 		result = -EINVAL;
 		goto bail;
@@ -1560,7 +1560,7 @@ int ipa3_add_flt_rule_after_v2(struct ipa_ioc_add_flt_rule_after_v2
 		goto bail;
 	}
 
-	if (ipa_ep_idx >= IPA3_MAX_NUM_PIPES ||
+	if (ipa_ep_idx >= ipa3_get_max_num_pipes() ||
 		ipa_ep_idx < 0) {
 		IPAERR_RL("invalid ipa_ep_idx=%u\n", ipa_ep_idx);
 		result = -EINVAL;
@@ -1892,7 +1892,7 @@ void ipa3_install_dflt_flt_rules(u32 ipa_ep_idx)
 	struct ipa3_ep_context *ep;
 	struct ipa_flt_rule_i rule;
 
-	if (ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("invalid ipa_ep_idx=%u\n", ipa_ep_idx);
 		ipa_assert();
 		return;
@@ -2039,7 +2039,7 @@ int ipa3_flt_read_tbl_from_hw(u32 pipe_idx, enum ipa_ip_type ip_type,
 	}
 
 	if (pipe_idx >= ipa3_ctx->ipa_num_pipes ||
-		pipe_idx >= IPA3_MAX_NUM_PIPES || ip_type >= IPA_IP_MAX ||
+		pipe_idx >= ipa3_get_max_num_pipes() || ip_type >= IPA_IP_MAX ||
 		!entry || !num_entry) {
 		IPAERR_RL("Invalid pipe_idx=%u\n", pipe_idx);
 		return -EFAULT;

@@ -959,7 +959,7 @@ int ipa3_conn_wigig_rx_pipe_i(void *in, struct ipa_wigig_conn_out_params *out,
 
 	ipa_ep_idx = ipa_get_ep_mapping(rx_client);
 	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED ||
-		ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+		ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("fail to get ep (IPA_CLIENT_WIGIG_PROD) %d.\n",
 			ipa_ep_idx);
 		return -EFAULT;
@@ -1253,7 +1253,7 @@ int ipa3_conn_wigig_client_i(void *in,
 
 	ipa_ep_idx = ipa_get_ep_mapping(tx_client);
 	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED ||
-		ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+		ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("fail to get ep (%d) %d.\n",
 			tx_client, ipa_ep_idx);
 		return -EFAULT;
@@ -1393,7 +1393,7 @@ int ipa3_disconn_wigig_pipe_i(enum ipa_client_type client,
 
 	ipa_ep_idx = ipa_get_ep_mapping(client);
 	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED ||
-		ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+		ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("fail to get ep (%d) %d.\n",
 			client, ipa_ep_idx);
 		return -EFAULT;
@@ -1661,7 +1661,7 @@ int ipa3_enable_wigig_pipe_i(enum ipa_client_type client)
 
 	ipa_ep_idx = ipa_get_ep_mapping(client);
 	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED ||
-		ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+		ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("fail to get ep (%d) %d.\n",
 			client, ipa_ep_idx);
 		return -EFAULT;
@@ -1778,18 +1778,18 @@ int ipa3_disable_wigig_pipe_i(enum ipa_client_type client)
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	bool disable_force_clear = false;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 	int retry_cnt = 0;
 
 	IPADBG("\n");
 
 	ipa_ep_idx = ipa_get_ep_mapping(client);
-	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED ||
-		ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx == IPA_EP_NOT_ALLOCATED) {
 		IPAERR("fail to get ep (%d) %d.\n",
 			client, ipa_ep_idx);
 		return -EFAULT;
 	}
-	if (ipa_ep_idx >= IPA3_MAX_NUM_PIPES) {
+	if (ipa_ep_idx >= ipa3_get_max_num_pipes()) {
 		IPAERR("ep %d out of range.\n", ipa_ep_idx);
 		return -EFAULT;
 	}
@@ -1809,9 +1809,10 @@ int ipa3_disable_wigig_pipe_i(enum ipa_client_type client)
 	}
 
 	IPADBG("pipe %d\n", ipa_ep_idx);
-	source_pipe_bitmask = 1 << ipa_ep_idx;
+	source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx);
+	source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx);
 	res = ipa3_enable_force_clear(ipa_ep_idx,
-		false, source_pipe_bitmask);
+		false, source_pipe_bitmask, source_pipe_reg_idx);
 	if (res) {
 		/*
 		 * assuming here modem SSR, AP can remove

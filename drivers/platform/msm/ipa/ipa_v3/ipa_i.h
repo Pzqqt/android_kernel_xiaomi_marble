@@ -51,6 +51,9 @@
 
 #define IPA_EP_NOT_ALLOCATED (-1)
 #define IPA3_MAX_NUM_PIPES 31
+#define IPA5_PIPES_NUM 36
+#define IPA5_PIPE_REG_NUM 2
+#define IPA5_MAX_NUM_PIPES (IPA5_PIPES_NUM)
 #define IPA_SYS_DESC_FIFO_SZ 0x800
 #define IPA_SYS_TX_DATA_DESC_FIFO_SZ 0x1000
 #define IPA_COMMON_EVENT_RING_SIZE 0x7C00
@@ -1935,12 +1938,12 @@ struct ipa3_app_clock_vote {
  */
 struct ipa3_context {
 	struct ipa3_char_device_context cdev;
-	struct ipa3_ep_context ep[IPA3_MAX_NUM_PIPES];
-	bool skip_ep_cfg_shadow[IPA3_MAX_NUM_PIPES];
-	u32 ep_flt_bitmap;
+	struct ipa3_ep_context ep[IPA5_MAX_NUM_PIPES];
+	bool skip_ep_cfg_shadow[IPA5_MAX_NUM_PIPES];
+	u64 ep_flt_bitmap;
 	u32 ep_flt_num;
 	bool resume_on_connect[IPA_CLIENT_MAX];
-	struct ipa3_flt_tbl flt_tbl[IPA3_MAX_NUM_PIPES][IPA_IP_MAX];
+	struct ipa3_flt_tbl flt_tbl[IPA5_MAX_NUM_PIPES][IPA_IP_MAX];
 	struct idr flt_rule_ids[IPA_IP_MAX];
 	void __iomem *mmio;
 	u32 ipa_wrapper_base;
@@ -2035,7 +2038,7 @@ struct ipa3_context {
 	struct mutex q6_proxy_clk_vote_mutex;
 	u32 q6_proxy_clk_vote_cnt;
 	u32 ipa_num_pipes;
-	dma_addr_t pkt_init_imm[IPA3_MAX_NUM_PIPES];
+	dma_addr_t pkt_init_imm[IPA5_MAX_NUM_PIPES];
 	u32 pkt_init_imm_opcode;
 
 	struct ipa3_wlan_comm_memb wc_memb;
@@ -2059,7 +2062,7 @@ struct ipa3_context {
 	/* RMNET_IOCTL_INGRESS_FORMAT_AGG_DATA */
 	bool ipa_client_apps_wan_cons_agg_gro;
 	/* M-release support to know client pipes */
-	struct ipa3cm_client_info ipacm_client[IPA3_MAX_NUM_PIPES];
+	struct ipa3cm_client_info ipacm_client[IPA5_MAX_NUM_PIPES];
 	bool tethered_flow_control;
 	bool ipa_initialization_complete;
 	struct list_head ipa_ready_cb_list;
@@ -2885,7 +2888,7 @@ bool ipa3_check_idr_if_freed(void *ptr);
 void *ipa3_id_find(u32 id);
 void ipa3_id_remove(u32 id);
 int ipa3_enable_force_clear(u32 request_id, bool throttle_source,
-	u32 source_pipe_bitmask);
+	u32 source_pipe_bitmask, u32 source_pipe_reg_idx);
 int ipa3_disable_force_clear(u32 request_id);
 
 int ipa3_cfg_ep_status(u32 clnt_hdl,
@@ -2999,6 +3002,7 @@ int ipa_set_flt_rt_stats(int index, struct ipa_flt_rt_stats stats);
 
 bool ipa_get_fnr_info(struct ipacm_fnr_info *fnr_info);
 
+u32 ipa3_get_max_num_pipes(void);
 u32 ipa3_get_num_pipes(void);
 struct ipa_smmu_cb_ctx *ipa3_get_smmu_ctx(enum ipa_smmu_cb_type);
 struct iommu_domain *ipa3_get_smmu_domain(void);

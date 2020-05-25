@@ -2617,6 +2617,7 @@ int ipa3_suspend_gsi_wdi_pipe(u32 clnt_hdl)
 	struct ipa3_ep_context *ep;
 	int res = 0;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 	bool disable_force_clear = false;
 	struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
 	int retry_cnt = 0;
@@ -2637,11 +2638,12 @@ int ipa3_suspend_gsi_wdi_pipe(u32 clnt_hdl)
 		return -EFAULT;
 	}
 	if (ep->valid) {
+		source_pipe_bitmask = ipahal_get_ep_bit(ipa_ep_idx);
+		source_pipe_reg_idx = ipahal_get_ep_reg_idx(ipa_ep_idx);
+
 		IPADBG("suspended pipe %d\n", ipa_ep_idx);
-		source_pipe_bitmask = 1 <<
-			ipa3_get_ep_mapping(ep->client);
 		res = ipa3_enable_force_clear(clnt_hdl,
-				false, source_pipe_bitmask);
+			false, source_pipe_bitmask, source_pipe_reg_idx);
 		if (res) {
 			/*
 			 * assuming here modem SSR, AP can remove
@@ -2731,6 +2733,7 @@ int ipa3_suspend_wdi_pipe(u32 clnt_hdl)
 	union IpaHwWdiCommonChCmdData_t suspend;
 	struct ipa_ep_cfg_ctrl ep_cfg_ctrl;
 	u32 source_pipe_bitmask = 0;
+	u32 source_pipe_reg_idx = 0;
 	bool disable_force_clear = false;
 	struct ipahal_ep_cfg_ctrl_scnd ep_ctrl_scnd = { 0 };
 
@@ -2765,10 +2768,10 @@ int ipa3_suspend_wdi_pipe(u32 clnt_hdl)
 		 * as IPA uC will fail to suspend the pipe otherwise.
 		 */
 		if (ipa3_ctx->ipa_wdi2) {
-			source_pipe_bitmask = 1 <<
-					ipa3_get_ep_mapping(ep->client);
+			source_pipe_bitmask = ipahal_get_ep_bit(clnt_hdl);
+			source_pipe_reg_idx = ipahal_get_ep_reg_idx(clnt_hdl);
 			result = ipa3_enable_force_clear(clnt_hdl,
-				false, source_pipe_bitmask);
+				false, source_pipe_bitmask,source_pipe_reg_idx);
 			if (result) {
 				/*
 				 * assuming here modem SSR, AP can remove
