@@ -1299,7 +1299,8 @@ static void _sde_crtc_set_src_split_order(struct drm_crtc *crtc,
 		prv_pstate = (i > 0) ? &pstates[i - 1] : NULL;
 		cur_pstate = &pstates[i];
 		nxt_pstate = ((i + 1) < cnt) ? &pstates[i + 1] : NULL;
-		prev_layout = prv_pstate->sde_pstate->layout;
+		prev_layout = prv_pstate ? prv_pstate->sde_pstate->layout :
+							SDE_LAYOUT_NONE;
 		cur_layout = cur_pstate->sde_pstate->layout;
 
 		if ((!prv_pstate) || (prv_pstate->stage != cur_pstate->stage)

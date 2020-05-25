@@ -200,10 +200,17 @@ static void _dce_dsc_pipe_cfg(struct sde_hw_dsc *hw_dsc,
 		u32 common_mode, bool ich_reset,
 		struct sde_hw_pingpong *hw_dsc_pp,
 		enum sde_3d_blend_mode mode_3d,
-		bool disable_merge_3d, bool enable)
+		bool disable_merge_3d, bool enable,
+		bool half_panel_partial_update)
 {
 	if (!enable) {
-		if (hw_dsc_pp && hw_dsc_pp->ops.disable_dsc)
+		/*
+		 * avoid disabling dsc encoder in pp-block as it is
+		 * not double-buffered and is not required to be disabled
+		 * for half panel updates
+		 */
+		if (hw_dsc_pp && hw_dsc_pp->ops.disable_dsc
+				&& !half_panel_partial_update)
 			hw_dsc_pp->ops.disable_dsc(hw_dsc_pp);
 
 		if (hw_dsc && hw_dsc->ops.dsc_disable)
@@ -342,7 +349,8 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 			index, active, merge_3d, disable_merge_3d);
 
 	_dce_dsc_pipe_cfg(hw_dsc, hw_pp, dsc, dsc_common_mode, ich_res,
-			hw_dsc_pp, mode_3d, disable_merge_3d, active);
+			hw_dsc_pp, mode_3d, disable_merge_3d, active,
+			half_panel_partial_update);
 
 	memset(&cfg, 0, sizeof(cfg));
 	cfg.dsc[cfg.dsc_count++] = hw_dsc->idx;
@@ -717,7 +725,7 @@ static void _dce_dsc_disable(struct sde_encoder_virt *sde_enc)
 
 		_dce_dsc_pipe_cfg(hw_dsc, hw_pp, NULL,
 					0, 0, hw_dsc_pp,
-					BLEND_3D_NONE, false, false);
+					BLEND_3D_NONE, false, false, false);
 
 		if (hw_dsc) {
 			sde_enc->dirty_dsc_ids[i] = hw_dsc->idx;
