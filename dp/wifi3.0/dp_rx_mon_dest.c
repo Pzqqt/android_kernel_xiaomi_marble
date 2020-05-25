@@ -1130,13 +1130,14 @@ dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
 	struct dp_srng *mon_buf_ring;
 	uint32_t num_entries;
 	struct rx_desc_pool *rx_desc_pool;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx = soc->wlan_cfg_ctx;
 
-	mon_buf_ring = &soc->rxdma_mon_buf_ring[mac_id];
+	mon_buf_ring = dp_rxdma_get_mon_buf_ring(pdev, mac_id);
 
 	num_entries = mon_buf_ring->num_entries;
 
-	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+	rx_desc_pool = dp_rx_get_mon_desc_pool(soc, mac_id, pdev_id);
 
 	dp_debug("Mon RX Desc Pool[%d] entries=%u", pdev_id, num_entries);
 
@@ -1147,13 +1148,24 @@ dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
 	 * entries. Once the monitor VAP is configured we replenish
 	 * the complete RXDMA monitor buffer ring.
 	 */
-	if (delayed_replenish)
+	if (delayed_replenish) {
 		num_entries = soc_cfg_ctx->delayed_replenish_entries + 1;
-	else
-		num_entries -= soc_cfg_ctx->delayed_replenish_entries;
+		status = dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
+						   rx_desc_pool,
+						   num_entries - 1);
+	} else {
+		union dp_rx_desc_list_elem_t *tail = NULL;
+		union dp_rx_desc_list_elem_t *desc_list = NULL;
 
-	return dp_pdev_rx_buffers_attach(soc, mac_id, mon_buf_ring,
-					 rx_desc_pool, num_entries - 1);
+		status = dp_rx_buffers_replenish(soc, mac_id,
+						 mon_buf_ring,
+						 rx_desc_pool,
+						 num_entries,
+						 &desc_list,
+						 &tail);
+	}
+
+	return status;
 }
 
 static QDF_STATUS
