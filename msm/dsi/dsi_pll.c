@@ -11,9 +11,6 @@
 #include <linux/err.h>
 #include <linux/delay.h>
 #include <linux/iopoll.h>
-#include <linux/vmalloc.h>
-#include <linux/io.h>
-#include <linux/of_address.h>
 #include "dsi_pll.h"
 
 static int dsi_pll_clock_register(struct platform_device *pdev,
@@ -52,78 +49,6 @@ static inline int dsi_pll_get_ioresources(struct platform_device *pdev,
 			return -ENOMEM;
 	}
 	return rc;
-}
-
-static void dsi_pll_free_bootmem(u32 mem_addr, u32 size)
-{
-	unsigned long pfn_start, pfn_end, pfn_idx;
-
-	pfn_start = mem_addr >> PAGE_SHIFT;
-	pfn_end = (mem_addr + size) >> PAGE_SHIFT;
-	for (pfn_idx = pfn_start; pfn_idx < pfn_end; pfn_idx++)
-		free_reserved_page(pfn_to_page(pfn_idx));
-}
-
-static void dsi_pll_parse_dfps(struct platform_device *pdev,
-				struct dsi_pll_resource *pll_res)
-{
-	struct device_node *pnode = NULL;
-	const u32 *addr;
-	struct vm_struct *area = NULL;
-	u64 size;
-	u32 offsets[2];
-	unsigned long virt_add = 0;
-
-	pnode = of_parse_phandle(pdev->dev.of_node, "memory-region", 0);
-	if (IS_ERR_OR_NULL(pnode)) {
-		DSI_PLL_INFO(pll_res, "of_parse_phandle failed\n");
-		goto node_err;
-	}
-
-	addr = of_get_address(pnode, 0, &size, NULL);
-	if (!addr) {
-		DSI_PLL_ERR(pll_res,
-			"failed to parse the dfps memory address\n");
-		goto node_err;
-	}
-
-	/* maintain compatibility for 32/64 bit */
-	offsets[0] = (u32) of_read_ulong(addr, 2);
-	offsets[1] = (u32) size;
-
-	area = get_vm_area(offsets[1], VM_IOREMAP);
-	if (!area) {
-		DSI_PLL_ERR(pll_res, "get_vm_area failed\n");
-		goto mem_err;
-	}
-
-	virt_add = (unsigned long)area->addr;
-	if (ioremap_page_range(virt_add, (virt_add + offsets[1]),
-			offsets[0], PAGE_KERNEL)) {
-		DSI_PLL_ERR(pll_res, "ioremap_page_range failed\n");
-		goto mem_err;
-	}
-
-	pll_res->dfps = kzalloc(sizeof(struct dfps_info), GFP_KERNEL);
-	if (IS_ERR_OR_NULL(pll_res->dfps)) {
-		DSI_PLL_ERR(pll_res, "pll_res->dfps allocate failed\n");
-		goto mem_err;
-	}
-
-	/* memcopy complete dfps structure from kernel virtual memory */
-	memcpy_fromio(pll_res->dfps, area->addr, sizeof(struct dfps_info));
-
-mem_err:
-	if (virt_add)
-		unmap_kernel_range(virt_add, (unsigned long) size);
-	if (area)
-		vfree(area->addr);
-	/* free the dfps memory here */
-	dsi_pll_free_bootmem(offsets[0], offsets[1]);
-
-node_err:
-	if (pnode)
-		of_node_put(pnode);
 }
 
 int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
@@ -219,9 +144,6 @@ int dsi_pll_init(struct platform_device *pdev, struct dsi_pll_resource **pll)
 		DSI_PLL_ERR(pll_res, "clock register failed rc=%d\n", rc);
 		return -EINVAL;
 	}
-
-	if (!(pll_res->index))
-		dsi_pll_parse_dfps(pdev, pll_res);
 
 	return rc;
 
