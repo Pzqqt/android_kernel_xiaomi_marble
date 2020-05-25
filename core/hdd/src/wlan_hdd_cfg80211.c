@@ -6713,6 +6713,7 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_LDPC] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_PHY_MODE] = {.type = NLA_U32 },
 
 };
 
@@ -7043,6 +7044,191 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_adapter *adapter,
 	}
 
 	return ret_val;
+}
+
+static eCsrPhyMode
+hdd_vendor_mode_to_phymode(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
+{
+	eCsrPhyMode phymode;
+
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+		phymode = eCSR_DOT11_MODE_AUTO;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+		phymode = eCSR_DOT11_MODE_11a;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+		phymode = eCSR_DOT11_MODE_11b;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+		phymode = eCSR_DOT11_MODE_11g;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		phymode = eCSR_DOT11_MODE_11n;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+		phymode = eCSR_DOT11_MODE_11ac;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+		phymode = eCSR_DOT11_MODE_11ax;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		phymode = -EINVAL;
+	}
+
+	return phymode;
+}
+
+static enum band_info
+hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
+{
+	enum band_info band;
+
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		band = BAND_ALL;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+		band = BAND_5G;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+		band = BAND_2G;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		band = -EINVAL;
+	}
+
+	return band;
+}
+
+static uint32_t
+hdd_vendor_mode_to_chwidth(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
+{
+	uint32_t chwidth;
+
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		chwidth = -EINVAL;
+	}
+
+	return chwidth;
+}
+
+/**
+ * hdd_config_phy_mode() - set PHY mode
+ * @adapter: hdd adapter
+ * @attr: nla attr sent by supplicant
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_config_phy_mode(struct hdd_adapter *adapter,
+			       const struct nlattr *attr)
+{
+	enum qca_wlan_vendor_phy_mode vendor_phy_mode;
+	eCsrPhyMode phymode;
+	enum band_info band;
+	uint32_t chwidth;
+
+	vendor_phy_mode = nla_get_u8(attr);
+
+	phymode = hdd_vendor_mode_to_phymode(vendor_phy_mode);
+	if (phymode < 0)
+		return -EINVAL;
+
+	band = hdd_vendor_mode_to_band(vendor_phy_mode);
+	if (band < 0)
+		return -EINVAL;
+
+	chwidth = hdd_vendor_mode_to_chwidth(vendor_phy_mode);
+	if (chwidth < 0)
+		return -EINVAL;
+
+	return hdd_update_phymode(adapter, phymode, band, chwidth);
 }
 
 /**
@@ -8145,6 +8331,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_tx_stbc},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC,
 	 hdd_config_rx_stbc},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_PHY_MODE,
+	 hdd_config_phy_mode},
 };
 
 #ifdef WLAN_FEATURE_ELNA

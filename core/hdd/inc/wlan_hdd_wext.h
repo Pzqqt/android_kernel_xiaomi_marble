@@ -258,7 +258,7 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
 		      struct sap_config *sap_config);
 
 /**
- * wlan_hdd_update_phymode() - handle change in PHY mode
+ * hdd_we_update_phymode() - handle change in PHY mode
  * @adapter: adapter being modified
  * @new_phymode: new PHY mode for the device
  *
@@ -270,7 +270,8 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
  *
  * Return: 0 on success, negative errno value on error
  */
-int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode);
+int hdd_we_update_phymode(struct hdd_adapter *adapter, int new_phymode);
+
 /**
  * wlan_hdd_update_btcoex_mode() - set BTCoex Mode
  * @adapter: adapter being modified
