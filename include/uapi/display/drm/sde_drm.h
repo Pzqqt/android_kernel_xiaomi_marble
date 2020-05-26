@@ -627,11 +627,34 @@ struct drm_msm_power_ctrl {
 	__u32 enable;
 	__u32 flags;
 };
+
+/**
+ * struct drm_msm_early_wakeup: Payload to early wake up display
+ * @wakeup_hint:  early wakeup hint.
+ * @connector_id: connector id. e.g.: for connector pass connector id.
+ */
+struct drm_msm_early_wakeup {
+	__u32 wakeup_hint;
+	__u32 connector_id;
+};
+
+/**
+ * struct drm_msm_display_hint: Payload for display hint
+ * @hint_flags:  display hint flags.
+ * @data: data struct. e.g.: for display hint parameter.
+ *        Userspace pointer to struct base on hint flags.
+ */
+struct drm_msm_display_hint {
+	__u64 data;
+	__u32 hint_flags;
+};
+
 #define DRM_SDE_WB_CONFIG              0x40
 #define DRM_MSM_REGISTER_EVENT         0x41
 #define DRM_MSM_DEREGISTER_EVENT       0x42
 #define DRM_MSM_RMFB2                  0x43
 #define DRM_MSM_POWER_CTRL             0x44
+#define DRM_MSM_DISPLAY_HINT           0x45
 
 /* sde custom events */
 #define DRM_EVENT_HISTOGRAM 0x80000000
@@ -646,6 +669,14 @@ struct drm_msm_power_ctrl {
 #define DRM_EVENT_LTM_WB_PB 0X80000009
 #define DRM_EVENT_LTM_OFF 0X8000000A
 
+/* display hint flags*/
+#define DRM_MSM_DISPLAY_EARLY_WAKEUP_HINT         0x01
+#define DRM_MSM_DISPLAY_POWER_COLLAPSE_HINT       0x02
+#define DRM_MSM_DISPLAY_IDLE_TIMEOUT_HINT         0x04
+#define DRM_MSM_DISPLAY_MODE_CHANGE_HINT          0x08
+
+#define DRM_MSM_WAKE_UP_ALL_DISPLAYS        0xFFFFFFFF
+
 #define DRM_IOCTL_SDE_WB_CONFIG \
 	DRM_IOW((DRM_COMMAND_BASE + DRM_SDE_WB_CONFIG), struct sde_drm_wb_cfg)
 #define DRM_IOCTL_MSM_REGISTER_EVENT   DRM_IOW((DRM_COMMAND_BASE + \
@@ -656,6 +687,8 @@ struct drm_msm_power_ctrl {
 			DRM_MSM_RMFB2), unsigned int)
 #define DRM_IOCTL_MSM_POWER_CTRL DRM_IOW((DRM_COMMAND_BASE + \
 			DRM_MSM_POWER_CTRL), struct drm_msm_power_ctrl)
+#define DRM_IOCTL_MSM_DISPLAY_HINT DRM_IOW((DRM_COMMAND_BASE + \
+			DRM_MSM_DISPLAY_HINT), struct drm_msm_display_hint)
 
 #if defined(__cplusplus)
 }
