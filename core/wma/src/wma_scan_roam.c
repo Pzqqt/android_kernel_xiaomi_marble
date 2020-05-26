@@ -3437,7 +3437,6 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 	case WMI_ROAM_TRIGGER_REASON_PER:
 	case WMI_ROAM_TRIGGER_REASON_BMISS:
 	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
-	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
 	case WMI_ROAM_TRIGGER_REASON_MAWC:
 	case WMI_ROAM_TRIGGER_REASON_DENSE:
 	case WMI_ROAM_TRIGGER_REASON_BACKGROUND:
@@ -3475,7 +3474,8 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		buf_left -= buf_cons;
 		return;
 	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
-		buf_cons = qdf_snprint(temp, buf_left, "Low_rssi_threshold: %d",
+	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
+		buf_cons = qdf_snprint(temp, buf_left, "Cur_rssi_threshold: %d",
 				       roam_info->rssi_trig_data.threshold);
 		temp += buf_cons;
 		buf_left -= buf_cons;
@@ -3601,7 +3601,8 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 		return;
 	}
 
-	if (WMI_ROAM_TRIGGER_REASON_LOW_RSSI == trigger)
+	if (WMI_ROAM_TRIGGER_REASON_LOW_RSSI == trigger ||
+	    WMI_ROAM_TRIGGER_REASON_PERIODIC == trigger)
 		qdf_snprint(buf1, ROAM_FAILURE_BUF_SIZE,
 			    "next_rssi_threshold: %d dBm",
 			    scan->next_rssi_threshold);
