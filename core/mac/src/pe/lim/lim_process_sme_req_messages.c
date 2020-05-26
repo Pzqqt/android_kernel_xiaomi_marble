@@ -5859,6 +5859,7 @@ void lim_send_obss_color_collision_cfg(struct mac_context *mac_ctx,
 	qdf_mem_zero(cfg_param, sizeof(*cfg_param));
 	cfg_param->vdev_id = session->smeSessionId;
 	cfg_param->evt_type = event_type;
+	cfg_param->current_bss_color = session->he_op.bss_color;
 	if (LIM_IS_AP_ROLE(session))
 		cfg_param->detection_period_ms =
 			OBSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS;
