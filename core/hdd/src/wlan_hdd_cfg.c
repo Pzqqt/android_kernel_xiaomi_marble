@@ -47,6 +47,7 @@
 #include "wlan_fwol_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "hdd_dp_cfg.h"
+#include <wma_api.h>
 
 /**
  * get_next_line() - find and locate the new line pointer
@@ -1402,4 +1403,38 @@ int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 		hdd_err("Failed to set HE RX STBC value");
 
 	return ret;
+}
+
+int hdd_update_channel_width(struct hdd_adapter *adapter,
+			     enum eSirMacHTChannelWidth chwidth,
+			     uint32_t bonding_mode)
+{
+	struct hdd_context *hdd_ctx;
+	struct sme_config_params *sme_config;
+	int ret;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx failure");
+		return -EINVAL;
+	}
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config)
+		return -ENOMEM;
+
+	ret = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_CHWIDTH,
+				  chwidth, VDEV_CMD);
+	if (ret)
+		goto free_config;
+
+	sme_get_config_param(hdd_ctx->mac_handle, sme_config);
+	sme_config->csr_config.channelBondingMode5GHz = bonding_mode;
+	sme_config->csr_config.channelBondingMode24GHz = bonding_mode;
+	sme_update_config(hdd_ctx->mac_handle, sme_config);
+
+free_config:
+	qdf_mem_free(sme_config);
+	return ret;
+
 }

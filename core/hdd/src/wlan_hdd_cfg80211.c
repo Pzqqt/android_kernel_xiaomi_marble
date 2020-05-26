@@ -6714,6 +6714,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_STBC] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PHY_MODE] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW] = {.type = NLA_U8 },
 
 };
 
@@ -8233,6 +8235,125 @@ static int hdd_set_elna_bypass(struct hdd_adapter *adapter,
 }
 #endif
 
+static enum eSirMacHTChannelWidth
+hdd_nl80211_chwidth_to_chwidth(uint8_t nl80211_chwidth)
+{
+	int chwidth;
+
+	switch (nl80211_chwidth) {
+	case NL80211_CHAN_WIDTH_20:
+		chwidth = eHT_CHANNEL_WIDTH_20MHZ;
+		break;
+	case NL80211_CHAN_WIDTH_40:
+		chwidth = eHT_CHANNEL_WIDTH_40MHZ;
+		break;
+	case NL80211_CHAN_WIDTH_80:
+		chwidth = eHT_CHANNEL_WIDTH_80MHZ;
+		break;
+	case NL80211_CHAN_WIDTH_80P80:
+		chwidth = eHT_CHANNEL_WIDTH_80P80MHZ;
+		break;
+	case NL80211_CHAN_WIDTH_160:
+		chwidth = eHT_CHANNEL_WIDTH_160MHZ;
+		break;
+	default:
+		hdd_err("Unsupported channel width %d", nl80211_chwidth);
+		chwidth = -EINVAL;
+	}
+
+	return chwidth;
+}
+
+static uint8_t
+hdd_chwidth_to_nl80211_chwidth(enum eSirMacHTChannelWidth chwidth)
+{
+	uint8_t nl80211_chwidth;
+
+	switch (chwidth) {
+	case eHT_CHANNEL_WIDTH_20MHZ:
+		nl80211_chwidth = NL80211_CHAN_WIDTH_20;
+		break;
+	case eHT_CHANNEL_WIDTH_40MHZ:
+		nl80211_chwidth = NL80211_CHAN_WIDTH_40;
+		break;
+	case eHT_CHANNEL_WIDTH_80MHZ:
+		nl80211_chwidth = NL80211_CHAN_WIDTH_80;
+		break;
+	case eHT_CHANNEL_WIDTH_80P80MHZ:
+		nl80211_chwidth = NL80211_CHAN_WIDTH_80P80;
+		break;
+	case eHT_CHANNEL_WIDTH_160MHZ:
+		nl80211_chwidth = NL80211_CHAN_WIDTH_160;
+		break;
+	default:
+		hdd_err("Unsupported channel width %d", chwidth);
+		nl80211_chwidth = 0xFF;
+	}
+
+	return nl80211_chwidth;
+}
+
+static uint32_t hdd_nl80211_chwidth_to_bonding_mode(uint8_t nl80211_chwidth)
+{
+	uint32_t bonding_mode;
+
+	switch (nl80211_chwidth) {
+	case NL80211_CHAN_WIDTH_20:
+		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		break;
+	default:
+		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+	}
+
+	return bonding_mode;
+}
+
+/**
+ * hdd_set_channel_width() - set channel width
+ *
+ * @adapter: hdd adapter
+ * @attr: nla attr sent by supplicant
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_set_channel_width(struct hdd_adapter *adapter,
+				 const struct nlattr *attr)
+{
+	uint8_t nl80211_chwidth;
+	enum eSirMacHTChannelWidth chwidth;
+	uint32_t bonding_mode;
+
+	nl80211_chwidth = nla_get_u8(attr);
+	chwidth = hdd_nl80211_chwidth_to_chwidth(nl80211_chwidth);
+	if (chwidth < 0) {
+		hdd_err("Invalid channel width");
+		return -EINVAL;
+	}
+
+	bonding_mode = hdd_nl80211_chwidth_to_bonding_mode(nl80211_chwidth);
+
+	return hdd_update_channel_width(adapter, chwidth, bonding_mode);
+}
+
+/**
+ * hdd_set_dynamic_bw() - enable / disable dynamic bandwidth
+ *
+ * @adapter: hdd adapter
+ * @attr: nla attr sent by supplicant
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_set_dynamic_bw(struct hdd_adapter *adapter,
+			      const struct nlattr *attr)
+{
+	uint8_t enable;
+
+	enable = nla_get_u8(attr);
+
+	return wma_cli_set_command(adapter->vdev_id, WMI_PDEV_PARAM_DYNAMIC_BW,
+				   enable, PDEV_CMD);
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -8333,6 +8454,10 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_rx_stbc},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_PHY_MODE,
 	 hdd_config_phy_mode},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH,
+	 hdd_set_channel_width},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW,
+	 hdd_set_dynamic_bw},
 };
 
 #ifdef WLAN_FEATURE_ELNA
@@ -8597,6 +8722,68 @@ static int hdd_get_rx_amsdu(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_get_channel_width() - Get channel width
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_channel_width(struct hdd_adapter *adapter,
+				 struct sk_buff *skb,
+				 const struct nlattr *attr)
+{
+	enum eSirMacHTChannelWidth chwidth;
+	uint8_t nl80211_chwidth;
+
+	chwidth = wma_cli_get_command(adapter->vdev_id, WMI_VDEV_PARAM_CHWIDTH,
+				      VDEV_CMD);
+	if (chwidth < 0) {
+		hdd_err("Failed to get chwidth");
+		return -EINVAL;
+	}
+
+	nl80211_chwidth = hdd_chwidth_to_nl80211_chwidth(chwidth);
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH,
+		       nl80211_chwidth)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * hdd_get_dynamic_bw() - Get dynamic bandwidth disabled / enabled
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_dynamic_bw(struct hdd_adapter *adapter,
+			      struct sk_buff *skb,
+			      const struct nlattr *attr)
+{
+	int enable;
+
+	enable = wma_cli_get_command(adapter->vdev_id,
+				     WMI_PDEV_PARAM_DYNAMIC_BW, PDEV_CMD);
+	if (enable < 0) {
+		hdd_err("Failed to get dynamic_bw");
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW,
+		       (uint8_t)enable)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * typedef config_getter_fn - get configuration handler
  * @adapter: The adapter being configured
  * @skb: sk buffer to hold nl80211 attributes
@@ -8652,6 +8839,12 @@ static const struct config_getters config_getters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RX_STBC,
 	 sizeof(uint8_t),
 	 hdd_vendor_attr_rx_stbc_get},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH,
+	 sizeof(uint8_t),
+	 hdd_get_channel_width},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW,
+	 sizeof(uint8_t),
+	 hdd_get_dynamic_bw},
 };
 
 /**

@@ -34,6 +34,7 @@
 #include <qdf_types.h>
 #include <csr_api.h>
 #include <sap_api.h>
+#include <sir_mac_prot_def.h>
 #include "osapi_linux.h"
 #include <wmi_unified.h>
 #include "wlan_pmo_hw_filter_public_struct.h"
@@ -383,4 +384,16 @@ int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value);
  * Return: 0 on success, negative errno on failure
  */
 int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value);
+
+/**
+ * hdd_update_channel_width() - Update adapter channel width settings
+ * @adapter: adapter being modified
+ * @chwidth: new channel width of enum eSirMacHTChannelWidth
+ * @bonding_mode: channel bonding mode of the new channel width
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+int hdd_update_channel_width(struct hdd_adapter *adapter,
+			     enum eSirMacHTChannelWidth chwidth,
+			     uint32_t bonding_mode);
 #endif /* end #if !defined(HDD_CONFIG_H__) */

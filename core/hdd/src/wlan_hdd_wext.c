@@ -3574,15 +3574,7 @@ static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
 
 static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 {
-	int errno;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint32_t bonding_mode;
-	struct sme_config_params *sme_config;
-	mac_handle_t mac_handle;
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!mac_handle)
-		return -EINVAL;
 
 	/* updating channel bonding only on 5Ghz */
 	hdd_debug("WMI_VDEV_PARAM_CHWIDTH val %d", ch_width);
@@ -3594,7 +3586,9 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 
 	case eHT_CHANNEL_WIDTH_40MHZ:
 	case eHT_CHANNEL_WIDTH_80MHZ:
-		bonding_mode = 1;
+	case eHT_CHANNEL_WIDTH_80P80MHZ:
+	case eHT_CHANNEL_WIDTH_160MHZ:
+		bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 		break;
 
 	default:
@@ -3602,26 +3596,7 @@ static int hdd_we_set_ch_width(struct hdd_adapter *adapter, int ch_width)
 		return -EINVAL;
 	}
 
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-
-	errno = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_CHWIDTH,
-				    ch_width, VDEV_CMD);
-	if (errno)
-		goto free_config;
-
-	sme_get_config_param(mac_handle, sme_config);
-	sme_config->csr_config.channelBondingMode5GHz = bonding_mode;
-	sme_config->csr_config.channelBondingMode24GHz = bonding_mode;
-	sme_update_config(mac_handle, sme_config);
-
-free_config:
-	qdf_mem_free(sme_config);
-
-	return errno;
+	return hdd_update_channel_width(adapter, ch_width, bonding_mode);
 }
 
 static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
