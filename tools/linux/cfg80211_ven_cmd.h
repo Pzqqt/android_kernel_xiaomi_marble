@@ -1190,6 +1190,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_NXT_RDR_FREQ = 444,
 	/* set the flag for a radio with no backhaul */
 	OL_ATH_PARAM_NO_BACKHAUL_RADIO = 445,
+	/* MAX_PHY feature flag per PDEV */
+	OL_ATH_PARAM_RPT_MAX_PHY = 446,
 
 };
 
@@ -3007,6 +3009,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NXT_RDR_FREQ, SET_PARAM, 1},
 	{"getNxtRadarFreq",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NXT_RDR_FREQ, GET_PARAM, 0},
+	{"rpt_max_phy",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RPT_MAX_PHY, SET_PARAM, 1},
+	{"g_rpt_max_phy",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_RPT_MAX_PHY, GET_PARAM, 0},
 	{"setCountryID",
 		OL_SPECIAL_PARAM_SHIFT | OL_SPECIAL_PARAM_COUNTRY_ID, SET_PARAM, 1},
 	{"getCountryID",
