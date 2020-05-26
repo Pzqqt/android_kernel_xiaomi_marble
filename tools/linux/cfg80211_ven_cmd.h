@@ -2718,7 +2718,7 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"get_reo_dest",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PDEV_TO_REO_DEST, GET_PARAM, 0},
 	{"dump_chmsk_tbl",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DUMP_CHAINMASK_TABLES, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DUMP_CHAINMASK_TABLES, GET_PARAM, 0},
 	{"print_obj_refs",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DUMP_OBJECTS, SET_PARAM, 1},
 	{"acs_srloadvar",
