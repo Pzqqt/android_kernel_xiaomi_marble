@@ -3685,6 +3685,49 @@ static void sde_encoder_input_event_work_handler(struct kthread_work *work)
 			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
 }
 
+static void sde_encoder_early_wakeup_work_handler(struct kthread_work *work)
+{
+	struct sde_encoder_virt *sde_enc = container_of(work,
+			struct sde_encoder_virt, early_wakeup_work);
+
+	if (!sde_enc) {
+		SDE_ERROR("invalid sde encoder\n");
+		return;
+	}
+
+	sde_encoder_resource_control(&sde_enc->base,
+			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
+}
+
+void sde_encoder_early_wakeup(struct drm_encoder *drm_enc)
+{
+	struct sde_encoder_virt *sde_enc = NULL;
+	struct msm_drm_thread *disp_thread = NULL;
+	struct msm_drm_private *priv = NULL;
+
+	priv = drm_enc->dev->dev_private;
+	sde_enc = to_sde_encoder_virt(drm_enc);
+
+	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE)) {
+		SDE_DEBUG_ENC(sde_enc,
+			"should only early wake up command mode display\n");
+		return;
+	}
+
+	if (!sde_enc->crtc || (sde_enc->crtc->index
+			>= ARRAY_SIZE(priv->event_thread))) {
+		SDE_ERROR("invalid CRTC: %d or crtc index: %d\n",
+			sde_enc->crtc == NULL,
+			sde_enc->crtc ? sde_enc->crtc->index : -EINVAL);
+		return;
+	}
+
+	disp_thread = &priv->disp_thread[sde_enc->crtc->index];
+
+	kthread_queue_work(&disp_thread->worker,
+				&sde_enc->early_wakeup_work);
+}
+
 int sde_encoder_poll_line_counts(struct drm_encoder *drm_enc)
 {
 	static const uint64_t timeout_us = 50000;
@@ -4787,6 +4830,9 @@ struct drm_encoder *sde_encoder_init_with_ops(
 
 	kthread_init_work(&sde_enc->input_event_work,
 			sde_encoder_input_event_work_handler);
+
+	kthread_init_work(&sde_enc->early_wakeup_work,
+			sde_encoder_early_wakeup_work_handler);
 
 	kthread_init_work(&sde_enc->esd_trigger_work,
 			sde_encoder_esd_trigger_work_handler);

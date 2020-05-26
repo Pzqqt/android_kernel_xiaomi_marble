@@ -167,6 +167,7 @@ struct sde_encoder_ops {
  * @rc_state:			resource controller state
  * @delayed_off_work:		delayed worker to schedule disabling of
  *				clks and resources after IDLE_TIMEOUT time.
+ * @early_wakeup_work:		worker to handle early wakeup event
  * @input_event_work:		worker to handle input device touch events
  * @esd_trigger_work:		worker to handle esd trigger events
  * @input_handler:			handler for input device events
@@ -232,6 +233,7 @@ struct sde_encoder_virt {
 	struct mutex rc_lock;
 	enum sde_enc_rc_states rc_state;
 	struct kthread_delayed_work delayed_off_work;
+	struct kthread_work early_wakeup_work;
 	struct kthread_work input_event_work;
 	struct kthread_work esd_trigger_work;
 	struct input_handler *input_handler;
@@ -264,6 +266,12 @@ struct sde_encoder_virt {
 void sde_encoder_get_hw_resources(struct drm_encoder *encoder,
 		struct sde_encoder_hw_resources *hw_res,
 		struct drm_connector_state *conn_state);
+
+/**
+ * sde_encoder_early_wakeup - early wake up display
+ * @encoder:	encoder pointer
+ */
+void sde_encoder_early_wakeup(struct drm_encoder *drm_enc);
 
 /**
  * sde_encoder_register_vblank_callback - provide callback to encoder that

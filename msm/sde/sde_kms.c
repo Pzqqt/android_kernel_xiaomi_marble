@@ -2659,6 +2659,32 @@ end:
 	drm_modeset_acquire_fini(&ctx);
 }
 
+
+void sde_kms_display_early_wakeup(struct drm_device *dev,
+				const int32_t connector_id)
+{
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *conn;
+	struct drm_encoder *drm_enc;
+
+	drm_connector_list_iter_begin(dev, &conn_iter);
+
+	drm_for_each_connector_iter(conn, &conn_iter) {
+		if (connector_id != DRM_MSM_WAKE_UP_ALL_DISPLAYS &&
+			connector_id != conn->base.id)
+			continue;
+
+		if (conn->state && conn->state->best_encoder)
+			drm_enc = conn->state->best_encoder;
+		else
+			drm_enc = conn->encoder;
+
+		sde_encoder_early_wakeup(drm_enc);
+	}
+
+	drm_connector_list_iter_end(&conn_iter);
+}
+
 static void _sde_kms_pm_suspend_idle_helper(struct sde_kms *sde_kms,
 	struct device *dev)
 {
@@ -2933,6 +2959,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.atomic_check = sde_kms_atomic_check,
 	.get_format      = sde_get_msm_format,
 	.round_pixclk    = sde_kms_round_pixclk,
+	.display_early_wakeup = sde_kms_display_early_wakeup,
 	.pm_suspend      = sde_kms_pm_suspend,
 	.pm_resume       = sde_kms_pm_resume,
 	.destroy         = sde_kms_destroy,

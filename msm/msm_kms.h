@@ -100,6 +100,8 @@ struct msm_kms_funcs {
 	void (*set_encoder_mode)(struct msm_kms *kms,
 				 struct drm_encoder *encoder,
 				 bool cmd_mode);
+	void (*display_early_wakeup)(struct drm_device *dev,
+				const int32_t connector_id);
 	/* pm suspend/resume hooks */
 	int (*pm_suspend)(struct device *dev);
 	int (*pm_resume)(struct device *dev);

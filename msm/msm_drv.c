@@ -1626,6 +1626,57 @@ int msm_ioctl_power_ctrl(struct drm_device *dev, void *data,
 	return rc;
 }
 
+/**
+ * msm_ioctl_display_early_wakeup - early wakeup display.
+ * @dev: drm device for the ioctl
+ * @data: data pointer for the ioctl
+ * @file_priv: drm file for the ioctl call
+ *
+ */
+int msm_ioctl_display_hint_ops(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_msm_display_hint *display_hint = data;
+	struct drm_msm_early_wakeup early_wakeup;
+	void __user *early_wakeup_usr;
+	struct msm_drm_private *priv;
+	struct msm_kms *kms;
+
+	priv = dev->dev_private;
+	kms = priv->kms;
+
+	if (unlikely(!display_hint)) {
+		DRM_ERROR("invalid ioctl data\n");
+		return -EINVAL;
+	}
+
+	SDE_EVT32(display_hint->hint_flags);
+
+	if (display_hint->hint_flags == DRM_MSM_DISPLAY_EARLY_WAKEUP_HINT) {
+		if (!display_hint->data) {
+			DRM_ERROR("early_wakeup: wrong parameter\n");
+			return -EINVAL;
+		}
+
+		early_wakeup_usr =
+			(void __user *)((uintptr_t)display_hint->data);
+
+		if (copy_from_user(&early_wakeup, early_wakeup_usr,
+				sizeof(early_wakeup))) {
+			DRM_ERROR("early_wakeup: copy from user failed\n");
+			return -EINVAL;
+		}
+
+		SDE_EVT32(early_wakeup.wakeup_hint);
+		if (kms && kms->funcs && kms->funcs->display_early_wakeup
+						&& early_wakeup.wakeup_hint)
+			kms->funcs->display_early_wakeup(dev,
+					early_wakeup.connector_id);
+	}
+
+	return 0;
+}
+
 static const struct drm_ioctl_desc msm_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_GEM_NEW,      msm_ioctl_gem_new,      DRM_AUTH|DRM_RENDER_ALLOW),
 	DRM_IOCTL_DEF_DRV(MSM_GEM_CPU_PREP, msm_ioctl_gem_cpu_prep, DRM_AUTH|DRM_RENDER_ALLOW),
@@ -1639,6 +1690,8 @@ static const struct drm_ioctl_desc msm_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(MSM_RMFB2, msm_ioctl_rmfb2, DRM_UNLOCKED),
 	DRM_IOCTL_DEF_DRV(MSM_POWER_CTRL, msm_ioctl_power_ctrl,
 			DRM_RENDER_ALLOW),
+	DRM_IOCTL_DEF_DRV(MSM_DISPLAY_HINT, msm_ioctl_display_hint_ops,
+			DRM_UNLOCKED),
 };
 
 static const struct vm_operations_struct vm_ops = {
