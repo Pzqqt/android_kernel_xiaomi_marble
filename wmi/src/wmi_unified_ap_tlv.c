@@ -2438,16 +2438,30 @@ send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_buf_t buf;
 	wmi_peer_chan_width_switch_cmd_fixed_param *cmd;
 	int32_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
-	int16_t max_peers_per_command;
+	uint32_t max_peers_per_command, max_peers_per_buf;
 	wmi_chan_width_peer_list *cmd_peer_list;
 	int16_t pending_peers = param->num_peers;
 	struct peer_chan_width_switch_info *param_peer_list =
 						param->chan_width_peer_list;
 	uint8_t ix;
 
-	max_peers_per_command = (wmi_get_max_msg_len(wmi_handle) -
-				 sizeof(*cmd) - WMI_TLV_HDR_SIZE) /
-				sizeof(*cmd_peer_list);
+	/* Max peers per WMI buffer */
+	max_peers_per_buf = (wmi_get_max_msg_len(wmi_handle) -
+			     sizeof(*cmd) - WMI_TLV_HDR_SIZE) /
+			    sizeof(*cmd_peer_list);
+
+	/*
+	 * Use param value only if it's greater than 0 and less than
+	 * the max peers per WMI buf.
+	 */
+	if (param->max_peers_per_cmd &&
+	    (param->max_peers_per_cmd <= max_peers_per_buf)) {
+		max_peers_per_command = param->max_peers_per_cmd;
+	} else {
+		max_peers_per_command = max_peers_per_buf;
+	}
+
+	WMI_LOGD("Setting peer limit as %u", max_peers_per_command);
 
 	while (pending_peers > 0) {
 		if (pending_peers >= max_peers_per_command) {
