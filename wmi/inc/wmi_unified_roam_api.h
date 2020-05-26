@@ -218,6 +218,15 @@ QDF_STATUS
 wmi_unified_send_roam_preauth_status(wmi_unified_t wmi_handle,
 				     struct wmi_roam_auth_status_params *param);
 
+/**
+ * wmi_unified_vdev_set_pcl_cmd  - Send Vdev PCL command to fw
+ * @wmi_handle: WMI handle
+ * @params: Set VDEV pcl parameters
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
+					struct set_pcl_cmd_params *params);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**

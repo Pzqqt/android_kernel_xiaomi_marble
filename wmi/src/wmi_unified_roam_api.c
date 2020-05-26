@@ -163,6 +163,16 @@ wmi_unified_send_roam_preauth_status(wmi_unified_t wmi_handle,
 								 params);
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_vdev_set_pcl_cmd(wmi_unified_t wmi_handle,
+					struct set_pcl_cmd_params *params)
+{
+	if (wmi_handle->ops->send_vdev_set_pcl_cmd)
+		return wmi_handle->ops->send_vdev_set_pcl_cmd(wmi_handle,
+							      params);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(

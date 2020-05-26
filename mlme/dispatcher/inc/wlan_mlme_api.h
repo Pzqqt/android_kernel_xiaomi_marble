@@ -813,6 +813,24 @@ QDF_STATUS wlan_mlme_get_bigtk_support(struct wlan_objmgr_psoc *psoc,
 bool wlan_mlme_get_host_scan_abort_support(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * wlan_mlme_get_peer_create_conf_support  - Get if the firmware supports
+ * peer create confirm event
+ * @psoc: PSOC object pointer
+ *
+ * Return: True if capability is supported, else False
+ */
+bool wlan_mlme_get_peer_create_conf_support(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_get_dual_sta_roam_support  - Get support for dual sta roaming
+ * feature
+ * @psoc: PSOC object pointer
+ *
+ * Return: True if capability is supported, else False
+ */
+bool wlan_mlme_get_dual_sta_roam_support(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_mlme_get_oce_sap_enabled_info() - Get the OCE feature enable
  * info for SAP
  * @psoc: pointer to psoc object
@@ -2521,4 +2539,23 @@ uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS
 wlan_mlme_get_dfs_chan_ageout_time(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *dfs_chan_ageout_time);
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * wlan_mlme_get_dual_sta_roaming_enabled  - API to get if the dual sta
+ * roaming support is enabled.
+ * @psoc: Pointer to global psoc object
+ *
+ * Return: True if dual sta roaming feature is enabled else return false
+ */
+bool
+wlan_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+wlan_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 #endif /* _WLAN_MLME_API_H_ */

@@ -922,6 +922,73 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_vdev_set_pcl_cmd_tlv() - Send WMI_VDEV_SET_PCL_CMDID to FW
+ * @wmi_handle: wmi handle
+ * @params: Set VDEV PCL params
+ *
+ * WMI_VDEV_SET_PCL_CMDID provides the Preferred Channel List (PCL) to WLAN
+ * firmware. The roaming module is the consumer of this information
+ * in the WLAN firmware. The channel list will be used when a VDEV needs
+ * to migrate to a new channel without host driver involvement. An example of
+ * this behavior is Legacy Fast Roaming (LFR 3.0).
+ *
+ * WMI_VDEV_SET_PCL_CMDID will carry only the weight list and not the actual
+ * channel list. The weights corresponds to the channels sent in
+ * WMI_SCAN_CHAN_LIST_CMDID. The channels from PCL would be having a higher
+ * weightage compared to the non PCL channels.
+ *
+ * When roaming is enabled on STA 1, PDEV pcl will be sent. When STA2 is
+ * up, VDEV pcl will be sent on STA 1 after calculating pcl again applying
+ * the bandmask and VDEV pcl will be sent for STA2. When one of the STA
+ * is disconnected, PDEV pcl will be sent on the other STA again.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+static QDF_STATUS
+send_vdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct set_pcl_cmd_params *params)
+{
+	wmi_vdev_set_pcl_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t *ch_weight, i;
+	size_t len;
+	uint32_t chan_len;
+
+	chan_len = params->weights->saved_num_chan;
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + (chan_len * sizeof(uint32_t));
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_vdev_set_pcl_cmd_fixed_param *)wmi_buf_data(buf);
+	buf_ptr = (uint8_t *)cmd;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_set_pcl_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_set_pcl_cmd_fixed_param));
+	cmd->vdev_id = params->vdev_id;
+	buf_ptr += sizeof(wmi_vdev_set_pcl_cmd_fixed_param);
+
+	/* Channel weights uint32 Array TLV */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
+		       (chan_len * sizeof(uint32_t)));
+	ch_weight = (uint32_t *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < chan_len; i++)
+		ch_weight[i] = params->weights->weighed_valid_list[i];
+
+	wmi_mtrace(WMI_VDEV_SET_PCL_CMDID, params->vdev_id, 0);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_SET_PCL_CMDID)) {
+		WMI_LOGE("%s: Failed to send WMI_VDEV_SET_PCL_CMDID", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -930,6 +997,7 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_process_roam_synch_complete_cmd =
 			send_process_roam_synch_complete_cmd_tlv;
 	ops->send_roam_invoke_cmd = send_roam_invoke_cmd_tlv;
+	ops->send_vdev_set_pcl_cmd = send_vdev_set_pcl_cmd_tlv;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
