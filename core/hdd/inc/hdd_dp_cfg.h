@@ -673,6 +673,27 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Threshold to trigger GRO flush skip for low T-put")
 
+/*
+ * <ini>
+ * gHandleLatencyCriticalClients - Enable the handling of latency critical
+ *			     clients in bus bandwidth timer.
+ * @Default: false
+ *
+ * This ini enables the handling of latency critical clients, eg: 11g/a
+ * clients, when they are running their corresponding peak throughput.
+ *
+ * Supported Feature: Latency critical clients in host
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DP_BUS_HANDLE_LATENCY_CRITICAL_CLIENTS \
+		CFG_INI_BOOL( \
+		"gHandleLatencyCriticalClients", \
+		false, \
+		"Control to enable latency critical clients")
+
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
@@ -1378,7 +1399,9 @@
 	CFG(CFG_DP_TCP_DELACK_THRESHOLD_LOW) \
 	CFG(CFG_DP_TCP_DELACK_TIMER_COUNT) \
 	CFG(CFG_DP_TCP_TX_HIGH_TPUT_THRESHOLD) \
-	CFG(CFG_DP_BUS_LOW_BW_CNT_THRESHOLD)
+	CFG(CFG_DP_BUS_LOW_BW_CNT_THRESHOLD) \
+	CFG(CFG_DP_BUS_HANDLE_LATENCY_CRITICAL_CLIENTS)
+
 #else
 #define CFG_HDD_DP_BUS_BANDWIDTH
 #endif

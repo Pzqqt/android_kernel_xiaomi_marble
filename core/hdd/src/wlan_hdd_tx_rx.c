@@ -3069,6 +3069,8 @@ static void hdd_ini_bus_bandwidth(struct hdd_config *config,
 		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_COMPUTE_INTERVAL);
 	config->bus_low_cnt_threshold =
 		cfg_get(psoc, CFG_DP_BUS_LOW_BW_CNT_THRESHOLD);
+	config->enable_latency_crit_clients =
+		cfg_get(psoc, CFG_DP_BUS_HANDLE_LATENCY_CRITICAL_CLIENTS);
 }
 
 /**

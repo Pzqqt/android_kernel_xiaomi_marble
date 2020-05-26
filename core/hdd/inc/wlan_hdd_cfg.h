@@ -171,6 +171,7 @@ struct hdd_config {
 	uint32_t tcp_delack_timer_count;
 	bool     enable_tcp_param_update;
 	uint32_t bus_low_cnt_threshold;
+	bool enable_latency_crit_clients;
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
 
 #ifdef QCA_SUPPORT_TXRX_DRIVER_TCP_DEL_ACK
