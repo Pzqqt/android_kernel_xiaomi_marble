@@ -56,6 +56,11 @@ static ssize_t __hdd_sysfs_unit_test_target_store(
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
+	if (!hdd_ctx->config->is_unit_test_framework_enabled) {
+		hdd_warn_rl("UT framework is disabled");
+		return -EINVAL;
+	}
+
 	ret = hdd_sysfs_validate_and_copy_buf(buf_local, sizeof(buf_local),
 					      buf, count);
 	if (ret) {

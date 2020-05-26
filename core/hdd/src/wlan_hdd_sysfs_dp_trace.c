@@ -190,7 +190,7 @@ static ssize_t hdd_sysfs_dump_dp_trace_store(struct kobject *kobj,
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
-	return err_size;
+	return errno_size;
 }
 
 static ssize_t
@@ -227,7 +227,7 @@ static ssize_t hdd_sysfs_dump_dp_trace_show(struct kobject *kobj,
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
-	return err_size;
+	return errno_size;
 }
 
 static struct kobj_attribute dump_dp_trace_attribute =
@@ -291,7 +291,7 @@ hdd_sysfs_clear_dp_trace_store(struct kobject *kobj,
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
-	return err_size;
+	return errno_size;
 }
 
 static struct kobj_attribute clear_dp_trace_attribute =
@@ -332,6 +332,7 @@ hdd_sysfs_dp_trace_destroy(struct kobject *driver_kobject)
 		hdd_err("could not get driver kobject!");
 		return;
 	}
-	sysfs_remove_file(driver_kobject, &set_dp_trace_attribute.attr);
 	sysfs_remove_file(driver_kobject, &clear_dp_trace_attribute.attr);
+	sysfs_remove_file(driver_kobject, &dump_dp_trace_attribute.attr);
+	sysfs_remove_file(driver_kobject, &set_dp_trace_attribute.attr);
 }
