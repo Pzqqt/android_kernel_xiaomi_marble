@@ -3038,7 +3038,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 				qdf_nbuf_data(ppdu_info->nbuf);
 
-	num_users = ppdu_desc->num_users;
+	num_users = ppdu_desc->bar_num_users;
 
 	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
 		for (i = 0; i < num_users; i++) {
@@ -3046,6 +3046,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 				/* update phy mode for bar frame */
 				ppdu_desc->phy_mode =
 					ppdu_desc->user[i].preamble;
+				ppdu_desc->user[0].mcs = ppdu_desc->user[i].mcs;
 				break;
 			}
 		}
