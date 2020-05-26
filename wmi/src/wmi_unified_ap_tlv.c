@@ -2543,18 +2543,12 @@ static QDF_STATUS extract_multi_vdev_restart_resp_event_tlv(
 	if (!param_buf->num_vdev_ids_bitmap)
 		return QDF_STATUS_E_FAILURE;
 
-	if ((param_buf->num_vdev_ids_bitmap * sizeof(uint32_t)) >
-			sizeof(param->vdev_id_bmap)) {
-		WMI_LOGE("vdevId bitmap overflow size:%d",
-			 param_buf->num_vdev_ids_bitmap);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	qdf_mem_copy(param->vdev_id_bmap, param_buf->vdev_ids_bitmap,
-		     param_buf->num_vdev_ids_bitmap * sizeof(uint32_t));
+		     sizeof(param->vdev_id_bmap));
 
-	WMI_LOGD("vdev_id_bmap :0x%x%x", param->vdev_id_bmap[1],
-		 param->vdev_id_bmap[0]);
+	WMI_LOGD("vdev_id_bmap is as follows");
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			   param->vdev_id_bmap, sizeof(param->vdev_id_bmap));
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -306,8 +306,9 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 		else
 			mlme_vdev_ops_multivdev_restart_fw_cmd_send(pdev);
 
-		if (pdev_mlme->start_send_vdev_arr[0] ||
-		    pdev_mlme->start_send_vdev_arr[1]) {
+		if (wlan_util_map_is_any_index_set(
+				pdev_mlme->start_send_vdev_arr,
+				sizeof(pdev_mlme->start_send_vdev_arr))) {
 			wlan_objmgr_pdev_iterate_obj_list
 				(pdev, WLAN_VDEV_OP,
 				 wlan_vdev_start_fw_send,
