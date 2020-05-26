@@ -298,6 +298,7 @@ typedef struct sap_StationDisassocCompleteEvent_s {
 	int tx_rate;
 	int rx_rate;
 	uint32_t rx_mc_bc_cnt;
+	uint32_t rx_retry_cnt;
 } tSap_StationDisassocCompleteEvent;
 
 typedef struct sap_StationSetKeyCompleteEvent_s {

@@ -5953,6 +5953,8 @@ static void csr_get_peer_rssi(struct mac_context *mac, uint32_t session_id,
 			QDF_MAC_ADDR_ARRAY(peer_mac.bytes));
 		if (QDF_IS_STATUS_ERROR(status))
 			sme_err("stats req failed: %d", status);
+
+		wma_get_rx_retry_cnt(mac, session_id, info.peer_mac_addr);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	}
 }
@@ -6807,6 +6809,7 @@ static void csr_roam_process_results_default(struct mac_context *mac_ctx,
 		roam_info->tx_rate = mac_ctx->peer_txrate;
 		roam_info->rx_rate = mac_ctx->peer_rxrate;
 		roam_info->rx_mc_bc_cnt = mac_ctx->rx_mc_bc_cnt;
+		roam_info->rx_retry_cnt = mac_ctx->rx_retry_cnt;
 
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
 			session_id);
@@ -10107,6 +10110,7 @@ csr_roam_send_disconnect_done_indication(struct mac_context *mac_ctx,
 		roam_info->rx_rate = mac_ctx->peer_rxrate;
 		roam_info->disassoc_reason = discon_ind->reason_code;
 		roam_info->rx_mc_bc_cnt = mac_ctx->rx_mc_bc_cnt;
+		roam_info->rx_retry_cnt = mac_ctx->rx_retry_cnt;
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 							    vdev_id,
 							    WLAN_LEGACY_SME_ID);

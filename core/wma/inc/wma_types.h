@@ -616,6 +616,17 @@ QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps);
 QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req);
 
 /**
+ * wma_get_rx_retry_cnt() - API to get rx retry count from data path
+ * @mac: pointer to mac context
+ * @vdev_id: vdev id
+ * @mac_addr: mac address of the remote station
+ *
+ * Return: none
+ */
+void wma_get_rx_retry_cnt(struct mac_context *mac, uint8_t vdev_id,
+			  uint8_t *mac_addr);
+
+/**
  * wma_set_wlm_latency_level() - set latency level to FW
  * @wma_ptr: wma handle
  * @latency_params: latency params

@@ -69,6 +69,7 @@
 #endif
 #include "wlan_scan_api.h"
 #include <wlan_crypto_global_api.h>
+#include "cdp_txrx_host_stats.h"
 
 /**
  * WMA_SET_VDEV_IE_SOURCE_HOST - Flag to identify the source of VDEV SET IE
@@ -235,6 +236,34 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void wma_get_rx_retry_cnt(struct mac_context *mac, uint8_t vdev_id,
+			  uint8_t *mac_addr)
+{
+	struct cdp_peer_stats *peer_stats;
+	QDF_STATUS status;
+
+	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
+	if (!peer_stats) {
+		wma_err("Failed to allocate memory for peer stats");
+		return;
+	}
+
+	status = cdp_host_get_peer_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					 vdev_id, mac_addr, peer_stats);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wma_err("Failed to get peer stats");
+		goto exit;
+	}
+
+	mac->rx_retry_cnt = peer_stats->rx.rx_retries;
+	wma_debug("Rx retry count %d, Peer" QDF_MAC_ADDR_STR, mac->rx_retry_cnt,
+		  QDF_MAC_ADDR_ARRAY(mac_addr));
+
+exit:
+	qdf_mem_free(peer_stats);
 }
 
 /**
