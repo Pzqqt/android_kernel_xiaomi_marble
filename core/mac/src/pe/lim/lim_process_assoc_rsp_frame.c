@@ -510,18 +510,10 @@ lim_handle_assoc_reject_status(struct mac_context *mac_ctx,
 }
 #endif
 
-/**
- * lim_get_nss_supported_by_ap() - finds out nss from AP's beacons
- * @vht_caps: VHT capabilities
- * @ht_caps: HT capabilities
- *
- * Return: nss advertised by AP in beacon
- */
-static uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
-					   tDot11fIEHTCaps *ht_caps,
-					   tDot11fIEhe_cap *he_caps)
+uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
+				    tDot11fIEHTCaps *ht_caps,
+				    tDot11fIEhe_cap *he_caps)
 {
-
 	if (he_caps->present) {
 		if ((he_caps->rx_he_mcs_map_lt_80 & 0xC0) != 0xC0)
 			return NSS_4x4_MODE;

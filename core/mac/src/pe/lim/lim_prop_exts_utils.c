@@ -509,13 +509,34 @@ void lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		session->gLimOperatingMode.present =
 			ext_cap->oper_mode_notification;
 		if (ext_cap->oper_mode_notification) {
+			uint8_t self_nss = 0;
+
+			if (!wlan_reg_is_24ghz_ch_freq(session->curr_op_freq))
+				self_nss = mac_ctx->vdev_type_nss_5g.sta;
+			else
+				self_nss = mac_ctx->vdev_type_nss_2g.sta;
+
 			if (CH_WIDTH_160MHZ > session->ch_width)
 				session->gLimOperatingMode.chanWidth =
 						session->ch_width;
 			else
 				session->gLimOperatingMode.chanWidth =
 					CH_WIDTH_160MHZ;
-			session->gLimOperatingMode.rxNSS = session->nss - 1;
+			/** Populate vdev nss in OMN ie of assoc requse for
+			 *  WFA CERT test scenario.
+			 */
+			if (ext_cap->beacon_protection_enable &&
+			    (session->opmode == QDF_STA_MODE) &&
+			    (!session->nss_forced_1x1) &&
+			     lim_get_nss_supported_by_ap(
+					&beacon_struct->VHTCaps,
+					&beacon_struct->HTCaps,
+					&beacon_struct->he_cap) ==
+						 NSS_1x1_MODE)
+				session->gLimOperatingMode.rxNSS = self_nss - 1;
+			else
+				session->gLimOperatingMode.rxNSS =
+							session->nss - 1;
 		} else {
 			pe_err("AP does not support op_mode rx");
 		}

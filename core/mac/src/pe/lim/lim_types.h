@@ -451,6 +451,17 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
 
 void lim_process_assoc_rsp_frame(struct mac_context *, uint8_t *, uint8_t, struct pe_session *);
 void lim_process_disassoc_frame(struct mac_context *, uint8_t *, struct pe_session *);
+
+/**
+ * lim_get_nss_supported_by_ap() - finds out nss from AP's beacons
+ * @vht_caps: VHT capabilities
+ * @ht_caps: HT capabilities
+ *
+ * Return: nss advertised by AP in beacon
+ */
+uint8_t lim_get_nss_supported_by_ap(tDot11fIEVHTCaps *vht_caps,
+				    tDot11fIEHTCaps *ht_caps,
+				    tDot11fIEhe_cap *he_caps);
 /*
  * lim_perform_disassoc() - Actual action taken after receiving disassoc
  * @mac_ctx: Global MAC context
