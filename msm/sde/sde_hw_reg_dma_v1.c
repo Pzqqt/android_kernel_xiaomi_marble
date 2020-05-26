@@ -1015,19 +1015,24 @@ static struct sde_reg_dma_buffer *alloc_reg_dma_buf_v1(u32 size)
 
 	aspace = msm_gem_smmu_address_space_get(reg_dma->drm_dev,
 			MSM_SMMU_DOMAIN_UNSECURE);
-	if (!aspace) {
-		DRM_ERROR("failed to get aspace\n");
-		rc = -EINVAL;
-		goto free_gem;
-	}
 
-	/* register to aspace */
-	rc = msm_gem_address_space_register_cb(aspace,
-			sde_reg_dma_aspace_cb_locked,
-			(void *)dma_buf);
-	if (rc) {
-		DRM_ERROR("failed to register callback %d", rc);
+	if (PTR_ERR(aspace) == -ENODEV) {
+		aspace = NULL;
+		DRM_DEBUG("IOMMU not present, relying on VRAM\n");
+	} else if (IS_ERR_OR_NULL(aspace)) {
+		rc = PTR_ERR(aspace);
+		aspace = NULL;
+		DRM_ERROR("failed to get aspace %d", rc);
 		goto free_gem;
+	} else if (aspace) {
+		/* register to aspace */
+		rc = msm_gem_address_space_register_cb(aspace,
+				sde_reg_dma_aspace_cb_locked,
+				(void *)dma_buf);
+		if (rc) {
+			DRM_ERROR("failed to register callback %d", rc);
+			goto free_gem;
+		}
 	}
 
 	dma_buf->aspace = aspace;

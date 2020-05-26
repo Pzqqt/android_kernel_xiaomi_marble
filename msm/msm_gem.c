@@ -109,22 +109,23 @@ static struct page **get_pages(struct drm_gem_object *obj)
 			return ptr;
 		}
 
-		/* For non-cached buffers, ensure the new pages are clean
-		 * because display controller, GPU, etc. are not coherent:
+		if (msm_obj->vram_node) {
+			goto end;
+		/*
+		 * For non-cached buffers, ensure the new pages are clean
+		 * because display controller, GPU, etc. are not coherent
 		 */
-		if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED)) {
+		} else if (msm_obj->flags & (MSM_BO_WC|MSM_BO_UNCACHED)) {
 			aspace_dev = msm_gem_get_aspace_device(msm_obj->aspace);
 			if (aspace_dev)
 				dma_map_sg(aspace_dev, msm_obj->sgt->sgl,
-						msm_obj->sgt->nents,
-						DMA_BIDIRECTIONAL);
+					msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
 			else
-				dev_err(dev->dev,
-					"failed to get aspace_device\n");
-
+				DRM_ERROR("failed to get aspace_device\n");
 		}
 	}
 
+end:
 	return msm_obj->pages;
 }
 
@@ -191,6 +192,8 @@ void msm_gem_sync(struct drm_gem_object *obj)
 
 	msm_obj = to_msm_bo(obj);
 
+	if (msm_obj->vram_node)
+		return;
 	/*
 	 * dma_sync_sg_for_device synchronises a single contiguous or
 	 * scatter/gather mapping for the CPU and device.
@@ -200,8 +203,7 @@ void msm_gem_sync(struct drm_gem_object *obj)
 		dma_sync_sg_for_device(aspace_dev, msm_obj->sgt->sgl,
 				msm_obj->sgt->nents, DMA_BIDIRECTIONAL);
 	else
-		dev_err(obj->dev->dev,
-			"failed to get aspace_device\n");
+		DRM_ERROR("failed to get aspace_device\n");
 }
 
 

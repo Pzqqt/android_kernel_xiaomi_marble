@@ -3474,7 +3474,13 @@ static void _sde_cp_crtc_set_ltm_buffer(struct sde_crtc *sde_crtc, void *cfg)
 		sde_crtc->ltm_buffers[i]->aspace =
 			msm_gem_smmu_address_space_get(crtc->dev,
 			MSM_SMMU_DOMAIN_UNSECURE);
-		if (!sde_crtc->ltm_buffers[i]->aspace) {
+
+		if (PTR_ERR(sde_crtc->ltm_buffers[i]->aspace) == -ENODEV) {
+			sde_crtc->ltm_buffers[i]->aspace = NULL;
+			DRM_DEBUG("IOMMU not present, relying on VRAM\n");
+		} else if (IS_ERR_OR_NULL(sde_crtc->ltm_buffers[i]->aspace)) {
+			ret = PTR_ERR(sde_crtc->ltm_buffers[i]->aspace);
+			sde_crtc->ltm_buffers[i]->aspace = NULL;
 			DRM_ERROR("failed to get aspace\n");
 			goto exit;
 		}
