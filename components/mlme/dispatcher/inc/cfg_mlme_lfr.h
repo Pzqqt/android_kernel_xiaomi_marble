@@ -2439,6 +2439,36 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"disable roam on STA iface if one of the iface mentioned in default is in connected state")
 
+/*
+ * <ini>
+ * enable_dual_sta_roam_offload - Enable roaming offload on both interfaces
+ * for STA + STA
+ * @Min: 0 - Dual STA Roam offload Disabled
+ * @Max: 1 - Dual STA Roam offload Enabled
+ * @Default: 1
+ *
+ * Enabling this ini will:
+ *  a) Enforce the STA + STA connection be DBS if the hw is capable.
+ *  b) Enable Roam Scan Offload on both the STA vdev.
+ *  c) Enable firmware to support sequential roaming on both STA vdev
+ *     if the firmware is capable of dual sta roaming.
+ *
+ * Related: None.
+ *
+ * Supported Feature: ROAM
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DUAL_STA_ROAM_OFFLOAD CFG_INI_UINT( \
+		"enable_dual_sta_roam_offload", \
+		false, \
+		true, \
+		true, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Enable roam on both STA vdev")
+
 #define ROAM_OFFLOAD_ALL \
 	CFG(CFG_LFR3_ROAMING_OFFLOAD) \
 	CFG(CFG_LFR3_ENABLE_SELF_BSS_ROAM) \
@@ -2451,6 +2481,7 @@
 	CFG(CFG_LFR_IDLE_ROAM_BAND) \
 	CFG(CFG_ROAM_TRIGGER_BITMAP) \
 	CFG(CFG_STA_DISABLE_ROAM) \
+	CFG(CFG_ENABLE_DUAL_STA_ROAM_OFFLOAD) \
 
 #else
 #define ROAM_OFFLOAD_ALL

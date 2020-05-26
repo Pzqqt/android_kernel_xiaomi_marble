@@ -725,4 +725,13 @@ struct roam_triggers {
 	uint32_t trigger_bitmap;
 };
 
+/**
+ * set_pcl_cmd_params  - Set PCL command params
+ * @vdev_id: Vdev id
+ * @weight: PCL weight
+ */
+struct set_pcl_cmd_params {
+	uint8_t vdev_id;
+	struct wmi_pcl_chan_weights *weights;
+};
 #endif /* _WMI_UNIFIED_ROAM_PARAM_H_ */

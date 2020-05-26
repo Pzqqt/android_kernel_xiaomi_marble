@@ -952,6 +952,8 @@ struct wlan_mlme_chain_cfg {
  * @bigtk_support: does the target support bigtk capability or not.
  * @stop_all_host_scan_support: Target capability that indicates if the target
  * supports stop all host scan request type.
+ * @peer_create_conf_support: Peer create confirmation command support
+ * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  *
  * Add all the mlme-tgt related capablities here, and the public API would fill
  * the related capability in the required mlme cfg structure.
@@ -960,6 +962,8 @@ struct mlme_tgt_caps {
 	bool data_stall_recovery_fw_support;
 	bool bigtk_support;
 	bool stop_all_host_scan_support;
+	bool peer_create_conf_support;
+	bool dual_sta_roam_fw_support;
 };
 
 /**
@@ -1140,6 +1144,8 @@ struct wlan_mlme_chainmask {
  * @bigtk_support: Whether BIGTK is supported or not
  * @stop_all_host_scan_support: Target capability that indicates if the target
  * supports stop all host scan request type.
+ * @peer_create_conf_support: Peer create confirmation command support
+ * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1178,6 +1184,8 @@ struct wlan_mlme_generic {
 	uint8_t dfs_chan_ageout_time;
 	bool bigtk_support;
 	bool stop_all_host_scan_support;
+	bool peer_create_conf_support;
+	bool dual_sta_roam_fw_support;
 };
 
 /*
@@ -1452,6 +1460,8 @@ struct bss_load_trigger {
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
  * @lfr3_roaming_offload:           Enable/disable roam offload feature
+ * @lfr3_dual_sta_roaming_enabled:  Enable/Disable dual sta roaming offload
+ * feature
  * @enable_self_bss_roam:               enable roaming to connected BSSID
  * @enable_disconnect_roam_offload: enable disassoc/deauth roam scan.
  * @enable_idle_roam: flag to enable/disable idle roam in fw
@@ -1563,6 +1573,7 @@ struct wlan_mlme_lfr_cfg {
 	bool enable_fast_roam_in_concurrency;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool lfr3_roaming_offload;
+	bool lfr3_dual_sta_roaming_enabled;
 	bool enable_self_bss_roam;
 	bool enable_disconnect_roam_offload;
 	bool enable_idle_roam;

@@ -5315,6 +5315,12 @@ static void wma_update_mlme_related_tgt_caps(struct wlan_objmgr_psoc *psoc,
 	mlme_tgt_cfg.stop_all_host_scan_support =
 		wmi_service_enabled(wmi_handle,
 				    wmi_service_host_scan_stop_vdev_all);
+	mlme_tgt_cfg.peer_create_conf_support =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_peer_create_conf);
+	mlme_tgt_cfg.dual_sta_roam_fw_support =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_dual_sta_roam_support);
 
 	wma_debug("beacon protection support %d", mlme_tgt_cfg.bigtk_support);
 
