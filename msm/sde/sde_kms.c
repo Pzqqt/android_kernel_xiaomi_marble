@@ -274,7 +274,8 @@ static int _sde_kms_secure_ctrl_xin_clients(struct sde_kms *sde_kms,
  */
 static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 {
-	struct drm_device *dev;
+	struct device dummy = {};
+	dma_addr_t dma_handle;
 	uint32_t num_sids;
 	uint32_t *sec_sid;
 	struct sde_mdss_cfg *sde_cfg = sde_kms->catalog;
@@ -283,8 +284,6 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	bool qtee_en = qtee_shmbridge_is_enabled();
 	phys_addr_t mem_addr;
 	u64 mem_size;
-
-	dev = sde_kms->dev;
 
 	num_sids = sde_cfg->sec_sid_mask_count;
 	if (!num_sids) {
@@ -314,9 +313,21 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 		sec_sid[i] = sde_cfg->sec_sid_mask[i];
 		SDE_DEBUG("sid_mask[%d]: %d\n", i, sec_sid[i]);
 	}
-	dma_map_single(dev->dev, sec_sid, num_sids *sizeof(uint32_t),
-			DMA_TO_DEVICE);
 
+	ret = dma_coerce_mask_and_coherent(&dummy, DMA_BIT_MASK(64));
+	if (ret) {
+		SDE_ERROR("Failed to set dma mask for dummy dev %d\n", ret);
+		goto map_error;
+	}
+	set_dma_ops(&dummy, NULL);
+
+	dma_handle = dma_map_single(&dummy, sec_sid,
+				num_sids *sizeof(uint32_t), DMA_TO_DEVICE);
+	if (dma_mapping_error(&dummy, dma_handle)) {
+		SDE_ERROR("dma_map_single for dummy dev failed vmid 0x%x\n",
+									vmid);
+		goto map_error;
+	}
 	SDE_DEBUG("calling scm_call for vmid 0x%x, num_sids %d, qtee_en %d",
 				vmid, num_sids, qtee_en);
 
@@ -328,6 +339,10 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	SDE_EVT32(MEM_PROTECT_SD_CTRL_SWITCH, MDP_DEVICE_ID, mem_size,
 			vmid, qtee_en, num_sids, ret);
 
+	dma_unmap_single(&dummy, dma_handle,
+				num_sids *sizeof(uint32_t), DMA_TO_DEVICE);
+
+map_error:
 	if (qtee_en)
 		qtee_shmbridge_free_shm(&shm);
 	else
