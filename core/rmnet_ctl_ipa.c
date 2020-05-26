@@ -18,6 +18,7 @@ struct rmnet_ctl_ipa_dev {
 };
 
 static struct rmnet_ctl_ipa_dev ctl_ipa_dev;
+static bool rmnet_ctl_ipa_registered;
 
 static int rmnet_ctl_send_ipa(struct rmnet_ctl_dev *dev, struct sk_buff *skb)
 {
@@ -78,33 +79,31 @@ static void rmnet_ctl_ipa_ready(void *user_data)
 			rmnet_ctl_dl_callback,
 			&ctl_ipa_dev);
 
-	pr_info("%s: %d\n", __func__, rc);
+	if (rc)
+		pr_err("%s: %d\n", __func__, rc);
+	else
+		rmnet_ctl_ipa_registered = true;
 }
 
 static int __init rmnet_ctl_init(void)
 {
 	int rc;
 
-	rc = ipa_register_rmnet_ctl_cb(
-			rmnet_ctl_probe,
-			&ctl_ipa_dev,
-			rmnet_ctl_remove,
-			&ctl_ipa_dev,
-			rmnet_ctl_dl_callback,
-			&ctl_ipa_dev);
-
-	if (rc == -EAGAIN)
-		rc = ipa_register_ipa_ready_cb(
-			rmnet_ctl_ipa_ready, NULL);
-
-	pr_info("%s: %d\n", __func__, rc);
+	rc = ipa_register_ipa_ready_cb(rmnet_ctl_ipa_ready, NULL);
+	if (rc == -EEXIST)
+		rmnet_ctl_ipa_ready(NULL);
+	else if (rc)
+		pr_err("%s: %d\n", __func__, rc);
 
 	return 0;
 }
 
 static void __exit rmnet_ctl_exit(void)
 {
-	ipa_unregister_rmnet_ctl_cb();
+	if (rmnet_ctl_ipa_registered) {
+		ipa_unregister_rmnet_ctl_cb();
+		rmnet_ctl_ipa_registered = false;
+	}
 }
 
 module_init(rmnet_ctl_init)
