@@ -1574,6 +1574,11 @@ static void hdd_send_association_event(struct net_device *dev,
 				       roam_info->tdls_prohibited,
 				       adapter->vdev);
 #endif
+
+		hdd_add_latency_critical_client(
+			hdd_ctx,
+			hdd_convert_cfgdot11mode_to_80211mode(
+				sta_ctx->conn_info.dot11mode));
 		/* start timer in sta/p2p_cli */
 		hdd_bus_bw_compute_prev_txrx_stats(adapter);
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
@@ -1613,6 +1618,10 @@ static void hdd_send_association_event(struct net_device *dev,
 					  false,
 					  adapter->vdev);
 
+		hdd_del_latency_critical_client(
+			hdd_ctx,
+			hdd_convert_cfgdot11mode_to_80211mode(
+				sta_ctx->conn_info.dot11mode));
 		/* stop timer in sta/p2p_cli */
 		hdd_bus_bw_compute_reset_prev_txrx_stats(adapter);
 		hdd_bus_bw_compute_timer_try_stop(hdd_ctx);

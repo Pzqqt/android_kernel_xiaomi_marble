@@ -1642,6 +1642,7 @@ struct hdd_fw_ver_info {
  * @pdev: object manager pdev context
  * @iftype_data_2g: Interface data for 2g band
  * @iftype_data_5g: Interface data for 5g band
+ * @num_latency_critical_clients: Number of latency critical clients connected
  * @bus_bw_work: work for periodically computing DDR bus bandwidth requirements
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
@@ -1708,6 +1709,7 @@ struct hdd_context {
 	int32_t oem_pid;
 #endif
 
+	qdf_atomic_t num_latency_critical_clients;
 	/** Concurrency Parameters*/
 	uint32_t concurrency_mode;
 
@@ -2536,6 +2538,54 @@ QDF_STATUS __wlan_hdd_validate_mac_address(struct qdf_mac_addr *mac_addr,
  *	    false, if none of the adapters is in connected state.
  */
 bool hdd_is_any_adapter_connected(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_add_latency_critical_client() - Add latency critical client
+ * @hdd_ctx: Global HDD context
+ * @phymode: the phymode of the connected adapter
+ *
+ * This function adds to the latency critical count if the present
+ * connection is also a latency critical one.
+ *
+ * Returns: None
+ */
+static inline void
+hdd_add_latency_critical_client(struct hdd_context *hdd_ctx,
+				enum qca_wlan_802_11_mode phymode)
+{
+	switch (phymode) {
+	case QCA_WLAN_802_11_MODE_11A:
+	case QCA_WLAN_802_11_MODE_11G:
+		qdf_atomic_inc(&hdd_ctx->num_latency_critical_clients);
+		break;
+	default:
+		break;
+	}
+}
+
+/**
+ * hdd_del_latency_critical_client() - Add tlatency critical client
+ * @hdd_ctx: Global HDD context
+ * @phymode: the phymode of the connected adapter
+ *
+ * This function removes from the latency critical count if the present
+ * connection is also a latency critical one.
+ *
+ * Returns: None
+ */
+static inline void
+hdd_del_latency_critical_client(struct hdd_context *hdd_ctx,
+				enum qca_wlan_802_11_mode phymode)
+{
+	switch (phymode) {
+	case QCA_WLAN_802_11_MODE_11A:
+	case QCA_WLAN_802_11_MODE_11G:
+		qdf_atomic_dec(&hdd_ctx->num_latency_critical_clients);
+		break;
+	default:
+		break;
+	}
+}
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 /**
