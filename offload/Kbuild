@@ -1,0 +1,10 @@
+#rmnet_perf needs the symbols from the core driver module
+KBUILD_EXTRA_SYMBOLS := $(shell pwd)/../../$(RMNET_CORE_PATH)/Module.symvers
+
+obj-m += rmnet_offload.o
+#Need core headers
+ccflags-y := -I$(RMNET_CORE_INC_DIR)
+rmnet_offload-y := rmnet_offload_state.o rmnet_offload_main.o \
+		   rmnet_offload_engine.o rmnet_offload_tcp.o \
+		   rmnet_offload_udp.o rmnet_offload_stats.o \
+		   rmnet_offload_knob.o
