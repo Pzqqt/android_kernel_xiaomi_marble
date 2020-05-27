@@ -2798,10 +2798,19 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	}
 
 	if (pdev->mcopy_mode) {
-		if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
-				(pdev->m_copy_id.tx_peer_id == peer_id)) {
-			return QDF_STATUS_E_INVAL;
+		/* If mcopy is enabled and mcopy_mode is M_COPY deliver 1st MSDU
+		 * per PPDU. If mcopy_mode is M_COPY_EXTENDED deliver 1st MSDU
+		 * for each MPDU
+		 */
+		if (pdev->mcopy_mode == M_COPY) {
+			if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
+			    (pdev->m_copy_id.tx_peer_id == peer_id)) {
+				return QDF_STATUS_E_INVAL;
+			}
 		}
+
+		if (!first_msdu)
+			return QDF_STATUS_E_INVAL;
 
 		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
 		pdev->m_copy_id.tx_peer_id = peer_id;

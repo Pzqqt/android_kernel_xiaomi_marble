@@ -1777,9 +1777,9 @@ struct dp_pdev {
 	/* enable calculation of delay stats*/
 	bool delay_stats_flag;
 	struct {
-		uint16_t tx_ppdu_id;
+		uint32_t tx_ppdu_id;
 		uint16_t tx_peer_id;
-		uint16_t rx_ppdu_id;
+		uint32_t rx_ppdu_id;
 	} m_copy_id;
 
 	/* To check if PPDU Tx stats are enabled for Pktlog */
