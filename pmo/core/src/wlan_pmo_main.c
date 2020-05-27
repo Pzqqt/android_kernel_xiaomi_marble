@@ -111,6 +111,10 @@ static void wlan_pmo_wow_pulse_init_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_PMO_WOW_PULSE_HIGH);
 	psoc_cfg->wow_pulse_interval_low =
 			cfg_get(psoc, CFG_PMO_WOW_PULSE_LOW);
+	psoc_cfg->wow_pulse_repeat_count =
+			cfg_get(psoc, CFG_PMO_WOW_PULSE_REPEAT);
+	psoc_cfg->wow_pulse_init_state =
+			cfg_get(psoc, CFG_PMO_WOW_PULSE_INIT);
 }
 #else
 static void wlan_pmo_wow_pulse_init_cfg(struct wlan_objmgr_psoc *psoc,

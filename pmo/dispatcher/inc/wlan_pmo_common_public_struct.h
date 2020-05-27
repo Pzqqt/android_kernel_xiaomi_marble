@@ -294,6 +294,8 @@ enum active_apf_mode {
  * @wow_pulse_pin: GPIO pin of wow pulse feature
  * @wow_pulse_interval_high: The interval of high level in the pulse
  * @wow_pulse_interval_low: The interval of low level in the pulse
+ * @wow_pulse_repeat_count: Pulse repeat count
+ * @wow_pulse_init_state: Pulse init level
  * @packet_filters_bitmap: Packet filter bitmap configuration
  * @wow_data_inactivity_timeout: power save wow data inactivity timeout
  * @ps_data_inactivity_timeout: Power save data inactivity timeout for non
@@ -353,6 +355,8 @@ struct pmo_psoc_cfg {
 	uint8_t wow_pulse_pin;
 	uint16_t wow_pulse_interval_high;
 	uint16_t wow_pulse_interval_low;
+	uint32_t wow_pulse_repeat_count;
+	uint32_t wow_pulse_init_state;
 #endif
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	uint8_t packet_filters_bitmap;
