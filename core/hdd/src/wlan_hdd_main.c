@@ -10093,17 +10093,27 @@ static int wlan_hdd_set_wow_pulse(struct hdd_context *hdd_ctx, bool enable)
 
 		wow_pulse_set_info.wow_pulse_interval_low =
 		    ucfg_pmo_get_wow_pulse_interval_low(hdd_ctx->psoc);
+
+		wow_pulse_set_info.wow_pulse_repeat_count =
+		    ucfg_pmo_get_wow_pulse_repeat_count(hdd_ctx->psoc);
+
+		wow_pulse_set_info.wow_pulse_init_state =
+		    ucfg_pmo_get_wow_pulse_init_state(hdd_ctx->psoc);
 	} else {
 		wow_pulse_set_info.wow_pulse_enable = false;
 		wow_pulse_set_info.wow_pulse_pin = 0;
 		wow_pulse_set_info.wow_pulse_interval_low = 0;
 		wow_pulse_set_info.wow_pulse_interval_high = 0;
+		wow_pulse_set_info.wow_pulse_repeat_count = 0;
+		wow_pulse_set_info.wow_pulse_init_state = 0;
 	}
-	hdd_debug("enable %d pin %d low %d high %d",
-		wow_pulse_set_info.wow_pulse_enable,
-		wow_pulse_set_info.wow_pulse_pin,
-		wow_pulse_set_info.wow_pulse_interval_low,
-		wow_pulse_set_info.wow_pulse_interval_high);
+	hdd_debug("enable %d pin %d low %d high %d count %d init %d",
+		  wow_pulse_set_info.wow_pulse_enable,
+		  wow_pulse_set_info.wow_pulse_pin,
+		  wow_pulse_set_info.wow_pulse_interval_low,
+		  wow_pulse_set_info.wow_pulse_interval_high,
+		  wow_pulse_set_info.wow_pulse_repeat_count,
+		  wow_pulse_set_info.wow_pulse_init_state);
 
 	status = sme_set_wow_pulse(&wow_pulse_set_info);
 	if (QDF_STATUS_E_FAILURE == status) {
