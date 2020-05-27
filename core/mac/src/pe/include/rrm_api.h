@@ -35,7 +35,15 @@
 
 QDF_STATUS rrm_initialize(struct mac_context *mac);
 
-QDF_STATUS rrm_cleanup(struct mac_context *mac);
+/**
+ * rrm_cleanup  - cleanup RRM measurement related data for the measurement
+ * index
+ * @mac: Pointer to mac context
+ * @idx: Measurement index
+ *
+ * Return: None
+ */
+void rrm_cleanup(struct mac_context *mac, uint8_t idx);
 
 QDF_STATUS rrm_process_link_measurement_request(struct mac_context *mac,
 						uint8_t *pRxPacketInfo,

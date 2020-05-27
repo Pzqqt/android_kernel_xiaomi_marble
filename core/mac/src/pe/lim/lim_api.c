@@ -512,7 +512,8 @@ void lim_cleanup(struct mac_context *mac)
 	/* Now, finally reset the deferred message queue pointers */
 	lim_reset_deferred_msg_q(mac);
 
-	rrm_cleanup(mac);
+	for (i = 0; i < MAX_MEASUREMENT_REQUEST; i++)
+		rrm_cleanup(mac, i);
 
 	lim_ft_cleanup_all_ft_sessions(mac);
 
