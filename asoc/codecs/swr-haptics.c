@@ -431,20 +431,10 @@ static int swr_haptics_device_down(struct swr_device *sdev)
 {
 	struct swr_haptics_dev *swr_hap = swr_get_dev_data(sdev);
 	int rc;
-	unsigned int val;
 
 	if (!swr_hap) {
 		dev_err(&sdev->dev, "%s: no data for swr_hap\n", __func__);
 		return -ENODEV;
-	}
-
-	/* Stop SWR play in SSR */
-	val = 0;
-	rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
-	if (rc) {
-		dev_err(swr_hap->dev, "%s: disable SWR_PLAY failed, rc=%d\n",
-				__func__, rc);
-		return rc;
 	}
 
 	/* Put SWR slave into reset */
