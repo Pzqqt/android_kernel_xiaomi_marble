@@ -762,6 +762,11 @@ enum {
 	IEEE80211_PARAM_OCE_IP_SUBNET_ID           = 697, /* IP subnet identifier value to be advertised as OCE attribute in Beacon and  Probe response frame */
 	IEEE80211_PARAM_OCE_ADD_ESS_RPT            = 698, /* Add ESS Report */
 	IEEE80211_PARAM_RSNX_OVERRIDE              = 700,
+#if QCA_AIRTIME_FAIRNESS && WLAN_ATF_STATS
+	IEEE80211_PARAM_ATF_ENABLE_STATS           = 701,
+	IEEE80211_PARAM_ATF_STATS_TIMEOUT          = 702,
+	IEEE80211_PARAM_ATF_GET_STATS              = 703,
+#endif
 };
 
 enum {
@@ -1679,6 +1684,13 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_commitatf",       IEEE80211_PARAM_ATF_OPT, GET_PARAM, 0},
 	{"perunit",             IEEE80211_PARAM_ATF_PER_UNIT, SET_PARAM, 1},
 	{"get_perunit",         IEEE80211_PARAM_ATF_PER_UNIT, GET_PARAM, 0},
+#if WLAN_ATF_STATS
+	{"enable_atf_stats",    IEEE80211_PARAM_ATF_ENABLE_STATS, SET_PARAM, 1},
+	{"g_enable_atf_stats",  IEEE80211_PARAM_ATF_ENABLE_STATS, GET_PARAM, 0},
+	{"atf_stats_timeout",   IEEE80211_PARAM_ATF_STATS_TIMEOUT, SET_PARAM, 1},
+	{"g_atf_stats_timeout", IEEE80211_PARAM_ATF_STATS_TIMEOUT, GET_PARAM, 0},
+	{"get_atf_stats",       IEEE80211_PARAM_ATF_GET_STATS, GET_PARAM, 0},
+#endif
 #endif
 	{"get_minpower",        IEEE80211_PARAM_TX_MIN_POWER, GET_PARAM, 0},
 	{"get_maxpower",        IEEE80211_PARAM_TX_MAX_POWER, GET_PARAM, 0},
