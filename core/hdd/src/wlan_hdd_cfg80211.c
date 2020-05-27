@@ -306,9 +306,10 @@ static const struct ieee80211_channel hdd_channels_dot11p[] = {
 	HDD5GHZCHAN(5920, 184, 0),
 };
 #else
-static const struct ieee80211_channel hdd_etsi13_srd_ch[] = {
+static const struct ieee80211_channel hdd_5dot9_ghz_ch[] = {
 	HDD5GHZCHAN(5845, 169, 0),
 	HDD5GHZCHAN(5865, 173, 0),
+	HDD5GHZCHAN(5885, 177, 0),
 };
 #endif
 
@@ -319,7 +320,7 @@ static const struct ieee80211_channel hdd_etsi13_srd_ch[] = {
 	sizeof(hdd_channels_dot11p))
 #else
 #define band_5_ghz_chanenls_size (sizeof(hdd_channels_5_ghz) + \
-	sizeof(hdd_etsi13_srd_ch))
+	sizeof(hdd_5dot9_ghz_ch))
 #endif
 
 static struct ieee80211_rate g_mode_rates[] = {
@@ -15572,14 +15573,15 @@ static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
 }
 
 /**
- * wlan_hdd_populate_srd_chan_info() - Populate SRD chan info in hdd context
+ * wlan_hdd_populate_5dot9_chan_info() - Populate 5.9 GHz chan info in hdd
+ * context
  * @hdd_ctx: pointer to hdd context
- * @index: SRD channel beginning index in chan_info of @hdd_ctx
+ * @index: 5.9 GHz channel beginning index in chan_info of @hdd_ctx
  *
- * Return: Number of SRD channels populated
+ * Return: Number of 5.9 GHz channels populated
  */
 static uint32_t
-wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
+wlan_hdd_populate_5dot9_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 {
 	return 0;
 }
@@ -15600,37 +15602,38 @@ static void wlan_hdd_copy_dsrc_ch(char *ch_ptr, int ch_arr_len)
 static void wlan_hdd_get_num_srd_ch_and_len(struct hdd_config *hdd_cfg,
 					    int *num_ch, int *ch_len)
 {
-	*num_ch = QDF_ARRAY_SIZE(hdd_etsi13_srd_ch);
-	*ch_len = sizeof(hdd_etsi13_srd_ch);
+	*num_ch = QDF_ARRAY_SIZE(hdd_5dot9_ghz_ch);
+	*ch_len = sizeof(hdd_5dot9_ghz_ch);
 }
 
 static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
 {
 	if (!ch_arr_len)
 		return;
-	qdf_mem_copy(ch_ptr, &hdd_etsi13_srd_ch[0], ch_arr_len);
+	qdf_mem_copy(ch_ptr, &hdd_5dot9_ghz_ch[0], ch_arr_len);
 }
 
 /**
- * wlan_hdd_populate_srd_chan_info() - Populate SRD chan info in hdd context
+ * wlan_hdd_populate_5dot9_chan_info() - Populate 5.9 GHz chan info in hdd
+ * context
  * @hdd_ctx: pointer to hdd context
- * @index: SRD channel beginning index in chan_info of @hdd_ctx
+ * @index: 5.9 GHz channel beginning index in chan_info of @hdd_ctx
  *
- * Return: Number of SRD channels populated
+ * Return: Number of 5.9 GHz channels populated
  */
 static uint32_t
-wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
+wlan_hdd_populate_5dot9_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 {
-	uint32_t num_srd_ch, i;
+	uint32_t num_5dot9_ch, i;
 	struct scan_chan_info *chan_info;
 
-	num_srd_ch = QDF_ARRAY_SIZE(hdd_etsi13_srd_ch);
+	num_5dot9_ch = QDF_ARRAY_SIZE(hdd_5dot9_ghz_ch);
 	chan_info = hdd_ctx->chan_info;
 
-	for (i = 0; i < num_srd_ch; i++)
-		chan_info[index + i].freq = hdd_etsi13_srd_ch[i].center_freq;
+	for (i = 0; i < num_5dot9_ch; i++)
+		chan_info[index + i].freq = hdd_5dot9_ghz_ch[i].center_freq;
 
-	return num_srd_ch;
+	return num_5dot9_ch;
 }
 
 #endif
@@ -23619,7 +23622,7 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 	}
 
 	index = num_2g + num_5g;
-	index = wlan_hdd_populate_srd_chan_info(hdd_ctx, index);
+	index = wlan_hdd_populate_5dot9_chan_info(hdd_ctx, index);
 
 	mac_handle = hdd_ctx->mac_handle;
 	sme_set_chan_info_callback(mac_handle,

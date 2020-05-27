@@ -216,6 +216,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	bool indoor_chan_enabled = false;
 	uint32_t restart_beaconing = 0;
 	bool enable_srd_chan = false;
+	bool enable_5dot9_ghz_chan;
 	QDF_STATUS status;
 	bool country_priority = 0;
 	bool value = false;
@@ -264,6 +265,11 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 
 	ucfg_mlme_get_11d_in_world_mode(hdd_ctx->psoc,
 					&config_vars->enable_11d_in_world_mode);
+
+	ucfg_mlme_get_5dot9_ghz_chan_in_master_mode(hdd_ctx->psoc,
+						    &enable_5dot9_ghz_chan);
+	config_vars->enable_5dot9_ghz_chan_in_master_mode =
+						enable_5dot9_ghz_chan;
 }
 
 /**
