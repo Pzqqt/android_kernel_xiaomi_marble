@@ -3773,6 +3773,18 @@ QDF_STATUS
 ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 					     bool *value);
 
+/**
+ * ucfg_mlme_get_5dot9_ghz_chan_in_master_mode  - get fcc 5.9 GHz chan
+ * in master mode
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_5dot9_ghz_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					    bool *value);
+
 #ifdef SAP_AVOID_ACS_FREQ_LIST
 /**
  * ucfg_mlme_get_acs_avoid_freq_list  - get acs avoid frequency list

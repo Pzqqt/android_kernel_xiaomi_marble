@@ -95,6 +95,30 @@
 	0, \
 	"enable/disable ETSI SRD channels in master mode")
 
+/*
+ * <ini>
+ * fcc_5dot9_ghz_chan_in_master_mode - Enable/disable 5.9 GHz channels in
+ * master mode for US
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * fcc_5dot9_ghz_chan_in_master_mode is to enable/disable 5.9 GHz channels
+ * in master mode for FCC reg domain
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP/P2P-GO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE CFG_INI_BOOL( \
+	"fcc_5dot9_ghz_chan_in_master_mode", \
+	0, \
+	"enable/disable FCC 5.9 GHz channels in master mode")
+
 #ifdef SAP_AVOID_ACS_FREQ_LIST
 #define SAP_AVOID_ACS_FREQ_LIST_DEFAULT ""
 
@@ -277,6 +301,7 @@
 	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
 	CFG(CFG_ENABLE_11D_IN_WORLD_MODE) \
 	CFG(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE) \
+	CFG(CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE) \
 	CFG(CFG_RESTART_BEACONING_ON_CH_AVOID) \
 	CFG(CFG_INDOOR_CHANNEL_SUPPORT) \
 	CFG(CFG_SCAN_11D_INTERVAL) \

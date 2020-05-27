@@ -1502,6 +1502,24 @@ ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+ucfg_mlme_get_5dot9_ghz_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_FCC_5DOT9_GHZ_CHAN_IN_MASTER_MODE);
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.reg.fcc_5dot9_ghz_chan_in_master_mode;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef SAP_AVOID_ACS_FREQ_LIST
 QDF_STATUS
 ucfg_mlme_get_acs_avoid_freq_list(struct wlan_objmgr_psoc *psoc,
