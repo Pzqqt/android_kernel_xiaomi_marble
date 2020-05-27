@@ -108,6 +108,14 @@ QDF_STATUS reg_get_default_country(uint16_t *default_country);
 bool reg_etsi13_regdmn(uint8_t reg_dmn);
 
 /**
+ * reg_fcc_regdmn () - Checks if the reg domain is FCC3/FCC8/FCC15/FCC16 or not
+ * @reg_dmn: reg domain
+ *
+ * Return: true or false
+ */
+bool reg_fcc_regdmn(uint8_t reg_dmn);
+
+/**
  * reg_en302_502_regdmn() - Check if the reg domain is en302_502 applicable.
  * @reg_dmn: Regulatory domain pair ID.
  *

@@ -198,6 +198,7 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_reg_set_offloaded_info(psoc);
 	target_if_reg_set_6ghz_info(psoc);
+	target_if_reg_set_5dot9_ghz_info(psoc);
 
 	/* Send num_msdu_desc to DP layer */
 	cdp_soc_set_param(wlan_psoc_get_dp_handle(psoc),

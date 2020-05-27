@@ -357,15 +357,19 @@ enum channel_enum {
 	CHAN_ENUM_5805,
 	CHAN_ENUM_5825,
 	CHAN_ENUM_5845,
-
+#ifdef WLAN_FEATURE_DSRC
 	CHAN_ENUM_5850,
 	CHAN_ENUM_5855,
 	CHAN_ENUM_5860,
+#endif
 	CHAN_ENUM_5865,
+#ifdef WLAN_FEATURE_DSRC
 	CHAN_ENUM_5870,
 	CHAN_ENUM_5875,
 	CHAN_ENUM_5880,
+#endif
 	CHAN_ENUM_5885,
+#ifdef WLAN_FEATURE_DSRC
 	CHAN_ENUM_5890,
 	CHAN_ENUM_5895,
 	CHAN_ENUM_5900,
@@ -373,6 +377,7 @@ enum channel_enum {
 	CHAN_ENUM_5910,
 	CHAN_ENUM_5915,
 	CHAN_ENUM_5920,
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	CHAN_ENUM_5935,
 	CHAN_ENUM_5955,
@@ -450,12 +455,22 @@ enum channel_enum {
 	NUM_49GHZ_CHANNELS = (MAX_49GHZ_CHANNEL - MIN_49GHZ_CHANNEL + 1),
 
 	MIN_5GHZ_CHANNEL = CHAN_ENUM_5180,
+	MAX_5GHZ_CHANNEL = CHAN_ENUM_5885,
+	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
+
+#ifdef WLAN_FEATURE_DSRC
+	MIN_5GHZ_CHANNEL = CHAN_ENUM_5180,
 	MAX_5GHZ_CHANNEL = CHAN_ENUM_5920,
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
 
 	MIN_DSRC_CHANNEL = CHAN_ENUM_5850,
 	MAX_DSRC_CHANNEL = CHAN_ENUM_5920,
 	NUM_DSRC_CHANNELS = (MAX_DSRC_CHANNEL - MIN_DSRC_CHANNEL + 1),
+#endif
+
+	MIN_5DOT9_CHANNEL = CHAN_ENUM_5845,
+	MAX_5DOT9_CHANNEL = CHAN_ENUM_5885,
+	NUM_5DOT9_CHANNELS = (MAX_5DOT9_CHANNEL - MIN_5DOT9_CHANNEL + 1),
 
 	INVALID_CHANNEL = 0xBAD,
 
@@ -963,6 +978,8 @@ enum restart_beaconing_on_ch_avoid_rule {
  * away from active LTE channels
  * @enable_srd_chan_in_master_mode: SRD channel support in master mode
  * @enable_11d_in_world_mode: enable 11d in world mode
+ * @enable_5dot9_ghz_chan_in_master_mode: 5.9 GHz channel support in
+ * master mode
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -975,6 +992,7 @@ struct reg_config_vars {
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
 	bool enable_srd_chan_in_master_mode;
 	bool enable_11d_in_world_mode;
+	bool enable_5dot9_ghz_chan_in_master_mode;
 };
 
 /**

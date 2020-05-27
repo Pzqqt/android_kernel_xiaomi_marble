@@ -316,6 +316,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 	rx_ops->reg_rx_ops.reg_set_6ghz_supported =
 		tgt_reg_set_6ghz_supported;
 
+	rx_ops->reg_rx_ops.reg_set_5dot9_ghz_supported =
+		tgt_reg_set_5dot9_ghz_supported;
+
 	rx_ops->reg_rx_ops.get_dfs_region =
 		wlan_reg_get_dfs_region;
 

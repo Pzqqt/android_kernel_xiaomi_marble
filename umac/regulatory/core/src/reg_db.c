@@ -1686,6 +1686,21 @@ bool reg_etsi13_regdmn(uint8_t reg_dmn)
 	return reg_dmn == ETSI13;
 }
 
+#ifdef CONFIG_BAND_6GHZ
+bool reg_fcc_regdmn(uint8_t reg_dmn)
+{
+	return ((reg_dmn == FCC3) ||
+		(reg_dmn == FCC8) ||
+		(reg_dmn == FCC15) ||
+		(reg_dmn == FCC16));
+}
+#else
+bool reg_fcc_regdmn(uint8_t reg_dmn)
+{
+	return (reg_dmn == FCC3 || reg_dmn == FCC8);
+}
+#endif
+
 bool reg_en302_502_regdmn(uint16_t regdmn)
 {
 	return ((regdmn == ETSI11_WORLD) ||

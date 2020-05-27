@@ -95,12 +95,17 @@ struct chan_change_cbk_entry {
  *	bit position value
  * @ignore_fw_reg_offload_ind: Ignore FW reg offload indication
  * @six_ghz_supported: whether 6ghz is supported
+ * @five_dot_nine_ghz_supported: whether 5.9ghz is supported
+ *	(service bit WMI_SERVICE_5_DOT_9GHZ_SUPPORT)
+ * @enable_5dot9_ghz_chan_in_master_mode: 5.9 GHz channel support in
+ *	master mode (ini fcc_5dot9_ghz_chan_in_master_mode)
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
 	bool chan_list_recvd[PSOC_MAX_PHY_REG_CAP];
 	bool offload_enabled;
 	bool six_ghz_supported;
+	bool five_dot_nine_ghz_supported;
 	uint8_t num_phy;
 	char cur_country[REG_ALPHA2_LEN + 1];
 	char def_country[REG_ALPHA2_LEN + 1];
@@ -143,6 +148,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool force_ssc_disable_indoor_channel;
 	bool enable_srd_chan_in_master_mode;
 	bool enable_11d_in_world_mode;
+	bool enable_5dot9_ghz_chan_in_master_mode;
 	qdf_spinlock_t cbk_list_lock;
 };
 

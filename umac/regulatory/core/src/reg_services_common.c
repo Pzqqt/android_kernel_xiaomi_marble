@@ -51,7 +51,8 @@ static const struct bonded_channel bonded_chan_40mhz_list[] = {
 	{140, 144},
 	{149, 153},
 	{157, 161},
-	{165, 169}
+	{165, 169},
+	{173, 177}
 };
 
 static const struct bonded_channel bonded_chan_80mhz_list[] = {
@@ -60,12 +61,14 @@ static const struct bonded_channel bonded_chan_80mhz_list[] = {
 	{100, 112},
 	{116, 128},
 	{132, 144},
-	{149, 161}
+	{149, 161},
+	{165, 177}
 };
 
 static const struct bonded_channel bonded_chan_160mhz_list[] = {
 	{36, 64},
-	{100, 128}
+	{100, 128},
+	{149, 177}
 };
 #endif /* CONFIG_CHAN_NUM_API */
 
@@ -85,6 +88,7 @@ static const struct bonded_channel_freq bonded_chan_40mhz_list_freq[] = {
 	{5745, 5765},
 	{5785, 5805},
 	{5825, 5845},
+	{5865, 5885},
 #ifdef CONFIG_BAND_6GHZ
 	{5955, 5975},
 	{5995, 6015},
@@ -126,6 +130,7 @@ static const struct bonded_channel_freq bonded_chan_80mhz_list_freq[] = {
 	{5580, 5640},
 	{5660, 5720},
 	{5745, 5805},
+	{5825, 5885},
 #ifdef CONFIG_BAND_6GHZ
 	{5955, 6015},
 	{6035, 6095},
@@ -148,6 +153,7 @@ static const struct bonded_channel_freq bonded_chan_80mhz_list_freq[] = {
 static const struct bonded_channel_freq bonded_chan_160mhz_list_freq[] = {
 	{5180, 5320},
 	{5500, 5640},
+	{5745, 5885},
 #ifdef CONFIG_BAND_6GHZ
 	{5955, 6095},
 	{6115, 6255},
@@ -259,20 +265,15 @@ const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_5850] = {5850, 170, 2, 160},
 	[CHAN_ENUM_5855] = {5855, 171, 2, 160},
 	[CHAN_ENUM_5860] = {5860, 172, 2, 160},
-#else
-	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
-	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
-	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
 #endif
 	[CHAN_ENUM_5865] = {5865, 173, 2, 160},
 #ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5870] = {5870, 174, 2, 160},
-#else
-	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
-#endif
 	[CHAN_ENUM_5875] = {5875, 175, 2, 160},
 	[CHAN_ENUM_5880] = {5880, 176, 2, 160},
+#endif
 	[CHAN_ENUM_5885] = {5885, 177, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5890] = {5890, 178, 2, 160},
 	[CHAN_ENUM_5895] = {5895, 179, 2, 160},
 	[CHAN_ENUM_5900] = {5900, 180, 2, 160},
@@ -280,6 +281,7 @@ const struct chan_map channel_map_us[NUM_CHANNELS] = {
 	[CHAN_ENUM_5910] = {5910, 182, 2, 160},
 	[CHAN_ENUM_5915] = {5915, 183, 2, 160},
 	[CHAN_ENUM_5920] = {5920, 184, 2, 160},
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_ENUM_5935] = {5935, 2, 2, 20},
 	[CHAN_ENUM_5955] = {5955, 1, 2, 160},
@@ -429,14 +431,19 @@ const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
 	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
 	[CHAN_ENUM_5845] = {5845, 169, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5865] = {5865, 173, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5875] = {5875, 175, 2, 160},
 	[CHAN_ENUM_5880] = {5880, 176, 2, 160},
+#endif
 	[CHAN_ENUM_5885] = {5885, 177, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5890] = {5890, 178, 2, 160},
 	[CHAN_ENUM_5895] = {5895, 179, 2, 160},
 	[CHAN_ENUM_5900] = {5900, 180, 2, 160},
@@ -444,6 +451,7 @@ const struct chan_map channel_map_eu[NUM_CHANNELS] = {
 	[CHAN_ENUM_5910] = {5910, 182, 2, 160},
 	[CHAN_ENUM_5915] = {5915, 183, 2, 160},
 	[CHAN_ENUM_5920] = {5920, 184, 2, 160},
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_ENUM_5935] = {5935, 2, 2, 20},
 	[CHAN_ENUM_5955] = {5955, 1, 2, 160},
@@ -593,14 +601,19 @@ const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
 	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
 	[CHAN_ENUM_5845] = {5845, 169, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5865] = {5865, INVALID_CHANNEL_NUM, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
@@ -608,6 +621,7 @@ const struct chan_map channel_map_jp[NUM_CHANNELS] = {
 	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_ENUM_5935] = {5935, 2, 2, 20},
 	[CHAN_ENUM_5955] = {5955, 1, 2, 160},
@@ -757,14 +771,19 @@ const struct chan_map channel_map_global[NUM_CHANNELS] = {
 	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
 	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
 	[CHAN_ENUM_5845] = {5845, 169, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5865] = {5865, 173, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
@@ -772,6 +791,7 @@ const struct chan_map channel_map_global[NUM_CHANNELS] = {
 	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_ENUM_5935] = {5935, 2, 2, 20},
 	[CHAN_ENUM_5955] = {5955, 1, 2, 160},
@@ -921,14 +941,19 @@ const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_5805] = {5805, 161, 2, 160},
 	[CHAN_ENUM_5825] = {5825, 165, 2, 160},
 	[CHAN_ENUM_5845] = {5845, 169, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5850] = {5850, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5855] = {5855, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5860] = {5860, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5865] = {5865, INVALID_CHANNEL_NUM, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5870] = {5870, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5875] = {5875, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5880] = {5880, INVALID_CHANNEL_NUM, 2, 160},
+#endif
 	[CHAN_ENUM_5885] = {5885, INVALID_CHANNEL_NUM, 2, 160},
+#ifdef WLAN_FEATURE_DSRC
 	[CHAN_ENUM_5890] = {5890, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5895] = {5895, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5900] = {5900, INVALID_CHANNEL_NUM, 2, 160},
@@ -936,6 +961,7 @@ const struct chan_map channel_map_china[NUM_CHANNELS] = {
 	[CHAN_ENUM_5910] = {5910, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5915] = {5915, INVALID_CHANNEL_NUM, 2, 160},
 	[CHAN_ENUM_5920] = {5920, INVALID_CHANNEL_NUM, 2, 160},
+#endif /* WLAN_FEATURE_DSRC */
 #ifdef CONFIG_BAND_6GHZ
 	[CHAN_ENUM_5935] = {5935, 2, 2, 20},
 	[CHAN_ENUM_5955] = {5955, 1, 2, 160},
@@ -3799,6 +3825,23 @@ QDF_STATUS reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc, bool val)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc, bool val)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc_priv_obj->five_dot_nine_ghz_supported = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev, uint8_t op_class)
 {
 	return ((op_class >= MIN_6GHZ_OPER_CLASS) &&
@@ -3820,6 +3863,69 @@ bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 	return psoc_priv_obj->six_ghz_supported;
 }
 #endif
+
+bool reg_is_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return  false;
+	}
+
+	return psoc_priv_obj->five_dot_nine_ghz_supported;
+}
+
+bool reg_is_fcc_regdmn(struct wlan_objmgr_pdev *pdev)
+{
+	struct cur_regdmn_info cur_reg_dmn;
+	QDF_STATUS status;
+
+	status = reg_get_curr_regdomain(pdev, &cur_reg_dmn);
+	if (status != QDF_STATUS_SUCCESS) {
+		reg_err_rl("Failed to get reg domain");
+		return false;
+	}
+
+	return reg_fcc_regdmn(cur_reg_dmn.dmn_id_5g);
+}
+
+bool reg_is_5dot9_ghz_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return false;
+	}
+
+	return (freq >= channel_map_us[MIN_5DOT9_CHANNEL].center_freq &&
+		freq <= channel_map_us[MAX_5DOT9_CHANNEL].center_freq);
+}
+
+bool reg_is_5dot9_ghz_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	if (!pdev) {
+		reg_alert("pdev is NULL");
+		return true;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_alert("psoc reg component is NULL");
+		return true;
+	}
+
+	return psoc_priv_obj->enable_5dot9_ghz_chan_in_master_mode;
+}
 
 #ifdef DISABLE_UNII_SHARED_BANDS
 QDF_STATUS

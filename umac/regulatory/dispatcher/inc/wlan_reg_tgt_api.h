@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -80,5 +80,13 @@ bool tgt_reg_ignore_fw_reg_offload_ind(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS tgt_reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
 				      bool val);
+
+/**
+ * tgt_reg_set_5dot9_ghz_supported() - Whether 5.9ghz is supported by the chip
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS tgt_reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
+					   bool val);
 
 #endif

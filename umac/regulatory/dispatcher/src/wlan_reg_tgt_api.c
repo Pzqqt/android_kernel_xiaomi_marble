@@ -95,3 +95,9 @@ QDF_STATUS tgt_reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
 {
 	return reg_set_6ghz_supported(psoc, val);
 }
+
+QDF_STATUS tgt_reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
+					   bool val)
+{
+	return reg_set_5dot9_ghz_supported(psoc, val);
+}

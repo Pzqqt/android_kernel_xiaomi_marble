@@ -628,6 +628,62 @@ reg_modify_chan_list_for_srd_channels(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+/**
+ * reg_modify_chan_list_for_5dot9_ghz_channels() - Modify 5.9 GHz channels
+ * in FCC
+ * @pdev: Pointer to pdev object
+ * @chan_list: Current channel list
+ *
+ * This function disables 5.9 GHz channels if service bit
+ * wmi_service_5dot9_ghz_support is not set or the reg db is not offloaded
+ * to FW. If service bit is set but ini enable_5dot9_ghz_chan_in_master_mode
+ * is not set, it converts these channels to passive in FCC regulatory domain.
+ * If both service bit and ini are set, the channels remain enabled.
+ */
+static void
+reg_modify_chan_list_for_5dot9_ghz_channels(struct wlan_objmgr_pdev *pdev,
+					    struct regulatory_channel
+					    *chan_list)
+{
+	enum channel_enum chan_enum;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!reg_is_fcc_regdmn(pdev))
+		return;
+
+	if (!reg_is_5dot9_ghz_supported(psoc) ||
+	    !reg_is_regdb_offloaded(psoc)) {
+		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+			if (reg_is_5dot9_ghz_freq(pdev, chan_list[chan_enum].
+						  center_freq)) {
+				chan_list[chan_enum].state =
+					CHANNEL_STATE_DISABLE;
+				chan_list[chan_enum].chan_flags =
+					REGULATORY_CHAN_DISABLED;
+			}
+		}
+		return;
+	}
+
+	if (reg_is_5dot9_ghz_chan_allowed_master_mode(pdev))
+		return;
+
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		if (chan_list[chan_enum].chan_flags & REGULATORY_CHAN_DISABLED)
+			continue;
+
+		if (reg_is_5dot9_ghz_freq(pdev,
+					  chan_list[chan_enum].center_freq)) {
+			chan_list[chan_enum].state =
+				CHANNEL_STATE_DFS;
+			chan_list[chan_enum].chan_flags |=
+				REGULATORY_CHAN_NO_IR;
+		}
+	}
+}
+
 #ifdef DISABLE_UNII_SHARED_BANDS
 /**
  * reg_is_reg_unii_band_1_set() - Check UNII bitmap
@@ -790,6 +846,10 @@ void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
 
 	reg_modify_chan_list_for_srd_channels(pdev_priv_obj->pdev_ptr,
 					      pdev_priv_obj->cur_chan_list);
+
+	reg_modify_chan_list_for_5dot9_ghz_channels(pdev_priv_obj->pdev_ptr,
+						    pdev_priv_obj->
+						    cur_chan_list);
 }
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)

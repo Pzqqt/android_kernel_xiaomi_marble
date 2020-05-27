@@ -1094,6 +1094,15 @@ QDF_STATUS reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
 				  bool val);
 
 /**
+ * reg_set_5dot9_ghz_supported() - Set if 5.9ghz is supported
+ *
+ * @psoc: Pointer to psoc
+ * @val: value
+ */
+QDF_STATUS reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc,
+				       bool val);
+
+/**
  * reg_is_6ghz_op_class() - Check whether 6ghz oper class
  *
  * @pdev: Pointer to pdev
@@ -1110,6 +1119,41 @@ bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc);
 #endif
+
+/**
+ * reg_is_5dot9_ghz_supported() - Whether 5.9ghz is supported
+ *
+ * @psoc: pointer to psoc
+ */
+bool reg_is_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_is_fcc_regdmn () - Checks if the current reg domain is FCC3/FCC8/FCC15/
+ * FCC16 or not
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_fcc_regdmn(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_is_5dot9_ghz_freq () - Checks if the frequency is 5.9 GHz freq or not
+ * @freq: frequency
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_5dot9_ghz_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
+/**
+ * reg_is_5dot9_ghz_chan_allowed_master_mode () - Checks if 5.9 GHz channels
+ * are allowed in master mode or not.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool reg_is_5dot9_ghz_chan_allowed_master_mode(struct wlan_objmgr_pdev *pdev);
 
 /**
  * reg_get_unii_5g_bitmap() - get unii_5g_bitmap value

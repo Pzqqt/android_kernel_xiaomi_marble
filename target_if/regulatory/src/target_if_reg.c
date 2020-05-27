@@ -90,6 +90,23 @@ static bool tgt_if_regulatory_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * tgt_if_regulatory_is_5dot9_ghz_supported() - Check if 5.9ghz is supported
+ * @psoc: Pointer to psoc
+ *
+ * Return: true if regdb if offloaded, else false
+ */
+static bool
+tgt_if_regulatory_is_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle)
+		return false;
+
+	return wmi_service_enabled(wmi_handle, wmi_service_5dot9_ghz_support);
+}
+
+/**
  * tgt_if_regulatory_is_there_serv_ready_extn() - Check for service ready
  * extension
  * @psoc: Pointer to psoc object
@@ -163,6 +180,24 @@ QDF_STATUS target_if_reg_set_6ghz_info(struct wlan_objmgr_psoc *psoc)
 		reg_rx_ops->reg_set_6ghz_supported(
 			psoc,
 			tgt_if_regulatory_is_6ghz_supported(psoc));
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_reg_set_5dot9_ghz_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_reg_rx_ops *reg_rx_ops;
+
+	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_rx_ops->reg_set_5dot9_ghz_supported)
+		reg_rx_ops->reg_set_5dot9_ghz_supported(
+			psoc,
+			tgt_if_regulatory_is_5dot9_ghz_supported(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }
