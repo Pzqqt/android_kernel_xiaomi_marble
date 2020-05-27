@@ -178,6 +178,7 @@ static int dp_hdcp2p2_wakeup(struct hdcp_transport_wakeup_data *data)
 {
 	struct dp_hdcp2p2_ctrl *ctrl;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 	if (!data) {
 		DP_ERR("invalid input\n");
 		return -EINVAL;
@@ -211,6 +212,7 @@ static int dp_hdcp2p2_wakeup(struct hdcp_transport_wakeup_data *data)
 	}
 
 exit:
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, data->cmd);
 	return 0;
 }
 
@@ -387,6 +389,10 @@ static int dp_hdcp2p2_aux_read_message(struct dp_hdcp2p2_ctrl *ctrl)
 		if (bytes_read != read_size) {
 			DP_ERR("fail: offset(0x%x), size(0x%x), rc(0x%x)\n",
 					offset, read_size, bytes_read);
+			SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,
+							offset,
+							read_size,
+							bytes_read);
 			rc = -EINVAL;
 			break;
 		}
@@ -423,6 +429,10 @@ static int dp_hdcp2p2_aux_write_message(struct dp_hdcp2p2_ctrl *ctrl,
 		if (bytes_written != write_size) {
 			DP_ERR("fail: offset(0x%x), size(0x%x), rc(0x%x)\n",
 					offset, write_size, bytes_written);
+			SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,
+							offset,
+							write_size,
+							bytes_written);
 			rc = -EINVAL;
 			break;
 		}
@@ -474,6 +484,7 @@ static void dp_hdcp2p2_send_msg(struct dp_hdcp2p2_ctrl *ctrl)
 	int rc = 0;
 	struct sde_hdcp_2x_wakeup_data cdata = {HDCP_2X_CMD_INVALID};
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 	if (!ctrl) {
 		DP_ERR("invalid input\n");
 		rc = -EINVAL;
@@ -509,6 +520,7 @@ exit:
 		cdata.cmd = HDCP_2X_CMD_MSG_SEND_FAILED;
 
 	dp_hdcp2p2_wakeup_lib(ctrl, &cdata);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, cdata.cmd);
 }
 
 static int dp_hdcp2p2_get_msg_from_sink(struct dp_hdcp2p2_ctrl *ctrl)
@@ -663,6 +675,7 @@ static int dp_hdcp2p2_cp_irq(void *input)
 {
 	int rc;
 	struct dp_hdcp2p2_ctrl *ctrl = input;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	rc = dp_hdcp2p2_valid_handle(ctrl);
 	if (rc)
@@ -691,6 +704,7 @@ static int dp_hdcp2p2_cp_irq(void *input)
 
 	kfifo_put(&ctrl->cmd_q, HDCP_TRANSPORT_CMD_LINK_CHECK);
 	wake_up(&ctrl->wait_q);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
 
 	return 0;
 }

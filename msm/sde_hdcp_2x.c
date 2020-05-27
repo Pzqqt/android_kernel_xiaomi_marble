@@ -151,6 +151,7 @@ static const struct sde_hdcp_2x_msg_data
 static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
 				     struct hdcp_transport_wakeup_data *data)
 {
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->last_msg);
 	switch (hdcp->last_msg) {
 	case INVALID_MESSAGE:
 		return AKE_INIT;
@@ -202,6 +203,7 @@ static int sde_hdcp_2x_get_next_message(struct sde_hdcp_2x_ctrl *hdcp,
 		pr_err("Unknown message ID (%d)\n", hdcp->last_msg);
 		return -EINVAL;
 	}
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
 }
 
 static void sde_hdcp_2x_wait_for_response(struct sde_hdcp_2x_ctrl *hdcp)
@@ -351,6 +353,7 @@ static void sde_hdcp_2x_clean(struct sde_hdcp_2x_ctrl *hdcp)
 	struct sde_hdcp_stream *stream_entry;
 	struct hdcp_transport_wakeup_data cdata = {HDCP_TRANSPORT_CMD_INVALID};
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated);
 	hdcp->authenticated = false;
 
 	cdata.context = hdcp->client_data;
@@ -372,6 +375,7 @@ static void sde_hdcp_2x_clean(struct sde_hdcp_2x_ctrl *hdcp)
 		sde_hdcp_2x_wakeup_client(hdcp, &cdata);
 
 	hdcp2_app_comm(hdcp->hdcp2_ctx, HDCP2_CMD_STOP, &hdcp->app_data);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hdcp->authenticated);
 }
 
 static u8 sde_hdcp_2x_stream_type(u8 min_enc_level)
@@ -474,6 +478,8 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 		HDCP_TRANSPORT_CMD_INVALID,
 		hdcp->client_data};
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated,
+					hdcp->app_data.response.data[0]);
 	switch (hdcp->app_data.response.data[0]) {
 	case SKE_SEND_TYPE_ID:
 		if (!hdcp2_app_comm(hdcp->hdcp2_ctx,
@@ -525,6 +531,7 @@ static void sde_hdcp_2x_msg_sent(struct sde_hdcp_2x_ctrl *hdcp)
 	}
 
 	sde_hdcp_2x_wakeup_client(hdcp, &cdata);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hdcp->authenticated);
 }
 
 static void sde_hdcp_2x_init(struct sde_hdcp_2x_ctrl *hdcp)
@@ -539,6 +546,7 @@ static void sde_hdcp_2x_start_auth(struct sde_hdcp_2x_ctrl *hdcp)
 {
 	int rc;
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated);
 	rc = hdcp2_app_comm(hdcp->hdcp2_ctx, HDCP2_CMD_START_AUTH,
 		&hdcp->app_data);
 	if (rc) {
@@ -550,6 +558,7 @@ static void sde_hdcp_2x_start_auth(struct sde_hdcp_2x_ctrl *hdcp)
 		 sde_hdcp_2x_message_name(hdcp->app_data.response.data[0]));
 
 	sde_hdcp_2x_send_message(hdcp);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hdcp->authenticated);
 }
 
 static void sde_hdcp_2x_timeout(struct sde_hdcp_2x_ctrl *hdcp)
@@ -584,6 +593,7 @@ static void sde_hdcp_2x_msg_recvd(struct sde_hdcp_2x_ctrl *hdcp)
 	u32 request_length, out_msg;
 	struct hdcp_transport_wakeup_data cdata = {HDCP_TRANSPORT_CMD_INVALID};
 
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, hdcp->authenticated);
 	if (atomic_read(&hdcp->hdcp_off)) {
 		pr_debug("invalid state, hdcp off\n");
 		return;
@@ -688,6 +698,7 @@ exit:
 
 	if (rc && !atomic_read(&hdcp->hdcp_off))
 		sde_hdcp_2x_clean(hdcp);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, hdcp->authenticated);
 }
 
 static struct list_head *sde_hdcp_2x_stream_present(
