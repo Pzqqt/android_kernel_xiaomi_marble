@@ -624,6 +624,7 @@ struct dsi_display_mode_priv_info {
  * @pixel_clk_khz:  Pixel clock in Khz.
  * @dsi_mode_flags: Flags to signal other drm components via private flags
  * @panel_mode:      Panel mode
+ * @is_preferred:   Is mode preferred
  * @priv_info:      Mode private info
  */
 struct dsi_display_mode {
@@ -631,6 +632,7 @@ struct dsi_display_mode {
 	u32 pixel_clk_khz;
 	u32 dsi_mode_flags;
 	enum dsi_op_mode panel_mode;
+	bool is_preferred;
 	struct dsi_display_mode_priv_info *priv_info;
 };
 

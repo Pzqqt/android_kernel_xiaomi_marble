@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DSI_DRM_H_
@@ -13,6 +13,8 @@
 #include "msm_drv.h"
 
 #include "dsi_display.h"
+
+#define NO_OVERRIDE -1
 
 struct dsi_bridge {
 	struct drm_bridge base;

@@ -23,7 +23,6 @@
 
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
 #define INT_BASE_10 10
-#define NO_OVERRIDE -1
 
 #define MISR_BUFF_SIZE	256
 #define ESD_MODE_STRING_MAX_LEN 256
@@ -2196,25 +2195,22 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	}
 
 	str = strnstr(boot_str, ":config", strlen(boot_str));
-	if (!str)
-		goto end;
-
-	if (kstrtol(str + strlen(":config"), INT_BASE_10,
-				(unsigned long *)&cmdline_topology)) {
-		DSI_ERR("invalid config index override: %s\n", boot_str);
-		goto end;
+	if (str) {
+		if (sscanf(str, ":config%lu", &cmdline_topology) != 1) {
+			DSI_ERR("invalid config index override: %s\n",
+				boot_str);
+			goto end;
+		}
 	}
 
 	str = strnstr(boot_str, ":timing", strlen(boot_str));
-	if (!str)
-		goto end;
-
-	if (kstrtol(str + strlen(":timing"), INT_BASE_10,
-				(unsigned long *)&cmdline_timing)) {
-		DSI_ERR("invalid timing index override: %s. resetting both timing and config\n",
-			boot_str);
-		cmdline_topology = NO_OVERRIDE;
-		goto end;
+	if (str) {
+		if (sscanf(str, ":timing%lu", &cmdline_timing) != 1) {
+			DSI_ERR("invalid timing index override: %s\n",
+				boot_str);
+			cmdline_topology = NO_OVERRIDE;
+			goto end;
+		}
 	}
 	DSI_DEBUG("successfully parsed command line topology and timing\n");
 end:
@@ -6241,13 +6237,21 @@ int dsi_display_get_modes(struct dsi_display *display,
 
 	timing_mode_count = display->panel->num_timing_nodes;
 
+	/* Validate command line timing */
+	if ((display->cmdline_timing != NO_OVERRIDE) &&
+		(display->cmdline_timing >= timing_mode_count))
+		display->cmdline_timing = NO_OVERRIDE;
+
 	for (mode_idx = 0; mode_idx < timing_mode_count; mode_idx++) {
 		struct dsi_display_mode display_mode;
 		int topology_override = NO_OVERRIDE;
+		bool is_preferred = false;
 		u32 frame_threshold_us = ctrl->ctrl->frame_threshold_time_us;
 
-		if (display->cmdline_timing == mode_idx)
+		if (display->cmdline_timing == mode_idx) {
 			topology_override = display->cmdline_topology;
+			is_preferred = true;
+		}
 
 		memset(&display_mode, 0, sizeof(display_mode));
 
@@ -6340,6 +6344,10 @@ int dsi_display_get_modes(struct dsi_display *display,
 			continue;
 
 		_dsi_display_populate_bit_clks(display, start, end, &array_idx);
+		if (is_preferred) {
+			/* Set first timing sub mode as preferred mode */
+			display->modes[start].is_preferred = true;
+		}
 	}
 
 exit:
