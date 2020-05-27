@@ -170,6 +170,8 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 		return ERR_CAST(attach);
 	}
 
+	attach->dma_map_attrs |= DMA_ATTR_IOMMU_USE_LLC_NWA;
+
 	/*
 	 * For cached buffers where CPU access is required, dma_map_attachment
 	 * must be called now to allow user-space to perform cpu sync begin/end

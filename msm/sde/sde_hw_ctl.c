@@ -52,7 +52,7 @@
 
 #define CTL_MIXER_BORDER_OUT            BIT(24)
 #define CTL_FLUSH_MASK_ROT              BIT(27)
-#define CTL_FLUSH_CTL                   17
+#define CTL_FLUSH_MASK_CTL              BIT(17)
 
 #define CTL_NUM_EXT			4
 #define CTL_SSPP_MAX_RECTS		2
@@ -417,15 +417,6 @@ static inline void sde_hw_ctl_uidle_enable(struct sde_hw_ctl *ctx, bool enable)
 	SDE_REG_WRITE(&ctx->hw, CTL_UIDLE_ACTIVE, val);
 }
 
-static inline int sde_hw_ctl_update_bitmask_ctl(struct sde_hw_ctl *ctx,
-		bool enable)
-{
-	if (!ctx)
-		return -EINVAL;
-
-	UPDATE_MASK(ctx->flush.pending_flush_mask, CTL_FLUSH_CTL, enable);
-	return 0;
-}
 
 static inline int sde_hw_ctl_update_bitmask_sspp(struct sde_hw_ctl *ctx,
 		enum sde_sspp sspp,
@@ -456,7 +447,7 @@ static inline int sde_hw_ctl_update_bitmask_mixer(struct sde_hw_ctl *ctx,
 	}
 
 	UPDATE_MASK(ctx->flush.pending_flush_mask, mixer_tbl[lm], enable);
-	sde_hw_ctl_update_bitmask_ctl(ctx, true);
+	ctx->flush.pending_flush_mask |= CTL_FLUSH_MASK_CTL;
 
 	return 0;
 }
@@ -1386,7 +1377,6 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 	ops->clear_all_blendstages = sde_hw_ctl_clear_all_blendstages;
 	ops->setup_blendstage = sde_hw_ctl_setup_blendstage;
 	ops->get_staged_sspp = sde_hw_ctl_get_staged_sspp;
-	ops->update_bitmask_ctl = sde_hw_ctl_update_bitmask_ctl;
 	ops->update_bitmask_sspp = sde_hw_ctl_update_bitmask_sspp;
 	ops->update_bitmask_mixer = sde_hw_ctl_update_bitmask_mixer;
 	ops->reg_dma_flush = sde_hw_reg_dma_flush;

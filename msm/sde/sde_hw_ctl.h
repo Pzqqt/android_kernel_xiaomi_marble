@@ -320,13 +320,6 @@ struct sde_hw_ctl_ops {
 	int (*wait_reset_status)(struct sde_hw_ctl *ctx);
 
 	/**
-	 * update_bitmask_ctl: updates mask corresponding to ctl
-	 * @enable           : true to enable, false to disable
-	 */
-	int (*update_bitmask_ctl)(struct sde_hw_ctl *ctx,
-		bool enable);
-
-	/**
 	 * update_bitmask_sspp: updates mask corresponding to sspp
 	 * @blk               : blk id
 	 * @enable            : true to enable, 0 to disable
