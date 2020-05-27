@@ -248,7 +248,7 @@ struct sde_kms_frame_event_cb_data {
 struct sde_kms {
 	struct msm_kms base;
 	struct drm_device *dev;
-	int core_rev;
+	uint32_t core_rev;
 	struct sde_mdss_cfg *catalog;
 
 	struct generic_pm_domain genpd;
