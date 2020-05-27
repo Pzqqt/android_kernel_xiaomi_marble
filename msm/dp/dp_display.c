@@ -426,6 +426,12 @@ static int dp_display_hdcp_process_sink_sync(struct dp_display_private *dp)
 			queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
 			return -EAGAIN;
 		}
+		/*
+		 * Some sinks need more time to stabilize after synchronization
+		 * and before it can handle an HDCP authentication request.
+		 * Adding the delay for better interoperability.
+		 */
+		msleep(6000);
 	}
 
 	return 0;
