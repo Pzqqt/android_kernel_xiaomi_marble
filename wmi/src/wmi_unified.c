@@ -2415,9 +2415,8 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 							data, len, id,
 							&wmi_cmd_struct_ptr);
 		if (tlv_ok_status != 0) {
-			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Error: id=0x%x, wmitlv check status=%d",
-				  __func__, id, tlv_ok_status);
+			QDF_DEBUG_PANIC("%s: Error: id=0x%x, wmitlv check status=%d",
+					__func__, id, tlv_ok_status);
 			goto end;
 		}
 	}
