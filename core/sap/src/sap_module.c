@@ -592,17 +592,6 @@ uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx)
 	return sap_ctx->ch_params.ch_width;
 }
 
-void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
-			       uint32_t vht_channel_width)
-{
-	if (!sap_ctx) {
-		sap_err("Invalid SAP pointer");
-		return;
-	}
-
-	sap_ctx->ch_params.ch_width = vht_channel_width;
-}
-
 bool wlan_sap_get_ch_params(struct sap_context *sap_ctx,
 			    struct ch_params *ch_params)
 {
