@@ -6061,6 +6061,12 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 		tx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
 		rx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
 	}
+	/* Intersection of self and AP's NSS capability */
+	if (tx_nss > wlan_vdev_mlme_get_nss(adapter->vdev))
+		tx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
+
+	if (rx_nss > wlan_vdev_mlme_get_nss(adapter->vdev))
+		rx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
 
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.tx_nss = tx_nss;
