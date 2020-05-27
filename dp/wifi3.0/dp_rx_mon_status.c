@@ -526,7 +526,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 	preamble = ppdu->u.preamble;
 	ppdu_type = ppdu->u.ppdu_type;
 
-	for (i = 0; i < ppdu->num_users; i++) {
+	for (i = 0; i < ppdu->num_users && i < CDP_MU_MAX_USERS; i++) {
 		peer = NULL;
 		ppdu_user = &ppdu->user[i];
 		if (ppdu_user->peer_id != HTT_INVALID_PEER)
@@ -1406,8 +1406,10 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 		dp_rx_mon_populate_cfr_info(pdev, ppdu_info, cdp_rx_ppdu);
 		dp_rx_populate_cdp_indication_ppdu(pdev,
 						   ppdu_info, cdp_rx_ppdu);
-		qdf_nbuf_put_tail(ppdu_nbuf,
-				  sizeof(struct cdp_rx_indication_ppdu));
+		if (!qdf_nbuf_put_tail(ppdu_nbuf,
+				       sizeof(struct cdp_rx_indication_ppdu)))
+			return;
+
 		dp_rx_stats_update(pdev, cdp_rx_ppdu);
 
 		if (cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
