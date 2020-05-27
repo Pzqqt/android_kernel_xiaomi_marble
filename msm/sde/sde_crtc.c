@@ -3271,12 +3271,6 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	_sde_crtc_blend_setup(crtc, old_state, true);
 	_sde_crtc_dest_scaler_setup(crtc);
 
-	/* cancel the idle notify delayed work */
-	if (sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
-					MSM_DISPLAY_VIDEO_MODE) &&
-		kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work))
-		SDE_DEBUG("idle notify work cancelled\n");
-
 	/*
 	 * Since CP properties use AXI buffer to program the
 	 * HW, check if context bank is in attached state,
@@ -3403,7 +3397,7 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	if (idle_time && sde_encoder_check_curr_mode(
 						sde_crtc->mixers[0].encoder,
 						MSM_DISPLAY_VIDEO_MODE)) {
-		kthread_queue_delayed_work(&event_thread->worker,
+		kthread_mod_delayed_work(&event_thread->worker,
 					&sde_crtc->idle_notify_work,
 					msecs_to_jiffies(idle_time));
 		SDE_DEBUG("schedule idle notify work in %dms\n", idle_time);
