@@ -4985,6 +4985,22 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 	},
+	{/* hw:x,39 */
+		.name = MSM_DAILINK_NAME(Compress3),
+		.stream_name = "Compress3",
+		.cpu_dai_name = "MultiMedia10",
+		.platform_name = "msm-compress-dsp",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			 SND_SOC_DPCM_TRIGGER_POST},
+		.codec_dai_name = "snd-soc-dummy-dai",
+		.codec_name = "snd-soc-dummy",
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		/* this dainlink has playback support */
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA10,
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {

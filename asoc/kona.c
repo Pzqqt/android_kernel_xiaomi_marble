@@ -6139,6 +6139,19 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(tx_cdcdma5_tx),
 	},
+	{/* hw:x,40 */
+		.name = MSM_DAILINK_NAME(Compress3),
+		.stream_name = "Compress3",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			 SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		/* this dainlink has playback support */
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA10,
+		SND_SOC_DAILINK_REG(multimedia10),
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
