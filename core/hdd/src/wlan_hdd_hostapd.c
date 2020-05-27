@@ -5595,7 +5595,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		    config->ch_params.center_freq_seg1 == 155) ||
 		    (config->ch_params.center_freq_seg1 == 138 &&
 		     config->ch_params.center_freq_seg0 == 155))) {
+			hdd_debug("Falling back to 80 from 80p80 as non supported freq_seq0 %d and freq_seq1 %d",
+				  config->ch_params.mhz_freq_seg0,
+				  config->ch_params.mhz_freq_seg1);
 			config->ch_params.center_freq_seg1 = 0;
+			config->ch_params.mhz_freq_seg1 = 0;
 			config->ch_width_orig = CH_WIDTH_80MHZ;
 			config->ch_params.ch_width = config->ch_width_orig;
 		}
@@ -5617,11 +5621,14 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		  config->mfpCapable, config->mfpRequired);
 #endif
 
-	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_STR " SSID: %.*s BCNINTV:%d Freq:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
+	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_STR " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
 		       QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
 		       config->SSIDinfo.ssid.length,
 		       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,
-		       config->chan_freq, config->SapHw_mode, config->privacy,
+		       config->chan_freq, config->ch_params.mhz_freq_seg0,
+		       config->ch_params.mhz_freq_seg1,
+		       config->ch_params.ch_width,
+		       config->SapHw_mode, config->privacy,
 		       config->authType, config->acs_cfg.acs_mode,
 		       config->acs_dfs_mode, config->dtim_period);
 
@@ -6386,6 +6393,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				cds_freq_to_chan(chandef->center_freq1);
 	adapter->session.ap.sap_config.ch_params.center_freq_seg1 =
 				cds_freq_to_chan(chandef->center_freq2);
+	adapter->session.ap.sap_config.ch_params.mhz_freq_seg0 =
+							chandef->center_freq1;
+	adapter->session.ap.sap_config.ch_params.mhz_freq_seg1 =
+							chandef->center_freq2;
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
