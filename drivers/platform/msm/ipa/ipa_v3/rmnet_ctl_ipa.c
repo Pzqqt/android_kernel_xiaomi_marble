@@ -527,8 +527,6 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 				rmnet_ctl_ipa3_ctx->stats.tx_pkt_dropped++;
 				rmnet_ctl_ipa3_ctx->stats.tx_byte_dropped +=
 					skb->len;
-				spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock,
-					flags);
 				kfree_skb(skb);
 				continue;
 			}
@@ -543,8 +541,8 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 		rmnet_ctl_ipa3_ctx->stats.tx_pkt_sent++;
 		rmnet_ctl_ipa3_ctx->stats.tx_byte_sent +=
 			skb->len;
-		spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 	}
+	spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 	goto out;
 
 delayed_work:
