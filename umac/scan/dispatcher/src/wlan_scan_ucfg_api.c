@@ -679,7 +679,6 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	uint32_t max_wait_iterations = SCM_CANCEL_SCAN_WAIT_ITERATION;
-	qdf_event_t cancel_scan_event;
 
 	if (!req || !req->vdev) {
 		scm_err("req or vdev within req is NULL");
@@ -699,34 +698,22 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	memset(&cancel_scan_event, 0, sizeof(cancel_scan_event));
-	/*
-	 * If cancel req is to cancel all scan of pdev or vdev
-	 * wait until all scan of pdev or vdev get cancelled
-	 */
-	qdf_event_create(&cancel_scan_event);
-	qdf_event_reset(&cancel_scan_event);
-
 	if (cancel_pdev) {
 		pdev = wlan_vdev_get_pdev(vdev);
 		while ((ucfg_scan_get_pdev_status(pdev) !=
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all pdev scan to get complete");
-				qdf_wait_single_event(&cancel_scan_event,
-					SCM_CANCEL_SCAN_WAIT_TIME);
+			qdf_sleep(SCM_CANCEL_SCAN_WAIT_TIME);
 			max_wait_iterations--;
 		}
 	} else if (cancel_vdev) {
 		while ((ucfg_scan_get_vdev_status(vdev) !=
 		     SCAN_NOT_IN_PROGRESS) && max_wait_iterations) {
 			scm_debug("wait for all vdev scan to get complete");
-				qdf_wait_single_event(&cancel_scan_event,
-					SCM_CANCEL_SCAN_WAIT_TIME);
+			qdf_sleep(SCM_CANCEL_SCAN_WAIT_TIME);
 			max_wait_iterations--;
 		}
 	}
-
-	qdf_event_destroy(&cancel_scan_event);
 
 	if (!max_wait_iterations) {
 		scm_err("Failed to wait for scans to get complete");
