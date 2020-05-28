@@ -2586,6 +2586,8 @@ static void hif_pci_deconfigure_grp_irq(struct hif_softc *scn)
 			hif_ext_group->irq_requested = false;
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
+				if (scn->irq_unlazy_disable)
+					irq_clear_status_flags(irq, IRQ_DISABLE_UNLAZY);
 				pfrm_free_irq(scn->qdf_dev->dev,
 					      irq, hif_ext_group);
 			}
@@ -3785,7 +3787,8 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 	pci_slot = hif_get_pci_slot(scn);
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->irq[j];
-
+		if (scn->irq_unlazy_disable)
+			irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
 		hif_info("request_irq = %d for grp %d",
 			 irq, hif_ext_group->grp_id);
 		ret = pfrm_request_irq(
@@ -4099,6 +4102,12 @@ again:
 	hif_pci_init_reg_windowing_support(sc, target_type);
 
 	tgt_info->target_type = target_type;
+
+	/*
+	 * Disable unlzay interrupt registration for QCN9000
+	 */
+	if (target_type == TARGET_TYPE_QCN9000)
+		ol_sc->irq_unlazy_disable = 1;
 
 	if (ce_srng_based(ol_sc)) {
 		HIF_TRACE("%s:Skip tgt_wake up for srng devices\n", __func__);

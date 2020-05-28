@@ -250,6 +250,8 @@ struct hif_softc {
 	/* The CPU hotplug event registration handle */
 	struct qdf_cpuhp_handler *cpuhp_event_handle;
 #endif
+	uint32_t irq_unlazy_disable;
+	/* Should the unlzay support for interrupt delivery be disabled */
 };
 
 static inline
