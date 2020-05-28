@@ -1654,9 +1654,9 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	score_param->rssi_scoring.bad_rssi_pcnt =
 		ap_profile->param.rssi_scoring.bad_rssi_pcnt;
 	score_param->rssi_scoring.good_bucket_size =
-		ap_profile->param.rssi_scoring.good_bucket_size;
+		ap_profile->param.rssi_scoring.good_rssi_bucket_size;
 	score_param->rssi_scoring.bad_bucket_size =
-		ap_profile->param.rssi_scoring.bad_bucket_size;
+		ap_profile->param.rssi_scoring.bad_rssi_bucket_size;
 	score_param->rssi_scoring.rssi_pref_5g_rssi_thresh =
 		(-1) * ap_profile->param.rssi_scoring.rssi_pref_5g_rssi_thresh;
 

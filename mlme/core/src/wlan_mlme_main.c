@@ -1696,21 +1696,6 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_subnet_detection(psoc, lfr);
 }
 
-static uint32_t
-mlme_limit_max_per_index_score(uint32_t per_index_score)
-{
-	uint8_t i, score;
-
-	for (i = 0; i < MAX_INDEX_PER_INI; i++) {
-		score = WLAN_GET_SCORE_PERCENTAGE(per_index_score, i);
-		if (score > MAX_PCT_SCORE)
-			WLAN_SET_SCORE_PERCENTAGE(per_index_score,
-				MAX_PCT_SCORE, i);
-	}
-
-	return per_index_score;
-}
-
 static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 				struct wlan_mlme_power *power)
 {
@@ -1739,145 +1724,13 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 			(uint8_t)cfg_default(CFG_LOCAL_POWER_CONSTRAINT);
 }
 
-static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
-				  struct wlan_mlme_scoring_cfg *scoring_cfg)
+static void mlme_init_roam_scoring_cfg(struct wlan_objmgr_psoc *psoc,
+				struct wlan_mlme_roam_scoring_cfg *scoring_cfg)
 {
-	uint32_t total_weight;
-
 	scoring_cfg->vendor_roam_score_algorithm =
 		cfg_get(psoc, CFG_VENDOR_ROAM_SCORE_ALGORITHM);
 	scoring_cfg->enable_scoring_for_roam =
 		cfg_get(psoc, CFG_ENABLE_SCORING_FOR_ROAM);
-	scoring_cfg->weight_cfg.rssi_weightage =
-		cfg_get(psoc, CFG_SCORING_RSSI_WEIGHTAGE);
-	scoring_cfg->weight_cfg.ht_caps_weightage =
-		cfg_get(psoc, CFG_SCORING_HT_CAPS_WEIGHTAGE);
-	scoring_cfg->weight_cfg.vht_caps_weightage =
-		cfg_get(psoc, CFG_SCORING_VHT_CAPS_WEIGHTAGE);
-	scoring_cfg->weight_cfg.he_caps_weightage =
-		cfg_get(psoc, CFG_SCORING_HE_CAPS_WEIGHTAGE);
-	scoring_cfg->weight_cfg.chan_width_weightage =
-		cfg_get(psoc, CFG_SCORING_CHAN_WIDTH_WEIGHTAGE);
-	scoring_cfg->weight_cfg.chan_band_weightage =
-		cfg_get(psoc, CFG_SCORING_CHAN_BAND_WEIGHTAGE);
-	scoring_cfg->weight_cfg.nss_weightage =
-		cfg_get(psoc, CFG_SCORING_NSS_WEIGHTAGE);
-	scoring_cfg->weight_cfg.beamforming_cap_weightage =
-		cfg_get(psoc, CFG_SCORING_BEAMFORM_CAP_WEIGHTAGE);
-	scoring_cfg->weight_cfg.pcl_weightage =
-		cfg_get(psoc, CFG_SCORING_PCL_WEIGHTAGE);
-	scoring_cfg->weight_cfg.channel_congestion_weightage =
-		cfg_get(psoc, CFG_SCORING_CHAN_CONGESTION_WEIGHTAGE);
-	scoring_cfg->weight_cfg.oce_wan_weightage =
-		cfg_get(psoc, CFG_SCORING_OCE_WAN_WEIGHTAGE);
-	scoring_cfg->weight_cfg.oce_ap_tx_pwr_weightage =
-				cfg_get(psoc, CFG_OCE_AP_TX_PWR_WEIGHTAGE);
-	scoring_cfg->weight_cfg.oce_subnet_id_weightage =
-				cfg_get(psoc, CFG_OCE_SUBNET_ID_WEIGHTAGE);
-
-	total_weight =  scoring_cfg->weight_cfg.rssi_weightage +
-			scoring_cfg->weight_cfg.ht_caps_weightage +
-			scoring_cfg->weight_cfg.vht_caps_weightage +
-			scoring_cfg->weight_cfg.he_caps_weightage +
-			scoring_cfg->weight_cfg.chan_width_weightage +
-			scoring_cfg->weight_cfg.chan_band_weightage +
-			scoring_cfg->weight_cfg.nss_weightage +
-			scoring_cfg->weight_cfg.beamforming_cap_weightage +
-			scoring_cfg->weight_cfg.pcl_weightage +
-			scoring_cfg->weight_cfg.channel_congestion_weightage +
-			scoring_cfg->weight_cfg.oce_wan_weightage +
-			scoring_cfg->weight_cfg.oce_ap_tx_pwr_weightage +
-			scoring_cfg->weight_cfg.oce_subnet_id_weightage;
-
-	/*
-	 * If configured weights are greater than max weight,
-	 * fallback to default weights
-	 */
-	if (total_weight > BEST_CANDIDATE_MAX_WEIGHT) {
-		mlme_legacy_err("Total weight greater than %d, using default weights",
-				BEST_CANDIDATE_MAX_WEIGHT);
-		scoring_cfg->weight_cfg.rssi_weightage = RSSI_WEIGHTAGE;
-		scoring_cfg->weight_cfg.ht_caps_weightage =
-						HT_CAPABILITY_WEIGHTAGE;
-		scoring_cfg->weight_cfg.vht_caps_weightage =
-						VHT_CAP_WEIGHTAGE;
-		scoring_cfg->weight_cfg.he_caps_weightage = HE_CAP_WEIGHTAGE;
-		scoring_cfg->weight_cfg.chan_width_weightage =
-						CHAN_WIDTH_WEIGHTAGE;
-		scoring_cfg->weight_cfg.chan_band_weightage =
-						CHAN_BAND_WEIGHTAGE;
-		scoring_cfg->weight_cfg.nss_weightage = NSS_WEIGHTAGE;
-		scoring_cfg->weight_cfg.beamforming_cap_weightage =
-						BEAMFORMING_CAP_WEIGHTAGE;
-		scoring_cfg->weight_cfg.pcl_weightage = PCL_WEIGHT;
-		scoring_cfg->weight_cfg.channel_congestion_weightage =
-						CHANNEL_CONGESTION_WEIGHTAGE;
-		scoring_cfg->weight_cfg.oce_wan_weightage = OCE_WAN_WEIGHTAGE;
-		scoring_cfg->weight_cfg.oce_ap_tx_pwr_weightage =
-			OCE_AP_TX_POWER_WEIGHTAGE;
-		scoring_cfg->weight_cfg.oce_subnet_id_weightage =
-			OCE_SUBNET_ID_WEIGHTAGE;
-	}
-
-	scoring_cfg->rssi_score.best_rssi_threshold =
-		cfg_get(psoc, CFG_SCORING_BEST_RSSI_THRESHOLD);
-	scoring_cfg->rssi_score.good_rssi_threshold =
-		cfg_get(psoc, CFG_SCORING_GOOD_RSSI_THRESHOLD);
-	scoring_cfg->rssi_score.bad_rssi_threshold =
-		cfg_get(psoc, CFG_SCORING_BAD_RSSI_THRESHOLD);
-
-	scoring_cfg->rssi_score.good_rssi_pcnt =
-		cfg_get(psoc, CFG_SCORING_GOOD_RSSI_PERCENT);
-	scoring_cfg->rssi_score.bad_rssi_pcnt =
-		cfg_get(psoc, CFG_SCORING_BAD_RSSI_PERCENT);
-
-	scoring_cfg->rssi_score.good_rssi_bucket_size =
-		cfg_get(psoc, CFG_SCORING_GOOD_RSSI_BUCKET_SIZE);
-	scoring_cfg->rssi_score.bad_rssi_bucket_size =
-		cfg_get(psoc, CFG_SCORING_BAD_RSSI_BUCKET_SIZE);
-
-	scoring_cfg->rssi_score.rssi_pref_5g_rssi_thresh =
-		cfg_get(psoc, CFG_SCORING_RSSI_PREF_5G_THRESHOLD);
-
-	scoring_cfg->bandwidth_weight_per_index =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_BW_WEIGHT_PER_IDX));
-	scoring_cfg->nss_weight_per_index =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_NSS_WEIGHT_PER_IDX));
-	scoring_cfg->band_weight_per_index =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_BAND_WEIGHT_PER_IDX));
-
-	scoring_cfg->esp_qbss_scoring.num_slot =
-		cfg_get(psoc, CFG_SCORING_NUM_ESP_QBSS_SLOTS);
-	scoring_cfg->esp_qbss_scoring.score_pcnt3_to_0 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_ESP_QBSS_SCORE_IDX_3_TO_0));
-	scoring_cfg->esp_qbss_scoring.score_pcnt7_to_4 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_ESP_QBSS_SCORE_IDX_7_TO_4));
-	scoring_cfg->esp_qbss_scoring.score_pcnt11_to_8 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_ESP_QBSS_SCORE_IDX_11_TO_8));
-	scoring_cfg->esp_qbss_scoring.score_pcnt15_to_12 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_ESP_QBSS_SCORE_IDX_15_TO_12));
-
-	scoring_cfg->oce_wan_scoring.num_slot =
-		cfg_get(psoc, CFG_SCORING_NUM_OCE_WAN_SLOTS);
-	scoring_cfg->oce_wan_scoring.score_pcnt3_to_0 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_3_TO_0));
-	scoring_cfg->oce_wan_scoring.score_pcnt7_to_4 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_7_TO_4));
-	scoring_cfg->oce_wan_scoring.score_pcnt11_to_8 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_11_TO_8));
-	scoring_cfg->oce_wan_scoring.score_pcnt15_to_12 =
-		mlme_limit_max_per_index_score(
-			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12));
 	scoring_cfg->roam_trigger_bitmap =
 			cfg_get(psoc, CFG_ROAM_SCORE_DELTA_TRIGGER_BITMAP);
 	scoring_cfg->roam_score_delta = cfg_get(psoc, CFG_ROAM_SCORE_DELTA);
@@ -2379,7 +2232,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
-	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
+	mlme_init_roam_scoring_cfg(psoc, &mlme_cfg->roam_scoring);
 	mlme_init_dot11_mode_cfg(&mlme_cfg->dot11_mode);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_acs_cfg(psoc, &mlme_cfg->acs);

@@ -1873,52 +1873,9 @@ struct wlan_mlme_rssi_cfg_score  {
 	uint32_t rssi_pref_5g_rssi_thresh;
 };
 
-/**
- * struct wlan_mlme_per_slot_scoring - define % score for differents slots
- *				for a scoring param.
- * num_slot: number of slots in which the param will be divided.
- *           Max 15. index 0 is used for 'not_present. Num_slot will
- *           equally divide 100. e.g, if num_slot = 4 slot 0 = 0-25%, slot
- *           1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
- * score_pcnt3_to_0: Conatins score percentage for slot 0-3
- *             BITS 0-7   :- the scoring pcnt when not present
- *             BITS 8-15  :- SLOT_1
- *             BITS 16-23 :- SLOT_2
- *             BITS 24-31 :- SLOT_3
- * score_pcnt7_to_4: Conatins score percentage for slot 4-7
- *             BITS 0-7   :- SLOT_4
- *             BITS 8-15  :- SLOT_5
- *             BITS 16-23 :- SLOT_6
- *             BITS 24-31 :- SLOT_7
- * score_pcnt11_to_8: Conatins score percentage for slot 8-11
- *             BITS 0-7   :- SLOT_8
- *             BITS 8-15  :- SLOT_9
- *             BITS 16-23 :- SLOT_10
- *             BITS 24-31 :- SLOT_11
- * score_pcnt15_to_12: Conatins score percentage for slot 12-15
- *             BITS 0-7   :- SLOT_12
- *             BITS 8-15  :- SLOT_13
- *             BITS 16-23 :- SLOT_14
- *             BITS 24-31 :- SLOT_15
- */
-struct wlan_mlme_per_slot_scoring {
-	uint32_t num_slot;
-	uint32_t score_pcnt3_to_0;
-	uint32_t score_pcnt7_to_4;
-	uint32_t score_pcnt11_to_8;
-	uint32_t score_pcnt15_to_12;
-};
-
 /*
- * struct wlan_mlme_score_config - MLME BSS Scoring related config
+ * struct wlan_mlme_roam_scoring_cfg - MLME roam related scoring config
  * @enable_scoring_for_roam: Enable/disable BSS Scoring for Roaming
- * @weight_cfg: Various Weight related Scoring Configs
- * @rssi_score: RSSI Scoring related thresholds/percentages config
- * @esp_qbss_scoring: ESP QBSS Scoring configs
- * @oce_wan_scoring: OCE WAN Scoring Configs
- * @bandwidth_weight_per_index: Bandwidth weight per index for scoring logic
- * @nss_weight_per_index: NSS weight per index for scoring logic
- * @band_weight_per_index: Band weight per index for scoring logic
  * @roam_trigger_bitmap: bitmap for various roam triggers
  * @roam_score_delta: percentage delta in roam score
  * @apsd_enabled: Enable automatic power save delivery
@@ -1926,15 +1883,8 @@ struct wlan_mlme_per_slot_scoring {
  * @min_roam_score_delta: Minimum difference between connected AP's and
  *			candidate AP's roam score to start roaming.
  */
-struct wlan_mlme_scoring_cfg {
+struct wlan_mlme_roam_scoring_cfg {
 	bool enable_scoring_for_roam;
-	struct wlan_mlme_weight_config weight_cfg;
-	struct wlan_mlme_rssi_cfg_score rssi_score;
-	struct wlan_mlme_per_slot_scoring esp_qbss_scoring;
-	struct wlan_mlme_per_slot_scoring oce_wan_scoring;
-	uint32_t bandwidth_weight_per_index;
-	uint32_t nss_weight_per_index;
-	uint32_t band_weight_per_index;
 	uint32_t roam_trigger_bitmap;
 	uint32_t roam_score_delta;
 	bool apsd_enabled;
@@ -2297,7 +2247,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_nss_chains nss_chains_ini_cfg;
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_stats_cfg stats;
-	struct wlan_mlme_scoring_cfg scoring;
+	struct wlan_mlme_roam_scoring_cfg roam_scoring;
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_threshold threshold;
 	struct wlan_mlme_timeout timeouts;

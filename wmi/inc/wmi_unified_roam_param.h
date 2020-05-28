@@ -24,6 +24,7 @@
 #define _WMI_UNIFIED_ROAM_PARAM_H_
 
 #include <wlan_blm_public_struct.h>
+#include <wlan_cm_bss_score_param.h>
 
 /**
  * struct gateway_update_req_param - gateway parameter update request
@@ -296,69 +297,6 @@ struct ap_profile {
 	uint32_t rssi_abs_thresh;
 };
 
-/**
- * struct rssi_scoring - rssi scoring param to sortlist selected AP
- * @best_rssi_threshold: Roamable AP RSSI equal or better than this threshold,
- *                      full rssi score 100. Units in dBm.
- * @good_rssi_threshold: Below threshold, scoring linear percentage between
- *                      rssi_good_pnt and 100. Units in dBm.
- * @bad_rssi_threshold: Between good and bad rssi threshold, scoring linear
- *                      % between rssi_bad_pcnt and rssi_good_pct in dBm.
- * @good_rssi_pcnt: Used to assigned scoring percentage of each slot between
- *                 best to good rssi threshold. Units in percentage.
- * @bad_rssi_pcnt: Used to assigned scoring percentage of each slot between good
- *                to bad rssi threshold. Unites in percentage.
- * @good_bucket_size : bucket size of slot in good zone
- * @bad_bucket_size : bucket size of slot in bad zone
- * @rssi_pref_5g_rssi_thresh: Below rssi threshold, 5G AP have given preference
- *                           of band percentage. Units in dBm.
- */
-struct rssi_scoring {
-	int32_t best_rssi_threshold;
-	int32_t good_rssi_threshold;
-	int32_t  bad_rssi_threshold;
-	uint32_t good_rssi_pcnt;
-	uint32_t bad_rssi_pcnt;
-	uint32_t good_bucket_size;
-	uint32_t bad_bucket_size;
-	int32_t  rssi_pref_5g_rssi_thresh;
-};
-
-/**
- * struct param_slot_scoring - define % score for differents slots for a
- *                             scoring param.
- * @num_slot: number of slots in which the param will be divided.
- *           Max 15. index 0 is used for 'not_present. Num_slot will
- *           equally divide 100. e.g, if num_slot = 4 slot 0 = 0-25%, slot
- *           1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
- * @score_pcnt3_to_0: Conatins score percentage for slot 0-3
- *             BITS 0-7   :- the scoring pcnt when not present
- *             BITS 8-15  :- SLOT_1
- *             BITS 16-23 :- SLOT_2
- *             BITS 24-31 :- SLOT_3
- * @score_pcnt7_to_4: Conatins score percentage for slot 4-7
- *             BITS 0-7   :- SLOT_4
- *             BITS 8-15  :- SLOT_5
- *             BITS 16-23 :- SLOT_6
- *             BITS 24-31 :- SLOT_7
- * @score_pcnt11_to_8: Conatins score percentage for slot 8-11
- *             BITS 0-7   :- SLOT_8
- *             BITS 8-15  :- SLOT_9
- *             BITS 16-23 :- SLOT_10
- *             BITS 24-31 :- SLOT_11
- * @score_pcnt15_to_12: Conatins score percentage for slot 12-15
- *             BITS 0-7   :- SLOT_12
- *             BITS 8-15  :- SLOT_13
- *             BITS 16-23 :- SLOT_14
- *             BITS 24-31 :- SLOT_15
- */
-struct param_slot_scoring {
-	uint32_t num_slot;
-	uint32_t score_pcnt3_to_0;
-	uint32_t score_pcnt7_to_4;
-	uint32_t score_pcnt11_to_8;
-	uint32_t score_pcnt15_to_12;
-};
 
 /**
  * struct scoring_param - scoring param to sortlist selected AP
@@ -427,9 +365,9 @@ struct scoring_param {
 	uint32_t roam_trigger_bitmap;
 	uint32_t vendor_roam_score_algorithm;
 	uint32_t cand_min_roam_score_delta;
-	struct rssi_scoring rssi_scoring;
-	struct param_slot_scoring esp_qbss_scoring;
-	struct param_slot_scoring oce_wan_scoring;
+	struct rssi_config_score rssi_scoring;
+	struct per_slot_score esp_qbss_scoring;
+	struct per_slot_score oce_wan_scoring;
 };
 
 /*
