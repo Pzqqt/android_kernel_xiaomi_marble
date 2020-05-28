@@ -666,6 +666,8 @@ static void _sde_core_perf_crtc_update_bus(struct sde_kms *kms,
 	}
 
 	bus_ab_quota = max(bw_sum_of_intfs, kms->perf.perf_tune.min_bus_vote);
+	bus_ab_quota = min(bus_ab_quota,
+			kms->catalog->perf.max_bw_high*1000ULL);
 	bus_ib_quota = perf.max_per_pipe_ib[bus_id];
 
 	if (kms->perf.perf_tune.mode == SDE_PERF_MODE_FIXED) {

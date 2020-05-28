@@ -5614,6 +5614,9 @@ int sde_crtc_helper_reset_custom_properties(struct drm_crtc *crtc,
 		}
 	}
 
+	/* disable clk and bw control until clk & bw properties are set */
+	cstate->bw_control = false;
+	cstate->bw_split_vote = false;
 	return 0;
 }
 
