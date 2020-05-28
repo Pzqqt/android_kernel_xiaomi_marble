@@ -3400,14 +3400,14 @@ static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
 	if (dp_srng_alloc(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed second rx refill ring"));
+			FL("dp_srng_alloc failed second rx refill ring"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (dp_srng_init(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
 			 IPA_RX_REFILL_BUF_RING_IDX, pdev->pdev_id)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed second rx refill ring"));
+			  FL("dp_srng_init failed second rx refill ring"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -11556,7 +11556,7 @@ static QDF_STATUS dp_pdev_srng_init(struct dp_pdev *pdev)
 	if (dp_srng_init(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
 			 RXDMA_BUF, 0, pdev->lmac_id)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed rx refill ring"));
+			  FL("dp_srng_init failed rx refill ring"));
 		goto fail1;
 	}
 
@@ -11645,7 +11645,7 @@ static QDF_STATUS dp_pdev_srng_alloc(struct dp_pdev *pdev)
 	if (dp_srng_alloc(soc, &soc->rx_refill_buf_ring[pdev->lmac_id],
 			  RXDMA_BUF, ring_size, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed rx refill ring"));
+			  FL("dp_srng_alloc failed rx refill ring"));
 		goto fail1;
 	}
 
@@ -11953,7 +11953,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for wbm_desc_rel_ring"));
+			  FL("dp_srng_alloc failed for wbm_desc_rel_ring"));
 		goto fail1;
 	}
 
@@ -11962,7 +11962,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->tcl_cmd_credit_ring, TCL_CMD_CREDIT,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for tcl_cmd_ring"));
+			  FL("dp_srng_alloc failed for tcl_cmd_ring"));
 		goto fail1;
 	}
 
@@ -11970,7 +11970,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->tcl_status_ring, TCL_STATUS, entries,
 			  0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for tcl_status_ring"));
+			  FL("dp_srng_alloc failed for tcl_status_ring"));
 		goto fail1;
 	}
 
@@ -11979,7 +11979,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->reo_reinject_ring, REO_REINJECT,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for reo_reinject_ring"));
+			  FL("dp_srng_alloc failed for reo_reinject_ring"));
 		goto fail1;
 	}
 
@@ -11988,7 +11988,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->rx_rel_ring, WBM2SW_RELEASE,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for rx_rel_ring"));
+			  FL("dp_srng_alloc failed for rx_rel_ring"));
 		goto fail1;
 	}
 
@@ -11997,7 +11997,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->reo_exception_ring, REO_EXCEPTION,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for reo_exception_ring"));
+			  FL("dp_srng_alloc failed for reo_exception_ring"));
 		goto fail1;
 	}
 
@@ -12005,7 +12005,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	entries = wlan_cfg_get_dp_soc_reo_cmd_ring_size(soc_cfg_ctx);
 	if (dp_srng_alloc(soc, &soc->reo_cmd_ring, REO_CMD, entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for reo_cmd_ring"));
+			  FL("dp_srng_alloc failed for reo_cmd_ring"));
 		goto fail1;
 	}
 
@@ -12013,7 +12013,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 	if (dp_srng_alloc(soc, &soc->reo_status_ring, REO_STATUS,
 			  entries, 0)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  FL("dp_srng_setup failed for reo_status_ring"));
+			  FL("dp_srng_alloc failed for reo_status_ring"));
 		goto fail1;
 	}
 
@@ -12039,7 +12039,7 @@ static QDF_STATUS dp_soc_srng_alloc(struct dp_soc *soc)
 		if (dp_srng_alloc(soc, &soc->reo_dest_ring[i], REO_DST,
 				  reo_dst_ring_size, cached)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL("dp_srng_setup failed for reo_dest_ring"));
+				  FL("dp_srng_alloc failed for reo_dest_ring"));
 			goto fail1;
 		}
 	}
