@@ -2723,6 +2723,63 @@ static int msm_get_port_id(int be_id)
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
 		afe_port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_2;
 		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_1:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_0:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_0;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_0:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_1;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_1:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_2;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_2:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_2;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_3;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_3:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_3;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_4:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_4;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_4:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_4;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_5;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_5:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_5;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_6;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_7:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_7;
+		break;
 	default:
 		pr_err("%s: Invalid BE id: %d\n", __func__, be_id);
 		afe_port_id = -EINVAL;
@@ -4124,6 +4181,38 @@ static int lahaina_send_island_va_config(int32_t be_id)
 	return rc;
 }
 
+static int lahaina_send_power_mode(int32_t be_id)
+{
+	int rc = 0;
+	int port_id = 0xFFFF;
+
+	port_id = msm_get_port_id(be_id);
+	if (port_id < 0) {
+		pr_err("%s: Invalid power interface, be_id: %d\n",
+			__func__, be_id);
+		rc = -EINVAL;
+	} else {
+		/*
+		 * send island mode config
+		 * This should be the first configuration
+		 *
+		 */
+		rc = afe_send_port_island_mode(port_id);
+		if (rc)
+			pr_err("%s: afe send island mode failed %d\n",
+				__func__, rc);
+		/*
+		 * send power mode config
+		 * This should be set after island configuration
+		 */
+		rc = afe_send_port_power_mode(port_id);
+		if (rc)
+			pr_err("%s: afe send power mode failed %d\n",
+				__func__, rc);
+	}
+	return rc;
+}
+
 static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				struct snd_pcm_hw_params *params)
 {
@@ -4886,6 +4975,12 @@ static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
 		if (ret)
 			pr_err("%s: send island va cfg failed, err: %d\n",
 			       __func__, ret);
+		break;
+	default:
+		ret = lahaina_send_power_mode(dai_link->id);
+		if (ret)
+			pr_err("%s: send power mode failed, err: %d\n",
+				__func__, ret);
 		break;
 	}
 
