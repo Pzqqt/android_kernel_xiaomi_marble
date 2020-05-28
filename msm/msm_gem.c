@@ -449,7 +449,8 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 			if (IS_ERR(obj->import_attach)) {
 				DRM_ERROR("dma_buf_attach failure, err=%ld\n",
 						PTR_ERR(obj->import_attach));
-				goto unlock;
+				ret = PTR_ERR(obj->import_attach);
+				return ret;
 			}
 			msm_obj->obj_dirty = false;
 			reattach = true;
@@ -462,14 +463,14 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 			if (ret) {
 				DRM_ERROR("delayed dma-buf import failed %d\n",
 						ret);
-				goto unlock;
+				return ret;
 			}
 		}
 
 		vma = add_vma(obj, aspace);
 		if (IS_ERR(vma)) {
 			ret = PTR_ERR(vma);
-			goto unlock;
+			return ret;
 		}
 
 		pages = get_pages(obj);
@@ -493,13 +494,10 @@ static int msm_gem_get_iova_locked(struct drm_gem_object *obj,
 		mutex_unlock(&aspace->list_lock);
 	}
 
-	mutex_unlock(&msm_obj->lock);
 	return 0;
 
 fail:
 	del_vma(vma);
-unlock:
-	mutex_unlock(&msm_obj->lock);
 	return ret;
 }
 static int msm_gem_pin_iova(struct drm_gem_object *obj,
