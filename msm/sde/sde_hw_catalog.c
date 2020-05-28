@@ -1434,6 +1434,9 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 			set_bit(SDE_PERF_SSPP_QOS_8LVL, &sspp->perf_features);
 		vig_count++;
 
+		sblk->format_list = sde_cfg->vig_formats;
+		sblk->virt_format_list = sde_cfg->virt_vig_formats;
+
 		if ((sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED2) ||
 		    (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3) ||
 		    (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)) {
@@ -1448,9 +1451,6 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 		}
 
 		_sde_sspp_setup_vigs_pp(props, sde_cfg, sspp);
-
-		sblk->format_list = sde_cfg->vig_formats;
-		sblk->virt_format_list = sde_cfg->virt_vig_formats;
 
 		if (sde_cfg->true_inline_rot_rev > 0) {
 			set_bit(SDE_SSPP_TRUE_INLINE_ROT, &sspp->features);
