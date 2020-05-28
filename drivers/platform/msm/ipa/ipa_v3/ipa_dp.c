@@ -1179,7 +1179,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_rx_notify,
 				(unsigned long) ep->sys);
 
-	if (ipa3_ctx->tx_napi_enable) {
+	if (IPA_CLIENT_IS_PROD(ep->client) &&
+		ipa3_ctx->tx_napi_enable) {
 		if (sys_in->client != IPA_CLIENT_APPS_WAN_PROD) {
 			netif_tx_napi_add(&ipa3_ctx->generic_ndev,
 			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,
