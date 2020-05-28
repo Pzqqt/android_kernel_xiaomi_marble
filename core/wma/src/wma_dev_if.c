@@ -2779,9 +2779,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	 * enable the firmware flag here.
 	 */
 	if (QDF_GLOBAL_MONITOR_MODE != cds_get_conparam() &&
-	    utils_is_dfs_chan_for_freq(wma->pdev,
-				wlan_reg_legacy_chan_to_freq(wma->pdev,
-							des_chan->ch_ieee)))
+	    utils_is_dfs_chan_for_freq(wma->pdev, des_chan->ch_freq))
 		mlme_obj->mgmt.generic.disable_hw_ack = true;
 
 	if (mlme_obj->mgmt.rate_info.bcn_tx_rate) {

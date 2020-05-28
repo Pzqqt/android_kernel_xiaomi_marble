@@ -2232,7 +2232,9 @@ hdd_cfg80211_update_channel_info(struct hdd_context *hdd_ctx,
 	struct nlattr *nla_attr, *channel;
 	struct hdd_channel_info *icv;
 	int i;
-	uint32_t freq_seg_0, freq_seg_1;
+	uint32_t freq_seg_0 = 0, freq_seg_1 = 0;
+	enum reg_wifi_band band;
+	uint8_t band_mask;
 
 	nla_attr = nla_nest_start(skb, idx);
 	if (!nla_attr)
@@ -2249,12 +2251,17 @@ hdd_cfg80211_update_channel_info(struct hdd_context *hdd_ctx,
 			goto fail;
 		}
 
-		freq_seg_0 = wlan_reg_legacy_chan_to_freq(
-						hdd_ctx->pdev,
-						icv->vht_center_freq_seg0);
-		freq_seg_1 = wlan_reg_legacy_chan_to_freq(
-						hdd_ctx->pdev,
-						icv->vht_center_freq_seg1);
+		band = wlan_reg_freq_to_band(icv->freq);
+		band_mask = 1 << band;
+
+		if (icv->vht_center_freq_seg0)
+			freq_seg_0 = wlan_reg_chan_band_to_freq(hdd_ctx->pdev,
+						    icv->vht_center_freq_seg0,
+						    band_mask);
+		if (icv->vht_center_freq_seg1)
+			freq_seg_1 = wlan_reg_chan_band_to_freq(hdd_ctx->pdev,
+						    icv->vht_center_freq_seg1,
+						    band_mask);
 
 		if (nla_put_u16(skb, CHAN_INFO_ATTR_FREQ,
 				icv->freq) ||
