@@ -804,14 +804,14 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 	dp_fisa_debug("fisa_flow->curr_aggr %d", fisa_flow->cur_aggr);
 	linear_skb = dp_fisa_rx_linear_skb(vdev, fisa_flow->head_skb, 24000);
 	if (linear_skb) {
-		if (qdf_likely(vdev->osif_rx))
-			vdev->osif_rx(vdev->osif_vdev, linear_skb);
+		if (!vdev->osif_rx || QDF_STATUS_SUCCESS !=
+		    vdev->osif_rx(vdev->osif_vdev, linear_skb))
+			qdf_nbuf_free(linear_skb);
 		/* Free non linear skb */
 		qdf_nbuf_free(fisa_flow->head_skb);
 	} else {
-		if (qdf_likely(vdev->osif_rx))
-			vdev->osif_rx(vdev->osif_vdev, fisa_flow->head_skb);
-		else
+		if (!vdev->osif_rx || QDF_STATUS_SUCCESS !=
+		    vdev->osif_rx(vdev->osif_vdev, fisa_flow->head_skb))
 			qdf_nbuf_free(fisa_flow->head_skb);
 	}
 
@@ -1061,9 +1061,8 @@ pull_nbuf:
 deliver_nbuf: /* Deliver without FISA */
 		qdf_nbuf_set_next(head_nbuf, NULL);
 		hex_dump_skb_data(head_nbuf, false);
-		if (qdf_likely(vdev->osif_rx))
-			vdev->osif_rx(vdev->osif_vdev, head_nbuf);
-		else
+		if (!vdev->osif_rx || QDF_STATUS_SUCCESS !=
+		    vdev->osif_rx(vdev->osif_vdev, head_nbuf))
 			qdf_nbuf_free(head_nbuf);
 next_msdu:
 		head_nbuf = next_nbuf;
