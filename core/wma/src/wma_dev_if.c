@@ -850,9 +850,9 @@ static void wma_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id, bool add)
 				ap_vdev_ids[i] = i;
 			}
 
-			if (wma->interfaces[i].mhz != prev_ch_freq) {
+			if (wma->interfaces[i].ch_freq != prev_ch_freq) {
 				num_ch++;
-				prev_ch_freq = wma->interfaces[i].mhz;
+				prev_ch_freq = wma->interfaces[i].ch_freq;
 			}
 		}
 	}
@@ -2764,7 +2764,6 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 		CFG_TGT_DEFAULT_GTX_TPC_MIN;
 	intr[vdev_id].config.gtx_info.gtxBWMask =
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[vdev_id].mhz = des_chan->ch_freq;
 	intr[vdev_id].chan_width = des_chan->ch_width;
 	intr[vdev_id].ch_freq = des_chan->ch_freq;
 	intr[vdev_id].ch_flagext = des_chan->ch_flagext;

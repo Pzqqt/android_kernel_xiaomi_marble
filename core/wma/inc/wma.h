@@ -665,7 +665,6 @@ struct wma_invalid_peer_params {
  * @llbCoexist: 11b coexist
  * @shortSlotTimeSupported: is short slot time supported or not
  * @dtimPeriod: DTIM period
- * @mhz: channel frequency in KHz
  * @chan_width: channel bandwidth
  * @vdev_up: is vdev up or not
  * @tsfadjust: TSF adjust
@@ -714,7 +713,6 @@ struct wma_txrx_node {
 	uint8_t llbCoexist;
 	uint8_t shortSlotTimeSupported;
 	uint8_t dtimPeriod;
-	A_UINT32 mhz;
 	enum phy_ch_width chan_width;
 	bool vdev_active;
 	uint64_t tsfadjust;

@@ -3572,7 +3572,7 @@ QDF_STATUS wma_get_connection_info(uint8_t vdev_id,
 	}
 	conn_table_entry->chan_width = wma_conn_table_entry->chan_width;
 	conn_table_entry->mac_id = wma_conn_table_entry->mac_id;
-	conn_table_entry->mhz = wma_conn_table_entry->mhz;
+	conn_table_entry->mhz = wma_conn_table_entry->ch_freq;
 	conn_table_entry->sub_type = wma_conn_table_entry->sub_type;
 	conn_table_entry->type = wma_conn_table_entry->type;
 	conn_table_entry->ch_flagext = wma_conn_table_entry->ch_flagext;
@@ -3603,7 +3603,7 @@ QDF_STATUS wma_ndi_update_connection_info(uint8_t vdev_id,
 	}
 
 	wma_iface_entry->chan_width = ndp_chan_info->ch_width;
-	wma_iface_entry->mhz = ndp_chan_info->freq;
+	wma_iface_entry->ch_freq = ndp_chan_info->freq;
 	wma_iface_entry->nss = ndp_chan_info->nss;
 	wma_iface_entry->mac_id = ndp_chan_info->mac_id;
 

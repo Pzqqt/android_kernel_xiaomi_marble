@@ -1214,7 +1214,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 		 csa_offload_event->new_ch_freq_seg2,
 		 csa_offload_event->new_op_class);
 
-	cur_chan = cds_freq_to_chan(intr[vdev_id].mhz);
+	cur_chan = cds_freq_to_chan(intr[vdev_id].ch_freq);
 	/*
 	 * basic sanity check: requested channel should not be 0
 	 * and equal to home channel

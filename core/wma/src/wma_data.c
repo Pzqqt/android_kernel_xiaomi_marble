@@ -1279,7 +1279,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		 __func__, pRateUpdateParams->bssid.bytes,
 		 intr[vdev_id].config.shortgi, rate_flag);
 	ret = wma_encode_mc_rate(short_gi, intr[vdev_id].config.chwidth,
-				 intr[vdev_id].mhz, mbpsx10_rate,
+				 intr[vdev_id].ch_freq, mbpsx10_rate,
 				 pRateUpdateParams->nss, &rate);
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Error, Invalid input rate value", __func__);
@@ -2586,9 +2586,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		use_6mbps = 1;
 
 	if (pFc->subType == SIR_MAC_MGMT_PROBE_RSP) {
-		if ((wma_is_vdev_in_ap_mode(wma_handle, vdev_id)) &&
-		    (0 != wma_handle->interfaces[vdev_id].mhz))
-			chanfreq = wma_handle->interfaces[vdev_id].mhz;
+		if (wma_is_vdev_in_ap_mode(wma_handle, vdev_id) &&
+		    wma_handle->interfaces[vdev_id].ch_freq)
+			chanfreq = wma_handle->interfaces[vdev_id].ch_freq;
 		else
 			chanfreq = channel_freq;
 		WMA_LOGD("%s: Probe response frame on channel %d vdev:%d",
@@ -2663,7 +2663,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	    PKT_CAPTURE_MODE_MGMT_ONLY) {
 		ucfg_pkt_capture_mgmt_tx(wma_handle->pdev,
 					 tx_frame,
-					 wma_handle->interfaces[vdev_id].mhz,
+					 wma_handle->interfaces[vdev_id].ch_freq,
 					 mgmt_param.tx_param.preamble_type);
 	}
 

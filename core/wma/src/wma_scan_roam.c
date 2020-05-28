@@ -2792,7 +2792,7 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t channel;
 
-	channel = wlan_freq_to_chan(iface->mhz);
+	channel = wlan_freq_to_chan(iface->ch_freq);
 	if (chan)
 		bss_phymode =
 			wma_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
@@ -3024,7 +3024,7 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 	wma_process_roam_synch_complete(wma, synch_event->vdev_id);
 
 	/* update freq and channel width */
-	wma->interfaces[synch_event->vdev_id].mhz =
+	wma->interfaces[synch_event->vdev_id].ch_freq =
 		roam_synch_ind_ptr->chan_freq;
 	if (roam_synch_ind_ptr->join_rsp)
 		wma->interfaces[synch_event->vdev_id].chan_width =
