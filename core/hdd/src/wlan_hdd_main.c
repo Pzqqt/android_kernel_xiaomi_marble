@@ -2469,6 +2469,9 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	else
 		hdd_debug("bcast twt is disable in ini, fw cap %d",
 			  cfg->bcast_twt_support);
+
+	hdd_update_score_config(hdd_ctx);
+
 	return 0;
 
 dispatcher_close:
@@ -16577,60 +16580,13 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 		ie_whitelist->voui[i] = whitelist.probe_req_voui[i];
 }
 
-QDF_STATUS hdd_update_score_config(
-	struct scoring_config *score_config, struct hdd_context *hdd_ctx)
+QDF_STATUS hdd_update_score_config(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg = hdd_ctx->config;
-	QDF_STATUS status;
-	struct wlan_mlme_nss_chains vdev_ini_cfg;
-	bool bval = false;
-	uint32_t channel_bonding_mode;
+	eCsrPhyMode phy_mode = hdd_cfg_xlate_to_csr_phy_mode(cfg->dot11Mode);
 
-	qdf_mem_zero(&vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
-	/* Populate the nss chain params from ini for this vdev type */
-	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
-				      QDF_STA_MODE,
-				      hdd_ctx->num_rf_chains);
-
-	score_config->vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ];
-	score_config->vdev_nss_5g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
-
-	sme_update_score_config(hdd_ctx->mac_handle, score_config);
-
-	ucfg_mlme_get_channel_bonding_24ghz(hdd_ctx->psoc,
-					    &channel_bonding_mode);
-	score_config->cb_mode_24G = channel_bonding_mode;
-	ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
-					   &channel_bonding_mode);
-	score_config->cb_mode_5G = channel_bonding_mode;
-
-	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
-	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
-	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax_ONLY)
-		score_config->he_cap = 1;
-
-	if (score_config->he_cap ||
-	    cfg->dot11Mode == eHDD_DOT11_MODE_11ac ||
-	    cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY)
-		score_config->vht_cap = 1;
-
-	if (score_config->vht_cap || cfg->dot11Mode == eHDD_DOT11_MODE_11n ||
-	    cfg->dot11Mode == eHDD_DOT11_MODE_11n_ONLY)
-		score_config->ht_cap = 1;
-
-	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("Failed to get vht_for_24ghz");
-	if (score_config->vht_cap && bval)
-		score_config->vht_24G_cap = 1;
-
-	status = ucfg_mlme_get_vht_enable_tx_bf(hdd_ctx->psoc,
-					&bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get vht_enable_tx_bf");
-
-	if (bval)
-		score_config->beamformee_cap = 1;
+	sme_update_score_config(hdd_ctx->mac_handle, phy_mode,
+				hdd_ctx->num_rf_chains);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -16680,12 +16636,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	}
 	scan_cfg.sta_miracast_mcc_rest_time = mcast_mcc_rest_time;
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
-
-	status = hdd_update_score_config(&scan_cfg.score_config, hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to update scoring config");
-		return -EINVAL;
-	}
 
 	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

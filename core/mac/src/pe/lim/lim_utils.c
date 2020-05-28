@@ -69,8 +69,6 @@
 #include <wlan_blm_api.h>
 #include <lim_assoc_utils.h>
 
-#define ASCII_SPACE_CHARACTER 0x20
-
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
    \brief deletes the complete lim dialogue token linked list.
@@ -8332,7 +8330,7 @@ QDF_STATUS lim_get_capability_info(struct mac_context *mac, uint16_t *pcap,
 		pcap_info->qos = 1;
 
 	/* APSD bit */
-	if (mac->mlme_cfg->scoring.apsd_enabled)
+	if (mac->mlme_cfg->roam_scoring.apsd_enabled)
 		pcap_info->apsd = 1;
 
 	pcap_info->rrm = mac->rrm.rrmConfig.rrm_enabled;

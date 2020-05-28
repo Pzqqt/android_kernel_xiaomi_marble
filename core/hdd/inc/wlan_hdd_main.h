@@ -3892,13 +3892,11 @@ void hdd_set_rx_mode_rps(bool enable);
 /**
  * hdd_update_score_config - API to update candidate scoring related params
  * configuration parameters
- * @score_config: score config to update
- * @cfg: config params
+ * @hdd_ctx: hdd context
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_update_score_config(
-	struct scoring_config *score_config, struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_update_score_config(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_get_stainfo() - get stainfo for the specified peer

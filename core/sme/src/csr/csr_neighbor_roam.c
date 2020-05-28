@@ -350,7 +350,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	struct roam_ext_params *roam_params;
 	tCsrChannelInfo *chan_info;
 	uint8_t num_ch = 0;
-	enum QDF_OPMODE opmode = QDF_STA_MODE;
 
 	if (!filter)
 		return QDF_STATUS_E_FAILURE;
@@ -425,7 +424,7 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 
 	csr_update_pmf_cap_from_connected_profile(profile, filter);
 
-	csr_update_connect_n_roam_cmn_filter(mac, filter, opmode);
+	csr_update_adaptive_11r_scan_filter(mac, filter);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1080,7 +1079,7 @@ QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.full_roam_scan_period =
 		mac->mlme_cfg->lfr.roam_full_scan_period;
 	pNeighborRoamInfo->cfgParams.enable_scoring_for_roam =
-		mac->mlme_cfg->scoring.enable_scoring_for_roam;
+		mac->mlme_cfg->roam_scoring.enable_scoring_for_roam;
 	pNeighborRoamInfo->cfgParams.roam_scan_n_probes =
 		mac->mlme_cfg->lfr.roam_scan_n_probes;
 	pNeighborRoamInfo->cfgParams.roam_scan_home_away_time =
@@ -1365,7 +1364,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 								session_id);
 		sme_debug("Filter creation status: %d", status);
 		status = csr_scan_get_result(mac_ctx, scan_filter,
-					     &scan_result);
+					     &scan_result, true);
 		qdf_mem_free(scan_filter);
 		csr_neighbor_roam_process_scan_results(mac_ctx, session_id,
 							&scan_result);

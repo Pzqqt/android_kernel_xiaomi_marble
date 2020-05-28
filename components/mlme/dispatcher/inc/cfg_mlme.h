@@ -48,7 +48,7 @@
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_stats.h"
 #include "cfg_mlme_twt.h"
-#include "cfg_mlme_scoring.h"
+#include "cfg_mlme_roam_scoring.h"
 #include "cfg_mlme_oce.h"
 #include "cfg_mlme_threshold.h"
 #include "cfg_mlme_feature_flag.h"
@@ -88,7 +88,7 @@
 	CFG_REG_ALL \
 	CFG_SAP_ALL \
 	CFG_SAP_PROTECTION_ALL \
-	CFG_SCORING_ALL \
+	CFG_ROAM_SCORING_ALL \
 	CFG_STA_ALL \
 	CFG_STATS_ALL \
 	CFG_THRESHOLD_ALL \

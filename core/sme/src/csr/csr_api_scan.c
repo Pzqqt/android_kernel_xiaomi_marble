@@ -53,6 +53,7 @@
 #include "qdf_crypto.h"
 #include <wlan_crypto_global_api.h>
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_cm_bss_score_param.h"
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
 					   uint32_t *pchan_freq_list,
@@ -163,7 +164,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 			qdf_mem_free(filter);
 			break;
 		}
-		status = csr_scan_get_result(mac_ctx, filter, &hBSSList);
+		status = csr_scan_get_result(mac_ctx, filter, &hBSSList, true);
 		qdf_mem_free(filter);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
@@ -2423,9 +2424,52 @@ static void csr_remove_ap_with_assoc_disallowed(struct mac_context *mac_ctx,
 	}
 }
 
+static void csr_get_pcl_chan_weigtage_for_sta(struct mac_context *mac_ctx,
+					struct pcl_freq_weight_list *pcl_lst)
+{
+	enum QDF_OPMODE opmode = QDF_STA_MODE;
+	enum policy_mgr_con_mode pm_mode;
+	uint32_t num_entries = 0;
+	QDF_STATUS status;
+
+	if (!pcl_lst)
+		return;
+
+	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
+		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
+					    pcl_lst->pcl_freq_list,
+					    &num_entries,
+					    pcl_lst->pcl_weight_list,
+					    NUM_CHANNELS);
+		if (QDF_IS_STATUS_ERROR(status))
+			return;
+		pcl_lst->num_of_pcl_channels = num_entries;
+	}
+}
+
+static void csr_calculate_scores(struct mac_context *mac_ctx,
+				 struct scan_filter *filter, qdf_list_t *list)
+{
+	struct pcl_freq_weight_list *pcl_lst = NULL;
+
+	if (!filter->num_of_bssid) {
+		pcl_lst = qdf_mem_malloc(sizeof(*pcl_lst));
+		csr_get_pcl_chan_weigtage_for_sta(mac_ctx, pcl_lst);
+		if (pcl_lst && !pcl_lst->num_of_pcl_channels) {
+			qdf_mem_free(pcl_lst);
+			pcl_lst = NULL;
+		}
+	}
+	wlan_cm_calculate_bss_score(mac_ctx->psoc, pcl_lst, list,
+				    &filter->bssid_hint);
+	if (pcl_lst)
+		qdf_mem_free(pcl_lst);
+}
+
 QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 			       struct scan_filter *filter,
-			       tScanResultHandle *results)
+			       tScanResultHandle *results,
+			       bool scoring_required)
 {
 	QDF_STATUS status;
 	struct scan_result_list *ret_list = NULL;
@@ -2449,9 +2493,11 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		sme_debug("num_entries %d", num_bss);
 	}
 
-	/* Filter the scan list with the blacklist, rssi reject, avoided APs */
-	if (filter && filter->bss_scoring_required)
+	if (num_bss && filter && scoring_required) {
+		csr_calculate_scores(mac_ctx, filter, list);
+		/* Filter the blacklisted APs and avoided APs */
 		wlan_blm_filter_bssid(pdev, list);
+	}
 
 	if (!list || (list && !qdf_list_size(list))) {
 		sme_debug("scan list empty");
@@ -2475,7 +2521,7 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
 	else {
-		if (filter && filter->bss_scoring_required)
+		if (scoring_required)
 			csr_remove_ap_with_assoc_disallowed(mac_ctx, ret_list);
 
 		if (!csr_ll_count(&ret_list->List)) {
@@ -2529,7 +2575,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
 		     QDF_MAC_ADDR_SIZE);
 
 	status = csr_scan_get_result(mac_ctx, scan_filter,
-				&filtered_scan_result);
+				&filtered_scan_result, false);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Failed to get scan result");

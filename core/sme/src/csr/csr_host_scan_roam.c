@@ -377,7 +377,7 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 		qdf_mem_free(filter);
 		return QDF_STATUS_E_FAILURE;
 	}
-	hstatus = csr_scan_get_result(mac, filter, &scanResult);
+	hstatus = csr_scan_get_result(mac, filter, &scanResult, true);
 	qdf_mem_free(filter);
 	if (hstatus != QDF_STATUS_SUCCESS)
 		sme_err("Get Scan Result status code %d", hstatus);

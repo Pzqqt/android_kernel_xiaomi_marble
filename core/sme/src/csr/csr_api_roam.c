@@ -25,6 +25,7 @@
 #include "wma_types.h"
 #include "wma_if.h"          /* for STA_INVALID_IDX. */
 #include "csr_inside_api.h"
+#include <include/wlan_psoc_mlme.h>
 #include "sme_trace.h"
 #include "sme_qos_internal.h"
 #include "sme_inside.h"
@@ -70,6 +71,7 @@
 
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
+#include "wlan_psoc_mlme_api.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -8346,7 +8348,8 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		qdf_mem_free(filter);
 		goto error;
 	}
-	status = csr_scan_get_result(mac, filter, &hBSSList);
+	status = csr_scan_get_result(mac, filter, &hBSSList,
+				     opmode == QDF_STA_MODE ? true : false);
 	qdf_mem_free(filter);
 	csr_roam_print_candidate_aps(hBSSList);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -9766,7 +9769,7 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 		qdf_mem_free(scan_filter);
 		return false;
 	}
-	status = csr_scan_get_result(mac_ctx, scan_filter, hBSSList);
+	status = csr_scan_get_result(mac_ctx, scan_filter, hBSSList, true);
 	qdf_mem_free(scan_filter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err(
@@ -10653,53 +10656,6 @@ static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
 			       &ssid_list->SSIDList[i].SSID);
 }
 
-#ifdef WLAN_ADAPTIVE_11R
-static void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r =
-		   mac_ctx->mlme_cfg->lfr.enable_adaptive_11r;
-}
-#else
-static inline void
-csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
-				    struct scan_filter *filter)
-{
-	filter->enable_adaptive_11r = false;
-}
-#endif
-
-void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
-					  struct scan_filter *filter,
-					  enum QDF_OPMODE opmode)
-{
-	enum policy_mgr_con_mode pm_mode;
-	uint32_t num_entries = 0, pcl_freq_list[NUM_CHANNELS] = {0};
-	QDF_STATUS status;
-
-	/* enable bss scoring for only STA mode */
-	if (opmode == QDF_STA_MODE)
-		filter->bss_scoring_required = true;
-
-	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
-
-	if (filter->num_of_bssid)
-		return;
-
-	if (policy_mgr_map_concurrency_mode(&opmode, &pm_mode)) {
-		status = policy_mgr_get_pcl(mac_ctx->psoc, pm_mode,
-					    pcl_freq_list, &num_entries,
-					    filter->pcl_weight_list,
-					    NUM_CHANNELS);
-		if (QDF_IS_STATUS_ERROR(status))
-			return;
-		qdf_mem_copy(filter->pcl_freq_list, pcl_freq_list,
-			     num_entries * sizeof(pcl_freq_list[0]));
-		filter->num_of_pcl_channels = num_entries;
-	}
-}
-
 #ifdef FEATURE_WLAN_WAPI
 /**
  * csr_update_phy_mode: Updates phy mode for wapi
@@ -10933,8 +10889,7 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 
 	csr_update_fils_scan_filter(filter, profile);
 
-	csr_update_connect_n_roam_cmn_filter(mac_ctx, filter,
-					     profile->csrPersona);
+	csr_update_adaptive_11r_scan_filter(mac_ctx, filter);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -18307,17 +18262,27 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 				    tpCsrNeighborRoamControlInfo roam_info)
 {
 	struct scoring_param *req_score_params;
-	struct rssi_scoring *req_rssi_score;
-	struct wlan_mlme_scoring_cfg *bss_score_params;
-	struct wlan_mlme_weight_config *weight_config;
-	struct wlan_mlme_rssi_cfg_score *rssi_score;
+	struct rssi_config_score *req_rssi_score;
+	struct wlan_mlme_roam_scoring_cfg *roam_score_params;
+	struct weight_cfg *weight_config;
+	struct rssi_config_score *rssi_score;
+	struct psoc_mlme_obj *mlme_psoc_obj;
+	struct per_slot_score *esp_qbss_scoring;
+	struct per_slot_score *oce_wan_scoring;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(mac_ctx->psoc);
+
+	if (!mlme_psoc_obj)
+		return;
 
 	req_score_params = &req_buffer->score_params;
 	req_rssi_score = &req_score_params->rssi_scoring;
 
-	bss_score_params = &mac_ctx->mlme_cfg->scoring;
-	weight_config = &bss_score_params->weight_cfg;
-	rssi_score = &bss_score_params->rssi_score;
+	roam_score_params = &mac_ctx->mlme_cfg->roam_scoring;
+	weight_config = &mlme_psoc_obj->score_config.weight_config;
+	rssi_score = &mlme_psoc_obj->score_config.rssi_score;
+	esp_qbss_scoring = &mlme_psoc_obj->score_config.esp_qbss_scoring;
+	oce_wan_scoring = &mlme_psoc_obj->score_config.oce_wan_scoring;
 
 	if (!roam_info->cfgParams.enable_scoring_for_roam)
 		req_score_params->disable_bitmap =
@@ -18343,52 +18308,54 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		weight_config->oce_subnet_id_weightage;
 
 	req_score_params->bw_index_score =
-		bss_score_params->bandwidth_weight_per_index;
+		mlme_psoc_obj->score_config.bandwidth_weight_per_index;
 	req_score_params->band_index_score =
-		bss_score_params->band_weight_per_index;
+		mlme_psoc_obj->score_config.band_weight_per_index;
 	req_score_params->nss_index_score =
-		bss_score_params->nss_weight_per_index;
+		mlme_psoc_obj->score_config.nss_weight_per_index;
 
 	req_score_params->vendor_roam_score_algorithm =
-			bss_score_params->vendor_roam_score_algorithm;
+			roam_score_params->vendor_roam_score_algorithm;
 
-	req_score_params->roam_score_delta = bss_score_params->roam_score_delta;
+	req_score_params->roam_score_delta =
+				roam_score_params->roam_score_delta;
 	req_score_params->roam_trigger_bitmap =
-				bss_score_params->roam_trigger_bitmap;
+				roam_score_params->roam_trigger_bitmap;
 
 	req_rssi_score->best_rssi_threshold = rssi_score->best_rssi_threshold;
 	req_rssi_score->good_rssi_threshold = rssi_score->good_rssi_threshold;
 	req_rssi_score->bad_rssi_threshold = rssi_score->bad_rssi_threshold;
 	req_rssi_score->good_rssi_pcnt = rssi_score->good_rssi_pcnt;
 	req_rssi_score->bad_rssi_pcnt = rssi_score->bad_rssi_pcnt;
-	req_rssi_score->good_bucket_size = rssi_score->good_rssi_bucket_size;
-	req_rssi_score->bad_bucket_size = rssi_score->bad_rssi_bucket_size;
+	req_rssi_score->good_rssi_bucket_size =
+				rssi_score->good_rssi_bucket_size;
+	req_rssi_score->bad_rssi_bucket_size = rssi_score->bad_rssi_bucket_size;
 	req_rssi_score->rssi_pref_5g_rssi_thresh =
 			rssi_score->rssi_pref_5g_rssi_thresh;
 
 	req_score_params->esp_qbss_scoring.num_slot =
-		bss_score_params->esp_qbss_scoring.num_slot;
+					esp_qbss_scoring->num_slot;
 	req_score_params->esp_qbss_scoring.score_pcnt3_to_0 =
-		bss_score_params->esp_qbss_scoring.score_pcnt3_to_0;
+					esp_qbss_scoring->score_pcnt3_to_0;
 	req_score_params->esp_qbss_scoring.score_pcnt7_to_4 =
-		bss_score_params->esp_qbss_scoring.score_pcnt7_to_4;
+					esp_qbss_scoring->score_pcnt7_to_4;
 	req_score_params->esp_qbss_scoring.score_pcnt11_to_8 =
-		bss_score_params->esp_qbss_scoring.score_pcnt11_to_8;
+					esp_qbss_scoring->score_pcnt11_to_8;
 	req_score_params->esp_qbss_scoring.score_pcnt15_to_12 =
-		bss_score_params->esp_qbss_scoring.score_pcnt15_to_12;
+					esp_qbss_scoring->score_pcnt15_to_12;
 
 	req_score_params->oce_wan_scoring.num_slot =
-		bss_score_params->oce_wan_scoring.num_slot;
+					oce_wan_scoring->num_slot;
 	req_score_params->oce_wan_scoring.score_pcnt3_to_0 =
-		bss_score_params->oce_wan_scoring.score_pcnt3_to_0;
+					oce_wan_scoring->score_pcnt3_to_0;
 	req_score_params->oce_wan_scoring.score_pcnt7_to_4 =
-		bss_score_params->oce_wan_scoring.score_pcnt7_to_4;
+					oce_wan_scoring->score_pcnt7_to_4;
 	req_score_params->oce_wan_scoring.score_pcnt11_to_8 =
-		bss_score_params->oce_wan_scoring.score_pcnt11_to_8;
+					oce_wan_scoring->score_pcnt11_to_8;
 	req_score_params->oce_wan_scoring.score_pcnt15_to_12 =
-		bss_score_params->oce_wan_scoring.score_pcnt15_to_12;
+					oce_wan_scoring->score_pcnt15_to_12;
 	req_score_params->cand_min_roam_score_delta =
-		bss_score_params->min_roam_score_delta;
+					roam_score_params->min_roam_score_delta;
 }
 
 uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)

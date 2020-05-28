@@ -3953,7 +3953,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (mac->mlme_cfg->wmm_params.qos_enabled)
 		selfCaps.qos = 1;
 
-	if (mac->mlme_cfg->scoring.apsd_enabled)
+	if (mac->mlme_cfg->roam_scoring.apsd_enabled)
 		selfCaps.apsd = 1;
 
 	selfCaps.rrm = mac->rrm.rrmConfig.rrm_enabled;

@@ -394,17 +394,29 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 void csr_copy_ssids_from_roam_params(struct roam_ext_params *roam_params,
 				     struct scan_filter *filter);
 
+#ifdef WLAN_ADAPTIVE_11R
 /*
- * csr_update_connect_n_roam_cmn_filter() - update common scan filter
- * @mac_ctx: pointer to mac context
+ * csr_update_adaptive_11r_scan_filter() - fill adaptive 11r support in filter
+ * @mac_ctx: mac ctx
  * @filter: scan filter
- * @opmode: opmode
  *
  * Return void
  */
-void csr_update_connect_n_roam_cmn_filter(struct mac_context *mac_ctx,
-					  struct scan_filter *filter,
-					  enum QDF_OPMODE opmode);
+static inline void
+csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
+				    struct scan_filter *filter)
+{
+	filter->enable_adaptive_11r =
+		   mac_ctx->mlme_cfg->lfr.enable_adaptive_11r;
+}
+#else
+static inline void
+csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
+				    struct scan_filter *filter)
+{
+	filter->enable_adaptive_11r = false;
+}
+#endif
 
 /*
  * csr_covert_enc_type_new() - convert csr enc type to wlan enc type
@@ -462,12 +474,14 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
  * @mac: Pointer to Global MAC structure
  * @filter: If pFilter is NULL, all cached results are returned
  * @phResult: an object for the result.
+ * @scoring_required: if scoding is required for AP
  *
  * Return QDF_STATUS
  */
 QDF_STATUS csr_scan_get_result(struct mac_context *mac,
 			       struct scan_filter *filter,
-			       tScanResultHandle *phResult);
+			       tScanResultHandle *phResult,
+			       bool scoring_required);
 
 /**
  * csr_scan_get_result_for_bssid - gets the scan result from scan cache for the

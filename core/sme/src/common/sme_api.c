@@ -62,6 +62,7 @@
 #include <wlan_coex_ucfg_api.h>
 #include "wlan_crypto_global_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_psoc_mlme_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -2542,7 +2543,7 @@ QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t vdev_id,
 			 0));
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_get_result(mac, filter, phResult);
+		status = csr_scan_get_result(mac, filter, phResult, false);
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -2632,7 +2633,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		status = csr_scan_get_result(mac_ctx, scan_filter,
-					  &filtered_scan_result);
+					  &filtered_scan_result, false);
 		if (QDF_STATUS_SUCCESS == status) {
 			csr_get_bssdescr_from_scan_handle(filtered_scan_result,
 					&first_ap_profile);
@@ -6804,7 +6805,7 @@ sme_restore_default_roaming_params(struct mac_context *mac,
 				   tCsrNeighborRoamControlInfo *roam_info)
 {
 	roam_info->cfgParams.enable_scoring_for_roam =
-			mac->mlme_cfg->scoring.enable_scoring_for_roam;
+			mac->mlme_cfg->roam_scoring.enable_scoring_for_roam;
 	roam_info->cfgParams.emptyScanRefreshPeriod =
 			mac->mlme_cfg->lfr.empty_scan_refresh_period;
 	roam_info->cfgParams.full_roam_scan_period =
@@ -13740,7 +13741,8 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
 		     bssid, sizeof(struct qdf_mac_addr));
 
-	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
+	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle,
+				     false);
 	qdf_mem_free(scan_filter);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_debug("parse_scan_result failed");
@@ -13804,7 +13806,8 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	qdf_mem_copy(scan_filter->bssid_list[0].bytes,
 		     bssid, sizeof(struct qdf_mac_addr));
 
-	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle);
+	status = csr_scan_get_result(mac_ctx, scan_filter, &result_handle,
+				     false);
 	qdf_mem_free(scan_filter);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("parse_scan_result failed");
@@ -15217,86 +15220,66 @@ sme_get_roam_scan_stats(mac_handle_t mac_handle,
 	return status;
 }
 
-void sme_update_score_config(mac_handle_t mac_handle,
-			     struct scoring_config *score_config)
+void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
+			     uint8_t num_rf_chains)
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct wlan_mlme_scoring_cfg *mlme_scoring_cfg;
+	struct wlan_mlme_nss_chains vdev_ini_cfg;
+	bool bval = false;
+	uint32_t channel_bonding_mode;
+	QDF_STATUS status;
+	struct psoc_phy_config config;
 
-	mlme_scoring_cfg = &mac_ctx->mlme_cfg->scoring;
+	qdf_mem_zero(&vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
+	/* Populate the nss chain params from ini for this vdev type */
+	sme_populate_nss_chain_params(mac_handle, &vdev_ini_cfg,
+				      QDF_STA_MODE, num_rf_chains);
 
-	score_config->weight_cfg.rssi_weightage =
-		mlme_scoring_cfg->weight_cfg.rssi_weightage;
-	score_config->weight_cfg.ht_caps_weightage =
-		mlme_scoring_cfg->weight_cfg.ht_caps_weightage;
-	score_config->weight_cfg.vht_caps_weightage =
-		mlme_scoring_cfg->weight_cfg.vht_caps_weightage;
-	score_config->weight_cfg.he_caps_weightage =
-		mlme_scoring_cfg->weight_cfg.he_caps_weightage;
-	score_config->weight_cfg.chan_width_weightage =
-		mlme_scoring_cfg->weight_cfg.chan_width_weightage;
-	score_config->weight_cfg.chan_band_weightage =
-		mlme_scoring_cfg->weight_cfg.chan_band_weightage;
-	score_config->weight_cfg.nss_weightage =
-		mlme_scoring_cfg->weight_cfg.nss_weightage;
-	score_config->weight_cfg.beamforming_cap_weightage =
-		mlme_scoring_cfg->weight_cfg.beamforming_cap_weightage;
-	score_config->weight_cfg.pcl_weightage =
-		mlme_scoring_cfg->weight_cfg.pcl_weightage;
-	score_config->weight_cfg.channel_congestion_weightage =
-		mlme_scoring_cfg->weight_cfg.channel_congestion_weightage;
-	score_config->weight_cfg.oce_wan_weightage =
-		mlme_scoring_cfg->weight_cfg.oce_wan_weightage;
-	score_config->weight_cfg.oce_ap_tx_pwr_weightage =
-		mlme_scoring_cfg->weight_cfg.oce_ap_tx_pwr_weightage;
-	score_config->weight_cfg.oce_subnet_id_weightage =
-		mlme_scoring_cfg->weight_cfg.oce_subnet_id_weightage;
+	config.vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ];
+	config.vdev_nss_5g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
 
-	score_config->bandwidth_weight_per_index =
-		mlme_scoring_cfg->bandwidth_weight_per_index;
-	score_config->nss_weight_per_index =
-		mlme_scoring_cfg->nss_weight_per_index;
-	score_config->band_weight_per_index =
-		mlme_scoring_cfg->band_weight_per_index;
+	if (phy_mode == eCSR_DOT11_MODE_AUTO ||
+	    phy_mode == eCSR_DOT11_MODE_11ax ||
+	    phy_mode == eCSR_DOT11_MODE_11ax_ONLY)
+		config.he_cap = 1;
 
-	score_config->rssi_score.best_rssi_threshold =
-		mlme_scoring_cfg->rssi_score.best_rssi_threshold;
-	score_config->rssi_score.good_rssi_threshold =
-		mlme_scoring_cfg->rssi_score.good_rssi_threshold;
-	score_config->rssi_score.bad_rssi_threshold =
-		mlme_scoring_cfg->rssi_score.bad_rssi_threshold;
-	score_config->rssi_score.good_rssi_pcnt =
-		mlme_scoring_cfg->rssi_score.good_rssi_pcnt;
-	score_config->rssi_score.bad_rssi_pcnt =
-		mlme_scoring_cfg->rssi_score.bad_rssi_pcnt;
-	score_config->rssi_score.good_rssi_bucket_size =
-		mlme_scoring_cfg->rssi_score.good_rssi_bucket_size;
-	score_config->rssi_score.bad_rssi_bucket_size =
-		mlme_scoring_cfg->rssi_score.bad_rssi_bucket_size;
-	score_config->rssi_score.rssi_pref_5g_rssi_thresh =
-		mlme_scoring_cfg->rssi_score.rssi_pref_5g_rssi_thresh;
+	if (config.he_cap ||
+	    phy_mode == eCSR_DOT11_MODE_11ac ||
+	    phy_mode == eCSR_DOT11_MODE_11ac_ONLY)
+		config.vht_cap = 1;
 
-	score_config->esp_qbss_scoring.num_slot =
-		mlme_scoring_cfg->esp_qbss_scoring.num_slot;
-	score_config->esp_qbss_scoring.score_pcnt3_to_0 =
-		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt3_to_0;
-	score_config->esp_qbss_scoring.score_pcnt7_to_4 =
-		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt7_to_4;
-	score_config->esp_qbss_scoring.score_pcnt11_to_8 =
-		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt11_to_8;
-	score_config->esp_qbss_scoring.score_pcnt15_to_12 =
-		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt15_to_12;
+	if (config.vht_cap || phy_mode == eCSR_DOT11_MODE_11n ||
+	    phy_mode == eCSR_DOT11_MODE_11n_ONLY)
+		config.ht_cap = 1;
 
-	score_config->oce_wan_scoring.num_slot =
-		mlme_scoring_cfg->oce_wan_scoring.num_slot;
-	score_config->oce_wan_scoring.score_pcnt3_to_0 =
-		mlme_scoring_cfg->oce_wan_scoring.score_pcnt3_to_0;
-	score_config->oce_wan_scoring.score_pcnt7_to_4 =
-		mlme_scoring_cfg->oce_wan_scoring.score_pcnt7_to_4;
-	score_config->oce_wan_scoring.score_pcnt11_to_8 =
-		mlme_scoring_cfg->oce_wan_scoring.score_pcnt11_to_8;
-	score_config->oce_wan_scoring.score_pcnt15_to_12 =
-		mlme_scoring_cfg->oce_wan_scoring.score_pcnt15_to_12;
+	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AX))
+		config.he_cap = 0;
+
+	if (!IS_FEATURE_SUPPORTED_BY_FW(DOT11AC))
+		config.vht_cap = 0;
+
+	status = wlan_mlme_get_vht_for_24ghz(mac_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("Failed to get vht_for_24ghz");
+	if (config.vht_cap && bval)
+		config.vht_24G_cap = 1;
+
+	status = wlan_mlme_get_vht_enable_tx_bf(mac_ctx->psoc,
+						&bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("unable to get vht_enable_tx_bf");
+
+	if (bval)
+		config.beamformee_cap = 1;
+
+	ucfg_mlme_get_channel_bonding_24ghz(mac_ctx->psoc,
+					    &channel_bonding_mode);
+	config.bw_above_20_24ghz = channel_bonding_mode;
+	ucfg_mlme_get_channel_bonding_5ghz(mac_ctx->psoc,
+					   &channel_bonding_mode);
+	config.bw_above_20_5ghz = channel_bonding_mode;
+
+	wlan_psoc_set_phy_config(mac_ctx->psoc, &config);
 }
 
 void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
