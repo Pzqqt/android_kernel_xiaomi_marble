@@ -3791,8 +3791,8 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 		irq = hif_ext_group->irq[j];
 		if (scn->irq_unlazy_disable)
 			irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
-		hif_info("request_irq = %d for grp %d",
-			 irq, hif_ext_group->grp_id);
+		hif_debug("request_irq = %d for grp %d",
+			  irq, hif_ext_group->grp_id);
 		ret = pfrm_request_irq(
 				scn->qdf_dev->dev, irq,
 				hif_ext_group_interrupt_handler,
