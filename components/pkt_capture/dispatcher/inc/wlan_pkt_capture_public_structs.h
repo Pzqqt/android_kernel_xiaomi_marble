@@ -66,4 +66,30 @@ struct mgmt_offload_event_params {
 struct pkt_capture_callbacks {
 	int (*get_rmf_status)(uint8_t vdev_id);
 };
+
+/**
+ * struct wlan_pkt_capture_tx_ops - structure of tx operation function
+ * pointers for packet capture component
+ * @pkt_capture_send_mode: send packet capture mode
+ *
+ */
+struct wlan_pkt_capture_tx_ops {
+	QDF_STATUS (*pkt_capture_send_mode)(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id,
+					    enum pkt_capture_mode mode);
+};
+
+/**
+ * struct wlan_pkt_capture_rx_ops - structure of rx operation function
+ * pointers for packet capture component
+ * @pkt_capture_register_ev_handlers: register mgmt offload event
+ * @pkt_capture_unregister_ev_handlers: unregister mgmt offload event
+ */
+struct wlan_pkt_capture_rx_ops {
+	QDF_STATUS (*pkt_capture_register_ev_handlers)
+					(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*pkt_capture_unregister_ev_handlers)
+					(struct wlan_objmgr_psoc *psoc);
+};
+
 #endif /* _WLAN_PKT_CAPTURE_PUBLIC_STRUCTS_H_ */

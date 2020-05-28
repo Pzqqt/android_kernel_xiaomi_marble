@@ -42,6 +42,7 @@ target_if_set_packet_capture_mode(struct wlan_objmgr_psoc *psoc,
 {
 	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct vdev_set_params param;
 
 	if (!wmi_handle) {
 		target_if_err("Invalid wmi handle");
@@ -51,19 +52,16 @@ target_if_set_packet_capture_mode(struct wlan_objmgr_psoc *psoc,
 	target_if_debug("psoc:%pK, vdev_id:%d mode:%d",
 			psoc, vdev_id, mode);
 
-	if (mode != PACKET_CAPTURE_MODE_DISABLE) {
-		struct vdev_set_params param;
+	param.vdev_id = vdev_id;
+	param.param_id = WMI_VDEV_PARAM_PACKET_CAPTURE_MODE;
+	param.param_value = (uint32_t)mode;
 
-		param.vdev_id = vdev_id;
-		param.param_id = WMI_VDEV_PARAM_PACKET_CAPTURE_MODE;
-		param.param_value = (uint32_t)mode;
+	status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ucfg_pkt_capture_set_pktcap_mode(psoc, mode);
+	else
+		pkt_capture_err("failed to set packet capture mode");
 
-		status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			ucfg_pkt_capture_set_pktcap_mode(psoc, mode);
-		else
-			pkt_capture_err("failed to set packet capture mode");
-	}
 	return status;
 }
 
@@ -192,8 +190,37 @@ target_if_register_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
-	PKT_CAPTURE_ENTER();
+
+	PKT_CAPTURE_EXIT();
+
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_unregister_mgmt_data_offload_event() - Unregister mgmt data offload
+ * event handler
+ * @psoc: wlan psoc object
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_unregister_mgmt_data_offload_event(struct wlan_objmgr_psoc *psoc)
+{
+	wmi_unified_t wmi_handle;
+	QDF_STATUS status;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		pkt_capture_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_unregister_event(wmi_handle,
+					      wmi_mgmt_offload_data_event_id);
+	if (status)
+		pkt_capture_err("unregister mgmt data offload event cb failed");
+
+	return status;
 }
 
 void
@@ -204,8 +231,11 @@ target_if_pkt_capture_register_rx_ops(struct wlan_pkt_capture_rx_ops *rx_ops)
 		return;
 	}
 
-	rx_ops->pkt_capture_register_mgmt_data_offload_event =
+	rx_ops->pkt_capture_register_ev_handlers =
 				target_if_register_mgmt_data_offload_event;
+
+	rx_ops->pkt_capture_unregister_ev_handlers =
+				target_if_unregister_mgmt_data_offload_event;
 }
 
 void
