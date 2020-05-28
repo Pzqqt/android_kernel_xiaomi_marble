@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,8 @@
 
 #ifndef _WLAN_PSOC_MLME_API_H_
 #define _WLAN_PSOC_MLME_API_H_
+
+#include <include/wlan_psoc_mlme.h>
 
 /**
  * wlan_psoc_mlme_get_cmpt_obj() - Returns PSOC MLME component object
@@ -55,5 +57,35 @@ mlme_psoc_ext_t *wlan_psoc_mlme_get_ext_hdl(struct wlan_objmgr_psoc *psoc);
  */
 void wlan_psoc_mlme_set_ext_hdl(struct psoc_mlme_obj *psoc_mlme,
 				mlme_psoc_ext_t *psoc_ext_hdl);
+
+/**
+ * wlan_psoc_set_phy_config() - Init psoc phy related configs
+ * @psoc: pointer to psoc object
+ * @phy_config: phy related configs score config
+ *
+ * Return: void
+ */
+void wlan_psoc_set_phy_config(struct wlan_objmgr_psoc *psoc,
+			      struct psoc_phy_config *phy_config);
+
+/**
+ * mlme_psoc_open() - MLME component Open
+ * @psoc: pointer to psoc object
+ *
+ * Open the MLME component and initialize the MLME structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * mlme_psoc_close() - MLME component close
+ * @psoc: pointer to psoc object
+ *
+ * Open the MLME component and initialize the MLME structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS mlme_psoc_close(struct wlan_objmgr_psoc *psoc);
 
 #endif

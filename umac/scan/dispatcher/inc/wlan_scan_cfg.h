@@ -336,31 +336,6 @@ enum scan_mode_6ghz {
 			true, \
 			"honour NL80211 scan policy flags")
 
-/*
- * <ini>
- * is_bssid_hint_priority - Set priority for connection with bssid_hint
- * BSSID.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to give priority to BSS for connection which comes
- * as part of bssid_hint
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_IS_BSSID_HINT_PRIORITY CFG_INI_UINT(\
-			"is_bssid_hint_priority",\
-			0, 1, 0,\
-			CFG_VALUE_OR_DEFAULT, \
-			"Set priority for connection with bssid_hint")
-
 #ifdef FEATURE_WLAN_SCAN_PNO
 /*
  * <ini>
@@ -1245,7 +1220,6 @@ enum scan_mode_6ghz {
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE_NC) \
 	CFG(CFG_HONOUR_NL_SCAN_POLICY_FLAGS) \
-	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC) \
 	CFG(CFG_MAX_REST_TIME_CONC) \

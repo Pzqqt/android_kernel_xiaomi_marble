@@ -118,6 +118,16 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 	 (_a)[4] == 0xff &&        \
 	 (_a)[5] == 0xff)
 
+/* Get number of bits from the index bit */
+#define QDF_GET_BITS(_val, _index, _num_bits) \
+		(((_val) >> (_index)) & ((1 << (_num_bits)) - 1))
+
+/* Set val to number of bits from the index bit */
+#define QDF_SET_BITS(_var, _index, _num_bits, _val) do { \
+		(_var) &= ~(((1 << (_num_bits)) - 1) << (_index)); \
+		(_var) |= (((_val) & ((1 << (_num_bits)) - 1)) << (_index)); \
+		} while (0)
+
 #define QDF_DECLARE_EWMA(name, factor, weight) \
 	__QDF_DECLARE_EWMA(name, factor, weight)
 

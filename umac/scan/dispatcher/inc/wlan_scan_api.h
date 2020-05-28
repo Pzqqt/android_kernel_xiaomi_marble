@@ -210,4 +210,17 @@ wlan_scan_process_bcn_probe_rx_sync(struct wlan_objmgr_psoc *psoc,
  */
 qdf_time_t wlan_scan_get_aging_time(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_scan_purge_results() - purge the scan list
+ * @scan_list: scan list to be purged
+ *
+ * This function purge the temp scan list
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS wlan_scan_purge_results(qdf_list_t *scan_list)
+{
+	return scm_purge_scan_results(scan_list);
+}
+
 #endif

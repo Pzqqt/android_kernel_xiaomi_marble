@@ -24,6 +24,7 @@
 #define __CFG_CONVERGED_H
 
 #include <wlan_scan_cfg.h>
+#include "cfg_mlme_score_params.h"
 #include "cfg_dp.h"
 #include "cfg_hif.h"
 #include <wlan_extscan_cfg.h>
@@ -52,8 +53,8 @@
 		CFG_SPECTRAL_ALL \
 		CFG_HIF \
 		CFG_DCS_ALL \
-		CFG_CFR_ALL
-
+		CFG_CFR_ALL \
+		CFG_MLME_SCORE_ALL
 
 #endif /* __CFG_CONVERGED_H */
 

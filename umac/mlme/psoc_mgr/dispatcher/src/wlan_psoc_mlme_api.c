@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -57,6 +57,49 @@ void wlan_psoc_mlme_set_ext_hdl(struct psoc_mlme_obj *psoc_mlme,
 				mlme_psoc_ext_t *psoc_ext_hdl)
 {
 	psoc_mlme->ext_psoc_ptr = psoc_ext_hdl;
+}
+
+void wlan_psoc_set_phy_config(struct wlan_objmgr_psoc *psoc,
+			      struct psoc_phy_config *phy_config)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+	struct psoc_phy_config *config;
+
+	if (!phy_config) {
+		mlme_err("phy_config is NUll");
+		return;
+	}
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	config = &mlme_psoc_obj->phy_config;
+
+	qdf_mem_copy(config, phy_config, sizeof(*config));
+}
+
+static void mlme_init_cfg(struct wlan_objmgr_psoc *psoc)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+
+	if (!mlme_psoc_obj)
+		return;
+
+	wlan_cm_init_score_config(psoc, &mlme_psoc_obj->score_config);
+}
+
+QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	mlme_init_cfg(psoc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 qdf_export_symbol(wlan_psoc_mlme_set_ext_hdl);

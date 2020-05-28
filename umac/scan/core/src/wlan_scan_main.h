@@ -313,7 +313,6 @@ struct extscan_def_config {
  * @select_5gh_margin: Prefer connecting to 5G AP even if
  *      its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
  *      applicable if prefer_5ghz is set.
- * @is_bssid_hint_priority: True if bssid_hint is given priority
  * @enable_mac_spoofing: enable mac address spoof in scan
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
  * @max_active_scans_allowed: maximum number of active parallel scan allowed
@@ -397,7 +396,6 @@ struct scan_default_params {
 	qdf_time_t scan_cache_aging_time;
 	uint32_t select_5ghz_margin;
 	bool enable_mac_spoofing;
-	bool is_bssid_hint_priority;
 	uint32_t usr_cfg_probe_rpt_time;
 	uint32_t usr_cfg_num_probes;
 	uint16_t max_bss_per_pdev;
@@ -461,7 +459,6 @@ struct scan_default_params {
 		};
 		uint32_t scan_events;
 	};
-	struct scoring_config score_config;
 };
 
 /**

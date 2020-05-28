@@ -25,6 +25,7 @@
 #include <wlan_ftm_init_deinit_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
+#include "wlan_psoc_mlme_api.h"
 #include <include/wlan_mlme_cmn.h>
 #ifdef WLAN_ATF_ENABLE
 #include <wlan_atf_utils_api.h>
@@ -1148,8 +1149,13 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
 		goto spectral_psoc_open_fail;
 
+	if (QDF_IS_STATUS_ERROR(mlme_psoc_open(psoc)))
+		goto mlme_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
 
+mlme_psoc_open_fail:
+	spectral_psoc_close(psoc);
 spectral_psoc_open_fail:
 	dcs_psoc_close(psoc);
 dcs_psoc_open_fail:
@@ -1177,6 +1183,8 @@ qdf_export_symbol(dispatcher_psoc_open);
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+
+	QDF_BUG(QDF_STATUS_SUCCESS == mlme_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dcs_psoc_close(psoc));
 

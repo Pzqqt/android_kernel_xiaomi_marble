@@ -990,8 +990,6 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_HONOUR_NL_SCAN_POLICY_FLAGS);
 	scan_obj->scan_def.enable_mac_spoofing =
 			cfg_get(psoc, CFG_ENABLE_MAC_ADDR_SPOOFING);
-	scan_obj->scan_def.is_bssid_hint_priority =
-			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
 	scan_obj->scan_def.extscan_adaptive_dwell_mode =
 			cfg_get(psoc, CFG_ADAPTIVE_EXTSCAN_DWELL_MODE);
 
@@ -1489,9 +1487,6 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
 	scan_def->sta_miracast_mcc_rest_time =
 				scan_cfg->sta_miracast_mcc_rest_time;
-
-	qdf_mem_copy(&scan_def->score_config, &scan_cfg->score_config,
-		sizeof(struct scoring_config));
 
 	return QDF_STATUS_SUCCESS;
 }

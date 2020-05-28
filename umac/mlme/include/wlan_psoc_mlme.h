@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <wlan_ext_mlme_obj_types.h>
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 #include <qdf_timer.h>
+#include <wlan_cm_bss_score_param.h>
 
 /* Max RNR size given max vaps are 16 */
 #define MAX_RNR_SIZE 256
@@ -40,12 +41,38 @@ struct wlan_6ghz_rnr_global_cache {
 };
 
 /**
+ * struct psoc_phy_config - psoc phy caps
+ * @vdev_nss_24g: Number of NSS the device support in 2.4Ghz
+ * @vdev_nss_5g: Number of NSS the device support in 5Ghz
+ * @ht_cap: If dev is configured as HT capable
+ * @vht_cap:If dev is configured as VHT capable
+ * @he_cap: If dev is configured as HE capable
+ * @vht_24G_cap:If dev is configured as VHT capable for 2.4Ghz
+ * @beamformee_cap:If dev is configured as BF capable
+ * @bw_above_20_5ghz: BW greater than 20Mhz supprted for 5Ghz
+ * @bw_above_20_24ghz: BW greater than 20Mhz supprted for 2.4Ghz
+ */
+struct psoc_phy_config {
+	uint8_t vdev_nss_24g;
+	uint8_t vdev_nss_5g;
+	uint32_t ht_cap:1,
+		 vht_cap:1,
+		 he_cap:1,
+		 vht_24G_cap:1,
+		 beamformee_cap:1,
+		 bw_above_20_5ghz:1,
+		 bw_above_20_24ghz:1;
+};
+
+/**
  * struct psoc_mlme_obj -  PSoC MLME component object
  * @psoc:                  PSoC object
- * @ext_psoc_ptr:        PSoC legacy pointer
- * @psoc_vdev_rt:       PSoC Vdev response timer
- * @psoc_mlme_wakelock:     Wakelock to prevent system going to suspend
+ * @ext_psoc_ptr:          PSoC legacy pointer
+ * @psoc_vdev_rt:          PSoC Vdev response timer
+ * @psoc_mlme_wakelock:    Wakelock to prevent system going to suspend
  * @rnr_6ghz_cache:        Cache of 6Ghz vap in RNR ie format
+ * @score_config:          BSS scoring related config
+ * @phy_config:            Psoc Phy config
  */
 struct psoc_mlme_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -55,6 +82,8 @@ struct psoc_mlme_obj {
 	struct psoc_mlme_wakelock psoc_mlme_wakelock;
 #endif
 	struct wlan_6ghz_rnr_global_cache rnr_6ghz_cache;
+	struct scoring_cfg score_config;
+	struct psoc_phy_config phy_config;
 };
 
 #endif
