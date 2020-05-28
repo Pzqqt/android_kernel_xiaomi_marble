@@ -140,6 +140,8 @@ typedef struct _HTC_ENDPOINT {
 	qdf_timer_t ul_poll_timer;
 	int ul_poll_timer_active;
 	int ul_outstanding_cnt;
+	uint32_t htc_send_cnt;
+	uint32_t htc_comp_cnt;
 	/* Need to call HIF to fetch rx?  (Not currently supported.) */
 	int dl_is_polled;
 	/* not currently supported */

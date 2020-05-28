@@ -866,6 +866,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		htc_issue_tx_bundle_stats_inc(target);
 
 		target->ce_send_cnt++;
+		pEndpoint->htc_send_cnt++;
 
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
 			if (status != QDF_STATUS_E_RESOURCES) {
@@ -899,6 +900,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 				LOCK_HTC_TX(target);
 			}
 			target->ce_send_cnt--;
+			pEndpoint->htc_send_cnt--;
 			pEndpoint->ul_outstanding_cnt--;
 			HTC_PACKET_REMOVE(&pEndpoint->TxLookupQueue, pPacket);
 			htc_packet_set_magic_cookie(pPacket, 0);
@@ -2245,7 +2247,6 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	LOCK_HTC_EP_TX_LOOKUP(pEndpoint);
 
 	LOCK_HTC_TX(target);
-
 	/* mark that HIF has indicated the send complete for another packet */
 	pEndpoint->ul_outstanding_cnt--;
 
@@ -2324,6 +2325,7 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 
 	pEndpoint = &target->endpoint[EpID];
 	target->TX_comp_cnt++;
+	pEndpoint->htc_comp_cnt++;
 
 	do {
 		pPacket = htc_lookup_tx_packet(target, pEndpoint, netbuf);
