@@ -17,6 +17,8 @@
 #include <linux/etherdevice.h>
 #include <linux/if_arp.h>
 #include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/tcp.h>
 #include <net/pkt_sched.h>
 #include "rmnet_config.h"
 #include "rmnet_handlers.h"
@@ -171,6 +173,25 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int boost_trigger = 0;
 	int txq = 0;
 
+	if (trace_print_skb_gso_enabled()) {
+		if (!skb_shinfo(skb)->gso_size)
+			goto skip_trace;
+
+		if (skb->protocol == htons(ETH_P_IP)) {
+			if (ip_hdr(skb)->protocol != IPPROTO_TCP)
+				goto skip_trace;
+		}
+
+		if (skb->protocol == htons(ETH_P_IPV6)) {
+			if (ipv6_hdr(skb)->nexthdr != IPPROTO_TCP)
+				goto skip_trace;
+		}
+
+		trace_print_skb_gso(skb, tcp_hdr(skb)->source,
+				    tcp_hdr(skb)->dest);
+	}
+
+skip_trace:
 	if (priv->real_dev)
 		txq = qmi_rmnet_get_queue(dev, skb);
 
