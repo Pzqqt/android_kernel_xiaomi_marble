@@ -439,7 +439,7 @@ static int ipa3_check_qmi_response(int rc,
 			"Timeout for qmi request id %d\n", req_id);
 			return rc;
 		}
-		if ((rc == -ENETRESET) || (rc == -ENODEV)) {
+		if ((rc == -ENETRESET) || (rc == -ENODEV) || (rc == -ECONNRESET)) {
 			IPAWANERR(
 			"SSR while waiting for qmi request id %d\n", req_id);
 			return rc;
