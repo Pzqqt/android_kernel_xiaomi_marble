@@ -958,7 +958,7 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 
 	if (soc->cdp_soc.ol_ops->peer_ast_flowid_map) {
 		soc->cdp_soc.ol_ops->peer_ast_flowid_map(
-				soc->ctrl_psoc, peer->peer_ids[0],
+				soc->ctrl_psoc, peer->peer_id,
 				peer->vdev->vdev_id, peer_mac_addr);
 	}
 
