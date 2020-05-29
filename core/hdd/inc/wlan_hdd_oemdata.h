@@ -29,6 +29,9 @@
 
 struct hdd_context;
 
+#ifdef FEATURE_OEM_DATA
+#define WLAN_WAIT_TIME_GET_OEM_DATA 1000
+#endif
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
 #ifndef OEM_DATA_REQ_SIZE
@@ -284,12 +287,15 @@ extern const struct nla_policy
 /**
  * hdd_oem_event_handler_cb() - callback for oem data event
  * @oem_event_data: oem data received in the event from the FW
+ * @vdev_id: vdev id
  *
  * Return: None
  */
-void hdd_oem_event_handler_cb(const struct oem_data *oem_event_data);
+void hdd_oem_event_handler_cb(const struct oem_data *oem_event_data,
+			      uint8_t vdev_id);
 #else
-static inline void hdd_oem_event_handler_cb(void *oem_event_data)
+static inline void hdd_oem_event_handler_cb(void *oem_event_data,
+					    uint8_t vdev_id)
 {
 }
 #endif

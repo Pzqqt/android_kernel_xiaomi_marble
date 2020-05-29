@@ -13971,7 +13971,6 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 					    hdd_sme_close_session_callback,
 					    hdd_common_roam_callback);
 
-	sme_set_oem_data_event_handler_cb(mac_handle, hdd_oem_event_handler_cb);
 	sme_set_roam_scan_ch_event_cb(mac_handle, hdd_get_roam_scan_ch_cb);
 	status = sme_set_monitor_mode_cb(mac_handle,
 					 hdd_sme_monitor_mode_callback);
@@ -14004,8 +14003,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	sme_reset_oem_data_event_handler_cb(mac_handle);
 
 	sme_deregister_tx_queue_cb(mac_handle);
 

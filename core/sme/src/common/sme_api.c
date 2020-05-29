@@ -3700,10 +3700,15 @@ QDF_STATUS sme_oem_req_cmd(mac_handle_t mac_handle,
 
 #ifdef FEATURE_OEM_DATA
 QDF_STATUS sme_oem_data_cmd(mac_handle_t mac_handle,
-			    struct oem_data *oem_data)
+			    void (*oem_data_event_handler_cb)
+			    (const struct oem_data *oem_event_data,
+			     uint8_t vdev_id),
+			     struct oem_data *oem_data,
+			     uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	void *wma_handle;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	SME_ENTER();
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
@@ -3712,6 +3717,12 @@ QDF_STATUS sme_oem_data_cmd(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.oem_data_event_handler_cb = oem_data_event_handler_cb;
+		mac->sme.oem_data_vdev_id = vdev_id;
+		sme_release_global_lock(&mac->sme);
+	}
 	status = wma_start_oem_data_cmd(wma_handle, oem_data);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("fail to call wma_start_oem_data_cmd.");
@@ -16061,42 +16072,6 @@ QDF_STATUS sme_get_ani_level(mac_handle_t mac_handle, uint32_t *freqs,
 	return status;
 }
 #endif /* FEATURE_ANI_LEVEL_REQUEST */
-
-#ifdef FEATURE_OEM_DATA
-QDF_STATUS sme_set_oem_data_event_handler_cb(
-			mac_handle_t mac_handle,
-			void (*oem_data_event_handler_cb)
-					(const struct oem_data *oem_event_data))
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS qdf_status;
-
-	qdf_status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		mac->sme.oem_data_event_handler_cb = oem_data_event_handler_cb;
-		sme_release_global_lock(&mac->sme);
-	}
-	return qdf_status;
-}
-
-void sme_reset_oem_data_event_handler_cb(mac_handle_t  mac_handle)
-{
-	struct mac_context *pmac;
-	QDF_STATUS qdf_status;
-
-	if (!mac_handle) {
-		sme_err("mac_handle is not valid");
-		return;
-	}
-	pmac = MAC_CONTEXT(mac_handle);
-
-	qdf_status = sme_acquire_global_lock(&pmac->sme);
-	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pmac->sme.oem_data_event_handler_cb = NULL;
-		sme_release_global_lock(&pmac->sme);
-	}
-}
-#endif
 
 QDF_STATUS sme_get_prev_connected_bss_ies(mac_handle_t mac_handle,
 					  uint8_t vdev_id,

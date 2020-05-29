@@ -380,7 +380,9 @@ struct sme_context {
 #endif
 #ifdef FEATURE_OEM_DATA
 	void (*oem_data_event_handler_cb)
-			(const struct oem_data *oem_event_data);
+			(const struct oem_data *oem_event_data,
+			 uint8_t vdev_id);
+	uint8_t oem_data_vdev_id;
 #endif
 	sme_get_raom_scan_ch_callback roam_scan_ch_callback;
 	void *roam_scan_ch_get_context;
