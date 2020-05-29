@@ -9019,6 +9019,41 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+static inline void hdd_low_tput_gro_flush_skip_check(
+			struct hdd_context *hdd_ctx,
+			enum pld_bus_width_type next_vote_level)
+{
+}
+#else
+/**
+ * hdd_low_tput_gro_flush_skip_check() - check GRO flush skip condition
+ *
+ * @hdd_ctx: handle to hdd context
+ * @next_vote_level: next bus bandwidth level
+ *
+ * If bus bandwidth level is PLD_BUS_WIDTH_LOW consistently and hit
+ * the bus_low_cnt_threshold, set flag to skip GRO flush.
+ *
+ * Return: none
+ */
+static inline void hdd_low_tput_gro_flush_skip_check(
+			struct hdd_context *hdd_ctx,
+			enum pld_bus_width_type next_vote_level)
+{
+	uint32_t bus_low_cnt_threshold =
+				hdd_ctx->config->bus_low_cnt_threshold;
+
+	if (next_vote_level == PLD_BUS_WIDTH_LOW) {
+		if (++hdd_ctx->bus_low_vote_cnt >= bus_low_cnt_threshold)
+			qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 1);
+	} else {
+		hdd_ctx->bus_low_vote_cnt = 0;
+		qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 0);
+	}
+}
+#endif
+
 /**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
@@ -9051,7 +9086,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	static enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
 	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 	uint32_t delack_timer_cnt = hdd_ctx->config->tcp_delack_timer_count;
-	uint32_t bus_low_cnt_threshold = hdd_ctx->config->bus_low_cnt_threshold;
 	cpumask_t pm_qos_cpu_mask;
 	bool is_rx_pm_qos_high = false;
 	bool is_tx_pm_qos_high = false;
@@ -9071,14 +9105,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	dptrace_high_tput_req =
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
-
-	if (next_vote_level == PLD_BUS_WIDTH_LOW) {
-		if (++hdd_ctx->bus_low_vote_cnt >= bus_low_cnt_threshold)
-			qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 1);
-	} else {
-		hdd_ctx->bus_low_vote_cnt = 0;
-		qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 0);
-	}
+	hdd_low_tput_gro_flush_skip_check(hdd_ctx, next_vote_level);
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("BW Vote level %d, tx_packets: %lld, rx_packets: %lld",
