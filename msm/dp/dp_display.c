@@ -415,6 +415,7 @@ static void dp_display_hdcp_process_delayed_off(struct dp_display_private *dp)
 static int dp_display_hdcp_process_sink_sync(struct dp_display_private *dp)
 {
 	u8 sink_status = 0;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
 	if (dp->debug->hdcp_wait_sink_sync) {
 		drm_dp_dpcd_readb(dp->aux->drm_aux, DP_SINK_STATUS,
@@ -426,7 +427,14 @@ static int dp_display_hdcp_process_sink_sync(struct dp_display_private *dp)
 			queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ);
 			return -EAGAIN;
 		}
+		/*
+		 * Some sinks need more time to stabilize after synchronization
+		 * and before it can handle an HDCP authentication request.
+		 * Adding the delay for better interoperability.
+		 */
+		msleep(6000);
 	}
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT);
 
 	return 0;
 }
@@ -573,6 +581,8 @@ static void dp_display_notify_hdcp_status_cb(void *ptr,
 		enum sde_hdcp_state state)
 {
 	struct dp_display_private *dp = ptr;
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,
+					dp->link->hdcp_status.hdcp_state);
 
 	if (!dp) {
 		DP_ERR("invalid input\n");
@@ -582,6 +592,8 @@ static void dp_display_notify_hdcp_status_cb(void *ptr,
 	dp->link->hdcp_status.hdcp_state = state;
 
 	queue_delayed_work(dp->wq, &dp->hdcp_cb_work, HZ/4);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT,
+					dp->link->hdcp_status.hdcp_state);
 }
 
 static void dp_display_deinitialize_hdcp(struct dp_display_private *dp)
