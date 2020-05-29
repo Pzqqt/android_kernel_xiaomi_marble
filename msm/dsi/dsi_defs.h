@@ -472,6 +472,11 @@ struct dsi_split_link_config {
  * @phy_type:            DPHY/CPHY is enabled for this panel.
  * @dsi_split_link_config:  Split Link Configuration.
  * @byte_intf_clk_div:   Determines the factor for calculating byte intf clock.
+ * @dma_sched_line:      Line at which dma command gets triggered. In case of
+ *			 video mode it is the line number after vactive and for
+ *			 cmd it points to the line after TE.
+ * @dma_sched_window:	 Determines the width of the window during the
+ *			 DSI command will be sent by the HW.
  */
 struct dsi_host_common_cfg {
 	enum dsi_pixel_format dst_format;
@@ -497,6 +502,8 @@ struct dsi_host_common_cfg {
 	enum dsi_phy_type phy_type;
 	struct dsi_split_link_config split_link;
 	u32 byte_intf_clk_div;
+	u32 dma_sched_line;
+	u32 dma_sched_window;
 };
 
 /**
@@ -513,8 +520,6 @@ struct dsi_host_common_cfg {
  * @bllp_lp11_en:              Enter low power stop mode (LP-11) during BLLP.
  * @traffic_mode:              Traffic mode for video stream.
  * @vc_id:                     Virtual channel identifier.
- * @dma_sched_line:         Line number, after vactive end, at which command dma
- *			       needs to be triggered.
  */
 struct dsi_video_engine_cfg {
 	bool last_line_interleave_en;
@@ -526,7 +531,6 @@ struct dsi_video_engine_cfg {
 	bool bllp_lp11_en;
 	enum dsi_video_traffic_mode traffic_mode;
 	u32 vc_id;
-	u32 dma_sched_line;
 };
 
 /**

@@ -1177,6 +1177,60 @@ int dsi_message_validate_tx_mode(struct dsi_ctrl *dsi_ctrl,
 	return rc;
 }
 
+static void dsi_configure_command_scheduling(struct dsi_ctrl *dsi_ctrl,
+		struct dsi_ctrl_cmd_dma_info *cmd_mem)
+{
+	u32 line_no = 0, window = 0, sched_line_no = 0;
+	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
+	struct dsi_mode_info *timing = &(dsi_ctrl->host_config.video_timing);
+
+	line_no = dsi_ctrl->host_config.common_config.dma_sched_line;
+	window = dsi_ctrl->host_config.common_config.dma_sched_window;
+
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, line_no, window);
+	/*
+	 * In case of command scheduling in video mode, the line at which
+	 * the command is scheduled can revert to the default value i.e. 1
+	 * for the following cases:
+	 *	1) No schedule line defined by the panel.
+	 *	2) schedule line defined is greater than VFP.
+	 */
+	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
+		dsi_hw_ops.schedule_dma_cmd &&
+		(dsi_ctrl->current_state.vid_engine_state ==
+					DSI_CTRL_ENGINE_ON)) {
+		sched_line_no = (line_no == 0) ? 1 : line_no;
+
+		if (timing) {
+			if (sched_line_no >= timing->v_front_porch)
+				sched_line_no = 1;
+			sched_line_no += timing->v_back_porch +
+				timing->v_sync_width + timing->v_active;
+		}
+		dsi_hw_ops.schedule_dma_cmd(&dsi_ctrl->hw, sched_line_no);
+	}
+
+	/*
+	 * In case of command scheduling in command mode, the window size
+	 * is reset to zero, if the total scheduling window is greater
+	 * than the panel height.
+	 */
+	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_CMD_MODE) &&
+			dsi_hw_ops.configure_cmddma_window) {
+		sched_line_no = line_no;
+
+		if ((sched_line_no + window) > timing->v_active)
+			window = 0;
+
+		sched_line_no += timing->v_active;
+
+		dsi_hw_ops.configure_cmddma_window(&dsi_ctrl->hw, cmd_mem,
+				sched_line_no, window);
+	}
+	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_EXIT,
+			sched_line_no, window);
+}
+
 static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 				const struct mipi_dsi_msg *msg,
 				struct dsi_ctrl_cmd_dma_fifo_info *cmd,
@@ -1184,26 +1238,17 @@ static void dsi_kickoff_msg_tx(struct dsi_ctrl *dsi_ctrl,
 				u32 flags)
 {
 	u32 hw_flags = 0;
-	u32 line_no = 0x1;
-	struct dsi_mode_info *timing;
 	struct dsi_ctrl_hw_ops dsi_hw_ops = dsi_ctrl->hw.ops;
 
 	SDE_EVT32(dsi_ctrl->cell_index, SDE_EVTLOG_FUNC_ENTRY, flags);
-	/* check if custom dma scheduling line needed */
-	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
-		(flags & DSI_CTRL_CMD_CUSTOM_DMA_SCHED))
-		line_no = dsi_ctrl->host_config.u.video_engine.dma_sched_line;
 
-	timing = &(dsi_ctrl->host_config.video_timing);
-	if (timing)
-		line_no += timing->v_back_porch + timing->v_sync_width +
-				timing->v_active;
-	if ((dsi_ctrl->host_config.panel_mode == DSI_OP_VIDEO_MODE) &&
-		dsi_hw_ops.schedule_dma_cmd &&
-		(dsi_ctrl->current_state.vid_engine_state ==
-					DSI_CTRL_ENGINE_ON))
-		dsi_hw_ops.schedule_dma_cmd(&dsi_ctrl->hw,
-				line_no);
+	if (dsi_ctrl->hw.reset_trig_ctrl)
+		dsi_hw_ops.reset_trig_ctrl(&dsi_ctrl->hw,
+				&dsi_ctrl->host_config.common_config);
+
+	/* check if custom dma scheduling line needed */
+	if (flags & DSI_CTRL_CMD_CUSTOM_DMA_SCHED)
+		dsi_configure_command_scheduling(dsi_ctrl, cmd_mem);
 
 	hw_flags |= (flags & DSI_CTRL_CMD_DEFER_TRIGGER) ?
 			DSI_CTRL_HW_CMD_WAIT_FOR_TRIGGER : 0;
