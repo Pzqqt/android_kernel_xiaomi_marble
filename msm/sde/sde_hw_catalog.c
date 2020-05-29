@@ -182,6 +182,7 @@ enum sde_prop {
 	MIXER_LINEWIDTH,
 	MIXER_BLEND,
 	WB_LINEWIDTH,
+	WB_LINEWIDTH_LINEAR,
 	BANK_BIT,
 	UBWC_VERSION,
 	UBWC_STATIC,
@@ -542,6 +543,8 @@ static struct sde_prop_type sde_prop[] = {
 	{MIXER_LINEWIDTH, "qcom,sde-mixer-linewidth", false, PROP_TYPE_U32},
 	{MIXER_BLEND, "qcom,sde-mixer-blendstages", false, PROP_TYPE_U32},
 	{WB_LINEWIDTH, "qcom,sde-wb-linewidth", false, PROP_TYPE_U32},
+	{WB_LINEWIDTH_LINEAR, "qcom,sde-wb-linewidth-linear",
+			false, PROP_TYPE_U32},
 	{BANK_BIT, "qcom,sde-highest-bank-bit", false, PROP_TYPE_U32},
 	{UBWC_VERSION, "qcom,sde-ubwc-version", false, PROP_TYPE_U32},
 	{UBWC_STATIC, "qcom,sde-ubwc-static", false, PROP_TYPE_U32},
@@ -2298,6 +2301,7 @@ static int sde_wb_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg)
 		if (!prop_exists[WB_LEN])
 			wb->len = DEFAULT_SDE_HW_BLOCK_LEN;
 		sblk->maxlinewidth = sde_cfg->max_wb_linewidth;
+		sblk->maxlinewidth_linear = sde_cfg->max_wb_linewidth_linear;
 
 		if (wb->id >= LINE_MODE_WB_OFFSET)
 			set_bit(SDE_WB_LINE_MODE, &wb->features);
@@ -3653,6 +3657,11 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->max_wb_linewidth = props->exists[WB_LINEWIDTH] ?
 			PROP_VALUE_ACCESS(props->values, WB_LINEWIDTH, 0) :
 			DEFAULT_SDE_LINE_WIDTH;
+
+	/* if wb linear width is not defined use the line width as default */
+	cfg->max_wb_linewidth_linear = props->exists[WB_LINEWIDTH_LINEAR] ?
+			PROP_VALUE_ACCESS(props->values, WB_LINEWIDTH_LINEAR, 0)
+			:  cfg->max_wb_linewidth;
 
 	cfg->max_mixer_width = props->exists[MIXER_LINEWIDTH] ?
 			PROP_VALUE_ACCESS(props->values, MIXER_LINEWIDTH, 0) :
