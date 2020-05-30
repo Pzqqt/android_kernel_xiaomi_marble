@@ -1605,30 +1605,35 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 
 	if (!wlan_nan_get_sap_conc_support(pm_ctx->psoc)) {
 		policy_mgr_debug("NAN+SAP not supported in fw");
+		/* Reject NAN as SAP is of high priority */
 		if (mode == PM_NAN_DISC_MODE)
 			return false;
 		/* Before SAP start disable NAN */
 		ucfg_nan_disable_concurrency(pm_ctx->psoc);
+		return true;
 	}
+
 	if (mode == PM_NAN_DISC_MODE) {
 		sap_freq = policy_mgr_mode_specific_get_channel(pm_ctx->psoc,
 								PM_SAP_MODE);
 		policy_mgr_debug("FREQ SAP: %d NAN: %d", sap_freq, ch_freq);
-		if (WLAN_REG_IS_SAME_BAND_FREQS(sap_freq, ch_freq)) {
-			if (sap_freq == ch_freq) {
-				policy_mgr_debug("NAN+SAP SCC");
-				return true;
-			}
+		if (ucfg_is_nan_dbs_supported(pm_ctx->psoc) &&
+		    !WLAN_REG_IS_SAME_BAND_FREQS(sap_freq, ch_freq))
+			return true;
 
-			if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
-				policy_mgr_debug("SAP force SCC disabled");
-				return false;
-			}
-			if (!policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(
-							pm_ctx, ch_freq)) {
-				policy_mgr_debug("NAN+SAP unsafe ch SCC disabled");
-				return false;
-			}
+		if (sap_freq == ch_freq) {
+			policy_mgr_debug("NAN+SAP SCC");
+			return true;
+		}
+
+		if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
+			policy_mgr_debug("SAP force SCC disabled");
+			return false;
+		}
+		if (!policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(
+						pm_ctx, ch_freq)) {
+			policy_mgr_debug("NAN+SAP unsafe ch SCC disabled");
+			return false;
 		}
 	} else if (mode == PM_SAP_MODE) {
 		nan_2g_freq =
@@ -1637,8 +1642,16 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 		nan_5g_freq = wlan_nan_get_disc_5g_ch_freq(pm_ctx->psoc);
 		policy_mgr_debug("SAP CH: %d NAN Ch: %d %d", ch_freq,
 				 nan_2g_freq, nan_5g_freq);
-		if (WLAN_REG_IS_SAME_BAND_FREQS(nan_2g_freq, ch_freq) ||
-		    WLAN_REG_IS_SAME_BAND_FREQS(nan_5g_freq, ch_freq)) {
+		if (ucfg_is_nan_conc_control_supported(pm_ctx->psoc) &&
+		    !ucfg_is_nan_dbs_supported(pm_ctx->psoc) &&
+		    !WLAN_REG_IS_SAME_BAND_FREQS(nan_2g_freq, ch_freq)) {
+			if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
+				policy_mgr_debug("NAN and SAP are in different bands but SAP force SCC disabled");
+				ucfg_nan_disable_concurrency(pm_ctx->psoc);
+				return true;
+			}
+		} else if (WLAN_REG_IS_SAME_BAND_FREQS(nan_2g_freq, ch_freq) ||
+			   WLAN_REG_IS_SAME_BAND_FREQS(nan_5g_freq, ch_freq)) {
 			if (ch_freq == nan_2g_freq || ch_freq == nan_5g_freq) {
 				policy_mgr_debug("NAN+SAP SCC");
 				return true;
@@ -1646,7 +1659,7 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 			if (!policy_mgr_is_force_scc(pm_ctx->psoc)) {
 				policy_mgr_debug("SAP force SCC disabled");
 				ucfg_nan_disable_concurrency(pm_ctx->psoc);
-				return false;
+				return true;
 			}
 			if ((WLAN_REG_IS_5GHZ_CH_FREQ(ch_freq) &&
 			     !policy_mgr_is_nan_sap_unsafe_ch_scc_allowed(
@@ -1656,7 +1669,7 @@ policy_mgr_nan_sap_pre_enable_conc_check(struct wlan_objmgr_psoc *psoc,
 			     pm_ctx, nan_2g_freq))) {
 				policy_mgr_debug("NAN+SAP unsafe ch SCC disabled");
 				ucfg_nan_disable_concurrency(pm_ctx->psoc);
-				return false;
+				return true;
 			}
 		}
 	}

@@ -546,5 +546,11 @@ bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	return false;
 }
+
+static inline
+bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
