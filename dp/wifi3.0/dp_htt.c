@@ -2172,14 +2172,14 @@ static uint8_t dp_get_ppdu_info_user_index(struct dp_pdev *pdev,
 			/* Max users possible is 8 so user array index should
 			 * not exceed 7
 			 */
-			qdf_assert_always(user_index <= CDP_MU_MAX_USER_INDEX);
+			qdf_assert_always(user_index <= (ppdu_desc->max_users - 1));
 			return user_index;
 		}
 	}
 
 	ppdu_info->last_user++;
 	/* Max users possible is 8 so last user should not exceed 8 */
-	qdf_assert_always(ppdu_info->last_user <= CDP_MU_MAX_USERS);
+	qdf_assert_always(ppdu_info->last_user <= ppdu_desc->max_users);
 	return ppdu_info->last_user - 1;
 }
 
@@ -2212,6 +2212,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		HTT_PPDU_STATS_COMMON_TLV_SCH_CMDID_GET(*tag_buf);
 	ppdu_desc->num_users =
 		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
+
+	qdf_assert_always(ppdu_desc->num_users <= ppdu_desc->max_users);
 
 	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(QTYPE_FRM_TYPE);
 	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
@@ -3464,10 +3466,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
  */
 static
 struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
-			uint8_t tlv_type)
+								   uint8_t tlv_type, uint8_t max_users)
 {
 	struct ppdu_info *ppdu_info = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	uint32_t size = 0;
 
 	/*
 	 * Find ppdu_id node exists or not
@@ -3528,6 +3531,9 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 		qdf_mem_free(ppdu_info);
 	}
 
+	size = sizeof(struct cdp_tx_completion_ppdu) +
+			(max_users * sizeof(struct cdp_tx_completion_ppdu_user));
+
 	/*
 	 * Allocate new ppdu_info node
 	 */
@@ -3535,9 +3541,8 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 	if (!ppdu_info)
 		return NULL;
 
-	ppdu_info->nbuf = qdf_nbuf_alloc(pdev->soc->osdev,
-			sizeof(struct cdp_tx_completion_ppdu), 0, 4,
-			TRUE);
+	ppdu_info->nbuf = qdf_nbuf_alloc(pdev->soc->osdev, size,
+									 0, 4, TRUE);
 	if (!ppdu_info->nbuf) {
 		qdf_mem_free(ppdu_info);
 		return NULL;
@@ -3545,11 +3550,9 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 
 	ppdu_info->ppdu_desc =
 		(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(ppdu_info->nbuf);
-	qdf_mem_zero(qdf_nbuf_data(ppdu_info->nbuf),
-			sizeof(struct cdp_tx_completion_ppdu));
+	qdf_mem_zero(qdf_nbuf_data(ppdu_info->nbuf), size);
 
-	if (qdf_nbuf_put_tail(ppdu_info->nbuf,
-			sizeof(struct cdp_tx_completion_ppdu)) == NULL) {
+	if (qdf_nbuf_put_tail(ppdu_info->nbuf, size) == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"No tailroom for HTT PPDU");
 		qdf_nbuf_free(ppdu_info->nbuf);
@@ -3558,6 +3561,8 @@ struct ppdu_info *dp_get_ppdu_desc(struct dp_pdev *pdev, uint32_t ppdu_id,
 		qdf_mem_free(ppdu_info);
 		return NULL;
 	}
+
+	ppdu_info->ppdu_desc->max_users = max_users;
 
 	/**
 	 * No lock is needed because all PPDU TLVs are processed in
@@ -3589,7 +3594,7 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
 	struct dp_peer *peer;
 	uint32_t i = 0;
-
+	uint8_t max_users = CDP_MU_MAX_USERS;
 	uint32_t *msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 
 	length = HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_GET(*msg_word);
@@ -3597,8 +3602,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	msg_word = msg_word + 1;
 	ppdu_id = HTT_T2H_PPDU_STATS_PPDU_ID_GET(*msg_word);
 
-
 	msg_word = msg_word + 3;
+
 	while (length > 0) {
 		tlv_buf = (uint8_t *)msg_word;
 		tlv_type = HTT_STATS_TLV_TAG_GET(*msg_word);
@@ -3628,9 +3633,22 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 			continue;
 		}
 
-		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type);
+		/*
+		 * retrieve max_users if it's USERS_INFO,
+		 * else, it's 1 for COMPLTN_FLUSH,
+		 * else, use CDP_MU_MAX_USERS
+		 */
+		if (tlv_type == HTT_PPDU_STATS_USERS_INFO_TLV) {
+			max_users =
+				HTT_PPDU_STATS_USERS_INFO_TLV_MAX_USERS_GET(*(msg_word + 1));
+		} else if (tlv_type == HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV) {
+			max_users = 1;
+		}
+
+		ppdu_info = dp_get_ppdu_desc(pdev, ppdu_id, tlv_type, max_users);
 		if (!ppdu_info)
 			return NULL;
+
 		ppdu_info->ppdu_desc->bss_color =
 			pdev->rx_mon_recv_status.bsscolor;
 
@@ -3678,6 +3696,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	    (ppdu_info->tlv_bitmap &
 	     (1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV)) &&
 	    ppdu_desc->delayed_ba) {
+
+		qdf_assert_always(ppdu_desc->num_users <= ppdu_desc->max_users);
 		for (i = 0; i < ppdu_desc->num_users; i++) {
 			struct cdp_delayed_tx_completion_ppdu_user *delay_ppdu;
 			uint64_t start_tsf;

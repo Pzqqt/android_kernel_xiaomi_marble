@@ -36,22 +36,6 @@
 /* Macro For NYSM value received in VHT TLV */
 #define VHT_SGI_NYSM 3
 
-/* PPDU STATS CFG */
-#define DP_PPDU_STATS_CFG_ALL 0xFFFF
-
-/* PPDU stats mask sent to FW to enable enhanced stats */
-#define DP_PPDU_STATS_CFG_ENH_STATS 0xE67
-/* PPDU stats mask sent to FW to support debug sniffer feature */
-#define DP_PPDU_STATS_CFG_SNIFFER 0x2FFF
-/* PPDU stats mask sent to FW to support BPR feature*/
-#define DP_PPDU_STATS_CFG_BPR 0x2000
-/* PPDU stats mask sent to FW to support BPR and enhanced stats feature */
-#define DP_PPDU_STATS_CFG_BPR_ENH (DP_PPDU_STATS_CFG_BPR | \
-				   DP_PPDU_STATS_CFG_ENH_STATS)
-/* PPDU stats mask sent to FW to support BPR and pcktlog stats feature */
-#define DP_PPDU_STATS_CFG_BPR_PKTLOG (DP_PPDU_STATS_CFG_BPR | \
-				      DP_PPDU_TXLITE_STATS_BITMASK_CFG)
-
 /**
  * Bitmap of HTT PPDU TLV types for Default mode
  */
@@ -62,6 +46,42 @@
 	(1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV) | \
 	(1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV)
+
+/* PPDU STATS CFG */
+#define DP_PPDU_STATS_CFG_ALL 0xFFFF
+
+/* PPDU stats mask sent to FW to enable enhanced stats */
+#define DP_PPDU_STATS_CFG_ENH_STATS \
+	(HTT_PPDU_DEFAULT_TLV_BITMAP) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV) | \
+	(1 << HTT_PPDU_STATS_USERS_INFO_TLV)
+
+/* PPDU stats mask sent to FW to support debug sniffer feature */
+#define DP_PPDU_STATS_CFG_SNIFFER \
+	(HTT_PPDU_DEFAULT_TLV_BITMAP) | \
+	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV) | \
+	(1 << HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV) | \
+	(1 << HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV) | \
+	(1 << HTT_PPDU_STATS_USERS_INFO_TLV)
+
+/* PPDU stats mask sent to FW to support BPR feature*/
+#define DP_PPDU_STATS_CFG_BPR \
+	(1 << HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV) | \
+	(1 << HTT_PPDU_STATS_USERS_INFO_TLV)
+
+/* PPDU stats mask sent to FW to support BPR and enhanced stats feature */
+#define DP_PPDU_STATS_CFG_BPR_ENH (DP_PPDU_STATS_CFG_BPR | \
+				   DP_PPDU_STATS_CFG_ENH_STATS)
+/* PPDU stats mask sent to FW to support BPR and pcktlog stats feature */
+#define DP_PPDU_STATS_CFG_BPR_PKTLOG (DP_PPDU_STATS_CFG_BPR | \
+				      DP_PPDU_TXLITE_STATS_BITMASK_CFG)
 
 /**
  * Bitmap of HTT PPDU delayed ba TLV types for Default mode

@@ -1817,6 +1817,7 @@ struct cdp_tx_mgmt_comp_info {
  * @vdev_id: VAP Id
  * @bar_num_users: BA response user count, based on completion common TLV
  * @num_users: Number of users
+ * @max_users: Number of users from USR_INFO TLV
  * @drop_reason: drop reason from flush status
  * @is_flush: is_flush is set based on flush tlv
  * @flow_type: tx flow type from flush status
@@ -1842,13 +1843,13 @@ struct cdp_tx_mgmt_comp_info {
  * @bss_color: 6 bit value for full bss color
  * @doppler: value for doppler (will be 0 most of the times)
  * @spatial_reuse: value for spatial reuse used in radiotap HE header
- * @user: per-User stats (array of per-user structures)
  * @bar_ppdu_id: BAR ppdu_id
  * @bar_tx_duration: BAR tx duration
  * @bar_ppdu_start_timestamp: BAR start timestamp
  * @bar_ppdu_end_timestamp: BAR end timestamp
  * @tlv_bitmap: tlv_bitmap for the PPDU
  * @sched_cmdid: schedule command id
+ * @user: per-User stats (array of per-user structures)
  */
 struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_id;
@@ -1856,6 +1857,7 @@ struct cdp_tx_completion_ppdu {
 	uint16_t vdev_id;
 	uint16_t bar_num_users;
 	uint32_t num_users;
+	uint8_t  max_users;
 	uint8_t last_usr_index;
 	uint32_t drop_reason;
 	uint32_t is_flush:1,
@@ -1882,13 +1884,13 @@ struct cdp_tx_completion_ppdu {
 	uint8_t bss_color;
 	uint8_t doppler;
 	uint8_t spatial_reuse;
-	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 	uint32_t bar_ppdu_id;
 	uint32_t bar_tx_duration;
 	uint32_t bar_ppdu_start_timestamp;
 	uint32_t bar_ppdu_end_timestamp;
 	uint32_t tlv_bitmap;
 	uint16_t sched_cmdid;
+	struct cdp_tx_completion_ppdu_user user[];
 };
 
 /**
