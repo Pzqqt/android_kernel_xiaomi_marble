@@ -29,6 +29,7 @@
 #define ESD_TRIGGER_STRING_MAX_LEN 10
 
 #define MAX_NAME_SIZE	64
+#define MAX_TE_RECHECKS 5
 
 #define DSI_CLOCK_BITRATE_RADIX 10
 #define MAX_TE_SOURCE_ID  2
@@ -764,18 +765,22 @@ static int dsi_display_status_bta_request(struct dsi_display *display)
 	return rc;
 }
 
-static int dsi_display_status_check_te(struct dsi_display *display)
+static int dsi_display_status_check_te(struct dsi_display *display,
+		int rechecks)
 {
-	int rc = 1;
+	int rc = 1, i = 0;
 	int const esd_te_timeout = msecs_to_jiffies(3*20);
 
 	dsi_display_change_te_irq_status(display, true);
 
-	reinit_completion(&display->esd_te_gate);
-	if (!wait_for_completion_timeout(&display->esd_te_gate,
-				esd_te_timeout)) {
-		DSI_ERR("TE check failed\n");
-		rc = -EINVAL;
+	for (i = 0; i < rechecks; i++) {
+		reinit_completion(&display->esd_te_gate);
+		if (!wait_for_completion_timeout(&display->esd_te_gate,
+					esd_te_timeout)) {
+			DSI_ERR("TE check failed\n");
+			dsi_display_change_te_irq_status(display, false);
+			return -EINVAL;
+		}
 	}
 
 	dsi_display_change_te_irq_status(display, false);
@@ -791,6 +796,7 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	u32 status_mode;
 	int rc = 0x1, ret;
 	u32 mask;
+	int te_rechecks = 1;
 
 	if (!dsi_display || !dsi_display->panel)
 		return -EINVAL;
@@ -819,13 +825,8 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	}
 	SDE_EVT32(SDE_EVTLOG_FUNC_ENTRY);
 
-	if (te_check_override && gpio_is_valid(dsi_display->disp_te_gpio))
-		status_mode = ESD_MODE_PANEL_TE;
-
-	if (status_mode == ESD_MODE_PANEL_TE) {
-		rc = dsi_display_status_check_te(dsi_display);
-		goto exit;
-	}
+	if (te_check_override)
+		te_rechecks = MAX_TE_RECHECKS;
 
 	ret = dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 		DSI_ALL_CLKS, DSI_CLK_ON);
@@ -842,23 +843,28 @@ int dsi_display_check_status(struct drm_connector *connector, void *display,
 	} else if (status_mode == ESD_MODE_SW_BTA) {
 		rc = dsi_display_status_bta_request(dsi_display);
 	} else if (status_mode == ESD_MODE_PANEL_TE) {
-		rc = dsi_display_status_check_te(dsi_display);
+		rc = dsi_display_status_check_te(dsi_display, te_rechecks);
+		te_check_override = false;
 	} else {
 		DSI_WARN("Unsupported check status mode: %d\n", status_mode);
 		panel->esd_config.esd_enabled = false;
 	}
 
+	if (rc <= 0 && te_check_override)
+		rc = dsi_display_status_check_te(dsi_display, te_rechecks);
 	/* Unmask error interrupts if check passed*/
 	if (rc > 0) {
 		dsi_display_set_ctrl_esd_check_flag(dsi_display, false);
 		dsi_display_mask_ctrl_error_interrupts(dsi_display, mask,
 							false);
+		if (te_check_override && panel->esd_config.esd_enabled == false)
+			rc = dsi_display_status_check_te(dsi_display,
+					te_rechecks);
 	}
 
 	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 		DSI_ALL_CLKS, DSI_CLK_OFF);
 
-exit:
 	/* Handle Panel failures during display disable sequence */
 	if (rc <=0)
 		atomic_set(&panel->esd_recovery_pending, 1);
