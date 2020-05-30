@@ -6482,8 +6482,11 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	/* NDI + SAP conditional supported */
 	hdd_sap_nan_check_and_disable_unsupported_ndi(hdd_ctx->psoc, true);
-	if (!policy_mgr_nan_sap_pre_enable_conc_check(
-	    hdd_ctx->psoc, PM_SAP_MODE, wlan_chan_to_freq(channel)))
+
+	if (policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+						      PM_NAN_DISC_MODE, NULL) &&
+	    !policy_mgr_nan_sap_pre_enable_conc_check(hdd_ctx->psoc,
+				PM_SAP_MODE, wlan_chan_to_freq(channel)))
 		hdd_debug("NAN disabled due to concurrency constraints");
 
 	/* check if concurrency is allowed */

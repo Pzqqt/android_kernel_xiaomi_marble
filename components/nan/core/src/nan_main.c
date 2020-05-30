@@ -1146,7 +1146,9 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
 		goto pre_enable_failure;
 	}
 
-	if (!policy_mgr_nan_sap_pre_enable_conc_check(psoc, PM_NAN_DISC_MODE,
+	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE,
+						      NULL) &&
+	    !policy_mgr_nan_sap_pre_enable_conc_check(psoc, PM_NAN_DISC_MODE,
 						      nan_ch_freq)) {
 		nan_debug("NAN not enabled due to concurrency constraints");
 		status = QDF_STATUS_E_INVAL;
@@ -1386,6 +1388,5 @@ bool wlan_nan_get_sap_conc_support(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return (psoc_nan_obj->nan_caps.nan_sap_supported &&
-		psoc_nan_obj->nan_caps.nan_dbs_supported &&
-		psoc_nan_obj->nan_caps.nan_conc_control);
+		ucfg_is_nan_conc_control_supported(psoc));
 }
