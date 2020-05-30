@@ -8638,14 +8638,23 @@ enum qca_wlan_vendor_attr_beacon_reporting_params {
  * enum qca_wlan_vendor_attr_oem_data_params - Used by the vendor command
  * QCA_NL80211_VENDOR_SUBCMD_OEM_DATA.
  *
- * @QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA: The binary blob for the vendor
- * command QCA_NL80211_VENDOR_SUBCMD_OEM_DATA are carried through this
- * attribute.
- * NLA_BINARY attribute, the max size is 1024 bytes.
+ * @QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA: This NLA_BINARY attribute is
+ * used to set/query the data to/from the firmware. On query, the same
+ * attribute is used to carry the respective data in the reply sent by the
+ * driver to userspace. The request to set/query the data and the format of the
+ * respective data from the firmware are embedded in the attribute. The
+ * maximum size of the attribute payload is 1024 bytes.
+ * Userspace has to set the QCA_WLAN_VENDOR_ATTR_OEM_DATA_RESPONSE_EXPECTED
+ * attribute when the data is queried from the firmware.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_OEM_DATA_RESPONSE_EXPECTED: This NLA_FLAG attribute
+ * is set when the userspace queries data from the firmware. This attribute
+ * should not be set when userspace sets the OEM data to the firmware.
  */
 enum qca_wlan_vendor_attr_oem_data_params {
 	QCA_WLAN_VENDOR_ATTR_OEM_DATA_INVALID = 0,
 	QCA_WLAN_VENDOR_ATTR_OEM_DATA_CMD_DATA = 1,
+	QCA_WLAN_VENDOR_ATTR_OEM_DATA_RESPONSE_EXPECTED = 3,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_OEM_DATA_PARAMS_AFTER_LAST,
