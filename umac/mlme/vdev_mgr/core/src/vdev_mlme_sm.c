@@ -150,6 +150,9 @@ static bool mlme_vdev_state_init_event(void *ctx, uint16_t event,
 {
 	struct vdev_mlme_obj *vdev_mlme = (struct vdev_mlme_obj *)ctx;
 	bool status;
+	enum QDF_OPMODE mode;
+
+	mode = wlan_vdev_mlme_get_opmode(vdev_mlme->vdev);
 
 	switch (event) {
 	case WLAN_VDEV_SM_EV_START:
@@ -165,7 +168,15 @@ static bool mlme_vdev_state_init_event(void *ctx, uint16_t event,
 		} else {
 			mlme_err(
 			"failed to validate vdev init params to move to START state");
-			status = true;
+			/*
+			 * In case of AP if false is returned, we consider as
+			 * error scenario and print that the event is not
+			 * handled. Hence return false only for STA.
+			 */
+			if (mode == QDF_STA_MODE)
+				status = false;
+			else
+				status = true;
 			mlme_vdev_notify_down_complete(vdev_mlme,
 						       event_data_len,
 						       event_data);
