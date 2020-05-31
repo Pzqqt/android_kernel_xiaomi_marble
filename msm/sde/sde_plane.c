@@ -2853,7 +2853,7 @@ void sde_plane_static_img_control(struct drm_plane *plane,
 
 	pstate->static_cache_state = state;
 
-	if (state == CACHE_STATE_FRAME_READ)
+	if (state == CACHE_STATE_FRAME_WRITE || state == CACHE_STATE_FRAME_READ)
 		_sde_plane_sspp_setup_sys_cache(psde, pstate, false);
 }
 

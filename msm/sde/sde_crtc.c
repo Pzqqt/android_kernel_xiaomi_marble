@@ -6321,7 +6321,6 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 	struct sde_crtc *sde_crtc = container_of(work, struct sde_crtc,
 			static_cache_read_work.work);
 	struct drm_crtc *crtc;
-	struct drm_plane *plane;
 	struct sde_crtc_mixer *mixer;
 	struct sde_hw_ctl *ctl;
 
@@ -6336,18 +6335,10 @@ void __sde_crtc_static_cache_read_work(struct kthread_work *work)
 	ctl = mixer->hw_ctl;
 
 	if (sde_crtc->cache_state != CACHE_STATE_FRAME_WRITE ||
-			!ctl->ops.update_bitmask_ctl ||
 			!ctl->ops.trigger_flush)
 		return;
 
 	sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_READ, false);
-	drm_atomic_crtc_for_each_plane(plane, crtc) {
-		if (!plane->state)
-			continue;
-
-		sde_plane_ctl_flush(plane, ctl, true);
-	}
-	ctl->ops.update_bitmask_ctl(ctl, true);
 	ctl->ops.trigger_flush(ctl);
 }
 

@@ -1489,8 +1489,6 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 		if (sde_cfg->inline_disable_const_clr)
 			set_bit(SDE_SSPP_INLINE_CONST_CLR, &sspp->features);
 
-		if (sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
-			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
 	}
 
 	sde_put_dt_props(props);
@@ -1732,6 +1730,9 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 
 		if (sde_cfg->uidle_cfg.uidle_rev)
 			set_bit(SDE_PERF_SSPP_UIDLE, &sspp->perf_features);
+
+		if (sde_cfg->sc_cfg[SDE_SYS_CACHE_DISP].has_sys_cache)
+			set_bit(SDE_PERF_SSPP_SYS_CACHE, &sspp->perf_features);
 
 		if (sde_cfg->has_decimation) {
 			sblk->maxhdeciexp = MAX_HORZ_DECIMATION;
