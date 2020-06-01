@@ -164,6 +164,46 @@ void dp_hist_update_stats(struct cdp_hist_stats *hist_stats, int value)
 }
 
 /*
+ * dp_copy_hist_stats(): Copy the histogram stats
+ * @src_hist_stats: Source histogram stats
+ * @dst_hist_stats: Destination histogram stats
+ *
+ * Return: void
+ */
+void dp_copy_hist_stats(struct cdp_hist_stats *src_hist_stats,
+			struct cdp_hist_stats *dst_hist_stats)
+{
+	uint8_t index;
+
+	for (index = 0; index < CDP_HIST_BUCKET_MAX; index++)
+		dst_hist_stats->hist.freq[index] =
+			src_hist_stats->hist.freq[index];
+	dst_hist_stats->min = src_hist_stats->min;
+	dst_hist_stats->max = src_hist_stats->max;
+	dst_hist_stats->avg = src_hist_stats->avg;
+}
+
+/*
+ * dp_accumulate_hist_stats(): Accumulate the hist src to dst
+ * @src_hist_stats: Source histogram stats
+ * @dst_hist_stats: Destination histogram stats
+ *
+ * Return: void
+ */
+void dp_accumulate_hist_stats(struct cdp_hist_stats *src_hist_stats,
+			      struct cdp_hist_stats *dst_hist_stats)
+{
+	uint8_t index;
+
+	for (index = 0; index < CDP_HIST_BUCKET_MAX; index++)
+		dst_hist_stats->hist.freq[index] +=
+			src_hist_stats->hist.freq[index];
+	dst_hist_stats->min = QDF_MIN(src_hist_stats->min, dst_hist_stats->min);
+	dst_hist_stats->max = QDF_MAX(src_hist_stats->max, dst_hist_stats->max);
+	dst_hist_stats->avg = (src_hist_stats->avg + dst_hist_stats->avg) >> 1;
+}
+
+/*
  * dp_hist_init(): Initialize the histogram object
  * @hist_stats: Hist stats object
  * @hist_type: Histogram type

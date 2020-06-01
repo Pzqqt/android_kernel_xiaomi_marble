@@ -36,5 +36,8 @@
 void dp_hist_update_stats(struct cdp_hist_stats *hist_stats, int value);
 void dp_hist_init(struct cdp_hist_stats *hist_stats,
 		  enum cdp_hist_types hist_type);
-
+void dp_accumulate_hist_stats(struct cdp_hist_stats *src_hist_stats,
+			      struct cdp_hist_stats *dst_hist_stats);
+void dp_copy_hist_stats(struct cdp_hist_stats *src_hist_stats,
+			struct cdp_hist_stats *dst_hist_stats);
 #endif /* __DP_HIST_H_ */

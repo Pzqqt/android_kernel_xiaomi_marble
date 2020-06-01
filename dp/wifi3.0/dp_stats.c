@@ -23,6 +23,11 @@
 #include "htt_ppdu_stats.h"
 #include "dp_htt.h"
 
+#ifdef QCA_PEER_EXT_STATS
+#include <cdp_txrx_hist_struct.h>
+#include "dp_hist.h"
+#endif
+
 #define DP_MAX_STRING_LEN 500
 
 #define DP_HTT_HW_INTR_NAME_LEN  HTT_STATS_MAX_HW_INTR_NAME_LEN
@@ -5465,6 +5470,167 @@ static void dp_print_jitter_stats(struct dp_peer *peer, struct dp_pdev *pdev)
 }
 #endif /* WLAN_PEER_JITTER */
 
+#ifdef QCA_PEER_EXT_STATS
+/*
+ * dp_print_hist_stats() : Print delay histogram
+ * @hstats: Histogram stats
+ *
+ * Return: void
+ */
+static void dp_print_hist_stats(struct cdp_hist_stats *hstats,
+				enum cdp_hist_types hist_type)
+{
+	uint8_t index = 0;
+	uint64_t count = 0;
+
+	for (index = 0; index < CDP_HIST_BUCKET_MAX; index++) {
+		count = hstats->hist.freq[index];
+		if (!count)
+			continue;
+		if (hist_type == CDP_HIST_TYPE_SW_ENQEUE_DELAY)
+			DP_PRINT_STATS("%s:  Packets = %llu",
+				       dp_vow_str_sw_enq_delay(index),
+				       count);
+		else if (hist_type == CDP_HIST_TYPE_HW_COMP_DELAY)
+			DP_PRINT_STATS("%s:  Packets = %llu",
+				       dp_vow_str_fw_to_hw_delay(index),
+				       count);
+		else if (hist_type == CDP_HIST_TYPE_REAP_STACK)
+			DP_PRINT_STATS("%s:  Packets = %llu",
+				       dp_vow_str_intfrm_delay(index),
+				       count);
+	}
+
+	DP_PRINT_STATS("Min = %u", hstats->min);
+	DP_PRINT_STATS("Max = %u", hstats->max);
+	DP_PRINT_STATS("Avg = %u\n", hstats->avg);
+}
+
+/*
+ * dp_accumulate_delay_tid_stats(): Accumulate the tid stats to the
+ *                                  hist stats.
+ * @soc: DP SoC handle
+ * @stats: cdp_delay_tid stats
+ * @dst_hstats: Destination histogram to copy tid stats
+ * @tid: TID value
+ *
+ * Return: void
+ */
+static void
+dp_accumulate_delay_tid_stats(struct dp_soc *soc,
+			      struct cdp_delay_tid_stats stats[]
+			      [CDP_MAX_TXRX_CTX],
+			      struct cdp_hist_stats *dst_hstats,
+			      uint8_t tid, uint32_t mode)
+{
+	uint8_t ring_id;
+
+	if (wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
+		struct cdp_delay_tid_stats *dstats =
+				&stats[tid][0];
+		struct cdp_hist_stats *src_hstats = NULL;
+
+		switch (mode) {
+		case CDP_HIST_TYPE_SW_ENQEUE_DELAY:
+			src_hstats = &dstats->tx_delay.tx_swq_delay;
+			break;
+		case CDP_HIST_TYPE_HW_COMP_DELAY:
+			src_hstats = &dstats->tx_delay.hwtx_delay;
+			break;
+		case CDP_HIST_TYPE_REAP_STACK:
+			src_hstats = &dstats->rx_delay.to_stack_delay;
+			break;
+		default:
+			break;
+		}
+
+		if (src_hstats)
+			dp_copy_hist_stats(src_hstats, dst_hstats);
+
+		return;
+	}
+
+	for (ring_id = 0; ring_id < CDP_MAX_TXRX_CTX; ring_id++) {
+		struct cdp_delay_tid_stats *dstats =
+				&stats[tid][ring_id];
+		struct cdp_hist_stats *src_hstats = NULL;
+
+		switch (mode) {
+		case CDP_HIST_TYPE_SW_ENQEUE_DELAY:
+			src_hstats = &dstats->tx_delay.tx_swq_delay;
+			break;
+		case CDP_HIST_TYPE_HW_COMP_DELAY:
+			src_hstats = &dstats->tx_delay.hwtx_delay;
+			break;
+		case CDP_HIST_TYPE_REAP_STACK:
+			src_hstats = &dstats->rx_delay.to_stack_delay;
+			break;
+		default:
+			break;
+		}
+
+		if (src_hstats)
+			dp_accumulate_hist_stats(src_hstats, dst_hstats);
+	}
+}
+
+/*
+ * dp_peer_print_delay_stats(): Print peer delay stats
+ * @soc: DP SoC handle
+ * @peer: DP peer handle
+ *
+ * Return: void
+ */
+void dp_peer_print_delay_stats(struct dp_pdev *pdev,
+			       struct dp_peer *peer)
+{
+	struct cdp_peer_ext_stats *pext_stats;
+	struct dp_soc *soc = NULL;
+	struct cdp_hist_stats hist_stats;
+	uint8_t tid;
+
+	if (!pdev || !pdev->soc)
+		return;
+
+	soc = pdev->soc;
+	if (!wlan_cfg_is_peer_ext_stats_enabled(soc->wlan_cfg_ctx))
+		return;
+
+	pext_stats = peer->pext_stats;
+	if (!pext_stats)
+		return;
+
+	for (tid = 0; tid < CDP_MAX_DATA_TIDS; tid++) {
+		DP_PRINT_STATS("----TID: %d----", tid);
+		DP_PRINT_STATS("Software Enqueue Delay:");
+		qdf_mem_zero(&hist_stats, sizeof(*(&hist_stats)));
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &hist_stats, tid,
+					      CDP_HIST_TYPE_SW_ENQEUE_DELAY);
+		dp_print_hist_stats(&hist_stats, CDP_HIST_TYPE_SW_ENQEUE_DELAY);
+		qdf_mem_zero(&hist_stats, sizeof(*(&hist_stats)));
+
+		DP_PRINT_STATS("Hardware Transmission Delay:");
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &hist_stats, tid,
+					      CDP_HIST_TYPE_HW_COMP_DELAY);
+		dp_print_hist_stats(&hist_stats, CDP_HIST_TYPE_HW_COMP_DELAY);
+		qdf_mem_zero(&hist_stats, sizeof(*(&hist_stats)));
+
+		DP_PRINT_STATS("Rx Reap2stack Deliver Delay:");
+		dp_accumulate_delay_tid_stats(soc, pext_stats->delay_stats,
+					      &hist_stats, tid,
+					      CDP_HIST_TYPE_REAP_STACK);
+		dp_print_hist_stats(&hist_stats, CDP_HIST_TYPE_REAP_STACK);
+	}
+}
+#else
+static inline void dp_peer_print_delay_stats(struct dp_pdev *pdev,
+					     struct dp_peer *peer)
+{
+}
+#endif
+
 void dp_print_peer_stats(struct dp_peer *peer)
 {
 	uint8_t i;
@@ -5732,6 +5898,8 @@ void dp_print_peer_stats(struct dp_peer *peer)
 		       peer->stats.rx.rx_data_rate);
 	DP_PRINT_STATS("Multipass Rx Packet Drop = %d",
 		       peer->stats.rx.multipass_rx_pkt_drop);
+
+	dp_peer_print_delay_stats(pdev, peer);
 }
 
 void dp_print_per_ring_stats(struct dp_soc *soc)
