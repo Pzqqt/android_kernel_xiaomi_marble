@@ -1105,6 +1105,8 @@ int swrm_get_clk_div_rate(int mclk_freq, int bus_clk_freq)
 			bus_clk_freq = SWR_CLK_RATE_4P8MHZ;
 		else if(bus_clk_freq <= SWR_CLK_RATE_9P6MHZ)
 			bus_clk_freq = SWR_CLK_RATE_9P6MHZ;
+		else
+			bus_clk_freq = SWR_CLK_RATE_9P6MHZ;
 	} else if (mclk_freq == SWR_CLK_RATE_11P2896MHZ)
 		bus_clk_freq = SWR_CLK_RATE_11P2896MHZ;
 
