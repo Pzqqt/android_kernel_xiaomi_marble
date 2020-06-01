@@ -360,9 +360,9 @@ typedef enum {
  * Please note to add new string in the array at index equal to
  * its enum value in wlan_objmgr_ref_dbgid.
  */
-static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
+static inline const char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 {
-	static const char *strings[] = { "WLAN_OBJMGR_ID",
+	static const char *strings[WLAN_REF_ID_MAX] = { "WLAN_OBJMGR_ID",
 					"WLAN_MLME_SB_ID",
 					"WLAN_MLME_NB_ID",
 					"WLAN_MGMT_SB_ID",
@@ -437,10 +437,12 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_PSOC_TARGET_IF_ID",
 					"FTM_TIME_SYNC_ID",
 					"WLAN_PKT_CAPTURE_ID",
-					"WLAN_DCS_ID",
-					"WLAN_REF_ID_MAX"};
+					"WLAN_DCS_ID"};
 
-	return (char *)strings[id];
+	if (id >= WLAN_REF_ID_MAX)
+		return "Unknown";
+
+	return strings[id];
 }
 
 #ifdef WLAN_OBJMGR_DEBUG
