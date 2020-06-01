@@ -6309,6 +6309,7 @@ static int msm_meta_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
 	struct snd_soc_card *card = rtd->card;
 	struct msm_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
+	u16 port_id = 0;
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
@@ -6342,6 +6343,13 @@ static int msm_meta_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		meta_mi2s_intf_conf[index].clk_enable[i] = true;
 
 		if (i == 0) {
+			port_id = msm_get_port_id(rtd->dai_link->id);
+			ret = afe_set_clk_id(port_id,
+					     mi2s_clk[member_port].clk_id);
+			if (ret < 0)
+				pr_err("%s: afe_set_clk_id fail %d\n",
+					 __func__, ret);
+
 			ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 			if (ret < 0) {
 				pr_err("%s: set fmt cpu dai failed for META_MI2S (%d), err:%d\n",

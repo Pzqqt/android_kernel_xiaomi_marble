@@ -30180,6 +30180,50 @@ static const struct snd_kcontrol_new aptx_dec_license_controls[] = {
 	msm_aptx_dec_license_control_put),
 };
 
+static int msm_routing_get_pll_clk_drift(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	return 0;
+}
+
+static int msm_routing_put_pll_clk_drift(struct snd_kcontrol *kcontrol,
+					 struct snd_ctl_elem_value *ucontrol)
+{
+	u16 port_id = 0;
+	int32_t clk_drift = 0;
+	uint32_t clk_reset = 0;
+	int be_idx, ret = -EINVAL;
+
+	be_idx = ucontrol->value.integer.value[0];
+	clk_drift = ucontrol->value.integer.value[1];
+	clk_reset = ucontrol->value.integer.value[2];
+
+	if (be_idx < 0 && be_idx >= MSM_BACKEND_DAI_MAX) {
+		pr_err("%s: Invalid be id %d\n", __func__, be_idx);
+		return -EINVAL;
+	}
+
+	if (!msm_bedais[be_idx].active && !clk_reset) {
+		pr_err("%s:BE is not active %d, cannot set clock drift\n",
+			__func__, be_idx);
+		return -EINVAL;
+	}
+
+	port_id = msm_bedais[be_idx].port_id;
+	pr_debug("%s: clk drift %d be idx %d clk reset %d port id 0x%x\n",
+		  __func__, clk_drift, be_idx, clk_reset, port_id);
+	ret = afe_set_pll_clk_drift(port_id, clk_drift, clk_reset);
+	if (ret < 0)
+		pr_err("%s: failed to set pll clk drift\n", __func__);
+
+	return ret;
+}
+
+static const struct snd_kcontrol_new pll_clk_drift_controls[] = {
+	SOC_SINGLE_MULTI_EXT("PLL config data", SND_SOC_NOPM, 0, 0xFFFFFFFF,
+	0, 128, msm_routing_get_pll_clk_drift, msm_routing_put_pll_clk_drift),
+};
+
 static int msm_routing_put_port_chmap_mixer(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
@@ -30479,6 +30523,9 @@ static int msm_routing_probe(struct snd_soc_component *component)
 	snd_soc_add_component_controls(component,
 			port_multi_channel_map_mixer_controls,
 			ARRAY_SIZE(port_multi_channel_map_mixer_controls));
+
+	snd_soc_add_component_controls(component, pll_clk_drift_controls,
+				      ARRAY_SIZE(pll_clk_drift_controls));
 
 	return 0;
 }

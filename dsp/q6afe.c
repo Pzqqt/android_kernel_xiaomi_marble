@@ -184,6 +184,43 @@ struct afe_ctl {
 	uint32_t v_vali_flag;
 };
 
+struct afe_clkinfo_per_port {
+	u16 port_id; /* AFE port ID */
+	uint32_t clk_id; /* Clock ID */
+};
+
+struct afe_clkinfo_per_port clkinfo_per_port[] = {
+	{ AFE_PORT_ID_PRIMARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
+	{ AFE_PORT_ID_SECONDARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_SEC_MI2S_IBIT},
+	{ AFE_PORT_ID_TERTIARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_TER_MI2S_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_QUAD_MI2S_IBIT},
+	{ AFE_PORT_ID_QUINARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_QUI_MI2S_IBIT},
+	{ AFE_PORT_ID_SENARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_SEN_MI2S_IBIT},
+	{ AFE_PORT_ID_PRIMARY_PCM_RX, Q6AFE_LPASS_CLK_ID_PRI_PCM_IBIT},
+	{ AFE_PORT_ID_SECONDARY_PCM_RX, Q6AFE_LPASS_CLK_ID_SEC_PCM_IBIT},
+	{ AFE_PORT_ID_TERTIARY_PCM_RX, Q6AFE_LPASS_CLK_ID_TER_PCM_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_PCM_RX, Q6AFE_LPASS_CLK_ID_QUAD_PCM_IBIT},
+	{ AFE_PORT_ID_QUINARY_PCM_RX, Q6AFE_LPASS_CLK_ID_QUIN_PCM_IBIT},
+	{ AFE_PORT_ID_SENARY_PCM_RX, Q6AFE_LPASS_CLK_ID_SEN_PCM_IBIT},
+	{ AFE_PORT_ID_PRIMARY_TDM_RX, Q6AFE_LPASS_CLK_ID_PRI_TDM_IBIT},
+	{ AFE_PORT_ID_SECONDARY_TDM_RX, Q6AFE_LPASS_CLK_ID_SEC_TDM_IBIT},
+	{ AFE_PORT_ID_TERTIARY_TDM_RX, Q6AFE_LPASS_CLK_ID_TER_TDM_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_TDM_RX, Q6AFE_LPASS_CLK_ID_QUAD_TDM_IBIT},
+	{ AFE_PORT_ID_QUINARY_TDM_RX, Q6AFE_LPASS_CLK_ID_QUIN_TDM_IBIT},
+	{ AFE_PORT_ID_PRIMARY_SPDIF_RX,
+		AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_CORE},
+	{ AFE_PORT_ID_PRIMARY_SPDIF_TX,
+		AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_INPUT_CORE},
+	{ AFE_PORT_ID_SECONDARY_SPDIF_RX,
+		AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_CORE},
+	{ AFE_PORT_ID_SECONDARY_SPDIF_TX,
+		AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_INPUT_CORE},
+	{ AFE_PORT_ID_PRIMARY_META_MI2S_RX,
+		Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
+	{ AFE_PORT_ID_SECONDARY_META_MI2S_RX,
+		Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
+};
+
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
 static unsigned long afe_configured_cmd;
 
@@ -8307,6 +8344,156 @@ int afe_set_lpass_clock(u16 port_id, struct afe_clk_cfg *cfg)
 }
 EXPORT_SYMBOL(afe_set_lpass_clock);
 
+static int afe_get_port_idx(u16 port_id)
+{
+	u16 afe_port = 0;
+	int i = -EINVAL;
+
+	pr_debug("%s: port id 0x%x\n", __func__, port_id);
+
+	if ((port_id >= AFE_PORT_ID_TDM_PORT_RANGE_START) &&
+		(port_id <= AFE_PORT_ID_TDM_PORT_RANGE_END))
+		afe_port = port_id & 0xFFF0;
+	else if ((port_id == AFE_PORT_ID_PRIMARY_SPDIF_RX) ||
+		 (port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) ||
+		 (port_id == AFE_PORT_ID_SECONDARY_SPDIF_RX) ||
+		 (port_id == AFE_PORT_ID_SECONDARY_SPDIF_TX))
+		afe_port = port_id;
+	else
+		afe_port = port_id & 0xFFFE;
+
+	for (i = 0; i < ARRAY_SIZE(clkinfo_per_port); i++) {
+		if (afe_port == clkinfo_per_port[i].port_id) {
+			pr_debug("%s: idx 0x%x port id 0x%x\n", __func__,
+				  i, afe_port);
+			return i;
+		}
+	}
+
+	pr_debug("%s: cannot get idx for port id 0x%x\n", __func__,
+		afe_port);
+
+	return -EINVAL;
+}
+
+static int afe_get_clk_id(u16 port_id)
+{
+	u16 afe_port = 0;
+	uint32_t clk_id = -EINVAL;
+	int idx = 0;
+
+	idx = afe_get_port_idx(port_id);
+	if (idx < 0) {
+		pr_err("%s: cannot get clock id for port id 0x%x\n", __func__,
+			afe_port);
+		return -EINVAL;
+	}
+
+	clk_id = clkinfo_per_port[idx].clk_id;
+	pr_debug("%s: clk id 0x%x port id 0x%x\n", __func__, clk_id,
+		  afe_port);
+
+	return clk_id;
+}
+
+/**
+ * afe_set_clk_id - Update clock id for AFE port
+ *
+ * @port_id: AFE port id
+ * @clk_id: CLock ID
+ *
+ * Returns 0 on success, appropriate error code otherwise
+ */
+int afe_set_clk_id(u16 port_id, uint32_t clk_id)
+{
+	u16 afe_port = 0;
+	int idx = 0;
+
+	idx = afe_get_port_idx(port_id);
+	if (idx < 0) {
+		pr_debug("%s: cannot set clock id for port id 0x%x\n", __func__,
+			afe_port);
+		return -EINVAL;
+	}
+
+	clkinfo_per_port[idx].clk_id = clk_id;
+	pr_debug("%s: updated clk id 0x%x port id 0x%x\n", __func__,
+		  clkinfo_per_port[idx].clk_id, afe_port);
+
+	return 0;
+}
+EXPORT_SYMBOL(afe_set_clk_id);
+
+/**
+ * afe_set_pll_clk_drift - Set audio interface PLL clock drift
+ *
+ * @port_id: AFE port id
+ * @set_clk_drift: clk drift to adjust PLL
+ * @clk_reset: reset Interface clock to original value
+ *
+ * Returns 0 on success, appropriate error code otherwise
+ */
+int afe_set_pll_clk_drift(u16 port_id, int32_t set_clk_drift,
+			  uint32_t clk_reset)
+{
+	struct afe_set_clk_drift clk_drift;
+	struct param_hdr_v3 param_hdr;
+	uint32_t clk_id;
+	int index = 0, ret = 0;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	memset(&clk_drift, 0, sizeof(clk_drift));
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: index[%d] invalid!\n", __func__, index);
+		return -EINVAL;
+	}
+
+	ret = afe_q6_interface_prepare();
+	if (ret != 0) {
+		pr_err_ratelimited("%s: Q6 interface prepare failed %d\n",
+				    __func__, ret);
+		return ret;
+	}
+
+	clk_id = afe_get_clk_id(port_id);
+	if (clk_id < 0) {
+		pr_err("%s: cannot get clk id for port id 0x%x\n",
+			__func__, port_id);
+		return -EINVAL;
+	}
+
+	if (clk_id & 0x01) {
+		pr_err("%s: cannot adjust clock drift for external clock id 0x%x\n",
+			__func__, clk_id);
+		return -EINVAL;
+	}
+
+	clk_drift.clk_drift = set_clk_drift;
+	clk_drift.clk_reset = clk_reset;
+	clk_drift.clk_id = clk_id;
+	pr_debug("%s: clk id = 0x%x clk drift  = %d clk reset = %d port id 0x%x\n",
+		  __func__, clk_drift.clk_id, clk_drift.clk_drift,
+		 clk_drift.clk_reset, port_id);
+
+	mutex_lock(&this_afe.afe_clk_lock);
+	param_hdr.module_id = AFE_MODULE_CLOCK_SET;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_CLOCK_ADJUST;
+	param_hdr.param_size = sizeof(struct afe_set_clk_drift);
+
+	ret = q6afe_svc_pack_and_set_param_in_band(index, param_hdr,
+						   (u8 *) &clk_drift);
+	if (ret < 0)
+		pr_err_ratelimited("%s: AFE PLL clk drift failed with ret %d\n",
+				    __func__, ret);
+
+	mutex_unlock(&this_afe.afe_clk_lock);
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_pll_clk_drift);
+
 /**
  * afe_set_lpass_clk_cfg - Set AFE clk config
  *
@@ -8392,6 +8579,10 @@ int afe_set_lpass_clock_v2(u16 port_id, struct afe_clk_set *cfg)
 			__func__, ret);
 		return -EINVAL;
 	}
+
+	ret = afe_set_clk_id(port_id, cfg->clk_id);
+	if (ret < 0)
+		pr_debug("%s: afe_set_clk_id fail %d\n", __func__, ret);
 
 	ret = afe_set_lpass_clk_cfg(index, cfg);
 	if (ret)
