@@ -2235,7 +2235,7 @@ static void swrm_device_wakeup_unvote(struct swr_master *mstr)
 
 static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 {
-	int ret = 0;
+	int ret = 0, i = 0;
 	u32 val;
 	u8 row_ctrl = SWR_ROW_50;
 	u8 col_ctrl = SWR_MIN_COL;
@@ -2246,6 +2246,18 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	u32 temp = 0;
 	int len = 0;
 
+	/* SW workaround to gate hw_ctl for SWR version >=1.6 */
+	if (swrm->version >= SWRM_VERSION_1_6) {
+		if (swrm->swrm_hctl_reg) {
+			temp = ioread32(swrm->swrm_hctl_reg);
+			temp &= 0xFFFFFFFD;
+			iowrite32(temp, swrm->swrm_hctl_reg);
+			usleep_range(500, 505);
+			temp = ioread32(swrm->swrm_hctl_reg);
+			dev_dbg(swrm->dev, "%s: hctl_reg val: 0x%x\n",
+				__func__, temp);
+		}
+	}
 	ssp_period = swrm_get_ssp_period(swrm, SWRM_ROW_50,
 					SWRM_COL_02, SWRM_FRAME_SYNC_SEL);
 	dev_dbg(swrm->dev, "%s: ssp_period: %d\n", __func__, ssp_period);
@@ -2301,6 +2313,13 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 		dev_err(swrm->dev,
 			"%s: swr link failed to connect\n",
 			__func__);
+		for (i = 0; i < len; i++) {
+			usleep_range(50, 55);
+			dev_err(swrm->dev,
+				"%s:reg:0x%x val:0x%x\n",
+				__func__,
+				reg[i], swr_master_read(swrm, reg[i]));
+		}
 		return -EINVAL;
 	}
 
@@ -2310,14 +2329,6 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 				(swr_master_read(swrm,
 					SWRM_CMD_FIFO_CFG) | 0x80000000));
 
-	/* SW workaround to gate hw_ctl for SWR version >=1.6 */
-	if (swrm->version >= SWRM_VERSION_1_6) {
-		if (swrm->swrm_hctl_reg) {
-			temp = ioread32(swrm->swrm_hctl_reg);
-			temp &= 0xFFFFFFFD;
-			iowrite32(temp, swrm->swrm_hctl_reg);
-		}
-	}
 	return ret;
 }
 
@@ -2657,6 +2668,7 @@ static int swrm_probe(struct platform_device *pdev)
 			"%s: Error in master Initialization , err %d\n",
 			__func__, ret);
 		mutex_unlock(&swrm->mlock);
+		ret = -EPROBE_DEFER;
 		goto err_mstr_init_fail;
 	}
 
@@ -2705,11 +2717,17 @@ err_irq_wakeup_fail:
 err_mstr_init_fail:
 	swr_unregister_master(&swrm->master);
 err_mstr_fail:
-	if (swrm->reg_irq)
+	if (swrm->reg_irq) {
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
 				swrm, SWR_IRQ_FREE);
-	else if (swrm->irq)
+	} else if (swrm->irq) {
 		free_irq(swrm->irq, swrm);
+		irqd_set_trigger_type(
+			irq_get_irq_data(swrm->irq),
+			IRQ_TYPE_NONE);
+	}
+	if (swrm->swr_irq_wakeup_capable)
+		irq_set_irq_wake(swrm->irq, 0);
 err_irq_fail:
 	mutex_destroy(&swrm->irq_lock);
 	mutex_destroy(&swrm->mlock);
@@ -2729,13 +2747,17 @@ static int swrm_remove(struct platform_device *pdev)
 {
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 
-	if (swrm->reg_irq)
+	if (swrm->reg_irq) {
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
 				swrm, SWR_IRQ_FREE);
-	else if (swrm->irq)
+	} else if (swrm->irq) {
 		free_irq(swrm->irq, swrm);
-	else if (swrm->wake_irq > 0)
+		irqd_set_trigger_type(
+			irq_get_irq_data(swrm->irq),
+			IRQ_TYPE_NONE);
+	} else if (swrm->wake_irq > 0) {
 		free_irq(swrm->wake_irq, swrm);
+	}
 	if (swrm->swr_irq_wakeup_capable)
 		irq_set_irq_wake(swrm->irq, 0);
 	cancel_work_sync(&swrm->wakeup_work);
