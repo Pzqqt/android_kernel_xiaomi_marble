@@ -6177,6 +6177,36 @@ err:
 	return ret;
 }
 
+static int msm_mi2s_snd_hw_free(struct snd_pcm_substream *substream)
+{
+	int i, data_format = 0;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	int index = rtd->cpu_dai->id;
+	struct snd_soc_card *card = rtd->card;
+	struct snd_soc_component *component;
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		data_format = mi2s_rx_cfg[index].data_format;
+	else
+		data_format = mi2s_tx_cfg[index].data_format;
+
+	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
+		 substream->name, substream->stream);
+
+	/* Call csra mute function if data format is DSD, else return */
+	if (data_format != AFE_DSD_DATA)
+		return 0;
+
+	for (i = 0; i < card->num_aux_devs; i++) {
+		component =
+			soc_find_component(card->aux_dev[i].codec_of_node,
+					NULL);
+		csra66x0_hw_free_mute(component);
+	}
+
+	return 0;
+}
+
 static void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 {
 	int ret;
@@ -6504,6 +6534,7 @@ static void msm_spdif_snd_shutdown(struct snd_pcm_substream *substream)
 
 static struct snd_soc_ops msm_mi2s_be_ops = {
 	.startup = msm_mi2s_snd_startup,
+	.hw_free = msm_mi2s_snd_hw_free,
 	.shutdown = msm_mi2s_snd_shutdown,
 };
 
