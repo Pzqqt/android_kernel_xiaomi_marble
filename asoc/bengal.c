@@ -4259,6 +4259,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm;
 	struct snd_card *card;
 	struct snd_info_entry *entry;
+	struct platform_device *pdev = NULL;
+	int i = 0;
+	char *data = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
 
@@ -4305,8 +4308,38 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
-		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
-				    sm_port_map);
+	for (i = 0; i < rtd->card->num_aux_devs; i++)
+	{
+		if (msm_aux_dev[i].name != NULL ) {
+			if (strstr(msm_aux_dev[i].name, "wsa"))
+				continue;
+		}
+
+		if (msm_aux_dev[i].codec_of_node) {
+			pdev = of_find_device_by_node(
+					msm_aux_dev[i].codec_of_node);
+
+			if (pdev)
+				data = (char*) of_device_get_match_data(
+								&pdev->dev);
+			if (data != NULL) {
+				if (!strncmp(data, "wcd937x",
+						sizeof("wcd937x"))) {
+					bolero_set_port_map(component,
+						ARRAY_SIZE(sm_port_map),
+						sm_port_map);
+					break;
+				} else if (!strncmp( data, "rouleur",
+							sizeof("rouleur"))) {
+					bolero_set_port_map(component,
+						ARRAY_SIZE(sm_port_map_rouleur),
+						sm_port_map_rouleur);
+					break;
+				}
+			}
+		}
+	}
+
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
 		entry = snd_info_create_subdir(card->module, "codecs",
