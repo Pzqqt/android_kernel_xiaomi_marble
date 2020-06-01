@@ -18,7 +18,6 @@
 #include <sound/initval.h>
 #include <sound/control.h>
 #include <sound/tlv.h>
-#include <sound/asound.h>
 #include <sound/pcm_params.h>
 #include <sound/hwdep.h>
 #include <audio/sound/audio_effects.h>
