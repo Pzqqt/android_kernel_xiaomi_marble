@@ -186,12 +186,6 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
-				&ch_mask, &port_type);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		swr_slvdev_datapath_control(swr_hap->swr_slave,
-				swr_hap->swr_slave->dev_num, false);
 		/* stop SWR play */
 		val = 0;
 		rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
@@ -200,6 +194,12 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					__func__, rc);
 			return rc;
 		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
+				&ch_mask, &port_type);
+		swr_slvdev_datapath_control(swr_hap->swr_slave,
+				swr_hap->swr_slave->dev_num, false);
 		swr_device_wakeup_unvote(swr_hap->swr_slave);
 		break;
 	default:
