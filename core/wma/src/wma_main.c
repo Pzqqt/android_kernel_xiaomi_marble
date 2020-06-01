@@ -103,6 +103,7 @@
 #include "wlan_policy_mgr_i.h"
 #include "target_if_psoc_timer_tx_ops.h"
 #include <ftm_time_sync_ucfg_api.h>
+#include "wlan_ipa_ucfg_api.h"
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -234,7 +235,7 @@ static void wma_set_ipa_disable_config(
 static void wma_set_ipa_disable_config(
 					target_resource_config *tgt_cfg)
 {
-	tgt_cfg->ipa_disable = false;
+	tgt_cfg->ipa_disable = ucfg_ipa_is_enabled() ? false : true;
 }
 #endif
 
