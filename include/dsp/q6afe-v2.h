@@ -403,6 +403,11 @@ int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
 		      struct afe_enc_config *enc_config,
 		      struct afe_dec_config *dec_config);
+int afe_port_start_v3(u16 port_id, union afe_port_config *afe_config,
+		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
+		      struct afe_enc_config *enc_config,
+		      struct afe_dec_config *dec_config,
+		      struct afe_ttp_config *ttp_config);
 int afe_spk_prot_feed_back_cfg(int src_port, int dst_port,
 	int l_ch, int r_ch, u32 enable);
 int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib);

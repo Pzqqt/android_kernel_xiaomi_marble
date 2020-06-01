@@ -4734,6 +4734,56 @@ struct afe_enc_config {
 	union afe_enc_config_data data;
 };
 
+/*
+ * Enable TTP generator in AFE.
+ */
+#define AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE         0x000132EF
+/*
+ * Configure TTP generator params in AFE.
+ */
+#define AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG           0x000132F0
+#define MAX_TTP_OFFSET_PAIRS  4
+struct afe_ttp_gen_enable_t {
+	uint16_t enable;
+	uint16_t reserved;
+} __packed;
+
+struct afe_ttp_ssrc_offset_pair_t {
+	uint32_t ssrc;
+	uint32_t offset;
+} __packed;
+
+struct afe_ttp_gen_cfg_t {
+	uint32_t ttp_offset_default;
+	/*
+	 * TTP offset uses for all other cases
+	 * where no valid SSRC is received.
+	 */
+	uint32_t settling_time;
+	/*
+	 * If settling_mode==0x00: time in [us]
+	 * after first received packet until
+	 * packets are no longer dropped.
+	 */
+	uint16_t settling_mode;
+	/*
+	 * 0x00(Drop), 0x01(Settle)
+	 */
+	uint16_t num_ssrc_offsets;
+	/*
+	 * Number of SSRC/TTPOFFSET pairs to follow
+	 */
+	struct afe_ttp_ssrc_offset_pair_t ssrc_ttp_offset[MAX_TTP_OFFSET_PAIRS];
+	/*
+	 * Array of ssrc/offset pairs
+	 */
+} __packed;
+
+struct afe_ttp_config {
+	struct afe_ttp_gen_enable_t ttp_gen_enable;
+	struct afe_ttp_gen_cfg_t ttp_gen_cfg;
+};
+
 union afe_dec_config_data {
 	struct asm_sbc_dec_cfg_t sbc_config;
 	struct asm_aac_dec_cfg_v2_t aac_config;

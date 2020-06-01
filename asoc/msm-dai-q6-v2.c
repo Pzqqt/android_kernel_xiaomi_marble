@@ -232,6 +232,7 @@ struct msm_dai_q6_dai_data {
 	u16 afe_tx_out_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
+	struct afe_ttp_config ttp_config;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
 	u32 xt_logging_disable;
@@ -2230,6 +2231,7 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 {
 	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
 	int rc = 0;
+	uint16_t ttp_gen_enable = dai_data->ttp_config.ttp_gen_enable.enable;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
 		if (dai_data->enc_config.format != ENC_FMT_NONE) {
@@ -2279,13 +2281,27 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 				bitwidth = 0;
 				break;
 			}
-			pr_debug("%s: calling AFE_PORT_START_V2 with dec format: %d\n",
-				 __func__, dai_data->dec_config.format);
-			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
-					       dai_data->rate,
-					       dai_data->afe_tx_out_channels,
-					       bitwidth,
-					       NULL, &dai_data->dec_config);
+
+			if (ttp_gen_enable == true) {
+				pr_debug("%s: calling AFE_PORT_START_V3 with dec format: %d\n",
+					 __func__, dai_data->dec_config.format);
+				rc = afe_port_start_v3(dai->id,
+						&dai_data->port_config,
+						dai_data->rate,
+						dai_data->afe_tx_out_channels,
+						bitwidth,
+						NULL, &dai_data->dec_config,
+						&dai_data->ttp_config);
+			} else {
+				pr_debug("%s: calling AFE_PORT_START_V2 with dec format: %d\n",
+					 __func__, dai_data->dec_config.format);
+				rc = afe_port_start_v2(dai->id,
+						&dai_data->port_config,
+						dai_data->rate,
+						dai_data->afe_tx_out_channels,
+						bitwidth,
+						NULL, &dai_data->dec_config);
+			}
 			if (rc < 0) {
 				pr_err("%s: fail to open AFE port 0x%x\n",
 					__func__, dai->id);
@@ -3670,6 +3686,91 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 	return ret;
 }
 
+static int  msm_dai_q6_afe_enable_ttp_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct afe_ttp_gen_enable_t);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_enable_ttp_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(ucontrol->value.bytes.data,
+	       &dai_data->ttp_config.ttp_gen_enable,
+	       sizeof(struct afe_ttp_gen_enable_t));
+	return 0;
+}
+
+static int msm_dai_q6_afe_enable_ttp_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(&dai_data->ttp_config.ttp_gen_enable,
+		ucontrol->value.bytes.data,
+		sizeof(struct afe_ttp_gen_enable_t));
+	return 0;
+}
+
+static int  msm_dai_q6_afe_ttp_cfg_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct afe_ttp_gen_cfg_t);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_ttp_cfg_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(ucontrol->value.bytes.data,
+	       &dai_data->ttp_config.ttp_gen_cfg,
+	       sizeof(struct afe_ttp_gen_cfg_t));
+	return 0;
+}
+
+static int msm_dai_q6_afe_ttp_cfg_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s: Received ttp config\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(&dai_data->ttp_config.ttp_gen_cfg,
+		ucontrol->value.bytes.data, sizeof(struct afe_ttp_gen_cfg_t));
+	return 0;
+}
+
 static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 	{
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
@@ -3695,6 +3796,27 @@ static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 	SOC_ENUM_EXT("AFE Output Bit Format", afe_bit_format_enum[0],
 		     msm_dai_q6_afe_output_bit_format_get,
 		     msm_dai_q6_afe_output_bit_format_put),
+};
+
+static const struct snd_kcontrol_new afe_ttp_config_controls[] = {
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "TTP Enable",
+		.info = msm_dai_q6_afe_enable_ttp_info,
+		.get = msm_dai_q6_afe_enable_ttp_get,
+		.put = msm_dai_q6_afe_enable_ttp_put,
+	},
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "AFE TTP config",
+		.info = msm_dai_q6_afe_ttp_cfg_info,
+		.get = msm_dai_q6_afe_ttp_cfg_get,
+		.put = msm_dai_q6_afe_ttp_cfg_put,
+	},
 };
 
 static int msm_dai_q6_slim_rx_drift_info(struct snd_kcontrol *kcontrol,
@@ -3919,6 +4041,12 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 				 dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_dec_config_controls[3],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_ttp_config_controls[0],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_ttp_config_controls[1],
 				 dai_data));
 		break;
 	case RT_PROXY_DAI_001_RX:

@@ -4366,6 +4366,51 @@ exit:
 	return ret;
 }
 
+static int q6afe_send_ttp_config(u16 port_id,
+			union afe_port_config afe_config,
+			struct afe_ttp_config *ttp_cfg)
+{
+	struct afe_ttp_gen_enable_t ttp_gen_enable;
+	struct afe_ttp_gen_cfg_t ttp_gen_cfg;
+	struct param_hdr_v3 param_hdr;
+	int ret;
+
+	memset(&ttp_gen_enable, 0, sizeof(ttp_gen_enable));
+	memset(&ttp_gen_cfg, 0, sizeof(ttp_gen_cfg));
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AFE_MODULE_ID_DECODER;
+	param_hdr.instance_id = INSTANCE_ID_0;
+
+	pr_debug("%s: Enable TTP generator\n", __func__);
+	ttp_gen_enable = ttp_cfg->ttp_gen_enable;
+	param_hdr.param_id = AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE;
+	param_hdr.param_size = sizeof(struct afe_ttp_gen_enable_t);
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr,
+					       (u8 *) &ttp_gen_enable);
+	if (ret) {
+		pr_err("%s: AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		goto exit;
+	}
+
+	pr_debug("%s: sending TTP generator config\n", __func__);
+	ttp_gen_cfg = ttp_cfg->ttp_gen_cfg;
+	param_hdr.param_id = AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG;
+	param_hdr.param_size = sizeof(struct afe_ttp_gen_cfg_t);
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr,
+					       (u8 *) &ttp_gen_cfg);
+	if (ret)
+		pr_err("%s: AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+exit:
+	return ret;
+}
+
 static int q6afe_send_dec_config(u16 port_id,
 			union afe_port_config afe_config,
 			struct afe_dec_config *cfg,
@@ -5036,7 +5081,8 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 			    u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
 			    union afe_enc_config_data *enc_cfg,
 			    u32 codec_format, u32 scrambler_mode, u32 mono_mode,
-			    struct afe_dec_config *dec_cfg)
+			    struct afe_dec_config *dec_cfg,
+			    struct afe_ttp_config *ttp_cfg)
 {
 	union afe_port_config port_cfg;
 	struct param_hdr_v3 param_hdr;
@@ -5369,6 +5415,15 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 				goto fail_cmd;
 			}
 		}
+		if (ttp_cfg != NULL) {
+			ret = q6afe_send_ttp_config(port_id, *afe_config,
+						    ttp_cfg);
+			if (ret) {
+				pr_err("%s: AFE TTP config for port 0x%x failed %d\n",
+					 __func__, port_id, ret);
+				goto fail_cmd;
+			}
+		}
 	}
 
 	port_index = afe_get_port_index(port_id);
@@ -5415,8 +5470,8 @@ fail_cmd:
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		   u32 rate)
 {
-	return __afe_port_start(port_id, afe_config, rate,
-				0, 0, NULL, ASM_MEDIA_FMT_NONE, 0, 0, NULL);
+	return __afe_port_start(port_id, afe_config, rate, 0, 0, NULL,
+				ASM_MEDIA_FMT_NONE, 0, 0, NULL, NULL);
 }
 EXPORT_SYMBOL(afe_port_start);
 
@@ -5446,15 +5501,49 @@ int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 					afe_in_channels, afe_in_bit_width,
 					&enc_cfg->data, enc_cfg->format,
 					enc_cfg->scrambler_mode,
-					enc_cfg->mono_mode, dec_cfg);
+					enc_cfg->mono_mode, dec_cfg, NULL);
 	else if (dec_cfg != NULL)
 		ret = __afe_port_start(port_id, afe_config, rate,
 					afe_in_channels, afe_in_bit_width,
-					NULL, dec_cfg->format, 0, 0, dec_cfg);
+					NULL, dec_cfg->format, 0, 0,
+					dec_cfg, NULL);
 
 	return ret;
 }
 EXPORT_SYMBOL(afe_port_start_v2);
+
+/**
+ * afe_port_start_v3 - to configure AFE session with
+ * specified port configuration and encoder /decoder params
+ *
+ * @port_id: AFE port id number
+ * @afe_config: port configuration
+ * @rate: sampling rate of port
+ * @enc_cfg: AFE enc configuration information to setup encoder
+ * @afe_in_channels: AFE input channel configuration, this needs
+ *  update only if input channel is differ from AFE output
+ * @dec_cfg: AFE dec configuration information to set up decoder
+ * @ttp_cfg: TTP generator configuration to enable TTP in AFE
+ *
+ * Returns 0 on success or error value on port start failure.
+ */
+int afe_port_start_v3(u16 port_id, union afe_port_config *afe_config,
+		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
+		      struct afe_enc_config *enc_cfg,
+		      struct afe_dec_config *dec_cfg,
+		      struct afe_ttp_config *ttp_cfg)
+{
+	int ret = 0;
+
+	if (dec_cfg != NULL && ttp_cfg != NULL)
+		ret = __afe_port_start(port_id, afe_config, rate,
+				       afe_in_channels, afe_in_bit_width,
+				       NULL, dec_cfg->format, 0, 0,
+				       dec_cfg, ttp_cfg);
+
+	return ret;
+}
+EXPORT_SYMBOL(afe_port_start_v3);
 
 int afe_get_port_index(u16 port_id)
 {
