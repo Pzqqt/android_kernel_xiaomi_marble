@@ -84,7 +84,7 @@ const struct nla_policy vendor_attr_policy[
 						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR] = {
-						.type = NLA_UNSPEC,
+						.type = NLA_BINARY,
 						.len = QDF_MAC_ADDR_SIZE
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_SECURITY] = {
@@ -156,7 +156,7 @@ const struct nla_policy vendor_attr_policy[
 						.len = sizeof(uint32_t)
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_IPV6_ADDR] = {
-						.type = NLA_UNSPEC,
+						.type = NLA_BINARY,
 						.len = QDF_IPV6_ADDR_SIZE
 	},
 	[QCA_WLAN_VENDOR_ATTR_NDP_TRANSPORT_PORT] = {
