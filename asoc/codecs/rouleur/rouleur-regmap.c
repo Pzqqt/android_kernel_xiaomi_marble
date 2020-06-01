@@ -45,6 +45,8 @@ static const struct reg_default rouleur_defaults[] = {
 	{ ROULEUR_ANA_HPHPA_CNP_CTL_2,            0x2B },
 	{ ROULEUR_ANA_HPHPA_PA_STATUS,            0x00 },
 	{ ROULEUR_ANA_HPHPA_FSM_CLK,              0x12 },
+	{ ROULEUR_ANA_HPHPA_L_GAIN,               0x00 },
+	{ ROULEUR_ANA_HPHPA_R_GAIN,               0x00 },
 	{ ROULEUR_SWR_HPHPA_HD2,                  0x1B },
 	{ ROULEUR_ANA_HPHPA_SPARE_CTL,            0x02 },
 	{ ROULEUR_ANA_SURGE_EN,                   0x38 },
