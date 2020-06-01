@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/gpio.h>
@@ -16,6 +16,7 @@
 #include <linux/clk.h>
 #include <linux/bitops.h>
 #include <soc/snd_event.h>
+#include <dsp/digital-cdc-rsc-mgr.h>
 #include <linux/pm_runtime.h>
 #include <dsp/audio_notifier.h>
 
@@ -469,6 +470,7 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 				   unsigned long opcode, void *ptr)
 {
 	static bool initial_boot = true;
+	struct lpi_gpio_state *state = dev_get_drvdata(lpi_dev);
 
 	pr_debug("%s: Service opcode 0x%lx\n", __func__, opcode);
 
@@ -484,6 +486,17 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 	case AUDIO_NOTIFIER_SERVICE_UP:
 		if (initial_boot)
 			initial_boot = false;
+
+		/* Reset HW votes after SSR */
+		if (!lpi_dev_up) {
+			if (state->lpass_core_hw_vote)
+				digital_cdc_rsc_mgr_hw_vote_reset(
+					state->lpass_core_hw_vote);
+			if (state->lpass_audio_hw_vote)
+				digital_cdc_rsc_mgr_hw_vote_reset(
+					state->lpass_audio_hw_vote);
+		}
+
 		lpi_dev_up = true;
 		snd_event_notify(lpi_dev, SND_EVENT_UP);
 		break;
@@ -870,7 +883,7 @@ int lpi_pinctrl_runtime_resume(struct device *dev)
 	}
 
 	mutex_lock(&state->core_hw_vote_lock);
-	ret = clk_prepare_enable(hw_vote);
+	ret = digital_cdc_rsc_mgr_hw_vote_enable(hw_vote);
 	if (ret < 0) {
 		pm_runtime_set_autosuspend_delay(dev,
 						 LPI_AUTO_SUSPEND_DELAY_ERROR);
@@ -906,7 +919,7 @@ int lpi_pinctrl_runtime_suspend(struct device *dev)
 
 	mutex_lock(&state->core_hw_vote_lock);
 	if (state->core_hw_vote_status) {
-		clk_disable_unprepare(hw_vote);
+		digital_cdc_rsc_mgr_hw_vote_disable(hw_vote);
 		state->core_hw_vote_status = false;
 	}
 	mutex_unlock(&state->core_hw_vote_lock);
