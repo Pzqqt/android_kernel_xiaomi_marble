@@ -155,7 +155,6 @@ struct sde_encoder_ops {
  *				done with frame processing
  * @crtc_frame_event_cb:	callback handler for frame event
  * @crtc_frame_event_cb_data:	callback handler private data
- * @vsync_event_timer:		vsync timer
  * @rsc_client:			rsc client pointer
  * @rsc_state_init:		boolean to indicate rsc config init
  * @disp_info:			local copy of msm_display_info struct
@@ -168,7 +167,6 @@ struct sde_encoder_ops {
  * @rc_state:			resource controller state
  * @delayed_off_work:		delayed worker to schedule disabling of
  *				clks and resources after IDLE_TIMEOUT time.
- * @vsync_event_work:		worker to handle vsync event for autorefresh
  * @input_event_work:		worker to handle input device touch events
  * @esd_trigger_work:		worker to handle esd trigger events
  * @input_handler:			handler for input device events
@@ -224,8 +222,6 @@ struct sde_encoder_virt {
 	void (*crtc_frame_event_cb)(void *data, u32 event);
 	struct sde_kms_frame_event_cb_data crtc_frame_event_cb_data;
 
-	struct timer_list vsync_event_timer;
-
 	struct sde_rsc_client *rsc_client;
 	bool rsc_state_init;
 	struct msm_display_info disp_info;
@@ -236,7 +232,6 @@ struct sde_encoder_virt {
 	struct mutex rc_lock;
 	enum sde_enc_rc_states rc_state;
 	struct kthread_delayed_work delayed_off_work;
-	struct kthread_work vsync_event_work;
 	struct kthread_work input_event_work;
 	struct kthread_work esd_trigger_work;
 	struct input_handler *input_handler;
