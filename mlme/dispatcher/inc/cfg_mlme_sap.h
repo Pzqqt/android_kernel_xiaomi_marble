@@ -221,7 +221,7 @@
  * gSapGetPeerInfo - Enable/Disable remote peer info query support
  * @Min: 0 - Disable remote peer info query support
  * @Max: 1 - Enable remote peer info query support
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable remote peer info query support
  *
@@ -231,7 +231,7 @@
  */
  #define CFG_SAP_GET_PEER_INFO CFG_INI_BOOL( \
 			"gSapGetPeerInfo", \
-			0, \
+			1, \
 			"sap get peer info")
 
 /*
