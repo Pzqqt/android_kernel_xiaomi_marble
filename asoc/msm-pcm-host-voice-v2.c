@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -1455,7 +1455,7 @@ static struct snd_soc_component_driver msm_soc_component = {
 static int msm_pcm_probe(struct platform_device *pdev)
 {
 
-	pr_info("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
+	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
 	return snd_soc_register_component(&pdev->dev, &msm_soc_component,
 					  NULL, 0);
 }
