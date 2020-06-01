@@ -23787,6 +23787,126 @@ static int wlan_hdd_cfg80211_get_channel(struct wiphy *wiphy,
 	return 0;
 }
 
+static bool hdd_check_bitmask_for_single_rate(enum nl80211_band band,
+				const struct cfg80211_bitrate_mask *mask)
+{
+	int num_rates = 0, i;
+
+	num_rates += qdf_get_hweight32(mask->control[band].legacy);
+
+	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].ht_mcs); i++)
+		num_rates += qdf_get_hweight8(mask->control[band].ht_mcs[i]);
+
+	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].vht_mcs); i++)
+		num_rates += qdf_get_hweight16(mask->control[band].vht_mcs[i]);
+
+	return num_rates ? true : false;
+}
+
+static int __wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
+						struct net_device *dev,
+						const u8 *peer,
+				       const struct cfg80211_bitrate_mask *mask)
+{
+	enum nl80211_band band;
+	int errno;
+	struct hdd_adapter *adapter = netdev_priv(dev);
+	uint8_t connected_band, nss, i;
+	int bit_rate = -1;
+	uint8_t rate_index;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam() ||
+	    QDF_GLOBAL_MONITOR_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in mode");
+		return -EINVAL;
+	}
+
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
+	connected_band = hdd_conn_get_connected_band(&adapter->session.station);
+
+	switch (connected_band) {
+	case BAND_2G:
+		band = NL80211_BAND_2GHZ;
+		break;
+	case BAND_5G:
+		band = NL80211_BAND_5GHZ;
+		break;
+	case BAND_ALL:
+	default:
+		hdd_debug("Invalid value of :%d", connected_band);
+		return -EINVAL;
+	}
+
+	/* Support configuring only one bitrate */
+	if (!hdd_check_bitmask_for_single_rate(band, mask)) {
+		hdd_err_rl("Multiple bitrate set not supported");
+		return -EINVAL;
+	}
+
+	if (!hweight32(mask->control[band].legacy)) {
+		hdd_err_rl("Legacy bit rate setting not supported");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].ht_mcs); i++) {
+		if (qdf_get_hweight8(mask->control[band].ht_mcs[i]) == 1) {
+			nss = i + 1;
+			rate_index = (ffs(mask->control[band].ht_mcs[i]) - 1);
+			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_HT,
+							  nss, rate_index);
+			goto configure_fw;
+		}
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(mask->control[band].vht_mcs); i++) {
+		if (qdf_get_hweight16(mask->control[band].vht_mcs[i]) == 1) {
+			nss = i + 1;
+			rate_index = (ffs(mask->control[band].vht_mcs[i]) - 1);
+			bit_rate = hdd_assemble_rate_code(WMI_RATE_PREAMBLE_VHT,
+							  nss, rate_index);
+			break;
+		}
+	}
+
+configure_fw:
+
+	if (bit_rate == -1)
+		return -EINVAL;
+
+	hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d", bit_rate);
+
+	errno = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_FIXED_RATE,
+				    bit_rate, VDEV_CMD);
+
+	if (errno)
+		hdd_err_rl("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+static int wlan_hdd_cfg80211_set_bitrate_mask(struct wiphy *wiphy,
+					      struct net_device *netdev,
+					      const u8 *peer,
+				       const struct cfg80211_bitrate_mask *mask)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(netdev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __wlan_hdd_cfg80211_set_bitrate_mask(wiphy, netdev, peer,
+						     mask);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
 /**
  * struct cfg80211_ops - cfg80211_ops
  *
@@ -23934,4 +24054,5 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.set_antenna = wlan_hdd_cfg80211_set_chainmask,
 	.get_antenna = wlan_hdd_cfg80211_get_chainmask,
 	.get_channel = wlan_hdd_cfg80211_get_channel,
+	.set_bitrate_mask = wlan_hdd_cfg80211_set_bitrate_mask,
 };
