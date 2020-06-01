@@ -182,6 +182,7 @@ struct afe_ctl {
 	/* FTM spk params */
 	uint32_t initial_cal;
 	uint32_t v_vali_flag;
+	uint32_t num_spkrs;
 };
 
 struct afe_clkinfo_per_port {
@@ -2158,6 +2159,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	struct afe_sp_v4_channel_v_vali_cfg *ch_v_vali_cfg = NULL;
 	struct afe_sp_v4_param_ex_vi_ftm_cfg *ex_vi_ftm_cfg = NULL;
 	struct afe_sp_v4_channel_ex_vi_ftm *ch_ex_vi_ftm_cfg = NULL;
+	uint32_t i = 0;
 
 	pr_debug("%s: Entry.. port_id %d\n", __func__, port_id);
 
@@ -2218,7 +2220,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 			v4_vi_op_mode->th_r0t0_selection_flag[SP_V2_SPKR_2] =
 							    USE_SAFE_R0TO;
 		}
-		afe_spk_config.v4_vi_op_mode.num_speakers = SP_V2_NUM_MAX_SPKRS;
+		afe_spk_config.v4_vi_op_mode.num_speakers = this_afe.num_spkrs;
 		if (afe_spk_prot_prepare(port_id, 0,
 			AFE_PARAM_ID_SP_V4_VI_OP_MODE_CFG,
 			&afe_spk_config,
@@ -2227,7 +2229,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 				__func__);
 
 		size = sizeof(struct afe_sp_v4_param_th_vi_r0t0_cfg) +
-		(SP_V2_NUM_MAX_SPKRS * sizeof(struct afe_sp_v4_channel_r0t0));
+		(this_afe.num_spkrs * sizeof(struct afe_sp_v4_channel_r0t0));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2241,15 +2243,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_r0t0_cfg =
 			(struct afe_sp_v4_channel_r0t0 *)(th_vi_r0t0_cfg + 1);
 
-		th_vi_r0t0_cfg->num_speakers = SP_V2_NUM_MAX_SPKRS;
-		ch_r0t0_cfg[SP_V2_SPKR_1].r0_cali_q24 =
-			(uint32_t) this_afe.prot_cfg.r0[SP_V2_SPKR_1];
-		ch_r0t0_cfg[SP_V2_SPKR_2].r0_cali_q24 =
-			(uint32_t) this_afe.prot_cfg.r0[SP_V2_SPKR_2];
-		ch_r0t0_cfg[SP_V2_SPKR_1].t0_cali_q6 =
-			(uint32_t) this_afe.prot_cfg.t0[SP_V2_SPKR_1];
-		ch_r0t0_cfg[SP_V2_SPKR_2].t0_cali_q6 =
-			(uint32_t) this_afe.prot_cfg.t0[SP_V2_SPKR_2];
+		th_vi_r0t0_cfg->num_speakers = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_r0t0_cfg[i].r0_cali_q24 =
+				(uint32_t) this_afe.prot_cfg.r0[i];
+			ch_r0t0_cfg[i].t0_cali_q6 =
+				(uint32_t) this_afe.prot_cfg.t0[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 			AFE_PARAM_ID_SP_V4_VI_R0T0_CFG,
 			(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2264,7 +2264,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	    (this_afe.vi_tx_port == port_id) &&
 	    (this_afe.prot_cfg.sp_version >= AFE_API_VERSION_V9)) {
 		size = sizeof(struct afe_sp_v4_param_th_vi_ftm_cfg) +
-		(SP_V2_NUM_MAX_SPKRS*sizeof(struct afe_sp_v4_channel_ftm_cfg));
+		(this_afe.num_spkrs * sizeof(struct afe_sp_v4_channel_ftm_cfg));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2277,16 +2277,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_ftm_cfg =
 			 (struct afe_sp_v4_channel_ftm_cfg *)(th_vi_ftm_cfg+1);
 
-		th_vi_ftm_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
-		ch_ftm_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.th_ftm_cfg.wait_time[SP_V2_SPKR_1];
-		ch_ftm_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.th_ftm_cfg.wait_time[SP_V2_SPKR_2];
-		ch_ftm_cfg[SP_V2_SPKR_1].ftm_time_ms =
-			this_afe.th_ftm_cfg.ftm_time[SP_V2_SPKR_1];
-		ch_ftm_cfg[SP_V2_SPKR_2].ftm_time_ms =
-			this_afe.th_ftm_cfg.ftm_time[SP_V2_SPKR_2];
-
+		th_vi_ftm_cfg->num_ch = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_ftm_cfg[i].wait_time_ms =
+				this_afe.th_ftm_cfg.wait_time[i];
+			ch_ftm_cfg[i].ftm_time_ms =
+				this_afe.th_ftm_cfg.ftm_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				AFE_PARAM_ID_SP_V4_TH_VI_FTM_CFG,
 				(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2298,8 +2295,8 @@ static void afe_send_cal_spv4_tx(int port_id)
 			MSM_SPKR_PROT_IN_V_VALI_MODE) &&
 		   (this_afe.vi_tx_port == port_id)) {
 		size = sizeof(struct afe_sp_v4_param_th_vi_v_vali_cfg) +
-			(SP_V2_NUM_MAX_SPKRS *
-			 sizeof(struct afe_sp_v4_channel_v_vali_cfg));
+			(this_afe.num_spkrs *
+			sizeof(struct afe_sp_v4_channel_v_vali_cfg));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2313,16 +2310,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_v_vali_cfg =
 		 (struct afe_sp_v4_channel_v_vali_cfg *)(th_vi_v_vali_cfg + 1);
 
-		th_vi_v_vali_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
-		ch_v_vali_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_1];
-		ch_v_vali_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_2];
-		ch_v_vali_cfg[SP_V2_SPKR_1].vali_time_ms =
-			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_1];
-		ch_v_vali_cfg[SP_V2_SPKR_2].vali_time_ms =
-			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_2];
-
+		th_vi_v_vali_cfg->num_ch = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_v_vali_cfg[i].wait_time_ms =
+				this_afe.v_vali_cfg.wait_time[i];
+			ch_v_vali_cfg[i].vali_time_ms =
+				this_afe.v_vali_cfg.vali_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				AFE_PARAM_ID_SP_V4_TH_VI_V_VALI_CFG,
 				(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2338,7 +2332,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	    (this_afe.vi_tx_port == port_id) &&
 	    (this_afe.prot_cfg.sp_version >= AFE_API_VERSION_V9)) {
 		size = sizeof(struct afe_sp_v4_param_ex_vi_ftm_cfg) +
-		(SP_V2_NUM_MAX_SPKRS *
+		(this_afe.num_spkrs *
 		 sizeof(struct afe_sp_v4_channel_ex_vi_ftm));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
@@ -2360,17 +2354,14 @@ static void afe_send_cal_spv4_tx(int port_id)
 				 sizeof(struct afe_sp_v4_param_ex_vi_mode_cfg)))
 			pr_info("%s: ex vi mode cfg failed\n", __func__);
 
-		ex_vi_ftm_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
+		ex_vi_ftm_cfg->num_ch = this_afe.num_spkrs;
 
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.ex_ftm_cfg.wait_time[SP_V2_SPKR_1];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.ex_ftm_cfg.wait_time[SP_V2_SPKR_2];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_1].ftm_time_ms =
-			this_afe.ex_ftm_cfg.ftm_time[SP_V2_SPKR_1];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_2].ftm_time_ms =
-			this_afe.ex_ftm_cfg.ftm_time[SP_V2_SPKR_2];
-
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_ex_vi_ftm_cfg[i].wait_time_ms =
+				this_afe.ex_ftm_cfg.wait_time[i];
+			ch_ex_vi_ftm_cfg[i].ftm_time_ms =
+				this_afe.ex_ftm_cfg.ftm_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				 AFE_PARAM_ID_SP_V4_EX_VI_FTM_CFG,
 				 (union afe_spkr_prot_config *)tmp_ptr, size))
@@ -8308,8 +8299,11 @@ int afe_close(int port_id)
 	 * even if ramp down configuration failed it is not serious enough to
 	 * warrant bailaing out.
 	 */
-	if (afe_spk_ramp_dn_cfg(port_id) < 0)
-		pr_err("%s: ramp down configuration failed\n", __func__);
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) < AFE_API_VERSION_V9) {
+		if (afe_spk_ramp_dn_cfg(port_id) < 0)
+			pr_err("%s: ramp down config failed\n", __func__);
+	}
 
 	stop.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
 				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
@@ -9451,6 +9445,7 @@ int afe_spk_prot_feed_back_cfg(int src_port, int dst_port,
 			this_afe.v4_ch_map_cfg.chan_info[index++] = 4;
 		}
 		this_afe.v4_ch_map_cfg.num_channels = index;
+		this_afe.num_spkrs = index / 2;
 		pr_debug("%s no of channels: %d\n", __func__, index);
 		this_afe.vi_tx_port = src_port;
 		this_afe.vi_rx_port = dst_port;
