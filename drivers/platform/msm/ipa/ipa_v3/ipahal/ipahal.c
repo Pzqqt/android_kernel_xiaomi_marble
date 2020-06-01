@@ -335,6 +335,33 @@ static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init(
 	return pyld;
 }
 
+static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_ip_packet_init_v_5_0(
+	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx)
+{
+	struct ipahal_imm_cmd_pyld *pyld;
+	struct ipa_imm_cmd_hw_ip_packet_init_v_5_0 *data;
+	struct ipahal_imm_cmd_ip_packet_init *pktinit_params =
+		(struct ipahal_imm_cmd_ip_packet_init *)params;
+
+	pyld = IPAHAL_MEM_ALLOC(sizeof(*pyld) + sizeof(*data), is_atomic_ctx);
+	if (unlikely(!pyld)) {
+		IPAHAL_ERR("kzalloc err\n");
+		return pyld;
+	}
+	pyld->opcode = ipahal_imm_cmd_get_opcode(cmd);
+	pyld->len = sizeof(*data);
+	data = (struct ipa_imm_cmd_hw_ip_packet_init_v_5_0 *)pyld->data;
+
+	if (unlikely(pktinit_params->destination_pipe_index & ~0xFF)) {
+		IPAHAL_ERR("Dst pipe idx is bigger than 8bit width 0x%x\n",
+			pktinit_params->destination_pipe_index);
+		WARN_ON(1);
+	}
+	data->destination_pipe_index = pktinit_params->destination_pipe_index;
+
+	return pyld;
+}
+
 static struct ipahal_imm_cmd_pyld *ipa_imm_cmd_construct_nat_dma(
 	enum ipahal_imm_cmd_name cmd, const void *params, bool is_atomic_ctx)
 {
@@ -706,7 +733,12 @@ static struct ipahal_imm_cmd_obj
 		19},
 	[IPA_HW_v4_0][IPA_IMM_CMD_IP_V6_CT_INIT] = {
 		ipa_imm_cmd_construct_ip_v6_ct_init,
-		23}
+		23},
+
+	/* IPAv5 */
+	[IPA_HW_v5_0][IPA_IMM_CMD_IP_PACKET_INIT] = {
+		ipa_imm_cmd_construct_ip_packet_init_v_5_0,
+		16},
 };
 
 /*

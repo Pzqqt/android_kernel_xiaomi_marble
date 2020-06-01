@@ -351,6 +351,21 @@ struct ipa_imm_cmd_hw_ip_packet_init {
 	u64 rsv1:59;
 };
 
+
+/*
+ * struct ipa_imm_cmd_hw_ip_packet_init_v_5_0 - IP_PACKET_INIT command payload
+ *  in H/W format for IPA v5_0.
+ * Configuration for specific IP pkt. Shall be called prior to an IP pkt
+ *  data. Pkt will not go through IP pkt processing.
+ * @destination_pipe_index: Destination pipe index  (in case routing
+ *  is enabled, this field will overwrite the rt  rule)
+ * @rsvd: reserved
+ */
+struct ipa_imm_cmd_hw_ip_packet_init_v_5_0 {
+    u64 destination_pipe_index : 8;
+    u64 rsv1 : 56;
+};
+
 /*
  * struct ipa_imm_cmd_hw_register_write - REGISTER_WRITE command payload
  *  in H/W format.
