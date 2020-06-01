@@ -836,6 +836,18 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 				BOLERO_MACRO_EVT_CLK_RESET, 0x0);
 	}
 	trace_printk("%s: clk count reset\n", __func__);
+
+	if (priv->rsc_clk_cb)
+		priv->rsc_clk_cb(priv->clk_dev, BOLERO_MACRO_EVT_SSR_GFMUX_UP);
+
+	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
+		if (!priv->macro_params[macro_idx].event_handler)
+			continue;
+		priv->macro_params[macro_idx].event_handler(
+			priv->component,
+			BOLERO_MACRO_EVT_PRE_SSR_UP, 0x0);
+	}
+
 	regcache_cache_only(priv->regmap, false);
 	mutex_lock(&priv->clk_lock);
 	priv->dev_up = true;
