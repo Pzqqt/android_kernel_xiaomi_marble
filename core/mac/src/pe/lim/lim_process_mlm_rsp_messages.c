@@ -1658,12 +1658,18 @@ lim_process_mlm_del_all_sta_rsp(struct vdev_mlme_obj *vdev_mlme,
 {
 	struct pe_session *session_entry;
 	tSirResultCodes status_code = eSIR_SME_SUCCESS;
-	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t vdev_id;
 
 	vdev = vdev_mlme->vdev;
 	vdev_id = wlan_vdev_get_id(vdev);
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 
