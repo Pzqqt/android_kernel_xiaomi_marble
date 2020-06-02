@@ -43,18 +43,16 @@
 
 const struct nla_policy subnet_detect_policy[
 			QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1] = {
-		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_GW_MAC_ADDR] = {
-				.type = NLA_BINARY,
-				.len = QDF_MAC_ADDR_SIZE
-		},
+		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_GW_MAC_ADDR] =
+				VENDOR_NLA_POLICY_MAC_ADDR,
 		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV4_ADDR] = {
-				.type = NLA_BINARY,
+				.type = NLA_EXACT_LEN,
 				.len = QDF_IPV4_ADDR_SIZE
 		},
 		[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV6_ADDR] = {
-				.type = NLA_BINARY,
+				.type = NLA_EXACT_LEN,
 				.len = QDF_IPV6_ADDR_SIZE
-		}
+		},
 };
 
 /**

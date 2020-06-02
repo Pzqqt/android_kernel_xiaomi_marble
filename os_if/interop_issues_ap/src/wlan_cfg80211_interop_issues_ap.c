@@ -42,9 +42,8 @@ interop_issues_ap_policy[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_LIST] = {
 						.type = NLA_U32,
 						.len = sizeof(uint32_t) },
-	[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID] = {
-						.type = NLA_BINARY,
-						.len = QDF_MAC_ADDR_SIZE },
+	[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID] =
+						VENDOR_NLA_POLICY_MAC_ADDR,
 };
 
 /**
