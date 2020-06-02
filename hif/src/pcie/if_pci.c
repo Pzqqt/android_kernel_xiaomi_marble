@@ -4054,8 +4054,10 @@ QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	HIF_TRACE("%s: con_mode = 0x%x, device_id = 0x%x",
+	/* Following print is used by various tools to identify
+	 * WLAN SOC (e.g. crash dump analysis and reporting tool).
+	 */
+	HIF_TRACE("%s: con_mode = 0x%x, WLAN_SOC_device_id = 0x%x",
 		  __func__, hif_get_conparam(ol_sc), id->device);
 
 	sc->pdev = pdev;
