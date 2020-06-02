@@ -2276,6 +2276,12 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		goto pdev_close;
 	}
 
+	status = ucfg_reg_set_band(hdd_ctx->pdev, band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to update regulatory band info");
+		goto pdev_close;
+	}
+
 	if (!cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_ctx->reg.reg_domain = cfg->reg_domain;
 		hdd_ctx->reg.eeprom_rd_ext = cfg->eeprom_rd_ext;
