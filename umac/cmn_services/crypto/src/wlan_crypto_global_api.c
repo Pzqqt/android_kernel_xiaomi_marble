@@ -3394,6 +3394,8 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 			cipher_table = (struct wlan_crypto_cipher *)
 							key->cipher_table;
 
+			if (!cipher_table)
+				continue;
 			if (cipher_table->cipher == WLAN_CRYPTO_CIPHER_WEP) {
 				tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
 				if (!tx_ops) {
@@ -4328,6 +4330,7 @@ QDF_STATUS wlan_crypto_save_key(struct wlan_objmgr_vdev *vdev,
 				key_index - WLAN_CRYPTO_MAXKEYIDX
 				- WLAN_CRYPTO_MAXIGTKKEYIDX;
 	}
+	crypto_key->valid = true;
 
 	return QDF_STATUS_SUCCESS;
 }
