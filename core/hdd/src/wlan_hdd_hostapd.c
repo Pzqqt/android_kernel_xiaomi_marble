@@ -1691,20 +1691,20 @@ hdd_hostapd_apply_action_oui(struct hdd_context *hdd_ctx,
 static void hdd_hostapd_set_sap_key(struct hdd_adapter *adapter)
 {
 	struct wlan_crypto_key *crypto_key;
+	uint8_t key_index;
 
-	crypto_key = wlan_crypto_get_key(adapter->vdev, 0);
-	if (!crypto_key) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-			  "Crypto KEY is NULL");
-		return;
+	for (key_index = 0; key_index < WLAN_CRYPTO_MAXKEYIDX; ++key_index) {
+		crypto_key = wlan_crypto_get_key(adapter->vdev, key_index);
+		if (!crypto_key) {
+			hdd_debug("Crypto KEY with key id %d is NULL",
+				  key_index);
+			continue;
+		}
+		ucfg_crypto_set_key_req(adapter->vdev, crypto_key,
+					WLAN_CRYPTO_KEY_TYPE_GROUP);
+		wma_update_set_key(adapter->vdev_id, false, key_index,
+				   crypto_key->cipher_type);
 	}
-	ucfg_crypto_set_key_req(adapter->vdev, crypto_key,
-				WLAN_CRYPTO_KEY_TYPE_UNICAST);
-	wma_update_set_key(adapter->vdev_id, true, 1, crypto_key->cipher_type);
-	ucfg_crypto_set_key_req(adapter->vdev, crypto_key,
-				WLAN_CRYPTO_KEY_TYPE_GROUP);
-
-	wma_update_set_key(adapter->vdev_id, true, 0, crypto_key->cipher_type);
 }
 
 /**
