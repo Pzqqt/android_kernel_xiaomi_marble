@@ -1501,6 +1501,48 @@ static void wlan_hdd_handle_ll_stats(struct hdd_adapter *adapter,
 	}
 }
 
+static void wlan_hdd_dealloc_ll_stats(void *priv)
+{
+	struct hdd_ll_stats_priv *ll_stats_priv = priv;
+	struct hdd_ll_stats *stats = NULL;
+	QDF_STATUS status;
+	qdf_list_node_t *ll_node;
+
+	if (!ll_stats_priv)
+		return;
+
+	qdf_spin_lock(&ll_stats_priv->ll_stats_lock);
+	status = qdf_list_remove_front(&ll_stats_priv->ll_stats_q, &ll_node);
+	qdf_spin_unlock(&ll_stats_priv->ll_stats_lock);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		stats =  qdf_container_of(ll_node, struct hdd_ll_stats,
+					  ll_stats_node);
+
+		if (stats->result_param_id == WMI_LINK_STATS_RADIO) {
+			struct wifi_radio_stats *radio_stat = stats->result;
+			int i;
+			int num_radio = stats->stats_nradio_npeer.no_of_radios;
+
+			for (i = 0; i < num_radio; i++) {
+				if (radio_stat->num_channels)
+					qdf_mem_free(radio_stat->channels);
+				if (radio_stat->total_num_tx_power_levels)
+					qdf_mem_free(radio_stat->
+						tx_time_per_power_level);
+				radio_stat++;
+			}
+		}
+
+		qdf_mem_free(stats->result);
+		qdf_mem_free(stats);
+		qdf_spin_lock(&ll_stats_priv->ll_stats_lock);
+		status = qdf_list_remove_front(&ll_stats_priv->ll_stats_q,
+					       &ll_node);
+		qdf_spin_unlock(&ll_stats_priv->ll_stats_lock);
+	}
+	qdf_list_destroy(&ll_stats_priv->ll_stats_q);
+}
+
 static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 				      tSirLLStatsGetReq *req)
 {
@@ -1515,6 +1557,7 @@ static int wlan_hdd_send_ll_stats_req(struct hdd_adapter *adapter,
 	static const struct osif_request_params params = {
 		.priv_size = sizeof(*priv),
 		.timeout_ms = WLAN_WAIT_TIME_LL_STATS,
+		.dealloc = wlan_hdd_dealloc_ll_stats,
 	};
 
 	hdd_enter();
