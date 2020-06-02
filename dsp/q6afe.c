@@ -126,7 +126,7 @@ struct afe_ctl {
 	void (*rx_cb)(uint32_t opcode,
 		uint32_t token, uint32_t *payload, void *priv);
 	void *tx_private_data;
-	void *rx_private_data;
+	void *rx_private_data[NUM_RX_PROXY_PORTS];
 	uint32_t mmap_handle;
 
 	void (*pri_spdif_tx_cb)(uint32_t opcode,
@@ -737,12 +737,14 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 					this_afe.tx_private_data);
 			this_afe.tx_cb = NULL;
 		}
-		if (this_afe.rx_cb) {
-			this_afe.rx_cb(data->opcode, data->token,
-					data->payload,
-					this_afe.rx_private_data);
-			this_afe.rx_cb = NULL;
+		for (i = 0; i < NUM_RX_PROXY_PORTS; i++) {
+			if (this_afe.rx_cb && this_afe.rx_private_data[i]) {
+				this_afe.rx_cb(data->opcode, data->token,
+						data->payload,
+						this_afe.rx_private_data[i]);
+			}
 		}
+		this_afe.rx_cb = NULL;
 
 		return 0;
 	}
@@ -863,7 +865,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 				port_id = RT_PROXY_PORT_001_TX;
 				break;
 			case AFE_PORT_DATA_CMD_RT_PROXY_PORT_READ_V2:
-				port_id = RT_PROXY_PORT_001_RX;
+				port_id = data->src_port;
 				break;
 			case AFE_CMD_ADD_TOPOLOGIES:
 				atomic_set(&this_afe.state, 0);
@@ -1011,7 +1013,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			if (this_afe.rx_cb) {
 				this_afe.rx_cb(data->opcode, data->token,
 					data->payload,
-					this_afe.rx_private_data);
+					this_afe.rx_private_data[PORTID_TO_IDX(port_id)]);
 			}
 			break;
 		}
@@ -7095,7 +7097,7 @@ int afe_register_get_events(u16 port_id,
 	} else if (port_id == RT_PROXY_PORT_001_RX ||
 			port_id == RT_PROXY_PORT_002_RX) {
 		this_afe.rx_cb = cb;
-		this_afe.rx_private_data = private_data;
+		this_afe.rx_private_data[PORTID_TO_IDX(port_id)] = private_data;
 	}
 
 	rtproxy.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
@@ -7128,6 +7130,7 @@ int afe_unregister_get_events(u16 port_id)
 	int ret = 0;
 	struct afe_service_cmd_unregister_rt_port_driver rtproxy;
 	int index = 0;
+	uint16_t i = 0;
 
 	pr_debug("%s:\n", __func__);
 
@@ -7181,8 +7184,13 @@ int afe_unregister_get_events(u16 port_id)
 		this_afe.tx_private_data = NULL;
 	} else if (port_id == RT_PROXY_PORT_001_RX ||
 			port_id == RT_PROXY_PORT_002_RX) {
-		this_afe.rx_cb = NULL;
-		this_afe.rx_private_data = NULL;
+		this_afe.rx_private_data[PORTID_TO_IDX(port_id)] = NULL;
+		for (i = 0; i < NUM_RX_PROXY_PORTS; i++) {
+			if (this_afe.rx_private_data[i] != NULL)
+				break;
+		}
+		if (i == NUM_RX_PROXY_PORTS)
+			this_afe.rx_cb = NULL;
 	}
 
 	ret = afe_apr_send_pkt(&rtproxy, &this_afe.wait[index]);
@@ -7281,7 +7289,7 @@ int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
 				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
 	afecmd_rd.hdr.pkt_size = sizeof(afecmd_rd);
 	afecmd_rd.hdr.src_port = 0;
-	afecmd_rd.hdr.dest_port = 0;
+	afecmd_rd.hdr.dest_port = port_id;
 	afecmd_rd.hdr.token = 0;
 	afecmd_rd.hdr.opcode = AFE_PORT_DATA_CMD_RT_PROXY_PORT_READ_V2;
 	afecmd_rd.port_id = port_id;
