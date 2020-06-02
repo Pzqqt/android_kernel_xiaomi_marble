@@ -17375,7 +17375,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
-	struct hdd_station_ctx *sta_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 	struct wlan_crypto_key *crypto_key;
 	int ret;
 	QDF_STATUS status;
@@ -17411,21 +17411,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		hdd_err("Invalid NULL key info");
 		return -EINVAL;
 	}
-	hdd_debug("unicast %d, cipher %d", unicast, crypto_key->cipher_type);
+	hdd_debug("unicast %d, multicast %d cipher %d",
+		  unicast, multicast, crypto_key->cipher_type);
 	if (!IS_WEP_CIPHER(crypto_key->cipher_type))
 		return 0;
-	sta_ctx =  WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (unicast)
-		status =
-		wlan_cfg80211_set_default_key(adapter->vdev, key_index,
-					      &sta_ctx->conn_info.bssid);
-	else
-		status = wlan_cfg80211_set_default_key(adapter->vdev, key_index,
-						       &bssid);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("ret fail status %d", ret);
-		return -EINVAL;
-	}
+
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		ret =
@@ -17435,6 +17425,18 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     key_index);
 		wma_update_set_key(adapter->vdev_id, unicast, key_index,
 				   crypto_key->cipher_type);
+	}
+
+	if (adapter->device_mode == QDF_SAP_MODE ||
+	    adapter->device_mode == QDF_P2P_GO_MODE) {
+		status = wlan_cfg80211_set_default_key(adapter->vdev, key_index,
+						       &bssid);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("ret fail status %d", ret);
+			return -EINVAL;
+		}
+		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+		ap_ctx->wep_def_key_idx = key_index;
 	}
 
 	return ret;
