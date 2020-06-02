@@ -153,6 +153,8 @@ struct iot_sim_context {
 	/* IOT_SIM Peer list & Bcast Peer */
 	struct iot_sim_rule_per_peer *iot_sim_peer_list, bcast_peer;
 	struct iot_sim_debugfs iot_sim_dbgfs_ctx;
+	void (*iot_sim_update_beacon_trigger)(mlme_pdev_ext_t *);
+	qdf_nbuf_t bcn_buf;
 };
 
 /* enum iot_sim_operations - iot sim operations

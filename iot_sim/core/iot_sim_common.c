@@ -22,6 +22,7 @@
 #include <qdf_util.h>
 #include <qdf_str.h>
 #include <wmi_unified_param.h>
+#include <wlan_iot_sim_utils_api.h>
 
 /*
  * iot_sim_oper_to_str - function to return iot sim operation string
@@ -580,6 +581,11 @@ iot_sim_send_rule_to_fw(struct iot_sim_context *isc,
 {
 	struct simulation_test_params param;
 
+	if (FRAME_TYPE_IS_BEACON(type, subtype) && offset) {
+		iot_sim_info("Beacon update from offset:%d", offset);
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
 	if (iot_sim_frame_supported_by_fw(type, subtype, action)) {
 		qdf_mem_zero(&param, sizeof(struct simulation_test_params));
 		param.pdev_id = wlan_objmgr_pdev_get_pdev_id(isc->pdev_obj);
@@ -608,8 +614,10 @@ iot_sim_send_rule_to_fw(struct iot_sim_context *isc,
 								&param)))
 			iot_sim_err("Sending del rule to fw failed!");
 
-		if (!FRAME_TYPE_IS_BEACON(type, subtype))
-			return QDF_STATUS_SUCCESS;
+		if (FRAME_TYPE_IS_BEACON(type, subtype) && clear)
+			return QDF_STATUS_E_NOSUPPORT;
+
+		return QDF_STATUS_SUCCESS;
 	}
 
 	return QDF_STATUS_E_NOSUPPORT;
@@ -889,6 +897,7 @@ iot_sim_debug_content_change_write(struct file *file,
 			((struct seq_file *)file->private_data)->private;
 	uint8_t action = 0, category = 0;
 	bool is_action = 0, clear = false;
+	mlme_pdev_ext_t *ext = NULL;
 
 	if ((!buf) || (count > USER_BUF_LEN) || (count < 7))
 		return -EFAULT;
@@ -947,11 +956,24 @@ iot_sim_debug_content_change_write(struct file *file,
 						  content, length, 0,
 						  is_action);
 	}
-	if (QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_SUCCESS(status)) {
 		iot_sim_err("iot_sim: Content Change Operation - success");
-	else
+		if (FRAME_TYPE_IS_BEACON(type, subtype)) {
+			if (isc->bcn_buf && (!length || !content)) {
+				qdf_nbuf_free(isc->bcn_buf);
+				isc->bcn_buf = NULL;
+			}
+			ext = wlan_pdev_mlme_get_ext_hdl(isc->pdev_obj);
+			if (ext) {
+				isc->iot_sim_update_beacon_trigger(ext);
+				iot_sim_info("Beacon update triggered");
+			} else {
+				iot_sim_err("mlme_pdev_ext is null");
+			}
+		}
+	} else {
 		iot_sim_err("iot_sim: Content Change Operation - Fail");
-
+	}
 free:
 	qdf_mem_free(content);
 	qdf_mem_free(locbuf);
@@ -1366,6 +1388,7 @@ wlan_iot_sim_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	qdf_set_macaddr_broadcast(&isc->bcast_peer.addr);
 	qdf_spinlock_create(&isc->bcast_peer.iot_sim_lock);
 	qdf_list_create(&isc->bcast_peer.list, 0);
+	isc->bcn_buf = NULL;
 
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_IOT_SIM_COMP,
 					      (void *)isc, QDF_STATUS_SUCCESS);
@@ -1396,11 +1419,14 @@ wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 		/* Deinitilise function pointers from iot_sim context */
 		iot_sim_debugfs_deinit(isc);
 		iot_sim_remove_all_rules(isc);
+		if (isc->bcn_buf)
+			qdf_nbuf_free(isc->bcn_buf);
 		qdf_spinlock_destroy(&isc->bcast_peer.iot_sim_lock);
 		qdf_mem_free(isc);
 	}
-	iot_sim_debug("iot_sim component pdev%u object created",
+	iot_sim_debug("iot_sim component pdev%u object destroyed",
 		      wlan_objmgr_pdev_get_pdev_id(isc->pdev_obj));
 
 	return QDF_STATUS_SUCCESS;
 }
+

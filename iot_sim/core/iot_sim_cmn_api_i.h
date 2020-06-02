@@ -89,7 +89,7 @@ QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
  * iot_sim_frame_update() - Management frame update
  * @pdev: reference to global pdev object
  * @nbuf: frame buffer
- * @direction: direction tx or rx
+ * @tx: TRUE in case of tx
  *
  * This function updates the outgoing management frame with
  * the content stored in iot_sim_context.
@@ -98,7 +98,9 @@ QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
  * QDF_STATUS_E_FAILURE on failure
  */
 QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev,
-				qdf_nbuf_t nbuf, bool direction);
+				qdf_nbuf_t nbuf,
+				struct beacon_tmpl_params *param,
+				bool tx);
 
 /*
  * iot_sim_get_ctx_from_pdev() - API to get iot_sim context object

@@ -1418,13 +1418,19 @@ struct wlan_lmac_if_sptrl_rx_ops {
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
 #ifdef WLAN_IOT_SIM_SUPPORT
+struct iot_sim_cbacks;
 /**
  * wlan_lmac_if_iot_sim_rx_ops: iot_sim rx operations
  * iot_sim_cmd_handler: Applies iot_sim rule in outgoing and incoming frames
+ * iot_sim_register_cb: callback registration with iot_sim
  **/
 struct wlan_lmac_if_iot_sim_rx_ops {
 	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
-					  qdf_nbuf_t n_buf, bool tx);
+					  qdf_nbuf_t n_buf,
+					  struct beacon_tmpl_params *param,
+					  bool tx);
+	QDF_STATUS (*iot_sim_register_cb)(struct wlan_objmgr_pdev *pdev,
+					  struct iot_sim_cbacks *cb);
 };
 #endif
 
