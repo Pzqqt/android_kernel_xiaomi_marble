@@ -218,7 +218,7 @@ struct msm_vidc_dt {
 	struct list_head context_banks;
 	struct mutex cb_lock;
 	const char *fw_name;
-	void *fw_cookie;
+	int fw_cookie;
 };
 
 int msm_vidc_init_dt(struct platform_device *pdev);
