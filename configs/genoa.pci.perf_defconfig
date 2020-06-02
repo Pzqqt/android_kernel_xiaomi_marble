@@ -24,7 +24,10 @@ CONFIG_DATA_CE_SW_INDEX_NO_INLINE_UPDATE := n
 ifeq ($(CONFIG_IPA), y)
 CONFIG_IPA_OFFLOAD := y
 endif
-ifeq ($(CONFIG_IPA3), y)
+ifeq ($(CONFIG_IPA3), m)
+CONFIG_IPA3_MODULE := y
+endif
+ifeq (y, $(findstring y, $(CONFIG_IPA3) $(CONFIG_IPA3_MODULE)))
 CONFIG_IPA_OFFLOAD := y
 endif
 
