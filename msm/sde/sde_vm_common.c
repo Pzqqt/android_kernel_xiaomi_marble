@@ -9,6 +9,7 @@
 #include "dp/dp_display.h"
 #include "sde_kms.h"
 #include "sde_vm_common.h"
+#include "sde_crtc.h"
 
 struct hh_notify_vmid_desc *sde_vm_populate_vmid(hh_vmid_t vmid)
 {
@@ -284,6 +285,48 @@ pre_release_rollback:
 			break;
 		}
 	}
+
+	return rc;
+}
+
+int sde_vm_request_valid(struct sde_kms *sde_kms,
+			  enum sde_crtc_vm_req old_state,
+			  enum sde_crtc_vm_req new_state)
+{
+	struct sde_vm_ops *vm_ops;
+	int rc = 0;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+
+	switch (new_state) {
+	case VM_REQ_RELEASE:
+		if (old_state == VM_REQ_RELEASE)
+			rc = -EINVAL;
+		break;
+	case VM_REQ_NONE:
+		if (old_state == VM_REQ_RELEASE)
+			rc = -EINVAL;
+		break;
+	case VM_REQ_ACQUIRE:
+		/**
+		 * Only the display which requested for HW assignment
+		 * can reclaim it back
+		 */
+		if (old_state != VM_REQ_RELEASE)
+			rc = -EINVAL;
+		break;
+	default:
+		SDE_ERROR("invalid vm request\n");
+		rc = -EINVAL;
+	};
+
+	if (!rc && !vm_ops->vm_owns_hw(sde_kms))
+		rc = -EINVAL;
+
+	SDE_DEBUG("old req: %d new req: %d owns_hw: %d\n",
+			old_state, new_state,
+			vm_ops->vm_owns_hw(sde_kms));
+	SDE_EVT32(old_state, new_state, vm_ops->vm_owns_hw(sde_kms));
 
 	return rc;
 }

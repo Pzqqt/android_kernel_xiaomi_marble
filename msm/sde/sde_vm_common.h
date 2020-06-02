@@ -75,4 +75,9 @@ int sde_vm_post_acquire(struct sde_kms *kms);
  */
 int sde_vm_pre_release(struct sde_kms *kms);
 
+
+int sde_vm_request_valid(struct sde_kms *sde_kms,
+			  enum sde_crtc_vm_req old_state,
+			  enum sde_crtc_vm_req new_state);
+
 #endif /* __SDE_VM_COMMON_H__ */

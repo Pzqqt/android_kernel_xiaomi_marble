@@ -48,6 +48,7 @@
 #include "sde_crtc.h"
 #include "sde_reg_dma.h"
 #include "sde_connector.h"
+#include "sde_vm.h"
 
 #include <linux/qcom_scm.h>
 #include "soc/qcom/secure_buffer.h"
@@ -893,6 +894,85 @@ static int _sde_kms_unmap_all_splash_regions(struct sde_kms *sde_kms)
 	return ret;
 }
 
+int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
+				      struct drm_atomic_state *state)
+{
+	struct drm_device *ddev;
+	struct drm_crtc *crtc;
+	struct drm_encoder *encoder;
+	struct drm_connector *connector;
+	struct sde_vm_ops *vm_ops;
+	struct sde_crtc_state *cstate;
+	enum sde_crtc_vm_req vm_req;
+	int rc = 0;
+
+	ddev = sde_kms->dev;
+
+	if (!sde_kms->vm)
+		return -EINVAL;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+
+	crtc = state->crtcs[0].ptr;
+
+	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+
+	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+	if (vm_req != VM_REQ_ACQUIRE)
+		return 0;
+
+	/* enable MDSS irq line */
+	sde_irq_update(&sde_kms->base, true);
+
+	/* clear the stale IRQ status bits */
+	if (sde_kms->hw_intr && sde_kms->hw_intr->ops.clear_all_irqs)
+		sde_kms->hw_intr->ops.clear_all_irqs(sde_kms->hw_intr);
+
+	/* enable the display path IRQ's */
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+		sde_encoder_irq_control(encoder, true);
+
+	/* Schedule ESD work */
+	list_for_each_entry(connector, &ddev->mode_config.connector_list, head)
+		if (drm_connector_mask(connector) & crtc->state->connector_mask)
+			sde_connector_schedule_status_work(connector, true);
+
+	/* handle non-SDE pre_acquire */
+	if (vm_ops->vm_client_post_acquire)
+		rc = vm_ops->vm_client_post_acquire(sde_kms);
+
+	return rc;
+}
+
+int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
+					   struct drm_atomic_state *state)
+{
+	struct drm_device *ddev;
+	struct drm_plane *plane;
+	struct sde_crtc_state *cstate;
+	enum sde_crtc_vm_req vm_req;
+
+	ddev = sde_kms->dev;
+
+	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+
+	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+	if (vm_req != VM_REQ_ACQUIRE)
+		return 0;
+
+	/* Clear the stale IRQ status bits */
+	if (sde_kms->hw_intr && sde_kms->hw_intr->ops.clear_all_irqs)
+		sde_kms->hw_intr->ops.clear_all_irqs(sde_kms->hw_intr);
+
+	/* Program the SID's for the trusted VM */
+	list_for_each_entry(plane, &ddev->mode_config.plane_list, head)
+		sde_plane_set_sid(plane, 1);
+
+	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 1);
+
+	return 0;
+}
+
 static void sde_kms_prepare_commit(struct msm_kms *kms,
 		struct drm_atomic_state *state)
 {
@@ -902,6 +982,7 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	struct drm_encoder *encoder;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *crtc_state;
+	struct sde_vm_ops *vm_ops;
 	int i, rc;
 
 	if (!kms)
@@ -947,6 +1028,14 @@ static void sde_kms_prepare_commit(struct msm_kms *kms,
 	 * transitions prepare below if any transtions is required.
 	 */
 	sde_kms_prepare_secure_transition(kms, state);
+
+	if (!sde_kms->vm)
+		goto end;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+
+	if (vm_ops->vm_prepare_commit)
+		vm_ops->vm_prepare_commit(sde_kms, state);
 end:
 	SDE_ATRACE_END("prepare_commit");
 }
@@ -1039,6 +1128,129 @@ static void _sde_kms_release_splash_resource(struct sde_kms *sde_kms,
 	}
 }
 
+int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
+	struct drm_atomic_state *state)
+{
+	struct sde_vm_ops *vm_ops;
+	struct drm_device *ddev;
+	struct drm_crtc *crtc;
+	struct drm_plane *plane;
+	struct drm_encoder *encoder;
+	struct sde_crtc_state *cstate;
+	struct drm_crtc_state *new_cstate;
+	enum sde_crtc_vm_req vm_req;
+	int rc = 0;
+
+	if (!sde_kms || !sde_kms->vm)
+		return -EINVAL;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+	ddev = sde_kms->dev;
+
+	crtc = state->crtcs[0].ptr;
+	new_cstate = state->crtcs[0].new_state;
+	cstate = to_sde_crtc_state(new_cstate);
+
+	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+	if (vm_req != VM_REQ_RELEASE)
+		return rc;
+
+	if (!new_cstate->active && !new_cstate->active_changed)
+		return rc;
+
+	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
+	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
+
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+		sde_encoder_irq_control(encoder, false);
+
+	sde_irq_update(&sde_kms->base, false);
+
+	list_for_each_entry(plane, &ddev->mode_config.plane_list, head)
+		sde_plane_set_sid(plane, 0);
+
+	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 0);
+
+	if (vm_ops->vm_release)
+		rc = vm_ops->vm_release(sde_kms);
+
+	return rc;
+}
+
+int sde_kms_vm_pre_release(struct sde_kms *sde_kms,
+	struct drm_atomic_state *state)
+{
+	struct drm_device *ddev;
+	struct drm_crtc *crtc;
+	struct drm_encoder *encoder;
+	struct drm_connector *connector;
+	int rc = 0;
+
+	ddev = sde_kms->dev;
+
+	crtc = state->crtcs[0].ptr;
+
+	/* if vm_req is enabled, once CRTC on the commit is guaranteed */
+	sde_kms_wait_for_frame_transfer_complete(&sde_kms->base, crtc);
+
+	/* disable ESD work */
+	list_for_each_entry(connector,
+			&ddev->mode_config.connector_list, head) {
+		if (drm_connector_mask(connector) & crtc->state->connector_mask)
+			sde_connector_schedule_status_work(connector, false);
+	}
+
+	/* disable SDE irq's */
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+		sde_encoder_irq_control(encoder, false);
+
+	/* disable IRQ line */
+	sde_irq_update(&sde_kms->base, false);
+
+	return rc;
+}
+
+int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
+	struct drm_atomic_state *state)
+{
+	struct sde_vm_ops *vm_ops;
+	struct sde_crtc_state *cstate;
+	enum sde_crtc_vm_req vm_req;
+	int rc = 0;
+
+	if (!sde_kms || !sde_kms->vm)
+		return -EINVAL;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+
+	cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+
+	vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+	if (vm_req != VM_REQ_RELEASE)
+		goto exit;
+
+	/* handle SDE pre-release */
+	sde_kms_vm_pre_release(sde_kms, state);
+
+	/* handle non-SDE clients pre-release */
+	if (vm_ops->vm_client_pre_release) {
+		rc = vm_ops->vm_client_pre_release(sde_kms);
+		if (rc) {
+			SDE_ERROR("sde vm pre_release failed, rc=%d\n", rc);
+			goto exit;
+		}
+	}
+
+	/* release HW */
+	if (vm_ops->vm_release) {
+		rc = vm_ops->vm_release(sde_kms);
+		if (rc)
+			SDE_ERROR("sde vm assign failed, rc=%d\n", rc);
+	}
+exit:
+	return rc;
+}
+
 static void sde_kms_complete_commit(struct msm_kms *kms,
 		struct drm_atomic_state *old_state)
 {
@@ -1049,6 +1261,7 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 	struct drm_connector *connector;
 	struct drm_connector_state *old_conn_state;
 	struct msm_display_conn_params params;
+	struct sde_vm_ops *vm_ops;
 	int i, rc = 0;
 
 	if (!kms || !old_state)
@@ -1090,6 +1303,17 @@ static void sde_kms_complete_commit(struct msm_kms *kms,
 		if (rc) {
 			pr_err("Connector Post kickoff failed rc=%d\n",
 					 rc);
+		}
+	}
+
+	if (sde_kms->vm) {
+		vm_ops = &sde_kms->vm->vm_ops;
+
+		if (vm_ops->vm_post_commit) {
+			rc = vm_ops->vm_post_commit(sde_kms, old_state);
+			if (rc)
+				SDE_ERROR("vm post commit failed, rc = %d\n",
+					  rc);
 		}
 	}
 
@@ -1794,6 +2018,9 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 		of_genpd_del_provider(pdev->dev.of_node);
 	}
 
+	if (sde_kms->vm && sde_kms->vm->vm_ops.vm_deinit)
+		sde_kms->vm->vm_ops.vm_deinit(sde_kms, &sde_kms->vm->vm_ops);
+
 	if (sde_kms->hw_intr)
 		sde_hw_intr_destroy(sde_kms->hw_intr);
 	sde_kms->hw_intr = NULL;
@@ -2061,6 +2288,108 @@ backoff:
 	goto retry;
 }
 
+static int sde_kms_check_vm_request(struct msm_kms *kms,
+				    struct drm_atomic_state *state)
+{
+	struct sde_kms *sde_kms;
+	struct drm_device *dev;
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *new_cstate, *old_cstate;
+	uint32_t i, commit_crtc_cnt = 0, global_crtc_cnt = 0;
+	struct drm_crtc *active_crtc = NULL, *global_active_crtc = NULL;
+	enum sde_crtc_vm_req old_vm_req = VM_REQ_NONE, new_vm_req = VM_REQ_NONE;
+	struct sde_vm_ops *vm_ops;
+	bool vm_req_active = false;
+	enum sde_crtc_idle_pc_state idle_pc_state;
+	int rc = 0;
+
+	if (!kms || !state)
+		return -EINVAL;
+
+	sde_kms = to_sde_kms(kms);
+	dev = sde_kms->dev;
+
+	if (!sde_kms->vm)
+		return 0;
+
+	vm_ops = &sde_kms->vm->vm_ops;
+
+	for_each_oldnew_crtc_in_state(state, crtc, old_cstate, new_cstate, i) {
+		struct sde_crtc_state *old_state = NULL, *new_state = NULL;
+
+		new_state = to_sde_crtc_state(new_cstate);
+
+		if (!new_cstate->active && !new_cstate->active_changed)
+			continue;
+
+		new_vm_req = sde_crtc_get_property(new_state,
+				CRTC_PROP_VM_REQ_STATE);
+
+		commit_crtc_cnt++;
+
+		if (old_cstate) {
+			old_state = to_sde_crtc_state(old_cstate);
+			old_vm_req = sde_crtc_get_property(old_state,
+					CRTC_PROP_VM_REQ_STATE);
+		}
+
+		/**
+		 * No active request if the transition is from
+		 * VM_REQ_NONE to VM_REQ_NONE
+		 */
+		if (new_vm_req || (old_state && old_vm_req))
+			vm_req_active = true;
+
+		idle_pc_state = sde_crtc_get_property(new_state,
+						CRTC_PROP_IDLE_PC_STATE);
+
+		active_crtc = crtc;
+	}
+
+	list_for_each_entry(crtc, &dev->mode_config.crtc_list, head) {
+		if (!crtc->state->active)
+			continue;
+
+		global_crtc_cnt++;
+		global_active_crtc = crtc;
+	}
+
+	/* Check for single crtc commits only on valid VM requests */
+	if (vm_req_active && active_crtc && global_active_crtc &&
+		(commit_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
+		 global_crtc_cnt > sde_kms->catalog->max_trusted_vm_displays ||
+		 active_crtc != global_active_crtc)) {
+		SDE_ERROR(
+			   "failed to switch VM due to CRTC concurrencies: MAX_CNT: %d active_cnt: %d global_cnt: %d active_crtc: %d global_crtc: %d\n",
+			   sde_kms->catalog->max_trusted_vm_displays,
+			   commit_crtc_cnt, global_crtc_cnt, active_crtc,
+			   global_active_crtc);
+		return -E2BIG;
+	}
+
+	if (!vm_req_active)
+		return 0;
+
+	/* disable idle-pc before releasing the HW */
+	if ((new_vm_req == VM_REQ_RELEASE) &&
+			(idle_pc_state == IDLE_PC_ENABLE)) {
+		SDE_ERROR("failed to switch VM since idle-pc is enabled\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&sde_kms->vm->vm_res_lock);
+	if (vm_ops->vm_request_valid)
+		rc = vm_ops->vm_request_valid(sde_kms, old_vm_req, new_vm_req);
+	if (rc)
+		SDE_ERROR(
+		"failed to complete vm transition request. old_state = %d, new_state = %d, hw_ownership: %d\n",
+		old_vm_req, new_vm_req, vm_ops->vm_owns_hw(sde_kms));
+	mutex_unlock(&sde_kms->vm->vm_res_lock);
+
+	return rc;
+}
+
+
 static int sde_kms_check_secure_transition(struct msm_kms *kms,
 		struct drm_atomic_state *state)
 {
@@ -2174,6 +2503,13 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 	 * Secure state
 	 */
 	ret = sde_kms_check_secure_transition(kms, state);
+	if (ret)
+		goto end;
+
+	ret = sde_kms_check_vm_request(kms, state);
+	if (ret)
+		SDE_ERROR("vm switch request checks failed\n");
+
 end:
 	SDE_ATRACE_END("atomic_check");
 	return ret;
@@ -3703,8 +4039,16 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	SDE_DEBUG("Registering for notification of irq_num: %d\n", irq_num);
 	irq_set_affinity_notifier(irq_num, &sde_kms->affinity_notify);
 
-	return 0;
+	if (sde_in_trusted_vm(sde_kms))
+		rc = sde_vm_trusted_init(sde_kms);
+	else
+		rc = sde_vm_primary_init(sde_kms);
+	if (rc) {
+		SDE_ERROR("failed to initialize VM ops, rc: %d\n", rc);
+		goto error;
+	}
 
+	return 0;
 error:
 	_sde_kms_hw_destroy(sde_kms, platformdev);
 end:

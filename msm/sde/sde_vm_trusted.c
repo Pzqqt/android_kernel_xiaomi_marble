@@ -337,9 +337,12 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 	ops->vm_release = _sde_vm_release;
 	ops->vm_owns_hw = sde_vm_owns_hw;
 	ops->vm_deinit = _sde_vm_deinit;
+	ops->vm_prepare_commit = sde_kms_vm_trusted_prepare_commit;
+	ops->vm_post_commit = sde_kms_vm_trusted_post_commit;
+	ops->vm_request_valid = sde_vm_request_valid;
 }
 
-int sde_vm_trusted_init(struct sde_kms *kms, struct sde_vm_ops *ops)
+int sde_vm_trusted_init(struct sde_kms *kms)
 {
 	struct sde_vm_trusted *sde_vm;
 	void *cookie;
@@ -349,7 +352,7 @@ int sde_vm_trusted_init(struct sde_kms *kms, struct sde_vm_ops *ops)
 	if (!sde_vm)
 		return -ENOMEM;
 
-	_sde_vm_set_ops(ops);
+	_sde_vm_set_ops(&sde_vm->base.vm_ops);
 
 	sde_vm->base.sde_kms = kms;
 
@@ -390,7 +393,7 @@ int sde_vm_trusted_init(struct sde_kms *kms, struct sde_vm_ops *ops)
 
 	return 0;
 init_fail:
-	_sde_vm_deinit(kms, ops);
+	_sde_vm_deinit(kms, &sde_vm->base.vm_ops);
 
 	return rc;
 }

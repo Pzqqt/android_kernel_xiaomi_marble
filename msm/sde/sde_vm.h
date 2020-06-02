@@ -30,43 +30,7 @@ struct sde_vm_irq_desc {
 	struct sde_vm_irq_entry *irq_entries;
 };
 
-/**
- * sde_vm - VM layer descriptor. Abstract for all the VM's
- * @vm_res_lock - mutex to protect resource updates
- * @mem_notificaiton_cookie - Hyp RM notification identifier
- * @n_irq_lent - irq count
- * @io_mem_handle - RM identifier for the IO range
- * @sde_kms - handle to sde_kms
- */
-struct sde_vm {
-	struct mutex vm_res_lock;
-	void *mem_notification_cookie;
-	atomic_t n_irq_lent;
-	int io_mem_handle;
-	struct sde_kms *sde_kms;
-};
-
-/**
- * sde_vm_primary - VM layer descriptor for Primary VM
- * @base - parent struct object
- * @irq_desc - cache copy of irq list for validating reclaim
- */
-struct sde_vm_primary {
-	struct sde_vm base;
-	struct sde_vm_irq_desc *irq_desc;
-};
-
-/**
- * sde_vm_trusted - VM layer descriptor for Trusted VM
- * @base - parent struct object
- * @sgl_desc - hyp RM sgl list descriptor for IO ranges
- * @irq_desc - irq list
- */
-struct sde_vm_trusted {
-	struct sde_vm base;
-	struct sde_vm_irq_desc *irq_desc;
-	struct hh_sgl_desc *sgl_desc;
-};
+enum sde_crtc_vm_req;
 
 /**
  * sde_vm_ops - VM specific function hooks
@@ -139,15 +103,59 @@ struct sde_vm_ops {
 	 * @kms - handle to sde_kms
 	 */
 	int (*vm_client_post_acquire)(struct sde_kms *kms);
+
+	int (*vm_request_valid)(struct sde_kms *sde_kms,
+			enum sde_crtc_vm_req old_state,
+			enum sde_crtc_vm_req new_state);
 };
 
 /**
+ * sde_vm - VM layer descriptor. Abstract for all the VM's
+ * @vm_res_lock - mutex to protect resource updates
+ * @mem_notificaiton_cookie - Hyp RM notification identifier
+ * @n_irq_lent - irq count
+ * @io_mem_handle - RM identifier for the IO range
+ * @sde_kms - handle to sde_kms
+ * @vm_ops - VM operation hooks for respective VM type
+ */
+struct sde_vm {
+	struct mutex vm_res_lock;
+	void *mem_notification_cookie;
+	atomic_t n_irq_lent;
+	int io_mem_handle;
+	struct sde_kms *sde_kms;
+	struct sde_vm_ops vm_ops;
+};
+
+/**
+ * sde_vm_primary - VM layer descriptor for Primary VM
+ * @base - parent struct object
+ * @irq_desc - cache copy of irq list for validating reclaim
+ */
+struct sde_vm_primary {
+	struct sde_vm base;
+	struct sde_vm_irq_desc *irq_desc;
+};
+
+/**
+ * sde_vm_trusted - VM layer descriptor for Trusted VM
+ * @base - parent struct object
+ * @sgl_desc - hyp RM sgl list descriptor for IO ranges
+ * @irq_desc - irq list
+ */
+struct sde_vm_trusted {
+	struct sde_vm base;
+	struct sde_vm_irq_desc *irq_desc;
+	struct hh_sgl_desc *sgl_desc;
+};
+
+#if IS_ENABLED(CONFIG_DRM_SDE_VM)
+/**
  * sde_vm_primary_init - Initialize primary VM layer
  * @kms - pointer to sde_kms
- * @ops - primary VM specific ops functions
  * @return - 0 on success
  */
-int sde_vm_primary_init(struct sde_kms *kms, struct sde_vm_ops *ops);
+int sde_vm_primary_init(struct sde_kms *kms);
 
 /**
  * sde_vm_trusted_init - Initialize Trusted VM layer
@@ -155,6 +163,17 @@ int sde_vm_primary_init(struct sde_kms *kms, struct sde_vm_ops *ops);
  * @ops - primary VM specific ops functions
  * @return - 0 on success
  */
-int sde_vm_trusted_init(struct sde_kms *kms, struct sde_vm_ops *ops);
+int sde_vm_trusted_init(struct sde_kms *kms);
+#else
+static inline int sde_vm_primary_init(struct sde_kms *kms)
+{
+	return 0;
+}
 
+static inline int sde_vm_trusted_init(struct sde_kms *kms)
+{
+	return 0;
+}
+
+#endif /* IS_ENABLED(CONFIG_DRM_SDE_VM) */
 #endif /* __SDE_VM_H__ */
