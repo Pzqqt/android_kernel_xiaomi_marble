@@ -109,9 +109,7 @@
 #include <target_if_direct_buf_rx_api.h>
 #endif
 
-#ifdef WLAN_FEATURE_PKT_CAPTURE
 #include "wlan_pkt_capture_ucfg_api.h"
-#endif
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -6731,6 +6729,13 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		wlan_res_cfg->num_vdevs--;
 		wma_update_num_peers_tids(wma_handle, wlan_res_cfg);
 	}
+
+	if (ucfg_pkt_capture_get_mode(wma_handle->psoc) &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_packet_capture_support))
+		wlan_res_cfg->pktcapture_support = true;
+	else
+		wlan_res_cfg->pktcapture_support = false;
 
 	WMA_LOGD("%s: num_vdevs: %u", __func__, wlan_res_cfg->num_vdevs);
 
