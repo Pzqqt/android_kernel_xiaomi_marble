@@ -583,6 +583,7 @@ static int __hdd_soc_recovery_reinit(struct device *dev,
 	cds_set_recovery_in_progress(false);
 
 	hdd_soc_load_unlock(dev);
+	hdd_start_complete(0);
 
 	return 0;
 
@@ -593,6 +594,7 @@ assert_fail_count:
 unlock:
 	cds_set_driver_in_bad_state(true);
 	hdd_soc_load_unlock(dev);
+	hdd_start_complete(errno);
 
 	return check_for_probe_defer(errno);
 }
@@ -798,6 +800,7 @@ static void __hdd_soc_recovery_shutdown(void)
 
 	/* recovery starts via firmware down indication; ensure we got one */
 	QDF_BUG(cds_is_driver_recovering());
+	hdd_init_start_completion();
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {

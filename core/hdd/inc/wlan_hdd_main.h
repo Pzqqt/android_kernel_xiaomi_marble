@@ -4430,4 +4430,11 @@ static inline void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 }
 #endif
 
+/**
+ * hdd_init_start_completion() - Init the completion variable to wait on ON/OFF
+ *
+ * Return: None
+ */
+void hdd_init_start_completion(void);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
