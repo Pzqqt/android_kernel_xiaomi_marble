@@ -1016,7 +1016,7 @@ void reg_init_channel_map(enum dfs_reg dfs_region)
 		channel_map = channel_map_china;
 		break;
 	case DFS_KR_REGION:
-		channel_map = channel_map_eu;
+		channel_map = channel_map_global;
 		break;
 	}
 }
