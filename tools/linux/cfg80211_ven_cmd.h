@@ -1719,9 +1719,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"get_blbwnssmap",      IEEE80211_DISABLE_STA_BWNSS_ADV, GET_PARAM, 0},
 	{"neighbourfilter",     IEEE80211_PARAM_RX_FILTER_NEIGHBOUR_PEERS_MONITOR,
 		SET_PARAM, 1},
-#if ATH_DATA_RX_INFO_EN
-	{"get_whc_wds",         IEEE80211_PARAM_RXINFO_PERPKT, GET_PARAM, 0},
-#endif
+	{"get_whc_wds", IEEE80211_PARAM_WHC_APINFO_WDS, GET_PARAM, 0},
 	{"set_whc_dist",        IEEE80211_PARAM_WHC_APINFO_ROOT_DIST, SET_PARAM, 1},
 	{"get_whc_dist",        IEEE80211_PARAM_WHC_APINFO_ROOT_DIST, GET_PARAM, 0},
 	{"assocwar160",         IEEE80211_PARAM_CONFIG_ASSOC_WAR_160W, SET_PARAM, 1},
