@@ -221,7 +221,7 @@
  * recommended (it takes 60 sec/10min to start depending upon channel type).
  *
  * Indexes are defined in this way.
- *     0 Index (BITS 0-7): DFS - Def 0%
+ *     0 Index (BITS 0-7): DFS - Def 1%
  *     1 Index (BITS 8-15): Reserved
  *     2 Index (BITS 16-23): Reserved
  *     3 Index (BITS 24-31): Reserved
@@ -236,7 +236,7 @@
 		"np_chan_weight", \
 		0x00000000, \
 		0x64646464, \
-		0x00000000, \
+		0x00000001, \
 		CFG_VALUE_OR_DEFAULT, \
 		"np chan weight")
 
