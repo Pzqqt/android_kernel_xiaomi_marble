@@ -1589,7 +1589,8 @@ static void dp_display_deinit_sub_modules(struct dp_display_private *dp)
 {
 	dp_debug_put(dp->debug);
 	dp_hpd_put(dp->hpd);
-	dp_audio_put(dp->panel->audio);
+	if (dp->panel)
+		dp_audio_put(dp->panel->audio);
 	dp_ctrl_put(dp->ctrl);
 	dp_panel_put(dp->panel);
 	dp_link_put(dp->link);
