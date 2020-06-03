@@ -2833,6 +2833,9 @@ static void _sde_plane_sspp_setup_sys_cache(struct sde_plane *psde,
 		pstate->sc_cfg.type = SDE_SYS_CACHE_DISP;
 	}
 
+	SDE_EVT32(DRMID(&psde->base), pstate->sc_cfg.rd_scid,
+			pstate->sc_cfg.rd_en, pstate->sc_cfg.rd_noallocate);
+
 	psde->pipe_hw->ops.setup_sys_cache(
 		psde->pipe_hw, &pstate->sc_cfg);
 }
