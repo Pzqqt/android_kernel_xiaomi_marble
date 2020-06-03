@@ -70,6 +70,15 @@
 #define VENDOR_NLA_POLICY_NESTED(__policy) {.type = NLA_NESTED}
 #endif /*End of (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0) */
 
+/* For kernel version <= 4.20, driver needs to provide policy */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 20, 0))
+#define VENDOR_NLA_POLICY_MAC_ADDR NLA_POLICY_ETH_ADDR
+#else
+#define VENDOR_NLA_POLICY_MAC_ADDR \
+	{.type = NLA_UNSPEC, .len = QDF_MAC_ADDR_SIZE}
+#define NLA_EXACT_LEN NLA_UNSPEC
+#endif /*End of (LINUX_VERSION_CODE <= KERNEL_VERSION(4, 20, 0) */
+
 #if defined(NBUF_MEMORY_DEBUG) && defined(NETLINK_BUF_TRACK)
 #define wlan_cfg80211_vendor_free_skb(skb) \
 	qdf_nbuf_free(skb)
