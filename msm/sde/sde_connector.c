@@ -1238,16 +1238,16 @@ static int _sde_connector_set_ext_hdr_info(
 		goto end;
 	}
 
-	if (!c_conn->hdr_supported) {
-		SDE_ERROR_CONN(c_conn, "sink doesn't support HDR\n");
-		rc = -ENOTSUPP;
-		goto end;
-	}
-
 	memset(&c_state->hdr_meta, 0, sizeof(c_state->hdr_meta));
 
 	if (!usr_ptr) {
 		SDE_DEBUG_CONN(c_conn, "hdr metadata cleared\n");
+		goto end;
+	}
+
+	if (!c_conn->hdr_supported) {
+		SDE_ERROR_CONN(c_conn, "sink doesn't support HDR\n");
+		rc = -ENOTSUPP;
 		goto end;
 	}
 
