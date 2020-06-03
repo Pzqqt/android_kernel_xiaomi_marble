@@ -2264,7 +2264,10 @@ dp_rxdma_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	dp_srng_access_end(int_ctx, soc, err_dst_srng);
 
 	if (rx_bufs_used) {
-		dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
+		if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+			dp_rxdma_srng = &soc->rx_refill_buf_ring[mac_id];
+		else
+			dp_rxdma_srng = &soc->rx_refill_buf_ring[pdev->lmac_id];
 		rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
 		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
