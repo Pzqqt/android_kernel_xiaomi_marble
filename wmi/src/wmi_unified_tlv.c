@@ -6928,6 +6928,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	if (tgt_res_cfg->max_ndp_sessions)
 		resource_cfg->max_ndp_sessions =
 				tgt_res_cfg->max_ndp_sessions;
+	resource_cfg->max_ndi_interfaces = tgt_res_cfg->max_ndi;
 
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
