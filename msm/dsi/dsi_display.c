@@ -5324,23 +5324,18 @@ static void dsi_display_unbind(struct device *dev,
 	struct platform_device *pdev = to_platform_device(dev);
 	int i, rc = 0;
 
-	if (!dev || !pdev) {
+	if (!dev || !pdev || !master) {
 		DSI_ERR("invalid param(s)\n");
 		return;
 	}
 
 	display = platform_get_drvdata(pdev);
-	if (!display) {
+	if (!display || !display->panel_node) {
 		DSI_ERR("invalid display\n");
 		return;
 	}
 
 	mutex_lock(&display->display_lock);
-
-	rc = dsi_panel_drv_deinit(display->panel);
-	if (rc)
-		DSI_ERR("[%s] failed to deinit panel driver, rc=%d\n",
-		       display->name, rc);
 
 	rc = dsi_display_mipi_host_deinit(display);
 	if (rc)
@@ -6284,7 +6279,9 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 	struct dsi_dyn_clk_caps *dyn_clk_caps;
 	struct dsi_display_mode *src, *dst;
 	struct dsi_host_common_cfg *cfg;
+	struct dsi_display_mode_priv_info *priv_info;
 	int i, j, total_modes, bpp, lanes = 0;
+	size_t size = 0;
 
 	if (!display || !mode_idx)
 		return;
@@ -6338,6 +6335,13 @@ static void _dsi_display_populate_bit_clks(struct dsi_display *display,
 				return;
 			}
 			memcpy(dst, src, sizeof(struct dsi_display_mode));
+
+			size = sizeof(struct dsi_display_mode_priv_info);
+			priv_info = kzalloc(size, GFP_KERNEL);
+			dst->priv_info = priv_info;
+			if (dst->priv_info)
+				memcpy(dst->priv_info, src->priv_info, size);
+
 			dst->timing.clk_rate_hz = dyn_clk_caps->bit_clk_list[i];
 
 			dsi_display_adjust_mode_timing(dyn_clk_caps, dst, lanes,
