@@ -314,6 +314,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	struct swr_haptics_dev *swr_hap;
 	int rc;
 	u8 devnum;
+	int retry = 5;
 
 	swr_hap = devm_kzalloc(&sdev->dev,
 			sizeof(struct swr_haptics_dev), GFP_KERNEL);
@@ -346,8 +347,12 @@ static int swr_haptics_probe(struct swr_device *sdev)
 				__func__, rc);
 		goto clean;
 	}
+	do {
+		/* Add delay for soundwire enumeration */
+		usleep_range(500, 510);
+		rc = swr_get_logical_dev_num(sdev, sdev->addr, &devnum);
+	} while (rc && --retry);
 
-	rc = swr_get_logical_dev_num(sdev, sdev->addr, &devnum);
 	if (rc) {
 		dev_err(swr_hap->dev, "%s: failed to get devnum for swr-haptics, rc=%d\n",
 				__func__, rc);

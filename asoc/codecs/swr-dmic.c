@@ -30,6 +30,8 @@
 #include "wcd938x/wcd938x.h"
 #include "swr-dmic.h"
 
+#define NUM_ATTEMPTS 5
+
 static int swr_master_channel_map[] = {
 	ZERO,
 	SWRM_TX1_CH1,
@@ -450,6 +452,7 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	const char *swr_dmic_name_prefix_of = NULL;
 	const char *swr_dmic_codec_name_of = NULL;
 	struct snd_soc_component *component = NULL;
+	int num_retry = NUM_ATTEMPTS;
 
 	swr_dmic = devm_kzalloc(&pdev->dev, sizeof(struct swr_dmic_priv),
 			    GFP_KERNEL);
@@ -512,10 +515,15 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	 * as per HW requirement.
 	 */
 	usleep_range(5000, 5010);
-	ret = swr_get_logical_dev_num(pdev, pdev->addr, &swr_devnum);
+	do {
+		/* Add delay for soundwire enumeration */
+		usleep_range(100, 110);
+		ret = swr_get_logical_dev_num(pdev, pdev->addr, &swr_devnum);
+	} while (ret && --num_retry);
+
 	if (ret) {
-		dev_dbg(&pdev->dev,
-			"%s get devnum %d for dev addr %lx failed\n",
+		dev_info(&pdev->dev,
+			"%s get devnum %d for dev addr %llx failed\n",
 			__func__, swr_devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
 		goto err;
@@ -670,7 +678,7 @@ done:
 static int swr_dmic_reset(struct swr_device *pdev)
 {
 	struct swr_dmic_priv *swr_dmic;
-	u8 retry = 5;
+	u8 retry = NUM_ATTEMPTS;
 	u8 devnum = 0;
 
 	swr_dmic = swr_get_dev_data(pdev);
