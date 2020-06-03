@@ -7147,6 +7147,29 @@ static void csr_update_tx_pwr_to_fw(struct mac_context *mac_ctx,
 	}
 }
 
+static void csr_update_rsn_intersect_to_fw(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id)
+{
+	uint32_t rsn_val = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+
+	if (!vdev) {
+		sme_err("Invalid vdev obj for vdev id %d", vdev_id);
+		return;
+	}
+
+	rsn_val = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	if (wma_cli_set2_command(vdev_id, WMI_VDEV_PARAM_RSN_CAPABILITY,
+				 rsn_val, 0, VDEV_CMD))
+		sme_err("Failed to update WMI_VDEV_PARAM_RSN_CAPABILITY for vdev id %d",
+			vdev_id);
+}
+
 /**
  * csr_roam_process_join_res() - Process the Join results
  * @mac_ctx:          Global MAC Context
@@ -7557,6 +7580,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	}
 
 	csr_update_tx_pwr_to_fw(mac_ctx, session_id);
+	csr_update_rsn_intersect_to_fw(mac_ctx->psoc, session_id);
 	sme_free_join_rsp_fils_params(roam_info);
 	qdf_mem_free(roam_info);
 }
