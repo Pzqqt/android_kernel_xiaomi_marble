@@ -28,6 +28,7 @@
 #include "sde_kms.h"
 #include "sde_core_perf.h"
 #include "sde_hw_ds.h"
+#include "sde_color_processing.h"
 
 #define SDE_CRTC_NAME_SIZE	12
 
@@ -426,6 +427,10 @@ enum sde_crtc_dirty_flags {
  * @new_perf: new performance state being requested
  * @noise_layer_en: flag to indicate if noise layer cfg is valid
  * @drm_msm_noise_layer_cfg: noise layer configuration
+ * @cp_prop_cnt: number of dirty color processing features
+ * @cp_prop_values: array of cp property values
+ * @cp_dirty_list: array tracking features that are dirty
+ * @cp_range_payload: array storing state user_data passed via range props
  */
 struct sde_crtc_state {
 	struct drm_crtc_state base;
@@ -457,6 +462,12 @@ struct sde_crtc_state {
 	struct sde_core_perf_params new_perf;
 	bool noise_layer_en;
 	struct drm_msm_noise_layer_cfg layer_cfg;
+	uint32_t cp_prop_cnt;
+	struct sde_cp_crtc_property_state
+		cp_prop_values[SDE_CP_CRTC_MAX_FEATURES];
+	uint32_t cp_dirty_list[SDE_CP_CRTC_MAX_FEATURES];
+	struct sde_cp_crtc_range_prop_payload
+		cp_range_payload[SDE_CP_CRTC_MAX_FEATURES];
 };
 
 enum sde_crtc_irq_state {

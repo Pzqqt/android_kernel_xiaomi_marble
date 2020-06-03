@@ -3367,7 +3367,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	struct sde_kms *sde_kms;
 	struct drm_plane *plane;
 	struct sde_splash_display *splash_display;
-	bool cont_splash_enabled = false, apply_cp_prop = false;
+	bool cont_splash_enabled = false;
 	size_t i;
 
 	if (!crtc) {
@@ -3449,11 +3449,11 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 			cont_splash_enabled = true;
 	}
 
-	apply_cp_prop = sde_kms->catalog->trusted_vm_env ?
-			true : sde_crtc->enabled;
-	if (sde_kms_is_cp_operation_allowed(sde_kms) &&
-			(cont_splash_enabled || apply_cp_prop))
+	if (sde_kms_is_cp_operation_allowed(sde_kms))
 		sde_cp_crtc_apply_properties(crtc);
+
+	if (!sde_crtc->enabled)
+		sde_cp_crtc_suspend(crtc);
 
 	/*
 	 * PP_DONE irq is only used by command mode for now.
@@ -3601,12 +3601,12 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 		SDE_ERROR("invalid sde_kms\n");
 		return;
 	}
-
 	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
 	drm_for_each_encoder_mask(enc, crtc->dev, state->encoder_mask)
 		sde_rm_release(&sde_kms->rm, enc, true);
 
+	sde_cp_clear_state_info(state, true);
 	__drm_atomic_helper_crtc_destroy_state(state);
 
 	/* destroy value helper */
@@ -4010,11 +4010,11 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 		SDE_ERROR("failed to allocate state\n");
 		return NULL;
 	}
-
 	/* duplicate value helper */
 	msm_property_duplicate_state(&sde_crtc->property_info,
 			old_cstate, cstate,
 			&cstate->property_state, cstate->property_values);
+	sde_cp_clear_state_info(&cstate->base, false);
 
 	/* duplicate base helper */
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &cstate->base);
@@ -4061,7 +4061,6 @@ static void sde_crtc_reset(struct drm_crtc *crtc)
 	msm_property_reset_state(&sde_crtc->property_info, cstate,
 			&cstate->property_state,
 			cstate->property_values);
-
 	_sde_crtc_set_input_fence_timeout(cstate);
 
 	cstate->base.crtc = crtc;
@@ -5740,7 +5739,7 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 
 	SDE_ATRACE_BEGIN("sde_crtc_atomic_set_property");
 	/* check with cp property system first */
-	ret = sde_cp_crtc_set_property(crtc, property, val);
+	ret = sde_cp_crtc_set_property(crtc, state, property, val);
 	if (ret != -ENOENT)
 		goto exit;
 

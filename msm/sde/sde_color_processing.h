@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_COLOR_PROCESSING_H
@@ -61,6 +61,84 @@ static const struct drm_prop_enum_list sde_ltm_hist_modes[] = {
 };
 
 /**
+ * sde_cp_crtc_features - list of color processing crtc features
+ */
+enum sde_cp_crtc_features {
+	/* Append new DSPP features before SDE_CP_CRTC_DSPP_MAX */
+	/* DSPP Features start */
+	SDE_CP_CRTC_DSPP_IGC,
+	SDE_CP_CRTC_DSPP_PCC,
+	SDE_CP_CRTC_DSPP_GC,
+	SDE_CP_CRTC_DSPP_HSIC,
+	SDE_CP_CRTC_DSPP_MEMCOL_SKIN,
+	SDE_CP_CRTC_DSPP_MEMCOL_SKY,
+	SDE_CP_CRTC_DSPP_MEMCOL_FOLIAGE,
+	SDE_CP_CRTC_DSPP_MEMCOL_PROT,
+	SDE_CP_CRTC_DSPP_SIXZONE,
+	SDE_CP_CRTC_DSPP_GAMUT,
+	SDE_CP_CRTC_DSPP_DITHER,
+	SDE_CP_CRTC_DSPP_HIST_CTRL,
+	SDE_CP_CRTC_DSPP_HIST_IRQ,
+	SDE_CP_CRTC_DSPP_AD,
+	SDE_CP_CRTC_DSPP_VLUT,
+	SDE_CP_CRTC_DSPP_AD_MODE,
+	SDE_CP_CRTC_DSPP_AD_INIT,
+	SDE_CP_CRTC_DSPP_AD_CFG,
+	SDE_CP_CRTC_DSPP_AD_INPUT,
+	SDE_CP_CRTC_DSPP_AD_ASSERTIVENESS,
+	SDE_CP_CRTC_DSPP_AD_BACKLIGHT,
+	SDE_CP_CRTC_DSPP_AD_STRENGTH,
+	SDE_CP_CRTC_DSPP_AD_ROI,
+	SDE_CP_CRTC_DSPP_LTM,
+	SDE_CP_CRTC_DSPP_LTM_INIT,
+	SDE_CP_CRTC_DSPP_LTM_ROI,
+	SDE_CP_CRTC_DSPP_LTM_HIST_CTL,
+	SDE_CP_CRTC_DSPP_LTM_HIST_THRESH,
+	SDE_CP_CRTC_DSPP_LTM_SET_BUF,
+	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF,
+	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF2,
+	SDE_CP_CRTC_DSPP_LTM_QUEUE_BUF3,
+	SDE_CP_CRTC_DSPP_LTM_VLUT,
+	SDE_CP_CRTC_DSPP_SB,
+	SDE_CP_CRTC_DSPP_RC_MASK,
+	SDE_CP_CRTC_DSPP_SPR_INIT,
+	SDE_CP_CRTC_DSPP_DEMURA_INIT,
+	SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
+	SDE_CP_CRTC_DSPP_MAX,
+	/* DSPP features end */
+
+	/* Append new LM features before SDE_CP_CRTC_MAX_FEATURES */
+	/* LM feature start*/
+	SDE_CP_CRTC_LM_GC,
+	/* LM feature end*/
+
+	SDE_CP_CRTC_MAX_FEATURES,
+};
+
+/**
+ * struct sde_cp_crtc_property_state: struct to define the property states.
+ * @prop: pointer to drm property
+ * @prop_val: value of the property
+ * @cp_node: pointer to cp feature info payload
+ */
+struct sde_cp_crtc_property_state {
+	struct drm_property *prop;
+	uint64_t prop_val;
+	void *cp_node;
+};
+
+/**
+ * struct sde_cp_crtc_range_prop_payload: struct to define range prop payload.
+ * @addr: pointer to payload
+ * @len: length of the property
+ */
+
+struct sde_cp_crtc_range_prop_payload {
+	u64 addr;
+	u32 len;
+};
+
+/**
  * sde_cp_crtc_init(): Initialize color processing lists for a crtc.
  *                     Should be called during crtc initialization.
  * @crtc:  Pointer to sde_crtc.
@@ -88,11 +166,13 @@ void sde_cp_crtc_destroy_properties(struct drm_crtc *crtc);
  *                                      for a crtc.
  *                                      Should be during atomic set property.
  * @crtc: Pointer to crtc.
+ * @cstate: sde crtc property state holding list of dirty props.
  * @property: Property that needs to enabled/disabled.
  * @val: Value of property.
  */
 int sde_cp_crtc_set_property(struct drm_crtc *crtc,
-				struct drm_property *property, uint64_t val);
+		struct drm_crtc_state *state,
+		struct drm_property *property, uint64_t val);
 /**
  * sde_cp_crtc_check_properties: Verify color processing properties for a crtc.
  *                               Should be called during atomic check call.
@@ -226,4 +306,11 @@ void sde_cp_crtc_enable(struct drm_crtc *crtc);
  * @crtc:  Pointer to drm_crtc.
  */
 void sde_cp_crtc_disable(struct drm_crtc *crtc);
+
+/**
+ * sde_cp_clear_state_info(): clear color processing info in the state.
+ * @state:  Pointer to drm_crtc_state.
+ * @free_mem: Boolean indicating if owned memory should be freed.
+ */
+void sde_cp_clear_state_info(struct drm_crtc_state *state, bool free_mem);
 #endif /*_SDE_COLOR_PROCESSING_H */

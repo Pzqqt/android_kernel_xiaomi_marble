@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include "msm_prop.h"
@@ -453,7 +453,7 @@ void *msm_property_alloc_state(struct msm_property_info *info)
 	mutex_unlock(&info->property_lock);
 
 	if (!state && info->state_size)
-		state = kmalloc(info->state_size, GFP_KERNEL);
+		state = kzalloc(info->state_size, GFP_KERNEL);
 
 	if (!state)
 		DRM_ERROR("failed to allocate state\n");
