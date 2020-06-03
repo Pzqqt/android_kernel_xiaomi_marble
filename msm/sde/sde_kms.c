@@ -161,8 +161,10 @@ static int _sde_debugfs_init(struct sde_kms *sde_kms)
 	return 0;
 }
 
-static void _sde_debugfs_destroy(struct sde_kms *sde_kms)
+static void sde_kms_debugfs_destroy(struct msm_kms *kms)
 {
+	struct sde_kms *sde_kms = to_sde_kms(kms);
+
 	/* don't need to NULL check debugfs_root */
 	if (sde_kms) {
 		sde_debugfs_vbif_destroy(sde_kms);
@@ -189,7 +191,7 @@ static int _sde_debugfs_init(struct sde_kms *sde_kms)
 	return 0;
 }
 
-static void _sde_debugfs_destroy(struct sde_kms *sde_kms)
+static void sde_kms_debugfs_destroy(struct msm_kms *kms)
 {
 }
 
@@ -1806,10 +1808,6 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 
 	_sde_kms_unmap_all_splash_regions(sde_kms);
 
-	/* safe to call these more than once during shutdown */
-	_sde_debugfs_destroy(sde_kms);
-	_sde_kms_mmu_destroy(sde_kms);
-
 	if (sde_kms->catalog) {
 		for (i = 0; i < sde_kms->catalog->vbif_count; i++) {
 			u32 vbif_idx = sde_kms->catalog->vbif[i].id;
@@ -1848,6 +1846,7 @@ static void _sde_kms_hw_destroy(struct sde_kms *sde_kms,
 	sde_kms->mmio = NULL;
 
 	sde_reg_dma_deinit();
+	_sde_kms_mmu_destroy(sde_kms);
 }
 
 int sde_kms_mmu_detach(struct sde_kms *sde_kms, bool secure_only)
@@ -2936,6 +2935,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.pm_suspend      = sde_kms_pm_suspend,
 	.pm_resume       = sde_kms_pm_resume,
 	.destroy         = sde_kms_destroy,
+	.debugfs_destroy = sde_kms_debugfs_destroy,
 	.cont_splash_config = sde_kms_cont_splash_config,
 	.register_events = _sde_kms_register_events,
 	.get_address_space = _sde_kms_get_address_space,

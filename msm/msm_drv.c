@@ -397,13 +397,9 @@ static int msm_drm_uninit(struct device *dev)
 	struct msm_vm_client_entry *client_entry, *tmp;
 	int i;
 
-	/* We must cancel and cleanup any pending vblank enable/disable
-	 * work before drm_irq_uninstall() to avoid work re-enabling an
-	 * irq after uninstall has disabled it.
-	 */
-
 	flush_workqueue(priv->wq);
-	destroy_workqueue(priv->wq);
+	pm_runtime_get_sync(dev);
+
 	/* clean up display commit/event worker threads */
 	for (i = 0; i < priv->num_crtcs; i++) {
 		if (priv->disp_thread[i].thread) {
@@ -420,7 +416,11 @@ static int msm_drm_uninit(struct device *dev)
 	}
 
 	drm_kms_helper_poll_fini(ddev);
+	if (kms && kms->funcs)
+		kms->funcs->debugfs_destroy(kms);
 
+	sde_dbg_destroy();
+	debugfs_remove_recursive(priv->debug_root);
 	drm_mode_config_cleanup(ddev);
 
 	if (priv->registered) {
@@ -433,11 +433,7 @@ static int msm_drm_uninit(struct device *dev)
 		msm_fbdev_free(ddev);
 #endif
 	drm_atomic_helper_shutdown(ddev);
-	drm_mode_config_cleanup(ddev);
-
-	pm_runtime_get_sync(dev);
 	drm_irq_uninstall(ddev);
-	pm_runtime_put_sync(dev);
 
 	if (kms && kms->funcs)
 		kms->funcs->destroy(kms);
@@ -450,9 +446,7 @@ static int msm_drm_uninit(struct device *dev)
 	}
 
 	component_unbind_all(dev, ddev);
-
-	sde_dbg_destroy();
-	debugfs_remove_recursive(priv->debug_root);
+	pm_runtime_put_sync(dev);
 
 	sde_power_resource_deinit(pdev, &priv->phandle);
 
@@ -470,6 +464,7 @@ static int msm_drm_uninit(struct device *dev)
 	msm_mdss_destroy(ddev);
 
 	ddev->dev_private = NULL;
+	destroy_workqueue(priv->wq);
 	kfree(priv);
 
 	drm_dev_put(ddev);
@@ -2090,8 +2085,6 @@ static int msm_pdev_remove(struct platform_device *pdev)
 	component_master_del(&pdev->dev, &msm_drm_ops);
 	of_platform_depopulate(&pdev->dev);
 
-	msm_drm_unbind(&pdev->dev);
-	component_master_del(&pdev->dev, &msm_drm_ops);
 	return 0;
 }
 
