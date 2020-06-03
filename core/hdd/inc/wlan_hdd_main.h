@@ -4466,4 +4466,13 @@ void hdd_init_start_completion(void);
  */
 int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 		       enum band_info band, uint32_t chwidth);
+
+/**
+ * hdd_max_sta_vdev_count_reached() - check sta vdev count
+ * @hdd_ctx: global hdd context
+ *
+ * Return: true if vdev limit reached
+ */
+bool hdd_max_sta_vdev_count_reached(struct hdd_context *hdd_ctx);
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

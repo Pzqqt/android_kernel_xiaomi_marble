@@ -6044,6 +6044,27 @@ static u8 hdd_get_mode_specific_interface_count(struct hdd_context *hdd_ctx,
 	return intf_count;
 }
 
+bool hdd_max_sta_vdev_count_reached(struct hdd_context *hdd_ctx)
+{
+	u8 intf_count;
+
+	/*
+	 * Check for max no of supported STA/P2PCLI VDEVs before
+	 * creating another one.
+	 */
+	intf_count = hdd_get_mode_specific_interface_count(hdd_ctx,
+							   QDF_STA_MODE);
+	intf_count += hdd_get_mode_specific_interface_count(hdd_ctx,
+						QDF_P2P_CLIENT_MODE);
+	if (CFG_TGT_DEFAULT_MAX_STA_VDEVS &&
+	    (intf_count >= CFG_TGT_DEFAULT_MAX_STA_VDEVS)) {
+		hdd_err("Max limit reached sta vdev-current %d max %d",
+			intf_count, CFG_TGT_DEFAULT_MAX_STA_VDEVS);
+		return true;
+	}
+	return false;
+}
+
 /**
  * hdd_open_adapter() - open and setup the hdd adatper
  * @hdd_ctx: global hdd context
@@ -6066,7 +6087,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 {
 	struct net_device *ndev = NULL;
 	struct hdd_adapter *adapter = NULL;
-	u8 intf_count = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->current_intf_count >= WLAN_MAX_VDEVS) {
@@ -6116,19 +6136,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	/* fall through */
 	case QDF_P2P_CLIENT_MODE:
 
-		/* Check for max no of supported STA/P2PCLI VDEVs before
-		 * creating another one.
-		 */
-		intf_count += hdd_get_mode_specific_interface_count(hdd_ctx,
-							QDF_STA_MODE);
-		intf_count += hdd_get_mode_specific_interface_count(hdd_ctx,
-							QDF_P2P_CLIENT_MODE);
-		if (CFG_TGT_DEFAULT_MAX_STA_VDEVS &&
-		    (intf_count >= CFG_TGT_DEFAULT_MAX_STA_VDEVS)) {
-			hdd_err("Max limit reached sta vdev-current %d max %d",
-				intf_count, CFG_TGT_DEFAULT_MAX_STA_VDEVS);
+		if (hdd_max_sta_vdev_count_reached(hdd_ctx))
 			return NULL;
-		}
 
 	/* fall through */
 	case QDF_P2P_DEVICE_MODE:
