@@ -443,6 +443,7 @@ typedef  enum  {
     WMI_SERVICE_MU_PREAMBLE_PUNCTURE_SUPPORT = 248, /* Indicates FW supports MU preamble puncture */
     WMI_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT = 249, /* Support for SRG, SRP based spatial reuse support */
     WMI_REQUEST_CTRL_PATH_STATS_REQUEST = 250, /* FW supports control path stats */
+    WMI_SERVICE_TPC_STATS_EVENT = 251, /* FW support to dump the TPC tables */
 
 
     /******* ADD NEW SERVICES UP TO 256 HERE *******/
