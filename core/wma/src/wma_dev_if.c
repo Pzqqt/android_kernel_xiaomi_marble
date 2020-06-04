@@ -3693,6 +3693,10 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 		WMA_LOGE("Invalid wma");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (!mac) {
+		WMA_LOGE("Invalid mac context");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	vdev_id = add_bss->staContext.smesessionId;
 
