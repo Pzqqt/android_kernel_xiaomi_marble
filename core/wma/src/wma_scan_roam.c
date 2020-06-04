@@ -4194,13 +4194,23 @@ QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *intr;
 	uint16_t beacon_interval_ori;
 	bool restart;
 	uint16_t reduced_beacon_interval;
 	struct vdev_mlme_obj *mlme_obj;
-	struct wlan_objmgr_vdev *vdev = intr->vdev;
+	struct wlan_objmgr_vdev *vdev;
 
+	if (!wma) {
+		pe_err("wma is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	intr = &wma->interfaces[vdev_id];
+	if (!intr) {
+		pe_err("wma txrx node is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev = intr->vdev;
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
 		pe_err("vdev component object is NULL");
