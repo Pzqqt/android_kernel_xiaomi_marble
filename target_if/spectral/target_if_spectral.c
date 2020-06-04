@@ -4200,6 +4200,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 			(spectral, ch_width, spectral->params
 			 [SPECTRAL_SCAN_MODE_AGILE].ss_frequency.cfreq2 > 0);
 		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_spin_unlock(&spectral->spectral_lock);
 			spectral_err("Failed to populate channel width");
 			return QDF_STATUS_E_FAILURE;
 		}
