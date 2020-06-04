@@ -1088,6 +1088,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_max_reg_power_allowed,
     WMITLV_TAG_STRUC_wmi_tpc_rates_array,
     WMITLV_TAG_STRUC_wmi_tpc_ctl_pwr_table,
+    WMITLV_TAG_STRUC_wmi_vdev_bcn_latency_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1786,6 +1787,7 @@ typedef enum {
     OP(WMI_ROAM_CAPABILITY_REPORT_EVENTID) \
     OP(WMI_CTRL_PATH_STATS_EVENTID) \
     OP(WMI_PDEV_GET_TPC_STATS_EVENTID) \
+    OP(WMI_VDEV_BCN_LATENCY_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5989,6 +5991,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_CAPABILITY_REPORT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_INT8, ctl_buf, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TPC_STATS_EVENTID);
 
+/* Send Bcn Latency ie related params to host */
+#define WMITLV_TABLE_WMI_VDEV_BCN_LATENCY_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_bcn_latency_fixed_param, wmi_vdev_bcn_latency_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_BCN_LATENCY_EVENTID);
 
 #ifdef __cplusplus
 }

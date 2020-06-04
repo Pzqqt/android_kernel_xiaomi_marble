@@ -1516,6 +1516,8 @@ typedef enum {
     WMI_VDEV_SEND_BIG_DATA_EVENTID,
     /** send BIG DATA stats to host phase 2 */
     WMI_VDEV_SEND_BIG_DATA_P2_EVENTID,
+    /** Latency related information received from beacon IE */
+    WMI_VDEV_BCN_LATENCY_EVENTID,
 
 
     /* peer specific events */
@@ -21611,6 +21613,29 @@ typedef struct  {
     A_UINT32 bss_color_bitmap_bit0to31;     /* Bit set indicating BSS color present */
     A_UINT32 bss_color_bitmap_bit32to63;    /* Bit set indicating BSS color present */
 } wmi_obss_color_collision_evt_fixed_param;
+
+/*
+ * WMI event to notify host if latency_flags/latency_level got changed
+ * or if latency got enabled/disabled.
+ * When latency disable is received in the beacon vendor IE and wlm
+ * parameters are restored, latency_enable will be zero.
+ * latency level and latency flags will be those of wlm params.
+ * Lay out of latency flags is as follows. The field is same as flags
+ * in wmi_wlm_config_cmd_fixed_param.
+ *
+ * |31 19|  18 | 17|16 14| 13 | 12| 11 | 10 |  9  |  8 |7  6|5  4|3  2| 1 | 0 |
+ * +-----+-----+---+-----+----+---+----+----+-----+----+----+----+----+---+---+
+ * | RSVD|SRATE|RTS| NSS |EDCA|TRY|SSLP|CSLP|DBMPS|RSVD|Roam|RSVD|DWLT|DFS|SUP|
+ * +------------------------------+---------------+---------+-----------------+
+ * |              WAL             |    PS         |  Roam   |     Scan        |
+ */
+typedef struct  {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_bcn_latency_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 latency_enable;
+    A_UINT32 latency_level;
+    A_UINT32 latency_flags;
+} wmi_vdev_bcn_latency_fixed_param;
 
 /**
  * OCB DCC types and structures.
