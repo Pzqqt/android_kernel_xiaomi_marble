@@ -3665,6 +3665,7 @@ typedef struct {
      * (maximum number of beacons after which VAP profiles repeat)
      * for any EMA VAP on any pdev.
      */
+
     A_UINT32 ema_max_profile_period;
     /** @brief max_ndp_sessions
      * This is the max ndp sessions sent by the host which is the minimum
@@ -3673,6 +3674,12 @@ typedef struct {
      * SERVICE_READY_EXT2_EVENT message).
      */
     A_UINT32 max_ndp_sessions;
+
+    /** @brief max_ndi_supported
+     * This is the max ndi interfaces sent by the host based on the value
+     * specified by the host's ini configuration.
+     */
+    A_UINT32 max_ndi_interfaces;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
