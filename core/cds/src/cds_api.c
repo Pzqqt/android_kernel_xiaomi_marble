@@ -555,9 +555,11 @@ static int cds_hang_event_notifier_call(struct notifier_block *block,
 
 	cmd->recovery_reason = gp_cds_context->recovery_reason;
 
-	qdf_mem_copy(&cmd->driver_version, QWLAN_VERSIONSTR, 11);
+	qdf_mem_copy(&cmd->driver_version, QWLAN_VERSIONSTR,
+		     sizeof(QWLAN_VERSIONSTR));
 
-	qdf_mem_copy(&cmd->hang_event_version, QDF_HANG_EVENT_VERSION, 3);
+	qdf_mem_copy(&cmd->hang_event_version, QDF_HANG_EVENT_VERSION,
+		     sizeof(QDF_HANG_EVENT_VERSION));
 
 	cds_hang_data->offset += total_len;
 	return NOTIFY_OK;
