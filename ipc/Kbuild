@@ -105,30 +105,17 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ IPC ############
 
-ifdef CONFIG_MSM_QDSP6_APRV2_RPMSG
-APRV_GLINK += apr.o
-APRV_GLINK += apr_v2.o
-APRV_GLINK += apr_tal_rpmsg.o
+ifdef CONFIG_MSM_QDSP6_GPR_RPMSG
+GPRV_GLINK += gpr-lite.o
 endif
 
-ifdef CONFIG_MSM_QDSP6_APRV3_RPMSG
-APRV_GLINK += apr.o
-APRV_GLINK += apr_v3.o
-APRV_GLINK += apr_tal_rpmsg.o
+ifdef CONFIG_AUDIO_PKT
+AUDIO_PKT += audio-pkt.o
 endif
 
-ifdef CONFIG_MSM_QDSP6_APRV2_VM
-APRV_GLINK += apr_vm.o
-APRV_GLINK += apr_v2.o
-endif
+LINUX_INC += -Iinclude/linux
 
-ifdef CONFIG_WCD_DSP_GLINK
-WDSP_GLINK += wcd-dsp-glink.o
-endif
-
-LINUX_INC +=	-Iinclude/linux
-
-INCS +=		$(COMMON_INC) \
+INCS +=	$(COMMON_INC) \
 		$(UAPI_INC)
 
 EXTRA_CFLAGS += $(INCS)
@@ -178,13 +165,11 @@ GCOV_PROFILE := y
 endif
 
 # Module information used by KBuild framework
-obj-$(CONFIG_MSM_QDSP6_APRV2_RPMSG) += apr_dlkm.o
-obj-$(CONFIG_MSM_QDSP6_APRV3_RPMSG) += apr_dlkm.o
-obj-$(CONFIG_MSM_QDSP6_APRV2_VM) += apr_dlkm.o
-apr_dlkm-y := $(APRV_GLINK)
+obj-$(CONFIG_MSM_QDSP6_GPR_RPMSG) += gpr_dlkm.o
+gpr_dlkm-y := $(GPRV_GLINK)
 
-obj-$(CONFIG_WCD_DSP_GLINK) += wglink_dlkm.o
-wglink_dlkm-y := $(WDSP_GLINK)
+obj-$(CONFIG_AUDIO_PKT) += audio_pkt_dlkm.o
+audio_pkt_dlkm-y := $(AUDIO_PKT)
 
 # inject some build related information
 CDEFINES += -DBUILD_TIMESTAMP=\"$(shell date -u +'%Y-%m-%dT%H:%M:%SZ')\"
