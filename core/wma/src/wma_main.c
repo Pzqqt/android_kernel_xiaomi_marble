@@ -6619,6 +6619,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	wmi_service_ready_ext_event_fixed_param *ev;
 	QDF_STATUS ret;
 	struct target_psoc_info *tgt_hdl;
+	struct wlan_psoc_target_capability_info *tgt_cap_info;
 	uint32_t conc_scan_config_bits, fw_config_bits;
 	struct wmi_unified *wmi_handle;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -6654,6 +6655,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	wma_debug("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
+	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
 	fw_config_bits = target_if_get_fw_config_bits(tgt_hdl);
 	conc_scan_config_bits = target_if_get_conc_scan_config_bits(tgt_hdl);
 
@@ -6728,6 +6730,14 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	if (wmi_service_enabled(wma_handle->wmi_handle, wmi_service_nan_vdev))
 		ucfg_nan_set_vdev_creation_supp_by_fw(wma_handle->psoc, true);
+
+	/* Change default hw mode as below kind of target will only be
+	 * sending single HW mode
+	 */
+	if (!wmi_service_enabled(wmi_handle,
+				 wmi_service_dual_band_simultaneous_support))
+		wma_handle->new_hw_mode_index =
+				tgt_cap_info->default_dbs_hw_mode_index;
 
 	/*
 	 * Firmware can accommodate maximum 4 vdevs and the ini gNumVdevs
@@ -9433,8 +9443,7 @@ QDF_STATUS wma_get_rx_chainmask(uint8_t pdev_id, uint32_t *chainmask_2g,
 	}
 
 	if ((wma_handle->new_hw_mode_index != WMA_DEFAULT_HW_MODE_INDEX) &&
-	    (num_hw_modes > 0) &&
-	    (wma_handle->new_hw_mode_index < num_hw_modes))
+	    (wma_handle->new_hw_mode_index <= num_hw_modes))
 		hw_mode_idx = wma_handle->new_hw_mode_index;
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	if (!mac_phy_cap) {
