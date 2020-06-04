@@ -14501,6 +14501,20 @@ typedef enum
     (((roam_reason) & WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_MASK) >> \
      WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE_SHIFT)
 
+/* Bits  0-3: stores 4 LSbs of trigger reason.
+ *            Old host will get trigger reasons <= 15 from this bitfield.
+ * Bit 7 will be 1 always to indicate that bits 8-15 are valid.
+ * Bits 8-15: full trigger_reason, including values > 15.
+ *            New host will gett full trigger_reason from this bitfield.
+ *            Bits 8-11 and bits 0-3 store matching values.
+ */
+#define WMI_SET_ROAM_EXT_TRIGGER_REASON(roam_reason, trigger_reason) \
+    do { \
+        (roam_reason) |= (trigger_reason & 0xf); \
+        (roam_reason) |= 0x80; \
+        (roam_reason) |= ((trigger_reason & 0xff) << 8); \
+    } while (0)
+
 /* roaming notification */
 #define WMI_ROAM_NOTIF_INVALID           0x0 /** invalid notification. Do not interpret notif field  */
 #define WMI_ROAM_NOTIF_ROAM_START        0x1 /** indicate that roaming is started. sent only in non WOW state */
@@ -20088,10 +20102,13 @@ typedef struct {
     /** auth_status: connected or authorized */
     A_UINT32 auth_status;
     /** roam_reason:
-     * bits 0-3 for roam reason   see WMI_ROAM_REASON_XXX
-     * bits 4-5 for subnet status see WMI_ROAM_SUBNET_CHANGE_STATUS_XXX.
-     * bit  6   for HW mode status, set 1 to indicate host to schedule
-     *          HW mode change, see WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE.
+     * bits 0-3  roam trigger reason LSbs - see WMI_ROAM_TRIGGER_REASON_XXX
+     * bits 4-5  subnet status - see WMI_ROAM_SUBNET_CHANGE_STATUS_XXX.
+     * bit  6    HW mode status, set 1 to indicate host to schedule
+     *           HW mode change, see WMI_ROAM_REQUEST_HOST_HW_MODE_CHANGE.
+     * bit  7    0x1 to show bits 8-15 are valid
+     * bits 8-15 full WMI_ROAM_TRIGGER_REASON_ID/WMI_ROAM_TRIGGER_EXT_REASON_ID
+     *           since 4 bits are not enough.
      */
     A_UINT32 roam_reason;
     /** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI. not valid if roam_reason is BMISS */
