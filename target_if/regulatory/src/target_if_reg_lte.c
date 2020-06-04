@@ -52,6 +52,10 @@ static int tgt_reg_ch_avoid_event_handler(ol_scn_t handle, uint8_t *event_buf,
 	}
 
 	reg_rx_ops = target_if_regulatory_get_rx_ops(psoc);
+	if (!reg_rx_ops) {
+		target_if_err("reg_rx_ops is NULL");
+		return -EINVAL;
+	}
 
 	if (!reg_rx_ops->reg_ch_avoid_event_handler) {
 		target_if_err("reg_ch_avoid_event_handler is NULL");
