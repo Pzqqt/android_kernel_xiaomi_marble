@@ -742,10 +742,11 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 			}
 
 			psbrr->channel_list.chan_freq_lst[ch_ctr++] =
-				wlan_reg_chan_opclass_to_freq(
+				wlan_reg_country_chan_opclass_to_freq(
+					mac->pdev, country,
 					ie_ap_chan_rpt->channelList[tmp_idx],
-					ie_ap_chan_rpt->regulatoryClass,
-					false);
+					ie_ap_chan_rpt->regulatoryClass, true);
+
 			if (ch_ctr >= QDF_ARRAY_SIZE(psbrr->channel_list.chan_freq_lst))
 				break;
 		}
