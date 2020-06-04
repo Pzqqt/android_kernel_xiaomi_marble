@@ -4252,58 +4252,80 @@ void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag
 {
 	void *dest_ptr = NULL;
 	uint32_t size = 0;
+	uint32_t size_expected = 0;
 
 	switch (tag_type) {
 	case HTT_STATS_TX_PDEV_CMN_TAG:
 		dest_ptr = &pdev->stats.htt_tx_pdev_stats.cmn_tlv;
 		size = sizeof(htt_tx_pdev_stats_cmn_tlv);
+		size_expected = sizeof(struct cdp_htt_tx_pdev_stats_cmn_tlv);
 		break;
 	case HTT_STATS_TX_PDEV_UNDERRUN_TAG:
 		dest_ptr = &pdev->stats.htt_tx_pdev_stats.underrun_tlv;
 		size = sizeof(htt_tx_pdev_stats_urrn_tlv_v);
+		size_expected = sizeof(struct cdp_htt_tx_pdev_stats_urrn_tlv_v);
 		break;
 	case HTT_STATS_TX_PDEV_SIFS_TAG:
 		dest_ptr = &pdev->stats.htt_tx_pdev_stats.sifs_tlv;
 		size = sizeof(htt_tx_pdev_stats_sifs_tlv_v);
+		size_expected = sizeof(struct cdp_htt_tx_pdev_stats_sifs_tlv_v);
 		break;
 	case HTT_STATS_TX_PDEV_FLUSH_TAG:
 		dest_ptr = &pdev->stats.htt_tx_pdev_stats.flush_tlv;
 		size = sizeof(htt_tx_pdev_stats_flush_tlv_v);
+		size_expected =
+			sizeof(struct cdp_htt_tx_pdev_stats_flush_tlv_v);
 		break;
 	case HTT_STATS_TX_PDEV_PHY_ERR_TAG:
 		dest_ptr = &pdev->stats.htt_tx_pdev_stats.phy_err_tlv;
 		size = sizeof(htt_tx_pdev_stats_phy_err_tlv_v);
+		size_expected =
+			sizeof(struct cdp_htt_tx_pdev_stats_phy_err_tlv_v);
 		break;
 	case HTT_STATS_RX_PDEV_FW_STATS_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_stats_tlv;
 		size = sizeof(htt_rx_pdev_fw_stats_tlv);
+		size_expected = sizeof(struct cdp_htt_rx_pdev_fw_stats_tlv);
 		break;
 	case HTT_STATS_RX_SOC_FW_STATS_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_tlv;
 		size = sizeof(htt_rx_soc_fw_stats_tlv);
+		size_expected = sizeof(struct cdp_htt_rx_soc_fw_stats_tlv);
 		break;
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_EMPTY_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_refill_ring_empty_tlv;
 		size = sizeof(htt_rx_soc_fw_refill_ring_empty_tlv_v);
+		size_expected =
+		sizeof(struct cdp_htt_rx_soc_fw_refill_ring_empty_tlv_v);
 		break;
 	case HTT_STATS_RX_SOC_FW_REFILL_RING_NUM_REFILL_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_refill_ring_num_refill_tlv;
 		size = sizeof(htt_rx_soc_fw_refill_ring_num_refill_tlv_v);
+		size_expected =
+		sizeof(struct cdp_htt_rx_soc_fw_refill_ring_num_refill_tlv_v);
 		break;
 	case HTT_STATS_RX_PDEV_FW_RING_MPDU_ERR_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_ring_mpdu_err_tlv;
 		size = sizeof(htt_rx_pdev_fw_ring_mpdu_err_tlv_v);
+		size_expected =
+			sizeof(struct cdp_htt_rx_pdev_fw_ring_mpdu_err_tlv_v);
 		break;
 	case HTT_STATS_RX_PDEV_FW_MPDU_DROP_TAG:
 		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_ring_mpdu_drop;
 		size = sizeof(htt_rx_pdev_fw_mpdu_drop_tlv_v);
+		size_expected =
+			sizeof(struct cdp_htt_rx_pdev_fw_mpdu_drop_tlv_v);
 		break;
 	default:
 		break;
 	}
 
+	if (size_expected < size)
+		dp_warn("Buffer Overflow:FW Struct Size:%d Host Struct Size:%d"
+			, size, size_expected);
+
 	if (dest_ptr)
-		qdf_mem_copy(dest_ptr, tag_buf, size);
+		qdf_mem_copy(dest_ptr, tag_buf, size_expected);
 }
 
 #ifdef VDEV_PEER_PROTOCOL_COUNT
