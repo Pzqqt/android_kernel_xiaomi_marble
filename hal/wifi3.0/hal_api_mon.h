@@ -154,8 +154,15 @@
 		rs->rs_flags |= (IEEE80211_AMSDU_FLAG); \
 } \
 
+#define HAL_RX_SET_MSDU_AGGREGATION((rs_mpdu), (rs_ppdu))\
+{\
+	if (rs_mpdu->rs_flags & IEEE80211_AMSDU_FLAG)\
+		rs_ppdu->rs_flags |= IEEE80211_AMSDU_FLAG;\
+} \
+
 #else
 #define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
+#define HAL_RX_SET_MSDU_AGGREGATION(rs_mpdu, rs_ppdu)
 #endif
 
 /* Max MPDUs per status buffer */
@@ -170,6 +177,7 @@
  * struct hal_rx_mon_desc_info () - HAL Rx Monitor descriptor info
  *
  * @ppdu_id:                 PHY ppdu id
+ * @status_ppdu_id:          status PHY ppdu id
  * @status_buf_count:        number of status buffer count
  * @rxdma_push_reason:       rxdma push reason
  * @rxdma_error_code:        rxdma error code
@@ -184,6 +192,7 @@
  */
 struct hal_rx_mon_desc_info {
 	uint16_t ppdu_id;
+	uint16_t status_ppdu_id;
 	uint8_t status_buf_count;
 	uint8_t rxdma_push_reason;
 	uint8_t rxdma_error_code;
@@ -471,7 +480,6 @@ struct hal_rx_ppdu_common_info {
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
 	uint32_t mpdu_fcs_ok_bitmap[HAL_RX_NUM_WORDS_PER_PPDU_BITMAP];
-	uint32_t last_ppdu_id;
 	uint32_t mpdu_cnt;
 	uint8_t num_users;
 };

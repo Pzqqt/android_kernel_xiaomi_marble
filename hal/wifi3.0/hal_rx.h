@@ -21,6 +21,7 @@
 
 #include <hal_api.h>
 
+#define HAL_INVALID_PPDU_ID    0xFFFFFFFF
 #define HAL_RX_OFFSET(block, field) block##_##field##_OFFSET
 #define HAL_RX_LSB(block, field) block##_##field##_LSB
 #define HAL_RX_MASk(block, field) block##_##field##_MASK
