@@ -2133,7 +2133,8 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 				     uint32_t target_type)
 {
 	if (target_type == TARGET_TYPE_QCA8074V2 ||
-	    target_type == TARGET_TYPE_QCN9000)
+	    target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6750)
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
 	else if (target_type == TARGET_TYPE_QCA8074 ||
 		 target_type == TARGET_TYPE_QCA6018 ||
@@ -2182,7 +2183,8 @@ target_if_spectral_report_params_init(
 	 * initialization is done for gen3 alone. In future if other generations
 	 * needs to use them they have to add proper initial values.
 	 */
-	if (target_type == TARGET_TYPE_QCN9000) {
+	if (target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6750) {
 		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_2;
 		rparams->num_spectral_detectors =
 				NUM_SPECTRAL_DETECTORS_GEN3_V2;
@@ -2341,7 +2343,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    target_type == TARGET_TYPE_QCA8074V2 ||
 	    target_type == TARGET_TYPE_QCA6018 ||
 	    target_type == TARGET_TYPE_QCA6390 ||
-	    target_type == TARGET_TYPE_QCN9000)
+	    target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6750)
 		spectral->direct_dma_support = true;
 
 	target_if_spectral_len_adj_swar_init(&spectral->len_adj_swar,
@@ -2354,7 +2357,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    (target_type == TARGET_TYPE_QCA5018) ||
 	    (target_type == TARGET_TYPE_QCN9000) ||
 	    (target_type == TARGET_TYPE_QCA6290) ||
-	    (target_type == TARGET_TYPE_QCA6390)) {
+	    (target_type == TARGET_TYPE_QCA6390) ||
+	    (target_type == TARGET_TYPE_QCA6750)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
 		spectral->tag_sscan_summary_exp =
