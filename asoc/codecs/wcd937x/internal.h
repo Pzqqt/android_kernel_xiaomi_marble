@@ -17,6 +17,7 @@
 #define  WCD_VOUT_CTL_TO_MICB(v)  (1000 + v * 50)
 #define MAX_PORT 8
 #define MAX_CH_PER_PORT 8
+#define MAX_TX_PWR_CH 2
 
 #define WCD937X_MAX_SLAVE_PORT_TYPES 10
 extern struct regmap_config wcd937x_regmap_config;
@@ -91,6 +92,7 @@ struct wcd937x_priv {
 	struct mutex ana_tx_clk_lock;
 	u8 tx_master_ch_map[WCD937X_MAX_SLAVE_CH_TYPES];
 	bool usbc_hs_status;
+	u32 tx_ch_pwr[MAX_TX_PWR_CH];
 };
 
 struct wcd937x_micbias_setting {
