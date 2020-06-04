@@ -41,7 +41,7 @@ QDF_STATUS target_if_psoc_vdev_rsp_timer_inuse(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->psoc_get_vdev_response_timer_info) {
+	if (!(rx_ops && rx_ops->psoc_get_vdev_response_timer_info)) {
 		mlme_err("VDEV_%d PSOC_%d No Rx Ops", vdev_id,
 			 wlan_psoc_get_id(psoc));
 		return QDF_STATUS_E_INVAL;
@@ -76,7 +76,7 @@ QDF_STATUS target_if_psoc_vdev_rsp_timer_init(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->psoc_get_vdev_response_timer_info) {
+	if (!(rx_ops && rx_ops->psoc_get_vdev_response_timer_info)) {
 		mlme_err("VDEV_%d PSOC_%d No Rx Ops", vdev_id,
 			 wlan_psoc_get_id(psoc));
 		return QDF_STATUS_E_INVAL;
@@ -113,7 +113,7 @@ void target_if_psoc_vdev_rsp_timer_deinit(struct wlan_objmgr_psoc *psoc,
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->psoc_get_vdev_response_timer_info) {
+	if (!(rx_ops && rx_ops->psoc_get_vdev_response_timer_info)) {
 		mlme_err("VDEV_%d PSOC_%d No Rx Ops", vdev_id,
 			 wlan_psoc_get_id(psoc));
 		return;
@@ -138,7 +138,7 @@ void target_if_flush_psoc_vdev_timers(struct wlan_objmgr_psoc *psoc)
 	int i;
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->psoc_get_vdev_response_timer_info) {
+	if (!(rx_ops && rx_ops->psoc_get_vdev_response_timer_info)) {
 		mlme_err("PSOC_%d No Rx Ops", wlan_psoc_get_id(psoc));
 		return;
 	}
@@ -166,7 +166,7 @@ QDF_STATUS target_if_vdev_mgr_rsp_timer_mod(
 	}
 
 	rx_ops = target_if_vdev_mgr_get_rx_ops(psoc);
-	if (!rx_ops && !rx_ops->psoc_get_vdev_response_timer_info) {
+	if (!(rx_ops && rx_ops->psoc_get_vdev_response_timer_info)) {
 		mlme_err("VDEV_%d PSOC_%d No Rx Ops", vdev_id,
 			 wlan_psoc_get_id(psoc));
 		return QDF_STATUS_E_FAILURE;
