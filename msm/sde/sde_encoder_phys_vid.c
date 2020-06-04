@@ -279,9 +279,9 @@ static void programmable_fetch_config(struct sde_encoder_phys *phys_enc,
 	m = phys_enc->sde_kms->catalog;
 
 	vfp_fetch_lines = programmable_fetch_get_num_lines(vid_enc,
-							   timing, true);
+							   timing, false);
 	if (vfp_fetch_lines) {
-		vert_total = get_vertical_total(timing, true);
+		vert_total = get_vertical_total(timing, false);
 		horiz_total = get_horizontal_total(timing);
 		vfp_fetch_start_vsync_counter =
 			(vert_total - vfp_fetch_lines) * horiz_total + 1;
