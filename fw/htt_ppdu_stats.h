@@ -714,13 +714,22 @@ typedef struct {
      *               of the BSS and is used to assist a receiving STA in
      *               identifying the BSS from which a PPDU originates.
      *               Value in the range 0 to 63
-     * BIT [31 : 6] -reserved
+     * BIT [6 : 6] - PPDU transmitted using Non-SRG opportunity
+     * BIT [7 : 7] - PPDU transmitted using SRG opportunity
+     * BIT [15: 8] - RSSI of the aborted OBSS frame (in dB w.r.t. noise floor)
+     *               by which SRG/Non-SRG based spatial reuse opportunity
+     *               was created.
+     * BIT [31:16] - reserved
      */
     union {
+        A_UINT32 reserved__aborted_obss_rssi__srg_tx__non_srg_tx___bss_color_id;
         A_UINT32 reserved__bss_color_id;
         struct {
-            A_UINT32 bss_color_id:   6,
-                     reserved2:     26;
+            A_UINT32 bss_color_id:       6,
+                     non_srg_tx:         1,
+                     srg_tx:             1,
+                     aborted_obss_rssi:  8,
+                     reserved2:         16;
         };
     };
 } htt_ppdu_stats_common_tlv;
