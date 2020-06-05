@@ -3537,23 +3537,22 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 	struct hif_softc *scn = (struct hif_softc *)hif_handle;
 	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
 
-	if (pld_force_wake_request(scn->qdf_dev->dev)) {
-		hif_err("force wake request send failed");
-		return -EINVAL;
-	}
-
 	HIF_STATS_INC(pci_scn, mhi_force_wake_request_vote, 1);
-	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
-	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
-		qdf_mdelay(FORCE_WAKE_DELAY_MS);
-		timeout += FORCE_WAKE_DELAY_MS;
-	}
 
-	if (pld_is_device_awake(scn->qdf_dev->dev) <= 0) {
-		hif_err("Unable to wake up mhi");
+	if (pld_force_wake_request_sync(scn->qdf_dev->dev,
+					FORCE_WAKE_DELAY_TIMEOUT_MS * 1000)) {
+		hif_err("force wake request send failed");
 		HIF_STATS_INC(pci_scn, mhi_force_wake_failure, 1);
 		return -EINVAL;
 	}
+
+	/* If device's M1 state-change event races here, it can be ignored,
+	 * as the device is expected to immediately move from M2 to M0
+	 * without entering low power state.
+	 */
+	if (!pld_is_device_awake(scn->qdf_dev->dev))
+		HIF_INFO("%s: state-change event races, ignore", __func__);
+
 	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
 	hif_write32_mb(scn,
 		       scn->mem +
@@ -3598,28 +3597,27 @@ int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
  */
 int hif_force_wake_request(struct hif_opaque_softc *hif_handle)
 {
-	uint32_t timeout = 0;
 	struct hif_softc *scn = (struct hif_softc *)hif_handle;
 	struct hif_pci_softc *pci_scn = HIF_GET_PCI_SOFTC(scn);
 
-	if (pld_force_wake_request(scn->qdf_dev->dev)) {
-		hif_err("force wake request send failed");
-		return -EINVAL;
-	}
-
 	HIF_STATS_INC(pci_scn, mhi_force_wake_request_vote, 1);
-	while (!pld_is_device_awake(scn->qdf_dev->dev) &&
-	       timeout <= FORCE_WAKE_DELAY_TIMEOUT_MS) {
-		qdf_mdelay(FORCE_WAKE_DELAY_MS);
-		timeout += FORCE_WAKE_DELAY_MS;
-	}
 
-	if (pld_is_device_awake(scn->qdf_dev->dev) <= 0) {
-		hif_err("Unable to wake up mhi");
+	if (pld_force_wake_request_sync(scn->qdf_dev->dev,
+					FORCE_WAKE_DELAY_TIMEOUT_MS * 1000)) {
+		hif_err("force wake request send failed");
 		HIF_STATS_INC(pci_scn, mhi_force_wake_failure, 1);
 		return -EINVAL;
 	}
+
+	/* If device's M1 state-change event races here, it can be ignored,
+	 * as the device is expected to immediately move from M2 to M0
+	 * without entering low power state.
+	 */
+	if (!pld_is_device_awake(scn->qdf_dev->dev))
+		HIF_INFO("%s: state-change event races, ignore", __func__);
+
 	HIF_STATS_INC(pci_scn, mhi_force_wake_success, 1);
+
 	return 0;
 }
 #endif /* DEVICE_FORCE_WAKE_ENABLE */
