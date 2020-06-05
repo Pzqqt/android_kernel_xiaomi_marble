@@ -184,7 +184,7 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: VIRT STRENGTH val: %d\n",
 					__func__, virtualizer->strength);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -208,7 +208,7 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: VIRT OUT_TYPE val:%d\n",
 				__func__, virtualizer->out_type);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -232,7 +232,7 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: VIRT GAIN_ADJUST val:%d\n",
 				__func__, virtualizer->gain_adjust);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -362,7 +362,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_MODE val:%d\n",
 				__func__, reverb->mode);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -385,7 +385,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_PRESET val:%d\n",
 					__func__, reverb->preset);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -408,7 +408,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_WET_MIX val:%d\n",
 				__func__, reverb->wet_mix);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -431,7 +431,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_GAIN_ADJUST val:%d\n",
 					__func__, reverb->gain_adjust);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -455,7 +455,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_ROOM_LEVEL val:%d\n",
 				__func__, reverb->room_level);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -478,7 +478,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_ROOM_HF_LEVEL val%d\n",
 				__func__, reverb->room_hf_level);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -502,7 +502,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_DECAY_TIME val:%d\n",
 				__func__, reverb->decay_time);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -525,7 +525,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_DECAY_HF_RATIO val%d\n",
 				__func__, reverb->decay_hf_ratio);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -549,7 +549,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_REFLECTIONS_LEVEL val:%d\n",
 				__func__, reverb->reflections_level);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -574,7 +574,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_REFLECTIONS_DELAY val:%d\n",
 				__func__, reverb->reflections_delay);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -599,7 +599,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_LEVEL val:%d\n",
 				__func__, reverb->level);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -622,7 +622,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s:REVERB_DELAY val:%d\n",
 					__func__, reverb->delay);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -645,7 +645,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_DIFFUSION val:%d\n",
 				__func__, reverb->diffusion);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -668,7 +668,7 @@ int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: REVERB_DENSITY val:%d\n",
 				__func__, reverb->density);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -798,7 +798,7 @@ int msm_audio_effects_bass_boost_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: BASS_BOOST_MODE val:%d\n",
 				__func__, bass_boost->mode);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -821,7 +821,7 @@ int msm_audio_effects_bass_boost_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: BASS_BOOST_STRENGTH val:%d\n",
 				__func__, bass_boost->strength);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -1014,7 +1014,7 @@ int msm_audio_effects_pbe_handler(struct audio_client *ac,
 				*p_coeffs++ = GET_NEXT(values, param_max_offset, rc);
 			}
 
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 
 			max_params_length =
@@ -1184,7 +1184,7 @@ int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 				eq->per_band_cfg[idx].quality_factor =
 					GET_NEXT(values, param_max_offset, rc);
 			}
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			config_param_length = EQ_CONFIG_PARAM_SZ +
 					      (EQ_CONFIG_PER_BAND_PARAM_SZ *
@@ -1245,7 +1245,7 @@ int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 			eq->band_index = idx;
 			pr_debug("%s: EQ_BAND_INDEX val:%d\n",
 				__func__, eq->band_index);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -1272,7 +1272,7 @@ int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 				GET_NEXT(values, param_max_offset, rc);
 			pr_debug("%s: EQ_SINGLE_BAND_FREQ idx:%d, val:%d\n",
 				__func__, eq->band_index, eq->freq_millihertz);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -1377,7 +1377,7 @@ static int __msm_audio_effects_volume_handler(struct audio_client *ac,
 			vol->right_gain =
 				GET_NEXT(values, param_max_offset, rc);
 			vol->master_gain = 0x2000;
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
@@ -1398,7 +1398,7 @@ static int __msm_audio_effects_volume_handler(struct audio_client *ac,
 			vol->right_gain = 0x2000;
 			vol->master_gain =
 				GET_NEXT(values, param_max_offset, rc);
-			if (command_config_state != CONFIG_SET)
+			if (command_config_state != AUDIO_EFFECTS_CONFIG_SET)
 				break;
 			max_params_length = params_length +
 					    COMMAND_IID_PAYLOAD_SZ +
