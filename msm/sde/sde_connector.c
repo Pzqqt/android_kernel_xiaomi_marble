@@ -484,23 +484,21 @@ static int sde_connector_handle_panel_id(uint32_t event_idx,
 	struct sde_connector *c_conn = usr;
 	int i;
 	u64 panel_id;
-	u8 arr[8], shift;
-	u64 mask = 0xff;
+	u8 msb_arr[8];
 
 	if (!c_conn)
 		return -EINVAL;
 
-	panel_id = (((u64)data0) << 31) | data1;
+	panel_id = (((u64)data0) << 32) | data1;
 	if (panel_id == ~0x0)
 		return 0;
 
-	for (i = 0; i < 8; i++) {
-		shift = 8 * i;
-		arr[7 - i] = (u8)((panel_id & (mask << shift)) >> shift);
-	}
+	for (i = 0; i < 8; i++)
+		msb_arr[i] = (panel_id >> (8 * (7 - i)));
+
 	/* update the panel id */
 	msm_property_set_blob(&c_conn->property_info,
-		  &c_conn->blob_panel_id, arr, sizeof(arr),
+		  &c_conn->blob_panel_id, &msb_arr,  sizeof(msb_arr),
 		  CONNECTOR_PROP_DEMURA_PANEL_ID);
 	sde_connector_register_event(&c_conn->base,
 			SDE_CONN_EVENT_PANEL_ID, NULL, c_conn);

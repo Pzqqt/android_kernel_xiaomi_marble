@@ -618,6 +618,24 @@ static bool dsi_display_validate_reg_read(struct dsi_panel *panel)
 	return false;
 }
 
+static void dsi_display_parse_demura_data(struct dsi_display *display)
+{
+	int rc = 0;
+
+	display->panel_id = 0;
+	if (display->fw) {
+		DSI_INFO("FW definition unsupported for Demura panel data\n");
+		return;
+	}
+
+	rc = of_property_read_u64(display->pdev->dev.of_node,
+			"qcom,demura-panel-id", &display->panel_id);
+	if (rc)
+		DSI_INFO("No panel ID is present for this display\n");
+	else
+		DSI_INFO("panel id found: %lx\n", display->panel_id);
+}
+
 static void dsi_display_parse_te_data(struct dsi_display *display)
 {
 	struct platform_device *pdev;
@@ -2510,7 +2528,6 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	char *sw_te = NULL;
 	unsigned long cmdline_topology = NO_OVERRIDE;
 	unsigned long cmdline_timing = NO_OVERRIDE;
-	unsigned long panel_id = NO_OVERRIDE;
 
 	if (display_type >= MAX_DSI_ACTIVE_DISPLAY) {
 		DSI_ERR("display_type=%d not supported\n", display_type);
@@ -2525,17 +2542,6 @@ static void dsi_display_parse_cmdline_topology(struct dsi_display *display,
 	sw_te = strnstr(boot_str, ":sim-swte", strlen(boot_str));
 	if (sw_te)
 		display->sw_te_using_wd = true;
-
-	str = strnstr(boot_str, ":panelid", strlen(boot_str));
-	if (str) {
-		if (kstrtol(str + strlen(":panelid"), INT_BASE_10,
-				(unsigned long *)&panel_id)) {
-			DSI_INFO("panel id not found: %s\n", boot_str);
-		} else {
-			DSI_INFO("panel id found: %lx\n", panel_id);
-			display->panel_id = panel_id;
-		}
-	}
 
 	str = strnstr(boot_str, ":config", strlen(boot_str));
 	if (str) {
@@ -4026,6 +4032,9 @@ static int dsi_display_parse_dt(struct dsi_display *display)
 		else
 			break;
 	}
+
+	/* Parse Demura data */
+	dsi_display_parse_demura_data(display);
 
 	DSI_DEBUG("success\n");
 error:
@@ -8027,7 +8036,7 @@ static void dsi_display_panel_id_notification(struct dsi_display *display)
 		display->ctrl[0].ctrl->panel_id_cb.event_cb(
 			display->ctrl[0].ctrl->panel_id_cb.event_usr_ptr,
 			display->ctrl[0].ctrl->panel_id_cb.event_idx,
-			0, ((display->panel_id & 0xffffffff00000000) >> 31),
+			0, ((display->panel_id & 0xffffffff00000000) >> 32),
 			(display->panel_id & 0xffffffff), 0, 0);
 	}
 }
