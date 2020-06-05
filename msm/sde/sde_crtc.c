@@ -7228,6 +7228,7 @@ void sde_crtc_update_cont_splash_settings(struct drm_crtc *crtc)
 	}
 
 	_sde_crtc_setup_mixers(crtc);
+	sde_cp_crtc_refresh_status_properties(crtc);
 	crtc->enabled = true;
 
 	/* update core clk value for initial state with cont-splash */

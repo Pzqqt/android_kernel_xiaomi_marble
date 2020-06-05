@@ -398,19 +398,20 @@ void sde_ltm_read_intr_status(struct sde_hw_dspp *ctx, u32 *status)
 	SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->ltm.base + 0x58, clear);
 }
 
-void sde_demura_backlight_cfg(struct sde_hw_dspp *dspp, u64 val)
+void sde_demura_backlight_cfg(struct sde_hw_dspp *ctx, u64 val)
 {
 	u32 demura_base;
 	u32 backlight;
 
-	if (!dspp) {
-		DRM_ERROR("invalid parameter ctx %pK", dspp);
+	if (!ctx) {
+		DRM_ERROR("invalid parameter ctx %pK", ctx);
 		return;
 	}
-	demura_base = dspp->cap->sblk->demura.base;
+
+	demura_base = ctx->cap->sblk->demura.base;
 	backlight = (val & REG_MASK(11));
 	backlight |= ((val & REG_MASK_SHIFT(11, 32)) >> 16);
-	SDE_REG_WRITE(&dspp->hw, dspp->cap->sblk->demura.base + 0x8,
+	SDE_REG_WRITE(&ctx->hw, ctx->cap->sblk->demura.base + 0x8,
 			backlight);
 }
 
@@ -607,4 +608,31 @@ void sde_setup_fp16_unmultv1(struct sde_hw_pipe *ctx,
 		unmult &= ~BIT(0);
 
 	SDE_REG_WRITE(&ctx->hw, unmult_base, unmult);
+}
+
+void sde_demura_read_plane_status(struct sde_hw_dspp *ctx, u32 *status)
+{
+	u32 demura_base;
+	u32 value;
+
+	if (!ctx) {
+		DRM_ERROR("invalid parameter ctx %pK", ctx);
+		return;
+	}
+
+	demura_base = ctx->cap->sblk->demura.base;
+	value = SDE_REG_READ(&ctx->hw, demura_base + 0x4);
+	if (!(value & 0x4)) {
+		*status = DEM_FETCH_DMA_INVALID;
+	} else if (ctx->idx == DSPP_0) {
+		if (value & 0x80000000)
+			*status = DEM_FETCH_DMA1_RECT0;
+		else
+			*status = DEM_FETCH_DMA3_RECT0;
+	} else {
+		if (value & 0x80000000)
+			*status = DEM_FETCH_DMA1_RECT1;
+		else
+			*status = DEM_FETCH_DMA3_RECT1;
+	}
 }

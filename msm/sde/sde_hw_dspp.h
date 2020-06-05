@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_DSPP_H
@@ -276,6 +276,13 @@ struct sde_hw_dspp_ops {
 	 * @status: Pointer to configuration.
 	 */
 	void (*setup_demura_backlight_cfg)(struct sde_hw_dspp *ctx, u64 val);
+
+	/**
+	 * demura_read_plane_status - Query demura plane status
+	 * @ctx: Pointer to dspp context
+	 * @status: Demura plane used by DSPP. demura_fetch_planes enum value.
+	 */
+	void (*demura_read_plane_status)(struct sde_hw_dspp *ctx, u32 *status);
 };
 
 /**

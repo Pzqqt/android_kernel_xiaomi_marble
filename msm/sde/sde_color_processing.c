@@ -1291,6 +1291,47 @@ static void _sde_cp_crtc_install_immutable_property(struct drm_crtc *crtc,
 				feature, val);
 	_sde_cp_crtc_attach_property(&prop_attach);
 }
+
+static void _sde_cp_crtc_install_bitmask_property(struct drm_crtc *crtc,
+		char *name, u32 feature, bool immutable,
+		const struct drm_prop_enum_list *list, u32 enum_sz,
+		u64 supported_bits)
+{
+	struct drm_property *prop;
+	struct sde_cp_node *prop_node = NULL;
+	struct msm_drm_private *priv;
+	struct sde_cp_prop_attach prop_attach;
+	int flags = immutable ? DRM_MODE_PROP_IMMUTABLE : 0;
+	uint64_t val = 0;
+
+	if (feature >=  SDE_CP_CRTC_MAX_FEATURES) {
+		DRM_ERROR("invalid feature %d max %d\n", feature,
+			  SDE_CP_CRTC_MAX_FEATURES);
+		return;
+	}
+
+	prop_node = kzalloc(sizeof(*prop_node), GFP_KERNEL);
+	if (!prop_node)
+		return;
+
+	priv = crtc->dev->dev_private;
+	prop = priv->cp_property[feature];
+
+	if (!prop) {
+		prop = drm_property_create_bitmask(crtc->dev, flags, name, list,
+				enum_sz, supported_bits);
+		if (!prop) {
+			DRM_ERROR("property create failed: %s\n", name);
+			kfree(prop_node);
+			return;
+		}
+		priv->cp_property[feature] = prop;
+	}
+
+	INIT_PROP_ATTACH(&prop_attach, crtc, prop, prop_node, feature, val);
+	_sde_cp_crtc_attach_property(&prop_attach);
+}
+
 static void _sde_cp_crtc_install_range_property(struct drm_crtc *crtc,
 					     char *name,
 					     u32 feature,
@@ -2184,6 +2225,44 @@ static int _sde_cp_crtc_set_range_prop(
 	return ret;
 }
 
+void sde_cp_crtc_refresh_status_properties(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = NULL;
+	int i = 0;
+	struct sde_hw_dspp *hw_dspp = NULL;
+	struct msm_drm_private *priv;
+	struct drm_property *prop;
+	u64 val = 0;
+
+	if (!crtc) {
+		DRM_ERROR("invalid crtc %pKn", crtc);
+		return;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("invalid sde_crtc %pK\n", sde_crtc);
+		return;
+	}
+
+	priv = crtc->dev->dev_private;
+	prop = priv->cp_property[SDE_CP_CRTC_DSPP_DEMURA_BOOT_PLANE];
+	if (!prop)
+		return;
+
+	for (i = 0; i < sde_crtc->num_mixers; i++) {
+		u32 status = 0;
+
+		hw_dspp = sde_crtc->mixers[i].hw_dspp;
+		if (hw_dspp && hw_dspp->ops.demura_read_plane_status) {
+			hw_dspp->ops.demura_read_plane_status(hw_dspp, &status);
+			if (status != DEM_FETCH_DMA_INVALID)
+				val |= 1 << status;
+		}
+	}
+	drm_object_property_set_value(&crtc->base, prop, val);
+}
+
 int sde_cp_crtc_set_property(struct drm_crtc *crtc,
 				struct drm_crtc_state *state,
 				struct drm_property *property,
@@ -3029,6 +3108,10 @@ static  void _dspp_demura_install_property(struct drm_crtc *crtc)
 		_sde_cp_crtc_install_range_property(crtc, "SDE_DEMURA_BACKLIGHT_V1",
 				SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
 				0, 1024, 0);
+		_sde_cp_crtc_install_bitmask_property(crtc, "SDE_DEMURA_BOOT_PLANE_V1",
+				SDE_CP_CRTC_DSPP_DEMURA_BOOT_PLANE, true,
+				sde_demura_fetch_planes,
+				ARRAY_SIZE(sde_demura_fetch_planes), 0xf);
 		break;
 	default:
 		DRM_ERROR("version %d not supported\n", version);

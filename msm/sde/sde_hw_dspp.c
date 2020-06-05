@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <drm/msm_drm_pp.h>
@@ -328,7 +328,9 @@ static void dspp_demura(struct sde_hw_dspp *c)
 		if (!ret) {
 			c->ops.setup_demura_cfg = reg_dmav1_setup_demurav1;
 			c->ops.setup_demura_backlight_cfg =
-				sde_demura_backlight_cfg;
+					sde_demura_backlight_cfg;
+			c->ops.demura_read_plane_status =
+					sde_demura_read_plane_status;
 		}
 	}
 }

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  */
 #ifndef _SDE_HW_COLOR_PROC_V4_H_
 #define _SDE_HW_COLOR_PROC_V4_H_
@@ -74,10 +74,17 @@ void sde_ltm_read_intr_status(struct sde_hw_dspp *dspp, u32 *status);
 
 /**
  * sde_demura_backlight_cfg - api to set backlight for demura
- * @dspp: pointer to dspp object
+ * @ctx: pointer to dspp object
  * @val: value of backlight
  */
-void sde_demura_backlight_cfg(struct sde_hw_dspp *dspp, u64 val);
+void sde_demura_backlight_cfg(struct sde_hw_dspp *ctx, u64 val);
+
+/**
+ * sde_demura_read_plane_status - api to read demura plane fetch setup.
+ * @ctx: pointer to dspp object.
+ * @status: Currently present plane. Reported as a demura_fetch_planes value.
+ */
+void sde_demura_read_plane_status(struct sde_hw_dspp *ctx, u32 *status);
 
 /**
  * sde_setup_fp16_cscv1 - api to set FP16 CSC cp block

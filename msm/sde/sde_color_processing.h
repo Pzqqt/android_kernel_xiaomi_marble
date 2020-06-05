@@ -104,6 +104,7 @@ enum sde_cp_crtc_features {
 	SDE_CP_CRTC_DSPP_SPR_INIT,
 	SDE_CP_CRTC_DSPP_DEMURA_INIT,
 	SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
+	SDE_CP_CRTC_DSPP_DEMURA_BOOT_PLANE,
 	SDE_CP_CRTC_DSPP_MAX,
 	/* DSPP features end */
 
@@ -160,6 +161,14 @@ void sde_cp_crtc_install_properties(struct drm_crtc *crtc);
  * @crtc:  Pointer to crtc.
  */
 void sde_cp_crtc_destroy_properties(struct drm_crtc *crtc);
+
+/**
+ * sde_cp_crtc_refresh_status_properties(): Updates color processing
+ *                                    properties reflecting the status
+ *                                    of the crtc.
+ * @crtc: Pointer to crtc.
+ */
+void sde_cp_crtc_refresh_status_properties(struct drm_crtc *crtc);
 
 /**
  * sde_cp_crtc_set_property: Set a color processing property

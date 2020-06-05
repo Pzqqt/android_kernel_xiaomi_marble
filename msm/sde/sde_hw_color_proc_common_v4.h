@@ -1,11 +1,38 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, 2021 The Linux Foundation. All rights reserved.
  */
 #ifndef _SDE_HW_COLOR_PROC_COMMON_V4_H_
 #define _SDE_HW_COLOR_PROC_COMMON_V4_H_
 
 #include "sde_hw_mdss.h"
+
+/*
+ * DEMURA fetch planes
+ * @DEM_FETCH_DMA1_RECT0      Demura data fetched from DMA plane 1 rectangle 0
+ * @DEM_FETCH_DMA1_RECT1      Demura data fetched from DMA plane 1 rectangle 1
+ * @DEM_FETCH_DMA3_RECT0      Demura data fetched from DMA plane 3 rectangle 0
+ * @DEM_FETCH_DMA3_RECT1      Demura data fetched from DMA plane 3 rectangle 1
+ * @DEM_FETCH_DMA_INVALID     Invalid DMA plane for fetching Demmura data
+ */
+enum demura_fetch_planes {
+	DEM_FETCH_DMA1_RECT0 = 0,
+	DEM_FETCH_DMA1_RECT1,
+	DEM_FETCH_DMA3_RECT0,
+	DEM_FETCH_DMA3_RECT1,
+	DEM_FETCH_DMA_INVALID,
+};
+
+/**
+ * struct sde_demura_fetch_planes - drm prop enun struct containing bit
+ *     mask enum properties and values
+ */
+static const struct drm_prop_enum_list sde_demura_fetch_planes[] = {
+	{DEM_FETCH_DMA1_RECT0, "demura_dma1_rect0"},
+	{DEM_FETCH_DMA1_RECT1, "demura_dma1_rect1"},
+	{DEM_FETCH_DMA3_RECT0, "demura_dma3_rect0"},
+	{DEM_FETCH_DMA3_RECT1, "demura_dma3_rect1"},
+};
 
 #define GAMUT_TABLE_SEL_OFF 0x4
 #define GAMUT_UPPER_COLOR_OFF 0x8
