@@ -6508,12 +6508,15 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_soc_t *soc,
 		 * configured.
 		 */
 		mon_buf_ring = &pdev->soc->rxdma_mon_buf_ring[mac_for_pdev];
-		num_entries = mon_buf_ring->num_entries;
-		hal_set_low_threshold(pdev->soc->rxdma_mon_buf_ring[mac_for_pdev].hal_srng,
-				      num_entries >> 3);
-		htt_srng_setup(pdev->soc->htt_handle, pdev->pdev_id,
-			       pdev->soc->rxdma_mon_buf_ring[mac_for_pdev]
-			       .hal_srng, RXDMA_MONITOR_BUF);
+		if (mon_buf_ring->hal_srng) {
+			num_entries = mon_buf_ring->num_entries;
+			hal_set_low_threshold(mon_buf_ring->hal_srng,
+					      num_entries >> 3);
+			htt_srng_setup(pdev->soc->htt_handle,
+				       pdev->pdev_id,
+				       mon_buf_ring->hal_srng,
+				       RXDMA_MONITOR_BUF);
+		}
 	}
 
 	dp_soc_config_full_mon_mode(pdev, DP_FULL_MON_ENABLE);
