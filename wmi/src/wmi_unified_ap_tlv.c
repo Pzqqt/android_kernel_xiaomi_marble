@@ -1703,7 +1703,8 @@ static QDF_STATUS set_rx_pkt_type_routing_tag_update_tlv(
 		WMITLV_TAG_STRUC_wmi_pdev_update_pkt_routing_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(
 	wmi_pdev_update_pkt_routing_cmd_fixed_param));
-	cmd->pdev_id = param->pdev_id;
+	cmd->pdev_id = wmi_hdl->ops->convert_pdev_id_host_to_target(wmi_hdl,
+							param->pdev_id);
 	cmd->op_code = (A_UINT32) param->op_code;
 	cmd->routing_type_bitmap = param->routing_type_bitmap;
 	cmd->dest_ring = param->dest_ring;
