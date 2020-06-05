@@ -1002,6 +1002,22 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 }
 
 /**
+ * dp_is_nbuf_bypass_fisa() - FISA bypass check for RX frame
+ * @nbuf: RX nbuf pointer
+ *
+ * Return: true if FISA should be bypassed else false
+ */
+static bool dp_is_nbuf_bypass_fisa(qdf_nbuf_t nbuf)
+{
+	/* RX frame from non-regular path or DHCP packet */
+	if (qdf_nbuf_is_exc_frame(nbuf) ||
+	    qdf_nbuf_is_ipv4_dhcp_pkt(nbuf))
+		return true;
+
+	return false;
+}
+
+/**
  * dp_fisa_rx() - Entry function to FISA to handle aggregation
  * @soc: core txrx main context
  * @vdev: Handle DP vdev
@@ -1023,8 +1039,9 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 	while (head_nbuf) {
 		next_nbuf = head_nbuf->next;
 		qdf_nbuf_set_next(head_nbuf, NULL);
-		/* bypass FISA for non-regular RX frame */
-		if (qdf_nbuf_is_exc_frame(head_nbuf))
+
+		/* bypass FISA check */
+		if (dp_is_nbuf_bypass_fisa(head_nbuf))
 			goto deliver_nbuf;
 
 		qdf_nbuf_push_head(head_nbuf, RX_PKT_TLVS_LEN +
