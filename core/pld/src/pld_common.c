@@ -1175,6 +1175,32 @@ int pld_force_wake_request(struct device *dev)
 	return ret;
 }
 
+int pld_force_wake_request_sync(struct device *dev, int timeout_us)
+{
+	int ret = 0;
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_force_wake_request_sync(dev, timeout_us);
+		break;
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_IPCI:
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		ret = -EINVAL;
+		break;
+	}
+
+	return ret;
+}
+
 /**
  * pld_is_device_awake() - Check if it's ready to access MMIO registers
  * @dev: device

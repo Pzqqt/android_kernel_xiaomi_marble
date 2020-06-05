@@ -644,6 +644,16 @@ void *pld_get_fw_ptr(struct device *dev);
 int pld_auto_suspend(struct device *dev);
 int pld_auto_resume(struct device *dev);
 int pld_force_wake_request(struct device *dev);
+
+/**
+ * pld_force_wake_request_sync() - Request to awake MHI synchronously
+ * @dev: device
+ * @timeout_us: timeout in micro-sec request to wake
+ *
+ * Return: 0 for success
+ *         Non zero failure code for errors
+ */
+int pld_force_wake_request_sync(struct device *dev, int timeout_us);
 int pld_is_device_awake(struct device *dev);
 int pld_force_wake_release(struct device *dev);
 int pld_ce_request_irq(struct device *dev, unsigned int ce_id,
