@@ -3177,6 +3177,8 @@ static int wsa_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EPROBE_DEFER;
 	}
+	msm_cdc_pinctrl_set_wakeup_capable(
+				wsa_priv->wsa_swr_gpio_p, false);
 
 	wsa_io_base = devm_ioremap(&pdev->dev,
 				   wsa_base_addr, WSA_MACRO_MAX_OFFSET);
