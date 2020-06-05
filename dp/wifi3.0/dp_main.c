@@ -2756,33 +2756,36 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_ty
 }
 
 /*
- * dp_soc_disable_mac2_intr_mask() - reset interrupt mask for WMAC2 hw rings
+ * dp_soc_disable_unused_mac_intr_mask() - reset interrupt mask for
+ *					  unused WMAC hw rings
  * @dp_soc - DP Soc handle
+ * @mac_num - wmac num
  *
  * Return: Return void
  */
-static void dp_soc_disable_mac2_intr_mask(struct dp_soc *soc)
+static void dp_soc_disable_unused_mac_intr_mask(struct dp_soc *soc,
+						int mac_num)
 {
 	int *grp_mask = NULL;
 	int group_number;
 
 	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_ring_mask[0];
-	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	group_number = dp_srng_find_ring_in_mask(mac_num, grp_mask);
 	wlan_cfg_set_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
 					  group_number, 0x0);
 
 	grp_mask = &soc->wlan_cfg_ctx->int_rx_mon_ring_mask[0];
-	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	group_number = dp_srng_find_ring_in_mask(mac_num, grp_mask);
 	wlan_cfg_set_rx_mon_ring_mask(soc->wlan_cfg_ctx,
 				      group_number, 0x0);
 
 	grp_mask = &soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[0];
-	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	group_number = dp_srng_find_ring_in_mask(mac_num, grp_mask);
 	wlan_cfg_set_rxdma2host_ring_mask(soc->wlan_cfg_ctx,
 					  group_number, 0x0);
 
 	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[0];
-	group_number = dp_srng_find_ring_in_mask(0x2, grp_mask);
+	group_number = dp_srng_find_ring_in_mask(mac_num, grp_mask);
 	wlan_cfg_set_host2rxdma_mon_ring_mask(soc->wlan_cfg_ctx,
 					      group_number, 0x0);
 }
@@ -10800,10 +10803,18 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 
 	/*
 	 * Skip registering hw ring interrupts for WMAC2 on IPQ6018
-	 * WMAC2 is not there in IPQ6018 platform.
+	 * and IPQ5018 WMAC2 is not there in these platforms.
 	 */
-	if (hal_get_target_type(soc->hal_soc) == TARGET_TYPE_QCA6018)
-		dp_soc_disable_mac2_intr_mask(soc);
+	if (hal_get_target_type(soc->hal_soc) == TARGET_TYPE_QCA6018 ||
+	    soc->disable_mac2_intr)
+		dp_soc_disable_unused_mac_intr_mask(soc, 0x2);
+
+	/*
+	 * Skip registering hw ring interrupts for WMAC1 on IPQ5018
+	 * WMAC1 is not there in this platform.
+	 */
+	if (soc->disable_mac1_intr)
+		dp_soc_disable_unused_mac_intr_mask(soc, 0x1);
 
 	/* Setup HW REO */
 	qdf_mem_zero(&reo_params, sizeof(reo_params));
@@ -12154,6 +12165,8 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		soc->hw_nac_monitor_support = 1;
 		soc->per_tid_basize_max_tid = 8;
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
+		soc->disable_mac1_intr = 1;
+		soc->disable_mac2_intr = 1;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

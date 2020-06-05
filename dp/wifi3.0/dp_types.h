@@ -1328,6 +1328,10 @@ struct dp_soc {
 	/* SG supported for msdu continued packets from wbm release ring */
 	bool wbm_release_desc_rx_sg_support;
 	bool peer_map_attach_success;
+	/* Flag to disable mac1 ring interrupts */
+	bool disable_mac1_intr;
+	/* Flag to disable mac2 ring interrupts */
+	bool disable_mac2_intr;
 
 	struct {
 		/* 1st msdu in sg for msdu continued packets in wbm rel ring */
