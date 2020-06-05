@@ -359,8 +359,12 @@ load_unload:
 		}
 
 	}
-	pr_err("%s: Not enough ports available\n", __func__);
+
 	ret = -EINVAL;
+	if (i == MAX_ALLOWED_USE_CASES) {
+		pr_err("%s: Not enough ports available\n", __func__);
+		return ret;
+	}
 fail:
 	kfree(pm[i]->payload);
 	pm[i]->payload = NULL;
