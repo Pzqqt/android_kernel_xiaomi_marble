@@ -2786,6 +2786,7 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	uint32_t ppdu_id = ts->ppdu_id;
 	uint8_t first_msdu = ts->first_msdu;
 	uint8_t last_msdu = ts->last_msdu;
+	uint32_t txcap_hdr_size = sizeof(struct tx_capture_hdr);
 
 	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode &&
 			 !pdev->latency_capture_enable))
@@ -2816,7 +2817,16 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 		pdev->m_copy_id.tx_peer_id = peer_id;
 	}
 
-	if (!qdf_nbuf_push_head(netbuf, sizeof(struct tx_capture_hdr))) {
+	if (qdf_unlikely(qdf_nbuf_headroom(netbuf) < txcap_hdr_size)) {
+		netbuf = qdf_nbuf_realloc_headroom(netbuf, txcap_hdr_size);
+		if (!netbuf) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("No headroom"));
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	if (!qdf_nbuf_push_head(netbuf, txcap_hdr_size)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("No headroom"));
 		return QDF_STATUS_E_NOMEM;
