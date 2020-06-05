@@ -6982,7 +6982,10 @@ bool hdd_is_interface_up(struct hdd_adapter *adapter)
 #if defined CFG80211_CONNECT_BSS || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 #if defined CFG80211_CONNECT_TIMEOUT_REASON_CODE || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)) || \
+	(defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_CONNECT_DONE)))
+
 /**
  * hdd_convert_timeout_reason() - Convert to kernel specific enum
  * @timeout_reason: reason for connect timeout
@@ -7006,7 +7009,10 @@ static enum nl80211_timeout_reason hdd_convert_timeout_reason(
 		return NL80211_TIMEOUT_UNSPECIFIED;
 	}
 }
+#endif
 
+#if defined CFG80211_CONNECT_TIMEOUT_REASON_CODE || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
 /**
  * hdd_cfg80211_connect_timeout() - API to send connection timeout reason
  * @dev: network device
