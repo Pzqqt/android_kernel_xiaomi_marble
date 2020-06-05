@@ -3351,7 +3351,8 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	event_thread = &priv->event_thread[crtc->index];
 	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
-	if (sde_crtc_get_property(cstate, CRTC_PROP_CACHE_STATE))
+	if ((sde_crtc->cache_state == CACHE_STATE_PRE_CACHE) &&
+			sde_crtc_get_property(cstate, CRTC_PROP_CACHE_STATE))
 		sde_crtc_static_img_control(crtc, CACHE_STATE_FRAME_WRITE,
 				false);
 	else
@@ -6285,6 +6286,8 @@ void sde_crtc_static_img_control(struct drm_crtc *crtc,
 		return;
 
 	sde_crtc = to_sde_crtc(crtc);
+	if (sde_crtc->cache_state == state)
+		return;
 
 	switch (state) {
 	case CACHE_STATE_NORMAL:
@@ -6400,6 +6403,7 @@ static void __sde_crtc_idle_notify_work(struct kthread_work *work)
 		msm_mode_object_event_notify(&crtc->base, crtc->dev,
 				&event, (u8 *)&ret);
 
+		SDE_EVT32(DRMID(crtc));
 		SDE_DEBUG("crtc[%d]: idle timeout notified\n", crtc->base.id);
 
 		sde_crtc_static_img_control(crtc, CACHE_STATE_PRE_CACHE, false);
