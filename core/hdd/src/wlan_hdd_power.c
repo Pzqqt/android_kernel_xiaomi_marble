@@ -610,7 +610,8 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	hdd_enable_arp_offload(adapter, trigger);
 	hdd_enable_ns_offload(adapter, trigger);
 	hdd_enable_mc_addr_filtering(adapter, trigger);
-	hdd_enable_hw_filter(adapter);
+	if (adapter->device_mode != QDF_NDI_MODE)
+		hdd_enable_hw_filter(adapter);
 	hdd_enable_action_frame_patterns(adapter);
 out:
 	hdd_exit();
