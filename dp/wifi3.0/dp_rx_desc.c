@@ -446,6 +446,7 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 	rx_desc_pool->freelist = *local_desc_list;
 	(*tail)->next = temp_list;
 	*tail = NULL;
+	*local_desc_list = NULL;
 
 	qdf_spin_unlock_bh(&rx_desc_pool->lock);
 }
