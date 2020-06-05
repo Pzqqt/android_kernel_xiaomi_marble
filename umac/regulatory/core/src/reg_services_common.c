@@ -3110,6 +3110,29 @@ enum channel_state reg_get_channel_state_for_freq(struct wlan_objmgr_pdev *pdev,
 	return pdev_priv_obj->cur_chan_list[ch_idx].state;
 }
 
+static uint32_t reg_get_channel_flags_for_freq(struct wlan_objmgr_pdev *pdev,
+					       qdf_freq_t freq)
+{
+	enum channel_enum chan_enum;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	chan_enum = reg_get_chan_enum_for_freq(freq);
+
+	if (chan_enum == INVALID_CHANNEL) {
+		reg_err("chan freq is not valid");
+		return REGULATORY_CHAN_INVALID;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg obj is NULL");
+		return REGULATORY_CHAN_INVALID;
+	}
+
+	return pdev_priv_obj->cur_chan_list[chan_enum].chan_flags;
+}
+
 /**
  * reg_get_5g_bonded_chan_array_for_freq()- Return the channel state for a
  * 5G or 6G channel frequency based on the bonded channel.
@@ -3575,11 +3598,11 @@ uint8_t reg_get_channel_reg_power_for_freq(struct wlan_objmgr_pdev *pdev,
 
 bool reg_is_dfs_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
-	enum channel_state ch_state;
+	uint32_t chan_flags;
 
-	ch_state = reg_get_channel_state_for_freq(pdev, freq);
+	chan_flags = reg_get_channel_flags_for_freq(pdev, freq);
 
-	return ch_state == CHANNEL_STATE_DFS;
+	return chan_flags & REGULATORY_CHAN_RADAR;
 }
 
 void reg_update_nol_ch_for_freq(struct wlan_objmgr_pdev *pdev,
