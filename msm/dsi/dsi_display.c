@@ -6474,6 +6474,7 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 	case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_HFP:
 		vtotal = DSI_V_TOTAL(&dsi_mode->timing);
 		old_htotal = dsi_h_total_dce(&dsi_mode->timing);
+		do_div(old_htotal, display->ctrl_count);
 		new_htotal = dsi_mode->timing.clk_rate_hz * lanes;
 		div = bpp * vtotal * dsi_mode->timing.refresh_rate;
 		if (dsi_display_is_type_cphy(display)) {
@@ -6483,14 +6484,15 @@ void dsi_display_adjust_mode_timing(struct dsi_display *display,
 		do_div(new_htotal, div);
 		if (old_htotal > new_htotal)
 			dsi_mode->timing.h_front_porch -=
-					(old_htotal - new_htotal);
+			((old_htotal - new_htotal) * display->ctrl_count);
 		else
 			dsi_mode->timing.h_front_porch +=
-					(new_htotal - old_htotal);
+			((new_htotal - old_htotal) * display->ctrl_count);
 		break;
 
 	case DSI_DYN_CLK_TYPE_CONST_FPS_ADJUST_VFP:
 		htotal = dsi_h_total_dce(&dsi_mode->timing);
+		do_div(htotal, display->ctrl_count);
 		new_vtotal = dsi_mode->timing.clk_rate_hz * lanes;
 		div = bpp * htotal * dsi_mode->timing.refresh_rate;
 		if (dsi_display_is_type_cphy(display)) {
