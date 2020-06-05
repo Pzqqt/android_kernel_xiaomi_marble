@@ -46,6 +46,7 @@ enum {
 	HPH_COMP_DELAY,
 	HPH_PA_DELAY,
 	AMIC2_BCS_ENABLE,
+	WCD_SUPPLIES_LPM_MODE,
 };
 
 /* TODO: Check on the step values */
@@ -1986,6 +1987,26 @@ static void rouleur_soc_codec_remove(struct snd_soc_component *component)
 						false);
 }
 
+static int rouleur_soc_codec_suspend(struct snd_soc_component *component)
+{
+	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
+
+	if (!rouleur)
+		return 0;
+	rouleur->dapm_bias_off = true;
+	return 0;
+}
+
+static int rouleur_soc_codec_resume(struct snd_soc_component *component)
+{
+	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
+
+	if (!rouleur)
+		return 0;
+	rouleur->dapm_bias_off = false;
+	return 0;
+}
+
 static const struct snd_soc_component_driver soc_codec_dev_rouleur = {
 	.name = DRV_NAME,
 	.probe = rouleur_soc_codec_probe,
@@ -1996,6 +2017,8 @@ static const struct snd_soc_component_driver soc_codec_dev_rouleur = {
 	.num_dapm_widgets = ARRAY_SIZE(rouleur_dapm_widgets),
 	.dapm_routes = rouleur_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(rouleur_audio_map),
+	.suspend = rouleur_soc_codec_suspend,
+	.resume = rouleur_soc_codec_resume,
 };
 
 #ifdef CONFIG_PM_SLEEP
@@ -2032,11 +2055,45 @@ static int rouleur_suspend(struct device *dev)
 		}
 		clear_bit(ALLOW_VPOS_DISABLE, &rouleur->status_mask);
 	}
+	if (rouleur->dapm_bias_off) {
+		 msm_cdc_set_supplies_lpm_mode(rouleur->dev,
+					      rouleur->supplies,
+					      pdata->regulator,
+					      pdata->num_supplies,
+					      true);
+		set_bit(WCD_SUPPLIES_LPM_MODE, &rouleur->status_mask);
+	}
 	return 0;
 }
 
 static int rouleur_resume(struct device *dev)
 {
+	struct rouleur_priv *rouleur = NULL;
+	struct rouleur_pdata *pdata = NULL;
+
+	if (!dev)
+		return -ENODEV;
+
+	rouleur = dev_get_drvdata(dev);
+	if (!rouleur)
+		return -EINVAL;
+
+	pdata = dev_get_platdata(rouleur->dev);
+
+	if (!pdata) {
+		dev_err(dev, "%s: pdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	if (test_bit(WCD_SUPPLIES_LPM_MODE, &rouleur->status_mask)) {
+		msm_cdc_set_supplies_lpm_mode(rouleur->dev,
+						rouleur->supplies,
+						pdata->regulator,
+						pdata->num_supplies,
+						false);
+		clear_bit(WCD_SUPPLIES_LPM_MODE, &rouleur->status_mask);
+	}
+
 	return 0;
 }
 #endif
@@ -2467,10 +2524,8 @@ static int rouleur_remove(struct platform_device *pdev)
 
 #ifdef CONFIG_PM_SLEEP
 static const struct dev_pm_ops rouleur_dev_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(
-		rouleur_suspend,
-		rouleur_resume
-	)
+	.suspend_late = rouleur_suspend,
+	.resume_early = rouleur_resume
 };
 #endif
 

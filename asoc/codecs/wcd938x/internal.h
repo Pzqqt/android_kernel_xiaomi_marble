@@ -73,6 +73,7 @@ struct wcd938x_priv {
 	bool comp2_enable;
 	bool ldoh;
 	bool bcs_dis;
+	bool dapm_bias_off;
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
 	u32 rx_clk_cnt;

@@ -97,6 +97,7 @@ struct wsa883x_priv {
 	bool comp_enable;
 	bool visense_enable;
 	bool ext_vdd_spk;
+	bool dapm_bias_off;
 	struct swr_port port[WSA883X_MAX_SWR_PORTS];
 	int global_pa_cnt;
 	int dev_mode;

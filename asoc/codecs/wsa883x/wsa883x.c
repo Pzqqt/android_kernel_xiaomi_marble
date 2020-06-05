@@ -132,6 +132,7 @@ enum {
 
 enum {
 	SPKR_STATUS = 0,
+	WSA_SUPPLIES_LPM_MODE,
 };
 
 enum {
@@ -1220,6 +1221,28 @@ static void wsa883x_codec_remove(struct snd_soc_component *component)
 	return;
 }
 
+static int wsa883x_soc_codec_suspend(struct snd_soc_component *component)
+{
+	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
+
+	if (!wsa883x)
+		return 0;
+
+	wsa883x->dapm_bias_off = true;
+	return 0;
+}
+
+static int wsa883x_soc_codec_resume(struct snd_soc_component *component)
+{
+	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
+
+	if (!wsa883x)
+		return 0;
+
+	wsa883x->dapm_bias_off = false;
+	return 0;
+}
+
 static const struct snd_soc_component_driver soc_codec_dev_wsa883x_wsa = {
 	.name = "",
 	.probe = wsa883x_codec_probe,
@@ -1230,6 +1253,8 @@ static const struct snd_soc_component_driver soc_codec_dev_wsa883x_wsa = {
 	.num_dapm_widgets = ARRAY_SIZE(wsa883x_dapm_widgets),
 	.dapm_routes = wsa883x_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(wsa883x_audio_map),
+	.suspend =  wsa883x_soc_codec_suspend,
+	.resume = wsa883x_soc_codec_resume,
 };
 
 static int wsa883x_gpio_ctrl(struct wsa883x_priv *wsa883x, bool enable)
@@ -1692,7 +1717,20 @@ static int wsa883x_swr_remove(struct swr_device *pdev)
 #ifdef CONFIG_PM_SLEEP
 static int wsa883x_swr_suspend(struct device *dev)
 {
+	struct wsa883x_priv *wsa883x = swr_get_dev_data(to_swr_device(dev));
+
+	if (!wsa883x) {
+		dev_err(dev, "%s: wsa883x private data is NULL\n", __func__);
+		return -EINVAL;
+	}
 	dev_dbg(dev, "%s: system suspend\n", __func__);
+	if (wsa883x->dapm_bias_off) {
+		msm_cdc_set_supplies_lpm_mode(dev, wsa883x->supplies,
+					wsa883x->regulator,
+					wsa883x->num_supplies,
+					true);
+		set_bit(WSA_SUPPLIES_LPM_MODE, &wsa883x->status_mask);
+	}
 	return 0;
 }
 
@@ -1704,13 +1742,21 @@ static int wsa883x_swr_resume(struct device *dev)
 		dev_err(dev, "%s: wsa883x private data is NULL\n", __func__);
 		return -EINVAL;
 	}
+	if (test_bit(WSA_SUPPLIES_LPM_MODE, &wsa883x->status_mask)) {
+		msm_cdc_set_supplies_lpm_mode(dev, wsa883x->supplies,
+					wsa883x->regulator,
+					wsa883x->num_supplies,
+					false);
+		clear_bit(WSA_SUPPLIES_LPM_MODE, &wsa883x->status_mask);
+	}
 	dev_dbg(dev, "%s: system resume\n", __func__);
 	return 0;
 }
 #endif /* CONFIG_PM_SLEEP */
 
 static const struct dev_pm_ops wsa883x_swr_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(wsa883x_swr_suspend, wsa883x_swr_resume)
+	.suspend_late = wsa883x_swr_suspend,
+	.resume_early = wsa883x_swr_resume,
 };
 
 static const struct swr_device_id wsa883x_swr_id[] = {
