@@ -3643,7 +3643,8 @@ dp_check_mgmt_ctrl_ppdu(struct dp_pdev *pdev,
 			dp_tx_cap_peer_unref_del(peer);
 		if (!(type == IEEE80211_FC0_TYPE_MGT &&
 		    (subtype == MGMT_SUBTYPE_PROBE_RESP >> 4 ||
-		     subtype == MGMT_SUBTYPE_DISASSOC >> 4))) {
+		     subtype == MGMT_SUBTYPE_DISASSOC >> 4 ||
+		     subtype == MGMT_SUBTYPE_DEAUTH >> 4))) {
 			if (!dp_peer_or_pdev_tx_cap_enabled(pdev, NULL,
 							    ppdu_desc->user[0]
 							    .mac_addr)) {
@@ -3831,7 +3832,8 @@ insert_mgmt_buf_to_queue:
 
 			if (type == IEEE80211_FC0_TYPE_MGT &&
 			    (subtype == MGMT_SUBTYPE_PROBE_RESP >> 4 ||
-			     subtype == MGMT_SUBTYPE_DISASSOC >> 4)) {
+			     subtype == MGMT_SUBTYPE_DISASSOC >> 4 ||
+			     subtype == MGMT_SUBTYPE_DEAUTH >> 4)) {
 				if (!dp_peer_or_pdev_tx_cap_enabled(pdev,
 								    NULL,
 								    wh->i_addr1
