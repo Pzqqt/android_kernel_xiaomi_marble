@@ -3634,6 +3634,8 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 		goto err_hwdep;
 	}
 
+	snd_soc_dapm_ignore_suspend(dapm, "WCD938X_AIF Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD938X_AIF Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC3");
