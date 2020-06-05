@@ -75,7 +75,7 @@
 
 #define IPA_MAX_NUM_REQ_CACHE 10
 
-#define NAPI_WEIGHT 60
+#define NAPI_WEIGHT 64
 
 #define NAPI_TX_WEIGHT 64
 
