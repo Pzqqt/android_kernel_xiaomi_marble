@@ -5610,11 +5610,13 @@ static void dsi_display_firmware_display(const struct firmware *fw,
 	struct dsi_display *display = context;
 
 	if (fw) {
-		DSI_DEBUG("reading data from firmware, size=%zd\n",
+		DSI_INFO("reading data from firmware, size=%zd\n",
 			fw->size);
 
 		display->fw = fw;
 		display->name = "dsi_firmware_display";
+	} else {
+		DSI_INFO("no firmware available, fallback to device node\n");
 	}
 
 	if (dsi_display_init(display))
@@ -5686,12 +5688,6 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 				"qcom,dsi-default-panel", 0);
 		if (!panel_node)
 			DSI_WARN("default panel not found\n");
-
-		if (IS_ENABLED(CONFIG_DSI_PARSER) && !display->trusted_vm_env)
-			firm_req = !request_firmware_nowait(
-				THIS_MODULE, 1, "dsi_prop",
-				&pdev->dev, GFP_KERNEL, display,
-				dsi_display_firmware_display);
 	}
 
 	boot_disp->node = pdev->dev.of_node;
@@ -5706,6 +5702,13 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, display);
 
 	/* initialize display in firmware callback */
+	if (!boot_disp->boot_disp_en && IS_ENABLED(CONFIG_DSI_PARSER)) {
+		firm_req = !request_firmware_nowait(
+			THIS_MODULE, 1, "dsi_prop",
+			&pdev->dev, GFP_KERNEL, display,
+			dsi_display_firmware_display);
+	}
+
 	if (!firm_req) {
 		rc = dsi_display_init(display);
 		if (rc)
