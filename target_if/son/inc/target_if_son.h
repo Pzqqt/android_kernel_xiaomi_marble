@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017,2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,39 +25,8 @@
 
 void target_if_son_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
-bool son_ol_is_peer_inact(struct wlan_objmgr_peer *);
-
 u_int32_t son_ol_get_peer_rate(struct wlan_objmgr_peer *peer, u_int8_t type);
-
-int8_t son_ol_sanitize_util_invtl(struct wlan_objmgr_pdev *pdev,
-				  u_int32_t *sample_period,
-				  u_int32_t *num_of_sample);
-
-bool son_ol_enable(struct wlan_objmgr_pdev *pdev, bool enable);
-
-/* Function pointer to set overload status */
-
-void son_ol_set_overload(struct wlan_objmgr_pdev *pdev, bool overload);
-
-/* Function pointer to set band steering parameters */
-
-bool son_ol_set_params(struct wlan_objmgr_pdev *pdev,
-			      u_int32_t inactivity_check_period,
-			      u_int32_t inactivity_threshold_normal,
-			      u_int32_t inactivity_threshold_overload);
 
 QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 			    u_int8_t *macaddr,
 			    struct wlan_objmgr_vdev *vdev);
-
-int son_ol_lmac_create(struct wlan_objmgr_pdev *pdev);
-
-
-int son_ol_lmac_destroy(struct wlan_objmgr_pdev *pdev);
-
-
-void  son_ol_rx_rssi_update(struct wlan_objmgr_pdev *pdev, u_int8_t *macaddres,
-			    u_int8_t status, int8_t rssi, u_int8_t subtype);
-
-void son_ol_rx_rate_update(struct wlan_objmgr_pdev *pdev, u_int8_t *macaddres,
-			   u_int8_t status, u_int32_t rateKbps);
