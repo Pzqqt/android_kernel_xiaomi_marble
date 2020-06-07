@@ -12602,12 +12602,13 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 			dai_data->port_config.cdc_dma.data_format =
 				AFE_LINEAR_PCM_DATA_PACKED_16BIT;
 
-		rc = afe_send_cdc_dma_data_align(dai->id,
+		if (dai_data->cdc_dma_data_align) {
+			rc = afe_send_cdc_dma_data_align(dai->id,
 				dai_data->cdc_dma_data_align);
-		if (rc)
-			pr_debug("%s: afe send data alignment failed %d\n",
-				__func__, rc);
-
+			if (rc)
+				pr_debug("%s: afe send data alignment failed %d\n",
+					__func__, rc);
+		}
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
 		if (rc < 0)
