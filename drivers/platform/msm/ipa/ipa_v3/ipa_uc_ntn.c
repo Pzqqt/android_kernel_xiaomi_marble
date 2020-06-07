@@ -392,6 +392,7 @@ int ipa3_setup_uc_ntn_pipes(struct ipa_ntn_conn_in_params *in,
 	int ipa_ep_idx_ul;
 	int ipa_ep_idx_dl;
 	int result = 0;
+	bool is_vlan_mode;
 
 	if (in == NULL) {
 		IPAERR("invalid input\n");
@@ -438,6 +439,13 @@ int ipa3_setup_uc_ntn_pipes(struct ipa_ntn_conn_in_params *in,
 	ep_ul->cfg.nat.nat_en = IPA_SRC_NAT;
 	ep_ul->cfg.hdr.hdr_len = hdr_len;
 	ep_ul->cfg.mode.mode = IPA_BASIC;
+
+	result = ipa_is_vlan_mode(IPA_VLAN_IF_ETH, &is_vlan_mode);
+	if (is_vlan_mode) {
+		ep_ul->cfg.hdr.hdr_ofst_metadata_valid = 1;
+		ep_ul->cfg.hdr.hdr_ofst_metadata = ETH_HLEN;
+		ep_ul->cfg.hdr.hdr_metadata_reg_valid = false;
+	}
 
 	if (ipa3_cfg_ep(ipa_ep_idx_ul, &ep_ul->cfg)) {
 		IPAERR("fail to setup ul pipe cfg\n");
