@@ -6040,6 +6040,9 @@ int dsi_display_get_info(struct drm_connector *connector,
 	host = &display->panel->host_config;
 	if (host->split_link.split_link_enabled)
 		info->capabilities |= MSM_DISPLAY_SPLIT_LINK;
+
+	info->dsc_count = display->panel->dsc_count;
+	info->lm_count = display->panel->lm_count;
 error:
 	mutex_unlock(&display->display_lock);
 	return rc;

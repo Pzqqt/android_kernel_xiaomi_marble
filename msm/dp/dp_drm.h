@@ -123,14 +123,21 @@ int dp_connector_get_info(struct drm_connector *connector,
 		struct msm_display_info *info, void *display);
 
 /**
- * dp_connector_post_open - handle the post open functionalites
+ * dp_connector_post_open - handle the post open functionalities
  * @connector: Pointer to drm connector structure
  * @display: Pointer to private display structure
  */
 void dp_connector_post_open(struct drm_connector *connector, void *display);
 
-int dp_drm_bridge_init(void *display,
-	struct drm_encoder *encoder);
+/**
+ * dp_drm_bridge_init- drm dp bridge initialize
+ * @display: Pointer to private display structure
+ * @encoder: encoder for this dp bridge
+ * @max_mixer_count: max available mixers for dp display
+ * @max_dsc_count: max available dsc for dp display
+ */
+int dp_drm_bridge_init(void *display, struct drm_encoder *encoder,
+	u32 max_mixer_count, u32 max_dsc_count);
 
 void dp_drm_bridge_deinit(void *display);
 

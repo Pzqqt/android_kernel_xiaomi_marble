@@ -582,7 +582,8 @@ int dp_connector_get_modes(struct drm_connector *connector,
 	return rc;
 }
 
-int dp_drm_bridge_init(void *data, struct drm_encoder *encoder)
+int dp_drm_bridge_init(void *data, struct drm_encoder *encoder,
+	u32 max_mixer_count, u32 max_dsc_count)
 {
 	int rc = 0;
 	struct dp_bridge *bridge;
@@ -618,6 +619,8 @@ int dp_drm_bridge_init(void *data, struct drm_encoder *encoder)
 	encoder->bridge = &bridge->base;
 	priv->bridges[priv->num_bridges++] = &bridge->base;
 	display->bridge = bridge;
+	display->max_mixer_count = max_mixer_count;
+	display->max_dsc_count = max_dsc_count;
 
 	return 0;
 error_free_bridge:

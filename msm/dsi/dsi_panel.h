@@ -221,6 +221,8 @@ struct dsi_panel {
 	struct dsi_panel_spr_info spr_info;
 
 	bool sync_broadcast_en;
+	u32 dsc_count;
+	u32 lm_count;
 
 	int panel_test_gpio;
 	int power_mode;

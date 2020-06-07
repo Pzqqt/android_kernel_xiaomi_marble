@@ -723,6 +723,10 @@ struct msm_resource_caps_info {
  * @roi_caps:           Region of interest capability info
  * @qsync_min_fps	Minimum fps supported by Qsync feature
  * @te_source		vsync source pin information
+ * @dsc_count:		max dsc hw blocks used by display (only available
+ *			for dsi display)
+ * @lm_count:		max layer mixer blocks used by display (only available
+ *			for dsi display)
  */
 struct msm_display_info {
 	int intf_type;
@@ -747,6 +751,9 @@ struct msm_display_info {
 
 	uint32_t qsync_min_fps;
 	uint32_t te_source;
+
+	uint32_t dsc_count;
+	uint32_t lm_count;
 };
 
 #define MSM_MAX_ROI	4

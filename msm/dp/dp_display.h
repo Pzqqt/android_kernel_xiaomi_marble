@@ -71,6 +71,8 @@ struct dp_display {
 	bool is_mst_supported;
 	u32 max_pclk_khz;
 	void *dp_mst_prv_info;
+	u32 max_mixer_count;
+	u32 max_dsc_count;
 
 	int (*enable)(struct dp_display *dp_display, void *panel);
 	int (*post_enable)(struct dp_display *dp_display, void *panel);

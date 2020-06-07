@@ -3431,6 +3431,49 @@ int dsi_panel_validate_mode(struct dsi_panel *panel,
 	return 0;
 }
 
+static int dsi_panel_get_max_res_count(struct dsi_parser_utils *utils,
+	struct device_node *node, u32 *dsc_count, u32 *lm_count)
+{
+	const char *compression;
+	u32 *array = NULL, top_count, len, i;
+	int rc = -EINVAL;
+	bool dsc_enable = false;
+
+	*dsc_count = 0;
+	*lm_count = 0;
+	compression = utils->get_property(node, "qcom,compression-mode", NULL);
+	if (compression && !strcmp(compression, "dsc"))
+		dsc_enable = true;
+
+	len = utils->count_u32_elems(node, "qcom,display-topology");
+	if (len <= 0 || len % TOPOLOGY_SET_LEN ||
+			len > (TOPOLOGY_SET_LEN * MAX_TOPOLOGY))
+		return rc;
+
+	top_count = len / TOPOLOGY_SET_LEN;
+
+	array = kcalloc(len, sizeof(u32), GFP_KERNEL);
+	if (!array)
+		return -ENOMEM;
+
+	rc = utils->read_u32_array(node, "qcom,display-topology", array, len);
+	if (rc) {
+		DSI_ERR("unable to read the display topologies, rc = %d\n", rc);
+		goto read_fail;
+	}
+
+	for (i = 0; i < top_count; i++) {
+		*lm_count = max(*lm_count, array[i * TOPOLOGY_SET_LEN]);
+		if (dsc_enable)
+			*dsc_count = max(*dsc_count,
+					array[i * TOPOLOGY_SET_LEN + 1]);
+	}
+
+read_fail:
+	kfree(array);
+	return 0;
+}
+
 int dsi_panel_get_mode_count(struct dsi_panel *panel)
 {
 	const u32 SINGLE_MODE_SUPPORT = 1;
@@ -3439,6 +3482,7 @@ int dsi_panel_get_mode_count(struct dsi_panel *panel)
 	int num_dfps_rates, num_bit_clks;
 	int num_video_modes = 0, num_cmd_modes = 0;
 	int count, rc = 0;
+	u32 dsc_count = 0, lm_count = 0;
 
 	if (!panel) {
 		DSI_ERR("invalid params\n");
@@ -3484,6 +3528,11 @@ int dsi_panel_get_mode_count(struct dsi_panel *panel)
 			num_video_modes++;
 		else if (panel->panel_mode == DSI_OP_CMD_MODE)
 			num_cmd_modes++;
+
+		dsi_panel_get_max_res_count(utils, child_np,
+				&dsc_count, &lm_count);
+		panel->dsc_count = max(dsc_count, panel->dsc_count);
+		panel->lm_count = max(lm_count, panel->lm_count);
 	}
 
 	num_dfps_rates = !panel->dfps_caps.dfps_support ? 1 :
