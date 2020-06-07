@@ -1362,13 +1362,14 @@ struct sde_perf_cfg {
  * @vig_sspp_linewidth max vig source pipe line width support.
  * @scaling_linewidth max vig source pipe linewidth for scaling usecases
  * @max_mixer_width    max layer mixer line width support.
+ * @max_dsc_width      max dsc line width support.
  * @max_mixer_blendstages max layer mixer blend stages or
  *                       supported z order
  * @max_wb_linewidth   max writeback line width support.
  * @max_wb_linewidth_linear   max writeback line width for linear formats.
  * @max_display_width   maximum display width support.
  * @max_display_height  maximum display height support.
- * @max_lm_per_display  maximum layer mixer per display
+
  * @min_display_width   minimum display width support.
  * @min_display_height  minimum display height support.
  * @qseed_type         qseed2 or qseed3 support.
@@ -1433,6 +1434,7 @@ struct sde_mdss_cfg {
 	u32 vig_sspp_linewidth;
 	u32 scaling_linewidth;
 	u32 max_mixer_width;
+	u32 max_dsc_width;
 	u32 max_mixer_blendstages;
 	u32 max_wb_linewidth;
 	u32 max_wb_linewidth_linear;
@@ -1441,7 +1443,6 @@ struct sde_mdss_cfg {
 	u32 max_display_height;
 	u32 min_display_width;
 	u32 min_display_height;
-	u32 max_lm_per_display;
 
 	u32 qseed_type;
 	u32 csc_type;

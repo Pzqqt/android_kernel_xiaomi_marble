@@ -127,6 +127,9 @@ struct dp_display {
 			struct drm_connector *connector, char *pps_cmd);
 	void (*wakeup_phy_layer)(struct dp_display *dp_display,
 			bool wakeup);
+	int (*get_available_dp_resources)(struct dp_display *dp_display,
+			const struct msm_resource_caps_info *avail_res,
+			struct msm_resource_caps_info *max_dp_avail_res);
 };
 
 #if IS_ENABLED(CONFIG_DRM_MSM_DP)

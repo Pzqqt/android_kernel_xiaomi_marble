@@ -1351,6 +1351,9 @@ int msm_get_mixer_count(struct msm_drm_private *priv,
 		const struct drm_display_mode *mode,
 		const struct msm_resource_caps_info *res, u32 *num_lm);
 
+int msm_get_dsc_count(struct msm_drm_private *priv,
+		u32 hdisplay, u32 *num_dsc);
+
 int msm_get_src_bpc(int chroma_format, int bpc);
 
 #endif /* __MSM_DRV_H__ */

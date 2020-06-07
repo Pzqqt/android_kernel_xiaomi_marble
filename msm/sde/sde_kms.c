@@ -2533,6 +2533,34 @@ error:
 	return rc;
 }
 
+static int sde_kms_get_dsc_count(const struct msm_kms *kms,
+		u32 hdisplay, u32 *num_dsc)
+{
+	struct sde_kms *sde_kms;
+	uint32_t max_dsc_width;
+
+	if (!num_dsc) {
+		SDE_ERROR("invalid num_dsc pointer\n");
+		return -EINVAL;
+	}
+
+	*num_dsc = 0;
+	if (!kms || !hdisplay) {
+		SDE_ERROR("invalid input args\n");
+		return -EINVAL;
+	}
+
+	sde_kms = to_sde_kms(kms);
+	max_dsc_width = sde_kms->catalog->max_dsc_width;
+	*num_dsc = DIV_ROUND_UP(hdisplay, max_dsc_width);
+
+	SDE_DEBUG("h=%d, max_dsc_width=%d, num_dsc=%d\n",
+			hdisplay, max_dsc_width,
+			*num_dsc);
+
+	return 0;
+}
+
 static void _sde_kms_null_commit(struct drm_device *dev,
 		struct drm_encoder *enc)
 {
@@ -2885,6 +2913,7 @@ static const struct msm_kms_funcs kms_funcs = {
 	.postopen = _sde_kms_post_open,
 	.check_for_splash = sde_kms_check_for_splash,
 	.get_mixer_count = sde_kms_get_mixer_count,
+	.get_dsc_count = sde_kms_get_dsc_count,
 };
 
 static int _sde_kms_mmu_destroy(struct sde_kms *sde_kms)

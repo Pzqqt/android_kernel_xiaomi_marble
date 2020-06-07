@@ -1938,6 +1938,32 @@ int msm_get_mixer_count(struct msm_drm_private *priv,
 	return funcs->get_mixer_count(priv->kms, mode, res, num_lm);
 }
 
+int msm_get_dsc_count(struct msm_drm_private *priv,
+		u32 hdisplay, u32 *num_dsc)
+{
+	struct msm_kms *kms;
+	const struct msm_kms_funcs *funcs;
+
+	if (!priv) {
+		DRM_ERROR("invalid drm private struct\n");
+		return -EINVAL;
+	}
+
+	kms = priv->kms;
+	if (!kms) {
+		DRM_ERROR("invalid msm kms struct\n");
+		return -EINVAL;
+	}
+
+	funcs = kms->funcs;
+	if (!funcs || !funcs->get_dsc_count) {
+		DRM_ERROR("invalid function pointers\n");
+		return -EINVAL;
+	}
+
+	return funcs->get_dsc_count(priv->kms, hdisplay, num_dsc);
+}
+
 static int msm_drm_bind(struct device *dev)
 {
 	return msm_drm_component_init(dev);
