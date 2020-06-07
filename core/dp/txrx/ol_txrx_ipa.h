@@ -92,7 +92,7 @@ struct ol_txrx_ipa_uc_rx_hdr {
 #define OL_TXRX_IPA_UC_WLAN_HDR_DES_MAC_OFFSET \
 	(OL_TXRX_IPA_WLAN_FRAG_HEADER + OL_TXRX_IPA_WLAN_IPA_HEADER)
 
-#if defined(QCA_WIFI_3_0) && IS_ENABLED(CONFIG_IPA3)
+#if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
 #define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res, osdev) \
 	do { \
 		QDF_IPA_PIPE_IN_UL_RDY_RING_RP_VA(pipe_in) = \
