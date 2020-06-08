@@ -128,9 +128,9 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
  * timed-out command from active queue and move any pending command to active
  * queue of same cmd_type.
  *
- * Return: QDF_STATUS
+ * Return: none
  */
-QDF_STATUS wlan_serialization_generic_timer_cb(void *arg);
+void wlan_serialization_generic_timer_cb(void *arg);
 
 /**
  * wlan_serialization_find_and_start_timer() - to find and start the timer
