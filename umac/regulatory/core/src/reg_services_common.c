@@ -2928,7 +2928,7 @@ QDF_STATUS reg_update_pdev_wireless_modes(struct wlan_objmgr_pdev *pdev,
 
 	if (!pdev_priv_obj) {
 		reg_err("reg pdev private obj is NULL");
-		return QDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	pdev_priv_obj->wireless_modes = wireless_modes;
@@ -3810,6 +3810,7 @@ bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev, uint8_t op_class)
 		(op_class <= MAX_6GHZ_OPER_CLASS));
 }
 
+#ifdef CONFIG_REG_CLIENT
 bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
@@ -3823,6 +3824,7 @@ bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 
 	return psoc_priv_obj->six_ghz_supported;
 }
+#endif
 
 #ifdef DISABLE_UNII_SHARED_BANDS
 QDF_STATUS

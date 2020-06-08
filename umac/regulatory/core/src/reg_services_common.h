@@ -1090,12 +1090,14 @@ QDF_STATUS reg_set_6ghz_supported(struct wlan_objmgr_psoc *psoc,
 bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
 			  uint8_t op_class);
 
+#ifdef CONFIG_REG_CLIENT
 /**
  * reg_is_6ghz_supported() - Whether 6ghz is supported
  *
  * @psoc: pointer to psoc
  */
 bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc);
+#endif
 
 /**
  * reg_get_unii_5g_bitmap() - get unii_5g_bitmap value
