@@ -1,0 +1,10 @@
+#
+# RMNET_SHS driver
+#
+
+menuconfig RMNET_SHS
+    tristate "Rmnet SHS driver"
+    default m
+    depends on RMNET_CORE
+    ---help---
+        performance mode of rmnet driver
