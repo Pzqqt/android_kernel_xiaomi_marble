@@ -14897,6 +14897,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_PDEV_SSCAN_FW_PARAM_EVENTID;
 	event_ids[wmi_roam_cap_report_event_id] =
 			WMI_ROAM_CAPABILITY_REPORT_EVENTID;
+	event_ids[wmi_vdev_bcn_latency_event_id] =
+			WMI_VDEV_BCN_LATENCY_EVENTID;
 }
 
 /**

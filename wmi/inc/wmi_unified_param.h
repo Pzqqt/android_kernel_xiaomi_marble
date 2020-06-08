@@ -4670,6 +4670,7 @@ typedef enum {
 	wmi_muedca_params_config_eventid,
 	wmi_pdev_sscan_fw_param_eventid,
 	wmi_roam_cap_report_event_id,
+	wmi_vdev_bcn_latency_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
