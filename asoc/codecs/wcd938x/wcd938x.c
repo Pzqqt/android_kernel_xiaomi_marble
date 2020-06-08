@@ -3051,9 +3051,17 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AMIC5"),
 	SND_SOC_DAPM_INPUT("AMIC6"),
 	SND_SOC_DAPM_INPUT("AMIC7"),
+
 	SND_SOC_DAPM_INPUT("IN1_HPHL"),
 	SND_SOC_DAPM_INPUT("IN2_HPHR"),
 	SND_SOC_DAPM_INPUT("IN3_AUX"),
+	/*
+	 * These dummy widgets are null connected to WCD938x dapm input and
+	 * output widgets which are not actual path endpoints. This ensures
+	 * dapm doesnt set these dapm input and output widgets as endpoints.
+	 */
+	SND_SOC_DAPM_INPUT("WCD_TX_DUMMY"),
+	SND_SOC_DAPM_OUTPUT("WCD_RX_DUMMY"),
 
 	/*tx widgets*/
 	SND_SOC_DAPM_ADC_E("ADC1", NULL, SND_SOC_NOPM, 0, 0,
@@ -3290,6 +3298,7 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 
 static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 
+	{"WCD_TX_DUMMY", NULL, "WCD_TX_OUTPUT"},
 	{"WCD_TX_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
@@ -3344,6 +3353,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"WCD_TX_OUTPUT", NULL, "DMIC8_MIXER"},
 	{"DMIC8_MIXER", "Switch", "DMIC8"},
 
+	{"IN1_HPHL", NULL, "WCD_RX_DUMMY"},
 	{"IN1_HPHL", NULL, "VDD_BUCK"},
 	{"IN1_HPHL", NULL, "CLS_H_PORT"},
 	{"RX1", NULL, "IN1_HPHL"},
@@ -3352,6 +3362,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHL PGA", NULL, "HPHL_RDAC"},
 	{"HPHL", NULL, "HPHL PGA"},
 
+	{"IN2_HPHR", NULL, "WCD_RX_DUMMY"},
 	{"IN2_HPHR", NULL, "VDD_BUCK"},
 	{"IN2_HPHR", NULL, "CLS_H_PORT"},
 	{"RX2", NULL, "IN2_HPHR"},
@@ -3360,6 +3371,7 @@ static const struct snd_soc_dapm_route wcd938x_audio_map[] = {
 	{"HPHR PGA", NULL, "HPHR_RDAC"},
 	{"HPHR", NULL, "HPHR PGA"},
 
+	{"IN3_AUX", NULL, "WCD_RX_DUMMY"},
 	{"IN3_AUX", NULL, "VDD_BUCK"},
 	{"IN3_AUX", NULL, "CLS_H_PORT"},
 	{"RX3", NULL, "IN3_AUX"},
@@ -3650,6 +3662,8 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_TX_DUMMY");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_RX_DUMMY");
 	snd_soc_dapm_sync(dapm);
 
 	wcd_cls_h_init(&wcd938x->clsh_info);
