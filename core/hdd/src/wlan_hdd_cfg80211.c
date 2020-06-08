@@ -10783,16 +10783,16 @@ const struct nla_policy get_preferred_freq_list_policy[
 };
 
 static uint32_t wlan_hdd_populate_weigh_pcl(
+				struct wlan_objmgr_psoc *psoc,
 				struct policy_mgr_pcl_chan_weights *
 				chan_weights,
 				struct weighed_pcl *w_pcl,
 				enum policy_mgr_con_mode intf_mode)
 {
-	int i, j;
-	uint32_t chan_idx = 0;
-	uint32_t set = 0;
-	uint32_t pcl_len = chan_weights->pcl_len;
-	uint32_t valid_weight;
+	u32 i, j, valid_weight;
+	u32 chan_idx = 0;
+	u32 pcl_len = chan_weights->pcl_len;
+	u32 conn_count = policy_mgr_get_connection_count(psoc);
 
 	/* convert channel number to frequency */
 	for (i = 0; i < chan_weights->pcl_len; i++) {
@@ -10800,45 +10800,51 @@ static uint32_t wlan_hdd_populate_weigh_pcl(
 		w_pcl[i].weight = chan_weights->weight_list[i];
 
 		if (intf_mode == PM_SAP_MODE || intf_mode == PM_P2P_GO_MODE)
-			w_pcl[i].flag = set | PCL_CHANNEL_SUPPORT_GO;
+			w_pcl[i].flag = PCL_CHANNEL_SUPPORT_GO;
 		else
-			w_pcl[i].flag = set | PCL_CHANNEL_SUPPORT_CLI;
+			w_pcl[i].flag = PCL_CHANNEL_SUPPORT_CLI;
 	}
 	chan_idx = pcl_len;
-	if (pcl_len && chan_weights->weight_list[pcl_len - 1] >
-	    PCL_GROUPS_WEIGHT_DIFFERENCE)
-	/* Set non-pcl channels weight 20 point less than the last PCL entry */
-		valid_weight = chan_weights->weight_list[pcl_len - 1] -
-				PCL_GROUPS_WEIGHT_DIFFERENCE;
-	else
-		valid_weight = 1;
+	if (!conn_count || policy_mgr_is_hw_dbs_capable(psoc) ||
+	    policy_mgr_is_interband_mcc_supported(psoc)) {
+		if (pcl_len && chan_weights->weight_list[pcl_len - 1] >
+		    PCL_GROUPS_WEIGHT_DIFFERENCE)
+		/*
+		 * Set non-pcl channels weight 20 point less than the
+		 * last PCL entry
+		 */
+			valid_weight = chan_weights->weight_list[pcl_len - 1] -
+					PCL_GROUPS_WEIGHT_DIFFERENCE;
+		else
+			valid_weight = 1;
 
-	/* Include rest of the valid channels */
-	for (i = 0; i < chan_weights->saved_num_chan; i++) {
-		for (j = 0; j < chan_weights->pcl_len; j++) {
-			if (chan_weights->saved_chan_list[i] ==
-				chan_weights->pcl_list[j])
-				break;
-		}
-		if (j == chan_weights->pcl_len) {
-			w_pcl[chan_idx].freq =
-				chan_weights->saved_chan_list[i];
-
-			if (!chan_weights->weighed_valid_list[i]) {
-				w_pcl[chan_idx].flag =
-					set | PCL_CHANNEL_EXCLUDE_IN_GO_NEG;
-				w_pcl[chan_idx].weight = 0;
-			} else {
-				if (intf_mode == PM_SAP_MODE ||
-				    intf_mode == PM_P2P_GO_MODE)
-					w_pcl[chan_idx].flag =
-						set | PCL_CHANNEL_SUPPORT_GO;
-				else
-					w_pcl[chan_idx].flag =
-						set | PCL_CHANNEL_SUPPORT_CLI;
-				w_pcl[chan_idx].weight = valid_weight;
+		/* Include rest of the valid channels */
+		for (i = 0; i < chan_weights->saved_num_chan; i++) {
+			for (j = 0; j < chan_weights->pcl_len; j++) {
+				if (chan_weights->saved_chan_list[i] ==
+					chan_weights->pcl_list[j])
+					break;
 			}
-			chan_idx++;
+			if (j == chan_weights->pcl_len) {
+				w_pcl[chan_idx].freq =
+					chan_weights->saved_chan_list[i];
+
+				if (!chan_weights->weighed_valid_list[i]) {
+					w_pcl[chan_idx].flag =
+						PCL_CHANNEL_EXCLUDE_IN_GO_NEG;
+					w_pcl[chan_idx].weight = 0;
+				} else {
+					if (intf_mode == PM_SAP_MODE ||
+					    intf_mode == PM_P2P_GO_MODE)
+						w_pcl[chan_idx].flag =
+						      PCL_CHANNEL_SUPPORT_GO;
+					else
+						w_pcl[chan_idx].flag =
+						      PCL_CHANNEL_SUPPORT_CLI;
+					w_pcl[chan_idx].weight = valid_weight;
+				}
+				chan_idx++;
+			}
 		}
 	}
 	return chan_idx;
@@ -10935,7 +10941,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 		qdf_mem_free(chan_weights);
 		return -ENOMEM;
 	}
-	pcl_len = wlan_hdd_populate_weigh_pcl(chan_weights, w_pcl, intf_mode);
+	pcl_len = wlan_hdd_populate_weigh_pcl(hdd_ctx->psoc, chan_weights,
+					      w_pcl, intf_mode);
 	qdf_mem_free(chan_weights);
 
 	for (i = 0; i < pcl_len; i++)
