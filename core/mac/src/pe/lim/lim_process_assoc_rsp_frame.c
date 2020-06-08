@@ -774,19 +774,6 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	lim_update_ese_tspec(mac_ctx, session_entry, assoc_rsp);
 #endif
 
-	if (assoc_rsp->capabilityInfo.ibss) {
-		/*
-		 * Received Re/Association Response from peer
-		 * with IBSS capability set.
-		 * Ignore the frame and wait until Re/assoc
-		 * failure timeout.
-		 */
-		pe_err("received Re/AssocRsp frame with IBSS capability");
-		qdf_mem_free(assoc_rsp);
-		qdf_mem_free(beacon);
-		return;
-	}
-
 	if (lim_get_capability_info(mac_ctx, &caps, session_entry)
 		!= QDF_STATUS_SUCCESS) {
 		qdf_mem_free(assoc_rsp);
