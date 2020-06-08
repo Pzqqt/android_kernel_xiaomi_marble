@@ -783,6 +783,9 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		ret = swr_slvdev_datapath_control(rouleur->rx_swr_dev,
 			    rouleur->rx_swr_dev->dev_num,
 			    true);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL,
+				0x40, 0x00);
 		usleep_range(5000, 5100);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
@@ -1400,6 +1403,7 @@ static int rouleur_event_notify(struct notifier_block *block,
 		rouleur_init_reg(component);
 		regcache_mark_dirty(rouleur->regmap);
 		regcache_sync(rouleur->regmap);
+		rouleur->dev_up = true;
 		/* Initialize MBHC module */
 		mbhc = &rouleur->mbhc->wcd_mbhc;
 		ret = rouleur_mbhc_post_ssr_init(rouleur->mbhc, component);
@@ -1412,7 +1416,6 @@ static int rouleur_event_notify(struct notifier_block *block,
 				mdelay(500);
 		}
 		rouleur->mbhc->wcd_mbhc.deinit_in_progress = false;
-		rouleur->dev_up = true;
 		break;
 	default:
 		dev_err(component->dev, "%s: invalid event %d\n", __func__,
