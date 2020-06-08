@@ -398,6 +398,7 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 
 		if (is_same_flow(&sw_ft_entry->rx_flow_tuple_info,
 				 &rx_flow_tuple_info)) {
+			sw_ft_entry->vdev = vdev;
 			dp_fisa_debug("It is same flow fse entry idx %d",
 				      hashed_flow_idx);
 			/* Incoming flow tuple matches with existing
