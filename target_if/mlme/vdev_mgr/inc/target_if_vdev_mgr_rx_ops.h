@@ -160,9 +160,8 @@ QDF_STATUS target_if_vdev_mgr_wmi_event_unregister(
  * target_if_vdev_mgr_rsp_timer_cb() - function to handle vdev related timeouts
  * @vdev_rsp: pointer to vdev response timer
  *
- * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on error
+ * Return: none
  */
-QDF_STATUS
-target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp);
+void target_if_vdev_mgr_rsp_timer_cb(struct vdev_response_timer *vdev_rsp);
 
 #endif /* __TARGET_IF_VDEV_MGR_RX_OPS_H__ */
