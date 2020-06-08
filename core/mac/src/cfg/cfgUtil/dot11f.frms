@@ -4113,7 +4113,7 @@ FRAME RadioMeasurementRequest
    FF    DialogToken;
    FF    NumOfRepetitions;
    //Measurement Request IE.
-   MANDIE MeasurementRequest[1..2];
+   MANDIE MeasurementRequest[1..5];
 }
 
 FRAME RadioMeasurementReport
