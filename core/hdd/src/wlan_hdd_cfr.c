@@ -67,6 +67,7 @@ const struct nla_policy cfr_config_policy[
 						.type = NLA_U32},
 };
 
+#ifdef WLAN_ENH_CFR_ENABLE
 static QDF_STATUS
 wlan_cfg80211_cfr_set_group_config(struct wlan_objmgr_vdev *vdev,
 				   struct nlattr *tb[])
@@ -281,38 +282,14 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 }
 
 static int
-wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
-				   struct hdd_adapter *adapter,
-				   const void *data,
-				   int data_len)
+wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
+				   struct nlattr **tb)
 {
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX + 1];
 	struct cfr_wlanconfig_param params = { 0 };
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t version = 0;
 	bool is_start_capture = false;
 	QDF_STATUS status;
-	int ret;
-
-	if (wlan_cfg80211_nla_parse(
-			tb,
-			QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX,
-			data,
-			data_len,
-			cfr_config_policy)) {
-		hdd_err("Invalid ATTR");
-		return -EINVAL;
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_VERSION]) {
-		version = nla_get_u8(tb[
-			QCA_WLAN_VENDOR_ATTR_PEER_CFR_VERSION]);
-		hdd_debug("version %d", version);
-		if (version != ENHANCED_CFR_VERSION) {
-			hdd_err("unsupported version");
-			return -EFAULT;
-		}
-	}
+	int ret = 0;
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]) {
 		is_start_capture = nla_get_flag(tb[
@@ -356,8 +333,47 @@ wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
 	}
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-
+	return ret;
+}
+#else
+static int
+wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
+				   struct nlattr **tb)
+{
 	return 0;
+}
+#endif
+
+static int
+wlan_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
+				   struct hdd_adapter *adapter,
+				   const void *data,
+				   int data_len)
+{
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX + 1];
+	uint8_t version = 0;
+
+	if (wlan_cfg80211_nla_parse(
+			tb,
+			QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX,
+			data,
+			data_len,
+			cfr_config_policy)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_VERSION]) {
+		version = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_PEER_CFR_VERSION]);
+		hdd_debug("version %d", version);
+		if (version != ENHANCED_CFR_VERSION) {
+			hdd_err("unsupported version");
+			return -EFAULT;
+		}
+	}
+
+	return wlan_cfg80211_peer_enh_cfr_capture(adapter, tb);
 }
 
 static int __wlan_hdd_cfg80211_peer_cfr_capture_cfg(struct wiphy *wiphy,
