@@ -6410,6 +6410,12 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
+
+	if (!mac_phy_cap) {
+		WMA_LOGE("mac_phy_cap Null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	/*
 	 * This list was updated as part of service ready event. Re-populate
 	 * HW mode list from the device capabilities.
