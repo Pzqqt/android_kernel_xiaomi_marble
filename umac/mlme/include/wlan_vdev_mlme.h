@@ -26,6 +26,7 @@
 #include <wlan_ext_mlme_obj_types.h>
 
 struct vdev_mlme_obj;
+struct cnx_mgr;
 
 /* Requestor ID for multiple vdev restart */
 #define MULTIPLE_VDEV_RESTART_REQ_ID 0x1234
@@ -536,6 +537,7 @@ struct vdev_mlme_ops {
  * @sm_lock:              VDEV SM lock
  * @vdev_cmd_lock:        VDEV MLME command atomicity
  * @sm_hdl:               VDEV SM handle
+ * @cnx_mgr_ctx: connection manager context, valid for STA and P2P-CLI mode only
  * @vdev: Pointer to vdev objmgr
  * @ops:                  VDEV MLME callback table
  * @ext_vdev_ptr:         VDEV MLME legacy pointer
@@ -550,6 +552,9 @@ struct vdev_mlme_obj {
 	qdf_mutex_t vdev_cmd_lock;
 #endif
 	struct wlan_sm *sm_hdl;
+	union {
+		struct cnx_mgr *cnx_mgr_ctx;
+	};
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
 	mlme_vdev_ext_t *ext_vdev_ptr;
