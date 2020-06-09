@@ -1100,17 +1100,19 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 {
 	tpSirBeaconReportReqInd beacon_req = (tpSirBeaconReportReqInd)msg_buf;
 	tpRrmSMEContext sme_rrm_ctx;
-	uint32_t len = 0, i = 0;
+	uint32_t len = 0, i = 0, j = 0;
 	uint8_t country[WNI_CFG_COUNTRY_CODE_LEN];
 	uint32_t session_id;
 	struct csr_roam_session *session;
 	QDF_STATUS status;
-	uint32_t num_chan;
+	uint32_t num_chan, local_num_channel;
 	bool chan_valid;
-	uint32_t *rrm_freq_list;
-	uint32_t bcn_chan_freq;
+	uint32_t *rrm_freq_list, *local_rrm_freq_list;
+	uint32_t bcn_chan_freq, local_bcn_chan_freq;
+	tRrmPEContext rrm_context;
 
 	sme_rrm_ctx = &mac->rrm.rrmSmeContext[beacon_req->measurement_idx];
+	rrm_context = mac->rrm.rrmPEContext;
 
 	status = csr_roam_get_session_id_from_bssid(mac, (struct qdf_mac_addr *)
 						    beacon_req->bssId,
@@ -1234,6 +1236,50 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		sme_rrm_ctx->channelList.numOfChannels = num_chan;
 	}
+
+	local_rrm_freq_list = sme_rrm_ctx->channelList.freq_list;
+	local_num_channel = 0;
+	for (i = 0; i < sme_rrm_ctx->channelList.numOfChannels; i++) {
+		local_bcn_chan_freq = local_rrm_freq_list[i];
+		chan_valid = true;
+
+		if (beacon_req->measurement_idx > 0) {
+			for (j = 0; j < rrm_context.beacon_rpt_chan_num; j ++) {
+				if (rrm_context.beacon_rpt_chan_list[j] ==
+				    local_bcn_chan_freq) {
+				/*
+				 * Ignore this channel, As this is already
+				 * included in previous request
+				 */
+					chan_valid = false;
+					break;
+				}
+			}
+		}
+
+		if (chan_valid) {
+			rrm_context.
+			beacon_rpt_chan_list[rrm_context.beacon_rpt_chan_num] =
+							local_bcn_chan_freq;
+			rrm_context.beacon_rpt_chan_num++;
+
+			if (rrm_context.beacon_rpt_chan_num >=
+			    MAX_NUM_CHANNELS) {
+			    /* this should never happen */
+				sme_err("Reset beacon_rpt_chan_num : %d",
+					rrm_context.beacon_rpt_chan_num);
+				rrm_context.beacon_rpt_chan_num = 0;
+			}
+			local_rrm_freq_list[local_num_channel] =
+							local_bcn_chan_freq;
+			local_num_channel++;
+		}
+	}
+
+	if (local_num_channel == 0)
+		goto cleanup;
+
+	sme_rrm_ctx->channelList.numOfChannels = local_num_channel;
 
 	/* Copy session bssid */
 	qdf_mem_copy(sme_rrm_ctx->sessionBssId.bytes, beacon_req->bssId,
