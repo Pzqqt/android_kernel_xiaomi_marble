@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,7 +24,7 @@
 #define _WLAN_CFG80211_CRYPTO_H_
 #include <net/cfg80211.h>
 #include "wlan_crypto_global_def.h"
-#ifdef CONFIG_CRYPTO_COMPONENT
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
 /**
  * wlan_cfg80211_set_default_key() - to set the default key to be used
  * @vdev: VDEV Object pointer
