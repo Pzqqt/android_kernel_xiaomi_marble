@@ -572,11 +572,17 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs);
  * dfs_process_ocac_complete() - Process Off-Channel CAC complete indication.
  * @pdev :Pointer to wlan_objmgr_pdev structure.
  * @ocac_status: Off channel CAC complete status
- * @center_freq : Center Frequency of O-CAC done indication.
+ * @center_freq1 : For 20/40/80/160Mhz, it is the center of the corresponding
+ * band. For 80P80/165MHz, it is the center of the left 80MHz.
+ * @center_freq2 : It is valid and non-zero only for 80P80/165MHz. It indicates
+ * the Center Frequency of the right 80MHz segment.
+ * @chwidth : Width of the channel for which OCAC completion is received.
  */
 void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			       uint32_t ocac_status,
-			       uint32_t center_freq);
+			       uint32_t center_freq1,
+			       uint32_t center_freq2,
+			       enum phy_ch_width chwidth);
 
 /**
  * dfs_get_ieeechan_for_agilecac() - Find an IEEE channel for agile CAC.
@@ -657,7 +663,9 @@ static inline void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 static inline void
 dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			  uint32_t ocac_status,
-			  uint32_t center_freq)
+			  uint32_t center_freq1,
+			  uint32_t center_freq2,
+			  enum phy_ch_width chwidth)
 {
 }
 

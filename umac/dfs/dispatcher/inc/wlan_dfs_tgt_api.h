@@ -103,14 +103,18 @@ struct dfs_emulate_bang_radar_test_cmd {
  * @vdev_id: Physical device identifier
  * @chan_freq: Channel number
  * @chan_width: Channel Width
- * @center_freq: Center channel number
+ * @center_freq1 : For 20/40/80/160Mhz, it is the center of the corresponding
+ * band. For 80P80/165MHz, it is the center of the left 80MHz.
+ * @center_freq2 : It is valid and non-zero only for 80P80/165MHz. It indicates
+ * the Center Frequency of the right 80MHz segment.
  * @ocac_status: off channel cac status
  */
 struct vdev_adfs_complete_status {
 	uint32_t vdev_id;
 	uint32_t chan_freq;
 	uint32_t chan_width;
-	uint32_t center_freq;
+	uint32_t center_freq1;
+	uint32_t center_freq2;
 	uint32_t ocac_status;
 };
 

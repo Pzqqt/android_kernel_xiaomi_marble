@@ -556,7 +556,9 @@ QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
 	}
 
 	dfs_process_ocac_complete(pdev, adfs_status->ocac_status,
-				  adfs_status->center_freq);
+				  adfs_status->center_freq1,
+				  adfs_status->center_freq2,
+				  adfs_status->chan_width);
 
 	return  QDF_STATUS_SUCCESS;
 }

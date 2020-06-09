@@ -12193,11 +12193,17 @@ extract_dfs_ocac_complete_event_tlv(wmi_unified_t wmi_handle,
 	ocac_complete_status = param_tlvs->fixed_param;
 	param->vdev_id = ocac_complete_status->vdev_id;
 	param->chan_freq = ocac_complete_status->chan_freq;
-	param->center_freq = ocac_complete_status->center_freq;
+	param->center_freq1 = ocac_complete_status->center_freq1;
+	param->center_freq2 = ocac_complete_status->center_freq2;
 	param->ocac_status = ocac_complete_status->status;
 	param->chan_width = ocac_complete_status->chan_width;
-	WMI_LOGD("processed ocac complete event vdev %d agile chan %d",
-		 param->vdev_id, param->center_freq);
+	WMI_LOGD("processed ocac complete event vdev %d"
+		 " agile chan %d %d width %d status %d",
+		 param->vdev_id,
+		 param->center_freq1,
+		 param->center_freq2,
+		 param->chan_width,
+		 param->ocac_status);
 
 	return QDF_STATUS_SUCCESS;
 }
