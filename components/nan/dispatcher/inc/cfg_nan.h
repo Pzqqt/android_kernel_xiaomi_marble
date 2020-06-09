@@ -215,6 +215,29 @@
 			"gSupportMp0Discovery", \
 			1, \
 			"Enable/Disable discovery of NAN cluster with Master Preference (MP) as 0")
+/*
+ * <ini>
+ * ndi_max_support - To configure max number of ndi host supports
+ *
+ * @Min: 1
+ * @Max: 2
+ * @Default: 1
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_NDI_MAX_SUPPORT CFG_INI_UINT( \
+			"ndi_max_support", \
+			1, \
+			2, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Max number of NDI host supports")
 
 #ifdef WLAN_FEATURE_NAN
 #define CFG_NAN_DISC CFG(CFG_NAN_ENABLE) \
@@ -231,6 +254,7 @@
 
 #define CFG_NAN_ALL     CFG_NAN_DISC \
 			CFG_NAN_DP \
-			CFG(CFG_NDP_MAX_SESSIONS)
+			CFG(CFG_NDP_MAX_SESSIONS) \
+			CFG(CFG_NDI_MAX_SUPPORT)
 
 #endif

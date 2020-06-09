@@ -342,6 +342,9 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->mgmt_comp_evt_bundle_support = true;
 	tgt_cfg->tx_msdu_new_partition_id_support = true;
 
+	cfg_nan_get_max_ndi(wma_handle->psoc,
+			    &tgt_cfg->max_ndi);
+
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;
 

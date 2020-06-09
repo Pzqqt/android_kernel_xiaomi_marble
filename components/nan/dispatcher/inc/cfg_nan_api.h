@@ -85,6 +85,15 @@ QDF_STATUS cfg_nan_get_ndp_max_sessions(struct wlan_objmgr_psoc *psoc,
 					uint32_t *val);
 
 /**
+ * cfg_nan_get_max_ndi() - get max number of ndi host supports
+ * @psoc: pointer to psoc object
+ * @val: pointer to hold max number of ndi
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cfg_nan_get_max_ndi(struct wlan_objmgr_psoc *psoc, uint32_t *val);
+
+/**
  * cfg_nan_get_support_mp0_discovery() - get value of config support mp0
  * discovery
  * @psoc: pointer to psoc object
@@ -140,6 +149,12 @@ QDF_STATUS cfg_nan_get_ndp_keepalive_period(struct wlan_objmgr_psoc *psoc,
 static inline
 QDF_STATUS cfg_nan_get_ndp_max_sessions(struct wlan_objmgr_psoc *psoc,
 					uint32_t *val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS cfg_nan_get_max_ndi(struct wlan_objmgr_psoc *psoc, uint32_t *val)
 {
 	return QDF_STATUS_SUCCESS;
 }
