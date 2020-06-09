@@ -10260,6 +10260,7 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 
 	if (!rx_hw_stats) {
 		dp_err("malloc failed for hw stats structure");
+		dp_peer_unref_delete(peer);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -10271,6 +10272,7 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 		dp_err("no tid stats sent successfully");
 		qdf_mem_free(rx_hw_stats);
 		qdf_spin_unlock_bh(&soc->rx_hw_stats_lock);
+		dp_peer_unref_delete(peer);
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_atomic_set(&rx_hw_stats->pending_tid_stats_cnt,
