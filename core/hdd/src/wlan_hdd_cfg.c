@@ -36,6 +36,7 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 #include <cds_api.h>
+#include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_he.h"
 #include <wlan_policy_mgr_api.h>
 #include "wifi_pos_api.h"
@@ -1276,6 +1277,341 @@ QDF_STATUS hdd_get_nss(struct hdd_adapter *adapter, uint8_t *nss)
 		*nss = *nss - 1;
 
 	return status;
+}
+
+int hdd_vendor_mode_to_phymode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+			       eCsrPhyMode *csr_phy_mode)
+{
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+		*csr_phy_mode = eCSR_DOT11_MODE_AUTO;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+		*csr_phy_mode = eCSR_DOT11_MODE_11a;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+		*csr_phy_mode = eCSR_DOT11_MODE_11b;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+		*csr_phy_mode = eCSR_DOT11_MODE_11g;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		*csr_phy_mode = eCSR_DOT11_MODE_11n;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+		*csr_phy_mode = eCSR_DOT11_MODE_11ac;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+		*csr_phy_mode = eCSR_DOT11_MODE_11ax;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+enum band_info
+hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
+{
+	enum band_info band;
+
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		band = BAND_ALL;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+		band = BAND_5G;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+		band = BAND_2G;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		band = BAND_UNKNOWN;
+	}
+
+	return band;
+}
+
+int
+hdd_vendor_mode_to_bonding_mode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+				uint32_t *bonding_mode)
+{
+	switch (vendor_phy_mode) {
+	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40MINUS:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
+	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
+		*bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+		break;
+	case QCA_WLAN_VENDOR_PHY_MODE_11A:
+	case QCA_WLAN_VENDOR_PHY_MODE_11B:
+	case QCA_WLAN_VENDOR_PHY_MODE_11G:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
+	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
+		*bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		break;
+	default:
+		hdd_err("Not supported mode %d", vendor_phy_mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_phymode_to_dot11_mode(eCsrPhyMode phymode,
+				     enum hdd_dot11_mode *dot11_mode)
+{
+	switch (phymode) {
+	case eCSR_DOT11_MODE_AUTO:
+		*dot11_mode = eHDD_DOT11_MODE_AUTO;
+		break;
+	case eCSR_DOT11_MODE_11a:
+		*dot11_mode = eHDD_DOT11_MODE_11a;
+		break;
+	case eCSR_DOT11_MODE_11b:
+		*dot11_mode = eHDD_DOT11_MODE_11b;
+		break;
+	case eCSR_DOT11_MODE_11g:
+		*dot11_mode = eHDD_DOT11_MODE_11g;
+		break;
+	case eCSR_DOT11_MODE_11n:
+		*dot11_mode = eHDD_DOT11_MODE_11n;
+		break;
+	case eCSR_DOT11_MODE_11ac:
+		*dot11_mode = eHDD_DOT11_MODE_11ac;
+		break;
+	case eCSR_DOT11_MODE_11ax:
+		*dot11_mode = eHDD_DOT11_MODE_11ax;
+		break;
+	default:
+		hdd_err("Not supported mode %d", phymode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+#ifdef QCA_HT_2040_COEX
+static QDF_STATUS
+hdd_set_ht2040_mode(struct hdd_adapter *adapter,
+		    struct csr_config_params *csr_config,
+		    uint32_t bonding_mode)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (csr_config->phyMode == eCSR_DOT11_MODE_11n) {
+		if (bonding_mode == WNI_CFG_CHANNEL_BONDING_MODE_ENABLE)
+			csr_config->obssEnabled = true;
+		else
+			csr_config->obssEnabled = false;
+		status = sme_set_ht2040_mode(hdd_ctx->mac_handle,
+					     adapter->vdev_id,
+					     eHT_CHAN_HT20,
+					     csr_config->obssEnabled);
+	}
+
+	return status;
+}
+#else
+static QDF_STATUS
+hdd_set_ht2040_mode(struct hdd_adapter *adapter,
+		    struct csr_config_params *csr_config,
+		    uint32_t bonding_mode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
+		       enum band_info band, uint32_t bonding_mode)
+{
+	struct net_device *net = adapter->dev;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct sme_config_params *sme_config = NULL;
+	struct csr_config_params *csr_config;
+	eCsrPhyMode old_phymode;
+	enum hdd_dot11_mode hdd_dot11mode;
+	uint8_t ui_band;
+	int ret = 0;
+	QDF_STATUS status;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret < 0)
+		return ret;
+
+	ret = hdd_phymode_to_dot11_mode(phymode, &hdd_dot11mode);
+	if (ret < 0)
+		return ret;
+
+	hdd_debug("phymode=%d bonding_mode=%d band=%d",
+		  phymode, bonding_mode, band);
+
+	old_phymode = sme_get_phy_mode(hdd_ctx->mac_handle);
+
+	sme_set_phy_mode(hdd_ctx->mac_handle, phymode);
+
+	switch (band) {
+	case BAND_ALL:
+		ui_band = WLAN_HDD_UI_BAND_AUTO;
+		break;
+	case BAND_5G:
+		ui_band = WLAN_HDD_UI_BAND_5_GHZ;
+		break;
+	case BAND_2G:
+		ui_band = WLAN_HDD_UI_BAND_2_4_GHZ;
+		break;
+	default:
+		hdd_err("Invalid band %d", band);
+		return -EINVAL;
+	}
+
+	if (hdd_reg_set_band(net, ui_band)) {
+		sme_set_phy_mode(hdd_ctx->mac_handle, old_phymode);
+		return -EIO;
+	}
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config)
+		return -ENOMEM;
+
+	sme_get_config_param(hdd_ctx->mac_handle, sme_config);
+	csr_config = &sme_config->csr_config;
+	csr_config->phyMode = phymode;
+
+	status = hdd_set_ht2040_mode(adapter, csr_config, bonding_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set ht2040 mode");
+		ret = -EIO;
+		goto free;
+	}
+
+	status = ucfg_mlme_set_band_capability(hdd_ctx->psoc, band);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to set MLME band capability");
+		ret = -EIO;
+		goto free;
+	}
+
+	if (band == BAND_2G) {
+		status = ucfg_mlme_set_11h_enabled(hdd_ctx->psoc, 0);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Failed to set 11h_enable flag");
+			ret = -EIO;
+			goto free;
+		}
+	}
+	if (band == BAND_2G) {
+		csr_config->channelBondingMode24GHz = bonding_mode;
+	} else if (band == BAND_5G) {
+		csr_config->channelBondingMode5GHz = bonding_mode;
+	} else {
+		csr_config->channelBondingMode24GHz = bonding_mode;
+		csr_config->channelBondingMode5GHz = bonding_mode;
+	}
+	sme_update_config(hdd_ctx->mac_handle, sme_config);
+
+	hdd_ctx->config->dot11Mode = hdd_dot11mode;
+	ucfg_mlme_set_channel_bonding_24ghz(hdd_ctx->psoc,
+					   csr_config->channelBondingMode24GHz);
+	ucfg_mlme_set_channel_bonding_5ghz(hdd_ctx->psoc,
+					   csr_config->channelBondingMode5GHz);
+	if (hdd_update_config_cfg(hdd_ctx) == false) {
+		hdd_err("could not update config_dat");
+		ret = -EIO;
+		goto free;
+	}
+
+	if (band == BAND_ALL || band == BAND_5G) {
+		struct ieee80211_supported_band *ieee_band;
+		uint32_t channel_bonding_mode;
+
+		ucfg_mlme_get_channel_bonding_5ghz(hdd_ctx->psoc,
+						   &channel_bonding_mode);
+		ieee_band = hdd_ctx->wiphy->bands[HDD_NL80211_BAND_5GHZ];
+		if (channel_bonding_mode)
+			ieee_band->ht_cap.cap |=
+					IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+		else
+			ieee_band->ht_cap.cap &=
+					~IEEE80211_HT_CAP_SUP_WIDTH_20_40;
+	}
+
+free:
+	if (sme_config)
+		qdf_mem_free(sme_config);
+	return ret;
 }
 
 int hdd_get_ldpc(struct hdd_adapter *adapter, int *value)

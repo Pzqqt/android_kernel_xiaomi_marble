@@ -367,6 +367,55 @@ void hdd_restore_all_ps(struct hdd_context *hdd_ctx);
 void hdd_override_all_ps(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_vendor_mode_to_phymode() - Get eCsrPhyMode according to vendor phy mode
+ * @vendor_phy_mode: vendor phy mode
+ * @crs_phy_mode: phy mode of eCsrPhyMode
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int hdd_vendor_mode_to_phymode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+			       eCsrPhyMode *csr_phy_mode);
+
+/**
+ * hdd_vendor_mode_to_band() - Get band_info according to vendor phy mode
+ * @vendor_phy_mode: vendor phy mode
+ *
+ * Return: band_info on success, BAND_UNKNOWN on error
+ */
+enum band_info
+hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode);
+
+/**
+ * hdd_vendor_mode_to_bonding_mode() - Get channel bonding mode according to
+ * vendor phy mode
+ * @vendor_phy_mode: vendor phy mode
+ * @bonding_mode: channel bonding mode
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int
+hdd_vendor_mode_to_bonding_mode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+				uint32_t *bonding_mode);
+
+/**
+ * hdd_update_phymode() - update the PHY mode of the adapter
+ * @adapter: adapter being modified
+ * @phymode: new PHY mode for the adapter
+ * @band: new band for the adapter
+ * @bonding_mode: new channel bonding mode for the adapter
+ *
+ * This function is called when the adapter is set to a new PHY mode.
+ * It takes a holistic look at the desired PHY mode along with the
+ * configured capabilities of the driver and the reported capabilities
+ * of the hardware in order to correctly configure all PHY-related
+ * parameters.
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
+		       enum band_info band, uint32_t bonding_mode);
+
+/**
  * hdd_get_ldpc() - Get adapter LDPC
  * @adapter: adapter being queried
  * @value: where to store the value

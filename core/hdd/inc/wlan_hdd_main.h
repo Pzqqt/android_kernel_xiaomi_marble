@@ -4459,24 +4459,6 @@ static inline void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 void hdd_init_start_completion(void);
 
 /**
- * hdd_update_phymode() - update the PHY mode of the adapter
- * @adapter: adapter being modified
- * @phymode: new PHY mode for the adapter
- * @band: new band for the adapter
- * @chwidth: new channel width for the adapter
- *
- * This function is called when the adapter is set to a new PHY mode.
- * It takes a holistic look at the desired PHY mode along with the
- * configured capabilities of the driver and the reported capabilities
- * of the hardware in order to correctly configure all PHY-related
- * parameters.
- *
- * Return: 0 on success, negative errno value on error
- */
-int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
-		       enum band_info band, uint32_t chwidth);
-
-/**
  * hdd_max_sta_vdev_count_reached() - check sta vdev count
  * @hdd_ctx: global hdd context
  *
