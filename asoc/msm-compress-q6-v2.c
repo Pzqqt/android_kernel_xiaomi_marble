@@ -137,6 +137,9 @@ struct msm_compr_audio {
 
 	int32_t first_buffer;
 	int32_t last_buffer;
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+	int32_t zero_buffer;
+#endif
 	int32_t partial_drain_delay;
 
 	uint16_t session_id;
@@ -168,6 +171,9 @@ struct msm_compr_audio {
 	atomic_t start;
 	atomic_t eos;
 	atomic_t drain;
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+	atomic_t partial_drain;
+#endif
 	atomic_t xrun;
 	atomic_t close;
 	atomic_t wait_on_close;
@@ -622,8 +628,10 @@ static void compr_event_handler(uint32_t opcode,
 			if (atomic_cmpxchg(&prtd->drain, 1, 0) &&
 			    prtd->last_buffer) {
 				pr_debug("%s: wake up on drain\n", __func__);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 				prtd->drain_ready = 1;
 				wake_up(&prtd->drain_wait);
+#endif
 				prtd->last_buffer = 0;
 			} else {
 				atomic_set(&prtd->start, 0);
@@ -666,6 +674,103 @@ static void compr_event_handler(uint32_t opcode,
 			break;
 		}
 
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+		if (prtd->zero_buffer) {
+			pr_debug("write_done for zero buffer\n");
+			prtd->zero_buffer = 0;
+
+			/* move to next stream and reset vars */
+			pr_debug("%s: Moving to next stream in gapless\n",
+								__func__);
+			ac->stream_id = NEXT_STREAM_ID(ac->stream_id);
+			prtd->byte_offset = 0;
+			prtd->app_pointer  = 0;
+			prtd->first_buffer = 1;
+			prtd->last_buffer = 0;
+			/*
+			 * Set gapless transition flag only if EOS hasn't been
+			 * acknowledged already.
+			 */
+			if (atomic_read(&prtd->eos))
+				prtd->gapless_state.gapless_transition = 1;
+			prtd->marker_timestamp = 0;
+
+			/*
+			 * Don't reset these as these vars map to
+			 * total_bytes_transferred and total_bytes_available
+			 * directly, only total_bytes_transferred will be
+			 * updated in the next avail() ioctl
+			 *	prtd->copied_total = 0;
+			 *	prtd->bytes_received = 0;
+			 */
+			atomic_set(&prtd->drain, 0);
+			atomic_set(&prtd->xrun, 1);
+			pr_debug("%s: issue CMD_RUN", __func__);
+			q6asm_run_nowait(prtd->audio_client, 0, 0, 0);
+			snd_compr_drain_notify(cstream);
+			spin_unlock_irqrestore(&prtd->lock, flags);
+			break;
+		}
+
+		bytes_available = prtd->bytes_received - prtd->copied_total;
+		if (bytes_available == 0) {
+			pr_debug("%s:bytes_available is 0\n", __func__);
+			if (prtd->last_buffer)
+				prtd->last_buffer = 0;
+
+			if (atomic_read(&prtd->partial_drain) &&
+				prtd->gapless_state.set_next_stream_id &&
+				!prtd->zero_buffer) {
+
+				pr_debug("%s:Partial Drain Case\n", __func__);
+				pr_debug("%s:Send EOS command\n", __func__);
+				/* send EOS */
+				prtd->eos_ack = 0;
+				atomic_set(&prtd->eos, 1);
+				atomic_set(&prtd->drain, 0);
+				q6asm_stream_cmd_nowait(ac, CMD_EOS, ac->stream_id);
+
+				/* send a zero length buffer in case of partial drain*/
+				atomic_set(&prtd->xrun, 0);
+				pr_debug("%s:Send zero size buffer\n", __func__);
+				msm_compr_send_buffer(prtd);
+				prtd->zero_buffer = 1;
+			} else {
+				/*
+				 * moving to next stream failed, so reset the gapless state
+				 * set next stream id for the same session so that the same
+				 * stream can be used for gapless playback
+				 */
+				pr_debug("%s:Drain Case\n", __func__);
+				pr_debug("%s:Reset Gapless params \n", __func__);
+
+				prtd->gapless_state.set_next_stream_id = false;
+				prtd->gapless_state.gapless_transition = 0;
+
+				pr_debug("%s:Send EOS command\n", __func__);
+				prtd->eos_ack = 0;
+				atomic_set(&prtd->eos, 1);
+				atomic_set(&prtd->drain, 0);
+				q6asm_stream_cmd_nowait(ac, CMD_EOS, ac->stream_id);
+
+				prtd->cmd_interrupt = 0;
+			}
+		} else if (bytes_available < cstream->runtime->fragment_size) {
+			pr_debug("%s:Partial Buffer Case \n", __func__);
+			atomic_set(&prtd->xrun, 1);
+
+			if (prtd->last_buffer)
+				prtd->last_buffer = 0;
+			if (atomic_read(&prtd->drain)) {
+				if (bytes_available > 0) {
+					pr_debug("%s: send %d partial bytes at the end",
+						   __func__, bytes_available);
+					atomic_set(&prtd->xrun, 0);
+					prtd->last_buffer = 1;
+					msm_compr_send_buffer(prtd);
+				}
+			}
+#else
 		bytes_available = prtd->bytes_received - prtd->copied_total;
 		if (bytes_available < cstream->runtime->fragment_size) {
 			pr_debug("WRITE_DONE Insufficient data to send. break out\n");
@@ -679,6 +784,7 @@ static void compr_event_handler(uint32_t opcode,
 				wake_up(&prtd->drain_wait);
 				atomic_set(&prtd->drain, 0);
 			}
+#endif
 		} else if ((bytes_available == cstream->runtime->fragment_size)
 			   && atomic_read(&prtd->drain)) {
 			prtd->last_buffer = 1;
@@ -740,7 +846,40 @@ static void compr_event_handler(uint32_t opcode,
 		    !prtd->gapless_state.set_next_stream_id) {
 			pr_debug("ASM_DATA_CMDRSP_EOS wake up\n");
 			prtd->eos_ack = 1;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			wake_up(&prtd->eos_wait);
+#else
+			pr_debug("%s:issue CMD_PAUSE stream_id %d",
+					  __func__, ac->stream_id);
+			q6asm_stream_cmd_nowait(ac, CMD_PAUSE, ac->stream_id);
+			prtd->cmd_ack = 0;
+
+			pr_debug("%s:DRAIN,don't wait for EOS ack\n", __func__);
+			/*
+			 * Don't reset these as these vars map to
+			 * total_bytes_transferred and total_bytes_available.
+			 * Just total_bytes_transferred will be updated
+			 * in the next avail() ioctl.
+			 * prtd->copied_total = 0;
+			 * prtd->bytes_received = 0;
+			 * do not reset prtd->bytes_sent as well as the same
+			 * session is used for gapless playback
+			 */
+			prtd->byte_offset = 0;
+
+			prtd->app_pointer  = 0;
+			prtd->first_buffer = 1;
+			prtd->last_buffer = 0;
+			atomic_set(&prtd->drain, 0);
+			atomic_set(&prtd->xrun, 1);
+
+			pr_debug("%s:issue CMD_FLUSH ac->stream_id %d",
+						  __func__, ac->stream_id);
+
+			q6asm_run_nowait(prtd->audio_client, 0, 0, 0);
+
+			snd_compr_drain_notify(cstream);
+#endif
 		}
 		atomic_set(&prtd->eos, 0);
 		stream_index = STREAM_ARRAY_INDEX(stream_id);
@@ -841,7 +980,9 @@ static void compr_event_handler(uint32_t opcode,
 						prtd->last_buffer = 0;
 
 					prtd->drain_ready = 1;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 					wake_up(&prtd->drain_wait);
+#endif
 					atomic_set(&prtd->drain, 0);
 				} else if (atomic_read(&prtd->xrun)) {
 					pr_debug("%s: RUN ack, continue write cycle\n", __func__);
@@ -916,11 +1057,13 @@ static void compr_event_handler(uint32_t opcode,
 		prtd->copied_total = prtd->bytes_received;
 		snd_compr_fragment_elapsed(cstream);
 		atomic_set(&prtd->error, 1);
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		wake_up(&prtd->drain_wait);
 		if (atomic_cmpxchg(&prtd->eos, 1, 0)) {
 			pr_debug("%s:unblock eos wait queues", __func__);
 			wake_up(&prtd->eos_wait);
 		}
+#endif
 		spin_unlock_irqrestore(&prtd->lock, flags);
 		break;
 	default:
@@ -1754,6 +1897,9 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 	atomic_set(&prtd->eos, 0);
 	atomic_set(&prtd->start, 0);
 	atomic_set(&prtd->drain, 0);
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+	atomic_set(&prtd->partial_drain, 0);
+#endif
 	atomic_set(&prtd->xrun, 0);
 	atomic_set(&prtd->close, 0);
 	atomic_set(&prtd->wait_on_close, 0);
@@ -1849,6 +1995,9 @@ static int msm_compr_capture_open(struct snd_compr_stream *cstream)
 	atomic_set(&prtd->eos, 0);
 	atomic_set(&prtd->start, 0);
 	atomic_set(&prtd->drain, 0);
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+	atomic_set(&prtd->partial_drain, 0);
+#endif
 	atomic_set(&prtd->xrun, 0);
 	atomic_set(&prtd->close, 0);
 	atomic_set(&prtd->wait_on_close, 0);
@@ -1911,7 +2060,9 @@ static int msm_compr_playback_free(struct snd_compr_stream *cstream)
 		return 0;
 	}
 	prtd->cmd_interrupt = 1;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	wake_up(&prtd->drain_wait);
+#endif
 	pdata = snd_soc_component_get_drvdata(component);
 	ac = prtd->audio_client;
 	if (!pdata || !ac) {
@@ -2293,6 +2444,7 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 	return ret;
 }
 
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 static int msm_compr_drain_buffer(struct msm_compr_audio *prtd,
 				  unsigned long *flags)
 {
@@ -2321,6 +2473,7 @@ static int msm_compr_drain_buffer(struct msm_compr_audio *prtd,
 	}
 	return rc;
 }
+#endif
 
 static int msm_compr_wait_for_stream_avail(struct msm_compr_audio *prtd,
 				    unsigned long *flags)
@@ -2373,7 +2526,9 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 	struct audio_client *ac = prtd->audio_client;
 	unsigned long fe_id = rtd->dai_link->id;
 	int rc = 0;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 	int bytes_to_write;
+#endif
 	unsigned long flags;
 	int stream_id;
 	uint32_t stream_index;
@@ -2465,17 +2620,21 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 			 * cmd_int and do not wake up eos_wait during gapless
 			 * transition
 			 */
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			if (!prtd->gapless_state.gapless_transition) {
 				prtd->cmd_interrupt = 1;
 				wake_up(&prtd->eos_wait);
 			}
+#endif
 			atomic_set(&prtd->eos, 0);
 		}
 		if (atomic_read(&prtd->drain)) {
 			pr_debug("%s: interrupt drain wait queues", __func__);
 			prtd->cmd_interrupt = 1;
 			prtd->drain_ready = 1;
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 			wake_up(&prtd->drain_wait);
+#endif
 			atomic_set(&prtd->drain, 0);
 		}
 		prtd->last_buffer = 0;
@@ -2521,10 +2680,20 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 		break;
 	case SND_COMPR_TRIGGER_PARTIAL_DRAIN:
 		pr_debug("%s: SND_COMPR_TRIGGER_PARTIAL_DRAIN\n", __func__);
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+		spin_lock_irqsave(&prtd->lock, flags);
+		atomic_set(&prtd->partial_drain, 1);
+#endif
 		if (!prtd->gapless_state.use_dsp_gapless_mode) {
 			pr_debug("%s: set partial drain as drain\n", __func__);
 			cmd = SND_COMPR_TRIGGER_DRAIN;
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+			atomic_set(&prtd->partial_drain, 0);
+#endif
 		}
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+		spin_unlock_irqrestore(&prtd->lock, flags);
+#endif
 	case SND_COMPR_TRIGGER_DRAIN:
 		pr_debug("%s: SNDRV_COMPRESS_DRAIN\n", __func__);
 		/* Make sure all the data is sent to DSP before sending EOS */
@@ -2534,9 +2703,13 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 			pr_err("%s: stream is not in started state\n",
 				__func__);
 			rc = -EPERM;
+#if !IS_ENABLED(CONFIG_AUDIO_QGKI)
+			atomic_set(&prtd->partial_drain, 0);
+#endif
 			spin_unlock_irqrestore(&prtd->lock, flags);
 			break;
 		}
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		if (prtd->bytes_received > prtd->copied_total) {
 			pr_debug("%s: wait till all the data is sent to dsp\n",
 				__func__);
@@ -2743,6 +2916,10 @@ static int msm_compr_trigger(struct snd_compr_stream *cstream, int cmd)
 
 			q6asm_run_nowait(prtd->audio_client, 0, 0, 0);
 		}
+#else
+		atomic_set(&prtd->drain, 1);
+		spin_unlock_irqrestore(&prtd->lock, flags);
+#endif
 		prtd->cmd_interrupt = 0;
 		break;
 	case SND_COMPR_TRIGGER_NEXT_TRACK:
