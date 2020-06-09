@@ -56,6 +56,7 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 						CFG_NDP_KEEP_ALIVE_PERIOD);
 	nan_obj->cfg_param.max_ndp_sessions = cfg_get(psoc,
 						      CFG_NDP_MAX_SESSIONS);
+	nan_obj->cfg_param.max_ndi = cfg_get(psoc, CFG_NDI_MAX_SUPPORT);
 }
 
 /**
