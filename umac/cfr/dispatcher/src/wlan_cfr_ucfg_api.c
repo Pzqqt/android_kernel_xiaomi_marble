@@ -538,6 +538,7 @@ QDF_STATUS ucfg_cfr_set_reset_bitmap(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+#ifdef WLAN_ENH_CFR_ENABLE
 /*
  * This is needed only in case of m_ta_ra_filter mode.
  * After providing all the group configurations, user should provide
@@ -567,6 +568,7 @@ QDF_STATUS ucfg_cfr_set_en_bitmap(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
+#endif
 
 /*
  * Copy user provided input for ul_mu_user_mask into cfr_rcc_param.
@@ -1096,6 +1098,7 @@ static void cfr_set_filter(struct wlan_objmgr_pdev *pdev, bool enable,
 		       filter_val);
 }
 
+#ifdef WLAN_ENH_CFR_ENABLE
 /*
  * With the initiation of commit command, this handler will be triggered.
  *
@@ -1286,6 +1289,7 @@ QDF_STATUS ucfg_cfr_set_rcc_mode(struct wlan_objmgr_vdev *vdev,
 
 	return status;
 }
+#endif
 
 bool ucfg_cfr_get_rcc_enabled(struct wlan_objmgr_vdev *vdev)
 {
@@ -1304,9 +1308,12 @@ bool ucfg_cfr_get_rcc_enabled(struct wlan_objmgr_vdev *vdev)
 	return rcc_enabled;
 }
 
+#ifdef WLAN_ENH_CFR_ENABLE
 QDF_STATUS ucfg_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
 					bool is_subscribe)
 {
 	return tgt_cfr_subscribe_ppdu_desc(pdev, is_subscribe);
 }
+#endif
+
 #endif

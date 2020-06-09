@@ -326,14 +326,14 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
  */
 void target_if_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev);
 #else
-static QDF_STATUS cfr_6018_init_pdev(
+static inline QDF_STATUS cfr_6018_init_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS cfr_6018_deinit_pdev(
+static inline QDF_STATUS cfr_6018_deinit_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev)
 {

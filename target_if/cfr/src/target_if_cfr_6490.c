@@ -33,6 +33,8 @@
 #include "cfg_ucfg_api.h"
 #include "cfr_cfg.h"
 
+#ifdef WLAN_ENH_CFR_ENABLE
+#ifdef CFR_USE_FIXED_FOLDER
 static wdi_event_subscribe g_cfr_subscribe;
 
 static void target_cfr_callback(void *pdev_obj, enum WDI_EVENT event,
@@ -116,6 +118,8 @@ target_if_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
+#endif
 
 QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_objmgr_pdev *pdev)

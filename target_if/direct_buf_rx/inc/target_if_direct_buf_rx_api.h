@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,6 +75,7 @@ enum DBR_MODULE {
 	DBR_MODULE_MAX,
 };
 
+#ifdef WMI_DBR_SUPPORT
 /**
  * struct direct_buf_rx_data - direct buffer rx data
  * @dbr_len: Length of the buffer DMAed
@@ -92,6 +93,7 @@ struct direct_buf_rx_data {
 	bool meta_data_valid;
 	struct direct_buf_rx_metadata meta_data;
 };
+#endif
 
 /**
  * struct dbr_module_config - module configuration for dbr
