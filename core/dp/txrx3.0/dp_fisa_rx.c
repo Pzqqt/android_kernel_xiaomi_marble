@@ -225,7 +225,8 @@ dp_rx_fisa_setup_hw_fse(struct dp_rx_fst *fisa_hdl,
 	flow.tuple_info.src_port = rx_flow_info->src_port;
 	flow.tuple_info.l4_protocol = rx_flow_info->l4_protocol;
 	flow.reo_destination_handler = HAL_RX_FSE_REO_DEST_FT;
-	hw_fse = hal_rx_flow_setup_fse(fisa_hdl->hal_rx_fst, hashed_flow_idx,
+	hw_fse = hal_rx_flow_setup_fse(fisa_hdl->soc_hdl->hal_soc,
+				       fisa_hdl->hal_rx_fst, hashed_flow_idx,
 				       &flow);
 
 	return hw_fse;
