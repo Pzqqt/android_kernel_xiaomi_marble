@@ -1182,6 +1182,23 @@ UMAC_MLME_OBJS := $(WLAN_COMMON_ROOT)/umac/mlme/mlme_objmgr/dispatcher/src/wlan_
 		$(WLAN_COMMON_ROOT)/umac/mlme/psoc_mgr/dispatcher/src/wlan_psoc_mlme_api.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_bss_scoring.o
 
+ifeq ($(CONFIG_CM_ENABLE), y)
+UMAC_MLME_OBJS += $(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_main.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_sm.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_roam_sm.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_connect.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_connect_scan.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_disconnect.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_cmn.o
+
+ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
+# Add LFR3/FW roam specific connection manager files here
+endif
+ifeq ($(CONFIG_QCACLD_WLAN_LFR2), y)
+# Add LFR2/host roam specific connection manager files here
+endif
+endif
+
 ######## MLME ##############
 MLME_DIR := components/mlme
 MLME_INC := -I$(WLAN_ROOT)/$(MLME_DIR)/core/inc \
@@ -2661,6 +2678,11 @@ endif
 cppflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
 cppflags-$(CONFIG_WLAN_GET_TDLS_PEERS) += -DWLAN_GET_TDLS_PEERS
 cppflags-$(CONFIG_WLAN_SET_RANGE_EXT) += -DWLAN_SET_RANGE_EXT
+
+ifeq ($(CONFIG_CM_ENABLE), y)
+cppflags-y += -DFEATURE_CM_ENABLE
+cppflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_PREAUTH_ENABLE
+endif
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
