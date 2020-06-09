@@ -4111,13 +4111,10 @@ enum qca_wlan_vendor_attr_config {
 	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_IFINDEX = 24,
 	/*
-	 * 8-bit unsigned value to trigger Advanced Power Save Mode:
+	 * 8-bit unsigned value to trigger QPower:
 	 * 1-Enable, 0-Disable
 	 */
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ADVANCED_POWER_SAVE_MODE = 25,
-	/* Deprecated old name */
-	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER =
-		QCA_WLAN_VENDOR_ATTR_CONFIG_ADVANCED_POWER_SAVE_MODE,
+	QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER = 25,
 	/*
 	 * 8-bit unsigned value to configure the driver and below layers to
 	 * ignore the assoc disallowed set by APs while connecting
@@ -4407,6 +4404,12 @@ enum qca_wlan_vendor_attr_config {
 	 * higher value configuration shall be returned with a failure.
 	 */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_NSS = 70,
+
+	/*
+	 * 8-bit unsigned value to trigger Optimized Power Management:
+	 * 1-Enable, 0-Disable
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_OPTIMIZED_POWER_MANAGEMENT = 71,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AFTER_LAST,
