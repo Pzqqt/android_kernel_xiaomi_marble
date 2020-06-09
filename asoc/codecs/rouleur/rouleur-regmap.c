@@ -38,7 +38,7 @@ static const struct reg_default rouleur_defaults[] = {
 	{ ROULEUR_ANA_MBHC_ZDET_RAMP_CTL,         0x00 },
 	{ ROULEUR_ANA_MBHC_FSM_STATUS,            0x00 },
 	{ ROULEUR_ANA_MBHC_ADC_RESULT,            0x00 },
-	{ ROULEUR_ANA_MBHC_MCLK,                  0x30 },
+	{ ROULEUR_ANA_MBHC_CTL_CLK,               0x30 },
 	{ ROULEUR_ANA_MBHC_ZDET_CALIB_RESULT,     0x00 },
 	{ ROULEUR_ANA_NCP_EN,                     0x00 },
 	{ ROULEUR_ANA_HPHPA_CNP_CTL_1,            0x54 },
