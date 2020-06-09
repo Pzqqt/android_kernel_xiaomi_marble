@@ -1089,6 +1089,7 @@ endif
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 #Enable 6 GHz Band
 CONFIG_BAND_6GHZ := y
+CONFIG_RX_FISA := y
 endif
 
 ifeq ($(CONFIG_CNSS_QCA6490), y)
