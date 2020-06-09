@@ -3003,6 +3003,7 @@ endif
 endif
 
 cppflags-$(CONFIG_FEATURE_SKB_PRE_ALLOC) += -DFEATURE_SKB_PRE_ALLOC
+cppflags-$(CONFIG_WCNSS_MEM_PRE_ALLOC) += -DCONFIG_WCNSS_MEM_PRE_ALLOC
 
 #Enable USB specific APIS
 ifeq ($(CONFIG_HIF_USB), y)
