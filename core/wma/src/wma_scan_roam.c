@@ -4261,11 +4261,20 @@ QDF_STATUS wma_pre_chan_switch_setup(uint8_t vdev_id)
 QDF_STATUS wma_post_chan_switch_setup(uint8_t vdev_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	struct wma_txrx_node *intr = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *intr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wlan_channel *des_chan;
 	cdp_config_param_type val;
 
+	if (!wma) {
+		pe_err("wma is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	intr = &wma->interfaces[vdev_id];
+	if (!intr) {
+		pe_err("wma txrx node is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 	/*
 	 * Record monitor mode channel here in case HW
 	 * indicate RX PPDU TLV with invalid channel number.
