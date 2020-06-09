@@ -5331,6 +5331,14 @@ struct ppet_hdr {
 #define HE_MCS_0_11    0x2
 #define HE_MCS_DISABLE 0x3
 
+#define HE_6G_MIN_MPDU_START_SAPCE_BIT_POS 0
+#define HE_6G_MAX_AMPDU_LEN_EXP_BIT_POS 3
+#define HE_6G_MAX_MPDU_LEN_BIT_POS 6
+#define HE_6G_SMPS_BIT_POS 9
+#define HE_6G_RD_RESP_BIT_POS 11
+#define HE_6G_RX_ANT_PATTERN_BIT_POS 12
+#define HE_6G_TX_ANT_PATTERN_BIT_POS 13
+
 /*
  * Following formuala has been arrived at using karnaugh map and unit tested
  * with sample code. Take MCS for each NSS as 2 bit value first and solve for
