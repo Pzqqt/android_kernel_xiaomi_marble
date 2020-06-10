@@ -15300,7 +15300,7 @@ wlan_hdd_iftype_data_mem_free(struct hdd_context *hdd_ctx)
 #endif
 
 #if defined(WLAN_FEATURE_NAN) && \
-	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+	   (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
 static void wlan_hdd_set_nan_if_mode(struct wiphy *wiphy)
 {
 	wiphy->interface_modes |= BIT(NL80211_IFTYPE_NAN);
@@ -22969,7 +22969,7 @@ wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 #endif
 
 #if defined(WLAN_FEATURE_NAN) && \
-	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+	   (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
 static int
 wlan_hdd_cfg80211_start_nan(struct wiphy *wiphy, struct wireless_dev *wdev,
 			    struct cfg80211_nan_conf *conf)
@@ -23464,7 +23464,7 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.external_auth = wlan_hdd_cfg80211_external_auth,
 #endif
 #if defined(WLAN_FEATURE_NAN) && \
-	   (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
+	   (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
 	.start_nan = wlan_hdd_cfg80211_start_nan,
 	.stop_nan = wlan_hdd_cfg80211_stop_nan,
 	.add_nan_func = wlan_hdd_cfg80211_add_nan_func,
