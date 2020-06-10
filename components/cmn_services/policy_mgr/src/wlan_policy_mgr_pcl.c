@@ -2486,7 +2486,7 @@ bool policy_mgr_dump_channel_list(uint32_t len, uint32_t *pcl_channels,
 		return false;
 
 	policymgr_nofl_debug("Total PCL Chan Freq %d", len);
-	for (idx = 0; idx < len; idx++) {
+	for (idx = 0; (idx < len) && (idx < NUM_CHANNELS); idx++) {
 		if (!WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[idx])) {
 			num += qdf_scnprintf(chan_buff + num, buff_len - num,
 					     " %d[%d]", pcl_channels[idx],
@@ -2512,7 +2512,7 @@ bool policy_mgr_dump_channel_list(uint32_t len, uint32_t *pcl_channels,
 
 	count = 0;
 	num = 0;
-	for (idx = 0; idx < len; idx++) {
+	for (idx = 0; (idx < len) && (idx < NUM_CHANNELS); idx++) {
 		if (WLAN_REG_IS_6GHZ_CHAN_FREQ(pcl_channels[idx])) {
 			num += qdf_scnprintf(chan_buff + num, buff_len - num,
 					     " %d[%d]", pcl_channels[idx],
