@@ -251,14 +251,10 @@ dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
 					  rx_desc_pool->buf_size,
 					  true);
 
-	ret = check_x86_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
-			      &nbuf_frag_info_t->paddr,
-			      rx_desc_pool);
+	ret = dp_check_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
+			     &nbuf_frag_info_t->paddr,
+			     rx_desc_pool);
 	if (ret == QDF_STATUS_E_FAILURE) {
-		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
-					     (nbuf_frag_info_t->virt_addr).nbuf,
-					     QDF_DMA_FROM_DEVICE,
-					     rx_desc_pool->buf_size);
 		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
 		return QDF_STATUS_E_ADDRNOTAVAIL;
 	}
@@ -3042,15 +3038,10 @@ dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc,
 	nbuf_frag_info_t->paddr =
 		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
 
-	ret = check_x86_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
-			      &nbuf_frag_info_t->paddr,
-			      rx_desc_pool);
+	ret = dp_check_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
+			     &nbuf_frag_info_t->paddr,
+			     rx_desc_pool);
 	if (ret == QDF_STATUS_E_FAILURE) {
-		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
-					     (nbuf_frag_info_t->virt_addr).nbuf,
-					     QDF_DMA_FROM_DEVICE,
-					     rx_desc_pool->buf_size);
-		qdf_nbuf_free((nbuf_frag_info_t->virt_addr).nbuf);
 		dp_err("nbuf check x86 failed");
 		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
 		return ret;

@@ -1723,6 +1723,8 @@ struct dp_soc {
 	/* Dp runtime refcount */
 	qdf_atomic_t dp_runtime_refcount;
 #endif
+	/* Invalid buffer that allocated for RX buffer */
+	qdf_nbuf_queue_t invalid_buf_queue;
 };
 
 #ifdef IPA_OFFLOAD

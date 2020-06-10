@@ -923,76 +923,121 @@ void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		qdf_nbuf_set_next((ptail), NULL);                     \
 	} while (0)
 
-/*for qcn9000 emulation the pcie is complete phy and no address restrictions*/
-#if !defined(BUILD_X86) || defined(QCA_WIFI_QCN9000)
-static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
-		qdf_dma_addr_t *paddr, struct rx_desc_pool *rx_desc_pool)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#else
+#if defined(QCA_PADDR_CHECK_ON_3TH_PLATFORM)
+/*
+ * on some third-party platform, the memory below 0x2000
+ * is reserved for target use, so any memory allocated in this
+ * region should not be used by host
+ */
+#define MAX_RETRY 50
+#define DP_PHY_ADDR_RESERVED	0x2000
+#elif defined(BUILD_X86)
+/*
+ * in M2M emulation platforms (x86) the memory below 0x50000000
+ * is reserved for target use, so any memory allocated in this
+ * region should not be used by host
+ */
 #define MAX_RETRY 100
-static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
-		qdf_dma_addr_t *paddr, struct rx_desc_pool *rx_desc_pool)
+#define DP_PHY_ADDR_RESERVED	0x50000000
+#endif
+
+#if defined(QCA_PADDR_CHECK_ON_3TH_PLATFORM) || defined(BUILD_X86)
+/**
+ * dp_check_paddr() - check if current phy address is valid or not
+ * @dp_soc: core txrx main context
+ * @rx_netbuf: skb buffer
+ * @paddr: physical address
+ * @rx_desc_pool: struct of rx descriptor pool
+ * check if the physical address of the nbuf->data is less
+ * than DP_PHY_ADDR_RESERVED then free the nbuf and try
+ * allocating new nbuf. We can try for 100 times.
+ *
+ * This is a temp WAR till we fix it properly.
+ *
+ * Return: success or failure.
+ */
+static inline
+int dp_check_paddr(struct dp_soc *dp_soc,
+		   qdf_nbuf_t *rx_netbuf,
+		   qdf_dma_addr_t *paddr,
+		   struct rx_desc_pool *rx_desc_pool)
 {
 	uint32_t nbuf_retry = 0;
 	int32_t ret;
-	const uint32_t x86_phy_addr = 0x50000000;
-	/*
-	 * in M2M emulation platforms (x86) the memory below 0x50000000
-	 * is reserved for target use, so any memory allocated in this
-	 * region should not be used by host
-	 */
+
+	if (qdf_likely(*paddr > DP_PHY_ADDR_RESERVED))
+		return QDF_STATUS_SUCCESS;
+
 	do {
-		if (qdf_likely(*paddr > x86_phy_addr))
-			return QDF_STATUS_SUCCESS;
-		else {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-					"phy addr %pK exceeded 0x50000000 trying again",
-					paddr);
-
-			nbuf_retry++;
-			if ((*rx_netbuf)) {
-				qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
-						QDF_DMA_FROM_DEVICE);
-				/* Not freeing buffer intentionally.
-				 * Observed that same buffer is getting
-				 * re-allocated resulting in longer load time
-				 * WMI init timeout.
-				 * This buffer is anyway not useful so skip it.
-				 **/
-			}
-
-			*rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
-						    rx_desc_pool->buf_size,
-						    RX_BUFFER_RESERVATION,
-						    rx_desc_pool->buf_alignment,
-						    FALSE);
-
-			if (qdf_unlikely(!(*rx_netbuf)))
-				return QDF_STATUS_E_FAILURE;
-
-			ret = qdf_nbuf_map_single(dp_soc->osdev, *rx_netbuf,
-							QDF_DMA_FROM_DEVICE);
-
-			if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
-				qdf_nbuf_free(*rx_netbuf);
-				*rx_netbuf = NULL;
-				continue;
-			}
-
-			*paddr = qdf_nbuf_get_frag_paddr(*rx_netbuf, 0);
+		dp_debug("invalid phy addr 0x%llx, trying again",
+			 (uint64_t)(*paddr));
+		nbuf_retry++;
+		if ((*rx_netbuf)) {
+			/* Not freeing buffer intentionally.
+			 * Observed that same buffer is getting
+			 * re-allocated resulting in longer load time
+			 * WMI init timeout.
+			 * This buffer is anyway not useful so skip it.
+			 *.Add such buffer to invalid list and free
+			 *.them when driver unload.
+			 **/
+			qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
+						     *rx_netbuf,
+						     QDF_DMA_FROM_DEVICE,
+						     rx_desc_pool->buf_size);
+			qdf_nbuf_queue_add(&dp_soc->invalid_buf_queue,
+					   *rx_netbuf);
 		}
+
+		*rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
+					    rx_desc_pool->buf_size,
+					    RX_BUFFER_RESERVATION,
+					    rx_desc_pool->buf_alignment,
+					    FALSE);
+
+		if (qdf_unlikely(!(*rx_netbuf)))
+			return QDF_STATUS_E_FAILURE;
+
+		ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev,
+						 *rx_netbuf,
+						 QDF_DMA_FROM_DEVICE,
+						 rx_desc_pool->buf_size);
+
+		if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
+			qdf_nbuf_free(*rx_netbuf);
+			*rx_netbuf = NULL;
+			continue;
+		}
+
+		*paddr = qdf_nbuf_get_frag_paddr(*rx_netbuf, 0);
+
+		if (qdf_likely(*paddr > DP_PHY_ADDR_RESERVED))
+			return QDF_STATUS_SUCCESS;
+
 	} while (nbuf_retry < MAX_RETRY);
 
 	if ((*rx_netbuf)) {
-		qdf_nbuf_unmap_single(dp_soc->osdev, *rx_netbuf,
-					QDF_DMA_FROM_DEVICE);
-		qdf_nbuf_free(*rx_netbuf);
+		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
+					     *rx_netbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
+		qdf_nbuf_queue_add(&dp_soc->invalid_buf_queue,
+				   *rx_netbuf);
 	}
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#else
+static inline
+int dp_check_paddr(struct dp_soc *dp_soc,
+		   qdf_nbuf_t *rx_netbuf,
+		   qdf_dma_addr_t *paddr,
+		   struct rx_desc_pool *rx_desc_pool)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 /**

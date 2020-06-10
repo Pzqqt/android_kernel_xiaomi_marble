@@ -1330,7 +1330,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
 
-	ret = check_x86_paddr(soc, &head, &paddr, rx_desc_pool);
+	ret = dp_check_paddr(soc, &head, &paddr, rx_desc_pool);
 
 	if (ret == QDF_STATUS_E_FAILURE) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
