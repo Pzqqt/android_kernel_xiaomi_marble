@@ -2572,6 +2572,7 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 		struct rnr_tbtt_multisoc_sync_param *param)
 {
 	wmi_pdev_tbtt_offset_sync_cmd_fixed_param *tbtt_sync_cmd;
+	struct rnr_bss_tbtt_info_param *tmp_bss;
 	wmi_buf_t buf;
 	wmi_pdev_rnr_bss_tbtt_info *bss_tbtt_info;
 	int32_t len = 0;
@@ -2592,6 +2593,7 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 		WMI_LOGP("%s: cmd_type: %d invalid", __func__, param->cmd_type);
 		return QDF_STATUS_E_FAILURE;
 	}
+	tmp_bss = param->rnr_bss_tbtt;
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf) {
 		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
@@ -2619,24 +2621,24 @@ static QDF_STATUS send_multisoc_tbtt_sync_cmd_tlv(wmi_unified_t wmi,
 			WMITLV_SET_HDR(&bss_tbtt_info->tlv_header,
 				WMITLV_TAG_STRUC_wmi_pdev_rnr_bss_tbtt_info,
 				WMITLV_GET_STRUCT_TLVLEN(wmi_pdev_rnr_bss_tbtt_info));
-			WMI_CHAR_ARRAY_TO_MAC_ADDR(param->rnr_bss_tbtt->bss_mac,
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(tmp_bss->bss_mac,
 					&bss_tbtt_info->bss_mac);
 			bss_tbtt_info->beacon_intval =
-				param->rnr_bss_tbtt->beacon_intval;
-			bss_tbtt_info->opclass = param->rnr_bss_tbtt->opclass;
+				tmp_bss->beacon_intval;
+			bss_tbtt_info->opclass = tmp_bss->opclass;
 			bss_tbtt_info->chan_idx =
-				param->rnr_bss_tbtt->chan_idx;
+				tmp_bss->chan_idx;
 			bss_tbtt_info->next_qtime_tbtt_high =
-				param->rnr_bss_tbtt->next_qtime_tbtt_high;
+				tmp_bss->next_qtime_tbtt_high;
 			bss_tbtt_info->next_qtime_tbtt_low =
-				param->rnr_bss_tbtt->next_qtime_tbtt_low;
+				tmp_bss->next_qtime_tbtt_low;
 			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
 				  "Beacon Intval: %d, Chan: %d, opclass: %d",
 				  bss_tbtt_info->beacon_intval,
 				  bss_tbtt_info->chan_idx,
 				  bss_tbtt_info->opclass);
 			bss_tbtt_info++;
-			param->rnr_bss_tbtt++;
+			tmp_bss++;
 		}
 	}
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
