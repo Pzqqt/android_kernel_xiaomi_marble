@@ -2454,7 +2454,9 @@ static void hif_post_recv_buffers_failure(struct HIF_CE_pipe_info *pipe_info,
 	 *	there is no trigger to refill the ce and we will
 	 *	eventually crash
 	 */
-	if (bufs_needed_tmp == CE_state->dest_ring->nentries - 1)
+	if (bufs_needed_tmp == CE_state->dest_ring->nentries - 1 ||
+	    (ce_srng_based(scn) &&
+	     bufs_needed_tmp == CE_state->dest_ring->nentries - 2))
 		qdf_sched_work(scn->qdf_dev, &CE_state->oom_allocation_work);
 
 }
