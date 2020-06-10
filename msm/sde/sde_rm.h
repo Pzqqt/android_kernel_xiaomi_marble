@@ -20,6 +20,12 @@
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE ||\
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE)
 
+#define TOPOLOGY_DUALPIPE_MERGE_MODE(x) \
+	(x == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE || \
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE || \
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC || \
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC)
+
 /**
  * enum sde_rm_topology_name - HW resource use case in use by connector
  * @SDE_RM_TOPOLOGY_NONE:                 No topology in use currently
@@ -342,6 +348,26 @@ static inline int sde_rm_topology_get_num_lm(struct sde_rm *rm,
 
 	return rm->topology_tbl[topology].num_lm;
 }
+
+/**
+ * sde_rm_topology_is_dual_pipe - check if the topology used
+ *	is a dual-pipe mode one
+ * @rm: SDE Resource Manager handle
+ * @state: drm state of the crtc
+ * @return: true if attached connector is in dual-pipe mode
+ */
+bool sde_rm_topology_is_dual_pipe(struct sde_rm *rm,
+		struct drm_crtc_state *state);
+
+/**
+ * sde_rm_topology_is_3dmux_dsc - check if the topology used
+ *	is a 3dmerge dsc mode one
+ * @rm: SDE Resource Manager handle
+ * @state: drm state of the crtc
+ * @return: true if attached connector is in 3DMERGE DSC mode
+ */
+bool sde_rm_topology_is_3dmux_dsc(struct sde_rm *rm,
+		struct drm_crtc_state *state);
 
 /**
  * sde_rm_topology_is_quad_pipe - check if the topology used

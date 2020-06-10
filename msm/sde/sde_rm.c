@@ -2142,6 +2142,63 @@ bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
 	return false;
 }
 
+bool sde_rm_topology_is_dual_pipe(struct sde_rm *rm,
+		struct drm_crtc_state *state)
+{
+	int i;
+	struct sde_crtc_state *cstate;
+	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
+
+	if ((!rm) || (!state)) {
+		pr_err("invalid arguments: rm:%d state:%d\n",
+				rm == NULL, state == NULL);
+		return false;
+	}
+
+	cstate = to_sde_crtc_state(state);
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		struct drm_connector *conn = cstate->connectors[i];
+
+		topology = sde_connector_get_topology_name(conn);
+		if (TOPOLOGY_DUALPIPE_MERGE_MODE(topology))
+			return true;
+	}
+
+	return false;
+}
+
+bool sde_rm_topology_is_3dmux_dsc(struct sde_rm *rm,
+		struct drm_crtc_state *state)
+{
+	int i;
+	struct sde_crtc_state *cstate;
+	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
+	const struct sde_rm_topology_def *def;
+	int num_lm, num_enc;
+
+	if ((!rm) || (!state)) {
+		pr_err("invalid arguments: rm:%d state:%d\n",
+				rm == NULL, state == NULL);
+		return false;
+	}
+
+	cstate = to_sde_crtc_state(state);
+
+	for (i = 0; i < cstate->num_connectors; i++) {
+		struct drm_connector *conn = cstate->connectors[i];
+
+		topology = sde_connector_get_topology_name(conn);
+		def = sde_rm_topology_get_topology_def(rm, topology);
+		num_lm = def->num_lm;
+		num_enc = def->num_comp_enc;
+		if (num_lm > num_enc && num_enc)
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * _sde_rm_release_rsvp - release resources and release a reservation
  * @rm:	KMS handle
