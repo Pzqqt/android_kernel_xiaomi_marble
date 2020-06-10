@@ -371,7 +371,6 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 	struct wlan_lmac_if_tx_ops *tx_ops;
-	struct wlan_lmac_if_rx_ops *rx_ops;
 
 	if (!peer) {
 		mgmt_txrx_err("peer passed is NULL");
@@ -430,23 +429,18 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	desc->vdev_id = wlan_vdev_get_id(vdev);
 	desc->context = context;
 
-	rx_ops = wlan_psoc_get_lmac_if_rxops(psoc);
-	if (!rx_ops) {
-		mgmt_txrx_err("rx_ops is NULL");
+	if (QDF_STATUS_E_NULL_VALUE ==
+	    iot_sim_mgmt_tx_update(psoc, vdev, buf)) {
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
+		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (rx_ops->iot_sim_rx_ops.iot_sim_cmd_handler) {
-		status = rx_ops->iot_sim_rx_ops.iot_sim_cmd_handler(vdev, buf);
-		if (status) {
-			mgmt_txrx_err("iot_sim_cmd_handler returned failure, dropping the frame");
-			return QDF_STATUS_E_FAILURE;
-		}
 	}
 
 	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
 	if (!tx_ops) {
 		mgmt_txrx_err("tx_ops is NULL");
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
+		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

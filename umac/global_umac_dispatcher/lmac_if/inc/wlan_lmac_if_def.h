@@ -53,6 +53,10 @@
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_dfs_ioctl.h>
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+#include <wlan_iot_sim_public_structs.h>
+#endif
+
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
 
@@ -676,12 +680,16 @@ struct wlan_lmac_if_sptrl_tx_ops {
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
-struct simulation_test_params;
-
+#ifdef WLAN_IOT_SIM_SUPPORT
+/**
+ * struct wlan_lmac_if_iot_sim_tx_ops - iot_sim south bound Tx operations
+ * @iot_sim_send_cmd: To send wmi simulation command
+ **/
 struct wlan_lmac_if_iot_sim_tx_ops {
 	QDF_STATUS (*iot_sim_send_cmd)(struct wlan_objmgr_pdev *pdev,
 				       struct simulation_test_params *param);
 };
+#endif
 
 #ifdef WIFI_POS_CONVERGED
 /*
@@ -1028,7 +1036,9 @@ struct wlan_lmac_if_tx_ops {
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_tx_ops p2p;
 #endif
+#ifdef WLAN_IOT_SIM_SUPPORT
 	struct wlan_lmac_if_iot_sim_tx_ops iot_sim_tx_ops;
+#endif
 #ifdef QCA_SUPPORT_SON
 	struct wlan_lmac_if_son_tx_ops son_tx_ops;
 #endif
@@ -1407,10 +1417,16 @@ struct wlan_lmac_if_sptrl_rx_ops {
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+/**
+ * wlan_lmac_if_iot_sim_rx_ops: iot_sim rx operations
+ * iot_sim_cmd_handler: Applies iot_sim rule in outgoing and incoming frames
+ **/
 struct wlan_lmac_if_iot_sim_rx_ops {
 	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
 					  qdf_nbuf_t n_buf);
 };
+#endif
 
 #ifdef WIFI_POS_CONVERGED
 /**
@@ -1752,11 +1768,13 @@ struct wlan_lmac_if_rx_ops {
 	 */
 	 struct wlan_lmac_if_mgmt_txrx_rx_ops mgmt_txrx_rx_ops;
 	 struct wlan_lmac_if_scan_rx_ops scan;
+
 #ifdef CONVERGED_P2P_ENABLE
 	struct wlan_lmac_if_p2p_rx_ops p2p;
 #endif
+#ifdef WLAN_IOT_SIM_SUPPORT
 	struct wlan_lmac_if_iot_sim_rx_ops iot_sim_rx_ops;
-
+#endif
 #ifdef WLAN_ATF_ENABLE
 	struct wlan_lmac_if_atf_rx_ops atf_rx_ops;
 #endif
