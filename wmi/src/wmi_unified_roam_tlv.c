@@ -1066,6 +1066,8 @@ wmi_fill_sae_single_pmk_param(struct roam_offload_scan_params *params,
 }
 #endif
 
+#define ROAM_OFFLOAD_PMK_EXT_BYTES 16
+
 /**
  * send_roam_scan_offload_mode_cmd_tlv() - send roam scan mode request to fw
  * @wmi_handle: wmi handle
@@ -1376,17 +1378,17 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 					     roam_req->psk_pmk,
 					     roam_offload_11i->pmk_len);
 
-				if (auth_mode ==
-				    WMI_AUTH_RSNA_SUITE_B_8021X_SHA384) {
-					roam_offload_11i->pmk_ext_len =
-						(roam_req->pmk_len -
-						 ROAM_OFFLOAD_PMK_BYTES);
-					qdf_mem_copy(roam_offload_11i->pmk_ext,
-						     &roam_req->psk_pmk[
-						     ROAM_OFFLOAD_PMK_BYTES],
-						     roam_offload_11i->
-						     pmk_ext_len);
-				}
+				roam_offload_11i->pmk_ext_len =
+					((roam_req->pmk_len >
+					 ROAM_OFFLOAD_PMK_BYTES) &&
+					 (auth_mode ==
+					 WMI_AUTH_RSNA_SUITE_B_8021X_SHA384)) ?
+					ROAM_OFFLOAD_PMK_EXT_BYTES : 0;
+
+				qdf_mem_copy(roam_offload_11i->pmk_ext,
+					     &roam_req->psk_pmk[
+					     ROAM_OFFLOAD_PMK_BYTES],
+					     roam_offload_11i->pmk_ext_len);
 
 				WMITLV_SET_HDR(&roam_offload_11i->tlv_header,
 				WMITLV_TAG_STRUC_wmi_roam_11i_offload_tlv_param,
