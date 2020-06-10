@@ -14892,6 +14892,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_MUEDCA_PARAMS_CONFIG_EVENTID;
 	event_ids[wmi_pdev_sscan_fw_param_eventid] =
 			WMI_PDEV_SSCAN_FW_PARAM_EVENTID;
+	event_ids[wmi_roam_cap_report_event_id] =
+			WMI_ROAM_CAPABILITY_REPORT_EVENTID;
 }
 
 /**
