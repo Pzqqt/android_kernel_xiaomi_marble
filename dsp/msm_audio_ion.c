@@ -21,7 +21,7 @@
 #include <linux/cdev.h>
 #include <linux/fs.h>
 #include <linux/device.h>
-#ifndef CONFIG_GECKO_CORE
+#ifndef CONFIG_SPF_CORE
 #include <ipc/apr.h>
 #endif
 #include <dsp/msm_audio_ion.h>
@@ -1030,7 +1030,7 @@ static int msm_audio_ion_probe(struct platform_device *pdev)
 	bool is_non_hypervisor_en;
 	struct device *dev = &pdev->dev;
 	struct of_phandle_args iommuspec;
-#ifndef CONFIG_GECKO_CORE
+#ifndef CONFIG_SPF_CORE
 	enum apr_subsys_state q6_state;
 #endif
 
@@ -1055,7 +1055,7 @@ static int msm_audio_ion_probe(struct platform_device *pdev)
 		dev_dbg(dev, "%s: SMMU is Disabled\n", __func__);
 		goto exit;
 	}
-#ifndef CONFIG_GECKO_CORE
+#ifndef CONFIG_SPF_CORE
 	q6_state = apr_get_q6_state();
 	if (q6_state == APR_SUBSYS_DOWN) {
 		dev_info(dev,

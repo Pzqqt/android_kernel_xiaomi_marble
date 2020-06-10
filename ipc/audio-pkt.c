@@ -27,7 +27,7 @@
 #include <linux/uaccess.h>
 #include <linux/termios.h>
 #include <ipc/gpr-lite.h>
-#include <dsp/gecko-core.h>
+#include <dsp/spf-core.h>
 #include <dsp/msm_audio_ion.h>
 
 /* Define IPC Logging Macros */
@@ -193,7 +193,7 @@ int audio_pkt_release(struct inode *inode, struct file *file)
 	spin_unlock_irqrestore(&audpkt_dev->queue_lock, flags);
 
 	file->private_data = NULL;
-	gecko_core_apm_close_all();
+	spf_core_apm_close_all();
 	msm_audio_ion_crash_handler();
 
 	return 0;

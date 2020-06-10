@@ -10,11 +10,11 @@
  * GNU General Public License for more details.
  */
 
-#ifndef __GECKO_CORE_H__
-#define __GECKO_CORE_H__
+#ifndef __SPF_CORE_H__
+#define __SPF_CORE_H__
 #include <ipc/gpr-lite.h>
 
-bool gecko_core_is_apm_ready(void);
-void gecko_core_apm_close_all(void);
+bool spf_core_is_apm_ready(void);
+void spf_core_apm_close_all(void);
 
 #endif

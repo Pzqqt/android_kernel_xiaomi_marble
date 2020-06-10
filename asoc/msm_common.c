@@ -19,7 +19,7 @@
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <asoc/msm-cdc-pinctrl.h>
-#include <dsp/gecko-core.h>
+#include <dsp/spf-core.h>
 #include <dsp/msm_audio_ion.h>
 #include <sound/info.h>
 
@@ -133,7 +133,7 @@ static void check_userspace_service_state(struct snd_soc_pcm_runtime *rtd,
 					__func__);
 		if (pdata->dsp_sessions_closed == 0) {
 			/*Issue close all graph cmd to DSP*/
-			gecko_core_apm_close_all();
+			spf_core_apm_close_all();
 			/*unmap all dma mapped buffers*/
 			msm_audio_ion_crash_handler();
 			pdata->dsp_sessions_closed = 1;

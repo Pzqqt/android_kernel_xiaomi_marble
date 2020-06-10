@@ -137,8 +137,8 @@ ifdef CONFIG_MSM_QDSP6_NOTIFIER
 QDSP6_NOTIFIER_OBJS += audio_notifier.o audio_ssr.o
 endif
 
-ifdef CONFIG_GECKO_CORE
-GECKO_CORE_OBJS += gecko-core.o
+ifdef CONFIG_SPF_CORE
+SPF_CORE_OBJS += spf-core.o
 endif
 
 ifdef CONFIG_AUDIO_PRM
@@ -154,7 +154,7 @@ VOICE_MHI += voice_mhi.o
 endif
 
 ifdef CONFIG_DIGITAL_CDC_RSC_MGR
-	GECKO_CORE_OBJS += digital-cdc-rsc-mgr.o
+	SPF_CORE_OBJS += digital-cdc-rsc-mgr.o
 endif
 
 LINUX_INC +=	-Iinclude/linux
@@ -217,8 +217,8 @@ adsp_loader_dlkm-y := $(ADSP_LOADER_OBJS)
 obj-$(CONFIG_MSM_QDSP6_PDR) += q6_pdr_dlkm.o
 q6_pdr_dlkm-y := $(QDSP6_PDR_OBJS)
 
-obj-$(CONFIG_GECKO_CORE) += gecko_core_dlkm.o
-gecko_core_dlkm-y := $(GECKO_CORE_OBJS)
+obj-$(CONFIG_SPF_CORE) += spf_core_dlkm.o
+spf_core_dlkm-y := $(SPF_CORE_OBJS)
 
 obj-$(CONFIG_MSM_QDSP6_NOTIFIER) += q6_notifier_dlkm.o
 q6_notifier_dlkm-y := $(QDSP6_NOTIFIER_OBJS)

@@ -14,7 +14,7 @@
 #include <linux/mutex.h>
 #include "voice_mhi.h"
 #include <dsp/msm_audio_ion.h>
-#include <dsp/gecko-core.h>
+#include <dsp/spf-core.h>
 #include <dsp/audio_prm.h>
 #include <ipc/gpr-lite.h>
 
@@ -388,7 +388,7 @@ static void voice_mhi_map_pcie_and_send(struct work_struct *work)
 		voice_mhi_lcl.dev_info.iova_pcie.base = iova;
 		mutex_unlock(&voice_mhi_lcl.mutex);
 
-		if (gecko_core_is_apm_ready()) {
+		if (spf_core_is_apm_ready()) {
 			voice_mhi_set_mailbox_memory_config();
 			voice_mhi_start();
 		}
@@ -413,7 +413,7 @@ static void voice_mhi_gpr_send(struct work_struct *work)
 	if (VOICE_MHI_STATE_CHECK(voice_mhi_lcl.voice_mhi_state,
 				VOICE_MHI_SDX_UP)) {
 		mutex_unlock(&voice_mhi_lcl.mutex);
-		if (gecko_core_is_apm_ready()) {
+		if (spf_core_is_apm_ready()) {
 			voice_mhi_set_mailbox_memory_config();
 			voice_mhi_start();
 			return;

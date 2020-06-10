@@ -10,7 +10,7 @@
 #include <linux/string.h>
 #include <linux/delay.h>
 #include <linux/platform_device.h>
-#include <dsp/gecko-core.h>
+#include <dsp/spf-core.h>
 #include <linux/of_device.h>
 #include <linux/sysfs.h>
 #include <linux/workqueue.h>
@@ -130,7 +130,7 @@ static void adsp_load_fw(struct work_struct *adsp_ldr_work)
 
 load_adsp:
 	{
-		adsp_state = gecko_core_is_apm_ready();
+		adsp_state = spf_core_is_apm_ready();
 		if (adsp_state == APR_SUBSYS_DOWN) {
 			priv = platform_get_drvdata(pdev);
 			if (!priv) {

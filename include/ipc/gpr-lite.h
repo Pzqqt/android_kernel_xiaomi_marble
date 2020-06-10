@@ -149,7 +149,7 @@ struct gpr_q6 {
 					    GPR_PKT_VER)
 
 /**********************************************************************/
-/**       GECKO GUID definitions                                    ***/
+/**       SPF GUID definitions                                    ***/
 /**********************************************************************/
 /* An empty macro to mark non-GUIDs so that GUID script doesn't mistake
    the ID for a GUID */

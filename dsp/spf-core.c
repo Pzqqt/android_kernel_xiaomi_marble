@@ -20,18 +20,18 @@
 #include <linux/of_platform.h>
 #include <linux/jiffies.h>
 #include <ipc/gpr-lite.h>
-#include <dsp/gecko-core.h>
+#include <dsp/spf-core.h>
 #include <dsp/digital-cdc-rsc-mgr.h>
 
 #define APM_STATE_READY_TIMEOUT_MS    10000
 #define Q6_READY_TIMEOUT_MS 1000
-#define APM_CMD_GET_GECKO_STATE 0x01001021
+#define APM_CMD_GET_SPF_STATE 0x01001021
 #define APM_CMD_CLOSE_ALL 0x01001013
-#define APM_CMD_RSP_GET_GECKO_STATE 0x02001007
+#define APM_CMD_RSP_GET_SPF_STATE 0x02001007
 #define APM_MODULE_INSTANCE_ID   0x00000001
 #define GPR_SVC_ADSP_CORE 0x3
 
-struct gecko_core {
+struct spf_core {
 	struct gpr_device *adev;
 	wait_queue_head_t wait;
 	struct mutex lock;
@@ -39,23 +39,23 @@ struct gecko_core {
 	int32_t status;
 };
 
-struct gecko_core_private {
+struct spf_core_private {
         struct device *dev;
 	struct mutex lock;
-        struct gecko_core *gecko_core_drv;
+        struct spf_core *spf_core_drv;
         bool is_initial_boot;
         struct work_struct add_chld_dev_work;
 };
 
-static struct gecko_core_private *gecko_core_priv;
+static struct spf_core_private *spf_core_priv;
 
 /* used to decode basic responses from Gecko */
-struct gecko_cmd_basic_rsp {
+struct spf_cmd_basic_rsp {
 	uint32_t opcode;
 	int32_t status;
 };
 
-struct apm_cmd_rsp_get_gecko_status_t
+struct apm_cmd_rsp_get_spf_status_t
 
 {
 	/* Gecko status
@@ -67,11 +67,11 @@ struct apm_cmd_rsp_get_gecko_status_t
 
 };
 
-static int gecko_core_callback(struct gpr_device *adev, void *data)
+static int spf_core_callback(struct gpr_device *adev, void *data)
 {
-	struct gecko_core *core = dev_get_drvdata(&adev->dev);
-	struct apm_cmd_rsp_get_gecko_status_t *gecko_status_rsp;
-	struct gecko_cmd_basic_rsp *basic_rsp;
+	struct spf_core *core = dev_get_drvdata(&adev->dev);
+	struct apm_cmd_rsp_get_spf_status_t *spf_status_rsp;
+	struct spf_cmd_basic_rsp *basic_rsp;
 	struct gpr_hdr *hdr = data;
 
 
@@ -79,7 +79,7 @@ static int gecko_core_callback(struct gpr_device *adev, void *data)
 	switch (hdr->opcode) {
 	case GPR_IBASIC_RSP_RESULT:
 		basic_rsp = GPR_PKT_GET_PAYLOAD(
-				struct gecko_cmd_basic_rsp,
+				struct spf_cmd_basic_rsp,
 				data);
 		dev_info(&adev->dev ,"%s: op %x status %d", __func__,
 				basic_rsp->opcode, basic_rsp->status);
@@ -91,13 +91,13 @@ static int gecko_core_callback(struct gpr_device *adev, void *data)
 		}
 		core->resp_received = true;
 		break;
-	case APM_CMD_RSP_GET_GECKO_STATE:
-		gecko_status_rsp =
+	case APM_CMD_RSP_GET_SPF_STATE:
+		spf_status_rsp =
 				GPR_PKT_GET_PAYLOAD(
-					struct apm_cmd_rsp_get_gecko_status_t,
+					struct apm_cmd_rsp_get_spf_status_t,
 					data);
 		dev_info(&adev->dev ,"%s: sucess response received",__func__);
-		core->status = gecko_status_rsp->status;
+		core->status = spf_status_rsp->status;
 		core->resp_received = true;
 		break;
 	default:
@@ -111,7 +111,7 @@ static int gecko_core_callback(struct gpr_device *adev, void *data)
 	return 0;
 }
 
-static bool __gecko_core_is_apm_ready(struct gecko_core *core)
+static bool __spf_core_is_apm_ready(struct spf_core *core)
 {
 	struct gpr_device *adev = core->adev;
 	struct gpr_pkt pkt;
@@ -126,9 +126,9 @@ static bool __gecko_core_is_apm_ready(struct gecko_core *core)
 	pkt.hdr.src_port = GPR_SVC_ADSP_CORE;
 	pkt.hdr.dst_domain_id = GPR_IDS_DOMAIN_ID_ADSP_V;
 	pkt.hdr.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
-	pkt.hdr.opcode = APM_CMD_GET_GECKO_STATE;
+	pkt.hdr.opcode = APM_CMD_GET_SPF_STATE;
 
-	dev_err(gecko_core_priv->dev, "%s: send_command ret\n",	__func__);
+	dev_err(spf_core_priv->dev, "%s: send_command ret\n",	__func__);
 
 	rc = gpr_send_pkt(adev, &pkt);
 	if (rc < 0) {
@@ -138,12 +138,12 @@ static bool __gecko_core_is_apm_ready(struct gecko_core *core)
 
 	rc = wait_event_timeout(core->wait, (core->resp_received),
 				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	dev_dbg(gecko_core_priv->dev, "%s: wait event unblocked \n", __func__);
+	dev_dbg(spf_core_priv->dev, "%s: wait event unblocked \n", __func__);
 
 	if (rc > 0 && core->resp_received) {
 		ret = core->status;
 	} else {
-		dev_err(gecko_core_priv->dev, "%s: command timedout, ret\n",
+		dev_err(spf_core_priv->dev, "%s: command timedout, ret\n",
 			__func__);
         }
 done:
@@ -152,28 +152,28 @@ done:
 }
 
 /**
- * gecko_core_is_apm_ready() - Get status of adsp
+ * spf_core_is_apm_ready() - Get status of adsp
  *
  * Return: Will return true if apm is ready and false if not.
  */
-bool gecko_core_is_apm_ready(void)
+bool spf_core_is_apm_ready(void)
 {
 	unsigned long  timeout;
 	bool ret = false;
-	struct gecko_core *core;
+	struct spf_core *core;
 
-	if (!gecko_core_priv)
+	if (!spf_core_priv)
 		return ret;
 
-	mutex_lock(&gecko_core_priv->lock);
-	core = gecko_core_priv->gecko_core_drv;
+	mutex_lock(&spf_core_priv->lock);
+	core = spf_core_priv->spf_core_drv;
 	if (!core)
 		goto done;
 
 	timeout = jiffies + msecs_to_jiffies(APM_STATE_READY_TIMEOUT_MS);
 	mutex_lock(&core->lock);
 	for (;;) {
-		if (__gecko_core_is_apm_ready(core)) {
+		if (__spf_core_is_apm_ready(core)) {
 			ret = true;
 			break;
 		}
@@ -186,30 +186,30 @@ bool gecko_core_is_apm_ready(void)
 
 	mutex_unlock(&core->lock);
 done:
-	mutex_unlock(&gecko_core_priv->lock);
+	mutex_unlock(&spf_core_priv->lock);
 	return ret;
 }
-EXPORT_SYMBOL_GPL(gecko_core_is_apm_ready);
+EXPORT_SYMBOL_GPL(spf_core_is_apm_ready);
 
 /**
- * gecko_core_apm_close_all() - Get status of adsp
+ * spf_core_apm_close_all() - Get status of adsp
  *
  * Return: Will be return true if apm is ready and false if not.
  */
-void gecko_core_apm_close_all(void)
+void spf_core_apm_close_all(void)
 {
 	int rc = 0;
-	struct gecko_core *core;
+	struct spf_core *core;
 	struct gpr_pkt pkt;
 	struct gpr_device *adev = NULL;
 
-	if (!gecko_core_priv)
+	if (!spf_core_priv)
 		return;
 
-	mutex_lock(&gecko_core_priv->lock);
-	core = gecko_core_priv->gecko_core_drv;
+	mutex_lock(&spf_core_priv->lock);
+	core = spf_core_priv->spf_core_drv;
 	if (!core) {
-		mutex_unlock(&gecko_core_priv->lock);
+		mutex_unlock(&spf_core_priv->lock);
 		return;
 	}
 
@@ -229,48 +229,48 @@ void gecko_core_apm_close_all(void)
 	pkt.hdr.src_domain_id = GPR_IDS_DOMAIN_ID_APPS_V;
 	pkt.hdr.opcode = APM_CMD_CLOSE_ALL;
 
-	dev_info(gecko_core_priv->dev, "%s: send_command \n", __func__);
+	dev_info(spf_core_priv->dev, "%s: send_command \n", __func__);
 
 	rc = gpr_send_pkt(adev, &pkt);
 	if (rc < 0) {
-		dev_err(gecko_core_priv->dev, "%s: send_pkt_failed %d\n",
+		dev_err(spf_core_priv->dev, "%s: send_pkt_failed %d\n",
 				__func__, rc);
 		goto done;
 	}
 
 	rc = wait_event_timeout(core->wait, (core->resp_received),
 				msecs_to_jiffies(Q6_READY_TIMEOUT_MS));
-	dev_info(gecko_core_priv->dev, "%s: wait event unblocked \n", __func__);
+	dev_info(spf_core_priv->dev, "%s: wait event unblocked \n", __func__);
 	if (rc > 0 && core->resp_received) {
 		if (core->status != 0)
-			dev_err(gecko_core_priv->dev, "%s, cmd failed status %d",
+			dev_err(spf_core_priv->dev, "%s, cmd failed status %d",
 					__func__, core->status);
 	} else {
-		dev_err(gecko_core_priv->dev, "%s: command timedout, ret\n",
+		dev_err(spf_core_priv->dev, "%s: command timedout, ret\n",
 			__func__);
         }
 
 done:
 	core->resp_received = false;
 	mutex_unlock(&core->lock);
-	mutex_unlock(&gecko_core_priv->lock);
+	mutex_unlock(&spf_core_priv->lock);
 	return;
 }
-EXPORT_SYMBOL_GPL(gecko_core_apm_close_all);
+EXPORT_SYMBOL_GPL(spf_core_apm_close_all);
 
 
-static int gecko_core_probe(struct gpr_device *adev)
+static int spf_core_probe(struct gpr_device *adev)
 {
-	struct gecko_core *core;
+	struct spf_core *core;
 	pr_err("%s",__func__);
-	if (!gecko_core_priv) {
-		pr_err("%s: gecko_core platform probe not yet done\n", __func__);
+	if (!spf_core_priv) {
+		pr_err("%s: spf_core platform probe not yet done\n", __func__);
 		return -EPROBE_DEFER;
 	}
-	mutex_lock(&gecko_core_priv->lock);
+	mutex_lock(&spf_core_priv->lock);
 	core = kzalloc(sizeof(*core), GFP_KERNEL);
 	if (!core) {
-		mutex_unlock(&gecko_core_priv->lock);
+		mutex_unlock(&spf_core_priv->lock);
 		return -ENOMEM;
 	}
 
@@ -279,90 +279,90 @@ static int gecko_core_probe(struct gpr_device *adev)
 	mutex_init(&core->lock);
 	core->adev = adev;
 	init_waitqueue_head(&core->wait);
-	gecko_core_priv->gecko_core_drv = core;
-	if (gecko_core_priv->is_initial_boot)
-		schedule_work(&gecko_core_priv->add_chld_dev_work);
-	mutex_unlock(&gecko_core_priv->lock);
+	spf_core_priv->spf_core_drv = core;
+	if (spf_core_priv->is_initial_boot)
+		schedule_work(&spf_core_priv->add_chld_dev_work);
+	mutex_unlock(&spf_core_priv->lock);
 
 	return 0;
 }
 
-static int gecko_core_exit(struct gpr_device *adev)
+static int spf_core_exit(struct gpr_device *adev)
 {
-	struct gecko_core *core = dev_get_drvdata(&adev->dev);
-	if (!gecko_core_priv) {
-		pr_err("%s: gecko_core platform probe not yet done\n", __func__);
+	struct spf_core *core = dev_get_drvdata(&adev->dev);
+	if (!spf_core_priv) {
+		pr_err("%s: spf_core platform probe not yet done\n", __func__);
 		return -1;
 	}
-	mutex_lock(&gecko_core_priv->lock);
-	gecko_core_priv->gecko_core_drv = NULL;
+	mutex_lock(&spf_core_priv->lock);
+	spf_core_priv->spf_core_drv = NULL;
 	kfree(core);
-        mutex_unlock(&gecko_core_priv->lock);
+        mutex_unlock(&spf_core_priv->lock);
 	return 0;
 }
 
-static const struct of_device_id gecko_core_device_id[]  = {
-	{ .compatible = "qcom,gecko_core" },
+static const struct of_device_id spf_core_device_id[]  = {
+	{ .compatible = "qcom,spf_core" },
 	{},
 };
-MODULE_DEVICE_TABLE(of, gecko_core_device_id);
+MODULE_DEVICE_TABLE(of, spf_core_device_id);
 
-static struct gpr_driver qcom_gecko_core_driver = {
-	.probe = gecko_core_probe,
-	.remove = gecko_core_exit,
-	.callback = gecko_core_callback,
+static struct gpr_driver qcom_spf_core_driver = {
+	.probe = spf_core_probe,
+	.remove = spf_core_exit,
+	.callback = spf_core_callback,
 	.driver = {
-		.name = "qcom-gecko_core",
-		.of_match_table = of_match_ptr(gecko_core_device_id),
+		.name = "qcom-spf_core",
+		.of_match_table = of_match_ptr(spf_core_device_id),
 	},
 };
 
-static void gecko_core_add_child_devices(struct work_struct *work)
+static void spf_core_add_child_devices(struct work_struct *work)
 {
 	int ret;
         pr_err("%s:enumarate machine driver\n", __func__);
 
-	if(gecko_core_is_apm_ready()) {
-		dev_err(gecko_core_priv->dev, "%s: apm is up\n",
+	if(spf_core_is_apm_ready()) {
+		dev_err(spf_core_priv->dev, "%s: apm is up\n",
 			__func__);
 	} else {
-		dev_err(gecko_core_priv->dev, "%s: apm is not up\n",
+		dev_err(spf_core_priv->dev, "%s: apm is not up\n",
 			__func__);
 		return;
 	}
 
-	ret = of_platform_populate(gecko_core_priv->dev->of_node,
-			NULL, NULL, gecko_core_priv->dev);
+	ret = of_platform_populate(spf_core_priv->dev->of_node,
+			NULL, NULL, spf_core_priv->dev);
 	if (ret)
-		dev_err(gecko_core_priv->dev, "%s: failed to add child nodes, ret=%d\n",
+		dev_err(spf_core_priv->dev, "%s: failed to add child nodes, ret=%d\n",
 			__func__, ret);
 
-        gecko_core_priv->is_initial_boot = false;
+        spf_core_priv->is_initial_boot = false;
 
 }
 
-static int gecko_core_platform_driver_probe(struct platform_device *pdev)
+static int spf_core_platform_driver_probe(struct platform_device *pdev)
 {
 	int ret = 0;
         pr_err("%s",__func__);
 
-	gecko_core_priv = devm_kzalloc(&pdev->dev, sizeof(struct gecko_core_private), GFP_KERNEL);
-	if (!gecko_core_priv)
+	spf_core_priv = devm_kzalloc(&pdev->dev, sizeof(struct spf_core_private), GFP_KERNEL);
+	if (!spf_core_priv)
 		return -ENOMEM;
 
-	gecko_core_priv->dev = &pdev->dev;
+	spf_core_priv->dev = &pdev->dev;
 
-	mutex_init(&gecko_core_priv->lock);
+	mutex_init(&spf_core_priv->lock);
 
-	INIT_WORK(&gecko_core_priv->add_chld_dev_work, gecko_core_add_child_devices);
+	INIT_WORK(&spf_core_priv->add_chld_dev_work, spf_core_add_child_devices);
 
-        ret = gpr_driver_register(&qcom_gecko_core_driver);
+        ret = gpr_driver_register(&qcom_spf_core_driver);
         if (ret) {
 		pr_err("%s: gpr driver register failed = %d\n",
 			__func__, ret);
 		ret = 0;
 	}
-        gecko_core_priv->is_initial_boot = true;
+        spf_core_priv->is_initial_boot = true;
 
 #if 0
 	ret = snd_event_client_register(&pdev->dev, &gpr_ssr_ops, NULL);
@@ -377,31 +377,31 @@ static int gecko_core_platform_driver_probe(struct platform_device *pdev)
 	return ret;
 }
 
-static int gecko_core_platform_driver_remove(struct platform_device *pdev)
+static int spf_core_platform_driver_remove(struct platform_device *pdev)
 {
 	//snd_event_client_deregister(&pdev->dev);
-        gpr_driver_unregister(&qcom_gecko_core_driver);
-	gecko_core_priv = NULL;
+        gpr_driver_unregister(&qcom_spf_core_driver);
+	spf_core_priv = NULL;
     digital_cdc_rsc_mgr_exit();
 	return 0;
 }
 
-static const struct of_device_id gecko_core_of_match[]  = {
-	{ .compatible = "qcom,gecko-core-platform", },
+static const struct of_device_id spf_core_of_match[]  = {
+	{ .compatible = "qcom,spf-core-platform", },
 	{},
 };
 
-static struct platform_driver gecko_core_driver = {
-	.probe = gecko_core_platform_driver_probe,
-	.remove = gecko_core_platform_driver_remove,
+static struct platform_driver spf_core_driver = {
+	.probe = spf_core_platform_driver_probe,
+	.remove = spf_core_platform_driver_remove,
 	.driver = {
-		.name = "gecko-core-platform",
+		.name = "spf-core-platform",
 		.owner = THIS_MODULE,
-		.of_match_table = gecko_core_of_match,
+		.of_match_table = spf_core_of_match,
 	}
 };
 
-module_platform_driver(gecko_core_driver);
+module_platform_driver(spf_core_driver);
 
 MODULE_DESCRIPTION("q6 core");
 MODULE_LICENSE("GPL v2");
