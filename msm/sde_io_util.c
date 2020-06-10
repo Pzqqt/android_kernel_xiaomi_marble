@@ -7,6 +7,7 @@
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/regulator/consumer.h>
+#include <linux/soc/qcom/spmi-pmic-arb.h>
 #include <linux/delay.h>
 #include <linux/sde_io_util.h>
 #include <linux/sde_vm_event.h>
@@ -129,6 +130,55 @@ void msm_dss_iounmap(struct dss_io_data *io_data)
 	io_data->len = 0;
 } /* msm_dss_iounmap */
 EXPORT_SYMBOL(msm_dss_iounmap);
+
+int msm_dss_get_pmic_io_mem(struct platform_device *pdev,
+		struct list_head *mem_list)
+{
+	struct list_head temp_head;
+	struct msm_io_mem_entry *io_mem;
+	struct resource *res = NULL;
+	struct property *prop;
+	const __be32 *cur;
+	int rc = 0;
+	u32 val;
+
+	INIT_LIST_HEAD(&temp_head);
+
+	res = kzalloc(sizeof(struct resource), GFP_KERNEL);
+	if (!res)
+		return -ENOMEM;
+
+	of_property_for_each_u32(pdev->dev.of_node, "qcom,pmic-arb-address",
+			prop, cur, val) {
+		rc = spmi_pmic_arb_map_address(&pdev->dev, val, res);
+		if (rc < 0) {
+			DEV_ERR("%pS - failed to map pmic address, rc:%d\n",
+						    __func__, rc);
+			goto parse_fail;
+		}
+
+		io_mem = kzalloc(sizeof(struct msm_io_mem_entry), GFP_KERNEL);
+		if (!io_mem) {
+			rc = -ENOMEM;
+			goto parse_fail;
+		}
+
+		io_mem->base = res->start;
+		io_mem->size = resource_size(res);
+
+		list_add(&io_mem->list, &temp_head);
+	}
+
+	list_splice(&temp_head, mem_list);
+	goto end;
+
+parse_fail:
+	msm_dss_clean_io_mem(&temp_head);
+end:
+	kzfree(res);
+	return rc;
+}
+EXPORT_SYMBOL(msm_dss_get_pmic_io_mem);
 
 int msm_dss_get_io_mem(struct platform_device *pdev, struct list_head *mem_list)
 {
