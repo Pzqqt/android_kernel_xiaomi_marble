@@ -31,8 +31,6 @@
  *
  */
 #define USER_BUF_LEN (1 + 2 + 2 + 2 + MAX_BUFFER_SIZE + 6)
-#define IOT_SIM_SET_OP_BIT(bitmap, oper) ((bitmap) |= 1 << (oper))
-#define IOT_SIM_CLEAR_OP_BIT(bitmap, oper) (((bitmap) &= ~(1 << (oper))) == 0)
 
 /**
  * wlan_iot_sim_pdev_obj_create_handler() - handler for pdev object create
@@ -115,15 +113,44 @@ iot_sim_get_ctx_from_pdev(struct wlan_objmgr_pdev *pdev)
 	return isc;
 }
 
+/*
+ * iot_sim_delete_rule_for_mac - function to delete content change rule
+ *                               for given peer mac
+ * @isc: iot sim context
+ * @oper: iot sim operation
+ * @seq: authentication sequence number, mostly 0 for non-authentication frame
+ * @type: 802.11 frame type
+ * @subtype: 802.11 frame subtype
+ * @mac: peer mac address
+ * @action: action frame or not
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
+ */
 QDF_STATUS
 iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 			    enum iot_sim_operations oper,
-			    unsigned short seq,
-			    unsigned char type,
-			    unsigned char subtype,
+			    uint16_t seq, uint8_t type,
+			    uint8_t subtype,
 			    struct qdf_mac_addr *mac,
-			    uint8_t cat, uint8_t act, bool action);
-
+			    bool action);
+/*
+ * iot_sim_parse_user_input_content_change - function to parse user input into
+ *					     predefined format for content
+ *					     change operation. All arguments
+ *					     passed will be filled upon success
+ * @isc: iot sim context
+ * @userbuf: local copy of user input
+ * @count: length of userbuf
+ * @t_st: address of type variable
+ * @seq: address of seq variable
+ * @offset: address of offset variable
+ * @length: address of length variable
+ * @content: double pointer to storage to store frame content after processing
+ * @mac: pointer to mac address
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ *	   QDF_STATUS_E_FAILURE otherwise
+ */
 QDF_STATUS
 iot_sim_parse_user_input_content_change(struct iot_sim_context *isc,
 					char *userbuf, ssize_t count,

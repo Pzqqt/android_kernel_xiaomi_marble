@@ -14,25 +14,40 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <wlan_iot_sim_tgt_api.h>
-#include <wlan_iot_sim_utils_api.h>
+#include <qdf_types.h>
 
-QDF_STATUS tgt_send_simulation_cmd(struct wlan_objmgr_pdev *pdev,
-				   struct simulation_test_params *param)
-{
-	struct wlan_objmgr_psoc *psoc = NULL;
-	struct wlan_lmac_if_tx_ops *tx_ops;
+#ifndef _WLAN_IOT_SIM__PUBLIC_STRUCTS_H_
+#define _WLAN_IOT_SIM__PUBLIC_STRUCTS_H_
 
-	psoc = wlan_pdev_get_psoc(pdev);
+/**
+ * struct simulation_test_params
+ * pdev_id: pdev id
+ * vdev_id: vdev id
+ * peer_macaddr: peer MAC address
+ * test_cmd_type: test command type
+ * test_subcmd_type: test command sub type
+ * frame_type: frame type
+ * frame_subtype: frame subtype
+ * seq: sequence number
+ * offset: Frame content offset
+ * frame_length: Frame content length
+ * buf_len: Buffer length
+ * bufp: buffer
+ */
+struct simulation_test_params {
+	u32 pdev_id;
+	u32 vdev_id;
+	u8 peer_mac[QDF_MAC_ADDR_SIZE];
+	u32 test_cmd_type;
+	u32 test_subcmd_type;
+	u8 frame_type;
+	u8 frame_subtype;
+	u8 seq;
+	u8 reserved;
+	u16 offset;
+	u16 frame_length;
+	u32 buf_len;
+	u8 *bufp;
+};
 
-	if (!psoc) {
-		iot_sim_err("psoc is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-	tx_ops = wlan_psoc_get_lmac_if_txops(psoc);
-	if (!tx_ops) {
-		iot_sim_err("tx_ops is NULL");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-	return tx_ops->iot_sim_tx_ops.iot_sim_send_cmd(pdev, param);
-}
+#endif	/* _WLAN_IOT_SIM__PUBLIC_STRUCTS_H_ */

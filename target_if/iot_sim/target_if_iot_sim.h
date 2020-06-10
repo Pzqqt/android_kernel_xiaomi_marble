@@ -22,6 +22,7 @@
 
 #ifdef WLAN_IOT_SIM_SUPPORT
 #include <wlan_iot_sim_utils_api.h>
+#include <wlan_iot_sim_public_structs.h>
 
 /**
  * target_if_iot_sim_register_tx_ops() - Register IOT Sim target_if Tx Ops

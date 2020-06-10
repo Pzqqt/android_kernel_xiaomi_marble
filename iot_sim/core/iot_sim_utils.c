@@ -24,36 +24,42 @@
 
 QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf)
 {
-	u8 type, subtype, seq = 0;
+	uint8_t type, subtype, seq = 0;
 	struct iot_sim_context *isc;
-	u8 *buf = qdf_nbuf_data(nbuf);
+	uint8_t *buf = qdf_nbuf_data(nbuf), *frm = NULL;
 	int fixed_param_length = 0;
 	bool is_action_frm = false;
-	u8 cat, cat_index;
+	uint8_t cat, cat_index;
+	int auth_seq_index = 0, offset = 0;
+	struct iot_sim_rule *piot_sim_rule = NULL;
+	qdf_size_t buf_len = 0;
 
 	type = (buf[0] & IEEE80211_FC0_TYPE_MASK) >> IEEE80211_FC0_TYPE_SHIFT;
 	subtype = (buf[0] & IEEE80211_FC0_SUBTYPE_MASK);
-	subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
 	isc = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_IOT_SIM_COMP);
 	if (!isc) {
 		iot_sim_err("pdev IOT_SIM object is NULL!");
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (type == 0x00 && subtype == 0x0b) {
+	if (type == IEEE80211_FC0_TYPE_MGT &&
+	    subtype == IEEE80211_FC0_SUBTYPE_AUTH) {
 	/* Authentication frame */
-		int auth_seq_index = IEEE80211_FRAME_BODY_OFFSET + 2;
-
+		auth_seq_index = IEEE80211_FRAME_BODY_OFFSET + 2;
 		seq = le16toh(*(u_int16_t *)(buf + auth_seq_index));
-	} else if (type == 0x00 && subtype == 0x05)
+	} else if (type == IEEE80211_FC0_TYPE_MGT &&
+		   subtype == IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 	/* Probe response frame */
 		fixed_param_length = 12;
-	else if (type == 0x00 && (subtype == 0x01 || subtype == 0x03))
+	else if (type == IEEE80211_FC0_TYPE_MGT &&
+		 (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_RESP ||
+		  subtype == IEEE80211_FC0_SUBTYPE_REASSOC_RESP))
 	/* Assoc/Reassoc response frame */
 		fixed_param_length = 6;
-	else if (type == 0x00 && subtype == 0x0d) {
+	else if (type == IEEE80211_FC0_TYPE_MGT &&
+		 subtype == IEEE80211_FC0_SUBTYPE_ACTION) {
 	/* Action frame */
-		u8 *frm = buf + IEEE80211_FRAME_BODY_OFFSET;
+		frm = buf + IEEE80211_FRAME_BODY_OFFSET;
 
 		is_action_frm = true;
 		if (iot_sim_get_index_for_action_frm(frm, &cat, &cat_index)) {
@@ -62,76 +68,65 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf)
 		}
 	}
 
+	subtype >>= IEEE80211_FC0_SUBTYPE_SHIFT;
+	iot_sim_debug("iot_sim: Change content operation for frame");
+	iot_sim_debug("type:%d subtype:%d seq:%d, is_action_frm: %u",
+		      type, subtype, seq, is_action_frm);
+
 	/* Only broadcast peer is getting handled right now.
 	 * Need to add support for peer based content modification
 	 */
 	qdf_spin_lock(&isc->bcast_peer.iot_sim_lock);
-	if (isc->bcast_peer.rule_per_seq[seq]) {
-		struct iot_sim_rule *piot_sim_rule;
-		qdf_size_t buf_len = qdf_nbuf_len(nbuf);
+	if (!isc->bcast_peer.rule_per_seq[seq])
+		goto norule;
 
-		if (is_action_frm)
-			piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
-					rule_per_action_frm[cat][cat_index];
-		else
-			piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
-						rule_per_type[type][subtype];
-		if (!piot_sim_rule) {
-			iot_sim_info("iot sim rule not set");
-			iot_sim_info("frame type:%d, subtype:%d, seq:%d",
-				     type, subtype, seq);
-			qdf_spin_unlock(&isc->bcast_peer.iot_sim_lock);
-			return QDF_STATUS_SUCCESS;
+	buf_len = qdf_nbuf_len(nbuf);
+
+	if (is_action_frm)
+		piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
+			rule_per_action_frm[cat][cat_index];
+	else
+		piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
+			rule_per_type[type][subtype];
+
+	if (!piot_sim_rule)
+		goto norule;
+
+	if (!piot_sim_rule->frm_content || !piot_sim_rule->len)
+		goto norule;
+
+	if (piot_sim_rule->offset ==
+			IEEE80211_FRAME_BODY_OFFSET) {
+		offset = IEEE80211_FRAME_BODY_OFFSET;
+	} else if (piot_sim_rule->offset == 0) {
+		offset = 0;
+	} else if (buf[piot_sim_rule->offset] ==
+			piot_sim_rule->frm_content[0]) {
+		offset = piot_sim_rule->offset;
+	}  else {
+		offset = IEEE80211_FRAME_BODY_OFFSET +
+			fixed_param_length;
+		while (((offset + 1) < buf_len) &&
+		       (buf[offset] < piot_sim_rule->frm_content[0])) {
+			offset += buf[offset + 1] + 2;
 		}
-
-		if (piot_sim_rule->frm_content && piot_sim_rule->len) {
-			int offset;
-
-			if (piot_sim_rule->offset ==
-			    IEEE80211_FRAME_BODY_OFFSET) {
-				offset = IEEE80211_FRAME_BODY_OFFSET;
-			} else if (piot_sim_rule->offset == 0) {
-				offset = 0;
-			} else if (buf[piot_sim_rule->offset] ==
-				   piot_sim_rule->frm_content[0]) {
-				offset = piot_sim_rule->offset;
-			}  else {
-				offset = IEEE80211_FRAME_BODY_OFFSET +
-					 fixed_param_length;
-				while (((offset + 1) < buf_len) &&
-				       (buf[offset] < piot_sim_rule->
-					 frm_content[0])) {
-					offset += buf[offset + 1] + 2;
-				}
-			}
-
-			if (offset <= buf_len) {
-				buf += offset;
-				qdf_mem_copy(buf, piot_sim_rule->frm_content,
-					     piot_sim_rule->len);
-				qdf_nbuf_set_pktlen(nbuf, offset +
-						    piot_sim_rule->len);
-				iot_sim_info("Content updated  for peer");
-				iot_sim_info("frame type:%d, subtype:%d",
-					     type, subtype);
-				iot_sim_info("seq:%d", seq);
-			} else {
-				iot_sim_err("Failed to modify content");
-				iot_sim_err("type:%d, subtype:%d",
-					    type, subtype);
-				iot_sim_err("seq:%d", seq);
-			}
-		} else {
-				iot_sim_info("Content update rule not set");
-				iot_sim_info("frame type:%d, subtype:%d, seq:%d",
-					     type, subtype, seq);
-		}
-	} else {
-			iot_sim_info("IOT simulation rule not set");
-			iot_sim_info("frame type:%d, subtype:%d, seq:%d",
-				     type, subtype, seq);
 	}
 
+	if (offset <= buf_len) {
+		buf += offset;
+		qdf_mem_copy(buf, piot_sim_rule->frm_content,
+			     piot_sim_rule->len);
+		qdf_nbuf_set_pktlen(nbuf, offset +
+				piot_sim_rule->len);
+		iot_sim_debug("iot_sim: Content updated");
+	} else {
+		iot_sim_err("Failed to modify content");
+	}
+	qdf_spin_unlock(&isc->bcast_peer.iot_sim_lock);
+	return QDF_STATUS_SUCCESS;
+
+norule:
+	iot_sim_debug("Rule not set for this frame");
 	qdf_spin_unlock(&isc->bcast_peer.iot_sim_lock);
 	return QDF_STATUS_SUCCESS;
 }
