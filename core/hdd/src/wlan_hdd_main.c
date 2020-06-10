@@ -5037,13 +5037,10 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	rc = wait_for_completion_timeout(
 			&adapter->vdev_destroy_event,
 			msecs_to_jiffies(SME_CMD_VDEV_CREATE_DELETE_TIMEOUT));
-	if (rc) {
+	if (!rc) {
+		hdd_err("timed out waiting for sme vdev delete");
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-
-		if (status == QDF_STATUS_E_TIMEOUT) {
-			hdd_err("timed out waiting for sme vdev delete");
-			sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
-		}
+		sme_cleanup_session(hdd_ctx->mac_handle, vdev_id);
 	}
 
 	hdd_nofl_debug("vdev %d destroyed successfully", vdev_id);
