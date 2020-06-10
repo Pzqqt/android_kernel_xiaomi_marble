@@ -2920,37 +2920,6 @@ struct smart_ant_enable_tx_feedback_params {
 };
 
 /**
- * struct simulation_test_params
- * pdev_id: pdev id
- * vdev_id: vdev id
- * peer_macaddr: peer MAC address
- * test_cmd_type: test command type
- * test_subcmd_type: test command sub type
- * frame_type: frame type
- * frame_subtype: frame subtype
- * seq: sequence number
- * offset: Frame content offset
- * frame_length: Frame content length
- * buf_len: Buffer length
- * bufp: buffer
- */
-struct simulation_test_params {
-	u32 pdev_id;
-	u32 vdev_id;
-	u8 peer_mac[QDF_MAC_ADDR_SIZE];
-	u32 test_cmd_type;
-	u32 test_subcmd_type;
-	u8 frame_type;
-	u8 frame_subtype;
-	u8 seq;
-	u8 reserved;
-	u16 offset;
-	u16 frame_length;
-	u32 buf_len;
-	u8 *bufp;
-};
-
-/**
  * struct vdev_spectral_configure_params - SPectral config params
  * @vdev_id: VDEV id
  * @count: count

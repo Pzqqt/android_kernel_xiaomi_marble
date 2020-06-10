@@ -1296,6 +1296,7 @@ wmi_unified_smart_ant_enable_tx_feedback_cmd_send(
 }
 qdf_export_symbol(wmi_unified_smart_ant_enable_tx_feedback_cmd_send);
 
+#ifdef WLAN_IOT_SIM_SUPPORT
 QDF_STATUS
 wmi_unified_simulation_test_cmd_send(
 		wmi_unified_t wmi_handle,
@@ -1308,6 +1309,7 @@ wmi_unified_simulation_test_cmd_send(
 	return QDF_STATUS_E_FAILURE;
 }
 qdf_export_symbol(wmi_unified_simulation_test_cmd_send);
+#endif
 
 QDF_STATUS
 wmi_unified_vdev_spectral_configure_cmd_send(

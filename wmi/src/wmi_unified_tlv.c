@@ -6415,6 +6415,7 @@ send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef WLAN_IOT_SIM_SUPPORT
 /**
  * send_simulation_test_cmd_tlv() - send simulation test command to fw
  *
@@ -6480,6 +6481,7 @@ static QDF_STATUS send_simulation_test_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * send_vdev_spectral_configure_cmd_tlv() - send VDEV spectral configure
@@ -14295,7 +14297,9 @@ struct wmi_ops tlv_ops =  {
 	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_tlv,
 	.send_periodic_chan_stats_config_cmd =
 		send_periodic_chan_stats_config_cmd_tlv,
+#ifdef WLAN_IOT_SIM_SUPPORT
 	.send_simulation_test_cmd = send_simulation_test_cmd_tlv,
+#endif
 	.send_vdev_spectral_configure_cmd =
 				send_vdev_spectral_configure_cmd_tlv,
 	.send_vdev_spectral_enable_cmd =

@@ -109,6 +109,10 @@
 #include "wlan_pkt_capture_public_structs.h"
 #endif
 
+#ifdef WLAN_IOT_SIM_SUPPORT
+#include "wlan_iot_sim_public_structs.h"
+#endif
+
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 
@@ -1993,6 +1997,7 @@ QDF_STATUS wmi_unified_smart_ant_enable_tx_feedback_cmd_send(
 			wmi_unified_t wmi_handle,
 			struct smart_ant_enable_tx_feedback_params *param);
 
+#ifdef WLAN_IOT_SIM_SUPPORT
 /**
  *  wmi_unified_simulation_test_cmd_send() -
  *  WMI simulation test command
@@ -2004,6 +2009,7 @@ QDF_STATUS wmi_unified_smart_ant_enable_tx_feedback_cmd_send(
 QDF_STATUS wmi_unified_simulation_test_cmd_send(wmi_unified_t wmi_handle,
 						struct simulation_test_params
 						*param);
+#endif
 
 /**
  *  wmi_unified_vdev_spectral_configure_cmd_send() -
