@@ -747,6 +747,7 @@ mgmt_get_rvs_action_subtype(uint8_t action_code)
 		break;
 	case MCSC_RSP:
 		frm_type = MGMT_ACTION_MCSC_RSP;
+		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
 		break;
