@@ -21,6 +21,10 @@
 #include "target_type.h"
 #include "wcss_version.h"
 #include "qdf_module.h"
+#include "hal_flow.h"
+#include "rx_flow_search_entry.h"
+#include "hal_rx_flow_info.h"
+
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_OFFSET \
 	RXPCU_PPDU_END_INFO_9_RX_PPDU_DURATION_OFFSET
 #define UNIFIED_RXPCU_PPDU_END_INFO_8_RX_PPDU_DURATION_MASK \
@@ -1388,6 +1392,118 @@ hal_rx_msdu_packet_metadata_get_5018(uint8_t *buf,
 		HAL_RX_MSDU_END_SA_SW_PEER_ID_GET(msdu_end);
 }
 
+/**
+ * hal_rx_flow_setup_fse_5018() - Setup a flow search entry in HW FST
+ * @fst: Pointer to the Rx Flow Search Table
+ * @table_offset: offset into the table where the flow is to be setup
+ * @flow: Flow Parameters
+ *
+ * Return: Success/Failure
+ */
+static void *
+hal_rx_flow_setup_fse_5018(uint8_t *rx_fst, uint32_t table_offset,
+			   uint8_t *rx_flow)
+{
+	struct hal_rx_fst *fst = (struct hal_rx_fst *)rx_fst;
+	struct hal_rx_flow *flow = (struct hal_rx_flow *)rx_flow;
+	uint8_t *fse;
+	bool fse_valid;
+
+	if (table_offset >= fst->max_entries) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "HAL FSE table offset %u exceeds max entries %u",
+			  table_offset, fst->max_entries);
+		return NULL;
+	}
+
+	fse = (uint8_t *)fst->base_vaddr +
+			(table_offset * HAL_RX_FST_ENTRY_SIZE);
+
+	fse_valid = HAL_GET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+
+	if (fse_valid) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "HAL FSE %pK already valid", fse);
+		return NULL;
+	}
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_0, SRC_IP_127_96,
+			       qdf_htonl(flow->tuple_info.src_ip_127_96));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_1, SRC_IP_95_64) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_1, SRC_IP_95_64,
+			       qdf_htonl(flow->tuple_info.src_ip_95_64));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_2, SRC_IP_63_32) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_2, SRC_IP_63_32,
+			       qdf_htonl(flow->tuple_info.src_ip_63_32));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_3, SRC_IP_31_0) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_3, SRC_IP_31_0,
+			       qdf_htonl(flow->tuple_info.src_ip_31_0));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_4, DEST_IP_127_96) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_4, DEST_IP_127_96,
+			       qdf_htonl(flow->tuple_info.dest_ip_127_96));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_5, DEST_IP_95_64) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_5, DEST_IP_95_64,
+			       qdf_htonl(flow->tuple_info.dest_ip_95_64));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_6, DEST_IP_63_32) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_6, DEST_IP_63_32,
+			       qdf_htonl(flow->tuple_info.dest_ip_63_32));
+
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_7, DEST_IP_31_0) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_7, DEST_IP_31_0,
+			       qdf_htonl(flow->tuple_info.dest_ip_31_0));
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_8, DEST_PORT);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_8, DEST_PORT) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_8, DEST_PORT,
+			       (flow->tuple_info.dest_port));
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_8, SRC_PORT);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_8, SRC_PORT) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_8, SRC_PORT,
+			       (flow->tuple_info.src_port));
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, L4_PROTOCOL);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, L4_PROTOCOL) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, L4_PROTOCOL,
+			       flow->tuple_info.l4_protocol);
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_HANDLER);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_HANDLER) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_HANDLER,
+			       flow->reo_destination_handler);
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, VALID) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9, VALID, 1);
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_10, METADATA);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_10, METADATA) =
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_10, METADATA,
+			       flow->fse_metadata);
+
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_INDICATION);
+	HAL_SET_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, REO_DESTINATION_INDICATION) |=
+		HAL_SET_FLD_SM(RX_FLOW_SEARCH_ENTRY_9,
+			       REO_DESTINATION_INDICATION,
+			       flow->reo_destination_indication);
+
+	/* Reset all the other fields in FSE */
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, RESERVED_9);
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_9, MSDU_DROP);
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_11, MSDU_COUNT);
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_12, MSDU_BYTE_COUNT);
+	HAL_CLR_FLD(fse, RX_FLOW_SEARCH_ENTRY_13, TIMESTAMP);
+
+	return fse;
+}
+
 struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1499,7 +1615,7 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	hal_rx_msdu_start_offset_get_generic,
 	hal_rx_mpdu_start_offset_get_generic,
 	hal_rx_mpdu_end_offset_get_generic,
-	NULL
+	hal_rx_flow_setup_fse_5018,
 };
 
 struct hal_hw_srng_config hw_srng_table_5018[] = {
