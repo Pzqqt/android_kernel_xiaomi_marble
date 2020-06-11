@@ -123,6 +123,7 @@ static const struct wsa_reg_mask_val reg_init[] = {
 	{WSA883X_GMAMP_SUP1, 0x60, 0x60},
 };
 
+static int wsa883x_handle_post_irq(void *data);
 static int wsa883x_get_temperature(struct snd_soc_component *component,
 				   int *temp);
 enum {
@@ -173,8 +174,23 @@ static struct regmap_irq_chip wsa883x_regmap_irq_chip = {
 	.ack_base = WSA883X_INTR_CLEAR0,
 	.use_ack = 1,
 	.runtime_pm = false,
+	.handle_post_irq = wsa883x_handle_post_irq,
 	.irq_drv_data = NULL,
 };
+
+static int wsa883x_handle_post_irq(void *data)
+{
+	struct wsa883x_priv *wsa883x = data;
+	u32 sts1 = 0, sts2 = 0;
+
+	regmap_read(wsa883x->regmap, WSA883X_INTR_STATUS0, &sts1);
+	regmap_read(wsa883x->regmap, WSA883X_INTR_STATUS1, &sts2);
+
+	wsa883x->swr_slave->slave_irq_pending =
+			((sts1 || sts2) ? true : false);
+
+	return IRQ_HANDLED;
+}
 
 #ifdef CONFIG_DEBUG_FS
 static int codec_debug_open(struct inode *inode, struct file *file)
@@ -995,6 +1011,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 					    wsa883x->swr_slave->dev_num,
 					    true);
 		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+		wcd_enable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		/* Force remove group */
 		swr_remove_from_group(wsa883x->swr_slave,
 				      wsa883x->swr_slave->dev_num);
@@ -1004,6 +1021,7 @@ static int wsa883x_spkr_event(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component, WSA883X_PA_FSM_CTL,
 				0x01, 0x00);
 		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PDM_WD);
+		wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 		clear_bit(SPKR_STATUS, &wsa883x->status_mask);
 		break;
 	}
@@ -1192,6 +1210,8 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
 	struct swr_device *dev;
 	int variant = 0, version = 0;
+	struct snd_soc_dapm_context *dapm =
+			snd_soc_component_get_dapm(component);
 
 	if (!wsa883x)
 		return -EINVAL;
@@ -1210,6 +1230,10 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
+
+	snd_soc_dapm_ignore_suspend(dapm,
+		wsa883x->dai_driver->playback.stream_name);
+	snd_soc_dapm_sync(dapm);
 
 	return 0;
 }
@@ -1484,11 +1508,17 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR,
 			"WSA SAF2WAR", wsa883x_saf2war_handle_irq, NULL);
 
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_SAF2WAR);
+
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF,
 			"WSA WAR2SAF", wsa883x_war2saf_handle_irq, NULL);
 
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_WAR2SAF);
+
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE,
 			"WSA OTP", wsa883x_otp_handle_irq, NULL);
+
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_DISABLE);
 
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_OCP,
 			"WSA OCP", wsa883x_ocp_handle_irq, NULL);
@@ -1513,9 +1543,13 @@ static int wsa883x_swr_probe(struct swr_device *pdev)
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN,
 			"WSA EXT INT", wsa883x_ext_int_handle_irq, NULL);
 
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_INTR_PIN);
+
 	/* Under Voltage Lock out (UVLO) interrupt handle */
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO,
 			"WSA UVLO", wsa883x_uvlo_handle_irq, NULL);
+
+	wcd_disable_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_UVLO);
 
 	wcd_request_irq(&wsa883x->irq_info, WSA883X_IRQ_INT_PA_ON_ERR,
 			"WSA PA ERR", wsa883x_pa_on_err_handle_irq, NULL);
