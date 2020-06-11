@@ -36,6 +36,8 @@
 #define RT_PROXY_DAI_002_TX	0xE1
 #define RT_PROXY_DAI_003_TX	0xF2
 #define VIRTUAL_ID_TO_PORTID(val) ((val & 0xF) | 0x2000)
+#define PORTID_TO_IDX(val)	((val & 0xF) >> 1)
+#define NUM_RX_PROXY_PORTS	2
 
 #define AFE_CLK_VERSION_V1    1
 #define AFE_CLK_VERSION_V2    2
