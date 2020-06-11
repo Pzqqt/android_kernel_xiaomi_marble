@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -533,6 +533,27 @@
 				0, \
 				"disable diversity gain rx 5g")
 
+/*
+ * <ini>
+ * enable_dynamic_nss_chain_config - Enable/Disable dynamic nss and chain config
+ * to FW.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Related: STA/SAP/P2P/NAN.
+ *
+ * Supported Feature: Dynamic chainmask
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DYNAMIC_NSS_CHAIN_CONFIG CFG_INI_BOOL( \
+					"enable_dynamic_nss_chain_config", \
+					1, \
+					"enable dynamic nss chain config")
+
 #define CFG_NSS_CHAINS_ALL \
 	CFG(CFG_NUM_TX_CHAINS_2G) \
 	CFG(CFG_NUM_TX_CHAINS_5G) \
@@ -548,7 +569,8 @@
 	CFG(CFG_DISABLE_TX_MRC_2G) \
 	CFG(CFG_DISABLE_RX_MRC_2G) \
 	CFG(CFG_DISABLE_TX_MRC_5G) \
-	CFG(CFG_DISABLE_RX_MRC_5G)
+	CFG(CFG_DISABLE_RX_MRC_5G) \
+	CFG(CFG_ENABLE_DYNAMIC_NSS_CHAIN_CONFIG)
 
 #endif /* __CFG_MLME_NSS_CHAINS */
 

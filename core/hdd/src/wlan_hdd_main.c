@@ -2181,6 +2181,7 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	uint8_t value = 0;
 	uint32_t fine_time_meas_cap = 0;
 	enum nss_chains_band_info band;
+	bool enable_dynamic_cfg;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2364,8 +2365,20 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	hdd_update_vdev_nss(hdd_ctx);
 
-	hdd_ctx->dynamic_nss_chains_support =
-					cfg->dynamic_nss_chains_support;
+	status =
+	  ucfg_mlme_get_enable_dynamic_nss_chains_cfg(hdd_ctx->psoc,
+						      &enable_dynamic_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("unable to get enable dynamic config");
+		hdd_ctx->dynamic_nss_chains_support = false;
+	} else {
+		hdd_ctx->dynamic_nss_chains_support =
+					cfg->dynamic_nss_chains_support &
+					enable_dynamic_cfg;
+		hdd_debug("Dynamic nss chain support FW %d driver %d",
+			   cfg->dynamic_nss_chains_support, enable_dynamic_cfg);
+	}
+
 	ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc, &fine_time_meas_cap);
 	fine_time_meas_cap &= cfg->fine_time_measurement_cap;
 	status = ucfg_mlme_set_fine_time_meas_cap(hdd_ctx->psoc,
