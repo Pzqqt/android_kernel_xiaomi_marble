@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -233,4 +233,48 @@ dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
 int
 dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
 			       bool *nol_subchannel_marking);
+
+#if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
+#define DFS_80P80MHZ_SECOND_SEG_OFFSET 85
+/**
+ * dfs_translate_radar_params() - Translate the radar parameters received in
+ *                                true 160MHz supported chipsets.
+ * @dfs: Pointer to the wlan_dfs object.
+ * @radar_found: Radar found parameters.
+ *
+ * Radar found parameters in true 160MHz detectors are represented below:
+ *
+ * Offset received with respect to the center of 160MHz ranging from -80 to +80.
+ *          __________________________________________
+ *         |                                          |
+ *         |             160 MHz Channel              |
+ *         |__________________________________________|
+ *         |        |           |           |         |
+ *         |        |           |           |         |
+ *        -80    -ve offset   center    +ve offset   +80
+ *
+ *
+ * Radar found parameters after translation by this API:
+ *
+ * Offsets with respect to pri/sec 80MHz center ranging from -40 to +40.
+ *          __________________________________________
+ *         |                    |                     |
+ *         |             160 MHz|Channel              |
+ *         |____________________|_____________________|
+ *         |         |          |           |         |
+ *         |         |          |           |         |
+ *        -40    pri center  +40/-40     sec center  +40
+ *
+ * Return: void.
+ */
+void
+dfs_translate_radar_params(struct wlan_dfs *dfs,
+			   struct radar_found_info *radar_found);
+#else
+static inline void
+dfs_translate_radar_params(struct wlan_dfs *dfs,
+			   struct radar_found_info *radar_found)
+{
+}
+#endif /* WLAN_DFS_TRUE_160MHZ_SUPPORT */
 #endif /*_DFS_PROCESS_RADAR_FOUND_IND_H_ */

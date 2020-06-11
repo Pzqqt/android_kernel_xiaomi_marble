@@ -959,42 +959,9 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 }
 #endif
 
-#ifdef WLAN_DFS_TRUE_160MHZ_SUPPORT
-#define DFS_80P80MHZ_SECOND_SEG_OFFSET 85
-/**
- * dfs_translate_radar_params() - Translate the radar parameters received in
- *                                true 160MHz supported chipsets.
- * @dfs: Pointer to the wlan_dfs object.
- * @radar_found: Radar found parameters.
- *
- * Radar found parameters in true 160MHz detectors are represented below:
- *
- * Offset received with respect to the center of 160MHz ranging from -80 to +80.
- *          __________________________________________
- *         |                                          |
- *         |             160 MHz Channel              |
- *         |__________________________________________|
- *         |        |           |           |         |
- *         |        |           |           |         |
- *        -80    -ve offset   center    +ve offset   +80
- *
- *
- * Radar found parameters after translation by this API:
- *
- * Offsets with respect to pri/sec 80MHz center ranging from -40 to +40.
- *          __________________________________________
- *         |                    |                     |
- *         |             160 MHz|Channel              |
- *         |____________________|_____________________|
- *         |         |          |           |         |
- *         |         |          |           |         |
- *        -40    pri center  +40/-40     sec center  +40
- *
- * Return: void.
- */
-static void
-dfs_translate_radar_params(struct wlan_dfs *dfs,
-			   struct radar_found_info *radar_found)
+#if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
+void dfs_translate_radar_params(struct wlan_dfs *dfs,
+				struct radar_found_info *radar_found)
 {
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	bool is_primary_ch_right_of_center = false;
@@ -1044,12 +1011,6 @@ dfs_translate_radar_params(struct wlan_dfs *dfs,
 		}
 	}
 }
-#else
-static inline void
-dfs_translate_radar_params(struct wlan_dfs *dfs,
-			   struct radar_found_info *radar_found)
-{
-}
 #endif /* WLAN_DFS_TRUE_160MHZ_SUPPORT */
 
 #ifdef CONFIG_CHAN_FREQ_API
@@ -1072,7 +1033,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 */
 	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
 
-	dfs_translate_radar_params(dfs, radar_found);
 	/* Before processing radar, check if HW mode switch is in progress.
 	 * If in progress, defer the processing of radar event received till
 	 * the mode switch is completed.
