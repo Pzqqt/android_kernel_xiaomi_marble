@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #undef TRACE_SYSTEM
@@ -99,6 +99,33 @@ DEFINE_EVENT
 
 	 TP_ARGS(func, evt, uint1, uint2, ulong1, ulong2, ptr1, ptr2)
 
+);
+
+TRACE_EVENT(print_skb_gso,
+
+	TP_PROTO(struct sk_buff *skb, __be16 src, __be16 dest),
+
+	TP_ARGS(skb, src, dest),
+
+	TP_STRUCT__entry(
+		__field(void *,	skbaddr)
+		__field(int, len)
+		__field(int, data_len)
+		__field(__be16, src)
+		__field(__be16, dest)
+	),
+
+	TP_fast_assign(
+		__entry->skbaddr = skb;
+		__entry->len = skb->len;
+		__entry->data_len = skb->data_len;
+		__entry->src = src;
+		__entry->dest = dest;
+	),
+
+	TP_printk("GSO: skbaddr=%pK, len=%d, data_len=%d, src=%u, dest=%u",
+		__entry->skbaddr, __entry->len, __entry->data_len,
+		be16_to_cpu(__entry->src), be16_to_cpu(__entry->dest))
 );
 
 /*****************************************************************************/
