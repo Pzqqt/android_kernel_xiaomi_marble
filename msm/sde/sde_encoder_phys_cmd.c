@@ -330,8 +330,8 @@ static void _sde_encoder_phys_cmd_setup_irq_hw_idx(
 	int ret = 0;
 
 	if (!phys_enc->sde_kms || !phys_enc->hw_pp || !phys_enc->hw_ctl) {
-		SDE_ERROR("invalid args %d %d\n", !phys_enc,
-			phys_enc ? !phys_enc->hw_pp : 0);
+		SDE_ERROR("invalid args %d %d %d\n", !phys_enc->sde_kms,
+				!phys_enc->hw_pp, !phys_enc->hw_ctl);
 		return;
 	}
 
@@ -500,7 +500,7 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 	u32 pending_kickoff_cnt;
 	unsigned long lock_flags;
 
-	if (!phys_enc || !phys_enc->hw_pp || !phys_enc->hw_ctl)
+	if (!phys_enc->hw_pp || !phys_enc->hw_ctl)
 		return -EINVAL;
 
 	conn = phys_enc->connector;

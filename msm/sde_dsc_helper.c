@@ -93,7 +93,7 @@ static struct sde_dsc_v1_1_table_index_lut {
 	int scr_ver;
 	u32 bpc;
 	u32 bpp;
-	enum sde_dsc_ratio_type type;
+	u32 type;
 } sde_dsc_v1_1_index_map[] = {
 	{0, 8, 8, DSC_V11_8BPC_8BPP},
 	{0, 10, 8, DSC_V11_10BPC_8BPP},
@@ -108,7 +108,7 @@ static struct sde_dsc_v1_2_table_index_lut {
 	u32 fmt;
 	u32 bpc;
 	u32 bpp;
-	enum sde_dsc_ratio_type type;
+	u32 type;
 } sde_dsc_v1_2_index_map[] = {
 	{MSM_CHROMA_444, 8, 8, DSC_V12_444_8BPC_8BPP},
 	{MSM_CHROMA_444, 10, 8, DSC_V12_444_10BPC_8BPP},

@@ -2086,7 +2086,7 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 	struct sde_rm_hw_iter pp_iter, qdss_iter;
 	struct sde_rm_hw_iter dsc_iter, vdc_iter;
 	struct sde_rm_hw_request request_hw;
-	int i;
+	int i, j;
 
 	sde_rm_init_hw_iter(&pp_iter, drm_enc->base.id, SDE_HW_BLK_PINGPONG);
 	for (i = 0; i < MAX_CHANNELS_PER_ENC; i++) {
@@ -2102,7 +2102,7 @@ static void _sde_encoder_virt_populate_hw_res(struct drm_encoder *drm_enc)
 		if (phys) {
 			sde_rm_init_hw_iter(&qdss_iter, drm_enc->base.id,
 						SDE_HW_BLK_QDSS);
-			for (i = 0; i < QDSS_MAX; i++) {
+			for (j = 0; j < QDSS_MAX; j++) {
 				if (sde_rm_get_hw(&sde_kms->rm, &qdss_iter)) {
 					phys->hw_qdss =
 					(struct sde_hw_qdss *)qdss_iter.hw;
@@ -2156,7 +2156,7 @@ static int sde_encoder_virt_modeset_rc(struct drm_encoder *drm_enc,
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	enum sde_intf_mode intf_mode;
 	int ret;
-	bool is_cmd_mode;
+	bool is_cmd_mode = false;
 
 	if (sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
 		is_cmd_mode = true;

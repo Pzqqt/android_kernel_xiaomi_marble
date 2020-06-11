@@ -846,11 +846,9 @@ static void _sde_plane_setup_scaler3(struct sde_plane *psde,
 	bool pre_down_supported = (psde->features & BIT(SDE_SSPP_PREDOWNSCALE));
 	bool inline_rotation = (pstate->rotation & DRM_MODE_ROTATE_90);
 
-	if (!psde || !pstate || !fmt ||
-			!chroma_subsmpl_h || !chroma_subsmpl_v) {
-		SDE_ERROR("psde %d pstate %d fmt %d smp_h %d smp_v %d\n",
-				!!psde, !!pstate, !!fmt, chroma_subsmpl_h,
-				chroma_subsmpl_v);
+	if (!fmt || !chroma_subsmpl_h || !chroma_subsmpl_v) {
+		SDE_ERROR("fmt %d smp_h %d smp_v %d\n", !fmt,
+				chroma_subsmpl_h, chroma_subsmpl_v);
 		return;
 	}
 

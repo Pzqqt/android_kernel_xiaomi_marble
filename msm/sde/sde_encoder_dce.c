@@ -385,9 +385,7 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 		SDE_DEBUG("mode_3d %s, on CTL_%d PP-%d merge3d:%d\n",
 				!disable_merge_3d ? "enabled" : "disabled",
 				hw_ctl->idx - CTL_0, hw_pp->idx - PINGPONG_0,
-				hw_pp->merge_3d ?
-				hw_pp->merge_3d->idx - MERGE_3D_0 :
-				-1);
+				hw_pp->merge_3d->idx - MERGE_3D_0);
 	}
 
 	return 0;
