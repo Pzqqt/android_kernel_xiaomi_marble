@@ -534,6 +534,8 @@ int ipa3_send(struct ipa3_sys_context *sys,
 					GSI_XFER_FLAG_EOT;
 				gsi_xfer[i].flags |=
 					GSI_XFER_FLAG_BEI;
+				hrtimer_try_to_cancel(&sys->db_timer);
+				sys->nop_pending = false;
 			} else {
 				send_nop = true;
 			}
@@ -1179,7 +1181,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 		tasklet_init(&ep->sys->tasklet, ipa3_tasklet_rx_notify,
 				(unsigned long) ep->sys);
 
-	if (ipa3_ctx->tx_napi_enable) {
+	if (IPA_CLIENT_IS_PROD(ep->client) &&
+		ipa3_ctx->tx_napi_enable) {
 		if (sys_in->client != IPA_CLIENT_APPS_WAN_PROD) {
 			netif_tx_napi_add(&ipa3_ctx->generic_ndev,
 			&ep->sys->napi_tx, ipa3_aux_poll_tx_complete,

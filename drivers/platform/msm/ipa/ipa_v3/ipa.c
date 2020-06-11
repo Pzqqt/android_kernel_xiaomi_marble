@@ -6574,6 +6574,12 @@ static inline void ipa3_enable_napi_netdev(void)
 	}
 }
 
+static inline void ipa3_disable_napi_netdev(void)
+{
+	if (ipa3_ctx->lan_rx_napi_enable)
+		netif_napi_del(&ipa3_ctx->napi_lan_rx);
+}
+
 static u32 get_tx_wrapper_cache_size(u32 cache_size)
 {
 	if (cache_size <= IPA_TX_WRAPPER_CACHE_MAX_THRESHOLD)
@@ -7148,7 +7154,7 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		if (result) {
 			IPADBG("Error: ODL init fialed\n");
 			result = -ENODEV;
-			goto fail_cdev_add;
+			goto fail_odl_init;
 		}
 	}
 
@@ -7164,14 +7170,32 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 	/* Create the dummy netdev for LAN RX NAPI*/
 	ipa3_enable_napi_netdev();
 
-	ipa3_wwan_init();
+	result = ipa3_wwan_init();
+	if (result) {
+		IPAERR(":ipa3_wwan_init err=%d\n", -result);
+		result = -ENODEV;
+		goto fail_wwan_init;
+	}
 
-	ipa3_rmnet_ctl_init();
+	result = ipa3_rmnet_ctl_init();
+	if (result) {
+		IPAERR(":ipa3_rmnet_ctl_init err=%d\n", -result);
+		result = -ENODEV;
+		goto fail_rmnet_ctl_init;
+	}
 
 	mutex_init(&ipa3_ctx->app_clock_vote.mutex);
 
 	return 0;
 
+fail_rmnet_ctl_init:
+	ipa3_wwan_cleanup();
+fail_wwan_init:
+	ipa3_disable_napi_netdev();
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_v4_1)
+		ipa_odl_cleanup();
+fail_odl_init:
+	cdev_del(cdev);
 fail_cdev_add:
 fail_gsi_pre_fw_load_init:
 	ipa3_dma_shutdown();

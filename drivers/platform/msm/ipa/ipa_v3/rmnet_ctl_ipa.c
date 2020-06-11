@@ -383,6 +383,7 @@ void ipa3_rmnet_ctl_ready_notifier(void)
 int ipa3_rmnet_ctl_xmit(struct sk_buff *skb)
 {
 	int ret;
+	int len;
 	unsigned long flags;
 
 	if (!ipa3_ctx->rmnet_ctl_enable) {
@@ -451,6 +452,7 @@ int ipa3_rmnet_ctl_xmit(struct sk_buff *skb)
 	}
 	spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 
+	len = skb->len;
 	/*
 	 * both data packets and command will be routed to
 	 * IPA_CLIENT_Q6_WAN_CONS based on DMA settings
@@ -478,8 +480,7 @@ int ipa3_rmnet_ctl_xmit(struct sk_buff *skb)
 	spin_lock_irqsave(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 	atomic_inc(&rmnet_ctl_ipa3_ctx->stats.outstanding_pkts);
 	rmnet_ctl_ipa3_ctx->stats.tx_pkt_sent++;
-	rmnet_ctl_ipa3_ctx->stats.tx_byte_sent +=
-		skb->len;
+	rmnet_ctl_ipa3_ctx->stats.tx_byte_sent += len;
 	ret = 0;
 
 out:
@@ -496,6 +497,7 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 	int ret;
 	unsigned long flags;
 	struct sk_buff *skb;
+	int len;
 
 	/* calling from WQ */
 	ret = ipa_pm_activate_sync(rmnet_ctl_ipa3_ctx->rmnet_ctl_pm_hdl);
@@ -512,6 +514,7 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 	/* dequeue the skb */
 	while (skb_queue_len(&rmnet_ctl_ipa3_ctx->tx_queue) > 0) {
 		skb = skb_dequeue(&rmnet_ctl_ipa3_ctx->tx_queue);
+		len = skb->len;
 		spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 		/*
 		 * both data packets and command will be routed to
@@ -527,8 +530,6 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 				rmnet_ctl_ipa3_ctx->stats.tx_pkt_dropped++;
 				rmnet_ctl_ipa3_ctx->stats.tx_byte_dropped +=
 					skb->len;
-				spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock,
-					flags);
 				kfree_skb(skb);
 				continue;
 			}
@@ -541,10 +542,9 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 		atomic_inc(&rmnet_ctl_ipa3_ctx->stats.outstanding_pkts);
 		spin_lock_irqsave(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 		rmnet_ctl_ipa3_ctx->stats.tx_pkt_sent++;
-		rmnet_ctl_ipa3_ctx->stats.tx_byte_sent +=
-			skb->len;
-		spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
+		rmnet_ctl_ipa3_ctx->stats.tx_byte_sent += len;
 	}
+	spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 	goto out;
 
 delayed_work:
