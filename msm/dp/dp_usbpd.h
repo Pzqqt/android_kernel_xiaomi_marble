@@ -65,7 +65,7 @@ void dp_usbpd_put(struct dp_hpd *pd);
 static inline struct dp_hpd *dp_usbpd_get(struct device *dev,
 		struct dp_hpd_cb *cb)
 {
-	return NULL;
+	return ERR_PTR(-ENODEV);
 }
 
 static inline void dp_usbpd_put(struct dp_hpd *pd)
