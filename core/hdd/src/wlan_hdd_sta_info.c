@@ -144,6 +144,7 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 		     struct hdd_station_info **sta_info, bool lock_required)
 {
 	struct hdd_station_info *info;
+	struct qdf_mac_addr addr;
 
 	if (!sta_info_container || !sta_info) {
 		hdd_err("Parameter(s) null");
@@ -160,6 +161,17 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 	if (lock_required)
 		qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
+	/*
+	 * In case the put_ref is called more than twice for a single take_ref,
+	 * this will result in either a BUG or page fault. In both the cases,
+	 * the root cause would be known and the buggy put_ref can be taken
+	 * care of.
+	 */
+	if (!qdf_atomic_read(&info->ref_cnt)) {
+		hdd_alert("sta_info ref count is already 0");
+		QDF_BUG(0);
+	}
+
 	qdf_atomic_dec(&info->ref_cnt);
 
 	if (qdf_atomic_read(&info->ref_cnt)) {
@@ -168,6 +180,7 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 		return;
 	}
 
+	qdf_copy_macaddr(&addr, &info->sta_mac);
 	if (info->assoc_req_ies.len) {
 		qdf_mem_free(info->assoc_req_ies.data);
 		info->assoc_req_ies.data = NULL;
@@ -180,6 +193,9 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 
 	if (lock_required)
 		qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
+
+	hdd_nofl_debug("STA_INFO: " QDF_MAC_ADDR_STR " freed",
+		       QDF_MAC_ADDR_ARRAY(addr.bytes));
 }
 
 void hdd_clear_cached_sta_info(struct hdd_adapter *adapter)
