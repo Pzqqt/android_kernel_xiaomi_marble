@@ -245,6 +245,7 @@ QDF_STATUS ucfg_mc_cp_stats_inc_wake_lock_stats(struct wlan_objmgr_psoc *psoc,
 
 	if (!psoc_mc_stats) {
 		cp_stats_err("psoc mc stats is null");
+		wlan_cp_stats_psoc_obj_unlock(psoc_cp_stats_priv);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
