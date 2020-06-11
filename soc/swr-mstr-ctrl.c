@@ -1873,7 +1873,7 @@ handle_irq:
 			swrm_enable_slave_irq(swrm);
 			if (status == swrm->slave_status) {
 				dev_dbg(swrm->dev,
-					"%s: No change in slave status: %d\n",
+					"%s: No change in slave status: 0x%x\n",
 					__func__, status);
 				break;
 			}
@@ -2177,17 +2177,19 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 					if ((id & SWR_DEV_ID_MASK) == dev_id) {
 						*dev_num = i;
 						ret = 0;
+						dev_info(swrm->dev,
+							"%s: devnum %d assigned for dev %llx\n",
+							__func__, i,
+							swr_dev->addr);
 					}
-					dev_dbg(swrm->dev,
-						"%s: devnum %d is assigned for dev addr %lx\n",
-						__func__, i, swr_dev->addr);
 				}
 			}
 		}
 	}
 	if (ret)
-		dev_err(swrm->dev, "%s: device 0x%llx is not ready\n",
-			__func__, dev_id);
+		dev_err_ratelimited(swrm->dev,
+				"%s: device 0x%llx is not ready\n",
+				__func__, dev_id);
 
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
