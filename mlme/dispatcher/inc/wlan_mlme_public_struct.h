@@ -1318,6 +1318,7 @@ enum dot11p_mode {
  * @num_tx_chains_11a:               number of tx chains in 11a mode
  * @disable_rx_mrc:                  disable 2 rx chains, in rx nss 1 mode
  * @disable_tx_mrc:                  disable 2 tx chains, in tx nss 1 mode
+ * @enable_dynamic_nss_chains_cfg:   enable the dynamic nss chain config to FW
  */
 struct wlan_mlme_nss_chains {
 	uint32_t num_tx_chains[NSS_CHAINS_BAND_MAX];
@@ -1329,6 +1330,7 @@ struct wlan_mlme_nss_chains {
 	uint32_t num_tx_chains_11a;
 	bool disable_rx_mrc[NSS_CHAINS_BAND_MAX];
 	bool disable_tx_mrc[NSS_CHAINS_BAND_MAX];
+	bool enable_dynamic_nss_chains_cfg;
 };
 
 /**

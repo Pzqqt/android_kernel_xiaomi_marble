@@ -2482,6 +2482,23 @@ ucfg_mlme_get_vht20_mcs9(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 /**
+ * ucfg_mlme_get_enable_dynamic_nss_chains_cfg() - API to get whether dynamic
+ * nss and chain config is enabled or not
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * API to get whether dynamic nss and chain config is enabled or not
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_enable_dynamic_nss_chains_cfg(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	return wlan_mlme_get_enable_dynamic_nss_chains_cfg(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_vht_enable2x2() - Enables/disables VHT Tx/Rx MCS values for 2x2
  * @psoc: psoc context
  * @value: data to be set
