@@ -323,6 +323,11 @@ SND_SOC_DAILINK_DEFS(sen_tdm_tx_0,
 	DAILINK_COMP_ARRAY(COMP_CODEC("msm-stub-codec.1", "msm-stub-tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
 
+SND_SOC_DAILINK_DEFS(wsa_dma_tx0_vi,
+	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-cdc-dma-dev.45057")),
+	DAILINK_COMP_ARRAY(COMP_CODEC("bolero_codec", "wsa_macro_vifeedback")),
+	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
+
 SND_SOC_DAILINK_DEFS(slimbus_7_rx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.16398")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslim_slave",
