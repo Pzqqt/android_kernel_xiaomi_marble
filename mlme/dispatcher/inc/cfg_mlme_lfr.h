@@ -2366,9 +2366,13 @@
  * <ini>
  * roam_triggers - Bitmap of roaming triggers. Setting this to
  * zero will disable roaming altogether for the STA interface.
+ * ESS report element of beacon explores BSS information, for roaming station
+ * uses it to consider next AP to roam. ROAM_TRIGGER_REASON_ESS_RSSI bit is
+ * to enable/disable roam trigger for ESS RSSI reason. This bit of ini is also
+ * used for WFA certification.
  * @Min: 0
  * @Max: 0xFFFFFFFF
- * @Default: 0xFFFF
+ * @Default: 0x1FFFF
  *
  * ROAM_TRIGGER_REASON_PER         BIT 1
  * ROAM_TRIGGER_REASON_BMISS       BIT 2
@@ -2385,13 +2389,14 @@
  * ROAM_TRIGGER_REASON_DEAUTH      BIT 13
  * ROAM_TRIGGER_REASON_IDLE        BIT 14
  * ROAM_TRIGGER_REASON_STA_KICKOUT BIT 15
- * ROAM_TRIGGER_REASON_MAX     BIT 16
+ * ROAM_TRIGGER_REASON_ESS_RSSI    BIT 16
+ * ROAM_TRIGGER_REASON_MAX         BIT 17
  *
  * Related: none
  *
  * Supported Feature: Roaming
  *
- * Usage: Internal
+ * Usage: External
  *
  * </ini>
  */
@@ -2399,7 +2404,7 @@
 			"roam_triggers", \
 			0, \
 			0xFFFFFFFF, \
-			0xFFFF, \
+			0x1FFFF, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Bitmap of roaming triggers")
 
