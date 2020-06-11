@@ -135,8 +135,7 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 
 	cce_match = true;
 	/* Get the cce_metadata from RX MSDU TLV */
-	cce_metadata = (hal_rx_msdu_cce_metadata_get(soc->hal_soc, rx_tlv_hdr) &
-			RX_MSDU_END_16_CCE_METADATA_MASK);
+	cce_metadata = hal_rx_msdu_cce_metadata_get(soc->hal_soc, rx_tlv_hdr);
 	/*
 	 * Received CCE metadata should be within the
 	 * valid limits
