@@ -3101,7 +3101,7 @@ static void sde_encoder_frame_done_callback(
 				SDE_EVT32_VERBOSE(DRMID(drm_enc), i,
 				     atomic_read(&sde_enc->frame_done_cnt[i]));
 				if (!atomic_add_unless(
-					&sde_enc->frame_done_cnt[i], 1, 1)) {
+					&sde_enc->frame_done_cnt[i], 1, 2)) {
 					SDE_EVT32(DRMID(drm_enc), event,
 						ready_phys->intf_idx,
 						SDE_EVTLOG_ERROR);
@@ -3113,7 +3113,7 @@ static void sde_encoder_frame_done_callback(
 			}
 
 			if (topology != SDE_RM_TOPOLOGY_PPSPLIT &&
-			    atomic_read(&sde_enc->frame_done_cnt[i]) != 1)
+			    atomic_read(&sde_enc->frame_done_cnt[i]) == 0)
 				trigger = false;
 		}
 
@@ -3123,7 +3123,8 @@ static void sde_encoder_frame_done_callback(
 					&sde_enc->crtc_frame_event_cb_data,
 					event);
 			for (i = 0; i < sde_enc->num_phys_encs; i++)
-				atomic_set(&sde_enc->frame_done_cnt[i], 0);
+				atomic_add_unless(&sde_enc->frame_done_cnt[i],
+						-1, 0);
 		}
 	} else if (sde_enc->crtc_frame_event_cb) {
 		sde_enc->crtc_frame_event_cb(
