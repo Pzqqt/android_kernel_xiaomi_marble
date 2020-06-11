@@ -33,10 +33,10 @@
 #define __can_sleep() \
 	(!in_interrupt() && !irqs_disabled() && !in_atomic())
 
-#define __zalloc_sleeps(size) kmalloc(size, GFP_KERNEL)
-#define __zalloc_atomic(size) kmalloc(size, GFP_ATOMIC)
+#define __zalloc_sleeps(size) kzalloc(size, GFP_KERNEL)
+#define __zalloc_atomic(size) kzalloc(size, GFP_ATOMIC)
 #define __zalloc_auto(size) \
-	kmalloc(size, __can_sleep() ? GFP_KERNEL : GFP_ATOMIC)
+	kzalloc(size, __can_sleep() ? GFP_KERNEL : GFP_ATOMIC)
 
 #define __free(ptr) kfree(ptr)
 
