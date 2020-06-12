@@ -21,7 +21,7 @@
  */
 #define MAX_BLOCKS    12
 
-#define SDE_HW_VER(MAJOR, MINOR, STEP) (((MAJOR & 0xF) << 28)    |\
+#define SDE_HW_VER(MAJOR, MINOR, STEP) ((u32)((MAJOR & 0xF) << 28)    |\
 		((MINOR & 0xFFF) << 16)  |\
 		(STEP & 0xFFFF))
 
