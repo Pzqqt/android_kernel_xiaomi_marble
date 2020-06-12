@@ -240,6 +240,53 @@ static int pld_ipci_resume_noirq(struct device *dev)
 	return 0;
 }
 
+/**
+ * pld_ipci_runtime_suspend() - Runtime suspend callback for power management
+ * @dev: device
+ *
+ * This function is to runtime suspend the platform device when power management
+ * is enabled.
+ *
+ * Return: status
+ */
+static int pld_ipci_runtime_suspend(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops && pld_context->ops->runtime_suspend)
+		return pld_context->ops->runtime_suspend(dev,
+							 PLD_BUS_TYPE_IPCI);
+
+	return 0;
+}
+
+/**
+ * pld_ipci_runtime_resume() - Runtime resume callback for power management
+ * @pdev: device
+ *
+ * This function is to runtime resume the platform device when power management
+ * is enabled.
+ *
+ * Return: status
+ */
+static int pld_ipci_runtime_resume(struct device *dev)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops && pld_context->ops->runtime_resume)
+		return pld_context->ops->runtime_resume(dev, PLD_BUS_TYPE_IPCI);
+
+	return 0;
+}
+
 static int pld_ipci_uevent(struct device *dev,
 			   struct icnss_uevent_data *uevent)
 {
@@ -343,6 +390,8 @@ struct icnss_driver_ops pld_ipci_ops = {
 	.pm_resume  = pld_ipci_pm_resume,
 	.suspend_noirq = pld_ipci_suspend_noirq,
 	.resume_noirq = pld_ipci_resume_noirq,
+	.runtime_suspend = pld_ipci_runtime_suspend,
+	.runtime_resume  = pld_ipci_runtime_resume,
 	.uevent = pld_ipci_uevent,
 	.idle_restart = pld_ipci_idle_restart_cb,
 	.idle_shutdown = pld_ipci_idle_shutdown_cb,
