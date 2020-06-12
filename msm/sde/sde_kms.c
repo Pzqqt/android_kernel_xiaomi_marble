@@ -154,6 +154,9 @@ static int _sde_debugfs_init(struct sde_kms *sde_kms)
 		debugfs_create_u32("qdss", 0600, debugfs_root,
 				(u32 *)&sde_kms->qdss_enabled);
 
+	debugfs_create_u32("pm_suspend_clk_dump", 0600, debugfs_root,
+			(u32 *)&sde_kms->pm_suspend_clk_dump);
+
 	return 0;
 }
 
@@ -165,6 +168,20 @@ static void _sde_debugfs_destroy(struct sde_kms *sde_kms)
 		sde_debugfs_core_irq_destroy(sde_kms);
 	}
 }
+
+static int _sde_kms_dump_clks_state(struct sde_kms *sde_kms)
+{
+	int i;
+	struct device *dev = sde_kms->dev->dev;
+
+	SDE_INFO("runtime PM suspended:%d", pm_runtime_suspended(dev));
+
+	for (i = 0; i < sde_kms->dsi_display_count; i++)
+		dsi_display_dump_clks_state(sde_kms->dsi_displays[i]);
+
+	return 0;
+}
+
 #else
 static int _sde_debugfs_init(struct sde_kms *sde_kms)
 {
@@ -173,6 +190,11 @@ static int _sde_debugfs_init(struct sde_kms *sde_kms)
 
 static void _sde_debugfs_destroy(struct sde_kms *sde_kms)
 {
+}
+
+static int _sde_kms_dump_clks_state(struct sde_kms *sde_kms)
+{
+	return 0;
 }
 #endif
 
@@ -2826,6 +2848,10 @@ unlock:
 	 */
 	pm_runtime_put_sync(dev);
 	pm_runtime_get_noresume(dev);
+
+	/* dump clock state before entering suspend */
+	if (sde_kms->pm_suspend_clk_dump)
+		_sde_kms_dump_clks_state(sde_kms);
 
 	return ret;
 }

@@ -322,4 +322,11 @@ int dsi_clk_prepare_enable(struct dsi_clk_link_set *clk);
  * @clk:       list of src clocks.
  */
 void dsi_clk_disable_unprepare(struct dsi_clk_link_set *clk);
+
+/**
+ * dsi_display_dump_clk_handle_state() - dump client clock state
+ * @client:       DSI clock client pointer.
+ */
+int dsi_display_dump_clk_handle_state(void *client);
+
 #endif /* _DSI_CLK_H_ */

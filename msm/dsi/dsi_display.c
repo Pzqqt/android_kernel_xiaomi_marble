@@ -7799,6 +7799,44 @@ int dsi_display_update_pps(char *pps_cmd, void *disp)
 	return 0;
 }
 
+int dsi_display_dump_clks_state(struct dsi_display *display)
+{
+	int rc = 0;
+
+	if (!display) {
+		DSI_ERR("invalid display argument\n");
+		return -EINVAL;
+	}
+
+	if (!display->clk_mngr) {
+		DSI_ERR("invalid clk manager\n");
+		return -EINVAL;
+	}
+
+	if (!display->dsi_clk_handle || !display->mdp_clk_handle) {
+		DSI_ERR("invalid clk handles\n");
+		return -EINVAL;
+	}
+
+	mutex_lock(&display->display_lock);
+	rc = dsi_display_dump_clk_handle_state(display->dsi_clk_handle);
+	if (rc) {
+		DSI_ERR("failed to dump dsi clock state\n");
+		goto end;
+	}
+
+	rc = dsi_display_dump_clk_handle_state(display->mdp_clk_handle);
+	if (rc) {
+		DSI_ERR("failed to dump mdp clock state\n");
+		goto end;
+	}
+
+end:
+	mutex_unlock(&display->display_lock);
+
+	return rc;
+}
+
 int dsi_display_unprepare(struct dsi_display *display)
 {
 	int rc = 0, i;

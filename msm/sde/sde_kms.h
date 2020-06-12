@@ -306,6 +306,7 @@ struct sde_kms {
 
 	bool first_kickoff;
 	bool qdss_enabled;
+	bool pm_suspend_clk_dump;
 
 	cpumask_t irq_cpu_mask;
 	struct dev_pm_qos_request pm_qos_irq_req[NR_CPUS];
