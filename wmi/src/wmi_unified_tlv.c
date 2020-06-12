@@ -328,6 +328,7 @@ static const uint32_t pdev_param_tlv[] = {
 	[wmi_pdev_param_enable_srp] = WMI_PDEV_PARAM_ENABLE_SRP,
 	[wmi_pdev_param_enable_sr_prohibit] = WMI_PDEV_PARAM_ENABLE_SR_PROHIBIT,
 	[wmi_pdev_param_sr_trigger_margin] = WMI_PDEV_PARAM_SR_TRIGGER_MARGIN,
+	[wmi_pdev_param_pream_punct_bw] = WMI_PDEV_PARAM_SET_PREAM_PUNCT_BW,
 };
 
 /**
@@ -11302,6 +11303,8 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 			param_buf->nan_cap->max_ndp_sessions;
 	else
 		param->max_ndp_sessions = 0;
+
+	param->preamble_puncture_bw_cap = ev->preamble_puncture_bw;
 
 	return QDF_STATUS_SUCCESS;
 }

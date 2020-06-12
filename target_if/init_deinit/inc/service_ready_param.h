@@ -386,6 +386,7 @@ struct wlan_psoc_host_service_ext_param {
  * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
  * @chwidth_num_peer_caps: Peer limit for peer_chan_width_switch WMI cmd
  * @max_ndp_sessions: Max number of ndp session fw supports
+ * @preamble_puncture_bw_cap: Preamble Puncturing Tx support
  */
 struct wlan_psoc_host_service_ext2_param {
 	uint8_t reg_db_version_major;
@@ -395,6 +396,7 @@ struct wlan_psoc_host_service_ext2_param {
 	uint32_t num_dbr_ring_caps;
 	uint32_t chwidth_num_peer_caps;
 	uint32_t max_ndp_sessions;
+	uint32_t preamble_puncture_bw_cap;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

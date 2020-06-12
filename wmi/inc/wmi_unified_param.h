@@ -4850,6 +4850,7 @@ typedef enum {
 	wmi_pdev_param_enable_srp,
 	wmi_pdev_param_enable_sr_prohibit,
 	wmi_pdev_param_sr_trigger_margin,
+	wmi_pdev_param_pream_punct_bw,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
