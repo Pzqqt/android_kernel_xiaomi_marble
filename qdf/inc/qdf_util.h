@@ -52,6 +52,11 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
 #define qdf_wmb()                 __qdf_wmb()
 
 /**
+ * qdf_rmb - read memory barrier.
+ */
+#define qdf_rmb()                 __qdf_rmb()
+
+/**
  * qdf_mb - read + write memory barrier.
  */
 #define qdf_mb()                 __qdf_mb()

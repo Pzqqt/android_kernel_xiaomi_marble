@@ -237,6 +237,7 @@ typedef struct hal_ring_handle *hal_ring_handle_t;
  * @dequeue_val: register value at the time of delayed write dequeue
  * @valid: whether this entry is valid or not
  * @enqueue_time: enqueue time (qdf_log_timestamp)
+ * @work_scheduled_time: work scheduled time (qdf_log_timestamp)
  * @dequeue_time: dequeue time (qdf_log_timestamp)
  */
 struct hal_reg_write_q_elem {
@@ -246,6 +247,7 @@ struct hal_reg_write_q_elem {
 	uint32_t dequeue_val;
 	uint8_t valid;
 	qdf_time_t enqueue_time;
+	qdf_time_t work_scheduled_time;
 	qdf_time_t dequeue_time;
 };
 

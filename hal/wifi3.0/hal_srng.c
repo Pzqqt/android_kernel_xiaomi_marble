@@ -461,7 +461,10 @@ static void hal_reg_write_work(void *arg)
 	uint32_t *addr;
 
 	q_elem = &hal->reg_write_queue[(hal->read_idx)];
+	q_elem->work_scheduled_time = qdf_get_log_timestamp();
 
+	/* Make sure q_elem consistent in the memory for multi-cores */
+	qdf_rmb();
 	if (!q_elem->valid)
 		return;
 
@@ -474,7 +477,11 @@ static void hal_reg_write_work(void *arg)
 		return;
 	}
 
-	while (q_elem->valid) {
+	while (true) {
+		qdf_rmb();
+		if (!q_elem->valid)
+			break;
+
 		q_elem->dequeue_time = qdf_get_log_timestamp();
 		ring_id = q_elem->srng->ring_id;
 		addr = q_elem->addr;
@@ -568,6 +575,17 @@ static void hal_reg_write_enqueue(struct hal_soc *hal_soc,
 	 */
 	qdf_wmb();
 	q_elem->valid = true;
+
+	/*
+	 * After all other fields in the q_elem has been updated
+	 * in memory successfully, the valid flag needs to be updated
+	 * in memory in time too.
+	 * Else there is a chance that the dequeuing worker thread
+	 * might read stale valid flag and the work will be bypassed
+	 * for this round. And if there is no other work scheduled
+	 * later, this hal register writing won't be updated any more.
+	 */
+	qdf_wmb();
 
 	srng->reg_write_in_progress  = true;
 	qdf_atomic_inc(&hal_soc->active_work_cnt);
