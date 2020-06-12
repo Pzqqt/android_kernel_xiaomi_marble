@@ -64,6 +64,12 @@ static void hdd_dcs_cb(struct wlan_objmgr_psoc *psoc, uint8_t mac_id,
 	count = policy_mgr_get_sap_go_count_on_mac(psoc, list, mac_id);
 	for (index = 0; index < count; index++) {
 		adapter = hdd_get_adapter_by_vdev(hdd_ctx, list[index]);
+		if (!adapter) {
+			hdd_err("vdev_id %u does not exist with host",
+				list[index]);
+			return;
+		}
+
 		if (wlansap_dcs_is_wlan_interference_mitigation_enabled(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter))) {
 			hdd_debug("DCS triggers ACS on vdev_id=%u, mac_id=%u",
@@ -106,6 +112,11 @@ void hdd_dcs_hostapd_set_chan(struct hdd_context *hdd_ctx,
 	 */
 	for (conn_index = 0; conn_index < count; conn_index++) {
 		adapter = hdd_get_adapter_by_vdev(hdd_ctx, list[conn_index]);
+		if (!adapter) {
+			hdd_err("vdev_id %u does not exist with host",
+				list[conn_index]);
+			return;
+		}
 
 		if (adapter->session.ap.operating_chan_freq != dcs_ch_freq)
 			wlansap_dcs_set_vdev_starting(
@@ -116,6 +127,11 @@ void hdd_dcs_hostapd_set_chan(struct hdd_context *hdd_ctx,
 	}
 	for (conn_index = 0; conn_index < count; conn_index++) {
 		adapter = hdd_get_adapter_by_vdev(hdd_ctx, list[conn_index]);
+		if (!adapter) {
+			hdd_err("vdev_id %u does not exist with host",
+				list[conn_index]);
+			return;
+		}
 
 		if (adapter->session.ap.operating_chan_freq != dcs_ch_freq) {
 			hdd_ctx->acs_policy.acs_chan_freq = AUTO_CHANNEL_SELECT;
@@ -158,6 +174,10 @@ static void hdd_dcs_hostapd_enable_wlan_interference_mitigation(
 		return;
 	}
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("vdev_id %u does not exist with host", vdev_id);
+		return;
+	}
 
 	if (wlansap_dcs_is_wlan_interference_mitigation_enabled(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter)) &&
