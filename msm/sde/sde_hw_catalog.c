@@ -187,6 +187,7 @@ enum sde_prop {
 	UBWC_STATIC,
 	UBWC_SWIZZLE,
 	QSEED_SW_LIB_REV,
+	QSEED_HW_VERSION,
 	CSC_TYPE,
 	PANIC_PER_PIPE,
 	SRC_SPLIT,
@@ -552,6 +553,8 @@ static struct sde_prop_type sde_prop[] = {
 	{UBWC_SWIZZLE, "qcom,sde-ubwc-swizzle", false, PROP_TYPE_U32},
 	{QSEED_SW_LIB_REV, "qcom,sde-qseed-sw-lib-rev", false,
 			PROP_TYPE_STRING},
+	{QSEED_HW_VERSION, "qcom,sde-qseed-scalar-version", false,
+			PROP_TYPE_U32},
 	{CSC_TYPE, "qcom,sde-csc-type", false, PROP_TYPE_STRING},
 	{PANIC_PER_PIPE, "qcom,sde-panic-per-pipe", false, PROP_TYPE_BOOL},
 	{SRC_SPLIT, "qcom,sde-has-src-split", false, PROP_TYPE_BOOL},
@@ -3728,6 +3731,8 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->pipe_order_type = PROP_VALUE_ACCESS(props->values,
 			PIPE_ORDER_VERSION, 0);
 	cfg->has_base_layer = PROP_VALUE_ACCESS(props->values, BASE_LAYER, 0);
+	cfg->qseed_hw_version = PROP_VALUE_ACCESS(props->values,
+			 QSEED_HW_VERSION, 0);
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)

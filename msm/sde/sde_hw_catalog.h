@@ -1409,6 +1409,7 @@ struct sde_perf_cfg {
  * @has_base_layer     Supports staging layer as base layer
  * @demura_supported   Demura pipe support flag(~0x00 - Not supported)
  * @qseed_sw_lib_rev	qseed sw library type supporting the qseed hw
+ * @qseed_hw_version   qseed hw version of the target
  * @sc_cfg: system cache configuration
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
@@ -1476,6 +1477,7 @@ struct sde_mdss_cfg {
 	bool has_demura;
 	u32 demura_supported[SSPP_MAX][2];
 	u32 qseed_sw_lib_rev;
+	u32 qseed_hw_version;
 
 	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
 

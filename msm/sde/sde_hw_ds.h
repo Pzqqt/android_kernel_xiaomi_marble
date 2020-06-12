@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_DS_H
@@ -58,13 +58,6 @@ struct sde_hw_ds_ops {
 	void (*setup_scaler)(struct sde_hw_ds *hw_ds,
 				void *scaler_cfg,
 				void *scaler_lut_cfg);
-
-	/**
-	 * get_scaler_ver - get scaler h/w version
-	 * @ctx: Pointer to ds structure
-	 */
-	u32 (*get_scaler_ver)(struct sde_hw_ds *ctx);
-
 };
 
 /**
