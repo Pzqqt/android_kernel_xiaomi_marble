@@ -605,6 +605,10 @@ struct hal_hw_txrx_ops {
 	void * (*hal_rx_flow_setup_fse)(uint8_t *rx_fst,
 					uint32_t table_offset,
 					uint8_t *rx_flow);
+	void (*hal_compute_reo_remap_ix2_ix3)(uint32_t *ring,
+					      uint32_t num_rings,
+					      uint32_t *remap1,
+					      uint32_t *remap2);
 };
 
 /**

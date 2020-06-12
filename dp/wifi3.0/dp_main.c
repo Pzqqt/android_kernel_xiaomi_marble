@@ -2927,24 +2927,10 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
  */
 bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1, uint32_t *remap2)
 {
-	*remap1 = HAL_REO_REMAP_IX2(REO_REMAP_SW1, 16) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 17) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 18) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW1, 19) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 20) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 21) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW1, 22) |
-		  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 23);
-
-	*remap2 = HAL_REO_REMAP_IX3(REO_REMAP_SW3, 24) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 25) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 26) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 27) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 28) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 29) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 30) |
-		  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 31);
-
+	uint32_t ring[4] = {REO_REMAP_SW1, REO_REMAP_SW2,
+						REO_REMAP_SW3};
+	hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+				      3, remap1, remap2);
 	dp_debug("remap1 %x remap2 %x", *remap1, *remap2);
 
 	return true;
@@ -2985,66 +2971,33 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 {
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 	uint8_t target_type;
+	uint32_t ring[4];
 
 	target_type = hal_get_target_type(soc->hal_soc);
 
 	switch (offload_radio) {
 	case dp_nss_cfg_default:
-		*remap1 = HAL_REO_REMAP_IX2(REO_REMAP_SW1, 16) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 17) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 18) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 19) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW1, 20) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 21) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 22) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 23);
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW3;
+		ring[3] = REO_REMAP_SW4;
+		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+					      4, remap1, remap2);
 
-		*remap2 = HAL_REO_REMAP_IX3(REO_REMAP_SW1, 24) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 25) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 26) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 27) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 28) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 29) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 30) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 31);
 		break;
 	case dp_nss_cfg_first_radio:
-		*remap1 = HAL_REO_REMAP_IX2(REO_REMAP_SW2, 16) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 17) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 18) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 19) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 20) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 21) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW2, 22) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 23);
-
-		*remap2 = HAL_REO_REMAP_IX3(REO_REMAP_SW4, 24) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 25) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 26) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 27) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 28) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 29) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 30) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW2, 31);
+		ring[0] = REO_REMAP_SW2;
+		ring[1] = REO_REMAP_SW3;
+		ring[2] = REO_REMAP_SW4;
+		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+					      3, remap1, remap2);
 		break;
 	case dp_nss_cfg_second_radio:
-		*remap1 = HAL_REO_REMAP_IX2(REO_REMAP_SW1, 16) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 17) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 18) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW1, 19) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 20) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW4, 21) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW1, 22) |
-			  HAL_REO_REMAP_IX2(REO_REMAP_SW3, 23);
-
-		*remap2 = HAL_REO_REMAP_IX3(REO_REMAP_SW4, 24) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 25) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 26) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 27) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 28) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW3, 29) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW4, 30) |
-			  HAL_REO_REMAP_IX3(REO_REMAP_SW1, 31);
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW3;
+		ring[2] = REO_REMAP_SW4;
+		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
+					      3, remap1, remap2);
 
 		break;
 	case dp_nss_cfg_dbdc:

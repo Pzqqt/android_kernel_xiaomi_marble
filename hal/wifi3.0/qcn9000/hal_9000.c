@@ -1579,6 +1579,51 @@ hal_rx_flow_setup_fse_9000(uint8_t *rx_fst, uint32_t table_offset,
 	return fse;
 }
 
+static
+void hal_compute_reo_remap_ix2_ix3_9000(uint32_t *ring, uint32_t num_rings,
+					uint32_t *remap1, uint32_t *remap2)
+{
+	switch (num_rings) {
+	case 3:
+		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
+				HAL_REO_REMAP_IX2(ring[1], 17) |
+				HAL_REO_REMAP_IX2(ring[2], 18) |
+				HAL_REO_REMAP_IX2(ring[0], 19) |
+				HAL_REO_REMAP_IX2(ring[1], 20) |
+				HAL_REO_REMAP_IX2(ring[2], 21) |
+				HAL_REO_REMAP_IX2(ring[0], 22) |
+				HAL_REO_REMAP_IX2(ring[1], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(ring[2], 24) |
+				HAL_REO_REMAP_IX3(ring[0], 25) |
+				HAL_REO_REMAP_IX3(ring[1], 26) |
+				HAL_REO_REMAP_IX3(ring[2], 27) |
+				HAL_REO_REMAP_IX3(ring[0], 28) |
+				HAL_REO_REMAP_IX3(ring[1], 29) |
+				HAL_REO_REMAP_IX3(ring[2], 30) |
+				HAL_REO_REMAP_IX3(ring[0], 31);
+		break;
+	case 4:
+		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
+				HAL_REO_REMAP_IX2(ring[1], 17) |
+				HAL_REO_REMAP_IX2(ring[2], 18) |
+				HAL_REO_REMAP_IX2(ring[3], 19) |
+				HAL_REO_REMAP_IX2(ring[0], 20) |
+				HAL_REO_REMAP_IX2(ring[1], 21) |
+				HAL_REO_REMAP_IX2(ring[2], 22) |
+				HAL_REO_REMAP_IX2(ring[3], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(ring[0], 24) |
+				HAL_REO_REMAP_IX3(ring[1], 25) |
+				HAL_REO_REMAP_IX3(ring[2], 26) |
+				HAL_REO_REMAP_IX3(ring[3], 27) |
+				HAL_REO_REMAP_IX3(ring[0], 28) |
+				HAL_REO_REMAP_IX3(ring[1], 29) |
+				HAL_REO_REMAP_IX3(ring[2], 30) |
+				HAL_REO_REMAP_IX3(ring[3], 31);
+		break;
+	}
+}
 struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 
 	/* init and setup */
@@ -1691,6 +1736,7 @@ struct hal_hw_txrx_ops qcn9000_hal_hw_txrx_ops = {
 	hal_rx_mpdu_start_offset_get_generic,
 	hal_rx_mpdu_end_offset_get_generic,
 	hal_rx_flow_setup_fse_9000,
+	hal_compute_reo_remap_ix2_ix3_9000
 };
 
 struct hal_hw_srng_config hw_srng_table_9000[] = {

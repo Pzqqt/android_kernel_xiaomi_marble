@@ -2027,6 +2027,17 @@ static inline void hal_reo_setup(hal_soc_handle_t hal_soc_hdl,
 	hal_soc->ops->hal_reo_setup(hal_soc, reoparams);
 }
 
+static inline
+void hal_compute_reo_remap_ix2_ix3(hal_soc_handle_t hal_soc_hdl,
+				   uint32_t *ring, uint32_t num_rings,
+				   uint32_t *remap1, uint32_t *remap2)
+{
+	struct hal_soc *hal_soc = (struct hal_soc *)hal_soc_hdl;
+
+	return hal_soc->ops->hal_compute_reo_remap_ix2_ix3(ring,
+					num_rings, remap1, remap2);
+}
+
 /**
  * hal_setup_link_idle_list - Setup scattered idle list using the
  * buffer list provided
