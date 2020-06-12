@@ -2269,6 +2269,12 @@ static int dp_debug_init(struct dp_debug *dp_debug)
 		struct dp_debug_private, dp_debug);
 	struct dentry *dir;
 
+	if (!IS_ENABLED(CONFIG_DEBUG_FS)) {
+		DP_WARN("Not creating debug root dir.");
+		debug->root = NULL;
+		return 0;
+	}
+
 	dir = debugfs_create_dir(DEBUG_NAME, NULL);
 	if (IS_ERR_OR_NULL(dir)) {
 		if (!dir)
