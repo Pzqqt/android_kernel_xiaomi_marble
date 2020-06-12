@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ static void wlan_ser_print_queues(
 		      (is_active_queue ? "Active" : "Pending"));
 
 	ser_err_no_fl(WLAN_SER_LINE);
-	ser_err_no_fl("|CMD_TYPE|CMD_ID|BLOCKING|PRIORITY|");
+	ser_err_no_fl("|CMD_TYPE|CMD_ID|VDEV_ID|BLOCKING|PRIORITY|");
 	ser_err_no_fl(WLAN_SER_LINE);
 
 	queuelen = wlan_serialization_list_size(queue);
@@ -77,9 +77,10 @@ static void wlan_ser_print_queues(
 				struct wlan_serialization_command_list,
 				vdev_node);
 
-	ser_err_no_fl("|%8u|%6u|%8u|%8u|",
+	ser_err_no_fl("|%8u|%6u|%6u|%8u|%8u|",
 		      cmd_list->cmd.cmd_type,
 		cmd_list->cmd.cmd_id,
+		wlan_vdev_get_id(cmd_list->cmd.vdev),
 		cmd_list->cmd.is_blocking,
 		cmd_list->cmd.is_high_priority);
 	}
