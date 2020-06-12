@@ -3995,7 +3995,7 @@ static void _perform_sbdma_kickoff(struct sde_hw_dspp *ctx,
 	}
 }
 
-static void _dspp_igcv32_off(struct sde_hw_dspp *ctx, void *cfg)
+static void _dspp_igcv4_off(struct sde_hw_dspp *ctx, void *cfg)
 {
 	struct sde_hw_cp_cfg *hw_cfg = cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
@@ -4036,7 +4036,7 @@ static void _dspp_igcv32_off(struct sde_hw_dspp *ctx, void *cfg)
 	_perform_sbdma_kickoff(ctx, hw_cfg, dma_ops, blk, IGC);
 }
 
-void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg)
+void reg_dmav2_setup_dspp_igcv4(struct sde_hw_dspp *ctx, void *cfg)
 {
 	struct drm_msm_igc_lut *lut_cfg;
 	struct sde_hw_reg_dma_ops *dma_ops;
@@ -4052,7 +4052,7 @@ void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg)
 
 	if (!hw_cfg->payload) {
 		DRM_DEBUG_DRIVER("disable igc feature\n");
-		_dspp_igcv32_off(ctx, cfg);
+		_dspp_igcv4_off(ctx, cfg);
 		return;
 	}
 

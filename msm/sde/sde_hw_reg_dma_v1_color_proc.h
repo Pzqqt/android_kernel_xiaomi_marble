@@ -275,11 +275,11 @@ int reg_dmav1_deinit_ltm_ops(enum sde_dspp idx);
 int reg_dmav2_init_dspp_op_v4(int feature, enum sde_dspp idx);
 
 /**
- * reg_dmav2_setup_dspp_igcv32() - igc v32 implementation using reg dma v2.
+ * reg_dmav2_setup_dspp_igcv4() - igc v4 implementation using reg dma v2.
  * @ctx: dspp ctx info
  * @cfg: pointer to struct sde_hw_cp_cfg
  */
-void reg_dmav2_setup_dspp_igcv32(struct sde_hw_dspp *ctx, void *cfg);
+void reg_dmav2_setup_dspp_igcv4(struct sde_hw_dspp *ctx, void *cfg);
 
 /**
  * reg_dmav2_setup_3d_gamutv43() - gamut v4_3 implementation using reg dma v2.

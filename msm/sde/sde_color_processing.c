@@ -2757,6 +2757,7 @@ static void dspp_igc_install_property(struct drm_crtc *crtc)
 		"SDE_DSPP_IGC_V", version);
 	switch (version) {
 	case 3:
+	case 4:
 		sde_cp_crtc_install_blob_property(crtc, feature_name,
 			SDE_CP_CRTC_DSPP_IGC, sizeof(struct drm_msm_igc_lut));
 		break;
