@@ -689,6 +689,7 @@ static int dp_aux_register(struct dp_aux *dp_aux)
 	aux->drm_aux.name = "sde_dp_aux";
 	aux->drm_aux.dev = aux->dev;
 	aux->drm_aux.transfer = dp_aux_transfer;
+	atomic_set(&aux->aborted, 1);
 	ret = drm_dp_aux_register(&aux->drm_aux);
 	if (ret) {
 		DP_ERR("%s: failed to register drm aux: %d\n", __func__, ret);
