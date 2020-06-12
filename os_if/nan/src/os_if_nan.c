@@ -2523,40 +2523,6 @@ static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
 	return qdf_status_to_os_return(status);
 }
 
-int os_if_nan_legacy_req(struct wlan_objmgr_psoc *psoc, const void *data,
-			 int data_len)
-{
-	struct nan_generic_req *nan_req;
-	QDF_STATUS status;
-
-	if (data_len > NAN_CMD_MAX_SIZE) {
-		osif_err("NAN request exceeding max allowed size");
-		return -EINVAL;
-	}
-
-	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
-	if (!nan_req)
-		return -ENOMEM;
-
-	nan_req->psoc = psoc;
-	nan_req->params.request_data_len = data_len;
-	qdf_mem_copy(nan_req->params.request_data, data, data_len);
-
-	/*
-	 * Send legacy NAN requests with type GENERIC, these will be treated as
-	 * passthrough by the driver. These will not affect the NAN state
-	 * machine or policy manager.
-	 */
-	status = ucfg_nan_discovery_req(nan_req, NAN_GENERIC_REQ);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		osif_err("Failed to post NAN request");
-
-	qdf_mem_free(nan_req);
-
-	return qdf_status_to_os_return(status);
-}
-
 static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 					 struct nlattr **tb)
 {

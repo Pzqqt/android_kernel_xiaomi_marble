@@ -31,23 +31,6 @@ struct hdd_context;
 struct wiphy;
 struct wireless_dev;
 
-/**
- * wlan_hdd_cfg80211_nan_request() - handle NAN request
- * @wiphy:   pointer to wireless wiphy structure.
- * @wdev:    pointer to wireless_dev structure.
- * @data:    Pointer to the data to be passed via vendor interface
- * @data_len:Length of the data to be passed
- *
- * This function is called by userspace to send a NAN request to
- * firmware.  This is an SSR-protected wrapper function.
- *
- * Return: 0 on success, negative errno on failure
- */
-int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-				  struct wireless_dev *wdev,
-				  const void *data,
-				  int data_len);
-
 bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx);
 
 /**
@@ -68,15 +51,6 @@ int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
 				      int data_len);
 
 #define FEATURE_NAN_VENDOR_COMMANDS					\
-	{                                                               \
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,                \
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NAN,           \
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |                   \
-			 WIPHY_VENDOR_CMD_NEED_NETDEV |                 \
-			 WIPHY_VENDOR_CMD_NEED_RUNNING,                 \
-		.doit = wlan_hdd_cfg80211_nan_request,                  \
-		vendor_command_policy(VENDOR_CMD_RAW_DATA, 0)           \
-	},								\
 	{                                                               \
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,                \
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NAN_EXT,       \

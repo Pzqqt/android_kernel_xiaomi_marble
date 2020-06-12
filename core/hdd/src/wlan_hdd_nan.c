@@ -51,65 +51,6 @@ bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 }
 
 /**
- * __wlan_hdd_cfg80211_nan_request() - cfg80211 NAN request handler
- * @wiphy: driver's wiphy struct
- * @wdev: wireless device to which the request is targeted
- * @data: actual request data (netlink-encapsulated)
- * @data_len: length of @data
- *
- * This is called when userspace needs to send a nan request to
- * firmware. The wlan host driver simply de-encapsulates the
- * request from the netlink payload and then forwards it to
- * firmware via SME.
- *
- * Return: 0 on success, negative errno on failure
- */
-static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-					   struct wireless_dev *wdev,
-					   const void *data, int data_len)
-{
-	int ret_val;
-	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-
-	hdd_enter_dev(wdev->netdev);
-
-	ret_val = wlan_hdd_validate_context(hdd_ctx);
-	if (ret_val)
-		return ret_val;
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err_rl("Command not allowed in FTM mode");
-		return -EPERM;
-	}
-
-	if (!cfg_nan_get_enable(hdd_ctx->psoc)) {
-		hdd_err_rl("NaN support is not enabled in INI");
-		return -EPERM;
-	}
-
-	return os_if_nan_legacy_req(hdd_ctx->psoc, data, data_len);
-}
-
-int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-				  struct wireless_dev *wdev, const void *data,
-				  int data_len)
-
-{
-	struct osif_psoc_sync *psoc_sync;
-	int errno;
-
-	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
-	if (errno)
-		return errno;
-
-	errno = __wlan_hdd_cfg80211_nan_request(wiphy, wdev, data, data_len);
-
-	osif_psoc_sync_op_stop(psoc_sync);
-
-	return errno;
-}
-
-/**
  * __wlan_hdd_cfg80211_nan_ext_request() - cfg80211 NAN extended request handler
  * @wiphy: driver's wiphy struct
  * @wdev: wireless device to which the request is targeted
