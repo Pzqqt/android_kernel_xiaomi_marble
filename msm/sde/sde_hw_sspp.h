@@ -165,8 +165,6 @@ struct sde_hw_pixel_ext {
  *              4: Read 1 line/pixel drop 3  lines/pixels
  *              8: Read 1 line/pixel drop 7 lines/pixels
  *              16: Read 1 line/pixel drop 15 line/pixels
- * @index:     index of the rectangle of SSPP
- * @mode:      parallel or time multiplex multirect mode
  */
 struct sde_hw_pipe_cfg {
 	struct sde_hw_fmt_layout layout;
@@ -174,8 +172,6 @@ struct sde_hw_pipe_cfg {
 	struct sde_rect dst_rect;
 	u8 horz_decimation;
 	u8 vert_decimation;
-	enum sde_sspp_multirect_index index;
-	enum sde_sspp_multirect_mode mode;
 };
 
 /**
