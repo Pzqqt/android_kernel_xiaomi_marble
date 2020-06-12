@@ -299,7 +299,12 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 
 		sec_sid = (uint32_t *) shm.vaddr;
 		mem_addr = shm.paddr;
-		mem_size = shm.size;
+		/**
+		 * SMMUSecureModeSwitch requires the size to be number of SID's
+		 * but shm allocates size in pages. Modify the args as per
+		 * client requirement.
+		 */
+		mem_size = sizeof(uint32_t) * num_sids;
 	} else {
 		sec_sid = kcalloc(num_sids, sizeof(uint32_t), GFP_KERNEL);
 		if (!sec_sid)
@@ -1500,7 +1505,9 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 
 		/* update display cap to MST_MODE for DP MST encoders */
 		info.capabilities |= MSM_DISPLAY_CAP_MST_MODE;
-		for (idx = 0; idx < sde_kms->dp_stream_count; idx++) {
+
+		for (idx = 0; idx < sde_kms->dp_stream_count &&
+				priv->num_encoders < max_encoders; idx++) {
 			info.h_tile_instance[0] = idx;
 			encoder = sde_encoder_init(dev, &info);
 			if (IS_ERR_OR_NULL(encoder)) {
@@ -2984,6 +2991,8 @@ static int _sde_kms_mmu_init(struct sde_kms *sde_kms)
 		}
 	}
 
+	sde_kms->base.aspace = sde_kms->aspace[0];
+
 	return 0;
 
 early_map_fail:
@@ -3048,6 +3057,7 @@ static void _sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 {
 	struct device *cpu_dev;
 	int cpu = 0;
+	u32 cpu_irq_latency = sde_kms->catalog->perf.cpu_irq_latency;
 
 	if (cpumask_empty(&sde_kms->irq_cpu_mask)) {
 		SDE_DEBUG("%s: irq_cpu_mask is empty\n", __func__);
@@ -3064,12 +3074,12 @@ static void _sde_kms_update_pm_qos_irq_request(struct sde_kms *sde_kms)
 
 		if (dev_pm_qos_request_active(&sde_kms->pm_qos_irq_req[cpu]))
 			dev_pm_qos_update_request(&sde_kms->pm_qos_irq_req[cpu],
-					sde_kms->catalog->perf.cpu_dma_latency);
+					cpu_irq_latency);
 		else
 			dev_pm_qos_add_request(cpu_dev,
 				&sde_kms->pm_qos_irq_req[cpu],
 				DEV_PM_QOS_RESUME_LATENCY,
-				sde_kms->catalog->perf.cpu_dma_latency);
+				cpu_irq_latency);
 	}
 }
 

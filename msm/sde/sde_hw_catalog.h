@@ -1317,6 +1317,7 @@ struct sde_sc_cfg {
  * @cpu_mask:          pm_qos cpu mask value
  * @cpu_mask_perf:     pm_qos cpu silver core mask value
  * @cpu_dma_latency:   pm_qos cpu dma latency value
+ * @cpu_irq_latency:   pm_qos cpu irq latency value
  * @axi_bus_width:     axi bus width value in bytes
  * @num_mnoc_ports:    number of mnoc ports
  */
@@ -1348,6 +1349,7 @@ struct sde_perf_cfg {
 	unsigned long cpu_mask;
 	unsigned long cpu_mask_perf;
 	u32 cpu_dma_latency;
+	u32 cpu_irq_latency;
 	u32 axi_bus_width;
 	u32 num_mnoc_ports;
 };

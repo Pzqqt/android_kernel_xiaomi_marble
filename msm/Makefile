@@ -132,3 +132,5 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 msm_drm-$(CONFIG_HDCP_QSEECOM) += ../hdcp/msm_hdcp.o \
 
 obj-$(CONFIG_DISPLAY_BUILD)	+= msm_drm.o
+
+obj-$(CONFIG_DRM_FBDEV_EMULATION) += msm_fbdev.o

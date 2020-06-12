@@ -2619,6 +2619,10 @@ static int _sde_plane_sspp_atomic_check_helper(struct sde_plane *psde,
 		SDE_ERROR_PLANE(psde, "invalid dest rect %u, %u, %ux%u\n",
 				dst.x, dst.y, dst.w, dst.h);
 		ret = -EINVAL;
+	} else if (SDE_FORMAT_IS_UBWC(fmt) &&
+		!psde->catalog->ubwc_version) {
+		SDE_ERROR_PLANE(psde, "ubwc not supported\n");
+		ret = -EINVAL;
 	}
 
 	return ret;

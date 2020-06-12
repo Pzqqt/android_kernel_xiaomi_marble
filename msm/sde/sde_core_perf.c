@@ -818,6 +818,9 @@ static void _sde_core_perf_crtc_update_check(struct drm_crtc *crtc,
 	struct sde_core_perf_params *new = &sde_crtc->new_perf;
 	int i;
 
+	if (!kms)
+		return;
+
 	for (i = 0; i < SDE_POWER_HANDLE_DBUS_ID_MAX; i++) {
 		/*
 		 * cases for bus bandwidth update.
