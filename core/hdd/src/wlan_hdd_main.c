@@ -5057,18 +5057,21 @@ hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 {
 	struct wlan_mlme_nss_chains vdev_ini_cfg;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_vdev *vdev;
 
 	/* Populate the nss chain params from ini for this vdev type */
 	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
 				      adapter->device_mode,
 				      hdd_ctx->num_rf_chains);
 
+	vdev = hdd_objmgr_get_vdev(adapter);
 	/* Store the nss chain config into the vdev */
-	if (adapter->vdev)
+	if (vdev) {
 		sme_store_nss_chains_cfg_in_vdev(adapter->vdev, &vdev_ini_cfg);
-	else
+		hdd_objmgr_put_vdev(vdev);
+	} else {
 		hdd_err("Vdev is NULL");
-
+	}
 }
 
 bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
