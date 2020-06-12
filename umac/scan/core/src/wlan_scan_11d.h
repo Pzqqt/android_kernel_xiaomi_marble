@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -67,20 +67,6 @@ QDF_STATUS scm_11d_cc_db_init(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS
  */
 QDF_STATUS scm_11d_cc_db_deinit(struct wlan_objmgr_psoc *psoc);
-
-/**
- * scm_11d_handle_country_info() - API to handle 11d country info
- * @psoc: psoc object
- * @pdev: pdev object
- * @scan_entry: the pointer to scan entry
- *
- * Update the country code database per the country code from country IE.
- *
- * Return: void
- */
-void scm_11d_handle_country_info(struct wlan_objmgr_psoc *psoc,
-				 struct wlan_objmgr_pdev *pdev,
-				 struct scan_cache_entry *scan_entry);
 
 /**
  * scm_11d_decide_country_code() - API to decide the country code per 11d

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -270,23 +270,34 @@ QDF_STATUS scm_11d_cc_db_deinit(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
-void scm_11d_handle_country_info(struct wlan_objmgr_psoc *psoc,
-				 struct wlan_objmgr_pdev *pdev,
-				 struct scan_cache_entry *scan_entry)
+/**
+ * scm_11d_handle_country_info() - API to handle 11d country info
+ * @arg: pointer to country code db
+ * @scan_entry: the pointer to scan entry
+ *
+ * Update the country code database per the country code from country IE
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+scm_11d_handle_country_info(void *arg,
+			    struct scan_cache_entry *scan_entry)
 {
 	uint8_t i;
 	bool match = false;
 	uint8_t num_country_codes;
-	struct scan_country_code_db *cc_db;
 	struct wlan_country_ie *cc_ie;
+	struct scan_country_code_db *cc_db;
 
 	cc_ie = util_scan_entry_country(scan_entry);
-	if (!cc_ie)
-		return;
+	cc_db = (struct scan_country_code_db *)arg;
 
-	cc_db = wlan_pdev_get_cc_db(psoc, pdev);
 	if (!cc_db)
-		return;
+		return QDF_STATUS_E_INVAL;
+
+	/* return success to continue iterate */
+	if (!cc_ie)
+		return QDF_STATUS_SUCCESS;
 
 	/* just to be sure, convert to UPPER case here */
 	for (i = 0; i < 3; i++)
@@ -302,13 +313,13 @@ void scm_11d_handle_country_info(struct wlan_objmgr_psoc *psoc,
 
 	if (match) {
 		cc_db->votes[i].votes++;
-		return;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (num_country_codes >= SCAN_MAX_NUM_COUNTRY_CODE) {
 		scm_debug("country code db already full: %d",
 			  num_country_codes);
-		return;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* add country code to end of the list */
@@ -316,6 +327,38 @@ void scm_11d_handle_country_info(struct wlan_objmgr_psoc *psoc,
 		     REG_ALPHA2_LEN + 1);
 	cc_db->votes[num_country_codes].votes = 1;
 	cc_db->num_country_codes++;
+	return QDF_STATUS_SUCCESS;
+}
+
+#define CC_VOTE_CHAR_LEN 10
+
+/**
+ * scm_11d_dump_cc_db() - Function to dump country db info
+ * @cc_db: pointer to country code db
+ *
+ * Return: None
+ */
+static void scm_11d_dump_cc_db(struct scan_country_code_db *cc_db)
+{
+	uint32_t i, buf_len, num = 0;
+	uint8_t *cc, *cc_buf;
+
+	if (!cc_db || !cc_db->num_country_codes)
+		return;
+
+	buf_len = QDF_MIN(cc_db->num_country_codes, SCAN_MAX_NUM_COUNTRY_CODE);
+	buf_len = buf_len * CC_VOTE_CHAR_LEN + 1;
+	cc_buf = qdf_mem_malloc(buf_len);
+	if (!cc_buf)
+		return;
+
+	for (i = 0; i < cc_db->num_country_codes; i++) {
+		cc = cc_db->votes[i].cc;
+		num += qdf_scnprintf(cc_buf + num, buf_len - num, " %c%c:%d",
+				     cc[0], cc[1], cc_db->votes[i].votes);
+	}
+	scm_debug("%s", cc_buf);
+	qdf_mem_free(cc_buf);
 }
 
 void scm_11d_decide_country_code(struct wlan_objmgr_vdev *vdev)
@@ -339,6 +382,10 @@ void scm_11d_decide_country_code(struct wlan_objmgr_vdev *vdev)
 		scm_err("scan_db is NULL");
 		return;
 	}
+
+	scm_iterate_scan_db(pdev, scm_11d_handle_country_info, cc_db);
+
+	scm_11d_dump_cc_db(cc_db);
 
 	if (wlan_reg_is_us(current_cc) || wlan_reg_is_world(current_cc))
 		found = scm_11d_elected_country_algo_fcc(cc_db);

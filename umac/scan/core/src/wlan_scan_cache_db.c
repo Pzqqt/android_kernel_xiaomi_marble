@@ -972,9 +972,6 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		if (scan_obj->cb.update_beacon)
 			scan_obj->cb.update_beacon(pdev, scan_entry);
 
-		if (wlan_reg_11d_enabled_on_host(psoc))
-			scm_11d_handle_country_info(psoc, pdev, scan_entry);
-
 		status = scm_add_update_entry(psoc, pdev, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			scm_debug("failed to add entry for BSSID: %pM Seq Num: %d",
