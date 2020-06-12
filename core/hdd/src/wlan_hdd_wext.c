@@ -5386,14 +5386,15 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_NSS:
 	{
-		sme_get_config_param(mac_handle, sme_config);
-		status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-		if (!QDF_IS_STATUS_SUCCESS(status))
+		uint8_t nss;
+
+		status = hdd_get_nss(adapter, &nss);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("unable to get vht_enable2x2");
-		*value = (bval == 0) ? 1 : 2;
-		if (!policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc) &&
-		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
-			*value = *value - 1;
+			ret = -EIO;
+			break;
+		}
+		*value = nss;
 
 		hdd_debug("GET_NSS: Current NSS:%d", *value);
 		break;

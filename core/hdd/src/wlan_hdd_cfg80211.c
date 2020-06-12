@@ -6716,6 +6716,7 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PHY_MODE] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_NSS] = {.type = NLA_U8 },
 
 };
 
@@ -8355,6 +8356,33 @@ static int hdd_set_dynamic_bw(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_set_nss() - set the number of spatial streams supported by the adapter
+ *
+ * @adapter: hdd adapter
+ * @attr: pointer to nla attr
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int hdd_set_nss(struct hdd_adapter *adapter,
+		       const struct nlattr *attr)
+{
+	uint8_t nss;
+	int ret;
+	QDF_STATUS status;
+
+	nss = nla_get_u8(attr);
+
+	status = hdd_update_nss(adapter, nss);
+	ret = qdf_status_to_os_return(status);
+
+	if (ret == 0 && adapter->device_mode == QDF_SAP_MODE)
+		ret = wma_cli_set_command(adapter->vdev_id, WMI_VDEV_PARAM_NSS,
+					  nss, VDEV_CMD);
+
+	return ret;
+}
+
+/**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
  * @attr: The nl80211 attribute being applied
@@ -8458,6 +8486,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_set_channel_width},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW,
 	 hdd_set_dynamic_bw},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_NSS,
+	 hdd_set_nss},
 };
 
 #ifdef WLAN_FEATURE_ELNA
@@ -8784,6 +8814,49 @@ static int hdd_get_dynamic_bw(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_get_nss_config() - Get the number of spatial streams supported by
+ * the adapter
+ * @adapter: Pointer to HDD adapter
+ * @skb: sk buffer to hold nl80211 attributes
+ * @attr: Pointer to struct nlattr
+ *
+ * Return: 0 on success; error number otherwise
+ */
+static int hdd_get_nss_config(struct hdd_adapter *adapter,
+			      struct sk_buff *skb,
+			      const struct nlattr *attr)
+{
+	uint8_t nss;
+
+	if (adapter->device_mode == QDF_SAP_MODE) {
+		int value;
+
+		value = wma_cli_get_command(adapter->vdev_id,
+					    WMI_VDEV_PARAM_NSS, VDEV_CMD);
+		if (value < 0) {
+			hdd_err("Failed to get nss");
+			return -EINVAL;
+		}
+		nss = (uint8_t)value;
+	} else {
+		QDF_STATUS status;
+
+		status = hdd_get_nss(adapter, &nss);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Failed to get nss");
+			return -EINVAL;
+		}
+	}
+
+	if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_CONFIG_NSS, nss)) {
+		hdd_err("nla_put failure");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * typedef config_getter_fn - get configuration handler
  * @adapter: The adapter being configured
  * @skb: sk buffer to hold nl80211 attributes
@@ -8845,6 +8918,9 @@ static const struct config_getters config_getters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW,
 	 sizeof(uint8_t),
 	 hdd_get_dynamic_bw},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_NSS,
+	 sizeof(uint8_t),
+	 hdd_get_nss_config},
 };
 
 /**

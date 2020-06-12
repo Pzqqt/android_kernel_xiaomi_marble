@@ -1022,19 +1022,6 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_update_nss() - Update the number of spatial streams supported.
- * Ensure that nss is either 1 or 2 before calling this.
- *
- * @adapter: the pointer to adapter
- * @nss: the number of spatial streams to be updated
- *
- * This function is used to modify the number of spatial streams
- * supported when not in connected state.
- *
- * Return: QDF_STATUS_SUCCESS if nss is correctly updated,
- *              otherwise QDF_STATUS_E_FAILURE would be returned
- */
 QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1223,6 +1210,26 @@ skip_ht_cap_update:
 	hdd_set_policy_mgr_user_cfg(hdd_ctx);
 
 	return (status == false) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_get_nss(struct hdd_adapter *adapter, uint8_t *nss)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool bval;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("unable to get vht_enable2x2");
+		return status;
+	}
+
+	*nss = (bval) ? 2 : 1;
+	if (!policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc) &&
+	    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
+		*nss = *nss - 1;
+
+	return status;
 }
 
 int hdd_get_ldpc(struct hdd_adapter *adapter, int *value)
