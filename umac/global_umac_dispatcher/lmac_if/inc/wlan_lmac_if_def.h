@@ -429,8 +429,9 @@ struct wlan_lmac_if_p2p_tx_ops {
  * @atf_get_peer_airtime:         Get peer airtime
  * @atf_get_chbusyper:            Get channel busy
  * @atf_open:                     ATF open
- * @atf_register_event_handler    ATF register wmi event handlers
- * @atf_unregister_event_handler  ATF unregister wmi event handlers
+ * @atf_register_event_handler:   ATF register wmi event handlers
+ * @atf_unregister_event_handler: ATF unregister wmi event handlers
+ * @atf_set_ppdu_stats:           ATF set ppdu stats to get ATF stats
  */
 struct wlan_lmac_if_atf_tx_ops {
 	void (*atf_node_unblock)(struct wlan_objmgr_pdev *pdev,
@@ -480,6 +481,8 @@ struct wlan_lmac_if_atf_tx_ops {
 	void (*atf_open)(struct wlan_objmgr_psoc *psoc);
 	void (*atf_register_event_handler)(struct wlan_objmgr_psoc *psoc);
 	void (*atf_unregister_event_handler)(struct wlan_objmgr_psoc *psoc);
+	void (*atf_set_ppdu_stats)(struct wlan_objmgr_pdev *pdev,
+				   uint8_t value);
 };
 #endif
 
@@ -1260,6 +1263,8 @@ struct wlan_lmac_if_p2p_rx_ops {
  * @atf_peer_unblk_txtraffic:          Unblock peer tx traffic
  * @atf_set_token_allocated:           Set atf token allocated
  * @atf_set_token_utilized:            Set atf token utilized
+ * @atf_process_ppdu_stats:            Process PPDU stats to get ATF stats
+ * @atf_is_stats_enabled:              Check ATF stats enabled or not
  */
 struct wlan_lmac_if_atf_rx_ops {
 	uint8_t (*atf_get_atf_commit)(struct wlan_objmgr_pdev *pdev);
@@ -1324,7 +1329,10 @@ struct wlan_lmac_if_atf_rx_ops {
 	void (*atf_set_token_allocated)(struct wlan_objmgr_peer *peer,
 					uint16_t value);
 	void (*atf_set_token_utilized)(struct wlan_objmgr_peer *peer,
-					uint16_t value);
+				       uint16_t value);
+	void (*atf_process_ppdu_stats)(struct wlan_objmgr_pdev *pdev,
+				       qdf_nbuf_t msg);
+	uint8_t (*atf_is_stats_enabled)(struct wlan_objmgr_pdev *pdev);
 };
 #endif
 

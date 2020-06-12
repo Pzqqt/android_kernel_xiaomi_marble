@@ -183,6 +183,8 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	atf_rx_ops->atf_peer_unblk_txtraffic = tgt_atf_peer_unblk_txtraffic;
 	atf_rx_ops->atf_set_token_allocated = tgt_atf_set_token_allocated;
 	atf_rx_ops->atf_set_token_utilized = tgt_atf_set_token_utilized;
+	atf_rx_ops->atf_process_ppdu_stats = tgt_atf_process_ppdu_stats;
+	atf_rx_ops->atf_is_stats_enabled = tgt_atf_is_stats_enabled;
 }
 #else
 static void
