@@ -189,6 +189,20 @@ enum cdp_ru_index {
 	RU_242_INDEX,
 	RU_484_INDEX,
 	RU_996_INDEX,
+	RU_INDEX_MAX,
+};
+
+struct cdp_ru_debug {
+	char *ru_type;
+};
+
+static const struct cdp_ru_debug cdp_ru_string[RU_INDEX_MAX] = {
+	{ "RU_26" },
+	{ "RU_52" },
+	{ "RU_106" },
+	{ "RU_242" },
+	{ "RU_484" },
+	{ "RU_996" }
 };
 
 #ifdef FEATURE_TSO_STATS
@@ -208,6 +222,99 @@ enum cdp_packet_type {
 	DOT11_AC = 3,
 	DOT11_AX = 4,
 	DOT11_MAX = 5,
+};
+
+#define MCS_VALID 1
+#define MCS_INVALID 0
+
+#define CDP_MAX_MCS_STRING_LEN 34
+/*
+ * struct cdp_rate_debug
+ *
+ * @mcs_type: print string for a given mcs
+ * @valid: valid mcs rate?
+ */
+struct cdp_rate_debug {
+	char mcs_type[CDP_MAX_MCS_STRING_LEN];
+	uint8_t valid;
+};
+
+static const struct cdp_rate_debug cdp_rate_string[DOT11_MAX][MAX_MCS] = {
+	{
+		{"OFDM 48 Mbps", MCS_VALID},
+		{"OFDM 24 Mbps", MCS_VALID},
+		{"OFDM 12 Mbps", MCS_VALID},
+		{"OFDM 6 Mbps ", MCS_VALID},
+		{"OFDM 54 Mbps", MCS_VALID},
+		{"OFDM 36 Mbps", MCS_VALID},
+		{"OFDM 18 Mbps", MCS_VALID},
+		{"OFDM 9 Mbps ", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+	},
+	{
+		{"CCK 11 Mbps Long  ", MCS_VALID},
+		{"CCK 5.5 Mbps Long ", MCS_VALID},
+		{"CCK 2 Mbps Long   ", MCS_VALID},
+		{"CCK 1 Mbps Long   ", MCS_VALID},
+		{"CCK 11 Mbps Short ", MCS_VALID},
+		{"CCK 5.5 Mbps Short", MCS_VALID},
+		{"CCK 2 Mbps Short  ", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+	},
+	{
+		{"HT MCS 0 (BPSK 1/2)  ", MCS_VALID},
+		{"HT MCS 1 (QPSK 1/2)  ", MCS_VALID},
+		{"HT MCS 2 (QPSK 3/4)  ", MCS_VALID},
+		{"HT MCS 3 (16-QAM 1/2)", MCS_VALID},
+		{"HT MCS 4 (16-QAM 3/4)", MCS_VALID},
+		{"HT MCS 5 (64-QAM 2/3)", MCS_VALID},
+		{"HT MCS 6 (64-QAM 3/4)", MCS_VALID},
+		{"HT MCS 7 (64-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+	},
+	{
+		{"VHT MCS 0 (BPSK 1/2)     ", MCS_VALID},
+		{"VHT MCS 1 (QPSK 1/2)     ", MCS_VALID},
+		{"VHT MCS 2 (QPSK 3/4)     ", MCS_VALID},
+		{"VHT MCS 3 (16-QAM 1/2)   ", MCS_VALID},
+		{"VHT MCS 4 (16-QAM 3/4)   ", MCS_VALID},
+		{"VHT MCS 5 (64-QAM 2/3)   ", MCS_VALID},
+		{"VHT MCS 6 (64-QAM 3/4)   ", MCS_VALID},
+		{"VHT MCS 7 (64-QAM 5/6)   ", MCS_VALID},
+		{"VHT MCS 8 (256-QAM 3/4)  ", MCS_VALID},
+		{"VHT MCS 9 (256-QAM 5/6)  ", MCS_VALID},
+		{"VHT MCS 10 (1024-QAM 3/4)", MCS_VALID},
+		{"VHT MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+	},
+	{
+		{"HE MCS 0 (BPSK 1/2)     ", MCS_VALID},
+		{"HE MCS 1 (QPSK 1/2)     ", MCS_VALID},
+		{"HE MCS 2 (QPSK 3/4)     ", MCS_VALID},
+		{"HE MCS 3 (16-QAM 1/2)   ", MCS_VALID},
+		{"HE MCS 4 (16-QAM 3/4)   ", MCS_VALID},
+		{"HE MCS 5 (64-QAM 2/3)   ", MCS_VALID},
+		{"HE MCS 6 (64-QAM 3/4)   ", MCS_VALID},
+		{"HE MCS 7 (64-QAM 5/6)   ", MCS_VALID},
+		{"HE MCS 8 (256-QAM 3/4)  ", MCS_VALID},
+		{"HE MCS 9 (256-QAM 5/6)  ", MCS_VALID},
+		{"HE MCS 10 (1024-QAM 3/4)", MCS_VALID},
+		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+	}
 };
 
 /*

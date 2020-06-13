@@ -66,86 +66,12 @@
 #define DP_NSS_LENGTH (6 * SS_COUNT)
 #define DP_MU_GROUP_LENGTH (6 * DP_MU_GROUP_SHOW)
 #define DP_MU_GROUP_SHOW 16
-#define DP_MAX_MCS_STRING_LEN 34
 #define DP_RXDMA_ERR_LENGTH (6 * HAL_RXDMA_ERR_MAX)
 #define DP_REO_ERR_LENGTH (6 * HAL_REO_ERR_MAX)
 #define STATS_PROC_TIMEOUT        (HZ / 1000)
 
-#define MCS_VALID 1
-#define MCS_INVALID 0
 
-/*
- * struct dp_rate_debug
- *
- * @mcs_type: print string for a given mcs
- * @valid: valid mcs rate?
- */
-struct dp_rate_debug {
-	char mcs_type[DP_MAX_MCS_STRING_LEN];
-	uint8_t valid;
-};
-
-static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
-	{
-		{"OFDM 48 Mbps", MCS_VALID},
-		{"OFDM 24 Mbps", MCS_VALID},
-		{"OFDM 12 Mbps", MCS_VALID},
-		{"OFDM 6 Mbps ", MCS_VALID},
-		{"OFDM 54 Mbps", MCS_VALID},
-		{"OFDM 36 Mbps", MCS_VALID},
-		{"OFDM 18 Mbps", MCS_VALID},
-		{"OFDM 9 Mbps ", MCS_VALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_VALID},
-	},
-	{
-		{"CCK 11 Mbps Long  ", MCS_VALID},
-		{"CCK 5.5 Mbps Long ", MCS_VALID},
-		{"CCK 2 Mbps Long   ", MCS_VALID},
-		{"CCK 1 Mbps Long   ", MCS_VALID},
-		{"CCK 11 Mbps Short ", MCS_VALID},
-		{"CCK 5.5 Mbps Short", MCS_VALID},
-		{"CCK 2 Mbps Short  ", MCS_VALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_VALID},
-	},
-	{
-		{"HT MCS 0 (BPSK 1/2)  ", MCS_VALID},
-		{"HT MCS 1 (QPSK 1/2)  ", MCS_VALID},
-		{"HT MCS 2 (QPSK 3/4)  ", MCS_VALID},
-		{"HT MCS 3 (16-QAM 1/2)", MCS_VALID},
-		{"HT MCS 4 (16-QAM 3/4)", MCS_VALID},
-		{"HT MCS 5 (64-QAM 2/3)", MCS_VALID},
-		{"HT MCS 6 (64-QAM 3/4)", MCS_VALID},
-		{"HT MCS 7 (64-QAM 5/6)", MCS_VALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_VALID},
-	},
-	{
-		{"VHT MCS 0 (BPSK 1/2)     ", MCS_VALID},
-		{"VHT MCS 1 (QPSK 1/2)     ", MCS_VALID},
-		{"VHT MCS 2 (QPSK 3/4)     ", MCS_VALID},
-		{"VHT MCS 3 (16-QAM 1/2)   ", MCS_VALID},
-		{"VHT MCS 4 (16-QAM 3/4)   ", MCS_VALID},
-		{"VHT MCS 5 (64-QAM 2/3)   ", MCS_VALID},
-		{"VHT MCS 6 (64-QAM 3/4)   ", MCS_VALID},
-		{"VHT MCS 7 (64-QAM 5/6)   ", MCS_VALID},
-		{"VHT MCS 8 (256-QAM 3/4)  ", MCS_VALID},
-		{"VHT MCS 9 (256-QAM 5/6)  ", MCS_VALID},
-		{"VHT MCS 10 (1024-QAM 3/4)", MCS_VALID},
-		{"VHT MCS 11 (1024-QAM 5/6)", MCS_VALID},
-		{"INVALID ", MCS_VALID},
-	},
+static const struct cdp_rate_debug dp_ppdu_rate_string[DOT11_MAX][MAX_MCS] = {
 	{
 		{"HE MCS 0 (BPSK 1/2)     ", MCS_VALID},
 		{"HE MCS 1 (QPSK 1/2)     ", MCS_VALID},
@@ -163,25 +89,8 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 	}
 };
 
-static const struct dp_rate_debug dp_ppdu_rate_string[DOT11_MAX][MAX_MCS] = {
-	{
-		{"HE MCS 0 (BPSK 1/2)     ", MCS_VALID},
-		{"HE MCS 1 (QPSK 1/2)     ", MCS_VALID},
-		{"HE MCS 2 (QPSK 3/4)     ", MCS_VALID},
-		{"HE MCS 3 (16-QAM 1/2)   ", MCS_VALID},
-		{"HE MCS 4 (16-QAM 3/4)   ", MCS_VALID},
-		{"HE MCS 5 (64-QAM 2/3)   ", MCS_VALID},
-		{"HE MCS 6 (64-QAM 3/4)   ", MCS_VALID},
-		{"HE MCS 7 (64-QAM 5/6)   ", MCS_VALID},
-		{"HE MCS 8 (256-QAM 3/4)  ", MCS_VALID},
-		{"HE MCS 9 (256-QAM 5/6)  ", MCS_VALID},
-		{"HE MCS 10 (1024-QAM 3/4)", MCS_VALID},
-		{"HE MCS 11 (1024-QAM 5/6)", MCS_VALID},
-		{"INVALID ", MCS_VALID},
-	}
-};
-
-static const struct dp_rate_debug dp_mu_rate_string[RX_TYPE_MU_MAX][MAX_MCS] = {
+static const struct cdp_rate_debug
+dp_mu_rate_string[RX_TYPE_MU_MAX][MAX_MCS] = {
 	{
 		{"HE MU-MIMO MCS 0 (BPSK 1/2)     ", MCS_VALID},
 		{"HE MU-MIMO MCS 1 (QPSK 1/2)     ", MCS_VALID},
@@ -5272,11 +5181,11 @@ dp_print_common_rates_info(struct cdp_pkt_type *pkt_type_array)
 	DP_PRINT_STATS("MSDU Count");
 	for (pkt_type = 0; pkt_type < DOT11_MAX; pkt_type++) {
 		for (mcs = 0; mcs < MAX_MCS; mcs++) {
-			if (!dp_rate_string[pkt_type][mcs].valid)
+			if (!cdp_rate_string[pkt_type][mcs].valid)
 				continue;
 
 			DP_PRINT_STATS("	%s = %d",
-				       dp_rate_string[pkt_type][mcs].mcs_type,
+				       cdp_rate_string[pkt_type][mcs].mcs_type,
 				       pkt_type_array[pkt_type].mcs_count[mcs]);
 		}
 
@@ -5755,18 +5664,9 @@ void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("Last Packet RU index [%d], Size [%d]",
 		       peer->stats.tx.ru_start, peer->stats.tx.ru_tones);
 	DP_PRINT_STATS("RU Locations RU[26 52 106 242 484 996]:");
-	DP_PRINT_STATS("RU_26:  %d",
-		       peer->stats.tx.ru_loc[RU_26_INDEX].num_msdu);
-	DP_PRINT_STATS("RU 52:  %d",
-		       peer->stats.tx.ru_loc[RU_52_INDEX].num_msdu);
-	DP_PRINT_STATS("RU 106: %d",
-		       peer->stats.tx.ru_loc[RU_106_INDEX].num_msdu);
-	DP_PRINT_STATS("RU 242: %d",
-		       peer->stats.tx.ru_loc[RU_242_INDEX].num_msdu);
-	DP_PRINT_STATS("RU 484: %d",
-		       peer->stats.tx.ru_loc[RU_484_INDEX].num_msdu);
-	DP_PRINT_STATS("RU 996: %d",
-		       peer->stats.tx.ru_loc[RU_996_INDEX].num_msdu);
+	for (i = 0; i < RU_INDEX_MAX; i++)
+		DP_PRINT_STATS("%s:  %d", cdp_ru_string[i].ru_type,
+			       peer->stats.tx.ru_loc[i].num_msdu);
 
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("Number of Msdu's Part of Amsdu = %d",
