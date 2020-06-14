@@ -1013,6 +1013,50 @@ void dfs_translate_radar_params(struct wlan_dfs *dfs,
 }
 #endif /* WLAN_DFS_TRUE_160MHZ_SUPPORT */
 
+/**
+ * dfs_radar_action_for_hw_mode_switch()- Radar cannot be processed when HW
+ * switch is in progress. So save the radar found parameters for
+ * future processing.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar found structure.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+dfs_radar_action_for_hw_mode_switch(struct wlan_dfs *dfs,
+				    struct radar_found_info *radar_found)
+{
+	/* Before processing radar, check if HW mode switch is in progress.
+	 * If in progress, defer the processing of radar event received till
+	 * the mode switch is completed.
+	 */
+	if (dfs_is_hw_mode_switch_in_progress(dfs)) {
+		struct radar_found_info *radar_params = NULL;
+
+		radar_params = qdf_mem_malloc(sizeof(*radar_params));
+		if (!radar_params)
+			return QDF_STATUS_SUCCESS;
+
+	/* If CAC timer is running, cancel it here rather than
+	 * after processing to avoid handling unnecessary CAC timeouts.
+	 */
+	if (dfs->dfs_cac_timer_running)
+		dfs_cac_stop(dfs);
+
+	/* If CAC timer is to be handled after mode switch and then
+	 * we receive radar, no point in handling CAC completion.
+	 */
+	if (dfs->dfs_defer_params.is_cac_completed)
+		dfs->dfs_defer_params.is_cac_completed = false;
+	qdf_mem_copy(radar_params, radar_found, sizeof(*radar_params));
+	dfs->dfs_defer_params.radar_params = radar_params;
+	dfs->dfs_defer_params.is_radar_detected = true;
+	return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #ifdef CONFIG_CHAN_FREQ_API
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
@@ -1033,34 +1077,9 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 */
 	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
 
-	/* Before processing radar, check if HW mode switch is in progress.
-	 * If in progress, defer the processing of radar event received till
-	 * the mode switch is completed.
-	 */
-	if (dfs_is_hw_mode_switch_in_progress(dfs)) {
-		struct radar_found_info *radar_params = NULL;
-
-		radar_params = qdf_mem_malloc(sizeof(*radar_params));
-		if (!radar_params)
-			goto exit;
-
-		/* If CAC timer is running, cancel it here rather than
-		 * after processing to avoid handling unnecessary CAC timeouts.
-		 */
-		if (dfs->dfs_cac_timer_running)
-			dfs_cac_stop(dfs);
-
-		/* If CAC timer is to be handled after mode switch and then
-		 * we receive radar, no point in handling CAC completion.
-		 */
-		if (dfs->dfs_defer_params.is_cac_completed)
-			dfs->dfs_defer_params.is_cac_completed = false;
-		qdf_mem_copy(radar_params, radar_found, sizeof(*radar_params));
-		dfs->dfs_defer_params.radar_params = radar_params;
-		dfs->dfs_defer_params.is_radar_detected = true;
-		status = QDF_STATUS_SUCCESS;
+	if (dfs_radar_action_for_hw_mode_switch(dfs, radar_found)
+		== QDF_STATUS_SUCCESS)
 		goto exit;
-	}
 
 	dfs_curchan = dfs->dfs_curchan;
 
