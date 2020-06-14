@@ -1377,6 +1377,25 @@ void dfs_false_radarfound_reset_vars(
 	dfs->dfs_phyerr_queued_count = 0;
 }
 
+/**
+ * dfs_process_radarevent() - For Full Offload, FW sends segment id,freq_offset
+ * and chirp information and gets assigned when there is radar detect. In
+ * case of radartool bangradar enhanced command and real radar for DA and PO,
+ * we assign these information here.
+ *
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info structure.
+ */
+
+static void
+dfs_fill_radar_found_info(struct wlan_dfs *dfs,
+			  struct radar_found_info *radar_found)
+{
+	radar_found->segment_id = dfs->dfs_seg_id;
+	radar_found->freq_offset = dfs->dfs_freq_offset;
+	radar_found->is_chirp = dfs->dfs_is_chirp;
+}
+
 void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)
 {
 	struct radar_found_info *radar_found;
@@ -1391,6 +1410,7 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)
 	radar_found->pdev_id =
 		wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
 
+	dfs_fill_radar_found_info(dfs, radar_found);
 	dfs_process_radar_ind(dfs, radar_found);
 	qdf_mem_free(radar_found);
 }

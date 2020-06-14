@@ -1003,8 +1003,6 @@ struct dfs_rcac_params {
  * @wlan_dfs_debug_timer:            Dfs debug timer.
  * @dfs_bangradar_type:              Radar simulation type.
  * @is_radar_found_on_secondary_seg: Radar on second segment.
- * @dfs_radar_found_for_fo:          Radar found event for FO(Full Offload) is
- *                                   received.
  * @is_radar_during_precac:          Radar found during precac.
  * @dfs_precac_lock:                 Lock to protect precac lists.
  * @dfs_precac_secondary_freq:       Second segment freq for precac.
@@ -1180,7 +1178,6 @@ struct wlan_dfs {
 	qdf_timer_t    wlan_dfs_debug_timer;
 	enum dfs_bangradar_types dfs_bangradar_type;
 	bool           is_radar_found_on_secondary_seg;
-	bool           dfs_radar_found_for_fo;
 	bool           is_radar_during_precac;
 	qdf_spinlock_t dfs_precac_lock;
 	bool           dfs_precac_enable;
