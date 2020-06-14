@@ -904,6 +904,21 @@ wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev,
 		      struct qdf_mac_addr *bssid);
 
 /**
+ * wlan_crypto_get_fils_pmksa  - Get the PMKSA for FILS
+ * SSID, if the SSID and cache id matches
+ * @vdev:     Pointer with VDEV object
+ * @cache_id: Cache id
+ * @ssid:     Pointer to ssid
+ * @ssid_len: SSID length
+ *
+ * Return: PMKSA entry if the cache id and SSID matches
+ */
+struct wlan_crypto_pmksa *
+wlan_crypto_get_fils_pmksa(struct wlan_objmgr_vdev *vdev,
+			   uint8_t *cache_id, uint8_t *ssid,
+			   uint8_t ssid_len);
+
+/**
  * wlan_crypto_pmksa_flush - called to flush saved pmksa
  * @crypto_params: crypto_params
  *
