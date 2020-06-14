@@ -2062,13 +2062,15 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			  "PreCAC timer abort, agile precac stopped");
 	} else if (ocac_status == OCAC_SUCCESS) {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			  "PreCAC timer Completed for agile freq: %d",
-			  center_freq_mhz1);
+			  "PreCAC timer Completed for agile freq: %d %d",
+			  center_freq_mhz1,
+			  center_freq_mhz2);
 		/*
 		 * TRIGGER agile precac timer with 0sec timeout
 		 * with ocac_status 0 for old pdev
 		 */
 		adfs_param.precac_center_freq_1 = center_freq_mhz1;
+		adfs_param.precac_center_freq_2 = center_freq_mhz2;
 		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
 		dfs_start_agile_precac_timer(dfs,
 					     ocac_status,
