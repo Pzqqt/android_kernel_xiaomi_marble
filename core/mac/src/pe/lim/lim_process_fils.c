@@ -976,6 +976,11 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 	if (!fils_info)
 		return 0;
 
+	if (!fils_info->keyname_nai_length || !fils_info->fils_rrk_len) {
+		pe_debug("FILS_PMKSA: NO keyname nai/RRK configured. Use PMKSA caching");
+		return 0;
+	}
+
 	buf_len =
 		/* code + identifier */
 		sizeof(uint8_t) * 2 +
@@ -1167,6 +1172,12 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	/* dump data */
 	lim_fils_data_dump("Fils Session",
 		fils_info->fils_session, SIR_FILS_SESSION_LENGTH);
+
+	if (!fils_info->fils_erp_reauth_pkt ||
+	    !fils_info->fils_erp_reauth_pkt_len) {
+		pe_debug("FILS: No ERP data. Dont add auth wrapped data");
+		return;
+	}
 
 	/*  ERP Packet  */
 	/* Add element id */
@@ -1520,24 +1531,31 @@ void lim_update_fils_config(struct mac_context *mac_ctx,
 		       FILS_MAX_KEYNAME_NAI_LENGTH);
 		fils_config_info->key_nai_length = FILS_MAX_KEYNAME_NAI_LENGTH;
 	}
-	pe_fils_info->keyname_nai_data =
-		qdf_mem_malloc(fils_config_info->key_nai_length);
-	if (!pe_fils_info->keyname_nai_data)
-		return;
 
-	qdf_mem_copy(pe_fils_info->keyname_nai_data,
-		     fils_config_info->keyname_nai,
-		     fils_config_info->key_nai_length);
-	pe_fils_info->fils_rrk =
-		qdf_mem_malloc(fils_config_info->r_rk_length);
-	if (!pe_fils_info->fils_rrk) {
-		qdf_mem_free(pe_fils_info->keyname_nai_data);
-		return;
+	if (fils_config_info->key_nai_length) {
+		pe_fils_info->keyname_nai_data =
+			qdf_mem_malloc(fils_config_info->key_nai_length);
+		if (!pe_fils_info->keyname_nai_data)
+			return;
+
+		qdf_mem_copy(pe_fils_info->keyname_nai_data,
+			     fils_config_info->keyname_nai,
+			     fils_config_info->key_nai_length);
 	}
 
-	if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
-		qdf_mem_copy(pe_fils_info->fils_rrk, fils_config_info->r_rk,
-			     fils_config_info->r_rk_length);
+	if (fils_config_info->r_rk_length) {
+		pe_fils_info->fils_rrk =
+			qdf_mem_malloc(fils_config_info->r_rk_length);
+		if (!pe_fils_info->fils_rrk) {
+			qdf_mem_free(pe_fils_info->keyname_nai_data);
+			return;
+		}
+
+		if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
+			qdf_mem_copy(pe_fils_info->fils_rrk,
+				     fils_config_info->r_rk,
+				     fils_config_info->r_rk_length);
+	}
 
 	qdf_mem_copy(pe_fils_info->fils_pmkid, fils_config_info->pmkid,
 		     PMKID_LEN);

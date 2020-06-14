@@ -2693,6 +2693,31 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 	return true;
 }
 
+bool csr_lookup_fils_pmkid(struct mac_context *mac,
+			   uint8_t vdev_id, uint8_t *cache_id,
+			   uint8_t *ssid, uint8_t ssid_len)
+{
+	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return false;
+	}
+
+	pmksa = wlan_crypto_get_fils_pmksa(vdev, cache_id, ssid, ssid_len);
+	if (!pmksa) {
+		sme_err("FILS_PMKSA: Lookup failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		return false;
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return true;
+}
+
 /**
  * csr_update_session_pmk() - Update the pmk len and pmk in the roam session
  * @session: pointer to the CSR Roam session
