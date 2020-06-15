@@ -10,10 +10,10 @@
  * GNU General Public License for more details.
  */
 
-#ifndef DATARMNET4acb030b4f
-#define DATARMNET4acb030b4f
+#ifndef DATARMNETd4ae2cf0b5
+#define DATARMNETd4ae2cf0b5
 #include "rmnet_offload_main.h"
 #include "rmnet_offload_engine.h"
-bool DATARMNET9dd18589e3(struct DATARMNET31caee06e2*DATARMNETd44a80d414,struct 
-DATARMNETadd6ff90d0*DATARMNETc3ffad4b30,bool DATARMNETc72284bb2d);
+bool DATARMNET8dc47eb7af(struct DATARMNETd7c9631acd*DATARMNETaa568481cf,struct 
+DATARMNETd812bcdbb5*DATARMNET5fe4c722a8,bool DATARMNETd87669e323);
 #endif
