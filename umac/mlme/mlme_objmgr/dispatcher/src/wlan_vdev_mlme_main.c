@@ -173,9 +173,11 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 
 static void mlme_scan_serialization_comp_info_cb(
 		struct wlan_objmgr_vdev *vdev,
-		union wlan_serialization_rules_info *comp_info)
+		union wlan_serialization_rules_info *comp_info,
+		struct wlan_serialization_command *cmd)
 {
 	struct wlan_objmgr_pdev *pdev;
+	struct scan_start_request *scan_start_req = cmd->umac_cmd;
 	QDF_STATUS status;
 
 	if (!comp_info || !vdev) {
@@ -187,6 +189,18 @@ static void mlme_scan_serialization_comp_info_cb(
 	if (!pdev) {
 		mlme_err("pdev is NULL");
 		return;
+	}
+
+	if (!scan_start_req) {
+		mlme_err("scan start request is null");
+		return;
+	}
+
+	comp_info->scan_info.is_scan_for_connect = false;
+
+	if (cmd->cmd_type == WLAN_SER_CMD_SCAN &&
+	    scan_start_req->scan_req.scan_type == SCAN_TYPE_SCAN_FOR_CONNECT) {
+		comp_info->scan_info.is_scan_for_connect = true;
 	}
 
 	comp_info->scan_info.is_mlme_op_in_progress = false;

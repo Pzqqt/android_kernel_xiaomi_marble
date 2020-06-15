@@ -697,12 +697,14 @@ struct hint_bssid {
  * @SCAN_TYPE_P2P_SEARCH: P2P Search
  * @SCAN_TYPE_P2P_LISTEN: P2P listed
  * @SCAN_TYPE_RRM: RRM scan request
+ * @SCAN_TYPE_SCAN_FOR_CONNECT : Scan for connect
  */
 enum scan_request_type {
 	SCAN_TYPE_DEFAULT = 0,
 	SCAN_TYPE_P2P_SEARCH = 1,
 	SCAN_TYPE_P2P_LISTEN = 2,
-	SCAN_TYPE_RRM = 3
+	SCAN_TYPE_RRM = 3,
+	SCAN_TYPE_SCAN_FOR_CONNECT = 4
 };
 
 /**

@@ -468,7 +468,8 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 
 static void dfs_scan_serialization_comp_info_cb(
 		struct wlan_objmgr_vdev *vdev,
-		union wlan_serialization_rules_info *comp_info)
+		union wlan_serialization_rules_info *comp_info,
+		struct wlan_serialization_command *cmd)
 {
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_pdev *pdev;

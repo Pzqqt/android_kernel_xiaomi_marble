@@ -80,6 +80,7 @@ enum wlan_serialization_cb_reason {
  * @is_cac_in_progress: boolean to check the cac status
  * @is_tdls_in_progress: boolean to check the tdls status
  * @is_mlme_op_in_progress: boolean to check the mlme op status
+ * @is_scan_for_connect: boolean to check if scan for connect
  *
  * This information is needed for scan command from other components
  * to apply the rules and check whether the cmd is allowed or not
@@ -88,6 +89,7 @@ struct wlan_serialization_scan_info {
 	bool is_cac_in_progress;
 	bool is_tdls_in_progress;
 	bool is_mlme_op_in_progress;
+	bool is_scan_for_connect;
 };
 
 /**
@@ -129,7 +131,8 @@ typedef QDF_STATUS
  * Return: None
  */
 typedef void (*wlan_serialization_comp_info_cb)(struct wlan_objmgr_vdev *vdev,
-		union wlan_serialization_rules_info *comp_info);
+		union wlan_serialization_rules_info *comp_info,
+		struct wlan_serialization_command *cmd);
 
 /**
  * wlan_serialization_apply_rules_cb() - callback per command to apply rules

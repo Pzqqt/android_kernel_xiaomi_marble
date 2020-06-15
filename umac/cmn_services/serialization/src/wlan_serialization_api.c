@@ -411,7 +411,7 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 		if (!ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id])
 			continue;
 		ser_soc_obj->comp_info_cb[cmd->cmd_type][comp_id](cmd->vdev,
-			&info);
+			&info, cmd);
 		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type])
 			continue;
 		if (!ser_soc_obj->apply_rules_cb[cmd->cmd_type](&info, comp_id))
