@@ -1036,6 +1036,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
 	u_int8_t *data, *ivp = NULL;
 	uint16_t buflen;
+	uint16_t len = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool is_from_addr_valid, is_bssid_valid;
 
@@ -1099,13 +1100,25 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	/* mpdu_data_ptr is pointer to action header */
 	mpdu_data_ptr = (uint8_t *)qdf_nbuf_data(buf) +
 			sizeof(struct ieee80211_frame);
+
+	if (wh->i_fc[1] & IEEE80211_FC1_ORDER) {
+		/* Adjust the offset taking into consideration HT control field
+		 * length, in the case when peer sends a frame with HT/VHT/HE
+		 * ctrl field in the header(when frame is transmitted in TB
+		 * PPDU format).
+		 */
+		mpdu_data_ptr += IEEE80211_HT_CTRL_LEN;
+		len = IEEE80211_HT_CTRL_LEN;
+		mgmt_txrx_debug_rl("HT control field present!");
+	}
+
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 	    !qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
 	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1)) {
 
 		if (buflen > (sizeof(struct ieee80211_frame) +
 			WLAN_HDR_EXT_IV_LEN))
-			ivp = data + sizeof(struct ieee80211_frame);
+			ivp = data + sizeof(struct ieee80211_frame) + len;
 
 		/* Set mpdu_data_ptr based on EXT IV bit
 		 * if EXT IV bit set, CCMP using PMF 8 bytes of IV is present
