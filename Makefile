@@ -9,7 +9,6 @@ ifeq ($(CONFIG_ARCH_KONA), y)
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/konadispconf.h
 endif
 
-ifneq ($(CONFIG_ARCH_QTI_VM), y)
 ifeq ($(CONFIG_ARCH_LAHAINA), y)
      ifeq ($(CONFIG_QGKI), y)
 		include $(srctree)/techpack/display/config/lahainadisp.conf
@@ -18,7 +17,6 @@ LINUXINCLUDE    += -include $(srctree)/techpack/display/config/lahainadispconf.h
 		include $(srctree)/techpack/display/config/gki_lahainadisp.conf
 LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_lahainadispconf.h
      endif
-endif
 endif
 
 LINUXINCLUDE    += \
