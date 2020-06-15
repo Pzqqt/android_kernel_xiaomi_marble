@@ -36,6 +36,8 @@
 #define IS_MSB_SET(__num) ((__num) & BIT(31))
 #define IS_LSB_SET(__num) ((__num) & BIT(0))
 
+#define VDEV_ALL                    0xFF
+
 /**
  * enum stats_req_type - enum indicating bit position of various stats type in
  * request map
