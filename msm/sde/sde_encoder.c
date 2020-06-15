@@ -3695,8 +3695,10 @@ static void sde_encoder_early_wakeup_work_handler(struct kthread_work *work)
 		return;
 	}
 
+	SDE_ATRACE_BEGIN("encoder_early_wakeup");
 	sde_encoder_resource_control(&sde_enc->base,
 			SDE_ENC_RC_EVENT_EARLY_WAKEUP);
+	SDE_ATRACE_END("encoder_early_wakeup");
 }
 
 void sde_encoder_early_wakeup(struct drm_encoder *drm_enc)
@@ -3724,8 +3726,10 @@ void sde_encoder_early_wakeup(struct drm_encoder *drm_enc)
 
 	disp_thread = &priv->disp_thread[sde_enc->crtc->index];
 
+	SDE_ATRACE_BEGIN("queue_early_wakeup_work");
 	kthread_queue_work(&disp_thread->worker,
 				&sde_enc->early_wakeup_work);
+	SDE_ATRACE_END("queue_early_wakeup_work");
 }
 
 int sde_encoder_poll_line_counts(struct drm_encoder *drm_enc)
