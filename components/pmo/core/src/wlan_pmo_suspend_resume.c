@@ -433,14 +433,17 @@ static void pmo_core_enable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
-		if (!vdev)
+		status = pmo_vdev_get_ref(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
 		pmo_register_action_frame_patterns(vdev, QDF_RUNTIME_SUSPEND);
+		pmo_vdev_put_ref(vdev);
 	}
 }
 
@@ -448,14 +451,17 @@ static void pmo_core_disable_runtime_pm_offloads(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t vdev_id;
 	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
-		if (!vdev)
+		status = pmo_vdev_get_ref(vdev);
+		if (QDF_IS_STATUS_ERROR(status))
 			continue;
 
 		pmo_clear_action_frame_patterns(vdev);
+		pmo_vdev_put_ref(vdev);
 	}
 }
 
