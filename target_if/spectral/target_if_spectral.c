@@ -3869,10 +3869,10 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 
 	if (!p_sops->is_spectral_active(spectral, smode)) {
 		p_sops->configure_spectral(spectral, spectral_params, smode);
+		spectral->rparams.marker[smode].is_valid = false;
 		p_sops->start_spectral_scan(spectral, smode, err);
 		spectral->timestamp_war.timestamp_war_offset[smode] = 0;
 		spectral->timestamp_war.last_fft_timestamp[smode] = 0;
-		spectral->rparams.marker[smode].is_valid = false;
 	}
 
 	/* get current spectral configuration */
