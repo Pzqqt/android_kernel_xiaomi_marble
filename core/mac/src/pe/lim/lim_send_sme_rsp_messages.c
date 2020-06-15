@@ -1465,7 +1465,7 @@ static QDF_STATUS lim_process_csa_wbw_ie(struct mac_context *mac_ctx,
 		eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 	if ((ap_new_ch_width == CH_WIDTH_160MHZ) &&
 			!new_ch_width_dfn) {
-		if (csa_params->new_ch_freq_seg1 != csa_params->channel +
+		if (abs(csa_params->new_ch_freq_seg1 - csa_params->channel) !=
 				CH_TO_CNTR_FREQ_DIFF_160MHz) {
 			pe_err("CSA wide BW IE has invalid center freq");
 			return QDF_STATUS_E_INVAL;
@@ -1488,7 +1488,7 @@ static QDF_STATUS lim_process_csa_wbw_ie(struct mac_context *mac_ctx,
 				 fw_vht_ch_wd);
 			ap_new_ch_width = fw_vht_ch_wd;
 		}
-		if (csa_params->new_ch_freq_seg1 != csa_params->channel +
+		if (abs(csa_params->new_ch_freq_seg1 - csa_params->channel) !=
 				CH_TO_CNTR_FREQ_DIFF_80MHz) {
 			pe_err("CSA wide BW IE has invalid center freq");
 			return QDF_STATUS_E_INVAL;
@@ -1496,7 +1496,7 @@ static QDF_STATUS lim_process_csa_wbw_ie(struct mac_context *mac_ctx,
 		csa_params->new_ch_freq_seg2 = 0;
 	}
 	if (new_ch_width_dfn) {
-		if (csa_params->new_ch_freq_seg1 != csa_params->channel +
+		if (abs(csa_params->new_ch_freq_seg1 - csa_params->channel) !=
 				CH_TO_CNTR_FREQ_DIFF_80MHz) {
 			pe_err("CSA wide BW IE has invalid center freq");
 			return QDF_STATUS_E_INVAL;
@@ -1507,8 +1507,7 @@ static QDF_STATUS lim_process_csa_wbw_ie(struct mac_context *mac_ctx,
 			ap_new_ch_width = fw_vht_ch_wd;
 		}
 		if ((ap_new_ch_width == CH_WIDTH_160MHZ) &&
-				(csa_params->new_ch_freq_seg1 !=
-				 csa_params->channel +
+		    (abs(csa_params->new_ch_freq_seg1 - csa_params->channel) !=
 				 CH_TO_CNTR_FREQ_DIFF_160MHz)) {
 			pe_err("wide BW IE has invalid 160M center freq");
 			csa_params->new_ch_freq_seg2 = 0;
