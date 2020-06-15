@@ -560,7 +560,7 @@ int scm_scan_get_burst_duration(int max_ch_time, bool miracast_enabled)
 	return burst_duration;
 }
 
-#define SCM_ACTIVE_DWELL_TIME_NAN      40
+#define SCM_ACTIVE_DWELL_TIME_NAN      60
 #define SCM_ACTIVE_DWELL_TIME_SAP      40
 
 /**
@@ -772,8 +772,7 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 
 	if (ndi_present) {
 		req->scan_req.dwell_time_active =
-			QDF_MIN(req->scan_req.dwell_time_active,
-				SCM_ACTIVE_DWELL_TIME_NAN);
+						SCM_ACTIVE_DWELL_TIME_NAN;
 		req->scan_req.dwell_time_active_2g =
 			QDF_MIN(req->scan_req.dwell_time_active_2g,
 			SCM_ACTIVE_DWELL_TIME_NAN);
