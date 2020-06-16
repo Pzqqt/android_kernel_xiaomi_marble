@@ -5,6 +5,7 @@
 menuconfig RMNET_CORE
 	default m 
 	select GRO_CELLS
+	select RMNET_LA_PLATFORM
 	---help---
 	  If you select this, you will enable the RMNET module which is used
 	  for handling data in the multiplexing and aggregation protocol (MAP)
@@ -16,3 +17,11 @@ menuconfig RMNET_CTL
 	---help---
 	  Enable the RMNET CTL module which is used for handling QMAP commands
 	  for flow control purposes.
+
+config RMNET_LA_PLATFORM
+	bool "Rmnet LA Platform Setting"
+	depends on CONFIG_ARCH_LAHAINA
+	default y
+	---help---
+	  Say Y here if you want rmnet_core to be able to include android
+	  specific header file locations

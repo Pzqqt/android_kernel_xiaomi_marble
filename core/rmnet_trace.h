@@ -5,7 +5,11 @@
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM rmnet
 #undef TRACE_INCLUDE_PATH
+#ifdef RMNET_LA_PLATFORM
 #define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
+#else
+#define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
+#endif
 #define TRACE_INCLUDE_FILE rmnet_trace
 
 #if !defined(_TRACE_RMNET_H) || defined(TRACE_HEADER_MULTI_READ)

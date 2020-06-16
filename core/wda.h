@@ -5,7 +5,11 @@
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM wda
 #undef TRACE_INCLUDE_PATH
+#ifdef RMNET_LA_PLATFORM
 #define TRACE_INCLUDE_PATH ../../../../vendor/qcom/opensource/datarmnet/core
+#else
+#define TRACE_INCLUDE_PATH ../../../../../../../src/datarmnet/core
+#endif
 #define TRACE_INCLUDE_FILE wda
 
 #if !defined(_TRACE_WDA_H) || defined(TRACE_HEADER_MULTI_READ)
