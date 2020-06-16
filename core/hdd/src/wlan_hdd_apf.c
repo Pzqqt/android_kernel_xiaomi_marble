@@ -508,6 +508,11 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 		return -EINVAL;
 	}
 	read_mem_params.addr_offset = nla_get_u32(tb[APF_CURRENT_OFFSET]);
+	if (read_mem_params.addr_offset > MAX_APF_MEMORY_LEN) {
+		hdd_err("attr apf memory offset should be less than %d",
+			MAX_APF_MEMORY_LEN);
+		return -EINVAL;
+	}
 
 	/* Read length */
 	if (!tb[APF_PACKET_SIZE]) {
