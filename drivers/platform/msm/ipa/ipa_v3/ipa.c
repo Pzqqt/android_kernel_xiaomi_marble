@@ -7730,7 +7730,9 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	IPADBG(": Read GPI or GCI Event RP from DDR = %s\n",
 	       ipa_drv_res->ipa_gpi_event_rp_ddr ? "True" : "False");
 
-	ipa_drv_res->tx_napi_enable = true;
+	ipa_drv_res->tx_napi_enable = 
+		of_property_read_bool(pdev->dev.of_node,
+		"qcom,tx-napi");
 	IPADBG(": Enable tx NAPI = %s\n",
 		ipa_drv_res->tx_napi_enable
 		? "True" : "False");
