@@ -1094,7 +1094,7 @@ EXPORT_SYMBOL(bolero_tx_mclk_enable);
  * Returns 0 on success or -EINVAL on error.
  */
 int bolero_register_event_listener(struct snd_soc_component *component,
-				   bool enable, bool is_dmic_sva)
+				   bool enable)
 {
 	struct bolero_priv *priv = NULL;
 	int ret = 0;
@@ -1113,8 +1113,7 @@ int bolero_register_event_listener(struct snd_soc_component *component,
 
 	if (priv->macro_params[TX_MACRO].reg_evt_listener)
 		ret = priv->macro_params[TX_MACRO].reg_evt_listener(component,
-								    enable,
-								    is_dmic_sva);
+								    enable);
 
 	return ret;
 }

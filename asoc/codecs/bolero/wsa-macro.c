@@ -166,7 +166,6 @@ struct wsa_macro_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
-	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 struct wsa_macro_bcl_pmic_params {
@@ -3197,7 +3196,6 @@ static int wsa_macro_probe(struct platform_device *pdev)
 	wsa_priv->swr_plat_data.clk = wsa_swrm_clock;
 	wsa_priv->swr_plat_data.core_vote = wsa_macro_core_vote;
 	wsa_priv->swr_plat_data.handle_irq = NULL;
-	wsa_priv->swr_plat_data.pinctrl_setup = NULL;
 
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,default-clk-id",
 				   &default_clk_id);
