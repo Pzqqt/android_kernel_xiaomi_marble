@@ -27,12 +27,16 @@ struct rmnet_frag_descriptor_pool {
 	u32 pool_size;
 };
 
+struct rmnet_fragment {
+	struct list_head list;
+	skb_frag_t frag;
+};
+
 struct rmnet_frag_descriptor {
 	struct list_head list;
-	struct list_head sub_frags;
-	skb_frag_t frag;
-	u8 *hdr_ptr;
+	struct list_head frags;
 	struct net_device *dev;
+	u32 len;
 	u32 hash;
 	__be32 tcp_seq;
 	__be16 ip_id;
@@ -57,18 +61,28 @@ struct rmnet_frag_descriptor *
 rmnet_get_frag_descriptor(struct rmnet_port *port);
 void rmnet_recycle_frag_descriptor(struct rmnet_frag_descriptor *frag_desc,
 				   struct rmnet_port *port);
-void rmnet_descriptor_add_frag(struct rmnet_port *port, struct list_head *list,
-			       struct page *p, u32 page_offset, u32 len);
+void *rmnet_frag_pull(struct rmnet_frag_descriptor *frag_desc,
+		      struct rmnet_port *port, unsigned int size);
+void *rmnet_frag_trim(struct rmnet_frag_descriptor *frag_desc,
+		      struct rmnet_port *port, unsigned int size);
+void *rmnet_frag_header_ptr(struct rmnet_frag_descriptor *frag_desc, u32 off,
+			    u32 len, void *buf);
+int rmnet_frag_descriptor_add_frag(struct rmnet_frag_descriptor *frag_desc,
+				   struct page *p, u32 page_offset, u32 len);
+int rmnet_frag_descriptor_add_frags_from(struct rmnet_frag_descriptor *to,
+					 struct rmnet_frag_descriptor *from,
+					 u32 off, u32 len);
 int rmnet_frag_ipv6_skip_exthdr(struct rmnet_frag_descriptor *frag_desc,
 				int start, u8 *nexthdrp, __be16 *fragp);
 
 /* QMAP command packets */
-void rmnet_frag_command(struct rmnet_map_header *qmap, struct rmnet_port *port);
-int rmnet_frag_flow_command(struct rmnet_map_header *qmap,
+void rmnet_frag_command(struct rmnet_frag_descriptor *frag_desc,
+			struct rmnet_map_header *qmap, struct rmnet_port *port);
+int rmnet_frag_flow_command(struct rmnet_frag_descriptor *frag_desc,
 			    struct rmnet_port *port, u16 pkt_len);
 
 /* Ingress data handlers */
-void rmnet_frag_deaggregate(skb_frag_t *frag, struct rmnet_port *port,
+void rmnet_frag_deaggregate(struct sk_buff *skb, struct rmnet_port *port,
 			    struct list_head *list);
 void rmnet_frag_deliver(struct rmnet_frag_descriptor *frag_desc,
 			struct rmnet_port *port);
@@ -84,68 +98,15 @@ void rmnet_descriptor_deinit(struct rmnet_port *port);
 
 static inline void *rmnet_frag_data_ptr(struct rmnet_frag_descriptor *frag_desc)
 {
-	return skb_frag_address(&frag_desc->frag);
-}
+	struct rmnet_fragment *frag;
 
-static inline void *rmnet_frag_pull(struct rmnet_frag_descriptor *frag_desc,
-				    struct rmnet_port *port,
-				    unsigned int size)
-{
-	if (size >= skb_frag_size(&frag_desc->frag)) {
-		pr_info("%s(): Pulling %u bytes from %u byte pkt. Dropping\n",
-			__func__, size, skb_frag_size(&frag_desc->frag));
-		rmnet_recycle_frag_descriptor(frag_desc, port);
+	frag = list_first_entry_or_null(&frag_desc->frags,
+					struct rmnet_fragment, list);
+
+	if (!frag)
 		return NULL;
-	}
 
-	frag_desc->frag.bv_offset += size;
-	skb_frag_size_sub(&frag_desc->frag, size);
-
-	return rmnet_frag_data_ptr(frag_desc);
-}
-
-static inline void *rmnet_frag_trim(struct rmnet_frag_descriptor *frag_desc,
-				    struct rmnet_port *port,
-				    unsigned int size)
-{
-	if (!size) {
-		pr_info("%s(): Trimming %u byte pkt to 0. Dropping\n",
-			__func__, skb_frag_size(&frag_desc->frag));
-		rmnet_recycle_frag_descriptor(frag_desc, port);
-		return NULL;
-	}
-
-	if (size < skb_frag_size(&frag_desc->frag))
-		skb_frag_size_set(&frag_desc->frag, size);
-
-	return rmnet_frag_data_ptr(frag_desc);
-}
-
-static inline void rmnet_frag_fill(struct rmnet_frag_descriptor *frag_desc,
-				   struct page *p, u32 page_offset, u32 len)
-{
-	get_page(p);
-	__skb_frag_set_page(&frag_desc->frag, p);
-	skb_frag_size_set(&frag_desc->frag, len);
-	frag_desc->frag.bv_offset = page_offset;
-}
-
-static inline u8
-rmnet_frag_get_next_hdr_type(struct rmnet_frag_descriptor *frag_desc)
-{
-	unsigned char *data = rmnet_frag_data_ptr(frag_desc);
-
-	data += sizeof(struct rmnet_map_header);
-	return ((struct rmnet_map_v5_coal_header *)data)->header_type;
-}
-
-static inline bool
-rmnet_frag_get_csum_valid(struct rmnet_frag_descriptor *frag_desc)
-{
-	unsigned char *data = rmnet_frag_data_ptr(frag_desc);
-
-	data += sizeof(struct rmnet_map_header);
-	return ((struct rmnet_map_v5_csum_header *)data)->csum_valid_required;
+	return skb_frag_address(&frag->frag);
 }
 
 #endif /* _RMNET_DESCRIPTOR_H_ */
