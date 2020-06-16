@@ -199,7 +199,8 @@ void lim_update_re_assoc_globals(struct mac_context *mac,
 
 void lim_update_assoc_sta_datas(struct mac_context *mac,
 				tpDphHashNode sta, tpSirAssocRsp pAssocRsp,
-				struct pe_session *pe_session);
+				struct pe_session *pe_session,
+				tSchBeaconStruct *beacon);
 
 /**
  * lim_sta_add_bss_update_ht_parameter() - function to update ht related
