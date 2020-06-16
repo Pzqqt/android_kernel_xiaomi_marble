@@ -4107,4 +4107,17 @@ wmi_unified_extract_time_sync_ftm_offset(wmi_unified_t wmi_handle,
 QDF_STATUS
 wmi_unified_send_injector_frame_config_cmd(wmi_unified_t wmi_handle,
 				struct wmi_host_injector_frame_params *param);
+
+/**
+ * wmi_unified_send_cp_stats_cmd() - Send cp stats command
+ * @wmi_handle: wmi handle
+ * @buf_ptr: buf_ptr received from wifistats
+ * @buf_len: length of buffer received from wifistats
+ *
+ * This function sends cp stats cmd to get cp stats.
+ *
+ * Return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_cp_stats_cmd(wmi_unified_t wmi_handle,
+					 void *buf_ptr, uint32_t buf_len);
 #endif /* _WMI_UNIFIED_API_H_ */

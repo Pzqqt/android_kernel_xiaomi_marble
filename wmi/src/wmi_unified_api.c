@@ -3349,3 +3349,14 @@ wmi_unified_send_injector_frame_config_cmd(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_send_cp_stats_cmd(wmi_unified_t wmi_handle,
+					 void *buf_ptr, uint32_t buf_len)
+{
+	if (wmi_handle->ops->send_cp_stats_cmd)
+		return wmi_handle->ops->send_cp_stats_cmd(wmi_handle, buf_ptr,
+							  buf_len);
+
+	return QDF_STATUS_E_FAILURE;
+}
+

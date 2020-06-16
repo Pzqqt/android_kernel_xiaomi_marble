@@ -2327,6 +2327,9 @@ QDF_STATUS (*send_roam_scan_ch_list_req_cmd)(wmi_unified_t wmi_hdl,
 
 QDF_STATUS (*send_injector_config_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_host_injector_frame_params *params);
+
+QDF_STATUS (*send_cp_stats_cmd)(wmi_unified_t wmi_handle,
+				void *buf_ptr, uint32_t buf_len);
 };
 
 /* Forward declartion for psoc*/
