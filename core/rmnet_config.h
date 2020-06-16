@@ -175,6 +175,7 @@ enum rmnet_dl_marker_prio {
 	RMNET_SHS,
 };
 
+#ifdef CONFIG_FTRACE
 enum rmnet_trace_func {
 	RMNET_MODULE,
 	NW_STACK_MODULE,
@@ -189,6 +190,7 @@ enum rmnet_trace_evt {
 	NW_STACK_RX,
 	NW_STACK_TX,
 };
+#endif
 
 int rmnet_is_real_dev_registered(const struct net_device *real_dev);
 struct rmnet_port *rmnet_get_port(struct net_device *real_dev);

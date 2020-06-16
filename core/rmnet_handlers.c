@@ -32,6 +32,8 @@
 
 #define RMNET_IP_VERSION_4 0x40
 #define RMNET_IP_VERSION_6 0x60
+
+#ifdef CONFIG_FTRACE
 #define CREATE_TRACE_POINTS
 #include "rmnet_trace.h"
 
@@ -50,6 +52,7 @@ EXPORT_TRACEPOINT_SYMBOL(rmnet_err);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_update);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_reset);
 EXPORT_TRACEPOINT_SYMBOL(rmnet_freq_boost);
+#endif
 
 /* Helper Functions */
 
@@ -101,8 +104,10 @@ rmnet_deliver_skb(struct sk_buff *skb, struct rmnet_port *port)
 {
 	int (*rmnet_shs_stamp)(struct sk_buff *skb, struct rmnet_port *port);
 
+#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_DLVR_SKB, 0xDEF, 0xDEF,
 			0xDEF, 0xDEF, (void *)skb, NULL);
+#endif
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	rmnet_vnd_rx_fixup(skb->dev, skb->len);
@@ -131,8 +136,10 @@ rmnet_deliver_skb_wq(struct sk_buff *skb, struct rmnet_port *port,
 	int (*rmnet_shs_stamp)(struct sk_buff *skb, struct rmnet_port *port);
 	struct rmnet_priv *priv = netdev_priv(skb->dev);
 
+#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_DLVR_SKB, 0xDEF, 0xDEF,
 			0xDEF, 0xDEF, (void *)skb, NULL);
+#endif
 	skb_reset_transport_header(skb);
 	skb_reset_network_header(skb);
 	rmnet_vnd_rx_fixup(skb->dev, skb->len);
@@ -393,8 +400,10 @@ rx_handler_result_t rmnet_rx_handler(struct sk_buff **pskb)
 	if (skb->pkt_type == PACKET_LOOPBACK)
 		return RX_HANDLER_PASS;
 
+#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_RCV_FROM_PND, 0xDEF,
 			0xDEF, 0xDEF, 0xDEF, NULL, NULL);
+#endif
 	dev = skb->dev;
 	port = rmnet_get_port(dev);
 
@@ -425,8 +434,10 @@ void rmnet_egress_handler(struct sk_buff *skb)
 	int err;
 	u32 skb_len;
 
+#ifdef CONFIG_FTRACE
 	trace_rmnet_low(RMNET_MODULE, RMNET_TX_UL_PKT, 0xDEF, 0xDEF, 0xDEF,
 			0xDEF, (void *)skb, NULL);
+#endif
 	sk_pacing_shift_update(skb->sk, 8);
 
 	orig_dev = skb->dev;

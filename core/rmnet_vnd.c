@@ -29,7 +29,10 @@
 
 #include "qmi_rmnet.h"
 #include "rmnet_qmi.h"
+
+#ifdef CONFIG_FTRACE
 #include "rmnet_trace.h"
+#endif
 
 /* RX/TX Fixup */
 
@@ -75,7 +78,9 @@ static netdev_tx_t rmnet_vnd_start_xmit(struct sk_buff *skb,
 					AF_INET : AF_INET6;
 		mark = skb->mark;
 		len = skb->len;
+#ifdef CONFIG_FTRACE
 		trace_rmnet_xmit_skb(skb);
+#endif
 		rmnet_egress_handler(skb);
 		qmi_rmnet_burst_fc_check(dev, ip_type, mark, len);
 		qmi_rmnet_work_maybe_restart(rmnet_get_rmnet_port(dev));
@@ -173,6 +178,7 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	int boost_trigger = 0;
 	int txq = 0;
 
+#ifdef CONFIG_FTRACE
 	if (trace_print_skb_gso_enabled()) {
 		if (!skb_shinfo(skb)->gso_size)
 			goto skip_trace;
@@ -192,6 +198,7 @@ static u16 rmnet_vnd_select_queue(struct net_device *dev,
 	}
 
 skip_trace:
+#endif
 	if (priv->real_dev)
 		txq = qmi_rmnet_get_queue(dev, skb);
 

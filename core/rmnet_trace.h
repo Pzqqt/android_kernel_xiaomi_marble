@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
-
+#ifdef CONFIG_FTRACE
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM rmnet
 #undef TRACE_INCLUDE_PATH
@@ -282,3 +282,5 @@ TP_printk("freq policy update core:%u policy freq floor :%u freq ceil :%u",
 #endif /* _TRACE_RMNET_H */
 
 #include <trace/define_trace.h>
+
+#endif
