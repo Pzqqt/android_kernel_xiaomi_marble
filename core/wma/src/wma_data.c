@@ -714,8 +714,8 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 ht_vht_done:
 		WMA_LOGE("%s: NSS = %d, freq = %d",
 			 __func__, nss, mhz);
-		WMA_LOGD(" %s: input_rate = %d, chwidth = %d rate = 0x%x, streaming_rate = %d",
-			 __func__, mbpsx10_rate, chwidth, *rate, stream_rate);
+		wma_debug("input_rate = %d, chwidth = %d rate = 0x%x, streaming_rate = %d",
+			 mbpsx10_rate, chwidth, *rate, stream_rate);
 	} else {
 		if (mbpsx10_rate > 0)
 			ret = wma_fill_ofdm_cck_mcast_rate(mbpsx10_rate,
@@ -886,7 +886,7 @@ int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params)
 	if (txbf_en.mutxbfee)
 		txbf_en.sutxbfee = txbf_en.mutxbfee;
 
-	WMA_LOGD("txbf_en.sutxbfee %d txbf_en.mutxbfee %d, sutxbfer %d",
+	wma_debug("txbf_en.sutxbfee %d txbf_en.mutxbfee %d, sutxbfer %d",
 		 txbf_en.sutxbfee, txbf_en.mutxbfee, txbf_en.sutxbfer);
 
 	return wma_vdev_set_param(wma->wmi_handle,
@@ -920,7 +920,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	if (work->status)
 		WMA_LOGE("Data Tx Ack Cb Status %d", work->status);
 	else
-		WMA_LOGD("Data Tx Ack Cb Status %d", work->status);
+		wma_debug("Data Tx Ack Cb Status %d", work->status);
 
 	/* Call the Ack Cb registered by UMAC */
 	if (ack_cb)
@@ -1139,8 +1139,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 						    &mcc_adapt_sch) ==
 	    QDF_STATUS_SUCCESS) {
 		if (mcc_adapt_sch) {
-			WMA_LOGD("%s: Can't set channel latency while MCC ADAPTIVE SCHED is enabled. Exit",
-				__func__);
+			wma_debug("Can't set channel latency while MCC ADAPTIVE SCHED is enabled. Exit");
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
@@ -1193,7 +1192,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 
 	/* First step is to confirm if MCC is active */
 	if (!lim_is_in_mcc(mac)) {
-		WMA_LOGD("%s: MCC is not active. Exiting", __func__);
+		wma_debug("MCC is not active. Exiting");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1203,8 +1202,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 						    &mcc_adapt_sch) ==
 	    QDF_STATUS_SUCCESS) {
 		if (mcc_adapt_sch) {
-			WMA_LOGD("%s: Can't set channel quota while MCC_ADAPTIVE_SCHED is enabled. Exit",
-				 __func__);
+			wma_debug("Can't set channel quota while MCC_ADAPTIVE_SCHED is enabled. Exit");
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
@@ -1352,7 +1350,7 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 	void *mac_context = wma_handle->mac_context;
 
-	WMA_LOGD("Tx Complete Status %d", status);
+	wma_debug("Tx Complete Status %d", status);
 
 	if (!wma_handle->tx_frm_download_comp_cb) {
 		WMA_LOGE("Tx Complete Cb not registered by umac");
@@ -1516,7 +1514,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	}
 
 	if (ucfg_pmo_get_wow_bus_suspend(wma->psoc)) {
-		WMA_LOGD(" Suspend is in progress: Pause/Unpause Tx is NoOp");
+		wma_debug("Suspend is in progress: Pause/Unpause Tx is NoOp");
 		return 0;
 	}
 
@@ -1548,7 +1546,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 						      wmi_event,
 						      vdev_id);
 
-			WMA_LOGD
+			wma_debug
 				("vdev_id %d, pause_map 0x%x, pause type %d, action %d",
 				vdev_id, wma_vdev_get_pause_bitmap(vdev_id),
 				wmi_event->pause_type, wmi_event->action);
@@ -1759,10 +1757,10 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGD("TM enable %d period %d", pThermalParams->thermalMgmtEnabled,
+	wma_debug("TM enable %d period %d", pThermalParams->thermalMgmtEnabled,
 		 pThermalParams->throttlePeriod);
 
-	WMA_LOGD("Throttle Duty Cycle Level in percentage:\n"
+	wma_nofl_debug("Throttle Duty Cycle Level in percentage:\n"
 		 "0 %d\n"
 		 "1 %d\n"
 		 "2 %d\n"
@@ -1792,7 +1790,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		pThermalParams->thermalLevels[3].maxTempThreshold;
 	wma->thermal_mgmt_info.thermalCurrLevel = WLAN_WMA_THERMAL_LEVEL_0;
 
-	WMA_LOGD("TM level min max:\n"
+	wma_nofl_debug("TM level min max:\n"
 		 "0 %d   %d\n"
 		 "1 %d   %d\n"
 		 "2 %d   %d\n"
@@ -1889,7 +1887,7 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 	}
 
 	if (thermal_level == wma->thermal_mgmt_info.thermalCurrLevel) {
-		WMA_LOGD("Current level %d is same as the set level, ignoring",
+		wma_debug("Current level %d is same as the set level, ignoring",
 			 wma->thermal_mgmt_info.thermalCurrLevel);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -2010,16 +2008,16 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	tm_event = param_buf->fixed_param;
-	WMA_LOGD("Thermal mgmt event received with temperature %d",
+	wma_debug("Thermal mgmt event received with temperature %d",
 		 tm_event->temperature_degreeC);
 
 	/* Get the thermal mitigation level for the reported temperature */
 	thermal_level = wma_thermal_mgmt_get_level(handle,
 					tm_event->temperature_degreeC);
-	WMA_LOGD("Thermal mgmt level  %d", thermal_level);
+	wma_debug("Thermal mgmt level  %d", thermal_level);
 
 	if (thermal_level == wma->thermal_mgmt_info.thermalCurrLevel) {
-		WMA_LOGD("Current level %d is same as the set level, ignoring",
+		wma_debug("Current level %d is same as the set level, ignoring",
 			 wma->thermal_mgmt_info.thermalCurrLevel);
 		return 0;
 	}
@@ -2212,9 +2210,9 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 	tx_param->preamble_type = (1 << preamble);
 	tx_param->frame_type = WMA_TX_SEND_MGMT_TYPE;
 
-	WMA_LOGD(FL("rate_id: %d, mcs: %0x, nss: %0x, preamble: %0x"),
-		     rid, tx_param->mcs_mask, tx_param->nss_mask,
-		     tx_param->preamble_type);
+	wma_debug("rate_id: %d, mcs: %0x, nss: %0x, preamble: %0x",
+		 rid, tx_param->mcs_mask, tx_param->nss_mask,
+		 tx_param->preamble_type);
 }
 
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
@@ -2591,8 +2589,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			chanfreq = wma_handle->interfaces[vdev_id].ch_freq;
 		else
 			chanfreq = channel_freq;
-		WMA_LOGD("%s: Probe response frame on channel %d vdev:%d",
-			__func__, chanfreq, vdev_id);
+		wma_debug("Probe response frame on channel %d vdev:%d",
+			 chanfreq, vdev_id);
 		if (wma_is_vdev_in_ap_mode(wma_handle, vdev_id) && !chanfreq)
 			WMA_LOGE("%s: AP oper chan is zero", __func__);
 	} else if (pFc->subType == SIR_MAC_MGMT_ACTION ||
@@ -2606,7 +2604,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if ((pFc->type == SIR_MAC_MGMT_FRAME) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_REQ) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_RSP)) {
-			WMA_LOGD("TX MGMT - Type %hu, SubType %hu seq_num[%d]",
+			wma_debug("TX MGMT - Type %hu, SubType %hu seq_num[%d]",
 				 pFc->type, pFc->subType,
 				 ((mHdr->seqControl.seqNumHi << 4) |
 				 mHdr->seqControl.seqNumLo));
@@ -2631,7 +2629,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	 */
 	if (rid < RATEID_DEFAULT &&
 	    (rid != RATEID_1MBPS && !(rid == RATEID_6MBPS && is_5g))) {
-		WMA_LOGD(FL("using rate id: %d for Tx"), rid);
+		wma_debug("using rate id: %d for Tx", rid);
 		mgmt_param.tx_params_valid = true;
 		wma_update_tx_send_params(&mgmt_param.tx_param, rid);
 	}
@@ -2696,7 +2694,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if (!rem)
 			WMA_LOGE("%s: Failed to send Mgmt Frame", __func__);
 		else
-			WMA_LOGD("%s: Failed to send Mgmt Frame", __func__);
+			wma_debug("Failed to send Mgmt Frame");
 		wma_handle->tx_fail_cnt++;
 		goto error;
 	}
@@ -2913,7 +2911,7 @@ void wma_tx_abort(uint8_t vdev_id)
 		return;
 	}
 
-	WMA_LOGD("%s: vdevid %d bssid %pM", __func__, vdev_id, bssid);
+	wma_debug("vdevid %d bssid %pM", vdev_id, bssid);
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC), vdev_id,
 			  OL_TXQ_PAUSE_REASON_TX_ABORT, 0);
@@ -3039,7 +3037,7 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 			(index + 1) % INVALID_PEER_MAX_NUM;
 
 		/* send deauth */
-		WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
+		wma_debug("vdev_id %d", vdev_id);
 		wma_debug(" RA: " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
 		wma_debug(" TA: " QDF_MAC_ADDR_STR,
@@ -3075,7 +3073,7 @@ int wma_dp_send_delba_ind(uint8_t vdev_id, uint8_t *peer_macaddr,
 	qdf_mem_copy(req->peer_macaddr, peer_macaddr, QDF_MAC_ADDR_SIZE);
 	req->tid = tid;
 	req->reason_code = reason_code;
-	WMA_LOGD("req delba_ind vdev %d %pM tid %d reason %d",
+	wma_debug("req delba_ind vdev %d %pM tid %d reason %d",
 		 vdev_id, peer_macaddr, tid, reason_code);
 	wma_send_msg_high_priority(wma, SIR_HAL_REQ_SEND_DELBA_REQ_IND,
 				   (void *)req, 0);
