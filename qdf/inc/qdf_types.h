@@ -388,6 +388,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_RPTR: Repeater module ID
  * @QDF_MODULE_ID_6GHZ: 6Ghz specific feature ID
  * @QDF_MODULE_ID_IOT_SIM: IOT Simulation for rogue AP module ID
+ * @QDF_MODULE_ID_IFMGR: Interface Manager feature ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -514,6 +515,7 @@ typedef enum {
 	QDF_MODULE_ID_RPTR,
 	QDF_MODULE_ID_6GHZ,
 	QDF_MODULE_ID_IOT_SIM,
+	QDF_MODULE_ID_IFMGR,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
