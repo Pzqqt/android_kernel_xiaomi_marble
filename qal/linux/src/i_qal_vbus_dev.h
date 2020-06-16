@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -125,7 +125,9 @@ __qal_vbus_get_dev_rstctl(struct qdf_pfm_hndl *pfhndl, const char *state,
 			  struct qdf_vbus_rstctl **rstctl)
 {
 	struct reset_control *rsctl;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0)
+	rsctl = devm_reset_control_get_optional((struct device *)pfhndl, state);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0)
 	rsctl = reset_control_get_optional((struct device *)pfhndl, state);
 #else
 	rsctl = NULL;
