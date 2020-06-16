@@ -46,6 +46,7 @@
 #define CMD_IS_ACTIVE                 2
 #define CMD_ACTIVE_MARKED_FOR_CANCEL  3
 #define CMD_ACTIVE_MARKED_FOR_REMOVAL 4
+#define CMD_MARKED_FOR_MOVEMENT       5
 /**
  * struct wlan_serialization_timer - Timer used for serialization
  * @cmd:      Cmd to which the timer is linked

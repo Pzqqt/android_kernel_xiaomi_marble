@@ -227,6 +227,7 @@ wlan_ser_move_non_scan_pending_to_active(
 		bool blocking_cmd_removed)
 {
 	struct wlan_serialization_command_list *pending_cmd_list = NULL;
+	struct wlan_serialization_command_list *next_cmd_list = NULL;
 	struct wlan_serialization_command_list *active_cmd_list;
 	struct wlan_serialization_command cmd_to_remove;
 	enum wlan_serialization_status status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
@@ -237,6 +238,7 @@ wlan_ser_move_non_scan_pending_to_active(
 
 	qdf_list_t *pending_queue;
 	qdf_list_node_t *pending_node = NULL;
+	qdf_list_node_t *next_node = NULL;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint32_t blocking_cmd_waiting = 0;
 	uint32_t vdev_id;
@@ -271,14 +273,15 @@ wlan_ser_move_non_scan_pending_to_active(
 		goto error;
 	}
 
-	while (qsize--) {
-		qdf_status = wlan_serialization_get_cmd_from_queue(
-				pending_queue, &pending_node);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			ser_err("can't peek cmd");
-			break;
-		}
+	qdf_status = wlan_serialization_peek_front(pending_queue,
+						   &pending_node);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		ser_err("can't peek cmd");
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+		goto error;
+	}
 
+	while (qsize--) {
 		if (vdev_queue_lookup) {
 			pending_cmd_list =
 				qdf_container_of(
@@ -311,11 +314,43 @@ wlan_ser_move_non_scan_pending_to_active(
 					pdev_queue)) {
 				break;
 			}
+			/*
+			 * For the last node we dont need the next node
+			 */
+			if (qsize) {
+				qdf_status = wlan_serialization_peek_next(
+					pending_queue,
+					pending_node,
+					&next_node);
+
+				if (qdf_status != QDF_STATUS_SUCCESS) {
+					ser_err("can't peek cmd");
+					break;
+				}
+
+				pending_node = next_node;
+
+				next_cmd_list = qdf_container_of(
+					next_node,
+					struct wlan_serialization_command_list,
+					pdev_node);
+
+				qdf_atomic_set_bit(CMD_MARKED_FOR_MOVEMENT,
+						   &next_cmd_list->cmd_in_use);
+			}
+
 			if (vdev_cmd_active)
 				continue;
+
 		} else {
 			if (vdev_cmd_active)
 				break;
+
+			if (qdf_atomic_test_bit(
+					CMD_MARKED_FOR_MOVEMENT,
+					&pending_cmd_list->cmd_in_use)) {
+				break;
+			}
 		}
 
 		qdf_mem_copy(&cmd_to_remove, &pending_cmd_list->cmd,
@@ -382,8 +417,12 @@ wlan_ser_move_non_scan_pending_to_active(
 		if (vdev_queue_lookup || pdev_queue->blocking_cmd_active)
 			break;
 
-		pending_node = NULL;
+		if (next_cmd_list) {
+			qdf_atomic_clear_bit(CMD_MARKED_FOR_MOVEMENT,
+					     &next_cmd_list->cmd_in_use);
+		}
 
+		next_cmd_list = NULL;
 	}
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
