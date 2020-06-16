@@ -936,6 +936,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_disabled = 0;
 	scan_obj->drop_bcn_on_chan_mismatch =
 			 cfg_get(psoc, CFG_DROP_BCN_ON_CHANNEL_MISMATCH);
+	scan_obj->drop_bcn_on_invalid_freq =
+			 cfg_get(psoc, CFG_DROP_BCN_ON_INVALID_FREQ);
 	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_CHANNEL_TIME);

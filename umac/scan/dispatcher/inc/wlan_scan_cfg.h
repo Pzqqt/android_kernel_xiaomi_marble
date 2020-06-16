@@ -60,6 +60,27 @@ enum scan_mode_6ghz {
 
 /*
  * <ini>
+ * drop_bcn_on_invalid_freq - drop the beacon or probe resp with invalid freq
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to decide whether to drop the beacon/probe resp or not
+ * if channel received in DS param, HT info and HE IE is invalid.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DROP_BCN_ON_INVALID_FREQ CFG_INI_BOOL(\
+		"drop_bcn_on_invalid_freq",\
+		true,\
+		"drop bcn on invalid freq in HT, DS, HE IE")
+
+/*
+ * <ini>
  * gActiveMaxChannelTime - Set max channel time for active scan
  * @Min: 0
  * @Max: 10000
@@ -1206,6 +1227,7 @@ enum scan_mode_6ghz {
 
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
+	CFG(CFG_DROP_BCN_ON_INVALID_FREQ) \
 	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_ENABLE_DFS_SCAN) \

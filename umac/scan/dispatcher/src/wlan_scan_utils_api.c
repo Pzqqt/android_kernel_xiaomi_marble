@@ -236,25 +236,52 @@ static struct he_oper_6g_param *util_scan_get_he_6g_params(uint8_t *he_ops)
 	return (struct he_oper_6g_param *)he_ops;
 }
 
-static void
-util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
-				     uint8_t *chan_idx, bool *he_6g_dup_bcon)
+static QDF_STATUS
+util_scan_get_chan_from_he_6g_params(struct wlan_objmgr_pdev *pdev,
+				     struct scan_cache_entry *scan_params,
+				     qdf_freq_t *chan_freq,
+				     bool *he_6g_dup_bcon, uint8_t band_mask)
 {
 	struct he_oper_6g_param *he_6g_params;
 	uint8_t *he_ops;
+	struct wlan_scan_obj *scan_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		scm_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	*he_6g_dup_bcon = false;
 
 	he_ops = util_scan_entry_heop(scan_params);
 	if (!util_scan_entry_hecap(scan_params) || !he_ops)
-		return;
+		return QDF_STATUS_SUCCESS;
 
 	he_6g_params = util_scan_get_he_6g_params(he_ops);
 	if (!he_6g_params)
-		return;
+		return QDF_STATUS_SUCCESS;
 
-	*chan_idx = he_6g_params->primary_channel;
+	*chan_freq = wlan_reg_chan_band_to_freq(pdev,
+						he_6g_params->primary_channel,
+						band_mask);
+	if (scan_obj->drop_bcn_on_invalid_freq &&
+	    wlan_reg_is_disable_for_freq(pdev, *chan_freq)) {
+		scm_debug_rl("%pM: Drop as invalid channel %d freq %d in HE 6Ghz params",
+			     scan_params->bssid.bytes,
+			     he_6g_params->primary_channel, *chan_freq);
+		return QDF_STATUS_E_INVAL;
+	}
 	*he_6g_dup_bcon = he_6g_params->duplicate_beacon ? true : false;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static enum wlan_phymode
@@ -312,10 +339,15 @@ util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 	return phymode;
 }
 #else
-static void
-util_scan_get_chan_from_he_6g_params(struct scan_cache_entry *scan_params,
-				     uint8_t *chan_idx, bool *he_6g_dup_bcon)
-{}
+static QDF_STATUS
+util_scan_get_chan_from_he_6g_params(struct wlan_objmgr_pdev *pdev,
+				     struct scan_cache_entry *scan_params,
+				     qdf_freq_t *chan_freq,
+				     bool *he_6g_dup_bcon,
+				     uint8_t band_mask)
+{
+	return QDF_STATUS_SUCCESS;
+}
 static inline enum wlan_phymode
 util_scan_get_phymode_6g(struct wlan_objmgr_pdev *pdev,
 			 struct scan_cache_entry *scan_params)
@@ -842,12 +874,28 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 }
 
 static QDF_STATUS
-util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params,
-			       uint8_t *chan_idx)
+util_scan_populate_bcn_ie_list(struct wlan_objmgr_pdev *pdev,
+			       struct scan_cache_entry *scan_params,
+			       qdf_freq_t *chan_freq, uint8_t band_mask)
 {
 	struct ie_header *ie, *sub_ie;
 	uint32_t ie_len, sub_ie_len;
 	QDF_STATUS status;
+	uint8_t chan_idx;
+	struct wlan_scan_obj *scan_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		scm_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("scan_obj is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	ie_len = util_scan_entry_ie_len(scan_params);
 	ie = (struct ie_header *)
@@ -883,8 +931,18 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params,
 			if (ie->ie_len != WLAN_DS_PARAM_IE_MAX_LEN)
 				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.ds_param = (uint8_t *)ie;
-			*chan_idx =
+			chan_idx =
 				((struct ds_ie *)ie)->cur_chan;
+			*chan_freq = wlan_reg_chan_band_to_freq(pdev, chan_idx,
+								band_mask);
+			/* Drop if invalid freq */
+			if (scan_obj->drop_bcn_on_invalid_freq &&
+			    wlan_reg_is_disable_for_freq(pdev, *chan_freq)) {
+				scm_debug_rl("%pM: Drop as invalid channel %d freq %d in DS IE",
+					     scan_params->bssid.bytes,
+					     chan_idx, *chan_freq);
+				return QDF_STATUS_E_INVAL;
+			}
 			break;
 		case WLAN_ELEMID_TIM:
 			if (ie->ie_len < WLAN_TIM_IE_MIN_LENGTH)
@@ -961,9 +1019,18 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params,
 				goto err;
 			scan_params->ie_list.htinfo =
 			  (uint8_t *)&(((struct wlan_ie_htinfo *) ie)->hi_ie);
-			*chan_idx =
-				((struct wlan_ie_htinfo_cmn *)
-			  (scan_params->ie_list.htinfo))->hi_ctrlchannel;
+			chan_idx = ((struct wlan_ie_htinfo_cmn *)
+				 (scan_params->ie_list.htinfo))->hi_ctrlchannel;
+			*chan_freq = wlan_reg_chan_band_to_freq(pdev, chan_idx,
+								band_mask);
+			/* Drop if invalid freq */
+			if (scan_obj->drop_bcn_on_invalid_freq &&
+			    wlan_reg_is_disable_for_freq(pdev, *chan_freq)) {
+				scm_debug_rl("%pM: Drop as invalid channel %d freq %d in HT_INFO IE",
+					     scan_params->bssid.bytes,
+					     chan_idx, *chan_freq);
+				return QDF_STATUS_E_INVAL;
+			}
 			break;
 		case WLAN_ELEMID_WAPI:
 			if (ie->ie_len < WLAN_WAPI_IE_MIN_LEN)
@@ -1412,8 +1479,10 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	struct scan_cache_entry *scan_entry;
 	struct qbss_load_ie *qbss_load;
 	struct scan_cache_node *scan_node;
-	uint8_t i, chan_idx = 0;
+	uint8_t i;
+	qdf_freq_t chan_freq = 0;
 	bool he_6g_dup_bcon = false;
+	uint8_t band_mask;
 
 	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
@@ -1454,6 +1523,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	/* Copy per chain rssi to scan entry */
 	qdf_mem_copy(scan_entry->per_chain_rssi, rx_param->rssi_ctl,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
+	band_mask = BIT(wlan_reg_freq_to_band(rx_param->chan_freq));
 
 	if (!wlan_psoc_nif_fw_ext_cap_get(wlan_pdev_get_psoc(pdev),
 					  WLAN_SOC_CEXT_HW_DB2DBM)) {
@@ -1490,9 +1560,11 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	scan_entry->raw_frame.len = frame_len;
 	qdf_mem_copy(scan_entry->raw_frame.ptr,
 		frame, frame_len);
-	status = util_scan_populate_bcn_ie_list(scan_entry, &chan_idx);
+	status = util_scan_populate_bcn_ie_list(pdev, scan_entry, &chan_freq,
+						band_mask);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_debug("failed to parse beacon IE");
+		scm_debug("%pM: failed to parse beacon IE",
+			  scan_entry->bssid.bytes);
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
 		return QDF_STATUS_E_FAILURE;
@@ -1510,19 +1582,21 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	if (scan_entry->ie_list.p2p)
 		scan_entry->is_p2p = true;
 
-	if (!chan_idx && util_scan_entry_hecap(scan_entry))
-		util_scan_get_chan_from_he_6g_params(scan_entry, &chan_idx,
-						     &he_6g_dup_bcon);
-
-	if (chan_idx) {
-		uint8_t band_mask = BIT(wlan_reg_freq_to_band(
-							rx_param->chan_freq));
-
-		scan_entry->channel.chan_freq =
-			wlan_reg_chan_band_to_freq(
-				pdev, chan_idx,
-				band_mask);
+	if (!chan_freq && util_scan_entry_hecap(scan_entry)) {
+		status = util_scan_get_chan_from_he_6g_params(pdev, scan_entry,
+							      &chan_freq,
+							      &he_6g_dup_bcon,
+							      band_mask);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mem_free(scan_entry->raw_frame.ptr);
+			qdf_mem_free(scan_entry);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
+
+	if (chan_freq)
+		scan_entry->channel.chan_freq = chan_freq;
+
 	/* If no channel info is present in beacon use meta channel */
 	if (!scan_entry->channel.chan_freq) {
 		scan_entry->channel.chan_freq = rx_param->chan_freq;
