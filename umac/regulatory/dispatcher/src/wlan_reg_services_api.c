@@ -1205,3 +1205,10 @@ enum reg_phymode wlan_reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
 	return reg_get_max_phymode(pdev, phy_in, freq);
 }
 #endif /* CHECK_REG_PHYMODE */
+
+#ifdef CONFIG_REG_CLIENT
+enum band_info wlan_reg_band_bitmap_to_band_info(uint32_t band_bitmap)
+{
+	return reg_band_bitmap_to_band_info(band_bitmap);
+}
+#endif

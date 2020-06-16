@@ -965,7 +965,7 @@ struct reg_config_vars {
 	uint32_t enable_11d_support;
 	uint32_t scan_11d_interval;
 	uint32_t userspace_ctry_priority;
-	enum band_info band_capability;
+	uint32_t band_capability;
 	uint32_t dfs_enabled;
 	uint32_t indoor_chan_enabled;
 	uint32_t force_ssc_disable_indoor_channel;

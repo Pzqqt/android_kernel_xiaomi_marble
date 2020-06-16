@@ -188,20 +188,20 @@ QDF_STATUS reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
 /**
  * reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical dev to set the band for
- * @band: The set band parameters to configure for the physical device
+ * @band_bitmap: The set band parameters to configure for the physical device
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, enum band_info band);
+QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev, uint32_t band_bitmap);
 
 /**
  * reg_get_band() - Get the band information for the PDEV
  * @pdev: The physical dev to get the band for
- * @band: The band parameters of the physical device
+ * @band_bitmap: The band parameters of the physical device
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS reg_get_band(struct wlan_objmgr_pdev *pdev, enum band_info *band);
+QDF_STATUS reg_get_band(struct wlan_objmgr_pdev *pdev, uint32_t *band_bitmap);
 
 /**
  * reg_set_fcc_constraint() - Apply fcc constraints on channels 12/13
@@ -627,4 +627,5 @@ static inline void set_disable_channel_state(
 {
 }
 #endif
+
 #endif

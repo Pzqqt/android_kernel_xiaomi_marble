@@ -3903,3 +3903,30 @@ enum reg_phymode reg_get_max_phymode(struct wlan_objmgr_pdev *pdev,
 	}
 }
 #endif /* CHECK_REG_PHYMODE */
+
+#ifdef CONFIG_REG_CLIENT
+enum band_info reg_band_bitmap_to_band_info(uint32_t band_bitmap)
+{
+	if ((band_bitmap & BIT(REG_BAND_2G)) &&
+	    (band_bitmap & BIT(REG_BAND_5G)) &&
+	    (band_bitmap & BIT(REG_BAND_6G)))
+		return BAND_ALL;
+	else if ((band_bitmap & BIT(REG_BAND_5G)) &&
+		 (band_bitmap & BIT(REG_BAND_6G)))
+		return BAND_5G;
+	else if ((band_bitmap & BIT(REG_BAND_2G)) &&
+		 (band_bitmap & BIT(REG_BAND_6G)))
+		return BAND_2G;
+	else if ((band_bitmap & BIT(REG_BAND_2G)) &&
+		 (band_bitmap & BIT(REG_BAND_5G)))
+		return BAND_ALL;
+	else if (band_bitmap & BIT(REG_BAND_2G))
+		return BAND_2G;
+	else if (band_bitmap & BIT(REG_BAND_5G))
+		return BAND_5G;
+	else if (band_bitmap & BIT(REG_BAND_6G))
+		return BAND_2G;
+	else
+		return BAND_UNKNOWN;
+}
+#endif
