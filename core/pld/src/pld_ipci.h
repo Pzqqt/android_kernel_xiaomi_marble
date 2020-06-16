@@ -149,6 +149,13 @@ static inline int pld_ipci_athdiag_write(struct device *dev, uint32_t offset,
 	return 0;
 }
 
+static inline int
+pld_ipci_qmi_send(struct device *dev, int type, void *cmd,
+		  int cmd_len, void *cb_ctx,
+		  int (*cb)(void *ctx, void *event, int event_len))
+{
+	return 0;
+}
 #else
 int pld_ipci_register_driver(void);
 void pld_ipci_unregister_driver(void);
@@ -253,6 +260,14 @@ static inline int pld_ipci_athdiag_write(struct device *dev, uint32_t offset,
 					 uint8_t *input)
 {
 	return icnss_athdiag_write(dev, offset, memtype, datalen, input);
+}
+
+static inline int
+pld_ipci_qmi_send(struct device *dev, int type, void *cmd,
+		  int cmd_len, void *cb_ctx,
+		  int (*cb)(void *ctx, void *event, int event_len))
+{
+	return icnss_qmi_send(dev, type, cmd, cmd_len, cb_ctx, cb);
 }
 #endif
 #endif

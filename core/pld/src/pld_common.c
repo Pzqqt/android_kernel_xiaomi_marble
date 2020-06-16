@@ -2639,8 +2639,9 @@ int pld_qmi_send(struct device *dev, int type, void *cmd,
 	case PLD_BUS_TYPE_SNOC:
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
-	case PLD_BUS_TYPE_IPCI:
 		return -EINVAL;
+	case PLD_BUS_TYPE_IPCI:
+		return pld_ipci_qmi_send(dev, type, cmd, cmd_len, cb_ctx, cb);
 	default:
 		pr_err("Invalid device type %d\n", bus_type);
 		return -EINVAL;
