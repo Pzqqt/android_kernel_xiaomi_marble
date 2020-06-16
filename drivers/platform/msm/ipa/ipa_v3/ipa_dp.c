@@ -3558,6 +3558,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 	struct list_head *head;
 	struct ipa3_sys_context *sys;
 	struct ipa_rx_page_data rx_page;
+	int size;
 
 	sys = (struct ipa3_sys_context *) notify->chan_user_data;
 	rx_pkt = (struct ipa3_rx_pkt_wrapper *) notify->xfer_user_data;
@@ -3567,9 +3568,12 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 	rx_pkt->sys->len--;
 	spin_unlock_bh(&rx_pkt->sys->spinlock);
 
-	/* TODO: truesize handle for EOB */
-	if (update_truesize)
-		IPAERR("update_truesize not supported\n");
+	if (likely(notify->bytes_xfered))
+		rx_pkt->data_len = notify->bytes_xfered;
+	else {
+		IPAERR_RL("unexpected 0 byte_xfered\n");
+		rx_pkt->data_len = rx_pkt->len;
+	}
 
 	if (notify->veid >= GSI_VEID_MAX) {
 		IPAERR("notify->veid > GSI_VEID_MAX\n");
@@ -3610,9 +3614,9 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.rx_page_drop_cnt);
 			return NULL;
 		}
-	/* go over the list backward to save computations on updating length */
-		list_for_each_entry_safe_reverse(rx_pkt, tmp, head, link) {
+		list_for_each_entry_safe(rx_pkt, tmp, head, link) {
 			rx_page = rx_pkt->page_data;
+			size = rx_pkt->data_len;
 
 			list_del(&rx_pkt->link);
 			if (rx_page.is_tmp_alloc)
@@ -3627,7 +3631,7 @@ static struct sk_buff *handle_page_completion(struct gsi_chan_xfer_notify
 			skb_add_rx_frag(rx_skb,
 				skb_shinfo(rx_skb)->nr_frags,
 				rx_page.page, 0,
-				notify->bytes_xfered,
+				size,
 				PAGE_SIZE << IPA_WAN_PAGE_ORDER);
 		}
 	} else {
