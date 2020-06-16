@@ -716,7 +716,8 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc);
  *         1 = caller can continue to scan
  */
 void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
-		union wlan_serialization_rules_info *comp_info);
+		union wlan_serialization_rules_info *comp_info,
+		struct wlan_serialization_command *cmd);
 
 /**
  * tdls_set_offchan_mode() - update tdls status info

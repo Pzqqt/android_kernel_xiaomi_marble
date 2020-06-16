@@ -1742,7 +1742,8 @@ return_success:
 }
 
 void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
-		union wlan_serialization_rules_info *comp_info)
+		union wlan_serialization_rules_info *comp_info,
+		struct wlan_serialization_command *cmd)
 {
 	struct tdls_soc_priv_obj *tdls_soc;
 	QDF_STATUS status;
