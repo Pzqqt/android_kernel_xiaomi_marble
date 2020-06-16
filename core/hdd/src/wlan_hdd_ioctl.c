@@ -2583,6 +2583,7 @@ static int drv_cmd_set_band(struct hdd_adapter *adapter,
 {
 	int err;
 	uint8_t band;
+	uint32_t band_bitmap;
 
 	/*
 	 * Parse the band value passed from userspace. The first 8 bytes
@@ -2594,7 +2595,9 @@ static int drv_cmd_set_band(struct hdd_adapter *adapter,
 		return err;
 	}
 
-	return hdd_reg_set_band(adapter->dev, band);
+	band_bitmap = hdd_reg_legacy_setband_to_reg_wifi_band_bitmap(band);
+
+	return hdd_reg_set_band(adapter->dev, band_bitmap);
 }
 
 static int drv_cmd_set_wmmps(struct hdd_adapter *adapter,

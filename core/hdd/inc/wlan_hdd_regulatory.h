@@ -70,13 +70,23 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx);
 int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code);
 
 /**
+ * hdd_reg_legacy_setband_to_reg_wifi_band_bitmap() - Convert the user space
+ *	band input to a bitmap of band capabilities, with reg_wifi_band as the
+ *	bit value
+ * @qca_setband: user space/setband value band input, can be 0, 1, or 2
+ *
+ * Return: bitmap on top of reg_wifi_band of bands enabled
+ */
+uint32_t hdd_reg_legacy_setband_to_reg_wifi_band_bitmap(uint8_t qca_setband);
+
+/**
  * hdd_reg_set_band() - helper function for setting the regulatory band
  * @hdd_ctx: the HDD context to set the band for
- * @ui_band: the UI band to configure
+ * @band_bitmap: the band bitmap to configure
  *
  * Return: zero for success, non-zero error code for failure
  */
-int hdd_reg_set_band(struct net_device *dev, u8 ui_band);
+int hdd_reg_set_band(struct net_device *dev, uint32_t band_bitmap);
 
 /**
  * hdd_update_indoor_channel() - enable/disable indoor channel
