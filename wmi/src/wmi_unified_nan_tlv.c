@@ -744,6 +744,13 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (fixed_params->nan_scid_len > event->num_ndp_scid) {
+		WMI_LOGE("FW msg ndp scid info len %d more than TLV hdr %d",
+			 fixed_params->nan_scid_len,
+			 event->num_ndp_scid);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (fixed_params->ndp_cfg_len >
 		(WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_params))) {
 		WMI_LOGE("%s: excess wmi buffer: ndp_cfg_len %d",
