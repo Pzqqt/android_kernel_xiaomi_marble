@@ -4867,7 +4867,9 @@ bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 	bool rcac_enabled = false;
 
 	dfsdomain = utils_get_dfsdomain(dfs->dfs_pdev_obj);
-	if ((dfsdomain == DFS_FCC_REGION || dfsdomain == DFS_MKK_REGION) &&
+	if ((dfsdomain == DFS_FCC_REGION ||
+	     dfsdomain == DFS_MKK_REGION ||
+	     dfsdomain == DFS_MKKN_REGION) &&
 	    dfs->dfs_agile_rcac_ucfg && dfs->dfs_fw_adfs_support_non_160)
 	    rcac_enabled = true;
 
