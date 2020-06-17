@@ -370,13 +370,15 @@ struct sde_hw_sspp_ops {
 			enum sde_sspp_multirect_index index);
 
 	/**
-	 * setup_multirect - setup multirect configuration
+	 * update_multirect - update multirect configuration
 	 * @ctx: Pointer to pipe context
+	 * @enable: Boolean to indicate enable or disable of given config
 	 * @index: rectangle index in multirect
 	 * @mode: parallel fetch / time multiplex multirect mode
 	 */
 
-	void (*setup_multirect)(struct sde_hw_pipe *ctx,
+	void (*update_multirect)(struct sde_hw_pipe *ctx,
+			bool enable,
 			enum sde_sspp_multirect_index index,
 			enum sde_sspp_multirect_mode mode);
 

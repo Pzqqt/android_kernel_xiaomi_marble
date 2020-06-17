@@ -193,7 +193,8 @@ static inline int _sspp_subblk_offset(struct sde_hw_pipe *ctx,
 	return rc;
 }
 
-static void sde_hw_sspp_setup_multirect(struct sde_hw_pipe *ctx,
+static void sde_hw_sspp_update_multirect(struct sde_hw_pipe *ctx,
+		bool enable,
 		enum sde_sspp_multirect_index index,
 		enum sde_sspp_multirect_mode mode)
 {
@@ -212,8 +213,13 @@ static void sde_hw_sspp_setup_multirect(struct sde_hw_pipe *ctx,
 		mode_mask = 0;
 	} else {
 		mode_mask = SDE_REG_READ(&ctx->hw, SSPP_MULTIRECT_OPMODE + idx);
-		mode_mask |= index;
-		if (mode == SDE_SSPP_MULTIRECT_TIME_MX)
+
+		if (enable)
+			mode_mask |= index;
+		else
+			mode_mask &= ~index;
+
+		if (enable && (mode == SDE_SSPP_MULTIRECT_TIME_MX))
 			mode_mask |= BIT(2);
 		else
 			mode_mask &= ~BIT(2);
@@ -1232,7 +1238,7 @@ static void _setup_layer_ops(struct sde_hw_pipe *c,
 	}
 
 	if (sde_hw_sspp_multirect_enabled(c->cap))
-		c->ops.setup_multirect = sde_hw_sspp_setup_multirect;
+		c->ops.update_multirect = sde_hw_sspp_update_multirect;
 
 	if (test_bit(SDE_SSPP_SCALER_QSEED3, &features) ||
 			test_bit(SDE_SSPP_SCALER_QSEED3LITE, &features)) {

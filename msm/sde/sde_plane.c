@@ -3026,9 +3026,11 @@ static void _sde_plane_update_roi_config(struct drm_plane *plane,
 				&pstate->excl_rect,
 				pstate->multirect_index);
 
-	if (psde->pipe_hw->ops.setup_multirect)
-		psde->pipe_hw->ops.setup_multirect(
+	/* enable multirect config of corresponding rect */
+	if (psde->pipe_hw->ops.update_multirect)
+		psde->pipe_hw->ops.update_multirect(
 				psde->pipe_hw,
+				true,
 				pstate->multirect_index,
 				pstate->multirect_mode);
 }
@@ -3283,6 +3285,7 @@ static void _sde_plane_atomic_disable(struct drm_plane *plane,
 	struct sde_plane *psde;
 	struct drm_plane_state *state;
 	struct sde_plane_state *pstate;
+	u32 multirect_index = SDE_SSPP_RECT_0;
 
 	if (!plane) {
 		SDE_ERROR("invalid plane\n");
@@ -3304,10 +3307,13 @@ static void _sde_plane_atomic_disable(struct drm_plane *plane,
 
 	pstate->pending = true;
 
-	if (is_sde_plane_virtual(plane) &&
-			psde->pipe_hw && psde->pipe_hw->ops.setup_multirect)
-		psde->pipe_hw->ops.setup_multirect(psde->pipe_hw,
-				SDE_SSPP_RECT_SOLO, SDE_SSPP_MULTIRECT_NONE);
+	if (is_sde_plane_virtual(plane))
+		multirect_index = SDE_SSPP_RECT_1;
+
+	/* disable multirect config of corresponding rect */
+	if (psde->pipe_hw && psde->pipe_hw->ops.update_multirect)
+		psde->pipe_hw->ops.update_multirect(psde->pipe_hw, false,
+				multirect_index, SDE_SSPP_MULTIRECT_TIME_MX);
 }
 
 static void sde_plane_atomic_update(struct drm_plane *plane,
