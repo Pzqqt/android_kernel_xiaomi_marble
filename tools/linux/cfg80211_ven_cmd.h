@@ -1218,6 +1218,8 @@ enum _ol_ath_param_t {
 	/* Support get_call_map() for CBT */
 	OL_ATH_PARAM_FUNC_CALL_MAP = 452,
 #endif
+	/* Configure punctured band setting */
+	OL_ATH_PARAM_PUNCTURED_BAND = 453,
 
 };
 
@@ -3142,6 +3144,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"get_call_map",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_FUNC_CALL_MAP, SET_PARAM, 1},
 #endif
+	{"puncture_band",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PUNCTURED_BAND, SET_PARAM, 1},
+	{"get_puncture_band",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PUNCTURED_BAND, GET_PARAM, 0},
 };
 #endif
 #endif
