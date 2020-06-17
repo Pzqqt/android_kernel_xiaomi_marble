@@ -932,7 +932,9 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	struct dp_pdev_tx_capture *tx_capture;
 	int i, j;
 
-	pdev->tx_capture.tx_cap_mode_flag = true;
+	qdf_atomic_init(&pdev->tx_capture.tx_cap_usr_mode);
+	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, 0);
+
 	tx_capture = &pdev->tx_capture;
 	/* Work queue setup for HTT stats and tx capture handling */
 	qdf_create_work(0, &pdev->tx_capture.ppdu_stats_work,
@@ -943,7 +945,6 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_queue);
 	STAILQ_INIT(&pdev->tx_capture.ppdu_stats_defer_queue);
 	qdf_spinlock_create(&pdev->tx_capture.ppdu_stats_lock);
-	qdf_spinlock_create(&pdev->tx_capture.config_lock);
 	pdev->tx_capture.ppdu_stats_queue_depth = 0;
 	pdev->tx_capture.ppdu_stats_next_sched = 0;
 	pdev->tx_capture.ppdu_stats_defer_queue_depth = 0;
@@ -985,7 +986,6 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 	qdf_flush_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 	qdf_destroy_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 
-	qdf_spinlock_destroy(&pdev->tx_capture.config_lock);
 	qdf_spinlock_destroy(&pdev->tx_capture.ppdu_stats_lock);
 
 	STAILQ_FOREACH_SAFE(ppdu_info,
@@ -1444,7 +1444,6 @@ dp_soc_is_tx_capture_set_in_pdev(struct dp_soc *soc)
 /*
  * dp_enh_tx_capture_disable()- API to disable enhanced tx capture
  * @pdev_handle: DP_PDEV handle
- *
  * Return: void
  */
 void
@@ -1476,10 +1475,51 @@ dp_enh_tx_capture_disable(struct dp_pdev *pdev)
 		}
 	}
 	dp_peer_tx_cap_del_all_filter(pdev);
-	pdev->tx_capture.tx_cap_mode_flag = true;
+
+	pdev->tx_capture_enabled = CDP_TX_ENH_CAPTURE_DISABLED;
 	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-		  "Mode change request done cur mode - %d\n",
-		  pdev->tx_capture_enabled);
+		  "Mode change request done cur mode - %d user_mode - %d\n",
+		  pdev->tx_capture_enabled, CDP_TX_ENH_CAPTURE_DISABLED);
+}
+
+/*
+ * dp_enh_tx_capture_enable()- API to disable enhanced tx capture
+ * @pdev_handle: DP_PDEV handle
+ * @user_mode: user mode
+ *
+ * Return: void
+ */
+void
+dp_enh_tx_capture_enable(struct dp_pdev *pdev, uint8_t user_mode)
+{
+	if (dp_soc_is_tx_capture_set_in_pdev(pdev->soc) == 1)
+		dp_soc_set_txrx_ring_map_single(pdev->soc);
+
+	if (!pdev->pktlog_ppdu_stats)
+		dp_h2t_cfg_stats_msg_send(pdev,
+					  DP_PPDU_STATS_CFG_SNIFFER,
+					  pdev->pdev_id);
+	pdev->tx_capture_enabled = user_mode;
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+		  "Mode change request done cur mode - %d user_mode - %d\n",
+		  pdev->tx_capture_enabled, user_mode);
+}
+
+/*
+ * dp_enh_tx_cap_mode_change()- API to enable/disable enhanced tx capture
+ * @pdev_handle: DP_PDEV handle
+ * @user_mode: user provided value
+ *
+ * Return: void
+ */
+static void
+dp_enh_tx_cap_mode_change(struct dp_pdev *pdev, uint8_t user_mode)
+{
+	if (user_mode == CDP_TX_ENH_CAPTURE_DISABLED) {
+		dp_enh_tx_capture_disable(pdev);
+	} else {
+		dp_enh_tx_capture_enable(pdev, user_mode);
+	}
 }
 
 /*
@@ -1492,44 +1532,10 @@ dp_enh_tx_capture_disable(struct dp_pdev *pdev)
 QDF_STATUS
 dp_config_enh_tx_capture(struct dp_pdev *pdev, uint8_t val)
 {
-	qdf_spin_lock(&pdev->tx_capture.config_lock);
-	if (pdev->tx_capture.tx_cap_mode_flag) {
-		pdev->tx_capture.tx_cap_mode_flag = false;
-		pdev->tx_capture_enabled = val;
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "Mode change requested - %d\n",
-			  pdev->tx_capture_enabled);
-	} else if (!pdev->tx_capture.tx_cap_mode_flag &&
-		   !val && !!pdev->tx_capture_enabled) {
-		/* here the val is always 0 which is disable */
-		pdev->tx_capture_enabled = val;
-		pdev->tx_capture.tx_cap_mode_flag = false;
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "Mode change requested - %d\n",
-			  pdev->tx_capture_enabled);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "Mode change request pending prev mode - %d\n",
-			  pdev->tx_capture_enabled);
-		qdf_spin_unlock(&pdev->tx_capture.config_lock);
-		return QDF_STATUS_E_BUSY;
-	}
-
-	if (pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENABLE_ALL_PEERS ||
-	    pdev->tx_capture_enabled == CDP_TX_ENH_CAPTURE_ENDIS_PER_PEER) {
-		if (dp_soc_is_tx_capture_set_in_pdev(pdev->soc) == 1)
-			dp_soc_set_txrx_ring_map_single(pdev->soc);
-
-		if (!pdev->pktlog_ppdu_stats)
-			dp_h2t_cfg_stats_msg_send(pdev,
-						  DP_PPDU_STATS_CFG_SNIFFER,
-						  pdev->pdev_id);
-		pdev->tx_capture.tx_cap_mode_flag = true;
-		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
-			  "Mode change request done cur mode - %d\n",
-			  pdev->tx_capture_enabled);
-	}
-	qdf_spin_unlock(&pdev->tx_capture.config_lock);
+	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, val);
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_LOW,
+		  "User mode change requested - %d\n",
+		  qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4819,6 +4825,7 @@ void dp_tx_ppdu_stats_process(void *context)
 	qdf_nbuf_t nbuf_ppdu;
 	struct dp_pdev_tx_capture *ptr_tx_cap = &pdev->tx_capture;
 	size_t nbuf_list_sz;
+	uint8_t user_mode;
 
 	STAILQ_INIT(&sched_ppdu_queue);
 	/* Move the PPDU entries to defer list */
@@ -4881,7 +4888,6 @@ void dp_tx_ppdu_stats_process(void *context)
 			continue;
 		}
 
-		qdf_spin_lock(&ptr_tx_cap->config_lock);
 		ppdu_desc_cnt = 0;
 		STAILQ_FOREACH_SAFE(sched_ppdu_info,
 				    &sched_ppdu_queue,
@@ -4905,9 +4911,6 @@ void dp_tx_ppdu_stats_process(void *context)
 			if (pdev->tx_capture_enabled ==
 			    CDP_TX_ENH_CAPTURE_DISABLED) {
 				struct cdp_tx_completion_ppdu *ppdu_desc;
-
-				if (!pdev->tx_capture.tx_cap_mode_flag)
-					dp_enh_tx_capture_disable(pdev);
 
 				ppdu_desc = (struct cdp_tx_completion_ppdu *)
 					qdf_nbuf_data(nbuf_ppdu);
@@ -4980,13 +4983,17 @@ void dp_tx_ppdu_stats_process(void *context)
 			}
 		}
 
-		qdf_spin_unlock(&ptr_tx_cap->config_lock);
 		qdf_mem_free(nbuf_ppdu_list);
 
-		qdf_spin_lock(&pdev->tx_capture.config_lock);
-		if (!pdev->tx_capture.tx_cap_mode_flag)
-			dp_enh_tx_capture_disable(pdev);
-		qdf_spin_unlock(&pdev->tx_capture.config_lock);
+		/* get user mode */
+		user_mode = qdf_atomic_read(&pdev->tx_capture.tx_cap_usr_mode);
+		/*
+		 * invoke mode change if user mode value is
+		 * different from driver mode value,
+		 * this was done to reduce config lock
+		 */
+		if (user_mode != pdev->tx_capture_enabled)
+			dp_enh_tx_cap_mode_change(pdev, user_mode);
 	}
 }
 
