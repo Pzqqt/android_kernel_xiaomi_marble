@@ -1646,8 +1646,8 @@ static void sde_plane_rot_install_properties(struct drm_plane *plane,
 	struct sde_mdss_cfg *catalog)
 {
 	struct sde_plane *psde = to_sde_plane(plane);
-	unsigned long supported_rotations = DRM_MODE_ROTATE_0 |
-			DRM_MODE_REFLECT_X | DRM_MODE_REFLECT_Y;
+	unsigned int supported_rotations = DRM_MODE_ROTATE_0 |
+		DRM_MODE_ROTATE_180 | DRM_MODE_REFLECT_X | DRM_MODE_REFLECT_Y;
 	int ret = 0;
 
 	if (!plane || !psde) {
@@ -1658,9 +1658,8 @@ static void sde_plane_rot_install_properties(struct drm_plane *plane,
 		return;
 	}
 
-	if (psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT))
-		supported_rotations |= DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_90 |
-			DRM_MODE_ROTATE_180 | DRM_MODE_ROTATE_270;
+	if (!psde->is_virtual && psde->features & BIT(SDE_SSPP_TRUE_INLINE_ROT))
+		supported_rotations |= DRM_MODE_ROTATE_90 | DRM_MODE_ROTATE_270;
 
 	ret = drm_plane_create_rotation_property(plane,
 			DRM_MODE_ROTATE_0, supported_rotations);
