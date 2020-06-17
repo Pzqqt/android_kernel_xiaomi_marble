@@ -5725,7 +5725,6 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 	struct dfs_agile_cac_params adfs_param;
 	uint8_t ocac_status = 0;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
-	uint8_t cur_dfs_idx;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 
@@ -5733,17 +5732,13 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 		 __func__, __LINE__,
 		dfs_soc_obj->precac_state_started);
 
-	if (!dfs_soc_obj->precac_state_started)
-		dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
-
-	cur_dfs_idx = dfs_soc_obj->cur_precac_dfs_index;
-	dfs_soc_obj->dfs_priv[cur_dfs_idx].agile_precac_active = true;
+	dfs_soc_obj->dfs_priv[dfs->dfs_psoc_idx].agile_precac_active = true;
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-		 " setting true to cur_precac_dfs_index = %d, dfs: %pK",
-		 dfs_soc_obj->cur_precac_dfs_index,
-		 dfs->dfs_soc_obj->dfs_priv[cur_dfs_idx].dfs);
+		 "Agile preCAC set to active for dfs_index = %d, dfs: %pK",
+		 dfs->dfs_psoc_idx, dfs);
 
-	if (!dfs->dfs_soc_obj->precac_state_started) {
+	if (!dfs_soc_obj->precac_state_started) {
+		dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
 		/*
 		 * Initiate first call to start preCAC here, for channel as 0,
 		 * and ocac_status as 0
