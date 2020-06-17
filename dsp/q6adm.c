@@ -2991,7 +2991,7 @@ exit:
  */
 int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	     int perf_mode, uint16_t bit_width, int app_type, int acdb_id,
-	     int session_type)
+	     int session_type, uint32_t passthr_mode)
 {
 	struct adm_cmd_device_open_v5	open;
 	struct adm_cmd_device_open_v6	open_v6;
@@ -3205,7 +3205,9 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			}
 
 			open_v8.topology_id = topology;
-			open_v8.reserved = 0;
+			open_v8.compressed_data_type = 0;
+			if (passthr_mode == COMPRESSED_PASSTHROUGH_DSD)
+				open_v8.compressed_data_type = 1;
 
 			/* variable endpoint payload */
 			ep1_payload.dev_num_channel = channel_mode & 0x00FF;
