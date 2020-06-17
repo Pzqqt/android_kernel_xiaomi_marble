@@ -92,6 +92,10 @@ typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
  */
 #define qdf_target_assert_always(expr)  __qdf_target_assert(expr)
 
+#define QDF_SET_PARAM(__param, __val)    ((__param) |= (1 << (__val)))
+#define QDF_HAS_PARAM(__param, __val)    ((__param) &  (1 << (__val)))
+#define QDF_CLEAR_PARAM(__param, __val)  ((__param) &= ((~1) << (__val)))
+
 /**
  * QDF_MAX - get maximum of two values
  * @_x: 1st argument

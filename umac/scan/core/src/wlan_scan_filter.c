@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,514 @@
 #include <wlan_scan_utils_api.h>
 #include "wlan_scan_main.h"
 #include "wlan_scan_cache_db_i.h"
+
+#ifdef WLAN_SCAN_SECURITY_FILTER_V1
+#include "wlan_crypto_global_def.h"
+#include "wlan_crypto_global_api.h"
+
+/**
+ * scm_check_open() - Check if scan entry support open authmode
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if open security else false
+ */
+static bool scm_check_open(struct scan_filter *filter,
+			   struct scan_cache_entry *db_entry,
+			   struct security_info *security)
+{
+	if (db_entry->cap_info.wlan_caps.privacy) {
+		scm_debug("%pM : have privacy set",
+			  db_entry->bssid.bytes);
+		return false;
+	}
+
+	if (filter->ucastcipherset &&
+	   !(QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_NONE))) {
+		scm_debug("%pM : Filter doesn't have CIPHER none in uc %x",
+			  db_entry->bssid.bytes, filter->ucastcipherset);
+		return false;
+	}
+
+	if (filter->mcastcipherset &&
+	   !(QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_NONE))) {
+		scm_debug("%pM : Filter doesn't have CIPHER none in mc %x",
+			  db_entry->bssid.bytes, filter->mcastcipherset);
+		return false;
+	}
+
+	QDF_SET_PARAM(security->ucastcipherset, WLAN_CRYPTO_CIPHER_NONE);
+	QDF_SET_PARAM(security->mcastcipherset, WLAN_CRYPTO_CIPHER_NONE);
+
+	return true;
+}
+
+/**
+ * scm_check_wep() - Check if scan entry support WEP authmode
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if WEP security else false
+ */
+static bool scm_check_wep(struct scan_filter *filter,
+			  struct scan_cache_entry *db_entry,
+			  struct security_info *security)
+{
+	/* If privacy bit is not set, consider no match */
+	if (!db_entry->cap_info.wlan_caps.privacy) {
+		scm_debug("%pM : doesn't have privacy set",
+			  db_entry->bssid.bytes);
+		return false;
+	}
+
+	if (!(db_entry->security_type & SCAN_SECURITY_TYPE_WEP)) {
+		scm_debug("%pM : doesn't support WEP", db_entry->bssid.bytes);
+		return false;
+	}
+
+	if (!filter->ucastcipherset || !filter->mcastcipherset) {
+		scm_debug("%pM : Filter uc %x or mc %x cipher are 0",
+			  db_entry->bssid.bytes, filter->ucastcipherset,
+			  filter->mcastcipherset);
+		return false;
+	}
+
+	if (!(QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP) ||
+	     QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	     QDF_HAS_PARAM(filter->ucastcipherset,
+			   WLAN_CRYPTO_CIPHER_WEP_104))) {
+		scm_debug("%pM : Filter doesn't have WEP cipher in uc %x",
+			  db_entry->bssid.bytes, filter->ucastcipherset);
+		return false;
+	}
+
+	if (!(QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP) ||
+	     QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP_40) ||
+	     QDF_HAS_PARAM(filter->mcastcipherset,
+			   WLAN_CRYPTO_CIPHER_WEP_104))) {
+		scm_debug("%pM : Filter doesn't have WEP cipher in mc %x",
+			  db_entry->bssid.bytes, filter->mcastcipherset);
+		return false;
+	}
+
+	if (QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP))
+		QDF_SET_PARAM(security->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP);
+
+	if (QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_40))
+		QDF_SET_PARAM(security->ucastcipherset,
+			      WLAN_CRYPTO_CIPHER_WEP_40);
+
+	if (QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_104))
+		QDF_SET_PARAM(security->ucastcipherset,
+			      WLAN_CRYPTO_CIPHER_WEP_104);
+
+	if (QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP))
+		QDF_SET_PARAM(security->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP);
+
+	if (QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP_40))
+		QDF_SET_PARAM(security->mcastcipherset,
+			      WLAN_CRYPTO_CIPHER_WEP_40);
+
+	if (QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP_104))
+		QDF_SET_PARAM(security->mcastcipherset,
+			      WLAN_CRYPTO_CIPHER_WEP_104);
+
+	return true;
+}
+
+/**
+ * scm_chk_if_cipher_n_akm_match() - Check if akm and ciphers match
+ * @filter: scan filter
+ * @ap_crypto: aps crypto params
+ *
+ * Return: true if matches
+ */
+static bool scm_chk_if_cipher_n_akm_match(struct scan_filter *filter,
+					  struct wlan_crypto_params *ap_crypto)
+{
+	/* Check AP's pairwise ciphers.*/
+	if (!(filter->ucastcipherset & ap_crypto->ucastcipherset))
+		return false;
+
+	/* Check AP's group cipher match.*/
+	if (!(filter->mcastcipherset & ap_crypto->mcastcipherset))
+		return false;
+
+	/* Check AP's AKM match with filter's AKM.*/
+	if (!(filter->key_mgmt & ap_crypto->key_mgmt))
+		return false;
+
+	/* Check AP's mgmt cipher match if present.*/
+	if ((filter->mgmtcipherset && ap_crypto->mgmtcipherset) &&
+	    !(filter->mgmtcipherset & ap_crypto->mgmtcipherset))
+		return false;
+
+	if (filter->ignore_pmf_cap)
+		return true;
+
+	if (filter->pmf_cap == WLAN_PMF_REQUIRED &&
+	    !(ap_crypto->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
+		return false;
+
+	if (filter->pmf_cap == WLAN_PMF_DISABLED &&
+	    (ap_crypto->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED))
+		return false;
+
+	return true;
+}
+
+static bool scm_chk_crypto_params(struct scan_filter *filter,
+				  struct wlan_crypto_params *ap_crypto,
+				  bool is_adaptive_11r,
+				  struct scan_cache_entry *db_entry,
+				  struct security_info *security)
+{
+	if (!scm_chk_if_cipher_n_akm_match(filter, ap_crypto)) {
+		scm_debug("%pM: fail. adaptive 11r %d Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
+			  db_entry->bssid.bytes, is_adaptive_11r,
+			  filter->key_mgmt, filter->mcastcipherset,
+			  filter->ucastcipherset, filter->mgmtcipherset,
+			  filter->pmf_cap, ap_crypto->key_mgmt,
+			  ap_crypto->mcastcipherset, ap_crypto->ucastcipherset,
+			  ap_crypto->mgmtcipherset, ap_crypto->rsn_caps);
+		return false;
+	}
+
+	security->mcastcipherset =
+		ap_crypto->mcastcipherset & filter->mcastcipherset;
+	security->ucastcipherset =
+		ap_crypto->ucastcipherset & filter->ucastcipherset;
+	security->key_mgmt = ap_crypto->key_mgmt & filter->key_mgmt;
+
+	return true;
+}
+
+/**
+ * scm_check_rsn() - Check if scan entry support RSN security
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if RSN security else false
+ */
+static bool scm_check_rsn(struct scan_filter *filter,
+			  struct scan_cache_entry *db_entry,
+			  struct security_info *security)
+{
+	bool is_adaptive_11r;
+	QDF_STATUS status;
+	struct wlan_crypto_params *ap_crypto;
+	bool match;
+
+	if (!util_scan_entry_rsn(db_entry)) {
+		scm_debug("%pM : doesn't have RSN IE", db_entry->bssid.bytes);
+		return false;
+	}
+
+	ap_crypto = qdf_mem_malloc(sizeof(*ap_crypto));
+	if (!ap_crypto)
+		return false;
+	status = wlan_crypto_rsnie_check(ap_crypto,
+					 util_scan_entry_rsn(db_entry));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("%pM: failed to parse RSN IE, status %d",
+			db_entry->bssid.bytes, status);
+		qdf_mem_free(ap_crypto);
+		return false;
+	}
+
+	is_adaptive_11r = db_entry->adaptive_11r_ap &&
+				filter->enable_adaptive_11r;
+
+	/* If adaptive 11r is enabled set the FT AKM for AP */
+	if (is_adaptive_11r) {
+		if (QDF_HAS_PARAM(ap_crypto->key_mgmt,
+				  WLAN_CRYPTO_KEY_MGMT_IEEE8021X)) {
+			QDF_SET_PARAM(ap_crypto->key_mgmt,
+				      WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X);
+		}
+		if (QDF_HAS_PARAM(ap_crypto->key_mgmt,
+				  WLAN_CRYPTO_KEY_MGMT_PSK)) {
+			QDF_SET_PARAM(ap_crypto->key_mgmt,
+				      WLAN_CRYPTO_KEY_MGMT_FT_PSK);
+		}
+		if (QDF_HAS_PARAM(ap_crypto->key_mgmt,
+				  WLAN_CRYPTO_KEY_MGMT_PSK_SHA256)) {
+			QDF_SET_PARAM(ap_crypto->key_mgmt,
+				      WLAN_CRYPTO_KEY_MGMT_FT_PSK);
+		}
+		if (QDF_HAS_PARAM(ap_crypto->key_mgmt,
+				  WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256)) {
+			QDF_SET_PARAM(ap_crypto->key_mgmt,
+				      WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X);
+		}
+	}
+
+	match = scm_chk_crypto_params(filter, ap_crypto, is_adaptive_11r,
+				      db_entry, security);
+	qdf_mem_free(ap_crypto);
+
+	return match;
+}
+
+/**
+ * scm_check_wpa() - Check if scan entry support WPA security
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if WPA security else false
+ */
+static bool scm_check_wpa(struct scan_filter *filter,
+			  struct scan_cache_entry *db_entry,
+			  struct security_info *security)
+{
+	QDF_STATUS status;
+	struct wlan_crypto_params *ap_crypto;
+	bool match;
+
+	if (!util_scan_entry_wpa(db_entry)) {
+		scm_debug("%pM : doesn't have WPA IE",
+			  db_entry->bssid.bytes);
+		return false;
+	}
+
+	ap_crypto = qdf_mem_malloc(sizeof(*ap_crypto));
+	if (!ap_crypto)
+		return false;
+
+	status = wlan_crypto_wpaie_check(ap_crypto,
+					 util_scan_entry_wpa(db_entry));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("%pM: failed to parse WPA IE, status %d",
+			db_entry->bssid.bytes, status);
+		qdf_mem_free(ap_crypto);
+		return false;
+	}
+
+	match = scm_chk_crypto_params(filter, ap_crypto, false,
+				      db_entry, security);
+	qdf_mem_free(ap_crypto);
+
+	return match;
+}
+
+/**
+ * scm_check_wapi() - Check if scan entry support WAPI security
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if WAPI security else false
+ */
+static bool scm_check_wapi(struct scan_filter *filter,
+			   struct scan_cache_entry *db_entry,
+			   struct security_info *security)
+{
+	QDF_STATUS status;
+	struct wlan_crypto_params *ap_crypto;
+
+	if (!util_scan_entry_wapi(db_entry)) {
+		scm_debug("%pM : doesn't have WAPI IE",
+			  db_entry->bssid.bytes);
+		return false;
+	}
+
+	ap_crypto = qdf_mem_malloc(sizeof(*ap_crypto));
+	if (!ap_crypto)
+		return false;
+
+	status = wlan_crypto_wapiie_check(ap_crypto,
+					  util_scan_entry_wapi(db_entry));
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("%pM: failed to parse WAPI IE, status %d",
+			db_entry->bssid.bytes, status);
+		qdf_mem_free(ap_crypto);
+		return false;
+	}
+
+	if (!scm_chk_if_cipher_n_akm_match(filter, ap_crypto)) {
+		scm_debug("%pM: fail. Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
+			  db_entry->bssid.bytes, filter->key_mgmt,
+			  filter->mcastcipherset, filter->ucastcipherset,
+			  filter->mgmtcipherset, filter->pmf_cap,
+			  ap_crypto->key_mgmt, ap_crypto->mcastcipherset,
+			  ap_crypto->ucastcipherset, ap_crypto->mgmtcipherset,
+			  ap_crypto->rsn_caps);
+		qdf_mem_free(ap_crypto);
+
+		return false;
+	}
+
+	security->mcastcipherset =
+		ap_crypto->mcastcipherset & filter->mcastcipherset;
+	security->ucastcipherset =
+		ap_crypto->ucastcipherset & filter->ucastcipherset;
+	security->key_mgmt = ap_crypto->key_mgmt & filter->key_mgmt;
+	qdf_mem_free(ap_crypto);
+
+	return true;
+}
+
+/**
+ * scm_match_any_security() - Check if any security in filter match
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if any security else false
+ */
+static bool scm_match_any_security(struct scan_filter *filter,
+				   struct scan_cache_entry *db_entry,
+				   struct security_info *security)
+{
+	struct wlan_crypto_params *ap_crypto = {0};
+	QDF_STATUS status;
+	bool match = false;
+
+	ap_crypto = qdf_mem_malloc(sizeof(*ap_crypto));
+	if (!ap_crypto)
+		return match;
+
+	if (util_scan_entry_rsn(db_entry)) {
+		status = wlan_crypto_rsnie_check(ap_crypto,
+						 util_scan_entry_rsn(db_entry));
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("%pM: failed to parse RSN IE, status %d",
+				db_entry->bssid.bytes, status);
+			goto free;
+		}
+		security->mcastcipherset = ap_crypto->mcastcipherset;
+		security->ucastcipherset = ap_crypto->ucastcipherset;
+		security->key_mgmt = ap_crypto->key_mgmt;
+		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_RSNA);
+		match = true;
+		goto free;
+	}
+
+	if (util_scan_entry_wpa(db_entry)) {
+		status = wlan_crypto_wpaie_check(ap_crypto,
+						 util_scan_entry_wpa(db_entry));
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("%pM: failed to parse WPA IE, status %d",
+				db_entry->bssid.bytes, status);
+			goto free;
+		}
+		security->mcastcipherset = ap_crypto->mcastcipherset;
+		security->ucastcipherset = ap_crypto->ucastcipherset;
+		security->key_mgmt = ap_crypto->key_mgmt;
+		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_WPA);
+		match = true;
+		goto free;
+	}
+
+	if (util_scan_entry_wapi(db_entry)) {
+		status = wlan_crypto_wapiie_check(ap_crypto,
+						util_scan_entry_wapi(db_entry));
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("%pM: failed to parse WPA IE, status %d",
+				db_entry->bssid.bytes, status);
+			goto free;
+		}
+		security->mcastcipherset = ap_crypto->mcastcipherset;
+		security->ucastcipherset = ap_crypto->ucastcipherset;
+		security->key_mgmt = ap_crypto->key_mgmt;
+		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_WAPI);
+		match = true;
+		goto free;
+	}
+
+	if (db_entry->cap_info.wlan_caps.privacy) {
+		QDF_SET_PARAM(security->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP);
+		QDF_SET_PARAM(security->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP);
+		QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_SHARED);
+		match = true;
+		goto free;
+	}
+
+	QDF_SET_PARAM(security->ucastcipherset, WLAN_CRYPTO_CIPHER_NONE);
+	QDF_SET_PARAM(security->mcastcipherset, WLAN_CRYPTO_CIPHER_NONE);
+	QDF_SET_PARAM(security->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
+	match = true;
+
+free:
+	qdf_mem_free(ap_crypto);
+
+	return match;
+}
+
+/**
+ * scm_is_security_match() - Check if security in filter match
+ * @filter: scan filter
+ * @db_entry: db entry
+ * @security: matched security.
+ *
+ * Return: true if security match else false
+ */
+static bool scm_is_security_match(struct scan_filter *filter,
+				  struct scan_cache_entry *db_entry,
+				  struct security_info *security)
+{
+	int i;
+	bool match = false;
+
+	if (!filter->authmodeset)
+		return scm_match_any_security(filter, db_entry, security);
+
+	for (i = 0; i <= WLAN_CRYPTO_AUTH_MAX && !match; i++) {
+		if (!QDF_HAS_PARAM(filter->authmodeset, i))
+			continue;
+
+		security->authmodeset = 0;
+		QDF_SET_PARAM(security->authmodeset, i);
+
+		switch (i) {
+		case WLAN_CRYPTO_AUTH_NONE:
+		case WLAN_CRYPTO_AUTH_OPEN:
+		case WLAN_CRYPTO_AUTH_AUTO:
+			match = scm_check_open(filter, db_entry, security);
+			if (match)
+				break;
+		/* If not OPEN, then check WEP match so fall through */
+		case WLAN_CRYPTO_AUTH_SHARED:
+			match = scm_check_wep(filter, db_entry, security);
+			break;
+		case WLAN_CRYPTO_AUTH_8021X:
+		case WLAN_CRYPTO_AUTH_RSNA:
+		case WLAN_CRYPTO_AUTH_CCKM:
+		case WLAN_CRYPTO_AUTH_SAE:
+		case WLAN_CRYPTO_AUTH_FILS_SK:
+			/* First check if there is a RSN match */
+			match = scm_check_rsn(filter, db_entry, security);
+			break;
+		case WLAN_CRYPTO_AUTH_WPA:
+			match = scm_check_wpa(filter, db_entry, security);
+			break;
+		case WLAN_CRYPTO_AUTH_WAPI:/* WAPI */
+			match = scm_check_wapi(filter, db_entry, security);
+			break;
+		default:
+			break;
+		}
+	}
+
+	return match;
+}
+
+static bool scm_ignore_ssid_check_for_owe(struct scan_filter *filter,
+					  struct scan_cache_entry *db_entry)
+{
+	if (util_scan_entry_is_hidden_ap(db_entry) &&
+	    QDF_HAS_PARAM(filter->key_mgmt, WLAN_CRYPTO_KEY_MGMT_OWE) &&
+	    util_is_bssid_match(&filter->bssid_hint, &db_entry->bssid))
+		return true;
+
+	return false;
+}
+
+#else
 
 /**
  * scm_is_open_security() - Check if scan entry support open security
@@ -1022,51 +1530,6 @@ static bool scm_is_def_security(struct scan_filter *filter,
 }
 
 /**
- * scm_is_fils_config_match() - Check if FILS config matches
- * @filter: scan filter
- * @db_entry: db entry
- *
- * Return: true if FILS config matches else false
- */
-static bool scm_is_fils_config_match(struct scan_filter *filter,
-	struct scan_cache_entry *db_entry)
-{
-	int i;
-	struct fils_indication_ie *indication_ie;
-	uint8_t *data;
-
-	if (!filter->fils_scan_filter.realm_check)
-		return true;
-
-	if (!db_entry->ie_list.fils_indication)
-		return false;
-
-
-	indication_ie =
-		(struct fils_indication_ie *) db_entry->ie_list.fils_indication;
-
-	data = indication_ie->variable_data;
-	if (indication_ie->is_cache_id_present)
-		data += CACHE_IDENTIFIER_LEN;
-
-	if (indication_ie->is_hessid_present)
-		data += HESSID_LEN;
-
-	for (i = 1; i <= indication_ie->realm_identifiers_cnt; i++) {
-		if (!qdf_mem_cmp(filter->fils_scan_filter.fils_realm,
-				 data, REAM_HASH_LEN))
-			return true;
-		/* Max realm count reached */
-		if (indication_ie->realm_identifiers_cnt == i)
-			break;
-		else
-			data = data + REAM_HASH_LEN;
-	}
-
-	return false;
-}
-
-/**
  * scm_is_security_match() - Check if security in filter match
  * @filter: scan filter
  * @db_entry: db entry
@@ -1133,6 +1596,80 @@ static bool scm_is_security_match(struct scan_filter *filter,
 	return match;
 }
 
+static bool scm_ignore_ssid_check_for_owe(struct scan_filter *filter,
+					  struct scan_cache_entry *db_entry)
+{
+	int i;
+
+	if (util_scan_entry_is_hidden_ap(db_entry)) {
+		for (i = 0; i < filter->num_of_auth; i++) {
+			if (filter->auth_type[i] == WLAN_AUTH_TYPE_OWE &&
+			    util_is_bssid_match(&filter->bssid_hint,
+						&db_entry->bssid)) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+#endif
+
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * scm_is_fils_config_match() - Check if FILS config matches
+ * @filter: scan filter
+ * @db_entry: db entry
+ *
+ * Return: true if FILS config matches else false
+ */
+static bool scm_is_fils_config_match(struct scan_filter *filter,
+				     struct scan_cache_entry *db_entry)
+{
+	int i;
+	struct fils_indication_ie *indication_ie;
+	uint8_t *data;
+
+	if (!filter->fils_scan_filter.realm_check)
+		return true;
+
+	if (!db_entry->ie_list.fils_indication)
+		return false;
+
+	indication_ie =
+		(struct fils_indication_ie *)db_entry->ie_list.fils_indication;
+
+	data = indication_ie->variable_data;
+	if (indication_ie->is_cache_id_present)
+		data += CACHE_IDENTIFIER_LEN;
+
+	if (indication_ie->is_hessid_present)
+		data += HESSID_LEN;
+
+	for (i = 1; i <= indication_ie->realm_identifiers_cnt; i++) {
+		if (!qdf_mem_cmp(filter->fils_scan_filter.fils_realm,
+				 data, REAM_HASH_LEN))
+			return true;
+		/* Max realm count reached */
+		if (indication_ie->realm_identifiers_cnt == i)
+			break;
+
+		data = data + REAM_HASH_LEN;
+	}
+
+	return false;
+}
+
+#else
+
+static inline bool scm_is_fils_config_match(struct scan_filter *filter,
+					    struct scan_cache_entry *db_entry)
+{
+	return true;
+}
+#endif
+
+
 bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		      struct scan_cache_entry *db_entry,
 		      struct scan_filter *filter,
@@ -1168,14 +1705,9 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	 * scan with specific ssid prior to connect as in other hidden ssid
 	 * cases. Add explicit check to allow OWE when ssid is hidden.
 	 */
-	if (!match && util_scan_entry_is_hidden_ap(db_entry)) {
-		for (i = 0; i < filter->num_of_auth; i++) {
-			if (filter->auth_type[i] == WLAN_AUTH_TYPE_OWE) {
-				match = true;
-				break;
-			}
-		}
-	}
+	if (!match)
+		match = scm_ignore_ssid_check_for_owe(filter, db_entry);
+
 	if (!match && filter->num_of_ssid)
 		return false;
 

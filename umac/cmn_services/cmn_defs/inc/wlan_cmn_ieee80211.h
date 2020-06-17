@@ -527,6 +527,7 @@ struct wlan_rsn_ie_hdr {
 
 #define WLAN_RSN_IE_MIN_LEN                    2
 
+#ifndef WLAN_SCAN_SECURITY_FILTER_V1
 /**
  * struct wlan_rsn_ie: rsn ie info
  * @ver: RSN ver
@@ -552,7 +553,7 @@ struct wlan_rsn_ie {
 	uint8_t pmkid[MAX_PMKID][PMKID_LEN];
 	uint32_t mgmt_cipher_suite;
 };
-
+#endif
 #define WLAN_WAPI_IE_MIN_LEN            20
 
 /**
@@ -569,6 +570,7 @@ struct wlan_wpa_ie_hdr {
 	u8 version[2];
 };
 
+#ifndef WLAN_SCAN_SECURITY_FILTER_V1
 /**
  * struct wlan_wpa_ie: WPA ie info
  * @ver: WPA ver
@@ -588,7 +590,7 @@ struct wlan_wpa_ie {
 	uint32_t auth_suites[WLAN_MAX_CIPHER];
 	uint16_t cap;
 };
-
+#endif
 #define WAPI_VERSION 1
 #define WLAN_WAPI_OUI 0x721400
 
@@ -597,6 +599,7 @@ struct wlan_wpa_ie {
 #define WLAN_WAI_CERT_OR_SMS4 0x01
 #define WLAN_WAI_PSK 0x02
 
+#ifndef WLAN_SCAN_SECURITY_FILTER_V1
 /**
  * struct wlan_wapi_ie: WAPI ie info
  * @ver: WAPI ver
@@ -614,7 +617,7 @@ struct wlan_wapi_ie {
 	uint32_t uc_cipher_suites[WLAN_MAX_CIPHER];
 	uint32_t mc_cipher_suite;
 };
-
+#endif
 /**
  * struct wlan_frame_hdr: generic IEEE 802.11 frames
  * @i_fc: frame control
@@ -1549,6 +1552,7 @@ is_sae_single_pmk_oui(uint8_t *frm)
 		((SAE_SINGLE_PMK_TYPE << OUI_TYPE_BITS) | SAE_SINGLE_PMK_OUI));
 }
 
+#ifndef WLAN_SCAN_SECURITY_FILTER_V1
 /**
  * wlan_parse_rsn_ie() - parse rsn ie
  * @rsn_ie: rsn ie ptr
@@ -1864,6 +1868,7 @@ static inline void wlan_parse_wapi_ie(uint8_t *wapi_ie,
 	if (len >= WLAN_OUI_SIZE)
 		wapi->mc_cipher_suite = LE_READ_4(ie);
 }
+#endif
 
 /**
  * wlan_parse_oce_reduced_wan_metrics_ie() - parse oce wan metrics
