@@ -1200,6 +1200,25 @@ static int sde_encoder_phys_wb_frame_timeout(struct sde_encoder_phys *phys_enc)
 	return event;
 }
 
+static bool _sde_encoder_phys_wb_is_idle(
+		struct sde_encoder_phys *phys_enc)
+{
+	bool ret = false;
+	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys_enc);
+	struct sde_hw_wb *hw_wb = wb_enc->hw_wb;
+	struct sde_vbif_get_xin_status_params xin_status = {0};
+
+	xin_status.vbif_idx = hw_wb->caps->vbif_idx;
+	xin_status.xin_id = hw_wb->caps->xin_id;
+	xin_status.clk_ctrl = hw_wb->caps->clk_ctrl;
+	if (sde_vbif_get_xin_status(phys_enc->sde_kms, &xin_status)) {
+		_sde_encoder_phys_wb_frame_done_helper(wb_enc, false);
+		ret = true;
+	}
+
+	return ret;
+}
+
 static int _sde_encoder_phys_wb_wait_for_commit_done(
 		struct sde_encoder_phys *phys_enc, bool is_disable)
 {
@@ -1235,7 +1254,9 @@ static int _sde_encoder_phys_wb_wait_for_commit_done(
 		KICKOFF_TIMEOUT_MS);
 	rc = sde_encoder_helper_wait_for_irq(phys_enc, INTR_IDX_WB_DONE,
 		&wait_info);
-	if (rc == -ETIMEDOUT) {
+	if (rc == -ETIMEDOUT && _sde_encoder_phys_wb_is_idle(phys_enc)) {
+		rc = 0;
+	} else if (rc == -ETIMEDOUT) {
 		SDE_EVT32(DRMID(phys_enc->parent), WBID(wb_enc),
 			wb_enc->frame_count, SDE_EVTLOG_ERROR);
 		SDE_ERROR("wb:%d kickoff timed out\n", WBID(wb_enc));

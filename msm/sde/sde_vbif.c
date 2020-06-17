@@ -406,6 +406,58 @@ bool sde_vbif_set_xin_halt(struct sde_kms *sde_kms,
 	return forced_on;
 }
 
+bool sde_vbif_get_xin_status(struct sde_kms *sde_kms,
+		struct sde_vbif_get_xin_status_params *params)
+{
+	struct sde_hw_vbif *vbif = NULL;
+	struct sde_hw_mdp *mdp;
+	int i, rc;
+	bool status;
+
+	if (!sde_kms || !params) {
+		SDE_ERROR("invalid arguments\n");
+		return false;
+	}
+
+	if (!sde_kms_is_vbif_operation_allowed(sde_kms)) {
+		SDE_DEBUG("vbif operations not permitted\n");
+		return true;
+	}
+
+	mdp = sde_kms->hw_mdp;
+
+	for (i = 0; i < ARRAY_SIZE(sde_kms->hw_vbif); i++) {
+		if (sde_kms->hw_vbif[i] &&
+				sde_kms->hw_vbif[i]->idx == params->vbif_idx) {
+			vbif = sde_kms->hw_vbif[i];
+			break;
+		}
+	}
+
+	if (!vbif || !mdp) {
+		SDE_DEBUG("invalid arguments vbif:%d mdp:%d vbif idx:%d\n",
+				vbif != NULL, mdp != NULL, params->vbif_idx);
+		return false;
+	}
+
+	if (!mdp->ops.get_clk_ctrl_status ||
+			!vbif->ops.get_xin_halt_status)
+		return false;
+
+	mutex_lock(&vbif->mutex);
+	SDE_EVT32_VERBOSE(vbif->idx, params->xin_id);
+	status = vbif->ops.get_xin_halt_status(vbif, params->xin_id);
+	if (status) {
+		rc = !mdp->ops.get_clk_ctrl_status(mdp, params->clk_ctrl,
+				&status);
+		if (rc)
+			status = false;
+	}
+	mutex_unlock(&vbif->mutex);
+
+	return status;
+}
+
 void sde_vbif_set_qos_remap(struct sde_kms *sde_kms,
 		struct sde_vbif_set_qos_params *params)
 {
