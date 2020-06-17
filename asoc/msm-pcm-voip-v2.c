@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -508,7 +508,7 @@ static void voip_process_dl_pkt(uint8_t *voc_pkt, void *private_data)
 {
 	struct voip_buf_node *buf_node = NULL;
 	struct voip_drv_info *prtd = private_data;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 	uint32_t rate_type;
 	uint32_t frame_rate;
 	u32 pkt_len;
@@ -778,7 +778,7 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	struct voip_buf_node *buf_node = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct voip_drv_info *prtd = runtime->private_data;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	pr_debug("%s: fbytes=%lu\n", __func__, fbytes);
 
@@ -852,7 +852,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	struct voip_buf_node *buf_node = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct voip_drv_info *prtd = runtime->private_data;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 	int size;
 
 	pr_debug("%s: fbytes = %lu\n", __func__, fbytes);
@@ -941,7 +941,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_substream *p_substream, *c_substream;
 	struct snd_pcm_runtime *runtime;
 	struct voip_drv_info *prtd;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	if (substream == NULL) {
 		pr_err("substream is NULL\n");

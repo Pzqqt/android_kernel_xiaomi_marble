@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -678,7 +678,7 @@ static void hpcm_copy_capture_data_to_queue(struct dai_data *dai_data,
 					    uint32_t len)
 {
 	struct hpcm_buf_node *buf_node = NULL;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	if (dai_data->substream == NULL)
 		return;
@@ -987,7 +987,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	struct snd_dma_buffer *dma_buf;
 	struct snd_pcm_runtime *runtime;
 	struct hpcm_drv *prtd;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 	struct dai_data *dai_data = NULL;
 	struct tap_point *tp = NULL;
 	struct tappnt_mxr_data *tmd = NULL;
@@ -1077,7 +1077,7 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct hpcm_drv *prtd = runtime->private_data;
 	struct dai_data *dai_data = hpcm_get_dai_data(substream->pcm->id, prtd);
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	if (dai_data == NULL) {
 		pr_err("%s, dai_data is null\n", __func__);
@@ -1129,7 +1129,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct hpcm_drv *prtd = runtime->private_data;
 	struct dai_data *dai_data = hpcm_get_dai_data(substream->pcm->id, prtd);
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	if (dai_data == NULL) {
 		pr_err("%s, dai_data is null\n", __func__);

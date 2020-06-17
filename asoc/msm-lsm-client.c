@@ -1252,7 +1252,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			 unsigned int cmd, void *arg)
 {
 	struct snd_soc_pcm_runtime *rtd;
-	unsigned long flags;
+	unsigned long flags = 0;
 	int ret;
 	struct snd_lsm_sound_model_v2 snd_model_v2;
 	struct snd_lsm_session_data session_data;

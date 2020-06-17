@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -36,7 +36,7 @@ int apr_tal_write(struct apr_svc_ch_dev *apr_ch, void *data,
 			   struct apr_pkt_priv *pkt_priv, int len)
 {
 	int rc = 0, retries = 0;
-	unsigned long flags;
+	unsigned long flags = 0;
 	struct rpmsg_device *rpdev = NULL;
 
 	if (!apr_ch || len > APR_MAX_BUF ||
@@ -186,7 +186,7 @@ static int apr_tal_rpmsg_callback(struct rpmsg_device *rpdev,
 				  void *data, int len, void *priv, u32 addr)
 {
 	struct apr_svc_ch_dev *apr_ch = dev_get_drvdata(&rpdev->dev);
-	unsigned long flags;
+	unsigned long flags = 0;
 
 	if (!apr_ch || !data) {
 		pr_err("%s: Invalid apr_ch or ptr\n", __func__);
