@@ -78,6 +78,16 @@ static inline ktime_t __qdf_ktime_get(void)
 }
 
 /**
+ * __qdf_ktime_real_get() - Gets the current wall clock as ktime object
+ *
+ * Return: current wall clock as ktime object
+ */
+static inline ktime_t __qdf_ktime_real_get(void)
+{
+	return ktime_get_real();
+}
+
+/**
  * __qdf_ktime_add_ns() - Adds ktime object and nanoseconds value and
  * returns the ktime object
  *

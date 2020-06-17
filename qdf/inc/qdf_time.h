@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,17 @@ static inline qdf_ktime_t qdf_ktime_add(qdf_ktime_t ktime1, qdf_ktime_t ktime2)
 static inline qdf_ktime_t qdf_ktime_get(void)
 {
 	return __qdf_ktime_get();
+}
+
+/**
+ * qdf_ktime_real_get - Gets the current wall clock as qdf_ktime_t object
+ *
+ * Return: current wall clock as qdf_ktime_t object
+ */
+
+static inline qdf_ktime_t qdf_ktime_real_get(void)
+{
+	return __qdf_ktime_real_get();
 }
 
 /**
