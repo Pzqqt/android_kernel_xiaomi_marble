@@ -2170,7 +2170,7 @@ hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 
 		icv->flags = 0;
 		icv->flags = cds_get_vendor_reg_flags(hdd_ctx->pdev,
-				icv->ieee_chan_number,
+				icv->freq,
 				sap_config->acs_cfg.ch_width,
 				sap_config->acs_cfg.is_ht_enabled,
 				sap_config->acs_cfg.is_vht_enabled,

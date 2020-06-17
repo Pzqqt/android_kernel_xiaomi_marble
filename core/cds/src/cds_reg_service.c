@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,18 +30,19 @@
 #include "cds_ieee80211_common_i.h"
 #include "cds_config.h"
 #include "cds_utils.h"
+#include "wlan_reg_services_api.h"
 
 uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
-		uint32_t chan, uint16_t bandwidth,
+		qdf_freq_t freq, uint16_t bandwidth,
 		bool is_ht_enabled, bool is_vht_enabled,
 		uint8_t sub_20_channel_width)
 {
 	uint32_t flags = 0;
 	enum channel_state state;
 	struct ch_params ch_params;
-	int sec_channel;
+	qdf_freq_t sec_freq;
 
-	state = wlan_reg_get_channel_state(pdev, chan);
+	state = wlan_reg_get_channel_state_for_freq(pdev, freq);
 	if (state == CHANNEL_STATE_INVALID)
 		return flags;
 	if (state == CHANNEL_STATE_DFS) {
@@ -50,7 +51,7 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 	if (state == CHANNEL_STATE_DISABLE)
 		flags |= IEEE80211_CHAN_BLOCKED;
 
-	if (WLAN_REG_IS_24GHZ_CH(chan)) {
+	if (wlan_reg_is_24ghz_ch_freq(freq)) {
 		if ((bandwidth == CH_WIDTH_80P80MHZ) ||
 		    (bandwidth == CH_WIDTH_160MHZ) ||
 		    (bandwidth == CH_WIDTH_80MHZ)) {
@@ -62,24 +63,27 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 
 	switch (bandwidth) {
 	case CH_WIDTH_80P80MHZ:
-		if (wlan_reg_get_5g_bonded_channel_state(pdev, chan,
-					bandwidth) != CHANNEL_STATE_INVALID) {
+		if (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
+								  bandwidth) !=
+		    CHANNEL_STATE_INVALID) {
 			if (is_vht_enabled)
 				flags |= IEEE80211_CHAN_VHT80_80;
 		}
 		bandwidth = CH_WIDTH_160MHZ;
 	/* FALLTHROUGH */
 	case CH_WIDTH_160MHZ:
-		if (wlan_reg_get_5g_bonded_channel_state(pdev, chan,
-					bandwidth) != CHANNEL_STATE_INVALID) {
+		if (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
+								  bandwidth) !=
+		    CHANNEL_STATE_INVALID) {
 			if (is_vht_enabled)
 				flags |= IEEE80211_CHAN_VHT160;
 		}
 		bandwidth = CH_WIDTH_80MHZ;
 	/* FALLTHROUGH */
 	case CH_WIDTH_80MHZ:
-		if (wlan_reg_get_5g_bonded_channel_state(pdev, chan,
-					bandwidth) != CHANNEL_STATE_INVALID) {
+		if (wlan_reg_get_5g_bonded_channel_state_for_freq(pdev, freq,
+								  bandwidth) !=
+		    CHANNEL_STATE_INVALID) {
 			if (is_vht_enabled)
 				flags |= IEEE80211_CHAN_VHT80;
 		}
@@ -88,18 +92,19 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 	case CH_WIDTH_40MHZ:
 		qdf_mem_zero(&ch_params, sizeof(ch_params));
 		ch_params.ch_width = bandwidth;
-		wlan_reg_set_channel_params(pdev, chan, 0, &ch_params);
+		wlan_reg_set_channel_params_for_freq(pdev, freq, 0, &ch_params);
 
 		if (ch_params.sec_ch_offset == LOW_PRIMARY_CH)
-			sec_channel = chan + 4;
+			sec_freq = freq + 20;
 		else if (ch_params.sec_ch_offset == HIGH_PRIMARY_CH)
-			sec_channel = chan - 4;
+			sec_freq = freq - 20;
 		else
-			sec_channel = 0;
+			sec_freq = 0;
 
-		if (wlan_reg_get_bonded_channel_state(pdev, chan, bandwidth,
-					sec_channel) !=
-				CHANNEL_STATE_INVALID) {
+		if (wlan_reg_get_bonded_channel_state_for_freq(pdev, freq,
+							       bandwidth,
+							       sec_freq) !=
+		    CHANNEL_STATE_INVALID) {
 			if (ch_params.sec_ch_offset == LOW_PRIMARY_CH) {
 				flags |= IEEE80211_CHAN_HT40PLUS;
 				if (is_vht_enabled)
@@ -121,18 +126,20 @@ uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
 		bandwidth = CH_WIDTH_10MHZ;
 	/* FALLTHROUGH */
 	case CH_WIDTH_10MHZ:
-		if ((wlan_reg_get_bonded_channel_state(pdev, chan, bandwidth,
-						0) != CHANNEL_STATE_INVALID) &&
-				(sub_20_channel_width ==
-				 WLAN_SUB_20_CH_WIDTH_10))
+		if (wlan_reg_get_bonded_channel_state_for_freq(pdev, freq,
+							       bandwidth,
+							       0) !=
+		     CHANNEL_STATE_INVALID &&
+		     sub_20_channel_width == WLAN_SUB_20_CH_WIDTH_10)
 			flags |= IEEE80211_CHAN_HALF;
 		bandwidth = CH_WIDTH_5MHZ;
 	/* FALLTHROUGH */
 	case CH_WIDTH_5MHZ:
-		if ((wlan_reg_get_bonded_channel_state(pdev, chan, bandwidth,
-						0) != CHANNEL_STATE_INVALID) &&
-				(sub_20_channel_width ==
-				 WLAN_SUB_20_CH_WIDTH_5))
+		if (wlan_reg_get_bonded_channel_state_for_freq(pdev, freq,
+							       bandwidth,
+							       0) !=
+		    CHANNEL_STATE_INVALID &&
+		    sub_20_channel_width == WLAN_SUB_20_CH_WIDTH_5)
 			flags |= IEEE80211_CHAN_QUARTER;
 		break;
 	default:

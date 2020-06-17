@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,14 +42,15 @@
  * cds_get_vendor_reg_flags() - This API returns vendor specific regulatory
  * channel flags
  * @pdev: pdev pointer
- * @chan: channel number
+ * @freq: channel frequency
  * @bandwidth: channel BW
  * @is_ht_enabled: HT enabled/disabled flag
  * @is_vht_enabled: VHT enabled/disabled flag
  * @sub_20_channel_width: Sub 20 channel bandwidth
  * Return: channel flags
  */
-uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev, uint32_t chan,
+uint32_t cds_get_vendor_reg_flags(struct wlan_objmgr_pdev *pdev,
+				  qdf_freq_t freq,
 				  uint16_t bandwidth,
 				  bool is_ht_enabled, bool is_vht_enabled,
 				  uint8_t sub_20_channel_width);
