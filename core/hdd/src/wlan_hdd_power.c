@@ -2520,10 +2520,6 @@ int hdd_set_power_config(struct hdd_context *hddctx,
 {
 	QDF_STATUS status;
 
-	if (!ucfg_pmo_get_power_save_mode(hddctx->psoc)) {
-		hdd_err("power save is disabled in configuration");
-		return -EINVAL;
-	}
 	if (adapter->device_mode != QDF_STA_MODE &&
 	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
 		hdd_info("Advanced power save only allowed in STA/P2P-Client modes:%d",
@@ -2547,6 +2543,9 @@ int hdd_set_power_config(struct hdd_context *hddctx,
 		hdd_err("failed to configure power: %d", status);
 		return -EINVAL;
 	}
+
+	/* cache latest userspace power save config to reapply after SSR */
+	ucfg_pmo_set_power_save_mode(hddctx->psoc, power);
 
 	return 0;
 }
