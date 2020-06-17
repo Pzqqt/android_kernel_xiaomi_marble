@@ -2211,12 +2211,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_BCN_BURST, SET_PARAM, 1},
 	{"get_bcnburst",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_BCN_BURST, GET_PARAM, 0},
-#if UMAC_SUPPORT_PERIODIC_PERFSTATS
 	{"dcs_enable",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PRDPERFSTAT_THRPUT_ENAB, SET_PARAM, 1},
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS, SET_PARAM, 1},
 	{"get_dcs_enable",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_PRDPERFSTAT_THRPUT_ENAB, GET_PARAM, 0},
-#endif
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS, GET_PARAM, 0},
 	{"get_total_PER",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_TOTAL_PER, GET_PARAM, 0},
 	{"setctsrate",
@@ -2747,8 +2745,6 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ICM_ACTIVE, SET_PARAM, 1},
 	{"get_icm_active",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ICM_ACTIVE, GET_PARAM, 0},
-	{"get_nominal_noisefloor",
-		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NOMINAL_NOISEFLOOR, GET_PARAM, 0},
 	{"acs_rank_en",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_RANK, SET_PARAM, 1},
 	{"g_acs_rank_en",
