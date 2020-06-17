@@ -263,6 +263,36 @@ out:
 	return;
 }
 
+/**
+ * pld_pcie_fw_sim_set_thermal_state: Set thermal state for thermal mitigation
+ * @dev: device
+ * @thermal_state: Thermal state set by thermal subsystem
+ * @mon_id: Thermal cooling device ID
+ *
+ * This function will be called when thermal subsystem notifies platform
+ * driver about change in thermal state.
+ *
+ * Return: 0 for success
+ * Non zero failure code for errors
+ */
+static int pld_pcie_fw_sim_set_thermal_state(struct device *dev,
+					     unsigned long thermal_state,
+					     int mon_id)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->set_curr_therm_cdev_state)
+		return pld_context->ops->set_curr_therm_cdev_state(dev,
+							      thermal_state,
+							      mon_id);
+
+	return -ENOTSUPP;
+}
+
 static struct pci_device_id pld_pcie_fw_sim_id_table[] = {
 	{ 0x168c, 0x003c, PCI_ANY_ID, PCI_ANY_ID },
 	{ 0x168c, 0x003e, PCI_ANY_ID, PCI_ANY_ID },
@@ -509,6 +539,36 @@ out:
 	return;
 }
 
+/**
+ * pld_pcie_fw_sim_set_thermal_state: Set thermal state for thermal mitigation
+ * @dev: device
+ * @thermal_state: Thermal state set by thermal subsystem
+ * @mon_id: Thermal cooling device ID
+ *
+ * This function will be called when thermal subsystem notifies platform
+ * driver about change in thermal state.
+ *
+ * Return: 0 for success
+ * Non zero failure code for errors
+ */
+static int pld_pcie_fw_sim_set_thermal_state(struct device *dev,
+					     unsigned long thermal_state,
+					     int mon_id)
+{
+	struct pld_context *pld_context;
+
+	pld_context = pld_get_global_context();
+	if (!pld_context)
+		return -EINVAL;
+
+	if (pld_context->ops->set_curr_therm_cdev_state)
+		return pld_context->ops->set_curr_therm_cdev_state(dev,
+							      thermal_state,
+							      mon_id);
+
+	return -ENOTSUPP;
+}
+
 static struct pci_device_id pld_pcie_fw_sim_id_table[] = {
 	{ 0x168c, 0x003c, PCI_ANY_ID, PCI_ANY_ID },
 	{ 0x168c, 0x003e, PCI_ANY_ID, PCI_ANY_ID },
@@ -539,6 +599,7 @@ struct cnss_wlan_driver pld_pcie_fw_sim_ops = {
 	.crash_shutdown = pld_pcie_fw_sim_crash_shutdown,
 	.modem_status   = pld_pcie_fw_sim_notify_handler,
 	.update_status  = pld_pcie_fw_sim_uevent,
+	.set_therm_cdev_state = pld_pcie_fw_sim_set_thermal_state,
 };
 
 /**

@@ -156,6 +156,26 @@ pld_ipci_qmi_send(struct device *dev, int type, void *cmd,
 {
 	return 0;
 }
+
+static inline int pld_ipci_thermal_register(struct device *dev,
+					    unsigned long max_state,
+					    int mon_id)
+{
+	return 0;
+}
+
+static inline void pld_ipci_thermal_unregister(struct device *dev,
+					       int mon_id)
+{
+}
+
+static inline int pld_ipci_get_thermal_state(struct device *dev,
+					     unsigned long *thermal_state,
+					     int mon_id)
+{
+	return 0;
+}
+
 #else
 int pld_ipci_register_driver(void);
 void pld_ipci_unregister_driver(void);
@@ -269,5 +289,26 @@ pld_ipci_qmi_send(struct device *dev, int type, void *cmd,
 {
 	return icnss_qmi_send(dev, type, cmd, cmd_len, cb_ctx, cb);
 }
+
+static inline int pld_ipci_thermal_register(struct device *dev,
+					    unsigned long max_state,
+					    int mon_id)
+{
+	return icnss_thermal_cdev_register(dev, max_state, mon_id);
+}
+
+static inline void pld_ipci_thermal_unregister(struct device *dev,
+					       int mon_id)
+{
+	icnss_thermal_cdev_unregister(dev, mon_id);
+}
+
+static inline int pld_ipci_get_thermal_state(struct device *dev,
+					     unsigned long *thermal_state,
+					     int mon_id)
+{
+	return icnss_get_curr_therm_cdev_state(dev, thermal_state, mon_id);
+}
+
 #endif
 #endif

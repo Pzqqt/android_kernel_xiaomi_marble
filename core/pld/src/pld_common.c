@@ -2862,6 +2862,94 @@ int pld_idle_restart(struct device *dev,
 	return errno;
 }
 
+int pld_thermal_register(struct device *dev,
+			 unsigned long max_state, int mon_id)
+{
+	int errno = -EINVAL;
+	enum pld_bus_type type;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+		errno = pld_pcie_fw_sim_thermal_register(dev, max_state,
+							 mon_id);
+		break;
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		errno = pld_ipci_thermal_register(dev, max_state, mon_id);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+
+	return errno;
+}
+
+void pld_thermal_unregister(struct device *dev, int mon_id)
+{
+	enum pld_bus_type type;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+		pld_pcie_fw_sim_thermal_unregister(dev, mon_id);
+		break;
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		pld_ipci_thermal_unregister(dev, mon_id);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+}
+
+int pld_get_thermal_state(struct device *dev, unsigned long *thermal_state,
+			  int mon_id)
+{
+	int errno = -EINVAL;
+	enum pld_bus_type type;
+
+	type = pld_get_bus_type(dev);
+	switch (type) {
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_PCIE_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI_FW_SIM:
+		errno = pld_pcie_fw_sim_get_thermal_state(dev, thermal_state,
+							  mon_id);
+		break;
+	case PLD_BUS_TYPE_SNOC_FW_SIM:
+		break;
+	case PLD_BUS_TYPE_IPCI:
+		errno = pld_ipci_get_thermal_state(dev, thermal_state, mon_id);
+		break;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		break;
+	}
+
+	return errno;
+}
+
 #ifdef FEATURE_WLAN_TIME_SYNC_FTM
 /**
  * pld_get_audio_wlan_timestamp() - Get audio timestamp

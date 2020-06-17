@@ -128,6 +128,25 @@ static inline int pld_pcie_fw_sim_idle_restart(struct device *dev)
 {
 	return 0;
 }
+
+static inline int pld_pcie_fw_sim_thermal_register(struct device *dev,
+						   unsigned long max_state,
+						   int mon_id)
+{
+	return 0;
+}
+
+static inline void pld_pcie_fw_sim_thermal_unregister(struct device *dev,
+						      int mon_id)
+{
+}
+
+static inline int pld_pcie_fw_sim_get_thermal_state(struct device *dev,
+						    unsigned long *therm_state,
+						    int mon_id)
+{
+	return 0;
+}
 #else
 #include <net/cnss2.h>
 
@@ -206,5 +225,27 @@ static inline int pld_pcie_fw_sim_idle_restart(struct device *dev)
 {
 	return cnss_fw_sim_idle_restart(dev);
 }
+
+static inline int pld_pcie_fw_sim_thermal_register(struct device *dev,
+						   unsigned long max_state,
+						   int mon_id)
+{
+	return cnss_fw_sim_thermal_cdev_register(dev, max_state, mon_id);
+}
+
+static inline void pld_pcie_fw_sim_thermal_unregister(struct device *dev,
+						      int mon_id)
+{
+	cnss_fw_sim_thermal_cdev_unregister(dev, mon_id);
+}
+
+static inline int pld_pcie_fw_sim_get_thermal_state(struct device *dev,
+						    unsigned long *therm_state,
+						    int mon_id)
+{
+	return cnss_fw_sim_get_curr_therm_cdev_state(dev, therm_state,
+						     mon_id);
+}
+
 #endif
 #endif
