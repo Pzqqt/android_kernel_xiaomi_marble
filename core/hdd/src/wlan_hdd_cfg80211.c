@@ -18102,7 +18102,8 @@ bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * connect by passing its roam_profile.
 	 */
 	status = policy_mgr_get_channel_from_scan_result(
-			hdd_ctx->psoc, roam_profile, &ch_freq);
+			hdd_ctx->psoc, roam_profile, &ch_freq,
+			adapter->vdev_id);
 
 	/*
 	 * If the STA's channel is 2.4 GHz, then set pcl with only 2.4 GHz

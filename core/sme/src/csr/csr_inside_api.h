@@ -418,6 +418,21 @@ csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
 }
 #endif
 
+#ifdef WLAN_SCAN_SECURITY_FILTER_V1
+
+/*
+ * csr_fill_filter_from_vdev_crypto() - fill scan filter crypto from vdev crypto
+ * @mac_ctx: csr auth type
+ * @filter: scan filter
+ * @vdev_id: vdev
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
+					    struct scan_filter *filter,
+					    uint8_t vdev_id);
+#else
+
 /*
  * csr_covert_enc_type_new() - convert csr enc type to wlan enc type
  * @enc: csr enc type
@@ -433,6 +448,15 @@ enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc);
  * Return enum wlan_auth_type
  */
 enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth);
+#endif
+
+/*
+ * csr_set_open_mode_in_scan_filter() - set open mode in scan filter
+ * @filter: scan filter
+ *
+ * Return void
+ */
+void csr_set_open_mode_in_scan_filter(struct scan_filter *filter);
 
 /**
  * csr_roam_get_scan_filter_from_profile() - prepare scan filter from
@@ -441,6 +465,7 @@ enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth);
  * @profile: roam profile
  * @filter: Populated scan filter based on the connected profile
  * @is_roam: if filter is for roam
+ * @vdev_id: vdev
  *
  * This function creates a scan filter based on the roam profile. Based on this
  * filter, scan results are obtained.
@@ -451,7 +476,23 @@ QDF_STATUS
 csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
 				      struct scan_filter *filter,
-				      bool is_roam);
+				      bool is_roam, uint8_t vdev_id);
+
+/*
+ * csr_fill_crypto_params_connected_profile() - fill scan filter crypto from
+ * connected profile
+ * @mac_ctx: csr auth type
+ * @profile: connected profile
+ * @filter: scan filter
+ * @vdev_id: vdev
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS
+csr_fill_crypto_params_connected_profile(struct mac_context *mac_ctx,
+					 tCsrRoamConnectedProfile *profile,
+					 struct scan_filter *filter,
+					 uint8_t vdev_id);
 
 /**
  * csr_neighbor_roam_get_scan_filter_from_profile() - prepare scan filter from

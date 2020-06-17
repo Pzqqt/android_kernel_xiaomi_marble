@@ -17194,7 +17194,8 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 	roam_profile = hdd_roam_profile(adapter);
 	mac_handle = hdd_adapter_get_mac_handle(adapter);
 	status = sme_get_rssi_snr_by_bssid(mac_handle,
-					   roam_profile, bssid, rssi, snr);
+					   roam_profile, bssid, rssi, snr,
+					   adapter->vdev_id);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_warn("sme_get_rssi_snr_by_bssid failed");
 		return -EINVAL;

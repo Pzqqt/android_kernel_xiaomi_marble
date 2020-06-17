@@ -3342,7 +3342,7 @@ csr_connect_info(struct mac_context *mac_ctx,
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
 				  session->pCurRoamProfile,
 				  &conn_stats.bssid[0],
-				  &conn_stats.rssi, NULL);
+				  &conn_stats.rssi, NULL, session->vdev_id);
 	conn_stats.est_link_speed = 0;
 	conn_stats.chnl_bw =
 		diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
@@ -3411,7 +3411,7 @@ void csr_get_sta_cxn_info(struct mac_context *mac_ctx,
 	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
 				  session->pCurRoamProfile,
 				  conn_profile->bssid.bytes,
-				  &rssi, NULL);
+				  &rssi, NULL, session->vdev_id);
 	len += qdf_scnprintf(buf + len, buf_sz - len,
 			     "\n\trssi: %d", rssi);
 	ch_width = diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
@@ -5541,6 +5541,7 @@ static void csr_roam_join_handle_profile(struct mac_context *mac_ctx,
 			cmd->u.roamCmd.roamProfile.negotiatedMCEncryptionType =
 				scan_result->mcEncryptionType;
 		}
+
 		cmd->u.roamCmd.roamProfile.negotiatedAuthType =
 			scan_result->authType;
 		if (cmd->u.roamCmd.fReassocToSelfNoCapChange) {
@@ -8274,6 +8275,19 @@ static void csr_roam_print_candidate_aps(tScanResultHandle results)
 	}
 }
 
+#ifdef WLAN_SCAN_SECURITY_FILTER_V1
+void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
+{
+	QDF_SET_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
+}
+#else
+void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
+{
+	/* No encryption */
+	filter->num_of_enc_type = 1;
+	filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
+}
+#endif
 QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		uint32_t *pRoamId)
@@ -8344,9 +8358,6 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 
 	/* Try to connect to any BSS */
 	if (!pProfile) {
-		/* No encryption */
-		filter->num_of_enc_type = 1;
-		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
 		/*
 		 * Dual STA roaming is supported only for DBS mode.
 		 * So if dual sta roaming is enabled, fill the channels
@@ -8355,10 +8366,12 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		 */
 		wlan_cm_dual_sta_roam_update_connect_channels(mac->psoc,
 							      filter);
+		csr_set_open_mode_in_scan_filter(filter);
 	} else {
 		/* Here is the profile we need to connect to */
 		status = csr_roam_get_scan_filter_from_profile(mac, pProfile,
-							       filter, false);
+							       filter, false,
+							       sessionId);
 		opmode = pProfile->csrPersona;
 	}
 	roamId = GET_NEXT_ROAM_ID(&mac->roam);
@@ -9779,13 +9792,14 @@ csr_post_roam_failure(struct mac_context *mac_ctx,
  * @mac:                  mac global context
  * @neighbor_roam_info:    roam info struct
  * @hBSSList:              scan result
+ * @vdev_id: vdev id
  *
  * Return: true if found else false.
  */
 static bool
 csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 				tpCsrNeighborRoamControlInfo neighbor_roam_info,
-				tScanResultHandle *hBSSList)
+				tScanResultHandle *hBSSList, uint8_t vdev_id)
 {
 	QDF_STATUS status;
 	struct scan_filter *scan_filter;
@@ -9796,7 +9810,7 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 
 	status = csr_roam_get_scan_filter_from_profile(mac_ctx,
 			&neighbor_roam_info->csrNeighborRoamProfile,
-			scan_filter, true);
+			scan_filter, true, vdev_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err(
 			"failed to prepare scan filter, status %d",
@@ -9931,7 +9945,8 @@ void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
 	 * If not, post a reassoc failure and disconnect.
 	 */
 	if (!csr_check_profile_in_scan_cache(mac, neighbor_roam_info,
-			     (tScanResultHandle *)&scan_handle_roam_ap))
+			     (tScanResultHandle *)&scan_handle_roam_ap,
+			     session_id))
 		goto POST_ROAM_FAILURE;
 
 	/* notify HDD about handoff and provide the BSSID too */
@@ -10803,16 +10818,109 @@ void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
 {}
 #endif
 
+#ifdef WLAN_SCAN_SECURITY_FILTER_V1
+QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
+					    struct scan_filter *filter,
+					    uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	filter->authmodeset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE);
+	filter->mcastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	filter->ucastcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER);
+	filter->key_mgmt =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
+	filter->mgmtcipherset =
+		wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
+					 struct csr_roam_profile *profile,
+					 struct scan_filter *filter,
+					 uint8_t vdev_id)
+{
+	if (profile->force_rsne_override) {
+		sme_debug("force_rsne_override do not set authmode and set ignore pmf cap");
+		filter->ignore_pmf_cap = true;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
+}
+#else
+static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
+					 struct csr_roam_profile *profile,
+					 struct scan_filter *filter,
+					 uint8_t vdev_id)
+{
+	uint8_t i;
+
+	if (profile->force_rsne_override) {
+		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
+		filter->num_of_auth = 1;
+		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
+		filter->num_of_enc_type = 1;
+		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+		filter->num_of_mc_enc_type = 1;
+		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+		filter->ignore_pmf_cap = true;
+	} else {
+		filter->num_of_auth =
+			profile->AuthType.numEntries;
+		if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
+			filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
+		for (i = 0; i < filter->num_of_auth; i++)
+			filter->auth_type[i] =
+			  csr_covert_auth_type_new(
+			  profile->AuthType.authType[i]);
+		filter->num_of_enc_type =
+			profile->EncryptionType.numEntries;
+		if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+			filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+		for (i = 0; i < filter->num_of_enc_type; i++)
+			filter->enc_type[i] =
+			  csr_covert_enc_type_new(
+			  profile->EncryptionType.encryptionType[i]);
+		filter->num_of_mc_enc_type =
+				profile->mcEncryptionType.numEntries;
+		if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
+			filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
+		for (i = 0; i < filter->num_of_mc_enc_type; i++)
+			filter->mc_enc_type[i] =
+			  csr_covert_enc_type_new(
+			  profile->mcEncryptionType.encryptionType[i]);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS
 csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
 				      struct scan_filter *filter,
-				      bool is_roam)
+				      bool is_roam,
+				      uint8_t vdev_id)
 {
 	tCsrChannelInfo *ch_info;
 	struct roam_ext_params *roam_params;
 	uint8_t i;
 	uint32_t phy_mode;
+	QDF_STATUS status;
 
 	if (!filter || !profile) {
 		sme_err("filter or profile is NULL");
@@ -10872,42 +10980,10 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 							      filter);
 	}
 
-	if (profile->force_rsne_override) {
-		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
-		filter->num_of_auth = 1;
-		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
-		filter->num_of_enc_type = 1;
-		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
-		filter->num_of_mc_enc_type = 1;
-		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+	status = csr_fill_crypto_params(mac_ctx, profile, filter, vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
-		filter->ignore_pmf_cap = true;
-	} else {
-		filter->num_of_auth =
-			profile->AuthType.numEntries;
-		if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
-			filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
-		for (i = 0; i < filter->num_of_auth; i++)
-			filter->auth_type[i] =
-			  csr_covert_auth_type_new(
-			  profile->AuthType.authType[i]);
-		filter->num_of_enc_type =
-			profile->EncryptionType.numEntries;
-		if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_enc_type; i++)
-			filter->enc_type[i] =
-			  csr_covert_enc_type_new(
-			  profile->EncryptionType.encryptionType[i]);
-		filter->num_of_mc_enc_type =
-				profile->mcEncryptionType.numEntries;
-		if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_mc_enc_type; i++)
-			filter->mc_enc_type[i] =
-			  csr_covert_enc_type_new(
-			  profile->mcEncryptionType.encryptionType[i]);
-	}
 
 	phy_mode = profile->phyMode;
 	csr_update_phy_mode(profile, &phy_mode);
@@ -15342,9 +15418,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				csr_translate_encrypt_type_to_ed_type
 					(pProfile->negotiatedUCEncryptionType);
 
-		csr_join_req->MCEncryptionType =
-				csr_translate_encrypt_type_to_ed_type
-					(pProfile->negotiatedMCEncryptionType);
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  mac->mlme_cfg->lfr.ese_enabled;
 #endif
@@ -20622,7 +20695,7 @@ QDF_STATUS csr_fast_reassoc(mac_handle_t mac_handle,
 	status = sme_get_beacon_frm(mac_handle, profile, bssid,
 				    &fastreassoc->frame_buf,
 				    &fastreassoc->frame_len,
-				    &ch_freq);
+				    &ch_freq, vdev_id);
 
 	if (!ch_freq) {
 		sme_err("channel retrieval from BSS desc fails!");

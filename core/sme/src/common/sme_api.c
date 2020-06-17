@@ -2576,33 +2576,21 @@ QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t mac_handle,
 
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 					tScanResultHandle *scan_cache,
-					uint32_t *ap_ch_freq)
+					uint32_t *ap_ch_freq,
+					uint8_t vdev_id)
 {
 	QDF_STATUS status;
 
 	status = sme_get_ap_channel_from_scan_cache((struct csr_roam_profile *)
 						  profile,
 						  scan_cache,
-						  ap_ch_freq);
+						  ap_ch_freq, vdev_id);
 	return status;
 }
 
-/**
- * sme_get_ap_channel_from_scan_cache() - a wrapper function to get AP's
- *                                        channel id from CSR by filtering the
- *                                        result which matches our roam profile.
- * @profile: SAP adapter
- * @ap_ch_freq: pointer to channel freq of SAP. Fill the value after finding the
- *              best ap from scan cache.
- *
- * This function is written to get AP's channel id from CSR by filtering
- * the result which matches our roam profile. This is a synchronous call.
- *
- * Return: QDF_STATUS.
- */
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	struct csr_roam_profile *profile, tScanResultHandle *scan_cache,
-	uint32_t *ap_ch_freq)
+	uint32_t *ap_ch_freq, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct mac_context *mac_ctx = sme_get_mac_context();
@@ -2621,15 +2609,12 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 
 	qdf_mem_zero(&first_ap_profile, sizeof(struct bss_description));
 	if (!profile) {
-		/* No encryption */
-		scan_filter->num_of_enc_type = 1;
-		scan_filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
+		csr_set_open_mode_in_scan_filter(scan_filter);
 	} else {
 		/* Here is the profile we need to connect to */
-		status = csr_roam_get_scan_filter_from_profile(mac_ctx,
-							       profile,
+		status = csr_roam_get_scan_filter_from_profile(mac_ctx, profile,
 							       scan_filter,
-							       false);
+							       false, vdev_id);
 	}
 
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -13809,7 +13794,8 @@ static void sme_prepare_beacon_from_bss_descp(uint8_t *frame_buf,
 QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 				     struct csr_roam_profile *profile,
 				     const uint8_t *bssid,
-				     int8_t *rssi, int8_t *snr)
+				     int8_t *rssi, int8_t *snr,
+				     uint8_t vdev_id)
 {
 	struct bss_description *bss_descp;
 	struct scan_filter *scan_filter;
@@ -13826,7 +13812,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 
 	status = csr_roam_get_scan_filter_from_profile(mac_ctx,
 						       profile, scan_filter,
-						       false);
+						       false, vdev_id);
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("prepare_filter failed");
 		qdf_mem_free(scan_filter);
@@ -13873,7 +13859,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      struct csr_roam_profile *profile,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
-			      uint32_t *ch_freq)
+			      uint32_t *ch_freq, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tScanResultHandle result_handle = NULL;
@@ -13890,7 +13876,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 	}
 	status = csr_roam_get_scan_filter_from_profile(mac_ctx,
 						       profile, scan_filter,
-						       false);
+						       false, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("prepare_filter failed");
 		status = QDF_STATUS_E_FAULT;

@@ -518,19 +518,31 @@ QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t vdev_id,
 			       struct scan_filter *filter,
 			       tScanResultHandle *phResult);
-QDF_STATUS sme_get_ap_channel_from_scan_cache(
-		struct csr_roam_profile *profile,
-		tScanResultHandle *scan_cache,
-		uint32_t *ap_ch_freq);
+
 /**
- * sme_get_ap_channel_from_scan() - a wrapper function to get
- *				  AP's channel id from
- *				  CSR by filtering the
- *				  result which matches
- *				  our roam profile.
+ * sme_get_ap_channel_from_scan_cache() - a wrapper function to get AP's channel
+ * from CSR by filtering the result which matches our roam profile.
  * @profile: SAP profile
  * @ap_ch_freq: pointer to channel id of SAP. Fill the value after finding the
  *              best ap from scan cache.
+ * @vdev_id: vdev id
+ *
+ * This function is written to get AP's channel id from CSR by filtering
+ * the result which matches our roam profile. This is a synchronous call.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS sme_get_ap_channel_from_scan_cache(struct csr_roam_profile *profile,
+					      tScanResultHandle *scan_cache,
+					      uint32_t *ap_ch_freq,
+					      uint8_t vdev_id);
+/**
+ * sme_get_ap_channel_from_scan() - a wrapper function to get AP's channel id
+ * from CSR by filtering the result which matches our roam profile.
+ * @profile: SAP profile
+ * @ap_ch_freq: pointer to channel id of SAP. Fill the value after finding the
+ *              best ap from scan cache.
+ * @vdev_id: vdev id
  *
  * This function is written to get AP's channel id from CSR by filtering
  * the result which matches our roam profile. This is a synchronous call.
@@ -539,7 +551,8 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
  */
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 					tScanResultHandle *scan_cache,
-					uint32_t *ap_ch_freq);
+					uint32_t *ap_ch_freq,
+					uint8_t vdev_id);
 
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);
@@ -2404,13 +2417,14 @@ void sme_set_chan_info_callback(mac_handle_t mac_handle,
  * @bssid: bssid to look for in scan cache
  * @rssi: rssi value found
  * @snr: snr value found
+ * @vdev_id: vdev id
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
 				     struct csr_roam_profile *profile,
 				     const uint8_t *bssid, int8_t *rssi,
-				     int8_t *snr);
+				     int8_t *snr, uint8_t vdev_id);
 
 /**
  * sme_get_beacon_frm() - gets the bss descriptor from scan cache and prepares
@@ -2421,6 +2435,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t mac_handle,
  * @frame_buf: frame buffer to populate
  * @frame_len: length of constructed frame
  * @ch_freq: Pointer to channel freq info to be filled
+ * @vdev_id: vdev id
  *
  * Return: QDF_STATUS
  */
@@ -2428,7 +2443,7 @@ QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
 			      struct csr_roam_profile *profile,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
-			      uint32_t *ch_freq);
+			      uint32_t *ch_freq, uint8_t vdev_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**

@@ -1372,7 +1372,7 @@ struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_get_ap_channel_from_scan)(
 		void *roam_profile,
 		void **scan_cache,
-		uint32_t *ch_freq);
+		uint32_t *ch_freq, uint8_t vdev_id);
 	QDF_STATUS (*sme_scan_result_purge)(
 				void *scan_result);
 	QDF_STATUS (*sme_rso_start_cb)(
@@ -1607,6 +1607,7 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
  * @psoc: PSOC object information
  * @roam_profile: pointer to roam profile
  * @ch_freq: channel frequency to be filled
+ * @vdev_id: vdev id
  *
  * This routine gets channel which most likely a candidate to which STA
  * will make connection.
@@ -1616,7 +1617,7 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
 QDF_STATUS
 policy_mgr_get_channel_from_scan_result(struct wlan_objmgr_psoc *psoc,
 					void *roam_profile,
-					uint32_t *ch_freq);
+					uint32_t *ch_freq, uint8_t vdev_id);
 
 /**
  * policy_mgr_mode_specific_num_open_sessions() - to get number of open sessions

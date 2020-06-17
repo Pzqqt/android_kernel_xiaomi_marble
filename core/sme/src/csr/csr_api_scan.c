@@ -159,7 +159,8 @@ QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 			break;
 		}
 		status = csr_roam_get_scan_filter_from_profile(mac_ctx, profile,
-							       filter, false);
+							       filter, false,
+							       session_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_mem_free(filter);
 			break;
@@ -1888,7 +1889,8 @@ csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 	uint32_t first_ap_ch_freq = 0, candidate_ch_freq;
 
 	status = sme_get_ap_channel_from_scan_cache(profile, &result_handle,
-						    &first_ap_ch_freq);
+						    &first_ap_ch_freq,
+						    session_id);
 	if (status != QDF_STATUS_SUCCESS || !result_handle ||
 	    !first_ap_ch_freq) {
 		if (result_handle)
@@ -1916,6 +1918,182 @@ csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
 
 	return candidate_ch_freq;
 }
+
+#ifdef WLAN_SCAN_SECURITY_FILTER_V1
+
+static void csr_fill_rsn_auth_type(enum csr_akm_type *auth_type, uint32_t akm)
+{
+	/* Try the more preferred ones first. */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA384))
+		*auth_type = eCSR_AUTH_TYPE_FT_FILS_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_FILS_SHA256))
+		*auth_type = eCSR_AUTH_TYPE_FT_FILS_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA384))
+		*auth_type = eCSR_AUTH_TYPE_FILS_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FILS_SHA256))
+		*auth_type = eCSR_AUTH_TYPE_FILS_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_SAE))
+		*auth_type = eCSR_AUTH_TYPE_FT_SAE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_SAE))
+		*auth_type = eCSR_AUTH_TYPE_SAE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_DPP))
+		*auth_type = eCSR_AUTH_TYPE_DPP_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OSEN))
+		*auth_type = eCSR_AUTH_TYPE_OSEN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_OWE))
+		*auth_type = eCSR_AUTH_TYPE_OWE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X))
+		*auth_type = eCSR_AUTH_TYPE_FT_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_PSK))
+		*auth_type = eCSR_AUTH_TYPE_FT_RSN_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		*auth_type = eCSR_AUTH_TYPE_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK))
+		*auth_type = eCSR_AUTH_TYPE_RSN_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
+		*auth_type = eCSR_AUTH_TYPE_CCKM_RSN;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK_SHA256))
+		*auth_type = eCSR_AUTH_TYPE_RSN_PSK_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SHA256))
+		*auth_type = eCSR_AUTH_TYPE_RSN_8021X_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B))
+		*auth_type = eCSR_AUTH_TYPE_SUITEB_EAP_SHA256;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192))
+		*auth_type = eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_FT_IEEE8021X_SHA384))
+		*auth_type = eCSR_AUTH_TYPE_FT_SUITEB_EAP_SHA384;
+	else
+		*auth_type = eCSR_AUTH_TYPE_NONE;
+}
+
+static void csr_fill_wpa_auth_type(enum csr_akm_type *auth_type, uint32_t akm)
+{
+	/* Try the more preferred ones first. */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_IEEE8021X))
+		*auth_type = eCSR_AUTH_TYPE_WPA;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_PSK))
+		*auth_type = eCSR_AUTH_TYPE_WPA_PSK;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_CCKM))
+		*auth_type = eCSR_AUTH_TYPE_CCKM_WPA;
+	else
+		*auth_type = eCSR_AUTH_TYPE_WPA_NONE;
+}
+
+static void csr_fill_wapi_auth_type(enum csr_akm_type *auth_type, uint32_t akm)
+{
+	/* Try the more preferred ones first. */
+	if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT))
+		*auth_type = eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
+	else if (QDF_HAS_PARAM(akm, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK))
+		*auth_type = eCSR_AUTH_TYPE_WAPI_WAI_PSK;
+	else
+		*auth_type = eCSR_AUTH_TYPE_NONE;
+}
+
+static void csr_fill_auth_type(enum csr_akm_type *auth_type,
+			       uint32_t authmodeset, uint32_t akm,
+			       uint32_t ucastcipherset)
+{
+	if (!authmodeset) {
+		*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_NONE) ||
+	    QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_OPEN)) {
+		*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_AUTO)) {
+		if ((QDF_HAS_PARAM(ucastcipherset, WLAN_CRYPTO_CIPHER_WEP) ||
+		     QDF_HAS_PARAM(ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_40) ||
+		     QDF_HAS_PARAM(ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_104)))
+			*auth_type = eCSR_AUTH_TYPE_AUTOSWITCH;
+		else
+			*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_SHARED)) {
+		*auth_type = eCSR_AUTH_TYPE_SHARED_KEY;
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_8021X) ||
+	    QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_RSNA) ||
+	    QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_CCKM) ||
+	    QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_SAE) ||
+	    QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_FILS_SK)) {
+		csr_fill_rsn_auth_type(auth_type, akm);
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_WPA)) {
+		csr_fill_wpa_auth_type(auth_type, akm);
+		return;
+	}
+
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_SHARED)) {
+		csr_fill_wapi_auth_type(auth_type, akm);
+		return;
+	}
+
+	*auth_type = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+}
+
+static void csr_fill_enc_type(eCsrEncryptionType *cipher_type,
+			      uint32_t cipherset)
+{
+	if (!cipherset) {
+		*cipher_type = eCSR_ENCRYPT_TYPE_NONE;
+		return;
+	}
+	if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_GCM_256))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_GCM))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES_GCMP;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_CCM) ||
+		 QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_OCB) ||
+		 QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_CCM_256))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_TKIP))
+		*cipher_type = eCSR_ENCRYPT_TYPE_TKIP;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_CMAC) ||
+		 QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_CMAC_256))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES_CMAC;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_WAPI_GCM4) ||
+		 QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_WAPI_SMS4))
+		*cipher_type = eCSR_ENCRYPT_TYPE_WPI;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_GMAC))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES_GMAC_128;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_AES_GMAC_256))
+		*cipher_type = eCSR_ENCRYPT_TYPE_AES_GMAC_256;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_WEP))
+		*cipher_type = eCSR_ENCRYPT_TYPE_WEP40;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_WEP_40))
+		*cipher_type = eCSR_ENCRYPT_TYPE_WEP40;
+	else if (QDF_HAS_PARAM(cipherset, WLAN_CRYPTO_CIPHER_WEP_104))
+		*cipher_type = eCSR_ENCRYPT_TYPE_WEP104;
+	else
+		*cipher_type = eCSR_ENCRYPT_TYPE_NONE;
+}
+
+static void csr_fill_neg_crypto_info(struct tag_csrscan_result *bss,
+				     struct security_info *sec_info)
+{
+	csr_fill_enc_type(&bss->ucEncryptionType, sec_info->ucastcipherset);
+	csr_fill_enc_type(&bss->mcEncryptionType, sec_info->mcastcipherset);
+	csr_fill_auth_type(&bss->authType, sec_info->authmodeset,
+			   sec_info->key_mgmt, sec_info->ucastcipherset);
+	sme_debug("Authmode %x, AKM %x, Cipher Uc %x Mc %x CSR: Auth %d, Cipher Uc %d Mc %d",
+		  sec_info->authmodeset, sec_info->key_mgmt,
+		  sec_info->ucastcipherset, sec_info->mcastcipherset,
+		  bss->authType, bss->ucEncryptionType, bss->mcEncryptionType);
+}
+
+#else
 
 enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth)
 {
@@ -2118,6 +2296,19 @@ static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
 	}
 }
 
+static void csr_fill_neg_crypto_info(struct tag_csrscan_result *bss,
+				     struct security_info *sec_info)
+{
+	bss->ucEncryptionType =
+		csr_covert_enc_type_old(sec_info->uc_enc);
+	bss->mcEncryptionType =
+		csr_covert_enc_type_old(sec_info->mc_enc);
+	bss->authType =
+		csr_covert_auth_type_old(sec_info->auth_type);
+}
+
+#endif
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * csr_update_bss_with_fils_data: Fill FILS params in bss desc from scan entry
@@ -2225,6 +2416,7 @@ csr_fill_single_pmk_ap_cap_from_scan_entry(struct bss_description *bss_desc,
 {
 }
 #endif
+
 static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 					struct scan_cache_entry *scan_entry,
 					struct tag_csrscan_result **p_result)
@@ -2262,12 +2454,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 	if (!bss)
 		return QDF_STATUS_E_NOMEM;
 
-	bss->ucEncryptionType =
-		csr_covert_enc_type_old(scan_entry->neg_sec_info.uc_enc);
-	bss->mcEncryptionType =
-		csr_covert_enc_type_old(scan_entry->neg_sec_info.mc_enc);
-	bss->authType =
-		csr_covert_auth_type_old(scan_entry->neg_sec_info.auth_type);
+	csr_fill_neg_crypto_info(bss, &scan_entry->neg_sec_info);
 	bss->bss_score = scan_entry->bss_score;
 
 	result_info = &bss->Result;
@@ -2683,6 +2870,7 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[sessionId];
 	tCsrRoamConnectedProfile *profile = NULL;
+	QDF_STATUS status;
 
 	if (!(mac_ctx && mac_ctx->roam.roamSession &&
 	      CSR_IS_SESSION_VALID(mac_ctx, sessionId))) {
@@ -2708,13 +2896,13 @@ void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
 		return;
 	}
 
-	filter->num_of_auth = 1;
-	filter->auth_type[0] = csr_covert_auth_type_new(profile->AuthType);
-	filter->num_of_enc_type = 1;
-	filter->enc_type[0] = csr_covert_enc_type_new(profile->EncryptionType);
-	filter->num_of_mc_enc_type = 1;
-	filter->mc_enc_type[0] =
-		csr_covert_enc_type_new(profile->mcEncryptionType);
+	status = csr_fill_crypto_params_connected_profile(mac_ctx, profile,
+							  filter, sessionId);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("fail to fill filter crypto");
+		qdf_mem_free(filter);
+		return;
+	}
 	filter->num_of_ssid = 1;
 	filter->ssid_list[0].length = profile->SSID.length;
 	qdf_mem_copy(filter->ssid_list[0].ssid, profile->SSID.ssId,

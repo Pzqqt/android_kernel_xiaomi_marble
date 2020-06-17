@@ -937,8 +937,6 @@ struct join_req {
 	/* (Re) Association Request */
 
 	tAniEdType UCEncryptionType;
-
-	tAniEdType MCEncryptionType;
 	enum ani_akm_type akm;
 
 	bool is11Rconnection;
