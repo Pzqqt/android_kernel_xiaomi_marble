@@ -4143,6 +4143,16 @@ struct afe_id_aptx_adaptive_enc_init
 #define AFE_MODULE_ID_DEPACKETIZER_COP        0x00013233
 #define AFE_MODULE_ID_DEPACKETIZER_COP_V1     0x000132E9
 
+/* Macros for dynamic loading of modules by AVCS */
+
+#define AVS_MODULE_ID_PACKETIZER_COP        0x0001322A
+
+#define AVS_MODULE_ID_PACKETIZER_COP_V1     0x000132E8
+
+#define AVS_MODULE_ID_DEPACKETIZER_COP      0x00013233
+
+#define AVS_MODULE_ID_DEPACKETIZER_COP_V1   0x000132E9
+
 /*
  * Depacketizer type parameter for the #AVS_MODULE_ID_DECODER module.
  * This parameter cannot be set runtime.
