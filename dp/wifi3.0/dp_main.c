@@ -2971,39 +2971,124 @@ static void dp_ipa_get_tx_comp_ring_size(int tx_comp_ring_num,
 		*tx_comp_ipa_ring_sz = WLAN_CFG_IPA_TX_COMP_RING_SIZE;
 }
 #else
+static uint8_t dp_reo_ring_selection(uint32_t value, uint32_t *ring)
+{
+	uint8_t num = 0;
+
+	switch (value) {
+	case 0xF:
+		num = 4;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW3;
+		ring[3] = REO_REMAP_SW4;
+		break;
+	case 0xE:
+		num = 3;
+		ring[0] = REO_REMAP_SW2;
+		ring[1] = REO_REMAP_SW3;
+		ring[2] = REO_REMAP_SW4;
+		break;
+	case 0xD:
+		num = 3;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW3;
+		ring[2] = REO_REMAP_SW4;
+		break;
+	case 0xC:
+		num = 2;
+		ring[0] = REO_REMAP_SW3;
+		ring[1] = REO_REMAP_SW4;
+		break;
+	case 0xB:
+		num = 3;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW4;
+		break;
+	case 0xA:
+		num = 2;
+		ring[0] = REO_REMAP_SW2;
+		ring[1] = REO_REMAP_SW4;
+		break;
+	case 0x9:
+		num = 2;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW4;
+		break;
+	case 0x8:
+		num = 1;
+		ring[0] = REO_REMAP_SW4;
+		break;
+	case 0x7:
+		num = 3;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		ring[2] = REO_REMAP_SW3;
+		break;
+	case 0x6:
+		num = 2;
+		ring[0] = REO_REMAP_SW2;
+		ring[1] = REO_REMAP_SW3;
+		break;
+	case 0x5:
+		num = 2;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW3;
+		break;
+	case 0x4:
+		num = 1;
+		ring[0] = REO_REMAP_SW3;
+		break;
+	case 0x3:
+		num = 2;
+		ring[0] = REO_REMAP_SW1;
+		ring[1] = REO_REMAP_SW2;
+		break;
+	case 0x2:
+		num = 1;
+		ring[0] = REO_REMAP_SW2;
+		break;
+	case 0x1:
+		num = 1;
+		ring[0] = REO_REMAP_SW1;
+		break;
+	}
+	return num;
+}
+
 static bool dp_reo_remap_config(struct dp_soc *soc,
 				uint32_t *remap1,
 				uint32_t *remap2)
 {
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
-	uint8_t target_type;
+	uint32_t reo_config = wlan_cfg_get_reo_rings_mapping(soc->wlan_cfg_ctx);
+	uint8_t target_type, num;
 	uint32_t ring[4];
+	uint32_t value;
 
 	target_type = hal_get_target_type(soc->hal_soc);
 
 	switch (offload_radio) {
 	case dp_nss_cfg_default:
-		ring[0] = REO_REMAP_SW1;
-		ring[1] = REO_REMAP_SW2;
-		ring[2] = REO_REMAP_SW3;
-		ring[3] = REO_REMAP_SW4;
+		value = reo_config & 0xF;
+		num = dp_reo_ring_selection(value, ring);
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
-					      4, remap1, remap2);
+					      num, remap1, remap2);
 
 		break;
 	case dp_nss_cfg_first_radio:
-		ring[0] = REO_REMAP_SW2;
-		ring[1] = REO_REMAP_SW3;
-		ring[2] = REO_REMAP_SW4;
+		value = reo_config & 0xE;
+		num = dp_reo_ring_selection(value, ring);
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
-					      3, remap1, remap2);
+					      num, remap1, remap2);
+
 		break;
 	case dp_nss_cfg_second_radio:
-		ring[0] = REO_REMAP_SW1;
-		ring[1] = REO_REMAP_SW3;
-		ring[2] = REO_REMAP_SW4;
+		value = reo_config & 0xD;
+		num = dp_reo_ring_selection(value, ring);
 		hal_compute_reo_remap_ix2_ix3(soc->hal_soc, ring,
-					      3, remap1, remap2);
+					      num, remap1, remap2);
 
 		break;
 	case dp_nss_cfg_dbdc:

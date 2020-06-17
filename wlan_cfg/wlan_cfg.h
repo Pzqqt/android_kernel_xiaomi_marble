@@ -183,6 +183,7 @@ struct wlan_srng_cfg {
  *                        5 tuple flow entry
  * @pktlog_buffer_size: packet log buffer size
  * @is_rx_fisa_enabled: flag to enable/disable FISA Rx
+ * @reo_rings_mapping: reo destination ring bitmap
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -283,6 +284,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint8_t is_rx_fisa_enabled;
 	bool is_tso_desc_attach_defer;
 	uint32_t delayed_replenish_entries;
+	uint32_t reo_rings_mapping;
 };
 
 /**
@@ -1329,3 +1331,12 @@ void wlan_cfg_set_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg,
 
 bool wlan_cfg_is_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg);
 
+/**
+ * wlan_cfg_get_reo_rings_mapping() - Get Reo destination ring bitmap
+ *
+ *
+ * @cfg: soc configuration context
+ *
+ * Return: reo ring bitmap.
+ */
+uint32_t wlan_cfg_get_reo_rings_mapping(struct wlan_cfg_dp_soc_ctxt *cfg);

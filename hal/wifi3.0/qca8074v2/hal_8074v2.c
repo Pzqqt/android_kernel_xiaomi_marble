@@ -1130,6 +1130,44 @@ void hal_compute_reo_remap_ix2_ix3_8074v2(uint32_t *ring, uint32_t num_rings,
 					  uint32_t *remap1, uint32_t *remap2)
 {
 	switch (num_rings) {
+	case 1:
+		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
+				HAL_REO_REMAP_IX2(ring[0], 17) |
+				HAL_REO_REMAP_IX2(ring[0], 18) |
+				HAL_REO_REMAP_IX2(ring[0], 19) |
+				HAL_REO_REMAP_IX2(ring[0], 20) |
+				HAL_REO_REMAP_IX2(ring[0], 21) |
+				HAL_REO_REMAP_IX2(ring[0], 22) |
+				HAL_REO_REMAP_IX2(ring[0], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(ring[0], 24) |
+				HAL_REO_REMAP_IX3(ring[0], 25) |
+				HAL_REO_REMAP_IX3(ring[0], 26) |
+				HAL_REO_REMAP_IX3(ring[0], 27) |
+				HAL_REO_REMAP_IX3(ring[0], 28) |
+				HAL_REO_REMAP_IX3(ring[0], 29) |
+				HAL_REO_REMAP_IX3(ring[0], 30) |
+				HAL_REO_REMAP_IX3(ring[0], 31);
+		break;
+	case 2:
+		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
+				HAL_REO_REMAP_IX2(ring[0], 17) |
+				HAL_REO_REMAP_IX2(ring[1], 18) |
+				HAL_REO_REMAP_IX2(ring[1], 19) |
+				HAL_REO_REMAP_IX2(ring[0], 20) |
+				HAL_REO_REMAP_IX2(ring[0], 21) |
+				HAL_REO_REMAP_IX2(ring[1], 22) |
+				HAL_REO_REMAP_IX2(ring[1], 23);
+
+		*remap2 = HAL_REO_REMAP_IX3(ring[0], 24) |
+				HAL_REO_REMAP_IX3(ring[0], 25) |
+				HAL_REO_REMAP_IX3(ring[1], 26) |
+				HAL_REO_REMAP_IX3(ring[1], 27) |
+				HAL_REO_REMAP_IX3(ring[0], 28) |
+				HAL_REO_REMAP_IX3(ring[0], 29) |
+				HAL_REO_REMAP_IX3(ring[1], 30) |
+				HAL_REO_REMAP_IX3(ring[1], 31);
+		break;
 	case 3:
 		*remap1 = HAL_REO_REMAP_IX2(ring[0], 16) |
 				HAL_REO_REMAP_IX2(ring[1], 17) |
