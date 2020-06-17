@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -24,11 +24,13 @@ static int __init audio_q6_init(void)
 	avtimer_init();
 	msm_mdf_init();
 	voice_mhi_init();
+	digital_cdc_rsc_mgr_init();
 	return 0;
 }
 
 static void __exit audio_q6_exit(void)
 {
+	digital_cdc_rsc_mgr_exit();
 	msm_mdf_exit();
 	avtimer_exit();
 	audio_slimslave_exit();

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -602,6 +602,25 @@ static const struct snd_soc_dapm_route csra66x0_dapm_routes[] = {
 	{"PGA", NULL, "DAC"},
 	{"SPKR", NULL, "PGA"},
 };
+/*
+ * csra66x0_hw_free_mute - Update csra66x0 mute register
+ *
+ * @component - csra66x0 component
+ *
+ */
+void csra66x0_hw_free_mute(struct snd_soc_component *component)
+{
+	int val = 0;
+
+	if (component == NULL)
+		return;
+
+	val = snd_soc_component_read32(component,
+			CSRA66X0_MISC_CONTROL_STATUS_1_FA);
+	snd_soc_component_write(component, CSRA66X0_MISC_CONTROL_STATUS_1_FA,
+			val | 0x04);
+}
+EXPORT_SYMBOL(csra66x0_hw_free_mute);
 
 static int csra66x0_wait_for_config_state(struct snd_soc_component *component)
 {

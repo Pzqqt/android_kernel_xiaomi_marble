@@ -325,11 +325,38 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 {
 	struct swr_dmic_priv *swr_dmic =
 			snd_soc_component_get_drvdata(component);
+	struct snd_soc_dapm_context *dapm =
+			snd_soc_component_get_dapm(component);
+	char w_name[100];
 
 	if (!swr_dmic)
 		return -EINVAL;
 
 	swr_dmic->component = component;
+	snd_soc_dapm_ignore_suspend(dapm,
+				swr_dmic->dai_driver->capture.stream_name);
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SWR_DMIC", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SMIC_SUPPLY", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SMIC_PORT_EN", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, 100);
+	strlcpy(w_name, component->name_prefix, 100);
+	strlcat(w_name, " SWR_DMIC_OUTPUT", 100);
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	snd_soc_dapm_sync(dapm);
+
 	return 0;
 }
 
@@ -624,6 +651,8 @@ static int swr_dmic_down(struct swr_device *pdev)
 		return -EINVAL;
 	}
 
+	dev_dbg(&pdev->dev, "%s: is_en_supply: %d\n",
+		__func__, swr_dmic->is_en_supply);
 	--swr_dmic->is_en_supply;
 	if (swr_dmic->is_en_supply < 0) {
 		dev_warn(&pdev->dev, "%s: mismatch in supply count %d\n",

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _CSRA66X0_H
@@ -226,4 +226,6 @@
 #define FAULT_STATUS_TEMP           0x10
 #define FAULT_STATUS_PROTECT        0x20
 
+
+void csra66x0_hw_free_mute(struct snd_soc_component *component);
 #endif /* _CSRA66X0_H */

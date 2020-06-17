@@ -378,6 +378,7 @@ struct rx_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
+	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 enum {
@@ -1410,11 +1411,7 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 			}
 		}
 		break;
-	case BOLERO_MACRO_EVT_SSR_UP:
-		trace_printk("%s, enter SSR up\n", __func__);
-		rx_priv->dev_up = true;
-		/* reset swr after ssr/pdr */
-		rx_priv->reset_swr = true;
+	case BOLERO_MACRO_EVT_PRE_SSR_UP:
 		/* enable&disable RX_CORE_CLK to reset GFMUX reg */
 		ret = bolero_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
@@ -1427,6 +1424,12 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 			bolero_clk_rsc_request_clock(rx_priv->dev,
 						rx_priv->default_clk_id,
 						RX_CORE_CLK, false);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		trace_printk("%s, enter SSR up\n", __func__);
+		rx_priv->dev_up = true;
+		/* reset swr after ssr/pdr */
+		rx_priv->reset_swr = true;
 
 		if (rx_priv->swr_ctrl_data)
 			swrm_wcd_notify(
@@ -1709,13 +1712,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 	dev_dbg(component->dev, "%s: event %d compander %d, enabled %d\n",
 		__func__, event, comp + 1, rx_priv->comp_enabled[comp]);
 
-	if (!rx_priv->comp_enabled[comp])
-		return 0;
-
-	comp_ctl0_reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
-					(comp * RX_MACRO_COMP_OFFSET);
-	rx_path_cfg0_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG0 +
-					(comp * RX_MACRO_RX_PATH_OFFSET);
 	rx_path_cfg3_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG3 +
 					(comp * RX_MACRO_RX_PATH_OFFSET);
 	rx0_path_ctl_reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL +
@@ -1731,6 +1727,19 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 	else
 		val = 0x00;
 
+	if (SND_SOC_DAPM_EVENT_ON(event))
+		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
+					0x03, val);
+	if (SND_SOC_DAPM_EVENT_OFF(event))
+		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
+					0x03, 0x03);
+	if (!rx_priv->comp_enabled[comp])
+		return 0;
+
+	comp_ctl0_reg = BOLERO_CDC_RX_COMPANDER0_CTL0 +
+					(comp * RX_MACRO_COMP_OFFSET);
+	rx_path_cfg0_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG0 +
+					(comp * RX_MACRO_RX_PATH_OFFSET);
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
 		/* Enable Compander Clock */
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
@@ -1741,8 +1750,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 					0x02, 0x00);
 		snd_soc_component_update_bits(component, rx_path_cfg0_reg,
 					0x02, 0x02);
-		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
-					0x03, val);
 	}
 
 	if (SND_SOC_DAPM_EVENT_OFF(event)) {
@@ -1754,8 +1761,6 @@ static int rx_macro_config_compander(struct snd_soc_component *component,
 					0x01, 0x00);
 		snd_soc_component_update_bits(component, comp_ctl0_reg,
 					0x04, 0x00);
-		snd_soc_component_update_bits(component, rx_path_cfg3_reg,
-					0x03, 0x03);
 	}
 
 	return 0;
@@ -1930,7 +1935,12 @@ static int rx_macro_config_classh(struct snd_soc_component *component,
 				0x40, 0x40);
 		break;
 	case INTERP_HPHR:
-		snd_soc_component_update_bits(component,
+		if (rx_priv->is_ear_mode_on)
+			snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_CLSH_HPH_V_PA,
+				0x3F, 0x39);
+		else
+			snd_soc_component_update_bits(component,
 				BOLERO_CDC_RX_CLSH_HPH_V_PA,
 				0x3F, 0x1C);
 		snd_soc_component_update_bits(component,
@@ -2988,21 +2998,24 @@ static int rx_macro_set_iir_gain(struct snd_soc_dapm_widget *w,
 }
 
 static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
-	SOC_SINGLE_SX_TLV("RX_RX0 Digital Volume",
+	SOC_SINGLE_S8_TLV("RX_RX0 Digital Volume",
 			  BOLERO_CDC_RX_RX0_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX1 Digital Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX1 Digital Volume",
 			  BOLERO_CDC_RX_RX1_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX2 Digital Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX2 Digital Volume",
 			  BOLERO_CDC_RX_RX2_RX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX0 Mix Digital Volume",
-		BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX1 Mix Digital Volume",
-		BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("RX_RX2 Mix Digital Volume",
-		BOLERO_CDC_RX_RX2_RX_VOL_MIX_CTL, 0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX0 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX1 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("RX_RX2 Mix Digital Volume",
+			  BOLERO_CDC_RX_RX2_RX_VOL_MIX_CTL,
+			  -84, 40, digital_gain),
 
 	SOC_SINGLE_EXT("RX_COMP1 Switch", SND_SOC_NOPM, RX_MACRO_COMP1, 1, 0,
 		rx_macro_get_compander, rx_macro_set_compander),
@@ -3031,29 +3044,29 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 			rx_macro_aux_hpf_mode_get,
 			rx_macro_aux_hpf_mode_put),
 
-	SOC_SINGLE_SX_TLV("IIR0 INP0 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP0 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B1_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP1 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP1 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B2_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP2 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP2 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B3_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR0 INP3 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR0 INP3 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR0_IIR_GAIN_B4_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP0 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP0 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B1_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP1 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP1 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B2_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP2 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP2 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B3_CTL, -84, 40,
 		digital_gain),
-	SOC_SINGLE_SX_TLV("IIR1 INP3 Volume",
-		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL, 0, -84, 40,
+	SOC_SINGLE_S8_TLV("IIR1 INP3 Volume",
+		BOLERO_CDC_RX_SIDETONE_IIR1_IIR_GAIN_B4_CTL, -84, 40,
 		digital_gain),
 
 	SOC_SINGLE_EXT("IIR0 Enable Band1", IIR0, BAND1, 1, 0,
@@ -4092,6 +4105,7 @@ static int rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.clk = rx_swrm_clock;
 	rx_priv->swr_plat_data.core_vote = rx_macro_core_vote;
 	rx_priv->swr_plat_data.handle_irq = NULL;
+	rx_priv->swr_plat_data.pinctrl_setup = NULL;
 
 	ret = of_property_read_u8_array(pdev->dev.of_node,
 				"qcom,rx-bcl-pmic-params", bcl_pmic_params,

@@ -126,7 +126,7 @@ struct afe_ctl {
 	void (*rx_cb)(uint32_t opcode,
 		uint32_t token, uint32_t *payload, void *priv);
 	void *tx_private_data;
-	void *rx_private_data;
+	void *rx_private_data[NUM_RX_PROXY_PORTS];
 	uint32_t mmap_handle;
 
 	void (*pri_spdif_tx_cb)(uint32_t opcode,
@@ -176,12 +176,51 @@ struct afe_ctl {
 	/* cal info for AFE */
 	struct afe_fw_info *fw_data;
 	u32 island_mode[AFE_MAX_PORTS];
+	u32 power_mode[AFE_MAX_PORTS];
 	struct vad_config vad_cfg[AFE_MAX_PORTS];
 	struct work_struct afe_dc_work;
 	struct notifier_block event_notifier;
 	/* FTM spk params */
 	uint32_t initial_cal;
 	uint32_t v_vali_flag;
+	uint32_t num_spkrs;
+};
+
+struct afe_clkinfo_per_port {
+	u16 port_id; /* AFE port ID */
+	uint32_t clk_id; /* Clock ID */
+};
+
+struct afe_clkinfo_per_port clkinfo_per_port[] = {
+	{ AFE_PORT_ID_PRIMARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
+	{ AFE_PORT_ID_SECONDARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_SEC_MI2S_IBIT},
+	{ AFE_PORT_ID_TERTIARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_TER_MI2S_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_QUAD_MI2S_IBIT},
+	{ AFE_PORT_ID_QUINARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_QUI_MI2S_IBIT},
+	{ AFE_PORT_ID_SENARY_MI2S_RX, Q6AFE_LPASS_CLK_ID_SEN_MI2S_IBIT},
+	{ AFE_PORT_ID_PRIMARY_PCM_RX, Q6AFE_LPASS_CLK_ID_PRI_PCM_IBIT},
+	{ AFE_PORT_ID_SECONDARY_PCM_RX, Q6AFE_LPASS_CLK_ID_SEC_PCM_IBIT},
+	{ AFE_PORT_ID_TERTIARY_PCM_RX, Q6AFE_LPASS_CLK_ID_TER_PCM_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_PCM_RX, Q6AFE_LPASS_CLK_ID_QUAD_PCM_IBIT},
+	{ AFE_PORT_ID_QUINARY_PCM_RX, Q6AFE_LPASS_CLK_ID_QUIN_PCM_IBIT},
+	{ AFE_PORT_ID_SENARY_PCM_RX, Q6AFE_LPASS_CLK_ID_SEN_PCM_IBIT},
+	{ AFE_PORT_ID_PRIMARY_TDM_RX, Q6AFE_LPASS_CLK_ID_PRI_TDM_IBIT},
+	{ AFE_PORT_ID_SECONDARY_TDM_RX, Q6AFE_LPASS_CLK_ID_SEC_TDM_IBIT},
+	{ AFE_PORT_ID_TERTIARY_TDM_RX, Q6AFE_LPASS_CLK_ID_TER_TDM_IBIT},
+	{ AFE_PORT_ID_QUATERNARY_TDM_RX, Q6AFE_LPASS_CLK_ID_QUAD_TDM_IBIT},
+	{ AFE_PORT_ID_QUINARY_TDM_RX, Q6AFE_LPASS_CLK_ID_QUIN_TDM_IBIT},
+	{ AFE_PORT_ID_PRIMARY_SPDIF_RX,
+		AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_OUTPUT_CORE},
+	{ AFE_PORT_ID_PRIMARY_SPDIF_TX,
+		AFE_CLOCK_SET_CLOCK_ID_PRI_SPDIF_INPUT_CORE},
+	{ AFE_PORT_ID_SECONDARY_SPDIF_RX,
+		AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_OUTPUT_CORE},
+	{ AFE_PORT_ID_SECONDARY_SPDIF_TX,
+		AFE_CLOCK_SET_CLOCK_ID_SEC_SPDIF_INPUT_CORE},
+	{ AFE_PORT_ID_PRIMARY_META_MI2S_RX,
+		Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
+	{ AFE_PORT_ID_SECONDARY_META_MI2S_RX,
+		Q6AFE_LPASS_CLK_ID_PRI_MI2S_IBIT},
 };
 
 static atomic_t afe_ports_mad_type[SLIMBUS_PORT_LAST - SLIMBUS_0_RX];
@@ -699,12 +738,14 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 					this_afe.tx_private_data);
 			this_afe.tx_cb = NULL;
 		}
-		if (this_afe.rx_cb) {
-			this_afe.rx_cb(data->opcode, data->token,
-					data->payload,
-					this_afe.rx_private_data);
-			this_afe.rx_cb = NULL;
+		for (i = 0; i < NUM_RX_PROXY_PORTS; i++) {
+			if (this_afe.rx_cb && this_afe.rx_private_data[i]) {
+				this_afe.rx_cb(data->opcode, data->token,
+						data->payload,
+						this_afe.rx_private_data[i]);
+			}
 		}
+		this_afe.rx_cb = NULL;
 
 		return 0;
 	}
@@ -825,7 +866,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 				port_id = RT_PROXY_PORT_001_TX;
 				break;
 			case AFE_PORT_DATA_CMD_RT_PROXY_PORT_READ_V2:
-				port_id = RT_PROXY_PORT_001_RX;
+				port_id = data->src_port;
 				break;
 			case AFE_CMD_ADD_TOPOLOGIES:
 				atomic_set(&this_afe.state, 0);
@@ -973,7 +1014,7 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			if (this_afe.rx_cb) {
 				this_afe.rx_cb(data->opcode, data->token,
 					data->payload,
-					this_afe.rx_private_data);
+					this_afe.rx_private_data[PORTID_TO_IDX(port_id)]);
 			}
 			break;
 		}
@@ -1045,6 +1086,7 @@ int afe_sizeof_cfg_cmd(u16 port_id)
 		ret_size = SIZEOF_CFG_CMD(afe_param_id_meta_i2s_cfg);
 		break;
 	case HDMI_RX:
+	case HDMI_RX_MS:
 	case DISPLAY_PORT_RX:
 		ret_size =
 		SIZEOF_CFG_CMD(afe_param_id_hdmi_multi_chan_audio_cfg);
@@ -2121,6 +2163,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	struct afe_sp_v4_channel_v_vali_cfg *ch_v_vali_cfg = NULL;
 	struct afe_sp_v4_param_ex_vi_ftm_cfg *ex_vi_ftm_cfg = NULL;
 	struct afe_sp_v4_channel_ex_vi_ftm *ch_ex_vi_ftm_cfg = NULL;
+	uint32_t i = 0;
 
 	pr_debug("%s: Entry.. port_id %d\n", __func__, port_id);
 
@@ -2181,7 +2224,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 			v4_vi_op_mode->th_r0t0_selection_flag[SP_V2_SPKR_2] =
 							    USE_SAFE_R0TO;
 		}
-		afe_spk_config.v4_vi_op_mode.num_speakers = SP_V2_NUM_MAX_SPKRS;
+		afe_spk_config.v4_vi_op_mode.num_speakers = this_afe.num_spkrs;
 		if (afe_spk_prot_prepare(port_id, 0,
 			AFE_PARAM_ID_SP_V4_VI_OP_MODE_CFG,
 			&afe_spk_config,
@@ -2190,7 +2233,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 				__func__);
 
 		size = sizeof(struct afe_sp_v4_param_th_vi_r0t0_cfg) +
-		(SP_V2_NUM_MAX_SPKRS * sizeof(struct afe_sp_v4_channel_r0t0));
+		(this_afe.num_spkrs * sizeof(struct afe_sp_v4_channel_r0t0));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2204,15 +2247,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_r0t0_cfg =
 			(struct afe_sp_v4_channel_r0t0 *)(th_vi_r0t0_cfg + 1);
 
-		th_vi_r0t0_cfg->num_speakers = SP_V2_NUM_MAX_SPKRS;
-		ch_r0t0_cfg[SP_V2_SPKR_1].r0_cali_q24 =
-			(uint32_t) this_afe.prot_cfg.r0[SP_V2_SPKR_1];
-		ch_r0t0_cfg[SP_V2_SPKR_2].r0_cali_q24 =
-			(uint32_t) this_afe.prot_cfg.r0[SP_V2_SPKR_2];
-		ch_r0t0_cfg[SP_V2_SPKR_1].t0_cali_q6 =
-			(uint32_t) this_afe.prot_cfg.t0[SP_V2_SPKR_1];
-		ch_r0t0_cfg[SP_V2_SPKR_2].t0_cali_q6 =
-			(uint32_t) this_afe.prot_cfg.t0[SP_V2_SPKR_2];
+		th_vi_r0t0_cfg->num_speakers = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_r0t0_cfg[i].r0_cali_q24 =
+				(uint32_t) this_afe.prot_cfg.r0[i];
+			ch_r0t0_cfg[i].t0_cali_q6 =
+				(uint32_t) this_afe.prot_cfg.t0[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 			AFE_PARAM_ID_SP_V4_VI_R0T0_CFG,
 			(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2227,7 +2268,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	    (this_afe.vi_tx_port == port_id) &&
 	    (this_afe.prot_cfg.sp_version >= AFE_API_VERSION_V9)) {
 		size = sizeof(struct afe_sp_v4_param_th_vi_ftm_cfg) +
-		(SP_V2_NUM_MAX_SPKRS*sizeof(struct afe_sp_v4_channel_ftm_cfg));
+		(this_afe.num_spkrs * sizeof(struct afe_sp_v4_channel_ftm_cfg));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2240,16 +2281,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_ftm_cfg =
 			 (struct afe_sp_v4_channel_ftm_cfg *)(th_vi_ftm_cfg+1);
 
-		th_vi_ftm_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
-		ch_ftm_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.th_ftm_cfg.wait_time[SP_V2_SPKR_1];
-		ch_ftm_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.th_ftm_cfg.wait_time[SP_V2_SPKR_2];
-		ch_ftm_cfg[SP_V2_SPKR_1].ftm_time_ms =
-			this_afe.th_ftm_cfg.ftm_time[SP_V2_SPKR_1];
-		ch_ftm_cfg[SP_V2_SPKR_2].ftm_time_ms =
-			this_afe.th_ftm_cfg.ftm_time[SP_V2_SPKR_2];
-
+		th_vi_ftm_cfg->num_ch = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_ftm_cfg[i].wait_time_ms =
+				this_afe.th_ftm_cfg.wait_time[i];
+			ch_ftm_cfg[i].ftm_time_ms =
+				this_afe.th_ftm_cfg.ftm_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				AFE_PARAM_ID_SP_V4_TH_VI_FTM_CFG,
 				(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2261,8 +2299,8 @@ static void afe_send_cal_spv4_tx(int port_id)
 			MSM_SPKR_PROT_IN_V_VALI_MODE) &&
 		   (this_afe.vi_tx_port == port_id)) {
 		size = sizeof(struct afe_sp_v4_param_th_vi_v_vali_cfg) +
-			(SP_V2_NUM_MAX_SPKRS *
-			 sizeof(struct afe_sp_v4_channel_v_vali_cfg));
+			(this_afe.num_spkrs *
+			sizeof(struct afe_sp_v4_channel_v_vali_cfg));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
 			mutex_unlock(
@@ -2276,16 +2314,13 @@ static void afe_send_cal_spv4_tx(int port_id)
 		ch_v_vali_cfg =
 		 (struct afe_sp_v4_channel_v_vali_cfg *)(th_vi_v_vali_cfg + 1);
 
-		th_vi_v_vali_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
-		ch_v_vali_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_1];
-		ch_v_vali_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.v_vali_cfg.wait_time[SP_V2_SPKR_2];
-		ch_v_vali_cfg[SP_V2_SPKR_1].vali_time_ms =
-			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_1];
-		ch_v_vali_cfg[SP_V2_SPKR_2].vali_time_ms =
-			this_afe.v_vali_cfg.vali_time[SP_V2_SPKR_2];
-
+		th_vi_v_vali_cfg->num_ch = this_afe.num_spkrs;
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_v_vali_cfg[i].wait_time_ms =
+				this_afe.v_vali_cfg.wait_time[i];
+			ch_v_vali_cfg[i].vali_time_ms =
+				this_afe.v_vali_cfg.vali_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				AFE_PARAM_ID_SP_V4_TH_VI_V_VALI_CFG,
 				(union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2301,7 +2336,7 @@ static void afe_send_cal_spv4_tx(int port_id)
 	    (this_afe.vi_tx_port == port_id) &&
 	    (this_afe.prot_cfg.sp_version >= AFE_API_VERSION_V9)) {
 		size = sizeof(struct afe_sp_v4_param_ex_vi_ftm_cfg) +
-		(SP_V2_NUM_MAX_SPKRS *
+		(this_afe.num_spkrs *
 		 sizeof(struct afe_sp_v4_channel_ex_vi_ftm));
 		tmp_ptr = kzalloc(size, GFP_KERNEL);
 		if (!tmp_ptr) {
@@ -2323,17 +2358,14 @@ static void afe_send_cal_spv4_tx(int port_id)
 				 sizeof(struct afe_sp_v4_param_ex_vi_mode_cfg)))
 			pr_info("%s: ex vi mode cfg failed\n", __func__);
 
-		ex_vi_ftm_cfg->num_ch = SP_V2_NUM_MAX_SPKRS;
+		ex_vi_ftm_cfg->num_ch = this_afe.num_spkrs;
 
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_1].wait_time_ms =
-			this_afe.ex_ftm_cfg.wait_time[SP_V2_SPKR_1];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_2].wait_time_ms =
-			this_afe.ex_ftm_cfg.wait_time[SP_V2_SPKR_2];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_1].ftm_time_ms =
-			this_afe.ex_ftm_cfg.ftm_time[SP_V2_SPKR_1];
-		ch_ex_vi_ftm_cfg[SP_V2_SPKR_2].ftm_time_ms =
-			this_afe.ex_ftm_cfg.ftm_time[SP_V2_SPKR_2];
-
+		for (i = 0; i < this_afe.num_spkrs; i++) {
+			ch_ex_vi_ftm_cfg[i].wait_time_ms =
+				this_afe.ex_ftm_cfg.wait_time[i];
+			ch_ex_vi_ftm_cfg[i].ftm_time_ms =
+				this_afe.ex_ftm_cfg.ftm_time[i];
+		}
 		if (afe_spk_prot_prepare(port_id, 0,
 				 AFE_PARAM_ID_SP_V4_EX_VI_FTM_CFG,
 				 (union afe_spkr_prot_config *)tmp_ptr, size))
@@ -2843,6 +2875,81 @@ done:
 
 }
 
+static int afe_get_power_mode(u16 port_id, u32 *power_mode)
+{
+	int ret = 0;
+	int index = 0;
+	*power_mode = 0;
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+			 __func__, index);
+		return -EINVAL;
+	}
+	*power_mode = this_afe.power_mode[index];
+	return ret;
+}
+
+/**
+ * afe_send_port_power_mode -
+ *          for sending power mode to AFE
+ *
+ * @port_id: AFE port id number
+ * Returns 0 on success or error on failure.
+ */
+int afe_send_port_power_mode(u16 port_id)
+{
+	struct afe_param_id_power_mode_cfg_t power_mode_cfg;
+	struct param_hdr_v3 param_info;
+	u32 power_mode = 0;
+	int ret = 0;
+
+	if (!(q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4)) {
+		pr_debug("%s: AFE port[%d] API version is invalid!\n",
+			__func__, port_id);
+		return 0;
+	}
+
+	memset(&power_mode_cfg, 0, sizeof(power_mode_cfg));
+	memset(&param_info, 0, sizeof(param_info));
+
+	ret = afe_get_power_mode(port_id, &power_mode);
+	if (ret) {
+		pr_err("%s: AFE port[%d] get power mode is invalid!\n",
+			__func__, port_id);
+		return ret;
+	}
+	if (power_mode == 0) {
+		pr_debug("%s: AFE port[%d] power mode is not enabled\n",
+			__func__, port_id);
+		return ret;
+	}
+	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = AFE_PARAM_ID_POWER_MODE_CONFIG;
+	param_info.param_size = sizeof(power_mode_cfg);
+
+	power_mode_cfg.power_mode_cfg_minor_version =
+					AFE_API_VERSION_POWER_MODE_CONFIG;
+	power_mode_cfg.power_mode_enable = power_mode;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_info, (u8 *) &power_mode_cfg);
+	if (ret) {
+		pr_err("%s: AFE set power mode enable for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		return ret;
+	}
+	pr_debug("%s: AFE set power mode 0x%x  enable for port 0x%x ret %d\n",
+			__func__, power_mode, port_id, ret);
+	trace_printk("%s: AFE set power mode 0x%x  enable for port 0x%x ret %d\n",
+			__func__, power_mode, port_id, ret);
+	return ret;
+}
+EXPORT_SYMBOL(afe_send_port_power_mode);
 
 static int afe_get_island_mode(u16 port_id, u32 *island_mode)
 {
@@ -2890,6 +2997,11 @@ int afe_send_port_island_mode(u16 port_id)
 	if (ret) {
 		pr_err("%s: AFE port[%d] get island mode is invalid!\n",
 				__func__, port_id);
+		return ret;
+	}
+	if (island_mode == 0) {
+		pr_debug("%s: AFE port[%d] island mode is not enabled\n",
+			__func__, port_id);
 		return ret;
 	}
 	param_info.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
@@ -4240,6 +4352,55 @@ void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag)
 EXPORT_SYMBOL(afe_set_island_mode_cfg);
 
 /**
+ * afe_get_power_mode_cfg -
+ *         get power mode configuration
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ */
+int afe_get_power_mode_cfg(u16 port_id, u32 *enable_flag)
+{
+	uint16_t port_index;
+	int ret = 0;
+
+	if (enable_flag) {
+		port_index = afe_get_port_index(port_id);
+		if (port_index < 0 || port_index >= AFE_MAX_PORTS) {
+			pr_err("%s: AFE port index[%d] invalid!\n",
+				__func__, port_index);
+			return -EINVAL;
+		}
+		*enable_flag = this_afe.power_mode[port_index];
+	}
+	return ret;
+}
+EXPORT_SYMBOL(afe_get_power_mode_cfg);
+
+/**
+ * afe_set_power_mode_cfg -
+ *         set power mode configuration
+ * @port_id: AFE port id number
+ * @enable_flag: Enable or Disable
+ */
+int afe_set_power_mode_cfg(u16 port_id, u32 enable_flag)
+{
+	uint16_t port_index;
+	int  ret= 0;
+
+	port_index = afe_get_port_index(port_id);
+	if (port_index < 0 || port_index >= AFE_MAX_PORTS) {
+		pr_err("%s: AFE port index[%d] invalid!\n",
+			__func__, port_index);
+		return -EINVAL;
+	}
+	this_afe.power_mode[port_index] = enable_flag;
+
+	trace_printk("%s: set power mode cfg 0x%x for port 0x%x\n",
+			__func__, this_afe.power_mode[port_index], port_id);
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_power_mode_cfg);
+
+/**
  * afe_set_routing_callback -
  *         Update callback function for routing
  *
@@ -4325,6 +4486,51 @@ int afe_port_send_usb_dev_param(u16 port_id, union afe_port_config *afe_config)
 		ret = -EINVAL;
 		goto exit;
 	}
+exit:
+	return ret;
+}
+
+static int q6afe_send_ttp_config(u16 port_id,
+			union afe_port_config afe_config,
+			struct afe_ttp_config *ttp_cfg)
+{
+	struct afe_ttp_gen_enable_t ttp_gen_enable;
+	struct afe_ttp_gen_cfg_t ttp_gen_cfg;
+	struct param_hdr_v3 param_hdr;
+	int ret;
+
+	memset(&ttp_gen_enable, 0, sizeof(ttp_gen_enable));
+	memset(&ttp_gen_cfg, 0, sizeof(ttp_gen_cfg));
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AFE_MODULE_ID_DECODER;
+	param_hdr.instance_id = INSTANCE_ID_0;
+
+	pr_debug("%s: Enable TTP generator\n", __func__);
+	ttp_gen_enable = ttp_cfg->ttp_gen_enable;
+	param_hdr.param_id = AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE;
+	param_hdr.param_size = sizeof(struct afe_ttp_gen_enable_t);
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr,
+					       (u8 *) &ttp_gen_enable);
+	if (ret) {
+		pr_err("%s: AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_STATE for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		goto exit;
+	}
+
+	pr_debug("%s: sending TTP generator config\n", __func__);
+	ttp_gen_cfg = ttp_cfg->ttp_gen_cfg;
+	param_hdr.param_id = AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG;
+	param_hdr.param_size = sizeof(struct afe_ttp_gen_cfg_t);
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr,
+					       (u8 *) &ttp_gen_cfg);
+	if (ret)
+		pr_err("%s: AVS_DEPACKETIZER_PARAM_ID_TTP_GEN_CFG for port 0x%x failed %d\n",
+			__func__, port_id, ret);
 exit:
 	return ret;
 }
@@ -4999,7 +5205,8 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 			    u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
 			    union afe_enc_config_data *enc_cfg,
 			    u32 codec_format, u32 scrambler_mode, u32 mono_mode,
-			    struct afe_dec_config *dec_cfg)
+			    struct afe_dec_config *dec_cfg,
+			    struct afe_ttp_config *ttp_cfg)
 {
 	union afe_port_config port_cfg;
 	struct param_hdr_v3 param_hdr;
@@ -5204,6 +5411,7 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		cfg_type = AFE_PARAM_ID_META_I2S_CONFIG;
 		break;
 	case HDMI_RX:
+	case HDMI_RX_MS:
 	case DISPLAY_PORT_RX:
 		cfg_type = AFE_PARAM_ID_HDMI_CONFIG;
 		break;
@@ -5332,6 +5540,15 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 				goto fail_cmd;
 			}
 		}
+		if (ttp_cfg != NULL) {
+			ret = q6afe_send_ttp_config(port_id, *afe_config,
+						    ttp_cfg);
+			if (ret) {
+				pr_err("%s: AFE TTP config for port 0x%x failed %d\n",
+					 __func__, port_id, ret);
+				goto fail_cmd;
+			}
+		}
 	}
 
 	port_index = afe_get_port_index(port_id);
@@ -5378,8 +5595,8 @@ fail_cmd:
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		   u32 rate)
 {
-	return __afe_port_start(port_id, afe_config, rate,
-				0, 0, NULL, ASM_MEDIA_FMT_NONE, 0, 0, NULL);
+	return __afe_port_start(port_id, afe_config, rate, 0, 0, NULL,
+				ASM_MEDIA_FMT_NONE, 0, 0, NULL, NULL);
 }
 EXPORT_SYMBOL(afe_port_start);
 
@@ -5409,15 +5626,49 @@ int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 					afe_in_channels, afe_in_bit_width,
 					&enc_cfg->data, enc_cfg->format,
 					enc_cfg->scrambler_mode,
-					enc_cfg->mono_mode, dec_cfg);
+					enc_cfg->mono_mode, dec_cfg, NULL);
 	else if (dec_cfg != NULL)
 		ret = __afe_port_start(port_id, afe_config, rate,
 					afe_in_channels, afe_in_bit_width,
-					NULL, dec_cfg->format, 0, 0, dec_cfg);
+					NULL, dec_cfg->format, 0, 0,
+					dec_cfg, NULL);
 
 	return ret;
 }
 EXPORT_SYMBOL(afe_port_start_v2);
+
+/**
+ * afe_port_start_v3 - to configure AFE session with
+ * specified port configuration and encoder /decoder params
+ *
+ * @port_id: AFE port id number
+ * @afe_config: port configuration
+ * @rate: sampling rate of port
+ * @enc_cfg: AFE enc configuration information to setup encoder
+ * @afe_in_channels: AFE input channel configuration, this needs
+ *  update only if input channel is differ from AFE output
+ * @dec_cfg: AFE dec configuration information to set up decoder
+ * @ttp_cfg: TTP generator configuration to enable TTP in AFE
+ *
+ * Returns 0 on success or error value on port start failure.
+ */
+int afe_port_start_v3(u16 port_id, union afe_port_config *afe_config,
+		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
+		      struct afe_enc_config *enc_cfg,
+		      struct afe_dec_config *dec_cfg,
+		      struct afe_ttp_config *ttp_cfg)
+{
+	int ret = 0;
+
+	if (dec_cfg != NULL && ttp_cfg != NULL)
+		ret = __afe_port_start(port_id, afe_config, rate,
+				       afe_in_channels, afe_in_bit_width,
+				       NULL, dec_cfg->format, 0, 0,
+				       dec_cfg, ttp_cfg);
+
+	return ret;
+}
+EXPORT_SYMBOL(afe_port_start_v3);
 
 int afe_get_port_index(u16 port_id)
 {
@@ -5453,6 +5704,7 @@ int afe_get_port_index(u16 port_id)
 	case MI2S_RX: return IDX_MI2S_RX;
 	case MI2S_TX: return IDX_MI2S_TX;
 	case HDMI_RX: return IDX_HDMI_RX;
+	case HDMI_RX_MS: return IDX_HDMI_RX_MS;
 	case DISPLAY_PORT_RX: return IDX_DISPLAY_PORT_RX;
 	case AFE_PORT_ID_PRIMARY_SPDIF_RX: return IDX_PRIMARY_SPDIF_RX;
 	case AFE_PORT_ID_PRIMARY_SPDIF_TX: return IDX_PRIMARY_SPDIF_TX;
@@ -5916,6 +6168,7 @@ int afe_open(u16 port_id,
 		cfg_type = AFE_PARAM_ID_META_I2S_CONFIG;
 		break;
 	case HDMI_RX:
+	case HDMI_RX_MS:
 	case DISPLAY_PORT_RX:
 		cfg_type = AFE_PARAM_ID_HDMI_CONFIG;
 		break;
@@ -6978,7 +7231,7 @@ int afe_register_get_events(u16 port_id,
 	} else if (port_id == RT_PROXY_PORT_001_RX ||
 			port_id == RT_PROXY_PORT_002_RX) {
 		this_afe.rx_cb = cb;
-		this_afe.rx_private_data = private_data;
+		this_afe.rx_private_data[PORTID_TO_IDX(port_id)] = private_data;
 	}
 
 	rtproxy.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
@@ -7011,6 +7264,7 @@ int afe_unregister_get_events(u16 port_id)
 	int ret = 0;
 	struct afe_service_cmd_unregister_rt_port_driver rtproxy;
 	int index = 0;
+	uint16_t i = 0;
 
 	pr_debug("%s:\n", __func__);
 
@@ -7064,8 +7318,13 @@ int afe_unregister_get_events(u16 port_id)
 		this_afe.tx_private_data = NULL;
 	} else if (port_id == RT_PROXY_PORT_001_RX ||
 			port_id == RT_PROXY_PORT_002_RX) {
-		this_afe.rx_cb = NULL;
-		this_afe.rx_private_data = NULL;
+		this_afe.rx_private_data[PORTID_TO_IDX(port_id)] = NULL;
+		for (i = 0; i < NUM_RX_PROXY_PORTS; i++) {
+			if (this_afe.rx_private_data[i] != NULL)
+				break;
+		}
+		if (i == NUM_RX_PROXY_PORTS)
+			this_afe.rx_cb = NULL;
 	}
 
 	ret = afe_apr_send_pkt(&rtproxy, &this_afe.wait[index]);
@@ -7164,7 +7423,7 @@ int afe_rt_proxy_port_read(phys_addr_t buf_addr_p,
 				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
 	afecmd_rd.hdr.pkt_size = sizeof(afecmd_rd);
 	afecmd_rd.hdr.src_port = 0;
-	afecmd_rd.hdr.dest_port = 0;
+	afecmd_rd.hdr.dest_port = port_id;
 	afecmd_rd.hdr.token = 0;
 	afecmd_rd.hdr.opcode = AFE_PORT_DATA_CMD_RT_PROXY_PORT_READ_V2;
 	afecmd_rd.port_id = port_id;
@@ -7812,6 +8071,7 @@ int afe_validate_port(u16 port_id)
 	case MI2S_RX:
 	case MI2S_TX:
 	case HDMI_RX:
+	case HDMI_RX_MS:
 	case DISPLAY_PORT_RX:
 	case AFE_PORT_ID_PRIMARY_SPDIF_RX:
 	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
@@ -8182,8 +8442,11 @@ int afe_close(int port_id)
 	 * even if ramp down configuration failed it is not serious enough to
 	 * warrant bailaing out.
 	 */
-	if (afe_spk_ramp_dn_cfg(port_id) < 0)
-		pr_err("%s: ramp down configuration failed\n", __func__);
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) < AFE_API_VERSION_V9) {
+		if (afe_spk_ramp_dn_cfg(port_id) < 0)
+			pr_err("%s: ramp down config failed\n", __func__);
+	}
 
 	stop.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
 				APR_HDR_LEN(APR_HDR_SIZE), APR_PKT_VER);
@@ -8307,6 +8570,156 @@ int afe_set_lpass_clock(u16 port_id, struct afe_clk_cfg *cfg)
 }
 EXPORT_SYMBOL(afe_set_lpass_clock);
 
+static int afe_get_port_idx(u16 port_id)
+{
+	u16 afe_port = 0;
+	int i = -EINVAL;
+
+	pr_debug("%s: port id 0x%x\n", __func__, port_id);
+
+	if ((port_id >= AFE_PORT_ID_TDM_PORT_RANGE_START) &&
+		(port_id <= AFE_PORT_ID_TDM_PORT_RANGE_END))
+		afe_port = port_id & 0xFFF0;
+	else if ((port_id == AFE_PORT_ID_PRIMARY_SPDIF_RX) ||
+		 (port_id == AFE_PORT_ID_PRIMARY_SPDIF_TX) ||
+		 (port_id == AFE_PORT_ID_SECONDARY_SPDIF_RX) ||
+		 (port_id == AFE_PORT_ID_SECONDARY_SPDIF_TX))
+		afe_port = port_id;
+	else
+		afe_port = port_id & 0xFFFE;
+
+	for (i = 0; i < ARRAY_SIZE(clkinfo_per_port); i++) {
+		if (afe_port == clkinfo_per_port[i].port_id) {
+			pr_debug("%s: idx 0x%x port id 0x%x\n", __func__,
+				  i, afe_port);
+			return i;
+		}
+	}
+
+	pr_debug("%s: cannot get idx for port id 0x%x\n", __func__,
+		afe_port);
+
+	return -EINVAL;
+}
+
+static int afe_get_clk_id(u16 port_id)
+{
+	u16 afe_port = 0;
+	uint32_t clk_id = -EINVAL;
+	int idx = 0;
+
+	idx = afe_get_port_idx(port_id);
+	if (idx < 0) {
+		pr_err("%s: cannot get clock id for port id 0x%x\n", __func__,
+			afe_port);
+		return -EINVAL;
+	}
+
+	clk_id = clkinfo_per_port[idx].clk_id;
+	pr_debug("%s: clk id 0x%x port id 0x%x\n", __func__, clk_id,
+		  afe_port);
+
+	return clk_id;
+}
+
+/**
+ * afe_set_clk_id - Update clock id for AFE port
+ *
+ * @port_id: AFE port id
+ * @clk_id: CLock ID
+ *
+ * Returns 0 on success, appropriate error code otherwise
+ */
+int afe_set_clk_id(u16 port_id, uint32_t clk_id)
+{
+	u16 afe_port = 0;
+	int idx = 0;
+
+	idx = afe_get_port_idx(port_id);
+	if (idx < 0) {
+		pr_debug("%s: cannot set clock id for port id 0x%x\n", __func__,
+			afe_port);
+		return -EINVAL;
+	}
+
+	clkinfo_per_port[idx].clk_id = clk_id;
+	pr_debug("%s: updated clk id 0x%x port id 0x%x\n", __func__,
+		  clkinfo_per_port[idx].clk_id, afe_port);
+
+	return 0;
+}
+EXPORT_SYMBOL(afe_set_clk_id);
+
+/**
+ * afe_set_pll_clk_drift - Set audio interface PLL clock drift
+ *
+ * @port_id: AFE port id
+ * @set_clk_drift: clk drift to adjust PLL
+ * @clk_reset: reset Interface clock to original value
+ *
+ * Returns 0 on success, appropriate error code otherwise
+ */
+int afe_set_pll_clk_drift(u16 port_id, int32_t set_clk_drift,
+			  uint32_t clk_reset)
+{
+	struct afe_set_clk_drift clk_drift;
+	struct param_hdr_v3 param_hdr;
+	uint32_t clk_id;
+	int index = 0, ret = 0;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	memset(&clk_drift, 0, sizeof(clk_drift));
+
+	index = q6audio_get_port_index(port_id);
+	if (index < 0 || index >= AFE_MAX_PORTS) {
+		pr_err("%s: index[%d] invalid!\n", __func__, index);
+		return -EINVAL;
+	}
+
+	ret = afe_q6_interface_prepare();
+	if (ret != 0) {
+		pr_err_ratelimited("%s: Q6 interface prepare failed %d\n",
+				    __func__, ret);
+		return ret;
+	}
+
+	clk_id = afe_get_clk_id(port_id);
+	if (clk_id < 0) {
+		pr_err("%s: cannot get clk id for port id 0x%x\n",
+			__func__, port_id);
+		return -EINVAL;
+	}
+
+	if (clk_id & 0x01) {
+		pr_err("%s: cannot adjust clock drift for external clock id 0x%x\n",
+			__func__, clk_id);
+		return -EINVAL;
+	}
+
+	clk_drift.clk_drift = set_clk_drift;
+	clk_drift.clk_reset = clk_reset;
+	clk_drift.clk_id = clk_id;
+	pr_debug("%s: clk id = 0x%x clk drift  = %d clk reset = %d port id 0x%x\n",
+		  __func__, clk_drift.clk_id, clk_drift.clk_drift,
+		 clk_drift.clk_reset, port_id);
+
+	mutex_lock(&this_afe.afe_clk_lock);
+	param_hdr.module_id = AFE_MODULE_CLOCK_SET;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_CLOCK_ADJUST;
+	param_hdr.param_size = sizeof(struct afe_set_clk_drift);
+
+	ret = q6afe_svc_pack_and_set_param_in_band(index, param_hdr,
+						   (u8 *) &clk_drift);
+	if (ret < 0)
+		pr_err_ratelimited("%s: AFE PLL clk drift failed with ret %d\n",
+				    __func__, ret);
+
+	mutex_unlock(&this_afe.afe_clk_lock);
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_pll_clk_drift);
+
 /**
  * afe_set_lpass_clk_cfg - Set AFE clk config
  *
@@ -8392,6 +8805,10 @@ int afe_set_lpass_clock_v2(u16 port_id, struct afe_clk_set *cfg)
 			__func__, ret);
 		return -EINVAL;
 	}
+
+	ret = afe_set_clk_id(port_id, cfg->clk_id);
+	if (ret < 0)
+		pr_debug("%s: afe_set_clk_id fail %d\n", __func__, ret);
 
 	ret = afe_set_lpass_clk_cfg(index, cfg);
 	if (ret)
@@ -9171,6 +9588,7 @@ int afe_spk_prot_feed_back_cfg(int src_port, int dst_port,
 			this_afe.v4_ch_map_cfg.chan_info[index++] = 4;
 		}
 		this_afe.v4_ch_map_cfg.num_channels = index;
+		this_afe.num_spkrs = index / 2;
 		pr_debug("%s no of channels: %d\n", __func__, index);
 		this_afe.vi_tx_port = src_port;
 		this_afe.vi_rx_port = dst_port;
@@ -10199,6 +10617,7 @@ int __init afe_init(void)
 		this_afe.afe_sample_rates[i] = 0;
 		this_afe.dev_acdb_id[i] = 0;
 		this_afe.island_mode[i] = 0;
+		this_afe.power_mode[i] = 0;
 		this_afe.vad_cfg[i].is_enable = 0;
 		this_afe.vad_cfg[i].pre_roll = 0;
 		init_waitqueue_head(&this_afe.wait[i]);

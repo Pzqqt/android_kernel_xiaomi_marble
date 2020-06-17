@@ -7,7 +7,6 @@
 #include <linux/bitops.h>
 #include <linux/mutex.h>
 #include <sound/control.h>
-#include <sound/asound.h>
 #include <sound/tlv.h>
 #include <dsp/q6adm-v2.h>
 #include <dsp/q6asm-v2.h>
@@ -1238,13 +1237,6 @@ int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 	}
 
 	event_data = (struct msm_adsp_event_data *)payload;
-	if (event_data->payload_len < sizeof(struct msm_adsp_event_data)) {
-		pr_err("%s: event_data size of %x is less than expected.\n",
-			__func__, event_data->payload_len);
-		ret = -EINVAL;
-		goto done;
-	}
-
 	kctl->info(kctl, &kctl_info);
 
 	if (event_data->payload_len >

@@ -36,6 +36,8 @@
 #define RT_PROXY_DAI_002_TX	0xE1
 #define RT_PROXY_DAI_003_TX	0xF2
 #define VIRTUAL_ID_TO_PORTID(val) ((val & 0xF) | 0x2000)
+#define PORTID_TO_IDX(val)	((val & 0xF) >> 1)
+#define NUM_RX_PROXY_PORTS	2
 
 #define AFE_CLK_VERSION_V1    1
 #define AFE_CLK_VERSION_V2    2
@@ -289,6 +291,8 @@ enum {
 	/* IDX 210-> 211 */
 	IDX_RT_PROXY_PORT_002_RX,
 	IDX_RT_PROXY_PORT_002_TX,
+	/* IDX 212 */
+	IDX_HDMI_RX_MS,
 	AFE_MAX_PORTS
 };
 
@@ -396,6 +400,8 @@ void afe_set_vad_cfg(u32 vad_enable, u32 preroll_config,
 void afe_set_island_mode_cfg(u16 port_id, u32 enable_flag);
 void afe_get_island_mode_cfg(u16 port_id, u32 *enable_flag);
 int afe_send_cdc_dma_data_align(u16 port_id, u32 cdc_dma_data_align);
+int afe_set_power_mode_cfg(u16 port_id, u32 enable_flag);
+int afe_get_power_mode_cfg(u16 port_id, u32 *enable_flag);
 int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	u32 rate);
 int afe_set_tws_channel_mode(u32 foramt, u16 port_id, u32 channel_mode);
@@ -403,6 +409,11 @@ int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
 		      struct afe_enc_config *enc_config,
 		      struct afe_dec_config *dec_config);
+int afe_port_start_v3(u16 port_id, union afe_port_config *afe_config,
+		      u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
+		      struct afe_enc_config *enc_config,
+		      struct afe_dec_config *dec_config,
+		      struct afe_ttp_config *ttp_config);
 int afe_spk_prot_feed_back_cfg(int src_port, int dst_port,
 	int l_ch, int r_ch, u32 enable);
 int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib);
@@ -482,12 +493,16 @@ int afe_get_sp_rx_tmax_xmax_logging_data(
 		u16 port_id);
 int afe_cal_init_hwdep(void *card);
 int afe_send_port_island_mode(u16 port_id);
+int afe_send_port_power_mode(u16 port_id);
 int afe_send_port_vad_cfg_params(u16 port_id);
 int afe_send_cmd_wakeup_register(void *handle, bool enable);
 void afe_register_wakeup_irq_callback(
 	void (*afe_cb_wakeup_irq)(void *handle));
 int afe_get_doa_tracking_mon(u16 port_id,
 	struct doa_tracking_mon_param *doa_tracking_data);
+int afe_set_pll_clk_drift(u16 port_id, int32_t set_clk_drift,
+			  uint32_t clk_reset);
+int afe_set_clk_id(u16 port_id, uint32_t clk_id);
 
 enum {
 	AFE_LPASS_CORE_HW_BLOCK_ID_NONE,

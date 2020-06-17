@@ -232,6 +232,7 @@ struct msm_dai_q6_dai_data {
 	u16 afe_tx_out_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
+	struct afe_ttp_config ttp_config;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
 	u32 xt_logging_disable;
@@ -1279,6 +1280,83 @@ static int msm_dai_q6_dai_auxpcm_remove(struct snd_soc_dai *dai)
 	return 0;
 }
 
+static int msm_dai_q6_power_mode_put(struct snd_kcontrol *kcontrol,
+				     struct snd_ctl_elem_value *ucontrol)
+{
+	int value = ucontrol->value.integer.value[0];
+	u16 port_id = (u16)kcontrol->private_value;
+
+	pr_debug("%s: power mode = %d\n", __func__, value);
+	trace_printk("%s: power mode = %d\n", __func__, value);
+
+	afe_set_power_mode_cfg(port_id, value);
+	return 0;
+}
+
+static int msm_dai_q6_power_mode_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	int value;
+	u16 port_id = (u16)kcontrol->private_value;
+
+	afe_get_power_mode_cfg(port_id, &value);
+	ucontrol->value.integer.value[0] = value;
+	return 0;
+}
+
+static void power_mode_mx_ctl_private_free(struct snd_kcontrol *kcontrol)
+{
+	struct snd_kcontrol_new *knew = snd_kcontrol_chip(kcontrol);
+	kfree(knew);
+}
+
+static int msm_dai_q6_add_power_mode_mx_ctls(struct snd_card *card,
+					 const char *dai_name,
+					 int dai_id, void *dai_data)
+{
+	const char *mx_ctl_name = "Power Mode";
+	char *mixer_str = NULL;
+	int dai_str_len = 0, ctl_len = 0;
+	int rc = 0;
+	struct snd_kcontrol_new *knew = NULL;
+	struct snd_kcontrol *kctl = NULL;
+
+	dai_str_len = strlen(dai_name) + 1;
+
+	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+	if (!mixer_str)
+		return -ENOMEM;
+
+	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
+
+	knew = kzalloc(sizeof(struct snd_kcontrol_new), GFP_KERNEL);
+	if (!knew) {
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	knew->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	knew->info = snd_ctl_boolean_mono_info;
+	knew->get = msm_dai_q6_power_mode_get;
+	knew->put = msm_dai_q6_power_mode_put;
+	knew->name = mixer_str;
+	knew->private_value = dai_id;
+	kctl = snd_ctl_new1(knew, knew);
+	if (!kctl) {
+		kfree(knew);
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	kctl->private_free = power_mode_mx_ctl_private_free;
+	rc = snd_ctl_add(card, kctl);
+	if (rc < 0)
+		pr_err("%s: err add config ctl, DAI = %s\n",
+			__func__, dai_name);
+	kfree(mixer_str);
+
+	return rc;
+}
+
 static int msm_dai_q6_island_mode_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
@@ -1324,6 +1402,54 @@ static int msm_dai_q6_add_island_mx_ctls(struct snd_card *card,
 	dai_str_len = strlen(dai_name) + 1;
 
 	/* Add island related mixer controls */
+	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+	if (!mixer_str)
+		return -ENOMEM;
+
+	snprintf(mixer_str, ctl_len, "%s %s", dai_name, mx_ctl_name);
+
+	knew = kzalloc(sizeof(struct snd_kcontrol_new), GFP_KERNEL);
+	if (!knew) {
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	knew->iface = SNDRV_CTL_ELEM_IFACE_MIXER;
+	knew->info = snd_ctl_boolean_mono_info;
+	knew->get = msm_dai_q6_island_mode_get;
+	knew->put = msm_dai_q6_island_mode_put;
+	knew->name = mixer_str;
+	knew->private_value = dai_id;
+	kctl = snd_ctl_new1(knew, knew);
+	if (!kctl) {
+		kfree(knew);
+		kfree(mixer_str);
+		return -ENOMEM;
+	}
+	kctl->private_free = island_mx_ctl_private_free;
+	rc = snd_ctl_add(card, kctl);
+	if (rc < 0)
+		pr_err("%s: err add config ctl, DAI = %s\n",
+			__func__, dai_name);
+	kfree(mixer_str);
+
+	return rc;
+}
+
+static int msm_dai_q6_add_isconfig_config_mx_ctls(struct snd_card *card,
+						const char *dai_name,
+						int dai_id, void *dai_data)
+
+{
+	const char *mx_ctl_name = "Island Config";
+	char *mixer_str = NULL;
+	int dai_str_len = 0, ctl_len = 0;
+	int rc = 0;
+	struct snd_kcontrol_new *knew = NULL;
+	struct snd_kcontrol *kctl = NULL;
+
+	dai_str_len = strlen(dai_name) + 1;
+
 	ctl_len = dai_str_len + strlen(mx_ctl_name) + 1;
 	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
 	if (!mixer_str)
@@ -2230,6 +2356,7 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 {
 	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
 	int rc = 0;
+	uint16_t ttp_gen_enable = dai_data->ttp_config.ttp_gen_enable.enable;
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
 		if (dai_data->enc_config.format != ENC_FMT_NONE) {
@@ -2279,13 +2406,27 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 				bitwidth = 0;
 				break;
 			}
-			pr_debug("%s: calling AFE_PORT_START_V2 with dec format: %d\n",
-				 __func__, dai_data->dec_config.format);
-			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
-					       dai_data->rate,
-					       dai_data->afe_tx_out_channels,
-					       bitwidth,
-					       NULL, &dai_data->dec_config);
+
+			if (ttp_gen_enable == true) {
+				pr_debug("%s: calling AFE_PORT_START_V3 with dec format: %d\n",
+					 __func__, dai_data->dec_config.format);
+				rc = afe_port_start_v3(dai->id,
+						&dai_data->port_config,
+						dai_data->rate,
+						dai_data->afe_tx_out_channels,
+						bitwidth,
+						NULL, &dai_data->dec_config,
+						&dai_data->ttp_config);
+			} else {
+				pr_debug("%s: calling AFE_PORT_START_V2 with dec format: %d\n",
+					 __func__, dai_data->dec_config.format);
+				rc = afe_port_start_v2(dai->id,
+						&dai_data->port_config,
+						dai_data->rate,
+						dai_data->afe_tx_out_channels,
+						bitwidth,
+						NULL, &dai_data->dec_config);
+			}
 			if (rc < 0) {
 				pr_err("%s: fail to open AFE port 0x%x\n",
 					__func__, dai->id);
@@ -2796,7 +2937,6 @@ static int msm_dai_q6_set_channel_map(struct snd_soc_dai *dai,
 	return rc;
 }
 
-/* all ports with excursion logging requirement can use this digital_mute api */
 static int msm_dai_q6_spk_digital_mute(struct snd_soc_dai *dai,
 				       int mute)
 {
@@ -3670,6 +3810,91 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 	return ret;
 }
 
+static int  msm_dai_q6_afe_enable_ttp_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct afe_ttp_gen_enable_t);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_enable_ttp_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(ucontrol->value.bytes.data,
+	       &dai_data->ttp_config.ttp_gen_enable,
+	       sizeof(struct afe_ttp_gen_enable_t));
+	return 0;
+}
+
+static int msm_dai_q6_afe_enable_ttp_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(&dai_data->ttp_config.ttp_gen_enable,
+		ucontrol->value.bytes.data,
+		sizeof(struct afe_ttp_gen_enable_t));
+	return 0;
+}
+
+static int  msm_dai_q6_afe_ttp_cfg_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct afe_ttp_gen_cfg_t);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_ttp_cfg_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s:\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(ucontrol->value.bytes.data,
+	       &dai_data->ttp_config.ttp_gen_cfg,
+	       sizeof(struct afe_ttp_gen_cfg_t));
+	return 0;
+}
+
+static int msm_dai_q6_afe_ttp_cfg_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	pr_debug("%s: Received ttp config\n", __func__);
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memcpy(&dai_data->ttp_config.ttp_gen_cfg,
+		ucontrol->value.bytes.data, sizeof(struct afe_ttp_gen_cfg_t));
+	return 0;
+}
+
 static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 	{
 		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
@@ -3695,6 +3920,27 @@ static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 	SOC_ENUM_EXT("AFE Output Bit Format", afe_bit_format_enum[0],
 		     msm_dai_q6_afe_output_bit_format_get,
 		     msm_dai_q6_afe_output_bit_format_put),
+};
+
+static const struct snd_kcontrol_new afe_ttp_config_controls[] = {
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "TTP Enable",
+		.info = msm_dai_q6_afe_enable_ttp_info,
+		.get = msm_dai_q6_afe_enable_ttp_get,
+		.put = msm_dai_q6_afe_enable_ttp_put,
+	},
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "AFE TTP config",
+		.info = msm_dai_q6_afe_ttp_cfg_info,
+		.get = msm_dai_q6_afe_ttp_cfg_get,
+		.put = msm_dai_q6_afe_ttp_cfg_put,
+	},
 };
 
 static int msm_dai_q6_slim_rx_drift_info(struct snd_kcontrol *kcontrol,
@@ -3919,6 +4165,12 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 				 dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_dec_config_controls[3],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_ttp_config_controls[0],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_ttp_config_controls[1],
 				 dai_data));
 		break;
 	case RT_PROXY_DAI_001_RX:
@@ -12195,6 +12447,14 @@ static int msm_dai_q6_dai_cdc_dma_probe(struct snd_soc_dai *dai)
 						dai->component->card->snd_card,
 						dai->name, dai->id,
 						(void *)dai_data);
+	rc = msm_dai_q6_add_power_mode_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai->id,
+						(void *)dai_data);
+	rc= msm_dai_q6_add_isconfig_config_mx_ctls(
+						dai->component->card->snd_card,
+						dai->name, dai->id,
+						(void *)dai_data);
 
 	rc = msm_dai_q6_dai_add_route(dai);
 	return rc;
@@ -12342,12 +12602,13 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 			dai_data->port_config.cdc_dma.data_format =
 				AFE_LINEAR_PCM_DATA_PACKED_16BIT;
 
-		rc = afe_send_cdc_dma_data_align(dai->id,
+		if (dai_data->cdc_dma_data_align) {
+			rc = afe_send_cdc_dma_data_align(dai->id,
 				dai_data->cdc_dma_data_align);
-		if (rc)
-			pr_debug("%s: afe send data alignment failed %d\n",
-				__func__, rc);
-
+			if (rc)
+				pr_debug("%s: afe send data alignment failed %d\n",
+					__func__, rc);
+		}
 		rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
 		if (rc < 0)
@@ -12364,7 +12625,8 @@ static int msm_dai_q6_cdc_dma_prepare(struct snd_pcm_substream *substream,
 static void msm_dai_q6_cdc_dma_shutdown(struct snd_pcm_substream *substream,
 				     struct snd_soc_dai *dai)
 {
-	struct msm_dai_q6_dai_data *dai_data = dev_get_drvdata(dai->dev);
+	struct msm_dai_q6_cdc_dma_dai_data *dai_data =
+					dev_get_drvdata(dai->dev);
 	int rc = 0;
 
 	if (test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
@@ -12383,6 +12645,19 @@ static void msm_dai_q6_cdc_dma_shutdown(struct snd_pcm_substream *substream,
 		clear_bit(STATUS_PORT_STARTED, dai_data->hwfree_status);
 }
 
+static int msm_dai_q6_cdc_dma_digital_mute(struct snd_soc_dai *dai,
+				       int mute)
+{
+	int port_id = dai->id;
+	struct msm_dai_q6_cdc_dma_dai_data *dai_data =
+					dev_get_drvdata(dai->dev);
+
+	if (mute && !dai_data->xt_logging_disable)
+		afe_get_sp_xt_logging_data(port_id);
+
+	return 0;
+}
+
 static struct snd_soc_dai_ops msm_dai_q6_cdc_dma_ops = {
 	.prepare          = msm_dai_q6_cdc_dma_prepare,
 	.hw_params        = msm_dai_q6_cdc_dma_hw_params,
@@ -12395,7 +12670,7 @@ static struct snd_soc_dai_ops msm_dai_q6_cdc_wsa_dma_ops = {
 	.hw_params        = msm_dai_q6_cdc_dma_hw_params,
 	.shutdown         = msm_dai_q6_cdc_dma_shutdown,
 	.set_channel_map = msm_dai_q6_cdc_dma_set_channel_map,
-	.digital_mute = msm_dai_q6_spk_digital_mute,
+	.digital_mute = msm_dai_q6_cdc_dma_digital_mute,
 };
 
 static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
@@ -12624,6 +12899,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "RX_CDC_DMA_RX_0",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_RX_CODEC_DMA_RX_0,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12674,6 +12950,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "RX_CDC_DMA_RX_1",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_RX_CODEC_DMA_RX_1,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12798,6 +13075,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "TX_CDC_DMA_TX_3",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_TX_CODEC_DMA_TX_3,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,
@@ -12848,6 +13126,7 @@ static struct snd_soc_dai_driver msm_dai_q6_cdc_dma_dai[] = {
 			.rate_min = 8000,
 			.rate_max = 384000,
 		},
+		.name = "TX_CDC_DMA_TX_4",
 		.ops = &msm_dai_q6_cdc_dma_ops,
 		.id = AFE_PORT_ID_TX_CODEC_DMA_TX_4,
 		.probe = msm_dai_q6_dai_cdc_dma_probe,

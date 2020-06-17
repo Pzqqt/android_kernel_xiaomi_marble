@@ -81,6 +81,7 @@ struct tx_macro_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
+	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 enum {
@@ -410,6 +411,9 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 			tx_priv->hs_slow_insert_complete = true;
 		else
 			tx_priv->hs_slow_insert_complete = false;
+		break;
+	default:
+		pr_debug("%s Invalid Event\n", __func__);
 		break;
 	}
 	return 0;
@@ -2362,18 +2366,18 @@ static const struct snd_soc_dapm_route tx_audio_map[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC0 Volume",
 			  BOLERO_CDC_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC1 Volume",
 			  BOLERO_CDC_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC2 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC2 Volume",
 			  BOLERO_CDC_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
 			  BOLERO_CDC_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2398,18 +2402,18 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_common[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC4 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC4 Volume",
 			  BOLERO_CDC_TX4_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC5 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC5 Volume",
 			  BOLERO_CDC_TX5_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC6 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC6 Volume",
 			  BOLERO_CDC_TX6_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC4 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2425,30 +2429,30 @@ static const struct snd_kcontrol_new tx_macro_snd_controls_v3[] = {
 };
 
 static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
-	SOC_SINGLE_SX_TLV("TX_DEC0 Volume",
+	SOC_SINGLE_S8_TLV("TX_DEC0 Volume",
 			  BOLERO_CDC_TX0_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC1 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC1 Volume",
 			  BOLERO_CDC_TX1_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC2 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC2 Volume",
 			  BOLERO_CDC_TX2_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC3 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC3 Volume",
 			  BOLERO_CDC_TX3_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC4 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC4 Volume",
 			  BOLERO_CDC_TX4_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC5 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC5 Volume",
 			  BOLERO_CDC_TX5_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC6 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC6 Volume",
 			  BOLERO_CDC_TX6_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
-	SOC_SINGLE_SX_TLV("TX_DEC7 Volume",
+			  -84, 40, digital_gain),
+	SOC_SINGLE_S8_TLV("TX_DEC7 Volume",
 			  BOLERO_CDC_TX7_TX_VOL_CTL,
-			  0, -84, 40, digital_gain),
+			  -84, 40, digital_gain),
 
 	SOC_ENUM_EXT("DEC0 MODE", dec_mode_mux_enum,
 			tx_macro_dec_mode_get, tx_macro_dec_mode_put),
@@ -2493,12 +2497,30 @@ static const struct snd_kcontrol_new tx_macro_snd_controls[] = {
 		       tx_macro_get_bcs, tx_macro_set_bcs),
 };
 
+static int tx_macro_pinctrl_setup(void *handle, bool enable)
+{
+	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
+
+	if (tx_priv == NULL) {
+		pr_err("%s: tx priv data is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable)
+		msm_cdc_pinctrl_set_wakeup_capable(
+			tx_priv->tx_swr_gpio_p, true);
+	else
+		msm_cdc_pinctrl_set_wakeup_capable(
+			tx_priv->tx_swr_gpio_p, false);
+	return 0;
+}
+
 static int tx_macro_register_event_listener(struct snd_soc_component *component,
-					    bool enable)
+					    bool enable, bool is_dmic_sva)
 {
 	struct device *tx_dev = NULL;
 	struct tx_macro_priv *tx_priv = NULL;
 	int ret = 0;
+	u32 dmic_sva = is_dmic_sva;
 
 	if (!component)
 		return -EINVAL;
@@ -2520,15 +2542,17 @@ static int tx_macro_register_event_listener(struct snd_soc_component *component,
 		if (enable) {
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_REGISTER_WAKEUP, NULL);
+				SWR_REGISTER_WAKEUP, &dmic_sva);
 			msm_cdc_pinctrl_set_wakeup_capable(
-					tx_priv->tx_swr_gpio_p, false);
+				tx_priv->tx_swr_gpio_p, false);
 		} else {
+			/* while teardown we can reset the flag */
+			dmic_sva = 0;
 			msm_cdc_pinctrl_set_wakeup_capable(
-					tx_priv->tx_swr_gpio_p, true);
+				tx_priv->tx_swr_gpio_p, true);
 			ret = swrm_wcd_notify(
 				tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-				SWR_DEREGISTER_WAKEUP, NULL);
+				SWR_DEREGISTER_WAKEUP, &dmic_sva);
 		}
 	}
 
@@ -3319,6 +3343,7 @@ static int tx_macro_probe(struct platform_device *pdev)
 		tx_priv->swr_plat_data.clk = tx_macro_swrm_clock;
 		tx_priv->swr_plat_data.core_vote = tx_macro_core_vote;
 		tx_priv->swr_plat_data.handle_irq = NULL;
+		tx_priv->swr_plat_data.pinctrl_setup = tx_macro_pinctrl_setup;
 		mutex_init(&tx_priv->swr_clk_lock);
 	}
 	tx_priv->is_used_tx_swr_gpio = is_used_tx_swr_gpio;

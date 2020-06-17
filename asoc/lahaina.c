@@ -2723,6 +2723,63 @@ static int msm_get_port_id(int be_id)
 	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
 		afe_port_id = AFE_PORT_ID_VA_CODEC_DMA_TX_2;
 		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_0:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_0;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_RX_1:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_RX_1;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_1:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_WSA_CDC_DMA_TX_2:
+		afe_port_id = AFE_PORT_ID_WSA_CODEC_DMA_TX_2;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_0:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_0;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_0:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_1;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_1:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_2;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_2:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_2;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_3;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_3:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_3;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_4:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_4;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_4:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_4;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_5;
+		break;
+	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_5:
+		afe_port_id = AFE_PORT_ID_TX_CODEC_DMA_TX_5;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_6;
+		break;
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_7:
+		afe_port_id = AFE_PORT_ID_RX_CODEC_DMA_RX_7;
+		break;
 	default:
 		pr_err("%s: Invalid BE id: %d\n", __func__, be_id);
 		afe_port_id = -EINVAL;
@@ -4124,6 +4181,38 @@ static int lahaina_send_island_va_config(int32_t be_id)
 	return rc;
 }
 
+static int lahaina_send_power_mode(int32_t be_id)
+{
+	int rc = 0;
+	int port_id = 0xFFFF;
+
+	port_id = msm_get_port_id(be_id);
+	if (port_id < 0) {
+		pr_err("%s: Invalid power interface, be_id: %d\n",
+			__func__, be_id);
+		rc = -EINVAL;
+	} else {
+		/*
+		 * send island mode config
+		 * This should be the first configuration
+		 *
+		 */
+		rc = afe_send_port_island_mode(port_id);
+		if (rc)
+			pr_err("%s: afe send island mode failed %d\n",
+				__func__, rc);
+		/*
+		 * send power mode config
+		 * This should be set after island configuration
+		 */
+		rc = afe_send_port_power_mode(port_id);
+		if (rc)
+			pr_err("%s: afe send power mode failed %d\n",
+				__func__, rc);
+	}
+	return rc;
+}
+
 static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				struct snd_pcm_hw_params *params)
 {
@@ -4886,6 +4975,12 @@ static int msm_snd_cdc_dma_startup(struct snd_pcm_substream *substream)
 		if (ret)
 			pr_err("%s: send island va cfg failed, err: %d\n",
 			       __func__, ret);
+		break;
+	default:
+		ret = lahaina_send_power_mode(dai_link->id);
+		if (ret)
+			pr_err("%s: send power mode failed, err: %d\n",
+				__func__, ret);
 		break;
 	}
 
@@ -6019,6 +6114,19 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.ignore_suspend = 1,
 		SND_SOC_DAILINK_REG(afepcm_tx1),
 	},
+        {/* hw:x,43 */
+		.name = MSM_DAILINK_NAME(Compress3),
+		.stream_name = "Compress3",
+		.dynamic = 1,
+		.dpcm_playback = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			 SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		/* this dainlink has playback support */
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA10,
+		SND_SOC_DAILINK_REG(multimedia10),
+	},
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
@@ -6693,6 +6801,17 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(wsa_dma_tx1),
+	},
+	{
+		.name = LPASS_BE_WSA_CDC_DMA_TX_0_VI,
+		.stream_name = "WSA CDC DMA0 Capture",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ops = &msm_cdc_dma_be_ops,
+		.ignore_suspend = 1,
+		SND_SOC_DAILINK_REG(wsa_dma_tx0_vi),
 	},
 };
 
@@ -7831,6 +7950,7 @@ static struct platform_driver lahaina_asoc_machine_driver = {
 };
 module_platform_driver(lahaina_asoc_machine_driver);
 
+MODULE_SOFTDEP("pre: bt_fm_slim");
 MODULE_DESCRIPTION("ALSA SoC msm");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);

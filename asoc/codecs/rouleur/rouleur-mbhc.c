@@ -22,20 +22,19 @@
 
 #define ROULEUR_ZDET_SUPPORTED          true
 /* Z value defined in milliohm */
-#define ROULEUR_ZDET_VAL_32             32000
-#define ROULEUR_ZDET_VAL_400            400000
-#define ROULEUR_ZDET_VAL_1200           1200000
 #define ROULEUR_ZDET_VAL_100K           100000000
 /* Z floating defined in ohms */
 #define ROULEUR_ZDET_FLOATING_IMPEDANCE 0x0FFFFFFE
 
-#define ROULEUR_ZDET_NUM_MEASUREMENTS   900
-#define ROULEUR_MBHC_GET_C1(c)          ((c & 0xC000) >> 14)
-#define ROULEUR_MBHC_GET_X1(x)          (x & 0x3FFF)
-/* Z value compared in milliOhm */
-#define ROULEUR_MBHC_IS_SECOND_RAMP_REQUIRED(z) ((z > 400000) || (z < 32000))
-#define ROULEUR_MBHC_ZDET_CONST         (86 * 16384)
-#define ROULEUR_MBHC_MOISTURE_RREF      R_24_KOHM
+#define ROULEUR_ZDET_NUM_MEASUREMENTS   100
+#define ROULEUR_ZDET_RMAX               1280000
+#define ROULEUR_ZDET_C1                 7500000
+#define ROULEUR_ZDET_C2                 187
+#define ROULEUR_ZDET_C3                 4500
+
+/* Cross connection thresholds in mV */
+#define ROULEUR_HPHL_CROSS_CONN_THRESHOLD 200
+#define ROULEUR_HPHR_CROSS_CONN_THRESHOLD 200
 
 static struct wcd_mbhc_register
 	wcd_mbhc_registers[WCD_MBHC_REG_FUNC_MAX] = {
@@ -88,7 +87,7 @@ static struct wcd_mbhc_register
 	WCD_MBHC_REGISTER("WCD_MBHC_ELECT_RESULT",
 			  ROULEUR_ANA_MBHC_RESULT_3, 0xFF, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MICB_CTRL",
-			  ROULEUR_ANA_MICBIAS_MICB_1_2_EN, 0x04, 2, 0),
+			  ROULEUR_ANA_MICBIAS_MICB_1_2_EN, 0x06, 1, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPH_CNP_WG_TIME",
 			  SND_SOC_NOPM, 0x00, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_PA_EN",
@@ -153,9 +152,6 @@ struct rouleur_mbhc_zdet_param {
 	u16 ldo_ctl;
 	u16 noff;
 	u16 nshift;
-	u16 btn5;
-	u16 btn6;
-	u16 btn7;
 };
 
 static int rouleur_mbhc_request_irq(struct snd_soc_component *component,
@@ -320,11 +316,11 @@ static void rouleur_mbhc_micb_ramp_control(struct snd_soc_component *component,
 					0x1C, 0x0C);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0xA0, 0x80);
+					0x80, 0x80);
 	} else {
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
-					0xA0, 0x00);
+					0x80, 0x00);
 		snd_soc_component_update_bits(component,
 					ROULEUR_ANA_MBHC_MICB2_RAMP,
 					0x1C, 0x00);
@@ -376,132 +372,147 @@ static int rouleur_mbhc_micb_ctrl_threshold_mic(
 	return rc;
 }
 
-static inline void rouleur_mbhc_get_result_params(struct rouleur_priv *rouleur,
-						s16 *d1_a, u16 noff,
-						int32_t *zdet)
+static void rouleur_mbhc_get_result_params(struct rouleur_priv *rouleur,
+					   struct snd_soc_component *component,
+					   int32_t *zdet)
 {
 	int i;
-	int val = 0, val1 = 0;
-	s16 c1 = 0;
-	s32 x1 = 0, d1 = 0;
-	int32_t denom;
-	int minCode_param[] = {
-			3277, 1639, 820, 410, 205, 103, 52, 26
-	};
+	int zcode = 0, zcode1 = 0, zdet_cal_result = 0, zdet_est_range = 0;
+	int noff = 0, ndac = 14;
+	int zdet_cal_coeff = 0, div_ratio = 0;
+	int num = 0, denom = 0;
 
+	/* Charge enable and wait for zcode to be updated */
 	regmap_update_bits(rouleur->regmap, ROULEUR_ANA_MBHC_ZDET, 0x20, 0x20);
 	for (i = 0; i < ROULEUR_ZDET_NUM_MEASUREMENTS; i++) {
-		regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_2, &val);
-		if (val & 0x80)
+		regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_2, &zcode);
+		if (zcode & 0x80)
 			break;
+		usleep_range(200, 210);
 	}
-	val = val << 0x8;
-	regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_1, &val1);
-	val |= val1;
-	regmap_update_bits(rouleur->regmap, ROULEUR_ANA_MBHC_ZDET, 0x20, 0x00);
-	x1 = ROULEUR_MBHC_GET_X1(val);
-	c1 = ROULEUR_MBHC_GET_C1(val);
-	/* If ramp is not complete, give additional 5ms */
-	if ((c1 < 2) && x1)
-		usleep_range(5000, 5050);
 
-	if (!c1 || !x1) {
+	/* If zcode updation is not complete, give additional 10ms */
+	if (!(zcode & 0x80))
+		usleep_range(10000, 10100);
+
+	regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_2, &zcode);
+	if (!(zcode & 0x80)) {
 		dev_dbg(rouleur->dev,
-			"%s: Impedance detect ramp error, c1=%d, x1=0x%x\n",
-			__func__, c1, x1);
-		goto ramp_down;
+			"%s: Impedance detect calculation error, zcode=0x%x\n",
+			__func__, zcode);
+		regmap_update_bits(rouleur->regmap, ROULEUR_ANA_MBHC_ZDET,
+				   0x20, 0x00);
+		return;
 	}
-	d1 = d1_a[c1];
-	denom = (x1 * d1) - (1 << (14 - noff));
+	zcode = zcode << 0x8;
+	zcode = zcode & 0x3FFF;
+	regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_1, &zcode1);
+	zcode |= zcode1;
+
+	dev_dbg(rouleur->dev,
+		"%s: zcode: %d, zcode1: %d\n", __func__, zcode, zcode1);
+
+	/* Calculate calibration coefficient */
+	zdet_cal_result = (snd_soc_component_read32(component,
+				ROULEUR_ANA_MBHC_ZDET_CALIB_RESULT)) & 0x1F;
+	zdet_cal_coeff = ROULEUR_ZDET_C1 /
+			((ROULEUR_ZDET_C2 * zdet_cal_result) + ROULEUR_ZDET_C3);
+	/* Rload calculation */
+	zdet_est_range = (snd_soc_component_read32(component,
+			  ROULEUR_ANA_MBHC_ZDET_CALIB_RESULT) & 0x60) >> 5;
+
+	dev_dbg(rouleur->dev,
+		"%s: zdet_cal_result: %d, zdet_cal_coeff: %d, zdet_est_range: %d\n",
+		__func__, zdet_cal_result, zdet_cal_coeff, zdet_est_range);
+	switch (zdet_est_range) {
+	case 0:
+	default:
+		noff = 0;
+		div_ratio = 320;
+		break;
+	case 1:
+		noff = 0;
+		div_ratio = 64;
+		break;
+	case 2:
+		noff = 4;
+		div_ratio = 64;
+		break;
+	case 3:
+		noff = 5;
+		div_ratio = 40;
+		break;
+	}
+
+	num = zdet_cal_coeff * ROULEUR_ZDET_RMAX;
+	denom = ((zcode * div_ratio * 100) - (1 << (ndac - noff)) * 1000);
+	dev_dbg(rouleur->dev,
+		"%s: num: %d, denom: %d\n", __func__, num, denom);
 	if (denom > 0)
-		*zdet = (ROULEUR_MBHC_ZDET_CONST * 1000) / denom;
-	else if (x1 < minCode_param[noff])
+		*zdet = (int32_t) ((num / denom) * 1000);
+	else
 		*zdet = ROULEUR_ZDET_FLOATING_IMPEDANCE;
 
-	dev_dbg(rouleur->dev, "%s: d1=%d, c1=%d, x1=0x%x, z_val=%d(milliOhm)\n",
-		__func__, d1, c1, x1, *zdet);
-ramp_down:
-	i = 0;
-	while (x1) {
-		regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_1, &val);
-		regmap_read(rouleur->regmap, ROULEUR_ANA_MBHC_RESULT_2, &val1);
-		val = val << 0x8;
-		val |= val1;
-		x1 = ROULEUR_MBHC_GET_X1(val);
-		i++;
-		if (i == ROULEUR_ZDET_NUM_MEASUREMENTS)
-			break;
-	}
+	dev_dbg(rouleur->dev, "%s: z_val=%d(milliOhm)\n",
+		__func__, *zdet);
+	/* Start discharge */
+	regmap_update_bits(rouleur->regmap, ROULEUR_ANA_MBHC_ZDET, 0x20, 0x00);
 }
 
-#if 0
-static void rouleur_mbhc_zdet_ramp(struct snd_soc_component *component,
-				 struct rouleur_mbhc_zdet_param *zdet_param,
-				 int32_t *zl, int32_t *zr, s16 *d1_a)
+static void rouleur_mbhc_zdet_start(struct snd_soc_component *component,
+				 int32_t *zl, int32_t *zr)
 {
 	struct rouleur_priv *rouleur = dev_get_drvdata(component->dev);
 	int32_t zdet = 0;
 
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_ZDET_ANA_CTL,
-				0x70, zdet_param->ldo_ctl << 4);
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_BTN5, 0xFC,
-				zdet_param->btn5);
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_BTN6, 0xFC,
-				zdet_param->btn6);
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_BTN7, 0xFC,
-				zdet_param->btn7);
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_ZDET_ANA_CTL,
-				0x0F, zdet_param->noff);
-	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_ZDET_RAMP_CTL,
-				0x0F, zdet_param->nshift);
-
 	if (!zl)
 		goto z_right;
-	/* Start impedance measurement for HPH_L */
+
+	/* HPHL pull down switch to force OFF */
+	regmap_update_bits(rouleur->regmap,
+			  ROULEUR_ANA_HPHPA_CNP_CTL_2, 0x30, 0x00);
+	/* Averaging enable for reliable results */
+	regmap_update_bits(rouleur->regmap,
+			   ROULEUR_ANA_MBHC_ZDET_ANA_CTL, 0x80, 0x80);
+	/* ZDET left measurement enable */
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_ZDET, 0x80, 0x80);
-	dev_dbg(rouleur->dev, "%s: ramp for HPH_L, noff = %d\n",
-		__func__, zdet_param->noff);
-	rouleur_mbhc_get_result_params(rouleur, d1_a, zdet_param->noff, &zdet);
+	/* Calculate the left Rload result */
+	rouleur_mbhc_get_result_params(rouleur, component, &zdet);
+
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_ZDET, 0x80, 0x00);
+	regmap_update_bits(rouleur->regmap,
+			   ROULEUR_ANA_MBHC_ZDET_ANA_CTL, 0x80, 0x00);
+	regmap_update_bits(rouleur->regmap,
+			  ROULEUR_ANA_HPHPA_CNP_CTL_2, 0x30, 0x20);
 
 	*zl = zdet;
 
 z_right:
 	if (!zr)
 		return;
-	/* Start impedance measurement for HPH_R */
+	/* HPHR pull down switch to force OFF */
+	regmap_update_bits(rouleur->regmap,
+			  ROULEUR_ANA_HPHPA_CNP_CTL_2, 0x0C, 0x00);
+	/* Averaging enable for reliable results */
+	regmap_update_bits(rouleur->regmap,
+			   ROULEUR_ANA_MBHC_ZDET_ANA_CTL, 0x80, 0x80);
+	/* ZDET right measurement enable */
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_ZDET, 0x40, 0x40);
-	dev_dbg(rouleur->dev, "%s: ramp for HPH_R, noff = %d\n",
-		__func__, zdet_param->noff);
-	rouleur_mbhc_get_result_params(rouleur, d1_a, zdet_param->noff, &zdet);
+
+	/* Calculate the right Rload result */
+	rouleur_mbhc_get_result_params(rouleur, component, &zdet);
+
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_ZDET, 0x40, 0x00);
+	regmap_update_bits(rouleur->regmap,
+			   ROULEUR_ANA_MBHC_ZDET_ANA_CTL, 0x80, 0x00);
+	regmap_update_bits(rouleur->regmap,
+			  ROULEUR_ANA_HPHPA_CNP_CTL_2, 0x0C, 0x08);
 
 	*zr = zdet;
-}
-
-static inline void rouleur_wcd_mbhc_qfuse_cal(
-					struct snd_soc_component *component,
-					int32_t *z_val, int flag_l_r)
-{
-	s16 q1;
-	int q1_cal;
-
-	if (*z_val < (ROULEUR_ZDET_VAL_400/1000))
-		q1 = snd_soc_component_read32(component,
-			ROULEUR_DIGITAL_EFUSE_REG_23 + (2 * flag_l_r));
-	else
-		q1 = snd_soc_component_read32(component,
-			ROULEUR_DIGITAL_EFUSE_REG_24 + (2 * flag_l_r));
-	if (q1 & 0x80)
-		q1_cal = (10000 - ((q1 & 0x7F) * 25));
-	else
-		q1_cal = (10000 + (q1 * 25));
-	if (q1_cal > 0)
-		*z_val = ((*z_val) * 10000) / q1_cal;
 }
 
 static void rouleur_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
@@ -509,40 +520,31 @@ static void rouleur_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 {
 	struct snd_soc_component *component = mbhc->component;
 	struct rouleur_priv *rouleur = dev_get_drvdata(component->dev);
-	s16 reg0, reg1, reg2, reg3, reg4;
+	s16 reg0;
 	int32_t z1L, z1R, z1Ls;
 	int zMono, z_diff1, z_diff2;
 	bool is_fsm_disable = false;
-	struct rouleur_mbhc_zdet_param zdet_param[] = {
-		{4, 0, 4, 0x08, 0x14, 0x18}, /* < 32ohm */
-		{2, 0, 3, 0x18, 0x7C, 0x90}, /* 32ohm < Z < 400ohm */
-		{1, 4, 5, 0x18, 0x7C, 0x90}, /* 400ohm < Z < 1200ohm */
-		{1, 6, 7, 0x18, 0x7C, 0x90}, /* >1200ohm */
-	};
-	struct rouleur_mbhc_zdet_param *zdet_param_ptr = NULL;
-	s16 d1_a[][4] = {
-		{0, 30, 90, 30},
-		{0, 30, 30, 5},
-		{0, 30, 30, 5},
-		{0, 30, 30, 5},
-	};
-	s16 *d1 = NULL;
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
-	reg0 = snd_soc_component_read32(component, ROULEUR_ANA_MBHC_BTN5);
-	reg1 = snd_soc_component_read32(component, ROULEUR_ANA_MBHC_BTN6);
-	reg2 = snd_soc_component_read32(component, ROULEUR_ANA_MBHC_BTN7);
-	reg3 = snd_soc_component_read32(component, ROULEUR_MBHC_CTL_CLK);
-	reg4 = snd_soc_component_read32(component,
-			ROULEUR_ANA_MBHC_ZDET_ANA_CTL);
+	reg0 = snd_soc_component_read32(component, ROULEUR_ANA_MBHC_ELECT);
 
-	if (snd_soc_component_read32(component, ROULEUR_ANA_MBHC_ELECT) &
-			0x80) {
+	if (reg0 & 0x80) {
 		is_fsm_disable = true;
 		regmap_update_bits(rouleur->regmap,
 				   ROULEUR_ANA_MBHC_ELECT, 0x80, 0x00);
 	}
+
+	/* Enable electrical bias */
+	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_ELECT,
+				      0x01, 0x01);
+
+	/* Enable codec main bias */
+	rouleur_global_mbias_enable(component);
+
+	/* Enable RCO clock */
+	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_CTL_1,
+				      0x80, 0x80);
 
 	/* For NO-jack, disable L_DET_EN before Z-det measurements */
 	if (mbhc->hphl_swh)
@@ -553,79 +555,34 @@ static void rouleur_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_MECH, 0x01, 0x00);
 
-	/* Disable surge protection before impedance detection.
+	/*
+	 * Disable surge protection before impedance detection.
 	 * This is done to give correct value for high impedance.
 	 */
-	regmap_update_bits(rouleur->regmap,
-			   ROULEUR_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0x00);
+	snd_soc_component_update_bits(component, ROULEUR_ANA_SURGE_EN,
+					0xC0, 0x00);
 	/* 1ms delay needed after disable surge protection */
 	usleep_range(1000, 1010);
 
-	/* First get impedance on Left */
-	d1 = d1_a[1];
-	zdet_param_ptr = &zdet_param[1];
-	rouleur_mbhc_zdet_ramp(component, zdet_param_ptr, &z1L, NULL, d1);
-
-	if (!ROULEUR_MBHC_IS_SECOND_RAMP_REQUIRED(z1L))
-		goto left_ch_impedance;
-
-	/* Second ramp for left ch */
-	if (z1L < ROULEUR_ZDET_VAL_32) {
-		zdet_param_ptr = &zdet_param[0];
-		d1 = d1_a[0];
-	} else if ((z1L > ROULEUR_ZDET_VAL_400) &&
-		  (z1L <= ROULEUR_ZDET_VAL_1200)) {
-		zdet_param_ptr = &zdet_param[2];
-		d1 = d1_a[2];
-	} else if (z1L > ROULEUR_ZDET_VAL_1200) {
-		zdet_param_ptr = &zdet_param[3];
-		d1 = d1_a[3];
-	}
-	rouleur_mbhc_zdet_ramp(component, zdet_param_ptr, &z1L, NULL, d1);
-
-left_ch_impedance:
+	/* Start of left ch impedance calculation */
+	rouleur_mbhc_zdet_start(component, &z1L, NULL);
 	if ((z1L == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
-		(z1L > ROULEUR_ZDET_VAL_100K)) {
+		(z1L > ROULEUR_ZDET_VAL_100K))
 		*zl = ROULEUR_ZDET_FLOATING_IMPEDANCE;
-		zdet_param_ptr = &zdet_param[1];
-		d1 = d1_a[1];
-	} else {
+	else
 		*zl = z1L/1000;
-		rouleur_wcd_mbhc_qfuse_cal(component, zl, 0);
-	}
+
 	dev_dbg(component->dev, "%s: impedance on HPH_L = %d(ohms)\n",
 		__func__, *zl);
 
-	/* Start of right impedance ramp and calculation */
-	rouleur_mbhc_zdet_ramp(component, zdet_param_ptr, NULL, &z1R, d1);
-	if (ROULEUR_MBHC_IS_SECOND_RAMP_REQUIRED(z1R)) {
-		if (((z1R > ROULEUR_ZDET_VAL_1200) &&
-			(zdet_param_ptr->noff == 0x6)) ||
-			((*zl) != ROULEUR_ZDET_FLOATING_IMPEDANCE))
-			goto right_ch_impedance;
-		/* Second ramp for right ch */
-		if (z1R < ROULEUR_ZDET_VAL_32) {
-			zdet_param_ptr = &zdet_param[0];
-			d1 = d1_a[0];
-		} else if ((z1R > ROULEUR_ZDET_VAL_400) &&
-			(z1R <= ROULEUR_ZDET_VAL_1200)) {
-			zdet_param_ptr = &zdet_param[2];
-			d1 = d1_a[2];
-		} else if (z1R > ROULEUR_ZDET_VAL_1200) {
-			zdet_param_ptr = &zdet_param[3];
-			d1 = d1_a[3];
-		}
-		rouleur_mbhc_zdet_ramp(component, zdet_param_ptr, NULL,
-				&z1R, d1);
-	}
-right_ch_impedance:
+	/* Start of right ch impedance calculation */
+	rouleur_mbhc_zdet_start(component, NULL, &z1R);
 	if ((z1R == ROULEUR_ZDET_FLOATING_IMPEDANCE) ||
-		(z1R > ROULEUR_ZDET_VAL_100K)) {
+		(z1R > ROULEUR_ZDET_VAL_100K))
 		*zr = ROULEUR_ZDET_FLOATING_IMPEDANCE;
-	} else {
+	else
 		*zr = z1R/1000;
-		rouleur_wcd_mbhc_qfuse_cal(component, zr, 1);
-	}
+
 	dev_dbg(component->dev, "%s: impedance on HPH_R = %d(ohms)\n",
 		__func__, *zr);
 
@@ -647,24 +604,10 @@ right_ch_impedance:
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 		goto zdet_complete;
 	}
-	snd_soc_component_update_bits(component, ROULEUR_HPH_R_ATEST,
-				0x02, 0x02);
-	snd_soc_component_update_bits(component, ROULEUR_HPH_PA_CTL2,
-				0x40, 0x01);
-	if (*zl < (ROULEUR_ZDET_VAL_32/1000))
-		rouleur_mbhc_zdet_ramp(component, &zdet_param[0], &z1Ls,
-				NULL, d1);
-	else
-		rouleur_mbhc_zdet_ramp(component, &zdet_param[1], &z1Ls,
-				NULL, d1);
-	snd_soc_component_update_bits(component, ROULEUR_HPH_PA_CTL2,
-				0x40, 0x00);
-	snd_soc_component_update_bits(component, ROULEUR_HPH_R_ATEST,
-				0x02, 0x00);
-	z1Ls /= 1000;
-	rouleur_wcd_mbhc_qfuse_cal(component, &z1Ls, 0);
-	/* Parallel of left Z and 9 ohm pull down resistor */
-	zMono = ((*zl) * 9) / ((*zl) + 9);
+
+	z1Ls = z1L/1000;
+	/* Parallel of left Z and 20 ohm pull down resistor */
+	zMono = ((*zl) * 20) / ((*zl) + 20);
 	z_diff1 = (z1Ls > zMono) ? (z1Ls - zMono) : (zMono - z1Ls);
 	z_diff2 = ((*zl) > z1Ls) ? ((*zl) - z1Ls) : (z1Ls - (*zl));
 	if ((z_diff1 * (*zl + z1Ls)) > (z_diff2 * (z1Ls + zMono))) {
@@ -677,13 +620,10 @@ right_ch_impedance:
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 	}
 
+zdet_complete:
 	/* Enable surge protection again after impedance detection */
 	regmap_update_bits(rouleur->regmap,
-			   ROULEUR_HPH_SURGE_HPHLR_SURGE_EN, 0xC0, 0xC0);
-zdet_complete:
-	snd_soc_component_write(component, ROULEUR_ANA_MBHC_BTN5, reg0);
-	snd_soc_component_write(component, ROULEUR_ANA_MBHC_BTN6, reg1);
-	snd_soc_component_write(component, ROULEUR_ANA_MBHC_BTN7, reg2);
+			   ROULEUR_ANA_SURGE_EN, 0xC0, 0xC0);
 	/* Turn on 100k pull down on HPHL */
 	regmap_update_bits(rouleur->regmap,
 			   ROULEUR_ANA_MBHC_MECH, 0x01, 0x01);
@@ -693,13 +633,14 @@ zdet_complete:
 		regmap_update_bits(rouleur->regmap,
 				   ROULEUR_ANA_MBHC_MECH, 0x80, 0x80);
 
-	snd_soc_component_write(component, ROULEUR_ANA_MBHC_ZDET_ANA_CTL, reg4);
-	snd_soc_component_write(component, ROULEUR_MBHC_CTL_CLK, reg3);
+	/* Restore electrical bias state */
+	snd_soc_component_update_bits(component, ROULEUR_ANA_MBHC_ELECT, 0x01,
+				      reg0 >> 7);
 	if (is_fsm_disable)
 		regmap_update_bits(rouleur->regmap,
 				   ROULEUR_ANA_MBHC_ELECT, 0x80, 0x80);
+	rouleur_global_mbias_disable(component);
 }
-#endif
 
 static void rouleur_mbhc_gnd_det_ctrl(struct snd_soc_component *component,
 			bool enable)
@@ -723,10 +664,10 @@ static void rouleur_mbhc_hph_pull_down_ctrl(struct snd_soc_component *component,
 	if (enable) {
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,
-				    0x30, 0x10);
+				    0x30, 0x20);
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,
-				    0x0C, 0x04);
+				    0x0C, 0x08);
 	} else {
 		snd_soc_component_update_bits(component,
 				    ROULEUR_ANA_HPHPA_CNP_CTL_2,
@@ -820,6 +761,54 @@ static void rouleur_mbhc_bcs_enable(struct wcd_mbhc *mbhc,
 		rouleur_disable_bcs_before_slow_insert(mbhc->component, true);
 }
 
+static void rouleur_mbhc_get_micbias_val(struct wcd_mbhc *mbhc, int *mb)
+{
+	u8 vout_ctl = 0;
+
+	/* Read MBHC Micbias (Mic Bias2) voltage */
+	WCD_MBHC_REG_READ(WCD_MBHC_MICB2_VOUT, vout_ctl);
+
+	/* Formula for getting micbias from vout
+	 * micbias = 1.6V + VOUT_CTL * 50mV
+	 */
+	*mb = 1600 + (vout_ctl * 50);
+	pr_debug("%s: vout_ctl: %d, micbias: %d\n", __func__, vout_ctl, *mb);
+}
+
+static void rouleur_mbhc_comp_autozero_control(struct wcd_mbhc *mbhc,
+						bool az_enable)
+{
+	if (az_enable)
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_MBHC_CTL_CLK, 0x08, 0x08);
+	else
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_MBHC_CTL_CLK, 0x08, 0x00);
+
+}
+
+static void rouleur_mbhc_surge_control(struct wcd_mbhc *mbhc,
+						bool surge_enable)
+{
+	if (surge_enable)
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_SURGE_EN, 0xC0, 0xC0);
+	else
+		snd_soc_component_update_bits(mbhc->component,
+				ROULEUR_ANA_SURGE_EN, 0xC0, 0x00);
+
+}
+
+static void rouleur_mbhc_update_cross_conn_thr(struct wcd_mbhc *mbhc)
+{
+	mbhc->hphl_cross_conn_thr = ROULEUR_HPHL_CROSS_CONN_THRESHOLD;
+	mbhc->hphr_cross_conn_thr = ROULEUR_HPHR_CROSS_CONN_THRESHOLD;
+
+	pr_debug("%s: Cross connection threshold for hphl: %d, hphr: %d\n",
+			__func__, mbhc->hphl_cross_conn_thr,
+			mbhc->hphr_cross_conn_thr);
+}
+
 static const struct wcd_mbhc_cb mbhc_cb = {
 	.request_irq = rouleur_mbhc_request_irq,
 	.irq_control = rouleur_mbhc_irq_control,
@@ -837,13 +826,17 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.mbhc_micb_ramp_control = rouleur_mbhc_micb_ramp_control,
 	.get_hwdep_fw_cal = rouleur_get_hwdep_fw_cal,
 	.mbhc_micb_ctrl_thr_mic = rouleur_mbhc_micb_ctrl_threshold_mic,
-	//.compute_impedance = rouleur_wcd_mbhc_calc_impedance,
+	.compute_impedance = rouleur_wcd_mbhc_calc_impedance,
 	.mbhc_gnd_det_ctrl = rouleur_mbhc_gnd_det_ctrl,
 	.hph_pull_down_ctrl = rouleur_mbhc_hph_pull_down_ctrl,
 	.mbhc_moisture_config = rouleur_mbhc_moisture_config,
 	.mbhc_get_moisture_status = rouleur_mbhc_get_moisture_status,
 	.mbhc_moisture_detect_en = rouleur_mbhc_moisture_detect_en,
 	.bcs_enable = rouleur_mbhc_bcs_enable,
+	.get_micbias_val = rouleur_mbhc_get_micbias_val,
+	.mbhc_comp_autozero_control = rouleur_mbhc_comp_autozero_control,
+	.mbhc_surge_ctl = rouleur_mbhc_surge_control,
+	.update_cross_conn_thr = rouleur_mbhc_update_cross_conn_thr,
 };
 
 static int rouleur_get_hph_type(struct snd_kcontrol *kcontrol,

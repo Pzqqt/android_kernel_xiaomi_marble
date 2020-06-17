@@ -17,6 +17,7 @@
 #define LPASS_BE_SLIMBUS_0_RX "SLIMBUS_0_RX"
 #define LPASS_BE_SLIMBUS_0_TX "SLIMBUS_0_TX"
 #define LPASS_BE_HDMI "HDMI"
+#define LPASS_BE_HDMI_MS "HDMI_MS"
 #define LPASS_BE_DISPLAY_PORT "DISPLAY_PORT"
 #define LPASS_BE_DISPLAY_PORT1 "DISPLAY_PORT1"
 #define LPASS_BE_INT_BT_SCO_RX "INT_BT_SCO_RX"
@@ -211,6 +212,7 @@
 
 #define LPASS_BE_WSA_CDC_DMA_RX_0 "WSA_CDC_DMA_RX_0"
 #define LPASS_BE_WSA_CDC_DMA_TX_0 "WSA_CDC_DMA_TX_0"
+#define LPASS_BE_WSA_CDC_DMA_TX_0_VI "WSA_CDC_DMA_TX_0_VI"
 #define LPASS_BE_WSA_CDC_DMA_RX_1 "WSA_CDC_DMA_RX_1"
 #define LPASS_BE_WSA_CDC_DMA_TX_1 "WSA_CDC_DMA_TX_1"
 #define LPASS_BE_WSA_CDC_DMA_TX_2 "WSA_CDC_DMA_TX_2"
@@ -508,6 +510,7 @@ enum {
 	MSM_BACKEND_DAI_SEC_META_MI2S_RX,
 	MSM_BACKEND_DAI_PROXY_RX,
 	MSM_BACKEND_DAI_PROXY_TX,
+	MSM_BACKEND_DAI_HDMI_RX_MS,
 	MSM_BACKEND_DAI_MAX,
 };
 
@@ -539,7 +542,7 @@ enum {
 #define RELEASE_LOCK	0
 #define ACQUIRE_LOCK	1
 
-#define MSM_BACKEND_DAI_PP_PARAMS_REQ_MAX	2
+#define MSM_BACKEND_DAI_PP_PARAMS_REQ_MAX	3
 #define HDMI_RX_ID				0x8001
 #define ADM_PP_PARAM_MUTE_ID			0
 #define ADM_PP_PARAM_MUTE_BIT			1
@@ -653,4 +656,55 @@ int msm_pcm_routing_set_channel_mixer_runtime(
 	int be_id, int session_id,
 	int session_type,
 	struct msm_pcm_channel_mixer *params);
+
+#ifndef SND_PCM_ADD_VOLUME_CTL
+/* PCM Volume control API
+ */
+/* array element of volume */
+struct snd_pcm_volume_elem {
+      int volume;
+};
+ /* pp information; retrieved via snd_kcontrol_chip() */
+struct snd_pcm_volume {
+      struct snd_pcm *pcm;    /* assigned PCM instance */
+      int stream;             /* PLAYBACK or CAPTURE */
+      struct snd_kcontrol *kctl;
+      const struct snd_pcm_volume_elem *volume;
+      int max_length;
+      void *private_data;     /* optional: private data pointer */
+};
+
+int snd_pcm_add_volume_ctls(struct snd_pcm *pcm, int stream,
+		const struct snd_pcm_volume_elem *volume,
+		int max_length,
+		unsigned long private_value,
+		struct snd_pcm_volume **info_ret);
+
+#endif
+
+#ifndef SND_PCM_ADD_USR_CTL
+/*
+ * PCM User control API	1450
+ */
+/* array element of usr elem */
+struct snd_pcm_usr_elem {
+	   int val[128];
+};
+
+/* pp information; retrieved via snd_kcontrol_chip() */
+struct snd_pcm_usr {
+   struct snd_pcm *pcm;   /* assigned PCM instance */
+   int stream;      /* PLAYBACK or CAPTURE */
+   struct snd_kcontrol *kctl;
+   const struct snd_pcm_usr_elem *usr;
+   int max_length;
+   void *private_data;   /* optional: private data pointer */
+};
+
+int snd_pcm_add_usr_ctls(struct snd_pcm *pcm, int stream,
+    const struct snd_pcm_usr_elem *usr,
+    int max_length, int max_control_str_len,
+    unsigned long private_value,
+    struct snd_pcm_usr **info_ret);
+#endif
 #endif /*_MSM_PCM_H*/

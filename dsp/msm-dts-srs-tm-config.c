@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2014, 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016-2018, 2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/err.h>
@@ -8,7 +8,6 @@
 #include <linux/bitops.h>
 #include <linux/mutex.h>
 #include <linux/atomic.h>
-#include <sound/asound.h>
 #include <sound/control.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6adm-v2.h>
