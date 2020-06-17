@@ -7239,6 +7239,45 @@ static const struct of_device_id lahaina_asoc_machine_of_match[]  = {
 	{},
 };
 
+static int msm_snd_card_late_probe(struct snd_soc_card *card)
+{
+	struct snd_soc_component *component = NULL;
+	const char *be_dl_name = LPASS_BE_RX_CDC_DMA_RX_0;
+	struct snd_soc_pcm_runtime *rtd;
+	int ret = 0;
+	void *mbhc_calibration;
+
+	rtd = snd_soc_get_pcm_runtime(card, be_dl_name);
+	if (!rtd) {
+		dev_err(card->dev,
+			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
+			__func__, be_dl_name);
+		return -EINVAL;
+	}
+
+	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	mbhc_calibration = def_wcd_mbhc_cal();
+	if (!mbhc_calibration)
+		return -ENOMEM;
+	wcd_mbhc_cfg.calibration = mbhc_calibration;
+	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	if (ret) {
+		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
+			__func__, ret);
+		goto err_hs_detect;
+	}
+	return 0;
+
+err_hs_detect:
+	kfree(mbhc_calibration);
+	return ret;
+}
+
 static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 {
 	struct snd_soc_card *card = NULL;
@@ -7417,6 +7456,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	if (card) {
 		card->dai_link = dailink;
 		card->num_links = total_links;
+		card->late_probe = msm_snd_card_late_probe;
 	}
 
 	return card;
@@ -7566,7 +7606,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm = NULL;
 	int ret = 0;
 	int codec_variant = -1;
-	void *mbhc_calibration;
 	struct snd_info_entry *entry;
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
@@ -7596,8 +7635,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		if (!entry) {
 			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
 				 __func__);
-			ret = 0;
-			goto mbhc_cfg_cal;
+			 return 0;
 		}
 		pdata->codec_root = entry;
 	}
@@ -7620,22 +7658,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 	}
 
-mbhc_cfg_cal:
-	mbhc_calibration = def_wcd_mbhc_cal();
-	if (!mbhc_calibration)
-		return -ENOMEM;
-	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-	if (ret) {
-		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
-			__func__, ret);
-		goto err_hs_detect;
-	}
 	return 0;
-
-err_hs_detect:
-	kfree(mbhc_calibration);
-	return ret;
 }
 
 static void msm_i2s_auxpcm_init(struct platform_device *pdev)
