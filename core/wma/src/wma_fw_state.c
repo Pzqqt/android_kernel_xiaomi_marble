@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,7 +73,7 @@ static int wma_echo_event_handler(void *handle, uint8_t *buf, uint32_t len)
 	};
 	QDF_STATUS qdf_status;
 
-	WMA_LOGD("Received Echo reply from firmware!");
+	wma_debug("Received Echo reply from firmware!");
 
 	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					    QDF_MODULE_ID_SME,

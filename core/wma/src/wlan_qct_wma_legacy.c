@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -96,7 +96,7 @@ QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 		break;
 
 	default:
-		WMA_LOGD("Unknown message type = 0x%X\n", msg.type);
+		wma_debug("Unknown message type = 0x%X", msg.type);
 		qdf_mem_free(msg.bodyptr);
 		return QDF_STATUS_E_FAILURE;
 	}

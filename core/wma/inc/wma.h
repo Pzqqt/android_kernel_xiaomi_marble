@@ -74,8 +74,6 @@
 #define WMA_INVALID_VDEV_ID                             0xFF
 
 /* Deprecated logging macros, to be removed. Please do not use in new code */
-#define WMA_LOGD(params ...) \
-	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_WMA, params)
 #define WMA_LOGI(params ...) \
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_WMA, params)
 #define WMA_LOGW(params ...) \

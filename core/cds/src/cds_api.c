@@ -426,7 +426,7 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));
 	if (!gp_cds_context->cfg_ctx) {
-		WMA_LOGD("%s: failed to init cfg handle", __func__);
+		cds_debug("failed to init cfg handle");
 		return;
 	}
 

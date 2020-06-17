@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,7 +74,7 @@ int wma_twt_en_complete_event_handler(void *handle,
 								wmi_handle,
 								event,
 								&param);
-	WMA_LOGD("TWT: Received TWT enable comp event, status:%d", status);
+	wma_debug("TWT: Received TWT enable comp event, status:%d", status);
 
 	if (mac->sme.twt_enable_cb)
 		mac->sme.twt_enable_cb(mac->hdd_handle, &param);
@@ -110,7 +110,7 @@ int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("TWT: Rcvd TWT disable comp event");
+	wma_debug("TWT: Rcvd TWT disable comp event");
 
 	if (mac->sme.twt_disable_cb)
 		mac->sme.twt_disable_cb(mac->hdd_handle);

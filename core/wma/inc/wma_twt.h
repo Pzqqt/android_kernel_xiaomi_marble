@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,7 +74,7 @@ static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   uint32_t congestion_timeout,
 					   bool bcast_val)
 {
-	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 }
 
 static inline void wma_send_twt_disable_cmd(uint32_t pdev_id)
@@ -89,7 +89,7 @@ static inline void wma_set_twt_peer_caps(tpAddStaParams params,
 static inline QDF_STATUS wma_twt_process_add_dialog(
 		struct wmi_twt_add_dialog_param *params)
 {
-	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 
 	return QDF_STATUS_E_INVAL;
 }
@@ -97,7 +97,7 @@ static inline QDF_STATUS wma_twt_process_add_dialog(
 static inline QDF_STATUS wma_twt_process_del_dialog(
 		struct wmi_twt_del_dialog_param *params)
 {
-	WMA_LOGD(FL("TWT not supported as WLAN_SUPPORT_TWT is disabled"));
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
 
 	return QDF_STATUS_E_INVAL;
 }

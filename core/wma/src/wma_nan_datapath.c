@@ -95,13 +95,13 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
-	WMA_LOGD(FL("Moving peer %pM to state %d"), add_sta->staMac, state);
+	wma_debug("Moving peer %pM to state %d", add_sta->staMac, state);
 	cdp_peer_state_update(soc, add_sta->staMac, state);
 
 	add_sta->nss    = iface->nss;
 	add_sta->status = QDF_STATUS_SUCCESS;
 send_rsp:
-	WMA_LOGD(FL("Sending add sta rsp to umac (mac:%pM, status:%d)"),
+	wma_debug("Sending add sta rsp to umac (mac:%pM, status:%d)",
 		 add_sta->staMac, add_sta->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }
@@ -123,11 +123,11 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 	del_sta->status = QDF_STATUS_SUCCESS;
 
 	if (del_sta->respReqd) {
-		WMA_LOGD(FL("Sending del rsp to umac (status: %d)"),
+		wma_debug("Sending del rsp to umac (status: %d)",
 				del_sta->status);
 		wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP, del_sta, 0);
 	} else {
-		WMA_LOGD(FL("NDI Del Sta resp not needed"));
+		wma_debug("NDI Del Sta resp not needed");
 		qdf_mem_free(del_sta);
 	}
 
