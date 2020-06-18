@@ -25,8 +25,9 @@
 static int DATARMNETe9173bbe0e(struct notifier_block*DATARMNET272c159b3c,
 unsigned long DATARMNET7f045a1e6e,void*data);static struct notifier_block 
 DATARMNET5fc54f7a13 __read_mostly={.notifier_call=DATARMNETe9173bbe0e,.priority=
-(0xd1f+216-0xdf5),};static const char*DATARMNETbc8418e817[]={"\x39\x37\x33\x31"}
-;static int DATARMNET2cb9ae589c;int __init DATARMNET163e93649e(void){pr_info(
+(0xd1f+216-0xdf5),};static const char*DATARMNETbc8418e817[]={"\x39\x37\x33\x31",
+"\x49\x31\x36\x33\x62\x30\x30\x32\x33\x33\x34\x33\x39\x65\x64\x65\x61\x64\x32\x35\x30\x38\x66\x36\x33\x37\x36\x36\x64\x33\x35\x33\x31\x30\x35\x33\x62\x64\x35\x37\x62"
+};static int DATARMNET2cb9ae589c;int __init DATARMNET163e93649e(void){pr_info(
 "\x25\x73\x28\x29\x3a\x20\x53\x74\x61\x72\x74\x69\x6e\x67\x20\x72\x6d\x6e\x65\x74\x20\x53\x48\x53\x20\x6d\x6f\x64\x75\x6c\x65\x20\x25\x73\x20" "\n"
 ,__func__,DATARMNETbc8418e817[(0xd2d+202-0xdf7)]);trace_rmnet_shs_high(
 DATARMNET1790979ccf,DATARMNET72cb00fdc0,(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),
