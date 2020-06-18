@@ -1258,8 +1258,8 @@ wlan_ipa_uc_disable_pipes(struct wlan_ipa_priv *ipa_ctx, bool force_disable)
 
 	qdf_spin_lock_bh(&ipa_ctx->enable_disable_lock);
 	if (ipa_ctx->ipa_pipes_down || ipa_ctx->pipes_down_in_progress) {
-		ipa_info("IPA WDI Pipes are already deactivated");
 		qdf_spin_unlock_bh(&ipa_ctx->enable_disable_lock);
+		ipa_info("IPA WDI Pipes are already deactivated");
 		return QDF_STATUS_E_ALREADY;
 	}
 	ipa_ctx->pipes_down_in_progress = true;
