@@ -234,6 +234,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		for (i = 0; i < num_msdus; i++) {
 			uint32_t l2_hdr_offset;
 			struct dp_rx_desc *rx_desc = NULL;
+			struct rx_desc_pool *rx_desc_pool;
 
 			rx_desc = dp_rx_get_mon_desc(soc,
 						     msdu_list.sw_cookie[i]);
@@ -260,8 +261,15 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			}
 
 			if (rx_desc->unmapped == 0) {
-				qdf_nbuf_unmap_single(soc->osdev, msdu,
-						      QDF_DMA_FROM_DEVICE);
+				rx_desc_pool = dp_rx_get_mon_desc_pool(
+							soc,
+							mac_id,
+							dp_pdev->pdev_id);
+				qdf_nbuf_unmap_nbytes_single(
+							soc->osdev,
+							rx_desc->nbuf,
+							QDF_DMA_FROM_DEVICE,
+							rx_desc_pool->buf_size);
 				rx_desc->unmapped = 1;
 			}
 
