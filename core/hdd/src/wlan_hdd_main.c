@@ -9136,6 +9136,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("BW Vote level %d, tx_packets: %lld, rx_packets: %lld",
 			  next_vote_level, tx_packets, rx_packets);
+
 		hdd_ctx->cur_vote_level = next_vote_level;
 		vote_level_change = true;
 
@@ -9194,14 +9195,16 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		else
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
 
-		if (hdd_ctx->is_pktlog_enabled) {
-			if (next_vote_level >= PLD_BUS_WIDTH_HIGH)
-				hdd_pktlog_enable_disable(hdd_ctx, false,
-							  0, 0);
-			else
-				hdd_pktlog_enable_disable(hdd_ctx, true,
-							  0, 0);
-		}
+		/*
+		 * force disable pktlog and only re-enable based
+		 * on ini config
+		 */
+		if (next_vote_level >= PLD_BUS_WIDTH_HIGH)
+			hdd_pktlog_enable_disable(hdd_ctx, false,
+						  0, 0);
+		else if (cds_is_packet_log_enabled())
+			hdd_pktlog_enable_disable(hdd_ctx, true,
+						  0, 0);
 	}
 
 	qdf_dp_trace_apply_tput_policy(dptrace_high_tput_req);
