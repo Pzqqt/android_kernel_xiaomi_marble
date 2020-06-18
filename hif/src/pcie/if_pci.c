@@ -24,6 +24,7 @@
 #ifdef CONFIG_PCI_MSM
 #include <linux/msm_pcie.h>
 #endif
+#include <linux/version.h>
 #include "hif_io32.h"
 #include "if_pci.h"
 #include "hif.h"
@@ -161,7 +162,11 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 		 */
 		pcierp_node = mhi_node->parent;
 		pcie_node = pcierp_node->parent;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
+		pci_id = pci_bus_find_domain_nr(NULL, scn->qdf_dev->dev);
+#else
 		pci_id = of_get_pci_domain_nr(pcie_node);
+#endif
 		if (pci_id < 0 || pci_id >= WLAN_CFG_MAX_PCIE_GROUPS) {
 			HIF_ERROR("pci_id:%d is invalid", pci_id);
 			QDF_ASSERT(0);
