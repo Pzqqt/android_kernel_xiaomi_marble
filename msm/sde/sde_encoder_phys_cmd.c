@@ -932,7 +932,7 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc,
 	struct drm_connector *conn = phys_enc->connector;
 	u32 qsync_mode;
 	struct drm_display_mode *mode;
-	u32 threshold_lines = 0;
+	u32 threshold_lines = DEFAULT_TEARCHECK_SYNC_THRESH_START;
 	struct sde_encoder_phys_cmd *cmd_enc =
 			to_sde_encoder_phys_cmd(phys_enc);
 
@@ -950,8 +950,9 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc,
 		u32 slow_time_ns;
 		u32 default_time_ns;
 		u32 extra_time_ns;
-		u32 total_extra_lines;
 		u32 default_line_time_ns;
+		u32 idle_time_ns = 0;
+		u32 transfer_time_us = 0;
 
 		if (phys_enc->parent_ops.get_qsync_fps)
 			phys_enc->parent_ops.get_qsync_fps(
@@ -974,27 +975,31 @@ static int _get_tearcheck_threshold(struct sde_encoder_phys *phys_enc,
 		/* Calculate the number of extra lines*/
 		slow_time_ns = (1 * 1000000000) / qsync_min_fps;
 		default_time_ns = (1 * 1000000000) / default_fps;
-		extra_time_ns = slow_time_ns - default_time_ns;
+		sde_encoder_helper_get_transfer_time(phys_enc->parent,
+				&transfer_time_us);
+		if (transfer_time_us)
+			idle_time_ns = default_time_ns -
+					(1000 * transfer_time_us);
+
+		extra_time_ns = slow_time_ns - default_time_ns + idle_time_ns;
 		default_line_time_ns = (1 * 1000000000) / (default_fps * yres);
 
-		total_extra_lines = extra_time_ns / default_line_time_ns;
-		threshold_lines += total_extra_lines;
+		threshold_lines = extra_time_ns / default_line_time_ns;
 
 		SDE_DEBUG_CMDENC(cmd_enc, "slow:%d default:%d extra:%d(ns)\n",
 			slow_time_ns, default_time_ns, extra_time_ns);
-		SDE_DEBUG_CMDENC(cmd_enc, "extra_lines:%d threshold:%d\n",
-			total_extra_lines, threshold_lines);
+		SDE_DEBUG_CMDENC(cmd_enc, "xfer:%d(us) idle:%d(ns) lines:%d\n",
+			transfer_time_us, idle_time_ns, threshold_lines);
 		SDE_DEBUG_CMDENC(cmd_enc, "min_fps:%d fps:%d yres:%d\n",
 			qsync_min_fps, default_fps, yres);
 
 		SDE_EVT32(qsync_mode, qsync_min_fps, extra_time_ns, default_fps,
-			yres, threshold_lines);
+			yres, transfer_time_us, threshold_lines);
 
 		*extra_frame_trigger_time = extra_time_ns;
 	}
 
 exit:
-	threshold_lines += DEFAULT_TEARCHECK_SYNC_THRESH_START;
 
 	return threshold_lines;
 }

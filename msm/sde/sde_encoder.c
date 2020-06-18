@@ -4043,6 +4043,24 @@ void sde_encoder_helper_get_pp_line_count(struct drm_encoder *drm_enc,
 	}
 }
 
+void sde_encoder_helper_get_transfer_time(struct drm_encoder *drm_enc,
+			u32 *transfer_time_us)
+{
+	struct sde_encoder_virt *sde_enc;
+	struct msm_mode_info *info;
+
+	if (!drm_enc || !transfer_time_us) {
+		SDE_ERROR("bad arg: encoder:%d transfer_time:%d\n", !drm_enc,
+				!transfer_time_us);
+		return;
+	}
+
+	sde_enc = to_sde_encoder_virt(drm_enc);
+	info = &sde_enc->mode_info;
+
+	*transfer_time_us = info->mdp_transfer_time_us;
+}
+
 int sde_encoder_helper_reset_mixers(struct sde_encoder_phys *phys_enc,
 		struct drm_framebuffer *fb)
 {
