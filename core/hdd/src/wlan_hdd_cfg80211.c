@@ -19132,20 +19132,41 @@ static void hdd_populate_crypto_cipher_type(u32 cipher,
 static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 				       struct cfg80211_connect_params *req)
 {
+	uint32_t set_val = 0;
+
 	hdd_populate_crypto_auth_type(vdev, req->auth_type);
 
-	if (req->crypto.n_akm_suites)
+	if (req->crypto.n_akm_suites) {
 		hdd_populate_crypto_akm_type(vdev, req->crypto.akm_suites[0]);
-
-	if (req->crypto.n_ciphers_pairwise)
+	} else {
+		/* Reset to none */
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_KEY_MGMT_NONE);
+		wlan_crypto_set_vdev_param(vdev,
+					    WLAN_CRYPTO_PARAM_KEY_MGMT,
+					    set_val);
+	}
+	if (req->crypto.n_ciphers_pairwise) {
 		hdd_populate_crypto_cipher_type(req->crypto.ciphers_pairwise[0],
 						vdev,
 						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	if (req->crypto.cipher_group)
+	} else {
+		/* Reset to none */
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_CIPHER_NONE);
+		wlan_crypto_set_vdev_param(vdev,
+					    WLAN_CRYPTO_PARAM_UCAST_CIPHER,
+					    0);
+	}
+	if (req->crypto.cipher_group) {
 		hdd_populate_crypto_cipher_type(req->crypto.cipher_group,
 						vdev,
 						WLAN_CRYPTO_PARAM_MCAST_CIPHER);
+	} else {
+		/* Reset to none */
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_CIPHER_NONE);
+		wlan_crypto_set_vdev_param(vdev,
+					    WLAN_CRYPTO_PARAM_MCAST_CIPHER,
+					    0);
+	}
 }
 
 /**
