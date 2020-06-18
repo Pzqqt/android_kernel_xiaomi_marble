@@ -15033,9 +15033,19 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				qdf_mem_copy(&csr_join_req->operationalRateSet.
 						rate, OpRateSet.rate,
 						OpRateSet.numRates);
-			} else
-				csr_join_req->operationalRateSet.numRates = 0;
+			} else if (pProfile->phyMode == eCSR_DOT11_MODE_AUTO &&
+				   WLAN_REG_IS_24GHZ_CH_FREQ(
+						pBssDescription->chan_freq)) {
+				/*
+				 * Some IOT APs don't send supported rates in
+				 * probe resp, hence add BSS basic rates in
+				 * supported rates IE of assoc request.
+				 */
+				tSirMacRateSet b_rates;
 
+				csr_populate_basic_rates(&b_rates, false, true);
+				csr_join_req->operationalRateSet = b_rates;
+			}
 			/* ExtendedRateSet */
 			if (ExRateSet.numRates) {
 				csr_join_req->extendedRateSet.numRates =
@@ -15043,8 +15053,20 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 				qdf_mem_copy(&csr_join_req->extendedRateSet.
 						rate, ExRateSet.rate,
 						ExRateSet.numRates);
-			} else
+			} else {
 				csr_join_req->extendedRateSet.numRates = 0;
+			}
+		} else if (pProfile->phyMode == eCSR_DOT11_MODE_AUTO &&
+			   WLAN_REG_IS_24GHZ_CH_FREQ(
+					pBssDescription->chan_freq)) {
+			/*
+			 * To connect IOT AP, add basic rates in supported
+			 * rates IE of assoc req.
+			 */
+			tSirMacRateSet b_rates;
+
+			csr_populate_basic_rates(&b_rates, false, true);
+			csr_join_req->operationalRateSet = b_rates;
 		} else {
 			csr_join_req->operationalRateSet.numRates = 0;
 			csr_join_req->extendedRateSet.numRates = 0;
