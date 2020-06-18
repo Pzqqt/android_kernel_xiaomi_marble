@@ -1394,7 +1394,8 @@ target_if_init_spectral_param_min_max(
 		param_min_max->fft_size_max[CH_WIDTH_20MHZ] =
 				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_DEFAULT;
 		if (target_type == TARGET_TYPE_QCN9000 ||
-		    target_type == TARGET_TYPE_QCA5018) {
+		    target_type == TARGET_TYPE_QCA5018 ||
+		    target_type == TARGET_TYPE_QCA6490) {
 			param_min_max->fft_size_max[CH_WIDTH_40MHZ] =
 				SPECTRAL_PARAM_FFT_SIZE_MAX_GEN3_QCN9000;
 			param_min_max->fft_size_max[CH_WIDTH_80MHZ] =
@@ -1578,7 +1579,8 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 	pcap->num_detectors_20mhz = 1;
 	pcap->num_detectors_40mhz = 1;
 	pcap->num_detectors_80mhz = 1;
-	if (target_type == TARGET_TYPE_QCN9000) {
+	if (target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6490) {
 		pcap->num_detectors_160mhz = 1;
 		pcap->num_detectors_80p80mhz = 1;
 	} else {
@@ -2136,7 +2138,8 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 	if (target_type == TARGET_TYPE_QCA8074V2 ||
 	    target_type == TARGET_TYPE_QCN9000 ||
 	    target_type == TARGET_TYPE_QCA5018 ||
-	    target_type == TARGET_TYPE_QCA6750)
+	    target_type == TARGET_TYPE_QCA6750 ||
+	    target_type == TARGET_TYPE_QCA6490)
 		swar->fftbin_size_war = SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE;
 	else if (target_type == TARGET_TYPE_QCA8074 ||
 		 target_type == TARGET_TYPE_QCA6018 ||
@@ -2149,7 +2152,8 @@ target_if_spectral_len_adj_swar_init(struct spectral_fft_bin_len_adj_swar *swar,
 	    target_type == TARGET_TYPE_QCA8074V2 ||
 	    target_type == TARGET_TYPE_QCA6018 ||
 	    target_type == TARGET_TYPE_QCA5018 ||
-	    target_type == TARGET_TYPE_QCN9000) {
+	    target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6490) {
 		swar->inband_fftbin_size_adj = 1;
 		swar->null_fftbin_adj = 1;
 	} else {
@@ -2188,7 +2192,8 @@ target_if_spectral_report_params_init(
 	 */
 	if (target_type == TARGET_TYPE_QCN9000 ||
 	    target_type == TARGET_TYPE_QCA5018 ||
-	    target_type == TARGET_TYPE_QCA6750) {
+	    target_type == TARGET_TYPE_QCA6750 ||
+	    target_type == TARGET_TYPE_QCA6490) {
 		rparams->version = SPECTRAL_REPORT_FORMAT_VERSION_2;
 		rparams->num_spectral_detectors =
 				NUM_SPECTRAL_DETECTORS_GEN3_V2;
@@ -2225,7 +2230,8 @@ target_if_spectral_report_params_init(
 
 	rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_0] =
 						SPECTRAL_SCAN_MODE_NORMAL;
-	if (target_type == TARGET_TYPE_QCN9000) {
+	if (target_type == TARGET_TYPE_QCN9000 ||
+	    target_type == TARGET_TYPE_QCA6490) {
 		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_1] =
 						SPECTRAL_SCAN_MODE_AGILE;
 		rparams->detid_mode_table[SPECTRAL_DETECTOR_ID_2] =
@@ -2348,6 +2354,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    target_type == TARGET_TYPE_QCA6018 ||
 	    target_type == TARGET_TYPE_QCA5018 ||
 	    target_type == TARGET_TYPE_QCA6390 ||
+	    target_type == TARGET_TYPE_QCA6490 ||
 	    target_type == TARGET_TYPE_QCN9000 ||
 	    target_type == TARGET_TYPE_QCA6750)
 		spectral->direct_dma_support = true;
@@ -2363,6 +2370,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	    (target_type == TARGET_TYPE_QCN9000) ||
 	    (target_type == TARGET_TYPE_QCA6290) ||
 	    (target_type == TARGET_TYPE_QCA6390) ||
+	    (target_type == TARGET_TYPE_QCA6490) ||
 	    (target_type == TARGET_TYPE_QCA6750)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
@@ -4717,6 +4725,7 @@ target_if_spectral_direct_dma_support(struct wlan_objmgr_pdev *pdev)
 		spectral_err("Spectral LMAC object is NULL");
 		return false;
 	}
+
 	return spectral->direct_dma_support;
 }
 
