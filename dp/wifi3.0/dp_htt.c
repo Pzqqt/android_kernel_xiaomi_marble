@@ -92,9 +92,6 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 	struct dp_pdev *pdev;
 	struct dp_vdev *vdev;
 
-	if (!peer->last_delayed_ba_ppduid || !cur_ppdu_id)
-		return;
-
 	if (peer->last_delayed_ba) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "BA not yet recv for prev delayed ppdu[%d] - cur ppdu[%d]",
@@ -131,6 +128,8 @@ dp_peer_copy_delay_stats(struct dp_peer *peer,
 	peer->delayed_ba_ppdu_stats.mu_group_id = ppdu->mu_group_id;
 
 	peer->last_delayed_ba = true;
+
+	ppdu->debug_copied = true;
 }
 
 /*
@@ -175,6 +174,8 @@ dp_peer_copy_stats_to_bar(struct dp_peer *peer,
 	ppdu->mu_group_id = peer->delayed_ba_ppdu_stats.mu_group_id;
 
 	peer->last_delayed_ba = false;
+
+	ppdu->debug_copied = true;
 }
 
 /*
@@ -3037,6 +3038,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 					 struct ppdu_info *ppdu_info)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct dp_peer *peer;
 	uint8_t num_users;
 	uint8_t i;
 
@@ -3056,6 +3058,104 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 			}
 		}
 	}
+
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA &&
+	    ppdu_desc->delayed_ba) {
+		qdf_assert_always(ppdu_desc->num_users <= ppdu_desc->max_users);
+
+		for (i = 0; i < ppdu_desc->num_users; i++) {
+			struct cdp_delayed_tx_completion_ppdu_user *delay_ppdu;
+			uint64_t start_tsf;
+			uint64_t end_tsf;
+			uint32_t ppdu_id;
+
+			ppdu_id = ppdu_desc->ppdu_id;
+			peer = dp_peer_find_by_id(pdev->soc,
+						  ppdu_desc->user[i].peer_id);
+			/**
+			 * This check is to make sure peer is not deleted
+			 * after processing the TLVs.
+			 */
+			if (!peer)
+				continue;
+
+			delay_ppdu = &peer->delayed_ba_ppdu_stats;
+			start_tsf = ppdu_desc->ppdu_start_timestamp;
+			end_tsf = ppdu_desc->ppdu_end_timestamp;
+			/**
+			 * save delayed ba user info
+			 */
+			if (ppdu_desc->user[i].delayed_ba) {
+				dp_peer_copy_delay_stats(peer,
+							 &ppdu_desc->user[i],
+							 ppdu_id);
+				peer->last_delayed_ba_ppduid = ppdu_id;
+				delay_ppdu->ppdu_start_timestamp = start_tsf;
+				delay_ppdu->ppdu_end_timestamp = end_tsf;
+			}
+			ppdu_desc->user[i].peer_last_delayed_ba =
+				peer->last_delayed_ba;
+
+			dp_peer_unref_del_find_by_id(peer);
+
+			if (ppdu_desc->user[i].delayed_ba &&
+			    !ppdu_desc->user[i].debug_copied) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO_MED,
+					  "%s: %d ppdu_id[%d] bar_ppdu_id[%d] num_users[%d] usr[%d] htt_frame_type[%d]\n",
+					  __func__, __LINE__,
+					  ppdu_desc->ppdu_id,
+					  ppdu_desc->bar_ppdu_id,
+					  ppdu_desc->num_users,
+					  i,
+					  ppdu_desc->htt_frame_type);
+			}
+		}
+	}
+
+	/*
+	 * when frame type is BAR and STATS_COMMON_TLV is set
+	 * copy the store peer delayed info to BAR status
+	 */
+	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR) {
+		for (i = 0; i < ppdu_desc->bar_num_users; i++) {
+			struct cdp_delayed_tx_completion_ppdu_user *delay_ppdu;
+			uint64_t start_tsf;
+			uint64_t end_tsf;
+
+			peer = dp_peer_find_by_id(pdev->soc,
+						  ppdu_desc->user[i].peer_id);
+			/**
+			 * This check is to make sure peer is not deleted
+			 * after processing the TLVs.
+			 */
+			if (!peer)
+				continue;
+
+			if (ppdu_desc->user[i].completion_status !=
+			    HTT_PPDU_STATS_USER_STATUS_OK) {
+				dp_peer_unref_del_find_by_id(peer);
+				continue;
+			}
+
+			delay_ppdu = &peer->delayed_ba_ppdu_stats;
+			start_tsf = delay_ppdu->ppdu_start_timestamp;
+			end_tsf = delay_ppdu->ppdu_end_timestamp;
+
+			if (peer->last_delayed_ba) {
+				dp_peer_copy_stats_to_bar(peer,
+							  &ppdu_desc->user[i]);
+				ppdu_desc->ppdu_id =
+					peer->last_delayed_ba_ppduid;
+				ppdu_desc->ppdu_start_timestamp = start_tsf;
+				ppdu_desc->ppdu_end_timestamp = end_tsf;
+			}
+			ppdu_desc->user[i].peer_last_delayed_ba =
+				peer->last_delayed_ba;
+			dp_peer_unref_del_find_by_id(peer);
+		}
+	}
+
 }
 
 #ifndef WLAN_TX_PKT_CAPTURE_ENH
@@ -3592,9 +3692,8 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	uint8_t *tlv_buf;
 	struct ppdu_info *ppdu_info = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
-	struct dp_peer *peer;
-	uint32_t i = 0;
 	uint8_t max_users = CDP_MU_MAX_USERS;
+
 	uint32_t *msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 
 	length = HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_GET(*msg_word);
@@ -3690,82 +3789,6 @@ static struct ppdu_info *dp_htt_process_tlv(struct dp_pdev *pdev,
 	if (ppdu_desc->user[ppdu_desc->last_usr_index].completion_status !=
 	    HTT_PPDU_STATS_USER_STATUS_OK) {
 		tlv_bitmap_expected = tlv_bitmap_expected & 0xFF;
-	}
-
-	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA &&
-	    (ppdu_info->tlv_bitmap &
-	     (1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV)) &&
-	    ppdu_desc->delayed_ba) {
-
-		qdf_assert_always(ppdu_desc->num_users <= ppdu_desc->max_users);
-		for (i = 0; i < ppdu_desc->num_users; i++) {
-			struct cdp_delayed_tx_completion_ppdu_user *delay_ppdu;
-			uint64_t start_tsf;
-			uint64_t end_tsf;
-			uint32_t ppdu_id;
-
-			ppdu_id = ppdu_desc->ppdu_id;
-			peer = dp_peer_find_by_id(pdev->soc,
-						  ppdu_desc->user[i].peer_id);
-			/**
-			 * This check is to make sure peer is not deleted
-			 * after processing the TLVs.
-			 */
-			if (!peer)
-				continue;
-
-			delay_ppdu = &peer->delayed_ba_ppdu_stats;
-			start_tsf = ppdu_desc->ppdu_start_timestamp;
-			end_tsf = ppdu_desc->ppdu_end_timestamp;
-			/**
-			 * save delayed ba user info
-			 */
-			if (ppdu_desc->user[i].delayed_ba) {
-				dp_peer_copy_delay_stats(peer,
-							 &ppdu_desc->user[i],
-							 ppdu_id);
-				peer->last_delayed_ba_ppduid = ppdu_id;
-				delay_ppdu->ppdu_start_timestamp = start_tsf;
-				delay_ppdu->ppdu_end_timestamp = end_tsf;
-			}
-			dp_peer_unref_del_find_by_id(peer);
-		}
-	}
-
-	/*
-	 * when frame type is BAR and STATS_COMMON_TLV is set
-	 * copy the store peer delayed info to BAR status
-	 */
-	if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_BAR &&
-	    (ppdu_info->tlv_bitmap &
-	     (1 << HTT_PPDU_STATS_SCH_CMD_STATUS_TLV))) {
-		for (i = 0; i < ppdu_desc->bar_num_users; i++) {
-			struct cdp_delayed_tx_completion_ppdu_user *delay_ppdu;
-			uint64_t start_tsf;
-			uint64_t end_tsf;
-			peer = dp_peer_find_by_id(pdev->soc,
-						  ppdu_desc->user[i].peer_id);
-			/**
-			 * This check is to make sure peer is not deleted
-			 * after processing the TLVs.
-			 */
-			if (!peer)
-				continue;
-
-			delay_ppdu = &peer->delayed_ba_ppdu_stats;
-			start_tsf = delay_ppdu->ppdu_start_timestamp;
-			end_tsf = delay_ppdu->ppdu_end_timestamp;
-
-			if (peer->last_delayed_ba) {
-				dp_peer_copy_stats_to_bar(peer,
-							  &ppdu_desc->user[i]);
-				ppdu_desc->ppdu_id =
-					peer->last_delayed_ba_ppduid;
-				ppdu_desc->ppdu_start_timestamp = start_tsf;
-				ppdu_desc->ppdu_end_timestamp = end_tsf;
-			}
-			dp_peer_unref_del_find_by_id(peer);
-		}
 	}
 
 	/*

@@ -1607,6 +1607,8 @@ struct cdp_delayed_tx_completion_ppdu_user {
  * @tlv_bitmap: per user tlv bitmap
  * @skip: tx capture skip flag
  * @mon_procd: to indicate user processed in ppdu of the sched cmd
+ * @debug_copied: flag to indicate bar frame copied
+ * @peer_last_delayed_ba: flag to indicate peer last delayed ba
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1700,6 +1702,8 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t tlv_bitmap;
 	bool skip;
 	bool mon_procd;
+	bool debug_copied;
+	bool peer_last_delayed_ba;
 };
 
 /**
