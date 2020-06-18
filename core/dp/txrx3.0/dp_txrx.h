@@ -56,7 +56,17 @@ struct dp_txrx_handle {
  *
  * return: none
  */
-void dp_rx_napi_gro_flush(struct napi_struct *napi);
+static inline void dp_rx_napi_gro_flush(struct napi_struct *napi)
+{
+	if (napi->poll) {
+		napi_gro_flush(napi, false);
+		if (napi->rx_count) {
+			netif_receive_skb_list(&napi->rx_list);
+			qdf_init_list_head(&napi->rx_list);
+			napi->rx_count = 0;
+		}
+	}
+}
 #else
 #define dp_rx_napi_gro_flush(_napi) napi_gro_flush((_napi), false)
 #endif
