@@ -858,8 +858,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 
 	chan_num = dfs->dfs_curchan->dfs_ch_ieee;
 	center_freq = dfs->dfs_curchan->dfs_ch_freq;
-	is_curchan_5g = WLAN_REG_IS_5GHZ_CH(chan_num);
-	is_curchan_24g = WLAN_REG_IS_24GHZ_CH(chan_num);
+	is_curchan_5g = WLAN_REG_IS_5GHZ_CH_FREQ(center_freq);
+	is_curchan_24g = WLAN_REG_IS_24GHZ_CH_FREQ(center_freq);
 	is_curchan_49g = WLAN_REG_IS_49GHZ_FREQ(center_freq);
 
 	for (i = 0; i < *num_chan; i++) {
@@ -870,13 +870,13 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		if (!dfs_mlme_check_allowed_prim_chanlist(pdev, chan_num))
 			continue;
 
-		if ((is_curchan_5g) && WLAN_REG_IS_5GHZ_CH(chan_num)) {
+		if ((is_curchan_5g) && WLAN_REG_IS_5GHZ_CH_FREQ(center_freq)) {
 			chan_list[j].dfs_ch_ieee = chan_num;
 			chan_list[j].dfs_ch_freq = center_freq;
 			chan_list[j].dfs_ch_flagext = flagext;
 			j++;
 		} else if ((is_curchan_24g) &&
-				WLAN_REG_IS_24GHZ_CH(chan_num)) {
+				WLAN_REG_IS_24GHZ_CH_FREQ(center_freq)) {
 			chan_list[j].dfs_ch_ieee = chan_num;
 			chan_list[j].dfs_ch_freq = center_freq;
 			j++;
