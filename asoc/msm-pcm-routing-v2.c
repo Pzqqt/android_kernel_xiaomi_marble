@@ -1250,10 +1250,10 @@ int msm_pcm_routing_reg_stream_app_type_cfg(
 		goto done;
 	}
 
-	pr_debug("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+	pr_debug("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d copp_token %d\n",
 		__func__, fedai_id, session_type, be_id,
 		cfg_data->app_type, cfg_data->acdb_dev_id,
-		cfg_data->sample_rate);
+		cfg_data->sample_rate, cfg_data->copp_token);
 
 	if (!is_mm_lsm_fe_id(fedai_id)) {
 		pr_err("%s: Invalid machine driver ID %d\n",
@@ -1336,10 +1336,10 @@ int msm_pcm_routing_get_stream_app_type_cfg(
 
 	*bedai_id = be_id;
 	*cfg_data = fe_dai_app_type_cfg[fedai_id][session_type][be_id];
-	pr_debug("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+	pr_debug("%s: fedai_id %d, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d copp_token %d\n",
 		__func__, fedai_id, session_type, *bedai_id,
 		cfg_data->app_type, cfg_data->acdb_dev_id,
-		cfg_data->sample_rate);
+		cfg_data->sample_rate, cfg_data->copp_token);
 done:
 	return ret;
 }
@@ -1626,6 +1626,7 @@ int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 	u32 channels, sample_rate;
 	u16 bit_width = 16, be_bit_width;
 	bool is_lsm;
+	uint32_t copp_token = 0;
 
 	pr_debug("%s:fe_id[%d] perf_mode[%d] id[%d] stream_type[%d] passt[%d]",
 		 __func__, fe_id, perf_mode, dspst_id,
@@ -1710,6 +1711,8 @@ int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 			fe_dai_app_type_cfg[fe_id][session_type][i].sample_rate;
 				bit_width =
 					app_type_cfg[app_type_idx].bit_width;
+				copp_token =
+			fe_dai_app_type_cfg[fe_id][session_type][i].copp_token;
 			} else {
 				sample_rate = msm_bedais[i].sample_rate;
 			}
@@ -1739,7 +1742,7 @@ int msm_pcm_routing_reg_phy_compr_stream(int fe_id, int perf_mode,
 				adm_open(port_id, path_type, sample_rate,
 					 channels, topology, perf_mode,
 					 bit_width, app_type, acdb_dev_id,
-					 session_type, passthr_mode);
+					 session_type, passthr_mode, copp_token);
 			if ((copp_idx < 0) ||
 				(copp_idx >= MAX_COPPS_PER_PORT)) {
 				pr_err("%s:adm open failed coppid:%d\n",
@@ -2014,6 +2017,7 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 	uint16_t bits_per_sample = 16, be_bit_width;
 	uint32_t passthr_mode = LEGACY_PCM;
 	int ret = 0;
+	uint32_t copp_token = 0;
 
 	if (fedai_id > MSM_FRONTEND_DAI_MM_MAX_ID) {
 		/* bad ID assigned in machine driver */
@@ -2070,6 +2074,9 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 					.sample_rate;
 				bits_per_sample =
 					app_type_cfg[app_type_idx].bit_width;
+				copp_token =
+				fe_dai_app_type_cfg[fedai_id][session_type][i]
+					.copp_token;
 			} else
 				sample_rate = msm_bedais[i].sample_rate;
 
@@ -2091,7 +2098,7 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 					    sample_rate, channels, topology,
 					    perf_mode, bits_per_sample,
 					    app_type, acdb_dev_id,
-					    session_type, passthr_mode);
+					    session_type, passthr_mode, copp_token);
 			if ((copp_idx < 0) ||
 				(copp_idx >= MAX_COPPS_PER_PORT)) {
 				pr_err("%s: adm open failed copp_idx:%d\n",
@@ -2254,6 +2261,7 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 	struct msm_pcm_routing_fdai_data *fdai;
 	uint32_t passthr_mode;
 	bool is_lsm;
+	uint32_t copp_token = 0;
 
 	pr_debug("%s: reg %x val %x set %x\n", __func__, reg, val, set);
 
@@ -2352,6 +2360,9 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 					.sample_rate;
 				bits_per_sample =
 					app_type_cfg[app_type_idx].bit_width;
+				copp_token =
+				fe_dai_app_type_cfg[val][session_type][reg]
+					.copp_token;
 			} else
 				sample_rate = msm_bedais[reg].sample_rate;
 
@@ -2372,7 +2383,7 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 					    sample_rate, channels, topology,
 					    fdai->perf_mode, bits_per_sample,
 					    app_type, acdb_dev_id,
-					    session_type, passthr_mode);
+					    session_type, passthr_mode, copp_token);
 			if ((copp_idx < 0) ||
 			    (copp_idx >= MAX_COPPS_PER_PORT)) {
 				pr_err("%s: adm open failed\n", __func__);
@@ -30031,6 +30042,7 @@ static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
 	u32 session_id;
 	struct media_format_info voc_be_media_format;
 	bool is_lsm;
+	uint32_t copp_token = 0;
 
 	pr_debug("%s: substream->pcm->id:%s\n",
 		 __func__, substream->pcm->id);
@@ -30114,6 +30126,9 @@ static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
 							   [be_id].sample_rate;
 				bits_per_sample =
 					app_type_cfg[app_type_idx].bit_width;
+				copp_token =
+					fe_dai_app_type_cfg[i][session_type]
+							[be_id].copp_token;
 			} else
 				sample_rate = bedai->sample_rate;
 			/*
@@ -30146,7 +30161,7 @@ static int msm_pcm_routing_prepare(struct snd_pcm_substream *substream)
 					    sample_rate, channels, topology,
 					    fdai->perf_mode, bits_per_sample,
 					    app_type, acdb_dev_id,
-					    session_type, fdai->passthr_mode);
+					    session_type, fdai->passthr_mode, copp_token);
 			if ((copp_idx < 0) ||
 				(copp_idx >= MAX_COPPS_PER_PORT)) {
 				pr_err("%s: adm open failed\n", __func__);

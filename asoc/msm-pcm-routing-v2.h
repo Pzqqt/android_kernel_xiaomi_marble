@@ -607,6 +607,7 @@ struct msm_pcm_stream_app_type_cfg {
 	int app_type;
 	int acdb_dev_id;
 	int sample_rate;
+	uint32_t copp_token;
 };
 
 /* dai_id: front-end ID,
