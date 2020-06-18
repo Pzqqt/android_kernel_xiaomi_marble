@@ -290,12 +290,11 @@ static void _sde_plane_set_qos_lut(struct drm_plane *plane,
 	frame_rate = crtc->mode.vrefresh;
 	perf = &psde->catalog->perf;
 	qos_count = perf->qos_refresh_count;
-	while (qos_count && perf->qos_refresh_rate) {
-		if (frame_rate >= perf->qos_refresh_rate[qos_count - 1]) {
-			fps_index = qos_count - 1;
+	while ((fps_index < qos_count) && perf->qos_refresh_rate) {
+		if ((frame_rate <= perf->qos_refresh_rate[fps_index]) ||
+				(fps_index == qos_count - 1))
 			break;
-		}
-		qos_count--;
+		fps_index++;
 	}
 
 	if (!psde->is_rt_pipe) {

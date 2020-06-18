@@ -168,12 +168,11 @@ static void sde_encoder_phys_wb_set_qos(struct sde_encoder_phys *phys_enc)
 
 	hw_wb = wb_enc->hw_wb;
 	qos_count = perf->qos_refresh_count;
-	while (qos_count && perf->qos_refresh_rate) {
-		if (frame_rate >= perf->qos_refresh_rate[qos_count - 1]) {
-			fps_index = qos_count - 1;
+	while ((fps_index < qos_count) && perf->qos_refresh_rate) {
+		if ((frame_rate <= perf->qos_refresh_rate[fps_index]) ||
+				(fps_index == qos_count - 1))
 			break;
-		}
-		qos_count--;
+		fps_index++;
 	}
 
 	qos_cfg.danger_safe_en = true;
