@@ -93,6 +93,12 @@
 /* MAX RNR entries per channel*/
 #define WLAN_MAX_RNR_COUNT 15
 
+/*
+ * Maximum numbers of callback functions that may be invoked
+ * for a particular scan event.
+ */
+#define MAX_SCAN_EVENT_LISTENERS (MAX_SCAN_EVENT_HANDLERS_PER_PDEV + 1)
+
 /**
  * struct probe_time_dwell_time - probe time, dwell time map
  * @dwell_time: dwell time
@@ -525,7 +531,123 @@ struct wlan_scan_obj {
 #ifdef FEATURE_6G_SCAN_CHAN_SORT_ALGO
 	struct channel_list_db rnr_channel_db;
 #endif
+#ifdef ENABLE_SCAN_PROFILE
+	uint64_t scan_listener_cb_exe_dur[MAX_SCAN_EVENT_LISTENERS];
+	uint64_t scm_scan_event_duration;
+	uint64_t scm_scan_to_post_scan_duration;
+#endif
 };
+
+#ifdef ENABLE_SCAN_PROFILE
+static inline
+void scm_duration_init(struct wlan_scan_obj *scan)
+{
+	if (!scan)
+		return;
+
+	scan->scm_scan_event_duration = 0;
+	scan->scm_scan_to_post_scan_duration = 0;
+}
+
+static inline
+void scm_event_duration_start(struct wlan_scan_obj *scan)
+{
+	if (!scan)
+		return;
+
+	scan->scm_scan_event_duration =
+		qdf_ktime_to_ms(qdf_ktime_get());
+}
+
+static inline
+void scm_event_duration_end(struct wlan_scan_obj *scan)
+{
+	if (!scan)
+		return;
+
+	scan->scm_scan_event_duration =
+		(qdf_ktime_to_ms(qdf_ktime_get()) -
+		 scan->scm_scan_event_duration);
+}
+
+static inline
+void scm_to_post_scan_duration_set(struct wlan_scan_obj *scan)
+{
+	if (!scan)
+		return;
+
+	scan->scm_scan_to_post_scan_duration =
+		(qdf_ktime_to_ms(qdf_ktime_get()) -
+		 scan->scm_scan_event_duration);
+}
+
+static inline
+void scm_listener_cb_exe_dur_start(struct wlan_scan_obj *scan, uint8_t index)
+{
+	if (!scan || (index >= MAX_SCAN_EVENT_LISTENERS))
+		return;
+
+	scan->scan_listener_cb_exe_dur[index] =
+		qdf_ktime_to_ms(qdf_ktime_get());
+}
+
+static inline
+void scm_listener_cb_exe_dur_end(struct wlan_scan_obj *scan, uint8_t index)
+{
+	if (!scan || (index >= MAX_SCAN_EVENT_LISTENERS))
+		return;
+
+	scan->scan_listener_cb_exe_dur[index] =
+		(qdf_ktime_to_ms(qdf_ktime_get()) -
+		 scan->scan_listener_cb_exe_dur[index]);
+}
+
+static inline
+void scm_listener_duration_init(struct wlan_scan_obj *scan)
+{
+	if (!scan)
+		return;
+
+	qdf_mem_set(&scan->scan_listener_cb_exe_dur,
+		    sizeof(uint64_t) * MAX_SCAN_EVENT_LISTENERS,
+		    0);
+}
+#else
+static inline
+void scm_duration_init(struct wlan_scan_obj *scan)
+{
+}
+
+static inline
+void scm_event_duration_start(struct wlan_scan_obj *scan)
+{
+}
+
+static inline
+void scm_event_duration_end(struct wlan_scan_obj *scan)
+{
+}
+
+static inline
+void scm_to_post_scan_duration_set(struct wlan_scan_obj *scan)
+{
+}
+
+static inline
+void scm_listener_cb_exe_dur_start(struct wlan_scan_obj *scan, uint8_t index)
+{
+}
+
+static inline
+void scm_listener_cb_exe_dur_end(struct wlan_scan_obj *scan, uint8_t index)
+{
+}
+
+static inline
+void scm_listener_duration_init(struct wlan_scan_obj *scan)
+{
+}
+#endif
 
 /**
  * wlan_psoc_get_scan_obj() - private API to get scan object from psoc

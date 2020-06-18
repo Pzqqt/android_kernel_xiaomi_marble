@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,12 +27,6 @@
 #define _WLAN_SCAN_MANAGER_API_H_
 
 #include "wlan_scan_main.h"
-
-/*
- * Maximum numbers of callback functions that may be invoked
- * for a particular scan event.
- */
-#define MAX_SCAN_EVENT_LISTENERS (MAX_SCAN_EVENT_HANDLERS_PER_PDEV + 1)
 
 /**
  * struct scan_event_listners - listeners interested in a particular scan event
