@@ -400,6 +400,10 @@ CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 6, CFG_VALUE_OR_DEFAULT, \
  *	 b. Allow CAC process on DFS channel in single SAP (GO) mode
  *	 c. Allow DFS radar event process in single SAP (GO) mode
  *	 d. Disallow CAC and radar event process in SAP (GO) + STA mode.
+ *	 The value 2 of this ini requires master mode to be enabled so it is
+ *	 mandatory to enable the dfs master mode ini gEnableDFSMasterCap
+ *	 along with it.
+ *
  * Related: None.
  *
  * Supported Feature: Non-DBS, DBS
