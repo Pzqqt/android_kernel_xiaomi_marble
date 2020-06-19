@@ -1181,6 +1181,7 @@ send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_SEC_TO_MSEC(roam_req->min_delay_btw_roam_scans);
 	roam_scan_mode_fp->roam_scan_mode = roam_req->mode;
 	roam_scan_mode_fp->vdev_id = roam_req->vdev_id;
+	wmi_debug("roam scan mode: %d", roam_req->mode);
 	if (roam_req->mode ==
 	    (WMI_ROAM_SCAN_MODE_NONE | WMI_ROAM_SCAN_MODE_ROAMOFFLOAD)) {
 		roam_scan_mode_fp->flags |=
