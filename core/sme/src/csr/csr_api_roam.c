@@ -16999,7 +16999,10 @@ static inline void
 csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 				     struct roam_offload_scan_req *req_buf,
 				     struct csr_roam_session *session)
-{}
+{
+	req_buf->roam_force_rssi_trigger =
+			mac_ctx->mlme_cfg->lfr.roam_force_rssi_trigger;
+}
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
