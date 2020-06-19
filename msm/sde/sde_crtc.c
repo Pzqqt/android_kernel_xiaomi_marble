@@ -3297,10 +3297,9 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	struct drm_device *dev;
 	struct drm_plane *plane;
 	struct msm_drm_private *priv;
-	struct msm_drm_thread *event_thread;
 	struct sde_crtc_state *cstate;
 	struct sde_kms *sde_kms;
-	int idle_time = 0, i;
+	int i;
 
 	if (!crtc || !crtc->dev || !crtc->dev->dev_private) {
 		SDE_ERROR("invalid crtc\n");
@@ -3330,14 +3329,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	cstate = to_sde_crtc_state(crtc->state);
 	dev = crtc->dev;
 	priv = dev->dev_private;
-
-	if (crtc->index >= ARRAY_SIZE(priv->event_thread)) {
-		SDE_ERROR("invalid crtc index[%d]\n", crtc->index);
-		return;
-	}
-
-	event_thread = &priv->event_thread[crtc->index];
-	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
 	if ((sde_crtc->cache_state == CACHE_STATE_PRE_CACHE) &&
 			sde_crtc_get_property(cstate, CRTC_PROP_CACHE_STATE))
@@ -3381,16 +3372,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 
 	/* wait for acquire fences before anything else is done */
 	_sde_crtc_wait_for_fences(crtc);
-
-	/* schedule the idle notify delayed work */
-	if (idle_time && sde_encoder_check_curr_mode(
-						sde_crtc->mixers[0].encoder,
-						MSM_DISPLAY_VIDEO_MODE)) {
-		kthread_mod_delayed_work(&event_thread->worker,
-					&sde_crtc->idle_notify_work,
-					msecs_to_jiffies(idle_time));
-		SDE_DEBUG("schedule idle notify work in %dms\n", idle_time);
-	}
 
 	if (!cstate->rsc_update) {
 		drm_for_each_encoder_mask(encoder, dev,
@@ -3518,6 +3499,32 @@ static void _sde_crtc_remove_pipe_flush(struct drm_crtc *crtc)
 	}
 }
 
+static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
+		struct drm_crtc_state *old_state)
+{
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_crtc_state *cstate = to_sde_crtc_state(old_state);
+	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
+	struct msm_drm_private *priv = sde_kms->dev->dev_private;
+	struct msm_drm_thread *event_thread;
+	int idle_time = 0;
+
+	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
+
+	if (!idle_time ||
+		!sde_encoder_check_curr_mode(sde_crtc->mixers[0].encoder,
+						MSM_DISPLAY_VIDEO_MODE) ||
+			(crtc->index >= ARRAY_SIZE(priv->event_thread)))
+		return;
+
+	/* schedule the idle notify delayed work */
+	event_thread = &priv->event_thread[crtc->index];
+
+	kthread_mod_delayed_work(&event_thread->worker,
+		&sde_crtc->idle_notify_work, msecs_to_jiffies(idle_time));
+	SDE_DEBUG("schedule idle notify work in %dms\n", idle_time);
+}
+
 /**
  * sde_crtc_reset_hw - attempt hardware reset on errors
  * @crtc: Pointer to DRM crtc instance
@@ -3632,7 +3639,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	struct drm_encoder *encoder;
 	struct drm_device *dev;
 	struct sde_crtc *sde_crtc;
-	struct msm_drm_private *priv;
 	struct sde_kms *sde_kms;
 	struct sde_crtc_state *cstate;
 	bool is_error = false;
@@ -3653,7 +3659,6 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		return;
 	}
 
-	priv = sde_kms->dev->dev_private;
 	cstate = to_sde_crtc_state(crtc->state);
 
 	/*
@@ -3738,6 +3743,8 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		sde_crtc->event = crtc->state->event;
 		spin_unlock_irqrestore(&dev->event_lock, flags);
 	}
+
+	_sde_crtc_schedule_idle_notify(crtc, old_state);
 
 	SDE_ATRACE_END("crtc_commit");
 }
@@ -4052,6 +4059,8 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 			(u8 *)&power_on);
 
 	_sde_crtc_flush_event_thread(crtc);
+	kthread_cancel_delayed_work_sync(&sde_crtc->static_cache_read_work);
+	kthread_cancel_delayed_work_sync(&sde_crtc->idle_notify_work);
 
 	SDE_EVT32(DRMID(crtc), sde_crtc->enabled,
 			crtc->state->active, crtc->state->enable);
