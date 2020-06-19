@@ -23,6 +23,7 @@
 #include <qdf_util.h>
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
+#include <linux/version.h>
 #include <linux/wireless.h>
 #include <net/cfg80211.h>
 #include <br_private.h>

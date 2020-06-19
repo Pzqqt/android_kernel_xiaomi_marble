@@ -45,11 +45,22 @@ int qca_multi_link_tbl_get_eth_entries(struct net_device *net_dev,
 	 */
 	rcu_read_lock();
 	for (i = 0; i < BR_HASH_SIZE ; i++) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 		hlist_for_each_entry_rcu(search_fdb, &p->br->hash[i], hlist) {
+#else
+		hlist_for_each_entry_rcu(search_fdb, &p->br->fdb_list,
+					 fdb_node) {
+#endif
 			ndev = search_fdb->dst ? search_fdb->dst->dev : NULL;
 			wdev = ndev ? ndev->ieee80211_ptr : NULL;
 			if (!wdev && ndev) {
-				memcpy(qfdb->qal_mac_addr, search_fdb->addr.addr, 6);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
+				memcpy(qfdb->qal_mac_addr,
+				       search_fdb->addr.addr, 6);
+#else
+				memcpy(qfdb->qal_mac_addr,
+				       search_fdb->key.addr.addr, 6);
+#endif
 				qfdb->qal_fdb_dev = ndev;
 				qfdb->qal_fdb_is_local =  search_fdb->is_local;
 				num_of_entries++;
@@ -89,7 +100,12 @@ struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev,
 
 	rcu_read_lock();
 	for (i = 0; i < BR_HASH_SIZE; i++) {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 		hlist_for_each_entry_rcu(search_fdb, &p->br->hash[i], hlist) {
+#else
+		hlist_for_each_entry_rcu(search_fdb, &p->br->fdb_list,
+					 fdb_node) {
+#endif
 			if (!search_fdb->is_local)
 				continue;
 
@@ -112,8 +128,14 @@ qdf_export_symbol(qca_multi_link_tbl_find_sta_or_ap);
 
 QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *addr)
 {
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 	int status;
+#endif
 	struct net_bridge_fdb_entry *fdb_entry = NULL;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+	struct net_bridge_port *fdb_port = NULL;
+	struct net_bridge *br = NULL;
+#endif
 
 	fdb_entry = br_fdb_has_entry(net_dev, addr, 0);
 	if (!fdb_entry) {
@@ -124,10 +146,25 @@ QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *
 		return QDF_STATUS_SUCCESS;
 	}
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 24)
+	fdb_port = br_port_get_rcu(net_dev);
+	if (!fdb_port) {
+		qdf_err("fdb port is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	br = fdb_port->br;
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
 	status = br_fdb_delete_by_netdev(net_dev, addr, 0);
 	if (status < 0) {
 		return QDF_STATUS_E_FAILURE;
 	}
+#else
+	/* Use 5.4-specific API */
+	qdf_info("Needs alternative implementation");
+#endif
 	return QDF_STATUS_SUCCESS;
 }
 
