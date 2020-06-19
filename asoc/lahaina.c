@@ -387,10 +387,11 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(proxy_tx),
 	},
 	/* Proxy Rx BACK END DAI Link */
@@ -400,11 +401,12 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
+		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(proxy_rx),
 	},
 	{
@@ -413,12 +415,12 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
-        .ops = &msm_common_be_ops,
+		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(usb_audio_rx),
 	},
 	{
@@ -427,11 +429,11 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
-        .ops = &msm_common_be_ops,
+		.ops = &msm_common_be_ops,
 		SND_SOC_DAILINK_REG(usb_audio_tx),
 	},
 };
@@ -443,7 +445,7 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.init = &msm_wcn_init,
@@ -459,7 +461,7 @@ static struct snd_soc_dai_link msm_wcn_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ops = &msm_common_be_ops,
@@ -477,7 +479,7 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -492,7 +494,7 @@ static struct snd_soc_dai_link ext_disp_be_dai_link[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -511,7 +513,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -526,7 +528,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -540,7 +542,7 @@ static struct snd_soc_dai_link msm_wsa_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -557,7 +559,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -572,7 +574,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -586,7 +588,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -600,7 +602,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -614,7 +616,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_pmdown_time = 1,
@@ -629,7 +631,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -642,7 +644,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -658,7 +660,7 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -671,7 +673,7 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -684,7 +686,7 @@ static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 #if IS_ENABLED(CONFIG_AUDIO_QGKI)
 		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
 #endif /* CONFIG_AUDIO_QGKI */
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST},
 		.ignore_suspend = 1,
@@ -825,7 +827,7 @@ static struct snd_soc_dai_link msm_stub_be_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_AUXPCM_RX,
 		.stream_name = LPASS_BE_PRI_AUXPCM_RX,
-		.dpcm_playback = 1,
+		.playback_only = 1,
 		.init = &msm_audrx_stub_init,
 		.ignore_pmdown_time = 1,
 		.ignore_suspend = 1,
@@ -835,7 +837,7 @@ static struct snd_soc_dai_link msm_stub_be_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_AUXPCM_TX,
 		.stream_name = LPASS_BE_PRI_AUXPCM_TX,
-		.dpcm_capture = 1,
+		.capture_only = 1,
 		.ignore_suspend = 1,
 		.ops = &msm_stub_be_ops,
 		SND_SOC_DAILINK_REG(auxpcm_tx),
@@ -1255,7 +1257,6 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "%s: No platform supplied from device tree\n", __func__);
 		return -EINVAL;
 	}
-
 	pdata = devm_kzalloc(&pdev->dev,
 			sizeof(struct msm_asoc_mach_data), GFP_KERNEL);
 	if (!pdata)
