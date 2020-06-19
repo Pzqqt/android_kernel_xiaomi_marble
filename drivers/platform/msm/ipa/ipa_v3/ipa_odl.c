@@ -369,7 +369,6 @@ int ipa3_odl_pipe_open(void)
 	holb_cfg.tmr_val = 0;
 	holb_cfg.en = 1;
 
-	ipa3_cfg_ep_holb_by_client(IPA_CLIENT_USB_DPL_CONS, &holb_cfg);
 	ret = ipa_setup_odl_pipe();
 	if (ret) {
 		IPAERR(" Setup endpoint config failed\n");
@@ -462,7 +461,6 @@ static int ipa_adpl_release(struct inode *inode, struct file *filp)
 void ipa3_odl_pipe_cleanup(bool is_ssr)
 {
 	bool ipa_odl_opened = false;
-	struct ipa_ep_cfg_holb holb_cfg;
 
 	if (!ipa3_odl_ctx->odl_state.adpl_open) {
 		IPAERR("adpl pipe not configured\n");
@@ -475,11 +473,6 @@ void ipa3_odl_pipe_cleanup(bool is_ssr)
 
 	/*Since init will not be done again*/
 	ipa3_odl_ctx->odl_state.odl_init = true;
-	memset(&holb_cfg, 0, sizeof(holb_cfg));
-	holb_cfg.tmr_val = 0;
-	holb_cfg.en = 0;
-
-	ipa3_cfg_ep_holb_by_client(IPA_CLIENT_USB_DPL_CONS, &holb_cfg);
 
 	ipa3_teardown_sys_pipe(ipa3_odl_ctx->odl_client_hdl);
 	ipa3_odl_ctx->odl_client_hdl = -1;
