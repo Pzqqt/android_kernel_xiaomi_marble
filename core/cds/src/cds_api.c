@@ -1855,6 +1855,7 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	QDF_STATUS status;
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
+	bool ssr_ini_enabled = cds_is_self_recovery_enabled();
 
 	/* NOTE! This code path is delicate! Think very carefully before
 	 * modifying the content or order of the following. Please review any
@@ -1882,8 +1883,11 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		return;
 	}
 
-	/* if *wlan* recovery is disabled, crash here for debugging */
-	if (!cds_is_self_recovery_enabled()) {
+	/*
+	 * if *wlan* recovery is disabled, crash here for debugging  for snoc
+	 * targets.
+	 */
+	if (qdf->bus_type == QDF_BUS_TYPE_SNOC && !ssr_ini_enabled) {
 		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
 				func, line);
 		return;
@@ -1911,6 +1915,14 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	cds_set_assert_target_in_progress(true);
 	cds_force_assert_target(qdf);
 	cds_set_assert_target_in_progress(false);
+
+	/*
+	 * if *wlan* recovery is disabled, once all the required registers are
+	 * read via the platform driver check and crash the system.
+	 */
+	if (qdf->bus_type == QDF_BUS_TYPE_PCI && !ssr_ini_enabled)
+		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
+				func, line);
 
 	status = qdf_runtime_pm_allow_suspend(&rtl);
 	if (QDF_IS_STATUS_ERROR(status))
