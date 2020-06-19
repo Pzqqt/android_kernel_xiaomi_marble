@@ -219,6 +219,7 @@ char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id);
  * @tx_retry_fw: the number of retried frames from firmware to remote station
  * @tx_retry_exhaust_fw: the number of frames retried but finally failed from
  *                    firmware to remote station
+ * @rx_fcs_count: the number of frames received with fcs error
  * @sta_info: The sta_info node for the station info list maintained in adapter
  * @assoc_req_ies: Assoc request IEs of the peer station
  * @ref_cnt: Reference count to synchronize sta_info access
@@ -279,6 +280,7 @@ struct hdd_station_info {
 	uint32_t tx_total_fw;
 	uint32_t tx_retry_fw;
 	uint32_t tx_retry_exhaust_fw;
+	uint32_t rx_fcs_count;
 	qdf_list_node_t sta_node;
 	struct wlan_ies assoc_req_ies;
 	qdf_atomic_t ref_cnt;

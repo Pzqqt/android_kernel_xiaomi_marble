@@ -1500,7 +1500,8 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 	struct cdp_peer_stats *peer_stats;
 	struct stats_event *stats;
 	QDF_STATUS status;
-	int ret;
+	bool found = false;
+	int i, ret = 0;
 
 	peer_stats = qdf_mem_malloc(sizeof(*peer_stats));
 	if (!peer_stats)
@@ -1541,7 +1542,33 @@ static int hdd_get_peer_stats(struct hdd_adapter *adapter,
 
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 
-	return 0;
+	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->vdev,
+							    &ret);
+	if (ret || !stats || !stats->num_peer_adv_stats) {
+		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+		hdd_err("Failed to get peer stats info");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < stats->num_peer_adv_stats; i++) {
+		if (!qdf_mem_cmp(stainfo->sta_mac.bytes,
+				 stats->peer_adv_stats[i].peer_macaddr,
+				 QDF_MAC_ADDR_SIZE)) {
+			stainfo->rx_fcs_count = stats->peer_adv_stats[i].
+								      fcs_count;
+			found = true;
+			break;
+		}
+	}
+
+	if (!found) {
+		hdd_err("Peer not found");
+		ret = -EINVAL;
+	}
+
+	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
+
+	return ret;
 }
 
 /**
@@ -1619,6 +1646,13 @@ static int hdd_add_peer_stats(struct sk_buff *skb,
 		    QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_TARGET_TX_RETRY_EXHAUSTED,
 		    stainfo->tx_retry_exhaust_fw)) {
 		hdd_err("Failed to put tx_retry_exhaust_fw");
+		goto fail;
+	}
+
+	if (nla_put_u32(skb,
+		     QCA_WLAN_VENDOR_ATTR_GET_STA_INFO_RX_FRAMES_CRC_FAIL_COUNT,
+		     stainfo->rx_fcs_count)) {
+		hdd_err("Failed to put rx_fcs_count");
 		goto fail;
 	}
 
