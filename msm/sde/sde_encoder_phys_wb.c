@@ -589,26 +589,16 @@ static void sde_encoder_phys_wb_setup_cdp(struct sde_encoder_phys *phys_enc,
 static void _sde_enc_phys_wb_detect_cwb(struct sde_encoder_phys *phys_enc,
 		struct drm_crtc_state *crtc_state)
 {
-	struct drm_encoder *encoder;
 	struct sde_encoder_phys_wb *wb_enc = to_sde_encoder_phys_wb(phys_enc);
 	const struct sde_wb_cfg *wb_cfg = wb_enc->hw_wb->caps;
-
-	phys_enc->in_clone_mode = false;
+	u32 encoder_mask = 0;
 
 	/* Check if WB has CWB support */
-	if (!(wb_cfg->features & BIT(SDE_WB_HAS_CWB)))
-		return;
-
-	/* if any other encoder is connected to same crtc enable clone mode*/
-	drm_for_each_encoder(encoder, crtc_state->crtc->dev) {
-		if (encoder->crtc != crtc_state->crtc)
-			continue;
-
-		if (phys_enc->parent != encoder) {
-			phys_enc->in_clone_mode = true;
-			break;
-		}
+	if (wb_cfg->features & BIT(SDE_WB_HAS_CWB)) {
+		encoder_mask = crtc_state->encoder_mask;
+		encoder_mask &= ~drm_encoder_mask(phys_enc->parent);
 	}
+	phys_enc->in_clone_mode = encoder_mask ? true : false;
 
 	SDE_DEBUG("detect CWB - status:%d\n", phys_enc->in_clone_mode);
 }
@@ -1296,6 +1286,15 @@ static int sde_encoder_phys_wb_wait_for_commit_done(
 	return _sde_encoder_phys_wb_wait_for_commit_done(phys_enc, false);
 }
 
+static int sde_encoder_phys_wb_wait_for_tx_complete(
+		struct sde_encoder_phys *phys_enc)
+{
+	if (!atomic_read(&phys_enc->pending_retire_fence_cnt))
+		return 0;
+
+	return _sde_encoder_phys_wb_wait_for_commit_done(phys_enc, true);
+}
+
 /**
  * sde_encoder_phys_wb_prepare_for_kickoff - pre-kickoff processing
  * @phys_enc:	Pointer to physical encoder
@@ -1724,6 +1723,7 @@ static void sde_encoder_phys_wb_init_ops(struct sde_encoder_phys_ops *ops)
 	ops->atomic_check = sde_encoder_phys_wb_atomic_check;
 	ops->get_hw_resources = sde_encoder_phys_wb_get_hw_resources;
 	ops->wait_for_commit_done = sde_encoder_phys_wb_wait_for_commit_done;
+	ops->wait_for_tx_complete = sde_encoder_phys_wb_wait_for_tx_complete;
 	ops->prepare_for_kickoff = sde_encoder_phys_wb_prepare_for_kickoff;
 	ops->handle_post_kickoff = sde_encoder_phys_wb_handle_post_kickoff;
 	ops->trigger_flush = sde_encoder_phys_wb_trigger_flush;
