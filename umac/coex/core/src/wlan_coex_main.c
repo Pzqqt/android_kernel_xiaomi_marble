@@ -32,6 +32,8 @@ QDF_STATUS wlan_coex_psoc_created_notification(struct wlan_objmgr_psoc *psoc,
 	if (!psoc_obj)
 		return QDF_STATUS_E_NOMEM;
 
+	psoc_obj->btc_chain_mode = WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED;
+
 	/* Attach scan private date to psoc */
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 						       WLAN_UMAC_COMP_COEX,
@@ -71,13 +73,6 @@ QDF_STATUS wlan_coex_psoc_destroyed_notification(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_coex_psoc_init(struct wlan_objmgr_psoc *psoc)
 {
-	struct coex_psoc_obj *coex_obj;
-
-	coex_obj = wlan_psoc_get_coex_obj(psoc);
-	if (!coex_obj)
-		return QDF_STATUS_E_INVAL;
-
-	coex_obj->btc_chain_mode = WLAN_COEX_BTC_CHAIN_MODE_UNSETTLED;
 	return QDF_STATUS_SUCCESS;
 }
 
