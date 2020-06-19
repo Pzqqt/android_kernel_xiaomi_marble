@@ -2675,6 +2675,7 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 		mcs->rx_mcs_set = param->rx_mcs_set;
 		mcs->tx_max_rate = param->tx_max_rate;
 		mcs->tx_mcs_set = param->tx_mcs_set;
+		mcs->tx_max_mcs_nss = param->tx_max_mcs_nss;
 	}
 
 	/* HE Rates */
