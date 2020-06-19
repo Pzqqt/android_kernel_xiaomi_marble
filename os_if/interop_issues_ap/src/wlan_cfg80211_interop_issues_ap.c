@@ -33,6 +33,7 @@
 #include <wlan_utility.h>
 #include "wlan_hdd_main.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_hdd_object_manager.h"
 
 const struct nla_policy
 interop_issues_ap_policy[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_MAX + 1] = {
@@ -178,13 +179,16 @@ __wlan_cfg80211_set_interop_issues_ap_config(struct wiphy *wiphy,
 	uint32_t count = 0;
 	struct wlan_interop_issues_ap_info interop_issues_ap = {0};
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_vdev *vdev;
 
-	if (!adapter->vdev) {
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
 		osif_err("Invalid vdev");
 		return -EINVAL;
 	}
 
-	psoc = wlan_vdev_get_psoc(adapter->vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	hdd_objmgr_put_vdev(vdev);
 	if (!psoc) {
 		osif_err("Invalid psoc");
 		return -EINVAL;

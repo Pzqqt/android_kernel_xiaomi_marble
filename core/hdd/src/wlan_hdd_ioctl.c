@@ -42,6 +42,7 @@
 #include <sme_api.h>
 #include <sir_api.h>
 #endif
+#include "wlan_hdd_object_manager.h"
 #include "hif.h"
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_reg_ucfg_api.h"
@@ -5804,6 +5805,7 @@ hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_vdev *vdev;
 
 	mac_handle = hdd_ctx->mac_handle;
 	if (!mac_handle) {
@@ -5817,15 +5819,24 @@ hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return -EINVAL;
+	}
+
 	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
 	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++) {
 		status = hdd_populate_vdev_chains(&user_cfg,
 						  num_rx_chains,
-						  num_tx_chains, band,
-						  adapter->vdev);
-		if (QDF_IS_STATUS_ERROR(status))
+						  num_tx_chains, band, vdev);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_objmgr_put_vdev(vdev);
 			return -EINVAL;
+		}
 	}
+	hdd_objmgr_put_vdev(vdev);
+
 	status = sme_nss_chains_update(mac_handle,
 				       &user_cfg,
 				       adapter->vdev_id);
@@ -6011,12 +6022,19 @@ static inline int drv_cmd_get_antenna_mode(struct hdd_adapter *adapter,
 	uint32_t antenna_mode = 0;
 	char extra[32];
 	uint8_t len = 0;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return -EINVAL;
+	}
 
 	antenna_mode = hdd_ctx->current_antenna_mode;
 	/* Overwrite this antenna mode if dynamic vdev chains are supported */
 	hdd_get_dynamic_antenna_mode(&antenna_mode,
-				     hdd_ctx->dynamic_nss_chains_support,
-				     adapter->vdev);
+				     hdd_ctx->dynamic_nss_chains_support, vdev);
+	hdd_objmgr_put_vdev(vdev);
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			antenna_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);

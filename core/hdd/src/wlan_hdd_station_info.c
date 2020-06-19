@@ -35,6 +35,7 @@
 #include <wlan_hdd_station_info.h>
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
+#include "wlan_hdd_object_manager.h"
 
 /*
  * define short names for the global vendor params
@@ -133,8 +134,15 @@ static int hdd_get_sta_congestion(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 	struct cca_stats cca_stats;
+	struct wlan_objmgr_vdev *vdev;
 
-	status = ucfg_mc_cp_stats_cca_stats_get(adapter->vdev, &cca_stats);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		hdd_err("vdev is NULL");
+		return -EINVAL;
+	}
+	status = ucfg_mc_cp_stats_cca_stats_get(vdev, &cca_stats);
+	hdd_objmgr_put_vdev(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
 
