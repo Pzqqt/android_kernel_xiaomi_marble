@@ -436,6 +436,42 @@ static bool scm_bss_is_connected(struct scan_cache_entry *entry)
 		return true;
 	return false;
 }
+
+static bool scm_bss_is_nontx_of_conn_bss(struct scan_cache_entry *entry,
+					 struct scan_dbs *scan_db)
+{
+	int i;
+	struct scan_cache_node *cur_node = NULL;
+	struct scan_cache_node *next_node = NULL;
+
+	if (!entry->mbssid_info.profile_num)
+		return false;
+
+	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
+		cur_node = scm_get_next_node(scan_db,
+					     &scan_db->scan_hash_tbl[i], NULL);
+		while (cur_node) {
+			if (!memcmp(entry->mbssid_info.trans_bssid,
+				    cur_node->entry->bssid.bytes,
+				    QDF_MAC_ADDR_SIZE)) {
+				if (scm_bss_is_connected(cur_node->entry)) {
+					scm_scan_entry_put_ref(scan_db,
+							       cur_node,
+							       true);
+					return true;
+				}
+			}
+
+			next_node = scm_get_next_node(scan_db,
+					&scan_db->scan_hash_tbl[i], cur_node);
+			cur_node = next_node;
+			next_node = NULL;
+		}
+	}
+
+	return false;
+}
+
 void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 	struct scan_dbs *scan_db)
 {
@@ -454,7 +490,9 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 		cur_node = scm_get_next_node(scan_db,
 			&scan_db->scan_hash_tbl[i], NULL);
 		while (cur_node) {
-			if (!scm_bss_is_connected(cur_node->entry))
+			if (!scm_bss_is_connected(cur_node->entry) &&
+			    !scm_bss_is_nontx_of_conn_bss(cur_node->entry,
+							  scan_db))
 				scm_check_and_age_out(scan_db, cur_node,
 					def_param->scan_cache_aging_time);
 			next_node = scm_get_next_node(scan_db,
