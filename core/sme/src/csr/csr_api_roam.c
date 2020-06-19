@@ -19867,17 +19867,11 @@ void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/*
- * fn csr_process_ho_fail_ind
- * brief  This function will process the Hand Off Failure indication
- *        received from the firmware. It will trigger a disconnect on
- *        the session which the firmware reported a hand off failure
- * param  mac global structure
- * param  msg_buf - Contains the session ID for which the handler should apply
- */
 void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 {
 	struct handoff_failure_ind *pSmeHOFailInd = msg_buf;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+	struct wlan_objmgr_vdev *vdev;
 	uint32_t sessionId;
 
 	if (!pSmeHOFailInd) {
@@ -19893,6 +19887,22 @@ void csr_process_ho_fail_ind(struct mac_context *mac_ctx, void *msg_buf)
 			sessionId);
 		return;
 	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, sessionId,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("LFR3: vdev is NULL");
+		return;
+	}
+
+	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+	if (vdev_roam_params)
+		vdev_roam_params->roam_invoke_in_progress = false;
+	else
+		sme_err("LFR3: Vdev roam params is NULL");
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	mac_ctx->sme.set_connection_info_cb(false);
 	csr_roam_roaming_offload_timer_action(mac_ctx, 0, sessionId,
 			ROAMING_OFFLOAD_TIMER_STOP);

@@ -1006,6 +1006,15 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 			      struct roam_offload_synch_ind *roam_synch_ind,
 			      struct bss_description *bss_desc_ptr);
 
+/**
+ * csr_process_ho_fail_ind  - This function will process the Hand Off Failure
+ * indication received from the firmware. It will trigger a disconnect on
+ * the session which the firmware reported a hand off failure.
+ * @mac:     Pointer to global Mac
+ * @msg_buf: Pointer to wma Ho fail indication message
+ *
+ * Return: None
+ */
 void csr_process_ho_fail_ind(struct mac_context *mac, void *msg_buf);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
