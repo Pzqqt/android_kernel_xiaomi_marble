@@ -197,9 +197,6 @@ void sde_hw_setup_scaler3(struct sde_hw_blk_reg_map *c,
 		struct sde_hw_scaler3_cfg *scaler3_cfg, u32 scaler_version,
 		u32 scaler_offset, const struct sde_format *format);
 
-u32 sde_hw_get_scaler3_ver(struct sde_hw_blk_reg_map *c,
-		u32 scaler_offset);
-
 void sde_hw_csc_matrix_coeff_setup(struct sde_hw_blk_reg_map *c,
 		u32 csc_reg_off, struct sde_csc_cfg *data,
 		u32 shift_bit);
@@ -220,7 +217,7 @@ uint32_t sde_get_linetime(struct drm_display_mode *mode,
 
 static inline bool is_qseed3_rev_qseed3lite(struct sde_mdss_cfg *sde_cfg)
 {
-	return ((sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE) ?
+	return ((sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3LITE) ?
 			true : false);
 }
 #endif /* _SDE_HW_UTIL_H */

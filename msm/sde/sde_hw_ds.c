@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "sde_hw_ds.h"
@@ -18,14 +18,6 @@ static void sde_hw_ds_setup_opmode(struct sde_hw_ds *hw_ds,
 	struct sde_hw_blk_reg_map *hw = &hw_ds->hw;
 
 	SDE_REG_WRITE(hw, DEST_SCALER_OP_MODE, op_mode);
-}
-
-static u32 _sde_hw_ds_get_scaler3_ver(struct sde_hw_ds *ctx)
-{
-	if (!ctx)
-		return 0;
-
-	return sde_hw_get_scaler3_ver(&ctx->hw, ctx->scl->base);
 }
 
 static void sde_hw_ds_setup_scaler3(struct sde_hw_ds *hw_ds,
@@ -59,10 +51,8 @@ static void _setup_ds_ops(struct sde_hw_ds_ops *ops, unsigned long features)
 	ops->setup_opmode = sde_hw_ds_setup_opmode;
 
 	if (test_bit(SDE_SSPP_SCALER_QSEED3, &features) ||
-			test_bit(SDE_SSPP_SCALER_QSEED3LITE, &features)) {
-		ops->get_scaler_ver = _sde_hw_ds_get_scaler3_ver;
+			test_bit(SDE_SSPP_SCALER_QSEED3LITE, &features))
 		ops->setup_scaler = sde_hw_ds_setup_scaler3;
-	}
 }
 
 static struct sde_ds_cfg *_ds_offset(enum sde_ds ds,
@@ -122,9 +112,8 @@ struct sde_hw_ds *sde_hw_ds_init(enum sde_ds idx,
 	hw_ds->scl = cfg;
 	_setup_ds_ops(&hw_ds->ops, hw_ds->scl->features);
 
-	if (hw_ds->ops.get_scaler_ver)
-		hw_ds->scl->version = hw_ds->ops.get_scaler_ver(hw_ds);
-
+	if (m->qseed_hw_version)
+		hw_ds->scl->version = m->qseed_hw_version;
 
 	rc = sde_hw_blk_init(&hw_ds->base, SDE_HW_BLK_DS, idx, &sde_hw_ops);
 	if (rc) {

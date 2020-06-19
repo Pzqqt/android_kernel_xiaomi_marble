@@ -5124,11 +5124,11 @@ static void sde_crtc_setup_capabilities_blob(struct sde_kms_info *info,
 	sde_kms_info_add_keyint(info, "max_blendstages",
 			catalog->max_mixer_blendstages);
 
-	if (catalog->qseed_type == SDE_SSPP_SCALER_QSEED2)
+	if (catalog->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED2)
 		sde_kms_info_add_keystr(info, "qseed_type", "qseed2");
-	if (catalog->qseed_type == SDE_SSPP_SCALER_QSEED3)
+	if (catalog->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3)
 		sde_kms_info_add_keystr(info, "qseed_type", "qseed3");
-	if (catalog->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)
+	if (catalog->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3LITE)
 		sde_kms_info_add_keystr(info, "qseed_type", "qseed3lite");
 
 	if (catalog->ubwc_version) {

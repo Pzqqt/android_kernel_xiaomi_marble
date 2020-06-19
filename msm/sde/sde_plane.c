@@ -3561,9 +3561,9 @@ static void _sde_plane_setup_capabilities_blob(struct sde_plane *psde,
 		sde_kms_info_stop(info);
 	}
 
-	if (psde->pipe_hw && psde->pipe_hw->ops.get_scaler_ver)
+	if (psde->pipe_hw && catalog->qseed_hw_version)
 		sde_kms_info_add_keyint(info, "scaler_step_ver",
-			psde->pipe_hw->ops.get_scaler_ver(psde->pipe_hw));
+			catalog->qseed_hw_version);
 
 	sde_kms_info_add_keyint(info, "max_linewidth",
 			psde->pipe_sblk->maxlinewidth);

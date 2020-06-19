@@ -515,12 +515,6 @@ struct sde_hw_sspp_ops {
 		struct sde_hw_inline_pre_downscale_cfg *pre_down);
 
 	/**
-	 * get_scaler_ver - get scaler h/w version
-	 * @ctx: Pointer to pipe context
-	 */
-	u32 (*get_scaler_ver)(struct sde_hw_pipe *ctx);
-
-	/**
 	 * setup_sys_cache - setup system cache configuration
 	 * @ctx: Pointer to pipe context
 	 * @cfg: Pointer to system cache configuration

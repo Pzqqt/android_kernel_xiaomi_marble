@@ -442,12 +442,7 @@ end:
 	}
 
 	SDE_REG_WRITE(c, QSEED3_OP_MODE + scaler_offset, op_mode);
-}
 
-u32 sde_hw_get_scaler3_ver(struct sde_hw_blk_reg_map *c,
-			u32 scaler_offset)
-{
-	return SDE_REG_READ(c, QSEED3_HW_VERSION + scaler_offset);
 }
 
 void sde_hw_csc_matrix_coeff_setup(struct sde_hw_blk_reg_map *c,

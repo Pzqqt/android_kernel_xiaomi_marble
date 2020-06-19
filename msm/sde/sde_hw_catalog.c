@@ -186,7 +186,8 @@ enum sde_prop {
 	UBWC_VERSION,
 	UBWC_STATIC,
 	UBWC_SWIZZLE,
-	QSEED_TYPE,
+	QSEED_SW_LIB_REV,
+	QSEED_HW_VERSION,
 	CSC_TYPE,
 	PANIC_PER_PIPE,
 	SRC_SPLIT,
@@ -550,7 +551,10 @@ static struct sde_prop_type sde_prop[] = {
 	{UBWC_VERSION, "qcom,sde-ubwc-version", false, PROP_TYPE_U32},
 	{UBWC_STATIC, "qcom,sde-ubwc-static", false, PROP_TYPE_U32},
 	{UBWC_SWIZZLE, "qcom,sde-ubwc-swizzle", false, PROP_TYPE_U32},
-	{QSEED_TYPE, "qcom,sde-qseed-type", false, PROP_TYPE_STRING},
+	{QSEED_SW_LIB_REV, "qcom,sde-qseed-sw-lib-rev", false,
+			PROP_TYPE_STRING},
+	{QSEED_HW_VERSION, "qcom,sde-qseed-scalar-version", false,
+			PROP_TYPE_U32},
 	{CSC_TYPE, "qcom,sde-csc-type", false, PROP_TYPE_STRING},
 	{PANIC_PER_PIPE, "qcom,sde-panic-per-pipe", false, PROP_TYPE_BOOL},
 	{SRC_SPLIT, "qcom,sde-has-src-split", false, PROP_TYPE_BOOL},
@@ -1438,11 +1442,11 @@ static int _sde_sspp_setup_vigs(struct device_node *np,
 		sblk->format_list = sde_cfg->vig_formats;
 		sblk->virt_format_list = sde_cfg->virt_vig_formats;
 
-		if ((sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED2) ||
-		    (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3) ||
-		    (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)) {
-			set_bit(sde_cfg->qseed_type, &sspp->features);
-			sblk->scaler_blk.id = sde_cfg->qseed_type;
+		if ((sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED2) ||
+		    (sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3) ||
+		    (sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3LITE)) {
+			set_bit(sde_cfg->qseed_sw_lib_rev, &sspp->features);
+			sblk->scaler_blk.id = sde_cfg->qseed_sw_lib_rev;
 			sblk->scaler_blk.base = PROP_VALUE_ACCESS(props->values,
 				VIG_QSEED_OFF, 0);
 			sblk->scaler_blk.len = PROP_VALUE_ACCESS(props->values,
@@ -1554,10 +1558,10 @@ static int _sde_sspp_setup_rgbs(struct device_node *np,
 			set_bit(SDE_PERF_SSPP_QOS_8LVL, &sspp->perf_features);
 		rgb_count++;
 
-		if ((sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED2) ||
-		    (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3)) {
+		if ((sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED2) ||
+		    (sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3)) {
 			set_bit(SDE_SSPP_SCALER_RGB, &sspp->features);
-			sblk->scaler_blk.id = sde_cfg->qseed_type;
+			sblk->scaler_blk.id = sde_cfg->qseed_sw_lib_rev;
 			sblk->scaler_blk.base = PROP_VALUE_ACCESS(props->values,
 					RGB_SCALER_OFF, 0);
 			sblk->scaler_blk.len = PROP_VALUE_ACCESS(props->values,
@@ -2882,9 +2886,10 @@ static int sde_ds_parse_dt(struct device_node *np,
 		if (!prop_exists[DS_LEN])
 			ds->len = DEFAULT_SDE_HW_BLOCK_LEN;
 
-		if (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3)
+		if (sde_cfg->qseed_sw_lib_rev == SDE_SSPP_SCALER_QSEED3)
 			set_bit(SDE_SSPP_SCALER_QSEED3, &ds->features);
-		else if (sde_cfg->qseed_type == SDE_SSPP_SCALER_QSEED3LITE)
+		else if (sde_cfg->qseed_sw_lib_rev ==
+				SDE_SSPP_SCALER_QSEED3LITE)
 			set_bit(SDE_SSPP_SCALER_QSEED3LITE, &ds->features);
 	}
 
@@ -3726,6 +3731,8 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	cfg->pipe_order_type = PROP_VALUE_ACCESS(props->values,
 			PIPE_ORDER_VERSION, 0);
 	cfg->has_base_layer = PROP_VALUE_ACCESS(props->values, BASE_LAYER, 0);
+	cfg->qseed_hw_version = PROP_VALUE_ACCESS(props->values,
+			 QSEED_HW_VERSION, 0);
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
@@ -3787,20 +3794,21 @@ static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
 	if (rc)
 		goto end;
 
-	rc = of_property_read_string(np, sde_prop[QSEED_TYPE].prop_name, &type);
+	rc = of_property_read_string(np, sde_prop[QSEED_SW_LIB_REV].prop_name,
+			&type);
 	if (rc) {
 		SDE_DEBUG("invalid %s node in device tree: %d\n",
-				sde_prop[QSEED_TYPE].prop_name, rc);
+				sde_prop[QSEED_SW_LIB_REV].prop_name, rc);
 		rc = 0;
 	} else if (!strcmp(type, "qseedv3")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3;
+		cfg->qseed_sw_lib_rev = SDE_SSPP_SCALER_QSEED3;
 	} else if (!strcmp(type, "qseedv3lite")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED3LITE;
+		cfg->qseed_sw_lib_rev = SDE_SSPP_SCALER_QSEED3LITE;
 	} else if (!strcmp(type, "qseedv2")) {
-		cfg->qseed_type = SDE_SSPP_SCALER_QSEED2;
+		cfg->qseed_sw_lib_rev = SDE_SSPP_SCALER_QSEED2;
 	} else {
 		SDE_DEBUG("Unknown type %s for property %s\n", type,
-				sde_prop[QSEED_TYPE].prop_name);
+				sde_prop[QSEED_SW_LIB_REV].prop_name);
 	}
 
 	rc = of_property_read_string(np, sde_prop[CSC_TYPE].prop_name, &type);
