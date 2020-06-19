@@ -5274,6 +5274,9 @@ struct wow_enable_params {
 #define SET_AUTO_RATE_HE_LTF_VAL(set_val, bit_mask) \
 	(set_val = (set_val & HE_SGI_MASK) | bit_mask)
 
+#define MSCS_OUI_TYPE "\x58"
+#define MSCS_OUI_SIZE 1
+
 #ifdef WLAN_FEATURE_11AX
 #define HE_CAP_OUI_TYPE "\x23"
 #define HE_CAP_OUI_SIZE 1

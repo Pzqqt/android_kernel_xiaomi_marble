@@ -19730,6 +19730,15 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 							eLen + 2);
 					if (status)
 						return status;
+				} else if (genie[0] ==
+					   SIR_MSCS_ELEMENT_EXT_EID) {
+					hdd_debug("MSCS EXT IE(len %d)",
+						  eLen + 2);
+					status = wlan_hdd_add_assoc_ie(
+							adapter, genie - 2,
+							eLen + 2);
+					if (status)
+						return status;
 				} else {
 					hdd_err("UNKNOWN EID: %X", genie[0]);
 				}

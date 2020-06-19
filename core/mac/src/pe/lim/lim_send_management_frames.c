@@ -1873,7 +1873,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	void *packet;
 	QDF_STATUS qdf_status;
 	uint16_t add_ie_len, current_len = 0, vendor_ie_len = 0;
-	uint8_t *add_ie = NULL;
+	uint8_t *add_ie = NULL, *mscs_ext_ie = NULL;
 	const uint8_t *wps_ie = NULL;
 	uint8_t power_caps = false;
 	uint8_t tx_flag = 0;
@@ -1891,6 +1891,7 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	enum rateid min_rid = RATEID_DEFAULT;
 	uint8_t *mbo_ie = NULL, *adaptive_11r_ie = NULL, *vendor_ies = NULL;
 	uint8_t mbo_ie_len = 0, adaptive_11r_ie_len = 0, rsnx_ie_len = 0;
+	uint8_t mscs_ext_ie_len = 0;
 	bool bss_mfp_capable;
 
 	if (!pe_session) {
@@ -2228,6 +2229,23 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		}
 		rsnx_ie_len = rsnx_ie[1] + 2;
 	}
+	/* MSCS ext ie */
+	if (wlan_get_ext_ie_ptr_from_ext_id(MSCS_OUI_TYPE, MSCS_OUI_SIZE,
+					    add_ie, add_ie_len)) {
+		mscs_ext_ie = qdf_mem_malloc(WLAN_MAX_IE_LEN + 2);
+		if (!mscs_ext_ie)
+			goto end;
+
+		qdf_status = lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
+					  WLAN_ELEMID_EXTN_ELEM, ONE_BYTE,
+					  MSCS_OUI_TYPE, MSCS_OUI_SIZE,
+					  mscs_ext_ie, WLAN_MAX_IE_LEN);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			pe_err("Failed to strip MSCS ext IE");
+			goto end;
+		}
+		mscs_ext_ie_len = mscs_ext_ie[1] + 2;
+	}
 
 	/*
 	 * MBO IE needs to be appendded at the end of the assoc request
@@ -2333,7 +2351,8 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 	}
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + aes_block_size_len +
-		rsnx_ie_len + mbo_ie_len + adaptive_11r_ie_len + vendor_ie_len;
+		rsnx_ie_len + mbo_ie_len + adaptive_11r_ie_len +
+		mscs_ext_ie_len + vendor_ie_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
@@ -2377,6 +2396,12 @@ lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     rsnx_ie, rsnx_ie_len);
 		payload = payload + rsnx_ie_len;
+	}
+
+	if (mscs_ext_ie && mscs_ext_ie_len) {
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+			     mscs_ext_ie, mscs_ext_ie_len);
+		payload = payload + mscs_ext_ie_len;
 	}
 
 	/* Copy the vendor IEs to the end of the frame */
@@ -2468,6 +2493,7 @@ end:
 	qdf_mem_free(rsnx_ie);
 	qdf_mem_free(vendor_ies);
 	qdf_mem_free(mbo_ie);
+	qdf_mem_free(mscs_ext_ie);
 
 	/* Free up buffer allocated for mlm_assoc_req */
 	qdf_mem_free(adaptive_11r_ie);
