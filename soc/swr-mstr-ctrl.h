@@ -179,6 +179,7 @@ struct swr_mstr_ctrl {
 	bool dev_up;
 	bool ipc_wakeup_triggered;
 	bool aud_core_err;
+	bool req_clk_switch;
 	struct pm_qos_request pm_qos_req;
 	enum swrm_pm_state pm_state;
 	wait_queue_head_t pm_wq;
