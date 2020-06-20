@@ -369,6 +369,7 @@ ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_pktlog.o
 endif
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_policy_mgr.o
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dp_aggregation.o
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_FW_STATE), y)

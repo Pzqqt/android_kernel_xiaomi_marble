@@ -104,6 +104,7 @@
 #include "wma_sar_public_structs.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "pld_common.h"
+#include <dp_txrx.h>
 
 #ifdef WLAN_FEATURE_DP_BUS_BANDWIDTH
 #include "qdf_periodic_work.h"
@@ -1649,6 +1650,8 @@ struct hdd_fw_ver_info {
  * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  * @sar_cmd_params: SAR command params to be configured to the FW
  * @country_change_work: work for updating vdev when country changes
+ * @rx_aggregation: rx aggregation enable or disable state
+ * @gro_force_flush: gro force flushed indication flag
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1974,6 +1977,10 @@ struct hdd_context {
 	uint8_t dutycycle_off_percent;
 #endif
 	qdf_work_t country_change_work;
+	struct {
+		qdf_atomic_t rx_aggregation;
+		uint8_t gro_force_flush[DP_MAX_RX_THREADS];
+	} dp_agg_param;
 };
 
 /**
