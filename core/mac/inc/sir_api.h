@@ -60,7 +60,7 @@ struct mac_context;
 
 #define SIR_MAX_ELEMENT_ID         255
 
-#define SIR_BCN_REPORT_MAX_BSS_DESC       4
+#define SIR_BCN_REPORT_MAX_BSS_DESC       8
 
 #define SIR_NUM_11B_RATES 4     /* 1,2,5.5,11 */
 #define SIR_NUM_11A_RATES 8     /* 6,9,12,18,24,36,48,54 */

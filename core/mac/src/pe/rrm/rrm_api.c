@@ -576,16 +576,24 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 
 	   maxMeasurementDuration = 2^(nonOperatingChanMax - 4) * BeaconInterval
 	 */
-	maxDuration =
+	if (mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax) {
+		maxDuration =
 		mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax - 4;
-	sign = (maxDuration < 0) ? 1 : 0;
-	maxDuration = (1L << ABS(maxDuration));
-	if (!sign)
-		maxMeasduration =
+		sign = (maxDuration < 0) ? 1 : 0;
+		maxDuration = (1L << ABS(maxDuration));
+		if (!sign)
+			maxMeasduration =
 			maxDuration * pe_session->beaconParams.beaconInterval;
-	else
-		maxMeasduration =
+		else
+			maxMeasduration =
 			pe_session->beaconParams.beaconInterval / maxDuration;
+	} else {
+		maxMeasduration =
+			pBeaconReq->measurement_request.Beacon.meas_duration;
+		maxDuration =
+		mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax;
+		sign = 0;
+	}
 
 	measDuration = pBeaconReq->measurement_request.Beacon.meas_duration;
 
@@ -607,13 +615,16 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 		return eRRM_REFUSED;
 	}
 
-	if (maxMeasduration < measDuration) {
-		if (pBeaconReq->durationMandatory) {
-			pe_nofl_err("RX: [802.11 BCN_RPT] Dropping the req: duration mandatory & maxduration > measduration");
+	if (pBeaconReq->durationMandatory) {
+		if (maxDuration && maxMeasduration < measDuration) {
+			pe_err("RX: [802.11 BCN_RPT] Dropping the req");
 			return eRRM_REFUSED;
-		} else
-			measDuration = maxMeasduration;
+		}
+	} else if (maxDuration) {
+		measDuration = QDF_MIN(maxMeasduration, measDuration);
 	}
+	pe_debug("measurement duration %d", measDuration);
+
 	/* Cache the data required for sending report. */
 	pCurrentReq->request.Beacon.reportingDetail =
 		pBeaconReq->measurement_request.Beacon.BcnReportingDetail.
@@ -790,15 +801,15 @@ rrm_process_beacon_report_req(struct mac_context *mac,
  * Return: Remaining length of IEs in current bss_desc which are not included
  *	   in pIes.
  */
-static uint8_t
+static uint16_t
 rrm_fill_beacon_ies(struct mac_context *mac, uint8_t *pIes,
 		    uint8_t *pNumIes, uint8_t pIesMaxSize, uint8_t *eids,
-		    uint8_t numEids, uint8_t start_offset,
+		    uint8_t numEids, uint16_t start_offset,
 		    struct bss_description *bss_desc)
 {
 	uint8_t *pBcnIes, count = 0, i;
 	uint16_t BcnNumIes, total_ies_len, len;
-	uint8_t rem_len = 0;
+	uint16_t rem_len = 0;
 
 	if ((!pIes) || (!pNumIes) || (!bss_desc)) {
 		pe_err("Invalid parameters");
@@ -868,7 +879,8 @@ rrm_fill_beacon_ies(struct mac_context *mac, uint8_t *pIes,
 					 * break. For first fragment, account
 					 * for the fixed fields also.
 					 */
-					rem_len = total_ies_len - *pNumIes;
+					rem_len = total_ies_len - *pNumIes -
+						  start_offset;
 					if (start_offset == 0)
 						rem_len = rem_len +
 						BEACON_FRAME_IES_OFFSET;
@@ -914,10 +926,11 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 		pCurrentReq[beacon_xmit_ind->measurement_idx];
 	struct pe_session *session_entry;
 	uint8_t session_id, counter;
-	uint8_t i, j, offset = 0;
+	uint8_t i, j;
 	uint8_t bss_desc_count = 0;
 	uint8_t report_index = 0;
-	uint8_t rem_len = 0;
+	uint16_t rem_len = 0;
+	uint16_t offset = 0;
 	uint8_t frag_id = 0;
 	uint8_t num_frames, num_reports_in_frame;
 

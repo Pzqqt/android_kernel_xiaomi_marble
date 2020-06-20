@@ -454,6 +454,7 @@ typedef struct sSirAssocRsp {
 #ifdef WLAN_FEATURE_11W
 	tDot11fIETimeoutInterval TimeoutInterval;
 #endif
+	tDot11fIERRMEnabledCap rrm_caps;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEOBSSScanParameters obss_scanparams;
 	tDot11fTLVrssi_assoc_rej rssi_assoc_rej;

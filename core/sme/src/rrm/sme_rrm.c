@@ -590,28 +590,37 @@ static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 
 	while (scan_results) {
 		/*
-		 * In passive scan, sta listens beacon. Connected AP beacon
-		 * is offloaded to firmware. Firmware will discard
-		 * connected AP beacon except that special IE exists.
-		 * Connected AP beacon will not be sent to host. Hence, timer
-		 * of connected AP in scan results is not updated and can
-		 * not meet "pScanResult->timer >= RRM_scan_timer".
+		 * Connected AP beacon is offloaded to firmware.
+		 * Firmware will discard connected AP beacon except that
+		 * special IE exists Connected AP beacon will not be sent
+		 * to host. Hence, timer of connected AP in scan results is
+		 * not updated and can not meet
+		 * "pScanResult->timer >= RRM_scan_timer".
 		 */
 		uint8_t is_conn_bss_found = false;
+		uint8_t is_nontx_of_conn_bss = false;
 
-		if ((scan_type == eSIR_PASSIVE_SCAN) &&
-		     (!qdf_mem_cmp(scan_results->BssDescriptor.bssId,
-		      session->pConnectBssDesc->bssId,
-		      sizeof(struct qdf_mac_addr)))) {
+		if (!qdf_mem_cmp(scan_results->BssDescriptor.bssId,
+				 session->pConnectBssDesc->bssId,
+		    sizeof(struct qdf_mac_addr))) {
 			is_conn_bss_found = true;
 			sme_debug("Connected BSS in scan results");
+		}
+		if (scan_results->BssDescriptor.mbssid_info.profile_num) {
+			if (!qdf_mem_cmp(scan_results->BssDescriptor.
+					 mbssid_info.trans_bssid,
+					 session->pConnectBssDesc->bssId,
+					 QDF_MAC_ADDR_SIZE)) {
+				is_nontx_of_conn_bss = true;
+				sme_debug("Non Tx BSS of Conn AP in results");
+			}
 		}
 		next_result = sme_scan_result_get_next(mac_handle,
 						       result_handle);
 		sme_debug("Scan res timer:%lu, rrm scan timer:%llu",
 				scan_results->timer, rrm_scan_timer);
 		if ((scan_results->timer >= rrm_scan_timer) ||
-		    (is_conn_bss_found == true)) {
+		    (is_conn_bss_found == true) || is_nontx_of_conn_bss) {
 			roam_info->bss_desc = &scan_results->BssDescriptor;
 			csr_roam_call_callback(mac_ctx, session_id, roam_info,
 						0, eCSR_ROAM_UPDATE_SCAN_RESULT,
@@ -677,8 +686,6 @@ static QDF_STATUS sme_rrm_scan_request_callback(struct mac_context *mac,
 						uint32_t scanId,
 						eCsrScanStatus status)
 {
-	uint16_t interval;
-	uint32_t time_tick;
 	QDF_STATUS qdf_status;
 	uint32_t session_id;
 	bool valid_result = true;
@@ -711,28 +718,6 @@ static QDF_STATUS sme_rrm_scan_request_callback(struct mac_context *mac,
 	ch_idx = pSmeRrmContext->currentIndex;
 	num_chan = pSmeRrmContext->channelList.numOfChannels;
 	if (((ch_idx + 1) < num_chan) && valid_result) {
-		if (QDF_TIMER_STATE_RUNNING ==
-		    qdf_mc_timer_get_current_state(
-				      &pSmeRrmContext->IterMeasTimer)) {
-			/*
-			 * Measurement random timer is already running, this
-			 * should not happen because the driver doesn't support
-			 * multiple measurements simultaneously. Also for
-			 * multiple measurements on a single report, the
-			 * channels in op class should be appended to the global
-			 * frequency list
-			 */
-			sme_err("[802.11 RRM]: meas timer is already running");
-			sme_rrm_send_scan_result(mac,
-					pSmeRrmContext->measurement_idx,
-					1, &freq_list[ch_idx], true);
-			qdf_mem_free(pSmeRrmContext->channelList.freq_list);
-			pSmeRrmContext->channelList.freq_list = NULL;
-			pSmeRrmContext->channelList.numOfChannels = 0;
-			sme_reset_ese_bcn_req_in_progress(pSmeRrmContext);
-			return QDF_STATUS_E_FAILURE;
-		}
-
 		sme_rrm_send_scan_result(mac, pSmeRrmContext->measurement_idx,
 					 1, &freq_list[ch_idx], false);
 
@@ -742,19 +727,10 @@ static QDF_STATUS sme_rrm_scan_request_callback(struct mac_context *mac,
 		/* From timer tick get a random number within 10ms and max
 		 * randmization interval.
 		 */
-		time_tick = qdf_mc_timer_get_system_ticks();
-		interval =
-			time_tick % (pSmeRrmContext->randnIntvl - 10 + 1) + 10;
-
-		sme_debug("Set timer for interval %d ", interval);
-		qdf_status = qdf_mc_timer_start(&pSmeRrmContext->IterMeasTimer,
-						interval);
-		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			qdf_mem_free(pSmeRrmContext->channelList.freq_list);
-			pSmeRrmContext->channelList.freq_list = NULL;
-			pSmeRrmContext->channelList.numOfChannels = 0;
-			sme_reset_ese_bcn_req_in_progress(pSmeRrmContext);
-		}
+		qdf_status = sme_rrm_issue_scan_req(mac,
+				pSmeRrmContext->measurement_idx);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			sme_debug("RRM scan req Failed");
 
 	} else {
 		/* Done with the measurement. Clean up all context and send a
@@ -814,16 +790,7 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 				      scan_id, scan_status);
 }
 
-/**
- * sme_rrm_issue_scan_req() - To issue rrm scan request
- * @mac_ctx: pointer to mac context
- *
- * This routine is called to issue rrm scan request
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
+QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext[idx];
@@ -916,15 +883,21 @@ sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
 		 * depending on type of scan.
 		 */
 		if (req->scan_req.scan_f_passive) {
-			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME)
+			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME) {
 				req->scan_req.dwell_time_passive =
 								max_chan_time;
+				req->scan_req.dwell_time_passive_6g =
+								max_chan_time;
+			}
 			sme_debug("Passive Max Dwell Time(%d)",
 				  req->scan_req.dwell_time_passive);
 		} else {
 			if (max_chan_time >= RRM_SCAN_MIN_DWELL_TIME) {
 				req->scan_req.dwell_time_active = max_chan_time;
-				req->scan_req.dwell_time_active_2g = max_chan_time;
+				req->scan_req.dwell_time_active_2g =
+								max_chan_time;
+				req->scan_req.dwell_time_active_6g =
+								max_chan_time;
 			}
 			sme_debug("Active Max Dwell Time(%d) 2G Dwell time %d",
 				  req->scan_req.dwell_time_active,
@@ -1685,34 +1658,6 @@ QDF_STATUS sme_rrm_msg_processor(struct mac_context *mac, uint16_t msg_type,
 }
 
 /**
- * rrm_iter_meas_timer_handle() - Timer handler to handlet the timeout
- * @ mac - The handle returned by mac_open.
- *
- * Timer handler to handlet the timeout condition when a specific BT
- * stop event does not come back, in which case to restore back the
- * heartbeat timer.
- *
- * Return: NULL
- */
-static void rrm_iter_meas_timer_handle(void *data)
-{
-	struct mac_context *mac;
-	mac_handle_t mac_handle = cds_get_context(QDF_MODULE_ID_SME);
-	tpRrmSMEContext sme_rrm_ctx = (tpRrmSMEContext)data;
-
-	mac = MAC_CONTEXT(mac_handle);
-	if (!mac) {
-		sme_err("Mac ctx is NULL");
-		return;
-	}
-
-	sme_debug("Randomization timer expired...send on next channel");
-
-	/* Issue a scan req for next channel. */
-	sme_rrm_issue_scan_req(mac, sme_rrm_ctx->measurement_idx);
-}
-
-/**
  * rrm_neighbor_rsp_timeout_handler() - Timer handler to handlet the timeout
  * @mac - The handle returned by mac_open.
  *
@@ -1770,16 +1715,6 @@ QDF_STATUS rrm_open(struct mac_context *mac)
 	for (i = 0; i < MAX_MEASUREMENT_REQUEST; i++) {
 		pSmeRrmContext = &mac->rrm.rrmSmeContext[i];
 
-		qdf_status = qdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
-					       QDF_TIMER_TYPE_SW,
-					       rrm_iter_meas_timer_handle,
-					       (void *)pSmeRrmContext);
-
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			sme_err("Fail to init measurement timer");
-			return QDF_STATUS_E_FAILURE;
-		}
-
 		qdf_status =
 		    qdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
 				      neighborRspWaitTimer, QDF_TIMER_TYPE_SW,
@@ -1827,25 +1762,12 @@ QDF_STATUS rrm_close(struct mac_context *mac)
 
 	for (i = 0; i < MAX_MEASUREMENT_REQUEST; i++) {
 		pSmeRrmContext = &mac->rrm.rrmSmeContext[i];
-		if (QDF_TIMER_STATE_RUNNING ==
-		    qdf_mc_timer_get_current_state(
-			    &pSmeRrmContext->IterMeasTimer)) {
-			qdf_status = qdf_mc_timer_stop(
-					&pSmeRrmContext->IterMeasTimer);
-			if (QDF_IS_STATUS_ERROR(qdf_status))
-				sme_err("Timer stop fail");
-		}
 
 		if (pSmeRrmContext->channelList.freq_list) {
 			qdf_mem_free(pSmeRrmContext->channelList.freq_list);
 			pSmeRrmContext->channelList.freq_list = NULL;
 			pSmeRrmContext->channelList.numOfChannels = 0;
 		}
-
-		qdf_status =
-			qdf_mc_timer_destroy(&pSmeRrmContext->IterMeasTimer);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			sme_err("Fail to destroy timer");
 
 		if (QDF_TIMER_STATE_RUNNING ==
 		    qdf_mc_timer_get_current_state(&pSmeRrmContext->

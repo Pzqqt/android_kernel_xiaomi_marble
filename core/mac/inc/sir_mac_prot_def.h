@@ -1481,9 +1481,9 @@ typedef struct sSirMacLinkReport {
 	uint8_t rsni;
 } tSirMacLinkReport, *tpSirMacLinkReport;
 
-#define BEACON_REPORT_MAX_IES 224       /* Refer IEEE 802.11k-2008, Table 7-31d */
+#define BEACON_REPORT_MAX_IES 215
 /* Max number of beacon reports per channel supported in the driver */
-#define MAX_BEACON_REPORTS 8
+#define MAX_BEACON_REPORTS 32
 /* Offset of IEs after Fixed Fields in Beacon Frame */
 #define BEACON_FRAME_IES_OFFSET 12
 
@@ -1539,7 +1539,7 @@ typedef struct sSirMacBeaconReport {
 
 } tSirMacBeaconReport, *tpSirMacBeaconReport;
 
-#define RADIO_REPORTS_MAX_IN_A_FRAME 4
+#define RADIO_REPORTS_MAX_IN_A_FRAME 7
 typedef struct sSirMacRadioMeasureReport {
 	uint8_t token;
 	uint8_t refused;

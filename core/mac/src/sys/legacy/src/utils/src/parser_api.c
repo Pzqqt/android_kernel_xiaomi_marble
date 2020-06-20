@@ -3136,6 +3136,10 @@ sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 		qdf_mem_copy(&pAssocRsp->HTInfo, &ar->HTInfo,
 			     sizeof(tDot11fIEHTInfo));
 	}
+	if (ar->RRMEnabledCap.present) {
+		qdf_mem_copy(&pAssocRsp->rrm_caps, &ar->RRMEnabledCap,
+			     sizeof(tDot11fIERRMEnabledCap));
+	}
 	if (ar->MobilityDomain.present) {
 		/* MobilityDomain */
 		pAssocRsp->mdiePresent = 1;
