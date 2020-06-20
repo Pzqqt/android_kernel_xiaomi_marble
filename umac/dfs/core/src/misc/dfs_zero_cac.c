@@ -1953,22 +1953,103 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 }
 #endif
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+#ifdef CONFIG_CHAN_FREQ_API
+/* Checks the Host side agile configurations. ie if agile channel
+ * is configured as 5730MHz and the agile channel width is 80P80/165MHz.
+ */
+#define IS_HOST_AGILE_CURCHAN_165MHZ(_x) \
+	((_x)->dfs_agile_precac_freq_mhz == \
+	 RESTRICTED_80P80_CHAN_CENTER_FREQ) && \
+	((_x)->dfs_precac_chwidth == CH_WIDTH_80P80MHZ)
+
+/* Checks if the FW Agile operation was on the restricited 80P80MHz,
+ * by comparing the center frequency 1 with 5690MHz, center frequency 2
+ * with 5775MHz and the channel width was 80P80/165MHz.
+ */
+#define IS_OCAC_EVENT_ON_165_MHZ_CHAN(_x, _y, _z) \
+	((_x) == RESTRICTED_80P80_LEFT_80_CENTER_FREQ) && \
+	((_y) == RESTRICTED_80P80_RIGHT_80_CENTER_FREQ) && \
+	((_z) == CH_WIDTH_80P80MHZ)
+
+/*
+ * dfs_is_ocac_complete_event_for_cur_agile_chan() - Check if the OCAC
+ * completion event from FW is received for the currently configured agile
+ * channel in host.
+ *
+ * @dfs: Pointer to dfs structure.
+ * @center_freq_mhz1: Center frequency of the band when the precac width is
+ * 20/40/80/160MHz and center frequency of the left 80MHz in case of restricted
+ * 80P80/165MHz.
+ * @center_freq_mhz2: Center frequency of the right 80MHz in case of restricted
+ * 80P80/165MHz. It is zero for other channel widths.
+ * @chwidth: Agile channel width for which the completion event is received.
+ *
+ * return: True if the channel on which OCAC completion event received is same
+ * as currently configured agile channel in host. False otherwise.
+ */
+static bool
+dfs_is_ocac_complete_event_for_cur_agile_chan(struct wlan_dfs *dfs,
+					      uint32_t center_freq_mhz1,
+					      uint32_t center_freq_mhz2,
+					      enum phy_ch_width chwidth)
+{
+    if (IS_HOST_AGILE_CURCHAN_165MHZ(dfs) &&
+	IS_OCAC_EVENT_ON_165_MHZ_CHAN(center_freq_mhz1,
+				      center_freq_mhz2,
+				      chwidth))
+	return true;
+    else if (dfs->dfs_agile_precac_freq_mhz == center_freq_mhz1)
+	return true;
+    else
+	return false;
+}
+
 /*
  * dfs_process_ocac_complete() - Process OCAC Complete eventid.
  * @pdev: Pointer to wlan_objmgr_pdev.
  * @ocac_status: OCAC Status.
- * @center_freq_mhz: Center frequency in MHZ.
+ * @center_freq_mhz1: Center frequency of the band when the precac width is
+ * 20/40/80/160MHz and center frequency of the left 80MHz in case of restricted
+ * 80P80/165MHz.
+ * @center_freq_mhz2: Center frequency of the right 80MHz in case of restricted
+ * 80P80/165MHz. It is zero for other channel widths.
+ * @chwidth: Agile channel width for which the completion event is received.
  */
-#ifdef QCA_SUPPORT_AGILE_DFS
-#ifdef CONFIG_CHAN_FREQ_API
 void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			       uint32_t ocac_status,
-			       uint32_t center_freq_mhz)
+			       uint32_t center_freq_mhz1,
+			       uint32_t center_freq_mhz2,
+			       enum phy_ch_width chwidth)
 {
 	struct wlan_dfs *dfs = NULL;
 	struct dfs_agile_cac_params adfs_param;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
+
+	/* When the FW sends a delayed OCAC completion status, Host might
+	 * have changed the precac channel already before an OCAC
+	 * completion event is received. So the OCAC completion status
+	 * should be validated if it is on the currently configured agile
+	 * channel.
+	 */
+
+	/* Assume the previous agile channel was 64 (20Mhz) and current
+	 * agile channel is 100(20Mhz), if the event from the FW is for
+	 * previously configured agile channel 64(20Mhz) then Host ignores
+	 * the event.
+	 */
+	if (!dfs_is_ocac_complete_event_for_cur_agile_chan(dfs,
+							  center_freq_mhz1,
+							  center_freq_mhz2,
+							  chwidth)) {
+	    dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		    "OCAC completion event is received on a different channel %d %d that is not the current Agile channel %d",
+		    center_freq_mhz1,
+		    center_freq_mhz2,
+		    dfs->dfs_agile_precac_freq_mhz);
+	    return;
+	}
 
 	/* STOP TIMER irrespective of status */
 	utils_dfs_cancel_precac_timer(pdev);
@@ -1981,13 +2062,15 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			  "PreCAC timer abort, agile precac stopped");
 	} else if (ocac_status == OCAC_SUCCESS) {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			  "PreCAC timer Completed for agile freq: %d",
-			  center_freq_mhz);
+			  "PreCAC timer Completed for agile freq: %d %d",
+			  center_freq_mhz1,
+			  center_freq_mhz2);
 		/*
 		 * TRIGGER agile precac timer with 0sec timeout
 		 * with ocac_status 0 for old pdev
 		 */
-		adfs_param.precac_center_freq_1 = center_freq_mhz;
+		adfs_param.precac_center_freq_1 = center_freq_mhz1;
+		adfs_param.precac_center_freq_2 = center_freq_mhz2;
 		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
 		dfs_start_agile_precac_timer(dfs,
 					     ocac_status,
