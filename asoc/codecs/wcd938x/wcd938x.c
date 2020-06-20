@@ -73,6 +73,10 @@ enum {
 	HPH_PA_DELAY,
 	AMIC2_BCS_ENABLE,
 	WCD_SUPPLIES_LPM_MODE,
+	WCD_ADC1_MODE,
+	WCD_ADC2_MODE,
+	WCD_ADC3_MODE,
+	WCD_ADC4_MODE,
 };
 
 enum {
@@ -1541,13 +1545,17 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (strnstr(w->name, "ADC", sizeof("ADC"))) {
-			if (test_bit(WCD_ADC1, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC1, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC1_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC1]];
-			if (test_bit(WCD_ADC2, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC2, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC2_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC2]];
-			if (test_bit(WCD_ADC3, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC3, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC3_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC3]];
-			if (test_bit(WCD_ADC4, &wcd938x->status_mask))
+			if (test_bit(WCD_ADC4, &wcd938x->status_mask) ||
+				test_bit(WCD_ADC4_MODE, &wcd938x->status_mask))
 				mode |= tx_mode_bit[wcd938x->tx_mode[WCD_ADC4]];
 
 			if (mode != 0) {
@@ -1594,6 +1602,14 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 
 		if (strnstr(w->name, "ADC", sizeof("ADC")))
 			wcd938x_set_swr_clk_rate(component, rate, bank);
+		if (strnstr(w->name, "ADC1", sizeof("ADC1")))
+			clear_bit(WCD_ADC1_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC2", sizeof("ADC2")))
+			clear_bit(WCD_ADC2_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC3", sizeof("ADC3")))
+			clear_bit(WCD_ADC3_MODE, &wcd938x->status_mask);
+		else if (strnstr(w->name, "ADC4", sizeof("ADC4")))
+			clear_bit(WCD_ADC4_MODE, &wcd938x->status_mask);
 		break;
 	};
 
@@ -2032,21 +2048,25 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		if (test_bit(WCD_ADC1, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH2, 0x40, 0x00);
+			set_bit(WCD_ADC1_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC1, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC2, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH2, 0x20, 0x00);
+			set_bit(WCD_ADC2_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC2, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC3, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH4, 0x40, 0x00);
+			set_bit(WCD_ADC3_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC3, &wcd938x->status_mask);
 		}
 		if (test_bit(WCD_ADC4, &wcd938x->status_mask)) {
 			snd_soc_component_update_bits(component,
 					WCD938X_ANA_TX_CH4, 0x20, 0x00);
+			set_bit(WCD_ADC4_MODE, &wcd938x->status_mask);
 			clear_bit(WCD_ADC4, &wcd938x->status_mask);
 		}
 		break;
