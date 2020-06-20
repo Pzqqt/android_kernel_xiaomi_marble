@@ -81,6 +81,8 @@ const DECLARE_TLV_DB_LINEAR(msm_compr_vol_gain, 0,
 #define COMPRESSED_PERF_MODE_FLAG 0
 #endif
 
+#define DSD_BLOCK_SIZE_4 4
+
 struct msm_compr_gapless_state {
 	bool set_next_stream_id;
 	int32_t stream_opened[MAX_NUMBER_OF_STREAMS];
@@ -1388,7 +1390,12 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 		dsd_cfg.dsd_data_rate = prtd->sample_rate;
 		dsd_cfg.num_version = 0;
 		dsd_cfg.is_bitwise_big_endian = 1;
-		dsd_cfg.dsd_channel_block_size = 4;
+		dsd_cfg.dsd_channel_block_size = 1;
+
+		if (codec_options->dsd_dec.blk_size == DSD_BLOCK_SIZE_4)
+			dsd_cfg.dsd_channel_block_size =
+				codec_options->dsd_dec.blk_size;
+
 		ret = q6asm_media_format_block_dsd(prtd->audio_client,
 						   &dsd_cfg, stream_id);
 		if (ret < 0)
