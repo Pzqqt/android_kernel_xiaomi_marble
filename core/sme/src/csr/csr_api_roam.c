@@ -8308,6 +8308,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 	csr_roam_cancel_roaming(mac, sessionId);
 	csr_scan_abort_mac_scan(mac, sessionId, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(mac, sessionId, NULL, eCsrHddIssued);
+
 	/* Check whether ssid changes */
 	if (csr_is_conn_state_connected(mac, sessionId) &&
 	    pProfile->SSIDs.numOfSSIDs &&
@@ -18485,6 +18486,17 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 	uint32_t roaming_bitmap;
 	bool dual_sta_roam_active;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		if (vdev_roam_params)
+			vdev_roam_params->roam_invoke_in_progress = false;
+	}
 
 	dual_sta_roam_active =
 		wlan_mlme_get_dual_sta_roaming_enabled(mac->psoc);
@@ -18710,8 +18722,20 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 			  uint8_t reason)
 {
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
 	enum roam_offload_state cur_state = mlme_get_roam_state(mac->psoc,
 								vdev_id);
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		if (vdev_roam_params)
+			vdev_roam_params->roam_invoke_in_progress = false;
+	}
+
 	switch (cur_state) {
 	/*
 	 * If RSO stop is not done already, send RSO stop first and
