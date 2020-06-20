@@ -1321,6 +1321,14 @@ struct dp_soc {
 	struct dp_rx_fst *rx_fst;
 #ifdef WLAN_SUPPORT_RX_FISA
 	uint8_t fisa_enable;
+
+	/**
+	 * Params used for controlling the fisa aggregation dynamically
+	 */
+	struct {
+		qdf_atomic_t skip_fisa;
+		uint8_t fisa_force_flush[MAX_REO_DEST_RINGS];
+	} skip_fisa_param;
 #endif
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG || WLAN_SUPPORT_RX_FISA */
 	/* Full monitor mode support */
