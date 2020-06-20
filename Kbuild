@@ -361,6 +361,9 @@ endif
 ifeq ($(CONFIG_REMOVE_PKT_LOG), n)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_pktlog.o
 endif
+ifeq ($(CONFIG_WLAN_DL_MODES), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dl_modes.o
+endif
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_policy_mgr.o
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dp_aggregation.o
 endif
@@ -2686,6 +2689,7 @@ cppflags-$(CONFIG_WLAN_SYSFS_MEM_STATS) += -DCONFIG_WLAN_SYSFS_MEM_STATS
 cppflags-$(CONFIG_WLAN_SYSFS_DCM) += -DWLAN_SYSFS_DCM
 cppflags-$(CONFIG_WLAN_SYSFS_HE_BSS_COLOR) += -DWLAN_SYSFS_HE_BSS_COLOR
 cppflags-$(CONFIG_WLAN_SYSFS_STA_INFO) += -DWLAN_SYSFS_STA_INFO
+cppflags-$(CONFIG_WLAN_DL_MODES) += -DCONFIG_WLAN_DL_MODES
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
 cppflags-y += \

@@ -74,6 +74,7 @@
 #include <wlan_hdd_sysfs_pkt_log.h>
 #include <wlan_hdd_sysfs_policy_mgr.h>
 #include <wlan_hdd_sysfs_dp_aggregation.h>
+#include <wlan_hdd_sysfs_dl_modes.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -665,11 +666,13 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_temperature_create(adapter);
 	hdd_sysfs_motion_detection_create(adapter);
 	hdd_sysfs_range_ext_create(adapter);
+	hdd_sysfs_dl_modes_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_dl_modes_destroy(adapter);
 	hdd_sysfs_range_ext_destroy(adapter);
 	hdd_sysfs_motion_detection_destroy(adapter);
 	hdd_sysfs_temperature_destroy(adapter);
@@ -717,11 +720,13 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_temperature_create(adapter);
 	hdd_sysfs_range_ext_create(adapter);
 	hdd_sysfs_ipa_create(adapter);
+	hdd_sysfs_dl_modes_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 {
+	hdd_sysfs_dl_modes_destroy(adapter);
 	hdd_sysfs_ipa_destroy(adapter);
 	hdd_sysfs_range_ext_destroy(adapter);
 	hdd_sysfs_temperature_destroy(adapter);
