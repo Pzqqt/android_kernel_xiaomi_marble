@@ -478,11 +478,6 @@ CONFIG_CHECKSUM_OFFLOAD := y
 #Enable GTK offload
 CONFIG_GTK_OFFLOAD := y
 
-#Enable EXT WOW
-ifeq ($(CONFIG_HIF_PCI), y)
-	CONFIG_EXT_WOW := y
-endif
-
 #Set this to 1 to catch erroneous Target accesses during debug.
 CONFIG_ATH_PCIE_ACCESS_DEBUG := n
 
