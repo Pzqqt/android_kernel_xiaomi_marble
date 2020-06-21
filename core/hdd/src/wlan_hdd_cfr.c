@@ -28,6 +28,7 @@
 #include "osif_sync.h"
 #include "wlan_hdd_cfr.h"
 #include "wlan_cfr_ucfg_api.h"
+#include "wlan_hdd_object_manager.h"
 
 const struct nla_policy cfr_config_policy[
 		QCA_WLAN_VENDOR_ATTR_PEER_CFR_MAX + 1] = {
@@ -401,7 +402,6 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 	struct cfr_wlanconfig_param params = { 0 };
 	struct wlan_objmgr_vdev *vdev;
 	bool is_start_capture = false;
-	QDF_STATUS status;
 	int ret = 0;
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]) {
@@ -415,19 +415,17 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	vdev = adapter->vdev;
-	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_CFR_ID);
-	if (QDF_IS_STATUS_ERROR(status)) {
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
 		hdd_err("can't get vdev");
-		return qdf_status_to_os_return(status);
+		return -EINVAL;
 	}
 
 	if (is_start_capture) {
 		ret = wlan_cfg80211_cfr_set_config(vdev, tb);
 		if (ret) {
 			hdd_err("set config failed");
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
-			return ret;
+			goto out;
 		}
 		params.en_cfg = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]);
@@ -445,7 +443,8 @@ wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
 		hdd_debug("stop indication done");
 	}
 
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_CFR_ID);
+out:
+	hdd_objmgr_put_vdev(vdev);
 	return ret;
 }
 #else

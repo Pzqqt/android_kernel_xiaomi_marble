@@ -57,6 +57,7 @@
 #include "sme_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_hdd_object_manager.h"
 
 #define HDD_WMM_UP_TO_AC_MAP_SIZE 8
 #define DSCP(x)	x
@@ -1521,12 +1522,15 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
 QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter)
 {
 	uint32_t *dscp_to_up_map = adapter->dscp_to_up_map;
-	struct wlan_objmgr_vdev *vdev = adapter->vdev;
+	struct wlan_objmgr_vdev *vdev;
 	int ret;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
 
 	if (vdev) {
 		/* Send DSCP to TID map table to FW */
 		ret = os_if_fwol_send_dscp_up_map_to_fw(vdev, dscp_to_up_map);
+		hdd_objmgr_put_vdev(vdev);
 		if (ret && ret != -EOPNOTSUPP)
 			return QDF_STATUS_E_FAILURE;
 	}

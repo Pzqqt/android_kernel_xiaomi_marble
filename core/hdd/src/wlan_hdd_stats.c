@@ -44,6 +44,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "cdp_txrx_misc.h"
 #include "cdp_txrx_host_stats.h"
+#include "wlan_hdd_object_manager.h"
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -4778,6 +4779,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	int link_speed_rssi_mid = 0;
 	int link_speed_rssi_low = 0;
 	uint32_t link_speed_rssi_report = 0;
+	struct wlan_objmgr_vdev *vdev;
 
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_CFG80211_GET_STA,
@@ -4909,13 +4911,18 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		bool tx_rate_calc, rx_rate_calc;
 		uint8_t tx_nss_max, rx_nss_max;
 
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (!vdev)
+			/* Keep GUI happy */
+			return 0;
 		/*
 		 * Take static NSS for reporting max rates. NSS from the FW
 		 * is not reliable as it changes as per the environment
 		 * quality.
 		 */
-		tx_nss_max = wlan_vdev_mlme_get_nss(adapter->vdev);
-		rx_nss_max = wlan_vdev_mlme_get_nss(adapter->vdev);
+		tx_nss_max = wlan_vdev_mlme_get_nss(vdev);
+		rx_nss_max = wlan_vdev_mlme_get_nss(vdev);
+		hdd_objmgr_put_vdev(vdev);
 
 		hdd_check_and_update_nss(hdd_ctx, &tx_nss_max, &rx_nss_max);
 
@@ -5621,15 +5628,19 @@ QDF_STATUS wlan_hdd_get_mib_stats(struct hdd_adapter *adapter)
 {
 	int ret = 0;
 	struct stats_event *stats;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!adapter) {
 		hdd_err("Invalid context, adapter");
 		return QDF_STATUS_E_FAULT;
 	}
 
-	stats = wlan_cfg80211_mc_cp_stats_get_mib_stats(
-			adapter->vdev,
-			&ret);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAULT;
+
+	stats = wlan_cfg80211_mc_cp_stats_get_mib_stats(vdev, &ret);
+	hdd_objmgr_put_vdev(vdev);
 	if (ret || !stats) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 		return ret;
@@ -5647,6 +5658,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 	int ret = 0, i;
 	struct hdd_station_ctx *sta_ctx;
 	struct stats_event *rssi_info;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!adapter) {
 		hdd_err("Invalid context, adapter");
@@ -5675,10 +5687,17 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 		return QDF_STATUS_SUCCESS;
 	}
 
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev) {
+		*rssi_value = adapter->rssi;
+		return QDF_STATUS_SUCCESS;
+	}
+
 	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(
-			adapter->vdev,
+			vdev,
 			sta_ctx->conn_info.bssid.bytes,
 			&ret);
+	hdd_objmgr_put_vdev(vdev);
 	if (ret || !rssi_info) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 		return ret;
@@ -6041,12 +6060,16 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	struct stats_event *stats;
 	struct wlan_mlme_nss_chains *dynamic_cfg;
 	uint32_t tx_nss, rx_nss;
+	struct wlan_objmgr_vdev *vdev;
 
-	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(adapter->vdev,
-							    &ret);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	stats = wlan_cfg80211_mc_cp_stats_get_station_stats(vdev, &ret);
 	if (ret || !stats) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
-		return ret;
+		goto out;
 	}
 
 	/* save summary stats to legacy location */
@@ -6087,11 +6110,12 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	adapter->hdd_stats.peer_stats.fcs_count =
 		stats->peer_adv_stats->fcs_count;
 
-	dynamic_cfg = mlme_get_dynamic_vdev_config(adapter->vdev);
+	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
 	if (!dynamic_cfg) {
 		hdd_err("nss chain dynamic config NULL");
 		wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 
 	switch (hdd_conn_get_connected_band(&adapter->session.station)) {
@@ -6104,15 +6128,15 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 		rx_nss = dynamic_cfg->rx_nss[NSS_CHAINS_BAND_5GHZ];
 		break;
 	default:
-		tx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
-		rx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
+		tx_nss = wlan_vdev_mlme_get_nss(vdev);
+		rx_nss = wlan_vdev_mlme_get_nss(vdev);
 	}
 	/* Intersection of self and AP's NSS capability */
-	if (tx_nss > wlan_vdev_mlme_get_nss(adapter->vdev))
-		tx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
+	if (tx_nss > wlan_vdev_mlme_get_nss(vdev))
+		tx_nss = wlan_vdev_mlme_get_nss(vdev);
 
-	if (rx_nss > wlan_vdev_mlme_get_nss(adapter->vdev))
-		rx_nss = wlan_vdev_mlme_get_nss(adapter->vdev);
+	if (rx_nss > wlan_vdev_mlme_get_nss(vdev))
+		rx_nss = wlan_vdev_mlme_get_nss(vdev);
 
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.tx_nss = tx_nss;
@@ -6142,7 +6166,9 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 		     sizeof(stats->vdev_chain_rssi[0].chain_rssi));
 	wlan_cfg80211_mc_cp_stats_free_stats_event(stats);
 
-	return 0;
+out:
+	hdd_objmgr_put_vdev(vdev);
+	return ret;
 }
 
 struct temperature_priv {

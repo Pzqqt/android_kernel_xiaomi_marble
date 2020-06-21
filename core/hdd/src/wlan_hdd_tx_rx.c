@@ -71,6 +71,7 @@
 #include "nan_public_structs.h"
 #include "nan_ucfg_api.h"
 #include <wlan_hdd_sar_limits.h>
+#include "wlan_hdd_object_manager.h"
 
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(QCA_LL_PDEV_TX_FLOW_CONTROL)
 /*
@@ -855,8 +856,14 @@ void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
 static bool hdd_is_xmit_allowed_on_ndi(struct hdd_adapter *adapter)
 {
 	enum nan_datapath_state state;
+	struct wlan_objmgr_vdev *vdev;
 
-	state = ucfg_nan_get_ndi_state(adapter->vdev);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return false;
+
+	state = ucfg_nan_get_ndi_state(vdev);
+	hdd_objmgr_put_vdev(vdev);
 	return (state == NAN_DATA_NDI_CREATED_STATE ||
 		state == NAN_DATA_CONNECTED_STATE ||
 		state == NAN_DATA_CONNECTING_STATE ||

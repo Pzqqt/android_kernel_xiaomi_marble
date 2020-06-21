@@ -16,12 +16,14 @@
 
 #include "wlan_hdd_ftm_time_sync.h"
 #include "ftm_time_sync_ucfg_api.h"
+#include "wlan_hdd_object_manager.h"
 
 static ssize_t hdd_ftm_time_sync_show(struct device *dev,
 				      struct device_attribute *attr, char *buf)
 {
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *adapter;
+	struct wlan_objmgr_vdev *vdev;
 	ssize_t size = 0;
 
 	struct net_device *net_dev = qdf_container_of(dev, struct net_device,
@@ -32,9 +34,14 @@ static ssize_t hdd_ftm_time_sync_show(struct device *dev,
 		return scnprintf(buf, PAGE_SIZE, "Invalid device\n");
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (adapter->device_mode == QDF_STA_MODE)
-		return ucfg_ftm_time_sync_show(adapter->vdev, buf);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
 
+	if (adapter->device_mode == QDF_STA_MODE)
+		size = ucfg_ftm_time_sync_show(vdev, buf);
+
+	hdd_objmgr_put_vdev(vdev);
 	return size;
 }
 
@@ -47,13 +54,18 @@ hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct wlan_objmgr_psoc *psoc;
 	struct net_device *net_dev;
+	struct wlan_objmgr_vdev *vdev;
 
-	psoc = wlan_vdev_get_psoc(adapter->vdev);
-	if (!psoc)
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
 		return;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		goto out;
 
 	if (!ucfg_is_ftm_time_sync_enable(psoc))
-		return;
+		goto out;
 
 	net_dev = adapter->dev;
 
@@ -68,6 +80,8 @@ hdd_ftm_time_sync_sta_state_notify(struct hdd_adapter *adapter,
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	ucfg_ftm_time_sync_update_sta_connect_state(
-						adapter->vdev, state,
+						vdev, state,
 						hdd_sta_ctx->conn_info.bssid);
+out:
+	hdd_objmgr_put_vdev(vdev);
 }
