@@ -15202,6 +15202,11 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_WPA3_SUITEB_ROAM_SUPPORT;
 	wmi_service[wmi_service_no_interband_mcc_support] =
 			WMI_SERVICE_NO_INTERBAND_MCC_SUPPORT;
+	wmi_service[wmi_service_dual_sta_roam_support] =
+			WMI_SERVICE_DUAL_STA_ROAM_SUPPORT;
+	wmi_service[wmi_service_peer_create_conf] =
+			WMI_SERVICE_PEER_CREATE_CONF;
+
 }
 
 /**

@@ -944,6 +944,11 @@ QDF_STATUS (*send_set_base_macaddr_indicate_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_pdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
 				struct wmi_pcl_chan_weights *msg);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS (*send_vdev_set_pcl_cmd)(wmi_unified_t wmi_handle,
+				    struct set_pcl_cmd_params *params);
+#endif
+
 #ifdef WLAN_POLICY_MGR_ENABLE
 QDF_STATUS (*send_pdev_set_dual_mac_config_cmd)(wmi_unified_t wmi_handle,
 		struct policy_mgr_dual_mac_config *msg);

@@ -5204,6 +5204,8 @@ typedef enum {
 	wmi_service_srg_srp_spatial_reuse_support,
 	wmi_service_suiteb_roam_support,
 	wmi_service_no_interband_mcc_support,
+	wmi_service_dual_sta_roam_support,
+	wmi_service_peer_create_conf,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
