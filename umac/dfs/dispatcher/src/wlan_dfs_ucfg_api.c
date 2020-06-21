@@ -394,7 +394,7 @@ bool ucfg_dfs_is_hw_pulses_allowed(struct wlan_objmgr_pdev *pdev)
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
-		return;
+		return false;
 	}
 
 	return dfs_is_hw_pulses_allowed(dfs);
