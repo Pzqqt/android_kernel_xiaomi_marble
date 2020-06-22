@@ -1315,6 +1315,8 @@ typedef enum {
     WMI_AUDIO_AGGR_GET_STATISTICS_CMDID,
     WMI_AUDIO_AGGR_RESET_STATISTICS_CMDID,
     WMI_AUDIO_AGGR_SET_RTSCTS_CONFIG_CMDID,
+    WMI_AUDIO_AGGR_SET_SCHED_METHOD_CMDID,
+    WMI_AUDIO_AGGR_GET_SCHED_METHOD_CMDID,
 
     /** WMI commands related to Channel Frequency Response Capture **/
     WMI_CFR_CAPTURE_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_CFR_CAPTURE),
@@ -2009,6 +2011,7 @@ typedef enum {
 
     /** WMI events related to Audio Frame aggregation feature **/
     WMI_AUDIO_AGGR_REPORT_STATISTICS_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_AUDIO),
+    WMI_AUDIO_AGGR_SCHED_METHOD_EVENTID,
 
 } WMI_EVT_ID;
 
@@ -26545,6 +26548,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_RTSCTS_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_REQUEST_CTRL_PATH_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_GET_TPC_STATS_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_SET_SCHED_METHOD_CMDID);
+        WMI_RETURN_STRING(WMI_AUDIO_AGGR_GET_SCHED_METHOD_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -30229,6 +30234,49 @@ typedef struct {
     A_UINT32 user_profile;
 } wmi_audio_aggr_set_rtscts_config_cmd_fixed_param;
 
+typedef enum {
+    /* audio aggr scheduler method list */
+    WMI_AUDIO_AGGR_SCHED_METHOD_HOST_CONTROL = 1,
+    WMI_AUDIO_AGGR_SCHED_METHOD_HOST_CONTROL_PER_CYCLE = 2,
+
+    WMI_AUDIO_AGGR_SCHED_METHOD_MAX,
+} WMI_AUDIO_AGGR_SCHED_METHOD_TYPE;
+
+typedef enum {
+    /* audio aggr RTS-CTS Config */
+    WMI_AUDIO_AGGR_RTS_CTS_CONFIG_DISABLED = 0,
+    WMI_AUDIO_AGGR_RTS_CTS_CONFIG_PPDU = 1,
+    WMI_AUDIO_AGGR_RTS_CTS_CONFIG_CYCLE = 2,
+
+    WMI_AUDIO_AGGR_RTS_CTS_MAX,
+} WMI_AUDIO_AGGR_RTS_CTS_CONFIG_TYPE;
+
+typedef struct {
+    /* TLV tag and len */
+    A_UINT32 tlv_header;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+
+    /* selected audio aggr scheduler method
+    *  valid methods can be found in WMI_AUDIO_AGGR_SCHED_METHOD_TYPE
+    */
+    A_UINT32 sched_method;
+
+    /* rts-cts config
+    * valid config can be found in WMI_AUDIO_AGGR_RTS_CTS_CONFIG_TYPE
+    */
+    A_UINT32 rtscts_config;
+} wmi_audio_aggr_set_sched_method_cmd_fixed_param;
+
+typedef struct {
+    /* TLV tag and len */
+    A_UINT32 tlv_header;
+
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+} wmi_audio_aggr_get_sched_method_cmd_fixed_param;
+
 typedef struct {
     /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_set_ocl_cmd_fixed_param */
@@ -30837,6 +30885,24 @@ typedef struct {
      */
     A_UINT32 null_frame_tx_lost;
 } wmi_audio_aggr_peer_stats;
+
+typedef struct {
+    /** TLV tag and len **/
+    A_UINT32 tlv_header;
+
+    /* ID of the vdev this response belongs to */
+    A_UINT32 vdev_id;
+
+    /* selected audio aggr scheduler method
+    *  valid methods can be found in WMI_AUDIO_AGGR_SCHED_METHOD_TYPE
+    */
+    A_UINT32 sched_method;
+
+    /* rts-cts config
+    * valid config can be found in WMI_AUDIO_AGGR_RTS_CTS_CONFIG_TYPE
+    */
+    A_UINT32 rtscts_config;
+} wmi_audio_aggr_sched_method_event_fixed_param;
 
 typedef struct {
     /** TLV tag and len; tag equals
