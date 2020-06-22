@@ -181,15 +181,19 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
  * Setting it to blank as feature is not intended to be supported
  * on linux version less than 4.3
  */
-#if LINUX_VERSION_CODE  < KERNEL_VERSION(4, 3, 0) || \
-	LINUX_VERSION_CODE  >= KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE  < KERNEL_VERSION(4, 3, 0)
 #define __QDF_DECLARE_EWMA(name, _factor, _weight)
 
 #define __qdf_ewma_tx_lag int
 #define __qdf_ewma_rx_rssi int
 #else
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0)
+#define __QDF_DECLARE_EWMA(name, _factor, _weight) \
+	DECLARE_EWMA(name, ilog2(_factor), _weight)
+#else
 #define __QDF_DECLARE_EWMA(name, _factor, _weight) \
 	DECLARE_EWMA(name, _factor, _weight)
+#endif
 
 #define __qdf_ewma_tx_lag struct ewma_tx_lag
 #define __qdf_ewma_rx_rssi struct ewma_rx_rssi
@@ -264,8 +268,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 
 #define __qdf_roundup(x, y) roundup(x, y)
 
-#if LINUX_VERSION_CODE  < KERNEL_VERSION(4, 3, 0) || \
-	LINUX_VERSION_CODE  >= KERNEL_VERSION(4, 11, 0)
+#if LINUX_VERSION_CODE  < KERNEL_VERSION(4, 3, 0)
 #define  __qdf_ewma_tx_lag_init(tx_lag)
 #define  __qdf_ewma_tx_lag_add(tx_lag, value)
 #define  __qdf_ewma_tx_lag_read(tx_lag)
