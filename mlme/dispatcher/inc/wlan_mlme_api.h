@@ -2240,7 +2240,6 @@ QDF_STATUS wlan_mlme_is_bmps_enabled(struct wlan_objmgr_psoc *psoc,
 /**
  * wlan_mlme_override_bmps_imps() - disable imps/bmps
  * @psoc: pointer to psoc object
- * @value: value that is requested by the caller
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
