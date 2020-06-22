@@ -1469,7 +1469,6 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
  * @adapter: HDD vdev context
  * @sap_config: sap configuration pointer
  * @csr_phy_mode: phymode to restart SAP with
- * @freq_changed: flag to set freq update on restart
  *
  * This function handles the stop/start/restart of SAP/P2P_GO adapters when the
  * country code changes
@@ -1479,8 +1478,7 @@ static void hdd_country_change_update_sta(struct hdd_context *hdd_ctx)
 static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
 					     struct hdd_adapter *adapter,
 					     struct sap_config *sap_config,
-					     eCsrPhyMode csr_phy_mode,
-					     bool freq_changed)
+					     eCsrPhyMode csr_phy_mode)
 {
 	struct hdd_hostapd_state *hostapd_state = NULL;
 	struct sap_context *sap_ctx = NULL;
@@ -1503,10 +1501,8 @@ static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
 		return;
 	}
 
-	if (freq_changed) {
-		sap_config->chan_freq =
+	sap_config->chan_freq =
 		wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
-	}
 
 	sap_config->sap_orig_hw_mode = sap_config->SapHw_mode;
 	sap_config->SapHw_mode = csr_phy_mode;
@@ -1543,29 +1539,21 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct sap_config *sap_config = NULL;
-	struct sap_context *sap_ctx = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t reg_phy_mode, new_phy_mode;
-	bool freq_changed, phy_changed;
+	bool phy_changed;
 	qdf_freq_t oper_freq;
 	eCsrPhyMode csr_phy_mode;
-	struct sta_ap_intf_check_work_ctx intf_work;
-	QDF_STATUS status;
 
 	pdev = hdd_ctx->pdev;
 
 	hdd_for_each_adapter_dev_held(hdd_ctx, adapter) {
 		oper_freq = hdd_get_adapter_home_channel(adapter);
-		freq_changed = wlan_reg_is_disable_for_freq(pdev, oper_freq);
 
 		switch (adapter->device_mode) {
 		case QDF_P2P_GO_MODE:
-			sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
-			if (freq_changed) {
-				status = wlansap_stop_bss(sap_ctx);
-				if (QDF_IS_STATUS_SUCCESS(status))
-					hdd_debug("Deleting SAP/P2P link!!");
-			}
+			policy_mgr_check_sap_restart(hdd_ctx->psoc,
+						     adapter->vdev_id);
 			break;
 		case QDF_SAP_MODE:
 			sap_config = &adapter->session.ap.sap_config;
@@ -1578,18 +1566,15 @@ static void hdd_country_change_update_sap(struct hdd_context *hdd_ctx)
 			csr_phy_mode =
 				csr_convert_from_reg_phy_mode(new_phy_mode);
 			phy_changed = (csr_phy_mode != sap_config->SapHw_mode);
-			if (freq_changed) {
-				intf_work.psoc = wlan_pdev_get_psoc(pdev);
-				policy_mgr_check_sta_ap_concurrent_ch_intf(
-								&intf_work);
-			}
 
 			if (phy_changed)
 				hdd_restart_sap_with_new_phymode(hdd_ctx,
 								 adapter,
 								 sap_config,
-								 csr_phy_mode,
-								 freq_changed);
+								 csr_phy_mode);
+			else
+				policy_mgr_check_sap_restart(hdd_ctx->psoc,
+							     adapter->vdev_id);
 			break;
 		default:
 			break;

@@ -1779,6 +1779,49 @@ void policy_mgr_nan_sap_post_disable_conc_check(struct wlan_objmgr_psoc *psoc)
 					       sap_info->bw), true);
 }
 
+void policy_mgr_check_sap_restart(struct wlan_objmgr_psoc *psoc,
+				  uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint32_t ch_freq;
+	struct policy_mgr_psoc_priv_obj *pm_ctx = NULL;
+
+	if (!psoc) {
+		policy_mgr_err("Invalid psoc");
+		return;
+	}
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
+
+	if (pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress &&
+	    pm_ctx->hdd_cbacks.hdd_is_chan_switch_in_progress()) {
+		policy_mgr_debug("wait as channel switch is already in progress");
+		status =
+			qdf_wait_single_event(&pm_ctx->channel_switch_complete_evt,
+					      CHANNEL_SWITCH_COMPLETE_TIMEOUT);
+		if (QDF_IS_STATUS_ERROR(status))
+			policy_mgr_err("wait for event failed, still continue with channel switch");
+	}
+
+	if (!pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart) {
+		policy_mgr_err("SAP restart get channel callback in NULL");
+		goto end;
+	}
+	status =
+		pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart(psoc,
+								      vdev_id,
+								      &ch_freq);
+	if (status == QDF_STATUS_SUCCESS)
+		policy_mgr_debug("SAP vdev id %d switch to new ch freq: %d",
+				 vdev_id, ch_freq);
+
+end:
+	pm_ctx->do_sap_unsafe_ch_check = false;
+}
+
 static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 {
 	struct wlan_objmgr_psoc *psoc;

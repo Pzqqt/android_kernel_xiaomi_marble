@@ -2583,12 +2583,22 @@ QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
 		bool *one_by_one_dbs, bool *two_by_two_dbs);
 
 /**
+ * policy_mgr_check_sap_restart() - Restart SAP when band/channel change
+ * @psoc: Pointer to soc
+ * @vdev_id: Vdev id
+ *
+ * Return: None
+ */
+void
+policy_mgr_check_sap_restart(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+/**
  * policy_mgr_check_sta_ap_concurrent_ch_intf() - Restart SAP in STA-AP case
  * @data: Pointer to STA adapter
  *
  * Restarts the SAP interface in STA-AP concurrency scenario
  *
- * Restart: None
+ * Return: None
  */
 void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data);
 
