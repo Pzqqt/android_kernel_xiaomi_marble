@@ -2032,6 +2032,11 @@ struct dp_pdev {
 	/* Flag to hold on to monitor destination ring */
 	bool hold_mon_dest_ring;
 
+#ifdef WLAN_ATF_ENABLE
+	/* ATF stats enable */
+	bool dp_atf_stats_enable;
+#endif
+
 	/* Maintains first status buffer's paddr of a PPDU */
 	uint64_t status_buf_addr;
 };

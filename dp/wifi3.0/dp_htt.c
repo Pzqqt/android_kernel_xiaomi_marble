@@ -2274,6 +2274,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
 
 	tag_buf = start_tag_buf + HTT_GET_STATS_CMN_INDEX(RESV_NUM_UL_BEAM);
+	ppdu_desc->phy_ppdu_tx_time_us =
+		HTT_PPDU_STATS_COMMON_TLV_PHY_PPDU_TX_TIME_US_GET(*tag_buf);
 	ppdu_desc->beam_change =
 		HTT_PPDU_STATS_COMMON_TLV_BEAM_CHANGE_GET(*tag_buf);
 	ppdu_desc->doppler =
@@ -2481,6 +2483,7 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	ppdu_user_desc->ru_tones =
 		(HTT_PPDU_STATS_USER_RATE_TLV_RU_END_GET(*tag_buf) -
 		HTT_PPDU_STATS_USER_RATE_TLV_RU_START_GET(*tag_buf)) + 1;
+	ppdu_desc->usr_ru_tones_sum += ppdu_user_desc->ru_tones;
 
 	tag_buf += 2;
 
@@ -2501,6 +2504,7 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	ppdu_user_desc->bw =
 		HTT_PPDU_STATS_USER_RATE_TLV_BW_GET(*tag_buf) - 2;
 	ppdu_user_desc->nss = HTT_PPDU_STATS_USER_RATE_TLV_NSS_GET(*tag_buf);
+	ppdu_desc->usr_nss_sum += ppdu_user_desc->nss;
 	ppdu_user_desc->mcs = HTT_PPDU_STATS_USER_RATE_TLV_MCS_GET(*tag_buf);
 	ppdu_user_desc->preamble =
 		HTT_PPDU_STATS_USER_RATE_TLV_PREAMBLE_GET(*tag_buf);
@@ -3401,6 +3405,52 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 	}
 }
 
+#ifdef WLAN_ATF_ENABLE
+static void
+dp_ppdu_desc_user_phy_tx_time_update(struct dp_pdev *pdev,
+				     struct cdp_tx_completion_ppdu *ppdu_desc,
+				     struct cdp_tx_completion_ppdu_user *user)
+{
+	uint32_t nss_ru_width_sum = 0;
+
+	if (!pdev || !ppdu_desc || !user)
+		return;
+
+	if (!pdev->dp_atf_stats_enable)
+		return;
+
+	if (ppdu_desc->frame_type != CDP_PPDU_FTYPE_DATA)
+		return;
+
+	nss_ru_width_sum = ppdu_desc->usr_nss_sum * ppdu_desc->usr_ru_tones_sum;
+	if (!nss_ru_width_sum)
+		nss_ru_width_sum = 1;
+
+	/**
+	 * For SU-MIMO PPDU phy Tx time is same for the single user.
+	 * For MU-MIMO phy Tx time is calculated per user as below
+	 *     user phy tx time =
+	 *           Entire PPDU duration * MU Ratio * OFDMA Ratio
+	 *     MU Ratio = usr_nss / Sum_of_nss_of_all_users
+	 *     OFDMA_ratio = usr_ru_width / Sum_of_ru_width_of_all_users
+	 *     usr_ru_widt = ru_end – ru_start + 1
+	 */
+	if (ppdu_desc->htt_frame_type == HTT_STATS_FTYPE_TIDQ_DATA_SU) {
+		user->phy_tx_time_us = ppdu_desc->phy_ppdu_tx_time_us;
+	} else {
+		user->phy_tx_time_us = (ppdu_desc->phy_ppdu_tx_time_us *
+				user->nss * user->ru_tones) / nss_ru_width_sum;
+	}
+}
+#else
+static void
+dp_ppdu_desc_user_phy_tx_time_update(struct dp_pdev *pdev,
+				     struct cdp_tx_completion_ppdu *ppdu_desc,
+				     struct cdp_tx_completion_ppdu_user *user)
+{
+}
+#endif
+
 /**
  * dp_ppdu_desc_user_stats_update(): Function to update TX user stats
  * @pdev: DP pdev handle
@@ -3442,6 +3492,7 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 	} else {
 		num_users = ppdu_desc->num_users;
 	}
+	qdf_assert_always(ppdu_desc->num_users <= ppdu_desc->max_users);
 
 	for (i = 0; i < num_users; i++) {
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
@@ -3498,6 +3549,9 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 					   ppdu_desc->ack_rssi);
 			dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 		}
+
+		dp_ppdu_desc_user_phy_tx_time_update(pdev, ppdu_desc,
+						     &ppdu_desc->user[i]);
 
 		dp_peer_unref_delete(peer);
 		tlv_bitmap_expected = tlv_bitmap_default;

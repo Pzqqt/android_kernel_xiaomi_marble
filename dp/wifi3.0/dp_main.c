@@ -7920,6 +7920,23 @@ static QDF_STATUS dp_get_peer_param(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_ATF_ENABLE
+static void dp_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+{
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid pdev");
+		return;
+	}
+
+	pdev->dp_atf_stats_enable = value;
+}
+#else
+static void dp_set_atf_stats_enable(struct dp_pdev *pdev, bool value)
+{
+}
+#endif
+
 /*
  * dp_set_peer_param: function to set parameters in peer
  * @cdp_soc: DP soc handle
@@ -8102,6 +8119,10 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		break;
 	case CDP_CONFIG_BSS_COLOR:
 		dp_mon_set_bsscolor(pdev, val.cdp_pdev_param_bss_color);
+		break;
+	case CDP_SET_ATF_STATS_ENABLE:
+		dp_set_atf_stats_enable(pdev,
+					val.cdp_pdev_param_atf_stats_enable);
 		break;
 	default:
 		return QDF_STATUS_E_INVAL;
