@@ -14937,10 +14937,20 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID;
 	event_ids[wmi_pdev_div_rssi_antid_event_id] =
 		WMI_PDEV_DIV_RSSI_ANTID_EVENTID;
+#ifdef WLAN_SUPPORT_TWT
 	event_ids[wmi_twt_enable_complete_event_id] =
 		WMI_TWT_ENABLE_COMPLETE_EVENTID;
 	event_ids[wmi_twt_disable_complete_event_id] =
 		WMI_TWT_DISABLE_COMPLETE_EVENTID;
+	event_ids[wmi_twt_add_dialog_complete_event_id] =
+		WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID;
+	event_ids[wmi_twt_del_dialog_complete_event_id] =
+		WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID;
+	event_ids[wmi_twt_pause_dialog_complete_event_id] =
+		WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID;
+	event_ids[wmi_twt_resume_dialog_complete_event_id] =
+		WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID;
+#endif
 	event_ids[wmi_apf_get_vdev_work_memory_resp_event_id] =
 		WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID;
 	event_ids[wmi_wlan_sar2_result_event_id] = WMI_SAR2_RESULT_EVENTID;
