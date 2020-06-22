@@ -5123,7 +5123,7 @@ QDF_STATUS wma_send_vdev_stop(uint8_t vdev_id)
 				wma->interfaces[vdev_id].vdev,
 				WMA_SET_LINK_STATE);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGP(FL("Failed to set wma req msg_type for vdev_id %d"),
+		wma_alert("Failed to set wma req msg_type for vdev_id %d",
 			 vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}

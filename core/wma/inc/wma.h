@@ -80,8 +80,6 @@
 	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_WMA, params)
 #define WMA_LOGE(params ...) \
 	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_WMA, params)
-#define WMA_LOGP(params ...) \
-	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_WMA, params)
 
 #define wma_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_WMA, params)
 #define wma_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_WMA, params)

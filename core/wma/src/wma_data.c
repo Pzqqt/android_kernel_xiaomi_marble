@@ -1366,7 +1366,7 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
 	/* Set the Tx Mgmt Complete Event */
 	qdf_status = qdf_event_set(&wma_handle->tx_frm_download_comp_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		WMA_LOGP("%s: Event Set failed - tx_frm_comp_event", __func__);
+		wma_alert("Event Set failed - tx_frm_comp_event");
 }
 
 /**
@@ -2330,8 +2330,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 							 (void **)&pPacket);
 
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-					WMA_LOGP("%s: Failed to allocate %d bytes for RMF status code (%x)",
-						__func__, newFrmLen,
+					wma_alert("Failed to allocate %d bytes for RMF status code (%x)",
+						newFrmLen,
 						qdf_status);
 					/* Free the original packet memory */
 					cds_packet_free((void *)tx_frame);
@@ -2381,8 +2381,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 						      (void **)&pPacket);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				WMA_LOGP("%s: Failed to allocate %d bytes for RMF status code (%x)",
-					__func__, newFrmLen,
+				wma_alert("Failed to allocate %d bytes for RMF status code (%x)",
+					newFrmLen,
 					qdf_status);
 				/* Free the original packet memory */
 				cds_packet_free((void *)tx_frame);
@@ -2572,8 +2572,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				&wma_handle->tx_frm_download_comp_event);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			WMA_LOGP("%s: Event Reset failed tx comp event %x",
-				 __func__, qdf_status);
+			wma_alert("Event Reset failed tx comp event %x",
+				 qdf_status);
 			cds_packet_free((void *)tx_frame);
 			goto error;
 		}
@@ -2718,7 +2718,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 					      WMA_TX_FRAME_COMPLETE_TIMEOUT);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			WMA_LOGP("Wait Event failed txfrm_comp_event");
+			wma_nofl_alert("Wait Event failed txfrm_comp_event");
 			/*
 			 * @Integrated: Something Wrong with Dxe
 			 *   TODO: Some Debug Code

@@ -1089,8 +1089,7 @@ int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
 {
 	if (wmi_unified_csa_offload_enable(wma->wmi_handle,
 				 vdev_id)) {
-		WMA_LOGP("%s: Failed to send CSA offload enable command",
-			 __func__);
+		wma_alert("Failed to send CSA offload enable command");
 		return -EIO;
 	}
 
@@ -2851,7 +2850,7 @@ void wma_del_ts_req(tp_wma_handle wma, struct del_ts_params *msg)
 	if (wmi_unified_del_ts_cmd(wma->wmi_handle,
 				 msg->sessionId,
 				 TID_TO_WME_AC(msg->userPrio))) {
-		WMA_LOGP("%s: Failed to send vdev DELTS command", __func__);
+		wma_alert("Failed to send vdev DELTS command");
 	}
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
