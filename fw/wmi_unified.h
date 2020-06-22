@@ -2833,6 +2833,16 @@ typedef struct {
      * 0 - not enabled
      */
     A_UINT32 chwidth_num_peer_caps;
+
+    /*
+     * Whether preamble puncturing is supported by FW, and if so, for which
+     * bandwidths.  The possible values for this field are listed below.
+     *   0: preamble puncturing is not supported
+     *  80: puncturing supported within channels of at least 80 MHz bandwidth
+     * 160: puncturing supported within channels of at least 160 MHz bandwidth
+     * 320: puncturing supported within 320 MHz channels
+     */
+    A_UINT32 preamble_puncture_bw;
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
@@ -6817,6 +6827,16 @@ typedef enum {
      *  1  | Enable/Disable mBSSID trigger support for BSR triggers.
      */
     WMI_PDEV_PARAM_ENABLE_MBSSID_CTRL_FRAME,
+
+    /*
+     * Parameter to set preamble punctured band as a bitmask, i.e.
+     * which 20MHz in the 80MHz bandwidth or 40MHz in 160MHz bandwidth.
+     * E.g. if first 20MHz is the primary and preamble puncturing is
+     * desired for 3rd 20Mhz, then the host will send 0x0100.
+     * FW doesn't expect the primary 20MHz to be punctured.
+     * This param is required only for 11ax release.
+     */
+    WMI_PDEV_PARAM_SET_PREAM_PUNCT_BW,
 
 } WMI_PDEV_PARAM;
 
