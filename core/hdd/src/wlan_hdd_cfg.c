@@ -339,39 +339,85 @@ config_exit:
 	return qdf_status;
 }
 
+#ifdef FEATURE_RUNTIME_PM
 /**
  * hdd_disable_runtime_pm() - Override to disable runtime_pm.
  * @cfg_ini: Handle to struct hdd_config
  *
  * Return: None
  */
-#ifdef FEATURE_RUNTIME_PM
 static void hdd_disable_runtime_pm(struct hdd_config *cfg_ini)
 {
 	cfg_ini->runtime_pm = 0;
+}
+
+/**
+ * hdd_restore_runtime_pm() - Restore runtime_pm configuration.
+ * @cfg_ini: Handle to struct hdd_config
+ *
+ * Return: None
+ */
+static void hdd_restore_runtime_pm(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *cfg_ini = hdd_ctx->config;
+
+	cfg_ini->runtime_pm = cfg_get(hdd_ctx->psoc, CFG_ENABLE_RUNTIME_PM);
 }
 #else
 static void hdd_disable_runtime_pm(struct hdd_config *cfg_ini)
 {
 }
+
+static void hdd_restore_runtime_pm(struct hdd_context *hdd_ctx)
+{
+}
 #endif
 
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
  * hdd_disable_auto_shutdown() - Override to disable auto_shutdown.
  * @cfg_ini: Handle to struct hdd_config
  *
  * Return: None
  */
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
 {
 	cfg_ini->wlan_auto_shutdown = 0;
+}
+
+/**
+ * hdd_restore_auto_shutdown() - Restore auto_shutdown configuration.
+ * @cfg_ini: Handle to struct hdd_config
+ *
+ * Return: None
+ */
+static void hdd_restore_auto_shutdown(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *cfg_ini = hdd_ctx->config;
+
+	cfg_ini->wlan_auto_shutdown = cfg_get(hdd_ctx->psoc,
+					      CFG_WLAN_AUTO_SHUTDOWN);
 }
 #else
 static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
 {
 }
+
+static void hdd_restore_auto_shutdown(struct hdd_context *hdd_ctx)
+{
+}
 #endif
+
+void hdd_restore_all_ps(struct hdd_context *hdd_ctx)
+{
+	/*
+	 * imps/bmps configuration will be restored in driver mode change
+	 * sequence as part of hdd_wlan_start_modules
+	 */
+
+	hdd_restore_runtime_pm(hdd_ctx);
+	hdd_restore_auto_shutdown(hdd_ctx);
+}
 
 void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 {

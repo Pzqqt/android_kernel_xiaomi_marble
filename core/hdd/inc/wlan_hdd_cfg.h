@@ -342,6 +342,15 @@ QDF_STATUS hdd_get_nss(struct hdd_adapter *adapter, uint8_t *nss);
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx);
 
 /**
+ * hdd_restore_all_ps() - Restore all the powersave configuration overwritten
+ * by hdd_override_all_ps.
+ * @hdd_ctx: Pointer to HDD context.
+ *
+ * Return: None
+ */
+void hdd_restore_all_ps(struct hdd_context *hdd_ctx);
+
+/**
  * hdd_override_all_ps() - overrides to disables all the powersave features.
  * @hdd_ctx: Pointer to HDD context.
  * Overrides below powersave ini configurations.
