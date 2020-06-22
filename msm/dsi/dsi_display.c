@@ -5182,12 +5182,22 @@ error:
 static int dsi_display_get_io_resources(struct msm_io_res *io_res, void *data)
 {
 	int rc = 0;
+	struct dsi_display *display;
+
+	if (!data)
+		return -EINVAL;
 
 	rc = dsi_ctrl_get_io_resources(io_res);
 	if (rc)
 		goto end;
 
 	rc = dsi_phy_get_io_resources(io_res);
+	if (rc)
+		goto end;
+
+	display = (struct dsi_display *)data;
+	rc = dsi_panel_get_io_resources(display->panel, io_res);
+
 end:
 	return rc;
 }
