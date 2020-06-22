@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -195,6 +195,22 @@ struct sme_qos_wmmtspecinfo {
 	uint16_t surplus_bw_allowance;
 	uint16_t medium_time;
 };
+
+static inline enum sme_qos_wmmuptype qca_wlan_ac_to_sme_qos(u8 priority)
+{
+	switch (priority) {
+	case QCA_WLAN_AC_BE:
+		return SME_QOS_WMM_UP_BE;
+	case QCA_WLAN_AC_BK:
+		return SME_QOS_WMM_UP_BK;
+	case QCA_WLAN_AC_VI:
+		return SME_QOS_WMM_UP_VI;
+	case QCA_WLAN_AC_VO:
+		return SME_QOS_WMM_UP_VO;
+	default:
+		return SME_QOS_WMM_UP_BE;
+	}
+}
 
 /* External APIs */
 typedef QDF_STATUS (*sme_QosCallback)(mac_handle_t mac_handle, void *HDDcontext,

@@ -1863,6 +1863,17 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 	dscp = (tos >> 2) & 0x3f;
 	*user_pri = adapter->dscp_to_up_map[dscp];
 
+	/*
+	 * Upgrade the priority, if the user priority of this packet is
+	 * less than the configured threshold.
+	 */
+	if (*user_pri < adapter->upgrade_udp_qos_threshold &&
+	    (qdf_nbuf_is_ipv4_udp_pkt(skb) || qdf_nbuf_is_ipv6_udp_pkt(skb))) {
+		/* Upgrade UDP pkt priority alone */
+		*user_pri = qca_wlan_ac_to_sme_qos(
+				adapter->upgrade_udp_qos_threshold);
+	}
+
 #ifdef HDD_WMM_DEBUG
 	hdd_debug("tos is %d, dscp is %d, up is %d", tos, dscp, *user_pri);
 #endif /* HDD_WMM_DEBUG */
