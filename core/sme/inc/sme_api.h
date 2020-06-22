@@ -155,6 +155,8 @@ struct sme_config_params {
 #define BW_160_OFFSET_BIT  3
 #endif /* FEATURE_WLAN_TDLS */
 
+struct wmi_twt_add_dialog_param;
+
 /* Thermal Mitigation*/
 typedef struct {
 	uint16_t smeMinTempThreshold;
@@ -3621,7 +3623,7 @@ QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
 					       twt_enable_cb twt_enable_cb);
 
 /**
- * sme_register_twt_disable_complete_cb - TWT disable registrar
+ * sme_register_twt_disable_complete_cb() - TWT disable registrar
  * @mac_handle: MAC handle
  * @twt_disable_cb: Function callback to handle disable event
  *
@@ -3629,6 +3631,21 @@ QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
  */
 QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
 						twt_disable_cb twt_disable_cb);
+
+/**
+ * sme_add_dialog_cmd() - Register callback and send TWT add dialog
+ * command to firmware
+ * @mac_handle: MAC handle
+ * @twt_add_dialog_cb: Function callback to handle add_dialog event
+ * @twt_params: TWT add dialog parameters
+ * @context: os_if_request cookie
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
+			      twt_add_dialog_cb twt_add_dialog_cb,
+			      struct wmi_twt_add_dialog_param *twt_params,
+			      void *context);
 
 /**
  * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
@@ -3639,40 +3656,14 @@ QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
 QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle);
 
 /**
- * sme_deregister_twt_disable_complete_cb - TWT disable deregistrar
+ * sme_deregister_twt_disable_complete_cb() - TWT disable deregistrar
  * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: QDF Status
  */
 QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle);
-
-#else
-static inline
-QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
-					       twt_enable_cb twt_enable_cb)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
-						twt_disable_cb twt_disable_cb)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
+
 /**
  * sme_get_sta_cxn_info() - This function populates all the connection
  *			    information which is formed by DUT-STA to AP

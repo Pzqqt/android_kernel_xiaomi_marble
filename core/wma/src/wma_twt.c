@@ -21,7 +21,6 @@
  *
  * WLAN Host Device Driver TWT - Target Wake Time Implementation
  */
-
 #include "wma_twt.h"
 #include "wmi_unified_twt_api.h"
 #include "wma_internal.h"
@@ -51,9 +50,9 @@ int wma_twt_en_complete_event_handler(void *handle,
 				      uint8_t *event, uint32_t len)
 {
 	struct wmi_twt_enable_complete_event_param param;
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	tp_wma_handle wma_handle = handle;
 	wmi_unified_t wmi_handle;
-	struct mac_context *mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	int status = -EINVAL;
 
 	if (!wma_handle) {
@@ -146,6 +145,56 @@ QDF_STATUS wma_twt_process_add_dialog(
 	return wmi_unified_twt_add_dialog_cmd(wmi_handle, params);
 }
 
+int wma_twt_add_dialog_complete_event_handler(void *handle,
+					      uint8_t *event, uint32_t len)
+{
+	struct wmi_twt_add_dialog_complete_event_param param = {0};
+	struct wmi_twt_add_dialog_additional_params additional_params = {0};
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	int status = -EINVAL;
+
+	if (!wma_handle) {
+		wma_err("Invalid wma handle for TWT add dialog complete");
+		return status;
+	}
+
+	if (!mac) {
+		wma_err("Invalid MAC context");
+		return status;
+	}
+
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wma handle for TWT add dialog complete");
+		return status;
+	}
+
+	status = wmi_extract_twt_add_dialog_comp_event(wmi_handle, event,
+						       &param);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	if (param.num_additional_twt_params) {
+		status = wmi_extract_twt_add_dialog_comp_additional_params(wmi_handle,
+									   event,
+									   len, 0,
+									   &additional_params);
+		if (QDF_IS_STATUS_ERROR(status))
+			return qdf_status_to_os_return(status);
+	}
+
+	wma_debug("TWT: Extract TWT add dialog event :%d", status);
+
+	if (mac->sme.twt_add_dialog_cb)
+		mac->sme.twt_add_dialog_cb(mac->sme.twt_context, &param,
+					   &additional_params);
+	mac->sme.twt_add_dialog_cb = NULL;
+
+	return status;
+}
+
 QDF_STATUS wma_twt_process_del_dialog(
 		struct wmi_twt_del_dialog_param *params)
 {
@@ -165,4 +214,3 @@ QDF_STATUS wma_twt_process_del_dialog(
 
 	return wmi_unified_twt_del_dialog_cmd(wmi_handle, params);
 }
-

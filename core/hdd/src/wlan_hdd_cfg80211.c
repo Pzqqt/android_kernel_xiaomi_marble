@@ -157,6 +157,10 @@
 #include "wlan_cm_roam_ucfg_api.h"
 #include "hif.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_hdd_twt.h"
+
+#define TWT_FLOW_TYPE_ANNOUNCED 0
+#define TWT_FLOW_TYPE_UNANNOUNCED 1
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -759,6 +763,21 @@ static struct ieee80211_iface_combination
 };
 
 static struct cfg80211_ops wlan_hdd_cfg80211_ops;
+
+const struct nla_policy qca_wlan_vendor_twt_add_dialog_policy[
+		QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION] = {.type = NLA_FLAG },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA] = {
+		.type = NLA_U32 },
+};
 
 #ifdef WLAN_NL80211_TESTMODE
 enum wlan_hdd_tm_attr {
@@ -6827,20 +6846,6 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 
 };
 
-static const struct nla_policy qca_wlan_vendor_twt_add_dialog_policy[
-		QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST] = {.type = NLA_FLAG },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER] = {.type = NLA_FLAG },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE] = {.type = NLA_U8 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION] = {.type = NLA_FLAG },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME] = {.type = NLA_U32 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION] = {.type = NLA_U32 },
-	[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA] = {
-		.type = NLA_U32 },
-};
-
 static const struct nla_policy
 qca_wlan_vendor_attr_he_omi_tx_policy [QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_HE_OMI_RX_NSS] =       {.type = NLA_U8 },
@@ -9288,6 +9293,121 @@ static void hdd_disable_runtime_pm_for_user(struct hdd_context *hdd_ctx)
 	qdf_runtime_pm_prevent_suspend(&ctx->user);
 }
 
+int hdd_twt_get_add_dialog_values(struct nlattr **tb,
+				  struct wmi_twt_add_dialog_param *params)
+{
+	uint32_t wake_intvl_exp, result;
+	int cmd_id;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (tb[cmd_id]) {
+		params->dialog_id = nla_get_u8(tb[cmd_id]);
+	} else {
+		params->dialog_id = 0;
+		hdd_debug("TWT_SETUP_FLOW_ID not specified. set to zero");
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_WAKE_INTVL_EXP is must");
+		return -EINVAL;
+	}
+	wake_intvl_exp = nla_get_u8(tb[cmd_id]);
+	if (wake_intvl_exp > TWT_SETUP_WAKE_INTVL_EXP_MAX) {
+		hdd_err_rl("Invalid wake_intvl_exp %u > %u",
+			   wake_intvl_exp,
+			   TWT_SETUP_WAKE_INTVL_EXP_MAX);
+		return -EINVAL;
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+	params->flag_bcast = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
+		return -EINVAL;
+	}
+	params->twt_cmd = nla_get_u8(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+	params->flag_trigger = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_FLOW_TYPE is must");
+		return -EINVAL;
+	}
+	params->flag_flow_type = nla_get_u8(tb[cmd_id]);
+	if (params->flag_flow_type != TWT_FLOW_TYPE_ANNOUNCED &&
+	    params->flag_flow_type != TWT_FLOW_TYPE_UNANNOUNCED)
+		return -EINVAL;
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+	params->flag_protection = nla_get_flag(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
+	if (tb[cmd_id])
+		params->sp_offset_us = nla_get_u32(tb[cmd_id]);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("TWT_SETUP_WAKE_DURATION is must");
+		return -EINVAL;
+	}
+	params->wake_dura_us = TWT_WAKE_DURATION_MULTIPLICATION_FACTOR *
+			       nla_get_u32(tb[cmd_id]);
+	if (params->wake_dura_us > TWT_SETUP_WAKE_DURATION_MAX) {
+		hdd_err_rl("Invalid wake_dura_us %u",
+			   params->wake_dura_us);
+		return -EINVAL;
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+	if (!tb[cmd_id]) {
+		hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
+		return -EINVAL;
+	}
+	params->wake_intvl_mantis = nla_get_u32(tb[cmd_id]);
+	if (params->wake_intvl_mantis >
+	    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
+		hdd_err_rl("Invalid wake_intvl_mantis %u",
+			   params->wake_dura_us);
+		return -EINVAL;
+	}
+
+	if (wake_intvl_exp && params->wake_intvl_mantis) {
+		result = 2 << (wake_intvl_exp - 1);
+		if (result >
+		    (UINT_MAX / params->wake_intvl_mantis)) {
+			hdd_err_rl("Invalid exp %d mantissa %d",
+				   wake_intvl_exp,
+				   params->wake_intvl_mantis);
+			return -EINVAL;
+		}
+		params->wake_intvl_us =
+			params->wake_intvl_mantis * result;
+	} else {
+		params->wake_intvl_us = params->wake_intvl_mantis;
+	}
+
+	hdd_debug("twt: dialod_id %d, vdev %d, wake intvl_us %d, mantis %d",
+		  params->dialog_id, params->vdev_id, params->wake_intvl_us,
+		  params->wake_intvl_mantis);
+	hdd_debug("twt: wake dura %d, sp_offset %d, cmd %d",
+		  params->wake_dura_us, params->sp_offset_us,
+		  params->twt_cmd);
+	hdd_debug("twt: bcast %d, trigger %d, flow_type %d, prot %d",
+		  params->flag_bcast, params->flag_trigger,
+		  params->flag_flow_type,
+		  params->flag_protection);
+	hdd_debug("twt: peer mac_addr "
+		  QDF_MAC_ADDR_STR,
+		  QDF_MAC_ADDR_ARRAY(params->peer_macaddr));
+
+	return 0;
+}
+
 /**
  * __wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
  * vendor command
@@ -9769,12 +9889,10 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		struct wmi_twt_add_dialog_param params = {0};
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		uint32_t wake_intvl_exp = 0, result = 0;
 		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 		struct nlattr *twt_session;
 		int tmp, rc;
 		uint32_t congestion_timeout = 0;
-		uint8_t twt_cmd;
 
 		if ((adapter->device_mode != QDF_STA_MODE &&
 		     adapter->device_mode != QDF_P2P_CLIENT_MODE) ||
@@ -9804,110 +9922,9 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				goto send_err;
 			}
 
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
-			if (!tb2[cmd_id]) {
-				hdd_err_rl("TWT_SETUP_WAKE_INTVL_EXP is must");
+			ret_val = hdd_twt_get_add_dialog_values(tb2, &params);
+			if (ret_val)
 				goto send_err;
-			}
-			wake_intvl_exp = nla_get_u8(tb2[cmd_id]);
-			if (wake_intvl_exp > TWT_SETUP_WAKE_INTVL_EXP_MAX) {
-				hdd_err_rl("Invalid wake_intvl_exp %u > %u",
-					   wake_intvl_exp,
-					   TWT_SETUP_WAKE_INTVL_EXP_MAX);
-				goto send_err;
-			}
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
-			if (tb2[cmd_id])
-				params.flag_bcast = nla_get_flag(tb2[cmd_id]);
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_REQ_TYPE;
-			if (!tb2[cmd_id]) {
-				hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
-				goto send_err;
-			}
-			twt_cmd = nla_get_u8(tb2[cmd_id]);
-			if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_REQUEST)
-				params.twt_cmd =
-					WMI_HOST_TWT_COMMAND_REQUEST_TWT;
-			else if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_SUGGEST)
-				params.twt_cmd =
-					WMI_HOST_TWT_COMMAND_SUGGEST_TWT;
-			else if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_DEMAND)
-				params.twt_cmd =
-					WMI_HOST_TWT_COMMAND_DEMAND_TWT;
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
-			if (tb2[cmd_id])
-				params.flag_trigger = nla_get_flag(tb2[cmd_id]);
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
-			if (!tb2[cmd_id]) {
-				hdd_err_rl("TWT_SETUP_FLOW_TYPE is must");
-				goto send_err;
-			}
-			params.flag_flow_type = nla_get_u8(tb2[cmd_id]);
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
-			if (tb2[cmd_id])
-				params.flag_protection =
-					nla_get_flag(tb2[cmd_id]);
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME;
-			if (tb2[cmd_id])
-				params.sp_offset_us = nla_get_u32(tb2[cmd_id]);
-
-			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
-			if (!tb2[cmd_id]) {
-				hdd_err_rl("TWT_SETUP_WAKE_DURATION is must");
-				goto send_err;
-			}
-			params.wake_dura_us = 256 * nla_get_u32(tb2[cmd_id]);
-			if (params.wake_dura_us > TWT_SETUP_WAKE_DURATION_MAX) {
-				hdd_err_rl("Invalid wake_dura_us %u",
-					   params.wake_dura_us);
-				goto send_err;
-			}
-
-			cmd_id =
-			QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
-			if (!tb2[cmd_id]) {
-				hdd_err_rl("SETUP_WAKE_INTVL_MANTISSA is must");
-				goto send_err;
-			}
-			params.wake_intvl_mantis = nla_get_u32(tb2[cmd_id]);
-			if (params.wake_intvl_mantis >
-			    TWT_SETUP_WAKE_INTVL_MANTISSA_MAX) {
-				hdd_err_rl("Invalid wake_intvl_mantis %u",
-					   params.wake_dura_us);
-				goto send_err;
-			}
-
-			if (wake_intvl_exp && params.wake_intvl_mantis) {
-				result = 2 << (wake_intvl_exp - 1);
-				if (result >
-				    (UINT_MAX / params.wake_intvl_mantis)) {
-					hdd_err_rl("Invalid exp %d mantissa %d",
-						   wake_intvl_exp,
-						   params.wake_intvl_mantis);
-					goto send_err;
-				}
-				params.wake_intvl_us =
-					params.wake_intvl_mantis * result;
-			} else {
-				params.wake_intvl_us = params.wake_intvl_mantis;
-			}
-
-			hdd_debug("twt: vdev %d, intvl_us %d, mantis %d",
-				  params.vdev_id, params.wake_intvl_us,
-				  params.wake_intvl_mantis);
-			hdd_debug("twt: dura %d, offset %d, cmd %d",
-				  params.wake_dura_us, params.sp_offset_us,
-				  params.twt_cmd);
-			hdd_debug("twt: bcast %d, trigger %d, type %d, prot %d",
-				  params.flag_bcast, params.flag_trigger,
-				  params.flag_flow_type,
-				  params.flag_protection);
 
 			ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
 							&congestion_timeout);
@@ -15103,6 +15120,9 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 
 	FEATURE_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION
+#ifdef WLAN_SUPPORT_TWT
+	FEATURE_VENDOR_SUBCMD_WIFI_CONFIG_TWT
+#endif
 
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,

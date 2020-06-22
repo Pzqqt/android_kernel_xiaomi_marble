@@ -39,6 +39,7 @@
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
 
+struct wmi_twt_add_dialog_complete_event_param;
 struct wmi_twt_enable_complete_event_param;
 /*--------------------------------------------------------------------------
   Type declarations
@@ -142,9 +143,33 @@ typedef void (*p2p_lo_callback)(void *context,
 typedef void (*sme_send_oem_data_rsp_msg)(struct oem_data_rsp *);
 #endif
 
-typedef void (*twt_enable_cb)(hdd_handle_t hdd_handle,
-			      struct wmi_twt_enable_complete_event_param *params);
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * typedef twt_enable_cb - TWT enable callback signature.
+ * @hdd_handle: Opaque handle to the HDD context
+ * @params: TWT enable complete event parameters.
+ */
+typedef
+void (*twt_enable_cb)(hdd_handle_t hdd_handle,
+		      struct wmi_twt_enable_complete_event_param *params);
+
+/**
+ * typedef twt_disable_cb - TWT enable callback signature.
+ * @hdd_handle: Opaque handle to the HDD context
+ */
 typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
+
+/**
+ * typedef twt_add_dialog_cb - TWT add dialog callback signature.
+ * @context: Opaque context that the client can use to associate the
+ *           callback with the request.
+ * @params: TWT add dialog complete event fixed parameters.
+ * @params: TWT add dialog complete event additional parameters.
+ */
+typedef void (*twt_add_dialog_cb)(void *context,
+				  struct wmi_twt_add_dialog_complete_event_param *params,
+				  struct wmi_twt_add_dialog_additional_params *additional_params);
+#endif
 
 #ifdef FEATURE_WLAN_APF
 /**
@@ -350,8 +375,12 @@ struct sme_context {
 	void *fw_state_context;
 #endif /* FEATURE_FW_STATE */
 	tx_queue_cb tx_queue_cb;
+#ifdef WLAN_SUPPORT_TWT
 	twt_enable_cb twt_enable_cb;
 	twt_disable_cb twt_disable_cb;
+	twt_add_dialog_cb twt_add_dialog_cb;
+	void *twt_context;
+#endif
 #ifdef FEATURE_WLAN_APF
 	apf_get_offload_cb apf_get_offload_cb;
 	apf_read_mem_cb apf_read_mem_cb;

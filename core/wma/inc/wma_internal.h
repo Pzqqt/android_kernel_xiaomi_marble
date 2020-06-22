@@ -1727,20 +1727,17 @@ int wma_twt_en_complete_event_handler(void *handle,
  */
 int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
 				       uint32_t len);
-#else
-static inline int wma_twt_en_complete_event_handler(void *handle,
-						    uint8_t *event,
-						    uint32_t len)
-{
-	return 0;
-}
 
-static inline int wma_twt_disable_comp_event_handler(void *handle,
-						     uint8_t *event,
-						     uint32_t len)
-{
-	return 0;
-}
+/**
+ * wma_twt_add_dialog_complete_event_handler - TWT add dlg complete evt handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success
+ */
+int wma_twt_add_dialog_complete_event_handler(void *handle,
+					      uint8_t *event, uint32_t len);
 #endif
 
 /**
