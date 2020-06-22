@@ -4095,6 +4095,7 @@ void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
+	dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
 	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
 #define EXTRA_TIME_IN_SEC 5
 	dfs_soc_obj->dfs_precac_timer_running = 1;
