@@ -15200,6 +15200,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 		WMI_SERVICE_SRG_SRP_SPATIAL_REUSE_SUPPORT;
 	wmi_service[wmi_service_suiteb_roam_support] =
 			WMI_SERVICE_WPA3_SUITEB_ROAM_SUPPORT;
+	wmi_service[wmi_service_no_interband_mcc_support] =
+			WMI_SERVICE_NO_INTERBAND_MCC_SUPPORT;
 }
 
 /**
