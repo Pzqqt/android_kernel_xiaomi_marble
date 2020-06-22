@@ -1356,7 +1356,8 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
 	spin_lock_init(&sc->runtime_lock);
 
 	qdf_atomic_init(&sc->pm_state);
-	qdf_runtime_lock_init(&sc->prevent_linkdown_lock);
+	hif_runtime_lock_init(&sc->prevent_linkdown_lock,
+			      "prevent_linkdown_lock");
 	qdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
 	qdf_atomic_init(&sc->pm_stats.runtime_get);
 	qdf_atomic_init(&sc->pm_stats.runtime_put);
@@ -1444,8 +1445,9 @@ static void hif_pm_runtime_sanitize_on_ssr_exit(struct hif_pci_softc *sc)
 static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
+	struct hif_opaque_softc *hif_ctx = GET_HIF_OPAQUE_HDL(scn);
 
-	qdf_runtime_lock_deinit(&sc->prevent_linkdown_lock);
+	hif_runtime_lock_deinit(hif_ctx, sc->prevent_linkdown_lock.lock);
 
 	hif_is_recovery_in_progress(scn) ?
 		hif_pm_runtime_sanitize_on_ssr_exit(sc) :
