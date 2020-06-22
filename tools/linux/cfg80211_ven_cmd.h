@@ -2012,7 +2012,7 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"whc_mixedbh_bh_type", IEEE80211_PARAM_WHC_BACKHAUL_TYPE, SET_PARAM, 1},
 	{"he_bsr_supp",         IEEE80211_PARAM_HE_BSR_SUPPORT, SET_PARAM, 1},
 	{"get_he_bsr_supp",     IEEE80211_PARAM_HE_BSR_SUPPORT, GET_PARAM, 0},
-	{"display_me_info",     IEEE80211_PARAM_DUMP_RA_TABLE, SET_PARAM, 1},
+	{"display_me_info",     IEEE80211_PARAM_DUMP_RA_TABLE, GET_PARAM, 0},
 	{"set_obss_ru_tolerance_time",  IEEE80211_PARAM_OBSS_NB_RU_TOLERANCE_TIME,
 		SET_PARAM, 1},
 	{"get_obss_ru_tolerance_time",  IEEE80211_PARAM_OBSS_NB_RU_TOLERANCE_TIME,
