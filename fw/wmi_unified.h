@@ -4096,7 +4096,7 @@ typedef struct {
 #define WMI_SET_FLAGS_IN_HINT_FREQ_BSSID(flags, pwmi_hint_freq_bssid_addr) (((pwmi_hint_freq_bssid_addr)->freq_flags) |= (flags))
 
 /** other macro for 6GHZ, TU(time unit), 20TU normally it is 20ms */
-#define MAX_NUM_20TU_EACH_CH      4
+#define MAX_NUM_20TU_EACH_CH      6
 #define MAX_NUM_S_SSID_EACH_20TU  1
 #define MAX_NUM_BSSID_EACH_20TU   3
 
@@ -10417,6 +10417,23 @@ typedef enum {
 /* Control to enable/disable periodic broadcast probe response transmission */
 #define WMI_VDEV_6GHZ_BITMAP_BCAST_PROBE_RSP                            0x10 /* deprecated */
 
+/** ROAM_11KV control params */
+
+/* WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING:
+ * Disable all FW-triggered roaming (e.g. low RSSI/final bmiss/BTM/PER)
+ * while still allowing host-invoked roaming.
+ */
+#define WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING              0x1
+/* WMI_VDEV_ROAM_11KV_CTRL_KEEP_CONN_RECV_BTM_REQ:
+ * DUT do not scan or roaming when receiving BTM req frame
+ */
+#define WMI_VDEV_ROAM_11KV_CTRL_KEEP_CONN_RECV_BTM_REQ                  0x2
+/* WMI_VDEV_ROAM_11KV_CTRL_DONOT_SEND_DISASSOC_ON_BTM_DI_SET:
+ * DUT do not send disasoc frame to AP when receiving BTM req with
+ * Disassoc Imminent bit set to 1.
+ */
+#define WMI_VDEV_ROAM_11KV_CTRL_DONOT_SEND_DISASSOC_ON_BTM_DI_SET       0x4
+
 /** the definition of different VDEV parameters */
 typedef enum {
     /** RTS Threshold */
@@ -11247,11 +11264,22 @@ typedef enum {
      * This value will be intersection of the local vdev's (STA's)
      * RSN capability and the peer's (AP's) RSN capability.
      */
-    WMI_VDEV_PARAM_RSN_CAPABILITY, /* 0xA0 */
+    WMI_VDEV_PARAM_RSN_CAPABILITY,        /* 0xA0 */
 
     /* Parameter used to enable/disable SRP feature */
-    WMI_VDEV_PARAM_ENABLE_SRP,
+    WMI_VDEV_PARAM_ENABLE_SRP,            /* 0xA1 */
 
+    /*
+     * Parameter used to control roaming/11kv (BTM) / etc. behavior
+     * bit    | purpose
+     * -----------------
+     * 0      | Disable any FW side roaming except host invoke roaming
+     * 1      | Do not trans away on receiving BTM req
+     * 2      | Do not send disassoc to AP when receiving BTM req with
+     *        | Disassoc Imminent bit set to 1
+     * 3 - 31 | Reserved
+     */
+    WMI_VDEV_PARAM_ROAM_11KV_CTRL,        /* 0xA2 */
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
