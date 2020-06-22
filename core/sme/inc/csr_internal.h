@@ -516,7 +516,6 @@ struct csr_roam_session {
 	struct qdf_mac_addr self_mac_addr;
 
 	eCsrConnectState connectState;
-	struct rsn_caps rsn_caps;
 	tCsrRoamConnectedProfile connectedProfile;
 	struct csr_roam_connectedinfo connectedInfo;
 	struct csr_roam_connectedinfo prev_assoc_ap_info;

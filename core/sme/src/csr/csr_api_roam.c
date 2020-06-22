@@ -17257,6 +17257,23 @@ csr_add_ch_lst_from_roam_scan_list(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
+			      uint16_t *rsn_caps)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return;
+	}
+
+	*rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
+
 #ifdef WLAN_FEATURE_11W
 /**
  * csr_rso_command_fill_11w_params() - Fill the 11w related parameters
@@ -17283,7 +17300,7 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 			session_id,
 			WLAN_LEGACY_SME_ID);
 	if (!vdev) {
-		pe_err("Invalid vdev");
+		sme_err("Invalid vdev");
 		return;
 	}
 
@@ -17473,9 +17490,10 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->ConnectedNetwork.mcencryption =
 		mac_ctx->roam.roamSession[session_id].
 		connectedProfile.mcEncryptionType;
-	/* Copy the RSN capabilities in roam offload request from session*/
-	req_buf->rsn_caps = session->rsn_caps;
 
+	/* Copy the self RSN capabilities in roam offload request */
+	csr_rso_command_fill_rsn_caps(mac_ctx, session_id,
+				      (uint16_t *)&req_buf->rsn_caps);
 	csr_rso_command_fill_11w_params(mac_ctx, session_id, req_buf);
 
 	req_buf->delay_before_vdev_stop =
