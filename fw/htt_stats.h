@@ -4691,6 +4691,22 @@ typedef struct {
      * Count of number of times SRG based TX transmissions were successful
      */
     A_UINT32 num_srg_ppdu_success;
+    /*
+     * Count of number of times PSR opportunities were created by aborting
+     * OBSS UL OFDMA HE-TB PPDU frame. HE-TB ppdu frames are aborted if the
+     * spatial reuse info in the OBSS trigger common field is set to allow PSR
+     * based spatial reuse.
+     */
+    A_UINT32 num_psr_opportunities;
+    /*
+     * Count of number of times TX PPDU were transmitted using PSR
+     * opportunities created.
+     */
+    A_UINT32 num_psr_ppdu_tried;
+    /*
+     * Count of number of times PSR based TX transmissions were successful.
+     */
+    A_UINT32 num_psr_ppdu_success;
 } htt_pdev_obss_pd_stats_tlv;
 
 /* NOTE:
