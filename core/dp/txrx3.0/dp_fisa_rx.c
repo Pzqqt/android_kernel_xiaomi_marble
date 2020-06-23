@@ -45,8 +45,8 @@ static void hex_dump_skb_data(qdf_nbuf_t nbuf, bool dump)
 		      (void *)_RET_IP_, nbuf, qdf_nbuf_next(nbuf),
 		      skb_shinfo(nbuf)->frag_list, qdf_nbuf_data(nbuf),
 		      nbuf->len, nbuf->data_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR, nbuf->data,
-			   64);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			   nbuf->data, 64);
 
 	next_nbuf = skb_shinfo(nbuf)->frag_list;
 	while (next_nbuf) {
@@ -54,7 +54,7 @@ static void hex_dump_skb_data(qdf_nbuf_t nbuf, bool dump)
 			      i, next_nbuf, qdf_nbuf_next(next_nbuf),
 			      qdf_nbuf_data(next_nbuf),
 			      qdf_nbuf_len(next_nbuf));
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 				   qdf_nbuf_data(next_nbuf), 64);
 		next_nbuf = qdf_nbuf_next(next_nbuf);
 		i++;
@@ -906,7 +906,7 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	uint16_t hal_cumultive_ip_len;
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
 
-	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_ERROR);
+	dump_tlvs(hal_soc_hdl, rx_tlv_hdr, QDF_TRACE_LEVEL_INFO_HIGH);
 	dp_fisa_debug("nbuf: %pK nbuf->next:%pK nbuf->data:%pK len %d data_len %d",
 		      nbuf, qdf_nbuf_next(nbuf), qdf_nbuf_data(nbuf), nbuf->len,
 		      nbuf->data_len);
