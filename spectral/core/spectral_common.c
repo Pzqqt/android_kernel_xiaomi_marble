@@ -32,6 +32,7 @@
  * spectral_get_vdev() - Get pointer to vdev to be used for Spectral
  * operations
  * @pdev: Pointer to pdev
+ * @vdev_id: vdev_id
  *
  * Spectral operates on pdev. However, in order to retrieve some WLAN
  * properties, a vdev is required. To facilitate this, the function returns the
@@ -50,14 +51,17 @@
  * Return: Pointer to vdev on success, NULL on failure
  */
 static struct wlan_objmgr_vdev*
-spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
+spectral_get_vdev(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev = NULL;
 
 	qdf_assert_always(pdev);
 
-	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
-
+	if (vdev_id == WLAN_INVALID_VDEV_ID)
+		vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
+	else
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+							    WLAN_SPECTRAL_ID);
 	if (!vdev) {
 		spectral_warn("Unable to get first vdev of pdev");
 		return NULL;
@@ -318,7 +322,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 			 * Check if any of the inactive Rx antenna
 			 * chains is set active in spectral chainmask
 			 */
-			vdev = spectral_get_vdev(pdev);
+			vdev = spectral_get_vdev(pdev, sscan_req->vdev_id);
 			if (!vdev)
 				goto bad;
 
@@ -406,7 +410,8 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 
 	case SPECTRAL_ACTIVATE_SCAN:
 		err = &sscan_req->action_req.sscan_err_code;
-		ret = sc->sptrlc_start_spectral_scan(pdev, smode, err);
+		ret = sc->sptrlc_start_spectral_scan(pdev, sscan_req->vdev_id,
+						     smode, err);
 		if (QDF_IS_STATUS_ERROR(ret))
 			goto bad;
 		break;
@@ -440,7 +445,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 		{
 			uint32_t chan_width;
 
-			vdev = spectral_get_vdev(pdev);
+			vdev = spectral_get_vdev(pdev, sscan_req->vdev_id);
 			if (!vdev)
 				goto bad;
 

@@ -197,6 +197,7 @@ tgt_get_spectral_config(struct wlan_objmgr_pdev *pdev,
 
 QDF_STATUS
 tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
+			uint8_t vdev_id,
 			enum spectral_scan_mode smode,
 			enum spectral_cp_error_code *err)
 {
@@ -210,8 +211,8 @@ tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return tx_ops->sptrl_tx_ops.sptrlto_start_spectral_scan(pdev, smode,
-			err);
+	return tx_ops->sptrl_tx_ops.sptrlto_start_spectral_scan(pdev, vdev_id,
+								smode, err);
 }
 
 QDF_STATUS

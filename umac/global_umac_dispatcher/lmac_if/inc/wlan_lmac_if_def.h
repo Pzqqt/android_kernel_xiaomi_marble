@@ -633,6 +633,7 @@ struct wlan_lmac_if_sptrl_tx_ops {
 					 enum spectral_scan_mode smode);
 	QDF_STATUS (*sptrlto_start_spectral_scan)
 					(struct wlan_objmgr_pdev *pdev,
+					 uint8_t vdev_id,
 					 const enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
 	QDF_STATUS (*sptrlto_stop_spectral_scan)

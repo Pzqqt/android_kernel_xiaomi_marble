@@ -150,6 +150,7 @@ struct spectral_context {
 					 const enum spectral_scan_mode smode);
 	QDF_STATUS (*sptrlc_start_spectral_scan)
 					(struct wlan_objmgr_pdev *pdev,
+					 uint8_t vdev_id,
 					 const enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
 	QDF_STATUS (*sptrlc_stop_spectral_scan)

@@ -841,7 +841,8 @@ target_if_log_sim_spectral_params(struct spectral_config *params)
 uint32_t
 target_if_spectral_sops_sim_configure_params(
 	void *arg,
-	struct spectral_config *params)
+	struct spectral_config *params,
+	enum spectral_scan_mode smode)
 {
 	struct target_if_spectral *spectral = NULL;
 	struct spectralsim_context *simctx = NULL;
@@ -860,7 +861,7 @@ target_if_spectral_sops_sim_configure_params(
 	simctx = (struct spectralsim_context *)spectral->simctx;
 	qdf_assert_always(simctx);
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev) {
 		spectral_warn("Spectral simulation: No VAPs found - not proceeding with param config.");
 		return 0;

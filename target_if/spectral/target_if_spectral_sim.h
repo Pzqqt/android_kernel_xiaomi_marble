@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2020 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -92,9 +92,10 @@ uint32_t target_if_spectral_sops_sim_stop_scan(void *arg);
 /**
  * target_if_spectral_sops_sim_configure_params() - Configure Spectral
  * parameters into simulation
- * arg - pointer to ath_spectral structure
- * params - pointer to struct spectral_config structure bearing Spectral
+ * @arg: pointer to ath_spectral structure
+ * @params: pointer to struct spectral_config structure bearing Spectral
  *          configuration
+ * @smode: Spectral scan mode
  *
  *  Internally, this function actually searches if a record set with the desired
  *  configuration has been loaded. If so, it points to the record set for
@@ -104,7 +105,8 @@ uint32_t target_if_spectral_sops_sim_stop_scan(void *arg);
  */
 uint32_t target_if_spectral_sops_sim_configure_params(
 	void *arg,
-	struct spectral_config *params);
+	struct spectral_config *params,
+	enum spectral_scan_mode smode);
 
 /**
  * target_if_spectral_sops_sim_get_params() - Get Spectral parameters configured

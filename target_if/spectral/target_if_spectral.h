@@ -669,7 +669,8 @@ struct target_if_spectral_ops {
 					enum spectral_cp_error_code *err);
 	uint32_t (*stop_spectral_scan)(void *arg,
 				       enum spectral_scan_mode smode);
-	uint32_t (*get_extension_channel)(void *arg);
+	uint32_t (*get_extension_channel)(void *arg,
+					  enum spectral_scan_mode smode);
 	int8_t    (*get_ctl_noisefloor)(void *arg);
 	int8_t    (*get_ext_noisefloor)(void *arg);
 	uint32_t (*configure_spectral)(
@@ -682,7 +683,8 @@ struct target_if_spectral_ops {
 			enum spectral_scan_mode smode);
 	uint32_t (*get_ent_spectral_mask)(void *arg);
 	uint32_t (*get_mac_address)(void *arg, char *addr);
-	uint32_t (*get_current_channel)(void *arg);
+	uint32_t (*get_current_channel)(void *arg,
+					enum spectral_scan_mode smode);
 	uint32_t (*reset_hw)(void *arg);
 	uint32_t (*get_chain_noise_floor)(void *arg, int16_t *nf_buf);
 	int (*spectral_process_phyerr)(struct target_if_spectral *spectral,
@@ -886,6 +888,7 @@ struct spectral_param_properties {
  * @capability: Spectral capabilities structure
  * @properties: Spectral parameter properties per mode
  * @spectral_lock: Lock used for internal Spectral operations
+ * @vdev_id: VDEV id for all spectral modes
  * @spectral_curchan_radindex: Current channel spectral index
  * @spectral_extchan_radindex: Extension channel spectral index
  * @spectraldomain: Current Spectral domain
@@ -980,6 +983,7 @@ struct target_if_spectral {
 	struct spectral_param_properties
 			properties[SPECTRAL_SCAN_MODE_MAX][SPECTRAL_PARAM_MAX];
 	qdf_spinlock_t                          spectral_lock;
+	uint8_t                                 vdev_id[SPECTRAL_SCAN_MODE_MAX];
 	int16_t                                 spectral_curchan_radindex;
 	int16_t                                 spectral_extchan_radindex;
 	uint32_t                               spectraldomain;
@@ -1340,6 +1344,7 @@ QDF_STATUS target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
  * target_if_spectral_get_vdev() - Get pointer to vdev to be used for Spectral
  * operations
  * @spectral: Pointer to Spectral target_if internal private data
+ * @smode: spectral scan mode
  *
  * Spectral operates on pdev. However, in order to retrieve some WLAN
  * properties, a vdev is required. To facilitate this, the function returns the
@@ -1351,7 +1356,8 @@ QDF_STATUS target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
  * Return: Pointer to vdev on success, NULL on failure
  */
 struct wlan_objmgr_vdev *target_if_spectral_get_vdev(
-	struct target_if_spectral *spectral);
+	struct target_if_spectral *spectral,
+	enum spectral_scan_mode smode);
 
 /**
  * target_if_spectral_dump_hdr_gen2() - Dump Spectral header for gen2
@@ -1952,19 +1958,25 @@ uint32_t target_if_sops_stop_spectral_scan(void *arg,
  * target_if_spectral_get_extension_channel() - Get the current Extension
  *                                              channel (in MHz)
  * @arg: Pointer to handle for Spectral target_if internal private data
+ * @smode: Spectral scan mode
  *
  * Return: Current Extension channel (in MHz) on success, 0 on failure or if
  * extension channel is not present.
  */
-uint32_t target_if_spectral_get_extension_channel(void *arg);
+uint32_t
+target_if_spectral_get_extension_channel(void *arg,
+					 enum spectral_scan_mode smode);
 
 /**
  * target_if_spectral_get_current_channel() - Get the current channel (in MHz)
  * @arg: Pointer to handle for Spectral target_if internal private data
+ * @smode: Spectral scan mode
  *
  * Return: Current channel (in MHz) on success, 0 on failure
  */
-uint32_t target_if_spectral_get_current_channel(void *arg);
+uint32_t
+target_if_spectral_get_current_channel(void *arg,
+				       enum spectral_scan_mode smode);
 
 
 /**
@@ -2127,6 +2139,7 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
 /**
  * target_if_start_spectral_scan() - Start spectral scan
  * @pdev: Pointer to pdev object
+ * @vdev_id: VDEV id
  * @smode: Spectral scan mode
  * @err: Spectral error code
  *
@@ -2135,6 +2148,7 @@ target_if_init_spectral_capability(struct target_if_spectral *spectral,
  * Return: QDF_STATUS_SUCCESS in case of success, else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
+					 uint8_t vdev_id,
 					 enum spectral_scan_mode smode,
 					 enum spectral_cp_error_code *err);
 

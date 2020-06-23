@@ -421,11 +421,13 @@ struct spectral_scan_dma_debug_request {
  *                              be atomic.
  * @ss_mode: Spectral scan mode
  * @req_id: Request identifier
+ * @vdev_id: VDEV id
  * @dma_debug_req: Spectral DMA debug request
  */
 struct spectral_cp_request {
 	enum spectral_scan_mode ss_mode;
 	uint8_t req_id;
+	uint8_t vdev_id;
 	union {
 		struct spectral_scan_config_request config_req;
 		struct spectral_scan_action_request action_req;

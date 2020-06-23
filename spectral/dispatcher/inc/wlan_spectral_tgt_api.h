@@ -127,6 +127,7 @@ QDF_STATUS tgt_get_spectral_config(struct wlan_objmgr_pdev *pdev,
 /**
  * tgt_start_spectral_scan() - Start spectral scan
  * @pdev: Pointer to pdev object
+ * @vdev_id: VDEV id
  * @smode: Spectral scan mode
  * @err: Spectral control path error code
  *
@@ -135,6 +136,7 @@ QDF_STATUS tgt_get_spectral_config(struct wlan_objmgr_pdev *pdev,
  * Return: QDF_STATUS_SUCCESS on success, else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id,
 				   enum spectral_scan_mode smode,
 				   enum spectral_cp_error_code *err);
 

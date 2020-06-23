@@ -54,7 +54,8 @@ static void target_if_spectral_get_firstvdev_pdev(struct wlan_objmgr_pdev *pdev,
 }
 
 struct wlan_objmgr_vdev *
-target_if_spectral_get_vdev(struct target_if_spectral *spectral)
+target_if_spectral_get_vdev(struct target_if_spectral *spectral,
+			    enum spectral_scan_mode smode)
 {
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_vdev *first_vdev = NULL;
@@ -62,6 +63,18 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 	qdf_assert_always(spectral);
 	pdev = spectral->pdev_obj;
 	qdf_assert_always(pdev);
+
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		return NULL;
+	}
+
+	if (spectral->vdev_id[smode] != WLAN_INVALID_VDEV_ID) {
+		first_vdev = wlan_objmgr_get_vdev_by_id_from_pdev(
+						pdev, spectral->vdev_id[smode],
+						WLAN_SPECTRAL_ID);
+		return first_vdev;
+	}
 
 	if (wlan_objmgr_pdev_try_get_ref(pdev, WLAN_SPECTRAL_ID) !=
 	    QDF_STATUS_SUCCESS) {
@@ -81,7 +94,6 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 	if (wlan_objmgr_vdev_try_get_ref(first_vdev, WLAN_SPECTRAL_ID) !=
 			QDF_STATUS_SUCCESS)
 		first_vdev = NULL;
-
 
 	return first_vdev;
 }
@@ -124,7 +136,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev)
 		return QDF_STATUS_E_NOENT;
 
@@ -205,7 +217,7 @@ target_if_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev)
 		return QDF_STATUS_E_NOENT;
 
@@ -308,7 +320,7 @@ target_if_spectral_info_init_defaults(struct target_if_spectral *spectral,
 
 	info->osps_cache.osc_params.ss_dbm_adj = SPECTRAL_SCAN_DBM_ADJ_DEFAULT;
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev)
 		return QDF_STATUS_E_NOENT;
 
@@ -1138,6 +1150,7 @@ target_if_sops_stop_spectral_scan(void *arg, enum spectral_scan_mode smode)
 /**
  * target_if_spectral_get_extension_channel() - Get the Extension channel
  * @arg: Pointer to handle for Spectral target_if internal private data
+ * @smode: Spectral scan mode
  *
  * Function to get the current Extension channel (in MHz)
  *
@@ -1145,7 +1158,8 @@ target_if_sops_stop_spectral_scan(void *arg, enum spectral_scan_mode smode)
  * extension channel is not present.
  */
 uint32_t
-target_if_spectral_get_extension_channel(void *arg)
+target_if_spectral_get_extension_channel(void *arg,
+					 enum spectral_scan_mode smode)
 {
 	/*
 	 * XXX: Once we expand to use cases where Spectral could be activated
@@ -1160,7 +1174,11 @@ target_if_spectral_get_extension_channel(void *arg)
 	qdf_assert_always(arg);
 	spectral = (struct target_if_spectral *)arg;
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		return 0;
+	}
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev)
 		return 0;
 
@@ -1177,13 +1195,14 @@ target_if_spectral_get_extension_channel(void *arg)
 /**
  * target_if_spectral_get_current_channel() - Get the current channel
  * @arg: Pointer to handle for Spectral target_if internal private data
+ * @smode: Spectral scan mode
  *
  * Function to get the current channel (in MHz)
  *
  * Return: Current channel (in MHz) on success, 0 on failure
  */
 uint32_t
-target_if_spectral_get_current_channel(void *arg)
+target_if_spectral_get_current_channel(void *arg, enum spectral_scan_mode smode)
 {
 	/*
 	 * XXX: Once we expand to use cases where Spectral could be activated
@@ -1198,7 +1217,11 @@ target_if_spectral_get_current_channel(void *arg)
 	qdf_assert_always(arg);
 	spectral = (struct target_if_spectral *)arg;
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		return 0;
+	}
+	vdev = target_if_spectral_get_vdev(spectral, smode);
 	if (!vdev)
 		return 0;
 
@@ -1804,7 +1827,7 @@ null_stop_spectral_scan(void *arg, enum spectral_scan_mode smode)
 }
 
 static uint32_t
-null_get_extension_channel(void *arg)
+null_get_extension_channel(void *arg, enum spectral_scan_mode smode)
 {
 	spectral_ops_not_registered("get_extension_channel");
 	return 1;
@@ -1855,7 +1878,7 @@ null_get_mac_address(void *arg, char *addr)
 }
 
 static uint32_t
-null_get_current_channel(void *arg)
+null_get_current_channel(void *arg, enum spectral_scan_mode smode)
 {
 	spectral_ops_not_registered("get_current_channel");
 	return 0;
@@ -2301,6 +2324,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_mem_zero(spectral, sizeof(struct target_if_spectral));
 	/* Store pdev in Spectral */
 	spectral->pdev_obj = pdev;
+	spectral->vdev_id[SPECTRAL_SCAN_MODE_NORMAL] = WLAN_INVALID_VDEV_ID;
+	spectral->vdev_id[SPECTRAL_SCAN_MODE_AGILE] = WLAN_INVALID_VDEV_ID;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
@@ -2899,7 +2924,7 @@ target_if_is_agile_span_overlap_with_operating_span
 	}
 	*is_overlapping = false;
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, SPECTRAL_SCAN_MODE_AGILE);
 	if (!vdev) {
 		spectral_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -3021,7 +3046,7 @@ target_if_spectral_populate_chwidth(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, SPECTRAL_SCAN_MODE_NORMAL);
 	if (!vdev) {
 		spectral_err("vdev is null");
 		return QDF_STATUS_E_FAILURE;
@@ -3489,8 +3514,8 @@ target_if_get_fft_bin_count(int fft_len)
 /**
  * target_if_init_upper_lower_flags() - Initializes control and extension
  * segment flags
- * @fft_len: FFT length
- * @pdev: Pointer to pdev object
+ * @spectral: pointer to target if spectral object
+ * @smode: Spectral scan mode
  *
  * API to initialize the control and extension flags with the lower/upper
  * segment based on the HT mode
@@ -3498,15 +3523,20 @@ target_if_get_fft_bin_count(int fft_len)
  * Return: FFt bin count
  */
 static void
-target_if_init_upper_lower_flags(struct target_if_spectral *spectral)
+target_if_init_upper_lower_flags(struct target_if_spectral *spectral,
+				 enum spectral_scan_mode smode)
 {
 	int current_channel = 0;
 	int ext_channel = 0;
 	struct target_if_spectral_ops *p_sops =
 		GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
-	current_channel = p_sops->get_current_channel(spectral);
-	ext_channel = p_sops->get_extension_channel(spectral);
+	if (smode >= SPECTRAL_SCAN_MODE_MAX) {
+		spectral_err("Invalid Spectral mode %u", smode);
+		return;
+	}
+	current_channel = p_sops->get_current_channel(spectral, smode);
+	ext_channel = p_sops->get_extension_channel(spectral, smode);
 
 	if ((current_channel == 0) || (ext_channel == 0))
 		return;
@@ -3636,8 +3666,8 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	    spectral_params->ss_spectral_pri ? 1 : 0;
 
 	/* check if extension channel is present */
-	extension_channel = p_sops->get_extension_channel(spectral);
-	current_channel = p_sops->get_current_channel(spectral);
+	extension_channel = p_sops->get_extension_channel(spectral, smode);
+	current_channel = p_sops->get_current_channel(spectral, smode);
 
 	status = target_if_spectral_populate_chwidth(
 			spectral, spectral->ch_width,
@@ -3895,7 +3925,7 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	/* get current spectral configuration */
 	p_sops->get_spectral_config(spectral, &spectral->params[smode], smode);
 
-	target_if_init_upper_lower_flags(spectral);
+	target_if_init_upper_lower_flags(spectral, smode);
 
 	return 0;
 }
@@ -3946,14 +3976,14 @@ target_if_is_aspectral_prohibited_by_adfs(struct wlan_objmgr_psoc *psoc,
 /**
  * target_if_get_curr_band() - Get current operating band of pdev
  *
- * @spectral: pointer to spectral object
+ * @pdev: pointer to pdev object
  *
  * API to get current operating band of a given pdev.
  *
  * Return: if success enum reg_wifi_band, REG_BAND_UNKNOWN in case of failure
  */
 static enum reg_wifi_band
-target_if_get_curr_band(struct wlan_objmgr_pdev *pdev)
+target_if_get_curr_band(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 {
 	struct wlan_objmgr_vdev *vdev;
 	int16_t chan_freq;
@@ -3964,7 +3994,11 @@ target_if_get_curr_band(struct wlan_objmgr_pdev *pdev)
 		return REG_BAND_UNKNOWN;
 	}
 
-	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
+	if (vdev_id == WLAN_INVALID_VDEV_ID)
+		vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SPECTRAL_ID);
+	else
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+							    WLAN_SPECTRAL_ID);
 	if (!vdev) {
 		spectral_debug("vdev is NULL");
 		return REG_BAND_UNKNOWN;
@@ -4006,7 +4040,8 @@ target_if_is_agile_scan_active_in_5g(struct wlan_objmgr_psoc *psoc,
 	}
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
-	band = target_if_get_curr_band(cur_pdev);
+	band = target_if_get_curr_band(
+			cur_pdev, spectral->vdev_id[SPECTRAL_SCAN_MODE_AGILE]);
 	if (band == REG_BAND_UNKNOWN) {
 		spectral_debug("Failed to get current band");
 		return;
@@ -4071,7 +4106,7 @@ target_if_is_agile_supported_cur_chmask(struct target_if_spectral *spectral,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev = target_if_spectral_get_vdev(spectral);
+	vdev = target_if_spectral_get_vdev(spectral, SPECTRAL_SCAN_MODE_AGILE);
 	if (!vdev) {
 		spectral_err("First vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -4147,6 +4182,7 @@ target_if_is_agile_supported_cur_chmask(struct target_if_spectral *spectral,
 
 QDF_STATUS
 target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
+			      uint8_t vdev_id,
 			      const enum spectral_scan_mode smode,
 			      enum spectral_cp_error_code *err)
 {
@@ -4191,6 +4227,13 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (p_sops->is_spectral_active(spectral, smode)) {
+		spectral_err("spectral in progress in current pdev, mode %d",
+			     smode);
+		return QDF_STATUS_E_FAILURE;
+	}
+	spectral->vdev_id[smode] = vdev_id;
+
 	if (smode == SPECTRAL_SCAN_MODE_AGILE) {
 		QDF_STATUS status;
 		bool is_supported = false;
@@ -4209,7 +4252,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		}
 	}
 
-	band = target_if_get_curr_band(spectral->pdev_obj);
+	band = target_if_get_curr_band(spectral->pdev_obj, vdev_id);
 	if (band == REG_BAND_UNKNOWN) {
 		spectral_err("Failed to get current band");
 		return QDF_STATUS_E_FAILURE;
@@ -4218,12 +4261,6 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev,
 		struct target_psoc_info *tgt_hdl;
 		enum wmi_host_hw_mode_config_type mode;
 		bool is_agile_scan_inprog_5g_pdev;
-
-		if (p_sops->is_spectral_active(spectral,
-					       SPECTRAL_SCAN_MODE_AGILE)) {
-			spectral_err("Agile Scan in progress in current pdev");
-			return QDF_STATUS_E_FAILURE;
-		}
 
 		tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 		if (!tgt_hdl) {
@@ -4386,6 +4423,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev,
 
 	spectral->send_single_packet = 0;
 	spectral->sc_spectral_scan = 0;
+	spectral->vdev_id[smode] = WLAN_INVALID_VDEV_ID;
 
 	qdf_spin_unlock(&spectral->spectral_lock);
 

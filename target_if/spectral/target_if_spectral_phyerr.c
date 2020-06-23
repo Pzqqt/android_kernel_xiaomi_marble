@@ -972,7 +972,8 @@ target_if_process_phyerr_gen2(struct target_if_spectral *spectral,
 		params.max_exp = 0;
 		params.peak = 0;
 		params.bin_pwr_data = (uint8_t *)pfft;
-		params.freq = p_sops->get_current_channel(spectral);
+		params.freq = p_sops->get_current_channel(spectral,
+							  params.smode);
 		params.freq_loading = 0;
 
 		params.interf_list.count = 0;
@@ -1970,7 +1971,7 @@ target_if_consume_spectral_report_gen3(
 
 		params.rssi         = rssi;
 
-		vdev = target_if_spectral_get_vdev(spectral);
+		vdev = target_if_spectral_get_vdev(spectral, spectral_mode);
 		if (!vdev) {
 			spectral_info("First vdev is NULL");
 			reset_160mhz_delivery_state_machine(
@@ -1991,7 +1992,8 @@ target_if_consume_spectral_report_gen3(
 
 		params.max_mag  = p_sfft->fft_peak_mag;
 
-		params.freq = p_sops->get_current_channel(spectral);
+		params.freq = p_sops->get_current_channel(spectral,
+							  spectral_mode);
 		params.agile_freq1 = spectral->params[SPECTRAL_SCAN_MODE_AGILE].
 				     ss_frequency.cfreq1;
 		params.agile_freq2 = spectral->params[SPECTRAL_SCAN_MODE_AGILE].
@@ -2112,7 +2114,7 @@ target_if_consume_spectral_report_gen3(
 
 		params.rssi_sec80 = rssi;
 
-		vdev = target_if_spectral_get_vdev(spectral);
+		vdev = target_if_spectral_get_vdev(spectral, spectral_mode);
 		if (!vdev) {
 			spectral_info("First vdev is NULL");
 			reset_160mhz_delivery_state_machine

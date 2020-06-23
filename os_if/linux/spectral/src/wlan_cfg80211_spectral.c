@@ -31,6 +31,7 @@
 #include <wlan_spectral_ucfg_api.h>
 #include <wlan_cfg80211_spectral.h>
 #include <spectral_ioctl.h>
+#include <wlan_objmgr_vdev_obj.h>
 
 const struct nla_policy spectral_scan_policy[
 		QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_MAX + 1] = {
@@ -191,6 +192,7 @@ convert_spectral_err_code_internal_to_nl
 #ifdef DIRECT_BUF_RX_DEBUG
 QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
 	struct wlan_objmgr_pdev *pdev,
+	struct wlan_objmgr_vdev *vdev,
 	struct nlattr **tb,
 	enum spectral_scan_mode sscan_mode)
 {
@@ -232,6 +234,7 @@ QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
 #else
 QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
 	struct wlan_objmgr_pdev *pdev,
+	struct wlan_objmgr_vdev *vdev,
 	struct nlattr **tb,
 	enum spectral_scan_mode sscan_mode)
 {
@@ -241,6 +244,7 @@ QDF_STATUS wlan_cfg80211_spectral_scan_dma_debug_config(
 
 int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 						 struct wlan_objmgr_pdev *pdev,
+						 struct wlan_objmgr_vdev *vdev,
 						 const void *data,
 						 int data_len)
 {
@@ -392,11 +396,16 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 	}
 
 	status = wlan_cfg80211_spectral_scan_dma_debug_config(
-			pdev, tb, sscan_mode);
+			pdev, vdev, tb, sscan_mode);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		status = QDF_STATUS_E_INVAL;
 		goto free_skb_return_os_status;
 	}
+
+	if (vdev)
+		sscan_req.vdev_id = wlan_vdev_get_id(vdev);
+	else
+		sscan_req.vdev_id = WLAN_INVALID_VDEV_ID;
 
 	if (CONFIG_REQUESTED(scan_req_type)) {
 		sscan_req.ss_mode = sscan_mode;
@@ -480,6 +489,7 @@ free_skb_return_os_status:
 
 int wlan_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 				     struct wlan_objmgr_pdev *pdev,
+				     struct wlan_objmgr_vdev *vdev,
 				     const void *data,
 				     int data_len)
 {
@@ -548,6 +558,7 @@ int wlan_cfg80211_spectral_scan_stop(struct wiphy *wiphy,
 
 int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 					   struct wlan_objmgr_pdev *pdev,
+					   struct wlan_objmgr_vdev *vdev,
 					   const void *data,
 					   int data_len)
 {
@@ -678,6 +689,7 @@ fail:
 
 int wlan_cfg80211_spectral_scan_get_cap(struct wiphy *wiphy,
 					struct wlan_objmgr_pdev *pdev,
+					struct wlan_objmgr_vdev *vdev,
 					const void *data,
 					int data_len)
 {
@@ -829,6 +841,7 @@ fail:
 
 int wlan_cfg80211_spectral_scan_get_diag_stats(struct wiphy *wiphy,
 					       struct wlan_objmgr_pdev *pdev,
+					       struct wlan_objmgr_vdev *vdev,
 					       const void *data,
 					       int data_len)
 {
@@ -880,6 +893,7 @@ int wlan_cfg80211_spectral_scan_get_diag_stats(struct wiphy *wiphy,
 
 int wlan_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 					   struct wlan_objmgr_pdev *pdev,
+					   struct wlan_objmgr_vdev *vdev,
 					   const void *data,
 					   int data_len)
 {
