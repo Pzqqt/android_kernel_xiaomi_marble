@@ -31,6 +31,8 @@ DATARMNET5fc54f7a13 __read_mostly={.notifier_call=DATARMNETe9173bbe0e,.priority=
 "\x49\x38\x38\x63\x62\x39\x33\x38\x31\x66\x32\x34\x38\x34\x62\x31\x63\x32\x37\x36\x32\x64\x30\x63\x62\x34\x62\x62\x30\x35\x64\x33\x31\x30\x64\x61\x32\x62\x65\x35\x65"
 ,
 "\x49\x31\x30\x34\x31\x36\x39\x33\x64\x35\x35\x31\x37\x30\x33\x62\x63\x38\x33\x35\x65\x63\x66\x62\x33\x31\x31\x30\x65\x66\x65\x63\x35\x30\x32\x30\x34\x63\x37\x36\x39"
+,
+"\x49\x30\x61\x32\x63\x61\x34\x36\x35\x34\x30\x30\x33\x35\x64\x62\x31\x39\x37\x65\x39\x37\x38\x62\x62\x33\x35\x62\x39\x30\x31\x35\x30\x64\x36\x37\x64\x35\x34\x35\x66"
 };static int DATARMNET2cb9ae589c;int __init DATARMNET163e93649e(void){pr_info(
 "\x25\x73\x28\x29\x3a\x20\x53\x74\x61\x72\x74\x69\x6e\x67\x20\x72\x6d\x6e\x65\x74\x20\x53\x48\x53\x20\x6d\x6f\x64\x75\x6c\x65\x20\x25\x73\x20" "\n"
 ,__func__,DATARMNETbc8418e817[(0xd2d+202-0xdf7)]);trace_rmnet_shs_high(
@@ -86,9 +88,9 @@ pr_err(
 ,__func__);ret=qmi_rmnet_ps_ind_register(port,&DATARMNETecc0627c70.
 rmnet_idl_ind_cb);if(ret)pr_err(
 "\x25\x73\x28\x29\x3a\x20\x72\x6d\x6e\x65\x74\x20\x70\x73\x5f\x69\x6e\x64\x20\x72\x65\x67\x69\x73\x74\x72\x61\x74\x69\x6f\x6e\x20\x66\x61\x69\x6c" "\n"
-,__func__);DATARMNETe46c480d71();DATARMNET0a6fb12cb2();DATARMNETecc0627c70.
-DATARMNET9c869c1ec2=(0xd26+209-0xdf6);trace_rmnet_shs_high(DATARMNET1790979ccf,
-DATARMNET443dab7031,(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),
-(0x16e8+787-0xc0c),NULL,NULL);RCU_INIT_POINTER(rmnet_shs_skb_entry,
-DATARMNET756778f14f);}break;default:break;}return NOTIFY_DONE;}module_init(
-DATARMNET163e93649e);module_exit(DATARMNETf3298dab6f);
+,__func__);DATARMNET039ac6d55d();DATARMNETe46c480d71();DATARMNET0a6fb12cb2();
+DATARMNETecc0627c70.DATARMNET9c869c1ec2=(0xd26+209-0xdf6);trace_rmnet_shs_high(
+DATARMNET1790979ccf,DATARMNET443dab7031,(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),
+(0x16e8+787-0xc0c),(0x16e8+787-0xc0c),NULL,NULL);RCU_INIT_POINTER(
+rmnet_shs_skb_entry,DATARMNET756778f14f);}break;default:break;}return 
+NOTIFY_DONE;}module_init(DATARMNET163e93649e);module_exit(DATARMNETf3298dab6f);
