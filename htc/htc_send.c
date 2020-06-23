@@ -2446,6 +2446,9 @@ void htc_kick_queues(void *context)
 	HTC_TARGET *target = (HTC_TARGET *)context;
 	HTC_ENDPOINT *endpoint = NULL;
 
+	if (hif_pm_runtime_get_sync(target->hif_dev, RTPM_ID_HTC))
+		return;
+
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		endpoint = &target->endpoint[i];
 
@@ -2460,6 +2463,8 @@ void htc_kick_queues(void *context)
 	}
 
 	hif_fastpath_resume(target->hif_dev);
+
+	hif_pm_runtime_put(target->hif_dev, RTPM_ID_HTC);
 }
 #endif
 
