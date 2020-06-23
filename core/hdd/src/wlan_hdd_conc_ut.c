@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,7 @@
 #include "wma.h"
 #include "wma_api.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_reg_services_api.h"
 
 #define NUMBER_OF_SCENARIO 300
 #define MAX_ALLOWED_CHAR_IN_REPORT 50
@@ -64,7 +65,7 @@ struct report_t {
 	bool status;
 	char result_code[MAX_ALLOWED_CHAR_IN_REPORT];
 	char reason[MAX_ALLOWED_CHAR_IN_REPORT];
-	char pcl[2 * NUM_CHANNELS];
+	char pcl_freqs[2 * NUM_CHANNELS];
 };
 
 static struct report_t report[NUMBER_OF_SCENARIO];
@@ -152,13 +153,13 @@ void print_report(struct hdd_context *hdd_ctx)
 
 	pr_info("+----------Report start -----------+\n");
 	while (idx < report_idx) {
-		pr_info("Idx:[%d]\nTitle:%s\nResult:[%s]\n\t1st_person[%s]\n\t2nd_persona[%s]\n\t3rd_persona[%s]\n\tDBS[%s]\n\tsystem_config[%s]\n\treason[%s]\n\tpcl[%s]\n",
+		pr_info("Idx:[%d]\nTitle:%s\nResult:[%s]\n\t1st_person[%s]\n\t2nd_persona[%s]\n\t3rd_persona[%s]\n\tDBS[%s]\n\tsystem_config[%s]\n\treason[%s]\n\tpcl_freqs[%s]\n",
 			idx,
 			report[idx].title, report[idx].result_code,
 			report[idx].first_persona, report[idx].second_persona,
 			report[idx].third_persona, report[idx].dbs_value,
 			report[idx].system_conf, report[idx].reason,
-			report[idx].pcl);
+			report[idx].pcl_freqs);
 		idx++;
 	}
 	pr_info("+----------Report end -----------+\n");
@@ -168,7 +169,7 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
 	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
 	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
-	uint8_t *pcl)
+	qdf_freq_t *pcl_freqs)
 {
 	int i;
 	char buf[4] = {0};
@@ -224,26 +225,26 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 	snprintf(report[report_idx].reason,
 		MAX_ALLOWED_CHAR_IN_REPORT,
 		reason);
-	if (pcl) {
-		qdf_mem_zero(report[report_idx].pcl,
-				sizeof(report[report_idx].pcl));
+	if (pcl_freqs) {
+		qdf_mem_zero(report[report_idx].pcl_freqs,
+				sizeof(report[report_idx].pcl_freqs));
 		for (i = 0; i < NUM_CHANNELS; i++) {
-			if (pcl[i] == 0)
+			if (pcl_freqs[i] == 0)
 				break;
 			qdf_mem_zero(buf, sizeof(buf));
-			snprintf(buf, sizeof(buf), "%d ", pcl[i]);
-			strlcat(report[report_idx].pcl, buf,
-				sizeof(report[report_idx].pcl));
-			strlcat(report[report_idx].pcl, ", ",
-				sizeof(report[report_idx].pcl));
+			snprintf(buf, sizeof(buf), "%d ", pcl_freqs[i]);
+			strlcat(report[report_idx].pcl_freqs, buf,
+				sizeof(report[report_idx].pcl_freqs));
+			strlcat(report[report_idx].pcl_freqs, ", ",
+				sizeof(report[report_idx].pcl_freqs));
 		}
 	}
 	report_idx++;
 }
 
 static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
-	enum policy_mgr_pcl_type pcl_type, uint8_t *pcl, uint32_t pcl_len,
-	uint8_t first_connection_chnl, uint8_t second_connection_chnl,
+	enum policy_mgr_pcl_type pcl_type, qdf_freq_t *pcl_freqs, uint32_t pcl_len,
+	qdf_freq_t first_connection_chnl, qdf_freq_t second_connection_chnl,
 	char *reason, uint32_t reason_length)
 {
 	bool status = true;
@@ -263,7 +264,7 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 		break;
 	case PM_5G:
 		for (first_idx = 0; first_idx < pcl_len; first_idx++) {
-			if (!WLAN_REG_IS_5GHZ_CH(pcl[first_idx])) {
+			if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[first_idx])) {
 				snprintf(reason, reason_length,
 					"2G channel found");
 				return false;
@@ -272,7 +273,7 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 		break;
 	case PM_24G:
 		for (first_idx = 0; first_idx < pcl_len; first_idx++) {
-			if (!WLAN_REG_IS_24GHZ_CH(pcl[first_idx])) {
+			if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[first_idx])) {
 				snprintf(reason, reason_length,
 					"5G channel found");
 				return false;
@@ -286,23 +287,23 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 				"invalid connections");
 			return false;
 		}
-		if (pcl[0] != first_connection_chnl) {
+		if (pcl_freqs[0] != first_connection_chnl) {
 			snprintf(reason, reason_length,
 				"No SCC found");
 			return false;
 		}
 		break;
 	case PM_MCC_CH:
-		if ((pcl[0] != first_connection_chnl) &&
+		if ((pcl_freqs[0] != first_connection_chnl) &&
 				((second_connection_chnl > 0) &&
-				 (pcl[0] != second_connection_chnl))) {
+				 (pcl_freqs[0] != second_connection_chnl))) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		if ((second_connection_chnl > 0) &&
-				(pcl[1] != first_connection_chnl &&
-				 pcl[1] != second_connection_chnl)) {
+				(pcl_freqs[1] != first_connection_chnl &&
+				 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
@@ -315,12 +316,12 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 				"invalid connections");
 			return false;
 		}
-		if (pcl[0] != first_connection_chnl) {
+		if (pcl_freqs[0] != first_connection_chnl) {
 			snprintf(reason, reason_length,
 				"No SCC found");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 2.4Ghz chnl");
 			return false;
@@ -333,19 +334,19 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 				"invalid connections");
 			return false;
 		}
-		if (pcl[0] != first_connection_chnl) {
+		if (pcl_freqs[0] != first_connection_chnl) {
 			snprintf(reason, reason_length,
 				"No SCC found");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
 		}
 		break;
 	case PM_24G_SCC_CH:
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[0])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[0])) {
 			snprintf(reason, reason_length,
 				"No 2.4Ghz chnl");
 			return false;
@@ -356,14 +357,14 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 				"invalid connections");
 			return false;
 		}
-		if (pcl[pcl_len-1] != first_connection_chnl) {
+		if (pcl_freqs[pcl_len-1] != first_connection_chnl) {
 			snprintf(reason, reason_length,
 				"No SCC found");
 			return false;
 		}
 		break;
 	case PM_5G_SCC_CH:
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[0])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[0])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
@@ -374,191 +375,191 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 				"invalid connections");
 			return false;
 		}
-		if (pcl[pcl_len-1] != first_connection_chnl) {
+		if (pcl_freqs[pcl_len-1] != first_connection_chnl) {
 			snprintf(reason, reason_length,
 				"No SCC found");
 			return false;
 		}
 		break;
 	case PM_MCC_CH_24G:
-		if ((pcl[0] != first_connection_chnl) &&
+		if ((pcl_freqs[0] != first_connection_chnl) &&
 			((second_connection_chnl > 0) &&
-			 (pcl[0] != second_connection_chnl))) {
+			 (pcl_freqs[0] != second_connection_chnl))) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		if ((second_connection_chnl > 0) &&
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl");
 			return false;
 		}
 		break;
 	case PM_MCC_CH_5G:
-		if ((pcl[0] != first_connection_chnl) &&
+		if ((pcl_freqs[0] != first_connection_chnl) &&
 			((second_connection_chnl > 0) &&
-			 (pcl[0] != second_connection_chnl))) {
+			 (pcl_freqs[0] != second_connection_chnl))) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		if ((second_connection_chnl > 0) &&
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
 		}
 		break;
 	case PM_24G_MCC_CH:
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[0])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[0])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl");
 			return false;
 		}
-		if ((pcl[pcl_len-1] != first_connection_chnl) &&
+		if ((pcl_freqs[pcl_len-1] != first_connection_chnl) &&
 			((second_connection_chnl > 0) &&
-			 (pcl[pcl_len-1] != second_connection_chnl))) {
+			 (pcl_freqs[pcl_len-1] != second_connection_chnl))) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		if ((second_connection_chnl > 0) &&
-			(pcl[pcl_len-2] != first_connection_chnl &&
-			 pcl[pcl_len-2] != second_connection_chnl)) {
+			(pcl_freqs[pcl_len-2] != first_connection_chnl &&
+			 pcl_freqs[pcl_len-2] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		break;
 	case PM_5G_MCC_CH:
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[0])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[0])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl");
 			return false;
 		}
-		if ((pcl[pcl_len-1] != first_connection_chnl) &&
+		if ((pcl_freqs[pcl_len-1] != first_connection_chnl) &&
 			((second_connection_chnl > 0) &&
-			 (pcl[pcl_len-1] != second_connection_chnl))) {
+			 (pcl_freqs[pcl_len-1] != second_connection_chnl))) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		if ((second_connection_chnl > 0) &&
-			(pcl[pcl_len-2] != first_connection_chnl &&
-			 pcl[pcl_len-2] != second_connection_chnl)) {
+			(pcl_freqs[pcl_len-2] != first_connection_chnl &&
+			 pcl_freqs[pcl_len-2] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"MCC invalid");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24_24G:
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24_5G:
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5_24G:
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5_5G:
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[pcl_len - 1])) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[pcl_len - 1])) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnls");
 			return false;
 		}
 		break;
 	case PM_SCC_ON_5_SCC_ON_24:
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
@@ -570,16 +571,16 @@ static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 		}
 		break;
 	case PM_SCC_ON_24_SCC_ON_5:
-		if (!WLAN_REG_IS_24GHZ_CH(pcl[0]) ||
-			(pcl[0] != first_connection_chnl &&
-			 pcl[0] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_24GHZ_CH_FREQ(pcl_freqs[0]) ||
+			(pcl_freqs[0] != first_connection_chnl &&
+			 pcl_freqs[0] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 24Ghz chnl/scc");
 			return false;
 		}
-		if (!WLAN_REG_IS_5GHZ_CH(pcl[1]) ||
-			(pcl[1] != first_connection_chnl &&
-			 pcl[1] != second_connection_chnl)) {
+		if (!WLAN_REG_IS_5GHZ_CH_FREQ(pcl_freqs[1]) ||
+			(pcl_freqs[1] != first_connection_chnl &&
+			 pcl_freqs[1] != second_connection_chnl)) {
 			snprintf(reason, reason_length,
 				"No 5Ghz chnl/scc");
 			return false;
@@ -619,9 +620,9 @@ static void wlan_hdd_map_subtypes_hdd_wma(enum policy_mgr_con_mode *dst,
 void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 {
 	enum policy_mgr_con_mode sub_type;
-	uint8_t pcl[NUM_CHANNELS] = {0},
-		weight_list[NUM_CHANNELS] = {0};
-	uint32_t pcl_len = 0, i, pcl_freqs[NUM_CHANNELS] = {0};
+	uint8_t weight_list[NUM_CHANNELS] = {0};
+	uint32_t pcl_len = 0;
+	qdf_freq_t pcl_freqs[NUM_CHANNELS] = {0};
 	bool status = false;
 	enum policy_mgr_pcl_type pcl_type;
 	char reason[20] = {0};
@@ -645,7 +646,6 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 			hdd_err("Test failed - No. of connection is not 0");
 			return;
 		}
-		qdf_mem_zero(pcl, sizeof(pcl));
 		pcl_len = 0;
 		pcl_type = policy_mgr_get_pcl_from_first_conn_table(
 			sub_type, system_pref);
@@ -653,20 +653,18 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 		/* check PCL value for second connection is correct or no */
 		policy_mgr_get_pcl(hdd_ctx->psoc, sub_type, pcl_freqs, &pcl_len,
 				   weight_list, QDF_ARRAY_SIZE(weight_list));
-		for (i = 0; i < pcl_len; i++)
-			pcl[i] = wlan_freq_to_chan(pcl_freqs[i]);
 
 		status = wlan_hdd_validate_pcl(hdd_ctx,
-				pcl_type, pcl, pcl_len, 0, 0,
+				pcl_type, pcl_freqs, pcl_len, 0, 0,
 				reason, sizeof(reason));
-		if ((pcl_type == PM_MAX_PCL_TYPE) && (pcl[0] == 0))
+		if ((pcl_type == PM_MAX_PCL_TYPE) && (pcl_freqs[0] == 0))
 			continue;
 
 		fill_report(hdd_ctx, "1 connection", sub_type,
 				PM_MAX_NUM_OF_MODE,
 				PM_MAX_NUM_OF_MODE,
 				0, 0, 0,
-				status, pcl_type, reason, pcl);
+				status, pcl_type, reason, pcl_freqs);
 	}
 }
 
@@ -675,9 +673,9 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 {
 	uint8_t vdevid = 0, tx_stream = 2, rx_stream = 2;
 	uint8_t type = WMI_VDEV_TYPE_STA, channel_id = first_chnl, mac_id = 1;
-	uint8_t pcl[NUM_CHANNELS] = {0},
-			weight_list[NUM_CHANNELS] = {0};
-	uint32_t pcl_len = 0, i, pcl_freqs[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS] = {0};
+	uint32_t pcl_len = 0;
+	qdf_freq_t pcl_freqs[NUM_CHANNELS];
 	enum policy_mgr_chain_mode chain_mask = first_chain_mask;
 	enum policy_mgr_con_mode sub_type, next_sub_type, dummy_type;
 	enum policy_mgr_pcl_type pcl_type;
@@ -726,7 +724,6 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 				next_sub_type++;
 				continue;
 			}
-			qdf_mem_zero(pcl, sizeof(pcl));
 			pcl_len = 0;
 			pcl_type = policy_mgr_get_pcl_from_second_conn_table(
 				second_index, next_sub_type, system_pref,
@@ -737,19 +734,17 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 					   next_sub_type, pcl_freqs, &pcl_len,
 					   weight_list,
 					   QDF_ARRAY_SIZE(weight_list));
-			for (i = 0; i < pcl_len; i++)
-				pcl[i] = wlan_freq_to_chan(pcl_freqs[i]);
 			status = wlan_hdd_validate_pcl(hdd_ctx,
-					pcl_type, pcl, pcl_len, channel_id, 0,
+					pcl_type, pcl_freqs, pcl_len, channel_id, 0,
 					reason, sizeof(reason));
-			if ((pcl_type == PM_MAX_PCL_TYPE) && (pcl[0] == 0)) {
+			if ((pcl_type == PM_MAX_PCL_TYPE) && (pcl_freqs[0] == 0)) {
 				next_sub_type++;
 				continue;
 			}
 			fill_report(hdd_ctx, "2 connections", sub_type,
 					next_sub_type,
 					PM_MAX_NUM_OF_MODE, first_chnl,
-					0, 0, status, pcl_type, reason, pcl);
+					0, 0, status, pcl_type, reason, pcl_freqs);
 			next_sub_type++;
 		}
 	}
@@ -764,8 +759,9 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 	uint8_t channel_id_1 = first_chnl, channel_id_2 = second_chnl;
 	uint8_t mac_id_1, mac_id_2;
 	uint8_t type_1 = WMI_VDEV_TYPE_STA, type_2 = WMI_VDEV_TYPE_STA;
-	uint8_t pcl[NUM_CHANNELS] = {0}, weight_list[NUM_CHANNELS] = {0};
-	uint32_t pcl_len = 0, i, pcl_freqs[NUM_CHANNELS];
+	uint8_t weight_list[NUM_CHANNELS] = {0};
+	uint32_t pcl_len = 0;
+	qdf_freq_t pcl_freqs[NUM_CHANNELS];
 	enum policy_mgr_chain_mode chain_mask_1;
 	enum policy_mgr_chain_mode chain_mask_2;
 	enum policy_mgr_con_mode sub_type_1, sub_type_2, next_sub_type;
@@ -852,7 +848,6 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 					next_sub_type++;
 					continue;
 				}
-				qdf_mem_zero(pcl, sizeof(pcl));
 				pcl_len = 0;
 				pcl_type =
 				policy_mgr_get_pcl_from_third_conn_table(
@@ -864,15 +859,12 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 					hdd_ctx->psoc, next_sub_type,
 					pcl_freqs, &pcl_len, weight_list,
 					QDF_ARRAY_SIZE(weight_list));
-				for (i = 0; i < pcl_len; i++)
-					pcl[i] =
-						wlan_freq_to_chan(pcl_freqs[i]);
 				status = wlan_hdd_validate_pcl(hdd_ctx,
-					pcl_type, pcl, pcl_len,
+					pcl_type, pcl_freqs, pcl_len,
 					channel_id_1, channel_id_2,
 					reason, sizeof(reason));
 				if ((pcl_type == PM_MAX_PCL_TYPE) &&
-					(pcl[0] == 0)) {
+					(pcl_freqs[0] == 0)) {
 					next_sub_type++;
 					continue;
 				}
@@ -880,7 +872,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 					sub_type_1, sub_type_2,
 					next_sub_type, first_chnl,
 					second_chnl, 0, status,
-					pcl_type, reason, pcl);
+					pcl_type, reason, pcl_freqs);
 				next_sub_type++;
 			}
 			/* remove entry to make a room for next iteration */

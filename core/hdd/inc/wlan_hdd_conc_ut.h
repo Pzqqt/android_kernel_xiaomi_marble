@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, 2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,7 +29,7 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
 	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
 	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
-	uint8_t *pcl);
+	qdf_freq_t *pcl_freqs);
 void print_report(struct hdd_context *hdd_ctx);
 void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx);
 void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
@@ -48,7 +48,7 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
 	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
 	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
-	uint8_t *pcl)
+	qdf_freq_t *pcl_freqs)
 {
 }
 
