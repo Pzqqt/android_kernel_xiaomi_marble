@@ -57,6 +57,8 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 	nan_obj->cfg_param.max_ndp_sessions = cfg_get(psoc,
 						      CFG_NDP_MAX_SESSIONS);
 	nan_obj->cfg_param.max_ndi = cfg_get(psoc, CFG_NDI_MAX_SUPPORT);
+	nan_obj->cfg_param.nan_feature_config =
+					cfg_get(psoc, CFG_NAN_FEATURE_CONFIG);
 }
 
 /**
@@ -1195,4 +1197,30 @@ ucfg_nan_set_vdev_creation_supp_by_fw(struct wlan_objmgr_psoc *psoc, bool set)
 	}
 
 	psoc_nan_obj->nan_caps.nan_vdev_allowed = set;
+}
+
+QDF_STATUS ucfg_get_nan_feature_config(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *nan_feature_config)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		*nan_feature_config = cfg_default(CFG_NAN_FEATURE_CONFIG);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*nan_feature_config = psoc_nan_obj->cfg_param.nan_feature_config;
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	if (wlan_vdev_mlme_get_opmode(vdev) == QDF_NAN_DISC_MODE ||
+	    (!ucfg_nan_is_vdev_creation_allowed(wlan_vdev_get_psoc(vdev)) &&
+	     wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE))
+		return true;
+
+	return false;
 }

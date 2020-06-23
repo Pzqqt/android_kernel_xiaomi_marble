@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -29,6 +29,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "nan_ucfg_api.h"
 
 static QDF_STATUS nan_psoc_obj_created_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg_list)
@@ -94,8 +95,18 @@ static QDF_STATUS nan_vdev_obj_created_notification(
 {
 	struct nan_vdev_priv_obj *nan_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_psoc *psoc;
 
 	nan_debug("nan_vdev_create_notif called");
+	if (ucfg_is_nan_vdev(vdev)) {
+		psoc = wlan_vdev_get_psoc(vdev);
+		if (!psoc) {
+			nan_err("psoc is NULL");
+			return QDF_STATUS_E_INVAL;
+		}
+		target_if_nan_set_vdev_feature_config(psoc,
+						      wlan_vdev_get_id(vdev));
+	}
 	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_NDI_MODE) {
 		nan_debug("not a ndi vdev. do nothing");
 		return QDF_STATUS_SUCCESS;
