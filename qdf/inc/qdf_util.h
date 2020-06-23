@@ -631,10 +631,10 @@ int qdf_get_cpu(void)
 }
 
 /**
- * qdf_get_hweight8() - count num of 1's in bitmap
+ * qdf_get_hweight8() - count num of 1's in 8-bit bitmap
  * @value: input bitmap
  *
- * Count num of 1's set in the bitmap
+ * Count num of 1's set in the 8-bit bitmap
  *
  * Return: num of 1's
  */
@@ -644,6 +644,43 @@ unsigned int qdf_get_hweight8(unsigned int w)
 	unsigned int res = w - ((w >> 1) & 0x55);
 	res = (res & 0x33) + ((res >> 2) & 0x33);
 	return (res + (res >> 4)) & 0x0F;
+}
+
+/**
+ * qdf_get_hweight16() - count num of 1's in 16-bit bitmap
+ * @value: input bitmap
+ *
+ * Count num of 1's set in the 16-bit bitmap
+ *
+ * Return: num of 1's
+ */
+static inline
+unsigned int qdf_get_hweight16(unsigned int w)
+{
+	unsigned int res = (w & 0x5555) + ((w >> 1) & 0x5555);
+
+	res = (res & 0x3333) + ((res >> 2) & 0x3333);
+	res = (res & 0x0F0F) + ((res >> 4) & 0x0F0F);
+	return (res & 0x00FF) + ((res >> 8) & 0x00FF);
+}
+
+/**
+ * qdf_get_hweight32() - count num of 1's in 32-bit bitmap
+ * @value: input bitmap
+ *
+ * Count num of 1's set in the 32-bit bitmap
+ *
+ * Return: num of 1's
+ */
+static inline
+unsigned int qdf_get_hweight32(unsigned int w)
+{
+	unsigned int res = (w & 0x55555555) + ((w >> 1) & 0x55555555);
+
+	res = (res & 0x33333333) + ((res >> 2) & 0x33333333);
+	res = (res & 0x0F0F0F0F) + ((res >> 4) & 0x0F0F0F0F);
+	res = (res & 0x00FF00FF) + ((res >> 8) & 0x00FF00FF);
+	return (res & 0x0000FFFF) + ((res >> 16) & 0x0000FFFF);
 }
 
 /**
