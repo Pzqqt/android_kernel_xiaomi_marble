@@ -343,7 +343,7 @@ qdf_export_symbol(qdf_trace_deinit);
  *
  * Return: None
  */
-void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
+void qdf_trace(uint8_t module, uint16_t code, uint16_t session, uint32_t data)
 {
 	tp_qdf_trace_record rec = NULL;
 	unsigned long flags;
