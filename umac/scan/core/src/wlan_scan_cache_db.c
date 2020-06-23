@@ -811,7 +811,7 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 					  &dup_node);
 
 	security_type = scan_params->security_type;
-	scm_nofl_debug("Received %s: %pM \"%.*s\" freq %d rssi %d tsf_delta %u seq %d snr %d phy %d hidden %d mismatch %d %s%s%s%s pdev %d",
+	scm_nofl_debug("Received %s: %pM \"%.*s\" freq %d rssi %d tsf_delta %u seq %d snr %d phy %d hidden %d mismatch %d %s%s%s%s pdev %d boot_time %llu ns",
 		       (scan_params->frm_subtype == MGMT_SUBTYPE_PROBE_RESP) ?
 		       "prb rsp" : "bcn", scan_params->bssid.bytes,
 		       scan_params->ssid.length, scan_params->ssid.ssid,
@@ -824,7 +824,8 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 		       security_type & SCAN_SECURITY_TYPE_RSN ? "[RSN]" : "",
 		       security_type & SCAN_SECURITY_TYPE_WAPI ? "[WAPI]" : "",
 		       security_type & SCAN_SECURITY_TYPE_WEP ? "[WEP]" : "",
-		       wlan_objmgr_pdev_get_pdev_id(pdev));
+		       wlan_objmgr_pdev_get_pdev_id(pdev),
+		       scan_params->boottime_ns);
 
 	if (scan_obj->cb.inform_beacon)
 		scan_obj->cb.inform_beacon(pdev, scan_params);
