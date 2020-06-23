@@ -39,6 +39,7 @@ struct intf_timing_params {
 	bool dsc_4hs_merge;	/* DSC 4HS merge */
 	bool poms_align_vsync;	/* poms with vsync aligned */
 	u32 dce_bytes_per_line;
+	u32 vrefresh;
 };
 
 struct intf_prog_fetch {
