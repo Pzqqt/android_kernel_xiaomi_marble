@@ -899,6 +899,7 @@ enum wifi_connectivity_events {
  * @WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE: Montitor mode wakelock
  * @WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART: Wakelock for Idle Restart
  * @WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_SHUTDOWN: Wakelock for Idle Shutdown
+ * @WIFI_POWER_EVENT_WAKELOCK_TDLS: Wakelock for TDLS
  *
  * Indicates the reason for which the wakelock was taken/released
  */
@@ -927,6 +928,7 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE,
 	WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_RESTART,
 	WIFI_POWER_EVENT_WAKELOCK_DRIVER_IDLE_SHUTDOWN,
+	WIFI_POWER_EVENT_WAKELOCK_TDLS,
 };
 
 /* The length of interface name should >= IFNAMSIZ */
