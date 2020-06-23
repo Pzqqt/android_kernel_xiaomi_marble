@@ -1324,6 +1324,13 @@ cleanup:
 		/* copy measurement bssid */
 		qdf_mem_copy(sme_rrm_ctx->bssId, beacon_req->macaddrBssid,
 			     sizeof(tSirMacAddr));
+		sme_rrm_ctx->token = beacon_req->uDialogToken;
+		sme_rrm_ctx->regClass =
+			beacon_req->channel_info.reg_class;
+		sme_rrm_ctx->randnIntvl =
+			QDF_MAX(beacon_req->randomizationInterval,
+			mac->rrm.rrmConfig.max_randn_interval);
+
 		sme_rrm_send_beacon_report_xmit_ind(mac,
 			     sme_rrm_ctx->measurement_idx, NULL, true, 0);
 	}
