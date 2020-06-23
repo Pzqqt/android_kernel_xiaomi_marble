@@ -1868,6 +1868,7 @@ struct ipa3_app_clock_vote {
  * @ipa_hw_type: type of IPA HW type (e.g. IPA 1.0, IPA 1.1 etc')
  * @ipa_hw_type_index: index of IPA HW type (e.g. IPA_4_0, IPA_4_0_MHI etc')
  * @ipa3_hw_mode: mode of IPA HW mode (e.g. Normal, Virtual or over PCIe)
+ * @gsi_ver: version of GSI
  * @use_ipa_teth_bridge: use tethering bridge driver
  * @modem_cfg_emb_pipe_flt: modem configure embedded pipe filtering rules
  * @logbuf: ipc log buffer for high priority messages
@@ -1988,6 +1989,7 @@ struct ipa3_context {
 	enum ipa_hw_type ipa_hw_type;
 	u8 hw_type_index;
 	enum ipa3_hw_mode ipa3_hw_mode;
+	enum gsi_ver gsi_ver;
 	enum ipa3_platform_type platform_type;
 	bool ipa_config_is_mhi;
 	bool use_ipa_teth_bridge;
