@@ -16,6 +16,16 @@ static int __init ipa_clients_manager_init(void)
 
 	ipa3_usb_init();
 
+	ipa_wdi3_register();
+
+	ipa_gsb_register();
+
+	ipa_uc_offload_register();
+
+	ipa_mhi_register();
+
+	ipa_wigig_register();
+
 	ipa3_notify_clients_registered();
 
 	return 0;

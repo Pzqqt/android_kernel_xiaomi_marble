@@ -1870,6 +1870,73 @@ fail_stop_channel:
 	return res;
 }
 
+static void ipa_wigig_free_msg(void *msg, uint32_t len, uint32_t type)
+{
+	IPADBG("free msg type:%d, len:%d, buff %pK", type, len, msg);
+	kfree(msg);
+	IPADBG("exit\n");
+}
+
+int ipa_wigig_send_wlan_msg(enum ipa_wlan_event msg_type,
+	const char *netdev_name, u8 *mac)
+{
+	struct ipa_msg_meta msg_meta;
+	struct ipa_wlan_msg *wlan_msg;
+	int ret;
+
+	IPADBG("%d\n", msg_type);
+
+	wlan_msg = kzalloc(sizeof(*wlan_msg), GFP_KERNEL);
+	if (wlan_msg == NULL)
+		return -ENOMEM;
+	strlcpy(wlan_msg->name, netdev_name, IPA_RESOURCE_NAME_MAX);
+	memcpy(wlan_msg->mac_addr, mac, IPA_MAC_ADDR_SIZE);
+	msg_meta.msg_len = sizeof(struct ipa_wlan_msg);
+	msg_meta.msg_type = msg_type;
+
+	IPADBG("send msg type:%d, len:%d, buff %pK", msg_meta.msg_type,
+		msg_meta.msg_len, wlan_msg);
+	ret = ipa_send_msg(&msg_meta, wlan_msg, ipa_wigig_free_msg);
+
+	IPADBG("exit\n");
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_wigig_send_wlan_msg);
+
+int ipa_wigig_send_msg(int msg_type,
+	const char *netdev_name, u8 *mac,
+	enum ipa_client_type client, bool to_wigig)
+{
+	struct ipa_msg_meta msg_meta;
+	struct ipa_wigig_msg *wigig_msg;
+	int ret;
+
+	IPADBG("\n");
+
+	wigig_msg = kzalloc(sizeof(struct ipa_wigig_msg), GFP_KERNEL);
+	if (wigig_msg == NULL)
+		return -ENOMEM;
+	strlcpy(wigig_msg->name, netdev_name, IPA_RESOURCE_NAME_MAX);
+	memcpy(wigig_msg->client_mac_addr, mac, IPA_MAC_ADDR_SIZE);
+	if (msg_type == WIGIG_CLIENT_CONNECT)
+		wigig_msg->u.ipa_client = client;
+	else
+		wigig_msg->u.to_wigig = to_wigig;
+
+	msg_meta.msg_type = msg_type;
+	msg_meta.msg_len = sizeof(struct ipa_wigig_msg);
+
+	IPADBG("send msg type:%d, len:%d, buff %pK", msg_meta.msg_type,
+		msg_meta.msg_len, wigig_msg);
+	ret = ipa_send_msg(&msg_meta, wigig_msg, ipa_wigig_free_msg);
+
+	IPADBG("exit\n");
+
+	return ret;
+}
+EXPORT_SYMBOL(ipa_wigig_send_msg);
+
 #ifndef CONFIG_DEBUG_FS
 int ipa3_wigig_init_debugfs_i(struct dentry *parent) { return 0; }
 #else

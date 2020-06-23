@@ -264,9 +264,9 @@ static void ipa3_del_a7_qmap_hdr(void)
 	hdl_entry = &del_hdr->hdl[0];
 	hdl_entry->hdl = rmnet_ipa3_ctx->qmap_hdr_hdl;
 
-	ret = ipa_del_hdr(del_hdr);
+	ret = ipa3_del_hdr(del_hdr);
 	if (ret || hdl_entry->status)
-		IPAWANERR("ipa_del_hdr failed\n");
+		IPAWANERR("ipa3_del_hdr failed\n");
 	else
 		IPAWANDBG("hdrs deletion done\n");
 
@@ -299,9 +299,9 @@ static void ipa3_del_qmap_hdr(uint32_t hdr_hdl)
 	hdl_entry = &del_hdr->hdl[0];
 	hdl_entry->hdl = hdr_hdl;
 
-	ret = ipa_del_hdr(del_hdr);
+	ret = ipa3_del_hdr(del_hdr);
 	if (ret || hdl_entry->status)
-		IPAWANERR("ipa_del_hdr failed\n");
+		IPAWANERR("ipa3_del_hdr failed\n");
 	else
 		IPAWANDBG("header deletion done\n");
 
@@ -1500,7 +1500,7 @@ static int handle3_ingress_format(struct net_device *dev,
 				  in->u.ingress_format.agg_size,
 				  in->u.ingress_format.agg_count);
 
-		ret = ipa_disable_apps_wan_cons_deaggr(
+		ret = ipa3_disable_apps_wan_cons_deaggr(
 			  in->u.ingress_format.agg_size,
 			  in->u.ingress_format.agg_count);
 
@@ -2896,7 +2896,7 @@ static int ipa3_lcl_mdm_ssr_notifier_cb(struct notifier_block *this,
 			ipa3_q6_pre_powerup_cleanup();
 		}
 		/* hold a proxy vote for the modem. */
-		ipa_proxy_clk_vote();
+		ipa3_proxy_clk_vote();
 		ipa3_reset_freeze_vote();
 		IPAWANINFO("IPA BEFORE_POWERUP handling is complete\n");
 		break;

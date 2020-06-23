@@ -2501,11 +2501,9 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl);
 /*
  * Header removal / addition
  */
-int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
+
 
 int ipa3_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool by_user);
-
-int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
 
 int ipa3_del_hdr_by_user(struct ipa_ioc_del_hdr *hdls, bool by_user);
 
@@ -3261,6 +3259,8 @@ static inline void ipa_eth_exit(void) { }
 int ipa3_get_gsi_chan_info(struct gsi_chan_info *gsi_chan_info,
 	unsigned long chan_hdl);
 
+int ipa3_disable_apps_wan_cons_deaggr(uint32_t agg_size, uint32_t agg_count);
+
 #if IS_ENABLED(CONFIG_IPA3_MHI_PRIME_MANAGER)
 int ipa_mpm_mhip_xdci_pipe_enable(enum ipa_usb_teth_prot prot);
 int ipa_mpm_mhip_xdci_pipe_disable(enum ipa_usb_teth_prot xdci_teth_prot);
@@ -3332,4 +3332,6 @@ int ipa3_uc_send_enable_flow_control(uint16_t gsi_chid,
 int ipa3_uc_send_disable_flow_control(void);
 int ipa3_uc_send_update_flow_control(uint32_t bitmask,
 	uint8_t  add_delete);
+
+enum ipa_hw_type ipa_get_hw_type_internal(void);
 #endif /* _IPA3_I_H_ */

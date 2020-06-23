@@ -12,12 +12,6 @@
 #define _IPA_API_H_
 
 struct ipa_api_controller {
-	int (*ipa_reset_endpoint)(u32 clnt_hdl);
-
-	int (*ipa_clear_endpoint_delay)(u32 clnt_hdl);
-
-	int (*ipa_disable_endpoint)(u32 clnt_hdl);
-
 	int (*ipa_cfg_ep)(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg);
 
 	int (*ipa_cfg_ep_nat)(u32 clnt_hdl,
@@ -56,31 +50,14 @@ struct ipa_api_controller {
 	int (*ipa_cfg_ep_holb_by_client)(enum ipa_client_type client,
 		const struct ipa_ep_cfg_holb *ipa_ep_cfg);
 
-	int (*ipa_cfg_ep_ctrl)(u32 clnt_hdl,
-		const struct ipa_ep_cfg_ctrl *ep_ctrl);
-
-	int (*ipa_add_hdr)(struct ipa_ioc_add_hdr *hdrs);
-
 	int (*ipa_add_hdr_usr)(struct ipa_ioc_add_hdr *hdrs, bool user_only);
 
-	int (*ipa_del_hdr)(struct ipa_ioc_del_hdr *hdls);
-
-	int (*ipa_commit_hdr)(void);
-
 	int (*ipa_reset_hdr)(bool user_only);
-
-	int (*ipa_get_hdr)(struct ipa_ioc_get_hdr *lookup);
-
-	int (*ipa_put_hdr)(u32 hdr_hdl);
-
-	int (*ipa_copy_hdr)(struct ipa_ioc_copy_hdr *copy);
 
 	int (*ipa_add_hdr_proc_ctx)(struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs,
 								bool user_only);
 
 	int (*ipa_del_hdr_proc_ctx)(struct ipa_ioc_del_hdr_proc_ctx *hdls);
-
-	int (*ipa_add_rt_rule)(struct ipa_ioc_add_rt_rule *rules);
 
 	int (*ipa_add_rt_rule_v2)(struct ipa_ioc_add_rt_rule_v2 *rules);
 
@@ -97,8 +74,6 @@ struct ipa_api_controller {
 	int (*ipa_reset_rt)(enum ipa_ip_type ip, bool user_only);
 
 	int (*ipa_get_rt_tbl)(struct ipa_ioc_get_rt_tbl *lookup);
-
-	int (*ipa_put_rt_tbl)(u32 rt_tbl_hdl);
 
 	int (*ipa_query_rt_index)(struct ipa_ioc_get_rt_tbl_indx *in);
 
@@ -150,41 +125,6 @@ struct ipa_api_controller {
 
 	int (*ipa_nat_mdfy_pdn)(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
 
-	int (*ipa_send_msg)(struct ipa_msg_meta *meta, void *buff,
-		ipa_msg_free_fn callback);
-
-	int (*ipa_register_pull_msg)(struct ipa_msg_meta *meta,
-		ipa_msg_pull_fn callback);
-
-	int (*ipa_deregister_pull_msg)(struct ipa_msg_meta *meta);
-
-	int (*ipa_register_intf)(const char *name,
-		const struct ipa_tx_intf *tx,
-		const struct ipa_rx_intf *rx);
-
-	int (*ipa_register_intf_ext)(const char *name,
-		const struct ipa_tx_intf *tx,
-		const struct ipa_rx_intf *rx,
-		const struct ipa_ext_intf *ext);
-
-	int (*ipa_deregister_intf)(const char *name);
-
-	int (*ipa_set_aggr_mode)(enum ipa_aggr_mode mode);
-
-	int (*ipa_set_qcncm_ndp_sig)(char sig[3]);
-
-	int (*ipa_set_single_ndp_per_mbim)(bool enable);
-
-	int (*ipa_tx_dp_mul)(enum ipa_client_type dst,
-			struct ipa_tx_data_desc *data_desc);
-
-	void (*ipa_free_skb)(struct ipa_rx_data *data);
-
-	int (*ipa_setup_sys_pipe)(struct ipa_sys_connect_params *sys_in,
-		u32 *clnt_hdl);
-
-	int (*ipa_teardown_sys_pipe)(u32 clnt_hdl);
-
 	int (*ipa_sys_setup)(struct ipa_sys_connect_params *sys_in,
 		unsigned long *ipa_bam_hdl,
 		u32 *ipa_pipe_num, u32 *clnt_hdl, bool en_status);
@@ -194,35 +134,7 @@ struct ipa_api_controller {
 	int (*ipa_sys_update_gsi_hdls)(u32 clnt_hdl, unsigned long gsi_ch_hdl,
 		unsigned long gsi_ev_hdl);
 
-	int (*ipa_connect_wdi_pipe)(struct ipa_wdi_in_params *in,
-		struct ipa_wdi_out_params *out);
-
-	int (*ipa_disconnect_wdi_pipe)(u32 clnt_hdl);
-
-	int (*ipa_enable_wdi_pipe)(u32 clnt_hdl);
-
-	int (*ipa_disable_wdi_pipe)(u32 clnt_hdl);
-
-	int (*ipa_resume_wdi_pipe)(u32 clnt_hdl);
-
-	int (*ipa_suspend_wdi_pipe)(u32 clnt_hdl);
-
-	int (*ipa_get_wdi_stats)(struct IpaHwStatsWDIInfoData_t *stats);
-
-	int (*ipa_uc_bw_monitor)(struct ipa_wdi_bw_info *info);
-
 	int (*ipa_set_wlan_tx_info)(struct ipa_wdi_tx_info *info);
-
-	u16 (*ipa_get_smem_restr_bytes)(void);
-
-	int (*ipa_broadcast_wdi_quota_reach_ind)(uint32_t fid,
-		uint64_t num_bytes);
-
-	int (*ipa_uc_wdi_get_dbpa)(struct ipa_wdi_db_params *out);
-
-	int (*ipa_uc_reg_rdyCB)(struct ipa_wdi_uc_ready_params *param);
-
-	int (*ipa_uc_dereg_rdyCB)(void);
 
 	int (*teth_bridge_init)(struct teth_bridge_init_params *params);
 
@@ -237,21 +149,6 @@ struct ipa_api_controller {
 	enum ipacm_client_enum (*ipa_get_client)(int pipe_idx);
 
 	bool (*ipa_get_client_uplink)(int pipe_idx);
-
-	int (*ipa_dma_init)(void);
-
-	int (*ipa_dma_enable)(void);
-
-	int (*ipa_dma_disable)(void);
-
-	int (*ipa_dma_sync_memcpy)(u64 dest, u64 src, int len);
-
-	int (*ipa_dma_async_memcpy)(u64 dest, u64 src, int len,
-		void (*user_cb)(void *user1), void *user_param);
-
-	int (*ipa_dma_uc_memcpy)(phys_addr_t dest, phys_addr_t src, int len);
-
-	void (*ipa_dma_destroy)(void);
 
 	bool (*ipa_has_open_aggr_frame)(enum ipa_client_type client);
 
@@ -318,69 +215,13 @@ struct ipa_api_controller {
 
 	int (*ipa_write_qmap_id)(struct ipa_ioc_write_qmapid *param_in);
 
-	int (*ipa_add_interrupt_handler)(enum ipa_irq_type interrupt,
-		ipa_irq_handler_t handler,
-		bool deferred_flag,
-		void *private_data);
-
 	int (*ipa_remove_interrupt_handler)(enum ipa_irq_type interrupt);
-
-	int (*ipa_restore_suspend_handler)(void);
-
-	void (*ipa_bam_reg_dump)(void);
-
-	int (*ipa_get_ep_mapping)(enum ipa_client_type client);
-
-	bool (*ipa_is_ready)(void);
-
-	void (*ipa_proxy_clk_vote)(void);
-
-	void (*ipa_proxy_clk_unvote)(void);
-
-	bool (*ipa_is_client_handle_valid)(u32 clnt_hdl);
-
-	enum ipa_client_type (*ipa_get_client_mapping)(int pipe_idx);
-
-	bool (*ipa_get_modem_cfg_emb_pipe_flt)(void);
-
-	enum ipa_transport_type (*ipa_get_transport_type)(void);
 
 	int (*ipa_ap_suspend)(struct device *dev);
 
 	int (*ipa_ap_resume)(struct device *dev);
 
-	int (*ipa_stop_gsi_channel)(u32 clnt_hdl);
-
 	int (*ipa_start_gsi_channel)(u32 clnt_hdl);
-
-	struct iommu_domain *(*ipa_get_smmu_domain)(void);
-
-	int (*ipa_disable_apps_wan_cons_deaggr)(uint32_t agg_size,
-						uint32_t agg_count);
-
-	struct device *(*ipa_get_dma_dev)(void);
-
-	int (*ipa_release_wdi_mapping)(u32 num_buffers,
-		struct ipa_wdi_buffer_info *info);
-
-	int (*ipa_create_wdi_mapping)(u32 num_buffers,
-		struct ipa_wdi_buffer_info *info);
-
-	const struct ipa_gsi_ep_config *(*ipa_get_gsi_ep_info)
-		(enum ipa_client_type client);
-
-	int (*ipa_register_rmnet_ctl_cb)(
-		void (*ipa_rmnet_ctl_ready_cb)(void *user_data1),
-		void *user_data1,
-		void (*ipa_rmnet_ctl_stop_cb)(void *user_data2),
-		void *user_data2,
-		void (*ipa_rmnet_ctl_rx_notify_cb)(
-		void *user_data3, void *rx_data),
-		void *user_data3);
-
-	int (*ipa_unregister_rmnet_ctl_cb)(void);
-
-	int (*ipa_rmnet_ctl_xmit)(struct sk_buff *skb);
 
 	void (*ipa_inc_client_enable_clks)(
 		struct ipa_active_client_logging_info *id);
@@ -477,8 +318,6 @@ struct ipa_api_controller {
 		bool (*teth_port_state)(void), enum ipa_client_type client);
 
 	void (*ipa_deregister_client_callback)(enum ipa_client_type client);
-
-	bool (*ipa_get_lan_rx_napi)(void);
 
 	int (*ipa_uc_debug_stats_alloc)(
 		struct IpaHwOffloadStatsAllocCmdData_t cmdinfo);

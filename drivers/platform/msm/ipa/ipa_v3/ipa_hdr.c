@@ -782,6 +782,7 @@ int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs)
 {
 	return ipa3_add_hdr_usr(hdrs, false);
 }
+EXPORT_SYMBOL(ipa3_add_hdr);
 
 /**
  * ipa3_add_hdr_usr() - add the specified headers to SW
@@ -883,6 +884,7 @@ int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls)
 {
 	return ipa3_del_hdr_by_user(hdls, false);
 }
+EXPORT_SYMBOL(ipa3_del_hdr);
 
 /**
  * ipa3_add_hdr_proc_ctx() - add the specified headers to SW

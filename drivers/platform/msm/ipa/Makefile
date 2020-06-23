@@ -31,12 +31,6 @@ ipam-y += \
 	ipa_v3/ipahal/ipahal_fltrt.o \
 	ipa_v3/ipahal/ipahal_hw_stats.o \
 	ipa_v3/ipahal/ipahal_nat.o \
-	ipa_clients/odu_bridge.o \
-	ipa_clients/ipa_mhi_client.o \
-	ipa_clients/ipa_uc_offload.o \
-	ipa_clients/ipa_wdi3.o \
-	ipa_clients/ipa_gsb.o \
-	ipa_clients/ipa_wigig.o
 
 ipam-$(CONFIG_RMNET_IPA3) += ipa_v3/rmnet_ipa.o ipa_v3/ipa_qmi_service_v01.o \
 	ipa_v3/ipa_qmi_service.o ipa_v3/rmnet_ctl_ipa.o \

@@ -1726,7 +1726,7 @@ static void ipa3_qmi_service_init_worker(struct work_struct *work)
 	IPAWANDBG("IPA A7 QMI init OK :>>>>\n");
 
 	ipa3_qmi_ctx->modem_cfg_emb_pipe_flt =
-		ipa_get_modem_cfg_emb_pipe_flt();
+		ipa3_get_modem_cfg_emb_pipe_flt();
 
 	ipa3_qmi_ctx->num_ipa_offload_connection = 0;
 	ipa3_svc_handle = vzalloc(sizeof(*ipa3_svc_handle));

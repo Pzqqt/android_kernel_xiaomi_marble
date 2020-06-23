@@ -64,7 +64,7 @@ struct ipa_wdi_context {
 
 static struct ipa_wdi_context *ipa_wdi_ctx;
 
-int ipa_wdi_init(struct ipa_wdi_init_in_params *in,
+static int ipa_wdi_init_internal(struct ipa_wdi_init_in_params *in,
 	struct ipa_wdi_init_out_params *out)
 {
 	struct ipa_wdi_uc_ready_params uc_ready_params;
@@ -97,7 +97,7 @@ int ipa_wdi_init(struct ipa_wdi_init_in_params *in,
 	ipa_wdi_ctx->wdi_notify = in->wdi_notify;
 #endif
 
-	if (ipa_uc_reg_rdyCB(&uc_ready_params) != 0) {
+	if (ipa3_uc_reg_rdyCB(&uc_ready_params) != 0) {
 		mutex_destroy(&ipa_wdi_ctx->lock);
 		kfree(ipa_wdi_ctx);
 		ipa_wdi_ctx = NULL;
@@ -114,15 +114,14 @@ int ipa_wdi_init(struct ipa_wdi_init_in_params *in,
 
 	ipa_wdi_ctx->is_smmu_enabled = out->is_smmu_enabled;
 
-	if (ipa3_ctx->ipa_wdi3_over_gsi)
+	if (ipa3_get_ctx()->ipa_wdi3_over_gsi)
 		out->is_over_gsi = true;
 	else
 		out->is_over_gsi = false;
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_init);
 
-int ipa_wdi_cleanup(void)
+static int ipa_wdi_cleanup_internal(void)
 {
 	struct ipa_wdi_intf_info *entry;
 	struct ipa_wdi_intf_info *next;
@@ -138,7 +137,6 @@ int ipa_wdi_cleanup(void)
 	ipa_wdi_ctx = NULL;
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_cleanup);
 
 static int ipa_wdi_commit_partial_hdr(
 	struct ipa_ioc_add_hdr *hdr,
@@ -168,7 +166,7 @@ static int ipa_wdi_commit_partial_hdr(
 		hdr->hdr[i].eth2_ofst = hdr_info[i].dst_mac_addr_offset;
 	}
 
-	if (ipa_add_hdr(hdr)) {
+	if (ipa3_add_hdr(hdr)) {
 		IPA_WDI_ERR("fail to add partial headers\n");
 		return -EFAULT;
 	}
@@ -176,7 +174,7 @@ static int ipa_wdi_commit_partial_hdr(
 	return 0;
 }
 
-int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
+static int ipa_wdi_reg_intf_internal(struct ipa_wdi_reg_intf_in_params *in)
 {
 	struct ipa_ioc_add_hdr *hdr;
 	struct ipa_wdi_intf_info *new_intf;
@@ -248,7 +246,7 @@ int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
 
 	memset(tx_prop, 0, sizeof(tx_prop));
 	tx_prop[0].ip = IPA_IP_v4;
-	if (!ipa3_ctx->ipa_wdi3_over_gsi)
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
 		tx_prop[0].dst_pipe = IPA_CLIENT_WLAN1_CONS;
 	else
 		tx_prop[0].dst_pipe = IPA_CLIENT_WLAN2_CONS;
@@ -258,7 +256,7 @@ int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
 		sizeof(tx_prop[0].hdr_name));
 
 	tx_prop[1].ip = IPA_IP_v6;
-	if (!ipa3_ctx->ipa_wdi3_over_gsi)
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
 		tx_prop[1].dst_pipe = IPA_CLIENT_WLAN1_CONS;
 	else
 		tx_prop[1].dst_pipe = IPA_CLIENT_WLAN2_CONS;
@@ -272,7 +270,7 @@ int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
 	rx.prop = rx_prop;
 	memset(rx_prop, 0, sizeof(rx_prop));
 	rx_prop[0].ip = IPA_IP_v4;
-	if (!ipa3_ctx->ipa_wdi3_over_gsi)
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
 		rx_prop[0].src_pipe = IPA_CLIENT_WLAN1_PROD;
 	else
 		rx_prop[0].src_pipe = IPA_CLIENT_WLAN2_PROD;
@@ -284,7 +282,7 @@ int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
 	}
 
 	rx_prop[1].ip = IPA_IP_v6;
-	if (!ipa3_ctx->ipa_wdi3_over_gsi)
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi)
 		rx_prop[1].src_pipe = IPA_CLIENT_WLAN1_PROD;
 	else
 		rx_prop[1].src_pipe = IPA_CLIENT_WLAN2_PROD;
@@ -295,7 +293,7 @@ int ipa_wdi_reg_intf(struct ipa_wdi_reg_intf_in_params *in)
 		rx_prop[1].attrib.meta_data_mask = in->meta_data_mask;
 	}
 
-	if (ipa_register_intf(in->netdev_name, &tx, &rx)) {
+	if (ipa3_register_intf(in->netdev_name, &tx, &rx)) {
 		IPA_WDI_ERR("fail to add interface prop\n");
 		ret = -EFAULT;
 		goto fail_commit_hdr;
@@ -315,9 +313,8 @@ fail_alloc_hdr:
 	mutex_unlock(&ipa_wdi_ctx->lock);
 	return ret;
 }
-EXPORT_SYMBOL(ipa_wdi_reg_intf);
 
-int ipa_wdi_dereg_intf(const char *netdev_name)
+static int ipa_wdi_dereg_intf_internal(const char *netdev_name)
 {
 	int len, ret = 0;
 	struct ipa_ioc_del_hdr *hdr = NULL;
@@ -354,13 +351,13 @@ int ipa_wdi_dereg_intf(const char *netdev_name)
 			IPA_WDI_DBG("IPv4 hdr hdl: %d IPv6 hdr hdl: %d\n",
 				hdr->hdl[0].hdl, hdr->hdl[1].hdl);
 
-			if (ipa_del_hdr(hdr)) {
+			if (ipa3_del_hdr(hdr)) {
 				IPA_WDI_ERR("fail to delete partial header\n");
 				ret = -EFAULT;
 				goto fail;
 			}
 
-			if (ipa_deregister_intf(entry->netdev_name)) {
+			if (ipa3_deregister_intf(entry->netdev_name)) {
 				IPA_WDI_ERR("fail to del interface props\n");
 				ret = -EFAULT;
 				goto fail;
@@ -377,7 +374,6 @@ fail:
 	mutex_unlock(&ipa_wdi_ctx->lock);
 	return ret;
 }
-EXPORT_SYMBOL(ipa_wdi_dereg_intf);
 
 
 static void ipa_wdi_pm_cb(void *p, enum ipa_pm_cb_event event)
@@ -385,7 +381,7 @@ static void ipa_wdi_pm_cb(void *p, enum ipa_pm_cb_event event)
 	IPA_WDI_DBG("received pm event %d\n", event);
 }
 
-int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
+static int ipa_wdi_conn_pipes_internal(struct ipa_wdi_conn_in_params *in,
 			struct ipa_wdi_conn_out_params *out)
 {
 	int i, j, ret = 0;
@@ -468,7 +464,7 @@ int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
 				in->u_rx.rx.event_ring_doorbell_pa;
 			in_rx.u.ul.rdy_comp_ring_size =
 				in->u_rx.rx.event_ring_size;
-			if (ipa_connect_wdi_pipe(&in_rx, &out_rx)) {
+			if (ipa3_connect_wdi_pipe(&in_rx, &out_rx)) {
 				IPA_WDI_ERR("fail to setup rx pipe\n");
 				ret = -EFAULT;
 				goto fail_connect_pipe;
@@ -493,7 +489,7 @@ int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
 				in->u_tx.tx.event_ring_size;
 			in_tx.u.dl.num_tx_buffers =
 				in->u_tx.tx.num_pkt_buffers;
-			if (ipa_connect_wdi_pipe(&in_tx, &out_tx)) {
+			if (ipa3_connect_wdi_pipe(&in_tx, &out_tx)) {
 				IPA_WDI_ERR("fail to setup tx pipe\n");
 				ret = -EFAULT;
 				goto fail;
@@ -520,7 +516,7 @@ int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
 				in->u_rx.rx_smmu.event_ring_doorbell_pa;
 			in_rx.u.ul_smmu.rdy_comp_ring_size =
 				in->u_rx.rx_smmu.event_ring_size;
-			if (ipa_connect_wdi_pipe(&in_rx, &out_rx)) {
+			if (ipa3_connect_wdi_pipe(&in_rx, &out_rx)) {
 				IPA_WDI_ERR("fail to setup rx pipe\n");
 				ret = -EFAULT;
 				goto fail_connect_pipe;
@@ -545,7 +541,7 @@ int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
 				in->u_tx.tx_smmu.event_ring_size;
 			in_tx.u.dl_smmu.num_tx_buffers =
 				in->u_tx.tx_smmu.num_pkt_buffers;
-			if (ipa_connect_wdi_pipe(&in_tx, &out_tx)) {
+			if (ipa3_connect_wdi_pipe(&in_tx, &out_tx)) {
 				IPA_WDI_ERR("fail to setup tx pipe\n");
 				ret = -EFAULT;
 				goto fail;
@@ -559,7 +555,7 @@ int ipa_wdi_conn_pipes(struct ipa_wdi_conn_in_params *in,
 	return 0;
 
 fail:
-	ipa_disconnect_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl);
+	ipa3_disconnect_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl);
 fail_connect_pipe:
 	ipa_pm_deregister(ipa_wdi_ctx->ipa_pm_hdl);
 
@@ -568,9 +564,8 @@ fail_setup_sys_pipe:
 		ipa_teardown_sys_pipe(ipa_wdi_ctx->sys_pipe_hdl[j]);
 	return ret;
 }
-EXPORT_SYMBOL(ipa_wdi_conn_pipes);
 
-int ipa_wdi_disconn_pipes(void)
+static int ipa_wdi_disconn_pipes_internal(void)
 {
 	int i, ipa_ep_idx_rx, ipa_ep_idx_tx;
 
@@ -587,7 +582,7 @@ int ipa_wdi_disconn_pipes(void)
 		}
 	}
 
-	if (!ipa3_ctx->ipa_wdi3_over_gsi) {
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	} else {
@@ -601,11 +596,11 @@ int ipa_wdi_disconn_pipes(void)
 			return -EFAULT;
 		}
 	} else {
-		if (ipa_disconnect_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
+		if (ipa3_disconnect_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to tear down wdi tx pipes\n");
 			return -EFAULT;
 		}
-		if (ipa_disconnect_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
+		if (ipa3_disconnect_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to tear down wdi rx pipes\n");
 			return -EFAULT;
 		}
@@ -618,9 +613,8 @@ int ipa_wdi_disconn_pipes(void)
 
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_disconn_pipes);
 
-int ipa_wdi_enable_pipes(void)
+static int ipa_wdi_enable_pipes_internal(void)
 {
 	int ret;
 	int ipa_ep_idx_tx, ipa_ep_idx_rx;
@@ -630,7 +624,7 @@ int ipa_wdi_enable_pipes(void)
 		return -EPERM;
 	}
 
-	if (!ipa3_ctx->ipa_wdi3_over_gsi) {
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	} else {
@@ -644,19 +638,19 @@ int ipa_wdi_enable_pipes(void)
 			return -EFAULT;
 		}
 	} else {
-		if (ipa_enable_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
+		if (ipa3_enable_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to enable wdi tx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_resume_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
+		if (ipa3_resume_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to resume wdi tx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_enable_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
+		if (ipa3_enable_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to enable wdi rx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_resume_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
+		if (ipa3_resume_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to resume wdi rx pipe\n");
 			return -EFAULT;
 		}
@@ -670,9 +664,8 @@ int ipa_wdi_enable_pipes(void)
 
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_enable_pipes);
 
-int ipa_wdi_disable_pipes(void)
+static int ipa_wdi_disable_pipes_internal(void)
 {
 	int ret;
 	int ipa_ep_idx_tx, ipa_ep_idx_rx;
@@ -682,7 +675,7 @@ int ipa_wdi_disable_pipes(void)
 		return -EPERM;
 	}
 
-	if (!ipa3_ctx->ipa_wdi3_over_gsi) {
+	if (!ipa3_get_ctx()->ipa_wdi3_over_gsi) {
 		ipa_ep_idx_rx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_PROD);
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN1_CONS);
 	} else {
@@ -696,19 +689,19 @@ int ipa_wdi_disable_pipes(void)
 			return -EFAULT;
 		}
 	} else {
-		if (ipa_suspend_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
+		if (ipa3_suspend_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to suspend wdi tx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_disable_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
+		if (ipa3_disable_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to disable wdi tx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_suspend_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
+		if (ipa3_suspend_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to suspend wdi rx pipe\n");
 			return -EFAULT;
 		}
-		if (ipa_disable_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
+		if (ipa3_disable_wdi_pipe(ipa_wdi_ctx->rx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to disable wdi rx pipe\n");
 			return -EFAULT;
 		}
@@ -722,9 +715,8 @@ int ipa_wdi_disable_pipes(void)
 
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_disable_pipes);
 
-int ipa_wdi_set_perf_profile(struct ipa_wdi_perf_profile *profile)
+static int ipa_wdi_set_perf_profile_internal(struct ipa_wdi_perf_profile *profile)
 {
 	if (profile == NULL) {
 		IPA_WDI_ERR("Invalid input\n");
@@ -739,36 +731,26 @@ int ipa_wdi_set_perf_profile(struct ipa_wdi_perf_profile *profile)
 
 	return 0;
 }
-EXPORT_SYMBOL(ipa_wdi_set_perf_profile);
 
-int ipa_wdi_create_smmu_mapping(u32 num_buffers,
-	struct ipa_wdi_buffer_info *info)
+void ipa_wdi3_register(void)
 {
-	return ipa_create_wdi_mapping(num_buffers, info);
-}
-EXPORT_SYMBOL(ipa_wdi_create_smmu_mapping);
+	struct ipa_wdi3_data funcs;
 
-int ipa_wdi_release_smmu_mapping(u32 num_buffers,
-	struct ipa_wdi_buffer_info *info)
-{
-	return ipa_release_wdi_mapping(num_buffers, info);
-}
-EXPORT_SYMBOL(ipa_wdi_release_smmu_mapping);
+	funcs.ipa_wdi_bw_monitor = ipa_uc_bw_monitor;
+	funcs.ipa_wdi_cleanup = ipa_wdi_cleanup_internal;
+	funcs.ipa_wdi_conn_pipes = ipa_wdi_conn_pipes_internal;
+	funcs.ipa_wdi_create_smmu_mapping = ipa3_create_wdi_mapping;
+	funcs.ipa_wdi_dereg_intf = ipa_wdi_dereg_intf_internal;
+	funcs.ipa_wdi_disable_pipes = ipa_wdi_disable_pipes_internal;
+	funcs.ipa_wdi_disconn_pipes = ipa_wdi_disconn_pipes_internal;
+	funcs.ipa_wdi_enable_pipes = ipa_wdi_enable_pipes_internal;
+	funcs.ipa_wdi_get_stats = ipa_get_wdi_stats;
+	funcs.ipa_wdi_init = ipa_wdi_init_internal;
+	funcs.ipa_wdi_reg_intf = ipa_wdi_reg_intf_internal;
+	funcs.ipa_wdi_release_smmu_mapping = ipa3_release_wdi_mapping;
+	funcs.ipa_wdi_set_perf_profile = ipa_wdi_set_perf_profile_internal;
+	funcs.ipa_wdi_sw_stats = ipa_set_wlan_tx_info;
 
-int ipa_wdi_get_stats(struct IpaHwStatsWDIInfoData_t *stats)
-{
-	return ipa_get_wdi_stats(stats);
+	if (ipa_fmwk_register_ipa_wdi3(&funcs))
+		pr_err("failed to register ipa_wdi3 APIs\n");
 }
-EXPORT_SYMBOL(ipa_wdi_get_stats);
-
-int ipa_wdi_bw_monitor(struct ipa_wdi_bw_info *info)
-{
-	return ipa_uc_bw_monitor(info);
-}
-EXPORT_SYMBOL(ipa_wdi_bw_monitor);
-
-int ipa_wdi_sw_stats(struct ipa_wdi_tx_info *info)
-{
-	return ipa_set_wlan_tx_info(info);
-}
-EXPORT_SYMBOL(ipa_wdi_sw_stats);

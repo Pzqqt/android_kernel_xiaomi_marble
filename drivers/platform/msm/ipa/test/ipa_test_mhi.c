@@ -36,6 +36,20 @@
 		}							\
 	} while (0)
 
+static char *ipa_mhi_state_str[] = {
+	__stringify(IPA_MHI_STATE_INITIALIZED),
+	__stringify(IPA_MHI_STATE_READY),
+	__stringify(IPA_MHI_STATE_STARTED),
+	__stringify(IPA_MHI_STATE_SUSPEND_IN_PROGRESS),
+	__stringify(IPA_MHI_STATE_SUSPENDED),
+	__stringify(IPA_MHI_STATE_RESUME_IN_PROGRESS),
+};
+
+#define MHI_STATE_STR(state) \
+	(((state) >= 0 && (state) < IPA_MHI_STATE_MAX) ? \
+		ipa_mhi_state_str[(state)] : \
+		"INVALID")
+
 /**
  * check for MSI interrupt for one or both channels:
  * OUT channel MSI my be missed as it
@@ -932,7 +946,7 @@ static int ipa_mhi_test_initialize_driver(bool skip_start_and_conn)
 		IPA_UT_LOG("ch: %d base: 0x%pK phys_addr 0x%llx chstate: %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID,
 			p_ch_ctx_array, phys_addr,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 
 		memset(&prod_params, 0, sizeof(prod_params));
 		prod_params.sys.client = IPA_CLIENT_MHI_PROD;
@@ -954,7 +968,7 @@ static int ipa_mhi_test_initialize_driver(bool skip_start_and_conn)
 
 		if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 			IPA_UT_LOG("MHI_PROD: chstate is not RUN chstate:%s\n",
-				ipa_mhi_get_state_str(
+				MHI_STATE_STR(
 				p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("PROD pipe state is not run");
 			return -EFAULT;
@@ -968,7 +982,7 @@ static int ipa_mhi_test_initialize_driver(bool skip_start_and_conn)
 		IPA_UT_LOG("ch: %d base: 0x%pK phys_addr 0x%llx chstate: %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
 			p_ch_ctx_array, phys_addr,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 
 		memset(&cons_params, 0, sizeof(cons_params));
 		cons_params.sys.client = IPA_CLIENT_MHI_CONS;
@@ -986,7 +1000,7 @@ static int ipa_mhi_test_initialize_driver(bool skip_start_and_conn)
 
 		if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 			IPA_UT_LOG("MHI_CONS: chstate is not RUN chstate:%s\n",
-				ipa_mhi_get_state_str(
+				MHI_STATE_STR(
 				p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("CONS pipe state is not run");
 			return -EFAULT;
@@ -1024,7 +1038,7 @@ static int ipa_mhi_test_destroy(struct ipa_test_mhi_context *ctx)
 		(phys_addr - ctx->ch_ctx_array.phys_base);
 	IPA_UT_LOG("channel id %d (CONS): chstate %s\n",
 		IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-		ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+		MHI_STATE_STR(p_ch_ctx_array->chstate));
 
 	phys_addr = p_mmio->ccabap +
 		((IPA_MHI_TEST_FIRST_CHANNEL_ID) *
@@ -1033,7 +1047,7 @@ static int ipa_mhi_test_destroy(struct ipa_test_mhi_context *ctx)
 		(phys_addr - ctx->ch_ctx_array.phys_base);
 	IPA_UT_LOG("channel id %d (PROD): chstate %s\n",
 		IPA_MHI_TEST_FIRST_CHANNEL_ID,
-		ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+		MHI_STATE_STR(p_ch_ctx_array->chstate));
 
 	IPA_UT_LOG("MHI Destroy\n");
 	ipa_mhi_destroy();
@@ -1157,7 +1171,7 @@ static int ipa_mhi_test_channel_reset(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_DISABLE) {
 		IPA_UT_LOG("chstate is not disabled! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("CONS pipe state is not disabled");
 		return -EFAULT;
 	}
@@ -1198,7 +1212,7 @@ static int ipa_mhi_test_channel_reset(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_DISABLE) {
 		IPA_UT_LOG("chstate is not disabled! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("PROD pipe state is not disabled");
 		return -EFAULT;
 	}
@@ -1244,7 +1258,7 @@ static int ipa_mhi_test_channel_reset(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 		IPA_UT_LOG("chstate is not run! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("PROD pipe state is not run");
 		return -EFAULT;
 	}
@@ -1269,7 +1283,7 @@ static int ipa_mhi_test_channel_reset(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 		IPA_UT_LOG("chstate is not run! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("CONS pipe state is not run");
 		return -EFAULT;
 	}
@@ -1566,7 +1580,7 @@ static int ipa_mhi_test_suspend(bool force, bool should_success)
 			IPA_HW_MHI_CHANNEL_STATE_SUSPEND) {
 			IPA_UT_LOG("chstate is not suspend! ch %d chstate %s\n",
 				IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-				ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+				MHI_STATE_STR(p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("channel state not suspend");
 			return -EFAULT;
 		}
@@ -1581,7 +1595,7 @@ static int ipa_mhi_test_suspend(bool force, bool should_success)
 		if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 			IPA_UT_LOG("chstate is not running! ch %d chstate %s\n",
 				IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-				ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+				MHI_STATE_STR(p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("channel state not run");
 			return -EFAULT;
 		}
@@ -1596,7 +1610,7 @@ static int ipa_mhi_test_suspend(bool force, bool should_success)
 			IPA_HW_MHI_CHANNEL_STATE_SUSPEND) {
 			IPA_UT_LOG("chstate is not suspend! ch %d chstate %s\n",
 				IPA_MHI_TEST_FIRST_CHANNEL_ID,
-				ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+				MHI_STATE_STR(p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("channel state not suspend");
 			return -EFAULT;
 		}
@@ -1611,7 +1625,7 @@ static int ipa_mhi_test_suspend(bool force, bool should_success)
 		if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 			IPA_UT_LOG("chstate is not running! ch %d chstate %s\n",
 				IPA_MHI_TEST_FIRST_CHANNEL_ID,
-				ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+				MHI_STATE_STR(p_ch_ctx_array->chstate));
 			IPA_UT_TEST_FAIL_REPORT("channel state not run");
 			return -EFAULT;
 		}
@@ -1647,7 +1661,7 @@ static int ipa_test_mhi_resume(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 		IPA_UT_LOG("chstate is not running! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID + 1,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("channel state not run");
 		return -EFAULT;
 	}
@@ -1659,7 +1673,7 @@ static int ipa_test_mhi_resume(void)
 	if (p_ch_ctx_array->chstate != IPA_HW_MHI_CHANNEL_STATE_RUN) {
 		IPA_UT_LOG("chstate is not running! ch %d chstate %s\n",
 			IPA_MHI_TEST_FIRST_CHANNEL_ID,
-			ipa_mhi_get_state_str(p_ch_ctx_array->chstate));
+			MHI_STATE_STR(p_ch_ctx_array->chstate));
 		IPA_UT_TEST_FAIL_REPORT("channel state not run");
 		return -EFAULT;
 	}
