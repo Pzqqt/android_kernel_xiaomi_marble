@@ -4569,6 +4569,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
 		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
@@ -6877,6 +6878,21 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
+	},
+	{
+		.name = LPASS_BE_RX_CDC_DMA_RX_5,
+		.stream_name = "RX CDC DMA5 Playback",
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.dynamic_be = 1,
+#endif /* CONFIG_AUDIO_QGKI */
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_5,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+		SND_SOC_DAILINK_REG(rx_dma_rx5),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_6,
