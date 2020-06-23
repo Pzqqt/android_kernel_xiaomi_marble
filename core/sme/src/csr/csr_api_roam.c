@@ -13040,10 +13040,6 @@ csr_compute_mode_and_band(struct mac_context *mac_ctx,
 			*band = (mac_ctx->mlme_cfg->gen.band == BAND_2G ?
 				REG_BAND_2G : REG_BAND_5G);
 			if (REG_BAND_2G == *band) {
-				/*
-				 * See reason in else if ( WLAN_REG_IS_24GHZ_CH
-				 * (opr_ch) ) to pick 11B
-				 */
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 			} else {
 				/* prefer 5GHz */
