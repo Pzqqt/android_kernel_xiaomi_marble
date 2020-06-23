@@ -4179,7 +4179,6 @@ wlan_crypto_reset_prarams(struct wlan_crypto_params *params)
 	params->ucastcipherset = 0;
 	params->mcastcipherset = 0;
 	params->mgmtcipherset = 0;
-	params->cipher_caps = 0;
 	params->key_mgmt = 0;
 	params->rsn_caps = 0;
 }
