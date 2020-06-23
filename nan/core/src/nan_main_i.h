@@ -85,6 +85,9 @@ enum nan_disc_state {
  * Preference (MP) as 0 when a new device is enabling NAN
  * @max_ndp_sessions: max ndp sessions host supports
  * @max_ndi: max number of ndi host supports
+ * @nan_feature_config: Bitmap to enable/disable a particular NAN feature
+ *                      configuration in firmware. It's sent to firmware through
+ *                      WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES
  */
 struct nan_cfg_params {
 	bool enable;
@@ -96,6 +99,7 @@ struct nan_cfg_params {
 	bool support_mp0_discovery;
 	uint32_t max_ndp_sessions;
 	uint32_t max_ndi;
+	uint32_t nan_feature_config;
 };
 
 /**

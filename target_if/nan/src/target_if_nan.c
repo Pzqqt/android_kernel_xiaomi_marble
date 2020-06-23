@@ -27,6 +27,7 @@
 #include "wlan_nan_api.h"
 #include "wmi_unified_api.h"
 #include "scheduler_api.h"
+#include <wmi_unified.h>
 
 static QDF_STATUS target_if_nan_event_flush_cb(struct scheduler_msg *msg)
 {
@@ -1162,4 +1163,30 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	else
 		return QDF_STATUS_SUCCESS;
+}
+
+void target_if_nan_set_vdev_feature_config(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id)
+{
+	QDF_STATUS status;
+	uint32_t nan_features;
+	struct vdev_set_params param;
+	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return;
+	}
+
+	ucfg_get_nan_feature_config(psoc, &nan_features);
+	target_if_debug("vdev_id:%d NAN features:0x%x", vdev_id, nan_features);
+
+	param.vdev_id = vdev_id;
+	param.param_id = WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES;
+	param.param_value = nan_features;
+
+	status = wmi_unified_vdev_set_param_send(wmi_handle, &param);
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("failed to set NAN_CONFIG_FEATURES(status = %d)",
+			      status);
 }

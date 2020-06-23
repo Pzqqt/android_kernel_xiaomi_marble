@@ -239,6 +239,38 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Max number of NDI host supports")
 
+/*
+ * <ini>
+ * nan_feature_config - Bitmap to enable/disable a particular NAN/NDP feature
+ *
+ * @Min: 0
+ * @Max: 0xFFFF
+ * @Default: 0x1
+ *
+ * This parameter helps to enable/disable a particular feature config by setting
+ * corresponding bit and send to firmware through the VDEV param
+ * WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES
+ * Acceptable values for this:
+ * BIT(0): Allow DW configuration from framework in sync role.
+ *	   If this is not set, firmware shall follow the spec/default behavior.
+ * BIT(1) to BIT(31): Reserved
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NAN_FEATURE_CONFIG CFG_INI_UINT( \
+			"nan_feature_config", \
+			0, \
+			0xFFFF, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Enable the specified NAN features in firmware")
+
 #ifdef WLAN_FEATURE_NAN
 #define CFG_NAN_DISC CFG(CFG_NAN_ENABLE) \
 			CFG(CFG_NDP_KEEP_ALIVE_PERIOD) \
@@ -255,6 +287,7 @@
 #define CFG_NAN_ALL     CFG_NAN_DISC \
 			CFG_NAN_DP \
 			CFG(CFG_NDP_MAX_SESSIONS) \
-			CFG(CFG_NDI_MAX_SUPPORT)
+			CFG(CFG_NDI_MAX_SUPPORT) \
+			CFG(CFG_NAN_FEATURE_CONFIG)
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,4 +98,14 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc);
  * Return: 0 for success or error code
  */
 int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len);
+
+/**
+ * target_if_nan_set_vdev_feature_config() - Init NAN feature config params
+ * @psoc: Pointer to PSOC Object
+ * @vdev_id: vdev_id of the current vdev
+ *
+ * This function updates NAN feature config bitmap to firmware
+ */
+void target_if_nan_set_vdev_feature_config(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id);
 #endif /* _WIFI_POS_TGT_IF_H_ */

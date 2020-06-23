@@ -423,6 +423,28 @@ QDF_STATUS ucfg_disable_nan_discovery(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS
 ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id);
+
+/**
+ * ucfg_get_nan_feature_config() - Get NAN feature bitmap
+ * @psoc: pointer to psoc object
+ * @nan_feature_config: NAN feature config bitmap to be enabled in firmware
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_get_nan_feature_config(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *nan_feature_config);
+
+/**
+ * ucfg_is_nan_vdev() - Check if the current vdev supports NAN or not
+ * @vdev: pointer to vdev object
+ *
+ * Return true
+ * 1. If the VDEV type is NAN_DISC or
+ * 2. If the VDEV type is STA and nan_separate_iface feature is not supported
+ *
+ * Return: Bool
+ */
+bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev);
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -508,6 +530,19 @@ ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id)
 
 static inline
 bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline
+QDF_STATUS ucfg_get_nan_feature_config(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *nan_feature_config)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	return false;
 }
