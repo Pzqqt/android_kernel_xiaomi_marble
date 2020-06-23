@@ -207,6 +207,15 @@ enum channel_state reg_get_2g_bonded_channel_state(
 void reg_set_channel_params(struct wlan_objmgr_pdev *pdev,
 			    uint8_t ch, uint8_t sec_ch_2g,
 			    struct ch_params *ch_params);
+
+/**
+ * reg_is_disable_ch() - Check if the given channel in disable state
+ * @pdev: Pointer to pdev
+ * @chan: channel number
+ *
+ * Return: True if channel state is disabled, else false
+ */
+bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 #endif /* CONFIG_CHAN_NUM_API */
 
 /**
@@ -1044,6 +1053,16 @@ reg_get_5g_bonded_channel_for_freq(struct wlan_objmgr_pdev *pdev,
 				   enum phy_ch_width ch_width,
 				   const struct bonded_channel_freq
 				   **bonded_chan_ptr_ptr);
+
+/**
+ * reg_is_disable_for_freq() - Check if the given channel frequency in
+ * disable state
+ * @pdev: Pointer to pdev
+ * @freq: Channel frequency
+ *
+ * Return: True if channel state is disabled, else false
+ */
+bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 #endif /* CONFIG_CHAN_FREQ_API */
 
 /**

@@ -1689,6 +1689,15 @@ bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
 
 	return ch_state == CHANNEL_STATE_DFS;
 }
+
+bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan)
+{
+	enum channel_state ch_state;
+
+	ch_state = reg_get_channel_state(pdev, chan);
+
+	return ch_state == CHANNEL_STATE_DISABLE;
+}
 #endif /* CONFIG_CHAN_NUM_API */
 
 uint8_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
@@ -3732,6 +3741,14 @@ enum reg_wifi_band reg_freq_to_band(qdf_freq_t freq)
 	return REG_BAND_UNKNOWN;
 }
 
+bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	enum channel_state ch_state;
+
+	ch_state = reg_get_channel_state_for_freq(pdev, freq);
+
+	return ch_state == CHANNEL_STATE_DISABLE;
+}
 #endif /* CONFIG_CHAN_FREQ_API */
 
 uint8_t  reg_get_max_tx_power(struct wlan_objmgr_pdev *pdev)

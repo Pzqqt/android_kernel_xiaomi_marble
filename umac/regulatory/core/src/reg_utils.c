@@ -823,28 +823,6 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-#ifdef CONFIG_CHAN_FREQ_API
-bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
-{
-	enum channel_state ch_state;
-
-	ch_state = reg_get_channel_state_for_freq(pdev, freq);
-
-	return ch_state == CHANNEL_STATE_DISABLE;
-}
-#endif /* CONFIG_CHAN_FREQ_API */
-
-#ifdef CONFIG_CHAN_NUM_API
-bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	enum channel_state ch_state;
-
-	ch_state = reg_get_channel_state(pdev, chan);
-
-	return ch_state == CHANNEL_STATE_DISABLE;
-}
-#endif /* CONFIG_CHAN_NUM_API */
-
 bool reg_is_regdb_offloaded(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;

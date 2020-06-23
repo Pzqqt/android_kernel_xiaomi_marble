@@ -74,15 +74,6 @@ bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch);
  * Return: true if channel is passive or disabled, else false.
  */
 bool reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
-
-/**
- * reg_is_disable_ch() - Check if the given channel in disable state
- * @pdev: Pointer to pdev
- * @chan: channel number
- *
- * Return: True if channel state is disabled, else false
- */
-bool reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
 #else
 static inline bool
 reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
@@ -92,12 +83,6 @@ reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint8_t ch)
 
 static inline bool
 reg_is_passive_or_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan)
-{
-	return false;
-}
-
-static inline bool
-reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan)
 {
 	return false;
 }
@@ -126,15 +111,6 @@ bool reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
  */
 bool reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t freq);
-/**
- * reg_is_disable_for_freq() - Check if the given channel frequency in
- * disable state
- * @pdev: Pointer to pdev
- * @freq: Channel frequency
- *
- * Return: True if channel state is disabled, else false
- */
-bool reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 #else
 static inline bool
 reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
@@ -146,12 +122,6 @@ reg_chan_has_dfs_attribute_for_freq(struct wlan_objmgr_pdev *pdev,
 static inline bool
 reg_is_passive_or_disable_for_freq(struct wlan_objmgr_pdev *pdev,
 				   qdf_freq_t freq)
-{
-	return false;
-}
-
-static inline bool
-reg_is_disable_for_freq(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
 	return false;
 }
