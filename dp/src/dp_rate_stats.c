@@ -309,7 +309,7 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 		stats_ctx = (struct wlan_peer_rate_stats_ctx *)
 				ppdu_user->cookie;
 
-		if (qdf_unlikely(!ppdu_user->tx_ratekbps ||
+		if (qdf_unlikely(!ppdu_user->tx_ratekbps || !ppdu_user->rix ||
 				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
 			continue;
 		}
@@ -318,11 +318,6 @@ wlan_peer_update_tx_rate_stats(struct wlan_soc_rate_stats_ctx *soc_stats_ctx,
 			qdf_debug("peer rate stats ctx is NULL, investigate");
 			qdf_debug("peer_mac: " QDF_MAC_ADDR_STR,
 				 QDF_MAC_ADDR_ARRAY(ppdu_user->mac_addr));
-			continue;
-		}
-
-		if (qdf_unlikely(!ppdu_user->tx_ratekbps || !ppdu_user->rix ||
-				 ppdu_user->rix > DP_RATE_TABLE_SIZE)) {
 			continue;
 		}
 
