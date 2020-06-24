@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,7 +33,7 @@
 #include "mac_trace.h"
 #include "qdf_trace.h"
 
-enum {
+enum pecodetype {
 	TRACE_CODE_MLM_STATE,
 	TRACE_CODE_SME_STATE,
 	TRACE_CODE_TX_MGMT,

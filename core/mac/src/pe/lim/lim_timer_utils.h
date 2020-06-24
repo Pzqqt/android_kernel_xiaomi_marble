@@ -32,7 +32,7 @@
 #include "lim_types.h"
 
 /* Timer related functions */
-enum {
+enum limtimertype {
 	eLIM_MIN_CHANNEL_TIMER,
 	eLIM_MAX_CHANNEL_TIMER,
 	eLIM_JOIN_FAIL_TIMER,
