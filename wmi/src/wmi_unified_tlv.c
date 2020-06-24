@@ -492,6 +492,8 @@ static const uint32_t vdev_param_tlv[] = {
 	[wmi_vdev_param_set_cmd_obss_pd_per_ac] =
 			WMI_VDEV_PARAM_SET_CMD_OBSS_PD_PER_AC,
 	[wmi_vdev_param_enable_srp] = WMI_VDEV_PARAM_ENABLE_SRP,
+	[wmi_vdev_param_nan_config_features] =
+			WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES,
 };
 #endif
 
