@@ -319,6 +319,7 @@ static void dp_peer_ast_hash_detach(struct dp_soc *soc)
 				TAILQ_REMOVE(&soc->ast_hash.bins[index], ast,
 					     hash_list_elem);
 				dp_peer_ast_cleanup(soc, ast);
+				soc->num_ast_entries--;
 				qdf_mem_free(ast);
 			}
 		}
