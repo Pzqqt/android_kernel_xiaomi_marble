@@ -11315,6 +11315,8 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	config->disable_channel = cfg_get(psoc, CFG_ENABLE_DISABLE_CHANNEL);
 	config->enable_sar_conversion = cfg_get(psoc, CFG_SAR_CONVERSION);
 	config->is_wow_disabled = cfg_get(psoc, CFG_WOW_DISABLE);
+	config->nb_commands_interval =
+				cfg_get(psoc, CFG_NB_COMMANDS_RATE_LIMIT);
 
 	hdd_periodic_sta_stats_config(config, psoc);
 	hdd_init_vc_mode_cfg_bitmap(config, psoc);

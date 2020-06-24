@@ -253,6 +253,7 @@ struct hdd_config {
 	/* Duration for which periodic logging should be done */
 	uint32_t periodic_stats_timer_duration;
 #endif /* WLAN_FEATURE_PERIODIC_STA_STATS */
+	uint8_t nb_commands_interval;
 };
 
 /**

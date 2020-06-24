@@ -1395,6 +1395,31 @@ struct dhcp_server {
 			CFG_VALUE_OR_DEFAULT, \
 			"Disable wow feature")
 
+/*
+ * <ini>
+ * nb_commands_interval - Used to rate limit nb commands from userspace
+ *
+ * @Min: 0
+ * @Max: 10
+ * Default: 3
+ *
+ * This ini is used to specify the duration in which any supp. nb command from
+ * userspace will not be processed completely in driver. For ex, the default
+ * value of 3 seconds signifies that consecutive commands within that
+ * time will not be processed fully.
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_NB_COMMANDS_RATE_LIMIT CFG_INI_UINT( \
+			"nb_commands_interval", \
+			0, \
+			10, \
+			3, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Rate limiting for nb commands")
+
 #ifdef WLAN_FEATURE_PERIODIC_STA_STATS
 /*
  * <ini>
@@ -1606,6 +1631,7 @@ enum host_log_level {
 	CFG(CFG_PRIVATE_WEXT_CONTROL) \
 	CFG(CFG_PROVISION_INTERFACE_POOL) \
 	CFG(CFG_TIMER_MULTIPLIER) \
+	CFG(CFG_NB_COMMANDS_RATE_LIMIT) \
 	CFG(CFG_HDD_DOT11_MODE) \
 	CFG(CFG_ENABLE_DISABLE_CHANNEL) \
 	CFG(CFG_SAR_CONVERSION) \
