@@ -1614,8 +1614,6 @@ static int wsa881x_swr_down(struct swr_device *pdev)
 	else
 		wsa881x->state = WSA881X_DEV_DOWN;
 
-	if (delayed_work_pending(&wsa881x->ocp_ctl_work))
-		cancel_delayed_work_sync(&wsa881x->ocp_ctl_work);
 	return ret;
 }
 
