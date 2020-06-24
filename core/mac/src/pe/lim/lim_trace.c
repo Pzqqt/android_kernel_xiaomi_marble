@@ -294,7 +294,7 @@ void mac_trace_msg_rx(struct mac_context *mac, uint8_t session, uint32_t data)
 		mac_trace(mac, TRACE_CODE_RX_WMA_MSG, session, data);
 		break;
 	default:
-		mac_trace(mac, module_id, session, data);
+		mac_trace(mac, msgId, session, data);
 		break;
 	}
 }
