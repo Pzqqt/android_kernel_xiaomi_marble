@@ -27851,6 +27851,7 @@ typedef enum {
 typedef enum {
     WMI_ROAM_TRIGGER_REASON_STA_KICKOUT = WMI_ROAM_TRIGGER_REASON_MAX,
     WMI_ROAM_TRIGGER_REASON_ESS_RSSI,
+    WMI_ROAM_TRIGGER_REASON_WTC_BTM,
 
     WMI_ROAM_TRIGGER_EXT_REASON_MAX
 } WMI_ROAM_TRIGGER_EXT_REASON_ID;
@@ -28120,6 +28121,12 @@ typedef enum {
     WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN,          /* Roam scan triggered due to partial scan failure */
     WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,  /* Roam scan triggered due to Low rssi periodic timer */
     WMI_ROAM_TRIGGER_SUB_REASON_CU_PERIODIC,        /* Roam scan triggered due to CU periodic timer */
+    /* PERIODIC_TIMER_AFTER_INACTIVITY:
+     * Roam scan triggered due to periodic timer after device in
+     * inactivity state.
+     * This timer is enabled/used for roaming in a vendor-specific manner.
+     */
+    WMI_ROAM_TRIGGER_SUB_REASCON_PERIODIC_TIMER_AFTER_INACTIVITY,
 } WMI_ROAM_TRIGGER_SUB_REASON_ID;
 
 typedef enum wmi_roam_invoke_status_error {
@@ -28194,6 +28201,20 @@ typedef struct {
      * Response status Values are enumerated in the 802.11 spec.
      */
     A_UINT32 btm_response_status_code;
+
+    union {
+        /*
+         * If a definition of these vendor-specific files has been provided,
+         * use the vendor-specific names for these fields as an alias for
+         */
+        #ifdef WMI_ROAM_TRIGGER_REASON_VENDOR_SPECIFIC1
+        WMI_ROAM_TRIGGER_REASON_VENDOR_SPECIFIC1;
+        #endif
+        struct {
+            /* opaque space reservation for vendor-specific fields */
+            A_UINT32 vendor_specific1[7];
+        };
+    };
 } wmi_roam_trigger_reason;
 
 typedef struct {
@@ -28318,6 +28339,29 @@ typedef struct {
 } wmi_roam_neighbor_report_info;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_btm_response_info_tlv_param */
+
+    /*enum STATUS_CODE_WNM_BTM defined in ieee80211_defs.h*/
+    A_UINT32 btm_status;
+
+    /* AP MAC address */
+    wmi_mac_addr target_bssid;
+
+    /* vsie_reason value:
+     *  0x00    Will move to Cellular
+     *  0x01    Unspecified
+     *  0x02    Not supported
+     *  0x03    No Cellular Network
+     *  0x04    Controlled by framework
+     *  0x05    Roam to better AP
+     *  0x06    Suspend mode
+     *  0x07    RSSI is strong enough
+     *  0x08-0xFF    TBD
+     */
+    A_UINT32 vsie_reason;
+} wmi_roam_btm_response_info;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_neighbor_report_channel_info_tlv_param */
     A_UINT32 channel;    /* Channel frequency in MHz */
 } wmi_roam_neighbor_report_channel_info;
@@ -28336,6 +28380,21 @@ typedef struct {
     A_UINT32 frame_info;
     A_UINT32 status_code; /* Status code from 802.11 spec, section 9.4.1.9 */
 } wmi_roam_frame_info;
+
+typedef struct {
+    A_UINT32 tlv_header;     /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_initial_info_tlv_param */
+
+    /* count of full scan */
+    A_UINT32 roam_full_scan_count;
+    A_INT32  rssi_th; /* unit: dBm */
+    A_UINT32 cu_th; /* channel utilization threhold: uses units of percent */
+    /* timer_canceled:
+     * bit0: timer1 canceled
+     * bit1: timer2 canceled
+     * bit2: inactive timer canceled
+     */
+    A_UINT32 timer_canceled;
+} wmi_roam_initial_info;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_stats_event_fixed_param */
