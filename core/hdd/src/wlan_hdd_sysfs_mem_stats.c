@@ -82,8 +82,10 @@ int hdd_sysfs_mem_stats_create(struct kobject *wlan_kobject)
 
 void hdd_sysfs_mem_stats_destroy(struct kobject *wlan_kobject)
 {
-	if (!wlan_kobject)
+	if (!wlan_kobject) {
 		hdd_err("Could not get wlan kobject!");
+		return;
+	}
 	sysfs_remove_file(wlan_kobject, &mem_stats_attribute.attr);
 }
 
