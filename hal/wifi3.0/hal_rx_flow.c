@@ -469,8 +469,8 @@ hal_rx_insert_flow_entry(struct hal_rx_fst *fst, uint32_t flow_hash,
 			 void *flow_tuple_info, uint32_t *flow_idx)
 {
 	int i;
-	void *hal_fse;
-	uint32_t hal_hash;
+	void *hal_fse = NULL;
+	uint32_t hal_hash = 0;
 	struct hal_flow_tuple_info hal_tuple_info = { 0 };
 	QDF_STATUS status;
 
@@ -518,8 +518,8 @@ hal_rx_find_flow_from_tuple(struct hal_rx_fst *fst, uint32_t flow_hash,
 			    void *flow_tuple_info, uint32_t *flow_idx)
 {
 	int i;
-	void *hal_fse;
-	uint32_t hal_hash;
+	void *hal_fse = NULL;
+	uint32_t hal_hash = 0;
 	struct hal_flow_tuple_info hal_tuple_info = { 0 };
 	QDF_STATUS status;
 
