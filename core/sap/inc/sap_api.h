@@ -1477,14 +1477,18 @@ wlansap_get_safe_channel_from_pcl_and_acs_range(struct sap_context *sap_ctx);
 /**
  * wlansap_get_chan_band_restrict() -  get new chan for band change
  * @sap_ctx: sap context pointer
+ * @csa_reason: channel switch reason to update
  *
  * Sap/p2p go channel switch from 5G to 2G by CSA when 5G band disabled to
  * avoid conflict with modem N79.
  * Sap/p2p go channel restore to 5G channel when 5G band enabled.
+ * Note: csa_reason is only updated when channel is disabled or band is
+ * restricted, so it must be initialized to a default value beforehand
  *
  * Return - restart channel in MHZ
  */
-qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx);
+qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
+					  enum sap_csa_reason_code *csa_reason);
 
 #ifdef DCS_INTERFERENCE_DETECTION
 /**

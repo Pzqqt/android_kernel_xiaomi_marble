@@ -2979,7 +2979,8 @@ err:
 	return freq;
 }
 
-qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
+qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx,
+					  enum sap_csa_reason_code *csa_reason)
 {
 	uint32_t restart_freq;
 	enum phy_ch_width restart_ch_width;
@@ -2995,6 +2996,12 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 		sap_err("sap_ctx NULL parameter");
 		return 0;
 	}
+
+	if (!csa_reason) {
+		sap_err("csa_reason is NULL");
+		return 0;
+	}
+
 	if (cds_is_driver_recovering())
 		return 0;
 
@@ -3002,6 +3009,12 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 	if (!mac) {
 		sap_err("Invalid MAC context");
 		return 0;
+	}
+
+	if (wlan_reg_is_disable_for_freq(mac->pdev, sap_ctx->chan_freq)) {
+		sap_debug("channel is disabled");
+		*csa_reason = CSA_REASON_CHAN_DISABLED;
+		return wlansap_get_safe_channel_from_pcl_and_acs_range(sap_ctx);
 	}
 
 	if (ucfg_reg_get_band(mac->pdev, &band) != QDF_STATUS_SUCCESS) {
@@ -3034,6 +3047,7 @@ qdf_freq_t wlansap_get_chan_band_restrict(struct sap_context *sap_ctx)
 		restart_ch_width = sap_ctx->chan_width_before_switch_band;
 		sap_debug("Restore chan freq: %d, width: %d",
 			  restart_freq, restart_ch_width);
+		*csa_reason = CSA_REASON_BAND_RESTRICTED;
 	} else {
 		sap_debug("No need switch SAP/Go channel");
 		return 0;
