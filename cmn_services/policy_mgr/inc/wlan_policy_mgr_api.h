@@ -75,6 +75,7 @@ typedef const enum policy_mgr_conc_next_action
  * @CSA_REASON_CONCURRENT_NAN_EVENT: NAN concurrency.
  * @CSA_REASON_BAND_RESTRICTED: band disabled or re-enabled
  * @CSA_REASON_DCS: DCS
+ * @CSA_REASON_CHAN_DISABLED: channel is disabled
  *
  */
 enum sap_csa_reason_code {
@@ -89,6 +90,7 @@ enum sap_csa_reason_code {
 	CSA_REASON_CONCURRENT_NAN_EVENT,
 	CSA_REASON_BAND_RESTRICTED,
 	CSA_REASON_DCS,
+	CSA_REASON_CHAN_DISABLED,
 };
 
 /**
