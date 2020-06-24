@@ -886,6 +886,9 @@ static uint32_t gsi_get_max_channels(enum gsi_ver ver)
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_BMSK) >>
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_CH_PER_EE_SHFT;
 		break;
+	default:
+		GSIERR("GSI version is not supported %d\n", ver);
+		break;
 	}
 
 	GSIDBG("max channels %d\n", reg);
@@ -956,6 +959,9 @@ static uint32_t gsi_get_max_event_rings(enum gsi_ver ver)
 		reg = (reg &
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_BMSK) >>
 			GSI_V2_9_EE_n_GSI_HW_PARAM_2_GSI_NUM_EV_PER_EE_SHFT;
+		break;
+	default:
+		GSIERR("GSI version is not supported %d\n", ver);
 		break;
 	}
 
