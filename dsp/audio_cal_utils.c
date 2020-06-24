@@ -449,7 +449,10 @@ static void delete_cal_block(struct cal_block_data *cal_block)
 	kfree(cal_block->cal_info);
 	cal_block->cal_info = NULL;
 	if (cal_block->map_data.dma_buf  != NULL) {
-		msm_audio_ion_free(cal_block->map_data.dma_buf);
+		if (cal_block->cma_mem)
+			msm_audio_ion_free_cma(cal_block->map_data.dma_buf);
+		else
+			msm_audio_ion_free(cal_block->map_data.dma_buf);
 		cal_block->map_data.dma_buf = NULL;
 	}
 	kfree(cal_block);
@@ -608,12 +611,22 @@ static int cal_block_ion_alloc(struct cal_block_data *cal_block)
 		goto done;
 	}
 
-	ret = msm_audio_ion_import(&cal_block->map_data.dma_buf,
-		cal_block->map_data.ion_map_handle,
-		NULL, 0,
-		&cal_block->cal_data.paddr,
-		&cal_block->map_data.map_size,
-		&cal_block->cal_data.kvaddr);
+	if (cal_block->cma_mem) {
+		ret = msm_audio_ion_import_cma(&cal_block->map_data.dma_buf,
+			cal_block->map_data.ion_map_handle,
+			NULL, 0,
+			&cal_block->cal_data.paddr,
+			&cal_block->map_data.map_size,
+			&cal_block->cal_data.kvaddr);
+	} else {
+		ret = msm_audio_ion_import(&cal_block->map_data.dma_buf,
+			cal_block->map_data.ion_map_handle,
+			NULL, 0,
+			&cal_block->cal_data.paddr,
+			&cal_block->map_data.map_size,
+			&cal_block->cal_data.kvaddr);
+	}
+
 	if (ret) {
 		pr_err("%s: audio ION import failed, rc = %d\n",
 			__func__, ret);
@@ -646,6 +659,7 @@ static struct cal_block_data *create_cal_block(struct cal_type_data *cal_type,
 	INIT_LIST_HEAD(&cal_block->list);
 
 	cal_block->map_data.ion_map_handle = basic_cal->cal_data.mem_handle;
+	cal_block->cma_mem = basic_cal->cal_data.cma_mem;
 	if (basic_cal->cal_data.mem_handle > 0) {
 		if (cal_block_ion_alloc(cal_block)) {
 			pr_err("%s: cal_block_ion_alloc failed!\n",
@@ -738,7 +752,10 @@ static int realloc_memory(struct cal_block_data *cal_block)
 {
 	int ret = 0;
 
-	msm_audio_ion_free(cal_block->map_data.dma_buf);
+	if (cal_block->cma_mem)
+		msm_audio_ion_free_cma(cal_block->map_data.dma_buf);
+	else
+		msm_audio_ion_free(cal_block->map_data.dma_buf);
 	cal_block->map_data.dma_buf = NULL;
 	cal_block->cal_data.size = 0;
 
@@ -856,6 +873,7 @@ int cal_utils_alloc_cal(size_t data_size, void *data,
 	cal_block = get_matching_cal_block(cal_type,
 		data);
 	if (cal_block != NULL) {
+		cal_block->cma_mem = alloc_data->cal_data.cma_mem;
 		ret = unmap_memory(cal_type, cal_block);
 		if (ret < 0)
 			goto err;
