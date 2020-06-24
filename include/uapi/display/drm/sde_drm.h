@@ -42,6 +42,29 @@ extern "C" {
 #define SCALER_LUT_UV_SEP_WR		0x20
 
 /**
+ * DRM format modifier tokens
+ *
+ * @DRM_FORMAT_MOD_QCOM_DX:         Refers to a DX variant of the base format.
+ *                                  Implementation may be platform and
+ *                                  base-format specific.
+ */
+#define DRM_FORMAT_MOD_QCOM_DX	fourcc_mod_code(QCOM, 0x2)
+
+/**
+ * @DRM_FORMAT_MOD_QCOM_TIGHT:      Refers to a tightly packed variant of the
+ *                                  base variant. Implementation may be
+ *                                  platform and base-format specific.
+ */
+#define DRM_FORMAT_MOD_QCOM_TIGHT	fourcc_mod_code(QCOM, 0x4)
+
+/**
+ * @DRM_FORMAT_MOD_QCOM_TILE:       Refers to a tile variant of the base format.
+ *                                  Implementation may be platform and
+ *                                  base-format specific.
+ */
+#define DRM_FORMAT_MOD_QCOM_TILE	fourcc_mod_code(QCOM, 0x8)
+
+/**
  * Blend operations for "blend_op" property
  *
  * @SDE_DRM_BLEND_OP_NOT_DEFINED:   No blend operation defined for the layer.
