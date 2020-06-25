@@ -9690,7 +9690,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int stats_id)
 
 int hdd_wlan_clear_stats(struct hdd_adapter *adapter, int stats_id)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_debug("stats_id %d", stats_id);
 
@@ -9721,7 +9721,7 @@ int hdd_wlan_clear_stats(struct hdd_adapter *adapter, int stats_id)
 		break;
 	}
 
-	return 0;
+	return qdf_status_to_os_return(status);
 }
 
 void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
