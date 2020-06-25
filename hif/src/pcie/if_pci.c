@@ -163,7 +163,7 @@ static inline int hif_get_pci_slot(struct hif_softc *scn)
 		pcierp_node = mhi_node->parent;
 		pcie_node = pcierp_node->parent;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 18, 0))
-		pci_id = pci_bus_find_domain_nr(NULL, scn->qdf_dev->dev);
+		pci_id = 0;
 #else
 		pci_id = of_get_pci_domain_nr(pcie_node);
 #endif
