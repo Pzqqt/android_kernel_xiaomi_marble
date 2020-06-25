@@ -27,6 +27,7 @@
 
 struct wlan_objmgr_psoc;
 
+#ifdef FEATURE_WLAN_TDLS
 /**
  * cfg_tdls_get_support_enable() - get tdls support enable
  * @psoc:        pointer to psoc object
@@ -243,4 +244,176 @@ QDF_STATUS
 cfg_tdls_set_scan_enable(struct wlan_objmgr_psoc *psoc,
 			 bool val);
 
+/**
+ * cfg_tdls_get_max_peer_count() - get tdls max peer count
+ * @psoc:        pointer to psoc object
+ *
+ * This function gets tdls max peer count
+ */
+uint16_t cfg_tdls_get_max_peer_count(struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS
+cfg_tdls_get_support_enable(struct wlan_objmgr_psoc *psoc,
+			    bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_support_enable(struct wlan_objmgr_psoc *psoc,
+			    bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_external_control(struct wlan_objmgr_psoc *psoc,
+			      bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_uapsd_mask(struct wlan_objmgr_psoc *psoc,
+			uint32_t *val)
+{
+	*val = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_buffer_sta_enable(struct wlan_objmgr_psoc *psoc,
+			       bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_buffer_sta_enable(struct wlan_objmgr_psoc *psoc,
+			       bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_uapsd_inactivity_time(struct wlan_objmgr_psoc *psoc,
+				   uint32_t *val)
+{
+	*val = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_rx_pkt_threshold(struct wlan_objmgr_psoc *psoc,
+			      uint32_t *val)
+{
+	*val = 0;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_off_channel_enable(struct wlan_objmgr_psoc *psoc,
+				bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_off_channel_enable(struct wlan_objmgr_psoc *psoc,
+				bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_off_channel_enable_orig(struct wlan_objmgr_psoc *psoc,
+				     bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+cfg_tdls_restore_off_channel_enable(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline void
+cfg_tdls_store_off_channel_enable(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_wmm_mode_enable(struct wlan_objmgr_psoc *psoc,
+			     bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_vdev_nss_2g(struct wlan_objmgr_psoc *psoc,
+			 uint8_t val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_vdev_nss_5g(struct wlan_objmgr_psoc *psoc,
+			 uint8_t val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_sleep_sta_enable(struct wlan_objmgr_psoc *psoc,
+			      bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_sleep_sta_enable(struct wlan_objmgr_psoc *psoc,
+			      bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_get_scan_enable(struct wlan_objmgr_psoc *psoc,
+			 bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+cfg_tdls_set_scan_enable(struct wlan_objmgr_psoc *psoc,
+			 bool val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline uint16_t
+cfg_tdls_get_max_peer_count(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+#endif /* FEATURE_WLAN_TDLS */
 #endif /* _WLAN_TDLS_CFG_API_H_ */

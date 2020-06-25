@@ -218,6 +218,8 @@ static QDF_STATUS tdls_object_init_params(
 			cfg_get(psoc, CFG_TDLS_IMPLICIT_TRIGGER);
 	tdls_soc_obj->tdls_configs.tdls_external_control =
 			cfg_get(psoc, CFG_TDLS_EXTERNAL_CONTROL);
+	tdls_soc_obj->max_num_tdls_sta =
+			cfg_get(psoc, CFG_TDLS_MAX_PEER_COUNT);
 
 	tdls_update_feature_flag(tdls_soc_obj);
 
@@ -381,8 +383,6 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 	    TDLS_IS_OFF_CHANNEL_ENABLED(tdls_feature_flags))
 		soc_obj->max_num_tdls_sta =
 			WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM;
-		else
-			soc_obj->max_num_tdls_sta = WLAN_TDLS_STA_MAX_NUM;
 
 	for (sta_idx = 0; sta_idx < soc_obj->max_num_tdls_sta; sta_idx++) {
 		soc_obj->tdls_conn_info[sta_idx].valid_entry = false;
