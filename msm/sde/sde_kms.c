@@ -4047,8 +4047,7 @@ static int sde_kms_pd_disable(struct generic_pm_domain *genpd)
 	return 0;
 }
 
-static int _sde_kms_get_splash_data(struct sde_kms *sde_kms,
-			struct sde_splash_data *data)
+static int _sde_kms_get_splash_data(struct sde_splash_data *data)
 {
 	int i = 0;
 	int ret = 0;
@@ -4131,7 +4130,7 @@ static int _sde_kms_get_splash_data(struct sde_kms *sde_kms,
 				splash_display->splash->splash_buf_size);
 	}
 
-	sde_kms->splash_data.type = SDE_SPLASH_HANDOFF;
+	data->type = SDE_SPLASH_HANDOFF;
 
 	return ret;
 }
@@ -4484,7 +4483,7 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 	if (rc)
 		goto error;
 
-	rc = _sde_kms_get_splash_data(sde_kms, &sde_kms->splash_data);
+	rc = _sde_kms_get_splash_data(&sde_kms->splash_data);
 	if (rc)
 		SDE_DEBUG("sde splash data fetch failed: %d\n", rc);
 
