@@ -20,6 +20,7 @@
 #include <scheduler_core.h>
 #include <qdf_atomic.h>
 #include <qdf_module.h>
+#include <qdf_platform.h>
 
 QDF_STATUS scheduler_disable(void)
 {
@@ -63,6 +64,11 @@ static inline void scheduler_watchdog_notify(struct scheduler_ctx *sched)
 static void scheduler_watchdog_timeout(void *arg)
 {
 	struct scheduler_ctx *sched = arg;
+
+	if (qdf_is_recovering()) {
+		sched_debug("Recovery is in progress ignore timeout");
+		return;
+	}
 
 	scheduler_watchdog_notify(sched);
 	if (sched->sch_thread)
