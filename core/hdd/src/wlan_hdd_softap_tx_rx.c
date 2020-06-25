@@ -1330,6 +1330,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	QDF_STATUS qdf_status;
 	struct hdd_station_info *sta_info;
 	struct qdf_mac_addr mac_addr;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -1354,7 +1355,13 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		sta_info->peer_state = OL_TXRX_PEER_STATE_AUTH;
-		p2p_peer_authorized(adapter->vdev, sta_mac->bytes);
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (vdev) {
+			p2p_peer_authorized(vdev, sta_mac->bytes);
+			hdd_objmgr_put_vdev(vdev);
+		} else {
+			hdd_err("vdev is NULL");
+		}
 	}
 
 	hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
