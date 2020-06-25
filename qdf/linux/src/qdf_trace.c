@@ -3274,13 +3274,17 @@ void qdf_trace_msg_cmn(unsigned int idx,
 
 	/* Check if category passed is valid */
 	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
-		pr_info("%s: Invalid category: %d\n", __func__, category);
+		vscnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE, str_format, val);
+		pr_info("%s: Invalid category: %d, log: %s\n",
+			__func__, category, str_buffer);
 		return;
 	}
 
 	/* Check if verbose mask is valid */
 	if (verbose < 0 || verbose >= QDF_TRACE_LEVEL_MAX) {
-		pr_info("%s: Invalid verbose level %d\n", __func__, verbose);
+		vscnprintf(str_buffer, QDF_TRACE_BUFFER_SIZE, str_format, val);
+		pr_info("%s: Invalid verbose level %d, log: %s\n",
+			__func__, verbose, str_buffer);
 		return;
 	}
 
