@@ -407,8 +407,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 			 * In future implementation, roaming module will also
 			 * handle this event and perform a scan.
 			 */
-			WMA_LOGW("%s: WMI_PEER_STA_KICKOUT_REASON_UNSPECIFIED event for STA",
-				__func__);
+			wma_warn("WMI_PEER_STA_KICKOUT_REASON_UNSPECIFIED event for STA");
 			wma_beacon_miss_handler(wma, vdev_id,
 						kickout_event->rssi);
 			goto exit_handler;
@@ -1343,8 +1342,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	if ((phymode == WLAN_PHYMODE_11A && num_peer_11a_rates == 0) ||
 	    (phymode == WLAN_PHYMODE_11B && num_peer_11b_rates == 0)) {
-		WMA_LOGW("%s: Invalid phy rates. phymode 0x%x, 11b_rates %d, 11a_rates %d",
-			__func__, phymode, num_peer_11b_rates,
+		wma_warn("Invalid phy rates. phymode 0x%x, 11b_rates %d, 11a_rates %d",
+			phymode, num_peer_11b_rates,
 			num_peer_11a_rates);
 		qdf_mem_free(cmd);
 		return QDF_STATUS_E_INVAL;
@@ -1379,7 +1378,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		 */
 
 		/* TODO: Do we really need this? */
-		WMA_LOGW("Peer is marked as HT capable but supported mcs rate is 0");
+		wma_warn("Peer is marked as HT capable but supported mcs rate is 0");
 		peer_ht_rates.num_rates = sizeof(temp_ni_rates);
 		qdf_mem_copy((uint8_t *) peer_ht_rates.rates, temp_ni_rates,
 			     peer_ht_rates.num_rates);

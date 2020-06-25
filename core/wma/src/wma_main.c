@@ -2078,9 +2078,9 @@ static int wma_flush_complete_evt_handler(void *handle,
 	/* Asynchronous flush event for fatal event,
 	 * but, report in progress already
 	 */
-	WMA_LOGW("%s: Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
-			__func__, WLAN_LOG_TYPE_FATAL,
-			WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
+	wma_warn("Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
+		WLAN_LOG_TYPE_FATAL,
+		WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
 	return QDF_STATUS_E_FAILURE;
 }
 

@@ -3258,7 +3258,7 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_DTIM_PERIOD");
 
 	if (!maxTxPower)
-		WMA_LOGW("Setting Tx power limit to 0");
+		wma_warn("Setting Tx power limit to 0");
 
 	wma_nofl_debug("TXP[W][set_bss_params]: %d", maxTxPower);
 
@@ -4786,7 +4786,7 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 				    CDP_TX_PENDING, &val))
 		return;
 	while (val.cdp_pdev_param_tx_pending && max_wait_iterations) {
-		WMA_LOGW(FL("Waiting for outstanding packet to drain."));
+		wma_warn("Waiting for outstanding packet to drain");
 		qdf_wait_for_event_completion(&wma->tx_queue_empty_event,
 				      WMA_TX_Q_RECHECK_TIMER_WAIT);
 		if (cdp_txrx_get_pdev_param(
@@ -5080,7 +5080,7 @@ QDF_STATUS wma_set_wlm_latency_level(void *wma_ptr,
 	ret = wmi_unified_wlm_latency_level_cmd(wma->wmi_handle,
 						latency_params);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGW("Failed to set latency level");
+		wma_warn("Failed to set latency level");
 
 	return ret;
 }

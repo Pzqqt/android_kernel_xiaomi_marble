@@ -5202,7 +5202,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 			event->num_entries_in_page);
 
 	if (!src_hotlist || !src_rssi || !event->num_entries_in_page) {
-		WMA_LOGW("%s: Cached results empty, send 0 results", __func__);
+		wma_warn("Cached results empty, send 0 results");
 		goto noresults;
 	}
 

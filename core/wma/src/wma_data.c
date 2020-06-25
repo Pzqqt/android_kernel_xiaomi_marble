@@ -1963,7 +1963,7 @@ static uint8_t wma_thermal_mgmt_get_level(void *handle, uint32_t temp)
 		level = i;
 	}
 
-	WMA_LOGW("Change thermal level from %d -> %d\n",
+	wma_warn("Change thermal level from %d -> %d",
 		 wma->thermal_mgmt_info.thermalCurrLevel, level);
 
 	return level;
