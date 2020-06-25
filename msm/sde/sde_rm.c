@@ -34,6 +34,9 @@
 				(t).num_intf == (r).num_intf && \
 				(t).comp_type == (r).comp_type)
 
+/* ~one vsync poll time for rsvp_nxt to cleared by modeset from commit thread */
+#define RM_NXT_CLEAR_POLL_TIMEOUT_US 16600
+
 /**
  * toplogy information to be used when ctl path version does not
  * support driving more than one interface per ctl_path
@@ -2343,6 +2346,30 @@ static int _sde_rm_commit_rsvp(
 	return ret;
 }
 
+/* call this only after rm_mutex held */
+struct sde_rm_rsvp *_sde_rm_poll_get_rsvp_nxt_locked(struct sde_rm *rm,
+		struct drm_encoder *enc)
+{
+	int i;
+	u32 loop_count = 20;
+	struct sde_rm_rsvp *rsvp_nxt = NULL;
+	u32 sleep = RM_NXT_CLEAR_POLL_TIMEOUT_US / loop_count;
+
+	for (i = 0; i < loop_count; i++) {
+		rsvp_nxt = _sde_rm_get_rsvp_nxt(rm, enc);
+		if (!rsvp_nxt)
+			return rsvp_nxt;
+
+		mutex_unlock(&rm->rm_lock);
+		SDE_DEBUG("iteration i:%d sleep range:%uus to %uus\n",
+				i, sleep, sleep * 2);
+		usleep_range(sleep, sleep * 2);
+		mutex_lock(&rm->rm_lock);
+	}
+
+	return rsvp_nxt;
+}
+
 int sde_rm_reserve(
 		struct sde_rm *rm,
 		struct drm_encoder *enc,
@@ -2399,16 +2426,17 @@ int sde_rm_reserve(
 	 * commit rsvps. This rsvp_nxt can be cleared by a back to back
 	 * check_only commit with modeset when its predecessor atomic
 	 * commit is delayed / not committed the reservation yet.
-	 * Bail out in such cases so that check only commit
-	 * comes again after earlier commit gets processed.
+	 * Poll for rsvp_nxt clear, allow the check_only commit if rsvp_nxt
+	 * gets cleared and bailout if it does not get cleared before timeout.
 	 */
-
 	if (test_only && rsvp_cur && rsvp_nxt) {
-		SDE_ERROR("cur %d nxt %d enc %d conn %d\n", rsvp_cur->seq,
-			 rsvp_nxt->seq, enc->base.id,
-			 conn_state->connector->base.id);
-		ret = -EINVAL;
-		goto end;
+		rsvp_nxt = _sde_rm_poll_get_rsvp_nxt_locked(rm, enc);
+		if (rsvp_nxt) {
+			SDE_ERROR("poll timeout cur %d nxt %d enc %d\n",
+				rsvp_cur->seq, rsvp_nxt->seq, enc->base.id);
+			ret = -EINVAL;
+			goto end;
+		}
 	}
 
 	if (!test_only && rsvp_nxt)
