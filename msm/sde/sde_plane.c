@@ -2862,6 +2862,7 @@ static void _sde_plane_setup_uidle(struct drm_crtc *crtc,
 {
 	struct sde_hw_pipe_uidle_cfg cfg;
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	u32 fal1_threshold_max = 15;
 
 	u32 line_time = sde_get_linetime(&crtc->mode,
 			sde_crtc->src_bpp, sde_crtc->target_bpp); /* nS */
@@ -2877,8 +2878,9 @@ static void _sde_plane_setup_uidle(struct drm_crtc *crtc,
 		cfg.enable = _sde_plane_allow_uidle(psde, src, dst);
 		cfg.fal10_threshold = fal10_threshold;
 		cfg.fal10_exit_threshold = fal10_threshold + 2;
-		cfg.fal1_threshold = 1 +
-			(fal1_target_idle_time_ns*1000/line_time*2)/1000;
+		cfg.fal1_threshold = min(1 +
+			(fal1_target_idle_time_ns*1000/line_time*2)/1000,
+			fal1_threshold_max);
 		cfg.fal_allowed_threshold = fal10_threshold +
 			(fal10_target_idle_time_ns*1000/line_time*2)/1000;
 	} else {
