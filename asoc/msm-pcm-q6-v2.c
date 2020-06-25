@@ -1330,7 +1330,12 @@ static int msm_pcm_adsp_stream_cmd_put(struct snd_kcontrol *kcontrol,
 		ret = -EINVAL;
 		goto done;
 	}
-
+	if (substream->ref_count <= 0) {
+		pr_err_ratelimited("%s substream ref_count:%d invalid\n",
+				__func__, substream->ref_count);
+		ret = -EINVAL;
+		goto done;
+	}
 	prtd = substream->runtime->private_data;
 	if (prtd == NULL) {
 		pr_err("%s prtd is null.\n", __func__);
@@ -1561,9 +1566,11 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 	}
 
 	mutex_lock(&pdata->lock);
-	prtd = substream->runtime->private_data;
-	if (prtd)
-		ucontrol->value.integer.value[0] = prtd->volume;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (prtd)
+			ucontrol->value.integer.value[0] = prtd->volume;
+	}
 	mutex_unlock(&pdata->lock);
 	return 0;
 }
@@ -1607,10 +1614,12 @@ static int msm_pcm_volume_ctl_put(struct snd_kcontrol *kcontrol,
 	}
 
 	mutex_lock(&pdata->lock);
-	prtd = substream->runtime->private_data;
-	if (prtd) {
-		rc = msm_pcm_set_volume(prtd, volume);
-		prtd->volume = volume;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (prtd) {
+			rc = msm_pcm_set_volume(prtd, volume);
+			prtd->volume = volume;
+		}
 	}
 	mutex_unlock(&pdata->lock);
 	return rc;
@@ -1678,9 +1687,11 @@ static int msm_pcm_compress_ctl_get(struct snd_kcontrol *kcontrol,
 		return 0;
 	}
 	mutex_lock(&pdata->lock);
-	prtd = substream->runtime->private_data;
-	if (prtd)
-		ucontrol->value.integer.value[0] = prtd->compress_enable;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (prtd)
+			ucontrol->value.integer.value[0] = prtd->compress_enable;
+	}
 	mutex_unlock(&pdata->lock);
 	return 0;
 }
@@ -1710,11 +1721,13 @@ static int msm_pcm_compress_ctl_put(struct snd_kcontrol *kcontrol,
 		return 0;
 	}
 	mutex_lock(&pdata->lock);
-	prtd = substream->runtime->private_data;
-	if (prtd) {
-		pr_debug("%s: setting compress flag to 0x%x\n",
-		__func__, compress);
-		prtd->compress_enable = compress;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (prtd) {
+			pr_debug("%s: setting compress flag to 0x%x\n",
+			__func__, compress);
+			prtd->compress_enable = compress;
+		}
 	}
 	mutex_unlock(&pdata->lock);
 	return rc;
@@ -1824,6 +1837,12 @@ static int msm_pcm_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 		return 0;
 
 	mutex_lock(&pdata->lock);
+	if (substream->ref_count <= 0) {
+		pr_err_ratelimited("%s: substream ref_count:%d invalid\n",
+				__func__, substream->ref_count);
+		mutex_unlock(&pdata->lock);
+		return -EINVAL;
+	}
 	prtd = substream->runtime ? substream->runtime->private_data : NULL;
 	if (prtd) {
 		prtd->set_channel_map = true;
@@ -1891,6 +1910,12 @@ static int msm_pcm_chmap_ctl_get(struct snd_kcontrol *kcontrol,
 		return 0; /* no channels set */
 
 	mutex_lock(&pdata->lock);
+	if (substream->ref_count <= 0) {
+		pr_err_ratelimited("%s: substream ref_count:%d invalid\n",
+				__func__, substream->ref_count);
+		mutex_unlock(&pdata->lock);
+		return -EINVAL;
+	}
 	prtd = substream->runtime ? substream->runtime->private_data : NULL;
 
 	if (prtd && prtd->set_channel_map == true) {
@@ -2180,6 +2205,12 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	}
 
 	mutex_lock(&pdata->lock);
+	if (substream->ref_count <= 0) {
+		pr_err_ratelimited("%s: substream ref_count:%d invalid\n",
+				__func__, substream->ref_count);
+		mutex_unlock(&pdata->lock);
+		return -EINVAL;
+	}
 	prtd = substream->runtime ? substream->runtime->private_data : NULL;
 	if (chmixer_pspd->enable && prtd) {
 		if (session_type == SESSION_TYPE_RX &&
