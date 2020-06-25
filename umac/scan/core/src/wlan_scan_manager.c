@@ -704,7 +704,8 @@ static void scm_req_update_concurrency_params(struct wlan_objmgr_vdev *vdev,
 				break;
 			}
 
-			if (ndi_present) {
+			if (ndi_present ||
+			    ((go_present || p2p_cli_present) && sta_active)) {
 				req->scan_req.burst_duration = 0;
 				break;
 			}
