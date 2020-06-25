@@ -369,3 +369,17 @@ cfg_tdls_set_scan_enable(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+uint16_t
+cfg_tdls_get_max_peer_count(struct wlan_objmgr_psoc *psoc)
+{
+	struct tdls_soc_priv_obj *soc_obj;
+
+	soc_obj = wlan_psoc_get_tdls_soc_obj(psoc);
+	if (!soc_obj) {
+		tdls_err("tdls soc null");
+		return 1;
+	}
+
+	return soc_obj->max_num_tdls_sta;
+}

@@ -271,8 +271,6 @@ static qdf_wake_lock_t wlan_wake_lock;
 #define WOW_MIN_PATTERN_SIZE 6
 #define WOW_MAX_PATTERN_SIZE 64
 
-/* max peer can be tdls peers + self peer + bss peer */
-#define HDD_MAX_VDEV_PEER_COUNT  (HDD_MAX_NUM_TDLS_STA + 2)
 #define IS_IDLE_STOP (!cds_is_driver_unloading() && \
 		      !cds_is_driver_recovering() && !cds_is_driver_loading())
 
@@ -5180,6 +5178,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	struct vdev_osif_priv *osif_priv;
 	struct wlan_vdev_create_params vdev_params = {0};
 	bool target_bigtk_support = false;
+	uint16_t max_peer_count;
 
 	hdd_nofl_debug("creating new vdev");
 
@@ -5259,7 +5258,12 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		vdev = hdd_objmgr_get_vdev(adapter);
 		if (!vdev)
 			goto hdd_vdev_destroy_procedure;
-		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
+
+		/* Max peer can be tdls peers + self peer + bss peer */
+		max_peer_count = cfg_tdls_get_max_peer_count(hdd_ctx->psoc);
+		max_peer_count += 2;
+		wlan_vdev_set_max_peer_count(vdev, max_peer_count);
+
 		ucfg_mlme_get_bigtk_support(hdd_ctx->psoc, &target_bigtk_support);
 		if (target_bigtk_support)
 			mlme_set_bigtk_support(vdev, true);

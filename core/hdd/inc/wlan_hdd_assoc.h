@@ -33,14 +33,6 @@
 
 #define HDD_TIME_STRING_LEN 24
 
-/* Preprocessor Definitions and Constants */
-#ifdef FEATURE_WLAN_TDLS
-#define HDD_MAX_NUM_TDLS_STA          8
-#define HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN  1
-#else
-#define HDD_MAX_NUM_TDLS_STA          0
-
-#endif
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
 

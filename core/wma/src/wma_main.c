@@ -102,6 +102,7 @@
 #include "nan_ucfg_api.h"
 #include "wma_coex.h"
 #include "target_if_vdev_mgr_rx_ops.h"
+#include "wlan_tdls_cfg_api.h"
 #include "wlan_policy_mgr_i.h"
 #include "target_if_psoc_timer_tx_ops.h"
 #include <ftm_time_sync_ucfg_api.h>
@@ -326,7 +327,8 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->max_frag_entries = CFG_TGT_MAX_FRAG_TABLE_ENTRIES;
 	tgt_cfg->num_tdls_vdevs = CFG_TGT_NUM_TDLS_VDEVS;
 	tgt_cfg->num_tdls_conn_table_entries =
-		CFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES;
+			QDF_MIN(CFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES,
+				cfg_tdls_get_max_peer_count(wma_handle->psoc));
 	tgt_cfg->beacon_tx_offload_max_vdev =
 		CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV;
 	tgt_cfg->num_multicast_filter_entries =

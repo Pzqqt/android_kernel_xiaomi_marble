@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -271,6 +271,30 @@
 	5, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Attempts for sending TDLS discovery requests")
+
+/*
+ * gTDLSMaxPeerCount - Max TDLS connected peer count
+ * @Min: 1
+ * @Max: 8
+ * @Default: 8
+ *
+ * This ini is used to configure the max connected TDLS peer count.
+ *
+ * Related: gEnableTDLSSupport.
+ *
+ * Supported Feature: TDLS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TDLS_MAX_PEER_COUNT CFG_INI_UINT( \
+	"gTDLSMaxPeerCount", \
+	1, \
+	8, \
+	8, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Max TDLS peer count")
 
 /*
  * <ini>
@@ -690,6 +714,7 @@
 	CFG(CFG_TDLS_TX_STATS_PERIOD) \
 	CFG(CFG_TDLS_TX_PACKET_THRESHOLD) \
 	CFG(CFG_TDLS_MAX_DISCOVERY_ATTEMPT) \
+	CFG(CFG_TDLS_MAX_PEER_COUNT) \
 	CFG(CFG_TDLS_IDLE_TIMEOUT) \
 	CFG(CFG_TDLS_IDLE_PACKET_THRESHOLD) \
 	CFG(CFG_TDLS_RSSI_TRIGGER_THRESHOLD) \

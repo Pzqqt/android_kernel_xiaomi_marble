@@ -888,11 +888,7 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 					WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT : 0);
 		set = set | (tdls_off_channel ?
 					WIIF_TDLS_OFFCHANNEL_SUPPORT : 0);
-		if (tdls_sleep_sta_enable || tdls_buffer_sta ||
-		    tdls_off_channel)
-			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN;
-		else
-			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA;
+		max_num_tdls_sta = cfg_tdls_get_max_peer_count(hdd_ctx->psoc);
 
 		hdd_debug("TDLS Feature supported value %x", set);
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION,
