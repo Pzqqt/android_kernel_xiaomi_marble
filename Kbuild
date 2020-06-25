@@ -2173,9 +2173,9 @@ PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie.o
 endif
 ifeq ($(CONFIG_SNOC_FW_SIM),y)
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc_fw_sim.o
-else ifeq ($(CONFIG_ICNSS),y)
+else ifeq (y,$(findstring y, $(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc.o
-else ifeq ($(CONFIG_ICNSS2),y)
+else ifeq (y,$(findstring y, $(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_ipci.o
 endif
 
@@ -2567,7 +2567,7 @@ ifeq ($(CONFIG_BUS_AUTO_SUSPEND), y)
 cppflags-y += -DFEATURE_RUNTIME_PM
 endif
 
-ifeq ($(CONFIG_ICNSS), y)
+ifeq (y,$(findstring y, $(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 ifeq ($(CONFIG_SNOC_FW_SIM), y)
 cppflags-y += -DCONFIG_PLD_SNOC_FW_SIM
 else
@@ -2688,7 +2688,9 @@ cppflags-$(CONFIG_QCACLD_WLAN_LFR3) += -DWLAN_FEATURE_ROAM_OFFLOAD
 
 cppflags-$(CONFIG_WLAN_FEATURE_MBSSID) += -DWLAN_FEATURE_MBSSID
 
-cppflags-$(CONFIG_CNSS_GENL) += -DCNSS_GENL
+ifeq (y,$(findstring y, $(CONFIG_CNSS_GENL) $(CONFIG_CNSS_GENL_MODULE)))
+cppflags-y += -DCNSS_GENL
+endif
 
 cppflags-$(CONFIG_QCACLD_WLAN_LFR2) += -DWLAN_FEATURE_HOST_ROAM
 
