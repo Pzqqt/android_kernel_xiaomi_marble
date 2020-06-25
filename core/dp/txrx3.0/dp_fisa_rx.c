@@ -1035,6 +1035,7 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 	qdf_nbuf_t next_nbuf;
 	struct dp_fisa_rx_sw_ft *fisa_flow;
 	int fisa_ret;
+	uint8_t rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(nbuf_list);
 
 	head_nbuf = nbuf_list;
 
@@ -1045,6 +1046,17 @@ QDF_STATUS dp_fisa_rx(struct dp_soc *soc, struct dp_vdev *vdev,
 		/* bypass FISA check */
 		if (dp_is_nbuf_bypass_fisa(head_nbuf))
 			goto deliver_nbuf;
+
+		if (qdf_atomic_read(&soc->skip_fisa_param.skip_fisa)) {
+			if (!soc->skip_fisa_param.fisa_force_flush[rx_ctx_id]) {
+				dp_rx_fisa_flush_by_ctx_id(soc, rx_ctx_id);
+				soc->skip_fisa_param.
+						fisa_force_flush[rx_ctx_id] = 1;
+			}
+			goto deliver_nbuf;
+		} else if (soc->skip_fisa_param.fisa_force_flush[rx_ctx_id]) {
+			soc->skip_fisa_param.fisa_force_flush[rx_ctx_id] = 0;
+		}
 
 		qdf_nbuf_push_head(head_nbuf, RX_PKT_TLVS_LEN +
 				   QDF_NBUF_CB_RX_PACKET_L3_HDR_PAD(head_nbuf));

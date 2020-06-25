@@ -110,6 +110,7 @@ QDF_STATUS dp_rx_fst_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	fst->soc_hdl = soc;
 	soc->rx_fst = fst;
 	soc->fisa_enable = true;
+	qdf_atomic_init(&soc->skip_fisa_param.skip_fisa);
 
 	QDF_TRACE(QDF_MODULE_ID_ANY, QDF_TRACE_LEVEL_ERROR,
 		  "Rx FST attach successful, #entries:%d\n",
