@@ -220,6 +220,7 @@ typedef struct sRrmPEContext {
 	/* Dialog token for the request initiated from station. */
 	uint8_t DialogToken;
 	uint16_t prev_rrm_report_seq_num;
+	uint8_t num_active_request;
 	tpRRMReq pCurrentReq[MAX_MEASUREMENT_REQUEST];
 	uint32_t beacon_rpt_chan_list[MAX_NUM_CHANNELS];
 	uint8_t beacon_rpt_chan_num;
