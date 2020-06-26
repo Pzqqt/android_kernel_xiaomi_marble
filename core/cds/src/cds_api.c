@@ -1916,14 +1916,6 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	cds_force_assert_target(qdf);
 	cds_set_assert_target_in_progress(false);
 
-	/*
-	 * if *wlan* recovery is disabled, once all the required registers are
-	 * read via the platform driver check and crash the system.
-	 */
-	if (qdf->bus_type == QDF_BUS_TYPE_PCI && !ssr_ini_enabled)
-		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
-				func, line);
-
 	status = qdf_runtime_pm_allow_suspend(&rtl);
 	if (QDF_IS_STATUS_ERROR(status))
 		cds_err("Failed to release runtime pm lock");

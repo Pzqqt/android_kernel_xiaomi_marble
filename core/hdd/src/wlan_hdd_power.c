@@ -1309,6 +1309,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	qdf_device_t qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	bool ssr_ini_enabled = cds_is_self_recovery_enabled();
 
 	hdd_info("WLAN driver shutting down!");
 
@@ -1318,6 +1320,18 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_err("HDD context is Null");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (!qdf) {
+		hdd_err("Qdf context is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/*
+	 * if *wlan* recovery is disabled, once all the required registers are
+	 * read via the platform driver check and crash the system.
+	 */
+	if (qdf->bus_type == QDF_BUS_TYPE_PCI && !ssr_ini_enabled)
+		QDF_DEBUG_PANIC("WLAN recovery is not enabled");
 
 	hdd_set_connection_in_progress(false);
 	policy_mgr_clear_concurrent_session_count(hdd_ctx->psoc);
