@@ -17,6 +17,12 @@ enum {
 	WCD9385 = 5,
 };
 
+/* from WCD to SWR DMIC events */
+enum {
+	WCD938X_EVT_SSR_DOWN,
+	WCD938X_EVT_SSR_UP,
+};
+
 struct swr_slave_ch_map {
 	u8 ch_type;
 	u8 index;
@@ -62,6 +68,9 @@ int wcd938x_info_create_codec_entry(struct snd_info_entry *codec_root,
 int wcd938x_get_codec_variant(struct snd_soc_component *component);
 int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *wcd938x,
 					int event, int micb_num);
+int wcd938x_swr_dmic_register_notifier(struct snd_soc_component *wcd938x,
+                                        struct notifier_block *nblock,
+                                        bool enable);
 
 static inline int wcd938x_slave_get_master_ch_val(int ch)
 {
