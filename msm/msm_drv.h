@@ -369,6 +369,9 @@ struct msm_roi_caps {
  * @dsc_4hsmerge_en:         Using DSC 4HS merge topology
  * @dsc_4hsmerge_padding     4HS merge DSC pair padding value in bytes
  * @dsc_4hsmerge_alignment   4HS merge DSC alignment value in bytes
+ * @half_panel_pu            True For Dual dsc encoders if partial update is
+ *                           enabled and only one encoder needs to be used,
+ *                           False in all other cases
  */
 struct msm_display_dsc_info {
 	struct drm_dsc_config config;
@@ -390,6 +393,7 @@ struct msm_display_dsc_info {
 	bool dsc_4hsmerge_en;
 	u32 dsc_4hsmerge_padding;
 	u32 dsc_4hsmerge_alignment;
+	bool half_panel_pu;
 };
 
 
