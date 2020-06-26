@@ -163,6 +163,14 @@ ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev)
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
 /**
+ * ucfg_scm_scan_free_scan_request_mem() - Free scan request memory
+ * @req: scan_start_request object
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_scm_scan_free_scan_request_mem(struct scan_start_request *req);
+
+/**
  * ucfg_scan_start() - Public API to start a scan
  * @req: start scan req params
  *
