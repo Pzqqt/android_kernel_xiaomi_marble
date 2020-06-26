@@ -98,15 +98,6 @@
 #define wma_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_WMA, params)
 
-#define WMA_DEBUG_ALWAYS
-
-#ifdef WMA_DEBUG_ALWAYS
-#define WMA_LOGA(params ...) \
-	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_WMA, params)
-#else
-#define WMA_LOGA(params ...)
-#endif
-
 #define WMA_WILDCARD_PDEV_ID 0x0
 
 #define WMA_HW_DEF_SCAN_MAX_DURATION      30000 /* 30 secs */

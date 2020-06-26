@@ -1632,7 +1632,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 
 	param_tlvs = (WMI_PEER_LINK_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_tlvs) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 	/*
@@ -1648,7 +1648,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 
 	if (!fixed_param || !peer_stats ||
 	    (peer_stats->num_rates && !rate_stats)) {
-		WMA_LOGA("%s: Invalid param_tlvs for Peer Stats", __func__);
+		wma_err("Invalid param_tlvs for Peer Stats");
 		return -EINVAL;
 	}
 
@@ -1863,20 +1863,19 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 	param_tlvs = (WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID_param_tlvs *)
 								cmd_param_info;
 	if (!param_tlvs) {
-		WMA_LOGA("%s: Invalid tx power level stats event", __func__);
+		wma_err("Invalid tx power level stats event");
 		return -EINVAL;
 	}
 
 	fixed_param = param_tlvs->fixed_param;
 	if (!fixed_param) {
-		WMA_LOGA("%s:Invalid param_tlvs for Radio tx_power level Stats",
-			 __func__);
+		wma_err("Invalid param_tlvs for Radio tx_power level Stats");
 		return -EINVAL;
 	}
 
 	link_stats_results = wma_handle->link_stats_results;
 	if (!link_stats_results) {
-		WMA_LOGA("%s: link_stats_results is NULL", __func__);
+		wma_err("link_stats_results is NULL");
 		return -EINVAL;
 	}
 
@@ -2027,7 +2026,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 
 	param_tlvs = (WMI_RADIO_LINK_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_tlvs) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 
@@ -2065,7 +2064,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 
 	if (!fixed_param || !radio_stats ||
 	    (radio_stats->num_channels && !channel_stats)) {
-		WMA_LOGA("%s: Invalid param_tlvs for Radio Stats", __func__);
+		wma_err("Invalid param_tlvs for Radio Stats");
 		return -EINVAL;
 	}
 	if (radio_stats->num_channels >
@@ -2523,7 +2522,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	param_tlvs = (WMI_IFACE_LINK_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_tlvs) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 
@@ -2541,7 +2540,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 
 	if (!fixed_param || !link_stats || (link_stats->num_ac && !ac_stats) ||
 	    (fixed_param->num_offload_stats && !offload_stats)) {
-		WMA_LOGA("%s: Invalid param_tlvs for Iface Stats", __func__);
+		wma_err("Invalid param_tlvs for Iface Stats");
 		return -EINVAL;
 	}
 	if (link_stats->num_ac > WIFI_AC_MAX || link_stats->num_ac >
@@ -2791,7 +2790,7 @@ void wma_config_stats_ext_threshold(tp_wma_handle wma,
 		 rx->rx_probe_reqs, rx->rx_oth_mgmts);
 	len += sizeof(wmi_rx_stats_thresh);
 
-	WMA_LOGA("WMA --> WMI_PDEV_SET_STATS_THRESHOLD_CMDID(0x%x), length=%d",
+	wma_alert("WMA --> WMI_PDEV_SET_STATS_THRESHOLD_CMDID(0x%x), length=%d",
 		 WMI_PDEV_SET_STATS_THRESHOLD_CMDID, len);
 	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				      WMI_PDEV_SET_STATS_THRESHOLD_CMDID);
@@ -2842,7 +2841,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	param_buf =
 	      (WMI_UPDATE_VDEV_RATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 
@@ -3130,7 +3129,7 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 	param_buf =
 		(WMI_PEER_STATS_INFO_EVENTID_param_tlvs *)cmd_param_info;
 	if (!param_buf) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 

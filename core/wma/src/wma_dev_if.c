@@ -2089,8 +2089,8 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct del_bss_resp *resp)
 
 	if (iface->del_staself_req && iface->is_del_sta_defered) {
 		iface->is_del_sta_defered = false;
-		WMA_LOGA("scheduling defered deletion (vdev id %x)",
-			 vdev_id);
+		wma_nofl_alert("scheduling defered deletion (vdev id %x)",
+			      vdev_id);
 		wma_vdev_detach(iface->del_staself_req);
 	}
 }
@@ -3026,14 +3026,14 @@ void wma_hold_req_timer(void *data)
 		wma_debug("Failed to lookup request message - %pK", tgt_req);
 		return;
 	}
-	WMA_LOGA(FL("request %d is timed out for vdev_id - %d"),
+	wma_alert("request %d is timed out for vdev_id - %d",
 		 tgt_req->msg_type, tgt_req->vdev_id);
 
 	if (tgt_req->msg_type == WMA_ADD_STA_REQ) {
 		tpAddStaParams params = (tpAddStaParams) tgt_req->user_data;
 
 		params->status = QDF_STATUS_E_TIMEOUT;
-		WMA_LOGA(FL("WMA_ADD_STA_REQ timed out"));
+		wma_alert("WMA_ADD_STA_REQ timed out");
 		wma_debug("Sending add sta rsp to umac (mac:%pM, status:%d)",
 			 params->staMac, params->status);
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
@@ -3044,7 +3044,7 @@ void wma_hold_req_timer(void *data)
 					   (void *)params, 0);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 
-		WMA_LOGA(FL("WMA_ADD_BSS_REQ timed out"));
+		wma_alert("WMA_ADD_BSS_REQ timed out");
 		wma_debug("Sending add bss rsp to umac (vdev %d, status:%d)",
 			 tgt_req->vdev_id, QDF_STATUS_E_TIMEOUT);
 
@@ -3077,7 +3077,7 @@ void wma_hold_req_timer(void *data)
 		del_sta = (struct del_sta_self_rsp_params *)tgt_req->user_data;
 
 		del_sta->self_sta_param->status = QDF_STATUS_E_TIMEOUT;
-		WMA_LOGA(FL("wma delete sta p2p request timed out"));
+		wma_alert("wma delete sta p2p request timed out");
 
 		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(

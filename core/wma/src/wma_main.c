@@ -152,8 +152,7 @@ static void wma_service_ready_ext_evt_timeout(void *data)
 {
 	tp_wma_handle wma_handle;
 
-	WMA_LOGA("%s: Timeout waiting for WMI_SERVICE_READY_EXT_EVENT",
-			__func__);
+	wma_alert("Timeout waiting for WMI_SERVICE_READY_EXT_EVENT");
 
 	wma_handle = (tp_wma_handle) data;
 
@@ -2943,7 +2942,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	target_if_register_legacy_service_ready_cb(
 					wma_legacy_service_ready_event_handler);
 
-	WMA_LOGA("WMA --> wmi_unified_attach - success");
+	wma_nofl_alert("WMA --> wmi_unified_attach - success");
 
 	/* store the wmi handle in tgt_if_handle */
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
@@ -8011,7 +8010,7 @@ int wma_motion_det_host_event_handler(void *handle, uint8_t *event,
 	}
 
 	motion_det_event_hdr = param_buf->fixed_param;
-	WMA_LOGA("motion detect host event received, vdev_id=%d, status=%d",
+	wma_alert("motion detect host event received, vdev_id=%d, status=%d",
 		 motion_det_event_hdr->vdev_id, motion_det_event_hdr->status);
 
 	md_event = qdf_mem_malloc(sizeof(*md_event));
@@ -8056,9 +8055,9 @@ int wma_motion_det_base_line_host_event_handler(void *handle,
 	}
 
 	motion_det_base_line_event_hdr = param_buf->fixed_param;
-	WMA_LOGA("motion detection base line event received, vdev_id=%d",
+	wma_alert("motion detection base line event received, vdev_id=%d",
 		 motion_det_base_line_event_hdr->vdev_id);
-	WMA_LOGA("baseline_value=%d bl_max_corr_resv=%d bl_min_corr_resv=%d",
+	wma_alert("baseline_value=%d bl_max_corr_resv=%d bl_min_corr_resv=%d",
 		 motion_det_base_line_event_hdr->bl_baseline_value,
 		 motion_det_base_line_event_hdr->bl_max_corr_reserved,
 		 motion_det_base_line_event_hdr->bl_min_corr_reserved);
@@ -8130,7 +8129,7 @@ static QDF_STATUS wma_set_motion_det_config(
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGA("Set motion_det_config to vdevId %d\n"
+	wma_nofl_alert("Set motion_det_config to vdevId %d\n"
 		 "time_t1 %d\n"
 		 "time_t2 %d\n"
 		 "n1 %d\n"
@@ -8198,7 +8197,7 @@ static QDF_STATUS wma_set_motion_det_enable(tp_wma_handle wma_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGA("Set motion_det_enable to vdevId %d %d", md_en->vdev_id,
+	wma_alert("Set motion_det_enable to vdevId %d %d", md_en->vdev_id,
 		 md_en->enable);
 	return QDF_STATUS_SUCCESS;
 }
@@ -8244,7 +8243,7 @@ static QDF_STATUS wma_set_motion_det_base_line_config(
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGA("Set motion_det_baseline_config to vdevId %d\n"
+	wma_nofl_alert("Set motion_det_baseline_config to vdevId %d\n"
 		 "bl_time_t %d\n"
 		 "bl_packet_gap %d\n"
 		 "bl_n %d\n"
@@ -8295,7 +8294,7 @@ static QDF_STATUS wma_set_motion_det_base_line_enable(
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMA_LOGA("Set motion_det_base_line_enable to vdevId %d enable %d",
+	wma_alert("Set motion_det_base_line_enable to vdevId %d enable %d",
 		 md_base_line_en->vdev_id, md_base_line_en->enable);
 	return QDF_STATUS_SUCCESS;
 }

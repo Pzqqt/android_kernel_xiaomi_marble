@@ -1591,39 +1591,39 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 
 static void wma_wow_stats_display(struct wake_lock_stats *stats)
 {
-	WMA_LOGA("WLAN wake reason counters:");
-	WMA_LOGA("uc:%d bc:%d v4_mc:%d v6_mc:%d ra:%d ns:%d na:%d "
-		 "icmp:%d icmpv6:%d",
-		 stats->ucast_wake_up_count,
-		 stats->bcast_wake_up_count,
-		 stats->ipv4_mcast_wake_up_count,
-		 stats->ipv6_mcast_wake_up_count,
-		 stats->ipv6_mcast_ra_stats,
-		 stats->ipv6_mcast_ns_stats,
-		 stats->ipv6_mcast_na_stats,
-		 stats->icmpv4_count,
-		 stats->icmpv6_count);
+	wma_nofl_alert("WLAN wake reason counters:");
+	wma_nofl_alert("uc:%d bc:%d v4_mc:%d v6_mc:%d ra:%d ns:%d na:%d "
+		      "icmp:%d icmpv6:%d",
+		      stats->ucast_wake_up_count,
+		      stats->bcast_wake_up_count,
+		      stats->ipv4_mcast_wake_up_count,
+		      stats->ipv6_mcast_wake_up_count,
+		      stats->ipv6_mcast_ra_stats,
+		      stats->ipv6_mcast_ns_stats,
+		      stats->ipv6_mcast_na_stats,
+		      stats->icmpv4_count,
+		      stats->icmpv6_count);
 
-	WMA_LOGA("assoc:%d disassoc:%d assoc_resp:%d reassoc:%d "
-		 "reassoc_resp:%d auth:%d deauth:%d action:%d",
-		 stats->mgmt_assoc,
-		 stats->mgmt_disassoc,
-		 stats->mgmt_assoc_resp,
-		 stats->mgmt_reassoc,
-		 stats->mgmt_reassoc_resp,
-		 stats->mgmt_auth,
-		 stats->mgmt_deauth,
-		 stats->mgmt_action);
+	wma_nofl_alert("assoc:%d disassoc:%d assoc_resp:%d reassoc:%d "
+		      "reassoc_resp:%d auth:%d deauth:%d action:%d",
+		      stats->mgmt_assoc,
+		      stats->mgmt_disassoc,
+		      stats->mgmt_assoc_resp,
+		      stats->mgmt_reassoc,
+		      stats->mgmt_reassoc_resp,
+		      stats->mgmt_auth,
+		      stats->mgmt_deauth,
+		      stats->mgmt_action);
 
-	WMA_LOGA("pno_match:%d pno_complete:%d gscan:%d "
-		 "low_rssi:%d rssi_breach:%d oem:%d scan_11d:%d",
-		 stats->pno_match_wake_up_count,
-		 stats->pno_complete_wake_up_count,
-		 stats->gscan_wake_up_count,
-		 stats->low_rssi_wake_up_count,
-		 stats->rssi_breach_wake_up_count,
-		 stats->oem_response_wake_up_count,
-		 stats->scan_11d);
+	wma_nofl_alert("pno_match:%d pno_complete:%d gscan:%d "
+		      "low_rssi:%d rssi_breach:%d oem:%d scan_11d:%d",
+		      stats->pno_match_wake_up_count,
+		      stats->pno_complete_wake_up_count,
+		      stats->gscan_wake_up_count,
+		      stats->low_rssi_wake_up_count,
+		      stats->rssi_breach_wake_up_count,
+		      stats->oem_response_wake_up_count,
+		      stats->scan_11d);
 }
 
 static void wma_print_wow_stats(t_wma_handle *wma,
@@ -2351,7 +2351,7 @@ static void wma_acquire_wow_wakelock(t_wma_handle *wma, int wake_reason)
 		return;
 	}
 
-	WMA_LOGA("Holding %d msec wake_lock", ms);
+	wma_alert("Holding %d msec wake_lock", ms);
 	cds_host_diag_log_work(wl, ms, WIFI_POWER_EVENT_WAKELOCK_WOW);
 	qdf_wake_lock_timeout_acquire(wl, ms);
 }
@@ -2377,7 +2377,7 @@ wma_wake_reason_ap_assoc_lost(t_wma_handle *wma, void *event, uint32_t len)
 	}
 
 	roam_event = event_param->fixed_param;
-	WMA_LOGA(FL("Beacon miss indication on vdev %d"), roam_event->vdev_id);
+	wma_alert("Beacon miss indication on vdev %d", roam_event->vdev_id);
 
 	wma_beacon_miss_handler(wma, roam_event->vdev_id, roam_event->rssi);
 
@@ -2705,16 +2705,16 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 	/* "Unspecified" means APPS triggered wake, else firmware triggered */
 	if (wake_info->wake_reason != WOW_REASON_UNSPECIFIED) {
 		vdev = &wma->interfaces[wake_info->vdev_id];
-		WMA_LOGA("WLAN triggered wakeup: %s (%d), vdev: %d (%s)",
-			 wma_wow_wake_reason_str(wake_info->wake_reason),
-			 wake_info->wake_reason,
-			 wake_info->vdev_id,
-			 wma_vdev_type_str(vdev->type));
+		wma_nofl_alert("WLAN triggered wakeup: %s (%d), vdev: %d (%s)",
+			      wma_wow_wake_reason_str(wake_info->wake_reason),
+			      wake_info->wake_reason,
+			      wake_info->vdev_id,
+			      wma_vdev_type_str(vdev->type));
 		wma_debug_assert_page_fault_wakeup(wake_info->wake_reason);
 	} else if (!wmi_get_runtime_pm_inprogress(wma->wmi_handle)) {
-		WMA_LOGA("Non-WLAN triggered wakeup: %s (%d)",
-			 wma_wow_wake_reason_str(wake_info->wake_reason),
-			 wake_info->wake_reason);
+		wma_nofl_alert("Non-WLAN triggered wakeup: %s (%d)",
+			      wma_wow_wake_reason_str(wake_info->wake_reason),
+			      wake_info->wake_reason);
 	}
 
 	qdf_wow_wakeup_host_event(wake_info->wake_reason);
@@ -2825,7 +2825,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
-	WMA_LOGA("Received PDEV resume event");
+	wma_nofl_alert("Received PDEV resume event");
 
 	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 
@@ -4660,7 +4660,7 @@ int wma_unified_beacon_debug_stats_event_handler(void *handle,
 	param_tlvs =
 	   (WMI_VDEV_BCN_RECEPTION_STATS_EVENTID_param_tlvs *)cmd_param_info;
 	if (!param_tlvs) {
-		WMA_LOGA("%s: Invalid stats event", __func__);
+		wma_err("Invalid stats event");
 		return -EINVAL;
 	}
 
@@ -4735,7 +4735,7 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	}
 	event = param_buf->fixed_param;
 	if (!event) {
-		WMA_LOGA("%s: Invalid fixed param", __func__);
+		wma_err("Invalid fixed param");
 		return -EINVAL;
 	}
 
