@@ -1991,6 +1991,7 @@ typedef enum {
     WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID,
     WMI_TWT_BTWT_INVITE_STA_COMPLETE_EVENTID,
     WMI_TWT_BTWT_REMOVE_STA_COMPLETE_EVENTID,
+    WMI_TWT_SESSION_STATS_EVENTID,
 
     /** Events in Prototyping phase */
     WMI_NDI_CAP_RSP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_PROTOTYPE),
@@ -31215,6 +31216,56 @@ typedef struct {
  *       of the frame.
  */
 } wmi_simulation_test_cmd_fixed_param;
+
+#define WMI_TWT_SESSION_FLAG_FLOW_ID_GET(_var) WMI_GET_BITS(_var, 0, 16)
+#define WMI_TWT_SESSION_FLAG_FLOW_ID_SET(_var, _val) WMI_SET_BITS(_var, 0, 16, _val)
+
+#define WMI_TWT_SESSION_FLAG_BCAST_TWT_GET(_var) WMI_GET_BITS(_var, 16, 1)
+#define WMI_TWT_SESSION_FLAG_BCAST_TWT_SET(_var, _val) WMI_SET_BITS(_var, 16, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_TRIGGER_TWT_GET(_var) WMI_GET_BITS(_var, 17, 1)
+#define WMI_TWT_SESSION_FLAG_TRIGGER_TWT_SET(_var, _val) WMI_SET_BITS(_var, 17, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_ANNOUN_TWT_GET(_var) WMI_GET_BITS(_var, 18, 1)
+#define WMI_TWT_SESSION_FLAG_ANNOUN_TWT_SET(_var, _val) WMI_SET_BITS(_var, 18, 1, _val)
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_session_stats_info */
+    A_UINT32 tlv_hdr;
+
+    A_UINT32     vdev_id;
+    wmi_mac_addr peer_mac;
+    A_UINT32 event_type; /* event type - defined in enum wmi_twt_session_stats_type */
+    /*
+     * Flags to provide information on TWT session and session types.
+     * This field is filled with the bitwise combination of the flag values
+     * defined by WMI_TWT_SESSION_FLAG_xxx
+     */
+    A_UINT32     flow_id_flags;
+    A_UINT32     dialog_id;
+    A_UINT32     wake_dura_us;
+    A_UINT32     wake_intvl_us;
+    /* this long time after TWT resumed the 1st Service Period will start */
+    A_UINT32     sp_offset_us;
+} wmi_twt_session_stats_info;
+
+enum wmi_twt_session_stats_type {
+    WMI_TWT_SESSION_SETUP     = 1,
+    WMI_TWT_SESSION_TEARDOWN  = 2,
+    WMI_TWT_SESSION_UPDATE    = 3,
+};
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMITLV_TAG_STRUC_wmi_pdev_twt_session_stats_event_fixed_param */
+    A_UINT32 tlv_header;
+
+    A_UINT32 pdev_id; /* ID of the pdev this response belongs to */
+
+    /* The TLVs follows this structure:
+     * wmi_twt_session_stats_info twt_sessions[]; <--- Array of twt_session.
+     */
+} wmi_pdev_twt_session_stats_event_fixed_param;
 
 
 
