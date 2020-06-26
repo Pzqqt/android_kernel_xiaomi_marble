@@ -1236,8 +1236,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				     nol_freq_list,
 				     num_channels);
 
-	if (dfs_is_agile_rcac_enabled(dfs) &&
-	    radar_found->detector_id == dfs_get_agile_detector_id(dfs))
+	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs))
 		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
 					       DFS_AGILE_SM_EV_ADFS_RADAR);
 	/*

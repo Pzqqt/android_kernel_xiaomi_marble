@@ -1619,7 +1619,8 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev)
 	dfs_reset_dfs_prevchan(dfs);
 }
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
+
 void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 				    enum dfs_agile_sm_evt event)
 {
@@ -1635,7 +1636,7 @@ void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	if (!dfs_is_agile_rcac_enabled(dfs))
+	if (!dfs_is_agile_cac_enabled(dfs))
 		return;
 
 	event_data = (void *)dfs;
@@ -1645,7 +1646,9 @@ void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 				 0,
 				 event_data);
 }
+#endif
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
 QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 				      struct ch_params *chan_params,
 				      qdf_freq_t *target_chan_freq)

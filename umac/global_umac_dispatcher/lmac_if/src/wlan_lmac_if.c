@@ -473,7 +473,7 @@ static void register_dfs_rx_ops_for_freq(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 #endif
 
 /*
- * register_agile_dfs_rx_ops() - Register DFS RX-Ops for Agile specific
+ * register_rcac_dfs_rx_ops() - Register DFS RX-Ops for RCAC specific
  * APIs.
  * @rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
  */
@@ -482,17 +482,33 @@ static void register_rcac_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 {
 	if (!rx_ops)
 		return;
-
 	rx_ops->dfs_set_rcac_enable = ucfg_dfs_set_rcac_enable;
 	rx_ops->dfs_get_rcac_enable = ucfg_dfs_get_rcac_enable;
 	rx_ops->dfs_set_rcac_freq = ucfg_dfs_set_rcac_freq;
 	rx_ops->dfs_get_rcac_freq = ucfg_dfs_get_rcac_freq;
-	rx_ops->dfs_agile_sm_deliver_evt = utils_dfs_agile_sm_deliver_evt;
 	rx_ops->dfs_is_agile_rcac_enabled = ucfg_dfs_is_agile_rcac_enabled;
 }
 #else
 static inline void
 register_rcac_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+}
+#endif
+
+/*
+ * register_agile_dfs_rx_ops() - Register Rx-Ops for Agile Specific APIs
+ * @rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
+ */
+#ifdef QCA_SUPPORT_AGILE_DFS
+static void register_agile_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+	rx_ops->dfs_agile_sm_deliver_evt = utils_dfs_agile_sm_deliver_evt;
+}
+#else
+static inline void
+register_agile_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 {
 }
 #endif
@@ -581,6 +597,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	register_precac_auto_chan_rx_ops_freq(dfs_rx_ops);
 	register_dfs_rx_ops_for_freq(dfs_rx_ops);
 	register_rcac_dfs_rx_ops(dfs_rx_ops);
+	register_agile_dfs_rx_ops(dfs_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

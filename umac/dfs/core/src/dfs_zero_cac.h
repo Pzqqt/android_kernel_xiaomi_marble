@@ -565,8 +565,9 @@ void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 /**
  * dfs_prepare_agile_precac_chan() - Send Agile set request for given pdev.
  * @dfs: Pointer to wlan_dfs structure.
+ * @is_chan_found: True if a channel is available for PreCAC, false otherwise.
  */
-void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs);
+void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs, bool *is_chan_found);
 
 /**
  * dfs_process_ocac_complete() - Process Off-Channel CAC complete indication.
@@ -656,7 +657,8 @@ static inline void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 {
 }
 
-static inline void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
+static inline void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs,
+						 bool *is_chan_found)
 {
 }
 
@@ -1249,7 +1251,7 @@ dfs_rcac_timer_deinit(struct dfs_soc_priv_obj *dfs_soc_obj)
 }
 #endif
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
 #define DFS_AGILE_SM_SPIN_LOCK(_soc_obj) \
 	qdf_spin_lock_bh(&((_soc_obj)->dfs_agile_sm_lock))
 #define DFS_AGILE_SM_SPIN_UNLOCK(_soc_obj) \
@@ -1286,6 +1288,44 @@ QDF_STATUS dfs_agile_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj);
 QDF_STATUS dfs_agile_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj);
 
 /**
+ * dfs_is_agile_cac_enabled() - Determine if Agile PreCAC/RCAC is enabled.
+ * @dfs: Pointer to struct wlan_dfs.
+ *
+ * Return: True if either Agile PreCAC/RCAC is enabled, false otherwise.
+ */
+bool dfs_is_agile_cac_enabled(struct wlan_dfs *dfs);
+
+#else
+
+static inline
+QDF_STATUS dfs_agile_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
+				    enum dfs_agile_sm_evt event,
+				    uint16_t event_data_len,
+				    void *event_data)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dfs_agile_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+QDF_STATUS dfs_agile_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool dfs_is_agile_cac_enabled(struct wlan_dfs *dfs)
+{
+	return false;
+}
+#endif /* QCA_SUPPORT_AGILE_DFS */
+
+#ifdef QCA_SUPPORT_ADFS_RCAC
+/**
  * dfs_is_agile_rcac_enabled() - Determine if Rolling CAC is enabled or not.
  * @dfs: Pointer to struct wlan_dfs.
  *
@@ -1310,28 +1350,20 @@ bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs);
  */
 void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 				    bool *is_rcac_chan_available);
+/**
+ * dfs_start_agile_rcac_timer() - Start Agile RCAC timer.
+ * @dfs: Pointer to struct wlan_dfs.
+ *
+ */
+void dfs_start_agile_rcac_timer(struct wlan_dfs *dfs);
+
+/**
+ * dfs_stop_agile_rcac_timer() - Stop Agile RCAC timer.
+ * @dfs: Pointer to struct wlan_dfs.
+ *
+ */
+void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs);
 #else
-static inline
-QDF_STATUS dfs_agile_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
-				    enum dfs_agile_sm_evt event,
-				    uint16_t event_data_len,
-				    void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS dfs_agile_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS dfs_agile_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static inline bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 {
 	return false;
@@ -1340,6 +1372,14 @@ static inline bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 static inline void
 dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 			       bool *is_rcac_chan_available)
+{
+}
+
+static inline void dfs_start_agile_rcac_timer(struct wlan_dfs *dfs)
+{
+}
+
+static inline void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs)
 {
 }
 #endif /* QCA_SUPPORT_ADFS_RCAC */

@@ -42,7 +42,7 @@
 #include <osdep.h>
 #include <wlan_cmn.h>
 #include "target_type.h"
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
 #include <wlan_sm_engine.h> /* for struct wlan_sm */
 #endif
 #include <wlan_dfs_public_struct.h>
@@ -938,7 +938,7 @@ struct dfs_mode_switch_defer_params {
 	bool is_radar_detected;
 };
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
 #define DFS_PSOC_NO_IDX 0xFF
 /**
  * enum dfs_agile_sm_state - DFS AGILE SM states.
@@ -1363,8 +1363,10 @@ struct dfs_soc_priv_obj {
 	bool ocac_status;
 #endif
 	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
-#if defined(QCA_SUPPORT_ADFS_RCAC)
+#ifdef QCA_SUPPORT_ADFS_RCAC
 	qdf_timer_t dfs_rcac_timer;
+#endif
+#ifdef QCA_SUPPORT_AGILE_DFS
 	struct wlan_sm *dfs_agile_sm_hdl;
 	enum dfs_agile_sm_state dfs_agile_sm_cur_state;
 	qdf_spinlock_t dfs_agile_sm_lock;

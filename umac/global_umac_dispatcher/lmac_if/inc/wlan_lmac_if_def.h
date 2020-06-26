@@ -1522,6 +1522,7 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_reinit_nol_from_psoc_copy:    Reinit DFS NOL from the PSOC NOL copy.
  * @dfs_reinit_precac_lists:          Reinit precac lists from other pdev.
  * @dfs_complete_deferred_tasks:      Process mode switch completion in DFS.
+ * @dfs_is_agile_rcac_enabled:        Checks if Agile RCAC is enabled.
  * @dfs_agile_sm_deliver_evt:         API to post events to DFS Agile  SM.
  */
 struct wlan_lmac_if_dfs_rx_ops {
@@ -1714,9 +1715,11 @@ struct wlan_lmac_if_dfs_rx_ops {
 					qdf_freq_t rcac_freq);
 	QDF_STATUS (*dfs_get_rcac_freq)(struct wlan_objmgr_pdev *pdev,
 					qdf_freq_t *rcac_freq);
+	bool (*dfs_is_agile_rcac_enabled)(struct wlan_objmgr_pdev *pdev);
+#endif
+#ifdef QCA_SUPPORT_AGILE_DFS
 	void (*dfs_agile_sm_deliver_evt)(struct wlan_objmgr_pdev *pdev,
 					 enum dfs_agile_sm_evt event);
-	bool (*dfs_is_agile_rcac_enabled)(struct wlan_objmgr_pdev *pdev);
 #endif
 };
 

@@ -978,7 +978,7 @@ void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
  */
 void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
 /**
  * utils_dfs_agile_sm_deliver_evt() - API to post events to DFS Agile SM.
  * @pdev: Pointer to DFS pdev object.
@@ -988,7 +988,15 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
  */
 void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 				    enum dfs_agile_sm_evt event);
+#else
+static inline
+void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				    enum dfs_agile_sm_evt event)
+{
+}
+#endif/*QCA_SUPPORT_AGILE_DFS*/
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
 /**
  * utils_dfs_get_rcac_channel() - Get the completed Rolling CAC channel if
  *                                available.
@@ -1002,12 +1010,6 @@ QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 				      struct ch_params *chan_params,
 				      qdf_freq_t *target_chan_freq);
 #else
-static inline
-void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				    enum dfs_agile_sm_evt event)
-{
-}
-
 static inline
 QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 				      struct ch_params *chan_params,
