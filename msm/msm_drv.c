@@ -65,6 +65,23 @@
 #define MSM_VERSION_MINOR	4
 #define MSM_VERSION_PATCHLEVEL	0
 
+#define LASTCLOSE_TIMEOUT_MS	500
+
+#define msm_wait_event_timeout(waitq, cond, timeout_ms, ret)		\
+	do {								\
+		ktime_t cur_ktime;					\
+		ktime_t exp_ktime;					\
+		s64 wait_time_jiffies = msecs_to_jiffies(timeout_ms);	\
+\
+		exp_ktime = ktime_add_ms(ktime_get(), timeout_ms);	\
+		do {							\
+			ret = wait_event_timeout(waitq, cond,		\
+					wait_time_jiffies);		\
+			cur_ktime = ktime_get();			\
+		} while ((!cond) && (ret == 0) &&			\
+			(ktime_compare_safe(exp_ktime, cur_ktime) > 0));\
+	} while (0)
+
 static void msm_fb_output_poll_changed(struct drm_device *dev)
 {
 	struct msm_drm_private *priv = NULL;
@@ -1022,6 +1039,13 @@ static void msm_lastclose(struct drm_device *dev)
 	/* wait for pending vblank requests to be executed by worker thread */
 	flush_workqueue(priv->wq);
 
+	/* wait for any pending crtcs to finish before lastclose commit */
+	msm_wait_event_timeout(priv->pending_crtcs_event, !priv->pending_crtcs,
+			LASTCLOSE_TIMEOUT_MS, rc);
+	if (!rc)
+		DRM_INFO("wait for crtc mask 0x%x failed, commit anyway...\n",
+				priv->pending_crtcs);
+
 	if (priv->fbdev) {
 		rc = drm_fb_helper_restore_fbdev_mode_unlocked(priv->fbdev);
 		if (rc)
@@ -1031,6 +1055,13 @@ static void msm_lastclose(struct drm_device *dev)
 		if (rc)
 			DRM_ERROR("client modeset commit failed: %d\n", rc);
 	}
+
+	/* wait again, before kms driver does it's lastclose commit */
+	msm_wait_event_timeout(priv->pending_crtcs_event, !priv->pending_crtcs,
+			LASTCLOSE_TIMEOUT_MS, rc);
+	if (!rc)
+		DRM_INFO("wait for crtc mask 0x%x failed, commit anyway...\n",
+				priv->pending_crtcs);
 
 	if (kms->funcs && kms->funcs->lastclose)
 		kms->funcs->lastclose(kms);
