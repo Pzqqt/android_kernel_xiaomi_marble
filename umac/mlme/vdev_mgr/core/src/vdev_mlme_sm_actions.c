@@ -265,6 +265,35 @@ static void wlan_vdev_start_fw_send(struct wlan_objmgr_pdev *pdev,
 	wlan_util_change_map_index(send_array, wlan_vdev_get_id(vdev), 0);
 }
 
+static void wlan_vdev_update_des_chan(struct wlan_objmgr_pdev *pdev,
+				      void *object,
+				      void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	struct wlan_channel *des_chan = (struct wlan_channel *)arg;
+	struct wlan_channel *iter_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	struct pdev_mlme_obj *pdev_mlme;
+
+	pdev_mlme = wlan_pdev_mlme_get_cmpt_obj(pdev);
+	if (!pdev_mlme) {
+		mlme_err(" PDEV MLME is NULL");
+		return;
+	}
+
+	if (wlan_util_map_index_is_set(pdev_mlme->start_send_vdev_arr,
+				       wlan_vdev_get_id(vdev)) == false)
+		return;
+
+	if (wlan_chan_eq(iter_chan, des_chan) != QDF_STATUS_SUCCESS) {
+		mlme_err("==> vdev id: %d: ieee %d, restart vdev ieee %d, updating",
+			 wlan_vdev_get_id(vdev), iter_chan->ch_ieee,
+			 des_chan->ch_ieee);
+		wlan_chan_copy(iter_chan, des_chan);
+	} else {
+		mlme_err("is invoked");
+	}
+}
+
 static void mlme_restart_req_timer_start(struct pdev_mlme_obj *pdev_mlme)
 {
 	qdf_timer_mod(&pdev_mlme->restart_req_timer, 100);
@@ -275,9 +304,51 @@ static void mlme_restart_req_timer_stop(struct pdev_mlme_obj *pdev_mlme)
 	qdf_timer_stop(&pdev_mlme->restart_req_timer);
 }
 
+static struct wlan_channel *wlan_pdev_mlme_get_restart_des_chan(
+					struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_channel *des_chan;
+	uint32_t max_vdevs = 0, i;
+	uint8_t vdev_id = 0xFF;
+	struct wlan_objmgr_vdev *vdev;
+	struct pdev_mlme_obj *pdev_mlme;
+
+	pdev_mlme = wlan_pdev_mlme_get_cmpt_obj(pdev);
+	if (!pdev_mlme) {
+		mlme_err(" PDEV MLME is NULL");
+		return NULL;
+	}
+
+	max_vdevs = wlan_psoc_get_max_vdev_count(wlan_pdev_get_psoc(pdev));
+	for (i = 0; i < max_vdevs; i++) {
+		if (wlan_util_map_index_is_set(
+			pdev_mlme->restart_send_vdev_bmap, i)
+					== false)
+			continue;
+
+		vdev_id = i;
+		break;
+	}
+
+	if (vdev_id == 0xFF)
+		return NULL;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return NULL;
+
+	des_chan = wlan_vdev_mlme_get_des_chan(vdev);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return des_chan;
+}
+
 static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 {
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_channel *des_chan = NULL;
 
 	pdev = pdev_mlme->pdev;
 
@@ -296,6 +367,7 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 			     sizeof(pdev_mlme->pdev_restart.restart_bmap));
 
 		qdf_atomic_init(&pdev_mlme->multivdev_restart_wait_cnt);
+		des_chan = wlan_pdev_mlme_get_restart_des_chan(pdev);
 		if (!wlan_pdev_nif_feat_cap_get(pdev,
 						WLAN_PDEV_F_MULTIVDEV_RESTART))
 			wlan_objmgr_pdev_iterate_obj_list
@@ -309,6 +381,13 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 		if (wlan_util_map_is_any_index_set(
 				pdev_mlme->start_send_vdev_arr,
 				sizeof(pdev_mlme->start_send_vdev_arr))) {
+			if (des_chan) {
+				wlan_objmgr_pdev_iterate_obj_list(pdev,
+						WLAN_VDEV_OP,
+						wlan_vdev_update_des_chan,
+						des_chan, 0,
+						WLAN_MLME_NB_ID);
+			}
 			wlan_objmgr_pdev_iterate_obj_list
 				(pdev, WLAN_VDEV_OP,
 				 wlan_vdev_start_fw_send,
