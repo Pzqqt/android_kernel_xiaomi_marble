@@ -60,7 +60,7 @@
 #define MEM_PROTECT_SD_CTRL_SWITCH 0x18
 #define MDP_DEVICE_ID            0x1A
 
-EXPORT_TRACEPOINT_SYMBOL(sde_drm_tracing_mark_write);
+EXPORT_TRACEPOINT_SYMBOL(tracing_mark_write);
 
 static const char * const iommu_ports[] = {
 		"mdp_0",
