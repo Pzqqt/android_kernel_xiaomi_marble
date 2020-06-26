@@ -19,7 +19,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_mon_chan.h
  *
- * implementation for creating sysfs file set_mon_chan
+ * implementation for creating sysfs file monitor_mode_channel
  */
 
 #ifndef _WLAN_HDD_SYSFS_SET_MON_CHAN_H
@@ -27,14 +27,14 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_MON_CHAN)
 /**
- * wlan_hdd_sysfs_set_mon_chan_create() - API to create set_mon_chan
+ * wlan_hdd_sysfs_set_mon_chan_create() - API to create monitor_mode_channel
  * @adapter: hdd adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/set_mon_chan
+ * file path: /sys/class/net/wlanxx/monitor_mode_channel
  *                (wlanxx is adapter name)
  * usage:
- *      echo [arg_0] [arg_1] > set_mon_chan
+ *      echo [arg_0] [arg_1] > monitor_mode_channel
  *
  * Return: 0 on success and errno on failure
  */
@@ -42,7 +42,7 @@ int hdd_sysfs_set_mon_chan_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_set_mon_chan_destroy() -
- *   API to destroy set_mon_chan
+ *   API to destroy monitor_mode_channel sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none

@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_scan_cfg.h
  *
- * implementation for creating sysfs file set_scan_cfg
+ * implementation for creating sysfs file scan_config
  */
 
 #ifndef _WLAN_HDD_SYSFS_SET_SCAN_CFG_H
@@ -25,13 +25,13 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_SCAN_CFG)
 /**
- * hdd_sysfs_set_scan_cfg_create() - API to create set_scan_cfg
+ * hdd_sysfs_set_scan_cfg_create() - API to create scan_config sysfs file
  * @driver_kobject: sysfs driver kobject
  *
- * file path: /sys/kernel/wifi/set_scan_cfg
+ * file path: /sys/kernel/wifi/scan_config
  *
  * usage:
- *      echo [arg_0] [arg_1] [arg_2]> set_scan_cfg
+ *      echo [arg_0] [arg_1] [arg_2]> scan_config
  *
  * Return: 0 on success and errno on failure
  */
@@ -39,7 +39,7 @@ int hdd_sysfs_set_scan_cfg_create(struct kobject *driver_kobject);
 
 /**
  * hdd_sysfs_set_scan_cfg_destroy() -
- *   API to destroy set_scan_cfg
+ *   API to destroy scan_config sysfs file
  *
  * Return: none
  */

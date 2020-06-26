@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_stats.c
  *
- * implementation for creating sysfs file get_stats
+ * implementation for creating sysfs file stats
  */
 
 #include <wlan_hdd_includes.h>
@@ -146,7 +146,7 @@ hdd_sysfs_get_stats_show(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_stats, 0440,
+static DEVICE_ATTR(stats, 0440,
 		   hdd_sysfs_get_stats_show, NULL);
 
 int hdd_sysfs_get_stats_create(struct hdd_adapter *adapter)
@@ -154,14 +154,14 @@ int hdd_sysfs_get_stats_create(struct hdd_adapter *adapter)
 	int error;
 
 	error = device_create_file(&adapter->dev->dev,
-				   &dev_attr_get_stats);
+				   &dev_attr_stats);
 	if (error)
-		hdd_err("could not create get_stats sysfs file");
+		hdd_err("could not create stats sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_get_stats_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_stats);
+	device_remove_file(&adapter->dev->dev, &dev_attr_stats);
 }

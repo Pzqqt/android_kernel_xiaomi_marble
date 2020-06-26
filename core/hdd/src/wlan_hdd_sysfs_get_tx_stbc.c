@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_tx_stbc.c
  *
- * implementation for creating sysfs file get_tx_stbc
+ * implementation for creating sysfs file tx_stbc
  */
 
 #include <wlan_hdd_includes.h>
@@ -94,7 +94,7 @@ hdd_sysfs_get_tx_stbc_show(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_tx_stbc, 0440,
+static DEVICE_ATTR(tx_stbc, 0440,
 		   hdd_sysfs_get_tx_stbc_show, NULL);
 
 int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter)
@@ -102,14 +102,14 @@ int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter)
 	int error;
 
 	error = device_create_file(&adapter->dev->dev,
-				   &dev_attr_get_tx_stbc);
+				   &dev_attr_tx_stbc);
 	if (error)
-		hdd_err("could not create get_tx_stbc sysfs file");
+		hdd_err("could not create tx_stbc sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_get_tx_stbc_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_tx_stbc);
+	device_remove_file(&adapter->dev->dev, &dev_attr_tx_stbc);
 }

@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_tx_stbc.h
  *
- * implementation for creating sysfs file get_tx_stbc
+ * implementation for creating sysfs file tx_stbc
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_TX_STBC_H
@@ -25,15 +25,15 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_TX_STBC)
 /**
- * hdd_sysfs_get_tx_stbc_create() - API to create get_tx_stbc
+ * hdd_sysfs_get_tx_stbc_create() - API to create tx_stbc sysfs file
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/get_tx_stbc
+ * file path: /sys/class/net/wlanxx/tx_stbc
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_tx_stbc
+ *      cat /sys/class/net/wlanxx/tx_stbc
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_get_tx_stbc_destroy() -
- *   API to destroy get_tx_stbc
+ *   API to destroy tx_stbc sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none

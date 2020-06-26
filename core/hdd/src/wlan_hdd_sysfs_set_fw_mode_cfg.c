@@ -19,7 +19,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_fw_mode_cfg.c
  *
- * implementation for creating sysfs file set_fw_mode_cfg
+ * implementation for creating sysfs file fw_mode_config
  */
 
 #include <wlan_hdd_includes.h>
@@ -118,7 +118,7 @@ wlan_hdd_store_set_fw_mode_cfg_sysfs(struct kobject *kobj,
 }
 
 static struct kobj_attribute set_fw_mode_cfg_attribute =
-	__ATTR(set_fw_mode_cfg, 0220, NULL,
+	__ATTR(fw_mode_config, 0220, NULL,
 	       wlan_hdd_store_set_fw_mode_cfg_sysfs);
 
 int hdd_sysfs_set_fw_mode_cfg_create(struct kobject *driver_kobject)
@@ -133,7 +133,7 @@ int hdd_sysfs_set_fw_mode_cfg_create(struct kobject *driver_kobject)
 	error = sysfs_create_file(driver_kobject,
 				  &set_fw_mode_cfg_attribute.attr);
 	if (error)
-		hdd_err("could not create set_fw_mode_cfg sysfs file");
+		hdd_err("could not create fw_mode_config sysfs file");
 
 	return error;
 }

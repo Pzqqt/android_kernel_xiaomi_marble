@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_stats.h
  *
- * implementation for creating sysfs file get_stats
+ * implementation for creating sysfs file stats
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_STATS_H
@@ -25,15 +25,15 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_STATS)
 /**
- * hdd_sysfs_get_stats_create() - API to create get_stats
+ * hdd_sysfs_get_stats_create() - API to create stats sysfs file
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/get_stats
+ * file path: /sys/class/net/wlanxx/stats
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_stats
+ *      cat /sys/class/net/wlanxx/stats
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_get_stats_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_get_stats_destroy() -
- *   API to destroy get_stats
+ *   API to destroy stats sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none

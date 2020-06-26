@@ -19,7 +19,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_mon_chan.c
  *
- * implementation for creating sysfs file set_mon_chan
+ * implementation for creating sysfs file monitor_mode_channel
  */
 
 #include <wlan_hdd_includes.h>
@@ -108,21 +108,21 @@ hdd_sysfs_set_mon_chan_store(struct device *dev,
 	return errno_size;
 }
 
-static DEVICE_ATTR(set_mon_chan, 0220,
+static DEVICE_ATTR(monitor_mode_channel, 0220,
 		   NULL, hdd_sysfs_set_mon_chan_store);
 
 int hdd_sysfs_set_mon_chan_create(struct hdd_adapter *adapter)
 {
 	int error;
 
-	error = device_create_file(&adapter->dev->dev, &dev_attr_set_mon_chan);
+	error = device_create_file(&adapter->dev->dev, &dev_attr_monitor_mode_channel);
 	if (error)
-		hdd_err("could not create set_mon_chan sysfs file");
+		hdd_err("could not create monitor_mode_channel sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_set_mon_chan_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_set_mon_chan);
+	device_remove_file(&adapter->dev->dev, &dev_attr_monitor_mode_channel);
 }

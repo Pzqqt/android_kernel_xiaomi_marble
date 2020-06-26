@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_scan_cfg.c
  *
- * implementation for creating sysfs file set_scan_cfg
+ * implementation for creating sysfs file scan_config
  */
 
 #include <wlan_hdd_includes.h>
@@ -120,7 +120,7 @@ hdd_sysfs_set_scan_cfg_store(struct kobject *kobj,
 }
 
 static struct kobj_attribute set_scan_cfg_attribute =
-	__ATTR(set_scan_cfg, 0220, NULL,
+	__ATTR(scan_config, 0220, NULL,
 	       hdd_sysfs_set_scan_cfg_store);
 
 int hdd_sysfs_set_scan_cfg_create(struct kobject *driver_kobject)
@@ -135,7 +135,7 @@ int hdd_sysfs_set_scan_cfg_create(struct kobject *driver_kobject)
 	error = sysfs_create_file(driver_kobject,
 				  &set_scan_cfg_attribute.attr);
 	if (error)
-		hdd_err("could not create set_scan_cfg sysfs file");
+		hdd_err("could not create scan_config sysfs file");
 
 	return error;
 }

@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_sta_info.c
  *
- * implementation for creating sysfs file get_sta_info
+ * implementation for creating sysfs file sta_info
  */
 
 #include <wlan_hdd_includes.h>
@@ -92,18 +92,18 @@ static ssize_t show_sta_info(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_sta_info, 0444, show_sta_info, NULL);
+static DEVICE_ATTR(sta_info, 0444, show_sta_info, NULL);
 
 void hdd_sysfs_get_sta_info_interface_create(struct hdd_adapter *adapter)
 {
 	int error;
 
-	error = device_create_file(&adapter->dev->dev, &dev_attr_get_sta_info);
+	error = device_create_file(&adapter->dev->dev, &dev_attr_sta_info);
 	if (error)
-		hdd_err("Could not create get_sta_info sysfs file");
+		hdd_err("Could not create sta_info sysfs file");
 }
 
 void hdd_sysfs_get_sta_info_interface_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_sta_info);
+	device_remove_file(&adapter->dev->dev, &dev_attr_sta_info);
 }

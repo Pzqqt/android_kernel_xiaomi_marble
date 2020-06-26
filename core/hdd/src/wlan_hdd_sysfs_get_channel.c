@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_channel.c
  *
- * implementation for creating sysfs file get_channel
+ * implementation for creating sysfs file channel
  */
 
 #include <wlan_hdd_includes.h>
@@ -78,18 +78,18 @@ static ssize_t show_channel_number(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_channel, 0444, show_channel_number, NULL);
+static DEVICE_ATTR(channel, 0444, show_channel_number, NULL);
 
 void hdd_sysfs_get_channel_interface_create(struct hdd_adapter *adapter)
 {
 	int error;
 
-	error = device_create_file(&adapter->dev->dev, &dev_attr_get_channel);
+	error = device_create_file(&adapter->dev->dev, &dev_attr_channel);
 	if (error)
-		hdd_err("Could not create get_channel sysfs file");
+		hdd_err("Could not create channel sysfs file");
 }
 
 void hdd_sysfs_get_channel_interface_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_channel);
+	device_remove_file(&adapter->dev->dev, &dev_attr_channel);
 }

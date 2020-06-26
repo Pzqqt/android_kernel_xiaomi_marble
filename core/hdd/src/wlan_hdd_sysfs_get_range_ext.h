@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_range_ext.h
  *
- * implementation for creating sysfs file get_range_ext
+ * implementation for creating sysfs file range_ext
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_RANGE_EXT_H
@@ -25,15 +25,15 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_RANGE_EXT)
 /**
- * hdd_sysfs_get_range_ext_create() - API to create get_range_ext
+ * hdd_sysfs_get_range_ext_create() - API to create range_ext
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/get_range_ext
+ * file path: /sys/class/net/wlanxx/range_ext
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_range_ext
+ *      cat /sys/class/net/wlanxx/range_ext
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_get_range_ext_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_get_range_ext_destroy() -
- *   API to destroy get_range_ext
+ *   API to destroy range_ext
  * @adapter: pointer to adapter
  *
  * Return: none

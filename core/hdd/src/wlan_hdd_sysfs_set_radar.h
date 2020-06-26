@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_radar.h
  *
- * implementation for creating sysfs file set_radar
+ * implementation for creating sysfs file radar
  */
 
 #ifndef _WLAN_HDD_SYSFS_SET_RADAR_H
@@ -25,15 +25,15 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_RADAR)
 /**
- * wlan_hdd_sysfs_set_radar_create() - API to create set_radar
+ * wlan_hdd_sysfs_set_radar_create() - API to create radar sysfs file
  * (for sap mode only)
  * @adapter: hdd adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/set_radar
+ * file path: /sys/class/net/wlanxx/radar
  *                (wlanxx is adapter name)
  * usage:
- *      echo [arg_0] > set_radar
+ *      echo [arg_0] > radar
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_set_radar_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_set_radar_destroy() -
- *   API to destroy set_radar
+ *   API to destroy radar sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none

@@ -25,23 +25,23 @@
 
 #if defined(WLAN_SYSFS) && defined(WLAN_GET_TDLS_PEERS)
 /**
- * hdd_sysfs_get_tdls_peers_interface_create() - API to create get_tdls_peers
+ * hdd_sysfs_get_tdls_peers_interface_create() - API to create tdls_peers
  * sysfs interface
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/get_tdls_peers
+ * file path: /sys/class/net/wlanxx/tdls_peers
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_tdls_peers
+ *      cat /sys/class/net/wlanxx/tdls_peers
  *
  * Return: none
  */
 void hdd_sysfs_get_tdls_peers_interface_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_tdls_peers_interface_destroy() - API to destroy get_tdls_peers
+ * hdd_sysfs_get_tdls_peers_interface_destroy() - API to destroy tdls_peers
  * sysfs interface
  * @adapter: pointer to adapter
  *

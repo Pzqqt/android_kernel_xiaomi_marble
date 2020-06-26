@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_wlan_dbg.c
  *
- * implementation for creating sysfs file set_wlan_dbg
+ * implementation for creating sysfs file wlan_dbg
  */
 
 #include <wlan_hdd_includes.h>
@@ -103,7 +103,7 @@ hdd_sysfs_set_wlan_dbg_store(struct kobject *kobj,
 }
 
 static struct kobj_attribute set_wlan_dbg_attribute =
-	__ATTR(set_wlan_dbg, 0220, NULL,
+	__ATTR(wlan_dbg, 0220, NULL,
 	       hdd_sysfs_set_wlan_dbg_store);
 
 int hdd_sysfs_set_wlan_dbg_create(struct kobject *driver_kobject)
@@ -118,7 +118,7 @@ int hdd_sysfs_set_wlan_dbg_create(struct kobject *driver_kobject)
 	error = sysfs_create_file(driver_kobject,
 				  &set_wlan_dbg_attribute.attr);
 	if (error)
-		hdd_err("could not create set_wlan_dbg sysfs file");
+		hdd_err("could not create wlan_dbg sysfs file");
 
 	return error;
 }

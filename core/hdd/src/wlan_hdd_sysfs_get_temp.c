@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_temp.c
  *
- * implementation for creating sysfs file get_temp
+ * implementation for creating sysfs file temp
  */
 
 #include <wlan_hdd_includes.h>
@@ -78,7 +78,7 @@ hdd_sysfs_get_temp_show(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_temp, 0440,
+static DEVICE_ATTR(temperature, 0440,
 		   hdd_sysfs_get_temp_show, NULL);
 
 int hdd_sysfs_get_temp_create(struct hdd_adapter *adapter)
@@ -86,14 +86,14 @@ int hdd_sysfs_get_temp_create(struct hdd_adapter *adapter)
 	int error;
 
 	error = device_create_file(&adapter->dev->dev,
-				   &dev_attr_get_temp);
+				   &dev_attr_temperature);
 	if (error)
-		hdd_err("could not create get_temp sysfs file");
+		hdd_err("could not create temp sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_get_temp_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_temp);
+	device_remove_file(&adapter->dev->dev, &dev_attr_temperature);
 }

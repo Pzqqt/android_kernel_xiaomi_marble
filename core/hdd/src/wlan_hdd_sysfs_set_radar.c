@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_radar.c
  *
- * implementation for creating sysfs file set_radar
+ * implementation for creating sysfs file radar
  */
 
 #include <wlan_hdd_includes.h>
@@ -110,21 +110,21 @@ hdd_sysfs_set_radar_store(struct device *dev,
 	return errno_size;
 }
 
-static DEVICE_ATTR(set_radar, 0220,
+static DEVICE_ATTR(radar, 0220,
 		   NULL, hdd_sysfs_set_radar_store);
 
 int hdd_sysfs_set_radar_create(struct hdd_adapter *adapter)
 {
 	int error;
 
-	error = device_create_file(&adapter->dev->dev, &dev_attr_set_radar);
+	error = device_create_file(&adapter->dev->dev, &dev_attr_radar);
 	if (error)
-		hdd_err("could not create set_radar sysfs file");
+		hdd_err("could not create radar sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_set_radar_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_set_radar);
+	device_remove_file(&adapter->dev->dev, &dev_attr_radar);
 }

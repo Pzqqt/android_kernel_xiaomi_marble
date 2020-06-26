@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_channel.h
  *
- * implementation for creating sysfs file get_channel
+ * implementation for creating sysfs file channel
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_CHANNEL_H
@@ -25,22 +25,22 @@
 
 #if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_GET_CHANNEL)
 /**
- * hdd_sysfs_get_channel_interface_create() - API to create get_channel sysfs
+ * hdd_sysfs_get_channel_interface_create() - API to create channel sysfs
  * @adapter: pointer to adapter
  *
  * this file is created for SAP adapter.
- * file path: /sys/class/net/wlanxx/get_channel
+ * file path: /sys/class/net/wlanxx/channel
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_channel
+ *      cat /sys/class/net/wlanxx/channel
  *
  * Return: none
  */
 void hdd_sysfs_get_channel_interface_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_channel_interface_destroy() - API to destroy get_channel
+ * hdd_sysfs_get_channel_interface_destroy() - API to destroy channel
  * @adapter: pointer to adapter
  *
  * Return: none

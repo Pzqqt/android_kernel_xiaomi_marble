@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_sta_info.h
  *
- * implementation for creating sysfs file get_sta_info
+ * implementation for creating sysfs file sta_info
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_STA_INFO_H
@@ -25,23 +25,23 @@
 
 #if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_GET_STA_INFO)
 /**
- * hdd_sysfs_get_sta_info_interface_create() - API to create get_sta_info sysfs
+ * hdd_sysfs_get_sta_info_interface_create() - API to create sta_info sysfs
  * interface
  * @adapter: pointer to adapter
  *
  * this file is created for SAP adapter.
- * file path: /sys/class/net/wlanxx/get_sta_info
+ * file path: /sys/class/net/wlanxx/sta_info
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_sta_info
+ *      cat /sys/class/net/wlanxx/sta_info
  *
  * Return: none
  */
 void hdd_sysfs_get_sta_info_interface_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_sta_info_interface_destroy() - API to destroy get_sta_info
+ * hdd_sysfs_get_sta_info_interface_destroy() - API to destroy sta_info
  * @adapter: pointer to adapter
  *
  * Return: none

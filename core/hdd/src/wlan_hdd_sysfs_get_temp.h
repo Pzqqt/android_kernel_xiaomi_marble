@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_temp.h
  *
- * implementation for creating sysfs file get_temp
+ * implementation for creating sysfs file temperature
  */
 
 #ifndef _WLAN_HDD_SYSFS_GET_TEMP_H
@@ -25,15 +25,15 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_TEMP)
 /**
- * hdd_sysfs_get_temp_create() - API to create get_temp
+ * hdd_sysfs_get_temp_create() - API to create temperature sysfs file
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
- * file path: /sys/class/net/wlanxx/get_temp
+ * file path: /sys/class/net/wlanxx/temperature
  *	where wlanxx is adapter name
  *
  * usage:
- *      cat /sys/class/net/wlanxx/get_temp
+ *      cat /sys/class/net/wlanxx/temperature
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_get_temp_create(struct hdd_adapter *adapter);
 
 /**
  * hdd_sysfs_get_temp_destroy() -
- *   API to destroy get_temp
+ *   API to destroy temperature sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none

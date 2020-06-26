@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_wlan_dbg.h
  *
- * implementation for creating sysfs file set_wlan_dbg
+ * implementation for creating sysfs file wlan_dbg
  */
 
 #ifndef _WLAN_HDD_SYSFS_SET_WLAN_DBG_H
@@ -25,20 +25,20 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_WLAN_DBG)
 /**
- * hdd_sysfs_set_wlan_dbg_create() - API to create set_wlan_dbg
+ * hdd_sysfs_set_wlan_dbg_create() - API to create wlan_dbg sysfs file
  * @driver_kobject: sysfs driver kobject
  *
- * file path: /sys/kernel/wifi/set_wlan_dbg
+ * file path: /sys/kernel/wifi/wlan_dbg
  *
  * usage:
- *      echo [arg_0] [arg_1] [arg_2] > set_wlan_dbg
+ *      echo [arg_0] [arg_1] [arg_2] > wlan_dbg
  *
  * Return: 0 on success and errno on failure
  */
 int hdd_sysfs_set_wlan_dbg_create(struct kobject *driver_kobject);
 
 /**
- * hdd_sysfs_set_wlan_dbg_destroy() - API to destroy set_wlan_dbg
+ * hdd_sysfs_set_wlan_dbg_destroy() - API to destroy wlan_dbg sysfs file
  *
  * Return: none
  */

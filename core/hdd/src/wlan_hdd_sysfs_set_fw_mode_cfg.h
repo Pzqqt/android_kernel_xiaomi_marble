@@ -19,7 +19,7 @@
 /**
  * DOC: wlan_hdd_sysfs_set_fw_mode_cfg.h
  *
- * implementation for creating sysfs file set_fw_mode_cfg
+ * implementation for creating sysfs file fw_mode_config
  */
 
 #ifndef _WLAN_HDD_SYSFS_SET_FW_MODE_CFG_H
@@ -27,13 +27,13 @@
 
 #if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_FW_MODE_CFG)
 /**
- * hdd_sysfs_set_fw_mode_cfg_create() - API to create set_fw_mode_cfg
+ * hdd_sysfs_set_fw_mode_cfg_create() - API to create fw_mode_config sysfs file
  * @driver_kobject: sysfs driver kobject
  *
- * file path: /sys/kernel/wifi/set_fw_mode_cfg
+ * file path: /sys/kernel/wifi/fw_mode_config
  *
  * usage:
- *      echo [arg_0] [arg_1] > set_fw_mode_cfg
+ *      echo [arg_0] [arg_1] > fw_mode_config
  *
  * Return: 0 on success and errno on failure
  */
@@ -41,7 +41,7 @@ int hdd_sysfs_set_fw_mode_cfg_create(struct kobject *driver_kobject);
 
 /**
  * hdd_sysfs_set_fw_mode_cfg_destroy() -
- *   API to destroy set_fw_mode_cfg
+ *   API to destroy fw_mode_config sysfs file
  *
  * Return: none
  */

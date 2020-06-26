@@ -112,7 +112,7 @@ hdd_sysfs_set_dp_trace_store(struct kobject *kobj,
 }
 
 static struct kobj_attribute set_dp_trace_attribute =
-	__ATTR(set_dp_trace, 0220, NULL,
+	__ATTR(dp_trace, 0220, NULL,
 	       hdd_sysfs_set_dp_trace_store);
 
 static uint32_t dump_dp_trace_count = 0;

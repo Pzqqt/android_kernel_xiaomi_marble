@@ -17,7 +17,7 @@
 /**
  * DOC: wlan_hdd_sysfs_get_range_ext.c
  *
- * implementation for creating sysfs file get_range_ext
+ * implementation for creating sysfs file range_ext
  */
 
 #include <wlan_hdd_includes.h>
@@ -75,7 +75,7 @@ hdd_sysfs_get_range_ext_show(struct device *dev,
 	return err_size;
 }
 
-static DEVICE_ATTR(get_range_ext, 0440,
+static DEVICE_ATTR(range_ext, 0440,
 		   hdd_sysfs_get_range_ext_show, NULL);
 
 int hdd_sysfs_get_range_ext_create(struct hdd_adapter *adapter)
@@ -83,14 +83,14 @@ int hdd_sysfs_get_range_ext_create(struct hdd_adapter *adapter)
 	int error;
 
 	error = device_create_file(&adapter->dev->dev,
-				   &dev_attr_get_range_ext);
+				   &dev_attr_range_ext);
 	if (error)
-		hdd_err("could not create get_range_ext sysfs file");
+		hdd_err("could not create range_ext sysfs file");
 
 	return error;
 }
 
 void hdd_sysfs_get_range_ext_destroy(struct hdd_adapter *adapter)
 {
-	device_remove_file(&adapter->dev->dev, &dev_attr_get_range_ext);
+	device_remove_file(&adapter->dev->dev, &dev_attr_range_ext);
 }
