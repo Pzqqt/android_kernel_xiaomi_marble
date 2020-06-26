@@ -1857,6 +1857,60 @@ static int _sde_rm_make_next_rsvp(struct sde_rm *rm, struct drm_encoder *enc,
 	return ret;
 }
 
+static int _sde_rm_update_pipe_cnt_from_active(
+		struct sde_splash_display *splash_display,
+		u32 active_pipes_mask)
+{
+	int i;
+	u32 sspp_present = 0, space_remain = 0;
+
+	if (!active_pipes_mask) {
+		return 0;
+	} else if (!splash_display) {
+		SDE_ERROR("invalid splash display provided\n");
+		return -EINVAL;
+	} else if (splash_display->pipe_cnt >=
+			ARRAY_SIZE(splash_display->pipes)) {
+		SDE_ERROR("no room to add active pipes to pipe array\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < splash_display->pipe_cnt; i++)
+		sspp_present |= BIT(splash_display->pipes[i].sspp);
+
+	space_remain = ARRAY_SIZE(splash_display->pipes)
+			- splash_display->pipe_cnt;
+
+	for (i = SSPP_VIG0; i < SSPP_MAX; i++) {
+		/* Skip planes already present in the array */
+		if (!(active_pipes_mask & BIT(i)) ||
+				(sspp_present & BIT(i)))
+			continue;
+
+		if (space_remain < R_MAX) {
+			SDE_ERROR("not enough room to add active pipe %d", i);
+			return -EINVAL;
+		}
+
+		/*
+		 * A plane in active but not sspp_present indicates a non-pixel
+		 * plane. Register both rectangles as we can't differentiate
+		 */
+		splash_display->pipes[splash_display->pipe_cnt].sspp = i;
+		splash_display->pipes[splash_display->pipe_cnt].is_virtual =
+				false;
+		splash_display->pipe_cnt++;
+		space_remain--;
+		splash_display->pipes[splash_display->pipe_cnt].sspp = i;
+		splash_display->pipes[splash_display->pipe_cnt].is_virtual =
+				true;
+		splash_display->pipe_cnt++;
+		space_remain--;
+	}
+
+	return 0;
+}
+
 /**
  * _sde_rm_get_hw_blk_for_cont_splash - retrieve the LM blocks on given CTL
  * and populate the connected HW blk ids in sde_splash_display
@@ -1869,9 +1923,10 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 		struct sde_hw_ctl *ctl,
 		struct sde_splash_display *splash_display)
 {
-	u32 lm_reg;
+	u32 lm_reg, max_cnt, active_pipes_mask = 0;
 	struct sde_rm_hw_iter iter_lm, iter_dsc;
 	struct sde_kms *sde_kms;
+	size_t start_count;
 
 	if (!rm || !ctl || !splash_display) {
 		SDE_ERROR("invalid input parameters\n");
@@ -1879,6 +1934,7 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 	}
 
 	sde_kms = container_of(rm, struct sde_kms, rm);
+	max_cnt = ARRAY_SIZE(splash_display->pipes);
 
 	sde_rm_init_hw_iter(&iter_lm, 0, SDE_HW_BLK_LM);
 	sde_rm_init_hw_iter(&iter_dsc, 0, SDE_HW_BLK_DSC);
@@ -1895,23 +1951,40 @@ static int _sde_rm_get_hw_blk_for_cont_splash(struct sde_rm *rm,
 		SDE_DEBUG("lm_cnt=%d lm_reg[%d]=0x%x\n", splash_display->lm_cnt,
 				iter_lm.blk->id - LM_0, lm_reg);
 
-		if (ctl->ops.get_staged_sspp &&
-				ctl->ops.get_staged_sspp(ctl, iter_lm.blk->id,
-					&splash_display->pipes[
-					splash_display->pipe_cnt], 1)) {
-			splash_display->pipe_cnt++;
-		} else if (sde_kms->splash_data.type == SDE_VM_HANDOFF) {
+		start_count = splash_display->pipe_cnt;
+		if (ctl->ops.get_staged_sspp) {
+			struct sde_sspp_index_info *start =
+				&splash_display->pipes[
+					splash_display->pipe_cnt];
+
+			splash_display->pipe_cnt += ctl->ops.get_staged_sspp(
+					ctl, iter_lm.blk->id, start,
+					max_cnt - splash_display->pipe_cnt);
+		}
+
+		if (sde_kms->splash_data.type == SDE_VM_HANDOFF) {
 			/* Allow VM handoff without any pipes, as it is a
 			 * valid case to have NULL commit before the
 			 * transition.
 			 */
 			SDE_DEBUG("VM handoff with no pipes staged\n");
-		} else {
-			SDE_ERROR("no pipe detected on LM-%d\n",
+		} else if (start_count == splash_display->pipe_cnt) {
+			SDE_ERROR("no pipes detected on LM-%d\n",
 					iter_lm.blk->id - LM_0);
+			return 0;
+		} else if (splash_display->pipe_cnt > max_cnt) {
+			SDE_ERROR("found %d pipes exceed max of %d\n",
+					splash_display->pipe_cnt, max_cnt);
 			return 0;
 		}
 	}
+
+	if (ctl->ops.get_active_pipes)
+		active_pipes_mask = ctl->ops.get_active_pipes(ctl);
+
+	if (_sde_rm_update_pipe_cnt_from_active(splash_display,
+			active_pipes_mask))
+		return 0;
 
 	while (_sde_rm_get_hw_locked(rm, &iter_dsc)) {
 		if (ctl->ops.read_active_status &&

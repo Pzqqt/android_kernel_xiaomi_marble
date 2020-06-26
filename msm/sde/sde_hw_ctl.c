@@ -638,6 +638,28 @@ static void sde_hw_ctl_set_fetch_pipe_active(struct sde_hw_ctl *ctx,
 	SDE_REG_WRITE(&ctx->hw, CTL_FETCH_PIPE_ACTIVE, val);
 }
 
+static u32 sde_hw_ctl_get_active_fetch_pipes(struct sde_hw_ctl *ctx)
+{
+	int i;
+	u32 fetch_info, fetch_active = 0;
+
+	if (!ctx)  {
+		DRM_ERROR("invalid args - ctx invalid\n");
+		return 0;
+	}
+
+	fetch_info = SDE_REG_READ(&ctx->hw, CTL_FETCH_PIPE_ACTIVE);
+
+	for (i = SSPP_VIG0; i < SSPP_MAX; i++) {
+		if (fetch_tbl[i] != CTL_INVALID_BIT &&
+				fetch_info & BIT(fetch_tbl[i])) {
+			fetch_active |= BIT(i);
+		}
+	}
+
+	return fetch_active;
+}
+
 static inline void _sde_hw_ctl_write_dspp_flushes(struct sde_hw_ctl *ctx) {
 	int i;
 	bool has_dspp_flushes = ctx->caps->features &
@@ -1275,6 +1297,7 @@ static void _setup_ctl_ops(struct sde_hw_ctl_ops *ops,
 		ops->get_scheduler_status = sde_hw_ctl_get_scheduler_status;
 		ops->read_active_status = sde_hw_ctl_read_active_status;
 		ops->set_active_pipes = sde_hw_ctl_set_fetch_pipe_active;
+		ops->get_active_pipes = sde_hw_ctl_get_active_fetch_pipes;
 	} else {
 		ops->update_pending_flush = sde_hw_ctl_update_pending_flush;
 		ops->trigger_flush = sde_hw_ctl_trigger_flush;

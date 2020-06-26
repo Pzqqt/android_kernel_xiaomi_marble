@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _SDE_HW_CTL_H
@@ -466,6 +466,13 @@ struct sde_hw_ctl_ops {
 	 */
 	void (*set_active_pipes)(struct sde_hw_ctl *ctx,
 			unsigned long *fetch_active);
+
+	/**
+	 * Get all the sspp marked for fetching on the control path.
+	 * @ctx       : ctl path ctx pointer
+	 * @Return: bitmap of enum sde_sspp pipes found
+	 */
+	u32 (*get_active_pipes)(struct sde_hw_ctl *ctx);
 };
 
 /**

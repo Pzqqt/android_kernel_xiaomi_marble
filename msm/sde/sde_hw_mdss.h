@@ -161,6 +161,12 @@ enum sde_sspp_type {
 	SSPP_TYPE_MAX
 };
 
+enum sde_sspp_rect {
+	R0,
+	R1,
+	R_MAX
+};
+
 enum sde_lm {
 	LM_0 = 1,
 	LM_1,
@@ -655,7 +661,7 @@ struct sde_splash_display {
 	u8 lm_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 dsc_ids[MAX_DATA_PATH_PER_DSIPLAY];
 	u8 vdc_ids[MAX_DATA_PATH_PER_DSIPLAY];
-	struct sde_sspp_index_info pipes[MAX_DATA_PATH_PER_DSIPLAY];
+	struct sde_sspp_index_info pipes[SSPP_MAX];
 	u8 ctl_cnt;
 	u8 lm_cnt;
 	u8 dsc_cnt;

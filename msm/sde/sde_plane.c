@@ -60,13 +60,6 @@
 #define TIME_MULTIPLEX_RECT(r0, r1, buffer_lines) \
 	 ((r0).y >= ((r1).y + (r1).h + buffer_lines))
 
-/* multirect rect index */
-enum {
-	R0,
-	R1,
-	R_MAX
-};
-
 #define SDE_QSEED_DEFAULT_DYN_EXP 0x0
 
 /**
