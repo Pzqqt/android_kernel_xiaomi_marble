@@ -10434,6 +10434,11 @@ typedef enum {
  */
 #define WMI_VDEV_ROAM_11KV_CTRL_DONOT_SEND_DISASSOC_ON_BTM_DI_SET       0x4
 
+
+/** NAN vdev config Feature flags */
+#define WMI_VDEV_NAN_ALLOW_DW_CONFIG_CHANGE_IN_SYNC_ROLE                0x1
+
+
 /** the definition of different VDEV parameters */
 typedef enum {
     /** RTS Threshold */
@@ -11280,6 +11285,12 @@ typedef enum {
      * 3 - 31 | Reserved
      */
     WMI_VDEV_PARAM_ROAM_11KV_CTRL,        /* 0xA2 */
+
+    /* vdev param to enable or disable various NAN config features
+     * param value bitmap set to 1 for enable and 0 for disable respectively
+     */
+    WMI_VDEV_PARAM_ENABLE_DISABLE_NAN_CONFIG_FEATURES,  /* 0xA3 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
