@@ -44,6 +44,7 @@
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "lim_ser_des_utils.h"
+#include "wlan_blm_api.h"
 
 /**
  * lim_delete_sta_util - utility function for deleting station context
@@ -183,6 +184,7 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	tpDphHashNode sta_ds;
 	enum eSirMacReasonCodes reason_code;
+	struct reject_ap_info ap_info;
 
 	if (!msg) {
 		pe_err("Invalid body pointer in message");
@@ -237,6 +239,12 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 						   session_entry->peSessionId,
 						   reason_code,
 						   eLIM_LINK_MONITORING_DEAUTH);
+			qdf_mem_copy(&ap_info.bssid, msg->addr2,
+				     QDF_MAC_ADDR_SIZE);
+			ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+			wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev,
+							  &ap_info);
+
 			/* only break for STA role (non TDLS) */
 			break;
 		}
