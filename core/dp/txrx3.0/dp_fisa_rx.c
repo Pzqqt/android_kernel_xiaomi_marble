@@ -281,34 +281,6 @@ static bool is_same_flow(struct cdp_rx_flow_tuple_info *tuple1,
 }
 
 /**
- * dp_rx_flow_send_htt_operation_cmd() - Invalidate FSE cache on FT change
- * @pdev: handle to DP pdev
- * @fse_op: Cache operation code
- * @rx_flow_tuple: flow tuple whose entry has to be invalidated
- *
- * Return: Success if we successfully send FW HTT command
- */
-static QDF_STATUS
-dp_rx_flow_send_htt_operation_cmd(struct dp_pdev *pdev,
-				  enum dp_htt_flow_fst_operation fse_op,
-				  struct cdp_rx_flow_tuple_info *rx_flow_tuple)
-{
-	struct dp_htt_rx_flow_fst_operation fse_op_cmd;
-	struct cdp_rx_flow_info rx_flow_info;
-
-	rx_flow_info.is_addr_ipv4 = true;
-	rx_flow_info.op_code = CDP_FLOW_FST_ENTRY_ADD;
-	qdf_mem_copy(&rx_flow_info.flow_tuple_info, rx_flow_tuple,
-		     sizeof(struct cdp_rx_flow_tuple_info));
-	rx_flow_info.fse_metadata = 0xDADA;
-	fse_op_cmd.pdev_id = pdev->pdev_id;
-	fse_op_cmd.op_code = fse_op;
-	fse_op_cmd.rx_flow = &rx_flow_info;
-
-	return dp_htt_rx_flow_fse_operation(pdev, &fse_op_cmd);
-}
-
-/**
  * dp_rx_fisa_add_ft_entry() - Add new flow to HW and SW FT if it is not added
  * @fisa_hdl: handle to FISA context
  * @flow_idx_hash: Hashed flow index
@@ -329,7 +301,6 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 	uint32_t hashed_flow_idx;
 	uint32_t skid_count = 0, max_skid_length;
 	struct cdp_rx_flow_tuple_info rx_flow_tuple_info;
-	QDF_STATUS status;
 	bool is_fst_updated = false;
 	bool is_flow_tcp, is_flow_udp, is_flow_ipv6;
 	hal_soc_handle_t hal_soc_hdl = fisa_hdl->soc_hdl->hal_soc;
@@ -442,16 +413,14 @@ dp_rx_fisa_add_ft_entry(struct dp_rx_fst *fisa_hdl,
 	 * Send HTT cache invalidation command to firmware to
 	 * reflect the flow update
 	 */
-	if (is_fst_updated) {
-		status = dp_rx_flow_send_htt_operation_cmd(vdev->pdev,
-					DP_HTT_FST_CACHE_INVALIDATE_FULL,
-					&rx_flow_tuple_info);
-		if (QDF_STATUS_SUCCESS != status) {
-			dp_err("Failed to send the cache invalidation\n");
-			/* TBD: remove flow from SW and HW flow table
-			 * Not big impact cache entry gets updated later
-			 */
-		}
+	if (is_fst_updated &&
+	    (qdf_atomic_inc_return(&fisa_hdl->fse_cache_flush_posted) == 1)) {
+		/* return 1 after increment implies FSE cache flush message
+		 * already posted. so start restart the timer
+		 */
+		qdf_timer_start(&fisa_hdl->fse_cache_flush_timer,
+				FSE_CACHE_FLUSH_TIME_OUT);
+
 	}
 	dp_fisa_debug("sw_ft_entry %pK", sw_ft_entry);
 	return sw_ft_entry;

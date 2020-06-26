@@ -26,6 +26,9 @@
 #endif
 
 #if defined(WLAN_SUPPORT_RX_FISA)
+
+#define FSE_CACHE_FLUSH_TIME_OUT	5 /* milliSeconds */
+
 /**
  * dp_rx_dump_fisa_stats() - Dump fisa stats
  * @soc: core txrx main context
