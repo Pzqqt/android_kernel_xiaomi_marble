@@ -9486,9 +9486,13 @@ typedef struct {
      * See macros starting with WMI_PDEV_ID_ for values.
      */
     A_UINT32 pdev_id;
-    /** control flags for this vdev */
+    /** control flags for this vdev (DEPRECATED)
+     * Use @mbss_capability_flags in vdev start instead.
+     */
     A_UINT32 flags;
-    /**  vdevid of transmitted AP (mbssid case) */
+    /**  vdevid of transmitted AP (mbssid case) (DEPRECATED)
+     * Use @vdevid_trans in vdev start instead.
+     */
     A_UINT32 vdevid_trans;
 /* This TLV is followed by another TLV of array of structures
  *   wmi_vdev_txrx_streams cfg_txrx_streams[];
@@ -10249,6 +10253,19 @@ typedef struct {
     A_UINT32 regdomain;
     /* min data rate to be used in BSS in Mbps */
     A_UINT32 min_data_rate;
+
+    /** @mbss_capability_flags: Bitmap of vdev's MBSS/EMA capability.
+     *  Capabilities are combination of below flags:
+     *     VDEV_FLAGS_NON_MBSSID_AP
+     *     VDEV_FLAGS_TRANSMIT_AP
+     *     VDEV_FLAGS_NON_TRANSMIT_AP
+     *     VDEV_FLAGS_EMA_MODE
+     */
+    A_UINT32 mbss_capability_flags;
+
+    /** vdevid of transmitting VAP (mbssid case). Ignored for non mbssid case */
+    A_UINT32 vdevid_trans;
+
 /* The TLVs follows this structure:
  *     wmi_channel chan; <-- WMI channel
  *     wmi_p2p_noa_descriptor  noa_descriptors[]; <-- actual p2p NOA descriptor from scan entry

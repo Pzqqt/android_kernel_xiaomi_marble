@@ -445,6 +445,7 @@ typedef  enum  {
     WMI_REQUEST_CTRL_PATH_STATS_REQUEST = 250, /* FW supports control path stats */
     WMI_SERVICE_TPC_STATS_EVENT = 251, /* FW support to dump the TPC tables */
     WMI_SERVICE_NO_INTERBAND_MCC_SUPPORT = 252, /* Indicates FW doesn't support interband MCC */
+    WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT = 253, /* FW supports VDEV's MBSS param exchange in VDEV start command */
 
 
     /******* ADD NEW SERVICES UP TO 256 HERE *******/
