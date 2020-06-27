@@ -163,9 +163,7 @@ __hdd_sysfs_gtx_bw_mask_show(struct net_device *net_dev, char *buf)
 		return -EINVAL;
 	}
 
-	scnprintf(buf, PAGE_SIZE, "%d", value);
-
-	return ret;
+	return scnprintf(buf, PAGE_SIZE, "%d", value);
 }
 
 static ssize_t
