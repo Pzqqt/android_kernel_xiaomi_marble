@@ -36,7 +36,7 @@
  *
  * Supported Feature: ACS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -58,7 +58,7 @@
  *
  * Supported Feature: ACS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * bits 0-3:   rssi weight
  * bits 4-7:   bss count weight
@@ -92,7 +92,7 @@
  *
  * Supported Feature: ACS
  *
- * Usage: External/Internal
+ * Usage: External
  *
  * </ini>
  */
@@ -145,7 +145,7 @@
  *
  * Supported Feature: ACS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */

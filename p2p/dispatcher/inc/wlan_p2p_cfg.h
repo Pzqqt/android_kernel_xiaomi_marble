@@ -36,7 +36,7 @@
  *
  * Supported Feature: P2P
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -62,7 +62,7 @@
  *
  * Supported Feature: P2P
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -89,7 +89,7 @@
  *
  * Supported Feature: P2P
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */

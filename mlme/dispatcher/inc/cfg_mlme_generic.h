@@ -107,7 +107,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -129,7 +129,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -160,7 +160,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -266,7 +266,7 @@
  *
  * Supported Feature: 802.11b, 2x2
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -290,7 +290,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -311,7 +311,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -339,7 +339,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -360,7 +360,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -381,7 +381,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -406,7 +406,7 @@
  *
  * Supported Feature: 5/10 Mhz channel width support
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -430,7 +430,7 @@
  *
  * Supported Feature: General
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -455,7 +455,7 @@
  *
  * Supported Feature: SSR
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -552,7 +552,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
