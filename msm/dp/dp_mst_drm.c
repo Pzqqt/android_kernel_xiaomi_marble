@@ -1743,10 +1743,10 @@ dp_mst_add_connector(struct drm_dp_mst_topology_mgr *mgr,
 				DRM_CONNECTOR_POLL_HPD,
 				DRM_MODE_CONNECTOR_DisplayPort);
 
-	if (!connector) {
+	if (IS_ERR_OR_NULL(connector)) {
 		DP_ERR("mst sde_connector_init failed\n");
 		drm_modeset_unlock_all(dev);
-		return connector;
+		return NULL;
 	}
 
 	rc = dp_display->mst_connector_install(dp_display, connector);
@@ -2074,7 +2074,7 @@ dp_mst_drm_fixed_connector_init(struct dp_display *dp_display,
 				DRM_CONNECTOR_POLL_HPD,
 				DRM_MODE_CONNECTOR_DisplayPort);
 
-	if (!connector) {
+	if (IS_ERR_OR_NULL(connector)) {
 		DP_ERR("mst sde_connector_init failed\n");
 		return NULL;
 	}
