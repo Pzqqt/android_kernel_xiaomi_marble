@@ -42,7 +42,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -68,7 +68,7 @@
  *
  * Supported Feature: DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -89,7 +89,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -147,7 +147,7 @@
  *
  * Supported Feature: DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -186,7 +186,7 @@
  *
  * Supported Feature: DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -210,7 +210,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -236,7 +236,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -280,7 +280,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -318,7 +318,7 @@
  *
  * Supported Feature: Concurrency
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -340,7 +340,7 @@ CFG_INI_UINT("gAllowMCCGODiffBI", 0, 4, 4, CFG_VALUE_OR_DEFAULT, \
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -375,7 +375,7 @@ CFG_INI_UINT("gEnableOverLapCh", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
  *
  * Supported Feature: DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -408,7 +408,7 @@ CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 6, CFG_VALUE_OR_DEFAULT, \
  *
  * Supported Feature: Non-DBS, DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -459,7 +459,7 @@ CFG_INI_UINT("gForce1x1Exception", 0, 2, 1, CFG_VALUE_OR_DEFAULT, \
  * Supported Feature: SAP
  *
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -483,7 +483,7 @@ CFG_INI_UINT("gEnableSAPManadatoryChanList", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
  *
  * Supported Feature: Non-DBS, DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -506,7 +506,7 @@ CFG_INI_BOOL("g_nan_sap_scc_on_lte_coex_chan", 1, \
  *
  * Supported Feature: Non-DBS, DBS
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -580,7 +580,7 @@ CFG_INI_UINT("g_enable_go_force_scc", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
  * Supported Feature: STA, SAP
  *
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */

@@ -39,7 +39,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -178,7 +178,7 @@
  *
  * Supported Feature: STA
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -466,7 +466,7 @@
  *
  * Supported Feature: SAP
  *
- * Usage: Internal/External
+ * Usage: External
  * </ini>
  */
 #define CFG_SAP_MAX_INACTIVITY_OVERRIDE CFG_INI_BOOL( \
@@ -487,7 +487,7 @@
  *
  * Supported Feature: SAP
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */

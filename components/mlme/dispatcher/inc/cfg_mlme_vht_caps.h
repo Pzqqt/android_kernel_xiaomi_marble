@@ -258,7 +258,7 @@
  *
  * Supported Feature: 11AC
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -286,7 +286,7 @@
  *
  * Supported Feature: 11AC
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
@@ -499,7 +499,7 @@
  * Supported Feature: SAP
  *
  *
- * Usage: Internal/External
+ * Usage: External
  *
  * </ini>
  */
