@@ -1786,6 +1786,9 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 {
 	struct qdf_notifer_data hang_evt_data;
 	enum qdf_hang_reason reason = QDF_REASON_UNSPECIFIED;
+	uint8_t bus_type;
+
+	bus_type = pld_get_bus_type(dev);
 
 	switch (event_data->uevent) {
 	case PLD_FW_DOWN:
@@ -1803,7 +1806,7 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 		 * thus defer the cleanup to be done during
 		 * hdd_soc_recovery_shutdown
 		 */
-		if (qdf_in_interrupt())
+		if (qdf_in_interrupt() || bus_type == PLD_BUS_TYPE_PCIE)
 			break;
 
 		hdd_soc_recovery_cleanup();
