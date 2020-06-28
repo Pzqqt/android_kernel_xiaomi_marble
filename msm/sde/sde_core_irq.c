@@ -464,16 +464,19 @@ void sde_core_irq_preinstall(struct sde_kms *sde_kms)
 		return;
 	}
 
-	rc = pm_runtime_get_sync(sde_kms->dev->dev);
-	if (rc < 0) {
-		SDE_ERROR("failed to enable power resource %d\n", rc);
-		SDE_EVT32(rc, SDE_EVTLOG_ERROR);
-		return;
-	}
+	if (!sde_in_trusted_vm(sde_kms)) {
+		rc = pm_runtime_get_sync(sde_kms->dev->dev);
+		if (rc < 0) {
+			SDE_ERROR("failed to enable power resource %d\n", rc);
+			SDE_EVT32(rc, SDE_EVTLOG_ERROR);
+			return;
+		}
 
-	sde_clear_all_irqs(sde_kms);
-	sde_disable_all_irqs(sde_kms);
-	pm_runtime_put_sync(sde_kms->dev->dev);
+		sde_clear_all_irqs(sde_kms);
+		sde_disable_all_irqs(sde_kms);
+
+		pm_runtime_put_sync(sde_kms->dev->dev);
+	}
 
 	spin_lock_init(&sde_kms->irq_obj.cb_lock);
 

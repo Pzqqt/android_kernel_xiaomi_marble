@@ -446,8 +446,7 @@ static int sde_power_mnoc_bus_parse(struct platform_device *pdev,
 
 	/* at least one databus path is required */
 	if (!pdbus->data_paths_cnt) {
-		pr_err("missing required interconnect:%s, rc:%d\n", name, rc);
-		return -EINVAL;
+		pr_info("mnoc interconnect path(s) not defined, rc: %d\n", rc);
 	} else if (rc) {
 		pr_info("ignoring error %d for non-primary data path\n", rc);
 		rc = 0;
