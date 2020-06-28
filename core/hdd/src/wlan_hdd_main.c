@@ -5860,6 +5860,12 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 		break;
 	}
 
+	if (adapter->scan_info.default_scan_ies) {
+		qdf_mem_free(adapter->scan_info.default_scan_ies);
+		adapter->scan_info.default_scan_ies = NULL;
+		adapter->scan_info.default_scan_ies_len = 0;
+	}
+
 	hdd_exit();
 }
 
@@ -7249,12 +7255,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		break;
 	default:
 		break;
-	}
-
-	if (adapter->scan_info.default_scan_ies) {
-		qdf_mem_free(adapter->scan_info.default_scan_ies);
-		adapter->scan_info.default_scan_ies = NULL;
-		adapter->scan_info.default_scan_ies_len = 0;
 	}
 
 	/* This function should be invoked at the end of this api*/
