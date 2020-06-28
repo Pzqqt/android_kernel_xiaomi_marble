@@ -2182,7 +2182,6 @@ static struct device *_sde_kms_get_address_space_device(struct msm_kms *kms,
 		unsigned int domain)
 {
 	struct sde_kms *sde_kms;
-	struct device *dev;
 	struct msm_gem_address_space *aspace;
 
 	if (!kms) {
@@ -2196,16 +2195,10 @@ static struct device *_sde_kms_get_address_space_device(struct msm_kms *kms,
 		return NULL;
 	}
 
-	/* return default device, when IOMMU is not present */
-	if (!iommu_present(&platform_bus_type)) {
-		dev = sde_kms->dev->dev;
-	} else {
-		aspace = _sde_kms_get_address_space(kms, domain);
-		dev =  (aspace && aspace->domain_attached) ?
-				msm_gem_get_aspace_device(aspace) : NULL;
-	}
+	aspace = _sde_kms_get_address_space(kms, domain);
 
-	return dev;
+	return (aspace && aspace->domain_attached) ?
+				msm_gem_get_aspace_device(aspace) : NULL;
 }
 
 static void _sde_kms_post_open(struct msm_kms *kms, struct drm_file *file)

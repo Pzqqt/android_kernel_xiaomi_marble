@@ -95,6 +95,8 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	struct msm_drm_private *priv;
 	struct msm_kms *kms;
 	int ret;
+	bool lazy_unmap = true;
+	u32 domain;
 
 	if (!dma_buf || !dev->dev_private)
 		return ERR_PTR(-EINVAL);
@@ -132,36 +134,33 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 		goto fail_put;
 	}
 
-	if (flags & ION_FLAG_SECURE) {
-		if (flags & ION_FLAG_CP_PIXEL) {
-			attach_dev = kms->funcs->get_address_space_device(kms,
-						MSM_SMMU_DOMAIN_SECURE);
-			/*
-			 * While transitioning from secure use-cases, the
-			 * secure-cb might still not be attached back, while
-			 * the prime_fd_to_handle call is made for the next
-			 * frame. Attach those buffers to default drm device
-			 * and reattaching with the correct context-bank
-			 * will be handled in msm_gem_delayed_import
-			 */
-			if (!attach_dev)
-				attach_dev = dev->dev;
-
-		} else if ((flags & ION_FLAG_CP_SEC_DISPLAY)
-				|| (flags & ION_FLAG_CP_CAMERA_PREVIEW)) {
-			attach_dev = dev->dev;
-		} else {
-			DRM_ERROR("invalid ion secure flag: 0x%lx\n", flags);
-		}
+	/*
+	 * - attach default drm device for all S2 only buffers or
+	 *   when IOMMU is not available
+	 * - avoid using lazying unmap feature as it doesn't add
+	 * any value without nested translations
+	 */
+	if ((!iommu_present(&platform_bus_type))
+			|| (flags & ION_FLAG_CP_SEC_DISPLAY)
+			|| (flags & ION_FLAG_CP_CAMERA_PREVIEW)) {
+		attach_dev = dev->dev;
+		lazy_unmap = false;
 	} else {
-		attach_dev = kms->funcs->get_address_space_device(kms,
-						MSM_SMMU_DOMAIN_UNSECURE);
+		domain = (flags & ION_FLAG_CP_PIXEL) ?
+			    MSM_SMMU_DOMAIN_SECURE : MSM_SMMU_DOMAIN_UNSECURE;
+		attach_dev = kms->funcs->get_address_space_device(kms, domain);
 	}
 
+	/*
+	 * While transitioning from secure use-cases, the secure/non-secure
+	 * context bank might still not be attached back, while the
+	 * prime_fd_to_handle call is made for the next frame. Attach those
+	 * buffers to default drm device and reattaching with the correct
+	 * context-bank will be handled in msm_gem_delayed_import.
+	 */
 	if (!attach_dev) {
-		DRM_ERROR("aspace device not found for domain\n");
-		ret = -EINVAL;
-		goto fail_put;
+		DRM_DEBUG("attaching dma buf with default drm device\n");
+		attach_dev = dev->dev;
 	}
 
 	attach = dma_buf_attach(dma_buf, attach_dev);
@@ -178,14 +177,13 @@ struct drm_gem_object *msm_gem_prime_import(struct drm_device *dev,
 	 * otherwise do delayed mapping during the commit.
 	 */
 	if (flags & ION_FLAG_CACHED) {
-		attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
-		sgt = dma_buf_map_attachment(
-				attach, DMA_BIDIRECTIONAL);
+		if (lazy_unmap)
+			attach->dma_map_attrs |= DMA_ATTR_DELAYED_UNMAP;
+		sgt = dma_buf_map_attachment(attach, DMA_BIDIRECTIONAL);
 		if (IS_ERR(sgt)) {
 			ret = PTR_ERR(sgt);
 			DRM_ERROR(
-			"dma_buf_map_attachment failure, err=%d\n",
-				ret);
+			"dma_buf_map_attachment failure, err=%d\n", ret);
 			goto fail_detach;
 		}
 	}
