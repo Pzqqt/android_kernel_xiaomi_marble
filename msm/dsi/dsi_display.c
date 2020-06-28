@@ -495,17 +495,23 @@ static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 
 	display->aspace = msm_gem_smmu_address_space_get(
 			display->drm_dev, MSM_SMMU_DOMAIN_UNSECURE);
-	if (!display->aspace) {
-		DSI_ERR("failed to get aspace\n");
-		rc = -EINVAL;
+
+	if (PTR_ERR(display->aspace) == -ENODEV) {
+		display->aspace = NULL;
+		DSI_DEBUG("IOMMU not present, relying on VRAM\n");
+	} else if (IS_ERR_OR_NULL(display->aspace)) {
+		rc = PTR_ERR(display->aspace);
+		display->aspace = NULL;
+		DSI_ERR("failed to get aspace %d\n", rc);
 		goto free_gem;
-	}
-	/* register to aspace */
-	rc = msm_gem_address_space_register_cb(display->aspace,
-			dsi_display_aspace_cb_locked, (void *)display);
-	if (rc) {
-		DSI_ERR("failed to register callback %d\n", rc);
-		goto free_gem;
+	} else if (display->aspace) {
+		/* register to aspace */
+		rc = msm_gem_address_space_register_cb(display->aspace,
+				dsi_display_aspace_cb_locked, (void *)display);
+		if (rc) {
+			DSI_ERR("failed to register callback %d\n", rc);
+			goto free_gem;
+		}
 	}
 
 	rc = msm_gem_get_iova(display->tx_cmd_buf, display->aspace,

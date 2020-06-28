@@ -514,8 +514,13 @@ static int msm_init_vram(struct drm_device *dev)
 		 * mach-msm:
 		 */
 	} else if (!iommu_present(&platform_bus_type)) {
-		DRM_INFO("using %s VRAM carveout\n", vram);
-		size = memparse(vram, NULL);
+		u32 vram_size;
+
+		ret = of_property_read_u32(dev->dev->of_node,
+					"qcom,vram-size", &vram_size);
+		size = (ret < 0) ? memparse(vram, NULL) : vram_size;
+		DRM_INFO("using 0x%x VRAM carveout\n", size);
+		ret = 0;
 	}
 
 	if (size) {
@@ -1886,21 +1891,26 @@ msm_gem_smmu_address_space_get(struct drm_device *dev,
 	struct msm_drm_private *priv = NULL;
 	struct msm_kms *kms;
 	const struct msm_kms_funcs *funcs;
+	struct msm_gem_address_space *aspace;
+
+	if (!iommu_present(&platform_bus_type))
+		return ERR_PTR(-ENODEV);
 
 	if ((!dev) || (!dev->dev_private))
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
 	priv = dev->dev_private;
 	kms = priv->kms;
 	if (!kms)
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
 	funcs = kms->funcs;
 
 	if ((!funcs) || (!funcs->get_address_space))
-		return NULL;
+		return ERR_PTR(-EINVAL);
 
-	return funcs->get_address_space(priv->kms, domain);
+	aspace = funcs->get_address_space(priv->kms, domain);
+	return aspace ? aspace : ERR_PTR(-EINVAL);
 }
 
 int msm_get_mixer_count(struct msm_drm_private *priv,
