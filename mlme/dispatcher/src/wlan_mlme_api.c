@@ -3599,6 +3599,8 @@ char *mlme_get_roam_trigger_str(uint32_t roam_scan_trigger)
 		return "STA KICKOUT";
 	case WMI_ROAM_TRIGGER_REASON_ESS_RSSI:
 		return "ESS RSSI";
+	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
+		return "WTC BTM";
 	case WMI_ROAM_TRIGGER_REASON_NONE:
 		return "NONE";
 	default:
@@ -3815,6 +3817,8 @@ char *mlme_get_sub_reason_str(uint32_t sub_reason)
 		return "LOW RSSI PERIODIC SCAN";
 	case WMI_ROAM_TRIGGER_SUB_REASON_CU_PERIODIC:
 		return "CU PERIODIC SCAN";
+	case WMI_ROAM_TRIGGER_SUB_REASCON_PERIODIC_TIMER_AFTER_INACTIVITY:
+		return "PERIODIC TIMER AFTER INACTIVITY";
 	default:
 		return "NONE";
 	}

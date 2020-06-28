@@ -24,8 +24,33 @@
 #include "wlan_vdev_mlme_api.h"
 #include "wlan_mlme_main.h"
 #include "wlan_policy_mgr_api.h"
+#include <wmi_unified_priv.h>
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
+				  struct roam_btm_response_data *dst,
+				  uint8_t idx)
+{
+	if (wmi->ops->extract_roam_btm_response_stats)
+		return wmi->ops->extract_roam_btm_response_stats(wmi, evt_buf,
+								 dst, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
+				       struct roam_initial_data *dst,
+				       uint8_t idx)
+{
+	if (wmi->ops->extract_roam_initial_info)
+		return wmi->ops->extract_roam_initial_info(wmi, evt_buf,
+							   dst, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					uint8_t vdev_id, bool pcl_per_vdev)
 {

@@ -30,6 +30,34 @@
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
+ * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
+				  struct roam_btm_response_data *dst,
+				  uint8_t idx);
+
+/**
+ * wlan_cm_roam_extract_roam_initial_info() - Extract Roam Initial stats
+ * @wmi:       wmi handle
+ * @evt_buf:   Pointer to the event buffer
+ * @dst:       Pointer to destination structure to fill data
+ * @idx:       TLV id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
+				       struct roam_initial_data *dst,
+				       uint8_t idx);
+
+/**
  * wlan_cm_roam_activate_pcl_per_vdev  - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
@@ -114,5 +142,22 @@ static inline void
 wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 					      struct scan_filter *filter)
 {}
+
+static inline QDF_STATUS
+wlan_cm_roam_extract_btm_response(wmi_unified_t wmi, void *evt_buf,
+				  struct roam_btm_response_data *dst,
+				  uint8_t idx)
+{
+	return true;
+}
+
+static inline QDF_STATUS
+wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
+				       struct roam_initial_data *dst,
+				       uint8_t idx)
+{
+	return true;
+}
+
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */

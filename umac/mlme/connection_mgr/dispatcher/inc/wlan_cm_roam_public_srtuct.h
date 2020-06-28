@@ -21,9 +21,10 @@
 #ifndef CM_ROAM_PUBLIC_STRUCT_H__
 #define CM_ROAM_PUBLIC_STRUCT_H__
 
-#include "wlan_policy_mgr_public_struct.h"
 #include "wlan_objmgr_cmn.h"
 #include "reg_services_public_struct.h"
+#include "wmi_unified_param.h"
+#include "wmi_unified_sta_param.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
@@ -47,6 +48,36 @@ enum roam_offload_state {
 	WLAN_ROAM_RSO_STOPPED,
 	WLAN_ROAMING_IN_PROG,
 	WLAN_ROAM_SYNCH_IN_PROG,
+};
+
+/**
+ *  struct roam_btm_response_data - BTM response related data
+ *  @present:       Flag to check if the roam btm_rsp tlv is present
+ *  @btm_status:    Btm request status
+ *  @target_bssid:  AP MAC address
+ *  @vsie_reason:   Vsie_reason value
+ */
+struct roam_btm_response_data {
+	bool present;
+	uint32_t btm_status;
+	struct qdf_mac_addr target_bssid;
+	uint32_t vsie_reason;
+};
+
+/**
+ *  struct roam_initial_data - Roam initial related data
+ *  @present:                Flag to check if the roam btm_rsp tlv is present
+ *  @roam_full_scan_count:   Roam full scan count
+ *  @rssi_th:                RSSI threhold
+ *  @cu_th:                  Channel utilization threhold
+ *  @fw_cancel_timer_bitmap: FW timers, which are getting cancelled
+ */
+struct roam_initial_data {
+	bool present;
+	uint32_t roam_full_scan_count;
+	uint32_t rssi_th;
+	uint32_t cu_th;
+	uint32_t fw_cancel_timer_bitmap;
 };
 
 /**
