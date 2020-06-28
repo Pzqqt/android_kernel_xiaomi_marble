@@ -2289,12 +2289,16 @@ struct wlan_mlme_sae_single_pmk {
  * @scan:               Roam scan related data structure.
  * @result:             Roam result parameters.
  * @data_11kv:          Neighbor report/BTM parameters.
+ * @btm_rsp:            BTM response information
+ * @roam_init_info:     Roam initial info
  */
 struct mlme_roam_debug_info {
 	struct wmi_roam_trigger_info trigger;
 	struct wmi_roam_scan_data scan;
 	struct wmi_roam_result result;
 	struct wmi_neighbor_report_data data_11kv;
+	struct roam_btm_response_data btm_rsp;
+	struct roam_initial_data roam_init_info;
 };
 
 /**

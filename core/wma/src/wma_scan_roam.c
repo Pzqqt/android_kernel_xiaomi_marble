@@ -81,7 +81,7 @@
 #include <cdp_txrx_mon.h>
 #include <cdp_txrx_ctrl.h>
 #include "wlan_blm_api.h"
-
+#include "wlan_cm_roam_api.h"
 #ifdef FEATURE_WLAN_DIAG_SUPPORT    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -3488,6 +3488,43 @@ wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
 }
 
 /**
+ * wma_rso_print_btm_rsp_info - BTM RSP related details
+ * @data:    Pointer to the btm rsp data
+ * @vdev_id: vdev id
+ *
+ * Prints the vdev, btm status, target_bssid and vsie reason
+ *
+ * Return: None
+ */
+static void
+wma_rso_print_btm_rsp_info(struct roam_btm_response_data *data,
+			   uint8_t vdev_id)
+{
+	wma_info("[BTM RSP]: VDEV[%d], Status: %d, VSIE reason: %d, BSSID: %pM",
+		 vdev_id, data->btm_status, data->vsie_reason,
+		 data->target_bssid.bytes);
+}
+
+/**
+ * wma_rso_print_roam_initial_info - Roaming related initial details
+ * @data:    Pointer to the btm rsp data
+ * @vdev_id: vdev id
+ *
+ * Prints the vdev, roam_full_scan_count, channel and rssi
+ * utilization threhold and timer
+ *
+ * Return: None
+ */
+static void
+wma_rso_print_roam_initial_info(struct roam_initial_data *data,
+				uint8_t vdev_id)
+{
+	wma_info("[ROAM INIT INFO]: VDEV[%d], roam_full_scan_count: %d, rssi_th: %d, cu_th: %d, fw_cancel_timer_bitmap: %d",
+		 vdev_id, data->roam_full_scan_count, data->rssi_th,
+		 data->cu_th, data->fw_cancel_timer_bitmap);
+}
+
+/**
  * wma_log_roam_scan_candidates  - Print roam scan candidate AP info
  * @ap:           Pointer to the candidate AP list
  * @num_entries:  Number of candidate APs
@@ -3770,6 +3807,22 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 		goto err;
 	}
 
+	rem_len -= param_buf->num_roam_neighbor_report_chan_info *
+			sizeof(wmi_roam_neighbor_report_channel_info);
+	if (rem_len < param_buf->num_roam_btm_response_info *
+	    sizeof(wmi_roam_btm_response_info)) {
+		wma_err_rl("Invalid btm rsp data");
+		goto err;
+	}
+
+	rem_len -= param_buf->num_roam_btm_response_info *
+			sizeof(wmi_roam_btm_response_info);
+	if (rem_len < param_buf->num_roam_initial_info *
+	    sizeof(wmi_roam_initial_info)) {
+		wma_err_rl("Invalid Initial roam info");
+		goto err;
+	}
+
 	if (!num_tlv) {
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
 		if (!roam_info)
@@ -3836,6 +3889,29 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 			return -EINVAL;
 		}
 
+		/* BTM resp info */
+		status = wlan_cm_roam_extract_btm_response(wma->wmi_handle,
+							   event,
+							   &roam_info->btm_rsp,
+							   i);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wma_err("%s:Roam btm rsp stats extract fail vdev %d",
+				__func__, vdev_id);
+			qdf_mem_free(roam_info);
+			return -EINVAL;
+		}
+
+		/* Initial Roam info */
+		status = wlan_cm_roam_extract_roam_initial_info(
+				wma->wmi_handle, event,
+				&roam_info->roam_init_info, i);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			wma_err("%s:Initial roam stats extract fail vdev %d",
+				__func__, vdev_id);
+			qdf_mem_free(roam_info);
+			return -EINVAL;
+		}
+
 		/* BTM req/resp or Neighbor report/response info */
 		status = wmi_unified_extract_roam_11kv_stats(
 				wma->wmi_handle, event,
@@ -3863,6 +3939,14 @@ int wma_roam_stats_event_handler(WMA_HANDLE handle, uint8_t *event,
 
 		if (roam_info->data_11kv.present)
 			wma_rso_print_11kv_info(&roam_info->data_11kv, vdev_id);
+
+		if (roam_info->btm_rsp.present)
+			wma_rso_print_btm_rsp_info(&roam_info->btm_rsp,
+						   vdev_id);
+
+		if (roam_info->roam_init_info.present)
+			wma_rso_print_roam_initial_info(
+					&roam_info->roam_init_info, vdev_id);
 
 		qdf_mem_free(roam_info);
 	}

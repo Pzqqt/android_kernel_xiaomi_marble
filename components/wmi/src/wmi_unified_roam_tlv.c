@@ -988,9 +988,84 @@ send_vdev_set_pcl_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_roam_btm_response_stats_tlv() - Extract the btm rsp stats
+ * from the WMI_ROAM_STATS_EVENTID
+ * @wmi_handle: wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        TLV id
+ */
+static QDF_STATUS
+extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				    struct roam_btm_response_data *dst,
+				    uint8_t idx)
+{
+	WMI_ROAM_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_roam_btm_response_info *src_data = NULL;
+
+	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
+
+	if (!param_buf || !param_buf->roam_btm_response_info ||
+	    !param_buf->num_roam_btm_response_info ||
+	    idx >= param_buf->num_roam_btm_response_info) {
+		WMI_LOGD("%s: Empty btm response param buf", __func__);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	src_data = &param_buf->roam_btm_response_info[idx];
+
+	dst->present = true;
+	dst->btm_status = src_data->btm_status;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->target_bssid,
+				   dst->target_bssid.bytes);
+	dst->vsie_reason = src_data->vsie_reason;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_roam_initial_info_tlv() - Extract the roam initial info
+ * from the WMI_ROAM_STATS_EVENTID
+ * @wmi_handle: wmi handle
+ * @evt_buf:    Pointer to the event buffer
+ * @dst:        Pointer to destination structure to fill data
+ * @idx:        TLV id
+ */
+static QDF_STATUS
+extract_roam_initial_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			      struct roam_initial_data *dst, uint8_t idx)
+{
+	WMI_ROAM_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_roam_initial_info *src_data = NULL;
+
+	param_buf = (WMI_ROAM_STATS_EVENTID_param_tlvs *)evt_buf;
+
+	if (!param_buf || !param_buf->roam_initial_info ||
+	    !param_buf->num_roam_initial_info ||
+	    idx >= param_buf->num_roam_initial_info) {
+		WMI_LOGD("%s: Empty roam_initial_info param buf", __func__);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	src_data = &param_buf->roam_initial_info[idx];
+
+	dst->present = true;
+	dst->roam_full_scan_count = src_data->roam_full_scan_count;
+	dst->rssi_th = src_data->rssi_th;
+	dst->cu_th = src_data->cu_th;
+	dst->fw_cancel_timer_bitmap = src_data->timer_canceled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
+
+	ops->extract_roam_btm_response_stats =
+				extract_roam_btm_response_stats_tlv;
+	ops->extract_roam_initial_info = extract_roam_initial_info_tlv;
 
 	ops->send_set_ric_req_cmd = send_set_ric_req_cmd_tlv;
 	ops->send_process_roam_synch_complete_cmd =
@@ -998,6 +1073,22 @@ void wmi_roam_offload_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_roam_invoke_cmd = send_roam_invoke_cmd_tlv;
 	ops->send_vdev_set_pcl_cmd = send_vdev_set_pcl_cmd_tlv;
 }
+#else
+static inline QDF_STATUS
+extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+				    struct roam_btm_response_data *dst,
+				    uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+extract_roam_initial_info_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			      struct roam_initial_data *dst, uint8_t idx)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)

@@ -22,6 +22,7 @@
 #define _WMI_UNIFIED_ROAM_API_H_
 
 #include <wmi_unified_roam_param.h>
+#include <wlan_cm_roam_public_srtuct.h>
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
