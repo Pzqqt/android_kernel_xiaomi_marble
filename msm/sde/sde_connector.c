@@ -2511,14 +2511,14 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 		if (sde_kms->catalog->has_qsync && display_info->qsync_min_fps)
 			msm_property_install_enum(&c_conn->property_info,
 					"qsync_mode", 0, 0, e_qsync_mode,
-					ARRAY_SIZE(e_qsync_mode),
+					ARRAY_SIZE(e_qsync_mode), 0,
 					CONNECTOR_PROP_QSYNC_MODE);
 
 		if (display_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE)
 			msm_property_install_enum(&c_conn->property_info,
 				"frame_trigger_mode", 0, 0,
 				e_frame_trigger_mode,
-				ARRAY_SIZE(e_frame_trigger_mode),
+				ARRAY_SIZE(e_frame_trigger_mode), 0,
 				CONNECTOR_PROP_CMD_FRAME_TRIGGER_MODE);
 
 		if (sde_kms->catalog->has_demura) {
@@ -2554,15 +2554,15 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 	/* enum/bitmask properties */
 	msm_property_install_enum(&c_conn->property_info, "topology_name",
 			DRM_MODE_PROP_IMMUTABLE, 0, e_topology_name,
-			ARRAY_SIZE(e_topology_name),
+			ARRAY_SIZE(e_topology_name), 0,
 			CONNECTOR_PROP_TOPOLOGY_NAME);
 	msm_property_install_enum(&c_conn->property_info, "topology_control",
 			0, 1, e_topology_control,
-			ARRAY_SIZE(e_topology_control),
+			ARRAY_SIZE(e_topology_control), 0,
 			CONNECTOR_PROP_TOPOLOGY_CONTROL);
 	msm_property_install_enum(&c_conn->property_info, "LP",
 			0, 0, e_power_mode,
-			ARRAY_SIZE(e_power_mode),
+			ARRAY_SIZE(e_power_mode), 0,
 			CONNECTOR_PROP_LP);
 
 	return 0;

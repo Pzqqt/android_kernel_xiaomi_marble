@@ -3715,7 +3715,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	else
 		msm_property_install_enum(&psde->property_info,
 				"multirect_mode", 0x0, 0, e_multirect_mode,
-				ARRAY_SIZE(e_multirect_mode),
+				ARRAY_SIZE(e_multirect_mode), 0,
 				PLANE_PROP_MULTIRECT_MODE);
 
 	if (psde->features & BIT(SDE_SSPP_EXCL_RECT))
@@ -3725,10 +3725,11 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	sde_plane_rot_install_properties(plane, catalog);
 
 	msm_property_install_enum(&psde->property_info, "blend_op", 0x0, 0,
-		e_blend_op, ARRAY_SIZE(e_blend_op), PLANE_PROP_BLEND_OP);
+		e_blend_op, ARRAY_SIZE(e_blend_op), 0, PLANE_PROP_BLEND_OP);
 
 	msm_property_install_enum(&psde->property_info, "src_config", 0x0, 1,
-		e_src_config, ARRAY_SIZE(e_src_config), PLANE_PROP_SRC_CONFIG);
+		e_src_config, ARRAY_SIZE(e_src_config), 0,
+		PLANE_PROP_SRC_CONFIG);
 
 	if (psde->pipe_hw->ops.setup_solidfill)
 		msm_property_install_range(&psde->property_info, "color_fill",
@@ -3754,7 +3755,7 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 
 	msm_property_install_enum(&psde->property_info, "fb_translation_mode",
 			0x0, 0, e_fb_translation_mode,
-			ARRAY_SIZE(e_fb_translation_mode),
+			ARRAY_SIZE(e_fb_translation_mode), 0,
 			PLANE_PROP_FB_TRANSLATION_MODE);
 
 	kfree(info);

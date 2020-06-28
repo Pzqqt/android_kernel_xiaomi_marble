@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #include "msm_prop.h"
@@ -203,7 +203,7 @@ void msm_property_install_volatile_range(struct msm_property_info *info,
 void msm_property_install_enum(struct msm_property_info *info,
 		const char *name, int flags, int is_bitmask,
 		const struct drm_prop_enum_list *values, int num_values,
-		uint32_t property_idx)
+		u32 init_idx, uint32_t property_idx)
 {
 	struct drm_property **prop;
 
@@ -239,10 +239,10 @@ void msm_property_install_enum(struct msm_property_info *info,
 		info->property_data[property_idx].default_value = 0;
 		info->property_data[property_idx].force_dirty = false;
 
-		/* select first defined value for enums */
-		if (!is_bitmask)
+		/* initialize with the given idx if valid */
+		if (!is_bitmask && init_idx && (init_idx < num_values))
 			info->property_data[property_idx].default_value =
-				values->type;
+				values[init_idx].type;
 
 		/* always attach property, if created */
 		if (*prop) {

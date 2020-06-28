@@ -5277,13 +5277,13 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 	if (catalog->has_idle_pc)
 		msm_property_install_enum(&sde_crtc->property_info,
 			"idle_pc_state", 0x0, 0, e_idle_pc_state,
-			ARRAY_SIZE(e_idle_pc_state),
+			ARRAY_SIZE(e_idle_pc_state), 0,
 			CRTC_PROP_IDLE_PC_STATE);
 
 	if (catalog->has_cwb_support)
 		msm_property_install_enum(&sde_crtc->property_info,
 				"capture_mode", 0, 0, e_cwb_data_points,
-				ARRAY_SIZE(e_cwb_data_points),
+				ARRAY_SIZE(e_cwb_data_points), 0,
 				CRTC_PROP_CAPTURE_OUTPUT);
 
 	msm_property_install_volatile_range(&sde_crtc->property_info,
@@ -5291,12 +5291,12 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 
 	msm_property_install_enum(&sde_crtc->property_info, "security_level",
 			0x0, 0, e_secure_level,
-			ARRAY_SIZE(e_secure_level),
+			ARRAY_SIZE(e_secure_level), 0,
 			CRTC_PROP_SECURITY_LEVEL);
 
 	msm_property_install_enum(&sde_crtc->property_info, "cache_state",
 			0x0, 0, e_cache_state,
-			ARRAY_SIZE(e_cache_state),
+			ARRAY_SIZE(e_cache_state), 0,
 			CRTC_PROP_CACHE_STATE);
 
 	if (catalog->has_dim_layer) {

@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _MSM_PROP_H_
@@ -250,6 +250,7 @@ void msm_property_install_volatile_range(struct msm_property_info *info,
  *              enumeration one
  * @values: Array of allowable enumeration/bitmask values
  * @num_values: Size of values array
+ * @init_idx: index of the values array entry to initialize the property
  * @property_idx: Property index
  */
 void msm_property_install_enum(struct msm_property_info *info,
@@ -258,6 +259,7 @@ void msm_property_install_enum(struct msm_property_info *info,
 		int is_bitmask,
 		const struct drm_prop_enum_list *values,
 		int num_values,
+		u32 init_idx,
 		uint32_t property_idx);
 
 /**

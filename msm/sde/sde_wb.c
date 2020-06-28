@@ -443,7 +443,7 @@ int sde_wb_connector_post_init(struct drm_connector *connector, void *display)
 			"fb_translation_mode",
 			0x0,
 			0, e_fb_translation_mode,
-			ARRAY_SIZE(e_fb_translation_mode),
+			ARRAY_SIZE(e_fb_translation_mode), 0,
 			CONNECTOR_PROP_FB_TRANSLATION_MODE);
 
 	return 0;
