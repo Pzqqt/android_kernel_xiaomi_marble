@@ -81,6 +81,10 @@
 #include "wlan_spectral_public_structs.h"
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#include <wlan_cm_roam_public_srtuct.h>
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -326,6 +330,17 @@ struct wmi_wq_dbg_info {
 };
 
 struct wmi_ops {
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS
+(*extract_roam_btm_response_stats)(wmi_unified_t wmi_handle, void *evt_buf,
+				   struct roam_btm_response_data *dst,
+				   uint8_t idx);
+
+QDF_STATUS
+(*extract_roam_initial_info)(wmi_unified_t wmi_handle, void *evt_buf,
+			     struct roam_initial_data *dst, uint8_t idx);
+#endif
+
 QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[QDF_MAC_ADDR_SIZE],
 				 struct vdev_create_params *param);
