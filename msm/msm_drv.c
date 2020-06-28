@@ -365,15 +365,7 @@ static int vblank_ctrl_queue_work(struct msm_drm_private *priv,
 	cur_work->crtc_id = crtc_id;
 	cur_work->enable = enable;
 	cur_work->priv = priv;
-
-	/* During modeset scenario, vblank request is queued to
-	 * display thread to avoid enabling irq resulting in
-	 * vblank refcount mismatch
-	 */
-	if (crtc->state && drm_atomic_crtc_needs_modeset(crtc->state))
-		worker = &priv->disp_thread[crtc_id].worker;
-	else
-		worker = &priv->event_thread[crtc_id].worker;
+	worker = &priv->event_thread[crtc_id].worker;
 
 	kthread_queue_work(worker, &cur_work->work);
 	return 0;
