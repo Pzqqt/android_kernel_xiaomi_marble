@@ -719,9 +719,11 @@ typedef struct {
      * BIT [15: 8] - RSSI of the aborted OBSS frame (in dB w.r.t. noise floor)
      *               by which SRG/Non-SRG based spatial reuse opportunity
      *               was created.
-     * BIT [31:16] - reserved
+     * BIT [16:16] - PPDU transmitted using PSR opportunity
+     * BIT [31:17] - reserved
      */
     union {
+        A_UINT32 reserved__psr_tx__aborted_obss_rssi__srg_tx__non_srg_tx___bss_color_id;
         A_UINT32 reserved__aborted_obss_rssi__srg_tx__non_srg_tx___bss_color_id;
         A_UINT32 reserved__bss_color_id;
         struct {
@@ -729,7 +731,8 @@ typedef struct {
                      non_srg_tx:         1,
                      srg_tx:             1,
                      aborted_obss_rssi:  8,
-                     reserved2:         16;
+                     psr_tx:             1,
+                     reserved2:         15;
         };
     };
 } htt_ppdu_stats_common_tlv;

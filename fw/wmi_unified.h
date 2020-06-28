@@ -6844,6 +6844,13 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SET_PREAM_PUNCT_BW,
 
+    /*
+     * Parameter used to set the Margin dB value to be included for calculating
+     * the spatial reuse value in common info field of the UL Trigger frame.
+     * Accepted value as per Spec are 0 to 5 dB (inclusive).
+     */
+    WMI_PDEV_PARAM_SR_TRIGGER_MARGIN,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
