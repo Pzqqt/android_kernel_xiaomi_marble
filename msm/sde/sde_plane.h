@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -110,6 +110,7 @@ enum sde_plane_sclcheck_state {
  * @rotation:		rotation cache state
  * @static_cache_state:	plane cache state for static image
  * @cdp_cfg:	CDP configuration
+ * @cont_splash_populated: State was populated as part of cont. splash
  */
 struct sde_plane_state {
 	struct drm_plane_state base;
@@ -141,6 +142,8 @@ struct sde_plane_state {
 	uint32_t static_cache_state;
 
 	struct sde_hw_pipe_cdp_cfg cdp_cfg;
+
+	bool cont_splash_populated;
 };
 
 /**

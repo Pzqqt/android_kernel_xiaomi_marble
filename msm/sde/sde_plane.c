@@ -4294,6 +4294,12 @@ sde_plane_duplicate_state(struct drm_plane *plane)
 
 	old_state = to_sde_plane_state(plane->state);
 	psde = to_sde_plane(plane);
+
+	if (old_state->cont_splash_populated) {
+		plane->state->crtc = NULL;
+		old_state->cont_splash_populated = false;
+	}
+
 	pstate = msm_property_alloc_state(&psde->property_info);
 	if (!pstate) {
 		SDE_ERROR_PLANE(psde, "failed to allocate state\n");

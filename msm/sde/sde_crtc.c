@@ -4005,6 +4005,16 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 
 	sde_crtc = to_sde_crtc(crtc);
 	old_cstate = to_sde_crtc_state(crtc->state);
+
+	if (old_cstate->cont_splash_populated) {
+		crtc->state->plane_mask = 0;
+		crtc->state->connector_mask = 0;
+		crtc->state->encoder_mask = 0;
+
+		crtc->state->enable = false;
+		old_cstate->cont_splash_populated = false;
+	}
+
 	cstate = msm_property_alloc_state(&sde_crtc->property_info);
 	if (!cstate) {
 		SDE_ERROR("failed to allocate state\n");

@@ -2889,6 +2889,7 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 	struct msm_drm_private *priv;
 	struct drm_plane *plane;
 	struct sde_splash_mem *splash;
+	struct sde_plane_state *pstate;
 	enum sde_sspp plane_id;
 	bool is_virtual;
 	int i, j;
@@ -2918,6 +2919,10 @@ static int _sde_kms_update_planes_for_cont_splash(struct sde_kms *sde_kms,
 						plane_id, crtc->base.id);
 			}
 
+			plane->state->crtc = crtc;
+			crtc->state->plane_mask |= drm_plane_mask(plane);
+			pstate = to_sde_plane_state(plane->state);
+			pstate->cont_splash_populated = true;
 			SDE_DEBUG("set crtc:%d for plane:%d rect:%d\n",
 					crtc->base.id, plane_id, is_virtual);
 		}
@@ -3115,6 +3120,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 
 	/* dsi */
 	for (i = 0; i < sde_kms->dsi_display_count; ++i) {
+		struct sde_crtc_state *cstate;
+		struct sde_connector_state *conn_state;
+
 		display = sde_kms->dsi_displays[i];
 		dsi_display = (struct dsi_display *)display;
 		splash_display = &sde_kms->splash_data.splash_display[i];
@@ -3189,7 +3197,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 		}
 		mutex_unlock(&dev->mode_config.mutex);
 
-		crtc->state->encoder_mask = (1 << drm_encoder_index(encoder));
+		crtc->state->encoder_mask = drm_encoder_mask(encoder);
+		crtc->state->connector_mask = drm_connector_mask(connector);
+		connector->state->crtc = crtc;
 
 		drm_mode = _sde_kms_get_splash_mode(sde_kms, connector, state);
 		if (!drm_mode) {
@@ -3211,6 +3221,8 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 		}
 		drm_mode_copy(&crtc->state->adjusted_mode, drm_mode);
 		drm_mode_copy(&crtc->mode, drm_mode);
+		cstate = to_sde_crtc_state(crtc->state);
+		cstate->cont_splash_populated = true;
 
 		/* Update encoder structure */
 		sde_encoder_update_caps_for_cont_splash(encoder,
@@ -3221,6 +3233,9 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 		sde_conn = to_sde_connector(connector);
 		if (sde_conn && sde_conn->ops.cont_splash_config)
 			sde_conn->ops.cont_splash_config(sde_conn->display);
+
+		conn_state = to_sde_connector_state(connector->state);
+		conn_state->cont_splash_populated = true;
 
 		rc = _sde_kms_update_planes_for_cont_splash(sde_kms,
 				splash_display, crtc);

@@ -618,6 +618,7 @@ struct sde_connector {
  * @msm_mode: struct containing drm_mode and downstream private variables
  * @old_topology_name: topology of previous atomic state. remove this in later
  *	kernel versions which provide drm_atomic_state old_state pointers
+ * @cont_splash_populated: State was populated as part of cont. splash
  */
 struct sde_connector_state {
 	struct drm_connector_state base;
@@ -632,6 +633,8 @@ struct sde_connector_state {
 	struct sde_connector_dyn_hdr_metadata dyn_hdr_meta;
 	struct msm_display_mode msm_mode;
 	enum sde_rm_topology_name old_topology_name;
+
+	bool cont_splash_populated;
 };
 
 /**

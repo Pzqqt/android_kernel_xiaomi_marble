@@ -431,6 +431,7 @@ enum sde_crtc_dirty_flags {
  * @cp_prop_values: array of cp property values
  * @cp_dirty_list: array tracking features that are dirty
  * @cp_range_payload: array storing state user_data passed via range props
+ * @cont_splash_populated: State was populated as part of cont. splash
  */
 struct sde_crtc_state {
 	struct drm_crtc_state base;
@@ -468,6 +469,7 @@ struct sde_crtc_state {
 	uint32_t cp_dirty_list[SDE_CP_CRTC_MAX_FEATURES];
 	struct sde_cp_crtc_range_prop_payload
 		cp_range_payload[SDE_CP_CRTC_MAX_FEATURES];
+	bool cont_splash_populated;
 };
 
 enum sde_crtc_irq_state {

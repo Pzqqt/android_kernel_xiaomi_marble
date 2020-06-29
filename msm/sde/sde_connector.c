@@ -1166,6 +1166,11 @@ sde_connector_atomic_duplicate_state(struct drm_connector *connector)
 
 	c_conn = to_sde_connector(connector);
 	c_oldstate = to_sde_connector_state(connector->state);
+	if (c_oldstate->cont_splash_populated) {
+		connector->state->crtc = NULL;
+		c_oldstate->cont_splash_populated = false;
+	}
+
 	c_state = msm_property_alloc_state(&c_conn->property_info);
 	if (!c_state) {
 		SDE_ERROR("state alloc failed\n");
