@@ -115,7 +115,6 @@ struct swr_ctrl_platform_data {
 	int (*core_vote)(void *handle, bool enable);
 	int (*reg_irq)(void *handle, irqreturn_t(*irq_handler)(int irq,
 			void *data), void *swr_handle, int type);
-	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 struct swr_mstr_ctrl {
@@ -149,7 +148,6 @@ struct swr_mstr_ctrl {
 	int (*core_vote)(void *handle, bool enable);
 	int (*reg_irq)(void *handle, irqreturn_t(*irq_handler)(int irq,
 			void *data), void *swr_handle, int type);
-	int (*pinctrl_setup)(void *handle, bool enable);
 	int irq;
 	int wake_irq;
 	int version;
@@ -175,10 +173,8 @@ struct swr_mstr_ctrl {
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;
 	u32 ipc_wakeup;
-	u32 dmic_sva;
 	bool dev_up;
 	bool ipc_wakeup_triggered;
-	bool aud_core_err;
 	bool req_clk_switch;
 	struct pm_qos_request pm_qos_req;
 	enum swrm_pm_state pm_state;

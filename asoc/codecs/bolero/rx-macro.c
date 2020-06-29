@@ -378,7 +378,6 @@ struct rx_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
-	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 enum {
@@ -4105,7 +4104,6 @@ static int rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.clk = rx_swrm_clock;
 	rx_priv->swr_plat_data.core_vote = rx_macro_core_vote;
 	rx_priv->swr_plat_data.handle_irq = NULL;
-	rx_priv->swr_plat_data.pinctrl_setup = NULL;
 
 	ret = of_property_read_u8_array(pdev->dev.of_node,
 				"qcom,rx-bcl-pmic-params", bcl_pmic_params,
