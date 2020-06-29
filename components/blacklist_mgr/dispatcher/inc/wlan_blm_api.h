@@ -30,19 +30,6 @@
 #include "wlan_blm_core.h"
 
 /**
- * wlan_blm_filter_bssid() - Wrapper API to blm_filter_bssid
- * @pdev: pdev object
- * @scan_list: scan list whose results are to filtered out.
- *
- * This API is a wrapper to blm_filter_bssid.
- */
-static inline QDF_STATUS
-wlan_blm_filter_bssid(struct wlan_objmgr_pdev *pdev, qdf_list_t *scan_list)
-{
-	return blm_filter_bssid(pdev, scan_list);
-}
-
-/**
  * wlan_blm_add_bssid_to_reject_list() - Add BSSID to the specific reject list.
  * @pdev: Pdev object
  * @ap_info: Ap info params such as BSSID, and the type of rejection to be done
@@ -119,11 +106,6 @@ wlan_blm_get_rssi_blacklist_threshold(struct wlan_objmgr_pdev *pdev)
 }
 
 #else
-static inline QDF_STATUS
-wlan_blm_filter_bssid(struct wlan_objmgr_pdev *pdev, qdf_list_t *scan_list)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 static inline QDF_STATUS
 wlan_blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,

@@ -2647,7 +2647,7 @@ static void csr_calculate_scores(struct mac_context *mac_ctx,
 			pcl_lst = NULL;
 		}
 	}
-	wlan_cm_calculate_bss_score(mac_ctx->psoc, pcl_lst, list,
+	wlan_cm_calculate_bss_score(mac_ctx->pdev, pcl_lst, list,
 				    &filter->bssid_hint);
 	if (pcl_lst)
 		qdf_mem_free(pcl_lst);
@@ -2680,11 +2680,8 @@ QDF_STATUS csr_scan_get_result(struct mac_context *mac_ctx,
 		sme_debug("num_entries %d", num_bss);
 	}
 
-	if (num_bss && filter && scoring_required) {
+	if (num_bss && filter && scoring_required)
 		csr_calculate_scores(mac_ctx, filter, list);
-		/* Filter the blacklisted APs and avoided APs */
-		wlan_blm_filter_bssid(pdev, list);
-	}
 
 	if (!list || (list && !qdf_list_size(list))) {
 		sme_debug("scan list empty");

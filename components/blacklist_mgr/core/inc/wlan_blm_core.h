@@ -144,31 +144,6 @@ struct blm_reject_ap {
 };
 
 /**
- * enum blm_bssid_action - action taken by driver for the scan results
- * @BLM_ACTION_NOP: No operation to be taken for the BSSID in the scan list.
- * @BLM_REMOVE_FROM_LIST: Remove the BSSID from the scan list ( Blacklisted APs)
- * @BLM_MOVE_AT_LAST: Attach the Ap at last of the scan list (Avoided Aps)
- */
-enum blm_bssid_action {
-	BLM_ACTION_NOP,
-	BLM_REMOVE_FROM_LIST,
-	BLM_MOVE_AT_LAST,
-};
-
-/**
- * blm_filter_bssid() - Filter out the bad Aps from the scan list.
- * @pdev: Pdev object
- * @scan_list: Scan list from the caller
- *
- * This API will filter out the bad Aps, or add the bad APs at the last
- * of the linked list if the APs are to be avoided.
- *
- * Return: QDF status
- */
-QDF_STATUS
-blm_filter_bssid(struct wlan_objmgr_pdev *pdev, qdf_list_t *scan_list);
-
-/**
  * blm_add_bssid_to_reject_list() - Add BSSID to the specific reject list.
  * @pdev: Pdev object
  * @ap_info: Ap info params such as BSSID, and the type of rejection to be done
