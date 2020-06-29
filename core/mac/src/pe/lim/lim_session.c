@@ -803,6 +803,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		 QDF_MAC_ADDR_ARRAY(session->bssId));
 
 	lim_reset_bcn_probe_filter(mac_ctx, session);
+	lim_sae_auth_cleanup_retry(mac_ctx, session->vdev_id);
 
 	/* Restore default failure timeout */
 	if (session->defaultAuthFailureTimeout) {

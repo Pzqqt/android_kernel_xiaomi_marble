@@ -421,6 +421,17 @@ bool lim_fill_lim_assoc_ind_params(
 		struct pe_session *session_entry);
 
 /**
+ * lim_sae_auth_cleanup_retry() - API to cleanup sae auth frmae stored
+ * and deactivate the timer
+ * @mac_ctx: Pointer to mac context
+ * @vdev_id: vdev id
+ *
+ * Return: none
+ */
+void lim_sae_auth_cleanup_retry(struct mac_context *mac_ctx,
+				uint8_t vdev_id);
+
+/**
  * lim_fill_sme_assoc_ind_params() - Initialize association indication
  * @mac_ctx: Pointer to Global MAC structure
  * @assoc_ind: PE association indication structure
@@ -1219,6 +1230,18 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx);
  */
 void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 				       uint32_t msg_type);
+
+/**
+ * lim_send_frame() - API to send frame
+ * @mac_ctx Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ * @buf: Pointer to SAE auth retry frame
+ * @buf_len: length of frame
+ *
+ * Return: None
+ */
+void lim_send_frame(struct mac_context *mac_ctx, uint8_t vdev_id, uint8_t *buf,
+		    uint16_t buf_len);
 
 /**
  * lim_send_mgmt_frame_tx() - Sends mgmt frame

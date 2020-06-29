@@ -60,6 +60,16 @@ struct wlan_disconnect_info {
 };
 
 /**
+ * struct sae_auth_retry - SAE auth retry Information
+ * @sae_auth_max_retry: Max number of sae auth retries
+ * @sae_auth: SAE auth frame information
+ */
+struct sae_auth_retry {
+	uint8_t sae_auth_max_retry;
+	struct wlan_ies sae_auth;
+};
+
+/**
  * struct peer_mlme_priv_obj - peer MLME component object
  * @last_pn_valid if last PN is valid
  * @last_pn: last pn received
@@ -147,6 +157,7 @@ struct wlan_mlme_roam {
  * @vdev_stop_type: vdev stop type request
  * @roam_off_state: Roam offload state
  * @bigtk_vdev_support: BIGTK feature support for this vdev (SAP)
+ * @sae_auth_retry: SAE auth retry information
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -165,6 +176,7 @@ struct mlme_legacy_priv {
 	uint32_t vdev_stop_type;
 	struct wlan_mlme_roam mlme_roam;
 	bool bigtk_vdev_support;
+	struct sae_auth_retry sae_retry;
 };
 
 /**
@@ -269,6 +281,22 @@ struct wlan_mlme_psoc_ext_obj *mlme_get_psoc_ext_obj_fl(struct wlan_objmgr_psoc
 							*psoc,
 							const char *func,
 							uint32_t line);
+
+/**
+ * mlme_get_sae_auth_retry() - Get sae_auth_retry pointer
+ * @vdev: vdev pointer
+ *
+ * Return: Pointer to struct sae_auth_retry or NULL
+ */
+struct sae_auth_retry *mlme_get_sae_auth_retry(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_free_sae_auth_retry() - Free the SAE auth info
+ * @vdev: vdev pointer
+ *
+ * Return: None
+ */
+void mlme_free_sae_auth_retry(struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_set_self_disconnect_ies() - Set diconnect IEs configured from userspace

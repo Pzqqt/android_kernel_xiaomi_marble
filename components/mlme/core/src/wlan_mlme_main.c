@@ -2253,6 +2253,36 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
+struct sae_auth_retry *mlme_get_sae_auth_retry(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return NULL;
+	}
+
+	return &mlme_priv->sae_retry;
+}
+
+void mlme_free_sae_auth_retry(struct wlan_objmgr_vdev *vdev)
+{
+	struct mlme_legacy_priv *mlme_priv;
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_legacy_err("vdev legacy private object is NULL");
+		return;
+	}
+
+	mlme_priv->sae_retry.sae_auth_max_retry = 0;
+	if (mlme_priv->sae_retry.sae_auth.data)
+		qdf_mem_free(mlme_priv->sae_retry.sae_auth.data);
+	mlme_priv->sae_retry.sae_auth.data = NULL;
+	mlme_priv->sae_retry.sae_auth.len = 0;
+}
+
 void mlme_set_self_disconnect_ies(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_ies *ie)
 {

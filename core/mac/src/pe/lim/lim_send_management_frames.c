@@ -5294,28 +5294,28 @@ error_delba:
 	return qdf_status;
 }
 
+#define WLAN_SAE_AUTH_TIMEOUT 1000
+#define WLAN_SAE_AUTH_RETRY 1
+
 /**
  * lim_tx_mgmt_frame() - Transmits Auth mgmt frame
  * @mac_ctx Pointer to Global MAC structure
- * @mb_msg: Received message info
+ * @vdev_id: vdev id
  * @msg_len: Received message length
  * @packet: Packet to be transmitted
  * @frame: Received frame
  *
  * Return: None
  */
-static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
-	struct sir_mgmt_msg *mb_msg, uint32_t msg_len,
-	void *packet, uint8_t *frame)
+static void lim_tx_mgmt_frame(struct mac_context *mac_ctx, uint8_t vdev_id,
+			      uint32_t msg_len, void *packet, uint8_t *frame)
 {
-	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl)frame;
 	QDF_STATUS qdf_status;
-	uint8_t vdev_id = 0;
 	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
 
-	vdev_id = mb_msg->vdev_id;
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
 		cds_packet_free((void *)packet);
@@ -5349,35 +5349,99 @@ static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
 	}
 }
 
-void lim_send_mgmt_frame_tx(struct mac_context *mac_ctx,
-		struct scheduler_msg *msg)
+static void
+lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
+			  uint8_t *frame, uint32_t frame_len)
 {
-	struct sir_mgmt_msg *mb_msg = (struct sir_mgmt_msg *)msg->bodyptr;
-	uint32_t msg_len;
-	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
-	uint8_t vdev_id;
+	struct pe_session *session;
+	struct sae_auth_retry *sae_retry;
+
+	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!session) {
+		pe_err("session not found for given vdev_id %d",
+		       vdev_id);
+		return;
+	}
+
+	sae_retry = mlme_get_sae_auth_retry(session->vdev);
+	if (!sae_retry) {
+		pe_err("sae retry pointer is NULL for vdev_id %d",
+		       vdev_id);
+		return;
+	}
+
+	if (sae_retry->sae_auth.data)
+		lim_sae_auth_cleanup_retry(mac_ctx, vdev_id);
+
+	sae_retry->sae_auth.data = qdf_mem_malloc(frame_len);
+	if (!sae_retry->sae_auth.data) {
+		pe_err("failed to alloc memory for sae auth");
+		return;
+	}
+
+	pe_debug("SAE auth frame queued vdev_id %d seq_num %d",
+		 vdev_id, mac_ctx->mgmtSeqNum);
+	qdf_mem_copy(sae_retry->sae_auth.data, frame, frame_len);
+	mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
+					session->peSessionId;
+	sae_retry->sae_auth.len = frame_len;
+	sae_retry->sae_auth_max_retry = WLAN_SAE_AUTH_RETRY;
+
+	tx_timer_change(
+		&mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer,
+		SYS_MS_TO_TICKS(WLAN_SAE_AUTH_TIMEOUT), 0);
+	/* Activate Auth Retry timer */
+	if (tx_timer_activate(
+	    &mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer) !=
+	    TX_SUCCESS) {
+		pe_err("failed to start periodic auth retry timer");
+		lim_sae_auth_cleanup_retry(mac_ctx, vdev_id);
+	}
+}
+
+void lim_send_frame(struct mac_context *mac_ctx, uint8_t vdev_id, uint8_t *buf,
+		    uint16_t buf_len)
+{
 	QDF_STATUS qdf_status;
 	uint8_t *frame;
 	void *packet;
-	tpSirMacMgmtHdr mac_hdr;
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl)buf;
+	tpSirMacMgmtHdr mac_hdr = (tpSirMacMgmtHdr)buf;
 
-	msg_len = mb_msg->msg_len - sizeof(*mb_msg);
 	pe_debug("sending fc->type: %d fc->subType: %d",
-		fc->type, fc->subType);
-
-	vdev_id = mb_msg->vdev_id;
-	mac_hdr = (tpSirMacMgmtHdr)mb_msg->data;
+		 fc->type, fc->subType);
 
 	lim_add_mgmt_seq_num(mac_ctx, mac_hdr);
-
-	qdf_status = cds_packet_alloc((uint16_t) msg_len, (void **)&frame,
-				 (void **)&packet);
+	qdf_status = cds_packet_alloc(buf_len, (void **)&frame,
+				      (void **)&packet);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("call to bufAlloc failed for AUTH frame");
 		return;
 	}
 
-	qdf_mem_copy(frame, mb_msg->data, msg_len);
+	qdf_mem_copy(frame, buf, buf_len);
+	lim_tx_mgmt_frame(mac_ctx, vdev_id, buf_len, packet, frame);
+}
 
-	lim_tx_mgmt_frame(mac_ctx, mb_msg, msg_len, packet, frame);
+void lim_send_mgmt_frame_tx(struct mac_context *mac_ctx,
+			    struct scheduler_msg *msg)
+{
+	struct sir_mgmt_msg *mb_msg = (struct sir_mgmt_msg *)msg->bodyptr;
+	uint32_t msg_len;
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl)mb_msg->data;
+	uint8_t vdev_id;
+	uint16_t auth_algo;
+
+	msg_len = mb_msg->msg_len - sizeof(*mb_msg);
+	vdev_id = mb_msg->vdev_id;
+
+	if (fc->subType == SIR_MAC_MGMT_AUTH) {
+		auth_algo = *(uint16_t *)(mb_msg->data +
+					sizeof(tSirMacMgmtHdr));
+		if (auth_algo == eSIR_AUTH_TYPE_SAE)
+			lim_handle_sae_auth_retry(mac_ctx, vdev_id,
+						  mb_msg->data, msg_len);
+	}
+
+	lim_send_frame(mac_ctx, vdev_id, mb_msg->data, msg_len);
 }

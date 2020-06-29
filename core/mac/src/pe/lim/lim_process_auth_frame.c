@@ -338,6 +338,22 @@ static void lim_external_auth_add_pre_auth_node(struct mac_context *mac_ctx,
 	lim_add_pre_auth_node(mac_ctx, auth_node);
 }
 
+void lim_sae_auth_cleanup_retry(struct mac_context *mac_ctx,
+				uint8_t vdev_id)
+{
+	struct pe_session *pe_session;
+
+	pe_session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
+	if (!pe_session) {
+		pe_err("session not found for given vdev_id %d", vdev_id);
+		return;
+	}
+
+	pe_debug("sae auth cleanup for vdev_id %d", vdev_id);
+	lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
+	mlme_free_sae_auth_retry(pe_session->vdev);
+}
+
 /**
  * lim_process_sae_auth_frame()-Process SAE authentication frame
  * @mac_ctx: MAC context
@@ -353,6 +369,7 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 	uint32_t frame_len;
 	uint8_t *body_ptr;
 	enum rxmgmt_flags rx_flags = RXMGMT_FLAG_NONE;
+	struct sae_auth_retry *sae_retry;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -388,6 +405,12 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 						eLIM_MLM_WT_SAE_AUTH_STATE);
 		}
 	}
+
+	sae_retry = mlme_get_sae_auth_retry(pe_session->vdev);
+	if (LIM_IS_STA_ROLE(pe_session) && sae_retry &&
+	    sae_retry->sae_auth.data)
+		lim_sae_auth_cleanup_retry(mac_ctx,
+					   pe_session->vdev_id);
 
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 				    (uint8_t *)mac_hdr,
