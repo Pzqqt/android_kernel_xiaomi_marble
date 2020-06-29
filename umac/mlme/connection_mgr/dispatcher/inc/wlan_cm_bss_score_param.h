@@ -149,8 +149,33 @@ struct pcl_freq_weight_list {
 };
 
 /**
+ * enum cm_blacklist_action - action taken by blacklist manager for the bssid
+ * @CM_BLM_NO_ACTION: No operation to be taken for the BSSID in the scan list.
+ * @CM_BLM_REMOVE: Remove the BSSID from the scan list (AP is blacklisted)
+ * @CM_BLM_AVOID: Add the Ap at last of the scan list (AP to Avoid)
+ */
+enum cm_blacklist_action {
+	CM_BLM_NO_ACTION,
+	CM_BLM_REMOVE,
+	CM_BLM_AVOID,
+};
+
+#ifdef FEATURE_BLACKLIST_MGR
+enum cm_blacklist_action
+wlan_blacklist_action_on_bssid(struct wlan_objmgr_pdev *pdev,
+			       struct scan_cache_entry *entry);
+#else
+static inline enum cm_blacklist_action
+wlan_blacklist_action_on_bssid(struct wlan_objmgr_pdev *pdev,
+			       struct scan_cache_entry *entry)
+{
+	return CM_BLM_NO_ACTION;
+}
+#endif
+
+/**
  * wlan_cm_calculate_bss_score() - calculate bss score for the scan list
- * @psoc: pointer to psoc object
+ * @pdev: pointer to pdev object
  * @pcl_list: pcl list for scoring
  * @scan_list: scan list, contains the input list and after the
  *             func it will have sorted list
@@ -158,7 +183,7 @@ struct pcl_freq_weight_list {
  *
  * Return: void
  */
-void wlan_cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
+void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 				 struct pcl_freq_weight_list *pcl_lst,
 				 qdf_list_t *scan_list,
 				 struct qdf_mac_addr *bssid_hint);
