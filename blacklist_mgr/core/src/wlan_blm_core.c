@@ -25,6 +25,7 @@
 #include <wlan_scan_public_structs.h>
 #include <wlan_scan_utils_api.h>
 #include "wlan_blm_tgt_api.h"
+#include <wlan_cm_bss_score_param.h>
 
 #define SECONDS_TO_MS(params)       (params * 1000)
 #define MINUTES_TO_MS(params)       (SECONDS_TO_MS(params) * 60)
@@ -132,7 +133,7 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 		  blm_entry->reject_ap_type);
 }
 
-static enum blm_bssid_action
+static enum cm_blacklist_action
 blm_prune_old_entries_and_get_action(struct blm_reject_ap *blm_entry,
 				     struct blm_config *cfg,
 				     struct scan_cache_entry *entry,
@@ -149,20 +150,20 @@ blm_prune_old_entries_and_get_action(struct blm_reject_ap *blm_entry,
 		blm_debug("%pM cleared from list", blm_entry->bssid.bytes);
 		qdf_list_remove_node(reject_ap_list, &blm_entry->node);
 		qdf_mem_free(blm_entry);
-		return BLM_ACTION_NOP;
+		return CM_BLM_NO_ACTION;
 	}
 
 	if (BLM_IS_AP_IN_BLACKLIST(blm_entry))
-		return BLM_REMOVE_FROM_LIST;
+		return CM_BLM_REMOVE;
 
 	if (BLM_IS_AP_IN_AVOIDLIST(blm_entry))
-		return BLM_MOVE_AT_LAST;
+		return CM_BLM_AVOID;
 
-	return BLM_ACTION_NOP;
+	return CM_BLM_NO_ACTION;
 
 }
 
-static enum blm_bssid_action
+static enum cm_blacklist_action
 blm_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 		    struct scan_cache_entry *entry)
 {
@@ -172,19 +173,19 @@ blm_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 	struct blm_reject_ap *blm_entry = NULL;
 	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
 	QDF_STATUS status;
-	enum blm_bssid_action action = BLM_ACTION_NOP;
+	enum cm_blacklist_action action = CM_BLM_NO_ACTION;
 
 	blm_ctx = blm_get_pdev_obj(pdev);
 	blm_psoc_obj = blm_get_psoc_obj(wlan_pdev_get_psoc(pdev));
 	if (!blm_ctx || !blm_psoc_obj) {
 		blm_err("blm_ctx or blm_psoc_obj is NULL");
-		return BLM_ACTION_NOP;
+		return CM_BLM_NO_ACTION;
 	}
 
 	status = qdf_mutex_acquire(&blm_ctx->reject_ap_list_lock);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		blm_err("failed to acquire reject_ap_list_lock");
-		return BLM_ACTION_NOP;
+		return CM_BLM_NO_ACTION;
 	}
 
 	cfg = &blm_psoc_obj->blm_cfg;
@@ -209,64 +210,14 @@ blm_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 	}
 	qdf_mutex_release(&blm_ctx->reject_ap_list_lock);
 
-	return BLM_ACTION_NOP;
+	return CM_BLM_NO_ACTION;
 }
 
-static void
-blm_modify_scan_list(qdf_list_t *scan_list,
-		     struct scan_cache_node *scan_node,
-		     enum blm_bssid_action action)
+enum cm_blacklist_action
+wlan_blacklist_action_on_bssid(struct wlan_objmgr_pdev *pdev,
+			       struct scan_cache_entry *entry)
 {
-	blm_debug("%pM Action %d", scan_node->entry->bssid.bytes, action);
-
-	switch (action) {
-	case BLM_REMOVE_FROM_LIST:
-		qdf_list_remove_node(scan_list, &scan_node->node);
-		util_scan_free_cache_entry(scan_node->entry);
-		qdf_mem_free(scan_node);
-		break;
-
-	case BLM_MOVE_AT_LAST:
-		qdf_list_remove_node(scan_list, &scan_node->node);
-		qdf_list_insert_back(scan_list, &scan_node->node);
-		scan_node->entry->bss_score = 0;
-		break;
-
-	default:
-		break;
-	}
-}
-
-QDF_STATUS
-blm_filter_bssid(struct wlan_objmgr_pdev *pdev, qdf_list_t *scan_list)
-{
-	struct scan_cache_node *scan_node = NULL;
-	uint32_t scan_list_size;
-	enum blm_bssid_action action;
-	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
-
-	if (!scan_list || !qdf_list_size(scan_list)) {
-		blm_debug("Scan list is NULL or No BSSIDs present");
-		return QDF_STATUS_E_EMPTY;
-	}
-
-	scan_list_size = qdf_list_size(scan_list);
-	qdf_list_peek_front(scan_list, &cur_node);
-
-	while (cur_node && scan_list_size) {
-		qdf_list_peek_next(scan_list, cur_node, &next_node);
-
-		scan_node = qdf_container_of(cur_node, struct scan_cache_node,
-					    node);
-		action = blm_action_on_bssid(pdev, scan_node->entry);
-		if (action != BLM_ACTION_NOP)
-			blm_modify_scan_list(scan_list, scan_node, action);
-		cur_node = next_node;
-		next_node = NULL;
-		scan_list_size--;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return blm_action_on_bssid(pdev, entry);
 }
 
 static void
