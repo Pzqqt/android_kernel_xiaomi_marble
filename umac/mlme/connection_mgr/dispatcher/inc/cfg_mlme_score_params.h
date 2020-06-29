@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,8 +18,8 @@
  * DOC: This file contains MLME SCORING related CFG/INI Items.
  */
 
-#ifndef __CFG_MLME_SCORE_PARAMS
-#define __CFG_MLME_SCORE_PARAMS
+#ifndef __CFG_MLME_SCORE_PARAMS_H
+#define __CFG_MLME_SCORE_PARAMS_H
 
 /*
  * <ini>
