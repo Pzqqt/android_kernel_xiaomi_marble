@@ -881,8 +881,16 @@ static int msm_lsm_dereg_model(struct snd_pcm_substream *substream,
 		}
 
 		if (sm->model_id == p_info->model_id) {
-			rc = q6lsm_set_one_param(client, p_info, NULL,
-						 LSM_DEREG_MULTI_SND_MODEL);
+			if (p_info->param_size != sizeof(p_info->model_id)) {
+				rc = -EINVAL;
+				pr_err("%s: %s failed, p_info->param_size is invalid: %d\n",
+				       __func__,  "LSM_DEREG_MULTI_SND_MODEL",
+				       p_info->param_size);
+			} else {
+				rc = q6lsm_set_one_param(client, p_info, NULL,
+							 LSM_DEREG_MULTI_SND_MODEL);
+			}
+
 			if (rc)
 				dev_err(rtd->dev,
 					"%s: Failed to deregister snd_model %d, err = %d\n",
