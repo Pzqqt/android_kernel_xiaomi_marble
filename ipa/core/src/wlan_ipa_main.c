@@ -378,6 +378,11 @@ void ipa_uc_force_pipe_shutdown(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
 
+	if (!pdev) {
+		ipa_debug("objmgr pdev is null!");
+		return;
+	}
+
 	if (!ipa_config_is_enabled()) {
 		ipa_debug("ipa is disabled");
 		return;
@@ -614,6 +619,11 @@ void ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev)
 void ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_ipa_priv *ipa_obj;
+
+	if (!pdev) {
+		ipa_debug("objmgr pdev is null!");
+		return;
+	}
 
 	ipa_obj = ipa_pdev_get_priv_obj(pdev);
 	if (!ipa_obj) {
