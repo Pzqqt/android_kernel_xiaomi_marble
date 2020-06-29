@@ -46,6 +46,7 @@ linux/src/qdf_list.o      \
 linux/src/qdf_lock.o       \
 linux/src/qdf_mc_timer.o    \
 linux/src/qdf_mem.o      \
+linux/src/qdf_crypto.o      \
 linux/src/qdf_module.o    \
 linux/src/qdf_net_if.o   \
 linux/src/qdf_nbuf.o       \

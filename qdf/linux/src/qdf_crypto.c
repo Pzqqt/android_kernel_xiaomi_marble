@@ -30,6 +30,7 @@
 #include <crypto/skcipher.h>
 #include <crypto/aead.h>
 #include <linux/ieee80211.h>
+#include <qdf_module.h>
 
 /* Function Definitions and Documentation */
 #define MAX_HMAC_ELEMENT_CNT 10
@@ -307,6 +308,8 @@ error:
 	crypto_free_shash(tfm);
 	return ret;
 }
+
+qdf_export_symbol(qdf_get_keyed_hash);
 
 /* AES String to Vector from RFC 5297, 'out' should be of length AES_BLOCK_SIZE
  */
