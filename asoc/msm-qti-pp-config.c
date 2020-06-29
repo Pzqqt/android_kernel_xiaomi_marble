@@ -1269,11 +1269,11 @@ int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 
 	spin_lock_irqsave(&kctl_prtd->prtd_spin_lock, spin_flags);
 	while (kctl_prtd->event_count >= DSP_STREAM_CALLBACK_QUEUE_SIZE) {
-		pr_info("%s: queue of size %d is full. delete oldest one.\n",
+		pr_debug("%s: queue of size %d is full. delete oldest one.\n",
 			__func__, DSP_STREAM_CALLBACK_QUEUE_SIZE);
 		oldest_event = list_first_entry(&kctl_prtd->event_queue,
 				struct dsp_stream_callback_list, list);
-		pr_info("%s: event deleted: type %d length %d\n",
+		pr_debug("%s: event deleted: type %d length %d\n",
 			__func__, oldest_event->event.event_type,
 			oldest_event->event.payload_len);
 		list_del(&oldest_event->list);
