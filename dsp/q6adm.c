@@ -3280,7 +3280,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			if ((this_adm.num_ec_ref_rx_chans != 0)
 				&& (path != ADM_PATH_PLAYBACK)
 				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
-				this_adm.num_ec_ref_rx_chans = 0;
 				memcpy(adm_params + sizeof(open_v8)
 						+ ep1_payload_size,
 						(void *)&ep2_payload,
