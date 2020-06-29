@@ -2081,6 +2081,8 @@ static int wcd938x_event_notify(struct notifier_block *block,
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd938x->dev_up = false;
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
+		wcd938x->mbhc->wcd_mbhc.plug_before_ssr =
+					wcd938x->mbhc->wcd_mbhc.current_plug;
 		mbhc = &wcd938x->mbhc->wcd_mbhc;
 		wcd938x->usbc_hs_status = get_usbc_hs_status(component,
 						mbhc->mbhc_cfg);
