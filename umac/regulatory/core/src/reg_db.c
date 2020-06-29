@@ -1504,7 +1504,7 @@ const struct regdomain regdomains_5g[] = {
 	[APL8] = {CTL_FCC, DFS_ETSI_REGION, 2, 80, 0, 2, {CHAN_5250_5330_4,
 							  CHAN_5735_5835_2} },
 
-	[APL9] = {CTL_MKK, DFS_KR_REGION, 2, 160, 6, 4,   {CHAN_5170_5250_8,
+	[APL9] = {CTL_MKK, DFS_KR_REGION, 2, 160, 6, 4,   {CHAN_5170_5250_2,
 							   CHAN_5250_5330_1,
 							   CHAN_5490_5730_6,
 							   CHAN_5735_5835_1} },
