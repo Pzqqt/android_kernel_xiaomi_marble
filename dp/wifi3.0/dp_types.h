@@ -386,8 +386,8 @@ struct dp_tx_desc_s {
 	qdf_nbuf_t nbuf;
 	uint16_t length;
 	uint16_t flags;
-	qdf_dma_addr_t dma_addr;
 	uint32_t id;
+	qdf_dma_addr_t dma_addr;
 	struct dp_vdev *vdev;
 	struct dp_pdev *pdev;
 	uint8_t tx_encap_type;

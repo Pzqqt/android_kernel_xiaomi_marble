@@ -37,6 +37,21 @@
 #define DP_TX_DESC_ID_OFFSET_MASK  0x00001F
 #define DP_TX_DESC_ID_OFFSET_OS    0
 
+/**
+ * Compilation assert on tx desc size
+ *
+ * if assert is hit please update POOL_MASK,
+ * PAGE_MASK according to updated size
+ *
+ * for current PAGE mask allowed size range of tx_desc
+ * is between 128 and 256
+ */
+QDF_COMPILE_TIME_ASSERT(dp_tx_desc_size,
+			((sizeof(struct dp_tx_desc_s)) <=
+			 (PAGE_SIZE >> DP_TX_DESC_ID_PAGE_OS)) &&
+			((sizeof(struct dp_tx_desc_s)) >
+			 (PAGE_SIZE >> (DP_TX_DESC_ID_PAGE_OS + 1))));
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #define TX_DESC_LOCK_CREATE(lock)
 #define TX_DESC_LOCK_DESTROY(lock)
