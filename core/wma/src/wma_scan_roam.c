@@ -2548,10 +2548,14 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	} else {
 		wma_fill_data_synch_event(wma, roam_synch_ind_ptr, param_buf);
 	}
-
 	chan = param_buf->chan;
-	if (chan)
+	if (chan) {
 		roam_synch_ind_ptr->chan_freq = chan->mhz;
+		roam_synch_ind_ptr->phy_mode =
+			wma_fw_to_host_phymode(WMI_GET_CHANNEL_MODE(chan));
+	} else {
+		roam_synch_ind_ptr->phy_mode = WLAN_PHYMODE_AUTO;
+	}
 
 	key = param_buf->key;
 	key_ft = param_buf->key_ext;

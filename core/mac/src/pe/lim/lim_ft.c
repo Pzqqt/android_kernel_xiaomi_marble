@@ -120,6 +120,7 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	tAddStaParams *sta_ctx;
 	bool chan_width_support = false;
 	tSchBeaconStruct *pBeaconStruct;
+	tDot11fIEVHTCaps *vht_caps = NULL;
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(ft_session)) {
@@ -194,47 +195,21 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		if (pBeaconStruct->VHTOperation.chanWidth && chan_width_support)
 			pAddBssParams->ch_width =
 				pBeaconStruct->VHTOperation.chanWidth + 1;
-		pAddBssParams->staContext.vht_caps =
-			((pBeaconStruct->VHTCaps.maxMPDULen <<
-			  SIR_MAC_VHT_CAP_MAX_MPDU_LEN) |
-			 (pBeaconStruct->VHTCaps.supportedChannelWidthSet <<
-			  SIR_MAC_VHT_CAP_SUPP_CH_WIDTH_SET) |
-			 (pBeaconStruct->VHTCaps.ldpcCodingCap <<
-			  SIR_MAC_VHT_CAP_LDPC_CODING_CAP) |
-			 (pBeaconStruct->VHTCaps.shortGI80MHz <<
-			  SIR_MAC_VHT_CAP_SHORTGI_80MHZ) |
-			 (pBeaconStruct->VHTCaps.shortGI160and80plus80MHz <<
-			  SIR_MAC_VHT_CAP_SHORTGI_160_80_80MHZ) |
-			 (pBeaconStruct->VHTCaps.txSTBC <<
-			  SIR_MAC_VHT_CAP_TXSTBC) |
-			 (pBeaconStruct->VHTCaps.rxSTBC <<
-			  SIR_MAC_VHT_CAP_RXSTBC) |
-			 (pBeaconStruct->VHTCaps.suBeamFormerCap <<
-			  SIR_MAC_VHT_CAP_SU_BEAMFORMER_CAP) |
-			 (pBeaconStruct->VHTCaps.suBeamformeeCap <<
-			  SIR_MAC_VHT_CAP_SU_BEAMFORMEE_CAP) |
-			 (pBeaconStruct->VHTCaps.csnofBeamformerAntSup <<
-			  SIR_MAC_VHT_CAP_CSN_BEAMORMER_ANT_SUP) |
-			 (pBeaconStruct->VHTCaps.numSoundingDim <<
-			  SIR_MAC_VHT_CAP_NUM_SOUNDING_DIM) |
-			 (pBeaconStruct->VHTCaps.muBeamformerCap <<
-			  SIR_MAC_VHT_CAP_NUM_BEAM_FORMER_CAP) |
-			 (pBeaconStruct->VHTCaps.muBeamformeeCap <<
-			  SIR_MAC_VHT_CAP_NUM_BEAM_FORMEE_CAP) |
-			 (pBeaconStruct->VHTCaps.vhtTXOPPS <<
-			  SIR_MAC_VHT_CAP_TXOPPS) |
-			 (pBeaconStruct->VHTCaps.htcVHTCap <<
-			  SIR_MAC_VHT_CAP_HTC_CAP) |
-			 (pBeaconStruct->VHTCaps.maxAMPDULenExp <<
-			  SIR_MAC_VHT_CAP_MAX_AMDU_LEN_EXPO) |
-			 (pBeaconStruct->VHTCaps.vhtLinkAdaptCap <<
-			  SIR_MAC_VHT_CAP_LINK_ADAPT_CAP) |
-			 (pBeaconStruct->VHTCaps.rxAntPattern <<
-			  SIR_MAC_VHT_CAP_RX_ANTENNA_PATTERN) |
-			 (pBeaconStruct->VHTCaps.txAntPattern <<
-			  SIR_MAC_VHT_CAP_TX_ANTENNA_PATTERN) |
-			 (pBeaconStruct->VHTCaps.extended_nss_bw_supp <<
-			  SIR_MAC_VHT_CAP_EXTD_NSS_BW));
+		vht_caps = &pBeaconStruct->VHTCaps;
+		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
+					      vht_caps, ft_session);
+	} else if (ft_session->vhtCapability &&
+	    pBeaconStruct->vendor_vht_ie.VHTCaps.present) {
+		pe_debug("VHT caps are present in vendor specific IE");
+		pAddBssParams->vhtCapable =
+			pBeaconStruct->vendor_vht_ie.VHTCaps.present;
+		if (pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth &&
+		    chan_width_support)
+			pAddBssParams->ch_width =
+			pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth + 1;
+		vht_caps = &pBeaconStruct->vendor_vht_ie.VHTCaps;
+		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
+					      vht_caps, ft_session);
 	} else {
 		pAddBssParams->vhtCapable = 0;
 	}
@@ -382,12 +357,99 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 #endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD)
+
+/**
+ * lim_convert_phymode_to_dot11mode() - get dot11 mode from phymode
+ * @phymode: phymode
+ *
+ * The function is to convert the phymode to corresponding dot11 mode
+ *
+ * Return: dot11mode.
+ */
+static uint8_t lim_convert_phymode_to_dot11mode(enum wlan_phymode phymode)
+{
+
+	if (IS_WLAN_PHYMODE_HE(phymode))
+		return MLME_DOT11_MODE_11AX;
+
+	if (IS_WLAN_PHYMODE_VHT(phymode))
+		return MLME_DOT11_MODE_11AC;
+
+	if (IS_WLAN_PHYMODE_HT(phymode))
+		return MLME_DOT11_MODE_11N;
+
+	if (phymode == WLAN_PHYMODE_11G)
+		return MLME_DOT11_MODE_11G;
+
+	if (phymode == WLAN_PHYMODE_11G_ONLY)
+		return MLME_DOT11_MODE_11G_ONLY;
+
+	if (phymode == WLAN_PHYMODE_11A)
+		return MLME_DOT11_MODE_11A;
+
+	if (phymode == WLAN_PHYMODE_11B)
+		return MLME_DOT11_MODE_11B;
+
+	return MLME_DOT11_MODE_ALL;
+}
+
+/**
+ * lim_calculate_dot11_mode() - calculate dot11 mode.
+ * @mac_context: mac context
+ * @bcn: beacon structure
+ * @band: reg_wifi_band
+ *
+ * The function is to calculate dot11 mode in case fw doen't send phy mode.
+ *
+ * Return: dot11mode.
+ */
+static uint8_t lim_calculate_dot11_mode(struct mac_context *mac_ctx,
+					tSchBeaconStruct *bcn,
+					enum reg_wifi_band band)
+{
+	enum mlme_dot11_mode self_dot11_mode;
+
+	self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
+
+	if (band == REG_BAND_2G)
+		return MLME_DOT11_MODE_11G;
+	else
+		return MLME_DOT11_MODE_11A;
+
+	switch (self_dot11_mode) {
+	case MLME_DOT11_MODE_11AX:
+	case MLME_DOT11_MODE_11AX_ONLY:
+	case MLME_DOT11_MODE_ALL:
+		if (bcn->he_cap.present)
+			return MLME_DOT11_MODE_11AX;
+		else if (bcn->VHTCaps.present ||
+			 bcn->vendor_vht_ie.present)
+			return MLME_DOT11_MODE_11AC;
+		else if (bcn->HTCaps.present)
+			return MLME_DOT11_MODE_11N;
+	case MLME_DOT11_MODE_11AC:
+	case MLME_DOT11_MODE_11AC_ONLY:
+		if (bcn->VHTCaps.present ||
+		    bcn->vendor_vht_ie.present)
+			return MLME_DOT11_MODE_11AC;
+		else if (bcn->HTCaps.present)
+			return MLME_DOT11_MODE_11N;
+	case MLME_DOT11_MODE_11N:
+	case MLME_DOT11_MODE_11N_ONLY:
+		if (bcn->HTCaps.present)
+			return MLME_DOT11_MODE_11N;
+	default:
+		break;
+	}
+}
+
 /**
  * lim_fill_dot11mode() - to fill 802.11 mode in FT session
  * @mac_ctx: pointer to mac ctx
  * @ft_session: FT session
  * @pe_session: PE session
  * @bcn: AP beacon pointer
+ * @bss_phymode: bss phy mode
  *
  * This API fills FT session's dot11mode either from pe session or
  * from CFG depending on the condition.
@@ -397,48 +459,24 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			       struct pe_session *ft_session,
 			       struct pe_session *pe_session,
-			       tSchBeaconStruct *bcn)
+			       tSchBeaconStruct *bcn,
+			       enum wlan_phymode bss_phymode)
 {
-	uint32_t self_dot11_mode;
-
 	if (pe_session->ftPEContext.pFTPreAuthReq &&
 	    !csr_is_roam_offload_enabled(mac_ctx)) {
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
 		return;
 	}
-	self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
-	pe_debug("selfDot11Mode: %d", self_dot11_mode);
-	if (ft_session->limRFBand == REG_BAND_2G)
-		ft_session->dot11mode = MLME_DOT11_MODE_11G;
-	else
-		ft_session->dot11mode = MLME_DOT11_MODE_11A;
-	switch (self_dot11_mode) {
-	case MLME_DOT11_MODE_11AX:
-	case MLME_DOT11_MODE_11AX_ONLY:
-		if (bcn->he_cap.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11AX;
-		else if (bcn->VHTCaps.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11AC;
-		else if (bcn->HTCaps.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11N;
-		break;
-	case MLME_DOT11_MODE_11AC:
-	case MLME_DOT11_MODE_11AC_ONLY:
-		if (bcn->VHTCaps.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11AC;
-		else if (bcn->HTCaps.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11N;
-		break;
-	case MLME_DOT11_MODE_11N:
-	case MLME_DOT11_MODE_11N_ONLY:
-		if (bcn->HTCaps.present)
-			ft_session->dot11mode = MLME_DOT11_MODE_11N;
 
-		break;
-	default:
-		break;
-	}
+	if (bss_phymode == WLAN_PHYMODE_AUTO)
+		ft_session->dot11mode = lim_calculate_dot11_mode(
+							mac_ctx, bcn,
+							ft_session->limRFBand);
+
+	else
+		ft_session->dot11mode =
+			lim_convert_phymode_to_dot11mode(bss_phymode);
 }
 #elif defined(WLAN_FEATURE_HOST_ROAM)
 /**
@@ -447,6 +485,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
  * @ft_session: FT session
  * @pe_session: PE session
  * @bcn: AP beacon pointer
+ * @bss_phymode: bss phy mode
  *
  * This API fills FT session's dot11mode either from pe session.
  *
@@ -455,7 +494,8 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			       struct pe_session *ft_session,
 			       struct pe_session *pe_session,
-			       tSchBeaconStruct *bcn)
+			       tSchBeaconStruct *bcn,
+			       enum wlan_phymode bss_phymode)
 {
 	ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
@@ -471,7 +511,9 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
  *------------------------------------------------------------------*/
 void lim_fill_ft_session(struct mac_context *mac,
 			 struct bss_description *pbssDescription,
-			 struct pe_session *ft_session, struct pe_session *pe_session)
+			 struct pe_session *ft_session,
+			 struct pe_session *pe_session,
+			 enum wlan_phymode bss_phymode)
 {
 	uint8_t currentBssUapsd;
 	uint8_t bss_chan_id;
@@ -523,12 +565,15 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->curr_op_freq = pbssDescription->chan_freq;
 	ft_session->limRFBand = lim_get_rf_band(ft_session->curr_op_freq);
 
-	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct);
-	pe_debug("dot11mode: %d", ft_session->dot11mode);
+	lim_fill_dot11mode(mac, ft_session, pe_session, pBeaconStruct,
+			   bss_phymode);
+	pe_debug("dot11mode: %d bss_phymode %d", ft_session->dot11mode,
+		 bss_phymode);
 
 	ft_session->vhtCapability =
-		(IS_DOT11_MODE_VHT(ft_session->dot11mode)
-		 && IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps));
+		(IS_DOT11_MODE_VHT(ft_session->dot11mode) &&
+		 (IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
+		  IS_BSS_VHT_CAPABLE(pBeaconStruct->vendor_vht_ie.VHTCaps)));
 	ft_session->htCapability =
 		(IS_DOT11_MODE_HT(ft_session->dot11mode)
 		 && pBeaconStruct->HTCaps.present);
@@ -560,9 +605,14 @@ void lim_fill_ft_session(struct mac_context *mac,
 		pBeaconStruct->VHTOperation.present &&
 		ft_session->vhtCapability) {
 		ft_session->vhtCapabilityPresentInBeacon = 1;
+	} else if (IS_BSS_VHT_CAPABLE(pBeaconStruct->vendor_vht_ie.VHTCaps) &&
+		    pBeaconStruct->vendor_vht_ie.VHTOperation.present &&
+		    ft_session->vhtCapability){
+		ft_session->vhtCapabilityPresentInBeacon = 1;
 	} else {
 		ft_session->vhtCapabilityPresentInBeacon = 0;
 	}
+
 	if (ft_session->htRecommendedTxWidthSet) {
 		ft_session->ch_width = CH_WIDTH_40MHZ;
 		if (ft_session->vhtCapabilityPresentInBeacon &&
@@ -573,6 +623,15 @@ void lim_fill_ft_session(struct mac_context *mac,
 			pBeaconStruct->VHTOperation.chan_center_freq_seg0;
 			ft_session->ch_center_freq_seg1 =
 			pBeaconStruct->VHTOperation.chan_center_freq_seg1;
+		} else if (ft_session->vhtCapabilityPresentInBeacon &&
+			   pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth){
+			ft_session->ch_width =
+			pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth + 1;
+			ft_session->ch_center_freq_seg0 =
+		pBeaconStruct->vendor_vht_ie.VHTOperation.chan_center_freq_seg0;
+			ft_session->ch_center_freq_seg1 =
+		pBeaconStruct->vendor_vht_ie.VHTOperation.chan_center_freq_seg1;
+
 		} else {
 			if (pBeaconStruct->HTInfo.secondaryChannelOffset ==
 					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)

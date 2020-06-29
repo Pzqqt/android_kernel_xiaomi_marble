@@ -361,4 +361,18 @@ void
 lim_extract_ies_from_deauth_disassoc(struct pe_session *session,
 				     uint8_t *deauth_disassoc_frame,
 				     uint16_t deauth_disassoc_frame_len);
+
+/**
+ * lim_update_vhtcaps_assoc_resp : Update VHT caps in assoc response.
+ * @mac_ctx Pointer to Global MAC structure
+ * @pAddBssParams: parameters required for add bss params.
+ * @vht_caps: VHT capabilities.
+ * @pe_session : session entry.
+ *
+ * Return : void
+ */
+void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
+				   struct bss_params *pAddBssParams,
+				   tDot11fIEVHTCaps *vht_caps,
+				   struct pe_session *pe_session);
 #endif /* __LIM_ASSOC_UTILS_H */

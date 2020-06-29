@@ -2465,7 +2465,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	ft_session_ptr->csaOffloadEnable = session_ptr->csaOffloadEnable;
 
 	/* Next routine will update nss and vdev_nss with AP's capabilities */
-	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr, session_ptr);
+	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr,
+			    session_ptr, roam_sync_ind_ptr->phy_mode);
 
 	/* Next routine may update nss based on dot11Mode */
 	lim_ft_prepare_add_bss_req(mac_ctx, ft_session_ptr, bss_desc);

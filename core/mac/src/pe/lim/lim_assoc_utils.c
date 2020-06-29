@@ -3279,9 +3279,10 @@ lim_del_bss(struct mac_context *mac, tpDphHashNode sta, uint16_t bss_idx,
  *
  * Return : void
  */
-static void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
-		struct bss_params *pAddBssParams,
-		tDot11fIEVHTCaps *vht_caps, struct pe_session *pe_session)
+void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
+				   struct bss_params *pAddBssParams,
+				   tDot11fIEVHTCaps *vht_caps,
+				   struct pe_session *pe_session)
 {
 	pAddBssParams->staContext.vht_caps =
 		((vht_caps->maxMPDULen <<

@@ -139,7 +139,8 @@ static inline int lim_process_ft_pre_auth_req(struct mac_context *mac,
 void lim_fill_ft_session(struct mac_context *mac,
 		struct bss_description *pbssDescription,
 		struct pe_session *ft_session,
-		struct pe_session *pe_session);
+		struct pe_session *pe_session,
+		enum wlan_phymode bss_phymode);
 
 /**
  * lim_ft_prepare_add_bss_req() - Create Add Bss Req to the new AP
@@ -162,7 +163,8 @@ QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 static inline void lim_fill_ft_session(struct mac_context *mac,
 		struct bss_description *pbssDescription,
 		struct pe_session *ft_session,
-		struct pe_session *pe_session)
+		struct pe_session *pe_session,
+		enum wlan_phymode bss_phymode)
 {}
 static inline void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		struct pe_session *ft_session,
