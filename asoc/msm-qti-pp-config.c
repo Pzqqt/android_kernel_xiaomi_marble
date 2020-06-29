@@ -536,7 +536,7 @@ static int msm_qti_pp_get_rms_value_control(struct snd_kcontrol *kcontrol,
 			break;
 	}
 	if ((be_idx >= MSM_BACKEND_DAI_MAX) || !msm_bedai.active) {
-		pr_err("%s, back not active to query rms be_idx:%d\n",
+		pr_debug("%s, back not active to query rms be_idx:%d\n",
 			__func__, be_idx);
 		rc = -EINVAL;
 		goto get_rms_value_err;
