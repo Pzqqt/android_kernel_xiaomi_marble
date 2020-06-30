@@ -935,12 +935,16 @@ static struct CE_attr host_ce_config_wlan_qca5018[] = {
 	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
+#else
 	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
 		512, NULL,},
+#endif
 	/* Target autonomous HIF_memcpy */
 	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac1) */
-	{/*CE7*/ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	{/*CE7*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* Reserved for target */
 	{/*CE8*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
@@ -987,12 +991,16 @@ static struct CE_attr host_ce_config_wlan_qcn9000[] = {
 	{/*CE4*/ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		CE_HTT_H2T_MSG_SRC_NENTRIES, 256, 0, NULL,},
 	/* target -> host PKTLOG */
+#ifdef REMOVE_PKT_LOG
+	{ /* CE5 */ 0, 0, 0, 0, 0, NULL,},
+#else
 	{/*CE5*/ (CE_ATTR_FLAGS), 0, 0, 2048,
 		512, NULL,},
+#endif
 	/* Target autonomous HIF_memcpy */
 	{/*CE6*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* host->target WMI (mac1) */
-	{/*CE7*/ CE_ATTR_FLAGS, 0, 32, 2048, 0, NULL,},
+	{/*CE7*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* Reserved for target */
 	{/*CE8*/ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 	/* CE 9, 10, 11 belong to CoreBsp & MHI driver */
