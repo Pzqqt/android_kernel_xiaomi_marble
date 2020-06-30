@@ -2478,7 +2478,7 @@ void lim_delete_all_peers(struct pe_session *session)
 					    &session->dph.dphHashTable);
 		if (!sta_ds)
 			continue;
-		status = lim_del_sta(mac_ctx, sta_ds, false, session);
+		status = lim_del_sta(mac_ctx, sta_ds, true, session);
 		if (QDF_STATUS_SUCCESS == status) {
 			lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr,
 						  sta_ds->assocId, session);
