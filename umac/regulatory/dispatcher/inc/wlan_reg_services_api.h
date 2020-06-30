@@ -191,6 +191,17 @@ uint16_t wlan_reg_min_6ghz_chan_freq(void);
 #define WLAN_REG_MAX_6GHZ_CHAN_FREQ wlan_reg_max_6ghz_chan_freq()
 uint16_t wlan_reg_max_6ghz_chan_freq(void);
 
+/**
+ * wlan_reg_is_6g_freq_indoor() - Check if a 6GHz frequency is indoor.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ *
+ * Return: Return true if a 6GHz frequency is indoor, else false.
+ */
+#define WLAN_REG_IS_6GHZ_FREQ_INDOOR(pdev, freq) \
+					wlan_reg_is_6g_freq_indoor(pdev, freq)
+bool wlan_reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
 #else
 
 #define WLAN_REG_IS_6GHZ_CHAN_FREQ(freq) (false)
@@ -221,6 +232,13 @@ static inline uint16_t wlan_reg_min_6ghz_chan_freq(void)
 static inline uint16_t wlan_reg_max_6ghz_chan_freq(void)
 {
 	return 0;
+}
+
+#define WLAN_REG_IS_6GHZ_FREQ_INDOOR(pdev, freq) (false)
+static inline bool
+wlan_reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	return false;
 }
 #endif /* CONFIG_BAND_6GHZ */
 

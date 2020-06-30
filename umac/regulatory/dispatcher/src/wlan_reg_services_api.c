@@ -817,6 +817,10 @@ bool wlan_reg_is_6ghz_psc_chan_freq(uint16_t freq)
 	return reg_is_6ghz_psc_chan_freq(freq);
 }
 
+bool wlan_reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
+{
+	return reg_is_6g_freq_indoor(pdev, freq);
+}
 #endif /* CONFIG_BAND_6GHZ */
 
 uint16_t

@@ -599,6 +599,15 @@ static inline bool REG_IS_6GHZ_FREQ(uint16_t freq)
 bool reg_is_6ghz_psc_chan_freq(uint16_t freq);
 
 /**
+ * reg_is_6g_freq_indoor() - Check if a 6GHz frequency is indoor.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ *
+ * Return: Return true if a 6GHz frequency is indoor, else false.
+ */
+bool reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
+
+/**
  * reg_min_6ghz_chan_freq() - Get minimum 6GHz channel center frequency
  *
  * Return: Minimum 6GHz channel center frequency
@@ -613,6 +622,12 @@ uint16_t reg_min_6ghz_chan_freq(void);
 uint16_t reg_max_6ghz_chan_freq(void);
 #else
 static inline bool reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return false;
+}
+
+static inline bool
+reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
 	return false;
 }
