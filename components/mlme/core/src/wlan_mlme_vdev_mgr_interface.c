@@ -925,6 +925,74 @@ int8_t mlme_get_max_reg_power(struct wlan_objmgr_vdev *vdev)
 }
 
 /**
+ * mlme_get_vdev_types() - get vdev type and subtype from its operation mode
+ * @mode: operation mode of vdev
+ * @type: type of vdev
+ * @sub_type: sub_type of vdev
+ *
+ * This API is called to get vdev type and subtype from its operation mode.
+ * Vdev operation modes are defined in enum QDF_OPMODE.
+ *
+ * Type of vdev are WLAN_VDEV_MLME_TYPE_AP, WLAN_VDEV_MLME_TYPE_STA,
+ * WLAN_VDEV_MLME_TYPE_IBSS, ,WLAN_VDEV_MLME_TYPE_MONITOR,
+ * WLAN_VDEV_MLME_TYPE_NAN, WLAN_VDEV_MLME_TYPE_OCB, WLAN_VDEV_MLME_TYPE_NDI
+ *
+ * Sub_types of vdev are WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE,
+ * WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT, WLAN_VDEV_MLME_SUBTYPE_P2P_GO,
+ * WLAN_VDEV_MLME_SUBTYPE_PROXY_STA, WLAN_VDEV_MLME_SUBTYPE_MESH
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS mlme_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
+				      uint8_t *sub_type)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	*type = 0;
+	*sub_type = 0;
+
+	switch (mode) {
+	case QDF_STA_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_STA;
+		break;
+	case QDF_SAP_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_AP;
+		break;
+	case QDF_P2P_DEVICE_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_AP;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE;
+		break;
+	case QDF_P2P_CLIENT_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_STA;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT;
+		break;
+	case QDF_P2P_GO_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_AP;
+		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_GO;
+		break;
+	case QDF_OCB_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_OCB;
+		break;
+	case QDF_IBSS_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_IBSS;
+		break;
+	case QDF_MONITOR_MODE:
+		*type = WMI_HOST_VDEV_TYPE_MONITOR;
+		break;
+	case QDF_NDI_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_NDI;
+		break;
+	case QDF_NAN_DISC_MODE:
+		*type = WLAN_VDEV_MLME_TYPE_NAN;
+		break;
+	default:
+		mlme_err("Invalid device mode %d", mode);
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+	return status;
+}
+
+/**
  * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object
  *
@@ -933,6 +1001,8 @@ int8_t mlme_get_max_reg_power(struct wlan_objmgr_vdev *vdev)
 static
 QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
+	QDF_STATUS status;
+
 	mlme_legacy_debug("vdev id = %d ",
 			  vdev_mlme->vdev->vdev_objmgr.vdev_id);
 	vdev_mlme->ext_vdev_ptr =
@@ -945,7 +1015,26 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 	target_if_cm_roam_register_tx_ops(
 			&vdev_mlme->ext_vdev_ptr->cm_roam.tx_ops);
 
-	return QDF_STATUS_SUCCESS;
+	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
+			      &vdev_mlme->proto.generic.nss_2g,
+			      &vdev_mlme->proto.generic.nss_5g);
+
+	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
+				     &vdev_mlme->mgmt.generic.type,
+				     &vdev_mlme->mgmt.generic.subtype);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Get vdev type failed; status:%d", status);
+		return status;
+	}
+
+	status = vdev_mgr_create_send(vdev_mlme);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("Failed to create vdev for vdev id %d",
+			 wlan_vdev_get_id(vdev_mlme->vdev));
+		return status;
+	}
+
+	return status;
 }
 
 /**
@@ -1243,99 +1332,10 @@ QDF_STATUS mlme_vdev_self_peer_create(struct wlan_objmgr_vdev *vdev)
 	return wma_vdev_self_peer_create(vdev_mlme);
 }
 
-/**
- * mlme_get_vdev_types() - get vdev type and subtype from its operation mode
- * @mode: operation mode of vdev
- * @type: type of vdev
- * @sub_type: sub_type of vdev
- *
- * This API is called to get vdev type and subtype from its operation mode.
- * Vdev operation modes are defined in enum QDF_OPMODE.
- *
- * Type of vdev are WLAN_VDEV_MLME_TYPE_AP, WLAN_VDEV_MLME_TYPE_STA,
- * WLAN_VDEV_MLME_TYPE_IBSS, ,WLAN_VDEV_MLME_TYPE_MONITOR,
- * WLAN_VDEV_MLME_TYPE_NAN, WLAN_VDEV_MLME_TYPE_OCB, WLAN_VDEV_MLME_TYPE_NDI
- *
- * Sub_types of vdev are WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE,
- * WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT, WLAN_VDEV_MLME_SUBTYPE_P2P_GO,
- * WLAN_VDEV_MLME_SUBTYPE_PROXY_STA, WLAN_VDEV_MLME_SUBTYPE_MESH
- * Return: QDF_STATUS
- */
-
-static QDF_STATUS mlme_get_vdev_types(enum QDF_OPMODE mode, uint8_t *type,
-				      uint8_t *sub_type)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	*type = 0;
-	*sub_type = 0;
-
-	switch (mode) {
-	case QDF_STA_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_STA;
-		break;
-	case QDF_SAP_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		break;
-	case QDF_P2P_DEVICE_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_DEVICE;
-		break;
-	case QDF_P2P_CLIENT_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_STA;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_CLIENT;
-		break;
-	case QDF_P2P_GO_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_AP;
-		*sub_type = WLAN_VDEV_MLME_SUBTYPE_P2P_GO;
-		break;
-	case QDF_OCB_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_OCB;
-		break;
-	case QDF_IBSS_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_IBSS;
-		break;
-	case QDF_MONITOR_MODE:
-		*type = WMI_HOST_VDEV_TYPE_MONITOR;
-		break;
-	case QDF_NDI_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_NDI;
-		break;
-	case QDF_NAN_DISC_MODE:
-		*type = WLAN_VDEV_MLME_TYPE_NAN;
-		break;
-	default:
-		mlme_err("Invalid device mode %d", mode);
-		status = QDF_STATUS_E_INVAL;
-		break;
-	}
-	return status;
-}
-
 static
 QDF_STATUS vdevmgr_mlme_ext_post_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
-	QDF_STATUS status;
-
-	sme_get_vdev_type_nss(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
-			      &vdev_mlme->proto.generic.nss_2g,
-			      &vdev_mlme->proto.generic.nss_5g);
-
-	status = mlme_get_vdev_types(wlan_vdev_mlme_get_opmode(vdev_mlme->vdev),
-				     &vdev_mlme->mgmt.generic.type,
-				     &vdev_mlme->mgmt.generic.subtype);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("Get vdev type failed; status:%d", status);
-		return status;
-	}
-
-	status = vdev_mgr_create_send(vdev_mlme);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_err("Failed to create vdev for vdev id %d",
-			 wlan_vdev_get_id(vdev_mlme->vdev));
-		return status;
-	}
-
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 bool mlme_vdev_uses_self_peer(uint32_t vdev_type, uint32_t vdev_subtype)
