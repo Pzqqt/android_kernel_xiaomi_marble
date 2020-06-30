@@ -438,6 +438,17 @@ void hdd_event_eapol_log(struct sk_buff *skb, enum qdf_proto_dir dir)
 {}
 #endif
 
+/**
+ * hdd_set_udp_qos_upgrade_config() - Set the threshold for UDP packet
+ *				      QoS upgrade.
+ * @adapter: adapter for which this configuration is to be applied
+ * @priority: the threshold priority
+ *
+ * Returns: 0 on success, -EINVAL on failure
+ */
+int hdd_set_udp_qos_upgrade_config(struct hdd_adapter *adapter,
+				   uint8_t priority);
+
 /*
  * As of the 4.7 kernel, net_device->trans_start is removed. Create shims to
  * support compiling against older versions of the kernel.

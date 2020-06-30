@@ -469,6 +469,25 @@ void hdd_event_eapol_log(struct sk_buff *skb, enum qdf_proto_dir dir)
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+int hdd_set_udp_qos_upgrade_config(struct hdd_adapter *adapter,
+				   uint8_t priority)
+{
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_info_rl("Data priority upgrade only allowed in STA mode:%d",
+			    adapter->device_mode);
+		return -EINVAL;
+	}
+
+	if (priority >= QCA_WLAN_AC_ALL) {
+		hdd_err_rl("Invlid data priority: %d", priority);
+		return -EINVAL;
+	}
+
+	adapter->upgrade_udp_qos_threshold = priority;
+
+	return 0;
+}
+
 /**
  * wlan_hdd_classify_pkt() - classify packet
  * @skb - sk buff

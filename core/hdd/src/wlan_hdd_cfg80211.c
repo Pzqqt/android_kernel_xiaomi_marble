@@ -49,6 +49,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_trace.h"
+#include "wlan_hdd_tx_rx.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
 #include "qdf_types.h"
@@ -6723,6 +6724,8 @@ const struct nla_policy wlan_hdd_wifi_config_policy[
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_WIDTH] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_DYNAMIC_BW] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_NSS] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_UDP_QOS_UPGRADE] = {
+		.type = NLA_U8 },
 
 };
 
@@ -7639,6 +7642,22 @@ static int hdd_config_scan_enable(struct hdd_adapter *adapter,
 	return 0;
 }
 
+/**
+ * hdd_config_udp_qos_upgrade_threshold() - NL attribute handler to parse
+ *					    priority upgrade threshold value.
+ * @adapter: adapter for which this configuration is to be applied
+ * @attr: NL attribute
+ *
+ * Returns: 0 on success, -EINVAL on failure
+ */
+static int hdd_config_udp_qos_upgrade_threshold(struct hdd_adapter *adapter,
+						const struct nlattr *attr)
+{
+	uint8_t priority = nla_get_u8(attr);
+
+	return hdd_set_udp_qos_upgrade_config(adapter, priority);
+}
+
 static int hdd_config_power(struct hdd_adapter *adapter,
 			    const struct nlattr *attr)
 {
@@ -8496,6 +8515,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_set_nss},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_OPTIMIZED_POWER_MANAGEMENT,
 	 hdd_config_power},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_UDP_QOS_UPGRADE,
+	 hdd_config_udp_qos_upgrade_threshold},
 };
 
 #ifdef WLAN_FEATURE_ELNA
