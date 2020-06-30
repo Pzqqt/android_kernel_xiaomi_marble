@@ -5444,6 +5444,7 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_component *aux_comp;
 	struct platform_device *pdev = NULL;
 	int i = 0;
+	bool is_wcd937x_used = false;
 	char *data = NULL;
 	struct msm_asoc_mach_data *pdata =
 				snd_soc_card_get_drvdata(rtd->card);
@@ -5545,31 +5546,27 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			if (data != NULL) {
 				if (!strncmp(data, "wcd937x",
 						sizeof("wcd937x"))) {
-					bolero_set_port_map(component,
-						ARRAY_SIZE(sm_port_map_wcd937x),
-						sm_port_map_wcd937x);
-					break;
-				} else if (!strncmp( data, "wcd938x",
-							sizeof("wcd938x"))) {
-					if (pdata->lito_v2_enabled) {
-						/*
-						 * Enable tx data line3 for
-						 * saipan version v2 and
-						 * write corresponding
-						 * lpi register.
-						 */
-						bolero_set_port_map(component,
-							ARRAY_SIZE(sm_port_map_v2),
-							sm_port_map_v2);
-					} else {
-						bolero_set_port_map(component,
-							ARRAY_SIZE(sm_port_map),
-							sm_port_map);
-					}
+					is_wcd937x_used = true;
 					break;
 				}
 			}
 		}
+	}
+
+	if (is_wcd937x_used) {
+		bolero_set_port_map(component,
+				    ARRAY_SIZE(sm_port_map_wcd937x),
+				    sm_port_map_wcd937x);
+	} else if (pdata->lito_v2_enabled) {
+		/*
+		 * Enable tx data line3 for saipan version v2 and
+		 * write corresponding lpi register.
+		 */
+		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map_v2),
+				    sm_port_map_v2);
+	} else {
+		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
+				    sm_port_map);
 	}
 
 	card = rtd->card->snd_card;
