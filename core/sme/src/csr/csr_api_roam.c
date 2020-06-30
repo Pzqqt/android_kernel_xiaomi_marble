@@ -17697,7 +17697,7 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 
 	params->neighbor_report_params.ssid.length =
 		session->connectedProfile.SSID.length;
-	qdf_mem_copy(params->neighbor_report_params.ssid.mac_ssid,
+	qdf_mem_copy(params->neighbor_report_params.ssid.ssid,
 			session->connectedProfile.SSID.ssId,
 			session->connectedProfile.SSID.length);
 }
@@ -17723,7 +17723,7 @@ QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
 
 	if (!neighbor_report_req->no_ssid) {
 		invoke_params->ssid.length = neighbor_report_req->ssid.length;
-		qdf_mem_copy(invoke_params->ssid.mac_ssid,
+		qdf_mem_copy(invoke_params->ssid.ssid,
 				neighbor_report_req->ssid.ssId,
 				neighbor_report_req->ssid.length);
 	} else {

@@ -3422,8 +3422,8 @@ hdd_extscan_epno_fill_network(struct nlattr *network,
 	nw->ssid.length = ssid_len;
 	hdd_debug("network ssid length %d", ssid_len);
 	ssid = nla_data(tb[id]);
-	qdf_mem_copy(nw->ssid.mac_ssid, ssid, ssid_len);
-	hdd_debug("Ssid (%.*s)", nw->ssid.length, nw->ssid.mac_ssid);
+	qdf_mem_copy(nw->ssid.ssid, ssid, ssid_len);
+	hdd_debug("Ssid (%.*s)", nw->ssid.length, nw->ssid.ssid);
 
 	/* Parse and fetch epno flags */
 	id = QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_FLAGS;

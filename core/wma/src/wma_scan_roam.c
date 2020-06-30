@@ -960,7 +960,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 	qdf_mem_zero(profile, sizeof(*profile));
 	if (!roam_req) {
 		profile->ssid.length = 0;
-		profile->ssid.mac_ssid[0] = 0;
+		profile->ssid.ssid[0] = 0;
 		profile->rsn_authmode = WMI_AUTH_NONE;
 		profile->rsn_ucastcipherset = WMI_CIPHER_NONE;
 		profile->rsn_mcastcipherset = WMI_CIPHER_NONE;
@@ -971,7 +971,7 @@ wma_roam_scan_fill_ap_profile(struct roam_offload_scan_req *roam_req,
 	}
 
 	profile->ssid.length = roam_req->ConnectedNetwork.ssId.length;
-	qdf_mem_copy(profile->ssid.mac_ssid,
+	qdf_mem_copy(profile->ssid.ssid,
 		     roam_req->ConnectedNetwork.ssId.ssId,
 		     profile->ssid.length);
 	profile->rsn_authmode =
@@ -1433,14 +1433,14 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
 
 	for (i = 0; i < num_ssid_white_list; i++) {
-		qdf_mem_copy(params->ssid_allowed_list[i].mac_ssid,
+		qdf_mem_copy(params->ssid_allowed_list[i].ssid,
 				roam_params->ssid_allowed_list[i].ssId,
 			roam_params->ssid_allowed_list[i].length);
 		params->ssid_allowed_list[i].length =
 				roam_params->ssid_allowed_list[i].length;
 		wma_debug("SSID %d: %.*s", i,
 			  params->ssid_allowed_list[i].length,
-			  params->ssid_allowed_list[i].mac_ssid);
+			  params->ssid_allowed_list[i].ssid);
 	}
 
 	for (i = 0; i < params->num_bssid_black_list; i++)

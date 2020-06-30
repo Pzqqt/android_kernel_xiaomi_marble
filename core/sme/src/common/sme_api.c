@@ -14027,7 +14027,7 @@ QDF_STATUS sme_set_del_pmkid_cache(struct wlan_objmgr_psoc *psoc,
 	} else {
 		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_SSID_CACHE_ID;
 		pmk_cache->ssid.length = pmk_cache_info->ssid_len;
-		qdf_mem_copy(pmk_cache->ssid.mac_ssid,
+		qdf_mem_copy(pmk_cache->ssid.ssid,
 			     pmk_cache_info->ssid,
 			     pmk_cache->ssid.length);
 	}
