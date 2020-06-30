@@ -2734,9 +2734,10 @@ err_mstr_fail:
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
 				swrm, SWR_IRQ_FREE);
 	} else if (swrm->irq) {
-		irqd_set_trigger_type(
-			irq_get_irq_data(swrm->irq),
-			IRQ_TYPE_NONE);
+		if (irq_get_irq_data(swrm->irq) != NULL)
+			irqd_set_trigger_type(
+				irq_get_irq_data(swrm->irq),
+				IRQ_TYPE_NONE);
 		if (swrm->swr_irq_wakeup_capable)
 			irq_set_irq_wake(swrm->irq, 0);
 		free_irq(swrm->irq, swrm);
@@ -2764,9 +2765,10 @@ static int swrm_remove(struct platform_device *pdev)
 		swrm->reg_irq(swrm->handle, swr_mstr_interrupt,
 				swrm, SWR_IRQ_FREE);
 	} else if (swrm->irq) {
-		irqd_set_trigger_type(
-			irq_get_irq_data(swrm->irq),
-			IRQ_TYPE_NONE);
+		if (irq_get_irq_data(swrm->irq) != NULL)
+			irqd_set_trigger_type(
+				irq_get_irq_data(swrm->irq),
+				IRQ_TYPE_NONE);
 		if (swrm->swr_irq_wakeup_capable)
 			irq_set_irq_wake(swrm->irq, 0);
 		free_irq(swrm->irq, swrm);
