@@ -7513,11 +7513,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkleft_port_types[0]);
 
-		if (dapm->component) {
-			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft IN");
-			snd_soc_dapm_ignore_suspend(dapm, "spkrLeft SPKR");
-		}
-
 		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
 							component);
 	}
@@ -7535,11 +7530,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		wsa883x_set_channel_map(component, &spkright_ports[0],
 				WSA883X_MAX_SWR_PORTS, &ch_mask[0],
 				&ch_rate[0], &spkright_port_types[0]);
-
-		if (dapm->component) {
-			snd_soc_dapm_ignore_suspend(dapm, "spkrRight IN");
-			snd_soc_dapm_ignore_suspend(dapm, "spkrRight SPKR");
-		}
 
 		wsa883x_codec_info_create_codec_entry(pdata->codec_root,
 							component);
