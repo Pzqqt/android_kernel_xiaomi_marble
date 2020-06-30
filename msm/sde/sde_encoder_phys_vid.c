@@ -95,6 +95,7 @@ static void drm_mode_to_intf_timing_params(
 	timing->underflow_clr = 0xff;
 	timing->hsync_skew = mode->hskew;
 	timing->v_front_porch_fixed = vid_enc->base.vfp_cached;
+	timing->vrefresh = mode->vrefresh;
 
 	if (vid_enc->base.comp_type != MSM_DISPLAY_COMPRESSION_NONE) {
 		timing->compression_en = true;
@@ -180,15 +181,10 @@ static inline u32 get_horizontal_total(const struct intf_timing_params *timing)
 	return active + inactive;
 }
 
-static inline u32 get_vertical_total(const struct intf_timing_params *timing,
-	bool use_fixed_vfp)
+static inline u32 get_vertical_total(const struct intf_timing_params *timing)
 {
-	u32 inactive;
 	u32 active = timing->yres;
-	u32 v_front_porch = use_fixed_vfp ?
-		timing->v_front_porch_fixed : timing->v_front_porch;
-
-	inactive = timing->v_back_porch + v_front_porch +
+	u32 inactive = timing->v_back_porch + timing->v_front_porch +
 			    timing->vsync_pulse_width;
 	return active + inactive;
 }
@@ -209,21 +205,26 @@ static inline u32 get_vertical_total(const struct intf_timing_params *timing,
  */
 static u32 programmable_fetch_get_num_lines(
 		struct sde_encoder_phys_vid *vid_enc,
-		const struct intf_timing_params *timing,
-		bool use_fixed_vfp)
+		const struct intf_timing_params *timing)
 {
 	struct sde_encoder_phys *phys_enc = &vid_enc->base;
-	u32 worst_case_needed_lines =
-	    phys_enc->hw_intf->cap->prog_fetch_lines_worst_case;
+
+	u32 needed_prefill_lines, needed_vfp_lines, actual_vfp_lines;
+	const u32 fixed_prefill_fps = 60;
+	u32 default_prefill_lines =
+		phys_enc->hw_intf->cap->prog_fetch_lines_worst_case;
 	u32 start_of_frame_lines =
 	    timing->v_back_porch + timing->vsync_pulse_width;
-	u32 needed_vfp_lines = worst_case_needed_lines - start_of_frame_lines;
-	u32 actual_vfp_lines = 0;
-	u32 v_front_porch = use_fixed_vfp ?
-		timing->v_front_porch_fixed : timing->v_front_porch;
+	u32 v_front_porch = timing->v_front_porch;
+
+	/* minimum prefill lines are defined based on 60fps */
+	needed_prefill_lines = (timing->vrefresh > fixed_prefill_fps) ?
+		((default_prefill_lines * timing->vrefresh) /
+			fixed_prefill_fps) : default_prefill_lines;
+	needed_vfp_lines = needed_prefill_lines - start_of_frame_lines;
 
 	/* Fetch must be outside active lines, otherwise undefined. */
-	if (start_of_frame_lines >= worst_case_needed_lines) {
+	if (start_of_frame_lines >= needed_prefill_lines) {
 		SDE_DEBUG_VIDENC(vid_enc,
 				"prog fetch is not needed, large vbp+vsw\n");
 		actual_vfp_lines = 0;
@@ -240,12 +241,12 @@ static u32 programmable_fetch_get_num_lines(
 	}
 
 	SDE_DEBUG_VIDENC(vid_enc,
-		"v_front_porch %u v_back_porch %u vsync_pulse_width %u\n",
-		v_front_porch, timing->v_back_porch,
+		"vrefresh:%u v_front_porch:%u v_back_porch:%u vsync_pulse_width:%u\n",
+		timing->vrefresh, v_front_porch, timing->v_back_porch,
 		timing->vsync_pulse_width);
 	SDE_DEBUG_VIDENC(vid_enc,
-		"wc_lines %u needed_vfp_lines %u actual_vfp_lines %u\n",
-		worst_case_needed_lines, needed_vfp_lines, actual_vfp_lines);
+		"prefill_lines:%u needed_vfp_lines:%u actual_vfp_lines:%u\n",
+		needed_prefill_lines, needed_vfp_lines, actual_vfp_lines);
 
 	return actual_vfp_lines;
 }
@@ -278,10 +279,9 @@ static void programmable_fetch_config(struct sde_encoder_phys *phys_enc,
 
 	m = phys_enc->sde_kms->catalog;
 
-	vfp_fetch_lines = programmable_fetch_get_num_lines(vid_enc,
-							   timing, true);
+	vfp_fetch_lines = programmable_fetch_get_num_lines(vid_enc, timing);
 	if (vfp_fetch_lines) {
-		vert_total = get_vertical_total(timing, true);
+		vert_total = get_vertical_total(timing);
 		horiz_total = get_horizontal_total(timing);
 		vfp_fetch_start_vsync_counter =
 			(vert_total - vfp_fetch_lines) * horiz_total + 1;
