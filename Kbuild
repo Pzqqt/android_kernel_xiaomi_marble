@@ -1974,15 +1974,15 @@ endif
 #######################################################
 
 ###### COEX ########
-COEX_OS_IF_SRC      := $(WLAN_COMMON_ROOT)/os_if/linux/coex/src
-COEX_TGT_SRC        := $(WLAN_COMMON_ROOT)/target_if/coex/src
-COEX_CORE_SRC       := $(WLAN_COMMON_ROOT)/umac/coex/core/src
-COEX_DISPATCHER_SRC := $(WLAN_COMMON_ROOT)/umac/coex/dispatcher/src
+COEX_OS_IF_SRC      := os_if/coex/src
+COEX_TGT_SRC        := components/target_if/coex/src
+COEX_CORE_SRC       := components/coex/core/src
+COEX_DISPATCHER_SRC := components/coex/dispatcher/src
 
-COEX_OS_IF_INC      := -I$(WLAN_COMMON_INC)/os_if/linux/coex/inc
-COEX_TGT_INC        := -I$(WLAN_COMMON_INC)/target_if/coex/inc
-COEX_DISPATCHER_INC := -I$(WLAN_COMMON_INC)/umac/coex/dispatcher/inc
-COEX_CORE_INC       := -I$(WLAN_COMMON_INC)/umac/coex/core/inc
+COEX_OS_IF_INC      := -I$(WLAN_ROOT)/os_if/coex/inc
+COEX_TGT_INC        := -I$(WLAN_ROOT)/components/target_if/coex/inc
+COEX_DISPATCHER_INC := -I$(WLAN_ROOT)/components/coex/dispatcher/inc
+COEX_CORE_INC       := -I$(WLAN_ROOT)/components/coex/core/inc
 
 ifeq ($(CONFIG_FEATURE_COEX), y)
 COEX_OBJS := $(COEX_TGT_SRC)/target_if_coex.o                 \
