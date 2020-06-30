@@ -4648,8 +4648,8 @@ static void ipa_dma_gsi_irq_rx_notify_cb(struct gsi_chan_xfer_notify *notify)
 int ipa3_alloc_common_event_ring(void)
 {
 	struct gsi_evt_ring_props gsi_evt_ring_props;
-	dma_addr_t evt_dma_addr;
-	dma_addr_t evt_rp_dma_addr;
+	dma_addr_t evt_dma_addr = 0;
+	dma_addr_t evt_rp_dma_addr = 0;
 	int result;
 
 	memset(&gsi_evt_ring_props, 0, sizeof(gsi_evt_ring_props));

@@ -186,7 +186,7 @@ int ipa3_uc_client_del_holb_monitor(uint16_t gsi_ch, uint8_t ee)
 	client_idx = ipa3_get_holb_client_idx_by_ch(gsi_ch);
 	if (client_idx == -EINVAL) {
 		IPAERR("Invalid client with GSI chan %d\n", gsi_ch);
-		ret = client_idx;
+		return client_idx;
 	}
 
 	holb_client = &(ipa3_ctx->uc_ctx.holb_monitor.client[client_idx]);

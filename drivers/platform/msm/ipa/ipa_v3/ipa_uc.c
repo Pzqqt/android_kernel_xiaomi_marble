@@ -1088,15 +1088,16 @@ int ipa3_uc_interface_init(void)
 		if (!ipa_uc_holb_wq) {
 			IPAERR("Failed to create ipa_uc_holb_wq\n");
 			result = -EFAULT;
-			goto fail_wq;
+			goto irq_fail3;
 		}
 	}
 	ipa3_ctx->uc_ctx.uc_inited = true;
 
 	IPADBG("IPA uC interface is initialized\n");
 	return 0;
-fail_wq:
-	destroy_workqueue(ipa_uc_holb_wq);
+
+irq_fail3:
+	ipa3_remove_interrupt_handler(IPA_UC_IRQ_2);
 irq_fail2:
 	ipa3_remove_interrupt_handler(IPA_UC_IRQ_1);
 irq_fail1:

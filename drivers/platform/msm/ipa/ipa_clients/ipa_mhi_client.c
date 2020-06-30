@@ -178,8 +178,9 @@ static int ipa_mhi_read_write_host(enum ipa_mhi_dma_dir dir, void *dev_addr,
 		host_addr = IPA_MHI_CLIENT_HOST_ADDR_COND(host_addr);
 
 		mem.size = size;
-		mem.base = dma_alloc_coherent(pdev, mem.size,
-			&mem.phys_base, GFP_KERNEL);
+		if (pdev)
+			mem.base = dma_alloc_coherent(pdev, mem.size,
+				&mem.phys_base, GFP_KERNEL);
 		if (!mem.base) {
 			IPA_MHI_ERR(
 				"dma_alloc_coherent failed, DMA buff size %d\n"
