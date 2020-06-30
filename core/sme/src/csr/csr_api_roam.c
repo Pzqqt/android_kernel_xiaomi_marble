@@ -10862,24 +10862,12 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 			  profile->mcEncryptionType.encryptionType[i]);
 	}
 
-	if (profile->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
-		filter->bss_type = WLAN_TYPE_BSS;
-	else
-		filter->bss_type = WLAN_TYPE_ANY;
-
 	phy_mode = profile->phyMode;
 	csr_update_phy_mode(profile, &phy_mode);
 
 	filter->dot11_mode = csr_convert_dotllmod_phymode(phy_mode);
 	if (profile->bWPSAssociation || profile->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;
-	if (profile->countryCode[0])
-		/*
-		 * This causes the matching function to use countryCode as one
-		 * of the criteria.
-		 */
-		qdf_mem_copy(filter->country, profile->countryCode,
-			     REG_ALPHA2_LEN + 1);
 
 	filter->mobility_domain = profile->mdid.mobility_domain;
 	qdf_mem_copy(filter->bssid_hint.bytes, profile->bssid_hint.bytes,

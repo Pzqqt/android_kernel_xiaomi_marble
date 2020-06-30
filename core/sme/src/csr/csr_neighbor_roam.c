@@ -399,11 +399,6 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 	filter->mc_enc_type[0] =
 		csr_covert_enc_type_new(profile->mcEncryptionType);
 
-	if (profile->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
-		filter->bss_type = WLAN_TYPE_BSS;
-	else
-		filter->bss_type = WLAN_TYPE_ANY;
-
 	chan_info = &nbr_roam_info->roamChannelInfo.currentChannelListInfo;
 	num_ch = chan_info->numOfChannels;
 	if (num_ch) {
