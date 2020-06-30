@@ -3696,6 +3696,13 @@ typedef struct {
      * specified by the host's ini configuration.
      */
     A_UINT32 max_ndi_interfaces;
+
+    /** @brief max_ap_vaps
+     * Maximum number of AP mode vdevs created at any time.
+     * This value is minimum of the number of AP vdevs supported by
+     * the target and host.
+     */
+    A_UINT32 max_ap_vaps;
 } wmi_resource_config;
 
 #define WMI_MSDU_FLOW_AST_ENABLE_GET(msdu_flow_config0, ast_x) \
