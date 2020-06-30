@@ -6112,7 +6112,7 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 {
 	DP_PRINT_STATS("PDEV Rx Stats:\n");
 	DP_PRINT_STATS("Received From HW (Per Rx Ring):");
-	DP_PRINT_STATS("	Packets = %d %d %d %d",
+	DP_PRINT_STATS("	Packets = %u %u %u %u",
 		       pdev->stats.rx.rcvd_reo[0].num,
 		       pdev->stats.rx.rcvd_reo[1].num,
 		       pdev->stats.rx.rcvd_reo[2].num,
@@ -6123,50 +6123,50 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 		       pdev->stats.rx.rcvd_reo[2].bytes,
 		       pdev->stats.rx.rcvd_reo[3].bytes);
 	DP_PRINT_STATS("Replenished:");
-	DP_PRINT_STATS("	Packets = %d",
+	DP_PRINT_STATS("	Packets = %u",
 		       pdev->stats.replenish.pkts.num);
-	DP_PRINT_STATS("	Buffers Added To Freelist = %d",
+	DP_PRINT_STATS("	Buffers Added To Freelist = %u",
 		       pdev->stats.buf_freelist);
 	DP_PRINT_STATS("	Low threshold intr = %d",
 		       pdev->stats.replenish.low_thresh_intrs);
 	DP_PRINT_STATS("Dropped:");
-	DP_PRINT_STATS("	msdu_not_done = %d",
+	DP_PRINT_STATS("	msdu_not_done = %u",
 		       pdev->stats.dropped.msdu_not_done);
-	DP_PRINT_STATS("        wifi parse = %d",
+	DP_PRINT_STATS("        wifi parse = %u",
 		       pdev->stats.dropped.wifi_parse);
-	DP_PRINT_STATS("        mon_rx_drop = %d",
+	DP_PRINT_STATS("        mon_rx_drop = %u",
 		       pdev->stats.dropped.mon_rx_drop);
-	DP_PRINT_STATS("        mon_radiotap_update_err = %d",
+	DP_PRINT_STATS("        mon_radiotap_update_err = %u",
 		       pdev->stats.dropped.mon_radiotap_update_err);
-	DP_PRINT_STATS("        mec_drop = %d",
+	DP_PRINT_STATS("        mec_drop = %u",
 		       pdev->stats.rx.mec_drop.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 		       pdev->stats.rx.mec_drop.bytes);
 	DP_PRINT_STATS("Sent To Stack:");
-	DP_PRINT_STATS("	Packets = %d",
+	DP_PRINT_STATS("	Packets = %u",
 		       pdev->stats.rx.to_stack.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 		       pdev->stats.rx.to_stack.bytes);
-	DP_PRINT_STATS("        vlan_tag_stp_cnt = %d",
+	DP_PRINT_STATS("        vlan_tag_stp_cnt = %u",
 		       pdev->stats.vlan_tag_stp_cnt);
 	DP_PRINT_STATS("Multicast/Broadcast:");
-	DP_PRINT_STATS("	Packets = %d",
+	DP_PRINT_STATS("	Packets = %u",
 		       pdev->stats.rx.multicast.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 		       pdev->stats.rx.multicast.bytes);
 	DP_PRINT_STATS("Errors:");
-	DP_PRINT_STATS("	Rxdma Ring Un-inititalized = %d",
+	DP_PRINT_STATS("	Rxdma Ring Un-inititalized = %u",
 		       pdev->stats.replenish.rxdma_err);
-	DP_PRINT_STATS("	Desc Alloc Failed: = %d",
+	DP_PRINT_STATS("	Desc Alloc Failed: = %u",
 		       pdev->stats.err.desc_alloc_fail);
-	DP_PRINT_STATS("	IP checksum error = %d",
+	DP_PRINT_STATS("	IP checksum error = %u",
 		       pdev->stats.err.ip_csum_err);
-	DP_PRINT_STATS("	TCP/UDP checksum error = %d",
+	DP_PRINT_STATS("	TCP/UDP checksum error = %u",
 		       pdev->stats.err.tcp_udp_csum_err);
 
 	/* Get bar_recv_cnt */
 	dp_aggregate_pdev_ctrl_frames_stats(pdev);
-	DP_PRINT_STATS("BAR Received Count: = %d",
+	DP_PRINT_STATS("BAR Received Count: = %u",
 		       pdev->stats.rx.bar_recv_cnt);
 }
 
