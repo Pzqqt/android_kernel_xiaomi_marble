@@ -3508,7 +3508,7 @@ wma_rso_print_trigger_info(struct wmi_roam_trigger_info *data, uint8_t vdev_id)
 
 	wma_get_trigger_detail_str(data, buf);
 	mlme_get_converted_timestamp(data->timestamp, time);
-	WMA_LOGI("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
+	wma_info("%s [ROAM_TRIGGER]: VDEV[%d] %s", time, vdev_id, buf);
 
 	qdf_mem_free(buf);
 }
@@ -3530,18 +3530,18 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN];
 
-	wma_debug("%40s%40s", LINE_STR, LINE_STR);
-	WMA_LOGI("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s",
-		 "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
-		 "SCR", "CU%", "SCR", "TOT_SCR");
-	wma_debug("%40s%40s", LINE_STR, LINE_STR);
+	wma_nofl_info("%40s%40s", LINE_STR, LINE_STR);
+	wma_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s",
+		     "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
+		     "SCR", "CU%", "SCR", "TOT_SCR");
+	wma_nofl_info("%40s%40s", LINE_STR, LINE_STR);
 
 	if (num_entries > MAX_ROAM_CANDIDATE_AP)
 		num_entries = MAX_ROAM_CANDIDATE_AP;
 
 	for (i = 0; i < num_entries; i++) {
 		mlme_get_converted_timestamp(ap->timestamp, time);
-		WMA_LOGI(QDF_MAC_ADDR_STR " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d",
+		wma_nofl_info(QDF_MAC_ADDR_STR " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d",
 			 QDF_MAC_ADDR_ARRAY(ap->bssid.bytes), time, ap->freq,
 			 ((ap->type == 0) ? "C_AP" :
 			  ((ap->type == 2) ? "R_AP" : "P_AP")),
@@ -3609,7 +3609,7 @@ wma_rso_print_scan_info(struct wmi_roam_scan_data *scan, uint8_t vdev_id,
 			    scan->next_rssi_threshold);
 
 	mlme_get_converted_timestamp(timestamp, time);
-	WMA_LOGI("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
+	wma_info("%s [ROAM_SCAN]: VDEV[%d] Scan_type: %s %s %s",
 		 time, vdev_id, (scan->type ? "FULL" : "PARTIAL"),
 		 buf1, buf);
 	wma_log_roam_scan_candidates(scan->ap, scan->num_ap);
@@ -3643,7 +3643,7 @@ wma_rso_print_roam_result(struct wmi_roam_result *res,
 			    mlme_get_roam_fail_reason_str(res->fail_reason));
 
 	mlme_get_converted_timestamp(res->timestamp, time);
-	WMA_LOGI("%s [ROAM_RESULT]: VDEV[%d] %s %s",
+	wma_info("%s [ROAM_RESULT]: VDEV[%d] %s %s",
 		 time, vdev_id, (res->status) ? "SUCCESS" : "FAILED", buf);
 
 	qdf_mem_free(buf);
@@ -3695,16 +3695,16 @@ wma_rso_print_11kv_info(struct wmi_neighbor_report_data *neigh_rpt,
 	}
 
 	mlme_get_converted_timestamp(neigh_rpt->req_time, time);
-	WMA_LOGI("%s [%s] VDEV[%d]", time,
+	wma_info("%s [%s] VDEV[%d]", time,
 		 (type == 1) ? "BTM_QUERY" : "NEIGH_RPT_REQ", vdev_id);
 
 	if (neigh_rpt->resp_time) {
 		mlme_get_converted_timestamp(neigh_rpt->resp_time, time1);
-		WMA_LOGI("%s [%s] VDEV[%d] %s", time1,
+		wma_info("%s [%s] VDEV[%d] %s", time1,
 			 (type == 1) ? "BTM_REQ" : "NEIGH_RPT_RSP", vdev_id,
 			 (num_ch > 0) ? buf : "NO Ch update");
 	} else {
-		WMA_LOGI("%s No response received from AP",
+		wma_info("%s No response received from AP",
 			 (type == 1) ? "BTM" : "NEIGH_RPT");
 	}
 	qdf_mem_free(buf);
@@ -4103,7 +4103,7 @@ int wma_rssi_breached_event_handler(void *handle,
 
 	wma_debug("req_id: %u vdev_id: %d curr_rssi: %d",
 		 rssi.request_id, rssi.session_id, rssi.curr_rssi);
-	WMA_LOGI("%s: curr_bssid: %pM", __func__, rssi.curr_bssid.bytes);
+	wma_debug("curr_bssid: %pM", rssi.curr_bssid.bytes);
 
 	mac->sme.rssi_threshold_breached_cb(mac->hdd_handle, &rssi);
 	wma_debug("Invoke HDD rssi breached callback");
@@ -4184,7 +4184,7 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 		vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
 
-	WMA_LOGI("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
+	wma_info("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
 	wlan_roam_debug_log(vdev_id, DEBUG_ROAM_SYNCH_CNF,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 
@@ -4691,7 +4691,7 @@ int wma_extscan_operations_event_handler(void *handle,
 	}
 	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_PROGRESS_EVENT_IND, oprn_ind);
-	WMA_LOGI("%s: sending scan progress event to hdd", __func__);
+	wma_debug("sending scan progress event to hdd");
 exit_handler:
 	qdf_mem_free(oprn_ind);
 	return 0;
@@ -4741,7 +4741,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_RES_AVAILABLE_IND,
 				tbl_usg_ind);
-	WMA_LOGI("%s: sending scan_res available event to hdd", __func__);
+	wma_debug("sending scan_res available event to hdd");
 	qdf_mem_free(tbl_usg_ind);
 	return 0;
 }
@@ -4963,7 +4963,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	dest_hotlist->ap_found = ap_found;
 	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_HOTLIST_MATCH_IND, dest_hotlist);
-	WMA_LOGI("%s: sending hotlist match event to hdd", __func__);
+	wma_debug("sending hotlist match event to hdd");
 	qdf_mem_free(dest_hotlist);
 	return 0;
 }
@@ -5200,10 +5200,10 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	event = param_buf->fixed_param;
 	src_hotlist = param_buf->bssid_list;
 	src_rssi = param_buf->rssi_list;
-	WMA_LOGI("Total_entries: %u first_entry_index: %u num_entries_in_page: %d",
-			event->total_entries,
-			event->first_entry_index,
-			event->num_entries_in_page);
+	wma_debug("Total_entries: %u first_entry_index: %u num_entries_in_page: %d",
+		 event->total_entries,
+		 event->first_entry_index,
+		 event->num_entries_in_page);
 
 	if (!src_hotlist || !src_rssi || !event->num_entries_in_page) {
 		wma_warn("Cached results empty, send 0 results");
@@ -5442,7 +5442,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 			eSIR_EXTSCAN_SIGNIFICANT_WIFI_CHANGE_RESULTS_IND,
 			dest_chglist);
-	WMA_LOGI("%s: sending change monitor results", __func__);
+	wma_debug("sending change monitor results");
 	qdf_mem_free(dest_chglist);
 	return 0;
 }
@@ -5530,7 +5530,7 @@ int wma_passpoint_match_event_handler(void *handle,
 	dest_match->request_id = 0;
 	dest_match->id = event->id;
 	dest_match->anqp_len = event->anqp_length;
-	WMA_LOGI("%s: passpoint match: id: %u anqp length %u", __func__,
+	wma_info("passpoint match: id: %u anqp length %u",
 		 dest_match->id, dest_match->anqp_len);
 
 	dest_ap->channel = event->channel_mhz;
@@ -5554,7 +5554,7 @@ int wma_passpoint_match_event_handler(void *handle,
 	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_PASSPOINT_NETWORK_FOUND_IND,
 				dest_match);
-	WMA_LOGI("%s: sending passpoint match event to hdd", __func__);
+	wma_debug("sending passpoint match event to hdd");
 	qdf_mem_free(dest_match);
 	return 0;
 }
@@ -5899,7 +5899,7 @@ static int wma_handle_hw_mode_transition(tp_wma_handle wma,
 		    param->wmi_pdev_set_hw_mode_response_vdev_mac_mapping,
 		    hw_mode_trans_ind);
 
-		WMA_LOGI(FL("Update HW mode"));
+		wma_debug("Update HW mode");
 		sme_msg.type = eWNI_SME_HW_MODE_TRANS_IND;
 		sme_msg.bodyptr = hw_mode_trans_ind;
 

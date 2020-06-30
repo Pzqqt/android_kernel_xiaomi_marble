@@ -713,8 +713,8 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 	}
 
 	if (wma_handle->ito_repeat_count) {
-		WMA_LOGI("Set ITO count to %d for vdevId %d",
-					wma_handle->ito_repeat_count, vdev_id);
+		wma_debug("Set ITO count to %d for vdevId %d",
+			 wma_handle->ito_repeat_count, vdev_id);
 
 		ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle,
 			vdev_id,
@@ -789,7 +789,7 @@ QDF_STATUS wma_set_power_config(uint8_t vdev_id, enum powersave_mode power)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMA_LOGI("configuring power: %d", power);
+	wma_info("configuring power: %d", power);
 	wma->powersave_mode = power;
 	return wma_unified_set_sta_ps_param(wma->wmi_handle,
 					    vdev_id,
@@ -1092,7 +1092,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 	}
 
 	wmi_event = param_buf->fixed_param;
-	WMA_LOGI(FL("temperature: %d"), wmi_event->value);
+	wma_info("temperature: %d", wmi_event->value);
 
 	sme_msg.type = eWNI_SME_MSG_GET_TEMPERATURE_IND;
 	sme_msg.bodyptr = NULL;
@@ -1233,8 +1233,7 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 		     new_noa_sub_ie_len);
 
 	bcn->len += (new_noa_sub_ie_len + sizeof(struct p2p_ie));
-	WMA_LOGI("%s: Updated beacon length with NoA Ie is %u",
-		 __func__, bcn->len);
+	wma_debug("Updated beacon length with NoA Ie is %u", bcn->len);
 }
 
 /**
@@ -1360,7 +1359,7 @@ void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 				noa_ie->noa_descriptors[1].start_time;
 		}
 	}
-	WMA_LOGI("Sending SIR_HAL_P2P_NOA_ATTR_IND to LIM");
+	wma_debug("Sending SIR_HAL_P2P_NOA_ATTR_IND to LIM");
 	wma_send_msg(wma_handle, SIR_HAL_P2P_NOA_ATTR_IND, (void *)noa_attr, 0);
 }
 

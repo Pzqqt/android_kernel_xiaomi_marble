@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,8 +38,6 @@ wma_fips_event_handler(void *handle, uint8_t *event, uint32_t len)
 	wma_fips_cb callback;
 	QDF_STATUS status;
 
-	WMA_LOGI(FL("handle:%pK event:%pK len:%u"), handle, event, len);
-
 	wma_handle = handle;
 	if (!wma_handle) {
 		WMA_LOGE(FL("NULL wma_handle"));
@@ -54,7 +52,7 @@ wma_fips_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	status = wmi_extract_fips_event_data(wmi_handle, event, &param);
 
-	WMA_LOGI(FL("Received FIPS event, pdev:%u status:%u data_len:%u"),
+	wma_info("Received FIPS event, pdev:%u status:%u data_len:%u",
 		 param.pdev_id, param.error_status, param.data_len);
 
 	/* make sure extraction error is propagated to upper layers */

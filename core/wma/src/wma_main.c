@@ -5778,8 +5778,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	wma_debug("Firmware default hw mode index : %d",
 		 tgt_cap_info->default_dbs_hw_mode_index);
-	WMA_LOGI("%s: Firmware build version : %08x",
-		 __func__, ev->fw_build_vers);
+	wma_info("Firmware build version : %08x",
+		 ev->fw_build_vers);
 	wma_debug("FW fine time meas cap: 0x%x",
 		 tgt_cap_info->wmi_fw_sub_feat_caps);
 
@@ -5796,8 +5796,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->hw_bd_info[BOARD_DATA_REV] =
 		WMI_GET_BOARD_DATA_REV(ev->hw_bd_info);
 
-	WMA_LOGI("%s: Board id: %x, Board version: %x %x %x %x %x",
-		 __func__, wma_handle->hw_bd_id,
+	wma_info("Board id: %x, Board version: %x %x %x %x %x",
+		 wma_handle->hw_bd_id,
 		 wma_handle->hw_bd_info[BDF_VERSION],
 		 wma_handle->hw_bd_info[REF_DESIGN_ID],
 		 wma_handle->hw_bd_info[CUSTOMER_ID],

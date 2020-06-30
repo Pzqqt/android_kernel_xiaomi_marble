@@ -546,7 +546,6 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	struct ppet_hdr *hdr;
 
 	if (!he_cap->present) {
-		WMA_LOGI(FL("HE Capabilities not present"));
 		return;
 	}
 
@@ -711,7 +710,7 @@ void wma_print_he_ppet(void *he_ppet)
 	struct wmi_host_ppe_threshold *ppet = he_ppet;
 
 	if (!ppet) {
-		WMA_LOGI(FL("PPET is NULL"));
+		wma_err("PPET is NULL");
 		return;
 	}
 
@@ -925,7 +924,7 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	}
 
 	if (!tgt_cfg->services.en_11ax) {
-		WMA_LOGI(FL("Target does not support 11AX"));
+		wma_info("Target does not support 11AX");
 		he_cap->present = false;
 		return;
 	}
@@ -998,9 +997,9 @@ void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
 	if (wmi_service_enabled(wmi_handle, wmi_service_11ax)) {
 		cfg->en_11ax = true;
 		wma_set_fw_wlan_feat_caps(DOT11AX);
-		WMA_LOGI(FL("11ax is enabled"));
+		wma_debug("11ax is enabled");
 	} else {
-		WMA_LOGI(FL("11ax is not enabled"));
+		wma_debug("11ax is not enabled");
 	}
 }
 

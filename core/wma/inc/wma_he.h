@@ -325,13 +325,11 @@ static inline bool wma_is_peer_he_capable(tpAddStaParams params)
 static inline void wma_set_he_vdev_param(struct wma_txrx_node *intr,
 			WMI_VDEV_PARAM param_id, uint32_t value)
 {
-	WMA_LOGI(FL("Unable to update WMI_VDEV_PARAM: %0x"), param_id);
 }
 
 static inline uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 					     WMI_VDEV_PARAM param_id)
 {
-	WMA_LOGI(FL("Unable to update WMI_VDEV_PARAM: %0x"), param_id);
 	return 0;
 }
 

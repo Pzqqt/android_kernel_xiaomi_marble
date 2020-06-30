@@ -742,7 +742,7 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	WMA_LOGI("%s send WMI_REQUEST_PEER_STATS_INFO_CMDID", __func__);
+	wma_debug("send WMI_REQUEST_PEER_STATS_INFO_CMDID");
 
 	len  = sizeof(wmi_request_peer_stats_info_cmd_fixed_param);
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
@@ -769,12 +769,11 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGI("%s vdev_id %d, mac %pM, req_type %x, reset %x",
-			__func__,
-			cmd->vdev_id,
-			peer_info_req->peer_macaddr.bytes,
-			cmd->request_type,
-			cmd->reset_after_request);
+	wma_info("vdev_id %d, mac %pM, req_type %x, reset %x",
+		cmd->vdev_id,
+		peer_info_req->peer_macaddr.bytes,
+		cmd->request_type,
+		cmd->reset_after_request);
 
 	qdf_mem_copy(&(wma_handle->peer_macaddr),
 					&(peer_info_req->peer_macaddr),
@@ -1697,7 +1696,7 @@ static int wma_extscan_get_eventid_from_tlvtag(uint32_t tag)
 		break;
 	}
 
-	WMA_LOGI("%s: For tag %d WMI event 0x%x", __func__, tag, event_id);
+	wma_info("For tag %d WMI event 0x%x", tag, event_id);
 	return event_id;
 }
 #else
@@ -2053,17 +2052,17 @@ static void wma_log_pkt_ipv4(uint8_t *data, uint32_t length)
 
 	pkt_len = *(uint16_t *)(data + IPV4_PKT_LEN_OFFSET);
 	ip_addr = (char *)(data + IPV4_SRC_ADDR_OFFSET);
-	wma_debug("src addr %d:%d:%d:%d", ip_addr[0], ip_addr[1],
-		 ip_addr[2], ip_addr[3]);
+	wma_nofl_debug("src addr %d:%d:%d:%d", ip_addr[0], ip_addr[1],
+		      ip_addr[2], ip_addr[3]);
 	ip_addr = (char *)(data + IPV4_DST_ADDR_OFFSET);
-	wma_debug("dst addr %d:%d:%d:%d", ip_addr[0], ip_addr[1],
-		 ip_addr[2], ip_addr[3]);
+	wma_nofl_debug("dst addr %d:%d:%d:%d", ip_addr[0], ip_addr[1],
+		      ip_addr[2], ip_addr[3]);
 	src_port = *(uint16_t *)(data + IPV4_SRC_PORT_OFFSET);
 	dst_port = *(uint16_t *)(data + IPV4_DST_PORT_OFFSET);
-	WMA_LOGI("Pkt_len: %u, src_port: %u, dst_port: %u",
-		 qdf_cpu_to_be16(pkt_len),
-		 qdf_cpu_to_be16(src_port),
-		 qdf_cpu_to_be16(dst_port));
+	wma_info("Pkt_len: %u, src_port: %u, dst_port: %u",
+		qdf_cpu_to_be16(pkt_len),
+		qdf_cpu_to_be16(src_port),
+		qdf_cpu_to_be16(dst_port));
 }
 
 static void wma_log_pkt_ipv6(uint8_t *data, uint32_t length)
@@ -2091,7 +2090,7 @@ static void wma_log_pkt_ipv6(uint8_t *data, uint32_t length)
 		 ip_addr[15]);
 	src_port = *(uint16_t *)(data + IPV6_SRC_PORT_OFFSET);
 	dst_port = *(uint16_t *)(data + IPV6_DST_PORT_OFFSET);
-	WMA_LOGI("Pkt_len: %u, src_port: %u, dst_port: %u",
+	wma_info("Pkt_len: %u, src_port: %u, dst_port: %u",
 		 qdf_cpu_to_be16(pkt_len),
 		 qdf_cpu_to_be16(src_port),
 		 qdf_cpu_to_be16(dst_port));
@@ -2172,7 +2171,7 @@ static void wma_wow_parse_data_pkt(t_wma_handle *wma,
 	proto_subtype = wma_wow_get_pkt_proto_subtype(data, length);
 	proto_subtype_name = wma_pkt_proto_subtype_to_string(proto_subtype);
 	if (proto_subtype_name)
-		WMA_LOGI("WOW Wakeup: %s rcvd", proto_subtype_name);
+		wma_info("WOW Wakeup: %s rcvd", proto_subtype_name);
 
 	switch (proto_subtype) {
 	case QDF_PROTO_EAPOL_M1:
@@ -4334,7 +4333,7 @@ static int wma_sar_event_handler(void *handle, uint8_t *evt_buf, uint32_t len)
 	wma_sar_cb callback;
 	QDF_STATUS status;
 
-	WMA_LOGI(FL("handle:%pK event:%pK len:%u"), handle, evt_buf, len);
+	wma_info("handle:%pK event:%pK len:%u", handle, evt_buf, len);
 
 	wma_handle = handle;
 	if (!wma_handle) {
@@ -4884,8 +4883,8 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
-	WMA_LOGI(FL("Received BT activity event %u"),
-		    fixed_param->coex_profile_evt);
+	wma_info("Received BT activity event %u",
+		fixed_param->coex_profile_evt);
 
 	sme_msg.type = eWNI_SME_BT_ACTIVITY_INFO_IND;
 	sme_msg.bodyptr = NULL;

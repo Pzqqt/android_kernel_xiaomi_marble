@@ -1840,7 +1840,7 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg sme_msg = {0};
 
-	WMA_LOGI(FL("Thermal level: %d"), level);
+	wma_info("Thermal level: %d", level);
 
 	sme_msg.type = eWNI_SME_SET_THERMAL_LEVEL_IND;
 	sme_msg.bodyptr = NULL;

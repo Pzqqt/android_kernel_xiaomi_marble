@@ -2234,8 +2234,8 @@ __wma_handle_vdev_stop_rsp(struct vdev_stop_response *resp_event)
 				       bssid.bytes);
 		iface->peer_count--;
 
-		WMA_LOGI("%s: Removed peer %pM vdev_id %d, peer_count %d",
-			 __func__, bssid.bytes,
+		wma_info("Removed peer %pM vdev_id %d, peer_count %d",
+			 bssid.bytes,
 			 resp_event->vdev_id, iface->peer_count);
 		vdev_stop_resp->status = status;
 		vdev_stop_resp->vdev_id = resp_event->vdev_id;
@@ -3783,7 +3783,7 @@ QDF_STATUS wma_send_peer_assoc_req(struct bss_params *add_bss)
 
 	if (!wmi_service_enabled(wma->wmi_handle,
 				 wmi_service_peer_assoc_conf)) {
-		WMA_LOGI(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
+		wma_debug("WMI_SERVICE_PEER_ASSOC_CONF not enabled");
 		goto send_resp;
 	}
 

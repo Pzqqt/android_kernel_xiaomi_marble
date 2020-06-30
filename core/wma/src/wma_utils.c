@@ -3133,7 +3133,7 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	WMA_LOGI("%s Recv WMI_PEER_STATS_INFO_EVENTID", __func__);
+	wma_debug("Recv WMI_PEER_STATS_INFO_EVENTID");
 	event = param_buf->fixed_param;
 	if (event->num_peers >
 	    ((WMI_SVC_MSG_MAX_SIZE -
@@ -3155,7 +3155,7 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 	qdf_mem_copy((buf + sizeof(wmi_peer_stats_info_event_fixed_param)),
 			param_buf->peer_stats_info,
 			sizeof(wmi_peer_stats_info) * event->num_peers);
-	WMA_LOGI("%s dump peer stats info", __func__);
+	wma_debug("dump peer stats info");
 	dump_peer_stats_info(event, param_buf->peer_stats_info);
 
 	wma_peer_info_ext_rsp(wma, buf);

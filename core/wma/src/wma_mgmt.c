@@ -190,8 +190,8 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 			(uint8_t) WMI_UNIFIED_NOA_ATTR_CTWIN_GET(p2p_noa_info);
 		noa_ie.num_descriptors = (uint8_t)
 				WMI_UNIFIED_NOA_ATTR_NUM_DESC_GET(p2p_noa_info);
-		WMA_LOGI("%s: index %u, oppPs %u, ctwindow %u, num_descriptors = %u",
-			 __func__, noa_ie.index,
+		wma_debug("index %u, oppPs %u, ctwindow %u, num_descriptors = %u",
+			 noa_ie.index,
 			 noa_ie.oppPS, noa_ie.ctwindow, noa_ie.num_descriptors);
 		for (i = 0; i < noa_ie.num_descriptors; i++) {
 			noa_ie.noa_descriptors[i].type_count =
@@ -203,8 +203,8 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 				p2p_noa_info->noa_descriptors[i].interval;
 			noa_ie.noa_descriptors[i].start_time =
 				p2p_noa_info->noa_descriptors[i].start_time;
-			WMA_LOGI("%s: NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
-				 __func__, i,
+			wma_debug("NoA descriptor[%d] type_count %u, duration %u, interval %u, start_time = %u",
+				 i,
 				 noa_ie.noa_descriptors[i].type_count,
 				 noa_ie.noa_descriptors[i].duration,
 				 noa_ie.noa_descriptors[i].interval,
@@ -497,9 +497,9 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 
 	/* Beacon Tx Indication supports only AP mode. Ignore in other modes */
 	if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) == false) {
-		WMA_LOGI("%s: Beacon Tx Indication does not support type %d and sub_type %d",
-			__func__, wma->interfaces[resp_event->vdev_id].type,
-			wma->interfaces[resp_event->vdev_id].sub_type);
+		wma_debug("Beacon Tx Indication does not support type %d and sub_type %d",
+			 wma->interfaces[resp_event->vdev_id].type,
+			 wma->interfaces[resp_event->vdev_id].sub_type);
 		return 0;
 	}
 
@@ -1690,7 +1690,7 @@ wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to update beacon interval");
 	else
-		WMA_LOGI("Updated beacon interval %d for vdev %d",
+		wma_info("Updated beacon interval %d for vdev %d",
 			 beaconInterval, vdev_id);
 }
 
