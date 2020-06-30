@@ -443,7 +443,7 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	ssid_ptr = (wmi_ssid *)(buf_ptr + WMI_TLV_HDR_SIZE);
 	for (i = 0; i < roam_req->num_ssid_white_list; i++) {
 		qdf_mem_copy(&ssid_ptr->ssid,
-			&roam_req->ssid_allowed_list[i].mac_ssid,
+			&roam_req->ssid_allowed_list[i].ssid,
 			roam_req->ssid_allowed_list[i].length);
 		ssid_ptr->ssid_len = roam_req->ssid_allowed_list[i].length;
 		ssid_ptr++;
@@ -1640,7 +1640,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 	profile->flags = ap_profile->profile.flags;
 	profile->rssi_threshold = ap_profile->profile.rssi_threshold;
 	profile->ssid.ssid_len = ap_profile->profile.ssid.length;
-	qdf_mem_copy(profile->ssid.ssid, ap_profile->profile.ssid.mac_ssid,
+	qdf_mem_copy(profile->ssid.ssid, ap_profile->profile.ssid.ssid,
 		     profile->ssid.ssid_len);
 	profile->rsn_authmode = ap_profile->profile.rsn_authmode;
 	profile->rsn_ucastcipherset = ap_profile->profile.rsn_ucastcipherset;
@@ -1651,7 +1651,7 @@ send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD("AP PROFILE: flags %x rssi_thres:%d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
 		 profile->flags, profile->rssi_threshold,
-		 profile->ssid.ssid_len, ap_profile->profile.ssid.mac_ssid,
+		 profile->ssid.ssid_len, ap_profile->profile.ssid.ssid,
 		 profile->rsn_authmode, profile->rsn_ucastcipherset,
 		 profile->rsn_mcastcipherset, profile->rsn_mcastmgmtcipherset,
 		 profile->rssi_abs_thresh);
@@ -2777,7 +2777,7 @@ send_offload_11k_cmd_tlv(wmi_unified_t wmi_handle,
 		neighbor_report_offload->ssid.ssid_len =
 			params->neighbor_report_params.ssid.length;
 		qdf_mem_copy(neighbor_report_offload->ssid.ssid,
-			     &params->neighbor_report_params.ssid.mac_ssid,
+			     &params->neighbor_report_params.ssid.ssid,
 			     neighbor_report_offload->ssid.ssid_len);
 	}
 
@@ -2827,9 +2827,7 @@ static QDF_STATUS send_invoke_neighbor_report_cmd_tlv(
 	cmd->flags = params->send_resp_to_host;
 
 	cmd->ssid.ssid_len = params->ssid.length;
-	qdf_mem_copy(cmd->ssid.ssid,
-		     &params->ssid.mac_ssid,
-		     cmd->ssid.ssid_len);
+	qdf_mem_copy(cmd->ssid.ssid, &params->ssid.ssid, cmd->ssid.ssid_len);
 
 	wmi_mtrace(WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID, cmd->vdev_id, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,

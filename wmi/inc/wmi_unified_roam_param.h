@@ -215,7 +215,7 @@ struct roam_scan_filter_params {
 	uint32_t num_ssid_white_list;
 	uint32_t num_bssid_preferred_list;
 	struct qdf_mac_addr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
-	struct mac_ssid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
+	struct wlan_ssid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
 	struct qdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
 	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
 	uint8_t lca_disallow_config_present;
@@ -289,7 +289,7 @@ struct plm_req_params {
 struct ap_profile {
 	uint32_t flags;
 	uint32_t rssi_threshold;
-	struct mac_ssid  ssid;
+	struct wlan_ssid  ssid;
 	uint32_t rsn_authmode;
 	uint32_t rsn_ucastcipherset;
 	uint32_t rsn_mcastcipherset;
@@ -684,7 +684,7 @@ struct wmi_11k_offload_neighbor_report_params {
 	uint32_t per_threshold_offset;
 	uint32_t neighbor_report_cache_timeout;
 	uint32_t max_neighbor_report_req_cap;
-	struct mac_ssid ssid;
+	struct wlan_ssid ssid;
 };
 
 /**
@@ -711,7 +711,7 @@ struct wmi_11k_offload_params {
 struct wmi_invoke_neighbor_report_params {
 	uint32_t vdev_id;
 	uint32_t send_resp_to_host;
-	struct mac_ssid ssid;
+	struct wlan_ssid ssid;
 };
 
 /**
