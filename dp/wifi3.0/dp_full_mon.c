@@ -69,6 +69,7 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev, uint32_t mac_id)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s %d : HAL Monitor Status Ring Init Failed -- %pK",
 			  __func__, __LINE__, mon_status_srng);
+		QDF_ASSERT(0);
 		return status;
 	}
 
@@ -80,6 +81,7 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev, uint32_t mac_id)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s %d : HAL SRNG access Failed -- %pK",
 			  __func__, __LINE__, mon_status_srng);
+		QDF_ASSERT(0);
 		return status;
 	}
 
