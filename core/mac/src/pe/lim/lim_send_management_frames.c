@@ -1747,9 +1747,9 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 	uint16_t reason_code;
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 
-	pe_nofl_info("Assoc req TX: %s",
+	pe_nofl_info("Assoc req TX: %s (%d)",
 		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
-		      "success" : "fail");
+		      "success" : "fail", tx_complete);
 
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		assoc_ack_status = ACKED;
@@ -2542,9 +2542,9 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 
-	pe_nofl_info("Auth TX: %s",
+	pe_nofl_info("Auth TX: %s (%d)",
 		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
-		     "success" : "fail");
+		     "success" : "fail", tx_complete);
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
 		auth_ack_status = ACKED;
