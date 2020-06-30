@@ -1493,7 +1493,7 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(pmksa->pmkid, pmk_info->pmkid, pmksa->pmkid_len);
 	qdf_mem_copy(&(pmksa->bssid), &(pmk_info->bssid), sizeof(wmi_mac_addr));
 	pmksa->ssid.ssid_len = pmk_info->ssid.length;
-	qdf_mem_copy(&(pmksa->ssid.ssid), &(pmk_info->ssid.mac_ssid),
+	qdf_mem_copy(&(pmksa->ssid.ssid), &(pmk_info->ssid.ssid),
 		     pmksa->ssid.ssid_len);
 	pmksa->cache_id = pmk_info->cache_id;
 	pmksa->cat_flag = pmk_info->cat_flag;

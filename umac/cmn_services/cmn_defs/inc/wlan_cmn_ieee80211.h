@@ -504,6 +504,16 @@ enum extn_element_ie {
 #define RSN_CAP_MFP_REQUIRED 0x40
 
 /**
+ * struct element_info - defines length of a memory block and memory block
+ * @len: length of memory block
+ * @ptr: memory block pointer
+ */
+struct element_info {
+	uint32_t len;
+	uint8_t *ptr;
+};
+
+/**
  * struct wlan_rsn_ie_hdr: rsn ie header
  * @elem_id: RSN element id WLAN_ELEMID_RSN.
  * @len: rsn ie length

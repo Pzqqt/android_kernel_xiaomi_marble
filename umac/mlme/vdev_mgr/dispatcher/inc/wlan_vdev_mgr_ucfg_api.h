@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,7 +118,7 @@ struct wlan_vdev_mgr_cfg {
 		uint32_t value;
 		uint64_t tsf;
 		uint8_t trans_bssid[QDF_MAC_ADDR_SIZE];
-		struct mlme_mac_ssid ssid_cfg;
+		struct wlan_ssid ssid_cfg;
 	};
 };
 

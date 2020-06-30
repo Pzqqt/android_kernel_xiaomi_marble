@@ -688,16 +688,6 @@ struct oem_data {
 #endif
 
 /**
- * struct mac_ssid - mac ssid structure
- * @length:
- * @mac_ssid[WMI_MAC_MAX_SSID_LENGTH]:
- */
-struct mac_ssid {
-	uint8_t length;
-	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
-} qdf_packed;
-
-/**
  * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
  * @NSS_CHAINS_BAND_2GHZ: 2.4Ghz band
  * @NSS_CHAINS_BAND_5GHZ: 5Ghz band
@@ -1760,7 +1750,7 @@ struct roam_offload_scan_params {
  * @auth_bit_field: auth bit field for matching WPA IE
  */
 struct wifi_epno_network_params {
-	struct mac_ssid  ssid;
+	struct wlan_ssid  ssid;
 	int8_t       rssi_threshold;
 	uint8_t      flags;
 	uint8_t      auth_bit_field;

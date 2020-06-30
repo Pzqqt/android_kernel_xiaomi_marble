@@ -206,8 +206,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 		param->hidden_ssid = mlme_obj->mgmt.ap.hidden_ssid;
 		param->cac_duration_ms = mlme_obj->mgmt.ap.cac_duration_ms;
 	}
-	wlan_vdev_mlme_get_ssid(vdev, param->ssid.mac_ssid,
-				&param->ssid.length);
+	wlan_vdev_mlme_get_ssid(vdev, param->ssid.ssid, &param->ssid.length);
 
 	if (des_chan->ch_phymode == WLAN_PHYMODE_11AC_VHT80 ||
 	    des_chan->ch_phymode == WLAN_PHYMODE_11AXA_HE80) {

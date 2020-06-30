@@ -1049,7 +1049,7 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 			cmd->ssid.ssid_len = req->ssid.length;
 		else
 			cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
-		qdf_mem_copy(cmd->ssid.ssid, req->ssid.mac_ssid,
+		qdf_mem_copy(cmd->ssid.ssid, req->ssid.ssid,
 			     cmd->ssid.ssid_len);
 	}
 

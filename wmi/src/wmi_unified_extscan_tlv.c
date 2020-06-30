@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, 2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -214,7 +214,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 			nlo_list[i].ssid.ssid.ssid_len =
 				req->networks[i].ssid.length;
 			qdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
-				     req->networks[i].ssid.mac_ssid,
+				     req->networks[i].ssid.ssid,
 				     nlo_list[i].ssid.ssid.ssid_len);
 			WMI_LOGD("index: %d ssid: %.*s len: %d", i,
 				 nlo_list[i].ssid.ssid.ssid_len,

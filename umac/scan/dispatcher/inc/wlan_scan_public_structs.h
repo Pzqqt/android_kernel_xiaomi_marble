@@ -78,16 +78,6 @@ struct channel_info {
 };
 
 /**
- * struct element_info - defines length of a memory block and memory block
- * @len: length of memory block
- * @ptr: memory block pointer
- */
-struct element_info {
-	uint32_t len;
-	uint8_t *ptr;
-};
-
-/**
  * struct ie_list - pointers to various IEs
  * @tim:        pointer to tim ie
  * @country:    pointer to country ie
