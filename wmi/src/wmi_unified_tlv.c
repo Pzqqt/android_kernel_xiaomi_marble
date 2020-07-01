@@ -4745,6 +4745,30 @@ static QDF_STATUS send_cp_stats_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_cp_stats_more_pending_tlv - api to extract more flag from event data
+ * @wmi_handle: wmi handle
+ * @evt_buf:    event buffer
+ * @more_flag:  buffer to populate more flag
+ *
+ * Return: status of operation
+ */
+static QDF_STATUS
+extract_cp_stats_more_pending_tlv(wmi_unified_t wmi, void *evt_buf,
+				  uint32_t *more_flag)
+{
+	WMI_CTRL_PATH_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_ctrl_path_stats_event_fixed_param *ev;
+
+	param_buf = (WMI_CTRL_PATH_STATS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf)
+		return QDF_STATUS_E_FAILURE;
+	ev = (wmi_ctrl_path_stats_event_fixed_param *)param_buf->fixed_param;
+
+	*more_flag = ev->more;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_nlo_mawc_cmd_tlv() - Send MAWC NLO configuration
  * @wmi_handle: wmi handle
  * @params: configuration parameters
@@ -14014,6 +14038,8 @@ struct wmi_ops tlv_ops =  {
 	.send_roam_scan_ch_list_req_cmd = send_roam_scan_ch_list_req_cmd_tlv,
 	.send_injector_config_cmd = send_injector_config_cmd_tlv,
 	.send_cp_stats_cmd = send_cp_stats_cmd_tlv,
+	.extract_cp_stats_more_pending =
+				extract_cp_stats_more_pending_tlv,
 };
 
 /**
@@ -14406,6 +14432,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_VDEV_DISCONNECT_EVENTID;
 	event_ids[wmi_peer_create_conf_event_id] =
 			WMI_PEER_CREATE_CONF_EVENTID;
+	event_ids[wmi_pdev_cp_fwstats_eventid] =
+			WMI_CTRL_PATH_STATS_EVENTID;
 }
 
 /**

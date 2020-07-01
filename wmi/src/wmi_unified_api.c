@@ -3280,3 +3280,15 @@ QDF_STATUS wmi_unified_send_cp_stats_cmd(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_unified_extract_cp_stats_more_pending(wmi_unified_t wmi_handle,
+					  void *evt_buf, uint32_t *more_flag)
+{
+	if (wmi_handle->ops->extract_cp_stats_more_pending)
+		return wmi_handle->ops->extract_cp_stats_more_pending(wmi_handle,
+								      evt_buf,
+								      more_flag);
+
+	return QDF_STATUS_E_FAILURE;
+}
+

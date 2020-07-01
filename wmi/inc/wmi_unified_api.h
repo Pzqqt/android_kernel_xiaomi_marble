@@ -4091,4 +4091,19 @@ wmi_unified_send_injector_frame_config_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_send_cp_stats_cmd(wmi_unified_t wmi_handle,
 					 void *buf_ptr, uint32_t buf_len);
+
+/**
+ * wmi_unified_extract_cp_stats_more_pending() - extract more flag
+ * @wmi_handle: wmi handle
+ * @evt_buf: event buffer
+ * @more_flag: more flag
+ *
+ * This function extracts the more_flag from fixed param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_extract_cp_stats_more_pending(wmi_unified_t wmi_handle,
+					  void *evt_buf, uint32_t *more_flag);
+
 #endif /* _WMI_UNIFIED_API_H_ */

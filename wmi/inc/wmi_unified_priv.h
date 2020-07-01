@@ -2396,6 +2396,10 @@ QDF_STATUS (*send_injector_config_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_cp_stats_cmd)(wmi_unified_t wmi_handle,
 				void *buf_ptr, uint32_t buf_len);
+
+QDF_STATUS (*extract_cp_stats_more_pending)(wmi_unified_t wmi_handle,
+					    void *evt_buf,
+					    uint32_t *more_flag);
 };
 
 /* Forward declartion for psoc*/
