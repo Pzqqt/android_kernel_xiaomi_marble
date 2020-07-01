@@ -354,6 +354,48 @@ void lim_sae_auth_cleanup_retry(struct mac_context *mac_ctx,
 	mlme_free_sae_auth_retry(pe_session->vdev);
 }
 
+#define SAE_AUTH_ALGO_BYTES 2
+#define SAE_AUTH_SEQ_NUM_BYTES 2
+#define SAE_AUTH_SEQ_OFFSET 1
+
+/**
+ * lim_is_sae_auth_algo_match()- Match SAE auth seq in queued SAE auth and
+ * SAE auth rx frame
+ * @queued_frame: Pointer to queued SAE auth retry frame
+ * @q_len: length of queued sae auth retry frame
+ * @rx_pkt_info: Rx packet
+ *
+ * Return: True if SAE auth seq is mached else false
+ */
+static bool lim_is_sae_auth_algo_match(uint8_t *queued_frame, uint16_t q_len,
+				       uint8_t *rx_pkt_info)
+{
+	tpSirMacMgmtHdr qmac_hdr = (tpSirMacMgmtHdr)queued_frame;
+	uint16_t *rxbody_ptr, *qbody_ptr, rxframe_len, min_len;
+
+	min_len = sizeof(tSirMacMgmtHdr) + SAE_AUTH_ALGO_BYTES +
+			SAE_AUTH_SEQ_NUM_BYTES;
+
+	rxframe_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+	if (rxframe_len < min_len || q_len < min_len) {
+		pe_debug("rxframe_len %d, queued_frame_len %d, min_len %d",
+			 rxframe_len, q_len, min_len);
+		return false;
+	}
+
+	rxbody_ptr = (uint16_t *)WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+	qbody_ptr = (uint16_t *)((uint8_t *)qmac_hdr + sizeof(tSirMacMgmtHdr));
+
+	pe_debug("sae_auth : rx pkt auth seq %d queued pkt auth seq %d",
+		 rxbody_ptr[SAE_AUTH_SEQ_OFFSET],
+		 qbody_ptr[SAE_AUTH_SEQ_OFFSET]);
+	if (rxbody_ptr[SAE_AUTH_SEQ_OFFSET] ==
+	    qbody_ptr[SAE_AUTH_SEQ_OFFSET])
+		return true;
+
+	return false;
+}
+
 /**
  * lim_process_sae_auth_frame()-Process SAE authentication frame
  * @mac_ctx: MAC context
@@ -408,10 +450,13 @@ static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 
 	sae_retry = mlme_get_sae_auth_retry(pe_session->vdev);
 	if (LIM_IS_STA_ROLE(pe_session) && sae_retry &&
-	    sae_retry->sae_auth.data)
-		lim_sae_auth_cleanup_retry(mac_ctx,
-					   pe_session->vdev_id);
-
+	    sae_retry->sae_auth.data) {
+		if (lim_is_sae_auth_algo_match(
+		    sae_retry->sae_auth.data, sae_retry->sae_auth.len,
+		     rx_pkt_info))
+			lim_sae_auth_cleanup_retry(mac_ctx,
+						   pe_session->vdev_id);
+	}
 	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
 				    (uint8_t *)mac_hdr,
 				    frame_len + sizeof(tSirMacMgmtHdr),
