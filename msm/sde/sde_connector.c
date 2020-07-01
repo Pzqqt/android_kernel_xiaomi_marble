@@ -1368,9 +1368,6 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		} else if (!c_state->out_fb && !val) {
 			SDE_DEBUG("cleared fb_id\n");
 			rc = 0;
-		} else {
-			msm_framebuffer_set_kmap(c_state->out_fb,
-					c_conn->fb_kmap);
 		}
 		break;
 	case CONNECTOR_PROP_RETIRE_FENCE:
@@ -1919,12 +1916,6 @@ static int sde_connector_init_debugfs(struct drm_connector *connector)
 		debugfs_create_u32("esd_status_interval", 0600,
 				connector->debugfs_entry,
 				&sde_connector->esd_status_interval);
-	}
-
-	if (!debugfs_create_bool("fb_kmap", 0600, connector->debugfs_entry,
-			&sde_connector->fb_kmap)) {
-		SDE_ERROR("failed to create connector fb_kmap\n");
-		return -ENOMEM;
 	}
 
 	if (sde_connector->ops.cmd_transfer) {

@@ -1095,7 +1095,6 @@ void msm_gem_object_set_name(struct drm_gem_object *bo, const char *fmt, ...);
 
 int msm_gem_delayed_import(struct drm_gem_object *obj);
 
-void msm_framebuffer_set_kmap(struct drm_framebuffer *fb, bool enable);
 void msm_framebuffer_set_keepattrs(struct drm_framebuffer *fb, bool enable);
 int msm_framebuffer_prepare(struct drm_framebuffer *fb,
 		struct msm_gem_address_space *aspace);
