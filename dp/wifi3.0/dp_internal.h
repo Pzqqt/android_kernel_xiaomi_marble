@@ -1665,6 +1665,11 @@ static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 }
 
 static inline void
+dp_pkt_log_init(struct cdp_soc_t *soc_hdl, uint8_t pdev_id, void *scn)
+{
+}
+
+static inline void
 dp_hif_update_pipe_callback(struct dp_soc *dp_soc, void *cb_context,
 			    QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t),
 			    uint8_t pipe_id)

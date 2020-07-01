@@ -115,13 +115,11 @@
 #define PHYB_2G_LMAC_ID 2
 #define PHYB_2G_TARGET_PDEV_ID 2
 
-#ifndef REMOVE_PKT_LOG
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
 	DP_RX_PKTLOG_LITE,
 };
-#endif
 
 /* enum m_copy_mode - Available mcopy mode
  *
@@ -1749,10 +1747,8 @@ struct dp_pdev {
 	/* map this pdev to a particular Reo Destination ring */
 	enum cdp_host_reo_dest_ring reo_dest;
 
-#ifndef REMOVE_PKT_LOG
 	/* Packet log mode */
 	uint8_t rx_pktlog_mode;
-#endif
 
 	/* WDI event handlers */
 	struct wdi_event_subscribe_t **wdi_event_list;

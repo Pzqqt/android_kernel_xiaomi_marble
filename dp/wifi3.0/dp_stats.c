@@ -4418,6 +4418,7 @@ void dp_peer_stats_update_protocol_cnt(struct cdp_soc_t *soc,
 }
 #endif
 
+#ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 {
 	struct cdp_interface_peer_stats peer_stats_intf;
@@ -4452,6 +4453,7 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT
 /**

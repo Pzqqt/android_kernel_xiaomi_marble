@@ -507,26 +507,6 @@ static void dp_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
 }
 
 /**
- * dp_get_num_rx_contexts() - get number of RX contexts
- * @soc_hdl: cdp opaque soc handle
- *
- * Return: number of RX contexts
- */
-static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
-{
-	int i;
-	int num_rx_contexts = 0;
-
-	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-
-	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
-		if (wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i))
-			num_rx_contexts++;
-
-	return num_rx_contexts;
-}
-
-/**
  * dp_pktlogmod_exit() - API to cleanup pktlog info
  * @pdev: Pdev handle
  *
@@ -550,7 +530,34 @@ static void dp_pktlogmod_exit(struct dp_pdev *pdev)
 	pktlogmod_exit(scn);
 	pdev->pkt_log_init = false;
 }
+#else
+static void dp_pkt_log_con_service(struct cdp_soc_t *soc_hdl,
+				   uint8_t pdev_id, void *scn)
+{
+}
+
+static void dp_pktlogmod_exit(struct dp_pdev *handle) { }
 #endif
+/**
+ * dp_get_num_rx_contexts() - get number of RX contexts
+ * @soc_hdl: cdp opaque soc handle
+ *
+ * Return: number of RX contexts
+ */
+static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
+{
+	int i;
+	int num_rx_contexts = 0;
+
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+		if (wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i))
+			num_rx_contexts++;
+
+	return num_rx_contexts;
+}
+
 #else
 static void dp_pktlogmod_exit(struct dp_pdev *handle) { }
 
