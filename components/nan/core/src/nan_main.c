@@ -888,14 +888,17 @@ done:
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
+QDF_STATUS nan_disable_cleanup(struct wlan_objmgr_psoc *psoc)
 {
 	struct nan_psoc_priv_obj *psoc_nan_obj;
-	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
 	uint8_t vdev_id;
 
-	psoc = nan_event->psoc;
+	if (!psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
 	if (!psoc_nan_obj) {
 		nan_err("psoc_nan_obj is NULL");
@@ -923,6 +926,11 @@ static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
 	}
 
 	return status;
+}
+
+static QDF_STATUS nan_handle_disable_ind(struct nan_event_params *nan_event)
+{
+	return nan_disable_cleanup(nan_event->psoc);
 }
 
 static QDF_STATUS nan_handle_schedule_update(
