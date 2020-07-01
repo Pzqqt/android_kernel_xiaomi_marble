@@ -16,8 +16,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _TARGET_IF_CFR_6018_H_
-#define _TARGET_IF_CFR_6018_H_
+#ifndef _TARGET_IF_CFR_ENH_H_
+#define _TARGET_IF_CFR_ENH_H_
 
 #ifdef WLAN_ENH_CFR_ENABLE
 /*
@@ -236,24 +236,24 @@ struct uplink_user_setup_info {
 };
 
 /**
- * cfr_6018_init_pdev() - Inits cfr pdev and registers necessary handlers.
+ * cfr_enh_init_pdev() - Inits cfr pdev and registers necessary handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: Registration status for necessary handlers
  */
-QDF_STATUS cfr_6018_init_pdev(
+QDF_STATUS cfr_enh_init_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev);
 
 /**
- * cfr_6018_deinit_pdev() - De-inits corresponding pdev and handlers.
+ * cfr_enh_deinit_pdev() - De-inits corresponding pdev and handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: De-registration status for necessary handlers
  */
-QDF_STATUS cfr_6018_deinit_pdev(
+QDF_STATUS cfr_enh_deinit_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev);
 
@@ -326,14 +326,14 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf);
  */
 void target_if_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev);
 #else
-static inline QDF_STATUS cfr_6018_init_pdev(
+static inline QDF_STATUS cfr_enh_init_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS cfr_6018_deinit_pdev(
+static inline QDF_STATUS cfr_enh_deinit_pdev(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev)
 {

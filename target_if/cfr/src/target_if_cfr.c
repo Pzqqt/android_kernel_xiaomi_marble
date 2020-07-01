@@ -26,7 +26,7 @@
 #include <init_deinit_lmac.h>
 #include <wlan_cfr_utils_api.h>
 #include <wlan_objmgr_pdev_obj.h>
-#include <target_if_cfr_6018.h>
+#include <target_if_cfr_enh.h>
 #ifdef CFR_USE_FIXED_FOLDER
 #include "target_if_cfr_6490.h"
 #include "target_if_cfr_adrastea.h"
@@ -277,7 +277,7 @@ int target_if_cfr_init_pdev(struct wlan_objmgr_psoc *psoc,
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000)) {
 		pa->is_cfr_capable = cfr_sc->is_cfr_capable;
-		return cfr_6018_init_pdev(psoc, pdev);
+		return cfr_enh_init_pdev(psoc, pdev);
 	} else
 		return QDF_STATUS_E_NOSUPPORT;
 }
@@ -303,7 +303,7 @@ int target_if_cfr_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		return cfr_wifi2_0_deinit_pdev(psoc, pdev);
 	} else if ((target_type == TARGET_TYPE_QCA6018) ||
 		   (target_type == TARGET_TYPE_QCN9000)) {
-		return cfr_6018_deinit_pdev(psoc, pdev);
+		return cfr_enh_deinit_pdev(psoc, pdev);
 	} else
 		return QDF_STATUS_E_NOSUPPORT;
 }

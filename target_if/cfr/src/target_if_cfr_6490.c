@@ -28,7 +28,7 @@
 #include <qdf_nbuf.h>
 #include "wlan_cfr_utils_api.h"
 #include "target_if_cfr_6490.h"
-#include "target_if_cfr_6018.h"
+#include "target_if_cfr_enh.h"
 #include "init_deinit_lmac.h"
 #include "cfg_ucfg_api.h"
 #include "cfr_cfg.h"
@@ -172,7 +172,7 @@ QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	status = cfr_6018_init_pdev(psoc, pdev);
+	status = cfr_enh_init_pdev(psoc, pdev);
 	cfr_pdev->chip_type = CFR_CAPTURE_RADIO_HSP;
 
 	return status;
@@ -200,5 +200,5 @@ QDF_STATUS cfr_6490_deinit_pdev(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	return cfr_6018_deinit_pdev(psoc, pdev);
+	return cfr_enh_deinit_pdev(psoc, pdev);
 }

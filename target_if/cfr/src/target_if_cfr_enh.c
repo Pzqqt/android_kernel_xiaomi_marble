@@ -28,7 +28,7 @@
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
 #endif
-#include <target_if_cfr_6018.h>
+#include <target_if_cfr_enh.h>
 #include "cdp_txrx_ctrl.h"
 
 #define CMN_NOISE_FLOOR       (-96)
@@ -119,7 +119,6 @@ void target_if_cfr_dump_lut_enh(struct wlan_objmgr_pdev *pdev)
 				(lut->dbr_tstamp - lut->txrx_tstamp) :
 				(lut->txrx_tstamp - lut->dbr_tstamp);
 		}
-
 	}
 
 	qdf_spin_unlock_bh(&pcfr->lut_lock);
@@ -229,7 +228,7 @@ static void dump_mu_rx_info(void *mu_rx_user_info,
 {
 	uint8_t i;
 	struct uplink_user_setup_info *ul_mu_user_info =
-		(struct uplink_user_setup_info *) mu_rx_user_info;
+		(struct uplink_user_setup_info *)mu_rx_user_info;
 
 	for (i = 0 ; i < mu_rx_num_users; i++) {
 		cfr_debug("<DBRCOMP><MU><%u>\n"
@@ -332,6 +331,7 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 			  meta->chain_phase[chain_id]);
 	}
 }
+
 /**
  * dump_enh_dma_hdr() - Dump enhanced DMA header populated by ucode
  * @dma_hdr: pointer to enhanced DMA header
@@ -417,7 +417,6 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 	}
 }
 
-
 /**
  * extract_peer_mac_from_freeze_tlv() - extract macaddr from freeze tlv
  * @freeze_tlv: Freeze TLV sent from MAC to PHY
@@ -486,7 +485,6 @@ static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
 		goto done;
 	}
 
-
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
 
@@ -499,9 +497,8 @@ static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
 		lut->dbr_recv = true;
 	}
 
-	if ((lut->dbr_recv == true) && (lut->tx_recv == true)) {
+	if ((lut->dbr_recv) && (lut->tx_recv)) {
 		if (lut->dbr_ppdu_id == lut->tx_ppdu_id) {
-
 			pcfr->last_success_tstamp = lut->dbr_tstamp;
 			if (lut->dbr_tstamp > lut->txrx_tstamp) {
 				diff = lut->dbr_tstamp - lut->txrx_tstamp;
@@ -652,7 +649,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 		goto relref;
 	}
 
-	cfr_debug("<RXTLV><%u>:buffer address: 0x%pK \n"
+	cfr_debug("<RXTLV><%u>:buffer address: 0x%pK\n"
 		  "<WIFIRX_PPDU_START_E> ppdu_id: 0x%04x\n"
 		  "<WIFIRXPCU_PPDU_END_INFO_E> BB_CAPTURED_CHANNEL = %d\n"
 		  "<WIFIPHYRX_PKT_END_E> RX_LOCATION_INFO_VALID = %d\n"
@@ -858,7 +855,6 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 			 sizeof(struct macrx_freeze_capture_channel) : 0);
 	}
 
-
 	length  = dma_hdr.length * 4;
 	length += dma_hdr.total_bytes; /* size of cfr data */
 
@@ -1057,9 +1053,8 @@ static void enh_prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param
 	header->u.meta_v3.status       = 0; /* failure */
 	header->u.meta_v3.length       = 0;
 
-	qdf_mem_copy(&header->u.meta_v2.peer_addr[0],
+	qdf_mem_copy(&header->u.meta_v3.peer_addr.su_peer_addr[0],
 		     &tx_evt_param->peer_mac_addr.bytes[0], QDF_MAC_ADDR_SIZE);
-
 }
 
 /**
@@ -1123,7 +1118,6 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		return -EINVAL;
 	}
 
-
 	retval = wmi_extract_cfr_peer_tx_event_param(wmi_handle, data,
 						     &tx_evt_param);
 
@@ -1132,7 +1126,6 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_CFR_ID);
 		return -EINVAL;
 	}
-
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, tx_evt_param.vdev_id,
 						    WLAN_CFR_ID);
@@ -1547,14 +1540,14 @@ void target_if_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
- * cfr_6018_init_pdev() - Inits cfr pdev and registers necessary handlers.
+ * cfr_enh_init_pdev() - Inits cfr pdev and registers necessary handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: Registration status for necessary handlers
  */
-QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_objmgr_pdev *pdev)
+QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
+			     struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pdev_cfr *pcfr;
@@ -1640,14 +1633,14 @@ QDF_STATUS cfr_6018_init_pdev(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * cfr_6018_deinit_pdev() - De-inits corresponding pdev and handlers.
+ * cfr_enh_deinit_pdev() - De-inits corresponding pdev and handlers.
  * @psoc: pointer to psoc object
  * @pdev: pointer to pdev object
  *
  * Return: De-registration status for necessary handlers
  */
-QDF_STATUS cfr_6018_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-				struct wlan_objmgr_pdev *pdev)
+QDF_STATUS cfr_enh_deinit_pdev(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev)
 {
 	int status;
 	struct pdev_cfr *pcfr;
