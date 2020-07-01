@@ -2367,7 +2367,9 @@ endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)
+ifeq ($(CONFIG_WDI_EVENT_ENABLE), y)
 OBJS += 	$(TXRX_DIR)/ol_txrx_event.o
+endif
 endif
 
 ifeq ($(CONFIG_FEATURE_FW_LOG_PARSING), y)
