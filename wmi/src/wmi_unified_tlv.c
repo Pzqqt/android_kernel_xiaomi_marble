@@ -5606,12 +5606,13 @@ static QDF_STATUS send_start_oemv2_data_cmd_tlv(wmi_unified_t wmi_handle,
 	uint16_t len = sizeof(*cmd);
 	uint16_t oem_data_len_aligned;
 	uint8_t *buf_ptr;
-	uint32_t pdev_id = oem_data->pdev_id;
+	uint32_t pdev_id;
 
 	if (!oem_data || !oem_data->data) {
 		wmi_err_rl("oem data is not valid");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	oem_data_len_aligned = roundup(oem_data->data_len, sizeof(uint32_t));
 	if (oem_data_len_aligned < oem_data->data_len) {
 		wmi_err_rl("integer overflow while rounding up data_len");
@@ -5634,6 +5635,7 @@ static QDF_STATUS send_start_oemv2_data_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_TAG_STRUC_wmi_oem_data_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_oem_data_cmd_fixed_param));
 
+	pdev_id = oem_data->pdev_id;
 	if (oem_data->pdev_vdev_flag) {
 		ops = wmi_handle->ops;
 		if (oem_data->is_host_pdev_id)
