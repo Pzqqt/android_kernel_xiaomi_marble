@@ -5621,9 +5621,17 @@ fail:
 	return ret;
 }
 
-static int msm_compr_new(struct snd_soc_pcm_runtime *rtd)
+int msm_compr_new(struct snd_soc_pcm_runtime *rtd, int num)
 {
-	int rc;
+	int rc = 0;
+
+	if (rtd == NULL) {
+		pr_err("%s: RTD is NULL\n", __func__);
+		return 0;
+	}
+	rc = snd_soc_new_compress(rtd, num);
+	if (rc)
+		pr_err("%s: Fail to create pcm for compress\n", __func__);
 
 	rc = msm_compr_add_volume_control(rtd);
 	if (rc)
@@ -5677,6 +5685,7 @@ static int msm_compr_new(struct snd_soc_pcm_runtime *rtd)
 			__func__);
 	return 0;
 }
+EXPORT_SYMBOL(msm_compr_new);
 
 static struct snd_compr_ops msm_compr_ops = {
 	.open			= msm_compr_open,
@@ -5699,7 +5708,6 @@ static struct snd_soc_component_driver msm_soc_component = {
 	.name		= DRV_NAME,
 	.probe		= msm_compr_probe,
 	.compr_ops	= &msm_compr_ops,
-	.pcm_new	= msm_compr_new,
 };
 
 static int msm_compr_dev_probe(struct platform_device *pdev)
