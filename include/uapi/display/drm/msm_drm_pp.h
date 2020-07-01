@@ -484,6 +484,7 @@ struct drm_msm_ad4_roi_cfg {
 
 #define LTM_STATS_SAT (1 << 1)
 #define LTM_STATS_MERGE_SAT (1 << 2)
+#define LTM_HIST_CHECKSUM_SUPPORT (1 << 0)
 
 /*
  * struct drm_msm_ltm_stats_data - LTM stats data structure
@@ -507,6 +508,8 @@ struct drm_msm_ltm_stats_data {
 	__u32 cfg_param_02;
 	__u32 cfg_param_03;
 	__u32 cfg_param_04;
+	__u32 feature_flag;
+	__u32 checksum;
 };
 
 /*

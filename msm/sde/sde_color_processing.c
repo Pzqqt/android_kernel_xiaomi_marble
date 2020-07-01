@@ -3808,6 +3808,19 @@ static void sde_cp_ltm_hist_interrupt_cb(void *arg, int irq_idx)
 	ltm_data = (struct drm_msm_ltm_stats_data *)
 		((u8 *)sde_crtc->ltm_buffers[idx]->kva +
 		sde_crtc->ltm_buffers[idx]->offset);
+
+	hw_dspp = sde_crtc->mixers[0].hw_dspp;
+	if (!hw_dspp) {
+		spin_unlock_irqrestore(&sde_crtc->ltm_lock, irq_flags);
+		DRM_ERROR("invalid dspp for mixer %d\n", i);
+		return;
+	}
+	if (hw_dspp->ltm_checksum_support) {
+		ltm_data->feature_flag |= LTM_HIST_CHECKSUM_SUPPORT;
+		ltm_data->checksum = ltm_data->status_flag;
+	} else
+		ltm_data->feature_flag &= ~LTM_HIST_CHECKSUM_SUPPORT;
+
 	ltm_data->status_flag = ltm_hist_status;
 
 	hw_lm = sde_crtc->mixers[0].hw_lm;
