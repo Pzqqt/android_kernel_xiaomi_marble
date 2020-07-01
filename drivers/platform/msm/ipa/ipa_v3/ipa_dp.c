@@ -1999,6 +1999,8 @@ fail_kmem_cache_alloc:
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_repl_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_repl_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.low_lat_repl_rx_empty);
 		pr_err_ratelimited("%s sys=%pK repl ring empty\n",
 				__func__, sys);
 		goto begin;
@@ -2662,8 +2664,10 @@ static void ipa3_fast_replenish_rx_cache(struct ipa3_sys_context *sys)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.wan_rx_empty);
 		else if (sys->ep->client == IPA_CLIENT_APPS_LAN_CONS)
 			IPA_STATS_INC_CNT(ipa3_ctx->stats.lan_rx_empty);
+		else if (sys->ep->client == IPA_CLIENT_APPS_WAN_LOW_LAT_CONS)
+			IPA_STATS_INC_CNT(ipa3_ctx->stats.low_lat_rx_empty);
 		else
-			WARN_ON(1);
+			WARN_ON_RATELIMIT_IPA(1);
 		queue_delayed_work(sys->wq, &sys->replenish_rx_work,
 				msecs_to_jiffies(1));
 	}
