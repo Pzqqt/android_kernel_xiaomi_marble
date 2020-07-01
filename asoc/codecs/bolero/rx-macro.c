@@ -387,6 +387,7 @@ enum {
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
 	RX_MACRO_AIF_ECHO,
+	RX_MACRO_AIF5_PB,
 	RX_MACRO_AIF6_PB,
 	RX_MACRO_MAX_DAIS,
 };
@@ -716,6 +717,20 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 			.rate_min = 8000,
 			.channels_min = 1,
 			.channels_max = 3,
+		},
+		.ops = &rx_macro_dai_ops,
+	},
+	{
+		.name = "rx_macro_rx5",
+		.id = RX_MACRO_AIF5_PB,
+		.playback = {
+			.stream_name = "RX_MACRO_AIF5 Playback",
+			.rates = RX_MACRO_RATES | RX_MACRO_FRAC_RATES,
+			.formats = RX_MACRO_FORMATS,
+			.rate_max = 384000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
 		},
 		.ops = &rx_macro_dai_ops,
 	},
@@ -1137,6 +1152,13 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 		dev_dbg(rx_priv->dev,
 			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d active_mask: 0x%x\n",
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
+		break;
+	case RX_MACRO_AIF5_PB:
+		*rx_slot = 0x1;
+		*rx_num = 0x01;
+		dev_dbg(rx_priv->dev,
+			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d\n",
+			__func__, dai->id, *rx_slot, *rx_num);
 		break;
 	case RX_MACRO_AIF6_PB:
 		*rx_slot = 0x1;
@@ -3191,6 +3213,9 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("RX AIF_ECHO", "RX_AIF_ECHO Capture", 0,
 		SND_SOC_NOPM, 0, 0),
 
+	SND_SOC_DAPM_AIF_IN("RX AIF5 PB", "RX_MACRO_AIF5 Playback", 0,
+		SND_SOC_NOPM, 0, 0),
+
 	SND_SOC_DAPM_AIF_IN("RX AIF6 PB", "RX_MACRO_AIF6 Playback", 0,
 		SND_SOC_NOPM, 0, 0),
 
@@ -3861,6 +3886,7 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF4 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF5 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF6 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR_OUT");
