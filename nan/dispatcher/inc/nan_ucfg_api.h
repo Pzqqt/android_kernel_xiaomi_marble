@@ -505,5 +505,11 @@ ucfg_nan_disable_ndi(struct wlan_objmgr_psoc *psoc, uint32_t ndi_vdev_id)
 {
 	return QDF_STATUS_E_INVAL;
 }
+
+static inline
+bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
