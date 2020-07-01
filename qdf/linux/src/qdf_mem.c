@@ -28,7 +28,6 @@
 #include "qdf_mc_timer.h"
 #include "qdf_module.h"
 #include <qdf_trace.h>
-#include "qdf_atomic.h"
 #include "qdf_str.h"
 #include "qdf_talloc.h"
 #include <linux/debugfs.h>
@@ -60,11 +59,35 @@ static bool is_initial_mem_debug_disabled;
  * @kmalloc: total kmalloc allocations
  * @dma: total dma allocations
  * @skb: total skb allocations
+ * @skb_total: total skb allocations in host driver
+ * @dp_tx_skb: total Tx skb allocations in datapath
+ * @dp_rx_skb: total Rx skb allocations in datapath
+ * @skb_mem_max: high watermark for skb allocations
+ * @dp_tx_skb_mem_max: high watermark for Tx DP skb allocations
+ * @dp_rx_skb_mem_max: high watermark for Rx DP skb allocations
+ * @dp_tx_skb_count: DP Tx buffer count
+ * @dp_tx_skb_count_max: High watermark for DP Tx buffer count
+ * @dp_rx_skb_count: DP Rx buffer count
+ * @dp_rx_skb_count_max: High watermark for DP Rx buffer count
+ * @tx_descs_outstanding: Current pending Tx descs count
+ * @tx_descs_max: High watermark for pending Tx descs count
  */
 static struct __qdf_mem_stat {
 	qdf_atomic_t kmalloc;
 	qdf_atomic_t dma;
 	qdf_atomic_t skb;
+	qdf_atomic_t skb_total;
+	qdf_atomic_t dp_tx_skb;
+	qdf_atomic_t dp_rx_skb;
+	int32_t skb_mem_max;
+	int32_t dp_tx_skb_mem_max;
+	int32_t dp_rx_skb_mem_max;
+	qdf_atomic_t dp_tx_skb_count;
+	int32_t dp_tx_skb_count_max;
+	qdf_atomic_t dp_rx_skb_count;
+	int32_t dp_rx_skb_count_max;
+	qdf_atomic_t tx_descs_outstanding;
+	int32_t tx_descs_max;
 } qdf_mem_stat;
 
 #ifdef MEMORY_DEBUG
@@ -1043,6 +1066,83 @@ void qdf_mem_skb_inc(qdf_size_t size)
 void qdf_mem_skb_dec(qdf_size_t size)
 {
 	qdf_atomic_sub(size, &qdf_mem_stat.skb);
+}
+
+void qdf_mem_skb_total_inc(qdf_size_t size)
+{
+	int32_t skb_mem_max = 0;
+
+	qdf_atomic_add(size, &qdf_mem_stat.skb_total);
+	skb_mem_max = qdf_atomic_read(&qdf_mem_stat.skb_total);
+	if (qdf_mem_stat.skb_mem_max < skb_mem_max)
+		qdf_mem_stat.skb_mem_max = skb_mem_max;
+}
+
+void qdf_mem_skb_total_dec(qdf_size_t size)
+{
+	qdf_atomic_sub(size, &qdf_mem_stat.skb_total);
+}
+
+void qdf_mem_dp_tx_skb_inc(qdf_size_t size)
+{
+	int32_t curr_dp_tx_skb_mem_max = 0;
+
+	qdf_atomic_add(size, &qdf_mem_stat.dp_tx_skb);
+	curr_dp_tx_skb_mem_max = qdf_atomic_read(&qdf_mem_stat.dp_tx_skb);
+	if (qdf_mem_stat.dp_tx_skb_mem_max < curr_dp_tx_skb_mem_max)
+		qdf_mem_stat.dp_tx_skb_mem_max = curr_dp_tx_skb_mem_max;
+}
+
+void qdf_mem_dp_tx_skb_dec(qdf_size_t size)
+{
+	qdf_atomic_sub(size, &qdf_mem_stat.dp_tx_skb);
+}
+
+void qdf_mem_dp_rx_skb_inc(qdf_size_t size)
+{
+	int32_t curr_dp_rx_skb_mem_max = 0;
+
+	qdf_atomic_add(size, &qdf_mem_stat.dp_rx_skb);
+	curr_dp_rx_skb_mem_max = qdf_atomic_read(&qdf_mem_stat.dp_rx_skb);
+	if (qdf_mem_stat.dp_rx_skb_mem_max < curr_dp_rx_skb_mem_max)
+		qdf_mem_stat.dp_rx_skb_mem_max = curr_dp_rx_skb_mem_max;
+}
+
+void qdf_mem_dp_rx_skb_dec(qdf_size_t size)
+{
+	qdf_atomic_sub(size, &qdf_mem_stat.dp_rx_skb);
+}
+
+void qdf_mem_dp_tx_skb_cnt_inc(void)
+{
+	int32_t curr_dp_tx_skb_count_max = 0;
+
+	qdf_atomic_add(1, &qdf_mem_stat.dp_tx_skb_count);
+	curr_dp_tx_skb_count_max =
+		qdf_atomic_read(&qdf_mem_stat.dp_tx_skb_count);
+	if (qdf_mem_stat.dp_tx_skb_count_max < curr_dp_tx_skb_count_max)
+		qdf_mem_stat.dp_tx_skb_count_max = curr_dp_tx_skb_count_max;
+}
+
+void qdf_mem_dp_tx_skb_cnt_dec(void)
+{
+	qdf_atomic_sub(1, &qdf_mem_stat.dp_tx_skb_count);
+}
+
+void qdf_mem_dp_rx_skb_cnt_inc(void)
+{
+	int32_t curr_dp_rx_skb_count_max = 0;
+
+	qdf_atomic_add(1, &qdf_mem_stat.dp_rx_skb_count);
+	curr_dp_rx_skb_count_max =
+		qdf_atomic_read(&qdf_mem_stat.dp_rx_skb_count);
+	if (qdf_mem_stat.dp_rx_skb_count_max < curr_dp_rx_skb_count_max)
+		qdf_mem_stat.dp_rx_skb_count_max = curr_dp_rx_skb_count_max;
+}
+
+void qdf_mem_dp_rx_skb_cnt_dec(void)
+{
+	qdf_atomic_sub(1, &qdf_mem_stat.dp_rx_skb_count);
 }
 #endif
 
@@ -2542,4 +2642,109 @@ int32_t qdf_skb_mem_stats_read(void)
 }
 
 qdf_export_symbol(qdf_skb_mem_stats_read);
+
+int32_t qdf_skb_total_mem_stats_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.skb_total);
+}
+
+qdf_export_symbol(qdf_skb_total_mem_stats_read);
+
+int32_t qdf_skb_max_mem_stats_read(void)
+{
+	return qdf_mem_stat.skb_mem_max;
+}
+
+qdf_export_symbol(qdf_skb_max_mem_stats_read);
+
+int32_t qdf_dp_tx_skb_mem_stats_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.dp_tx_skb);
+}
+
+qdf_export_symbol(qdf_dp_tx_skb_mem_stats_read);
+
+int32_t qdf_dp_rx_skb_mem_stats_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.dp_rx_skb);
+}
+
+qdf_export_symbol(qdf_dp_rx_skb_mem_stats_read);
+
+int32_t qdf_mem_dp_tx_skb_cnt_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.dp_tx_skb_count);
+}
+
+qdf_export_symbol(qdf_mem_dp_tx_skb_cnt_read);
+
+int32_t qdf_mem_dp_tx_skb_max_cnt_read(void)
+{
+	return qdf_mem_stat.dp_tx_skb_count_max;
+}
+
+qdf_export_symbol(qdf_mem_dp_tx_skb_max_cnt_read);
+
+int32_t qdf_mem_dp_rx_skb_cnt_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.dp_rx_skb_count);
+}
+
+qdf_export_symbol(qdf_mem_dp_rx_skb_cnt_read);
+
+int32_t qdf_mem_dp_rx_skb_max_cnt_read(void)
+{
+	return qdf_mem_stat.dp_rx_skb_count_max;
+}
+
+qdf_export_symbol(qdf_mem_dp_rx_skb_max_cnt_read);
+
+int32_t qdf_dp_tx_skb_max_mem_stats_read(void)
+{
+	return qdf_mem_stat.dp_tx_skb_mem_max;
+}
+
+qdf_export_symbol(qdf_dp_tx_skb_max_mem_stats_read);
+
+int32_t qdf_dp_rx_skb_max_mem_stats_read(void)
+{
+	return qdf_mem_stat.dp_rx_skb_mem_max;
+}
+
+qdf_export_symbol(qdf_dp_rx_skb_max_mem_stats_read);
+
+int32_t qdf_mem_tx_desc_cnt_read(void)
+{
+	return qdf_atomic_read(&qdf_mem_stat.tx_descs_outstanding);
+}
+
+qdf_export_symbol(qdf_mem_tx_desc_cnt_read);
+
+int32_t qdf_mem_tx_desc_max_read(void)
+{
+	return qdf_mem_stat.tx_descs_max;
+}
+
+qdf_export_symbol(qdf_mem_tx_desc_max_read);
+
+void qdf_mem_tx_desc_cnt_update(qdf_atomic_t pending_tx_descs,
+				int32_t tx_descs_max)
+{
+	qdf_mem_stat.tx_descs_outstanding = pending_tx_descs;
+	qdf_mem_stat.tx_descs_max = tx_descs_max;
+}
+
+qdf_export_symbol(qdf_mem_tx_desc_cnt_update);
+
+void qdf_mem_stats_init(void)
+{
+	qdf_mem_stat.skb_mem_max = 0;
+	qdf_mem_stat.dp_tx_skb_mem_max = 0;
+	qdf_mem_stat.dp_rx_skb_mem_max = 0;
+	qdf_mem_stat.dp_tx_skb_count_max = 0;
+	qdf_mem_stat.dp_rx_skb_count_max = 0;
+	qdf_mem_stat.tx_descs_max = 0;
+}
+
+qdf_export_symbol(qdf_mem_stats_init);
 

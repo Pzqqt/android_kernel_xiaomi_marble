@@ -2230,6 +2230,47 @@ static inline void __qdf_nbuf_orphan(struct sk_buff *skb)
 	return skb_orphan(skb);
 }
 
+#ifdef CONFIG_WLAN_SYSFS_MEM_STATS
+/**
+ * __qdf_record_nbuf_nbytes() - add or subtract the size of the nbuf
+ * from the total skb mem and DP tx/rx skb mem
+ * @nbytes: number of bytes
+ * @dir: direction
+ * @is_mapped: is mapped or unmapped memory
+ *
+ * Return: none
+ */
+static inline void __qdf_record_nbuf_nbytes(
+	int nbytes, qdf_dma_dir_t dir, bool is_mapped)
+{
+	if (is_mapped) {
+		if (dir == QDF_DMA_TO_DEVICE) {
+			qdf_mem_dp_tx_skb_cnt_inc();
+			qdf_mem_dp_tx_skb_inc(nbytes);
+		} else if (dir == QDF_DMA_FROM_DEVICE) {
+			qdf_mem_dp_rx_skb_cnt_inc();
+			qdf_mem_dp_rx_skb_inc(nbytes);
+		}
+		qdf_mem_skb_total_inc(nbytes);
+	} else {
+		if (dir == QDF_DMA_TO_DEVICE) {
+			qdf_mem_dp_tx_skb_cnt_dec();
+			qdf_mem_dp_tx_skb_dec(nbytes);
+		} else if (dir == QDF_DMA_FROM_DEVICE) {
+			qdf_mem_dp_rx_skb_cnt_dec();
+			qdf_mem_dp_rx_skb_dec(nbytes);
+		}
+		qdf_mem_skb_total_dec(nbytes);
+	}
+}
+
+#else /* CONFIG_WLAN_SYSFS_MEM_STATS */
+static inline void __qdf_record_nbuf_nbytes(
+	int nbytes, qdf_dma_dir_t dir, bool is_mapped)
+{
+}
+#endif /* CONFIG_WLAN_SYSFS_MEM_STATS */
+
 /**
  * __qdf_nbuf_map_nbytes_single() - map nbytes
  * @osdev: os device
@@ -2255,13 +2296,17 @@ static inline QDF_STATUS __qdf_nbuf_map_nbytes_single(
 		qdf_dma_dir_t dir, int nbytes)
 {
 	qdf_dma_addr_t paddr;
+	QDF_STATUS ret;
 
 	/* assume that the OS only provides a single fragment */
 	QDF_NBUF_CB_PADDR(buf) = paddr =
 		dma_map_single(osdev->dev, buf->data,
 			       nbytes, __qdf_dma_dir_to_os(dir));
-	return dma_mapping_error(osdev->dev, paddr) ?
+	ret =  dma_mapping_error(osdev->dev, paddr) ?
 		QDF_STATUS_E_FAULT : QDF_STATUS_SUCCESS;
+	if (QDF_IS_STATUS_SUCCESS(ret))
+		__qdf_record_nbuf_nbytes(nbytes, dir, true);
+	return ret;
 }
 #endif
 /**
@@ -2288,6 +2333,7 @@ __qdf_nbuf_unmap_nbytes_single(qdf_device_t osdev, struct sk_buff *buf,
 	qdf_dma_addr_t paddr = QDF_NBUF_CB_PADDR(buf);
 
 	if (qdf_likely(paddr)) {
+		__qdf_record_nbuf_nbytes(nbytes, dir, false);
 		dma_unmap_single(osdev->dev, paddr, nbytes,
 				 __qdf_dma_dir_to_os(dir));
 		return;
