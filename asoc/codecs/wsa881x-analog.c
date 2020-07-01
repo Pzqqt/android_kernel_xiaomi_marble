@@ -35,6 +35,19 @@
 #define SPK_GAIN_12DB 4
 #define WIDGET_NAME_MAX_SIZE 80
 
+#define MAX_NAME_LEN 30
+#define WSA881X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
+			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
+			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
+			SNDRV_PCM_RATE_384000)
+/* Fractional Rates */
+#define WSA881X_FRAC_RATES (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_88200 |\
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800)
+
+#define WSA881X_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
+			SNDRV_PCM_FMTBIT_S24_LE |\
+			SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S32_LE)
+
 /*
  * Private data Structure for wsa881x. All parameters related to
  * WSA881X codec needs to be defined here.
@@ -66,6 +79,9 @@ struct wsa881x_pdata {
 	struct device_node *wsa_vi_gpio_p;
 	struct device_node *wsa_clk_gpio_p;
 	struct device_node *wsa_reset_gpio_p;
+	char *wsa881x_name_prefix;
+	struct snd_soc_dai_driver *dai_driver;
+	struct snd_soc_component_driver *driver;
 };
 
 enum {
@@ -1190,7 +1206,8 @@ static void wsa881x_remove(struct snd_soc_component *component)
 	mutex_destroy(&wsa881x->res_lock);
 }
 
-static const struct snd_soc_component_driver soc_component_dev_wsa881x = {
+static const struct snd_soc_component_driver soc_codec_dev_wsa881x = {
+	.name = "",
 	.probe	= wsa881x_probe,
 	.remove	= wsa881x_remove,
 
@@ -1203,6 +1220,21 @@ static const struct snd_soc_component_driver soc_component_dev_wsa881x = {
 	.num_dapm_widgets = ARRAY_SIZE(wsa881x_dapm_widgets),
 	.dapm_routes = wsa881x_audio_map,
 	.num_dapm_routes = ARRAY_SIZE(wsa881x_audio_map),
+};
+
+static struct snd_soc_dai_driver wsa_dai[] = {
+	{
+		.name = "",
+		.playback = {
+			.stream_name = "",
+			.rates = WSA881X_RATES | WSA881X_FRAC_RATES,
+			.formats = WSA881X_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 2,
+			},
+	},
 };
 
 static int wsa881x_reset(struct wsa881x_pdata *pdata, bool enable)
@@ -1332,6 +1364,8 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 	int wsa881x_index = 0;
 	struct wsa881x_pdata *pdata = NULL;
 	struct clk *wsa_mclk = NULL;
+	char buffer[MAX_NAME_LEN];
+	const char *wsa881x_name_prefix_of = NULL;
 
 	ret = wsa881x_i2c_get_client_index(client, &wsa881x_index);
 	if (ret != 0) {
@@ -1454,13 +1488,70 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		}
 		wsa881x_presence_count++;
 		wsa881x_probing_count++;
-		ret = snd_soc_register_component(&client->dev,
-					&soc_component_dev_wsa881x,
-					NULL, 0);
-		if (ret < 0)
+
+		ret = of_property_read_string(client->dev.of_node,
+				"qcom,wsa-prefix", &wsa881x_name_prefix_of);
+		if (ret) {
+			dev_err(&client->dev,
+				"%s: Looking up %s property in node %s failed\n",
+				__func__, "qcom,wsa-prefix",
+				client->dev.of_node->full_name);
 			goto err1;
+		}
+
+		pdata->driver = devm_kzalloc(&client->dev,
+					sizeof(struct snd_soc_component_driver),
+					GFP_KERNEL);
+		if (!pdata->driver) {
+			ret = -ENOMEM;
+			goto err1;
+		}
+
+		memcpy(pdata->driver, &soc_codec_dev_wsa881x,
+				sizeof(struct snd_soc_component_driver));
+
+		pdata->dai_driver = devm_kzalloc(&client->dev,
+					sizeof(struct snd_soc_dai_driver),
+					GFP_KERNEL);
+		if (!pdata->dai_driver) {
+			ret = -ENOMEM;
+			goto err_mem;
+		}
+
+		memcpy(pdata->dai_driver, wsa_dai,
+			sizeof(struct snd_soc_dai_driver));
+
+		snprintf(buffer, sizeof(buffer), "wsa-codec.%d", wsa881x_index);
+		pdata->driver->name = kstrndup(buffer,
+					       strlen(buffer), GFP_KERNEL);
+
+		snprintf(buffer, sizeof(buffer), "wsa_rx%d", wsa881x_index);
+		pdata->dai_driver->name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+		snprintf(buffer, sizeof(buffer),
+			 "WSA881X_AIF%d Playback", wsa881x_index);
+		pdata->dai_driver->playback.stream_name =
+				kstrndup(buffer, strlen(buffer), GFP_KERNEL);
+
+		/* Number of DAI's used is 1 */
+		ret = snd_soc_register_component(&client->dev,
+					pdata->driver, pdata->dai_driver, 1);
+
 		pdata->status = WSA881X_STATUS_I2C;
 	}
+err_mem:
+	 kfree(pdata->wsa881x_name_prefix);
+	if (pdata->dai_driver) {
+		kfree(pdata->dai_driver->name);
+		kfree(pdata->dai_driver->playback.stream_name);
+		kfree(pdata->dai_driver);
+	}
+	if (pdata->driver) {
+		kfree(pdata->driver->name);
+		kfree(pdata->driver);
+	}
+
 err1:
 	wsa881x_reset(pdata, false);
 err:
@@ -1472,6 +1563,16 @@ static int wsa881x_i2c_remove(struct i2c_client *client)
 	struct wsa881x_pdata *wsa881x = client->dev.platform_data;
 
 	snd_soc_unregister_component(&client->dev);
+	kfree(wsa881x->wsa881x_name_prefix);
+	if (wsa881x->dai_driver) {
+		kfree(wsa881x->dai_driver->name);
+		kfree(wsa881x->dai_driver->playback.stream_name);
+		kfree(wsa881x->dai_driver);
+	}
+	if (wsa881x->driver) {
+		kfree(wsa881x->driver->name);
+		kfree(wsa881x->driver);
+	}
 	i2c_set_clientdata(client, NULL);
 	kfree(wsa881x);
 	return 0;
