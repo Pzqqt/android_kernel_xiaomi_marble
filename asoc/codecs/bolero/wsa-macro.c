@@ -2008,10 +2008,12 @@ static int wsa_macro_set_rx_mute_status(struct snd_kcontrol *kcontrol,
 	int value = ucontrol->value.integer.value[0];
 	int wsa_rx_shift = ((struct soc_multi_mixer_control *)
 			kcontrol->private_value)->shift;
+	int ret = 0;
 
 	if (!wsa_macro_get_data(component, &wsa_dev, &wsa_priv, __func__))
 		return -EINVAL;
 
+	pm_runtime_get_sync(wsa_priv->dev);
 	switch (wsa_rx_shift) {
 	case 0:
 		snd_soc_component_update_bits(component,
@@ -2036,13 +2038,16 @@ static int wsa_macro_set_rx_mute_status(struct snd_kcontrol *kcontrol,
 	default:
 		pr_err("%s: invalid argument rx_shift = %d\n", __func__,
 			wsa_rx_shift);
-		return -EINVAL;
+		ret = -EINVAL;
 	}
+	pm_runtime_mark_last_busy(wsa_priv->dev);
+	pm_runtime_put_autosuspend(wsa_priv->dev);
 
 	dev_dbg(component->dev, "%s: WSA Digital Mute RX %d Enable %d\n",
 		__func__, wsa_rx_shift, value);
 	wsa_priv->wsa_digital_mute_status[wsa_rx_shift] = value;
-	return 0;
+
+	return ret;
 }
 
 static int wsa_macro_get_compander(struct snd_kcontrol *kcontrol,
