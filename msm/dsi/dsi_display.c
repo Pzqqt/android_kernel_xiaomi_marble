@@ -5037,6 +5037,39 @@ error:
 	return rc;
 }
 
+static int dsi_display_get_io_resources(struct msm_io_res *io_res, void *data)
+{
+	int rc = 0;
+
+	rc = dsi_ctrl_get_io_resources(io_res);
+	if (rc)
+		goto end;
+
+	rc = dsi_phy_get_io_resources(io_res);
+end:
+	return rc;
+}
+
+static int dsi_display_pre_release(void *data)
+{
+	if (!data)
+		return -EINVAL;
+
+	dsi_display_ctrl_irq_update((struct dsi_display *)data, false);
+
+	return 0;
+}
+
+static int dsi_display_pre_acquire(void *data)
+{
+	if (!data)
+		return -EINVAL;
+
+	dsi_display_ctrl_irq_update((struct dsi_display *)data, true);
+
+	return 0;
+}
+
 /**
  * dsi_display_bind - bind dsi device with controlling device
  * @dev:        Pointer to base of platform device
@@ -5057,6 +5090,11 @@ static int dsi_display_bind(struct device *dev,
 	struct platform_device *pdev = to_platform_device(dev);
 	char *client1 = "dsi_clk_client";
 	char *client2 = "mdp_event_client";
+	struct msm_vm_ops vm_event_ops = {
+		.vm_get_io_resources = dsi_display_get_io_resources,
+		.vm_pre_hw_release = dsi_display_pre_release,
+		.vm_post_hw_acquire = dsi_display_pre_acquire,
+	};
 	int i, rc = 0;
 
 	if (!dev || !pdev || !master) {
@@ -5249,6 +5287,8 @@ static int dsi_display_bind(struct device *dev,
 
 	/* register te irq handler */
 	dsi_display_register_te_irq(display);
+
+	msm_register_vm_event(master, dev, &vm_event_ops, (void *)display);
 
 	goto error;
 

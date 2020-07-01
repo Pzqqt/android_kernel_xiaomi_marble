@@ -847,4 +847,14 @@ void dsi_ctrl_set_continuous_clk(struct dsi_ctrl *dsi_ctrl, bool enable);
  * @dsi_ctrl:                      DSI controller handle.
  */
 int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
+
+/**
+ * dsi_ctrl_get_io_resources() - reads associated register range
+ *
+ * @io_res:	 pointer to msm_io_res struct to populate the ranges
+ *
+ * Return: error code.
+ */
+int dsi_ctrl_get_io_resources(struct msm_io_res *io_res);
+
 #endif /* _DSI_CTRL_H_ */

@@ -116,6 +116,27 @@ int dsi_phy_get_version(struct msm_dsi_phy *phy)
 	return phy->ver_info->version;
 }
 
+int dsi_phy_get_io_resources(struct msm_io_res *io_res)
+{
+	struct dsi_phy_list_item *dsi_phy;
+	int rc = 0;
+
+	mutex_lock(&dsi_phy_list_lock);
+
+	list_for_each_entry(dsi_phy, &dsi_phy_list, list) {
+		rc = msm_dss_get_io_mem(dsi_phy->phy->pdev, &io_res->mem);
+		if (rc) {
+			DSI_PHY_ERR(dsi_phy->phy,
+					"failed to get io mem, rc = %d\n", rc);
+			return rc;
+		}
+	}
+
+	mutex_unlock(&dsi_phy_list_lock);
+
+	return rc;
+}
+
 static int dsi_phy_regmap_init(struct platform_device *pdev,
 			       struct msm_dsi_phy *phy)
 {

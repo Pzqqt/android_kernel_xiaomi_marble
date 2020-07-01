@@ -1998,6 +1998,27 @@ static struct platform_driver dsi_ctrl_driver = {
 	},
 };
 
+int dsi_ctrl_get_io_resources(struct msm_io_res *io_res)
+{
+	int rc = 0;
+	struct dsi_ctrl_list_item *dsi_ctrl;
+
+	mutex_lock(&dsi_ctrl_list_lock);
+
+	list_for_each_entry(dsi_ctrl, &dsi_ctrl_list, list) {
+		rc = msm_dss_get_io_mem(dsi_ctrl->ctrl->pdev, &io_res->mem);
+		if (rc) {
+			DSI_CTRL_ERR(dsi_ctrl->ctrl,
+					"failed to get io mem, rc = %d\n", rc);
+			return rc;
+		}
+	}
+
+	mutex_unlock(&dsi_ctrl_list_lock);
+
+	return rc;
+}
+
 /**
  * dsi_ctrl_get() - get a dsi_ctrl handle from an of_node
  * @of_node:    of_node of the DSI controller.

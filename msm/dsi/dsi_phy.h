@@ -356,4 +356,13 @@ int dsi_phy_dyn_refresh_cache_phy_timings(struct msm_dsi_phy *phy,
  */
 void dsi_phy_set_continuous_clk(struct msm_dsi_phy *phy, bool enable);
 
+/**
+ * dsi_phy_get_io_resources() - reads associated register range
+ *
+ * @io_res:	 pointer to msm_io_res struct to populate the ranges
+ *
+ * Return: error code.
+ */
+int dsi_phy_get_io_resources(struct msm_io_res *io_res);
+
 #endif /* _DSI_PHY_H_ */
