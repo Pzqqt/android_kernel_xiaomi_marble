@@ -2243,8 +2243,7 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 				    tDot11fIEVHTCaps *vht_caps)
 {
 	tSirMacRateSet temp_rate_set;
-	uint32_t i, j, val, min, is_a_rate;
-	tSirMacRateSet temp_rate_set2;
+	uint32_t i, j, is_a_rate;
 	uint32_t phymode;
 	uint8_t mcsSet[SIZE_OF_SUPPORTED_MCS_SET];
 	struct supported_rates *rates;
@@ -2254,73 +2253,8 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 	qdf_size_t val_len;
 
 	is_a_rate = 0;
-	temp_rate_set2.numRates = 0;
 
 	lim_get_phy_mode(mac_ctx, &phymode, NULL);
-
-	/* get own rate set */
-	val_len = mac_ctx->mlme_cfg->rates.opr_rate_set.len;
-	if (wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set.rate,
-				  &mac_ctx->mlme_cfg->rates.opr_rate_set,
-				  &val_len) != QDF_STATUS_SUCCESS) {
-		/* Could not get rateset from CFG. Log error. */
-		pe_err("could not retrieve rateset");
-		val_len = 0;
-	}
-	temp_rate_set.numRates = val_len;
-
-	if (phymode == WNI_CFG_PHY_MODE_11G) {
-		/* get own extended rate set */
-		val_len = mac_ctx->mlme_cfg->rates.ext_opr_rate_set.len;
-		if (wlan_mlme_get_cfg_str(
-			(uint8_t *)&temp_rate_set2.rate,
-			&mac_ctx->mlme_cfg->rates.ext_opr_rate_set,
-			&val_len) != QDF_STATUS_SUCCESS) {
-			/* Could not get rateset from CFG. Log error. */
-			pe_err("could not retrieve extrateset");
-			val_len = 0;
-		}
-			temp_rate_set2.numRates = val_len;
-	}
-
-	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
-		pe_err("more than 12 rates in CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/**
-	 * Handling of the rate set IEs is the following:
-	 * - keep only rates that we support and that the station supports
-	 * - sort and the rates into the pSta->rate array
-	 */
-
-	/* Copy all rates in temp_rate_set, there are 12 rates max */
-	for (i = 0; i < temp_rate_set2.numRates; i++)
-		temp_rate_set.rate[i + temp_rate_set.numRates] =
-			temp_rate_set2.rate[i];
-
-	temp_rate_set.numRates += temp_rate_set2.numRates;
-
-	/**
-	 * Sort rates in temp_rate_set (they are likely to be already sorted)
-	 * put the result in temp_rate_set2
-	 */
-	temp_rate_set2.numRates = 0;
-
-	for (i = 0; i < temp_rate_set.numRates; i++) {
-		min = 0;
-		val = 0xff;
-
-		for (j = 0; j < temp_rate_set.numRates; j++)
-			if ((uint32_t) (temp_rate_set.rate[j] & 0x7f) < val) {
-				val = temp_rate_set.rate[j] & 0x7f;
-				min = j;
-			}
-
-		temp_rate_set2.rate[temp_rate_set2.numRates++] =
-			temp_rate_set.rate[min];
-		temp_rate_set.rate[min] = 0xff;
-	}
 
 	/**
 	 * Copy received rates in temp_rate_set, the parser has ensured
@@ -2340,27 +2274,22 @@ lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx,
 	rates = &stads->supportedRates;
 	qdf_mem_zero(rates, sizeof(*rates));
 
-	for (i = 0; i < temp_rate_set2.numRates; i++) {
-		for (j = 0; j < temp_rate_set.numRates; j++) {
-			if ((temp_rate_set2.rate[i] & 0x7F) !=
-				(temp_rate_set.rate[j] & 0x7F))
-				continue;
-
-			if ((b_rateindex > SIR_NUM_11B_RATES) ||
-			    (a_rateindex > SIR_NUM_11A_RATES)) {
-				pe_warn("Invalid number of rates (11b->%d, 11a->%d)",
-					b_rateindex, a_rateindex);
-				return QDF_STATUS_E_FAILURE;
-			}
-			if (sirIsArate(temp_rate_set2.rate[i] & 0x7f)) {
-				is_a_rate = 1;
-				if (a_rateindex < SIR_NUM_11A_RATES)
-					rates->llaRates[a_rateindex++] = temp_rate_set2.rate[i];
-			} else {
-				if (b_rateindex < SIR_NUM_11B_RATES)
-					rates->llbRates[b_rateindex++] = temp_rate_set2.rate[i];
-			}
-			break;
+	for (j = 0; j < temp_rate_set.numRates; j++) {
+		if ((b_rateindex > SIR_NUM_11B_RATES) ||
+		    (a_rateindex > SIR_NUM_11A_RATES)) {
+			pe_warn("Invalid number of rates (11b->%d, 11a->%d)",
+				b_rateindex, a_rateindex);
+			return QDF_STATUS_E_FAILURE;
+		}
+		if (sirIsArate(temp_rate_set.rate[j] & 0x7f)) {
+			is_a_rate = 1;
+			if (a_rateindex < SIR_NUM_11A_RATES)
+				rates->llaRates[a_rateindex++] =
+						temp_rate_set.rate[j];
+		} else {
+			if (b_rateindex < SIR_NUM_11B_RATES)
+				rates->llbRates[b_rateindex++] =
+						temp_rate_set.rate[j];
 		}
 	}
 
