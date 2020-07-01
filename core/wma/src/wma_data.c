@@ -569,8 +569,7 @@ static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 		ret = wma_fill_ht40_mcast_rate(shortgi, mbpsx10_rate,
 					       nss, rate, streaming_rate);
 	else
-		WMA_LOGE("%s: Error, Invalid chwidth enum %d", __func__,
-			 chwidth);
+		wma_err("Error, Invalid chwidth enum %d", chwidth);
 	return (*streaming_rate != 0) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
 }
 
@@ -606,8 +605,7 @@ static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
 		ret = wma_fill_vht80_mcast_rate(shortgi, mbpsx10_rate, nss,
 						rate, streaming_rate);
 	else
-		WMA_LOGE("%s: chwidth enum %d not supported",
-			 __func__, chwidth);
+		wma_err("chwidth enum %d not supported", chwidth);
 	return (*streaming_rate != 0) ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
 }
 
@@ -637,8 +635,8 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 	 * (3) 540 < mbpsx10_rate <= 2000: use 1x1 HT/VHT
 	 * (4) 2000 < mbpsx10_rate: use 2x2 HT/VHT
 	 */
-	WMA_LOGE("%s: Input: nss = %d, mbpsx10 = 0x%x, chwidth = %d, shortgi = %d",
-		 __func__, nss, mbpsx10_rate, chwidth, shortgi);
+	wma_debug("Input: nss = %d, mbpsx10 = 0x%x, chwidth = %d, shortgi = %d",
+		  nss, mbpsx10_rate, chwidth, shortgi);
 	if ((mbpsx10_rate & 0x40000000) && nss > 0) {
 		/* bit 30 indicates user inputed nss,
 		 * bit 28 and 29 used to encode nss
@@ -712,8 +710,7 @@ static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 			}
 		}
 ht_vht_done:
-		WMA_LOGE("%s: NSS = %d, freq = %d",
-			 __func__, nss, mhz);
+		wma_debug("NSS = %d, freq = %d", nss, mhz);
 		wma_debug("input_rate = %d, chwidth = %d rate = 0x%x, streaming_rate = %d",
 			 mbpsx10_rate, chwidth, *rate, stream_rate);
 	} else {
@@ -723,8 +720,8 @@ ht_vht_done:
 		else
 			*rate = 0xFF;
 
-		WMA_LOGE("%s: NSS = %d, input_rate = %d, rate = 0x%x",
-			 __func__, nss, mbpsx10_rate, *rate);
+		wma_debug("NSS = %d, input_rate = %d, rate = 0x%x",
+			  nss, mbpsx10_rate, *rate);
 	}
 	return ret;
 }
@@ -747,15 +744,13 @@ static void wma_cp_stats_set_rate_flag(tp_wma_handle wma, uint8_t vdev_id)
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
 						    WLAN_LEGACY_WMA_ID);
 	if (!vdev) {
-		WMA_LOGE("%s, vdev not found for id: %d", __func__,
-			 vdev_id);
+		wma_err("vdev not found for id: %d", vdev_id);
 		return;
 	}
 
 	status = wma_get_vdev_rate_flag(iface->vdev, &rate_flag);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s, vdev not found for id: %d", __func__,
-			 vdev_id);
+		wma_err("vdev not found for id: %d", vdev_id);
 		return;
 	}
 	ucfg_mc_cp_stats_set_rate_flags(vdev, rate_flag);
@@ -819,8 +814,7 @@ void wma_set_bss_rate_flags(tp_wma_handle wma, uint8_t vdev_id,
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
 	if (!vdev_mlme) {
-		WMA_LOGE("%s: Failed to get mlme obj for vdev_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get mlme obj for vdev_%d", vdev_id);
 		return;
 	}
 	rate_flags = &vdev_mlme->mgmt.rate_info.rate_flags;
@@ -908,7 +902,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	wma_tx_ota_comp_callback ack_cb;
 
 	if (cds_is_load_or_unload_in_progress()) {
-		WMA_LOGE("%s: Driver load/unload in progress", __func__);
+		wma_err("Driver load/unload in progress");
 		return;
 	}
 
@@ -918,7 +912,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	ack_cb = wma_handle->umac_data_ota_ack_cb;
 
 	if (work->status)
-		WMA_LOGE("Data Tx Ack Cb Status %d", work->status);
+		wma_debug("Data Tx Ack Cb Status %d", work->status);
 	else
 		wma_debug("Data Tx Ack Cb Status %d", work->status);
 
@@ -926,7 +920,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	if (ack_cb)
 		ack_cb(wma_handle->mac_context, NULL, work->status, NULL);
 	else
-		WMA_LOGE("Data Tx Ack Cb is NULL");
+		wma_err("Data Tx Ack Cb is NULL");
 
 	wma_handle->umac_data_ota_ack_cb = NULL;
 	wma_handle->last_umac_data_nbuf = NULL;
@@ -951,7 +945,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 
 	if (!wma_handle) {
-		WMA_LOGE("%s: Invalid WMA Handle", __func__);
+		wma_err("Invalid WMA Handle");
 		return;
 	}
 
@@ -961,11 +955,9 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 	 */
 	if (wma_handle->last_umac_data_nbuf != netbuf) {
 		if (wma_handle->umac_data_ota_ack_cb) {
-			WMA_LOGE("%s: nbuf does not match but umac_data_ota_ack_cb is not null",
-				__func__);
+			wma_err("nbuf does not match but umac_data_ota_ack_cb is not null");
 		} else {
-			WMA_LOGE("%s: nbuf does not match and umac_data_ota_ack_cb is also null",
-				__func__);
+			wma_err("nbuf does not match and umac_data_ota_ack_cb is also null");
 		}
 		goto free_nbuf;
 	}
@@ -1004,8 +996,7 @@ QDF_STATUS wma_check_txrx_chainmask(int num_rf_chains, int cmd_value)
 {
 	if ((cmd_value > WMA_MAX_RF_CHAINS(num_rf_chains)) ||
 	    (cmd_value < WMA_MIN_RF_CHAINS)) {
-		WMA_LOGE("%s: Requested value %d over the range",
-			__func__, cmd_value);
+		wma_err("Requested value %d over the range", cmd_value);
 		return QDF_STATUS_E_INVAL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1032,12 +1023,12 @@ int wma_peer_state_change_event_handler(void *handle,
 #endif
 
 	if (!event_buff) {
-		WMA_LOGE("%s: Received NULL event ptr from FW", __func__);
+		wma_err("Received NULL event ptr from FW");
 		return -EINVAL;
 	}
 	param_buf = (WMI_PEER_STATE_EVENTID_param_tlvs *) event_buff;
 	if (!param_buf) {
-		WMA_LOGE("%s: Received NULL buf ptr from FW", __func__);
+		wma_err("Received NULL buf ptr from FW");
 		return -ENOMEM;
 	}
 
@@ -1052,8 +1043,7 @@ int wma_peer_state_change_event_handler(void *handle,
 		 */
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 		if (!wma_handle->peer_authorized_cb) {
-			WMA_LOGE("%s: peer authorized cb not registered",
-				 __func__);
+			wma_err("peer authorized cb not registered");
 			return -EINVAL;
 		}
 		wma_handle->peer_authorized_cb(event->vdev_id);
@@ -1118,7 +1108,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	uint32_t chan1_freq = cds_chan_to_freq(channel1);
 
 	if (!wma) {
-		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
+		wma_err("NULL wma ptr. Exiting");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1130,7 +1120,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 
 	/* First step is to confirm if MCC is active */
 	if (!lim_is_in_mcc(mac)) {
-		WMA_LOGE("%s: MCC is not active. Exiting", __func__);
+		wma_err("MCC is not active. Exiting");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1143,8 +1133,8 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
-		WMA_LOGE("%s: Failed to get value for MCC_ADAPTIVE_SCHED, "
-			 "Exit w/o setting latency", __func__);
+		wma_err("Failed to get value for MCC_ADAPTIVE_SCHED, "
+			 "Exit w/o setting latency");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1180,7 +1170,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 	uint32_t chan2_freq = cds_chan_to_freq(adapter_2_chan_number);
 
 	if (!wma) {
-		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
+		wma_err("NULL wma ptr. Exiting");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1206,8 +1196,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
-		WMA_LOGE("%s: Failed to retrieve WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED. Exit",
-			__func__);
+		wma_err("Failed to retrieve WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED. Exit");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1234,7 +1223,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	/* Get the vdev id */
 	if (wma_find_vdev_id_by_addr(wma, pRateUpdateParams->bssid.bytes,
 				     &vdev_id)) {
-		WMA_LOGE("vdev handle is invalid for %pM",
+		wma_err("vdev handle is invalid for %pM",
 			 pRateUpdateParams->bssid.bytes);
 		qdf_mem_free(pRateUpdateParams);
 		return QDF_STATUS_E_INVAL;
@@ -1243,8 +1232,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 
 	status = wma_get_vdev_rate_flag(intr[vdev_id].vdev, &rate_flag);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s: Failed to get rate_flag for VDEV_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get rate_flag for VDEV_%d", vdev_id);
 		qdf_mem_free(pRateUpdateParams);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1270,25 +1258,25 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		    mcastDataRate24GHzTxFlag & TX_RATE_SGI)
 			short_gi = 1;   /* upper layer specified short GI */
 	}
-	WMA_LOGE("%s: dev_id = %d, dev_type = %d, dev_mode = %d,",
-		 __func__, vdev_id, intr[vdev_id].type,
+	wma_debug("dev_id = %d, dev_type = %d, dev_mode = %d,",
+		 vdev_id, intr[vdev_id].type,
 		 pRateUpdateParams->dev_mode);
-	WMA_LOGE("%s: mac = %pM, config.shortgi = %d, rate_flags = 0x%x",
-		 __func__, pRateUpdateParams->bssid.bytes,
+	wma_debug("mac = %pM, config.shortgi = %d, rate_flags = 0x%x",
+		 pRateUpdateParams->bssid.bytes,
 		 intr[vdev_id].config.shortgi, rate_flag);
 	ret = wma_encode_mc_rate(short_gi, intr[vdev_id].config.chwidth,
 				 intr[vdev_id].ch_freq, mbpsx10_rate,
 				 pRateUpdateParams->nss, &rate);
 	if (ret != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Error, Invalid input rate value", __func__);
+		wma_err("Error, Invalid input rate value");
 		qdf_mem_free(pRateUpdateParams);
 		return ret;
 	}
 	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_SGI, short_gi);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s: Fail to Set WMI_VDEV_PARAM_SGI(%d), status = %d",
-			 __func__, short_gi, status);
+		wma_err("Fail to Set WMI_VDEV_PARAM_SGI(%d), status = %d",
+			short_gi, status);
 		qdf_mem_free(pRateUpdateParams);
 		return status;
 	}
@@ -1296,7 +1284,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 					      vdev_id, paramId, rate);
 	qdf_mem_free(pRateUpdateParams);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("%s: Fail to Set rate, status = %d", __func__, status);
+		wma_err("Fail to Set rate, status = %d", status);
 		return status;
 	}
 
@@ -1353,7 +1341,7 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
 	wma_debug("Tx Complete Status %d", status);
 
 	if (!wma_handle->tx_frm_download_comp_cb) {
-		WMA_LOGE("Tx Complete Cb not registered by umac");
+		wma_err("Tx Complete Cb not registered by umac");
 		return;
 	}
 
@@ -1419,7 +1407,7 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 	uint8_t pdev_id = WMI_PDEV_ID_SOC;
 
 	if (!soc) {
-		WMA_LOGE("%s:SOC context is NULL", __func__);
+		wma_err("SOC context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1493,7 +1481,7 @@ static void wma_process_vdev_tx_pause_evt(void *soc,
 			}
 		}
 	} else {
-		WMA_LOGE("Not Valid Action Type %d", event->action);
+		wma_err("Not Valid Action Type %d", event->action);
 	}
 }
 
@@ -1509,7 +1497,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 
 	param_buf = (WMI_TX_PAUSE_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
-		WMA_LOGE("Invalid roam event buffer");
+		wma_err("Invalid roam event buffer");
 		return -EINVAL;
 	}
 
@@ -1519,7 +1507,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	}
 
 	if (!soc) {
-		WMA_LOGE("%s:SOC context is NULL", __func__);
+		wma_err("SOC context is NULL");
 		return -EINVAL;
 	}
 
@@ -1535,8 +1523,7 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 			/* No Vdev */
 		} else {
 			if (!wma->interfaces[vdev_id].vdev) {
-				WMA_LOGE("%s: vdev is NULL for %d", __func__,
-					 vdev_id);
+				wma_err("vdev is NULL for %d", vdev_id);
 				/* Test Next VDEV */
 				vdev_map >>= 1;
 				continue;
@@ -1624,11 +1611,11 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if (!wma || !config) {
-		WMA_LOGE("%s Invalid input\n", __func__);
+		wma_err("Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGE("%s enable %d period %d txq limit %d\n", __func__,
+	wma_debug("enable %d period %d txq limit %d\n",
 		 config->enable,
 		 config->period,
 		 config->txq_limit);
@@ -1726,7 +1713,7 @@ static QDF_STATUS wma_update_thermal_cfg_to_fw(tp_wma_handle wma)
 	thermal_params.thermalEnable =
 		wma->thermal_mgmt_info.thermalMgmtEnabled;
 
-	WMA_LOGE("TM sending to fw: min_temp %d max_temp %d enable %d",
+	wma_debug("TM sending to fw: min_temp %d max_temp %d enable %d",
 		 thermal_params.minTemp, thermal_params.maxTemp,
 		 thermal_params.thermalEnable);
 
@@ -1753,7 +1740,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 #endif /* FW_THERMAL_THROTTLE_SUPPORT */
 
 	if (!wma || !pThermalParams) {
-		WMA_LOGE("TM Invalid input");
+		wma_err("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1850,8 +1837,7 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		WMA_LOGE(FL(
-			"Fail to post set thermal level ind msg"));
+		wma_err("Fail to post set thermal level ind msg");
 }
 
 /**
@@ -1869,20 +1855,20 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 					 uint8_t thermal_level)
 {
 	if (!wma) {
-		WMA_LOGE("TM Invalid input");
+		wma_err("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGE("TM set level %d", thermal_level);
+	wma_debug("TM set level %d", thermal_level);
 
 	/* Check if thermal mitigation is enabled */
 	if (!wma->thermal_mgmt_info.thermalMgmtEnabled) {
-		WMA_LOGE("Thermal mgmt is not enabled, ignoring set level command");
+		wma_err("Thermal mgmt is not enabled, ignoring set level command");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (thermal_level >= WLAN_WMA_MAX_THERMAL_LEVELS) {
-		WMA_LOGE("Invalid thermal level set %d", thermal_level);
+		wma_err("Invalid thermal level set %d", thermal_level);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1988,14 +1974,14 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	WMI_THERMAL_MGMT_EVENTID_param_tlvs *param_buf;
 
 	if (!event || !handle) {
-		WMA_LOGE("Invalid thermal mitigation event buffer");
+		wma_err("Invalid thermal mitigation event buffer");
 		return -EINVAL;
 	}
 
 	wma = (tp_wma_handle) handle;
 
 	if (!wma) {
-		WMA_LOGE("%s: Failed to get wma handle", __func__);
+		wma_err("Failed to get wma handle");
 		return -EINVAL;
 	}
 
@@ -2003,7 +1989,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 
 	/* Check if thermal mitigation is enabled */
 	if (!wma->thermal_mgmt_info.thermalMgmtEnabled) {
-		WMA_LOGE("Thermal mgmt is not enabled, ignoring event");
+		wma_err("Thermal mgmt is not enabled, ignoring event");
 		return -EINVAL;
 	}
 
@@ -2051,7 +2037,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 		wma->thermal_mgmt_info.thermalMgmtEnabled;
 
 	if (QDF_STATUS_SUCCESS != wma_set_thermal_mgmt(wma, thermal_params)) {
-		WMA_LOGE("Could not send thermal mgmt command to the firmware!");
+		wma_err("Could not send thermal mgmt command to the firmware!");
 		return -EINVAL;
 	}
 
@@ -2252,14 +2238,14 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint8_t pdev_id;
 
 	if (!wma_handle) {
-		WMA_LOGE("wma_handle is NULL");
+		wma_err("wma_handle is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
 	iface = &wma_handle->interfaces[vdev_id];
 
 	if (!soc) {
-		WMA_LOGE("%s:SOC context is NULL", __func__);
+		wma_err("SOC context is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2267,7 +2253,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	cdp_hl_tdls_flag_reset(soc, vdev_id, false);
 
 	if (frmType >= TXRX_FRM_MAX) {
-		WMA_LOGE("Invalid Frame Type Fail to send Frame");
+		wma_err("Invalid Frame Type Fail to send Frame");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2283,7 +2269,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	 */
 	if (!((frmType == TXRX_FRM_802_11_MGMT) ||
 	      (frmType == TXRX_FRM_802_11_DATA))) {
-		WMA_LOGE("No Support to send other frames except 802.11 Mgmt/Data");
+		wma_err("No Support to send other frames except 802.11 Mgmt/Data");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2459,11 +2445,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				if (curr_timestamp >=
 				    wma_handle->last_umac_data_ota_timestamp +
 				    500) {
-					WMA_LOGE("%s: No Tx Ack for last data frame for more than 5 secs, allow Tx of current data frame",
-						__func__);
+					wma_err("No Tx Ack for last data frame for more than 5 secs, allow Tx of current data frame");
 				} else {
-					WMA_LOGE("%s: Already one Data pending for Ack, reject Tx of data frame",
-						__func__);
+					wma_err("Already one Data pending for Ack, reject Tx of data frame");
 					cds_packet_free((void *)tx_frame);
 					return QDF_STATUS_E_FAILURE;
 				}
@@ -2473,7 +2457,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 * Data Frames are sent through TxRx Non Standard Data
 			 * path so Ack Complete Cb is must
 			 */
-			WMA_LOGE("No Ack Complete Cb. Don't Allow");
+			wma_err("No Ack Complete Cb. Don't Allow");
 			cds_packet_free((void *)tx_frame);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -2511,7 +2495,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			vdev_id, false);
 
 		if (ret) {
-			WMA_LOGE("TxRx Rejected. Fail to do Tx");
+			wma_err("TxRx Rejected. Fail to do Tx");
 			/* Call Download Cb so that umac can free the buffer */
 			if (tx_frm_download_comp_cb)
 				tx_frm_download_comp_cb(wma_handle->mac_context,
@@ -2533,7 +2517,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	ctrl_pdev = cdp_get_ctrl_pdev_from_vdev(soc, vdev_id);
 	if (!ctrl_pdev) {
-		WMA_LOGE("ol_pdev_handle is NULL\n");
+		wma_err("ol_pdev_handle is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2592,7 +2576,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		wma_debug("Probe response frame on channel %d vdev:%d",
 			 chanfreq, vdev_id);
 		if (wma_is_vdev_in_ap_mode(wma_handle, vdev_id) && !chanfreq)
-			WMA_LOGE("%s: AP oper chan is zero", __func__);
+			wma_err("AP oper chan is zero");
 	} else if (pFc->subType == SIR_MAC_MGMT_ACTION ||
 			pFc->subType == SIR_MAC_MGMT_AUTH) {
 		chanfreq = channel_freq;
@@ -2636,13 +2620,13 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	psoc = wma_handle->psoc;
 	if (!psoc) {
-		WMA_LOGE("%s: psoc ctx is NULL", __func__);
+		wma_err("psoc ctx is NULL");
 		cds_packet_free((void *)tx_frame);
 		goto error;
 	}
 
 	if (!wma_handle->pdev) {
-		WMA_LOGE("%s: pdev ctx is NULL", __func__);
+		wma_err("pdev ctx is NULL");
 		cds_packet_free((void *)tx_frame);
 		goto error;
 	}
@@ -2673,7 +2657,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: mgmt tx failed", __func__);
+		wma_err("mgmt tx failed");
 		qdf_nbuf_free((qdf_nbuf_t)tx_frame);
 		goto error;
 	}
@@ -2692,7 +2676,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		rem = qdf_do_div_rem(wma_handle->tx_fail_cnt,
 				     MAX_PRINT_FAILURE_CNT);
 		if (!rem)
-			WMA_LOGE("%s: Failed to send Mgmt Frame", __func__);
+			wma_err("Failed to send Mgmt Frame");
 		else
 			wma_debug("Failed to send Mgmt Frame");
 		wma_handle->tx_fail_cnt++;
@@ -2754,9 +2738,8 @@ error:
 QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
 				      bool bSwap)
 {
-	/* Sanity Check */
 	if (!pkt) {
-		WMA_LOGE("wma:Invalid parameter sent on wma_peek_rx_pkt_info");
+		wma_err("wma:Invalid parameter sent on wma_peek_rx_pkt_info");
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -2849,8 +2832,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	mic_err_ind->sessionId = vdev_id;
 	bssid = wma_get_vdev_bssid(wma->interfaces[vdev_id].vdev);
 	if (!bssid) {
-		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get bssid for vdev_%d", vdev_id);
 		qdf_mem_free((void *)mic_err_ind);
 		return;
 	}
@@ -2879,8 +2861,7 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 				       QDF_MODULE_ID_SME,
 				       QDF_MODULE_ID_SME,
 				       &cds_msg)) {
-		WMA_LOGE("%s: could not post mic failure indication to SME",
-			 __func__);
+		wma_err("could not post mic failure indication to SME");
 		qdf_mem_free((void *)mic_err_ind);
 	}
 }
@@ -2900,14 +2881,13 @@ void wma_tx_abort(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface->vdev) {
-		WMA_LOGE("%s: iface->vdev is NULL", __func__);
+		wma_err("iface->vdev is NULL");
 		return;
 	}
 
 	bssid = wma_get_vdev_bssid(iface->vdev);
 	if (!bssid) {
-		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get bssid for vdev_%d", vdev_id);
 		return;
 	}
 
