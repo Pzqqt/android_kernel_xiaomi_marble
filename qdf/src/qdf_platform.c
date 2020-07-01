@@ -30,6 +30,7 @@ static qdf_is_driver_unloading_callback is_driver_unloading_cb;
 static qdf_is_recovering_callback	is_recovering_cb;
 static qdf_is_drv_connected_callback    is_drv_connected_cb;
 static qdf_wmi_send_over_qmi_callback _wmi_send_recv_qmi_cb;
+static qdf_is_drv_supported_callback    is_drv_supported_cb;
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
@@ -175,3 +176,22 @@ void qdf_check_state_before_panic(void)
 
 qdf_export_symbol(qdf_check_state_before_panic);
 
+void qdf_register_drv_supported_callback(qdf_is_drv_supported_callback
+					 is_drv_supported)
+{
+	is_drv_supported_cb = is_drv_supported;
+}
+
+qdf_export_symbol(qdf_register_drv_supported_callback);
+
+bool qdf_is_drv_supported(void)
+{
+	if (!is_drv_supported_cb) {
+		qdf_err("drv supported callback is not registered");
+		return false;
+	}
+
+	return is_drv_supported_cb();
+}
+
+qdf_export_symbol(qdf_is_drv_supported);

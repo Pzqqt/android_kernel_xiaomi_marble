@@ -255,5 +255,31 @@ void qdf_register_drv_connected_callback(qdf_is_drv_connected_callback
  */
 void qdf_check_state_before_panic(void);
 
+/**
+ * qdf_is_drv_supported_callback() - callback to query if drv is supported
+ *
+ * Return: true if drv is supported else false
+ */
+typedef bool (*qdf_is_drv_supported_callback)(void);
+
+/**
+ * qdf_is_drv_supported_callback() - API to check if drv is supported or not
+ *
+ * DRV is dynamic request voting using which fw can do page fault and
+ * bring in page back without apps wake up
+ *
+ * Return: true: if drv is supported
+ *	   false: if drv is not supported
+ */
+bool qdf_is_drv_supported(void);
+
+/**
+ * qdf_register_drv_supported_callback() - API to register drv supported cb
+ * @is_drv_supported: callback to query if drv is supported or not
+ *
+ * Return: none
+ */
+void qdf_register_drv_supported_callback(qdf_is_drv_supported_callback
+					 is_drv_supported);
 #endif /*_QDF_PLATFORM_H*/
 
