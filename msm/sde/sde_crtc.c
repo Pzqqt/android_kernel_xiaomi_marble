@@ -5245,6 +5245,12 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		{CACHE_STATE_ENABLED, "cache_state_enabled"},
 	};
 
+	static const struct drm_prop_enum_list e_vm_req_state[] = {
+		{VM_REQ_NONE, "vm_req_none"},
+		{VM_REQ_RELEASE, "vm_req_release"},
+		{VM_REQ_ACQUIRE, "vm_req_acquire"},
+	};
+
 	SDE_DEBUG("\n");
 
 	if (!crtc || !catalog) {
@@ -5282,6 +5288,15 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 	msm_property_install_range(&sde_crtc->property_info,
 		"idle_time", 0, 0, U64_MAX, 0,
 		CRTC_PROP_IDLE_TIMEOUT);
+
+	if (catalog->has_trusted_vm_support) {
+		int init_idx = sde_in_trusted_vm(sde_kms) ? 1 : 0;
+
+		msm_property_install_enum(&sde_crtc->property_info,
+			"vm_request_state", 0x0, 0, e_vm_req_state,
+			ARRAY_SIZE(e_vm_req_state), init_idx,
+			CRTC_PROP_VM_REQ_STATE);
+	}
 
 	if (catalog->has_idle_pc)
 		msm_property_install_enum(&sde_crtc->property_info,
