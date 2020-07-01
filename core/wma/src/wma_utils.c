@@ -3291,7 +3291,7 @@ wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			else
 				phymode = (CH_WIDTH_40MHZ == ch_width) ?
 					  WLAN_PHYMODE_11AC_VHT40 :
-					  WLAN_PHYMODE_11AC_VHT20;
+					  WLAN_PHYMODE_11AC_VHT20_2G;
 		} else if (is_ht) {
 			phymode = (CH_WIDTH_40MHZ == ch_width) ?
 				   WLAN_PHYMODE_11NG_HT40 :
