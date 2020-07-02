@@ -129,7 +129,7 @@ static void wma_convert_he_ppet(uint8_t *he_ppet,
 
 	ppet_1 = NULL;
 	if (!ppet) {
-		WMA_LOGE(FL("PPET is NULL"));
+		wma_err("PPET is NULL");
 		qdf_mem_zero(he_ppet, HE_MAX_PPET_SIZE);
 		return;
 	}
@@ -912,13 +912,13 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	total_mac_phy_cnt = target_psoc_get_total_mac_phy_cnt(tgt_hdl);
 
 	if (!mac_phy_cap) {
-		WMA_LOGE(FL("Invalid MAC PHY capabilities handle"));
+		wma_err("Invalid MAC PHY capabilities handle");
 		he_cap->present = false;
 		return;
 	}
 
 	if (!num_hw_modes) {
-		WMA_LOGE(FL("No extended HE cap for current SOC"));
+		wma_err("No extended HE cap for current SOC");
 		he_cap->present = false;
 		return;
 	}
@@ -1376,7 +1376,7 @@ void wma_vdev_set_he_bss_params(tp_wma_handle wma, uint8_t vdev_id,
 			WMI_VDEV_PARAM_HEOPS_0_31, he_info->he_ops);
 
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE(FL("Failed to set HE OPs"));
+		wma_err("Failed to set HE OPs");
 }
 
 void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
@@ -1388,7 +1388,7 @@ void wma_vdev_set_he_config(tp_wma_handle wma, uint8_t vdev_id,
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 				 WMI_VDEV_PARAM_OBSSPD, add_bss->he_sta_obsspd);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE(FL("Failed to set HE Config"));
+		wma_err("Failed to set HE Config");
 	pd_min = add_bss->he_sta_obsspd & 0xff,
 	pd_max = (add_bss->he_sta_obsspd & 0xff00) >> 8,
 	sec_ch_ed = (add_bss->he_sta_obsspd & 0xff0000) >> 16,
@@ -1404,7 +1404,7 @@ QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
 	uint32_t dword_he_op = 0;
 
 	if (!wma) {
-		WMA_LOGE(FL("wrong wma_handle...."));
+		wma_err("wrong wma_handle....");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1420,7 +1420,7 @@ QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
 			WMI_VDEV_PARAM_HEOPS_0_31, dword_he_op);
 
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE(FL("Failed to set HE OPs"));
+		wma_err("Failed to set HE OPs");
 
 	return ret;
 }
@@ -1469,7 +1469,7 @@ void wma_set_he_txbf_params(uint8_t vdev_id, bool su_bfer,
 	wma_debug("set HEMU_MODE (hemu_mode = 0x%x)", hemu_mode);
 
 	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE("failed to set HEMU_MODE(status = %d)", status);
+		wma_err("failed to set HEMU_MODE(status = %d)", status);
 }
 
 QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap)
@@ -1478,7 +1478,7 @@ QDF_STATUS wma_get_he_capabilities(struct he_capability *he_cap)
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
-		WMA_LOGE(FL("Invalid WMA handle"));
+		wma_err("Invalid WMA handle");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1508,7 +1508,7 @@ void wma_set_he_vdev_param(struct wma_txrx_node *intr, WMI_VDEV_PARAM param_id,
 		intr->config.range_ext = value;
 		break;
 	default:
-		WMA_LOGE(FL("Unhandled HE vdev param: %0x"), param_id);
+		wma_err("Unhandled HE vdev param: %0x", param_id);
 		break;
 	}
 }
@@ -1522,7 +1522,7 @@ uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 	case WMI_VDEV_PARAM_HE_RANGE_EXT:
 		return intr->config.range_ext;
 	default:
-		WMA_LOGE(FL("Unhandled HE vdev param: %0x"), param_id);
+		wma_err("Unhandled HE vdev param: %0x", param_id);
 		break;
 	}
 	return 0;

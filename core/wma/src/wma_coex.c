@@ -1,6 +1,6 @@
 
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -336,7 +336,7 @@ void wma_get_mws_coex_info_req(tp_wma_handle wma_handle,
 						   req->vdev_id, req->cmd_id);
 
 	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE("Failed to send mws coex info");
+		wma_err("Failed to send mws coex info");
 }
 
 void wma_register_mws_coex_events(tp_wma_handle wma_handle)

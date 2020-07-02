@@ -74,10 +74,6 @@
 
 #define WMA_INVALID_VDEV_ID                             0xFF
 
-/* Deprecated logging macros, to be removed. Please do not use in new code */
-#define WMA_LOGE(params ...) \
-	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_WMA, params)
-
 #define wma_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_WMA, params)
 #define wma_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_WMA, params)
 #define wma_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_WMA, params)
@@ -1826,19 +1822,19 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 	struct wma_txrx_node *iface;
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invald!");
 		return;
 	}
 
 	if (vdev_id >= wma->max_bssid) {
-		WMA_LOGE("%s: Invalid vdev_id: %d", __func__, vdev_id);
+		wma_err("Invalid vdev_id: %d", vdev_id);
 		return;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 
 	if (!iface) {
-		WMA_LOGE("%s: Interface is NULL", __func__);
+		wma_err("Interface is NULL");
 		return;
 	}
 
@@ -1858,14 +1854,14 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 	struct wma_txrx_node *iface;
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invald!");
 		return 0;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 
 	if (!iface) {
-		WMA_LOGE("%s: Interface is NULL", __func__);
+		wma_err("Interface is NULL");
 		return 0;
 	}
 
@@ -1884,14 +1880,14 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 	struct wma_txrx_node *iface;
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invalid!");
 		return 0;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 
 	if (!iface) {
-		WMA_LOGE("%s: Interface is NULL", __func__);
+		wma_err("Interface is NULL");
 		return 0;
 	}
 
@@ -1974,13 +1970,13 @@ wma_get_vdev_rate_flag(struct wlan_objmgr_vdev *vdev, uint32_t *rate_flag)
 	struct vdev_mlme_obj *mlme_obj;
 
 	if (!vdev) {
-		WMA_LOGE("%s vdev is NULL", __func__);
+		wma_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (!mlme_obj) {
-		WMA_LOGE("%s Failed to get mlme_obj", __func__);
+		wma_err("ailed to get mlme_obj");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2002,14 +1998,14 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	struct wma_txrx_node *iface;
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invalid!");
 		return;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 
 	if (!iface) {
-		WMA_LOGE("%s: Interface is NULL", __func__);
+		wma_err("Interface is NULL");
 		return;
 	}
 
@@ -2030,14 +2026,14 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	struct wma_txrx_node *iface;
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invalid!");
 		return;
 	}
 
 	iface = &wma->interfaces[vdev_id];
 
 	if (!iface) {
-		WMA_LOGE("%s: Interface is NULL", __func__);
+		wma_err("Interface is NULL");
 		return;
 	}
 

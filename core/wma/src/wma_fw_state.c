@@ -32,7 +32,7 @@ QDF_STATUS wma_get_fw_state(tp_wma_handle wma_handle)
 	uint32_t len = sizeof(*cmd);
 
 	if (!wma_handle) {
-		WMA_LOGE(FL("WMA is closed, can not issue cmd"));
+		wma_err("WMA is closed, can not issue cmd");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -79,7 +79,7 @@ static int wma_echo_event_handler(void *handle, uint8_t *buf, uint32_t len)
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		WMA_LOGE("%s: Fail to post fw state reply msg", __func__);
+		wma_err("Fail to post fw state reply msg");
 		return -EINVAL;
 	}
 

@@ -35,7 +35,7 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id,
 	int32_t ret;
 
 	if (!wma) {
-		WMA_LOGE("Invalid WMA context, enable TWT failed");
+		wma_err("Invalid WMA context, enable TWT failed");
 		return;
 	}
 	twt_enable_params.pdev_id = pdev_id;
@@ -44,7 +44,7 @@ void wma_send_twt_enable_cmd(uint32_t pdev_id,
 	ret = wmi_unified_twt_enable_cmd(wma->wmi_handle, &twt_enable_params);
 
 	if (ret)
-		WMA_LOGE("Failed to enable TWT");
+		wma_err("Failed to enable TWT");
 }
 
 int wma_twt_en_complete_event_handler(void *handle,
@@ -57,16 +57,16 @@ int wma_twt_en_complete_event_handler(void *handle,
 	int status = -EINVAL;
 
 	if (!wma_handle) {
-		WMA_LOGE("Invalid wma handle for TWT complete");
+		wma_err("Invalid wma handle for TWT complete");
 		return status;
 	}
 	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
 	if (!wmi_handle) {
-		WMA_LOGE("Invalid wmi handle for TWT complete");
+		wma_err("Invalid wmi handle for TWT complete");
 		return status;
 	}
 	if (!mac) {
-		WMA_LOGE("Invalid MAC context");
+		wma_err("Invalid MAC context");
 		return status;
 	}
 	if (wmi_handle->ops->extract_twt_enable_comp_event)
@@ -89,14 +89,14 @@ void wma_send_twt_disable_cmd(uint32_t pdev_id)
 	int32_t ret;
 
 	if (!wma) {
-		WMA_LOGE("Invalid WMA context, Disable TWT failed");
+		wma_err("Invalid WMA context, Disable TWT failed");
 		return;
 	}
 	twt_disable_params.pdev_id = pdev_id;
 	ret = wmi_unified_twt_disable_cmd(wma->wmi_handle, &twt_disable_params);
 
 	if (ret)
-		WMA_LOGE("Failed to disable TWT");
+		wma_err("Failed to disable TWT");
 }
 
 int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
@@ -106,7 +106,7 @@ int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
 
 	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
-		WMA_LOGE("Invalid MAC context");
+		wma_err("Invalid MAC context");
 		return -EINVAL;
 	}
 
@@ -133,13 +133,13 @@ QDF_STATUS wma_twt_process_add_dialog(
 	wmi_unified_t wmi_handle;
 
 	if (!wma_handle) {
-		WMA_LOGE("Invalid WMA context, twt add dialog failed");
+		wma_err("Invalid WMA context, twt add dialog failed");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
 	if (!wmi_handle) {
-		WMA_LOGE("Invalid wmi handle, twt add dialog failed");
+		wma_err("Invalid wmi handle, twt add dialog failed");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -153,13 +153,13 @@ QDF_STATUS wma_twt_process_del_dialog(
 	wmi_unified_t wmi_handle;
 
 	if (!wma_handle) {
-		WMA_LOGE("Invalid WMA context, twt del dialog failed");
+		wma_err("Invalid WMA context, twt del dialog failed");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
 	if (!wmi_handle) {
-		WMA_LOGE("Invalid wmi handle, twt del dialog failed");
+		wma_err("Invalid wmi handle, twt del dialog failed");
 		return QDF_STATUS_E_INVAL;
 	}
 

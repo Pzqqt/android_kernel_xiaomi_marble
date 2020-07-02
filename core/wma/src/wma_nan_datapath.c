@@ -56,7 +56,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	if (cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
 					add_sta->staMac)) {
-		WMA_LOGE(FL("NDI peer already exists, peer_addr %pM"),
+		wma_err("NDI peer already exists, peer_addr %pM",
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
@@ -70,7 +70,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * here.
 	 */
 	if (cdp_find_peer_exist(soc, pdev_id, add_sta->staMac)) {
-		WMA_LOGE(FL("peer exists on other vdev with peer_addr %pM"),
+		wma_err("peer exists on other vdev with peer_addr %pM",
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
@@ -79,14 +79,14 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	status = wma_create_peer(wma, add_sta->staMac,
 				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE(FL("Failed to create peer for %pM"), add_sta->staMac);
+		wma_err("Failed to create peer for %pM", add_sta->staMac);
 		add_sta->status = status;
 		goto send_rsp;
 	}
 
 	if (!cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
 					 add_sta->staMac)) {
-		WMA_LOGE(FL("Failed to find peer handle using peer mac %pM"),
+		wma_err("Failed to find peer handle using peer mac %pM",
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
