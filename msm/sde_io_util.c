@@ -9,6 +9,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/delay.h>
 #include <linux/sde_io_util.h>
+#include <linux/sde_vm_event.h>
 
 #define MAX_I2C_CMDS  16
 void dss_reg_w(struct dss_io_data *io, u32 offset, u32 value, u32 debug)
@@ -128,6 +129,127 @@ void msm_dss_iounmap(struct dss_io_data *io_data)
 	io_data->len = 0;
 } /* msm_dss_iounmap */
 EXPORT_SYMBOL(msm_dss_iounmap);
+
+int msm_dss_get_io_mem(struct platform_device *pdev, struct list_head *mem_list)
+{
+	struct list_head temp_head;
+	struct msm_io_mem_entry *io_mem;
+	struct resource *res = NULL;
+	const char *reg_name, *exclude_reg_name;
+	int i, j, rc = 0;
+	int num_entry, num_exclude_entry;
+
+	INIT_LIST_HEAD(&temp_head);
+
+	num_entry = of_property_count_strings(pdev->dev.of_node,
+						  "reg-names");
+	if (num_entry < 0)
+		num_entry = 0;
+
+	/*
+	 * check the dt property to know whether the platform device wants
+	 * to exclude any reg ranges from the IO list
+	 */
+	num_exclude_entry = of_property_count_strings(pdev->dev.of_node,
+					  "qcom,sde-vm-exclude-reg-names");
+	if (num_exclude_entry < 0)
+		num_exclude_entry = 0;
+
+	for (i = 0; i < num_entry; i++) {
+		bool exclude = false;
+
+		of_property_read_string_index(pdev->dev.of_node,
+				"reg-names", i,	&reg_name);
+
+		for (j = 0; j < num_exclude_entry; j++) {
+			of_property_read_string_index(pdev->dev.of_node,
+				"qcom,sde-vm-exclude-reg-names", j,
+				&exclude_reg_name);
+
+			if (!strcmp(reg_name, exclude_reg_name)) {
+				exclude = true;
+				break;
+			}
+		}
+
+		if (exclude)
+			continue;
+
+		res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
+					   reg_name);
+		if (!res)
+			break;
+
+		io_mem = kzalloc(sizeof(*io_mem), GFP_KERNEL);
+		if (!io_mem) {
+			msm_dss_clean_io_mem(&temp_head);
+			rc = -ENOMEM;
+			goto parse_fail;
+		}
+
+		io_mem->base = res->start;
+		io_mem->size = resource_size(res);
+
+		list_add(&io_mem->list, &temp_head);
+	}
+
+	list_splice(&temp_head, mem_list);
+
+	return 0;
+
+parse_fail:
+	msm_dss_clean_io_mem(&temp_head);
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_dss_get_io_mem);
+
+void msm_dss_clean_io_mem(struct list_head *mem_list)
+{
+	struct msm_io_mem_entry *pos, *tmp;
+
+	list_for_each_entry_safe(pos, tmp, mem_list, list) {
+		list_del(&pos->list);
+		kzfree(pos);
+	}
+}
+EXPORT_SYMBOL(msm_dss_clean_io_mem);
+
+int msm_dss_get_io_irq(struct platform_device *pdev, struct list_head *irq_list,
+		       u32 label)
+{
+	struct msm_io_irq_entry *io_irq;
+	int irq;
+
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0) {
+		pr_err("invalid IRQ\n");
+		return irq;
+	}
+
+	io_irq = kzalloc(sizeof(*io_irq), GFP_KERNEL);
+	if (!io_irq)
+		return -ENOMEM;
+
+	io_irq->label  = label;
+	io_irq->irq_num = irq;
+
+	list_add(&io_irq->list, irq_list);
+
+	return 0;
+}
+EXPORT_SYMBOL(msm_dss_get_io_irq);
+
+void msm_dss_clean_io_irq(struct list_head *irq_list)
+{
+	struct msm_io_irq_entry *pos, *tmp;
+
+	list_for_each_entry_safe(pos, tmp, irq_list, list) {
+		list_del(&pos->list);
+		kzfree(pos);
+	}
+}
+EXPORT_SYMBOL(msm_dss_clean_io_irq);
 
 int msm_dss_get_vreg(struct device *dev, struct dss_vreg *in_vreg,
 	int num_vreg, int enable)

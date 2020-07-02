@@ -85,7 +85,12 @@ struct dss_module_power {
 int msm_dss_ioremap_byname(struct platform_device *pdev,
 	struct dss_io_data *io_data, const char *name);
 void msm_dss_iounmap(struct dss_io_data *io_data);
-
+int msm_dss_get_io_mem(struct platform_device *pdev,
+		       struct list_head *mem_list);
+void msm_dss_clean_io_mem(struct list_head *mem_list);
+int msm_dss_get_io_irq(struct platform_device *pdev,
+		       struct list_head *irq_list, u32 label);
+void msm_dss_clean_io_irq(struct list_head *irq_list);
 int msm_dss_enable_gpio(struct dss_gpio *in_gpio, int num_gpio, int enable);
 int msm_dss_gpio_enable(struct dss_gpio *in_gpio, int num_gpio, int enable);
 

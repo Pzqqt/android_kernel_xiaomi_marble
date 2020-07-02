@@ -13,16 +13,52 @@
 #include <drm/drm_device.h>
 
 /**
+ * struct - msm_io_irq_entry - define irq item
+ * @label: hh_irq_label for the irq
+ * @irq_num: linux mapped irq num
+ * @list: list head pointer
+ */
+struct msm_io_irq_entry {
+	u32 label;
+	u32 irq_num;
+	struct list_head list;
+};
+
+/**
+ * struct - msm_io_mem_entry - define io memory item
+ * @base: reg base
+ * @size: size of the reg range
+ * @list: list head pointer
+ */
+struct msm_io_mem_entry {
+	phys_addr_t base;
+	phys_addr_t size;
+	struct list_head list;
+};
+
+/**
+ * struct - msm_io_res - represents the hw resources for vm sharing
+ * @irq: list of IRQ's of all the dislay sub-devices
+ * @mem: list of IO memory ranges of all the display sub-devices
+ */
+struct msm_io_res {
+	struct list_head irq;
+	struct list_head mem;
+};
+
+/**
  * struct msm_vm_ops - hooks for communication with vm clients
  * @vm_pre_hw_release: invoked before releasing the HW
  * @vm_post_hw_acquire: invoked before pushing the first commit
  * @vm_check: invoked to check the readiness of the vm_clients
  *	      before releasing the HW
+ * @vm_get_io_resources: invoked to collect HW resources
  */
 struct msm_vm_ops {
 	int (*vm_pre_hw_release)(void *priv_data);
 	int (*vm_post_hw_acquire)(void *priv_data);
 	int (*vm_check)(void *priv_data);
+	int (*vm_get_io_resources)(struct msm_io_res *io_res, void *priv_data);
 };
 
 /**
