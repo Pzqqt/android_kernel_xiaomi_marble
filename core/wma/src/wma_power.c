@@ -361,9 +361,12 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	int8_t max_reg_power;
 	struct wma_txrx_node *iface;
 
-	if (wma_find_vdev_id_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
-				     &vdev_id)) {
-		/* not in SAP array. Try the station/p2p array */
+	if (tx_pwr_params->dev_mode == QDF_SAP_MODE ||
+	    tx_pwr_params->dev_mode == QDF_P2P_GO_MODE) {
+		ret = wma_find_vdev_id_by_addr(wma_handle,
+					       tx_pwr_params->bssId.bytes,
+					       &vdev_id);
+	} else {
 		ret = wma_find_vdev_id_by_bssid(wma_handle,
 						tx_pwr_params->bssId.bytes,
 						&vdev_id);
