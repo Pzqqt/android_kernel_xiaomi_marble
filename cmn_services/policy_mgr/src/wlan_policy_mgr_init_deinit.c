@@ -35,6 +35,7 @@
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_objmgr_global_obj.h"
+#include "target_if.h"
 
 static QDF_STATUS policy_mgr_psoc_obj_create_cb(struct wlan_objmgr_psoc *psoc,
 		void *data)
@@ -408,15 +409,32 @@ static void policy_mgr_update_5g_scc_prefer(struct wlan_objmgr_psoc *psoc)
 }
 
 #ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
-static void policy_mgr_init_non_dbs_pcl(void)
+static void policy_mgr_init_non_dbs_pcl(struct wlan_objmgr_psoc *psoc)
 {
-	second_connection_pcl_non_dbs_table =
-	&second_connection_pcl_nodbs_no_interband_mcc_table;
-	third_connection_pcl_non_dbs_table =
-	&third_connection_pcl_nodbs_no_interband_mcc_table;
+	struct wmi_unified *wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	if (!wmi_handle) {
+		policy_mgr_debug("Invalid WMI handle");
+		return;
+	}
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_no_interband_mcc_support) &&
+	    !wmi_service_enabled(wmi_handle,
+				wmi_service_dual_band_simultaneous_support)) {
+		second_connection_pcl_non_dbs_table =
+		&second_connection_pcl_nodbs_no_interband_mcc_table;
+		third_connection_pcl_non_dbs_table =
+		&third_connection_pcl_nodbs_no_interband_mcc_table;
+	} else {
+		second_connection_pcl_non_dbs_table =
+		&second_connection_pcl_nodbs_table;
+		third_connection_pcl_non_dbs_table =
+		&third_connection_pcl_nodbs_table;
+	}
 }
 #else
-static void policy_mgr_init_non_dbs_pcl(void)
+static void policy_mgr_init_non_dbs_pcl(struct wlan_objmgr_psoc *psoc)
 {
 	second_connection_pcl_non_dbs_table =
 	&second_connection_pcl_nodbs_table;
@@ -523,7 +541,7 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		&pm_third_connection_pcl_dbs_1x1_table;
 
 	/* Initialize non-DBS pcl table pointer to particular table*/
-	policy_mgr_init_non_dbs_pcl();
+	policy_mgr_init_non_dbs_pcl(psoc);
 
 	if (policy_mgr_is_hw_dbs_2x2_capable(psoc) ||
 	    policy_mgr_is_hw_dbs_required_for_band(psoc,
