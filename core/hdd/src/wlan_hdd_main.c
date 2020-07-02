@@ -3829,6 +3829,10 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			goto close;
 		}
 
+		/* Override PS params for monitor mode */
+		if (hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+			hdd_override_all_ps(hdd_ctx);
+
 		status = cds_dp_open(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open cds post open; status: %d",
@@ -3882,10 +3886,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			ret = -EINVAL;
 			break;
 		}
-
-		/* Override PS params for monitor mode */
-		if (hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
-			hdd_override_all_ps(hdd_ctx);
 
 		ret = hdd_configure_cds(hdd_ctx);
 		if (ret) {
@@ -13207,10 +13207,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	case DRIVER_MODULES_ENABLED:
 		hdd_debug("Wlan transitioning (CLOSED <- ENABLED)");
 
-		/* Restore PS params for monitor mode */
-		if (hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
-			hdd_restore_all_ps(hdd_ctx);
-
 		if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 			hdd_disable_power_management(hdd_ctx);
 			break;
@@ -13343,6 +13339,10 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	hdd_bus_bandwidth_deinit(hdd_ctx);
 	hdd_check_for_leaks(hdd_ctx, is_recovery_stop);
 	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+
+	/* Restore PS params for monitor mode */
+	if (hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		hdd_restore_all_ps(hdd_ctx);
 
 	/* Once the firmware sequence is completed reset this flag */
 	hdd_ctx->imps_enabled = false;
