@@ -1986,12 +1986,17 @@ static int wma_flush_complete_evt_handler(void *handle,
 	reason_code = wmi_event->reserved0;
 	wma_debug("Received reason code %d from FW", reason_code);
 
-	buf_ptr = (uint8_t *)wmi_event;
-	buf_ptr = buf_ptr + sizeof(wmi_debug_mesg_flush_complete_fixed_param) +
-		  WMI_TLV_HDR_SIZE;
-	data_stall_event = (wmi_debug_mesg_fw_data_stall_param *) buf_ptr;
+	if (reason_code == WMA_DATA_STALL_TRIGGER) {
+		buf_ptr = (uint8_t *)wmi_event;
+		buf_ptr = buf_ptr +
+			  sizeof(wmi_debug_mesg_flush_complete_fixed_param) +
+			  WMI_TLV_HDR_SIZE;
+		data_stall_event =
+				(wmi_debug_mesg_fw_data_stall_param *)buf_ptr;
+	}
 
-	if (((data_stall_event->tlv_header & 0xFFFF0000) >> 16 ==
+	if (reason_code == WMA_DATA_STALL_TRIGGER &&
+	    ((data_stall_event->tlv_header & 0xFFFF0000) >> 16 ==
 	      WMITLV_TAG_STRUC_wmi_debug_mesg_fw_data_stall_param)) {
 		/**
 		 * Log data stall info received from FW:

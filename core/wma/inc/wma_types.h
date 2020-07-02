@@ -435,6 +435,8 @@
 
 #define WMA_ROAM_INIT_PARAM                  SIR_HAL_INIT_ROAM_OFFLOAD_PARAM
 
+#define WMA_DATA_STALL_TRIGGER 6
+
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 
