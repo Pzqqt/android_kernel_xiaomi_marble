@@ -14868,6 +14868,43 @@ typedef struct {
  **/
 } wmi_roam_subnet_change_config_fixed_param;
 
+typedef enum {
+    /** No change in scan mode, use legacy modes */
+    ROAM_TRIGGER_SCAN_MODE_NONE = 0,
+    /** Trigger only partial roam scan */
+    ROAM_TRIGGER_SCAN_MODE_PARTIAL,
+    /** Trigger only FULL roam scan */
+    ROAM_TRIGGER_SCAN_MODE_FULL,
+    /** Don't trigger any roam scan and disconnect from AP */
+    ROAM_TRIGGER_SCAN_MODE_NO_SCAN_DISCONNECTION,
+} WMI_ROAM_TRIGGER_SCAN_MODE;
+
+typedef struct {
+    A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_configure_roam_trigger_parameters */
+    A_UINT32 trigger_reason; /** Roam trigger reason from WMI_ROAM_TRIGGER_REASON_ID */
+    A_UINT32 enable;         /** 0 - Disable, non-zero - enable */
+    A_UINT32 scan_mode;      /** Scan mode from WMI_ROAM_TRIGGER_SCAN_MODE */
+    /** consider roam trigger if connected AP rssi is worse than trigger_rssi_threshold */
+    A_INT32 trigger_rssi_threshold;      /* Units in dbm*/
+    /*
+     * Consider AP as roam candidate only if AP rssi is better than
+     * cand_ap_min_rssi_threshold
+     */
+    A_INT32 cand_ap_min_rssi_threshold; /* Units in dbm */
+    /* Roam score delta in %.
+     * Consider AP as roam candidate only if AP score is at least
+     * roam_score_delta % better than connected AP score.
+     * Ex: roam_score_delta = 20, and connected AP score is 4000,
+     * then consider candidate AP only if its score is at least
+     * 4800 (= 4000 * 120%)
+     */
+    A_UINT32 roam_score_delta_percentage;
+    /* Reason code to be filled in the response frame from STA.
+       Ex: Reason code in the BTM response frame
+       Valid values are 0 - 255 */
+    A_UINT32 reason_code;
+} wmi_configure_roam_trigger_parameters;
+
 /**
  * WMI_ROAM_ENABLE_DISABLE_TRIGGER_REASON:
  * Enable or disable roaming triggers in FW.
@@ -14883,6 +14920,15 @@ typedef struct {
      * bit value equal 0x0.
      */
     A_UINT32      trigger_reason_bitmask;
+
+/**
+ * The following TLVs will follow this fixed_param TLV:
+ *
+ * wmi_configure_roam_trigger_parameters config_roam_trigger_param[]
+ *     Roam trigger configuration per roam trigger.
+ *     The number of elements in this TLV array is limited to
+ *     WMI_ROAM_TRIGGER_EXT_REASON_MAX
+ */
 } wmi_roam_enable_disable_trigger_reason_fixed_param;
 
 /** WMI_PROFILE_MATCH_EVENT: offload scan

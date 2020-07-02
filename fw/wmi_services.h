@@ -446,6 +446,7 @@ typedef  enum  {
     WMI_SERVICE_TPC_STATS_EVENT = 251, /* FW support to dump the TPC tables */
     WMI_SERVICE_NO_INTERBAND_MCC_SUPPORT = 252, /* Indicates FW doesn't support interband MCC */
     WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT = 253, /* FW supports VDEV's MBSS param exchange in VDEV start command */
+    WMI_SERVICE_CONFIGURE_ROAM_TRIGGER_PARAM_SUPPORT = 254, /* FW supports ROAM trigger configuration param TLV */
 
 
     /******* ADD NEW SERVICES UP TO 256 HERE *******/
