@@ -477,7 +477,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 	enum channel_state ch_state;
 	struct wlan_objmgr_pdev *pdev;
 	uint8_t chan_id;
-	enum band_info cur_band = BAND_ALL;
+	uint32_t cur_band;
 	qdf_freq_t ch_freq;
 
 	vdev_obj = peer->vdev_priv;
@@ -513,7 +513,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 		return;
 	}
 
-	if (BAND_2G == cur_band) {
+	if (BIT(REG_BAND_2G) == cur_band) {
 		tdls_err("sending the offchannel value as 0 as only 2g is supported");
 		peer_param->peer_cap.pref_off_channum = 0;
 		peer_param->peer_cap.opclass_for_prefoffchan = 0;
