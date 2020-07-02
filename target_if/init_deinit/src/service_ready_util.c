@@ -310,6 +310,26 @@ select_preferred_hw_mode(struct target_psoc_info *tgt_hdl,
 	return selected_mode;
 }
 
+#ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
+static void init_deinit_change_def_hw_mode(struct target_psoc_info *tgt_hdl,
+					   struct wmi_unified *wmi_handle)
+{
+	struct tgt_info *info = &tgt_hdl->info;
+
+	if ((info->hw_modes.num_modes == 1) &&
+	    (info->hw_modes.hw_mode_ids[0] == WMI_HOST_HW_MODE_DBS) &&
+	    !wmi_service_enabled(wmi_handle,
+				 wmi_service_dual_band_simultaneous_support))
+		target_psoc_set_preferred_hw_mode(tgt_hdl,
+						  WMI_HOST_HW_MODE_DETECT);
+}
+#else
+static void init_deinit_change_def_hw_mode(struct target_psoc_info *tgt_hdl,
+					   struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 int init_deinit_populate_hw_mode_capability(
 		wmi_unified_t wmi_handle, uint8_t *event,
 		struct target_psoc_info *tgt_hdl)
@@ -333,7 +353,6 @@ int init_deinit_populate_hw_mode_capability(
 	info->hw_modes.num_modes = 0;
 	info->hw_mode_cap.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 
-	preferred_mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
 	for (hw_idx = 0; hw_idx < num_hw_modes; hw_idx++) {
 		status = get_hw_mode(wmi_handle, event, hw_idx,
 						&hw_mode_caps[hw_idx]);
@@ -353,11 +372,15 @@ int init_deinit_populate_hw_mode_capability(
 		if (status)
 			goto return_exit;
 
+		if (num_hw_modes == 1)
+			init_deinit_change_def_hw_mode(tgt_hdl, wmi_handle);
+
 		selected_mode = select_preferred_hw_mode(tgt_hdl,
 							 &hw_mode_caps[hw_idx],
 							 selected_mode);
 	}
 
+	preferred_mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
 	if (preferred_mode == WMI_HOST_HW_MODE_DETECT) {
 		target_if_info("Preferred mode is not set, use mode id %d\n",
 			       selected_mode);
