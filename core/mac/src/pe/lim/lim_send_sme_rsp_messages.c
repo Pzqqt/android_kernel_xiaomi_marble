@@ -1533,7 +1533,6 @@ prnt_log:
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT
 static bool lim_is_csa_channel_allowed(struct mac_context *mac_ctx,
 				       qdf_freq_t ch_freq1,
 				       uint32_t ch_freq2)
@@ -1549,14 +1548,6 @@ static bool lim_is_csa_channel_allowed(struct mac_context *mac_ctx,
 
 	return is_allowed;
 }
-#else
-static bool lim_is_csa_channel_allowed(struct mac_context *mac_ctx,
-				       qdf_freq_t ch_freq1,
-				       uint32_t ch_freq2)
-{
-	return true;
-}
-#endif
 
 /**
  * lim_handle_csa_offload_msg() - Handle CSA offload message
