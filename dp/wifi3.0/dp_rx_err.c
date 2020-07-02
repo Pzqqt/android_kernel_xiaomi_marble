@@ -1683,28 +1683,8 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 	while (qdf_likely(quota)) {
 		ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
-
-		if (qdf_unlikely(!ring_desc)) {
-			/* Check hw hp in case of SG support */
-			if (qdf_unlikely(soc->wbm_release_desc_rx_sg_support)) {
-				/*
-				 * Update the cached hp from hw hp
-				 * This is required for partially created
-				 * SG packets while quote is still left
-				 */
-				hal_srng_sync_cachedhp(hal_soc, hal_ring_hdl);
-				ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
-				if (!ring_desc) {
-					QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-							FL("No Rx Hw Desc for intermediate sg -- %pK"),
-							hal_ring_hdl);
-					break;
-				}
-			} else {
-				/* Come out of the loop in Non SG support cases */
-				break;
-			}
-		}
+		if (qdf_unlikely(!ring_desc))
+			break;
 
 		/* XXX */
 		buf_type = HAL_RX_WBM_BUF_TYPE_GET(ring_desc);
