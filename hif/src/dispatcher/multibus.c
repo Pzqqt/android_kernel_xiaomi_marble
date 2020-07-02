@@ -530,6 +530,30 @@ int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx)
 	return 0;
 }
 
+int hif_apps_disable_irq_wake(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	return disable_irq_wake(scn->wake_irq);
+}
+
+int hif_apps_enable_irq_wake(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn;
+
+	QDF_BUG(hif_ctx);
+	scn = HIF_GET_SOFTC(hif_ctx);
+	if (!scn)
+		return -EINVAL;
+
+	return enable_irq_wake(scn->wake_irq);
+}
+
 #ifdef WLAN_FEATURE_BMI
 bool hif_needs_bmi(struct hif_opaque_softc *scn)
 {

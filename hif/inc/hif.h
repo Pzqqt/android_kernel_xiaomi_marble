@@ -1161,6 +1161,28 @@ int hif_apps_wake_irq_enable(struct hif_opaque_softc *hif_ctx);
  */
 int hif_apps_wake_irq_disable(struct hif_opaque_softc *hif_ctx);
 
+/**
+ * hif_apps_enable_irq_wake() - Enables the irq wake from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * This function always applies to the APPS side kernel interrupt handling
+ * to wake the system from suspend.
+ *
+ * Return: errno
+ */
+int hif_apps_enable_irq_wake(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_apps_disable_irq_wake() - Disables the wake irq from the APPS side
+ * @hif_ctx: an opaque HIF handle to use
+ *
+ * This function always applies to the APPS side kernel interrupt handling
+ * to disable the wake irq.
+ *
+ * Return: errno
+ */
+int hif_apps_disable_irq_wake(struct hif_opaque_softc *hif_ctx);
+
 #ifdef FEATURE_RUNTIME_PM
 int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx);
 void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx);

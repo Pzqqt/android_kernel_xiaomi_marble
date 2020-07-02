@@ -289,39 +289,27 @@ void hif_ipci_prevent_linkdown(struct hif_softc *scn, bool flag)
 
 int hif_ipci_bus_suspend(struct hif_softc *scn)
 {
-	QDF_STATUS ret;
-
-	hif_apps_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
-
-	ret = hif_try_complete_tasks(scn);
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		hif_apps_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
-		return -EBUSY;
-	}
-
-	return 0;
+	return hif_apps_enable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
 }
 
 int hif_ipci_bus_resume(struct hif_softc *scn)
 {
-	hif_apps_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
-
-	return 0;
+	return hif_apps_disable_irq_wake(GET_HIF_OPAQUE_HDL(scn));
 }
 
 int hif_ipci_bus_suspend_noirq(struct hif_softc *scn)
 {
-	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		qdf_atomic_set(&scn->link_suspended, 1);
+	QDF_STATUS ret;
+
+	ret = hif_try_complete_tasks(scn);
+	if (QDF_IS_STATUS_ERROR(ret))
+		return -EBUSY;
 
 	return 0;
 }
 
 int hif_ipci_bus_resume_noirq(struct hif_softc *scn)
 {
-	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		qdf_atomic_set(&scn->link_suspended, 0);
-
 	return 0;
 }
 
@@ -439,9 +427,6 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		/* implies the ce is also initialized */
 		if (!ce_sc->tasklets[ce_id].inited)
 			continue;
-
-		if (ce_id == wake_ce_id)
-			irqflags |= IRQF_NO_SUSPEND;
 
 		ipci_sc->ce_msi_irq_num[ce_id] = irq;
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
