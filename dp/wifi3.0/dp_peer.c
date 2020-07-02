@@ -502,17 +502,21 @@ struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
  * @vdev_id: vdev id for VAP to which the peer belongs to
  * @ast_hash: ast hash value in HW
  *
- * Return: None
+ * Return: QDF_STATUS code
  */
-static inline void dp_peer_map_ast(struct dp_soc *soc,
-	struct dp_peer *peer, uint8_t *mac_addr, uint16_t hw_peer_id,
-	uint8_t vdev_id, uint16_t ast_hash)
+static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
+					 struct dp_peer *peer,
+					 uint8_t *mac_addr,
+					 uint16_t hw_peer_id,
+					 uint8_t vdev_id,
+					 uint16_t ast_hash)
 {
 	struct dp_ast_entry *ast_entry = NULL;
 	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_STATIC;
+	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
 	if (!peer) {
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -542,10 +546,11 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "AST entry not found");
+		err = QDF_STATUS_E_NOENT;
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return;
+	return err;
 }
 
 void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
@@ -585,20 +590,18 @@ void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
  * This API is used by WDS source port learning function to
  * add a new AST entry into peer AST list
  *
- * Return: 0 if new entry is allocated,
- *        -1 if entry add failed
+ * Return: QDF_STATUS code
  */
-int dp_peer_add_ast(struct dp_soc *soc,
-			struct dp_peer *peer,
-			uint8_t *mac_addr,
-			enum cdp_txrx_ast_entry_type type,
-			uint32_t flags)
+QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
+			   struct dp_peer *peer,
+			   uint8_t *mac_addr,
+			   enum cdp_txrx_ast_entry_type type,
+			   uint32_t flags)
 {
 	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_vdev *vdev = NULL, *tmp_vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	uint8_t next_node_mac[6];
-	int  ret = -1;
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
 	struct dp_peer *tmp_peer = NULL;
@@ -609,7 +612,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Peers vdev is NULL"));
 		QDF_ASSERT(0);
-		return ret;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	pdev = vdev->pdev;
@@ -623,7 +626,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				  FL("Peers vdev is NULL"));
 			QDF_ASSERT(0);
 			dp_peer_unref_delete(tmp_peer);
-			return ret;
+			return QDF_STATUS_E_INVAL;
 		}
 		if (tmp_vdev->pdev->pdev_id == pdev->pdev_id)
 			is_peer_found = true;
@@ -634,7 +637,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (peer->delete_in_progress) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		return ret;
+		return QDF_STATUS_E_BUSY;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -649,7 +652,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Max ast entries reached"));
-		return ret;
+		return QDF_STATUS_E_RESOURCES;
 	}
 
 	/* If AST entry already exists , just return from here
@@ -666,7 +669,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				ast_entry->is_active = TRUE;
 
 			qdf_spin_unlock_bh(&soc->ast_lock);
-			return 0;
+			return QDF_STATUS_E_ALREADY;
 		}
 		if (is_peer_found) {
 			/* During WDS to static roaming, peer is added
@@ -676,7 +679,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			 */
 			if (type != CDP_TXRX_AST_TYPE_STATIC) {
 				qdf_spin_unlock_bh(&soc->ast_lock);
-				return 0;
+				return QDF_STATUS_E_ALREADY;
 			}
 		}
 	} else {
@@ -696,7 +699,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS_HM) &&
 			    !ast_entry->delete_in_progress) {
 				qdf_spin_unlock_bh(&soc->ast_lock);
-				return 0;
+				return QDF_STATUS_E_ALREADY;
 			}
 
 			/* Add for HMWDS entry we cannot be ignored if there
@@ -726,7 +729,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 						  QDF_TRACE_LEVEL_ERROR,
 						  "Allocation failed");
 					qdf_spin_unlock_bh(&soc->ast_lock);
-					return ret;
+					return QDF_STATUS_E_NOMEM;
 				}
 
 				qdf_mem_copy(&param->mac_addr.raw[0], mac_addr,
@@ -743,6 +746,17 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				ast_entry->cookie = (void *)param;
 				if (!ast_entry->delete_in_progress)
 					dp_peer_del_ast(soc, ast_entry);
+
+				qdf_spin_unlock_bh(&soc->ast_lock);
+
+				/* Call the saved callback*/
+				if (cb) {
+					cb(soc->ctrl_psoc,
+					   dp_soc_to_cdp_soc(soc),
+					   cookie,
+					   CDP_TXRX_AST_DELETE_IN_PROGRESS);
+				}
+				return QDF_STATUS_E_AGAIN;
 			}
 
 			/* Modify an already existing AST entry from type
@@ -762,15 +776,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				dp_peer_del_ast(soc, ast_entry);
 			}
 			qdf_spin_unlock_bh(&soc->ast_lock);
-
-			/* Call the saved callback*/
-			if (cb) {
-				cb(soc->ctrl_psoc,
-				   dp_soc_to_cdp_soc(soc),
-				   cookie,
-				   CDP_TXRX_AST_DELETE_IN_PROGRESS);
-			}
-			return 0;
+			return QDF_STATUS_E_ALREADY;
 		}
 	}
 
@@ -783,7 +789,7 @@ add_ast_entry:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  FL("fail to allocate ast_entry"));
 		QDF_ASSERT(0);
-		return ret;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, QDF_MAC_ADDR_SIZE);
@@ -857,12 +863,12 @@ add_ast_entry:
 				flags,
 				ast_entry->type)) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
-			return 0;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return ret;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /*
@@ -1096,11 +1102,13 @@ void dp_peer_ast_set_type(struct dp_soc *soc,
 }
 
 #else
-int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, enum cdp_txrx_ast_entry_type type,
-		uint32_t flags)
+QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
+			   struct dp_peer *peer,
+			   uint8_t *mac_addr,
+			   enum cdp_txrx_ast_entry_type type,
+			   uint32_t flags)
 {
-	return 1;
+	return QDF_STATUS_E_FAILURE;
 }
 
 void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
@@ -1131,11 +1139,14 @@ static int dp_peer_ast_hash_attach(struct dp_soc *soc)
 	return 0;
 }
 
-static inline void dp_peer_map_ast(struct dp_soc *soc,
-	struct dp_peer *peer, uint8_t *mac_addr, uint16_t hw_peer_id,
-	uint8_t vdev_id, uint16_t ast_hash)
+static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
+					 struct dp_peer *peer,
+					 uint8_t *mac_addr,
+					 uint16_t hw_peer_id,
+					 uint8_t vdev_id,
+					 uint16_t ast_hash)
 {
-	return;
+	return QDF_STATUS_SUCCESS;
 }
 
 static void dp_peer_ast_hash_detach(struct dp_soc *soc)
@@ -1631,10 +1642,10 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
  * associate the peer_id that firmware provided with peer entry
  * and update the ast table in the host with the hw_peer_id.
  *
- * Return: none
+ * Return: QDF_STATUS code
  */
 
-void
+QDF_STATUS
 dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 		       uint16_t hw_peer_id, uint8_t vdev_id,
 		       uint8_t *peer_mac_addr, uint16_t ast_hash,
@@ -1642,6 +1653,7 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 {
 	struct dp_peer *peer = NULL;
 	enum cdp_txrx_ast_entry_type type = CDP_TXRX_AST_TYPE_STATIC;
+	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
 	dp_info("peer_map_event (soc:%pK): peer_id %d, hw_peer_id %d, peer_mac %pM, vdev_id %d",
 		soc, peer_id, hw_peer_id,
@@ -1667,14 +1679,14 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 			if (!dp_peer_ast_free_entry_by_mac(soc,
 							   peer,
 							   peer_mac_addr))
-				return;
+				return QDF_STATUS_E_INVAL;
 
 			dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
 				 peer, peer->peer_id,
 				 peer->mac_addr.raw, peer_mac_addr, vdev_id,
 				 is_wds);
 
-			return;
+			return QDF_STATUS_E_INVAL;
 		}
 
 	} else {
@@ -1731,8 +1743,10 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 
 		}
 	}
-	dp_peer_map_ast(soc, peer, peer_mac_addr,
-			hw_peer_id, vdev_id, ast_hash);
+	err = dp_peer_map_ast(soc, peer, peer_mac_addr,
+			      hw_peer_id, vdev_id, ast_hash);
+
+	return err;
 }
 
 /**

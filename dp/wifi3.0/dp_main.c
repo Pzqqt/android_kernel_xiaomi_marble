@@ -630,6 +630,7 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 				 uint32_t flags)
 {
 	int ret = -1;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct dp_peer *peer = dp_peer_find_hash_find((struct dp_soc *)soc_hdl,
 						       peer_mac, 0, vdev_id);
 
@@ -639,11 +640,15 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 		goto fail;
 	}
 
-	ret = dp_peer_add_ast((struct dp_soc *)soc_hdl,
-			      peer,
-			      mac_addr,
-			      type,
-			      flags);
+	status = dp_peer_add_ast((struct dp_soc *)soc_hdl,
+				 peer,
+				 mac_addr,
+				 type,
+				 flags);
+	if ((status == QDF_STATUS_SUCCESS) ||
+	    (status == QDF_STATUS_E_ALREADY) ||
+	    (status == QDF_STATUS_E_AGAIN))
+		ret = 0;
 fail:
 	if (peer)
 		dp_peer_unref_delete(peer);

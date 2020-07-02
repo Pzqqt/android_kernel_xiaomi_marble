@@ -115,10 +115,10 @@ dp_clear_peer_internal(struct dp_soc *soc, struct dp_peer *peer)
 }
 
 void dp_print_ast_stats(struct dp_soc *soc);
-void dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
-			    uint16_t hw_peer_id, uint8_t vdev_id,
-			    uint8_t *peer_mac_addr, uint16_t ast_hash,
-			    uint8_t is_wds);
+QDF_STATUS dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
+				  uint16_t hw_peer_id, uint8_t vdev_id,
+				  uint8_t *peer_mac_addr, uint16_t ast_hash,
+				  uint8_t is_wds);
 void dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 			      uint8_t vdev_id, uint8_t *peer_mac_addr,
 			      uint8_t is_wds, uint32_t free_wds_count);
@@ -132,9 +132,9 @@ QDF_STATUS dp_rx_delba_ind_handler(void *soc_handle, uint16_t peer_id,
 uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 		uint16_t peer_id, uint8_t *peer_mac);
 
-int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, enum cdp_txrx_ast_entry_type type,
-		uint32_t flags);
+QDF_STATUS dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
+			   uint8_t *mac_addr, enum cdp_txrx_ast_entry_type type,
+			   uint32_t flags);
 
 void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry);
 
