@@ -1132,6 +1132,7 @@ mbhc_cfg_cal:
 			__func__, ret);
 		goto err_hs_detect;
 	}
+	msm_common_dai_link_init(rtd);
 	return 0;
 
 err_hs_detect:
