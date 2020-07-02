@@ -1775,18 +1775,18 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	if (!qdf_mem_cmp(eh->h_dest, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
 		return false;
 
-	da_peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, eh->h_dest);
+	da_peer = dp_find_peer_by_addr_and_vdev(dp_pdev_to_cdp_pdev(pdev),
+						dp_vdev_to_cdp_vdev(vdev),
+						eh->h_dest);
+
 	if (!da_peer)
 		return false;
 
-	if (da_peer->vdev != vdev)
-		return false;
+	sa_peer = dp_find_peer_by_addr_and_vdev(dp_pdev_to_cdp_pdev(pdev),
+						dp_vdev_to_cdp_vdev(vdev),
+						eh->h_source);
 
-	sa_peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev, eh->h_source);
 	if (!sa_peer)
-		return false;
-
-	if (sa_peer->vdev != vdev)
 		return false;
 
 	/*
