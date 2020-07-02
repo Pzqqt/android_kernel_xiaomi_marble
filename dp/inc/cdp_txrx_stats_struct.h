@@ -252,6 +252,7 @@ enum WDI_EVENT {
 	WDI_EVENT_PEER_FLUSH_RATE_STATS,
 	WDI_EVENT_FLUSH_RATE_STATS_REQ,
 	WDI_EVENT_RX_MPDU,
+	WDI_EVENT_HMWDS_AST_ADD_STATUS,
 	/* End of new event items */
 	WDI_EVENT_LAST
 };
@@ -1783,6 +1784,19 @@ struct cdp_pdev_stats {
 	uint64_t tx_ppdu_proc;
 	uint64_t ack_ba_comes_twice;
 	uint64_t ppdu_drop;
+};
+
+/* struct cdp_peer_hmwds_ast_add_status - hmwds peer ast add status
+ * @vdev_id: vdev id
+ * @status: ast add status
+ * @peer_mac: peer mac address
+ * @ast_mac: ast node mac address
+ */
+struct cdp_peer_hmwds_ast_add_status {
+	uint32_t vdev_id;
+	uint32_t status;
+	uint8_t  peer_mac[QDF_MAC_ADDR_SIZE];
+	uint8_t  ast_mac[QDF_MAC_ADDR_SIZE];
 };
 
 enum cdp_soc_param_t {
