@@ -1678,7 +1678,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	int i;
 	bool match = false;
 	struct scan_default_params *def_param;
-	struct wlan_country_ie *cc_ie;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
@@ -1686,9 +1685,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	if (filter->age_threshold && filter->age_threshold <
 					util_scan_entry_age(db_entry))
-		return false;
-
-	if (filter->p2p_results && !db_entry->is_p2p)
 		return false;
 
 	if (db_entry->ssid.length) {
@@ -1740,28 +1736,9 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->rrm_measurement_filter)
 		return true;
 
-	/* TODO match phyMode */
-
 	if (!filter->ignore_auth_enc_type &&
 	    !scm_is_security_match(filter, db_entry, security)) {
 		scm_debug("%pM : Ignore as security profile didn't match",
-			  db_entry->bssid.bytes);
-		return false;
-	}
-
-	if (!util_is_bss_type_match(filter->bss_type, db_entry->cap_info)) {
-		scm_debug("%pM : Ignore as bss type didn't match cap_info %x bss_type %d",
-			  db_entry->bssid.bytes, db_entry->cap_info.value,
-			  filter->bss_type);
-		return false;
-	}
-
-	/* TODO match rate set */
-
-	if (filter->only_wmm_ap &&
-	   !db_entry->ie_list.wmeinfo &&
-	   !db_entry->ie_list.wmeparam) {
-		scm_debug("%pM : Ignore as required wmeinfo and wme params not present",
 			  db_entry->bssid.bytes);
 		return false;
 	}
@@ -1770,13 +1747,6 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (!scm_is_fils_config_match(filter, db_entry)) {
 		scm_debug("%pM :Ignore as fils config didn't match",
 			  db_entry->bssid.bytes);
-		return false;
-	}
-
-	cc_ie = util_scan_entry_country(db_entry);
-	if (!util_country_code_match(filter->country, cc_ie)) {
-		scm_debug("%pM : Ignore as country %.*s didn't match",
-			  db_entry->bssid.bytes, 2, filter->country);
 		return false;
 	}
 

@@ -472,7 +472,6 @@ struct fils_filter_info {
  * struct scan_filter: scan filter
  * @enable_adaptive_11r:    flag to check if adaptive 11r ini is enabled
  * @age_threshold: If set return entry which are newer than the age_threshold
- * @p2p_results: If only p2p entries is required
  * @rrm_measurement_filter: For measurement reports.if set, only SSID, BSSID
  *                          and channel is considered for filtering.
  * @num_of_bssid: number of bssid passed
@@ -483,17 +482,14 @@ struct fils_filter_info {
  * @num_of_mc_enc_type: number of multicast enc type
  * @pmf_cap: Pmf capability
  * @ignore_pmf_cap: Ignore pmf capability match
- * @bss_type: bss type BSS/IBSS etc
  * @dot11_mode: operating modes 0 mean any
  *              11a , 11g, 11n , 11ac , 11b etc
  * @band: to get specific band 2.4G, 5G or 4.9 G
  * @rssi_threshold: AP having RSSI greater than
  *                  rssi threasholed (ignored if set 0)
- * @only_wmm_ap: If only Qos AP is needed
  * @ignore_auth_enc_type: Ignore enc type if
  *                        this is set (For WPS/OSEN connection)
  * @mobility_domain: Mobility domain for 11r
- * @country[3]: Ap with specific country code
  * @bssid_list: bssid list
  * @ssid_list: ssid list
  * @chan_freq_list: channel frequency list, frequency unit: MHz
@@ -511,30 +507,26 @@ struct fils_filter_info {
 struct scan_filter {
 	bool enable_adaptive_11r;
 	qdf_time_t age_threshold;
-	uint32_t p2p_results;
-	uint32_t rrm_measurement_filter;
-	uint32_t num_of_bssid;
-	uint32_t num_of_ssid;
-	uint32_t num_of_channels;
+	bool rrm_measurement_filter;
+	uint8_t num_of_bssid;
+	uint8_t num_of_ssid;
+	uint8_t num_of_channels;
 #ifndef WLAN_SCAN_SECURITY_FILTER_V1
-	uint32_t num_of_auth;
-	uint32_t num_of_enc_type;
-	uint32_t num_of_mc_enc_type;
+	uint8_t num_of_auth;
+	uint8_t num_of_enc_type;
+	uint8_t num_of_mc_enc_type;
 #endif
 	enum wlan_pmf_cap pmf_cap;
 	bool ignore_pmf_cap;
-	enum wlan_bss_type bss_type;
 	enum wlan_phymode dot11_mode;
 	enum wlan_band band;
-	uint32_t rssi_threshold;
-	uint32_t only_wmm_ap;
-	uint32_t ignore_auth_enc_type;
+	uint8_t rssi_threshold;
+	bool ignore_auth_enc_type;
 	uint32_t mobility_domain;
 	/* Variable params list */
-	uint8_t country[3];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
-	uint32_t chan_freq_list[NUM_CHANNELS];
+	qdf_freq_t chan_freq_list[NUM_CHANNELS];
 #ifdef WLAN_SCAN_SECURITY_FILTER_V1
 	uint32_t authmodeset;
 	uint32_t key_mgmt;
