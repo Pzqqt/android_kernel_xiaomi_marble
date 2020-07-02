@@ -33,8 +33,8 @@
 #define ROULEUR_ZDET_C3                 4500
 
 /* Cross connection thresholds in mV */
-#define ROULEUR_HPHL_CROSS_CONN_THRESHOLD 200
-#define ROULEUR_HPHR_CROSS_CONN_THRESHOLD 200
+#define ROULEUR_HPHL_CROSS_CONN_THRESHOLD 350
+#define ROULEUR_HPHR_CROSS_CONN_THRESHOLD 350
 
 static struct wcd_mbhc_register
 	wcd_mbhc_registers[WCD_MBHC_REG_FUNC_MAX] = {
