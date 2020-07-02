@@ -107,7 +107,7 @@ QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
-		WMA_LOGE("%s: wma is NULL", __func__);
+		wma_err("wma is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	wma_debug("Set Sta Ps param vdevId %d Param %d val %d",
@@ -186,8 +186,8 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 	ret = wmi_unified_ap_ps_cmd_send(wma->wmi_handle, peer_addr,
 						&param);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Failed to set WMI_AP_PS_PEER_PARAM_UAPSD for %pM",
-			 peer_addr);
+		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_UAPSD for %pM",
+			peer_addr);
 		return ret;
 	}
 
@@ -200,8 +200,8 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 	ret = wmi_unified_ap_ps_cmd_send(wma->wmi_handle, peer_addr,
 					  &param);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Failed to set WMI_AP_PS_PEER_PARAM_MAX_SP for %pM",
-			 peer_addr);
+		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_MAX_SP for %pM",
+			peer_addr);
 		return ret;
 	}
 
@@ -267,15 +267,15 @@ void wma_set_tx_power(WMA_HANDLE handle,
 						&vdev_id);
 	}
 	if (ret) {
-		WMA_LOGE("vdev id is invalid for %pM",
-			 tx_pwr_params->bssId.bytes);
+		wma_err("vdev id is invalid for %pM",
+			tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
 	if (!wma_is_vdev_up(vdev_id)) {
-		WMA_LOGE("%s: vdev id %d is not up for %pM", __func__, vdev_id,
-			 tx_pwr_params->bssId.bytes);
+		wma_err("vdev id %d is not up for %pM", vdev_id,
+			tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
@@ -314,7 +314,7 @@ void wma_set_tx_power(WMA_HANDLE handle,
 end:
 	qdf_mem_free(tx_pwr_params);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT");
+		wma_err("Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT");
 }
 
 void wma_send_max_tx_pwrlmt(WMA_HANDLE handle, uint8_t vdev_id)
@@ -372,14 +372,14 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 						&vdev_id);
 	}
 	if (ret) {
-		WMA_LOGE("vdev id is invalid for %pM",
-			 tx_pwr_params->bssId.bytes);
+		wma_err("vdev id is invalid for %pM",
+			tx_pwr_params->bssId.bytes);
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
 	if (!wma_is_vdev_up(vdev_id)) {
-		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
+		wma_err("vdev id %d is not up", vdev_id);
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
@@ -410,8 +410,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 end:
 	qdf_mem_free(tx_pwr_params);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("%s: Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT",
-			__func__);
+		wma_err("Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT");
 }
 
 /**
@@ -430,7 +429,7 @@ static QDF_STATUS wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
 	ret = wmi_unified_set_sta_ps_mode(wmi_handle, vdev_id,
 				   val);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wma_err("Failed to send set Mimo PS ret = %d", ret);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -500,7 +499,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 	wma_debug("Set Force Sleep vdevId %d val %d", vdev_id, enable);
 
 	if (!mac) {
-		WMA_LOGE("%s: Unable to get PE context", __func__);
+		wma_err("Unable to get PE context");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -542,7 +541,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					   WMI_STA_PS_ENABLE_QPOWER,
 					   power_config);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("%s(%d) Power Failed vdevId %d",
+		wma_err("%s(%d) Power Failed vdevId %d",
 			power_config ? "Enable" : "Disable",
 			power_config, vdev_id);
 		return ret;
@@ -557,7 +556,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					   rx_wake_policy);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Setting wake policy Failed vdevId %d", vdev_id);
+		wma_err("Setting wake policy Failed vdevId %d", vdev_id);
 		return ret;
 	}
 	wma_debug("Setting wake policy to %d vdevId %d",
@@ -569,7 +568,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					   tx_wake_threshold);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Setting TxWake Threshold vdevId %d", vdev_id);
+		wma_err("Setting TxWake Threshold vdevId %d", vdev_id);
 		return ret;
 	}
 	wma_debug("Setting TxWake Threshold to %d vdevId %d",
@@ -581,7 +580,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					   pspoll_count);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Set Ps Poll Count Failed vdevId %d ps poll cnt %d",
+		wma_err("Set Ps Poll Count Failed vdevId %d ps poll cnt %d",
 			 vdev_id, pspoll_count);
 		return ret;
 	}
@@ -594,7 +593,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					   inactivity_time);
 
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Setting Tx/Rx InActivity Failed vdevId %d InAct %d",
+		wma_err("Setting Tx/Rx InActivity Failed vdevId %d InAct %d",
 			 vdev_id, inactivity_time);
 		return ret;
 	}
@@ -606,7 +605,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 		ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, true);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Enable Sta Mode Ps Failed vdevId %d",
+			wma_err("Enable Sta Mode Ps Failed vdevId %d",
 				vdev_id);
 			return ret;
 		}
@@ -619,7 +618,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 					      cfg_data_val);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		/* Even it fails continue Fw will take default LI */
-		WMA_LOGE("Failed to Set Listen Interval vdevId %d", vdev_id);
+		wma_err("Failed to Set Listen Interval vdevId %d", vdev_id);
 	}
 	wma_debug("Set Listen Interval vdevId %d Listen Intv %d",
 		 vdev_id, cfg_data_val);
@@ -651,7 +650,7 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 	iface = &wma_handle->interfaces[vdev_id];
 
 	if (!iface || !iface->vdev) {
-		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
+		wma_err("vdev is NULL for vdev_%d", vdev_id);
 		return;
 	}
 
@@ -666,14 +665,14 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 						   vdev_id,
 				WMI_STA_PS_PARAM_UAPSD, 0);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Set Uapsd param 0 Failed vdevId %d", vdev_id);
+			wma_err("Set Uapsd param 0 Failed vdevId %d", vdev_id);
 			return;
 		}
 
 		ret = wma_set_force_sleep(wma_handle, vdev_id, false,
 					  power_config, true);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Enable Sta Ps Failed vdevId %d", vdev_id);
+			wma_err("Enable Sta Ps Failed vdevId %d", vdev_id);
 			return;
 		}
 	} else if (eSIR_ADDON_ENABLE_UAPSD == ps_req->psSetting) {
@@ -689,8 +688,8 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 						      WMI_STA_PS_PARAM_UAPSD,
 						      uapsd_val);
 			if (QDF_IS_STATUS_ERROR(ret)) {
-				WMA_LOGE("Enable Uapsd Failed vdevId %d",
-						vdev_id);
+				wma_err("Enable Uapsd Failed vdevId %d",
+					vdev_id);
 				return;
 			}
 			/* Cache the Uapsd Mask */
@@ -709,7 +708,7 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 					  power_config, true);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Enable Forced Sleep Failed vdevId %d",
+			wma_err("Enable Forced Sleep Failed vdevId %d",
 				 vdev_id);
 			return;
 		}
@@ -724,7 +723,7 @@ void wma_enable_sta_ps_mode(tpEnablePsParams ps_req)
 			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX,
 			wma_handle->ito_repeat_count);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Set ITO count failed vdevId %d Error %d",
+			wma_err("Set ITO count failed vdevId %d Error %d",
 				 vdev_id, ret);
 			return;
 		}
@@ -762,7 +761,7 @@ void wma_disable_sta_ps_mode(tpDisablePsParams ps_req)
 	/* Disable Sta Mode Power save */
 	ret = wmi_unified_set_sta_ps(wma_handle->wmi_handle, vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
+		wma_err("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
 		return;
 	}
 	iface->in_bmps = false;
@@ -774,7 +773,7 @@ void wma_disable_sta_ps_mode(tpDisablePsParams ps_req)
 						   vdev_id,
 				WMI_STA_PS_PARAM_UAPSD, 0);
 		if (QDF_IS_STATUS_ERROR(ret)) {
-			WMA_LOGE("Disable Uapsd Failed vdevId %d", vdev_id);
+			wma_err("Disable Uapsd Failed vdevId %d", vdev_id);
 			/*
 			 * Even this fails we can proceed as success
 			 * since we disabled powersave
@@ -788,7 +787,7 @@ QDF_STATUS wma_set_power_config(uint8_t vdev_id, enum powersave_mode power)
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("WMA context is invalid!");
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -809,14 +808,14 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
 	if (!iface->vdev) {
-		WMA_LOGE("%s: vdev is NULL for vdev_%d", __func__, vdev_id);
+		wma_err("vdev is NULL for vdev_%d", vdev_id);
 		return;
 	}
 
 	/* Disable Sta Mode Power save */
 	ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
+		wma_err("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
 		return;
 	}
 
@@ -826,7 +825,7 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
 			WMI_STA_PS_PARAM_UAPSD, uapsd_val);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Enable Uapsd Failed vdevId %d", vdev_id);
+		wma_err("Enable Uapsd Failed vdevId %d", vdev_id);
 		return;
 	}
 
@@ -839,7 +838,7 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 	ret = wma_set_force_sleep(wma, vdev_id, true,
 			power_config, ps_req->uapsdParams.enable_ps);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Enable Forced Sleep Failed vdevId %d", vdev_id);
+		wma_err("Enable Forced Sleep Failed vdevId %d", vdev_id);
 		return;
 	}
 
@@ -864,14 +863,14 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 	/* Disable Sta Mode Power save */
 	ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, false);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
+		wma_err("Disable Sta Mode Ps Failed vdevId %d", vdev_id);
 		return;
 	}
 
 	ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
 			WMI_STA_PS_PARAM_UAPSD, 0);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Uapsd Failed vdevId %d", vdev_id);
+		wma_err("Disable Uapsd Failed vdevId %d", vdev_id);
 		return;
 	}
 
@@ -879,7 +878,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 	ret = wma_set_force_sleep(wma, vdev_id, false,
 			power_config, true);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Forced Sleep Failed vdevId %d", vdev_id);
+		wma_err("Disable Forced Sleep Failed vdevId %d", vdev_id);
 		return;
 	}
 }
@@ -918,7 +917,7 @@ static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_handle,
 				   &cmd);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
+		wma_err("Failed to send set uapsd param ret = %d", ret);
 
 	return ret;
 }
@@ -959,16 +958,15 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 
 	bssid = wma_get_vdev_bssid(wma_handle->interfaces[vdev_id].vdev);
 	if (!bssid) {
-		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get bssid for vdev_%d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 			vdev_id, bssid,
 			&uapsd_trigger_param, 1);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Fail to send uapsd param cmd for vdevid %d ret = %d",
-			 ret, vdev_id);
+		wma_err("Fail to send uapsd param cmd for vdevid %d ret = %d",
+			ret, vdev_id);
 		return ret;
 	}
 
@@ -1012,7 +1010,7 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 		user_priority = UAPSD_UP_BE;
 		break;
 	default:
-		WMA_LOGE("Invalid AC vdevId %d ac %d", vdev_id, ac);
+		wma_err("Invalid AC vdevId %d ac %d", vdev_id, ac);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1028,16 +1026,15 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 
 	bssid = wma_get_vdev_bssid(wma_handle->interfaces[vdev_id].vdev);
 	if (!bssid) {
-		WMA_LOGE("%s: Failed to get bssid for vdev_%d",
-			 __func__, vdev_id);
+		wma_err("Failed to get bssid for vdev_%d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 		vdev_id, bssid,
 		&uapsd_trigger_param, 1);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Fail to send auto trig cmd for vdevid %d ret = %d",
-			 ret, vdev_id);
+		wma_err("Fail to send auto trig cmd for vdevid %d ret = %d",
+			ret, vdev_id);
 		return ret;
 	}
 
@@ -1045,8 +1042,8 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 					   WMI_STA_PS_PARAM_UAPSD,
 					   iface->uapsd_cached_val);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Disable Uapsd per ac Failed vdevId %d ac %d", vdev_id,
-			 ac);
+		wma_err("Disable Uapsd per ac Failed vdevId %d ac %d", vdev_id,
+			ac);
 		return ret;
 	}
 	wma_debug("Disable Uapsd per ac vdevId %d val %d", vdev_id,
@@ -1067,7 +1064,7 @@ QDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 
 	ret = wmi_unified_get_temperature(wma_handle->wmi_handle);
 	if (ret)
-		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wma_err("Failed to send set Mimo PS ret = %d", ret);
 
 	return ret;
 }
@@ -1090,7 +1087,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 
 	param_buf = (WMI_PDEV_TEMPERATURE_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
-		WMA_LOGE("Invalid pdev_temperature event buffer");
+		wma_err("Invalid pdev_temperature event buffer");
 		return -EINVAL;
 	}
 
@@ -1105,7 +1102,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		WMA_LOGE(FL("Fail to post get temperature ind msg"));
+		wma_err("Fail to post get temperature ind msg");
 	return 0;
 }
 
@@ -1126,8 +1123,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	struct pdev_params pdevparam;
 
 	if (!wma || !wma->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue tx power limit",
-			 __func__);
+		wma_err("WMA is closed, can not issue tx power limit");
 		return QDF_STATUS_E_INVAL;
 	}
 	/* Set value and reason code for 2g and 5g power limit */
@@ -1149,7 +1145,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 					 &pdevparam,
 					 WMA_WILDCARD_PDEV_ID);
 	if (ret) {
-		WMA_LOGE("%s: Failed to set txpower 2g (%d)", __func__, ret);
+		wma_err("Failed to set txpower 2g (%d)", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 	pdevparam.param_id = WMI_PDEV_PARAM_TXPOWER_LIMIT5G;
@@ -1158,7 +1154,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 					 &pdevparam,
 					 WMA_WILDCARD_PDEV_ID);
 	if (ret) {
-		WMA_LOGE("%s: Failed to set txpower 5g (%d)", __func__, ret);
+		wma_err("Failed to set txpower 5g (%d)", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1439,7 +1435,7 @@ QDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
 	ret = wmi_unified_set_mimops(wma->wmi_handle, vdev_id,
 				   value);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wma_err("Failed to send set Mimo PS ret = %d", ret);
 
 	return ret;
 }
@@ -1493,7 +1489,7 @@ QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
 					 WMA_WILDCARD_PDEV_ID);
 
 	if (ret) {
-		WMA_LOGE("Fail to Set Idle Ps Config %d", idle_ps);
+		wma_err("Fail to Set Idle Ps Config %d", idle_ps);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wma->in_imps = !!idle_ps;
@@ -1518,7 +1514,7 @@ QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 	ret = wmi_unified_set_smps_params(wma->wmi_handle, vdev_id,
 				   value);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
+		wma_err("Failed to send set Mimo PS ret = %d", ret);
 
 	return ret;
 }
@@ -1538,19 +1534,19 @@ QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
 			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
-		WMA_LOGE("%s: wma_handle is NULL", __func__);
+		wma_err("wma_handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!wma_is_vdev_up(vdev_id)) {
-		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
+		wma_err("vdev id %d is not up", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 				WMI_VDEV_PARAM_TXPOWER_SCALE, value);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Set tx power scale failed");
+		wma_err("Set tx power scale failed");
 
 	return ret;
 }
@@ -1569,19 +1565,19 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
-		WMA_LOGE("%s: wma_handle is NULL", __func__);
+		wma_err("wma_handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!wma_is_vdev_up(vdev_id)) {
-		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
+		wma_err("vdev id %d is not up", vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wma_vdev_set_param(wma_handle->wmi_handle, vdev_id,
 				WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB, value);
 	if (QDF_IS_STATUS_ERROR(ret))
-		WMA_LOGE("Decrease tx power value failed");
+		wma_err("Decrease tx power value failed");
 
 	return ret;
 }
