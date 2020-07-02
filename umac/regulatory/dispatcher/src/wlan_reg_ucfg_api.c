@@ -227,13 +227,6 @@ QDF_STATUS ucfg_reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev,
 	return reg_enable_dfs_channels(pdev, dfs_enable);
 }
 
-QDF_STATUS ucfg_reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
-				  enum band_info *band)
-{
-	return reg_get_curr_band(pdev, band);
-
-}
-
 void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					    void *cbk, void *arg)
 {

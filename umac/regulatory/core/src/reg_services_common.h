@@ -408,16 +408,6 @@ QDF_STATUS reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
 			      struct cc_regdmn_s *rd);
 
 /**
- * reg_get_curr_band() - Get current band
- * @pdev: Pdev pointer
- * @band: Pointer to save the current band
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
-			     enum band_info *band);
-
-/**
  * reg_set_regdb_offloaded() - set/clear regulatory offloaded flag
  *
  * @psoc: psoc pointer

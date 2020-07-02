@@ -178,15 +178,6 @@ QDF_STATUS ucfg_reg_set_country(struct wlan_objmgr_pdev *dev,
 QDF_STATUS ucfg_reg_reset_country(struct wlan_objmgr_psoc *psoc);
 
 /**
- * ucfg_reg_get_curr_band() - Get the current band capability
- * @pdev: The physical dev to get default country from
- * @band: buffer to populate the band into
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS ucfg_reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
-		enum band_info *band);
-/**
  * ucfg_reg_enable_dfs_channels() - Enable the use of DFS channels
  * @pdev: The physical dev to enable DFS channels for
  *
