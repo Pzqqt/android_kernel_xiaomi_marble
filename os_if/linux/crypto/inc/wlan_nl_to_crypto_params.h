@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,9 +30,10 @@
  * set the crypto auth type for corresponding auth type received
  * from NL
  *
- * Return: crypto auth type, negative value for failure
+ * Return: crypto auth type
  */
-int osif_nl_to_crypto_auth_type(enum nl80211_auth_type auth_type);
+wlan_crypto_auth_mode
+osif_nl_to_crypto_auth_type(enum nl80211_auth_type auth_type);
 
 /**
  * osif_nl_to_crypto_akm_type() - populate akm type for crypto
@@ -41,9 +42,9 @@ int osif_nl_to_crypto_auth_type(enum nl80211_auth_type auth_type);
  * set the crypto akm type for corresponding akm type received
  * from NL
  *
- * Return: crypto akm type, negative value for failure
+ * Return: crypto akm type
  */
-int osif_nl_to_crypto_akm_type(u32 key_mgmt);
+wlan_crypto_key_mgmt osif_nl_to_crypto_akm_type(u32 key_mgmt);
 
 /**
  * osif_nl_to_crypto_cipher_type() - populate cipher type for crypto
