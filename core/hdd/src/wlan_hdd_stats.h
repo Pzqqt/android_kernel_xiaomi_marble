@@ -537,12 +537,4 @@ void wlan_hdd_register_cp_stats_cb(struct hdd_context *hdd_ctx);
 #else
 static inline void wlan_hdd_register_cp_stats_cb(struct hdd_context *hdd_ctx) {}
 #endif
-
-/**
- * hdd_update_sta_arp_stats() - update arp stats
- * @adapter: adapter context
- *
- * Return: An error code or 0 on success.
- */
-QDF_STATUS hdd_update_sta_arp_stats(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_STATS_H) */

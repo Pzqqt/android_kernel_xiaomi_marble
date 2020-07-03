@@ -552,4 +552,13 @@ wlan_hdd_dump_queue_history_state(struct hdd_netif_queue_history *q_hist,
 bool wlan_hdd_rx_rpm_mark_last_busy(struct hdd_context *hdd_ctx,
 				    void *hif_ctx);
 
+/**
+ * hdd_sta_notify_tx_comp_cb() - notify tx comp callback registered with dp
+ * @skb: pointer to skb
+ * @ctx: osif context
+ * @flag: tx status flag
+ *
+ * Return: None
+ */
+void hdd_sta_notify_tx_comp_cb(qdf_nbuf_t skb, void *ctx, uint16_t flag);
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

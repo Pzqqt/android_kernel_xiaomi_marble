@@ -1014,11 +1014,12 @@ static inline void hdd_softap_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
  * hdd_softap_notify_tx_compl_cbk() - callback to notify tx completion
  * @skb: pointer to skb data
  * @adapter: pointer to vdev apdapter
+ * @flags: tx status flag
  *
  * Return: None
  */
 static void hdd_softap_notify_tx_compl_cbk(struct sk_buff *skb,
-					   void *context)
+					   void *context, uint16_t flag)
 {
 	int errno;
 	struct hdd_adapter *adapter = context;

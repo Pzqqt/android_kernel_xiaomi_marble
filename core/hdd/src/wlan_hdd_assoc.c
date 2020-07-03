@@ -2239,6 +2239,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 
+	txrx_ops.tx.tx_comp = hdd_sta_notify_tx_comp_cb;
 	txrx_ops.tx.tx = NULL;
 	cdp_vdev_register(soc, adapter->vdev_id, (ol_osif_vdev_handle)adapter,
 			  &txrx_ops);
