@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,6 +34,7 @@
 #include "wlan_hdd_spectralscan.h"
 #include <wlan_spectral_ucfg_api.h>
 #include "wma.h"
+#include "wlan_hdd_object_manager.h"
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -584,6 +585,7 @@ QDF_STATUS wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter)
 	uint32_t chainmask;
 	uint8_t home_chan;
 	uint8_t pdev_id;
+	struct wlan_objmgr_vdev *vdev;
 
 	spectral_get_version(adapter->hdd_ctx->pdev, &version, &sub_version);
 	if (version != SPECTRAL_VERSION_3)
@@ -593,7 +595,11 @@ QDF_STATUS wlan_spectral_update_rx_chainmask(struct hdd_adapter *adapter)
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(adapter->hdd_ctx->pdev);
 	wma_get_rx_chainmask(pdev_id, &chainmask_2g, &chainmask_5g);
 	chainmask = home_chan > MAX_24GHZ_CHANNEL ? chainmask_5g : chainmask_2g;
-	wlan_vdev_mlme_set_rxchainmask(adapter->vdev, chainmask);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+	wlan_vdev_mlme_set_rxchainmask(vdev, chainmask);
+	hdd_objmgr_put_vdev(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

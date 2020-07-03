@@ -28,6 +28,7 @@
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include <wlan_pmo_wow_public_struct.h>
+#include "wlan_hdd_object_manager.h"
 
 /* Preprocessor Definitions and Constants */
 #define WOWL_INTER_PTRN_TOKENIZER   ';'
@@ -106,6 +107,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t num_filters;
 	bool invalid_ptrn = false;
+	struct wlan_objmgr_vdev *vdev;
 
 	status = hdd_get_num_wow_filters(hdd_ctx, &num_filters);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -224,9 +226,15 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		wow_pattern.pattern_id = empty_slot;
 		wow_pattern.pattern_byte_offset = 0;
 
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (!vdev) {
+			hdd_err("vdev is null");
+			qdf_mem_free(g_hdd_wowl_ptrns[empty_slot]);
+			g_hdd_wowl_ptrns[empty_slot] = NULL;
+			return false;
+		}
 		/* Register the pattern downstream */
-		status = ucfg_pmo_add_wow_user_pattern(
-					adapter->vdev, &wow_pattern);
+		status = ucfg_pmo_add_wow_user_pattern(vdev, &wow_pattern);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			/* Add failed, so invalidate the local storage */
 			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
@@ -234,7 +242,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			qdf_mem_free(g_hdd_wowl_ptrns[empty_slot]);
 			g_hdd_wowl_ptrns[empty_slot] = NULL;
 		}
-
+		hdd_objmgr_put_vdev(vdev);
 		dump_hdd_wowl_ptrn(&wow_pattern);
 
 next_ptrn:
@@ -268,6 +276,7 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t num_filters;
+	struct wlan_objmgr_vdev *vdev;
 
 	status = hdd_get_num_wow_filters(hdd_ctx, &num_filters);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -288,7 +297,12 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	if (!patternFound)
 		return false;
 
-	status = ucfg_pmo_del_wow_user_pattern(adapter->vdev, id);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return false;
+
+	status = ucfg_pmo_del_wow_user_pattern(vdev, id);
+	hdd_objmgr_put_vdev(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
 		return false;
 
@@ -319,6 +333,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	struct pmo_wow_add_pattern wow_pattern;
 	QDF_STATUS qdf_ret_status;
 	uint16_t pattern_len, mask_len, i;
+	struct wlan_objmgr_vdev *vdev;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
 		hdd_err("WoW pattern index %d is out of range (0 ~ %d)",
@@ -392,9 +407,13 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 		pattern_mask += 2;
 	}
 
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return false;
+
 	/* Register the pattern downstream */
-	qdf_ret_status = ucfg_pmo_add_wow_user_pattern(
-				adapter->vdev, &wow_pattern);
+	qdf_ret_status = ucfg_pmo_add_wow_user_pattern(vdev, &wow_pattern);
+	hdd_objmgr_put_vdev(vdev);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("pmo_wow_user_pattern failed with error code (%d).",
 			  qdf_ret_status);
@@ -424,6 +443,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 			       uint8_t pattern_idx)
 {
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS qdf_ret_status;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -440,8 +460,12 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	qdf_ret_status = ucfg_pmo_del_wow_user_pattern(
-				adapter->vdev, pattern_idx);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return false;
+
+	qdf_ret_status = ucfg_pmo_del_wow_user_pattern(vdev, pattern_idx);
+	hdd_objmgr_put_vdev(vdev);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("sme_wowl_del_bcast_pattern failed with error code (%d).",
 			 qdf_ret_status);

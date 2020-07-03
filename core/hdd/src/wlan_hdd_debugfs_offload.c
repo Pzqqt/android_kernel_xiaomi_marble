@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,7 @@
 #include "wlan_pmo_ns_public_struct.h"
 #include "wlan_pmo_mc_addr_filtering_public_struct.h"
 #include "wlan_pmo_ucfg_api.h"
+#include "wlan_hdd_object_manager.h"
 
 /* IPv6 address string */
 #define IPV6_MAC_ADDRESS_STR_LEN 47  /* Including null terminator */
@@ -136,10 +137,15 @@ wlan_hdd_arp_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	ssize_t length = 0;
 	int ret_val;
 	struct pmo_arp_offload_params info = {0};
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	status = ucfg_pmo_get_arp_offload_params(adapter->vdev,
-						 &info);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return 0;
+
+	status = ucfg_pmo_get_arp_offload_params(vdev, &info);
+	hdd_objmgr_put_vdev(vdev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret_val = scnprintf(buf, buf_avail_len,
 				    "\nARP OFFLOAD QUERY FAILED\n");
@@ -225,11 +231,16 @@ wlan_hdd_ns_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	ssize_t length = 0;
 	int ret;
 	struct pmo_ns_offload_params info = {0};
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 	uint32_t i;
 
-	status = ucfg_pmo_get_ns_offload_params(adapter->vdev,
-						&info);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return 0;
+
+	status = ucfg_pmo_get_ns_offload_params(vdev, &info);
+	hdd_objmgr_put_vdev(vdev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret = scnprintf(buf, buf_avail_len,
 				"\nNS OFFLOAD QUERY FAILED\n");

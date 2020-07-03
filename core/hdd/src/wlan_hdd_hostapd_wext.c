@@ -45,6 +45,8 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_hdd_sta_info.h"
+#include "wlan_hdd_object_manager.h"
+
 #define WE_WLAN_VERSION     1
 
 /* WEXT limitation: MAX allowed buf len for any *
@@ -2574,6 +2576,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	char macaddrarray[MAC_ADDRESS_STR_LEN];
 	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BCAST_INIT;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter();
 
@@ -2603,9 +2606,14 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 			hdd_err("String to Hex conversion Failed");
 	}
 
-	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(adapter->vdev,
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	rssi_info = wlan_cfg80211_mc_cp_stats_get_peer_rssi(vdev,
 							    macaddress.bytes,
 							    &ret);
+	hdd_objmgr_put_vdev(vdev);
 	if (ret || !rssi_info) {
 		wlan_cfg80211_mc_cp_stats_free_stats_event(rssi_info);
 		return ret;

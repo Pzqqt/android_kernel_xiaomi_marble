@@ -5035,10 +5035,9 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	ucfg_pmo_del_wow_pattern(vdev);
 	status = ucfg_reg_11d_vdev_delete_update(vdev);
 	ucfg_scan_vdev_set_disable(vdev, REASON_VDEV_DOWN);
-	hdd_objmgr_put_vdev(vdev);
-
 	/* Disable serialization for vdev before sending vdev delete */
-	wlan_ser_vdev_queue_disable(adapter->vdev);
+	wlan_ser_vdev_queue_disable(vdev);
+	hdd_objmgr_put_vdev(vdev);
 
 	qdf_spin_lock_bh(&adapter->vdev_lock);
 	adapter->vdev = NULL;
@@ -5086,7 +5085,7 @@ hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 	vdev = hdd_objmgr_get_vdev(adapter);
 	/* Store the nss chain config into the vdev */
 	if (vdev) {
-		sme_store_nss_chains_cfg_in_vdev(adapter->vdev, &vdev_ini_cfg);
+		sme_store_nss_chains_cfg_in_vdev(vdev, &vdev_ini_cfg);
 		hdd_objmgr_put_vdev(vdev);
 	} else {
 		hdd_err("Vdev is NULL");
@@ -5257,7 +5256,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
 		ucfg_mlme_get_bigtk_support(hdd_ctx->psoc, &target_bigtk_support);
 		if (target_bigtk_support)
-			mlme_set_bigtk_support(adapter->vdev, true);
+			mlme_set_bigtk_support(vdev, true);
 		hdd_objmgr_put_vdev(vdev);
 	}
 
@@ -7795,6 +7794,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 	eConnectionState conn_state;
 	bool value;
 	uint8_t chan;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter();
 
@@ -7884,10 +7884,16 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			if (wlan_hdd_is_session_type_monitor(
 			    QDF_MONITOR_MODE) &&
 			    ucfg_pkt_capture_get_mode(hdd_ctx->psoc)) {
-				ucfg_pkt_capture_register_callbacks(
-						adapter->vdev,
+				vdev = hdd_objmgr_get_vdev(adapter);
+				if (vdev) {
+					ucfg_pkt_capture_register_callbacks(
+						vdev,
 						hdd_mon_rx_packet_cbk,
 						adapter);
+					hdd_objmgr_put_vdev(vdev);
+				} else {
+					hdd_err("vdev is null");
+				}
 				break;
 			}
 			chan = wlan_reg_freq_to_chan(hdd_ctx->pdev,

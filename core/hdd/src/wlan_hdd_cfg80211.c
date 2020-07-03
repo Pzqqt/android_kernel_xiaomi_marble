@@ -17428,6 +17428,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
 	struct hdd_ap_ctx *ap_ctx;
 	struct wlan_crypto_key *crypto_key;
+	struct wlan_objmgr_vdev *vdev;
 	int ret;
 	QDF_STATUS status;
 
@@ -17457,20 +17458,28 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	if (0 != ret)
 		return ret;
-	crypto_key = wlan_crypto_get_key(adapter->vdev, key_index);
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	crypto_key = wlan_crypto_get_key(vdev, key_index);
 	if (!crypto_key) {
 		hdd_err("Invalid NULL key info");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto out;
 	}
 	hdd_debug("unicast %d, multicast %d cipher %d",
 		  unicast, multicast, crypto_key->cipher_type);
-	if (!IS_WEP_CIPHER(crypto_key->cipher_type))
-		return 0;
+	if (!IS_WEP_CIPHER(crypto_key->cipher_type)) {
+		ret = 0;
+		goto out;
+	}
 
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		ret =
-		wlan_cfg80211_crypto_add_key(adapter->vdev, (unicast ?
+		wlan_cfg80211_crypto_add_key(vdev, (unicast ?
 					     WLAN_CRYPTO_KEY_TYPE_UNICAST :
 					     WLAN_CRYPTO_KEY_TYPE_GROUP),
 					     key_index);
@@ -17480,16 +17489,19 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	if (adapter->device_mode == QDF_SAP_MODE ||
 	    adapter->device_mode == QDF_P2P_GO_MODE) {
-		status = wlan_cfg80211_set_default_key(adapter->vdev, key_index,
+		status = wlan_cfg80211_set_default_key(vdev, key_index,
 						       &bssid);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("ret fail status %d", ret);
-			return -EINVAL;
+			ret = -EINVAL;
+			goto out;
 		}
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 		ap_ctx->wep_def_key_idx = key_index;
 	}
 
+out:
+	hdd_objmgr_put_vdev(vdev);
 	return ret;
 }
 
@@ -21419,7 +21431,7 @@ static QDF_STATUS wlan_hdd_del_pmksa_cache(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_copy_macaddr(&pmksa.bssid, &pmk_cache->BSSID);
-	result = wlan_crypto_set_del_pmksa(adapter->vdev, &pmksa, false);
+	result = wlan_crypto_set_del_pmksa(vdev, &pmksa, false);
 	hdd_objmgr_put_vdev(vdev);
 
 	return result;
@@ -21434,7 +21446,7 @@ QDF_STATUS wlan_hdd_flush_pmksa_cache(struct hdd_adapter *adapter)
 	if (!vdev)
 		return QDF_STATUS_E_FAILURE;
 
-	result = wlan_crypto_set_del_pmksa(adapter->vdev, NULL, false);
+	result = wlan_crypto_set_del_pmksa(vdev, NULL, false);
 	hdd_objmgr_put_vdev(vdev);
 
 	return result;
