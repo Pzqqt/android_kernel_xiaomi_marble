@@ -19130,7 +19130,7 @@ static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 /**
  * hdd_populate_crypto_auth_type() - populate auth type for crypto
  * @vdev: pointed to vdev obmgr
- * @auth_type: legacy auth_type
+ * @req: connect req
  *
  * set the crypto auth type for corresponding auth type received
  * from NL
@@ -19138,17 +19138,31 @@ static inline void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
  * Return: None
  */
 static void hdd_populate_crypto_auth_type(struct wlan_objmgr_vdev *vdev,
-					  enum nl80211_auth_type auth_type)
+					  struct cfg80211_connect_params *req)
 {
 	QDF_STATUS status;
 	uint32_t set_val = 0;
 	wlan_crypto_auth_mode crypto_auth_type =
-			osif_nl_to_crypto_auth_type(auth_type);
+			osif_nl_to_crypto_auth_type(req->auth_type);
 
-	HDD_SET_BIT(set_val, crypto_auth_type);
-	status = wlan_crypto_set_vdev_param(vdev,
-					    WLAN_CRYPTO_PARAM_AUTH_MODE,
-					    set_val);
+	if (crypto_auth_type == WLAN_CRYPTO_AUTH_FILS_SK)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_FILS_SK);
+	else if (crypto_auth_type == WLAN_CRYPTO_AUTH_SAE)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_SAE);
+	else if (crypto_auth_type == WLAN_CRYPTO_AUTH_SHARED)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_SHARED);
+	else if (crypto_auth_type == WLAN_CRYPTO_AUTH_AUTO &&
+		 !req->crypto.wpa_versions)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_AUTO);
+	else if (!req->crypto.wpa_versions)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_OPEN);
+	else if (req->crypto.wpa_versions & NL80211_WPA_VERSION_1)
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_WPA);
+	else
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_RSNA);
+
+	status =  wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE,
+					     set_val);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set auth type %0X to crypto component",
 			set_val);
@@ -19224,8 +19238,6 @@ static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 {
 	uint32_t set_val = 0;
 
-	hdd_populate_crypto_auth_type(vdev, req->auth_type);
-
 	if (req->crypto.n_akm_suites) {
 		hdd_populate_crypto_akm_type(vdev, req->crypto.akm_suites[0]);
 	} else {
@@ -19240,34 +19252,39 @@ static void hdd_populate_crypto_params(struct wlan_objmgr_vdev *vdev,
 						vdev,
 						WLAN_CRYPTO_PARAM_UCAST_CIPHER);
 	} else {
+		set_val = 0;
 		/* Reset to none */
 		HDD_SET_BIT(set_val, WLAN_CRYPTO_CIPHER_NONE);
 		wlan_crypto_set_vdev_param(vdev,
 					    WLAN_CRYPTO_PARAM_UCAST_CIPHER,
-					    0);
+					    set_val);
 	}
 	if (req->crypto.cipher_group) {
 		hdd_populate_crypto_cipher_type(req->crypto.cipher_group,
 						vdev,
 						WLAN_CRYPTO_PARAM_MCAST_CIPHER);
 	} else {
+		set_val = 0;
 		/* Reset to none */
 		HDD_SET_BIT(set_val, WLAN_CRYPTO_CIPHER_NONE);
 		wlan_crypto_set_vdev_param(vdev,
 					    WLAN_CRYPTO_PARAM_MCAST_CIPHER,
-					    0);
+					    set_val);
 	}
+
+	hdd_populate_crypto_auth_type(vdev, req);
 }
 
+#ifdef FEATURE_WLAN_WAPI
 /**
  * hdd_set_crypto_key_mgmt_param() - Set key mgmt param.
  * @adapter: Pointer to adapter.
  *
  * Return: None
  */
-static void hdd_set_crypto_key_mgmt_param(struct hdd_adapter *adapter)
+static void hdd_set_wapi_crypto_key_mgmt_param(struct hdd_adapter *adapter)
 {
-	uint32_t key_mgmt = 0;
+	uint32_t set_val = 0;
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!adapter) {
@@ -19279,14 +19296,26 @@ static void hdd_set_crypto_key_mgmt_param(struct hdd_adapter *adapter)
 	if (!vdev)
 		return;
 
+	HDD_SET_BIT(set_val, WLAN_CRYPTO_AUTH_WAPI);
+	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_AUTH_MODE, set_val);
+	set_val = 0;
 	if (adapter->wapi_info.wapi_auth_mode == WAPI_AUTH_MODE_PSK)
-		HDD_SET_BIT(key_mgmt, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK);
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_KEY_MGMT_WAPI_PSK);
 	if (adapter->wapi_info.wapi_auth_mode == WAPI_AUTH_MODE_CERT)
-		HDD_SET_BIT(key_mgmt, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT);
+		HDD_SET_BIT(set_val, WLAN_CRYPTO_KEY_MGMT_WAPI_CERT);
 
-	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT, key_mgmt);
+	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT, set_val);
+
+	set_val = 0;
+	HDD_SET_BIT(set_val, WLAN_CRYPTO_CIPHER_WAPI_SMS4);
+
+	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_UCAST_CIPHER,
+				   set_val);
+	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_MCAST_CIPHER,
+				   set_val);
 	hdd_objmgr_put_vdev(vdev);
 }
+#endif
 
 /**
  * wlan_hdd_cfg80211_set_ie() - set IEs
@@ -19592,7 +19621,7 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 					WAPI_AUTH_MODE_CERT;
 			}
 
-			hdd_set_crypto_key_mgmt_param(adapter);
+			hdd_set_wapi_crypto_key_mgmt_param(adapter);
 			break;
 #endif
 		case DOT11F_EID_SUPPOPERATINGCLASSES:
