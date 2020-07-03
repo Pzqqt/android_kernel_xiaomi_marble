@@ -1790,7 +1790,7 @@ noinline
 qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				    struct dp_tx_msdu_info_s *msdu_info)
 {
-	uint8_t i;
+	uint32_t i;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc;
