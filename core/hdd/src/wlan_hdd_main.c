@@ -9596,26 +9596,36 @@ static inline void hdd_pm_qos_update_request(struct hdd_context *hdd_ctx,
 #endif /* CLD_PM_QOS */
 
 /**
- * hdd_low_tput_gro_flush_skip_check() - check GRO flush skip condition
+ * hdd_low_tput_gro_flush_skip_handler() - adjust GRO flush for low tput
  * @hdd_ctx: handle to hdd context
  * @next_vote_level: next bus bandwidth level
  *
  * If bus bandwidth level is PLD_BUS_WIDTH_LOW consistently and hit
  * the bus_low_cnt_threshold, set flag to skip GRO flush.
+ * If bus bandwidth keeps going to PLD_BUS_WIDTH_IDLE, perform a GRO
+ * flush to avoid TCP traffic stall
  *
  * Return: none
  */
-static inline void hdd_low_tput_gro_flush_skip_check(
+static inline void hdd_low_tput_gro_flush_skip_handler(
 			struct hdd_context *hdd_ctx,
 			enum pld_bus_width_type next_vote_level)
 {
 	uint32_t bus_low_cnt_threshold =
 				hdd_ctx->config->bus_low_cnt_threshold;
+	struct hdd_adapter *adapter;
 
 	if (next_vote_level == PLD_BUS_WIDTH_LOW) {
 		if (++hdd_ctx->bus_low_vote_cnt >= bus_low_cnt_threshold)
 			qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 1);
 	} else {
+		if (qdf_atomic_read(&hdd_ctx->low_tput_gro_enable)) {
+			/* flush pending rx pkts when LOW->IDLE */
+			hdd_debug("flush queued GRO pkts");
+			hdd_for_each_adapter(hdd_ctx, adapter)
+				hdd_rx_flush_packet_cbk(adapter,
+							adapter->vdev_id);
+		}
 		hdd_ctx->bus_low_vote_cnt = 0;
 		qdf_atomic_set(&hdd_ctx->low_tput_gro_enable, 0);
 	}
@@ -9672,7 +9682,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	dptrace_high_tput_req =
 			next_vote_level > PLD_BUS_WIDTH_IDLE ? true : false;
-	hdd_low_tput_gro_flush_skip_check(hdd_ctx, next_vote_level);
+	hdd_low_tput_gro_flush_skip_handler(hdd_ctx, next_vote_level);
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hdd_debug("BW Vote level %d, tx_packets: %lld, rx_packets: %lld",
