@@ -758,13 +758,21 @@ post_msg:
 
 	if (req_type != NAN_GENERIC_REQ) {
 		err = osif_request_wait_for_response(request);
-		if (err)
+		if (err) {
 			nan_debug("NAN request: %u timed out: %d",
 				  req_type, err);
 
+			if (req_type == NAN_ENABLE_REQ) {
+				nan_set_discovery_state(psoc,
+							NAN_DISC_DISABLED);
+				policy_mgr_check_n_start_opportunistic_timer(
+									psoc);
+			} else if (req_type == NAN_DISABLE_REQ) {
+				nan_disable_cleanup(psoc);
+			}
+		}
 		if (req_type == NAN_DISABLE_REQ)
 			psoc_priv->is_explicit_disable = false;
-
 		osif_request_put(request);
 	}
 
