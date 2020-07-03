@@ -105,6 +105,7 @@ msm_drm-$(CONFIG_DRM_MSM_DSI) += dsi/dsi_phy.o \
 	dsi/dsi_phy_timing_v4_0.o \
 	dsi/dsi_pll.o \
 	dsi/dsi_pll_5nm.o \
+	dsi/dsi_pll_10nm.o \
 	dsi/dsi_ctrl_hw_cmn.o \
 	dsi/dsi_ctrl_hw_1_4.o \
 	dsi/dsi_ctrl_hw_2_0.o \
