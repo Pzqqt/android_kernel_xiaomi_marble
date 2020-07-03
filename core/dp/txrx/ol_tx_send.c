@@ -874,14 +874,16 @@ static void ol_tx_update_ack_count(struct ol_tx_desc_t *tx_desc,
  * ol_tx_notify_completion() - Notify tx completion for this desc
  * @tx_desc: tx desc
  * @netbuf:  buffer
+ * @status: tx status
  *
  * Return: none
  */
 static void ol_tx_notify_completion(struct ol_tx_desc_t *tx_desc,
-				    qdf_nbuf_t netbuf)
+				    qdf_nbuf_t netbuf, uint8_t status)
 {
 	void *osif_dev;
 	ol_txrx_completion_fp tx_compl_cbk = NULL;
+	uint16_t flag = 0;
 
 	qdf_assert(tx_desc);
 
@@ -896,8 +898,14 @@ static void ol_tx_notify_completion(struct ol_tx_desc_t *tx_desc,
 	tx_compl_cbk = tx_desc->vdev->tx_comp;
 	ol_tx_flow_pool_unlock(tx_desc);
 
+	if (status == htt_tx_status_ok)
+		flag = (BIT(QDF_TX_RX_STATUS_OK) |
+			BIT(QDF_TX_RX_STATUS_DOWNLOAD_SUCC));
+	else if (status != htt_tx_status_download_fail)
+		flag = BIT(QDF_TX_RX_STATUS_DOWNLOAD_SUCC);
+
 	if (tx_compl_cbk)
-		tx_compl_cbk(netbuf, osif_dev);
+		tx_compl_cbk(netbuf, osif_dev, flag);
 }
 
 /**
@@ -945,40 +953,6 @@ static void ol_tx_update_connectivity_stats(struct ol_tx_desc_t *tx_desc,
 		if (status == htt_tx_status_ok)
 			stats_rx(netbuf, osif_dev,
 				 PKT_TYPE_TX_ACK_CNT, &pkt_type);
-	}
-}
-
-/**
- * ol_tx_update_arp_stats() - update ARP packet TX stats
- * @tx_desc: tx desc
- * @netbuf:  buffer
- * @status: htt status
- *
- *
- * Return: none
- */
-static void ol_tx_update_arp_stats(struct ol_tx_desc_t *tx_desc,
-				   qdf_nbuf_t netbuf,
-				   enum htt_tx_status status)
-{
-	uint32_t tgt_ip;
-
-	qdf_assert(tx_desc);
-
-	ol_tx_flow_pool_lock(tx_desc);
-	if (!tx_desc->vdev) {
-		ol_tx_flow_pool_unlock(tx_desc);
-		return;
-	}
-
-	tgt_ip = cds_get_arp_stats_gw_ip(tx_desc->vdev->osif_dev);
-	ol_tx_flow_pool_unlock(tx_desc);
-
-	if (tgt_ip == qdf_nbuf_get_arp_tgt_ip(netbuf)) {
-		if (status != htt_tx_status_download_fail)
-			cds_incr_arp_stats_tx_tgt_delivered();
-		if (status == htt_tx_status_ok)
-			cds_incr_arp_stats_tx_tgt_acked();
 	}
 }
 
@@ -1073,16 +1047,9 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 
-		if (QDF_NBUF_CB_GET_PACKET_TYPE(netbuf) ==
-		    QDF_NBUF_CB_PACKET_TYPE_ARP) {
-			if (qdf_nbuf_data_is_arp_req(netbuf))
-				ol_tx_update_arp_stats(tx_desc, netbuf,
-						       status);
-		}
-
 		/* check tx completion notification */
 		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(netbuf))
-			ol_tx_notify_completion(tx_desc, netbuf);
+			ol_tx_notify_completion(tx_desc, netbuf, status);
 
 		/* track connectivity stats */
 		ol_tx_update_connectivity_stats(tx_desc, netbuf,
