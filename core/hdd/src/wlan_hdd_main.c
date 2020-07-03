@@ -6735,11 +6735,13 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		if (!wlan_sap_is_pre_cac_context(sap_ctx) &&
 		    (hdd_ctx->sap_pre_cac_work.fn))
 			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
-		wlansap_cleanup_cac_timer(sap_ctx);
 
 		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:
+		sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+		wlansap_cleanup_cac_timer(sap_ctx);
+
 		cds_flush_work(&adapter->sap_stop_bss_work);
 		if (qdf_atomic_read(&adapter->session.ap.acs_in_progress)) {
 			hdd_info("ACS in progress, wait for complete");
