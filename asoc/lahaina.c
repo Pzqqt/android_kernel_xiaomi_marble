@@ -5999,6 +5999,19 @@ static struct snd_soc_dai_link msm_bolero_fe_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_bolero_fe_stub_dai_links[] = {
+	{/* hw:x,33 */
+		.name = LPASS_BE_WSA_CDC_DMA_TX_0,
+		.stream_name = "WSA CDC DMA0 Capture",
+		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ops = &msm_cdc_dma_be_ops,
+		SND_SOC_DAILINK_REG(wsa_cdcdma0_capture_stub),
+	},
+};
+
 static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 	{/* hw:x,34 */
 		.name = MSM_DAILINK_NAME(ASM Loopback),
@@ -6847,6 +6860,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -7238,6 +7252,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	u32 val = 0;
 	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
+	u32 wsa_max_devs = 0;
 
 	match = of_match_node(lahaina_asoc_machine_of_match, dev->of_node);
 	if (!match) {
@@ -7254,12 +7269,27 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_dai_links));
 		total_links += ARRAY_SIZE(msm_common_dai_links);
 
-		memcpy(msm_lahaina_dai_links + total_links,
-		       msm_bolero_fe_dai_links,
-		       sizeof(msm_bolero_fe_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_bolero_fe_dai_links);
-
+		rc = of_property_read_u32(dev->of_node,
+				"qcom,wsa-max-devs", &wsa_max_devs);
+		if (rc) {
+			dev_info(dev,
+				"%s: wsa-max-devs property missing in DT %s, ret = %d\n",
+				 __func__, dev->of_node->full_name, rc);
+			wsa_max_devs = 0;
+		}
+		if (!wsa_max_devs) {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_bolero_fe_stub_dai_links,
+				sizeof(msm_bolero_fe_stub_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_bolero_fe_stub_dai_links);
+		} else {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_bolero_fe_dai_links,
+				sizeof(msm_bolero_fe_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_bolero_fe_dai_links);
+		}
 		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_common_misc_fe_dai_links,
 		       sizeof(msm_common_misc_fe_dai_links));
@@ -7276,12 +7306,13 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
 
-		memcpy(msm_lahaina_dai_links + total_links,
-		       msm_wsa_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
-
+		if (wsa_max_devs) {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_wsa_cdc_dma_be_dai_links,
+				sizeof(msm_wsa_cdc_dma_be_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+		}
 		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_va_cdc_dma_be_dai_links,
 		       sizeof(msm_va_cdc_dma_be_dai_links));
@@ -7410,6 +7441,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
 
+	if (codec_reg_done) {
+		return 0;
+	}
         if (pdata->wsa_max_devs > 0) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
 		if (!component) {
