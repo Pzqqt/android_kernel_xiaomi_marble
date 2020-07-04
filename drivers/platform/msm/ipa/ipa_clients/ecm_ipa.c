@@ -648,7 +648,6 @@ static void ecm_ipa_packet_receive_notify
 {
 	struct sk_buff *skb = (struct sk_buff *)data;
 	struct ecm_ipa_dev *ecm_ipa_ctx = priv;
-	int result;
 	unsigned int packet_len;
 
 	if (!skb) {
@@ -672,9 +671,8 @@ static void ecm_ipa_packet_receive_notify
 	skb->dev = ecm_ipa_ctx->net;
 	skb->protocol = eth_type_trans(skb, ecm_ipa_ctx->net);
 
-	result = ecm_ipa_ctx->netif_rx_function(skb);
-	if (unlikely(result))
-		ECM_IPA_ERROR("fail on netif_rx_function\n");
+	ecm_ipa_ctx->netif_rx_function(skb);
+
 	ecm_ipa_ctx->net->stats.rx_packets++;
 	ecm_ipa_ctx->net->stats.rx_bytes += packet_len;
 }

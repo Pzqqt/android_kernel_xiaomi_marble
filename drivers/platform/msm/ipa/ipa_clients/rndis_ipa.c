@@ -1113,7 +1113,6 @@ static void rndis_ipa_packet_receive_notify(
 {
 	struct sk_buff *skb = (struct sk_buff *)data;
 	struct rndis_ipa_dev *rndis_ipa_ctx = private;
-	int result;
 	unsigned int packet_len = skb->len;
 
 	RNDIS_IPA_DEBUG
@@ -1149,9 +1148,8 @@ static void rndis_ipa_packet_receive_notify(
 	}
 
 	trace_rndis_netif_ni(skb->protocol);
-	result = rndis_ipa_ctx->netif_rx_function(skb);
-	if (unlikely(result))
-		RNDIS_IPA_ERROR("fail on netif_rx_function\n");
+	rndis_ipa_ctx->netif_rx_function(skb);
+
 	rndis_ipa_ctx->net->stats.rx_packets++;
 	rndis_ipa_ctx->net->stats.rx_bytes += packet_len;
 }
