@@ -2523,6 +2523,37 @@ error:
 	return QDF_STATUS_SUCCESS;
 }
 
+#define SAE_AUTH_ALGO_LEN 2
+#define SAE_AUTH_ALGO_OFFSET 0
+static bool lim_is_ack_for_sae_auth(qdf_nbuf_t buf)
+{
+	tpSirMacMgmtHdr mac_hdr;
+	uint16_t *sae_auth, min_len;
+
+	if (!buf) {
+		pe_debug("buf is NULL");
+		return false;
+	}
+
+	min_len = sizeof(tSirMacMgmtHdr) + SAE_AUTH_ALGO_LEN;
+	if (qdf_nbuf_len(buf) < min_len) {
+		pe_debug("buf_len %d less than min_len %d",
+			 (uint32_t)qdf_nbuf_len(buf), min_len);
+		return false;
+	}
+
+	mac_hdr = (tpSirMacMgmtHdr)(qdf_nbuf_data(buf));
+	if (mac_hdr->fc.subType == SIR_MAC_MGMT_AUTH) {
+		sae_auth = (uint16_t *)((uint8_t *)mac_hdr +
+					sizeof(tSirMacMgmtHdr));
+		if (sae_auth[SAE_AUTH_ALGO_OFFSET] ==
+		    eSIR_AUTH_TYPE_SAE)
+			return true;
+	}
+
+	return false;
+}
+
 /**
  * lim_auth_tx_complete_cnf()- Confirmation for auth sent over the air
  * @context: pointer to global mac
@@ -2532,7 +2563,6 @@ error:
  *
  * Return: This returns QDF_STATUS
  */
-
 static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 					   qdf_nbuf_t buf,
 					   uint32_t tx_complete,
@@ -2541,6 +2571,7 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	struct mac_context *mac_ctx = (struct mac_context *)context;
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
+	bool sae_auth_acked;
 
 	pe_nofl_info("Auth TX: %s (%d)",
 		     (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ?
@@ -2549,8 +2580,14 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
 		auth_ack_status = ACKED;
 		reason_code = QDF_STATUS_SUCCESS;
-		/* 'Change' timer for future activations */
-		lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
+		sae_auth_acked = lim_is_ack_for_sae_auth(buf);
+		/*
+		 * 'Change' timer for future activations only if ack
+		 * received is not for WPA SAE auth frames.
+		 */
+		if (!sae_auth_acked)
+			lim_deactivate_and_change_timer(mac_ctx,
+							eLIM_AUTH_RETRY_TIMER);
 	} else {
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_FAILURE;
 		auth_ack_status = NOT_ACKED;
