@@ -27,6 +27,29 @@
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
+ * enum roam_offload_state - Roaming module state for each STA vdev.
+ * @WLAN_ROAM_DEINIT: Roaming module is not initialized at the
+ *  firmware.
+ * @WLAN_ROAM_INIT: Roaming module initialized at the firmware.
+ * @WLAN_ROAM_RSO_ENABLED: RSO started, firmware can roam to different AP.
+ * @WLAN_ROAM_RSO_STOPPED: RSO stopped - roaming module is initialized at firmware,
+ * but firmware cannot do roaming due to supplicant disabled roaming/driver
+ * disabled roaming.
+ * @WLAN_ROAMING_IN_PROG: Roaming started at firmware. This state is
+ * transitioned after candidate selection is done at fw and preauth to
+ * the AP is started.
+ * @WLAN_ROAM_SYNCH_IN_PROG: Roaming handoff complete
+ */
+enum roam_offload_state {
+	WLAN_ROAM_DEINIT,
+	WLAN_ROAM_INIT,
+	WLAN_ROAM_RSO_ENABLED,
+	WLAN_ROAM_RSO_STOPPED,
+	WLAN_ROAMING_IN_PROG,
+	WLAN_ROAM_SYNCH_IN_PROG,
+};
+
+/**
  * enum wlan_cm_rso_control_requestor - Driver disabled roaming requestor that
  * will request the roam module to disable roaming based on the mlme operation
  * @RSO_INVALID_REQUESTOR: invalid requestor
@@ -77,16 +100,11 @@ struct wlan_cm_roam_tx_ops {
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
  * @tx_ops: Roam Tx ops to send roam offload commands to firmware
- * @reassoc_resp_frame:     Pointer to reassoc frame received in roam synch
- * indication
- * @reassoc_resp_frame_len: reassoc frame len received in roam synch indication
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
  */
 struct wlan_cm_roam {
 	struct wlan_cm_roam_tx_ops tx_ops;
-	uint8_t *reassoc_resp_frame;
-	uint16_t reassoc_resp_frame_len;
 	bool pcl_vdev_cmd_active;
 };
 #endif
