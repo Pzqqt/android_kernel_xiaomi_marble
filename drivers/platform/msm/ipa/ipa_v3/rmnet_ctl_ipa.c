@@ -514,7 +514,8 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 	/* dequeue the skb */
 	while (skb_queue_len(&rmnet_ctl_ipa3_ctx->tx_queue) > 0) {
 		skb = skb_dequeue(&rmnet_ctl_ipa3_ctx->tx_queue);
-		len = skb->len;
+		if (skb)
+			len = skb->len;
 		spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 		/*
 		 * both data packets and command will be routed to
