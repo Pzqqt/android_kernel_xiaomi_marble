@@ -1210,6 +1210,19 @@ MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
 
 MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_vdev_mgr_interface.o
 
+CM_DIR := components/umac/mlme/connection_mgr
+CM_TGT_IF_DIR := components/target_if/connection_mgr
+
+CM_INC := -I$(WLAN_ROOT)/$(CM_DIR)/dispatcher/inc \
+		-I$(WLAN_ROOT)/$(CM_TGT_IF_DIR)/inc
+
+MLME_INC += $(CM_INC)
+
+CM_ROAM_OBJS :=    $(CM_DIR)/dispatcher/src/wlan_cm_tgt_if_tx_api.o \
+			$(CM_DIR)/dispatcher/src/wlan_cm_roam_api.o \
+			$(CM_TGT_IF_DIR)/src/target_if_cm_roam_offload.o
+
+MLME_OBJS += $(CM_ROAM_OBJS)
 
 ####### BLACKLIST_MGR ########
 

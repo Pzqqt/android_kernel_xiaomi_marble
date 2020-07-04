@@ -24,6 +24,7 @@
 #include "wmi_unified_sta_api.h"
 #include "wlan_mlme_dbg.h"
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static struct wmi_unified
 *target_if_cm_roam_get_wmi_handle_from_vdev(struct wlan_objmgr_vdev *vdev)
 {
@@ -45,6 +46,14 @@ static struct wmi_unified
 	return wmi_handle;
 }
 
+/**
+ * target_if_cm_roam_send_vdev_set_pcl_cmd  - Send set vdev pcl
+ * command to wmi.
+ * @vdev: VDEV object pointer
+ * @req:  Pointer to the pcl request msg
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS
 target_if_cm_roam_send_vdev_set_pcl_cmd(struct wlan_objmgr_vdev *vdev,
 					struct set_pcl_req *req)
@@ -62,6 +71,17 @@ target_if_cm_roam_send_vdev_set_pcl_cmd(struct wlan_objmgr_vdev *vdev,
 	return wmi_unified_vdev_set_pcl_cmd(wmi_handle, &params);
 }
 
+static void
+target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
+{
+	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
+}
+#else
+static inline void
+target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
+{}
+#endif
+
 QDF_STATUS target_if_cm_roam_register_tx_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
 	if (!tx_ops) {
@@ -69,7 +89,7 @@ QDF_STATUS target_if_cm_roam_register_tx_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tx_ops->send_vdev_set_pcl_cmd = target_if_cm_roam_send_vdev_set_pcl_cmd;
+	target_if_cm_roam_register_lfr3_ops(tx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

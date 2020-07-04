@@ -5648,16 +5648,6 @@ struct sir_sae_msg {
 	tSirMacAddr peer_mac_addr;
 };
 
-/**
- * struct set_pcl_req - Request message to set the PCL
- * @chan_weights: PCL channel weights
- * @band_mask: Supported band mask
- */
-struct set_pcl_req {
-	struct wmi_pcl_chan_weights chan_weights;
-	uint32_t band_mask;
-};
-
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 /**
  * struct sir_md_evt - motion detection event status

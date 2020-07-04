@@ -9016,7 +9016,7 @@ void wma_log_completion_timeout(void *data)
  *
  * Return: Mapped channel weight of type wmi_pcl_chan_weight
  */
-static wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
+wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
 {
 	switch (pcl_weight) {
 	case WEIGHT_OF_GROUP1_PCL_CHANNELS:

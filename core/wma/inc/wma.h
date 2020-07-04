@@ -46,6 +46,7 @@
 #include "wma_api.h"
 #include "wmi_unified_param.h"
 #include "wmi.h"
+#include "wlan_cm_roam_public_srtuct.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
@@ -1474,6 +1475,14 @@ QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_RSSI_MONITOR */
+
+/**
+ * wma_map_pcl_weights  - Map WMA pcl weights to wmi pcl weights
+ * @pcl_weight: Input PCL weight to be converted to wmi format
+ *
+ * Return: wmi_pcl_chan_weight
+ */
+wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight);
 
 QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 				     struct set_pcl_req *msg);

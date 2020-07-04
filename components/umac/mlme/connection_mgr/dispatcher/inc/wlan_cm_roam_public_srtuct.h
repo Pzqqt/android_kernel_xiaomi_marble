@@ -74,6 +74,7 @@ struct wlan_cm_roam_tx_ops {
 /**
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
+ * @tx_ops: Roam Tx ops to send roam offload commands to firmware
  * @reassoc_resp_frame:     Pointer to reassoc frame received in roam synch
  * indication
  * @reassoc_resp_frame_len: reassoc frame len received in roam synch indication
@@ -81,6 +82,7 @@ struct wlan_cm_roam_tx_ops {
  * sent or PDEV level PCL command needs to be sent
  */
 struct wlan_cm_roam {
+	struct wlan_cm_roam_tx_ops tx_ops;
 	uint8_t *reassoc_resp_frame;
 	uint16_t reassoc_resp_frame_len;
 	bool pcl_vdev_cmd_active;

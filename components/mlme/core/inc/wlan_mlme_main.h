@@ -28,6 +28,7 @@
 #include <wlan_cmn.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
+#include "wlan_cm_roam_public_srtuct.h"
 
 #define mlme_legacy_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_legacy_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
@@ -156,6 +157,7 @@ struct wlan_mlme_roam {
  * @disconnect_info: Disconnection information
  * @vdev_stop_type: vdev stop type request
  * @roam_off_state: Roam offload state
+ * @cm_roam: Roaming configuration
  * @bigtk_vdev_support: BIGTK feature support for this vdev (SAP)
  * @sae_auth_retry: SAE auth retry information
  */
@@ -175,6 +177,7 @@ struct mlme_legacy_priv {
 	struct wlan_disconnect_info disconnect_info;
 	uint32_t vdev_stop_type;
 	struct wlan_mlme_roam mlme_roam;
+	struct wlan_cm_roam cm_roam;
 	bool bigtk_vdev_support;
 	struct sae_auth_retry sae_retry;
 };
@@ -539,7 +542,7 @@ mlme_get_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
  */
 void
 mlme_set_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			   enum roam_control_requestor reqs, bool clear);
+			   enum wlan_cm_rso_control_requestor reqs, bool clear);
 
 #define MLME_IS_ROAM_STATE_RSO_STARTED(psoc, vdev_id) \
 	(mlme_get_roam_state(psoc, vdev_id) == ROAM_RSO_STARTED)

@@ -18,6 +18,9 @@
  * DOC: This file contains definitions for target_if roaming offload.
  */
 
+#ifndef TARGET_IF_CM_ROAM_OFFLOAD_H__
+#define TARGET_IF_CM_ROAM_OFFLOAD_H__
+
 #include "wlan_cm_roam_public_srtuct.h"
 
 /**
@@ -29,3 +32,4 @@
  */
 QDF_STATUS
 target_if_cm_roam_register_tx_ops(struct wlan_cm_roam_tx_ops *tx_ops);
+#endif

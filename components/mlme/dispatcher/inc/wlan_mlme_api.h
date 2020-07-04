@@ -2557,4 +2557,31 @@ wlan_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)
 }
 #endif
 
+/**
+ * mlme_store_fw_scan_channels - Update the valid channel list to mlme.
+ * @psoc: Pointer to global psoc object
+ * @chan_list: Source channel list pointer
+ *
+ * Currently the channel list is saved to wma_handle to be updated in the
+ * PCL command. This cannot be accesed at target_if while sending vdev
+ * set pcl command. So save the channel list to mlme.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_store_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
+			    tSirUpdateChanList *chan_list);
+
+/**
+ * mlme_get_fw_scan_channels  - Copy the saved valid channel
+ * list to the provided buffer
+ * @psoc: Pointer to global psoc object
+ * @freq_list: Pointer to the frequency list buffer to be filled
+ * @saved_num_chan: Number of channels filled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *freq_list,
+				     uint8_t *saved_num_chan);
 #endif /* _WLAN_MLME_API_H_ */

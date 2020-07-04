@@ -72,6 +72,7 @@
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
 #include "wlan_psoc_mlme_api.h"
+#include "wlan_cm_roam_api.h"
 
 #define RSN_AUTH_KEY_MGMT_SAE           WLAN_RSN_SEL(WLAN_AKM_SAE)
 #define MAX_PWR_FCC_CHAN_12 8
@@ -8320,6 +8321,14 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		/* No encryption */
 		filter->num_of_enc_type = 1;
 		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
+		/*
+		 * Dual STA roaming is supported only for DBS mode.
+		 * So if dual sta roaming is enabled, fill the channels
+		 * allowed for 2nd STA connection based on the 1st STA
+		 * connected band.
+		 */
+		wlan_cm_dual_sta_roam_update_connect_channels(mac->psoc,
+							      filter);
 	} else {
 		/* Here is the profile we need to connect to */
 		status = csr_roam_get_scan_filter_from_profile(mac, pProfile,
@@ -10814,7 +10823,10 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				break;
 			}
 			if (csr_roam_is_channel_valid(mac_ctx,
-						      ch_info->freq_list[i])) {
+						      ch_info->freq_list[i]) &&
+			    wlan_cm_dual_sta_is_freq_allowed(
+				    mac_ctx->psoc, ch_info->freq_list[i],
+				    profile->csrPersona)) {
 				filter->chan_freq_list[filter->num_of_channels] =
 							ch_info->freq_list[i];
 				filter->num_of_channels++;
@@ -10823,6 +10835,15 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 					  ch_info->freq_list[i]);
 			}
 		}
+	} else {
+		/*
+		 * Channels allowed is not present in the roam_profile.
+		 * Update the the channels for this connection if this is
+		 * 2nd STA, with the channels other than the 1st connected
+		 * STA, as dual sta roaming is supported only on one band.
+		 */
+		wlan_cm_dual_sta_roam_update_connect_channels(mac_ctx->psoc,
+							      filter);
 	}
 
 	if (profile->force_rsne_override) {

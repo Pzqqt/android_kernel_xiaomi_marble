@@ -2739,7 +2739,7 @@ mlme_get_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 
 void
 mlme_set_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
-			   enum roam_control_requestor reqs, bool clear)
+			   enum wlan_cm_rso_control_requestor reqs, bool clear)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct mlme_legacy_priv *mlme_priv;
@@ -2818,5 +2818,61 @@ void mlme_set_roam_state(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				 new_state);
 	mlme_priv->mlme_roam.roam_sm.state = new_state;
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
+}
+
+QDF_STATUS
+mlme_store_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
+			    tSirUpdateChanList *chan_list)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_lfr_cfg *lfr;
+	uint16_t i;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	lfr = &mlme_obj->cfg.lfr;
+	qdf_mem_zero(&lfr->saved_freq_list, sizeof(lfr->saved_freq_list));
+	lfr->saved_freq_list.num_channels = chan_list->numChan;
+	for (i = 0; i < chan_list->numChan; i++)
+		lfr->saved_freq_list.freq[i] = chan_list->chanParam[i].freq;
+
+	mlme_legacy_debug("ROAM: save %d channels",
+			  chan_list->numChan);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *freq_list,
+				     uint8_t *saved_num_chan)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+	struct wlan_mlme_lfr_cfg *lfr;
+	uint16_t i;
+
+	if (!freq_list) {
+		mlme_legacy_err("ROAM: Freq list is NULL");
+		*saved_num_chan = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		mlme_legacy_err("Failed to get MLME Obj");
+		*saved_num_chan = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	lfr = &mlme_obj->cfg.lfr;
+	*saved_num_chan = lfr->saved_freq_list.num_channels;
+
+	for (i = 0; i < lfr->saved_freq_list.num_channels; i++)
+		freq_list[i] = lfr->saved_freq_list.freq[i];
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif
