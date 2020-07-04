@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -340,9 +340,10 @@ ABORT_PREAUTH:
 			reason = REASON_PREAUTH_FAILED_FOR_ALL;
 			if (neighbor_roam_info->uOsRequestedHandoff) {
 				neighbor_roam_info->uOsRequestedHandoff = 0;
-				csr_post_roam_state_change(mac_ctx, session_id,
-							   ROAM_RSO_STARTED,
-							   reason);
+				csr_post_roam_state_change(
+						   mac_ctx, session_id,
+						   WLAN_ROAM_RSO_ENABLED,
+						   reason);
 			} else {
 				/* ROAM_SCAN_OFFLOAD_RESTART is a
 				 * special command to trigger bmiss

@@ -261,6 +261,16 @@ struct mlme_roam_after_data_stall *
 mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * mlme_is_roam_invoke_in_progress  - Get if roam invoked by host
+ * is active.
+ * @psoc: Pointer to global psoc.
+ * @vdev_id: vdev id
+ *
+ * Return: True if roaming invoke is in progress
+ */
+bool mlme_is_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id);
+/**
  * mlme_cfg_on_psoc_enable() - Populate MLME structure from CFG and INI
  * @psoc: pointer to the psoc object
  *
@@ -544,20 +554,32 @@ void
 mlme_set_operations_bitmap(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			   enum wlan_cm_rso_control_requestor reqs, bool clear);
 
-#define MLME_IS_ROAM_STATE_RSO_STARTED(psoc, vdev_id) \
-	(mlme_get_roam_state(psoc, vdev_id) == ROAM_RSO_STARTED)
+#define MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id) \
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_RSO_ENABLED)
 
 #define MLME_IS_ROAM_STATE_DEINIT(psoc, vdev_id) \
-	(mlme_get_roam_state(psoc, vdev_id) == ROAM_DEINIT)
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_DEINIT)
 
 #define MLME_IS_ROAM_STATE_INIT(psoc, vdev_id) \
-	(mlme_get_roam_state(psoc, vdev_id) == ROAM_INIT)
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_INIT)
 
 #define MLME_IS_ROAM_STATE_STOPPED(psoc, vdev_id) \
-	(mlme_get_roam_state(psoc, vdev_id) == ROAM_RSO_STOPPED)
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_RSO_STOPPED)
 
 #define MLME_IS_ROAM_INITIALIZED(psoc, vdev_id) \
-	(mlme_get_roam_state(psoc, vdev_id) >= ROAM_INIT)
+	(mlme_get_roam_state(psoc, vdev_id) >= WLAN_ROAM_INIT)
+#endif
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#define MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) \
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAMING_IN_PROG)
+
+#define MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) \
+	(mlme_get_roam_state(psoc, vdev_id) == WLAN_ROAM_SYNCH_IN_PROG)
+
+#else
+#define MLME_IS_ROAMING_IN_PROG(psoc, vdev_id) (false)
+#define MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) (false)
 #endif
 
 /**

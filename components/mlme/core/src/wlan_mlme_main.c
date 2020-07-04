@@ -81,6 +81,30 @@ mlme_get_roam_invoke_params(struct wlan_objmgr_vdev *vdev)
 	return &mlme_priv->roam_invoke_params;
 }
 
+bool mlme_is_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id)
+{
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_legacy_err("Vdev object is NULL");
+		return false;
+	}
+
+	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+	if (!vdev_roam_params) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return false;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return vdev_roam_params->roam_invoke_in_progress;
+}
+
 uint8_t *mlme_get_dynamic_oce_flags(struct wlan_objmgr_vdev *vdev)
 {
 	struct mlme_legacy_priv *mlme_priv;
@@ -2579,14 +2603,18 @@ static
 const char *mlme_roam_state_to_string(enum roam_offload_state state)
 {
 	switch (state) {
-	case ROAM_INIT:
+	case WLAN_ROAM_INIT:
 		return "ROAM_INIT";
-	case ROAM_DEINIT:
+	case WLAN_ROAM_DEINIT:
 		return "ROAM_DEINIT";
-	case ROAM_RSO_STARTED:
-		return "ROAM_RSO_STARTED";
-	case ROAM_RSO_STOPPED:
+	case WLAN_ROAM_RSO_ENABLED:
+		return "ROAM_RSO_ENABLED";
+	case WLAN_ROAM_RSO_STOPPED:
 		return "ROAM_RSO_STOPPED";
+	case WLAN_ROAMING_IN_PROG:
+		return "ROAMING_IN_PROG";
+	case WLAN_ROAM_SYNCH_IN_PROG:
+		return "ROAM_SYNCH_IN_PROG";
 	default:
 		return "";
 	}
@@ -2596,9 +2624,10 @@ static void
 mlme_print_roaming_state(uint8_t vdev_id, enum roam_offload_state cur_state,
 			 enum roam_offload_state new_state)
 {
-	mlme_debug("ROAM: vdev %d: %s(%d) --> %s(%d)",
-		   vdev_id, mlme_roam_state_to_string(cur_state), cur_state,
-		   mlme_roam_state_to_string(new_state), new_state);
+	mlme_legacy_debug("ROAM: vdev%d: [%s(%d)] --> [%s(%d)]",
+			  vdev_id, mlme_roam_state_to_string(cur_state),
+			  cur_state,
+			  mlme_roam_state_to_string(new_state), new_state);
 
 	/* TODO: Try to print the state change requestor also */
 }
@@ -2777,14 +2806,14 @@ mlme_get_roam_state(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 
 	if (!vdev) {
 		mlme_legacy_err("vdev object is NULL");
-		return ROAM_DEINIT;
+		return WLAN_ROAM_DEINIT;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
 		mlme_legacy_err("vdev legacy private object is NULL");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
-		return ROAM_DEINIT;
+		return WLAN_ROAM_DEINIT;
 	}
 
 	roam_state = mlme_priv->mlme_roam.roam_sm.state;

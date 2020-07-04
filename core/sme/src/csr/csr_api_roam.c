@@ -7563,7 +7563,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 	}
 
 	if (csr_roam_is_sta_mode(mac_ctx, session_id))
-		csr_post_roam_state_change(mac_ctx, session_id, ROAM_INIT,
+		csr_post_roam_state_change(mac_ctx, session_id, WLAN_ROAM_INIT,
 					   REASON_CONNECT);
 
 	/* Not to signal link up because keys are yet to be set.
@@ -17542,8 +17542,7 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 
 		req_buf->RoamScanOffloadEnabled = 0;
 	} else if (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) {
-		if (mlme_get_roam_state(mac_ctx->psoc, session_id) ==
-		    ROAM_RSO_STARTED)
+		if (MLME_IS_ROAM_STATE_RSO_ENABLED(mac_ctx->psoc, session_id))
 			req_buf->RoamScanOffloadEnabled = 1;
 	} else {
 		req_buf->RoamScanOffloadEnabled =
@@ -18637,7 +18636,7 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 
 	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
 	switch (cur_state) {
-	case ROAM_DEINIT:
+	case WLAN_ROAM_DEINIT:
 		roaming_bitmap = mlme_get_roam_trigger_bitmap(mac->psoc,
 							      vdev_id);
 		if (!roaming_bitmap) {
@@ -18670,13 +18669,13 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 				return QDF_STATUS_E_FAILURE;
 			}
 			csr_post_roam_state_change(mac, temp_vdev_id,
-						   ROAM_DEINIT, reason);
+						   WLAN_ROAM_DEINIT, reason);
 		}
 		break;
 
-	case ROAM_INIT:
-	case ROAM_RSO_STOPPED:
-	case ROAM_RSO_STARTED:
+	case WLAN_ROAM_INIT:
+	case WLAN_ROAM_RSO_STOPPED:
+	case WLAN_ROAM_RSO_ENABLED:
 	/*
 	 * Already the roaming module is initialized at fw,
 	 * just return from here
@@ -18689,7 +18688,7 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_INIT);
+	mlme_set_roam_state(mac->psoc, vdev_id, WLAN_ROAM_INIT);
 
 	roam_enabled_vdev_id =
 		csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
@@ -18721,17 +18720,17 @@ csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
 
 	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
 	switch (cur_state) {
-	case ROAM_INIT:
-	case ROAM_RSO_STOPPED:
+	case WLAN_ROAM_INIT:
+	case WLAN_ROAM_RSO_STOPPED:
 		break;
 
-	case ROAM_DEINIT:
+	case WLAN_ROAM_DEINIT:
 		status = csr_roam_switch_to_init(mac, vdev_id, reason);
 		if (QDF_IS_STATUS_ERROR(status))
 			return status;
 
 		break;
-	case ROAM_RSO_STARTED:
+	case WLAN_ROAM_RSO_ENABLED:
 	/*
 	 * Send RSO update config if roaming already enabled
 	 */
@@ -18758,7 +18757,7 @@ csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
 		sme_debug("ROAM: RSO start failed");
 		return status;
 	}
-	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_RSO_STARTED);
+	mlme_set_roam_state(mac->psoc, vdev_id, WLAN_ROAM_RSO_ENABLED);
 
 	/*
 	 * If supplicant disabled roaming, driver does not send
@@ -18772,7 +18771,7 @@ csr_roam_switch_to_rso_start(struct mac_context *mac, uint8_t vdev_id,
 		return QDF_STATUS_SUCCESS;
 
 	sme_debug("ROAM: RSO disabled by Supplicant on vdev[%d]", vdev_id);
-	return csr_post_roam_state_change(mac, vdev_id, ROAM_RSO_STOPPED,
+	return csr_post_roam_state_change(mac, vdev_id, WLAN_ROAM_RSO_STOPPED,
 					  REASON_SUPPLICANT_DISABLED_ROAMING);
 }
 
@@ -18785,7 +18784,7 @@ csr_roam_switch_to_rso_stop(struct mac_context *mac, uint8_t vdev_id,
 
 	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
 	switch (cur_state) {
-	case ROAM_RSO_STARTED:
+	case WLAN_ROAM_RSO_ENABLED:
 		status = csr_post_rso_stop(mac, vdev_id, reason);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			sme_err("ROAM: Unable to switch to RSO STOP State");
@@ -18793,9 +18792,9 @@ csr_roam_switch_to_rso_stop(struct mac_context *mac, uint8_t vdev_id,
 		}
 		break;
 
-	case ROAM_DEINIT:
-	case ROAM_RSO_STOPPED:
-	case ROAM_INIT:
+	case WLAN_ROAM_DEINIT:
+	case WLAN_ROAM_RSO_STOPPED:
+	case WLAN_ROAM_INIT:
 	/*
 	 * Already the roaming module is initialized at fw,
 	 * nothing to do here
@@ -18803,7 +18802,7 @@ csr_roam_switch_to_rso_stop(struct mac_context *mac, uint8_t vdev_id,
 	default:
 		return QDF_STATUS_SUCCESS;
 	}
-	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_RSO_STOPPED);
+	mlme_set_roam_state(mac->psoc, vdev_id, WLAN_ROAM_RSO_STOPPED);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -18816,14 +18815,14 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 	enum roam_offload_state cur_state = mlme_get_roam_state(mac->psoc,
 								vdev_id);
 	switch (cur_state) {
-	case ROAM_RSO_STARTED:
+	case WLAN_ROAM_RSO_ENABLED:
 		csr_roam_switch_to_rso_stop(mac, vdev_id, reason);
 		break;
-	case ROAM_RSO_STOPPED:
-	case ROAM_INIT:
+	case WLAN_ROAM_RSO_STOPPED:
+	case WLAN_ROAM_INIT:
 		break;
 
-	case ROAM_DEINIT:
+	case WLAN_ROAM_DEINIT:
 	/*
 	 * Already the roaming module is de-initialized at fw,
 	 * do nothing here
@@ -18836,7 +18835,7 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_DEINIT);
+	mlme_set_roam_state(mac->psoc, vdev_id, WLAN_ROAM_DEINIT);
 
 	if (reason != REASON_SUPPLICANT_INIT_ROAMING)
 		csr_enable_roaming_on_connected_sta(mac, vdev_id);
@@ -18851,26 +18850,26 @@ csr_handle_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (requested_state != ROAM_DEINIT &&
+	if (requested_state != WLAN_ROAM_DEINIT &&
 	    !csr_is_conn_state_connected_infra(mac, vdev_id)) {
 		sme_debug("ROAM: roam state change requested in disconnected state");
 		return status;
 	}
 
 	switch (requested_state) {
-	case ROAM_DEINIT:
+	case WLAN_ROAM_DEINIT:
 		status = csr_roam_switch_to_deinit(mac, vdev_id,
 						   reason);
 		break;
-	case ROAM_INIT:
+	case WLAN_ROAM_INIT:
 		status = csr_roam_switch_to_init(mac, vdev_id,
 						 reason);
 		break;
-	case ROAM_RSO_STARTED:
+	case WLAN_ROAM_RSO_ENABLED:
 		status = csr_roam_switch_to_rso_start(mac, vdev_id,
 						      reason);
 		break;
-	case ROAM_RSO_STOPPED:
+	case WLAN_ROAM_RSO_STOPPED:
 		status = csr_roam_switch_to_rso_stop(mac, vdev_id,
 						     reason);
 		break;
@@ -21641,7 +21640,7 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 QDF_STATUS
 csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
 {
-	if (!MLME_IS_ROAM_STATE_RSO_STARTED(mac->psoc, vdev_id)) {
+	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(mac->psoc, vdev_id)) {
 		sme_debug("Update cfg received while ROAM RSO not started");
 		return QDF_STATUS_E_INVAL;
 	}
@@ -21692,6 +21691,7 @@ csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
 
 	sme_debug("ROAM: Enabling roaming on vdev[%d]", sta_vdev_id);
 
-	return csr_post_roam_state_change(mac, sta_vdev_id, ROAM_RSO_STARTED,
+	return csr_post_roam_state_change(mac, sta_vdev_id,
+					  WLAN_ROAM_RSO_ENABLED,
 					  REASON_CTX_INIT);
 }

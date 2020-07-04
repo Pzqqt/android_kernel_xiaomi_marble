@@ -271,25 +271,6 @@ enum mlme_ts_info_ack_policy {
 	TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
 };
 
-#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * enum roam_offload_state - Roaming module state for each STA vdev.
- * @ROAM_DEINIT: Roaming module is not initialized at the
- *  firmware.
- * @ROAM_INIT: Roaming module initialized at the firmware.
- * @ROAM_RSO_STARTED: RSO started, firmware can roam to different AP.
- * @ROAM_RSO_STOPPED: RSO stopped - roaming module is initialized at firmware,
- *  but firmware cannot do roaming due to supplicant disabled roaming/driver
- * disabled roaming.
- */
-enum roam_offload_state {
-	ROAM_DEINIT,
-	ROAM_INIT,
-	ROAM_RSO_STARTED,
-	ROAM_RSO_STOPPED
-};
-#endif
-
 /**
  * struct mlme_edca_params - EDCA pramaters related config items
  *

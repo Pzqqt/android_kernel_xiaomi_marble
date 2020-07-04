@@ -6226,7 +6226,8 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	mlme_set_supplicant_disabled_roaming(mac_ctx->psoc, session_id,
 					     !is_fast_roam_enabled);
 
-	state = (is_fast_roam_enabled) ? ROAM_RSO_STARTED : ROAM_RSO_STOPPED;
+	state = (is_fast_roam_enabled) ?
+		WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_RSO_STOPPED;
 	status = csr_post_roam_state_change(mac_ctx, session_id, state,
 					    REASON_SUPPLICANT_DISABLED_ROAMING);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -6324,7 +6325,7 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
 					   requestor, false);
 
 	status = csr_post_roam_state_change(mac_ctx, session_id,
-					    ROAM_RSO_STOPPED,
+					    WLAN_ROAM_RSO_STOPPED,
 					    REASON_DRIVER_DISABLED);
 
 	return status;
@@ -6356,7 +6357,8 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 	if (QDF_IS_STATUS_ERROR(status))
 		return QDF_STATUS_E_FAILURE;
 
-	status = csr_post_roam_state_change(mac, sessionId, ROAM_RSO_STARTED,
+	status = csr_post_roam_state_change(mac, sessionId,
+					    WLAN_ROAM_RSO_ENABLED,
 					    REASON_DRIVER_ENABLED);
 
 	sme_release_global_lock(&mac->sme);
@@ -15966,9 +15968,10 @@ static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
 	if (enable)
 		reason = REASON_SUPPLICANT_INIT_ROAMING;
 
-	csr_post_roam_state_change(mac, vdev_id,
-				   enable ? ROAM_RSO_STARTED : ROAM_DEINIT,
-				   reason);
+	csr_post_roam_state_change(
+			mac, vdev_id,
+			enable ? WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_DEINIT,
+			reason);
 
 	sme_release_global_lock(&mac->sme);
 
