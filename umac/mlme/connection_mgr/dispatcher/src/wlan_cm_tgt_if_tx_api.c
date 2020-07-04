@@ -81,6 +81,9 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		weights->saved_chan_list[i] = freq_list->freq[i];
 
 	weights->saved_num_chan = freq_list->num_channels;
+	if (pcl_req->clear_vdev_pcl)
+		weights->saved_num_chan = 0;
+
 	status = policy_mgr_get_valid_chan_weights(
 			psoc, (struct policy_mgr_pcl_chan_weights *)weights);
 
@@ -109,7 +112,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	mlme_debug("LFR3: Dump Vdev PCL weights");
+	mlme_debug("LFR3: vdev[%d] Dump Vdev PCL weights", pcl_req->vdev_id);
 	policy_mgr_dump_channel_list(weights->saved_num_chan,
 				     weights->saved_chan_list,
 				     weights->weighed_valid_list);

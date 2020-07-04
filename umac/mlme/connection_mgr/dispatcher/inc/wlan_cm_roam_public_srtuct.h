@@ -52,11 +52,13 @@ enum wlan_cm_rso_control_requestor {
  * struct set_pcl_req - Request message to set the PCL
  * @vdev_id:   Vdev id
  * @band_mask: Supported band mask
+ * @clear_vdev_pcl: Clear the configured vdev pcl channels
  * @chan_weights: PCL channel weights
  */
 struct set_pcl_req {
 	uint8_t vdev_id;
 	uint32_t band_mask;
+	bool clear_vdev_pcl;
 	struct wmi_pcl_chan_weights chan_weights;
 };
 
