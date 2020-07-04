@@ -1346,13 +1346,15 @@ QDF_STATUS policy_mgr_pdev_get_pcl(struct wlan_objmgr_psoc *psoc,
 /**
  * policy_mgr_set_pcl_for_existing_combo() - Set PCL for existing connection
  * @mode: Connection mode of type 'policy_mgr_con_mode'
+ * @vdev_id: Vdev Id
  *
  * Set the PCL for an existing connection
  *
  * Return: None
  */
-void policy_mgr_set_pcl_for_existing_combo(
-		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
+void policy_mgr_set_pcl_for_existing_combo(struct wlan_objmgr_psoc *psoc,
+					   enum policy_mgr_con_mode mode,
+					   uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_conc_connection_info
@@ -1386,7 +1388,7 @@ void policy_mgr_set_pcl_for_existing_combo(
 
 	/* Send PCL only if policy_mgr_pdev_get_pcl returned success */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
+		status = pm_ctx->sme_cbacks.sme_set_pcl(&pcl, vdev_id, false);
 		if (QDF_IS_STATUS_ERROR(status))
 			policy_mgr_err("Send set PCL to SME failed");
 	}

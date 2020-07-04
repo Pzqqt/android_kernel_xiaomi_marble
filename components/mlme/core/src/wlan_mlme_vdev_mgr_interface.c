@@ -27,6 +27,7 @@
 #include <include/wlan_mlme_cmn.h>
 #include <../../core/src/vdev_mgr_ops.h>
 #include "wlan_psoc_mlme_api.h"
+#include "target_if_cm_roam_offload.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -940,6 +941,9 @@ QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 		mlme_legacy_err("failed to allocate meory for ext_vdev_ptr");
 		return QDF_STATUS_E_NOMEM;
 	}
+
+	target_if_cm_roam_register_tx_ops(
+			&vdev_mlme->ext_vdev_ptr->cm_roam.tx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

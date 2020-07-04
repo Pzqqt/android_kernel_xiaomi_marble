@@ -45,6 +45,8 @@
 #include "wma_types.h"
 #include "lim_api.h"
 #include "lim_session_utils.h"
+#include "wlan_cm_tgt_if_tx_api.h"
+#include "wlan_cm_roam_api.h"
 
 #include "cds_utils.h"
 
@@ -8759,9 +8761,9 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_set_rssi_monitoring(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case SIR_HAL_PDEV_SET_PCL_TO_FW:
-		wma_send_pdev_set_pcl_cmd(wma_handle,
-				(struct set_pcl_req *)msg->bodyptr);
+	case SIR_HAL_SET_PCL_TO_FW:
+		wma_send_set_pcl_cmd(wma_handle,
+				     (struct set_pcl_req *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_PDEV_SET_HW_MODE:
@@ -9033,7 +9035,7 @@ wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
 }
 
 /**
- * wma_send_pdev_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * wma_send_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
  * @wma_handle: WMA handle
  * @msg: PCL structure containing the PCL and the number of channels
  *
@@ -9051,8 +9053,8 @@ wmi_pcl_chan_weight wma_map_pcl_weights(uint32_t pcl_weight)
  *
  * Return: Success if the cmd is sent successfully to the firmware
  */
-QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
-				     struct set_pcl_req *msg)
+QDF_STATUS wma_send_set_pcl_cmd(tp_wma_handle wma_handle,
+				struct set_pcl_req *msg)
 {
 	uint32_t i;
 	QDF_STATUS status;
@@ -9062,6 +9064,15 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 				__func__);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	/*
+	 * if vdev_id is WLAN_UMAC_VDEV_ID_MAX, then roaming is enabled on
+	 * only one sta, so PDEV PCL command needs to be sent.
+	 * If a valid vdev id is present, then vdev pcl command needs to be
+	 * sent.
+	 */
+	if (msg->vdev_id != WLAN_UMAC_VDEV_ID_MAX)
+		return wlan_cm_roam_send_set_vdev_pcl(wma_handle->psoc, msg);
 
 	for (i = 0; i < wma_handle->saved_chan.num_channels; i++) {
 		msg->chan_weights.saved_chan_list[i] =

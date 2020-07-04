@@ -64,6 +64,9 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_psoc_mlme_api.h"
 #include "mac_init_api.h"
+#include "wlan_cm_roam_public_srtuct.h"
+#include "wlan_cm_roam_api.h"
+#include "wlan_cm_tgt_if_tx_api.h"
 
 static QDF_STATUS init_sme_cmd_list(struct mac_context *mac);
 
@@ -1209,7 +1212,7 @@ QDF_STATUS sme_start(mac_handle_t mac_handle)
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		sme_cbacks.sme_nss_update_request = sme_nss_update_request;
 		sme_cbacks.sme_pdev_set_hw_mode = sme_pdev_set_hw_mode;
-		sme_cbacks.sme_pdev_set_pcl = sme_pdev_set_pcl;
+		sme_cbacks.sme_set_pcl = sme_set_pcl;
 		sme_cbacks.sme_soc_set_dual_mac_config =
 			sme_soc_set_dual_mac_config;
 		sme_cbacks.sme_change_mcc_beacon_interval =
@@ -1217,6 +1220,8 @@ QDF_STATUS sme_start(mac_handle_t mac_handle)
 		sme_cbacks.sme_get_ap_channel_from_scan =
 			sme_get_ap_channel_from_scan;
 		sme_cbacks.sme_scan_result_purge = sme_scan_result_purge;
+		sme_cbacks.sme_rso_start_cb = sme_start_roaming;
+		sme_cbacks.sme_rso_stop_cb = sme_stop_roaming;
 		status = policy_mgr_register_sme_cb(mac->psoc, &sme_cbacks);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("Failed to register sme cb with Policy Manager: %d",
@@ -6315,7 +6320,8 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
  *	   Other status on failure
  */
 QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
-			    uint8_t reason, uint32_t requestor)
+			    uint8_t reason,
+			    enum wlan_cm_rso_control_requestor requestor)
 {
 	QDF_STATUS status;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
@@ -6349,7 +6355,8 @@ QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t session_id,
  *	Other status on failure
  */
 QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
-			     uint8_t reason, uint32_t requestor)
+			     uint8_t reason,
+			     enum wlan_cm_rso_control_requestor requestor)
 {
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -6370,6 +6377,68 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 	sme_release_global_lock(&mac->sme);
 
 	return status;
+}
+
+void sme_set_pcl_for_first_connected_vdev(mac_handle_t mac_handle,
+					  uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	uint8_t roam_enabled_vdev_id;
+
+	/*
+	 * Get the vdev id of the STA on which roaming is already
+	 * initialized and set the vdev PCL for that STA vdev if dual
+	 * STA roaming feature is enabled
+	 * If this is the first connected STA vdev, then PDEV pcl will
+	 * be set at csr_roam_switch_to_init.
+	 */
+	roam_enabled_vdev_id = csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
+
+	if (wlan_mlme_get_dual_sta_roaming_enabled(mac->psoc) &&
+	    roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		wlan_cm_roam_activate_pcl_per_vdev(mac->psoc,
+						   roam_enabled_vdev_id,
+						   true);
+		policy_mgr_set_pcl_for_existing_combo(mac->psoc, PM_STA_MODE,
+						      roam_enabled_vdev_id);
+	}
+}
+
+void sme_clear_and_set_pcl_for_connected_vdev(mac_handle_t mac_handle,
+					      uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct policy_mgr_pcl_list *msg;
+	uint8_t roam_enabled_vdev_id;
+
+	/*
+	 * Clear VDEV PCL for other STA vdev when dual sta roaming
+	 * is enabled on disconnection on one STA.
+	 * This is followed by set PDEV pcl to firmware
+	 */
+	roam_enabled_vdev_id = csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
+
+	if (wlan_mlme_get_dual_sta_roaming_enabled(mac->psoc) &&
+	    roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
+		msg = qdf_mem_malloc(sizeof(*msg));
+		if (!msg)
+			return;
+
+		/*
+		 * Here the PCL level should be at vdev level already as this
+		 * is invoked from disconnect handler. Clear the vdev pcl
+		 * for the existing connected STA vdev and this is followed
+		 * by set PDEV pcl.
+		 */
+		sme_set_pcl(msg, roam_enabled_vdev_id, true);
+		qdf_mem_free(msg);
+
+		wlan_cm_roam_activate_pcl_per_vdev(mac->psoc,
+						   roam_enabled_vdev_id,
+						   false);
+		policy_mgr_set_pcl_for_existing_combo(mac->psoc, PM_STA_MODE,
+						      roam_enabled_vdev_id);
+	}
 }
 
 /*
@@ -12080,40 +12149,52 @@ QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
 
 /**
  * sme_get_connected_roaming_vdev_band_mask() - get connected vdev band mask
+ * @vdev_id: Vdev id
  *
  * Return: reg wifi band mask
  */
-static uint32_t sme_get_connected_roaming_vdev_band_mask(void)
+static uint32_t
+sme_get_connected_roaming_vdev_band_mask(uint8_t vdev_id)
 {
 	uint32_t band_mask = REG_BAND_MASK_ALL;
 	struct mac_context *mac = sme_get_mac_context();
 	struct csr_roam_session *session;
-	uint8_t session_id;
+	bool dual_sta_roam_active;
 
 	if (!mac) {
 		sme_debug("MAC Context is NULL");
 		return band_mask;
 	}
-	session_id = csr_get_roam_enabled_sta_sessionid(mac);
-	if (session_id != WLAN_UMAC_VDEV_ID_MAX) {
-		session = CSR_GET_SESSION(mac, session_id);
-		band_mask = BIT(wlan_reg_freq_to_band(
-					session->connectedProfile.op_freq));
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("Session not found for vdev:%d", vdev_id);
 		return band_mask;
 	}
+
+	/*
+	 * If PCL command is PDEV level, only one sta is active.
+	 * So fill the band mask if intra band roaming is enabled
+	 */
+	if (!wlan_cm_roam_is_pcl_per_vdev_active(mac->psoc, vdev_id)) {
+		if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac))
+			band_mask = BIT(wlan_reg_freq_to_band(
+					session->connectedProfile.op_freq));
+
+		return band_mask;
+	}
+
+	dual_sta_roam_active =
+			wlan_mlme_get_dual_sta_roaming_enabled(mac->psoc);
+	if (dual_sta_roam_active)
+		band_mask = BIT(wlan_reg_freq_to_band(
+				session->connectedProfile.op_freq));
 
 	return band_mask;
 }
 
-/*
- * sme_pdev_set_pcl() - Send WMI_PDEV_SET_PCL_CMDID to the WMA
- * @mac_handle: Handle returned by macOpen
- * @msg: PCL channel list and length structure
- *
- * Sends the command to WMA to send WMI_PDEV_SET_PCL_CMDID to FW
- * Return: QDF_STATUS_SUCCESS on successful posting
- */
-QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
+QDF_STATUS sme_set_pcl(struct policy_mgr_pcl_list *msg, uint8_t vdev_id,
+		       bool clear_vdev_pcl)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac   = sme_get_mac_context();
@@ -12131,21 +12212,34 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (!MLME_IS_ROAM_INITIALIZED(mac->psoc, vdev_id)) {
+		sme_debug("Roam is not initialized on vdev:%d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
 
-	req_msg->band_mask = REG_BAND_MASK_ALL;
-	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
-		req_msg->band_mask = sme_get_connected_roaming_vdev_band_mask();
-		sme_debug("Connected STA band mask%d", req_msg->band_mask);
-	}
+	req_msg->band_mask = sme_get_connected_roaming_vdev_band_mask(vdev_id);
+	sme_debug("Connected STA band mask%d", req_msg->band_mask);
+
 	for (i = 0; i < msg->pcl_len; i++) {
 		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
 		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
 	}
 
 	req_msg->chan_weights.pcl_len = msg->pcl_len;
+	req_msg->clear_vdev_pcl = clear_vdev_pcl;
+
+	/*
+	 * Set vdev value as WLAN_UMAC_VDEV_ID_MAX, if PDEV level
+	 * PCL command needs to be sent.
+	 */
+	if (!wlan_cm_roam_is_pcl_per_vdev_active(mac->psoc, vdev_id))
+		vdev_id = WLAN_UMAC_VDEV_ID_MAX;
+
+	req_msg->vdev_id = vdev_id;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -12156,11 +12250,11 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 
 	/* Serialize the req through MC thread */
 	message.bodyptr = req_msg;
-	message.type    = SIR_HAL_PDEV_SET_PCL_TO_FW;
+	message.type    = eWNI_SME_ROAM_SEND_SET_PCL_REQ;
 	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA, &message);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+					QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("scheduler_post_msg failed!(err=%d)", status);
 		qdf_mem_free(req_msg);
 		status = QDF_STATUS_E_FAILURE;

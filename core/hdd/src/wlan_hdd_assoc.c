@@ -73,6 +73,7 @@
 #include "wlan_hdd_sta_info.h"
 #include "wlan_hdd_ftm_time_sync.h"
 #include "wlan_hdd_periodic_sta_stats.h"
+#include "wlan_cm_roam_api.h"
 
 #include <ol_defines.h>
 #include "wlan_pkt_capture_ucfg_api.h"
@@ -1987,9 +1988,13 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	hdd_print_bss_info(sta_ctx);
 
-	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
+	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc) &&
+	    QDF_STA_MODE == adapter->device_mode) {
 		sme_enable_roaming_on_connected_sta(mac_handle,
 						    adapter->vdev_id);
+		sme_clear_and_set_pcl_for_connected_vdev(mac_handle,
+							 adapter->vdev_id);
+	}
 
 	return status;
 }
@@ -2824,6 +2829,14 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			hdd_debug("p2p cli active keep roam disabled");
 		} else {
+			/*
+			 * On successful association. set the vdev PCL for the
+			 * already existing STA which was connected first
+			 */
+			sme_set_pcl_for_first_connected_vdev(
+					hdd_ctx->mac_handle,
+					adapter->vdev_id);
+
 			/*
 			 * Enable roaming on other STA iface except this one.
 			 * Firmware dosent support connection on one STA iface

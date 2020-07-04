@@ -50,7 +50,7 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 
 	/* value - true (vdev pcl) false - pdev pcl */
 	mlme_priv->cm_roam.pcl_vdev_cmd_active = pcl_per_vdev;
-	mlme_legacy_debug("CM_ROAM: SET PCL cmd level - [%s]",
+	mlme_legacy_debug("CM_ROAM: vdev[%d] SET PCL cmd level - [%s]", vdev_id,
 			  pcl_per_vdev ? "VDEV" : "PDEV");
 }
 

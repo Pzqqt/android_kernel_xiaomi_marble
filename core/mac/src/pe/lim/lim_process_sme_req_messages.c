@@ -3464,7 +3464,7 @@ static void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 	struct scheduler_msg wma_msg = {0};
 	QDF_STATUS status;
 
-	wma_msg.type = SIR_HAL_PDEV_SET_PCL_TO_FW;
+	wma_msg.type = SIR_HAL_SET_PCL_TO_FW;
 	wma_msg.bodyptr = msg_buf;
 
 	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);

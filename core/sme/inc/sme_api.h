@@ -46,6 +46,7 @@
 #include <qca_vendor.h>
 #include "wmi_unified.h"
 #include "wmi_unified_param.h"
+#include "wlan_cm_roam_public_srtuct.h"
 
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -971,10 +972,43 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 				   const bool is_fast_roam_enabled);
 
 QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t sessionId,
-			    uint8_t reason, uint32_t requestor);
+			    uint8_t reason,
+			    enum wlan_cm_rso_control_requestor requestor);
 
 QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
-			     uint8_t reason, uint32_t requestor);
+			     uint8_t reason,
+			     enum wlan_cm_rso_control_requestor requestor);
+
+/**
+ * sme_set_pcl_for_first_connected_vdev  - Set the vdev pcl for the connected
+ * STA vdev
+ * @mac_handle: Pointer to opaque mac handle
+ * @vdev_id: vdev id
+ *
+ * This API will be called from the association completion handler of the
+ * 2nd STA to set the vdev pcl for the 1st.
+ *
+ * Return: None
+ */
+void sme_set_pcl_for_first_connected_vdev(mac_handle_t mac_handle,
+					  uint8_t vdev_id);
+
+/**
+ * sme_clear_and_set_pcl_for_connected_vdev  - Clear the vdev pcl for the
+ * current connected VDEV and Set PDEV pcl for that vdev.
+ *
+ * @mac_handle: Pointer to opaque mac handle
+ * @vdev_id: vdev id
+ *
+ * This API will be called from the disconnection handler of the 2nd STA.
+ * In the disconnection path. Clear the existing vdev pcl for the 1st STA
+ * and set the PDEV pcl.
+ *
+ * Return: None
+ */
+void sme_clear_and_set_pcl_for_connected_vdev(mac_handle_t mac_handle,
+					      uint8_t vdev_id);
+
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 					     uint8_t sessionId,
@@ -1808,7 +1842,21 @@ void sme_update_user_configured_nss(mac_handle_t mac_handle, uint8_t nss);
 
 bool sme_is_any_session_in_connected_state(mac_handle_t mac_handle);
 
-QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg);
+/**
+ * sme_set_pcl() - Send set pcl command to the WMA via lim
+ * @msg: PCL channel list and length structure
+ * @vdev_id: Vdev id
+ * @clear_vdev_pcl: flag to clear the configured vdev pcl
+ *
+ * Sends the set pcl command to lim->WMA to send WMI_PDEV_SET_PCL_CMDID to FW
+ * if dual sta roaming is disabled. If dual sta roaming is enabled,
+ * WMI_VDEV_SET_PCL_CMDID will be sent.
+ *
+ * Return: QDF_STATUS_SUCCESS on successful posting
+ */
+QDF_STATUS sme_set_pcl(struct policy_mgr_pcl_list *msg, uint8_t vdev_id,
+		       bool clear_vdev_pcl);
+
 QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg);
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				  uint8_t  new_nss, uint8_t ch_width,

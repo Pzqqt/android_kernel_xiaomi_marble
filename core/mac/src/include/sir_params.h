@@ -381,7 +381,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_FLUSH_LOG_TO_FW            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 160)
 
-#define SIR_HAL_PDEV_SET_PCL_TO_FW         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 161)
+#define SIR_HAL_SET_PCL_TO_FW              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 161)
 
 #ifdef WLAN_MWS_INFO_DEBUGFS
 #define SIR_HAL_GET_MWS_COEX_INFO_REQ      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 162)

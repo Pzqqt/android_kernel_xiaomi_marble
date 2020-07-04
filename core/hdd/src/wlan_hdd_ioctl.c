@@ -3784,9 +3784,19 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 		  val);
 
 	ucfg_mlme_set_roam_intra_band(hdd_ctx->psoc, (bool)val);
-	policy_mgr_set_pcl_for_existing_combo(
-					hdd_ctx->psoc,
-					PM_STA_MODE);
+
+	/* Disable roaming on Vdev before setting PCL */
+	sme_stop_roaming(hdd_ctx->mac_handle, adapter->vdev_id,
+			 REASON_DRIVER_DISABLED,
+			 RSO_SET_PCL);
+
+	policy_mgr_set_pcl_for_existing_combo(hdd_ctx->psoc, PM_STA_MODE,
+					      adapter->vdev_id);
+
+	/* Enable roaming once SET pcl is done */
+	sme_start_roaming(hdd_ctx->mac_handle, adapter->vdev_id,
+			  REASON_DRIVER_ENABLED,
+			  RSO_SET_PCL);
 
 exit:
 	return ret;

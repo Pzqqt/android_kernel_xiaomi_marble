@@ -354,15 +354,17 @@ csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
  * csr_get_roam_enabled_sta_sessionid() - get the session id of the sta on which
  * roaming is enabled.
  * @mac_ctx:  pointer to global mac structure
+ * @vdev_id: vdev id of the requestor
  *
- * The function check if any sta is present and has roaming enabled and return
- * the session id of the sta with roaming enabled else if roaming is not enabled
- * on any STA return WLAN_UMAC_VDEV_ID_MAX
+ * The function checks if any sta(other than the provided vdev_id) is present
+ * and has roaming enabled and return the session id of the sta with roaming
+ * enabled else if roaming is not enabled on any STA return
+ * WLAN_UMAC_VDEV_ID_MAX.
  *
  * Return: session id of STA on which roaming is enabled
  */
-uint8_t csr_get_roam_enabled_sta_sessionid(
-	struct mac_context *mac_ctx);
+uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx,
+					   uint8_t vdev_id);
 
 #if defined(WLAN_FEATURE_FILS_SK)
 /**

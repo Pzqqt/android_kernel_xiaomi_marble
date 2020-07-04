@@ -1225,10 +1225,12 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 	     eCSR_CFG_DOT11_MODE_11AX_ONLY))
 		pChanList->he_en = true;
 
+	pChanList->numChan = num_channel;
+	mlme_store_fw_scan_channels(mac->psoc, pChanList);
+
 	msg.type = WMA_UPDATE_CHAN_LIST_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = pChanList;
-	pChanList->numChan = num_channel;
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
 			 NO_SESSION, msg.type));
 	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
@@ -18413,7 +18415,8 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 					roam_score_params->min_roam_score_delta;
 }
 
-uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
+uint8_t
+csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx, uint8_t vdev_id)
 {
 	struct csr_roam_session *session;
 	uint8_t i;
@@ -18424,6 +18427,9 @@ uint8_t csr_get_roam_enabled_sta_sessionid(struct mac_context *mac_ctx)
 			continue;
 		if (!session->pCurRoamProfile ||
 		    session->pCurRoamProfile->csrPersona != QDF_STA_MODE)
+			continue;
+
+		if (vdev_id == i)
 			continue;
 
 		if (MLME_IS_ROAM_INITIALIZED(mac_ctx->psoc, i))
@@ -18512,9 +18518,13 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 			uint8_t reason)
 {
 	enum roam_offload_state cur_state;
-	uint8_t temp_vdev_id;
+	uint8_t temp_vdev_id, roam_enabled_vdev_id;
 	uint32_t roaming_bitmap;
+	bool dual_sta_roam_active;
 	QDF_STATUS status;
+
+	dual_sta_roam_active =
+		wlan_mlme_get_dual_sta_roaming_enabled(mac->psoc);
 
 	cur_state = mlme_get_roam_state(mac->psoc, vdev_id);
 	switch (cur_state) {
@@ -18527,13 +18537,16 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 			return QDF_STATUS_E_FAILURE;
 		}
 
+		if (dual_sta_roam_active)
+			break;
+
 		/*
 		 * Disable roaming on the enabled sta if supplicant wants to
 		 * enable roaming on this vdev id
 		 */
-		temp_vdev_id = csr_get_roam_enabled_sta_sessionid(mac);
-		if ((temp_vdev_id != WLAN_UMAC_VDEV_ID_MAX) &&
-		    (vdev_id != temp_vdev_id)) {
+		temp_vdev_id = csr_get_roam_enabled_sta_sessionid(
+							mac, vdev_id);
+		if (temp_vdev_id != WLAN_UMAC_VDEV_ID_MAX) {
 			/*
 			 * Roam init state can be requested as part of
 			 * initial connection or due to enable from
@@ -18564,11 +18577,24 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 	}
 
 	status = csr_send_roam_offload_init_msg(mac, vdev_id, true);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	mlme_set_roam_state(mac->psoc, vdev_id, ROAM_INIT);
+
+	roam_enabled_vdev_id =
+		csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
+
+	/* Send PDEV pcl command if only one STA is in connected state
+	 * If there is another STA connection exist, then set the
+	 * PCL type to vdev level
+	 */
+	if (roam_enabled_vdev_id != WLAN_UMAC_VDEV_ID_MAX &&
+	    dual_sta_roam_active)
+		wlan_cm_roam_activate_pcl_per_vdev(mac->psoc, vdev_id, true);
+
+	/* Set PCL before sending RSO start */
+	policy_mgr_set_pcl_for_existing_combo(mac->psoc, PM_STA_MODE, vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -18698,7 +18724,6 @@ csr_roam_switch_to_deinit(struct mac_context *mac, uint8_t vdev_id,
 	}
 
 	status = csr_send_roam_offload_init_msg(mac, vdev_id, false);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -18779,7 +18804,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	struct roam_ext_params *roam_params_dst;
 	struct roam_ext_params *roam_params_src;
-	uint8_t temp_session_id;
 	bool prev_roaming_state;
 	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
 	uint32_t fw_akm_bitmap;
@@ -18800,14 +18824,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
 		sme_debug("Session not in connected state, RSO not sent and state=%d ",
 			  roam_info->neighborRoamState);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	temp_session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
-	if ((temp_session_id != WLAN_UMAC_VDEV_ID_MAX) &&
-	    (session_id != temp_session_id)) {
-		sme_debug("Roam cmd not for session %d on which roaming is enabled",
-			   temp_session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -19026,7 +19042,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		csr_update_11k_offload_params(mac_ctx, session, req_buf, FALSE);
 
 	prev_roaming_state = mlme_get_roam_state(mac_ctx->psoc, session_id);
-	policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc, PM_STA_MODE);
 
 	/* Update PER config to FW. No need to update in case of stop command,
 	 * FW takes care of stopping this internally
@@ -19041,8 +19056,6 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 			  __func__);
 		mlme_set_roam_state(mac_ctx->psoc, session_id,
 				    prev_roaming_state);
-		policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc,
-						      PM_STA_MODE);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* update the last sent cmd */
@@ -21538,7 +21551,7 @@ csr_enable_roaming_on_connected_sta(struct mac_context *mac, uint8_t vdev_id)
 	uint32_t count;
 	uint32_t idx;
 
-	sta_vdev_id = csr_get_roam_enabled_sta_sessionid(mac);
+	sta_vdev_id = csr_get_roam_enabled_sta_sessionid(mac, vdev_id);
 	if (sta_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
 		return QDF_STATUS_E_FAILURE;
 
