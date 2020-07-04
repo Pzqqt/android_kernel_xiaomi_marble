@@ -273,25 +273,6 @@ enum mlme_ts_info_ack_policy {
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
- * enum roam_control_requestor - Driver disabled roaming requestor that will
- *  request the roam module to disable roaming based on the mlme operation
- * @RSO_INVALID_REQUESTOR: invalid requestor
- * @RSO_START_BSS: disable roaming temporarily due to start bss
- * @RSO_CHANNEL_SWITCH: disable roaming due to STA channel switch
- * @RSO_CONNECT_START: disable roaming temporarily due to connect
- * @RSO_SAP_CHANNEL_CHANGE: disable roaming due to SAP channel change
- * @RSO_NDP_CON_ON_NDI: disable roaming due to NDP connection on NDI
- */
-enum roam_control_requestor {
-	RSO_INVALID_REQUESTOR,
-	RSO_START_BSS          = BIT(0),
-	RSO_CHANNEL_SWITCH     = BIT(1),
-	RSO_CONNECT_START      = BIT(2),
-	RSO_SAP_CHANNEL_CHANGE = BIT(3),
-	RSO_NDP_CON_ON_NDI     = BIT(4),
-};
-
-/**
  * enum roam_offload_state - Roaming module state for each STA vdev.
  * @ROAM_DEINIT: Roaming module is not initialized at the
  *  firmware.
@@ -1456,6 +1437,16 @@ struct bss_load_trigger {
 #define LFR3_STA_ROAM_DISABLE_BY_P2P BIT(0)
 #define LFR3_STA_ROAM_DISABLE_BY_NAN BIT(1)
 
+/**
+ * struct fw_scan_channels  - Channel details part of VDEV set PCL command
+ * @num_channels: Number of channels
+ * @ch_freq_list: Channel Frequency list
+ */
+struct fw_scan_channels {
+	uint8_t num_channels;
+	uint32_t freq[NUM_CHANNELS];
+};
+
 /*
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
@@ -1565,6 +1556,7 @@ struct bss_load_trigger {
  * @fw_akm_bitmap:                  Supported Akm suites of firmware
  * @roam_full_scan_period: Idle period in seconds between two successive
  * full channel roam scans
+ * @saved_freq_list: Valid channel list
  * @sae_single_pmk_feature_enabled: Contains value of ini
  * sae_single_pmk_feature_enabled
  */
@@ -1676,6 +1668,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t fw_akm_bitmap;
 	uint32_t roam_full_scan_period;
+	struct fw_scan_channels saved_freq_list;
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	bool sae_single_pmk_feature_enabled;
 #endif

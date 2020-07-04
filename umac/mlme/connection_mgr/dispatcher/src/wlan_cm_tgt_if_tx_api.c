@@ -34,7 +34,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 			       struct set_pcl_req *pcl_req)
 {
 	struct wlan_cm_roam_tx_ops roam_tx_ops;
-	struct saved_channels *freq_list;
+	struct fw_scan_channels *freq_list;
 	struct wlan_objmgr_vdev *vdev;
 	struct wmi_pcl_chan_weights *weights;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -73,8 +73,8 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 		goto end;
 	}
 
-	mlme_roam_fill_saved_channels(psoc, freq_list->freq,
-				      &freq_list->num_channels);
+	mlme_get_fw_scan_channels(psoc, freq_list->freq,
+				  &freq_list->num_channels);
 
 	weights = &pcl_req->chan_weights;
 	for (i = 0; i < freq_list->num_channels; i++)
@@ -86,7 +86,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_free(freq_list);
 
-	for (i = 0; i < chan_weights->saved_num_chan; i++) {
+	for (i = 0; i < weights->saved_num_chan; i++) {
 		weights->weighed_valid_list[i] =
 			wma_map_pcl_weights(weights->weighed_valid_list[i]);
 
