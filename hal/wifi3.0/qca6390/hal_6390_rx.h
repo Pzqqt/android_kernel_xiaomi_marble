@@ -547,103 +547,103 @@ static void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
 {
 	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_end tlv (1/2) - "
-			"rxpcu_mpdu_filter_in_category: %x "
-			"sw_frame_group_id: %x "
-			"phy_ppdu_id: %x "
-			"ip_hdr_chksum: %x "
-			"tcp_udp_chksum: %x "
-			"key_id_octet: %x "
-			"cce_super_rule: %x "
-			"cce_classify_not_done_truncat: %x "
-			"cce_classify_not_done_cce_dis: %x "
-			"ext_wapi_pn_63_48: %x "
-			"ext_wapi_pn_95_64: %x "
-			"ext_wapi_pn_127_96: %x "
-			"reported_mpdu_length: %x "
-			"first_msdu: %x "
-			"last_msdu: %x "
-			"sa_idx_timeout: %x "
-			"da_idx_timeout: %x "
-			"msdu_limit_error: %x "
-			"flow_idx_timeout: %x "
-			"flow_idx_invalid: %x "
-			"wifi_parser_error: %x "
-			"amsdu_parser_error: %x",
-			msdu_end->rxpcu_mpdu_filter_in_category,
-			msdu_end->sw_frame_group_id,
-			msdu_end->phy_ppdu_id,
-			msdu_end->ip_hdr_chksum,
-			msdu_end->tcp_udp_chksum,
-			msdu_end->key_id_octet,
-			msdu_end->cce_super_rule,
-			msdu_end->cce_classify_not_done_truncate,
-			msdu_end->cce_classify_not_done_cce_dis,
-			msdu_end->ext_wapi_pn_63_48,
-			msdu_end->ext_wapi_pn_95_64,
-			msdu_end->ext_wapi_pn_127_96,
-			msdu_end->reported_mpdu_length,
-			msdu_end->first_msdu,
-			msdu_end->last_msdu,
-			msdu_end->sa_idx_timeout,
-			msdu_end->da_idx_timeout,
-			msdu_end->msdu_limit_error,
-			msdu_end->flow_idx_timeout,
-			msdu_end->flow_idx_invalid,
-			msdu_end->wifi_parser_error,
-			msdu_end->amsdu_parser_error);
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_DP,
+		       "rx_msdu_end tlv (1/2) - "
+		       "rxpcu_mpdu_filter_in_category: %x "
+		       "sw_frame_group_id: %x "
+		       "phy_ppdu_id: %x "
+		       "ip_hdr_chksum: %x "
+		       "tcp_udp_chksum: %x "
+		       "key_id_octet: %x "
+		       "cce_super_rule: %x "
+		       "cce_classify_not_done_truncat: %x "
+		       "cce_classify_not_done_cce_dis: %x "
+		       "ext_wapi_pn_63_48: %x "
+		       "ext_wapi_pn_95_64: %x "
+		       "ext_wapi_pn_127_96: %x "
+		       "reported_mpdu_length: %x "
+		       "first_msdu: %x "
+		       "last_msdu: %x "
+		       "sa_idx_timeout: %x "
+		       "da_idx_timeout: %x "
+		       "msdu_limit_error: %x "
+		       "flow_idx_timeout: %x "
+		       "flow_idx_invalid: %x "
+		       "wifi_parser_error: %x "
+		       "amsdu_parser_error: %x",
+		       msdu_end->rxpcu_mpdu_filter_in_category,
+		       msdu_end->sw_frame_group_id,
+		       msdu_end->phy_ppdu_id,
+		       msdu_end->ip_hdr_chksum,
+		       msdu_end->tcp_udp_chksum,
+		       msdu_end->key_id_octet,
+		       msdu_end->cce_super_rule,
+		       msdu_end->cce_classify_not_done_truncate,
+		       msdu_end->cce_classify_not_done_cce_dis,
+		       msdu_end->ext_wapi_pn_63_48,
+		       msdu_end->ext_wapi_pn_95_64,
+		       msdu_end->ext_wapi_pn_127_96,
+		       msdu_end->reported_mpdu_length,
+		       msdu_end->first_msdu,
+		       msdu_end->last_msdu,
+		       msdu_end->sa_idx_timeout,
+		       msdu_end->da_idx_timeout,
+		       msdu_end->msdu_limit_error,
+		       msdu_end->flow_idx_timeout,
+		       msdu_end->flow_idx_invalid,
+		       msdu_end->wifi_parser_error,
+		       msdu_end->amsdu_parser_error);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_end tlv (2/2)- "
-			"sa_is_valid: %x "
-			"da_is_valid: %x "
-			"da_is_mcbc: %x "
-			"l3_header_padding: %x "
-			"ipv6_options_crc: %x "
-			"tcp_seq_number: %x "
-			"tcp_ack_number: %x "
-			"tcp_flag: %x "
-			"lro_eligible: %x "
-			"window_size: %x "
-			"da_offset: %x "
-			"sa_offset: %x "
-			"da_offset_valid: %x "
-			"sa_offset_valid: %x "
-			"rule_indication_31_0: %x "
-			"rule_indication_63_32: %x "
-			"sa_idx: %x "
-			"da_idx: %x "
-			"msdu_drop: %x "
-			"reo_destination_indication: %x "
-			"flow_idx: %x "
-			"fse_metadata: %x "
-			"cce_metadata: %x "
-			"sa_sw_peer_id: %x ",
-			msdu_end->sa_is_valid,
-			msdu_end->da_is_valid,
-			msdu_end->da_is_mcbc,
-			msdu_end->l3_header_padding,
-			msdu_end->ipv6_options_crc,
-			msdu_end->tcp_seq_number,
-			msdu_end->tcp_ack_number,
-			msdu_end->tcp_flag,
-			msdu_end->lro_eligible,
-			msdu_end->window_size,
-			msdu_end->da_offset,
-			msdu_end->sa_offset,
-			msdu_end->da_offset_valid,
-			msdu_end->sa_offset_valid,
-			msdu_end->rule_indication_31_0,
-			msdu_end->rule_indication_63_32,
-			msdu_end->sa_idx,
-			msdu_end->da_idx_or_sw_peer_id,
-			msdu_end->msdu_drop,
-			msdu_end->reo_destination_indication,
-			msdu_end->flow_idx,
-			msdu_end->fse_metadata,
-			msdu_end->cce_metadata,
-			msdu_end->sa_sw_peer_id);
+	__QDF_TRACE_RL(dbg_level, QDF_MODULE_ID_DP,
+		       "rx_msdu_end tlv (2/2)- "
+		       "sa_is_valid: %x "
+		       "da_is_valid: %x "
+		       "da_is_mcbc: %x "
+		       "l3_header_padding: %x "
+		       "ipv6_options_crc: %x "
+		       "tcp_seq_number: %x "
+		       "tcp_ack_number: %x "
+		       "tcp_flag: %x "
+		       "lro_eligible: %x "
+		       "window_size: %x "
+		       "da_offset: %x "
+		       "sa_offset: %x "
+		       "da_offset_valid: %x "
+		       "sa_offset_valid: %x "
+		       "rule_indication_31_0: %x "
+		       "rule_indication_63_32: %x "
+		       "sa_idx: %x "
+		       "da_idx: %x "
+		       "msdu_drop: %x "
+		       "reo_destination_indication: %x "
+		       "flow_idx: %x "
+		       "fse_metadata: %x "
+		       "cce_metadata: %x "
+		       "sa_sw_peer_id: %x ",
+		       msdu_end->sa_is_valid,
+		       msdu_end->da_is_valid,
+		       msdu_end->da_is_mcbc,
+		       msdu_end->l3_header_padding,
+		       msdu_end->ipv6_options_crc,
+		       msdu_end->tcp_seq_number,
+		       msdu_end->tcp_ack_number,
+		       msdu_end->tcp_flag,
+		       msdu_end->lro_eligible,
+		       msdu_end->window_size,
+		       msdu_end->da_offset,
+		       msdu_end->sa_offset,
+		       msdu_end->da_offset_valid,
+		       msdu_end->sa_offset_valid,
+		       msdu_end->rule_indication_31_0,
+		       msdu_end->rule_indication_63_32,
+		       msdu_end->sa_idx,
+		       msdu_end->da_idx_or_sw_peer_id,
+		       msdu_end->msdu_drop,
+		       msdu_end->reo_destination_indication,
+		       msdu_end->flow_idx,
+		       msdu_end->fse_metadata,
+		       msdu_end->cce_metadata,
+		       msdu_end->sa_sw_peer_id);
 }
 
 
