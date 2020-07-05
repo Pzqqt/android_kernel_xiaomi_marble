@@ -1058,6 +1058,48 @@ dfs_radar_action_for_hw_mode_switch(struct wlan_dfs *dfs,
 }
 
 #ifdef CONFIG_CHAN_FREQ_API
+/**
+ * dfs_find_radar_affected_channels()- Find the radar affected 20MHz channels.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar found structure.
+ * @freq_list: List of 20MHz frequencies on which radar has been detected.
+ * @freq_center: Frequency center of the band on which the radar was detected.
+ *
+ * Return: number of radar affected channels.
+ */
+static uint8_t
+dfs_find_radar_affected_channels(struct wlan_dfs *dfs,
+				 struct radar_found_info *radar_found,
+				 uint16_t *freq_list,
+				 uint32_t freq_center)
+{
+	uint8_t num_channels;
+
+	if (dfs->dfs_bangradar_type == DFS_BANGRADAR_FOR_ALL_SUBCHANS)
+		num_channels =
+			dfs_get_bonding_channel_without_seg_info_for_freq
+			(dfs->dfs_curchan, freq_list);
+	/* BW reduction is dependent on subchannel marking */
+	else if ((dfs->dfs_use_nol_subchannel_marking) &&
+		 (!(dfs->dfs_bangradar_type) ||
+		 (dfs->dfs_bangradar_type ==
+		  DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS)))
+		num_channels =
+		dfs_find_radar_affected_subchans_for_freq(dfs,
+							  radar_found,
+							  freq_list,
+							  freq_center);
+	else
+		num_channels = dfs_get_bonding_channels_for_freq
+			(dfs,
+			 dfs->dfs_curchan,
+			 radar_found->segment_id,
+			 radar_found->detector_id,
+			 freq_list);
+
+	return num_channels;
+}
+
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
 {
@@ -1138,25 +1180,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		status = QDF_STATUS_SUCCESS;
 		goto exit;
 	}
-
-	if (dfs->dfs_bangradar_type == DFS_BANGRADAR_FOR_ALL_SUBCHANS)
-		num_channels =
-			dfs_get_bonding_channel_without_seg_info_for_freq
-			(dfs_curchan, freq_list);
-	/* BW reduction is dependent on subchannel marking */
-	else if ((dfs->dfs_use_nol_subchannel_marking) &&
-		 (!(dfs->dfs_bangradar_type) ||
-		  (dfs->dfs_bangradar_type ==
-		   DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS)))
-		num_channels =
-			dfs_find_radar_affected_subchans_for_freq(dfs,
-								  radar_found,
-								  freq_list,
-								  freq_center);
-	else
-		num_channels = dfs_get_bonding_channels_for_freq
-			(dfs, dfs_curchan, radar_found->segment_id,
-			 radar_found->detector_id, freq_list);
+	num_channels = dfs_find_radar_affected_channels(dfs,
+							radar_found,
+							freq_list,
+							freq_center);
 
 	dfs_reset_bangradar(dfs);
 
