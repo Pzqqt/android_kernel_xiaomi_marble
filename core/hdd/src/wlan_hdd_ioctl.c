@@ -3318,17 +3318,37 @@ cleanup:
 
 	return ret;
 }
-#else
-static bool is_roam_ch_from_fw_supported(struct hdd_context *hdd_ctx)
-{
-	return false;
-}
 
-static uint32_t
-hdd_get_roam_chan_from_fw(struct hdd_adapter *adapter, uint32_t *chan_list,
-                          uint8_t *num_channels)
+int
+hdd_get_roam_scan_freq(struct hdd_adapter *adapter, mac_handle_t mac_handle,
+		       uint32_t *chan_list, uint8_t *num_channels)
 {
-	return QDF_STATUS_E_INVAL;
+	int ret = 0;
+
+	if (!adapter || !mac_handle || !chan_list || !num_channels) {
+		hdd_err("failed to get roam scan channel, invalid input");
+		return -EFAULT;
+	}
+
+	if (is_roam_ch_from_fw_supported(adapter->hdd_ctx)) {
+		ret = hdd_get_roam_chan_from_fw(adapter, chan_list,
+						num_channels);
+		if (ret != QDF_STATUS_SUCCESS) {
+			hdd_err("failed to get roam scan channel list from FW");
+			return -EFAULT;
+		}
+
+		return ret;
+	}
+
+	if (sme_get_roam_scan_channel_list(mac_handle, chan_list,
+					   num_channels, adapter->vdev_id) !=
+					   QDF_STATUS_SUCCESS) {
+		hdd_err("failed to get roam scan channel list");
+		return -EFAULT;
+	}
+
+	return ret;
 }
 #endif
 
@@ -3346,29 +3366,11 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 	int len;
 	uint8_t chan;
 
-	if (is_roam_ch_from_fw_supported(hdd_ctx)) {
-		ret = hdd_get_roam_chan_from_fw(adapter, freq_list,
-						&num_channels);
-		if (ret == QDF_STATUS_SUCCESS) {
-			goto fill_ch_resp;
-		} else {
-			hdd_err("failed to get roam scan channel list from FW");
-			ret = -EFAULT;
-			goto exit;
-		}
-	}
-
-	if (QDF_STATUS_SUCCESS !=
-		sme_get_roam_scan_channel_list(hdd_ctx->mac_handle,
-					       freq_list,
-					       &num_channels,
-					       adapter->vdev_id)) {
-		hdd_err("failed to get roam scan channel list");
-		ret = -EFAULT;
+	ret = hdd_get_roam_scan_freq(adapter, hdd_ctx->mac_handle, freq_list,
+				     &num_channels);
+	if (ret != QDF_STATUS_SUCCESS)
 		goto exit;
-	}
 
-fill_ch_resp:
 	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
 		   TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL,
 		   adapter->vdev_id, num_channels);

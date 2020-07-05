@@ -65,12 +65,35 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 void hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
 			     struct roam_scan_ch_resp *roam_ch,
 			     void *context);
+
+/**
+ * hdd_get_roam_scan_freq() - roam scan freq list
+ * @adapter: Pointer to hdd adapter
+ * @mac_handle: pointer to mac_handle
+ * @chan_list: Pointer to hold roam scan freq list
+ * @num_channels: Pointer to hold num of roam scan channels in list
+ *
+ * This function gets roam scan frequencies from FW if FW is capable else
+ * roam scan frequencies are taken from host maintained list.
+ *
+ * Return: 0 on success else error value
+ */
+int
+hdd_get_roam_scan_freq(struct hdd_adapter *adapter, mac_handle_t mac_handle,
+		       uint32_t *chan_list, uint8_t *num_channels);
 #else
 static inline void
 hdd_get_roam_scan_ch_cb(hdd_handle_t hdd_handle,
 			void *roam_ch,
 			void *context)
 {
+}
+
+static inline int
+hdd_get_roam_scan_freq(struct hdd_adapter *adapter, mac_handle_t mac_handle,
+		       uint32_t *chan_list, uint8_t *num_channels)
+{
+	return -EFAULT;
 }
 #endif
 #endif /* end #if !defined(WLAN_HDD_IOCTL_H) */
