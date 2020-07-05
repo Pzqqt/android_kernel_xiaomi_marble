@@ -555,6 +555,26 @@
 #define CFG_DP_NAPI \
 	CFG_INI_BOOL("dp_napi_enabled", PLATFORM_VALUE(true, false), \
 	"DP Napi Enabled")
+/*
+ * <ini>
+ * gEnableP2pIpTcpUdpChecksumOffload - Enable checksum offload for P2P mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini entry is used to enable/disable TX checksum(UDP/TCP) for P2P modes.
+ * This includes P2P device mode, P2P client mode and P2P GO mode.
+ * The feature is enabled by default. To disable TX checksum for P2P, add the
+ * following entry in ini file:
+ * gEnableP2pIpTcpUdpChecksumOffload=0
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DP_P2P_TCP_UDP_CKSUM_OFFLOAD \
+		CFG_INI_BOOL("gEnableP2pIpTcpUdpChecksumOffload", true, \
+		"DP TCP UDP Checksum Offload for P2P mode (device/cli/go)")
 
 /*
  * <ini>
@@ -886,6 +906,7 @@
 		CFG(CFG_DP_NAPI) \
 		CFG(CFG_DP_TCP_UDP_CKSUM_OFFLOAD) \
 		CFG(CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD) \
+		CFG(CFG_DP_P2P_TCP_UDP_CKSUM_OFFLOAD) \
 		CFG(CFG_DP_DEFRAG_TIMEOUT_CHECK) \
 		CFG(CFG_DP_WBM_RELEASE_RING) \
 		CFG(CFG_DP_TCL_CMD_CREDIT_RING) \

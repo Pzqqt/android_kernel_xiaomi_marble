@@ -541,6 +541,8 @@ wlan_cfg_soc_attach(struct cdp_ctrl_objmgr_psoc *psoc)
 	wlan_cfg_ctx->peer_flow_ctrl_enabled =
 			cfg_get(psoc, CFG_DP_PEER_FLOW_CTRL);
 	wlan_cfg_ctx->napi_enabled = cfg_get(psoc, CFG_DP_NAPI);
+	wlan_cfg_ctx->p2p_tcp_udp_checksumoffload =
+			cfg_get(psoc, CFG_DP_P2P_TCP_UDP_CKSUM_OFFLOAD);
 	wlan_cfg_ctx->nan_tcp_udp_checksumoffload =
 			cfg_get(psoc, CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD);
 	wlan_cfg_ctx->tcp_udp_checksumoffload =
@@ -1102,6 +1104,11 @@ int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_get_int_timer_threshold_mon(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->int_timer_threshold_mon;
+}
+
+int wlan_cfg_get_p2p_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->p2p_tcp_udp_checksumoffload;
 }
 
 int wlan_cfg_get_nan_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg)

@@ -9010,6 +9010,8 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	soc->wlan_cfg_ctx->tso_enabled = params->tso_enable;
 	soc->wlan_cfg_ctx->lro_enabled = params->lro_enable;
 	soc->wlan_cfg_ctx->rx_hash = params->flow_steering_enable;
+	soc->wlan_cfg_ctx->p2p_tcp_udp_checksumoffload =
+				params->p2p_tcp_udp_checksumoffload;
 	soc->wlan_cfg_ctx->nan_tcp_udp_checksumoffload =
 				params->nan_tcp_udp_checksumoffload;
 	soc->wlan_cfg_ctx->tcp_udp_checksumoffload =
@@ -9664,6 +9666,9 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
 	switch (cfg) {
 	case cfg_dp_enable_data_stall:
 		value = dpsoc->wlan_cfg_ctx->enable_data_stall_detection;
+		break;
+	case cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload:
+		value = dpsoc->wlan_cfg_ctx->p2p_tcp_udp_checksumoffload;
 		break;
 	case cfg_dp_enable_nan_ip_tcp_udp_checksum_offload:
 		value = dpsoc->wlan_cfg_ctx->nan_tcp_udp_checksumoffload;

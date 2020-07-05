@@ -4048,6 +4048,10 @@ static void dp_tx_vdev_update_feature_flags(struct dp_vdev *vdev)
 
 	if (vdev->opmode == wlan_op_mode_ndi)
 		vdev->csum_enabled = wlan_cfg_get_nan_checksum_offload(cfg);
+	else if ((vdev->subtype == wlan_op_subtype_p2p_device) ||
+		 (vdev->subtype == wlan_op_subtype_p2p_cli) ||
+		 (vdev->subtype == wlan_op_subtype_p2p_go))
+		vdev->csum_enabled = wlan_cfg_get_p2p_checksum_offload(cfg);
 	else
 		vdev->csum_enabled = wlan_cfg_get_checksum_offload(cfg);
 }

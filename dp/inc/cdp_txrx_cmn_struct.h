@@ -2172,6 +2172,7 @@ struct cdp_rx_indication_msdu {
  * @lro_enable: Enable/Disable LRO
  * @gro_enable: Enable/Disable GRO
  * @flow_steering_enable: Enable/Disable Rx Hash based flow steering
+ * @p2p_tcp_udp_checksumoffload: Enable/Disable TCP/UDP Checksum Offload for P2P
  * @nan_tcp_udp_checksumoffload: Enable/Disable TCP/UDP Checksum Offload for NAN
  * @tcp_udp_checksumoffload: Enable/Disable TCP/UDP Checksum Offload
  * @napi_enable: Enable/Disable Napi
@@ -2188,6 +2189,7 @@ struct cdp_config_params {
 	unsigned int lro_enable:1;
 	unsigned int gro_enable:1;
 	unsigned int flow_steering_enable:1;
+	unsigned int p2p_tcp_udp_checksumoffload:1;
 	unsigned int nan_tcp_udp_checksumoffload:1;
 	unsigned int tcp_udp_checksumoffload:1;
 	unsigned int napi_enable:1;
@@ -2244,13 +2246,29 @@ struct cdp_monitor_filter {
 };
 
 /**
- * cdp_dp_cfg - dp ini config enum
+ * enum cdp_dp_cfg - CDP ENUMs to get to DP configation
+ * @cfg_dp_enable_data_stall: context passed to be used by consumer
+ * @cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload: get P2P checksum config
+ * @cfg_dp_enable_nan_ip_tcp_udp_checksum_offload: get NAN TX checksum config
+ * @cfg_dp_enable_ip_tcp_udp_checksum_offload: get TX checksum config for others
+ * @cfg_dp_tso_enable: get TSO enable config
+ * @cfg_dp_lro_enable: get LRO enable config
+ * @cfg_dp_gro_enable: get GRP enable config
+ * @cfg_dp_tx_flow_start_queue_offset: get DP TX flow start queue offset
+ * @cfg_dp_tx_flow_stop_queue_threshold: get DP TX flow stop queue threshold
+ * @cfg_dp_ipa_uc_tx_buf_size: get IPA TX buf size config
+ * @cfg_dp_ipa_uc_tx_partition_base: get IPA UC TX partition base config
+ * @cfg_dp_ipa_uc_rx_ind_ring_count: get IPA rx indication ring count config
+ * @cfg_dp_enable_flow_steering: get flow steerint enable config
+ * @cfg_dp_reorder_offload_supported: get reorder offload support config
+ * @cfg_dp_ce_classify_enable: get CE classify enable config
+ * @cfg_dp_disable_intra_bss_fwd: get intra bss fwd config
+ * @cfg_dp_pktlog_buffer_size: get packet log buffer size config
  */
 enum cdp_dp_cfg {
 	cfg_dp_enable_data_stall,
-	/* checksum offload for NAN interface */
+	cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload,
 	cfg_dp_enable_nan_ip_tcp_udp_checksum_offload,
-	/* generic checksum offload for other interfaces */
 	cfg_dp_enable_ip_tcp_udp_checksum_offload,
 	cfg_dp_tso_enable,
 	cfg_dp_lro_enable,

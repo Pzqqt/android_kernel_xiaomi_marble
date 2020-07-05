@@ -4970,6 +4970,8 @@ void dp_print_soc_cfg_params(struct dp_soc *soc)
 		       soc_cfg_ctx->peer_flow_ctrl_enabled);
 	DP_PRINT_STATS("napi enabled: %u ",
 		       soc_cfg_ctx->napi_enabled);
+	DP_PRINT_STATS("P2P Tcp Udp checksum offload: %u ",
+		       soc_cfg_ctx->p2p_tcp_udp_checksumoffload);
 	DP_PRINT_STATS("NAN Tcp Udp checksum offload: %u ",
 		       soc_cfg_ctx->nan_tcp_udp_checksumoffload);
 	DP_PRINT_STATS("Tcp Udp checksum offload: %u ",

@@ -287,6 +287,8 @@ struct txrx_pdev_cfg_param_t {
 	bool ip_tcp_udp_checksum_offload;
 	/* IP, TCP and UDP checksum offload for NAN Mode*/
 	bool nan_ip_tcp_udp_checksum_offload;
+	/* IP, TCP and UDP checksum offload for P2P Mode*/
+	bool p2p_ip_tcp_udp_checksum_offload;
 	/* Rx processing in thread from TXRX */
 	bool enable_rxthread;
 	/* CE classification enabled through INI */
