@@ -7545,23 +7545,23 @@ sme_update_roam_scan_freq_list(mac_handle_t mac_handle, uint8_t vdev_id,
 	}
 
 	neighbor_roam_info = &mac->roam.neighborRoamInfo[vdev_id];
-	if (neighbor_roam_info->cfgParams.specific_chan_info.numOfChannels) {
+	if (neighbor_roam_info->cfgParams.specific_chan_info.numOfChannels &&
+	    freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST) {
 		sme_err("Specific channel list is already configured");
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_INVAL;
 	}
 
+	sme_debug("frequency list type %d", freq_list_type);
 	if (freq_list_type == QCA_PREFERRED_SCAN_FREQ_LIST) {
-		sme_debug("Preferred frequency list: ");
 		channel_info = &neighbor_roam_info->cfgParams.pref_chan_info;
+		status = sme_update_roam_scan_channel_list(
+					mac_handle, vdev_id, channel_info,
+					freq_list, num_chan);
 	} else {
-		goto out;
+		status = sme_change_roam_scan_channel_list(mac_handle, vdev_id,
+							   freq_list, num_chan);
 	}
-
-	status = sme_update_roam_scan_channel_list(mac_handle, vdev_id,
-						   channel_info, freq_list,
-						   num_chan);
-out:
 	sme_release_global_lock(&mac->sme);
 
 	return status;
