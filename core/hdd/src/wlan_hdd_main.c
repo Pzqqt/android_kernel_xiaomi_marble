@@ -5356,22 +5356,8 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	if (ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 
-	/*
-	 * In case of USB tethering, LRO is disabled. If SSR happened
-	 * during that time, then as part of SSR init, do not enable
-	 * the LRO again. Keep the LRO state same as before SSR.
-	 */
-	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
-			cfg_dp_lro_enable) &&
-			!(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
-		adapter->dev->features |= NETIF_F_LRO;
 
-	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
-			cfg_dp_enable_ip_tcp_udp_checksum_offload))
-		adapter->dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-	adapter->dev->features |= NETIF_F_RXCSUM;
-
-	hdd_set_tso_flags(hdd_ctx, adapter->dev);
+	hdd_set_netdev_flags(adapter);
 
 	/* rcpi info initialization */
 	qdf_mem_zero(&adapter->rcpi, sizeof(adapter->rcpi));
@@ -6915,6 +6901,7 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 void hdd_set_netdev_flags(struct hdd_adapter *adapter)
 {
 	bool enable_csum = false;
+	bool enable_lro;
 	enum QDF_OPMODE device_mode;
 	struct hdd_context *hdd_ctx;
 	ol_txrx_soc_handle soc;
@@ -6935,17 +6922,31 @@ void hdd_set_netdev_flags(struct hdd_adapter *adapter)
 	}
 
 	/* Determine device_mode specific configuration */
+
+	enable_lro = !!cdp_cfg_get(soc, cfg_dp_lro_enable);
+	enable_csum = !!cdp_cfg_get(soc,
+				     cfg_dp_enable_ip_tcp_udp_checksum_offload);
 	switch (device_mode) {
+	case QDF_P2P_DEVICE_MODE:
+	case QDF_P2P_CLIENT_MODE:
+		enable_csum = !!cdp_cfg_get(soc,
+					    cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload);
+		break;
+	case QDF_P2P_GO_MODE:
+		enable_csum = !!cdp_cfg_get(soc,
+					    cfg_dp_enable_p2p_ip_tcp_udp_checksum_offload);
+		enable_lro = false;
+		break;
+	case QDF_SAP_MODE:
+		enable_lro = false;
+		break;
 	case QDF_NDI_MODE:
 	case QDF_NAN_DISC_MODE:
-		if (cdp_cfg_get(soc,
-				cfg_dp_enable_nan_ip_tcp_udp_checksum_offload))
-			enable_csum = true;
+		enable_csum = !!cdp_cfg_get(soc,
+					    cfg_dp_enable_nan_ip_tcp_udp_checksum_offload);
 		break;
 	default:
-		if (cdp_cfg_get(soc,
-				cfg_dp_enable_ip_tcp_udp_checksum_offload))
-			enable_csum = true;
+		break;
 	}
 
 	/* Set netdev flags */
@@ -6955,8 +6956,7 @@ void hdd_set_netdev_flags(struct hdd_adapter *adapter)
 	 * during that time, then as part of SSR init, do not enable
 	 * the LRO again. Keep the LRO state same as before SSR.
 	 */
-	if (cdp_cfg_get(soc, cfg_dp_lro_enable) &&
-	    !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
+	if (enable_lro && !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
 		adapter->dev->features |= NETIF_F_LRO;
 
 	if (enable_csum)
@@ -16509,6 +16509,9 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 	params.flow_steering_enable =
 		cfg_get(hdd_ctx->psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	params.napi_enable = hdd_ctx->napi_enable;
+	params.p2p_tcp_udp_checksumoffload =
+		cfg_get(hdd_ctx->psoc,
+			CFG_DP_P2P_TCP_UDP_CKSUM_OFFLOAD);
 	params.nan_tcp_udp_checksumoffload =
 		cfg_get(hdd_ctx->psoc,
 			CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD);
