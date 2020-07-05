@@ -327,7 +327,7 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 	set_dma_ops(&dummy, NULL);
 
 	dma_handle = dma_map_single(&dummy, sec_sid,
-				num_sids *sizeof(uint32_t), DMA_TO_DEVICE);
+				num_sids * sizeof(uint32_t), DMA_TO_DEVICE);
 	if (dma_mapping_error(&dummy, dma_handle)) {
 		SDE_ERROR("dma_map_single for dummy dev failed vmid 0x%x\n",
 									vmid);
@@ -345,7 +345,7 @@ static int _sde_kms_scm_call(struct sde_kms *sde_kms, int vmid)
 			vmid, qtee_en, num_sids, ret);
 
 	dma_unmap_single(&dummy, dma_handle,
-				num_sids *sizeof(uint32_t), DMA_TO_DEVICE);
+				num_sids * sizeof(uint32_t), DMA_TO_DEVICE);
 
 map_error:
 	if (qtee_en)
