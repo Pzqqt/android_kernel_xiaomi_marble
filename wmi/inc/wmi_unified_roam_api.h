@@ -178,7 +178,7 @@ wmi_unified_roam_invoke_cmd(wmi_unified_t wmi_handle,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
-					 struct roam_triggers *triggers);
+					 struct wlan_roam_triggers *triggers);
 
 /**
  * wmi_unified_send_disconnect_roam_params() - Send disconnect roam trigger

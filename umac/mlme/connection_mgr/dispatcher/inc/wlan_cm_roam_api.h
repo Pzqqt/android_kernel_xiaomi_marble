@@ -28,6 +28,9 @@
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 
+/* Default value of reason code */
+#define DISABLE_VENDOR_BTM_CONFIG 2
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
@@ -117,6 +120,44 @@ wlan_cm_dual_sta_is_freq_allowed(struct wlan_objmgr_psoc *psoc, uint32_t freq,
 void
 wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 					      struct scan_filter *filter);
+/**
+ * wlan_cm_roam_set_vendor_btm_params  - API to set vendor btm params
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ * @param: vendor configured roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params
+								*param);
+/**
+ * wlan_cm_roam_disable_vendor_btm  - API to disable vendor btm by default
+ * reason
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
+
+/**
+ * wlan_cm_roam_get_vendor_btm_params - API to get vendor btm param
+ * @psoc: PSOC pointer
+ * @vdev_id: VDEV id
+ * @param: vendor configured roam trigger param
+ *
+ * Return: none
+ */
+void
+wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params
+								*param);
+
 #else
 static inline
 void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
@@ -159,5 +200,20 @@ wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
 	return true;
 }
 
+static inline void
+wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{}
+
+static inline void
+wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params *param)
+{}
+
+static inline void
+wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params *param)
+{}
 #endif  /* FEATURE_ROAM_OFFLOAD */
 #endif  /* WLAN_CM_ROAM_API_H__ */
