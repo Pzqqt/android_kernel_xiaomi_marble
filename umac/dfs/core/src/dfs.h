@@ -1022,8 +1022,8 @@ struct dfs_rcac_params {
  *                                   doing precac.
  * @dfs_autoswitch_des_chan:         Desired channel which has to be used
  *                                   after precac.
- * @dfs_autoswitch_des_chan_freq:    Desired freq which has to be used
- *                                   after precac.
+ * @dfs_autoswitch_chan:             Desired channel of dfs_channel structure
+ *                                   which will be prioritized for preCAC.
  * @dfs_autoswitch_des_mode:         Desired PHY mode which has to be used
  *                                   after precac.
  * @dfs_pre_cac_timeout_channel_change: Channel change due to precac timeout.
@@ -1202,8 +1202,8 @@ struct wlan_dfs {
 #endif
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 #ifdef CONFIG_CHAN_FREQ_API
+	struct dfs_channel *dfs_autoswitch_chan;
 	uint16_t       dfs_precac_inter_chan_freq;
-	uint16_t       dfs_autoswitch_des_chan_freq;
 #endif
 #endif
 	uint8_t        dfs_pre_cac_timeout_channel_change:1;
