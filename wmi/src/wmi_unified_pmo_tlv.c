@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1592,6 +1592,28 @@ static QDF_STATUS send_wow_delete_pattern_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WMI_HOST_WAKEUP_OVER_QMI
+static inline
+QDF_STATUS wmi_unified_cmd_send_chk(struct wmi_unified *wmi_handle,
+				    wmi_buf_t buf,
+				    uint32_t buflen, uint32_t cmd_id)
+{
+	WMI_LOGD("%s: Send WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID over QMI",
+		 __func__);
+	return wmi_unified_cmd_send_over_qmi(wmi_handle, buf,
+					     buflen, cmd_id);
+}
+#else
+static inline
+QDF_STATUS wmi_unified_cmd_send_chk(struct wmi_unified *wmi_handle,
+				    wmi_buf_t buf,
+				    uint32_t buflen, uint32_t cmd_id)
+{
+	return wmi_unified_cmd_send(wmi_handle, buf,
+				    buflen, cmd_id);
+}
+#endif
+
 /**
  * send_host_wakeup_ind_to_fw_cmd_tlv() - send wakeup ind to fw
  * @wmi_handle: wmi handle
@@ -1624,8 +1646,8 @@ static QDF_STATUS send_host_wakeup_ind_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
 			(wmi_wow_hostwakeup_from_sleep_cmd_fixed_param));
 
 	wmi_mtrace(WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID, NO_SESSION, 0);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
+	ret = wmi_unified_cmd_send_chk(wmi_handle, buf, len,
+				       WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
 	if (ret) {
 		WMI_LOGE("Failed to send host wakeup indication to fw");
 		wmi_buf_free(buf);
