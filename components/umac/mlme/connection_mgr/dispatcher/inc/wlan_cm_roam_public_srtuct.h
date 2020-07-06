@@ -128,14 +128,61 @@ struct wlan_cm_roam_tx_ops {
 };
 
 /**
+ * enum roam_scan_freq_scheme - Scan mode for triggering roam
+ * ROAM_SCAN_FREQ_SCHEME_NO_SCAN: Indicates the fw to not scan.
+ * ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN: Indicates the firmware to
+ * trigger partial frequency scans.
+ * ROAM_SCAN_FREQ_SCHEME_FULL_SCAN: Indicates the firmware to
+ * trigger full frequency scans.
+ */
+enum roam_scan_freq_scheme {
+	ROAM_SCAN_FREQ_SCHEME_NO_SCAN = 0,
+	ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN = 1,
+	ROAM_SCAN_FREQ_SCHEME_FULL_SCAN = 2,
+};
+
+/**
+ * struct wlan_cm_roam_vendor_btm_params - vendor config roam control param
+ * @scan_freq_scheme: scan frequency scheme from enum
+ * qca_roam_scan_freq_scheme
+ * @connected_rssi_threshold: RSSI threshold of the current
+ * connected AP
+ * @candidate_rssi_threshold: RSSI threshold of the
+ * candidate AP
+ * @user_roam_reason: Roam triggered reason code, value zero is for enable
+ * and non zero value is disable
+ */
+struct wlan_cm_roam_vendor_btm_params {
+	uint32_t scan_freq_scheme;
+	uint32_t connected_rssi_threshold;
+	uint32_t candidate_rssi_threshold;
+	uint32_t user_roam_reason;
+};
+
+/**
+ * struct wlan_roam_triggers - vendor configured roam triggers
+ * @vdev_id: vdev id
+ * @trigger_bitmap: vendor configured roam trigger bitmap as
+ *		    defined @enum roam_control_trigger_reason
+ * @control_param: roam trigger param
+ */
+struct wlan_roam_triggers {
+	uint32_t vdev_id;
+	uint32_t trigger_bitmap;
+	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
+};
+
+/**
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
  * @tx_ops: Roam Tx ops to send roam offload commands to firmware
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
+ * @control_param: vendor configured roam control param
  */
 struct wlan_cm_roam {
 	struct wlan_cm_roam_tx_ops tx_ops;
 	bool pcl_vdev_cmd_active;
+	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 };
 #endif

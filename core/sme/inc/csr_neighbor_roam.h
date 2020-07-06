@@ -263,7 +263,7 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ptr);
 #define REASON_SUPPLICANT_INIT_ROAMING              46
 #define REASON_SUPPLICANT_DE_INIT_ROAMING           47
 #define REASON_DRIVER_DISABLED                      48
-#define REASON_ROAM_CONTROL_CONFIG_RESTORED         49
+#define REASON_ROAM_CONTROL_CONFIG_CHANGED          49
 #define REASON_ROAM_CONTROL_CONFIG_ENABLED          50
 #define REASON_ROAM_CANDIDATE_FOUND                 51
 #define REASON_ROAM_HANDOFF_DONE                    52

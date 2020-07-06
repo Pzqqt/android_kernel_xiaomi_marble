@@ -637,7 +637,7 @@ void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
 static void csr_roam_restore_default_config(struct mac_context *mac_ctx,
 					    uint8_t vdev_id)
 {
-	struct roam_triggers triggers;
+	struct wlan_roam_triggers triggers;
 
 	sme_set_roam_config_enable(MAC_HANDLE(mac_ctx), vdev_id, 0);
 

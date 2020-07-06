@@ -713,17 +713,6 @@ struct wmi_invoke_neighbor_report_params {
 };
 
 /**
- * struct roam_triggers - vendor configured roam triggers
- * @vdev_id: vdev id
- * @trigger_bitmap: vendor configured roam trigger bitmap as
- *		    defined @enum roam_control_trigger_reason
- */
-struct roam_triggers {
-	uint32_t vdev_id;
-	uint32_t trigger_bitmap;
-};
-
-/**
  * set_pcl_cmd_params  - Set PCL command params
  * @vdev_id: Vdev id
  * @weight: PCL weight

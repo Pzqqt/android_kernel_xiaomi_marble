@@ -2217,7 +2217,7 @@ struct roam_offload_scan_req {
 	struct wmi_disconnect_roam_params disconnect_roam_params;
 #endif
 	struct roam_ext_params roam_params;
-	struct roam_triggers roam_triggers;
+	struct wlan_roam_triggers roam_triggers;
 	uint8_t  middle_of_roaming;
 	uint32_t hi_rssi_scan_max_count;
 	uint32_t hi_rssi_scan_rssi_delta;

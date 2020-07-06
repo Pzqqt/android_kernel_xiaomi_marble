@@ -337,11 +337,11 @@ QDF_STATUS wmi_unified_get_roam_scan_ch_list(wmi_unified_t wmi_handle,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
-					 struct roam_triggers *triggers)
+					 struct wlan_roam_triggers *triggers)
 {
 	if (wmi_handle->ops->send_set_roam_trigger_cmd)
 		return wmi_handle->ops->send_set_roam_trigger_cmd(wmi_handle,
-				triggers->vdev_id, triggers->trigger_bitmap);
+								  triggers);
 
 	return QDF_STATUS_E_FAILURE;
 }

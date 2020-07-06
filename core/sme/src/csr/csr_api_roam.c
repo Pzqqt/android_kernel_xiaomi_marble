@@ -19223,6 +19223,10 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	else if (command == ROAM_SCAN_OFFLOAD_STOP)
 		csr_update_11k_offload_params(mac_ctx, session, req_buf, FALSE);
 
+	wlan_cm_roam_get_vendor_btm_params(mac_ctx->psoc, session_id,
+					   &req_buf->roam_triggers.
+							vendor_btm_param);
+
 	prev_roaming_state = mlme_get_roam_state(mac_ctx->psoc, session_id);
 
 	/* Update PER config to FW. No need to update in case of stop command,

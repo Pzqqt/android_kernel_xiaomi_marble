@@ -153,6 +153,7 @@
 #include "wlan_hdd_apf.h"
 #include "wlan_hdd_cfr.h"
 #include "wlan_hdd_ioctl.h"
+#include "wlan_cm_roam_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -4508,6 +4509,10 @@ roam_control_policy[QCA_ATTR_ROAM_CONTROL_MAX + 1] = {
 	[QCA_ATTR_ROAM_CONTROL_TRIGGERS] = {.type = NLA_U32},
 	[QCA_ATTR_ROAM_CONTROL_SELECTION_CRITERIA] = {.type = NLA_NESTED},
 	[QCA_ATTR_ROAM_CONTROL_SCAN_PERIOD] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_CONNECTED_RSSI_THRESHOLD] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD] = {.type = NLA_U32},
+	[QCA_ATTR_ROAM_CONTROL_USER_REASON] = {.type = NLA_U32},
 };
 
 /**
@@ -4625,7 +4630,7 @@ hdd_send_roam_triggers_to_sme(struct hdd_context *hdd_ctx,
 			      uint32_t roam_trigger_bitmap)
 {
 	QDF_STATUS status;
-	struct roam_triggers triggers;
+	struct wlan_roam_triggers triggers;
 	struct hdd_adapter *adapter;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
@@ -4838,6 +4843,7 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct nlattr *tb2[QCA_ATTR_ROAM_CONTROL_MAX + 1], *attr;
 	uint32_t value;
+	struct wlan_cm_roam_vendor_btm_params param = {0};
 
 	hdd_enter();
 	/* The command must carry PARAM_ROAM_CONTROL_CONFIG */
@@ -4944,6 +4950,26 @@ hdd_set_roam_with_control_config(struct hdd_context *hdd_ctx,
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("failed to set candidate selection criteria");
 	}
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_SCAN_SCHEME];
+	if (attr)
+		param.scan_freq_scheme = nla_get_u32(attr);
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CONNECTED_RSSI_THRESHOLD];
+	if (attr)
+		param.connected_rssi_threshold = nla_get_u32(attr);
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_CANDIDATE_RSSI_THRESHOLD];
+	if (attr)
+		param.candidate_rssi_threshold = nla_get_u32(attr);
+
+	attr = tb2[QCA_ATTR_ROAM_CONTROL_USER_REASON];
+	if (attr)
+		param.user_roam_reason = nla_get_u32(attr);
+	 else
+		param.user_roam_reason = DISABLE_VENDOR_BTM_CONFIG;
+	wlan_cm_roam_set_vendor_btm_params(hdd_ctx->psoc, vdev_id, &param);
+	sme_send_vendor_btm_params(hdd_ctx->mac_handle, vdev_id);
 
 	return qdf_status_to_os_return(status);
 }

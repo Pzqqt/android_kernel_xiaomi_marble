@@ -4069,7 +4069,7 @@ void sme_chan_to_freq_list(
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
-				 struct roam_triggers *triggers);
+				 struct wlan_roam_triggers *triggers);
 
 /**
  * sme_set_roam_config_enable() - Cache roam config status in SME
@@ -4086,6 +4086,18 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 QDF_STATUS sme_set_roam_config_enable(mac_handle_t mac_handle,
 				      uint8_t vdev_id,
 				      uint8_t roam_control_enable);
+
+/**
+ * sme_send_vendor_btm_params - Send vendor btm params to FW
+ * @hdd_ctx: HDD context
+ * @vdev_id: vdev id
+ *
+ * Send roam trigger param to firmware if valid.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_send_vendor_btm_params(mac_handle_t mac_handle, uint8_t vdev_id);
 
 /**
  * sme_get_roam_config_status() - Get roam config status from SME

@@ -64,7 +64,6 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_psoc_mlme_api.h"
 #include "mac_init_api.h"
-#include "wlan_cm_roam_public_srtuct.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_cm_tgt_if_tx_api.h"
 
@@ -15981,12 +15980,12 @@ static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
 }
 
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
-				 struct roam_triggers *triggers)
+				 struct wlan_roam_triggers *triggers)
 {
 	QDF_STATUS status;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
-	struct roam_triggers *roam_trigger_data;
+	struct wlan_roam_triggers *roam_trigger_data;
 
 	mlme_set_roam_trigger_bitmap(mac->psoc, triggers->vdev_id,
 				     triggers->trigger_bitmap);
@@ -16023,6 +16022,29 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to post ROAM_TRIGGERS msg");
 		qdf_mem_free(roam_trigger_data);
+	}
+
+	return status;
+}
+
+QDF_STATUS
+sme_send_vendor_btm_params(mac_handle_t mac_handle, uint8_t vdev_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (vdev_id >= WLAN_MAX_VDEVS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid sme session id: %d"), vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
+			csr_roam_update_cfg(mac, vdev_id,
+					    REASON_ROAM_CONTROL_CONFIG_CHANGED);
+		sme_release_global_lock(&mac->sme);
 	}
 
 	return status;

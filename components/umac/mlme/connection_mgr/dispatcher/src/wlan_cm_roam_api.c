@@ -179,4 +179,86 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	}
 	qdf_mem_free(channel_list);
 }
+
+void
+wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return;
+	}
+
+	/* Set default value of reason code */
+	mlme_priv->cm_roam.vendor_btm_param.user_roam_reason =
+						DISABLE_VENDOR_BTM_CONFIG;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
+
+void
+wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params
+									*param)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return;
+	}
+
+	qdf_mem_copy(&mlme_priv->cm_roam.vendor_btm_param, param,
+		     sizeof(struct wlan_cm_roam_vendor_btm_params));
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
+
+void
+wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
+				   uint8_t vdev_id,
+				   struct wlan_cm_roam_vendor_btm_params *param)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return;
+	}
+
+	qdf_mem_copy(param, &mlme_priv->cm_roam.vendor_btm_param,
+		     sizeof(struct wlan_cm_roam_vendor_btm_params));
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
 #endif

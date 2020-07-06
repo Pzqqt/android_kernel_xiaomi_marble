@@ -2072,7 +2072,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		 * disconnect
 		 */
 		if (mode == WMI_ROAM_SCAN_MODE_NONE) {
-			struct roam_triggers roam_triggers;
+			struct wlan_roam_triggers roam_triggers;
 
 			roam_triggers.vdev_id = roam_req->sessionId;
 			roam_triggers.trigger_bitmap = 0;
@@ -2213,6 +2213,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 		wma_send_disconnect_roam_params(wma_handle, roam_req);
 		wma_send_idle_roam_params(wma_handle, roam_req);
+		wma_set_roam_triggers(wma_handle, &roam_req->roam_triggers);
 
 		break;
 
@@ -6435,7 +6436,7 @@ int wma_handle_btm_blacklist_event(void *handle, uint8_t *cmd_param_info,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_set_roam_triggers(tp_wma_handle wma,
-				 struct roam_triggers *triggers)
+				 struct wlan_roam_triggers *triggers)
 {
 	if (!wma_is_vdev_valid(triggers->vdev_id))
 		return QDF_STATUS_E_INVAL;
@@ -6543,7 +6544,7 @@ int wma_roam_pmkid_request_event_handler(void *handle, uint8_t *event,
 #endif /* WLAN_FEATURE_FIPS */
 #else
 inline QDF_STATUS
-wma_set_roam_triggers(tp_wma_handle wma, struct roam_triggers *triggers)
+wma_set_roam_triggers(tp_wma_handle wma, struct wlan_roam_triggers *triggers)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
