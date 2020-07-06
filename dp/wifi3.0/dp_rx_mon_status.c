@@ -1442,14 +1442,14 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 * @soc: core txrx main context
 * @ppdu_info: Structure for rx ppdu info
 * @status_nbuf: Qdf nbuf abstraction for linux skb
-* @mac_id: mac_id/pdev_id correspondinggly for MCL and WIN
+* @pdev_id: mac_id/pdev_id correspondinggly for MCL and WIN
 *
 * Return: none
 */
 static inline void
 dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 				struct hal_rx_ppdu_info *ppdu_info,
-				qdf_nbuf_t status_nbuf, uint32_t mac_id)
+				qdf_nbuf_t status_nbuf, uint32_t pdev_id)
 {
 	struct dp_peer *peer;
 	struct dp_ast_entry *ast_entry;
@@ -1466,7 +1466,7 @@ dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
 							WDI_EVENT_RX_DESC, soc,
 							status_nbuf,
 							peer->peer_id,
-							WDI_NO_VAL, mac_id);
+							WDI_NO_VAL, pdev_id);
 				}
 			}
 		}
@@ -1650,7 +1650,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 		}
 		if (pdev->dp_peer_based_pktlog) {
 			dp_rx_process_peer_based_pktlog(soc, ppdu_info,
-							status_nbuf, mac_id);
+							status_nbuf,
+							pdev->pdev_id);
 		} else {
 			if (pdev->rx_pktlog_mode == DP_RX_PKTLOG_FULL)
 				pktlog_mode = WDI_EVENT_RX_DESC;
@@ -1661,7 +1662,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 				dp_wdi_event_handler(pktlog_mode, soc,
 						     status_nbuf,
 						     HTT_INVALID_PEER,
-						     WDI_NO_VAL, mac_id);
+						     WDI_NO_VAL, pdev->pdev_id);
 		}
 
 		/* smart monitor vap and m_copy cannot co-exist */
