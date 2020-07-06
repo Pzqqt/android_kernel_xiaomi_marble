@@ -1089,6 +1089,11 @@ static uint32_t policy_mgr_dump_current_concurrency_two_connection(
 		count += strlcat(cc_mode, "+NDI",
 					length);
 		break;
+	case PM_NAN_DISC_MODE:
+		count = policy_mgr_dump_current_concurrency_one_connection(
+				cc_mode, length);
+		count += strlcat(cc_mode, "+NAN Disc", length);
+		break;
 	default:
 		policy_mgr_err("unexpected mode %d", mode);
 		break;

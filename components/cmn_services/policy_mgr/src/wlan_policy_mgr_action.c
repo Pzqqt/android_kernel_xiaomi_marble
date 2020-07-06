@@ -1680,7 +1680,8 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct policy_mgr_conc_connection_info *sap_info = NULL;
-	uint8_t nan_freq_2g, nan_freq_5g, i;
+	uint8_t i;
+	qdf_freq_t nan_freq_2g, nan_freq_5g;
 	QDF_STATUS status;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -1720,23 +1721,26 @@ void policy_mgr_nan_sap_post_enable_conc_check(struct wlan_objmgr_psoc *psoc)
 			policy_mgr_err("wait for event failed, still continue with channel switch");
 	}
 
-	policy_mgr_debug("Force SCC for NAN+SAP Ch freq: %d",
-			 WLAN_REG_IS_5GHZ_CH_FREQ(sap_info->freq) ?
-			 nan_freq_5g : nan_freq_2g);
 	if (pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason)
 		pm_ctx->hdd_cbacks.wlan_hdd_set_sap_csa_reason(psoc,
 					sap_info->vdev_id,
 					CSA_REASON_CONCURRENT_NAN_EVENT);
 
-	if (WLAN_REG_IS_5GHZ_CH_FREQ(sap_info->freq)) {
+	/* SAP should be moved to 2g NAN channel on non-DBS platforms */
+	if (!ucfg_is_nan_dbs_supported(pm_ctx->psoc) ||
+	    WLAN_REG_IS_24GHZ_CH_FREQ(sap_info->freq)) {
+		policy_mgr_debug("Force SCC for NAN+SAP Ch freq: %d",
+				 nan_freq_2g);
 		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
-						       nan_freq_5g,
+						       nan_freq_2g,
 						       policy_mgr_get_ch_width(
 						       sap_info->bw),
 						       true);
-	} else {
+	} else if (nan_freq_5g && WLAN_REG_IS_5GHZ_CH_FREQ(sap_info->freq)) {
+		policy_mgr_debug("Force SCC for NAN+SAP Ch freq: %d",
+				 nan_freq_5g);
 		policy_mgr_change_sap_channel_with_csa(psoc, sap_info->vdev_id,
-						       nan_freq_2g,
+						       nan_freq_5g,
 						       policy_mgr_get_ch_width(
 						       sap_info->bw),
 						       true);
