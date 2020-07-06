@@ -244,6 +244,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool p2p_tcp_udp_checksumoffload;
 	bool nan_tcp_udp_checksumoffload;
 	bool tcp_udp_checksumoffload;
+	bool legacy_mode_checksumoffload_disable;
 	bool defrag_timeout_check;
 	int nss_cfg;
 	uint32_t tx_flow_stop_queue_threshold;

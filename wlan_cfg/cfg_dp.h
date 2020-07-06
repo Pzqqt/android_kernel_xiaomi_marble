@@ -940,6 +940,26 @@
 #define CFG_DP_PEER_EXT_STATS \
 		CFG_INI_BOOL("peer_ext_stats", \
 		false, "Peer extended stats")
+/*
+ * <ini>
+ * legacy_mode_csum_disable - Disable csum offload for legacy 802.11abg modes
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disable HW checksum offload capability for legacy
+ * connections
+ *
+ * Related: gEnableIpTcpUdpChecksumOffload should be enabled
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+
+#define CFG_DP_LEGACY_MODE_CSUM_DISABLE \
+	CFG_INI_BOOL("legacy_mode_csum_disable", false, \
+		     "Enable/Disable legacy mode checksum")
 
 #define CFG_DP_RX_BUFF_POOL_ENABLE \
 	CFG_INI_BOOL("dp_rx_buff_prealloc_pool", false, \
@@ -1026,6 +1046,6 @@
 		CFG(CFG_DP_PEER_EXT_STATS) \
 		CFG(CFG_DP_RX_BUFF_POOL_ENABLE) \
 		CFG(CFG_DP_RX_PENDING_HL_THRESHOLD) \
-		CFG(CFG_DP_RX_PENDING_LO_THRESHOLD)
-
+		CFG(CFG_DP_RX_PENDING_LO_THRESHOLD) \
+		CFG(CFG_DP_LEGACY_MODE_CSUM_DISABLE)
 #endif /* _CFG_DP_H_ */

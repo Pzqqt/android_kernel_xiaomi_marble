@@ -8578,6 +8578,11 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 				      val.cdp_vdev_param_mesh_mode);
 		break;
 #endif
+	case CDP_ENABLE_CSUM:
+		dp_info("vdev_id %d enable Checksum %d", vdev_id,
+			val.cdp_enable_tx_checksum);
+		vdev->csum_enabled = val.cdp_enable_tx_checksum;
+		break;
 	default:
 		break;
 	}
@@ -10141,6 +10146,10 @@ static uint32_t dp_get_cfg(struct cdp_soc_t *soc, enum cdp_dp_cfg cfg)
 		break;
 	case cfg_dp_enable_ip_tcp_udp_checksum_offload:
 		value = dpsoc->wlan_cfg_ctx->tcp_udp_checksumoffload;
+		break;
+	case cfg_dp_disable_legacy_mode_csum_offload:
+		value = dpsoc->wlan_cfg_ctx->
+					legacy_mode_checksumoffload_disable;
 		break;
 	case cfg_dp_tso_enable:
 		value = dpsoc->wlan_cfg_ctx->tso_enabled;

@@ -272,8 +272,11 @@ cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
 	}
 
 	if (!soc->ops->ctrl_ops ||
-	    !soc->ops->ctrl_ops->txrx_set_vdev_param)
+	    !soc->ops->ctrl_ops->txrx_set_vdev_param) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "NULL vdev params callback");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	return soc->ops->ctrl_ops->txrx_set_vdev_param(soc, vdev_id,
 						       type, val);
