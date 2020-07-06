@@ -28,6 +28,11 @@
 #include "cdp_txrx_cmn_struct.h"
 #include <enet.h>
 
+#include <linux/debugfs.h>
+#include <linux/uaccess.h>
+#include "qdf_lock.h"
+#include "qdf_debugfs.h"
+
 #include "dp_tx_capture.h"
 
 #define MAX_MONITOR_HEADER (512)
@@ -939,6 +944,79 @@ bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
 }
 
 /**
+ * ppdu_desc_dbg_enqueue() - enqueue tx cap debug ppdu desc to the list
+ * @ptr_log_info: tx capture log info
+ * @ptr_dbg_ppdu: tx capture ppdu desc pointer
+ *
+ * Return: list size
+ */
+static
+uint32_t ppdu_desc_dbg_enqueue(struct tx_cap_debug_log_info *ptr_log_info,
+			       struct dbg_tx_comp_ppdu *ptr_dbg_ppdu)
+{
+	uint32_t list_size;
+
+	qdf_spin_lock(&ptr_log_info->dbg_log_lock);
+	qdf_list_insert_back_size(&ptr_log_info->ppdu_dbg_queue,
+				  &ptr_dbg_ppdu->node, &list_size);
+	qdf_spin_unlock(&ptr_log_info->dbg_log_lock);
+
+	return list_size;
+}
+
+/**
+ * ppdu_desc_dbg_dequeue() - dequeue tx cap debug ppdu desc from list
+ * @ptr_log_info: tx capture log info
+ *
+ * Return: tx capture ppdu desc pointer
+ */
+static
+struct dbg_tx_comp_ppdu *
+ppdu_desc_dbg_dequeue(struct tx_cap_debug_log_info *ptr_log_info)
+{
+	qdf_list_node_t *list_node = NULL;
+
+	qdf_spin_lock(&ptr_log_info->dbg_log_lock);
+	qdf_list_remove_front(&ptr_log_info->ppdu_dbg_queue, &list_node);
+	qdf_spin_unlock(&ptr_log_info->dbg_log_lock);
+
+	if (!list_node)
+		return NULL;
+
+	return qdf_container_of(list_node, struct dbg_tx_comp_ppdu, node);
+}
+
+/*
+ * ppdu_desc_dbg_queue_init: ppdu desc logging debugfs queue init
+ * @ptr_log_info: tx capture debugfs log structure
+ *
+ * return: void
+ */
+static void ppdu_desc_dbg_queue_init(struct tx_cap_debug_log_info *ptr_log_info)
+{
+	ptr_log_info->ppdu_queue_size = MAX_TX_CAP_QUEUE_SIZE;
+
+	qdf_list_create(&ptr_log_info->ppdu_dbg_queue,
+			ptr_log_info->ppdu_queue_size);
+	qdf_spinlock_create(&ptr_log_info->dbg_log_lock);
+
+	ptr_log_info->pause_dbg_log = 0;
+}
+
+/*
+ * ppdu_desc_dbg_queue_deinit: ppdu desc logging debugfs queue deinit
+ * @ptr_log_info: tx capture debugfs log structure
+ *
+ * return: void
+ */
+static
+void ppdu_desc_dbg_queue_deinit(struct tx_cap_debug_log_info *ptr_log_info)
+{
+	qdf_list_destroy(&ptr_log_info->ppdu_dbg_queue);
+	qdf_spinlock_destroy(&ptr_log_info->dbg_log_lock);
+}
+
+/**
  * dp_tx_ppdu_stats_attach - Initialize Tx PPDU stats and enhanced capture
  * @pdev: DP PDEV
  *
@@ -948,12 +1026,15 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 {
 	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
 	struct dp_pdev_tx_capture *tx_capture;
+	struct tx_cap_debug_log_info *ptr_log_info;
 	int i, j;
 
 	qdf_atomic_init(&pdev->tx_capture.tx_cap_usr_mode);
 	qdf_atomic_set(&pdev->tx_capture.tx_cap_usr_mode, 0);
 
 	tx_capture = &pdev->tx_capture;
+	ptr_log_info = &tx_capture->log_info;
+
 	/* Work queue setup for HTT stats and tx capture handling */
 	qdf_create_work(0, &pdev->tx_capture.ppdu_stats_work,
 			dp_tx_ppdu_stats_process,
@@ -985,6 +1066,8 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 		ptr_peer_mgmt_list = &tx_capture->ptr_peer_mgmt_list[i];
 		ptr_peer_mgmt_list->avail = true;
 	}
+
+	ppdu_desc_dbg_queue_init(ptr_log_info);
 }
 
 /**
@@ -996,11 +1079,14 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 {
 	struct ppdu_info *ppdu_info, *tmp_ppdu_info = NULL;
+	struct tx_cap_debug_log_info *ptr_log_info;
 	int i, j;
+	void *buf;
 
 	if (!pdev || !pdev->tx_capture.ppdu_stats_workqueue)
 		return;
 
+	ptr_log_info = &pdev->tx_capture.log_info;
 	qdf_flush_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 	qdf_destroy_workqueue(0, pdev->tx_capture.ppdu_stats_workqueue);
 
@@ -1044,6 +1130,21 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 	}
 
 	qdf_mem_free(pdev->tx_capture.ptr_peer_mgmt_list);
+
+	/* disable the ppdu_desc_log to avoid storing further */
+	ptr_log_info->ppdu_desc_log = 0;
+	ptr_log_info->pause_dbg_log = 1;
+
+	/* loop through the list and free the nbuf */
+	while (!qdf_list_empty(&ptr_log_info->ppdu_dbg_queue)) {
+		buf = ppdu_desc_dbg_dequeue(ptr_log_info);
+		if (!buf)
+			qdf_mem_free(buf);
+	}
+
+	ppdu_desc_dbg_queue_deinit(ptr_log_info);
+
+	dp_tx_capture_debugfs_deinit(pdev);
 }
 
 #define MAX_MSDU_THRESHOLD_TSF 100000
@@ -4971,6 +5072,8 @@ void dp_tx_ppdu_stats_process(void *context)
 
 				continue;
 			} else {
+				tx_cap_debugfs_log_ppdu_desc(pdev, nbuf_ppdu);
+
 				/* process ppdu_info on tx capture turned on */
 				ppdu_desc_cnt = dp_tx_cap_proc_per_ppdu_info(
 							pdev,
@@ -5038,6 +5141,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 			qdf_nbuf_data(ppdu_info->nbuf);
 	ppdu_desc->tlv_bitmap = ppdu_info->tlv_bitmap;
+	ppdu_desc->sched_cmdid = ppdu_info->sched_cmdid;
 
 	qdf_spin_lock_bh(&pdev->tx_capture.ppdu_stats_lock);
 
@@ -5800,5 +5904,460 @@ void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 		peer->tx_cap_enabled = 1;
 	}
 	return;
+}
+
+/*
+ * dbg_copy_ppdu_desc: copy ppdu_desc to tx capture debugfs
+ * @nbuf_ppdu: nbuf ppdu
+ *
+ * return: void
+ */
+void *dbg_copy_ppdu_desc(qdf_nbuf_t nbuf_ppdu)
+{
+	struct dbg_tx_comp_ppdu *ptr_dbg_ppdu = NULL;
+	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	uint8_t i = 0;
+	uint8_t num_users = 0;
+
+	ppdu_desc = (struct cdp_tx_completion_ppdu *)
+			qdf_nbuf_data(nbuf_ppdu);
+
+	ptr_dbg_ppdu = qdf_mem_malloc(sizeof(struct dbg_tx_comp_ppdu) +
+				      (ppdu_desc->num_users *
+				       sizeof(struct dbg_tx_comp_ppdu_user)));
+	if (!ptr_dbg_ppdu)
+		return NULL;
+
+	num_users = ppdu_desc->num_users;
+
+	ptr_dbg_ppdu->ppdu_id = ppdu_desc->ppdu_id;
+	ptr_dbg_ppdu->bar_ppdu_id = ppdu_desc->bar_ppdu_id;
+	ptr_dbg_ppdu->vdev_id = ppdu_desc->vdev_id;
+	ptr_dbg_ppdu->bar_num_users = ppdu_desc->bar_num_users;
+	ptr_dbg_ppdu->num_users = ppdu_desc->num_users;
+	ptr_dbg_ppdu->sched_cmdid = ppdu_desc->sched_cmdid;
+	ptr_dbg_ppdu->tlv_bitmap = ppdu_desc->tlv_bitmap;
+	ptr_dbg_ppdu->htt_frame_type = ppdu_desc->htt_frame_type;
+	ptr_dbg_ppdu->frame_ctrl = ppdu_desc->frame_ctrl;
+	ptr_dbg_ppdu->ppdu_start_timestamp = ppdu_desc->ppdu_start_timestamp;
+	ptr_dbg_ppdu->ppdu_end_timestamp = ppdu_desc->ppdu_end_timestamp;
+	ptr_dbg_ppdu->bar_ppdu_start_timestamp =
+					ppdu_desc->bar_ppdu_start_timestamp;
+	ptr_dbg_ppdu->bar_ppdu_end_timestamp =
+					ppdu_desc->bar_ppdu_end_timestamp;
+
+	for (i = 0; i < ppdu_desc->num_users; i++) {
+		ptr_dbg_ppdu->user[i].completion_status =
+					ppdu_desc->user[i].completion_status;
+		ptr_dbg_ppdu->user[i].tid = ppdu_desc->user[i].tid;
+		ptr_dbg_ppdu->user[i].peer_id = ppdu_desc->user[i].peer_id;
+
+		qdf_mem_copy(ptr_dbg_ppdu->user[i].mac_addr,
+			     ppdu_desc->user[i].mac_addr, 6);
+		ptr_dbg_ppdu->user[i].frame_ctrl =
+					ppdu_desc->user[i].frame_ctrl;
+		ptr_dbg_ppdu->user[i].qos_ctrl = ppdu_desc->user[i].qos_ctrl;
+		ptr_dbg_ppdu->user[i].mpdu_tried =
+					ppdu_desc->user[i].mpdu_tried_ucast +
+					ppdu_desc->user[i].mpdu_tried_mcast;
+		ptr_dbg_ppdu->user[i].mpdu_success =
+					ppdu_desc->user[i].mpdu_success;
+		ptr_dbg_ppdu->user[i].ltf_size = ppdu_desc->user[i].ltf_size;
+		ptr_dbg_ppdu->user[i].stbc = ppdu_desc->user[i].stbc;
+		ptr_dbg_ppdu->user[i].he_re = ppdu_desc->user[i].he_re;
+		ptr_dbg_ppdu->user[i].txbf = ppdu_desc->user[i].txbf;
+		ptr_dbg_ppdu->user[i].bw = ppdu_desc->user[i].bw;
+		ptr_dbg_ppdu->user[i].nss = ppdu_desc->user[i].nss;
+		ptr_dbg_ppdu->user[i].mcs = ppdu_desc->user[i].mcs;
+		ptr_dbg_ppdu->user[i].preamble = ppdu_desc->user[i].preamble;
+		ptr_dbg_ppdu->user[i].gi = ppdu_desc->user[i].gi;
+		ptr_dbg_ppdu->user[i].dcm = ppdu_desc->user[i].dcm;
+		ptr_dbg_ppdu->user[i].ldpc = ppdu_desc->user[i].ldpc;
+		ptr_dbg_ppdu->user[i].delayed_ba =
+					ppdu_desc->user[i].delayed_ba;
+		ptr_dbg_ppdu->user[i].ack_ba_tlv =
+					ppdu_desc->user[i].ack_ba_tlv;
+		ptr_dbg_ppdu->user[i].ba_seq_no = ppdu_desc->user[i].ba_seq_no;
+		ptr_dbg_ppdu->user[i].start_seq = ppdu_desc->user[i].start_seq;
+		qdf_mem_copy(ptr_dbg_ppdu->user[i].ba_bitmap,
+			     ppdu_desc->user[i].ba_bitmap,
+			     CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+		qdf_mem_copy(ptr_dbg_ppdu->user[i].enq_bitmap,
+			     ppdu_desc->user[i].enq_bitmap,
+			     CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+		ptr_dbg_ppdu->user[i].num_mpdu = ppdu_desc->user[i].num_mpdu;
+		ptr_dbg_ppdu->user[i].num_msdu = ppdu_desc->user[i].num_msdu;
+		ptr_dbg_ppdu->user[i].is_mcast = ppdu_desc->user[i].is_mcast;
+		ptr_dbg_ppdu->user[i].tlv_bitmap =
+					ppdu_desc->user[i].tlv_bitmap;
+	}
+	return ptr_dbg_ppdu;
+}
+
+/**
+ * debug_ppdu_log_enable_show() - debugfs function to display ppdu_desc
+ * @file: qdf debugfs handler
+ * @arg: priv data used to get htt_logger_handler
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS debug_ppdu_desc_log_show(qdf_debugfs_file_t file, void *arg)
+{
+	struct dp_pdev *pdev;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+	struct dbg_tx_comp_ppdu *ptr_dbg_ppdu;
+	uint8_t k = 0;
+	uint8_t i = 0;
+
+	pdev = (struct dp_pdev *)arg;
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	if ((ptr_log_info->stop_seq & (0x1 << PPDU_LOG_DISPLAY_LIST)) &&
+	    !ptr_log_info->ppdu_desc_log) {
+		ptr_log_info->stop_seq &= ~(0x1 << PPDU_LOG_DISPLAY_LIST);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!ptr_log_info->ppdu_desc_log) {
+		ptr_log_info->pause_dbg_log = 0;
+		ptr_log_info->stop_seq |= (0x1 << PPDU_LOG_DISPLAY_LIST);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	ptr_log_info->pause_dbg_log = 1;
+
+	ptr_dbg_ppdu = ppdu_desc_dbg_dequeue(ptr_log_info);
+	if (!ptr_dbg_ppdu) {
+		ptr_log_info->pause_dbg_log = 0;
+		ptr_log_info->stop_seq |= (0x1 << PPDU_LOG_DISPLAY_LIST);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	qdf_debugfs_printf(file,
+			   "===============================================\n");
+	qdf_debugfs_printf(file,
+			   "P_ID:%d B_P_ID:%d VDEV:%d N_USR[%d %d] SCH_ID:%d\n",
+			   ptr_dbg_ppdu->ppdu_id,
+			   ptr_dbg_ppdu->bar_ppdu_id,
+			   ptr_dbg_ppdu->vdev_id,
+			   ptr_dbg_ppdu->num_users,
+			   ptr_dbg_ppdu->bar_num_users,
+			   ptr_dbg_ppdu->sched_cmdid);
+	qdf_debugfs_printf(file,
+			   "TLV:0x%x H_FRM:%d FCTRL:0x%x\n",
+			   ptr_dbg_ppdu->tlv_bitmap,
+			   ptr_dbg_ppdu->htt_frame_type,
+			   ptr_dbg_ppdu->frame_ctrl);
+	qdf_debugfs_printf(file,
+			   "TSF[%llu - %llu] B_TSF[%llu - %llu]\n",
+			   ptr_dbg_ppdu->ppdu_start_timestamp,
+			   ptr_dbg_ppdu->ppdu_end_timestamp,
+			   ptr_dbg_ppdu->bar_ppdu_start_timestamp,
+			   ptr_dbg_ppdu->bar_ppdu_end_timestamp);
+	for (k = 0; k < ptr_dbg_ppdu->num_users; k++) {
+		struct dbg_tx_comp_ppdu_user *user;
+
+		user = &ptr_dbg_ppdu->user[k];
+		qdf_debugfs_printf(file, "USER: %d\n", k);
+		qdf_debugfs_printf(file,
+				   "\tPEER:%d TID:%d CS:%d TLV:0x%x\n",
+				   user->peer_id,
+				   user->tid,
+				   user->completion_status,
+				   user->tlv_bitmap);
+		qdf_debugfs_printf(file,
+				   "\tFCTRL:0x%x QOS:0x%x\n",
+				   user->frame_ctrl,
+				   user->qos_ctrl);
+		qdf_debugfs_printf(file,
+				   "\tMPDU[T:%d S:%d] N_MPDU:%d N_MSDU:%d\n",
+				   user->mpdu_tried,
+				   user->mpdu_success,
+				   user->num_mpdu,
+				   user->num_msdu);
+		qdf_debugfs_printf(file,
+				   "\tMCS:%d NSS:%d PRE:%d BW:%d D_BA:%d\n",
+				   user->mcs,
+				   user->nss,
+				   user->preamble,
+				   user->bw,
+				   user->delayed_ba);
+
+		qdf_debugfs_printf(file,
+				   "\tS_SEQ:%d ENQ_BITMAP[",
+				   user->start_seq);
+		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++)
+			qdf_debugfs_printf(file, " 0x%x",
+					   user->enq_bitmap[i]);
+		qdf_debugfs_printf(file, "]\n");
+
+		qdf_debugfs_printf(file,
+				   "\tBA_SEQ:%d BA_BITMAP[",
+				   user->ba_seq_no);
+		for (i = 0; i < CDP_BA_256_BIT_MAP_SIZE_DWORDS; i++)
+			qdf_debugfs_printf(file, " 0x%x",
+					   user->ba_bitmap[i]);
+		qdf_debugfs_printf(file, "]\n");
+	}
+	qdf_debugfs_printf(file,
+			   "===============================================\n");
+	/* free the dequeued dbg ppdu_desc */
+	qdf_mem_free(ptr_dbg_ppdu);
+	return QDF_STATUS_E_AGAIN;
+}
+
+/**
+ * debug_ppdu_desc_log_write() - write is not allowed in ppdu_desc_log.
+ * @priv: file handler to access tx capture log info
+ * @buf: received data buffer
+ * @len: length of received buffer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS debug_ppdu_desc_log_write(void *priv,
+					    const char *buf,
+					    qdf_size_t len)
+{
+	return -EINVAL;
+}
+
+/**
+ * debug_ppdu_log_enable_show() - debugfs function to show the
+ * enable/disable flag.
+ * @file: qdf debugfs handler
+ * @arg: priv data used to get htt_logger_handler
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS debug_ppdu_log_enable_show(qdf_debugfs_file_t file, void *arg)
+{
+	struct dp_pdev *pdev;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+
+	pdev = (struct dp_pdev *)arg;
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	if ((ptr_log_info->stop_seq & (0x1 << PPDU_LOG_ENABLE_LIST))) {
+		ptr_log_info->stop_seq &= ~(0x1 << PPDU_LOG_ENABLE_LIST);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	qdf_debugfs_printf(file, "%u\n", ptr_log_info->ppdu_desc_log);
+	ptr_log_info->stop_seq |= (0x1 << PPDU_LOG_ENABLE_LIST);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * debug_ppdu_log_enable_write() - debugfs function to enable/disable
+ * the debugfs flag.
+ * @priv: file handler to access tx capture log info
+ * @buf: received data buffer
+ * @len: length of received buffer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS debug_ppdu_log_enable_write(void *priv,
+					      const char *buf,
+					      qdf_size_t len)
+{
+	struct dp_pdev *pdev;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+	int k, ret;
+
+	pdev = (struct dp_pdev *)priv;
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	ret = kstrtoint(buf, 0, &k);
+	if ((ret != 0) || ((k != 0) && (k != 1)))
+		return QDF_STATUS_E_PERM;
+
+	if (k == 1) {
+		/* if ppdu_desc log already 1 return success */
+		if (ptr_log_info->ppdu_desc_log)
+			return QDF_STATUS_SUCCESS;
+
+		/* initialize ppdu_desc_log to 1 */
+		ptr_log_info->ppdu_desc_log = 1;
+	} else {
+		/* if ppdu_desc log already 1 return success */
+		if (ptr_log_info->ppdu_desc_log)
+			return QDF_STATUS_SUCCESS;
+
+		/* initialize ppdu_desc_log to 1 */
+		ptr_log_info->ppdu_desc_log = 0;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * tx_cap_debugfs_log_ppdu_desc: tx capture logging ppdu desc
+ * @pdev: DP PDEV handle
+ * @nbuf_ppdu: nbuf ppdu
+ *
+ * return: void
+ */
+void tx_cap_debugfs_log_ppdu_desc(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu)
+{
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+	struct dbg_tx_comp_ppdu *ptr_dbg_ppdu;
+	struct dbg_tx_comp_ppdu *ptr_tmp_ppdu;
+	uint32_t list_size;
+
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	if (!ptr_log_info->ppdu_desc_log || ptr_log_info->pause_dbg_log)
+		return;
+
+	ptr_dbg_ppdu = dbg_copy_ppdu_desc(nbuf_ppdu);
+	if (!ptr_dbg_ppdu)
+		return;
+
+	list_size = ppdu_desc_dbg_enqueue(ptr_log_info, ptr_dbg_ppdu);
+	QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_INFO_MED,
+		  "%s: enqueue list_size:%d\n", __func__, list_size);
+
+	if (list_size >= ptr_log_info->ppdu_queue_size) {
+		ptr_tmp_ppdu = ppdu_desc_dbg_dequeue(ptr_log_info);
+		qdf_mem_free(ptr_tmp_ppdu);
+	}
+}
+
+#define DEBUGFS_FOPS(func_base)                                 \
+	{                                                       \
+		.name = #func_base,                             \
+		.ops = {                                        \
+			.show = debug_##func_base##_show,       \
+			.write = debug_##func_base##_write,     \
+			.priv = NULL,                           \
+		}                                               \
+	}
+
+struct tx_cap_debugfs_info tx_cap_debugfs_infos[NUM_TX_CAP_DEBUG_INFOS] = {
+	DEBUGFS_FOPS(ppdu_log_enable),
+	DEBUGFS_FOPS(ppdu_desc_log),
+};
+
+/*
+ * tx_cap_debugfs_remove: remove dentry and file created.
+ * @ptr_log_info: tx capture debugfs log structure
+ *
+ * return: void
+ */
+static void tx_cap_debugfs_remove(struct tx_cap_debug_log_info *ptr_log_info)
+{
+	qdf_dentry_t dentry;
+	uint8_t i = 0;
+
+	for (i = 0; i < NUM_TX_CAP_DEBUG_INFOS; ++i) {
+		dentry = ptr_log_info->debugfs_de[i];
+		if (dentry) {
+			qdf_debugfs_remove_file(dentry);
+			ptr_log_info->debugfs_de[i] = NULL;
+		}
+	}
+
+	dentry = ptr_log_info->tx_cap_debugfs_dir;
+	if (dentry) {
+		qdf_debugfs_remove_dir(dentry);
+		ptr_log_info->tx_cap_debugfs_dir = NULL;
+	}
+}
+
+/*
+ * dp_tx_capture_debugfs_init: tx capture debugfs init
+ * @pdev: DP PDEV handle
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev)
+{
+	qdf_dentry_t dentry;
+	struct dp_soc *soc;
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+	struct tx_cap_debugfs_info *ptr_debugfs_info;
+	uint8_t i = 0;
+	char buf[32];
+	char *name = NULL;
+
+	soc = pdev->soc;
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	if (soc->cdp_soc.ol_ops->get_device_name) {
+		name = soc->cdp_soc.ol_ops->get_device_name(
+				pdev->soc->ctrl_psoc, pdev->pdev_id);
+	}
+
+	if (name == NULL)
+		return QDF_STATUS_E_FAILURE;
+
+	/* directory creation with name */
+	snprintf(buf, sizeof(buf), "tx_cap_log_%s", name);
+	dentry = qdf_debugfs_create_dir(buf, NULL);
+
+	if (!dentry) {
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_ERROR,
+			  "error while creating debugfs dir for %s", buf);
+		goto out;
+	}
+
+	ptr_log_info->tx_cap_debugfs_dir = dentry;
+
+	qdf_mem_copy(ptr_log_info->tx_cap_debugfs_infos,
+		     tx_cap_debugfs_infos,
+		     (sizeof(struct tx_cap_debugfs_info) *
+		      NUM_TX_CAP_DEBUG_INFOS));
+
+	for (i = 0; i < NUM_TX_CAP_DEBUG_INFOS; i++) {
+		ptr_debugfs_info = &ptr_log_info->tx_cap_debugfs_infos[i];
+		/* store pdev tx capture pointer to private data pointer */
+		ptr_debugfs_info->ops.priv = pdev;
+
+		ptr_log_info->debugfs_de[i] = qdf_debugfs_create_file(
+				ptr_debugfs_info->name,
+				TX_CAP_DBG_FILE_PERM,
+				ptr_log_info->tx_cap_debugfs_dir,
+				&ptr_debugfs_info->ops);
+
+		if (!ptr_log_info->debugfs_de[i]) {
+			QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "debug Entry creation failed[%s]!",
+				  ptr_debugfs_info->name);
+			goto out;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+out:
+	tx_cap_debugfs_remove(ptr_log_info);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * dp_tx_capture_debugfs_deinit: tx capture debugfs deinit
+ * @pdev: DP PDEV handle
+ *
+ * return: void
+ */
+void dp_tx_capture_debugfs_deinit(struct dp_pdev *pdev)
+{
+	struct dp_pdev_tx_capture *ptr_tx_cap;
+	struct tx_cap_debug_log_info *ptr_log_info;
+
+	ptr_tx_cap = &pdev->tx_capture;
+	ptr_log_info = &ptr_tx_cap->log_info;
+
+	tx_cap_debugfs_remove(ptr_log_info);
 }
 #endif

@@ -41,6 +41,16 @@ struct dp_tx_desc_s;
 
 #define MAX_MGMT_PEER_FILTER 16
 
+/* Macro for Debugfs */
+#define TX_CAP_DBG_FILE_PERM	(QDF_FILE_USR_READ | QDF_FILE_USR_WRITE | \
+				 QDF_FILE_GRP_READ | \
+				 QDF_FILE_OTH_READ)
+#define NUM_TX_CAP_DEBUG_INFOS 2
+#define MAX_TX_CAP_QUEUE_SIZE 30
+
+#define PPDU_LOG_ENABLE_LIST 1
+#define PPDU_LOG_DISPLAY_LIST 2
+
 /* stats */
 enum CDP_PEER_MSDU_DESC {
 	PEER_MSDU_SUCC,
@@ -83,6 +93,24 @@ struct dp_tx_cap_nbuf_list {
 	uint8_t ref_cnt;
 };
 
+struct tx_cap_debugfs_info {
+	const char *name;
+	struct qdf_debugfs_fops ops;
+};
+
+struct tx_cap_debug_log_info {
+	struct dentry *debugfs_de[NUM_DEBUG_INFOS];
+	qdf_spinlock_t tx_cap_record_lock;
+	qdf_dentry_t tx_cap_debugfs_dir;
+	qdf_list_t ppdu_dbg_queue;
+	qdf_spinlock_t dbg_log_lock;
+	uint8_t ppdu_desc_log;
+	uint8_t pause_dbg_log;
+	uint8_t stop_seq;
+	uint8_t ppdu_queue_size;
+	struct tx_cap_debugfs_info tx_cap_debugfs_infos[NUM_TX_CAP_DEBUG_INFOS];
+};
+
 struct dp_pdev_tx_capture {
 	/* For deferred PPDU status processing */
 	qdf_spinlock_t ppdu_stats_lock;
@@ -111,6 +139,8 @@ struct dp_pdev_tx_capture {
 	struct cdp_tx_completion_ppdu dummy_ppdu_desc;
 	struct dp_peer_mgmt_list *ptr_peer_mgmt_list;
 	qdf_atomic_t tx_cap_usr_mode;
+
+	struct tx_cap_debug_log_info log_info;
 };
 
 /* Tx TID */
@@ -154,6 +184,59 @@ struct dp_peer_tx_capture {
 #endif
 };
 
+/* per user ppdu desc structure for debugfs */
+struct dbg_tx_comp_ppdu_user {
+	uint32_t completion_status:8,
+		tid:8,
+		peer_id:16;
+	uint8_t mac_addr[6];
+	uint32_t frame_ctrl:16,
+		 qos_ctrl:16;
+	uint32_t mpdu_tried;
+	uint16_t mpdu_success:16;
+	uint32_t ltf_size:2,
+		 stbc:1,
+		 he_re:1,
+		 txbf:4,
+		 bw:4,
+		 nss:4,
+		 mcs:4,
+		 preamble:4,
+		 gi:4,
+		 dcm:1,
+		 ldpc:1,
+		 delayed_ba:1,
+		 ack_ba_tlv:1;
+	uint32_t ba_seq_no;
+	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t start_seq;
+	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t num_mpdu:9,
+		 num_msdu:16;
+	bool is_mcast;
+	uint32_t tlv_bitmap;
+};
+
+/* ppdu desc structure for debugfs */
+struct dbg_tx_comp_ppdu {
+	qdf_list_node_t node;
+	uint32_t ppdu_id;
+	uint32_t bar_ppdu_id;
+	uint16_t vdev_id;
+	uint16_t bar_num_users;
+	uint32_t num_users;
+	uint16_t sched_cmdid;
+	uint32_t tlv_bitmap;
+	uint16_t htt_frame_type;
+	uint16_t frame_ctrl;
+	uint64_t ppdu_start_timestamp;
+	uint64_t ppdu_end_timestamp;
+	uint32_t bar_ppdu_start_timestamp;
+	uint32_t bar_ppdu_end_timestamp;
+
+	struct dbg_tx_comp_ppdu_user user[];
+};
+
 /*
  * dp_peer_tid_peer_id_update() – update peer_id to tid structure
  * @peer: Datapath peer
@@ -188,7 +271,6 @@ void dp_peer_update_80211_hdr(struct dp_vdev *vdev, struct dp_peer *peer);
 /**
  * dp_tx_ppdu_stats_attach - Initialize Tx PPDU stats and enhanced capture
  * @pdev: DP PDEV
- *
  * Return: none
  */
 void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev);
@@ -264,22 +346,6 @@ dp_config_enh_tx_capture(struct dp_pdev *pdev_handle, uint8_t val);
  * return: void
  */
 void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf);
-
-/**
- * dp_tx_ppdu_stats_attach(): Function to initialize tx ppdu stats on attach
- * @pdev: dp_pdev
- *
- * return: status
- */
-void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev);
-
-/**
- * dp_tx_ppdu_stats_detach(): Function to deinit tx ppdu stats on detach
- * @pdev: dp_pdev
- *
- * return: status
- */
-void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev);
 
 /**
  * dp_process_ppdu_stats_process(): workqueue function for ppdu stats
@@ -438,5 +504,30 @@ bool is_dp_peer_mgmt_pkt_filter(struct dp_pdev *pdev,
  */
 void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 				     struct dp_peer *peer);
+
+/*
+ * dp_tx_capture_debugfs_init: tx capture debugfs init
+ * @pdev: DP PDEV handle
+ *
+ * return: QDF_STATUS
+ */
+QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev);
+
+/*
+ * dp_tx_capture_debugfs_deinit: tx capture debugfs deinit
+ * @pdev: DP PDEV handle
+ *
+ * return: void
+ */
+void dp_tx_capture_debugfs_deinit(struct dp_pdev *pdev);
+
+/*
+ * tx_cap_debugfs_log_ppdu_desc: tx capture logging ppdu desc
+ * @pdev: DP PDEV handle
+ * @nbuf_ppdu: nbuf ppdu
+ *
+ * return: void
+ */
+void tx_cap_debugfs_log_ppdu_desc(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu);
 #endif
 #endif
