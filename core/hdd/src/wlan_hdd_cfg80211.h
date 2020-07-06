@@ -851,4 +851,13 @@ static inline void hdd_send_update_owe_info_event(struct hdd_adapter *adapter,
 {
 }
 #endif
+
+/**
+ * hdd_is_legacy_connection() - Is adapter connection is legacy
+ * @adapter: Handle to hdd_adapter
+ *
+ * Return: true if connection mode is legacy, false otherwise.
+ */
+bool hdd_is_legacy_connection(struct hdd_adapter *adapter);
+
 #endif

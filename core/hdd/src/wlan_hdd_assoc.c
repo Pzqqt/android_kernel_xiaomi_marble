@@ -1599,6 +1599,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		if (ucfg_pkt_capture_get_pktcap_mode(hdd_ctx->psoc))
 			ucfg_pkt_capture_record_channel(adapter->vdev);
+
+		hdd_netdev_update_features(adapter);
 	} else {                /* Not Associated */
 		hdd_nofl_info("%s(vdevid-%d): disconnected", dev->name,
 			      adapter->vdev_id);

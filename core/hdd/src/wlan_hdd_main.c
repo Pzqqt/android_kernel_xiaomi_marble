@@ -192,6 +192,7 @@
 #include "wlan_coex_ucfg_api.h"
 #include "wlan_cm_roam_api.h"
 #include "wlan_cm_roam_ucfg_api.h"
+#include <cdp_txrx_ctrl.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -1026,6 +1027,9 @@ static int __hdd_netdev_notifier_call(struct net_device *net_dev,
 		 */
 		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, net_dev);
 		break;
+	case NETDEV_FEAT_CHANGE:
+		hdd_debug("vdev %d netdev Feature 0x%llx\n",
+			  adapter->vdev_id, net_dev->features);
 
 	default:
 		break;
@@ -4748,11 +4752,173 @@ static const struct ethtool_ops wlan_ethtool_ops = {
 };
 #endif
 
+/**
+ * __hdd_fix_features - Adjust the feature flags needed to be updated
+ * @net_dev: Handle to net_device
+ * @features: Currently enabled feature flags
+ *
+ * Return: Adjusted feature flags on success, old feature on failure
+ */
+static netdev_features_t __hdd_fix_features(struct net_device *net_dev,
+					    netdev_features_t features)
+{
+	netdev_features_t feature_change_req = features;
+	netdev_features_t feature_tso_csum;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
+
+	if (!adapter->handle_feature_update) {
+		hdd_debug("Not triggered by hdd_netdev_update_features");
+		return features;
+	}
+
+	feature_tso_csum = hdd_get_tso_csum_feature_flags();
+	if (hdd_is_legacy_connection(adapter))
+		/* Disable checksum and TSO */
+		feature_change_req &= ~feature_tso_csum;
+	else
+		/* Enable checksum and TSO */
+		feature_change_req |= feature_tso_csum;
+
+	hdd_debug("vdev mode %d current features 0x%llx, requesting feature change 0x%llx",
+		  adapter->device_mode, net_dev->features,
+		  feature_change_req);
+
+	return feature_change_req;
+}
+
+/**
+ * hdd_fix_features() - Wrapper for __hdd_fix_features to protect it from SSR
+ * @net_dev: Pointer to net_device structure
+ * @features: Updated features set
+ *
+ * Adjusts the feature request, do not update the device yet.
+ *
+ * Return: updated feature for success, incoming feature as is on failure
+ */
+static netdev_features_t hdd_fix_features(struct net_device *net_dev,
+					  netdev_features_t features)
+{
+	int errno;
+	int changed_features = features;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return features;
+
+	changed_features = __hdd_fix_features(net_dev, features);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return changed_features;
+}
+/**
+ * __hdd_set_features - Update device config for resultant change in feature
+ * @net_dev: Handle to net_device
+ * @features: Existing + requested feature after resolving the dependency
+ *
+ * Return: 0 on success, non zero error on failure
+ */
+static int __hdd_set_features(struct net_device *net_dev,
+			      netdev_features_t features)
+{
+	struct hdd_adapter *adapter = netdev_priv(net_dev);
+	cdp_config_param_type vdev_param;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!adapter->handle_feature_update) {
+		hdd_debug("Not triggered by hdd_netdev_update_features");
+		return 0;
+	}
+
+	if (!soc) {
+		hdd_err("soc handle is NULL");
+		return 0;
+	}
+
+	hdd_debug("vdev mode %d vdev_id %d current features 0x%llx, changed features 0x%llx",
+		  adapter->device_mode, adapter->vdev_id, net_dev->features,
+		  features);
+
+	if (features & (NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM))
+		vdev_param.cdp_enable_tx_checksum = true;
+	else
+		vdev_param.cdp_enable_tx_checksum = false;
+
+	if (cdp_txrx_set_vdev_param(soc, adapter->vdev_id, CDP_ENABLE_CSUM,
+				    vdev_param))
+		hdd_debug("Failed to set DP vdev params");
+
+	return 0;
+}
+
+/**
+ * hdd_set_features() - Wrapper for __hdd_set_features to protect it from SSR
+ * @net_dev: Pointer to net_device structure
+ * @features: Updated features set
+ *
+ * Is called to update device configurations for changed features.
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int hdd_set_features(struct net_device *net_dev,
+			    netdev_features_t features)
+{
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	errno = __hdd_set_features(net_dev, features);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+void hdd_netdev_update_features(struct hdd_adapter *adapter)
+{
+	struct net_device *net_dev = adapter->dev;
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	bool request_feature_update = false;
+
+	if (!soc) {
+		hdd_err("soc handle is NULL");
+		return;
+	}
+
+	if (!cdp_cfg_get(soc, cfg_dp_disable_legacy_mode_csum_offload))
+		return;
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+		if (cdp_cfg_get(soc, cfg_dp_enable_ip_tcp_udp_checksum_offload))
+			request_feature_update = true;
+		break;
+	default:
+		break;
+	}
+
+	if (request_feature_update) {
+		hdd_debug("Update net_dev features for device mode %d",
+			  adapter->device_mode);
+		rtnl_lock();
+		adapter->handle_feature_update = true;
+		netdev_update_features(net_dev);
+		adapter->handle_feature_update = false;
+		rtnl_unlock();
+	}
+}
+
 static const struct net_device_ops wlan_drv_ops = {
 	.ndo_open = hdd_open,
 	.ndo_stop = hdd_stop,
 	.ndo_uninit = hdd_uninit,
 	.ndo_start_xmit = hdd_hard_start_xmit,
+	.ndo_fix_features = hdd_fix_features,
+	.ndo_set_features = hdd_set_features,
 	.ndo_tx_timeout = hdd_tx_timeout,
 	.ndo_get_stats = hdd_get_stats,
 	.ndo_do_ioctl = hdd_ioctl,

@@ -427,6 +427,8 @@ static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_DP_NAN_TCP_UDP_CKSUM_OFFLOAD);
 	cdp_cfg.p2p_ip_tcp_udp_checksum_offload =
 		cfg_get(psoc, CFG_DP_P2P_TCP_UDP_CKSUM_OFFLOAD);
+	cdp_cfg.legacy_mode_csum_disable =
+		cfg_get(psoc, CFG_DP_LEGACY_MODE_CSUM_DISABLE);
 	cdp_cfg.ce_classify_enabled =
 		cfg_get(psoc, CFG_DP_CE_CLASSIFY_ENABLE);
 	cdp_cfg.tso_enable = cfg_get(psoc, CFG_DP_TSO);
