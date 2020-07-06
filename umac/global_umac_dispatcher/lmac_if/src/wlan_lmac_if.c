@@ -513,6 +513,31 @@ register_agile_dfs_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+/* register_dfs_chan_postnol_rx_ops() - Register DFS Rx-Ops for postNOL
+ * channel change APIs.
+ * @rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
+ */
+static void
+register_dfs_chan_postnol_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+	if (!rx_ops)
+		return;
+
+	rx_ops->dfs_set_postnol_freq = ucfg_dfs_set_postnol_freq;
+	rx_ops->dfs_set_postnol_mode = ucfg_dfs_set_postnol_mode;
+	rx_ops->dfs_set_postnol_cfreq2 = ucfg_dfs_set_postnol_cfreq2;
+	rx_ops->dfs_get_postnol_freq = ucfg_dfs_get_postnol_freq;
+	rx_ops->dfs_get_postnol_mode = ucfg_dfs_get_postnol_mode;
+	rx_ops->dfs_get_postnol_cfreq2 = ucfg_dfs_get_postnol_cfreq2;
+}
+#else
+static inline void
+register_dfs_chan_postnol_rx_ops(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
+{
+}
+#endif
+
 static QDF_STATUS
 wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
@@ -598,6 +623,7 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	register_dfs_rx_ops_for_freq(dfs_rx_ops);
 	register_rcac_dfs_rx_ops(dfs_rx_ops);
 	register_agile_dfs_rx_ops(dfs_rx_ops);
+	register_dfs_chan_postnol_rx_ops(dfs_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

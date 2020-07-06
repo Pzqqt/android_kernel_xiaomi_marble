@@ -67,6 +67,8 @@
  * @mlme_dfs_deliver_event:            Deliver DFS events to user space
  * @mlme_precac_chan_change_csa_for_freq:Channel change triggered by PrCAC using
  *                                     Channel Switch Announcement.
+ * @mlme_postnol_chan_switch:          Channel change post NOL using Channel
+ *                                     Switch Announcement.
  * @mlme_mark_dfs_for_freq:            Mark DFS channel frequency as radar.
  * @mlme_get_extchan_for_freq:         Get the extension channel.
  * @mlme_find_dot11_chan_for_freq:     Find a channel pointer.
@@ -211,6 +213,13 @@ struct dfs_to_mlme {
 					       uint8_t des_chan,
 					       enum wlan_phymode des_mode);
 #endif
+#endif
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+	QDF_STATUS
+	(*mlme_postnol_chan_switch)(struct wlan_objmgr_pdev *pdev,
+				    qdf_freq_t des_chan_freq,
+				    qdf_freq_t des_cfreq2,
+				    enum wlan_phymode des_mode);
 #endif
 	QDF_STATUS (*mlme_nol_timeout_notification)(
 			struct wlan_objmgr_pdev *pdev);
@@ -648,6 +657,109 @@ static inline QDF_STATUS
 ucfg_dfs_set_rcac_freq(struct wlan_objmgr_pdev *pdev,
 		       qdf_freq_t rcac_freq)
 {
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+/**
+ * ucfg_dfs_set_postnol_freq() - Set PostNOL freq.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_freq: User configured freq to switch to, post NOL, in MHZ.
+ *
+ */
+QDF_STATUS ucfg_dfs_set_postnol_freq(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t postnol_freq);
+
+/**
+ * ucfg_dfs_set_postnol_mode() - Set PostNOL mode.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_mode: User configured mode to switch to, post NOL, in MHZ.
+ *
+ */
+QDF_STATUS ucfg_dfs_set_postnol_mode(struct wlan_objmgr_pdev *pdev,
+				     uint8_t postnol_mode);
+
+/**
+ * ucfg_dfs_set_postnol_cfreq2() - Set PostNOL secondary center frequency.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_freq: User configured secondary center frequency to switch to,
+ * post NOL, in MHZ.
+ *
+ */
+QDF_STATUS ucfg_dfs_set_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+				       qdf_freq_t postnol_cfreq2);
+
+/**
+ * ucfg_dfs_get_postnol_freq() - Get PostNOL freq.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_freq: Pointer to user configured freq to switch to, post NOL.
+ *
+ */
+QDF_STATUS ucfg_dfs_get_postnol_freq(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t *postnol_freq);
+
+/**
+ * ucfg_dfs_get_postnol_mode() - Set PostNOL mode.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_mode: Pointer to user configured mode to switch to, post NOL.
+ *
+ */
+QDF_STATUS ucfg_dfs_get_postnol_mode(struct wlan_objmgr_pdev *pdev,
+				     uint8_t *postnol_mode);
+
+/**
+ * ucfg_dfs_get_postnol_cfreq2() - Set PostNOL secondary center frequency.
+ * @pdev: Pointer to DFS pdev object.
+ * @postnol_freq: Pointer to user configured secondary center frequency to
+ * switch to post NOL.
+ *
+ */
+QDF_STATUS ucfg_dfs_get_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+				       qdf_freq_t *postnol_cfreq2);
+#else
+static inline QDF_STATUS
+ucfg_dfs_set_postnol_freq(struct wlan_objmgr_pdev *pdev,
+			  qdf_freq_t postnol_freq)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_dfs_set_postnol_mode(struct wlan_objmgr_pdev *pdev,
+			  uint8_t postnol_mode)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_dfs_set_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+			    qdf_freq_t postnol_cfreq2)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_dfs_get_postnol_freq(struct wlan_objmgr_pdev *pdev,
+			  qdf_freq_t *postnol_freq)
+{
+	*postnol_freq = 0;
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_dfs_get_postnol_mode(struct wlan_objmgr_pdev *pdev,
+			  uint8_t *postnol_mode)
+{
+	*postnol_mode = CH_WIDTH_INVALID;
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_dfs_get_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+			    qdf_freq_t *postnol_cfreq2)
+{
+	*postnol_cfreq2 = 0;
 	return QDF_STATUS_SUCCESS;
 }
 #endif
