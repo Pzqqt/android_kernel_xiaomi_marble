@@ -414,35 +414,23 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 /**
  * process_pktcapture_mgmt_rx_data_cb() -  process management rx packets
  * @rx_params: mgmt rx event params
- * @wbuf: netbuf
+ * @nbuf: netbuf
  *
  * Return: none
  */
 static QDF_STATUS
 pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 			    struct wlan_objmgr_peer *peer,
-			    qdf_nbuf_t wbuf,
+			    qdf_nbuf_t nbuf,
 			    struct mgmt_rx_event_params *rx_params,
 			    enum mgmt_frame_type frm_type)
 {
 	struct mon_rx_status txrx_status = {0};
 	struct ieee80211_frame *wh;
 	tpSirMacFrameCtl pfc;
-	qdf_nbuf_t nbuf;
-	int buf_len;
 
 	if (!(pkt_capture_get_pktcap_mode(psoc) & PKT_CAPTURE_MODE_MGMT_ONLY))
 		return QDF_STATUS_E_FAILURE;
-
-	buf_len = qdf_nbuf_len(wbuf);
-	nbuf = qdf_nbuf_alloc(NULL, roundup(
-				  buf_len + RESERVE_BYTES, 4),
-				  RESERVE_BYTES, 4, false);
-	if (!nbuf)
-		return QDF_STATUS_E_FAILURE;
-
-	qdf_nbuf_put_tail(nbuf, buf_len);
-	qdf_mem_copy(qdf_nbuf_data(nbuf), qdf_nbuf_data(wbuf), buf_len);
 
 	pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
