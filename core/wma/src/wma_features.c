@@ -3570,7 +3570,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		WMA_LOGE("%s: failed to send tdls peer update state command",
 			 __func__);
 		ret = -EIO;
-		goto end_tdls_peer_state;
+		/* Fall through to delete TDLS peer for teardown */
 	}
 
 	/* in case of teardown, remove peer from fw */
@@ -3590,7 +3590,6 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			WMA_LOGE(FL("wma_remove_peer failed"));
 			ret = -EINVAL;
-			goto end_tdls_peer_state;
 		}
 		cdp_peer_update_last_real_peer(soc, WMI_PDEV_ID_SOC,
 					       peer_state->vdev_id,
