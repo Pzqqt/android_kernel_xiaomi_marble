@@ -1778,6 +1778,9 @@ static int _wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx)
+		return -EINVAL;
+
 	errno = __wlan_hdd_cfg80211_resume_wlan(wiphy);
 	hif_pm_runtime_put(hif_ctx, RTPM_ID_SUSPEND_RESUME);
 
@@ -2014,6 +2017,9 @@ static int _wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx)
+		return -EINVAL;
+
 	errno = hif_pm_runtime_get_sync(hif_ctx, RTPM_ID_SUSPEND_RESUME);
 	if (errno)
 		return errno;
