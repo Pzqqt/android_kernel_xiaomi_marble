@@ -767,6 +767,7 @@ enum {
 	IEEE80211_PARAM_ATF_STATS_TIMEOUT          = 702,
 	IEEE80211_PARAM_ATF_GET_STATS              = 703,
 #endif
+	IEEE80211_PARAM_OCE_VERSION_OVERRIDE       = 704, /* Support to override OCE release version to 2*/
 };
 
 enum {
@@ -2165,6 +2166,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"me_adddeny",          35835, SET_PARAM, 1},
 	{"hbrparams",           35838, SET_PARAM, 1},
 	{"rxtimeout",           35839, SET_PARAM, 1},
+	{"oce_version_override ",     IEEE80211_PARAM_OCE_VERSION_OVERRIDE, SET_PARAM, 1},
+	{"g_oce_version_override ",   IEEE80211_PARAM_OCE_VERSION_OVERRIDE, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
