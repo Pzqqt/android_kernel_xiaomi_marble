@@ -14,17 +14,24 @@
 #define SINGLE_CTL	1
 #define DUAL_CTL	2
 
-#define TOPOLOGY_QUADPIPE_MERGE_MODE(x) \
+#define TOPOLOGY_SINGLEPIPE_MODE(x) \
+	(x == SDE_RM_TOPOLOGY_SINGLEPIPE ||\
+		x == SDE_RM_TOPOLOGY_SINGLEPIPE_DSC ||\
+		x == SDE_RM_TOPOLOGY_SINGLEPIPE_VDC)
+
+#define TOPOLOGY_DUALPIPE_MODE(x) \
+	(x == SDE_RM_TOPOLOGY_DUALPIPE ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_DSC ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC ||\
+		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC)
+
+#define TOPOLOGY_QUADPIPE_MODE(x) \
 	(x == SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE ||\
 		x == SDE_RM_TOPOLOGY_QUADPIPE_3DMERGE_DSC ||\
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE ||\
 		x == SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE)
-
-#define TOPOLOGY_DUALPIPE_MERGE_MODE(x) \
-	(x == SDE_RM_TOPOLOGY_DUALPIPE_DSCMERGE || \
-		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE || \
-		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_VDC || \
-		x == SDE_RM_TOPOLOGY_DUALPIPE_3DMERGE_DSC)
 
 /**
  * enum sde_rm_topology_name - HW resource use case in use by connector
@@ -61,6 +68,27 @@ enum sde_rm_topology_name {
 	SDE_RM_TOPOLOGY_QUADPIPE_DSCMERGE,
 	SDE_RM_TOPOLOGY_QUADPIPE_DSC4HSMERGE,
 	SDE_RM_TOPOLOGY_MAX,
+};
+
+/**
+ * enum sde_rm_topology_group - Topology group selection
+ * @SDE_RM_TOPOLOGY_GROUP_NONE:        No topology group in use currently
+ * @SDE_RM_TOPOLOGY_GROUP_SINGLEPIPE:  Any topology that uses 1 LM
+ * @SDE_RM_TOPOLOGY_GROUP_DUALPIPE:    Any topology that uses 2 LM
+ * @SDE_RM_TOPOLOGY_GROUP_QUADPIPE:    Any topology that uses 4 LM
+ * @SDE_RM_TOPOLOGY_GROUP_3DMERGE:     Any topology that uses 3D merge only
+ * @SDE_RM_TOPOLOGY_GROUP_3DMERGE_DSC: Any topology that uses 3D merge + DSC
+ * @SDE_RM_TOPOLOGY_GROUP_DSCMERGE:    Any topology that uses DSC merge
+ */
+enum sde_rm_topology_group {
+	SDE_RM_TOPOLOGY_GROUP_NONE = 0,
+	SDE_RM_TOPOLOGY_GROUP_SINGLEPIPE,
+	SDE_RM_TOPOLOGY_GROUP_DUALPIPE,
+	SDE_RM_TOPOLOGY_GROUP_QUADPIPE,
+	SDE_RM_TOPOLOGY_GROUP_3DMERGE,
+	SDE_RM_TOPOLOGY_GROUP_3DMERGE_DSC,
+	SDE_RM_TOPOLOGY_GROUP_DSCMERGE,
+	SDE_RM_TOPOLOGY_GROUP_MAX,
 };
 
 /**
@@ -350,34 +378,16 @@ static inline int sde_rm_topology_get_num_lm(struct sde_rm *rm,
 }
 
 /**
- * sde_rm_topology_is_dual_pipe - check if the topology used
- *	is a dual-pipe mode one
+ * sde_rm_topology_is_group - check if the topology in use
+ *	is part of the requested group
  * @rm: SDE Resource Manager handle
  * @state: drm state of the crtc
- * @return: true if attached connector is in dual-pipe mode
+ * @group: topology group to check
+ * @return: true if attached connector is in the topology group
  */
-bool sde_rm_topology_is_dual_pipe(struct sde_rm *rm,
-		struct drm_crtc_state *state);
-
-/**
- * sde_rm_topology_is_3dmux_dsc - check if the topology used
- *	is a 3dmerge dsc mode one
- * @rm: SDE Resource Manager handle
- * @state: drm state of the crtc
- * @return: true if attached connector is in 3DMERGE DSC mode
- */
-bool sde_rm_topology_is_3dmux_dsc(struct sde_rm *rm,
-		struct drm_crtc_state *state);
-
-/**
- * sde_rm_topology_is_quad_pipe - check if the topology used
- *	is a quad-pipe mode one
- * @rm: SDE Resource Manager handle
- * @state: drm state of the crtc
- * @return: true if attached connector is in quad-pipe mode
- */
-bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
-		struct drm_crtc_state *state);
+bool sde_rm_topology_is_group(struct sde_rm *rm,
+		struct drm_crtc_state *state,
+		enum sde_rm_topology_group group);
 
 /**
  * sde_rm_ext_blk_create_reserve - Create external HW blocks

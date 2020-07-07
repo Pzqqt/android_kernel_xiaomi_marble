@@ -852,7 +852,8 @@ static int _sde_crtc_set_lm_roi(struct drm_crtc *crtc,
 	 * hence, crtc roi must match the mixer dimensions.
 	 */
 	if (crtc_state->num_ds_enabled ||
-		sde_rm_topology_is_3dmux_dsc(&sde_kms->rm, state)) {
+		sde_rm_topology_is_group(&sde_kms->rm, state,
+				SDE_RM_TOPOLOGY_GROUP_3DMERGE_DSC)) {
 		if (memcmp(lm_roi, lm_bounds, sizeof(struct sde_rect))) {
 			SDE_ERROR("Unsupported: Dest scaler/3d mux DSC + PU\n");
 			return -EINVAL;
@@ -4815,7 +4816,8 @@ static int _sde_crtc_check_plane_layout(struct drm_crtc *crtc,
 		return -EINVAL;
 	}
 
-	if (!sde_rm_topology_is_quad_pipe(&kms->rm, crtc_state))
+	if (!sde_rm_topology_is_group(&kms->rm, crtc_state,
+			SDE_RM_TOPOLOGY_GROUP_QUADPIPE))
 		return 0;
 
 	drm_atomic_crtc_state_for_each_plane(plane, crtc_state) {
