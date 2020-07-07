@@ -156,7 +156,7 @@ dp_mon_ht2_rx_ring_cfg(struct dp_soc *soc,
 			hal_ring_hdl =
 				soc->rxdma_mon_status_ring[lmac_id].hal_srng;
 			hal_ring_type = RXDMA_MONITOR_STATUS;
-			ring_buf_size = RX_DATA_BUFFER_SIZE;
+			ring_buf_size = RX_MON_STATUS_BUF_SIZE;
 			break;
 
 		case DP_MON_FILTER_SRNG_TYPE_RXDMA_MON_BUF:

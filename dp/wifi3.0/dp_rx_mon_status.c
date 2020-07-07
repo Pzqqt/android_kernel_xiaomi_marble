@@ -1640,7 +1640,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 				rx_tlv = hal_rx_status_get_next_tlv(rx_tlv);
 
 				if ((rx_tlv - rx_tlv_start) >=
-					RX_DATA_BUFFER_SIZE)
+					RX_MON_STATUS_BUF_SIZE)
 					break;
 
 			} while ((tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE) ||
@@ -1730,6 +1730,63 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, struct dp_intr *int_ctx,
 		}
 	}
 	return;
+}
+
+/*
+ * dp_rx_nbuf_prepare() - prepare RX nbuf
+ * @soc: core txrx main context
+ * @pdev: core txrx pdev context
+ *
+ * This function alloc & map nbuf for RX dma usage, retry it if failed
+ * until retry times reaches max threshold or succeeded.
+ *
+ * Return: qdf_nbuf_t pointer if succeeded, NULL if failed.
+ */
+static inline qdf_nbuf_t
+dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	uint8_t *buf;
+	int32_t nbuf_retry_count;
+	QDF_STATUS ret;
+	qdf_nbuf_t nbuf = NULL;
+
+	for (nbuf_retry_count = 0; nbuf_retry_count <
+		QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD;
+			nbuf_retry_count++) {
+		/* Allocate a new skb using alloc_skb */
+		nbuf = qdf_nbuf_alloc_no_recycler(RX_MON_STATUS_BUF_SIZE,
+						  RX_BUFFER_RESERVATION,
+						  RX_DATA_BUFFER_ALIGNMENT);
+
+		if (!nbuf) {
+			DP_STATS_INC(pdev, replenish.nbuf_alloc_fail, 1);
+			continue;
+		}
+
+		buf = qdf_nbuf_data(nbuf);
+
+		memset(buf, 0, RX_MON_STATUS_BUF_SIZE);
+
+		ret = qdf_nbuf_map_nbytes_single(soc->osdev, nbuf,
+						 QDF_DMA_FROM_DEVICE,
+						 RX_MON_STATUS_BUF_SIZE);
+
+		/* nbuf map failed */
+		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+			qdf_nbuf_free(nbuf);
+			DP_STATS_INC(pdev, replenish.map_err, 1);
+			continue;
+		}
+		/* qdf_nbuf alloc and map succeeded */
+		break;
+	}
+
+	/* qdf_nbuf still alloc or map failed */
+	if (qdf_unlikely(nbuf_retry_count >=
+			QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD))
+		return NULL;
+
+	return nbuf;
 }
 
 /*
@@ -1844,7 +1901,8 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 				 */
 				break;
 			}
-			qdf_nbuf_set_pktlen(status_nbuf, RX_DATA_BUFFER_SIZE);
+			qdf_nbuf_set_pktlen(status_nbuf,
+					    RX_MON_STATUS_BUF_SIZE);
 
 			qdf_nbuf_unmap_nbytes_single(soc->osdev, status_nbuf,
 						     QDF_DMA_FROM_DEVICE,
@@ -2027,7 +2085,7 @@ dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 		 pdev_id, num_entries);
 
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
-	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
+	rx_desc_pool->buf_size = RX_MON_STATUS_BUF_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
 	/* Disable frag processing flag */
 	dp_rx_enable_mon_dest_frag(rx_desc_pool, false);

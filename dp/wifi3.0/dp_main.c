@@ -11333,7 +11333,7 @@ static void dp_cfr_filter(struct cdp_soc_t *soc_hdl,
 				    soc->rxdma_mon_status_ring[mac_id]
 				    .hal_srng,
 				    RXDMA_MONITOR_STATUS,
-				    RX_DATA_BUFFER_SIZE,
+				    RX_MON_STATUS_BUF_SIZE,
 				    &htt_tlv_filter);
 	}
 }
