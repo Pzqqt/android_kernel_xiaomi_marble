@@ -617,8 +617,15 @@ QDF_STATUS (*send_set_rssi_monitoring_cmd)(wmi_unified_t wmi_handle,
 					struct rssi_monitor_param *req);
 #endif /* FEATURE_RSSI_MONITOR */
 
-QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(wmi_unified_t wmi_handle,
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_offload_scan_rssi_params *roam_req);
+#else
+QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
+				wmi_unified_t wmi_handle,
 				struct roam_offload_scan_rssi_params *roam_req);
+#endif
 
 QDF_STATUS (*send_roam_mawc_params_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_mawc_roam_params *params);
