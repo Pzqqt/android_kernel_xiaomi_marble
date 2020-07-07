@@ -583,6 +583,9 @@ void qdf_runtime_lock_deinit(qdf_runtime_lock_t *lock)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
+	if (!hif_ctx)
+		return;
+
 	if (!lock)
 		return;
 
