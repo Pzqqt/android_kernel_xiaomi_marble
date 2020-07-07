@@ -1278,6 +1278,11 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
 	cmd->param_id = param_id;
 	cmd->param_value = param->param_value;
+
+	WMI_LOGD("%s: vdev_id %d peer_mac: %pM param_id: %u param_value: %x",
+		 __func__, cmd->vdev_id, peer_addr, param->param_id,
+		 cmd->param_value);
+
 	wmi_mtrace(WMI_PEER_SET_PARAM_CMDID, cmd->vdev_id, 0);
 	err = wmi_unified_cmd_send(wmi, buf,
 				   sizeof(wmi_peer_set_param_cmd_fixed_param),
