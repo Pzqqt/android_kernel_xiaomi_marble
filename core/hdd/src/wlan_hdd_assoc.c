@@ -1861,7 +1861,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	}
 
 	hdd_clear_roam_profile_ie(adapter);
-	hdd_wmm_init(adapter);
+	hdd_wmm_dscp_initial_state(adapter);
 	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
 
 	/* indicate 'disconnect' status to wpa_supplicant... */
@@ -3513,7 +3513,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			hdd_conn_set_connection_state(adapter,
 					eConnectionState_NotConnected);
 		}
-		hdd_wmm_init(adapter);
+		hdd_wmm_dscp_initial_state(adapter);
 
 		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,

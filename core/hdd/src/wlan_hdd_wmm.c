@@ -1611,7 +1611,7 @@ static inline QDF_STATUS hdd_custom_dscp_up_map(
 #endif /* WLAN_CUSTOM_DSCP_UP_MAP */
 
 /**
- * hdd_wmm_init() - initialize the WMM DSCP configuation
+ * hdd_wmm_dscp_initial_state() - initialize the WMM DSCP configuration
  * @adapter : [in]  pointer to Adapter context
  *
  * This function will initialize the WMM DSCP configuation of an
@@ -1620,7 +1620,7 @@ static inline QDF_STATUS hdd_custom_dscp_up_map(
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
+QDF_STATUS hdd_wmm_dscp_initial_state(struct hdd_adapter *adapter)
 {
 	enum sme_qos_wmmuptype *dscp_to_up_map = adapter->dscp_to_up_map;
 	struct wlan_objmgr_psoc *psoc = adapter->hdd_ctx->psoc;
@@ -1657,6 +1657,8 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	sme_ac_enum_type ac_type;
 
 	hdd_enter();
+
+	hdd_wmm_dscp_initial_state(adapter);
 
 	adapter->hdd_wmm_status.qap = false;
 	INIT_LIST_HEAD(&adapter->hdd_wmm_status.context_list);
@@ -2311,7 +2313,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 					       adapter->vdev_id);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_wmm_init(adapter);
+		hdd_wmm_dscp_initial_state(adapter);
 
 	hdd_exit();
 

@@ -217,7 +217,7 @@ int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr);
 QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter);
 
 /**
- * hdd_wmm_init() - initialize the WMM DSCP configuation
+ * hdd_wmm_dscp_initial_state() - initialize the WMM DSCP configuration
  * @adapter : [in]  pointer to Adapter context
  *
  * This function will initialize the WMM DSCP configuation of an
@@ -226,7 +226,7 @@ QDF_STATUS hdd_send_dscp_up_map_to_fw(struct hdd_adapter *adapter);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter);
+QDF_STATUS hdd_wmm_dscp_initial_state(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_adapter_init() - initialize the WMM configuration of an adapter

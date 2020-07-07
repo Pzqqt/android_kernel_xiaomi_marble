@@ -4880,7 +4880,6 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 
 	/* set dev's parent to underlying device */
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
-	hdd_wmm_init(adapter);
 	spin_lock_init(&adapter->pause_map_lock);
 	adapter->start_time = qdf_system_ticks();
 	adapter->last_time = adapter->start_time;
@@ -7816,7 +7815,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			  qdf_opmode_str(adapter->device_mode),
 			  adapter->device_mode);
 
-		hdd_wmm_init(adapter);
+		hdd_wmm_dscp_initial_state(adapter);
 
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:

@@ -5731,7 +5731,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	mutex_unlock(&hdd_ctx->sap_lock);
 
 	/* Initialize WMM configuation */
-	hdd_wmm_init(adapter);
+	hdd_wmm_dscp_initial_state(adapter);
 	if (hostapd_state->bss_state == BSS_START) {
 		policy_mgr_incr_active_session(hdd_ctx->psoc,
 					adapter->device_mode,
