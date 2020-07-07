@@ -202,6 +202,7 @@ enum sde_prop {
 	SEC_SID_MASK,
 	BASE_LAYER,
 	TRUSTED_VM_ENV,
+	MAX_TRUSTED_VM_DISPLAYS,
 	SDE_PROP_MAX,
 };
 
@@ -574,6 +575,8 @@ static struct sde_prop_type sde_prop[] = {
 	{SEC_SID_MASK, "qcom,sde-secure-sid-mask", false, PROP_TYPE_U32_ARRAY},
 	{BASE_LAYER, "qcom,sde-mixer-stage-base-layer", false, PROP_TYPE_BOOL},
 	{TRUSTED_VM_ENV, "qcom,sde-trusted-vm-env", false, PROP_TYPE_BOOL},
+	{MAX_TRUSTED_VM_DISPLAYS, "qcom,sde-max-trusted-vm-displays", false,
+			PROP_TYPE_U32},
 };
 
 static struct sde_prop_type sde_perf_prop[] = {
@@ -3752,6 +3755,8 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 			 QSEED_HW_VERSION, 0);
 	cfg->trusted_vm_env = PROP_VALUE_ACCESS(props->values, TRUSTED_VM_ENV,
 			 0);
+	cfg->max_trusted_vm_displays = PROP_VALUE_ACCESS(props->values,
+			MAX_TRUSTED_VM_DISPLAYS, 0);
 }
 
 static int sde_top_parse_dt(struct device_node *np, struct sde_mdss_cfg *cfg)
