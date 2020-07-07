@@ -1651,13 +1651,15 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
  * @ies: pointer consisting of IEs
  * @len: IE length
  *
- * Return: NULL if the element ID is not found or
- * a pointer to the first byte of the requested
- * element
+ * Return: NULL if the element ID is not found or if IE pointer is NULL else
+ * pointer to the first byte of the requested element
  */
 static uint8_t *util_scan_find_ie(uint8_t eid, uint8_t *ies,
 				  int32_t len)
 {
+	if (!ies)
+		return NULL;
+
 	while (len >= 2 && len >= ies[1] + 2) {
 		if (ies[0] == eid)
 			return ies;
