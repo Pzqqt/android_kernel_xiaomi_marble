@@ -455,6 +455,7 @@ static const u32 hdd_sta_akm_suites[] = {
 	WLAN_AKM_SUITE_FT_FILS_SHA256,
 	WLAN_AKM_SUITE_FT_FILS_SHA384,
 	WLAN_AKM_SUITE_OWE,
+	WLAN_AKM_SUITE_DPP_RSN,
 };
 
 /*akm suits supported by AP*/
