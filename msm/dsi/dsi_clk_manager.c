@@ -1396,6 +1396,27 @@ void dsi_display_clk_mngr_update_splash_status(void *clk_mgr, bool status)
 	mngr->is_cont_splash_enabled = status;
 }
 
+int dsi_display_dump_clk_handle_state(void *client)
+{
+	struct dsi_clk_mngr *mngr;
+	struct dsi_clk_client_info *c = client;
+
+	if (!c || !c->mngr) {
+		DSI_ERR("Invalid params\n");
+		return -EINVAL;
+	}
+
+	mngr = c->mngr;
+	mutex_lock(&mngr->clk_mutex);
+	DSI_INFO("[%s]%s: Core (ref=%d, state=%d), Link (ref=%d, state=%d)\n",
+			mngr->name, c->name, c->core_refcount,
+			c->core_clk_state, c->link_refcount,
+			c->link_clk_state);
+	mutex_unlock(&mngr->clk_mutex);
+
+	return 0;
+}
+
 void *dsi_display_clk_mngr_register(struct dsi_clk_info *info)
 {
 	struct dsi_clk_mngr *mngr;
