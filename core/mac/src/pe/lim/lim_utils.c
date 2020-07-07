@@ -1969,6 +1969,10 @@ lim_util_count_sta_add(struct mac_context *mac,
 	if (mac->lim.gLimNumOfAniSTAs++ != 0)
 		return;
 
+	if (mac->mlme_cfg->wmm_params.edca_profile !=
+	    WNI_CFG_EDCA_PROFILE_ANI)
+		return;
+
 	/* get here only if this is the first ANI peer in the BSS */
 	sch_edca_profile_update(mac, pe_session);
 }
@@ -1999,6 +2003,10 @@ lim_util_count_sta_del(struct mac_context *mac,
 	mac->lim.gLimNumOfAniSTAs--;
 
 	if (mac->lim.gLimNumOfAniSTAs != 0)
+		return;
+
+	if (mac->mlme_cfg->wmm_params.edca_profile !=
+	    WNI_CFG_EDCA_PROFILE_ANI)
 		return;
 
 	/* get here only if this is the last ANI peer in the BSS */
