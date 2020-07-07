@@ -829,11 +829,14 @@ static void tdls_ct_process_cap_unknown(struct tdls_peer *curr_peer,
 			tdls_vdev->curr_candidate = curr_peer;
 			tdls_implicit_send_discovery_request(tdls_vdev);
 		} else {
-			curr_peer->tdls_support = TDLS_CAP_NOT_SUPPORTED;
-			tdls_set_peer_link_status(
-				    curr_peer,
-				    TDLS_LINK_IDLE,
-				    TDLS_LINK_NOT_SUPPORTED);
+			if (curr_peer->link_status != TDLS_LINK_CONNECTING) {
+				curr_peer->tdls_support =
+						TDLS_CAP_NOT_SUPPORTED;
+				tdls_set_peer_link_status(
+						curr_peer,
+						TDLS_LINK_IDLE,
+						TDLS_LINK_NOT_SUPPORTED);
+			}
 		}
 	}
 }
