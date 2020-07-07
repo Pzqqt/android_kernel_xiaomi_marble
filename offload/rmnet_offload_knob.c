@@ -30,6 +30,7 @@ DATARMNET8f535916a4, DATARMNETae9bf9b111, DATARMNETbdf6f9d425) \
 		.DATARMNET8a7dce7d36 = DATARMNETbdf6f9d425, \
 		.DATARMNET9cee06cbe4 = { \
 			.set = __ ## DATARMNET4c4a5ce272, \
+			.get = param_get_ullong, \
 		}, \
 	}
 #define DATARMNET584f34118e(DATARMNETe1196c6554, DATARMNET4c4a5ce272) \
