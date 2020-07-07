@@ -5958,6 +5958,7 @@ int ipa3_init_mem_partition(enum ipa_hw_type type)
 	case IPA_HW_v3_5:
 	case IPA_HW_v3_5_1:
 	case IPA_HW_v4_0:
+	default:
 		IPAERR("unsupported version %d\n", type);
 		return -EPERM;
 	}
