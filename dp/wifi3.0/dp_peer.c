@@ -501,6 +501,7 @@ struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
  * @hw_peer_id: HW AST Index returned by target in peer map event
  * @vdev_id: vdev id for VAP to which the peer belongs to
  * @ast_hash: ast hash value in HW
+ * @is_wds: flag to indicate peer map event for WDS ast entry
  *
  * Return: QDF_STATUS code
  */
@@ -509,10 +510,13 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 					 uint8_t *mac_addr,
 					 uint16_t hw_peer_id,
 					 uint8_t vdev_id,
-					 uint16_t ast_hash)
+					 uint16_t ast_hash,
+					 uint8_t is_wds)
 {
 	struct dp_ast_entry *ast_entry = NULL;
 	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_STATIC;
+	void *cookie = NULL;
+	txrx_ast_free_cb cb = NULL;
 	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
 	if (!peer) {
@@ -526,6 +530,51 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	ast_entry = dp_peer_ast_list_find(soc, peer, mac_addr);
+
+	if (is_wds) {
+		/*
+		 * In certain cases like Auth attack on a repeater
+		 * can result in the number of ast_entries falling
+		 * in the same hash bucket to exceed the max_skid
+		 * length supported by HW in root AP. In these cases
+		 * the FW will return the hw_peer_id (ast_index) as
+		 * 0xffff indicating HW could not add the entry in
+		 * its table. Host has to delete the entry from its
+		 * table in these cases.
+		 */
+		if (hw_peer_id == HTT_INVALID_PEER) {
+			DP_STATS_INC(soc, ast.map_err, 1);
+			if (ast_entry) {
+				if (ast_entry->is_mapped) {
+					soc->ast_table[ast_entry->ast_idx] =
+						NULL;
+				}
+
+				cb = ast_entry->callback;
+				cookie = ast_entry->cookie;
+
+				dp_peer_unlink_ast_entry(soc, ast_entry);
+				dp_peer_free_ast_entry(soc, ast_entry);
+
+				qdf_spin_unlock_bh(&soc->ast_lock);
+
+				if (cb) {
+					cb(soc->ctrl_psoc,
+					   dp_soc_to_cdp_soc(soc),
+					   cookie,
+					   CDP_TXRX_AST_DELETED);
+				}
+			} else {
+				qdf_spin_unlock_bh(&soc->ast_lock);
+				dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
+					 peer, peer->peer_id,
+					 peer->mac_addr.raw, mac_addr,
+					 vdev_id, is_wds);
+			}
+			err = QDF_STATUS_E_INVAL;
+			return err;
+		}
+	}
 
 	if (ast_entry) {
 		ast_entry->ast_idx = hw_peer_id;
@@ -1144,7 +1193,8 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 					 uint8_t *mac_addr,
 					 uint16_t hw_peer_id,
 					 uint8_t vdev_id,
-					 uint16_t ast_hash)
+					 uint16_t ast_hash,
+					 uint8_t is_wds)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1664,31 +1714,6 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 	 */
 	if (is_wds) {
 		peer = soc->peer_id_to_obj_map[peer_id];
-		/*
-		 * In certain cases like Auth attack on a repeater
-		 * can result in the number of ast_entries falling
-		 * in the same hash bucket to exceed the max_skid
-		 * length supported by HW in root AP. In these cases
-		 * the FW will return the hw_peer_id (ast_index) as
-		 * 0xffff indicating HW could not add the entry in
-		 * its table. Host has to delete the entry from its
-		 * table in these cases.
-		 */
-		if (hw_peer_id == HTT_INVALID_PEER) {
-			DP_STATS_INC(soc, ast.map_err, 1);
-			if (!dp_peer_ast_free_entry_by_mac(soc,
-							   peer,
-							   peer_mac_addr))
-				return QDF_STATUS_E_INVAL;
-
-			dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
-				 peer, peer->peer_id,
-				 peer->mac_addr.raw, peer_mac_addr, vdev_id,
-				 is_wds);
-
-			return QDF_STATUS_E_INVAL;
-		}
-
 	} else {
 		/*
 		 * It's the responsibility of the CP and FW to ensure
@@ -1744,7 +1769,7 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 		}
 	}
 	err = dp_peer_map_ast(soc, peer, peer_mac_addr,
-			      hw_peer_id, vdev_id, ast_hash);
+			      hw_peer_id, vdev_id, ast_hash, is_wds);
 
 	return err;
 }
