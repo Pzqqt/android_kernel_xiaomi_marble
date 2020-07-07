@@ -1094,7 +1094,8 @@ static void _sde_encoder_update_vsync_source(struct sde_encoder_virt *sde_enc,
 			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_0 -
 					sde_enc->te_source;
 		else if (disp_info->is_te_using_watchdog_timer)
-			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_4;
+			vsync_source = SDE_VSYNC_SOURCE_WD_TIMER_4 +
+					sde_enc->te_source;
 		else
 			vsync_source = sde_enc->te_source;
 
