@@ -6,8 +6,8 @@
 #include <linux/ipa_uc_offload.h>
 #include <linux/msm_ipa.h>
 #include <linux/if_vlan.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
 #include <linux/ipa_fmwk.h>
 
 #define IPA_NTN_DMA_POOL_ALIGNMENT 8

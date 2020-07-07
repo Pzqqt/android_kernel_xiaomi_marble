@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 
@@ -11,7 +11,7 @@
 #include <linux/msm_ipa.h>
 #include <linux/mutex.h>
 #include <linux/ipa.h>
-#include "linux/msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/dmapool.h>
 #include "ipa_i.h"
 

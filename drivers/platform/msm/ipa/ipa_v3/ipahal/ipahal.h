@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPAHAL_H_
 #define _IPAHAL_H_
 
-#include "../ipa_defs.h"
-#include "../../ipa_common_i.h"
+#include "ipa_defs.h"
+#include "ipa_common_i.h"
 
 /*
  * Immediate command names

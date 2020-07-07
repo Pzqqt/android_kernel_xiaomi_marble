@@ -8,7 +8,7 @@
 #include <linux/mm.h>
 #include <linux/module.h>
 #include "ipa_clients_i.h"
-#include "../ipa_v3/ipa_i.h"
+#include "ipa_i.h"
 
 static int __init ipa_clients_manager_init(void)
 {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018 - 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018 - 2020, The Linux Foundation. All rights reserved.
  */
 
 #include "ipa_ut_framework.h"
 #include <linux/ipa_wdi3.h>
 #include <linux/ipa.h>
 #include <linux/delay.h>
-#include "../ipa_v3/ipa_i.h"
+#include "ipa_i.h"
 
 #define NUM_TX_BUFS 10
 #define NUM_RX_BUFS 10

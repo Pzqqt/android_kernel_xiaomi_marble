@@ -21,8 +21,8 @@
 #include <linux/random.h>
 #include <linux/rndis_ipa.h>
 #include <linux/workqueue.h>
-#include "../ipa_common_i.h"
-#include "../ipa_v3/ipa_pm.h"
+#include "ipa_common_i.h"
+#include "ipa_pm.h"
 
 #define CREATE_TRACE_POINTS
 #include "rndis_ipa_trace.h"

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
 #include <linux/idr.h>
 #include "ipa_i.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_fltrt.h"
+#include "ipahal.h"
+#include "ipahal_fltrt.h"
 
 #define IPA_RT_INDEX_BITMAP_SIZE	(32)
 #define IPA_RT_STATUS_OF_ADD_FAILED	(-1)

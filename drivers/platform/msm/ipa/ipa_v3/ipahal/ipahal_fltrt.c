@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/ipa.h>
@@ -11,7 +11,7 @@
 #include "ipahal_fltrt.h"
 #include "ipahal_fltrt_i.h"
 #include "ipahal_i.h"
-#include "../../ipa_common_i.h"
+#include "ipa_common_i.h"
 
 #define IPA_MAC_FLT_BITS (IPA_FLT_MAC_DST_ADDR_ETHER_II | \
 		IPA_FLT_MAC_SRC_ADDR_ETHER_II | IPA_FLT_MAC_DST_ADDR_802_3 | \

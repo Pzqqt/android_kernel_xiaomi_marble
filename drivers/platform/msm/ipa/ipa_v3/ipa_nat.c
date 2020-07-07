@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/device.h>
@@ -11,8 +11,8 @@
 #include <linux/uaccess.h>
 #include <linux/dma-noncoherent.h>
 #include "ipa_i.h"
-#include "ipahal/ipahal.h"
-#include "ipahal/ipahal_nat.h"
+#include "ipahal.h"
+#include "ipahal_nat.h"
 
 
 /*

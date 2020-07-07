@@ -49,8 +49,3 @@ obj-$(CONFIG_IPA3) += ipam.o
 
 obj-y += ipa_v3/ ipa_clients/
 
-ccflags-$(CONFIG_IPA3) += -Idrivers/platform/msm/ipa/ipa_v3
-ccflags-$(CONFIG_IPA3) += -Idrivers/platform/msm/ipa/ipa_v3/ipahal
-ccflags-$(CONFIG_IPA3) += -Idrivers/platform/msm/ipa/ipa_clients
-ccflags-$(CONFIG_IPA3_REGDUMP) += -Idrivers/platform/msm/ipa/ipa_v3/dump
-ccflags-$(CONFIG_IPA3_REGDUMP_IPA_4_5) += -Idrivers/platform/msm/ipa/ipa_v3/dump/ipa4.5

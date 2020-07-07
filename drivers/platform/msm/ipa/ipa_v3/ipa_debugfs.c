@@ -9,8 +9,8 @@
 #include <linux/kernel.h>
 #include <linux/stringify.h>
 #include "ipa_i.h"
-#include "../ipa_rm_i.h"
-#include "ipahal/ipahal_nat.h"
+#include "ipa_rm_i.h"
+#include "ipahal_nat.h"
 #include "ipa_odl.h"
 #include "ipa_qmi_service.h"
 

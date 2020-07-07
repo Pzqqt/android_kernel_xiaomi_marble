@@ -1,13 +1,13 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _IPA_UT_FRAMEWORK_H_
 #define _IPA_UT_FRAMEWORK_H_
 
 #include <linux/kernel.h>
-#include "../ipa_common_i.h"
+#include "ipa_common_i.h"
 #include "ipa_ut_i.h"
 
 #define IPA_UT_DRV_NAME "ipa_ut"
