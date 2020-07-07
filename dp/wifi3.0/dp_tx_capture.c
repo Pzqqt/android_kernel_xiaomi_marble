@@ -2616,7 +2616,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 	ppdu_desc->channel = cur_ppdu_desc->channel;
 	ppdu_desc->num_mpdu = 1;
 	ppdu_desc->num_msdu = 1;
-	ppdu_desc->user[0].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
+	ppdu_desc->user[usr_idx].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
 	ppdu_desc->bar_num_users = 0;
 	ppdu_desc->num_users = 1;
 
@@ -2635,11 +2635,12 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 		ppdu_desc->ppdu_end_timestamp =
 				cur_ppdu_desc->ppdu_end_timestamp;
 		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration;
-		ppdu_desc->user[0].peer_id = cur_ppdu_desc->user[0].peer_id;
+		ppdu_desc->user[usr_idx].peer_id =
+				cur_ppdu_desc->user[usr_idx].peer_id;
 		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_RTS |
 					 IEEE80211_FC0_TYPE_CTL);
-		qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
-			     &cur_ppdu_desc->user[0].mac_addr,
+		qdf_mem_copy(&ppdu_desc->user[usr_idx].mac_addr,
+			     &cur_ppdu_desc->user[usr_idx].mac_addr,
 			     QDF_MAC_ADDR_SIZE);
 
 		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_idx);
@@ -2649,7 +2650,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 	    cur_ppdu_desc->mprot_type == SEND_WIFICTS2SELF_E) {
 		uint16_t peer_id;
 
-		peer_id = cur_ppdu_desc->user[0].peer_id;
+		peer_id = cur_ppdu_desc->user[usr_idx].peer_id;
 		/* send dummy CTS frame */
 		ppdu_desc->htt_frame_type = HTT_STATS_FTYPE_SGEN_CTS;
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
@@ -2661,7 +2662,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 				cur_ppdu_desc->ppdu_end_timestamp;
 		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration -
 					 (RTS_INTERVAL + SIFS_INTERVAL);
-		ppdu_desc->user[0].peer_id = peer_id;
+		ppdu_desc->user[usr_idx].peer_id = peer_id;
 		peer = dp_tx_cap_peer_find_by_id(pdev->soc, peer_id);
 		if (peer) {
 			vdev = peer->vdev;
@@ -2675,7 +2676,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 		}
 
 		if (vdev)
-			qdf_mem_copy(&ppdu_desc->user[0].mac_addr,
+			qdf_mem_copy(&ppdu_desc->user[usr_idx].mac_addr,
 				     vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 
 		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_idx);
@@ -2786,7 +2787,7 @@ void dp_send_data_to_stack(struct dp_pdev *pdev,
 	tx_capture_info.ppdu_desc = ppdu_desc;
 	tx_capture_info.mpdu_info.channel_num = pdev->operating_channel.num;
 
-	if (ppdu_desc->mprot_type)
+	if (ppdu_desc->mprot_type && (usr_idx == 0))
 		dp_send_dummy_rts_cts_frame(pdev, ppdu_desc, usr_idx);
 
 	start_seq = user->start_seq;
