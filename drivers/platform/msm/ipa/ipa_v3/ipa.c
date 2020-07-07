@@ -5693,7 +5693,7 @@ static int ipa3_gsi_pre_fw_load_init(void)
 
 	result = gsi_configure_regs(
 		ipa3_res.ipa_mem_base,
-		ipa3_get_gsi_ver(ipa3_res.ipa_hw_type));
+		ipa3_ctx->gsi_ver);
 
 	if (result) {
 		IPAERR("Failed to configure GSI registers\n");
@@ -5996,7 +5996,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 		ipa3_disable_prefetch(IPA_CLIENT_MHI_CONS);
 
 	memset(&gsi_props, 0, sizeof(gsi_props));
-	gsi_props.ver = ipa3_get_gsi_ver(resource_p->ipa_hw_type);
+	gsi_props.ver = ipa3_ctx->gsi_ver;
 	gsi_props.ee = resource_p->ee;
 	gsi_props.intr = GSI_INTR_IRQ;
 	gsi_props.phys_addr = resource_p->transport_mem_base;
@@ -6035,7 +6035,7 @@ static int ipa3_post_init(const struct ipa3_plat_drv_res *resource_p,
 	/* GSI 2.2 requires to allocate all EE GSI channel
 	 * during device bootup.
 	 */
-	if (ipa3_get_gsi_ver(resource_p->ipa_hw_type) == GSI_VER_2_2) {
+	if (gsi_props.ver == GSI_VER_2_2) {
 		result = ipa3_alloc_gsi_channel();
 		if (result) {
 			IPAERR("Failed to alloc the GSI channels\n");
@@ -6148,6 +6148,7 @@ static int ipa3_manual_load_ipa_fws(void)
 	int result;
 	const struct firmware *fw;
 	const char *path = IPA_FWS_PATH;
+	enum gsi_ver gsi_ver = ipa3_ctx->gsi_ver;
 
 	if (ipa3_ctx->ipa3_hw_mode == IPA_HW_MODE_EMULATION) {
 		switch (ipa3_get_emulation_type()) {
@@ -6179,10 +6180,10 @@ static int ipa3_manual_load_ipa_fws(void)
 		result = emulator_load_fws(fw,
 			ipa3_res.transport_mem_base,
 			ipa3_res.transport_mem_size,
-			ipa3_get_gsi_ver(ipa3_res.ipa_hw_type));
+			gsi_ver);
 	} else {
 		result = ipa3_load_fws(fw, ipa3_res.transport_mem_base,
-			ipa3_get_gsi_ver(ipa3_res.ipa_hw_type));
+			gsi_ver);
 	}
 
 	if (result) {
@@ -6193,7 +6194,7 @@ static int ipa3_manual_load_ipa_fws(void)
 
 	result = gsi_enable_fw(ipa3_res.transport_mem_base,
 				ipa3_res.transport_mem_size,
-				ipa3_get_gsi_ver(ipa3_res.ipa_hw_type));
+				gsi_ver);
 	if (result) {
 		IPAERR("Failed to enable GSI FW\n");
 		release_firmware(fw);
@@ -8595,6 +8596,9 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p,
 		IPAERR("IPA dts parsing failed\n");
 		return result;
 	}
+
+	/* Get GSI version */
+	ipa3_ctx->gsi_ver = ipa3_get_gsi_ver(ipa3_res.ipa_hw_type);
 
 	result = ipa3_bind_api_controller(ipa3_res.ipa_hw_type, api_ctrl);
 	if (result) {
