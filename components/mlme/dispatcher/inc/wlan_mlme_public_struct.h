@@ -1111,8 +1111,8 @@ struct wlan_mlme_chainmask {
  * @sae_connect_retries: sae connect retry bitmask
  */
 struct wlan_mlme_generic {
-	enum band_info band_capability;
-	enum band_info band;
+	uint32_t band_capability;
+	uint32_t band;
 	uint8_t select_5ghz_margin;
 	uint8_t sub_20_chan_width;
 	uint8_t ito_repeat_count;

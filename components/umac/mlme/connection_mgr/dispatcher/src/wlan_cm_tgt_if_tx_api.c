@@ -38,7 +38,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev;
 	struct wmi_pcl_chan_weights *weights;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint8_t band_capability;
+	uint32_t band_capability;
 	uint16_t i;
 
 	/*
@@ -94,13 +94,13 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 			wma_map_pcl_weights(weights->weighed_valid_list[i]);
 
 		/* Dont allow roaming on 2G when 5G_ONLY configured */
-		if ((band_capability == BAND_5G ||
+		if ((band_capability == BIT(REG_BAND_5G) ||
 		     pcl_req->band_mask == BIT(REG_BAND_5G)) &&
 		     WLAN_REG_IS_24GHZ_CH_FREQ(weights->saved_chan_list[i]))
 			weights->weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;
 
-		if ((band_capability == BAND_2G ||
+		if ((band_capability == BIT(REG_BAND_2G) ||
 		     pcl_req->band_mask == BIT(REG_BAND_2G)) &&
 		    !WLAN_REG_IS_24GHZ_CH_FREQ(weights->saved_chan_list[i]))
 			weights->weighed_valid_list[i] =

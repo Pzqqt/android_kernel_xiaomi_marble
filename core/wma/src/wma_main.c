@@ -5090,28 +5090,37 @@ wma_update_sar_version(struct wlan_psoc_host_service_ext_param *param,
  * wma_update_hdd_band_cap() - update band cap which hdd understands
  * @supported_band: supported band which has been given by FW
  * @tgt_cfg: target configuration to be updated
+ * @psoc: psoc ptr
  *
  * Convert WMA given supported band to enum which HDD understands
  *
  * Return: None
  */
 static void wma_update_hdd_band_cap(WMI_PHY_CAPABILITY supported_band,
-				    struct wma_tgt_cfg *tgt_cfg)
+				    struct wma_tgt_cfg *tgt_cfg,
+				    struct wlan_objmgr_psoc *psoc)
 {
 	switch (supported_band) {
 	case WMI_11G_CAPABILITY:
 	case WMI_11NG_CAPABILITY:
-		tgt_cfg->band_cap = BAND_2G;
+		tgt_cfg->band_cap = BIT(REG_BAND_2G);
 		break;
 	case WMI_11A_CAPABILITY:
 	case WMI_11NA_CAPABILITY:
 	case WMI_11AC_CAPABILITY:
-		tgt_cfg->band_cap = BAND_5G;
+		tgt_cfg->band_cap = BIT(REG_BAND_5G);
 		break;
 	case WMI_11AG_CAPABILITY:
 	case WMI_11NAG_CAPABILITY:
+	case WMI_11AX_CAPABILITY:
+		tgt_cfg->band_cap = (BIT(REG_BAND_2G) | BIT(REG_BAND_5G));
+		if (wlan_reg_is_6ghz_supported(psoc))
+			tgt_cfg->band_cap |= BIT(REG_BAND_6G);
+		break;
 	default:
-		tgt_cfg->band_cap = BAND_ALL;
+		tgt_cfg->band_cap = (BIT(REG_BAND_2G) |
+				     BIT(REG_BAND_5G) |
+				     BIT(REG_BAND_6G));
 	}
 }
 
@@ -5450,7 +5459,7 @@ static int wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.dfs_cac_offload = wma_handle->is_dfs_offloaded;
 	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
 	wma_update_hdd_band_cap(target_if_get_phy_capability(tgt_hdl),
-				&tgt_cfg);
+				&tgt_cfg, wma_handle->psoc);
 	wma_update_sar_version(service_ext_param, &tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
 		target_if_get_wmi_fw_sub_feat_caps(tgt_hdl);

@@ -211,8 +211,8 @@ void hdd_reset_global_reg_params(void)
 static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
-	uint8_t band_capability = 0, indoor_chnl_marking = 0;
-	uint32_t scan_11d_interval = 0;
+	uint8_t indoor_chnl_marking = 0;
+	uint32_t band_capability = 0, scan_11d_interval = 0;
 	bool indoor_chan_enabled = false;
 	uint32_t restart_beaconing = 0;
 	bool enable_srd_chan = false;

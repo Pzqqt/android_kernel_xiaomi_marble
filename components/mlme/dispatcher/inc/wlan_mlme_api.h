@@ -257,7 +257,7 @@ QDF_STATUS wlan_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
-					 uint8_t *band_capability);
+					 uint32_t *band_capability);
 
 /**
  * wlan_mlme_set_band_capability() - Set the Band capability config
@@ -267,7 +267,7 @@ QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
-					 uint8_t band_capability);
+					 uint32_t band_capability);
 
 /**
  * wlan_mlme_get_prevent_link_down() - Get the prevent link down config

@@ -16010,7 +16010,7 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
 {
 	int i, j;
-	uint8_t band_capability;
+	uint32_t band_capability;
 	QDF_STATUS status;
 	struct ieee80211_supported_band *band;
 
@@ -16028,7 +16028,7 @@ static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
 			band = hdd_ctx->wiphy->bands[i];
 
 			if (HDD_NL80211_BAND_2GHZ == i &&
-			    BAND_5G == band_capability) {
+			    BIT(REG_BAND_5G) == band_capability) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable social channels for P2P */
@@ -16042,7 +16042,7 @@ static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
 					IEEE80211_CHAN_DISABLED;
 				continue;
 			} else if (HDD_NL80211_BAND_5GHZ == i &&
-				   BAND_2G == band_capability) {
+				   BIT(REG_BAND_2G) == band_capability) {
 				/* 2G only */
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
