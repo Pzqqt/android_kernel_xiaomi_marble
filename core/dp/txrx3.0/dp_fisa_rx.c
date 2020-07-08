@@ -596,6 +596,7 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 		hal_rx_msdu_end_l3_hdr_padding_get(fisa_hdl->soc_hdl->hal_soc,
 						   rx_tlv_hdr);
 	struct udphdr *udp_hdr;
+	uint32_t udp_len;
 	uint32_t transport_payload_offset;
 
 	qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN + l2_hdr_offset);
@@ -603,21 +604,21 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	udp_hdr = (struct udphdr *)(qdf_nbuf_data(nbuf) +
 			get_transport_header_offset(fisa_flow, nbuf));
 
+	udp_len = qdf_ntohs(udp_hdr->len);
+
 	/**
 	 * Incoming nbuf is of size greater than ongoing aggregation
 	 * then flush the aggregate and start new aggregation for nbuf
 	 */
 	if (head_skb &&
-	    (qdf_ntohs(udp_hdr->len) >
-	     qdf_ntohs(fisa_flow->head_skb_udp_hdr->len))) {
+	    (udp_len > qdf_ntohs(fisa_flow->head_skb_udp_hdr->len))) {
 		/* current msdu should not take into account for flushing */
 		fisa_flow->adjusted_cumulative_ip_length -=
-			(qdf_ntohs(udp_hdr->len) - sizeof(struct udphdr));
+			(udp_len - sizeof(struct udphdr));
 		fisa_flow->cur_aggr--;
 		dp_rx_fisa_flush_flow_wrap(fisa_flow);
 		/* napi_flush_cumulative_ip_length  not include current msdu */
-		fisa_flow->napi_flush_cumulative_ip_length -=
-					qdf_ntohs(udp_hdr->len);
+		fisa_flow->napi_flush_cumulative_ip_length -= udp_len;
 		head_skb = NULL;
 	}
 
@@ -626,10 +627,10 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 		/* First nbuf for the flow */
 		fisa_flow->head_skb = nbuf;
 		fisa_flow->head_skb_udp_hdr = udp_hdr;
-		fisa_flow->cur_aggr_gso_size = qdf_ntohs(udp_hdr->len) -
-					sizeof(struct udphdr);
-		fisa_flow->adjusted_cumulative_ip_length =
-					qdf_ntohs(udp_hdr->len);
+		fisa_flow->cur_aggr_gso_size = udp_len - sizeof(struct udphdr);
+		fisa_flow->adjusted_cumulative_ip_length = udp_len;
+
+		fisa_flow->frags_cumulative_len = 0;
 
 		return FISA_AGGR_DONE;
 	}
@@ -642,6 +643,8 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	hex_dump_skb_data(nbuf, false);
 
 	fisa_flow->bytes_aggregated += qdf_nbuf_len(nbuf);
+
+	fisa_flow->frags_cumulative_len += (udp_len - sizeof(struct udphdr));
 
 	if (qdf_nbuf_get_ext_list(head_skb)) {
 		/*
@@ -667,8 +670,7 @@ dp_rx_fisa_aggr_udp(struct dp_rx_fst *fisa_hdl,
 	 * Incoming nbuf is of size less than ongoing aggregation
 	 * then flush the aggregate
 	 */
-	if (qdf_ntohs(udp_hdr->len) <
-	    qdf_ntohs(fisa_flow->head_skb_udp_hdr->len))
+	if (udp_len < qdf_ntohs(fisa_flow->head_skb_udp_hdr->len))
 		dp_rx_fisa_flush_flow_wrap(fisa_flow);
 
 	return FISA_AGGR_DONE;
@@ -831,6 +833,18 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 		/* Free non linear skb */
 		qdf_nbuf_free(fisa_flow->head_skb);
 	} else {
+		/*
+		 * Sanity check head data_len should be equal to sum of
+		 * all fragments length
+		 */
+		if (qdf_unlikely(fisa_flow->frags_cumulative_len !=
+				 fisa_flow->head_skb->data_len)) {
+			qdf_assert(0);
+			/* Drop the aggregate */
+			qdf_nbuf_free(fisa_flow->head_skb);
+			goto out;
+		}
+
 		if (!vdev->osif_rx || QDF_STATUS_SUCCESS !=
 		    vdev->osif_rx(vdev->osif_vdev, fisa_flow->head_skb))
 			qdf_nbuf_free(fisa_flow->head_skb);
@@ -990,13 +1004,28 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 		fisa_flow->napi_flush_cumulative_ip_length = 0;
 		fisa_flow->cur_aggr = 0;
 		fisa_flow->do_not_aggregate = false;
-		if (hal_cumulative_ip_len > FISA_MAX_SINGLE_CUMULATIVE_IP_LEN)
+		fisa_flow->hal_cumultive_ip_len = 0;
+		fisa_flow->last_hal_aggr_count = 0;
+		/* Check fisa related HW TLV correct or not */
+		if (qdf_unlikely(dp_fisa_aggregation_should_stop(
+						fisa_flow,
+						hal_aggr_count,
+						hal_cumulative_ip_len,
+						rx_tlv_hdr))) {
 			qdf_assert(0);
+			fisa_flow->do_not_aggregate = true;
+			/*
+			 * do not aggregate until next new aggregation
+			 * start.
+			 */
+			goto invalid_fisa_assist;
+		}
 	} else if (qdf_unlikely(dp_fisa_aggregation_should_stop(
 						fisa_flow,
 						hal_aggr_count,
 						hal_cumulative_ip_len,
 						rx_tlv_hdr))) {
+		qdf_assert(0);
 		/* Either HW cumulative ip length is wrong, or packet is missed
 		 * Flush the flow and do not aggregate until next start new
 		 * aggreagtion
