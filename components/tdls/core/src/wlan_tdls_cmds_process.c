@@ -813,7 +813,7 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 
 	if (!req || !req->vdev) {
 		tdls_err("req: %pK", req);
-		goto error;
+		goto free_req;
 	}
 	vdev = req->vdev;
 	psoc = wlan_vdev_get_psoc(vdev);
@@ -848,26 +848,16 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	case WLAN_SER_CMD_ACTIVE:
 		/* command moved to active list. Do nothing */
 		break;
-	case WLAN_SER_CMD_DENIED_LIST_FULL:
-	case WLAN_SER_CMD_DENIED_RULES_FAILED:
-	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
-		/* notify os interface about internal error*/
-		status = tdls_internal_add_peer_rsp(req, QDF_STATUS_E_FAILURE);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
-		/* cmd can't be serviced.
-		 * release tdls_add_peer_request memory
-		 */
-		qdf_mem_free(req);
-		break;
 	default:
-		QDF_ASSERT(0);
-		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
 
 	return status;
 error:
+	/* notify os interface about internal error*/
 	status = tdls_internal_add_peer_rsp(req, QDF_STATUS_E_FAILURE);
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_TDLS_NB_ID);
+free_req:
 	qdf_mem_free(req);
 	return status;
 }
@@ -1038,7 +1028,7 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	if (!req || !req->vdev) {
 		tdls_err("req: %pK", req);
 		status = QDF_STATUS_E_FAILURE;
-		goto error;
+		goto free_req;
 	}
 
 	vdev = req->vdev;
@@ -1063,27 +1053,16 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	case WLAN_SER_CMD_ACTIVE:
 		/* command moved to active list. Do nothing */
 		break;
-	case WLAN_SER_CMD_DENIED_LIST_FULL:
-	case WLAN_SER_CMD_DENIED_RULES_FAILED:
-	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
-		/* notify os interface about internal error*/
-		status = tdls_internal_update_peer_rsp(req,
-						       QDF_STATUS_E_FAILURE);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
-		/* cmd can't be serviced.
-		 * release tdls_add_peer_request memory
-		 */
-		qdf_mem_free(req);
-		break;
 	default:
-		QDF_ASSERT(0);
-		status = QDF_STATUS_E_INVAL;
-		break;
+		goto error;
 	}
 
 	return status;
 error:
+	/* notify os interface about internal error*/
 	status = tdls_internal_update_peer_rsp(req, QDF_STATUS_E_FAILURE);
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_TDLS_NB_ID);
+free_req:
 	qdf_mem_free(req);
 	return status;
 }
@@ -1222,27 +1201,15 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	case WLAN_SER_CMD_ACTIVE:
 		/* command moved to active list. Do nothing */
 		break;
-	case WLAN_SER_CMD_DENIED_LIST_FULL:
-	case WLAN_SER_CMD_DENIED_RULES_FAILED:
-	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
-		/* notify os interface about internal error*/
-		status = tdls_internal_del_peer_rsp(req);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
-		/* cmd can't be serviced.
-		 * release tdls_add_peer_request memory
-		 */
-		qdf_mem_free(req);
-		break;
 	default:
-		QDF_ASSERT(0);
-		status = QDF_STATUS_E_INVAL;
-		break;
+		goto error;
 	}
 
 	return status;
 error:
+	/* notify os interface about internal error*/
 	status = tdls_internal_del_peer_rsp(req);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_TDLS_NB_ID);
 free_req:
 	qdf_mem_free(req);
 	return status;
