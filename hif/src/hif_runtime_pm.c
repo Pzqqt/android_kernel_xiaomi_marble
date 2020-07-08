@@ -568,8 +568,7 @@ void hif_pm_runtime_close(struct hif_softc *scn)
 int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 	int pm_state;
 
 	if (!scn)
@@ -578,6 +577,7 @@ int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
@@ -587,7 +587,7 @@ int hif_pm_runtime_sync_resume(struct hif_opaque_softc *hif_ctx)
 	rpm_ctx->pm_stats.request_resume++;
 	rpm_ctx->pm_stats.last_resume_caller = (void *)_RET_IP_;
 
-	return pm_runtime_resume(dev);
+	return pm_runtime_resume(hif_bus_get_dev(scn));
 }
 
 /**
@@ -997,7 +997,7 @@ int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 				    wlan_rtpm_dbgid rtpm_dbgid)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
+	struct device *dev;
 	int usage_count;
 	char *err = NULL;
 
@@ -1007,6 +1007,7 @@ int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	dev = hif_bus_get_dev(scn);
 	usage_count = atomic_read(&dev->power.usage_count);
 	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
 		err = "Uexpected PUT when runtime PM is disabled";
@@ -1033,8 +1034,7 @@ int hif_pm_runtime_put_sync_suspend(struct hif_opaque_softc *hif_ctx,
 int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 	int pm_state;
 
 	if (!scn)
@@ -1043,6 +1043,7 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED ||
 	    pm_state == HIF_PM_RUNTIME_STATE_SUSPENDING)
@@ -1052,7 +1053,7 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 	rpm_ctx->pm_stats.request_resume++;
 	rpm_ctx->pm_stats.last_resume_caller = (void *)_RET_IP_;
 
-	return hif_pm_request_resume(dev);
+	return hif_pm_request_resume(hif_bus_get_dev(scn));
 }
 
 /**
@@ -1067,16 +1068,16 @@ int hif_pm_runtime_request_resume(struct hif_opaque_softc *hif_ctx)
 void hif_pm_runtime_mark_last_busy(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 
 	if (!scn)
 		return;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	rpm_ctx->pm_stats.last_busy_marker = (void *)_RET_IP_;
 	rpm_ctx->pm_stats.last_busy_timestamp = qdf_get_log_timestamp_usecs();
 
-	return pm_runtime_mark_last_busy(dev);
+	return pm_runtime_mark_last_busy(hif_bus_get_dev(scn));
 }
 
 /**
@@ -1093,7 +1094,6 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
 				 wlan_rtpm_dbgid rtpm_dbgid)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
 
 	if (!scn)
 		return;
@@ -1102,7 +1102,7 @@ void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx,
 		return;
 
 	hif_pm_stats_runtime_get_record(scn, rtpm_dbgid);
-	pm_runtime_get_noresume(dev);
+	pm_runtime_get_noresume(hif_bus_get_dev(scn));
 }
 
 /**
@@ -1124,8 +1124,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 		       wlan_rtpm_dbgid rtpm_dbgid)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
+	struct device *dev;
 	int ret;
 	int pm_state;
 
@@ -1137,6 +1137,8 @@ int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx,
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	dev = hif_bus_get_dev(scn);
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	pm_state = qdf_atomic_read(&rpm_ctx->pm_state);
 
 	if (pm_state  == HIF_PM_RUNTIME_STATE_ON ||
@@ -1195,7 +1197,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 		       wlan_rtpm_dbgid rtpm_dbgid)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
+	struct device *dev;
 	int usage_count;
 	char *error = NULL;
 
@@ -1208,6 +1210,7 @@ int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx,
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	dev = hif_bus_get_dev(scn);
 	usage_count = atomic_read(&dev->power.usage_count);
 	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
 		error = "Unexpected PUT when runtime PM is disabled";
@@ -1240,7 +1243,7 @@ int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
 			      wlan_rtpm_dbgid rtpm_dbgid)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct device *dev = hif_bus_get_dev(scn);
+	struct device *dev;
 	int usage_count;
 	char *err = NULL;
 
@@ -1250,6 +1253,7 @@ int hif_pm_runtime_put_noidle(struct hif_opaque_softc *hif_ctx,
 	if (!hif_pci_pm_runtime_enabled(scn))
 		return 0;
 
+	dev = hif_bus_get_dev(scn);
 	usage_count = atomic_read(&dev->power.usage_count);
 	if (usage_count == 2 && !scn->hif_config.enable_runtime_pm)
 		err = "Unexpected PUT when runtime PM is disabled";
@@ -1731,11 +1735,12 @@ void hif_pm_runtime_check_and_request_resume(struct hif_opaque_softc *hif_ctx)
 void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 
 	if (!scn)
 		return;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	qdf_atomic_set(&rpm_ctx->pm_dp_rx_busy, 1);
 	rpm_ctx->dp_last_busy_timestamp = qdf_get_log_timestamp_usecs();
 
@@ -1751,11 +1756,12 @@ void hif_pm_runtime_mark_dp_rx_busy(struct hif_opaque_softc *hif_ctx)
 int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 
 	if (!scn)
 		return 0;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	return qdf_atomic_read(&rpm_ctx->pm_dp_rx_busy);
 }
 
@@ -1768,11 +1774,12 @@ int hif_pm_runtime_is_dp_rx_busy(struct hif_opaque_softc *hif_ctx)
 qdf_time_t hif_pm_runtime_get_dp_rx_busy_mark(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
+	struct hif_runtime_pm_ctx *rpm_ctx;
 
 	if (!scn)
 		return 0;
 
+	rpm_ctx = hif_bus_get_rpm_ctx(scn);
 	return rpm_ctx->dp_last_busy_timestamp;
 }
 #endif /* FEATURE_RUNTIME_PM */
