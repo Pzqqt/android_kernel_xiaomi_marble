@@ -31,6 +31,8 @@
 #define DEVICE_ENABLE 1
 #define DEVICE_DISABLE 0
 
+#define ARRAY_SZ 21
+
 static struct attribute device_state_attr = {
 	.name = "state",
 	.mode = 0660,
@@ -369,15 +371,15 @@ int msm_channel_map_get(struct snd_kcontrol *kcontrol,
 
 void msm_common_get_backend_name(const char *stream_name, char **backend_name)
 {
-	char arg[21] = {0};
+	char arg[ARRAY_SZ] = {0};
 	char value[61] = {0};
 
 	sscanf(stream_name, "%20[^-]-%60s", arg, value);
-	*backend_name = kzalloc(strlen(arg)+1, GFP_KERNEL);
+	*backend_name = kzalloc(ARRAY_SZ, GFP_KERNEL);
 	if (!(*backend_name))
 		return;
 
-	strlcpy(*backend_name, arg, strlen(arg)+1);
+	strlcpy(*backend_name, arg, ARRAY_SZ);
 }
 
 int msm_common_dai_link_init(struct snd_soc_pcm_runtime *rtd)
