@@ -224,9 +224,50 @@ static QDF_STATUS tdls_object_init_params(
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef TDLS_WOW_ENABLED
+/**
+ * tdls_wow_init(): Create/init wake lock for TDLS
+ *
+ * Create/init wake lock for TDLS if DVR isn't supported
+ *
+ * Return None
+ */
+static void tdls_wow_init(struct tdls_soc_priv_obj *soc_obj)
+{
+	soc_obj->is_prevent_suspend = false;
+	soc_obj->is_drv_supported = qdf_is_drv_supported();
+	if (!soc_obj->is_drv_supported) {
+		qdf_wake_lock_create(&soc_obj->wake_lock, "wlan_tdls");
+		qdf_runtime_lock_init(&soc_obj->runtime_lock);
+	}
+}
+
+/**
+ * tdls_wow_deinit(): Destroy/deinit wake lock for TDLS
+ *
+ * Destroy/deinit wake lock for TDLS if DVR isn't supported
+ *
+ * Return None
+ */
+static void tdls_wow_deinit(struct tdls_soc_priv_obj *soc_obj)
+{
+	if (!soc_obj->is_drv_supported) {
+		qdf_runtime_lock_deinit(&soc_obj->runtime_lock);
+		qdf_wake_lock_destroy(&soc_obj->wake_lock);
+	}
+}
+#else
+static void tdls_wow_init(struct tdls_soc_priv_obj *soc_obj)
+{
+}
+
+static void tdls_wow_deinit(struct tdls_soc_priv_obj *soc_obj)
+{
+}
+#endif
+
 static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 {
-
 	tdls_object_init_params(soc_obj);
 	soc_obj->connected_peer_count = 0;
 	soc_obj->tdls_nss_switch_in_progress = false;
@@ -238,13 +279,16 @@ static QDF_STATUS tdls_global_init(struct tdls_soc_priv_obj *soc_obj)
 	soc_obj->tdls_disable_in_progress = false;
 
 	qdf_spinlock_create(&soc_obj->tdls_ct_spinlock);
+	tdls_wow_init(soc_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS tdls_global_deinit(struct tdls_soc_priv_obj *soc_obj)
 {
+	tdls_wow_deinit(soc_obj);
 	qdf_spinlock_destroy(&soc_obj->tdls_ct_spinlock);
+
 	return QDF_STATUS_SUCCESS;
 }
 
