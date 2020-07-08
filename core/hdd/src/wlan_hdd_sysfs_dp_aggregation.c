@@ -47,12 +47,6 @@ static ssize_t
 __hdd_sysfs_dp_aggregation_show(struct hdd_context *hdd_ctx,
 				struct kobj_attribute *attr, char *buf)
 {
-	int ret;
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret != 0)
-		return ret;
-
 	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
@@ -69,6 +63,11 @@ static ssize_t hdd_sysfs_dp_aggregation_show(struct kobject *kobj,
 	struct osif_psoc_sync *psoc_sync;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	ssize_t errno_size;
+	int ret;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
 
 	errno_size = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy),
 					     &psoc_sync);
@@ -92,10 +91,6 @@ __hdd_sysfs_dp_aggregation_store(struct hdd_context *hdd_ctx,
 	uint32_t value;
 	int ret;
 	ol_txrx_soc_handle dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret != 0)
-		return ret;
 
 	if (!wlan_hdd_validate_modules_state(hdd_ctx) || !dp_soc)
 		return -EINVAL;
@@ -131,6 +126,11 @@ hdd_sysfs_dp_aggregation_store(struct kobject *kobj,
 	struct osif_psoc_sync *psoc_sync;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	ssize_t errno_size;
+	int ret;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
 
 	errno_size = osif_psoc_sync_op_start(wiphy_dev(hdd_ctx->wiphy),
 					     &psoc_sync);
