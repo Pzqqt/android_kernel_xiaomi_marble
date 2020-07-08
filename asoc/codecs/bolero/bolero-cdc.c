@@ -806,6 +806,9 @@ static ssize_t bolero_version_read(struct snd_info_entry *entry,
 	case BOLERO_VERSION_1_2:
 		len = snprintf(buffer, sizeof(buffer), "BOLERO_1_2\n");
 		break;
+	case BOLERO_VERSION_2_0:
+		len = snprintf(buffer, sizeof(buffer), "BOLERO_2_0\n");
+		break;
 	case BOLERO_VERSION_2_1:
 		len = snprintf(buffer, sizeof(buffer), "BOLERO_2_1\n");
 		break;
