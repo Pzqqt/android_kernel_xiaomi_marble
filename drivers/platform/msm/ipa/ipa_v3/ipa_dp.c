@@ -313,6 +313,7 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 	IPADBG_LOW("gsi send NOP for ch: %lu\n", sys->ep->gsi_chan_hdl);
 	if (atomic_read(&sys->workqueue_flushed))
 		return;
+
 	spin_lock_bh(&sys->spinlock);
 	if (!list_empty(&sys->avail_tx_wrapper_list)) {
 		tx_pkt = list_first_entry(&sys->avail_tx_wrapper_list,
@@ -321,8 +322,10 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 		sys->avail_tx_wrapper--;
 		memset(tx_pkt, 0, sizeof(struct ipa3_tx_pkt_wrapper));
 	} else {
+		spin_unlock_bh(&sys->spinlock);
 		tx_pkt = kmem_cache_zalloc(ipa3_ctx->tx_pkt_wrapper_cache,
 			GFP_KERNEL);
+		spin_lock_bh(&sys->spinlock);
 	}
 	if (!tx_pkt) {
 		spin_unlock_bh(&sys->spinlock);
@@ -358,7 +361,6 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 
 	/* make sure TAG process is sent before clocks are gated */
 	ipa3_ctx->tag_process_before_gating = true;
-
 }
 
 
@@ -566,7 +568,6 @@ int ipa3_send(struct ipa3_sys_context *sys,
 
 	/* set the timer for sending the NOP descriptor */
 	if (send_nop) {
-
 		ktime_t time = ktime_set(0, IPA_TX_SEND_COMPL_NOP_DELAY_NS);
 
 		IPADBG_LOW("scheduling timer for ch %lu\n",
