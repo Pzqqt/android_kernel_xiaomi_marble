@@ -21055,7 +21055,7 @@ QDF_STATUS hdd_softap_deauth_current_sta(struct hdd_adapter *adapter,
 	if (!qdf_is_macaddr_broadcast(&sta_info->sta_mac))
 		sme_send_disassoc_req_frame(hdd_ctx->mac_handle,
 					    adapter->vdev_id,
-					    (uint8_t *)&param->peerMacAddr,
+					    (uint8_t *)&sta_info->sta_mac,
 					    param->reason_code, 0);
 
 	qdf_status = hdd_softap_sta_deauth(adapter, param);
