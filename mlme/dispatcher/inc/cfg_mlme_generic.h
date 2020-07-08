@@ -140,13 +140,21 @@
 
 /*
  * <ini>
- * BandCapability - Preferred band (0: Both,  1: 2.4G only,  2: 5G only)
+ * BandCapability - Preferred band (0: Both 2.4G and 5G,
+ *				    1: 2.4G only,
+ *				    2: 5G only,
+ *				    3: Both 2.4G and 5G,
+ *				    4: 6G only,
+ *				    5: Both 2.4G and 6G,
+ *				    6: Both 5G and 6G,
+ *				    7: 2.4G, 5G, and 6G)
  * @Min: 0
- * @Max: 2
- * @Default: 0
+ * @Max: 7
+ * @Default: 7
  *
  * This ini is used to set default band capability
- * (0: Both, 1: 2.4G only, 2: 5G only)
+ * (0: Both 2.4G and 5G, 1: 2.4G only, 2: 5G only, 3: Both 2.4G and 5G,
+ *  4: 6G only, 5: Both 2.4G and 6G, 6: Both 5G and 6G, 7: 2.4G, 5G, and 6G)
  *
  * Related: None
  *
@@ -159,8 +167,8 @@
 #define CFG_BAND_CAPABILITY CFG_INI_UINT( \
 	"BandCapability", \
 	0, \
-	2, \
-	0, \
+	7, \
+	7, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Band Capability")
 

@@ -236,7 +236,7 @@ QDF_STATUS ucfg_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
  */
 static inline
 QDF_STATUS ucfg_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
-					 uint8_t *band_capability)
+					 uint32_t *band_capability)
 {
 	return wlan_mlme_get_band_capability(psoc, band_capability);
 }
@@ -250,7 +250,7 @@ QDF_STATUS ucfg_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
  */
 static inline
 QDF_STATUS ucfg_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
-					 uint8_t band_capability)
+					 uint32_t band_capability)
 {
 	return wlan_mlme_set_band_capability(psoc, band_capability);
 }

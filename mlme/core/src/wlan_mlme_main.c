@@ -299,6 +299,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_RTT_MAC_RANDOMIZATION);
 	gen->band_capability =
 		cfg_get(psoc, CFG_BAND_CAPABILITY);
+	if (!gen->band_capability)
+		gen->band_capability = (BIT(REG_BAND_2G) | BIT(REG_BAND_5G));
 	gen->band = gen->band_capability;
 	gen->select_5ghz_margin =
 		cfg_get(psoc, CFG_SELECT_5GHZ_MARGIN);
