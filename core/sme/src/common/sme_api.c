@@ -15313,7 +15313,7 @@ void sme_update_score_config(mac_handle_t mac_handle, eCsrPhyMode phy_mode,
 	bool bval = false;
 	uint32_t channel_bonding_mode;
 	QDF_STATUS status;
-	struct psoc_phy_config config;
+	struct psoc_phy_config config = {0};
 
 	qdf_mem_zero(&vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
 	/* Populate the nss chain params from ini for this vdev type */
