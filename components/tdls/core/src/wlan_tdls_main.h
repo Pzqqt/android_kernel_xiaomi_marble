@@ -165,6 +165,7 @@ struct tdls_set_state_info {
  * @tdls_external_peer_count: external tdls peer count
  * @tdls_nss_switch_in_progress: tdls antenna switch in progress
  * @tdls_nss_teardown_complete: tdls tear down complete
+ * @tdls_disable_in_progress: tdls is disable in progress
  * @tdls_nss_transition_mode: tdls nss transition mode
  * @tdls_teardown_peers_cnt: tdls tear down peer count
  * @set_state_info: set tdls state info
@@ -182,6 +183,11 @@ struct tdls_set_state_info {
  * @tdls_update_dp_vdev_flags store CDP_UPDATE_TDLS_FLAGS
  * @tdls_idle_peer_data: provide information about idle peer
  * @tdls_ct_spinlock: connection tracker spin lock
+ * @is_prevent_suspend: prevent suspend or not
+ * @is_drv_supported: platform supports drv or not, enable/disable tdls wow
+ * based on this flag.
+ * @wake_lock: wake lock
+ * @runtime_lock: runtime lock
  * @tdls_osif_init_cb: Callback to initialize the tdls private
  * @tdls_osif_deinit_cb: Callback to deinitialize the tdls private
  */
@@ -224,6 +230,12 @@ struct tdls_soc_priv_obj {
 	uint16_t tdls_del_all_peers;
 	uint32_t tdls_update_dp_vdev_flags;
 	qdf_spinlock_t tdls_ct_spinlock;
+#ifdef TDLS_WOW_ENABLED
+	bool is_prevent_suspend;
+	bool is_drv_supported;
+	qdf_wake_lock_t wake_lock;
+	qdf_runtime_lock_t runtime_lock;
+#endif
 	tdls_vdev_init_cb tdls_osif_init_cb;
 	tdls_vdev_deinit_cb tdls_osif_deinit_cb;
 };

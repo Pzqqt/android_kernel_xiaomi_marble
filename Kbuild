@@ -2690,6 +2690,10 @@ endif
 
 #normally, TDLS negative behavior is not needed
 cppflags-$(CONFIG_QCOM_TDLS) += -DFEATURE_WLAN_TDLS
+ifeq ($(CONFIG_LITHIUM), y)
+cppflags-$(CONFIG_QCOM_TDLS) += -DTDLS_WOW_ENABLED
+endif
+
 cppflags-$(CONFIG_WLAN_GET_TDLS_PEERS) += -DWLAN_GET_TDLS_PEERS
 cppflags-$(CONFIG_WLAN_SET_RANGE_EXT) += -DWLAN_SET_RANGE_EXT
 
