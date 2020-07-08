@@ -310,6 +310,20 @@ util_scan_entry_phymode(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_entry_nss() - function to read nss of scan entry
+ * @scan_entry: scan entry
+ *
+ * API, function to read nss of scan entry
+ *
+ * Return: nss
+ */
+static inline u_int8_t
+util_scan_entry_nss(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->nss;
+}
+
+/**
  * util_is_ssid_match() - to check if ssid match
  * @ssid1: ssid 1
  * @ssid2: ssid 2
