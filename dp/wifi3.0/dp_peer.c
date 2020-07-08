@@ -29,6 +29,9 @@
 #include <hal_reo.h>
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
+#ifdef FEATURE_WDS
+#include "dp_txrx_wds.h"
+#endif
 
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_tx_capture.h"
@@ -593,6 +596,7 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 
 				cb = ast_entry->callback;
 				cookie = ast_entry->cookie;
+				peer_type = ast_entry->type;
 
 				dp_peer_unlink_ast_entry(soc, ast_entry);
 				dp_peer_free_ast_entry(soc, ast_entry);
@@ -613,6 +617,10 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 					 vdev_id, is_wds);
 			}
 			err = QDF_STATUS_E_INVAL;
+
+			dp_hmwds_ast_add_notify(peer, mac_addr,
+						peer_type, err, true);
+
 			return err;
 		}
 	}
@@ -640,6 +648,10 @@ static inline QDF_STATUS dp_peer_map_ast(struct dp_soc *soc,
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
+
+	dp_hmwds_ast_add_notify(peer, mac_addr,
+				peer_type, err, true);
+
 	return err;
 }
 
@@ -652,6 +664,7 @@ void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 		(struct dp_ast_free_cb_params *)cookie;
 	struct dp_soc *soc = (struct dp_soc *)dp_soc;
 	struct dp_peer *peer = NULL;
+	QDF_STATUS err = QDF_STATUS_SUCCESS;
 
 	if (status != CDP_TXRX_AST_DELETED) {
 		qdf_mem_free(cookie);
@@ -661,10 +674,14 @@ void dp_peer_free_hmwds_cb(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	peer = dp_peer_find_hash_find(soc, &param->peer_mac_addr.raw[0],
 				      0, param->vdev_id);
 	if (peer) {
-		dp_peer_add_ast(soc, peer,
-				&param->mac_addr.raw[0],
-				param->type,
-				param->flags);
+		err = dp_peer_add_ast(soc, peer,
+				      &param->mac_addr.raw[0],
+				      param->type,
+				      param->flags);
+
+		dp_hmwds_ast_add_notify(peer, &param->mac_addr.raw[0],
+					param->type, err, false);
+
 		dp_peer_unref_delete(peer);
 	}
 	qdf_mem_free(cookie);

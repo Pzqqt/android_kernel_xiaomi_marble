@@ -652,6 +652,9 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	    (status == QDF_STATUS_E_ALREADY) ||
 	    (status == QDF_STATUS_E_AGAIN))
 		ret = 0;
+
+	dp_hmwds_ast_add_notify(peer, mac_addr,
+				type, status, false);
 fail:
 	if (peer)
 		dp_peer_unref_delete(peer);

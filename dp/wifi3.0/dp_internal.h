@@ -2280,4 +2280,15 @@ static inline bool dp_soc_is_full_mon_enable(struct dp_pdev *pdev)
 	return (pdev->soc->full_mon_mode && pdev->monitor_configured) ?
 			true : false;
 }
+
+#ifndef FEATURE_WDS
+static inline void
+dp_hmwds_ast_add_notify(struct dp_peer *peer,
+			uint8_t *mac_addr,
+			enum cdp_txrx_ast_entry_type type,
+			QDF_STATUS err,
+			bool is_peer_map)
+{
+}
+#endif
 #endif /* #ifndef _DP_INTERNAL_H_ */
