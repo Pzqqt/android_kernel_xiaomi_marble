@@ -3505,9 +3505,14 @@ static void _sde_crtc_schedule_idle_notify(struct drm_crtc *crtc,
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 	struct sde_crtc_state *cstate = to_sde_crtc_state(old_state);
 	struct sde_kms *sde_kms = _sde_crtc_get_kms(crtc);
-	struct msm_drm_private *priv = sde_kms->dev->dev_private;
+	struct msm_drm_private *priv;
 	struct msm_drm_thread *event_thread;
 	int idle_time = 0;
+
+	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private)
+		return;
+
+	priv = sde_kms->dev->dev_private;
 
 	idle_time = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_TIMEOUT);
 
