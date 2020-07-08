@@ -904,26 +904,35 @@ static void dp_rx_fisa_flush_flow(struct dp_vdev *vdev,
  * @fisa_flow: Handle SW flow entry
  * @hal_aggr_count: current aggregate count from RX PKT TLV
  * @hal_cumulative_ip_len: current cumulative ip length from RX PKT TLV
+ * @rx_tlv_hdr: current msdu RX PKT TLV
  *
  * Return: true - current flow aggregation should stop,
 	   false - continue to aggregate.
  */
-static inline bool dp_fisa_aggregation_should_stop(
+static bool dp_fisa_aggregation_should_stop(
 				struct dp_fisa_rx_sw_ft *fisa_flow,
 				uint32_t hal_aggr_count,
-				uint16_t hal_cumulative_ip_len)
+				uint16_t hal_cumulative_ip_len,
+				uint8_t *rx_tlv_hdr)
 {
+	uint32_t msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+	uint32_t l4_hdr_offset = HAL_RX_TLV_GET_IP_OFFSET(rx_tlv_hdr) +
+				 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv_hdr);
+	uint32_t cumulative_ip_len_delta = hal_cumulative_ip_len -
+					   fisa_flow->hal_cumultive_ip_len;
 	/**
 	 * current cumulative ip length should > last cumulative_ip_len
 	 * and <= last cumulative_ip_len + 1478, also current aggregate
 	 * count should be equal to last aggregate count + 1,
+	 * cumulative_ip_len delta should be equal to current msdu length
+	 * - l4 header offset,
 	 * otherwise, current fisa flow aggregation should be stopped.
 	 */
 	if (fisa_flow->do_not_aggregate ||
 	    hal_cumulative_ip_len <= fisa_flow->hal_cumultive_ip_len ||
-	    (hal_cumulative_ip_len - fisa_flow->hal_cumultive_ip_len)
-	     > FISA_MAX_SINGLE_CUMULATIVE_IP_LEN ||
-	    (fisa_flow->last_hal_aggr_count + 1) != hal_aggr_count)
+	    cumulative_ip_len_delta > FISA_MAX_SINGLE_CUMULATIVE_IP_LEN ||
+	    (fisa_flow->last_hal_aggr_count + 1) != hal_aggr_count ||
+	    cumulative_ip_len_delta != (msdu_len - l4_hdr_offset))
 		return true;
 
 	return false;
@@ -980,7 +989,8 @@ static int dp_add_nbuf_to_fisa_flow(struct dp_rx_fst *fisa_hdl,
 	} else if (qdf_unlikely(dp_fisa_aggregation_should_stop(
 						fisa_flow,
 						hal_aggr_count,
-						hal_cumulative_ip_len))) {
+						hal_cumulative_ip_len,
+						rx_tlv_hdr))) {
 		/* Either HW cumulative ip length is wrong, or packet is missed
 		 * Flush the flow and do not aggregate until next start new
 		 * aggreagtion
