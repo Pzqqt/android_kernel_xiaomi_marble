@@ -1774,8 +1774,8 @@ static ssize_t _sde_debugfs_conn_cmd_tx_sts_read(struct file *file,
 		char __user *buf, size_t count, loff_t *ppos)
 {
 	struct drm_connector *connector = file->private_data;
-	struct sde_connector *c_conn;
-	char buffer[MAX_CMD_PAYLOAD_SIZE];
+	struct sde_connector *c_conn = NULL;
+	char buffer[MAX_CMD_PAYLOAD_SIZE] = {0};
 	int blen = 0;
 
 	if (*ppos)
@@ -1783,7 +1783,7 @@ static ssize_t _sde_debugfs_conn_cmd_tx_sts_read(struct file *file,
 
 	if (!connector) {
 		SDE_ERROR("invalid argument, conn is NULL\n");
-		return 0;
+		return -EINVAL;
 	}
 
 	c_conn = to_sde_connector(connector);
@@ -1797,7 +1797,7 @@ static ssize_t _sde_debugfs_conn_cmd_tx_sts_read(struct file *file,
 	SDE_DEBUG("output: %s\n", buffer);
 	if (blen <= 0) {
 		SDE_ERROR("snprintf failed, blen %d\n", blen);
-		return 0;
+		return -EINVAL;
 	}
 
 	if (blen > count)
@@ -1817,16 +1817,16 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 			const char __user *p, size_t count, loff_t *ppos)
 {
 	struct drm_connector *connector = file->private_data;
-	struct sde_connector *c_conn;
+	struct sde_connector *c_conn = NULL;
 	char *input, *token, *input_copy, *input_dup = NULL;
 	const char *delim = " ";
+	char buffer[MAX_CMD_PAYLOAD_SIZE] = {0};
+	int rc = 0, strtoint = 0;
 	u32 buf_size = 0;
-	char buffer[MAX_CMD_PAYLOAD_SIZE];
-	int rc = 0, strtoint;
 
 	if (*ppos || !connector) {
 		SDE_ERROR("invalid argument(s), conn %d\n", connector != NULL);
-		return 0;
+		return -EINVAL;
 	}
 
 	c_conn = to_sde_connector(connector);
@@ -1834,10 +1834,10 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 	if (!c_conn->ops.cmd_transfer) {
 		SDE_ERROR("no cmd transfer support for connector name %s\n",
 				c_conn->name);
-		return 0;
+		return -EINVAL;
 	}
 
-	input = kmalloc(count + 1, GFP_KERNEL);
+	input = kzalloc(count + 1, GFP_KERNEL);
 	if (!input)
 		return -ENOMEM;
 
@@ -1848,7 +1848,7 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 	}
 	input[count] = '\0';
 
-	SDE_INFO("Command requested for trasnfer to panel: %s\n", input);
+	SDE_INFO("Command requested for transfer to panel: %s\n", input);
 
 	input_copy = kstrdup(input, GFP_KERNEL);
 	if (!input_copy) {
@@ -1862,20 +1862,23 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 		rc = kstrtoint(token, 0, &strtoint);
 		if (rc) {
 			SDE_ERROR("input buffer conversion failed\n");
-			goto end;
+			goto end1;
 		}
 
+		buffer[buf_size++] = (strtoint & 0xff);
 		if (buf_size >= MAX_CMD_PAYLOAD_SIZE) {
 			SDE_ERROR("buffer size exceeding the limit %d\n",
 					MAX_CMD_PAYLOAD_SIZE);
-			goto end;
+			rc = -EFAULT;
+			goto end1;
 		}
-		buffer[buf_size++] = (strtoint & 0xff);
 		token = strsep(&input_copy, delim);
 	}
 	SDE_DEBUG("command packet size in bytes: %u\n", buf_size);
-	if (!buf_size)
-		goto end;
+	if (!buf_size) {
+		rc = -EFAULT;
+		goto end1;
+	}
 
 	mutex_lock(&c_conn->lock);
 	rc = c_conn->ops.cmd_transfer(&c_conn->base, c_conn->display, buffer,
@@ -1884,8 +1887,9 @@ static ssize_t _sde_debugfs_conn_cmd_tx_write(struct file *file,
 	mutex_unlock(&c_conn->lock);
 
 	rc = count;
-end:
+end1:
 	kfree(input_dup);
+end:
 	kfree(input);
 	return rc;
 }
@@ -1894,6 +1898,177 @@ static const struct file_operations conn_cmd_tx_fops = {
 	.open =		_sde_debugfs_conn_cmd_tx_open,
 	.read =		_sde_debugfs_conn_cmd_tx_sts_read,
 	.write =	_sde_debugfs_conn_cmd_tx_write,
+};
+
+static int _sde_debugfs_conn_cmd_rx_open(struct inode *inode, struct file *file)
+{
+	/* non-seekable */
+	file->private_data = inode->i_private;
+	return nonseekable_open(inode, file);
+}
+
+static ssize_t _sde_debugfs_conn_cmd_rx_read(struct file *file,
+		char __user *buf, size_t count, loff_t *ppos)
+{
+	struct drm_connector *connector = file->private_data;
+	struct sde_connector *c_conn = NULL;
+	char *strs = NULL;
+	char *strs_temp = NULL;
+	int blen = 0, i = 0, n = 0, left_size = 0;
+
+	if (*ppos)
+		return 0;
+
+	if (!connector) {
+		SDE_ERROR("invalid argument, conn is NULL\n");
+		return -EINVAL;
+	}
+
+	c_conn = to_sde_connector(connector);
+	if (c_conn->rx_len <= 0 || c_conn->rx_len > MAX_CMD_RECEIVE_SIZE) {
+		SDE_ERROR("no valid data from panel\n");
+		return -EINVAL;
+	}
+
+	/*
+	 * Rx data was stored as HEX value in rx buffer,
+	 * convert 1 HEX value to strings for display, need 5 bytes.
+	 * for example: HEX value 0xFF, converted to strings, should be '0',
+	 * 'x','F','F' and 1 space.
+	 */
+	left_size = c_conn->rx_len * 5 + 1;
+	strs = kzalloc(left_size, GFP_KERNEL);
+	if (!strs)
+		return -ENOMEM;
+	strs_temp = strs;
+
+	mutex_lock(&c_conn->lock);
+	for (i = 0; i < c_conn->rx_len; i++) {
+		n = scnprintf(strs_temp, left_size, "0x%.2x ",
+			     c_conn->cmd_rx_buf[i]);
+		strs_temp += n;
+		left_size -= n;
+	}
+	mutex_unlock(&c_conn->lock);
+
+	blen = strlen(strs);
+	if (blen <= 0) {
+		SDE_ERROR("snprintf failed, blen %d\n", blen);
+		blen = -EFAULT;
+		goto err;
+	}
+
+	if (copy_to_user(buf, strs, blen)) {
+		SDE_ERROR("copy to user buffer failed\n");
+		blen = -EFAULT;
+		goto err;
+	}
+
+	*ppos += blen;
+
+err:
+	kfree(strs);
+	return blen;
+}
+
+
+static ssize_t _sde_debugfs_conn_cmd_rx_write(struct file *file,
+			const char __user *p, size_t count, loff_t *ppos)
+{
+	struct drm_connector *connector = file->private_data;
+	struct sde_connector *c_conn = NULL;
+	char *input, *token, *input_copy, *input_dup = NULL;
+	const char *delim = " ";
+	unsigned char buffer[MAX_CMD_PAYLOAD_SIZE] = {0};
+	int rc = 0, strtoint = 0;
+	u32 buf_size = 0;
+
+	if (*ppos || !connector) {
+		SDE_ERROR("invalid argument(s), conn %d\n", connector != NULL);
+		return -EINVAL;
+	}
+
+	c_conn = to_sde_connector(connector);
+	if (!c_conn->ops.cmd_receive) {
+		SDE_ERROR("no cmd receive support for connector name %s\n",
+				c_conn->name);
+		return -EINVAL;
+	}
+
+	memset(c_conn->cmd_rx_buf, 0x0, MAX_CMD_RECEIVE_SIZE);
+	c_conn->rx_len = 0;
+
+	input = kzalloc(count + 1, GFP_KERNEL);
+	if (!input)
+		return -ENOMEM;
+
+	if (copy_from_user(input, p, count)) {
+		SDE_ERROR("copy from user failed\n");
+		rc  = -EFAULT;
+		goto end;
+	}
+	input[count] = '\0';
+
+	SDE_INFO("Command requested for rx from panel: %s\n", input);
+
+	input_copy = kstrdup(input, GFP_KERNEL);
+	if (!input_copy) {
+		rc = -ENOMEM;
+		goto end;
+	}
+
+	input_dup = input_copy;
+	token = strsep(&input_copy, delim);
+	while (token) {
+		rc = kstrtoint(token, 0, &strtoint);
+		if (rc) {
+			SDE_ERROR("input buffer conversion failed\n");
+			goto end1;
+		}
+
+		buffer[buf_size++] = (strtoint & 0xff);
+		if (buf_size >= MAX_CMD_PAYLOAD_SIZE) {
+			SDE_ERROR("buffer size = %d exceeding the limit %d\n",
+					buf_size, MAX_CMD_PAYLOAD_SIZE);
+			rc = -EFAULT;
+			goto end1;
+		}
+		token = strsep(&input_copy, delim);
+	}
+
+	if (!buffer[0] || buffer[0] > MAX_CMD_RECEIVE_SIZE) {
+		SDE_ERROR("invalid rx length\n");
+		rc = -EFAULT;
+		goto end1;
+	}
+
+	SDE_DEBUG("command packet size in bytes: %u, rx len: %u\n",
+			buf_size, buffer[0]);
+	if (!buf_size) {
+		rc = -EFAULT;
+		goto end1;
+	}
+
+	mutex_lock(&c_conn->lock);
+	c_conn->rx_len = c_conn->ops.cmd_receive(c_conn->display, buffer + 1,
+			buf_size - 1, c_conn->cmd_rx_buf, buffer[0]);
+	mutex_unlock(&c_conn->lock);
+
+	if (c_conn->rx_len <= 0)
+		rc = -EINVAL;
+	else
+		rc = count;
+end1:
+	kfree(input_dup);
+end:
+	kfree(input);
+	return rc;
+}
+
+static const struct file_operations conn_cmd_rx_fops = {
+	.open =         _sde_debugfs_conn_cmd_rx_open,
+	.read =         _sde_debugfs_conn_cmd_rx_read,
+	.write =        _sde_debugfs_conn_cmd_rx_write,
 };
 
 #ifdef CONFIG_DEBUG_FS
@@ -1932,6 +2107,15 @@ static int sde_connector_init_debugfs(struct drm_connector *connector)
 			connector->debugfs_entry,
 			connector, &conn_cmd_tx_fops)) {
 			SDE_ERROR("failed to create connector cmd_tx\n");
+			return -ENOMEM;
+		}
+	}
+
+	if (sde_connector->ops.cmd_receive) {
+		if (!debugfs_create_file("rx_cmd", 0600,
+			connector->debugfs_entry,
+			connector, &conn_cmd_rx_fops)) {
+			SDE_ERROR("failed to create connector cmd_rx\n");
 			return -ENOMEM;
 		}
 	}

@@ -654,6 +654,17 @@ int dsi_display_cmd_transfer(struct drm_connector *connector,
 		u32 cmd_buf_len);
 
 /**
+ * dsi_display_cmd_receive() - receive response from the panel
+ * @display:            Handle to display.
+ * @cmd_buf:            Command buffer
+ * @cmd_buf_len:        Command buffer length in bytes
+ * @recv_buf:           Receive buffer
+ * @recv_buf_len:       Receive buffer length in bytes
+ */
+int dsi_display_cmd_receive(void *display, const char *cmd_buf,
+			    u32 cmd_buf_len, u8 *recv_buf, u32 recv_buf_len);
+
+/**
  * dsi_display_soft_reset() - perform a soft reset on DSI controller
  * @display:         Handle to display
  *
