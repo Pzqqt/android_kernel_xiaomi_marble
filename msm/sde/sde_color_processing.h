@@ -205,4 +205,12 @@ int sde_cp_ltm_off_event_handler(struct drm_crtc *crtc_drm, bool en,
  * @crtc_drm: Pointer to crtc.
  */
 void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm);
+
+/**
+ * sde_cp_crtc_vm_primary_handoff: Properly handoff CRTC color mode features
+ * when switching from primary VM to trusted VM
+ * @crtc: Pointer to crtc.
+ */
+void sde_cp_crtc_vm_primary_handoff(struct drm_crtc *crtc);
+
 #endif /*_SDE_COLOR_PROCESSING_H */

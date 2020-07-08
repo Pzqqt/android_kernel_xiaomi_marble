@@ -195,6 +195,21 @@ static enum sde_cp_crtc_pu_features
 		(enum sde_cp_crtc_pu_features) SDE_CP_CRTC_DSPP_RC_MASK,
 };
 
+/* explicitly set the features that needs to be treated during handoff */
+static bool feature_handoff_mask[SDE_CP_CRTC_MAX_FEATURES] = {
+	[SDE_CP_CRTC_DSPP_IGC] = 1,
+	[SDE_CP_CRTC_DSPP_PCC] = 1,
+	[SDE_CP_CRTC_DSPP_GC] = 1,
+	[SDE_CP_CRTC_DSPP_HSIC] = 1,
+	[SDE_CP_CRTC_DSPP_MEMCOL_SKIN] = 1,
+	[SDE_CP_CRTC_DSPP_MEMCOL_SKY] = 1,
+	[SDE_CP_CRTC_DSPP_MEMCOL_FOLIAGE] = 1,
+	[SDE_CP_CRTC_DSPP_MEMCOL_PROT] = 1,
+	[SDE_CP_CRTC_DSPP_SIXZONE] = 1,
+	[SDE_CP_CRTC_DSPP_GAMUT] = 1,
+	[SDE_CP_CRTC_DSPP_DITHER] = 1,
+};
+
 static void _sde_cp_crtc_enable_hist_irq(struct sde_crtc *sde_crtc);
 
 typedef int (*feature_wrapper)(struct sde_hw_dspp *hw_dspp,
@@ -4143,4 +4158,69 @@ void sde_cp_mode_switch_prop_dirty(struct drm_crtc *crtc_drm)
 		}
 	}
 	mutex_unlock(&crtc->crtc_cp_lock);
+}
+
+/* this func needs to be called within crtc_cp_lock mutex */
+static bool _sde_cp_feature_in_dirtylist(u32 feature, struct list_head *list)
+{
+	struct sde_cp_node *node = NULL;
+
+	list_for_each_entry(node, list, dirty_list) {
+		if (feature == node->feature)
+			return true;
+	}
+
+	return false;
+}
+
+/* this func needs to be called within crtc_cp_lock mutex */
+static bool _sde_cp_feature_in_activelist(u32 feature, struct list_head *list)
+{
+	struct sde_cp_node *node = NULL;
+
+	list_for_each_entry(node, list, active_list) {
+		if (feature == node->feature)
+			return true;
+	}
+
+	return false;
+}
+
+void sde_cp_crtc_vm_primary_handoff(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = NULL;
+	struct sde_cp_node *prop_node = NULL;
+
+	if (!crtc) {
+		DRM_ERROR("crtc %pK\n", crtc);
+		return;
+	}
+
+	sde_crtc = to_sde_crtc(crtc);
+	if (!sde_crtc) {
+		DRM_ERROR("sde_crtc %pK\n", sde_crtc);
+		return;
+	}
+
+	mutex_lock(&sde_crtc->crtc_cp_lock);
+
+	list_for_each_entry(prop_node, &sde_crtc->feature_list, feature_list) {
+		if (!feature_handoff_mask[prop_node->feature])
+			continue;
+
+		if (_sde_cp_feature_in_dirtylist(prop_node->feature,
+						 &sde_crtc->dirty_list))
+			continue;
+
+		if (_sde_cp_feature_in_activelist(prop_node->feature,
+						 &sde_crtc->active_list)) {
+			sde_cp_update_list(prop_node, sde_crtc, true);
+			list_del_init(&prop_node->active_list);
+			continue;
+		}
+
+		sde_cp_update_list(prop_node, sde_crtc, true);
+	}
+
+	mutex_unlock(&sde_crtc->crtc_cp_lock);
 }
