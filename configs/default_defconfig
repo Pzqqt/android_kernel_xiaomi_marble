@@ -93,10 +93,19 @@ endif
 ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
 	CONFIG_ROME_IF = snoc
 	CONFIG_QCA_WIFI_SDIO := n
+	CONFIG_PLD_SNOC_ICNSS_FLAG := y
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
+ifeq ($(CONFIG_CNSS_QCA6750), y)
 	CONFIG_ROME_IF = ipci
+	CONFIG_PLD_IPCI_ICNSS_FLAG := y
+else
+	CONFIG_ROME_IF = snoc
+	CONFIG_QCA_WIFI_SDIO := n
+	CONFIG_ICNSS2_HELIUM := y
+	CONFIG_PLD_SNOC_ICNSS_FLAG := y
+endif
 endif
 
 ifdef CONFIG_IPCIE_FW_SIM
@@ -115,7 +124,7 @@ endif
 # Make WLAN as open-source driver by default
 WLAN_OPEN_SOURCE := y
 
-ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
+ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE) $(CONFIG_ICNSS2_HELIUM)))
 	CONFIG_HELIUMPLUS := y
 	CONFIG_64BIT_PADDR := y
 	CONFIG_FEATURE_TSO := y
@@ -419,7 +428,7 @@ endif
 #Whether have QMI support
 CONFIG_QMI_SUPPORT := y
 
-ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
+ifeq (y,$(findstring y,$(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE) $(CONFIG_ICNSS2_HELIUM)))
 CONFIG_WIFI_3_0_ADRASTEA := y
 CONFIG_ADRASTEA_RRI_ON_DDR := y
 # Enable athdiag procfs debug support for adrastea
@@ -938,7 +947,7 @@ CONFIG_WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY := n
 CONFIG_WLAN_FEATURE_TWT := y
 CONFIG_FW_THERMAL_THROTTLE := y
 
-ifeq (y,$(findstring y,$(CONFIG_LITHIUM) $(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
+ifeq (y,$(findstring y,$(CONFIG_LITHIUM) $(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE) $(CONFIG_ICNSS2_HELIUM)))
 CONFIG_WLAN_FEATURE_BMI := n
 else
 CONFIG_WLAN_FEATURE_BMI := y
@@ -1051,10 +1060,6 @@ endif
 ifeq ($(CONFIG_HIF_PCI), y)
 CONFIG_PLD_PCIE_CNSS_FLAG := y
 endif
-endif
-
-ifeq (y,$(findstring y,$(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
-CONFIG_PLD_IPCI_ICNSS_FLAG := y
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS2) $(CONFIG_CNSS2_MODULE)))

@@ -32,7 +32,11 @@
 #include <net/cnss2.h>
 #endif
 #ifdef CONFIG_PLD_SNOC_ICNSS
+#ifdef CONFIG_PLD_SNOC_ICNSS2
+#include <soc/qcom/icnss2.h>
+#else
 #include <soc/qcom/icnss.h>
+#endif
 #endif
 #ifdef CONFIG_PLD_IPCI_ICNSS
 #include <soc/qcom/icnss2.h>

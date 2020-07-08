@@ -2185,9 +2185,9 @@ PLD_OBJS +=     $(PLD_SRC_DIR)/pld_pcie.o
 endif
 ifeq ($(CONFIG_SNOC_FW_SIM),y)
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc_fw_sim.o
-else ifeq (y,$(findstring y, $(CONFIG_ICNSS) $(CONFIG_ICNSS_MODULE)))
+else ifeq (y,$(findstring y, $(CONFIG_ICNSS) $(CONFIG_PLD_SNOC_ICNSS_FLAG)))
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_snoc.o
-else ifeq (y,$(findstring y, $(CONFIG_ICNSS2) $(CONFIG_ICNSS2_MODULE)))
+else ifeq (y,$(findstring y, $(CONFIG_PLD_IPCI_ICNSS_FLAG)))
 PLD_OBJS +=     $(PLD_SRC_DIR)/pld_ipci.o
 endif
 
@@ -2588,6 +2588,9 @@ else
 cppflags-y += -DCONFIG_PLD_SNOC_ICNSS
 endif
 endif
+
+cppflags-$(CONFIG_PLD_SNOC_ICNSS_FLAG) += -DCONFIG_PLD_SNOC_ICNSS
+cppflags-$(CONFIG_ICNSS2_HELIUM) += -DCONFIG_PLD_SNOC_ICNSS2
 
 cppflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0_ADRASTEA
 cppflags-$(CONFIG_WIFI_3_0_ADRASTEA) += -DQCA_WIFI_3_0
