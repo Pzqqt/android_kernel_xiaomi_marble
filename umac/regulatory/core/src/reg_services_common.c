@@ -3446,9 +3446,24 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 	enum channel_state chan_state2 = CHANNEL_STATE_ENABLE;
 	const struct bonded_channel_freq *bonded_chan_ptr = NULL;
 	const struct bonded_channel_freq *bonded_chan_ptr2 = NULL;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	enum channel_enum chan_enum;
+	uint16_t max_bw;
 
 	if (!ch_params) {
 		reg_err("ch_params is NULL");
+		return;
+	}
+
+	chan_enum = reg_get_chan_enum_for_freq(freq);
+	if (chan_enum == INVALID_CHANNEL) {
+		reg_err("chan freq is not valid");
+		return;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
 		return;
 	}
 
@@ -3459,7 +3474,12 @@ static void reg_set_5g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 			ch_params->ch_width = CH_WIDTH_160MHZ;
 	}
 
+	max_bw = pdev_priv_obj->cur_chan_list[chan_enum].max_bw;
+
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
+		if (max_bw < reg_get_bw_value(ch_params->ch_width))
+			goto update_bw;
+
 		bonded_chan_ptr = NULL;
 		bonded_chan_ptr2 = NULL;
 		chan_state = reg_get_5g_bonded_channel_for_freq(
@@ -3553,6 +3573,21 @@ static void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 					       uint16_t sec_ch_2g_freq)
 {
 	enum channel_state chan_state = CHANNEL_STATE_ENABLE;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	enum channel_enum chan_enum;
+	uint16_t max_bw;
+
+	chan_enum = reg_get_chan_enum_for_freq(oper_freq);
+	if (chan_enum == INVALID_CHANNEL) {
+		reg_err("chan freq is not valid");
+		return;
+	}
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("reg pdev priv obj is NULL");
+		return;
+	}
 
 	if (ch_params->ch_width >= CH_WIDTH_MAX)
 		ch_params->ch_width = CH_WIDTH_40MHZ;
@@ -3565,7 +3600,12 @@ static void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 			sec_ch_2g_freq = oper_freq - 20;
 	}
 
+	max_bw = pdev_priv_obj->cur_chan_list[chan_enum].max_bw;
+
 	while (ch_params->ch_width != CH_WIDTH_INVALID) {
+		if (max_bw < reg_get_bw_value(ch_params->ch_width))
+			goto update_bw;
+
 		chan_state =
 		reg_get_2g_bonded_channel_state_for_freq(pdev, oper_freq,
 							 sec_ch_2g_freq,
@@ -3602,7 +3642,7 @@ static void reg_set_2g_channel_params_for_freq(struct wlan_objmgr_pdev *pdev,
 			}
 			break;
 		}
-
+update_bw:
 		ch_params->ch_width = get_next_lower_bw[ch_params->ch_width];
 	}
 	/* Overwrite mhz_freq_seg1 and center_freq_seg1 to 0 for 2.4 Ghz */
