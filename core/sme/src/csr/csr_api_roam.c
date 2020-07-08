@@ -10706,94 +10706,6 @@ static void csr_copy_ssids_from_profile(tCsrSSIDs *ssid_list,
 			       &ssid_list->SSIDList[i].SSID);
 }
 
-#ifdef FEATURE_WLAN_WAPI
-/**
- * csr_update_phy_mode: Updates phy mode for wapi
- * @profile: Source profile
- * @phy_mode: phy_mode to be modified
- *
- * Return: None
- */
-static void csr_update_phy_mode(struct csr_roam_profile *profile,
-				uint32_t *phy_mode)
-{
-	/*
-	 * check if user asked for WAPI with 11n or auto mode, in that
-	 * case modify the phymode to 11g
-	 */
-	if (csr_is_profile_wapi(profile)) {
-		if (*phy_mode & eCSR_DOT11_MODE_11n)
-			*phy_mode &= ~eCSR_DOT11_MODE_11n;
-		if (*phy_mode & eCSR_DOT11_MODE_AUTO)
-			*phy_mode &= ~eCSR_DOT11_MODE_AUTO;
-		if (!*phy_mode)
-			*phy_mode = eCSR_DOT11_MODE_11g;
-	}
-}
-#else
-static inline
-void csr_update_phy_mode(struct csr_roam_profile *profile, uint32_t *phy_mode)
-{}
-#endif
-
-/**
- * csr_convert_dotllmod_phymode: Convert eCsrPhyMode to wlan_phymode
- * @dotllmode: phy mode
- *
- * Return: returns enum wlan_phymode
- */
-static enum wlan_phymode csr_convert_dotllmod_phymode(eCsrPhyMode dotllmode)
-{
-	enum wlan_phymode con_phy_mode;
-
-	switch (dotllmode) {
-	case eCSR_DOT11_MODE_abg:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	case eCSR_DOT11_MODE_11a:
-		con_phy_mode = WLAN_PHYMODE_11A;
-		break;
-	case eCSR_DOT11_MODE_11b:
-		con_phy_mode = WLAN_PHYMODE_11B;
-		break;
-	case eCSR_DOT11_MODE_11g:
-		con_phy_mode = WLAN_PHYMODE_11G;
-		break;
-	case eCSR_DOT11_MODE_11n:
-		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
-		break;
-	case eCSR_DOT11_MODE_11g_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11G;
-		break;
-	case eCSR_DOT11_MODE_11n_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11NA_HT20;
-		break;
-	case eCSR_DOT11_MODE_11b_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11B;
-		break;
-	case eCSR_DOT11_MODE_11ac:
-		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
-		break;
-	case eCSR_DOT11_MODE_11ac_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11AC_VHT160;
-		break;
-	case eCSR_DOT11_MODE_AUTO:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	case eCSR_DOT11_MODE_11ax:
-		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
-		break;
-	case eCSR_DOT11_MODE_11ax_ONLY:
-		con_phy_mode = WLAN_PHYMODE_11AXA_HE160;
-		break;
-	default:
-		con_phy_mode = WLAN_PHYMODE_AUTO;
-		break;
-	}
-
-	return con_phy_mode;
-}
-
 #ifdef WLAN_FEATURE_11W
 
 /**
@@ -10919,7 +10831,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 	tCsrChannelInfo *ch_info;
 	struct roam_ext_params *roam_params;
 	uint8_t i;
-	uint32_t phy_mode;
 	QDF_STATUS status;
 
 	if (!filter || !profile) {
@@ -10985,10 +10896,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 		return status;
 
 
-	phy_mode = profile->phyMode;
-	csr_update_phy_mode(profile, &phy_mode);
-
-	filter->dot11_mode = csr_convert_dotllmod_phymode(phy_mode);
 	if (profile->bWPSAssociation || profile->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;
 
