@@ -83,7 +83,7 @@ static struct CE_attr host_ce_config_wlan_qcn7605[] = {
 	/* target->host HTT + HTC control */
 	{ /* CE1 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host WMI */
-	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  2048, 128, NULL,},
+	{ /* CE2 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
 	/* target->host HTT */
 	{ /* CE3 */ CE_ATTR_FLAGS, 0, 0, 2048, 512, NULL,},
 	/* host->target HTT */
