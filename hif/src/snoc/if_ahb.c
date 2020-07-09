@@ -559,17 +559,18 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 					    IORESOURCE_MEM, 0);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
-		return -EIO;
+		return status;
 	}
 	memres = (struct resource *)vmres;
 	if (!memres) {
 		HIF_INFO("%s: Failed to get IORESOURCE_MEM\n", __func__);
-		return -EIO;
+		return QDF_STATUS_E_IO;
 	}
 
 	ret = pfrm_dma_set_mask(dev, 32);
 	if (ret) {
 		HIF_INFO("ath: 32-bit DMA not available\n");
+		status = QDF_STATUS_E_IO;
 		goto err_cleanup1;
 	}
 
@@ -581,7 +582,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 				__func__, ret);
-		return ret;
+		return QDF_STATUS_E_IO;
 	}
 
 	/* Arrange for access to Target SoC registers. */
@@ -597,7 +598,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 #endif
 	if (QDF_IS_STATUS_ERROR(status)) {
 		HIF_INFO("ath: ioremap error\n");
-		ret = PTR_ERR(mem);
+		status = QDF_STATUS_E_IO;
 		goto err_cleanup1;
 	}
 
@@ -620,7 +621,7 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 		sc->mem_ce = ioremap_nocache(HOST_CE_ADDRESS, HOST_CE_SIZE);
 		if (IS_ERR(sc->mem_ce)) {
 			HIF_INFO("CE: ioremap failed\n");
-			return PTR_ERR(sc->mem_ce);
+			return QDF_STATUS_E_IO;
 		}
 		ol_sc->mem_ce = sc->mem_ce;
 	}
@@ -631,11 +632,11 @@ QDF_STATUS hif_ahb_enable_bus(struct hif_softc *ol_sc,
 			(tgt_info->target_type != TARGET_TYPE_QCA6018)) {
 		if (hif_ahb_enable_radio(sc, pdev, id) != 0) {
 			HIF_INFO("error in enabling soc\n");
-			return -EIO;
+			return QDF_STATUS_E_IO;
 		}
 
 		if (hif_target_sync_ahb(ol_sc) < 0) {
-			ret = -EIO;
+			status = QDF_STATUS_E_IO;
 			goto err_target_sync;
 		}
 	}
@@ -652,7 +653,7 @@ err_target_sync:
 		hif_ahb_disable_bus(ol_sc);
 	}
 err_cleanup1:
-	return ret;
+	return status;
 }
 
 
