@@ -2421,62 +2421,22 @@ static int sde_rotator_streamoff(struct file *file,
 }
 
 /*
- * sde_rotator_cropcap - V4l2 ioctl crop capabilities.
+ * sde_rotator_g_selection - V4l2 ioctl get crop.
  * @file: Pointer to file struct.
  * @fh: V4l2 File handle.
- * @a: Pointer to v4l2_cropcap struct need to be set.
+ * @selection: Pointer to v4l2_selection struct need to be set.
  */
-static int sde_rotator_cropcap(struct file *file, void *fh,
-	struct v4l2_cropcap *a)
-{
-	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
-	struct v4l2_format *format;
-	struct v4l2_rect *crop;
-
-	switch (a->type) {
-	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		format = &ctx->format_out;
-		crop = &ctx->crop_out;
-		break;
-	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		format = &ctx->format_cap;
-		crop = &ctx->crop_cap;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	a->bounds.top = 0;
-	a->bounds.left = 0;
-	a->bounds.width = format->fmt.pix.width;
-	a->bounds.height = format->fmt.pix.height;
-
-	a->defrect = *crop;
-
-	a->pixelaspect.numerator = 1;
-	a->pixelaspect.denominator = 1;
-
-	SDEROT_EVTLOG(format->fmt.pix.width, format->fmt.pix.height, a->type);
-	return 0;
-}
-
-/*
- * sde_rotator_g_crop - V4l2 ioctl get crop.
- * @file: Pointer to file struct.
- * @fh: V4l2 File handle.
- * @crop: Pointer to v4l2_crop struct need to be set.
- */
-static int sde_rotator_g_crop(struct file *file, void *fh,
-	struct v4l2_crop *crop)
+static int sde_rotator_g_selection(struct file *file, void *fh,
+	struct v4l2_selection *selection)
 {
 	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
 
-	switch (crop->type) {
+	switch (selection->type) {
 	case V4L2_BUF_TYPE_VIDEO_OUTPUT:
-		crop->c = ctx->crop_out;
+		selection->r = ctx->crop_out;
 		break;
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE:
-		crop->c = ctx->crop_cap;
+		selection->r = ctx->crop_cap;
 		break;
 	default:
 		return -EINVAL;
@@ -2485,13 +2445,13 @@ static int sde_rotator_g_crop(struct file *file, void *fh,
 }
 
 /*
- * sde_rotator_s_crop - V4l2 ioctl set crop.
+ * sde_rotator_s_selection - V4l2 ioctl set crop.
  * @file: Pointer to file struct.
  * @fh: V4l2 File handle.
- * @crop: Pointer to v4l2_crop struct need to be set.
+ * @selection: Pointer to v4l2_selection struct need to be set.
  */
-static int sde_rotator_s_crop(struct file *file, void *fh,
-	const struct v4l2_crop *crop)
+static int sde_rotator_s_selection(struct file *file, void *fh,
+	struct v4l2_selection *selection)
 {
 	struct sde_rotator_ctx *ctx = sde_rotator_ctx_from_fh(fh);
 	struct sde_rotator_device *rot_dev = ctx->rot_dev;
@@ -2500,12 +2460,12 @@ static int sde_rotator_s_crop(struct file *file, void *fh,
 
 	sde_rotator_get_item_from_ctx(ctx, &item);
 
-	rect.left = max_t(__u32, crop->c.left, 0);
-	rect.top = max_t(__u32, crop->c.top, 0);
-	rect.height = max_t(__u32, crop->c.height, 0);
-	rect.width = max_t(__u32, crop->c.width, 0);
+	rect.left = max_t(__u32, selection->r.left, 0);
+	rect.top = max_t(__u32, selection->r.top, 0);
+	rect.height = max_t(__u32, selection->r.height, 0);
+	rect.width = max_t(__u32, selection->r.width, 0);
 
-	if (crop->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
+	if (selection->type == V4L2_BUF_TYPE_VIDEO_OUTPUT) {
 		rect.left = min_t(__u32, rect.left,
 				ctx->format_out.fmt.pix.width - 1);
 		rect.top = min_t(__u32, rect.top,
@@ -2524,9 +2484,9 @@ static int sde_rotator_s_crop(struct file *file, void *fh,
 
 		SDEDEV_DBG(rot_dev->dev,
 			"s_crop s:%d t:%d (%u,%u,%u,%u)->(%u,%u,%u,%u)\n",
-			ctx->session_id, crop->type,
-			crop->c.left, crop->c.top,
-			crop->c.width, crop->c.height,
+			ctx->session_id, selection->type,
+			selection->r.left, selection->r.top,
+			selection->r.width, selection->r.height,
 			item.src_rect.x, item.src_rect.y,
 			item.src_rect.w, item.src_rect.h);
 
@@ -2534,7 +2494,7 @@ static int sde_rotator_s_crop(struct file *file, void *fh,
 		ctx->crop_out.top = item.src_rect.y;
 		ctx->crop_out.width = item.src_rect.w;
 		ctx->crop_out.height = item.src_rect.h;
-	} else if (crop->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
+	} else if (selection->type == V4L2_BUF_TYPE_VIDEO_CAPTURE) {
 		rect.left = min_t(__u32, rect.left,
 				ctx->format_cap.fmt.pix.width - 1);
 		rect.top = min_t(__u32, rect.top,
@@ -2553,9 +2513,9 @@ static int sde_rotator_s_crop(struct file *file, void *fh,
 
 		SDEDEV_DBG(rot_dev->dev,
 			"s_crop s:%d t:%d (%u,%u,%u,%u)->(%u,%u,%u,%u)\n",
-			ctx->session_id, crop->type,
-			crop->c.left, crop->c.top,
-			crop->c.width, crop->c.height,
+			ctx->session_id, selection->type,
+			selection->r.left, selection->r.top,
+			selection->r.width, selection->r.height,
 			item.dst_rect.x, item.dst_rect.y,
 			item.dst_rect.w, item.dst_rect.h);
 
@@ -2879,9 +2839,8 @@ static const struct v4l2_ioctl_ops sde_rotator_ioctl_ops = {
 	.vidioc_querybuf          = sde_rotator_querybuf,
 	.vidioc_streamon          = sde_rotator_streamon,
 	.vidioc_streamoff         = sde_rotator_streamoff,
-	.vidioc_cropcap           = sde_rotator_cropcap,
-	.vidioc_g_crop            = sde_rotator_g_crop,
-	.vidioc_s_crop            = sde_rotator_s_crop,
+	.vidioc_g_selection       = sde_rotator_g_selection,
+	.vidioc_s_selection       = sde_rotator_s_selection,
 	.vidioc_g_parm            = sde_rotator_g_parm,
 	.vidioc_s_parm            = sde_rotator_s_parm,
 	.vidioc_default           = sde_rotator_private_ioctl,

@@ -16,7 +16,6 @@
 #include <linux/dma-buf.h>
 #include <linux/of_platform.h>
 #include <linux/msm_dma_iommu_mapping.h>
-#include <asm/dma-iommu.h>
 
 #include "soc/qcom/secure_buffer.h"
 #include "sde_rotator_base.h"
