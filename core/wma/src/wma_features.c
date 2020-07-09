@@ -1165,10 +1165,10 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	if (!csa_offload_event)
 		return -EINVAL;
 
-	if (wma->interfaces[vdev_id].roaming_in_progress ||
-		wma->interfaces[vdev_id].roam_synch_in_progress) {
-		WMA_LOGE("Roaming in progress for vdev %d, ignore csa_offload_event",
-				vdev_id);
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id) ||
+	    wma->interfaces[vdev_id].roaming_in_progress) {
+		WMA_LOGE("Roaming in progress for vdev %d, ignore csa event",
+			 vdev_id);
 		qdf_mem_free(csa_offload_event);
 		return -EINVAL;
 	}
@@ -3523,8 +3523,8 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		goto end_tdls_peer_state;
 	}
 
-	if (wma_is_roam_synch_in_progress(wma_handle,
-					  peer_state->vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma_handle->psoc,
+					   peer_state->vdev_id)) {
 		WMA_LOGE("%s: roaming in progress, reject peer update cmd!",
 			 __func__);
 		ret = -EPERM;
@@ -3586,7 +3586,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			 peer_state->vdev_id);
 		qdf_status = wma_remove_peer(wma_handle,
 					     peer_state->peer_macaddr,
-					     peer_state->vdev_id, false);
+					     peer_state->vdev_id);
 		if (QDF_IS_STATUS_ERROR(qdf_status)) {
 			WMA_LOGE(FL("wma_remove_peer failed"));
 			ret = -EINVAL;

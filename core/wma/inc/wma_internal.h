@@ -615,17 +615,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
-static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
-		uint8_t vdev_id)
-{
-	return wma->interfaces[vdev_id].roam_synch_in_progress;
-}
-#else
-static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
-		uint8_t vdev_id)
-{
-	return false;
-}
 #endif
 
 /*
@@ -687,15 +676,14 @@ QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
 
 QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
-			   uint8_t vdev_id, bool roam_synch_in_progress);
+			   uint8_t vdev_id);
 
 QDF_STATUS wma_peer_unmap_conf_send(tp_wma_handle wma,
 				    struct send_peer_unmap_conf_params *msg);
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma,
 			   uint8_t peer_addr[QDF_MAC_ADDR_SIZE],
-			   uint32_t peer_type, uint8_t vdev_id,
-			   bool roam_synch_in_progress);
+			   uint32_t peer_type, uint8_t vdev_id);
 
 /**
  * wma_send_del_bss_response() - send delete bss resp

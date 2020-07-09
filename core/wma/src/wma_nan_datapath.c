@@ -77,8 +77,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	}
 
 	status = wma_create_peer(wma, add_sta->staMac,
-				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId,
-				 false);
+				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE(FL("Failed to create peer for %pM"), add_sta->staMac);
 		add_sta->status = status;
@@ -90,8 +89,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		WMA_LOGE(FL("Failed to find peer handle using peer mac %pM"),
 			 add_sta->staMac);
 		add_sta->status = QDF_STATUS_E_FAILURE;
-		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId,
-				false);
+		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
 		goto send_rsp;
 	}
 
@@ -119,7 +117,7 @@ void wma_delete_sta_req_ndi_mode(tp_wma_handle wma,
 					tpDeleteStaParams del_sta)
 {
 	wma_remove_peer(wma, del_sta->staMac,
-			del_sta->smesessionId, false);
+			del_sta->smesessionId);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
 	if (del_sta->respReqd) {

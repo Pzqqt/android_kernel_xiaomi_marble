@@ -3774,7 +3774,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 				 csr_conn_info->nAssocRspLength));
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (!csr_session->roam_synch_in_progress) {
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac_ctx->psoc, sessionid)) {
 #endif
 		for (ac = QCA_WLAN_AC_BE; ac < QCA_WLAN_AC_ALL; ac++) {
 			ac_info = &qos_session->ac_info[ac];
@@ -4727,7 +4727,7 @@ static bool sme_qos_ft_handoff_required(struct mac_context *mac,
 	csr_roam_session = CSR_GET_SESSION(mac, session_id);
 
 	if (csr_roam_session &&
-	    csr_roam_session->roam_synch_in_progress &&
+	    MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id) &&
 	    csr_roam_is_ese_assoc(mac, session_id) &&
 	    csr_roam_session->connectedInfo.nTspecIeLength)
 		return true;

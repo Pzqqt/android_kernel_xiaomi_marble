@@ -610,7 +610,6 @@ struct csr_roam_session {
 	uint8_t join_bssid_count;
 	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
-	bool roam_synch_in_progress;
 	bool supported_nss_1x1;
 	uint8_t vdev_nss;
 	uint8_t nss;
@@ -651,8 +650,6 @@ struct csr_roamstruct {
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
 	uint32_t deauthRspStatus;
-	uint8_t *pReassocResp;          /* reassociation response from new AP */
-	uint16_t reassocRespLen;        /* length of reassociation response */
 	qdf_mc_timer_t packetdump_timer;
 	spinlock_t roam_state_lock;
 };

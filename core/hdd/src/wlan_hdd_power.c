@@ -1515,7 +1515,6 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_init_scan_reject_params(hdd_ctx);
 
-	hdd_set_roaming_in_progress(false);
 	complete(&adapter->roaming_comp_var);
 	hdd_ctx->bt_coex_mode_set = false;
 

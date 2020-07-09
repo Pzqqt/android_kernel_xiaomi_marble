@@ -626,6 +626,8 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
  * @rx_packet_info    - A pointer to Rx packet info structure
+ * @reassoc_frame_length - Valid frame length if its a reassoc response frame
+ * else 0
  * @sub_type - Indicates whether it is Association Response (=0) or
  *                   Reassociation Response (=1) frame
  *
@@ -634,10 +636,10 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
  *
  * Return: None
  */
-
 void
-lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
-	uint8_t *rx_pkt_info, uint8_t subtype, struct pe_session *session_entry)
+lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
+			    uint32_t reassoc_frame_len,
+			    uint8_t subtype, struct pe_session *session_entry)
 {
 	uint8_t *body;
 	uint16_t caps, ie_len;
@@ -649,17 +651,14 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	tpSirAssocRsp assoc_rsp;
 	tLimMlmAssocCnf assoc_cnf;
 	tSchBeaconStruct *beacon;
+	uint8_t vdev_id = session_entry->vdev_id;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t vdev_id = 0;
 	struct csr_roam_session *roam_session;
 #endif
 	uint8_t ap_nss;
 	int8_t rssi;
 	QDF_STATUS status;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	vdev_id = session_entry->vdev_id;
-#endif
 	assoc_cnf.resultCode = eSIR_SME_SUCCESS;
 	/* Update PE session Id */
 	assoc_cnf.sessionId = session_entry->peSessionId;
@@ -674,9 +673,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (lim_is_roam_synch_in_progress(session_entry)) {
-		hdr = (tpSirMacMgmtHdr) mac_ctx->roam.pReassocResp;
-		frame_len = mac_ctx->roam.reassocRespLen - SIR_MAC_HDR_LEN_3A;
+	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry)) {
+		hdr = (tpSirMacMgmtHdr)rx_pkt_info;
+		frame_len = reassoc_frame_len - SIR_MAC_HDR_LEN_3A;
 		rssi = 0;
 	} else {
 		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
@@ -690,7 +689,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	}
 
 	pe_nofl_info("Assoc rsp RX: subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_STR,
-		     subtype, session_entry->vdev_id,
+		     subtype, vdev_id,
 		     GET_LIM_SYSTEM_ROLE(session_entry),
 		     session_entry->limMlmState, rssi,
 		     QDF_MAC_ADDR_ARRAY(hdr->sa));
@@ -704,7 +703,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	if (((subtype == LIM_ASSOC) &&
 		(session_entry->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE)) ||
 		((subtype == LIM_REASSOC) &&
-		 !lim_is_roam_synch_in_progress(session_entry) &&
+		 !lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry) &&
 		((session_entry->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE)
 		&& (session_entry->limMlmState !=
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
@@ -760,8 +759,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		return;
 	}
 	/* Get pointer to Re/Association Response frame body */
-	if (lim_is_roam_synch_in_progress(session_entry))
-		body = mac_ctx->roam.pReassocResp + SIR_MAC_HDR_LEN_3A;
+	if (lim_is_roam_synch_in_progress(mac_ctx->psoc, session_entry))
+		body =  rx_pkt_info + SIR_MAC_HDR_LEN_3A;
 	else
 		body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	/* parse Re/Association Response frame. */
@@ -988,8 +987,9 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 					   session_entry->nss);
 
 		if ((session_entry->limMlmState ==
-		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
-			lim_is_roam_synch_in_progress(session_entry)) {
+		     eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
+		    lim_is_roam_synch_in_progress(mac_ctx->psoc,
+						  session_entry)) {
 			pe_debug("Sending self sta");
 			lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp,
 				session_entry, NULL);
@@ -1002,7 +1002,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 				session_entry->gLimEdcaParams,
 				session_entry);
 			/* Send the active EDCA parameters to HAL */
-			if (!lim_is_roam_synch_in_progress(session_entry)) {
+			if (!lim_is_roam_synch_in_progress(mac_ctx->psoc,
+							   session_entry)) {
 				lim_send_edca_params(mac_ctx,
 					session_entry->gLimEdcaParamsActive,
 					session_entry->vdev_id, false);

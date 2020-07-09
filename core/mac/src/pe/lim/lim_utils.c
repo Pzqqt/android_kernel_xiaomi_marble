@@ -3780,7 +3780,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		return;
 	}
 
-	if (lim_is_roam_synch_in_progress(pe_session)) {
+	if (lim_is_roam_synch_in_progress(mac->psoc, pe_session)) {
 		pe_debug("Roaming in progress, ignore HT IE BW update");
 		return;
 	}

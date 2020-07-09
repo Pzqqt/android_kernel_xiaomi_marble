@@ -462,8 +462,9 @@ lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode sta,
 	sta->valid = 0;
 	lim_send_sme_tsm_ie_ind(mac, pe_session, 0, 0, 0);
 	/* Any roaming related changes should be above this line */
-	if (lim_is_roam_synch_in_progress(pe_session))
+	if (lim_is_roam_synch_in_progress(mac->psoc, pe_session))
 		return QDF_STATUS_SUCCESS;
+
 	sta->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
 	if (LIM_IS_STA_ROLE(pe_session)) {

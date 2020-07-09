@@ -802,7 +802,7 @@ struct hdd_station_ctx {
 	struct qdf_mac_addr requested_bssid;
 	struct hdd_connection_info conn_info;
 	struct hdd_connection_info cache_conn_info;
-	int ft_carrier_on;
+	bool ft_carrier_on;
 	bool hdd_reassoc_scenario;
 	int sta_debug_state;
 	struct hdd_mon_set_ch_info ch_info;
@@ -3630,7 +3630,6 @@ tSirAddie *hdd_assoc_additional_ie(struct hdd_adapter *adapter)
  * Return: true if roaming is in progress else false
  */
 bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx);
-void hdd_set_roaming_in_progress(bool value);
 
 /**
  * hdd_is_connection_in_progress() - check if connection is in progress

@@ -358,23 +358,12 @@ hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *adapter,
  * @adapter: HDD adapter
  * @peer_mac_addr: Peer MAC address
  * @sta_state: peer state
- * @roam_synch_in_progress: roam synch in progress
  *
  * Return: QDF status
  */
 QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t *peer_mac_addr,
-				 enum ol_txrx_peer_state sta_state,
-				 bool roam_synch_in_progress);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo);
-#else
-static inline bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo)
-{
-	return false;
-}
-#endif
-
+				 enum ol_txrx_peer_state sta_state);
 /**
  * hdd_update_dp_vdev_flags() - update datapath vdev flags
  * @cbk_data: callback data

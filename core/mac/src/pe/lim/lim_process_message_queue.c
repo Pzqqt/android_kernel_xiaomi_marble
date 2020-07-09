@@ -1409,6 +1409,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 
 		case SIR_MAC_MGMT_ASSOC_RSP:
 			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
+						    ASSOC_FRAME_LEN,
 						    LIM_ASSOC,
 						    pe_session);
 			break;
@@ -1430,6 +1431,7 @@ lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 
 		case SIR_MAC_MGMT_REASSOC_RSP:
 			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
+						    ASSOC_FRAME_LEN,
 						    LIM_REASSOC,
 						    pe_session);
 			break;

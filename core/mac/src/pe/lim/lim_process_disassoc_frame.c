@@ -191,7 +191,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		 * so check if the disassoc is received from current AP when
 		 * roaming is being done in the firmware
 		 */
-		if (pe_session->fw_roaming_started &&
+		if (MLME_IS_ROAMING_IN_PROG(mac->psoc, pe_session->vdev_id) &&
 		    IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("Dropping disassoc frame from connected AP");
 			pe_session->recvd_disassoc_while_roaming = true;

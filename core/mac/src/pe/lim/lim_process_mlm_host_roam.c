@@ -401,53 +401,44 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		       pe_session->bssId);
 		goto end;
 	}
+
 	/* Prepare and send Reassociation request frame */
 	/* start reassoc timer. */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pe_session->bRoamSynchInProgress != true) {
-#endif
-		mac->lim.lim_timers.gLimReassocFailureTimer.sessionId =
+	mac->lim.lim_timers.gLimReassocFailureTimer.sessionId =
 			pe_session->peSessionId;
-		/* / Start reassociation failure timer */
-		MTRACE(mac_trace
-			(mac, TRACE_CODE_TIMER_ACTIVATE,
-			 pe_session->peSessionId, eLIM_REASSOC_FAIL_TIMER));
-		if (tx_timer_activate
-			(&mac->lim.lim_timers.gLimReassocFailureTimer)
-			!= TX_SUCCESS) {
-			/* / Could not start reassoc failure timer. */
-			/* Log error */
-			pe_err("could not start Reassoc failure timer");
-			/* Return Reassoc confirm with */
-			/* Resources Unavailable */
-			mlmReassocCnf.resultCode =
-				eSIR_SME_RESOURCES_UNAVAILABLE;
-			mlmReassocCnf.protStatusCode =
-				eSIR_MAC_UNSPEC_FAILURE_STATUS;
-			goto end;
-		}
-		mac->lim.pe_session = pe_session;
-		if (!mac->lim.pe_session->pLimMlmReassocRetryReq) {
-			/* Take a copy of reassoc request for retrying */
-			mac->lim.pe_session->pLimMlmReassocRetryReq =
-				qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-			if (!mac->lim.pe_session->pLimMlmReassocRetryReq)
-				goto end;
-			qdf_mem_copy(mac->lim.pe_session->
-					pLimMlmReassocRetryReq,
-					pe_session->pLimMlmReassocReq,
-					sizeof(tLimMlmReassocReq));
-		}
-		mac->lim.reAssocRetryAttempt = 0;
-		lim_send_reassoc_req_with_ft_ies_mgmt_frame(mac,
-				pe_session->
-				pLimMlmReassocReq,
-				pe_session);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	} else {
-		pe_debug("LFR3:Do not activate timer and dont send the reassoc");
+	/* / Start reassociation failure timer */
+	MTRACE(mac_trace
+		(mac, TRACE_CODE_TIMER_ACTIVATE,
+		 pe_session->peSessionId, eLIM_REASSOC_FAIL_TIMER));
+
+	if (tx_timer_activate(&mac->lim.lim_timers.gLimReassocFailureTimer) !=
+	    TX_SUCCESS) {
+		/* / Could not start reassoc failure timer. */
+		/* Log error */
+		pe_err("could not start Reassoc failure timer");
+		/* Return Reassoc confirm with */
+		/* Resources Unavailable */
+		mlmReassocCnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
+		mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		goto end;
 	}
-#endif
+
+	mac->lim.pe_session = pe_session;
+	if (!mac->lim.pe_session->pLimMlmReassocRetryReq) {
+		/* Take a copy of reassoc request for retrying */
+		mac->lim.pe_session->pLimMlmReassocRetryReq =
+			qdf_mem_malloc(sizeof(tLimMlmReassocReq));
+		if (!mac->lim.pe_session->pLimMlmReassocRetryReq)
+			goto end;
+
+		qdf_mem_copy(mac->lim.pe_session->pLimMlmReassocRetryReq,
+			     pe_session->pLimMlmReassocReq,
+			     sizeof(tLimMlmReassocReq));
+	}
+	mac->lim.reAssocRetryAttempt = 0;
+	lim_send_reassoc_req_with_ft_ies_mgmt_frame(
+		mac, pe_session->pLimMlmReassocReq, pe_session);
+
 	pe_session->limPrevMlmState = pe_session->limMlmState;
 	pe_session->limMlmState = eLIM_MLM_WT_FT_REASSOC_RSP_STATE;
 	MTRACE(mac_trace
@@ -513,13 +504,6 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	/* Lets save this for when we receive the Reassoc Rsp */
 	pe_session->ftPEContext.pAddStaReq = pAddStaParams;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pe_session->bRoamSynchInProgress) {
-		pe_debug("LFR3:Prep and save AddStaReq for post-assoc-rsp");
-		lim_process_assoc_rsp_frame(mac, mac->roam.pReassocResp,
-					    LIM_REASSOC, pe_session);
-	}
-#endif
 	return;
 
 end:
@@ -611,9 +595,7 @@ void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 	else
 		val = mac->mlme_cfg->sap_cfg.listen_interval;
 
-	status = wma_add_bss_peer_sta(session->vdev_id, session->bssId,
-				      false);
-
+	status = wma_add_bss_peer_sta(session->vdev_id, session->bssId);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(reassoc_req);
 		return;

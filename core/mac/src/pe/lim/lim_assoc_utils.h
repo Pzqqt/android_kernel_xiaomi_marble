@@ -170,12 +170,14 @@ static inline QDF_STATUS lim_add_ft_sta_self(struct mac_context *mac,
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
+static inline bool lim_is_roam_synch_in_progress(struct wlan_objmgr_psoc *psoc,
+						 struct pe_session *pe_session)
 {
-	return pe_session->bRoamSynchInProgress;
+	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, pe_session->vdev_id);
 }
 #else
-static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
+static inline bool lim_is_roam_synch_in_progress(struct wlan_objmgr_psoc *psoc,
+						 struct pe_session *pe_session)
 {
 	return false;
 }

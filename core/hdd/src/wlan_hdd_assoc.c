@@ -1024,6 +1024,19 @@ static inline void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 #endif
 
 /**
+ * hdd_is_roam_sync_in_progress()- Check if roam offloaded
+ * @hdd_ctx: Pointer to hdd context
+ * @vdev_id: Vdev id
+ *
+ * Return: roam sync status if roaming offloaded else false
+ */
+static bool hdd_is_roam_sync_in_progress(struct hdd_context *hdd_ctx,
+					 uint8_t vdev_id)
+{
+	return MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id);
+}
+
+/**
  * hdd_save_bss_info() - save connection info in hdd sta ctx
  * @adapter: Pointer to adapter
  * @roam_info: pointer to roam info
@@ -1033,6 +1046,7 @@ static inline void hdd_copy_he_operation(struct hdd_station_ctx *hdd_sta_ctx,
 static void hdd_save_bss_info(struct hdd_adapter *adapter,
 						struct csr_roam_info *roam_info)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -1051,8 +1065,9 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 		hdd_sta_ctx->conn_info.conn_flag.ht_present = false;
 	}
 	if (roam_info->reassoc ||
-	    hdd_is_roam_sync_in_progress(roam_info))
+	    hdd_is_roam_sync_in_progress(hdd_ctx, adapter->vdev_id))
 		hdd_sta_ctx->conn_info.roam_count++;
+
 	if (roam_info->hs20vendor_ie.present) {
 		hdd_sta_ctx->conn_info.conn_flag.hs20_present = true;
 		qdf_mem_copy(&hdd_sta_ctx->conn_info.hs20vendor_ie,
@@ -1483,15 +1498,12 @@ static void hdd_send_association_event(struct net_device *dev,
 	memset(&wrqu, '\0', sizeof(wrqu));
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 	we_event = SIOCGIWAP;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (roam_info)
-		if (roam_info->roamSynchInProgress) {
-			/* Update tdls module about the disconnection event */
-			hdd_notify_sta_disconnect(adapter->vdev_id,
-						 true, false,
-						 adapter->vdev);
-		}
-#endif
+
+	/* Update tdls module about the disconnection event */
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, adapter->vdev_id))
+		hdd_notify_sta_disconnect(adapter->vdev_id, true, false,
+					  adapter->vdev);
+
 	if (eConnectionState_Associated == sta_ctx->conn_info.conn_state) {
 		struct oem_channel_info chan_info = {0};
 
@@ -1500,7 +1512,8 @@ static void hdd_send_association_event(struct net_device *dev,
 			return;
 		}
 
-		if (!hdd_is_roam_sync_in_progress(roam_info)) {
+		if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc,
+						    adapter->vdev_id)) {
 			policy_mgr_incr_active_session(hdd_ctx->psoc,
 				adapter->device_mode, adapter->vdev_id);
 			hdd_green_ap_start_state_mc(hdd_ctx,
@@ -1961,9 +1974,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		hdd_conn_set_connection_state(adapter,
 					       eConnectionState_NotConnected);
 
-	/* Clear roaming in progress flag */
-	hdd_set_roaming_in_progress(false);
-
+	hdd_init_scan_reject_params(hdd_ctx);
 	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
@@ -2046,10 +2057,10 @@ void hdd_set_unpause_queue(void *soc, struct hdd_adapter *adapter)
 
 QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t *peer_mac,
-				 enum ol_txrx_peer_state sta_state,
-				 bool roam_synch_in_progress)
+				 enum ol_txrx_peer_state sta_state)
 {
 	QDF_STATUS err;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	err = cdp_peer_state_update(soc, peer_mac, sta_state);
@@ -2057,10 +2068,9 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 		hdd_err("peer state update failed");
 		return QDF_STATUS_E_FAULT;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (roam_synch_in_progress)
+
+	if (hdd_is_roam_sync_in_progress(hdd_ctx, adapter->vdev_id))
 		return QDF_STATUS_SUCCESS;
-#endif
 
 	if (sta_state == OL_TXRX_PEER_STATE_AUTH) {
 		/* Reset scan reject params on successful set key */
@@ -2133,25 +2143,13 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  *
  * Return: QDF_STATUS enumeration
  */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
 					     struct csr_roam_info *roam_info,
 					     uint8_t *mac_addr,
 					     enum ol_txrx_peer_state sta_state)
 {
-	return hdd_change_peer_state(adapter, mac_addr, sta_state,
-				     roam_info->roamSynchInProgress);
+	return hdd_change_peer_state(adapter, mac_addr, sta_state);
 }
-#else
-static QDF_STATUS hdd_conn_change_peer_state(struct hdd_adapter *adapter,
-					     struct csr_roam_info *roam_info,
-					     uint8_t *mac_addr,
-					     enum ol_txrx_peer_state sta_state)
-{
-	return hdd_change_peer_state(adapter, mac_addr, sta_state,
-				     false);
-}
-#endif
 
 #if defined(WLAN_SUPPORT_RX_FISA)
 /**
@@ -2452,7 +2450,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * active session count should still be the same and hence upon
 	 * successful reassoc decrement the active session count here.
 	 */
-	if (!hdd_is_roam_sync_in_progress(roam_info)) {
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, adapter->vdev_id)) {
 		hdd_roam_decr_conn_count(adapter, hdd_ctx);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
@@ -2535,22 +2533,6 @@ done:
 }
 
 /**
- * hdd_is_roam_sync_in_progress()- Check if roam offloaded
- * @roaminfo - Roaming Information
- *
- * Return: roam sync status if roaming offloaded else false
- */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo)
-{
-	if (roaminfo)
-		return roaminfo->roamSynchInProgress;
-	else
-		return false;
-}
-#endif
-
-/**
  * hdd_change_sta_state_authenticated()-
  * This function changes STA state to authenticated
  * @adapter:  pointer to the adapter structure.
@@ -2587,8 +2569,7 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 	 */
 
 	status = hdd_change_peer_state(adapter, mac_addr,
-				       OL_TXRX_PEER_STATE_AUTH,
-				       hdd_is_roam_sync_in_progress(roaminfo));
+				       OL_TXRX_PEER_STATE_AUTH);
 	hdd_conn_set_authenticated(adapter, true);
 	hdd_objmgr_set_peer_mlme_auth_state(adapter->vdev, true);
 
@@ -3102,8 +3083,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						 * decrement the active session
 						 * count here.
 						 */
-						if (!hdd_is_roam_sync_in_progress
-								(roam_info)) {
+						if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(
+							hdd_ctx->psoc, adapter->vdev_id)) {
 						hdd_roam_decr_conn_count(
 							 adapter, hdd_ctx);
 
@@ -3256,13 +3237,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				qdf_status =
 					hdd_change_peer_state(adapter,
 						roam_info->bssid.bytes,
-						OL_TXRX_PEER_STATE_CONN,
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-						roam_info->roamSynchInProgress
-#else
-						false
-#endif
-						);
+						OL_TXRX_PEER_STATE_CONN);
 				hdd_conn_set_authenticated(adapter, false);
 				hdd_objmgr_set_peer_mlme_auth_state(
 							adapter->vdev,
@@ -3275,13 +3250,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				qdf_status =
 					hdd_change_peer_state(adapter,
 						roam_info->bssid.bytes,
-						OL_TXRX_PEER_STATE_AUTH,
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-						roam_info->roamSynchInProgress
-#else
-						false
-#endif
-						);
+						OL_TXRX_PEER_STATE_AUTH);
 				hdd_conn_set_authenticated(adapter, true);
 				hdd_objmgr_set_peer_mlme_auth_state(
 							adapter->vdev,
@@ -3298,10 +3267,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			}
 
 			/* Start the tx queues */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-			if (roam_info->roamSynchInProgress)
-				hdd_debug("LFR3:netif_tx_wake_all_queues");
-#endif
 			hdd_debug("Enabling queues");
 			wlan_hdd_netif_queue_control(adapter,
 						   WLAN_WAKE_ALL_NETIF_QUEUE,
@@ -4312,15 +4277,12 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_napi_serialize(0);
 		if (roam_result == eCSR_ROAM_RESULT_FAILURE) {
 			adapter->roam_ho_fail = true;
-			hdd_set_roaming_in_progress(false);
 		} else {
 			adapter->roam_ho_fail = false;
 		}
+
+		hdd_init_scan_reject_params(hdd_ctx);
 		complete(&adapter->roaming_comp_var);
-		break;
-	case eCSR_ROAM_SYNCH_COMPLETE:
-		hdd_debug("LFR3: Roam synch complete");
-		hdd_set_roaming_in_progress(false);
 		break;
 	case eCSR_ROAM_SHOULD_ROAM:
 		/* notify apps that we can't pass traffic anymore */
@@ -4347,7 +4309,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 		hdd_debug("****eCSR_ROAM_DISASSOCIATED****");
 		hdd_napi_serialize(0);
 		hdd_set_connection_in_progress(false);
-		hdd_set_roaming_in_progress(false);
+		hdd_init_scan_reject_params(hdd_ctx);
 		adapter->roam_ho_fail = false;
 		complete(&adapter->roaming_comp_var);
 
@@ -4536,7 +4498,6 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				WLAN_STOP_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);
 		hdd_set_connection_in_progress(true);
-		hdd_set_roaming_in_progress(true);
 		policy_mgr_restart_opportunistic_timer(hdd_ctx->psoc, true);
 		break;
 	case eCSR_ROAM_ABORT:
@@ -4546,7 +4507,7 @@ hdd_sme_roam_callback(void *context, struct csr_roam_info *roam_info,
 				WLAN_WAKE_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);
 		hdd_set_connection_in_progress(false);
-		hdd_set_roaming_in_progress(false);
+		hdd_init_scan_reject_params(hdd_ctx);
 		adapter->roam_ho_fail = false;
 		sta_ctx->ft_carrier_on = false;
 		complete(&adapter->roaming_comp_var);

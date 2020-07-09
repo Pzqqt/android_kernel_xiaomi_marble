@@ -1999,12 +1999,12 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		 * should go through to the firmware and receive HO_FAIL
 		 * and clean up.
 		 */
-		if (wma_is_roam_synch_in_progress(wma_handle,
-				roam_req->sessionId) &&
-				roam_req->reason ==
-				REASON_ROAM_STOP_ALL) {
-				wma_debug("Dont send RSO stop during roam sync");
-				break;
+		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma_handle->psoc,
+						   roam_req->sessionId) &&
+		    roam_req->reason == REASON_ROAM_STOP_ALL) {
+			wma_info("vdev_id:%d : Drop RSO stop during roam sync",
+				 roam_req->sessionId);
+			break;
 		}
 
 		/*
@@ -2305,14 +2305,6 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
 	wlan_roam_debug_log(synch_fail->session_id,
 			    DEBUG_ROAM_SYNCH_FAIL,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
-
-	/* Hand Off Failure could happen as an exception, when a roam synch
-	 * indication is posted to Host, but a roam synch complete is not
-	 * posted to the firmware.So, clear the roam synch in progress
-	 * flag before disconnecting the session through this event.
-	 */
-	wma_handle->interfaces[synch_fail->session_id].roam_synch_in_progress =
-		false;
 }
 
 /**
@@ -2773,7 +2765,7 @@ wma_roam_update_vdev(tp_wma_handle wma,
 
 	wma_delete_sta(wma, del_sta_params);
 	wma_delete_bss(wma, vdev_id);
-	wma_add_bss_peer_sta(vdev_id, roam_synch_ind_ptr->bssid.bytes, true);
+	wma_add_bss_peer_sta(vdev_id, roam_synch_ind_ptr->bssid.bytes);
 	/* Update new peer's uc cipher */
 	wma_update_roamed_peer_unicast_cipher(wma, uc_cipher, cipher_cap,
 					      roam_synch_ind_ptr->bssid.bytes);
@@ -2907,9 +2899,9 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 		synch_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_SYNCH));
 
-	if (wma_is_roam_synch_in_progress(wma, synch_event->vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, synch_event->vdev_id)) {
 		WMA_LOGE("%s: Ignoring RSI since one is already in progress",
-				__func__);
+			 __func__);
 		goto cleanup_label;
 	}
 
@@ -2981,8 +2973,6 @@ int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
 			       WIFI_POWER_EVENT_WAKELOCK_WOW);
 	qdf_wake_lock_timeout_acquire(&wma->roam_ho_wl,
 				      WMA_ROAM_HO_WAKE_LOCK_DURATION);
-
-	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = true;
 
 	roam_synch_ind_ptr = qdf_mem_malloc(roam_synch_data_len);
 	if (!roam_synch_ind_ptr) {
@@ -3068,9 +3058,6 @@ cleanup_label:
 		qdf_mem_free(roam_synch_ind_ptr);
 	if (bss_desc_ptr)
 		qdf_mem_free(bss_desc_ptr);
-	if (wma && synch_event)
-		wma->interfaces[synch_event->vdev_id].roam_synch_in_progress =
-			false;
 
 	return status;
 }
@@ -3085,7 +3072,6 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	struct wma_txrx_node *iface = NULL;
 	int status = -EINVAL;
 
-	wma_debug("LFR3:Synch Frame event");
 	if (!event) {
 		WMA_LOGE("event param null");
 		return status;
@@ -3128,18 +3114,17 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	vdev_id = synch_frame_event->vdev_id;
 	iface = &wma->interfaces[vdev_id];
 
-	if (wma_is_roam_synch_in_progress(wma, vdev_id)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, vdev_id)) {
 		WMA_LOGE("Ignoring this event as it is unexpected");
 		wma_free_roam_synch_frame_ind(iface);
 		return status;
 	}
-	wma_debug("LFR3: Received ROAM_SYNCH_FRAME_EVENT");
 
-	wma_debug("synch frame payload: LEN bcn:%d, req:%d, rsp:%d morefrag: %d",
-		 synch_frame_event->bcn_probe_rsp_len,
-		 synch_frame_event->reassoc_req_len,
-		 synch_frame_event->reassoc_rsp_len,
-		 synch_frame_event->more_frag);
+	wma_debug("LFR3: Roam synch frame payload: LEN bcn:%d, req:%d, rsp:%d morefrag: %d",
+		  synch_frame_event->bcn_probe_rsp_len,
+		  synch_frame_event->reassoc_req_len,
+		  synch_frame_event->reassoc_rsp_len,
+		  synch_frame_event->more_frag);
 
 	if (synch_frame_event->bcn_probe_rsp_len) {
 		iface->roam_synch_frame_ind.bcn_probe_rsp_len =
@@ -4170,21 +4155,18 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 		return;
 	}
 
-	if (!wma_is_vdev_valid(vdev_id)) {
-		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+	if (!wma_is_vdev_valid(vdev_id))
 		return;
-	}
 
 	if (wmi_unified_roam_synch_complete_cmd(wma_handle->wmi_handle,
-				 vdev_id)) {
+						vdev_id))
 		return;
-	}
 
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
 		vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_COMPLETE));
 
-	wma_info("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
+	wma_info("LFR3: vdev[%d] Sent ROAM_SYNCH_COMPLETE", vdev_id);
 	wlan_roam_debug_log(vdev_id, DEBUG_ROAM_SYNCH_CNF,
 			    DEBUG_INVALID_PEER_ID, NULL, NULL, 0, 0);
 
@@ -5948,11 +5930,12 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 		return;
 
 	roam_synch_data->roamed_vdev_id = vdev_id;
-	wma_handle->pe_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
-				     NULL, op_code);
+	if (notif != WMI_ROAM_NOTIF_ROAM_START)
+		wma_handle->pe_roam_synch_cb(wma_handle->mac_context,
+					     roam_synch_data, NULL, op_code);
+
 	wma_handle->csr_roam_synch_cb(wma_handle->mac_context, roam_synch_data,
 				      NULL, op_code);
-
 	qdf_mem_free(roam_synch_data);
 }
 
@@ -5961,6 +5944,36 @@ void wma_handle_roam_sync_timeout(tp_wma_handle wma_handle,
 {
 	wma_invalid_roam_reason_handler(wma_handle, info->vdev_id,
 					WMI_ROAM_NOTIF_ROAM_ABORT);
+}
+
+static char *wma_get_roam_event_reason_string(uint32_t reason)
+{
+	switch (reason) {
+	case WMI_ROAM_REASON_INVALID:
+		return "Default";
+	case WMI_ROAM_REASON_BETTER_AP:
+		return "Better AP";
+	case WMI_ROAM_REASON_BMISS:
+		return "BMISS";
+	case WMI_ROAM_REASON_LOW_RSSI:
+		return "Low Rssi";
+	case WMI_ROAM_REASON_SUITABLE_AP:
+		return "Suitable AP";
+	case WMI_ROAM_REASON_HO_FAILED:
+		return "Hand-off Failed";
+	case WMI_ROAM_REASON_INVOKE_ROAM_FAIL:
+		return "Roam Invoke failed";
+	case WMI_ROAM_REASON_RSO_STATUS:
+		return "RSO status";
+	case WMI_ROAM_REASON_BTM:
+		return "BTM";
+	case WMI_ROAM_REASON_DEAUTH:
+		return "Deauth";
+	default:
+		return "Invalid";
+	}
+
+	return "Invalid";
 }
 
 /**
@@ -5992,10 +6005,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	}
 
 	wmi_event = param_buf->fixed_param;
-	wma_debug("Reason %x, Notif %x for vdevid %x, rssi %d",
-		 wmi_event->reason, wmi_event->notif,
-		 wmi_event->vdev_id, wmi_event->rssi);
-
 	if (wmi_event->vdev_id >= wma_handle->max_bssid) {
 		WMA_LOGE("Invalid vdev id from firmware");
 		return -EINVAL;
@@ -6009,6 +6018,11 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 	DPTRACE(qdf_dp_trace_record_event(QDF_DP_TRACE_EVENT_RECORD,
 		wmi_event->vdev_id, QDF_TRACE_DEFAULT_PDEV_ID,
 		QDF_PROTO_TYPE_EVENT, QDF_ROAM_EVENTID));
+
+	wma_debug("FW_ROAM_EVT: Reason:%s[%d], Notif %x for vdevid %x, rssi %d",
+		  wma_get_roam_event_reason_string(wmi_event->reason),
+		  wmi_event->reason,
+		  wmi_event->notif, wmi_event->vdev_id, wmi_event->rssi);
 
 	switch (wmi_event->reason) {
 	case WMI_ROAM_REASON_BTM:
@@ -6072,8 +6086,6 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		WMA_LOGE("mac addr to avoid %pM", bssid.bytes);
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id, bssid);
-		wma_handle->interfaces[wmi_event->vdev_id].roaming_in_progress =
-								false;
 		break;
 #endif
 	case WMI_ROAM_REASON_INVALID:

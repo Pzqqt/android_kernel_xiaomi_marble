@@ -872,47 +872,36 @@ static void csr_neighbor_roam_info_ctx_init(struct mac_context *mac,
 		csr_neighbor_roam_purge_preauth_failed_list(mac);
 	}
 
-	if (csr_roam_is_roam_offload_scan_enabled(mac)) {
-		/*
-		 * Store the current PMK info of the AP
-		 * to the single pmk global cache if the BSS allows
-		 * single pmk roaming capable.
-		 */
-		csr_store_sae_single_pmk_to_global_cache(mac, session,
-							 session_id);
+	if (!csr_roam_is_roam_offload_scan_enabled(mac))
+		return;
+	/*
+	 * Store the current PMK info of the AP
+	 * to the single pmk global cache if the BSS allows
+	 * single pmk roaming capable.
+	 */
+	csr_store_sae_single_pmk_to_global_cache(mac, session,
+						 session_id);
 
-		/*
-		 * If this is not a INFRA type BSS, then do not send the command
-		 * down to firmware.Do not send the START command for
-		 * other session connections.
-		 */
-		if (!csr_roam_is_sta_mode(mac, session_id)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"Wrong Mode %d",
-				session->connectedProfile.BSSType);
-			return;
-		}
-		ngbr_roam_info->uOsRequestedHandoff = 0;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (session->roam_synch_in_progress) {
-			if (mac->roam.pReassocResp) {
-				qdf_mem_free(mac->roam.pReassocResp);
-				mac->roam.pReassocResp = NULL;
-			}
-		} else
-#endif
-		{
-			csr_post_roam_state_change(mac, session_id,
-						   WLAN_ROAM_RSO_ENABLED,
-						   REASON_CTX_INIT);
-
-		}
+	/*
+	 * If this is not a INFRA type BSS, then do not send the command
+	 * down to firmware.Do not send the START command for
+	 * other session connections.
+	 */
+	if (!csr_roam_is_sta_mode(mac, session_id)) {
+		sme_debug("Wrong Mode %d", session->connectedProfile.BSSType);
+		return;
 	}
+
+	ngbr_roam_info->uOsRequestedHandoff = 0;
+	if (!MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id))
+		csr_post_roam_state_change(mac, session_id,
+					   WLAN_ROAM_RSO_ENABLED,
+					   REASON_CTX_INIT);
 }
 
 /**
- * csr_neighbor_roam_indicate_connect()
- * @mac: mac context
+* csr_neighbor_roam_indicate_connect()
+* @mac: mac context
  * @session_id: Session Id
  * @qdf_status: QDF status
  *
@@ -961,22 +950,20 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		return QDF_STATUS_SUCCESS;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session->roam_synch_in_progress &&
-		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
-		session->roam_synch_data->authStatus)) {
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(mac->psoc, session_id) &&
+	    eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
+	     session->roam_synch_data->authStatus) {
 		sme_debug("LFR3: Authenticated");
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
 		if (!roam_info)
 			return QDF_STATUS_E_NOMEM;
 		qdf_copy_macaddr(&roam_info->peerMac,
 				 &session->connectedProfile.bssid);
-		roam_info->roamSynchInProgress =
-			session->roam_synch_in_progress;
 		csr_roam_call_callback(mac, session_id, roam_info, 0,
 				       eCSR_ROAM_SET_KEY_COMPLETE,
 				       eCSR_ROAM_RESULT_AUTHENTICATED);
 		csr_neighbor_roam_reset_init_state_control_info(mac,
-			session_id);
+								session_id);
 		csr_neighbor_roam_info_ctx_init(mac, session_id);
 		qdf_mem_free(roam_info);
 		return status;

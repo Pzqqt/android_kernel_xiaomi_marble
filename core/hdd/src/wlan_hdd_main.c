@@ -14345,14 +14345,12 @@ wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(cur_adapter);
 	struct hdd_adapter *adapter = NULL;
-	struct csr_roam_profile *roam_profile;
 	struct hdd_station_ctx *sta_ctx;
 
 	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
 		return;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		roam_profile = hdd_roam_profile(adapter);
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		if (cur_adapter->vdev_id != adapter->vdev_id &&
@@ -14373,14 +14371,12 @@ wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(cur_adapter);
 	struct hdd_adapter *adapter = NULL;
-	struct csr_roam_profile *roam_profile;
 	struct hdd_station_ctx *sta_ctx;
 
 	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
 		return;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		roam_profile = hdd_roam_profile(adapter);
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		if (cur_adapter->vdev_id != adapter->vdev_id &&
@@ -16789,44 +16785,33 @@ int hdd_enable_disable_ca_event(struct hdd_context *hdd_ctx, uint8_t set_value)
 	return 0;
 }
 
-/**
- * hdd_set_roaming_in_progress() - to set the roaming in progress flag
- * @value: value to set
- *
- * This function will set the passed value to roaming in progress flag.
- *
- * Return: None
- */
-void hdd_set_roaming_in_progress(bool value)
-{
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
-		return;
-	}
-
-	hdd_ctx->roaming_in_progress = value;
-	hdd_debug("Roaming in Progress set to %d", value);
-	if (!hdd_ctx->roaming_in_progress) {
-		/* Reset scan reject params on successful roam complete */
-		hdd_debug("Reset scan reject params");
-		hdd_init_scan_reject_params(hdd_ctx);
-	}
-}
-
 bool hdd_is_roaming_in_progress(struct hdd_context *hdd_ctx)
 {
+	struct hdd_adapter *adapter = NULL;
+	uint8_t vdev_id;
+
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
 		return false;
 	}
 
-	if (hdd_ctx->roaming_in_progress)
-		hdd_debug("Roaming is in progress");
+	if (!policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
+		return false;
 
-	return hdd_ctx->roaming_in_progress;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		vdev_id = adapter->vdev_id;
+		if (adapter->device_mode == QDF_STA_MODE &&
+		    (MLME_IS_ROAM_SYNCH_IN_PROGRESS(hdd_ctx->psoc, vdev_id) ||
+		     MLME_IS_ROAMING_IN_PROG(hdd_ctx->psoc, vdev_id) ||
+		     mlme_is_roam_invoke_in_progress(hdd_ctx->psoc,
+						      vdev_id))) {
+			hdd_debug("Roaming is in progress on:vdev_id:%d",
+				  adapter->vdev_id);
+			return true;
+		}
+	}
+
+	return false;
 }
 
 /**

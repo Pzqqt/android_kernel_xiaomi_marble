@@ -235,13 +235,13 @@ lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 
 	if (lim_is_reassoc_in_progress(mac, pe_session) ||
 	    lim_is_reassoc_in_progress(mac, pRoamSessionEntry) ||
-	    pe_session->fw_roaming_started) {
+	    MLME_IS_ROAMING_IN_PROG(mac->psoc, pe_session->vdev_id)) {
 		/*
 		 * For LFR3, the roaming bssid is not known during ROAM_START,
 		 * so check if the deauth is received from current AP when
 		 * roaming is being done in the firmware
 		 */
-		if (pe_session->fw_roaming_started &&
+		if (MLME_IS_ROAMING_IN_PROG(mac->psoc, pe_session->vdev_id) &&
 		    IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("LFR3: Drop deauth frame from connected AP");
 			/*

@@ -2383,6 +2383,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	struct pe_session *session_ptr;
 	struct pe_session *ft_session_ptr;
 	uint8_t session_id;
+	uint8_t *reassoc_resp;
 	tpDphHashNode curr_sta_ds;
 	uint16_t aid;
 	struct bss_params *add_bss_params;
@@ -2407,11 +2408,7 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 
 	pe_debug("LFR3: PE callback reason: %d", reason);
 	switch (reason) {
-	case SIR_ROAMING_START:
-		session_ptr->fw_roaming_started = true;
-		return QDF_STATUS_SUCCESS;
 	case SIR_ROAMING_ABORT:
-		session_ptr->fw_roaming_started = false;
 		/*
 		 * If there was a disassoc or deauth that was received
 		 * during roaming and it was not honored, then we have
@@ -2431,13 +2428,12 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		}
 		return QDF_STATUS_SUCCESS;
 	case SIR_ROAM_SYNCH_PROPAGATION:
-		session_ptr->fw_roaming_started = false;
 		break;
 	default:
 		return status;
 	}
 
-	pe_debug("LFR3:Received ROAM_OFFLOAD_SYNCH_IND bssid %pM auth: %d vdevId: %d",
+	pe_debug("LFR3:Received ROAM SYNCH IND bssid %pM auth: %d vdevId: %d",
 		 roam_sync_ind_ptr->bssid.bytes, roam_sync_ind_ptr->authStatus,
 		 roam_sync_ind_ptr->roamed_vdev_id);
 
@@ -2517,19 +2513,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
-	mac_ctx->roam.pReassocResp =
-		qdf_mem_malloc(mac_ctx->roam.reassocRespLen);
-	if (!mac_ctx->roam.pReassocResp) {
-		ft_session_ptr->bRoamSynchInProgress = false;
-		return QDF_STATUS_E_NOMEM;
-	}
-	qdf_mem_copy(mac_ctx->roam.pReassocResp,
-			(uint8_t *)roam_sync_ind_ptr +
-			roam_sync_ind_ptr->reassocRespOffset,
-			mac_ctx->roam.reassocRespLen);
-
-	ft_session_ptr->bRoamSynchInProgress = true;
 
 	if (roam_sync_ind_ptr->authStatus ==
 	    CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
@@ -2537,7 +2520,10 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		curr_sta_ds->is_key_installed = true;
 	}
 
-	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
+	reassoc_resp = (uint8_t *)roam_sync_ind_ptr +
+			roam_sync_ind_ptr->reassocRespOffset;
+	lim_process_assoc_rsp_frame(mac_ctx, reassoc_resp,
+				    roam_sync_ind_ptr->reassocRespLength,
 				    LIM_REASSOC, ft_session_ptr);
 
 	lim_check_ft_initial_im_association(roam_sync_ind_ptr, ft_session_ptr);
@@ -2563,9 +2549,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
 	if (!roam_sync_ind_ptr->join_rsp) {
 		ft_session_ptr->bRoamSynchInProgress = false;
-		if (mac_ctx->roam.pReassocResp)
-			qdf_mem_free(mac_ctx->roam.pReassocResp);
-		mac_ctx->roam.pReassocResp = NULL;
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -2607,10 +2590,6 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 	ft_session_ptr->limSmeState = eLIM_SME_LINK_EST_STATE;
 	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
 	ft_session_ptr->bRoamSynchInProgress = false;
-	if (mac_ctx->roam.pReassocResp)
-		qdf_mem_free(mac_ctx->roam.pReassocResp);
-	mac_ctx->roam.pReassocResp = NULL;
-
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -18347,11 +18347,11 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		 *
 		 * If connection state is not changed, connection state will
 		 * remain in eConnectionState_NotConnected state.
-		 * In hdd_association_completion_handler, "hddDisconInProgress"
-		 * is set to true if conn state is
+		 * In hdd_association_completion_handler,
+		 * "disconnection_in_progress" is set to true if conn state is
 		 * eConnectionState_NotConnected.
-		 * If "hddDisconInProgress" is set to true then cfg80211 layer
-		 * is not informed of connect result indication which
+		 * If "disconnection_in_progress" is set to true then cfg80211
+		 * layer is not informed of connect result indication which
 		 * is an issue.
 		 */
 		if (QDF_STA_MODE == adapter->device_mode ||
@@ -19825,11 +19825,11 @@ static void wlan_hdd_wait_for_roaming(mac_handle_t mac_handle,
 		rc = wait_for_completion_timeout(&adapter->roaming_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_STOP_ROAM));
 		if (!rc) {
+			hdd_init_scan_reject_params(hdd_ctx);
 			hdd_err("roaming_comp_var time out vdev id: %d",
 				adapter->vdev_id);
-			/* Clear roaming in progress flag */
-			hdd_set_roaming_in_progress(false);
 		}
+
 		if (adapter->roam_ho_fail) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
 			hdd_conn_set_connection_state(adapter,
@@ -19894,12 +19894,9 @@ static int wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 		qdf_mem_copy(sta_ctx->requested_bssid.bytes, bssid,
 			     QDF_MAC_ADDR_SIZE);
 
-		hdd_set_roaming_in_progress(true);
-
 		status = hdd_reassoc(adapter, bssid, ch_freq,
 				     CONNECT_CMD_USERSPACE);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			hdd_set_roaming_in_progress(false);
 			hdd_debug("Failed with status: %d", status);
 		}
 	}

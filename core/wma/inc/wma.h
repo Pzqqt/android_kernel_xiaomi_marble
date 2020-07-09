@@ -721,7 +721,6 @@ struct wma_txrx_node {
 	uint32_t nwType;
 	tSetStaKeyParams *staKeyParams;
 	uint32_t peer_count;
-	bool roam_synch_in_progress;
 	void *plink_status_req;
 	void *psnr_req;
 	uint8_t delay_before_vdev_stop;
@@ -1649,11 +1648,10 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 		struct set_ie_param *ie_params);
 
 QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *mac_addr,
-			   uint8_t vdev_id, bool roam_synch_in_progress);
+			   uint8_t vdev_id);
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma, uint8_t peer_addr[6],
-			   u_int32_t peer_type, u_int8_t vdev_id,
-			   bool roam_synch_in_progress);
+			   u_int32_t peer_type, u_int8_t vdev_id);
 
 QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
 				  uint32_t peer_id_cnt,
@@ -2409,8 +2407,7 @@ int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
  *
  * Return: 0 on success, else error on failure
  */
-QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid,
-				bool roam_sync);
+QDF_STATUS wma_add_bss_peer_sta(uint8_t vdev_id, uint8_t *bssid);
 
 /**
  * wma_send_vdev_stop() - WMA api to send vdev stop to fw
