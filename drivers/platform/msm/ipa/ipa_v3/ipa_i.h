@@ -1410,6 +1410,8 @@ struct ipa3_stats {
 	u32 wan_repl_rx_empty;
 	u32 lan_rx_empty;
 	u32 lan_repl_rx_empty;
+	u32 low_lat_rx_empty;
+	u32 low_lat_repl_rx_empty;
 	u32 flow_enable;
 	u32 flow_disable;
 	u32 tx_non_linear;
