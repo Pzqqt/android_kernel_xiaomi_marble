@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_tx_stbc.h
+ * DOC: wlan_hdd_sysfs_tx_stbc.h
  *
- * implementation for creating sysfs file tx_stbc
+ * Implementation for creating sysfs file tx_stbc
  */
 
-#ifndef _WLAN_HDD_SYSFS_GET_TX_STBC_H
-#define _WLAN_HDD_SYSFS_GET_TX_STBC_H
+#ifndef _WLAN_HDD_SYSFS_TX_STBC_H
+#define _WLAN_HDD_SYSFS_TX_STBC_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_TX_STBC)
+#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SYSFS_TX_STBC)
 /**
- * hdd_sysfs_get_tx_stbc_create() - API to create tx_stbc sysfs file
+ * hdd_sysfs_tx_stbc_create() - API to create tx_stbc sysfs file
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
@@ -37,26 +37,26 @@
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter);
+int hdd_sysfs_tx_stbc_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_tx_stbc_destroy() -
+ * hdd_sysfs_tx_stbc_destroy() -
  *   API to destroy tx_stbc sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_get_tx_stbc_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_tx_stbc_destroy(struct hdd_adapter *adapter);
 #else
 static inline int
-hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter)
+hdd_sysfs_tx_stbc_create(struct hdd_adapter *adapter)
 {
 	return 0;
 }
 
 static inline void
-hdd_sysfs_get_tx_stbc_destroy(struct hdd_adapter *adapter)
+hdd_sysfs_tx_stbc_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_GET_TX_STBC_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_TX_STBC_H */

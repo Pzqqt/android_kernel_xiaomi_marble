@@ -52,7 +52,7 @@
 #include <wlan_hdd_sysfs_wow_ito.h>
 #include <wlan_hdd_sysfs_wowl_add_ptrn.h>
 #include <wlan_hdd_sysfs_wowl_del_ptrn.h>
-#include <wlan_hdd_sysfs_get_tx_stbc.h>
+#include <wlan_hdd_sysfs_tx_stbc.h>
 #include <wlan_hdd_sysfs_get_stats.h>
 #include <wlan_hdd_sysfs_set_wlan_dbg.h>
 #include <wlan_hdd_sysfs_txrx_fw_st_rst.h>
@@ -656,7 +656,7 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_dcm_create(adapter);
 	hdd_sysfs_wowl_add_ptrn_create(adapter);
 	hdd_sysfs_wowl_del_ptrn_create(adapter);
-	hdd_sysfs_get_tx_stbc_create(adapter);
+	hdd_sysfs_tx_stbc_create(adapter);
 	hdd_sysfs_get_stats_create(adapter);
 	hdd_sysfs_txrx_fw_st_rst_create(adapter);
 	hdd_sysfs_gtx_bw_mask_create(adapter);
@@ -686,7 +686,7 @@ hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_gtx_bw_mask_destroy(adapter);
 	hdd_sysfs_txrx_fw_st_rst_destroy(adapter);
 	hdd_sysfs_get_stats_destroy(adapter);
-	hdd_sysfs_get_tx_stbc_destroy(adapter);
+	hdd_sysfs_tx_stbc_destroy(adapter);
 	hdd_sysfs_wowl_del_ptrn_destroy(adapter);
 	hdd_sysfs_wowl_add_ptrn_destroy(adapter);
 	hdd_sysfs_dcm_destroy(adapter);
@@ -710,7 +710,7 @@ hdd_sysfs_create_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_unit_test_target_create(adapter);
 	hdd_sysfs_modify_acl_create(adapter);
 	hdd_sysfs_connect_info_interface_create(adapter);
-	hdd_sysfs_get_tx_stbc_create(adapter);
+	hdd_sysfs_tx_stbc_create(adapter);
 	hdd_sysfs_get_stats_create(adapter);
 	hdd_sysfs_txrx_fw_st_rst_create(adapter);
 	hdd_sysfs_gtx_bw_mask_create(adapter);
@@ -742,7 +742,7 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_gtx_bw_mask_destroy(adapter);
 	hdd_sysfs_txrx_fw_st_rst_destroy(adapter);
 	hdd_sysfs_get_stats_destroy(adapter);
-	hdd_sysfs_get_tx_stbc_destroy(adapter);
+	hdd_sysfs_tx_stbc_destroy(adapter);
 	hdd_sysfs_connect_info_interface_destroy(adapter);
 	hdd_sysfs_modify_acl_destroy(adapter);
 	hdd_sysfs_unit_test_target_destroy(adapter);

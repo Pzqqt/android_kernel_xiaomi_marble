@@ -15,7 +15,7 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_tx_stbc.c
+ * DOC: wlan_hdd_sysfs_tx_stbc.c
  *
  * implementation for creating sysfs file tx_stbc
  */
@@ -24,7 +24,7 @@
 #include <wlan_hdd_sysfs.h>
 #include "osif_vdev_sync.h"
 #include "sme_api.h"
-#include <wlan_hdd_sysfs_get_tx_stbc.h>
+#include <wlan_hdd_sysfs_tx_stbc.h>
 
 static int hdd_sysfs_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 {
@@ -45,7 +45,7 @@ static int hdd_sysfs_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 }
 
 static ssize_t
-__hdd_sysfs_get_tx_stbc_show(struct net_device *net_dev, char *buf)
+__hdd_sysfs_tx_stbc_show(struct net_device *net_dev, char *buf)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
 	struct hdd_context *hdd_ctx;
@@ -75,9 +75,9 @@ __hdd_sysfs_get_tx_stbc_show(struct net_device *net_dev, char *buf)
 }
 
 static ssize_t
-hdd_sysfs_get_tx_stbc_show(struct device *dev,
-			   struct device_attribute *attr,
-			   char *buf)
+hdd_sysfs_tx_stbc_show(struct device *dev,
+		       struct device_attribute *attr,
+		       char *buf)
 {
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
 	struct osif_vdev_sync *vdev_sync;
@@ -87,7 +87,7 @@ hdd_sysfs_get_tx_stbc_show(struct device *dev,
 	if (err_size)
 		return err_size;
 
-	err_size = __hdd_sysfs_get_tx_stbc_show(net_dev, buf);
+	err_size = __hdd_sysfs_tx_stbc_show(net_dev, buf);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -95,9 +95,9 @@ hdd_sysfs_get_tx_stbc_show(struct device *dev,
 }
 
 static DEVICE_ATTR(tx_stbc, 0440,
-		   hdd_sysfs_get_tx_stbc_show, NULL);
+		   hdd_sysfs_tx_stbc_show, NULL);
 
-int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter)
+int hdd_sysfs_tx_stbc_create(struct hdd_adapter *adapter)
 {
 	int error;
 
@@ -109,7 +109,7 @@ int hdd_sysfs_get_tx_stbc_create(struct hdd_adapter *adapter)
 	return error;
 }
 
-void hdd_sysfs_get_tx_stbc_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_tx_stbc_destroy(struct hdd_adapter *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_tx_stbc);
 }
