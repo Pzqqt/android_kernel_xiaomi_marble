@@ -20153,7 +20153,7 @@ csr_update_op_class_array(struct mac_context *mac_ctx,
 		*i < (REG_MAX_SUPP_OPER_CLASSES - 1); idx++) {
 		wlan_reg_freq_to_chan_op_class(
 			mac_ctx->pdev, channel_info->channel_freq_list[idx],
-			false, BIT(BEHAV_NONE), &class, &ch_num);
+			true, BIT(BEHAV_NONE), &class, &ch_num);
 
 		found = false;
 		for (j = 0; j < REG_MAX_SUPP_OPER_CLASSES - 1; j++) {
