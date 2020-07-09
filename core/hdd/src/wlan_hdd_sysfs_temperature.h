@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_temp.h
+ * DOC: wlan_hdd_sysfs_temperature.h
  *
- * implementation for creating sysfs file temperature
+ * Implementation for creating sysfs file temperature
  */
 
-#ifndef _WLAN_HDD_SYSFS_GET_TEMP_H
-#define _WLAN_HDD_SYSFS_GET_TEMP_H
+#ifndef _WLAN_HDD_SYSFS_TEMPERATURE_H
+#define _WLAN_HDD_SYSFS_TEMPERATURE_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_TEMP)
+#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SYSFS_TEMPERATURE)
 /**
- * hdd_sysfs_get_temp_create() - API to create temperature sysfs file
+ * hdd_sysfs_temperature_create() - API to create temperature sysfs file
  * @adapter: pointer to adapter
  *
  * this file is created per adapter.
@@ -37,26 +37,26 @@
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_sysfs_get_temp_create(struct hdd_adapter *adapter);
+int hdd_sysfs_temperature_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_temp_destroy() -
+ * hdd_sysfs_temperature_destroy() -
  *   API to destroy temperature sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_get_temp_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_temperature_destroy(struct hdd_adapter *adapter);
 #else
 static inline int
-hdd_sysfs_get_temp_create(struct hdd_adapter *adapter)
+hdd_sysfs_temperature_create(struct hdd_adapter *adapter)
 {
 	return 0;
 }
 
 static inline void
-hdd_sysfs_get_temp_destroy(struct hdd_adapter *adapter)
+hdd_sysfs_temperature_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_GET_TEMP_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_TEMPERATURE_H */

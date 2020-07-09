@@ -15,19 +15,19 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_temp.c
+ * DOC: wlan_hdd_sysfs_temperature.c
  *
- * implementation for creating sysfs file temp
+ * Implementation for creating sysfs file temperature
  */
 
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_sysfs.h>
 #include "osif_vdev_sync.h"
-#include <wlan_hdd_sysfs_get_temp.h>
+#include <wlan_hdd_sysfs_temperature.h>
 #include <wlan_hdd_stats.h>
 
 static ssize_t
-__hdd_sysfs_get_temp_show(struct net_device *net_dev, char *buf)
+__hdd_sysfs_temperature_show(struct net_device *net_dev, char *buf)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
 	struct hdd_context *hdd_ctx;
@@ -59,9 +59,9 @@ __hdd_sysfs_get_temp_show(struct net_device *net_dev, char *buf)
 }
 
 static ssize_t
-hdd_sysfs_get_temp_show(struct device *dev,
-			struct device_attribute *attr,
-			char *buf)
+hdd_sysfs_temperature_show(struct device *dev,
+			   struct device_attribute *attr,
+			   char *buf)
 {
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
 	struct osif_vdev_sync *vdev_sync;
@@ -71,7 +71,7 @@ hdd_sysfs_get_temp_show(struct device *dev,
 	if (err_size)
 		return err_size;
 
-	err_size = __hdd_sysfs_get_temp_show(net_dev, buf);
+	err_size = __hdd_sysfs_temperature_show(net_dev, buf);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -79,21 +79,21 @@ hdd_sysfs_get_temp_show(struct device *dev,
 }
 
 static DEVICE_ATTR(temperature, 0440,
-		   hdd_sysfs_get_temp_show, NULL);
+		   hdd_sysfs_temperature_show, NULL);
 
-int hdd_sysfs_get_temp_create(struct hdd_adapter *adapter)
+int hdd_sysfs_temperature_create(struct hdd_adapter *adapter)
 {
 	int error;
 
 	error = device_create_file(&adapter->dev->dev,
 				   &dev_attr_temperature);
 	if (error)
-		hdd_err("could not create temp sysfs file");
+		hdd_err("could not create temperature sysfs file");
 
 	return error;
 }
 
-void hdd_sysfs_get_temp_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_temperature_destroy(struct hdd_adapter *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_temperature);
 }
