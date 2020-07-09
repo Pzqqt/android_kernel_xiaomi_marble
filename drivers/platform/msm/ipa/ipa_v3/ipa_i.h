@@ -1192,7 +1192,8 @@ struct ipa3_desc {
  * @skb: skb
  * @dma_address: DMA address of this Rx packet
  * @link: linked to the Rx packets on that pipe
- * @len: how many bytes are copied into skb's flat buffer
+ * @len: fixed allocated skb length (i.e. times of page size)
+ * @data_len: how many bytes are copied into skb's flat buffer
  */
 struct ipa3_rx_pkt_wrapper {
 	struct list_head link;
@@ -1201,6 +1202,7 @@ struct ipa3_rx_pkt_wrapper {
 		struct ipa_rx_page_data page_data;
 	};
 	u32 len;
+	u32 data_len;
 	struct work_struct work;
 	struct ipa3_sys_context *sys;
 };
