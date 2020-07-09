@@ -3928,6 +3928,83 @@ wlan_mlme_get_dfs_chan_ageout_time(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_SAE
+
+#define NUM_RETRY_BITS 3
+#define ROAM_AUTH_INDEX 2
+#define ASSOC_INDEX 1
+#define AUTH_INDEX 0
+#define MAX_RETRIES 2
+#define MAX_ROAM_AUTH_RETRIES 1
+
+QDF_STATUS
+wlan_mlme_get_sae_assoc_retry_count(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *retry_count)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*retry_count = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*retry_count =
+		QDF_GET_BITS(mlme_obj->cfg.gen.sae_connect_retries,
+			     ASSOC_INDEX * NUM_RETRY_BITS, NUM_RETRY_BITS);
+
+	*retry_count = QDF_MIN(MAX_RETRIES, *retry_count);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_sae_auth_retry_count(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *retry_count)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*retry_count = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*retry_count =
+		QDF_GET_BITS(mlme_obj->cfg.gen.sae_connect_retries,
+			     AUTH_INDEX * NUM_RETRY_BITS, NUM_RETRY_BITS);
+
+	*retry_count = QDF_MIN(MAX_RETRIES, *retry_count);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_sae_roam_auth_retry_count(struct wlan_objmgr_psoc *psoc,
+					uint8_t *retry_count)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+
+	if (!mlme_obj) {
+		*retry_count = 0;
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*retry_count =
+		QDF_GET_BITS(mlme_obj->cfg.gen.sae_connect_retries,
+			     ROAM_AUTH_INDEX * NUM_RETRY_BITS, NUM_RETRY_BITS);
+
+	*retry_count = QDF_MIN(MAX_ROAM_AUTH_RETRIES, *retry_count);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 bool
 wlan_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)
