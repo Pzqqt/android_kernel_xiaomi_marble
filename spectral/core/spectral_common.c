@@ -83,30 +83,22 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id)
 static void
 spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
 {
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_START_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_config_and_start);
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_STOP_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_stop);
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_get_config);
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_get_diag_stats);
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_GET_CAP_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_get_cap);
-	wlan_cfg80211_register_spectral_cmd_handler(
-		pdev,
-		SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX,
-		wlan_cfg80211_spectral_scan_get_status);
+	struct spectral_cfg80211_vendor_cmd_handlers handlers = {0};
+
+	handlers.wlan_cfg80211_spectral_scan_start =
+			wlan_cfg80211_spectral_scan_config_and_start;
+	handlers.wlan_cfg80211_spectral_scan_stop =
+			wlan_cfg80211_spectral_scan_stop;
+	handlers.wlan_cfg80211_spectral_scan_get_config =
+			wlan_cfg80211_spectral_scan_get_config;
+	handlers.wlan_cfg80211_spectral_scan_get_diag_stats =
+			wlan_cfg80211_spectral_scan_get_diag_stats;
+	handlers.wlan_cfg80211_spectral_scan_get_cap =
+			wlan_cfg80211_spectral_scan_get_cap;
+	handlers.wlan_cfg80211_spectral_scan_get_status =
+			wlan_cfg80211_spectral_scan_get_status;
+
+	wlan_cfg80211_register_spectral_cmd_handler(pdev, &handlers);
 }
 #else
 static void

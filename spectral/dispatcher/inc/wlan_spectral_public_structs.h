@@ -162,31 +162,6 @@ enum spectral_msg_type {
 };
 
 /**
- * enum wlan_cfg80211_spectral_vendorcmd_handler_idx - Indices to cfg80211
- * spectral vendor command handlers
- * @SPECTRAL_SCAN_START_HANDLER_IDX:  Index to SPECTRAL_SCAN_START handler
- * @SPECTRAL_SCAN_STOP_HANDLER_IDX:  Index to SPECTRAL_SCAN_STOP handler
- * @SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_CONFIG
- * handler
- * @SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX: Index to
- * SPECTRAL_SCAN_GET_DIAG_STATS handler
- * @SPECTRAL_SCAN_GET_CAP_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_CAP handler
- * @SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_STATUS
- * handler
- * @SPECTRAL_SCAN_VENDOR_CMD_HANDLER_MAX: Number of cfg80211 spectral
- * vendor command handlers supported
- */
-enum wlan_cfg80211_spectral_vendorcmd_handler_idx {
-	SPECTRAL_SCAN_START_HANDLER_IDX,
-	SPECTRAL_SCAN_STOP_HANDLER_IDX,
-	SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX,
-	SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX,
-	SPECTRAL_SCAN_GET_CAP_HANDLER_IDX,
-	SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX,
-	SPECTRAL_SCAN_VENDOR_CMD_HANDLER_MAX,
-};
-
-/**
  * enum spectral_debug - Spectral debug level
  * @DEBUG_SPECTRAL:  Minimal SPECTRAL debug
  * @DEBUG_SPECTRAL1: Normal SPECTRAL debug
@@ -240,6 +215,55 @@ enum spectral_cp_error_code {
 enum spectral_dma_debug {
 	SPECTRAL_DMA_RING_DEBUG,
 	SPECTRAL_DMA_BUFFER_DEBUG,
+};
+
+struct wiphy;
+
+/**
+ * struct spectral_cfg80211_vendor_cmd_handlers - Spectral vendor command
+ * handlers
+ * @wlan_cfg80211_spectral_scan_start: start scan handler
+ * @wlan_cfg80211_spectral_scan_stop: stop scan handler
+ * @wlan_cfg80211_spectral_scan_get_config: get config handler
+ * @wlan_cfg80211_spectral_scan_get_diag_stats: get diag stats handler
+ * @wlan_cfg80211_spectral_scan_get_cap: get capability handler
+ * @wlan_cfg80211_spectral_scan_get_status: get status handler
+ */
+struct spectral_cfg80211_vendor_cmd_handlers {
+	int (*wlan_cfg80211_spectral_scan_start)(struct wiphy *wiphy,
+						 struct wlan_objmgr_pdev *pdev,
+						 struct wlan_objmgr_vdev *vdev,
+						 const void *data,
+						 int data_len);
+	int (*wlan_cfg80211_spectral_scan_stop)(struct wiphy *wiphy,
+						struct wlan_objmgr_pdev *pdev,
+						struct wlan_objmgr_vdev *vdev,
+						const void *data,
+						int data_len);
+	int (*wlan_cfg80211_spectral_scan_get_config)(
+						struct wiphy *wiphy,
+						struct wlan_objmgr_pdev *pdev,
+						struct wlan_objmgr_vdev *vdev,
+						const void *data,
+						int data_len);
+	int (*wlan_cfg80211_spectral_scan_get_diag_stats)(
+						struct wiphy *wiphy,
+						struct wlan_objmgr_pdev *pdev,
+						struct wlan_objmgr_vdev *vdev,
+						const void *data,
+						int data_len);
+	int (*wlan_cfg80211_spectral_scan_get_cap)(
+						struct wiphy *wiphy,
+						struct wlan_objmgr_pdev *pdev,
+						struct wlan_objmgr_vdev *vdev,
+						const void *data,
+						int data_len);
+	int (*wlan_cfg80211_spectral_scan_get_status)(
+						struct wiphy *wiphy,
+						struct wlan_objmgr_pdev *pdev,
+						struct wlan_objmgr_vdev *vdev,
+						const void *data,
+						int data_len);
 };
 
 /**

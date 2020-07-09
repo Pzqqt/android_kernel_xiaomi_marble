@@ -52,9 +52,9 @@ extern const struct nla_policy
  *
  * Return: 0 on success, negative value on failure
  */
-void wlan_cfg80211_register_spectral_cmd_handler(struct wlan_objmgr_pdev *pdev,
-						 int idx,
-						 void *handler);
+void wlan_cfg80211_register_spectral_cmd_handler(
+			struct wlan_objmgr_pdev *pdev,
+			struct spectral_cfg80211_vendor_cmd_handlers *handlers);
 
 /**
  * wlan_cfg80211_spectral_scan_config_and_start() - Start spectral scan
