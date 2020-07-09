@@ -26,6 +26,14 @@
 #include "wlan_objmgr_cmn.h"
 #include "nan_public_structs.h"
 
+#define NAN_CONCURRENCY_SUPPORTED(psoc) \
+	(ucfg_is_nan_dbs_supported(psoc) || \
+	 ucfg_is_nan_conc_control_supported(psoc))
+
+#define NDI_CONCURRENCY_SUPPORTED(psoc) \
+	(ucfg_is_ndi_dbs_supported(psoc) || \
+	 ucfg_is_nan_conc_control_supported(psoc))
+
 #ifdef WLAN_FEATURE_NAN
 #define ucfg_nan_set_ndi_state(vdev, state) \
 	__ucfg_nan_set_ndi_state(vdev, state, __func__)
