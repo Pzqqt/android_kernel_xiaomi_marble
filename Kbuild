@@ -269,8 +269,8 @@ endif
 ifeq ($(CONFIG_WLAN_REASSOC), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_reassoc.o
 endif
-ifeq ($(CONFIG_WLAN_SYSFS_GET_STA_INFO), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_sta_info.o
+ifeq ($(CONFIG_WLAN_SYSFS_STA_INFO), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_sta_info.o
 endif
 ifeq ($(CONFIG_WLAN_DEBUG_CRASH_INJECT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_crash_inject.o
@@ -2665,7 +2665,7 @@ cppflags-$(CONFIG_FEATURE_WLM_STATS) += -DFEATURE_WLM_STATS
 cppflags-$(CONFIG_WLAN_SYSFS_MEM_STATS) += -DCONFIG_WLAN_SYSFS_MEM_STATS
 cppflags-$(CONFIG_WLAN_SYSFS_DCM) += -DWLAN_SYSFS_DCM
 cppflags-$(CONFIG_WLAN_SYSFS_HE_BSS_COLOR) += -DWLAN_SYSFS_HE_BSS_COLOR
-cppflags-$(CONFIG_WLAN_SYSFS_GET_STA_INFO) += -DWLAN_SYSFS_GET_STA_INFO
+cppflags-$(CONFIG_WLAN_SYSFS_STA_INFO) += -DWLAN_SYSFS_STA_INFO
 
 ifeq ($(CONFIG_LEAK_DETECTION), y)
 cppflags-y += \

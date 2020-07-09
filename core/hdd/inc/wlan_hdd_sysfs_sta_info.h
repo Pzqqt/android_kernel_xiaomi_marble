@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_sta_info.h
+ * DOC: wlan_hdd_sysfs_sta_info.h
  *
  * implementation for creating sysfs file sta_info
  */
 
-#ifndef _WLAN_HDD_SYSFS_GET_STA_INFO_H
-#define _WLAN_HDD_SYSFS_GET_STA_INFO_H
+#ifndef _WLAN_HDD_SYSFS_STA_INFO_H
+#define _WLAN_HDD_SYSFS_STA_INFO_H
 
-#if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_GET_STA_INFO)
+#if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_STA_INFO)
 /**
- * hdd_sysfs_get_sta_info_interface_create() - API to create sta_info sysfs
+ * hdd_sysfs_sta_info_interface_create() - API to create sta_info sysfs
  * interface
  * @adapter: pointer to adapter
  *
@@ -38,25 +38,25 @@
  *
  * Return: none
  */
-void hdd_sysfs_get_sta_info_interface_create(struct hdd_adapter *adapter);
+void hdd_sysfs_sta_info_interface_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_sta_info_interface_destroy() - API to destroy sta_info
+ * hdd_sysfs_sta_info_interface_destroy() - API to destroy sta_info
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_get_sta_info_interface_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_sta_info_interface_destroy(struct hdd_adapter *adapter);
 
 #else
 static inline
-void hdd_sysfs_get_sta_info_interface_create(struct hdd_adapter *adapter)
+void hdd_sysfs_sta_info_interface_create(struct hdd_adapter *adapter)
 {
 }
 
 static inline
-void hdd_sysfs_get_sta_info_interface_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_sta_info_interface_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_GET_STA_INFO_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_STA_INFO_H */
