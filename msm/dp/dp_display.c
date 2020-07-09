@@ -581,13 +581,14 @@ static void dp_display_notify_hdcp_status_cb(void *ptr,
 		enum sde_hdcp_state state)
 {
 	struct dp_display_private *dp = ptr;
-	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,
-					dp->link->hdcp_status.hdcp_state);
 
 	if (!dp) {
 		DP_ERR("invalid input\n");
 		return;
 	}
+
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY,
+					dp->link->hdcp_status.hdcp_state);
 
 	dp->link->hdcp_status.hdcp_state = state;
 
