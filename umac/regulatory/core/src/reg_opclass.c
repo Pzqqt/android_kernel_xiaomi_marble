@@ -591,7 +591,7 @@ void reg_freq_width_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 		op_class_tbl++;
 	}
 
-	reg_err_rl("invalid frequency %d", freq);
+	reg_err_rl("no op class for frequency %d", freq);
 }
 
 void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
@@ -602,9 +602,9 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 			       uint8_t *chan_num)
 {
 	enum channel_enum chan_enum;
-	uint16_t chan_width;
 	struct regulatory_channel *cur_chan_list;
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct ch_params chan_params;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
@@ -622,10 +622,11 @@ void reg_freq_to_chan_op_class(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	chan_width = cur_chan_list[chan_enum].max_bw;
+	chan_params.ch_width = CH_WIDTH_MAX;
+	reg_set_channel_params_for_freq(pdev, freq, 0, &chan_params);
 
 	reg_freq_width_to_chan_op_class(pdev, freq,
-					chan_width,
+					reg_get_bw_value(chan_params.ch_width),
 					global_tbl_lookup,
 					behav_limit,
 					op_class,
