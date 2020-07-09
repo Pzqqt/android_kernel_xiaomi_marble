@@ -31,10 +31,10 @@
  * @WLAN_ROAM_DEINIT: Roaming module is not initialized at the
  *  firmware.
  * @WLAN_ROAM_INIT: Roaming module initialized at the firmware.
- * @WLAN_ROAM_RSO_ENABLED: RSO started, firmware can roam to different AP.
- * @WLAN_ROAM_RSO_STOPPED: RSO stopped - roaming module is initialized at firmware,
- * but firmware cannot do roaming due to supplicant disabled roaming/driver
- * disabled roaming.
+ * @WLAN_ROAM_RSO_ENABLED: RSO enabled, firmware can roam to different AP.
+ * @WLAN_ROAM_RSO_STOPPED: RSO stopped - roaming module is initialized at
+ * firmware, but firmware cannot do roaming due to supplicant disabled
+ * roaming/driver disabled roaming.
  * @WLAN_ROAMING_IN_PROG: Roaming started at firmware. This state is
  * transitioned after candidate selection is done at fw and preauth to
  * the AP is started.
