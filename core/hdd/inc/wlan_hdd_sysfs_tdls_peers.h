@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_tdls_peers.h
+ * DOC: wlan_hdd_sysfs_tdls_peers.h
  *
- * implementation for creating sysfs file get TDLS peers
+ * Implementation for creating sysfs file tdls_peers
  */
 
-#ifndef _WLAN_HDD_SYSFS_GET_TDLS_PEERS_H
-#define _WLAN_HDD_SYSFS_GET_TDLS_PEERS_H
+#ifndef _WLAN_HDD_SYSFS_TDLS_PEERS_H
+#define _WLAN_HDD_SYSFS_TDLS_PEERS_H
 
-#if defined(WLAN_SYSFS) && defined(WLAN_GET_TDLS_PEERS)
+#if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_TDLS_PEERS)
 /**
- * hdd_sysfs_get_tdls_peers_interface_create() - API to create tdls_peers
+ * hdd_sysfs_tdls_peers_interface_create() - API to create tdls_peers
  * sysfs interface
  * @adapter: pointer to adapter
  *
@@ -38,26 +38,26 @@
  *
  * Return: none
  */
-void hdd_sysfs_get_tdls_peers_interface_create(struct hdd_adapter *adapter);
+void hdd_sysfs_tdls_peers_interface_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_tdls_peers_interface_destroy() - API to destroy tdls_peers
+ * hdd_sysfs_tdls_peers_interface_destroy() - API to destroy tdls_peers
  * sysfs interface
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_get_tdls_peers_interface_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_tdls_peers_interface_destroy(struct hdd_adapter *adapter);
 
 #else
 static inline
-void hdd_sysfs_get_tdls_peers_interface_create(struct hdd_adapter *adapter)
+void hdd_sysfs_tdls_peers_interface_create(struct hdd_adapter *adapter)
 {
 }
 
 static inline
-void hdd_sysfs_get_tdls_peers_interface_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_tdls_peers_interface_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_GET_TDLS_PEERS_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_TDLS_PEERS_H */

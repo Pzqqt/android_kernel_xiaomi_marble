@@ -340,8 +340,8 @@ endif
 ifeq ($(CONFIG_WLAN_GET_RANGE_EXT), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_range_ext.o
 endif
-ifeq ($(CONFIG_WLAN_GET_TDLS_PEERS), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_tdls_peers.o
+ifeq ($(CONFIG_WLAN_SYSFS_TDLS_PEERS), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_tdls_peers.o
 endif
 ifeq ($(CONFIG_WLAN_SYSFS_TEMPERATURE), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_temperature.o
@@ -2697,7 +2697,7 @@ ifeq ($(CONFIG_LITHIUM), y)
 cppflags-$(CONFIG_QCOM_TDLS) += -DTDLS_WOW_ENABLED
 endif
 
-cppflags-$(CONFIG_WLAN_GET_TDLS_PEERS) += -DWLAN_GET_TDLS_PEERS
+cppflags-$(CONFIG_WLAN_SYSFS_TDLS_PEERS) += -DWLAN_SYSFS_TDLS_PEERS
 cppflags-$(CONFIG_WLAN_SET_RANGE_EXT) += -DWLAN_SET_RANGE_EXT
 
 ifeq ($(CONFIG_CM_ENABLE), y)

@@ -68,7 +68,7 @@
 #include <wlan_hdd_sysfs_dp_trace.h>
 #include <wlan_hdd_sysfs_stats.h>
 #include <wlan_hdd_sysfs_get_range_ext.h>
-#include <wlan_hdd_sysfs_get_tdls_peers.h>
+#include <wlan_hdd_sysfs_tdls_peers.h>
 #include <wlan_hdd_sysfs_temperature.h>
 #include <wlan_hdd_sysfs_thermal_cfg.h>
 #include <wlan_hdd_sysfs_motion_detection.h>
@@ -665,7 +665,7 @@ hdd_sysfs_create_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_txrx_fw_stats_create(adapter);
 	hdd_sysfs_txrx_stats_create(adapter);
 	hdd_sysfs_get_range_ext_create(adapter);
-	hdd_sysfs_get_tdls_peers_interface_create(adapter);
+	hdd_sysfs_tdls_peers_interface_create(adapter);
 	hdd_sysfs_temperature_create(adapter);
 	hdd_sysfs_motion_detection_create(adapter);
 	hdd_sysfs_range_ext_create(adapter);
@@ -677,7 +677,7 @@ hdd_sysfs_destroy_sta_adapter_root_obj(struct hdd_adapter *adapter)
 	hdd_sysfs_range_ext_destroy(adapter);
 	hdd_sysfs_motion_detection_destroy(adapter);
 	hdd_sysfs_temperature_destroy(adapter);
-	hdd_sysfs_get_tdls_peers_interface_destroy(adapter);
+	hdd_sysfs_tdls_peers_interface_destroy(adapter);
 	hdd_sysfs_get_range_ext_destroy(adapter);
 	hdd_sysfs_txrx_stats_destroy(adapter);
 	hdd_sysfs_txrx_fw_stats_destroy(adapter);

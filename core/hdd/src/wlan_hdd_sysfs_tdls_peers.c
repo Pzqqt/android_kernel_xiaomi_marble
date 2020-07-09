@@ -15,15 +15,15 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_tdls_peers.c
+ * DOC: wlan_hdd_sysfs_tdls_peers.c
  *
- * implementation for creating sysfs file tdls_peers
+ * Implementation for creating sysfs file tdls_peers
  */
 
 #include <wlan_hdd_includes.h>
 #include "osif_vdev_sync.h"
 #include "wlan_hdd_object_manager.h"
-#include "wlan_hdd_sysfs_get_tdls_peers.h"
+#include "wlan_hdd_sysfs_tdls_peers.h"
 
 /**
  * __show_tdls_all_peers() - dump all TDLS peer info into output string
@@ -102,7 +102,7 @@ static ssize_t show_tdls_all_peers(struct device *dev,
 
 static DEVICE_ATTR(tdls_peers, 0444, show_tdls_all_peers, NULL);
 
-void hdd_sysfs_get_tdls_peers_interface_create(struct hdd_adapter *adapter)
+void hdd_sysfs_tdls_peers_interface_create(struct hdd_adapter *adapter)
 {
 	int error;
 
@@ -112,7 +112,7 @@ void hdd_sysfs_get_tdls_peers_interface_create(struct hdd_adapter *adapter)
 		hdd_err("could not create tdls_peers sysfs file");
 }
 
-void hdd_sysfs_get_tdls_peers_interface_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_tdls_peers_interface_destroy(struct hdd_adapter *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_tdls_peers);
 }
