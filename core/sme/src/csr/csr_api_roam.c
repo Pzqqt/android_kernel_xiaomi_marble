@@ -18363,13 +18363,10 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 				    tpCsrNeighborRoamControlInfo roam_info)
 {
 	struct scoring_param *req_score_params;
-	struct rssi_config_score *req_rssi_score;
 	struct wlan_mlme_roam_scoring_cfg *roam_score_params;
 	struct weight_cfg *weight_config;
-	struct rssi_config_score *rssi_score;
 	struct psoc_mlme_obj *mlme_psoc_obj;
-	struct per_slot_score *esp_qbss_scoring;
-	struct per_slot_score *oce_wan_scoring;
+	struct scoring_cfg *score_config;
 
 	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(mac_ctx->psoc);
 
@@ -18377,13 +18374,9 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		return;
 
 	req_score_params = &req_buffer->score_params;
-	req_rssi_score = &req_score_params->rssi_scoring;
-
+	score_config = &mlme_psoc_obj->score_config;
 	roam_score_params = &mac_ctx->mlme_cfg->roam_scoring;
-	weight_config = &mlme_psoc_obj->score_config.weight_config;
-	rssi_score = &mlme_psoc_obj->score_config.rssi_score;
-	esp_qbss_scoring = &mlme_psoc_obj->score_config.esp_qbss_scoring;
-	oce_wan_scoring = &mlme_psoc_obj->score_config.oce_wan_scoring;
+	weight_config = &score_config->weight_config;
 
 	if (!roam_info->cfgParams.enable_scoring_for_roam)
 		req_score_params->disable_bitmap =
@@ -18409,11 +18402,11 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		weight_config->oce_subnet_id_weightage;
 
 	req_score_params->bw_index_score =
-		mlme_psoc_obj->score_config.bandwidth_weight_per_index;
+		score_config->bandwidth_weight_per_index;
 	req_score_params->band_index_score =
-		mlme_psoc_obj->score_config.band_weight_per_index;
+		score_config->band_weight_per_index;
 	req_score_params->nss_index_score =
-		mlme_psoc_obj->score_config.nss_weight_per_index;
+		score_config->nss_weight_per_index;
 
 	req_score_params->vendor_roam_score_algorithm =
 			roam_score_params->vendor_roam_score_algorithm;
@@ -18423,38 +18416,14 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 	req_score_params->roam_trigger_bitmap =
 				roam_score_params->roam_trigger_bitmap;
 
-	req_rssi_score->best_rssi_threshold = rssi_score->best_rssi_threshold;
-	req_rssi_score->good_rssi_threshold = rssi_score->good_rssi_threshold;
-	req_rssi_score->bad_rssi_threshold = rssi_score->bad_rssi_threshold;
-	req_rssi_score->good_rssi_pcnt = rssi_score->good_rssi_pcnt;
-	req_rssi_score->bad_rssi_pcnt = rssi_score->bad_rssi_pcnt;
-	req_rssi_score->good_rssi_bucket_size =
-				rssi_score->good_rssi_bucket_size;
-	req_rssi_score->bad_rssi_bucket_size = rssi_score->bad_rssi_bucket_size;
-	req_rssi_score->rssi_pref_5g_rssi_thresh =
-			rssi_score->rssi_pref_5g_rssi_thresh;
-
-	req_score_params->esp_qbss_scoring.num_slot =
-					esp_qbss_scoring->num_slot;
-	req_score_params->esp_qbss_scoring.score_pcnt3_to_0 =
-					esp_qbss_scoring->score_pcnt3_to_0;
-	req_score_params->esp_qbss_scoring.score_pcnt7_to_4 =
-					esp_qbss_scoring->score_pcnt7_to_4;
-	req_score_params->esp_qbss_scoring.score_pcnt11_to_8 =
-					esp_qbss_scoring->score_pcnt11_to_8;
-	req_score_params->esp_qbss_scoring.score_pcnt15_to_12 =
-					esp_qbss_scoring->score_pcnt15_to_12;
-
-	req_score_params->oce_wan_scoring.num_slot =
-					oce_wan_scoring->num_slot;
-	req_score_params->oce_wan_scoring.score_pcnt3_to_0 =
-					oce_wan_scoring->score_pcnt3_to_0;
-	req_score_params->oce_wan_scoring.score_pcnt7_to_4 =
-					oce_wan_scoring->score_pcnt7_to_4;
-	req_score_params->oce_wan_scoring.score_pcnt11_to_8 =
-					oce_wan_scoring->score_pcnt11_to_8;
-	req_score_params->oce_wan_scoring.score_pcnt15_to_12 =
-					oce_wan_scoring->score_pcnt15_to_12;
+	qdf_mem_copy(&req_score_params->rssi_scoring, &score_config->rssi_score,
+		     sizeof(struct rssi_config_score));
+	qdf_mem_copy(&req_score_params->esp_qbss_scoring,
+		     &score_config->esp_qbss_scoring,
+		     sizeof(struct per_slot_score));
+	qdf_mem_copy(&req_score_params->oce_wan_scoring,
+		     &score_config->oce_wan_scoring,
+		     sizeof(struct per_slot_score));
 	req_score_params->cand_min_roam_score_delta =
 					roam_score_params->min_roam_score_delta;
 }
