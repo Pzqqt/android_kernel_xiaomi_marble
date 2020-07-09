@@ -68,14 +68,14 @@ struct weight_cfg {
  * @rssi_pref_5g_rssi_thresh: Beamforming caps weightage
  */
 struct rssi_config_score  {
-	uint32_t best_rssi_threshold;
-	uint32_t good_rssi_threshold;
-	uint32_t bad_rssi_threshold;
-	uint32_t good_rssi_pcnt;
-	uint32_t bad_rssi_pcnt;
-	uint32_t good_rssi_bucket_size;
-	uint32_t bad_rssi_bucket_size;
-	uint32_t rssi_pref_5g_rssi_thresh;
+	uint8_t best_rssi_threshold;
+	uint8_t good_rssi_threshold;
+	uint8_t bad_rssi_threshold;
+	uint8_t good_rssi_pcnt;
+	uint8_t bad_rssi_pcnt;
+	uint8_t good_rssi_bucket_size;
+	uint8_t bad_rssi_bucket_size;
+	uint8_t rssi_pref_5g_rssi_thresh;
 };
 
 /**
@@ -107,7 +107,7 @@ struct rssi_config_score  {
  *             BITS 24-31 :- SLOT_15
  */
 struct per_slot_score {
-	uint32_t num_slot;
+	uint8_t num_slot;
 	uint32_t score_pcnt3_to_0;
 	uint32_t score_pcnt7_to_4;
 	uint32_t score_pcnt11_to_8;

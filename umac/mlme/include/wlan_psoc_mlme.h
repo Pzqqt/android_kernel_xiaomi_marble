@@ -65,14 +65,23 @@ struct psoc_phy_config {
 };
 
 /**
+ * struct psoc_config - psoc level configs
+ * @score_config:          BSS scoring related config
+ * @phy_config:            Psoc Phy config
+ */
+struct psoc_config {
+	struct scoring_cfg score_config;
+	struct psoc_phy_config phy_config;
+};
+
+/**
  * struct psoc_mlme_obj -  PSoC MLME component object
  * @psoc:                  PSoC object
  * @ext_psoc_ptr:          PSoC legacy pointer
  * @psoc_vdev_rt:          PSoC Vdev response timer
  * @psoc_mlme_wakelock:    Wakelock to prevent system going to suspend
  * @rnr_6ghz_cache:        Cache of 6Ghz vap in RNR ie format
- * @score_config:          BSS scoring related config
- * @phy_config:            Psoc Phy config
+ * @psoc_cfg:              Psoc level configs
  */
 struct psoc_mlme_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -82,8 +91,7 @@ struct psoc_mlme_obj {
 	struct psoc_mlme_wakelock psoc_mlme_wakelock;
 #endif
 	struct wlan_6ghz_rnr_global_cache rnr_6ghz_cache;
-	struct scoring_cfg score_config;
-	struct psoc_phy_config phy_config;
+	struct psoc_config psoc_cfg;
 };
 
 #endif

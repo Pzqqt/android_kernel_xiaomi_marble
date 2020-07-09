@@ -73,7 +73,7 @@ void wlan_psoc_set_phy_config(struct wlan_objmgr_psoc *psoc,
 	if (!mlme_psoc_obj)
 		return;
 
-	config = &mlme_psoc_obj->phy_config;
+	config = &mlme_psoc_obj->psoc_cfg.phy_config;
 
 	qdf_mem_copy(config, phy_config, sizeof(*config));
 }
@@ -87,7 +87,7 @@ static void mlme_init_cfg(struct wlan_objmgr_psoc *psoc)
 	if (!mlme_psoc_obj)
 		return;
 
-	wlan_cm_init_score_config(psoc, &mlme_psoc_obj->score_config);
+	wlan_cm_init_score_config(psoc, &mlme_psoc_obj->psoc_cfg.score_config);
 }
 
 QDF_STATUS mlme_psoc_open(struct wlan_objmgr_psoc *psoc)

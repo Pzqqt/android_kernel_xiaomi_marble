@@ -770,8 +770,8 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 
 	if (!mlme_psoc_obj)
 		return 0;
-	phy_config = &mlme_psoc_obj->phy_config;
-	score_config = &mlme_psoc_obj->score_config;
+	phy_config = &mlme_psoc_obj->psoc_cfg.phy_config;
+	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	weight_config = &score_config->weight_config;
 
 	if (score_config->is_bssid_hint_priority && bssid_hint &&
@@ -1001,8 +1001,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 	if (!mlme_psoc_obj)
 		return;
 
-	score_config = &mlme_psoc_obj->score_config;
-	config = &mlme_psoc_obj->phy_config;
+	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
+	config = &mlme_psoc_obj->psoc_cfg.phy_config;
 
 	mlme_nofl_debug("Self caps: HT %d VHT %d HE %d VHT_24Ghz %d BF cap %d bw_above_20_24ghz %d bw_above_20_5ghz %d 2.4G NSS %d 5G NSS %d",
 			config->ht_cap, config->vht_cap,
