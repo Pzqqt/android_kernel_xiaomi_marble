@@ -58,7 +58,7 @@
 #include <wlan_hdd_sysfs_txrx_fw_st_rst.h>
 #include <wlan_hdd_sysfs_gtx_bw_mask.h>
 #include <wlan_hdd_sysfs_set_scan_cfg.h>
-#include <wlan_hdd_sysfs_set_mon_chan.h>
+#include <wlan_hdd_sysfs_monitor_mode_channel.h>
 #include <wlan_hdd_sysfs_set_range_ext.h>
 #include <wlan_hdd_sysfs_set_radar.h>
 #include <wlan_hdd_sysfs_rts_cts.h>
@@ -756,13 +756,13 @@ hdd_sysfs_destroy_sap_adapter_root_obj(struct hdd_adapter *adapter)
 static void
 hdd_sysfs_create_monitor_adapter_root_obj(struct hdd_adapter *adapter)
 {
-	hdd_sysfs_set_mon_chan_create(adapter);
+	hdd_sysfs_monitor_mode_channel_create(adapter);
 }
 
 static void
 hdd_sysfs_destroy_monitor_adapter_root_obj(struct hdd_adapter *adapter)
 {
-	hdd_sysfs_set_mon_chan_destroy(adapter);
+	hdd_sysfs_monitor_mode_channel_destroy(adapter);
 }
 
 void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)

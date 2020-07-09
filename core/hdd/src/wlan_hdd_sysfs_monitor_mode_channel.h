@@ -17,17 +17,18 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_mon_chan.h
+ * DOC: wlan_hdd_sysfs_monitor_mode_channel.h
  *
- * implementation for creating sysfs file monitor_mode_channel
+ * Implementation for creating sysfs file monitor_mode_channel
  */
 
-#ifndef _WLAN_HDD_SYSFS_SET_MON_CHAN_H
-#define _WLAN_HDD_SYSFS_SET_MON_CHAN_H
+#ifndef _WLAN_HDD_SYSFS_MONITOR_MODE_CHANNEL_H
+#define _WLAN_HDD_SYSFS_MONITOR_MODE_CHANNEL_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_MON_CHAN)
+#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SYSFS_MONITOR_MODE_CHANNEL)
 /**
- * wlan_hdd_sysfs_set_mon_chan_create() - API to create monitor_mode_channel
+ * hdd_sysfs_monitor_mode_channel_create() -
+ *  API to create monitor_mode_channel
  * @adapter: hdd adapter
  *
  * this file is created per adapter.
@@ -38,26 +39,26 @@
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_sysfs_set_mon_chan_create(struct hdd_adapter *adapter);
+int hdd_sysfs_monitor_mode_channel_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_set_mon_chan_destroy() -
+ * hdd_sysfs_monitor_mode_channel_destroy() -
  *   API to destroy monitor_mode_channel sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_set_mon_chan_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_monitor_mode_channel_destroy(struct hdd_adapter *adapter);
 #else
 static inline int
-hdd_sysfs_set_mon_chan_create(struct hdd_adapter *adapter)
+hdd_sysfs_monitor_mode_channel_create(struct hdd_adapter *adapter)
 {
 	return 0;
 }
 
 static inline void
-hdd_sysfs_set_mon_chan_destroy(struct hdd_adapter *adapter)
+hdd_sysfs_monitor_mode_channel_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_SET_MON_CHAN_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_MONITOR_MODE_CHANNEL_H */

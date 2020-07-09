@@ -17,19 +17,19 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_mon_chan.c
+ * DOC: wlan_hdd_sysfs_monitor_mode_channel.c
  *
- * implementation for creating sysfs file monitor_mode_channel
+ * Implementation for creating sysfs file monitor_mode_channel
  */
 
 #include <wlan_hdd_includes.h>
 #include "osif_vdev_sync.h"
 #include <wlan_hdd_sysfs.h>
-#include <wlan_hdd_sysfs_set_mon_chan.h>
+#include <wlan_hdd_sysfs_monitor_mode_channel.h>
 
 static ssize_t
-__hdd_sysfs_set_mon_chan_store(struct net_device *net_dev,
-			       char const *buf, size_t count)
+__hdd_sysfs_monitor_mode_channel_store(struct net_device *net_dev,
+				       char const *buf, size_t count)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
 	char buf_local[MAX_SYSFS_USER_COMMAND_SIZE_LENGTH + 1];
@@ -89,9 +89,9 @@ __hdd_sysfs_set_mon_chan_store(struct net_device *net_dev,
 }
 
 static ssize_t
-hdd_sysfs_set_mon_chan_store(struct device *dev,
-			     struct device_attribute *attr,
-			     char const *buf, size_t count)
+hdd_sysfs_monitor_mode_channel_store(struct device *dev,
+				     struct device_attribute *attr,
+				     char const *buf, size_t count)
 {
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
 	struct osif_vdev_sync *vdev_sync;
@@ -101,7 +101,8 @@ hdd_sysfs_set_mon_chan_store(struct device *dev,
 	if (errno_size)
 		return errno_size;
 
-	errno_size = __hdd_sysfs_set_mon_chan_store(net_dev, buf, count);
+	errno_size = __hdd_sysfs_monitor_mode_channel_store(net_dev,
+							    buf, count);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -109,20 +110,21 @@ hdd_sysfs_set_mon_chan_store(struct device *dev,
 }
 
 static DEVICE_ATTR(monitor_mode_channel, 0220,
-		   NULL, hdd_sysfs_set_mon_chan_store);
+		   NULL, hdd_sysfs_monitor_mode_channel_store);
 
-int hdd_sysfs_set_mon_chan_create(struct hdd_adapter *adapter)
+int hdd_sysfs_monitor_mode_channel_create(struct hdd_adapter *adapter)
 {
 	int error;
 
-	error = device_create_file(&adapter->dev->dev, &dev_attr_monitor_mode_channel);
+	error = device_create_file(&adapter->dev->dev,
+				   &dev_attr_monitor_mode_channel);
 	if (error)
 		hdd_err("could not create monitor_mode_channel sysfs file");
 
 	return error;
 }
 
-void hdd_sysfs_set_mon_chan_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_monitor_mode_channel_destroy(struct hdd_adapter *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_monitor_mode_channel);
 }
