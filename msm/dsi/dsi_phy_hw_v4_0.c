@@ -222,8 +222,16 @@ static void dsi_phy_hw_cphy_enable(struct dsi_phy_hw *phy,
 	u32 glbl_hstx_str_ctrl_0 = 0;
 	u32 glbl_rescode_top_ctrl = 0;
 	u32 glbl_rescode_bot_ctrl = 0;
+	bool less_than_1500_mhz = false;
 
-	if (phy->version == DSI_PHY_VERSION_4_1) {
+	/* Alter PHY configurations if data rate less than 1.5GHZ*/
+	if (cfg->bit_clk_rate_hz <= 1500000000)
+		less_than_1500_mhz = true;
+
+	if (phy->version == DSI_PHY_VERSION_4_2) {
+		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3c : 0x00;
+		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x38 : 0x3b;
+	} else if (phy->version == DSI_PHY_VERSION_4_1) {
 		glbl_rescode_top_ctrl = 0x00;
 		glbl_rescode_bot_ctrl = 0x3C;
 		glbl_str_swi_cal_sel_ctrl = 0x00;
@@ -329,9 +337,9 @@ static void dsi_phy_hw_dphy_enable(struct dsi_phy_hw *phy,
 		less_than_1500_mhz = true;
 
 	if (phy->version == DSI_PHY_VERSION_4_2) {
-		vreg_ctrl_0 = 0x58;
-		glbl_rescode_top_ctrl = 0x03;
-		glbl_rescode_bot_ctrl = 0x3c;
+		vreg_ctrl_0 = less_than_1500_mhz ? 0x53 : 0x52;
+		glbl_rescode_top_ctrl = less_than_1500_mhz ? 0x3c : 0x00;
+		glbl_rescode_bot_ctrl = less_than_1500_mhz ? 0x38 : 0x39;
 		glbl_str_swi_cal_sel_ctrl = 0x00;
 		glbl_hstx_str_ctrl_0 = 0x88;
 	} else if (phy->version == DSI_PHY_VERSION_4_1) {
