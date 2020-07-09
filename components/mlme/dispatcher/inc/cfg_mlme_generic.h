@@ -710,6 +710,48 @@
 			0, 8, 0, CFG_VALUE_OR_DEFAULT, \
 			"Set DFS Channel ageout time from host to firmware")
 
+/*
+ * <ini>
+ * sae_connect_retries - Bit mask to retry Auth and full connection on assoc
+ * timeout to same AP and auth retries during roaming
+ * @Min: 0x0
+ * @Max: 0x52
+ * @Default: 0x49
+ *
+ * This ini is used to set max auth retry in auth phase of roaming and initial
+ * connection and max connection retry in case of assoc timeout. MAX Auth and
+ * connection retries are capped to 2 and roam Auth retry is capped to 1.
+ * Default is 0x49 i.e. 1 retry each.
+ *
+ * Bits       Retry Type
+ * BIT[0:2]   AUTH retries
+ * BIT[3:5]   Connection reties
+ * BIT[6:8]   ROAM AUTH retries
+ *
+ * Some Possible values are as below
+ * 0          - NO auth/roam Auth retry and NO full connection retry after
+ *              assoc timeout
+ * 0x49       - 1 auth/roam auth retry and 1 full connection retry
+ * 0x52       - 1 roam auth retry, 2 auth retry and 2 full connection retry
+ * 0x1 /0x2   - 0 roam auth retry, 1 or 2 auth retry respectively and NO full
+ *              connection retry
+ * 0x8 /0x10  - 0 roam auth retry,NO auth retry and 1 or 2 full connection retry
+ *              respectively.
+ * 0x4A       - 1 roam auth retry,2 auth retry and 1 full connection retry
+ * 0x51       - 1 auth/roam auth retry and 2 full connection retry
+ *
+ * Related: None
+ *
+ * Supported Feature: STA SAE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAE_CONNECION_RETRIES CFG_INI_UINT("sae_connect_retries", \
+				0, 0x52, 0x49, CFG_VALUE_OR_DEFAULT, \
+				"Bit mask to retry Auth and full connection on assoc timeout to same AP for SAE connection")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -740,5 +782,6 @@
 	CFG(CFG_MGMT_RETRY_MAX) \
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
 	CFG(CFG_ENABLE_RING_BUFFER) \
-	CFG(CFG_DFS_CHAN_AGEOUT_TIME)
+	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
+	CFG(CFG_SAE_CONNECION_RETRIES)
 #endif /* __CFG_MLME_GENERIC_H */
