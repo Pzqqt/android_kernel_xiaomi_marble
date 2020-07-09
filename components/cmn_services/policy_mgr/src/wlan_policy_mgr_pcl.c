@@ -176,7 +176,8 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* do we need to change the HW mode */
-	policy_mgr_check_n_start_opportunistic_timer(psoc);
+	if (policy_mgr_is_hw_dbs_capable(psoc))
+		policy_mgr_check_n_start_opportunistic_timer(psoc);
 	return;
 }
 

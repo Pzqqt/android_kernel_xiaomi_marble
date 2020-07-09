@@ -999,7 +999,7 @@ QDF_STATUS ucfg_ndi_remove_entry_from_policy_mgr(struct wlan_objmgr_vdev *vdev)
 	qdf_spin_unlock_bh(&vdev_priv_obj->lock);
 
 	if (state == NAN_DATA_NDI_DELETED_STATE &&
-	    psoc_priv_obj->nan_caps.ndi_dbs_supported &&
+	    NDI_CONCURRENCY_SUPPORTED(psoc) &&
 	    active_ndp_peers) {
 		nan_info("Delete NDP peers: %u and remove NDI from policy mgr",
 			 active_ndp_peers);
