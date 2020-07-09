@@ -269,6 +269,41 @@ restart_timer:
 	}
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * pe_init_pmf_comeback_timer: init PMF comeback timer
+ * @mac_ctx: pointer to global adapter context
+ * @session: pe session
+ *
+ * Return: void
+ */
+static void
+pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx, struct pe_session *session)
+{
+	QDF_STATUS status;
+
+	if (session->opmode != QDF_STA_MODE)
+		return;
+
+	pe_debug("init pmf comeback timer for vdev %d", session->vdev_id);
+	session->pmf_retry_timer_info.mac = mac_ctx;
+	session->pmf_retry_timer_info.vdev_id = session->vdev_id;
+	session->pmf_retry_timer_info.retried = false;
+	status = qdf_mc_timer_init(
+			&session->pmf_retry_timer, QDF_TIMER_TYPE_SW,
+			lim_pmf_comeback_timer_callback,
+			(void *)&session->pmf_retry_timer_info);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		pe_err("cannot init pmf comeback timer");
+}
+#else
+static inline void
+pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx, struct pe_session *session,
+			   uint8_t vdev_id)
+{
+}
+#endif
+
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * pe_delete_fils_info: API to delete fils session info
@@ -653,6 +688,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 			pe_err("cannot create ap_ecsa_timer");
 	}
 	pe_init_fils_info(session_ptr);
+	pe_init_pmf_comeback_timer(mac, session_ptr);
 	session_ptr->ht_client_cnt = 0;
 	/* following is invalid value since seq number is 12 bit */
 	session_ptr->prev_auth_seq_num = 0xFFFF;
@@ -776,6 +812,25 @@ struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 
 	return NULL;
 }
+
+#ifdef WLAN_FEATURE_11W
+static void lim_clear_pmfcomeback_timer(struct pe_session *session)
+{
+	if (session->opmode != QDF_STA_MODE)
+		return;
+
+	pe_debug("deinit pmf comeback timer for vdev %d", session->vdev_id);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&session->pmf_retry_timer))
+		qdf_mc_timer_stop(&session->pmf_retry_timer);
+	qdf_mc_timer_destroy(&session->pmf_retry_timer);
+	session->pmf_retry_timer_info.retried = false;
+}
+#else
+static void lim_clear_pmfcomeback_timer(struct pe_session *session)
+{
+}
+#endif
 
 /**
  * pe_delete_session() - deletes the PE session given the session ID.
@@ -957,6 +1012,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		session->add_ie_params.probeRespBCNDataLen = 0;
 	}
 	pe_delete_fils_info(session);
+	lim_clear_pmfcomeback_timer(session);
 	session->valid = false;
 
 	session->mac_ctx = NULL;

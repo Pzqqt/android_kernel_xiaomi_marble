@@ -560,6 +560,68 @@ static inline void lim_process_he_info(tpSirProbeRespBeacon beacon,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11W
+
+#define MAX_RETRY_TIMER 1500
+static QDF_STATUS
+lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
+			     tpSirAssocRsp assoc_rsp)
+{
+	uint16_t timeout_value;
+
+	if (session_entry->opmode != QDF_STA_MODE)
+		return QDF_STATUS_E_FAILURE;
+
+	if (session_entry->limRmfEnabled &&
+	    session_entry->pmf_retry_timer_info.retried &&
+	    assoc_rsp->status_code == eSIR_MAC_TRY_AGAIN_LATER) {
+		pe_debug("Already retry in progress");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * Handle association Response for sta mode with RMF enabled and TRY
+	 * again later with timeout interval and Assoc comeback type
+	 */
+	if (!session_entry->limRmfEnabled || assoc_rsp->status_code !=
+	    eSIR_MAC_TRY_AGAIN_LATER || !assoc_rsp->TimeoutInterval.present ||
+	    assoc_rsp->TimeoutInterval.timeoutType !=
+	    SIR_MAC_TI_TYPE_ASSOC_COMEBACK ||
+	    session_entry->pmf_retry_timer_info.retried)
+		return QDF_STATUS_E_FAILURE;
+
+	timeout_value = assoc_rsp->TimeoutInterval.timeoutValue;
+	if (timeout_value < 10) {
+		/*
+		 * if this value is less than 10 then our timer
+		 * will fail to start and due to this we will
+		 * never re-attempt. Better modify the timer
+		 * value here.
+		 */
+		timeout_value = 10;
+	}
+	timeout_value = QDF_MIN(MAX_RETRY_TIMER, timeout_value);
+	pe_debug("ASSOC res with eSIR_MAC_TRY_AGAIN_LATER recvd.Starting timer to wait timeout: %d",
+		 timeout_value);
+	if (QDF_STATUS_SUCCESS !=
+	    qdf_mc_timer_start(&session_entry->pmf_retry_timer,
+			       timeout_value)) {
+		pe_err("Failed to start comeback timer");
+		return QDF_STATUS_E_FAILURE;
+	}
+	session_entry->pmf_retry_timer_info.retried = true;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
+			     tpSirAssocRsp assoc_rsp)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
@@ -593,6 +655,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 #endif
 	uint8_t ap_nss;
 	int8_t rssi;
+	QDF_STATUS status;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	vdev_id = session_entry->vdev_id;
@@ -802,6 +865,15 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 		qdf_mem_copy(ap_info.bssid.bytes, hdr->sa, QDF_MAC_ADDR_SIZE);
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 	}
+
+	status = lim_handle_pmfcomeback_timer(session_entry, assoc_rsp);
+	/* return if retry again timer is started and ignore this assoc resp */
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
+		return;
+	}
+
 	if (assoc_rsp->status_code != eSIR_MAC_SUCCESS_STATUS) {
 		/*
 		 *Re/Association response was received

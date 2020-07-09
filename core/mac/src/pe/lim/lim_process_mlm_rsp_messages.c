@@ -416,6 +416,38 @@ static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 		(uint32_t *) assoc_req);
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * lim_pmf_comeback_timer_callback() -PMF callback handler
+ * @context: Timer context
+ *
+ * This function is called to processes the PMF comeback
+ * callback
+ *
+ * Return: None
+ */
+void lim_pmf_comeback_timer_callback(void *context)
+{
+	struct comeback_timer_info *info =
+			(struct comeback_timer_info *)context;
+	struct mac_context *mac_ctx = info->mac;
+	struct pe_session *session;
+
+	session = pe_find_session_by_vdev_id(mac_ctx, info->vdev_id);
+	if (!session) {
+		pe_err("no session found for vdev %d", info->vdev_id);
+		return;
+	}
+
+	pe_info("comeback later timer expired. sending MLM ASSOC req for vdev %d",
+		session->vdev_id);
+	/* set MLM state such that ASSOC REQ packet will be sent out */
+	session->limPrevMlmState = info->lim_prev_mlm_state;
+	session->limMlmState = info->lim_mlm_state;
+	lim_send_mlm_assoc_req(mac_ctx, session);
+}
+#endif /* WLAN_FEATURE_11W */
+
 /**
  * lim_process_mlm_auth_cnf()-Process Auth confirmation
  * @mac_ctx:  Pointer to Global MAC structure

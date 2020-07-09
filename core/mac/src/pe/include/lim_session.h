@@ -37,7 +37,8 @@ typedef struct sPowersaveoffloadInfo {
 #ifdef WLAN_FEATURE_11W
 struct comeback_timer_info {
 	struct mac_context *mac;
-	uint8_t session_id;
+	uint8_t vdev_id;
+	uint8_t retried;
 	tLimMlmStates lim_prev_mlm_state;  /* Previous MLM State */
 	tLimMlmStates lim_mlm_state;       /* MLM State */
 };
@@ -476,6 +477,10 @@ struct pe_session {
 	/* Fast Transition (FT) */
 	tftPEContext ftPEContext;
 	bool isNonRoamReassoc;
+#ifdef WLAN_FEATURE_11W
+	qdf_mc_timer_t pmf_retry_timer;
+	struct comeback_timer_info pmf_retry_timer_info;
+#endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
 	/* timer for resetting protection fileds at regular intervals */
 	qdf_mc_timer_t protection_fields_reset_timer;
