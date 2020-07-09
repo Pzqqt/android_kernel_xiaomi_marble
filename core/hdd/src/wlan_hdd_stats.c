@@ -3877,7 +3877,7 @@ static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
 				/* report middle speed */
 				rssidx = 1;
 			} else if (stats->rssi >= link_speed_rssi_low) {
-				/* report middle speed */
+				/* report low speed */
 				rssidx = 2;
 			} else {
 				/* report actual speed */
