@@ -2033,6 +2033,27 @@ static bool get_usbc_hs_status(struct snd_soc_component *component,
 	return false;
 }
 
+int wcd938x_swr_dmic_register_notifier(struct snd_soc_component *component,
+					struct notifier_block *nblock,
+					bool enable)
+{
+	struct wcd938x_priv *wcd938x_priv;
+	if(NULL == component) {
+		pr_err("%s: wcd938x component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	wcd938x_priv = snd_soc_component_get_drvdata(component);
+	wcd938x_priv->notify_swr_dmic = enable;
+	if (enable)
+		return blocking_notifier_chain_register(&wcd938x_priv->notifier,
+							nblock);
+	else
+		return blocking_notifier_chain_unregister(
+				&wcd938x_priv->notifier, nblock);
+}
+EXPORT_SYMBOL(wcd938x_swr_dmic_register_notifier);
+
 static int wcd938x_event_notify(struct notifier_block *block,
 				unsigned long val,
 				void *data)
@@ -2080,6 +2101,10 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd938x->dev_up = false;
+		if(wcd938x->notify_swr_dmic)
+			blocking_notifier_call_chain(&wcd938x->notifier,
+						     WCD938X_EVT_SSR_DOWN,
+						     NULL);
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = true;
 		wcd938x->mbhc->wcd_mbhc.plug_before_ssr =
 					wcd938x->mbhc->wcd_mbhc.current_plug;
@@ -2113,6 +2138,10 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		}
 		wcd938x->mbhc->wcd_mbhc.deinit_in_progress = false;
 		wcd938x->dev_up = true;
+		if(wcd938x->notify_swr_dmic)
+			blocking_notifier_call_chain(&wcd938x->notifier,
+						     WCD938X_EVT_SSR_UP,
+						     NULL);
 		break;
 	case BOLERO_WCD_EVT_CLK_NOTIFY:
 		snd_soc_component_update_bits(component,
@@ -2296,6 +2325,9 @@ static int wcd938x_enable_micbias(struct wcd938x_priv *wcd938x,
 		return -EINVAL;
 	};
 
+	pr_debug("%s: req: %d micb_num: %d  micb_ref: %d pullup_ref: %d\n",
+		__func__, req, micb_num, wcd938x->micb_ref[micb_index],
+		wcd938x->pullup_ref[micb_index]);
 	mutex_lock(&wcd938x->micb_lock);
 
 	switch (req) {
@@ -2360,6 +2392,8 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 					int event, int micb_num)
 {
 	struct wcd938x_priv *wcd938x_priv = NULL;
+	int ret = 0;
+	int micb_index = micb_num - 1;
 
 	if(NULL == component) {
 		pr_err("%s: wcd938x component is NULL\n", __func__);
@@ -2376,6 +2410,15 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 
 	wcd938x_priv = snd_soc_component_get_drvdata(component);
 
+	if (!wcd938x_priv->dev_up) {
+		if ((wcd938x_priv->pullup_ref[micb_index] > 0) &&
+			(event == SND_SOC_DAPM_POST_PMD)) {
+			wcd938x_priv->pullup_ref[micb_index]--;
+			ret = -ENODEV;
+			goto done;
+		}
+	}
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		wcd938x_wakeup(wcd938x_priv, true);
@@ -2389,7 +2432,8 @@ int wcd938x_codec_force_enable_micbias_v2(struct snd_soc_component *component,
 		break;
 	}
 
-	return 0;
+done:
+	return ret;
 }
 EXPORT_SYMBOL(wcd938x_codec_force_enable_micbias_v2);
 
@@ -3728,7 +3772,6 @@ static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 			return ret;
 		}
 	}
-	wcd938x->dev_up = true;
 	return ret;
 
 err_hwdep:
@@ -4088,6 +4131,7 @@ static int wcd938x_bind(struct device *dev)
 				__func__);
 		goto err_irq;
 	}
+	wcd938x->dev_up = true;
 
 	return ret;
 err_irq:

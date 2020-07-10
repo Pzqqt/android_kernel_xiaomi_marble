@@ -106,6 +106,9 @@ struct wcd938x_priv {
 	bool dev_up;
 	u8 tx_master_ch_map[WCD938X_MAX_SLAVE_CH_TYPES];
 	bool usbc_hs_status;
+	/* wcd to swr dmic notification */
+	bool notify_swr_dmic;
+	struct blocking_notifier_head notifier;
 };
 
 struct wcd938x_micbias_setting {
