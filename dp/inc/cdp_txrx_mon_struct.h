@@ -195,7 +195,7 @@ struct cdp_mon_status {
 	uint32_t cdp_rs_bw;
 	uint32_t cdp_rs_nss;
 	uint8_t  cdp_rs_fcs_err;
-
+	bool     cdp_rs_rxdma_err;
 };
 
 enum {

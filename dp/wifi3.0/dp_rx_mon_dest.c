@@ -184,6 +184,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
 	uint64_t nbuf_paddr = 0;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
+	struct cdp_mon_status *rs;
 
 	if (qdf_unlikely(!dp_pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -197,6 +198,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info, &msdu_cnt);
 
+	rs = &dp_pdev->rx_mon_recv_status;
+	rs->cdp_rs_rxdma_err = false;
 	if ((hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc) ==
 		HAL_RX_WBM_RXDMA_PSH_RSN_ERROR)) {
 		uint8_t rxdma_err =
@@ -209,6 +212,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			drop_mpdu = true;
 			dp_pdev->rx_mon_stats.dest_mpdu_drop++;
 		}
+		rs->cdp_rs_rxdma_err = true;
 	}
 
 	is_frag = false;
