@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_radar.h
+ * DOC: wlan_hdd_sysfs_radar.h
  *
  * implementation for creating sysfs file radar
  */
 
-#ifndef _WLAN_HDD_SYSFS_SET_RADAR_H
-#define _WLAN_HDD_SYSFS_SET_RADAR_H
+#ifndef _WLAN_HDD_SYSFS_RADAR_H
+#define _WLAN_HDD_SYSFS_RADAR_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_RADAR)
+#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SYSFS_RADAR)
 /**
- * wlan_hdd_sysfs_set_radar_create() - API to create radar sysfs file
+ * wlan_hdd_sysfs_radar_create() - API to create radar sysfs file
  * (for sap mode only)
  * @adapter: hdd adapter
  *
@@ -37,26 +37,26 @@
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_sysfs_set_radar_create(struct hdd_adapter *adapter);
+int hdd_sysfs_radar_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_set_radar_destroy() -
+ * hdd_sysfs_radar_destroy() -
  *   API to destroy radar sysfs file
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_set_radar_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_radar_destroy(struct hdd_adapter *adapter);
 #else
 static inline int
-hdd_sysfs_set_radar_create(struct hdd_adapter *adapter)
+hdd_sysfs_radar_create(struct hdd_adapter *adapter)
 {
 	return 0;
 }
 
 static inline void
-hdd_sysfs_set_radar_destroy(struct hdd_adapter *adapter)
+hdd_sysfs_radar_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_SET_RADAR_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_RADAR_H */

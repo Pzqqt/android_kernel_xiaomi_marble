@@ -15,20 +15,20 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_radar.c
+ * DOC: wlan_hdd_sysfs_radar.c
  *
- * implementation for creating sysfs file radar
+ * Implementation for creating sysfs file radar
  */
 
 #include <wlan_hdd_includes.h>
 #include "osif_vdev_sync.h"
 #include <wlan_hdd_sysfs.h>
-#include <wlan_hdd_sysfs_set_radar.h>
+#include <wlan_hdd_sysfs_radar.h>
 #include "wlan_dfs_tgt_api.h"
 
 static ssize_t
-__hdd_sysfs_set_radar_store(struct net_device *net_dev,
-			    char const *buf, size_t count)
+__hdd_sysfs_radar_store(struct net_device *net_dev,
+			char const *buf, size_t count)
 {
 	struct hdd_adapter *adapter = netdev_priv(net_dev);
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
@@ -91,9 +91,9 @@ __hdd_sysfs_set_radar_store(struct net_device *net_dev,
 }
 
 static ssize_t
-hdd_sysfs_set_radar_store(struct device *dev,
-			  struct device_attribute *attr,
-			  char const *buf, size_t count)
+hdd_sysfs_radar_store(struct device *dev,
+		      struct device_attribute *attr,
+		      char const *buf, size_t count)
 {
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
 	struct osif_vdev_sync *vdev_sync;
@@ -103,7 +103,7 @@ hdd_sysfs_set_radar_store(struct device *dev,
 	if (errno_size)
 		return errno_size;
 
-	errno_size = __hdd_sysfs_set_radar_store(net_dev, buf, count);
+	errno_size = __hdd_sysfs_radar_store(net_dev, buf, count);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
@@ -111,9 +111,9 @@ hdd_sysfs_set_radar_store(struct device *dev,
 }
 
 static DEVICE_ATTR(radar, 0220,
-		   NULL, hdd_sysfs_set_radar_store);
+		   NULL, hdd_sysfs_radar_store);
 
-int hdd_sysfs_set_radar_create(struct hdd_adapter *adapter)
+int hdd_sysfs_radar_create(struct hdd_adapter *adapter)
 {
 	int error;
 
@@ -124,7 +124,7 @@ int hdd_sysfs_set_radar_create(struct hdd_adapter *adapter)
 	return error;
 }
 
-void hdd_sysfs_set_radar_destroy(struct hdd_adapter *adapter)
+void hdd_sysfs_radar_destroy(struct hdd_adapter *adapter)
 {
 	device_remove_file(&adapter->dev->dev, &dev_attr_radar);
 }
