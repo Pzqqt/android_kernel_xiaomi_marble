@@ -2416,8 +2416,7 @@ void qdf_net_buf_debug_exit(void)
 			qdf_info("SKB buf memory Leak@ Func %s, @Line %d, size %zu, nbuf %pK",
 				 p_prev->func_name, p_prev->line_num,
 				 p_prev->size, p_prev->net_buf);
-			qdf_info(
-				 "SKB leak map %s, line %d, unmap %s line %d mapped=%d",
+			qdf_info("SKB leak map %s, line %d, unmap %s line %d mapped=%d",
 				 p_prev->map_func_name,
 				 p_prev->map_line_num,
 				 p_prev->unmap_func_name,
@@ -2514,6 +2513,11 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			qdf_str_lcopy(p_node->func_name, func_name,
 				      QDF_MEM_FUNC_NAME_SIZE);
 			p_node->line_num = line_num;
+			p_node->is_nbuf_mapped = false;
+			p_node->map_line_num = 0;
+			p_node->unmap_line_num = 0;
+			p_node->map_func_name[0] = '\0';
+			p_node->unmap_func_name[0] = '\0';
 			p_node->size = size;
 			qdf_mem_skb_inc(size);
 			p_node->p_next = gp_qdf_net_buf_track_tbl[i];
