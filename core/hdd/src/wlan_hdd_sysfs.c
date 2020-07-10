@@ -54,7 +54,7 @@
 #include <wlan_hdd_sysfs_wowl_del_ptrn.h>
 #include <wlan_hdd_sysfs_tx_stbc.h>
 #include <wlan_hdd_sysfs_get_stats.h>
-#include <wlan_hdd_sysfs_set_wlan_dbg.h>
+#include <wlan_hdd_sysfs_wlan_dbg.h>
 #include <wlan_hdd_sysfs_txrx_fw_st_rst.h>
 #include <wlan_hdd_sysfs_gtx_bw_mask.h>
 #include <wlan_hdd_sysfs_scan_config.h>
@@ -775,7 +775,7 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 		hdd_sysfs_fw_mode_config_create(driver_kobject);
 		hdd_sysfs_scan_disable_create(driver_kobject);
 		hdd_sysfs_wow_ito_create(driver_kobject);
-		hdd_sysfs_set_wlan_dbg_create(driver_kobject);
+		hdd_sysfs_wlan_dbg_create(driver_kobject);
 		hdd_sysfs_scan_config_create(driver_kobject);
 		hdd_sysfs_dp_trace_create(driver_kobject);
 		hdd_sysfs_thermal_cfg_create(driver_kobject);
@@ -798,7 +798,7 @@ void hdd_destroy_sysfs_files(void)
 		hdd_sysfs_thermal_cfg_destroy(driver_kobject);
 		hdd_sysfs_dp_trace_destroy(driver_kobject);
 		hdd_sysfs_scan_config_destroy(driver_kobject);
-		hdd_sysfs_set_wlan_dbg_destroy(driver_kobject);
+		hdd_sysfs_wlan_dbg_destroy(driver_kobject);
 		hdd_sysfs_wow_ito_destroy(driver_kobject);
 		hdd_sysfs_scan_disable_destroy(driver_kobject);
 		hdd_sysfs_fw_mode_config_destroy(driver_kobject);

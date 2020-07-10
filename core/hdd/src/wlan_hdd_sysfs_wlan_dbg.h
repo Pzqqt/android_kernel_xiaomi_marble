@@ -15,17 +15,17 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_wlan_dbg.h
+ * DOC: wlan_hdd_sysfs_wlan_dbg.h
  *
- * implementation for creating sysfs file wlan_dbg
+ * Implementation for creating sysfs file wlan_dbg
  */
 
-#ifndef _WLAN_HDD_SYSFS_SET_WLAN_DBG_H
-#define _WLAN_HDD_SYSFS_SET_WLAN_DBG_H
+#ifndef _WLAN_HDD_SYSFS_WLAN_DBG_H
+#define _WLAN_HDD_SYSFS_WLAN_DBG_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SET_WLAN_DBG)
+#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_SYSFS_WLAN_DBG)
 /**
- * hdd_sysfs_set_wlan_dbg_create() - API to create wlan_dbg sysfs file
+ * hdd_sysfs_wlan_dbg_create() - API to create wlan_dbg sysfs file
  * @driver_kobject: sysfs driver kobject
  *
  * file path: /sys/kernel/wifi/wlan_dbg
@@ -35,25 +35,25 @@
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_sysfs_set_wlan_dbg_create(struct kobject *driver_kobject);
+int hdd_sysfs_wlan_dbg_create(struct kobject *driver_kobject);
 
 /**
- * hdd_sysfs_set_wlan_dbg_destroy() - API to destroy wlan_dbg sysfs file
+ * hdd_sysfs_wlan_dbg_destroy() - API to destroy wlan_dbg sysfs file
  *
  * Return: none
  */
 void
-hdd_sysfs_set_wlan_dbg_destroy(struct kobject *driver_kobject);
+hdd_sysfs_wlan_dbg_destroy(struct kobject *driver_kobject);
 #else
 static inline int
-hdd_sysfs_set_wlan_dbg_create(struct kobject *driver_kobject)
+hdd_sysfs_wlan_dbg_create(struct kobject *driver_kobject)
 {
 	return 0;
 }
 
 static inline void
-hdd_sysfs_set_wlan_dbg_destroy(struct kobject *driver_kobject)
+hdd_sysfs_wlan_dbg_destroy(struct kobject *driver_kobject)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_SET_WLAN_DBG_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_WLAN_DBG_H */
