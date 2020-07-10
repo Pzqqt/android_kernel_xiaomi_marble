@@ -327,6 +327,7 @@ static const uint32_t pdev_param_tlv[] = {
 			WMI_PDEV_PARAM_ENABLE_FW_DYNAMIC_HE_EDCA,
 	[wmi_pdev_param_enable_srp] = WMI_PDEV_PARAM_ENABLE_SRP,
 	[wmi_pdev_param_enable_sr_prohibit] = WMI_PDEV_PARAM_ENABLE_SR_PROHIBIT,
+	[wmi_pdev_param_sr_trigger_margin] = WMI_PDEV_PARAM_SR_TRIGGER_MARGIN,
 };
 
 /**
