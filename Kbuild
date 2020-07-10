@@ -263,8 +263,8 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs.o
 ifeq ($(CONFIG_WLAN_SYSFS_CHANNEL), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_channel.o
 endif
-ifeq ($(CONFIG_WLAN_SET_FW_MODE_CFG), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_fw_mode_cfg.o
+ifeq ($(CONFIG_WLAN_SYSFS_FW_MODE_CFG), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_fw_mode_config.o
 endif
 ifeq ($(CONFIG_WLAN_REASSOC), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_reassoc.o
@@ -2638,7 +2638,7 @@ endif
 endif
 cppflags-$(CONFIG_UNIT_TEST) += -DWLAN_UNIT_TEST
 cppflags-$(CONFIG_WLAN_DEBUG_CRASH_INJECT) += -DCONFIG_WLAN_DEBUG_CRASH_INJECT
-cppflags-$(CONFIG_WLAN_SET_FW_MODE_CFG) += -DCONFIG_WLAN_SET_FW_MODE_CFG
+cppflags-$(CONFIG_WLAN_SYSFS_FW_MODE_CFG) += -DCONFIG_WLAN_SYSFS_FW_MODE_CFG
 cppflags-$(CONFIG_WLAN_REASSOC) += -DCONFIG_WLAN_REASSOC
 cppflags-$(CONFIG_WLAN_SCAN_DISABLE) += -DCONFIG_WLAN_SCAN_DISABLE
 cppflags-$(CONFIG_WLAN_WOW_ITO) += -DCONFIG_WLAN_WOW_ITO

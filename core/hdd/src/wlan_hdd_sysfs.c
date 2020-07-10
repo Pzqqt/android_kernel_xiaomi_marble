@@ -39,7 +39,7 @@
 #include "osif_sync.h"
 #include "wlan_hdd_sysfs_sta_info.h"
 #include "wlan_hdd_sysfs_channel.h"
-#include <wlan_hdd_sysfs_set_fw_mode_cfg.h>
+#include <wlan_hdd_sysfs_fw_mode_config.h>
 #include <wlan_hdd_sysfs_reassoc.h>
 #include <wlan_hdd_sysfs_mem_stats.h>
 #include "wlan_hdd_sysfs_crash_inject.h"
@@ -772,7 +772,7 @@ void hdd_create_sysfs_files(struct hdd_context *hdd_ctx)
 	hdd_sysfs_mem_stats_create(wlan_kobject);
 	if  (QDF_GLOBAL_MISSION_MODE == hdd_get_conparam()) {
 		hdd_sysfs_create_powerstats_interface();
-		hdd_sysfs_set_fw_mode_cfg_create(driver_kobject);
+		hdd_sysfs_fw_mode_config_create(driver_kobject);
 		hdd_sysfs_scan_disable_create(driver_kobject);
 		hdd_sysfs_wow_ito_create(driver_kobject);
 		hdd_sysfs_set_wlan_dbg_create(driver_kobject);
@@ -801,7 +801,7 @@ void hdd_destroy_sysfs_files(void)
 		hdd_sysfs_set_wlan_dbg_destroy(driver_kobject);
 		hdd_sysfs_wow_ito_destroy(driver_kobject);
 		hdd_sysfs_scan_disable_destroy(driver_kobject);
-		hdd_sysfs_set_fw_mode_cfg_destroy(driver_kobject);
+		hdd_sysfs_fw_mode_config_destroy(driver_kobject);
 		hdd_sysfs_destroy_powerstats_interface();
 	}
 	hdd_sysfs_mem_stats_destroy(wlan_kobject);

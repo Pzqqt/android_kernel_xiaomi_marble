@@ -17,20 +17,20 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_fw_mode_cfg.c
+ * DOC: wlan_hdd_sysfs_fw_mode_config.c
  *
- * implementation for creating sysfs file fw_mode_config
+ * Implementation for creating sysfs file fw_mode_config
  */
 
 #include <wlan_hdd_includes.h>
 #include "osif_psoc_sync.h"
 #include <wlan_hdd_sysfs.h>
-#include <wlan_hdd_sysfs_set_fw_mode_cfg.h>
+#include <wlan_hdd_sysfs_fw_mode_config.h>
 #include "wlan_policy_mgr_ucfg.h"
 
 static ssize_t
-__wlan_hdd_store_set_fw_mode_cfg_sysfs(struct hdd_context *hdd_ctx,
-				       struct kobj_attribute *attr,
+__wlan_hdd_store_fw_mode_config_sysfs(struct hdd_context *hdd_ctx,
+				      struct kobj_attribute *attr,
 				       const char *buf,
 				       size_t count)
 {
@@ -90,10 +90,10 @@ __wlan_hdd_store_set_fw_mode_cfg_sysfs(struct hdd_context *hdd_ctx,
 }
 
 static ssize_t
-wlan_hdd_store_set_fw_mode_cfg_sysfs(struct kobject *kobj,
-				     struct kobj_attribute *attr,
-				     const char *buf,
-				     size_t count)
+wlan_hdd_store_fw_mode_config_sysfs(struct kobject *kobj,
+				    struct kobj_attribute *attr,
+				    const char *buf,
+				    size_t count)
 {
 	struct osif_psoc_sync *psoc_sync;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -109,8 +109,8 @@ wlan_hdd_store_set_fw_mode_cfg_sysfs(struct kobject *kobj,
 	if (errno_size)
 		return errno_size;
 
-	errno_size = __wlan_hdd_store_set_fw_mode_cfg_sysfs(hdd_ctx, attr,
-							    buf, count);
+	errno_size = __wlan_hdd_store_fw_mode_config_sysfs(hdd_ctx, attr,
+							   buf, count);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
@@ -119,9 +119,9 @@ wlan_hdd_store_set_fw_mode_cfg_sysfs(struct kobject *kobj,
 
 static struct kobj_attribute set_fw_mode_cfg_attribute =
 	__ATTR(fw_mode_config, 0220, NULL,
-	       wlan_hdd_store_set_fw_mode_cfg_sysfs);
+	       wlan_hdd_store_fw_mode_config_sysfs);
 
-int hdd_sysfs_set_fw_mode_cfg_create(struct kobject *driver_kobject)
+int hdd_sysfs_fw_mode_config_create(struct kobject *driver_kobject)
 {
 	int error;
 
@@ -139,7 +139,7 @@ int hdd_sysfs_set_fw_mode_cfg_create(struct kobject *driver_kobject)
 }
 
 void
-hdd_sysfs_set_fw_mode_cfg_destroy(struct kobject *driver_kobject)
+hdd_sysfs_fw_mode_config_destroy(struct kobject *driver_kobject)
 {
 	if (!driver_kobject) {
 		hdd_err("could not get driver kobject!");
