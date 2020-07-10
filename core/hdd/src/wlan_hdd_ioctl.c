@@ -515,6 +515,32 @@ QDF_STATUS hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 }
 #endif
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0))
+/**
+ * hdd_is_fast_reassoc_allowed  - check if roaming offload init is
+ * done. If roaming offload is not initialized, don't allow roam invoke
+ * to be triggered.
+ * @psoc: Pointer to psoc object
+ * @vdev_id: vdev_id
+ *
+ * This API should return true if kernel version is less than 4.9, because
+ * the earlier versions don't have the fix to handle reassociation failure.
+ *
+ * Return: true if roaming module initialization is done else false
+ */
+static bool
+hdd_is_fast_reassoc_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return MLME_IS_ROAM_INITIALIZED(psoc, vdev_id);
+}
+#else
+static inline bool
+hdd_is_fast_reassoc_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return true;
+}
+#endif
+
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint32_t ch_freq, const handoff_src src)
 {
@@ -573,6 +599,14 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 
 	/* Proceed with reassoc */
 	if (roaming_offload_enabled(hdd_ctx)) {
+		if (!hdd_is_fast_reassoc_allowed(hdd_ctx->psoc,
+						adapter->vdev_id)) {
+			hdd_err("LFR3: vdev[%d] Roaming module is not initialized",
+				adapter->vdev_id);
+			ret = -EPERM;
+			goto exit;
+		}
+
 		status = hdd_wma_send_fastreassoc_cmd(adapter, bssid, ch_freq);
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("Failed to send fast reassoc cmd");
