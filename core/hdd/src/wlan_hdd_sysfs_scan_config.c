@@ -15,20 +15,20 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_set_scan_cfg.c
+ * DOC: wlan_hdd_sysfs_scan_config.c
  *
- * implementation for creating sysfs file scan_config
+ * Implementation for creating sysfs file scan_config
  */
 
 #include <wlan_hdd_includes.h>
 #include "osif_psoc_sync.h"
 #include <wlan_hdd_sysfs.h>
-#include <wlan_hdd_sysfs_set_scan_cfg.h>
+#include <wlan_hdd_sysfs_scan_config.h>
 #include "wlan_policy_mgr_ucfg.h"
 
 static ssize_t
-__hdd_sysfs_set_scan_cfg_store(struct hdd_context *hdd_ctx,
-			       struct kobj_attribute *attr,
+__hdd_sysfs_scan_config_store(struct hdd_context *hdd_ctx,
+			      struct kobj_attribute *attr,
 			       const char *buf,
 			       size_t count)
 {
@@ -92,10 +92,10 @@ __hdd_sysfs_set_scan_cfg_store(struct hdd_context *hdd_ctx,
 }
 
 static ssize_t
-hdd_sysfs_set_scan_cfg_store(struct kobject *kobj,
-			     struct kobj_attribute *attr,
-			     const char *buf,
-			     size_t count)
+hdd_sysfs_scan_config_store(struct kobject *kobj,
+			    struct kobj_attribute *attr,
+			    const char *buf,
+			    size_t count)
 {
 	struct osif_psoc_sync *psoc_sync;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -111,8 +111,8 @@ hdd_sysfs_set_scan_cfg_store(struct kobject *kobj,
 	if (errno_size)
 		return errno_size;
 
-	errno_size = __hdd_sysfs_set_scan_cfg_store(hdd_ctx, attr,
-						    buf, count);
+	errno_size = __hdd_sysfs_scan_config_store(hdd_ctx, attr,
+						   buf, count);
 
 	osif_psoc_sync_op_stop(psoc_sync);
 
@@ -121,9 +121,9 @@ hdd_sysfs_set_scan_cfg_store(struct kobject *kobj,
 
 static struct kobj_attribute set_scan_cfg_attribute =
 	__ATTR(scan_config, 0220, NULL,
-	       hdd_sysfs_set_scan_cfg_store);
+	       hdd_sysfs_scan_config_store);
 
-int hdd_sysfs_set_scan_cfg_create(struct kobject *driver_kobject)
+int hdd_sysfs_scan_config_create(struct kobject *driver_kobject)
 {
 	int error;
 
@@ -141,7 +141,7 @@ int hdd_sysfs_set_scan_cfg_create(struct kobject *driver_kobject)
 }
 
 void
-hdd_sysfs_set_scan_cfg_destroy(struct kobject *driver_kobject)
+hdd_sysfs_scan_config_destroy(struct kobject *driver_kobject)
 {
 	if (!driver_kobject) {
 		hdd_err("could not get driver kobject!");
