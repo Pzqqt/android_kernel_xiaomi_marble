@@ -2121,84 +2121,77 @@ int sde_rm_update_topology(struct sde_rm *rm,
 	return ret;
 }
 
-bool sde_rm_topology_is_quad_pipe(struct sde_rm *rm,
-		struct drm_crtc_state *state)
+bool sde_rm_topology_is_group(struct sde_rm *rm,
+		struct drm_crtc_state *state,
+		enum sde_rm_topology_group group)
 {
-	int i;
+	int i, ret = 0;
 	struct sde_crtc_state *cstate;
-	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
+	struct drm_connector *conn;
+	struct drm_connector_state *conn_state;
+	struct msm_display_topology topology;
+	enum sde_rm_topology_name name;
 
-	if ((!rm) || (!state)) {
-		pr_err("invalid arguments: rm:%d state:%d\n",
-				rm == NULL, state == NULL);
+	if ((!rm) || (!state) || (!state->state)) {
+		pr_err("invalid arguments: rm:%d state:%d atomic state:%d\n",
+				!rm, !state, state ? (!state->state) : 0);
 		return false;
 	}
 
 	cstate = to_sde_crtc_state(state);
 
 	for (i = 0; i < cstate->num_connectors; i++) {
-		struct drm_connector *conn = cstate->connectors[i];
+		conn = cstate->connectors[i];
+		if (!conn) {
+			SDE_DEBUG("invalid connector\n");
+			continue;
+		}
 
-		topology = sde_connector_get_topology_name(conn);
-		if (TOPOLOGY_QUADPIPE_MERGE_MODE(topology))
-			return true;
-	}
+		conn_state = drm_atomic_get_connector_state(state->state, conn);
+		if (!conn_state) {
+			SDE_DEBUG("%s invalid connector state\n", conn->name);
+			continue;
+		}
 
-	return false;
-}
+		ret = sde_connector_state_get_topology(conn_state, &topology);
+		if (ret) {
+			SDE_DEBUG("%s invalid topology\n", conn->name);
+			continue;
+		}
 
-bool sde_rm_topology_is_dual_pipe(struct sde_rm *rm,
-		struct drm_crtc_state *state)
-{
-	int i;
-	struct sde_crtc_state *cstate;
-	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
-
-	if ((!rm) || (!state)) {
-		pr_err("invalid arguments: rm:%d state:%d\n",
-				rm == NULL, state == NULL);
-		return false;
-	}
-
-	cstate = to_sde_crtc_state(state);
-
-	for (i = 0; i < cstate->num_connectors; i++) {
-		struct drm_connector *conn = cstate->connectors[i];
-
-		topology = sde_connector_get_topology_name(conn);
-		if (TOPOLOGY_DUALPIPE_MERGE_MODE(topology))
-			return true;
-	}
-
-	return false;
-}
-
-bool sde_rm_topology_is_3dmux_dsc(struct sde_rm *rm,
-		struct drm_crtc_state *state)
-{
-	int i;
-	struct sde_crtc_state *cstate;
-	uint64_t topology = SDE_RM_TOPOLOGY_NONE;
-	const struct sde_rm_topology_def *def;
-	int num_lm, num_enc;
-
-	if ((!rm) || (!state)) {
-		pr_err("invalid arguments: rm:%d state:%d\n",
-				rm == NULL, state == NULL);
-		return false;
-	}
-
-	cstate = to_sde_crtc_state(state);
-
-	for (i = 0; i < cstate->num_connectors; i++) {
-		struct drm_connector *conn = cstate->connectors[i];
-
-		topology = sde_connector_get_topology_name(conn);
-		def = sde_rm_topology_get_topology_def(rm, topology);
-		num_lm = def->num_lm;
-		num_enc = def->num_comp_enc;
-		if (num_lm > num_enc && num_enc)
-			return true;
+		name = sde_rm_get_topology_name(rm, topology);
+		switch (group) {
+		case SDE_RM_TOPOLOGY_GROUP_SINGLEPIPE:
+			if (TOPOLOGY_SINGLEPIPE_MODE(name))
+				return true;
+			break;
+		case SDE_RM_TOPOLOGY_GROUP_DUALPIPE:
+			if (TOPOLOGY_DUALPIPE_MODE(name))
+				return true;
+			break;
+		case SDE_RM_TOPOLOGY_GROUP_QUADPIPE:
+			if (TOPOLOGY_QUADPIPE_MODE(name))
+				return true;
+			break;
+		case SDE_RM_TOPOLOGY_GROUP_3DMERGE:
+			if (topology.num_lm > topology.num_intf &&
+					!topology.num_enc)
+				return true;
+			break;
+		case SDE_RM_TOPOLOGY_GROUP_3DMERGE_DSC:
+			if (topology.num_lm > topology.num_enc &&
+					topology.num_enc)
+				return true;
+			break;
+		case SDE_RM_TOPOLOGY_GROUP_DSCMERGE:
+			if (topology.num_lm == topology.num_enc &&
+					topology.num_enc)
+				return true;
+			break;
+		default:
+			SDE_ERROR("invalid topology group\n");
+			return false;
+		}
 	}
 
 	return false;
