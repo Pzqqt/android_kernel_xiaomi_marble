@@ -1334,11 +1334,9 @@ int hdd_vendor_mode_to_phymode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
 	return 0;
 }
 
-enum band_info
-hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
+int hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+			    uint8_t *supported_band, bool is_6ghz_supported)
 {
-	enum band_info band;
-
 	switch (vendor_phy_mode) {
 	case QCA_WLAN_VENDOR_PHY_MODE_AUTO:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT20:
@@ -1348,6 +1346,8 @@ hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT80P80:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AC_VHT160:
+		*supported_band = BIT(REG_BAND_2G) | BIT(REG_BAND_5G);
+		break;
 	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE20:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE40PLUS:
@@ -1356,7 +1356,10 @@ hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
 	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE80P80:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AX_HE160:
 	case QCA_WLAN_VENDOR_PHY_MODE_11AGN:
-		band = BAND_ALL;
+		if (is_6ghz_supported)
+			*supported_band = REG_BAND_MASK_ALL;
+		else
+			*supported_band = BIT(REG_BAND_2G) | BIT(REG_BAND_5G);
 		break;
 	case QCA_WLAN_VENDOR_PHY_MODE_11A:
 	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT20:
@@ -1364,7 +1367,7 @@ hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
 	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40PLUS:
 	case QCA_WLAN_VENDOR_PHY_MODE_11NA_HT40MINUS:
 	case QCA_WLAN_VENDOR_PHY_MODE_5G_AUTO:
-		band = BAND_5G;
+		*supported_band = BIT(REG_BAND_5G);
 		break;
 	case QCA_WLAN_VENDOR_PHY_MODE_11B:
 	case QCA_WLAN_VENDOR_PHY_MODE_11G:
@@ -1373,14 +1376,14 @@ hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode)
 	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40PLUS:
 	case QCA_WLAN_VENDOR_PHY_MODE_11NG_HT40MINUS:
 	case QCA_WLAN_VENDOR_PHY_MODE_2G_AUTO:
-		band = BAND_2G;
+		*supported_band = BIT(REG_BAND_2G);
 		break;
 	default:
 		hdd_err("Not supported mode %d", vendor_phy_mode);
-		band = BAND_UNKNOWN;
+		return -EINVAL;
 	}
 
-	return band;
+	return 0;
 }
 
 int
@@ -1495,7 +1498,7 @@ hdd_set_ht2040_mode(struct hdd_adapter *adapter,
 #endif
 
 int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
-		       enum band_info band, uint32_t bonding_mode)
+		       uint8_t supported_band, uint32_t bonding_mode)
 {
 	struct net_device *net = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1503,7 +1506,6 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 	struct csr_config_params *csr_config;
 	eCsrPhyMode old_phymode;
 	enum hdd_dot11_mode hdd_dot11mode;
-	uint8_t ui_band;
 	int ret = 0;
 	QDF_STATUS status;
 
@@ -1515,29 +1517,14 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 	if (ret < 0)
 		return ret;
 
-	hdd_debug("phymode=%d bonding_mode=%d band=%d",
-		  phymode, bonding_mode, band);
+	hdd_debug("phymode=%d bonding_mode=%d supported_band=%d",
+		  phymode, bonding_mode, supported_band);
 
 	old_phymode = sme_get_phy_mode(hdd_ctx->mac_handle);
 
 	sme_set_phy_mode(hdd_ctx->mac_handle, phymode);
 
-	switch (band) {
-	case BAND_ALL:
-		ui_band = WLAN_HDD_UI_BAND_AUTO;
-		break;
-	case BAND_5G:
-		ui_band = WLAN_HDD_UI_BAND_5_GHZ;
-		break;
-	case BAND_2G:
-		ui_band = WLAN_HDD_UI_BAND_2_4_GHZ;
-		break;
-	default:
-		hdd_err("Invalid band %d", band);
-		return -EINVAL;
-	}
-
-	if (hdd_reg_set_band(net, ui_band)) {
+	if (hdd_reg_set_band(net, supported_band)) {
 		sme_set_phy_mode(hdd_ctx->mac_handle, old_phymode);
 		return -EIO;
 	}
@@ -1557,14 +1544,14 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 		goto free;
 	}
 
-	status = ucfg_mlme_set_band_capability(hdd_ctx->psoc, band);
+	status = ucfg_mlme_set_band_capability(hdd_ctx->psoc, supported_band);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to set MLME band capability");
 		ret = -EIO;
 		goto free;
 	}
 
-	if (band == BAND_2G) {
+	if (supported_band == BIT(REG_BAND_2G)) {
 		status = ucfg_mlme_set_11h_enabled(hdd_ctx->psoc, 0);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to set 11h_enable flag");
@@ -1572,14 +1559,12 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 			goto free;
 		}
 	}
-	if (band == BAND_2G) {
+	if (supported_band & BIT(REG_BAND_2G))
 		csr_config->channelBondingMode24GHz = bonding_mode;
-	} else if (band == BAND_5G) {
+
+	if (supported_band & BIT(REG_BAND_5G))
 		csr_config->channelBondingMode5GHz = bonding_mode;
-	} else {
-		csr_config->channelBondingMode24GHz = bonding_mode;
-		csr_config->channelBondingMode5GHz = bonding_mode;
-	}
+
 	sme_update_config(hdd_ctx->mac_handle, sme_config);
 
 	hdd_ctx->config->dot11Mode = hdd_dot11mode;
@@ -1593,7 +1578,7 @@ int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
 		goto free;
 	}
 
-	if (band == BAND_ALL || band == BAND_5G) {
+	if (supported_band & BIT(REG_BAND_5G)) {
 		struct ieee80211_supported_band *ieee_band;
 		uint32_t channel_bonding_mode;
 

@@ -379,11 +379,13 @@ int hdd_vendor_mode_to_phymode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
 /**
  * hdd_vendor_mode_to_band() - Get band_info according to vendor phy mode
  * @vendor_phy_mode: vendor phy mode
+ * @supported_band: supported band bitmap
+ * @is_6ghz_supported: whether 6ghz is supported
  *
- * Return: band_info on success, BAND_UNKNOWN on error
+ * Return: 0 on success, negative errno value on error
  */
-enum band_info
-hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode);
+int hdd_vendor_mode_to_band(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
+			    uint8_t *supported_band, bool is_6ghz_supported);
 
 /**
  * hdd_vendor_mode_to_bonding_mode() - Get channel bonding mode according to
@@ -401,7 +403,7 @@ hdd_vendor_mode_to_bonding_mode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
  * hdd_update_phymode() - update the PHY mode of the adapter
  * @adapter: adapter being modified
  * @phymode: new PHY mode for the adapter
- * @band: new band for the adapter
+ * @supported_band: supported band bitmap for the adapter
  * @bonding_mode: new channel bonding mode for the adapter
  *
  * This function is called when the adapter is set to a new PHY mode.
@@ -413,7 +415,7 @@ hdd_vendor_mode_to_bonding_mode(enum qca_wlan_vendor_phy_mode vendor_phy_mode,
  * Return: 0 on success, negative errno value on error
  */
 int hdd_update_phymode(struct hdd_adapter *adapter, eCsrPhyMode phymode,
-		       enum band_info band, uint32_t bonding_mode);
+		       uint8_t supported_band, uint32_t bonding_mode);
 
 /**
  * hdd_get_ldpc() - Get adapter LDPC

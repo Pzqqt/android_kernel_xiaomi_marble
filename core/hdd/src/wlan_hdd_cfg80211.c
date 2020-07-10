@@ -7152,11 +7152,18 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_adapter *adapter,
 static int hdd_config_phy_mode(struct hdd_adapter *adapter,
 			       const struct nlattr *attr)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	enum qca_wlan_vendor_phy_mode vendor_phy_mode;
 	eCsrPhyMode phymode;
-	enum band_info band;
+	uint8_t supported_band;
 	uint32_t bonding_mode;
 	int ret = 0;
+
+	if (!psoc) {
+		hdd_err("psoc is NULL");
+		return -EINVAL;
+	}
 
 	vendor_phy_mode = nla_get_u32(attr);
 
@@ -7164,15 +7171,17 @@ static int hdd_config_phy_mode(struct hdd_adapter *adapter,
 	if (ret < 0)
 		return ret;
 
-	band = hdd_vendor_mode_to_band(vendor_phy_mode);
-	if (band == BAND_UNKNOWN)
-		return -EINVAL;
+	ret = hdd_vendor_mode_to_band(vendor_phy_mode, &supported_band,
+				      wlan_reg_is_6ghz_supported(psoc));
+	if (ret < 0)
+		return ret;
 
 	ret = hdd_vendor_mode_to_bonding_mode(vendor_phy_mode, &bonding_mode);
 	if (ret < 0)
 		return ret;
 
-	return hdd_update_phymode(adapter, phymode, band, bonding_mode);
+	return hdd_update_phymode(adapter, phymode, supported_band,
+				  bonding_mode);
 }
 
 /**

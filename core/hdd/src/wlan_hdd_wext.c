@@ -3415,82 +3415,76 @@ static int iw_get_wlm_stats(struct net_device *net_dev,
 }
 #endif /* FEATURE_WLM_STATS */
 
-static eCsrPhyMode hdd_we_ieee_to_phymode(int ieee_mode)
+static int hdd_we_ieee_to_phymode(int ieee_mode, eCsrPhyMode *csr_phy_mode)
 {
-	eCsrPhyMode phymode;
-
 	switch (ieee_mode) {
 	case IEEE80211_MODE_AUTO:
 	case IEEE80211_MODE_2G_AUTO:
 	case IEEE80211_MODE_5G_AUTO:
-		phymode = eCSR_DOT11_MODE_AUTO;
+		*csr_phy_mode = eCSR_DOT11_MODE_AUTO;
 		break;
 	case IEEE80211_MODE_11A:
-		phymode = eCSR_DOT11_MODE_11a;
+		*csr_phy_mode = eCSR_DOT11_MODE_11a;
 		break;
 	case IEEE80211_MODE_11B:
-		phymode = eCSR_DOT11_MODE_11b;
+		*csr_phy_mode = eCSR_DOT11_MODE_11b;
 		break;
 	case IEEE80211_MODE_11G:
-		phymode = eCSR_DOT11_MODE_11g;
+		*csr_phy_mode = eCSR_DOT11_MODE_11g;
 		break;
 	case IEEE80211_MODE_11NA_HT20:
 	case IEEE80211_MODE_11NA_HT40:
 	case IEEE80211_MODE_11NG_HT20:
 	case IEEE80211_MODE_11NG_HT40:
 	case IEEE80211_MODE_11AGN:
-		phymode = eCSR_DOT11_MODE_11n;
+		*csr_phy_mode = eCSR_DOT11_MODE_11n;
 		break;
 	case IEEE80211_MODE_11AC_VHT20:
 	case IEEE80211_MODE_11AC_VHT40:
 	case IEEE80211_MODE_11AC_VHT80:
-		phymode = eCSR_DOT11_MODE_11ac;
+		*csr_phy_mode = eCSR_DOT11_MODE_11ac;
 		break;
 	default:
 		hdd_err("Not supported mode %d", ieee_mode);
-		phymode = -EINVAL;
+		return -EINVAL;
 	}
 
-	return phymode;
+	return 0;
 }
 
-static enum band_info hdd_we_ieee_to_band(int ieee_mode)
+static int hdd_we_ieee_to_band(int ieee_mode, uint8_t *supported_band)
 {
-	enum band_info band;
-
 	switch (ieee_mode) {
 	case IEEE80211_MODE_AUTO:
 	case IEEE80211_MODE_11AC_VHT20:
 	case IEEE80211_MODE_11AC_VHT40:
 	case IEEE80211_MODE_11AC_VHT80:
 	case IEEE80211_MODE_11AGN:
-		band = BAND_ALL;
+		*supported_band = BIT(REG_BAND_2G) | BIT(REG_BAND_5G);
 		break;
 	case IEEE80211_MODE_11A:
 	case IEEE80211_MODE_11NA_HT20:
 	case IEEE80211_MODE_11NA_HT40:
 	case IEEE80211_MODE_5G_AUTO:
-		band = BAND_5G;
+		*supported_band = BIT(REG_BAND_5G);
 		break;
 	case IEEE80211_MODE_11B:
 	case IEEE80211_MODE_11G:
 	case IEEE80211_MODE_11NG_HT20:
 	case IEEE80211_MODE_11NG_HT40:
 	case IEEE80211_MODE_2G_AUTO:
-		band = BAND_2G;
+		*supported_band = BIT(REG_BAND_2G);
 		break;
 	default:
 		hdd_err("Not supported mode %d", ieee_mode);
-		band = -EINVAL;
+		return -EINVAL;
 	}
 
-	return band;
+	return 0;
 }
 
-static uint32_t hdd_we_ieee_to_chwidth(int ieee_mode)
+static int hdd_we_ieee_to_bonding_mode(int ieee_mode, uint32_t *bonding_mode)
 {
-	uint32_t chwidth;
-
 	switch (ieee_mode) {
 	case IEEE80211_MODE_AUTO:
 	case IEEE80211_MODE_11NA_HT40:
@@ -3500,7 +3494,7 @@ static uint32_t hdd_we_ieee_to_chwidth(int ieee_mode)
 	case IEEE80211_MODE_2G_AUTO:
 	case IEEE80211_MODE_5G_AUTO:
 	case IEEE80211_MODE_11AGN:
-		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
+		*bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 		break;
 	case IEEE80211_MODE_11A:
 	case IEEE80211_MODE_11B:
@@ -3508,35 +3502,37 @@ static uint32_t hdd_we_ieee_to_chwidth(int ieee_mode)
 	case IEEE80211_MODE_11NA_HT20:
 	case IEEE80211_MODE_11NG_HT20:
 	case IEEE80211_MODE_11AC_VHT20:
-		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+		*bonding_mode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 		break;
 	default:
 		hdd_err("Not supported mode %d", ieee_mode);
-		chwidth = -EINVAL;
+		return -EINVAL;
 	}
 
-	return chwidth;
+	return 0;
 }
 
 int hdd_we_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 {
 	eCsrPhyMode phymode;
-	enum band_info band;
-	uint32_t chwidth;
+	uint8_t supported_band;
+	uint32_t bonding_mode;
+	int ret;
 
-	phymode = hdd_we_ieee_to_phymode(new_phymode);
-	if (phymode < 0)
+	ret = hdd_we_ieee_to_phymode(new_phymode, &phymode);
+	if (ret < 0)
 		return -EINVAL;
 
-	band = hdd_we_ieee_to_band(new_phymode);
-	if (band < 0)
-		return -EINVAL;
+	ret = hdd_we_ieee_to_band(new_phymode, &supported_band);
+	if (ret < 0)
+		return ret;
 
-	chwidth = hdd_we_ieee_to_chwidth(new_phymode);
-	if (chwidth < 0)
-		return -EINVAL;
+	ret = hdd_we_ieee_to_bonding_mode(new_phymode, &bonding_mode);
+	if (ret < 0)
+		return ret;
 
-	return hdd_update_phymode(adapter, phymode, band, chwidth);
+	return hdd_update_phymode(adapter, phymode, supported_band,
+				  bonding_mode);
 }
 
 static int hdd_validate_pdev_reset(int value)
