@@ -2286,8 +2286,8 @@ void sde_rm_release(struct sde_rm *rm, struct drm_encoder *enc, bool nxt)
 	if (!conn) {
 		SDE_EVT32(enc->base.id, 0x0, 0xffffffff);
 		_sde_rm_release_rsvp(rm, rsvp, conn);
-		SDE_DEBUG("failed to get conn for enc %d nxt %d rsvp[s%de%d]\n",
-				enc->base.id, nxt, rsvp->seq, rsvp->enc_id);
+		SDE_DEBUG("failed to get conn for enc %d nxt %d\n",
+				enc->base.id, nxt);
 		goto end;
 	}
 

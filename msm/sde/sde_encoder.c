@@ -2618,7 +2618,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 	struct drm_display_mode *cur_mode = NULL;
 	struct msm_display_info *disp_info;
 
-	if (!drm_enc) {
+	if (!drm_enc || !drm_enc->crtc) {
 		SDE_ERROR("invalid encoder\n");
 		return;
 	}
@@ -2630,7 +2630,7 @@ static void sde_encoder_virt_enable(struct drm_encoder *drm_enc)
 		return;
 	}
 
-	if (drm_enc->crtc && !sde_enc->crtc)
+	if (!sde_enc->crtc)
 		sde_enc->crtc = drm_enc->crtc;
 
 	comp_info = &sde_enc->mode_info.comp_info;
