@@ -148,6 +148,7 @@ enum precac_chan_state {
  * @bw:                Bandwidth of the precac entry.
  * @dfs:               Pointer to wlan_dfs structure.
  * @tree_root:         Tree root node with 80MHz channel key.
+ * @non_dfs_subch_count: Number of non DFS subchannels in the entry.
  */
 struct dfs_precac_entry {
 	TAILQ_ENTRY(dfs_precac_entry) pe_list;
@@ -158,6 +159,7 @@ struct dfs_precac_entry {
 	uint16_t            bw;
 	struct wlan_dfs     *dfs;
 	struct precac_tree_node *tree_root;
+	uint8_t             non_dfs_subch_count;
 };
 
 /**
@@ -1405,4 +1407,30 @@ dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+#ifdef ATH_SUPPORT_ZERO_CAC_DFS
+/**
+ * dfs_precac_status_for_channel() - Find the preCAC status of the given
+ * channel.
+ *
+ * @dfs: Pointer to wlan_dfs dfs.
+ * @deschan: DFS channel to check preCAC status.
+ *
+ * Return:
+ * DFS_NO_PRECAC_COMPLETED_CHANS - 0 preCAC completed channels.
+ * DFS_PRECAC_COMPLETED_CHAN - Given channel is preCAC completed.
+ * DFS_PRECAC_REQUIRED_CHAN - Given channel requires preCAC.
+ */
+enum precac_status_for_chan
+dfs_precac_status_for_channel(struct wlan_dfs *dfs,
+			      struct dfs_channel *deschan);
+#else
+static inline enum precac_status_for_chan
+dfs_precac_status_for_channel(struct wlan_dfs *dfs,
+			      struct dfs_channel *deschan)
+{
+	return DFS_INVALID_PRECAC_STATUS;
+}
+#endif
+
 #endif /* _DFS_ZERO_CAC_H_ */

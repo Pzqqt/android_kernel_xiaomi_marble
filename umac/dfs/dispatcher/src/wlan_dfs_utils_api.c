@@ -1701,3 +1701,21 @@ QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef ATH_SUPPORT_ZERO_CAC_DFS
+enum precac_status_for_chan
+utils_dfs_precac_status_for_channel(struct wlan_objmgr_pdev *pdev,
+				    struct wlan_channel *deschan)
+{
+	struct wlan_dfs *dfs;
+	struct dfs_channel chan;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return false;
+
+	dfs_fill_chan_info(&chan, deschan);
+
+	return dfs_precac_status_for_channel(dfs, &chan);
+}
+#endif

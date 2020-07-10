@@ -373,4 +373,24 @@ enum dfs_agile_sm_evt {
 	DFS_AGILE_SM_EV_ADFS_RADAR =  3,
 };
 
+/**
+ * enum precac_status_for_chan - preCAC status for channels.
+ * @DFS_NO_PRECAC_COMPLETED_CHANS: None of the channels are preCAC completed.
+ * @DFS_PRECAC_COMPLETED_CHAN: A given channel is preCAC completed.
+ * @DFS_PRECAC_REQUIRED_CHAN:  A given channel required preCAC.
+ * @DFS_INVALID_PRECAC_STATUS: Invalid status.
+ *
+ * Note: "DFS_NO_PRECAC_COMPLETED_CHANS" has more priority than
+ * "DFS_PRECAC_COMPLETED_CHAN". This is because if the preCAC list does not
+ * have any channel that completed preCAC, "DFS_NO_PRECAC_COMPLETED_CHANS"
+ * is returned and search for preCAC completion (DFS_PRECAC_COMPLETED_CHAN)
+ * for a given channel is not done.
+ */
+enum precac_status_for_chan {
+	DFS_NO_PRECAC_COMPLETED_CHANS,
+	DFS_PRECAC_COMPLETED_CHAN,
+	DFS_PRECAC_REQUIRED_CHAN,
+	DFS_INVALID_PRECAC_STATUS,
+};
+
 #endif  /* _DFS_IOCTL_H_ */

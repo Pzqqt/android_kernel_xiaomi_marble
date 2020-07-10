@@ -1032,4 +1032,23 @@ QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 }
 #endif /* QCA_SUPPORT_ADFS_RCAC */
 
+#ifdef ATH_SUPPORT_ZERO_CAC_DFS
+/**
+ * utils_dfs_precac_status_for_channel() - API to find the preCAC status
+ * of the given channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @deschan: Pointer to desired channel of wlan_channel structure.
+ */
+enum precac_status_for_chan
+utils_dfs_precac_status_for_channel(struct wlan_objmgr_pdev *pdev,
+				    struct wlan_channel *deschan);
+#else
+static inline enum precac_status_for_chan
+utils_dfs_precac_status_for_channel(struct wlan_objmgr_pdev *pdev,
+				    struct wlan_channel *deschan)
+{
+	return DFS_INVALID_PRECAC_STATUS;
+}
+#endif
+
 #endif /* _WLAN_DFS_UTILS_API_H_ */
