@@ -982,8 +982,10 @@ static netdev_tx_t rndis_ipa_start_xmit(struct sk_buff *skb,
 fail_tx_packet:
 	rndis_ipa_xmit_error(skb);
 out:
-	ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
+	if (atomic_read(&rndis_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
 fail_pm_activate:
+
 	RNDIS_IPA_DEBUG
 		("packet Tx done - %s\n",
 		(status == NETDEV_TX_OK) ? "OK" : "FAIL");
@@ -1054,6 +1056,10 @@ static void rndis_ipa_tx_complete_notify(
 		netif_wake_queue(rndis_ipa_ctx->net);
 		RNDIS_IPA_DEBUG("send queue was awaken\n");
 	}
+
+	/*Release resource only when outstanding packets are zero*/
+	if (atomic_read(&rndis_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(rndis_ipa_ctx->pm_hdl);
 
 out:
 	dev_kfree_skb_any(skb);

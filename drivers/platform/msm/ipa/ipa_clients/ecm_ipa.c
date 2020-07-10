@@ -628,7 +628,8 @@ static netdev_tx_t ecm_ipa_start_xmit
 
 fail_tx_packet:
 out:
-	ipa_pm_deferred_deactivate(ecm_ipa_ctx->pm_hdl);
+	if (atomic_read(&ecm_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(ecm_ipa_ctx->pm_hdl);
 fail_pm_activate:
 	return status;
 }
@@ -1180,6 +1181,8 @@ static void ecm_ipa_tx_complete_notify
 		netif_wake_queue(ecm_ipa_ctx->net);
 	}
 
+	if (atomic_read(&ecm_ipa_ctx->outstanding_pkts) == 0)
+		ipa_pm_deferred_deactivate(ecm_ipa_ctx->pm_hdl);
 out:
 	dev_kfree_skb_any(skb);
 }
