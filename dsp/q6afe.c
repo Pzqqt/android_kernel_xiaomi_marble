@@ -281,7 +281,7 @@ static int q6afe_load_avcs_modules(int num_modules, u16 port_id,
 	struct avcs_load_unload_modules_sec_payload sec_payload;
 
 	if (num_modules <= 0) {
-		pr_err("%s: Invalid number of modules to load\n");
+		pr_err("%s: Invalid number of modules to load\n", __func__);
 		return -EINVAL;
 	}
 

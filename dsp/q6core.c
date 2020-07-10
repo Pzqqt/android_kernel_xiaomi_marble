@@ -937,7 +937,7 @@ int32_t q6core_avcs_load_unload_modules(struct avcs_load_unload_modules_payload
 	int num_modules;
 
 	if (payload == NULL) {
-		pr_err("%s: payload is null\n");
+		pr_err("%s: payload is null\n", __func__);
 		return -EINVAL;
 	}
 
