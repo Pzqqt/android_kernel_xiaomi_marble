@@ -4097,6 +4097,31 @@ void wma_update_roam_offload_flag(void *handle,
 }
 #endif
 
+void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params)
+{
+	tp_wma_handle wma = handle;
+	struct wma_txrx_node *iface;
+	QDF_STATUS status;
+
+	if (!wma_is_vdev_valid(params->vdev_id)) {
+		wma_err("vdev_id: %d is not active", params->vdev_id);
+		return;
+	}
+
+	iface = &wma->interfaces[params->vdev_id];
+
+	if ((iface->type != WMI_VDEV_TYPE_STA) ||
+	    (iface->sub_type != 0)) {
+		wma_err("this isn't a STA: %d", params->vdev_id);
+		return;
+	}
+
+	status = wma_vdev_set_param(wma->wmi_handle, params->vdev_id,
+				    WMI_VDEV_PARAM_ROAM_11KV_CTRL, params->cfg);
+	if (QDF_IS_STATUS_ERROR(status))
+		wma_err("Failed to set WMI_VDEV_PARAM_ROAM_11KV_CTRL");
+}
+
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;

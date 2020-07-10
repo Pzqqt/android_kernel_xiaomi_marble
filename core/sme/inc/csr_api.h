@@ -1415,6 +1415,17 @@ QDF_STATUS
 csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 			       bool enable);
 
+/**
+ * csr_send_roam_disable_cfg_msg() - Send roam module enable/disable cfg to fw
+ * @mac: mac context
+ * @vdev_id: vdev id
+ * @cfg: roaming enable/disable cfg
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_send_roam_disable_cfg_msg(struct mac_context *mac,
+					 uint32_t vdev_id, uint8_t cfg);
+
 typedef void (*csr_ani_callback)(int8_t *ani, void *context);
 
 #ifdef WLAN_FEATURE_11W

@@ -6230,6 +6230,8 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	enum roam_offload_state state;
 	QDF_STATUS status;
 	bool supplicant_disabled_roaming;
+	uint32_t set_val = 0;
+	enum roam_offload_state  cur_state;
 
 	/*
 	 * supplicant_disabled_roaming flag is altered when supplicant sends
@@ -6247,6 +6249,20 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 			return QDF_STATUS_SUCCESS;
 		return  QDF_STATUS_E_FAILURE;
 	}
+	cur_state = mlme_get_roam_state(mac_ctx->psoc, session_id);
+	if (cur_state == WLAN_ROAM_INIT) {
+		if (!is_fast_roam_enabled)
+			set_val =
+			WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING;
+		status = csr_send_roam_disable_cfg_msg(mac_ctx, session_id,
+						       set_val);
+
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sme_err("ROAM: update fast roaming failed, status: %d",
+				status);
+		}
+	}
+	mac_ctx->mlme_cfg->sta.usr_disabled_roaming = !is_fast_roam_enabled;
 
 	supplicant_disabled_roaming =
 		mlme_get_supplicant_disabled_roaming(mac_ctx->psoc,
@@ -14108,6 +14124,7 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_ERROR(sme_acquire_global_lock(&mac->sme)))
 		return QDF_STATUS_E_FAILURE;
 
+	mlme_set_supplicant_disabled_roaming(mac->psoc, vdev_id, 0);
 	status = csr_fast_reassoc(mac_handle, profile, bssid, ch_freq, vdev_id,
 				  connected_bssid);
 
@@ -15265,6 +15282,8 @@ void sme_set_he_testbed_def(mac_handle_t mac_handle, uint8_t vdev_id)
 	if (QDF_IS_STATUS_ERROR(status))
 		sme_err("Failed to set enable bcast probe resp in FW, %d",
 			status);
+
+	mac_ctx->mlme_cfg->sta.usr_disabled_roaming = true;
 }
 
 void sme_reset_he_caps(mac_handle_t mac_handle, uint8_t vdev_id)

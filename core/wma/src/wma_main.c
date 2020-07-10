@@ -8977,6 +8977,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif
+	case WMA_ROAM_DISABLE_CFG:
+		wma_set_roam_disable_cfg(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_ROAM_SCAN_CH_REQ:
 		wma_get_roam_scan_ch(wma_handle->wmi_handle, msg->bodyval);
 		break;

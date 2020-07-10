@@ -829,6 +829,15 @@ void wma_update_roam_offload_flag(void *handle,
 				  struct roam_init_params *params);
 #endif
 /**
+ * wma_set_roam_disable_cfg() - Set roam module disable cfg to fw
+ * @wma: wma handle
+ * @params: Roaming module enable/disable params
+ *
+ * Return: none
+ */
+void wma_set_roam_disable_cfg(void *handle, struct roam_disable_cfg *params);
+
+/**
  * wma_self_peer_create() - create self peer in objmgr
  * @vdev_mlme: vdev mlme component private object
  *

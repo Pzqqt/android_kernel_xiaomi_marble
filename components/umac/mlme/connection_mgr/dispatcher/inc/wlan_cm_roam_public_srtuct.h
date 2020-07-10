@@ -487,6 +487,16 @@ struct wlan_roam_11k_offload_params {
 };
 
 /**
+ * struct roam_disable_cfg - Firmware roam module disable parameters
+ * @vdev_id: vdev for which the roaming has to be enabled/disabled
+ * @cfg:  Config to enable/disable FW roam module
+ */
+struct roam_disable_cfg {
+	uint8_t vdev_id;
+	uint8_t cfg;
+};
+
+/**
  * struct wlan_roam_disconnect_params - Emergency deauth/disconnect roam params
  * @vdev_id: VDEV on which the parameters should be applied
  * @enable: Enable or disable disconnect roaming.

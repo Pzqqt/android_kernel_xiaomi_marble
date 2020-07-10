@@ -3513,6 +3513,22 @@ static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
 	}
 }
 
+static void lim_send_roam_disable_cfg(struct mac_context *mac_ctx,
+				      uint32_t *msg_buf)
+{
+	struct scheduler_msg wma_msg = {0};
+	QDF_STATUS status;
+
+	wma_msg.type = WMA_ROAM_DISABLE_CFG;
+	wma_msg.bodyptr = msg_buf;
+
+	status = wma_post_ctrl_msg(mac_ctx, &wma_msg);
+	if (QDF_STATUS_SUCCESS != status) {
+		pe_err("Posting WMA_ROAM_DISABLE_CFG failed");
+		qdf_mem_free(msg_buf);
+	}
+}
+
 /**
  * lim_send_roam_per_command() - Process roam send PER command from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -3568,6 +3584,11 @@ static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
 }
 
 static void lim_send_roam_per_command(struct mac_context *mac_ctx,
+				      uint32_t *msg_buf)
+{
+	qdf_mem_free(msg_buf);
+}
+static void lim_send_roam_disable_cfg(struct mac_context *mac_ctx,
 				      uint32_t *msg_buf)
 {
 	qdf_mem_free(msg_buf);
@@ -4654,6 +4675,10 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 #ifndef ROAM_OFFLOAD_V1
 	case eWNI_SME_ROAM_INIT_PARAM:
 		lim_send_roam_offload_init(mac, msg_buf);
+		bufConsumed = false;
+		break;
+	case eWNI_SME_ROAM_DISABLE_CFG:
+		lim_send_roam_disable_cfg(mac, msg_buf);
 		bufConsumed = false;
 		break;
 	case eWNI_SME_ROAM_SEND_PER_REQ:

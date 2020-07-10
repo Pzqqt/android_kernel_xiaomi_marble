@@ -18675,6 +18675,14 @@ csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 
 	/* Set PCL before sending RSO start */
 	policy_mgr_set_pcl_for_existing_combo(mac->psoc, PM_STA_MODE, vdev_id);
+	if (mac->mlme_cfg->sta.usr_disabled_roaming) {
+		status = csr_send_roam_disable_cfg_msg(mac, vdev_id,
+			WMI_VDEV_ROAM_11KV_CTRL_DISABLE_FW_TRIGGER_ROAMING);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			sme_err("ROAM: fast roaming disable failed. status %d",
+				status);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -22366,6 +22374,32 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 	return status;
 }
 #endif
+
+QDF_STATUS csr_send_roam_disable_cfg_msg(struct mac_context *mac,
+					 uint32_t vdev_id, uint8_t cfg)
+{
+	struct scheduler_msg message = {0};
+	QDF_STATUS status;
+	struct roam_disable_cfg *params;
+
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params)
+		return QDF_STATUS_E_NOMEM;
+
+	params->vdev_id = vdev_id;
+	params->cfg = cfg;
+
+	message.bodyptr = params;
+	message.type = eWNI_SME_ROAM_DISABLE_CFG;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &message);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("ROAM: Failed to post ROAM_DISABLE_CFG msg");
+		qdf_mem_free(params);
+	}
+
+	return status;
+}
 
 QDF_STATUS
 csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)

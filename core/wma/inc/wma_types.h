@@ -440,6 +440,7 @@
 #endif
 
 #define WMA_DATA_STALL_TRIGGER 6
+#define WMA_ROAM_DISABLE_CFG                 SIR_HAL_INIT_ROAM_DISABLE_CFG
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
