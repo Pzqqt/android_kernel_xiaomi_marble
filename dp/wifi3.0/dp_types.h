@@ -1987,9 +1987,6 @@ struct dp_vdev {
 	/* Handle to the OS shim SW's virtual device */
 	ol_osif_vdev_handle osif_vdev;
 
-	/* Handle to the UMAC handle */
-	struct cdp_ctrl_objmgr_vdev *ctrl_vdev;
-
 	/* MAC address */
 	union dp_align_mac_addr mac_addr;
 
