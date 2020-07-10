@@ -1833,6 +1833,9 @@ static inline void hal_rx_msdu_list_get(hal_soc_handle_t hal_soc_hdl,
 		/* num_msdus received in mpdu descriptor may be incorrect
 		 * sometimes due to HW issue. Check msdu buffer address also
 		 */
+		if (!i && (HAL_RX_BUFFER_ADDR_31_0_GET(
+			&msdu_details[i].buffer_addr_info_details) == 0))
+			break;
 		if (HAL_RX_BUFFER_ADDR_31_0_GET(
 			&msdu_details[i].buffer_addr_info_details) == 0) {
 			/* set the last msdu bit in the prev msdu_desc_info */

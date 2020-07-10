@@ -571,7 +571,8 @@ more_msdu_link_desc:
 
 	dp_rx_link_desc_return_by_addr(soc, buf_addr_info,
 				       HAL_BM_ACTION_PUT_IN_IDLE_LIST);
-	QDF_BUG(msdu_processed == mpdu_desc_info->msdu_count);
+	if (qdf_unlikely(msdu_processed != mpdu_desc_info->msdu_count))
+		DP_STATS_INC(soc, rx.err.msdu_count_mismatch, 1);
 
 	return rx_bufs_used;
 }

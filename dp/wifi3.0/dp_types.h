@@ -847,6 +847,8 @@ struct dp_soc_stats {
 			uint32_t reo_err_oor_sg_count;
 			/* RX msdu rejected count on delivery to vdev stack_fn*/
 			uint32_t rejected;
+			/* Incorrect msdu count in MPDU desc info */
+			uint32_t msdu_count_mismatch;
 		} err;
 
 		/* packet count per core - per ring */
