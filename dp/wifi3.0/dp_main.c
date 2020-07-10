@@ -1869,31 +1869,6 @@ budget_done:
 	return dp_budget - budget;
 }
 
-/**
- * dp_mon_get_lmac_id_from_ch_band() - get the lmac id corresponding
- *		to a particular channel band.
- * @soc: Datapath soc handle
- * @band: channel band configured
- *
- * Returns: lmac id corresponding to the channel band
- *
- * Currently the 5GHz/6GHz packets will be captured on lmac id 0
- * and the 2.4GHz packets are captured on lmac id 1.
- * This function returns the mapping on the basis of above information.
- */
-static inline int dp_mon_get_lmac_id_from_ch_band(struct dp_soc *soc,
-						  enum reg_wifi_band band)
-{
-	if (band == REG_BAND_2G)
-		return DP_MON_2G_LMAC_ID;
-	else if (band == REG_BAND_5G)
-		return DP_MON_5G_LMAC_ID;
-	else if (band == REG_BAND_6G)
-		return DP_MON_6G_LMAC_ID;
-
-	return DP_MON_INVALID_LMAC_ID;
-}
-
 /* dp_interrupt_timer()- timer poll for interrupts
  *
  * @arg: SoC Handle
@@ -1921,7 +1896,7 @@ static void dp_interrupt_timer(void *arg)
 		return;
 	}
 
-	lmac_id = dp_mon_get_lmac_id_from_ch_band(soc, pdev->mon_chan_band);
+	lmac_id = pdev->ch_band_lmac_id_mapping[pdev->mon_chan_band];
 	if (qdf_unlikely(lmac_id == DP_MON_INVALID_LMAC_ID)) {
 		qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
 		return;
@@ -7953,11 +7928,27 @@ static QDF_STATUS dp_set_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 				    enum cdp_pdev_param_type param,
 				    cdp_config_param_type val)
 {
+	int target_type;
+	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	struct dp_pdev *pdev =
 		dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)cdp_soc,
 						   pdev_id);
 	if (!pdev)
 		return QDF_STATUS_E_FAILURE;
+
+	target_type = hal_get_target_type(soc->hal_soc);
+	switch (target_type) {
+	case TARGET_TYPE_QCA6750:
+		pdev->ch_band_lmac_id_mapping[REG_BAND_2G] = DP_MON_5G_LMAC_ID;
+		pdev->ch_band_lmac_id_mapping[REG_BAND_5G] = DP_MON_5G_LMAC_ID;
+		pdev->ch_band_lmac_id_mapping[REG_BAND_6G] = DP_MON_6G_LMAC_ID;
+		break;
+	default:
+		pdev->ch_band_lmac_id_mapping[REG_BAND_2G] = DP_MON_2G_LMAC_ID;
+		pdev->ch_band_lmac_id_mapping[REG_BAND_5G] = DP_MON_5G_LMAC_ID;
+		pdev->ch_band_lmac_id_mapping[REG_BAND_6G] = DP_MON_6G_LMAC_ID;
+		break;
+	}
 
 	switch (param) {
 	case CDP_CONFIG_TX_CAPTURE:
@@ -12530,6 +12521,9 @@ static inline QDF_STATUS dp_pdev_init(struct cdp_soc_t *txrx_soc,
 	pdev->neighbour_peers_added = false;
 	pdev->monitor_configured = false;
 	pdev->mon_chan_band = REG_BAND_UNKNOWN;
+	pdev->ch_band_lmac_id_mapping[REG_BAND_2G] = DP_MON_INVALID_LMAC_ID;
+	pdev->ch_band_lmac_id_mapping[REG_BAND_5G] = DP_MON_INVALID_LMAC_ID;
+	pdev->ch_band_lmac_id_mapping[REG_BAND_6G] = DP_MON_INVALID_LMAC_ID;
 
 	DP_STATS_INIT(pdev);
 

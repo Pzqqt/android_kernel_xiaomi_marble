@@ -1583,6 +1583,8 @@ struct dp_pdev {
 	/* Empty ring used by firmware to post rx buffers to the MAC */
 	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
 
+	int ch_band_lmac_id_mapping[REG_BAND_UNKNOWN];
+
 	/* wlan_cfg pdev ctxt*/
 	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;
 
