@@ -30515,7 +30515,7 @@ static int msm_routing_put_pll_clk_drift(struct snd_kcontrol *kcontrol,
 	clk_drift = ucontrol->value.integer.value[1];
 	clk_reset = ucontrol->value.integer.value[2];
 
-	if (be_idx < 0 && be_idx >= MSM_BACKEND_DAI_MAX) {
+	if (be_idx < 0 || be_idx >= MSM_BACKEND_DAI_MAX) {
 		pr_err("%s: Invalid be id %d\n", __func__, be_idx);
 		return -EINVAL;
 	}
