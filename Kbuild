@@ -840,10 +840,20 @@ OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
 OS_IF_INC += -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
-            -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc
+            -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc \
+            -I$(WLAN_COMMON_INC)/os_if/linux/mlme/inc
 
 OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
 	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o
+
+ifeq ($(CONFIG_CM_ENABLE), y)
+OS_IF_OBJ += $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_util.o \
+	     $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_connect_rsp.o \
+	     $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_disconnect_rsp.o \
+	     $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_disconnect_rsp.o \
+	     $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_req.o \
+	     $(OS_IF_DIR)/linux/mlme/src/wlan_cfg80211_cm_roam_rsp.o
+endif
 
 CONFIG_CRYPTO_COMPONENT := y
 
@@ -1182,7 +1192,9 @@ UMAC_MLME_OBJS += $(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_connect.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_connect_scan.o \
 		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_disconnect.o \
-		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_cmn.o
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/core/src/wlan_cm_util.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/dispatcher/src/wlan_cm_ucfg_api.o \
+		$(WLAN_COMMON_ROOT)/umac/mlme/connection_mgr/dispatcher/src/wlan_cm_api.o \
 
 ifeq ($(CONFIG_QCACLD_WLAN_LFR3), y)
 # Add LFR3/FW roam specific connection manager files here
