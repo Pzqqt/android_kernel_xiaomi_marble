@@ -259,7 +259,20 @@ static void dp_mst_sim_topology_put_port(struct drm_dp_mst_port *port)
 	kref_put(&port->topology_kref, dp_mst_sim_destroy_port);
 }
 
-/* DRM DP MST Framework simulator OPs */
+/*
+ * DRM DP MST Framework simulator OPs
+ *
+ * If simulation mode is enabled, on HPD connect, mst mode is enabled on the
+ * topology manager and 2 simulated ports are created using
+ * dp_mst_sim_add_port. These 2 ports are added to the MST branch device.
+ * Each node in the DP MST topology has 2 reference objects one for memory
+ * allocation and the other for its use on the topology tree. When the last
+ * topology reference is released on a port, the port gets destroyed and when
+ * the last malloc reference is released, then the port memory is freed.
+ * Each port also gets a reference on its parent branch object to make sure
+ * that the branch is not destroyed prematurely.
+ */
+
 static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 			struct dp_mst_sim_port_data *port_msg)
 {
@@ -322,6 +335,31 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 
 put_port:
 	dp_mst_sim_topology_put_port(port);
+}
+
+static void dp_mst_sim_remove_port(struct dp_mst_private *mst,
+			struct drm_dp_mst_port *port)
+{
+	struct drm_dp_mst_branch *mstb;
+	int i;
+
+	mstb = mst->mst_mgr.mst_primary;
+	if (!mstb) {
+		DP_ERR("Unable to remove port. mst branch device is null\n");
+		return;
+	}
+
+	mutex_lock(&mstb->mgr->lock);
+	list_del(&port->next);
+	mutex_unlock(&mstb->mgr->lock);
+	dp_mst_sim_topology_put_port(port);
+
+	for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
+		if (mst->simulator.port_edids[i].port_number ==
+				port->port_num) {
+			mst->simulator.port_edids[i].valid = false;
+		}
+	}
 }
 
 static void dp_mst_sim_link_probe_work(struct work_struct *work)
@@ -500,13 +538,8 @@ static int dp_mst_sim_topology_mgr_set_mst(
 	struct dp_mst_private *mst = container_of(mgr,
 			struct dp_mst_private, mst_mgr);
 
-	/*
-	 * Setting mst off on the mgr initiates shutdown of the branch device.
-	 * Moving the disable to bridge disable in order to make sure the
-	 * connector is valid till the hpd notification is completed.
-	 */
-	if (!mst_state)
-		return 0;
+	DP_MST_DEBUG("enter: mst_state %d\n", mst_state);
+	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, mst_state);
 
 	rc = drm_dp_mst_topology_mgr_set_mst(mgr, mst_state);
 	if (rc < 0) {
@@ -514,7 +547,8 @@ static int dp_mst_sim_topology_mgr_set_mst(
 		return rc;
 	}
 
-	queue_work(system_long_wq, &mst->simulator.probe_work);
+	if (mst_state)
+		queue_work(system_long_wq, &mst->simulator.probe_work);
 
 	mst->simulator.mst_state = mst_state;
 	return 0;
@@ -574,7 +608,6 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 			if (port->connector && port->connector->base.id ==
 					info->mst_sim_remove_con_id) {
 				in_list = true;
-				list_del(&port->next);
 				break;
 			}
 		}
@@ -584,13 +617,8 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 			DRM_ERROR("invalid connector id %d\n",
 					info->mst_sim_remove_con_id);
 			return;
-		}
-
-		for (i = 0; i < DP_MST_SIM_MAX_PORTS; i++) {
-			if (mst->simulator.port_edids[i].port_number ==
-					port->port_num) {
-				mst->simulator.port_edids[i].valid = false;
-			}
+		} else {
+			dp_mst_sim_remove_port(mst, port);
 		}
 
 		dp_mst_sim_topology_put_port(port);
@@ -855,14 +883,6 @@ static void _dp_mst_bridge_pre_enable_part1(struct dp_mst_bridge *dp_bridge)
 		return;
 	}
 
-	/*
-	 * Take a reference to the port topology to make sure the port object
-	 * is available while waiting for the connector to be cleaned up after
-	 * hpd low. This reference will be released in the disable path.
-	 */
-	if (mst->simulator.mst_state)
-		dp_mst_sim_topology_get_port(port);
-
 	pbn = mst->mst_fw_cbs->calc_pbn_mode(&dp_bridge->dp_mode);
 
 	slots = mst->mst_fw_cbs->find_vcpi_slots(&mst->mst_mgr, pbn);
@@ -940,7 +960,6 @@ static void _dp_mst_bridge_pre_disable_part2(struct dp_mst_bridge *dp_bridge)
 	struct sde_connector *c_conn =
 		to_sde_connector(dp_bridge->connector);
 	struct drm_dp_mst_port *port = c_conn->mst_port;
-	int rc = 0;
 
 	DP_MST_DEBUG("enter\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
@@ -960,17 +979,8 @@ static void _dp_mst_bridge_pre_disable_part2(struct dp_mst_bridge *dp_bridge)
 	port->vcpi.vcpi = dp_bridge->vcpi;
 	mst->mst_fw_cbs->deallocate_vcpi(&mst->mst_mgr, port);
 
-	if (mst->simulator.mst_state) {
-		rc = drm_dp_mst_topology_mgr_set_mst(&mst->mst_mgr, false);
-		if (rc < 0)
-			DRM_WARN("unable to set mst topology mgr, rc: %d\n",
-					rc);
-
-		/* release the reference taken during pre_enable */
-		dp_mst_sim_topology_put_port(port);
-
-		mst->simulator.mst_state = false;
-	}
+	if (mst->simulator.mst_state)
+		dp_mst_sim_remove_port(mst, port);
 
 	dp_bridge->vcpi = 0;
 	dp_bridge->pbn = 0;
