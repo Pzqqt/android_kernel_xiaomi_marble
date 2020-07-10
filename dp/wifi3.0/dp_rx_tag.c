@@ -270,6 +270,7 @@ void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
 {
 	uint32_t msdu_ppdu_id = 0;
 	struct mon_rx_status *mon_recv_status;
+	struct cdp_mon_status *rs;
 
 	bool is_mon_protocol_flow_tag_enabled =
 		wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(soc->wlan_cfg_ctx);
@@ -281,6 +282,10 @@ void dp_rx_mon_update_protocol_flow_tag(struct dp_soc *soc,
 		return;
 
 	if (qdf_likely(1 != dp_pdev->ppdu_info.rx_status.rxpcu_filter_pass))
+		return;
+
+	rs = &dp_pdev->rx_mon_recv_status;
+	if (rs->cdp_rs_rxdma_err)
 		return;
 
 	msdu_ppdu_id = hal_rx_get_ppdu_id(soc->hal_soc, rx_desc);
