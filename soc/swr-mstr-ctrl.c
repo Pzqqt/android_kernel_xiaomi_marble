@@ -646,6 +646,7 @@ static int swr_master_bulk_write(struct swr_mstr_ctrl *swrm, u32 *reg_addr,
 			usleep_range(50, 55);
 			swr_master_write(swrm, reg_addr[i], val[i]);
 		}
+		usleep_range(100, 110);
 		mutex_unlock(&swrm->iolock);
 	}
 	return 0;
