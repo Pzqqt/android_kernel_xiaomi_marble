@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,7 +43,7 @@
  * @QDF_STATUS_E_EMPTY: empty condition
  * @QDF_STATUS_E_EXISTS: existence failure
  * @QDF_STATUS_E_TIMEOUT: operation timeout
- * @QDF_STATUS_E_FAILURE: unknown reason do not use unless nothign else applies
+ * @QDF_STATUS_E_FAILURE: unknown reason do not use unless nothing else applies
  * @QDF_STATUS_E_NOENT: No such file or directory
  * @QDF_STATUS_E_E2BIG: Arg list too long
  * @QDF_STATUS_E_NOSPC: no space left on device
@@ -57,11 +57,6 @@
  * @QDF_STATUS_E_PROTO: protocol error
  * @QDF_STATUS_NOT_INITIALIZED: resource not initialized
  * @QDF_STATUS_E_NULL_VALUE: request is null
- * @QDF_STATUS_PMC_PENDING: request pendign in pmc
- * @QDF_STATUS_PMC_DISABLED: pmc is disabled
- * @QDF_STATUS_PMC_NOT_NOW: pmc not ready now
- * @QDF_STATUS_PMC_AC_POWER: pmc ac power
- * @QDF_STATUS_PMC_SYS_ERROR: pmc system error
  * @QDF_STATUS_HEARTBEAT_TMOUT: hearbeat timeout error
  * @QDF_STATUS_NTH_BEACON_DELIVERY: Nth beacon delivery
  * @QDF_STATUS_CSR_WRONG_STATE: csr in wrong state
@@ -112,11 +107,6 @@ typedef enum {
 	QDF_STATUS_E_PROTO,
 	QDF_STATUS_NOT_INITIALIZED,
 	QDF_STATUS_E_NULL_VALUE,
-	QDF_STATUS_PMC_PENDING,
-	QDF_STATUS_PMC_DISABLED,
-	QDF_STATUS_PMC_NOT_NOW,
-	QDF_STATUS_PMC_AC_POWER,
-	QDF_STATUS_PMC_SYS_ERROR,
 	QDF_STATUS_HEARTBEAT_TMOUT,
 	QDF_STATUS_NTH_BEACON_DELIVERY,
 	QDF_STATUS_CSR_WRONG_STATE,
