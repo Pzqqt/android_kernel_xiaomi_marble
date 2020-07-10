@@ -176,6 +176,7 @@ struct tx_macro_priv {
 	int bcs_ch;
 	bool bcs_clk_en;
 	bool hs_slow_insert_complete;
+	int amic_sample_rate;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -500,6 +501,29 @@ static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 				hpf_cut_off_freq << 5);
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x02);
+		/* Add delay between toggle hpf gate based on sample rate */
+		switch(tx_priv->amic_sample_rate) {
+		case 8000:
+			usleep_range(125, 130);
+			break;
+		case 16000:
+			usleep_range(62, 65);
+			break;
+		case 32000:
+			usleep_range(31, 32);
+			break;
+		case 48000:
+			usleep_range(20, 21);
+			break;
+		case 96000:
+			usleep_range(10, 11);
+			break;
+		case 192000:
+			usleep_range(5, 6);
+			break;
+		default:
+			usleep_range(125, 130);
+		}
 		snd_soc_component_update_bits(component, hpf_gate_reg,
 						0x03, 0x01);
 	} else {
@@ -935,6 +959,7 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 	u16 dec_cfg_reg = 0;
 	u16 hpf_gate_reg = 0;
 	u16 tx_gain_ctl_reg = 0;
+	u16 tx_fs_reg = 0;
 	u8 hpf_cut_off_freq = 0;
 	u16 adc_mux_reg = 0;
 	int hpf_delay = TX_MACRO_DMIC_HPF_DELAY_MS;
@@ -960,6 +985,11 @@ static int tx_macro_enable_dec(struct snd_soc_dapm_widget *w,
 				TX_MACRO_TX_PATH_OFFSET * decimator;
 	adc_mux_reg = BOLERO_CDC_TX_INP_MUX_ADC_MUX0_CFG1 +
 			TX_MACRO_ADC_MUX_CFG_OFFSET * decimator;
+	tx_fs_reg = BOLERO_CDC_TX0_TX_PATH_CTL +
+				TX_MACRO_TX_PATH_OFFSET * decimator;
+
+	tx_priv->amic_sample_rate = (snd_soc_component_read32(component,
+				     tx_fs_reg) & 0x0F);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
