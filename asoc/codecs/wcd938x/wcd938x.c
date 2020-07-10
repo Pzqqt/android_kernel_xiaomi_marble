@@ -1650,57 +1650,6 @@ static int wcd938x_get_adc_mode(int val)
 	return ret;
 }
 
-static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
-				    struct snd_kcontrol *kcontrol,
-				    int event){
-	struct snd_soc_component *component =
-					snd_soc_dapm_to_component(w->dapm);
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-	int clk_rate = 0, ret = 0;
-
-	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
-		w->name, event);
-
-	switch (event) {
-	case SND_SOC_DAPM_PRE_PMU:
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
-		set_bit(w->shift, &wcd938x->status_mask);
-		clk_rate = wcd938x_get_clk_rate(wcd938x->tx_mode[w->shift]);
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				 wcd938x->tx_swr_dev->dev_num,
-				 true);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				wcd938x->tx_swr_dev->dev_num,
-				false);
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
-		clear_bit(w->shift, &wcd938x->status_mask);
-		break;
-	};
-
-	return ret;
-}
-
-void wcd938x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
-					    bool bcs_disable)
-{
-	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
-
-	if (wcd938x->update_wcd_event) {
-		if (bcs_disable)
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
-		else
-			wcd938x->update_wcd_event(wcd938x->handle,
-						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
-	}
-}
-
 int wcd938x_tx_channel_config(struct snd_soc_component *component,
 			      int channel, int mode)
 {
@@ -1741,14 +1690,14 @@ int wcd938x_tx_channel_config(struct snd_soc_component *component,
 	return ret;
 }
 
-static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
-			      struct snd_kcontrol *kcontrol, int event)
-{
+static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
+				    struct snd_kcontrol *kcontrol,
+				    int event){
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
-	int mode;
-	int ret = 0;
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	int clk_rate = 0, ret = 0;
+	int mode;
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -1756,9 +1705,14 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_REQ_CTL, 0x02, 0x02);
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
+		set_bit(w->shift, &wcd938x->status_mask);
+		clk_rate = wcd938x_get_clk_rate(wcd938x->tx_mode[w->shift]);
+		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
+				 wcd938x->tx_swr_dev->dev_num,
+				 true);
 		ret = wcd938x_tx_channel_config(component, w->shift, 1);
 		mode = wcd938x_get_adc_mode(wcd938x->tx_mode[w->shift]);
 		if (mode < 0) {
@@ -1834,6 +1788,51 @@ static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
+		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
+				wcd938x->tx_swr_dev->dev_num,
+				false);
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
+		clear_bit(w->shift, &wcd938x->status_mask);
+		break;
+	};
+
+	return ret;
+}
+
+void wcd938x_disable_bcs_before_slow_insert(struct snd_soc_component *component,
+					    bool bcs_disable)
+{
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	if (wcd938x->update_wcd_event) {
+		if (bcs_disable)
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 0);
+		else
+			wcd938x->update_wcd_event(wcd938x->handle,
+						WCD_BOLERO_EVT_BCS_CLK_OFF, 1);
+	}
+}
+
+static int wcd938x_enable_req(struct snd_soc_dapm_widget *w,
+			      struct snd_kcontrol *kcontrol, int event)
+{
+	struct snd_soc_component *component =
+					snd_soc_dapm_to_component(w->dapm);
+	int ret = 0;
+
+	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
+		w->name, event);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_REQ_CTL, 0x02, 0x02);
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_REQ_CTL, 0x01, 0x00);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x00);
 		break;
