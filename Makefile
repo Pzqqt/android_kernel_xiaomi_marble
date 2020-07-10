@@ -21,6 +21,16 @@ LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_lahainadispco
 endif
 endif
 
+ifeq ($(CONFIG_ARCH_HOLI), y)
+     ifeq ($(CONFIG_QGKI), y)
+		include $(srctree)/techpack/display/config/holidisp.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/display/config/holidispconf.h
+     else
+		include $(srctree)/techpack/display/config/gki_holidisp.conf
+LINUXINCLUDE    += -include $(srctree)/techpack/display/config/gki_holidispconf.h
+     endif
+endif
+
 LINUXINCLUDE    += \
 		   -I$(srctree)/techpack/display/include/uapi/display \
 		   -I$(srctree)/techpack/display/include
