@@ -155,6 +155,9 @@ struct probe_time_dwell_time {
 /* Indicate client hint req is high priority than FW rnr or FILS discovery */
 #define SCAN_FLAG_EXT_6GHZ_CLIENT_HIGH_PRIORITY 0x80
 
+/* RRM scan type indication */
+#define SCAN_FLAG_EXT_RRM_SCAN_IND 0x400
+
 /* Passive dwell time if bt_a2dp is enabled. Time in msecs*/
 #define PASSIVE_DWELL_TIME_BT_A2DP_ENABLED 28
 

@@ -1296,6 +1296,8 @@ scm_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	      req->scan_req.scan_type != SCAN_TYPE_RRM)
 		scm_req_update_concurrency_params(vdev, req, scan_obj);
 
+	if (req->scan_req.scan_type == SCAN_TYPE_RRM)
+		req->scan_req.scan_ctrl_flags_ext |= SCAN_FLAG_EXT_RRM_SCAN_IND;
 	/*
 	 * Set wide band flag if enabled. This will cause
 	 * phymode TLV being sent to FW.
