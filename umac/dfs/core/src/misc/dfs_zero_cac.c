@@ -1894,6 +1894,8 @@ dfs_precac_create_precac_entry(struct wlan_dfs *dfs,
 	precac_entry->center_ch_ieee =
 	utils_dfs_freq_to_chan(precac_center_freq);
 	precac_entry->bw = dfs_max_bw_info[index].dfs_max_bw;
+	/* non_dfs_subch_count will be updated once the channels are marked. */
+	precac_entry->non_dfs_subch_count = 0;
 	precac_entry->dfs = dfs;
 	status =
 	    dfs_create_precac_tree_for_freq(dfs,
@@ -1921,6 +1923,8 @@ dfs_precac_create_165mhz_precac_entry(struct wlan_dfs *dfs,
 	precac_entry->center_ch_ieee =
 		utils_dfs_freq_to_chan(precac_entry->center_ch_freq);
 	precac_entry->bw = DFS_CHWIDTH_160_VAL;
+	/* non_dfs_subch_count will be updated once the channels are marked. */
+	precac_entry->non_dfs_subch_count = 0;
 	precac_entry->dfs = dfs;
 	dfs_insert_node_into_bstree_for_freq(&precac_entry->tree_root,
 					     RESTRICTED_80P80_CHAN_CENTER_FREQ,
@@ -1943,6 +1947,35 @@ dfs_precac_create_165mhz_precac_entry(struct wlan_dfs *dfs,
 			&dfs->dfs_precac_list,
 			precac_entry, pe_list);
 	return status;
+}
+
+/**
+ * dfs_update_non_dfs_subchannel_count() - API to update the preCAC entry
+ * with the given non DFS subchannel count.
+ * @dfs:       Pointer to DFS object.
+ * @frequency: Frequency whose corresponding preCAC entry needs to be updated.
+ * @count:     Non DFS subchannel count for the preCAC entry.
+ */
+static void
+dfs_update_non_dfs_subchannel_count(struct wlan_dfs *dfs,
+				    qdf_freq_t frequency,
+				    uint8_t count)
+{
+	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
+
+	PRECAC_LIST_LOCK(dfs);
+	TAILQ_FOREACH_SAFE(precac_entry,
+			   &dfs->dfs_precac_list,
+			   pe_list,
+			   tmp_precac_entry) {
+		if (IS_WITHIN_RANGE_STRICT(frequency,
+					   precac_entry->center_ch_freq,
+					   (precac_entry->bw/2))) {
+			precac_entry->non_dfs_subch_count = count;
+			break;
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
 }
 
 static void
@@ -1971,6 +2004,9 @@ dfs_mark_non_dfs_as_precac_done(struct wlan_dfs *dfs,
 					      ichan->dfs_ch_mhz_freq_seg1,
 					      0,
 					      CH_WIDTH_80MHZ);
+		dfs_update_non_dfs_subchannel_count(dfs,
+						    ichan->dfs_ch_mhz_freq_seg1,
+						    N_SUBCHANS_FOR_80BW);
 		PRECAC_LIST_LOCK(dfs);
 	} else if (!WLAN_IS_CHAN_DFS_CFREQ2(ichan)) {
 		PRECAC_LIST_UNLOCK(dfs);
@@ -1978,6 +2014,9 @@ dfs_mark_non_dfs_as_precac_done(struct wlan_dfs *dfs,
 					      ichan->dfs_ch_mhz_freq_seg2,
 					      0,
 					      CH_WIDTH_80MHZ);
+		dfs_update_non_dfs_subchannel_count(dfs,
+						    ichan->dfs_ch_mhz_freq_seg2,
+						    N_SUBCHANS_FOR_80BW);
 		PRECAC_LIST_LOCK(dfs);
 	}
 }
@@ -2917,6 +2956,54 @@ static void dfs_print_precac_tree_nodes(struct wlan_dfs *dfs,
 			}
 		}
 	}
+}
+
+/**
+ * dfs_is_precac_completed_count_non_zero() - API to find if the preCAC
+ * completed channels count is zero/non_zero.
+ * @dfs: Pointer to DFS object.
+ *
+ * Return true, if there exists atleast one node/subchannel in the preCAC list
+ * that is CAC done, else return false.
+ */
+static bool
+dfs_is_precac_completed_count_non_zero(struct wlan_dfs *dfs)
+{
+	struct dfs_precac_entry *precac_entry = NULL;
+
+	PRECAC_LIST_LOCK(dfs);
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_list)) {
+		TAILQ_FOREACH(precac_entry,
+			      &dfs->dfs_precac_list,
+			      pe_list) {
+			/* Find if the tree root has any preCAC channels
+			 * that is CAC done.
+			 */
+			if (!precac_entry->tree_root->n_caced_subchs)
+				continue;
+			if (abs(precac_entry->tree_root->n_caced_subchs -
+			    precac_entry->non_dfs_subch_count)) {
+				PRECAC_LIST_UNLOCK(dfs);
+				return true;
+			}
+		}
+	}
+	PRECAC_LIST_UNLOCK(dfs);
+
+	return false;
+}
+
+enum precac_status_for_chan
+dfs_precac_status_for_channel(struct wlan_dfs *dfs,
+			      struct dfs_channel *deschan)
+{
+	if (!dfs_is_precac_completed_count_non_zero(dfs))
+		return DFS_NO_PRECAC_COMPLETED_CHANS;
+
+	if (dfs_is_precac_done(dfs, deschan))
+		return DFS_PRECAC_COMPLETED_CHAN;
+
+	return DFS_PRECAC_REQUIRED_CHAN;
 }
 
 void dfs_print_precaclists(struct wlan_dfs *dfs)
