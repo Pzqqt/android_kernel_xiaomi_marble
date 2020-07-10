@@ -1121,5 +1121,5 @@ ifeq ($(CONFIG_ARCH_SDM660), y)
 CONFIG_WLAN_FEATURE_PKT_CAPTURE := y
 endif
 
-# enable connection manager
-#CONFIG_CM_ENABLE := y
+#Enable connection manager
+CONFIG_CM_ENABLE := n
