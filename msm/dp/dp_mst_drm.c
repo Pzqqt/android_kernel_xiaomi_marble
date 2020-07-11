@@ -267,6 +267,10 @@ static void dp_mst_sim_add_port(struct dp_mst_private *mst,
 	struct drm_dp_mst_port *port;
 
 	mstb = mst->mst_mgr.mst_primary;
+	if (!mstb) {
+		DP_ERR("Unable to add port. mst branch device was destroyed\n");
+		return;
+	}
 
 	port = kzalloc(sizeof(*port), GFP_KERNEL);
 	if (!port)
