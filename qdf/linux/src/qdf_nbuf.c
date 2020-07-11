@@ -4574,3 +4574,71 @@ void __qdf_nbuf_mod_exit(void)
 {
 }
 #endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 4, 0))
+QDF_STATUS __qdf_nbuf_move_frag_page_offset(__qdf_nbuf_t nbuf, uint8_t idx,
+					    int offset)
+{
+	unsigned int frag_offset;
+	skb_frag_t *frag;
+
+	if (qdf_unlikely(idx >= __qdf_nbuf_get_nr_frags(nbuf)))
+		return QDF_STATUS_E_FAILURE;
+
+	frag = &skb_shinfo(nbuf)->frags[idx];
+	frag_offset = skb_frag_off(frag);
+
+	frag_offset += offset;
+	skb_frag_off_set(frag, frag_offset);
+
+	__qdf_nbuf_trim_add_frag_size(nbuf, idx, -(offset), 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+QDF_STATUS __qdf_nbuf_move_frag_page_offset(__qdf_nbuf_t nbuf, uint8_t idx,
+					    int offset)
+{
+	uint16_t frag_offset;
+	skb_frag_t *frag;
+
+	if (qdf_unlikely(idx >= __qdf_nbuf_get_nr_frags(nbuf)))
+		return QDF_STATUS_E_FAILURE;
+
+	frag = &skb_shinfo(nbuf)->frags[idx];
+	frag_offset = frag->page_offset;
+
+	frag_offset += offset;
+	frag->page_offset = frag_offset;
+
+	__qdf_nbuf_trim_add_frag_size(nbuf, idx, -(offset), 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+qdf_export_symbol(__qdf_nbuf_move_frag_page_offset);
+
+void __qdf_nbuf_add_rx_frag(__qdf_frag_t buf, __qdf_nbuf_t nbuf,
+			    int offset, int frag_len,
+			    unsigned int truesize, bool take_frag_ref)
+{
+	struct page *page;
+	int frag_offset;
+	uint8_t nr_frag;
+
+	nr_frag = __qdf_nbuf_get_nr_frags(nbuf);
+
+	page = virt_to_head_page(buf);
+	frag_offset = buf - page_address(page);
+
+	skb_add_rx_frag(nbuf, nr_frag, page,
+			(frag_offset + offset),
+			frag_len, truesize);
+
+	if (unlikely(take_frag_ref))
+		skb_frag_ref(nbuf, nr_frag);
+}
+
+qdf_export_symbol(__qdf_nbuf_add_rx_frag);

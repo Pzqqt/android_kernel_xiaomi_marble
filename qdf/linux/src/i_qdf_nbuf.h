@@ -37,6 +37,7 @@
 #include <qdf_mem.h>
 #include <linux/tcp.h>
 #include <qdf_util.h>
+#include <qdf_nbuf_frag.h>
 
 /*
  * Use socket buffer as the underlying implementation as skbuf .
@@ -2346,6 +2347,89 @@ void __qdf_nbuf_queue_head_unlock(struct sk_buff_head *skb_queue_head)
 {
 	spin_unlock_bh(&skb_queue_head->lock);
 }
+
+/**
+ * __qdf_nbuf_get_frag_size_by_idx() - Get nbuf frag size at index idx
+ * @nbuf: qdf_nbuf_t
+ * @idx: Index for which frag size is requested
+ *
+ * Return: Frag size
+ */
+static inline unsigned int __qdf_nbuf_get_frag_size_by_idx(__qdf_nbuf_t nbuf,
+							   uint8_t idx)
+{
+	unsigned int size = 0;
+
+	if (likely(idx < __QDF_NBUF_MAX_FRAGS))
+		size = skb_frag_size(&skb_shinfo(nbuf)->frags[idx]);
+	return size;
+}
+
+/**
+ * __qdf_nbuf_get_frag_address() - Get nbuf frag address at index idx
+ * @nbuf: qdf_nbuf_t
+ * @idx: Index for which frag address is requested
+ *
+ * Return: Frag address in success, else NULL
+ */
+static inline __qdf_frag_t __qdf_nbuf_get_frag_addr(__qdf_nbuf_t nbuf,
+						    uint8_t idx)
+{
+	__qdf_frag_t frag_addr = NULL;
+
+	if (likely(idx < __QDF_NBUF_MAX_FRAGS))
+		frag_addr = skb_frag_address(&skb_shinfo(nbuf)->frags[idx]);
+	return frag_addr;
+}
+
+/**
+ * __qdf_nbuf_trim_add_frag_size() - Increase/Decrease frag_size by size
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index
+ * @size: Size by which frag_size needs to be increased/decreased
+ *        +Ve means increase, -Ve means decrease
+ * @truesize: truesize
+ */
+static inline void __qdf_nbuf_trim_add_frag_size(__qdf_nbuf_t nbuf, uint8_t idx,
+						 int size,
+						 unsigned int truesize)
+{
+	skb_coalesce_rx_frag(nbuf, idx, size, truesize);
+}
+
+/**
+ * __qdf_nbuf_move_frag_page_offset() - Move frag page_offset by size
+ *          and adjust length by size.
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index
+ * @offset: Frag page offset should be moved by offset.
+ *      +Ve - Move offset forward.
+ *      -Ve - Move offset backward.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS __qdf_nbuf_move_frag_page_offset(__qdf_nbuf_t nbuf, uint8_t idx,
+					    int offset);
+
+/**
+ * __qdf_nbuf_add_rx_frag() - Add frag to nbuf at nr_frag index
+ * @buf: Frag pointer needs to be added in nbuf frag
+ * @nbuf: qdf_nbuf_t where frag will be added
+ * @offset: Offset in frag to be added to nbuf_frags
+ * @frag_len: Frag length
+ * @truesize: truesize
+ * @take_frag_ref: Whether to take ref for frag or not
+ *      This bool must be set as per below comdition:
+ *      1. False: If this frag is being added in any nbuf
+ *              for the first time after allocation.
+ *      2. True: If frag is already attached part of any
+ *              nbuf.
+ *
+ * It takes ref_count based on boolean flag take_frag_ref
+ */
+void __qdf_nbuf_add_rx_frag(__qdf_frag_t buf, __qdf_nbuf_t nbuf,
+			    int offset, int frag_len,
+			    unsigned int truesize, bool take_frag_ref);
 
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_w.h>

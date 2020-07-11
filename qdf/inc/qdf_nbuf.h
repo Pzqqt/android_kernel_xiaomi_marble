@@ -3667,6 +3667,86 @@ static inline void qdf_nbuf_orphan(qdf_nbuf_t buf)
 	return __qdf_nbuf_orphan(buf);
 }
 
+/**
+ * qdf_nbuf_get_frag_size_by_idx() - Get size of nbuf frag at index idx
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index for which frag size is requested
+ *
+ * Return: Frag size
+ */
+static inline unsigned int qdf_nbuf_get_frag_size_by_idx(qdf_nbuf_t nbuf,
+							 uint8_t idx)
+{
+	return __qdf_nbuf_get_frag_size_by_idx(nbuf, idx);
+}
+
+/**
+ * qdf_nbuf_get_frag_addr() - Get nbuf frag address at index idx
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index for which frag address is requested
+ *
+ * Return: Frag address
+ */
+static inline qdf_frag_t qdf_nbuf_get_frag_addr(qdf_nbuf_t nbuf, uint8_t idx)
+{
+	return __qdf_nbuf_get_frag_addr(nbuf, idx);
+}
+
+/**
+ * qdf_nbuf_trim_add_frag_size() - Increase/Decrease frag_size by size
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index
+ * @size: Size by which frag_size needs to be increased/decreased
+ *        +Ve means increase, -Ve means decrease
+ * @truesize: truesize
+ */
+static inline void qdf_nbuf_trim_add_frag_size(qdf_nbuf_t nbuf, uint8_t idx,
+					       int size, unsigned int truesize)
+{
+	__qdf_nbuf_trim_add_frag_size(nbuf, idx, size, truesize);
+}
+
+/**
+ * qdf_nbuf_move_frag_page_offset() - Move frag page_offset by size
+ *          and adjust length by size.
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index
+ * @offset: Frag page offset should be moved by offset.
+ *      +Ve - Move offset forward.
+ *      -Ve - Move offset backward.
+ */
+static inline QDF_STATUS qdf_nbuf_move_frag_page_offset(qdf_nbuf_t nbuf,
+							uint8_t idx,
+							int offset)
+{
+	return __qdf_nbuf_move_frag_page_offset(nbuf, idx, offset);
+}
+
+/**
+ * qdf_nbuf_add_rx_frag() - Add frag to nbuf at index frag_idx
+ * @buf: Frag pointer needs to be added in nbuf frag
+ * @nbuf: qdf_nbuf_t where frag will be added
+ * @offset: Offset in frag to be added to nbuf_frags
+ * @frag_len: Frag length
+ * @truesize: truesize
+ * @take_frag_ref: Whether to take ref for frag or not
+ *      This bool must be set as per below comdition:
+ *      1. False: If this frag is being added in any nbuf
+ *              for the first time after allocation
+ *      2. True: If frag is already attached part of any
+ *              nbuf
+ *
+ * qdf_nbuf_add_rx_frag takes ref_count based on boolean flag take_frag_ref
+ */
+static inline void qdf_nbuf_add_rx_frag(qdf_frag_t buf, qdf_nbuf_t nbuf,
+					int offset, int frag_len,
+					unsigned int truesize,
+					bool take_frag_ref)
+{
+	__qdf_nbuf_add_rx_frag(buf, nbuf, offset,
+			       frag_len, truesize, take_frag_ref);
+}
+
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>
 #else

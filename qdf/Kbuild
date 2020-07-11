@@ -50,6 +50,7 @@ linux/src/qdf_crypto.o      \
 linux/src/qdf_module.o    \
 linux/src/qdf_net_if.o   \
 linux/src/qdf_nbuf.o       \
+linux/src/qdf_nbuf_frag.o       \
 linux/src/qdf_perf.o        \
 linux/src/qdf_status.o     \
 linux/src/qdf_threads.o     \
