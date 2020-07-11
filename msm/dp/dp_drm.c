@@ -702,3 +702,34 @@ int dp_connector_update_pps(struct drm_connector *connector,
 	dp_disp = display;
 	return dp_disp->update_pps(dp_disp, connector, pps_cmd);
 }
+
+int dp_connector_install_properties(void *display, struct drm_connector *conn)
+{
+	struct dp_display *dp_display = display;
+	struct drm_connector *base_conn;
+	int rc;
+
+	if (!display || !conn) {
+		DP_ERR("invalid params\n");
+		return -EINVAL;
+	}
+
+	base_conn = dp_display->base_connector;
+
+	/*
+	 * Create the property on the base connector during probe time and then
+	 * attach the same property onto new connector objects created for MST
+	 */
+	if (!base_conn->colorspace_property) {
+		/* This is the base connector. create the drm property */
+		rc = drm_mode_create_dp_colorspace_property(base_conn);
+		if (rc)
+			return rc;
+	} else {
+		conn->colorspace_property = base_conn->colorspace_property;
+	}
+
+	drm_object_attach_property(&conn->base, conn->colorspace_property, 0);
+
+	return 0;
+}

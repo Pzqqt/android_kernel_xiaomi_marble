@@ -2729,10 +2729,8 @@ static int _sde_connector_install_properties(struct drm_device *dev,
 			      sizeof(hdr),
 			      CONNECTOR_PROP_EXT_HDR_INFO);
 
-		/* create and attach colorspace property for DP */
-		if (!drm_mode_create_dp_colorspace_property(connector))
-			drm_object_attach_property(&connector->base,
-				connector->colorspace_property, 0);
+		if (c_conn->ops.install_properties)
+			c_conn->ops.install_properties(display, connector);
 	}
 
 	msm_property_install_volatile_range(&c_conn->property_info,
