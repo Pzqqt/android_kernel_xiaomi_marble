@@ -4121,9 +4121,11 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 			sde_encoder_control_idle_pc(encoder, true);
 	}
 
-	if (sde_crtc->power_event)
+	if (sde_crtc->power_event) {
 		sde_power_handle_unregister_event(&priv->phandle,
 				sde_crtc->power_event);
+		sde_crtc->power_event = NULL;
+	}
 
 	/**
 	 * All callbacks are unregistered and frame done waits are complete
