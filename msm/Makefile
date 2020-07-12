@@ -128,6 +128,7 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 	msm_gem_prime.o \
 	msm_gem_vma.o \
 	msm_smmu.o \
+	msm_cooling_device.o \
 	msm_prop.o
 
 msm_drm-$(CONFIG_HDCP_QSEECOM) += ../hdcp/msm_hdcp.o \
