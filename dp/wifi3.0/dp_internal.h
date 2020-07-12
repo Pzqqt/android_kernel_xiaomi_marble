@@ -1948,6 +1948,18 @@ void dp_peer_tx_capture_filter_check(struct dp_pdev *pdev,
 				     struct dp_peer *peer)
 {
 }
+
+/*
+ * dp_tx_capture_debugfs_init: tx capture debugfs init
+ * @pdev: DP PDEV handle
+ *
+ * return: QDF_STATUS
+ */
+static inline
+QDF_STATUS dp_tx_capture_debugfs_init(struct dp_pdev *pdev)
+{
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 #ifdef FEATURE_PERPKT_INFO

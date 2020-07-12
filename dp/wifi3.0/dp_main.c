@@ -178,6 +178,9 @@ QDF_STATUS dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 				HTC_HANDLE htc_handle,
 				qdf_device_t qdf_osdev,
 				uint8_t pdev_id);
+
+static int dp_pdev_post_attach_wifi3(struct cdp_soc_t *psoc, uint8_t pdev_id);
+
 static QDF_STATUS
 dp_pdev_init_wifi3(struct cdp_soc_t *txrx_soc,
 		   HTC_HANDLE htc_handle,
@@ -4111,6 +4114,44 @@ dp_pdev_deinit_wifi3(struct cdp_soc_t *psoc, uint8_t pdev_id,
 
 	dp_pdev_deinit((struct cdp_pdev *)txrx_pdev, force);
 
+	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_pdev_post_attach() - Do post pdev attach after dev_alloc_name
+ * @txrx_pdev: Datapath PDEV handle
+ *
+ * Return: None
+ */
+static void dp_pdev_post_attach(struct cdp_pdev *txrx_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
+
+	dp_tx_capture_debugfs_init(pdev);
+}
+
+/*
+ * dp_pdev_post_attach_wifi3() - attach txrx pdev post
+ * @psoc: Datapath soc handle
+ * @pdev_id: pdev id of pdev
+ *
+ * Return: QDF_STATUS
+ */
+static int dp_pdev_post_attach_wifi3(struct cdp_soc_t *soc,
+				     uint8_t pdev_id)
+{
+	struct dp_pdev *pdev;
+
+	pdev = dp_get_pdev_from_soc_pdev_id_wifi3((struct dp_soc *)soc,
+						  pdev_id);
+
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("DP PDEV is Null for pdev id %d"), pdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dp_pdev_post_attach((struct cdp_pdev *)pdev);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9916,6 +9957,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
 	.txrx_vdev_detach = dp_vdev_detach_wifi3,
 	.txrx_pdev_attach = dp_pdev_attach_wifi3,
+	.txrx_pdev_post_attach = dp_pdev_post_attach_wifi3,
 	.txrx_pdev_detach = dp_pdev_detach_wifi3,
 	.txrx_pdev_deinit = dp_pdev_deinit_wifi3,
 	.txrx_peer_create = dp_peer_create_wifi3,

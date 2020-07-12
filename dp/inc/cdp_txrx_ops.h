@@ -1087,6 +1087,8 @@ struct ol_if_ops {
 	int (*get_soc_nss_cfg)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle);
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 
+	char *(*get_device_name)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
+				 uint8_t pdev_id);
 };
 
 #ifdef DP_PEER_EXTENDED_API
