@@ -1089,9 +1089,8 @@ ifeq ($(CONFIG_WLAN_FW_OFFLOAD), y)
 CONFIG_WLAN_FEATURE_ELNA := y
 endif
 
-ifeq (y,$(findstring y,$(CONFIG_ARCH_MSM) $(CONFIG_ARCH_QCOM)))
+#Enable DP Bus Vote
 CONFIG_WLAN_FEATURE_DP_BUS_BANDWIDTH := y
-endif
 
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 #Enable 6 GHz Band
