@@ -113,7 +113,7 @@ TRACE_EVENT(sde_encoder_underrun,
 		__entry->underrun_cnt)
 );
 
-TRACE_EVENT(sde_drm_tracing_mark_write,
+TRACE_EVENT(tracing_mark_write,
 	TP_PROTO(char trace_type, const struct task_struct *task,
 		const char *name, int value),
 	TP_ARGS(trace_type, task, name, value),
@@ -390,7 +390,7 @@ TRACE_EVENT(sde_perf_uidle_status,
 			)
 );
 
-#define sde_atrace trace_sde_drm_tracing_mark_write
+#define sde_atrace trace_tracing_mark_write
 
 #define SDE_ATRACE_END(name) sde_atrace('E', current, name, 0)
 #define SDE_ATRACE_BEGIN(name) sde_atrace('B', current, name, 0)
