@@ -2621,7 +2621,7 @@ int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
 	 * sure that HW mode is not set to DBS by NAN Enable request. NAN state
 	 * machine will remain unaffected in this case.
 	 */
-	if (!ucfg_is_nan_dbs_supported(psoc))
+	if (!NAN_CONCURRENCY_SUPPORTED(psoc))
 		return os_if_nan_generic_req(psoc, tb);
 
 	/*
