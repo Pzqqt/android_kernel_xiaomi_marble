@@ -109,6 +109,9 @@ struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev,
 			if (!search_fdb->is_local)
 				continue;
 
+			if ((!search_fdb->dst) || (!search_fdb->dst->dev))
+				return NULL;
+
 			search_dev = search_fdb->dst->dev;
 			ieee80211_ptr = search_dev->ieee80211_ptr;
 			if (ieee80211_ptr
