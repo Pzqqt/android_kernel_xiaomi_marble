@@ -3023,10 +3023,10 @@ static  void _dspp_demura_install_property(struct drm_crtc *crtc)
 	version = catalog->dspp[0].sblk->demura.version >> 16;
 	switch (version) {
 	case 1:
-		_sde_cp_crtc_install_blob_property(crtc, "DEMURA_INIT_V1",
+		_sde_cp_crtc_install_blob_property(crtc, "SDE_DEMURA_INIT_CFG_V1",
 			SDE_CP_CRTC_DSPP_DEMURA_INIT,
 			sizeof(struct drm_msm_dem_cfg));
-		_sde_cp_crtc_install_range_property(crtc, "DEMURA_BACKLIGHT",
+		_sde_cp_crtc_install_range_property(crtc, "SDE_DEMURA_BACKLIGHT_V1",
 				SDE_CP_CRTC_DSPP_DEMURA_BACKLIGHT,
 				0, 1024, 0);
 		break;
