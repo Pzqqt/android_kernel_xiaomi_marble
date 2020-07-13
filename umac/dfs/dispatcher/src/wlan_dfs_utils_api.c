@@ -1668,6 +1668,11 @@ QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 		return status;
 
 	*target_chan_freq = dfs->dfs_rcac_param.rcac_pri_freq;
+
+	/* Do not modify the input ch_params if no RCAC channel is present. */
+	if (!*target_chan_freq)
+		return status;
+
 	*chan_params = dfs->dfs_rcac_param.rcac_ch_params;
 
 	return QDF_STATUS_SUCCESS;
