@@ -521,22 +521,14 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	mcs_2 = new_cap->tx_he_mcs_map_lt_80;
 	he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
 	if (is_5g_cap) {
-		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
-		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
 		*((uint16_t *)he_cap->rx_he_mcs_map_160) =
-			HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
-		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
+			*((uint16_t *)new_cap->rx_he_mcs_map_160);
 		*((uint16_t *)he_cap->tx_he_mcs_map_160) =
-			HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
-		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
+			*((uint16_t *)new_cap->tx_he_mcs_map_160);
 		*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
-			HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
-		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
+			*((uint16_t *)new_cap->rx_he_mcs_map_80_80);
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
-			HE_INTERSECT_MCS(mcs_1, mcs_2);
+			*((uint16_t *)new_cap->tx_he_mcs_map_80_80);
 	}
 }
 
