@@ -9067,15 +9067,16 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	tSmeCmd *pCommand = NULL;
 	mac_handle_t mac_handle = MAC_HANDLE(mac);
 	struct csr_roam_session *session_ptr;
-	struct scan_result_list *bss_list = NULL;
 	struct csr_roam_profile *profile = NULL;
 	struct csr_roam_connectedinfo *prev_connect_info;
 	struct wlan_crypto_pmksa *pmksa;
 	uint32_t len = 0, roamId = 0, reason_code = 0;
 	bool is_dis_pending;
 	bool use_same_bss = false;
+	uint8_t max_retry_count = 1;
 	bool retry_same_bss = false;
 	bool attempt_next_bss = true;
+	enum csr_akm_type auth_type = eCSR_AUTH_TYPE_NONE;
 
 	if (!pSmeJoinRsp) {
 		sme_err("Sme Join Response is NULL");
@@ -9161,8 +9162,7 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	if (pCommand) {
 		roamId = pCommand->u.roamCmd.roamId;
 		profile = &pCommand->u.roamCmd.roamProfile;
-		bss_list =
-			(struct scan_result_list *)pCommand->u.roamCmd.hBSSList;
+		auth_type = profile->AuthType.authType[0];
 	}
 
 	reason_code = pSmeJoinRsp->protStatusCode;
@@ -9209,11 +9209,14 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 	    pSmeJoinRsp->status_code == eSIR_SME_ASSOC_TIMEOUT_RESULT_CODE &&
 	    (mlme_get_reconn_after_assoc_timeout_flag(mac->psoc,
 						     pSmeJoinRsp->vdev_id) ||
-	    (profile && (profile->AuthType.authType[0] == eCSR_AUTH_TYPE_SAE ||
-	      profile->AuthType.authType[0] == eCSR_AUTH_TYPE_FT_SAE) &&
-	    bss_list && (csr_ll_count(&bss_list->List) ==
-	    session_ptr->join_bssid_count))))
+	    (auth_type == eCSR_AUTH_TYPE_SAE ||
+	     auth_type == eCSR_AUTH_TYPE_FT_SAE))) {
 		retry_same_bss = true;
+		if (auth_type == eCSR_AUTH_TYPE_SAE ||
+		    auth_type == eCSR_AUTH_TYPE_FT_SAE)
+			wlan_mlme_get_sae_assoc_retry_count(mac->psoc,
+							    &max_retry_count);
+	}
 
 	if (attempt_next_bss && retry_same_bss &&
 	    pCommand && pCommand->u.roamCmd.pRoamBssEntry) {
@@ -9223,10 +9226,12 @@ static void csr_roam_join_rsp_processor(struct mac_context *mac,
 			GET_BASE_ADDR(pCommand->u.roamCmd.pRoamBssEntry,
 				      struct tag_csrscan_result, Link);
 		/* Retry with same BSSID without PMKID */
-		if (!scan_result->retry_count) {
-			sme_info("Retry once with same BSSID, status %d reason %d",
-				 pSmeJoinRsp->status_code, reason_code);
-			scan_result->retry_count = 1;
+		if (scan_result->retry_count < max_retry_count) {
+			sme_info("Retry once with same BSSID, status %d reason %d auth_type %d retry count %d max count %d",
+				 pSmeJoinRsp->status_code, reason_code,
+				 auth_type, scan_result->retry_count,
+				 max_retry_count);
+			scan_result->retry_count++;
 			use_same_bss = true;
 		}
 	}

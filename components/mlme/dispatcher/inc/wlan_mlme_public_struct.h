@@ -1108,6 +1108,7 @@ struct wlan_mlme_chainmask {
  * supports stop all host scan request type.
  * @peer_create_conf_support: Peer create confirmation command support
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
+ * @sae_connect_retries: sae connect retry bitmask
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -1148,6 +1149,7 @@ struct wlan_mlme_generic {
 	bool stop_all_host_scan_support;
 	bool peer_create_conf_support;
 	bool dual_sta_roam_fw_support;
+	uint32_t sae_connect_retries;
 };
 
 /*

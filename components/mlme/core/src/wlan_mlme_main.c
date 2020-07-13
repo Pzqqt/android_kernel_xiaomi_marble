@@ -347,6 +347,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT);
 	gen->dfs_chan_ageout_time =
 		cfg_get(psoc, CFG_DFS_CHAN_AGEOUT_TIME);
+	gen->sae_connect_retries =
+		cfg_get(psoc, CFG_SAE_CONNECION_RETRIES);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)

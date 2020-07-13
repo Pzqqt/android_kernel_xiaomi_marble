@@ -55,6 +55,7 @@
 #include <cdp_txrx_peer_ops.h>
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
+#include <wlan_mlme_api.h>
 
 /**
  *
@@ -5348,7 +5349,6 @@ error_delba:
 }
 
 #define WLAN_SAE_AUTH_TIMEOUT 1000
-#define WLAN_SAE_AUTH_RETRY 1
 
 /**
  * lim_tx_mgmt_frame() - Transmits Auth mgmt frame
@@ -5408,6 +5408,7 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 {
 	struct pe_session *session;
 	struct sae_auth_retry *sae_retry;
+	uint8_t retry_count = 0;
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session) {
@@ -5415,6 +5416,17 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		       vdev_id);
 		return;
 	}
+
+	if (session->limMlmState == eLIM_MLM_WT_SAE_AUTH_STATE)
+		wlan_mlme_get_sae_auth_retry_count(mac_ctx->psoc, &retry_count);
+	else
+		wlan_mlme_get_sae_roam_auth_retry_count(mac_ctx->psoc,
+							&retry_count);
+	if (!retry_count) {
+		pe_debug("vdev %d: SAE Auth retry disabled", vdev_id);
+		return;
+	}
+
 
 	sae_retry = mlme_get_sae_auth_retry(session->vdev);
 	if (!sae_retry) {
@@ -5438,7 +5450,7 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 	mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer.sessionId =
 					session->peSessionId;
 	sae_retry->sae_auth.len = frame_len;
-	sae_retry->sae_auth_max_retry = WLAN_SAE_AUTH_RETRY;
+	sae_retry->sae_auth_max_retry = retry_count;
 
 	tx_timer_change(
 		&mac_ctx->lim.lim_timers.g_lim_periodic_auth_retry_timer,
