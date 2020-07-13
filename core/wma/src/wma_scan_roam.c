@@ -3307,6 +3307,7 @@ int wma_roam_auth_offload_event_handler(WMA_HANDLE handle, uint8_t *event,
 	wma_debug("Received Roam auth offload event for bss:%pM vdev_id:%d",
 		  ap_bssid.bytes, vdev_id);
 
+	lim_sae_auth_cleanup_retry(mac_ctx, vdev_id);
 	status = wma->csr_roam_auth_event_handle_cb(mac_ctx, vdev_id, ap_bssid);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err_rl("Trigger pre-auth failed");
@@ -5898,6 +5899,7 @@ static void wma_invalid_roam_reason_handler(tp_wma_handle wma_handle,
 	} else if (notif == WMI_ROAM_NOTIF_ROAM_ABORT) {
 		wma_handle->interfaces[vdev_id].roaming_in_progress = false;
 		op_code = SIR_ROAMING_ABORT;
+		lim_sae_auth_cleanup_retry(wma_handle->mac_context, vdev_id);
 	} else {
 		wma_debug("Invalid notif %d", notif);
 		return;
@@ -6064,6 +6066,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_debug("mac addr to avoid %pM", bssid.bytes);
 		wma_handle_hw_mode_transition(wma_handle, param_buf);
 		wma_roam_ho_fail_handler(wma_handle, wmi_event->vdev_id, bssid);
+		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
+					   wmi_event->vdev_id);
 		break;
 #endif
 	case WMI_ROAM_REASON_INVALID:
@@ -6079,6 +6083,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		if (!roam_synch_data)
 			return -ENOMEM;
 
+		lim_sae_auth_cleanup_retry(wma_handle->mac_context,
+					   wmi_event->vdev_id);
 		roam_synch_data->roamed_vdev_id = wmi_event->vdev_id;
 		wma_handle->csr_roam_synch_cb(wma_handle->mac_context,
 					      roam_synch_data, NULL,

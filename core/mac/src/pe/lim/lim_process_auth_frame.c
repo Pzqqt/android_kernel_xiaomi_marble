@@ -1660,7 +1660,8 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 {
 	tpSirMacMgmtHdr dot11_hdr;
 	uint16_t auth_alg, frm_len;
-	uint8_t *frm_body;
+	uint8_t *frm_body, pdev_id;
+	struct wlan_objmgr_vdev *vdev;
 
 	dot11_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt);
 	frm_body = WMA_GET_RX_MPDU_DATA(rx_pkt);
@@ -1679,6 +1680,13 @@ bool lim_process_sae_preauth_frame(struct mac_context *mac, uint8_t *rx_pkt)
 		 ((dot11_hdr->seqControl.seqNumHi << 8) |
 		  (dot11_hdr->seqControl.seqNumLo << 4) |
 		  (dot11_hdr->seqControl.fragNum)), *(uint16_t *)(frm_body + 2));
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(mac->pdev);
+	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(
+			mac->psoc, pdev_id, dot11_hdr->da, WLAN_LEGACY_SME_ID);
+	if (vdev) {
+		lim_sae_auth_cleanup_retry(mac, vdev->vdev_objmgr.vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+	}
 
 	lim_send_sme_mgmt_frame_ind(mac, dot11_hdr->fc.subType,
 				    (uint8_t *)dot11_hdr,

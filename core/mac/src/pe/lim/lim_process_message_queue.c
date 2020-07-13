@@ -89,6 +89,7 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 		if (tx_timer_running(&mac->lim.lim_timers.sae_auth_timer))
 			lim_deactivate_and_change_timer(mac,
 							eLIM_AUTH_SAE_TIMER);
+		lim_sae_auth_cleanup_retry(mac, session->vdev_id);
 		/* success */
 		if (sae_msg->sae_status == IEEE80211_STATUS_SUCCESS)
 			lim_restore_from_auth_state(mac,

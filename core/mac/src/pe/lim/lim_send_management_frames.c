@@ -5416,6 +5416,8 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		       vdev_id);
 		return;
 	}
+	if (session->opmode != QDF_STA_MODE)
+		return;
 
 	if (session->limMlmState == eLIM_MLM_WT_SAE_AUTH_STATE)
 		wlan_mlme_get_sae_auth_retry_count(mac_ctx->psoc, &retry_count);
@@ -5426,7 +5428,6 @@ lim_handle_sae_auth_retry(struct mac_context *mac_ctx, uint8_t vdev_id,
 		pe_debug("vdev %d: SAE Auth retry disabled", vdev_id);
 		return;
 	}
-
 
 	sae_retry = mlme_get_sae_auth_retry(session->vdev);
 	if (!sae_retry) {
