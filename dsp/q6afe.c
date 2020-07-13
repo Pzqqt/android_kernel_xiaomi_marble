@@ -5680,8 +5680,12 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 			if ((q6core_get_avcs_api_version_per_service(
 				APRV2_IDS_SERVICE_ID_ADSP_CORE_V) >=
 				AVCS_API_VERSION_V5)) {
-				/* LDAC doesn't require decoder */
-				if (codec_format == ENC_CODEC_TYPE_LDAC)
+				/*
+				 * LDAC and APTX_ADAPTIVE don't require loading decoder module
+				 * Only loading de-packetizer module.
+				 */
+				if (codec_format == ENC_CODEC_TYPE_LDAC ||
+					codec_format == ASM_MEDIA_FMT_APTX_ADAPTIVE)
 					ret = q6afe_load_avcs_modules(1, port_id,
 						DECODER_CASE, codec_format);
 				else
