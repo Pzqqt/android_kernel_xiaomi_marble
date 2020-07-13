@@ -425,6 +425,9 @@ struct sde_connector_dyn_hdr_metadata {
  * @event_table: Array of registered events
  * @event_lock: Lock object for event_table
  * @bl_device: backlight device node
+ * @cdev: backlight cooling device interface
+ * @n: backlight cooling device notifier
+ * @thermal_max_brightness: thermal max brightness cap
  * @status_work: work object to perform status checks
  * @esd_status_interval: variable to change ESD check interval in millisec
  * @panel_dead: Flag to indicate if panel has gone bad
@@ -484,6 +487,9 @@ struct sde_connector {
 	spinlock_t event_lock;
 
 	struct backlight_device *bl_device;
+	struct sde_cdev *cdev;
+	struct notifier_block n;
+	unsigned long thermal_max_brightness;
 	struct delayed_work status_work;
 	u32 esd_status_interval;
 	bool panel_dead;
