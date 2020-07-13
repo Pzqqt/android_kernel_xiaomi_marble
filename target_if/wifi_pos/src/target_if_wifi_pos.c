@@ -176,7 +176,7 @@ static int target_if_wifi_pos_oem_rsp_ev_handler(ol_scn_t scn,
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	priv_obj = wifi_pos_get_psoc_priv_obj(psoc);
+	priv_obj = wifi_pos_get_psoc_priv_obj(wifi_pos_get_psoc());
 	if (!priv_obj) {
 		target_if_err("priv_obj is null");
 		wlan_objmgr_psoc_release_ref(psoc, WLAN_WIFI_POS_TGT_IF_ID);
@@ -316,6 +316,11 @@ void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_wifi_pos_register_events;
 	wifi_pos_tx_ops->wifi_pos_deregister_events =
 		target_if_wifi_pos_deregister_events;
+	wifi_pos_tx_ops->wifi_pos_convert_pdev_id_host_to_target =
+		target_if_wifi_pos_convert_pdev_id_host_to_target;
+	wifi_pos_tx_ops->wifi_pos_convert_pdev_id_target_to_host =
+		target_if_wifi_pos_convert_pdev_id_target_to_host;
+
 }
 
 inline struct wlan_lmac_if_wifi_pos_rx_ops *target_if_wifi_pos_get_rxops(
@@ -410,6 +415,38 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifndef CNSS_GENL
+QDF_STATUS target_if_wifi_pos_convert_pdev_id_host_to_target(
+		struct wlan_objmgr_psoc *psoc, uint32_t host_pdev_id,
+		uint32_t *target_pdev_id)
+{
+	wmi_unified_t wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	if (!wmi_hdl) {
+		target_if_err("null wmi_hdl");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_convert_pdev_id_host_to_target(wmi_hdl, host_pdev_id,
+						  target_pdev_id);
+}
+
+QDF_STATUS target_if_wifi_pos_convert_pdev_id_target_to_host(
+		struct wlan_objmgr_psoc *psoc, uint32_t target_pdev_id,
+		uint32_t *host_pdev_id)
+{
+	wmi_unified_t wmi_hdl = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	if (!wmi_hdl) {
+		target_if_err("null wmi_hdl");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_convert_pdev_id_target_to_host(wmi_hdl, target_pdev_id,
+						  host_pdev_id);
+}
+#endif /* CNSS_GENL */
 
 #ifdef WLAN_FEATURE_CIF_CFR
 static QDF_STATUS target_if_wifi_pos_fill_ring(uint8_t ring_idx,
