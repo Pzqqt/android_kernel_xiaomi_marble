@@ -933,12 +933,17 @@ static QDF_STATUS hdd_sta_info_re_attach(
 
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
-	hdd_reset_sta_info_during_reattach(sta_info);
+	if (sta_info->is_attached) {
+		qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
+		hdd_err("sta info is alredy attached");
+		return QDF_STATUS_SUCCESS;
+	}
 
+	hdd_reset_sta_info_during_reattach(sta_info);
 	/* Add one extra ref for reattach */
 	qdf_atomic_inc(&sta_info->ref_cnt);
 	qdf_mem_copy(&sta_info->sta_mac, sta_mac, sizeof(struct qdf_mac_addr));
-
+	sta_info->is_attached = true;
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
 	return QDF_STATUS_SUCCESS;

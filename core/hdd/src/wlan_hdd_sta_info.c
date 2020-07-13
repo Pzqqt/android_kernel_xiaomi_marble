@@ -65,6 +65,7 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 	qdf_atomic_set(&sta_info->ref_cnt, 1);
 	qdf_list_insert_front(&sta_info_container->sta_obj,
 			      &sta_info->sta_node);
+	sta_info->is_attached = true;
 
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
@@ -88,7 +89,12 @@ void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
-	hdd_put_sta_info_ref(sta_info_container, sta_info, false);
+	if (info->is_attached) {
+		info->is_attached = false;
+		hdd_put_sta_info_ref(sta_info_container, sta_info, false);
+	} else {
+		hdd_info("Stainfo is already detached");
+	}
 
 	qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 }

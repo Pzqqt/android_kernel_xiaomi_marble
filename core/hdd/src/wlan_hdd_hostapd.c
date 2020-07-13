@@ -775,11 +775,11 @@ static void hdd_clear_sta(struct hdd_adapter *adapter,
 
 static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
-	struct hdd_station_info *sta_info;
+	struct hdd_station_info *sta_info, *tmp = NULL;
 
 	hdd_enter_dev(adapter->dev);
 
-	hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
 		hdd_clear_sta(adapter, sta_info);
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
 	}
@@ -1537,6 +1537,7 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 			goto exit;
 
 		qdf_mem_copy(cache_sta_info, stainfo, sizeof(*cache_sta_info));
+		cache_sta_info->is_attached = 0;
 		cache_sta_info->assoc_req_ies.data =
 				qdf_mem_malloc(event->ies_len);
 		if (cache_sta_info->assoc_req_ies.data) {
@@ -1557,15 +1558,15 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 					    cache_sta_info);
 			qdf_atomic_inc(&adapter->cache_sta_count);
 		} else {
-			struct hdd_station_info *temp_sta_info;
+			struct hdd_station_info *temp_sta_info, *tmp = NULL;
 			struct hdd_sta_info_obj *sta_list =
 						&adapter->cache_sta_info_list;
 
 			hdd_debug("reached max caching, removing oldest");
 
 			/* Find the oldest cached station */
-			hdd_for_each_sta_ref(adapter->cache_sta_info_list,
-					     temp_sta_info) {
+			hdd_for_each_sta_ref_safe(adapter->cache_sta_info_list,
+						  temp_sta_info, tmp) {
 				if (temp_sta_info->disassoc_ts &&
 				    (!oldest_disassoc_sta_ts ||
 				    qdf_system_time_after(
@@ -1798,7 +1799,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	tSap_StationSetKeyCompleteEvent *key_complete;
 	int ret = 0;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
-	struct hdd_station_info *stainfo, *cache_stainfo;
+	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
 
@@ -2426,12 +2427,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		ap_ctx->ap_active = false;
 
-		hdd_for_each_sta_ref(adapter->sta_info_list, stainfo) {
+		hdd_for_each_sta_ref_safe(adapter->sta_info_list, stainfo,
+					  tmp) {
 			if (!qdf_is_macaddr_broadcast(
 			    &stainfo->sta_mac)) {
 				ap_ctx->ap_active = true;
 				hdd_put_sta_info_ref(&adapter->sta_info_list,
 						     &stainfo, true);
+				if (tmp)
+					hdd_put_sta_info_ref(
+						&adapter->sta_info_list,
+						&tmp, true);
 				break;
 			}
 			hdd_put_sta_info_ref(&adapter->sta_info_list,
@@ -6832,19 +6838,22 @@ bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 			    struct qdf_mac_addr *mac_addr)
 {
 	bool is_associated = false;
-	struct hdd_station_info *sta_info;
+	struct hdd_station_info *sta_info, *tmp = NULL;
 
 	if (!adapter || !mac_addr) {
 		hdd_err("Invalid adapter or mac_addr");
 		return false;
 	}
 
-	hdd_for_each_sta_ref(adapter->sta_info_list, sta_info) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
 		if (!qdf_mem_cmp(&sta_info->sta_mac, mac_addr,
 				 QDF_MAC_ADDR_SIZE)) {
 			is_associated = true;
 			hdd_put_sta_info_ref(&adapter->sta_info_list,
 					     &sta_info, true);
+			if (tmp)
+				hdd_put_sta_info_ref(&adapter->sta_info_list,
+						     &tmp, true);
 			break;
 		}
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
