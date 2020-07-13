@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -299,5 +299,10 @@
  * maximum number of channels in an OCB schedule
  */
 #define CFG_TGT_NUM_OCB_SCHEDULES		2
+
+/*
+ * Default TWT AP STA Count
+ */
+#define CFG_TGT_DEFAULT_TWT_AP_STA_COUNT	0
 
 #endif  /*__WLAN_TGT_DEF_CONFIG_H__ */

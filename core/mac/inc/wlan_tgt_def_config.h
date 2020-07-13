@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2020 The Linux Foundation. All rights reserved.
  *
  *
  *
@@ -260,5 +260,14 @@
  * maximum number of channels in an OCB schedule
  */
 #define CFG_TGT_NUM_OCB_SCHEDULES		2
+
+/*
+ * Default TWT AP STA Count
+ */
+#if defined(WLAN_SUPPORT_TWT) && defined(WLAN_TWT_SAP_STA_COUNT)
+#define CFG_TGT_DEFAULT_TWT_AP_STA_COUNT	WLAN_TWT_SAP_STA_COUNT
+#else
+#define CFG_TGT_DEFAULT_TWT_AP_STA_COUNT	0
+#endif /* WLAN_SUPPORT_TWT && WLAN_TWT_SAP_STA_COUNT */
 
 #endif /*__WLAN_TGT_DEF_CONFIG_H__ */
