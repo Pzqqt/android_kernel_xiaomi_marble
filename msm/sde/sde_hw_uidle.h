@@ -23,7 +23,7 @@ struct sde_hw_uidle;
 
 #define SDE_UIDLE_WD_GRANULARITY 1
 #define SDE_UIDLE_WD_HEART_BEAT 0
-#define SDE_UIDLE_WD_LOAD_VAL 12
+#define SDE_UIDLE_WD_LOAD_VAL 18
 
 struct sde_uidle_ctl_cfg {
 	u32 fal10_exit_cnt;
