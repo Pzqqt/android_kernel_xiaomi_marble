@@ -348,6 +348,72 @@ wlan_cfg80211_cfr_set_config(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+static int
+wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
+				   struct nlattr **tb)
+{
+	struct cfr_wlanconfig_param params = { 0 };
+	struct wlan_objmgr_vdev *vdev;
+	bool is_start_capture = false;
+	int ret = 0;
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]) {
+		is_start_capture = nla_get_flag(tb[
+			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]);
+	}
+
+	if (is_start_capture &&
+	    !tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]) {
+		hdd_err("Invalid group bitmap");
+		return -EINVAL;
+	}
+
+	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_CFR_ID);
+	if (!vdev) {
+		hdd_err("can't get vdev");
+		return -EINVAL;
+	}
+
+	if (is_start_capture) {
+		ret = wlan_cfg80211_cfr_set_config(vdev, tb);
+		if (ret) {
+			hdd_err("set config failed");
+			goto out;
+		}
+		params.en_cfg = nla_get_u32(tb[
+			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]);
+		hdd_debug("params.en_cfg %d", params.en_cfg);
+		ucfg_cfr_set_en_bitmap(vdev, &params);
+	} else {
+		hdd_debug("cleanup rcc mode");
+		ucfg_cfr_set_rcc_mode(vdev, RCC_DIS_ALL_MODE, 0);
+	}
+
+	if (is_start_capture)
+		ucfg_cfr_resume(wlan_vdev_get_pdev(vdev));
+
+	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
+				     is_start_capture);
+	ucfg_cfr_committed_rcc_config(vdev);
+	if (!is_start_capture) {
+		ucfg_cfr_stop_indication(vdev);
+		ucfg_cfr_suspend(wlan_vdev_get_pdev(vdev));
+		hdd_debug("stop indication done");
+	}
+
+out:
+	hdd_objmgr_put_vdev_by_user(vdev, WLAN_CFR_ID);
+	return ret;
+}
+#else
+static int
+wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
+				   struct nlattr **tb)
+{
+	return 0;
+}
+#endif
+
 #ifdef WLAN_CFR_ADRASTEA
 static QDF_STATUS
 wlan_cfg80211_peer_cfr_capture_cfg_adrastea(struct hdd_adapter *adapter,
@@ -458,72 +524,6 @@ wlan_cfg80211_peer_cfr_capture_cfg_adrastea(struct hdd_adapter *adapter,
 					    struct nlattr **tb)
 {
 	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
-
-static int
-wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
-				   struct nlattr **tb)
-{
-	struct cfr_wlanconfig_param params = { 0 };
-	struct wlan_objmgr_vdev *vdev;
-	bool is_start_capture = false;
-	int ret = 0;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]) {
-		is_start_capture = nla_get_flag(tb[
-			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE]);
-	}
-
-	if (is_start_capture &&
-	    !tb[QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]) {
-		hdd_err("Invalid group bitmap");
-		return -EINVAL;
-	}
-
-	vdev = hdd_objmgr_get_vdev_by_user(adapter, WLAN_CFR_ID);
-	if (!vdev) {
-		hdd_err("can't get vdev");
-		return -EINVAL;
-	}
-
-	if (is_start_capture) {
-		ret = wlan_cfg80211_cfr_set_config(vdev, tb);
-		if (ret) {
-			hdd_err("set config failed");
-			goto out;
-		}
-		params.en_cfg = nla_get_u32(tb[
-			QCA_WLAN_VENDOR_ATTR_PEER_CFR_ENABLE_GROUP_BITMAP]);
-		hdd_debug("params.en_cfg %d", params.en_cfg);
-		ucfg_cfr_set_en_bitmap(vdev, &params);
-	} else {
-		hdd_debug("cleanup rcc mode");
-		ucfg_cfr_set_rcc_mode(vdev, RCC_DIS_ALL_MODE, 0);
-	}
-
-	if (is_start_capture)
-		ucfg_cfr_resume(wlan_vdev_get_pdev(vdev));
-
-	ucfg_cfr_subscribe_ppdu_desc(wlan_vdev_get_pdev(vdev),
-				     is_start_capture);
-	ucfg_cfr_committed_rcc_config(vdev);
-	if (!is_start_capture) {
-		ucfg_cfr_stop_indication(vdev);
-		ucfg_cfr_suspend(wlan_vdev_get_pdev(vdev));
-		hdd_debug("stop indication done");
-	}
-
-out:
-	hdd_objmgr_put_vdev_by_user(vdev, WLAN_CFR_ID);
-	return ret;
-}
-#else
-static int
-wlan_cfg80211_peer_enh_cfr_capture(struct hdd_adapter *adapter,
-				   struct nlattr **tb)
-{
-	return 0;
 }
 #endif
 
