@@ -4111,6 +4111,8 @@ static int rx_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EPROBE_DEFER;
 	}
+	msm_cdc_pinctrl_set_wakeup_capable(
+				rx_priv->rx_swr_gpio_p, false);
 
 	rx_io_base = devm_ioremap(&pdev->dev, rx_base_addr,
 				  RX_MACRO_MAX_OFFSET);
