@@ -540,6 +540,24 @@ void *dp_rx_cookie_2_va_mon_status(struct dp_soc *soc, uint32_t cookie)
 }
 #endif /* RX_DESC_MULTI_PAGE_ALLOC */
 
+#ifdef DP_RX_DESC_COOKIE_INVALIDATE
+static inline QDF_STATUS
+dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
+{
+	if (qdf_unlikely(HAL_RX_REO_BUF_COOKIE_INVALID_GET(ring_desc)))
+		return QDF_STATUS_E_FAILURE;
+
+	HAL_RX_REO_BUF_COOKIE_INVALID_SET(ring_desc);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+dp_rx_cookie_check_and_invalidate(hal_ring_desc_t ring_desc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS dp_rx_desc_pool_is_allocated(struct rx_desc_pool *rx_desc_pool);
 QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 				 uint32_t pool_size,

@@ -228,6 +228,24 @@ enum hal_rx_ret_buf_manager {
 		(paddr_hi << BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_LSB) & \
 		BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK)
 
+#define HAL_RX_COOKIE_INVALID_MASK	0x80000000
+
+/*
+ * macro to get the invalid bit for sw cookie
+ */
+#define HAL_RX_BUF_COOKIE_INVALID_GET(buff_addr_info) \
+		((*(((unsigned int *)buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) & \
+		HAL_RX_COOKIE_INVALID_MASK)
+
+/*
+ * macro to set the invalid bit for sw cookie
+ */
+#define HAL_RX_BUF_COOKIE_INVALID_SET(buff_addr_info) \
+		((*(((unsigned int *)buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) |= \
+		HAL_RX_COOKIE_INVALID_MASK)
+
 /*
  * macro to set the cookie into the rxdma ring entry
  */
@@ -292,6 +310,16 @@ enum hal_rx_ret_buf_manager {
 #define HAL_RX_REO_BUFFER_ADDR_31_0_GET(reo_desc)	\
 	(HAL_RX_BUFFER_ADDR_31_0_GET(&			\
 	(((struct reo_destination_ring *)		\
+		reo_desc)->buf_or_link_desc_addr_info)))
+
+#define HAL_RX_REO_BUF_COOKIE_INVALID_GET(reo_desc)	\
+	(HAL_RX_BUF_COOKIE_INVALID_GET(&		\
+	(((struct reo_destination_ring *)	\
+		reo_desc)->buf_or_link_desc_addr_info)))
+
+#define HAL_RX_REO_BUF_COOKIE_INVALID_SET(reo_desc)	\
+	(HAL_RX_BUF_COOKIE_INVALID_SET(&		\
+	(((struct reo_destination_ring *)	\
 		reo_desc)->buf_or_link_desc_addr_info)))
 
 #define HAL_RX_REO_BUF_COOKIE_GET(reo_desc)	\
