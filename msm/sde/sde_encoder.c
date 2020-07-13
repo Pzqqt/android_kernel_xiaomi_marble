@@ -1484,6 +1484,9 @@ static void sde_encoder_misr_configure(struct drm_encoder *drm_enc,
 	}
 	sde_enc = to_sde_encoder_virt(drm_enc);
 
+	if (!sde_enc->misr_reconfigure)
+		return;
+
 	for (i = 0; i < sde_enc->num_phys_encs; i++) {
 		struct sde_encoder_phys *phys = sde_enc->phys_encs[i];
 
@@ -1492,6 +1495,7 @@ static void sde_encoder_misr_configure(struct drm_encoder *drm_enc,
 
 		phys->ops.setup_misr(phys, enable, frame_count);
 	}
+	sde_enc->misr_reconfigure = false;
 }
 
 static void sde_encoder_input_event_handler(struct input_handle *handle,
@@ -4273,6 +4277,7 @@ static ssize_t _sde_encoder_misr_setup(struct file *file,
 		return rc;
 
 	sde_enc->misr_enable = enable;
+	sde_enc->misr_reconfigure = true;
 	sde_enc->misr_frame_count = frame_count;
 	sde_encoder_misr_configure(&sde_enc->base, enable, frame_count);
 	pm_runtime_put_sync(drm_enc->dev->dev);
