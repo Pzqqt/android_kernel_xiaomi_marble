@@ -362,6 +362,8 @@ static int rouleur_rx_clk_enable(struct snd_soc_component *component)
 		snd_soc_component_update_bits(component,
 				ROULEUR_ANA_HPHPA_FSM_CLK, 0x80, 0x80);
 		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_NCP_VCTRL, 0x07, 0x06);
+		snd_soc_component_update_bits(component,
 				ROULEUR_ANA_NCP_EN, 0x01, 0x01);
 		usleep_range(500, 510);
 	}
@@ -592,11 +594,11 @@ static int rouleur_codec_ear_lo_dac_event(struct snd_soc_dapm_widget *w,
 				ROULEUR_DIG_SWR_CDC_RX0_CTL,
 				0x80, 0x00);
 		snd_soc_component_update_bits(component,
-				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
-				0x04, 0x04);
-		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_CDC_RX_CLK_CTL,
 				0x01, 0x01);
+		snd_soc_component_update_bits(component,
+				ROULEUR_DIG_SWR_CDC_RX_GAIN_CTL,
+				0x04, 0x04);
 
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -635,7 +637,7 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				    true);
 
 		set_bit(HPH_PA_DELAY, &rouleur->status_mask);
-		usleep_range(5000, 5100);
+		usleep_range(200, 210);
 		snd_soc_component_update_bits(component,
 			ROULEUR_DIG_SWR_PDM_WD_CTL1,
 			0x03, 0x03);
@@ -671,9 +673,8 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/*
-		 * 7ms sleep is required after PA is disabled as per
-		 * HW requirement. If compander is disabled, then
-		 * 20ms delay is required.
+		 * 5ms sleep is required after PA is disabled as per
+		 * HW requirement.
 		 */
 		if (test_bit(HPH_PA_DELAY, &rouleur->status_mask)) {
 
@@ -710,7 +711,7 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				    rouleur->rx_swr_dev->dev_num,
 				    true);
 		set_bit(HPH_PA_DELAY, &rouleur->status_mask);
-		usleep_range(5000, 5100);
+		usleep_range(200, 210);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x03);
@@ -784,20 +785,31 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 			    rouleur->rx_swr_dev->dev_num,
 			    true);
 		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_5,
+				0x04, 0x00);
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_4,
+				0x0F, 0x0F);
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
 				ROULEUR_ANA_COMBOPA_CTL,
 				0x40, 0x00);
-		usleep_range(5000, 5100);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x03);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		usleep_range(5000, 5100);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_4,
+				0x0F, 0x04);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
-			wcd_enable_irq(&rouleur->irq_info,
-					ROULEUR_IRQ_HPHL_PDM_WD_INT);
+		wcd_enable_irq(&rouleur->irq_info,
+				ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
 		wcd_disable_irq(&rouleur->irq_info,
@@ -834,23 +846,34 @@ static int rouleur_codec_enable_lo_pa(struct snd_soc_dapm_widget *w,
 			    rouleur->rx_swr_dev->dev_num,
 			    true);
 		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_5,
+				0x04, 0x00);
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_4,
+				0x0F, 0x0F);
+		usleep_range(1000, 1010);
+		snd_soc_component_update_bits(component,
 				ROULEUR_ANA_COMBOPA_CTL,
 				0x40, 0x40);
-		usleep_range(5000, 5100);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x03);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
+		usleep_range(5000, 5100);
+		snd_soc_component_update_bits(component,
+				ROULEUR_ANA_COMBOPA_CTL_4,
+				0x0F, 0x04);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
 						(WCD_RX1 << 0x10));
-			wcd_enable_irq(&rouleur->irq_info,
-					ROULEUR_IRQ_HPHL_PDM_WD_INT);
+		wcd_enable_irq(&rouleur->irq_info,
+				ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-			wcd_disable_irq(&rouleur->irq_info,
+		wcd_disable_irq(&rouleur->irq_info,
 					ROULEUR_IRQ_HPHL_PDM_WD_INT);
 		if (rouleur->update_wcd_event)
 			rouleur->update_wcd_event(rouleur->handle,
