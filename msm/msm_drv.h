@@ -111,6 +111,8 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_VIG_IGC,
 	PLANE_PROP_DMA_IGC,
 	PLANE_PROP_DMA_GC,
+	PLANE_PROP_FP16_GC,
+	PLANE_PROP_FP16_CSC,
 
 	/* # of blob properties */
 	PLANE_PROP_BLOBCOUNT,
@@ -132,6 +134,8 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_SCALER_V1,
 	PLANE_PROP_SCALER_V2,
 	PLANE_PROP_INVERSE_PMA,
+	PLANE_PROP_FP16_IGC,
+	PLANE_PROP_FP16_UNMULT,
 
 	/* enum/bitmask properties */
 	PLANE_PROP_BLEND_OP,

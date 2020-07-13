@@ -65,6 +65,14 @@ extern "C" {
 #define DRM_FORMAT_MOD_QCOM_TILE	fourcc_mod_code(QCOM, 0x8)
 
 /**
+ * @DRM_FORMAT_MOD_QCOM_ALPHA_SWAP:	Refers to a pixel format for which
+ *					its alpha ordering has been reversed.
+ *					Implementation may be platform and
+ *					base-format specific.
+ */
+#define DRM_FORMAT_MOD_QCOM_ALPHA_SWAP	fourcc_mod_code(QCOM, 0x10)
+
+/**
  * Blend operations for "blend_op" property
  *
  * @SDE_DRM_BLEND_OP_NOT_DEFINED:   No blend operation defined for the layer.

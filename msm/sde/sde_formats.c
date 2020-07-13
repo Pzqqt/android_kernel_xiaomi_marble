@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"[drm:%s:%d] " fmt, __func__, __LINE__
@@ -410,6 +410,18 @@ static const struct sde_format sde_format_map[] = {
 		false, 4, SDE_FORMAT_FLAG_DX,
 		SDE_FETCH_LINEAR, 1),
 
+	INTERLEAVED_RGB_FMT(ARGB16161616F,
+		COLOR_16BIT, COLOR_16BIT, COLOR_16BIT, COLOR_16BIT,
+		C1_B_Cb, C0_G_Y, C2_R_Cr, C3_ALPHA, 4,
+		true, 8, SDE_FORMAT_FLAG_FP16,
+		SDE_FETCH_LINEAR, 1),
+
+	INTERLEAVED_RGB_FMT(ABGR16161616F,
+		COLOR_16BIT, COLOR_16BIT, COLOR_16BIT, COLOR_16BIT,
+		C2_R_Cr, C0_G_Y, C1_B_Cb, C3_ALPHA, 4,
+		true, 8, SDE_FORMAT_FLAG_FP16,
+		SDE_FETCH_LINEAR, 1),
+
 	PSEUDO_YUV_FMT(NV12,
 		0, COLOR_8BIT, COLOR_8BIT, COLOR_8BIT,
 		C1_B_Cb, C2_R_Cr,
@@ -469,6 +481,21 @@ static const struct sde_format sde_format_map[] = {
 		C1_B_Cb, C2_R_Cr, C0_G_Y,
 		false, SDE_CHROMA_420, 1, SDE_FORMAT_FLAG_YUV,
 		SDE_FETCH_LINEAR, 3),
+};
+
+/* Base formats supporting the alpha swapping modifier */
+static const struct sde_format sde_format_map_alpha_swap[] = {
+	INTERLEAVED_RGB_FMT(ARGB16161616F,
+		COLOR_16BIT, COLOR_16BIT, COLOR_16BIT, COLOR_16BIT,
+		C3_ALPHA, C1_B_Cb, C0_G_Y, C2_R_Cr, 4,
+		true, 8, SDE_FORMAT_FLAG_FP16 | SDE_FORMAT_FLAG_ALPHA_SWAP,
+		SDE_FETCH_LINEAR, 1),
+
+	INTERLEAVED_RGB_FMT(ABGR16161616F,
+		COLOR_16BIT, COLOR_16BIT, COLOR_16BIT, COLOR_16BIT,
+		C3_ALPHA, C2_R_Cr, C0_G_Y, C1_B_Cb, 4,
+		true, 8, SDE_FORMAT_FLAG_FP16 | SDE_FORMAT_FLAG_ALPHA_SWAP,
+		SDE_FETCH_LINEAR, 1),
 };
 
 /*
@@ -608,6 +635,12 @@ static const struct sde_format sde_format_map_ubwc[] = {
 		true, 4, SDE_FORMAT_FLAG_DX | SDE_FORMAT_FLAG_COMPRESSED,
 		SDE_FETCH_UBWC, 2, SDE_TILE_HEIGHT_UBWC),
 
+	INTERLEAVED_RGB_FMT_TILED(ABGR16161616F,
+		COLOR_16BIT, COLOR_16BIT, COLOR_16BIT, COLOR_16BIT,
+		C2_R_Cr, C0_G_Y, C1_B_Cb, C3_ALPHA, 4,
+		true, 8, SDE_FORMAT_FLAG_FP16 | SDE_FORMAT_FLAG_COMPRESSED,
+		SDE_FETCH_UBWC, 2, SDE_TILE_HEIGHT_UBWC),
+
 	PSEUDO_YUV_FMT_TILED(NV12,
 		0, COLOR_8BIT, COLOR_8BIT, COLOR_8BIT,
 		C1_B_Cb, C2_R_Cr,
@@ -691,6 +724,7 @@ static int _sde_format_get_media_color_ubwc(const struct sde_format *fmt)
 		{DRM_FORMAT_ABGR2101010, MMM_COLOR_FMT_RGBA1010102_UBWC},
 		{DRM_FORMAT_XBGR2101010, MMM_COLOR_FMT_RGBA1010102_UBWC},
 		{DRM_FORMAT_BGR565, MMM_COLOR_FMT_RGB565_UBWC},
+		{DRM_FORMAT_ABGR16161616F, MMM_COLOR_FMT_RGBA16161616F_UBWC},
 	};
 	int color_fmt = -1;
 	int i;
@@ -1239,6 +1273,10 @@ const struct sde_format *sde_get_sde_format_ext(
 	case 0:
 		map = sde_format_map;
 		map_size = ARRAY_SIZE(sde_format_map);
+		break;
+	case DRM_FORMAT_MOD_QCOM_ALPHA_SWAP:
+		map = sde_format_map_alpha_swap;
+		map_size = ARRAY_SIZE(sde_format_map_alpha_swap);
 		break;
 	case DRM_FORMAT_MOD_QCOM_COMPRESSED:
 	case DRM_FORMAT_MOD_QCOM_COMPRESSED | DRM_FORMAT_MOD_QCOM_TILE:

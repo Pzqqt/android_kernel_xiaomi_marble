@@ -618,6 +618,42 @@ struct sde_hw_sspp_ops {
 	 * @multirect_index: rec in use
 	 */
 	u32 (*get_ubwc_error)(struct sde_hw_pipe *ctx, uint32_t multirect_index);
+
+	/**
+	 * setup_fp16_csc - set FP16 CSC cp block
+	 * @ctx: Pointer to pipe object
+	 * @index: Pipe rectangle to operate on
+	 * @data: Pointer to sde_hw_cp_cfg object holding drm_msm_fp16_csc data
+	 */
+	void (*setup_fp16_csc)(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+	/**
+	 * sde_setup_fp16_gcv1 - set FP16 GC cp block
+	 * @ctx: Pointer to pipe object
+	 * @index: Pipe rectangle to operate on
+	 * @data: Pointer to sde_hw_cp_cfg object holding drm_msm_fp16_gc data
+	 */
+	void (*setup_fp16_gc)(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+	/**
+	 * sde_setup_fp16_igcv1 - set FP16 IGC cp block
+	 * @ctx: Pointer to pipe object
+	 * @index: Pipe rectangle to operate on
+	 * @data: Pointer to sde_hw_cp_cfg object containing bool data
+	 */
+	void (*setup_fp16_igc)(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
+
+	/**
+	 * sde_setup_fp16_unmultv1 - set FP16 UNMULT cp block
+	 * @ctx: Pointer to pipe object
+	 * @index: Pipe rectangle to operate on
+	 * @data: Pointer to sde_hw_cp_cfg object containing bool data
+	 */
+	void (*setup_fp16_unmult)(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data);
 };
 
 /**

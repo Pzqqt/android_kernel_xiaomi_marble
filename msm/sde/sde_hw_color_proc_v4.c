@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
  */
 #include <drm/msm_drm_pp.h>
 #include "sde_hw_color_proc_common_v4.h"
@@ -412,4 +412,199 @@ void sde_demura_backlight_cfg(struct sde_hw_dspp *dspp, u64 val)
 	backlight |= ((val & REG_MASK_SHIFT(11, 32)) >> 16);
 	SDE_REG_WRITE(&dspp->hw, dspp->cap->sblk->demura.base + 0x8,
 			backlight);
+}
+
+void sde_setup_fp16_cscv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data)
+{
+	struct sde_hw_cp_cfg *hw_cfg = data;
+	struct drm_msm_fp16_csc *fp16_csc;
+	u32 csc_base, csc, i, offset = 0;
+
+	if (!ctx || !data || index == SDE_SSPP_RECT_MAX) {
+		DRM_ERROR("invalid parameter\tctx: %pK\tdata: %pK\tindex: %d\n",
+				ctx, data, index);
+		return;
+	}
+
+	if (index == SDE_SSPP_RECT_SOLO || index == SDE_SSPP_RECT_0)
+		csc_base = ctx->cap->sblk->fp16_csc_blk[0].base;
+	else
+		csc_base = ctx->cap->sblk->fp16_csc_blk[1].base;
+
+	if (!csc_base) {
+		DRM_ERROR("invalid offset for FP16 CSC CP block\tpipe: %d\tindex: %d\n",
+				ctx->idx, index);
+		return;
+	}
+
+	fp16_csc = (struct drm_msm_fp16_csc *)(hw_cfg->payload);
+	if (!fp16_csc)
+		goto write_base;
+
+	if (hw_cfg->len != sizeof(struct drm_msm_fp16_csc) ||
+			!hw_cfg->payload) {
+		DRM_ERROR("invalid hw_cfg payload\tpipe: %d\tindex: %d\tlen: %d\tpayload: %pK\n",
+				ctx->idx, index, hw_cfg->len, hw_cfg->payload);
+		return;
+	}
+
+	if (fp16_csc->cfg_param_0_len != FP16_CSC_CFG0_PARAM_LEN) {
+		DRM_ERROR("invalid param 0 length! Got: %d\tExpected: %d\tpipe: %d\tindex: %d\n",
+				fp16_csc->cfg_param_0_len, FP16_CSC_CFG0_PARAM_LEN,
+				ctx->idx, index);
+		return;
+	} else if (fp16_csc->cfg_param_1_len !=  FP16_CSC_CFG1_PARAM_LEN) {
+		DRM_ERROR("invalid param 1 length! Got: %d\tExpected: %d\tpipe: %d\tindex: %d\n",
+				fp16_csc->cfg_param_1_len, FP16_CSC_CFG1_PARAM_LEN,
+				ctx->idx, index);
+		return;
+	}
+
+	for (i = 0; i < (fp16_csc->cfg_param_0_len / 2); i++) {
+		offset += 0x4;
+		csc = fp16_csc->cfg_param_0[2 * i] & 0xFFFF;
+		csc |= (fp16_csc->cfg_param_0[2 * i + 1] & 0xFFFF) << 16;
+		SDE_REG_WRITE(&ctx->hw, csc_base + offset, csc);
+	}
+	for (i = 0; i < (fp16_csc->cfg_param_1_len / 2); i++) {
+		offset += 0x4;
+		csc = fp16_csc->cfg_param_1[2 * i] & 0xFFFF;
+		csc |= (fp16_csc->cfg_param_1[2 * i + 1] & 0xFFFF) << 16;
+		SDE_REG_WRITE(&ctx->hw, csc_base + offset, csc);
+	}
+
+write_base:
+	csc = SDE_REG_READ(&ctx->hw, csc_base);
+	if (fp16_csc)
+		csc |= BIT(2);
+	else
+		csc &= ~BIT(2);
+
+	SDE_REG_WRITE(&ctx->hw, csc_base, csc);
+}
+
+void sde_setup_fp16_gcv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data)
+{
+	struct sde_hw_cp_cfg *hw_cfg = data;
+	struct drm_msm_fp16_gc *fp16_gc;
+	u32 gc_base, gc;
+
+	if (!ctx || !data || index == SDE_SSPP_RECT_MAX) {
+		DRM_ERROR("invalid parameter\tctx: %pK\tdata: %pK\tindex: %d\n",
+				ctx, data, index);
+		return;
+	}
+
+	fp16_gc = (struct drm_msm_fp16_gc *)(hw_cfg->payload);
+	if (fp16_gc && (hw_cfg->len != sizeof(struct drm_msm_fp16_gc) ||
+			fp16_gc->mode == FP16_GC_MODE_INVALID)) {
+		DRM_ERROR("invalid hw_cfg payload\tpipe: %d\tindex: %d\tlen: %d\tmode: %d",
+				ctx->idx, index, hw_cfg->len, fp16_gc->mode);
+		return;
+	}
+
+	if (index == SDE_SSPP_RECT_SOLO || index == SDE_SSPP_RECT_0)
+		gc_base = ctx->cap->sblk->fp16_gc_blk[0].base;
+	else
+		gc_base = ctx->cap->sblk->fp16_gc_blk[1].base;
+
+	if (!gc_base) {
+		DRM_ERROR("invalid offset for FP16 GC CP block\tpipe: %d\tindex: %d\n",
+				ctx->idx, index);
+		return;
+	}
+
+	gc = SDE_REG_READ(&ctx->hw, gc_base);
+	gc &= ~0xF8;
+
+	if (fp16_gc) {
+		gc |= BIT(4);
+		if (fp16_gc->flags & FP16_GC_FLAG_ALPHA_EN)
+			gc |= BIT(3);
+
+		if (fp16_gc->mode == FP16_GC_MODE_PQ)
+			gc |= BIT(5);
+	}
+
+	SDE_REG_WRITE(&ctx->hw, gc_base, gc);
+}
+
+void sde_setup_fp16_igcv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data)
+{
+	struct sde_hw_cp_cfg *hw_cfg = data;
+	bool *fp16_igc;
+	u32 igc_base, igc;
+
+	if (!ctx || !data || index == SDE_SSPP_RECT_MAX) {
+		DRM_ERROR("invalid parameter\tctx: %pK\tdata: %pK\tindex: %d\n",
+				ctx, data, index);
+		return;
+	} else if (hw_cfg->len != sizeof(bool)) {
+		DRM_ERROR("invalid hw_cfg payload\tpipe: %d\tindex: %d\tlen: %d",
+				ctx->idx, index, hw_cfg->len);
+		return;
+	}
+
+	if (index == SDE_SSPP_RECT_SOLO || index == SDE_SSPP_RECT_0)
+		igc_base = ctx->cap->sblk->fp16_igc_blk[0].base;
+	else
+		igc_base = ctx->cap->sblk->fp16_igc_blk[1].base;
+
+	if (!igc_base) {
+		DRM_ERROR("invalid offset for FP16 IGC CP block\tpipe: %d\tindex: %d\n",
+				ctx->idx, index);
+		return;
+	}
+
+	igc = SDE_REG_READ(&ctx->hw, igc_base);
+	fp16_igc = (bool *)(hw_cfg->payload);
+
+	if (fp16_igc && *fp16_igc)
+		igc |= BIT(1);
+	else
+		igc &= ~BIT(1);
+
+	SDE_REG_WRITE(&ctx->hw, igc_base, igc);
+}
+
+void sde_setup_fp16_unmultv1(struct sde_hw_pipe *ctx,
+		enum sde_sspp_multirect_index index, void *data)
+{
+	struct sde_hw_cp_cfg *hw_cfg = data;
+	bool *fp16_unmult;
+	u32 unmult_base, unmult;
+
+	if (!ctx || !data || index == SDE_SSPP_RECT_MAX) {
+		DRM_ERROR("invalid parameter\tctx: %pK\tdata: %pK\tindex: %d\n",
+				ctx, data, index);
+		return;
+	} else if (hw_cfg->len != sizeof(bool)) {
+		DRM_ERROR("invalid hw_cfg payload\tpipe: %d\tindex: %d\tlen: %d",
+				ctx->idx, index, hw_cfg->len);
+		return;
+	}
+
+	if (index == SDE_SSPP_RECT_SOLO || index == SDE_SSPP_RECT_0)
+		unmult_base = ctx->cap->sblk->fp16_unmult_blk[0].base;
+	else
+		unmult_base = ctx->cap->sblk->fp16_unmult_blk[1].base;
+
+	if (!unmult_base) {
+		DRM_ERROR("invalid offset for FP16 UNMULT CP block\tpipe: %d\tindex: %d\n",
+				ctx->idx, index);
+		return;
+	}
+
+	unmult = SDE_REG_READ(&ctx->hw, unmult_base);
+	fp16_unmult = (bool *)(hw_cfg->payload);
+
+	if (fp16_unmult && *fp16_unmult)
+		unmult |= BIT(0);
+	else
+		unmult &= ~BIT(0);
+
+	SDE_REG_WRITE(&ctx->hw, unmult_base, unmult);
 }
