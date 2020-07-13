@@ -275,6 +275,7 @@ struct scan_mbssid_info {
  * @bssid: BSS MAC address
  * @short_ssid: short ssid
  * @bss_params: BSS parameters
+ * @psd_20mhz: 20MHz power spectral density
  */
 struct rnr_bss_info {
 	uint8_t neighbor_ap_tbtt_offset;
@@ -283,6 +284,7 @@ struct rnr_bss_info {
 	struct qdf_mac_addr bssid;
 	uint32_t short_ssid;
 	uint8_t bss_params;
+	uint8_t psd_20mhz;
 };
 
 /**
@@ -320,9 +322,13 @@ struct neighbor_ap_info_field {
  * @TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM: neighbor AP, short ssid and bss param
  * @TBTT_NEIGHBOR_AP_BSSID: neighbor AP and bssid
  * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM: neighbor AP, bssid and bss param
+ * @TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid and bss
+ * param and 20MHz PSD
  * @TBTT_NEIGHBOR_AP_BSSSID_S_SSID: neighbor AP, bssid and short ssid
  * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM: neighbor AP, bssid, short ssid
  * and bss params
+ * @TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD: neighbor AP, bssid,
+ * short ssid, bss params and 20MHz PSD
  */
 enum tbtt_information_field {
 	TBTT_NEIGHBOR_AP_OFFSET_ONLY = 1,
@@ -331,8 +337,10 @@ enum tbtt_information_field {
 	TBTT_NEIGHBOR_AP_S_SSID_BSS_PARAM = 6,
 	TBTT_NEIGHBOR_AP_BSSID = 7,
 	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM = 8,
+	TBTT_NEIGHBOR_AP_BSSID_BSS_PARAM_20MHZ_PSD = 9,
 	TBTT_NEIGHBOR_AP_BSSSID_S_SSID = 11,
-	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM = 12
+	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM = 12,
+	TBTT_NEIGHBOR_AP_BSSID_S_SSID_BSS_PARAM_20MHZ_PSD = 13
 };
 
 /**
