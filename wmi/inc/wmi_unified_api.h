@@ -3875,6 +3875,22 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 					      uint32_t host_pdev_id,
 					      uint32_t *target_pdev_id);
 
+#ifndef CNSS_GENL
+/**
+ * wmi_convert_pdev_id_target_to_host() - Convert pdev_id from target to host
+ * defines. For legacy there is not conversion required. Just return pdev_id as
+ * it is.
+ * @wmi_handle: wmi handle
+ * @target_pdev_id: target pdev_id to be converted.
+ * @host_pdev_id: Output host pdev id.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
+					      uint32_t target_pdev_id,
+					      uint32_t *host_pdev_id);
+#endif
+
 /**
  * wmi_unified_send_bss_color_change_enable_cmd() - WMI function to send bss
  *  color change enable to FW.

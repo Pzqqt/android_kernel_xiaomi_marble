@@ -3131,6 +3131,23 @@ QDF_STATUS wmi_convert_pdev_id_host_to_target(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifndef CNSS_GENL
+QDF_STATUS wmi_convert_pdev_id_target_to_host(wmi_unified_t wmi_handle,
+					      uint32_t target_pdev_id,
+					      uint32_t *host_pdev_id)
+{
+	if (wmi_handle->ops->convert_pdev_id_target_to_host) {
+		*host_pdev_id =
+			wmi_handle->ops->convert_pdev_id_target_to_host(
+					wmi_handle,
+					target_pdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 QDF_STATUS
 wmi_unified_send_bss_color_change_enable_cmd(wmi_unified_t wmi_handle,
 					     uint32_t vdev_id,
