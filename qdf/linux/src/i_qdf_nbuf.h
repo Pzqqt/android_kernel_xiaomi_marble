@@ -1023,6 +1023,17 @@ uint8_t __qdf_nbuf_get_exemption_type(struct sk_buff *skb);
 void __qdf_nbuf_ref(struct sk_buff *skb);
 int __qdf_nbuf_shared(struct sk_buff *skb);
 
+/**
+ * __qdf_nbuf_get_nr_frags() - return the number of fragments in an skb,
+ * @skb: sk buff
+ *
+ * Return: number of fragments
+ */
+static inline size_t __qdf_nbuf_get_nr_frags(struct sk_buff *skb)
+{
+	return skb_shinfo(skb)->nr_frags;
+}
+
 /*
  * qdf_nbuf_pool_delete() implementation - do nothing in linux
  */
@@ -1045,9 +1056,10 @@ static inline struct sk_buff *__qdf_nbuf_clone(struct sk_buff *skb)
 	struct sk_buff *skb_new = NULL;
 
 	skb_new = skb_clone(skb, GFP_ATOMIC);
-	if (skb_new)
+	if (skb_new) {
+		__qdf_frag_count_inc(__qdf_nbuf_get_nr_frags(skb_new));
 		__qdf_nbuf_count_inc(skb_new);
-
+	}
 	return skb_new;
 }
 
@@ -1065,9 +1077,10 @@ static inline struct sk_buff *__qdf_nbuf_copy(struct sk_buff *skb)
 	struct sk_buff *skb_new = NULL;
 
 	skb_new = skb_copy(skb, GFP_ATOMIC);
-	if (skb_new)
+	if (skb_new) {
+		__qdf_frag_count_inc(__qdf_nbuf_get_nr_frags(skb_new));
 		__qdf_nbuf_count_inc(skb_new);
-
+	}
 	return skb_new;
 }
 
@@ -2058,17 +2071,6 @@ static inline size_t
 __qdf_nbuf_headlen(struct sk_buff *skb)
 {
 	return skb_headlen(skb);
-}
-
-/**
- * __qdf_nbuf_get_nr_frags() - return the number of fragments in an skb,
- * @skb: sk buff
- *
- * Return: number of fragments
- */
-static inline size_t __qdf_nbuf_get_nr_frags(struct sk_buff *skb)
-{
-	return skb_shinfo(skb)->nr_frags;
 }
 
 /**

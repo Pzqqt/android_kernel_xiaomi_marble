@@ -581,6 +581,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	if (pld_nbuf_pre_alloc_free(skb))
 		return;
 
+	qdf_frag_count_dec(qdf_nbuf_get_nr_frags(skb));
 	qdf_nbuf_count_dec(skb);
 	qdf_mem_skb_dec(skb->truesize);
 	if (nbuf_free_cb)
@@ -2811,6 +2812,9 @@ qdf_export_symbol(qdf_nbuf_alloc_no_recycler_debug);
 void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
 	qdf_nbuf_t ext_list;
+	qdf_frag_t p_frag;
+	uint32_t num_nr_frags;
+	uint32_t idx = 0;
 
 	if (qdf_unlikely(!nbuf))
 		return;
@@ -2825,6 +2829,18 @@ void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 	qdf_nbuf_panic_on_free_if_mapped(nbuf, func, line);
 	qdf_net_buf_debug_delete_node(nbuf);
 	qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_FREE);
+
+	/* Take care to delete the debug entries for frags */
+	num_nr_frags = qdf_nbuf_get_nr_frags(nbuf);
+
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	while (idx < num_nr_frags) {
+		p_frag = qdf_nbuf_get_frag_addr(nbuf, idx);
+		if (qdf_likely(p_frag))
+			qdf_frag_debug_refcount_dec(p_frag, func, line);
+		idx++;
+	}
 
 	/* Take care to delete the debug entries for frag_list */
 	ext_list = qdf_nbuf_get_ext_list(nbuf);
@@ -2844,6 +2860,10 @@ qdf_export_symbol(qdf_nbuf_free_debug);
 
 qdf_nbuf_t qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 {
+	uint32_t num_nr_frags;
+	uint32_t idx = 0;
+	qdf_frag_t p_frag;
+
 	qdf_nbuf_t cloned_buf = __qdf_nbuf_clone(buf);
 
 	if (is_initial_mem_debug_disabled)
@@ -2851,6 +2871,18 @@ qdf_nbuf_t qdf_nbuf_clone_debug(qdf_nbuf_t buf, const char *func, uint32_t line)
 
 	if (qdf_unlikely(!cloned_buf))
 		return NULL;
+
+	/* Take care to update the debug entries for frags */
+	num_nr_frags = qdf_nbuf_get_nr_frags(cloned_buf);
+
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	while (idx < num_nr_frags) {
+		p_frag = qdf_nbuf_get_frag_addr(cloned_buf, idx);
+		if (qdf_likely(p_frag))
+			qdf_frag_debug_refcount_inc(p_frag, func, line);
+		idx++;
+	}
 
 	/* Store SKB in internal QDF tracking table */
 	qdf_net_buf_debug_add_node(cloned_buf, 0, func, line);
@@ -4691,8 +4723,114 @@ void __qdf_nbuf_add_rx_frag(__qdf_frag_t buf, __qdf_nbuf_t nbuf,
 			(frag_offset + offset),
 			frag_len, truesize);
 
-	if (unlikely(take_frag_ref))
+	if (unlikely(take_frag_ref)) {
+		qdf_frag_count_inc(QDF_NBUF_FRAG_DEBUG_COUNT_ONE);
 		skb_frag_ref(nbuf, nr_frag);
+	}
 }
 
 qdf_export_symbol(__qdf_nbuf_add_rx_frag);
+
+#ifdef NBUF_FRAG_MEMORY_DEBUG
+
+QDF_STATUS qdf_nbuf_move_frag_page_offset_debug(qdf_nbuf_t nbuf, uint8_t idx,
+						int offset, const char *func,
+						uint32_t line)
+{
+	QDF_STATUS result;
+	qdf_frag_t p_fragp, n_fragp;
+
+	p_fragp = qdf_nbuf_get_frag_addr(nbuf, idx);
+	result = __qdf_nbuf_move_frag_page_offset(nbuf, idx, offset);
+
+	n_fragp = qdf_nbuf_get_frag_addr(nbuf, idx);
+
+	/*
+	 * Update frag address in frag debug tracker
+	 * when frag offset is successfully changed in skb
+	 */
+	if (result == QDF_STATUS_SUCCESS)
+		qdf_frag_debug_update_addr(p_fragp, n_fragp, func, line);
+
+	return result;
+}
+
+qdf_export_symbol(qdf_nbuf_move_frag_page_offset_debug);
+
+void qdf_nbuf_add_rx_frag_debug(qdf_frag_t buf, qdf_nbuf_t nbuf,
+				int offset, int frag_len,
+				unsigned int truesize, bool take_frag_ref,
+				const char *func, uint32_t line)
+{
+	qdf_frag_t fragp;
+	uint32_t num_nr_frags;
+
+	__qdf_nbuf_add_rx_frag(buf, nbuf, offset,
+			       frag_len, truesize, take_frag_ref);
+
+	num_nr_frags = qdf_nbuf_get_nr_frags(nbuf);
+
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	fragp = qdf_nbuf_get_frag_addr(nbuf, num_nr_frags - 1);
+
+	/* Update frag address in frag debug tracking table */
+	if (fragp != buf)
+		qdf_frag_debug_update_addr(buf, fragp, func, line);
+
+	/* Update frag refcount in frag debug tracking table */
+	qdf_frag_debug_refcount_inc(fragp, func, line);
+}
+
+qdf_export_symbol(qdf_nbuf_add_rx_frag_debug);
+
+void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf, const char *func,
+				    uint32_t line)
+{
+	uint32_t num_nr_frags;
+	uint32_t idx = 0;
+	qdf_frag_t p_frag;
+
+	if (qdf_unlikely(!buf))
+		return;
+
+	/* Take care to update the refcount in the debug entries for frags */
+	num_nr_frags = qdf_nbuf_get_nr_frags(buf);
+
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	while (idx < num_nr_frags) {
+		p_frag = qdf_nbuf_get_frag_addr(buf, idx);
+		if (qdf_likely(p_frag))
+			qdf_frag_debug_refcount_inc(p_frag, func, line);
+		idx++;
+	}
+}
+
+qdf_export_symbol(qdf_net_buf_debug_acquire_frag);
+
+void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
+				    uint32_t line)
+{
+	uint32_t num_nr_frags;
+	uint32_t idx = 0;
+	qdf_frag_t p_frag;
+
+	if (qdf_unlikely(!buf))
+		return;
+
+	/* Take care to update the refcount in the debug entries for frags */
+	num_nr_frags = qdf_nbuf_get_nr_frags(buf);
+
+	qdf_assert_always(num_nr_frags <= QDF_NBUF_MAX_FRAGS);
+
+	while (idx < num_nr_frags) {
+		p_frag = qdf_nbuf_get_frag_addr(buf, idx);
+		if (qdf_likely(p_frag))
+			qdf_frag_debug_refcount_dec(p_frag, func, line);
+		idx++;
+	}
+}
+
+qdf_export_symbol(qdf_net_buf_debug_release_frag);
+#endif /* NBUF_FRAG_MEMORY_DEBUG */

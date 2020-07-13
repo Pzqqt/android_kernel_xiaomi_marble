@@ -2259,6 +2259,7 @@ void qdf_mem_init(void)
 {
 	qdf_mem_debug_init();
 	qdf_net_buf_debug_init();
+	qdf_frag_debug_init();
 	qdf_mem_debugfs_init();
 	qdf_mem_debug_debugfs_init();
 }
@@ -2268,6 +2269,7 @@ void qdf_mem_exit(void)
 {
 	qdf_mem_debug_debugfs_exit();
 	qdf_mem_debugfs_exit();
+	qdf_frag_debug_exit();
 	qdf_net_buf_debug_exit();
 	qdf_mem_debug_exit();
 }

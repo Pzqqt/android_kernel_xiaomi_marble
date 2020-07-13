@@ -3756,6 +3756,80 @@ static inline void qdf_nbuf_trim_add_frag_size(qdf_nbuf_t nbuf, uint8_t idx,
 	__qdf_nbuf_trim_add_frag_size(nbuf, idx, size, truesize);
 }
 
+#ifdef NBUF_FRAG_MEMORY_DEBUG
+
+#define qdf_nbuf_move_frag_page_offset(f, i, o) \
+	qdf_nbuf_move_frag_page_offset_debug(f, i, o, __func__, __LINE__)
+
+/**
+ * qdf_nbuf_move_frag_page_offset_debug() - Move frag page_offset by size
+ *          and adjust length by size.
+ * @nbuf: qdf_nbuf_t
+ * @idx: Frag index
+ * @offset: Frag page offset should be moved by offset.
+ *      +Ve - Move offset forward.
+ *      -Ve - Move offset backward.
+ * @func: Caller function name
+ * @line: Caller function line no.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_nbuf_move_frag_page_offset_debug(qdf_nbuf_t nbuf, uint8_t idx,
+						int offset, const char *func,
+						uint32_t line);
+
+#define qdf_nbuf_add_rx_frag(f, b, o, l, s, r) \
+	qdf_nbuf_add_rx_frag_debug(f, b, o, l, s, r, __func__, __LINE__)
+
+/**
+ * qdf_nbuf_add_rx_frag_debug() - Add frag to nbuf at index frag_idx
+ * @buf: Frag pointer needs to be added in nbuf
+ * @nbuf: qdf_nbuf_t where frag will be added
+ * @offset: Offset in frag to be added to nbuf_frags
+ * @frag_len: Frag length
+ * @truesize: truesize
+ * @take_frag_ref: Whether to take ref for frag or not
+ *      This bool must be set as per below comdition:
+ *      1. False: If this frag is being added in any nbuf
+ *              for the first time after allocation
+ *      2. True: If frag is already attached part of any
+ *              nbuf
+ * @func: Caller function name
+ * @line: Caller function line no.
+ *
+ * Return: none
+ */
+void qdf_nbuf_add_rx_frag_debug(qdf_frag_t buf, qdf_nbuf_t nbuf,
+				int offset, int frag_len,
+				unsigned int truesize, bool take_frag_ref,
+				const char *func, uint32_t line);
+
+/**
+ * qdf_net_buf_debug_acquire_frag() - Add frag nodes to frag debug tracker
+ *	when nbuf is received from network stack
+ * @buf: qdf_nbuf_t
+ * @func: Caller function name
+ * @line: Caller function line no.
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf, const char *func,
+				    uint32_t line);
+
+/**
+ * qdf_net_buf_debug_release_frag() - Update frag nodes in frag debug tracker
+ *	when nbuf is sent to network stack
+ * @buf: qdf_nbuf_t
+ * @func: Caller function name
+ * @line: Caller function line no.
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf, const char *func,
+				    uint32_t line);
+
+#else /* NBUF_FRAG_MEMORY_DEBUG */
+
 /**
  * qdf_nbuf_move_frag_page_offset() - Move frag page_offset by size
  *          and adjust length by size.
@@ -3796,6 +3870,19 @@ static inline void qdf_nbuf_add_rx_frag(qdf_frag_t buf, qdf_nbuf_t nbuf,
 	__qdf_nbuf_add_rx_frag(buf, nbuf, offset,
 			       frag_len, truesize, take_frag_ref);
 }
+
+static inline void qdf_net_buf_debug_acquire_frag(qdf_nbuf_t buf,
+						  const char *func,
+						  uint32_t line)
+{
+}
+
+static inline void qdf_net_buf_debug_release_frag(qdf_nbuf_t buf,
+						  const char *func,
+						  uint32_t line)
+{
+}
+#endif /* NBUF_FRAG_MEMORY_DEBUG */
 
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_api_w.h>

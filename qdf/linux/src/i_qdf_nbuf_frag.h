@@ -27,10 +27,75 @@
 #include <qdf_net_types.h>
 #include <qdf_mem.h>
 
+#define QDF_NBUF_FRAG_DEBUG_COUNT_ZERO    0
+#define QDF_NBUF_FRAG_DEBUG_COUNT_ONE     1
+
 /**
  * typedef __qdf_frag_t - Abstraction for void * for frag address
  */
 typedef void *__qdf_frag_t;
+
+#ifdef QDF_NBUF_FRAG_GLOBAL_COUNT
+
+/**
+ * __qdf_frag_count_get() - Get global frag count
+ *
+ * Return: Global frag gauge
+ */
+uint32_t __qdf_frag_count_get(void);
+
+/**
+ * __qdf_frag_count_inc() - Increment frag global count
+ * @value: Increment value
+ *
+ * Return: none
+ */
+void __qdf_frag_count_inc(uint32_t value);
+
+/**
+ * __qdf_frag_count_dec() - Decrement frag global count
+ * @value: Decrement value
+ *
+ * Return: none
+ */
+void __qdf_frag_count_dec(uint32_t value);
+
+/*
+ * __qdf_frag_mod_init() - Initialization routine for qdf_frag
+ *
+ * Return: none
+ */
+void __qdf_frag_mod_init(void);
+
+/**
+ * __qdf_frag_mod_exit() - Uninitialization routine for qdf_frag
+ *
+ * Return: none
+ */
+void __qdf_frag_mod_exit(void);
+
+#else
+static inline uint32_t __qdf_frag_count_get(void)
+{
+	return 0;
+}
+
+static inline void __qdf_frag_count_inc(uint32_t value)
+{
+}
+
+static inline void __qdf_frag_count_dec(uint32_t value)
+{
+}
+
+static inline void __qdf_frag_mod_init(void)
+{
+}
+
+static inline void __qdf_frag_mod_exit(void)
+{
+}
+#endif /* QDF_NBUF_FRAG_GLOBAL_COUNT */
 
 /**
  * Maximum number of frags an SKB can hold
@@ -64,10 +129,15 @@ QDF_STATUS __qdf_mem_map_page(qdf_device_t osdev, __qdf_frag_t buf,
 /**
  * __qdf_frag_free() - Free allocated frag memory
  * @vaddr: Frag address to be freed
+ *
+ * Return: none
  */
 static inline void __qdf_frag_free(__qdf_frag_t vaddr)
 {
-	skb_free_frag(vaddr);
+	if (qdf_likely(vaddr)) {
+		skb_free_frag(vaddr);
+		__qdf_frag_count_dec(QDF_NBUF_FRAG_DEBUG_COUNT_ONE);
+	}
 }
 
 /**
@@ -78,6 +148,11 @@ static inline void __qdf_frag_free(__qdf_frag_t vaddr)
  */
 static inline __qdf_frag_t __qdf_frag_alloc(unsigned int fragsz)
 {
-	return netdev_alloc_frag(fragsz);
+	__qdf_frag_t p_frag = netdev_alloc_frag(fragsz);
+
+	if (p_frag)
+		__qdf_frag_count_inc(QDF_NBUF_FRAG_DEBUG_COUNT_ONE);
+	return p_frag;
 }
+
 #endif /* _I_QDF_NBUF_FRAG_H */
