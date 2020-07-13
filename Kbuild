@@ -3159,6 +3159,7 @@ cppflags-$(CONFIG_FEATURE_NO_DBS_INTRABAND_MCC_SUPPORT) += -DFEATURE_NO_DBS_INTR
 cppflags-y += -DHAL_DISABLE_NON_BA_2K_JUMP_ERROR
 cppflags-y += -DENABLE_HAL_SOC_STATS
 cppflags-y += -DENABLE_HAL_REG_WR_HISTORY
+cppflags-y += -DDP_RX_DESC_COOKIE_INVALIDATE
 endif
 
 # Enable Low latency optimisation mode
