@@ -1335,6 +1335,13 @@ static int dp_display_usbpd_disconnect_cb(struct device *dev)
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY, dp->state,
 			dp->debug->psm_enabled);
 
+	/* skip if a disconnect is already in progress */
+	if (dp_display_state_is(DP_STATE_ABORTED)) {
+		DP_DEBUG("disconnect already in progress\n");
+		SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_CASE1, dp->state);
+		return 0;
+	}
+
 	if (dp->debug->psm_enabled && dp_display_state_is(DP_STATE_READY))
 		dp->link->psm_config(dp->link, &dp->panel->link_info, true);
 
