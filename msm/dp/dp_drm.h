@@ -225,7 +225,8 @@ static inline void dp_connector_post_open(struct drm_connector *connector,
 {
 }
 
-static inline int dp_drm_bridge_init(void *display, struct drm_encoder *encoder)
+static inline int dp_drm_bridge_init(void *display, struct drm_encoder *encoder,
+		u32 max_mixer_count, u32 max_dsc_count)
 {
 	return 0;
 }
