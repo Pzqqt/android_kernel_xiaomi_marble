@@ -3350,8 +3350,11 @@ csr_connect_info(struct mac_context *mac_ctx,
 		diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
 	conn_stats.bss_type =
 	     diag_persona_from_csr_type(session->pCurRoamProfile->csrPersona);
-	conn_stats.operating_channel = wlan_reg_freq_to_chan(mac_ctx->pdev,
-							conn_profile->op_freq);
+	if (conn_profile->op_freq)
+		conn_stats.operating_channel =
+			wlan_reg_freq_to_chan(mac_ctx->pdev,
+					      conn_profile->op_freq);
+
 	conn_stats.qos_capability = conn_profile->qosConnection;
 	conn_stats.auth_type =
 	     diag_auth_type_from_csr_type(conn_profile->AuthType);
