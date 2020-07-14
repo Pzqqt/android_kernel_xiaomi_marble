@@ -17,8 +17,9 @@
 /**
  * DOC: wlan_hdd_sysfs_stats.h
  *
- * implementation for creating sysfs files:
+ * Implementation for creating sysfs files:
  *
+ * stats
  * dump_stats
  * clear_stats
  */
@@ -35,12 +36,14 @@
  * file path:
  *   /sys/class/net/wlanxx/dump_stats
  *   /sys/class/net/wlanxx/clear_stats
+ *   /sys/class/net/wlanxx/stats
  * where wlanxx is adapter name
  *
  * usage:
  *      echo [stats_id] > dump_stats
  *      cat dump_stats
  *      echo [stats_id] > clear_stats
+ *      cat /sys/class/net/wlanxx/stats
  *
  * Return: 0 on success and errno on failure
  */

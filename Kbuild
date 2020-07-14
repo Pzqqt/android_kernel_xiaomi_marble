@@ -304,9 +304,6 @@ endif
 ifeq ($(CONFIG_WLAN_SYSFS_TX_STBC), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_tx_stbc.o
 endif
-ifeq ($(CONFIG_WLAN_GET_STATS), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_stats.o
-endif
 ifeq ($(CONFIG_WLAN_SYSFS_SCAN_CFG), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_scan_config.o
 endif
