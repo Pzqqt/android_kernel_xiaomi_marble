@@ -39,6 +39,8 @@
 #define SOC_THRESHOLD_LEVEL 25
 #define LOW_SOC_MBIAS_REG_MIN_VOLTAGE 2850000
 
+#define FOUNDRY_ID_SEC 0x5
+
 enum {
 	CODEC_TX = 0,
 	CODEC_RX,
@@ -641,6 +643,11 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 
 		set_bit(HPH_PA_DELAY, &rouleur->status_mask);
 		usleep_range(200, 210);
+		/* Enable HD2 Config for HPHR if foundry id is SEC */
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHR_HD2_ENABLE,
+						0x04);
 		snd_soc_component_update_bits(component,
 			ROULEUR_DIG_SWR_PDM_WD_CTL1,
 			0x03, 0x03);
@@ -685,6 +692,10 @@ static int rouleur_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			clear_bit(HPH_PA_DELAY, &rouleur->status_mask);
 		}
 
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHR_HD2_ENABLE,
+						0x00);
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_POST_HPHR_PA_OFF,
 					     &rouleur->mbhc->wcd_mbhc);
@@ -715,6 +726,10 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				    true);
 		set_bit(HPH_PA_DELAY, &rouleur->status_mask);
 		usleep_range(200, 210);
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						0x04);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x03);
@@ -758,6 +773,10 @@ static int rouleur_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			clear_bit(HPH_PA_DELAY, &rouleur->status_mask);
 		}
 
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						0x00);
 		blocking_notifier_call_chain(&rouleur->mbhc->notifier,
 					     WCD_EVENT_POST_HPHL_PA_OFF,
 					     &rouleur->mbhc->wcd_mbhc);
@@ -798,6 +817,10 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		snd_soc_component_update_bits(component,
 				ROULEUR_ANA_COMBOPA_CTL,
 				0x40, 0x00);
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						0x04);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x03);
@@ -824,6 +847,10 @@ static int rouleur_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		usleep_range(5000, 5100);
+		if (rouleur->foundry_id == FOUNDRY_ID_SEC)
+			rouleur->update_wcd_event(rouleur->handle,
+						WCD_BOLERO_EVT_HPHL_HD2_ENABLE,
+						0x00);
 		snd_soc_component_update_bits(component,
 				ROULEUR_DIG_SWR_PDM_WD_CTL0,
 				0x03, 0x00);
@@ -2104,6 +2131,25 @@ static void rouleur_evaluate_soc(struct work_struct *work)
 	}
 }
 
+static void rouleur_get_foundry_id(struct rouleur_priv *rouleur)
+{
+	int ret;
+
+	if (rouleur->foundry_id_reg == 0) {
+		pr_debug("%s: foundry id not defined\n", __func__);
+		return;
+	}
+
+	ret = pm2250_spmi_read(rouleur->spmi_dev,
+				rouleur->foundry_id_reg, &rouleur->foundry_id);
+	if (ret == 0)
+		pr_debug("%s: rouleur foundry id = %x\n", rouleur->foundry_id,
+			 __func__);
+	else
+		pr_debug("%s: rouleur error in spmi read ret = %d\n",
+			 __func__, ret);
+}
+
 static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
@@ -2159,6 +2205,8 @@ static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_sync(dapm);
 
 	rouleur_init_reg(component);
+	/* Get rouleur foundry id */
+	rouleur_get_foundry_id(rouleur);
 
 	rouleur->version = ROULEUR_VERSION_1_0;
        /* Register event notifier */
@@ -2417,6 +2465,12 @@ struct rouleur_pdata *rouleur_populate_dt_data(struct device *dev)
 	}
 	pdata->reset_reg = reg;
 
+	if (of_property_read_u32(dev->of_node, "qcom,foundry-id-reg", &reg))
+		dev_dbg(dev, "%s: Failed to obtain foundry id\n",
+			__func__);
+	else
+		pdata->foundry_id_reg = reg;
+
 	/* Parse power supplies */
 	msm_cdc_get_power_supplies(dev, &pdata->regulator,
 				   &pdata->num_supplies);
@@ -2492,6 +2546,7 @@ static int rouleur_bind(struct device *dev)
 
 	rouleur->spmi_dev = &pdev->dev;
 	rouleur->reset_reg = pdata->reset_reg;
+	rouleur->foundry_id_reg = pdata->foundry_id_reg;
 	ret = msm_cdc_init_supplies(dev, &rouleur->supplies,
 				    pdata->regulator, pdata->num_supplies);
 	if (!rouleur->supplies) {

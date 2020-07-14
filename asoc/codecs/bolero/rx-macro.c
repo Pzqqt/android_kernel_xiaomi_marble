@@ -1507,6 +1507,16 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 					 RX_MACRO_MOD_GAIN));
 		}
 		break;
+	case BOLERO_MACRO_EVT_HPHL_HD2_ENABLE:
+		/* Enable hd2 config for hphl*/
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX0_RX_PATH_CFG0, 0x04, data);
+		break;
+	case BOLERO_MACRO_EVT_HPHR_HD2_ENABLE:
+		/* Enable hd2 config for hphr*/
+		snd_soc_component_update_bits(component,
+				BOLERO_CDC_RX_RX1_RX_PATH_CFG0, 0x04, data);
+		break;
 	}
 done:
 	return ret;
