@@ -17,9 +17,9 @@
 /**
  * DOC: wlan_hdd_sysfs_dp_trace.c
  *
- * implementation for creating sysfs files:
+ * Implementation for creating sysfs files:
  *
- * set_dp_trace
+ * dp_trace
  * dump_dp_trace
  * clear_dp_trace
  */
@@ -31,7 +31,7 @@
 #include "qdf_trace.h"
 
 static ssize_t
-__hdd_sysfs_set_dp_trace_store(struct hdd_context *hdd_ctx,
+__hdd_sysfs_dp_trace_store(struct hdd_context *hdd_ctx,
 			       struct kobj_attribute *attr,
 			       const char *buf,
 			       size_t count)
@@ -84,7 +84,7 @@ __hdd_sysfs_set_dp_trace_store(struct hdd_context *hdd_ctx,
 }
 
 static ssize_t
-hdd_sysfs_set_dp_trace_store(struct kobject *kobj,
+hdd_sysfs_dp_trace_store(struct kobject *kobj,
 			     struct kobj_attribute *attr,
 			     const char *buf,
 			     size_t count)
@@ -103,7 +103,7 @@ hdd_sysfs_set_dp_trace_store(struct kobject *kobj,
 	if (errno_size)
 		return errno_size;
 
-	errno_size = __hdd_sysfs_set_dp_trace_store(hdd_ctx, attr,
+	errno_size = __hdd_sysfs_dp_trace_store(hdd_ctx, attr,
 						    buf, count);
 
 	osif_psoc_sync_op_stop(psoc_sync);
@@ -111,9 +111,9 @@ hdd_sysfs_set_dp_trace_store(struct kobject *kobj,
 	return errno_size;
 }
 
-static struct kobj_attribute set_dp_trace_attribute =
-	__ATTR(set_dp_trace, 0220, NULL,
-	       hdd_sysfs_set_dp_trace_store);
+static struct kobj_attribute dp_trace_attribute =
+	__ATTR(dp_trace, 0220, NULL,
+	       hdd_sysfs_dp_trace_store);
 
 static uint32_t dump_dp_trace_count = 0;
 
@@ -308,9 +308,9 @@ int hdd_sysfs_dp_trace_create(struct kobject *driver_kobject)
 	}
 
 	error = sysfs_create_file(driver_kobject,
-				  &set_dp_trace_attribute.attr);
+				  &dp_trace_attribute.attr);
 	if (error)
-		hdd_err("could not create set_dp_trace sysfs file");
+		hdd_err("could not create dp_trace sysfs file");
 
 	error = sysfs_create_file(driver_kobject,
 				  &dump_dp_trace_attribute.attr);
@@ -334,5 +334,5 @@ hdd_sysfs_dp_trace_destroy(struct kobject *driver_kobject)
 	}
 	sysfs_remove_file(driver_kobject, &clear_dp_trace_attribute.attr);
 	sysfs_remove_file(driver_kobject, &dump_dp_trace_attribute.attr);
-	sysfs_remove_file(driver_kobject, &set_dp_trace_attribute.attr);
+	sysfs_remove_file(driver_kobject, &dp_trace_attribute.attr);
 }

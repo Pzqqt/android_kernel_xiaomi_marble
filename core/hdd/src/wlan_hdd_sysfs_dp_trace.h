@@ -17,9 +17,9 @@
 /**
  * DOC: wlan_hdd_sysfs_dp_trace.h
  *
- * implementation for creating sysfs files:
+ * Implementation for creating sysfs files:
  *
- * set_dp_trace
+ * dp_trace
  * dump_dp_trace
  * clear_dp_trace
  */
@@ -37,12 +37,12 @@
  * hdd_sysfs_dp_trace_create() - API to create dp trace related files
  * @driver_kobject: sysfs driver kobject
  *
- * file path: /sys/kernel/wifi/set_dp_trace
+ * file path: /sys/kernel/wifi/dp_trace
  *            /sys/kernel/wifi/dump_dp_trace
  *            /sys/kernel/wifi/clear_dp_trace
  *
  * usage:
- *      echo [arg_0] [arg_1] [arg_2]> set_dp_trace
+ *      echo [arg_0] [arg_1] [arg_2]> dp_trace
  *      echo [0/1] > dump_dp_trace
  *      echo 2 [count] > dump_dp_trace
  *      cat dump_dp_trace
