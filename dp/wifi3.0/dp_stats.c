@@ -6035,8 +6035,10 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.defrag_peer_uninit);
 		DP_PRINT_STATS("pkts delivered no peer %u",
 			       pdev->soc->stats.rx.err.pkt_delivered_no_peer);
-		DP_PRINT_STATS("RX invalid cookie: %d",
+		DP_PRINT_STATS("RX stale cookie: %d",
 			       soc->stats.rx.err.invalid_cookie);
+		DP_PRINT_STATS("RX invalid cookie: %d",
+			       soc->stats.rx.err.stale_cookie);
 		DP_PRINT_STATS("2k jump delba sent: %u",
 			       pdev->soc->stats.rx.err.rx_2k_jump_delba_sent);
 		DP_PRINT_STATS("2k jump msdu to stack: %u",
@@ -6578,6 +6580,9 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_PRINT_STATS("RX invalid cookie: %d",
 		       soc->stats.rx.err.invalid_cookie);
+
+	DP_PRINT_STATS("RX stale cookie: %d",
+		       soc->stats.rx.err.stale_cookie);
 
 	DP_PRINT_STATS("RX wait completed msdu break: %d",
 		       soc->stats.rx.msdu_scatter_wait_break);

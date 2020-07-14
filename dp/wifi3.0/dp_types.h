@@ -833,6 +833,8 @@ struct dp_soc_stats {
 			uint32_t scatter_msdu;
 			/* RX msdu drop count due to invalid cookie */
 			uint32_t invalid_cookie;
+			/* Count of stale cookie read in RX path */
+			uint32_t stale_cookie;
 			/* Delba sent count due to RX 2k jump */
 			uint32_t rx_2k_jump_delba_sent;
 			/* RX 2k jump msdu indicated to stack count */
