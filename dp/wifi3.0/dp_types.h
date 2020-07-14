@@ -1540,6 +1540,7 @@ struct ppdu_info {
 	uint32_t ppdu_id;
 	uint32_t sched_cmdid;
 	uint32_t max_ppdu_id;
+	uint32_t tsf_l32;
 	uint16_t tlv_bitmap;
 	uint16_t last_tlv_cnt;
 	uint16_t last_user:8,
@@ -1558,6 +1559,7 @@ struct ppdu_info {
 #endif
 	uint8_t compltn_common_tlv;
 	uint8_t ack_ba_tlv;
+	bool done;
 };
 
 /**
@@ -1870,6 +1872,11 @@ struct dp_pdev {
 #endif
 	/* list of ppdu tlvs */
 	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
+	TAILQ_HEAD(, ppdu_info) sched_comp_ppdu_list;
+
+	uint32_t sched_comp_list_depth;
+	uint16_t delivered_sched_cmdid;
+	uint16_t last_sched_cmdid;
 	uint32_t tlv_count;
 	uint32_t list_depth;
 	uint32_t ppdu_id;

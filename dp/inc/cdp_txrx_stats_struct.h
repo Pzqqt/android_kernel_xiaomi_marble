@@ -1718,6 +1718,7 @@ struct cdp_cfr_rcc_stats {
  * @tx_ppdu_proc: stats counter for tx ppdu processed
  * @ack_ba_comes_twice: stats counter for ack_ba_comes twice
  * @ppdu_drop: stats counter for ppdu_desc drop once threshold reached
+ * @ppdu_wrap_drop: stats counter for ppdu desc drop on wrap around
  */
 struct cdp_pdev_stats {
 	struct {
@@ -1784,6 +1785,7 @@ struct cdp_pdev_stats {
 	uint64_t tx_ppdu_proc;
 	uint64_t ack_ba_comes_twice;
 	uint64_t ppdu_drop;
+	uint64_t ppdu_wrap_drop;
 
 	struct {
 		uint64_t num_bufs_consumed;
