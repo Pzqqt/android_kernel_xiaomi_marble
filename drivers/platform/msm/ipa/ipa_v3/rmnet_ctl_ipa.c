@@ -497,7 +497,7 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 	int ret;
 	unsigned long flags;
 	struct sk_buff *skb;
-	int len;
+	int len = 0;
 
 	/* calling from WQ */
 	ret = ipa_pm_activate_sync(rmnet_ctl_ipa3_ctx->rmnet_ctl_pm_hdl);
@@ -514,8 +514,9 @@ static void rmnet_ctl_wakeup_ipa(struct work_struct *work)
 	/* dequeue the skb */
 	while (skb_queue_len(&rmnet_ctl_ipa3_ctx->tx_queue) > 0) {
 		skb = skb_dequeue(&rmnet_ctl_ipa3_ctx->tx_queue);
-		if (skb)
-			len = skb->len;
+		if (skb == NULL)
+			continue;
+		len = skb->len;
 		spin_unlock_irqrestore(&rmnet_ctl_ipa3_ctx->tx_lock, flags);
 		/*
 		 * both data packets and command will be routed to
