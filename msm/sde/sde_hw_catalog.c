@@ -550,7 +550,8 @@ static struct sde_prop_type sde_prop[] = {
 	{WB_LINEWIDTH, "qcom,sde-wb-linewidth", false, PROP_TYPE_U32},
 	{WB_LINEWIDTH_LINEAR, "qcom,sde-wb-linewidth-linear",
 			false, PROP_TYPE_U32},
-	{BANK_BIT, "qcom,sde-highest-bank-bit", false, PROP_TYPE_U32},
+	{BANK_BIT, "qcom,sde-highest-bank-bit", false,
+			PROP_TYPE_BIT_OFFSET_ARRAY},
 	{UBWC_VERSION, "qcom,sde-ubwc-version", false, PROP_TYPE_U32},
 	{UBWC_STATIC, "qcom,sde-ubwc-static", false, PROP_TYPE_U32},
 	{UBWC_SWIZZLE, "qcom,sde-ubwc-swizzle", false, PROP_TYPE_U32},
@@ -1078,7 +1079,6 @@ static int _validate_dt_entry(struct device_node *np,
 				sde_prop[i].prop_name,
 				prop_count[i], *off_count);
 			rc = 0;
-			prop_count[i] = 0;
 		}
 		if (prop_count[i] < 0) {
 			prop_count[i] = 0;
@@ -3675,6 +3675,7 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 	struct sde_dt_props *props)
 {
 	int i;
+	u32 ddr_type;
 
 	cfg->max_sspp_linewidth = props->exists[SSPP_LINEWIDTH] ?
 			PROP_VALUE_ACCESS(props->values, SSPP_LINEWIDTH, 0) :
@@ -3709,13 +3710,18 @@ static void _sde_top_parse_dt_helper(struct sde_mdss_cfg *cfg,
 			SDE_HW_UBWC_VER(PROP_VALUE_ACCESS(props->values,
 			UBWC_VERSION, 0)) : DEFAULT_SDE_UBWC_NONE;
 
-	cfg->mdp[0].highest_bank_bit = props->exists[BANK_BIT] ?
-			PROP_VALUE_ACCESS(props->values, BANK_BIT, 0) :
-			DEFAULT_SDE_HIGHEST_BANK_BIT;
+	cfg->mdp[0].highest_bank_bit = DEFAULT_SDE_HIGHEST_BANK_BIT;
 
-	if (cfg->ubwc_version == SDE_HW_UBWC_VER_40 &&
-			of_fdt_get_ddrtype() == LP_DDR4_TYPE)
-		cfg->mdp[0].highest_bank_bit = 0x02;
+	if (props->exists[BANK_BIT]) {
+		for (i = 0; i < props->counts[BANK_BIT]; i++) {
+			ddr_type = PROP_BITVALUE_ACCESS(props->values,
+					BANK_BIT, i, 0);
+			if (!ddr_type || (of_fdt_get_ddrtype() == ddr_type))
+				cfg->mdp[0].highest_bank_bit =
+					PROP_BITVALUE_ACCESS(props->values,
+					BANK_BIT, i, 1);
+		}
+	}
 
 	cfg->macrotile_mode = props->exists[MACROTILE_MODE] ?
 			PROP_VALUE_ACCESS(props->values, MACROTILE_MODE, 0) :
