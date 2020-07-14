@@ -5273,6 +5273,13 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 		 */
 		uint16_t flags = DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH;
 
+		/* Add Restricted 80p80 enabled bit to the flag so that
+		 * random channel selection will fallback to 160MHz and pick
+		 * 160MHz channels if the current operating BW is 165MHz.
+		 */
+		if (WLAN_IS_CHAN_MODE_165(dfs, dfs->dfs_curchan))
+			flags |= DFS_RANDOM_CH_FLAG_RESTRICTED_80P80_ENABLED;
+
 		dfs_fill_des_rcac_chan_params(dfs,
 					      &nxt_chan_params,
 					      curchan_chwidth);
