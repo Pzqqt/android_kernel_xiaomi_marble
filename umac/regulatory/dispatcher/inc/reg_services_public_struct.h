@@ -1139,13 +1139,13 @@ struct avoid_freq_ind_data {
 	struct unsafe_ch_list chan_list;
 };
 
-#define FIVEG_STARTING_FREQ     5000
-#define TWOG_STARTING_FREQ      2407
-#define TWOG_CHAN_14_IN_MHZ     2484
-#define TWOG_CHAN_1_IN_MHZ      2412
-#define TWOG_CHAN_5_IN_MHZ      2432
-#define TWOG_CHAN_6_IN_MHZ      2437
-#define TWOG_CHAN_13_IN_MHZ     2472
+#define FIVEG_STARTING_FREQ        5000
+#define TWOG_STARTING_FREQ         2407
+#define TWOG_CHAN_14_IN_MHZ        2484
+#define TWOG_CHAN_1_IN_MHZ         2412
+#define TWOG_CHAN_5_IN_MHZ         2432
+#define TWOG_CHAN_6_IN_MHZ         2437
+#define TWOG_CHAN_13_IN_MHZ        2472
 
 /**
  * struct reg_ctl_params - reg ctl and regd info

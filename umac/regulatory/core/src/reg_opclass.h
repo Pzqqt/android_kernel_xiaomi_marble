@@ -119,6 +119,27 @@ QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 				   uint8_t *n_opclasses,
 				   uint8_t max_supp_op_class,
 				   bool global_tbl_lookup);
+
+/**
+ * reg_is_5ghz_op_class() - Check if the input opclass is a 5GHz opclass.
+ * @country: Country code.
+ * @op_class: Operating class.
+ *
+ * Return: Return true if input the opclass is a 5GHz opclass,
+ * else return false.
+ */
+bool reg_is_5ghz_op_class(const uint8_t *country, uint8_t op_class);
+
+/**
+ * reg_is_2ghz_op_class() - Check if the input opclass is a 2.4GHz opclass.
+ * @country: Country code.
+ * @op_class: Operating class.
+ *
+ * Return: Return true if input the opclass is a 2.4GHz opclass,
+ * else return false.
+ */
+bool reg_is_2ghz_op_class(const uint8_t *country, uint8_t op_class);
+
 #ifdef CONFIG_CHAN_FREQ_API
 
 /**
@@ -314,6 +335,18 @@ QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 				   bool global_tbl_lookup)
 {
 	return QDF_STATUS_E_FAILURE;
+}
+
+static inline
+bool reg_is_5ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return false;
+}
+
+static inline
+bool reg_is_2ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return false;
 }
 
 #ifdef CONFIG_CHAN_FREQ_API

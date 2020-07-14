@@ -1155,6 +1155,16 @@ uint16_t wlan_reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 				      global_tbl_lookup);
 }
 
+bool wlan_reg_is_5ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return reg_is_5ghz_op_class(country, op_class);
+}
+
+bool wlan_reg_is_2ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return reg_is_2ghz_op_class(country, op_class);
+}
+
 bool wlan_reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev,
 			       uint8_t op_class)
 {

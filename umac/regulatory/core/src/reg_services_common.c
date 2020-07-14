@@ -3881,12 +3881,6 @@ reg_set_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc, bool val)
 	return QDF_STATUS_SUCCESS;
 }
 
-bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev, uint8_t op_class)
-{
-	return ((op_class >= MIN_6GHZ_OPER_CLASS) &&
-		(op_class <= MAX_6GHZ_OPER_CLASS));
-}
-
 #ifdef CONFIG_REG_CLIENT
 bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc)
 {

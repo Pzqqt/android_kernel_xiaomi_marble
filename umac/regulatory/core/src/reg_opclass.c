@@ -972,4 +972,61 @@ QDF_STATUS reg_get_opclass_details(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool reg_is_6ghz_op_class(struct wlan_objmgr_pdev *pdev, uint8_t op_class)
+{
+	return ((op_class >= MIN_6GHZ_OPER_CLASS) &&
+		(op_class <= MAX_6GHZ_OPER_CLASS));
+}
+
+/**
+ * reg_is_opclass_band_found - Check if the input opclass is 2G or 5G.
+ *
+ * @country - Pointer to country.
+ * @op_class - Operating class.
+ * @bandmask = Bitmask for band.
+ *
+ * Return : Return true if the input opclass' band (2Ghz or 5Ghz) matches one
+ * of bandmask's band.
+ */
+static bool reg_is_opclass_band_found(const uint8_t *country,
+				      uint8_t op_class,
+				      uint8_t bandmask)
+{
+	const struct reg_dmn_op_class_map_t *op_class_tbl;
+
+	op_class_tbl = reg_get_class_from_country((uint8_t *)country);
+
+	while (op_class_tbl && op_class_tbl->op_class) {
+		if (op_class_tbl->op_class == op_class) {
+			qdf_freq_t freq = op_class_tbl->start_freq +
+			(op_class_tbl->channels[0] * FREQ_TO_CHAN_SCALE);
+
+			if ((bandmask & BIT(REG_BAND_5G)) &&
+			    REG_IS_5GHZ_FREQ(freq))
+				return true;
+
+			if ((bandmask & BIT(REG_BAND_2G)) &&
+			    REG_IS_24GHZ_CH_FREQ(freq))
+				return true;
+
+			return false;
+		}
+
+		op_class_tbl++;
+	}
+
+	reg_err_rl("Opclass %d is not found", op_class);
+
+	return false;
+}
+
+bool reg_is_5ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return reg_is_opclass_band_found(country, op_class, BIT(REG_BAND_5G));
+}
+
+bool reg_is_2ghz_op_class(const uint8_t *country, uint8_t op_class)
+{
+	return reg_is_opclass_band_found(country, op_class, BIT(REG_BAND_2G));
+}
 #endif

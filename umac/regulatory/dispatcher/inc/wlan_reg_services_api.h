@@ -1370,6 +1370,26 @@ uint16_t wlan_reg_get_op_class_width(struct wlan_objmgr_pdev *pdev,
 				     bool global_tbl_lookup);
 
 /**
+ * wlan_reg_is_5ghz_op_class() - Check if the input opclass is a 5GHz opclass.
+ * @country: Country code.
+ * @op_class: Operating class.
+ *
+ * Return: Return true if input the opclass is a 5GHz opclass,
+ * else return false.
+ */
+bool wlan_reg_is_5ghz_op_class(const uint8_t *country, uint8_t op_class);
+
+/**
+ * wlan_reg_is_2ghz_op_class() - Check if the input opclass is a 2.4GHz opclass.
+ * @country: Country code.
+ * @op_class: Operating class.
+ *
+ * Return: Return true if input the opclass is a 2.4GHz opclass,
+ * else return false.
+ */
+bool wlan_reg_is_2ghz_op_class(const uint8_t *country, uint8_t op_class);
+
+/**
  * wlan_reg_is_6ghz_op_class() - Whether 6ghz oper class
  * @pdev: pdev ptr
  * @op_class: operating class
