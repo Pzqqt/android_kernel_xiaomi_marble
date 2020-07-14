@@ -1530,6 +1530,8 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "PAGE_FAULT";
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		return "ROAM_PMKID_REQUEST";
+	case WOW_REASON_VDEV_DISCONNECT:
+		return "VDEV_DISCONNECT";
 	default:
 		return "unknown";
 	}
@@ -1755,6 +1757,9 @@ static int wow_get_wmi_eventid(int32_t reason, uint32_t tag)
 	case WOW_REASON_ROAM_PMKID_REQUEST:
 		event_id = WMI_ROAM_PMKID_REQUEST_EVENTID;
 		break;
+	case WOW_REASON_VDEV_DISCONNECT:
+		event_id = WMI_VDEV_DISCONNECT_EVENTID;
+		break;
 	default:
 		wma_debug("No Event Id for WOW reason %s(%d)",
 			 wma_wow_wake_reason_str(reason), reason);
@@ -1794,6 +1799,7 @@ static bool is_piggybacked_event(int32_t reason)
 	case WOW_REASON_TDLS_CONN_TRACKER_EVENT:
 	case WOW_REASON_ROAM_HO:
 	case WOW_REASON_ROAM_PMKID_REQUEST:
+	case WOW_REASON_VDEV_DISCONNECT:
 		return true;
 	default:
 		return false;
@@ -2665,6 +2671,11 @@ static int wma_wake_event_piggybacked(
 		wma_debug("Host woken up because of PMKID request event");
 		errno = wma_roam_pmkid_request_event_handler(wma, pb_event,
 							     pb_event_len);
+		break;
+	case WOW_REASON_VDEV_DISCONNECT:
+		wma_debug("Host woken up because of vdev disconnect event");
+		errno = wma_roam_vdev_disconnect_event_handler(wma, pb_event,
+							       pb_event_len);
 		break;
 	default:
 		wma_err("Wake reason %s(%u) is not a piggybacked event",

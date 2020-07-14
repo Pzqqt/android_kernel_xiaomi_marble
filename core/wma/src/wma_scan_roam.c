@@ -313,6 +313,29 @@ static inline void wma_roam_scan_fill_fils_params(
 #endif
 
 /**
+ * wma_handle_btm_disassoc_imminent_msg() - Send del sta msg to lim on receiving
+ * BTM request from AP with disassoc imminent reason
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+static void wma_handle_btm_disassoc_imminent_msg(tp_wma_handle wma_handle,
+						 uint32_t vdev_id)
+{
+	tpDeleteStaContext del_sta_ctx;
+
+	del_sta_ctx = qdf_mem_malloc(sizeof(tDeleteStaContext));
+	if (!del_sta_ctx)
+		return;
+
+	del_sta_ctx->vdev_id = vdev_id;
+	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT;
+	wma_send_msg(wma_handle, SIR_LIM_DELETE_STA_CONTEXT_IND,
+		     (void *)del_sta_ctx, 0);
+}
+
+/**
  * wma_roam_scan_offload_set_params() - Set roam scan offload params
  * @wma_handle: pointer to wma context
  * @params: pointer to roam scan offload params
@@ -375,6 +398,41 @@ static void wma_roam_scan_offload_set_params(
 		 params->roam_offload_params.roam_preauth_retry_count,
 		 params->roam_offload_params.roam_preauth_no_ack_timeout,
 		 params->is_sae_same_pmk);
+}
+
+int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
+					   uint32_t len)
+{
+	WMI_VDEV_DISCONNECT_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_disconnect_event_fixed_param *roam_vdev_disc_ev;
+	tp_wma_handle wma = (tp_wma_handle)handle;
+
+	if (!event) {
+		wma_err("%s: received null event from target", __func__);
+		return -EINVAL;
+	}
+
+	param_buf = (WMI_VDEV_DISCONNECT_EVENTID_param_tlvs *)event;
+
+	roam_vdev_disc_ev = param_buf->fixed_param;
+	if (!roam_vdev_disc_ev) {
+		wma_err("%s: roam cap event is NULL", __func__);
+		return -EINVAL;
+	}
+
+	wma_debug("Received disconnect roam event on vdev_id : %d, reason:%d",
+		 roam_vdev_disc_ev->vdev_id, roam_vdev_disc_ev->reason);
+
+	switch (roam_vdev_disc_ev->reason) {
+	case WLAN_DISCONNECT_REASON_MOVE_TO_CELLULAR:
+		wma_handle_btm_disassoc_imminent_msg(wma,
+						roam_vdev_disc_ev->vdev_id);
+		break;
+	default:
+		return 0;
+	}
+
+	return 0;
 }
 #else
 static void wma_roam_scan_offload_set_params(
@@ -5896,29 +5954,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 					QDF_MODULE_ID_SCAN,  &cds_msg);
 	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(candidate_ind);
-}
-
-/**
- * wma_handle_btm_disassoc_imminent_msg() - Send del sta msg to lim on receiving
- * BTM request from AP with disassoc imminent reason
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- *
- * Return: None
- */
-static void wma_handle_btm_disassoc_imminent_msg(tp_wma_handle wma_handle,
-						 uint32_t vdev_id)
-{
-	tpDeleteStaContext del_sta_ctx;
-
-	del_sta_ctx = qdf_mem_malloc(sizeof(tDeleteStaContext));
-	if (!del_sta_ctx)
-		return;
-
-	del_sta_ctx->vdev_id = vdev_id;
-	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT;
-	wma_send_msg(wma_handle, SIR_LIM_DELETE_STA_CONTEXT_IND,
-		     (void *)del_sta_ctx, 0);
 }
 
 /**
