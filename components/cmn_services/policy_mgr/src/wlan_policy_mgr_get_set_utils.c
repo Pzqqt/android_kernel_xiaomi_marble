@@ -1562,9 +1562,17 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t num_connections = 0;
 	bool is_mcc = false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return is_mcc;
+	}
 
 	num_connections = policy_mgr_get_connection_count(psoc);
 
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	switch (num_connections) {
 	case 1:
 		break;
@@ -1591,6 +1599,7 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
 				 num_connections);
 		break;
 	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return is_mcc;
 }
@@ -1925,9 +1934,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	 * or SAP since IPA only cares about these two
 	 */
 	if (mode == QDF_STA_MODE || mode == QDF_SAP_MODE) {
-		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 		mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
 			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);

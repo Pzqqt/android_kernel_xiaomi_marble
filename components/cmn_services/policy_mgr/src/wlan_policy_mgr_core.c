@@ -621,9 +621,7 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 
 	/* IPA only cares about STA or SAP mode */
 	if (mode == PM_STA_MODE || mode == PM_SAP_MODE) {
-		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 		mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 		if (pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb)
 			pm_ctx->dp_cbacks.hdd_ipa_set_mcc_mode_cb(mcc_mode);
