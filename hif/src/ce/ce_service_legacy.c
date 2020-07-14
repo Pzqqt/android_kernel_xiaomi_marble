@@ -706,13 +706,13 @@ ce_sendlist_send_legacy(struct CE_handle *copyeng,
  * @per_recv_context: virtual address of the nbuf
  * @buffer: physical address of the nbuf
  *
- * Return: 0 if the buffer is enqueued
+ * Return: QDF_STATUS_SUCCESS if the buffer is enqueued
  */
-static int
+static QDF_STATUS
 ce_recv_buf_enqueue_legacy(struct CE_handle *copyeng,
 			   void *per_recv_context, qdf_dma_addr_t buffer)
 {
-	int status;
+	QDF_STATUS status;
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	struct CE_ring_state *dest_ring = CE_state->dest_ring;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -728,7 +728,7 @@ ce_recv_buf_enqueue_legacy(struct CE_handle *copyeng,
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
 		qdf_spin_unlock_bh(&CE_state->ce_index_lock);
-		return -EIO;
+		return QDF_STATUS_E_IO;
 	}
 
 	if ((CE_RING_DELTA(nentries_mask, write_index, sw_index - 1) > 0) ||
@@ -802,7 +802,7 @@ ce_recv_entries_done_nolock_legacy(struct hif_softc *scn,
 	return CE_RING_DELTA(nentries_mask, sw_index, read_index);
 }
 
-static int
+static QDF_STATUS
 ce_completed_recv_next_nolock_legacy(struct CE_state *CE_state,
 				     void **per_CE_contextp,
 				     void **per_transfer_contextp,
@@ -811,7 +811,7 @@ ce_completed_recv_next_nolock_legacy(struct CE_state *CE_state,
 				     unsigned int *transfer_idp,
 				     unsigned int *flagsp)
 {
-	int status;
+	QDF_STATUS status;
 	struct CE_ring_state *dest_ring = CE_state->dest_ring;
 	unsigned int nentries_mask = dest_ring->nentries_mask;
 	unsigned int sw_index = dest_ring->sw_index;
@@ -930,7 +930,7 @@ ce_revoke_recv_next_legacy(struct CE_handle *copyeng,
  * Guts of ce_completed_send_next.
  * The caller takes responsibility for any necessary locking.
  */
-static int
+static QDF_STATUS
 ce_completed_send_next_nolock_legacy(struct CE_state *CE_state,
 				     void **per_CE_contextp,
 				     void **per_transfer_contextp,
@@ -941,7 +941,7 @@ ce_completed_send_next_nolock_legacy(struct CE_state *CE_state,
 				     unsigned int *hw_idx,
 				     uint32_t *toeplitz_hash_result)
 {
-	int status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct CE_ring_state *src_ring = CE_state->src_ring;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
 	unsigned int nentries_mask = src_ring->nentries_mask;
