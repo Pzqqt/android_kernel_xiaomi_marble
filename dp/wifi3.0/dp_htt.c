@@ -5393,21 +5393,8 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 	HTT_RX_FSE_OPERATION_PDEV_ID_SET(*msg_word, htt_fisa_config->pdev_id);
 
 	msg_word++;
-	HTT_RX_FISA_CONFIG_FISA_ENABLE_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_IPSEC_SKIP_SEARCH_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_NON_TCP_SKIP_SEARCH_SET(*msg_word, 0);
-	HTT_RX_FISA_CONFIG_ADD_IPV4_FIXED_HDR_LEN_SET(*msg_word, 0);
-	HTT_RX_FISA_CONFIG_ADD_IPV6_FIXED_HDR_LEN_SET(*msg_word, 0);
-	HTT_RX_FISA_CONFIG_ADD_TCP_FIXED_HDR_LEN_SET(*msg_word, 0);
-	HTT_RX_FISA_CONFIG_ADD_UDP_HDR_LEN_SET(*msg_word, 0);
-	HTT_RX_FISA_CONFIG_CHKSUM_CUM_IP_LEN_EN_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_TID_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_TA_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_QOS_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_RAW_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_DECRYPT_ERR_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_DISABLE_MSDU_DROP_CHECK_SET(*msg_word, 1);
-	HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_SET(*msg_word, 0xf);
+	HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_SET(*msg_word, 1);
+	HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_SET(*msg_word, 0xf);
 
 	msg_word++;
 	htt_fisa_config->fisa_timeout_threshold = fisa_config->fisa_timeout;
