@@ -1103,7 +1103,10 @@ int htt_h2t_full_mon_cfg(struct htt_soc *htt_soc,
 		HTT_RX_FULL_MONITOR_MODE_NON_ZERO_MPDU_SET(*msg_word, true);
 		HTT_RX_FULL_MONITOR_MODE_RELEASE_RINGS_SET(*msg_word, 0x2);
 	} else if (config == DP_FULL_MON_DISABLE) {
-		HTT_RX_FULL_MONITOR_MODE_ENABLE_SET(*msg_word, false);
+		/* As per MAC team's suggestion, While disbaling full monitor
+		 * mode, Set 'en' bit to true in full monitor mode register.
+		 */
+		HTT_RX_FULL_MONITOR_MODE_ENABLE_SET(*msg_word, true);
 		HTT_RX_FULL_MONITOR_MODE_ZERO_MPDU_SET(*msg_word, false);
 		HTT_RX_FULL_MONITOR_MODE_NON_ZERO_MPDU_SET(*msg_word, false);
 		HTT_RX_FULL_MONITOR_MODE_RELEASE_RINGS_SET(*msg_word, 0x2);
