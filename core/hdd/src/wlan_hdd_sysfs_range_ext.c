@@ -24,7 +24,55 @@
 #include "osif_vdev_sync.h"
 #include <wlan_hdd_sysfs.h>
 #include "wma_api.h"
-#include "wlan_hdd_sysfs_set_range_ext.h"
+#include "wlan_hdd_sysfs_range_ext.h"
+
+static ssize_t
+__hdd_sysfs_range_ext_show(struct net_device *net_dev, char *buf)
+{
+	struct hdd_adapter *adapter = netdev_priv(net_dev);
+	struct hdd_context *hdd_ctx;
+	int value;
+	int ret;
+
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err_rl("adapter validate fail");
+		return -EINVAL;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	if (!wlan_hdd_validate_modules_state(hdd_ctx))
+		return -EINVAL;
+
+	hdd_debug("GET WMI_VDEV_PARAM_HE_RANGE_EXT");
+	value = wma_cli_get_command(adapter->vdev_id,
+				    WMI_VDEV_PARAM_HE_RANGE_EXT, VDEV_CMD);
+
+	return scnprintf(buf, PAGE_SIZE, "%d\n", value);
+}
+
+static ssize_t
+hdd_sysfs_range_ext_show(struct device *dev,
+			 struct device_attribute *attr,
+			 char *buf)
+{
+	struct net_device *net_dev = container_of(dev, struct net_device, dev);
+	struct osif_vdev_sync *vdev_sync;
+	ssize_t err_size;
+
+	err_size = osif_vdev_sync_op_start(net_dev, &vdev_sync);
+	if (err_size)
+		return err_size;
+
+	err_size = __hdd_sysfs_range_ext_show(net_dev, buf);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return err_size;
+}
 
 static ssize_t __hdd_sysfs_range_ext_store(struct net_device *net_dev,
 					   char const *buf, size_t count)
@@ -98,7 +146,8 @@ hdd_sysfs_range_ext_store(struct device *dev, struct device_attribute *attr,
 	return errno_size;
 }
 
-static DEVICE_ATTR(range_ext, 0220, NULL, hdd_sysfs_range_ext_store);
+static DEVICE_ATTR(range_ext, 0660, hdd_sysfs_range_ext_show,
+		   hdd_sysfs_range_ext_store);
 
 void hdd_sysfs_range_ext_create(struct hdd_adapter *adapter)
 {

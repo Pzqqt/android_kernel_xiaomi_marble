@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,48 +15,45 @@
  */
 
 /**
- * DOC: wlan_hdd_sysfs_get_range_ext.h
+ * DOC: wlan_hdd_sysfs_range_ext.h
  *
- * implementation for creating sysfs file range_ext
+ * Implementation for creating sysfs file range_ext
  */
 
-#ifndef _WLAN_HDD_SYSFS_GET_RANGE_EXT_H
-#define _WLAN_HDD_SYSFS_GET_RANGE_EXT_H
+#ifndef _WLAN_HDD_SYSFS_RANGE_EXT_H
+#define _WLAN_HDD_SYSFS_RANGE_EXT_H
 
-#if defined(WLAN_SYSFS) && defined(CONFIG_WLAN_GET_RANGE_EXT)
+#if defined(WLAN_SYSFS) && defined(WLAN_SYSFS_RANGE_EXT)
 /**
- * hdd_sysfs_get_range_ext_create() - API to create range_ext
- * @adapter: pointer to adapter
+ * wlan_hdd_sysfs_range_ext_create() - API to create range_ext
+ * @adapter: hdd adapter
  *
  * this file is created per adapter.
  * file path: /sys/class/net/wlanxx/range_ext
- *	where wlanxx is adapter name
- *
+ *                (wlanxx is adapter name)
  * usage:
- *      cat /sys/class/net/wlanxx/range_ext
+ *      echo 1  > range_ext
  *
- * Return: 0 on success and errno on failure
+ * Return: none
  */
-int hdd_sysfs_get_range_ext_create(struct hdd_adapter *adapter);
+void hdd_sysfs_range_ext_create(struct hdd_adapter *adapter);
 
 /**
- * hdd_sysfs_get_range_ext_destroy() -
- *   API to destroy range_ext
+ * hdd_sysfs_range_ext_destroy() - API to destroy range_ext
  * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_sysfs_get_range_ext_destroy(struct hdd_adapter *adapter);
+void hdd_sysfs_range_ext_destroy(struct hdd_adapter *adapter);
 #else
-static inline int
-hdd_sysfs_get_range_ext_create(struct hdd_adapter *adapter)
+static inline void
+hdd_sysfs_range_ext_create(struct hdd_adapter *adapter)
 {
-	return 0;
 }
 
 static inline void
-hdd_sysfs_get_range_ext_destroy(struct hdd_adapter *adapter)
+hdd_sysfs_range_ext_destroy(struct hdd_adapter *adapter)
 {
 }
 #endif
-#endif /* #ifndef _WLAN_HDD_SYSFS_GET_RANGE_EXT_H */
+#endif /* #ifndef _WLAN_HDD_SYSFS_RANGE_EXT_H */

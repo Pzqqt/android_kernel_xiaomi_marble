@@ -313,8 +313,8 @@ endif
 ifeq ($(CONFIG_WLAN_SYSFS_MONITOR_MODE_CHANNEL), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_monitor_mode_channel.o
 endif
-ifeq ($(CONFIG_WLAN_SET_RANGE_EXT), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_set_range_ext.o
+ifeq ($(CONFIG_WLAN_SYSFS_RANGE_EXT), y)
+HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_range_ext.o
 endif
 ifeq ($(CONFIG_WLAN_SYSFS_RADAR), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_radar.o
@@ -336,9 +336,6 @@ HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_dp_trace.o
 endif
 ifeq ($(CONFIG_WLAN_SYSFS_STATS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_stats.o
-endif
-ifeq ($(CONFIG_WLAN_GET_RANGE_EXT), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_get_range_ext.o
 endif
 ifeq ($(CONFIG_WLAN_SYSFS_TDLS_PEERS), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_sysfs_tdls_peers.o
@@ -2657,7 +2654,6 @@ cppflags-$(CONFIG_WLAN_TXRX_FW_STATS) += -DCONFIG_WLAN_TXRX_FW_STATS
 cppflags-$(CONFIG_WLAN_TXRX_STATS) += -DCONFIG_WLAN_TXRX_STATS
 cppflags-$(CONFIG_WLAN_SYSFS_DP_TRACE) += -DWLAN_SYSFS_DP_TRACE
 cppflags-$(CONFIG_WLAN_SYSFS_STATS) += -DWLAN_SYSFS_STATS
-cppflags-$(CONFIG_WLAN_GET_RANGE_EXT) += -DCONFIG_WLAN_GET_RANGE_EXT
 cppflags-$(CONFIG_WLAN_SYSFS_TEMPERATURE) += -DCONFIG_WLAN_SYSFS_TEMPERATURE
 cppflags-$(CONFIG_WLAN_THERMAL_CFG) += -DCONFIG_WLAN_THERMAL_CFG
 cppflags-$(CONFIG_FEATURE_UNIT_TEST_SUSPEND) += -DWLAN_SUSPEND_RESUME_TEST
@@ -2698,7 +2694,7 @@ cppflags-$(CONFIG_QCOM_TDLS) += -DTDLS_WOW_ENABLED
 endif
 
 cppflags-$(CONFIG_WLAN_SYSFS_TDLS_PEERS) += -DWLAN_SYSFS_TDLS_PEERS
-cppflags-$(CONFIG_WLAN_SET_RANGE_EXT) += -DWLAN_SET_RANGE_EXT
+cppflags-$(CONFIG_WLAN_SYSFS_RANGE_EXT) += -DWLAN_SYSFS_RANGE_EXT
 
 ifeq ($(CONFIG_CM_ENABLE), y)
 cppflags-y += -DFEATURE_CM_ENABLE
