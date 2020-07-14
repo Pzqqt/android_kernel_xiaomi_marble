@@ -4231,7 +4231,8 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 
 	hdd_debug("Peer %pM", mac);
 
-	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list, mac);
+	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list, mac,
+					  STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
 	if (!stainfo) {
 		hdd_err("peer %pM not found", mac);
 		return -EINVAL;
@@ -4240,7 +4241,8 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	qdf_mem_copy(macaddr.bytes, mac, QDF_MAC_ADDR_SIZE);
 	status = wlan_hdd_get_peer_info(adapter, macaddr, &peer_info);
 	if (status) {
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+				     STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
 		hdd_err("fail to get peer info from fw");
 		return -EPERM;
 	}
@@ -4255,7 +4257,8 @@ static int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	txrx_stats.rssi = peer_info.rssi + WLAN_HDD_TGT_NOISE_FLOOR_DBM;
 	wlan_hdd_fill_rate_info(&txrx_stats, &peer_info);
 	wlan_hdd_fill_station_info(hddctx->psoc, sinfo, stainfo, &txrx_stats);
-	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
+	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+			     STA_INFO_WLAN_HDD_GET_STATION_REMOTE);
 
 	return status;
 }

@@ -49,10 +49,10 @@ static ssize_t __show_sta_info(struct net_device *net_dev, char *buf)
 			    "%s    get_sta_info:\nstaAddress\n",
 			    net_dev->name);
 
-	hdd_for_each_sta_ref(adapter->sta_info_list, sta) {
+	hdd_for_each_sta_ref(adapter->sta_info_list, sta, STA_INFO_SHOW) {
 		if (QDF_IS_ADDR_BROADCAST(sta->sta_mac.bytes)) {
 			hdd_put_sta_info_ref(&adapter->sta_info_list, &sta,
-					     true);
+					     true, STA_INFO_SHOW);
 			continue;
 		}
 		ret_val += scnprintf(buf + ret_val, PAGE_SIZE - ret_val,
@@ -65,7 +65,8 @@ static ssize_t __show_sta_info(struct net_device *net_dev, char *buf)
 				     sta->sta_mac.bytes[5],
 				     sta->ecsa_capable);
 
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta, true,
+				     STA_INFO_SHOW);
 	}
 
 exit:

@@ -28,6 +28,52 @@
 
 #define HDD_MAX_PEERS 32
 
+char *sta_info_string_from_dbgid(wlan_sta_info_dbgid id)
+{
+	static const char *strings[] = {
+				"STA_INFO_ID_RESERVED",
+				"STA_INFO_CFG80211_GET_LINK_PROPERTIES",
+				"STA_INFO_SOFTAP_INSPECT_TX_EAP_PKT",
+				"STA_INFO_SOFTAP_CHECK_WAIT_FOR_TX_EAP_PKT",
+				"STA_INFO_SOFTAP_INSPECT_DHCP_PACKET",
+				"STA_INFO_SOFTAP_HARD_START_XMIT",
+				"STA_INFO_SOFTAP_INIT_TX_RX_STA",
+				"STA_INFO_SOFTAP_RX_PACKET_CBK",
+				"STA_INFO_SOFTAP_REGISTER_STA",
+				"STA_INFO_GET_CACHED_STATION_REMOTE",
+				"STA_INFO_HDD_GET_STATION_REMOTE",
+				"STA_INFO_WLAN_HDD_GET_STATION_REMOTE",
+				"STA_INFO_SOFTAP_DEAUTH_CURRENT_STA",
+				"STA_INFO_SOFTAP_DEAUTH_ALL_STA",
+				"STA_INFO_CFG80211_DEL_STATION",
+				"STA_INFO_HDD_CLEAR_ALL_STA",
+				"STA_INFO_FILL_STATION_INFO",
+				"STA_INFO_HOSTAPD_SAP_EVENT_CB",
+				"STA_INFO_SAP_INDICATE_DISCONNECT_FOR_STA",
+				"STA_INFO_IS_PEER_ASSOCIATED",
+				"STA_INFO_SAP_SET_TWO_INTS_GETNONE",
+				"STA_INFO_SAP_GETASSOC_STAMACADDR",
+				"STA_INFO_SOFTAP_GET_STA_INFO",
+				"STA_INFO_GET_SOFTAP_LINKSPEED",
+				"STA_INFO_CONNECTION_IN_PROGRESS_ITERATOR",
+				"STA_INFO_SOFTAP_STOP_BSS",
+				"STA_INFO_SOFTAP_CHANGE_STA_STATE",
+				"STA_INFO_CLEAR_CACHED_STA_INFO",
+				"STA_INFO_ATTACH_DETACH",
+				"STA_INFO_SHOW",
+				"STA_INFO_ID_MAX"};
+	int32_t num_dbg_strings = QDF_ARRAY_SIZE(strings);
+
+	if (id >= num_dbg_strings) {
+		char *ret = "";
+
+		hdd_err("Debug string not found for debug id %d", id);
+		return ret;
+	}
+
+	return (char *)strings[id];
+}
+
 QDF_STATUS hdd_sta_info_init(struct hdd_sta_info_obj *sta_info_container)
 {
 	if (!sta_info_container) {
@@ -62,7 +108,8 @@ QDF_STATUS hdd_sta_info_attach(struct hdd_sta_info_obj *sta_info_container,
 
 	qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
-	qdf_atomic_set(&sta_info->ref_cnt, 1);
+	hdd_take_sta_info_ref(sta_info_container, sta_info, false,
+			      STA_INFO_ATTACH_DETACH);
 	qdf_list_insert_front(&sta_info_container->sta_obj,
 			      &sta_info->sta_node);
 	sta_info->is_attached = true;
@@ -91,7 +138,8 @@ void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 
 	if (info->is_attached) {
 		info->is_attached = false;
-		hdd_put_sta_info_ref(sta_info_container, sta_info, false);
+		hdd_put_sta_info_ref(sta_info_container, sta_info, false,
+				     STA_INFO_ATTACH_DETACH);
 	} else {
 		hdd_info("Stainfo is already detached");
 	}
@@ -101,7 +149,8 @@ void hdd_sta_info_detach(struct hdd_sta_info_obj *sta_info_container,
 
 struct hdd_station_info *hdd_get_sta_info_by_mac(
 				struct hdd_sta_info_obj *sta_info_container,
-				const uint8_t *mac_addr)
+				const uint8_t *mac_addr,
+				wlan_sta_info_dbgid sta_info_dbgid)
 {
 	struct hdd_station_info *sta_info = NULL;
 
@@ -116,7 +165,7 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 		if (qdf_is_macaddr_equal(&sta_info->sta_mac,
 					 (struct qdf_mac_addr *)mac_addr)) {
 			hdd_take_sta_info_ref(sta_info_container,
-					      sta_info, false);
+					      sta_info, false, sta_info_dbgid);
 			qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 			return sta_info;
 		}
@@ -129,10 +178,16 @@ struct hdd_station_info *hdd_get_sta_info_by_mac(
 
 void hdd_take_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 			   struct hdd_station_info *sta_info,
-			   bool lock_required)
+			   bool lock_required,
+			   wlan_sta_info_dbgid sta_info_dbgid)
 {
 	if (!sta_info_container || !sta_info) {
 		hdd_err("Parameter(s) null");
+		return;
+	}
+
+	if (sta_info_dbgid >= STA_INFO_ID_MAX) {
+		hdd_err("Invalid sta_info debug id %d", sta_info_dbgid);
 		return;
 	}
 
@@ -140,6 +195,7 @@ void hdd_take_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 		qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
 	qdf_atomic_inc(&sta_info->ref_cnt);
+	qdf_atomic_inc(&sta_info->ref_cnt_dbgid[sta_info_dbgid]);
 
 	if (lock_required)
 		qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
@@ -147,7 +203,8 @@ void hdd_take_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 
 void
 hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
-		     struct hdd_station_info **sta_info, bool lock_required)
+		     struct hdd_station_info **sta_info, bool lock_required,
+		     wlan_sta_info_dbgid sta_info_dbgid)
 {
 	struct hdd_station_info *info;
 	struct qdf_mac_addr addr;
@@ -164,6 +221,11 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 		return;
 	}
 
+	if (sta_info_dbgid >= STA_INFO_ID_MAX) {
+		hdd_err("Invalid sta_info debug id %d", sta_info_dbgid);
+		return;
+	}
+
 	if (lock_required)
 		qdf_spin_lock_bh(&sta_info_container->sta_obj_lock);
 
@@ -173,12 +235,15 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 	 * the root cause would be known and the buggy put_ref can be taken
 	 * care of.
 	 */
-	if (!qdf_atomic_read(&info->ref_cnt)) {
-		hdd_alert("sta_info ref count is already 0");
+	if (!qdf_atomic_read(&info->ref_cnt_dbgid[sta_info_dbgid])) {
+		hdd_err("Sta_info ref count put is detected without get for debug id %s",
+			sta_info_string_from_dbgid(sta_info_dbgid));
+
 		QDF_BUG(0);
 	}
 
 	qdf_atomic_dec(&info->ref_cnt);
+	qdf_atomic_dec(&info->ref_cnt_dbgid[sta_info_dbgid]);
 
 	if (qdf_atomic_read(&info->ref_cnt)) {
 		if (lock_required)
@@ -213,10 +278,11 @@ void hdd_clear_cached_sta_info(struct hdd_adapter *adapter)
 		return;
 	}
 
-	hdd_for_each_sta_ref_safe(adapter->cache_sta_info_list, sta_info, tmp) {
+	hdd_for_each_sta_ref_safe(adapter->cache_sta_info_list, sta_info, tmp,
+				  STA_INFO_CLEAR_CACHED_STA_INFO) {
 		hdd_sta_info_detach(&adapter->cache_sta_info_list, &sta_info);
 		hdd_put_sta_info_ref(&adapter->cache_sta_info_list, &sta_info,
-				     true);
+				     true, STA_INFO_CLEAR_CACHED_STA_INFO);
 	}
 }
 

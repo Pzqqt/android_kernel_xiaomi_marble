@@ -779,9 +779,11 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 
 	hdd_enter_dev(adapter->dev);
 
-	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp,
+				  STA_INFO_HDD_CLEAR_ALL_STA) {
 		hdd_clear_sta(adapter, sta_info);
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
+				     STA_INFO_HDD_CLEAR_ALL_STA);
 	}
 }
 
@@ -1456,7 +1458,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	bool is_dot11_mode_abgn;
 
 	stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
-					  event->staMac.bytes);
+					  event->staMac.bytes,
+					  STA_INFO_FILL_STATION_INFO);
 
 	if (!stainfo) {
 		hdd_err("invalid stainfo");
@@ -1529,7 +1532,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 	cache_sta_info =
 		hdd_get_sta_info_by_mac(&adapter->cache_sta_info_list,
-					event->staMac.bytes);
+					event->staMac.bytes,
+					STA_INFO_FILL_STATION_INFO);
 
 	if (!cache_sta_info) {
 		cache_sta_info = qdf_mem_malloc(sizeof(*cache_sta_info));
@@ -1566,7 +1570,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 			/* Find the oldest cached station */
 			hdd_for_each_sta_ref_safe(adapter->cache_sta_info_list,
-						  temp_sta_info, tmp) {
+						  temp_sta_info, tmp,
+						  STA_INFO_FILL_STATION_INFO) {
 				if (temp_sta_info->disassoc_ts &&
 				    (!oldest_disassoc_sta_ts ||
 				    qdf_system_time_after(
@@ -1577,8 +1582,10 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 					oldest_disassoc_sta_info =
 						temp_sta_info;
 				}
-				hdd_put_sta_info_ref(sta_list, &temp_sta_info,
-						     true);
+				hdd_put_sta_info_ref(
+						sta_list, &temp_sta_info,
+						true,
+						STA_INFO_FILL_STATION_INFO);
 			}
 
 			/* Remove the oldest and store the current */
@@ -1589,7 +1596,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		}
 	} else {
 		hdd_put_sta_info_ref(&adapter->cache_sta_info_list,
-				     &cache_sta_info, true);
+				     &cache_sta_info, true,
+				     STA_INFO_FILL_STATION_INFO);
 	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
@@ -1611,7 +1619,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		  stainfo->rx_mcs_map,
 		  stainfo->tx_mcs_map);
 exit:
-	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
+	hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+			     STA_INFO_FILL_STATION_INFO);
 	return;
 }
 
@@ -2367,7 +2376,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 
 		cache_stainfo = hdd_get_sta_info_by_mac(
 						&adapter->cache_sta_info_list,
-						disassoc_comp->staMac.bytes);
+						disassoc_comp->staMac.bytes,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
 		if (cache_stainfo) {
 			/* Cache the disassoc info */
 			cache_stainfo->rssi = disassoc_comp->rssi;
@@ -2385,7 +2395,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 				  cache_stainfo->rx_rate,
 				  cache_stainfo->reason_code);
 			hdd_put_sta_info_ref(&adapter->cache_sta_info_list,
-					     &cache_stainfo, true);
+					     &cache_stainfo, true,
+					     STA_INFO_HOSTAPD_SAP_EVENT_CB);
 		}
 		hdd_nofl_info("SAP disassociated " QDF_MAC_ADDR_STR,
 			      QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
@@ -2406,8 +2417,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
-		stainfo = hdd_get_sta_info_by_mac(&adapter->sta_info_list,
-						  disassoc_comp->staMac.bytes);
+		stainfo = hdd_get_sta_info_by_mac(
+						&adapter->sta_info_list,
+						disassoc_comp->staMac.bytes,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
 		if (!stainfo) {
 			hdd_err("Failed to find the right station");
 			return QDF_STATUS_E_INVAL;
@@ -2423,25 +2436,30 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
 
 		hdd_softap_deregister_sta(adapter, &stainfo);
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &stainfo, true,
+				     STA_INFO_HOSTAPD_SAP_EVENT_CB);
 
 		ap_ctx->ap_active = false;
 
 		hdd_for_each_sta_ref_safe(adapter->sta_info_list, stainfo,
-					  tmp) {
+					  tmp, STA_INFO_HOSTAPD_SAP_EVENT_CB) {
 			if (!qdf_is_macaddr_broadcast(
 			    &stainfo->sta_mac)) {
 				ap_ctx->ap_active = true;
-				hdd_put_sta_info_ref(&adapter->sta_info_list,
-						     &stainfo, true);
+				hdd_put_sta_info_ref(
+						&adapter->sta_info_list,
+						&stainfo, true,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
 				if (tmp)
 					hdd_put_sta_info_ref(
 						&adapter->sta_info_list,
-						&tmp, true);
+						&tmp, true,
+						STA_INFO_HOSTAPD_SAP_EVENT_CB);
 				break;
 			}
 			hdd_put_sta_info_ref(&adapter->sta_info_list,
-					     &stainfo, true);
+					     &stainfo, true,
+					     STA_INFO_HOSTAPD_SAP_EVENT_CB);
 		}
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -6806,14 +6824,17 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		return;
 	}
 
-	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp,
+				  STA_INFO_SAP_INDICATE_DISCONNECT_FOR_STA) {
 		hdd_debug("sta_mac: " QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
 
 		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
 			hdd_softap_deregister_sta(adapter, &sta_info);
-			hdd_put_sta_info_ref(&adapter->sta_info_list,
-					     &sta_info, true);
+			hdd_put_sta_info_ref(
+				&adapter->sta_info_list,
+				&sta_info, true,
+				STA_INFO_SAP_INDICATE_DISCONNECT_FOR_STA);
 			continue;
 		}
 
@@ -6822,7 +6843,8 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		qdf_mem_copy(
 		     &sap_event.sapevt.sapStationDisassocCompleteEvent.staMac,
 		     &sta_info->sta_mac, sizeof(struct qdf_mac_addr));
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
+				     STA_INFO_SAP_INDICATE_DISCONNECT_FOR_STA);
 
 		sap_event.sapevt.sapStationDisassocCompleteEvent.reason =
 				eSAP_MAC_INITATED_DISASSOC;
@@ -6845,18 +6867,23 @@ bool hdd_is_peer_associated(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp) {
+	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp,
+				  STA_INFO_IS_PEER_ASSOCIATED) {
 		if (!qdf_mem_cmp(&sta_info->sta_mac, mac_addr,
 				 QDF_MAC_ADDR_SIZE)) {
 			is_associated = true;
 			hdd_put_sta_info_ref(&adapter->sta_info_list,
-					     &sta_info, true);
+					     &sta_info, true,
+					     STA_INFO_IS_PEER_ASSOCIATED);
 			if (tmp)
-				hdd_put_sta_info_ref(&adapter->sta_info_list,
-						     &tmp, true);
+				hdd_put_sta_info_ref(
+						&adapter->sta_info_list,
+						&tmp, true,
+						STA_INFO_IS_PEER_ASSOCIATED);
 			break;
 		}
-		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true);
+		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
+				     STA_INFO_IS_PEER_ASSOCIATED);
 	}
 
 	return is_associated;
