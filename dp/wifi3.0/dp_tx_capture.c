@@ -695,12 +695,30 @@ void dp_deliver_mgmt_frm(struct dp_pdev *pdev, qdf_nbuf_t nbuf)
 			return;
 		}
 
+		if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+		    IEEE80211_FC0_TYPE_MGT) &&
+		    ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
+		     IEEE80211_FC0_SUBTYPE_ACTION)) {
+			uint8_t *frm;
+			struct ieee80211_action *ia;
+
+			frm = (u_int8_t *)&wh[1];
+			ia = (struct ieee80211_action *)frm;
+
+			if ((ia->ia_category == IEEE80211_ACTION_CAT_S1G) &&
+			    (ia->ia_action == IEEE80211_ACTION_TWT_SETUP)) {
+				ptr_mgmt_hdr->is_sgen_pkt = false;
+			}
+		}
+
 		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE, QDF_TRACE_LEVEL_DEBUG,
-			  "dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%u",
+			  "dlvr mgmt frm(%d 0x%08x): fc 0x%x %x, dur 0x%x%x tsf:%u, retries_count: %d, is_sgen: %d",
 			  ptr_mgmt_hdr->ppdu_id,
 			  ptr_mgmt_hdr->ppdu_id,
 			  wh->i_fc[1], wh->i_fc[0],
-			  wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf);
+			  wh->i_dur[1], wh->i_dur[0], ptr_mgmt_hdr->tx_tsf,
+			  ptr_mgmt_hdr->retries_count,
+			  ptr_mgmt_hdr->is_sgen_pkt);
 
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_TX_CAPTURE,
 				   QDF_TRACE_LEVEL_DEBUG,
