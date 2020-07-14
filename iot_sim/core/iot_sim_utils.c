@@ -250,6 +250,9 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 	int auth_seq_index = 0;
 	struct iot_sim_rule *piot_sim_rule = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct iot_sim_rule_per_peer *peer_rule;
+	struct ieee80211_frame *wh = (struct ieee80211_frame *)buf;
+	struct qdf_mac_addr *mac_addr;
 
 	isc = wlan_objmgr_pdev_get_comp_private_obj(pdev, WLAN_IOT_SIM_COMP);
 	if (!isc) {
@@ -293,20 +296,28 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 		      type, subtype, seq, is_action_frm,
 		      tx ? "TX" : "RX");
 
-	/**
-	 * Only broadcast peer is getting handled right now.
-	 * Need to add support for peer based content modification
-	 */
-	qdf_spin_lock(&isc->bcast_peer.iot_sim_lock);
+	if (tx)
+		mac_addr = (struct qdf_mac_addr *)wh->i_addr1;
+	else
+		mac_addr = (struct qdf_mac_addr *)wh->i_addr2;
 
-	if (!isc->bcast_peer.rule_per_seq[seq])
+	peer_rule = iot_sim_find_peer_from_mac(isc, mac_addr);
+	if (!peer_rule)
+		peer_rule = &isc->bcast_peer;
+
+	if (!peer_rule)
+		goto no_peer_rule;
+
+	qdf_spin_lock_bh(&isc->iot_sim_lock);
+
+	if (!peer_rule->rule_per_seq[seq])
 		goto norule;
 
 	if (is_action_frm)
-		piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
+		piot_sim_rule = peer_rule->rule_per_seq[seq]->
 			rule_per_action_frm[cat][cat_index];
 	else
-		piot_sim_rule = isc->bcast_peer.rule_per_seq[seq]->
+		piot_sim_rule = peer_rule->rule_per_seq[seq]->
 			rule_per_type[type][subtype];
 
 	if (!piot_sim_rule)
@@ -341,11 +352,14 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 			status = QDF_STATUS_E_NULL_VALUE;
 	}
 
-	qdf_spin_unlock(&isc->bcast_peer.iot_sim_lock);
+	qdf_spin_unlock_bh(&isc->iot_sim_lock);
 	return status;
 
 norule:
 	iot_sim_debug("Rule not set for this frame");
-	qdf_spin_unlock(&isc->bcast_peer.iot_sim_lock);
+	qdf_spin_unlock_bh(&isc->iot_sim_lock);
+	return QDF_STATUS_SUCCESS;
+no_peer_rule:
+	iot_sim_debug("Rule not set for this peer");
 	return QDF_STATUS_SUCCESS;
 }

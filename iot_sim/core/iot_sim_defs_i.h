@@ -75,6 +75,7 @@
 #define N_FRAME_TYPE 0x4
 #define N_FRAME_SUBTYPE 0xF
 #define MAX_SEQ 0x4
+#define MAX_PEER_COUNT 0x2
 #define MAX_ACTION 0x3
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
 #define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
@@ -136,10 +137,9 @@ struct iot_sim_rule_per_seq {
  * @list - list variable
  */
 struct iot_sim_rule_per_peer {
+	qdf_list_node_t node;
 	struct qdf_mac_addr addr;
-	qdf_spinlock_t iot_sim_lock;
 	struct iot_sim_rule_per_seq *rule_per_seq[MAX_SEQ];
-	qdf_list_t list;
 };
 
 /**
@@ -152,6 +152,8 @@ struct iot_sim_context {
 	struct wlan_objmgr_pdev *pdev_obj;
 	/* IOT_SIM Peer list & Bcast Peer */
 	struct iot_sim_rule_per_peer *iot_sim_peer_list, bcast_peer;
+	qdf_list_t peer_list;
+	qdf_spinlock_t iot_sim_lock;
 	struct iot_sim_debugfs iot_sim_dbgfs_ctx;
 	void (*iot_sim_update_beacon_trigger)(mlme_pdev_ext_t *);
 	qdf_nbuf_t bcn_buf;

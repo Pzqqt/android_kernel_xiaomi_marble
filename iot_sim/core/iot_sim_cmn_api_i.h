@@ -87,6 +87,18 @@ QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
 					    uint8_t *act, bool rx);
 
 /**
+ * iot_sim_find_peer_from_mac - function to find the iot sim peer data
+ *                              based on the mac address provided
+ *
+ * @isc: iot_sim pdev private object
+ * @mac: mac address of the peer
+ * Return: iot_sim_rule_per_peer reference if exists else NULL
+ */
+struct iot_sim_rule_per_peer *
+iot_sim_find_peer_from_mac(struct iot_sim_context *isc,
+			   struct qdf_mac_addr *mac);
+
+/**
  * iot_sim_frame_update() - Management frame update
  * @pdev: reference to global pdev object
  * @nbuf: frame buffer

@@ -131,10 +131,108 @@ struct iot_sim_rule_per_peer *
 iot_sim_find_peer_from_mac(struct iot_sim_context *isc,
 			   struct qdf_mac_addr *mac)
 {
+	struct iot_sim_rule_per_peer *peer_rule = NULL;
+	qdf_list_node_t *node = NULL, *next_node = NULL;
+
 	if (qdf_is_macaddr_zero(mac) || qdf_is_macaddr_broadcast(mac))
 		return &isc->bcast_peer;
-	else
-		return NULL;
+	else {
+		if (qdf_list_empty(&isc->peer_list)) {
+			iot_sim_debug("peer_list empty");
+			return NULL;
+		}
+
+		qdf_spin_lock_bh(&isc->iot_sim_lock);
+		if (QDF_STATUS_SUCCESS !=
+		    qdf_list_peek_front(&isc->peer_list, &next_node)) {
+			qdf_spin_unlock_bh(&isc->iot_sim_lock);
+			iot_sim_err("Failed to get peer rule from peer_list");
+			return NULL;
+		}
+
+		do {
+			node = next_node;
+			peer_rule =
+				qdf_container_of(node,
+						 struct iot_sim_rule_per_peer,
+						 node);
+			if (qdf_is_macaddr_equal(&peer_rule->addr, mac)) {
+				qdf_spin_unlock_bh(&isc->iot_sim_lock);
+				return peer_rule;
+			}
+		} while (QDF_STATUS_SUCCESS ==
+			 qdf_list_peek_next(&isc->peer_list, node, &next_node));
+
+		qdf_spin_unlock_bh(&isc->iot_sim_lock);
+		iot_sim_err("Failed to find peer");
+	}
+
+	return NULL;
+}
+
+/*
+ * iot_sim_add_peer - function to add the iot sim peer data
+ *
+ * @isc: iot_sim pdev private object
+ * @mac: mac address of the peer
+ *
+ * Return: iot_sim_rule_per_peer reference
+ */
+struct iot_sim_rule_per_peer *
+iot_sim_add_peer(struct iot_sim_context *isc, struct qdf_mac_addr *mac)
+{
+	struct iot_sim_rule_per_peer *peer_rule = NULL;
+	QDF_STATUS status;
+
+	if (qdf_is_macaddr_zero(mac) || qdf_is_macaddr_broadcast(mac)) {
+		iot_sim_err("called iot_sim_add_peer for broadcast address");
+		return &isc->bcast_peer;
+	}
+
+	qdf_spin_lock_bh(&isc->iot_sim_lock);
+	if (qdf_list_size(&isc->peer_list) < MAX_PEER_COUNT) {
+		peer_rule = qdf_mem_malloc(sizeof
+					   (struct iot_sim_rule_per_peer));
+		if (!peer_rule) {
+			iot_sim_err("Memory alloc failed for peer: "
+				    QDF_MAC_ADDR_STR,
+				    QDF_MAC_ADDR_ARRAY(mac->bytes));
+			goto rel_lock;
+		}
+
+		qdf_copy_macaddr(&peer_rule->addr, mac);
+		status = qdf_list_insert_back(&isc->peer_list,
+					      &peer_rule->node);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			iot_sim_err("peer_list enqueue failed for peer "
+				    QDF_MAC_ADDR_STR,
+				    QDF_MAC_ADDR_ARRAY(mac->bytes));
+			qdf_mem_free(peer_rule);
+			peer_rule = NULL;
+		}
+	} else {
+		iot_sim_err("peer_list  already reached max limit");
+	}
+
+rel_lock:
+	qdf_spin_unlock_bh(&isc->iot_sim_lock);
+	return peer_rule;
+}
+
+/*
+ * iot_sim_remove_peer - function to remove the iot sim peer data
+ *
+ * @isc: iot_sim pdev private object
+ * @mac: mac address of the peer
+ *
+ * Return: void
+ */
+void iot_sim_remove_peer(struct iot_sim_context *isc,
+			 struct iot_sim_rule_per_peer *peer_rule)
+{
+	qdf_spin_lock_bh(&isc->iot_sim_lock);
+	qdf_list_remove_node(&isc->peer_list, &peer_rule->node);
+	qdf_spin_unlock_bh(&isc->iot_sim_lock);
 }
 
 /*
@@ -696,6 +794,8 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 	struct iot_sim_rule_per_seq **s_e;
 	struct iot_sim_rule **f_e;
 	struct iot_sim_rule_per_peer *peer;
+	bool peer_remove = 1, broadcast_peer = 0;
+	uint8_t i;
 
 	if (qdf_is_macaddr_zero(mac))
 		iot_sim_info("Rule deletion for all peers");
@@ -716,12 +816,16 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 	if (oper == DROP || oper == DELAY)
 		iot_sim_remap_type_subtype(&type, &subtype, &seq, action);
 
-	peer = iot_sim_find_peer_from_mac(isc, mac);
+	if (qdf_is_macaddr_zero(mac) || qdf_is_macaddr_broadcast(mac)) {
+		peer = &isc->bcast_peer;
+		broadcast_peer = 1;
+	} else
+		peer = iot_sim_find_peer_from_mac(isc, mac);
 	if (peer) {
-		qdf_spin_lock(&peer->iot_sim_lock);
+		qdf_spin_lock_bh(&isc->iot_sim_lock);
 		s_e = &peer->rule_per_seq[seq];
 		if (!*s_e) {
-			qdf_spin_unlock(&peer->iot_sim_lock);
+			qdf_spin_unlock_bh(&isc->iot_sim_lock);
 			return QDF_STATUS_SUCCESS;
 		}
 
@@ -732,7 +836,15 @@ iot_sim_delete_rule_for_mac(struct iot_sim_context *isc,
 
 		if (*f_e)
 			status = iot_sim_del_rule(s_e, f_e, oper);
-		qdf_spin_unlock(&peer->iot_sim_lock);
+
+		for (i = 0; i < MAX_SEQ; i++)
+			if (peer->rule_per_seq[i])
+				peer_remove = 0;
+		qdf_spin_unlock_bh(&isc->iot_sim_lock);
+		if (!broadcast_peer && peer_remove) {
+			iot_sim_remove_peer(isc, peer);
+			qdf_mem_free(peer);
+		}
 	}
 
 	return status;
@@ -831,15 +943,17 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 		iot_sim_remap_type_subtype(&type, &subtype, &seq, action);
 
 	peer = iot_sim_find_peer_from_mac(isc, mac);
+	if (!peer)
+		peer = iot_sim_add_peer(isc, mac);
 	if (peer) {
-		qdf_spin_lock(&peer->iot_sim_lock);
+		qdf_spin_lock_bh(&isc->iot_sim_lock);
 		s_e = &peer->rule_per_seq[seq];
 		if (!*s_e) {
 			*s_e = qdf_mem_malloc(sizeof(struct
 					      iot_sim_rule_per_seq));
 			if (!*s_e) {
 				iot_sim_err("can't allocate s_e");
-				qdf_spin_unlock(&peer->iot_sim_lock);
+				qdf_spin_unlock_bh(&isc->iot_sim_lock);
 				return QDF_STATUS_E_NOMEM;
 			}
 		}
@@ -861,7 +975,7 @@ iot_sim_add_rule_for_mac(struct iot_sim_context *isc,
 			     type, subtype);
 
 		status = iot_sim_add_rule(s_e, f_e, oper, frm, offset, len);
-		qdf_spin_unlock(&peer->iot_sim_lock);
+		qdf_spin_unlock_bh(&isc->iot_sim_lock);
 	} else {
 		/* TBD: clear the rules for peer with address 'mac'*/
 	}
@@ -1088,6 +1202,9 @@ iot_sim_parse_user_input_drop(struct iot_sim_context *isc,
 	 */
 	if (argv[5])
 		status = qdf_mac_parse(argv[5], addr);
+
+	iot_sim_err("drop rule mac address " QDF_MAC_ADDR_STR,
+		    QDF_MAC_ADDR_ARRAY(addr->bytes));
 
 	return status;
 err:
@@ -1393,8 +1510,8 @@ wlan_iot_sim_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	}
 
 	qdf_set_macaddr_broadcast(&isc->bcast_peer.addr);
-	qdf_spinlock_create(&isc->bcast_peer.iot_sim_lock);
-	qdf_list_create(&isc->bcast_peer.list, 0);
+	qdf_spinlock_create(&isc->iot_sim_lock);
+	qdf_list_create(&isc->peer_list, 2);
 	isc->bcn_buf = NULL;
 
 	wlan_objmgr_pdev_component_obj_attach(pdev, WLAN_IOT_SIM_COMP,
@@ -1426,9 +1543,10 @@ wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 		/* Deinitilise function pointers from iot_sim context */
 		iot_sim_debugfs_deinit(isc);
 		iot_sim_remove_all_rules(isc);
+		qdf_list_destroy(&isc->peer_list);
 		if (isc->bcn_buf)
 			qdf_nbuf_free(isc->bcn_buf);
-		qdf_spinlock_destroy(&isc->bcast_peer.iot_sim_lock);
+		qdf_spinlock_destroy(&isc->iot_sim_lock);
 		qdf_mem_free(isc);
 	}
 	iot_sim_debug("iot_sim component pdev%u object destroyed",
