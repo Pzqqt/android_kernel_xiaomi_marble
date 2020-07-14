@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,9 +56,9 @@ qdf_export_symbol(hif_send_fast);
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE
  */
-int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
-				fastpath_msg_handler handler,
-				void *context)
+QDF_STATUS hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
+				       fastpath_msg_handler handler,
+				       void *context)
 {
 	struct CE_state *ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);

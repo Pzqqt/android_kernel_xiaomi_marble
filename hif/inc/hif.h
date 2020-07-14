@@ -665,15 +665,25 @@ bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx);
 void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx);
 bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
 void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret);
-int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
-				fastpath_msg_handler handler, void *context);
+
+/**
+ * hif_ce_fastpath_cb_register() - Register callback for fastpath msg handler
+ * @handler: Callback funtcion
+ * @context: handle for callback function
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS hif_ce_fastpath_cb_register(
+		struct hif_opaque_softc *hif_ctx,
+		fastpath_msg_handler handler, void *context);
 #else
-static inline int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
-					      fastpath_msg_handler handler,
-					      void *context)
+static inline QDF_STATUS hif_ce_fastpath_cb_register(
+		struct hif_opaque_softc *hif_ctx,
+		fastpath_msg_handler handler, void *context)
 {
 	return QDF_STATUS_E_FAILURE;
 }
+
 static inline void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret)
 {
 	return NULL;

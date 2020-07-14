@@ -375,7 +375,7 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 
 qdf_export_symbol(war_ce_src_ring_write_idx_set);
 
-int
+QDF_STATUS
 ce_send(struct CE_handle *copyeng,
 		void *per_transfer_context,
 		qdf_dma_addr_t buffer,
@@ -385,7 +385,7 @@ ce_send(struct CE_handle *copyeng,
 		uint32_t user_flag)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
-	int status;
+	QDF_STATUS status;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(CE_state->scn);
 
 	qdf_spin_lock_bh(&CE_state->ce_index_lock);
@@ -410,7 +410,7 @@ void ce_sendlist_init(struct ce_sendlist *sendlist)
 	sl->num_items = 0;
 }
 
-int
+QDF_STATUS
 ce_sendlist_buf_add(struct ce_sendlist *sendlist,
 					qdf_dma_addr_t buffer,
 					uint32_t nbytes,
@@ -436,7 +436,7 @@ ce_sendlist_buf_add(struct ce_sendlist *sendlist,
 	return QDF_STATUS_SUCCESS;
 }
 
-int
+QDF_STATUS
 ce_sendlist_send(struct CE_handle *copyeng,
 		 void *per_transfer_context,
 		 struct ce_sendlist *sendlist, unsigned int transfer_id)

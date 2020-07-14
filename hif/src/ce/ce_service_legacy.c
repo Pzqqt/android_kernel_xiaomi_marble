@@ -522,7 +522,7 @@ static inline bool ce_is_fastpath_enabled(struct hif_softc *scn)
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
-static int
+static QDF_STATUS
 ce_send_nolock_legacy(struct CE_handle *copyeng,
 		      void *per_transfer_context,
 		      qdf_dma_addr_t buffer,
@@ -531,7 +531,7 @@ ce_send_nolock_legacy(struct CE_handle *copyeng,
 		      uint32_t flags,
 		      uint32_t user_flags)
 {
-	int status;
+	QDF_STATUS status;
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	struct CE_ring_state *src_ring = CE_state->src_ring;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -622,12 +622,12 @@ ce_send_nolock_legacy(struct CE_handle *copyeng,
 	return status;
 }
 
-static int
+static QDF_STATUS
 ce_sendlist_send_legacy(struct CE_handle *copyeng,
 			void *per_transfer_context,
 			struct ce_sendlist *sendlist, unsigned int transfer_id)
 {
-	int status = -ENOMEM;
+	QDF_STATUS status = QDF_STATUS_E_NOMEM;
 	struct ce_sendlist_s *sl = (struct ce_sendlist_s *)sendlist;
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	struct CE_ring_state *src_ring = CE_state->src_ring;

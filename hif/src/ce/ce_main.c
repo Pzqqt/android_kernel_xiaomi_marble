@@ -2068,7 +2068,8 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 	struct CE_handle *ce_hdl = pipe_info->ce_hdl;
 	int bytes = nbytes, nfrags = 0;
 	struct ce_sendlist sendlist;
-	int status, i = 0;
+	int i = 0;
+	QDF_STATUS status;
 	unsigned int mux_id = 0;
 
 	if (nbytes > qdf_nbuf_len(nbuf)) {

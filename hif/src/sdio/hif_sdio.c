@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -109,7 +109,7 @@ void hif_sdio_stop(struct hif_softc *hif_ctx)
  *
  * send tx data on a given pipe id
  *
- * Return: int
+ * Return: QDF_STATUS
  */
 QDF_STATUS hif_send_head(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
 		uint32_t transfer_id, uint32_t nbytes, qdf_nbuf_t buf,
