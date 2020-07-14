@@ -3130,12 +3130,18 @@ static void _sde_kms_remove_pm_qos_irq_request(struct sde_kms *sde_kms)
 	}
 }
 
-void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable)
+void sde_kms_cpu_vote_for_irq(struct sde_kms *sde_kms, bool enable)
 {
-	if (enable)
+	struct msm_drm_private *priv = sde_kms->dev->dev_private;
+
+	mutex_lock(&priv->phandle.phandle_lock);
+
+	if (enable && atomic_inc_return(&sde_kms->irq_vote_count) == 1)
 		_sde_kms_update_pm_qos_irq_request(sde_kms);
-	else
+	else if (!enable && atomic_dec_return(&sde_kms->irq_vote_count) == 0)
 		_sde_kms_remove_pm_qos_irq_request(sde_kms);
+
+	mutex_unlock(&priv->phandle.phandle_lock);
 }
 
 static void sde_kms_irq_affinity_notify(
@@ -3670,6 +3676,7 @@ static int sde_kms_hw_init(struct msm_kms *kms)
 
 	atomic_set(&sde_kms->detach_sec_cb, 0);
 	atomic_set(&sde_kms->detach_all_cb, 0);
+	atomic_set(&sde_kms->irq_vote_count, 0);
 
 	/*
 	 * Support format modifiers for compression etc.

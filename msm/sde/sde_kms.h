@@ -222,8 +222,6 @@ struct sde_irq_callback {
  * @enable_counts array of IRQ enable counts
  * @cb_lock:      callback lock
  * @debugfs_file: debugfs file for irq statistics
- * @curr_irq_enable_count: Atomic counter keep track of total current irq enable
- *                         It is used to keep pm_qos vote on CPU.
  */
 struct sde_irq {
 	u32 total_irqs;
@@ -232,7 +230,6 @@ struct sde_irq {
 	atomic_t *irq_counts;
 	spinlock_t cb_lock;
 	struct dentry *debugfs_file;
-	atomic_t curr_irq_enable_count;
 };
 
 /**
@@ -308,6 +305,7 @@ struct sde_kms {
 	bool pm_suspend_clk_dump;
 
 	cpumask_t irq_cpu_mask;
+	atomic_t irq_vote_count;
 	struct dev_pm_qos_request pm_qos_irq_req[NR_CPUS];
 	struct irq_affinity_notify affinity_notify;
 };
@@ -684,12 +682,12 @@ void sde_kms_timeline_status(struct drm_device *dev);
 int sde_kms_handle_recovery(struct drm_encoder *encoder);
 
 /**
- * Notifies the irq enable on first interrupt enable and irq disable
- * on last interrupt disable.
- * @sde_kms: poiner to sde_kms structure
- * @enable: true if irq enabled, false for disabled state.
+ * sde_kms_cpu_vote_for_irq() - API to keep pm_qos latency vote on cpu
+ * where mdss_irq is scheduled
+ * @sde_kms: pointer to sde_kms structure
+ * @enable: true if enable request, false otherwise.
  */
-void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable);
+void sde_kms_cpu_vote_for_irq(struct sde_kms *sde_kms, bool enable);
 
 /**
  * sde_kms_get_io_resources() - reads associated register range
