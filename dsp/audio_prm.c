@@ -15,14 +15,19 @@
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/sched.h>
+#include <linux/delay.h>
 #include <linux/jiffies.h>
 #include <linux/of.h>
 #include <linux/of_platform.h>
 #include <ipc/gpr-lite.h>
 #include <soc/snd_event.h>
 #include <dsp/audio_prm.h>
+#include <dsp/spf-core.h>
+#include <dsp/audio_notifier.h>
 
 #define TIMEOUT_MS 500
+#define MAX_RETRY_COUNT 3
+#define APM_READY_WAIT_DURATION 2
 
 struct audio_prm {
 	struct gpr_device *adev;
@@ -35,6 +40,8 @@ struct audio_prm {
 };
 
 static struct audio_prm g_prm;
+
+static bool is_apm_ready_check_done = false;
 
 static int audio_prm_callback(struct gpr_device *adev, void *data)
 {
@@ -82,6 +89,7 @@ static int audio_prm_callback(struct gpr_device *adev, void *data)
 static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 {
 	int ret = 0;
+	int retry;
 
 	if (wait)
 		atomic_set(&g_prm.state, 1);
@@ -94,6 +102,16 @@ static int prm_gpr_send_pkt(struct gpr_pkt *pkt, wait_queue_head_t *wait)
 		pr_err("%s: apr is unregistered\n", __func__);
 		mutex_unlock(&g_prm.lock);
 		return -ENODEV;
+	}
+	if (!is_apm_ready_check_done && g_prm.is_adsp_up) {
+		pr_info("%s: apm ready check not done\n", __func__);
+		retry = 0;
+		while (!spf_core_is_apm_ready() || retry < MAX_RETRY_COUNT) {
+			msleep(APM_READY_WAIT_DURATION);
+			retry++;
+		}
+		is_apm_ready_check_done = true;
+		pr_info("%s: apm ready check done\n", __func__);
 	}
 	g_prm.resp_received = false;
 	ret = gpr_send_pkt(g_prm.adev, pkt);
@@ -295,7 +313,34 @@ int audio_prm_set_lpass_clk_cfg (struct clk_cfg *clk, uint8_t enable)
 }
 EXPORT_SYMBOL(audio_prm_set_lpass_clk_cfg);
 
+static int audio_prm_service_cb(struct notifier_block *this,
+				unsigned long opcode, void *data)
+{
+	pr_info("%s: Service opcode 0x%lx\n", __func__, opcode);
 
+	switch (opcode) {
+	case AUDIO_NOTIFIER_SERVICE_DOWN:
+		mutex_lock(&g_prm.lock);
+		pr_debug("%s: making apm_ready check false\n", __func__);
+		is_apm_ready_check_done = false;
+		g_prm.is_adsp_up = false;
+		mutex_unlock(&g_prm.lock);
+		break;
+	case AUDIO_NOTIFIER_SERVICE_UP:
+		mutex_lock(&g_prm.lock);
+		g_prm.is_adsp_up = true;
+		mutex_unlock(&g_prm.lock);
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_OK;
+}
+
+static struct notifier_block service_nb = {
+	.notifier_call  = audio_prm_service_cb,
+	.priority = -INT_MAX,
+};
 
 static int audio_prm_probe(struct gpr_device *adev)
 {
@@ -307,8 +352,7 @@ static int audio_prm_probe(struct gpr_device *adev)
 	g_prm.adev = adev;
 
 	init_waitqueue_head(&g_prm.wait);
-
-
+	g_prm.is_adsp_up = true;
 	pr_err("%s: prm probe success\n", __func__);
 	return ret;
 }
@@ -318,6 +362,7 @@ static int audio_prm_remove(struct gpr_device *adev)
 	int ret = 0;
 
 	mutex_lock(&g_prm.lock);
+	g_prm.is_adsp_up = false;
 	g_prm.adev = NULL;
 	mutex_unlock(&g_prm.lock);
 	return ret;
@@ -339,6 +384,31 @@ static struct gpr_driver qcom_audio_prm_driver = {
 	},
 };
 
-module_gpr_driver(qcom_audio_prm_driver);
+static int __init audio_prm_module_init(void)
+{
+	int ret;
+	ret = gpr_driver_register(&qcom_audio_prm_driver);
+	if (ret) {
+		pr_err("%s: gpr driver register failed = %d\n", __func__, ret);
+		return ret;
+	}
+	ret = audio_notifier_register("audio_prm", AUDIO_NOTIFIER_ADSP_DOMAIN,
+					&service_nb);
+	if (ret < 0) {
+		pr_err("%s: Audio notifier register failed ret = %d\n",
+			__func__, ret);
+		return ret;
+	}
+	return ret;
+}
+
+static void __exit audio_prm_module_exit(void)
+{
+	audio_notifier_deregister("audio_prm");
+	gpr_driver_unregister(&qcom_audio_prm_driver);
+}
+
+module_init(audio_prm_module_init);
+module_exit(audio_prm_module_exit);
 MODULE_DESCRIPTION("audio prm");
 MODULE_LICENSE("GPL v2");
