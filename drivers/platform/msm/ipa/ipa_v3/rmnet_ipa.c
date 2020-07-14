@@ -2753,7 +2753,7 @@ static int rmnet_ipa_ap_suspend(struct device *dev)
 	}
 
 	/* Make sure that there is no Tx operation ongoing */
-	netif_stop_queue(netdev);
+	netif_device_detach(netdev);
 	spin_unlock_irqrestore(&wwan_ptr->lock, flags);
 
 	IPAWANDBG("De-activating the PM resource.\n");
@@ -2781,8 +2781,10 @@ static int rmnet_ipa_ap_resume(struct device *dev)
 	IPAWANDBG("Enter...\n");
 	/* Clear the suspend in progress flag. */
 	atomic_set(&rmnet_ipa3_ctx->ap_suspend, 0);
-	if (netdev)
-		netif_wake_queue(netdev);
+	if (netdev) {
+		netif_device_attach(netdev);
+		netif_trans_update(netdev);
+	}
 	IPAWANDBG("Exit\n");
 
 	return 0;
