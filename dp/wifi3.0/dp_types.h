@@ -851,6 +851,8 @@ struct dp_soc_stats {
 			uint32_t msdu_count_mismatch;
 			/* RX raw frame dropped count */
 			uint32_t raw_frm_drop;
+			/* Stale link desc cookie count*/
+			uint32_t invalid_link_cookie;
 		} err;
 
 		/* packet count per core - per ring */

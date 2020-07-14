@@ -300,6 +300,28 @@ enum hal_rx_ret_buf_manager {
 		BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_MASK,	\
 		BUFFER_ADDR_INFO_1_RETURN_BUFFER_MANAGER_LSB))
 
+#define HAL_RX_LINK_COOKIE_INVALID_MASK 0x40000000
+
+#define HAL_RX_BUF_LINK_COOKIE_INVALID_GET(buff_addr_info) \
+		((*(((unsigned int *)buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) & \
+		HAL_RX_LINK_COOKIE_INVALID_MASK)
+
+#define HAL_RX_BUF_LINK_COOKIE_INVALID_SET(buff_addr_info) \
+		((*(((unsigned int *)buff_addr_info) + \
+		(BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_OFFSET >> 2))) |= \
+		HAL_RX_LINK_COOKIE_INVALID_MASK)
+
+#define HAL_RX_REO_BUF_LINK_COOKIE_INVALID_GET(reo_desc)	\
+		(HAL_RX_BUF_LINK_COOKIE_INVALID_GET(&		\
+		(((struct reo_destination_ring *)	\
+			reo_desc)->buf_or_link_desc_addr_info)))
+
+#define HAL_RX_REO_BUF_LINK_COOKIE_INVALID_SET(reo_desc)	\
+		(HAL_RX_BUF_LINK_COOKIE_INVALID_SET(&		\
+		(((struct reo_destination_ring *)	\
+			reo_desc)->buf_or_link_desc_addr_info)))
+
 /* TODO: Convert the following structure fields accesseses to offsets */
 
 #define HAL_RX_REO_BUFFER_ADDR_39_32_GET(reo_desc)	\
