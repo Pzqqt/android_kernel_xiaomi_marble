@@ -8011,12 +8011,14 @@ void wlan_hdd_set_wlm_mode(struct hdd_context *hdd_ctx, uint16_t latency_level)
 	    QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW) {
 		hdd_ctx->llm_enabled = true;
 		if (!hdd_ctx->hbw_requested) {
+			cpumask_setall(&hdd_ctx->pm_qos_req.cpus_affine);
 			pm_qos_update_request(&hdd_ctx->pm_qos_req,
 					      DISABLE_KRAIT_IDLE_PS_VAL);
 			hdd_ctx->hbw_requested = true;
 		}
 	} else {
 		if (hdd_ctx->hbw_requested) {
+			cpumask_clear(&hdd_ctx->pm_qos_req.cpus_affine);
 			pm_qos_update_request(&hdd_ctx->pm_qos_req,
 					      PM_QOS_DEFAULT_VALUE);
 			hdd_ctx->hbw_requested = false;

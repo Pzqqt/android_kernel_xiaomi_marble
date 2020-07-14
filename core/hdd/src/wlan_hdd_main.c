@@ -9373,7 +9373,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		if (next_vote_level < PLD_BUS_WIDTH_MEDIUM)
 			cpumask_clear(&pm_qos_cpu_mask);
 
-		hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
+		if (!hdd_ctx->llm_enabled)
+			hdd_pm_qos_update_request(hdd_ctx, &pm_qos_cpu_mask);
 	}
 
 	hdd_display_periodic_stats(hdd_ctx, (total_pkts > 0) ? true : false);
