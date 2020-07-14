@@ -380,7 +380,6 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
-	int clk_src = 0;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -393,30 +392,12 @@ static int va_macro_swr_pwr_event_v2(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
-		if (va_priv->swr_ctrl_data) {
-			clk_src = CLK_SRC_VA_RCG;
-			ret = swrm_wcd_notify(
-				va_priv->swr_ctrl_data[0].va_swr_pdev,
-				SWR_REQ_CLK_SWITCH, &clk_src);
-			if (ret)
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-		}
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, false);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		msm_cdc_pinctrl_set_wakeup_capable(
 				va_priv->va_swr_gpio_p, true);
-		if (va_priv->swr_ctrl_data) {
-			clk_src = CLK_SRC_TX_RCG;
-			ret = swrm_wcd_notify(
-				va_priv->swr_ctrl_data[0].va_swr_pdev,
-				SWR_REQ_CLK_SWITCH, &clk_src);
-			if (ret)
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-		}
 		break;
 	default:
 		dev_err(va_priv->dev,
@@ -454,10 +435,6 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 					"%s: lpass audio hw enable failed\n",
 					__func__);
 		}
-		if (!ret)
-			if (bolero_tx_clk_switch(component, CLK_SRC_VA_RCG))
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
 		if (va_priv->lpi_enable) {
 			bolero_register_event_listener(component, true);
 			va_priv->register_event_listener = true;
@@ -468,8 +445,6 @@ static int va_macro_swr_pwr_event(struct snd_soc_dapm_widget *w,
 			va_priv->register_event_listener = false;
 			bolero_register_event_listener(component, false);
 		}
-		if (bolero_tx_clk_switch(component, CLK_SRC_TX_RCG))
-			dev_dbg(va_dev, "%s: clock switch failed\n",__func__);
 		if (va_priv->lpass_audio_hw_vote)
 			digital_cdc_rsc_mgr_hw_vote_disable(
 				va_priv->lpass_audio_hw_vote);
@@ -509,7 +484,6 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	struct device *va_dev = NULL;
 	struct va_macro_priv *va_priv = NULL;
-	int clk_src = 0;
 
 	if (!va_macro_get_data(component, &va_dev, &va_priv, __func__))
 		return -EINVAL;
@@ -530,27 +504,10 @@ static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			ret = bolero_tx_mclk_enable(component, 1);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		if (va_priv->lpi_enable) {
-			if (va_priv->version == BOLERO_VERSION_2_1) {
-				if (va_priv->swr_ctrl_data) {
-					clk_src = CLK_SRC_TX_RCG;
-					ret = swrm_wcd_notify(
-					va_priv->swr_ctrl_data[0].va_swr_pdev,
-					SWR_REQ_CLK_SWITCH, &clk_src);
-					if (ret)
-						dev_dbg(va_dev,
-					"%s: clock switch failed\n",
-						__func__);
-				}
-			} else if (bolero_tx_clk_switch(component,
-					CLK_SRC_TX_RCG)) {
-				dev_dbg(va_dev, "%s: clock switch failed\n",
-					__func__);
-			}
+		if (va_priv->lpi_enable)
 			va_macro_mclk_enable(va_priv, 0, true);
-		} else {
+		else
 			bolero_tx_mclk_enable(component, 0);
-		}
 
 		if (va_priv->tx_clk_status > 0) {
 			bolero_clk_rsc_request_clock(va_priv->dev,
