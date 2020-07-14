@@ -455,7 +455,8 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl);
 /**
  * dsi_ctrl_host_init() - Initialize DSI host hardware.
  * @dsi_ctrl:        DSI controller handle.
- * @is_splash_enabled:       boolean signifying splash status.
+ * @skip_op:         Boolean to indicate few operations can be skipped.
+ *                   Set during the cont-splash or trusted-vm enable case.
  *
  * Initializes DSI controller hardware with host configuration provided by
  * dsi_ctrl_update_host_config(). Initialization can be performed only during
@@ -464,7 +465,7 @@ int dsi_ctrl_host_timing_update(struct dsi_ctrl *dsi_ctrl);
  *
  * Return: error code.
  */
-int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool is_splash_enabled);
+int dsi_ctrl_host_init(struct dsi_ctrl *dsi_ctrl, bool skip_op);
 
 /**
  * dsi_ctrl_host_deinit() - De-Initialize DSI host hardware.
@@ -566,17 +567,6 @@ int dsi_ctrl_cmd_transfer(struct dsi_ctrl *dsi_ctrl,
 int dsi_ctrl_cmd_tx_trigger(struct dsi_ctrl *dsi_ctrl, u32 flags);
 
 /**
- * dsi_ctrl_update_host_engine_state_for_cont_splash() - update engine
- *                                 states for cont splash usecase
- * @dsi_ctrl:              DSI controller handle.
- * @state:                 DSI engine state
- *
- * Return: error code.
- */
-int dsi_ctrl_update_host_engine_state_for_cont_splash(struct dsi_ctrl *dsi_ctrl,
-				enum dsi_engine_state state);
-
-/**
  * dsi_ctrl_set_power_state() - set power state for dsi controller
  * @dsi_ctrl:          DSI controller handle.
  * @state:             Power state.
@@ -593,6 +583,8 @@ int dsi_ctrl_set_power_state(struct dsi_ctrl *dsi_ctrl,
  * dsi_ctrl_set_cmd_engine_state() - set command engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Command engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -600,7 +592,7 @@ int dsi_ctrl_set_power_state(struct dsi_ctrl *dsi_ctrl,
  * Return: error code.
  */
 int dsi_ctrl_set_cmd_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state);
+				  enum dsi_engine_state state, bool skip_op);
 
 /**
  * dsi_ctrl_validate_host_state() - validate DSI ctrl host state
@@ -616,6 +608,8 @@ bool dsi_ctrl_validate_host_state(struct dsi_ctrl *dsi_ctrl);
  * dsi_ctrl_set_vid_engine_state() - set video engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Video engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON.
@@ -623,12 +617,14 @@ bool dsi_ctrl_validate_host_state(struct dsi_ctrl *dsi_ctrl);
  * Return: error code.
  */
 int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
-				  enum dsi_engine_state state);
+				  enum dsi_engine_state state, bool skip_op);
 
 /**
  * dsi_ctrl_set_host_engine_state() - set host engine state
  * @dsi_ctrl:            DSI Controller handle.
  * @state:               Engine state.
+ * @skip_op:             Boolean to indicate few operations can be skipped.
+ *                       Set during the cont-splash or trusted-vm enable case.
  *
  * Host engine state can be modified only when DSI controller power state is
  * set to DSI_CTRL_POWER_LINK_CLK_ON and cmd, video engines are disabled.
@@ -636,7 +632,7 @@ int dsi_ctrl_set_vid_engine_state(struct dsi_ctrl *dsi_ctrl,
  * Return: error code.
  */
 int dsi_ctrl_set_host_engine_state(struct dsi_ctrl *dsi_ctrl,
-				   enum dsi_engine_state state);
+				   enum dsi_engine_state state, bool skip_op);
 
 /**
  * dsi_ctrl_set_ulps() - set ULPS state for DSI lanes.
@@ -851,4 +847,14 @@ void dsi_ctrl_set_continuous_clk(struct dsi_ctrl *dsi_ctrl, bool enable);
  * @dsi_ctrl:                      DSI controller handle.
  */
 int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
+
+/**
+ * dsi_ctrl_get_io_resources() - reads associated register range
+ *
+ * @io_res:	 pointer to msm_io_res struct to populate the ranges
+ *
+ * Return: error code.
+ */
+int dsi_ctrl_get_io_resources(struct msm_io_res *io_res);
+
 #endif /* _DSI_CTRL_H_ */

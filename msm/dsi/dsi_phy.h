@@ -181,7 +181,8 @@ int dsi_phy_set_power_state(struct msm_dsi_phy *dsi_phy, bool enable);
  * @config:             DSI host configuration.
  * @pll_source:         Source PLL for PHY clock.
  * @skip_validation:    Validation will not be performed on parameters.
- * @is_cont_splash_enabled:    check whether continuous splash enabled.
+ * @skip_op:            Skip re-enabling dsi phy hw during usecases like
+ *                      cont-splash/trusted-vm if set to true.
  *
  * Validates and enables DSI PHY.
  *
@@ -191,15 +192,17 @@ int dsi_phy_enable(struct msm_dsi_phy *dsi_phy,
 		   struct dsi_host_config *config,
 		   enum dsi_phy_pll_source pll_source,
 		   bool skip_validation,
-		   bool is_cont_splash_enabled);
+		   bool skip_op);
 
 /**
  * dsi_phy_disable() - disable DSI PHY hardware.
- * @phy:        DSI PHY handle.
+ * @phy:            DSI PHY handle.
+ * @skip_op:        Skip disabling dsi phy hw during usecases like
+ *                  trusted-vm if set to true.
  *
  * Return: error code.
  */
-int dsi_phy_disable(struct msm_dsi_phy *phy);
+int dsi_phy_disable(struct msm_dsi_phy *phy, bool skip_op);
 
 /**
  * dsi_phy_set_ulps() - set ulps state for DSI pHY
@@ -352,5 +355,14 @@ int dsi_phy_dyn_refresh_cache_phy_timings(struct msm_dsi_phy *phy,
  * @enable:	variable to control continuous clock.
  */
 void dsi_phy_set_continuous_clk(struct msm_dsi_phy *phy, bool enable);
+
+/**
+ * dsi_phy_get_io_resources() - reads associated register range
+ *
+ * @io_res:	 pointer to msm_io_res struct to populate the ranges
+ *
+ * Return: error code.
+ */
+int dsi_phy_get_io_resources(struct msm_io_res *io_res);
 
 #endif /* _DSI_PHY_H_ */

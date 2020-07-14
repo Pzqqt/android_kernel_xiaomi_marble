@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
-
+#include <linux/iopoll.h>
 #include "dsi_ctrl_hw.h"
 #include "dsi_ctrl_reg.h"
 #include "dsi_hw.h"
@@ -12,6 +12,61 @@
 
 /* register to configure DMA scheduling */
 #define DSI_DMA_SCHEDULE_CTRL 0x100
+
+void dsi_ctrl_hw_22_setup_lane_map(struct dsi_ctrl_hw *ctrl,
+		       struct dsi_lane_map *lane_map)
+{
+	u32 reg_value = lane_map->lane_map_v2[DSI_LOGICAL_LANE_0] |
+			(lane_map->lane_map_v2[DSI_LOGICAL_LANE_1] << 4) |
+			(lane_map->lane_map_v2[DSI_LOGICAL_LANE_2] << 8) |
+			(lane_map->lane_map_v2[DSI_LOGICAL_LANE_3] << 12);
+
+	DSI_W32(ctrl, DSI_LANE_SWAP_CTRL, reg_value);
+
+	DSI_CTRL_HW_DBG(ctrl, "[DSI_%d] Lane swap setup complete\n",
+			ctrl->index);
+}
+
+int dsi_ctrl_hw_22_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl,
+		u32 lanes)
+{
+	int rc = 0, val = 0;
+	u32 fifo_empty_mask = 0;
+	u32 const sleep_us = 10;
+	u32 const timeout_us = 100;
+
+	if (lanes & DSI_DATA_LANE_0)
+		fifo_empty_mask |= (BIT(12) | BIT(16));
+
+	if (lanes & DSI_DATA_LANE_1)
+		fifo_empty_mask |= BIT(20);
+
+	if (lanes & DSI_DATA_LANE_2)
+		fifo_empty_mask |= BIT(24);
+
+	if (lanes & DSI_DATA_LANE_3)
+		fifo_empty_mask |= BIT(28);
+
+	DSI_CTRL_HW_DBG(ctrl, "%s: polling for fifo empty, mask=0x%08x\n",
+		__func__, fifo_empty_mask);
+	rc = readl_poll_timeout(ctrl->base + DSI_FIFO_STATUS, val,
+			(val & fifo_empty_mask), sleep_us, timeout_us);
+	if (rc) {
+		DSI_CTRL_HW_ERR(ctrl,
+				"%s: fifo not empty, FIFO_STATUS=0x%08x\n",
+				__func__, val);
+		goto error;
+	}
+error:
+	return rc;
+}
+
+ssize_t dsi_ctrl_hw_22_reg_dump_to_buffer(struct dsi_ctrl_hw *ctrl,
+					  char *buf,
+					  u32 size)
+{
+	return size;
+}
 
 /**
  * dsi_ctrl_hw_22_phy_reset_config() - to configure clamp control during ulps
