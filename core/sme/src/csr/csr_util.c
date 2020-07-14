@@ -1603,7 +1603,8 @@ QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 				phyMode = eCSR_DOT11_MODE_11ax;
 			else
 				sme_debug("Warning - 6Ghz AP no he cap");
-		}
+		} else if (pIes->he_cap.present)
+			phyMode = eCSR_DOT11_MODE_11ax;
 
 		*pPhyMode = phyMode;
 	}
