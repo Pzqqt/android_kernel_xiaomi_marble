@@ -16128,6 +16128,10 @@ typedef enum {
      * due to CSA in OCV enabled case.
      */
     WLAN_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT = 1,
+    /* MOVE_TO_CELLULAR:
+     * Disconnect from WiFi to move to cellular
+     */
+    WLAN_DISCONNECT_REASON_MOVE_TO_CELLULAR,
 } WMI_VDEV_DISCONNECT_REASON_ID;
 
 typedef struct {
