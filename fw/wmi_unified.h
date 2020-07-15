@@ -27479,6 +27479,10 @@ typedef enum _WMI_TWT_COMMAND_T {
 #define TWT_FLAGS_GET_BTWT_ID0(flag)            WMI_GET_BITS(flag, 12, 1)
 #define TWT_FLAGS_SET_BTWT_ID0(flag, val)       WMI_SET_BITS(flag, 12, 1, val)
 
+/* 0 means TWT Information frame is enabled, 1 means TWT Information frame is disabled */
+#define TWT_FLAGS_GET_TWT_INFO_FRAME_DISABLED(flag)      WMI_GET_BITS(flag, 13, 1)
+#define TWT_FLAGS_SET_TWT_INFO_FRAME_DISABLED(flag, val) WMI_SET_BITS(flag, 13, 1, val)
+
 typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param  */
     A_UINT32 vdev_id;       /* VDEV identifier */
@@ -27528,11 +27532,26 @@ typedef enum _WMI_ADD_TWT_STATUS_T {
 } WMI_ADD_TWT_STATUS_T;
 
 typedef struct {
+    A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_additional_params */
+    A_UINT32 flags;         /* TWT flags, refer to MACROs TWT_FLAGS_*(TWT_FLAGS_GET_CMD etc) */
+    A_UINT32 wake_dur_us;   /* Wake duration in uS */
+    A_UINT32 wake_intvl_us; /* Wake Interval in uS */
+    A_UINT32 sp_offset_us;  /* SP Starting Offset */
+    A_UINT32 sp_tsf_us_lo;  /* SP start TSF bits 31:0 */
+    A_UINT32 sp_tsf_us_hi;  /* SP start TSF bits 63:32 */
+} wmi_twt_add_dialog_additional_params;
+
+typedef struct {
     A_UINT32 tlv_header;    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_add_dialog_complete_event_fixed_param */
     A_UINT32 vdev_id;       /* VDEV identifier */
     wmi_mac_addr peer_macaddr; /* peer MAC address */
     A_UINT32 dialog_id;     /* TWT dialog ID */
     A_UINT32 status;        /* refer to WMI_ADD_TWT_STATUS_T */
+/*
+ * This fixed_param TLV is followed by the below TLVs:
+ * wmi_twt_add_dialog_additional_params twt_params[]; // TWT params received
+ *                                                    // from peer
+ */
 } wmi_twt_add_dialog_complete_event_fixed_param;
 
 typedef struct {
