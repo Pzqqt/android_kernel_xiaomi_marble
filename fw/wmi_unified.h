@@ -13231,6 +13231,22 @@ typedef struct {
 #define WMI_RC_TS_FLAG          0x200   /* Three stream flag */
 #define WMI_RC_UAPSD_FLAG       0x400   /* UAPSD Rate Control */
 
+enum WMI_PEER_STA_TYPE {
+    WMI_PEER_STA_TYPE_INVALID                 = 0, /* Invalid type*/
+    WMI_PEER_STA_TYPE_ONLY_STAVDEV            = 1, /* AP has only STAVDEV and APVDEV is not present on any radio */
+    WMI_PEER_STA_TYPE_APVDEV_ON_OTHER_RADIO   = 2, /* AP has STAVDEV on one radio and APVDEV on other radios */
+    WMI_PEER_STA_TYPE_FH_APVDEV_ON_SAME_RADIO = 3, /* AP has STAVDEV and APVDEV on same radio. During STAVDEV connection,
+                                                    * no repeater client is connected with this repeater APVDEV
+                                                    */
+    WMI_PEER_STA_TYPE_BH_APVDEV_ON_SAME_RADIO = 4, /* AP has STAVDEV and APVDEV on same radio. During STAVDEV connection,
+                                                    * at least one repeater client is connected with this repeater APVDEV
+                                                    * (daisy chain config)
+                                                    */
+};
+
+#define WMI_PEER_STA_TYPE_GET(dword)        WMI_GET_BITS(dword, 0, 8)
+#define WMI_PEER_STA_TYPE_SET(dword, value) WMI_SET_BITS(dword, 0, 8, value)
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param */
     /** peer MAC address */
@@ -13320,6 +13336,13 @@ typedef struct {
      * valid when WMI_PEER_HE is set and WMI_PEER_VHT/HT are not set.
      */
     A_UINT32 peer_he_caps_6ghz;
+
+    /* bit[0-7] : sta_type
+     * bit[8-31]: reserved
+     * Refer to enum WMI_PEER_STA_TYPE for sta_type values.
+     * Refer to WMI_PEER_STA_TYPE_GET/SET macros.
+     */
+    A_UINT32 sta_type;
 
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
