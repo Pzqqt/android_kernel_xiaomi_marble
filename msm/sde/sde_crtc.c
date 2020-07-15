@@ -5360,6 +5360,47 @@ static int _sde_crtc_check_plane_layout(struct drm_crtc *crtc,
 	return 0;
 }
 
+static int _sde_crtc_check_fsc_planes(struct drm_crtc *crtc,
+		struct drm_crtc_state *crtc_state)
+{
+	struct sde_format *format = NULL;
+	struct drm_plane *plane = NULL;
+	struct drm_plane_state *plane_state = NULL;
+	struct sde_crtc_state *cstate;
+	int fsc_plane_count = 0, non_fsc_plane_count = 0;
+
+	cstate = to_sde_crtc_state(crtc_state);
+
+	drm_atomic_crtc_state_for_each_plane(plane, crtc_state) {
+		plane_state = drm_atomic_get_new_plane_state(
+				crtc_state->state, plane);
+		if (!plane_state)
+			continue;
+
+		format = to_sde_format(msm_framebuffer_format(
+				plane_state->fb));
+		if (!format) {
+			SDE_ERROR("invalid format\n");
+			return -EINVAL;
+		} else if (SDE_FORMAT_IS_FSC(format)) {
+			fsc_plane_count++;
+		} else {
+			non_fsc_plane_count++;
+		}
+	}
+
+	if (fsc_plane_count && non_fsc_plane_count) {
+		SDE_ERROR("%d fsc and %d other planes detected together\n",
+				fsc_plane_count, non_fsc_plane_count);
+		return -EINVAL;
+	}
+
+	if (fsc_plane_count)
+		cstate->in_fsc_mode = true;
+
+	return 0;
+}
+
 static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		struct drm_crtc_state *state)
 {
@@ -5428,6 +5469,13 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	rc = _sde_crtc_check_plane_layout(crtc, state);
 	if (rc) {
 		SDE_ERROR("crtc%d failed plane layout check %d\n",
+				crtc->base.id, rc);
+		goto end;
+	}
+
+	rc = _sde_crtc_check_fsc_planes(crtc, state);
+	if (rc) {
+		SDE_ERROR("crtc%d failed fsc planes check %d\n",
 				crtc->base.id, rc);
 		goto end;
 	}
