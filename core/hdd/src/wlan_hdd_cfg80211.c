@@ -18698,23 +18698,21 @@ static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
 		  req->fils_erp_next_seq_num, req->auth_type,
 		  req->fils_erp_username_len, req->fils_erp_rrk_len,
 		  req->fils_erp_realm_len);
-	if (req->fils_erp_rrk_len || req->fils_erp_realm_len ||
-	    req->fils_erp_username_len ||
-	    req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
+
+	if (req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
 	    req->fils_erp_realm_len > FILS_MAX_REALM_LEN ||
 	    req->fils_erp_username_len > FILS_MAX_KEYNAME_NAI_LENGTH) {
 		hdd_err("length incorrect, user=%zu rrk=%zu realm=%zu",
 			req->fils_erp_username_len, req->fils_erp_rrk_len,
 			req->fils_erp_realm_len);
-		return true;
+		return false;
 	}
 
 	if (!req->fils_erp_rrk || !req->fils_erp_realm ||
-	    !req->fils_erp_username) {
-		hdd_err("buffer incorrect, user=%pK rrk=%pK realm=%pK",
+	    !req->fils_erp_username)
+		hdd_err("ERP info is NULL, user=%pK rrk=%pK realm=%pK",
 			req->fils_erp_username, req->fils_erp_rrk,
 			req->fils_erp_realm);
-	}
 
 	return true;
 }

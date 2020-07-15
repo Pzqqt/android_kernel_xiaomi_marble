@@ -1082,12 +1082,13 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
  * @cache_id:  FILS cache id
  * @ssid:      SSID pointer
  * @ssid_len:  SSID length
+ * @bssid:     Pointer to the BSSID to lookup
  *
  * Return: True if lookup is successful
  */
 bool csr_lookup_fils_pmkid(struct mac_context *mac, uint8_t vdev_id,
 			   uint8_t *cache_id, uint8_t *ssid,
-			   uint8_t ssid_len);
+			   uint8_t ssid_len, struct qdf_mac_addr *bssid);
 /**
  * csr_is_pmkid_found_for_peer() - check if pmkid sent by peer is present
 				   in PMK cache. Used in SAP mode.

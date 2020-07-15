@@ -2695,9 +2695,10 @@ bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 
 bool csr_lookup_fils_pmkid(struct mac_context *mac,
 			   uint8_t vdev_id, uint8_t *cache_id,
-			   uint8_t *ssid, uint8_t ssid_len)
+			   uint8_t *ssid, uint8_t ssid_len,
+			   struct qdf_mac_addr *bssid)
 {
-	struct wlan_crypto_pmksa *pmksa;
+	struct wlan_crypto_pmksa *fils_ssid_pmksa, *bssid_lookup_pmksa;
 	struct wlan_objmgr_vdev *vdev;
 
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, vdev_id,
@@ -2707,8 +2708,10 @@ bool csr_lookup_fils_pmkid(struct mac_context *mac,
 		return false;
 	}
 
-	pmksa = wlan_crypto_get_fils_pmksa(vdev, cache_id, ssid, ssid_len);
-	if (!pmksa) {
+	bssid_lookup_pmksa = wlan_crypto_get_pmksa(vdev, bssid);
+	fils_ssid_pmksa =
+		wlan_crypto_get_fils_pmksa(vdev, cache_id, ssid, ssid_len);
+	if (!fils_ssid_pmksa && !bssid_lookup_pmksa) {
 		sme_err("FILS_PMKSA: Lookup failed");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		return false;
