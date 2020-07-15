@@ -477,6 +477,14 @@ static int dsi_panel_pinctrl_init(struct dsi_panel *panel)
 		goto error;
 	}
 
+	panel->pinctrl.pwm_pin =
+		pinctrl_lookup_state(panel->pinctrl.pinctrl, "pwm_pin");
+
+	if (IS_ERR_OR_NULL(panel->pinctrl.pwm_pin)) {
+		panel->pinctrl.pwm_pin = NULL;
+		DSI_DEBUG("failed to get pinctrl pwm_pin");
+	}
+
 error:
 	return rc;
 }
@@ -647,6 +655,14 @@ static int dsi_panel_pwm_register(struct dsi_panel *panel)
 		DSI_ERR("[%s] failed to request pwm, rc=%d\n", panel->name,
 			rc);
 		return rc;
+	}
+
+	if (panel->pinctrl.pwm_pin) {
+		rc = pinctrl_select_state(panel->pinctrl.pinctrl,
+			panel->pinctrl.pwm_pin);
+		if (rc)
+			DSI_ERR("[%s] failed to set pwm pinctrl, rc=%d\n",
+				panel->name, rc);
 	}
 
 	return 0;
