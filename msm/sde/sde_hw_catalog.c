@@ -498,6 +498,12 @@ enum {
 	REG_DMA_PROP_MAX
 };
 
+enum {
+	NOISE_LAYER_OFF,
+	NOISE_LAYER_VERSION,
+	NOISEL_LAYER_PROP_MAX
+};
+
 /*************************************************************
  * dts property definition
  *************************************************************/
@@ -961,9 +967,17 @@ static struct sde_prop_type demura_prop[] = {
 			false, PROP_TYPE_U32},
 };
 
+static struct sde_prop_type noise_layer_prop[] = {
+	[NOISE_LAYER_OFF] = {NOISE_LAYER_OFF, "qcom,sde-lm-noise-off",
+			false, PROP_TYPE_U32},
+	[NOISE_LAYER_VERSION] =  {NOISE_LAYER_VERSION,
+		"qcom,sde-lm-noise-version", false, PROP_TYPE_U32},
+};
+
 /*************************************************************
  * static API list
  *************************************************************/
+static int _sde_lm_noise_parse_dt(struct device_node *np, struct sde_mdss_cfg *sde_cfg);
 
 static int _parse_dt_u32_handler(struct device_node *np,
 	char *prop_name, u32 *offsets, int len, bool mandatory)
@@ -2320,6 +2334,7 @@ static int sde_mixer_parse_dt(struct device_node *np,
 		}
 	}
 	sde_cfg->mixer_count = mixer_count;
+	_sde_lm_noise_parse_dt(np, sde_cfg);
 
 end:
 	sde_put_dt_props(blend_props);
@@ -2851,6 +2866,42 @@ static int _sde_rc_parse_dt(struct device_node *np,
 		}
 	}
 
+	sde_put_dt_props(props);
+	return 0;
+}
+
+static int _sde_lm_noise_parse_dt(struct device_node *np,
+		struct sde_mdss_cfg *sde_cfg)
+{
+	int off_count, i;
+	struct sde_dt_props *props;
+
+	props = sde_get_dt_props(np, NOISEL_LAYER_PROP_MAX, noise_layer_prop,
+			ARRAY_SIZE(noise_layer_prop), &off_count);
+	if (IS_ERR(props)) {
+		SDE_ERROR("noise: failed to get dt props\n");
+		return PTR_ERR(props);
+	}
+
+	if (!props->exists[NOISE_LAYER_OFF] ||
+		!props->exists[NOISE_LAYER_VERSION]) {
+		SDE_ERROR("noise: prop doesnt exist %d %d\n",
+			props->exists[NOISE_LAYER_OFF],
+			props->exists[NOISE_LAYER_VERSION]);
+		goto exit;
+	}
+
+	for (i = 0; i < sde_cfg->mixer_count; i++) {
+		struct sde_lm_cfg *lm = &sde_cfg->mixer[i];
+		struct sde_lm_sub_blks *sblk = lm->sblk;
+		sblk->nlayer.base = PROP_VALUE_ACCESS(props->values,
+					NOISE_LAYER_OFF, 0);
+		sblk->nlayer.version = PROP_VALUE_ACCESS(props->values,
+					NOISE_LAYER_VERSION, 0);
+		sblk->nlayer.len = sizeof(u32);
+		set_bit(SDE_MIXER_NOISE_LAYER, &lm->features);
+	}
+exit:
 	sde_put_dt_props(props);
 	return 0;
 }

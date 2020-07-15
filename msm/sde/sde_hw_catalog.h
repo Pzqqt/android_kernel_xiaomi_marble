@@ -337,6 +337,7 @@ enum {
  * @SDE_DISP_PRIMARY_PREF     Layer mixer preferred for primary display
  * @SDE_DISP_SECONDARY_PREF   Layer mixer preferred for secondary display
  * @SDE_MIXER_COMBINED_ALPHA  Layer mixer bg and fg alpha in single register
+ * @SDE_MIXER_NOISE_LAYER     Layer mixer supports noise layer
  * @SDE_MIXER_MAX             maximum value
  */
 enum {
@@ -349,6 +350,7 @@ enum {
 	SDE_DISP_CWB_PREF,
 	SDE_DISP_DCWB_PREF,
 	SDE_MIXER_COMBINED_ALPHA,
+	SDE_MIXER_NOISE_LAYER,
 	SDE_MIXER_MAX
 };
 
@@ -811,12 +813,14 @@ struct sde_sspp_sub_blks {
  * @maxblendstages:         Max number of blend-stages supported
  * @blendstage_base:        Blend-stage register base offset
  * @gc: gamma correction block
+ * @nlayer: noise layer block
  */
 struct sde_lm_sub_blks {
 	u32 maxwidth;
 	u32 maxblendstages;
 	u32 blendstage_base[MAX_BLOCKS];
 	struct sde_pp_blk gc;
+	struct sde_pp_blk nlayer;
 };
 
 /**
@@ -1021,7 +1025,7 @@ struct sde_sspp_cfg {
  */
 struct sde_lm_cfg {
 	SDE_HW_BLK_INFO;
-	const struct sde_lm_sub_blks *sblk;
+	struct sde_lm_sub_blks *sblk;
 	u32 dspp;
 	u32 pingpong;
 	u32 ds;
