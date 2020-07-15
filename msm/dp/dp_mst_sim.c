@@ -18,10 +18,9 @@
 #include <linux/debugfs.h>
 #include <linux/platform_device.h>
 #include <drm/drm_edid.h>
-#include <drm/drm_modes.h>
-#include "dp_aux_bridge.h"
+#include <drm/drm_dp_helper.h>
 #include "dp_debug.h"
-#include "dp_mst_sim_helper.h"
+#include "dp_mst_sim.h"
 
 struct dp_sim_dpcd_reg {
 	struct list_head head;
@@ -29,11 +28,13 @@ struct dp_sim_dpcd_reg {
 	u8 val;
 };
 
+#define DP_SIM_BRIDGE_PRIV_FLAG (1 << 31)
+
 #define MAX_BUILTIN_DPCD_ADDR SZ_2K
 #define MAX_MST_PORT 8
 
 struct dp_sim_device {
-	struct platform_device *pdev;
+	struct device *dev;
 	struct dp_aux_bridge bridge;
 	void *host_dev;
 	int (*hpd_cb)(void *, bool, bool);
@@ -51,9 +52,13 @@ struct dp_sim_device {
 
 	u32 link_training_cnt;
 	u32 link_training_remain;
+	u32 link_training_lane_cnt;
+	bool link_training_mismatch;
 
 	struct dp_mst_sim_port *ports;
 	u32 port_num;
+	u32 current_port_num;
+	u32 sim_mode;
 
 	u32 edid_seg;
 	u32 edid_addr;
@@ -123,41 +128,24 @@ static int dp_sim_register_hpd(struct dp_aux_bridge *bridge,
 	return 0;
 }
 
-static int dp_sim_read_dpcd(struct dp_sim_device *sim_dev,
-		struct drm_dp_aux_msg *msg)
+static u8 dp_sim_read_dpcd(struct dp_sim_device *sim_dev,
+		u32 addr)
 {
 	struct dp_sim_dpcd_reg *reg;
-	u32 i, addr;
-	u8 *buf;
 
-	if (msg->address + msg->size <= MAX_BUILTIN_DPCD_ADDR) {
-		memcpy(msg->buffer,
-			&sim_dev->dpcd_reg[msg->address],
-			msg->size);
+	if (addr < MAX_BUILTIN_DPCD_ADDR) {
+		return sim_dev->dpcd_reg[addr];
 	} else {
-		buf = (u8 *)msg->buffer;
-		for (i = 0; i < msg->size; i++) {
-			addr = msg->address + i;
-			if (addr < MAX_BUILTIN_DPCD_ADDR)
-				buf[i] = sim_dev->dpcd_reg[addr];
-			else {
-				buf[i] = 0;
-				list_for_each_entry(reg,
-						&sim_dev->dpcd_reg_list,
-						head) {
-					if (reg->addr == addr) {
-						buf[i] = reg->val;
-						break;
-					}
-				}
-			}
+		list_for_each_entry(reg, &sim_dev->dpcd_reg_list, head) {
+			if (reg->addr == addr)
+				return reg->val;
 		}
 	}
 
-	return msg->size;
+	return 0;
 }
 
-static int dp_sim_write_dpcd(struct dp_sim_device *sim_dev,
+static void dp_sim_write_dpcd(struct dp_sim_device *sim_dev,
 		u32 addr, u8 val)
 {
 	struct dp_sim_dpcd_reg *dpcd_reg;
@@ -168,22 +156,34 @@ static int dp_sim_write_dpcd(struct dp_sim_device *sim_dev,
 		list_for_each_entry(dpcd_reg, &sim_dev->dpcd_reg_list, head) {
 			if (dpcd_reg->addr == addr) {
 				dpcd_reg->val = val;
-				return 0;
+				return;
 			}
 		}
 
-		dpcd_reg = devm_kzalloc(&sim_dev->pdev->dev,
+		dpcd_reg = devm_kzalloc(sim_dev->dev,
 				sizeof(*dpcd_reg), GFP_KERNEL);
 		if (!dpcd_reg)
-			return -ENOMEM;
+			return;
 
 		dpcd_reg->addr = addr;
 		dpcd_reg->val = val;
 		list_add_tail(&dpcd_reg->head, &sim_dev->dpcd_reg_list);
 	}
+}
 
-	DP_DEBUG("dpcd[0x%x]=0x%x\n", addr, val);
-	return 0;
+static int dp_sim_read_dpcd_regs(struct dp_sim_device *sim_dev,
+		u8 *buf, u32 size, u32 offset)
+{
+	u32 i;
+
+	if (offset + size <= MAX_BUILTIN_DPCD_ADDR) {
+		memcpy(buf, &sim_dev->dpcd_reg[offset], size);
+	} else {
+		for (i = 0; i < size; i++)
+			buf[i] = dp_sim_read_dpcd(sim_dev, offset + i);
+	}
+
+	return size;
 }
 
 static int dp_sim_read_edid(struct dp_sim_device *sim_dev,
@@ -221,10 +221,15 @@ static int dp_sim_link_training(struct dp_sim_device *sim_dev,
 		struct drm_dp_aux_msg *msg)
 {
 	u8 *link_status = msg->buffer;
-	int ret;
+	int ret, i;
 
 	if (msg->request == DP_AUX_NATIVE_READ &&
 			msg->address == DP_LANE0_1_STATUS) {
+		/*
+		 * remain is an option to allow limited actual
+		 * link training. this is needed for some device
+		 * when actual read is needed.
+		 */
 		if (sim_dev->link_training_remain) {
 			sim_dev->link_training_remain--;
 			ret = drm_aux->transfer(drm_aux, msg);
@@ -235,16 +240,44 @@ static int dp_sim_link_training(struct dp_sim_device *sim_dev,
 
 		memcpy(msg->buffer, &sim_dev->dpcd_reg[msg->address],
 				msg->size);
+
+		/*
+		 * when mismatch happens, clear status and fail the link
+		 * training.
+		 */
+		if (sim_dev->link_training_mismatch) {
+			link_status[0] = 0;
+			link_status[1] = 0;
+		}
+
 		return msg->size;
 	}
 
 	if (msg->request == DP_AUX_NATIVE_WRITE) {
-		if (msg->address == DP_TRAINING_LANE0_SET)
-			memcpy(msg->buffer,
-				&sim_dev->dpcd_reg[DP_TRAINING_LANE0_SET], 4);
-		else if (msg->address == DP_TRAINING_PATTERN_SET)
+		if (msg->address == DP_TRAINING_LANE0_SET) {
+			const u8 mask = DP_TRAIN_VOLTAGE_SWING_MASK |
+					DP_TRAIN_PRE_EMPHASIS_MASK;
+			/*
+			 * when link training is set, only pre-set vx/px is
+			 * going through. here we will fail the initial
+			 * vx/px and correct them automatically.
+			 */
+			sim_dev->link_training_mismatch = false;
+			for (i = 0; i < sim_dev->link_training_lane_cnt; i++) {
+				if ((link_status[i] & mask) !=
+					(sim_dev->dpcd_reg[
+					DP_TRAINING_LANE0_SET + i] & mask)) {
+					sim_dev->link_training_mismatch = true;
+					break;
+				}
+			}
+		} else if (msg->address == DP_TRAINING_PATTERN_SET) {
 			sim_dev->link_training_remain =
 				sim_dev->link_training_cnt;
+		} else if (msg->address == DP_LINK_BW_SET) {
+			sim_dev->link_training_lane_cnt =
+				link_status[1] & 0x1F;
+		}
 	}
 
 	return 0;
@@ -259,16 +292,19 @@ static ssize_t dp_sim_transfer(struct dp_aux_bridge *bridge,
 
 	mutex_lock(&sim_dev->lock);
 
-	if (sim_dev->skip_link_training) {
+	if (sim_dev->skip_link_training &&
+			!(sim_dev->sim_mode & DP_SIM_MODE_LINK_TRAIN)) {
 		ret = dp_sim_link_training(sim_dev, drm_aux, msg);
 		if (ret)
 			goto end;
 	}
 
-	ret = dp_mst_sim_transfer(sim_dev->bridge.mst_ctx, msg);
-	if (ret >= 0) {
-		ret = msg->size;
-		goto end;
+	if ((sim_dev->sim_mode & DP_SIM_MODE_MST) || sim_dev->skip_mst) {
+		ret = dp_mst_sim_transfer(sim_dev->bridge.mst_ctx, msg);
+		if (ret >= 0) {
+			ret = msg->size;
+			goto end;
+		}
 	}
 
 	if (msg->request == DP_AUX_NATIVE_WRITE) {
@@ -276,11 +312,18 @@ static ssize_t dp_sim_transfer(struct dp_aux_bridge *bridge,
 		sim_dev->dpcd_write_size = msg->size;
 	}
 
-	if (sim_dev->skip_edid && (msg->request & DP_AUX_I2C_MOT))
+	if (((sim_dev->sim_mode & DP_SIM_MODE_EDID) ||
+			sim_dev->skip_edid) &&
+			(msg->request & DP_AUX_I2C_MOT))
 		ret = dp_sim_read_edid(sim_dev, msg);
-	else if (sim_dev->skip_dpcd && msg->request == DP_AUX_NATIVE_READ)
-		ret = dp_sim_read_dpcd(sim_dev, msg);
-	else if (sim_dev->skip_config && msg->request == DP_AUX_NATIVE_WRITE)
+	else if (((sim_dev->sim_mode & DP_SIM_MODE_DPCD_READ) ||
+			sim_dev->skip_dpcd) &&
+			msg->request == DP_AUX_NATIVE_READ)
+		ret = dp_sim_read_dpcd_regs(sim_dev, msg->buffer,
+				msg->size, msg->address);
+	else if (((sim_dev->sim_mode & DP_SIM_MODE_DPCD_WRITE) ||
+			sim_dev->skip_config) &&
+			msg->request == DP_AUX_NATIVE_WRITE)
 		ret = msg->size;
 	else
 		ret = drm_aux->transfer(drm_aux, msg);
@@ -299,6 +342,147 @@ static void dp_sim_host_hpd_irq(void *host_dev)
 
 	if (sim_dev->hpd_cb)
 		sim_dev->hpd_cb(sim_dev->host_dev, false, true);
+}
+
+int dp_sim_set_sim_mode(struct dp_aux_bridge *bridge, u32 sim_mode)
+{
+	struct dp_sim_device *sim_dev;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	sim_dev->sim_mode = sim_mode;
+
+	return 0;
+}
+
+int dp_sim_update_port_num(struct dp_aux_bridge *bridge, u32 port_num)
+{
+	struct dp_sim_device *sim_dev;
+	struct dp_mst_sim_port *ports;
+	u32 i, rc;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	if (port_num > sim_dev->port_num) {
+		ports = devm_kzalloc(sim_dev->dev,
+				port_num * sizeof(*ports), GFP_KERNEL);
+		if (!ports)
+			return -ENOMEM;
+
+		memcpy(ports, sim_dev->ports,
+				sim_dev->port_num * sizeof(*ports));
+
+		if (sim_dev->ports)
+			devm_kfree(sim_dev->dev, sim_dev->ports);
+
+		sim_dev->ports = ports;
+
+		for (i = sim_dev->port_num; i < port_num; i++) {
+			memcpy(&ports[i], &output_port, sizeof(*ports));
+			ports[i].peer_guid[0] = i;
+		}
+
+		sim_dev->port_num = port_num;
+	}
+
+	rc = dp_mst_sim_update(sim_dev->bridge.mst_ctx,
+			port_num, sim_dev->ports);
+	if (rc)
+		return rc;
+
+	sim_dev->current_port_num = port_num;
+
+	return rc;
+}
+
+int dp_sim_update_port_status(struct dp_aux_bridge *bridge,
+		int port, enum drm_connector_status status)
+{
+	struct dp_sim_device *sim_dev;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	if (port < 0 || port >= sim_dev->current_port_num)
+		return -EINVAL;
+
+	sim_dev->ports[port].pdt = (status == connector_status_connected) ?
+			DP_PEER_DEVICE_SST_SINK : DP_PEER_DEVICE_NONE;
+
+	return dp_mst_sim_update(sim_dev->bridge.mst_ctx,
+			sim_dev->current_port_num, sim_dev->ports);
+}
+
+int dp_sim_update_port_edid(struct dp_aux_bridge *bridge,
+		int port, const u8 *edid, u32 size)
+{
+	struct dp_sim_device *sim_dev;
+	struct dp_mst_sim_port *sim_port;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	if (port < 0 || port >= sim_dev->current_port_num)
+		return -EINVAL;
+
+	sim_port = &sim_dev->ports[port];
+
+	if (size != sim_port->edid_size) {
+		if (sim_port->edid)
+			devm_kfree(sim_dev->dev, (u8 *)sim_port->edid);
+
+		sim_port->edid = devm_kzalloc(sim_dev->dev,
+				size, GFP_KERNEL);
+		if (!sim_port->edid)
+			return -ENOMEM;
+
+		sim_port->edid_size = size;
+	}
+
+	memcpy((u8 *)sim_port->edid, edid, size);
+
+	return dp_mst_sim_update(sim_dev->bridge.mst_ctx,
+			sim_dev->current_port_num, sim_dev->ports);
+}
+
+int dp_sim_write_dpcd_reg(struct dp_aux_bridge *bridge,
+		const u8 *dpcd, u32 size, u32 offset)
+{
+	struct dp_sim_device *sim_dev;
+	int i;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	for (i = 0; i < size; i++)
+		dp_sim_write_dpcd(sim_dev, offset + i, dpcd[i]);
+
+	return 0;
+}
+
+int dp_sim_read_dpcd_reg(struct dp_aux_bridge *bridge,
+		u8 *dpcd, u32 size, u32 offset)
+{
+	struct dp_sim_device *sim_dev;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	sim_dev = to_dp_sim_dev(bridge);
+
+	return dp_sim_read_dpcd_regs(sim_dev, dpcd, size, offset);
 }
 
 static void dp_sim_update_dtd(struct edid *edid,
@@ -463,7 +647,7 @@ static int dp_sim_parse_edid_from_node(struct dp_sim_device *sim_dev,
 		flags |= DRM_MODE_FLAG_NVSYNC;
 	mode->flags = flags;
 
-	edid = devm_kzalloc(&sim_dev->pdev->dev, sizeof(*edid), GFP_KERNEL);
+	edid = devm_kzalloc(sim_dev->dev, sizeof(*edid), GFP_KERNEL);
 	if (!edid) {
 		rc = -ENOMEM;
 		goto fail;
@@ -478,7 +662,7 @@ static int dp_sim_parse_edid_from_node(struct dp_sim_device *sim_dev,
 	port->peer_guid[0] = index;
 
 	if (port->edid)
-		devm_kfree(&sim_dev->pdev->dev, (u8 *)port->edid);
+		devm_kfree(sim_dev->dev, (u8 *)port->edid);
 
 	port->edid = (u8 *)edid;
 	port->edid_size = sizeof(*edid);
@@ -493,7 +677,7 @@ static int dp_sim_parse_edid_from_data(struct dp_sim_device *sim_dev,
 	struct dp_mst_sim_port *port;
 	u8 *edid_data;
 
-	edid_data = devm_kzalloc(&sim_dev->pdev->dev, len, GFP_KERNEL);
+	edid_data = devm_kzalloc(sim_dev->dev, len, GFP_KERNEL);
 	if (!edid_data)
 		return -ENOMEM;
 
@@ -504,7 +688,7 @@ static int dp_sim_parse_edid_from_data(struct dp_sim_device *sim_dev,
 	port->peer_guid[0] = index;
 
 	if (port->edid)
-		devm_kfree(&sim_dev->pdev->dev, (u8 *)port->edid);
+		devm_kfree(sim_dev->dev, (u8 *)port->edid);
 
 	port->edid = edid_data;
 	port->edid_size = len;
@@ -528,13 +712,14 @@ static int dp_sim_parse_edid(struct dp_sim_device *sim_dev)
 	if (port_num >= 15)
 		return -EINVAL;
 
-	ports = devm_kzalloc(&sim_dev->pdev->dev,
+	ports = devm_kzalloc(sim_dev->dev,
 			port_num * sizeof(*ports), GFP_KERNEL);
 	if (!ports)
 		return -ENOMEM;
 
 	sim_dev->ports = ports;
 	sim_dev->port_num = port_num;
+	sim_dev->current_port_num = port_num;
 
 	i = 0;
 	for_each_child_of_node(of_node, node) {
@@ -566,13 +751,6 @@ static int dp_sim_parse_dpcd(struct dp_sim_device *sim_dev)
 	const __be32 *arr;
 	int rc;
 
-	sim_dev->dpcd_reg[DP_DPCD_REV] = 0x14;
-	sim_dev->dpcd_reg[DP_SINK_COUNT] = 0x1;
-	sim_dev->dpcd_reg[DP_LANE0_1_STATUS] = 0x77;
-	sim_dev->dpcd_reg[DP_LANE2_3_STATUS] = 0x77;
-	sim_dev->dpcd_reg[DP_LANE_ALIGN_STATUS_UPDATED] = 0x1;
-	sim_dev->dpcd_reg[DP_SINK_STATUS] = 0x3;
-
 	rc = of_property_read_u32(node, "qcom,dpcd-max-rate", &val);
 	if (!rc)
 		sim_dev->dpcd_reg[DP_MAX_LINK_RATE] = val;
@@ -597,19 +775,27 @@ static int dp_sim_parse_dpcd(struct dp_sim_device *sim_dev)
 
 	rc = of_property_read_u32(node, "qcom,voltage-swing", &val);
 	if (!rc)
-		for (i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++) {
 			sim_dev->dpcd_reg[DP_TRAINING_LANE0_SET + i] |=
 					val;
+			sim_dev->dpcd_reg[DP_ADJUST_REQUEST_LANE0_1 + (i/2)] |=
+					(val & 0x3) << ((i & 0x1) << 2);
+		}
 
 	rc = of_property_read_u32(node, "qcom,pre-emphasis", &val);
 	if (!rc)
-		for (i = 0; i < 4; i++)
+		for (i = 0; i < 4; i++) {
 			sim_dev->dpcd_reg[DP_TRAINING_LANE0_SET + i] |=
 					val << 3;
+			sim_dev->dpcd_reg[DP_ADJUST_REQUEST_LANE0_1 + (i/2)] |=
+					(val & 0x3) << (((i & 0x1) << 2) + 2);
+		}
 
 	rc = of_property_read_u32(node, "qcom,link-training-cnt", &val);
 	if (!rc)
 		sim_dev->link_training_cnt = val;
+	else
+		sim_dev->link_training_cnt = 0;
 
 	return 0;
 }
@@ -689,9 +875,9 @@ static ssize_t dp_sim_debug_write_edid(struct file *file,
 
 	if (edid_size != port->edid_size) {
 		if (port->edid)
-			devm_kfree(&debug->pdev->dev, (u8 *)port->edid);
+			devm_kfree(debug->dev, (u8 *)port->edid);
 
-		port->edid = devm_kzalloc(&debug->pdev->dev,
+		port->edid = devm_kzalloc(debug->dev,
 					edid_size, GFP_KERNEL);
 		if (!port->edid) {
 			rc = -ENOMEM;
@@ -877,7 +1063,8 @@ static ssize_t dp_sim_debug_write_hpd(struct file *file,
 	if (kstrtoint(buf, 10, &hpd) != 0)
 		goto end;
 
-	debug->hpd_cb(debug->host_dev, !!hpd, false);
+	if (debug->hpd_cb)
+		debug->hpd_cb(debug->host_dev, !!hpd, false);
 
 end:
 	return len;
@@ -1006,9 +1193,51 @@ end:
 	return len;
 }
 
+static ssize_t dp_sim_debug_write_mst_hpd(struct file *file,
+		const char __user *user_buff, size_t count, loff_t *ppos)
+{
+	struct dp_sim_debug_edid_entry *entry = file->private_data;
+	struct dp_sim_device *debug;
+	char buf[SZ_8];
+	size_t len = 0;
+	int hpd = 0;
+
+	if (!entry)
+		return -ENODEV;
+
+	debug = entry->sim_dev;
+	if (!debug || entry->index >= debug->port_num)
+		return -EINVAL;
+
+	if (*ppos)
+		return 0;
+
+	len = min_t(size_t, count, SZ_8 - 1);
+	if (copy_from_user(buf, user_buff, len))
+		goto end;
+
+	buf[len] = '\0';
+
+	if (kstrtoint(buf, 10, &hpd) != 0)
+		goto end;
+
+	dp_sim_update_port_status(&debug->bridge,
+				entry->index, hpd ?
+				connector_status_connected :
+				connector_status_disconnected);
+
+end:
+	return len;
+}
+
 static const struct file_operations sim_edid_fops = {
 	.open = simple_open,
 	.write = dp_sim_debug_write_edid,
+};
+
+static const struct file_operations sim_mst_hpd_fops = {
+	.open = simple_open,
+	.write = dp_sim_debug_write_mst_hpd,
 };
 
 static ssize_t dp_sim_debug_write_mst_mode(struct file *file,
@@ -1019,10 +1248,10 @@ static ssize_t dp_sim_debug_write_mst_mode(struct file *file,
 	size_t len = 0;
 	int mst_sideband_mode = 0;
 	u32 mst_port_cnt = 0;
-	struct dp_mst_sim_port *ports;
+	u32 mst_old_port_cnt;
 	struct dp_sim_debug_edid_entry *edid_entry;
 	u8 *edid;
-	u32 i;
+	u32 i, rc;
 
 	if (!debug)
 		return -ENODEV;
@@ -1045,63 +1274,55 @@ static ssize_t dp_sim_debug_write_mst_mode(struct file *file,
 		return -EINVAL;
 	}
 
+	if (!mst_port_cnt)
+		mst_port_cnt = 1;
+
 	debug->skip_mst = !mst_sideband_mode;
 	DP_DEBUG("mst_sideband_mode: %d port_cnt:%d\n",
 			mst_sideband_mode, mst_port_cnt);
 
-	if (mst_port_cnt > debug->port_num) {
-		ports = devm_kzalloc(&debug->pdev->dev,
-				mst_port_cnt * sizeof(*ports), GFP_KERNEL);
-		if (!ports)
+	mst_old_port_cnt = debug->port_num;
+	rc = dp_sim_update_port_num(&debug->bridge, mst_port_cnt);
+	if (rc)
+		return rc;
+
+	/* write mst */
+	dp_sim_write_dpcd(debug, DP_MSTM_CAP, debug->skip_mst);
+
+	/* create default edid nodes */
+	for (i = mst_old_port_cnt; i < mst_port_cnt; i++) {
+		edid_entry = devm_kzalloc(debug->dev,
+				sizeof(*edid_entry), GFP_KERNEL);
+		if (!edid_entry)
+			continue;
+
+		edid_entry->index = i;
+		edid_entry->sim_dev = debug;
+		scnprintf(buf, sizeof(buf), "edid-%d", i);
+		debugfs_create_file(buf,
+				0444,
+				debug->debugfs_edid_dir,
+				edid_entry,
+				&sim_edid_fops);
+		scnprintf(buf, sizeof(buf), "hpd-%d", i);
+		debugfs_create_file(buf,
+				0444,
+				debug->debugfs_edid_dir,
+				edid_entry,
+				&sim_mst_hpd_fops);
+
+		if (!debug->ports[0].edid_size)
+			continue;
+
+		edid = devm_kzalloc(debug->dev,
+				debug->ports[0].edid_size, GFP_KERNEL);
+		if (!edid)
 			return -ENOMEM;
 
-		memcpy(ports, debug->ports,
-				debug->port_num * sizeof(*ports));
-
-		devm_kfree(&debug->pdev->dev, debug->ports);
-
-		debug->ports = ports;
-
-		for (i = debug->port_num; i < mst_port_cnt; i++) {
-			memcpy(&ports[i], &output_port, sizeof(*ports));
-			ports[i].peer_guid[0] = i;
-
-			edid_entry = devm_kzalloc(&debug->pdev->dev,
-					sizeof(*edid_entry), GFP_KERNEL);
-			if (!edid_entry)
-				continue;
-
-			edid_entry->index = i;
-			edid_entry->sim_dev = debug;
-			scnprintf(buf, sizeof(buf), "edid-%d", i);
-			debugfs_create_file(buf,
-					0444,
-					debug->debugfs_edid_dir,
-					edid_entry,
-					&sim_edid_fops);
-
-			if (!ports[0].edid_size)
-				continue;
-
-			edid = devm_kzalloc(&debug->pdev->dev,
-					ports[0].edid_size, GFP_KERNEL);
-			if (!edid)
-				return -ENOMEM;
-
-			memcpy(edid, ports[0].edid, ports[0].edid_size);
-			ports[i].edid = edid;
-			ports[i].edid_size = ports[0].edid_size;
-		}
-
-		debug->port_num = mst_port_cnt;
+		memcpy(edid, debug->ports[0].edid, debug->ports[0].edid_size);
+		debug->ports[i].edid = edid;
+		debug->ports[i].edid_size = debug->ports[0].edid_size;
 	}
-
-	if (debug->skip_mst)
-		dp_mst_sim_update(debug->bridge.mst_ctx,
-				debug->port_num, debug->ports);
-	else
-		dp_mst_sim_update(debug->bridge.mst_ctx,
-				0, NULL);
 
 	return count;
 }
@@ -1149,6 +1370,9 @@ static int dp_sim_debug_init(struct dp_sim_device *sim_dev)
 	char name[SZ_16];
 	int rc = 0, i;
 
+	if (!sim_dev->label)
+		return 0;
+
 	dir = debugfs_create_dir(sim_dev->label, NULL);
 	if (IS_ERR_OR_NULL(dir)) {
 		rc = PTR_ERR(dir);
@@ -1166,7 +1390,7 @@ static int dp_sim_debug_init(struct dp_sim_device *sim_dev)
 	}
 
 	for (i = 0; i < sim_dev->port_num; i++) {
-		edid_entry = devm_kzalloc(&sim_dev->pdev->dev,
+		edid_entry = devm_kzalloc(sim_dev->dev,
 				sizeof(*edid_entry), GFP_KERNEL);
 		edid_entry->index = i;
 		edid_entry->sim_dev = sim_dev;
@@ -1179,6 +1403,18 @@ static int dp_sim_debug_init(struct dp_sim_device *sim_dev)
 		if (IS_ERR_OR_NULL(file)) {
 			rc = PTR_ERR(file);
 			DP_ERR("[%s] debugfs create edid failed, rc=%d\n",
+					sim_dev->label, rc);
+			goto error_remove_dir;
+		}
+		scnprintf(name, sizeof(name), "hpd-%d", i);
+		file = debugfs_create_file(name,
+				0444,
+				edid_dir,
+				edid_entry,
+				&sim_mst_hpd_fops);
+		if (IS_ERR_OR_NULL(file)) {
+			rc = PTR_ERR(file);
+			DP_ERR("[%s] debugfs create hpd failed, rc=%d\n",
 					sim_dev->label, rc);
 			goto error_remove_dir;
 		}
@@ -1293,8 +1529,6 @@ static int dp_sim_parse(struct dp_sim_device *sim_dev)
 
 	sim_dev->label = of_get_property(sim_dev->bridge.of_node,
 			"label", NULL);
-	if (!sim_dev->label)
-		sim_dev->label = "dp-sim";
 
 	rc = dp_sim_parse_dpcd(sim_dev);
 	if (rc) {
@@ -1317,22 +1551,22 @@ static int dp_sim_parse(struct dp_sim_device *sim_dev)
 	return 0;
 }
 
-int dp_sim_probe(struct platform_device *pdev)
+int dp_sim_create_bridge(struct device *dev, struct dp_aux_bridge **bridge)
 {
 	struct dp_sim_device *dp_sim_dev;
 	struct dp_mst_sim_cfg cfg;
 	int ret;
 
-	dp_sim_dev = devm_kzalloc(&pdev->dev, sizeof(*dp_sim_dev), GFP_KERNEL);
+	dp_sim_dev = devm_kzalloc(dev, sizeof(*dp_sim_dev), GFP_KERNEL);
 	if (!dp_sim_dev)
 		return -ENOMEM;
 
-	dp_sim_dev->pdev = pdev;
-	dp_sim_dev->bridge.of_node = pdev->dev.of_node;
+	dp_sim_dev->dev = dev;
+	dp_sim_dev->bridge.of_node = dev->of_node;
 	dp_sim_dev->bridge.register_hpd = dp_sim_register_hpd;
 	dp_sim_dev->bridge.transfer = dp_sim_transfer;
 	dp_sim_dev->bridge.dev_priv = dp_sim_dev;
-	dp_sim_dev->bridge.flag = DP_AUX_BRIDGE_MST;
+	dp_sim_dev->bridge.flag = DP_AUX_BRIDGE_MST | DP_SIM_BRIDGE_PRIV_FLAG;
 	INIT_LIST_HEAD(&dp_sim_dev->dpcd_reg_list);
 	mutex_init(&dp_sim_dev->lock);
 
@@ -1341,8 +1575,66 @@ int dp_sim_probe(struct platform_device *pdev)
 	cfg.host_hpd_irq = dp_sim_host_hpd_irq;
 
 	ret = dp_mst_sim_create(&cfg, &dp_sim_dev->bridge.mst_ctx);
+	if (ret) {
+		devm_kfree(dev, dp_sim_dev);
+		return ret;
+	}
+
+	/* default dpcd reg value */
+	dp_sim_dev->dpcd_reg[DP_DPCD_REV] = 0x12;
+	dp_sim_dev->dpcd_reg[DP_MAX_LINK_RATE] = 0x14;
+	dp_sim_dev->dpcd_reg[DP_MAX_LANE_COUNT] = 0xc4;
+	dp_sim_dev->dpcd_reg[DP_SINK_COUNT] = 0x1;
+	dp_sim_dev->dpcd_reg[DP_LANE0_1_STATUS] = 0x77;
+	dp_sim_dev->dpcd_reg[DP_LANE2_3_STATUS] = 0x77;
+	dp_sim_dev->dpcd_reg[DP_LANE_ALIGN_STATUS_UPDATED] = 0x1;
+	dp_sim_dev->dpcd_reg[DP_SINK_STATUS] = 0x3;
+	dp_sim_dev->dpcd_reg[DP_PAYLOAD_TABLE_UPDATE_STATUS] = 0x3;
+
+	/* enable link training by default */
+	dp_sim_dev->skip_link_training = true;
+	dp_sim_dev->link_training_cnt = (u32)-1;
+
+	*bridge = &dp_sim_dev->bridge;
+	return 0;
+}
+
+int dp_sim_destroy_bridge(struct dp_aux_bridge *bridge)
+{
+	struct dp_sim_device *dp_sim_dev;
+	struct dp_sim_dpcd_reg *reg, *p;
+
+	if (!bridge || !(bridge->flag & DP_SIM_BRIDGE_PRIV_FLAG))
+		return -EINVAL;
+
+	dp_sim_dev = to_dp_sim_dev(bridge);
+
+	dp_mst_sim_destroy(dp_sim_dev->bridge.mst_ctx);
+
+	list_for_each_entry_safe(reg, p, &dp_sim_dev->dpcd_reg_list, head) {
+		list_del(&reg->head);
+		devm_kfree(dp_sim_dev->dev, reg);
+	}
+
+	if (dp_sim_dev->ports)
+		devm_kfree(dp_sim_dev->dev, dp_sim_dev->ports);
+
+	devm_kfree(dp_sim_dev->dev, dp_sim_dev);
+
+	return 0;
+}
+
+int dp_sim_probe(struct platform_device *pdev)
+{
+	struct dp_sim_device *dp_sim_dev;
+	struct dp_aux_bridge *bridge;
+	int ret;
+
+	ret = dp_sim_create_bridge(&pdev->dev, &bridge);
 	if (ret)
 		return ret;
+
+	dp_sim_dev = to_dp_sim_dev(bridge);
 
 	ret = dp_sim_parse(dp_sim_dev);
 	if (ret)
@@ -1351,12 +1643,10 @@ int dp_sim_probe(struct platform_device *pdev)
 	if (dp_sim_dev->skip_hpd)
 		dp_sim_dev->bridge.flag |= DP_AUX_BRIDGE_HPD;
 
-	if (dp_sim_dev->skip_mst) {
-		ret = dp_mst_sim_update(dp_sim_dev->bridge.mst_ctx,
-				dp_sim_dev->port_num, dp_sim_dev->ports);
-		if (ret)
-			goto fail;
-	}
+	ret = dp_mst_sim_update(dp_sim_dev->bridge.mst_ctx,
+			dp_sim_dev->port_num, dp_sim_dev->ports);
+	if (ret)
+		goto fail;
 
 	ret = dp_sim_debug_init(dp_sim_dev);
 	if (ret)
@@ -1371,7 +1661,7 @@ int dp_sim_probe(struct platform_device *pdev)
 	return 0;
 
 fail:
-	dp_mst_sim_destroy(dp_sim_dev->bridge.mst_ctx);
+	dp_sim_destroy_bridge(bridge);
 	return ret;
 }
 
@@ -1383,9 +1673,9 @@ int dp_sim_remove(struct platform_device *pdev)
 	if (!dp_sim_dev)
 		return 0;
 
-	dp_mst_sim_destroy(dp_sim_dev->bridge.mst_ctx);
-
 	debugfs_remove_recursive(dp_sim_dev->debugfs_dir);
+
+	dp_sim_destroy_bridge(&dp_sim_dev->bridge);
 
 	return 0;
 }
