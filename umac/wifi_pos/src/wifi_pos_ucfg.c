@@ -24,6 +24,38 @@
 #include "wifi_pos_api.h"
 #include "wifi_pos_ucfg_i.h"
 #include "wlan_ptt_sock_svc.h"
+#ifndef CNSS_GENL
+#include <wlan_objmgr_psoc_obj.h>
+#endif
+
+#ifndef CNSS_GENL
+QDF_STATUS ucfg_wifi_psoc_get_pdev_id_by_dev_name(
+		char *dev_name, uint8_t *pdev_id,
+		struct wlan_objmgr_psoc **psoc)
+{
+	struct wlan_objmgr_psoc *tmp_psoc = wifi_pos_get_psoc();
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc_obj;
+
+	if (!tmp_psoc) {
+		wifi_pos_err("psoc is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wifi_pos_psoc_obj = wifi_pos_get_psoc_priv_obj(tmp_psoc);
+	if (!wifi_pos_psoc_obj) {
+		wifi_pos_err("wifi_pos_psoc_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!wifi_pos_psoc_obj->wifi_pos_get_pdev_id_by_dev_name) {
+		wifi_pos_err("wifi_pos_get_pdev_id_by_dev_name is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wifi_pos_psoc_obj->wifi_pos_get_pdev_id_by_dev_name(
+			dev_name, pdev_id, psoc);
+}
+#endif
 
 QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 				     struct wifi_pos_req_msg *req,
@@ -32,11 +64,11 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 	uint8_t err;
 	uint32_t app_pid;
 	bool is_app_registered;
-	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc_obj =
-					wifi_pos_get_psoc_priv_obj(psoc);
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc_obj;
 
 	wifi_pos_debug("enter");
 
+	wifi_pos_psoc_obj = wifi_pos_get_psoc_priv_obj(wifi_pos_get_psoc());
 	if (!wifi_pos_psoc_obj) {
 		wifi_pos_err("wifi_pos_psoc_obj is null");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -52,7 +84,8 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 	if (!wifi_pos_psoc_obj->wifi_pos_req_handler) {
 		wifi_pos_err("wifi_pos_psoc_obj->wifi_pos_req_handler is null");
 		err = OEM_ERR_NULL_CONTEXT;
-		send_rsp_cb(app_pid, WIFI_POS_CMD_ERROR, sizeof(err), &err);
+		send_rsp_cb(psoc, app_pid, WIFI_POS_CMD_ERROR, sizeof(err),
+			    &err);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -61,7 +94,8 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 		wifi_pos_err("requesting app is not registered, app_registered: %d, requesting pid: %d, stored pid: %d",
 			is_app_registered, req->pid, app_pid);
 		err = OEM_ERR_APP_NOT_REGISTERED;
-		send_rsp_cb(app_pid, WIFI_POS_CMD_ERROR, sizeof(err), &err);
+		send_rsp_cb(psoc, app_pid, WIFI_POS_CMD_ERROR, sizeof(err),
+			    &err);
 		return QDF_STATUS_E_INVAL;
 	}
 

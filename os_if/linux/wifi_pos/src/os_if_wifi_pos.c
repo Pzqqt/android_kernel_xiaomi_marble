@@ -571,13 +571,13 @@ static void os_if_send_nl_resp(uint32_t pid, uint8_t *buf,
  *
  * Return:  none
  */
-static void os_if_wifi_pos_send_rsp(uint32_t pid, enum wifi_pos_cmd_ids cmd,
-				    uint32_t buf_len, uint8_t *buf)
+static void os_if_wifi_pos_send_rsp(struct wlan_objmgr_psoc *psoc, uint32_t pid,
+				    enum wifi_pos_cmd_ids cmd, uint32_t buf_len,
+				    uint8_t *buf)
 {
 	tAniMsgHdr *aniHdr;
 	struct sk_buff *skb = NULL;
 	struct nlmsghdr *nlh;
-	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
 
 	/* OEM msg is always to a specific process and cannot be a broadcast */
 	if (pid == 0) {
@@ -766,13 +766,21 @@ static int  wifi_pos_parse_req(const void *data, int len, int pid,
 	return status;
 }
 #else
-static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req)
+static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req,
+			      struct wlan_objmgr_psoc **psoc)
 {
 	/* SKB->data contains NL msg */
 	/* NLMSG_DATA(nlh) contains ANI msg */
 	struct nlmsghdr *nlh;
 	tAniMsgHdr *msg_hdr;
 	size_t field_info_len;
+	int interface_len;
+	char *interface = NULL;
+	uint8_t pdev_id = 0;
+	uint32_t tgt_pdev_id = 0;
+	uint8_t i;
+	uint32_t offset;
+	QDF_STATUS status;
 
 	nlh = (struct nlmsghdr *)skb->data;
 	if (!nlh) {
@@ -805,13 +813,58 @@ static int wifi_pos_parse_req(struct sk_buff *skb, struct wifi_pos_req_msg *req)
 	req->buf = (uint8_t *)&msg_hdr[1];
 	req->pid = nlh->nlmsg_pid;
 	req->field_info_buf = NULL;
+	req->field_info_buf_len = 0;
 
 	field_info_len = nlh->nlmsg_len -
-			(NLMSG_LENGTH(sizeof(*msg_hdr) + msg_hdr->length));
+		(NLMSG_LENGTH(sizeof(*msg_hdr) + msg_hdr->length +
+			      sizeof(struct wifi_pos_interface)));
 	if (field_info_len) {
-		req->field_info_buf = (struct wifi_pos_field_info *)
-				      (req->buf + req->buf_len);
-		req->field_info_buf_len = field_info_len;
+		req->field_info_buf =
+			(struct wifi_pos_field_info *)(req->buf + req->buf_len);
+		req->field_info_buf_len = sizeof(struct wifi_pos_field_info);
+	}
+
+	interface_len = nlh->nlmsg_len -
+		(NLMSG_LENGTH(sizeof(*msg_hdr) + msg_hdr->length +
+			      req->field_info_buf_len));
+
+	if (interface_len) {
+		interface = (char *)(req->buf + req->buf_len +
+				     req->field_info_buf_len);
+		req->interface.length = *interface;
+
+		if (req->interface.length > sizeof(req->interface.dev_name)) {
+			osif_err("interface length exceeds array length");
+			return OEM_ERR_INVALID_MESSAGE_LENGTH;
+		}
+
+		qdf_mem_copy(req->interface.dev_name,
+			     (interface + sizeof(uint8_t)),
+			     req->interface.length);
+
+		status = ucfg_wifi_psoc_get_pdev_id_by_dev_name(
+				req->interface.dev_name, &pdev_id, psoc);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("failed to get pdev_id and psoc");
+			return OEM_ERR_NULL_CONTEXT;
+		}
+
+		status = wifi_pos_convert_host_pdev_id_to_target(
+				*psoc, pdev_id, &tgt_pdev_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			osif_err("failed to get target pdev_id");
+			return OEM_ERR_NULL_CONTEXT;
+		}
+
+		for (i = 0;
+		     (req->field_info_buf && (i < req->field_info_buf->count));
+		     i++) {
+			if (req->field_info_buf->fields[i].id ==
+					META_DATA_PDEV) {
+				offset = req->field_info_buf->fields[i].offset;
+				*((uint32_t *)&req->buf[offset]) = tgt_pdev_id;
+			}
+		}
 	}
 
 	return 0;
@@ -843,7 +896,7 @@ static void __os_if_wifi_pos_callback(const void *data, int data_len,
 	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
 	err = wifi_pos_parse_req(data, data_len, pid, &req);
 	if (err) {
-		os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
+		os_if_wifi_pos_send_rsp(psoc, wifi_pos_get_app_pid(psoc),
 					WIFI_POS_CMD_ERROR, sizeof(err), &err);
 		status = QDF_STATUS_E_INVAL;
 		goto release_psoc_ref;
@@ -875,18 +928,20 @@ static int __os_if_wifi_pos_callback(struct sk_buff *skb)
 	uint8_t err;
 	QDF_STATUS status;
 	struct wifi_pos_req_msg req = {0};
-	struct wlan_objmgr_psoc *psoc = wifi_pos_get_psoc();
+	struct wlan_objmgr_psoc *psoc = NULL;
 
 	osif_debug("enter");
-	if (!psoc) {
-		osif_err("global psoc object not registered yet.");
+
+	err = wifi_pos_parse_req(skb, &req, &psoc);
+	if (err) {
+		osif_err("wifi_pos_parse_req failed");
 		return -EINVAL;
 	}
 
 	wlan_objmgr_psoc_get_ref(psoc, WLAN_WIFI_POS_OSIF_ID);
-	err = wifi_pos_parse_req(skb, &req);
+
 	if (err) {
-		os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
+		os_if_wifi_pos_send_rsp(psoc, wifi_pos_get_app_pid(psoc),
 					WIFI_POS_CMD_ERROR, sizeof(err), &err);
 		status = QDF_STATUS_E_INVAL;
 		goto release_psoc_ref;
@@ -1000,7 +1055,7 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 		peer_info->peer_chan_info.reg_info_2 = chan_info->reg_info_2;
 	}
 
-	os_if_wifi_pos_send_rsp(wifi_pos_get_app_pid(psoc),
+	os_if_wifi_pos_send_rsp(psoc, wifi_pos_get_app_pid(psoc),
 				WIFI_POS_PEER_STATUS_IND,
 				sizeof(*peer_info), (uint8_t *)peer_info);
 	qdf_mem_free(peer_info);

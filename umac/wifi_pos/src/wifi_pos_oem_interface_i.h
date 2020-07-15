@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,17 +42,5 @@
 
 #define WIFI_POS_FLAG_DFS               10
 #define WIFI_POS_SET_DFS(info)          (info |=  (1 << WIFI_POS_FLAG_DFS))
-
-/**
- * enum WMIRTT_FIELD_ID - identifies which field is being specified
- * @WMIRTT_FIELD_ID_oem_data_sub_type: oem data req sub type
- * @WMIRTT_FIELD_ID_channel_mhz: channel mhz info
- * @WMIRTT_FIELD_ID_pdev: pdev info
- */
-enum WMIRTT_FIELD_ID {
-	WMIRTT_FIELD_ID_oem_data_sub_type,
-	WMIRTT_FIELD_ID_channel_mhz,
-	WMIRTT_FIELD_ID_pdev,
-};
 
 #endif

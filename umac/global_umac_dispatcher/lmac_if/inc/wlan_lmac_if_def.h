@@ -698,12 +698,22 @@ struct wlan_lmac_if_iot_sim_tx_ops {
  * @data_req_tx: function pointer to send wifi_pos req to firmware
  * @wifi_pos_register_events: function pointer to register wifi_pos events
  * @wifi_pos_deregister_events: function pointer to deregister wifi_pos events
+ * @wifi_pos_convert_pdev_id_host_to_target: function pointer to get target
+ * pdev_id from host pdev_id.
+ * @wifi_pos_convert_pdev_id_target_to_host: function pointer to get host
+ * pdev_id from target pdev_id.
  */
 struct wlan_lmac_if_wifi_pos_tx_ops {
 	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_pdev *pdev,
 				  struct oem_data_req *req);
 	QDF_STATUS (*wifi_pos_register_events)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*wifi_pos_deregister_events)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*wifi_pos_convert_pdev_id_host_to_target)(
+			struct wlan_objmgr_psoc *psoc, uint32_t host_pdev_id,
+			uint32_t *target_pdev_id);
+	QDF_STATUS (*wifi_pos_convert_pdev_id_target_to_host)(
+			struct wlan_objmgr_psoc *psoc, uint32_t target_pdev_id,
+			uint32_t *host_pdev_id);
 };
 #endif
 

@@ -207,7 +207,8 @@ struct wifi_pos_dma_rings_cfg {
 	void *srng;
 };
 
-typedef void (*wifi_pos_send_rsp_handler)(uint32_t, enum wifi_pos_cmd_ids,
+typedef void (*wifi_pos_send_rsp_handler)(struct wlan_objmgr_psoc *, uint32_t,
+					  enum wifi_pos_cmd_ids,
 					  uint32_t, uint8_t *);
 
 /**
@@ -242,6 +243,7 @@ typedef void (*wifi_pos_send_rsp_handler)(uint32_t, enum wifi_pos_cmd_ids,
  *                                     for given freq and channel width
  * @wifi_pos_send_action: function pointer to send registered action frames
  *                        to userspace APP
+ * @wifi_pos_get_pdev_id_by_dev_name: get pdev_id from device name
  * @rsp_version: rsp version
  *
  * wifi pos request messages
@@ -288,6 +290,9 @@ struct wifi_pos_psoc_priv_obj {
 	void (*wifi_pos_send_action)(struct wlan_objmgr_psoc *psoc,
 				     uint32_t oem_subtype, uint8_t *buf,
 				     uint32_t len);
+	QDF_STATUS (*wifi_pos_get_pdev_id_by_dev_name)(
+			char *dev_name, uint8_t *pdev_id,
+			struct wlan_objmgr_psoc **psoc);
 	uint32_t rsp_version;
 };
 

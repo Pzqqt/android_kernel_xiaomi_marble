@@ -32,6 +32,18 @@ struct wlan_objmgr_psoc;
 struct wifi_pos_driver_caps;
 
 /**
+ * enum RTT_FIELD_ID - identifies which field is being specified
+ * @META_DATA_SUB_TYPE: oem data req sub type
+ * @META_DATA_CHANNEL_MHZ: channel mhz info
+ * @META_DATA_PDEV: pdev info
+ */
+enum RTT_FIELD_ID {
+	META_DATA_SUB_TYPE,
+	META_DATA_CHANNEL_MHZ,
+	META_DATA_PDEV,
+};
+
+/**
  * struct wifi_pos_field - wifi positioning field element
  * @id: RTT field id
  * @offset: data offset in field info buffer
@@ -51,6 +63,18 @@ struct wifi_pos_field {
 struct wifi_pos_field_info {
 	uint32_t count;
 	struct wifi_pos_field fields[1];
+};
+
+/* Length of interface name */
+#define INTERFACE_LEN 16
+/**
+ * struct wifi_pos_interface - wifi positioning interface structure
+ * @length: interface length
+ * @dev_name: device name
+ */
+struct wifi_pos_interface {
+	uint8_t length;
+	char dev_name[INTERFACE_LEN];
 };
 
 #ifdef WIFI_POS_CONVERGED
@@ -138,7 +162,7 @@ struct qdf_packed wifi_pos_peer_status_info {
  * @field_info_buf: buffer containing field info
  * @field_info_buf_len: length of field info buffer
  * @rsp_version: nl type or ani type
- *
+ * @interface: contains interface name and length
  */
 struct wifi_pos_req_msg {
 	enum wifi_pos_cmd_ids msg_type;
@@ -148,6 +172,7 @@ struct wifi_pos_req_msg {
 	struct wifi_pos_field_info *field_info_buf;
 	uint32_t field_info_buf_len;
 	uint32_t rsp_version;
+	struct wifi_pos_interface interface;
 };
 
 /**
@@ -460,6 +485,33 @@ QDF_STATUS wifi_pos_register_send_action(
 						uint8_t *buf,
 						uint32_t buf_len));
 
+#ifndef CNSS_GENL
+/**
+ * ucfg_wifi_psoc_get_pdev_id_by_dev_name: ucfg API to get pdev_id and psoc from
+ *                                         devname.
+ * @dev_name: dev name received from LOWI application
+ * @pdev_id: get pdev_id from dev_name
+ * @psoc: get psoc corresponding psoc from dev_name
+ */
+QDF_STATUS ucfg_wifi_psoc_get_pdev_id_by_dev_name(
+		char *dev_name, uint8_t *pdev_id,
+		struct wlan_objmgr_psoc **psoc);
+
+/**
+ * wifi_pos_register_get_pdev_id_by_dev_name: API to register callback to get
+ * pdev_id from dev name
+ * @psoc: pointer to global psoc object
+ * @handler: callback to be registered
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_register_get_pdev_id_by_dev_name(
+		struct wlan_objmgr_psoc *psoc,
+		QDF_STATUS (*handler)(char *dev_name, uint8_t *pdev_id,
+				      struct wlan_objmgr_psoc **psoc));
+#endif
+
 /**
  * wifi_pos_send_report_resp: Send report to osif
  * @psoc: pointer to psoc object
@@ -473,4 +525,18 @@ QDF_STATUS wifi_pos_register_send_action(
 QDF_STATUS wifi_pos_send_report_resp(struct wlan_objmgr_psoc *psoc,
 				     int req_id, uint8_t *dest_mac,
 				     int err_code);
+
+/**
+ * wifi_pos_convert_host_pdev_id_to_target: convert host pdev_id to target
+ * pdev_id
+ * @psoc: pointer to psoc object
+ * @host_pdev_id: host pdev id
+ * @target_pdev_id: target pdev id
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_convert_host_pdev_id_to_target(
+	struct wlan_objmgr_psoc *psoc, uint32_t host_pdev_id,
+	uint32_t *target_pdev_id);
 #endif
