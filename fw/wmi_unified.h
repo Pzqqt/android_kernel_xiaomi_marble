@@ -7774,22 +7774,23 @@ typedef struct {
 } wmi_pdev_set_wmm_params_cmd_fixed_param;
 
 typedef enum {
-    WMI_REQUEST_PEER_STAT            = 0x0001,
-    WMI_REQUEST_AP_STAT              = 0x0002,
-    WMI_REQUEST_PDEV_STAT            = 0x0004,
-    WMI_REQUEST_VDEV_STAT            = 0x0008,
-    WMI_REQUEST_BCNFLT_STAT          = 0x0010,
-    WMI_REQUEST_VDEV_RATE_STAT       = 0x0020,
-    WMI_REQUEST_INST_STAT            = 0x0040,
-    WMI_REQUEST_MIB_STAT             = 0x0080,
-    WMI_REQUEST_RSSI_PER_CHAIN_STAT  = 0x0100,
-    WMI_REQUEST_CONGESTION_STAT      = 0x0200,
-    WMI_REQUEST_PEER_EXTD_STAT       = 0x0400,
-    WMI_REQUEST_BCN_STAT             = 0x0800,
-    WMI_REQUEST_BCN_STAT_RESET       = 0x1000,
-    WMI_REQUEST_PEER_EXTD2_STAT      = 0x2000,
-    WMI_REQUEST_MIB_EXTD_STAT        = 0x4000,
-    WMI_REQUEST_PMF_BCN_PROTECT_STAT = 0x8000,
+    WMI_REQUEST_PEER_STAT            = 0x00001,
+    WMI_REQUEST_AP_STAT              = 0x00002,
+    WMI_REQUEST_PDEV_STAT            = 0x00004,
+    WMI_REQUEST_VDEV_STAT            = 0x00008,
+    WMI_REQUEST_BCNFLT_STAT          = 0x00010,
+    WMI_REQUEST_VDEV_RATE_STAT       = 0x00020,
+    WMI_REQUEST_INST_STAT            = 0x00040,
+    WMI_REQUEST_MIB_STAT             = 0x00080,
+    WMI_REQUEST_RSSI_PER_CHAIN_STAT  = 0x00100,
+    WMI_REQUEST_CONGESTION_STAT      = 0x00200,
+    WMI_REQUEST_PEER_EXTD_STAT       = 0x00400,
+    WMI_REQUEST_BCN_STAT             = 0x00800,
+    WMI_REQUEST_BCN_STAT_RESET       = 0x01000,
+    WMI_REQUEST_PEER_EXTD2_STAT      = 0x02000,
+    WMI_REQUEST_MIB_EXTD_STAT        = 0x04000,
+    WMI_REQUEST_PMF_BCN_PROTECT_STAT = 0x08000,
+    WMI_REQUEST_VDEV_EXTD_STAT       = 0x10000,
 } wmi_stats_id;
 
 /*
@@ -8514,6 +8515,10 @@ typedef struct {
  * wmi_pmf_bcn_protect_stats pmf_bcn_protect_stats[]
  * follows the other TLVs
  */
+/* If WMI_REQUEST_VDEV_EXTD_STAT is set in stats_id, then TLV
+ * wmi_vdev_extd_stats wmi_vdev_extd_stats[]
+ * follows the other TLVs
+ */
 } wmi_stats_event_fixed_param;
 
 /* WLAN channel CCA stats bitmap  */
@@ -9138,6 +9143,8 @@ typedef struct {
      *  different types of stats:
      *  1.  wmi_ctrl_path_pdev_stats_struct ctrl_path_pdev_stats[];
      *      This TLV array contains zero or more pdev stats instances.
+     *  2.  wmi_vdev_extd_stats vdev_extd_stats[];
+     *      This TLV array contains zero or more vdev_extd_stats instances.
      */
 } wmi_ctrl_path_stats_event_fixed_param;
 
@@ -9286,6 +9293,23 @@ typedef struct {
     A_UINT32 tx_bcn_succ_cnt; /* Total number of beacon frame transmitted successfully */
     A_UINT32 tx_bcn_outage_cnt; /* Total number of failed beacons */
 } wmi_bcn_stats;
+
+/**
+ *  vdev extension statistics
+ */
+typedef struct {
+    A_UINT32 tlv_header;
+    /* vdev id */
+    A_UINT32 vdev_id;
+    /* Total number of Fils Discovery frames transmitted successfully */
+    A_UINT32 fd_succ_cnt;
+    /* Total number of Fils Discovery frames failed */
+    A_UINT32 fd_fail_cnt;
+    /* Total number of unsolicited probe response frames transmitted successfully */
+    A_UINT32 unsolicited_prb_succ_cnt;
+    /* Total number of unsolicited probe response frames failed */
+    A_UINT32 unsolicited_prb_fail_cnt;
+} wmi_vdev_extd_stats;
 
 /**
  *  peer statistics.
