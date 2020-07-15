@@ -708,6 +708,9 @@ QDF_STATUS (*send_process_roam_synch_complete_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_invoke_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_roam_invoke_cmd *roaminvoke,
 		uint32_t ch_hz);
+
+QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
+					struct wlan_roam_triggers *triggers);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 #endif /* WMI_ROAM_SUPPORT */
 
@@ -2279,10 +2282,6 @@ QDF_STATUS (*extract_oem_response_param)
 
 QDF_STATUS (*extract_hw_mode_resp_event)(wmi_unified_t wmi_handle,
 					 void *evt_buf, uint32_t *cmd_status);
-
-QDF_STATUS (*send_set_roam_trigger_cmd)(wmi_unified_t wmi_handle,
-					uint32_t vdev_id,
-					uint32_t trigger_bitmap);
 
 #ifdef WLAN_FEATURE_ELNA
 QDF_STATUS (*send_set_elna_bypass_cmd)(wmi_unified_t wmi_handle,
