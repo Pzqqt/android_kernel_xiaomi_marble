@@ -139,7 +139,7 @@ static QDF_STATUS __dsc_vdev_can_trans(struct dsc_vdev *vdev)
 		return QDF_STATUS_E_INVAL;
 
 	if (qdf_is_recovering())
-		return QDF_STATUS_E_AGAIN;
+		return QDF_STATUS_E_INVAL;
 
 	if (__dsc_trans_active_or_queued(&vdev->psoc->trans)) {
 		/* psoc idle shutdown(wifi off) needs to be added in DSC queue
