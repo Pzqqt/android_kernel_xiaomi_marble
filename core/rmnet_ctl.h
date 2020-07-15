@@ -29,4 +29,6 @@ struct rmnet_ctl_client_if {
 		       const void *data, unsigned int len);
 };
 
+struct rmnet_ctl_client_if *rmnet_ctl_if(void);
+
 #endif /* _RMNET_CTL_H_ */
