@@ -191,7 +191,8 @@ static void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
 		  "packet_ra_upper_16: 0x%04x packet_ra_mid_16: 0x%04x\n"
 		  "packet_ra_lower_16: 0x%04x tsf_timestamp_63_48: 0x%04x\n"
 		  "tsf_timestamp_47_32: 0x%04x tsf_timestamp_31_16: 0x%04x\n"
-		  "tsf_timestamp_15_0: 0x%04x user_index: %d directed: %d\n",
+		  "tsf_timestamp_15_0: 0x%04x user_index_or_user_mask_5_0: %d\n"
+		  "directed: %d\n",
 		  cookie,
 		  freeze->freeze,
 		  freeze->capture_reason,
@@ -210,7 +211,56 @@ static void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
 		  freeze->tsf_timestamp_47_32,
 		  freeze->tsf_timestamp_31_16,
 		  freeze->tsf_timestamp_15_0,
-		  freeze->user_index,
+		  freeze->user_index_or_user_mask_5_0,
+		  freeze->directed);
+}
+
+/**
+ * dump_freeze_tlv_v2() - Dump freeze TLV v2 sent in enhanced DMA header
+ * @freeze_tlv: Freeze TLV sent from MAC to PHY
+ * @cookie: Index into lookup table
+ *
+ * Return: none
+ */
+static void dump_freeze_tlv_v2(void *freeze_tlv, uint32_t cookie)
+{
+	struct macrx_freeze_capture_channel_v2 *freeze =
+		(struct macrx_freeze_capture_channel_v2 *)freeze_tlv;
+
+	cfr_debug("<DBRCOMP><FREEZE><%u>\n"
+		  "freeze: %d capture_reason: %d packet_type: 0x%x\n"
+		  "packet_subtype: 0x%x sw_peer_id_valid: %d sw_peer_id: %d\n"
+		  "phy_ppdu_id: 0x%04x packet_ta_upper_16: 0x%04x\n"
+		  "packet_ta_mid_16: 0x%04x packet_ta_lower_16: 0x%04x\n"
+		  "packet_ra_upper_16: 0x%04x packet_ra_mid_16: 0x%04x\n"
+		  "packet_ra_lower_16: 0x%04x\n"
+		  "tsf_63_48_or_user_mask_36_32: 0x%04x\n"
+		  "tsf_timestamp_47_32: 0x%04x\n"
+		  "tsf_timestamp_31_16: 0x%04x\n"
+		  "tsf_timestamp_15_0: 0x%04x\n"
+		  "user_index_or_user_mask_15_0: 0x%04x\n"
+		  "user_mask_31_16: 0x%04x\n"
+		  "directed: %d\n",
+		  cookie,
+		  freeze->freeze,
+		  freeze->capture_reason,
+		  freeze->packet_type,
+		  freeze->packet_sub_type,
+		  freeze->sw_peer_id_valid,
+		  freeze->sw_peer_id,
+		  freeze->phy_ppdu_id,
+		  freeze->packet_ta_upper_16,
+		  freeze->packet_ta_mid_16,
+		  freeze->packet_ta_lower_16,
+		  freeze->packet_ra_upper_16,
+		  freeze->packet_ra_mid_16,
+		  freeze->packet_ra_lower_16,
+		  freeze->tsf_63_48_or_user_mask_36_32,
+		  freeze->tsf_timestamp_47_32,
+		  freeze->tsf_timestamp_31_16,
+		  freeze->tsf_timestamp_15_0,
+		  freeze->user_index_or_user_mask_15_0,
+		  freeze->user_mask_31_16,
 		  freeze->directed);
 }
 
@@ -378,8 +428,12 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			  dma_hdr->mu_rx_num_users,
 			  dma_hdr->decimation_factor);
 
-		if (dma_hdr->freeze_data_incl)
-			dump_freeze_tlv(freeze_tlv, cookie);
+		if (dma_hdr->freeze_data_incl) {
+			if (header->chip_type == CFR_CAPTURE_RADIO_PINE)
+				dump_freeze_tlv_v2(freeze_tlv, cookie);
+			else
+				dump_freeze_tlv(freeze_tlv, cookie);
+		}
 
 		if (dma_hdr->mu_rx_data_incl)
 			dump_mu_rx_info(mu_rx_user_info,
@@ -427,6 +481,10 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 static void
 extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
 {
+	/*
+	 * Packet_ta fields position is common between freeze tlv v1
+	 * and v2, hence typecasting to v1 is also fine
+	 */
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
 
@@ -444,14 +502,21 @@ extract_peer_mac_from_freeze_tlv(void *freeze_tlv, uint8_t *peermac)
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS check_dma_length(struct look_up_table *lut)
+static QDF_STATUS check_dma_length(struct look_up_table *lut,
+				   uint32_t target_type)
 {
-	if (lut->header_length <= CYP_MAX_HEADER_LENGTH_WORDS &&
-	    lut->payload_length <= CYP_MAX_DATA_LENGTH_BYTES) {
-		return QDF_STATUS_SUCCESS;
+	if (target_type == TARGET_TYPE_QCN9000) {
+		if (lut->header_length <= PINE_MAX_HEADER_LENGTH_WORDS &&
+		    lut->payload_length <= PINE_MAX_DATA_LENGTH_BYTES) {
+			return QDF_STATUS_SUCCESS;
+		}
 	} else {
-		return QDF_STATUS_E_FAILURE;
+		if (lut->header_length <= CYP_MAX_HEADER_LENGTH_WORDS &&
+		    lut->payload_length <= CYP_MAX_DATA_LENGTH_BYTES) {
+			return QDF_STATUS_SUCCESS;
+		}
 	}
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -477,6 +542,8 @@ static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
 	struct pdev_cfr *pcfr;
 	uint64_t diff;
 	int status = STATUS_ERROR;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t target_type;
 
 	if (module_id > 1) {
 		cfr_err("Received request with invalid mod id. Investigate!!");
@@ -487,6 +554,15 @@ static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
 
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (qdf_unlikely(!psoc)) {
+		cfr_err("psoc is null\n");
+		status = STATUS_ERROR;
+		goto done;
+	}
+
+	target_type = target_if_cfr_get_target_type(psoc);
 
 	if (module_id == CORRELATE_TX_EV_MODULE_ID) {
 		if (lut->tx_recv)
@@ -518,7 +594,8 @@ static int correlate_and_relay_enh(struct wlan_objmgr_pdev *pdev,
 			 */
 			cfr_free_pending_dbr_events(pdev);
 
-			if (check_dma_length(lut) == QDF_STATUS_SUCCESS) {
+			if (check_dma_length(lut, target_type) ==
+					QDF_STATUS_SUCCESS) {
 				pcfr->release_cnt++;
 				cfr_debug("<CORRELATE><%u>:Stream and release "
 					  "CFR data for "
@@ -713,8 +790,8 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 	meta->is_mu_ppdu = (cdp_rx_ppdu->u.ppdu_type == CDP_RX_TYPE_SU) ? 0 : 1;
 	meta->num_mu_users = (meta->is_mu_ppdu) ? (cdp_rx_ppdu->num_users) : 0;
 
-	if (meta->num_mu_users > CYP_CFR_MU_USERS)
-		meta->num_mu_users = CYP_CFR_MU_USERS;
+	if (meta->num_mu_users > pcfr->max_mu_users)
+		meta->num_mu_users = pcfr->max_mu_users;
 
 	for (i = 0; i < MAX_CHAIN; i++)
 		meta->chain_rssi[i] =
@@ -761,6 +838,10 @@ relref:
  */
 static uint8_t freeze_reason_to_capture_type(void *freeze_tlv)
 {
+	/*
+	 * Capture_reason field position is common between freeze_tlv v1
+	 * and v2, hence typcasting to any one is fine
+	 */
 	struct macrx_freeze_capture_channel *freeze =
 		(struct macrx_freeze_capture_channel *)freeze_tlv;
 
@@ -849,10 +930,18 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (dma_hdr.mu_rx_data_incl) {
+		uint8_t freeze_tlv_len;
+
+		if (pcfr->chip_type == CFR_CAPTURE_RADIO_PINE) {
+			freeze_tlv_len =
+				sizeof(struct macrx_freeze_capture_channel_v2);
+		} else {
+			freeze_tlv_len =
+				sizeof(struct macrx_freeze_capture_channel);
+		}
 		mu_rx_user_info = data +
 			sizeof(struct whal_cfir_enhanced_hdr) +
-			(dma_hdr.freeze_data_incl ?
-			 sizeof(struct macrx_freeze_capture_channel) : 0);
+			(dma_hdr.freeze_data_incl ? freeze_tlv_len : 0);
 	}
 
 	length  = dma_hdr.length * 4;
@@ -878,6 +967,7 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 		     sizeof(struct whal_cfir_dma_hdr));
 
 	header = &lut->header;
+	header->chip_type = pcfr->chip_type;
 	meta = &header->u.meta_v3;
 	meta->channel_bw = dma_hdr.upload_pkt_bw;
 	meta->num_rx_chain = NUM_CHAINS_FW_TO_HOST(dma_hdr.num_chains);
@@ -1613,10 +1703,12 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_PINE;
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_PINE;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_PINE;
+		pcfr->max_mu_users = PINE_CFR_MU_USERS;
 	} else {
 		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_CYP;
+		pcfr->max_mu_users = CYP_CFR_MU_USERS;
 	}
 
 	if (!pcfr->lut_timer_init) {

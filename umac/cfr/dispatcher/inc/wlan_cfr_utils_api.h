@@ -500,6 +500,7 @@ struct pdev_cfr {
 	uint32_t lut_num;
 	uint32_t dbr_buf_size;
 	uint32_t dbr_num_bufs;
+	uint32_t max_mu_users;
 	uint64_t tx_evt_cnt;
 	uint64_t total_tx_evt_cnt;
 	uint64_t dbr_evt_cnt;

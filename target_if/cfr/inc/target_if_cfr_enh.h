@@ -65,21 +65,31 @@
 /* in ms */
 #define LUT_AGE_TIMER 3000
 #define LUT_AGE_THRESHOLD 3000
-#define NUM_LUT_ENTRIES 136
 
 /* Max size :
- * 16240 = 112 bytes(csi header) + 64 bytes(cfr header) + 16064 bytes(cfr
- * payload)
+ * sizeof(csi_cfr_header) + 64 bytes(cfr header) + 16064 bytes(cfr payload)
  */
-#define STREAMFS_MAX_SUBBUF_CYP 16240
+#define STREAMFS_MAX_SUBBUF_CYP \
+	(sizeof(struct csi_cfr_header) + \
+	 (CYP_MAX_HEADER_LENGTH_WORDS * 4) + \
+	 CYP_MAX_DATA_LENGTH_BYTES)
 
 #define STREAMFS_NUM_SUBBUF_CYP 255
 
+/* Max 37 users in MU case for Pine */
+#define PINE_CFR_MU_USERS 37
+
+#define PINE_MAX_HEADER_LENGTH_WORDS 50
+
+#define PINE_MAX_DATA_LENGTH_BYTES 16384
+
 /* Max size :
- * 16886 = 310 bytes(csi header) + 192 bytes(cfr header) + 16384 bytes(cfr
- * payload)
+ * sizeof(csi_cfr_header) + 200 bytes(cfr header) + 16384 bytes(cfr payload)
  */
-#define STREAMFS_MAX_SUBBUF_PINE 16886
+#define STREAMFS_MAX_SUBBUF_PINE \
+	(sizeof(struct csi_cfr_header) + \
+	 (PINE_MAX_HEADER_LENGTH_WORDS * 4) + \
+	 PINE_MAX_DATA_LENGTH_BYTES)
 
 #define STREAMFS_NUM_SUBBUF_PINE 255
 
@@ -215,9 +225,33 @@ struct macrx_freeze_capture_channel {
 	uint16_t tsf_timestamp_31_16             : 16; //[15:0]
 	uint16_t tsf_timestamp_47_32             : 16; //[15:0]
 	uint16_t tsf_timestamp_63_48             : 16; //[15:0]
-	uint16_t user_index                      :  6, //[5:0]
+	uint16_t user_index_or_user_mask_5_0     :  6, //[5:0]
 		 directed                        :  1, //[6]
 		 reserved_13                     :  9; //[15:7]
+};
+
+struct macrx_freeze_capture_channel_v2 {
+	uint16_t freeze                          :  1, //[0]
+		 capture_reason                  :  3, //[3:1]
+		 packet_type                     :  2, //[5:4]
+		 packet_sub_type                 :  4, //[9:6]
+		 directed                        :  1, //[10]
+		 reserved                        :  4, //[14:11]
+		 sw_peer_id_valid                :  1; //[15]
+	uint16_t sw_peer_id                      : 16; //[15:0]
+	uint16_t phy_ppdu_id                     : 16; //[15:0]
+	uint16_t packet_ta_lower_16              : 16; //[15:0]
+	uint16_t packet_ta_mid_16                : 16; //[15:0]
+	uint16_t packet_ta_upper_16              : 16; //[15:0]
+	uint16_t packet_ra_lower_16              : 16; //[15:0]
+	uint16_t packet_ra_mid_16                : 16; //[15:0]
+	uint16_t packet_ra_upper_16              : 16; //[15:0]
+	uint16_t tsf_timestamp_15_0              : 16; //[15:0]
+	uint16_t tsf_timestamp_31_16             : 16; //[15:0]
+	uint16_t tsf_timestamp_47_32             : 16; //[15:0]
+	uint16_t tsf_63_48_or_user_mask_36_32    : 16; //[15:0]
+	uint16_t user_index_or_user_mask_15_0    : 16; //[15:0]
+	uint16_t user_mask_31_16                 : 16; //[15:0]
 };
 
 struct uplink_user_setup_info {
