@@ -31310,6 +31310,12 @@ typedef struct {
 #define WMI_TWT_SESSION_FLAG_ANNOUN_TWT_GET(_var) WMI_GET_BITS(_var, 18, 1)
 #define WMI_TWT_SESSION_FLAG_ANNOUN_TWT_SET(_var, _val) WMI_SET_BITS(_var, 18, 1, _val)
 
+#define WMI_TWT_SESSION_FLAG_TWT_PROTECTION_GET(_var) WMI_GET_BITS(_var, 19, 1)
+#define WMI_TWT_SESSION_FLAG_TWT_PROTECTION_SET(_var, _val) WMI_SET_BITS(_var, 19, 1, _val)
+
+#define WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_GET(_var) WMI_GET_BITS(_var, 20, 1)
+#define WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_SET(_var, _val) WMI_SET_BITS(_var, 20, 1, _val)
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_twt_session_stats_info */
     A_UINT32 tlv_hdr;
@@ -31328,6 +31334,9 @@ typedef struct {
     A_UINT32     wake_intvl_us;
     /* this long time after TWT resumed the 1st Service Period will start */
     A_UINT32     sp_offset_us;
+    /* service period start TSF */
+    A_UINT32     sp_tsf_us_lo; /* bits 31:0 */
+    A_UINT32     sp_tsf_us_hi; /* bits 63:32 */
 } wmi_twt_session_stats_info;
 
 enum wmi_twt_session_stats_type {
