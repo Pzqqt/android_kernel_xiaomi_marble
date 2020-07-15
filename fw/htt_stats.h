@@ -367,6 +367,14 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_VDEV_RTT_RESP_STATS = 34,
 
+    /* HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
+     * PARAMS:
+     *   - No Params
+     * RESP MSG:
+     *   - htt_pktlog_and_htt_ring_stats_t
+     */
+    HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS = 35,
+
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -511,6 +519,7 @@ typedef enum {
     HTT_STATS_TXBF_OFDMA_STEER_STATS_TAG           = 116, /* htt_txbf_ofdma_steer_stats_tlv */
     HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
     HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
+    HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -5112,6 +5121,29 @@ typedef struct {
 typedef struct {
     htt_vdev_rtt_resp_stats_tlv vdev_rtt_resp_stats;
 } htt_vdev_rtt_resp_stats_t;
+
+/* STATS_TYPE : HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS
+ * TLV_TAGS:
+ *    - HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG
+ */
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_tlv_hdr_t   tlv_hdr;
+
+    /* No of pktlog payloads that were dropped in htt_ppdu_stats path */
+    A_UINT32 pktlog_lite_drop_cnt;
+    /* No of pktlog payloads that were dropped in TQM path */
+    A_UINT32 pktlog_tqm_drop_cnt;
+    /* No of pktlog ppdu stats payloads that were dropped */
+    A_UINT32 pktlog_ppdu_stats_drop_cnt;
+    /* No of pktlog ppdu ctrl payloads that were dropped */
+    A_UINT32 pktlog_ppdu_ctrl_drop_cnt;
+    /* No of pktlog sw events payloads that were dropped */
+    A_UINT32 pktlog_sw_events_drop_cnt;
+} htt_pktlog_and_htt_ring_stats_tlv;
 
 
 #endif /* __HTT_STATS_H__ */
