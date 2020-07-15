@@ -2645,7 +2645,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	uint32_t frame_len = 0, body_len = 0;
 	tpSirMacMgmtHdr mac_hdr;
 	void *packet;
-	QDF_STATUS qdf_status;
+	QDF_STATUS qdf_status, status;
 	uint8_t tx_flag = 0;
 	uint8_t vdev_id = 0;
 	uint16_t ft_ies_length = 0;
@@ -2688,8 +2688,11 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 		body_len = SIR_MAC_AUTH_FRAME_INFO_LEN;
 		frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 
-		frame_len += lim_create_fils_auth_data(mac_ctx,
-						auth_frame, session);
+		status = lim_create_fils_auth_data(mac_ctx, auth_frame,
+						   session, &frame_len);
+		if (QDF_IS_STATUS_ERROR(status))
+			return;
+
 		if (auth_frame->authAlgoNumber == eSIR_FT_AUTH) {
 			if (session->ftPEContext.pFTPreAuthReq &&
 			    0 != session->ftPEContext.pFTPreAuthReq->
