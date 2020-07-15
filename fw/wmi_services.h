@@ -474,6 +474,7 @@ typedef  enum  {
     /******* ADD NEW SERVICES 256 AND BEYOND HERE *******/
 
     WMI_SERVICE_CFR_CAPTURE_COUNT_SUPPORT = 256, /* indicates FW support to program CFR capture mode and capture count */
+    WMI_SERVICE_OCV_SUPPORT = 257, /* FW supports OCV (Operating Channel Validation) */
 
 
     WMI_MAX_EXT2_SERVICE
