@@ -28276,6 +28276,9 @@ typedef struct {
 typedef enum {
     WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER = 1, /* Roam scan triggered due to periodic timer expiry */
     WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER,   /* Roam scan triggered due to inactivity detection */
+    /* INACTIVITY_TIMER_LOW_RSSI - alias for INACTIVITY_TIMER */
+    WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_LOW_RSSI =
+        WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER,
     WMI_ROAM_TRIGGER_SUB_REASON_BTM_DI_TIMER,       /* Roam scan triggered due to BTM Disassoc Imminent timeout */
     WMI_ROAM_TRIGGER_SUB_REASON_FULL_SCAN,          /* Roam scan triggered due to partial scan failure */
     WMI_ROAM_TRIGGER_SUB_REASON_LOW_RSSI_PERIODIC,  /* Roam scan triggered due to Low rssi periodic timer */
@@ -28286,6 +28289,16 @@ typedef enum {
      * This timer is enabled/used for roaming in a vendor-specific manner.
      */
     WMI_ROAM_TRIGGER_SUB_REASCON_PERIODIC_TIMER_AFTER_INACTIVITY,
+    WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY =
+        WMI_ROAM_TRIGGER_SUB_REASCON_PERIODIC_TIMER_AFTER_INACTIVITY,
+    /*
+     * PERIODIC_TIMER_AFTER_INACTIVITY_LOW_RSSI - alias for
+     * PERIODIC_TIMER_AFTER_INACTIVITY
+     */
+    WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_LOW_RSSI =
+        WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY,
+    WMI_ROAM_TRIGGER_SUB_REASON_PERIODIC_TIMER_AFTER_INACTIVITY_CU,
+    WMI_ROAM_TRIGGER_SUB_REASON_INACTIVITY_TIMER_CU,
 } WMI_ROAM_TRIGGER_SUB_REASON_ID;
 
 typedef enum wmi_roam_invoke_status_error {
@@ -28518,6 +28531,12 @@ typedef struct {
      *  0x08-0xFF    TBD
      */
     A_UINT32 vsie_reason;
+    /*
+     * timestamp is the absolute time w.r.t host timer which is synchronized
+     * between the host and target.
+     * This timestamp indicates the time when btm response is sent.
+     */
+    A_UINT32 timestamp; /* milli second units */
 } wmi_roam_btm_response_info;
 
 typedef struct {
