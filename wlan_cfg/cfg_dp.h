@@ -874,6 +874,10 @@
 		CFG_INI_BOOL("peer_ext_stats", \
 		false, "Peer extended stats")
 
+#define CFG_DP_RX_BUFF_POOL_ENABLE \
+	CFG_INI_BOOL("dp_rx_buff_prealloc_pool", false, \
+		     "Enable/Disable DP RX emergency buffer pool support")
+
 #define CFG_DP \
 		CFG(CFG_DP_HTT_PACKET_TYPE) \
 		CFG(CFG_DP_INT_BATCH_THRESHOLD_OTHER) \
@@ -951,6 +955,7 @@
 		CFG(CFG_DP_RX_FISA_ENABLE) \
 		CFG(CFG_DP_FULL_MON_MODE) \
 		CFG(CFG_DP_REO_RINGS_MAP) \
-		CFG(CFG_DP_PEER_EXT_STATS)
+		CFG(CFG_DP_PEER_EXT_STATS) \
+		CFG(CFG_DP_RX_BUFF_POOL_ENABLE)
 
 #endif /* _CFG_DP_H_ */

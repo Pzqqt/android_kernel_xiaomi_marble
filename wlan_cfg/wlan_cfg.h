@@ -185,6 +185,8 @@ struct wlan_srng_cfg {
  * @pktlog_buffer_size: packet log buffer size
  * @is_rx_fisa_enabled: flag to enable/disable FISA Rx
  * @pext_stats_enabled: Flag to enable and disabled peer extended stats
+ * @is_rx_buff_pool_enabled: flag to enable/disable emergency RX buffer
+ *                           pool support
  */
 struct wlan_cfg_dp_soc_ctxt {
 	int num_int_ctxts;
@@ -288,6 +290,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	uint32_t delayed_replenish_entries;
 	uint32_t reo_rings_mapping;
 	bool pext_stats_enabled;
+	bool is_rx_buff_pool_enabled;
 };
 
 /**
@@ -1335,6 +1338,16 @@ void wlan_cfg_fill_interrupt_mask(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx,
  * Return: true if enabled, false otherwise.
  */
 bool wlan_cfg_is_rx_fisa_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/**
+ * wlan_cfg_is_rx_buffer_pool_enabled() - Get RX buffer pool enabled flag
+ *
+ *
+ * @cfg: soc configuration context
+ *
+ * Return: true if enabled, false otherwise.
+ */
+bool wlan_cfg_is_rx_buffer_pool_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif
 
 void wlan_cfg_set_tso_desc_attach_defer(struct wlan_cfg_dp_soc_ctxt *cfg,
