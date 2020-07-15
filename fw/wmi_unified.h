@@ -30739,6 +30739,7 @@ typedef struct {
 #define WMI_CFR_NDPA_NDP_ALL_EN_BIT_POS               3
 #define WMI_CFR_TA_RA_TYPE_FILTER_EN_BIT_POS          4
 #define WMI_CFR_ALL_PACKET_EN_BIT_POS                 5
+#define WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_BIT_POS    6
 
 #define WMI_CFR_CAPTURE_INTERVAL_NUM_BITS             24
 #define WMI_CFR_CAPTURE_INTERVAL_BIT_POS              0
@@ -30757,6 +30758,14 @@ typedef struct {
 
 #define WMI_CFR_FREEZE_DELAY_CNT_THR_NUM_BITS         8
 #define WMI_CFR_FREEZE_DELAY_CNT_THR_BIT_POS          1
+
+
+#define WMI_CFR_CAPTURE_COUNT_NUM_BITS                16
+#define WMI_CFR_CAPTURE_COUNT_BIT_POS                 0
+
+#define WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_NUM_BITS    1
+#define WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_BIT_POS     16
+
 
 #define WMI_CFR_DIRECTED_FTM_ACK_EN_SET(param, value) \
     WMI_SET_BITS(param, WMI_CFR_DIRECTED_FTM_ACK_EN_BIT_POS, 1, value)
@@ -30796,6 +30805,12 @@ typedef struct {
 #define WMI_CFR_ALL_PACKET_EN_GET(param)     \
     WMI_GET_BITS(param, WMI_CFR_ALL_PACKET_EN_BIT_POS, 1)
 
+#define WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_SET(param, value)  \
+    WMI_SET_BITS(param, WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_BIT_POS, 1, value)
+
+#define WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_GET(param)  \
+    WMI_GET_BITS(param, WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_BIT_POS, 1)
+
 #define WMI_CFR_CAPTURE_INTERVAL_SET(param, value) \
     WMI_SET_BITS(param, WMI_CFR_CAPTURE_INTERVAL_BIT_POS, WMI_CFR_CAPTURE_INTERVAL_NUM_BITS, value)
 
@@ -30832,6 +30847,18 @@ typedef struct {
 #define WMI_CFR_FREEZE_DELAY_CNT_THR_GET(param)     \
     WMI_GET_BITS(param, WMI_CFR_FREEZE_DELAY_CNT_THR_BIT_POS, WMI_CFR_FREEZE_DELAY_CNT_THR_NUM_BITS)
 
+#define WMI_CFR_CAPTURE_COUNT_SET(param, value) \
+    WMI_SET_BITS(param, WMI_CFR_CAPTURE_COUNT_BIT_POS, WMI_CFR_CAPTURE_COUNT_NUM_BITS, value)
+
+#define WMI_CFR_CAPTURE_COUNT_GET(param)     \
+    WMI_GET_BITS(param, WMI_CFR_CAPTURE_COUNT_BIT_POS, WMI_CFR_CAPTURE_COUNT_NUM_BITS)
+
+#define WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_SET(param, value) \
+    WMI_SET_BITS(param, WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_BIT_POS, WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_NUM_BITS, value)
+
+#define WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_GET(param)     \
+    WMI_GET_BITS(param, WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_BIT_POS, WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_NUM_BITS)
+
 typedef struct {
    /** TLV tag and len; tag equals
     * WMITLV_TAG_STRUC_wmi_peer_cfr_capture_filter_cmd_fixed_param */
@@ -30846,10 +30873,12 @@ typedef struct {
      * Bit 0:    Filter Directed FTM ACK frames for CFR capture
      * Bit 1:    Filter All FTM ACK frames for CFR capture
      * Bit 2:    Filter NDPA NDP Directed Frames for CFR capture
-     * Bit 3:    Filter Frames based on TA/RA/Subtype as provided
+     * Bit 3:    Filter NDPA NDP All Frames for CFR capture
+     * Bit 4:    Filter Frames based on TA/RA/Subtype as provided
      *           in CFR Group config
-     * Bit 4:    Filter in All packets for CFR Capture
-     * Bits 31:5 Reserved for future use
+     * Bit 5:    Filter in All packets for CFR Capture
+     * Bit 6:    Filter in TA/RA frames as FP if this bit is set else as MO
+     * Bits 31:7 Reserved for future use
      */
     A_UINT32 filter_type;
     /* capture_interval:
@@ -30897,6 +30926,25 @@ typedef struct {
      * Bits 31:9  Reserved for future use
      */
     A_UINT32 freeze_tlv_delay_cnt;
+
+    /* capture_count:
+     * Indicates the number of consecutive packets for which CFR capture
+     * is to be enabled.
+     * Interpretation of capture_interval_mode_select (bit 16):
+     *     Value 0: capture_interval + capture_duration fields are used
+     *              to capture CFR for capture_duration after every
+     *              capture_interval.
+     *     Value 1: capture_interval + capture_count fields are used to
+     *              capture CFR for capture_count+1 number of packets
+     *              after every capture interval
+     * Bit 15:0   : capture_count
+     *              Refer to WMI_CFR_CAPTURE_COUNT_GET/SET macros.
+     * Bit 16     : capture_interval_mode_select
+     *              Refer to WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_GET/SET macros.
+     * Bits 31:17 : Reserved
+     */
+    A_UINT32 capture_count;
+
 /*
  * A variable-length TLV array of wmi_cfr_filter_group_config will
  * follow this fixed_param TLV
