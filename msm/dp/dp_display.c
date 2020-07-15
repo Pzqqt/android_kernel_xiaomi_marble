@@ -924,8 +924,7 @@ static void dp_display_host_init(struct dp_display_private *dp)
 	if (dp->hpd->orientation == ORIENTATION_CC2)
 		flip = true;
 
-	reset = dp->debug->sim_mode ? false :
-		(!dp->hpd->multi_func || !dp->hpd->peer_usb_comm);
+	reset = dp->debug->sim_mode ? false : !dp->hpd->multi_func;
 
 	dp->power->init(dp->power, flip);
 	dp->hpd->host_init(dp->hpd, &dp->catalog->hpd);
