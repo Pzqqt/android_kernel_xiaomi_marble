@@ -850,6 +850,22 @@ struct dsi_ctrl_hw_ops {
 	 */
 	void (*reset_trig_ctrl)(struct dsi_ctrl_hw *ctrl,
 			struct dsi_host_common_cfg *cfg);
+
+	/**
+	 * hw.ops.map_mdp_regs() - maps MDP interface line count registers.
+	 * @pdev:	Pointer to platform device.
+	 * @ctrl:	Pointer to the controller host hardware.
+	 */
+	int (*map_mdp_regs)(struct platform_device *pdev,
+			struct dsi_ctrl_hw *ctrl);
+
+	/**
+	 * hw.ops.log_line_count() - reads the MDP interface line count
+	 *			     registers.
+	 * @ctrl:	Pointer to the controller host hardware.
+	 * @cmd_mode:	Boolean to indicate command mode operation.
+	 */
+	u32 (*log_line_count)(struct dsi_ctrl_hw *ctrl, bool cmd_mode);
 };
 
 /*
@@ -860,6 +876,13 @@ struct dsi_ctrl_hw_ops {
  * @mmss_misc_length:       Length of mmss_misc register map.
  * @disp_cc_base:           Base address of disp_cc register map.
  * @disp_cc_length:         Length of disp_cc register map.
+ * @te_rd_ptr_reg:	    Address of MDP_TEAR_INTF_TEAR_LINE_COUNT. This
+ *			    register is used for testing and validating the RD
+ *			    ptr value when a CMD is triggered and it succeeds.
+ * @line_count_reg:	    Address of MDP_TEAR_INTF_LINE_COUNT. This
+ *			    register is used for testing and validating the
+ *			    line count value when a CMD is triggered and it
+ *			    succeeds.
  * @index:                  Instance ID of the controller.
  * @feature_map:            Features supported by the DSI controller.
  * @ops:                    Function pointers to the operations supported by the
@@ -880,6 +903,8 @@ struct dsi_ctrl_hw {
 	void __iomem *mmss_misc_base;
 	u32 mmss_misc_length;
 	void __iomem *disp_cc_base;
+	void __iomem *te_rd_ptr_reg;
+	void __iomem *line_count_reg;
 	u32 disp_cc_length;
 	u32 index;
 
