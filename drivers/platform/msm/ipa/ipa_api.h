@@ -3,10 +3,11 @@
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/ipa_mhi.h>
-#include <linux/ipa_uc_offload.h>
-#include <linux/ipa_wdi3.h>
+#include "ipa_mhi.h"
+#include "ipa_uc_offload.h"
+#include "ipa_wdi3.h"
 #include "ipa_common_i.h"
+#include "gsi.h"
 
 #ifndef _IPA_API_H_
 #define _IPA_API_H_

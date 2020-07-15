@@ -3,7 +3,7 @@
  * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
-#include <linux/ipa.h>
+#include "ipa.h"
 #include <linux/device.h>
 #include <linux/init.h>
 #include <linux/kernel.h>
@@ -11,7 +11,7 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/platform_device.h>
-#include <linux/ipa_uc_offload.h>
+#include "ipa_uc_offload.h"
 #include <linux/pci.h>
 #include "ipa_api.h"
 #include "ipa_i.h"

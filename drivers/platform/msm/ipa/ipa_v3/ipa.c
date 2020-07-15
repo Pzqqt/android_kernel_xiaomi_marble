@@ -22,7 +22,7 @@
 #include <linux/interconnect.h>
 #include <linux/netdevice.h>
 #include <linux/delay.h>
-#include <linux/msm_gsi.h>
+#include "msm_gsi.h"
 #include <linux/time.h>
 #include <linux/hashtable.h>
 #include <linux/jhash.h>
@@ -34,6 +34,7 @@
 #include <linux/soc/qcom/smem_state.h>
 #include <linux/of_irq.h>
 #include <linux/ctype.h>
+#include "gsi.h"
 
 #ifdef CONFIG_ARM64
 

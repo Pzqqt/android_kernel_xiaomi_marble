@@ -5,7 +5,7 @@
 
 #ifndef _IPA_DEFS_H_
 #define _IPA_DEFS_H_
-#include <linux/ipa.h>
+#include "ipa.h"
 
 /**
  * struct ipa_rt_rule_i - attributes of a routing rule

@@ -9,10 +9,11 @@
 #include <linux/device.h>
 #include <linux/module.h>
 #include <linux/mhi.h>
-#include <linux/msm_gsi.h>
+#include "msm_gsi.h"
 #include <linux/delay.h>
 #include <linux/log2.h>
 #include <linux/gfp.h>
+#include "gsi.h"
 #include "ipa_common_i.h"
 #include "ipa_i.h"
 

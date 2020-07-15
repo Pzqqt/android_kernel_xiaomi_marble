@@ -13,7 +13,7 @@
 #include <linux/skbuff.h>
 #include <linux/sched.h>
 #include <linux/atomic.h>
-#include <linux/ecm_ipa.h>
+#include "ecm_ipa.h"
 #include "ipa_common_i.h"
 #include "ipa_pm.h"
 

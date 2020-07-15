@@ -17,8 +17,8 @@
 #include <linux/notifier.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
-#include <linux/ipa.h>
-#include <linux/ipa_usb.h>
+#include "ipa.h"
+#include "ipa_usb.h"
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
 #include <linux/firmware.h>
@@ -35,7 +35,7 @@
 #include <linux/mailbox_client.h>
 #include <linux/mailbox/qmp.h>
 #include <linux/rmnet_ipa_fd_ioctl.h>
-#include <linux/ipa_fmwk.h>
+#include "ipa_fmwk.h"
 #include "ipa_uc_holb_monitor.h"
 
 #define IPA_DEV_NAME_MAX_LEN 15
@@ -488,6 +488,19 @@ enum ipa_icc_type {
 };
 
 #define IPA_ICC_MAX (IPA_ICC_PATH_MAX*IPA_ICC_TYPE_MAX)
+
+/**
+ * struct  ipa_rx_page_data - information needed
+ * to send to wlan driver on receiving data from ipa hw
+ * @page: skb page
+ * @dma_addr: DMA address of this Rx packet
+ * @is_tmp_alloc: skb page from tmp_alloc or recycle_list
+ */
+struct ipa_rx_page_data {
+	struct page *page;
+	dma_addr_t dma_addr;
+	bool is_tmp_alloc;
+};
 
 struct ipa3_active_client_htable_entry {
 	struct hlist_node list;
