@@ -477,6 +477,60 @@ QDF_STATUS ucfg_tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
 	return status;
 }
 
+static QDF_STATUS ucfg_tdls_post_msg_flush_cb(struct scheduler_msg *msg)
+{
+	void *ptr = msg->bodyptr;
+	struct wlan_objmgr_vdev *vdev = NULL;
+
+	switch (msg->type) {
+	case TDLS_CMD_TEARDOWN_LINKS:
+	case TDLS_NOTIFY_RESET_ADAPTERS:
+		ptr = NULL;
+		break;
+	case TDLS_NOTIFY_STA_CONNECTION:
+	case TDLS_NOTIFY_STA_DISCONNECTION:
+		vdev = ((struct tdls_sta_notify_params *)ptr)->vdev;
+		break;
+	case TDLS_CMD_SET_TDLS_MODE:
+		vdev = ((struct tdls_set_mode_params *)ptr)->vdev;
+		break;
+	case TDLS_CMD_TX_ACTION:
+	case TDLS_CMD_SET_RESPONDER:
+		break;
+	case TDLS_CMD_ADD_STA:
+		vdev = ((struct tdls_add_peer_request *)ptr)->vdev;
+		break;
+	case TDLS_CMD_CHANGE_STA:
+		vdev = ((struct tdls_update_peer_request *)ptr)->vdev;
+		break;
+	case TDLS_CMD_ENABLE_LINK:
+	case TDLS_CMD_DISABLE_LINK:
+	case TDLS_CMD_REMOVE_FORCE_PEER:
+	case TDLS_CMD_CONFIG_FORCE_PEER:
+		vdev = ((struct tdls_oper_request *)ptr)->vdev;
+		break;
+	case TDLS_CMD_SET_OFFCHANNEL:
+		vdev = ((struct tdls_set_offchannel *)ptr)->vdev;
+		break;
+	case TDLS_CMD_SET_OFFCHANMODE:
+		vdev = ((struct tdls_set_offchanmode *)ptr)->vdev;
+		break;
+	case TDLS_CMD_SET_SECOFFCHANOFFSET:
+		vdev = ((struct tdls_set_secoffchanneloffset *)ptr)->vdev;
+		break;
+	}
+
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+
+	if (ptr)
+		qdf_mem_free(ptr);
+
+	msg->bodyptr = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
 			      struct tdls_add_peer_params *add_peer_req)
 {
@@ -510,6 +564,7 @@ QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_ADD_STA;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
@@ -556,6 +611,7 @@ QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_CHANGE_STA;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
@@ -621,6 +677,7 @@ QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = cmd;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
@@ -681,41 +738,6 @@ static QDF_STATUS tdls_send_mgmt_frame_flush_callback(struct scheduler_msg *msg)
 		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_TDLS_NB_ID);
 
 	qdf_mem_free(req);
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS ucfg_tdls_post_msg_flush_cb(struct scheduler_msg *msg)
-{
-	void *ptr = msg->bodyptr;
-	struct wlan_objmgr_vdev *vdev = NULL;
-
-	switch (msg->type) {
-	case TDLS_CMD_TEARDOWN_LINKS:
-	case TDLS_NOTIFY_RESET_ADAPTERS:
-		ptr = NULL;
-		break;
-	case TDLS_NOTIFY_STA_CONNECTION:
-		vdev = ((struct tdls_sta_notify_params *)ptr)->vdev;
-		break;
-	case TDLS_NOTIFY_STA_DISCONNECTION:
-		vdev = ((struct tdls_sta_notify_params *)ptr)->vdev;
-		break;
-	case TDLS_CMD_SET_TDLS_MODE:
-		vdev = ((struct tdls_set_mode_params *)ptr)->vdev;
-		break;
-	case TDLS_CMD_TX_ACTION:
-	case TDLS_CMD_SET_RESPONDER:
-		break;
-	}
-
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
-
-	if (ptr)
-		qdf_mem_free(ptr);
-
-	msg->bodyptr = NULL;
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1056,6 +1078,7 @@ QDF_STATUS ucfg_set_tdls_offchannel(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_OFFCHANNEL;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1098,6 +1121,7 @@ QDF_STATUS ucfg_set_tdls_offchan_mode(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_OFFCHANMODE;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -1140,6 +1164,7 @@ QDF_STATUS ucfg_set_tdls_secoffchanneloffset(struct wlan_objmgr_vdev *vdev,
 	msg.bodyptr = req;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_SET_SECOFFCHANOFFSET;
+	msg.flush_callback = ucfg_tdls_post_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD, QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
