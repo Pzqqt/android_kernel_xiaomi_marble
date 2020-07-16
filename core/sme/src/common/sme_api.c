@@ -6206,6 +6206,7 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	enum roam_offload_state state;
 	QDF_STATUS status;
+	bool supplicant_disabled_roaming;
 
 	/*
 	 * supplicant_disabled_roaming flag is altered when supplicant sends
@@ -6224,6 +6225,13 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 		return  QDF_STATUS_E_FAILURE;
 	}
 
+	supplicant_disabled_roaming =
+		mlme_get_supplicant_disabled_roaming(mac_ctx->psoc,
+						     session_id);
+	if (!is_fast_roam_enabled && supplicant_disabled_roaming) {
+		sme_debug("ROAM: RSO disabled by wpa supplicant already");
+		return QDF_STATUS_E_ALREADY;
+	}
 	mlme_set_supplicant_disabled_roaming(mac_ctx->psoc, session_id,
 					     !is_fast_roam_enabled);
 
