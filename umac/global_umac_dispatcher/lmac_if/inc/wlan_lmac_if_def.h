@@ -1447,8 +1447,9 @@ struct iot_sim_cbacks;
 struct wlan_lmac_if_iot_sim_rx_ops {
 	QDF_STATUS (*iot_sim_cmd_handler)(struct wlan_objmgr_vdev *vdev,
 					  qdf_nbuf_t n_buf,
-					  struct beacon_tmpl_params *param,
-					  bool tx);
+					  struct beacon_tmpl_params *bcn_param,
+					  bool tx,
+					  struct mgmt_rx_event_params *param);
 	QDF_STATUS (*iot_sim_register_cb)(struct wlan_objmgr_pdev *pdev,
 					  struct iot_sim_cbacks *cb);
 };

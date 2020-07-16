@@ -24,11 +24,12 @@
 #define IEEE80211_FRAME_BODY_OFFSET 0x18
 
 QDF_STATUS iot_sim_cmd_handler(struct wlan_objmgr_vdev *vdev, qdf_nbuf_t nbuf,
-			       struct beacon_tmpl_params *param, bool tx)
+			       struct beacon_tmpl_params *bcn_param, bool tx,
+			       struct mgmt_rx_event_params *param)
 {
 	struct wlan_objmgr_pdev *pdev = vdev->vdev_objmgr.wlan_pdev;
 
-	return iot_sim_frame_update(pdev, nbuf, param, tx);
+	return iot_sim_frame_update(pdev, nbuf, bcn_param, tx, param);
 }
 
 QDF_STATUS iot_sim_register_callbacks(struct wlan_objmgr_pdev *pdev,

@@ -77,6 +77,7 @@
 #define MAX_SEQ 0x4
 #define MAX_PEER_COUNT 0x2
 #define MAX_ACTION 0x3
+#define RX_STATUS_SIZE 0x96
 #define IOT_SIM_DEBUGFS_FILE_NUM 3
 #define FRAME_TYPE_IS_BEACON(type, subtype) ((type) == 0 && (subtype) == 8)
 #define FRAME_TYPE_IS_ACTION(type, subtype) ((type) == 0 && (subtype) == 13)
@@ -113,6 +114,11 @@ struct iot_sim_rule {
 	bool drop;
 	uint16_t delay_dur;
 	uint8_t rule_bitmap;
+	qdf_nbuf_t nbuf_list[2];
+	qdf_nbuf_t sec_buf;
+	struct qdf_delayed_work *dwork;
+	struct mgmt_rx_event_params *rx_param;
+	qdf_spinlock_t iot_sim_delay_lock;
 };
 
 /*
@@ -188,6 +194,11 @@ enum iot_sim_subcmd {
 	ADD_RULE_ACTION,
 	DEL_RULE_ACTION,
 	IOT_SIM_MAX_SUBCMD,
+};
+
+struct iot_sim_cb_context {
+	struct iot_sim_context *isc;
+	struct iot_sim_rule *piot_sim_rule;
 };
 
 #endif /* _IOT_SIM_DEFS_I_H_ */

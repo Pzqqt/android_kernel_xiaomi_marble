@@ -946,7 +946,8 @@ static QDF_STATUS simulation_frame_update(struct wlan_objmgr_psoc *psoc,
 		if (vdev) {
 			status = rx_ops->iot_sim_rx_ops.
 					iot_sim_cmd_handler(vdev, buf,
-							    NULL, false);
+							    NULL, false,
+							    rx_param);
 			if (status == QDF_STATUS_E_NULL_VALUE) {
 				wlan_objmgr_vdev_release_ref(vdev, dbgid);
 				mgmt_txrx_debug("iot_sim:Pkt processed at RX");

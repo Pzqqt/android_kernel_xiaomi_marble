@@ -194,7 +194,8 @@ QDF_STATUS iot_sim_mgmt_tx_update(struct wlan_objmgr_psoc *psoc,
 		status = rx_ops->iot_sim_rx_ops.iot_sim_cmd_handler(vdev,
 								    buf,
 								    NULL,
-								    true);
+								    true,
+								    NULL);
 		if (QDF_IS_STATUS_ERROR(status))
 			mgmt_txrx_err("iot_sim_cmd_handler returned failure");
 	}

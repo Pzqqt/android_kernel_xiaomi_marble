@@ -40,6 +40,15 @@
  *
  */
 #define USER_BUF_LEN_DROP (2 + 2 + 2 + 2 + 1 + 17)
+/*
+ *		IOT SIM User Buf Format for Drop
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * |FrmType/subtype| Seq |category|action| delay |MacAddr|
+ * ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ * |   2Characters |2char| 2chars |2chars| 4char|17chars|
+ *
+ */
+#define USER_BUF_LEN_DELAY (2 + 2 + 2 + 2 + 4 + 17)
 
 /**
  * wlan_iot_sim_pdev_obj_create_handler() - handler for pdev object create
@@ -103,6 +112,7 @@ iot_sim_find_peer_from_mac(struct iot_sim_context *isc,
  * @pdev: reference to global pdev object
  * @nbuf: frame buffer
  * @tx: TRUE in case of tx
+ * @rx_param: mgmt_rx_event_params
  *
  * This function updates the outgoing management frame with
  * the content stored in iot_sim_context.
@@ -113,7 +123,8 @@ iot_sim_find_peer_from_mac(struct iot_sim_context *isc,
 QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev,
 				qdf_nbuf_t nbuf,
 				struct beacon_tmpl_params *param,
-				bool tx);
+				bool tx,
+				struct mgmt_rx_event_params *rx_param);
 
 /*
  * iot_sim_get_ctx_from_pdev() - API to get iot_sim context object
