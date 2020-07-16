@@ -149,8 +149,8 @@ struct pkt_stats_msg {
 
 #define MAX_FLUSH_TIMER_PERIOD_VALUE 3600000 /* maximum of 1 hour (in ms) */
 struct wlan_logging {
-	/* Log Fatal and ERROR to console */
-	bool log_to_console;
+	/* Console log levels */
+	uint32_t console_log_levels;
 	/* Number of buffers to be used for logging */
 	uint32_t num_buf;
 	uint32_t buffer_length;
@@ -447,7 +447,7 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 		wake_up_interruptible(&gwlan_logging.wait_queue);
 	}
 
-	if (gwlan_logging.log_to_console)
+	if (gwlan_logging.console_log_levels & BIT(log_level))
 		log_to_console(log_level, tbuf, to_be_sent);
 
 	return 0;
@@ -893,9 +893,9 @@ void wlan_logging_set_active(bool active)
 	gwlan_logging.is_active = active;
 }
 
-void wlan_logging_set_log_to_console(bool log_to_console)
+void wlan_set_console_log_levels(uint32_t console_log_levels)
 {
-	gwlan_logging.log_to_console = log_to_console;
+	gwlan_logging.console_log_levels = console_log_levels;
 }
 
 static void flush_log_buffers_timer(void *dummy)
@@ -1070,7 +1070,7 @@ int wlan_logging_sock_init_svc(void)
 	spin_lock_init(&gwlan_logging.spin_lock);
 	spin_lock_init(&gwlan_logging.pkt_stats_lock);
 
-	gwlan_logging.log_to_console = false;
+	gwlan_logging.console_log_levels = 0;
 	gwlan_logging.num_buf = MAX_LOGMSG_COUNT;
 	gwlan_logging.buffer_length = MAX_LOGMSG_LENGTH;
 
