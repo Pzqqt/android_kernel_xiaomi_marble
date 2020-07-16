@@ -2097,7 +2097,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 
 		if (roam_req->reason == REASON_ROAM_STOP_ALL ||
 		    roam_req->reason == REASON_DISCONNECTED ||
-		    roam_req->reason == REASON_ROAM_SYNCH_FAILED) {
+		    roam_req->reason == REASON_ROAM_SYNCH_FAILED ||
+		    roam_req->reason == REASON_SUPPLICANT_DISABLED_ROAMING) {
 			mode = WMI_ROAM_SCAN_MODE_NONE;
 		} else {
 			if (csr_is_roam_offload_enabled(mac))
