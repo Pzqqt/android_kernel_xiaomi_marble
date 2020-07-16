@@ -57,7 +57,8 @@ QDF_STATUS lim_populate_peer_rate_set(struct mac_context *mac,
 				      struct pe_session *pe_session,
 				      tDot11fIEVHTCaps *pVHTCaps,
 				      tDot11fIEhe_cap *he_caps,
-				      struct sDphHashNode *sta_ds);
+				      struct sDphHashNode *sta_ds,
+				      struct bss_description *bss_desc);
 
 /**
  * lim_populate_own_rate_set() - comprises the basic and extended rates read
