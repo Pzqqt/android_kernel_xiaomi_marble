@@ -100,13 +100,12 @@
  * @SDE_ENC_RC_EVENT_PRE_MODESET:
  *	This event happens at NORMAL priority from a work item.
  *	Event signals that there is a seamless mode switch is in prgoress. A
- *	client needs to turn of only irq - leave clocks ON to reduce the mode
- *	switch latency.
+ *	client needs to leave clocks ON to reduce the mode switch latency.
  * @SDE_ENC_RC_EVENT_POST_MODESET:
  *	This event happens at NORMAL priority from a work item.
  *	Event signals that seamless mode switch is complete and resources are
- *	acquired. Clients wants to turn on the irq again and update the rsc
- *	with new vtotal.
+ *	acquired. Clients wants to update the rsc with new vtotal and update
+ *	pm_qos vote.
  * @SDE_ENC_RC_EVENT_ENTER_IDLE:
  *	This event happens at NORMAL priority from a work item.
  *	Event signals that there were no frame updates for
@@ -1898,19 +1897,6 @@ static int _sde_encoder_rc_pre_modeset(struct drm_encoder *drm_enc,
 		sde_enc->rc_state = SDE_ENC_RC_STATE_ON;
 	}
 
-	ret = sde_encoder_wait_for_event(drm_enc, MSM_ENC_TX_COMPLETE);
-	if (ret && ret != -EWOULDBLOCK) {
-		SDE_ERROR_ENC(sde_enc,
-				"wait for commit done returned %d\n",
-				ret);
-		SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
-				ret, SDE_EVTLOG_ERROR);
-		ret = -EINVAL;
-		goto end;
-	}
-
-	sde_encoder_irq_control(drm_enc, false);
-
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
 		SDE_ENC_RC_STATE_MODESET, SDE_EVTLOG_FUNC_CASE5);
 
@@ -1944,8 +1930,6 @@ static int _sde_encoder_rc_post_modeset(struct drm_encoder *drm_enc,
 		ret = -EINVAL;
 		goto end;
 	}
-
-	sde_encoder_irq_control(drm_enc, true);
 
 	_sde_encoder_update_rsc_client(drm_enc, true);
 
@@ -2396,13 +2380,19 @@ static void sde_encoder_virt_mode_set(struct drm_encoder *drm_enc,
 	if (ret)
 		return;
 
-	/* reserve dynamic resources now, indicating non test-only */
-	ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state,
-			conn->state, false);
-	if (ret) {
-		SDE_ERROR_ENC(sde_enc,
+	if (drm_enc->crtc->state->active_changed ||
+		!(msm_is_mode_seamless_dms(msm_mode) ||
+		(msm_is_mode_seamless_dyn_clk(msm_mode) &&
+		sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE)))) {
+
+		/* reserve dynamic resources now, indicating non test-only */
+		ret = sde_rm_reserve(&sde_kms->rm, drm_enc, drm_enc->crtc->state,
+				conn->state, false);
+		if (ret) {
+			SDE_ERROR_ENC(sde_enc,
 				"failed to reserve hw resources, %d\n", ret);
-		return;
+			return;
+		}
 	}
 
 	/* assign the reserved HW blocks to this encoder */

@@ -276,7 +276,6 @@ struct sde_encoder_irq {
  * @enc_spinlock:	Virtual-Encoder-Wide Spin Lock for IRQ purposes
  * @enable_state:	Enable state tracking
  * @vblank_refcount:	Reference count of vblank request
- * @vblank_cached_refcount:	Reference count of vblank cached request
  * @wbirq_refcount:	Reference count of wb irq request
  * @vsync_cnt:		Vsync count for the physical encoder
  * @last_vsync_timestamp:	store last vsync timestamp
@@ -327,7 +326,6 @@ struct sde_encoder_phys {
 	enum sde_enc_enable_state enable_state;
 	struct mutex *vblank_ctl_lock;
 	atomic_t vblank_refcount;
-	atomic_t vblank_cached_refcount;
 	atomic_t wbirq_refcount;
 	atomic_t vsync_cnt;
 	ktime_t last_vsync_timestamp;
