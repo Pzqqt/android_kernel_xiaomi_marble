@@ -849,6 +849,8 @@ struct dp_soc_stats {
 			uint32_t rejected;
 			/* Incorrect msdu count in MPDU desc info */
 			uint32_t msdu_count_mismatch;
+			/* RX raw frame dropped count */
+			uint32_t raw_frm_drop;
 		} err;
 
 		/* packet count per core - per ring */
@@ -2401,6 +2403,11 @@ struct dp_rx_fst {
 #define DP_RX_GET_SW_FT_ENTRY_SIZE sizeof(struct dp_rx_fse)
 #elif WLAN_SUPPORT_RX_FISA
 
+struct dp_fisa_stats {
+	/* flow index invalid from RX HW TLV */
+	uint32_t invalid_flow_index;
+};
+
 enum fisa_aggr_ret {
 	FISA_AGGR_DONE,
 	FISA_AGGR_NOT_ELIGIBLE,
@@ -2486,6 +2493,8 @@ struct dp_rx_fst {
 	qdf_atomic_t fse_cache_flush_posted;
 	qdf_timer_t fse_cache_flush_timer;
 	struct fse_cache_flush_history cache_fl_rec[MAX_FSE_CACHE_FL_HST];
+	/* FISA DP stats */
+	struct dp_fisa_stats stats;
 };
 
 #endif /* WLAN_SUPPORT_RX_FISA */

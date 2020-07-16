@@ -1918,6 +1918,31 @@ void dp_rx_set_hdr_pad(qdf_nbuf_t nbuf, uint32_t l3_padding)
 }
 #endif
 
+#ifdef DP_RX_DROP_RAW_FRM
+/**
+ * dp_rx_is_raw_frame_dropped() - if raw frame nbuf, free and drop
+ * @nbuf: pkt skb pointer
+ *
+ * Return: true - raw frame, dropped
+ *	   false - not raw frame, do nothing
+ */
+static inline
+bool dp_rx_is_raw_frame_dropped(qdf_nbuf_t nbuf)
+{
+	if (qdf_nbuf_is_raw_frame(nbuf)) {
+		qdf_nbuf_free(nbuf);
+		return true;
+	}
+
+	return false;
+}
+#else
+static inline
+bool dp_rx_is_raw_frame_dropped(qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
 
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
@@ -2253,6 +2278,12 @@ done:
 	nbuf = nbuf_head;
 	while (nbuf) {
 		next = nbuf->next;
+		if (qdf_unlikely(dp_rx_is_raw_frame_dropped(nbuf))) {
+			nbuf = next;
+			DP_STATS_INC(soc, rx.err.raw_frm_drop, 1);
+			continue;
+		}
+
 		rx_tlv_hdr = qdf_nbuf_data(nbuf);
 		vdev_id = QDF_NBUF_CB_RX_VDEV_ID(nbuf);
 
