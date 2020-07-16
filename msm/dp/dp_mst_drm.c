@@ -896,25 +896,27 @@ dp_mst_connector_detect(struct drm_connector *connector, bool force,
 	struct sde_connector *c_conn = to_sde_connector(connector);
 	struct dp_display *dp_display = c_conn->display;
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
-	enum drm_connector_status status;
-	struct dp_mst_connector mst_conn;
+	struct dp_panel *dp_panel;
 	struct drm_modeset_acquire_ctx ctx;
+	enum drm_connector_status status;
 
 	DP_MST_DEBUG("enter:\n");
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_ENTRY);
 
+	if (!c_conn->drv_panel || !c_conn->mst_port) {
+		DP_DEBUG("conn %d is invalid\n");
+		return connector_status_disconnected;
+	}
+
+	dp_panel = c_conn->drv_panel;
+
+	if (dp_panel->mst_hide)
+		return connector_status_disconnected;
+
 	drm_modeset_acquire_init(&ctx, 0);
 
 	status = mst->mst_fw_cbs->detect_port_ctx(connector,
-			&ctx, &mst->mst_mgr,
-			c_conn->mst_port);
-
-	memset(&mst_conn, 0, sizeof(mst_conn));
-	dp_display->mst_get_connector_info(dp_display, connector, &mst_conn);
-	if (mst_conn.conn == connector &&
-			mst_conn.state != connector_status_unknown) {
-		status = mst_conn.state;
-	}
+			&ctx, &mst->mst_mgr, c_conn->mst_port);
 
 	DP_MST_INFO("conn:%d status:%d\n", connector->base.id, status);
 	SDE_EVT32_EXTERNAL(SDE_EVTLOG_FUNC_EXIT, connector->base.id, status);
@@ -989,10 +991,11 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	struct sde_connector *c_conn;
 	struct drm_dp_mst_port *mst_port;
 	struct dp_display_mode dp_mode;
+	struct dp_panel *dp_panel;
 	uint16_t full_pbn, required_pbn;
 	int available_slots, required_slots;
 	struct dp_mst_bridge_state *dp_bridge_state;
-	int i, slots_in_use = 0, active_enc_cnt = 0;
+	int i, vrefresh, slots_in_use = 0, active_enc_cnt = 0;
 	const u32 tot_slots = 63;
 
 	if (!connector || !mode || !display) {
@@ -1003,6 +1006,18 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 	mst = dp_display->dp_mst_prv_info;
 	c_conn = to_sde_connector(connector);
 	mst_port = c_conn->mst_port;
+	dp_panel = c_conn->drv_panel;
+
+	if (!dp_panel || !mst_port)
+		return MODE_ERROR;
+
+	vrefresh = drm_mode_vrefresh(mode);
+
+	if (dp_panel->mode_override && (mode->hdisplay != dp_panel->hdisplay ||
+			mode->vdisplay != dp_panel->vdisplay ||
+			vrefresh != dp_panel->vrefresh ||
+			mode->picture_aspect_ratio != dp_panel->aspect_ratio))
+		return MODE_BAD;
 
 	/* dp bridge state is protected by drm_mode_config.connection_mutex */
 	for (i = 0; i < MAX_DP_MST_DRM_BRIDGES; i++) {
@@ -1036,7 +1051,7 @@ enum drm_mode_status dp_mst_connector_mode_valid(
 		return MODE_BAD;
 	}
 
-	return dp_connector_mode_valid(connector, mode, display, avail_res);
+	return dp_display->validate_mode(dp_display, dp_panel, mode, avail_res);
 }
 
 int dp_mst_connector_get_info(struct drm_connector *connector,

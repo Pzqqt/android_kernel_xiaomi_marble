@@ -48,57 +48,39 @@
 
 /**
  * struct dp_debug
- * @debug_en: specifies whether debug mode enabled
  * @sim_mode: specifies whether sim mode enabled
  * @psm_enabled: specifies whether psm enabled
  * @hdcp_disabled: specifies if hdcp is disabled
  * @hdcp_wait_sink_sync: used to wait for sink synchronization before HDCP auth
- * @aspect_ratio: used to filter out aspect_ratio value
- * @vdisplay: used to filter out vdisplay value
- * @hdisplay: used to filter out hdisplay value
- * @vrefresh: used to filter out vrefresh value
  * @tpg_state: specifies whether tpg feature is enabled
  * @max_pclk_khz: max pclk supported
  * @force_encryption: enable/disable forced encryption for HDCP 2.2
  * @skip_uevent: skip hotplug uevent to the user space
  * @hdcp_status: string holding hdcp status information
- * @dp_mst_connector_list: list containing all dp mst connectors
- * @mst_hpd_sim: specifies whether simulated hpd enabled
  * @mst_sim_add_con: specifies whether new sim connector is to be added
  * @mst_sim_remove_con: specifies whether sim connector is to be removed
  * @mst_sim_remove_con_id: specifies id of sim connector to be removed
- * @mst_port_cnt: number of mst ports to be added during hpd
  * @connect_notification_delay_ms: time (in ms) to wait for any attention
  *              messages before sending the connect notification uevent
  * @disconnect_delay_ms: time (in ms) to wait before turning off the mainlink
  *              in response to HPD low of cable disconnect event
  */
 struct dp_debug {
-	bool debug_en;
 	bool sim_mode;
 	bool psm_enabled;
 	bool hdcp_disabled;
 	bool hdcp_wait_sink_sync;
-	int aspect_ratio;
-	int vdisplay;
-	int hdisplay;
-	int vrefresh;
 	bool tpg_state;
 	u32 max_pclk_khz;
 	bool force_encryption;
 	bool skip_uevent;
 	char hdcp_status[SZ_128];
-	struct dp_mst_connector dp_mst_connector_list;
-	bool mst_hpd_sim;
 	bool mst_sim_add_con;
 	bool mst_sim_remove_con;
 	int mst_sim_remove_con_id;
-	u32 mst_port_cnt;
 	unsigned long connect_notification_delay_ms;
 	u32 disconnect_delay_ms;
 
-	struct dp_mst_connector mst_connector_cache;
-	u8 *(*get_edid)(struct dp_debug *dp_debug);
 	void (*abort)(struct dp_debug *dp_debug);
 	void (*set_mst_con)(struct dp_debug *dp_debug, int con_id);
 };

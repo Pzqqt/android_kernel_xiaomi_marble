@@ -69,8 +69,6 @@ struct dp_panel_private {
 	struct dp_link *link;
 	struct dp_parser *parser;
 	struct dp_catalog_panel *catalog;
-	bool custom_edid;
-	bool custom_dpcd;
 	bool panel_on;
 	bool vsc_supported;
 	bool vscext_supported;
@@ -1489,11 +1487,6 @@ static int dp_panel_read_dpcd(struct dp_panel *dp_panel, bool multi_func)
 	panel->vscext_supported = false;
 	panel->vscext_chaining_supported = false;
 
-	if (panel->custom_dpcd) {
-		DP_DEBUG("skip dpcd read in debug mode\n");
-		goto skip_dpcd_read;
-	}
-
 	rlen = drm_dp_dpcd_read(drm_aux, DP_TRAINING_AUX_RD_INTERVAL, &temp, 1);
 	if (rlen != 1) {
 		DP_ERR("error reading DP_TRAINING_AUX_RD_INTERVAL\n");
@@ -1527,26 +1520,22 @@ static int dp_panel_read_dpcd(struct dp_panel *dp_panel, bool multi_func)
 	if (rlen != 1) {
 		DP_DEBUG("failed to read DPRX_FEATURE_ENUMERATION_LIST\n");
 		rx_feature = 0;
+	} else {
+		panel->vsc_supported = !!(rx_feature &
+				VSC_SDP_EXTENSION_FOR_COLORIMETRY_SUPPORTED);
+		panel->vscext_supported = !!(rx_feature &
+		 		VSC_EXT_VESA_SDP_SUPPORTED);
+		panel->vscext_chaining_supported = !!(rx_feature &
+				VSC_EXT_VESA_SDP_CHAINING_SUPPORTED);
+
+		DP_DEBUG("vsc=%d, vscext=%d, vscext_chaining=%d\n",
+				panel->vsc_supported, panel->vscext_supported,
+				panel->vscext_chaining_supported);
 	}
-
-skip_dpcd_read:
-	if (panel->custom_dpcd)
-		rx_feature = dp_panel->dpcd[DP_RECEIVER_CAP_SIZE + 1];
-
-	panel->vsc_supported = !!(rx_feature &
-		VSC_SDP_EXTENSION_FOR_COLORIMETRY_SUPPORTED);
-	panel->vscext_supported = !!(rx_feature & VSC_EXT_VESA_SDP_SUPPORTED);
-	panel->vscext_chaining_supported = !!(rx_feature &
-			VSC_EXT_VESA_SDP_CHAINING_SUPPORTED);
-
-	DP_DEBUG("vsc=%d, vscext=%d, vscext_chaining=%d\n",
-		panel->vsc_supported, panel->vscext_supported,
-		panel->vscext_chaining_supported);
 
 	link_info->revision = dpcd[DP_DPCD_REV];
 	panel->major = (link_info->revision >> 4) & 0x0f;
 	panel->minor = link_info->revision & 0x0f;
-
 	/* override link params updated in dp_panel_init_panel_info */
 	link_info->rate = min_t(unsigned long, panel->parser->max_lclk_khz,
 			drm_dp_bw_code_to_link_rate(dpcd[DP_MAX_LINK_RATE]));
@@ -1617,74 +1606,6 @@ static int dp_panel_set_default_link_params(struct dp_panel *dp_panel)
 	return 0;
 }
 
-static bool dp_panel_validate_edid(struct edid *edid, size_t edid_size)
-{
-	if (!edid || (edid_size < EDID_LENGTH))
-		return false;
-
-	if (EDID_LENGTH * (edid->extensions + 1) > edid_size) {
-		DP_ERR("edid size does not match allocated.\n");
-		return false;
-	}
-
-	if (!drm_edid_is_valid(edid)) {
-		DP_ERR("invalid edid.\n");
-		return false;
-	}
-	return true;
-}
-
-static int dp_panel_set_edid(struct dp_panel *dp_panel, u8 *edid,
-		size_t edid_size)
-{
-	struct dp_panel_private *panel;
-
-	if (!dp_panel) {
-		DP_ERR("invalid input\n");
-		return -EINVAL;
-	}
-
-	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-
-	if (edid && dp_panel_validate_edid((struct edid *)edid, edid_size)) {
-		dp_panel->edid_ctrl->edid = (struct edid *)edid;
-		panel->custom_edid = true;
-	} else {
-		panel->custom_edid = false;
-		dp_panel->edid_ctrl->edid = NULL;
-	}
-
-	DP_DEBUG("%d\n", panel->custom_edid);
-	return 0;
-}
-
-static int dp_panel_set_dpcd(struct dp_panel *dp_panel, u8 *dpcd)
-{
-	struct dp_panel_private *panel;
-	u8 *dp_dpcd;
-
-	if (!dp_panel) {
-		DP_ERR("invalid input\n");
-		return -EINVAL;
-	}
-
-	dp_dpcd = dp_panel->dpcd;
-
-	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-
-	if (dpcd) {
-		memcpy(dp_dpcd, dpcd, DP_RECEIVER_CAP_SIZE +
-				DP_RECEIVER_EXT_CAP_SIZE + 1);
-		panel->custom_dpcd = true;
-	} else {
-		panel->custom_dpcd = false;
-	}
-
-	DP_DEBUG("%d\n", panel->custom_dpcd);
-
-	return 0;
-}
-
 static int dp_panel_read_edid(struct dp_panel *dp_panel,
 	struct drm_connector *connector)
 {
@@ -1698,11 +1619,6 @@ static int dp_panel_read_edid(struct dp_panel *dp_panel,
 	}
 
 	panel = container_of(dp_panel, struct dp_panel_private, dp_panel);
-
-	if (panel->custom_edid) {
-		DP_DEBUG("skip edid read in debug mode\n");
-		goto end;
-	}
 
 	sde_get_edid(connector, &panel->aux->drm_aux->ddc,
 		(void **)&dp_panel->edid_ctrl);
@@ -2347,7 +2263,7 @@ static int dp_panel_deinit_panel_info(struct dp_panel *dp_panel, u32 flags)
 	shdr_if_sdp = &panel->catalog->shdr_if_sdp;
 	vsc_colorimetry = &panel->catalog->vsc_colorimetry;
 
-	if (!panel->custom_edid && dp_panel->edid_ctrl->edid)
+	if (dp_panel->edid_ctrl->edid)
 		sde_free_edid((void **)&dp_panel->edid_ctrl);
 
 	dp_panel_set_stream_info(dp_panel, DP_STREAM_MAX, 0, 0, 0, 0);
@@ -3083,8 +2999,6 @@ struct dp_panel *dp_panel_get(struct dp_panel_in *in)
 	dp_panel->get_mode_bpp = dp_panel_get_mode_bpp;
 	dp_panel->get_modes = dp_panel_get_modes;
 	dp_panel->handle_sink_request = dp_panel_handle_sink_request;
-	dp_panel->set_edid = dp_panel_set_edid;
-	dp_panel->set_dpcd = dp_panel_set_dpcd;
 	dp_panel->tpg_config = dp_panel_tpg_config;
 	dp_panel->spd_config = dp_panel_spd_config;
 	dp_panel->setup_hdr = dp_panel_setup_hdr;
