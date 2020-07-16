@@ -137,7 +137,7 @@ struct hdd_config {
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	/* WLAN Logging */
 	bool wlan_logging_enable;
-	bool wlan_logging_to_console;
+	uint32_t wlan_console_log_levels;
 	uint8_t host_log_custom_nl_proto;
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 

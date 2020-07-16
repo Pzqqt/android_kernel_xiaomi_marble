@@ -11268,8 +11268,7 @@ static void hdd_psoc_idle_timeout_callback(void *priv)
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 static void hdd_set_wlan_logging(struct hdd_context *hdd_ctx)
 {
-	wlan_logging_set_log_to_console(hdd_ctx->config->
-					wlan_logging_to_console);
+	wlan_set_console_log_levels(hdd_ctx->config->wlan_console_log_levels);
 	wlan_logging_set_active(hdd_ctx->config->wlan_logging_enable);
 }
 #else
@@ -11283,7 +11282,7 @@ static void hdd_init_wlan_logging_params(struct hdd_config *config,
 {
 	config->wlan_logging_enable = cfg_get(psoc, CFG_WLAN_LOGGING_SUPPORT);
 
-	config->wlan_logging_to_console =
+	config->wlan_console_log_levels =
 			cfg_get(psoc, CFG_WLAN_LOGGING_CONSOLE_SUPPORT);
 	config->host_log_custom_nl_proto =
 		cfg_get(psoc, CFG_HOST_LOG_CUSTOM_NETLINK_PROTO);
