@@ -4873,7 +4873,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	struct sde_multirect_plane_states *multirect_plane = NULL;
 	struct drm_connector *conn;
 	struct drm_connector_list_iter conn_iter;
-	struct drm_connector_state *conn_state;
 
 	if (!crtc) {
 		SDE_ERROR("invalid crtc\n");
@@ -4911,15 +4910,13 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 
 	/* identify connectors attached to this crtc */
 	cstate->num_connectors = 0;
-	drm_connector_list_iter_begin(dev, &conn_iter);
-	drm_for_each_connector_iter(conn, &conn_iter) {
-		conn_state = drm_atomic_get_connector_state(state->state, conn);
 
-		if (conn_state && conn_state->crtc == crtc &&
-				cstate->num_connectors < MAX_CONNECTORS) {
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(conn, &conn_iter)
+		if ((state->connector_mask & (1 << drm_connector_index(conn)))
+				&& cstate->num_connectors < MAX_CONNECTORS) {
 			cstate->connectors[cstate->num_connectors++] = conn;
 		}
-	}
 	drm_connector_list_iter_end(&conn_iter);
 
 	rc = _sde_crtc_check_dest_scaler_data(crtc, state);
