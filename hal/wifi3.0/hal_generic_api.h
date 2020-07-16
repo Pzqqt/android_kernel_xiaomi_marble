@@ -485,9 +485,11 @@ static inline void hal_get_radiotap_he_gi_ltf(uint16_t *he_gi, uint16_t *he_ltf)
 #define CHANNEL_FREQ_2407 2407
 #define CHANNEL_FREQ_2512 2512
 #define CHANNEL_FREQ_5000 5000
-#define CHANNEL_FREQ_5940 5940
+#define CHANNEL_FREQ_5950 5950
 #define CHANNEL_FREQ_4000 4000
 #define CHANNEL_FREQ_5150 5150
+#define CHANNEL_FREQ_5920 5920
+#define CHANNEL_FREQ_5935 5935
 #define FREQ_MULTIPLIER_CONST_5MHZ 5
 #define FREQ_MULTIPLIER_CONST_20MHZ 20
 /**
@@ -500,7 +502,10 @@ static inline void hal_get_radiotap_he_gi_ltf(uint16_t *he_gi, uint16_t *he_ltf)
 static uint16_t
 hal_rx_radiotap_num_to_freq(uint16_t chan_num, qdf_freq_t center_freq)
 {
-	if (center_freq < CHANNEL_FREQ_5940) {
+	if (center_freq > CHANNEL_FREQ_5920 && center_freq < CHANNEL_FREQ_5950)
+		return CHANNEL_FREQ_5935;
+
+	if (center_freq < CHANNEL_FREQ_5950) {
 		if (chan_num == CHANNEL_NUM_14)
 			return CHANNEL_FREQ_2484;
 		if (chan_num < CHANNEL_NUM_14)
@@ -520,7 +525,7 @@ hal_rx_radiotap_num_to_freq(uint16_t chan_num, qdf_freq_t center_freq)
 		return CHANNEL_FREQ_5000 +
 			(chan_num * FREQ_MULTIPLIER_CONST_5MHZ);
 	} else {
-		return CHANNEL_FREQ_5940 +
+		return CHANNEL_FREQ_5950 +
 			(chan_num * FREQ_MULTIPLIER_CONST_5MHZ);
 	}
 }
