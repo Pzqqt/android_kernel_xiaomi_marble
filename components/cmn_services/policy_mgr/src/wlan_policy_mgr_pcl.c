@@ -2376,7 +2376,8 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
-		struct policy_mgr_pcl_chan_weights *weight)
+		struct policy_mgr_pcl_chan_weights *weight,
+		enum policy_mgr_con_mode mode)
 {
 	uint32_t i, j;
 	struct policy_mgr_conc_connection_info
@@ -2393,16 +2394,20 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_set(weight->weighed_valid_list, NUM_CHANNELS,
 		    WEIGHT_OF_DISALLOWED_CHANNELS);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if (policy_mgr_mode_specific_connection_count(
-		psoc, PM_STA_MODE, NULL) > 0) {
+	if ((mode == PM_P2P_GO_MODE || mode == PM_P2P_CLIENT_MODE) ||
+	    (mode == PM_STA_MODE &&
+	     policy_mgr_mode_specific_connection_count(psoc, PM_STA_MODE,
+						       NULL) > 0)) {
 		/*
 		 * Store the STA mode's parameter and temporarily delete it
 		 * from the concurrency table. This way the allow concurrency
 		 * check can be used as though a new connection is coming up,
 		 * allowing to detect the disallowed channels.
 		 */
-		policy_mgr_store_and_del_conn_info(psoc, PM_STA_MODE, false,
-						info, &num_cxn_del);
+		if (mode == PM_STA_MODE)
+			policy_mgr_store_and_del_conn_info(psoc, mode,
+							   false, info,
+							   &num_cxn_del);
 		/*
 		 * There is a small window between releasing the above lock
 		 * and acquiring the same in policy_mgr_allow_concurrency,
@@ -2410,14 +2415,16 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		 */
 		for (i = 0; i < weight->saved_num_chan; i++) {
 			if (policy_mgr_is_concurrency_allowed
-				(psoc, PM_STA_MODE, weight->saved_chan_list[i],
+				(psoc, mode, weight->saved_chan_list[i],
 				HW_MODE_20_MHZ)) {
 				weight->weighed_valid_list[i] =
 					WEIGHT_OF_NON_PCL_CHANNELS;
 			}
 		}
 		/* Restore the connection info */
-		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
+		if (mode == PM_STA_MODE)
+			policy_mgr_restore_deleted_conn_info(psoc, info,
+							     num_cxn_del);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 

@@ -2099,6 +2099,7 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(
  * @psoc: PSOC object information
  * @weight: Pointer to the structure containing pcl, saved channel list and
  * weighed channel list
+ * @mode: Policy manager connection mode
  *
  * Provides the weightage for all valid channels. This compares the PCL list
  * with the valid channel list. The channels present in the PCL get their
@@ -2108,7 +2109,8 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(
  * Return: QDF_STATUS
  */
 QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
-		struct policy_mgr_pcl_chan_weights *weight);
+		struct policy_mgr_pcl_chan_weights *weight,
+		enum policy_mgr_con_mode mode);
 
 /**
  * policy_mgr_set_hw_mode_on_channel_switch() - Set hw mode

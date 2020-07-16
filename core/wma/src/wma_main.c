@@ -9084,7 +9084,8 @@ QDF_STATUS wma_send_set_pcl_cmd(tp_wma_handle wma_handle,
 
 	msg->chan_weights.saved_num_chan = wma_handle->saved_chan.num_channels;
 	status = policy_mgr_get_valid_chan_weights(wma_handle->psoc,
-		(struct policy_mgr_pcl_chan_weights *)&msg->chan_weights);
+		(struct policy_mgr_pcl_chan_weights *)&msg->chan_weights,
+		PM_STA_MODE);
 
 	for (i = 0; i < msg->chan_weights.saved_num_chan; i++) {
 		msg->chan_weights.weighed_valid_list[i] =

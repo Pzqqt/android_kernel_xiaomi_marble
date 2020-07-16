@@ -10965,7 +10965,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	chan_weights->saved_num_chan = NUM_CHANNELS;
 	sme_get_valid_channels(chan_weights->saved_chan_list,
 			       &chan_weights->saved_num_chan);
-	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights);
+	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights,
+					  intf_mode);
 	w_pcl = qdf_mem_malloc(sizeof(struct weighed_pcl) * NUM_CHANNELS);
 	if (!w_pcl) {
 		qdf_mem_free(chan_weights);
