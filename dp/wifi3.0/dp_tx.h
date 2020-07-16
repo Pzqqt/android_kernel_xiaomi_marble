@@ -36,6 +36,8 @@
 #define DP_TX_DESC_FLAG_TDLS_FRAME	0x100
 #define DP_TX_DESC_FLAG_ALLOCATED	0x200
 
+#define DP_TX_EXT_DESC_FLAG_METADATA_VALID 0x1
+
 #define DP_TX_FREE_SINGLE_BUF(soc, buf)                  \
 do {                                                           \
 	qdf_nbuf_unmap(soc->osdev, buf, QDF_DMA_TO_DEVICE);  \
@@ -58,6 +60,10 @@ do {                                                           \
 	#endif /* TX_PER_VDEV_DESC_POOL */
 #endif /* TX_PER_PDEV_DESC_POOL */
 #define DP_TX_QUEUE_MASK 0x3
+
+/* number of dwords for htt_tx_msdu_desc_ext2_t */
+#define DP_TX_MSDU_INFO_META_DATA_DWORDS 7
+
 /**
  * struct dp_tx_frag_info_s
  * @vaddr: hlos vritual address for buffer
@@ -148,7 +154,7 @@ struct dp_tx_msdu_info_s {
 		struct qdf_tso_info_t tso_info;
 		struct dp_tx_sg_info_s sg_info;
 	} u;
-	uint32_t meta_data[7];
+	uint32_t meta_data[DP_TX_MSDU_INFO_META_DATA_DWORDS];
 	uint8_t exception_fw;
 	uint16_t ppdu_cookie;
 	uint8_t is_tx_sniffer;
