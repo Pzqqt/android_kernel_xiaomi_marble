@@ -45,7 +45,7 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 	 * If vdev_id is WLAN_UMAC_VDEV_ID_MAX, then PDEV pcl command
 	 * needs to be sent
 	 */
-	if (pcl_req && pcl_req->vdev_id == WLAN_UMAC_VDEV_ID_MAX)
+	if (!pcl_req || pcl_req->vdev_id == WLAN_UMAC_VDEV_ID_MAX)
 		return QDF_STATUS_E_FAILURE;
 
 	status = ucfg_mlme_get_band_capability(psoc, &band_capability);
