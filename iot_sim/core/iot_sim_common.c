@@ -97,7 +97,7 @@ iot_sim_parse_action_frame(uint16_t length, uint16_t offset, uint8_t *content,
 
 		/* Offset represet category type and action type */
 		status = iot_sim_get_index_for_action_frm(hex, category,
-							  action);
+							  action, false);
 		if (status == QDF_STATUS_E_FAULT) {
 			iot_sim_err("Get indices for action failed");
 			return status;
@@ -113,7 +113,7 @@ iot_sim_parse_action_frame(uint16_t length, uint16_t offset, uint8_t *content,
 			return QDF_STATUS_E_FAILURE;
 		}
 		status = iot_sim_get_index_for_action_frm(ptr, category,
-							  action);
+							  action, false);
 	}
 	return status;
 }
@@ -370,12 +370,13 @@ err:
  * @frm: buf containing 802.11 action/category codes
  * @cat_type: buf to hold converted category code
  * @act_type: buf to hold converted action code
+ * @rx: TRUE if its getting called in the rx path
  *
  * Return: QDF_STATUS_SUCCESS on success, failure otherwise
  */
 QDF_STATUS
 iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
-				 uint8_t *act_type)
+				 uint8_t *act_type, bool rx)
 {
 	uint8_t category, action;
 
@@ -388,8 +389,14 @@ iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat_type,
 	case IEEE80211_ACTION_CAT_BA:
 		switch (action) {
 		case IEEE80211_ACTION_BA_ADDBA_REQUEST:
-			*cat_type = category;
-			*act_type = action;
+			if (rx) {
+				*cat_type = CAT_BA;
+				*act_type = action;
+
+			} else {
+				*cat_type = category;
+				*act_type = action;
+			}
 			break;
 		case IEEE80211_ACTION_BA_ADDBA_RESPONSE:
 		case IEEE80211_ACTION_BA_DELBA:
@@ -1145,7 +1152,7 @@ iot_sim_debug_drop_write(struct file *file,
 		 * convert 802.11 category and action code to iot sim codes
 		 */
 		status = iot_sim_get_index_for_action_frm(tmp, &category,
-							  &action);
+							  &action, false);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto free;
 

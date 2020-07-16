@@ -76,6 +76,7 @@ QDF_STATUS wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
  * @frm: action frame
  * @cat: action frame category
  * @act: action frame details
+ * @rx: TRUE if its getting called in the rx path
  *
  * Provides the simulation database index for the action frame.
  *
@@ -83,7 +84,7 @@ QDF_STATUS wlan_iot_sim_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
  *         QDF_STATUS_E_FAILURE on failure
  */
 QDF_STATUS iot_sim_get_index_for_action_frm(uint8_t *frm, uint8_t *cat,
-					    uint8_t *act);
+					    uint8_t *act, bool rx);
 
 /**
  * iot_sim_frame_update() - Management frame update

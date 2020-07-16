@@ -281,7 +281,8 @@ QDF_STATUS iot_sim_frame_update(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t nbuf,
 		frm = buf + IEEE80211_FRAME_BODY_OFFSET;
 
 		is_action_frm = true;
-		if (iot_sim_get_index_for_action_frm(frm, &cat, &cat_index)) {
+		if (iot_sim_get_index_for_action_frm(frm, &cat,
+						     &cat_index, !tx)) {
 			iot_sim_err("get_index_for_action_frm failed");
 			return QDF_STATUS_SUCCESS;
 		}
