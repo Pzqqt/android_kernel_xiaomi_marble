@@ -2657,9 +2657,8 @@ done:
 		qdf_mem_skb_dec(p_node->size);
 		qdf_nbuf_track_free(p_node);
 	} else {
-		qdf_print("Unallocated buffer ! Double free of net_buf %pK ?",
-			  net_buf);
-		QDF_BUG(0);
+		QDF_MEMDEBUG_PANIC("Unallocated buffer ! Double free of net_buf %pK ?",
+				   net_buf);
 	}
 }
 qdf_export_symbol(qdf_net_buf_debug_delete_node);
