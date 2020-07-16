@@ -4,8 +4,8 @@
  */
 
 #include <linux/delay.h>
-#include "ipa_mhi.h"
-#include "ipa.h"
+#include <linux/ipa_mhi.h>
+#include <linux/ipa.h>
 #include "ipa_i.h"
 #include "gsi.h"
 #include "gsi_reg.h"

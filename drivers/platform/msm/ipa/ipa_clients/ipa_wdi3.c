@@ -3,7 +3,7 @@
  * Copyright (c) 2017-2020, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa_wdi3.h"
+#include <linux/ipa_wdi3.h>
 #include <linux/msm_ipa.h>
 #include <linux/string.h>
 #include "ipa_common_i.h"

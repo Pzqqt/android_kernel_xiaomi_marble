@@ -4,7 +4,7 @@
  */
 
 #include "ipa_i.h"
-#include "ipa_wdi3.h"
+#include <linux/ipa_wdi3.h>
 
 #define UPDATE_RP_MODERATION_CONFIG 1
 #define UPDATE_RP_MODERATION_THRESHOLD 8

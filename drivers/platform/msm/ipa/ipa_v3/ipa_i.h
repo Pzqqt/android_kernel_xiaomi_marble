@@ -17,8 +17,8 @@
 #include <linux/notifier.h>
 #include <linux/interrupt.h>
 #include <linux/netdevice.h>
-#include "ipa.h"
-#include "ipa_usb.h"
+#include <linux/ipa.h>
+#include <linux/ipa_usb.h>
 #include <linux/iommu.h>
 #include <linux/platform_device.h>
 #include <linux/firmware.h>
@@ -34,7 +34,7 @@
 #include <linux/mailbox_client.h>
 #include <linux/mailbox/qmp.h>
 #include <linux/rmnet_ipa_fd_ioctl.h>
-#include "ipa_fmwk.h"
+#include <linux/ipa_fmwk.h>
 #include "ipa_uc_holb_monitor.h"
 
 #define IPA_DEV_NAME_MAX_LEN 15

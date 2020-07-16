@@ -17,7 +17,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/sched.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/random.h>
 #include <linux/workqueue.h>
 #include "rndis_ipa.h"

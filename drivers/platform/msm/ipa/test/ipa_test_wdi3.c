@@ -4,8 +4,8 @@
  */
 
 #include "ipa_ut_framework.h"
-#include "ipa_wdi3.h"
-#include "ipa.h"
+#include <linux/ipa_wdi3.h>
+#include <linux/ipa.h>
 #include <linux/delay.h>
 #include "ipa_i.h"
 

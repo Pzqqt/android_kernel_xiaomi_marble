@@ -26,7 +26,7 @@
 #include <soc/qcom/subsystem_notif.h>
 #include "ipa_qmi_service.h"
 #include <linux/rmnet_ipa_fd_ioctl.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <uapi/linux/msm_rmnet.h>
 #include <net/rmnet_config.h>
 #include "ipa_mhi_proxy.h"

@@ -22,7 +22,7 @@
 #include <linux/interconnect.h>
 #include <linux/netdevice.h>
 #include <linux/delay.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/time.h>
 #include <linux/hashtable.h>
 #include <linux/jhash.h>

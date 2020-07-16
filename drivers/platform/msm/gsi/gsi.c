@@ -8,7 +8,7 @@
 #include <linux/io.h>
 #include <linux/log2.h>
 #include <linux/module.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include "gsi.h"

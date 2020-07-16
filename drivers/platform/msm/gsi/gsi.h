@@ -11,7 +11,7 @@
 #include <linux/completion.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
 

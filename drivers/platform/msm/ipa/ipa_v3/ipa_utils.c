@@ -8,7 +8,7 @@
 #include <linux/io.h>
 #include <linux/ratelimit.h>
 #include <linux/interconnect.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include <linux/elf.h>
 #include "ipa_i.h"
 #include "ipahal.h"

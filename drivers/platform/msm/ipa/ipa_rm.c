@@ -5,7 +5,7 @@
 
 #include <linux/slab.h>
 #include <linux/workqueue.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_rm_dependency_graph.h"
 #include "ipa_rm_i.h"
 #include "ipa_common_i.h"

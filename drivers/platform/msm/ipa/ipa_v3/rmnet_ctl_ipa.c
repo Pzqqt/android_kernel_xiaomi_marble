@@ -6,7 +6,7 @@
 #include <linux/string.h>
 #include <linux/skbuff.h>
 #include <linux/workqueue.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <uapi/linux/msm_rmnet.h>
 #include "ipa_i.h"
 

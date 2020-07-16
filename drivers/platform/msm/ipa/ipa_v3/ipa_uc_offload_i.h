@@ -6,7 +6,7 @@
 #ifndef _IPA_UC_OFFLOAD_I_H_
 #define _IPA_UC_OFFLOAD_I_H_
 
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_i.h"
 
 /*

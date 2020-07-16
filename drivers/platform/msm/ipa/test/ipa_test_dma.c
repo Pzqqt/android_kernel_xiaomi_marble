@@ -3,7 +3,7 @@
  * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  */
 
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_i.h"
 #include "ipa_ut_framework.h"
 

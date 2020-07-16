@@ -7,7 +7,7 @@
 #define _IPA_RM_I_H_
 
 #include <linux/workqueue.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_rm_resource.h"
 #include "ipa_common_i.h"
 

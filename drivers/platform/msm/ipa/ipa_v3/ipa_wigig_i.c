@@ -7,7 +7,7 @@
 #include <linux/if_ether.h>
 #include <linux/log2.h>
 #include <linux/debugfs.h>
-#include "ipa_wigig.h"
+#include <linux/ipa_wigig.h>
 
 #define IPA_WIGIG_DESC_RING_EL_SIZE	32
 #define IPA_WIGIG_STATUS_RING_EL_SIZE	16

@@ -8,7 +8,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/random.h>
 #include <linux/uaccess.h>
-#include "msm_gsi.h"
+#include <linux/msm_gsi.h>
 #include "gsi_reg.h"
 #include "gsi.h"
 

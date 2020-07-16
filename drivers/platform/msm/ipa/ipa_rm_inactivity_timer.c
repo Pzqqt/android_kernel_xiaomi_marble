@@ -10,7 +10,7 @@
 #include <linux/timer.h>
 #include <linux/unistd.h>
 #include <linux/workqueue.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include "ipa_rm_i.h"
 
 #define MAX_WS_NAME 20

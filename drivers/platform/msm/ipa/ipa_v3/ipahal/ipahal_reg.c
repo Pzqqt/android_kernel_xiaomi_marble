@@ -4,7 +4,7 @@
  */
 
 #include <linux/init.h>
-#include "ipa.h"
+#include <linux/ipa.h>
 #include <linux/kernel.h>
 #include <linux/msm_ipa.h>
 #include "ipahal_i.h"
