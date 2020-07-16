@@ -859,7 +859,6 @@ static void hdd_soc_recovery_shutdown(struct device *dev)
 	int errno;
 
 	errno = osif_psoc_sync_trans_start_wait(dev, &psoc_sync);
-	QDF_BUG(!errno);
 	if (errno)
 		return;
 
