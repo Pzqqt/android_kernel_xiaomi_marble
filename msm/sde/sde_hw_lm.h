@@ -81,6 +81,10 @@ struct sde_hw_lm_ops {
 	/* collect_misr: reads and stores MISR data from HW register */
 	int (*collect_misr)(struct sde_hw_mixer *ctx, bool nonblock,
 			u32 *misr_value);
+
+	/* setup_noise_layer: enables/disables noise layer */
+	int (*setup_noise_layer)(struct sde_hw_mixer *ctx,
+		struct sde_hw_noise_layer_cfg *cfg);
 };
 
 struct sde_hw_mixer {

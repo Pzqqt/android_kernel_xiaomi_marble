@@ -680,6 +680,29 @@ struct drm_msm_display_hint {
 	__u32 hint_flags;
 };
 
+#define DRM_NOISE_LAYER_CFG
+#define DRM_NOISE_TEMPORAL_FLAG (1 << 0)
+#define DRM_NOISE_ATTN_MAX 255
+#define DRM_NOISE_STREN_MAX 6
+
+/**
+ * struct drm_msm_noise_layer_cfg: Payload to enable/disable noise blend
+ * @flags: operation control flags, for future use
+ * @zposn: noise zorder
+ * @zposattn: attenuation zorder
+ * @attn_factor: attenuation factor in range of 1 to 255
+ * @stength: strength in range of 0 to 6
+ * @alpha_noise: attenuation in range of 1 to 255
+*/
+struct drm_msm_noise_layer_cfg {
+	__u64 flags;
+	__u32 zposn;
+	__u32 zposattn;
+	__u32 attn_factor;
+	__u32 strength;
+	__u32 alpha_noise;
+};
+
 #define DRM_SDE_WB_CONFIG              0x40
 #define DRM_MSM_REGISTER_EVENT         0x41
 #define DRM_MSM_DEREGISTER_EVENT       0x42

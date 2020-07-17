@@ -31,6 +31,7 @@
 
 #define LM_MISR_CTRL			0x310
 #define LM_MISR_SIGNATURE		0x314
+#define LM_NOISE_LAYER			0x320
 
 static struct sde_lm_cfg *_lm_offset(enum sde_lm mixer,
 		struct sde_mdss_cfg *m,
@@ -279,6 +280,95 @@ static int sde_hw_lm_collect_misr(struct sde_hw_mixer *ctx, bool nonblock,
 	return 0;
 }
 
+static void sde_hw_clear_noise_layer(struct sde_hw_mixer *ctx)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+	const struct sde_lm_sub_blks *sblk = ctx->cap->sblk;
+	int stage_off, i;
+	u32 reset = BIT(18) | BIT(31), val;
+
+	reset = ~reset;
+	for (i = SDE_STAGE_0; i <= sblk->maxblendstages; i++) {
+		stage_off = _stage_offset(ctx, i);
+		if (WARN_ON(stage_off < 0))
+			return;
+
+		/**
+		 * read the blendn_op register and clear only noise layer
+		 */
+		val = SDE_REG_READ(c, LM_BLEND0_OP + stage_off);
+		val &= reset;
+		SDE_REG_WRITE(c, LM_BLEND0_OP + stage_off, val);
+	}
+	SDE_REG_WRITE(c, LM_NOISE_LAYER, 0);
+}
+
+static int sde_hw_lm_setup_noise_layer(struct sde_hw_mixer *ctx,
+		struct sde_hw_noise_layer_cfg *cfg)
+{
+	struct sde_hw_blk_reg_map *c = &ctx->hw;
+	int stage_off;
+	u32 val = 0, alpha = 0;
+	const struct sde_lm_sub_blks *sblk = ctx->cap->sblk;
+	struct sde_hw_mixer_cfg *mixer = &ctx->cfg;
+
+	sde_hw_clear_noise_layer(ctx);
+	if (!cfg)
+		return 0;
+
+	if (cfg->zposn == SDE_STAGE_BASE || cfg->zposn + 1 != cfg->zposattn ||
+		cfg->zposattn >= sblk->maxblendstages) {
+		SDE_ERROR("invalid zposn %d zposattn %d max stage %d\n",
+			cfg->zposn, cfg->zposattn, sblk->maxblendstages);
+		return -EINVAL;
+	}
+	stage_off = _stage_offset(ctx, cfg->zposn);
+	if (stage_off < 0) {
+		SDE_ERROR("invalid stage_off:%d for noise layer stage_off %d\n",
+				cfg->zposn, stage_off);
+		return -EINVAL;
+	}
+	val = BIT(18) | BIT(31);
+	val |= (1 << 8);
+	alpha = 255 | (cfg->alpha_noise << 16);
+	SDE_REG_WRITE(c, LM_BLEND0_OP + stage_off, val);
+	SDE_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, alpha);
+	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
+	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
+	val = SDE_REG_READ(c, LM_OP_MODE);
+	val = (1 << cfg->zposn) | val;
+	SDE_REG_WRITE(c, LM_OP_MODE, val);
+
+	stage_off = _stage_offset(ctx, cfg->zposattn);
+	if (stage_off < 0) {
+		SDE_ERROR("invalid stage_off:%d for noise layer\n",
+				cfg->zposattn);
+		sde_hw_clear_noise_layer(ctx);
+		return -EINVAL;
+	}
+	val = 1 | BIT(31) | BIT(16);
+	val |= BIT(2);
+	val |= (1 << 8);
+	alpha = cfg->attn_factor;
+	SDE_REG_WRITE(c, LM_BLEND0_OP + stage_off, val);
+	SDE_REG_WRITE(c, LM_BLEND0_CONST_ALPHA + stage_off, alpha);
+	val = SDE_REG_READ(c, LM_OP_MODE);
+	val = (1 << cfg->zposattn) | val;
+	SDE_REG_WRITE(c, LM_OP_MODE, val);
+	val = ctx->cfg.out_width | (ctx->cfg.out_height << 16);
+	SDE_REG_WRITE(c, LM_FG_COLOR_FILL_SIZE + stage_off, val);
+
+	val = 1;
+	if (mixer->right_mixer)
+		val |= (((mixer->out_width % 4) & 0x3) << 4);
+
+	if (cfg->flags & DRM_NOISE_TEMPORAL_FLAG)
+		val |= BIT(1);
+	val |= ((cfg->strength & 0x7) << 8);
+	SDE_REG_WRITE(c, LM_NOISE_LAYER, val);
+	return 0;
+}
+
 static void _setup_mixer_ops(struct sde_mdss_cfg *m,
 		struct sde_hw_lm_ops *ops,
 		unsigned long features)
@@ -299,6 +389,9 @@ static void _setup_mixer_ops(struct sde_mdss_cfg *m,
 		ops->setup_dim_layer = sde_hw_lm_setup_dim_layer;
 		ops->clear_dim_layer = sde_hw_lm_clear_dim_layer;
 	}
+
+	if (test_bit(SDE_MIXER_NOISE_LAYER, &features))
+		ops->setup_noise_layer = sde_hw_lm_setup_noise_layer;
 };
 
 static struct sde_hw_blk_ops sde_hw_ops = {

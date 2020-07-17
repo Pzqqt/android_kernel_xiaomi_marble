@@ -63,6 +63,9 @@ static int sde_crtc_mmrm_interrupt_handler(struct drm_crtc *crtc_drm,
 	bool en, struct sde_irq_callback *idle_irq);
 static int sde_crtc_pm_event_handler(struct drm_crtc *crtc, bool en,
 		struct sde_irq_callback *noirq);
+static int _sde_crtc_set_noise_layer(struct sde_crtc *sde_crtc,
+				struct sde_crtc_state *cstate,
+				void __user *usr_ptr);
 
 static struct sde_crtc_custom_events custom_events[] = {
 	{DRM_EVENT_AD_BACKLIGHT, sde_cp_ad_interrupt},
@@ -102,6 +105,11 @@ static struct sde_crtc_custom_events custom_events[] = {
 #define MILI_TO_MICRO			1000
 
 #define SKIP_STAGING_PIPE_ZPOS		255
+
+static void sde_crtc_install_noise_layer_properties(struct sde_crtc *sde_crtc,
+		struct sde_mdss_cfg *catalog, struct sde_kms_info *info);
+static void sde_cp_crtc_apply_noise(struct drm_crtc *crtc,
+		struct drm_crtc_state *state);
 
 static inline struct sde_kms *_sde_crtc_get_kms(struct drm_crtc *crtc)
 {
@@ -3386,6 +3394,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 
 	_sde_crtc_blend_setup(crtc, old_state, true);
 	_sde_crtc_dest_scaler_setup(crtc);
+	sde_cp_crtc_apply_noise(crtc, old_state);
 
 	if (old_state->mode_changed) {
 		sde_core_perf_crtc_update_uidle(crtc, true);
@@ -4914,6 +4923,23 @@ static int _sde_crtc_check_get_pstates(struct drm_crtc *crtc,
 	return rc;
 }
 
+static int _sde_crtc_noise_layer_check_zpos(struct sde_crtc_state *cstate,
+                                            u32 zpos) {
+	if (!test_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty) ||
+		!cstate->noise_layer_en) {
+		SDE_DEBUG("noise layer not enabled %d\n", cstate->noise_layer_en);
+		return 0;
+	}
+
+	if (cstate->layer_cfg.zposn == zpos ||
+		cstate->layer_cfg.zposattn == zpos) {
+		SDE_ERROR("invalid zpos %d zposn %d zposattn %d\n", zpos,
+		     cstate->layer_cfg.zposn, cstate->layer_cfg.zposattn);
+		return -EINVAL;
+	}
+	return 0;
+}
+
 static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 		struct sde_crtc *sde_crtc,
 		struct sde_crtc_state *cstate,
@@ -4978,7 +5004,9 @@ static int _sde_crtc_check_zpos(struct drm_crtc_state *state,
 		} else {
 			zpos_cnt++;
 		}
-
+		rc = _sde_crtc_noise_layer_check_zpos(cstate, z_pos);
+		if (rc)
+			break;
 		if (!kms->catalog->has_base_layer)
 			pstates[i].sde_pstate->stage = z_pos + SDE_STAGE_0;
 		else
@@ -5580,6 +5608,8 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 			info->data, SDE_KMS_INFO_DATALEN(info),
 			CRTC_PROP_INFO);
 
+	sde_crtc_install_noise_layer_properties(sde_crtc, catalog, info);
+
 	kfree(info);
 }
 
@@ -5730,6 +5760,10 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 				goto exit;
 			}
 		}
+		break;
+	case CRTC_PROP_NOISE_LAYER_V1:
+		_sde_crtc_set_noise_layer(sde_crtc, cstate,
+					(void __user *)(uintptr_t)val);
 		break;
 	default:
 		/* nothing to do */
@@ -7116,4 +7150,108 @@ void sde_crtc_update_cont_splash_settings(struct drm_crtc *crtc)
 	sde_crtc->cur_perf.core_clk_rate = (rate > 0) ?
 					rate : kms->perf.max_core_clk_rate;
 	sde_crtc->cur_perf.core_clk_rate = kms->perf.max_core_clk_rate;
+}
+
+static void sde_crtc_install_noise_layer_properties(struct sde_crtc *sde_crtc,
+		struct sde_mdss_cfg *catalog, struct sde_kms_info *info)
+{
+	struct sde_lm_cfg *lm;
+	char feature_name[256];
+	u32 version;
+
+	if (!catalog->mixer_count)
+		return;
+
+	lm = &catalog->mixer[0];
+	if (!(lm->features & BIT(SDE_MIXER_NOISE_LAYER)))
+		return;
+
+	version = lm->sblk->nlayer.version >> 16;
+	snprintf(feature_name, ARRAY_SIZE(feature_name), "%s%d", "noise_layer_v", version);
+
+	switch (version) {
+	case 1:
+		sde_kms_info_add_keyint(info, "has_noise_layer", 1);
+		msm_property_install_volatile_range(&sde_crtc->property_info,
+			feature_name, 0x0, 0, ~0, 0, CRTC_PROP_NOISE_LAYER_V1);
+		break;
+	default:
+		SDE_ERROR("unsupported noise layer version %d\n", version);
+		break;
+	}
+}
+
+static int _sde_crtc_set_noise_layer(struct sde_crtc *sde_crtc,
+				struct sde_crtc_state *cstate,
+				void __user *usr_ptr)
+{
+	int ret;
+
+	if (!sde_crtc || !cstate) {
+		SDE_ERROR("invalid sde_crtc/state\n");
+		return -EINVAL;
+	}
+
+	SDE_DEBUG("crtc %s\n", sde_crtc->name);
+
+	if (!usr_ptr) {
+		SDE_DEBUG("noise layer removed\n");
+		cstate->noise_layer_en = false;
+		set_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty);
+		return 0;
+	}
+	ret = copy_from_user(&cstate->layer_cfg, usr_ptr,
+		sizeof(cstate->layer_cfg));
+	if (ret) {
+		SDE_ERROR("failed to copy noise layer %d\n", ret);
+		return -EFAULT;
+	}
+	if (cstate->layer_cfg.zposn != cstate->layer_cfg.zposattn - 1 ||
+		cstate->layer_cfg.zposattn >= SDE_STAGE_MAX ||
+		!cstate->layer_cfg.attn_factor ||
+		cstate->layer_cfg.attn_factor > DRM_NOISE_ATTN_MAX ||
+		cstate->layer_cfg.strength > DRM_NOISE_STREN_MAX ||
+		!cstate->layer_cfg.alpha_noise ||
+		cstate->layer_cfg.alpha_noise > DRM_NOISE_ATTN_MAX) {
+		SDE_ERROR("invalid param zposn %d zposattn %d attn_factor %d \
+			   strength %d alpha noise %d\n", cstate->layer_cfg.zposn,
+			   cstate->layer_cfg.zposattn, cstate->layer_cfg.attn_factor,
+			   cstate->layer_cfg.strength, cstate->layer_cfg.alpha_noise);
+		return -EINVAL;
+	}
+	cstate->noise_layer_en = true;
+	set_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty);
+	return 0;
+}
+
+static void sde_cp_crtc_apply_noise(struct drm_crtc *crtc,
+		struct drm_crtc_state *state)
+{
+	struct sde_crtc *scrtc = to_sde_crtc(crtc);
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+	struct sde_hw_mixer *lm;
+	int i;
+	struct sde_hw_noise_layer_cfg cfg;
+
+	if (!test_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty))
+		return;
+
+	cfg.flags = cstate->layer_cfg.flags;
+	cfg.alpha_noise = cstate->layer_cfg.alpha_noise;
+	cfg.attn_factor = cstate->layer_cfg.attn_factor;
+	cfg.strength = cstate->layer_cfg.strength;
+	cfg.zposn = cstate->layer_cfg.zposn;
+	cfg.zposattn = cstate->layer_cfg.zposattn;
+
+	for (i = 0; i < scrtc->num_mixers; i++) {
+		lm = scrtc->mixers[i].hw_lm;
+		if (!lm->ops.setup_noise_layer)
+			break;
+		if (!cstate->noise_layer_en)
+			lm->ops.setup_noise_layer(lm, NULL);
+		else
+			lm->ops.setup_noise_layer(lm, &cfg);
+	}
+	if (!cstate->noise_layer_en)
+		clear_bit(SDE_CRTC_NOISE_LAYER, cstate->dirty);
 }

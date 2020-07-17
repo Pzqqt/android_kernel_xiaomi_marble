@@ -746,4 +746,21 @@ struct sde_hw_pp_vsync_info {
 	u32 intf_frame_count;
 };
 
+/**
+ * struct sde_hw_noise_layer_cfg: Payload to enable/disable noise blend
+ * @flags: operation control flags, for future use
+ * @zposn: zorder required for noise
+ * @zposattn: zorder required for noise
+ * @attn_factor: factor in range of 1 to 255
+ * @stength: strength in range of 0 to 6
+ * @alpha_noise: factor in range of 1 to 255
+*/
+struct sde_hw_noise_layer_cfg {
+	u64 flags;
+	u32 zposn;
+	u32 zposattn;
+	u32 attn_factor;
+	u32 strength;
+	u32 alpha_noise;
+};
 #endif  /* _SDE_HW_MDSS_H */

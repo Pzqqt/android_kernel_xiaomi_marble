@@ -418,6 +418,7 @@ struct sde_crtc {
 enum sde_crtc_dirty_flags {
 	SDE_CRTC_DIRTY_DEST_SCALER,
 	SDE_CRTC_DIRTY_DIM_LAYERS,
+	SDE_CRTC_NOISE_LAYER,
 	SDE_CRTC_DIRTY_MAX,
 };
 
@@ -450,6 +451,8 @@ enum sde_crtc_dirty_flags {
  * @ds_cfg: Destination scaler config
  * @scl3_lut_cfg: QSEED3 lut config
  * @new_perf: new performance state being requested
+ * @noise_layer_en: flag to indicate if noise layer cfg is valid
+ * @drm_msm_noise_layer_cfg: noise layer configuration
  */
 struct sde_crtc_state {
 	struct drm_crtc_state base;
@@ -479,6 +482,8 @@ struct sde_crtc_state {
 	struct sde_hw_scaler3_lut_cfg scl3_lut_cfg;
 
 	struct sde_core_perf_params new_perf;
+	bool noise_layer_en;
+	struct drm_msm_noise_layer_cfg layer_cfg;
 };
 
 enum sde_crtc_irq_state {
