@@ -475,8 +475,14 @@ dp_rx_get_fisa_flow(struct dp_rx_fst *fisa_hdl, struct dp_vdev *vdev,
 
 	flow_idx_valid = is_flow_idx_valid(flow_invalid, flow_timeout);
 	if (flow_idx_valid) {
-		dp_fisa_debug("flow_idx is valid 0x%x", flow_idx);
-		qdf_assert_always(flow_idx < fisa_hdl->max_entries);
+		/* If flow index is invalid, fail to get flow */
+		if (qdf_unlikely(flow_idx >= fisa_hdl->max_entries)) {
+			dp_info("flow_idx is invalid 0x%x", flow_idx);
+			hal_rx_dump_pkt_tlvs(hal_soc_hdl, rx_tlv_hdr,
+					     QDF_TRACE_LEVEL_INFO_HIGH);
+			DP_STATS_INC(fisa_hdl, invalid_flow_index, 1);
+			return NULL;
+		}
 		sw_ft_entry = &sw_ft_base[flow_idx];
 		sw_ft_entry->vdev = vdev;
 
