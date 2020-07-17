@@ -168,13 +168,13 @@ int hif_dummy_bus_configure(struct hif_softc *hif_sc)
  * @config: configuration value to set
  * @config_len: configuration length
  *
- * Return: 0 for success
+ * Return: QDF_STATUS_SUCCESS for success
  */
 QDF_STATUS
 hif_dummy_get_config_item(struct hif_softc *hif_sc,
 		     int opcode, void *config, uint32_t config_len)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

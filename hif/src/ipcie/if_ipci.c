@@ -662,7 +662,7 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 			  __func__, ret);
-		return ret;
+		return qdf_status_from_os_return(ret);
 	}
 
 	sc->dev = dev;
@@ -687,11 +687,10 @@ QDF_STATUS hif_ipci_enable_bus(struct hif_softc *ol_sc,
 
 	if (!ol_sc->mem_pa) {
 		HIF_ERROR("%s: ERROR - BAR0 uninitialized", __func__);
-		ret = -EIO;
 		return QDF_STATUS_E_ABORTED;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 bool hif_ipci_needs_bmi(struct hif_softc *scn)

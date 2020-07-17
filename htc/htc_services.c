@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -106,6 +106,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	uint16_t conn_flags;
 	uint16_t rsp_msg_id, rsp_msg_serv_id, rsp_msg_max_msg_size;
 	uint8_t rsp_msg_status, rsp_msg_end_id, rsp_msg_serv_meta_len;
+	int ret;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 			("+htc_connect_service, target:%pK SvcID:0x%X\n", target,
@@ -350,12 +351,13 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		pEndpoint->EpCallBacks = pConnectReq->EpCallbacks;
 		pEndpoint->async_update = 0;
 
-		status = hif_map_service_to_pipe(target->hif_dev,
-						 pEndpoint->service_id,
-						 &pEndpoint->UL_PipeID,
-						 &pEndpoint->DL_PipeID,
-						 &pEndpoint->ul_is_polled,
-						 &pEndpoint->dl_is_polled);
+		ret = hif_map_service_to_pipe(target->hif_dev,
+					      pEndpoint->service_id,
+					      &pEndpoint->UL_PipeID,
+					      &pEndpoint->DL_PipeID,
+					      &pEndpoint->ul_is_polled,
+					      &pEndpoint->dl_is_polled);
+		status = qdf_status_from_os_return(ret);
 		if (QDF_IS_STATUS_ERROR(status))
 			break;
 

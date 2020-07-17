@@ -1268,11 +1268,31 @@ typedef uint32_t (*ext_intr_handler)(void *, uint32_t);
 int32_t hif_get_int_ctx_irq_num(struct hif_opaque_softc *softc,
 				uint8_t id);
 
-uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
-uint32_t  hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
-		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
-		void *cb_ctx, const char *context_name,
-		enum hif_exec_type type, uint32_t scale);
+/**
+ * hif_configure_ext_group_interrupts() - Congigure ext group intrrupts
+ * @hif_ctx: hif opaque context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
+
+/**
+ * hif_register_ext_group() - API to register external group
+ * interrupt handler.
+ * @hif_ctx : HIF Context
+ * @numirq: number of irq's in the group
+ * @irq: array of irq values
+ * @handler: callback interrupt handler function
+ * @cb_ctx: context to passed in callback
+ * @type: napi vs tasklet
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
+				  uint32_t numirq, uint32_t irq[],
+				  ext_intr_handler handler,
+				  void *cb_ctx, const char *context_name,
+				  enum hif_exec_type type, uint32_t scale);
 
 void hif_deregister_exec_group(struct hif_opaque_softc *hif_ctx,
 				const char *context_name);

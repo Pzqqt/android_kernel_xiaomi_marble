@@ -47,9 +47,9 @@
  *
  * Enables hif device interrupts
  *
- * Return: int
+ * Return: QDF_STATUS
  */
-uint32_t hif_start(struct hif_opaque_softc *hif_ctx)
+QDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
@@ -128,8 +128,8 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
  * hif_map_service_to_pipe() - maps ul/dl pipe to service id.
  * @hif_ctx: HIF hdl
  * @ServiceId: sevice index
- * @ULPipe: uplink pipe id
- * @DLPipe: down-linklink pipe id
+ * @ul_pipe: uplink pipe id
+ * @dl_pipe: down-linklink pipe id
  * @ul_is_polled: if ul is polling based
  * @ul_is_polled: if dl is polling based
  *
@@ -142,21 +142,18 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl,
 {
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_hdl);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;
+	QDF_STATUS status;
 
-	return hif_dev_map_service_to_pipe(hif_device,
-					   service_id, ul_pipe, dl_pipe);
+	status =  hif_dev_map_service_to_pipe(hif_device,
+					      service_id, ul_pipe, dl_pipe);
+	return qdf_status_to_os_return(status);
 }
 
 /**
- * hif_map_service_to_pipe() - maps ul/dl pipe to service id.
+ * hif_get_default_pipe() - get default pipe
  * @scn: HIF context
- * @ServiceId: sevice index
- * @ULPipe: uplink pipe id
- * @DLPipe: down-linklink pipe id
- * @ul_is_polled: if ul is polling based
- * @ul_is_polled: if dl is polling based
- *
- * Return: int
+ * @ul_pipe: uplink pipe id
+ * @dl_pipe: down-linklink pipe id
  */
 void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ul_pipe,
 			  uint8_t *dl_pipe)

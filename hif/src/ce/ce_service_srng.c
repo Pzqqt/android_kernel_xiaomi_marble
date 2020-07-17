@@ -621,7 +621,7 @@ ce_cancel_send_next_srng(struct CE_handle *copyeng,
 		uint32_t *toeplitz_hash_result)
 {
 	struct CE_state *CE_state;
-	int status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct CE_ring_state *src_ring;
 	unsigned int nentries_mask;
 	unsigned int sw_index;

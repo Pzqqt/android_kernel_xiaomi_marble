@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -494,7 +494,7 @@ void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ul_pipe,
  * @ul_is_polled: if ul is polling based
  * @ul_is_polled: if dl is polling based
  *
- * Return: QDF_STATUS_SUCCESS if success else an appropriate QDF_STATUS error
+ * Return: status
  */
 int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 			    uint8_t *ul_pipe, uint8_t *dl_pipe,
@@ -530,7 +530,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 		break;
 	}
 
-	return status;
+	return qdf_status_to_os_return(status);
 }
 #else
 
@@ -549,7 +549,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
  * @ul_is_polled: if ul is polling based
  * @ul_is_polled: if dl is polling based
  *
- * Return: QDF_STATUS_SUCCESS if success else an appropriate QDF_STATUS error
+ * Return: status
  */
 int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 			    uint8_t *ul_pipe, uint8_t *dl_pipe,
@@ -614,7 +614,7 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 		break;
 	}
 
-	return status;
+	return qdf_status_to_os_return(status);
 }
 #endif
 

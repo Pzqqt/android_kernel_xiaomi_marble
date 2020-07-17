@@ -1434,7 +1434,7 @@ static int hif_set_hia(struct hif_softc *scn)
 				 NULL, NULL);
 
 	if (ADRASTEA_BU)
-		return QDF_STATUS_SUCCESS;
+		return 0;
 
 #ifdef QCA_WIFI_3_0
 	i = 0;
@@ -1666,7 +1666,7 @@ static int hif_set_hia(struct hif_softc *scn)
 
 done:
 
-	return rv;
+	return qdf_status_to_os_return(rv);
 }
 
 /**
@@ -3403,7 +3403,7 @@ again:
 			hif_vote_link_up(hif_hdl);
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 
 err_tgtstate:
 	hif_disable_pci(sc);
@@ -3421,7 +3421,7 @@ err_enable_pci:
 		qdf_mdelay(delay_time);
 		goto again;
 	}
-	return ret;
+	return qdf_status_from_os_return(ret);
 }
 
 /**

@@ -710,7 +710,7 @@ void hif_config_irq_set_perf_affinity_hint(
 qdf_export_symbol(hif_config_irq_set_perf_affinity_hint);
 #endif
 
-uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
+QDF_STATUS hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
@@ -840,12 +840,13 @@ void hif_exec_kill(struct hif_opaque_softc *hif_ctx)
  * @cb_ctx: context to passed in callback
  * @type: napi vs tasklet
  *
- * Return: status
+ * Return: QDF_STATUS
  */
-uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
-		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
-		void *cb_ctx, const char *context_name,
-		enum hif_exec_type type, uint32_t scale)
+QDF_STATUS hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
+				  uint32_t numirq, uint32_t irq[],
+				  ext_intr_handler handler,
+				  void *cb_ctx, const char *context_name,
+				  enum hif_exec_type type, uint32_t scale)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
