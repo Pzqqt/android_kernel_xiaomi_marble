@@ -927,7 +927,7 @@ WLAN_CFR_OBJS := $(WLAN_CFR_CORE_DIR)/cfr_common.o \
                 $(WLAN_CFR_DISP_DIR)/wlan_cfr_ucfg_api.o \
                 $(WLAN_CFR_DISP_DIR)/wlan_cfr_utils_api.o \
 		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr.o \
-		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_6018.o \
+		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_enh.o \
 		$(WLAN_COMMON_ROOT)/target_if/cfr/src/target_if_cfr_6490.o
 endif
 ############# UMAC_GREEN_AP ############
