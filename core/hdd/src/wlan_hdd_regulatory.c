@@ -1455,6 +1455,13 @@ static void hdd_restart_sap_with_new_phymode(struct hdd_context *hdd_ctx,
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
 
+	if (!test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
+		sap_config->sap_orig_hw_mode = sap_config->SapHw_mode;
+		sap_config->SapHw_mode = csr_phy_mode;
+		hdd_err("Can't restart AP because it is not started");
+		return;
+	}
+
 	qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 	status = wlansap_stop_bss(sap_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
