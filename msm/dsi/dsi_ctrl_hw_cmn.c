@@ -1072,7 +1072,7 @@ u32 dsi_ctrl_hw_cmn_poll_dma_status(struct dsi_ctrl_hw *ctrl)
 	u32 const delay_us = 10;
 	u32 const timeout_us = 5000;
 
-	rc = readl_poll_timeout_atomic(ctrl->base + DSI_INT_CTRL, status,
+	rc = DSI_READ_POLL_TIMEOUT_ATOMIC(ctrl, DSI_INT_CTRL, status,
 				      ((status & DSI_CMD_MODE_DMA_DONE) > 0), delay_us, timeout_us);
 	if (rc) {
 		DSI_CTRL_HW_DBG(ctrl, "CMD_MODE_DMA_DONE failed\n");
@@ -1776,7 +1776,7 @@ int dsi_ctrl_hw_cmn_wait_for_cmd_mode_mdp_idle(struct dsi_ctrl_hw *ctrl)
 	u32 const sleep_us = 2 * 1000;
 	u32 const timeout_us = 200 * 1000;
 
-	rc = readl_poll_timeout(ctrl->base + DSI_STATUS, val,
+	rc = DSI_READ_POLL_TIMEOUT(ctrl, DSI_STATUS, val,
 			!(val & cmd_mode_mdp_busy_mask), sleep_us, timeout_us);
 	if (rc)
 		DSI_CTRL_HW_ERR(ctrl, "timed out waiting for idle\n");
@@ -1817,7 +1817,7 @@ int dsi_ctrl_hw_cmn_wait4dynamic_refresh_done(struct dsi_ctrl_hw *ctrl)
 	u32 const timeout_us = 84000; /* approximately 5 vsyncs */
 	u32 reg = 0, dyn_refresh_done = BIT(28);
 
-	rc = readl_poll_timeout(ctrl->base + DSI_INT_CTRL, reg,
+	rc = DSI_READ_POLL_TIMEOUT(ctrl, DSI_INT_CTRL, reg,
 				(reg & dyn_refresh_done), sleep_us, timeout_us);
 	if (rc) {
 		DSI_CTRL_HW_ERR(ctrl, "wait4dynamic refresh timedout %d\n", rc);
@@ -1839,7 +1839,7 @@ bool dsi_ctrl_hw_cmn_vid_engine_busy(struct dsi_ctrl_hw *ctrl)
 	u32 const sleep_us = 1000;
 	u32 const timeout_us = 50000;
 
-	rc = readl_poll_timeout(ctrl->base + DSI_STATUS, reg,
+	rc = DSI_READ_POLL_TIMEOUT(ctrl, DSI_STATUS, reg,
 			!(reg & video_engine_busy), sleep_us, timeout_us);
 	if (rc)
 		return true;

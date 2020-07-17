@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/math64.h>
@@ -245,8 +245,8 @@ void dsi_phy_hw_v3_0_enable(struct dsi_phy_hw *phy,
 		DSI_PHY_WARN(phy, "PLL turned on before configuring PHY\n");
 
 	/* wait for REFGEN READY */
-	rc = readl_poll_timeout_atomic(phy->base + DSIPHY_CMN_PHY_STATUS,
-		status, (status & BIT(0)), delay_us, timeout_us);
+	rc = DSI_READ_POLL_TIMEOUT_ATOMIC(phy, DSIPHY_CMN_PHY_STATUS,
+			status, (status & BIT(0)), delay_us, timeout_us);
 	if (rc) {
 		DSI_PHY_ERR(phy, "Ref gen not ready. Aborting\n");
 		return;
@@ -364,7 +364,7 @@ int dsi_phy_hw_v3_0_wait_for_lane_idle(
 
 	DSI_PHY_DBG(phy, "polling for lanes to be in stop state, mask=0x%08x\n",
 		stop_state_mask);
-	rc = readl_poll_timeout(phy->base + DSIPHY_CMN_LANE_STATUS1, val,
+	rc = DSI_READ_POLL_TIMEOUT(phy, DSIPHY_CMN_LANE_STATUS1, val,
 				((val & stop_state_mask) == stop_state_mask),
 				sleep_us, timeout_us);
 	if (rc) {

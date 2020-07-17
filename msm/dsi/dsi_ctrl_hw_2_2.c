@@ -56,7 +56,7 @@ int dsi_ctrl_hw_22_wait_for_lane_idle(struct dsi_ctrl_hw *ctrl,
 
 	DSI_CTRL_HW_DBG(ctrl, "%s: polling for fifo empty, mask=0x%08x\n",
 		__func__, fifo_empty_mask);
-	rc = readl_poll_timeout(ctrl->base + DSI_FIFO_STATUS, val,
+	rc = DSI_READ_POLL_TIMEOUT(ctrl, DSI_FIFO_STATUS, val,
 			(val & fifo_empty_mask), sleep_us, timeout_us);
 	if (rc) {
 		DSI_CTRL_HW_ERR(ctrl,
