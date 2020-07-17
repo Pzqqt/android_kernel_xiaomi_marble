@@ -58,6 +58,7 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
 				    struct rssi_monitor_param *req);
 #endif
 
+#ifdef ROAM_OFFLOAD_V1
 /**
  * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
  *							parameters
@@ -71,7 +72,23 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 		wmi_unified_t wmi_handle,
+		struct wlan_roam_offload_scan_rssi_params *roam_req);
+#else
+/**
+ * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
+ *                                                      parameters
+ * @wmi_handle: wmi handle
+ * @roam_req: roam rssi related parameters
+ *
+ * This function reads the incoming @roam_req and fill in the destination
+ * WMI structure and send down the roam scan rssi configs down to the firmware
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
+		wmi_unified_t wmi_handle,
 		struct roam_offload_scan_rssi_params *roam_req);
+#endif
 
 /**
  * wmi_unified_roam_mawc_params_cmd() - configure roaming MAWC parameters

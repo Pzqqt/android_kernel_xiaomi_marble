@@ -209,65 +209,6 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 		uint8_t outputNumOfChannels,
 		uint8_t *pMergedOutputNumOfChannels);
 void csr_roam_reset_roam_params(struct mac_context *mac_ptr);
-#define ROAM_SCAN_OFFLOAD_START                     1
-#define ROAM_SCAN_OFFLOAD_STOP                      2
-#define ROAM_SCAN_OFFLOAD_RESTART                   3
-#define ROAM_SCAN_OFFLOAD_UPDATE_CFG                4
-#define ROAM_SCAN_OFFLOAD_ABORT_SCAN                5
-
-#define REASON_CONNECT                              1
-#define REASON_CHANNEL_LIST_CHANGED                 2
-#define REASON_LOOKUP_THRESH_CHANGED                3
-#define REASON_DISCONNECTED                         4
-#define REASON_RSSI_DIFF_CHANGED                    5
-#define REASON_ESE_INI_CFG_CHANGED                  6
-#define REASON_NEIGHBOR_SCAN_REFRESH_PERIOD_CHANGED 7
-#define REASON_VALID_CHANNEL_LIST_CHANGED           8
-#define REASON_FLUSH_CHANNEL_LIST                   9
-#define REASON_EMPTY_SCAN_REF_PERIOD_CHANGED        10
-#define REASON_PREAUTH_FAILED_FOR_ALL               11
-#define REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW     12
-#define REASON_NPROBES_CHANGED                      13
-#define REASON_HOME_AWAY_TIME_CHANGED               14
-#define REASON_OS_REQUESTED_ROAMING_NOW             15
-#define REASON_SCAN_CH_TIME_CHANGED                 16
-#define REASON_SCAN_HOME_TIME_CHANGED               17
-#define REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED    18
-#define REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED        19
-#define REASON_ROAM_BMISS_FIRST_BCNT_CHANGED        20
-#define REASON_ROAM_BMISS_FINAL_BCNT_CHANGED        21
-#define REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED      22
-#define REASON_ROAM_DFS_SCAN_MODE_CHANGED           23
-#define REASON_ROAM_ABORT_ROAM_SCAN                 24
-#define REASON_ROAM_EXT_SCAN_PARAMS_CHANGED         25
-#define REASON_ROAM_SET_SSID_ALLOWED                26
-#define REASON_ROAM_SET_FAVORED_BSSID               27
-#define REASON_ROAM_GOOD_RSSI_CHANGED               28
-#define REASON_ROAM_SET_BLACKLIST_BSSID             29
-#define REASON_ROAM_SCAN_HI_RSSI_MAXCOUNT_CHANGED   30
-#define REASON_ROAM_SCAN_HI_RSSI_DELTA_CHANGED      31
-#define REASON_ROAM_SCAN_HI_RSSI_DELAY_CHANGED      32
-#define REASON_ROAM_SCAN_HI_RSSI_UB_CHANGED         33
-#define REASON_CONNECT_IES_CHANGED                  34
-#define REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED    35
-#define REASON_ROAM_SYNCH_FAILED                    36
-#define REASON_ROAM_PSK_PMK_CHANGED                 37
-#define REASON_ROAM_STOP_ALL                        38
-#define REASON_SUPPLICANT_DISABLED_ROAMING          39
-#define REASON_CTX_INIT                             40
-#define REASON_FILS_PARAMS_CHANGED                  41
-#define REASON_SME_ISSUED                           42
-#define REASON_DRIVER_ENABLED                       43
-#define REASON_ROAM_FULL_SCAN_PERIOD_CHANGED        44
-#define REASON_SCORING_CRITERIA_CHANGED             45
-#define REASON_SUPPLICANT_INIT_ROAMING              46
-#define REASON_SUPPLICANT_DE_INIT_ROAMING           47
-#define REASON_DRIVER_DISABLED                      48
-#define REASON_ROAM_CONTROL_CONFIG_CHANGED          49
-#define REASON_ROAM_CONTROL_CONFIG_ENABLED          50
-#define REASON_ROAM_CANDIDATE_FOUND                 51
-#define REASON_ROAM_HANDOFF_DONE                    52
-#define REASON_ROAM_ABORT                           53
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(struct mac_context *mac, uint8_t sessionId,

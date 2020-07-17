@@ -18557,6 +18557,7 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 static QDF_STATUS
 csr_roam_switch_to_init(struct mac_context *mac, uint8_t vdev_id,
 			uint8_t reason)
@@ -18961,6 +18962,19 @@ csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 {
 	return csr_handle_roam_state_change(mac, vdev_id, state, reason);
 }
+#else
+QDF_STATUS
+csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
+			   enum roam_offload_state state, uint8_t reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (state == WLAN_ROAM_RSO_ENABLED)
+		status = wlan_cm_start_roaming(mac->pdev, vdev_id, reason);
+
+	return status;
+}
+#endif
 
 /**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
@@ -19249,6 +19263,284 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 
 	return status;
 }
+
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+QDF_STATUS wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    uint8_t command,
+				    uint8_t reason)
+{
+	uint8_t *state = NULL;
+	struct csr_roam_session *session;
+	struct mac_context *mac_ctx;
+	tpCsrNeighborRoamControlInfo roam_info;
+	enum csr_akm_type roam_profile_akm = eCSR_AUTH_TYPE_UNKNOWN;
+	uint32_t fw_akm_bitmap;
+	bool p2p_disable_sta_roaming = 0, nan_disable_sta_roaming = 0;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sme_debug("RSO Command %d, vdev %d, Reason %d",
+		  command, vdev_id, reason);
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "session is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	roam_info = &mac_ctx->roam.neighborRoamInfo[vdev_id];
+
+	if (roam_info->neighborRoamState !=
+	    eCSR_NEIGHBOR_ROAM_STATE_CONNECTED &&
+	    (command == ROAM_SCAN_OFFLOAD_UPDATE_CFG ||
+	     command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_RESTART)) {
+		sme_debug("Session not in connected state, RSO not sent and state=%d ",
+			  roam_info->neighborRoamState);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (session->pCurRoamProfile)
+		roam_profile_akm =
+			session->pCurRoamProfile->AuthType.authType[0];
+	else
+		sme_info("Roam profile is NULL");
+
+	if (CSR_IS_AKM_FILS(roam_profile_akm) &&
+	    !mac_ctx->is_fils_roaming_supported) {
+		sme_info("FILS Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (!csr_is_adaptive_11r_roam_supported(mac_ctx, session)) {
+		sme_info("Adaptive 11r Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	fw_akm_bitmap = mac_ctx->mlme_cfg->lfr.fw_akm_bitmap;
+	/* Roaming is not supported currently for OWE akm */
+	if (roam_profile_akm == eCSR_AUTH_TYPE_OWE &&
+	    !CSR_IS_FW_OWE_ROAM_SUPPORTED(fw_akm_bitmap)) {
+		sme_info("OWE Roaming not suppprted by fw");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/* Roaming is not supported for SAE authentication */
+	if (CSR_IS_AUTH_TYPE_SAE(roam_profile_akm) &&
+	    !CSR_IS_FW_SAE_ROAM_SUPPORTED(fw_akm_bitmap)) {
+		sme_info("Roaming not suppprted for SAE connection");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if ((roam_profile_akm == eCSR_AUTH_TYPE_SUITEB_EAP_SHA256 ||
+	     roam_profile_akm == eCSR_AUTH_TYPE_SUITEB_EAP_SHA384) &&
+	     !CSR_IS_FW_SUITEB_ROAM_SUPPORTED(fw_akm_bitmap)) {
+		sme_info("Roaming not supported for SUITEB connection");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/*
+	 * If fw doesn't advertise FT SAE, FT-FILS or FT-Suite-B capability,
+	 * don't support roaming to that profile
+	 */
+	if (CSR_IS_AKM_FT_SAE(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_SAE_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT SAE akm");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+	}
+
+	if (CSR_IS_AKM_FT_SUITEB_SHA384(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_SUITEB_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT Suite-B akm");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+	}
+
+	if (CSR_IS_AKM_FT_FILS(roam_profile_akm)) {
+		if (!CSR_IS_FW_FT_FILS_SUPPORTED(fw_akm_bitmap)) {
+			sme_info("Roaming not suppprted for FT FILS akm");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+	}
+
+	p2p_disable_sta_roaming =
+		(cfg_p2p_is_roam_config_disabled(psoc) &&
+		(policy_mgr_mode_specific_connection_count(
+					psoc, PM_P2P_CLIENT_MODE, NULL) ||
+		policy_mgr_mode_specific_connection_count(
+					psoc, PM_P2P_GO_MODE, NULL)));
+	nan_disable_sta_roaming =
+	    (cfg_nan_is_roam_config_disabled(psoc) &&
+	    policy_mgr_mode_specific_connection_count(psoc, PM_NDI_MODE, NULL));
+
+	if ((command == ROAM_SCAN_OFFLOAD_START ||
+	     command == ROAM_SCAN_OFFLOAD_UPDATE_CFG) &&
+	     (p2p_disable_sta_roaming || nan_disable_sta_roaming)) {
+		sme_info("roaming not supported for active %s connection",
+			 p2p_disable_sta_roaming ? "p2p" : "ndi");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * The Dynamic Config Items Update may happen even if the state is in
+	 * INIT. It is important to ensure that the command is passed down to
+	 * the FW only if the Infra Station is in a connected state. A connected
+	 * station could also be in a PREAUTH or REASSOC states.
+	 * 1) Block all CMDs that are not STOP in INIT State. For STOP always
+	 *    inform firmware irrespective of state.
+	 * 2) Block update cfg CMD if its for REASON_ROAM_SET_BLACKLIST_BSSID,
+	 *    because we need to inform firmware of blacklisted AP for PNO in
+	 *    all states.
+	 */
+	if ((roam_info->neighborRoamState == eCSR_NEIGHBOR_ROAM_STATE_INIT) &&
+	    (command != ROAM_SCAN_OFFLOAD_STOP) &&
+	    (reason != REASON_ROAM_SET_BLACKLIST_BSSID)) {
+		state = mac_trace_get_neighbour_roam_state(
+				roam_info->neighborRoamState);
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  FL("Scan Command not sent to FW state=%s and cmd=%d"),
+			  state,  command);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_cm_roam_scan_offload_rssi_thresh() - set roam offload scan rssi
+ * parameters
+ * @mac_ctx: global mac ctx
+ * @session: csr roam session
+ * @params:  roam offload scan rssi related parameters
+ *
+ * This function is used to set roam offload scan rssi related parameters
+ *
+ * Return: None
+ */
+static void wlan_cm_roam_scan_offload_rssi_thresh(
+			struct mac_context *mac_ctx,
+			struct csr_roam_session *session,
+			struct wlan_roam_offload_scan_rssi_params *params)
+{
+	struct roam_ext_params *roam_params;
+		tpCsrNeighborRoamControlInfo roam_info =
+		&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
+
+	roam_params = &mac_ctx->roam.configParam.roam_params;
+
+	if (roam_params->alert_rssi_threshold)
+		params->rssi_thresh = roam_params->alert_rssi_threshold;
+	else
+		params->rssi_thresh =
+			(int8_t)roam_info->cfgParams.neighborLookupThreshold *
+			(-1);
+
+	params->vdev_id = session->vdev_id;
+	params->rssi_thresh_diff =
+		roam_info->cfgParams.nOpportunisticThresholdDiff & 0x000000ff;
+	params->hi_rssi_scan_max_count =
+		roam_info->cfgParams.hi_rssi_scan_max_count;
+	/*
+	 * If the current operation channel is 5G frequency band, then
+	 * there is no need to enable the HI_RSSI feature. This feature
+	 * is useful only if we are connected to a 2.4 GHz AP and we wish
+	 * to connect to a better 5GHz AP is available.
+	 */
+	if (session->disable_hi_rssi)
+		params->hi_rssi_scan_rssi_delta = 0;
+	else
+		params->hi_rssi_scan_rssi_delta =
+			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
+	params->hi_rssi_scan_rssi_ub =
+		roam_info->cfgParams.hi_rssi_scan_rssi_ub;
+	params->raise_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_boost_threshold_5g;
+	params->dense_rssi_thresh_offset =
+		mac_ctx->mlme_cfg->lfr.roam_dense_rssi_thre_offset;
+	params->dense_min_aps_cnt = mac_ctx->mlme_cfg->lfr.roam_dense_min_aps;
+	params->traffic_threshold =
+			mac_ctx->mlme_cfg->lfr.roam_dense_traffic_threshold;
+
+	/* Set initial dense roam status */
+	if (mac_ctx->scan.roam_candidate_count[params->vdev_id] >
+	    params->dense_min_aps_cnt)
+		params->initial_dense_status = true;
+
+	params->bg_scan_bad_rssi_thresh =
+		mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_threshold;
+
+	params->bg_scan_client_bitmap =
+		mac_ctx->mlme_cfg->lfr.roam_bg_scan_client_bitmap;
+	params->roam_bad_rssi_thresh_offset_2g =
+			mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_offset_2g;
+
+	params->drop_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_penalize_threshold_5g;
+
+	params->raise_factor_5g = mac_ctx->mlme_cfg->lfr.rssi_boost_factor_5g;
+	params->drop_factor_5g = mac_ctx->mlme_cfg->lfr.rssi_penalize_factor_5g;
+	params->max_raise_rssi_5g = mac_ctx->mlme_cfg->lfr.max_rssi_boost_5g;
+	params->max_drop_rssi_5g = mac_ctx->mlme_cfg->lfr.max_rssi_penalize_5g;
+
+	if (roam_params->good_rssi_roam)
+		params->good_rssi_threshold = NOISE_FLOOR_DBM_DEFAULT;
+	else
+		params->good_rssi_threshold = 0;
+
+	params->early_stop_scan_enable =
+		mac_ctx->mlme_cfg->lfr.early_stop_scan_enable;
+	if (params->early_stop_scan_enable) {
+		params->roam_earlystop_thres_min =
+			mac_ctx->mlme_cfg->lfr.early_stop_scan_min_threshold;
+		params->roam_earlystop_thres_max =
+			mac_ctx->mlme_cfg->lfr.early_stop_scan_max_threshold;
+	}
+
+	params->rssi_thresh_offset_5g =
+		roam_info->cfgParams.rssi_thresh_offset_5g;
+}
+
+QDF_STATUS
+wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id,
+			    struct wlan_roam_start_config *req,
+			    uint8_t reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct csr_roam_session *session;
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "session is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_cm_roam_scan_offload_rssi_thresh(mac_ctx,
+					      session,
+					      &req->rssi_params);
+
+	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
+
+	return status;
+}
+#endif
+#endif
 
 QDF_STATUS
 csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,

@@ -25,6 +25,73 @@
 #include "wlan_mlme_main.h"
 #include "wlan_policy_mgr_api.h"
 #include <wmi_unified_priv.h>
+#include "../../core/src/wlan_cm_roam_offload.h"
+
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+QDF_STATUS
+wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id)
+{
+	uint32_t op_ch_freq_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t sta_vdev_id = WLAN_INVALID_VDEV_ID;
+	uint32_t count;
+	uint32_t idx;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	sta_vdev_id = policy_mgr_get_roam_enabled_sta_session_id(psoc, vdev_id);
+	if (sta_vdev_id != WLAN_UMAC_VDEV_ID_MAX)
+		return QDF_STATUS_E_FAILURE;
+
+	count = policy_mgr_get_mode_specific_conn_info(psoc,
+						       op_ch_freq_list,
+						       vdev_id_list,
+						       PM_STA_MODE);
+
+	if (!count)
+		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * Loop through all connected STA vdevs and roaming will be enabled
+	 * on the STA that has a different vdev id from the one passed as
+	 * input and has non zero roam trigger value.
+	 */
+	for (idx = 0; idx < count; idx++) {
+		if (vdev_id_list[idx] != vdev_id &&
+		    mlme_get_roam_trigger_bitmap(psoc, vdev_id_list[idx])) {
+			sta_vdev_id = vdev_id_list[idx];
+			break;
+		}
+	}
+
+	if (sta_vdev_id == WLAN_INVALID_VDEV_ID)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_debug("ROAM: Enabling roaming on vdev[%d]", sta_vdev_id);
+
+	return cm_roam_state_change(pdev,
+				    sta_vdev_id,
+				    WLAN_ROAM_RSO_ENABLED,
+				    REASON_CTX_INIT);
+}
+
+QDF_STATUS wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
+				 uint8_t vdev_id, uint8_t reason)
+{
+	return cm_roam_state_change(pdev, vdev_id,
+				    WLAN_ROAM_RSO_ENABLED, reason);
+}
+
+QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id,
+				     uint8_t rso_command,
+				     uint8_t reason)
+{
+	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
+}
+#endif
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS

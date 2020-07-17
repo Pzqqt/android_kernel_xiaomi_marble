@@ -46,6 +46,18 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_RSSI_MONITOR */
 
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
+		wmi_unified_t wmi_handle,
+		struct wlan_roam_offload_scan_rssi_params *roam_req)
+{
+	if (wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd(
+				wmi_handle, roam_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#else
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 		wmi_unified_t wmi_handle,
 		struct roam_offload_scan_rssi_params *roam_req)
@@ -56,6 +68,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 QDF_STATUS wmi_unified_roam_mawc_params_cmd(
 			wmi_unified_t wmi_handle,
