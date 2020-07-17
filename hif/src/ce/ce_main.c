@@ -1168,8 +1168,10 @@ static void hif_prepare_hal_shadow_register_cfg(struct hif_softc *scn,
 		int *num_shadow_registers_configured) {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
-	return hif_state->ce_services->ce_prepare_shadow_register_v2_cfg(
+	hif_state->ce_services->ce_prepare_shadow_register_v2_cfg(
 			scn, shadow_config, num_shadow_registers_configured);
+
+	return;
 }
 
 static inline uint32_t ce_get_desc_size(struct hif_softc *scn,

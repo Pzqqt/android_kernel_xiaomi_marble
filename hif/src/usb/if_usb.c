@@ -188,7 +188,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 {
 	struct usb_interface *interface = (struct usb_interface *)bdev;
 	struct usb_device_id *id = (struct usb_device_id *)bid;
-	int ret = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct hif_usb_softc *sc;
 	struct usb_device *usbdev = interface_to_usbdev(interface);
 	int vendor_id, product_id;
@@ -263,7 +263,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 	hif_usb_unload_dev_num = usbdev->devnum;
 	g_usb_sc = sc;
 	HIF_EXIT();
-	return 0;
+	return QDF_STATUS_SUCCESS;
 
 err_reset:
 	hif_usb_diag_write_cold_reset(scn);

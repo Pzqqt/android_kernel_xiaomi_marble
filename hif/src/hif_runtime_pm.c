@@ -1077,7 +1077,9 @@ void hif_pm_runtime_mark_last_busy(struct hif_opaque_softc *hif_ctx)
 	rpm_ctx->pm_stats.last_busy_marker = (void *)_RET_IP_;
 	rpm_ctx->pm_stats.last_busy_timestamp = qdf_get_log_timestamp_usecs();
 
-	return pm_runtime_mark_last_busy(hif_bus_get_dev(scn));
+	pm_runtime_mark_last_busy(hif_bus_get_dev(scn));
+
+	return;
 }
 
 /**

@@ -276,7 +276,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 				__func__, ret);
-		return ret;
+		return qdf_status_from_os_return(ret);
 	}
 
 	ret = qdf_device_init_wakeup(ol_sc->qdf_dev, true);
@@ -286,7 +286,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 	else if (ret) {
 		HIF_ERROR("%s: device_init_wakeup: err= %d",
 				__func__, ret);
-		return ret;
+		return qdf_status_from_os_return(ret);
 	}
 
 	ret = hif_snoc_get_target_type(ol_sc, dev, bdev, bid,

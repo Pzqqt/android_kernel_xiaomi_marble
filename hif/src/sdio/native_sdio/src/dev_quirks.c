@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -403,9 +403,10 @@ static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
  * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
- * Return: 0 on success, error number otherwise.
+ * Return: QDF_STATUS
  */
-int hif_sdio_set_bus_speed(struct hif_softc *ol_sc, struct sdio_func *func)
+QDF_STATUS hif_sdio_set_bus_speed(struct hif_softc *ol_sc,
+				  struct sdio_func *func)
 {
 	uint32_t clock, clock_set = 12500000;
 	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
@@ -414,7 +415,7 @@ int hif_sdio_set_bus_speed(struct hif_softc *ol_sc, struct sdio_func *func)
 	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
 	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
-		return 0;
+		return QDF_STATUS_SUCCESS;
 
 	if (mmcclock > 0)
 		clock_set = mmcclock;
@@ -442,31 +443,33 @@ int hif_sdio_set_bus_speed(struct hif_softc *ol_sc, struct sdio_func *func)
 				&device->host->ios);
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
- * hif_set_bus_width() - Set the sdio bus width
+ * hif_sdio_set_bus_width() - Set the sdio bus width
  * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
- * Return: 0 on success, error number otherwise.
+ * Return: QDF_STATUS
  */
-int hif_sdio_set_bus_width(struct hif_softc *ol_sc, struct sdio_func *func)
+QDF_STATUS hif_sdio_set_bus_width(struct hif_softc *ol_sc,
+				  struct sdio_func *func)
 {
 	int ret = 0;
 	uint16_t manfid;
 	uint8_t data = 0;
 	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
 	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
-		return ret;
+		return status;
 
 #if KERNEL_VERSION(3, 4, 0) <= LINUX_VERSION_CODE
 	if (mmcbuswidth == 0)
-		return ret;
+		return status;
 
 	/* Set MMC Bus Width: 1-1Bit, 4-4Bit, 8-8Bit */
 	if (mmcbuswidth == 1) {
@@ -504,12 +507,16 @@ int hif_sdio_set_bus_width(struct hif_softc *ol_sc, struct sdio_func *func)
 	} else {
 		HIF_ERROR("%s: Unsupported bus width %d",
 			  __func__, mmcbuswidth);
-		ret = QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
 	}
 
+	status = qdf_status_from_os_return(ret);
+
+out:
 	HIF_INFO("%s: Bus with : %d\n",  __func__, mmcbuswidth);
 #endif
-	return ret;
+	return status;
 }
 
 
@@ -666,7 +673,7 @@ QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
 	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
-		return 0;
+		return QDF_STATUS_SUCCESS;
 
 	sdio_claim_host(func);
 

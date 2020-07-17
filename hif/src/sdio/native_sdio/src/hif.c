@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -277,15 +277,16 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
  * @func: SDIO function context
  * @device: pointer to hif handle
  *
- * Return: 0 for success and non-zero for failure
+ * Return: QDF_STATUS
  */
-A_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
-			struct sdio_func *func,
-			struct hif_sdio_dev *device)
+QDF_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
+			  struct sdio_func *func,
+			  struct hif_sdio_dev *device)
 {
 	int ret = 0;
 	const struct sdio_device_id *id;
 	uint32_t target_type;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	HIF_ENTER();
 	scn = (struct hif_sdio_softc *)ol_sc;
@@ -357,19 +358,19 @@ A_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
 	}
 
 	if (athdiag_procfs_init(scn) != 0) {
-		ret = QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		goto err_attach1;
 	}
 
 	ret = hif_dev_register_channels(device, func);
 
-	return ret;
+	return qdf_status_from_os_return(ret);
 
 err_attach1:
 	if (scn->ramdump_base)
 		pld_hif_sdio_release_ramdump_mem(scn->ramdump_base);
 	scn = NULL;
-	return ret;
+	return status;
 }
 
 /**
@@ -567,13 +568,14 @@ void hif_sdio_shutdown(struct hif_softc *hif_ctx)
  * @func: pointer to sdio_func
  * @id: pointer to sdio_device_id
  *
- * Return: 0 on success, error number otherwise.
+ * Return: QDF_STATUS
  */
-static int hif_device_inserted(struct hif_softc *ol_sc,
-			       struct sdio_func *func,
-			       const struct sdio_device_id *id)
+static QDF_STATUS hif_device_inserted(struct hif_softc *ol_sc,
+				      struct sdio_func *func,
+				      const struct sdio_device_id *id)
 {
-	int i, ret = 0, count;
+	int i, count;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct hif_sdio_dev *device = NULL;
 
 	HIF_INFO("%s: F%X, VID: 0x%X, DevID: 0x%X, block size: 0x%X/0x%X\n",
@@ -665,7 +667,7 @@ static int hif_device_inserted(struct hif_softc *ol_sc,
 
 	ret = hif_enable_func(ol_sc, device, func, false);
 	if ((ret == QDF_STATUS_SUCCESS || ret == QDF_STATUS_E_PENDING))
-		return 0;
+		return QDF_STATUS_SUCCESS;
 	ret = QDF_STATUS_E_FAILURE;
 del_hif_dev:
 	del_hif_device(device);
@@ -1078,12 +1080,12 @@ void hif_dump_cccr(struct hif_sdio_dev *hif_device)
 	HIF_ERROR("%s: Exit", __func__);
 }
 
-int hif_sdio_device_inserted(struct hif_softc *ol_sc,
-			     struct device *dev,
-			     const struct sdio_device_id *id)
+QDF_STATUS hif_sdio_device_inserted(struct hif_softc *ol_sc,
+				    struct device *dev,
+				    const struct sdio_device_id *id)
 {
 	struct sdio_func *func = dev_to_sdio_func(dev);
-	int status = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	HIF_ERROR("%s: Enter", __func__);
 	status = hif_device_inserted(ol_sc, func, id);

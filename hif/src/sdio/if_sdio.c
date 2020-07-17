@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -159,7 +159,6 @@ QDF_STATUS hif_sdio_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 			       void *bdev, const struct hif_bus_id *bid,
 			       enum hif_enable_type type)
 {
-	int ret = 0;
 	const struct sdio_device_id *id = (const struct sdio_device_id *)bid;
 
 	if (hif_sdio_device_inserted(ol_sc, dev, id)) {
@@ -167,7 +166,7 @@ QDF_STATUS hif_sdio_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	return ret;
+	return QDF_STATUS_SUCCESS;
 }
 
 

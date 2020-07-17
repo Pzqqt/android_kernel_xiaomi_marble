@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,9 +78,19 @@ int ath_sdio_resume(void *context);
 void hif_init_qdf_ctx(qdf_device_t qdf_dev, void *ol_sc);
 void hif_deinit_qdf_ctx(void *ol_sc);
 
-int hif_sdio_device_inserted(struct hif_softc *ol_sc,
-			     struct device *dev,
-			     const struct sdio_device_id *id);
+/**
+ * hif_sdio_device_inserted() - Wrapper function for hif-sdio driver probe
+ * handler
+ * @ol_sc: HIF device context
+ * @dev: pointer to device structure
+ * @id: pointer to sdio_device_id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hif_sdio_device_inserted(struct hif_softc *ol_sc,
+				    struct device *dev,
+				    const struct sdio_device_id *id);
+
 void hif_sdio_stop(struct hif_softc *hif_ctx);
 void hif_sdio_shutdown(struct hif_softc *hif_ctx);
 void hif_sdio_device_removed(struct hif_softc *hif_ctx, struct sdio_func *func);

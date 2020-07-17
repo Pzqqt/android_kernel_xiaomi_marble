@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1563,10 +1563,10 @@ hif_read_write(struct hif_sdio_dev *device,
  * @device: HIF device object
  * @func: function pointer
  *
- * Return success or failure
+ * Return QDF_STATUS
  */
-static int hif_sdio_func_enable(struct hif_softc *ol_sc,
-				struct sdio_func *func)
+static QDF_STATUS hif_sdio_func_enable(struct hif_softc *ol_sc,
+				       struct sdio_func *func)
 {
 	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
 
@@ -1611,7 +1611,7 @@ static int hif_sdio_func_enable(struct hif_softc *ol_sc,
 		sdio_release_host(func);
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1941,7 +1941,7 @@ QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
 QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 			   struct sdio_func *func, bool resume)
 {
-	int ret = QDF_STATUS_SUCCESS;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	HIF_ENTER();
 

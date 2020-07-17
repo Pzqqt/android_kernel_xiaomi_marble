@@ -426,8 +426,9 @@ static inline void hif_record_event(struct hif_opaque_softc *hif_ctx,
 	event.tp = tp;
 	event.type = type;
 
-	return hif_hist_record_event(hif_ctx, &event,
-				     intr_grp_id);
+	hif_hist_record_event(hif_ctx, &event, intr_grp_id);
+
+	return;
 }
 
 #else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -344,7 +344,7 @@ QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
 QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
 			   struct sdio_func *func, bool resume)
 {
-	int ret = QDF_STATUS_SUCCESS;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if (!device) {
 		HIF_ERROR("%s: HIF device is NULL", __func__);
