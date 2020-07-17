@@ -128,7 +128,6 @@ static struct dfc_qmi_data __rcu *qmap_dfc_data;
 static atomic_t qmap_txid;
 static void *rmnet_ctl_handle;
 
-extern struct rmnet_ctl_client_if rmnet_ctl_if;
 static struct rmnet_ctl_client_if *rmnet_ctl;
 
 static void dfc_qmap_send_end_marker_cnf(struct qos_info *qos,
@@ -504,7 +503,7 @@ int dfc_qmap_client_init(void *port, int index, struct svc_info *psvc,
 
 	atomic_set(&qmap_txid, 0);
 
-	rmnet_ctl = symbol_get(rmnet_ctl_if);
+	rmnet_ctl = rmnet_ctl_if();
 	if (!rmnet_ctl) {
 		pr_err("rmnet_ctl module not loaded\n");
 		goto out;
@@ -547,11 +546,7 @@ void dfc_qmap_client_exit(void *dfc_data)
 	synchronize_rcu();
 
 	kfree(data);
-
-	if (rmnet_ctl) {
-		symbol_put(rmnet_ctl_if);
-		rmnet_ctl = NULL;
-	}
+	rmnet_ctl = NULL;
 
 	pr_info("DFC QMAP exit\n");
 }
