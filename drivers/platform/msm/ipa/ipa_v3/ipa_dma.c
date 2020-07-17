@@ -10,10 +10,11 @@
 #include <linux/kernel.h>
 #include <linux/msm_ipa.h>
 #include <linux/mutex.h>
-#include <linux/ipa.h>
-#include <linux/msm_gsi.h>
+#include "ipa.h"
+#include "msm_gsi.h"
 #include <linux/dmapool.h>
 #include "ipa_i.h"
+#include "gsi.h"
 
 #define IPA_DMA_POLLING_MIN_SLEEP_RX 1010
 #define IPA_DMA_POLLING_MAX_SLEEP_RX 1050

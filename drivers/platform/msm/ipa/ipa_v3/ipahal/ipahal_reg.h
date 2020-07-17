@@ -6,7 +6,7 @@
 #ifndef _IPAHAL_REG_H_
 #define _IPAHAL_REG_H_
 
-#include <linux/ipa.h>
+#include "ipa.h"
 
 /*
  * Registers names

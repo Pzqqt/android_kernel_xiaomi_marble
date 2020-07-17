@@ -5,15 +5,16 @@
 
 #ifndef _IPA_COMMON_I_H_
 #define _IPA_COMMON_I_H_
-#include <linux/ipa_mhi.h>
+#include "ipa_mhi.h"
 #include <linux/ipa_qmi_service_v01.h>
 #include <linux/errno.h>
 #include <linux/ipc_logging.h>
-#include <linux/ipa.h>
-#include <linux/ipa_uc_offload.h>
-#include <linux/ipa_wdi3.h>
-#include <linux/ipa_wigig.h>
+#include "ipa.h"
+#include "ipa_uc_offload.h"
+#include "ipa_wdi3.h"
+#include "ipa_wigig.h"
 #include <linux/ratelimit.h>
+#include "gsi.h"
 
 #define WARNON_RATELIMIT_BURST 1
 #define IPA_RATELIMIT_BURST 1
@@ -344,6 +345,102 @@ struct ipa_hdr_offset_entry {
 	bool ipacm_installed;
 };
 
+/**
+ * enum teth_tethering_mode - Tethering mode (Rmnet / MBIM)
+ */
+enum teth_tethering_mode {
+	TETH_TETHERING_MODE_RMNET,
+	TETH_TETHERING_MODE_MBIM,
+	TETH_TETHERING_MODE_MAX,
+};
+
+/**
+ * teth_bridge_init_params - Parameters used for in/out USB API
+ * @usb_notify_cb:	Callback function which should be used by the caller.
+ * Output parameter.
+ * @private_data:	Data for the callback function. Should be used by the
+ * caller. Output parameter.
+ * @skip_ep_cfg: boolean field that determines if Apps-processor
+ *  should or should not confiugre this end-point.
+ */
+struct teth_bridge_init_params {
+	ipa_notify_cb usb_notify_cb;
+	void *private_data;
+	enum ipa_client_type client;
+	bool skip_ep_cfg;
+};
+
+/**
+ * struct teth_bridge_connect_params - Parameters used in teth_bridge_connect()
+ * @ipa_usb_pipe_hdl:	IPA to USB pipe handle, returned from ipa_connect()
+ * @usb_ipa_pipe_hdl:	USB to IPA pipe handle, returned from ipa_connect()
+ * @tethering_mode:	Rmnet or MBIM
+ * @ipa_client_type:    IPA "client" name (IPA_CLIENT_USB#_PROD)
+ */
+struct teth_bridge_connect_params {
+	u32 ipa_usb_pipe_hdl;
+	u32 usb_ipa_pipe_hdl;
+	enum teth_tethering_mode tethering_mode;
+	enum ipa_client_type client_type;
+};
+
+/**
+ * struct IpaOffloadStatschannel_info - channel info for uC
+ * stats
+ * @dir: Direction of the channel ID DIR_CONSUMER =0,
+ * DIR_PRODUCER = 1
+ * @ch_id: GSI ch_id of the IPA endpoint for which stats need
+ * to be calculated, 0xFF means invalid channel or disable stats
+ * on already stats enabled channel
+ */
+struct IpaOffloadStatschannel_info {
+	u8 dir;
+	u8 ch_id;
+} __packed;
+
+/**
+ * struct IpaHwOffloadStatsAllocCmdData_t - protocol info for uC
+ * stats start
+ * @protocol: Enum that indicates the protocol type
+ * @ch_id_info: GSI ch_id and dir of the IPA endpoint for which stats
+ * need to be calculated
+ */
+struct IpaHwOffloadStatsAllocCmdData_t {
+	u32 protocol;
+	struct IpaOffloadStatschannel_info
+		ch_id_info[IPA_MAX_CH_STATS_SUPPORTED];
+} __packed;
+
+/**
+ * struct ipa_uc_dbg_ring_stats - uC dbg stats info for each
+ * offloading protocol
+ * @ring: ring stats for each channel
+ * @ch_num: number of ch supported for given protocol
+ */
+struct ipa_uc_dbg_ring_stats {
+	struct IpaHwRingStats_t ring[IPA_MAX_CH_STATS_SUPPORTED];
+	u8 num_ch;
+};
+
+/**
+ * struct ipa_tz_unlock_reg_info - Used in order unlock regions of memory by TZ
+ * @reg_addr - Physical address of the start of the region
+ * @size - Size of the region in bytes
+ */
+struct ipa_tz_unlock_reg_info {
+	u64 reg_addr;
+	u64 size;
+};
+
+/**
+ * struct ipa_tx_suspend_irq_data - interrupt data for IPA_TX_SUSPEND_IRQ
+ * @endpoints: bitmask of endpoints which case IPA_TX_SUSPEND_IRQ interrupt
+ * @dma_addr: DMA address of this Rx packet
+ */
+struct ipa_tx_suspend_irq_data {
+	u32 endpoints;
+};
+
 extern const char *ipa_clients_strings[];
 
 #define IPA_IPC_LOGGING(buf, fmt, args...) \
@@ -562,13 +659,13 @@ int ipa_commit_rt(enum ipa_ip_type ip);
 
 int ipa_reset_rt(enum ipa_ip_type ip, bool user_only);
 
-int ipa_get_rt_tbl(struct ipa_ioc_get_rt_tbl *lookup);
-
 int ipa_query_rt_index(struct ipa_ioc_get_rt_tbl_indx *in);
 
 int ipa_mdfy_rt_rule(struct ipa_ioc_mdfy_rt_rule *rules);
 
 int ipa_mdfy_rt_rule_v2(struct ipa_ioc_mdfy_rt_rule_v2 *rules);
+
+int ipa_get_rt_tbl(struct ipa_ioc_get_rt_tbl *lookup);
 
 /*
 * Filtering

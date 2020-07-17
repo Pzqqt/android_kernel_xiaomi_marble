@@ -17,10 +17,10 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/sched.h>
-#include <linux/ipa.h>
+#include "ipa.h"
 #include <linux/random.h>
-#include <linux/rndis_ipa.h>
 #include <linux/workqueue.h>
+#include "rndis_ipa.h"
 #include "ipa_common_i.h"
 #include "ipa_pm.h"
 

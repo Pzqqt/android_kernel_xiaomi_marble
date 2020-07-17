@@ -7,11 +7,11 @@
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/debugfs.h>
-#include <linux/ipa.h>
-#include <linux/ipa_usb.h>
-#include <linux/rndis_ipa.h>
-#include <linux/ecm_ipa.h>
-#include <linux/ipa_fmwk.h>
+#include "ipa.h"
+#include "ipa_usb.h"
+#include "ipa_fmwk.h"
+#include "rndis_ipa.h"
+#include "ecm_ipa.h"
 #include "ipa_i.h"
 #include "ipa_rm_i.h"
 

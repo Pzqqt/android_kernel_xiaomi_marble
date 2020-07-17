@@ -9,8 +9,9 @@
 #include <linux/dmapool.h>
 #include <linux/list.h>
 #include <linux/netdevice.h>
-#include <linux/msm_gsi.h>
+#include "msm_gsi.h"
 #include <net/sock.h>
+#include "gsi.h"
 #include "ipa_i.h"
 #include "ipa_trace.h"
 #include "ipahal.h"
