@@ -35,10 +35,10 @@
 #include "ol_txrx_api.h"
 
 #ifdef WLAN_FEATURE_TSF_PLUS
-#ifndef WLAN_FEATURE_TSF_PLUS_NOIRQ
-#ifndef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+#if !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) && \
+	!defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC) && \
+	!defined(WLAN_FEATURE_TSF_TIMER_SYNC)
 static int tsf_gpio_irq_num = -1;
-#endif
 #endif
 #endif
 static struct completion tsf_sync_get_completion_evt;
@@ -54,7 +54,8 @@ static struct completion tsf_sync_get_completion_evt;
 #define OUTPUT_LOW 0
 
 #ifdef WLAN_FEATURE_TSF_PLUS
-#ifdef WLAN_FEATURE_TSF_PLUS_NOIRQ
+#if defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) || \
+	defined(WLAN_FEATURE_TSF_TIMER_SYNC)
 static void hdd_update_timestamp(struct hdd_adapter *adapter);
 #else
 static void
@@ -937,6 +938,52 @@ static inline int32_t hdd_get_soctime_from_tsf64time(
 	return ret;
 }
 
+/**
+ * hdd_get_tsftime_from_qtime()
+ *
+ * @adapter: Adapter pointer
+ * @qtime: current qtime, us
+ * @tsf_sync_qtime: qtime of the tsf, us
+ * @tsf_time: current tsf time(qtime), us
+ *
+ * This function determines current tsf time
+ * using current qtime
+ *
+ * Return: 0 for success or non-zero negative failure code
+ */
+static inline int32_t
+hdd_get_tsftime_from_qtime(struct hdd_adapter *adapter, uint64_t qtime,
+			   uint64_t tsf_sync_qtime, uint64_t *tsf_time)
+{
+	int32_t ret = -EINVAL;
+	uint64_t delta64_tsf64time;
+	bool in_cap_state;
+
+	in_cap_state = hdd_tsf_is_in_cap(adapter);
+
+	/*
+	 * To avoid check the lock when it's not capturing tsf
+	 * (the tstamp-pair won't be changed)
+	 */
+	if (in_cap_state)
+		qdf_spin_lock_bh(&adapter->host_target_sync_lock);
+
+	if (qtime > tsf_sync_qtime) {
+		delta64_tsf64time = qtime - tsf_sync_qtime;
+		ret = hdd_uint64_plus(adapter->last_target_time,
+				      delta64_tsf64time, tsf_time);
+	} else {
+		delta64_tsf64time = tsf_sync_qtime - qtime;
+		ret = hdd_uint64_minus(adapter->last_target_time,
+				       delta64_tsf64time, tsf_time);
+	}
+
+	if (in_cap_state)
+		qdf_spin_unlock_bh(&adapter->host_target_sync_lock);
+
+	return ret;
+}
+
 static void hdd_capture_tsf_timer_expired_handler(void *arg)
 {
 	uint32_t tsf_op_resp;
@@ -950,7 +997,9 @@ static void hdd_capture_tsf_timer_expired_handler(void *arg)
 }
 
 #ifndef WLAN_FEATURE_TSF_PLUS_NOIRQ
-#ifndef WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC
+#if !defined(WLAN_FEATURE_TSF_PLUS_EXT_GPIO_SYNC) && \
+	!defined(WLAN_FEATURE_TSF_TIMER_SYNC)
+
 static irqreturn_t hdd_tsf_captured_irq_handler(int irq, void *arg)
 {
 	struct hdd_adapter *adapter;
@@ -1039,7 +1088,8 @@ void hdd_capture_req_timer_expired_handler(void *arg)
 	qdf_mc_timer_start(sync_timer, interval);
 }
 
-#ifdef WLAN_FEATURE_TSF_PLUS_NOIRQ
+#if defined(WLAN_FEATURE_TSF_PLUS_NOIRQ) || \
+	defined(WLAN_FEATURE_TSF_TIMER_SYNC)
 static void hdd_update_timestamp(struct hdd_adapter *adapter)
 {
 	int interval = 0;
@@ -1128,7 +1178,7 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
-	uint64_t tsf_sync_qtime, host_time, reg_qtime, qtime;
+	uint64_t tsf_sync_qtime, host_time, reg_qtime, qtime, target_time;
 	ssize_t size;
 
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
@@ -1160,20 +1210,24 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 
 	qtime = qdf_log_timestamp_to_usecs(reg_qtime);
 	do_div(host_time, NSEC_PER_USEC);
+	hdd_get_tsftime_from_qtime(adapter, qtime, tsf_sync_qtime,
+				   &target_time);
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM %llu %llu\n",
+		size = scnprintf(buf, PAGE_SIZE,
+				 "%s%llu %llu %pM %llu %llu %llu\n",
 				 buf, adapter->last_target_time,
 				 tsf_sync_qtime,
 				 hdd_sta_ctx->conn_info.bssid.bytes,
-				 qtime, host_time);
+				 qtime, host_time, target_time);
 	} else {
-		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM %llu %llu\n",
+		size = scnprintf(buf, PAGE_SIZE,
+				 "%s%llu %llu %pM %llu %llu %llu\n",
 				 buf, adapter->last_target_time,
 				 tsf_sync_qtime,
 				 adapter->mac_addr.bytes,
-				 qtime, host_time);
+				 qtime, host_time, target_time);
 	}
 
 	return size;
@@ -1832,6 +1886,33 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_init(struct hdd_context *hdd_ctx)
 static inline
 enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
+	QDF_TIMER_STATE capture_req_timer_status;
+	qdf_mc_timer_t *cap_timer;
+	struct hdd_adapter *adapter, *adapternode_ptr, *next_ptr;
+
+	status = hdd_get_front_adapter(hdd_ctx, &adapternode_ptr);
+
+	while (adapternode_ptr && QDF_STATUS_SUCCESS == status) {
+		adapter = adapternode_ptr;
+		status =
+		    hdd_get_next_adapter(hdd_ctx, adapternode_ptr, &next_ptr);
+		adapternode_ptr = next_ptr;
+		if (adapter->host_capture_req_timer.state == 0)
+			continue;
+		cap_timer = &adapter->host_capture_req_timer;
+		capture_req_timer_status =
+			qdf_mc_timer_get_current_state(cap_timer);
+
+		if (capture_req_timer_status != QDF_TIMER_STATE_UNUSED) {
+			qdf_mc_timer_stop(cap_timer);
+			status =
+				qdf_mc_timer_destroy(cap_timer);
+			if (status != QDF_STATUS_SUCCESS)
+				hdd_err_rl("remove timer failed: %d", status);
+		}
+	}
+
 	return HDD_TSF_OP_SUCC;
 }
 #else
@@ -2122,6 +2203,29 @@ static void wlan_hdd_phc_deinit(struct hdd_context *hdd_ctx)
 }
 #endif /* WLAN_FEATURE_TSF_PTP */
 
+#ifdef WLAN_FEATURE_TSF_TIMER_SYNC
+/**
+ * hdd_convert_qtime_to_us() - convert qtime to us
+ * @time: QTIMER ticks for adrastea and us for Lithium
+ *
+ * This function converts qtime to us.
+ *
+ * Return: Time in microseconds
+ */
+static inline uint64_t
+hdd_convert_qtime_to_us(uint64_t time)
+{
+	return time;
+}
+
+#else
+static inline uint64_t
+hdd_convert_qtime_to_us(uint64_t time)
+{
+	return qdf_log_timestamp_to_usecs(time);
+}
+#endif
+
 /**
  * hdd_get_tsf_cb() - handle tsf callback
  * @pcb_cxt: pointer to the hdd_contex
@@ -2191,7 +2295,7 @@ int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 	tsf_sync_soc_time = ((uint64_t)ptsf->soc_timer_high << 32 |
 			ptsf->soc_timer_low);
 	adapter->cur_tsf_sync_soc_time =
-		qdf_log_timestamp_to_usecs(tsf_sync_soc_time) * NSEC_PER_USEC;
+		hdd_convert_qtime_to_us(tsf_sync_soc_time) * NSEC_PER_USEC;
 	complete(&tsf_sync_get_completion_evt);
 	hdd_update_tsf(adapter, adapter->cur_target_time);
 	hdd_info("Vdev=%u, tsf_low=%u, tsf_high=%u ptsf->soc_timer_low=%u ptsf->soc_timer_high=%u",

@@ -354,7 +354,7 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	return 0;
 }
 
-#ifdef QCA_WIFI_3_0
+#if defined(QCA_WIFI_3_0) || defined(WLAN_FEATURE_TSF_TIMER_SYNC)
 #define TSF_FW_ACTION_CMD TSF_TSTAMP_QTIMER_CAPTURE_REQ
 #else
 #define TSF_FW_ACTION_CMD TSF_TSTAMP_CAPTURE_REQ
