@@ -127,7 +127,6 @@ struct roam_offload_scan_rssi_params {
 	uint32_t bg_scan_client_bitmap;
 	uint32_t flags;
 };
-#endif
 
 /**
  * struct roam_scan_period_params - Roam scan period parameters
@@ -152,6 +151,7 @@ struct roam_scan_period_params {
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t full_scan_period;
 };
+#endif
 
 /**
  * struct wmi_mawc_roam_params - Motion Aided wireless connectivity params

@@ -86,6 +86,37 @@
 #define REASON_ROAM_HANDOFF_DONE                    52
 #define REASON_ROAM_ABORT                           53
 
+/**
+ * struct wlan_cm_roam_vendor_btm_params - vendor config roam control param
+ * @scan_freq_scheme: scan frequency scheme from enum
+ * qca_roam_scan_freq_scheme
+ * @connected_rssi_threshold: RSSI threshold of the current
+ * connected AP
+ * @candidate_rssi_threshold: RSSI threshold of the
+ * candidate AP
+ * @user_roam_reason: Roam triggered reason code, value zero is for enable
+ * and non zero value is disable
+ */
+struct wlan_cm_roam_vendor_btm_params {
+	uint32_t scan_freq_scheme;
+	uint32_t connected_rssi_threshold;
+	uint32_t candidate_rssi_threshold;
+	uint32_t user_roam_reason;
+};
+
+/**
+ * struct wlan_roam_triggers - vendor configured roam triggers
+ * @vdev_id: vdev id
+ * @trigger_bitmap: vendor configured roam trigger bitmap as
+ *		    defined @enum roam_control_trigger_reason
+ * @control_param: roam trigger param
+ */
+struct wlan_roam_triggers {
+	uint32_t vdev_id;
+	uint32_t trigger_bitmap;
+	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
+};
+
 #ifdef ROAM_OFFLOAD_V1
 #define NOISE_FLOOR_DBM_DEFAULT          (-96)
 #define RSSI_MIN_VALUE                   (-128)
@@ -153,12 +184,69 @@ struct wlan_roam_offload_scan_rssi_params {
 };
 
 /**
+ * struct wlan_roam_beacon_miss_cnt - roam beacon miss count
+ * @vdev_id: vdev id
+ * @roam_bmiss_first_bcnt: First beacon miss count
+ * @roam_bmiss_final_bcnt: Final beacon miss count
+ */
+struct wlan_roam_beacon_miss_cnt {
+	uint32_t vdev_id;
+	uint8_t roam_bmiss_first_bcnt;
+	uint8_t roam_bmiss_final_bcnt;
+};
+
+/**
+ * struct wlan_roam_reason_vsie_enable - roam reason vsie enable parameters
+ * @vdev_id: vdev id
+ * @enable_roam_reason_vsie: enable/disable inclusion of roam Reason
+ * in Re(association) frame
+ */
+struct wlan_roam_reason_vsie_enable {
+	uint32_t vdev_id;
+	uint8_t enable_roam_reason_vsie;
+};
+
+/**
+ * struct wlan_roam_scan_period_params - Roam scan period parameters
+ * @vdev_id: Vdev for which the scan period parameters are sent
+ * @empty_scan_refresh_period: empty scan refresh period
+ * @scan_period: Opportunistic scan runs on a timer for scan_period
+ * @scan_age: Duration after which the scan entries are to be aged out
+ * @roam_scan_inactivity_time: inactivity monitoring time in ms for which the
+ * device is considered to be inactive
+ * @roam_inactive_data_packet_count: Maximum allowed data packets count during
+ * roam_scan_inactivity_time.
+ * @roam_scan_period_after_inactivity: Roam scan period in ms after device is
+ * in inactive state.
+ * @full_scan_period: Full scan period is the idle period in seconds
+ * between two successive full channel roam scans.
+ */
+struct wlan_roam_scan_period_params {
+	uint32_t vdev_id;
+	uint32_t empty_scan_refresh_period;
+	uint32_t scan_period;
+	uint32_t scan_age;
+	uint32_t roam_scan_inactivity_time;
+	uint32_t roam_inactive_data_packet_count;
+	uint32_t roam_scan_period_after_inactivity;
+	uint32_t full_scan_period;
+};
+
+/**
  * struct wlan_roam_start_config - structure containing parameters for
  * roam start config
  * @rssi_params: roam scan rssi threshold parameters
+ * @beacon_miss_cnt: roam beacon miss count parameters
+ * @reason_vsie_enable: roam reason vsie enable parameters
+ * @roam_triggers: roam triggers parameters
+ * @scan_period_params: roam scan period parameters
  */
 struct wlan_roam_start_config {
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
+	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
+	struct wlan_roam_reason_vsie_enable reason_vsie_enable;
+	struct wlan_roam_triggers roam_triggers;
+	struct wlan_roam_scan_period_params scan_period_params;
 	/* other wmi cmd structures */
 };
 
@@ -283,37 +371,6 @@ enum roam_scan_freq_scheme {
 	ROAM_SCAN_FREQ_SCHEME_NO_SCAN = 0,
 	ROAM_SCAN_FREQ_SCHEME_PARTIAL_SCAN = 1,
 	ROAM_SCAN_FREQ_SCHEME_FULL_SCAN = 2,
-};
-
-/**
- * struct wlan_cm_roam_vendor_btm_params - vendor config roam control param
- * @scan_freq_scheme: scan frequency scheme from enum
- * qca_roam_scan_freq_scheme
- * @connected_rssi_threshold: RSSI threshold of the current
- * connected AP
- * @candidate_rssi_threshold: RSSI threshold of the
- * candidate AP
- * @user_roam_reason: Roam triggered reason code, value zero is for enable
- * and non zero value is disable
- */
-struct wlan_cm_roam_vendor_btm_params {
-	uint32_t scan_freq_scheme;
-	uint32_t connected_rssi_threshold;
-	uint32_t candidate_rssi_threshold;
-	uint32_t user_roam_reason;
-};
-
-/**
- * struct wlan_roam_triggers - vendor configured roam triggers
- * @vdev_id: vdev id
- * @trigger_bitmap: vendor configured roam trigger bitmap as
- *		    defined @enum roam_control_trigger_reason
- * @control_param: roam trigger param
- */
-struct wlan_roam_triggers {
-	uint32_t vdev_id;
-	uint32_t trigger_bitmap;
-	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 };
 
 /**

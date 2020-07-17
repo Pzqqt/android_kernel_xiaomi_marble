@@ -984,34 +984,14 @@ QDF_STATUS
 ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val)
 {
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		*val = cfg_default(CFG_LFR_ROAM_BMISS_FINAL_BCNT);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	*val = mlme_obj->cfg.lfr.roam_bmiss_final_bcnt;
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_mlme_get_roam_bmiss_final_bcnt(psoc, val);
 }
 
 QDF_STATUS
 ucfg_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *val)
 {
-	struct wlan_mlme_psoc_ext_obj *mlme_obj;
-
-	mlme_obj = mlme_get_psoc_ext_obj(psoc);
-	if (!mlme_obj) {
-		*val = cfg_default(CFG_LFR_ROAM_BMISS_FIRST_BCNT);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	*val = mlme_obj->cfg.lfr.roam_bmiss_first_bcnt;
-
-	return QDF_STATUS_SUCCESS;
+	return wlan_mlme_get_roam_bmiss_first_bcnt(psoc, val);
 }
 
 QDF_STATUS

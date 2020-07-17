@@ -2653,4 +2653,26 @@ QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
 					bool *val);
+
+/**
+ * wlan_mlme_get_roam_bmiss_final_bcnt() - Get roam bmiss final count
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *val);
+
+/**
+ * wlan_mlme_get_roam_bmiss_first_bcnt() - Get roam bmiss first count
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *val);
 #endif /* _WLAN_MLME_API_H_ */

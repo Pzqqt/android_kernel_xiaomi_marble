@@ -698,14 +698,6 @@ wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		  roam_params->roam_bad_rssi_thresh_offset_2g);
 	return status;
 }
-#else
-QDF_STATUS
-wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
 
 /**
  * wma_roam_scan_offload_scan_period() - set roam offload scan period
@@ -743,7 +735,21 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 	return wmi_unified_roam_scan_offload_scan_period(wma_handle->wmi_handle,
 							 &scan_period_params);
 }
+#else
+QDF_STATUS
+wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 
+QDF_STATUS
+wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 /**
  * wma_roam_scan_offload_rssi_change() - set roam offload RSSI change threshold
  * @wma_handle: wma handle
@@ -1863,7 +1869,7 @@ wma_send_idle_roam_params(tp_wma_handle wma_handle,
  *
  * Return: Void
  */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && !defined(ROAM_OFFLOAD_V1)
 static void wma_set_vdev_roam_reason_vsie(tp_wma_handle wma, uint8_t vdev_id,
 					  bool is_roam_reason_vsie_enabled)
 {

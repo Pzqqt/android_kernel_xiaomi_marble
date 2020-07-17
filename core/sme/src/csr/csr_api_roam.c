@@ -19184,10 +19184,11 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 
 #ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-QDF_STATUS wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
-				    uint8_t vdev_id,
-				    uint8_t command,
-				    uint8_t reason)
+QDF_STATUS
+wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+			 uint8_t vdev_id,
+			 uint8_t command,
+			 uint8_t reason)
 {
 	uint8_t *state = NULL;
 	struct csr_roam_session *session;
@@ -19343,7 +19344,8 @@ QDF_STATUS wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
-static void wlan_cm_roam_scan_offload_rssi_thresh(
+static void
+wlan_cm_roam_scan_offload_rssi_thresh(
 			struct mac_context *mac_ctx,
 			struct csr_roam_session *session,
 			struct wlan_roam_offload_scan_rssi_params *params)
@@ -19426,6 +19428,41 @@ static void wlan_cm_roam_scan_offload_rssi_thresh(
 		roam_info->cfgParams.rssi_thresh_offset_5g;
 }
 
+/**
+ * wlan_cm_roam_scan_offload_scan_period() - set roam offload scan period
+ * parameters
+ * @mac_ctx: global mac ctx
+ * @session: csr roam session
+ * @params:  roam offload scan period related parameters
+ *
+ * This function is used to set roam offload scan period related parameters
+ *
+ * Return: None
+ */
+static void
+wlan_cm_roam_scan_offload_scan_period(
+				struct mac_context *mac_ctx,
+				struct csr_roam_session *session,
+				struct wlan_roam_scan_period_params *params)
+{
+	tpCsrNeighborRoamControlInfo roam_info =
+			&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
+
+	params->vdev_id = session->vdev_id;
+	params->empty_scan_refresh_period =
+				roam_info->cfgParams.emptyScanRefreshPeriod;
+	params->scan_period = params->empty_scan_refresh_period;
+	params->scan_age = (3 * params->empty_scan_refresh_period);
+	params->roam_scan_inactivity_time =
+				roam_info->cfgParams.roam_scan_inactivity_time;
+	params->roam_inactive_data_packet_count =
+			roam_info->cfgParams.roam_inactive_data_packet_count;
+	params->roam_scan_period_after_inactivity =
+			roam_info->cfgParams.roam_scan_period_after_inactivity;
+	params->full_scan_period =
+			roam_info->cfgParams.full_roam_scan_period;
+}
+
 QDF_STATUS
 wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id,
@@ -19452,6 +19489,10 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 	wlan_cm_roam_scan_offload_rssi_thresh(mac_ctx,
 					      session,
 					      &req->rssi_params);
+
+	wlan_cm_roam_scan_offload_scan_period(mac_ctx,
+					      session,
+					      &req->scan_period_params);
 
 	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
 

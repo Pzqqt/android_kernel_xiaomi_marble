@@ -86,6 +86,146 @@ target_if_cm_roam_register_lfr3_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 
 #ifdef ROAM_OFFLOAD_V1
 /**
+ * target_if_is_vdev_valid - vdev id is valid or not
+ * @vdev_id: vdev id
+ *
+ * Return: true or false
+ */
+static bool target_if_is_vdev_valid(uint8_t vdev_id)
+{
+	return (vdev_id < WLAN_MAX_VDEVS ? true : false);
+}
+
+/**
+ * target_if_vdev_set_param() - set per vdev params in fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @param_id: parameter id
+ * @param_value: parameter value
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+target_if_vdev_set_param(wmi_unified_t wmi_handle, uint32_t vdev_id,
+			 uint32_t param_id, uint32_t param_value)
+{
+	struct vdev_set_params param = {0};
+
+	if (!target_if_is_vdev_valid(vdev_id)) {
+		target_if_err("vdev_id: %d is invalid, reject the req: param id %d val %d",
+			      vdev_id, param_id, param_value);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param.vdev_id = vdev_id;
+	param.param_id = param_id;
+	param.param_value = param_value;
+
+	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
+}
+
+/**
+ * target_if_cm_roam_scan_bmiss_cnt() - set bmiss count to fw
+ * @wmi_handle: wmi handle
+ * @req: bmiss count parameters
+ *
+ * Set first & final bmiss count to fw.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_bmiss_cnt(wmi_unified_t wmi_handle,
+				 struct wlan_roam_beacon_miss_cnt *req)
+{
+	QDF_STATUS status;
+	uint32_t vdev_id;
+	uint8_t first_bcnt;
+	uint8_t final_bcnt;
+
+	vdev_id = req->vdev_id;
+	first_bcnt = req->roam_bmiss_first_bcnt;
+	final_bcnt = req->roam_bmiss_final_bcnt;
+
+	target_if_debug("first_bcnt: %d, final_bcnt: %d",
+			first_bcnt, final_bcnt);
+
+	status = target_if_vdev_set_param(wmi_handle, vdev_id,
+					  WMI_VDEV_PARAM_BMISS_FIRST_BCNT,
+					  first_bcnt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev set WMI_VDEV_PARAM_BMISS_FIRST_BCNT params returned error %d",
+			      status);
+		return status;
+	}
+
+	status = target_if_vdev_set_param(wmi_handle, vdev_id,
+					  WMI_VDEV_PARAM_BMISS_FINAL_BCNT,
+					  final_bcnt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev set WMI_VDEV_PARAM_BMISS_FINAL_BCNT params returned error %d",
+			      status);
+		return status;
+	}
+
+	return status;
+}
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/* target_if_cm_roam_reason_vsie(): set vdev param
+ * WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE
+ * @wmi_handle: handle to WMI
+ * @req: roam reason vsie enable parameters
+ *
+ * Return: void
+ */
+static void
+target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
+			      struct wlan_roam_reason_vsie_enable *req)
+{
+	QDF_STATUS status;
+
+	status = target_if_vdev_set_param(
+				wmi_handle,
+				req->vdev_id,
+				WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE,
+				req->enable_roam_reason_vsie);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("Failed to set vdev param %d",
+			      WMI_VDEV_PARAM_ENABLE_DISABLE_ROAM_REASON_VSIE);
+}
+
+/* target_if_cm_roam_triggers(): send roam triggers to WMI
+ * @wmi_handle: handle to WMI
+ * @req: roam triggers parameters
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
+			   struct wlan_roam_triggers *req)
+{
+	if (!target_if_is_vdev_valid(req->vdev_id))
+		return QDF_STATUS_E_INVAL;
+
+	return wmi_unified_set_roam_triggers(wmi_handle, req);
+}
+#else
+static void
+target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
+			      struct wlan_roam_reason_vsie_enable *req)
+{
+}
+
+static QDF_STATUS
+target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
+			   struct wlan_roam_triggers *req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+/**
  * target_if_cm_roam_scan_offload_rssi_thresh() - Send roam scan rssi threshold
  * commands to wmi
  * @wmi_handle: wmi handle
@@ -201,6 +341,28 @@ target_if_cm_roam_scan_offload_rssi_thresh(
 }
 
 /**
+ * target_if_roam_scan_offload_scan_period() - set roam offload scan period
+ * @wmi_handle: wmi handle
+ * @req:  roam scan period parameters
+ *
+ * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_offload_scan_period(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_scan_period_params *req)
+{
+	if (!target_if_is_vdev_valid(req->vdev_id)) {
+		target_if_err("Invalid vdev id:%d", req->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wmi_unified_roam_scan_offload_scan_period(wmi_handle, req);
+}
+
+/**
  * target_if_cm_roam_send_roam_start() - Send roam start related commands
  * to wmi
  * @vdev: vdev object
@@ -214,17 +376,47 @@ static QDF_STATUS
 target_if_cm_roam_send_roam_start(struct wlan_objmgr_vdev *vdev,
 				  struct wlan_roam_start_config *req)
 {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
 
 	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
 	if (!wmi_handle)
 		return QDF_STATUS_E_FAILURE;
 
-	target_if_cm_roam_scan_offload_rssi_thresh(wmi_handle,
-						   &req->rssi_params);
-	/* add other wmi commands */
+	status = target_if_cm_roam_scan_offload_rssi_thresh(
+							wmi_handle,
+							&req->rssi_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending roam scan offload rssi thresh failed");
+		goto end;
+	}
 
-	return QDF_STATUS_SUCCESS;
+	status = target_if_cm_roam_scan_bmiss_cnt(wmi_handle,
+						  &req->beacon_miss_cnt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev set bmiss bcnt param failed");
+		goto end;
+	}
+
+	target_if_cm_roam_reason_vsie(wmi_handle, &req->reason_vsie_enable);
+
+	target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+
+	/* Opportunistic scan runs on a timer, value set by
+	 * empty_scan_refresh_period. Age out the entries after 3 such
+	 * cycles.
+	 */
+	if (req->scan_period_params.empty_scan_refresh_period > 0) {
+		status = target_if_cm_roam_scan_offload_scan_period(
+						wmi_handle,
+						&req->scan_period_params);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto end;
+	}
+
+	/* add other wmi commands */
+end:
+	return status;
 }
 
 /**
