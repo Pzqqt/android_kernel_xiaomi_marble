@@ -39,10 +39,11 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id,
-				uint8_t rso_command,
-				uint8_t reason);
+QDF_STATUS
+cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+		     uint8_t vdev_id,
+		     uint8_t rso_command,
+		     uint8_t reason);
 
 /**
  * cm_roam_state_change() - Post roam state change to roam state machine
@@ -55,9 +56,10 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
-				uint8_t vdev_id,
-				enum roam_offload_state requested_state,
-				uint8_t reason);
+QDF_STATUS
+cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
+		     uint8_t vdev_id,
+		     enum roam_offload_state requested_state,
+		     uint8_t reason);
 #endif
 #endif

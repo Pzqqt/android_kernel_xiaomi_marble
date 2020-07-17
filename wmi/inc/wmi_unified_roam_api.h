@@ -73,6 +73,18 @@ wmi_unified_set_rssi_monitoring_cmd(wmi_unified_t wmi_handle,
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 		wmi_unified_t wmi_handle,
 		struct wlan_roam_offload_scan_rssi_params *roam_req);
+
+/**
+ * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
+ * @wmi_handle: wmi handle
+ * @param: pointer to roam scan period params to be sent to fw
+ *
+ * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
+	wmi_unified_t wmi_handle, struct wlan_roam_scan_period_params *param);
 #else
 /**
  * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
@@ -88,6 +100,18 @@ QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(
 		wmi_unified_t wmi_handle,
 		struct roam_offload_scan_rssi_params *roam_req);
+
+/**
+ * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
+ * @wmi_handle: wmi handle
+ * @param: pointer to roam scan period params to be sent to fw
+ *
+ * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
+	wmi_unified_t wmi_handle, struct roam_scan_period_params *param);
 #endif
 
 /**
@@ -288,18 +312,6 @@ QDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(
 QDF_STATUS wmi_unified_roam_scan_offload_cmd(wmi_unified_t wmi_handle,
 					     uint32_t command,
 					     uint32_t vdev_id);
-
-/**
- * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
- * @wmi_handle: wmi handle
- * @param: pointer to roam scan period params to be sent to fw
- *
- * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
-QDF_STATUS wmi_unified_roam_scan_offload_scan_period(
-	wmi_unified_t wmi_handle, struct roam_scan_period_params *param);
 
 /**
  * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list
