@@ -127,3 +127,35 @@ end:
 	return status;
 }
 #endif
+
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   struct wlan_roam_start_config *req)
+{
+	QDF_STATUS status;
+	struct wlan_cm_roam_tx_ops roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev);
+	if (!roam_tx_ops.send_roam_start_req) {
+		mlme_err("send_roam_start_req is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = roam_tx_ops.send_roam_start_req(vdev, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam start");
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+	return status;
+}
+#endif
+#endif

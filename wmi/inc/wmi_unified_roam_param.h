@@ -64,6 +64,7 @@ struct rssi_monitor_param {
 	bool     control;
 };
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * struct roam_offload_scan_rssi_params - structure containing
  *              parameters for roam offload scan based on RSSI
@@ -126,6 +127,7 @@ struct roam_offload_scan_rssi_params {
 	uint32_t bg_scan_client_bitmap;
 	uint32_t flags;
 };
+#endif
 
 /**
  * struct roam_scan_period_params - Roam scan period parameters

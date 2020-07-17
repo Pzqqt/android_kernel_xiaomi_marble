@@ -3516,4 +3516,21 @@ bool policy_mgr_is_restart_sap_required(struct wlan_objmgr_psoc *psoc,
 					qdf_freq_t freq,
 					tQDF_MCC_TO_SCC_SWITCH_MODE scc_mode);
 
+/**
+ * policy_mgr_get_roam_enabled_sta_session_id() - get the session id of the sta
+ * on which roaming is enabled.
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id of the requestor
+ *
+ * The function checks if any sta(other than the provided vdev_id) is present
+ * and has roaming enabled and return the session id of the sta with roaming
+ * enabled else if roaming is not enabled on any STA return
+ * WLAN_UMAC_VDEV_ID_MAX.
+ *
+ * Return: session id of STA on which roaming is enabled
+ */
+uint8_t policy_mgr_get_roam_enabled_sta_session_id(
+						struct wlan_objmgr_psoc *psoc,
+						uint8_t vdev_id);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

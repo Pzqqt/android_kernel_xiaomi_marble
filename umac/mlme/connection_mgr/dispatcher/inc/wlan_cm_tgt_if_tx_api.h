@@ -47,4 +47,20 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_cm_tgt_send_roam_start_req  - Send roam start command to firmware
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ * @req: roam start config parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   struct wlan_roam_start_config *req);
+#endif
+#endif
 #endif /* CM_TGT_IF_TX_API_H__ */

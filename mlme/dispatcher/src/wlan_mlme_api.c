@@ -4030,3 +4030,20 @@ wlan_mlme_get_dual_sta_roaming_enabled(struct wlan_objmgr_psoc *psoc)
 	return dual_sta_roaming_enabled;
 }
 #endif
+
+QDF_STATUS
+wlan_mlme_get_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
+					bool *val)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.lfr.roam_scan_offload_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}

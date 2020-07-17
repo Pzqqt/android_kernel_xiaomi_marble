@@ -2643,4 +2643,14 @@ mlme_store_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_get_fw_scan_channels(struct wlan_objmgr_psoc *psoc,
 				     uint32_t *freq_list,
 				     uint8_t *saved_num_chan);
+/**
+ * wlan_mlme_get_roam_scan_offload_enabled() - Roam scan offload enable or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
+					bool *val);
 #endif /* _WLAN_MLME_API_H_ */

@@ -155,6 +155,7 @@ void wmi_rssi_monitor_attach_tlv(struct wmi_unified *wmi_handle)
 }
 #endif /* FEATURE_RSSI_MONITOR */
 
+#ifdef ROAM_OFFLOAD_V1
 /**
  * send_roam_scan_offload_rssi_thresh_cmd_tlv() - set scan offload
  *                                                rssi threashold
@@ -165,6 +166,141 @@ void wmi_rssi_monitor_attach_tlv(struct wmi_unified *wmi_handle)
  *
  * Return: QDF status
  */
+static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_offload_scan_rssi_params *roam_req)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_scan_rssi_threshold_fixed_param *rssi_threshold_fp;
+	wmi_roam_scan_extended_threshold_param *ext_thresholds = NULL;
+	wmi_roam_earlystop_rssi_thres_param *early_stop_thresholds = NULL;
+	wmi_roam_dense_thres_param *dense_thresholds = NULL;
+	wmi_roam_bg_scan_roaming_param *bg_scan_params = NULL;
+
+	len = sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
+	len += sizeof(wmi_roam_scan_extended_threshold_param);
+	len += WMI_TLV_HDR_SIZE;
+	len += sizeof(wmi_roam_earlystop_rssi_thres_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for dense thresholds*/
+	len += sizeof(wmi_roam_dense_thres_param);
+	len += WMI_TLV_HDR_SIZE; /* TLV for BG Scan*/
+	len += sizeof(wmi_roam_bg_scan_roaming_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	rssi_threshold_fp =
+		(wmi_roam_scan_rssi_threshold_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(
+		&rssi_threshold_fp->tlv_header,
+		WMITLV_TAG_STRUC_wmi_roam_scan_rssi_threshold_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+				(wmi_roam_scan_rssi_threshold_fixed_param));
+	/* fill in threshold values */
+	rssi_threshold_fp->vdev_id = roam_req->vdev_id;
+	rssi_threshold_fp->roam_scan_rssi_thresh = roam_req->rssi_thresh;
+	rssi_threshold_fp->roam_rssi_thresh_diff = roam_req->rssi_thresh_diff;
+	rssi_threshold_fp->hirssi_scan_max_count =
+			roam_req->hi_rssi_scan_max_count;
+	rssi_threshold_fp->hirssi_scan_delta =
+			roam_req->hi_rssi_scan_rssi_delta;
+	rssi_threshold_fp->hirssi_upper_bound = roam_req->hi_rssi_scan_rssi_ub;
+	rssi_threshold_fp->rssi_thresh_offset_5g =
+		roam_req->rssi_thresh_offset_5g;
+
+	buf_ptr += sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_scan_extended_threshold_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	ext_thresholds = (wmi_roam_scan_extended_threshold_param *)buf_ptr;
+
+	ext_thresholds->penalty_threshold_5g = roam_req->penalty_threshold_5g;
+	if (roam_req->raise_rssi_thresh_5g >= WMI_NOISE_FLOOR_DBM_DEFAULT)
+		ext_thresholds->boost_threshold_5g =
+					roam_req->boost_threshold_5g;
+
+	ext_thresholds->boost_algorithm_5g =
+		WMI_ROAM_5G_BOOST_PENALIZE_ALGO_LINEAR;
+	ext_thresholds->boost_factor_5g = roam_req->raise_factor_5g;
+	ext_thresholds->penalty_algorithm_5g =
+		WMI_ROAM_5G_BOOST_PENALIZE_ALGO_LINEAR;
+	ext_thresholds->penalty_factor_5g = roam_req->drop_factor_5g;
+	ext_thresholds->max_boost_5g = roam_req->max_raise_rssi_5g;
+	ext_thresholds->max_penalty_5g = roam_req->max_drop_rssi_5g;
+	ext_thresholds->good_rssi_threshold = roam_req->good_rssi_threshold;
+
+	WMITLV_SET_HDR(&ext_thresholds->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_scan_extended_threshold_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+				(wmi_roam_scan_extended_threshold_param));
+	buf_ptr += sizeof(wmi_roam_scan_extended_threshold_param);
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_earlystop_rssi_thres_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	early_stop_thresholds = (wmi_roam_earlystop_rssi_thres_param *)buf_ptr;
+	early_stop_thresholds->roam_earlystop_thres_min =
+		roam_req->roam_earlystop_thres_min;
+	early_stop_thresholds->roam_earlystop_thres_max =
+		roam_req->roam_earlystop_thres_max;
+	WMITLV_SET_HDR(&early_stop_thresholds->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_earlystop_rssi_thres_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+				(wmi_roam_earlystop_rssi_thres_param));
+
+	buf_ptr += sizeof(wmi_roam_earlystop_rssi_thres_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_dense_thres_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	dense_thresholds = (wmi_roam_dense_thres_param *)buf_ptr;
+	dense_thresholds->roam_dense_rssi_thres_offset =
+			roam_req->dense_rssi_thresh_offset;
+	dense_thresholds->roam_dense_min_aps = roam_req->dense_min_aps_cnt;
+	dense_thresholds->roam_dense_traffic_thres =
+			roam_req->traffic_threshold;
+	dense_thresholds->roam_dense_status = roam_req->initial_dense_status;
+	WMITLV_SET_HDR(&dense_thresholds->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_dense_thres_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_roam_dense_thres_param));
+
+	buf_ptr += sizeof(wmi_roam_dense_thres_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_roam_bg_scan_roaming_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	bg_scan_params = (wmi_roam_bg_scan_roaming_param *)buf_ptr;
+	bg_scan_params->roam_bg_scan_bad_rssi_thresh =
+		roam_req->bg_scan_bad_rssi_thresh;
+	bg_scan_params->roam_bg_scan_client_bitmap =
+		roam_req->bg_scan_client_bitmap;
+	bg_scan_params->bad_rssi_thresh_offset_2g =
+		roam_req->roam_bad_rssi_thresh_offset_2g;
+
+	bg_scan_params->flags = 0;
+	if (roam_req->roam_bad_rssi_thresh_offset_2g)
+		bg_scan_params->flags |= WMI_ROAM_BG_SCAN_FLAGS_2G_TO_5G_ONLY;
+	WMITLV_SET_HDR(&bg_scan_params->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_roam_bg_scan_roaming_param));
+
+	wmi_mtrace(WMI_ROAM_SCAN_RSSI_THRESHOLD, NO_SESSION, 0);
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
+			 status);
+		wmi_buf_free(buf);
+	}
+
+	return status;
+}
+#else
 static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 		wmi_unified_t wmi_handle,
 		struct roam_offload_scan_rssi_params *roam_req)
@@ -295,6 +431,7 @@ static QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(
 
 	return status;
 }
+#endif
 
 static QDF_STATUS send_roam_mawc_params_cmd_tlv(wmi_unified_t wmi_handle,
 		struct wmi_mawc_roam_params *params)

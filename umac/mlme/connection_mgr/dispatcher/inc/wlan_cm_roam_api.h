@@ -31,6 +31,111 @@
 /* Default value of reason code */
 #define DISABLE_VENDOR_BTM_CONFIG 2
 
+#ifdef ROAM_OFFLOAD_V1
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+/**
+ * wlan_cm_enable_roaming_on_connected_sta() - Enable roaming on other connected
+ * sta vdev
+ * @pdev: pointer to pdev object
+ * @vdev_id: vdev id on which roaming should not be enabled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id);
+
+/**
+ * wlan_cm_start_roaming() - start roaming
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @reason: reason to roam
+ *
+ * This function gets called to start roaming
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
+		      uint8_t vdev_id,
+		      uint8_t reason);
+
+/**
+ * wlan_cm_roam_cmd_allowed() - check roam cmd is allowed or not
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id
+ * @rso_command: roam scan offload command
+ * @reason: reason to roam
+ *
+ * This function gets called to check roam cmd is allowed or not
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
+			 uint8_t vdev_id,
+			 uint8_t rso_command,
+			 uint8_t reason);
+
+/**
+ * wlan_cm_roam_fill_start_req() - fill start request structure content
+ * @psoc: pointer to psoc object
+ * @vdev_id: vdev id
+ * @req: roam start config pointer
+ * @reason: reason to roam
+ *
+ * This function gets called to fill start request structure content
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
+			    uint8_t vdev_id,
+			    struct wlan_roam_start_config *req,
+			    uint8_t reason);
+
+/**
+ * wlan_cm_roam_send_rso_cmd() - Send rso command
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @rso_command: roam scan offload command
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * This function is used to send rso command
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id,
+				     uint8_t rso_command,
+				     uint8_t reason);
+#else
+static inline QDF_STATUS
+wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
+					uint8_t vdev_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
+		      uint8_t vdev_id,
+		      uint8_t reason)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+static inline QDF_STATUS
+wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+			  uint8_t vdev_id,
+			  uint8_t rso_command,
+			  uint8_t reason);
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_cm_roam_extract_btm_response() - Extract BTM rsp stats
