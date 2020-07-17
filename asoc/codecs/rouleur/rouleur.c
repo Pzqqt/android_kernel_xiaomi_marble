@@ -26,6 +26,7 @@
 #include <asoc/msm-cdc-pinctrl.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include <asoc/msm-cdc-supply.h>
+#include <linux/power_supply.h>
 
 #define DRV_NAME "rouleur_codec"
 
@@ -35,6 +36,8 @@
 #define ROULEUR_VERSION_ENTRY_SIZE 32
 
 #define NUM_ATTEMPTS 5
+#define SOC_THRESHOLD_LEVEL 25
+#define LOW_SOC_MBIAS_REG_MIN_VOLTAGE 2850000
 
 enum {
 	CODEC_TX = 0,
@@ -2000,6 +2003,107 @@ done:
 	return rc;
 }
 
+static int rouleur_battery_supply_cb(struct notifier_block *nb,
+			unsigned long event, void *data)
+{
+	struct power_supply *psy = data;
+	struct rouleur_priv *rouleur =
+		container_of(nb, struct rouleur_priv, psy_nb);
+
+	if (strcmp(psy->desc->name, "battery"))
+		return NOTIFY_OK;
+	queue_work(system_freezable_wq, &rouleur->soc_eval_work);
+
+	return NOTIFY_OK;
+}
+
+static int rouleur_read_battery_soc(struct rouleur_priv *rouleur, int *soc_val)
+{
+	static struct power_supply *batt_psy;
+	union power_supply_propval ret = {0,};
+	int err = 0;
+
+	*soc_val = 100;
+	if (!batt_psy)
+		batt_psy = power_supply_get_by_name("battery");
+	if (batt_psy) {
+		err = power_supply_get_property(batt_psy,
+				POWER_SUPPLY_PROP_CAPACITY, &ret);
+		if (err) {
+			pr_err("%s: battery SoC read error:%d\n",
+				__func__, err);
+			return err;
+		}
+		*soc_val = ret.intval;
+	}
+	pr_debug("%s: soc:%d\n", __func__, *soc_val);
+
+	return err;
+}
+
+static void rouleur_evaluate_soc(struct work_struct *work)
+{
+	struct rouleur_priv *rouleur =
+		container_of(work, struct rouleur_priv, soc_eval_work);
+	int soc_val = 0, ret = 0;
+	struct rouleur_pdata *pdata = NULL;
+
+	pdata = dev_get_platdata(rouleur->dev);
+	if (!pdata) {
+		dev_err(rouleur->dev, "%s: pdata is NULL\n", __func__);
+		return;
+	}
+
+	if (rouleur_read_battery_soc(rouleur, &soc_val) < 0) {
+		dev_err(rouleur->dev, "%s unable to read battery SoC\n",
+			__func__);
+		return;
+	}
+
+	if (soc_val < SOC_THRESHOLD_LEVEL) {
+		dev_dbg(rouleur->dev,
+			"%s battery SoC less than threshold soc_val = %d\n",
+			__func__, soc_val);
+		/* Reduce PA Gain by 6DB for low SoC */
+		if (rouleur->update_wcd_event)
+			rouleur->update_wcd_event(rouleur->handle,
+					WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
+					true);
+		rouleur->low_soc = true;
+		ret = msm_cdc_set_supply_min_voltage(rouleur->dev,
+						 rouleur->supplies,
+						 pdata->regulator,
+						 pdata->num_supplies,
+						 "cdc-vdd-mic-bias",
+						 LOW_SOC_MBIAS_REG_MIN_VOLTAGE,
+						 true);
+		if (ret < 0)
+			dev_err(rouleur->dev,
+				"%s unable to set mbias min voltage\n",
+				__func__);
+	} else {
+		if (rouleur->low_soc == true) {
+			/* Reset PA Gain to default for normal SoC */
+			if (rouleur->update_wcd_event)
+				rouleur->update_wcd_event(rouleur->handle,
+					WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
+					false);
+			ret = msm_cdc_set_supply_min_voltage(rouleur->dev,
+						rouleur->supplies,
+						pdata->regulator,
+						pdata->num_supplies,
+						"cdc-vdd-mic-bias",
+						LOW_SOC_MBIAS_REG_MIN_VOLTAGE,
+						false);
+			if (ret < 0)
+				dev_err(rouleur->dev,
+					"%s unable to set mbias min voltage\n",
+					__func__);
+			rouleur->low_soc = false;
+		}
+	}
+}
+
 static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct rouleur_priv *rouleur = snd_soc_component_get_drvdata(component);
@@ -2070,7 +2174,16 @@ static int rouleur_soc_codec_probe(struct snd_soc_component *component)
 			return ret;
 		}
 	}
+	rouleur->low_soc = false;
 	rouleur->dev_up = true;
+	/* Register notifier to change gain based on state of charge */
+	INIT_WORK(&rouleur->soc_eval_work, rouleur_evaluate_soc);
+	rouleur->psy_nb.notifier_call = rouleur_battery_supply_cb;
+	if (power_supply_reg_notifier(&rouleur->psy_nb) < 0)
+		dev_dbg(rouleur->dev,
+			"%s: could not register pwr supply notifier\n",
+			__func__);
+	queue_work(system_freezable_wq, &rouleur->soc_eval_work);
 done:
 	return ret;
 }

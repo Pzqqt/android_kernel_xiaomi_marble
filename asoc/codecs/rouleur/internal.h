@@ -85,6 +85,9 @@ struct rouleur_priv {
 	struct mutex main_bias_lock;
 	bool dev_up;
 	bool usbc_hs_status;
+	struct notifier_block psy_nb;
+	struct work_struct soc_eval_work;
+	bool low_soc;
 };
 
 struct rouleur_micbias_setting {
@@ -131,6 +134,7 @@ enum {
 	WCD_BOLERO_EVT_IMPED_FALSE,	/* for imped false */
 	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 	WCD_BOLERO_EVT_BCS_CLK_OFF,
+	WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE, /* To reduce PA gain for low SoC */
 };
 
 enum {

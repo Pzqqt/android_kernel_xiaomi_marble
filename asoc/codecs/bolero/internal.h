@@ -32,6 +32,7 @@ enum {
 	WCD_BOLERO_EVT_IMPED_FALSE,  /* for imped false */
 	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 	WCD_BOLERO_EVT_BCS_CLK_OFF,
+	WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
 };
 
 struct wcd_ctrl_platform_data {
