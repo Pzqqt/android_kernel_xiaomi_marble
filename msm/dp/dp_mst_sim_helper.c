@@ -63,6 +63,7 @@ struct dp_mst_sim_context {
 	struct mutex session_lock;
 	struct completion session_comp;
 	struct workqueue_struct *wq;
+	int reset_cnt;
 
 	u8 esi[16];
 	u8 guid[16];
@@ -75,6 +76,12 @@ struct dp_mst_sim_work {
 	unsigned int address;
 	u8 buffer[256];
 	size_t size;
+};
+
+struct dp_mst_notify_work {
+	struct work_struct base;
+	struct dp_mst_sim_context *ctx;
+	u32 port_mask;
 };
 
 #ifdef CONFIG_DYNAMIC_DEBUG
@@ -634,19 +641,46 @@ static int dp_sideband_build_clear_payload_id_table_rep(
 	return idx;
 }
 
-static inline int dp_sideband_update_esi(struct dp_mst_sim_context *ctx)
+static int dp_sideband_build_connection_notify_req(
+		struct dp_mst_sim_context *ctx, int port_idx)
+{
+	struct dp_mst_sim_port *port = &ctx->ports[port_idx];
+	u8 *buf = ctx->down_rep.msg;
+	int idx = 0;
+
+	buf[idx] = DP_CONNECTION_STATUS_NOTIFY;
+	idx++;
+
+	buf[idx] = port_idx << 4;
+	idx++;
+
+	memcpy(&buf[idx], &port->peer_guid, 16);
+	idx += 16;
+
+	buf[idx] = (port->ldps << 6) |
+			(port->ddps << 5) |
+			(port->mcs << 4) |
+			(port->input << 3) |
+			(port->pdt & 0x7);
+	idx++;
+
+	return idx;
+}
+
+static inline int dp_sideband_update_esi(
+		struct dp_mst_sim_context *ctx, u8 val)
 {
 	ctx->esi[0] = ctx->port_num;
-	ctx->esi[1] = DP_DOWN_REP_MSG_RDY;
+	ctx->esi[1] = val;
 	ctx->esi[2] = 0;
 
 	return 0;
 }
 
 static inline bool dp_sideband_pending_esi(
-		struct dp_mst_sim_context *ctx)
+		struct dp_mst_sim_context *ctx, u8 val)
 {
-	return !!(ctx->esi[1] & DP_DOWN_REP_MSG_RDY);
+	return !!(ctx->esi[1] & val);
 }
 
 static int dp_mst_sim_clear_esi(struct dp_mst_sim_context *ctx,
@@ -666,10 +700,8 @@ static int dp_mst_sim_clear_esi(struct dp_mst_sim_context *ctx,
 	for (i = 0; i < msg->size; i++)
 		ctx->esi[addr + i] &= ~((u8 *)msg->buffer)[i];
 
-	if ((old_esi & DP_DOWN_REP_MSG_RDY) &&
-			!(ctx->esi[1] & DP_DOWN_REP_MSG_RDY)) {
+	if (old_esi != ctx->esi[1])
 		complete(&ctx->session_comp);
-	}
 
 	mutex_unlock(&ctx->session_lock);
 
@@ -744,7 +776,12 @@ static int dp_mst_sim_down_req_internal(struct dp_mst_sim_context *ctx,
 	msg = &ctx->down_rep;
 	msg->curlen = 0;
 
+	mutex_lock(&ctx->session_lock);
+
 	while (msg->curlen < size) {
+		if (ctx->reset_cnt)
+			break;
+
 		/* copy data */
 		len = min(size - msg->curlen, 44);
 		memcpy(&ctx->dpcd[3], &msg->msg[msg->curlen], len);
@@ -766,22 +803,24 @@ static int dp_mst_sim_down_req_internal(struct dp_mst_sim_context *ctx,
 		ctx->dpcd[len + 3] = dp_mst_sim_msg_data_crc4(&ctx->dpcd[3], len);
 
 		/* update esi */
-		mutex_lock(&ctx->session_lock);
-		dp_sideband_update_esi(ctx);
-		mutex_unlock(&ctx->session_lock);
+		dp_sideband_update_esi(ctx, DP_DOWN_REP_MSG_RDY);
 
 		/* notify host */
+		mutex_unlock(&ctx->session_lock);
 		ctx->host_hpd_irq(ctx->host_dev);
+		mutex_lock(&ctx->session_lock);
 
 		/* wait until esi is cleared */
-		mutex_lock(&ctx->session_lock);
-		while (dp_sideband_pending_esi(ctx)) {
+		while (dp_sideband_pending_esi(ctx, DP_DOWN_REP_MSG_RDY)) {
+			if (ctx->reset_cnt)
+				break;
 			mutex_unlock(&ctx->session_lock);
 			wait_for_completion(&ctx->session_comp);
 			mutex_lock(&ctx->session_lock);
 		}
-		mutex_unlock(&ctx->session_lock);
 	}
+
+	mutex_unlock(&ctx->session_lock);
 
 	return 0;
 }
@@ -846,6 +885,56 @@ static int dp_mst_sim_down_rep(struct dp_mst_sim_context *ctx,
 	return 0;
 }
 
+static int dp_mst_sim_up_req(struct dp_mst_sim_context *ctx,
+		struct drm_dp_aux_msg *msg)
+{
+	u32 addr = msg->address - DP_SIDEBAND_MSG_UP_REQ_BASE;
+
+	memcpy(msg->buffer, &ctx->dpcd[addr], msg->size);
+	msg->reply = DP_AUX_NATIVE_REPLY_ACK;
+
+	dp_sideband_hex_dump("up_req",
+		addr, msg->buffer, msg->size);
+
+	return 0;
+}
+
+static void dp_mst_sim_reset_work(struct work_struct *work)
+{
+	struct dp_mst_notify_work *notify_work =
+		container_of(work, struct dp_mst_notify_work, base);
+	struct dp_mst_sim_context *ctx = notify_work->ctx;
+
+	mutex_lock(&ctx->session_lock);
+	--ctx->reset_cnt;
+	reinit_completion(&ctx->session_comp);
+	mutex_unlock(&ctx->session_lock);
+}
+
+static int dp_mst_sim_reset(struct dp_mst_sim_context *ctx,
+		struct drm_dp_aux_msg *msg)
+{
+	struct dp_mst_notify_work *work;
+
+	if (!msg->size || ((u8 *)msg->buffer)[0])
+		return msg->size;
+
+	mutex_lock(&ctx->session_lock);
+	++ctx->reset_cnt;
+	complete(&ctx->session_comp);
+	mutex_unlock(&ctx->session_lock);
+
+	work = kzalloc(sizeof(*work), GFP_KERNEL);
+	if (!work)
+		return msg->size;
+
+	work->ctx = ctx;
+	INIT_WORK(&work->base, dp_mst_sim_reset_work);
+	queue_work(ctx->wq, &work->base);
+
+	return msg->size;
+}
+
 int dp_mst_sim_transfer(void *mst_sim_context, struct drm_dp_aux_msg *msg)
 {
 	struct dp_mst_sim_context *ctx = mst_sim_context;
@@ -858,13 +947,25 @@ int dp_mst_sim_transfer(void *mst_sim_context, struct drm_dp_aux_msg *msg)
 		    msg->address < DP_SIDEBAND_MSG_DOWN_REQ_BASE + 256)
 			return dp_mst_sim_down_req(mst_sim_context, msg);
 
+		if (msg->address >= DP_SIDEBAND_MSG_UP_REP_BASE &&
+		    msg->address < DP_SIDEBAND_MSG_UP_REP_BASE + 256)
+			return 0;
+
 		if (msg->address >= DP_SINK_COUNT_ESI &&
 		    msg->address < DP_SINK_COUNT_ESI + 14)
 			return dp_mst_sim_clear_esi(mst_sim_context, msg);
+
+		if (msg->address == DP_MSTM_CTRL)
+			return dp_mst_sim_reset(mst_sim_context, msg);
+
 	} else if (msg->request == DP_AUX_NATIVE_READ) {
 		if (msg->address >= DP_SIDEBAND_MSG_DOWN_REP_BASE &&
 		    msg->address < DP_SIDEBAND_MSG_DOWN_REP_BASE + 256)
 			return dp_mst_sim_down_rep(mst_sim_context, msg);
+
+		if (msg->address >= DP_SIDEBAND_MSG_UP_REQ_BASE &&
+		    msg->address < DP_SIDEBAND_MSG_UP_REQ_BASE + 256)
+			return dp_mst_sim_up_req(mst_sim_context, msg);
 
 		if (msg->address >= DP_SINK_COUNT_ESI &&
 		    msg->address < DP_SINK_COUNT_ESI + 14)
@@ -874,18 +975,108 @@ int dp_mst_sim_transfer(void *mst_sim_context, struct drm_dp_aux_msg *msg)
 	return -EINVAL;
 }
 
+static void dp_mst_sim_up_req_work(struct work_struct *work)
+{
+	struct dp_mst_notify_work *notify_work =
+		container_of(work, struct dp_mst_notify_work, base);
+	struct dp_mst_sim_context *ctx = notify_work->ctx;
+	struct drm_dp_sideband_msg_rx *msg = &ctx->down_rep;
+	struct drm_dp_sideband_msg_hdr hdr;
+	int len, hdr_len, i;
+
+	mutex_lock(&ctx->session_lock);
+
+	for (i = 0; i < ctx->port_num; i++) {
+		if (ctx->reset_cnt)
+			break;
+
+		if (!(notify_work->port_mask & (1 << i)))
+			continue;
+
+		len = dp_sideband_build_connection_notify_req(ctx, i);
+
+		/* copy data */
+		memcpy(&ctx->dpcd[3], msg->msg, len);
+
+		/* build header */
+		memset(&hdr, 0, sizeof(struct drm_dp_sideband_msg_hdr));
+		hdr.broadcast = 0;
+		hdr.path_msg = 0;
+		hdr.lct = 1;
+		hdr.lcr = 0;
+		hdr.seqno = 0;
+		hdr.msg_len = len + 1;
+		hdr.eomt = 1;
+		hdr.somt = 1;
+		dp_mst_sim_encode_sideband_msg_hdr(&hdr, ctx->dpcd, &hdr_len);
+
+		/* build crc */
+		ctx->dpcd[len + 3] = dp_mst_sim_msg_data_crc4(&ctx->dpcd[3], len);
+
+		/* update esi */
+		dp_sideband_update_esi(ctx, DP_UP_REQ_MSG_RDY);
+
+		/* notify host */
+		mutex_unlock(&ctx->session_lock);
+		ctx->host_hpd_irq(ctx->host_dev);
+		mutex_lock(&ctx->session_lock);
+
+		/* wait until esi is cleared */
+		while (dp_sideband_pending_esi(ctx, DP_UP_REQ_MSG_RDY)) {
+			if (ctx->reset_cnt)
+				break;
+			mutex_unlock(&ctx->session_lock);
+			wait_for_completion(&ctx->session_comp);
+			mutex_lock(&ctx->session_lock);
+		}
+	}
+
+	mutex_unlock(&ctx->session_lock);
+
+	kfree(notify_work);
+}
+
+static void dp_mst_sim_notify(struct dp_mst_sim_context *ctx,
+		u32 port_mask)
+{
+	struct dp_mst_notify_work *work;
+
+	work = kzalloc(sizeof(*work), GFP_KERNEL);
+	if (!work)
+		return;
+
+	work->ctx = ctx;
+	work->port_mask = port_mask;
+
+	INIT_WORK(&work->base, dp_mst_sim_up_req_work);
+	queue_work(ctx->wq, &work->base);
+}
+
 int dp_mst_sim_update(void *mst_sim_context, u32 port_num,
 		struct dp_mst_sim_port *ports)
 {
 	struct dp_mst_sim_context *ctx = mst_sim_context;
 	u8 *edid;
 	int rc = 0;
+	u32 update_mask = 0;
 	u32 i;
 
 	if (!ctx || port_num >= 15)
 		return -EINVAL;
 
 	mutex_lock(&ctx->session_lock);
+
+	/* get update mask */
+	if (port_num && ctx->port_num == port_num) {
+		for (i = 0; i < port_num; i++) {
+			if (ports[i].pdt != ctx->ports[i].pdt ||
+			    ports[i].input != ctx->ports[i].input ||
+			    ports[i].ldps != ctx->ports[i].ldps ||
+			    ports[i].ddps != ctx->ports[i].ddps ||
+			    ports[i].mcs != ctx->ports[i].mcs)
+				update_mask |= (1 << i);
+		}
+	}
 
 	for (i = 0; i < ctx->port_num; i++)
 		kfree(ctx->ports[i].edid);
@@ -927,6 +1118,10 @@ fail:
 	}
 
 	mutex_unlock(&ctx->session_lock);
+
+	if (update_mask)
+		dp_mst_sim_notify(ctx, update_mask);
+
 	return rc;
 }
 
