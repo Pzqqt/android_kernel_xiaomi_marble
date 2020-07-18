@@ -990,6 +990,7 @@ int32_t q6core_avcs_load_unload_modules(struct avcs_load_unload_modules_payload
 	else
 		mod->hdr.opcode =  AVCS_CMD_UNLOAD_MODULES;
 
+	q6core_lcl.adsp_status = 0;
 	q6core_lcl.avcs_module_resp_received = 0;
 	ret = apr_send_pkt(q6core_lcl.core_handle_q,
 		(uint32_t *)mod);
