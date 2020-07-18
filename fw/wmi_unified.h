@@ -8052,8 +8052,14 @@ typedef struct {
     A_UINT32 center_freq1;
     /** msecs the radio is awake (32 bits number accruing over time) */
     A_UINT32 radio_awake_time;
-    /** msecs the CCA register is busy (32 bits number accruing over time) */
+    /** msecs the CCA register is busy (32 bits number accruing over time)
+     * Includes rx_time but not tx_time.
+     */
     A_UINT32 cca_busy_time;
+    /** msecs the radio is transmitting (32 bits number accruing over time) */
+    A_UINT32 tx_time;
+    /** msecs the radio is in active receive (32 bits number accruing over time) */
+    A_UINT32 rx_time;
 } wmi_channel_stats;
 
 /*
