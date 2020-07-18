@@ -126,6 +126,7 @@ enum {
 #define TOPOLOGY_SPECIFIC_CHANNEL_INFO
 #define MSM_SPKR_PROT_SPV3
 #define MSM_SPKR_PROT_SPV4
+#define MSM_CMA_MEM_ALLOC
 
 enum {
 	VERSION_0_0,
@@ -156,7 +157,10 @@ struct audio_cal_data {
 	__s32		cal_size;
 	/* If mem_handle if shared memory is used*/
 	__s32		mem_handle;
-	/* size of virtual memory if shared memory not used */
+#ifdef MSM_CMA_MEM_ALLOC
+	/* cma allocation flag if cma heap memory is used */
+	__u32		cma_mem;
+#endif
 };
 
 
