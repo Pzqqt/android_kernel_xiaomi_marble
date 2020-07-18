@@ -69,6 +69,19 @@ void hdd_ndp_session_end_handler(struct hdd_adapter *adapter);
 
 void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
 		     struct hdd_adapter *adapter);
+
+/**
+ * hdd_ndi_start(): Start NDI adapter and create NDI vdev
+ * @iface_name: NDI interface name
+ * @transaction_id: Transaction id given by framework to start the NDI.
+ *                  Framework expects this in the immediate response when
+ *                  the NDI is created by it.
+ *
+ * Create NDI move interface and vdev.
+ *
+ * Return: 0 upon success
+ */
+int hdd_ndi_start(char *iface_name, uint16_t transaction_id);
 #else
 #define WLAN_HDD_IS_NDI(adapter)	(false)
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
@@ -101,13 +114,17 @@ static inline void hdd_cleanup_ndi(struct hdd_context *hdd_ctx,
 				   struct hdd_adapter *adapter)
 {
 }
+
+static inline int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
+{
+	return 0;
+}
 #endif /* WLAN_FEATURE_NAN */
 
 enum nan_datapath_state;
 struct nan_datapath_inf_create_rsp;
 
 int hdd_ndi_open(char *iface_name);
-int hdd_ndi_start(char *iface_name, uint16_t transaction_id);
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id);
 void hdd_ndi_close(uint8_t vdev_id);
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
