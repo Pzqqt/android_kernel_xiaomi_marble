@@ -75,7 +75,8 @@ extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 	nan_msg_hdr = (nan_msg_header_t *)event->data;
 
-	if (!wmi_service_enabled(wmi_handle, wmi_service_nan_dbs_support)) {
+	if (!wmi_service_enabled(wmi_handle, wmi_service_nan_dbs_support) &&
+	    !wmi_service_enabled(wmi_handle, wmi_service_nan_disable_support)) {
 		evt_params->evt_type = nan_event_id_generic_rsp;
 		return QDF_STATUS_SUCCESS;
 	}
