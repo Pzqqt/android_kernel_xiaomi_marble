@@ -1224,3 +1224,34 @@ bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev)
 
 	return false;
 }
+
+QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	struct nan_event_params *disable_ind;
+	struct nan_disable_ind_msg msg = {
+		.msg_hdr.msg_id = NAN_MSG_ID_DISABLE_INDICATION,
+		.reason = 0, /* success */ };
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	disable_ind = qdf_mem_malloc(sizeof(struct nan_event_params) +
+				     sizeof(msg));
+	if (!disable_ind) {
+		nan_err("failed to alloc disable_ind");
+		return QDF_STATUS_E_NOMEM;
+	}
+	disable_ind->psoc = psoc,
+	disable_ind->evt_type = nan_event_id_disable_ind;
+	disable_ind->buf_len = sizeof(msg);
+	qdf_mem_copy(disable_ind->buf, &msg, disable_ind->buf_len);
+
+	psoc_nan_obj->cb_obj.os_if_nan_event_handler(disable_ind);
+
+	qdf_mem_free(disable_ind);
+	return QDF_STATUS_SUCCESS;
+}

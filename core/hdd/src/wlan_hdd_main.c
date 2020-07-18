@@ -7863,6 +7863,13 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 						   WLAN_STATUS_ASSOC_DENIED_UNSPEC,
 						   GFP_KERNEL, false, 0);
 			}
+			if ((adapter->device_mode == QDF_NAN_DISC_MODE ||
+			     (adapter->device_mode == QDF_STA_MODE &&
+			      !ucfg_nan_is_vdev_creation_allowed(
+							hdd_ctx->psoc))) &&
+			    cds_is_driver_recovering())
+				ucfg_nan_disable_ind_to_userspace(
+							hdd_ctx->psoc);
 
 			hdd_register_tx_flow_control(adapter,
 					hdd_tx_resume_timer_expired_handler,

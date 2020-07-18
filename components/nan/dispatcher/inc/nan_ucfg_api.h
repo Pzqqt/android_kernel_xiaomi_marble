@@ -453,6 +453,16 @@ QDF_STATUS ucfg_get_nan_feature_config(struct wlan_objmgr_psoc *psoc,
  * Return: Bool
  */
 bool ucfg_is_nan_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_nan_disable_ind_to_userspace() - Send NAN disble ind to userspace
+ * @psoc: pointer to psoc object
+ *
+ * Prepare NAN disable indication and send it to userspace
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc);
 #else /* WLAN_FEATURE_NAN */
 
 static inline
@@ -559,6 +569,12 @@ static inline
 bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
+}
+
+static inline
+QDF_STATUS ucfg_nan_disable_ind_to_userspace(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */
