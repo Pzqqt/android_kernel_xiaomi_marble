@@ -331,7 +331,17 @@ static int pkt_capture_mon_thread(void *arg)
 				shutdown = true;
 				break;
 			}
-			pkt_capture_process_from_queue(mon_ctx);
+
+			/*
+			 * if packet capture deregistratin happens stop
+			 * processing packets in queue because mon cb will
+			 * be set to NULL.
+			 */
+			if (test_bit(PKT_CAPTURE_REGISTER_EVENT,
+				     &mon_ctx->mon_event_flag))
+				pkt_capture_process_from_queue(mon_ctx);
+			else
+				complete(&mon_ctx->mon_register_event);
 
 			if (test_bit(PKT_CAPTURE_RX_SUSPEND_EVENT,
 				     &mon_ctx->mon_event_flag)) {
@@ -358,7 +368,7 @@ void pkt_capture_close_mon_thread(struct pkt_capture_mon_context *mon_ctx)
 	if (!mon_ctx->mon_thread)
 		return;
 
-	/* Shut down Tlshim Rx thread */
+	/* Shut down mon thread */
 	set_bit(PKT_CAPTURE_RX_SHUTDOWN_EVENT,
 		&mon_ctx->mon_event_flag);
 	set_bit(PKT_CAPTURE_RX_POST_EVENT,
@@ -494,6 +504,7 @@ pkt_capture_alloc_mon_thread(struct pkt_capture_mon_context *mon_ctx)
 	init_completion(&mon_ctx->suspend_mon_event);
 	init_completion(&mon_ctx->resume_mon_event);
 	init_completion(&mon_ctx->mon_shutdown);
+	init_completion(&mon_ctx->mon_register_event);
 	mon_ctx->mon_event_flag = 0;
 	spin_lock_init(&mon_ctx->mon_queue_lock);
 	spin_lock_init(&mon_ctx->mon_pkt_freeq_lock);
