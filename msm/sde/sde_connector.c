@@ -17,6 +17,7 @@
 #include "dsi_display.h"
 #include "sde_crtc.h"
 #include "sde_rm.h"
+#include "sde_vm.h"
 #include <drm/drm_probe_helper.h>
 
 #define BL_NODE_NAME_SIZE 32
@@ -79,6 +80,8 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 	int bl_lvl;
 	struct drm_event event;
 	int rc = 0;
+	struct msm_drm_private *priv;
+	struct sde_kms *sde_kms;
 
 	brightness = bd->props.brightness;
 
@@ -88,6 +91,10 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		brightness = 0;
 
 	c_conn = bl_get_data(bd);
+
+	priv = c_conn->base.dev->dev_private;
+	sde_kms = to_sde_kms(priv->kms);
+
 	display = (struct dsi_display *) c_conn->display;
 	if (brightness > display->panel->bl_config.bl_max_level)
 		brightness = display->panel->bl_config.bl_max_level;
@@ -106,6 +113,19 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 		return 0;
 	}
 
+	if (sde_kms->vm) {
+		struct sde_vm_ops *vm_ops = &sde_kms->vm->vm_ops;
+
+		mutex_lock(&sde_kms->vm->vm_res_lock);
+
+		if (vm_ops->vm_owns_hw && vm_ops->vm_owns_hw(sde_kms)) {
+			SDE_DEBUG(
+				"skipping bl update due to HW unavailablity\n");
+			mutex_unlock(&sde_kms->vm->vm_res_lock);
+			return 0;
+		}
+	}
+
 	if (c_conn->ops.set_backlight) {
 		/* skip notifying user space if bl is 0 */
 		if (brightness != 0) {
@@ -118,6 +138,9 @@ static int sde_backlight_device_update_status(struct backlight_device *bd)
 				c_conn->display, bl_lvl);
 		c_conn->unset_bl_level = 0;
 	}
+
+	if (sde_kms->vm)
+		mutex_unlock(&sde_kms->vm->vm_res_lock);
 
 	return rc;
 }
@@ -152,15 +175,25 @@ static int sde_backlight_setup(struct sde_connector *c_conn,
 	struct backlight_properties props;
 	struct dsi_display *display;
 	struct dsi_backlight_config *bl_config;
+	struct msm_drm_private *priv;
+	struct sde_kms *sde_kms;
 	static int display_count;
 	char bl_node_name[BL_NODE_NAME_SIZE];
 
-	if (!c_conn || !dev || !dev->dev) {
+	if (!c_conn || !dev || !dev->dev || !dev->dev_private) {
 		SDE_ERROR("invalid param\n");
 		return -EINVAL;
 	} else if (c_conn->connector_type != DRM_MODE_CONNECTOR_DSI) {
 		return 0;
 	}
+
+	priv = dev->dev_private;
+	if (!priv->kms)
+		return -EINVAL;
+
+	sde_kms = to_sde_kms(priv->kms);
+	if (sde_in_trusted_vm(sde_kms))
+		return 0;
 
 	memset(&props, 0, sizeof(props));
 	props.type = BACKLIGHT_RAW;

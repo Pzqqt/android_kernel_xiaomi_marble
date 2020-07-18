@@ -310,6 +310,8 @@ struct sde_kms {
 	cpumask_t irq_cpu_mask;
 	struct dev_pm_qos_request pm_qos_irq_req[NR_CPUS];
 	struct irq_affinity_notify affinity_notify;
+
+	struct sde_vm *vm;
 };
 
 struct vsync_info {
@@ -699,4 +701,55 @@ void sde_kms_irq_enable_notify(struct sde_kms *sde_kms, bool enable);
  */
 int sde_kms_get_io_resources(struct sde_kms *kms, struct msm_io_res *io_res);
 
+/**
+ * sde_kms_vm_trusted_resource_init - reserve/initialize the HW/SW resources
+ * @sde_kms: poiner to sde_kms structure
+ * return: 0 on success; error code otherwise
+ */
+int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms);
+
+/**
+ * sde_kms_vm_trusted_resource_deinit - release the HW/SW resources
+ * @sde_kms: poiner to sde_kms structure
+ */
+void sde_kms_vm_trusted_resource_deinit(struct sde_kms *sde_kms);
+
+/**
+ * sde_kms_vm_trusted_post_commit - function to prepare the VM after the
+ *				    last commit before releasing the HW
+ *				    resources from trusted VM
+ * @sde_kms: pointer to sde_kms
+ * @state: current frames atomic commit state
+ */
+int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
+	struct drm_atomic_state *state);
+
+/**
+ * sde_kms_vm_primary_post_commit - function to prepare the VM after the
+ *				    last commit before assign the HW
+ *				    resources from primary VM
+ * @sde_kms: pointer to sde_kms
+ * @state: current frames atomic commit state
+ */
+int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
+	struct drm_atomic_state *state);
+
+/**
+ * sde_kms_vm_trusted_prepare_commit - function to prepare the VM before the
+ *				       the first commit after the accepting
+ *				       the HW resources in trusted VM.
+ * @sde_kms: pointer to sde_kms
+ * @state: current frame's atomic commit state
+ */
+int sde_kms_vm_trusted_prepare_commit(struct sde_kms *sde_kms,
+					   struct drm_atomic_state *state);
+/**
+ * sde_kms_vm_primary_prepare_commit - function to prepare the VM before the
+ *				       the first commit after the reclaming
+ *				       the HW resources in trusted VM.
+ * @sde_kms: pointer to sde_kms
+ * @state: current frame's atomic commit state
+ */
+int sde_kms_vm_primary_prepare_commit(struct sde_kms *sde_kms,
+					   struct drm_atomic_state *state);
 #endif /* __sde_kms_H__ */
