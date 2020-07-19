@@ -133,6 +133,7 @@ hal_rx_flow_delete_entry(struct hal_rx_fst *fst, void *hal_rx_fse)
 }
 qdf_export_symbol(hal_rx_flow_delete_entry);
 
+#ifndef WLAN_SUPPORT_RX_FISA
 /**
  * hal_rx_fst_key_configure() - Configure the Toeplitz key in the FST
  * @fst: Pointer to the Rx Flow Search Table
@@ -157,6 +158,11 @@ static void hal_rx_fst_key_configure(struct hal_rx_fst *fst)
 	key_bitwise_shift_left(key_bytes, HAL_FST_HASH_KEY_SIZE_BYTES, 5);
 	key_reverse(fst->shifted_key, key_bytes, HAL_FST_HASH_KEY_SIZE_BYTES);
 }
+#else
+static void hal_rx_fst_key_configure(struct hal_rx_fst *fst)
+{
+}
+#endif
 
 /**
  * hal_rx_fst_get_base() - Retrieve the virtual base address of the Rx FST
@@ -240,6 +246,7 @@ QDF_STATUS hal_rx_flow_get_tuple_info(void *hal_fse,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef WLAN_SUPPORT_RX_FISA
 /**
  * hal_flow_toeplitz_create_cache() - Calculate hashes for each possible
  * byte value with the key taken as is
@@ -302,6 +309,11 @@ static void hal_flow_toeplitz_create_cache(struct hal_rx_fst *fst)
 		cur_key = cur_key << 8 | new_key_byte;
 	}
 }
+#else
+static void hal_flow_toeplitz_create_cache(struct hal_rx_fst *fst)
+{
+}
+#endif
 
 /**
  * hal_rx_fst_attach() - Initialize Rx flow search table in HW FST
@@ -386,6 +398,7 @@ void hal_rx_fst_detach(struct hal_rx_fst *rx_fst,
 }
 qdf_export_symbol(hal_rx_fst_detach);
 
+#ifndef WLAN_SUPPORT_RX_FISA
 /**
  * hal_flow_toeplitz_hash() - Calculate Toeplitz hash by using the cached key
  *
@@ -433,6 +446,13 @@ hal_flow_toeplitz_hash(void *hal_fst, struct hal_rx_flow *flow)
 
 	return hash;
 }
+#else
+uint32_t
+hal_flow_toeplitz_hash(void *hal_fst, struct hal_rx_flow *flow)
+{
+	return 0;
+}
+#endif
 qdf_export_symbol(hal_flow_toeplitz_hash);
 
 /**

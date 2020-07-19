@@ -55,11 +55,13 @@ struct hal_rx_fst {
 	uint8_t *base_vaddr;
 	qdf_dma_addr_t base_paddr;
 	uint8_t *key;
+#ifndef WLAN_SUPPORT_RX_FISA
 	uint8_t  shifted_key[HAL_FST_HASH_KEY_SIZE_BYTES];
+	uint32_t key_cache[HAL_FST_HASH_KEY_SIZE_BYTES][1 << 8];
+#endif
 	uint16_t max_entries;
 	uint16_t max_skid_length;
 	uint16_t hash_mask;
-	uint32_t key_cache[HAL_FST_HASH_KEY_SIZE_BYTES][1 << 8];
 	uint32_t add_flow_count;
 	uint32_t del_flow_count;
 };
