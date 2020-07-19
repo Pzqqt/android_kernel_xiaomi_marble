@@ -1450,6 +1450,12 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 		} while (1);
 
 		delete_avail_tx_wrapper_list(ep);
+		/* Delete NAPI TX object. For WAN_PROD, it is deleted
+		 * in rmnet_ipa driver.
+		 */
+		if (ipa3_ctx->tx_napi_enable &&
+			(ep->client != IPA_CLIENT_APPS_WAN_PROD))
+			netif_napi_del(&ep->sys->napi_tx);
 	}
 
 	/* channel stop might fail on timeout if IPA is busy */
