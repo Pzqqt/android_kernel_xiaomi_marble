@@ -267,6 +267,7 @@ struct sde_crtc_misr_info {
  *                    for secure cases.
  * @misr_enable_debugfs : boolean entry indicates misr enable/disable status
  *                        from debugfs.
+ * @misr_reconfigure : boolean entry indicates misr reconfigure status
  * @misr_frame_count  : misr frame count provided by client
  * @misr_data     : store misr data before turning off the clocks.
  * @idle_notify_work: delayed worker to notify idle timeout to user space
@@ -341,6 +342,7 @@ struct sde_crtc {
 	spinlock_t event_lock;
 	bool misr_enable_sui;
 	bool misr_enable_debugfs;
+	bool misr_reconfigure;
 	u32 misr_frame_count;
 	struct kthread_delayed_work idle_notify_work;
 
