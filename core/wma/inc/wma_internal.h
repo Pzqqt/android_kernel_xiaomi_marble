@@ -1738,6 +1738,17 @@ int wma_twt_disable_comp_event_handler(void *handle, uint8_t *event,
  */
 int wma_twt_add_dialog_complete_event_handler(void *handle,
 					      uint8_t *event, uint32_t len);
+
+/**
+ * wma_twt_del_dialog_complete_event_handler - TWT del dlg complete evt handler
+ * @handle: wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * Return: 0 on success
+ */
+int wma_twt_del_dialog_complete_event_handler(void *handle,
+					      uint8_t *event, uint32_t len);
 #endif
 
 /**

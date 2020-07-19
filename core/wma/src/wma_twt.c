@@ -214,3 +214,37 @@ QDF_STATUS wma_twt_process_del_dialog(
 
 	return wmi_unified_twt_del_dialog_cmd(wmi_handle, params);
 }
+
+int wma_twt_del_dialog_complete_event_handler(void *handle,
+					      uint8_t *event, uint32_t len)
+{
+	struct wmi_twt_del_dialog_complete_event_param param;
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	int status = -EINVAL;
+
+	if (!wma_handle) {
+		wma_err("Invalid wma handle for TWT del dialog complete");
+		return status;
+	}
+	wmi_handle = (wmi_unified_t)wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wma handle for TWT del dialog complete");
+		return status;
+	}
+	if (!mac) {
+		wma_err("Invalid MAC context");
+		return status;
+	}
+	status = wmi_extract_twt_del_dialog_comp_event(wmi_handle, event,
+						       &param);
+	wma_debug("TWT: Extract TWT del dlg comp event, status:%d", status);
+
+	if (mac->sme.twt_del_dialog_cb)
+		mac->sme.twt_del_dialog_cb(mac->sme.twt_context, &param);
+
+	mac->sme.twt_del_dialog_cb = NULL;
+
+	return status;
+}

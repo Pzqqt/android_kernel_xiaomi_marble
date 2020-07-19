@@ -3369,6 +3369,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				 wmi_twt_add_dialog_complete_event_id,
 				 wma_twt_add_dialog_complete_event_handler,
 				 WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler
+				(wma_handle->wmi_handle,
+				 wmi_twt_del_dialog_complete_event_id,
+				 wma_twt_del_dialog_complete_event_handler,
+				 WMA_RX_SERIALIZER_CTX);
 #endif
 
 	wma_register_apf_events(wma_handle);

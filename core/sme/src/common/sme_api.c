@@ -14486,6 +14486,42 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 	return status;
 }
 
+QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
+			      twt_del_dialog_cb del_dialog_cb,
+			      struct wmi_twt_del_dialog_param *twt_params,
+			      void *context)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS status;
+	void *wma_handle;
+
+	SME_ENTER();
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sme_err("wma_handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.twt_del_dialog_cb = del_dialog_cb;
+		mac->sme.twt_context = context;
+		sme_release_global_lock(&mac->sme);
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("failed to register del dlg callback");
+		return status;
+	}
+
+	status = wma_twt_process_del_dialog(twt_params);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("failed to call wma_twt_process_del_dialog");
+
+	SME_EXIT();
+	return status;
+}
+
 #endif
 
 QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,

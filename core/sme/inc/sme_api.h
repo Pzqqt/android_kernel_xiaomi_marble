@@ -3648,6 +3648,21 @@ QDF_STATUS sme_add_dialog_cmd(mac_handle_t mac_handle,
 			      void *context);
 
 /**
+ * sme_del_dialog_cmd() - Register callback and send TWT del dialog
+ * command to firmware
+ * @mac_handle: MAC handle
+ * @twt_del_dialog_cb: Function callback to handle del_dialog event
+ * @twt_params: TWT del dialog parameters
+ * @context: os_if_request cookie
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS sme_del_dialog_cmd(mac_handle_t mac_handle,
+			      twt_del_dialog_cb del_dialog_cb,
+			      struct wmi_twt_del_dialog_param *twt_params,
+			      void *context);
+
+/**
  * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
  * @mac_handle: Opaque handle to the global MAC context
  *

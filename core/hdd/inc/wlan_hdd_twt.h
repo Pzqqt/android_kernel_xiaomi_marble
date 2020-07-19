@@ -35,6 +35,8 @@ struct hdd_context;
 struct hdd_adapter;
 struct wma_tgt_cfg;
 struct wmi_twt_add_dialog_param;
+struct wmi_twt_del_dialog_param;
+
 extern const struct nla_policy qca_wlan_vendor_twt_add_dialog_policy[
 		QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
 

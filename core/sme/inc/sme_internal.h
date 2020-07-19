@@ -169,6 +169,15 @@ typedef void (*twt_disable_cb)(hdd_handle_t hdd_handle);
 typedef void (*twt_add_dialog_cb)(void *context,
 				  struct wmi_twt_add_dialog_complete_event_param *params,
 				  struct wmi_twt_add_dialog_additional_params *additional_params);
+
+/**
+ * typedef twt_del_dialog_cb - TWT delete dialog callback signature.
+ * @context: Opaque context that the client can use to associate the
+ *           callback with the request.
+ * @params: TWT delete dialog complete event parameters.
+ */
+typedef void (*twt_del_dialog_cb)(void *context,
+				  struct wmi_twt_del_dialog_complete_event_param *params);
 #endif
 
 #ifdef FEATURE_WLAN_APF
@@ -379,6 +388,7 @@ struct sme_context {
 	twt_enable_cb twt_enable_cb;
 	twt_disable_cb twt_disable_cb;
 	twt_add_dialog_cb twt_add_dialog_cb;
+	twt_del_dialog_cb twt_del_dialog_cb;
 	void *twt_context;
 #endif
 #ifdef FEATURE_WLAN_APF
