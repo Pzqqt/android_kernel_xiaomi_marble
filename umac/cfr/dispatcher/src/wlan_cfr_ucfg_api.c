@@ -301,7 +301,7 @@ static void cfr_iter_peer_handler(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	if (pe->request == PEER_CFR_CAPTURE_ENABLE) {
+	if (pe->period && (pe->request == PEER_CFR_CAPTURE_ENABLE)) {
 		*cfr_capt_status = pe->request;
 		cfr_debug("CFR capture running for peer "
 			  QDF_MAC_ADDR_STR,
