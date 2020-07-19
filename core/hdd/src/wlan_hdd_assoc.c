@@ -1599,8 +1599,6 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		if (ucfg_pkt_capture_get_pktcap_mode(hdd_ctx->psoc))
 			ucfg_pkt_capture_record_channel(adapter->vdev);
-
-		hdd_netdev_update_features(adapter);
 	} else {                /* Not Associated */
 		hdd_nofl_info("%s(vdevid-%d): disconnected", dev->name,
 			      adapter->vdev_id);
@@ -2735,6 +2733,33 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 #endif
 
 /**
+ * hdd_netif_queue_enable() - Enable the network queue for a
+ *			      particular adapter.
+ * @adapter: pointer to the adapter structure
+ *
+ * This function schedules a work to update the netdev features
+ * and enable the network queue if the feature "disable checksum/tso
+ * for legacy connections" is enabled via INI. If not, it will
+ * retain the existing behavior by just enabling the network queues.
+ *
+ * Returns: none
+ */
+static inline void hdd_netif_queue_enable(struct hdd_adapter *adapter)
+{
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (cdp_cfg_get(soc, cfg_dp_disable_legacy_mode_csum_offload)) {
+		qdf_queue_work(0, hdd_ctx->adapter_ops_wq,
+			       &adapter->netdev_features_update_work);
+	} else {
+		wlan_hdd_netif_queue_control(adapter,
+					     WLAN_WAKE_ALL_NETIF_QUEUE,
+					     WLAN_CONTROL_PATH);
+	}
+}
+
+/**
  * hdd_association_completion_handler() - association completion handler
  * @adapter: pointer to adapter
  * @roam_info: pointer to roam info
@@ -3222,10 +3247,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						roam_info,
 						roam_info->bss_desc);
 				hdd_debug("Enabling queues");
-				wlan_hdd_netif_queue_control(adapter,
-						WLAN_WAKE_ALL_NETIF_QUEUE,
-						WLAN_CONTROL_PATH);
-
+				hdd_netif_queue_enable(adapter);
 			}
 			qdf_mem_free(rsp_rsn_ie);
 		} else {
@@ -3279,9 +3301,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 
 			/* Start the tx queues */
 			hdd_debug("Enabling queues");
-			wlan_hdd_netif_queue_control(adapter,
-						   WLAN_WAKE_ALL_NETIF_QUEUE,
-						   WLAN_CONTROL_PATH);
+			hdd_netif_queue_enable(adapter);
 		}
 		qdf_mem_free(reqRsnIe);
 

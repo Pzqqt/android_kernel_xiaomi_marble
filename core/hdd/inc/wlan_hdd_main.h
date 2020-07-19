@@ -1118,6 +1118,8 @@ struct hdd_context;
  * @gro_flushed: Flag to indicate if GRO explicit flush is done or not
  * @handle_feature_update: Handle feature update only if it is triggered
  *			   by hdd_netdev_feature_update
+ * @netdev_features_update_work: work for handling the netdev features update
+				 for the adapter.
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1415,6 +1417,8 @@ struct hdd_adapter {
 	uint8_t gro_disallowed[DP_MAX_RX_THREADS];
 	uint8_t gro_flushed[DP_MAX_RX_THREADS];
 	bool handle_feature_update;
+
+	qdf_work_t netdev_features_update_work;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
@@ -1690,6 +1694,7 @@ struct hdd_fw_ver_info {
  * @current_pcie_gen_speed: current pcie gen speed
  * @pm_qos_req: pm_qos request for all cpu cores
  * @qos_cpu_mask: voted cpu core mask
+ * @adapter_ops_wq: High priority workqueue for handling adapter operations
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2021,6 +2026,7 @@ struct hdd_context {
 		uint8_t gro_force_flush[DP_MAX_RX_THREADS];
 	} dp_agg_param;
 	int current_pcie_gen_speed;
+	qdf_workqueue_t *adapter_ops_wq;
 };
 
 /**
@@ -2813,6 +2819,41 @@ hdd_is_low_tput_gro_enable(struct hdd_context *hdd_ctx)
 #define GET_BW_COMPUTE_INTV(config) 0
 
 #endif /*WLAN_FEATURE_DP_BUS_BANDWIDTH*/
+
+/**
+ * hdd_init_adapter_ops_wq() - Init global workqueue for adapter operations.
+ * @hdd_ctx: pointer to HDD context
+ *
+ * Return: QDF_STATUS_SUCCESS if workqueue is allocated,
+ *	   QDF_STATUS_E_NOMEM if workqueue aloocation fails.
+ */
+QDF_STATUS hdd_init_adapter_ops_wq(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_deinit_adapter_ops_wq() - Deinit global workqueue for adapter operations.
+ * @hdd_ctx: pointer to HDD context
+ *
+ * Return: None
+ */
+void hdd_deinit_adapter_ops_wq(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_adapter_feature_update_work_init() - Init per adapter work for netdev
+ *					    feature update
+ * @adapter: pointer to adapter structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_adapter_feature_update_work_init(struct hdd_adapter *adapter);
+
+/**
+ * hdd_adapter_feature_update_work_deinit() - Deinit per adapter work for
+ *					      netdev feature update
+ * @adapter: pointer to adapter structure
+ *
+ * Return: QDF_STATUS
+ */
+void hdd_adapter_feature_update_work_deinit(struct hdd_adapter *adapter);
 
 int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask);
 
