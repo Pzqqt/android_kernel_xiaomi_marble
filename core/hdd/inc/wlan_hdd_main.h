@@ -1677,6 +1677,47 @@ struct hdd_fw_ver_info {
 };
 
 /**
+ * The logic for get current index of history is dependent on this
+ * value being power of 2.
+ */
+#define WLAN_HDD_ADAPTER_OPS_HISTORY_MAX 4
+QDF_COMPILE_TIME_ASSERT(adapter_ops_history_size,
+			(WLAN_HDD_ADAPTER_OPS_HISTORY_MAX &
+			 (WLAN_HDD_ADAPTER_OPS_HISTORY_MAX - 1)) == 0);
+
+/**
+ * enum hdd_adapter_ops_event - events for adapter ops history
+ * @WLAN_HDD_ADAPTER_OPS_WORK_POST: adapter ops work posted
+ * @WLAN_HDD_ADAPTER_OPS_WORK_SCHED: adapter ops work scheduled
+ */
+enum hdd_adapter_ops_event {
+	WLAN_HDD_ADAPTER_OPS_WORK_POST,
+	WLAN_HDD_ADAPTER_OPS_WORK_SCHED,
+};
+
+/**
+ * struct hdd_adapter_ops_record - record of adapter ops history
+ * @timestamp: time of the occurrence of event
+ * @event: event
+ * @vdev_id: vdev id corresponding to the event
+ */
+struct hdd_adapter_ops_record {
+	uint64_t timestamp;
+	enum hdd_adapter_ops_event event;
+	int vdev_id;
+};
+
+/**
+ * struct hdd_adapter_ops_history - history of adapter ops
+ * @index: index to store the next event
+ * @entry: array of events
+ */
+struct hdd_adapter_ops_history {
+	qdf_atomic_t index;
+	struct hdd_adapter_ops_record entry[WLAN_HDD_ADAPTER_OPS_HISTORY_MAX];
+};
+
+/**
  * struct hdd_context - hdd shared driver and psoc/device context
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
@@ -2027,6 +2068,7 @@ struct hdd_context {
 	} dp_agg_param;
 	int current_pcie_gen_speed;
 	qdf_workqueue_t *adapter_ops_wq;
+	struct hdd_adapter_ops_history adapter_ops_history;
 };
 
 /**
@@ -2100,6 +2142,50 @@ struct hdd_channel_info {
 /*
  * Function declarations and documentation
  */
+
+/**
+ * wlan_hdd_history_get_next_index() - get next index to store the history
+				       entry
+ * @curr_idx: current index
+ * @max_entries: max entries in the history
+ *
+ * Returns: The index at which record is to be stored in history
+ */
+static inline uint32_t wlan_hdd_history_get_next_index(qdf_atomic_t *curr_idx,
+						       uint32_t max_entries)
+{
+	uint32_t idx = qdf_atomic_inc_return(curr_idx);
+
+	return idx & (max_entries - 1);
+}
+
+/**
+ * hdd_adapter_ops_record_event() - record an entry in the adapter ops history
+ * @hdd_ctx: pointer to hdd context
+ * @event: event
+ * @vdev_id: vdev id corresponding to event
+ *
+ * Returns: None
+ */
+static inline void
+hdd_adapter_ops_record_event(struct hdd_context *hdd_ctx,
+			     enum hdd_adapter_ops_event event,
+			     int vdev_id)
+{
+	struct hdd_adapter_ops_history *adapter_hist;
+	struct hdd_adapter_ops_record *record;
+	uint32_t idx;
+
+	adapter_hist = &hdd_ctx->adapter_ops_history;
+
+	idx = wlan_hdd_history_get_next_index(&adapter_hist->index,
+					      WLAN_HDD_ADAPTER_OPS_HISTORY_MAX);
+
+	record = &adapter_hist->entry[idx];
+	record->event = event;
+	record->vdev_id = vdev_id;
+	record->timestamp = qdf_get_log_timestamp();
+}
 
 /**
  * hdd_validate_channel_and_bandwidth() - Validate the channel-bandwidth combo

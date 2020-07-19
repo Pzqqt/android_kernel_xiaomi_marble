@@ -2750,6 +2750,9 @@ static inline void hdd_netif_queue_enable(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (cdp_cfg_get(soc, cfg_dp_disable_legacy_mode_csum_offload)) {
+		hdd_adapter_ops_record_event(hdd_ctx,
+					     WLAN_HDD_ADAPTER_OPS_WORK_POST,
+					     adapter->vdev_id);
 		qdf_queue_work(0, hdd_ctx->adapter_ops_wq,
 			       &adapter->netdev_features_update_work);
 	} else {

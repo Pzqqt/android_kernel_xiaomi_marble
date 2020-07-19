@@ -10081,9 +10081,19 @@ __hdd_adapter_param_update_work(struct hdd_adapter *adapter)
  */
 static void hdd_adapter_param_update_work(void *arg)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = arg;
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
+
+	if (!hdd_ctx) {
+		hdd_err("Invalid hdd context");
+		return;
+	}
+
+	hdd_adapter_ops_record_event(hdd_ctx,
+				     WLAN_HDD_ADAPTER_OPS_WORK_SCHED,
+				     WLAN_INVALID_VDEV_ID);
 
 	if (hdd_validate_adapter(adapter)) {
 		hdd_err("netdev features update request for invalid adapter");
@@ -11968,6 +11978,7 @@ struct hdd_context *hdd_context_create(struct device *dev)
 		goto err_deinit_hdd_context;
 
 	hdd_set_wlan_logging(hdd_ctx);
+	qdf_atomic_init(&hdd_ctx->adapter_ops_history.index);
 
 skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);
