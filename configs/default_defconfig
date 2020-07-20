@@ -1058,7 +1058,6 @@ endif
 
 ifneq ($(TARGET_BUILD_VARIANT),user)
 CONFIG_DESC_DUP_DETECT_DEBUG := y
-CONFIG_DEBUG_RX_RING_BUFFER := y
 endif
 
 ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS_MODULE)))
@@ -1127,6 +1126,12 @@ endif
 ifeq ($(CONFIG_ARCH_SDM660), y)
 CONFIG_WLAN_FEATURE_PKT_CAPTURE := y
 endif
+
+#Enable RX RING buffers debug
+CONFIG_DEBUG_RX_RING_BUFFER := y
+
+#Enable Hash debug
+CONFIG_RX_HASH_DEBUG := y
 
 #Enable connection manager
 CONFIG_CM_ENABLE := n

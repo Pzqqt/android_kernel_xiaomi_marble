@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -297,7 +297,8 @@ struct htt_pdev_t {
 		uint32_t size_mask;	/* size - 1, at least 16 bits long */
 
 		int fill_level; /* how many rx buffers to keep in the ring */
-		int fill_cnt;   /* # of rx buffers (full+empty) in the ring */
+		/* # of rx buffers (full+empty) in the ring */
+		qdf_atomic_t fill_cnt;
 		int pop_fail_cnt;   /* # of nebuf pop failures */
 
 		/*
