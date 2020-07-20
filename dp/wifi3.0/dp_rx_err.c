@@ -31,6 +31,7 @@
 #endif
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 #include "qdf_net_types.h"
+#include "dp_rx_buffer_pool.h"
 
 /* Max buffer in invalid peer SG list*/
 #define DP_MAX_INVALID_BUFFERS 10
@@ -323,7 +324,7 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			hal_rx_print_pn(soc->hal_soc, rx_tlv_hdr);
 
 		/* Just free the buffers */
-		qdf_nbuf_free(rx_desc->nbuf);
+		dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf, *mac_id);
 
 		dp_rx_add_to_free_desc_list(&pdev->free_list_head,
 					    &pdev->free_list_tail, rx_desc);
@@ -515,6 +516,12 @@ more_msdu_link_desc:
 				 HAL_MSDU_F_MSDU_CONTINUATION))
 			continue;
 
+		if (dp_rx_buffer_pool_refill(soc, head_nbuf,
+					     rx_desc->pool_id)) {
+			/* MSDU queued back to the pool */
+			goto process_next_msdu;
+		}
+
 		rx_tlv_hdr_first = qdf_nbuf_data(head_nbuf);
 		rx_tlv_hdr_last = qdf_nbuf_data(tail_nbuf);
 
@@ -547,6 +554,7 @@ more_msdu_link_desc:
 			qdf_nbuf_free(nbuf);
 		}
 
+process_next_msdu:
 		msdu_processed++;
 		head_nbuf = NULL;
 		tail_nbuf = NULL;
@@ -1852,13 +1860,19 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 					  soc->wbm_sg_param.wbm_sg_nbuf_tail,
 					  nbuf);
 			if (process_sg_buf) {
-				DP_RX_MERGE_TWO_LIST(nbuf_head, nbuf_tail,
-						     soc->wbm_sg_param.wbm_sg_nbuf_head,
-						     soc->wbm_sg_param.wbm_sg_nbuf_tail);
+				if (!dp_rx_buffer_pool_refill(
+					soc,
+					soc->wbm_sg_param.wbm_sg_nbuf_head,
+					rx_desc->pool_id))
+					DP_RX_MERGE_TWO_LIST(
+						nbuf_head, nbuf_tail,
+						soc->wbm_sg_param.wbm_sg_nbuf_head,
+						soc->wbm_sg_param.wbm_sg_nbuf_tail);
 				dp_rx_wbm_sg_list_reset(soc);
 				process_sg_buf = false;
 			}
-		} else {
+		} else if (!dp_rx_buffer_pool_refill(soc, nbuf,
+						     rx_desc->pool_id)) {
 			DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, nbuf);
 		}
 
@@ -2227,7 +2241,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						"[%s][%d] msdu_nbuf=%pK ",
 						__func__, __LINE__, msdu);
 
-					qdf_nbuf_free(msdu);
+					dp_rx_buffer_pool_nbuf_free(soc, msdu,
+							rx_desc->pool_id);
 					rx_bufs_used++;
 					dp_rx_add_to_free_desc_list(head,
 						tail, rx_desc);
@@ -2375,7 +2390,8 @@ dp_wbm_int_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				qdf_nbuf_unmap_single(soc->osdev, msdu,
 						      QDF_DMA_FROM_DEVICE);
 
-				qdf_nbuf_free(msdu);
+				dp_rx_buffer_pool_nbuf_free(soc, msdu,
+							    rx_desc->pool_id);
 				rx_bufs_used++;
 				dp_rx_add_to_free_desc_list(head,
 							    tail, rx_desc);
@@ -2456,7 +2472,8 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 						     rx_desc_pool->buf_size);
 			rx_desc->unmapped = 1;
 
-			qdf_nbuf_free(rx_desc->nbuf);
+			dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
+						    rx_desc->pool_id);
 			dp_rx_add_to_free_desc_list(&head,
 						    &tail,
 						    rx_desc);

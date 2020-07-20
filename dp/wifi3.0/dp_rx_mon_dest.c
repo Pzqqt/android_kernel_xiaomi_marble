@@ -28,6 +28,7 @@
 #include "dp_rx_mon.h"
 #include "wlan_cfg.h"
 #include "dp_internal.h"
+#include "dp_rx_buffer_pool.h"
 #ifdef WLAN_TX_PKT_CAPTURE_ENH
 #include "dp_rx_mon_feature.h"
 
@@ -275,6 +276,15 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 							QDF_DMA_FROM_DEVICE,
 							rx_desc_pool->buf_size);
 				rx_desc->unmapped = 1;
+			}
+
+			if (dp_rx_buffer_pool_refill(soc, msdu,
+						     rx_desc->pool_id)) {
+				drop_mpdu = true;
+				msdu = NULL;
+				dp_pdev->mon_last_linkdesc_paddr =
+					buf_info.paddr;
+				goto next_msdu;
 			}
 
 			if (drop_mpdu) {

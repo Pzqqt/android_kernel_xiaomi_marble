@@ -1422,4 +1422,26 @@ static inline void dp_rx_wbm_sg_list_deinit(struct dp_soc *soc)
 		dp_rx_wbm_sg_list_reset(soc);
 	}
 }
+
+#ifdef WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL
+#define DP_RX_PROCESS_NBUF(soc, head, tail, ebuf_head, ebuf_tail, rx_desc) \
+	do {								   \
+		if (!soc->rx_buff_pool[rx_desc->pool_id].is_initialized) { \
+			DP_RX_LIST_APPEND(head, tail, rx_desc->nbuf);	   \
+			break;						   \
+		}							   \
+		DP_RX_LIST_APPEND(ebuf_head, ebuf_tail, rx_desc->nbuf);	   \
+		if (!qdf_nbuf_is_rx_chfrag_cont(rx_desc->nbuf)) {	   \
+			if (!dp_rx_buffer_pool_refill(soc, ebuf_head,	   \
+						      rx_desc->pool_id))   \
+				DP_RX_MERGE_TWO_LIST(head, tail,	   \
+						     ebuf_head, ebuf_tail);\
+			ebuf_head = NULL;				   \
+			ebuf_tail = NULL;				   \
+		}							   \
+	} while (0)
+#else
+#define DP_RX_PROCESS_NBUF(soc, head, tail, ebuf_head, ebuf_tail, rx_desc) \
+	DP_RX_LIST_APPEND(head, tail, rx_desc->nbuf)
+#endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
 #endif /* _DP_RX_H */

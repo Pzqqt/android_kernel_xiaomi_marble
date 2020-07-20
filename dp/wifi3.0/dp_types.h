@@ -967,6 +967,12 @@ struct link_desc_bank {
 	uint32_t size;
 };
 
+struct rx_buff_pool {
+	qdf_nbuf_queue_head_t emerg_nbuf_q;
+	uint32_t nbuf_fail_cnt;
+	bool is_initialized;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/**
@@ -1362,6 +1368,9 @@ struct dp_soc {
 	} wbm_sg_param;
 	/* Number of msdu exception descriptors */
 	uint32_t num_msdu_exception_desc;
+
+	/* RX buffer params */
+	struct rx_buff_pool rx_buff_pool[MAX_PDEV_CNT];
 };
 
 #ifdef IPA_OFFLOAD

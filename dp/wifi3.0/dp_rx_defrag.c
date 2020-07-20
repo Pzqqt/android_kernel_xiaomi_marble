@@ -28,6 +28,7 @@
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
 #include "dp_rx_defrag.h"
 #include "dp_ipa.h"
+#include "dp_rx_buffer_pool.h"
 
 const struct dp_rx_defrag_cipher dp_f_ccmp = {
 	"AES-CCM",
@@ -1434,6 +1435,11 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		goto discard_frag;
 	}
 
+	if (dp_rx_buffer_pool_refill(soc, frag, rx_desc->pool_id)) {
+		/* fragment queued back to the pool, free the link desc */
+		goto err_free_desc;
+	}
+
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_desc->rx_buf_start);
 
 	qdf_nbuf_set_pktlen(frag, (msdu_len + RX_PKT_TLVS_LEN));
@@ -1649,6 +1655,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 discard_frag:
 	qdf_nbuf_free(frag);
+err_free_desc:
 	dp_rx_add_to_free_desc_list(head, tail, rx_desc);
 	if (dp_rx_link_desc_return(soc, ring_desc,
 				   HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=

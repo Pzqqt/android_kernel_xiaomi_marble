@@ -6368,6 +6368,14 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 	dp_aggregate_pdev_ctrl_frames_stats(pdev);
 	DP_PRINT_STATS("BAR Received Count: = %u",
 		       pdev->stats.rx.bar_recv_cnt);
+
+	DP_PRINT_STATS("RX Buffer Pool Stats:\n");
+	DP_PRINT_STATS("\tBuffers consumed during refill = %llu",
+		       pdev->stats.rx_buffer_pool.num_bufs_consumed);
+	DP_PRINT_STATS("\tSuccessful allocations during refill = %llu",
+		       pdev->stats.rx_buffer_pool.num_bufs_alloc_success);
+	DP_PRINT_STATS("\tAllocations from the pool during replenish = %llu",
+		       pdev->stats.rx_buffer_pool.num_pool_bufs_replenish);
 }
 
 void

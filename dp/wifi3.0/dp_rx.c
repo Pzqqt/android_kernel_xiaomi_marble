@@ -33,6 +33,7 @@
 #include "dp_txrx_wds.h"
 #endif
 #include "dp_hist.h"
+#include "dp_rx_buffer_pool.h"
 
 #ifdef ATH_RX_PRI_SAVE
 #define DP_RX_TID_SAVE(_nbuf, _tid) \
@@ -172,7 +173,6 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	union dp_rx_desc_list_elem_t *next;
 	QDF_STATUS ret;
 	uint16_t buf_size = rx_desc_pool->buf_size;
-	uint8_t buf_alignment = rx_desc_pool->buf_alignment;
 
 	void *rxdma_srng;
 
@@ -239,11 +239,9 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	count = 0;
 
 	while (count < num_req_buffers) {
-		rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
-					buf_size,
-					RX_BUFFER_RESERVATION,
-					buf_alignment,
-					FALSE);
+		rx_netbuf = dp_rx_buffer_pool_nbuf_alloc(dp_soc, mac_id,
+							 rx_desc_pool,
+							 num_entries_avail);
 
 		if (qdf_unlikely(!rx_netbuf)) {
 			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
@@ -254,7 +252,7 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 						 QDF_DMA_FROM_DEVICE, buf_size);
 
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
-			qdf_nbuf_free(rx_netbuf);
+			dp_rx_buffer_pool_nbuf_free(dp_soc, rx_netbuf, mac_id);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
 			continue;
 		}
@@ -2004,6 +2002,8 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, hal_ring_handle_t hal_ring_hdl,
 	uint32_t num_entries = 0;
 	struct hal_rx_msdu_metadata msdu_metadata;
 	QDF_STATUS status;
+	qdf_nbuf_t ebuf_head;
+	qdf_nbuf_t ebuf_tail;
 
 	DP_HIST_INIT();
 
@@ -2025,6 +2025,8 @@ more_data:
 	peer = NULL;
 	vdev = NULL;
 	num_rx_bufs_reaped = 0;
+	ebuf_head = NULL;
+	ebuf_tail = NULL;
 
 	qdf_mem_zero(rx_bufs_reaped, sizeof(rx_bufs_reaped));
 	qdf_mem_zero(&mpdu_desc_info, sizeof(mpdu_desc_info));
@@ -2088,7 +2090,8 @@ more_data:
 							QDF_DMA_FROM_DEVICE,
 							RX_DATA_BUFFER_SIZE);
 				rx_desc->unmapped = 1;
-				qdf_nbuf_free(rx_desc->nbuf);
+				dp_rx_buffer_pool_nbuf_free(soc, rx_desc->nbuf,
+							    rx_desc->pool_id);
 				dp_rx_add_to_free_desc_list(
 							&head[rx_desc->pool_id],
 							&tail[rx_desc->pool_id],
@@ -2231,8 +2234,8 @@ more_data:
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
 		rx_desc->unmapped = 1;
-		DP_RX_LIST_APPEND(nbuf_head, nbuf_tail, rx_desc->nbuf);
-
+		DP_RX_PROCESS_NBUF(soc, nbuf_head, nbuf_tail, ebuf_head,
+				   ebuf_tail, rx_desc);
 		/*
 		 * if continuation bit is set then we have MSDU spread
 		 * across multiple buffers, let us not decrement quota
@@ -2972,6 +2975,11 @@ dp_rx_pdev_buffers_alloc(struct dp_pdev *pdev)
 
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 
+	/* Initialize RX buffer pool which will be
+	 * used during low memory conditions
+	 */
+	dp_rx_buffer_pool_init(soc, mac_for_pdev);
+
 	return dp_pdev_rx_buffers_attach(soc, mac_for_pdev, dp_rxdma_srng,
 					 rx_desc_pool, rxdma_entries - 1);
 }
@@ -2991,6 +2999,7 @@ dp_rx_pdev_buffers_free(struct dp_pdev *pdev)
 	rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
 
 	dp_rx_desc_nbuf_free(soc, rx_desc_pool);
+	dp_rx_buffer_pool_deinit(soc, mac_for_pdev);
 }
 
 /*

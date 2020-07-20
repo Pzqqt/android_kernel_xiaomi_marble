@@ -1784,6 +1784,12 @@ struct cdp_pdev_stats {
 	uint64_t tx_ppdu_proc;
 	uint64_t ack_ba_comes_twice;
 	uint64_t ppdu_drop;
+
+	struct {
+		uint64_t num_bufs_consumed;
+		uint64_t num_pool_bufs_replenish;
+		uint64_t num_bufs_alloc_success;
+	} rx_buffer_pool;
 };
 
 /* struct cdp_peer_hmwds_ast_add_status - hmwds peer ast add status
