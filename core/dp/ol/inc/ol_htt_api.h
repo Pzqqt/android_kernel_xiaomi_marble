@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -191,6 +191,14 @@ void htt_t2h_stats_print(uint8_t *stats_data, int concise);
  * Return: None
  */
 void htt_log_rx_ring_info(htt_pdev_handle pdev);
+
+/**
+ * htt_rx_refill_failure() - During refill failure check if debt is zero
+ * @pdev: handle to the HTT instance
+ *
+ * Return: None
+ */
+void htt_rx_refill_failure(htt_pdev_handle pdev);
 
 #ifndef HTT_DEBUG_LEVEL
 #if defined(DEBUG)

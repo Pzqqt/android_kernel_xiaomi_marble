@@ -5582,8 +5582,10 @@ static void ol_txrx_post_data_stall_event(
 	data_stall_info.recovery_type = recovery_type;
 
 	if (data_stall_info.data_stall_type ==
-				DATA_STALL_LOG_FW_RX_REFILL_FAILED)
+				DATA_STALL_LOG_FW_RX_REFILL_FAILED) {
 		htt_log_rx_ring_info(pdev->htt_pdev);
+		htt_rx_refill_failure(pdev->htt_pdev);
+	}
 
 	pdev->data_stall_detect_callback(&data_stall_info);
 }

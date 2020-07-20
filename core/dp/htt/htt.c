@@ -859,6 +859,11 @@ void htt_log_rx_ring_info(htt_pdev_handle pdev)
 		  qdf_atomic_read(&pdev->rx_ring.refill_debt));
 }
 
+void htt_rx_refill_failure(htt_pdev_handle pdev)
+{
+	QDF_BUG(qdf_atomic_read(&pdev->rx_ring.refill_debt));
+}
+
 #if HTT_DEBUG_LEVEL > 5
 void htt_display(htt_pdev_handle pdev, int indent)
 {
