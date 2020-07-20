@@ -313,15 +313,15 @@ static inline void wma_roam_scan_fill_fils_params(
 #endif
 
 /**
- * wma_handle_btm_disassoc_imminent_msg() - Send del sta msg to lim on receiving
- * BTM request from AP with disassoc imminent reason
+ * wma_handle_disconnect_reason() - Send del sta msg to lim on receiving
  * @wma_handle: wma handle
  * @vdev_id: vdev id
+ * @reason: disconnection reason from fw
  *
  * Return: None
  */
-static void wma_handle_btm_disassoc_imminent_msg(tp_wma_handle wma_handle,
-						 uint32_t vdev_id)
+static void wma_handle_disconnect_reason(tp_wma_handle wma_handle,
+					 uint32_t vdev_id, uint32_t reason)
 {
 	tpDeleteStaContext del_sta_ctx;
 
@@ -330,7 +330,7 @@ static void wma_handle_btm_disassoc_imminent_msg(tp_wma_handle wma_handle,
 		return;
 
 	del_sta_ctx->vdev_id = vdev_id;
-	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT;
+	del_sta_ctx->reasonCode = reason;
 	wma_send_msg(wma_handle, SIR_LIM_DELETE_STA_CONTEXT_IND,
 		     (void *)del_sta_ctx, 0);
 }
@@ -419,14 +419,22 @@ int wma_roam_vdev_disconnect_event_handler(void *handle, uint8_t *event,
 		wma_err("%s: roam cap event is NULL", __func__);
 		return -EINVAL;
 	}
+	if (roam_vdev_disc_ev->vdev_id >= wma->max_bssid) {
+		wma_err("Invalid vdev id %d", roam_vdev_disc_ev->vdev_id);
+		return -EINVAL;
+	}
 
 	wma_debug("Received disconnect roam event on vdev_id : %d, reason:%d",
 		 roam_vdev_disc_ev->vdev_id, roam_vdev_disc_ev->reason);
 
 	switch (roam_vdev_disc_ev->reason) {
+	case WLAN_DISCONNECT_REASON_CSA_SA_QUERY_TIMEOUT:
+		wma_handle_disconnect_reason(wma, roam_vdev_disc_ev->vdev_id,
+			HAL_DEL_STA_REASON_CODE_SA_QUERY_TIMEOUT);
+		break;
 	case WLAN_DISCONNECT_REASON_MOVE_TO_CELLULAR:
-		wma_handle_btm_disassoc_imminent_msg(wma,
-						roam_vdev_disc_ev->vdev_id);
+		wma_handle_disconnect_reason(wma, roam_vdev_disc_ev->vdev_id,
+			HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT);
 		break;
 	default:
 		return 0;
@@ -6144,8 +6152,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		wma_debug("Kickout due to btm request");
 		wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_BTM,
 				      wmi_event->vdev_id, NULL);
-		wma_handle_btm_disassoc_imminent_msg(wma_handle,
-						   wmi_event->vdev_id);
+		wma_handle_disconnect_reason(wma_handle, wmi_event->vdev_id,
+				HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT);
 		break;
 	case WMI_ROAM_REASON_BMISS:
 		/*
