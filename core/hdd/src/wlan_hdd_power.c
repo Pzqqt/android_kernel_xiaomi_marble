@@ -1705,6 +1705,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 				goto end;
 		}
 
+		sme_save_usr_ps_cfg(mac_handle, true);
 		ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
 		if (is_bmps_enabled) {
 			hdd_debug("Wlan driver Entering Power save");
@@ -1732,6 +1733,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	} else {
 		hdd_debug("Wlan driver Entering Full Power");
 
+		sme_save_usr_ps_cfg(mac_handle, false);
 		/*
 		 * Enter Full power command received from GUI
 		 * this means we are disconnected
