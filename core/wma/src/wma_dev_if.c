@@ -879,46 +879,8 @@ static void wma_handle_hidden_ssid_restart(tp_wma_handle wma,
 				      0, NULL);
 }
 
-static void
-wma_update_peer_phymode_sta(tp_wma_handle wma, struct wma_txrx_node *iface)
-{
-	wmi_host_channel_width ch_width;
-	uint8_t vdev_id;
-	enum wlan_phymode bss_phymode;
-	uint32_t fw_phymode;
-	uint8_t *bssid;
-	struct wlan_channel *des_chan;
-	QDF_STATUS status;
-
-	vdev_id = wlan_vdev_get_id(iface->vdev);
-	/* for CSA case firmware expects phymode before ch_wd */
-	bssid = wma_get_vdev_bssid(iface->vdev);
-	if (!bssid) {
-		wma_err("Failed to get bssid for vdev_id %d", vdev_id);
-		return;
-	}
-
-	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
-	bss_phymode = des_chan->ch_phymode;
-
-	/* update new phymode to peer */
-	wma_objmgr_set_peer_mlme_phymode(wma, bssid, bss_phymode);
-	fw_phymode = wma_host_to_fw_phymode(bss_phymode);
-
-	/* for CSA case firmware expects phymode before ch_wd */
-	status = wma_set_peer_param(wma, bssid, WMI_PEER_PHYMODE, fw_phymode,
-				    vdev_id);
-
-
-	ch_width = wmi_get_ch_width_from_phy_mode(wma->wmi_handle, fw_phymode);
-	status = wma_set_peer_param(wma, bssid, WMI_PEER_CHWIDTH, ch_width,
-				    vdev_id);
-	wma_debug("vdev_id %d fw_phy_mode %d bss_phymode %d chanwidth %d",
-		  vdev_id, fw_phymode, bss_phymode, ch_width);
-}
-
-static void wma_sap_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
-				      void *object, void *arg)
+static void wma_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
+				  void *object, void *arg)
 {
 	struct wlan_objmgr_peer *peer = object;
 	enum wlan_phymode old_peer_phymode;
@@ -977,34 +939,6 @@ static void wma_sap_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 	wma_debug("FW phymode %d old phymode %d new phymode %d bw %d macaddr "QDF_MAC_ADDR_STR,
 		  fw_phymode, old_peer_phymode, new_phymode,
 		  max_ch_width_supported, QDF_MAC_ADDR_ARRAY(peer_mac_addr));
-}
-
-static void
-wma_update_peer_phymode_sap(struct wlan_objmgr_vdev *vdev)
-{
-	wlan_objmgr_iterate_peerobj_list(vdev,
-					 wma_sap_peer_send_phymode,
-					 NULL,
-					 WLAN_LEGACY_WMA_ID);
-}
-
-/**
- * wma_update_peer_phymode_after_vdev_restart() - Set new peer phymode after
- * vdev restart according to previous phymode and new chan width.
- *
- * @wma: wma handle
- * @iface: interfcae pointer
- *
- * Return: none
- */
-static
-void wma_update_peer_phymode_after_vdev_restart(tp_wma_handle wma,
-						struct wma_txrx_node *iface)
-{
-	if (iface->type == WMI_VDEV_TYPE_AP)
-		wma_update_peer_phymode_sap(iface->vdev);
-	else if (iface->type == WMI_VDEV_TYPE_STA)
-		wma_update_peer_phymode_sta(wma, iface);
 }
 
 static
@@ -1086,9 +1020,12 @@ QDF_STATUS wma_handle_channel_switch_resp(tp_wma_handle wma,
 
 	if (QDF_IS_STATUS_SUCCESS(rsp->status) &&
 	    rsp->resp_type == WMI_VDEV_RESTART_RESP_EVENT) {
-		wma_update_peer_phymode_after_vdev_restart(wma, iface);
+		wlan_objmgr_iterate_peerobj_list(iface->vdev,
+					 wma_peer_send_phymode, NULL,
+					 WLAN_LEGACY_WMA_ID);
 		wma_update_rate_flags_after_vdev_restart(wma, iface);
 	}
+
 	if (wma_is_vdev_in_ap_mode(wma, rsp->vdev_id) ||
 	    mlme_is_chan_switch_in_progress(iface->vdev))
 		event = WLAN_VDEV_SM_EV_RESTART_RESP;
