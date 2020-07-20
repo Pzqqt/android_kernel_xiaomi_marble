@@ -2069,6 +2069,7 @@ struct hdd_context {
 	int current_pcie_gen_speed;
 	qdf_workqueue_t *adapter_ops_wq;
 	struct hdd_adapter_ops_history adapter_ops_history;
+	bool ll_stats_per_chan_rx_tx_time;
 };
 
 /**

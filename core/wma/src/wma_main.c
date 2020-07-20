@@ -4614,6 +4614,10 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 	if (wmi_service_enabled(wmi_handle,
 				wmi_roam_scan_chan_list_to_host_support))
 		cfg->is_roam_scan_ch_to_host = true;
+
+	cfg->ll_stats_per_chan_rx_tx_time =
+		wmi_service_enabled(wmi_handle,
+				    wmi_service_ll_stats_per_chan_rx_tx_time);
 }
 
 /**
