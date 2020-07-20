@@ -239,6 +239,7 @@ int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 		struct dp_pdev *pdev);
 QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 					     qdf_nbuf_t nbuf,
+					     uint32_t size,
 					     bool create);
 
 bool dp_reo_remap_config(struct dp_soc *soc, uint32_t *remap1,
@@ -266,6 +267,7 @@ static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 
 static inline QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 							   qdf_nbuf_t nbuf,
+							   uint32_t size,
 							   bool create)
 {
 	return QDF_STATUS_SUCCESS;

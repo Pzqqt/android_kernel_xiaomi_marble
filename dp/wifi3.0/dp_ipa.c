@@ -93,13 +93,14 @@ static void dp_ipa_reo_remap_history_add(uint32_t ix0_val, uint32_t ix2_val,
 
 static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 						   qdf_nbuf_t nbuf,
+						   uint32_t size,
 						   bool create)
 {
 	qdf_mem_info_t mem_map_table = {0};
 
 	qdf_update_mem_map_table(soc->osdev, &mem_map_table,
 				 qdf_nbuf_get_frag_paddr(nbuf, 0),
-				 skb_end_pointer(nbuf) - nbuf->data);
+				 size);
 
 	if (create)
 		qdf_ipa_wdi_create_smmu_mapping(1, &mem_map_table);
@@ -111,6 +112,7 @@ static QDF_STATUS __dp_ipa_handle_buf_smmu_mapping(struct dp_soc *soc,
 
 QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 					     qdf_nbuf_t nbuf,
+					     uint32_t size,
 					     bool create)
 {
 	struct dp_pdev *pdev;
@@ -129,7 +131,7 @@ QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 	if (!qdf_atomic_read(&soc->ipa_pipes_enabled))
 		return QDF_STATUS_SUCCESS;
 
-	return __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, create);
+	return __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, size, create);
 }
 
 #ifdef RX_DESC_MULTI_PAGE_ALLOC
@@ -165,7 +167,8 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 			continue;
 		nbuf = rx_desc->nbuf;
 
-		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, create);
+		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
+						 rx_pool->buf_size, create);
 	}
 	qdf_spin_unlock_bh(&rx_pool->lock);
 
@@ -195,7 +198,8 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 
 		nbuf = rx_pool->array[i].rx_desc.nbuf;
 
-		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, create);
+		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
+						 rx_pool->buf_size, create);
 	}
 	qdf_spin_unlock_bh(&rx_pool->lock);
 
@@ -225,7 +229,10 @@ static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 			continue;
 
 		if (qdf_mem_smmu_s1_enabled(soc->osdev))
-			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, false);
+			__dp_ipa_handle_buf_smmu_mapping(
+					soc, nbuf,
+					skb_end_pointer(nbuf) - nbuf->data,
+					false);
 
 		qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
 		qdf_nbuf_free(nbuf);
@@ -372,7 +379,10 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			= (void *)nbuf;
 
 		if (qdf_mem_smmu_s1_enabled(soc->osdev))
-			__dp_ipa_handle_buf_smmu_mapping(soc, nbuf, true);
+			__dp_ipa_handle_buf_smmu_mapping(
+					soc, nbuf,
+					skb_end_pointer(nbuf) - nbuf->data,
+					true);
 	}
 
 	hal_srng_access_end_unlocked(soc->hal_soc,

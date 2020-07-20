@@ -261,7 +261,8 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 
-		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf, true);
+		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf,
+						  buf_size, true);
 		/*
 		 * check if the physical address of nbuf->data is
 		 * less then 0x50000000 then free the nbuf and try
@@ -2076,6 +2077,11 @@ more_data:
 		if (QDF_IS_STATUS_ERROR(status)) {
 			if (qdf_unlikely(rx_desc && rx_desc->nbuf)) {
 				qdf_assert_always(rx_desc->unmapped);
+				dp_ipa_handle_rx_buf_smmu_mapping(
+							soc,
+							rx_desc->nbuf,
+							RX_DATA_BUFFER_SIZE,
+							false);
 				qdf_nbuf_unmap_nbytes_single(
 							soc->osdev,
 							rx_desc->nbuf,
@@ -2218,6 +2224,9 @@ more_data:
 		 * in case double skb unmap happened.
 		 */
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
 		qdf_nbuf_unmap_nbytes_single(soc->osdev, rx_desc->nbuf,
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
@@ -2792,7 +2801,10 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 						     desc_list->rx_desc.cookie,
 						     rx_desc_pool->owner);
 
-			dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, nbuf, true);
+			dp_ipa_handle_rx_buf_smmu_mapping(
+						dp_soc, nbuf,
+						rx_desc_pool->buf_size,
+						true);
 
 			desc_list = next;
 		}

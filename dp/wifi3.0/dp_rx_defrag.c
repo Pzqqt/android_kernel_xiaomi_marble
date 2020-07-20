@@ -1093,10 +1093,12 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 			qdf_nbuf_data(head), nbuf_len);
 
 	cookie = HAL_RX_BUF_COOKIE_GET(msdu0);
+	rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
 
 	/* map the nbuf before reinject it into HW */
-	ret = qdf_nbuf_map_single(soc->osdev, head,
-				  QDF_DMA_FROM_DEVICE);
+	ret = qdf_nbuf_map_nbytes_single(soc->osdev, head,
+					 QDF_DMA_FROM_DEVICE,
+					 rx_desc_pool->buf_size);
 	if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s: nbuf map failed !", __func__);
@@ -1110,10 +1112,11 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	 */
 	rx_desc->unmapped = 0;
 
-	dp_ipa_handle_rx_buf_smmu_mapping(soc, head, true);
+	dp_ipa_handle_rx_buf_smmu_mapping(soc, head,
+					  rx_desc_pool->buf_size,
+					  true);
 
 	paddr = qdf_nbuf_get_frag_paddr(head, 0);
-	rx_desc_pool = &soc->rx_desc_buf[pdev->lmac_id];
 
 	ret = check_x86_paddr(soc, &head, &paddr, rx_desc_pool);
 
@@ -1732,6 +1735,9 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	msdu = rx_desc->nbuf;
 
 	rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+	dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf,
+					  rx_desc_pool->buf_size,
+					  false);
 	qdf_nbuf_unmap_nbytes_single(soc->osdev, rx_desc->nbuf,
 				     QDF_DMA_FROM_DEVICE,
 				     rx_desc_pool->buf_size);

@@ -25,6 +25,7 @@
 #include "qdf_trace.h"
 #include "qdf_nbuf.h"
 #include "dp_rx_defrag.h"
+#include "dp_ipa.h"
 #ifdef FEATURE_WDS
 #include "dp_txrx_wds.h"
 #endif
@@ -301,6 +302,9 @@ dp_rx_msdus_drop(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 		}
 
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
 		qdf_nbuf_unmap_nbytes_single(soc->osdev, rx_desc->nbuf,
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
@@ -492,6 +496,9 @@ more_msdu_link_desc:
 
 		nbuf = rx_desc->nbuf;
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
 		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
@@ -1822,6 +1829,9 @@ dp_rx_wbm_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 
 		nbuf = rx_desc->nbuf;
 		rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+		dp_ipa_handle_rx_buf_smmu_mapping(soc, nbuf,
+						  rx_desc_pool->buf_size,
+						  false);
 		qdf_nbuf_unmap_nbytes_single(soc->osdev, nbuf,
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
@@ -2129,6 +2139,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	hal_rxdma_desc_t ring_desc;
+	struct rx_desc_pool *rx_desc_pool;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2199,8 +2210,17 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						continue;
 					}
 
-					qdf_nbuf_unmap_single(soc->osdev, msdu,
-						QDF_DMA_FROM_DEVICE);
+					rx_desc_pool = &soc->
+						rx_desc_buf[rx_desc->pool_id];
+					dp_ipa_handle_rx_buf_smmu_mapping(
+							soc, msdu,
+							rx_desc_pool->buf_size,
+							false);
+					qdf_nbuf_unmap_nbytes_single(
+						soc->osdev, msdu,
+						QDF_DMA_FROM_DEVICE,
+						rx_desc_pool->buf_size);
+					rx_desc->unmapped = 1;
 
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_DEBUG,
@@ -2427,6 +2447,10 @@ dp_handle_wbm_internal_error(struct dp_soc *soc, void *hal_desc,
 
 		if (rx_desc && rx_desc->nbuf) {
 			rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+			dp_ipa_handle_rx_buf_smmu_mapping(
+						soc, rx_desc->nbuf,
+						rx_desc_pool->buf_size,
+						false);
 			qdf_nbuf_unmap_nbytes_single(soc->osdev, rx_desc->nbuf,
 						     QDF_DMA_FROM_DEVICE,
 						     rx_desc_pool->buf_size);
