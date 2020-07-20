@@ -485,6 +485,21 @@ struct cdp_rx_mic_err_info {
 };
 
 /**
+ * struct cdp_mscs_params - MSCS parameters obtained
+ * from handshake
+ * @user_pri_bitmap - User priority bitmap
+ * @user_pri_limit - User priority limit
+ * @classifier_type - TCLAS Classifier type
+ * @classifier_mask - TCLAS Classifier mask
+ */
+struct cdp_mscs_params {
+	uint8_t user_pri_bitmap;
+	uint8_t user_pri_limit;
+	uint8_t classifier_type;
+	uint8_t classifier_mask;
+};
+
+/**
  * struct cdp_sec_type - security type information
  */
 enum cdp_sec_type {

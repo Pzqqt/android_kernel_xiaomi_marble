@@ -6045,6 +6045,75 @@ fail0:
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 
 /*
+ * dp_record_mscs_params - MSCS parameters sent by the STA in
+ * the MSCS Request to the AP. The AP makes a note of these
+ * parameters while comparing the MSDUs sent by the STA, to
+ * send the downlink traffic with correct User priority.
+ * @soc - Datapath soc handle
+ * @peer_mac - STA Mac address
+ * @vdev_id - ID of the vdev handle
+ * @mscs_params - Structure having MSCS parameters obtained
+ * from handshake
+ * @active - Flag to set MSCS active/inactive
+ * return type - QDF_STATUS - Success/Invalid
+ */
+static QDF_STATUS
+dp_record_mscs_params(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
+		      uint8_t vdev_id, struct cdp_mscs_params *mscs_params,
+		      bool active)
+{
+	struct dp_peer *peer;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	peer = dp_peer_find_hash_find(soc, peer_mac, 0, vdev_id,
+				      DP_MOD_ID_CDP);
+
+	if (!peer) {
+		dp_err("%s: Peer is NULL!\n", __func__);
+		goto fail;
+	}
+	if (!active) {
+		dp_info("MSCS Procedure is terminated");
+		peer->mscs_active = active;
+		goto fail;
+	}
+
+	if (mscs_params->classifier_type == IEEE80211_TCLAS_MASK_CLA_TYPE_4) {
+		/* Populate entries inside IPV4 database first */
+		peer->mscs_ipv4_parameter.user_priority_bitmap =
+			mscs_params->user_pri_bitmap;
+		peer->mscs_ipv4_parameter.user_priority_limit =
+			mscs_params->user_pri_limit;
+		peer->mscs_ipv4_parameter.classifier_mask =
+			mscs_params->classifier_mask;
+
+		/* Populate entries inside IPV6 database */
+		peer->mscs_ipv6_parameter.user_priority_bitmap =
+			mscs_params->user_pri_bitmap;
+		peer->mscs_ipv6_parameter.user_priority_limit =
+			mscs_params->user_pri_limit;
+		peer->mscs_ipv6_parameter.classifier_mask =
+			mscs_params->classifier_mask;
+		peer->mscs_active = 1;
+		dp_info("\n\tMSCS Procedure request based parameters for %pM\n"
+			"\tClassifier_type = %d\tUser priority bitmap = %x\n"
+			"\tUser priority limit = %x\tClassifier mask = %x",
+			peer_mac,
+			mscs_params->classifier_type,
+			peer->mscs_ipv4_parameter.user_priority_bitmap,
+			peer->mscs_ipv4_parameter.user_priority_limit,
+			peer->mscs_ipv4_parameter.classifier_mask);
+	}
+
+	status = QDF_STATUS_SUCCESS;
+fail:
+	if (peer)
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
+	return status;
+}
+
+/*
  * dp_get_sec_type() - Get the security type
  * @soc: soc handle
  * @vdev_id: id of dp handle
@@ -10106,6 +10175,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
 	.txrx_vdev_get_neighbour_rssi = dp_vdev_get_neighbour_rssi,
 #endif
+	.txrx_record_mscs_params = dp_record_mscs_params,
 	.set_key = dp_set_michael_key,
 	.txrx_get_vdev_param = dp_get_vdev_param,
 	.enable_peer_based_pktlog = dp_enable_peer_based_pktlog,

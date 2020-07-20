@@ -100,6 +100,39 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 #endif /* ATH_SUPPORT_NAC || ATH_SUPPORT_NAC_RSSI*/
 
 /**
+ * @brief record the MSCS data and send it to the Data path
+ * @details
+ *  This defines interface function to record the MSCS procedure
+ *  based data parameters so that the data path layer can access it
+ *
+ * @param soc - the pointer to soc object
+ * @param vdev_id - id of the pointer to vdev
+ * @param macaddr - the address of neighbour peer
+ * @param mscs_params - Structure having MSCS params
+ * obtained from handshake
+ * @return - QDF_STATUS
+ */
+static inline QDF_STATUS
+cdp_record_vdev_mscs_params(ol_txrx_soc_handle soc, uint8_t
+		*macaddr, uint8_t vdev_id, struct cdp_mscs_params *mscs_params,
+		bool active)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:",
+			  __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_record_mscs_params)
+		return QDF_STATUS_E_FAILURE;
+	return soc->ops->ctrl_ops->txrx_record_mscs_params
+			(soc, macaddr, vdev_id, mscs_params, active);
+}
+
+/**
  * @brief set the Reo Destination ring for the pdev
  * @details
  *  This will be used to configure the Reo Destination ring for this pdev.

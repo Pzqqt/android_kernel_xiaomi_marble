@@ -680,6 +680,14 @@ struct cdp_ctrl_ops {
 						   char *macaddr,
 						   uint8_t *rssi);
 #endif
+
+	QDF_STATUS
+		(*txrx_record_mscs_params) (
+				struct cdp_soc_t *soc, uint8_t *macaddr,
+				uint8_t vdev_id,
+				struct cdp_mscs_params *mscs_params,
+				bool active);
+
 	QDF_STATUS
 	(*set_key)(struct cdp_soc_t *soc, uint8_t vdev_id, uint8_t *mac,
 		   bool is_unicast, uint32_t *key);
