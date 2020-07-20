@@ -830,6 +830,12 @@ struct dp_soc_stats {
 			uint32_t hal_wbm_rel_dup;
 			/* HAL RXDMA error Duplicate count */
 			uint32_t hal_rxdma_err_dup;
+			/* ipa smmu map duplicate count */
+			uint32_t ipa_smmu_map_dup;
+			/* ipa smmu unmap duplicate count */
+			uint32_t ipa_smmu_unmap_dup;
+			/* ipa smmu unmap while ipa pipes is disabled */
+			uint32_t ipa_unmap_no_pipe;
 			/* REO cmd send fail/requeue count */
 			uint32_t reo_cmd_send_fail;
 			/* REO cmd send drain count */

@@ -128,8 +128,29 @@ QDF_STATUS dp_ipa_handle_rx_buf_smmu_mapping(struct dp_soc *soc,
 	    !qdf_mem_smmu_s1_enabled(soc->osdev))
 		return QDF_STATUS_SUCCESS;
 
-	if (!qdf_atomic_read(&soc->ipa_pipes_enabled))
-		return QDF_STATUS_SUCCESS;
+	/**
+	 * Even if ipa pipes is disabled, but if it's unmap
+	 * operation and nbuf has done ipa smmu map before,
+	 * do ipa smmu unmap as well.
+	 */
+	if (!qdf_atomic_read(&soc->ipa_pipes_enabled)) {
+		if (!create && qdf_nbuf_is_rx_ipa_smmu_map(nbuf)) {
+			DP_STATS_INC(soc, rx.err.ipa_unmap_no_pipe, 1);
+		} else {
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	if (qdf_unlikely(create == qdf_nbuf_is_rx_ipa_smmu_map(nbuf))) {
+		if (create) {
+			DP_STATS_INC(soc, rx.err.ipa_smmu_map_dup, 1);
+		} else {
+			DP_STATS_INC(soc, rx.err.ipa_smmu_unmap_dup, 1);
+		}
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_nbuf_set_rx_ipa_smmu_map(nbuf, create);
 
 	return __dp_ipa_handle_buf_smmu_mapping(soc, nbuf, size, create);
 }
@@ -167,6 +188,19 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 			continue;
 		nbuf = rx_desc->nbuf;
 
+		if (qdf_unlikely(create ==
+				 qdf_nbuf_is_rx_ipa_smmu_map(nbuf))) {
+			if (create) {
+				DP_STATS_INC(soc,
+					     rx.err.ipa_smmu_map_dup, 1);
+			} else {
+				DP_STATS_INC(soc,
+					     rx.err.ipa_smmu_unmap_dup, 1);
+			}
+			continue;
+		}
+		qdf_nbuf_set_rx_ipa_smmu_map(nbuf, create);
+
 		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
 						 rx_pool->buf_size, create);
 	}
@@ -197,6 +231,19 @@ static QDF_STATUS dp_ipa_handle_rx_buf_pool_smmu_mapping(struct dp_soc *soc,
 			continue;
 
 		nbuf = rx_pool->array[i].rx_desc.nbuf;
+
+		if (qdf_unlikely(create ==
+				 qdf_nbuf_is_rx_ipa_smmu_map(nbuf))) {
+			if (create) {
+				DP_STATS_INC(soc,
+					     rx.err.ipa_smmu_map_dup, 1);
+			} else {
+				DP_STATS_INC(soc,
+					     rx.err.ipa_smmu_unmap_dup, 1);
+			}
+			continue;
+		}
+		qdf_nbuf_set_rx_ipa_smmu_map(nbuf, create);
 
 		__dp_ipa_handle_buf_smmu_mapping(soc, nbuf,
 						 rx_pool->buf_size, create);

@@ -5959,6 +5959,12 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->soc->stats.rx.err.nbuf_sanity_fail);
 		DP_PRINT_STATS("Rx refill duplicate link desc: %d",
 			       pdev->soc->stats.rx.err.dup_refill_link_desc);
+		DP_PRINT_STATS("Rx ipa smmu map duplicate: %d",
+			       pdev->soc->stats.rx.err.ipa_smmu_map_dup);
+		DP_PRINT_STATS("Rx ipa smmu unmap duplicate: %d",
+			       pdev->soc->stats.rx.err.ipa_smmu_unmap_dup);
+		DP_PRINT_STATS("Rx ipa smmu unmap no pipes: %d",
+			       pdev->soc->stats.rx.err.ipa_unmap_no_pipe);
 
 		DP_PRINT_STATS("Reo Statistics");
 		DP_PRINT_STATS("near_full: %u ", soc->stats.rx.near_full);
