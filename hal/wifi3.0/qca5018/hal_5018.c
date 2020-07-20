@@ -217,6 +217,24 @@ uint8_t hal_rx_mpdu_start_tlv_tag_valid_5018(void *rx_tlv_hdr)
 	return tlv_tag == WIFIRX_MPDU_START_E ? true : false;
 }
 
+/**
+ * hal_rx_wbm_err_msdu_continuation_get_5018 () - API to check if WBM
+ * msdu continuation bit is set
+ *
+ *@wbm_desc: wbm release ring descriptor
+ *
+ * Return: true if msdu continuation bit is set.
+ */
+uint8_t hal_rx_wbm_err_msdu_continuation_get_5018(void *wbm_desc)
+{
+	uint32_t comp_desc =
+		*(uint32_t *)(((uint8_t *)wbm_desc) +
+				WBM_RELEASE_RING_3_MSDU_CONTINUATION_OFFSET);
+
+	return (comp_desc & WBM_RELEASE_RING_3_MSDU_CONTINUATION_MASK) >>
+		WBM_RELEASE_RING_3_MSDU_CONTINUATION_LSB;
+}
+
 static
 void hal_compute_reo_remap_ix2_ix3_5018(uint32_t *ring, uint32_t num_rings,
 					uint32_t *remap1, uint32_t *remap2)
@@ -1691,7 +1709,7 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	NULL,
 	hal_rx_mpdu_start_tlv_tag_valid_5018,
 	NULL,
-	NULL,
+	hal_rx_wbm_err_msdu_continuation_get_5018,
 
 	/* rx - TLV struct offsets */
 	hal_rx_msdu_end_offset_get_generic,
