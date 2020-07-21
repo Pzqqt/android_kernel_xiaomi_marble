@@ -149,6 +149,19 @@ QDF_STATUS wmi_extract_twt_add_dialog_comp_event(
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_twt_add_dialog_comp_additional_params(
+		wmi_unified_t wmi_handle, uint8_t *evt_buf,
+		struct wmi_twt_add_dialog_additional_params *additional_params,
+		uint32_t idx)
+{
+	if (wmi_handle->ops->extract_twt_add_dialog_comp_additional_params)
+		return wmi_handle->ops->
+			extract_twt_add_dialog_comp_additional_params(
+			wmi_handle, evt_buf, additional_params, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_extract_twt_del_dialog_comp_event(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,

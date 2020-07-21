@@ -2158,6 +2158,13 @@ QDF_STATUS (*extract_twt_add_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_add_dialog_complete_event_param *params);
 
+QDF_STATUS (*extract_twt_add_dialog_comp_additional_params)
+		(
+		 wmi_unified_t wmi_handle, uint8_t *evt_buf,
+		 struct wmi_twt_add_dialog_additional_params *additional_params,
+		 uint32_t idx
+		);
+
 QDF_STATUS (*extract_twt_del_dialog_comp_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wmi_twt_del_dialog_complete_event_param *params);

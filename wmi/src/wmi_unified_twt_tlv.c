@@ -413,6 +413,15 @@ static QDF_STATUS extract_twt_disable_comp_event_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_twt_add_dialog_comp_event_tlv - Extacts twt add dialog complete wmi
+ * event from firmware
+ * @wmi_hande: WMI handle
+ * @evt_buf: Pointer to wmi event buf of twt add dialog complete event
+ * @params: Pointer to store the extracted parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF STATUS error values on failure
+ */
 static QDF_STATUS extract_twt_add_dialog_comp_event_tlv(
 		wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
@@ -433,6 +442,74 @@ static QDF_STATUS extract_twt_add_dialog_comp_event_tlv(
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->status = ev->status;
 	params->dialog_id = ev->dialog_id;
+	params->num_additional_twt_params = param_buf->num_twt_params;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_twt_add_dialog_comp_additional_parameters() - Extracts additional twt
+ * twt parameters, as part of add dialog completion event
+ * @wmi_hdl: wmi handle
+ * @evt_buf: Pointer event buffer
+ * @additional_params: twt additional parameters to extract
+ * @idx: index of num_twt_params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+static QDF_STATUS extract_twt_add_dialog_comp_additional_parameters
+(
+	wmi_unified_t wmi_handle, uint8_t *evt_buf,
+	struct wmi_twt_add_dialog_additional_params *additional_params,
+	uint32_t idx
+)
+{
+	WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *param_buf;
+	wmi_twt_add_dialog_complete_event_fixed_param *ev;
+	uint32_t flags = 0;
+
+	param_buf = (WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->fixed_param;
+
+	if (ev->status != WMI_HOST_ADD_TWT_STATUS_OK) {
+		WMI_LOGE("Status of add dialog complete is not success");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (idx >= param_buf->num_twt_params) {
+		WMI_LOGE("Invalid idx %d while num_twt_params = %d",
+			 idx, param_buf->num_twt_params);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!param_buf->twt_params) {
+		WMI_LOGE("Unable to extract additional twt parameters");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	flags = param_buf->twt_params[idx].flags;
+	additional_params->twt_cmd = TWT_FLAGS_GET_CMD(flags);
+	additional_params->bcast = TWT_FLAGS_GET_BROADCAST(flags);
+	additional_params->trig_en = TWT_FLAGS_GET_TRIGGER(flags);
+	additional_params->announce = TWT_FLAGS_GET_FLOW_TYPE(flags);
+	additional_params->protection = TWT_FLAGS_GET_PROTECTION(flags);
+	additional_params->b_twt_id0 = TWT_FLAGS_GET_BTWT_ID0(flags);
+	additional_params->info_frame_disabled =
+				TWT_FLAGS_GET_TWT_INFO_FRAME_DISABLED(flags);
+	additional_params->wake_dur_us = param_buf->twt_params[idx].wake_dur_us;
+	additional_params->wake_intvl_us =
+				param_buf->twt_params[idx].wake_intvl_us;
+	additional_params->sp_offset_us =
+				param_buf->twt_params[idx].sp_offset_us;
+	additional_params->sp_tsf_us_lo =
+				param_buf->twt_params[idx].sp_tsf_us_lo;
+	additional_params->sp_tsf_us_hi =
+				param_buf->twt_params[idx].sp_tsf_us_hi;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -604,6 +681,8 @@ void wmi_twt_attach_tlv(wmi_unified_t wmi_handle)
 				extract_twt_disable_comp_event_tlv;
 	ops->extract_twt_add_dialog_comp_event =
 				extract_twt_add_dialog_comp_event_tlv;
+	ops->extract_twt_add_dialog_comp_additional_params =
+			extract_twt_add_dialog_comp_additional_parameters;
 	ops->extract_twt_del_dialog_comp_event =
 				extract_twt_del_dialog_comp_event_tlv;
 	ops->extract_twt_pause_dialog_comp_event =
