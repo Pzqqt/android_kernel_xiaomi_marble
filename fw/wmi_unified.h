@@ -9644,6 +9644,12 @@ typedef struct {
  * of assoc request/response
  */
 #define WMI_UNIFIED_VDEV_START_LDPC_RX_ENABLED  (1<<3)
+/** Indicates HW encryption is disabled, and SW encryption is enabled.
+ *  If This flag is set, indicates that HW encryption will be disabled
+ *  and SW encryption will be enabled.
+ *  If SW encryption is enabled, key plumbing will not happen in FW.
+ */
+#define WMI_UNIFIED_VDEV_START_HW_ENCRYPTION_DISABLED  (1<<4)
 
 /* BSS color 0-6 */
 #define WMI_HEOPS_COLOR_GET_D2(he_ops) WMI_GET_BITS(he_ops, 0, 6)
