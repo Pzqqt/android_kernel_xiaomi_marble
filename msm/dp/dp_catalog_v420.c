@@ -246,11 +246,12 @@ static void dp_catalog_ctrl_update_vx_px_v420(struct dp_catalog_ctrl *ctrl,
 
 	io_data = catalog->io->dp_ahb;
 	version = dp_read(DP_HW_VERSION);
+	DP_DEBUG("version: 0x%x\n", version);
 
 	/*
-	 * For DP controller versions 1.2.3 and 1.2.4
+	 * For DP controller versions >= 1.2.3
 	 */
-	if ((version == 0x10020003) || (version == 0x10020004)) {
+	if (version >= 0x10020003) {
 		if (high) {
 			value0 = dp_swing_hbr2_hbr3[v_level][p_level];
 			value1 = dp_pre_emp_hbr2_hbr3[v_level][p_level];
