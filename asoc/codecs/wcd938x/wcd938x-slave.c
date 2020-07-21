@@ -24,8 +24,6 @@
 #define SWR_SLV_MAX_DEVICES     2
 #endif /* CONFIG_DEBUG_FS */
 
-#define SWR_MAX_RETRY    5
-
 struct wcd938x_slave_priv {
 	struct swr_device *swr_slave;
 #ifdef CONFIG_DEBUG_FS
@@ -280,24 +278,17 @@ static int wcd938x_slave_bind(struct device *dev,
 	int ret = 0;
 	uint8_t devnum = 0;
 	struct swr_device *pdev = to_swr_device(dev);
-	int retry = SWR_MAX_RETRY;
 
 	if (!pdev) {
 		pr_err("%s: invalid swr device handle\n", __func__);
 		return -EINVAL;
 	}
 
-	do {
-		/* Add delay for soundwire enumeration */
-		usleep_range(100, 110);
-		ret = swr_get_logical_dev_num(pdev, pdev->addr, &devnum);
-	} while (ret && --retry);
-
+	ret = swr_get_logical_dev_num(pdev, pdev->addr, &devnum);
 	if (ret) {
 		dev_dbg(&pdev->dev,
-			"%s get devnum %d for dev addr %llx failed\n",
+			"%s get devnum %d for dev addr %lx failed\n",
 			__func__, devnum, pdev->addr);
-		ret = -EPROBE_DEFER;
 		return ret;
 	}
 	pdev->dev_num = devnum;
