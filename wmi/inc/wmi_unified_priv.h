@@ -621,10 +621,18 @@ QDF_STATUS (*send_set_rssi_monitoring_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
 			wmi_unified_t wmi_handle,
 			struct wlan_roam_offload_scan_rssi_params *roam_req);
+
+QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(
+				wmi_unified_t wmi_handle,
+				struct wlan_roam_scan_period_params *params);
 #else
 QDF_STATUS (*send_roam_scan_offload_rssi_thresh_cmd)(
 				wmi_unified_t wmi_handle,
 				struct roam_offload_scan_rssi_params *roam_req);
+
+QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(
+					wmi_unified_t wmi_handle,
+					struct roam_scan_period_params *params);
 #endif
 
 QDF_STATUS (*send_roam_mawc_params_cmd)(wmi_unified_t wmi_handle,
@@ -643,9 +651,6 @@ QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_scan_offload_cmd)(wmi_unified_t wmi_handle,
 				 uint32_t command, uint32_t vdev_id);
 
-QDF_STATUS (*send_roam_scan_offload_scan_period_cmd)(wmi_unified_t wmi_handle,
-					struct roam_scan_period_params *params);
-
 QDF_STATUS (*send_roam_scan_offload_chan_list_cmd)(wmi_unified_t wmi_handle,
 				   uint8_t chan_count,
 				   uint32_t *chan_list,
@@ -658,10 +663,10 @@ QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
 					uint32_t hirssi_delay_btw_scans);
 
 QDF_STATUS (*send_per_roam_config_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_per_roam_config_req *req_buf);
+		struct wlan_per_roam_config_req *req_buf);
 
 QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_11k_offload_params *params);
+		struct wlan_roam_11k_offload_params *params);
 
 QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_invoke_neighbor_report_params *params);
@@ -669,18 +674,17 @@ QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_bss_load_config)(wmi_unified_t wmi_handle,
 					struct wmi_bss_load_config *params);
 
-QDF_STATUS (*send_disconnect_roam_params)(
-			wmi_unified_t wmi_handle,
-			struct wmi_disconnect_roam_params *req);
+QDF_STATUS (*send_disconnect_roam_params)(wmi_unified_t wmi_handle,
+			struct wlan_roam_disconnect_params *req);
 
 QDF_STATUS (*send_idle_roam_params)(wmi_unified_t wmi_handle,
-				    struct wmi_idle_roam_params *req);
+				    struct wlan_roam_idle_params *req);
 
 QDF_STATUS (*send_roam_preauth_status)(wmi_unified_t wmi_handle,
 				struct wmi_roam_auth_status_params *params);
 
 QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
-			      struct wmi_btm_config *params);
+			      struct wlan_roam_btm_config *params);
 
 QDF_STATUS (*send_limit_off_chan_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_limit_off_chan_param *limit_off_chan_param);
