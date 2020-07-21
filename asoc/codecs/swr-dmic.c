@@ -33,6 +33,8 @@
 #define NUM_ATTEMPTS 5
 #define SWRS_SCP_CONTROL    0x44
 
+#define MAX_NAME_LEN 40
+
 static int swr_master_channel_map[] = {
 	ZERO,
 	SWRM_TX1_CH1,
@@ -294,32 +296,37 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 			snd_soc_component_get_drvdata(component);
 	struct snd_soc_dapm_context *dapm =
 			snd_soc_component_get_dapm(component);
-	char w_name[100];
+	char w_name[MAX_NAME_LEN];
 
 	if (!swr_dmic)
 		return -EINVAL;
 
 	swr_dmic->component = component;
-	snd_soc_dapm_ignore_suspend(dapm,
-				swr_dmic->dai_driver->capture.stream_name);
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SWR_DMIC", 100);
+	if (!component->name_prefix) {
+		dev_err(component->dev, "%s: component prefix is NULL\n", __func__);
+		return -EPROBE_DEFER;
+	}
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " ", sizeof(w_name));
+	strlcat(w_name, swr_dmic->dai_driver->capture.stream_name,
+				sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SMIC_SUPPLY", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR_DMIC", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SMIC_PORT_EN", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SMIC_PORT_EN", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SWR_DMIC_OUTPUT", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR_DMIC_OUTPUT", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	snd_soc_dapm_sync(dapm);
