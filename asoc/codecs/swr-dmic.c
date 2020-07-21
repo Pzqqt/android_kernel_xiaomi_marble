@@ -94,6 +94,9 @@ const char *aif_name_list[] = {
 static int swr_dmic_reset(struct swr_device *pdev);
 static int swr_dmic_up(struct swr_device *pdev);
 static int swr_dmic_down(struct swr_device *pdev);
+static int swr_dmic_event_notify(struct notifier_block *block,
+				unsigned long val,
+				void *data);
 
 static inline int swr_dmic_tx_get_slave_port_type_idx(const char *wname,
 				      unsigned int *port_idx)
@@ -324,6 +327,10 @@ static int swr_dmic_codec_probe(struct snd_soc_component *component)
 
 	snd_soc_dapm_sync(dapm);
 
+	swr_dmic->nblock.notifier_call = swr_dmic_event_notify;
+	wcd938x_swr_dmic_register_notifier(swr_dmic->supply_component,
+					&swr_dmic->nblock, true);
+
 	return 0;
 }
 
@@ -472,6 +479,8 @@ static int swr_dmic_probe(struct swr_device *pdev)
 		ret = enable_wcd_codec_supply(swr_dmic, true);
 		if (ret) {
 			ret = -EPROBE_DEFER;
+			swr_dmic->is_wcd_supply = false;
+			swr_dmic->wcd_handle = NULL;
 			goto err;
 		}
 		++swr_dmic->is_en_supply;
@@ -516,10 +525,16 @@ static int swr_dmic_probe(struct swr_device *pdev)
 			"%s get devnum %d for dev addr %llx failed\n",
 			__func__, swr_devnum, pdev->addr);
 		ret = -EPROBE_DEFER;
-		goto dev_err;
+
+		if (swr_dmic->is_en_supply == 1) {
+			enable_wcd_codec_supply(swr_dmic, false);
+			--swr_dmic->is_en_supply;
+		}
+		swr_dmic->is_wcd_supply = false;
+		swr_dmic->wcd_handle = NULL;
+		goto err;
 	}
 	pdev->dev_num = swr_devnum;
-
 
 	swr_dmic->driver = devm_kzalloc(&pdev->dev,
 			sizeof(struct snd_soc_component_driver), GFP_KERNEL);
@@ -585,10 +600,6 @@ static int swr_dmic_probe(struct swr_device *pdev)
 	strlcpy(prefix_name, swr_dmic_name_prefix_of,
 			strlen(swr_dmic_name_prefix_of) + 1);
 	component->name_prefix = prefix_name;
-
-	swr_dmic->nblock.notifier_call = swr_dmic_event_notify;
-	wcd938x_swr_dmic_register_notifier(swr_dmic->supply_component,
-					&swr_dmic->nblock, true);
 
 	return 0;
 
