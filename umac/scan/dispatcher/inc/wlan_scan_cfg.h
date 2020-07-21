@@ -985,7 +985,7 @@ enum scan_mode_6ghz {
  *
  * </ini>
  */
-#ifdef QCA_WIFI_NAPIER_EMULATION
+#ifdef CONFIG_WIFI_EMULATION_WIFI_3_0
 #define CFG_SCAN_AGING_TIME_DEFAULT (90)
 #else
 #define CFG_SCAN_AGING_TIME_DEFAULT (30)
