@@ -18321,7 +18321,7 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 		return;
 
 	req_score_params = &req_buffer->score_params;
-	score_config = &mlme_psoc_obj->score_config;
+	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	roam_score_params = &mac_ctx->mlme_cfg->roam_scoring;
 	weight_config = &score_config->weight_config;
 
