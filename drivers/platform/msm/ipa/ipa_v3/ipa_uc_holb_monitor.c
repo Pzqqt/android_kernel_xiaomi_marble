@@ -218,11 +218,17 @@ void ipa3_uc_holb_event_log(uint16_t gsi_ch, bool enable,
 	if (!ipa3_ctx->uc_ctx.ipa_use_uc_holb_monitor)
 		return;
 
-	mutex_lock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
+	/* HOLB client indexes are reused when a peripheral is
+	 * disconnected and connected back. And so there is no
+	 * need to acquire the lock here as we get the events from
+	 * uC only after a channel is connected atleast once. Also
+	 * if we acquire a lock here we will run into a deadlock
+	 * as we can get uC holb events and a response to add/delete
+	 * commands at the same time.
+	 */
 	client_idx = ipa3_get_holb_client_idx_by_ch(gsi_ch);
 	if (client_idx == -EINVAL) {
 		IPAERR("Invalid client with GSI chan %d\n", gsi_ch);
-		mutex_unlock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
 		return;
 	}
 	holb_client = &(ipa3_ctx->uc_ctx.holb_monitor.client[client_idx]);
@@ -237,5 +243,4 @@ void ipa3_uc_holb_event_log(uint16_t gsi_ch, bool enable,
 		holb_client->disable_cnt++;
 	holb_client->current_idx = (holb_client->current_idx + 1) %
 		IPA_HOLB_EVENT_LOG_MAX;
-	mutex_unlock(&ipa3_ctx->uc_ctx.holb_monitor.uc_holb_lock);
 }
