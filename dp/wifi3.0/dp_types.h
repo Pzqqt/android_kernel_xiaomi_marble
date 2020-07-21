@@ -2145,6 +2145,14 @@ struct dp_vdev {
 
 	/* callback to collect connectivity stats */
 	ol_txrx_stats_rx_fp stats_cb;
+
+#ifdef WLAN_SUPPORT_RX_FISA
+	/**
+	 * Params used for controlling the fisa aggregation dynamically
+	 */
+	uint8_t fisa_disallowed[MAX_REO_DEST_RINGS];
+	uint8_t fisa_force_flushed[MAX_REO_DEST_RINGS];
+#endif
 };
 
 
