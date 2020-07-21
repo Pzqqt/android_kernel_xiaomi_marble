@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #define pr_fmt(fmt)	"%s:%d: " fmt, __func__, __LINE__
@@ -19,7 +19,7 @@
 #include <soc/qcom/secure_buffer.h>
 #include <asm/cacheflush.h>
 #include <uapi/linux/sched/types.h>
-#include <soc/qcom/qtee_shmbridge.h>
+#include <linux/qtee_shmbridge.h>
 
 #include "sde_rotator_base.h"
 #include "sde_rotator_core.h"
@@ -111,7 +111,8 @@ err:
 		icc_set_bw(bus->data_bus_hdl[j], ab, ab);
 	ATRACE_END("msm_bus_scale_req_rot");
 	pr_err("failed to set data bus quota %llu\n", quota);
-	if (!bus->curr_quota_val) {
+
+	if (!bus->curr_quota_val)
 		pr_err("rotator: data bus was set to 0\n");
 
 	return ret;
@@ -594,7 +595,6 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			mdata->sec_cam_en = 1;
 			sde_smmu_secure_ctrl(0);
 
-			dmac_flush_range(sid_info, sid_info + 1);
 			ret = qcom_scm_mem_protect_sd_ctrl(SDE_ROTATOR_DEVICE,
 						mem_addr, mem_size, vmid);
 			if (ret) {
@@ -621,7 +621,6 @@ static int sde_rotator_secure_session_ctrl(bool enable)
 			vmid = VMID_CP_PIXEL;
 			mdata->sec_cam_en = 0;
 
-			dmac_flush_range(sid_info, sid_info + 1);
 			ret = qcom_scm_mem_protect_sd_ctrl(SDE_ROTATOR_DEVICE,
 					mem_addr, mem_size, vmid);
 			if (ret)
@@ -2748,16 +2747,20 @@ static int sde_rotator_parse_dt_bus(struct sde_rot_mgr *mgr,
 data_bus:
 	for (i = 0; i < SDE_ROTATION_BUS_PATH_MAX; i++) {
 		snprintf(bus_name, 32, "%s%d", "qcom,rot-data-bus", i);
-		ret = of_property_match_string(pdev->dev.of_node,
+		ret = of_property_match_string(dev->dev.of_node,
 			"interconnect-names", bus_name);
 		if (ret < 0) {
 			if (!mgr->data_bus.data_paths_cnt) {
-				pr_debug("rotator: bus %s dt node missing\n", bus_name);
+				pr_debug("rotator: bus %s dt node missing\n",
+					bus_name);
 				return 0;
-			} else
+			} else {
 				goto end;
-		} else
-			mgr->data_bus.data_bus_hdl[i] = of_icc_get(&pdev->dev, bus_name);
+			}
+		} else {
+			mgr->data_bus.data_bus_hdl[i] =
+				of_icc_get(&dev->dev, bus_name);
+		}
 
 		if (IS_ERR_OR_NULL(mgr->data_bus.data_bus_hdl[i])) {
 			SDEROT_ERR("rotator: get data bus %s failed\n",
