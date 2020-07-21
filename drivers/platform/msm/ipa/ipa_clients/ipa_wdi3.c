@@ -632,12 +632,22 @@ static int ipa_wdi_enable_pipes_internal(void)
 		ipa_ep_idx_tx = ipa_get_ep_mapping(IPA_CLIENT_WLAN2_CONS);
 	}
 
+	if (ipa_ep_idx_tx <= 0 || ipa_ep_idx_rx <= 0)
+		return -EFAULT;
+
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
 		if (ipa_enable_wdi_pipes(ipa_ep_idx_tx, ipa_ep_idx_rx)) {
 			IPA_WDI_ERR("fail to enable wdi pipes\n");
 			return -EFAULT;
 		}
 	} else {
+		if ((ipa_wdi_ctx->tx_pipe_hdl >= IPA3_MAX_NUM_PIPES) ||
+			(ipa_wdi_ctx->tx_pipe_hdl < 0) ||
+			(ipa_wdi_ctx->rx_pipe_hdl >= IPA3_MAX_NUM_PIPES) ||
+			(ipa_wdi_ctx->rx_pipe_hdl < 0)) {
+			IPA_WDI_ERR("pipe handle not valid\n");
+			return -EFAULT;
+		}
 		if (ipa3_enable_wdi_pipe(ipa_wdi_ctx->tx_pipe_hdl)) {
 			IPA_WDI_ERR("fail to enable wdi tx pipe\n");
 			return -EFAULT;
