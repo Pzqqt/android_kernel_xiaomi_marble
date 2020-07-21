@@ -1422,6 +1422,7 @@ struct sde_perf_cfg {
  * @qseed_sw_lib_rev	qseed sw library type supporting the qseed hw
  * @qseed_hw_version   qseed hw version of the target
  * @sc_cfg: system cache configuration
+ * @syscache_supported  Flag to indicate if sys cache support is enabled
  * @uidle_cfg		Settings for uidle feature
  * @sui_misr_supported  indicate if secure-ui-misr is supported
  * @sui_block_xin_mask  mask of all the xin-clients to be blocked during
@@ -1494,6 +1495,7 @@ struct sde_mdss_cfg {
 	u32 qseed_hw_version;
 
 	struct sde_sc_cfg sc_cfg[SDE_SYS_CACHE_MAX];
+	bool syscache_supported;
 
 	bool sui_misr_supported;
 	u32 sui_block_xin_mask;

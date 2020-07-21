@@ -471,11 +471,6 @@ enum {
 };
 
 enum {
-	CACHE_CONTROLLER,
-	CACHE_CONTROLLER_PROP_MAX,
-};
-
-enum {
 	REG_DMA_OFF,
 	REG_DMA_ID,
 	REG_DMA_VERSION,
@@ -870,10 +865,6 @@ static struct sde_prop_type vbif_prop[] = {
 static struct sde_prop_type uidle_prop[] = {
 	{UIDLE_OFF, "qcom,sde-uidle-off", false, PROP_TYPE_U32},
 	{UIDLE_LEN, "qcom,sde-uidle-size", false, PROP_TYPE_U32},
-};
-
-static struct sde_prop_type cache_prop[] = {
-	{CACHE_CONTROLLER, "qcom,llcc-v2", false, PROP_TYPE_NODE},
 };
 
 static struct sde_prop_type reg_dma_prop[REG_DMA_PROP_MAX] = {
@@ -3225,25 +3216,22 @@ static int sde_cache_parse_dt(struct device_node *np,
 	struct platform_device *pdev;
 	struct of_phandle_args phargs;
 	struct sde_sc_cfg *sc_cfg = sde_cfg->sc_cfg;
-	struct sde_dt_props *props;
+	struct device_node *llcc_node;
 	int rc = 0;
-	u32 off_count;
 
 	if (!sde_cfg) {
 		SDE_ERROR("invalid argument\n");
 		return -EINVAL;
 	}
 
-	props = sde_get_dt_props(np, CACHE_CONTROLLER_PROP_MAX, cache_prop,
-			ARRAY_SIZE(cache_prop), &off_count);
-	if (IS_ERR_OR_NULL(props))
-		return PTR_ERR(props);
+	if (!sde_cfg->syscache_supported)
+		return 0;
 
-	if (!props->exists[CACHE_CONTROLLER]) {
-		SDE_DEBUG("cache controller missing, will disable img cache:%d",
-				props->exists[CACHE_CONTROLLER]);
-		rc = 0;
-		goto end;
+	llcc_node = of_find_node_by_name(NULL, "cache-controller");
+	if (!llcc_node ||
+		(!of_device_is_compatible(llcc_node, "qcom,llcc-v2"))) {
+		SDE_DEBUG("cache controller missing, will disable img cache\n");
+		return 0;
 	}
 
 	slice = llcc_slice_getd(LLCC_DISP);
@@ -3308,7 +3296,6 @@ static int sde_cache_parse_dt(struct device_node *np,
 cleanup:
 	of_node_put(phargs.np);
 end:
-	sde_put_dt_props(props);
 	return rc;
 }
 
@@ -4739,6 +4726,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		sde_cfg->dither_luma_mode_support = true;
 		sde_cfg->mdss_hw_block_size = 0x158;
 		sde_cfg->has_trusted_vm_support = true;
+		sde_cfg->syscache_supported = true;
 	} else if (IS_HOLI_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = false;
 		sde_cfg->has_qsync = true;
