@@ -2240,6 +2240,9 @@ static QDF_STATUS sap_goto_starting(struct sap_context *sap_ctx,
 	     sap_ctx->csr_roamProfile.phyMode ==
 					eCSR_DOT11_MODE_11g_ONLY))
 		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
+	else if (WLAN_REG_IS_24GHZ_CH_FREQ(sap_ctx->chan_freq) &&
+		 (sap_ctx->csr_roamProfile.phyMode == eCSR_DOT11_MODE_11a))
+		sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11g;
 
 	/*
 	 * Transition from SAP_INIT to SAP_STARTING
