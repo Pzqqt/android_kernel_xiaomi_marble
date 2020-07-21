@@ -54,6 +54,8 @@ typedef struct sk_buff_head __qdf_nbuf_queue_head_t;
 
 #define QDF_NBUF_CB_TX_MAX_OS_FRAGS 1
 
+#define QDF_SHINFO_SIZE    SKB_DATA_ALIGN(sizeof(struct skb_shared_info))
+
 /* QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS -
  * max tx fragments added by the driver
  * The driver will always add one tx fragment (the tx descriptor)
