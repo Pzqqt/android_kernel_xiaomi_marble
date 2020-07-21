@@ -5187,32 +5187,99 @@ void dp_tx_ppdu_stats_process(void *context)
 void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			  struct ppdu_info *ppdu_info)
 {
+	struct ppdu_info *s_ppdu_info = NULL;
+	struct ppdu_info *ppdu_info_next = NULL;
 	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
+	uint32_t time_delta = 0;
+	bool starved = 0;
+	bool matched = 0;
+	bool recv_ack_ba_done = 0;
 
-	TAILQ_REMOVE(&pdev->ppdu_info_list, ppdu_info, ppdu_info_list_elem);
-	pdev->list_depth--;
+	if (ppdu_info->tlv_bitmap & (1 << HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV) &&  ppdu_info->done)
+		recv_ack_ba_done = 1;
 
-	ppdu_desc = (struct cdp_tx_completion_ppdu *)
-			qdf_nbuf_data(ppdu_info->nbuf);
-	ppdu_desc->tlv_bitmap = ppdu_info->tlv_bitmap;
-	ppdu_desc->sched_cmdid = ppdu_info->sched_cmdid;
+	pdev->last_sched_cmdid = ppdu_info->sched_cmdid;
+	s_ppdu_info = TAILQ_FIRST(&pdev->sched_comp_ppdu_list);
 
-	qdf_spin_lock_bh(&pdev->tx_capture.ppdu_stats_lock);
+	TAILQ_FOREACH_SAFE(s_ppdu_info, &pdev->sched_comp_ppdu_list,
+			   ppdu_info_list_elem, ppdu_info_next) {
+		if (s_ppdu_info->tsf_l32 > ppdu_info->tsf_l32)
+			time_delta = (MAX_TSF_32 - s_ppdu_info->tsf_l32) +
+					ppdu_info->tsf_l32;
+		else
+			time_delta = ppdu_info->tsf_l32 - s_ppdu_info->tsf_l32;
 
-	if (qdf_unlikely(!pdev->tx_capture_enabled &&
-	    (pdev->tx_capture.ppdu_stats_queue_depth +
-	    pdev->tx_capture.ppdu_stats_defer_queue_depth) >
-	    DP_TX_PPDU_PROC_MAX_DEPTH)) {
-		qdf_nbuf_free(ppdu_info->nbuf);
-		qdf_mem_free(ppdu_info);
-		pdev->tx_capture.ppdu_dropped++;
-	} else {
-		STAILQ_INSERT_TAIL(&pdev->tx_capture.ppdu_stats_queue,
-				   ppdu_info, ppdu_info_queue_elem);
-		pdev->tx_capture.ppdu_stats_queue_depth++;
+		if (!s_ppdu_info->done && !recv_ack_ba_done) {
+			if (time_delta < MAX_SCHED_STARVE) {
+				QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+					  QDF_TRACE_LEVEL_INFO_MED,
+					  "pdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] TLV_B[0x%x] TSF[%u] D[%d]",
+					  pdev->pdev_id,
+					  s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
+					  s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
+					  s_ppdu_info->tlv_bitmap, s_ppdu_info->tsf_l32,
+					  s_ppdu_info->done);
+				break;
+			} else {
+				starved = 1;
+			}
+		}
+
+		pdev->delivered_sched_cmdid = s_ppdu_info->sched_cmdid;
+		TAILQ_REMOVE(&pdev->sched_comp_ppdu_list, s_ppdu_info,
+			     ppdu_info_list_elem);
+		pdev->sched_comp_list_depth--;
+
+		ppdu_desc = (struct cdp_tx_completion_ppdu *)
+				qdf_nbuf_data(s_ppdu_info->nbuf);
+		ppdu_desc->tlv_bitmap = s_ppdu_info->tlv_bitmap;
+		ppdu_desc->sched_cmdid = ppdu_info->sched_cmdid;
+
+		if (starved) {
+			qdf_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+				ppdu_desc->frame_ctrl,
+				ppdu_desc->htt_frame_type,
+				ppdu_desc->tlv_bitmap,
+				ppdu_desc->user[0].completion_status);
+			starved = 0;
+		}
+
+		if (ppdu_info->ppdu_id == s_ppdu_info->ppdu_id &&
+		    ppdu_info->sched_cmdid == s_ppdu_info->sched_cmdid)
+			matched = 1;
+
+		QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
+			  QDF_TRACE_LEVEL_INFO_MED,
+			  "pdev[%d] vdev[%d] ppdu_id[0x%x %d] sched_cmdid[0x%x %d] FC[0x%x] H_FTYPE[0x%x] TLV_B[0x%x] TSF[%u] cs[%d] M[%d] R_PID[%d S %d]",
+			  pdev->pdev_id, ppdu_desc->vdev_id,
+			  s_ppdu_info->ppdu_id, s_ppdu_info->ppdu_id,
+			  s_ppdu_info->sched_cmdid, s_ppdu_info->sched_cmdid,
+			  ppdu_desc->frame_ctrl,
+			  ppdu_desc->htt_frame_type,
+			  ppdu_desc->tlv_bitmap, s_ppdu_info->tsf_l32,
+			  ppdu_desc->user[0].completion_status, matched,
+			  ppdu_info->ppdu_id, ppdu_info->sched_cmdid);
+
+		qdf_spin_lock_bh(&pdev->tx_capture.ppdu_stats_lock);
+
+		if (qdf_unlikely(!pdev->tx_capture_enabled &&
+		    (pdev->tx_capture.ppdu_stats_queue_depth +
+		    pdev->tx_capture.ppdu_stats_defer_queue_depth) >
+		    DP_TX_PPDU_PROC_MAX_DEPTH)) {
+			qdf_nbuf_free(s_ppdu_info->nbuf);
+			qdf_mem_free(s_ppdu_info);
+			pdev->tx_capture.ppdu_dropped++;
+		} else {
+			STAILQ_INSERT_TAIL(&pdev->tx_capture.ppdu_stats_queue,
+					   s_ppdu_info, ppdu_info_queue_elem);
+			pdev->tx_capture.ppdu_stats_queue_depth++;
+		}
+		qdf_spin_unlock_bh(&pdev->tx_capture.ppdu_stats_lock);
+
+		if (matched)
+			break;
 	}
-	qdf_spin_unlock_bh(&pdev->tx_capture.ppdu_stats_lock);
 
 	if ((pdev->tx_capture.ppdu_stats_queue_depth >
 	    DP_TX_PPDU_PROC_THRESHOLD) ||
