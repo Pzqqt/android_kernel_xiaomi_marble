@@ -1306,6 +1306,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	dispatcher_psoc_close(psoc);
 
+	qdf_flush_work(&gp_cds_context->cds_recovery_work);
+
 	qdf_status = wma_wmi_work_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to close wma_wmi_work");
