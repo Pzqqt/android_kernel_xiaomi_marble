@@ -34,6 +34,7 @@
 #include <host_diag_core_event.h>
 #include "host_diag_core_log.h"
 #include <qdf_event.h>
+#include <qdf_module.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -897,6 +898,8 @@ void wlan_set_console_log_levels(uint32_t console_log_levels)
 {
 	gwlan_logging.console_log_levels = console_log_levels;
 }
+
+qdf_export_symbol(wlan_set_console_log_levels);
 
 static void flush_log_buffers_timer(void *dummy)
 {
