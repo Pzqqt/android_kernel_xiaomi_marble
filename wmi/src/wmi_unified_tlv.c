@@ -8428,6 +8428,25 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 		return false;
 	}
 
+	if (!soc->wmi_ext_service_bitmap) {
+		WMI_LOGE("WMI service ext bit map is not saved yet");
+		return false;
+	}
+
+	/* if wmi_service_enabled was received with extended2 bitmap,
+	 * use WMI_SERVICE_EXT2_IS_ENABLED to check the services.
+	 */
+	if (soc->wmi_ext2_service_bitmap)
+		return WMI_SERVICE_EXT2_IS_ENABLED(soc->wmi_service_bitmap,
+				soc->wmi_ext_service_bitmap,
+				soc->wmi_ext2_service_bitmap,
+				service_id);
+
+	if (service_id >= WMI_MAX_EXT_SERVICE) {
+		WMI_LOGE("Service id %d but WMI ext2 service bitmap is NULL",
+			 service_id);
+		return false;
+	}
 	/* if wmi_service_enabled was received with extended bitmap,
 	 * use WMI_SERVICE_EXT_IS_ENABLED to check the services.
 	 */
@@ -9252,6 +9271,7 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	WMI_SERVICE_AVAILABLE_EVENTID_param_tlvs *param_buf;
 	wmi_service_available_event_fixed_param *ev;
 	struct wmi_soc *soc = wmi_handle->soc;
+	uint32_t i = 0;
 
 	param_buf = (WMI_SERVICE_AVAILABLE_EVENTID_param_tlvs *) evt_buf;
 
@@ -9279,6 +9299,29 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		qdf_mem_copy(bitmap_buf,
 			soc->wmi_ext_service_bitmap,
 			(WMI_SERVICE_SEGMENT_BM_SIZE32 * sizeof(uint32_t)));
+
+	if (!param_buf->wmi_service_ext_bitmap) {
+		WMI_LOGD("wmi_service_ext_bitmap not available");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!soc->wmi_ext2_service_bitmap) {
+		soc->wmi_ext2_service_bitmap =
+			qdf_mem_malloc(param_buf->num_wmi_service_ext_bitmap *
+				       sizeof(uint32_t));
+		if (!soc->wmi_ext2_service_bitmap)
+			return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_copy(soc->wmi_ext2_service_bitmap,
+		     param_buf->wmi_service_ext_bitmap,
+		     (param_buf->num_wmi_service_ext_bitmap *
+		      sizeof(uint32_t)));
+
+	for (i = 0; i < param_buf->num_wmi_service_ext_bitmap; i++) {
+		WMI_LOGD("wmi_ext2_service_bitmap %u:0x%x",
+			 i, soc->wmi_ext2_service_bitmap[i]);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
