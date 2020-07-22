@@ -205,9 +205,10 @@
  * 3.81 Add ppdu_start_tsf field in HTT_TX_WBM_COMPLETION_V2.
  * 3.82 Add WIN_SIZE field to HTT_T2H_MSG_TYPE_RX_DELBA msg.
  * 3.83 Shrink seq_idx field in HTT PPDU ID from 3 bits to 2.
+ * 3.84 Add fisa_control_bits_v2 def.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 83
+#define HTT_CURRENT_VERSION_MINOR 84
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -6054,6 +6055,10 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
      * [17:0]
      */
      union {
+         /*
+          * fisa_control_bits structure is deprecated.
+          * Please use fisa_control_bits_v2 going forward.
+          */
          struct {
              A_UINT32 fisa_enable:                1,
                       ipsec_skip_search:          1,
@@ -6072,6 +6077,11 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
                       fisa_aggr_limit:            4,
                       reserved:                   14;
          } fisa_control_bits;
+         struct {
+             A_UINT32 fisa_enable:                1,
+                      fisa_aggr_limit:            4,
+                      reserved:                   27;
+         } fisa_control_bits_v2;
 
          A_UINT32 fisa_control_value;
     } u_fisa_control;
@@ -6277,6 +6287,29 @@ PREPACK struct htt_h2t_msg_type_fisa_config_t {
             ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_FISA_AGGR_LIMIT_S)); \
         } while (0)
 
+/* Dword 1: fisa_control_value fisa config */
+#define HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_M             0x00000001
+#define HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_S             0
+#define HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_M) >> \
+                HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_S)
+#define HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_FISA_V2_ENABLE, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_FISA_V2_ENABLE_S)); \
+        } while (0)
+
+/* Dword 1: fisa_control_value fisa_aggr_limit */
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M        0x0000001e
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_S        1
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_GET(_var) \
+        (((_var) & HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_M) >> \
+                HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_S)
+#define HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_SET(_var, _val) \
+        do { \
+            HTT_CHECK_SET_VAL(HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT, _val); \
+            ((_var) |= ((_val) << HTT_RX_FISA_CONFIG_FISA_V2_AGGR_LIMIT_S)); \
+        } while (0)
 
 PREPACK struct htt_h2t_msg_rx_fse_setup_t {
         A_UINT32 msg_type:8,  /* HTT_H2T_MSG_TYPE_RX_FSE_SETUP_CFG */
