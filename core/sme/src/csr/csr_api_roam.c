@@ -17003,6 +17003,7 @@ csr_populate_roam_chan_list(struct mac_context *mac_ctx,
 			    tCsrChannelInfo *src)
 {
 	enum band_info band;
+	uint32_t band_cap;
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
 	uint32_t *freq_lst = src->freq_list;
@@ -17011,14 +17012,15 @@ csr_populate_roam_chan_list(struct mac_context *mac_ctx,
 	 * The INI channels need to be filtered with respect to the current band
 	 * that is supported.
 	 */
-	band = mac_ctx->mlme_cfg->gen.band_capability;
-	if ((BAND_2G != band) && (BAND_5G != band)
-	    && (BAND_ALL != band)) {
+	band_cap = mac_ctx->mlme_cfg->gen.band_capability;
+	if (!band_cap) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 "Invalid band(%d), roam scan offload req aborted",
-			  band);
+			 "Invalid band_cap(%d), roam scan offload req aborted",
+			  band_cap);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	band = wlan_reg_band_bitmap_to_band_info(band_cap);
 
 	num_channels = dst->ChannelCount;
 	for (i = 0; i < src->numOfChannels; i++) {

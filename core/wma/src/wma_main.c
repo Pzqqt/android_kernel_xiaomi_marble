@@ -1398,10 +1398,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
-			if ((mac->mlme_cfg->gen.band_capability ==
-			     BAND_ALL) ||
-			    (mac->mlme_cfg->gen.band_capability ==
-			     BAND_2G))
+			if (mac->mlme_cfg->gen.band_capability & BIT(REG_BAND_2G))
 				mac->mlme_cfg->power.current_tx_power_level =
 					(uint8_t)privcmd->param_value;
 			else
@@ -1409,10 +1406,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			wma->pdevconfig.txpow5g = privcmd->param_value;
-			if ((mac->mlme_cfg->gen.band_capability ==
-			     BAND_ALL) ||
-			    (mac->mlme_cfg->gen.band_capability ==
-			     BAND_5G))
+			if (mac->mlme_cfg->gen.band_capability & BIT(REG_BAND_5G))
 				mac->mlme_cfg->power.current_tx_power_level =
 					(uint8_t)privcmd->param_value;
 			else
