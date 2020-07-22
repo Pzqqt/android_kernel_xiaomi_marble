@@ -222,6 +222,40 @@ ucfg_cfr_set_capture_interval(struct wlan_objmgr_vdev *vdev,
 			      struct cfr_wlanconfig_param *params);
 
 /**
+ * ucfg_cfr_set_tara_filterin_as_fp() - function to FP/MO filtering for m_TA_RA
+ * @vdev: pointer to vdev object
+ * @params: user config
+ *
+ * Return: status
+ */
+QDF_STATUS
+ucfg_cfr_set_tara_filterin_as_fp(struct wlan_objmgr_vdev *vdev,
+				 struct cfr_wlanconfig_param *params);
+
+/**
+ * ucfg_cfr_set_capture_count() - function to configure capture count
+ * @vdev: pointer to vdev object
+ * @params: user config
+ *
+ * Return: status
+ */
+QDF_STATUS
+ucfg_cfr_set_capture_count(struct wlan_objmgr_vdev *vdev,
+			   struct cfr_wlanconfig_param *params);
+
+/**
+ * ucfg_cfr_set_capture_interval_mode_sel() - function to configure capture
+ *					      interval mode nob
+ * @vdev: pointer to vdev object
+ * @params: user confi
+ *
+ * Return: status
+ */
+QDF_STATUS
+ucfg_cfr_set_capture_interval_mode_sel(struct wlan_objmgr_vdev *vdev,
+				       struct cfr_wlanconfig_param *params);
+
+/**
  * ucfg_cfr_set_en_bitmap() - function to configure 16-bit bitmap in TA_RA mode
  * @vdev: pointer to vdev object
  * @params: user config

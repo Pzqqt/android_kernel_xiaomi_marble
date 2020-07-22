@@ -629,6 +629,89 @@ ucfg_cfr_set_freeze_tlv_delay_cnt(struct wlan_objmgr_vdev *vdev,
 }
 
 /*
+ * Configure ta_ra_filter_in_as_fp from the provided configuration into
+ * cfr_rcc_param. All fixed parameters needed to be stored into cfr_rcc_param.
+ */
+QDF_STATUS
+ucfg_cfr_set_tara_filterin_as_fp(struct wlan_objmgr_vdev *vdev,
+				 struct cfr_wlanconfig_param *params)
+{
+	struct pdev_cfr *pcfr = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = dev_sanity_check(vdev, &pdev, &pcfr);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	if (!pcfr->is_mo_marking_support) {
+		cfr_err("MO marking support not available to filter as FP/MO");
+		status = QDF_STATUS_E_NOSUPPORT;
+	} else {
+		pcfr->rcc_param.en_ta_ra_filter_in_as_fp =
+			params->en_ta_ra_filter_in_as_fp;
+	}
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+
+	return status;
+}
+
+/*
+ * Set the capture count from the provided configuration into cfr_rcc_param.
+ * All fixed parameters are needed to be stored into cfr_rcc_param.
+ */
+QDF_STATUS
+ucfg_cfr_set_capture_count(struct wlan_objmgr_vdev *vdev,
+			   struct cfr_wlanconfig_param *params)
+{
+	struct pdev_cfr *pcfr = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = dev_sanity_check(vdev, &pdev, &pcfr);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	if (!pcfr->is_cap_interval_mode_sel_support) {
+		cfr_err("Capture count support not enabled");
+		status = QDF_STATUS_E_NOSUPPORT;
+	} else {
+		pcfr->rcc_param.capture_count = params->cap_count;
+	}
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+
+	return status;
+}
+
+/*
+ * Set interval mode sel nob from the provided configuration into cfr_rcc_param.
+ * All fixed parameters are needed to be stored into cfr_rcc_param
+ */
+QDF_STATUS
+ucfg_cfr_set_capture_interval_mode_sel(struct wlan_objmgr_vdev *vdev,
+				       struct cfr_wlanconfig_param *params)
+{
+	struct pdev_cfr *pcfr = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = dev_sanity_check(vdev, &pdev, &pcfr);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	if (!pcfr->is_cap_interval_mode_sel_support) {
+		cfr_err("Capture count support not enabled");
+		status = QDF_STATUS_E_NOSUPPORT;
+	} else {
+		pcfr->rcc_param.capture_intval_mode_sel =
+			params->cap_intval_mode_sel;
+	}
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
+
+	return status;
+}
+
+/*
  * Set capture interval from the provided configuration into cfr_rcc_param.
  * All fixed parameters are needed to be stored into cfr_rcc_param.
  */
@@ -844,6 +927,10 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 		pcfr->rcc_param.capture_duration);
 	cfr_err("capture interval : %u usec\n",
 		pcfr->rcc_param.capture_interval);
+	cfr_err("capture count : %u\n",
+		pcfr->rcc_param.capture_count);
+	cfr_err("capture interval mode sel : %u\n",
+		pcfr->rcc_param.capture_intval_mode_sel);
 	cfr_err("UL MU User mask lower : %u\n",
 		pcfr->rcc_param.ul_mu_user_mask_lower);
 	cfr_err("UL MU User mask upper : %u\n",

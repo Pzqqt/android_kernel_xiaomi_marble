@@ -92,6 +92,27 @@ tgt_cfr_enable_cfr_timer(struct wlan_objmgr_pdev *pdev, uint32_t cfr_timer);
 void tgt_cfr_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value);
 
 /**
+ * tgt_cfr_capture_count_support_set() - API to set capture_count support
+ * @psoc: pointer to psoc_object
+ * @value: value to be set
+ *
+ * Return: success/failure
+ */
+QDF_STATUS
+tgt_cfr_capture_count_support_set(struct wlan_objmgr_psoc *psoc,
+				  uint32_t value);
+
+/**
+ * tgt_cfr_mo_marking_support_set() - API to set MO marking support
+ * @psoc: pointer to psoc_object
+ * @value: value to be set
+ *
+ * Return: success/failure
+ */
+QDF_STATUS
+tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value);
+
+/**
  * tgt_cfr_info_send() - API to send cfr info
  * @pdev: pointer to pdev_object
  * @head: pointer to cfr info head

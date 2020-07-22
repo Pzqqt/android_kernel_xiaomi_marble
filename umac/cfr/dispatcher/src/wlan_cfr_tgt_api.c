@@ -317,4 +317,70 @@ QDF_STATUS tgt_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+tgt_cfr_capture_count_support_set(struct wlan_objmgr_psoc *psoc,
+				  uint32_t value)
+{
+	struct psoc_cfr *cfr_sc;
+
+	if (!psoc) {
+		cfr_err("CFR: NULL PSOC!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						       WLAN_UMAC_COMP_CFR);
+
+	if (!cfr_sc) {
+		cfr_err("Failed to get CFR component priv obj!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc->is_cap_interval_mode_sel_support = !!value;
+	cfr_debug("CFR: cap_interval_mode_sel_support is %s\n",
+		  (cfr_sc->is_cap_interval_mode_sel_support) ?
+		  "enabled" :
+		  "disabled");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc, uint32_t value)
+{
+	struct psoc_cfr *cfr_sc;
+
+	if (!psoc) {
+		cfr_err("CFR: NULL PSOC!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						       WLAN_UMAC_COMP_CFR);
+	if (!cfr_sc) {
+		cfr_err("Failed to get CFR component priv obj!!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	cfr_sc->is_mo_marking_support = !!value;
+	cfr_debug("CFR: mo_marking_support is %s\n",
+		  (cfr_sc->is_mo_marking_support) ? "enabled" : "disabled");
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS
+tgt_cfr_capture_count_support_set(struct wlan_objmgr_psoc *psoc,
+				  uint32_t value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+QDF_STATUS
+tgt_cfr_mo_marking_support_set(struct wlan_objmgr_psoc *psoc,
+			       uint32_t value)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif

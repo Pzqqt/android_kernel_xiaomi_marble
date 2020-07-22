@@ -1394,12 +1394,19 @@ struct wlan_lmac_if_sa_api_rx_ops {
  * struct wlan_lmac_if_cfr_rx_ops - CFR south bound rx function pointers
  * @cfr_support_set: Set the CFR support based on FW advert
  * @cfr_info_send: Send cfr info to upper layers
+ * @cfr_capture_count_support_set: Set the capture_count support based on FW
+ * advert
+ * @cfr_mo_marking_support_set: Set MO marking supported based on FW advert
  */
 struct wlan_lmac_if_cfr_rx_ops {
 	void (*cfr_support_set)(struct wlan_objmgr_psoc *psoc, uint32_t value);
 	uint32_t (*cfr_info_send)(struct wlan_objmgr_pdev *pdev, void *head,
 				  size_t hlen, void *data, size_t dlen,
 				  void *tail, size_t tlen);
+	QDF_STATUS (*cfr_capture_count_support_set)(
+			struct wlan_objmgr_psoc *psoc, uint32_t value);
+	QDF_STATUS (*cfr_mo_marking_support_set)(struct wlan_objmgr_psoc *psoc,
+						 uint32_t value);
 };
 #endif
 
