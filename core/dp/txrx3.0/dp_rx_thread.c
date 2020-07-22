@@ -104,7 +104,7 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 	if (!total_queued)
 		return;
 
-	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u gro_flushes: %u gro_flushes_by_vdev_del: %u rx_flushes: %u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u)",
+	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u gro_flushes: %u gro_flushes_by_vdev_del: %u rx_flushes: %u max_len:%u invalid(peer:%u vdev:%u rx-handle:%u others:%u enq fail:%u)",
 		rx_thread->id,
 		qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue),
 		total_queued,
@@ -118,7 +118,8 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 		rx_thread->stats.dropped_invalid_peer,
 		rx_thread->stats.dropped_invalid_vdev,
 		rx_thread->stats.dropped_invalid_os_rx_handles,
-		rx_thread->stats.dropped_others);
+		rx_thread->stats.dropped_others,
+		rx_thread->stats.dropped_enq_fail);
 }
 
 QDF_STATUS dp_rx_tm_dump_stats(struct dp_rx_tm_handle *rx_tm_hdl)
@@ -132,6 +133,79 @@ QDF_STATUS dp_rx_tm_dump_stats(struct dp_rx_tm_handle *rx_tm_hdl)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef FEATURE_ALLOW_PKT_DROPPING
+/*
+ * dp_check_and_update_pending() - Check and Set RX Pending flag
+ * @tm_handle_cmn - DP thread pointer
+ *
+ * Returns: QDF_STATUS_SUCCESS on success or qdf error code on
+ * failure
+ */
+static inline
+QDF_STATUS dp_check_and_update_pending(struct dp_rx_tm_handle_cmn
+				       *tm_handle_cmn)
+{
+	struct dp_txrx_handle_cmn *txrx_handle_cmn;
+	struct dp_rx_tm_handle *rx_tm_hdl =
+		    (struct dp_rx_tm_handle *)tm_handle_cmn;
+	struct dp_soc *dp_soc;
+	uint32_t rx_pending_hl_threshold;
+	uint32_t rx_pending_lo_threshold;
+	uint32_t nbuf_queued_total = 0;
+	uint32_t nbuf_dequeued_total = 0;
+	uint32_t pending = 0;
+	int i;
+
+	txrx_handle_cmn =
+		dp_rx_thread_get_txrx_handle(tm_handle_cmn);
+	if (!txrx_handle_cmn) {
+		dp_err("invalid txrx_handle_cmn!");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dp_soc = (struct dp_soc *)dp_txrx_get_soc_from_ext_handle(
+					txrx_handle_cmn);
+	if (!dp_soc) {
+		dp_err("invalid soc!");
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rx_pending_hl_threshold = wlan_cfg_rx_pending_hl_threshold(
+				  dp_soc->wlan_cfg_ctx);
+	rx_pending_lo_threshold = wlan_cfg_rx_pending_lo_threshold(
+				  dp_soc->wlan_cfg_ctx);
+
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
+		if (likely(rx_tm_hdl->rx_thread[i])) {
+			nbuf_queued_total +=
+			    rx_tm_hdl->rx_thread[i]->stats.nbuf_queued_total;
+			nbuf_dequeued_total +=
+			    rx_tm_hdl->rx_thread[i]->stats.nbuf_dequeued;
+		}
+	}
+
+	if (nbuf_queued_total > nbuf_dequeued_total)
+		pending = nbuf_queued_total - nbuf_dequeued_total;
+
+	if (unlikely(pending > rx_pending_hl_threshold))
+		qdf_atomic_set(&rx_tm_hdl->allow_dropping, 1);
+	else if (pending < rx_pending_lo_threshold)
+		qdf_atomic_set(&rx_tm_hdl->allow_dropping, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+static inline
+QDF_STATUS dp_check_and_update_pending(struct dp_rx_tm_handle_cmn
+				       *tm_handle_cmn)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * dp_rx_tm_thread_enqueue() - enqueue nbuf list into rx_thread
@@ -157,6 +231,7 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 	struct dp_rx_tm_handle_cmn *tm_handle_cmn;
 	uint8_t reo_ring_num = QDF_NBUF_CB_RX_CTX_ID(nbuf_list);
 	qdf_wait_queue_head_t *wait_q_ptr;
+	uint8_t allow_dropping;
 
 	tm_handle_cmn = rx_thread->rtm_handle_cmn;
 
@@ -176,6 +251,15 @@ static QDF_STATUS dp_rx_tm_thread_enqueue(struct dp_rx_thread *rx_thread,
 
 	num_elements_in_nbuf = QDF_NBUF_CB_RX_NUM_ELEMENTS_IN_LIST(nbuf_list);
 	nbuf_queued = num_elements_in_nbuf;
+
+	allow_dropping = qdf_atomic_read(
+		&((struct dp_rx_tm_handle *)tm_handle_cmn)->allow_dropping);
+	if (unlikely(allow_dropping)) {
+		qdf_nbuf_list_free(nbuf_list);
+		rx_thread->stats.dropped_enq_fail += num_elements_in_nbuf;
+		nbuf_queued = 0;
+		goto enq_done;
+	}
 
 	dp_rx_tm_walk_skb_list(nbuf_list);
 
@@ -214,6 +298,9 @@ enq_done:
 	temp_qlen = qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue);
 
 	rx_thread->stats.nbuf_queued[reo_ring_num] += nbuf_queued;
+	rx_thread->stats.nbuf_queued_total += nbuf_queued;
+
+	dp_check_and_update_pending(tm_handle_cmn);
 
 	if (temp_qlen > rx_thread->stats.nbufq_max_len)
 		rx_thread->stats.nbufq_max_len = temp_qlen;
