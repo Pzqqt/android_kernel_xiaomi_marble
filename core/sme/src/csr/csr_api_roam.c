@@ -8263,19 +8263,11 @@ static void csr_roam_print_candidate_aps(tScanResultHandle results)
 	}
 }
 
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
 void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
 {
 	QDF_SET_PARAM(filter->authmodeset, WLAN_CRYPTO_AUTH_OPEN);
 }
-#else
-void csr_set_open_mode_in_scan_filter(struct scan_filter *filter)
-{
-	/* No encryption */
-	filter->num_of_enc_type = 1;
-	filter->enc_type[0] = WLAN_ENCRYPT_TYPE_NONE;
-}
-#endif
+
 QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		uint32_t *pRoamId)
@@ -10739,7 +10731,6 @@ void csr_update_pmf_cap_from_profile(struct csr_roam_profile *profile,
 {}
 #endif
 
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
 QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 					    struct scan_filter *filter,
 					    uint8_t vdev_id)
@@ -10782,53 +10773,6 @@ static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
 
 	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
 }
-#else
-static QDF_STATUS csr_fill_crypto_params(struct mac_context *mac_ctx,
-					 struct csr_roam_profile *profile,
-					 struct scan_filter *filter,
-					 uint8_t vdev_id)
-{
-	uint8_t i;
-
-	if (profile->force_rsne_override) {
-		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
-		filter->num_of_auth = 1;
-		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
-		filter->num_of_enc_type = 1;
-		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
-		filter->num_of_mc_enc_type = 1;
-		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
-		filter->ignore_pmf_cap = true;
-	} else {
-		filter->num_of_auth =
-			profile->AuthType.numEntries;
-		if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
-			filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
-		for (i = 0; i < filter->num_of_auth; i++)
-			filter->auth_type[i] =
-			  csr_covert_auth_type_new(
-			  profile->AuthType.authType[i]);
-		filter->num_of_enc_type =
-			profile->EncryptionType.numEntries;
-		if (filter->num_of_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_enc_type; i++)
-			filter->enc_type[i] =
-			  csr_covert_enc_type_new(
-			  profile->EncryptionType.encryptionType[i]);
-		filter->num_of_mc_enc_type =
-				profile->mcEncryptionType.numEntries;
-		if (filter->num_of_mc_enc_type > WLAN_NUM_OF_ENCRYPT_TYPE)
-			filter->num_of_mc_enc_type = WLAN_NUM_OF_ENCRYPT_TYPE;
-		for (i = 0; i < filter->num_of_mc_enc_type; i++)
-			filter->mc_enc_type[i] =
-			  csr_covert_enc_type_new(
-			  profile->mcEncryptionType.encryptionType[i]);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 QDF_STATUS
 csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,

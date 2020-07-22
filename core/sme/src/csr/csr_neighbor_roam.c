@@ -340,35 +340,6 @@ csr_update_pmf_cap_from_connected_profile(tCsrRoamConnectedProfile *profile,
 {}
 #endif
 
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
-QDF_STATUS
-csr_fill_crypto_params_connected_profile(struct mac_context *mac_ctx,
-					 tCsrRoamConnectedProfile *profile,
-					 struct scan_filter *filter,
-					 uint8_t vdev_id)
-{
-	return csr_fill_filter_from_vdev_crypto(mac_ctx, filter, vdev_id);
-}
-#else
-QDF_STATUS
-csr_fill_crypto_params_connected_profile(struct mac_context *mac_ctx,
-					 tCsrRoamConnectedProfile *profile,
-					 struct scan_filter *filter,
-					 uint8_t vdev_id)
-{
-	filter->num_of_auth = 1;
-	filter->auth_type[0] = csr_covert_auth_type_new(profile->AuthType);
-	filter->num_of_enc_type = 1;
-	filter->enc_type[0] =
-		csr_covert_enc_type_new(profile->EncryptionType);
-	filter->num_of_mc_enc_type = 1;
-	filter->mc_enc_type[0] =
-		csr_covert_enc_type_new(profile->mcEncryptionType);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 QDF_STATUS
 csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 					       struct scan_filter *filter,
@@ -420,8 +391,8 @@ csr_neighbor_roam_get_scan_filter_from_profile(struct mac_context *mac,
 			  filter->ssid_list[0].length);
 	}
 
-	status = csr_fill_crypto_params_connected_profile(mac, profile, filter,
-							  vdev_id);
+	status = csr_fill_filter_from_vdev_crypto(mac, filter, vdev_id);
+
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 

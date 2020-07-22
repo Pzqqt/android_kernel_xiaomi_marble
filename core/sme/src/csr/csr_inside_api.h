@@ -418,8 +418,6 @@ csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
 }
 #endif
 
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
-
 /*
  * csr_fill_filter_from_vdev_crypto() - fill scan filter crypto from vdev crypto
  * @mac_ctx: csr auth type
@@ -431,24 +429,6 @@ csr_update_adaptive_11r_scan_filter(struct mac_context *mac_ctx,
 QDF_STATUS csr_fill_filter_from_vdev_crypto(struct mac_context *mac_ctx,
 					    struct scan_filter *filter,
 					    uint8_t vdev_id);
-#else
-
-/*
- * csr_covert_enc_type_new() - convert csr enc type to wlan enc type
- * @enc: csr enc type
- *
- * Return enum wlan_enc_type
- */
-enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc);
-
-/*
- * csr_covert_auth_type_new() - convert csr auth type to wlan auth type
- * @auth: csr auth type
- *
- * Return enum wlan_auth_type
- */
-enum wlan_auth_type csr_covert_auth_type_new(enum csr_akm_type auth);
-#endif
 
 /*
  * csr_set_open_mode_in_scan_filter() - set open mode in scan filter
@@ -477,22 +457,6 @@ csr_roam_get_scan_filter_from_profile(struct mac_context *mac_ctx,
 				      struct csr_roam_profile *profile,
 				      struct scan_filter *filter,
 				      bool is_roam, uint8_t vdev_id);
-
-/*
- * csr_fill_crypto_params_connected_profile() - fill scan filter crypto from
- * connected profile
- * @mac_ctx: csr auth type
- * @profile: connected profile
- * @filter: scan filter
- * @vdev_id: vdev
- *
- * Return QDF_STATUS
- */
-QDF_STATUS
-csr_fill_crypto_params_connected_profile(struct mac_context *mac_ctx,
-					 tCsrRoamConnectedProfile *profile,
-					 struct scan_filter *filter,
-					 uint8_t vdev_id);
 
 /**
  * csr_neighbor_roam_get_scan_filter_from_profile() - prepare scan filter from
