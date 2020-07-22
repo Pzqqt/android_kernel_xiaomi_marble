@@ -15309,6 +15309,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_CONFIGURE_ROAM_TRIGGER_PARAM_SUPPORT;
 	wmi_service[wmi_service_5dot9_ghz_support] =
 			WMI_SERVICE_5_DOT_9GHZ_SUPPORT;
+	wmi_service[wmi_service_cfr_ta_ra_as_fp_support] =
+			WMI_SERVICE_CFR_TA_RA_AS_FP_SUPPORT;
+	wmi_service[wmi_service_cfr_capture_count_support] =
+			WMI_SERVICE_CFR_CAPTURE_COUNT_SUPPORT;
 }
 
 /**
