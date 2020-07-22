@@ -1047,8 +1047,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	ent_ring_desc = hal_srng_src_get_next(soc->hal_soc, hal_srng);
 	if (!ent_ring_desc) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "HAL src ring next entry NULL");
+		dp_err_rl("HAL src ring next entry NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
