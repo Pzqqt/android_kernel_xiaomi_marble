@@ -69,8 +69,6 @@ enum {
 
 #define SDE_QSEED_DEFAULT_DYN_EXP 0x0
 
-#define DEFAULT_REFRESH_RATE	60
-
 /**
  * enum sde_plane_qos - Different qos configurations for each pipe
  *

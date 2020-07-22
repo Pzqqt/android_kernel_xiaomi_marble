@@ -105,6 +105,8 @@
 
 #define SDE_NAME_SIZE  12
 
+#define DEFAULT_FPS 60
+
 /* timeout in frames waiting for frame done */
 #define SDE_FRAME_DONE_TIMEOUT	60
 
