@@ -8,4 +8,8 @@ LINUXINCLUDE    += -include $(srctree)/techpack/eva/config/waipioevaconf.h
 endif
 endif
 
+LINUXINCLUDE    += -I$(srctree)/techpack/eva/include \
+                   -I$(srctree)/techpack/eva/include/uapi \
+		   -I$(srctree)/techpack/eva/include/uapi/eva
+
 obj-y +=msm/

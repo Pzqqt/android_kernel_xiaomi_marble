@@ -3,4 +3,4 @@
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
 
-#define CONFIG_MSM_EVA 0
+#define CONFIG_MSM_EVA 1
