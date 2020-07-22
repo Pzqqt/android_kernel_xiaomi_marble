@@ -881,8 +881,16 @@ static int msm_lsm_dereg_model(struct snd_pcm_substream *substream,
 		}
 
 		if (sm->model_id == p_info->model_id) {
-			rc = q6lsm_set_one_param(client, p_info, NULL,
-						 LSM_DEREG_MULTI_SND_MODEL);
+			if (p_info->param_size != sizeof(p_info->model_id)) {
+				rc = -EINVAL;
+				pr_err("%s: %s failed, p_info->param_size is invalid: %d\n",
+				       __func__,  "LSM_DEREG_MULTI_SND_MODEL",
+				       p_info->param_size);
+			} else {
+				rc = q6lsm_set_one_param(client, p_info, NULL,
+							 LSM_DEREG_MULTI_SND_MODEL);
+			}
+
 			if (rc)
 				dev_err(rtd->dev,
 					"%s: Failed to deregister snd_model %d, err = %d\n",
@@ -1252,7 +1260,7 @@ static int msm_lsm_ioctl_shared(struct snd_pcm_substream *substream,
 			 unsigned int cmd, void *arg)
 {
 	struct snd_soc_pcm_runtime *rtd;
-	unsigned long flags;
+	unsigned long flags = 0;
 	int ret;
 	struct snd_lsm_sound_model_v2 snd_model_v2;
 	struct snd_lsm_session_data session_data;
@@ -2404,9 +2412,12 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 	case SNDRV_LSM_SET_MODULE_PARAMS_V2: {
 		struct snd_lsm_module_params p_data;
 		struct lsm_params_info *temp_ptr_info = NULL;
+		struct lsm_params_info_v2 info_v2;
 		struct lsm_params_info_v2 *ptr_info_v2 = NULL, *temp_ptr_info_v2 = NULL;
 		size_t p_size = 0, count;
 		u8 *params;
+
+		memset(&info_v2, 0, sizeof(info_v2));
 
 		if (!prtd->lsm_client->use_topology) {
 			dev_err(rtd->dev,
@@ -2472,16 +2483,17 @@ static int msm_lsm_ioctl(struct snd_pcm_substream *substream,
 		for (count = 0; count < p_data.num_params; count++) {
 			if (cmd == SNDRV_LSM_SET_MODULE_PARAMS) {
 				/* convert to V2 param info struct from legacy param info */
-				ptr_info_v2->module_id = temp_ptr_info->module_id;
-				ptr_info_v2->param_id = temp_ptr_info->param_id;
-				ptr_info_v2->param_size = temp_ptr_info->param_size;
-				ptr_info_v2->param_data = temp_ptr_info->param_data;
-				ptr_info_v2->param_type = temp_ptr_info->param_type;
+				info_v2.module_id = temp_ptr_info->module_id;
+				info_v2.param_id = temp_ptr_info->param_id;
+				info_v2.param_size = temp_ptr_info->param_size;
+				info_v2.param_data = temp_ptr_info->param_data;
+				info_v2.param_type = temp_ptr_info->param_type;
 
-				ptr_info_v2->instance_id = INSTANCE_ID_0;
-				ptr_info_v2->stage_idx = LSM_STAGE_INDEX_FIRST;
-				ptr_info_v2->model_id = 0;
+				info_v2.instance_id = INSTANCE_ID_0;
+				info_v2.stage_idx = LSM_STAGE_INDEX_FIRST;
+				info_v2.model_id = 0;
 
+				ptr_info_v2 = &info_v2;
 				temp_ptr_info++;
 			} else {
 				if (LSM_REG_MULTI_SND_MODEL != temp_ptr_info_v2->param_type ||

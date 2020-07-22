@@ -515,6 +515,8 @@ static void voc_set_error_state(uint16_t reset_proc)
 		if (v != NULL) {
 			v->voc_state = VOC_ERROR;
 			v->rec_info.recording = 0;
+			v->music_info.playing = 0;
+			v->music_info.force = 0;
 		}
 	}
 }

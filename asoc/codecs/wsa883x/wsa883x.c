@@ -620,9 +620,14 @@ static int wsa_get_temp(struct snd_kcontrol *kcontrol,
 {
 	struct snd_soc_component *component =
 			snd_soc_kcontrol_component(kcontrol);
+	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
 	int temp = 0;
 
-	wsa883x_get_temperature(component, &temp);
+	if (test_bit(SPKR_STATUS, &wsa883x->status_mask))
+		temp = wsa883x->curr_temp;
+	else
+		wsa883x_get_temperature(component, &temp);
+
 	ucontrol->value.integer.value[0] = temp;
 
 	return 0;

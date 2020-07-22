@@ -13,6 +13,7 @@
 #define AVCS_CMD_ADSP_EVENT_GET_STATE		0x0001290C
 #define AVCS_CMDRSP_ADSP_EVENT_GET_STATE	0x0001290D
 #define AVCS_API_VERSION_V4		4
+#define AVCS_API_VERSION_V5		5
 #define APRV2_IDS_SERVICE_ID_ADSP_CORE_V (0x3)
 
 bool q6core_is_adsp_ready(void);
@@ -197,6 +198,126 @@ struct avcs_cmd_load_unload_topo_modules {
 	struct apr_hdr hdr;
 	uint32_t topology_id;
 } __packed;
+
+#define AVCS_LOAD_MODULES 1
+
+#define AVCS_UNLOAD_MODULES 0
+
+#define AVCS_CMD_LOAD_MODULES           0x00012989
+
+#define AVCS_CMD_UNLOAD_MODULES         0x0001298A
+
+#define AVCS_CMD_RSP_LOAD_MODULES       0x0001298B
+
+/*
+ * Module is generic, such as a preprocessor,
+ * postprocessor, or volume control
+ *  module.
+ */
+#define AMDB_MODULE_TYPE_GENERIC           0
+
+/** Module is a decoder. */
+#define AMDB_MODULE_TYPE_DECODER           1
+
+/** Module is an encoder. */
+#define AMDB_MODULE_TYPE_ENCODER           2
+
+/** Module is a converter. */
+#define AMDB_MODULE_TYPE_CONVERTER         3
+
+/** Module is a packetizer. */
+#define AMDB_MODULE_TYPE_PACKETIZER        4
+
+/** Module is a depacketizer. */
+#define AMDB_MODULE_TYPE_DEPACKETIZER      5
+
+
+struct avcs_load_unload_modules_sec_payload {
+	uint32_t       module_type;
+	/*
+	 * < Type of module.
+
+	 * @values
+	 * - #AMDB_MODULE_TYPE_GENERIC
+	 * - #AMDB_MODULE_TYPE_DECODER
+	 * - #AMDB_MODULE_TYPE_ENCODER
+	 * - #AMDB_MODULE_TYPE_CONVERTER
+	 * - #AMDB_MODULE_TYPE_PACKETIZER
+	 * - #AMDB_MODULE_TYPE_DEPACKETIZER
+	 */
+
+
+	uint32_t       id1;
+	/*
+	 * < One of the following types of IDs:
+	 * - Format ID for the encoder, decoder, and packetizer module types
+	 * - Module ID for the generic module type
+	 * - Source format ID for the converter module type
+	 */
+
+	uint32_t       id2;
+	/*
+	 * < Sink format ID for the converter module type.
+	 * Zero for other module types
+	 */
+
+	uint32_t handle_lsw;
+	/* < LSW of the Handle to the module loaded */
+
+	uint32_t handle_msw;
+	/* < MSW of the Handle to the module loaded. */
+} __packed;
+
+struct avcs_load_unload_modules_payload {
+	uint32_t num_modules;
+	/**< Number of modules being registered */
+
+	struct avcs_load_unload_modules_sec_payload load_unload_info[0];
+	/*
+	 * < Load/unload information for num_modules.
+	 * It will be of type avcs_load_unload_info_t[num_modules]
+	 */
+} __packed;
+
+struct avcs_load_unload_modules_meminfo {
+	uint32_t                  data_payload_addr_lsw;
+	/**< Lower 32 bits of the 64-bit data payload address. */
+
+	uint32_t                  data_payload_addr_msw;
+	/**< Upper 32 bits of the 64-bit data payload address. */
+
+	uint32_t                  mem_map_handle;
+	/*
+	 * < Unique identifier for an address. The aDSP returns this memory map
+	 * handle through the #AVCS_CMD_SHARED_MEM_MAP_REGIONS command.
+
+	 * @values @vertspace{-2}
+	 * - NULL -- Parameter data payloads are within the message payload
+	 * (in-band).
+	 * - Non-NULL -- Parameter data payloads begin at the address specified
+	 * in the data_payload_addr_lsw and data_payload_addr_msw fields
+	 * (out-of-band).
+
+	 * The client can choose in-band or out-of-band
+	 */
+
+	uint32_t                  buffer_size;
+	/*
+	 * < Actual size (in bytes) of the valid data
+	 * in the data payload address.
+	 */
+} __packed;
+
+struct avcs_cmd_dynamic_modules {
+	struct apr_hdr hdr;
+	struct avcs_load_unload_modules_meminfo meminfo;
+	struct avcs_load_unload_modules_payload payload;
+} __packed;
+
+
+int32_t q6core_avcs_load_unload_modules(struct avcs_load_unload_modules_payload *payload,
+				uint32_t preload_type);
+
 
 /* This command allows a remote client(HLOS) creates a client to LPASS NPA
  * resource node. Currently, this command supports only the NPA Sleep resource

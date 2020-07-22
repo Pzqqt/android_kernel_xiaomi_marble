@@ -536,7 +536,7 @@ static int msm_qti_pp_get_rms_value_control(struct snd_kcontrol *kcontrol,
 			break;
 	}
 	if ((be_idx >= MSM_BACKEND_DAI_MAX) || !msm_bedai.active) {
-		pr_err("%s, back not active to query rms be_idx:%d\n",
+		pr_debug("%s, back not active to query rms be_idx:%d\n",
 			__func__, be_idx);
 		rc = -EINVAL;
 		goto get_rms_value_err;
@@ -1200,7 +1200,7 @@ int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 	int ctl_len = 0, ret = 0;
 	struct dsp_stream_callback_list *new_event;
 	struct dsp_stream_callback_list *oldest_event;
-	unsigned long spin_flags;
+	unsigned long spin_flags = 0;
 	struct dsp_stream_callback_prtd *kctl_prtd = NULL;
 	struct msm_adsp_event_data *event_data = NULL;
 	const char *mixer_ctl_name = DSP_STREAM_CALLBACK;
@@ -1269,11 +1269,11 @@ int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 
 	spin_lock_irqsave(&kctl_prtd->prtd_spin_lock, spin_flags);
 	while (kctl_prtd->event_count >= DSP_STREAM_CALLBACK_QUEUE_SIZE) {
-		pr_info("%s: queue of size %d is full. delete oldest one.\n",
+		pr_debug("%s: queue of size %d is full. delete oldest one.\n",
 			__func__, DSP_STREAM_CALLBACK_QUEUE_SIZE);
 		oldest_event = list_first_entry(&kctl_prtd->event_queue,
 				struct dsp_stream_callback_list, list);
-		pr_info("%s: event deleted: type %d length %d\n",
+		pr_debug("%s: event deleted: type %d length %d\n",
 			__func__, oldest_event->event.event_type,
 			oldest_event->event.payload_len);
 		list_del(&oldest_event->list);
@@ -1309,7 +1309,7 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 {
 	uint32_t payload_size = 0;
 	struct dsp_stream_callback_list *oldest_event;
-	unsigned long spin_flags;
+	unsigned long spin_flags = 0;
 	struct dsp_stream_callback_prtd *kctl_prtd = NULL;
 	int ret = 0;
 

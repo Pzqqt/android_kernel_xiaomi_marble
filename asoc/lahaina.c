@@ -4569,6 +4569,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_1:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_2:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_3:
+	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_5:
 	case MSM_BACKEND_DAI_RX_CDC_DMA_RX_6:
 		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
@@ -5999,6 +6000,19 @@ static struct snd_soc_dai_link msm_bolero_fe_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_bolero_fe_stub_dai_links[] = {
+	{/* hw:x,33 */
+		.name = LPASS_BE_WSA_CDC_DMA_TX_0,
+		.stream_name = "WSA CDC DMA0 Capture",
+		.id = MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ops = &msm_cdc_dma_be_ops,
+		SND_SOC_DAILINK_REG(wsa_cdcdma0_capture_stub),
+	},
+};
+
 static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 	{/* hw:x,34 */
 		.name = MSM_DAILINK_NAME(ASM Loopback),
@@ -6847,6 +6861,7 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx1),
+		.init = &msm_int_audrx_init,
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_2,
@@ -6877,6 +6892,21 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 		.ignore_suspend = 1,
 		.ops = &msm_cdc_dma_be_ops,
 		SND_SOC_DAILINK_REG(rx_dma_rx3),
+	},
+	{
+		.name = LPASS_BE_RX_CDC_DMA_RX_5,
+		.stream_name = "RX CDC DMA5 Playback",
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.dynamic_be = 1,
+#endif /* CONFIG_AUDIO_QGKI */
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_5,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+		SND_SOC_DAILINK_REG(rx_dma_rx5),
 	},
 	{
 		.name = LPASS_BE_RX_CDC_DMA_RX_6,
@@ -7225,6 +7255,45 @@ static const struct of_device_id lahaina_asoc_machine_of_match[]  = {
 	{},
 };
 
+static int msm_snd_card_late_probe(struct snd_soc_card *card)
+{
+	struct snd_soc_component *component = NULL;
+	const char *be_dl_name = LPASS_BE_RX_CDC_DMA_RX_0;
+	struct snd_soc_pcm_runtime *rtd;
+	int ret = 0;
+	void *mbhc_calibration;
+
+	rtd = snd_soc_get_pcm_runtime(card, be_dl_name);
+	if (!rtd) {
+		dev_err(card->dev,
+			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
+			__func__, be_dl_name);
+		return -EINVAL;
+	}
+
+	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	mbhc_calibration = def_wcd_mbhc_cal();
+	if (!mbhc_calibration)
+		return -ENOMEM;
+	wcd_mbhc_cfg.calibration = mbhc_calibration;
+	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	if (ret) {
+		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
+			__func__, ret);
+		goto err_hs_detect;
+	}
+	return 0;
+
+err_hs_detect:
+	kfree(mbhc_calibration);
+	return ret;
+}
+
 static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 {
 	struct snd_soc_card *card = NULL;
@@ -7238,6 +7307,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	u32 val = 0;
 	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
+	u32 wsa_max_devs = 0;
 
 	match = of_match_node(lahaina_asoc_machine_of_match, dev->of_node);
 	if (!match) {
@@ -7254,12 +7324,27 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_dai_links));
 		total_links += ARRAY_SIZE(msm_common_dai_links);
 
-		memcpy(msm_lahaina_dai_links + total_links,
-		       msm_bolero_fe_dai_links,
-		       sizeof(msm_bolero_fe_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_bolero_fe_dai_links);
-
+		rc = of_property_read_u32(dev->of_node,
+				"qcom,wsa-max-devs", &wsa_max_devs);
+		if (rc) {
+			dev_info(dev,
+				"%s: wsa-max-devs property missing in DT %s, ret = %d\n",
+				 __func__, dev->of_node->full_name, rc);
+			wsa_max_devs = 0;
+		}
+		if (!wsa_max_devs) {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_bolero_fe_stub_dai_links,
+				sizeof(msm_bolero_fe_stub_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_bolero_fe_stub_dai_links);
+		} else {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_bolero_fe_dai_links,
+				sizeof(msm_bolero_fe_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_bolero_fe_dai_links);
+		}
 		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_common_misc_fe_dai_links,
 		       sizeof(msm_common_misc_fe_dai_links));
@@ -7276,12 +7361,13 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
 
-		memcpy(msm_lahaina_dai_links + total_links,
-		       msm_wsa_cdc_dma_be_dai_links,
-		       sizeof(msm_wsa_cdc_dma_be_dai_links));
-		total_links +=
-			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
-
+		if (wsa_max_devs) {
+			memcpy(msm_lahaina_dai_links + total_links,
+				msm_wsa_cdc_dma_be_dai_links,
+				sizeof(msm_wsa_cdc_dma_be_dai_links));
+			total_links +=
+				ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links);
+		}
 		memcpy(msm_lahaina_dai_links + total_links,
 		       msm_va_cdc_dma_be_dai_links,
 		       sizeof(msm_va_cdc_dma_be_dai_links));
@@ -7386,6 +7472,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	if (card) {
 		card->dai_link = dailink;
 		card->num_links = total_links;
+		card->late_probe = msm_snd_card_late_probe;
 	}
 
 	return card;
@@ -7410,6 +7497,9 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
 
+	if (codec_reg_done) {
+		return 0;
+	}
         if (pdata->wsa_max_devs > 0) {
 		component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
 		if (!component) {
@@ -7532,7 +7622,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dapm_context *dapm = NULL;
 	int ret = 0;
 	int codec_variant = -1;
-	void *mbhc_calibration;
 	struct snd_info_entry *entry;
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
@@ -7562,8 +7651,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		if (!entry) {
 			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
 				 __func__);
-			ret = 0;
-			goto mbhc_cfg_cal;
+			 return 0;
 		}
 		pdata->codec_root = entry;
 	}
@@ -7586,22 +7674,7 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 		return ret;
 	}
 
-mbhc_cfg_cal:
-	mbhc_calibration = def_wcd_mbhc_cal();
-	if (!mbhc_calibration)
-		return -ENOMEM;
-	wcd_mbhc_cfg.calibration = mbhc_calibration;
-	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
-	if (ret) {
-		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
-			__func__, ret);
-		goto err_hs_detect;
-	}
 	return 0;
-
-err_hs_detect:
-	kfree(mbhc_calibration);
-	return ret;
 }
 
 static void msm_i2s_auxpcm_init(struct platform_device *pdev)

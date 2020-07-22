@@ -552,13 +552,15 @@ static int msm_pcm_volume_ctl_put(struct snd_kcontrol *kcontrol,
 		goto exit;
 	}
 	mutex_lock(&loopback_session_lock);
-	prtd = substream->runtime->private_data;
-	if (!prtd) {
-		rc = -ENODEV;
-		mutex_unlock(&loopback_session_lock);
-		goto exit;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (!prtd) {
+			rc = -ENODEV;
+			mutex_unlock(&loopback_session_lock);
+			goto exit;
+		}
+		rc = pcm_loopback_set_volume(prtd, volume);
 	}
-	rc = pcm_loopback_set_volume(prtd, volume);
 	mutex_unlock(&loopback_session_lock);
 exit:
 	return rc;
@@ -584,13 +586,15 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 		goto exit;
 	}
 	mutex_lock(&loopback_session_lock);
-	prtd = substream->runtime->private_data;
-	if (!prtd) {
-		rc = -ENODEV;
-		mutex_unlock(&loopback_session_lock);
-		goto exit;
+	if (substream->ref_count > 0) {
+		prtd = substream->runtime->private_data;
+		if (!prtd) {
+			rc = -ENODEV;
+			mutex_unlock(&loopback_session_lock);
+			goto exit;
+		}
+		ucontrol->value.integer.value[0] = prtd->volume;
 	}
-	ucontrol->value.integer.value[0] = prtd->volume;
 	mutex_unlock(&loopback_session_lock);
 exit:
 	return rc;
@@ -623,16 +627,19 @@ static int msm_pcm_playback_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	u64 fe_id = kcontrol->private_value;
 	int session_type = SESSION_TYPE_RX;
 	int be_id = ucontrol->value.integer.value[3];
-	struct msm_pcm_stream_app_type_cfg cfg_data = {0, 0, 48000};
+	struct msm_pcm_stream_app_type_cfg cfg_data = {0, 0, 48000, 0};
 	int ret = 0;
 
 	cfg_data.app_type = ucontrol->value.integer.value[0];
 	cfg_data.acdb_dev_id = ucontrol->value.integer.value[1];
 	if (ucontrol->value.integer.value[2] != 0)
 		cfg_data.sample_rate = ucontrol->value.integer.value[2];
-	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d\n",
+	if (ucontrol->value.integer.value[4] != 0)
+		cfg_data.copp_token = ucontrol->value.integer.value[4];
+	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d copp_token %d\n",
 		__func__, fe_id, session_type, be_id,
-		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate);
+		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate,
+		cfg_data.copp_token);
 	ret = msm_pcm_routing_reg_stream_app_type_cfg(fe_id, session_type,
 						      be_id, &cfg_data);
 	if (ret < 0)
@@ -663,9 +670,12 @@ static int msm_pcm_playback_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 	ucontrol->value.integer.value[1] = cfg_data.acdb_dev_id;
 	ucontrol->value.integer.value[2] = cfg_data.sample_rate;
 	ucontrol->value.integer.value[3] = be_id;
-	pr_debug("%s: fedai_id %llu, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+	ucontrol->value.integer.value[4] = cfg_data.copp_token;
+	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d copp_token %d\n",
 		__func__, fe_id, session_type, be_id,
-		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate);
+		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate,
+		cfg_data.copp_token);
+
 done:
 	return ret;
 }
@@ -676,16 +686,19 @@ static int msm_pcm_capture_app_type_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 	u64 fe_id = kcontrol->private_value;
 	int session_type = SESSION_TYPE_TX;
 	int be_id = ucontrol->value.integer.value[3];
-	struct msm_pcm_stream_app_type_cfg cfg_data = {0, 0, 48000};
+	struct msm_pcm_stream_app_type_cfg cfg_data = {0, 0, 48000, 0};
 	int ret = 0;
 
 	cfg_data.app_type = ucontrol->value.integer.value[0];
 	cfg_data.acdb_dev_id = ucontrol->value.integer.value[1];
 	if (ucontrol->value.integer.value[2] != 0)
 		cfg_data.sample_rate = ucontrol->value.integer.value[2];
-	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d\n",
+	if (ucontrol->value.integer.value[4] != 0)
+		cfg_data.copp_token = ucontrol->value.integer.value[4];
+	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d copp_token %d\n",
 		__func__, fe_id, session_type, be_id,
-		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate);
+		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate,
+		cfg_data.copp_token);
 	ret = msm_pcm_routing_reg_stream_app_type_cfg(fe_id, session_type,
 						      be_id, &cfg_data);
 	if (ret < 0)
@@ -716,9 +729,11 @@ static int msm_pcm_capture_app_type_cfg_ctl_get(struct snd_kcontrol *kcontrol,
 	ucontrol->value.integer.value[1] = cfg_data.acdb_dev_id;
 	ucontrol->value.integer.value[2] = cfg_data.sample_rate;
 	ucontrol->value.integer.value[3] = be_id;
-	pr_debug("%s: fedai_id %llu, session_type %d, be_id %d, app_type %d, acdb_dev_id %d, sample_rate %d\n",
+	ucontrol->value.integer.value[4] = cfg_data.copp_token;
+	pr_debug("%s: fe_id- %llu session_type- %d be_id- %d app_type- %d acdb_dev_id- %d sample_rate- %d copp_token %d\n",
 		__func__, fe_id, session_type, be_id,
-		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate);
+		cfg_data.app_type, cfg_data.acdb_dev_id, cfg_data.sample_rate,
+		cfg_data.copp_token);
 done:
 	return ret;
 }
@@ -888,6 +903,12 @@ static int msm_pcm_channel_mixer_cfg_ctl_put(struct snd_kcontrol *kcontrol,
 			chmixer_pspd);
 
 	mutex_lock(&loopback_session_lock);
+	if (substream->ref_count <= 0) {
+		pr_err_ratelimited("%s: substream ref_count:%d invalid\n",
+				__func__, substream->ref_count);
+		mutex_unlock(&loopback_session_lock);
+		return -EINVAL;
+	}
 	if (chmixer_pspd->enable && substream->runtime) {
 		prtd = substream->runtime->private_data;
 		if (!prtd) {

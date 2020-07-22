@@ -378,7 +378,6 @@ struct rx_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
-	int (*pinctrl_setup)(void *handle, bool enable);
 };
 
 enum {
@@ -388,6 +387,7 @@ enum {
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
 	RX_MACRO_AIF_ECHO,
+	RX_MACRO_AIF5_PB,
 	RX_MACRO_AIF6_PB,
 	RX_MACRO_MAX_DAIS,
 };
@@ -717,6 +717,20 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 			.rate_min = 8000,
 			.channels_min = 1,
 			.channels_max = 3,
+		},
+		.ops = &rx_macro_dai_ops,
+	},
+	{
+		.name = "rx_macro_rx5",
+		.id = RX_MACRO_AIF5_PB,
+		.playback = {
+			.stream_name = "RX_MACRO_AIF5 Playback",
+			.rates = RX_MACRO_RATES | RX_MACRO_FRAC_RATES,
+			.formats = RX_MACRO_FORMATS,
+			.rate_max = 384000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 4,
 		},
 		.ops = &rx_macro_dai_ops,
 	},
@@ -1138,6 +1152,13 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 		dev_dbg(rx_priv->dev,
 			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d active_mask: 0x%x\n",
 			__func__, dai->id, *rx_slot, *rx_num, rx_priv->active_ch_mask[dai->id]);
+		break;
+	case RX_MACRO_AIF5_PB:
+		*rx_slot = 0x1;
+		*rx_num = 0x01;
+		dev_dbg(rx_priv->dev,
+			"%s: dai->id:%d, ch_mask:0x%x, active_ch_cnt:%d\n",
+			__func__, dai->id, *rx_slot, *rx_num);
 		break;
 	case RX_MACRO_AIF6_PB:
 		*rx_slot = 0x1;
@@ -3192,6 +3213,9 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("RX AIF_ECHO", "RX_AIF_ECHO Capture", 0,
 		SND_SOC_NOPM, 0, 0),
 
+	SND_SOC_DAPM_AIF_IN("RX AIF5 PB", "RX_MACRO_AIF5 Playback", 0,
+		SND_SOC_NOPM, 0, 0),
+
 	SND_SOC_DAPM_AIF_IN("RX AIF6 PB", "RX_MACRO_AIF6 Playback", 0,
 		SND_SOC_NOPM, 0, 0),
 
@@ -3862,6 +3886,7 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF4 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF5 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF6 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL_OUT");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR_OUT");
@@ -4029,6 +4054,12 @@ static int rx_macro_probe(struct platform_device *pdev)
 	u32 is_used_rx_swr_gpio = 1;
 	const char *is_used_rx_swr_gpio_dt = "qcom,is-used-swr-gpio";
 
+	if (!bolero_is_va_macro_registered(&pdev->dev)) {
+		dev_err(&pdev->dev,
+			"%s: va-macro not registered yet, defer\n", __func__);
+		return -EPROBE_DEFER;
+	}
+
 	rx_priv = devm_kzalloc(&pdev->dev, sizeof(struct rx_macro_priv),
 			    GFP_KERNEL);
 	if (!rx_priv)
@@ -4080,6 +4111,8 @@ static int rx_macro_probe(struct platform_device *pdev)
 			__func__);
 		return -EPROBE_DEFER;
 	}
+	msm_cdc_pinctrl_set_wakeup_capable(
+				rx_priv->rx_swr_gpio_p, false);
 
 	rx_io_base = devm_ioremap(&pdev->dev, rx_base_addr,
 				  RX_MACRO_MAX_OFFSET);
@@ -4105,7 +4138,6 @@ static int rx_macro_probe(struct platform_device *pdev)
 	rx_priv->swr_plat_data.clk = rx_swrm_clock;
 	rx_priv->swr_plat_data.core_vote = rx_macro_core_vote;
 	rx_priv->swr_plat_data.handle_irq = NULL;
-	rx_priv->swr_plat_data.pinctrl_setup = NULL;
 
 	ret = of_property_read_u8_array(pdev->dev.of_node,
 				"qcom,rx-bcl-pmic-params", bcl_pmic_params,

@@ -15,6 +15,7 @@
 #include <linux/types.h>
 #include <linux/clk.h>
 #include <linux/bitops.h>
+#include <linux/delay.h>
 #include <soc/snd_event.h>
 #include <dsp/digital-cdc-rsc-mgr.h>
 #include <linux/pm_runtime.h>
@@ -489,6 +490,8 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 
 		/* Reset HW votes after SSR */
 		if (!lpi_dev_up) {
+			/* Add 100ms sleep to ensure AVS is up after SSR */
+			msleep(100);
 			if (state->lpass_core_hw_vote)
 				digital_cdc_rsc_mgr_hw_vote_reset(
 					state->lpass_core_hw_vote);

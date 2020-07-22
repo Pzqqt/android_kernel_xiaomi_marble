@@ -331,7 +331,8 @@ static const char *const mi2s_format[] = {
 	"NA6",
 	"NA7",
 	"NA8",
-	"DSD_DOP_W_MARKER"
+	"DSD_DOP_W_MARKER",
+	"NATIVE_DSD_DATA"
 };
 
 static const char *const mi2s_vi_feed_mono[] = {
@@ -340,7 +341,7 @@ static const char *const mi2s_vi_feed_mono[] = {
 };
 
 static const struct soc_enum mi2s_config_enum[] = {
-	SOC_ENUM_SINGLE_EXT(10, mi2s_format),
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(mi2s_format), mi2s_format),
 	SOC_ENUM_SINGLE_EXT(2, mi2s_vi_feed_mono),
 };
 
@@ -5895,6 +5896,7 @@ static int msm_dai_q6_mi2s_set_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBS_CFS:
+	case SND_SOC_DAIFMT_CBM_CFS:
 		mi2s_dai_data->rx_dai.mi2s_dai_data.port_config.i2s.ws_src = 1;
 		mi2s_dai_data->tx_dai.mi2s_dai_data.port_config.i2s.ws_src = 1;
 		break;

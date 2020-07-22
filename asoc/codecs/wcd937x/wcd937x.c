@@ -1777,6 +1777,48 @@ static int wcd937x_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wcd937x_tx_ch_pwr_level_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+
+	if (strnstr(kcontrol->id.name, "CH1", sizeof(kcontrol->id.name)))
+		ucontrol->value.integer.value[0] = wcd937x->tx_ch_pwr[0];
+	else if (strnstr(kcontrol->id.name, "CH3", sizeof(kcontrol->id.name)))
+		ucontrol->value.integer.value[0] = wcd937x->tx_ch_pwr[1];
+
+	return 0;
+}
+
+static int wcd937x_tx_ch_pwr_level_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *component =
+				snd_soc_kcontrol_component(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
+	u32 pwr_level = ucontrol->value.enumerated.item[0];
+
+	dev_dbg(component->dev, "%s: tx ch pwr_level: %d\n",
+		__func__, pwr_level);
+
+	if (strnstr(kcontrol->id.name, "CH1",
+				sizeof(kcontrol->id.name))) {
+		snd_soc_component_update_bits(component,
+				WCD937X_ANA_TX_CH1, 0x60,
+				pwr_level << 0x5);
+		wcd937x->tx_ch_pwr[0] = pwr_level;
+	} else if (strnstr(kcontrol->id.name, "CH3",
+			sizeof(kcontrol->id.name))) {
+		snd_soc_component_update_bits(component,
+				WCD937X_ANA_TX_CH3, 0x60,
+				pwr_level << 0x5);
+		wcd937x->tx_ch_pwr[1] = pwr_level;
+	}
+	return 0;
+}
+
 static int wcd937x_ear_pa_gain_get(struct snd_kcontrol *kcontrol,
 				struct snd_ctl_elem_value *ucontrol)
 {
@@ -2001,6 +2043,10 @@ static int wcd937x_tx_master_ch_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static const char * const wcd937x_tx_ch_pwr_level_text[] = {
+	"L0", "L1", "L2", "L3",
+};
+
 static const char * const wcd937x_ear_pa_gain_text[] = {
 	"G_6_DB", "G_4P5_DB", "G_3_DB", "G_1P5_DB", "G_0_DB",
 	"G_M1P5_DB", "G_M3_DB", "G_M4P5_DB",
@@ -2015,6 +2061,9 @@ static const struct soc_enum rx_hph_mode_mux_enum =
 
 static SOC_ENUM_SINGLE_EXT_DECL(wcd937x_ear_pa_gain_enum,
 				wcd937x_ear_pa_gain_text);
+
+static SOC_ENUM_SINGLE_EXT_DECL(wcd937x_tx_ch_pwr_level_enum,
+				wcd937x_tx_ch_pwr_level_text);
 
 static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 	SOC_ENUM_EXT("EAR PA GAIN", wcd937x_ear_pa_gain_enum,
@@ -2054,6 +2103,10 @@ static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
 	SOC_ENUM_EXT("DMIC5 ChMap", tx_master_ch_enum,
 			wcd937x_tx_master_ch_get, wcd937x_tx_master_ch_put),
+	SOC_ENUM_EXT("TX CH1 PWR", wcd937x_tx_ch_pwr_level_enum,
+		wcd937x_tx_ch_pwr_level_get, wcd937x_tx_ch_pwr_level_put),
+	SOC_ENUM_EXT("TX CH3 PWR", wcd937x_tx_ch_pwr_level_enum,
+		wcd937x_tx_ch_pwr_level_get, wcd937x_tx_ch_pwr_level_put),
 };
 
 static const struct snd_kcontrol_new adc1_switch[] = {
@@ -3114,7 +3167,9 @@ static int wcd937x_bind(struct device *dev)
 		dev_err(dev, "%s: bad micbias pdata\n", __func__);
 		goto err_irq;
 	}
-
+	/* default L1 power setting */
+	wcd937x->tx_ch_pwr[0] = 1;
+	wcd937x->tx_ch_pwr[1] = 1;
 	mutex_init(&wcd937x->micb_lock);
 	mutex_init(&wcd937x->ana_tx_clk_lock);
 	/* Request for watchdog interrupt */

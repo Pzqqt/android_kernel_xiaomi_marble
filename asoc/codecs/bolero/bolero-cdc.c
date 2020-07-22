@@ -600,6 +600,28 @@ int bolero_dmic_clk_enable(struct snd_soc_component *component,
 }
 EXPORT_SYMBOL(bolero_dmic_clk_enable);
 
+bool bolero_is_va_macro_registered(struct device *dev)
+{
+	struct bolero_priv *priv;
+
+	if (!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return false;
+	}
+	if (!bolero_is_valid_child_dev(dev)) {
+		dev_err(dev, "%s: child device calling is not added yet\n",
+			__func__);
+		return false;
+	}
+	priv = dev_get_drvdata(dev->parent);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return false;
+	}
+	return priv->macros_supported[VA_MACRO];
+}
+EXPORT_SYMBOL(bolero_is_va_macro_registered);
+
 /**
  * bolero_register_macro - Registers macro to bolero
  *
@@ -644,7 +666,6 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
 	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = ops->reg_wake_irq;
-		priv->macro_params[macro_id].clk_switch = ops->clk_switch;
 		priv->macro_params[macro_id].reg_evt_listener =
 							ops->reg_evt_listener;
 		priv->macro_params[macro_id].clk_enable = ops->clk_enable;
@@ -661,7 +682,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
 
-	dev_dbg(dev, "%s: register macro successful:%d\n", macro_id);
+	dev_info(dev, "%s: register macro successful:%d\n", __func__, macro_id);
 
 	if (priv->num_macros_registered == priv->num_macros) {
 		ret = bolero_copy_dais_from_macro(priv);
@@ -719,7 +740,6 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].dev = NULL;
 	if (macro_id == TX_MACRO) {
 		priv->macro_params[macro_id].reg_wake_irq = NULL;
-		priv->macro_params[macro_id].clk_switch = NULL;
 		priv->macro_params[macro_id].reg_evt_listener = NULL;
 		priv->macro_params[macro_id].clk_enable = NULL;
 	}
@@ -1017,40 +1037,6 @@ int bolero_register_wake_irq(struct snd_soc_component *component,
 EXPORT_SYMBOL(bolero_register_wake_irq);
 
 /**
- * bolero_tx_clk_switch - Switch tx macro clock
- *
- * @component: pointer to codec component instance.
- *
- * @clk_src: 0 for TX_RCG and 1 for VA_RCG
- *
- * Returns 0 on success or -EINVAL on error.
- */
-int bolero_tx_clk_switch(struct snd_soc_component *component, int clk_src)
-{
-	struct bolero_priv *priv = NULL;
-	int ret = 0;
-
-	if (!component)
-		return -EINVAL;
-
-	priv = snd_soc_component_get_drvdata(component);
-	if (!priv)
-		return -EINVAL;
-
-	if (!bolero_is_valid_codec_dev(priv->dev)) {
-		dev_err(component->dev, "%s: invalid codec\n", __func__);
-		return -EINVAL;
-	}
-
-	if (priv->macro_params[TX_MACRO].clk_switch)
-		ret = priv->macro_params[TX_MACRO].clk_switch(component,
-							      clk_src);
-
-	return ret;
-}
-EXPORT_SYMBOL(bolero_tx_clk_switch);
-
-/**
  * bolero_tx_mclk_enable - Enable/Disable TX Macro mclk
  *
  * @component: pointer to codec component instance.
@@ -1094,7 +1080,7 @@ EXPORT_SYMBOL(bolero_tx_mclk_enable);
  * Returns 0 on success or -EINVAL on error.
  */
 int bolero_register_event_listener(struct snd_soc_component *component,
-				   bool enable, bool is_dmic_sva)
+				   bool enable)
 {
 	struct bolero_priv *priv = NULL;
 	int ret = 0;
@@ -1113,8 +1099,7 @@ int bolero_register_event_listener(struct snd_soc_component *component,
 
 	if (priv->macro_params[TX_MACRO].reg_evt_listener)
 		ret = priv->macro_params[TX_MACRO].reg_evt_listener(component,
-								    enable,
-								    is_dmic_sva);
+								    enable);
 
 	return ret;
 }

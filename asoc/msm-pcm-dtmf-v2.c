@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2014, 2017-2019 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, 2017-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -224,7 +224,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	struct dtmf_buf_node *buf_node = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct dtmf_drv_info *prtd = runtime->private_data;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	ret = wait_event_interruptible_timeout(prtd->out_wait,
 				(!list_empty(&prtd->out_queue)),
@@ -324,7 +324,7 @@ static int msm_pcm_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_substream *c_substream;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct dtmf_drv_info *prtd = runtime->private_data;
-	unsigned long dsp_flags;
+	unsigned long dsp_flags = 0;
 
 	pr_debug("%s() DTMF\n", __func__);
 

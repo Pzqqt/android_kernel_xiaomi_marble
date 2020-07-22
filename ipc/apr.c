@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2010-2014, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2014, 2016-2020 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -32,9 +32,14 @@
 
 #define APR_PKT_IPC_LOG_PAGE_CNT 2
 
+static int apr_pkt_cnt_adsp_restart = 20;
+module_param(apr_pkt_cnt_adsp_restart, int, 0664);
+MODULE_PARM_DESC(apr_pkt_cnt_adsp_restart, "set apr pktcount for adsp restart feature");
+
 static struct apr_q6 q6;
 static struct apr_client client[APR_DEST_MAX][APR_CLIENT_MAX];
 static void *apr_pkt_ctx;
+static int apr_send_pkt_count;
 static wait_queue_head_t modem_wait;
 static bool is_modem_up;
 static char *subsys_name = NULL;
@@ -61,6 +66,8 @@ struct apr_private {
 
 static struct apr_private *apr_priv;
 static bool apr_cf_debug;
+static struct work_struct apr_cb_work;
+static void state_notify_cb(struct work_struct *work);
 
 #ifdef CONFIG_DEBUG_FS
 static struct dentry *debugfs_apr_debug;
@@ -313,6 +320,7 @@ static void apr_adsp_up(void)
 		schedule_work(&apr_priv->add_chld_dev_work);
 	spin_unlock(&apr_priv->apr_lock);
 	snd_event_notify(apr_priv->dev, SND_EVENT_UP);
+	cancel_work_sync(&apr_cb_work);
 }
 
 int apr_load_adsp_image(void)
@@ -415,7 +423,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 		w_len = rc;
 		if (w_len != hdr->pkt_size) {
 			pr_err("%s: Unable to write whole APR pkt successfully: %d\n",
-			       __func__, rc);
+				__func__, rc);
 			rc = -EINVAL;
 		}
 	} else {
@@ -426,6 +434,17 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 					__func__);
 			rc = -ENETRESET;
 		}
+		if (rc == -EAGAIN || rc == -ETIMEDOUT) {
+			apr_send_pkt_count++;
+			pr_err("%s:: send pkt timedout apr_send_pkt_count %d\n",
+				__func__, apr_send_pkt_count);
+		}
+	}
+	if (apr_send_pkt_count == apr_pkt_cnt_adsp_restart) {
+		pr_debug("%s:: schedule work for adsp loader restart cb\n",
+				__func__);
+		schedule_work(&apr_cb_work);
+		apr_send_pkt_count = 0;
 	}
 	spin_unlock_irqrestore(&svc->w_lock, flags);
 
@@ -799,6 +818,19 @@ static void apr_reset_deregister(struct work_struct *work)
 	apr_deregister(handle);
 	kfree(apr_reset);
 }
+
+static void state_notify_cb(struct work_struct *work)
+{
+	if (q6.state_notify_cb)
+		q6.state_notify_cb(APR_SUBSYS_UNKNOWN, q6.client_handle);
+}
+
+void apr_register_adsp_state_cb(void *adsp_cb, void *client_handle)
+{
+	q6.state_notify_cb = adsp_cb;
+	q6.client_handle = client_handle;
+}
+EXPORT_SYMBOL(apr_register_adsp_state_cb);
 
 /**
  * apr_start_rx_rt - Clients call to vote for thread
@@ -1212,7 +1244,7 @@ static int apr_probe(struct platform_device *pdev)
 			__func__, ret);
 		ret = 0;
 	}
-
+	INIT_WORK(&apr_cb_work, state_notify_cb);
 	return apr_debug_init();
 }
 
