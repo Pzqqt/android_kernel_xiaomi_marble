@@ -38,6 +38,7 @@ struct bolero_clk_rsc {
 	int reg_seq_en_cnt;
 	int va_tx_clk_cnt;
 	bool dev_up;
+	bool dev_up_gfmux;
 	u32 num_fs_reg;
 	u32 *fs_gen_seq;
 	int default_clk_id[MAX_CLK];
@@ -65,10 +66,14 @@ static int bolero_clk_rsc_cb(struct device *dev, u16 event)
 	}
 
 	mutex_lock(&priv->rsc_clk_lock);
-	if (event == BOLERO_MACRO_EVT_SSR_UP)
+	if (event == BOLERO_MACRO_EVT_SSR_UP) {
 		priv->dev_up = true;
-	else if (event == BOLERO_MACRO_EVT_SSR_DOWN)
+	} else if (event == BOLERO_MACRO_EVT_SSR_DOWN) {
 		priv->dev_up = false;
+		priv->dev_up_gfmux = false;
+	} else if (event == BOLERO_MACRO_EVT_SSR_GFMUX_UP) {
+		priv->dev_up_gfmux = true;
+	}
 	mutex_unlock(&priv->rsc_clk_lock);
 
 	return 0;
@@ -282,10 +287,12 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 			 * care in DSP itself
 			 */
 			if (clk_id != VA_CORE_CLK) {
-				iowrite32(0x1, clk_muxsel);
-				muxsel = ioread32(clk_muxsel);
-				trace_printk("%s: muxsel value after enable: %d\n",
-						__func__, muxsel);
+				if (priv->dev_up_gfmux) {
+					iowrite32(0x1, clk_muxsel);
+					muxsel = ioread32(clk_muxsel);
+					trace_printk("%s: muxsel value after enable: %d\n",
+							__func__, muxsel);
+				}
 				bolero_clk_rsc_mux0_clk_request(priv,
 							default_clk_id,
 							false);
@@ -313,10 +320,12 @@ static int bolero_clk_rsc_mux1_clk_request(struct bolero_clk_rsc *priv,
 					 * This configuration would be taken
 					 * care in DSP itself.
 					 */
-					iowrite32(0x0, clk_muxsel);
-					muxsel = ioread32(clk_muxsel);
-					trace_printk("%s: muxsel value after disable: %d\n",
-							__func__, muxsel);
+					if (priv->dev_up_gfmux) {
+						iowrite32(0x0, clk_muxsel);
+						muxsel = ioread32(clk_muxsel);
+						trace_printk("%s: muxsel value after disable: %d\n",
+								__func__, muxsel);
+					}
 				}
 			}
 			if (priv->clk[clk_id + NPL_CLK_OFFSET])
@@ -706,6 +715,7 @@ static int bolero_clk_rsc_probe(struct platform_device *pdev)
 	}
 	priv->dev = &pdev->dev;
 	priv->dev_up = true;
+	priv->dev_up_gfmux = true;
 	mutex_init(&priv->rsc_clk_lock);
 	mutex_init(&priv->fs_gen_lock);
 	dev_set_drvdata(&pdev->dev, priv);

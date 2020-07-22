@@ -145,6 +145,8 @@ do {                                                    \
 #define FW_READ_ATTEMPTS 15
 #define FW_READ_TIMEOUT 4000000
 #define FAKE_REM_RETRY_ATTEMPTS 3
+#define HPHL_CROSS_CONN_THRESHOLD 100
+#define HPHR_CROSS_CONN_THRESHOLD 100
 
 #define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
 #define ANC_DETECT_RETRY_CNT 7
@@ -456,6 +458,14 @@ struct wcd_mbhc_register {
 };
 
 struct wcd_mbhc_cb {
+	void (*update_cross_conn_thr)
+		(struct wcd_mbhc *mbhc);
+	void (*mbhc_surge_ctl)
+		(struct wcd_mbhc *mbhc, bool surge_en);
+	void (*mbhc_comp_autozero_control)
+		(struct wcd_mbhc *mbhc, bool az_enable);
+	void (*get_micbias_val)
+		(struct wcd_mbhc *mbhc, int *mb);
 	void (*bcs_enable)
 		(struct wcd_mbhc *mbhc, bool bcs_enable);
 	int (*enable_mb_source)(struct wcd_mbhc *mbhc, bool turn_on);
@@ -541,6 +551,7 @@ struct wcd_mbhc {
 	wait_queue_head_t wait_btn_press;
 	bool is_btn_press;
 	u8 current_plug;
+	u8 plug_before_ssr;
 	bool in_swch_irq_handler;
 	bool hphl_swh; /*track HPHL switch NC / NO */
 	bool gnd_swh; /*track GND switch NC / NO */
@@ -551,6 +562,8 @@ struct wcd_mbhc {
 	u32 moist_vref;
 	u32 moist_iref;
 	u32 moist_rref;
+	u32 hphl_cross_conn_thr;
+	u32 hphr_cross_conn_thr;
 	u8 micbias1_cap_mode; /* track ext cap setting */
 	u8 micbias2_cap_mode; /* track ext cap setting */
 	bool hs_detect_work_stop;

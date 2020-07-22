@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/kernel.h>
@@ -473,10 +473,6 @@ int swr_get_logical_dev_num(struct swr_device *dev, u64 dev_id,
 	}
 	mutex_lock(&master->mlock);
 	ret = master->get_logical_dev_num(master, dev_id, dev_num);
-	if (ret) {
-		pr_err("%s: Error %d to get logical addr for device %llx\n",
-			__func__, ret, dev_id);
-	}
 	mutex_unlock(&master->mlock);
 	return ret;
 }

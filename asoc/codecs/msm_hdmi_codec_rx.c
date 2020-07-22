@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
  */
 #include <linux/platform_device.h>
 #include <linux/slab.h>
@@ -25,8 +25,8 @@
 	static SOC_ENUM_SINGLE_DECL(ext_disp_audio_ack_state##index, \
 			    SND_SOC_NOPM, index, ext_disp_audio_ack_text)
 
-#define SWITCH_DP_CODEC(codec_info, codec_data, dai_id) \
-	codec_info.type = EXT_DISPLAY_TYPE_DP; \
+#define SWITCH_DP_CODEC(codec_info, codec_data, dai_id, type) \
+	codec_info.type = type; \
 	codec_info.ctrl_id = codec_data->ctl[dai_id]; \
 	codec_info.stream_id = codec_data->stream[dai_id]; \
 
@@ -38,6 +38,7 @@ enum {
 enum {
 	DP_STREAM0 = 0,
 	DP_STREAM1,
+	HDMI,
 	DP_STREAM_MAX,
 };
 
@@ -49,6 +50,7 @@ enum {
 	DP_DAI1 = 1,
 	DP_DAI2,
 	HDMI_DAI,
+	HDMI_MS_DAI,
 	DP_DAI_MAX,
 };
 
@@ -60,6 +62,8 @@ SOC_EXT_DISP_AUDIO_TYPE(1);
 SOC_EXT_DISP_AUDIO_ACK_STATE(1);
 SOC_EXT_DISP_AUDIO_TYPE(2);
 SOC_EXT_DISP_AUDIO_ACK_STATE(2);
+SOC_EXT_DISP_AUDIO_TYPE(3);
+SOC_EXT_DISP_AUDIO_ACK_STATE(3);
 
 struct msm_ext_disp_audio_codec_rx_data {
 	struct platform_device *ext_disp_core_pdev;
@@ -80,6 +84,7 @@ static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
 	int rc = 0;
 	struct msm_ext_disp_codec_id codec_info;
 	int dai_id = kcontrol->private_value;
+	int type;
 
 	codec_data = snd_soc_component_get_drvdata(component);
 	if (!codec_data) {
@@ -91,7 +96,11 @@ static int msm_ext_disp_edid_ctl_info(struct snd_kcontrol *kcontrol,
 		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
+	if (dai_id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 	if (!codec_data->ext_disp_ops.get_audio_edid_blk || rc) {
@@ -126,6 +135,7 @@ static int msm_ext_disp_edid_get(struct snd_kcontrol *kcontrol,
 	struct msm_ext_disp_codec_id codec_info;
 	int rc = 0;
 	int dai_id = kcontrol->private_value;
+	int type;
 
 	codec_data = snd_soc_component_get_drvdata(component);
 	if (!codec_data) {
@@ -138,7 +148,11 @@ static int msm_ext_disp_edid_get(struct snd_kcontrol *kcontrol,
 		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
+	if (dai_id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 	if (!codec_data->ext_disp_ops.get_audio_edid_blk || rc) {
@@ -147,7 +161,6 @@ static int msm_ext_disp_edid_get(struct snd_kcontrol *kcontrol,
 		mutex_unlock(&codec_data->dp_ops_lock);
 		return -EINVAL;
 	}
-
 	rc = codec_data->ext_disp_ops.get_audio_edid_blk(
 			codec_data->ext_disp_core_pdev, &edid_blk);
 	mutex_unlock(&codec_data->dp_ops_lock);
@@ -188,6 +201,7 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 	struct msm_ext_disp_codec_id codec_info;
 	int rc = 0;
 	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
+	int type;
 
 	codec_data = snd_soc_component_get_drvdata(component);
 	if (!codec_data) {
@@ -200,7 +214,11 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
+	if (dai_id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 
@@ -213,7 +231,7 @@ static int msm_ext_disp_audio_type_get(struct snd_kcontrol *kcontrol,
 	}
 
 	cable_state = codec_data->ext_disp_ops.cable_status(
-				   codec_data->ext_disp_core_pdev, 1);
+				codec_data->ext_disp_core_pdev, 1);
 	if (cable_state < 0) {
 		dev_err(component->dev, "%s: Error retrieving cable state from ext_disp, err:%d\n",
 			__func__, cable_state);
@@ -274,6 +292,7 @@ static int msm_ext_disp_audio_ack_set(struct snd_kcontrol *kcontrol,
 	struct msm_ext_disp_codec_id codec_info;
 	int rc = 0;
 	int dai_id = ((struct soc_enum *) kcontrol->private_value)->shift_l;
+	int type;
 
 	codec_data = snd_soc_component_get_drvdata(component);
 	if (!codec_data) {
@@ -287,7 +306,11 @@ static int msm_ext_disp_audio_ack_set(struct snd_kcontrol *kcontrol,
 		codec_data->ctl[dai_id], codec_data->stream[dai_id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai_id);
+	if (dai_id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai_id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 
@@ -425,6 +448,15 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 		.access = SNDRV_CTL_ELEM_ACCESS_READ |
 			  SNDRV_CTL_ELEM_ACCESS_VOLATILE,
 		.iface  = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name   = "HDMI MS EDID",
+		.info   = msm_ext_disp_edid_ctl_info,
+		.get    = msm_ext_disp_edid_get,
+		.private_value = HDMI_MS_DAI,
+	},
+	{
+		.access = SNDRV_CTL_ELEM_ACCESS_READ |
+			  SNDRV_CTL_ELEM_ACCESS_VOLATILE,
+		.iface  = SNDRV_CTL_ELEM_IFACE_PCM,
 		.name   = "Display Port EDID",
 		.info   = msm_ext_disp_edid_ctl_info,
 		.get    = msm_ext_disp_edid_get,
@@ -445,11 +477,17 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 	SOC_ENUM_EXT("External Display1 Type",
 		     ext_disp_audio_type2,
 		     msm_ext_disp_audio_type_get, NULL),
+	SOC_ENUM_EXT("External HDMI Type",
+		     ext_disp_audio_type3,
+		     msm_ext_disp_audio_type_get, NULL),
 	SOC_ENUM_EXT("External Display Audio Ack",
 		     ext_disp_audio_ack_state1,
 		     NULL, msm_ext_disp_audio_ack_set),
 	SOC_ENUM_EXT("External Display1 Audio Ack",
 		     ext_disp_audio_ack_state2,
+		     NULL, msm_ext_disp_audio_ack_set),
+	SOC_ENUM_EXT("External HDMI Audio Ack",
+		     ext_disp_audio_ack_state3,
 		     NULL, msm_ext_disp_audio_ack_set),
 
 	SOC_SINGLE_MULTI_EXT("External Display Audio Device",
@@ -460,6 +498,11 @@ static const struct snd_kcontrol_new msm_ext_disp_codec_rx_controls[] = {
 			SND_SOC_NOPM, DP_DAI2, DP_STREAM_MAX - 1, 0, 2,
 			msm_ext_disp_audio_device_get,
 			msm_ext_disp_audio_device_set),
+	SOC_SINGLE_MULTI_EXT("External HDMI Device",
+			SND_SOC_NOPM, HDMI_MS_DAI, DP_STREAM_MAX - 1, 0, 2,
+			msm_ext_disp_audio_device_get,
+			msm_ext_disp_audio_device_set),
+
 };
 
 static int msm_ext_disp_audio_codec_rx_dai_startup(
@@ -470,6 +513,7 @@ static int msm_ext_disp_audio_codec_rx_dai_startup(
 	struct msm_ext_disp_codec_id codec_info;
 	struct msm_ext_disp_audio_codec_rx_data *codec_data =
 			dev_get_drvdata(dai->component->dev);
+	int type;
 
 	if (!codec_data) {
 		dev_err(dai->dev, "%s() codec_data is null\n",
@@ -482,7 +526,11 @@ static int msm_ext_disp_audio_codec_rx_dai_startup(
 		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
+	if (dai->id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 
@@ -524,7 +572,7 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 	struct msm_ext_disp_codec_id codec_info;
 	int rc = 0;
 	struct msm_ext_disp_audio_setup_params audio_setup_params = {0};
-
+	int type;
 	struct msm_ext_disp_audio_codec_rx_data *codec_data =
 			dev_get_drvdata(dai->component->dev);
 
@@ -539,7 +587,11 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
+	if (dai->id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 
@@ -609,7 +661,7 @@ static int msm_ext_disp_audio_codec_rx_dai_hw_params(
 	audio_setup_params.down_mix = down_mix;
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 	if (rc)
@@ -636,6 +688,7 @@ static void msm_ext_disp_audio_codec_rx_dai_shutdown(
 
 	struct msm_ext_disp_audio_codec_rx_data *codec_data =
 			dev_get_drvdata(dai->component->dev);
+	int type;
 
 	if (!codec_data) {
 		dev_err(dai->dev, "%s() codec_data is null\n",
@@ -648,7 +701,11 @@ static void msm_ext_disp_audio_codec_rx_dai_shutdown(
 		codec_data->ctl[dai->id], codec_data->stream[dai->id]);
 
 	mutex_lock(&codec_data->dp_ops_lock);
-	SWITCH_DP_CODEC(codec_info, codec_data, dai->id);
+	if (dai->id == HDMI_MS_DAI)
+		type = EXT_DISPLAY_TYPE_HDMI;
+	else
+		type = EXT_DISPLAY_TYPE_DP;
+	SWITCH_DP_CODEC(codec_info, codec_data, dai->id, type);
 	rc = msm_ext_disp_select_audio_codec(codec_data->ext_disp_core_pdev,
 						 &codec_info);
 
@@ -745,6 +802,20 @@ static struct snd_soc_dai_driver msm_ext_disp_audio_codec_rx_dais[] = {
 		.id = HDMI_DAI,
 		.playback = {
 			.stream_name = "HDMI Playback",
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 48000,
+			.rate_max = 48000,
+			.rates = MSM_EXT_DISP_PCM_RATES,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
+		},
+		.ops = &msm_ext_disp_audio_codec_rx_dai_ops,
+	},
+	{
+		.name = "msm_hdmi_ms_audio_codec_rx_dai",
+		.id = HDMI_MS_DAI,
+		.playback = {
+			.stream_name = "HDMI MS Playback",
 			.channels_min = 1,
 			.channels_max = 8,
 			.rate_min = 48000,

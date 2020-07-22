@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -38,6 +38,10 @@
 
 static const unsigned int ep92_samp_freq_table[8] = {
 	32000, 44100, 48000, 88200, 96000, 176400, 192000, 768000
+};
+
+static const unsigned int ep92_dsd_freq_table[4] = {
+	64, 128, 256, 0
 };
 
 static bool ep92_volatile_register(struct device *dev, unsigned int reg)
@@ -549,6 +553,23 @@ static void ep92_read_audio_info(struct snd_soc_component *component,
 		send_uevent = true;
 	}
 
+	old = ep92->ai.system_status_1;
+	ep92->ai.system_status_1 = snd_soc_read(codec,
+		EP92_AUDIO_INFO_SYSTEM_STATUS_1);
+	if (ep92->ai.system_status_1 == 0xff) {
+		dev_dbg(codec->dev,
+			"ep92 EP92_AUDIO_INFO_SYSTEM_STATUS_1 read 0xff\n");
+		ep92->ai.system_status_1 = old;
+	}
+	change = ep92->ai.system_status_1 ^ old;
+	if (change & EP92_AI_DSD_RATE_MASK) {
+		dev_dbg(codec->dev, "ep92 dsd rate changed to %d\n",
+			ep92_dsd_freq_table[(ep92->ai.system_status_1 &
+				EP92_AI_DSD_RATE_MASK)
+				>> EP92_AI_DSD_RATE_SHIFT]);
+		send_uevent = true;
+	}
+
 	old = ep92->ai.audio_status;
 	ep92->ai.audio_status = snd_soc_component_read32(component,
 		EP92_AUDIO_INFO_AUDIO_STATUS);
@@ -580,7 +601,9 @@ static void ep92_read_audio_info(struct snd_soc_component *component,
 	}
 
 	new_mode = ep92->old_mode;
-	if (ep92->ai.audio_status & EP92_AI_STD_ADO_MASK) {
+	if (ep92->ai.audio_status & EP92_AI_DSD_ADO_MASK)
+		new_mode = 2; /* One bit audio */
+	else if (ep92->ai.audio_status & EP92_AI_STD_ADO_MASK) {
 		if (ep92->ai.cs[0] & EP92_AI_NPCM_MASK)
 			new_mode = 1; /* Compr */
 		else
@@ -890,6 +913,27 @@ static ssize_t ep92_sysfs_rda_audio_format(struct device *dev,
 	}
 
 	val = ep92->old_mode;
+
+	ret = snprintf(buf, EP92_SYSFS_ENTRY_MAX_LEN, "%d\n", val);
+	dev_dbg(dev, "%s: '%d'\n", __func__, val);
+
+	return ret;
+}
+
+static ssize_t ep92_sysfs_rda_dsd_rate(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret = 0;
+	int val;
+	struct ep92_pdata *ep92 = dev_get_drvdata(dev);
+
+	if (!ep92 || !ep92->codec) {
+		dev_err(dev, "%s: device error\n", __func__);
+		return -ENODEV;
+	}
+
+	val = ep92_dsd_freq_table[(ep92->ai.system_status_1 &
+			EP92_AI_DSD_RATE_MASK) >> EP92_AI_DSD_RATE_SHIFT];
 
 	ret = snprintf(buf, EP92_SYSFS_ENTRY_MAX_LEN, "%d\n", val);
 	dev_dbg(dev, "%s: '%d'\n", __func__, val);
@@ -1621,6 +1665,7 @@ static DEVICE_ATTR(cec_volume, 0644, ep92_sysfs_rda_cec_volume,
 static DEVICE_ATTR(runout, 0444, ep92_sysfs_rda_runout, NULL);
 static DEVICE_ATTR(force_inactive, 0644, ep92_sysfs_rda_force_inactive,
 	ep92_sysfs_wta_force_inactive);
+static DEVICE_ATTR(dsd_rate, 0444, ep92_sysfs_rda_dsd_rate, NULL);
 
 static struct attribute *ep92_fs_attrs[] = {
 	&dev_attr_chipid.attr,
@@ -1647,6 +1692,7 @@ static struct attribute *ep92_fs_attrs[] = {
 	&dev_attr_cec_volume.attr,
 	&dev_attr_runout.attr,
 	&dev_attr_force_inactive.attr,
+	&dev_attr_dsd_rate.attr,
 	NULL,
 };
 

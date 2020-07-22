@@ -186,12 +186,6 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
-				&ch_mask, &port_type);
-		break;
-	case SND_SOC_DAPM_POST_PMD:
-		swr_slvdev_datapath_control(swr_hap->swr_slave,
-				swr_hap->swr_slave->dev_num, false);
 		/* stop SWR play */
 		val = 0;
 		rc = regmap_write(swr_hap->regmap, SWR_PLAY_REG, val);
@@ -200,6 +194,12 @@ static int hap_enable_swr_dac_port(struct snd_soc_dapm_widget *w,
 					__func__, rc);
 			return rc;
 		}
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		swr_disconnect_port(swr_hap->swr_slave, &port_id, num_port,
+				&ch_mask, &port_type);
+		swr_slvdev_datapath_control(swr_hap->swr_slave,
+				swr_hap->swr_slave->dev_num, false);
 		swr_device_wakeup_unvote(swr_hap->swr_slave);
 		break;
 	default:
@@ -314,6 +314,7 @@ static int swr_haptics_probe(struct swr_device *sdev)
 	struct swr_haptics_dev *swr_hap;
 	int rc;
 	u8 devnum;
+	int retry = 5;
 
 	swr_hap = devm_kzalloc(&sdev->dev,
 			sizeof(struct swr_haptics_dev), GFP_KERNEL);
@@ -346,8 +347,12 @@ static int swr_haptics_probe(struct swr_device *sdev)
 				__func__, rc);
 		goto clean;
 	}
+	do {
+		/* Add delay for soundwire enumeration */
+		usleep_range(500, 510);
+		rc = swr_get_logical_dev_num(sdev, sdev->addr, &devnum);
+	} while (rc && --retry);
 
-	rc = swr_get_logical_dev_num(sdev, sdev->addr, &devnum);
 	if (rc) {
 		dev_err(swr_hap->dev, "%s: failed to get devnum for swr-haptics, rc=%d\n",
 				__func__, rc);
