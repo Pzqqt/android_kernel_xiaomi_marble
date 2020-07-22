@@ -7718,6 +7718,27 @@ struct wmi_roam_deauth_trigger_data {
 };
 
 /**
+ * struct wmi_roam_wtc_btm_trigger_data - wtc btm roaming trigger related
+ * parameters
+ * @roaming_mode: Roaming Mode
+ * @vsie_trigger_reason: Roam trigger reason present in btm request
+ * @sub_code: Sub code present in btm request
+ * @wtc_mode: WTC mode
+ * @wtc_scan_mode: WTC scan mode
+ * @wtc_rssi_th: Connected AP threshold
+ * @wtc_candi_rssi_th: Candidate AP threshold
+ */
+struct wmi_roam_wtc_btm_trigger_data {
+	uint32_t roaming_mode;
+	uint32_t vsie_trigger_reason;
+	uint32_t sub_code;
+	uint32_t wtc_mode;
+	uint32_t wtc_scan_mode;
+	uint32_t wtc_rssi_th;
+	uint32_t wtc_candi_rssi_th;
+};
+
+/**
  *  struct wmi_roam_candidate_info - Roam scan candidate APs related info
  *  @timestamp:   Host timestamp in millisecs
  *  @type:        0 - Candidate AP; 1 - Current connected AP.
@@ -7808,6 +7829,7 @@ struct wmi_neighbor_report_data {
  * @cu_trig_data:       BSS Load roam trigger parameters.
  * @rssi_trig_data:     RSSI trigger related info.
  * @deauth_trig_data:   Deauth roam trigger related info
+ * @wtc_btm_trig_data:  WTC BTM roam trigger related info
  */
 struct wmi_roam_trigger_info {
 	bool present;
@@ -7820,6 +7842,7 @@ struct wmi_roam_trigger_info {
 		struct wmi_roam_cu_trigger_data cu_trig_data;
 		struct wmi_roam_rssi_trigger_data rssi_trig_data;
 		struct wmi_roam_deauth_trigger_data deauth_trig_data;
+		struct wmi_roam_wtc_btm_trigger_data wtc_btm_trig_data;
 	};
 };
 

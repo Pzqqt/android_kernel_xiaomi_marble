@@ -13845,6 +13845,22 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		trig->rssi_trig_data.threshold = src_data->roam_rssi_threshold;
 		return QDF_STATUS_SUCCESS;
 
+	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
+		trig->wtc_btm_trig_data.roaming_mode =
+					src_data->vendor_specific1[0];
+		trig->wtc_btm_trig_data.vsie_trigger_reason =
+					src_data->vendor_specific1[1];
+		trig->wtc_btm_trig_data.sub_code =
+					src_data->vendor_specific1[2];
+		trig->wtc_btm_trig_data.wtc_mode =
+					src_data->vendor_specific1[3];
+		trig->wtc_btm_trig_data.wtc_scan_mode =
+					src_data->vendor_specific1[4];
+		trig->wtc_btm_trig_data.wtc_rssi_th =
+					src_data->vendor_specific1[5];
+		trig->wtc_btm_trig_data.wtc_candi_rssi_th =
+					src_data->vendor_specific1[6];
+		return QDF_STATUS_SUCCESS;
 	default:
 		return QDF_STATUS_SUCCESS;
 	}
