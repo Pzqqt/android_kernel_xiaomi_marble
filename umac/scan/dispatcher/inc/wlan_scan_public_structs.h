@@ -237,22 +237,13 @@ struct scan_cache_node {
  * @ucastcipherset: unicast cipher set
  * @mcastcipherset: multicast cipher set
  * @mgmtcipherset: mgmt cipher set
- * @uc_enc: unicast cipher
- * @mc_enc: multicast cipher
- * @auth_type: key management
  */
 struct security_info {
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
 	uint32_t authmodeset;
 	uint32_t key_mgmt;
 	uint32_t ucastcipherset;
 	uint32_t mcastcipherset;
 	uint32_t mgmtcipherset;
-#else
-	enum wlan_enc_type uc_enc;
-	enum wlan_enc_type mc_enc;
-	enum wlan_auth_type auth_type;
-#endif
 };
 
 /**
@@ -485,9 +476,6 @@ struct fils_filter_info {
  * @num_of_bssid: number of bssid passed
  * @num_of_ssid: number of ssid
  * @num_of_channels: number of  channels
- * @num_of_auth: number of auth types
- * @num_of_enc_type: number of unicast enc type
- * @num_of_mc_enc_type: number of multicast enc type
  * @pmf_cap: Pmf capability
  * @ignore_pmf_cap: Ignore pmf capability match
  * @dot11_mode: operating modes 0 mean any
@@ -506,9 +494,6 @@ struct fils_filter_info {
  * @ucastcipherset: unicast cipher set
  * @mcastcipherset: multicast cipher set
  * @mgmtcipherset: mgmt cipher set
- * @auth_type: auth type list
- * @enc_type: unicast enc type list
- * @mc_enc_type: multicast cast enc type list
  * @fils_scan_filter: FILS info
  * @bssid_hint: Mac address of bssid_hint
  */
@@ -518,12 +503,7 @@ struct scan_filter {
 	bool rrm_measurement_filter;
 	uint8_t num_of_bssid;
 	uint8_t num_of_ssid;
-	uint8_t num_of_channels;
-#ifndef WLAN_SCAN_SECURITY_FILTER_V1
-	uint8_t num_of_auth;
-	uint8_t num_of_enc_type;
-	uint8_t num_of_mc_enc_type;
-#endif
+	uint16_t num_of_channels;
 	enum wlan_pmf_cap pmf_cap;
 	bool ignore_pmf_cap;
 	enum wlan_phymode dot11_mode;
@@ -535,17 +515,11 @@ struct scan_filter {
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_FILTER_NUM_BSSID];
 	struct wlan_ssid ssid_list[WLAN_SCAN_FILTER_NUM_SSID];
 	qdf_freq_t chan_freq_list[NUM_CHANNELS];
-#ifdef WLAN_SCAN_SECURITY_FILTER_V1
 	uint32_t authmodeset;
 	uint32_t key_mgmt;
 	uint32_t ucastcipherset;
 	uint32_t mcastcipherset;
 	uint32_t mgmtcipherset;
-#else
-	enum wlan_auth_type auth_type[WLAN_NUM_OF_SUPPORT_AUTH_TYPE];
-	enum wlan_enc_type enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
-	enum wlan_enc_type mc_enc_type[WLAN_NUM_OF_ENCRYPT_TYPE];
-#endif
 #ifdef WLAN_FEATURE_FILS_SK
 	struct fils_filter_info fils_scan_filter;
 #endif
