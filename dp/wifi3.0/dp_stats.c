@@ -6055,6 +6055,8 @@ void dp_txrx_path_stats(struct dp_soc *soc)
 			       soc->stats.rx.err.raw_frm_drop);
 		DP_PRINT_STATS("Rx stale link desc cookie: %d",
 			       pdev->soc->stats.rx.err.invalid_link_cookie);
+		DP_PRINT_STATS("Rx nbuf sanity fails: %d",
+			       pdev->soc->stats.rx.err.nbuf_sanity_fail);
 
 		DP_PRINT_STATS("Reo Statistics");
 		DP_PRINT_STATS("near_full: %u ", soc->stats.rx.near_full);
@@ -6616,6 +6618,9 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 
 	DP_PRINT_STATS("Rx stale link desc cookie: %d",
 		       soc->stats.rx.err.invalid_link_cookie);
+
+	DP_PRINT_STATS("Rx nbuf sanity fail: %d",
+		       soc->stats.rx.err.nbuf_sanity_fail);
 
 	for (i = 0; i < HAL_RXDMA_ERR_MAX; i++) {
 		index += qdf_snprint(&rxdma_error[index],

@@ -287,6 +287,7 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		qdf_assert_always((*desc_list)->rx_desc.in_use == 0);
 
 		(*desc_list)->rx_desc.in_use = 1;
+		(*desc_list)->rx_desc.in_err_state = 0;
 		dp_rx_desc_update_dbg_info(&(*desc_list)->rx_desc,
 					   func_name, RX_DESC_REPLENISHED);
 		dp_verbose_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
@@ -1721,21 +1722,25 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
  * Return: NONE
  */
 static inline
-void dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
-				  struct dp_rx_desc *rx_desc)
+QDF_STATUS dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
+					struct dp_rx_desc *rx_desc)
 {
 	struct hal_buf_info hbi;
 
 	hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
 	/* Sanity check for possible buffer paddr corruption */
-	qdf_assert_always((&hbi)->paddr ==
-			  qdf_nbuf_get_frag_paddr(rx_desc->nbuf, 0));
+	if ((&hbi)->paddr ==
+			  qdf_nbuf_get_frag_paddr(rx_desc->nbuf, 0))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
 }
 #else
 static inline
-void dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
-				  struct dp_rx_desc *rx_desc)
+QDF_STATUS dp_rx_desc_nbuf_sanity_check(hal_ring_desc_t ring_desc,
+					struct dp_rx_desc *rx_desc)
 {
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -2120,7 +2125,13 @@ more_data:
 			continue;
 		}
 
-		dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
+		status = dp_rx_desc_nbuf_sanity_check(ring_desc, rx_desc);
+		if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
+			DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
+			rx_desc->in_err_state = 1;
+			hal_srng_dst_get_next(hal_soc, hal_ring_hdl);
+			continue;
+		}
 
 		if (qdf_unlikely(!dp_rx_desc_check_magic(rx_desc))) {
 			dp_err("Invalid rx_desc cookie=%d", rx_buf_cookie);

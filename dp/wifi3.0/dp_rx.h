@@ -108,6 +108,7 @@ struct dp_rx_desc_dbg_info {
  * @in_use		  rx_desc is in use
  * @unmapped		  used to mark rx_desc an unmapped if the corresponding
  *			  nbuf is already unmapped
+ * @in_err_state	: Nbuf sanity failed for this descriptor.
  */
 struct dp_rx_desc {
 	qdf_nbuf_t nbuf;
@@ -119,7 +120,8 @@ struct dp_rx_desc {
 	struct dp_rx_desc_dbg_info *dbg_info;
 #endif
 	uint8_t	in_use:1,
-	unmapped:1;
+	unmapped:1,
+	in_err_state:1;
 };
 
 /* RX Descriptor Multi Page memory alloc related */
