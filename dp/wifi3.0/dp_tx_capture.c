@@ -3098,7 +3098,8 @@ check_subseq_ppdu_to_pending_q(struct dp_tx_cap_nbuf_list nbuf_ppdu_list[],
 							      peer_id);
 		next_user = &next_ppdu->user[cur_usr_idx];
 
-		if ((next_user->skip == 1) || (peer_id != next_user->peer_id))
+		if ((next_user->skip == 1) || (peer_id != next_user->peer_id) ||
+		    (next_user->mon_procd == 1))
 			continue;
 
 		if (last_pend_ppdu) {
@@ -3129,6 +3130,8 @@ check_subseq_ppdu_to_pending_q(struct dp_tx_cap_nbuf_list nbuf_ppdu_list[],
 
 			/* decrement reference */
 			dp_tx_cap_nbuf_list_dec_ref(ptr_nbuf_list);
+
+			next_user->mon_procd = 1;
 		}
 
 		if (next_user->last_enq_seq > cur_last_seq)
@@ -3177,7 +3180,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			user = &ppdu_desc->user[cur_usr_idx];
 
 			if ((user->skip == 1) || (peer_id != user->peer_id) ||
-			    (tx_tid->tid != user->tid))
+			    (tx_tid->tid != user->tid) || (user->mon_procd == 1))
 				continue;
 
 			if ((user->pending_retries == 0) &&
@@ -3185,6 +3188,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			    qdf_nbuf_is_queue_empty(head_ppdu)) {
 				dp_send_data_to_stack(pdev, ppdu_desc,
 						      cur_usr_idx);
+				user->mon_procd = 1;
 				/* free ppd_desc from list */
 				dp_ppdu_desc_free(ptr_nbuf_list, cur_usr_idx);
 			} else {
@@ -3218,6 +3222,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 				qdf_nbuf_queue_add(head_ppdu, tmp_pend_nbuf);
 				/* decrement reference */
 				dp_tx_cap_nbuf_list_dec_ref(ptr_nbuf_list);
+				user->mon_procd = 1;
 			}
 		}
 		return;
@@ -3244,7 +3249,8 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 			cur_user = &cur_ppdu_desc->user[cur_usr_idx];
 
-			if (cur_user->skip == 1)
+			if ((cur_user->skip == 1) ||
+			    (cur_user->mon_procd == 1))
 				continue;
 
 			/* to handle last ppdu case we need to decrement */
@@ -3293,6 +3299,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			qdf_nbuf_queue_add(head_ppdu, tmp_pend_nbuf);
 			/* decrement reference */
 			dp_tx_cap_nbuf_list_dec_ref(ptr_nbuf_list);
+			cur_user->mon_procd = 1;
 		}
 		cur_index = 0;
 		cur_start_seq = cur_user->start_seq;
@@ -4433,8 +4440,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				continue;
 
 			cur_user = &cur_ppdu_desc->user[usr_idx];
+
 			if ((cur_user->delayed_ba == 1) ||
-			    (cur_user->skip == 1))
+			    (cur_user->skip == 1) || (cur_user->mon_procd == 1))
 				continue;
 
 			peer_id = cur_ppdu_desc->user[usr_idx].peer_id;
