@@ -282,12 +282,14 @@ enum roam_offload_state {
  *  @btm_status:    Btm request status
  *  @target_bssid:  AP MAC address
  *  @vsie_reason:   Vsie_reason value
+ *  @timestamp:     This timestamp indicates the time when btm rsp is sent
  */
 struct roam_btm_response_data {
 	bool present;
 	uint32_t btm_status;
 	struct qdf_mac_addr target_bssid;
 	uint32_t vsie_reason;
+	uint32_t timestamp;
 };
 
 /**

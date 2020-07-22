@@ -1272,6 +1272,9 @@ convert_control_roam_trigger_reason_bitmap(uint32_t trigger_reason_bitmap)
 	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_ESS_RSSI))
 		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_ESS_RSSI);
 
+	if (trigger_reason_bitmap & BIT(ROAM_TRIGGER_REASON_WTC_BTM))
+		fw_trigger_bitmap |= BIT(WMI_ROAM_TRIGGER_REASON_WTC_BTM);
+
 	return fw_trigger_bitmap;
 }
 
@@ -1495,6 +1498,7 @@ extract_roam_btm_response_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_data->target_bssid,
 				   dst->target_bssid.bytes);
 	dst->vsie_reason = src_data->vsie_reason;
+	dst->timestamp = src_data->timestamp;
 
 	return QDF_STATUS_SUCCESS;
 }

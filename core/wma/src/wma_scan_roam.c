@@ -3546,6 +3546,19 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		temp += buf_cons;
 		buf_left -= buf_cons;
 		return;
+	case WMI_ROAM_TRIGGER_REASON_WTC_BTM:
+		buf_cons =
+		  qdf_snprint(temp, buf_left, "Raoming Mode: %d, Trigger Reason: %d, Sub code:%d, wtc mode:%d, wtc scan mode:%d, wtc rssi th:%d, wtc candi rssi th:%d",
+			      roam_info->wtc_btm_trig_data.roaming_mode,
+			      roam_info->wtc_btm_trig_data.vsie_trigger_reason,
+			      roam_info->wtc_btm_trig_data.sub_code,
+			      roam_info->wtc_btm_trig_data.wtc_mode,
+			      roam_info->wtc_btm_trig_data.wtc_scan_mode,
+			      roam_info->wtc_btm_trig_data.wtc_rssi_th,
+			      roam_info->wtc_btm_trig_data.wtc_candi_rssi_th);
+		temp += buf_cons;
+		buf_left -= buf_cons;
+		return;
 	default:
 		return;
 	}
@@ -3591,8 +3604,11 @@ static void
 wma_rso_print_btm_rsp_info(struct roam_btm_response_data *data,
 			   uint8_t vdev_id)
 {
-	wma_info("[BTM RSP]: VDEV[%d], Status: %d, VSIE reason: %d, BSSID: %pM",
-		 vdev_id, data->btm_status, data->vsie_reason,
+	char time[TIME_STRING_LEN];
+
+	mlme_get_converted_timestamp(data->timestamp, time);
+	wma_info("%s [BTM RSP]: VDEV[%d], Status: %d, VSIE reason: %d, BSSID: %pM",
+		 time, vdev_id, data->btm_status, data->vsie_reason,
 		 data->target_bssid.bytes);
 }
 
