@@ -69,6 +69,26 @@ QDF_STATUS wma_twt_process_add_dialog(struct wmi_twt_add_dialog_param *params);
  */
 QDF_STATUS wma_twt_process_del_dialog(struct wmi_twt_del_dialog_param *params);
 
+/**
+ * wma_twt_process_pause_dialog() - Process pause dialog command
+ * @params: pause dialog configuration param
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS error code
+ * on failure
+ */
+QDF_STATUS
+wma_twt_process_pause_dialog(struct wmi_twt_pause_dialog_cmd_param *params);
+
+/**
+ * wma_twt_process_resume_dialog() - Process resume dialog command
+ * @params: resume dialog configuration param
+ *
+ * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS error code
+ * on failure
+ */
+QDF_STATUS
+wma_twt_process_resume_dialog(struct wmi_twt_resume_dialog_cmd_param *params);
+
 #else
 static inline void wma_send_twt_enable_cmd(uint32_t pdev_id,
 					   uint32_t congestion_timeout,
@@ -101,6 +121,25 @@ static inline QDF_STATUS wma_twt_process_del_dialog(
 
 	return QDF_STATUS_E_INVAL;
 }
+
+static inline QDF_STATUS wma_twt_process_pause_dialog(
+		struct wmi_twt_pause_dialog_cmd_param *params)
+
+{
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
+
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline QDF_STATUS wma_twt_process_resume_dialog(
+		struct wmi_twt_resume_dialog_cmd_param *params)
+
+{
+	wma_debug("TWT not supported as WLAN_SUPPORT_TWT is disabled");
+
+	return QDF_STATUS_E_INVAL;
+}
+
 #endif
 
 #endif /* __WMA_HE_H */

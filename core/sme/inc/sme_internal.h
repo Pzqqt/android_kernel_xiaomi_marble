@@ -178,6 +178,26 @@ typedef void (*twt_add_dialog_cb)(void *context,
  */
 typedef void (*twt_del_dialog_cb)(void *context,
 				  struct wmi_twt_del_dialog_complete_event_param *params);
+
+/**
+ * typedef twt_pause_dialog_cb - TWT pause dialog callback signature.
+ * @context: Opaque context that the client can use to associate the
+ *           callback with the request.
+ * @params: TWT pause dialog complete event parameters.
+ */
+typedef
+void (*twt_pause_dialog_cb)(void *context,
+			    struct wmi_twt_pause_dialog_complete_event_param *params);
+
+/**
+ * typedef twt_resume_dialog_cb - TWT resume dialog callback signature.
+ * @context: Opaque context that the client can use to associate the
+ *           callback with the request.
+ * @params: TWT resume dialog complete event parameters.
+ */
+typedef
+void (*twt_resume_dialog_cb)(void *context,
+			     struct wmi_twt_resume_dialog_complete_event_param *params);
 #endif
 
 #ifdef FEATURE_WLAN_APF
@@ -385,10 +405,14 @@ struct sme_context {
 #endif /* FEATURE_FW_STATE */
 	tx_queue_cb tx_queue_cb;
 #ifdef WLAN_SUPPORT_TWT
-	twt_enable_cb twt_enable_cb;
-	twt_disable_cb twt_disable_cb;
-	twt_add_dialog_cb twt_add_dialog_cb;
-	twt_del_dialog_cb twt_del_dialog_cb;
+	union {
+		twt_enable_cb twt_enable_cb;
+		twt_disable_cb twt_disable_cb;
+		twt_add_dialog_cb twt_add_dialog_cb;
+		twt_del_dialog_cb twt_del_dialog_cb;
+		twt_pause_dialog_cb twt_pause_dialog_cb;
+		twt_resume_dialog_cb twt_resume_dialog_cb;
+	};
 	void *twt_context;
 #endif
 #ifdef FEATURE_WLAN_APF
