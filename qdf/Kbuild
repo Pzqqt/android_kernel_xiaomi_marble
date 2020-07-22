@@ -55,6 +55,7 @@ linux/src/qdf_status.o     \
 linux/src/qdf_threads.o     \
 linux/src/qdf_trace.o \
 linux/src/qdf_vfs.o \
+linux/src/qdf_delayed_work.o \
 src/qdf_flex_mem.o \
 src/qdf_parse.o \
 src/qdf_str.o \
