@@ -1642,6 +1642,7 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pdev_cfr *pcfr;
 	uint32_t target_type;
+	struct psoc_cfr *cfr_sc;
 
 	if (!pdev) {
 		cfr_err("PDEV is NULL!");
@@ -1657,6 +1658,14 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 						     WLAN_UMAC_COMP_CFR);
 	if (!pcfr) {
 		cfr_err("pcfr is NULL!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	cfr_sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						       WLAN_UMAC_COMP_CFR);
+
+	if (!cfr_sc) {
+		cfr_err("cfr_sc is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -1682,6 +1691,9 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 	pcfr->rcc_param.num_grp_tlvs = MAX_TA_RA_ENTRIES;
 	pcfr->rcc_param.vdev_id = CFR_INVALID_VDEV_ID;
 	pcfr->rcc_param.srng_id = DEFAULT_SRNGID_CFR;
+	pcfr->is_cap_interval_mode_sel_support =
+				cfr_sc->is_cap_interval_mode_sel_support;
+	pcfr->is_mo_marking_support = cfr_sc->is_mo_marking_support;
 
 	target_if_cfr_default_ta_ra_config(&pcfr->rcc_param,
 					   true, MAX_RESET_CFG_ENTRY);

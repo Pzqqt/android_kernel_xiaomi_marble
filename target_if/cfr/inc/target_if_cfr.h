@@ -132,6 +132,29 @@ void target_if_cfr_set_cfr_support(struct wlan_objmgr_psoc *psoc,
 				   uint8_t value);
 
 /**
+ * target_if_cfr_set_capture_count_support() - Function to set capture count
+ *					       support.
+ * @psoc: pointer to psoc object
+ * @value: value to be set
+ *
+ * Return: success/failure
+ */
+QDF_STATUS
+target_if_cfr_set_capture_count_support(struct wlan_objmgr_psoc *psoc,
+					uint8_t value);
+
+/**
+ * target_if_cfr_set_mo_marking_support() - Function to set MO marking support
+ * @psoc: pointer to psoc object
+ * @value: value to be set
+ *
+ * Return: success/failure
+ */
+QDF_STATUS
+target_if_cfr_set_mo_marking_support(struct wlan_objmgr_psoc *psoc,
+				     uint8_t value);
+
+/**
  * target_if_cfr_info_send() - Function to send cfr info to upper layers
  * @pdev: pointer to pdev object
  * @head: pointer to cfr info head
