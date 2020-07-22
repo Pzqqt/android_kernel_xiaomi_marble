@@ -5075,7 +5075,7 @@ static int _dsi_display_dev_init(struct dsi_display *display)
 		return -EINVAL;
 	}
 
-	if (!display->panel_node)
+	if (!display->panel_node && !display->fw)
 		return 0;
 
 	mutex_lock(&display->display_lock);
@@ -5380,7 +5380,7 @@ static int dsi_display_bind(struct device *dev,
 				drm, display);
 		return -EINVAL;
 	}
-	if (!display->panel_node)
+	if (!display->panel_node && !display->fw)
 		return 0;
 
 	if (!display->fw)
@@ -5690,7 +5690,13 @@ static void dsi_display_firmware_display(const struct firmware *fw,
 			fw->size);
 
 		display->fw = fw;
-		display->name = "dsi_firmware_display";
+
+		if (!strcmp(display->display_type, "primary"))
+			display->name = "dsi_firmware_display";
+
+		else if (!strcmp(display->display_type, "secondary"))
+			display->name = "dsi_firmware_display_secondary";
+
 	} else {
 		DSI_INFO("no firmware available, fallback to device node\n");
 	}
@@ -5781,10 +5787,17 @@ int dsi_display_dev_probe(struct platform_device *pdev)
 	if (!boot_disp->boot_disp_en &&
 			IS_ENABLED(CONFIG_DSI_PARSER) &&
 			!display->trusted_vm_env) {
-		firm_req = !request_firmware_nowait(
-			THIS_MODULE, 1, "dsi_prop",
-			&pdev->dev, GFP_KERNEL, display,
-			dsi_display_firmware_display);
+		if (!strcmp(display->display_type, "primary"))
+			firm_req = !request_firmware_nowait(
+				THIS_MODULE, 1, "dsi_prop",
+				&pdev->dev, GFP_KERNEL, display,
+				dsi_display_firmware_display);
+
+		else if (!strcmp(display->display_type, "secondary"))
+			firm_req = !request_firmware_nowait(
+				THIS_MODULE, 1, "dsi_prop_sec",
+				&pdev->dev, GFP_KERNEL, display,
+				dsi_display_firmware_display);
 	}
 
 	if (!firm_req) {
