@@ -1782,7 +1782,6 @@ static int _sde_encoder_rc_pre_modeset(struct drm_encoder *drm_enc,
 	}
 
 	sde_encoder_irq_control(drm_enc, false);
-	_sde_encoder_modeset_helper_locked(drm_enc, sw_event);
 
 	SDE_EVT32(DRMID(drm_enc), sw_event, sde_enc->rc_state,
 		SDE_ENC_RC_STATE_MODESET, SDE_EVTLOG_FUNC_CASE5);
@@ -1818,7 +1817,6 @@ static int _sde_encoder_rc_post_modeset(struct drm_encoder *drm_enc,
 		goto end;
 	}
 
-	_sde_encoder_modeset_helper_locked(drm_enc, sw_event);
 	sde_encoder_irq_control(drm_enc, true);
 
 	_sde_encoder_update_rsc_client(drm_enc, true);
