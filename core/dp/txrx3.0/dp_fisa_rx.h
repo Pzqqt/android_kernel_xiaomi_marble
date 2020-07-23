@@ -90,6 +90,18 @@ void dp_rx_skip_fisa(struct cdp_soc_t *cdp_soc, uint32_t value)
 
 	qdf_atomic_set(&soc->skip_fisa_param.skip_fisa, !value);
 }
+
+/**
+ * dp_set_fisa_disallowed_for_vdev() - Set fisa disallowed flag for vdev
+ * @cdp_soc: core txrx main context
+ * @vdev_id: Vdev id
+ * @rx_ctx_id: rx context id
+ * @val: value to be set
+ *
+ * Return: None
+ */
+void dp_set_fisa_disallowed_for_vdev(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
+				     uint8_t rx_ctx_id, uint8_t val);
 #else
 static QDF_STATUS dp_rx_dump_fisa_stats(struct dp_soc *soc)
 {
