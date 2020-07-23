@@ -4441,6 +4441,9 @@ int dsi_panel_pre_disable(struct dsi_panel *panel)
 
 	mutex_lock(&panel->panel_lock);
 
+	if (gpio_is_valid(panel->bl_config.en_gpio))
+		gpio_set_value(panel->bl_config.en_gpio, 0);
+
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_PRE_OFF);
 	if (rc) {
 		DSI_ERR("[%s] failed to send DSI_CMD_SET_PRE_OFF cmds, rc=%d\n",
