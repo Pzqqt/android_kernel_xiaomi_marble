@@ -81,6 +81,31 @@ static inline bool is_no_backhaul_radio(struct wiphy *no_bl_wiphy)
 	return false;
 }
 
+static inline bool is_other_fast_lane_radio_primary(struct wiphy *fl_wiphy)
+{
+	qdf_list_node_t *next_node = NULL;
+
+	if (!fl_wiphy) {
+		return false;
+	}
+
+	if (qdf_list_empty(&qca_multi_link_cfg.fast_lane_list)) {
+		return false;
+	}
+
+	qdf_list_peek_front(&qca_multi_link_cfg.fast_lane_list,
+		(qdf_list_node_t **)&next_node);
+	while (next_node) {
+		struct qca_multi_link_list_node *fast_lane_node
+		= (struct qca_multi_link_list_node *)next_node;
+		if ((fast_lane_node->wiphy != fl_wiphy)
+		&& (fast_lane_node->wiphy  == qca_multi_link_cfg.primary_wiphy)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /**
  * qca_multi_link_is_primary_radio() - Check if this is a primary radio
  *
@@ -98,6 +123,11 @@ static inline bool qca_multi_link_is_primary_radio(struct wiphy *dev_wiphy)
 	} else {
 		is_primary = (dev_wiphy == qca_multi_link_cfg.primary_wiphy)?true:false;
 	}
+
+	if ((is_primary == false) && is_fast_lane_radio(dev_wiphy)) {
+		is_primary = is_other_fast_lane_radio_primary(dev_wiphy);
+	}
+
 	return is_primary;
 }
 
