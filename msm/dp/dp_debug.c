@@ -447,6 +447,8 @@ static ssize_t dp_debug_write_edid_modes_mst(struct file *file,
 				mst_connector->vdisplay = vdisplay;
 				mst_connector->vrefresh = vrefresh;
 				mst_connector->aspect_ratio = aspect_ratio;
+				DP_INFO("Setting %dx%dp%d on conn %d\n",
+					hdisplay, vdisplay, vrefresh, con_id);
 			}
 		}
 
