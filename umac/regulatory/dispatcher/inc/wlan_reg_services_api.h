@@ -318,6 +318,7 @@ bool wlan_reg_is_channel_valid_5g_sbs(uint8_t curchan, uint8_t newchan);
  */
 #define WLAN_REG_CHAN_TO_BAND(chan_num)  wlan_reg_chan_to_band(chan_num)
 enum band_info wlan_reg_chan_to_band(uint8_t chan_num);
+#endif /* CONFIG_CHAN_NUM_API */
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -328,7 +329,7 @@ enum band_info wlan_reg_chan_to_band(uint8_t chan_num);
 QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 						struct channel_power *ch_list,
 						uint8_t *num_chan);
-#endif /* CONFIG_CHAN_NUM_API */
+
 /**
  * wlan_reg_read_default_country() - Read the default country for the regdomain
  * @country: pointer to the country code.

@@ -127,15 +127,6 @@ extern const struct chan_map channel_map_jp[];
 extern const struct chan_map channel_map_china[];
 extern const struct chan_map channel_map_global[];
 
-#ifdef CONFIG_CHAN_NUM_API
-/**
- * reg_get_chan_enum() - Get channel enum for given channel number
- * @chan_num: Channel number
- *
- * Return: Channel enum
- */
-enum channel_enum reg_get_chan_enum(uint8_t chan_num);
-
 /**
  * reg_get_channel_list_with_power() - Provides the channel list with power
  * @pdev: Pointer to pdev
@@ -147,6 +138,15 @@ enum channel_enum reg_get_chan_enum(uint8_t chan_num);
 QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 					   struct channel_power *ch_list,
 					   uint8_t *num_chan);
+
+#ifdef CONFIG_CHAN_NUM_API
+/**
+ * reg_get_chan_enum() - Get channel enum for given channel number
+ * @chan_num: Channel number
+ *
+ * Return: Channel enum
+ */
+enum channel_enum reg_get_chan_enum(uint8_t chan_num);
 
 /**
  * reg_get_channel_state() - Get channel state from regulatory
@@ -357,7 +357,6 @@ bool reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint8_t chan);
  */
 uint8_t reg_freq_to_chan(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
-#ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_chan_to_freq() - Get frequency from channel number
  * @pdev: Pointer to pdev
@@ -377,6 +376,7 @@ qdf_freq_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev, uint8_t chan_num);
 uint16_t reg_legacy_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 				 uint8_t chan_num);
 
+#ifdef CONFIG_CHAN_NUM_API
 /**
  * reg_chan_is_49ghz() - Check if the input channel number is 4.9GHz
  * @pdev: Pdev pointer

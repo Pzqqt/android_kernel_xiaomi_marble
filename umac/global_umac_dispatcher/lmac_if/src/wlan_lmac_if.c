@@ -467,24 +467,6 @@ static void register_dfs_rx_ops_for_freq(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
 #endif
 
 /*
- * register_dfs_rx_ops_for_ieee() - Register DFS rx ops for IEEE channel based
- * APIs
- * rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
- */
-
-#ifdef CONFIG_CHAN_NUM_API
-static void register_dfs_rx_ops_for_ieee(struct wlan_lmac_if_dfs_rx_ops *rx_ops)
-{
-	if (!rx_ops)
-		return;
-	rx_ops->dfs_find_vht80_chan_for_precac =
-		tgt_dfs_find_vht80_chan_for_precac;
-	rx_ops->dfs_set_current_channel =
-		tgt_dfs_set_current_channel;
-}
-#endif
-
-/*
  * register_rcac_dfs_rx_ops() - Register DFS RX-Ops for Rolling CAC specific
  * APIs.
  * @rx_ops: Pointer to wlan_lmac_if_dfs_rx_ops.
@@ -592,7 +574,6 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	register_precac_auto_chan_rx_ops_ieee(dfs_rx_ops);
 	register_precac_auto_chan_rx_ops_freq(dfs_rx_ops);
 	register_dfs_rx_ops_for_freq(dfs_rx_ops);
-	register_dfs_rx_ops_for_ieee(dfs_rx_ops);
 	register_rcac_dfs_rx_ops(dfs_rx_ops);
 
 	return QDF_STATUS_SUCCESS;
