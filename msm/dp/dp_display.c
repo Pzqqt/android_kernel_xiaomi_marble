@@ -904,8 +904,11 @@ static void dp_display_process_mst_hpd_high(struct dp_display_private *dp,
 		info.mst_port_cnt = dp->debug->mst_port_cnt;
 		info.edid = dp->debug->get_edid(dp->debug);
 
+		if (dp->mst.cbs.set_mgr_state)
+			dp->mst.cbs.set_mgr_state(&dp->dp_display, true, &info);
+
 		if (dp->mst.cbs.hpd)
-			dp->mst.cbs.hpd(&dp->dp_display, true, &info);
+			dp->mst.cbs.hpd(&dp->dp_display, true);
 	}
 
 	DP_MST_DEBUG("mst_hpd_high. mst_active:%d\n", dp->mst.mst_active);
@@ -1131,16 +1134,34 @@ skip_notify:
 
 static void dp_display_process_mst_hpd_low(struct dp_display_private *dp)
 {
+	int rc = 0;
 	struct dp_mst_hpd_info info = {0};
 
 	if (dp->mst.mst_active) {
 		DP_MST_DEBUG("mst_hpd_low work\n");
 
-		if (dp->mst.cbs.hpd) {
-			info.mst_protocol = dp->parser->has_mst_sideband;
-			dp->mst.cbs.hpd(&dp->dp_display, false, &info);
-		}
+		/*
+		 * HPD unplug callflow:
+		 * 1. send hpd unplug event with status=disconnected
+		 * 2. send hpd unplug on base connector so usermode can disable
+		 * all external displays.
+		 * 3. unset mst state in the topology mgr so the branch device
+		 *  can be cleaned up.
+		 */
+		if (dp->mst.cbs.hpd)
+			dp->mst.cbs.hpd(&dp->dp_display, false);
+
 		dp_display_update_mst_state(dp, false);
+
+		if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
+				dp_display_state_is(DP_STATE_ENABLED)))
+			rc = dp_display_send_hpd_notification(dp);
+
+		if (dp->mst.cbs.set_mgr_state) {
+			info.mst_protocol = dp->parser->has_mst_sideband;
+			dp->mst.cbs.set_mgr_state(&dp->dp_display, false,
+					&info);
+		}
 	}
 
 	DP_MST_DEBUG("mst_hpd_low. mst_active:%d\n", dp->mst.mst_active);
@@ -1153,12 +1174,14 @@ static int dp_display_process_hpd_low(struct dp_display_private *dp)
 	dp_display_state_remove(DP_STATE_CONNECTED);
 	dp->process_hpd_connect = false;
 	dp_audio_enable(dp, false);
-	dp_display_process_mst_hpd_low(dp);
 
-	if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
-			dp_display_state_is(DP_STATE_ENABLED)) &&
-			!dp->mst.mst_active)
-		rc = dp_display_send_hpd_notification(dp);
+	if (dp->mst.mst_active) {
+		dp_display_process_mst_hpd_low(dp);
+	} else {
+		if ((dp_display_state_is(DP_STATE_CONNECT_NOTIFIED) ||
+				dp_display_state_is(DP_STATE_ENABLED)))
+			rc = dp_display_send_hpd_notification(dp);
+	}
 
 	mutex_lock(&dp->session_lock);
 	if (!dp->active_stream_cnt)

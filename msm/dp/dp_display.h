@@ -30,11 +30,12 @@ struct dp_mst_hpd_info {
 };
 
 struct dp_mst_drm_cbs {
-	void (*hpd)(void *display, bool hpd_status,
-			struct dp_mst_hpd_info *info);
+	void (*hpd)(void *display, bool hpd_status);
 	void (*hpd_irq)(void *display, struct dp_mst_hpd_info *info);
 	void (*set_drv_state)(void *dp_display,
 			enum dp_drv_state mst_state);
+	int (*set_mgr_state)(void *dp_display, bool state,
+			struct dp_mst_hpd_info *info);
 };
 
 struct dp_mst_drm_install_info {

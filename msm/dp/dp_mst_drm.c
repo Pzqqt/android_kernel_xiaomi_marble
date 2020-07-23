@@ -625,6 +625,23 @@ static void dp_mst_sim_handle_hpd_irq(void *dp_display,
 	}
 }
 
+static enum drm_connector_status dp_mst_sim_detect_port(
+			struct drm_connector *connector,
+			struct drm_dp_mst_topology_mgr *mgr,
+			struct drm_dp_mst_port *port)
+{
+	struct dp_mst_private *mst = container_of(mgr,
+			struct dp_mst_private, mst_mgr);
+	enum drm_connector_status status = connector_status_disconnected;
+
+	if (mst->mst_session_state)
+		status = drm_dp_mst_detect_port(connector, mgr, port);
+
+	DP_MST_DEBUG("mst sim port status: %d, session state: %d\n",
+		status, mst->mst_session_state);
+	return status;
+}
+
 static void _dp_mst_get_vcpi_info(
 		struct drm_dp_mst_topology_mgr *mgr,
 		int vcpi, int *start_slot, int *num_slots)
@@ -701,7 +718,7 @@ static const struct dp_drm_mst_fw_helper_ops drm_dp_sim_mst_fw_helper_ops = {
 	.update_payload_part1      = dp_mst_sim_update_payload_part1,
 	.check_act_status          = dp_mst_sim_no_action,
 	.update_payload_part2      = dp_mst_sim_update_payload_part2,
-	.detect_port               = drm_dp_mst_detect_port,
+	.detect_port               = dp_mst_sim_detect_port,
 	.get_edid                  = dp_mst_sim_get_edid,
 	.topology_mgr_set_mst      = dp_mst_sim_topology_mgr_set_mst,
 	.get_vcpi_info             = _dp_mst_get_vcpi_info,
@@ -2128,31 +2145,32 @@ static void dp_mst_hpd_event_notify(struct dp_mst_private *mst, bool hpd_status)
 
 	kobject_uevent_env(&dev->primary->kdev->kobj, KOBJ_CHANGE, envp);
 
-	DP_MST_INFO_LOG("%s finished\n", __func__);
+	DP_MST_INFO_LOG("%s finished. hpd_status:%d\n", __func__, hpd_status);
 }
 
 /* DP Driver Callback OPs */
 
-static void dp_mst_display_hpd(void *dp_display, bool hpd_status,
+static int dp_mst_display_set_mgr_state(void *dp_display, bool state,
 		struct dp_mst_hpd_info *info)
 {
 	int rc;
 	struct dp_display *dp = dp_display;
 	struct dp_mst_private *mst = dp->dp_mst_prv_info;
 
-	mutex_lock(&mst->mst_lock);
-	mst->mst_session_state = hpd_status;
-	mutex_unlock(&mst->mst_lock);
-
-	if (!hpd_status) {
-		rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr,
-				hpd_status);
-		if (rc < 0)
-			goto fail;
+	/*
+	 * on hpd high, set_mgr_state is called before hotplug event is sent
+	 * to usermode and mst_session_state should be updated here.
+	 * on hpd_low, set_mgr_state is called after hotplug event is sent and
+	 * the session_state was already updated prior to that.
+	 */
+	if (state) {
+		mutex_lock(&mst->mst_lock);
+		mst->mst_session_state = state;
+		mutex_unlock(&mst->mst_lock);
 	}
 
 	if (info && !info->mst_protocol) {
-		if (hpd_status) {
+		if (state) {
 			mst->simulator.edid = (struct edid *)info->edid;
 			mst->simulator.port_cnt = info->mst_port_cnt;
 		}
@@ -2161,21 +2179,35 @@ static void dp_mst_display_hpd(void *dp_display, bool hpd_status,
 		mst->mst_fw_cbs = &drm_dp_mst_fw_helper_ops;
 	}
 
-	if (hpd_status) {
-		rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr,
-				hpd_status);
-		if (rc < 0)
-			goto fail;
+	rc = mst->mst_fw_cbs->topology_mgr_set_mst(&mst->mst_mgr, state);
+	if (rc < 0) {
+		DP_ERR("failed to set topology mgr state to %d. rc %d\n",
+				state, rc);
+		return rc;
+	}
+
+	return 0;
+}
+
+static void dp_mst_display_hpd(void *dp_display, bool hpd_status)
+{
+	struct dp_display *dp = dp_display;
+	struct dp_mst_private *mst = dp->dp_mst_prv_info;
+
+	/*
+	 * on hpd high, set_mgr_state is called before hotplug event is sent
+	 * to usermode and mst_session_state was already updated there.
+	 * on hpd_low, hotplug event is sent before set_mgr_state and the
+	 * session state should be unset here for the connection status to be
+	 * updated accordingly.
+	 */
+	if (!hpd_status) {
+		mutex_lock(&mst->mst_lock);
+		mst->mst_session_state = hpd_status;
+		mutex_unlock(&mst->mst_lock);
 	}
 
 	dp_mst_hpd_event_notify(mst, hpd_status);
-
-	DP_MST_INFO_LOG("mst display hpd success. hpd:%d, rc:%d\n", hpd_status,
-			rc);
-	return;
-fail:
-	DRM_ERROR("mst display hpd failed. hpd: %d, rc: %d\n",
-			hpd_status, rc);
 }
 
 static void dp_mst_display_hpd_irq(void *dp_display,
@@ -2255,6 +2287,7 @@ static const struct dp_mst_drm_cbs dp_mst_display_cbs = {
 	.hpd = dp_mst_display_hpd,
 	.hpd_irq = dp_mst_display_hpd_irq,
 	.set_drv_state = dp_mst_set_state,
+	.set_mgr_state = dp_mst_display_set_mgr_state,
 };
 
 static const struct drm_dp_mst_topology_cbs dp_mst_drm_cbs = {
