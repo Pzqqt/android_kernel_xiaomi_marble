@@ -1905,6 +1905,10 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 	msdu = rx_desc->nbuf;
 
 	rx_desc_pool = &soc->rx_desc_buf[rx_desc->pool_id];
+
+	if (rx_desc->unmapped)
+		return rx_bufs_used;
+
 	dp_ipa_handle_rx_buf_smmu_mapping(soc, rx_desc->nbuf,
 					  rx_desc_pool->buf_size,
 					  false);

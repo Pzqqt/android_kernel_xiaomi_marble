@@ -1524,6 +1524,7 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 	uint16_t num_msdus;
 	struct dp_rx_desc *rx_desc = NULL;
 	QDF_STATUS status;
+	bool ret;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring_hdl);
@@ -1627,6 +1628,32 @@ dp_rx_err_process(struct dp_intr *int_ctx, struct dp_soc *soc,
 							 &mpdu_desc_info,
 							 &mac_id, quota);
 				rx_bufs_reaped[mac_id] += count;
+				goto next_entry;
+			}
+
+			/*
+			 * this is a unlikely scenario where the host is reaping
+			 * a descriptor which it already reaped just a while ago
+			 * but is yet to replenish it back to HW.
+			 * In this case host will dump the last 128 descriptors
+			 * including the software descriptor rx_desc and assert.
+			 */
+
+			if (qdf_unlikely(!rx_desc->in_use)) {
+				DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
+				dp_info_rl("Reaping rx_desc not in use!");
+				dp_rx_dump_info_and_assert(soc, hal_ring_hdl,
+							   ring_desc, rx_desc);
+				/* ignore duplicate RX desc and continue */
+				/* Pop out the descriptor */
+				goto next_entry;
+			}
+
+			ret = dp_rx_desc_paddr_sanity_check(rx_desc,
+							    msdu_list.paddr[0]);
+			if (!ret) {
+				DP_STATS_INC(soc, rx.err.nbuf_sanity_fail, 1);
+				rx_desc->in_err_state = 1;
 				goto next_entry;
 			}
 
