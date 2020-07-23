@@ -12,7 +12,7 @@
 #include <linux/ion.h>
 #include <linux/msm_ion.h>
 #include <linux/refcount.h>
-#include <media/msm_cvp_private.h>
+#include <media/msm_eva_private.h>
 #include "msm_cvp_buf.h"
 #include "msm_cvp_synx.h"
 

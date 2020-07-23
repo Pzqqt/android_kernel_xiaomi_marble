@@ -6,7 +6,7 @@
 #ifndef _MSM_V4L2_PRIVATE_H_
 #define _MSM_V4L2_PRIVATE_H_
 
-#include <media/msm_cvp_private.h>
+#include <media/msm_eva_private.h>
 #include "msm_cvp_debug.h"
 
 long cvp_unblocked_ioctl(struct file *filp,

@@ -21,7 +21,7 @@
 #include <linux/dma-mapping.h>
 #include "msm_cvp_core.h"
 #include <media/msm_media_info.h>
-#include <media/msm_cvp_private.h>
+#include <media/msm_eva_private.h>
 #include "cvp_hfi_api.h"
 #include <synx_api.h>
 
