@@ -217,21 +217,40 @@ void mlme_cm_sm_state_update(struct cnx_mgr *cm_ctx,
 			     enum wlan_cm_sm_state substate);
 
 /**
- * mlme_cm_sm_deliver_evt() - Delivers event to CM SM
+ * mlme_cm_sm_deliver_event() - Delivers event to connection manager SM
+ * @cm_ctx: cm ctx
+ * @event: CM event
+ * @data_len: data size
+ * @data: event data
+ *
+ * API to dispatch event to VDEV MLME SM without lock
+ *
+ * Return: SUCCESS: on handling event
+ *         FAILURE: on ignoring the event
+ */
+static inline
+QDF_STATUS mlme_cm_sm_deliver_event(struct cnx_mgr *cm_ctx,
+				    enum wlan_cm_sm_evt event,
+				    uint16_t data_len, void *data)
+{
+	return wlan_sm_dispatch(cm_ctx->sm.sm_hdl, event, data_len, data);
+}
+
+/**
+ * wlan_mlme_cm_sm_deliver_evt() - Delivers event to CM SM
  * @vdev: Object manager VDEV object
  * @event: CM event
- * @event_data_len: data size
- * @event_data: event data
+ * @data_len: data size
+ * @data: event data
  *
  * API to dispatch event to VDEV MLME SM with lock acquired
  *
  * Return: SUCCESS: on handling event
  *         FAILURE: on ignoring the event
  */
-QDF_STATUS mlme_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
-				  enum wlan_cm_sm_evt event,
-				  uint16_t event_data_len,
-				  void *event_data);
+QDF_STATUS wlan_mlme_cm_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,
+				       enum wlan_cm_sm_evt event,
+				       uint16_t data_len, void *data);
 
 #endif /* FEATURE_CM_ENABLE */
 #endif /* __WLAN_CM_SM_H__ */

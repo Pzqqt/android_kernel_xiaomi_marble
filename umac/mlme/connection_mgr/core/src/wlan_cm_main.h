@@ -73,19 +73,19 @@ enum wlan_cm_sm_state {
 
 /**
  * enum wlan_cm_sm_evt - connection manager related events
- * @WLAN_CM_SM_EV_CONNECT_REQ:            Connect request event
- * @WLAN_CM_SM_EV_SCAN_FOR_SSID:          Event for scan for SSID
- * @WLAN_CM_SM_EV_SCAN_FOR_SSID_SUCCESS:  Scan for SSID success event
- * @WLAN_CM_SM_EV_SCAN_FOR_SSID_FAILURE:  Scan for SSID fail event
- * @WLAN_CM_SM_EV_CONNECT_START_REQ:      Connect start request after BSSID list
- *                                        is prepared
- * @WLAN_CM_SM_EV_CONNECT_START:          Connect request for a particular BSSID
+ * @WLAN_CM_SM_EV_CONNECT_REQ:            Connect request event from requester
+ * @WLAN_CM_SM_EV_SCAN:                   Event to start connect scan
+ * @WLAN_CM_SM_EV_SCAN_SUCCESS:           Connect scan success event
+ * @WLAN_CM_SM_EV_SCAN_FAILURE:           Connect scan fail event
+ * @WLAN_CM_SM_EV_CONNECT_START:          Connect start process initiate
+ * @WLAN_CM_SM_EV_CONNECT_ACTIVE:         Connect request is activated
  * @WLAN_CM_SM_EV_CONNECT_SUCCESS:        Connect success
- * @WLAN_CM_SM_EV_CONNECT_NEXT_CANDIDATE: Select next candidate for connection
- * @WLAN_CM_SM_EV_CONNECT_FAILURE:        Connect failed event
- * @WLAN_CM_SM_EV_DISCONNECT_REQ:         Disconnect request event
- * @WLAN_CM_SM_EV_DISCONNECT_START_REQ:   Start disconnect sequence
- * @WLAN_CM_SM_EV_DISCONNECT_START:       Disconnect process start event
+ * @WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE: Get next candidate for connection
+ * @WLAN_CM_SM_EV_CONNECT_FAILURE:        Connect failed for all candidate
+ * @WLAN_CM_SM_EV_DISCONNECT_REQ:         Disconnect request event from
+ * requester
+ * @WLAN_CM_SM_EV_DISCONNECT_START:       Start disconnect sequence
+ * @WLAN_CM_SM_EV_DISCONNECT_ACTIVE:      Process disconnect after in active cmd
  * @WLAN_CM_SM_EV_DISCONNECT_DONE:        Disconnect done event
  * @WLAN_CM_SM_EV_ROAM_START:             Roam start event
  * @WLAN_CM_SM_EV_ROAM_SYNC:              Roam sync event
@@ -98,24 +98,21 @@ enum wlan_cm_sm_state {
  * @WLAN_CM_SM_EV_REASSOC_DONE:           Reassoc completed
  * @WLAN_CM_SM_EV_REASSOC_FAILURE:        Reassoc failed
  * @WLAN_CM_SM_EV_ROAM_COMPLETE:          Roaming completed
- * @WLAN_CM_SM_EV_CONNECT_TIMEOUT:        Connect timeout event
- * @WLAN_CM_SM_EV_CONNECT_SER_FAIL:       Connect request failed to serialize
- * @WLAN_CM_SM_EV_HW_MODE_CHANGE_FAIL:    HW mode change failed event
  * @WLAN_CM_SM_EV_MAX:                    Max event
  */
 enum wlan_cm_sm_evt {
 	WLAN_CM_SM_EV_CONNECT_REQ = 0,
-	WLAN_CM_SM_EV_SCAN_FOR_SSID = 1,
-	WLAN_CM_SM_EV_SCAN_FOR_SSID_SUCCESS = 2,
-	WLAN_CM_SM_EV_SCAN_FOR_SSID_FAILURE = 3,
-	WLAN_CM_SM_EV_CONNECT_START_REQ = 4,
-	WLAN_CM_SM_EV_CONNECT_START = 5,
+	WLAN_CM_SM_EV_SCAN = 1,
+	WLAN_CM_SM_EV_SCAN_SUCCESS = 2,
+	WLAN_CM_SM_EV_SCAN_FAILURE = 3,
+	WLAN_CM_SM_EV_CONNECT_START = 4,
+	WLAN_CM_SM_EV_CONNECT_ACTIVE = 5,
 	WLAN_CM_SM_EV_CONNECT_SUCCESS = 6,
-	WLAN_CM_SM_EV_CONNECT_NEXT_CANDIDATE = 7,
+	WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE = 7,
 	WLAN_CM_SM_EV_CONNECT_FAILURE = 8,
 	WLAN_CM_SM_EV_DISCONNECT_REQ = 9,
-	WLAN_CM_SM_EV_DISCONNECT_START_REQ = 10,
-	WLAN_CM_SM_EV_DISCONNECT_START = 11,
+	WLAN_CM_SM_EV_DISCONNECT_START = 10,
+	WLAN_CM_SM_EV_DISCONNECT_ACTIVE = 11,
 	WLAN_CM_SM_EV_DISCONNECT_DONE = 12,
 	WLAN_CM_SM_EV_ROAM_START = 13,
 	WLAN_CM_SM_EV_ROAM_SYNC = 14,
@@ -128,9 +125,6 @@ enum wlan_cm_sm_evt {
 	WLAN_CM_SM_EV_REASSOC_DONE = 21,
 	WLAN_CM_SM_EV_REASSOC_FAILURE = 22,
 	WLAN_CM_SM_EV_ROAM_COMPLETE = 23,
-	WLAN_CM_SM_EV_CONNECT_TIMEOUT = 24,
-	WLAN_CM_SM_EV_CONNECT_SER_FAIL = 25,
-	WLAN_CM_SM_EV_HW_MODE_CHANGE_FAIL = 26,
 	WLAN_CM_SM_EV_MAX,
 };
 
@@ -164,8 +158,8 @@ struct cm_state_sm {
  * @cur_candidate: current candidate
  */
 struct cm_connect_req {
-	uint64_t cm_id;
-	uint64_t scan_id;
+	wlan_cm_id cm_id;
+	wlan_scan_id scan_id;
 	qdf_timer_t scan_timer;
 	qdf_timer_t hw_mode_timer;
 	struct wlan_cm_connect_req req;
@@ -180,7 +174,7 @@ struct cm_connect_req {
  * @req: disconnect connect req from osif
  */
 struct cm_disconnect_req {
-	uint64_t cm_id;
+	wlan_cm_id cm_id;
 	struct wlan_cm_disconnect_req req;
 };
 
@@ -195,7 +189,7 @@ struct cm_disconnect_req {
 struct cm_req {
 	qdf_list_node_t node;
 	enum wlan_cm_source source;
-	uint64_t cm_id;
+	wlan_cm_id cm_id;
 	union {
 		struct cm_connect_req connect_req;
 		struct cm_disconnect_req discon_req;

@@ -17,3 +17,34 @@
 /**
  * DOC: Implements disconnect specific apis of connection manager
  */
+#include "wlan_cm_main_api.h"
+
+QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
+			       struct cm_disconnect_req *req)
+{
+	/*
+	 * TODO: Interface event, stop scan, disconnect TDLS, P2P roc cleanup
+	 * queue serialization.
+	 */
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
+{
+	/*
+	 * TODO: call vdev sm to start disconnect.
+	 */
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
+				  struct wlan_cm_discon_rsp *resp)
+{
+	/*
+	 * TODO: inform osif, inform interface manager
+	 * update fils/wep key and inform legacy, update bcn filter and scan
+	 * entry mlme info, blm action and remove from serialization at the end.
+	 */
+	return QDF_STATUS_SUCCESS;
+}
+

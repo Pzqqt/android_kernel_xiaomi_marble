@@ -26,6 +26,8 @@
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_scan_public_structs.h>
 
+typedef uint32_t wlan_cm_id;
+
 /**
  * struct wlan_cm_wep_key_params - store wep key info
  * @key: key info
@@ -170,7 +172,7 @@ struct wlan_cm_connect_req {
  */
 struct wlan_cm_vdev_connect_req {
 	uint8_t vdev_id;
-	uint8_t cm_id;
+	wlan_cm_id cm_id;
 	struct scan_cache_node *bss;
 };
 
@@ -197,7 +199,7 @@ struct wlan_cm_disconnect_req {
  * @req: disconnect req
  */
 struct wlan_cm_vdev_discon_req {
-	uint8_t cm_id;
+	wlan_cm_id cm_id;
 	struct wlan_cm_disconnect_req req;
 };
 
@@ -299,7 +301,7 @@ struct wlan_connect_rsp_ies {
  */
 struct wlan_cm_connect_rsp {
 	uint8_t vdev_id;
-	uint8_t cm_id;
+	wlan_cm_id cm_id;
 	uint8_t connect_status;
 	enum wlan_cm_connect_fail_reason reason;
 	uint8_t reason_code;
