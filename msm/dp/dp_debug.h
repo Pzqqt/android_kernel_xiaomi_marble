@@ -85,9 +85,10 @@ struct dp_debug {
 	bool mst_sim_remove_con;
 	int mst_sim_remove_con_id;
 	u32 mst_port_cnt;
-
+	struct dp_mst_connector mst_connector_cache;
 	u8 *(*get_edid)(struct dp_debug *dp_debug);
 	void (*abort)(struct dp_debug *dp_debug);
+	void (*set_mst_con)(struct dp_debug *dp_debug, int con_id);
 };
 
 /**

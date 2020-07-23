@@ -2977,6 +2977,7 @@ static int dp_display_mst_connector_install(struct dp_display *dp_display,
 	struct dp_panel *dp_panel;
 	struct dp_display_private *dp;
 	struct dp_mst_connector *mst_connector;
+	struct dp_mst_connector *cached_connector;
 
 	if (!dp_display || !connector) {
 		DP_ERR("invalid input\n");
@@ -3031,7 +3032,19 @@ static int dp_display_mst_connector_install(struct dp_display *dp_display,
 		return -ENOMEM;
 	}
 
-	mst_connector->debug_en = false;
+	cached_connector = &dp->debug->mst_connector_cache;
+	if (cached_connector->debug_en) {
+		mst_connector->debug_en = true;
+		mst_connector->hdisplay = cached_connector->hdisplay;
+		mst_connector->vdisplay = cached_connector->vdisplay;
+		mst_connector->vrefresh = cached_connector->vrefresh;
+		mst_connector->aspect_ratio = cached_connector->aspect_ratio;
+		memset(cached_connector, 0, sizeof(*cached_connector));
+		dp->debug->set_mst_con(dp->debug, connector->base.id);
+	} else {
+		mst_connector->debug_en = false;
+	}
+
 	mst_connector->conn = connector;
 	mst_connector->con_id = connector->base.id;
 	mst_connector->state = connector_status_unknown;
@@ -3089,6 +3102,15 @@ static int dp_display_mst_connector_uninstall(struct dp_display *dp_display,
 	list_for_each_entry_safe(con_to_remove, temp_con,
 			&dp->debug->dp_mst_connector_list.list, list) {
 		if (con_to_remove->conn == connector) {
+			/*
+			 * cache any debug info if enabled that can be applied
+			 * on new connectors.
+			 */
+			if (con_to_remove->debug_en)
+				memcpy(&dp->debug->mst_connector_cache,
+						con_to_remove,
+						sizeof(*con_to_remove));
+
 			list_del(&con_to_remove->list);
 			kfree(con_to_remove);
 		}
