@@ -150,24 +150,43 @@ struct wmi_ext_dbg_msg {
 #define wmi_debug_rl(params...) QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_WMI, params)
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
+/* wmi entry size */
+#ifndef WMI_DEBUG_ENTRY_MAX_LENGTH
+#define WMI_DEBUG_ENTRY_MAX_LENGTH (16)
+#endif
 
+/* wmi commands */
+#ifndef WMI_CMD_DEBUG_MAX_ENTRY
+#define WMI_CMD_DEBUG_MAX_ENTRY (1024)
+#endif
+#ifndef WMI_CMD_CMPL_DEBUG_MAX_ENTRY
+#define WMI_CMD_CMPL_DEBUG_MAX_ENTRY (1024)
+#endif
+
+/* wmi events */
 #ifndef WMI_EVENT_DEBUG_MAX_ENTRY
 #define WMI_EVENT_DEBUG_MAX_ENTRY (1024)
 #endif
 
-#ifndef WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH
-#define WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH (16)
+/* wmi mgmt Tx */
+#ifndef WMI_MGMT_TX_DEBUG_MAX_ENTRY
+#define WMI_MGMT_TX_DEBUG_MAX_ENTRY (256)
+#endif
+#ifndef WMI_MGMT_TX_CMPL_DEBUG_MAX_ENTRY
+#define WMI_MGMT_TX_CMPL_DEBUG_MAX_ENTRY (256)
 #endif
 
-/* wmi_mgmt commands */
-#ifndef WMI_MGMT_EVENT_DEBUG_MAX_ENTRY
-#define WMI_MGMT_EVENT_DEBUG_MAX_ENTRY (256)
+/* wmi mgmt Rx */
+#ifndef WMI_MGMT_RX_DEBUG_MAX_ENTRY
+#define WMI_MGMT_RX_DEBUG_MAX_ENTRY (256)
 #endif
+
 /* wmi diag rx events max buffer */
 #ifndef WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY
 #define WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY (256)
 #endif
 
+/* wmi filtered command event */
 #ifdef WMI_INTERFACE_FILTERED_EVENT_LOGGING
 #ifndef WMI_FILTERED_CMD_EVT_SUPPORTED
 #define WMI_FILTERED_CMD_EVT_SUPPORTED (10)
@@ -186,8 +205,8 @@ struct wmi_ext_dbg_msg {
  */
 struct wmi_command_debug {
 	uint32_t command;
-	/*16 bytes of WMI cmd excluding TLV and WMI headers */
-	uint32_t data[WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH/sizeof(uint32_t)];
+	/* WMI cmd data excluding TLV and WMI headers */
+	uint32_t data[WMI_DEBUG_ENTRY_MAX_LENGTH / sizeof(uint32_t)];
 	uint64_t time;
 };
 
@@ -199,8 +218,8 @@ struct wmi_command_debug {
  */
 struct wmi_event_debug {
 	uint32_t event;
-	/*16 bytes of WMI event data excluding TLV header */
-	uint32_t data[WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH/sizeof(uint32_t)];
+	/* WMI event data excluding TLV header */
+	uint32_t data[WMI_DEBUG_ENTRY_MAX_LENGTH / sizeof(uint32_t)];
 	uint64_t time;
 };
 
