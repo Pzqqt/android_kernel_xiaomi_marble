@@ -5849,7 +5849,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	tSirUpdateIE update_ie;
 	int ret;
 	mac_handle_t mac_handle;
-	struct sap_context *sap_ctx;
 
 	hdd_enter();
 
@@ -5915,9 +5914,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
-	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
-	wlansap_dcs_set_vdev_wlan_interference_mitigation(sap_ctx, false);
-	wlansap_dcs_set_vdev_starting(sap_ctx, false);
+	hdd_dcs_clear(adapter);
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,

@@ -205,3 +205,38 @@ void hdd_dcs_chan_select_complete(struct hdd_adapter *adapter)
 							hdd_ctx,
 							adapter->vdev_id);
 }
+
+void hdd_dcs_clear(struct hdd_adapter *adapter)
+{
+	QDF_STATUS status;
+	uint8_t mac_id;
+	struct hdd_context *hdd_ctx;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD context pointer");
+		return;
+	}
+
+	psoc = hdd_ctx->psoc;
+
+	if (wlansap_dcs_is_wlan_interference_mitigation_enabled(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter))) {
+		status = policy_mgr_get_mac_id_by_session_id(psoc,
+							     adapter->vdev_id,
+							     &mac_id);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("get mac id failed");
+			return;
+		}
+		if (policy_mgr_get_sap_go_count_on_mac(psoc, list, mac_id) <= 1)
+			ucfg_dcs_clear(psoc, mac_id);
+	}
+
+	wlansap_dcs_set_vdev_wlan_interference_mitigation(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter), false);
+	wlansap_dcs_set_vdev_starting(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter), false);
+}

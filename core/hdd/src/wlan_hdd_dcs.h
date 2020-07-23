@@ -62,6 +62,17 @@ void hdd_dcs_hostapd_set_chan(struct hdd_context *hdd_ctx,
  * Return: None
  */
 void hdd_dcs_chan_select_complete(struct hdd_adapter *adapter);
+
+/**
+ * hdd_dcs_clear() - clear dcs information
+ * @adapter: hdd adapter pointer
+ *
+ * This function is used to clear sap dcs related information such as
+ * im stats and freq ctrl params
+ *
+ * Return: None
+ */
+void hdd_dcs_clear(struct hdd_adapter *adapter);
 #else
 static inline void hdd_dcs_register_cb(struct hdd_context *hdd_ctx)
 {
@@ -74,6 +85,10 @@ static inline void hdd_dcs_hostapd_set_chan(struct hdd_context *hdd_ctx,
 }
 
 static inline void hdd_dcs_chan_select_complete(struct hdd_adapter *adapter)
+{
+}
+
+static inline void hdd_dcs_clear(struct hdd_adapter *adapter)
 {
 }
 #endif
