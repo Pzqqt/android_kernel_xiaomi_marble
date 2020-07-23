@@ -98,7 +98,6 @@ bool qca_multi_link_remove_fastlane_radio(struct wiphy *fl_wiphy);
 bool qca_multi_link_add_no_backhaul_radio(struct wiphy *no_bl_wiphy);
 bool qca_multi_link_remove_no_backhaul_radio(struct wiphy *no_bl_wiphy);
 bool qca_multi_link_ap_rx(struct net_device *net_dev, qdf_nbuf_t nbuf);
-bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf,
-			  qca_multi_link_needs_enq_t allow_vap_enq);
+bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf);
 bool qca_multi_link_sta_tx(struct net_device *net_dev, qdf_nbuf_t nbuf);
 #endif

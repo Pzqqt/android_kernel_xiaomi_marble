@@ -671,8 +671,7 @@ qdf_export_symbol(qca_multi_link_ap_rx);
  *	   QCA_MULTI_LINK_PKT_CONSUMED: frame is consumed.
  */
 static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device *net_dev,
-							      qdf_nbuf_t nbuf,
-							      qca_multi_link_needs_enq_t allow_vap_enq)
+							      qdf_nbuf_t nbuf)
 {
 	uint8_t is_mcast;
 	qca_multi_link_tbl_entry_t qca_ml_entry;
@@ -765,10 +764,6 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 	 * Unicast packets handling received on secondary Stations.
 	 */
 	if (qca_multi_link_cfg.loop_detected) {
-
-		if (allow_vap_enq == QCA_MULTI_LINK_SKIP_VAP_ENQ) {
-			return QCA_MULTI_LINK_PKT_ALLOW;
-		}
 
 		qca_ml_entry.qal_fdb_ieee80211_ptr = NULL;
 		qca_ml_entry.qal_fdb_dev = NULL;
@@ -941,8 +936,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
  * Return: false: frame not consumed and should be processed further by caller
  *	   true: frame dropped/enqueued.
  */
-bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf,
-			  qca_multi_link_needs_enq_t allow_vap_enq)
+bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf)
 {
 	uint8_t is_eapol;
 	bool is_primary = false;
@@ -973,7 +967,7 @@ bool qca_multi_link_sta_rx(struct net_device *net_dev, qdf_nbuf_t nbuf,
 	if (is_primary) {
 		status = qca_multi_link_primary_sta_rx(sta_dev, nbuf);
 	} else {
-		status = qca_multi_link_secondary_sta_rx(sta_dev, nbuf, allow_vap_enq);
+		status = qca_multi_link_secondary_sta_rx(sta_dev, nbuf);
 	}
 	dev_put(sta_dev);
 
