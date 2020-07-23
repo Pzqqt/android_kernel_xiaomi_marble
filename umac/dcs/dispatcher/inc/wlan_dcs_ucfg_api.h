@@ -117,4 +117,14 @@ void ucfg_config_dcs_disable(struct wlan_objmgr_psoc *psoc,
  */
 uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
 
+/**
+ * ucfg_dcs_clear() - API to clear dcs related information
+ * @psoc: pointer to psoc object
+ * @pdev_id: pdev id
+ *
+ * This function gets called to clear dcs related information
+ *
+ * Return: None
+ */
+void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
 #endif /* _WLAN_DCS_UCFG_API_H_ */

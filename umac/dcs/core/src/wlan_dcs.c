@@ -126,13 +126,6 @@ QDF_STATUS wlan_dcs_cmd_send(struct wlan_objmgr_psoc *psoc,
 	dcs_tx_ops = target_if_dcs_get_tx_ops(psoc);
 
 	if (dcs_tx_ops->dcs_cmd_send) {
-		if (dcs_enable & CAP_DCS_WLANIM) {
-			qdf_timer_stop(&dcs_pdev_priv->dcs_disable_timer);
-			qdf_mem_set(&dcs_pdev_priv->dcs_im_stats,
-				    sizeof(dcs_pdev_priv->dcs_im_stats), 0);
-			dcs_pdev_priv->dcs_freq_ctrl_params.
-						disable_delay_process = false;
-		}
 		dcs_info("dcs_enable: %u, pdev_id: %u", dcs_enable, pdev_id);
 		return dcs_tx_ops->dcs_cmd_send(psoc,
 						pdev_id,
@@ -732,4 +725,28 @@ wlan_dcs_process(struct wlan_objmgr_psoc *psoc, struct dcs_stats_event *event)
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
+{
+	struct dcs_pdev_priv_obj *dcs_pdev_priv;
+
+	if (!psoc) {
+		dcs_err("psoc is null");
+		return;
+	}
+
+	dcs_pdev_priv = wlan_dcs_get_pdev_private_obj(psoc, pdev_id);
+	if (!dcs_pdev_priv) {
+		dcs_err("dcs pdev private object is null");
+		return;
+	}
+
+	qdf_timer_stop(&dcs_pdev_priv->dcs_disable_timer);
+	qdf_mem_set(&dcs_pdev_priv->dcs_im_stats,
+		    sizeof(dcs_pdev_priv->dcs_im_stats), 0);
+	qdf_mem_set(dcs_pdev_priv->dcs_freq_ctrl_params.timestamp,
+		    MAX_DCS_TIME_RECORD * sizeof(unsigned long), 0);
+	dcs_pdev_priv->dcs_freq_ctrl_params.dcs_happened_count = 0;
+	dcs_pdev_priv->dcs_freq_ctrl_params.disable_delay_process = false;
 }

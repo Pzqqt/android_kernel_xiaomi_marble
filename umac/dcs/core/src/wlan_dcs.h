@@ -226,4 +226,15 @@ QDF_STATUS wlan_dcs_process(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_dcs_disable_timer_fn(void *dcs_timer_args);
 
+/**
+ * wlan_dcs_clear() - clear dcs information
+ * @psoc: psoc pointer
+ * @pdev_id: pdev_id
+ *
+ * The function gets called to clear dcs information such as dcs
+ * frequency control parameters and stop dcs disable timer
+ *
+ * Return: None
+ */
+void wlan_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id);
 #endif  /* _WLAN_DCS_H_ */

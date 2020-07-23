@@ -91,3 +91,8 @@ uint8_t ucfg_get_dcs_enable(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
 
 	return dcs_pdev_priv->dcs_host_params.dcs_enable;
 }
+
+void ucfg_dcs_clear(struct wlan_objmgr_psoc *psoc, uint32_t pdev_id)
+{
+	wlan_dcs_clear(psoc, pdev_id);
+}
