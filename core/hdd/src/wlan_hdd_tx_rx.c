@@ -1620,7 +1620,7 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 	gro_ret = napi_gro_receive(napi_to_use, skb);
 
 	if (hdd_get_current_throughput_level(hdd_ctx) == PLD_BUS_WIDTH_IDLE ||
-	    !rx_aggregation) {
+	    !rx_aggregation || adapter->gro_disallowed[rx_ctx_id]) {
 		if (HDD_IS_EXTRA_GRO_FLUSH_NECESSARY(gro_ret)) {
 			adapter->hdd_stats.tx_rx_stats.
 					rx_gro_low_tput_flush++;
@@ -1628,6 +1628,8 @@ static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
 		}
 		if (!rx_aggregation)
 			hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id] = 1;
+		if (adapter->gro_disallowed[rx_ctx_id])
+			adapter->gro_flushed[rx_ctx_id] = 1;
 	}
 	local_bh_enable();
 
@@ -2024,6 +2026,98 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	return status;
 }
 #else
+
+#if defined(WLAN_SUPPORT_RX_FISA)
+/**
+ * hdd_set_fisa_disallowed_for_vdev() - Set fisa disallowed bit for a vdev
+ * @soc: DP soc handle
+ * @vdev_id: Vdev id
+ * @rx_ctx_id: rx context id
+ * @val: Enable or disable
+ *
+ * The function sets the fisa disallowed flag for a given vdev
+ *
+ * Return: None
+ */
+static inline
+void hdd_set_fisa_disallowed_for_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id,
+				      uint8_t rx_ctx_id, uint8_t val)
+{
+	dp_set_fisa_disallowed_for_vdev(soc, vdev_id, rx_ctx_id, val);
+}
+#else
+static inline
+void hdd_set_fisa_disallowed_for_vdev(ol_txrx_soc_handle soc, uint8_t vdev_id,
+				      uint8_t rx_ctx_id, uint8_t val)
+{
+}
+#endif
+
+/**
+ * hdd_rx_check_qdisc_for_adapter() - Check if any ingress qdisc is configured
+ *  for given adapter
+ * @adapter: pointer to HDD adapter context
+ * @rx_ctx_id: Rx context id
+ *
+ * The function checks if ingress qdisc is registered for a given
+ * net device.
+ *
+ * Return: None
+ */
+static void
+hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
+{
+	ol_txrx_soc_handle soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct netdev_queue *ingress_q;
+	struct Qdisc *ingress_qdisc;
+	bool is_qdisc_ingress = false;
+
+	/*
+	 * This additional ingress_queue NULL check is to avoid
+	 * doing RCU lock/unlock in the common scenario where
+	 * ingress_queue is not configured by default
+	 */
+	if (qdf_likely(!adapter->dev->ingress_queue))
+		goto reset_wl;
+
+	rcu_read_lock();
+	ingress_q = rcu_dereference(adapter->dev->ingress_queue);
+
+	if (qdf_unlikely(!ingress_q))
+		goto reset;
+
+	ingress_qdisc = rcu_dereference(ingress_q->qdisc);
+	if (!ingress_qdisc)
+		goto reset;
+
+	is_qdisc_ingress = qdf_str_eq(ingress_qdisc->ops->id, "ingress");
+	if (!is_qdisc_ingress)
+		goto reset;
+
+	rcu_read_unlock();
+
+	if (adapter->gro_disallowed[rx_ctx_id])
+		return;
+
+	hdd_debug("ingress qdisc configured disable GRO");
+	adapter->gro_disallowed[rx_ctx_id] = 1;
+	hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id, rx_ctx_id, 1);
+
+	return;
+
+reset:
+	rcu_read_unlock();
+
+reset_wl:
+	if (adapter->gro_disallowed[rx_ctx_id]) {
+		hdd_debug("ingress qdisc removed enable GRO");
+		hdd_set_fisa_disallowed_for_vdev(soc, adapter->vdev_id,
+						 rx_ctx_id, 0);
+		adapter->gro_disallowed[rx_ctx_id] = 0;
+		adapter->gro_flushed[rx_ctx_id] = 0;
+	}
+}
+
 QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 				   struct sk_buff *skb)
 {
@@ -2033,12 +2127,15 @@ QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
 	bool skb_receive_offload_ok = false;
 	uint8_t rx_ctx_id = QDF_NBUF_CB_RX_CTX_ID(skb);
 
+	hdd_rx_check_qdisc_for_adapter(adapter, rx_ctx_id);
+
 	if (QDF_NBUF_CB_RX_TCP_PROTO(skb) &&
 	    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 		skb_receive_offload_ok = true;
 
 	if (skb_receive_offload_ok && hdd_ctx->receive_offload_cb &&
-	    !hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id]) {
+	    !hdd_ctx->dp_agg_param.gro_force_flush[rx_ctx_id] &&
+	    !adapter->gro_flushed[rx_ctx_id]) {
 		status = hdd_ctx->receive_offload_cb(adapter, skb);
 
 		if (QDF_IS_STATUS_SUCCESS(status)) {

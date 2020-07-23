@@ -1113,6 +1113,8 @@ struct hdd_context;
  *                          as per enum qca_disconnect_reason_codes
  * @upgrade_udp_qos_threshold: The threshold for user priority upgrade for
 			       any UDP packet.
+ * @gro_disallowed: Flag to check if GRO is enabled or disable for adapter
+ * @gro_flushed: Flag to indicate if GRO explicit flush is done or not
  */
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
@@ -1407,6 +1409,8 @@ struct hdd_adapter {
 	void *cookie;
 	bool response_expected;
 #endif
+	uint8_t gro_disallowed[DP_MAX_RX_THREADS];
+	uint8_t gro_flushed[DP_MAX_RX_THREADS];
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
