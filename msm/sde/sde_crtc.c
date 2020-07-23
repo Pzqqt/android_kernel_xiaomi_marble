@@ -3202,7 +3202,7 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	struct drm_device *dev;
 	struct sde_kms *sde_kms;
 	struct sde_splash_display *splash_display;
-	bool cont_splash_enabled = false;
+	bool cont_splash_enabled = false, apply_cp_prop = false;
 	size_t i;
 
 	if (!crtc) {
@@ -3274,8 +3274,10 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 			cont_splash_enabled = true;
 	}
 
+	apply_cp_prop = sde_kms->catalog->trusted_vm_env ?
+			true : sde_crtc->enabled;
 	if (sde_kms_is_cp_operation_allowed(sde_kms) &&
-			(cont_splash_enabled || sde_crtc->enabled))
+			(cont_splash_enabled || apply_cp_prop))
 		sde_cp_crtc_apply_properties(crtc);
 
 	/*
