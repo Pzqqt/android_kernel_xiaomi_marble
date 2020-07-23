@@ -1000,6 +1000,45 @@ dp_rx_defrag_nwifi_to_8023(struct dp_soc *soc,
 	qdf_mem_free(rx_desc_info);
 }
 
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
+/**
+ * dp_rx_reinject_ring_record_entry() - Record reinject ring history
+ * @soc: Datapath soc structure
+ * @paddr: paddr of the buffer reinjected to SW2REO ring
+ * @sw_cookie: SW cookie of the buffer reinjected to SW2REO ring
+ * @rbm: Return buffer manager of the buffer reinjected to SW2REO ring
+ *
+ * Returns: None
+ */
+static inline void
+dp_rx_reinject_ring_record_entry(struct dp_soc *soc, uint64_t paddr,
+				 uint32_t sw_cookie, uint8_t rbm)
+{
+	struct dp_buf_info_record *record;
+	uint32_t idx;
+
+	if (qdf_unlikely(soc->rx_reinject_ring_history))
+		return;
+
+	idx = dp_history_get_next_index(&soc->rx_reinject_ring_history->index,
+					DP_RX_REINJECT_HIST_MAX);
+
+	/* No NULL check needed for record since its an array */
+	record = &soc->rx_reinject_ring_history->entry[idx];
+
+	record->timestamp = qdf_get_log_timestamp();
+	record->hbi.paddr = paddr;
+	record->hbi.sw_cookie = sw_cookie;
+	record->hbi.rbm = rbm;
+}
+#else
+static inline void
+dp_rx_reinject_ring_record_entry(struct dp_soc *soc, uint64_t paddr,
+				 uint32_t sw_cookie, uint8_t rbm)
+{
+}
+#endif
+
 /*
  * dp_rx_defrag_reo_reinject(): Reinject the fragment chain back into REO
  * @peer: Pointer to the peer
@@ -1136,6 +1175,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	dp_rx_reinject_ring_record_entry(soc, paddr, cookie, DP_DEFRAG_RBM);
 	paddr = (uint64_t)buf_info.paddr;
 	/* buf addr */
 	hal_rxdma_buff_addr_info_set(ent_ring_desc, paddr,

@@ -3827,6 +3827,63 @@ static QDF_STATUS dp_htt_ppdu_stats_attach(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_DP_RX_RING_HISTORY
+/**
+ * dp_soc_rx_history_attach() - Attach the ring history record buffers
+ * @soc: DP soc structure
+ *
+ * This function allocates the memory for recording the rx ring, rx error
+ * ring and the reinject ring entries. There is no error returned in case
+ * of allocation failure since the record function checks if the history is
+ * initialized or not. We do not want to fail the driver load in case of
+ * failure to allocate memory for debug history.
+ *
+ * Returns: None
+ */
+static void dp_soc_rx_history_attach(struct dp_soc *soc)
+{
+	int i;
+	uint32_t rx_ring_hist_size;
+	uint32_t rx_err_ring_hist_size;
+	uint32_t rx_reinject_hist_size;
+
+	rx_ring_hist_size = sizeof(*soc->rx_ring_history[i]);
+	rx_err_ring_hist_size = sizeof(*soc->rx_err_ring_history);
+	rx_reinject_hist_size = sizeof(*soc->rx_reinject_ring_history);
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
+		soc->rx_ring_history[i] = qdf_mem_malloc(rx_ring_hist_size);
+		qdf_atomic_init(&soc->rx_ring_history[i]->index);
+	}
+
+	soc->rx_err_ring_history = qdf_mem_malloc(rx_err_ring_hist_size);
+	qdf_atomic_init(&soc->rx_err_ring_history->index);
+
+	soc->rx_reinject_ring_history = qdf_mem_malloc(rx_reinject_hist_size);
+	qdf_atomic_init(&soc->rx_reinject_ring_history->index);
+}
+
+static void dp_soc_rx_history_detach(struct dp_soc *soc)
+{
+	int i;
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
+		qdf_mem_free(soc->rx_ring_history[i]);
+
+	qdf_mem_free(soc->rx_err_ring_history);
+	qdf_mem_free(soc->rx_reinject_ring_history);
+}
+
+#else
+static inline void dp_soc_rx_history_attach(struct dp_soc *soc)
+{
+}
+
+static inline void dp_soc_rx_history_detach(struct dp_soc *soc)
+{
+}
+#endif
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @txrx_soc: Datapath SOC handle
@@ -4327,6 +4384,7 @@ static void dp_soc_detach(struct cdp_soc_t *txrx_soc)
 	dp_hw_link_desc_ring_free(soc);
 	dp_hw_link_desc_pool_banks_free(soc, WLAN_INVALID_PDEV_ID);
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
+	dp_soc_rx_history_detach(soc);
 
 	qdf_mem_free(soc);
 }
@@ -10922,6 +10980,7 @@ dp_soc_attach(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 	/* Reset wbm sg list and flags */
 	dp_rx_wbm_sg_list_reset(soc);
 
+	dp_soc_rx_history_attach(soc);
 	wlan_set_srng_cfg(&soc->wlan_srng_cfg);
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {
