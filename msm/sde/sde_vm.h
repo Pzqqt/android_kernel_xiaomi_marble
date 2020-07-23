@@ -164,6 +164,53 @@ int sde_vm_primary_init(struct sde_kms *kms);
  * @return - 0 on success
  */
 int sde_vm_trusted_init(struct sde_kms *kms);
+
+/**
+ * sde_vm_is_enabled - check whether TUI feature is enabled
+ * @sde_kms - pointer to sde_kms
+ * @return - true if enabled, false otherwise
+ */
+static inline bool sde_vm_is_enabled(struct sde_kms *sde_kms)
+{
+	return !!sde_kms->vm;
+}
+
+/**
+ * sde_vm_lock - lock vm variables
+ * @sde_kms - pointer to sde_kms
+ */
+static inline void sde_vm_lock(struct sde_kms *sde_kms)
+{
+	if (!sde_kms->vm)
+		return;
+
+	mutex_lock(&sde_kms->vm->vm_res_lock);
+}
+
+/**
+ * sde_vm_unlock - unlock vm variables
+ * @sde_kms - pointer to sde_kms
+ */
+static inline void sde_vm_unlock(struct sde_kms *sde_kms)
+{
+	if (!sde_kms->vm)
+		return;
+
+	mutex_unlock(&sde_kms->vm->vm_res_lock);
+}
+
+/**
+ * sde_vm_get_ops - helper API to retrieve sde_vm_ops
+ * @sde_kms - pointer to sde_kms
+ * @return - pointer to sde_vm_ops
+ */
+static inline struct sde_vm_ops *sde_vm_get_ops(struct sde_kms *sde_kms)
+{
+	if (!sde_kms->vm)
+		return NULL;
+
+	return &sde_kms->vm->vm_ops;
+}
 #else
 static inline int sde_vm_primary_init(struct sde_kms *kms)
 {
@@ -173,6 +220,24 @@ static inline int sde_vm_primary_init(struct sde_kms *kms)
 static inline int sde_vm_trusted_init(struct sde_kms *kms)
 {
 	return 0;
+}
+
+static inline bool sde_vm_is_enabled(struct sde_kms *sde_kms)
+{
+	return false;
+}
+
+static inline void sde_vm_lock(struct sde_kms *sde_kms)
+{
+}
+
+static inline void sde_vm_unlock(struct sde_kms *sde_kms)
+{
+}
+
+static inline struct sde_vm_ops *sde_vm_get_ops(struct sde_kms *sde_kms)
+{
+	return NULL;
 }
 
 #endif /* IS_ENABLED(CONFIG_DRM_SDE_VM) */
