@@ -4271,7 +4271,6 @@ error:
 	soc->htt_stats.num_stats = 0;
 	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 	return;
-
 }
 
 /*
@@ -4443,14 +4442,276 @@ static bool time_allow_print(unsigned long *htt_ring_tt, u_int8_t ring_id)
 }
 
 static void dp_htt_alert_print(enum htt_t2h_msg_type msg_type,
-			       u_int8_t pdev_id, u_int8_t ring_id,
+			       struct dp_pdev *pdev, u_int8_t ring_id,
 			       u_int16_t hp_idx, u_int16_t tp_idx,
 			       u_int32_t bkp_time, char *ring_stype)
 {
-	dp_alert("msg_type: %d pdev_id: %d ring_type: %s ",
-		 msg_type, pdev_id, ring_stype);
+	dp_alert("seq_num %u msg_type: %d pdev_id: %d ring_type: %s ",
+		 pdev->bkp_stats.seq_num, msg_type, pdev->pdev_id, ring_stype);
 	dp_alert("ring_id: %d hp_idx: %d tp_idx: %d bkpressure_time_ms: %d ",
 		 ring_id, hp_idx, tp_idx, bkp_time);
+}
+
+/**
+ * dp_get_srng_ring_state_from_hal(): Get hal level ring stats
+ * @soc: DP_SOC handle
+ * @srng: DP_SRNG handle
+ * @ring_type: srng src/dst ring
+ *
+ * Return: void
+ */
+static QDF_STATUS
+dp_get_srng_ring_state_from_hal(struct dp_soc *soc,
+				struct dp_pdev *pdev,
+				struct dp_srng *srng,
+				enum hal_ring_type ring_type,
+				struct dp_srng_ring_state *state)
+{
+	struct hal_soc *hal_soc;
+
+	if (!soc || !srng || !srng->hal_srng || !state)
+		return QDF_STATUS_E_INVAL;
+
+	hal_soc = (struct hal_soc *)soc->hal_soc;
+
+	hal_get_sw_hptp(soc->hal_soc, srng->hal_srng, &state->sw_tail,
+			&state->sw_head);
+
+	hal_get_hw_hptp(soc->hal_soc, srng->hal_srng, &state->hw_head,
+			&state->hw_tail, ring_type);
+
+	state->ring_type = ring_type;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_queue_srng_ring_stats(): Print pdev hal level ring stats
+ * @pdev: DP_pdev handle
+ *
+ * Return: void
+ */
+static void dp_queue_ring_stats(struct dp_pdev *pdev)
+{
+	uint32_t i;
+	int mac_id;
+	int lmac_id;
+	uint32_t j = 0;
+	struct dp_soc_srngs_state * soc_srngs_state = NULL;
+	QDF_STATUS status;
+
+	soc_srngs_state = qdf_mem_malloc(sizeof(struct dp_soc_srngs_state));
+	if (!soc_srngs_state) {
+		dp_htt_alert("Memory alloc failed for back pressure event");
+		return;
+	}
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->reo_exception_ring,
+				 REO_EXCEPTION,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->reo_reinject_ring,
+				 REO_REINJECT,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->reo_cmd_ring,
+				 REO_CMD,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->reo_status_ring,
+				 REO_STATUS,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rx_rel_ring,
+				 WBM2SW_RELEASE,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->tcl_cmd_credit_ring,
+				 TCL_CMD_CREDIT,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->tcl_status_ring,
+				 TCL_STATUS,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->wbm_desc_rel_ring,
+				 SW2WBM_RELEASE,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
+		status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->reo_dest_ring[i],
+				 REO_DST,
+				 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+
+	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++) {
+		status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->tcl_data_ring[i],
+				 TCL_DATA,
+				 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+
+	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
+		status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->tx_comp_ring[i],
+				 WBM2SW_RELEASE,
+				 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+
+	lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc, 0, pdev->pdev_id);
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rx_refill_buf_ring
+				 [lmac_id],
+				 RXDMA_BUF,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+	status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->rx_refill_buf_ring2,
+				 RXDMA_BUF,
+				 &soc_srngs_state->ring_state[j]);
+
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_assert_always(++j < DP_MAX_SRNGS);
+
+
+	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
+		dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->rx_mac_buf_ring[i],
+				 RXDMA_BUF,
+				 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
+						     mac_id, pdev->pdev_id);
+
+		if (pdev->soc->wlan_cfg_ctx->rxdma1_enable) {
+			status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rxdma_mon_buf_ring[lmac_id],
+				 RXDMA_MONITOR_BUF,
+				 &soc_srngs_state->ring_state[j]);
+
+			if (status == QDF_STATUS_SUCCESS)
+				qdf_assert_always(++j < DP_MAX_SRNGS);
+
+			status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rxdma_mon_dst_ring[lmac_id],
+				 RXDMA_MONITOR_DST,
+				 &soc_srngs_state->ring_state[j]);
+
+			if (status == QDF_STATUS_SUCCESS)
+				qdf_assert_always(++j < DP_MAX_SRNGS);
+
+			status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rxdma_mon_desc_ring[lmac_id],
+				 RXDMA_MONITOR_DESC,
+				 &soc_srngs_state->ring_state[j]);
+
+			if (status == QDF_STATUS_SUCCESS)
+				qdf_assert_always(++j < DP_MAX_SRNGS);
+		}
+
+		status = dp_get_srng_ring_state_from_hal
+			(pdev->soc, pdev,
+			 &pdev->soc->rxdma_mon_status_ring[lmac_id],
+			 RXDMA_MONITOR_STATUS,
+			 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+
+	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)	{
+		lmac_id = dp_get_lmac_id_for_pdev_id(pdev->soc,
+						     i, pdev->pdev_id);
+
+		status = dp_get_srng_ring_state_from_hal
+				(pdev->soc, pdev,
+				 &pdev->soc->rxdma_err_dst_ring
+				 [lmac_id],
+				 RXDMA_DST,
+				 &soc_srngs_state->ring_state[j]);
+
+		if (status == QDF_STATUS_SUCCESS)
+			qdf_assert_always(++j < DP_MAX_SRNGS);
+	}
+	soc_srngs_state->max_ring_id = j;
+
+	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
+
+	soc_srngs_state->seq_num = pdev->bkp_stats.seq_num;
+	TAILQ_INSERT_TAIL(&pdev->bkp_stats.list, soc_srngs_state,
+			  list_elem);
+	pdev->bkp_stats.seq_num++;
+	qdf_spin_unlock_bh(&pdev->bkp_stats.list_lock);
+
+	qdf_queue_work(0, pdev->bkp_stats.work_queue,
+		       &pdev->bkp_stats.work);
 }
 
 /*
@@ -4499,22 +4760,22 @@ static void dp_htt_bkp_event_alert(u_int32_t *msg_word, struct htt_soc *soc)
 	case HTT_SW_RING_TYPE_UMAC:
 		if (!time_allow_print(radio_tt->umac_ttt, ring_id))
 			return;
-		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+		dp_htt_alert_print(msg_type, pdev, ring_id, hp_idx, tp_idx,
 				   bkp_time, "HTT_SW_RING_TYPE_UMAC");
 	break;
 	case HTT_SW_RING_TYPE_LMAC:
 		if (!time_allow_print(radio_tt->lmac_ttt, ring_id))
 			return;
-		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+		dp_htt_alert_print(msg_type, pdev, ring_id, hp_idx, tp_idx,
 				   bkp_time, "HTT_SW_RING_TYPE_LMAC");
 	break;
 	default:
-		dp_htt_alert_print(msg_type, pdev_id, ring_id, hp_idx, tp_idx,
+		dp_htt_alert_print(msg_type, pdev, ring_id, hp_idx, tp_idx,
 				   bkp_time, "UNKNOWN");
 	break;
 	}
 
-	dp_print_ring_stats(pdev);
+	dp_queue_ring_stats(pdev);
 	dp_print_napi_stats(pdev->soc);
 }
 
@@ -5844,4 +6105,113 @@ dp_htt_rx_fisa_config(struct dp_pdev *pdev,
 	}
 
 	return status;
+}
+
+/**
+ * dp_bk_pressure_stats_handler(): worker function to print back pressure
+ *				   stats
+ *
+ * @context : argument to work function
+ */
+static void dp_bk_pressure_stats_handler(void *context)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)context;
+	struct dp_soc_srngs_state *soc_srngs_state, *soc_srngs_state_next;
+	const char *ring_name;
+	int i;
+	struct dp_srng_ring_state *ring_state;
+
+	TAILQ_HEAD(, dp_soc_srngs_state) soc_srngs_state_list;
+
+	TAILQ_INIT(&soc_srngs_state_list);
+	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
+	TAILQ_CONCAT(&soc_srngs_state_list, &pdev->bkp_stats.list,
+		     list_elem);
+	qdf_spin_unlock_bh(&pdev->bkp_stats.list_lock);
+
+	TAILQ_FOREACH_SAFE(soc_srngs_state, &soc_srngs_state_list,
+			   list_elem, soc_srngs_state_next) {
+		TAILQ_REMOVE(&soc_srngs_state_list, soc_srngs_state,
+			     list_elem);
+
+		DP_PRINT_STATS("### START BKP stats for seq_num %u ###",
+			       soc_srngs_state->seq_num);
+		for (i = 0; i < soc_srngs_state->max_ring_id; i++) {
+			ring_state = &soc_srngs_state->ring_state[i];
+			ring_name = dp_srng_get_str_from_hal_ring_type
+						(ring_state->ring_type);
+			DP_PRINT_STATS("%s: SW:Head pointer = %d Tail Pointer = %d\n",
+				       ring_name,
+				       ring_state->sw_head,
+				       ring_state->sw_tail);
+
+			DP_PRINT_STATS("%s: HW:Head pointer = %d Tail Pointer = %d\n",
+				       ring_name,
+				       ring_state->hw_head,
+				       ring_state->hw_tail);
+		}
+
+		DP_PRINT_STATS("### BKP stats for seq_num %u COMPLETE ###",
+			       soc_srngs_state->seq_num);
+		qdf_mem_free(soc_srngs_state);
+	}
+}
+
+/*
+ * dp_pdev_bkp_stats_detach() - detach resources for back pressure stats
+ *				processing
+ * @pdev: Datapath PDEV handle
+ *
+ */
+void dp_pdev_bkp_stats_detach(struct dp_pdev *pdev)
+{
+	struct dp_soc_srngs_state *ring_state, *ring_state_next;
+
+	if (!pdev->bkp_stats.work_queue)
+		return;
+
+	qdf_flush_workqueue(0, pdev->bkp_stats.work_queue);
+	qdf_destroy_workqueue(0, pdev->bkp_stats.work_queue);
+	qdf_flush_work(&pdev->bkp_stats.work);
+	qdf_disable_work(&pdev->bkp_stats.work);
+	qdf_spin_lock_bh(&pdev->bkp_stats.list_lock);
+	TAILQ_FOREACH_SAFE(ring_state, &pdev->bkp_stats.list,
+			   list_elem, ring_state_next) {
+		TAILQ_REMOVE(&pdev->bkp_stats.list, ring_state,
+			     list_elem);
+		qdf_mem_free(ring_state);
+	}
+	qdf_spin_unlock_bh(&pdev->bkp_stats.list_lock);
+	qdf_spinlock_destroy(&pdev->bkp_stats.list_lock);
+}
+
+/*
+ * dp_pdev_bkp_stats_attach() - attach resources for back pressure stats
+ *				processing
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: QDF_STATUS_SUCCESS: Success
+ *         QDF_STATUS_E_NOMEM: Error
+ */
+QDF_STATUS dp_pdev_bkp_stats_attach(struct dp_pdev *pdev)
+{
+	TAILQ_INIT(&pdev->bkp_stats.list);
+	pdev->bkp_stats.seq_num = 0;
+
+	qdf_create_work(0, &pdev->bkp_stats.work,
+			dp_bk_pressure_stats_handler, pdev);
+
+	pdev->bkp_stats.work_queue =
+		qdf_alloc_unbound_workqueue("dp_bkp_work_queue");
+	if (!pdev->bkp_stats.work_queue)
+		goto fail;
+
+	qdf_spinlock_create(&pdev->bkp_stats.list_lock);
+	return QDF_STATUS_SUCCESS;
+
+fail:
+	dp_htt_alert("BKP stats attach failed");
+	qdf_flush_work(&pdev->bkp_stats.work);
+	qdf_disable_work(&pdev->bkp_stats.work);
+	return QDF_STATUS_E_FAILURE;
 }

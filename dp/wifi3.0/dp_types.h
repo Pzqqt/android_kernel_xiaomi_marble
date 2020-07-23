@@ -119,6 +119,8 @@
 
 #define REO_CMD_EVENT_HIST_MAX 64
 
+#define DP_MAX_SRNGS 64
+
 /* 2G PHYB */
 #define PHYB_2G_LMAC_ID 2
 #define PHYB_2G_TARGET_PDEV_ID 2
@@ -2073,6 +2075,22 @@ struct pdev_htt_stats_dbgfs_cfg {
 };
 #endif /* HTT_STATS_DEBUGFS_SUPPORT */
 
+struct dp_srng_ring_state {
+	enum hal_ring_type ring_type;
+	uint32_t sw_head;
+	uint32_t sw_tail;
+	uint32_t hw_head;
+	uint32_t hw_tail;
+
+};
+
+struct dp_soc_srngs_state {
+	uint32_t seq_num;
+	uint32_t max_ring_id;
+	struct dp_srng_ring_state ring_state[DP_MAX_SRNGS];
+	TAILQ_ENTRY(dp_soc_srngs_state) list_elem;
+};
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/**
@@ -2463,6 +2481,14 @@ struct dp_pdev {
 #endif
 	/* Flag to inidicate monitor rings are initialized */
 	uint8_t pdev_mon_init;
+	struct {
+		qdf_work_t work;
+		qdf_workqueue_t *work_queue;
+		uint32_t seq_num;
+		qdf_spinlock_t list_lock;
+
+		TAILQ_HEAD(, dp_soc_srngs_state) list;
+	} bkp_stats;
 };
 
 struct dp_peer;
