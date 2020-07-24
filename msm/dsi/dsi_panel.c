@@ -3662,7 +3662,7 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 	struct dsi_mode_info *timing = &mode->timing;
 	struct dsi_display_mode *display_mode;
 	u32 jitter_numer, jitter_denom, prefill_lines;
-	u32 min_threshold_us, prefill_time_us;
+	u32 min_threshold_us, prefill_time_us, max_transfer_us;
 	u16 bpp;
 
 	/* Packet overlead in bits,2 bytes header + 2 bytes checksum
@@ -3703,6 +3703,26 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 
 	timing->min_dsi_clk_hz = min_bitclk_hz;
 
+	min_threshold_us = mult_frac(frame_time_us,
+			jitter_numer, (jitter_denom * 100));
+	/*
+	 * Increase the prefill_lines proportionately as recommended
+	 * 35lines for 60fps, 52 for 90fps, 70lines for 120fps.
+	 */
+	prefill_lines = mult_frac(MIN_PREFILL_LINES,
+			timing->refresh_rate, 60);
+
+	prefill_time_us = mult_frac(frame_time_us, prefill_lines,
+			(timing->v_active));
+
+	/*
+	 * Threshold is sum of panel jitter time, prefill line time
+	 * plus 64usec buffer time.
+	 */
+	min_threshold_us = min_threshold_us + 64 + prefill_time_us;
+
+	DSI_DEBUG("min threshold time=%d\n", min_threshold_us);
+
 	if (timing->clk_rate_hz) {
 		/* adjust the transfer time proportionately for bit clk*/
 		dsi_transfer_time_us = frame_time_us * min_bitclk_hz;
@@ -3710,30 +3730,13 @@ void dsi_panel_calc_dsi_transfer_time(struct dsi_host_common_cfg *config,
 		timing->dsi_transfer_time_us = dsi_transfer_time_us;
 
 	} else if (mode->priv_info->mdp_transfer_time_us) {
+		max_transfer_us = frame_time_us - min_threshold_us;
+		mode->priv_info->mdp_transfer_time_us = min(
+				mode->priv_info->mdp_transfer_time_us,
+				max_transfer_us);
 		timing->dsi_transfer_time_us =
 			mode->priv_info->mdp_transfer_time_us;
 	} else {
-
-		min_threshold_us = mult_frac(frame_time_us,
-				jitter_numer, (jitter_denom * 100));
-		/*
-		 * Increase the prefill_lines proportionately as recommended
-		 * 35lines for 60fps, 52 for 90fps, 70lines for 120fps.
-		 */
-		prefill_lines = mult_frac(MIN_PREFILL_LINES,
-				timing->refresh_rate, 60);
-
-		prefill_time_us = mult_frac(frame_time_us, prefill_lines,
-				(timing->v_active));
-
-		/*
-		 * Threshold is sum of panel jitter time, prefill line time
-		 * plus 100usec buffer time.
-		 */
-		min_threshold_us = min_threshold_us + 100 + prefill_time_us;
-
-		DSI_DEBUG("min threshold time=%d\n", min_threshold_us);
-
 		if (min_threshold_us > frame_threshold_us)
 			frame_threshold_us = min_threshold_us;
 
