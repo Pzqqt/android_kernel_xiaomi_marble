@@ -544,15 +544,24 @@
 
 /*
  * <ini>
- * gTDLSPuapsdPTIWindow - This ini is used to configure peer traffic indication
- * window.
- * @Min: 1
- * @Max: 5
- * @Default: 2
+ * gTDLSExternalControl - Enable external TDLS control.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 1
  *
- * This ini is used to configure buffering time in number of beacon intervals.
+ * This ini is used to enable/disable external TDLS control.
+ * TDLS external control works with TDLS implicit trigger. TDLS external
+ * control allows a user to add a MAC address of potential TDLS peers so
+ * that the CLD driver can initiate implicit TDLS setup to only those peers
+ * when criteria for TDLS setup (throughput and RSSI threshold) is met.
+ * There are two flavors of external control supported. If control default
+ * is set 1 it means strict external control where only for configured
+ * tdls peer mac address tdls link will be established. If control default
+ * is set 2 liberal tdls external control is needed which means
+ * tdls link will be established with configured peer mac address as well
+ * as any other peer which supports tdls.
  *
- * Related: gEnableTDLSSupport.
+ * Related: gEnableTDLSSupport, gEnableTDLSImplicitTrigger.
  *
  * Supported Feature: TDLS
  *

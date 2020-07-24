@@ -142,8 +142,12 @@ tdls_update_feature_flag(struct tdls_soc_priv_obj *tdls_soc_obj)
 		  1 << TDLS_FEATURE_ENABLE : 0) |
 		 (tdls_soc_obj->tdls_configs.tdls_implicit_trigger_enable ?
 		  1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
-		 (tdls_soc_obj->tdls_configs.tdls_external_control ?
-		  1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
+		 (tdls_soc_obj->tdls_configs.tdls_external_control &
+		  TDLS_STRICT_EXTERNAL_CONTROL ?
+		  1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0) |
+		 (tdls_soc_obj->tdls_configs.tdls_external_control &
+		  TDLS_LIBERAL_EXTERNAL_CONTROL ?
+		  1 << TDLS_FEATURE_LIBERAL_EXTERNAL_CONTROL : 0));
 }
 
 /**
