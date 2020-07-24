@@ -21,7 +21,7 @@
 #include "wlan_cm_main.h"
 #include "wlan_cm_sm.h"
 
-QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
@@ -35,7 +35,7 @@ QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
 
 	vdev_mlme->cnx_mgr_ctx->vdev = vdev_mlme->vdev;
-	status = mlme_cm_sm_create(vdev_mlme->cnx_mgr_ctx);
+	status = cm_sm_create(vdev_mlme->cnx_mgr_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_err("CM MLME SM allocation failed");
 		qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
@@ -47,7 +47,7 @@ QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 	enum QDF_OPMODE op_mode = wlan_vdev_mlme_get_opmode(vdev);
@@ -56,7 +56,7 @@ QDF_STATUS mlme_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 		return QDF_STATUS_SUCCESS;
 
 	qdf_list_destroy(&vdev_mlme->cnx_mgr_ctx->req_list);
-	mlme_cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);
+	cm_sm_destroy(vdev_mlme->cnx_mgr_ctx);
 	qdf_mem_free(vdev_mlme->cnx_mgr_ctx);
 	vdev_mlme->cnx_mgr_ctx = NULL;
 

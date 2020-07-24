@@ -22,22 +22,21 @@
 #include "wlan_cm_roam_sm.h"
 #include "wlan_cm_sm.h"
 
-void mlme_cm_state_roaming_entry(void *ctx)
+void cm_state_roaming_entry(void *ctx)
 {
-	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+	struct cnx_mgr *cm_ctx = ctx;
 
-	mlme_cm_sm_state_update(cm_ctx, WLAN_CM_S_ROAMING, WLAN_CM_SS_IDLE);
+	cm_sm_state_update(cm_ctx, WLAN_CM_S_ROAMING, WLAN_CM_SS_IDLE);
 }
 
-void mlme_cm_state_roaming_exit(void *ctx)
+void cm_state_roaming_exit(void *ctx)
 {
 }
 
-bool mlme_cm_state_roaming_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data)
+bool cm_state_roaming_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data)
 {
-//	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+//	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
 
 	switch (event) {
@@ -51,25 +50,24 @@ bool mlme_cm_state_roaming_event(void *ctx, uint16_t event,
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
-void mlme_cm_subst_preauth_entry(void *ctx)
+void cm_subst_preauth_entry(void *ctx)
 {
-	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+	struct cnx_mgr *cm_ctx = ctx;
 
-	if (mlme_cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
+	if (cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
 		QDF_BUG(0);
 
-	mlme_cm_set_substate(cm_ctx, WLAN_CM_SS_PREAUTH);
+	cm_set_substate(cm_ctx, WLAN_CM_SS_PREAUTH);
 }
 
-void mlme_cm_subst_preauth_exit(void *ctx)
+void cm_subst_preauth_exit(void *ctx)
 {
 }
 
-bool mlme_cm_subst_preauth_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data)
+bool cm_subst_preauth_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data)
 {
-//	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+//	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
 
 	switch (event) {
@@ -83,25 +81,24 @@ bool mlme_cm_subst_preauth_event(void *ctx, uint16_t event,
 
 #endif /* WLAN_FEATURE_PREAUTH_ENABLE */
 
-void mlme_cm_subst_reassoc_entry(void *ctx)
+void cm_subst_reassoc_entry(void *ctx)
 {
-	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+	struct cnx_mgr *cm_ctx = ctx;
 
-	if (mlme_cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
+	if (cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
 		QDF_BUG(0);
 
-	mlme_cm_set_substate(cm_ctx, WLAN_CM_SS_REASSOC);
+	cm_set_substate(cm_ctx, WLAN_CM_SS_REASSOC);
 }
 
-void mlme_cm_subst_reassoc_exit(void *ctx)
+void cm_subst_reassoc_exit(void *ctx)
 {
 }
 
-bool mlme_cm_subst_reassoc_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data)
+bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data)
 {
-//	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+//	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
 
 	switch (event) {
@@ -116,25 +113,24 @@ bool mlme_cm_subst_reassoc_event(void *ctx, uint16_t event,
 #endif /* WLAN_FEATURE_HOST_ROAM */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void mlme_cm_subst_roam_start_entry(void *ctx)
+void cm_subst_roam_start_entry(void *ctx)
 {
-	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+	struct cnx_mgr *cm_ctx = ctx;
 
-	if (mlme_cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
+	if (cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
 		QDF_BUG(0);
 
-	mlme_cm_set_substate(cm_ctx, WLAN_CM_SS_ROAM_STARTED);
+	cm_set_substate(cm_ctx, WLAN_CM_SS_ROAM_STARTED);
 }
 
-void mlme_cm_subst_roam_start_exit(void *ctx)
+void cm_subst_roam_start_exit(void *ctx)
 {
 }
 
-bool mlme_cm_subst_roam_start_event(void *ctx, uint16_t event,
-				    uint16_t event_data_len,
-				    void *event_data)
+bool cm_subst_roam_start_event(void *ctx, uint16_t event, uint16_t data_len,
+			       void *data)
 {
-//	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+//	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
 
 	switch (event) {
@@ -146,25 +142,24 @@ bool mlme_cm_subst_roam_start_event(void *ctx, uint16_t event,
 	return status;
 }
 
-void mlme_cm_subst_roam_sync_entry(void *ctx)
+void cm_subst_roam_sync_entry(void *ctx)
 {
-	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+	struct cnx_mgr *cm_ctx = ctx;
 
-	if (mlme_cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
+	if (cm_get_state(cm_ctx) != WLAN_CM_S_ROAMING)
 		QDF_BUG(0);
 
-	mlme_cm_set_substate(cm_ctx, WLAN_CM_SS_ROAM_SYNC);
+	cm_set_substate(cm_ctx, WLAN_CM_SS_ROAM_SYNC);
 }
 
-void mlme_cm_subst_roam_sync_exit(void *ctx)
+void cm_subst_roam_sync_exit(void *ctx)
 {
 }
 
-bool mlme_cm_subst_roam_sync_event(void *ctx, uint16_t event,
-				   uint16_t event_data_len,
-				   void *event_data)
+bool cm_subst_roam_sync_event(void *ctx, uint16_t event, uint16_t data_len,
+			      void *data)
 {
-//	struct cnx_mgr *cm_ctx = (struct cnx_mgr *)ctx;
+//	struct cnx_mgr *cm_ctx = ctx;
 	bool status;
 
 	switch (event) {

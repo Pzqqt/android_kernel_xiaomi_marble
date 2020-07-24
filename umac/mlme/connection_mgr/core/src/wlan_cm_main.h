@@ -235,7 +235,7 @@ struct cnx_mgr {
 };
 
 /**
- * mlme_cm_init() - Invoke connection manager init
+ * wlan_cm_init() - Invoke connection manager init
  * @vdev_mlme_obj:  VDEV MLME comp object
  *
  * API allocates CM and init
@@ -243,10 +243,10 @@ struct cnx_mgr {
  * Return: SUCCESS on successful allocation
  *         FAILURE, if registration fails
  */
-QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme);
+QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme);
 
 /**
- * mlme_cm_deinit() - Invoke connection manager deinit
+ * wlan_cm_deinit() - Invoke connection manager deinit
  * @vdev_mlme_obj:  VDEV MLME comp object
  *
  * API destroys CM
@@ -254,15 +254,15 @@ QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme);
  * Return: SUCCESS on successful deletion
  *         FAILURE, if deletion fails
  */
-QDF_STATUS mlme_cm_deinit(struct vdev_mlme_obj *vdev_mlme);
+QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme);
 #else
 
-static inline QDF_STATUS mlme_cm_init(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS wlan_cm_init(struct vdev_mlme_obj *vdev_mlme)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS mlme_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
+static inline QDF_STATUS wlan_cm_deinit(struct vdev_mlme_obj *vdev_mlme)
 {
 	return QDF_STATUS_SUCCESS;
 }

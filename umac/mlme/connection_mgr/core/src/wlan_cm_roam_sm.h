@@ -24,7 +24,7 @@
 #define __WLAN_CM_ROAM_SM_H__
 
 /**
- * mlme_cm_state_roaming_entry() - Entry API for roaming state for
+ * cm_state_roaming_entry() - Entry API for roaming state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -32,35 +32,37 @@
  *
  * Return: void
  */
-void mlme_cm_state_roaming_entry(void *ctx);
+void cm_state_roaming_entry(void *ctx);
 
 /**
- * mlme_cm_state_roaming_exit() - Exit API for roaming state for connection mgr
+ * cm_state_roaming_exit() - Exit API for roaming state for connection mgr
  * @ctx: connection manager ctx
  *
  * API to perform operations on exiting from roaming state
  *
  * Return: void
  */
-void mlme_cm_state_roaming_exit(void *ctx);
+void cm_state_roaming_exit(void *ctx);
 
 /**
- * mlme_cm_state_roaming_event() - Roaming State event handler for
+ * cm_state_roaming_event() - Roaming State event handler for
  * connection mgr
  * @ctx: connection manager ctx
+ * @event: event to handle
+ * @data_len: event data len
+ * @data:event data
  *
  * API to handle events in roaming state
  *
  * Return: bool
  */
-bool mlme_cm_state_roaming_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data);
+bool cm_state_roaming_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data);
 
 #ifdef WLAN_FEATURE_HOST_ROAM
 #ifdef WLAN_FEATURE_PREAUTH_ENABLE
 /**
- * mlme_cm_subst_preauth_entry() - Entry API for preauth sub-state for
+ * cm_subst_preauth_entry() - Entry API for preauth sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -68,10 +70,10 @@ bool mlme_cm_state_roaming_event(void *ctx, uint16_t event,
  *
  * Return: void
  */
-void mlme_cm_subst_preauth_entry(void *ctx);
+void cm_subst_preauth_entry(void *ctx);
 
 /**
- * mlme_cm_subst_preauth_exit() - Exit API for preauth sub-state for
+ * cm_subst_preauth_exit() - Exit API for preauth sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -79,36 +81,37 @@ void mlme_cm_subst_preauth_entry(void *ctx);
  *
  * Return: void
  */
-void mlme_cm_subst_preauth_exit(void *ctx);
+void cm_subst_preauth_exit(void *ctx);
 
 /**
- * mlme_cm_subst_preauth_event() - Preauth sub-state event handler for
+ * cm_subst_preauth_event() - Preauth sub-state event handler for
  * connection mgr
  * @ctx: connection manager ctx
+ * @event: event to handle
+ * @data_len: event data len
+ * @data:event data
  *
  * API to handle events in preauth sub-state
  *
  * Return: bool
  */
-bool mlme_cm_subst_preauth_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data);
+bool cm_subst_preauth_event(void *ctx, uint16_t event,
+			    uint16_t data_len, void *data);
 #else /* WLAN_FEATURE_PREAUTH_ENABLE  && WLAN_FEATURE_HOST_ROAM */
 
-static inline void mlme_cm_subst_preauth_entry(void *ctx) {}
+static inline void cm_subst_preauth_entry(void *ctx) {}
 
-static inline void mlme_cm_subst_preauth_exit(void *ctx) {}
+static inline void cm_subst_preauth_exit(void *ctx) {}
 
-static inline bool mlme_cm_subst_preauth_event(void *ctx, uint16_t event,
-					       uint16_t event_data_len,
-					       void *event_data)
+static inline bool cm_subst_preauth_event(void *ctx, uint16_t event,
+					  uint16_t data_len, void *data)
 {
 	return true;
 }
 #endif /* WLAN_FEATURE_PREAUTH_ENABLE */
 
 /**
- * mlme_cm_subst_reassoc_entry() - Entry API for reassoc sub-state for
+ * cm_subst_reassoc_entry() - Entry API for reassoc sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -116,10 +119,10 @@ static inline bool mlme_cm_subst_preauth_event(void *ctx, uint16_t event,
  *
  * Return: void
  */
-void mlme_cm_subst_reassoc_entry(void *ctx);
+void cm_subst_reassoc_entry(void *ctx);
 
 /**
- * mlme_cm_subst_reassoc_exit() - Exit API for reassoc sub-state for
+ * cm_subst_reassoc_exit() - Exit API for reassoc sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -127,26 +130,28 @@ void mlme_cm_subst_reassoc_entry(void *ctx);
  *
  * Return: void
  */
-void mlme_cm_subst_reassoc_exit(void *ctx);
+void cm_subst_reassoc_exit(void *ctx);
 
 /**
- * mlme_cm_subst_reassoc_event() - Reassoc sub-state event handler for
+ * cm_subst_reassoc_event() - Reassoc sub-state event handler for
  * connection mgr
  * @ctx: connection manager ctx
+ * @event: event to handle
+ * @data_len: event data len
+ * @data:event data
  *
  * API to handle events in preauth sub-state
  *
  * Return: bool
  */
-bool mlme_cm_subst_reassoc_event(void *ctx, uint16_t event,
-				 uint16_t event_data_len,
-				 void *event_data);
+bool cm_subst_reassoc_event(void *ctx, uint16_t event, uint16_t data_len,
+			    void *data);
 #endif /* WLAN_FEATURE_HOST_ROAM */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 
 /**
- * mlme_cm_subst_roam_start_entry() - Entry API for roam start sub-state for
+ * cm_subst_roam_start_entry() - Entry API for roam start sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -154,10 +159,10 @@ bool mlme_cm_subst_reassoc_event(void *ctx, uint16_t event,
  *
  * Return: void
  */
-void mlme_cm_subst_roam_start_entry(void *ctx);
+void cm_subst_roam_start_entry(void *ctx);
 
 /**
- * mlme_cm_subst_roam_start_exit() - Exit API for roam start sub-state for
+ * cm_subst_roam_start_exit() - Exit API for roam start sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -165,23 +170,25 @@ void mlme_cm_subst_roam_start_entry(void *ctx);
  *
  * Return: void
  */
-void mlme_cm_subst_roam_start_exit(void *ctx);
+void cm_subst_roam_start_exit(void *ctx);
 
 /**
- * mlme_cm_subst_roam_start_event() - Roam start sub-state event handler for
+ * cm_subst_roam_start_event() - Roam start sub-state event handler for
  * connection mgr
  * @ctx: connection manager ctx
+ * @event: event to handle
+ * @data_len: event data len
+ * @data:event data
  *
  * API to handle events in roam start sub-state
  *
  * Return: bool
  */
-bool mlme_cm_subst_roam_start_event(void *ctx, uint16_t event,
-				    uint16_t event_data_len,
-				    void *event_data);
+bool cm_subst_roam_start_event(void *ctx, uint16_t event, uint16_t data_len,
+			       void *data);
 
 /**
- * mlme_cm_subst_roam_sync_entry() - Entry API for roam sync sub-state for
+ * cm_subst_roam_sync_entry() - Entry API for roam sync sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -189,10 +196,10 @@ bool mlme_cm_subst_roam_start_event(void *ctx, uint16_t event,
  *
  * Return: void
  */
-void mlme_cm_subst_roam_sync_entry(void *ctx);
+void cm_subst_roam_sync_entry(void *ctx);
 
 /**
- * mlme_cm_subst_roam_sync_exit() - Exit API for roam sync sub-state for
+ * cm_subst_roam_sync_exit() - Exit API for roam sync sub-state for
  * connection mgr
  * @ctx: connection manager ctx
  *
@@ -200,20 +207,22 @@ void mlme_cm_subst_roam_sync_entry(void *ctx);
  *
  * Return: void
  */
-void mlme_cm_subst_roam_sync_exit(void *ctx);
+void cm_subst_roam_sync_exit(void *ctx);
 
 /**
- * mlme_cm_subst_roam_sync_event() - Roam sync sub-state event handler for
+ * cm_subst_roam_sync_event() - Roam sync sub-state event handler for
  * connection mgr
  * @ctx: connection manager ctx
+ * @event: event to handle
+ * @data_len: event data len
+ * @data:event data
  *
  * API to handle events in roam sync sub-state
  *
  * Return: bool
  */
-bool mlme_cm_subst_roam_sync_event(void *ctx, uint16_t event,
-				   uint16_t event_data_len,
-				   void *event_data);
+bool cm_subst_roam_sync_event(void *ctx, uint16_t event, uint16_t data_len,
+			      void *data);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #endif /* __WLAN_CM_ROAM_SM_H__ */

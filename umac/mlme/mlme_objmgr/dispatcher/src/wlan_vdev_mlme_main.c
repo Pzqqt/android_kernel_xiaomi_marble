@@ -104,7 +104,7 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 		goto init_failed;
 	}
 
-	if (QDF_IS_STATUS_ERROR(mlme_cm_init(vdev_mlme))) {
+	if (QDF_IS_STATUS_ERROR(wlan_cm_init(vdev_mlme))) {
 		mlme_err("CM SM create failed");
 		goto cm_sm_create_failed;
 	}
@@ -133,7 +133,7 @@ ext_hdl_post_create_failed:
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
 ext_hdl_create_failed:
-	mlme_cm_deinit(vdev_mlme);
+	wlan_cm_deinit(vdev_mlme);
 cm_sm_create_failed:
 	mlme_vdev_sm_destroy(vdev_mlme);
 init_failed:
@@ -158,7 +158,7 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	mlme_cm_deinit(vdev_mlme);
+	wlan_cm_deinit(vdev_mlme);
 	mlme_vdev_sm_destroy(vdev_mlme);
 
 	mlme_vdev_ops_ext_hdl_destroy(vdev_mlme);
