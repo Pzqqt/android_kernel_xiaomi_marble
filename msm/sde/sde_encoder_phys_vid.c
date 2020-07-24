@@ -210,7 +210,7 @@ static u32 programmable_fetch_get_num_lines(
 	struct sde_encoder_phys *phys_enc = &vid_enc->base;
 
 	u32 needed_prefill_lines, needed_vfp_lines, actual_vfp_lines;
-	const u32 fixed_prefill_fps = 60;
+	const u32 fixed_prefill_fps = DEFAULT_FPS;
 	u32 default_prefill_lines =
 		phys_enc->hw_intf->cap->prog_fetch_lines_worst_case;
 	u32 start_of_frame_lines =
