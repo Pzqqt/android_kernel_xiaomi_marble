@@ -7204,6 +7204,16 @@ int voc_enable_device(uint32_t session_id)
 			goto done;
 		}
 		v->voc_state = VOC_RUN;
+
+		if (v->lch_mode == 0) {
+			pr_debug("%s: dev_mute = %d, ramp_duration = %d ms\n",
+				__func__, v->dev_rx.dev_mute,
+				 v->dev_rx.dev_mute_ramp_duration_ms);
+			ret = voice_send_device_mute_cmd(v,
+					VSS_IVOLUME_DIRECTION_RX,
+					v->dev_rx.dev_mute,
+					v->dev_rx.dev_mute_ramp_duration_ms);
+		}
 	} else {
 		pr_debug("%s: called in voc state=%d, No_OP\n",
 			 __func__, v->voc_state);
