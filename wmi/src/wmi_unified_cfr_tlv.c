@@ -161,6 +161,9 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 				     rcc->capture_interval);
 	WMI_CFR_CAPTURE_DURATION_SET(cmd->capture_duration,
 				     rcc->capture_duration);
+	WMI_CFR_CAPTURE_COUNT_SET(cmd->capture_count, rcc->capture_count);
+	WMI_CFR_CAPTURE_INTERVAL_MODE_SEL_SET(cmd->capture_count,
+					      rcc->capture_intval_mode_sel);
 	WMI_CFR_FILTER_GROUP_BITMAP_SET(cmd->filter_group_bitmap,
 					rcc->filter_group_bitmap);
 	WMI_CFR_UL_MU_USER_UPPER_SET(cmd->ul_mu_user_mask_upper,
@@ -180,6 +183,8 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 				    rcc->m_ndpa_ndp_all);
 	WMI_CFR_TA_RA_TYPE_FILTER_EN_SET(cmd->filter_type,
 					 rcc->m_ta_ra_filter);
+	WMI_CFR_FILTER_IN_AS_FP_TA_RA_TYPE_SET(cmd->filter_type,
+					       rcc->en_ta_ra_filter_in_as_fp);
 	WMI_CFR_ALL_PACKET_EN_SET(cmd->filter_type,
 				  rcc->m_all_packet);
 
