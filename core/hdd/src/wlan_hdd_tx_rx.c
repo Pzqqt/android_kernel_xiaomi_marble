@@ -1029,7 +1029,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		goto drop_pkt;
 	}
 
-	hdd_get_tx_resource(adapter, &mac_addr,
+	hdd_get_tx_resource(adapter, &mac_addr_tx_allowed,
 			    WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
 
 	/* Get TL AC corresponding to Qdisc queue index/AC. */

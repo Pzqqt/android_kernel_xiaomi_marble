@@ -333,7 +333,7 @@ ol_txrx_get_vdev_by_peer_addr(struct cdp_pdev *ppdev,
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "PDEV not found for peer_addr:" QDF_MAC_ADDR_STR,
+			  "Peer not found for peer_addr:" QDF_MAC_ADDR_STR,
 			  QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
 		return NULL;
 	}
