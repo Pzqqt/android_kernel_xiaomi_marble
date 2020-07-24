@@ -896,9 +896,12 @@ static u32 _sde_crtc_get_displays_affected(struct drm_crtc *crtc,
 			disp_bitmask = BIT(1);		/* right only */
 		else
 			disp_bitmask = BIT(0) | BIT(1); /* left and right */
+	} else if (sde_crtc->mixers_swapped) {
+		disp_bitmask = BIT(0);
 	} else {
 		for (i = 0; i < sde_crtc->num_mixers; i++) {
-			if (!sde_kms_rect_is_null(&crtc_state->lm_roi[i]))
+			if (!sde_kms_rect_is_null(
+					&crtc_state->lm_roi[i]))
 				disp_bitmask |= BIT(i);
 		}
 	}
@@ -1113,7 +1116,7 @@ static void _sde_crtc_program_lm_output_roi(struct drm_crtc *crtc)
 	struct sde_crtc_state *crtc_state;
 	const struct sde_rect *lm_roi;
 	struct sde_hw_mixer *hw_lm;
-	bool right_mixer;
+	bool right_mixer = false;
 	int lm_idx;
 
 	if (!crtc)
@@ -1127,14 +1130,12 @@ static void _sde_crtc_program_lm_output_roi(struct drm_crtc *crtc)
 
 		lm_roi = &crtc_state->lm_roi[lm_idx];
 		hw_lm = sde_crtc->mixers[lm_idx].hw_lm;
-		right_mixer = lm_idx % MAX_MIXERS_PER_LAYOUT;
+		if (!sde_crtc->mixers_swapped)
+			right_mixer = lm_idx % MAX_MIXERS_PER_LAYOUT;
 
 		SDE_EVT32(DRMID(crtc_state->base.crtc), lm_idx,
 				lm_roi->x, lm_roi->y, lm_roi->w, lm_roi->h,
 				right_mixer);
-
-		if (sde_kms_rect_is_null(lm_roi))
-			continue;
 
 		hw_lm->cfg.out_width = lm_roi->w;
 		hw_lm->cfg.out_height = lm_roi->h;
@@ -1664,13 +1665,8 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 		ctl = mixer[i].hw_ctl;
 		lm = mixer[i].hw_lm;
 
-		if (sde_kms_rect_is_null(lm_roi)) {
-			SDE_DEBUG(
-				"%s: lm%d leave ctl%d mask 0 since null roi\n",
-					sde_crtc->name, lm->idx - LM_0,
-					ctl->idx - CTL_0);
-			continue;
-		}
+		if (sde_kms_rect_is_null(lm_roi))
+			sde_crtc->mixers[i].mixer_op_mode = 0;
 
 		lm->ops.setup_alpha_out(lm, mixer[i].mixer_op_mode);
 
@@ -1684,8 +1680,17 @@ static void _sde_crtc_blend_setup(struct drm_crtc *crtc,
 			ctl->idx - CTL_0,
 			cfg.pending_flush_mask);
 
-		ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
-				&sde_crtc->stage_cfg[lm_layout]);
+		if (sde_kms_rect_is_null(lm_roi)) {
+			SDE_DEBUG(
+				"%s: lm%d leave ctl%d mask 0 since null roi\n",
+					sde_crtc->name, lm->idx - LM_0,
+					ctl->idx - CTL_0);
+			ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
+					NULL);
+		} else {
+			ctl->ops.setup_blendstage(ctl, mixer[i].hw_lm->idx,
+					&sde_crtc->stage_cfg[lm_layout]);
+		}
 	}
 
 	_sde_crtc_program_lm_output_roi(crtc);

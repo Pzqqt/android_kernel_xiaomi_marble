@@ -326,11 +326,11 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 	hw_ctl = sde_enc->cur_master->hw_ctl;
 
 	/*
-	 * in 3d_merge and half_panel partial update dsc should be
+	 * in 3d_merge or half_panel partial update, dsc should be
 	 * bound to the pp which is driving the update, else in
 	 * 3d_merge dsc should be bound to left side of the pipe
 	 */
-	if (merge_3d && half_panel_partial_update)
+	if (merge_3d || half_panel_partial_update)
 		hw_pp = (active) ? sde_enc->hw_pp[0] : sde_enc->hw_pp[1];
 	else
 		hw_pp = sde_enc->hw_pp[index];
@@ -346,9 +346,9 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 		return -EINVAL;
 	}
 
-	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h,
-			dsc_common_mode, index, active, merge_3d,
-			disable_merge_3d, dsc_4hsmerge);
+	SDE_EVT32(DRMID(&sde_enc->base), roi->w, roi->h, dsc_common_mode,
+			index, active, merge_3d, disable_merge_3d,
+			dsc_4hsmerge);
 
 	_dce_dsc_pipe_cfg(hw_dsc, hw_pp, dsc, dsc_common_mode, ich_res,
 			hw_dsc_pp, mode_3d, disable_merge_3d, active,
@@ -362,11 +362,12 @@ static int _dce_dsc_setup_single(struct sde_encoder_virt *sde_enc,
 
 	if (hw_ctl->ops.update_bitmask)
 		hw_ctl->ops.update_bitmask(hw_ctl, SDE_HW_FLUSH_DSC,
-				hw_dsc->idx, active);
+				hw_dsc->idx, true);
 
-	SDE_DEBUG_DCE(sde_enc, "update_intf_cfg hw_ctl[%d], dsc:%d, %s",
+	SDE_DEBUG_DCE(sde_enc, "update_intf_cfg hw_ctl[%d], dsc:%d, %s %d\n",
 			hw_ctl->idx, cfg.dsc[0],
-			active ? "enabled" : "disabled");
+			active ? "enabled" : "disabled",
+			half_panel_partial_update);
 
 	if (mode_3d) {
 		memset(&cfg, 0, sizeof(cfg));
@@ -428,6 +429,7 @@ static int _dce_dsc_setup_helper(struct sde_encoder_virt *sde_enc,
 
 	half_panel_partial_update = _dce_check_half_panel_update(num_lm,
 			affected_displays);
+	dsc->half_panel_pu = half_panel_partial_update;
 	dsc_merge = ((num_dsc > num_intf) && !half_panel_partial_update) ?
 			true : false;
 	disable_merge_3d = (merge_3d && half_panel_partial_update) ?
