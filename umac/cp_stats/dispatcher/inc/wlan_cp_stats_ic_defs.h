@@ -372,6 +372,8 @@ struct vdev_80211_stats {
 	uint64_t cs_prob_req_drops;
 	uint64_t cs_oob_probe_req_count;
 	uint64_t cs_wc_probe_req_drops;
+	uint64_t cs_fils_frames_sent;
+	uint64_t cs_fils_frames_sent_fail;
 };
 
 /**

@@ -775,6 +775,7 @@ enum {
 	IEEE80211_PARAM_CURRENT_PP                 = 706, /* P Periodicity */
 	IEEE80211_PARAM_NO_ACT_VAPS                = 707, /* Active Vaps */
 	IEEE80211_PARAM_TX_VAP                     = 708, /* Current Tx Vap */
+	IEEE80211_PARAM_FILS_IS_ENABLE            = 709, /* Fils enable frames*/
 };
 
 enum {
