@@ -543,7 +543,7 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan)
 
 #ifdef QCA_SUPPORT_AGILE_DFS
 void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
-				    uint8_t *cur_precac_dfs_index)
+				    uint8_t *cur_agile_dfs_index)
 {
 	struct wlan_dfs *dfs;
 	struct dfs_soc_priv_obj *dfs_soc_obj;
@@ -554,8 +554,8 @@ void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
 
-	*cur_precac_dfs_index =
-	   (dfs_soc_obj->cur_precac_dfs_index + 1) % dfs_soc_obj->num_dfs_privs;
+	*cur_agile_dfs_index =
+	   (dfs_soc_obj->cur_agile_dfs_index + 1) % dfs_soc_obj->num_dfs_privs;
 }
 
 /*
@@ -591,7 +591,7 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
 	uint16_t ch_freq = 0;
-	uint8_t cur_dfs_idx = 0;
+	uint8_t cur_agile_dfs_idx = 0;
 	uint16_t vhtop_ch_freq_seg1, vhtop_ch_freq_seg2;
 	int i;
 	struct dfs_agile_cac_params adfs_param;
@@ -604,11 +604,11 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 	pdev = dfs->dfs_pdev_obj;
 
 	for (i = 0; i < dfs_soc_obj->num_dfs_privs; i++) {
-		dfs_find_pdev_for_agile_precac(pdev, &cur_dfs_idx);
-		dfs_soc_obj->cur_precac_dfs_index = cur_dfs_idx;
-		temp_dfs = dfs_soc_obj->dfs_priv[cur_dfs_idx].dfs;
+		dfs_find_pdev_for_agile_precac(pdev, &cur_agile_dfs_idx);
+		dfs_soc_obj->cur_agile_dfs_index = cur_agile_dfs_idx;
+		temp_dfs = dfs_soc_obj->dfs_priv[cur_agile_dfs_idx].dfs;
 		pdev = temp_dfs->dfs_pdev_obj;
-		if (!dfs_soc_obj->dfs_priv[cur_dfs_idx].agile_precac_active)
+		if (!dfs_soc_obj->dfs_priv[cur_agile_dfs_idx].agile_precac_active)
 			continue;
 
 		vhtop_ch_freq_seg1 =
@@ -1162,7 +1162,7 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 		 * no need to configure agile channel.
 		 * Return from this function.
 		 */
-		if (!(dfs_soc_obj->cur_precac_dfs_index == dfs->dfs_psoc_idx)) {
+		if (!(dfs_soc_obj->cur_agile_dfs_index == dfs->dfs_psoc_idx)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS,
 				  "preCAC not running on radarfound DFS idx=%d",
 				  dfs->dfs_psoc_idx);
@@ -1453,7 +1453,7 @@ static os_timer_func(dfs_precac_timeout)
 
 	OS_GET_TIMER_ARG(dfs_soc_obj, struct dfs_soc_priv_obj *);
 
-	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_agile_dfs_index].dfs;
 	dfs_soc_obj->dfs_precac_timer_running = 0;
 
 	if (dfs_is_legacy_precac_enabled(dfs)) {
@@ -2734,8 +2734,8 @@ void dfs_start_precac_timer_for_freq(struct wlan_dfs *dfs,
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = dfs->dfs_soc_obj;
-	dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
-	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+	dfs_soc_obj->cur_agile_dfs_index = dfs->dfs_psoc_idx;
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_agile_dfs_index].dfs;
 #define EXTRA_TIME_IN_SEC 5
 	dfs_soc_obj->dfs_precac_timer_running = 1;
 
@@ -3337,14 +3337,14 @@ dfs_find_dfschan_for_freq(struct wlan_dfs *dfs,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!freq) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC, "Input freq is 0!!");
+		dfs_err(dfs, WLAN_DEBUG_DFS_AGILE, "Input freq is 0!!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	mode = dfs_convert_chwidth_to_wlan_phymode(chwidth);
 
 	if (mode == WLAN_PHYMODE_MAX) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC, "Invalid RCAC mode, user "
+		dfs_err(dfs, WLAN_DEBUG_DFS_AGILE, "Invalid RCAC mode, user "
 				"rcac channel invalid!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3448,7 +3448,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (chwidth == CH_WIDTH_80P80MHZ) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+		dfs_err(dfs, WLAN_DEBUG_DFS_AGILE,
 			"RCAC cannot be started for 80P80MHz with single chan");
 		return false;
 	}
@@ -3462,7 +3462,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	status = dfs_find_dfschan_for_freq(dfs, rcac_freq, 0, chwidth,
 					   &rcac_chan);
 	if (status != QDF_STATUS_SUCCESS) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+		dfs_err(dfs, WLAN_DEBUG_DFS_AGILE,
 			"RCAC Channel %d not found for agile width %d",
 			dfs->dfs_agile_rcac_freq_ucfg,
 			chwidth);
@@ -3474,7 +3474,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 	 */
 	if (dfs_is_new_chan_subset_of_old_chan(dfs, &rcac_chan,
 					       dfs->dfs_curchan)) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+		dfs_err(dfs, WLAN_DEBUG_DFS_AGILE,
 			"RCAC Channel %d is either a subset of the current"
 			"operating channel or is a non-dfs channel",
 			dfs->dfs_agile_rcac_freq_ucfg);
@@ -3483,7 +3483,7 @@ dfs_is_rcac_chan_valid(struct wlan_dfs *dfs, enum phy_ch_width chwidth,
 
 	/* 3. Reject the RCAC channel if it has NOL channel as its subset. */
 	if (dfs_is_subchans_of_rcac_chan_in_nol(dfs, &rcac_chan)) {
-	    dfs_err(dfs, WLAN_DEBUG_DFS_RCAC,
+	    dfs_err(dfs, WLAN_DEBUG_DFS_AGILE,
 		    "RCAC Channel %d has NOL channels as its subset",
 		    dfs->dfs_agile_rcac_freq_ucfg);
 		return false;
@@ -3517,7 +3517,7 @@ dfs_save_rcac_ch_params(struct wlan_dfs *dfs, struct ch_params rcac_ch_params,
 			rcac_ch_params.mhz_freq_seg0;
 	rcac_param->rcac_ch_params.mhz_freq_seg1 =
 			rcac_ch_params.mhz_freq_seg1;
-	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE,
 		  "Saved rcac params: prim_freq: %d, width: %d, cfreq0: %d"
 		  "cfreq1: %d", rcac_param->rcac_pri_freq,
 		  rcac_param->rcac_ch_params.ch_width,
@@ -3612,7 +3612,7 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 	dfs_save_rcac_ch_params(dfs, nxt_chan_params, rcac_freq);
 
 	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(&dfs_chan)) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE,
 			  "Not picking an RCAC channel as the random channel"
 			  "cfreq1: %d, cfreq2:%d chosen in non-DFS",
 			  dfs_chan.dfs_ch_vhtop_ch_freq_seg1,
@@ -3621,7 +3621,7 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 	}
 
 	if (nxt_chan_params.ch_width != dfs->dfs_precac_chwidth) {
-		dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE,
 			  "Not picking an RCAC channel as next channel"
 			  "width: %d is not an agile supported width: %d",
 			  nxt_chan_params.ch_width, dfs->dfs_precac_chwidth);
@@ -3731,7 +3731,7 @@ void dfs_set_agilecac_chan_for_freq(struct wlan_dfs *dfs,
 
 	*ch_freq = dfs->dfs_agile_precac_freq_mhz;
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC, "Current channel width: %d,"
+	dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE, "Current channel width: %d,"
 		  "Agile channel width: %d",
 		  curchan_chwidth, agile_chwidth);
 
@@ -3952,7 +3952,7 @@ void dfs_agile_precac_start(struct wlan_dfs *dfs)
 		 dfs->dfs_psoc_idx, dfs);
 
 	if (!dfs_soc_obj->precac_state_started) {
-		dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
+		dfs_soc_obj->cur_agile_dfs_index = dfs->dfs_psoc_idx;
 		/*
 		 * Initiate first call to start preCAC here, for channel as 0,
 		 * and ocac_status as 0
@@ -4023,7 +4023,7 @@ uint32_t dfs_get_precac_intermediate_chan(struct wlan_dfs *dfs)
 #ifdef QCA_SUPPORT_AGILE_DFS
 void dfs_reset_agile_config(struct dfs_soc_priv_obj *dfs_soc)
 {
-	dfs_soc->cur_precac_dfs_index = PCAC_DFS_INDEX_ZERO;
+	dfs_soc->cur_agile_dfs_index = PCAC_DFS_INDEX_ZERO;
 	dfs_soc->dfs_precac_timer_running = PCAC_TIMER_NOT_RUNNING;
 	dfs_soc->precac_state_started = PRECAC_NOT_STARTED;
 	dfs_soc->ocac_status = OCAC_SUCCESS;
@@ -4262,17 +4262,17 @@ void dfs_start_agile_engine(struct wlan_dfs *dfs)
  */
 
 /**
- * dfs_rcac_set_curr_state() - API to set the current state of RCAC SM.
+ * dfs_agile_set_curr_state() - API to set the current state of Agile SM.
  * @dfs_soc_obj: Pointer to DFS soc private object.
  * @state: value of current state.
  *
  * Return: void.
  */
-static void dfs_rcac_set_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj,
-				    enum dfs_rcac_sm_state state)
+static void dfs_agile_set_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj,
+				     enum dfs_agile_sm_state state)
 {
-	if (state < DFS_RCAC_S_MAX) {
-		dfs_soc_obj->dfs_rcac_curr_state = state;
+	if (state < DFS_AGILE_S_MAX) {
+		dfs_soc_obj->dfs_agile_sm_cur_state = state;
 	} else {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			"DFS RCAC state (%d) is invalid", state);
@@ -4281,32 +4281,32 @@ static void dfs_rcac_set_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj,
 }
 
 /**
- * dfs_rcac_get_curr_state() - API to get current state of RCAC SM.
+ * dfs_agile_get_curr_state() - API to get current state of Agile SM.
  * @dfs_soc_obj: Pointer to DFS soc private object.
  *
  * Return: current state enum of type, dfs_rcac_sm_state.
  */
-static enum dfs_rcac_sm_state
-dfs_rcac_get_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj)
+static enum dfs_agile_sm_state
+dfs_agile_get_curr_state(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-	return dfs_soc_obj->dfs_rcac_curr_state;
+	return dfs_soc_obj->dfs_agile_sm_cur_state;
 }
 
 /**
- * dfs_rcac_sm_transition_to() - Wrapper API to transition the RCAC SM state.
+ * dfs_rcac_sm_transition_to() - Wrapper API to transition the Agile SM state.
  * @dfs_soc_obj: Pointer to dfs soc private object that hold the SM handle.
  * @state: State to which the SM is transitioning to.
  *
  * Return: void.
  */
-static void dfs_rcac_sm_transition_to(struct dfs_soc_priv_obj *dfs_soc_obj,
-				      enum dfs_rcac_sm_state state)
+static void dfs_agile_sm_transition_to(struct dfs_soc_priv_obj *dfs_soc_obj,
+				       enum dfs_agile_sm_state state)
 {
-	wlan_sm_transition_to(dfs_soc_obj->dfs_rcac_sm_hdl, state);
+	wlan_sm_transition_to(dfs_soc_obj->dfs_agile_sm_hdl, state);
 }
 
 /**
- * dfs_rcac_sm_deliver_event() - API to post events to RCAC SM.
+ * dfs_agile_sm_deliver_event() - API to post events to Agile SM.
  * @dfs_soc_obj: Pointer to dfs soc private object.
  * @event: Event to be posted to the RCAC SM.
  * @event_data_len: Length of event data.
@@ -4319,11 +4319,12 @@ static void dfs_rcac_sm_transition_to(struct dfs_soc_priv_obj *dfs_soc_obj,
  * under a dispatcher API without a lock.
  */
 static
-QDF_STATUS dfs_rcac_sm_deliver_event(struct dfs_soc_priv_obj *dfs_soc_obj,
-				     enum dfs_rcac_sm_evt event,
-				     uint16_t event_data_len, void *event_data)
+QDF_STATUS dfs_agile_sm_deliver_event(struct dfs_soc_priv_obj *dfs_soc_obj,
+				      enum dfs_agile_sm_evt event,
+				      uint16_t event_data_len,
+				      void *event_data)
 {
-	return wlan_sm_dispatch(dfs_soc_obj->dfs_rcac_sm_hdl,
+	return wlan_sm_dispatch(dfs_soc_obj->dfs_agile_sm_hdl,
 				event,
 				event_data_len,
 				event_data);
@@ -4373,39 +4374,39 @@ static void dfs_abort_agile_rcac(struct wlan_dfs *dfs)
 	qdf_mem_zero(&dfs->dfs_rcac_param, sizeof(struct dfs_rcac_params));
 	dfs->dfs_agile_precac_freq_mhz = 0;
 	dfs->dfs_precac_chwidth = CH_WIDTH_INVALID;
-	dfs->dfs_soc_obj->cur_precac_dfs_index = DFS_PSOC_NO_IDX;
+	dfs->dfs_soc_obj->cur_agile_dfs_index = DFS_PSOC_NO_IDX;
 }
 
 /**
- * dfs_rcac_state_init_entry() - Entry API for INIT state
+ * dfs_agile_state_init_entry() - Entry API for INIT state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving to INIT state
  *
  * Return: void
  */
-static void dfs_rcac_state_init_entry(void *ctx)
+static void dfs_agile_state_init_entry(void *ctx)
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 
-	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_INIT);
+	dfs_agile_set_curr_state(dfs_soc, DFS_AGILE_S_INIT);
 }
 
 /**
- * dfs_rcac_state_init_exit() - Exit API for INIT state
+ * dfs_agile_state_init_exit() - Exit API for INIT state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving out of INIT state
  *
  * Return: void
  */
-static void dfs_rcac_state_init_exit(void *ctx)
+static void dfs_agile_state_init_exit(void *ctx)
 {
 	/* NO OPS */
 }
 
 /**
- * dfs_rcac_state_init_event() - INIT State event handler
+ * dfs_agile_state_init_event() - INIT State event handler
  * @ctx: DFS SoC private object
  * @event: Event posted to the SM.
  * @event_data_len: Length of event data.
@@ -4416,7 +4417,7 @@ static void dfs_rcac_state_init_exit(void *ctx)
  * Return: TRUE:  on handling event
  *         FALSE: on ignoring the event
  */
-static bool dfs_rcac_state_init_event(void *ctx,
+static bool dfs_agile_state_init_event(void *ctx,
 				      uint16_t event,
 				      uint16_t event_data_len,
 				      void *event_data)
@@ -4432,18 +4433,18 @@ static bool dfs_rcac_state_init_event(void *ctx,
 	dfs = (struct wlan_dfs *)event_data;
 
 	switch (event) {
-	case DFS_RCAC_SM_EV_RCAC_START:
+	case DFS_AGILE_SM_EV_AGILE_START:
 		/* Check if feature is enabled for this DFS and if RCAC channel
 		 * is valid, if those are true, send appropriate WMIs to FW
 		 * and only then transition to the state as follows.
 		 */
 
-		if (dfs_soc->cur_precac_dfs_index != DFS_PSOC_NO_IDX)
+		if (dfs_soc->cur_agile_dfs_index != DFS_PSOC_NO_IDX)
 			return true;
 		dfs_prepare_agile_rcac_channel(dfs, &is_rcac_chan_available);
 		if (is_rcac_chan_available) {
-			dfs_soc->cur_precac_dfs_index = dfs->dfs_psoc_idx;
-			dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_RUNNING);
+			dfs_soc->cur_agile_dfs_index = dfs->dfs_psoc_idx;
+			dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_RUNNING);
 		}
 		status = true;
 		break;
@@ -4456,39 +4457,39 @@ static bool dfs_rcac_state_init_event(void *ctx,
 }
 
 /**
- * dfs_rcac_state_running_entry() - Entry API for running state
+ * dfs_agile_state_running_entry() - Entry API for running state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving to running state
  *
  * Return: void
  */
-static void dfs_rcac_state_running_entry(void *ctx)
+static void dfs_agile_state_running_entry(void *ctx)
 {
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	struct wlan_dfs *dfs =
-		dfs_soc->dfs_priv[dfs_soc->cur_precac_dfs_index].dfs;
+		dfs_soc->dfs_priv[dfs_soc->cur_agile_dfs_index].dfs;
 
-	dfs_rcac_set_curr_state(dfs_soc, DFS_RCAC_S_RUNNING);
+	dfs_agile_set_curr_state(dfs_soc, DFS_AGILE_S_RUNNING);
 	dfs_start_agile_rcac_timer(dfs);
 	dfs_start_agile_engine(dfs);
 }
 
 /**
- * dfs_rcac_state_running_exit() - Exit API for RUNNING state
+ * dfs_agile_state_running_exit() - Exit API for RUNNING state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving out of RUNNING state
  *
  * Return: void
  */
-static void dfs_rcac_state_running_exit(void *ctx)
+static void dfs_agile_state_running_exit(void *ctx)
 {
 	/* NO OPS */
 }
 
 /**
- * dfs_rcac_state_running_event() - RUNNING State event handler
+ * dfs_agile_state_running_event() - RUNNING State event handler
  * @ctx: DFS SoC private object
  * @event: Event posted to the SM.
  * @event_data_len: Length of event data.
@@ -4499,7 +4500,7 @@ static void dfs_rcac_state_running_exit(void *ctx)
  * Return: TRUE:  on handling event
  *         FALSE: on ignoring the event
  */
-static bool dfs_rcac_state_running_event(void *ctx,
+static bool dfs_agile_state_running_event(void *ctx,
 					 uint16_t event,
 					 uint16_t event_data_len,
 					 void *event_data)
@@ -4513,37 +4514,37 @@ static bool dfs_rcac_state_running_event(void *ctx,
 
 	dfs = (struct wlan_dfs *)event_data;
 
-	if (dfs->dfs_psoc_idx != dfs_soc->cur_precac_dfs_index)
+	if (dfs->dfs_psoc_idx != dfs_soc->cur_agile_dfs_index)
 		return false;
 
 	switch (event) {
-	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
+	case DFS_AGILE_SM_EV_ADFS_RADAR:
 		/* After radar is found on the Agile channel we need to find
 		 * a new channel and then start Agile CAC on that.
-		 * On receiving the "DFS_RCAC_SM_EV_ADFS_RADAR_FOUND" if
+		 * On receiving the "DFS_AGILE_SM_EV_ADFS_RADAR_FOUND" if
 		 * we change the state from [RUNNING] -> [RUNNING] then
 		 * [RUNNING] should handle case in which a channel is not found
 		 * and bring the state machine back to INIT.
 		 * Instead we move the state to INIT and post the event
-		 * "DFS_RCAC_SM_EV_RCAC_START" so INIT handles the case of
+		 * "DFS_AGILE_SM_EV_AGILE_START" so INIT handles the case of
 		 * channel not found and stay in that state.
 		 * Abort the existing RCAC and restart from INIT state.
 		 */
 		dfs_abort_agile_rcac(dfs);
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
-		dfs_rcac_sm_deliver_event(dfs_soc,
-					  DFS_RCAC_SM_EV_RCAC_START,
+		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
+		dfs_agile_sm_deliver_event(dfs_soc,
+					  DFS_AGILE_SM_EV_AGILE_START,
 					  event_data_len,
 					  event_data);
 		status = true;
 		break;
-	case DFS_RCAC_SM_EV_RCAC_STOP:
+	case DFS_AGILE_SM_EV_AGILE_STOP:
 		dfs_abort_agile_rcac(dfs);
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
 		status = true;
 		break;
-	case DFS_RCAC_SM_EV_RCAC_DONE:
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_COMPLETE);
+	case DFS_AGILE_SM_EV_AGILE_DONE:
+		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_COMPLETE);
 		status = true;
 	default:
 		status = false;
@@ -4554,44 +4555,44 @@ static bool dfs_rcac_state_running_event(void *ctx,
 }
 
 /**
- * dfs_rcac_state_complete_entry() - Entry API for complete state
+ * dfs_agile_state_complete_entry() - Entry API for complete state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving to complete state
  *
  * Return: void
  */
-static void dfs_rcac_state_complete_entry(void *ctx)
+static void dfs_agile_state_complete_entry(void *ctx)
 {
 	struct dfs_soc_priv_obj *dfs_soc_obj = (struct dfs_soc_priv_obj *)ctx;
 	struct wlan_dfs *dfs;
 
-	dfs_rcac_set_curr_state(dfs_soc_obj, DFS_RCAC_S_COMPLETE);
+	dfs_agile_set_curr_state(dfs_soc_obj, DFS_AGILE_S_COMPLETE);
 
-	if (!(dfs_soc_obj->cur_precac_dfs_index < WLAN_UMAC_MAX_PDEVS))
+	if (!(dfs_soc_obj->cur_agile_dfs_index < WLAN_UMAC_MAX_PDEVS))
 		return;
 
-	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_agile_dfs_index].dfs;
 
 	/* Mark the RCAC channel as CAC done. */
 	dfs_mark_adfs_chan_as_cac_done(dfs);
 }
 
 /**
- * dfs_rcac_state_complete_exit() - Exit API for complete state
+ * dfs_agile_state_complete_exit() - Exit API for complete state
  * @ctx: DFS SoC private object
  *
  * API to perform operations on moving out of complete state
  *
  * Return: void
  */
-static void dfs_rcac_state_complete_exit(void *ctx)
+static void dfs_agile_state_complete_exit(void *ctx)
 {
 	/* NO OPs. */
 }
 
 /**
- * dfs_rcac_state_complete_event() - COMPLETE State event handler
+ * dfs_agile_state_complete_event() - COMPLETE State event handler
  * @ctx: DFS SoC private object
  * @event: Event posted to the SM.
  * @event_data_len: Length of event data.
@@ -4602,7 +4603,7 @@ static void dfs_rcac_state_complete_exit(void *ctx)
  * Return: TRUE:  on handling event
  *         FALSE: on ignoring the event
  */
-static bool dfs_rcac_state_complete_event(void *ctx,
+static bool dfs_agile_state_complete_event(void *ctx,
 					  uint16_t event,
 					  uint16_t event_data_len,
 					  void *event_data)
@@ -4616,33 +4617,33 @@ static bool dfs_rcac_state_complete_event(void *ctx,
 
 	dfs = (struct wlan_dfs *)event_data;
 
-	if (dfs->dfs_psoc_idx != dfs_soc->cur_precac_dfs_index)
+	if (dfs->dfs_psoc_idx != dfs_soc->cur_agile_dfs_index)
 		return false;
 
 	switch (event) {
-	case DFS_RCAC_SM_EV_ADFS_RADAR_FOUND:
+	case DFS_AGILE_SM_EV_ADFS_RADAR:
 		/* Reset the RCAC done state for this RCAC chan of this dfs.
 		 * Unmark the channels for RCAC done before calling abort API as
-		 * the abort API invalidates the cur_precac_dfs_index.
+		 * the abort API invalidates the cur_agile_dfs_index.
 		 */
 		dfs_unmark_rcac_done(dfs);
 		/* Abort the existing RCAC and restart from INIT state. */
 		dfs_abort_agile_rcac(dfs);
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
-		dfs_rcac_sm_deliver_event(dfs_soc,
-					  DFS_RCAC_SM_EV_RCAC_START,
+		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
+		dfs_agile_sm_deliver_event(dfs_soc,
+					  DFS_AGILE_SM_EV_AGILE_START,
 					  event_data_len,
 					  event_data);
 		status = true;
 		break;
-	case DFS_RCAC_SM_EV_RCAC_STOP:
+	case DFS_AGILE_SM_EV_AGILE_STOP:
 		/* Reset the RCAC done state for this RCAC chan of this dfs.
 		 * Unmark the channels for RCAC done before calling abort API as
-		 * the abort API invalidates the cur_precac_dfs_index.
+		 * the abort API invalidates the cur_agile_dfs_index.
 		 */
 		dfs_unmark_rcac_done(dfs);
 		dfs_abort_agile_rcac(dfs);
-		dfs_rcac_sm_transition_to(dfs_soc, DFS_RCAC_S_INIT);
+		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
 		status = true;
 		break;
 	default:
@@ -4653,142 +4654,142 @@ static bool dfs_rcac_state_complete_event(void *ctx,
 	return status;
 }
 
-static struct wlan_sm_state_info dfs_rcac_sm_info[] = {
+static struct wlan_sm_state_info dfs_agile_sm_info[] = {
 	{
-		(uint8_t)DFS_RCAC_S_INIT,
+		(uint8_t)DFS_AGILE_S_INIT,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
 		"INIT",
-		dfs_rcac_state_init_entry,
-		dfs_rcac_state_init_exit,
-		dfs_rcac_state_init_event
+		dfs_agile_state_init_entry,
+		dfs_agile_state_init_exit,
+		dfs_agile_state_init_event
 	},
 	{
-		(uint8_t)DFS_RCAC_S_RUNNING,
+		(uint8_t)DFS_AGILE_S_RUNNING,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
 		"RUNNING",
-		dfs_rcac_state_running_entry,
-		dfs_rcac_state_running_exit,
-		dfs_rcac_state_running_event
+		dfs_agile_state_running_entry,
+		dfs_agile_state_running_exit,
+		dfs_agile_state_running_event
 	},
 	{
-		(uint8_t)DFS_RCAC_S_COMPLETE,
+		(uint8_t)DFS_AGILE_S_COMPLETE,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		(uint8_t)WLAN_SM_ENGINE_STATE_NONE,
 		false,
 		"COMPLETE",
-		dfs_rcac_state_complete_entry,
-		dfs_rcac_state_complete_exit,
-		dfs_rcac_state_complete_event
+		dfs_agile_state_complete_entry,
+		dfs_agile_state_complete_exit,
+		dfs_agile_state_complete_event
 	},
 };
 
-static const char *dfs_rcac_sm_event_names[] = {
-	"EV_RCAC_START",
-	"EV_RCAC_STOP",
-	"EV_RCAC_DONE",
+static const char *dfs_agile_sm_event_names[] = {
+	"EV_AGILE_START",
+	"EV_AGILE_STOP",
+	"EV_AGILE_DONE",
 	"EV_ADFS_RADAR_FOUND",
 };
 
 /**
- * dfs_rcac_sm_print_state() - API to log the current state.
+ * dfs_agile_sm_print_state() - API to log the current state.
  * @dfs_soc_obj: Pointer to dfs soc private object.
  *
  * Return: void.
  */
-static void dfs_rcac_sm_print_state(struct dfs_soc_priv_obj *dfs_soc_obj)
+static void dfs_agile_sm_print_state(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-	enum dfs_rcac_sm_state state;
+	enum dfs_agile_sm_state state;
 
-	state = dfs_rcac_get_curr_state(dfs_soc_obj);
-	if (!(state < DFS_RCAC_S_MAX))
+	state = dfs_agile_get_curr_state(dfs_soc_obj);
+	if (!(state < DFS_AGILE_S_MAX))
 		return;
 
-	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "->[%s] %s",
-		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
-		  dfs_rcac_sm_info[state].name);
+	dfs_debug(NULL, WLAN_DEBUG_DFS_AGILE, "->[%s] %s",
+		  dfs_soc_obj->dfs_agile_sm_hdl->name,
+		  dfs_agile_sm_info[state].name);
 }
 
 /**
- * dfs_rcac_sm_print_state_event() - API to log the current state and event
+ * dfs_agile_sm_print_state_event() - API to log the current state and event
  *                                   received.
  * @dfs_soc_obj: Pointer to dfs soc private object.
  * @event: Event posted to RCAC SM.
  *
  * Return: void.
  */
-static void dfs_rcac_sm_print_state_event(struct dfs_soc_priv_obj *dfs_soc_obj,
-					  enum dfs_rcac_sm_evt event)
+static void dfs_agile_sm_print_state_event(struct dfs_soc_priv_obj *dfs_soc_obj,
+					  enum dfs_agile_sm_evt event)
 {
-	enum dfs_rcac_sm_state state;
+	enum dfs_agile_sm_state state;
 
-	state = dfs_rcac_get_curr_state(dfs_soc_obj);
-	if (!(state < DFS_RCAC_S_MAX))
+	state = dfs_agile_get_curr_state(dfs_soc_obj);
+	if (!(state < DFS_AGILE_S_MAX))
 		return;
 
-	dfs_debug(NULL, WLAN_DEBUG_DFS_RCAC, "[%s]%s, %s",
-		  dfs_soc_obj->dfs_rcac_sm_hdl->name,
-		  dfs_rcac_sm_info[state].name,
-		  dfs_rcac_sm_event_names[event]);
+	dfs_debug(NULL, WLAN_DEBUG_DFS_AGILE, "[%s]%s, %s",
+		  dfs_soc_obj->dfs_agile_sm_hdl->name,
+		  dfs_agile_sm_info[state].name,
+		  dfs_agile_sm_event_names[event]);
 }
 
-QDF_STATUS dfs_rcac_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
-				   enum dfs_rcac_sm_evt event,
+QDF_STATUS dfs_agile_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
+				   enum dfs_agile_sm_evt event,
 				   uint16_t event_data_len,
 				   void *event_data)
 {
-	enum dfs_rcac_sm_state old_state, new_state;
+	enum dfs_agile_sm_state old_state, new_state;
 	QDF_STATUS status;
 
-	DFS_RCAC_SM_SPIN_LOCK(dfs_soc_obj);
-	old_state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	DFS_AGILE_SM_SPIN_LOCK(dfs_soc_obj);
+	old_state = dfs_agile_get_curr_state(dfs_soc_obj);
 
 	/* Print current state and event received */
-	dfs_rcac_sm_print_state_event(dfs_soc_obj, event);
+	dfs_agile_sm_print_state_event(dfs_soc_obj, event);
 
-	status = dfs_rcac_sm_deliver_event(dfs_soc_obj, event,
+	status = dfs_agile_sm_deliver_event(dfs_soc_obj, event,
 					   event_data_len, event_data);
 
-	new_state = dfs_rcac_get_curr_state(dfs_soc_obj);
+	new_state = dfs_agile_get_curr_state(dfs_soc_obj);
 
 	/* Print new state after event if transition happens */
 	if (old_state != new_state)
-		dfs_rcac_sm_print_state(dfs_soc_obj);
-	DFS_RCAC_SM_SPIN_UNLOCK(dfs_soc_obj);
+		dfs_agile_sm_print_state(dfs_soc_obj);
+	DFS_AGILE_SM_SPIN_UNLOCK(dfs_soc_obj);
 
 	return status;
 }
 
-QDF_STATUS dfs_rcac_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
+QDF_STATUS dfs_agile_sm_create(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 	struct wlan_sm *sm;
 
-	sm = wlan_sm_create("DFS_RCAC", dfs_soc_obj,
-			    DFS_RCAC_S_INIT,
-			    dfs_rcac_sm_info,
-			    QDF_ARRAY_SIZE(dfs_rcac_sm_info),
-			    dfs_rcac_sm_event_names,
-			    QDF_ARRAY_SIZE(dfs_rcac_sm_event_names));
+	sm = wlan_sm_create("DFS_AGILE", dfs_soc_obj,
+			    DFS_AGILE_S_INIT,
+			    dfs_agile_sm_info,
+			    QDF_ARRAY_SIZE(dfs_agile_sm_info),
+			    dfs_agile_sm_event_names,
+			    QDF_ARRAY_SIZE(dfs_agile_sm_event_names));
 	if (!sm) {
-		qdf_err("DFS RCAC SM allocation failed");
+		qdf_err("DFS AGILE SM allocation failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	dfs_soc_obj->dfs_rcac_sm_hdl = sm;
+	dfs_soc_obj->dfs_agile_sm_hdl = sm;
 
-	qdf_spinlock_create(&dfs_soc_obj->dfs_rcac_sm_lock);
+	qdf_spinlock_create(&dfs_soc_obj->dfs_agile_sm_lock);
 
 	/* Initialize the RCAC DFS index to default (no index). */
-	dfs_soc_obj->cur_precac_dfs_index = DFS_PSOC_NO_IDX;
+	dfs_soc_obj->cur_agile_dfs_index = DFS_PSOC_NO_IDX;
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS dfs_rcac_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
+QDF_STATUS dfs_agile_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-	wlan_sm_delete(dfs_soc_obj->dfs_rcac_sm_hdl);
-	qdf_spinlock_destroy(&dfs_soc_obj->dfs_rcac_sm_lock);
+	wlan_sm_delete(dfs_soc_obj->dfs_agile_sm_hdl);
+	qdf_spinlock_destroy(&dfs_soc_obj->dfs_agile_sm_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4806,8 +4807,8 @@ QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs, bool rcac_en)
 	dfs_reset_precac_lists(dfs);
 
 	if (!rcac_en) {
-		dfs_rcac_sm_deliver_evt(dfs->dfs_soc_obj,
-					DFS_RCAC_SM_EV_RCAC_STOP,
+		dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+					DFS_AGILE_SM_EV_AGILE_STOP,
 					0,
 					(void *)dfs);
 	}
@@ -4857,10 +4858,10 @@ static os_timer_func(dfs_rcac_timeout)
 
 	OS_GET_TIMER_ARG(dfs_soc_obj, struct dfs_soc_priv_obj *);
 
-	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_agile_dfs_index].dfs;
 
-	dfs_rcac_sm_deliver_evt(dfs_soc_obj,
-				DFS_RCAC_SM_EV_RCAC_DONE,
+	dfs_agile_sm_deliver_evt(dfs_soc_obj,
+				DFS_AGILE_SM_EV_AGILE_DONE,
 				0,
 				(void *)dfs);
 }
@@ -4899,7 +4900,7 @@ void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 	 * variables.
 	 */
 	*is_rcac_chan_available = rcac_ch_freq ? true : false;
-	dfs_debug(dfs, WLAN_DEBUG_DFS_RCAC, "Chosen rcac channel: %d",
+	dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE, "Chosen rcac channel: %d",
 		  rcac_ch_freq);
 }
 #endif
