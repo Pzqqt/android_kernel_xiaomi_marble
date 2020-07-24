@@ -1386,7 +1386,8 @@ static QDF_STATUS send_set_roam_trigger_cmd_tlv(wmi_unified_t wmi_handle,
 			triggers->vendor_btm_param.connected_rssi_threshold;
 	roam_trigger_parameters->cand_ap_min_rssi_threshold =
 			triggers->vendor_btm_param.candidate_rssi_threshold;
-	roam_trigger_parameters->roam_score_delta_percentage = 0;
+	roam_trigger_parameters->roam_score_delta_percentage =
+			triggers->roam_score_delta;
 	roam_trigger_parameters->reason_code =
 			triggers->vendor_btm_param.user_roam_reason;
 

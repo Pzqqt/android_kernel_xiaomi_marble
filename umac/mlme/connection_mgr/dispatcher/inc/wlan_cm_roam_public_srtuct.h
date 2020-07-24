@@ -140,11 +140,14 @@ struct wlan_cm_roam_vendor_btm_params {
  * @vdev_id: vdev id
  * @trigger_bitmap: vendor configured roam trigger bitmap as
  *		    defined @enum roam_control_trigger_reason
+ * @roam_score_delta: Value of roam score delta
+ * percentage to trigger roam
  * @control_param: roam trigger param
  */
 struct wlan_roam_triggers {
 	uint32_t vdev_id;
 	uint32_t trigger_bitmap;
+	uint32_t roam_score_delta;
 	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
 };
 
