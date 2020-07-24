@@ -1654,6 +1654,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.enable_event = dsi_conn_enable_event,
 		.cmd_transfer = dsi_display_cmd_transfer,
 		.cont_splash_config = dsi_display_cont_splash_config,
+		.cont_splash_res_disable = dsi_display_cont_splash_res_disable,
 		.get_panel_vfp = dsi_display_get_panel_vfp,
 		.get_default_lms = dsi_display_get_default_lms,
 		.cmd_receive = dsi_display_cmd_receive,
@@ -1671,6 +1672,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.check_status = NULL,
 		.cmd_transfer = NULL,
 		.cont_splash_config = NULL,
+		.cont_splash_res_disable = NULL,
 		.get_panel_vfp = NULL,
 		.cmd_receive = NULL,
 	};
@@ -1688,6 +1690,7 @@ static int _sde_kms_setup_displays(struct drm_device *dev,
 		.config_hdr = dp_connector_config_hdr,
 		.cmd_transfer = NULL,
 		.cont_splash_config = NULL,
+		.cont_splash_res_disable = NULL,
 		.get_panel_vfp = NULL,
 		.update_pps = dp_connector_update_pps,
 		.cmd_receive = NULL,
@@ -2784,6 +2787,66 @@ static struct drm_display_mode *_sde_kms_get_splash_mode(
 	return curr_mode;
 }
 
+static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
+		struct dsi_display *dsi_display)
+{
+	void *display;
+	struct drm_encoder *encoder = NULL;
+	struct msm_display_info info;
+	struct drm_device *dev;
+	struct sde_kms *sde_kms;
+	struct drm_connector_list_iter conn_iter;
+	struct drm_connector *connector = NULL;
+	struct sde_connector *sde_conn = NULL;
+	int rc = 0;
+
+	sde_kms = to_sde_kms(kms);
+	dev = sde_kms->dev;
+	display = dsi_display;
+	if (dsi_display) {
+		if (dsi_display->bridge->base.encoder) {
+			encoder = dsi_display->bridge->base.encoder;
+			SDE_DEBUG("encoder name = %s\n", encoder->name);
+		}
+		memset(&info, 0x0, sizeof(info));
+		rc = dsi_display_get_info(NULL, &info, display);
+		if (rc) {
+			SDE_ERROR("%s: dsi get_info failed: %d\n",
+					rc, __func__);
+			encoder = NULL;
+		}
+	}
+
+	drm_connector_list_iter_begin(dev, &conn_iter);
+	drm_for_each_connector_iter(connector, &conn_iter) {
+		/**
+		 * Inform cont_splash is disabled to each interface/connector.
+		 * This is currently supported for DSI interface.
+		 */
+		sde_conn = to_sde_connector(connector);
+		if (sde_conn && sde_conn->ops.cont_splash_res_disable) {
+			if (!dsi_display || !encoder) {
+				sde_conn->ops.cont_splash_res_disable
+						(sde_conn->display);
+			} else if (connector->encoder_ids[0]
+					== encoder->base.id) {
+				/**
+				 * This handles dual DSI
+				 * configuration where one DSI
+				 * interface has cont_splash
+				 * enabled and the other doesn't.
+				 */
+				sde_conn->ops.cont_splash_res_disable
+						(sde_conn->display);
+				break;
+			}
+		}
+	}
+	drm_connector_list_iter_end(&conn_iter);
+
+	return 0;
+}
+
 static int sde_kms_cont_splash_config(struct msm_kms *kms)
 {
 	void *display;
@@ -2817,6 +2880,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		&& (!sde_kms->splash_data.num_splash_regions)) ||
 			!sde_kms->splash_data.num_splash_displays) {
 		DRM_INFO("cont_splash feature not enabled\n");
+		sde_kms_inform_cont_splash_res_disable(kms, NULL);
 		return rc;
 	}
 
@@ -2833,6 +2897,8 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms)
 		if (!splash_display->cont_splash_enabled) {
 			SDE_DEBUG("display->name = %s splash not enabled\n",
 					dsi_display->name);
+			sde_kms_inform_cont_splash_res_disable(kms,
+					dsi_display);
 			continue;
 		}
 

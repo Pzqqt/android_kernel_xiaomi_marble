@@ -326,6 +326,13 @@ struct sde_connector_ops {
 	int (*cont_splash_config)(void *display);
 
 	/**
+	 * cont_splash_res_disable - Remove any splash resources added in probe
+	 * @display: Pointer to private display handle
+	 * Returns: zero for success, negetive for failure
+	 */
+	int (*cont_splash_res_disable)(void *display);
+
+	/**
 	 * get_panel_vfp - returns original panel vfp
 	 * @display: Pointer to private display handle
 	 * @h_active: width
