@@ -1220,7 +1220,7 @@ static void sde_hw_rotator_map_vaddr(struct sde_dbg_buf *dbgbuf,
 
 	if (dbgbuf->dmabuf && (dbgbuf->buflen > 0)) {
 		dma_buf_begin_cpu_access(dbgbuf->dmabuf, DMA_FROM_DEVICE);
-		dbgbuf->vaddr = dma_buf_kmap(dbgbuf->dmabuf, 0);
+		dbgbuf->vaddr = dma_buf_vmap(dbgbuf->dmabuf);
 		SDEROT_DBG("vaddr mapping: 0x%pK/%ld w:%d/h:%d\n",
 				dbgbuf->vaddr, dbgbuf->buflen,
 				dbgbuf->width, dbgbuf->height);
