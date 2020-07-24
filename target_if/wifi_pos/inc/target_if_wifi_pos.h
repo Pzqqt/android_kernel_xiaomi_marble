@@ -26,6 +26,7 @@
 
 #include "qdf_types.h"
 #include "qdf_status.h"
+#include "wlan_cmn.h"
 struct oem_data_req;
 struct oem_data_rsp;
 struct wlan_objmgr_psoc;
@@ -60,6 +61,16 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc);
 
+
+/**
+ * target_if_wifi_pos_get_vht_ch_width: function to get vht channel width
+ * @psoc: pointer to psoc object
+ * @ch_width: pointer to the variable in which output value needs to be filled
+ *
+ * Return: status of operation
+ */
+QDF_STATUS target_if_wifi_pos_get_vht_ch_width(struct wlan_objmgr_psoc *psoc,
+					       enum phy_ch_width *ch_width);
 
 /**
  * target_if_wifi_pos_register_tx_ops: function to register with lmac tx ops

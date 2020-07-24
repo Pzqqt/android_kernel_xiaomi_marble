@@ -712,6 +712,7 @@ struct wlan_lmac_if_iot_sim_tx_ops {
  * pdev_id from host pdev_id.
  * @wifi_pos_convert_pdev_id_target_to_host: function pointer to get host
  * pdev_id from target pdev_id.
+ * @wifi_pos_get_vht_ch_width: Function pointer to get max supported bw by FW
  */
 struct wlan_lmac_if_wifi_pos_tx_ops {
 	QDF_STATUS (*data_req_tx)(struct wlan_objmgr_pdev *pdev,
@@ -724,6 +725,8 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 	QDF_STATUS (*wifi_pos_convert_pdev_id_target_to_host)(
 			struct wlan_objmgr_psoc *psoc, uint32_t target_pdev_id,
 			uint32_t *host_pdev_id);
+	QDF_STATUS (*wifi_pos_get_vht_ch_width)(struct wlan_objmgr_psoc *psoc,
+						enum phy_ch_width *ch_width);
 };
 #endif
 

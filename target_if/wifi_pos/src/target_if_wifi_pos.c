@@ -320,6 +320,8 @@ void target_if_wifi_pos_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_wifi_pos_convert_pdev_id_host_to_target;
 	wifi_pos_tx_ops->wifi_pos_convert_pdev_id_target_to_host =
 		target_if_wifi_pos_convert_pdev_id_target_to_host;
+	wifi_pos_tx_ops->wifi_pos_get_vht_ch_width =
+		target_if_wifi_pos_get_vht_ch_width;
 
 }
 
@@ -412,6 +414,33 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 	wmi_unified_unregister_event_handler(
 			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_oem_report_event_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_wifi_pos_get_vht_ch_width(struct wlan_objmgr_psoc *psoc,
+					       enum phy_ch_width *ch_width)
+{
+	struct target_psoc_info *tgt_hdl;
+	int vht_cap_info;
+
+	*ch_width = CH_WIDTH_INVALID;
+
+	if (!psoc)
+		return QDF_STATUS_E_INVAL;
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl)
+		return QDF_STATUS_E_INVAL;
+
+	*ch_width = CH_WIDTH_80MHZ;
+
+	vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
+
+	if (vht_cap_info & WLAN_VHTCAP_SUP_CHAN_WIDTH_80_160)
+		*ch_width = CH_WIDTH_80P80MHZ;
+	else if (vht_cap_info & WLAN_VHTCAP_SUP_CHAN_WIDTH_160)
+		*ch_width = CH_WIDTH_160MHZ;
 
 	return QDF_STATUS_SUCCESS;
 }
