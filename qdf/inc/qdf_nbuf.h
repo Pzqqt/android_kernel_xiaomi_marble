@@ -1520,6 +1520,25 @@ qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 				int reserve, int align, int prio,
 				const char *func, uint32_t line);
 
+/**
+ * qdf_nbuf_alloc_no_recycler() - Allocates skb
+ * @size: Size to be allocated for skb
+ * @reserve: Reserved headroom size
+ * @align: Align
+ * @func: Function name of the call site
+ * @line: Line number of the callsite
+ *
+ * This API allocates skb of required size and aligns if needed and reserves
+ * some space in the front. This skb allocation is not from skb recycler pool.
+ *
+ * Return: Allocated nbuf pointer
+ */
+#define qdf_nbuf_alloc_no_recycler(s, r, a) \
+	qdf_nbuf_alloc_no_recycler_debug(s, r, a, __func__, __LINE__)
+
+qdf_nbuf_t qdf_nbuf_alloc_no_recycler_debug(size_t size, int reserve, int align,
+					    const char *func, uint32_t line);
+
 #define qdf_nbuf_free(d) \
 	qdf_nbuf_free_debug(d, __func__, __LINE__)
 
@@ -1616,6 +1635,10 @@ qdf_net_buf_debug_update_unmap_node(qdf_nbuf_t net_buf,
 #define qdf_nbuf_alloc(osdev, size, reserve, align, prio) \
 	qdf_nbuf_alloc_fl(osdev, size, reserve, align, prio, \
 			  __func__, __LINE__)
+
+#define qdf_nbuf_alloc_no_recycler(size, reserve, align) \
+	qdf_nbuf_alloc_no_recycler_fl(size, reserve, align, __func__, __LINE__)
+
 static inline qdf_nbuf_t
 qdf_nbuf_alloc_fl(qdf_device_t osdev, qdf_size_t size, int reserve, int align,
 		  int prio, const char *func, uint32_t line)
@@ -1625,6 +1648,33 @@ qdf_nbuf_alloc_fl(qdf_device_t osdev, qdf_size_t size, int reserve, int align,
 	nbuf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio, func, line);
 	if (qdf_likely(nbuf))
 		qdf_mem_skb_inc(nbuf->truesize);
+	return nbuf;
+}
+
+/**
+ * qdf_nbuf_alloc_no_recycler_fl() - Allocate SKB
+ * @size: Size to be allocated for skb
+ * @reserve: Reserved headroom size
+ * @align: Align
+ * @func: Function name of the call site
+ * @line: Line number of the callsite
+ *
+ * This API allocates skb of required size and aligns if needed and reserves
+ * some space in the front. This skb allocation is not from skb recycler pool.
+ *
+ * Return: Allocated nbuf pointer
+ */
+static inline qdf_nbuf_t
+qdf_nbuf_alloc_no_recycler_fl(size_t size, int reserve, int align,
+			      const char *func, uint32_t line)
+{
+	qdf_nbuf_t nbuf;
+
+	nbuf = __qdf_nbuf_alloc_no_recycler(size, reserve, align, func, line);
+
+	if (qdf_likely(nbuf))
+		qdf_mem_skb_inc(nbuf->truesize);
+
 	return nbuf;
 }
 

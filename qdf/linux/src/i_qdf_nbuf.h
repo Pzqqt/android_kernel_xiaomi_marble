@@ -754,6 +754,22 @@ __qdf_nbuf_t
 __qdf_nbuf_alloc(__qdf_device_t osdev, size_t size, int reserve, int align,
 		 int prio, const char *func, uint32_t line);
 
+/**
+ * __qdf_nbuf_alloc_no_recycler() - Allocates skb
+ * @size: Size to be allocated for skb
+ * @reserve: Reserve headroom size
+ * @align: Align data
+ * @func: Function name of the call site
+ * @line: Line number of the callsite
+ *
+ * This API allocates a nbuf and aligns it if needed and reserves some headroom
+ * space after the alignment where nbuf is not allocated from skb recycler pool.
+ *
+ * Return: Allocated nbuf pointer
+ */
+__qdf_nbuf_t __qdf_nbuf_alloc_no_recycler(size_t size, int reserve, int align,
+					  const char *func, uint32_t line);
+
 void __qdf_nbuf_free(struct sk_buff *skb);
 QDF_STATUS __qdf_nbuf_map(__qdf_device_t osdev,
 			struct sk_buff *skb, qdf_dma_dir_t dir);

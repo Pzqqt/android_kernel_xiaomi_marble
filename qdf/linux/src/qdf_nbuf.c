@@ -538,6 +538,37 @@ skb_alloc:
 #endif
 qdf_export_symbol(__qdf_nbuf_alloc);
 
+__qdf_nbuf_t __qdf_nbuf_alloc_no_recycler(size_t size, int reserve, int align,
+					  const char *func, uint32_t line)
+{
+	qdf_nbuf_t nbuf;
+	unsigned long offset;
+
+	if (align)
+		size += (align - 1);
+
+	nbuf = alloc_skb(size, GFP_ATOMIC);
+	if (!nbuf)
+		goto ret_nbuf;
+
+	memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
+
+	skb_reserve(nbuf, reserve);
+
+	if (align) {
+		offset = ((unsigned long)nbuf->data) % align;
+		if (offset)
+			skb_reserve(nbuf, align - offset);
+	}
+
+	qdf_nbuf_count_inc(nbuf);
+
+ret_nbuf:
+	return nbuf;
+}
+
+qdf_export_symbol(__qdf_nbuf_alloc_no_recycler);
+
 /**
  * __qdf_nbuf_free() - free the nbuf its interrupt safe
  * @skb: Pointer to network buffer
@@ -2752,6 +2783,30 @@ qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 	return nbuf;
 }
 qdf_export_symbol(qdf_nbuf_alloc_debug);
+
+qdf_nbuf_t qdf_nbuf_alloc_no_recycler_debug(size_t size, int reserve, int align,
+					    const char *func, uint32_t line)
+{
+	qdf_nbuf_t nbuf;
+
+	if (is_initial_mem_debug_disabled)
+		return __qdf_nbuf_alloc_no_recycler(size, reserve, align, func,
+						    line);
+
+	nbuf = __qdf_nbuf_alloc_no_recycler(size, reserve, align, func, line);
+
+	/* Store SKB in internal QDF tracking table */
+	if (qdf_likely(nbuf)) {
+		qdf_net_buf_debug_add_node(nbuf, size, func, line);
+		qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_ALLOC);
+	} else {
+		qdf_nbuf_history_add(nbuf, func, line, QDF_NBUF_ALLOC_FAILURE);
+	}
+
+	return nbuf;
+}
+
+qdf_export_symbol(qdf_nbuf_alloc_no_recycler_debug);
 
 void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, const char *func, uint32_t line)
 {
