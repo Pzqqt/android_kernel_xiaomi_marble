@@ -195,6 +195,7 @@ static inline char *dp_phy_aux_config_type_to_string(u32 cfg_type)
  * @gpio_aux_switch: presence GPIO AUX switch status
  * @dsc_feature_enable: DSC feature enable status
  * @fec_feature_enable: FEC feature enable status
+ * @dsc_continuous_pps: PPS sent every frame by HW
  * @has_widebus: widebus (2PPC) feature eanble status
   *@mst_fixed_port: mst port_num reserved for fixed topology
  * @parse: function to be called by client to parse device tree.
@@ -221,6 +222,7 @@ struct dp_parser {
 	bool no_aux_switch;
 	bool dsc_feature_enable;
 	bool fec_feature_enable;
+	bool dsc_continuous_pps;
 	bool has_widebus;
 	bool gpio_aux_switch;
 	bool lphw_hpd;
