@@ -118,6 +118,7 @@ enum {
 	BOLERO_WSA_EVT_SSR_DOWN,
 	BOLERO_WSA_EVT_SSR_UP,
 	BOLERO_WSA_EVT_PA_ON_POST_FSCLK,
+	BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB,
 };
 
 struct wsa_ctrl_platform_data {
@@ -1403,6 +1404,7 @@ static int wsa881x_event_notify(struct notifier_block *nb,
 					      0x80, 0x00);
 		break;
 	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK:
+	case BOLERO_WSA_EVT_PA_ON_POST_FSCLK_ADIE_LB:
 		if ((snd_soc_component_read32(wsa881x->component,
 				WSA881X_SPKR_DAC_CTL) & 0x80) == 0x80)
 			snd_soc_component_update_bits(wsa881x->component,
