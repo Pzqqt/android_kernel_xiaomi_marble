@@ -1201,6 +1201,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_NO_BACKHAUL_RADIO = 445,
 	/* MAX_PHY feature flag per PDEV */
 	OL_ATH_PARAM_RPT_MAX_PHY = 446,
+	/* Enable additional operating triplets in the Country IE */
+	OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS = 447,
 
 };
 
@@ -3097,6 +3099,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, SET_PARAM, 1},
 	{"g_nobckhlradio",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_NO_BACKHAUL_RADIO, GET_PARAM, 0},
+	{"enable_additional_triplets",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, SET_PARAM, 1},
+	{"g_enable_additional_triplets",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, GET_PARAM, 0},
 };
 #endif
 #endif
