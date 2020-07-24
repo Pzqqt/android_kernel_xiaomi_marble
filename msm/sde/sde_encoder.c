@@ -546,6 +546,7 @@ void sde_encoder_destroy(struct drm_encoder *drm_enc)
 {
 	struct sde_encoder_virt *sde_enc = NULL;
 	int i = 0;
+	unsigned int num_encs;
 
 	if (!drm_enc) {
 		SDE_ERROR("invalid encoder\n");
@@ -554,21 +555,29 @@ void sde_encoder_destroy(struct drm_encoder *drm_enc)
 
 	sde_enc = to_sde_encoder_virt(drm_enc);
 	SDE_DEBUG_ENC(sde_enc, "\n");
+	num_encs = sde_enc->num_phys_encs;
 
 	mutex_lock(&sde_enc->enc_lock);
 	sde_rsc_client_destroy(sde_enc->rsc_client);
 
-	for (i = 0; i < sde_enc->num_phys_encs; i++) {
+	for (i = 0; i < num_encs; i++) {
 		struct sde_encoder_phys *phys;
 
 		phys = sde_enc->phys_vid_encs[i];
 		if (phys && phys->ops.destroy) {
 			phys->ops.destroy(phys);
 			--sde_enc->num_phys_encs;
-			sde_enc->phys_encs[i] = NULL;
+			sde_enc->phys_vid_encs[i] = NULL;
 		}
 
 		phys = sde_enc->phys_cmd_encs[i];
+		if (phys && phys->ops.destroy) {
+			phys->ops.destroy(phys);
+			--sde_enc->num_phys_encs;
+			sde_enc->phys_cmd_encs[i] = NULL;
+		}
+
+		phys = sde_enc->phys_encs[i];
 		if (phys && phys->ops.destroy) {
 			phys->ops.destroy(phys);
 			--sde_enc->num_phys_encs;
