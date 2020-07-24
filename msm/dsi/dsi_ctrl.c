@@ -1967,6 +1967,8 @@ static int dsi_ctrl_dev_remove(struct platform_device *pdev)
 
 	mutex_lock(&dsi_ctrl->ctrl_lock);
 
+	dsi_ctrl_isr_configure(dsi_ctrl, false);
+
 	rc = dsi_ctrl_supplies_deinit(dsi_ctrl);
 	if (rc)
 		DSI_CTRL_ERR(dsi_ctrl,
