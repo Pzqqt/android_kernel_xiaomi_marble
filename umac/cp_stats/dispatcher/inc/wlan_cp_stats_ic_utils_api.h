@@ -274,6 +274,9 @@ VDEV_CP_STATS_SET_FUNCS(peer_delete_req);
 VDEV_CP_STATS_SET_FUNCS(peer_delete_resp);
 VDEV_CP_STATS_SET_FUNCS(peer_delete_all_req);
 VDEV_CP_STATS_SET_FUNCS(peer_delete_all_resp);
+VDEV_CP_STATS_SET_FUNCS(prob_req_drops);
+VDEV_CP_STATS_SET_FUNCS(oob_probe_req_count);
+VDEV_CP_STATS_SET_FUNCS(wc_probe_req_drops);
 
 #define VDEV_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \

@@ -297,6 +297,9 @@ struct pdev_ic_cp_stats {
  * @peer_delete_resp: no of peer delete resp rcvd from target
  * @peer_delete_all_req: no of peer delete all req sent to target
  * @peer_delete_all_resp: no of peer delete all resp rcvd from target
+ * @prob_req_drops: no of probe requests drops
+ * @oob_probe_req_count: no of out of band probe requests
+ * @wc_probe_req_drops: no of wildcard probe requests drops
  */
 struct vdev_80211_stats {
 	uint64_t cs_rx_wrongbss;
@@ -366,6 +369,9 @@ struct vdev_80211_stats {
 	uint64_t cs_peer_delete_resp;
 	uint64_t cs_peer_delete_all_req;
 	uint64_t cs_peer_delete_all_resp;
+	uint64_t cs_prob_req_drops;
+	uint64_t cs_oob_probe_req_count;
+	uint64_t cs_wc_probe_req_drops;
 };
 
 /**

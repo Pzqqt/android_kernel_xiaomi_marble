@@ -772,6 +772,9 @@ enum {
 	IEEE80211_PARAM_RAWSIM_DEBUG_NUM_ENCAP_FRAMES   = 704, /* Sets the number of encap raw frames to dump when debug enabled */
 	IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES   = 705, /* Sets the number of decap raw frames to dump when debug enabled */
 #endif /* ATH_PERF_PWR_OFFLOAD && QCA_SUPPORT_RAWMODE_PKT_SIMULATION */
+	IEEE80211_PARAM_CURRENT_PP                 = 706, /* P Periodicity */
+	IEEE80211_PARAM_NO_ACT_VAPS                = 707, /* Active Vaps */
+	IEEE80211_PARAM_TX_VAP                     = 708, /* Current Tx Vap */
 };
 
 enum {
