@@ -1412,8 +1412,7 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 				true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				wcd938x->tx_swr_dev->dev_num,
+		wcd938x_tx_connect_port(component, DMIC0 + (w->shift), 0,
 				false);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_AMIC_CTL,
@@ -1591,14 +1590,9 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 			rate = wcd938x_get_clk_rate(ADC_MODE_INVALID);
 			wcd938x_set_swr_clk_rate(component, rate, !bank);
 		}
-		wcd938x_tx_connect_port(component, w->shift, 0, false);
-		if (w->shift == ADC2 &&
-			test_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask)) {
-			if (!wcd938x->bcs_dis)
-				wcd938x_tx_connect_port(component, MBHC, 0,
-					false);
-			clear_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
-		}
+		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
+				wcd938x->tx_swr_dev->dev_num,
+				false);
 
 		if (strnstr(w->name, "ADC", sizeof("ADC")))
 			wcd938x_set_swr_clk_rate(component, rate, bank);
@@ -1788,9 +1782,15 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 		default:
 			break;
 		}
-		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
-				wcd938x->tx_swr_dev->dev_num,
-				false);
+		wcd938x_tx_connect_port(component, ADC1 + w->shift, 0, false);
+		if (w->shift + ADC1 == ADC2 &&
+			test_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask)) {
+			if (!wcd938x->bcs_dis)
+				wcd938x_tx_connect_port(component, MBHC, 0,
+					false);
+			clear_bit(AMIC2_BCS_ENABLE, &wcd938x->status_mask);
+		}
+
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x00);
 		clear_bit(w->shift, &wcd938x->status_mask);
