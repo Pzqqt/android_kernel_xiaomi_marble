@@ -7550,14 +7550,12 @@ int dsi_display_pre_kickoff(struct drm_connector *connector,
 		struct dsi_display *display,
 		struct msm_display_kickoff_params *params)
 {
-	int rc = 0;
+	int rc = 0, ret = 0;
 	int i;
 
 	/* check and setup MISR */
 	if (display->misr_enable)
 		_dsi_display_setup_misr(display);
-
-	rc = dsi_display_set_roi(display, params->rois);
 
 	/* dynamic DSI clock setting */
 	if (atomic_read(&display->clkrate_change_pending)) {
@@ -7576,7 +7574,6 @@ int dsi_display_pre_kickoff(struct drm_connector *connector,
 		 */
 		display_for_each_ctrl(i, display) {
 			struct dsi_ctrl *ctrl = display->ctrl[i].ctrl;
-			int ret = 0;
 
 			ret = dsi_ctrl_wait_for_cmd_mode_mdp_idle(ctrl);
 			if (ret)
@@ -7593,6 +7590,9 @@ wait_failure:
 		dsi_panel_release_panel_lock(display->panel);
 		mutex_unlock(&display->display_lock);
 	}
+
+	if (!ret)
+		rc = dsi_display_set_roi(display, params->rois);
 
 	return rc;
 }
