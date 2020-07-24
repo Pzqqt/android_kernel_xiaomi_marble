@@ -54,7 +54,11 @@
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define WLAN_CFG_PER_PDEV_LMAC_RING 0
 #define WLAN_LRO_ENABLE 0
+#ifdef QCA_WIFI_QCA6750
+#define WLAN_CFG_MAC_PER_TARGET 1
+#else
 #define WLAN_CFG_MAC_PER_TARGET 2
+#endif
 #ifdef IPA_OFFLOAD
 /* Size of TCL TX Ring */
 #if defined(TX_TO_NPEERS_INC_TX_DESCS)
