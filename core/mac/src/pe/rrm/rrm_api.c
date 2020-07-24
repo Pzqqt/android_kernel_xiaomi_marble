@@ -1211,7 +1211,7 @@ QDF_STATUS rrm_process_beacon_req(struct mac_context *mac_ctx, tSirMacAddr peer,
 				  uint8_t *num_report, int index)
 {
 	tRrmRetStatus rrm_status = eRRM_SUCCESS;
-	tpSirMacRadioMeasureReport report;
+	tpSirMacRadioMeasureReport report = NULL;
 	tpRRMReq curr_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
