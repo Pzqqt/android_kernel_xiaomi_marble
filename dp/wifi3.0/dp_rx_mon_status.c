@@ -2029,6 +2029,8 @@ dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
 	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
+	/* Disable frag processing flag */
+	dp_rx_enable_mon_dest_frag(rx_desc_pool, false);
 
 	dp_rx_desc_pool_init(soc, mac_id, num_entries + 1, rx_desc_pool);
 

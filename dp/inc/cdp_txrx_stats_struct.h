@@ -1801,6 +1801,7 @@ struct cdp_cfr_rcc_stats {
  * @pkts: total packets replenished
  * @rxdma_err: rxdma errors for replenished
  * @nbuf_alloc_fail: nbuf alloc failed
+ * @frag_alloc_fail: frag alloc failed
  * @map_err: Mapping failure
  * @x86_fail: x86 failures
  * @low_thresh_intrs: low threshold interrupts
@@ -1846,6 +1847,7 @@ struct cdp_pdev_stats {
 		struct cdp_pkt_info pkts;
 		uint32_t rxdma_err;
 		uint32_t nbuf_alloc_fail;
+		uint32_t frag_alloc_fail;
 		uint32_t map_err;
 		uint32_t x86_fail;
 		uint32_t low_thresh_intrs;

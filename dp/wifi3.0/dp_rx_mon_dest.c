@@ -1244,6 +1244,8 @@ dp_rx_pdev_mon_buf_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
 	rx_desc_pool->buf_size = RX_MONITOR_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_MONITOR_BUFFER_ALIGNMENT;
+	/* Enable frag processing if feature is enabled */
+	dp_rx_enable_mon_dest_frag(rx_desc_pool, true);
 
 	dp_rx_desc_pool_init(soc, mac_id, rx_desc_pool_size, rx_desc_pool);
 
@@ -1339,7 +1341,10 @@ void dp_rx_pdev_mon_buf_buffers_free(struct dp_pdev *pdev, uint32_t mac_id)
 
 	dp_debug("Mon RX Buf buffers Free pdev[%d]", pdev_id);
 
-	dp_rx_desc_nbuf_free(soc, rx_desc_pool);
+	if (rx_desc_pool->rx_mon_dest_frag_enable)
+		dp_rx_desc_frag_free(soc, rx_desc_pool);
+	else
+		dp_rx_desc_nbuf_free(soc, rx_desc_pool);
 }
 
 static QDF_STATUS

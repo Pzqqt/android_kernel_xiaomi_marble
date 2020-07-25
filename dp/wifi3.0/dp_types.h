@@ -297,6 +297,21 @@ enum dp_cpu_ring_map_types {
 };
 
 /**
+ * dp_rx_nbuf_frag_info - Hold vaddr and paddr for a buffer
+ *
+ * paddr: Physical address of buffer allocated.
+ * nbuf: Allocated nbuf in case of nbuf approach.
+ * vaddr: Virtual address of frag allocated in case of frag approach.
+ */
+struct dp_rx_nbuf_frag_info {
+	qdf_dma_addr_t paddr;
+	union {
+		qdf_nbuf_t nbuf;
+		qdf_frag_t vaddr;
+	} virt_addr;
+};
+
+/**
  * struct rx_desc_pool
  * @pool_size: number of RX descriptor in the pool
  * @elem_size: Element size
@@ -307,6 +322,7 @@ enum dp_cpu_ring_map_types {
  * @owner: owner for nbuf
  * @buf_size: Buffer size
  * @buf_alignment: Buffer alignment
+ * @rx_mon_dest_frag_enable: Enable frag processing for mon dest buffer
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
@@ -321,6 +337,7 @@ struct rx_desc_pool {
 	uint8_t owner;
 	uint16_t buf_size;
 	uint8_t buf_alignment;
+	bool rx_mon_dest_frag_enable;
 };
 
 /**

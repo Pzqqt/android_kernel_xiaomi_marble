@@ -136,6 +136,129 @@ QDF_STATUS dp_rx_desc_sanity(struct dp_soc *soc, hal_soc_handle_t hal_soc,
 }
 #endif
 
+/**
+ * dp_pdev_frag_alloc_and_map() - Allocate frag for desc buffer and map
+ *
+ * @dp_soc: struct dp_soc *
+ * @nbuf_frag_info_t: nbuf frag info
+ * @dp_pdev: struct dp_pdev *
+ * @rx_desc_pool: Rx desc pool
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef DP_RX_MON_MEM_FRAG
+static inline QDF_STATUS
+dp_pdev_frag_alloc_and_map(struct dp_soc *dp_soc,
+			   struct dp_rx_nbuf_frag_info *nbuf_frag_info_t,
+			   struct dp_pdev *dp_pdev,
+			   struct rx_desc_pool *rx_desc_pool)
+{
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	(nbuf_frag_info_t->virt_addr).vaddr =
+			qdf_frag_alloc(rx_desc_pool->buf_size);
+
+	if (!((nbuf_frag_info_t->virt_addr).vaddr)) {
+		dp_err("Frag alloc failed");
+		DP_STATS_INC(dp_pdev, replenish.frag_alloc_fail, 1);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ret = qdf_mem_map_page(dp_soc->osdev,
+			       (nbuf_frag_info_t->virt_addr).vaddr,
+			       QDF_DMA_FROM_DEVICE,
+			       rx_desc_pool->buf_size,
+			       &nbuf_frag_info_t->paddr);
+
+	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+		qdf_frag_free((nbuf_frag_info_t->virt_addr).vaddr);
+		dp_err("Frag map failed");
+		DP_STATS_INC(dp_pdev, replenish.map_err, 1);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+dp_pdev_frag_alloc_and_map(struct dp_soc *dp_soc,
+			   struct dp_rx_nbuf_frag_info *nbuf_frag_info_t,
+			   struct dp_pdev *dp_pdev,
+			   struct rx_desc_pool *rx_desc_pool)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DP_RX_MON_MEM_FRAG */
+
+/**
+ * dp_pdev_nbuf_alloc_and_map() - Allocate nbuf for desc buffer and map
+ *
+ * @dp_soc: struct dp_soc *
+ * @mac_id: Mac id
+ * @num_entries_avail: num_entries_avail
+ * @nbuf_frag_info_t: nbuf frag info
+ * @dp_pdev: struct dp_pdev *
+ * @rx_desc_pool: Rx desc pool
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+dp_pdev_nbuf_alloc_and_map_replenish(struct dp_soc *dp_soc,
+				     uint32_t mac_id,
+				     uint32_t num_entries_avail,
+				     struct dp_rx_nbuf_frag_info *nbuf_frag_info_t,
+				     struct dp_pdev *dp_pdev,
+				     struct rx_desc_pool *rx_desc_pool)
+{
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+
+	(nbuf_frag_info_t->virt_addr).nbuf =
+		dp_rx_buffer_pool_nbuf_alloc(dp_soc,
+					     mac_id,
+					     rx_desc_pool,
+					     num_entries_avail);
+	if (!((nbuf_frag_info_t->virt_addr).nbuf)) {
+		dp_err("nbuf alloc failed");
+		DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev,
+					 (nbuf_frag_info_t->virt_addr).nbuf,
+					 QDF_DMA_FROM_DEVICE,
+					 rx_desc_pool->buf_size);
+
+	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+		dp_rx_buffer_pool_nbuf_free(dp_soc,
+			(nbuf_frag_info_t->virt_addr).nbuf, mac_id);
+		dp_err("nbuf map failed");
+		DP_STATS_INC(dp_pdev, replenish.map_err, 1);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	nbuf_frag_info_t->paddr =
+		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
+
+	dp_ipa_handle_rx_buf_smmu_mapping(dp_soc,
+			(qdf_nbuf_t)((nbuf_frag_info_t->virt_addr).nbuf),
+					  rx_desc_pool->buf_size,
+					  true);
+
+	ret = check_x86_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
+			      &nbuf_frag_info_t->paddr,
+			      rx_desc_pool);
+	if (ret == QDF_STATUS_E_FAILURE) {
+		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
+					     (nbuf_frag_info_t->virt_addr).nbuf,
+					     QDF_DMA_FROM_DEVICE,
+					     rx_desc_pool->buf_size);
+		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
+		return QDF_STATUS_E_ADDRNOTAVAIL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -167,13 +290,10 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	uint32_t num_entries_avail;
 	uint32_t count;
 	int sync_hw_ptr = 1;
-	qdf_dma_addr_t paddr;
-	qdf_nbuf_t rx_netbuf;
+	struct dp_rx_nbuf_frag_info nbuf_frag_info = {0};
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
 	QDF_STATUS ret;
-	uint16_t buf_size = rx_desc_pool->buf_size;
-
 	void *rxdma_srng;
 
 	rxdma_srng = dp_rxdma_srng->hal_srng;
@@ -239,37 +359,21 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	count = 0;
 
 	while (count < num_req_buffers) {
-		rx_netbuf = dp_rx_buffer_pool_nbuf_alloc(dp_soc, mac_id,
-							 rx_desc_pool,
-							 num_entries_avail);
-
-		if (qdf_unlikely(!rx_netbuf)) {
-			DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
-			break;
-		}
-
-		ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev, rx_netbuf,
-						 QDF_DMA_FROM_DEVICE, buf_size);
+		/* Flag is set while pdev rx_desc_pool initialization */
+		if (qdf_unlikely(rx_desc_pool->rx_mon_dest_frag_enable))
+			ret = dp_pdev_frag_alloc_and_map(dp_soc,
+							 &nbuf_frag_info,
+							 dp_pdev,
+							 rx_desc_pool);
+		else
+			ret = dp_pdev_nbuf_alloc_and_map_replenish(dp_soc,
+								   mac_id,
+					num_entries_avail, &nbuf_frag_info,
+					dp_pdev, rx_desc_pool);
 
 		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
-			dp_rx_buffer_pool_nbuf_free(dp_soc, rx_netbuf, mac_id);
-			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
-			continue;
-		}
-
-		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
-
-		dp_ipa_handle_rx_buf_smmu_mapping(dp_soc, rx_netbuf,
-						  buf_size, true);
-		/*
-		 * check if the physical address of nbuf->data is
-		 * less then 0x50000000 then free the nbuf and try
-		 * allocating new nbuf. We can try for 100 times.
-		 * this is a temp WAR till we fix it properly.
-		 */
-		ret = check_x86_paddr(dp_soc, &rx_netbuf, &paddr, rx_desc_pool);
-		if (ret == QDF_STATUS_E_FAILURE) {
-			DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
+			if (qdf_unlikely(ret  == QDF_STATUS_E_FAULT))
+				continue;
 			break;
 		}
 
@@ -281,7 +385,13 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		next = (*desc_list)->next;
 
-		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
+		/* Flag is set while pdev rx_desc_pool initialization */
+		if (qdf_unlikely(rx_desc_pool->rx_mon_dest_frag_enable))
+			dp_rx_desc_frag_prep(&((*desc_list)->rx_desc),
+					     &nbuf_frag_info);
+		else
+			dp_rx_desc_prep(&((*desc_list)->rx_desc),
+					&nbuf_frag_info);
 
 		/* rx_desc.in_use should be zero at this time*/
 		qdf_assert_always((*desc_list)->rx_desc.in_use == 0);
@@ -290,12 +400,13 @@ QDF_STATUS __dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		(*desc_list)->rx_desc.in_err_state = 0;
 		dp_rx_desc_update_dbg_info(&(*desc_list)->rx_desc,
 					   func_name, RX_DESC_REPLENISHED);
-		dp_verbose_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
-				 rx_netbuf, qdf_nbuf_data(rx_netbuf),
-				 (unsigned long long)paddr,
+		dp_verbose_debug("rx_netbuf=%pK, paddr=0x%llx, cookie=%d",
+				 nbuf_frag_info.virt_addr.nbuf,
+				 (unsigned long long)(nbuf_frag_info.paddr),
 				 (*desc_list)->rx_desc.cookie);
 
-		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
+		hal_rxdma_buff_addr_info_set(rxdma_ring_entry,
+					     nbuf_frag_info.paddr,
 						(*desc_list)->rx_desc.cookie,
 						rx_desc_pool->owner);
 
@@ -2698,41 +2809,47 @@ QDF_STATUS dp_rx_vdev_detach(struct dp_vdev *vdev)
 }
 
 static QDF_STATUS
-dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc, qdf_nbuf_t *nbuf,
+dp_pdev_nbuf_alloc_and_map(struct dp_soc *dp_soc,
+			   struct dp_rx_nbuf_frag_info *nbuf_frag_info_t,
 			   struct dp_pdev *dp_pdev,
 			   struct rx_desc_pool *rx_desc_pool)
 {
-	qdf_dma_addr_t paddr;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
-	*nbuf = qdf_nbuf_alloc(dp_soc->osdev, rx_desc_pool->buf_size,
+	(nbuf_frag_info_t->virt_addr).nbuf =
+		qdf_nbuf_alloc(dp_soc->osdev, rx_desc_pool->buf_size,
 			       RX_BUFFER_RESERVATION,
 			       rx_desc_pool->buf_alignment, FALSE);
-	if (!(*nbuf)) {
+	if (!((nbuf_frag_info_t->virt_addr).nbuf)) {
 		dp_err("nbuf alloc failed");
 		DP_STATS_INC(dp_pdev, replenish.nbuf_alloc_fail, 1);
 		return ret;
 	}
 
-	ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev, *nbuf,
+	ret = qdf_nbuf_map_nbytes_single(dp_soc->osdev,
+					 (nbuf_frag_info_t->virt_addr).nbuf,
 					 QDF_DMA_FROM_DEVICE,
 					 rx_desc_pool->buf_size);
 
 	if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
-		qdf_nbuf_free(*nbuf);
+		qdf_nbuf_free((nbuf_frag_info_t->virt_addr).nbuf);
 		dp_err("nbuf map failed");
 		DP_STATS_INC(dp_pdev, replenish.map_err, 1);
 		return ret;
 	}
 
-	paddr = qdf_nbuf_get_frag_paddr(*nbuf, 0);
+	nbuf_frag_info_t->paddr =
+		qdf_nbuf_get_frag_paddr((nbuf_frag_info_t->virt_addr).nbuf, 0);
 
-	ret = check_x86_paddr(dp_soc, nbuf, &paddr, rx_desc_pool);
+	ret = check_x86_paddr(dp_soc, &((nbuf_frag_info_t->virt_addr).nbuf),
+			      &nbuf_frag_info_t->paddr,
+			      rx_desc_pool);
 	if (ret == QDF_STATUS_E_FAILURE) {
-		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev, *nbuf,
+		qdf_nbuf_unmap_nbytes_single(dp_soc->osdev,
+					     (nbuf_frag_info_t->virt_addr).nbuf,
 					     QDF_DMA_FROM_DEVICE,
 					     rx_desc_pool->buf_size);
-		qdf_nbuf_free(*nbuf);
+		qdf_nbuf_free((nbuf_frag_info_t->virt_addr).nbuf);
 		dp_err("nbuf check x86 failed");
 		DP_STATS_INC(dp_pdev, replenish.x86_fail, 1);
 		return ret;
@@ -2752,7 +2869,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_ring_entry;
 	qdf_dma_addr_t paddr;
-	qdf_nbuf_t *rx_nbuf_arr;
+	struct dp_rx_nbuf_frag_info *nf_info;
 	uint32_t nr_descs, nr_nbuf = 0, nr_nbuf_total = 0;
 	uint32_t buffer_index, nbuf_ptrs_per_page;
 	qdf_nbuf_t nbuf;
@@ -2802,24 +2919,24 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 	 * have been allocated to fit in one page across each
 	 * iteration to index into the nbuf.
 	 */
-	total_pages = (nr_descs * sizeof(*rx_nbuf_arr)) / PAGE_SIZE;
+	total_pages = (nr_descs * sizeof(*nf_info)) / PAGE_SIZE;
 
 	/*
 	 * Add an extra page to store the remainder if any
 	 */
-	if ((nr_descs * sizeof(*rx_nbuf_arr)) % PAGE_SIZE)
+	if ((nr_descs * sizeof(*nf_info)) % PAGE_SIZE)
 		total_pages++;
-	rx_nbuf_arr = qdf_mem_malloc(PAGE_SIZE);
-	if (!rx_nbuf_arr) {
+	nf_info = qdf_mem_malloc(PAGE_SIZE);
+	if (!nf_info) {
 		dp_err("failed to allocate nbuf array");
 		DP_STATS_INC(dp_pdev, replenish.rxdma_err, num_req_buffers);
 		QDF_BUG(0);
 		return QDF_STATUS_E_NOMEM;
 	}
-	nbuf_ptrs_per_page = PAGE_SIZE / sizeof(*rx_nbuf_arr);
+	nbuf_ptrs_per_page = PAGE_SIZE / sizeof(*nf_info);
 
 	for (page_idx = 0; page_idx < total_pages; page_idx++) {
-		qdf_mem_zero(rx_nbuf_arr, PAGE_SIZE);
+		qdf_mem_zero(nf_info, PAGE_SIZE);
 
 		for (nr_nbuf = 0; nr_nbuf < nbuf_ptrs_per_page; nr_nbuf++) {
 			/*
@@ -2830,9 +2947,15 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			 */
 			if (nr_nbuf_total >= nr_descs)
 				break;
-			ret = dp_pdev_nbuf_alloc_and_map(dp_soc,
-							 &rx_nbuf_arr[nr_nbuf],
-							 dp_pdev, rx_desc_pool);
+			/* Flag is set while pdev rx_desc_pool initialization */
+			if (qdf_unlikely(rx_desc_pool->rx_mon_dest_frag_enable))
+				ret = dp_pdev_frag_alloc_and_map(dp_soc,
+						&nf_info[nr_nbuf], dp_pdev,
+						rx_desc_pool);
+			else
+				ret = dp_pdev_nbuf_alloc_and_map(dp_soc,
+						&nf_info[nr_nbuf], dp_pdev,
+						rx_desc_pool);
 			if (QDF_IS_STATUS_ERROR(ret))
 				break;
 
@@ -2848,10 +2971,16 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			qdf_assert_always(rxdma_ring_entry);
 
 			next = desc_list->next;
-			nbuf = rx_nbuf_arr[buffer_index];
-			paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
+			paddr = nf_info[buffer_index].paddr;
+			nbuf = nf_info[buffer_index].virt_addr.nbuf;
 
-			dp_rx_desc_prep(&desc_list->rx_desc, nbuf);
+			/* Flag is set while pdev rx_desc_pool initialization */
+			if (qdf_unlikely(rx_desc_pool->rx_mon_dest_frag_enable))
+				dp_rx_desc_frag_prep(&desc_list->rx_desc,
+						     &nf_info[buffer_index]);
+			else
+				dp_rx_desc_prep(&desc_list->rx_desc,
+						&nf_info[buffer_index]);
 			desc_list->rx_desc.in_use = 1;
 			dp_rx_desc_alloc_dbg_info(&desc_list->rx_desc);
 			dp_rx_desc_update_dbg_info(&desc_list->rx_desc,
@@ -2861,7 +2990,6 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 			hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						     desc_list->rx_desc.cookie,
 						     rx_desc_pool->owner);
-
 			dp_ipa_handle_rx_buf_smmu_mapping(
 						dp_soc, nbuf,
 						rx_desc_pool->buf_size,
@@ -2874,7 +3002,7 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 	}
 
 	dp_info("filled %u RX buffers for driver attach", nr_nbuf_total);
-	qdf_mem_free(rx_nbuf_arr);
+	qdf_mem_free(nf_info);
 
 	if (!nr_nbuf_total) {
 		dp_err("No nbuf's allocated");
@@ -2889,6 +3017,35 @@ dp_pdev_rx_buffers_attach(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * dp_rx_enable_mon_dest_frag() - Enable frag processing for
+ *              monitor destination ring via frag.
+ *
+ * Enable this flag only for monitor destination buffer processing
+ * if DP_RX_MON_MEM_FRAG feature is enabled.
+ * If flag is set then frag based function will be called for alloc,
+ * map, prep desc and free ops for desc buffer else normal nbuf based
+ * function will be called.
+ *
+ * @rx_desc_pool: Rx desc pool
+ * @is_mon_dest_desc: Is it for monitor dest buffer
+ *
+ * Return: None
+ */
+#ifdef DP_RX_MON_MEM_FRAG
+void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
+				bool is_mon_dest_desc)
+{
+	rx_desc_pool->rx_mon_dest_frag_enable = is_mon_dest_desc;
+}
+#else
+void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
+				bool is_mon_dest_desc)
+{
+	rx_desc_pool->rx_mon_dest_frag_enable = false;
+}
+#endif
 
 /*
  * dp_rx_pdev_desc_pool_alloc() -  allocate memory for software rx descriptor
@@ -2966,6 +3123,13 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 	struct rx_desc_pool *rx_desc_pool;
 
 	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
+		/**
+		 * If NSS is enabled, rx_desc_pool is already filled.
+		 * Hence, just disable desc_pool frag flag.
+		 */
+		rx_desc_pool = &soc->rx_desc_buf[mac_for_pdev];
+		dp_rx_enable_mon_dest_frag(rx_desc_pool, false);
+
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			  "nss-wifi<4> skip Rx refil %d", mac_for_pdev);
 		return QDF_STATUS_SUCCESS;
@@ -2986,6 +3150,8 @@ QDF_STATUS dp_rx_pdev_desc_pool_init(struct dp_pdev *pdev)
 	rx_desc_pool->owner = DP_WBM2SW_RBM;
 	rx_desc_pool->buf_size = RX_DATA_BUFFER_SIZE;
 	rx_desc_pool->buf_alignment = RX_DATA_BUFFER_ALIGNMENT;
+	/* Disable monitor dest processing via frag */
+	dp_rx_enable_mon_dest_frag(rx_desc_pool, false);
 
 	dp_rx_desc_pool_init(soc, mac_for_pdev,
 			     rx_sw_desc_num, rx_desc_pool);

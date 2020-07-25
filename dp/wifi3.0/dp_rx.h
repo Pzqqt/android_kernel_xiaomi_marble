@@ -97,6 +97,8 @@ struct dp_rx_desc_dbg_info {
  * @nbuf		: VA of the "skb" posted
  * @rx_buf_start	: VA of the original Rx buffer, before
  *			  movement of any skb->data pointer
+ * @paddr_buf_start     : PA of the original Rx buffer, before
+ *                        movement of any frag pointer
  * @cookie		: index into the sw array which holds
  *			  the sw Rx descriptors
  *			  Cookie space is 21 bits:
@@ -113,6 +115,7 @@ struct dp_rx_desc_dbg_info {
 struct dp_rx_desc {
 	qdf_nbuf_t nbuf;
 	uint8_t *rx_buf_start;
+	qdf_dma_addr_t paddr_buf_start;
 	uint32_t cookie;
 	uint8_t	 pool_id;
 #ifdef RX_DESC_DEBUG_CHECK
@@ -683,6 +686,25 @@ void dp_rx_desc_nbuf_and_pool_free(struct dp_soc *soc, uint32_t pool_id,
 void dp_rx_desc_nbuf_free(struct dp_soc *soc,
 			  struct rx_desc_pool *rx_desc_pool);
 
+#ifdef DP_RX_MON_MEM_FRAG
+/*
+ * dp_rx_desc_frag_free() - free the sw rx desc frag called during
+ *			    de-initialization of wifi module.
+ *
+ * @soc: core txrx main context
+ * @rx_desc_pool: rx descriptor pool pointer
+ *
+ * Return: None
+ */
+void dp_rx_desc_frag_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool);
+#else
+static inline
+void dp_rx_desc_frag_free(struct dp_soc *soc,
+			  struct rx_desc_pool *rx_desc_pool)
+{
+}
+#endif
 /*
  * dp_rx_desc_pool_free() - free the sw rx desc array called during
  *			    de-initialization of wifi module.
@@ -1278,19 +1300,48 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
 /**
  * dp_rx_desc_prep() - prepare rx desc
  * @rx_desc: rx descriptor pointer to be prepared
- * @nbuf: nbuf to be associated with rx_desc
+ * @nbuf_frag_info_t: struct dp_rx_nbuf_frag_info *
  *
  * Note: assumption is that we are associating a nbuf which is mapped
  *
  * Return: none
  */
-static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+static inline
+void dp_rx_desc_prep(struct dp_rx_desc *rx_desc,
+		     struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
 {
 	rx_desc->magic = DP_RX_DESC_MAGIC;
-	rx_desc->nbuf = nbuf;
+	rx_desc->nbuf = (nbuf_frag_info_t->virt_addr).nbuf;
 	rx_desc->unmapped = 0;
 }
 
+/**
+ * dp_rx_desc_frag_prep() - prepare rx desc
+ * @rx_desc: rx descriptor pointer to be prepared
+ * @nbuf_frag_info_t: struct dp_rx_nbuf_frag_info *
+ *
+ * Note: assumption is that we frag address is mapped
+ *
+ * Return: none
+ */
+#ifdef DP_RX_MON_MEM_FRAG
+static inline
+void dp_rx_desc_frag_prep(struct dp_rx_desc *rx_desc,
+			  struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
+{
+	rx_desc->magic = DP_RX_DESC_MAGIC;
+	rx_desc->rx_buf_start =
+		(uint8_t *)((nbuf_frag_info_t->virt_addr).vaddr);
+	rx_desc->paddr_buf_start = nbuf_frag_info_t->paddr;
+	rx_desc->unmapped = 0;
+}
+#else
+static inline
+void dp_rx_desc_frag_prep(struct dp_rx_desc *rx_desc,
+			  struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
+{
+}
+#endif /* DP_RX_MON_MEM_FRAG */
 #else
 
 static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
@@ -1298,12 +1349,36 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
 	return true;
 }
 
-static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
+static inline
+void dp_rx_desc_prep(struct dp_rx_desc *rx_desc,
+		     struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
 {
-	rx_desc->nbuf = nbuf;
+	rx_desc->nbuf = (nbuf_frag_info_t->virt_addr).nbuf;
 	rx_desc->unmapped = 0;
 }
+
+#ifdef DP_RX_MON_MEM_FRAG
+static inline
+void dp_rx_desc_frag_prep(struct dp_rx_desc *rx_desc,
+			  struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
+{
+	rx_desc->rx_buf_start =
+		(uint8_t *)((nbuf_frag_info_t->virt_addr).vaddr);
+	rx_desc->paddr_buf_start = nbuf_frag_info_t->paddr;
+	rx_desc->unmapped = 0;
+}
+#else
+static inline
+void dp_rx_desc_frag_prep(struct dp_rx_desc *rx_desc,
+			  struct dp_rx_nbuf_frag_info *nbuf_frag_info_t)
+{
+}
+#endif /* DP_RX_MON_MEM_FRAG */
+
 #endif /* RX_DESC_DEBUG_CHECK */
+
+void dp_rx_enable_mon_dest_frag(struct rx_desc_pool *rx_desc_pool,
+				bool is_mon_dest_desc);
 
 void dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
