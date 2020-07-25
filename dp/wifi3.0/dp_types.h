@@ -601,6 +601,9 @@ struct dp_srng {
 	uint8_t cached;
 	int irq;
 	uint32_t num_entries;
+#ifdef DP_MEM_PRE_ALLOC
+	uint8_t is_mem_prealloc;
+#endif
 };
 
 struct dp_rx_reorder_array_elem {

@@ -1096,8 +1096,20 @@ struct ol_if_ops {
 	bool (*is_roam_inprogress)(uint32_t vdev_id);
 	enum QDF_GLOBAL_MODE (*get_con_mode)(void);
 #ifdef QCA_PEER_MULTIQ_SUPPORT
-	int  (*peer_ast_flowid_map)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
-			       uint16_t peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
+	int (*peer_ast_flowid_map)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle,
+				   uint16_t peer_id, uint8_t vdev_id,
+				   uint8_t *peer_mac_addr);
+#endif
+#ifdef DP_MEM_PRE_ALLOC
+	void *(*dp_prealloc_get_consistent)(uint32_t *size,
+					    void **base_vaddr_unaligned,
+					    qdf_dma_addr_t *paddr_unaligned,
+					    qdf_dma_addr_t *paddr_aligned,
+					    uint32_t align,
+					    uint32_t ring_type);
+	void (*dp_prealloc_put_consistent)(qdf_size_t size,
+					   void *vaddr_unligned,
+					   qdf_dma_addr_t paddr);
 #endif
 	int (*get_soc_nss_cfg)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle);
 

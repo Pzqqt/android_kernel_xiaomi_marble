@@ -1430,6 +1430,94 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
 }
 #endif
 
+#ifdef DP_MEM_PRE_ALLOC
+static inline
+void *dp_srng_aligned_mem_alloc_consistent(struct dp_soc *soc,
+					   struct dp_srng *srng,
+					   uint32_t ring_type)
+{
+	void *mem;
+
+	qdf_assert(!srng->is_mem_prealloc);
+
+	if (!soc->cdp_soc.ol_ops->dp_prealloc_get_consistent) {
+		dp_warn("dp_prealloc_get_consistent is null!");
+		goto qdf;
+	}
+
+	mem =
+		soc->cdp_soc.ol_ops->dp_prealloc_get_consistent
+						(&srng->alloc_size,
+						 &srng->base_vaddr_unaligned,
+						 &srng->base_paddr_unaligned,
+						 &srng->base_paddr_aligned,
+						 DP_RING_BASE_ALIGN, ring_type);
+
+	if (mem) {
+		srng->is_mem_prealloc = true;
+		goto end;
+	}
+qdf:
+	mem =  qdf_aligned_mem_alloc_consistent(soc->osdev, &srng->alloc_size,
+						&srng->base_vaddr_unaligned,
+						&srng->base_paddr_unaligned,
+						&srng->base_paddr_aligned,
+						DP_RING_BASE_ALIGN);
+end:
+	dp_info("%s memory %pK dp_srng %pK ring_type %d alloc_size %d num_entries %d",
+		srng->is_mem_prealloc ? "pre-alloc" : "dynamic-alloc", mem,
+		srng, ring_type, srng->alloc_size, srng->num_entries);
+	return mem;
+}
+
+static inline void dp_srng_mem_free_consistent(struct dp_soc *soc,
+					       struct dp_srng *srng)
+{
+	if (srng->is_mem_prealloc) {
+		if (!soc->cdp_soc.ol_ops->dp_prealloc_put_consistent) {
+			dp_warn("dp_prealloc_put_consistent is null!");
+			QDF_BUG(0);
+			return;
+		}
+		soc->cdp_soc.ol_ops->dp_prealloc_put_consistent
+						(srng->alloc_size,
+						 srng->base_vaddr_unaligned,
+						 srng->base_paddr_unaligned);
+
+	} else {
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+					srng->alloc_size,
+					srng->base_vaddr_unaligned,
+					srng->base_paddr_unaligned, 0);
+	}
+}
+
+#else
+
+static inline
+void *dp_srng_aligned_mem_alloc_consistent(struct dp_soc *soc,
+					   struct dp_srng *srng,
+					   uint32_t ring_type)
+
+{
+	return qdf_aligned_mem_alloc_consistent(soc->osdev, &srng->alloc_size,
+						&srng->base_vaddr_unaligned,
+						&srng->base_paddr_unaligned,
+						&srng->base_paddr_aligned,
+						DP_RING_BASE_ALIGN);
+}
+
+static inline void dp_srng_mem_free_consistent(struct dp_soc *soc,
+					       struct dp_srng *srng)
+{
+	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+				srng->alloc_size,
+				srng->base_vaddr_unaligned,
+				srng->base_paddr_unaligned, 0);
+}
+
+#endif /* DP_MEM_PRE_ALLOC */
+
 /*
  * dp_srng_free() - Free SRNG memory
  * @soc  : Data path soc handle
@@ -1437,15 +1525,11 @@ dp_srng_configure_interrupt_thresholds(struct dp_soc *soc,
  *
  * return: None
  */
-
 static void dp_srng_free(struct dp_soc *soc, struct dp_srng *srng)
 {
 	if (srng->alloc_size && srng->base_vaddr_unaligned) {
 		if (!srng->cached) {
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-						srng->alloc_size,
-						srng->base_vaddr_unaligned,
-						srng->base_paddr_unaligned, 0);
+			dp_srng_mem_free_consistent(soc, srng);
 		} else {
 			qdf_mem_free(srng->base_vaddr_unaligned);
 		}
@@ -1487,11 +1571,11 @@ static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 
 	ring_params.num_entries = srng->num_entries;
 
-	dp_verbose_debug("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u",
-			 ring_type, ring_num,
-			 (void *)ring_params.ring_base_vaddr,
-			 (void *)ring_params.ring_base_paddr,
-			 ring_params.num_entries);
+	dp_info("Ring type: %d, num:%d vaddr %pK paddr %pK entries %u",
+		ring_type, ring_num,
+		(void *)ring_params.ring_base_vaddr,
+		(void *)ring_params.ring_base_paddr,
+		ring_params.num_entries);
 
 	if (soc->intr_mode == DP_INTR_MSI) {
 		dp_srng_msi_setup(soc, &ring_params, ring_type, ring_num);
@@ -1539,7 +1623,6 @@ static QDF_STATUS dp_srng_alloc(struct dp_soc *soc, struct dp_srng *srng,
 {
 	hal_soc_handle_t hal_soc = soc->hal_soc;
 	uint32_t entry_size = hal_srng_get_entrysize(hal_soc, ring_type);
-	uint32_t ring_base_align = 32;
 	uint32_t max_entries = hal_srng_max_entries(hal_soc, ring_type);
 
 	if (srng->base_vaddr_unaligned) {
@@ -1556,19 +1639,16 @@ static QDF_STATUS dp_srng_alloc(struct dp_soc *soc, struct dp_srng *srng,
 
 	if (!cached) {
 		srng->base_vaddr_aligned =
-		    qdf_aligned_mem_alloc_consistent(
-					soc->osdev, &srng->alloc_size,
-					&srng->base_vaddr_unaligned,
-					&srng->base_paddr_unaligned,
-					&srng->base_paddr_aligned,
-					ring_base_align);
+		    dp_srng_aligned_mem_alloc_consistent(soc,
+							 srng,
+							 ring_type);
 	} else {
 		srng->base_vaddr_aligned = qdf_aligned_malloc(
 					&srng->alloc_size,
 					&srng->base_vaddr_unaligned,
 					&srng->base_paddr_unaligned,
 					&srng->base_paddr_aligned,
-					ring_base_align);
+					DP_RING_BASE_ALIGN);
 	}
 
 	if (!srng->base_vaddr_aligned)
