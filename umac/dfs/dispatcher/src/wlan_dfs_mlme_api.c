@@ -70,7 +70,6 @@ void dfs_mlme_mark_dfs_for_freq(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 #else /* Else of ndef MCL_DFS_SUPPORT */
-#ifdef CONFIG_CHAN_NUM_API
 static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 		void *object,
 		void *arg)
@@ -87,31 +86,6 @@ static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
 		    vdev_id);
 }
-#endif
-
-/* dfs_send_radar_ind_for_freq() - Send radar found indication.
- * @pdev: Pointer to wlan_objmgr_pdev.
- * @object: Pointer to wlan_objmgr_vdev.
- * @arg : void pointer to args.
- */
-#ifdef CONFIG_CHAN_FREQ_API
-static void dfs_send_radar_ind_for_freq(struct wlan_objmgr_pdev *pdev,
-					void *object,
-					void *arg)
-{
-	struct scheduler_msg sme_msg = {0};
-	uint8_t vdev_id = wlan_vdev_get_id((struct wlan_objmgr_vdev *)object);
-
-	sme_msg.type = eWNI_SME_DFS_RADAR_FOUND;
-	sme_msg.bodyptr = NULL;
-	sme_msg.bodyval = vdev_id;
-	scheduler_post_message(QDF_MODULE_ID_DFS,
-			       QDF_MODULE_ID_SME,
-			       QDF_MODULE_ID_SME, &sme_msg);
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
-		 vdev_id);
-}
-#endif
 
 #ifdef CONFIG_CHAN_NUM_API
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
@@ -153,7 +127,7 @@ void dfs_mlme_mark_dfs_for_freq(struct wlan_objmgr_pdev *pdev,
 	vdev = wlan_pdev_peek_active_first_vdev(pdev, WLAN_DFS_ID);
 
 	if (vdev) {
-		dfs_send_radar_ind_for_freq(pdev, vdev, NULL);
+		dfs_send_radar_ind(pdev, vdev, NULL);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_DFS_ID);
 	}
 }

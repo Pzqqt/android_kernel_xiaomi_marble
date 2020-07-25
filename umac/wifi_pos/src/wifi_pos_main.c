@@ -440,21 +440,23 @@ static void wifi_pos_get_reg_info(struct wlan_objmgr_pdev *pdev,
 /**
  * wifi_pos_get_valid_channels: Get the list of valid channels from the
  * given channel list
- * @channels: Channel list to be validated
+ * @chan_freqs: Channel frequencies to be validated
  * @num_ch: NUmber of channels in the channel list to be validated
  * @valid_channel_list: Pointer to valid channel list
  *
  * Return: Number of valid channels in the given list
  */
-
-static uint32_t wifi_pos_get_valid_channels(uint8_t *channels, uint32_t num_ch,
-					    uint8_t *valid_channel_list) {
+static uint32_t wifi_pos_get_valid_channels(qdf_freq_t *chan_freqs,
+					    uint32_t num_ch,
+					    qdf_freq_t *valid_channel_list)
+{
 	uint32_t i, num_valid_channels = 0;
 
 	for (i = 0; i < num_ch; i++) {
-		if (wlan_reg_get_chan_enum(channels[i]) == INVALID_CHANNEL)
+		if (wlan_reg_get_chan_enum_for_freq(chan_freqs[i]) ==
+		    INVALID_CHANNEL)
 			continue;
-		valid_channel_list[num_valid_channels++] = channels[i];
+		valid_channel_list[num_valid_channels++] = chan_freqs[i];
 	}
 	return num_valid_channels;
 }
@@ -495,21 +497,23 @@ static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
 static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
-	uint8_t idx, band_mask;
-	uint8_t *buf;
+	uint8_t idx;
+	uint8_t *buf = NULL;
 	uint32_t len, i, freq;
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
+	qdf_freq_t *chan_freqs = NULL;
 	bool oem_6g_support_disable;
 	uint8_t *channels = req->buf;
 	struct wlan_objmgr_pdev *pdev;
 	uint32_t num_ch = req->buf_len;
-	uint8_t valid_channel_list[NUM_CHANNELS];
+	qdf_freq_t valid_channel_list[NUM_CHANNELS];
 	uint32_t num_valid_channels = 0;
 	struct wifi_pos_ch_info_rsp *ch_info;
-	struct wifi_pos_channel_list *ch_list;
+	struct wifi_pos_channel_list *ch_list = NULL;
 	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
 					wifi_pos_get_psoc_priv_obj(psoc);
+	QDF_STATUS ret_val;
 
 	if (!wifi_pos_obj) {
 		wifi_pos_err("wifi_pos priv obj is null");
@@ -527,12 +531,21 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	}
 	if (num_ch > NUM_CHANNELS) {
 		wifi_pos_err("Invalid number of channels");
-		return QDF_STATUS_E_INVAL;
+		ret_val = QDF_STATUS_E_INVAL;
+		goto cleanup;
+	}
+
+	chan_freqs = qdf_mem_malloc(NUM_CHANNELS * (sizeof(*chan_freqs)));
+	if (!chan_freqs) {
+		ret_val = QDF_STATUS_E_NOMEM;
+		goto cleanup;
 	}
 
 	ch_list = qdf_mem_malloc(sizeof(*ch_list));
-	if (!ch_list)
-		return QDF_STATUS_E_NOMEM;
+	if (!ch_list) {
+		ret_val = QDF_STATUS_E_NOMEM;
+		goto cleanup;
+	}
 
 	if (num_ch == 0 && req->rsp_version == WIFI_POS_RSP_V2_NL) {
 		wifi_pos_get_ch_info(psoc, ch_list);
@@ -549,18 +562,21 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 			num_valid_channels++;
 		}
 	} else {
+		for (i = 0; i < NUM_CHANNELS; i++)
+			chan_freqs[i] =
+			    wlan_reg_chan_band_to_freq(pdev, channels[i],
+						       BIT(REG_BAND_5G) |
+						       BIT(REG_BAND_2G));
 		/* v1 has ch_list with frequencies in order of 2.4g, 5g only */
 		num_valid_channels = wifi_pos_get_valid_channels(
-							channels, num_ch,
+							chan_freqs, num_ch,
 							 valid_channel_list);
-		band_mask = BIT(REG_BAND_5G) | BIT(REG_BAND_2G);
 		for (i = 0; i < num_valid_channels; i++) {
-			ch_list->chan_info[i].chan_num = valid_channel_list[i];
 			ch_list->chan_info[i].center_freq =
-				wlan_reg_chan_band_to_freq(
-						pdev,
-						ch_list->chan_info[i].chan_num,
-						band_mask);
+							valid_channel_list[i];
+			ch_list->chan_info[i].chan_num =
+				wlan_reg_freq_to_chan(pdev, ch_list->
+						      chan_info[i].center_freq);
 		}
 	}
 
@@ -568,9 +584,8 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 			num_valid_channels;
 	buf = qdf_mem_malloc(len);
 	if (!buf) {
-		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_CORE_ID);
-		qdf_mem_free(ch_list);
-		return QDF_STATUS_E_NOMEM;
+		ret_val = QDF_STATUS_E_NOMEM;
+		goto cleanup;
 	}
 
 	/* First byte of message body will have num of channels */
@@ -600,12 +615,15 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_obj->wifi_pos_send_rsp(psoc, wifi_pos_obj->app_pid,
 					WIFI_POS_CMD_GET_CH_INFO,
 					len, buf);
+	ret_val = QDF_STATUS_SUCCESS;
 
+cleanup:
 	qdf_mem_free(buf);
 	qdf_mem_free(ch_list);
+	qdf_mem_free(chan_freqs);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_CORE_ID);
 
-	return QDF_STATUS_SUCCESS;
+	return ret_val;
 }
 
 static void wifi_pos_vdev_iterator(struct wlan_objmgr_psoc *psoc,
