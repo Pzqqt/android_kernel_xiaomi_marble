@@ -192,6 +192,8 @@ struct cds_context {
 
 	void *dp_soc;
 
+	void *dp_mem_pre_alloc_ctx;
+
 	/* Configuration handle used to get system configuration */
 	struct cdp_cfg *cfg_ctx;
 

@@ -492,6 +492,13 @@ static int __hdd_soc_probe(struct device *dev,
 	if (errno)
 		goto unlock;
 
+	status = dp_prealloc_init();
+
+	if (status != QDF_STATUS_SUCCESS) {
+		errno = qdf_status_to_os_return(status);
+		goto unlock;
+	}
+
 	hdd_ctx = hdd_context_create(dev);
 	if (IS_ERR(hdd_ctx)) {
 		errno = PTR_ERR(hdd_ctx);
@@ -525,6 +532,7 @@ hdd_context_destroy:
 	hdd_context_destroy(hdd_ctx);
 
 assert_fail_count:
+	dp_prealloc_deinit();
 	probe_fail_cnt++;
 	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
 	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
@@ -711,6 +719,8 @@ static void __hdd_soc_remove(struct device *dev)
 
 	cds_set_driver_in_bad_state(false);
 	cds_set_unload_in_progress(false);
+
+	dp_prealloc_deinit();
 
 	pr_info("%s: Driver De-initialized\n", WLAN_MODULE_NAME);
 }
