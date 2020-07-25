@@ -6128,6 +6128,8 @@ void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 	struct sir_rssi_disallow_lst entry;
 	struct roam_blacklist_timeout *blacklist;
 
+	pe_debug("Received Blacklist event from FW num entries %d",
+		 src_lst->num_entries);
 	blacklist = &src_lst->roam_blacklist[0];
 	for (i = 0; i < src_lst->num_entries; i++) {
 
