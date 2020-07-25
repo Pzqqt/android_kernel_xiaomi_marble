@@ -336,9 +336,7 @@ void hal_rx_get_rtt_info_9000(void *rx_tlv, void *ppdu_info_hdl)
 		   RTT_CHE_BUFFER_POINTER_HIGH8);
 
 	ppdu_info->cfr_info.chan_capture_status =
-	HAL_RX_GET(rx_tlv,
-		   PHYRX_PKT_END_13_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
-		   RESERVED_8);
+		GET_RX_LOCATION_INFO_CHAN_CAPTURE_STATUS(rx_tlv);
 }
 #endif
 /**
