@@ -6559,6 +6559,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);
 	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
+	DP_PRINT_STATS("RX frag OOR: %d", soc->stats.rx.rx_frag_oor);
 
 	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos2);
 	DP_PRINT_STATS("RX Ring Near Full: %d", soc->stats.rx.near_full);

@@ -134,8 +134,7 @@ static void dp_rx_return_head_frag_desc(struct dp_peer *peer,
 void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 			 unsigned int tid)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Flushing TID %d"), tid);
+	dp_info_rl("Flushing TID %d", tid);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1300,9 +1299,6 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		hdr_space += dp_f_wep.ic_header;
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_TXRX,
-			QDF_TRACE_LEVEL_ERROR,
-			"dp_rx_defrag: Did not match any security type");
 		break;
 	}
 
@@ -1536,12 +1532,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			 */
 			dp_rx_reorder_flush_frag(peer, tid);
 
-			DP_STATS_INC(soc, rx.rx_frag_err, 1);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s mismatch, dropping earlier sequence ",
-				(rxseq == rx_tid->curr_seq_num)
-				? "address"
-				: "seq number");
+			DP_STATS_INC(soc, rx.rx_frag_oor, 1);
 
 			/*
 			 * The sequence number for this fragment becomes the
