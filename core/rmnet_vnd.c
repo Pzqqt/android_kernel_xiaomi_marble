@@ -766,3 +766,8 @@ void rmnet_vnd_reset_mac_addr(struct net_device *dev)
 
 	random_ether_addr(dev->perm_addr);
 }
+
+int netif_is_rmnet(const struct net_device *dev)
+{
+	return dev->netdev_ops == &rmnet_vnd_ops;
+}

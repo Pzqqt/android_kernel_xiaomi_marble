@@ -1,5 +1,5 @@
 /* Copyright (c) 2013-2014, 2016-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -49,9 +49,18 @@ struct rmnet_shs_clnt_s {
 };
 
 struct rmnet_endpoint {
-	u8 mux_id;
+	union {
+		u8 mux_id;
+		__be32 ifa_address;
+		struct in6_addr in6addr;
+	};
 	struct net_device *egress_dev;
 	struct hlist_node hlnode;
+};
+
+struct rmnet_ip_route_endpoint {
+	struct in6_addr addr;
+	struct net_device *egress_dev;
 };
 
 struct rmnet_agg_stats {
@@ -249,4 +258,9 @@ int rmnet_add_bridge(struct net_device *rmnet_dev,
 		     struct netlink_ext_ack *extack);
 int rmnet_del_bridge(struct net_device *rmnet_dev,
 		     struct net_device *slave_dev);
+
+struct rmnet_endpoint *rmnet_get_ip6_route_endpoint(struct rmnet_port *port,
+						    struct in6_addr *addr);
+struct rmnet_endpoint *rmnet_get_ip4_route_endpoint(struct rmnet_port *port,
+						    __be32 *ifa_address);
 #endif /* _RMNET_CONFIG_H_ */
