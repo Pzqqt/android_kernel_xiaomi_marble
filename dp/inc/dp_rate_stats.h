@@ -106,23 +106,53 @@ struct wlan_peer_tx_link_stats {
 };
 
 /**
- * struct wlan_peer_rate_stats - Peer rate statistics ctx
+ * struct wlan_peer_rate_stats - Rate statistics
  * @tx: tx rate statistics
  * @rx: rx rate statistics
- * @tx_link_stats: tx link quality stats
- * @rx_link_stats: rx link quality stats
+ */
+struct wlan_peer_rate_stats {
+	struct wlan_peer_tx_rate_stats tx;
+	struct wlan_peer_rx_rate_stats rx;
+};
+
+/**
+ * struct wlan_peer_link_metrics - Peer link metrics
+ * @tx: tx link quality stats
+ * @rx: rx link quality stats
+ */
+struct wlan_peer_link_metrics {
+	struct wlan_peer_tx_link_stats tx;
+	struct wlan_peer_rx_link_stats rx;
+};
+
+/**
+ * struct wlan_peer_rate_stats_ctx - Peer statistics context
+ * @rate_stats: Rate statistics (version 1 stats)
+ * @link_metrics: Link Metrics (version 2 stats)
  * @mac_addr: peer MAC address
  * @peer_cookie: cookie for unique session of peer
  * @pdev_id: id of dp pdev
  */
 struct wlan_peer_rate_stats_ctx {
-	struct wlan_peer_tx_rate_stats tx;
-	struct wlan_peer_rx_rate_stats rx;
-	struct wlan_peer_rx_link_stats rx_link_stats;
-	struct wlan_peer_tx_link_stats tx_link_stats;
+	struct wlan_peer_rate_stats *rate_stats;
+	struct wlan_peer_link_metrics *link_metrics;
 	uint8_t mac_addr[WLAN_MAC_ADDR_LEN];
 	uint64_t peer_cookie;
 	uint8_t pdev_id;
+};
+
+/**
+ * enum rdk_stats_version - Peer statistics versions
+ * @RDK_STATS_DISABLED: peer statistics disabled
+ * @RDK_RATE_STATS: peer rate statistics enabled
+ * @RDK_LINK_STATS: peer link metrics enabled
+ * @RDK_ALL_STATS: peer all statistics enabled
+ */
+enum rdk_stats_version {
+	RDK_STATS_DISABLED = 0,
+	RDK_RATE_STATS = 1,
+	RDK_LINK_STATS = 2,
+	RDK_ALL_STATS = 3,
 };
 
 /**
@@ -136,6 +166,8 @@ struct wlan_peer_rate_stats_ctx {
  * @rxs_cache_hit: cache hit for rate index received from cache database
  * @txs_cache_miss: rate index recevied is not in cache database
  * @rxs_cache_miss: rate index recevied is not in cache database
+ * @stats_ver: peer statistics version
+ * @is_lithium: is lithium or legacy
  */
 struct wlan_soc_rate_stats_ctx {
 	struct cdp_soc_t *soc;
@@ -147,6 +179,7 @@ struct wlan_soc_rate_stats_ctx {
 	uint32_t rxs_cache_hit;
 	uint32_t txs_cache_miss;
 	uint32_t rxs_cache_miss;
+	enum rdk_stats_version stats_ver;
 	bool is_lithium;
 };
 
