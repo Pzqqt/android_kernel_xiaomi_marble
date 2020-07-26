@@ -684,6 +684,19 @@ static void dp_peer_multipass_list_add(struct dp_soc *soc, uint8_t *peer_mac,
 		qdf_err("NULL peer");
 		return;
 	}
+
+	/* If peer already exists in vdev multipass list, do not add it.
+	 * This may happen if key install comes twice or re-key
+	 * happens for a peer.
+	 */
+	if (peer->vlan_id) {
+		dp_debug("peer already added to vdev multipass list"
+			 "MAC: "QDF_MAC_ADDR_STR" vlan: %d ",
+			 QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw), peer->vlan_id);
+		dp_peer_unref_delete(peer);
+		return;
+	}
+
 	/*
 	 * Ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it when element is deleted from the list.
