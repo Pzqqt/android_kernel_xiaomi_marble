@@ -216,16 +216,16 @@ static void dump_freeze_tlv(void *freeze_tlv, uint32_t cookie)
 }
 
 /**
- * dump_freeze_tlv_v2() - Dump freeze TLV v2 sent in enhanced DMA header
+ * dump_freeze_tlv_v3() - Dump freeze TLV v2 sent in enhanced DMA header
  * @freeze_tlv: Freeze TLV sent from MAC to PHY
  * @cookie: Index into lookup table
  *
  * Return: none
  */
-static void dump_freeze_tlv_v2(void *freeze_tlv, uint32_t cookie)
+static void dump_freeze_tlv_v3(void *freeze_tlv, uint32_t cookie)
 {
-	struct macrx_freeze_capture_channel_v2 *freeze =
-		(struct macrx_freeze_capture_channel_v2 *)freeze_tlv;
+	struct macrx_freeze_capture_channel_v3 *freeze =
+		(struct macrx_freeze_capture_channel_v3 *)freeze_tlv;
 
 	cfr_debug("<DBRCOMP><FREEZE><%u>\n"
 		  "freeze: %d capture_reason: %d packet_type: 0x%x\n"
@@ -406,7 +406,8 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			  "peer_id: %d ppdu_id: 0x%04x total_bytes: %d\n"
 			  "header_version: %d target_id: %d cfr_fmt: %d\n"
 			  "mu_rx_data_incl: %d freeze_data_incl: %d\n"
-			  "mu_rx_num_users: %d decimation_factor: %d\n",
+			  "mu_rx_num_users: %d decimation_factor: %d\n"
+			  "freeze_tlv_version: %d\n",
 			  cookie,
 			  dma_hdr->tag,
 			  dma_hdr->length,
@@ -426,11 +427,13 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			  dma_hdr->mu_rx_data_incl,
 			  dma_hdr->freeze_data_incl,
 			  dma_hdr->mu_rx_num_users,
-			  dma_hdr->decimation_factor);
+			  dma_hdr->decimation_factor,
+			  dma_hdr->freeze_tlv_version);
 
 		if (dma_hdr->freeze_data_incl) {
-			if (header->chip_type == CFR_CAPTURE_RADIO_PINE)
-				dump_freeze_tlv_v2(freeze_tlv, cookie);
+			if (dma_hdr->freeze_tlv_version ==
+					MACRX_FREEZE_TLV_VERSION_3)
+				dump_freeze_tlv_v3(freeze_tlv, cookie);
 			else
 				dump_freeze_tlv(freeze_tlv, cookie);
 		}
@@ -447,7 +450,8 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			"peer_id: %d ppdu_id: 0x%04x total_bytes: %d\n"
 			"header_version: %d target_id: %d cfr_fmt: %d\n"
 			"mu_rx_data_incl: %d freeze_data_incl: %d\n"
-			"mu_rx_num_users: %d decimation_factor: %d\n",
+			"mu_rx_num_users: %d decimation_factor: %d\n"
+			"freeze_tlv_version: %d\n",
 			cookie,
 			dma_hdr->tag,
 			dma_hdr->length,
@@ -467,7 +471,8 @@ static void dump_enh_dma_hdr(struct whal_cfir_enhanced_hdr *dma_hdr,
 			dma_hdr->mu_rx_data_incl,
 			dma_hdr->freeze_data_incl,
 			dma_hdr->mu_rx_num_users,
-			dma_hdr->decimation_factor);
+			dma_hdr->decimation_factor,
+			dma_hdr->freeze_tlv_version);
 	}
 }
 
@@ -932,9 +937,9 @@ static bool enh_cfr_dbr_event_handler(struct wlan_objmgr_pdev *pdev,
 	if (dma_hdr.mu_rx_data_incl) {
 		uint8_t freeze_tlv_len;
 
-		if (pcfr->chip_type == CFR_CAPTURE_RADIO_PINE) {
+		if (dma_hdr.freeze_tlv_version == MACRX_FREEZE_TLV_VERSION_3) {
 			freeze_tlv_len =
-				sizeof(struct macrx_freeze_capture_channel_v2);
+				sizeof(struct macrx_freeze_capture_channel_v3);
 		} else {
 			freeze_tlv_len =
 				sizeof(struct macrx_freeze_capture_channel);
