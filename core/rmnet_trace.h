@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2018-2021, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 #include <linux/version.h>
 #undef TRACE_SYSTEM
@@ -21,10 +22,69 @@
 
 #include <linux/skbuff.h>
 #include <linux/tracepoint.h>
-
+#include <linux/timekeeping.h>
 /*****************************************************************************/
 /* Trace events for rmnet module */
 /*****************************************************************************/
+DECLARE_EVENT_CLASS(rmnet_skb_time_template,
+
+	TP_PROTO(struct sk_buff *skb),
+
+	TP_ARGS(skb),
+
+	TP_STRUCT__entry(
+		__field(void *,	skbaddr)
+		__field(unsigned int, len)
+		__string(name,	skb->dev->name)
+		__field(u64,	qtime)
+
+	),
+
+	TP_fast_assign(
+		__entry->skbaddr = skb;
+		__entry->len = skb->len;
+		__assign_str(name, skb->dev->name);
+		__entry->qtime = ktime_get_raw_ns();
+	),
+
+	TP_printk("dev=%s skbaddr=%pK len=%u UTC time %ld",
+		  __get_str(name), __entry->skbaddr, __entry->len,
+		   __entry->qtime)
+);
+
+DEFINE_EVENT
+	(rmnet_skb_time_template, rmnet_skb_ip_route_entry,
+
+	TP_PROTO(struct sk_buff *skb),
+
+	TP_ARGS(skb)
+);
+
+DEFINE_EVENT
+	(rmnet_skb_time_template, rmnet_skb_ip_route_exit,
+
+	TP_PROTO(struct sk_buff *skb),
+
+	TP_ARGS(skb)
+);
+
+DEFINE_EVENT
+	(rmnet_skb_time_template, rmnet_skb_egress_entry,
+
+	TP_PROTO(struct sk_buff *skb),
+
+	TP_ARGS(skb)
+);
+
+DEFINE_EVENT
+	(rmnet_skb_time_template, rmnet_skb_egress_exit,
+
+	TP_PROTO(struct sk_buff *skb),
+
+	TP_ARGS(skb)
+);
+
+
 TRACE_EVENT(rmnet_xmit_skb,
 
 	TP_PROTO(struct sk_buff *skb),
