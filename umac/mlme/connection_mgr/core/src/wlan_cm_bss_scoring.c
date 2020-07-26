@@ -1038,18 +1038,25 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 			}
 		}
 
-		if (blacklist_action == CM_BLM_NO_ACTION)
+		if (blacklist_action == CM_BLM_NO_ACTION) {
 			cm_calculate_bss_score(psoc, scan_entry->entry,
 					       pcl_chan_weight, bssid_hint);
-		else if (blacklist_action == CM_BLM_AVOID)
+		} else if (blacklist_action == CM_BLM_AVOID) {
 			/* add min score so that it is added back in the end */
 			scan_entry->entry->bss_score =
 					CM_AVOID_CANDIDATE_MIN_SCORE;
+			mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Avoidlist, give min score %d",
+					scan_entry->entry->bssid.bytes,
+					scan_entry->entry->channel.chan_freq,
+					scan_entry->entry->rssi_raw,
+					scan_entry->entry->bss_score);
+		}
 
 		/* Remove node from current locaion to add node back shorted */
 		status = qdf_list_remove_node(scan_list, cur_node);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			mlme_err("failed to remove node from scan list");
+			mlme_err("failed to remove node for BSS %pM from scan list",
+				 scan_entry->entry->bssid.bytes);
 			return;
 		}
 		/*
@@ -1057,6 +1064,10 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		 * else add back to the list sorted
 		 */
 		if (blacklist_action == CM_BLM_REMOVE) {
+			mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Blacklist, remove entry",
+					scan_entry->entry->bssid.bytes,
+					scan_entry->entry->channel.chan_freq,
+					scan_entry->entry->rssi_raw);
 			util_scan_free_cache_entry(scan_entry->entry);
 			qdf_mem_free(scan_entry);
 		} else {
