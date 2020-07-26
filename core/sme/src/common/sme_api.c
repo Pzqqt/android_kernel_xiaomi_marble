@@ -103,6 +103,28 @@ QDF_STATUS sme_release_global_lock(struct sme_context *sme)
 	return qdf_mutex_release(&sme->sme_global_lock);
 }
 
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS cm_roam_acquire_lock(void)
+{
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac)
+		return QDF_STATUS_E_FAILURE;
+
+	return sme_acquire_global_lock(&mac->sme);
+}
+
+QDF_STATUS cm_roam_release_lock(void)
+{
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_SME);
+
+	if (!mac)
+		return QDF_STATUS_E_FAILURE;
+
+	return sme_release_global_lock(&mac->sme);
+}
+#endif
+
 struct mac_context *sme_get_mac_context(void)
 {
 	struct mac_context *mac_ctx;
