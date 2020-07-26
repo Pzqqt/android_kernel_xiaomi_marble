@@ -134,6 +134,29 @@ wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+/**
+ * cm_roam_acquire_lock  - Wrapper for sme_acquire_global_lock.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_acquire_lock(void);
+
+/**
+ * cm_roam_release_lock  - Wrapper for sme_release_global_lock()
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_release_lock(void);
+
+/**
+ * cm_roam_get_requestor_string  - RSO control requestor to string api
+ * @requestor: Requestor of type enum wlan_cm_rso_control_requestor
+ *
+ * Return: Pointer to converted string
+ */
+char
+*cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

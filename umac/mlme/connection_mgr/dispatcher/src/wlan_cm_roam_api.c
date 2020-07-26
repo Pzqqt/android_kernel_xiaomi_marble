@@ -329,3 +329,26 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 }
 #endif
+
+#ifdef ROAM_OFFLOAD_V1
+char *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor)
+{
+	switch (requestor) {
+	case RSO_INVALID_REQUESTOR:
+	default:
+		return "No requestor";
+	case RSO_START_BSS:
+		return "SAP start";
+	case RSO_CHANNEL_SWITCH:
+		return "CSA";
+	case RSO_CONNECT_START:
+		return "STA connection";
+	case RSO_SAP_CHANNEL_CHANGE:
+		return "SAP Ch switch";
+	case RSO_NDP_CON_ON_NDI:
+		return "NDP connection";
+	case RSO_SET_PCL:
+		return "Set PCL";
+	}
+}
+#endif
