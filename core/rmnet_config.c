@@ -870,6 +870,9 @@ static int rmnet_addr6_event(struct notifier_block *unused,
 	real_dev = priv->real_dev;
 	port = rmnet_get_port_rtnl(real_dev);
 
+	if (!port)
+		return NOTIFY_OK;
+
 	switch (event) {
 	case NETDEV_UP:
 		ep = kzalloc(sizeof(*ep), GFP_ATOMIC);
@@ -909,6 +912,9 @@ static int rmnet_addr4_event(struct notifier_block *unused,
 	priv = netdev_priv(dev);
 	real_dev = priv->real_dev;
 	port = rmnet_get_port_rtnl(real_dev);
+
+	if (!port)
+		return NOTIFY_OK;
 
 	switch (event) {
 	case NETDEV_UP:
