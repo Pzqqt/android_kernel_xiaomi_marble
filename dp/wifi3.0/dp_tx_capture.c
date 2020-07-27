@@ -505,9 +505,14 @@ void dp_peer_tid_peer_id_update(struct dp_peer *peer, uint16_t peer_id)
 	int tid;
 	struct dp_tx_tid *tx_tid;
 
+	dp_peer_tid_queue_init(peer);
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
 		tx_tid->peer_id = peer_id;
+		if (tx_tid->tid != tid) {
+			qdf_err("tx tid is corrupted for tid %d, peer_id %d", tid, peer_id);
+			tx_tid->tid = tid;
+		}
 	}
 }
 
@@ -523,6 +528,8 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
+		if (tx_tid->init_done)
+			continue;
 		tx_tid->tid = tid;
 		qdf_nbuf_queue_init(&tx_tid->defer_msdu_q);
 		qdf_nbuf_queue_init(&tx_tid->msdu_comp_q);
@@ -550,6 +557,7 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		/* spinlock create */
 		qdf_spinlock_create(&tx_tid->tid_lock);
 		qdf_spinlock_create(&tx_tid->tasklet_tid_lock);
+		tx_tid->init_done = 1;
 	}
 
 	peer->tx_capture.is_tid_initialized = 1;
@@ -3010,7 +3018,6 @@ static void dp_ppdu_desc_free(struct dp_tx_cap_nbuf_list *ptr_nbuf_list,
 			      uint8_t usr_idx)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc = NULL;
-	struct cdp_tx_completion_ppdu_user *user = NULL;
 	qdf_nbuf_t tmp_nbuf;
 
 	if (!ptr_nbuf_list->nbuf_ppdu ||
@@ -3022,7 +3029,6 @@ static void dp_ppdu_desc_free(struct dp_tx_cap_nbuf_list *ptr_nbuf_list,
 	if (tmp_nbuf) {
 		ppdu_desc = (struct cdp_tx_completion_ppdu *)
 				qdf_nbuf_data(tmp_nbuf);
-		user = &ppdu_desc->user[usr_idx];
 
 		dp_ppdu_queue_free(tmp_nbuf, usr_idx);
 		dp_tx_cap_nbuf_list_dec_ref(ptr_nbuf_list);
@@ -3327,6 +3333,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 			if ((user->skip == 1) || (peer_id != user->peer_id) ||
 			    (tx_tid->tid != user->tid))
 				continue;
+
 			if ((user->pending_retries == 0) &&
 			    qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q) &&
 			    qdf_nbuf_is_queue_empty(head_ppdu)) {
@@ -3393,6 +3400,7 @@ dp_tx_mon_proc_pending_ppdus(struct dp_pdev *pdev, struct dp_tx_tid *tx_tid,
 
 			if (cur_user->skip == 1)
 				continue;
+
 			/* to handle last ppdu case we need to decrement */
 			ppdu_cnt--;
 			break;
@@ -4413,6 +4421,7 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 							 user->peer_id);
 			if (!peer) {
 				dp_ppdu_desc_free(ptr_nbuf_list, usr_idx);
+				user->skip = 1;
 				continue;
 			}
 
@@ -4579,7 +4588,8 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 				continue;
 
 			cur_user = &cur_ppdu_desc->user[usr_idx];
-			if (cur_user->delayed_ba == 1 || cur_user->skip == 1)
+			if ((cur_user->delayed_ba == 1) ||
+			    (cur_user->skip == 1))
 				continue;
 
 			peer_id = cur_ppdu_desc->user[usr_idx].peer_id;
@@ -4767,7 +4777,7 @@ dp_tx_cap_proc_per_ppdu_info(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu,
 			 */
 			if (peer->bss_peer ||
 			    !dp_peer_or_pdev_tx_cap_enabled(pdev,
-				NULL, peer->mac_addr.raw)) {
+				NULL, peer->mac_addr.raw) || user->is_mcast) {
 				user->skip = 1;
 				goto free_nbuf_dec_ref;
 			}
@@ -5136,9 +5146,10 @@ void dp_tx_ppdu_stats_process(void *context)
 							ptr_nbuf_list)) {
 					QDF_TRACE(QDF_MODULE_ID_TX_CAPTURE,
 						  QDF_TRACE_LEVEL_FATAL,
-						  "%s: %d missing handling of ppdu_desc ref_cnt:%d ,i : %d!!!\n",
+						  "%s: %d missing handling of ppdu_desc ref_cnt:%d ,i : %d ptr %p, ppdu_desc_cnt %d!!!\n",
 						  __func__, __LINE__,
-						  ptr_nbuf_list->ref_cnt, i);
+						  ptr_nbuf_list->ref_cnt, i, ptr_nbuf_list, ppdu_desc_cnt);
+					QDF_BUG(0);
 				}
 			}
 		}
