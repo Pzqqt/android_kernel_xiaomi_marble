@@ -75,22 +75,114 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 				    WLAN_ROAM_RSO_ENABLED,
 				    REASON_CTX_INIT);
 }
+#endif
 
-QDF_STATUS wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
-				 uint8_t vdev_id, uint8_t reason)
+char *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor)
 {
-	return cm_roam_state_change(pdev, vdev_id,
-				    WLAN_ROAM_RSO_ENABLED, reason);
+	switch (requestor) {
+	case RSO_INVALID_REQUESTOR:
+	default:
+		return "No requestor";
+	case RSO_START_BSS:
+		return "SAP start";
+	case RSO_CHANNEL_SWITCH:
+		return "CSA";
+	case RSO_CONNECT_START:
+		return "STA connection";
+	case RSO_SAP_CHANNEL_CHANGE:
+		return "SAP Ch switch";
+	case RSO_NDP_CON_ON_NDI:
+		return "NDP connection";
+	case RSO_SET_PCL:
+		return "Set PCL";
+	}
+}
+
+QDF_STATUS
+wlan_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			bool enable)
+{
+	uint8_t reason = REASON_SUPPLICANT_DE_INIT_ROAMING;
+	QDF_STATUS status;
+
+	status = cm_roam_acquire_lock();
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+
+	if (enable)
+		reason = REASON_SUPPLICANT_INIT_ROAMING;
+
+	status = cm_roam_state_change(
+			pdev, vdev_id,
+			enable ? WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_DEINIT,
+			reason);
+	cm_roam_release_lock();
+
+	return status;
+}
+
+QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+			       enum wlan_cm_rso_control_requestor requestor,
+			       uint8_t reason)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	QDF_STATUS status;
+
+	status = cm_roam_acquire_lock();
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+
+	if (reason == REASON_DRIVER_DISABLED && requestor)
+		mlme_set_operations_bitmap(psoc, vdev_id, requestor, false);
+
+	mlme_debug("ROAM_CONFIG: vdev[%d] Disable roaming - requestor:%s",
+		   vdev_id, cm_roam_get_requestor_string(requestor));
+
+	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_STOPPED,
+				      REASON_DRIVER_DISABLED);
+	cm_roam_release_lock();
+
+	return status;
+}
+
+QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+			      enum wlan_cm_rso_control_requestor requestor,
+			      uint8_t reason)
+{
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	QDF_STATUS status;
+
+	if (reason == REASON_DRIVER_DISABLED && requestor)
+		mlme_set_operations_bitmap(psoc, vdev_id, requestor, true);
+
+	status = cm_roam_acquire_lock();
+	if (QDF_IS_STATUS_ERROR(status))
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_debug("ROAM_CONFIG: vdev[%d] Enable roaming - requestor:%s",
+		   vdev_id, cm_roam_get_requestor_string(requestor));
+
+	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_ENABLED,
+				      REASON_DRIVER_ENABLED);
+	cm_roam_release_lock();
+
+	return status;
+}
+
+QDF_STATUS wlan_cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     enum roam_offload_state requested_state,
+				     uint8_t reason)
+{
+	return cm_roam_state_change(pdev, vdev_id, requested_state, reason);
 }
 
 QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id,
-				     uint8_t rso_command,
+				     uint8_t vdev_id, uint8_t rso_command,
 				     uint8_t reason)
 {
 	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
 }
-#endif
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -142,8 +234,8 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 
 	/* value - true (vdev pcl) false - pdev pcl */
 	mlme_priv->cm_roam.pcl_vdev_cmd_active = pcl_per_vdev;
-	mlme_legacy_debug("CM_ROAM: vdev[%d] SET PCL cmd level - [%s]", vdev_id,
-			  pcl_per_vdev ? "VDEV" : "PDEV");
+	mlme_debug("CM_ROAM: vdev[%d] SET PCL cmd level - [%s]", vdev_id,
+		   pcl_per_vdev ? "VDEV" : "PDEV");
 }
 
 bool wlan_cm_roam_is_pcl_per_vdev_active(struct wlan_objmgr_psoc *psoc,
@@ -227,7 +319,7 @@ wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 	status = policy_mgr_get_valid_chans(psoc, channel_list,
 					    &num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		mlme_legacy_err("Error in getting valid channels");
+		mlme_err("Error in getting valid channels");
 		qdf_mem_free(channel_list);
 		return;
 	}
@@ -327,28 +419,5 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 		     sizeof(struct wlan_cm_roam_vendor_btm_params));
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
-}
-#endif
-
-#ifdef ROAM_OFFLOAD_V1
-char *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor)
-{
-	switch (requestor) {
-	case RSO_INVALID_REQUESTOR:
-	default:
-		return "No requestor";
-	case RSO_START_BSS:
-		return "SAP start";
-	case RSO_CHANNEL_SWITCH:
-		return "CSA";
-	case RSO_CONNECT_START:
-		return "STA connection";
-	case RSO_SAP_CHANNEL_CHANGE:
-		return "SAP Ch switch";
-	case RSO_NDP_CON_ON_NDI:
-		return "NDP connection";
-	case RSO_SET_PCL:
-		return "Set PCL";
-	}
 }
 #endif

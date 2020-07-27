@@ -20,7 +20,9 @@
  * Implementation for roaming ucfg public functionality.
  */
 
+#include "wlan_mlme_ucfg_api.h"
 #include "wlan_cm_roam_ucfg_api.h"
+#include "../../core/src/wlan_cm_roam_offload.h"
 
 #ifdef ROAM_OFFLOAD_V1
 QDF_STATUS
@@ -31,6 +33,8 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	bool supplicant_disabled_roaming;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	QDF_STATUS status;
+	bool lfr_enabled;
+	enum roam_offload_state state;
 
 	/*
 	 * If the ini "FastRoamEnabled" is disabled, don't allow the
@@ -38,7 +42,8 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	 */
 	ucfg_mlme_is_lfr_enabled(psoc, &lfr_enabled);
 	if (!lfr_enabled) {
-		mlme_legacy_debug("ROAM_CONFIG: Fast roam ini is disabled");
+		mlme_debug("ROAM_CONFIG: Fast roam ini is disabled. is_fast_roam_enabled %d",
+			   is_fast_roam_enabled);
 		if (!is_fast_roam_enabled)
 			return QDF_STATUS_SUCCESS;
 
@@ -56,7 +61,7 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	supplicant_disabled_roaming =
 		mlme_get_supplicant_disabled_roaming(psoc, vdev_id);
 	if (!is_fast_roam_enabled && supplicant_disabled_roaming) {
-		mlme_legacy_debug("ROAM_CONFIG: RSO already disabled by supplicant");
+		mlme_debug("ROAM_CONFIG: RSO already disabled by supplicant");
 		return QDF_STATUS_E_ALREADY;
 	}
 
@@ -71,76 +76,25 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 	return status;
 }
 
-/*
- * Driver internally invoked RSO operation/configuration APIs.
- */
-QDF_STATUS
-ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
-			uint8_t vdev_id, bool enable)
+QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id)
 {
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-	uint8_t reason = REASON_SUPPLICANT_DE_INIT_ROAMING;
 	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	bool roam_scan_offload_enabled;
+
+	ucfg_mlme_is_roam_scan_offload_enabled(psoc,
+					       &roam_scan_offload_enabled);
+	if (!roam_scan_offload_enabled)
+		return QDF_STATUS_SUCCESS;
 
 	status = cm_roam_acquire_lock();
 	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
+		return status;
 
-	if (enable)
-		reason = REASON_SUPPLICANT_INIT_ROAMING;
-
-	status = cm_roam_state_change(
-			pdev, vdev_id,
-			enable ? WLAN_ROAM_RSO_ENABLED : WLAN_ROAM_DEINIT,
-			reason);
-	cm_roam_release_lock();
-
-	return status;
-}
-
-QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
-			       enum wlan_cm_rso_control_requestor requestor,
-			       uint8_t reason)
-{
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-	QDF_STATUS status;
-
-	status = cm_roam_acquire_lock();
-	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
-
-	if (reason == REASON_DRIVER_DISABLED && requestor)
-		mlme_set_operations_bitmap(psoc, vdev_id, requestor, false);
-
-	mlme_legacy_debug("ROAM_CONFIG: vdev[%d] Disable roaming - requestor:%s",
-			  vdev_id, cm_roam_get_requestor_string(requestor));
-
-	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_STOPPED,
-				      REASON_DRIVER_DISABLED);
-	cm_roam_release_lock();
-
-	return status;
-}
-
-QDF_STATUS ucfg_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
-			      enum wlan_cm_rso_control_requestor requestor,
-			      uint8_t reason)
-{
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-	QDF_STATUS status;
-
-	if (reason == REASON_DRIVER_DISABLED && requestor)
-		mlme_set_operations_bitmap(mac->psoc, vdev_id, requestor, true);
-
-	status = cm_roam_acquire_lock();
-	if (QDF_IS_STATUS_ERROR(status))
-		return QDF_STATUS_E_FAILURE;
-
-	mlme_legacy_debug("ROAM_CONFIG: vdev[%d] Enable roaming - requestor:%s",
-			  vdev_id, cm_roam_get_requestor_string(requestor));
-
-	status = cm_roam_state_change(pdev, vdev_id, WLAN_ROAM_RSO_STARTED,
-				      REASON_DRIVER_ENABLED);
+	status = cm_roam_state_change(pdev, vdev_id,
+				      ROAM_SCAN_OFFLOAD_ABORT_SCAN,
+				      REASON_ROAM_ABORT_ROAM_SCAN);
 	cm_roam_release_lock();
 
 	return status;

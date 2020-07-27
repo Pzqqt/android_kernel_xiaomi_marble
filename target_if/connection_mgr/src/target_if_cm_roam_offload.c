@@ -23,6 +23,8 @@
 #include "target_if.h"
 #include "wmi_unified_sta_api.h"
 #include "wlan_mlme_dbg.h"
+#include "wlan_mlme_api.h"
+#include "wlan_crypto_global_api.h"
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) || defined(ROAM_OFFLOAD_V1)
 static struct wmi_unified
@@ -210,6 +212,36 @@ target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
 
 	return wmi_unified_set_roam_triggers(wmi_handle, req);
 }
+
+/**
+ * target_if_cm_roam_scan_get_cckm_mode() - Get the CCKM auth mode
+ * @vdev: vdev object
+ * @auth_mode: Auth mode to be converted
+ *
+ * Based on LFR2.0 or LFR3.0, return the proper auth type
+ *
+ * Return: if LFR2.0, then return WMI_AUTH_CCKM for backward compatibility
+ *         if LFR3.0 then return the appropriate auth type
+ */
+static uint32_t
+target_if_cm_roam_scan_get_cckm_mode(struct wlan_objmgr_vdev *vdev,
+				     uint32_t auth_mode)
+{
+	struct wlan_objmgr_psoc *psoc;
+	bool roam_offload_enable;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return WMI_AUTH_CCKM;
+	}
+
+	wlan_mlme_get_roaming_offload(psoc, &roam_offload_enable);
+	if (roam_offload_enable)
+		return auth_mode;
+	else
+		return WMI_AUTH_CCKM;
+}
 #else
 static void
 target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
@@ -223,8 +255,14 @@ target_if_cm_roam_triggers(wmi_unified_t wmi_handle,
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
-#endif
 
+static uint32_t
+target_if_cm_roam_scan_get_cckm_mode(struct wlan_objmgr_vdev *vdev,
+				     uint32_t auth_mode)
+{
+	return WMI_AUTH_CCKM;
+}
+#endif
 /**
  * target_if_cm_roam_scan_offload_rssi_thresh() - Send roam scan rssi threshold
  * commands to wmi
@@ -362,6 +400,171 @@ target_if_cm_roam_scan_offload_scan_period(
 	return wmi_unified_roam_scan_offload_scan_period(wmi_handle, req);
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * target_if_roam_fill_11w_params() - Fill the 11w related parameters
+ * for ap profile
+ * @vdev: vdev object
+ * @req: roam ap profile parameters
+ *
+ * Return: None
+ */
+static void
+target_if_cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
+				  struct ap_profile_params *req)
+{
+	uint32_t group_mgmt_cipher;
+	uint16_t rsn_caps;
+	bool peer_rmf_capable = false;
+	uint32_t keymgmt;
+
+	if (!vdev) {
+		target_if_err("Invalid vdev");
+		return;
+	}
+
+	rsn_caps = (uint16_t)wlan_crypto_get_param(vdev,
+						   WLAN_CRYPTO_PARAM_RSN_CAP);
+	if (wlan_crypto_vdev_has_mgmtcipher(
+					vdev,
+					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC) |
+					(1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256) |
+					(1 << WLAN_CRYPTO_CIPHER_AES_CMAC)) &&
+					(rsn_caps &
+					 WLAN_CRYPTO_RSN_CAP_MFP_ENABLED))
+		peer_rmf_capable = true;
+
+	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_MGMT_CIPHER);
+
+	if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_CMAC))
+		group_mgmt_cipher = WMI_CIPHER_AES_CMAC;
+	else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC))
+		group_mgmt_cipher = WMI_CIPHER_AES_GMAC;
+	else if (keymgmt & (1 << WLAN_CRYPTO_CIPHER_AES_GMAC_256))
+		group_mgmt_cipher = WMI_CIPHER_BIP_GMAC_256;
+	 else
+		group_mgmt_cipher = WMI_CIPHER_NONE;
+
+	if (peer_rmf_capable) {
+		req->profile.rsn_mcastmgmtcipherset = group_mgmt_cipher;
+		req->profile.flags |= WMI_AP_PROFILE_FLAG_PMF;
+	} else {
+		req->profile.rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
+	}
+}
+#else
+static inline
+void target_if_cm_roam_fill_11w_params(struct wlan_objmgr_vdev *vdev,
+				       struct ap_profile_params *req)
+{}
+#endif
+
+/**
+ * target_if_cm_roam_scan_offload_ap_profile() - send roam ap profile to
+ * firmware
+ * @vdev: vdev object
+ * @wmi_handle: wmi handle
+ * @req: roam ap profile parameters
+ *
+ * Send WMI_ROAM_AP_PROFILE parameters to firmware
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_offload_ap_profile(
+				struct wlan_objmgr_vdev *vdev,
+				wmi_unified_t wmi_handle,
+				struct ap_profile_params *req)
+{
+	uint32_t rsn_authmode;
+	bool db2dbm_enabled;
+
+	if (!target_if_is_vdev_valid(req->vdev_id)) {
+		target_if_err("Invalid vdev id:%d", req->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	rsn_authmode = req->profile.rsn_authmode;
+	if (rsn_authmode == WMI_AUTH_CCKM_WPA ||
+	    rsn_authmode == WMI_AUTH_CCKM_RSNA)
+		req->profile.rsn_authmode =
+		target_if_cm_roam_scan_get_cckm_mode(vdev, rsn_authmode);
+
+	target_if_cm_roam_fill_11w_params(vdev, req);
+
+	db2dbm_enabled = wmi_service_enabled(wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (!req->profile.rssi_abs_thresh) {
+		if (db2dbm_enabled)
+			req->profile.rssi_abs_thresh = RSSI_MIN_VALUE;
+	} else {
+		if (!db2dbm_enabled)
+			req->profile.rssi_abs_thresh -=
+						NOISE_FLOOR_DBM_DEFAULT;
+	}
+
+	if (!db2dbm_enabled) {
+		req->min_rssi_params[DEAUTH_MIN_RSSI].min_rssi -=
+						NOISE_FLOOR_DBM_DEFAULT;
+		req->min_rssi_params[DEAUTH_MIN_RSSI].min_rssi &= 0x000000ff;
+
+		req->min_rssi_params[BMISS_MIN_RSSI].min_rssi -=
+						NOISE_FLOOR_DBM_DEFAULT;
+		req->min_rssi_params[BMISS_MIN_RSSI].min_rssi &= 0x000000ff;
+	}
+
+	return wmi_unified_send_roam_scan_offload_ap_cmd(wmi_handle, req);
+}
+
+/**
+ * target_if_cm_roam_scan_filter() - send roam scan filter to firmware
+ * @wmi_handle: wmi handle
+ * @command: rso command
+ * @req: roam scan filter parameters
+ *
+ * Send WMI_ROAM_FILTER_CMDID parameters to firmware
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
+			      struct wlan_roam_scan_filter_params *req)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!target_if_is_vdev_valid(req->filter_params.vdev_id)) {
+		target_if_err("Invalid vdev id:%d",
+			      req->filter_params.vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (command != ROAM_SCAN_OFFLOAD_STOP) {
+		switch (req->reason) {
+		case REASON_ROAM_SET_BLACKLIST_BSSID:
+		case REASON_ROAM_SET_SSID_ALLOWED:
+		case REASON_ROAM_SET_FAVORED_BSSID:
+			break;
+		case REASON_CTX_INIT:
+			if (command == ROAM_SCAN_OFFLOAD_START) {
+				req->filter_params.op_bitmap |=
+				ROAM_FILTER_OP_BITMAP_LCA_DISALLOW |
+				ROAM_FILTER_OP_BITMAP_RSSI_REJECTION_OCE;
+			} else {
+				target_if_debug("Roam Filter need not be sent");
+				return QDF_STATUS_SUCCESS;
+			}
+			break;
+		default:
+			target_if_debug("Roam Filter need not be sent");
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	status = wmi_unified_roam_scan_filter_cmd(wmi_handle,
+						  &req->filter_params);
+	return status;
+}
+
 /**
  * target_if_cm_roam_send_roam_start() - Send roam start related commands
  * to wmi
@@ -412,6 +615,20 @@ target_if_cm_roam_send_roam_start(struct wlan_objmgr_vdev *vdev,
 						&req->scan_period_params);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
+	}
+
+	status = target_if_cm_roam_scan_offload_ap_profile(
+							vdev, wmi_handle,
+							&req->profile_params);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto end;
+
+	status = target_if_cm_roam_scan_filter(wmi_handle,
+					       ROAM_SCAN_OFFLOAD_START,
+					       &req->scan_filter_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending start for roam scan filter failed");
+		goto end;
 	}
 
 	/* add other wmi commands */
