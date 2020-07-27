@@ -25,6 +25,8 @@
 #define WAKELOCK_TIMEOUT	5000
 #define AFE_CLK_TOKEN	1024
 
+#define SP_V4_NUM_MAX_SPKRS SP_V2_NUM_MAX_SPKRS
+
 struct afe_avcs_payload_port_mapping {
 	u16 port_id;
 	struct avcs_load_unload_modules_payload *payload;
@@ -124,6 +126,46 @@ struct wlock {
 
 static struct wlock wl;
 
+struct afe_sp_v4_th_vi_ftm_get_param_resp {
+	struct afe_sp_v4_gen_get_param_resp gen_resp;
+	int32_t num_ch;
+	/* Number of channels for Rx signal.
+	*/
+
+	struct afe_sp_v4_channel_ftm_params
+		ch_ftm_params[SP_V4_NUM_MAX_SPKRS];
+} __packed;
+
+struct afe_sp_v4_v_vali_get_param_resp {
+	struct afe_sp_v4_gen_get_param_resp gen_resp;
+	int32_t num_ch;
+	/* Number of channels for Rx signal.
+	*/
+
+	struct afe_sp_v4_channel_v_vali_params
+		ch_v_vali_params[SP_V4_NUM_MAX_SPKRS];
+} __packed;
+
+struct afe_sp_v4_ex_vi_ftm_get_param_resp {
+	struct afe_sp_v4_gen_get_param_resp gen_resp;
+	int32_t num_ch;
+	/* Number of channels for Rx signal.
+	*/
+
+	struct afe_sp_v4_channel_ex_vi_ftm_params
+		ch_ex_vi_ftm_params[SP_V4_NUM_MAX_SPKRS];
+} __packed;
+
+struct afe_sp_v4_max_log_get_param_resp {
+	struct afe_sp_v4_gen_get_param_resp gen_resp;
+	int32_t num_ch;
+	/* Number of channels for Rx signal.
+	*/
+
+	struct afe_sp_v4_channel_tmax_xmax_params
+		ch_max_params[SP_V4_NUM_MAX_SPKRS];
+} __packed;
+
 struct afe_ctl {
 	void *apr;
 	atomic_t state;
@@ -173,8 +215,14 @@ struct afe_ctl {
 	struct afe_sp_rx_tmax_xmax_logging_resp	xt_logging_resp;
 	struct afe_sp_v4_th_vi_calib_resp spv4_calib_data;
 	struct afe_sp_v4_param_vi_channel_map_cfg v4_ch_map_cfg;
-	struct afe_sp_v4_gen_get_param_resp *spv4_get_param_resp_ptr;
-	uint32_t spv4_rcvd_param_size;
+	struct afe_sp_v4_th_vi_ftm_get_param_resp spv4_th_vi_ftm_resp;
+	uint32_t spv4_th_vi_ftm_rcvd_param_size;
+	struct afe_sp_v4_v_vali_get_param_resp spv4_v_vali_resp;
+	uint32_t spv4_v_vali_rcvd_param_size;
+	struct afe_sp_v4_ex_vi_ftm_get_param_resp spv4_ex_vi_ftm_resp;
+	uint32_t spv4_ex_vi_ftm_rcvd_param_size;
+	struct afe_sp_v4_max_log_get_param_resp spv4_max_log_resp;
+	uint32_t spv4_max_log_rcvd_param_size;
 	struct afe_av_dev_drift_get_param_resp	av_dev_drift_resp;
 	struct afe_doa_tracking_mon_get_param_resp	doa_tracking_mon_resp;
 	int vi_tx_port;
@@ -659,27 +707,16 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 		break;
 	case AFE_PARAM_ID_SP_V4_TH_VI_FTM_PARAMS:
 		num_ch = data_start[0];
-		this_afe.spv4_rcvd_param_size =
-			sizeof(struct afe_sp_v4_gen_get_param_resp) +
-			sizeof(struct afe_sp_v4_param_th_vi_ftm_params) +
-			(num_ch * sizeof(struct afe_sp_v4_channel_ftm_params));
-		this_afe.spv4_get_param_resp_ptr =
-			 kzalloc(this_afe.spv4_rcvd_param_size, GFP_ATOMIC);
-		data_dest = (u32 *)this_afe.spv4_get_param_resp_ptr;
+		this_afe.spv4_th_vi_ftm_rcvd_param_size = param_hdr.param_size;
+		data_dest = (u32 *)&this_afe.spv4_th_vi_ftm_resp;
 		expected_size +=
 			sizeof(struct afe_sp_v4_param_th_vi_ftm_params) +
 			(num_ch * sizeof(struct afe_sp_v4_channel_ftm_params));
 		break;
 	case AFE_PARAM_ID_SP_V4_TH_VI_V_VALI_PARAMS:
 		num_ch = data_start[0];
-		this_afe.spv4_rcvd_param_size =
-			sizeof(struct afe_sp_v4_gen_get_param_resp) +
-			sizeof(struct afe_sp_v4_param_th_vi_v_vali_params) +
-			(num_ch *
-			sizeof(struct afe_sp_v4_channel_v_vali_params));
-		this_afe.spv4_get_param_resp_ptr =
-			 kzalloc(this_afe.spv4_rcvd_param_size, GFP_ATOMIC);
-		data_dest = (u32 *)this_afe.spv4_get_param_resp_ptr;
+		this_afe.spv4_v_vali_rcvd_param_size = param_hdr.param_size;
+		data_dest = (u32 *)&this_afe.spv4_v_vali_resp;
 		expected_size +=
 			sizeof(struct afe_sp_v4_param_th_vi_v_vali_params) +
 			(num_ch *
@@ -687,33 +724,19 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 		break;
 	case AFE_PARAM_ID_SP_V4_EX_VI_FTM_PARAMS:
 		num_ch = data_start[0];
-		this_afe.spv4_rcvd_param_size =
-			sizeof(struct afe_sp_v4_gen_get_param_resp) +
-			sizeof(struct afe_sp_v4_param_ex_vi_ftm_params) +
-			(num_ch *
-			sizeof(struct afe_sp_v4_channel_ex_vi_ftm_params));
-		this_afe.spv4_get_param_resp_ptr =
-			kzalloc(this_afe.spv4_rcvd_param_size, GFP_ATOMIC);
-		data_dest = (u32 *)this_afe.spv4_get_param_resp_ptr;
+		this_afe.spv4_ex_vi_ftm_rcvd_param_size = param_hdr.param_size;
+		data_dest = (u32 *)&this_afe.spv4_ex_vi_ftm_resp;
 		expected_size +=
-			sizeof(struct afe_sp_v4_param_ex_vi_ftm_params) +
-			(num_ch *
-			sizeof(struct afe_sp_v4_channel_ex_vi_ftm_params));
+		  sizeof(struct afe_sp_v4_param_ex_vi_ftm_params) +
+		  (num_ch * sizeof(struct afe_sp_v4_channel_ex_vi_ftm_params));
 		break;
 	case AFE_PARAM_ID_SP_V4_RX_TMAX_XMAX_LOGGING:
 		num_ch = data_start[0];
-		this_afe.spv4_rcvd_param_size =
-			sizeof(struct afe_sp_v4_gen_get_param_resp) +
-			sizeof(struct afe_sp_v4_param_tmax_xmax_logging) +
-			(num_ch *
-			sizeof(struct afe_sp_v4_channel_tmax_xmax_params));
-		this_afe.spv4_get_param_resp_ptr =
-			kzalloc(this_afe.spv4_rcvd_param_size, GFP_ATOMIC);
-		data_dest = (u32 *)this_afe.spv4_get_param_resp_ptr;
+		this_afe.spv4_max_log_rcvd_param_size = param_hdr.param_size;
+		data_dest = (u32 *)&this_afe.spv4_max_log_resp;
 		expected_size +=
-			sizeof(struct afe_sp_v4_param_tmax_xmax_logging) +
-			(num_ch *
-			sizeof(struct afe_sp_v4_channel_tmax_xmax_params));
+		  sizeof(struct afe_sp_v4_param_tmax_xmax_logging) +
+		  (num_ch * sizeof(struct afe_sp_v4_channel_tmax_xmax_params));
 		break;
 	default:
 		pr_err("%s: Unrecognized param ID %d\n", __func__,
@@ -9128,7 +9151,7 @@ static int afe_get_spv4_th_vi_v_vali_data(void *params, uint32_t size)
 	struct param_hdr_v3 param_hdr;
 	int port = AFE_PORT_ID_WSA_CODEC_DMA_TX_0;
 	int ret = -EINVAL;
-	u8 *rcvd_params = NULL;
+	uint32_t min_size = 0;
 	struct afe_sp_v4_channel_v_vali_params *v_vali_params = NULL;
 
 	if (!params) {
@@ -9152,14 +9175,14 @@ static int afe_get_spv4_th_vi_v_vali_data(void *params, uint32_t size)
 		goto get_params_fail;
 	}
 
-	rcvd_params = (u8 *)this_afe.spv4_get_param_resp_ptr +
-				 sizeof(struct afe_sp_v4_gen_get_param_resp);
+	min_size = (size < this_afe.spv4_v_vali_rcvd_param_size) ?
+		size : this_afe.spv4_v_vali_rcvd_param_size;
+	memcpy(params, (void*)&this_afe.spv4_v_vali_resp.num_ch, min_size);
 
-	memcpy(params, rcvd_params, this_afe.spv4_rcvd_param_size);
+	v_vali_params = &this_afe.spv4_v_vali_resp.ch_v_vali_params[0];
 
-	v_vali_params = (struct afe_sp_v4_channel_v_vali_params *)
-		(params + sizeof(struct afe_sp_v4_param_th_vi_v_vali_params));
-	pr_debug("%s:  Vrms %d %d status %d %d\n", __func__,
+	pr_debug("%s: num_ch %d  Vrms %d %d status %d %d\n", __func__,
+		this_afe.spv4_v_vali_resp.num_ch,
 		v_vali_params[SP_V2_SPKR_1].vrms_q24,
 		v_vali_params[SP_V2_SPKR_2].vrms_q24,
 		v_vali_params[SP_V2_SPKR_1].status,
@@ -9173,7 +9196,6 @@ static int afe_get_spv4_th_vi_v_vali_data(void *params, uint32_t size)
 
 	ret = 0;
 get_params_fail:
-	kfree(this_afe.spv4_get_param_resp_ptr);
 	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
@@ -9227,7 +9249,7 @@ static int afe_get_spv4_th_vi_ftm_data(void *params, uint32_t size)
 	struct param_hdr_v3 param_hdr;
 	int port = SLIMBUS_4_TX;
 	int ret = -EINVAL;
-	u8 *rcvd_params = NULL;
+	uint32_t min_size = 0;
 	struct afe_sp_v4_channel_ftm_params *th_vi_params;
 
 	if (!params) {
@@ -9251,22 +9273,21 @@ static int afe_get_spv4_th_vi_ftm_data(void *params, uint32_t size)
 		goto get_params_fail;
 	}
 
-	rcvd_params = (u8 *)this_afe.spv4_get_param_resp_ptr +
-				 sizeof(struct afe_sp_v4_gen_get_param_resp);
-	memcpy(params, rcvd_params,  this_afe.spv4_rcvd_param_size);
+	min_size = (size < this_afe.spv4_th_vi_ftm_rcvd_param_size) ?
+		size : this_afe.spv4_th_vi_ftm_rcvd_param_size;
+	memcpy(params, (void*)&this_afe.spv4_th_vi_ftm_resp.num_ch, min_size);
 
-	th_vi_params = (struct afe_sp_v4_channel_ftm_params *)
-		(params + sizeof(struct afe_sp_v4_param_th_vi_ftm_params));
-	pr_debug("%s: DC resistance %d %d temp %d %d status %d %d\n",
-		 __func__, th_vi_params[SP_V2_SPKR_1].dc_res_q24,
-		 th_vi_params[SP_V2_SPKR_2].dc_res_q24,
-		 th_vi_params[SP_V2_SPKR_1].temp_q22,
-		 th_vi_params[SP_V2_SPKR_2].temp_q22,
-		 th_vi_params[SP_V2_SPKR_1].status,
-		 th_vi_params[SP_V2_SPKR_2].status);
+	th_vi_params = &this_afe.spv4_th_vi_ftm_resp.ch_ftm_params[0];
+	pr_debug("%s:num_ch %d, DC resistance %d %d temp %d %d status %d %d\n",
+		 __func__, this_afe.spv4_th_vi_ftm_resp.num_ch,
+		th_vi_params[SP_V2_SPKR_1].dc_res_q24,
+		th_vi_params[SP_V2_SPKR_2].dc_res_q24,
+		th_vi_params[SP_V2_SPKR_1].temp_q22,
+		th_vi_params[SP_V2_SPKR_2].temp_q22,
+		th_vi_params[SP_V2_SPKR_1].status,
+		th_vi_params[SP_V2_SPKR_2].status);
 	ret = 0;
 get_params_fail:
-	kfree(this_afe.spv4_get_param_resp_ptr);
 	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
@@ -9321,7 +9342,7 @@ static int afe_get_spv4_ex_vi_ftm_data(void *params, uint32_t size)
 	struct param_hdr_v3 param_hdr;
 	int port = SLIMBUS_4_TX;
 	int ret = -EINVAL;
-	u8 *rcvd_params = NULL;
+	uint32_t min_size = 0;
 	struct afe_sp_v4_channel_ex_vi_ftm_params *ex_vi_ftm_param;
 
 	if (!params) {
@@ -9346,17 +9367,16 @@ static int afe_get_spv4_ex_vi_ftm_data(void *params, uint32_t size)
 		goto get_params_fail;
 	}
 
-	rcvd_params = (u8 *)this_afe.spv4_get_param_resp_ptr +
-				 sizeof(struct afe_sp_v4_gen_get_param_resp);
+	min_size = (size < this_afe.spv4_ex_vi_ftm_rcvd_param_size) ?
+		size : this_afe.spv4_ex_vi_ftm_rcvd_param_size;
+	memcpy(params, (void*)&this_afe.spv4_ex_vi_ftm_resp.num_ch, min_size);
 
-	memcpy(params, rcvd_params,  this_afe.spv4_rcvd_param_size);
+	ex_vi_ftm_param = &this_afe.spv4_ex_vi_ftm_resp.ch_ex_vi_ftm_params[0];
 
-	ex_vi_ftm_param = (struct afe_sp_v4_channel_ex_vi_ftm_params *)
-		(params + sizeof(struct afe_sp_v4_param_ex_vi_ftm_params));
-
-	pr_debug("%s: resistance %d %d force factor %d %d Damping kg/s %d %d\n"
+	pr_debug("%s:num_ch %d, res %d %d forcefactor %d %d Dmping kg/s %d %d\n"
 		"stiffness N/mm %d %d freq %d %d Qfactor %d %d status %d %d",
-		__func__, ex_vi_ftm_param[SP_V2_SPKR_1].ftm_re_q24,
+		__func__, this_afe.spv4_ex_vi_ftm_resp.num_ch,
+		ex_vi_ftm_param[SP_V2_SPKR_1].ftm_re_q24,
 		ex_vi_ftm_param[SP_V2_SPKR_2].ftm_re_q24,
 		ex_vi_ftm_param[SP_V2_SPKR_1].ftm_Bl_q24,
 		ex_vi_ftm_param[SP_V2_SPKR_2].ftm_Bl_q24,
@@ -9372,7 +9392,6 @@ static int afe_get_spv4_ex_vi_ftm_data(void *params, uint32_t size)
 		ex_vi_ftm_param[SP_V2_SPKR_2].status);
 	ret = 0;
 get_params_fail:
-	kfree(this_afe.spv4_get_param_resp_ptr);
 	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
@@ -9431,7 +9450,6 @@ static int afe_get_sp_v4_rx_tmax_xmax_logging_data(
 {
 	struct param_hdr_v3 param_hdr;
 	int ret = -EINVAL;
-	struct afe_sp_v4_param_tmax_xmax_logging *tmax_xmax_logging;
 	struct afe_sp_v4_channel_tmax_xmax_params *tx_channel_params;
 	uint32_t i, size = 0;
 
@@ -9456,13 +9474,9 @@ static int afe_get_sp_v4_rx_tmax_xmax_logging_data(
 		goto get_params_fail;
 	}
 
-	tmax_xmax_logging = (struct afe_sp_v4_param_tmax_xmax_logging *)
-				((u8 *)this_afe.spv4_get_param_resp_ptr +
-				sizeof(struct afe_sp_v4_gen_get_param_resp));
-	tx_channel_params = (struct afe_sp_v4_channel_tmax_xmax_params *)
-			((u8 *)tmax_xmax_logging +
-			 sizeof(struct afe_sp_v4_param_tmax_xmax_logging));
-	for (i = 0; i < tmax_xmax_logging->num_ch; i++) {
+	tx_channel_params = &this_afe.spv4_max_log_resp.ch_max_params[0];
+	for (i = 0; i < this_afe.spv4_max_log_resp.num_ch; i++) {
+
 		xt_logging->max_excursion[i] =
 			tx_channel_params[i].max_excursion;
 		xt_logging->count_exceeded_excursion[i] =
@@ -9475,7 +9489,6 @@ static int afe_get_sp_v4_rx_tmax_xmax_logging_data(
 
 	ret = 0;
 get_params_fail:
-	kfree(this_afe.spv4_get_param_resp_ptr);
 done:
 	return ret;
 }
