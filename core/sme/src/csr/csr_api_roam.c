@@ -18451,6 +18451,8 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 		req->reason = REASON_SUPPLICANT_DISABLED_ROAMING;
 	else if (reason == REASON_DISCONNECTED)
 		req->reason = REASON_DISCONNECTED;
+	else if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
+		req->reason = REASON_OS_REQUESTED_ROAMING_NOW;
 	else
 		req->reason = REASON_SME_ISSUED;
 
@@ -18710,6 +18712,10 @@ csr_roam_switch_to_rso_stop(struct mac_context *mac, uint8_t vdev_id,
 	 * nothing to do here
 	 */
 	default:
+		/* For LFR2 BTM request, need handoff even roam disabled */
+		if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
+			csr_neighbor_roam_proceed_with_handoff_req(mac,
+								   vdev_id);
 		return QDF_STATUS_SUCCESS;
 	}
 	mlme_set_roam_state(mac->psoc, vdev_id, WLAN_ROAM_RSO_STOPPED);
