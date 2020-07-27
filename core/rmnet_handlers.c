@@ -220,7 +220,8 @@ static void rmnet_ip_route_rcv(struct sk_buff *skb, struct rmnet_port *port)
 	case RMNET_IP_VERSION_6:
 		skb->protocol = htons(ETH_P_IPV6);
 		ip6h = ipv6_hdr(skb);
-		ep = rmnet_get_ip6_route_endpoint(port, &ip6h->daddr);
+		ep = rmnet_get_ip6_route_endpoint(port, &ip6h->saddr,
+						  &ip6h->daddr);
 		if (!ep)
 			goto drop_skb;
 

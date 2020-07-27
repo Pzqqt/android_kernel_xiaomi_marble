@@ -821,36 +821,59 @@ int rmnet_get_dlmarker_info(void *port)
 }
 EXPORT_SYMBOL(rmnet_get_dlmarker_info);
 
-struct rmnet_endpoint *rmnet_get_ip6_route_endpoint(struct rmnet_port *port,
-						    struct in6_addr *addr)
+struct rmnet_endpoint *rmnet_get_ip6_endpoint(struct rmnet_port *port,
+					      struct in6_addr *addr)
 {
-	struct rmnet_endpoint *ep, *tmp = NULL;
+	struct rmnet_endpoint *ep;
 
 	hlist_for_each_entry_rcu(ep, &port->muxed_ep[0], hlnode) {
+
 		if (!memcmp(&ep->in6addr, addr, sizeof(struct in6_addr))) {
 			return ep;
 		}
 
-		tmp = ep;
 	}
 
-	return tmp;
+	return NULL;
+}
+
+struct rmnet_endpoint *rmnet_get_ip6_route_endpoint(struct rmnet_port *port,
+						    struct in6_addr *saddr,
+						    struct in6_addr *daddr)
+{
+	struct rmnet_endpoint *ep;
+
+	hlist_for_each_entry_rcu(ep, &port->muxed_ep[0], hlnode) {
+
+		/* IP traffic will come as ll packet. Match with link local ep
+		 * if possible.
+		 */
+		if((ipv6_addr_type(&ep->in6addr) & IPV6_ADDR_LINKLOCAL) &&
+		   (ipv6_addr_type(saddr) & IPV6_ADDR_LINKLOCAL))
+			return ep;
+
+		if (!memcmp(&ep->in6addr, daddr, sizeof(struct in6_addr))) {
+			return ep;
+		}
+
+	}
+
+	return NULL;
 }
 
 struct rmnet_endpoint *rmnet_get_ip4_route_endpoint(struct rmnet_port *port,
 						    __be32 *ifa_address)
 {
-	struct rmnet_endpoint *ep, *tmp = NULL;
+	struct rmnet_endpoint *ep;
 
 	hlist_for_each_entry_rcu(ep, &port->muxed_ep[0], hlnode) {
 		if (!memcmp(&ep->ifa_address, ifa_address, sizeof(__be32))) {
 			return ep;
 		}
 
-		tmp = ep;
 	}
 
-	return tmp;
+	return NULL;
 }
 
 static int rmnet_addr6_event(struct notifier_block *unused,
@@ -885,7 +908,7 @@ static int rmnet_addr6_event(struct notifier_block *unused,
 		hlist_add_head_rcu(&ep->hlnode, &port->muxed_ep[0]);
 		break;
 	case NETDEV_DOWN:
-		ep = rmnet_get_ip6_route_endpoint(port, &if6->addr);
+		ep = rmnet_get_ip6_endpoint(port, &if6->addr);
 		if (!ep)
 			return NOTIFY_OK;
 

@@ -260,7 +260,8 @@ int rmnet_del_bridge(struct net_device *rmnet_dev,
 		     struct net_device *slave_dev);
 
 struct rmnet_endpoint *rmnet_get_ip6_route_endpoint(struct rmnet_port *port,
-						    struct in6_addr *addr);
+						    struct in6_addr *saddr,
+						    struct in6_addr *daddr);
 struct rmnet_endpoint *rmnet_get_ip4_route_endpoint(struct rmnet_port *port,
 						    __be32 *ifa_address);
 #endif /* _RMNET_CONFIG_H_ */
