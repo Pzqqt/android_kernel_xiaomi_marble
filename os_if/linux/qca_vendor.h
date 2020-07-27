@@ -447,6 +447,11 @@
  *
  *	The format of the opaque data is specific to the particular firmware
  *	version and there is no guarantee of the format remaining same.
+ *
+ * @QCA_NL80211_VENDOR_SUBCMD_MBSSID_TX_VDEV_STATUS: This acts as an event.
+ *	The host driver selects Tx VDEV, and notifies user. The attributes
+ *	used with this event are defined in enum
+ *	qca_wlan_vendor_attr_mbssid_tx_vdev_status.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -675,6 +680,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_CONFIG_TWT = 191,
 	QCA_NL80211_VENDOR_SUBCMD_GETBAND = 192,
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS = 195,
+	QCA_NL80211_VENDOR_SUBCMD_MBSSID_TX_VDEV_STATUS = 196,
 };
 
 enum qca_wlan_vendor_tos {
@@ -1206,6 +1212,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_REQUEST_SAR_LIMITS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_UPDATE_STA_INFO_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_FW_STATS_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_MBSSID_TX_VDEV_STATUS_INDEX,
 };
 
 /**
@@ -9954,5 +9961,24 @@ enum qca_wlan_vendor_attr_config_tspec {
 	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_MAX =
 	QCA_WLAN_VENDOR_ATTR_CONFIG_TSPEC_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_mbssid_tx_vdev_status - Defines attributes
+ * used by QCA_NL80211_VENDOR_SUBCMD_MBSSID_TX_VDEV_STATUS vendor command.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_VAL:
+ * u8 attribute. Notify the TX VDEV status. Possible values 0, 1
+ * belonging to MBSSID/EMA_AP configuration. 0 means Non-Tx VDEV,
+ * 1 means Tx VDEV. Mandatory attribute for all MBSSID VDEV status events.
+ */
+enum qca_wlan_vendor_attr_mbssid_tx_vdev_status {
+	QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_VAL = 1,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_MAX =
+	QCA_WLAN_VENDOR_ATTR_MBSSID_TX_VDEV_STATUS_AFTER_LAST - 1,
 };
 #endif
