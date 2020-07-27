@@ -1040,6 +1040,9 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	if (!req->is_restart) {
 		if (req->pmf_enabled)
 			cmd->flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
+
+		cmd->mbss_capability_flags = req->mbssid_flags;
+		cmd->vdevid_trans = req->vdevid_trans;
 	}
 
 	/* Copy the SSID */
@@ -14780,6 +14783,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_LL_STATS_PER_CHAN_RX_TX_TIME_SUPPORT;
 	wmi_service[wmi_service_thermal_multi_client_support] =
 			WMI_SERVICE_THERMAL_MULTI_CLIENT_SUPPORT;
+	wmi_service[wmi_service_mbss_param_in_vdev_start_support] =
+			WMI_SERVICE_MBSS_PARAM_IN_VDEV_START_SUPPORT;
 }
 
 /**

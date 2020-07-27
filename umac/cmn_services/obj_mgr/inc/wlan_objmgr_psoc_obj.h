@@ -140,6 +140,8 @@
 #define WLAN_SOC_NSS_RATIO_TO_HOST_SUPPORT 0x00200000
 	/* EMA AP Support */
 #define WLAN_SOC_CEXT_EMA_AP           0x00400000
+	/* MBSS PARAM IN START REQ Support */
+#define WLAN_SOC_CEXT_MBSS_PARAM_IN_START   0x00800000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

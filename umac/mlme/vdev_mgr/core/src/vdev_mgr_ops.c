@@ -126,6 +126,7 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	struct wlan_objmgr_pdev *pdev;
 	enum QDF_OPMODE op_mode;
 	bool is_dfs_chan_updated = false;
+	struct vdev_mlme_mbss_11ax *mbss;
 
 	vdev = mlme_obj->vdev;
 	if (!vdev) {
@@ -203,6 +204,11 @@ static QDF_STATUS vdev_mgr_start_param_update(
 	param->channel.reg_class_id = mlme_obj->mgmt.generic.reg_class_id;
 	param->bcn_tx_rate_code = vdev_mgr_fetch_ratecode(mlme_obj);
 	param->ldpc_rx_enabled = mlme_obj->proto.generic.ldpc;
+
+	mbss = &mlme_obj->mgmt.mbss_11ax;
+	param->mbssid_flags = mbss->mbssid_flags;
+	param->vdevid_trans = mbss->vdevid_trans;
+
 	if (mlme_obj->mgmt.generic.type == WLAN_VDEV_MLME_TYPE_AP) {
 		param->hidden_ssid = mlme_obj->mgmt.ap.hidden_ssid;
 		param->cac_duration_ms = mlme_obj->mgmt.ap.cac_duration_ms;

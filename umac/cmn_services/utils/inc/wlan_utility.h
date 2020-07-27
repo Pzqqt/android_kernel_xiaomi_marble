@@ -254,6 +254,23 @@ QDF_STATUS wlan_pdev_chan_change_pending_vdevs_down(
 					wlan_objmgr_ref_dbgid dbg_id);
 
 /**
+ * wlan_pdev_chan_change_pending_ap_vdevs_down() - function to test/set channel
+ *                                            change pending flag for AP VDEVs
+ * @pdev: pdev object
+ * @vdev_id_map: bitmap to derive channel change AP vdevs
+ * @ref_id: object manager ref id
+ *
+ * This function test/set channel change pending flag for AP vdevs
+ *
+ * Return: QDF_STATUS_SUCCESS, if it iterates through all vdevs,
+ *         otherwise QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wlan_pdev_chan_change_pending_ap_vdevs_down(
+					struct wlan_objmgr_pdev *pdev,
+					unsigned long *vdev_id_map,
+					wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_chan_eq() - function to check whether both channels are same
  * @chan1: channel1 object
  * @chan2: channel2 object
