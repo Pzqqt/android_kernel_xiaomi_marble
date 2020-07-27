@@ -776,6 +776,7 @@ enum {
 	IEEE80211_PARAM_NO_ACT_VAPS                = 707, /* Active Vaps */
 	IEEE80211_PARAM_TX_VAP                     = 708, /* Current Tx Vap */
 	IEEE80211_PARAM_FILS_IS_ENABLE            = 709, /* Fils enable frames*/
+	IEEE80211_PARAM_MBSS_TXVDEV                = 710,
 };
 
 enum {
@@ -1232,6 +1233,8 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_MUMIMO_MAX_USERS = 456,
 	/* ACS pre-CAC only channel selection support */
 	OL_ATH_PARAM_ACS_PRECAC_SUPPORT = 457,
+	/* MBSSID AUTO MODE TX VDEV derivation */
+	OL_ATH_PARAM_MBSS_AUTOMODE = 458,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -2197,6 +2200,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 #endif
 	{"mscs",                IEEE80211_PARAM_ENABLE_MSCS, SET_PARAM, 1},
 	{"g_mscs",              IEEE80211_PARAM_ENABLE_MSCS, GET_PARAM, 0},
+	{"mbss_tx_vdev",        IEEE80211_PARAM_MBSS_TXVDEV, SET_PARAM, 1},
+	{"g_mbss_tx_vdev",      IEEE80211_PARAM_MBSS_TXVDEV, GET_PARAM, 0},
 	{"setiebuf",            35828, SET_PARAM, 1},
 	{"getiebuf",            35827, GET_PARAM, 0},
 	{"dbgreq",              35832, SET_PARAM, 1},
@@ -3171,6 +3176,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_PRECAC_SUPPORT, SET_PARAM, 1},
 	{"g_acs_pcaconly",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ACS_PRECAC_SUPPORT, GET_PARAM, 0},
+	{"mbss_auto",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MBSS_AUTOMODE, SET_PARAM, 1},
+	{"g_mbss_auto",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MBSS_AUTOMODE, GET_PARAM, 0},
 };
 #endif
 #endif
