@@ -378,7 +378,6 @@ free_ppdu_desc_mpdu_q:
 
 	if (!qdf_nbuf_is_queue_empty(&user->mpdu_q))
 		qdf_nbuf_queue_free(&user->mpdu_q);
-
 	if (user->mpdus)
 		qdf_mem_free(user->mpdus);
 
@@ -528,12 +527,32 @@ void dp_peer_tid_queue_init(struct dp_peer *peer)
 		qdf_nbuf_queue_init(&tx_tid->defer_msdu_q);
 		qdf_nbuf_queue_init(&tx_tid->msdu_comp_q);
 		qdf_nbuf_queue_init(&tx_tid->pending_ppdu_q);
+
 		tx_tid->max_ppdu_id = 0;
+
+		tx_tid->xretry_ppdu =
+			qdf_mem_malloc(sizeof(struct cdp_tx_completion_ppdu) +
+						   sizeof(struct cdp_tx_completion_ppdu_user));
+		if (qdf_unlikely(!tx_tid->xretry_ppdu)) {
+			int i;
+
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_ERROR,
+					  "Alloc failed");
+			for (i = 0; i < tid; i++) {
+				tx_tid = &peer->tx_capture.tx_tid[i];
+				qdf_mem_free(tx_tid->xretry_ppdu);
+			}
+			QDF_ASSERT(0);
+			return;
+		}
 
 		/* spinlock create */
 		qdf_spinlock_create(&tx_tid->tid_lock);
 		qdf_spinlock_create(&tx_tid->tasklet_tid_lock);
 	}
+
+	peer->tx_capture.is_tid_initialized = 1;
 }
 
 /*
@@ -579,9 +598,12 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 	int tid;
 	uint16_t peer_id;
 
+	if (!peer->tx_capture.is_tid_initialized)
+		return;
+
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
 		tx_tid = &peer->tx_capture.tx_tid[tid];
-		xretry_ppdu = &tx_tid->xretry_ppdu;
+		xretry_ppdu = tx_tid->xretry_ppdu;
 		xretry_user = &xretry_ppdu->user[0];
 
 		qdf_spin_lock_bh(&tx_tid->tid_lock);
@@ -618,7 +640,9 @@ void dp_peer_tid_queue_cleanup(struct dp_peer *peer)
 			dp_ppdu_queue_free(ppdu_nbuf, usr_idx);
 			qdf_nbuf_free(ppdu_nbuf);
 		}
+
 		qdf_nbuf_queue_free(&xretry_user->mpdu_q);
+		qdf_mem_free(xretry_ppdu);
 
 		tx_tid->max_ppdu_id = 0;
 	}
@@ -1056,8 +1080,18 @@ void dp_tx_ppdu_stats_attach(struct dp_pdev *pdev)
 				&pdev->tx_capture.ctl_mgmt_lock[i][j]);
 		}
 	}
-	qdf_mem_zero(&pdev->tx_capture.dummy_ppdu_desc,
-		     sizeof(struct cdp_tx_completion_ppdu));
+
+	pdev->tx_capture.dummy_ppdu_desc = qdf_mem_malloc(
+				 sizeof(struct cdp_tx_completion_ppdu) +
+				 sizeof(struct cdp_tx_completion_ppdu_user));
+
+	if (qdf_unlikely(!pdev->tx_capture.dummy_ppdu_desc)) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "Alloc failed");
+		QDF_ASSERT(0);
+		return;
+	}
 
 	pdev->tx_capture.ptr_peer_mgmt_list = (struct dp_peer_mgmt_list *)
 			qdf_mem_malloc(sizeof(struct dp_peer_mgmt_list) *
@@ -1129,6 +1163,7 @@ void dp_tx_ppdu_stats_detach(struct dp_pdev *pdev)
 		}
 	}
 
+	qdf_mem_free(pdev->tx_capture.dummy_ppdu_desc);
 	qdf_mem_free(pdev->tx_capture.ptr_peer_mgmt_list);
 
 	/* disable the ppdu_desc_log to avoid storing further */
@@ -2730,7 +2765,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 
 	rts_send = 0;
 	ptr_tx_cap = &pdev->tx_capture;
-	ppdu_desc = &ptr_tx_cap->dummy_ppdu_desc;
+	ppdu_desc = ptr_tx_cap->dummy_ppdu_desc;
 
 	ppdu_desc->channel = cur_ppdu_desc->channel;
 	ppdu_desc->num_mpdu = 1;
@@ -2810,7 +2845,7 @@ static void dp_gen_ack_rx_frame(struct dp_pdev *pdev,
 	struct dp_pdev_tx_capture *ptr_tx_cap;
 
 	ptr_tx_cap = &pdev->tx_capture;
-	ppdu_desc = &ptr_tx_cap->dummy_ppdu_desc;
+	ppdu_desc = ptr_tx_cap->dummy_ppdu_desc;
 	ppdu_desc->channel = tx_capture_info->ppdu_desc->channel;
 	ppdu_desc->num_mpdu = 1;
 	ppdu_desc->num_msdu = 1;
@@ -3081,7 +3116,7 @@ dp_tx_mon_proc_xretries(struct dp_pdev *pdev, struct dp_peer *peer,
 	uint32_t seq_no;
 	uint8_t usr_idx = 0;
 
-	xretry_ppdu = &tx_tid->xretry_ppdu;
+	xretry_ppdu = tx_tid->xretry_ppdu;
 	xretry_user = &xretry_ppdu->user[0];
 
 	if (qdf_nbuf_is_queue_empty(&tx_tid->pending_ppdu_q)) {
@@ -4182,7 +4217,7 @@ dp_peer_tx_cap_tid_queue_flush_tlv(struct dp_pdev *pdev,
 				    qdf_nbuf_queue_len(&head_xretries));
 	if (!qdf_nbuf_is_queue_empty(&head_xretries)) {
 		struct cdp_tx_completion_ppdu *xretry_ppdu =
-						&tx_tid->xretry_ppdu;
+						tx_tid->xretry_ppdu;
 		uint32_t xretry_qlen;
 
 		xretry_ppdu->ppdu_id = peer->tx_capture.tx_wifi_ppdu_id;
@@ -4360,8 +4395,9 @@ dp_check_ppdu_and_deliver(struct dp_pdev *pdev,
 			uint32_t mpdu_tried = 0;
 
 			if (!ptr_nbuf_list->nbuf_ppdu ||
-			    !dp_tx_cap_nbuf_list_get_ref(ptr_nbuf_list))
+			    !dp_tx_cap_nbuf_list_get_ref(ptr_nbuf_list)) {
 				continue;
+			}
 
 			nbuf_ppdu = ptr_nbuf_list->nbuf_ppdu;
 
@@ -4717,7 +4753,7 @@ dp_tx_cap_proc_per_ppdu_info(struct dp_pdev *pdev, qdf_nbuf_t nbuf_ppdu,
 			/**
 			 * peer can be NULL
 			 */
-			if (!peer) {
+			if (!peer || !peer->tx_capture.is_tid_initialized) {
 				user->skip = 1;
 				goto free_nbuf_dec_ref;
 			}
@@ -4794,7 +4830,7 @@ dequeue_msdu_again:
 			 * done inside restitch function
 			 */
 			tx_tid = &peer->tx_capture.tx_tid[tid];
-			xretry_ppdu = &tx_tid->xretry_ppdu;
+			xretry_ppdu = tx_tid->xretry_ppdu;
 			xretry_user = &xretry_ppdu->user[0];
 			xretry_ppdu->ppdu_id =
 			peer->tx_capture.tx_wifi_ppdu_id;
