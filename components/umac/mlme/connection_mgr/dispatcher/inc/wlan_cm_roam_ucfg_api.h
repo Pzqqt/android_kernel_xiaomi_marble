@@ -23,7 +23,10 @@
 #ifndef _WLAN_CM_ROAM_UCFG_API_H_
 #define _WLAN_CM_ROAM_UCFG_API_H_
 
+#include "wlan_cm_roam_api.h"
+
 #ifdef ROAM_OFFLOAD_V1
+
 /**
  * ucfg_user_space_enable_disable_rso  - Enable/Disable Roam Scan offload
  * to firmware.
@@ -40,6 +43,17 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id,
 				   const bool is_fast_roam_enabled);
 
+/*
+ * ucfg_cm_abort_roam_scan() -abort current roam scan cycle by roam scan
+ * offload module.
+ * @pdev: Pointer to pdev
+ * vdev_id - vdev Identifier
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id);
+
 /**
  * ucfg_cm_rso_init_deinit  - Init or Deinit roaming module at firmware
  * @pdev: Pointer to pdev
@@ -49,9 +63,12 @@ ucfg_user_space_enable_disable_rso(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS
-ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
-			uint8_t vdev_id, bool enable);
+static inline QDF_STATUS
+ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
+			bool enable)
+{
+	return wlan_cm_rso_init_deinit(pdev, vdev_id, enable);
+}
 
 /**
  * ucfg_cm_disable_rso  - Disable roam scan offload to firmware
@@ -62,9 +79,13 @@ ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
  *
  * Return:  QDF_STATUS
  */
+static inline
 QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
 			       enum wlan_cm_rso_control_requestor requestor,
-			       uint8_t reason);
+			       uint8_t reason)
+{
+	return wlan_cm_disable_rso(pdev, vdev_id, requestor, reason);
+}
 
 /**
  * ucfg_cm_enable_rso  - Enable roam scan offload to firmware
@@ -75,8 +96,12 @@ QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
  *
  * Return:  QDF_STATUS
  */
+static inline
 QDF_STATUS ucfg_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
 			      enum wlan_cm_rso_control_requestor requestor,
-			      uint8_t reason);
+			      uint8_t reason)
+{
+	return wlan_cm_enable_rso(pdev, vdev_id, requestor, reason);
+}
 #endif
 #endif

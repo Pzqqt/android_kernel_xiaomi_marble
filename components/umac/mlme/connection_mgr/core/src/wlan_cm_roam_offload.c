@@ -188,11 +188,9 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc,
  * process directly, generate a new function wlan_cm_roam_send_rso_cmd
  * for external usage.
  */
-QDF_STATUS
-cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-		     uint8_t vdev_id,
-		     uint8_t rso_command,
-		     uint8_t reason)
+QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t rso_command,
+				uint8_t reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -279,6 +277,21 @@ cm_roam_switch_to_rso_stop(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void cm_roam_roam_invoke_in_progress(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id, bool set)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_roam_after_data_stall *vdev_roam_params;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return;
+	vdev_roam_params = mlme_get_roam_invoke_params(vdev);
+	if (vdev_roam_params)
+		vdev_roam_params->roam_invoke_in_progress = set;
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
 /**
  * cm_roam_switch_to_deinit() - roam state handling for roam deinit
  * @pdev: pdev pointer
@@ -297,6 +310,8 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
 	enum roam_offload_state cur_state = mlme_get_roam_state(psoc, vdev_id);
+
+	cm_roam_roam_invoke_in_progress(psoc, vdev_id, false);
 
 	switch (cur_state) {
 	/*
@@ -355,6 +370,8 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	bool dual_sta_roam_active;
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+
+	cm_roam_roam_invoke_in_progress(psoc, vdev_id, false);
 
 	dual_sta_roam_active =
 		wlan_mlme_get_dual_sta_roaming_enabled(psoc);

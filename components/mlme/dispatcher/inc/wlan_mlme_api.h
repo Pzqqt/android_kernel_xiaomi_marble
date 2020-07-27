@@ -2505,6 +2505,17 @@ wlan_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
  * Return: Roaming triggers value
  */
 uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_get_roaming_offload() - Get roaming offload setting
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to enable/disable roaming offload
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool *val);
 #else
 static inline QDF_STATUS
 wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
@@ -2524,6 +2535,15 @@ static inline
 uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc)
 {
 	return 0xFFFF;
+}
+
+static inline QDF_STATUS
+wlan_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

@@ -6210,6 +6210,7 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * sme_config_fast_roaming() - enable/disable LFR support at runtime
  * @mac_handle - The handle returned by macOpen.
@@ -6268,6 +6269,7 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #ifdef FEATURE_WLAN_ESE
 int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
@@ -6326,6 +6328,33 @@ int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
 }
 #endif
 
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t vdev_id,
+			    uint8_t reason,
+			    enum wlan_cm_rso_control_requestor requestor)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac, vdev_id);
+	if (!session) {
+		sme_err("ROAM: incorrect vdev ID %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wlan_cm_disable_rso(mac->pdev, vdev_id, requestor, reason);
+}
+
+QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t vdev_id,
+			     uint8_t reason,
+			     enum wlan_cm_rso_control_requestor requestor)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	return wlan_cm_enable_rso(mac->pdev, vdev_id, requestor, reason);
+}
+
+#else
 /**
  * sme_stop_roaming() - Stop roaming for a given sessionId
  *  This is a synchronous call
@@ -6396,6 +6425,7 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 
 	return status;
 }
+#endif
 
 void sme_set_pcl_for_first_connected_vdev(mac_handle_t mac_handle,
 					  uint8_t vdev_id)
@@ -9652,6 +9682,7 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /*
  * sme_abort_roam_scan() -
  * API to abort current roam scan cycle by roam scan offload module.
@@ -9680,6 +9711,7 @@ QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId)
 
 	return status;
 }
+#endif
 
 QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
 					  uint8_t wifi_band,
@@ -15990,6 +16022,24 @@ void sme_chan_to_freq_list(
 			wlan_reg_chan_to_freq(pdev, (uint32_t)chan_list[count]);
 }
 
+#ifdef ROAM_OFFLOAD_V1
+static inline
+QDF_STATUS sme_rso_init_deinit(struct mac_context *mac,
+			       struct wlan_roam_triggers *triggers)
+{
+	QDF_STATUS status;
+
+	if (!triggers->trigger_bitmap)
+		status = wlan_cm_rso_init_deinit(mac->pdev, triggers->vdev_id,
+						 false);
+	else
+		status = wlan_cm_rso_init_deinit(mac->pdev, triggers->vdev_id,
+						 true);
+
+	return status;
+}
+#else
+
 static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
 				     bool enable)
 {
@@ -16019,6 +16069,23 @@ static QDF_STATUS sme_enable_roaming(struct mac_context *mac, uint32_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline
+QDF_STATUS sme_rso_init_deinit(struct mac_context *mac,
+			       struct wlan_roam_triggers *triggers)
+{
+	QDF_STATUS status;
+
+	if (!triggers->trigger_bitmap)
+		status = sme_enable_roaming(mac, triggers->vdev_id,
+					    false);
+	else
+		status = sme_enable_roaming(mac, triggers->vdev_id,
+					    true);
+
+	return status;
+}
+#endif
+
 QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 				 struct wlan_roam_triggers *triggers)
 {
@@ -16029,13 +16096,8 @@ QDF_STATUS sme_set_roam_triggers(mac_handle_t mac_handle,
 
 	mlme_set_roam_trigger_bitmap(mac->psoc, triggers->vdev_id,
 				     triggers->trigger_bitmap);
-	if (!triggers->trigger_bitmap)
-		status = sme_enable_roaming(mac, triggers->vdev_id,
-					    false);
-	else
-		status = sme_enable_roaming(mac, triggers->vdev_id,
-					    true);
 
+	status = sme_rso_init_deinit(mac, triggers);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 

@@ -2025,9 +2025,7 @@ typedef enum {
 	SIR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL = 1,
 	SIR_ROAMING_DFS_CHANNEL_ENABLED_ACTIVE = 2
 } eSirDFSRoamScanMode;
-#define MAX_SSID_ALLOWED_LIST 4
-#define MAX_BSSID_AVOID_LIST  16
-#define MAX_BSSID_FAVORED     16
+
 /**
  * struct roam_ext_params - Structure holding roaming parameters
  * @num_bssid_avoid_list:       The number of BSSID's that we should

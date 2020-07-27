@@ -154,7 +154,7 @@
 #include "wlan_hdd_apf.h"
 #include "wlan_hdd_cfr.h"
 #include "wlan_hdd_ioctl.h"
-#include "wlan_cm_roam_api.h"
+#include "wlan_cm_roam_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)

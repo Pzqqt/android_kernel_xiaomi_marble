@@ -1740,6 +1740,7 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_check_band_freq_match() - check if passed band and ch freq match
@@ -1819,6 +1820,7 @@ is_dfs_unsafe_extra_band_chan(struct mac_context *mac_ctx, uint32_t freq,
 
 	return false;
 }
+#endif
 #endif
 
 #ifdef FEATURE_WLAN_ESE
@@ -2097,6 +2099,7 @@ QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
@@ -2135,6 +2138,7 @@ csr_fetch_ch_lst_from_received_list(struct mac_context *mac_ctx,
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
 	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC;
 }
+#endif
 #endif
 
 /**
@@ -2494,6 +2498,7 @@ void csr_set_11k_offload_config_param(struct csr_config *csr_config,
 		max_neighbor_report_req_cap;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 static void
 csr_copy_mawc_config(struct mac_context *mac,
 		     struct mawc_params *mawc_config)
@@ -2511,6 +2516,7 @@ csr_copy_mawc_config(struct mac_context *mac,
 	mawc_config->mawc_roam_rssi_low_adjust =
 		mac->mlme_cfg->lfr.mawc_roam_rssi_low_adjust;
 }
+#endif
 
 QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 					   struct csr_config_params *pParam)
@@ -16682,6 +16688,7 @@ QDF_STATUS csr_roam_set_key_mgmt_offload(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * csr_update_roam_scan_ese_params() - Update ESE related params in RSO request
  * @req_buf: Roam Scan Offload Request buffer
@@ -16911,6 +16918,7 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->roaming_scan_policy =
 			mac_ctx->mlme_cfg->lfr.roaming_scan_policy;
 }
+#endif
 
 #ifdef WLAN_FEATURE_FIPS
 QDF_STATUS
@@ -16989,6 +16997,8 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+
+#ifndef ROAM_OFFLOAD_V1
 /**
  * csr_populate_roam_chan_list()
  * parameters
@@ -17753,52 +17763,6 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 			session->connectedProfile.SSID.length);
 }
 
-QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
-				struct sRrmNeighborReq *neighbor_report_req,
-				bool send_resp_to_host)
-{
-	struct wmi_invoke_neighbor_report_params *invoke_params;
-	struct scheduler_msg msg = {0};
-
-	if (!neighbor_report_req) {
-		sme_err("Invalid params");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	invoke_params = qdf_mem_malloc(sizeof(*invoke_params));
-	if (!invoke_params)
-		return QDF_STATUS_E_NOMEM;
-
-	invoke_params->vdev_id = session_id;
-	invoke_params->send_resp_to_host = send_resp_to_host;
-
-	if (!neighbor_report_req->no_ssid) {
-		invoke_params->ssid.length = neighbor_report_req->ssid.length;
-		qdf_mem_copy(invoke_params->ssid.ssid,
-				neighbor_report_req->ssid.ssId,
-				neighbor_report_req->ssid.length);
-	} else {
-		invoke_params->ssid.length = 0;
-	}
-
-	sme_debug("Sending SIR_HAL_INVOKE_NEIGHBOR_REPORT");
-
-	msg.type = SIR_HAL_INVOKE_NEIGHBOR_REPORT;
-	msg.reserved = 0;
-	msg.bodyptr = invoke_params;
-
-	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_WMA,
-							 QDF_MODULE_ID_WMA,
-							 &msg)) {
-		sme_err("Not able to post message to WMA");
-		qdf_mem_free(invoke_params);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * check_allowed_ssid_list() - Check the WhiteList
  * @req_buffer:      Buffer which contains the connected profile SSID.
@@ -17888,6 +17852,54 @@ csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
 
 	qdf_mem_free(reject_list);
 }
+#endif
+
+QDF_STATUS csr_invoke_neighbor_report_request(
+				uint8_t session_id,
+				struct sRrmNeighborReq *neighbor_report_req,
+				bool send_resp_to_host)
+{
+	struct wmi_invoke_neighbor_report_params *invoke_params;
+	struct scheduler_msg msg = {0};
+
+	if (!neighbor_report_req) {
+		sme_err("Invalid params");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	invoke_params = qdf_mem_malloc(sizeof(*invoke_params));
+	if (!invoke_params)
+		return QDF_STATUS_E_NOMEM;
+
+	invoke_params->vdev_id = session_id;
+	invoke_params->send_resp_to_host = send_resp_to_host;
+
+	if (!neighbor_report_req->no_ssid) {
+		invoke_params->ssid.length = neighbor_report_req->ssid.length;
+		qdf_mem_copy(invoke_params->ssid.ssid,
+			     neighbor_report_req->ssid.ssId,
+			     neighbor_report_req->ssid.length);
+	} else {
+		invoke_params->ssid.length = 0;
+	}
+
+	sme_debug("Sending SIR_HAL_INVOKE_NEIGHBOR_REPORT");
+
+	msg.type = SIR_HAL_INVOKE_NEIGHBOR_REPORT;
+	msg.reserved = 0;
+	msg.bodyptr = invoke_params;
+
+	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
+							 QDF_MODULE_ID_WMA,
+							 QDF_MODULE_ID_WMA,
+							 &msg)) {
+		sme_err("Not able to post message to WMA");
+		qdf_mem_free(invoke_params);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /*
  * csr_roam_send_rso_cmd() - API to send RSO command to PE
@@ -17919,6 +17931,7 @@ csr_roam_send_rso_cmd(struct mac_context *mac_ctx,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * csr_append_assoc_ies() - Append specific IE to assoc IE's buffer
  * @mac_ctx: Pointer to global mac context
@@ -17998,6 +18011,7 @@ static void ese_populate_addtional_ies(struct mac_context *mac_ctx,
 {
 }
 #endif
+
 /**
  * csr_update_driver_assoc_ies() - Append driver built IE's to assoc IE's
  * @mac_ctx: Pointer to global mac structure
@@ -18177,6 +18191,7 @@ csr_roam_offload_per_scan(struct mac_context *mac_ctx, uint8_t session_id)
 	}
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #if defined(WLAN_FEATURE_FILS_SK)
 QDF_STATUS csr_update_fils_config(struct mac_context *mac, uint8_t session_id,
@@ -18200,6 +18215,7 @@ QDF_STATUS csr_update_fils_config(struct mac_context *mac, uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * copy_all_before_char() - API to copy all character before a particular char
  * @str: Source string
@@ -18293,26 +18309,29 @@ static void csr_update_fils_params_rso(struct mac_context *mac,
 		  roam_fils_params->next_erp_seq_num,
 		  roam_fils_params->rrk_length, roam_fils_params->realm_len);
 }
+#endif
 #else
+
+#ifndef ROAM_OFFLOAD_V1
 static inline
 void csr_update_fils_params_rso(struct mac_context *mac,
 				struct csr_roam_session *session,
 				struct roam_offload_scan_req *req_buffer)
 {}
 #endif
+#endif
 
 /**
  * csr_update_score_params() - API to update Score params in RSO
  * @mac_ctx: Mac context
- * @req_buffer: RSO request buffer
+ * @req_score_params: request score params
  *
  * Return: None
  */
 static void csr_update_score_params(struct mac_context *mac_ctx,
-				    struct roam_offload_scan_req *req_buffer,
+				    struct scoring_param *req_score_params,
 				    tpCsrNeighborRoamControlInfo roam_info)
 {
-	struct scoring_param *req_score_params;
 	struct wlan_mlme_roam_scoring_cfg *roam_score_params;
 	struct weight_cfg *weight_config;
 	struct psoc_mlme_obj *mlme_psoc_obj;
@@ -18323,7 +18342,6 @@ static void csr_update_score_params(struct mac_context *mac_ctx,
 	if (!mlme_psoc_obj)
 		return;
 
-	req_score_params = &req_buffer->score_params;
 	score_config = &mlme_psoc_obj->psoc_cfg.score_config;
 	roam_score_params = &mac_ctx->mlme_cfg->roam_scoring;
 	weight_config = &score_config->weight_config;
@@ -18910,19 +18928,6 @@ csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
 {
 	return csr_handle_roam_state_change(mac, vdev_id, state, reason);
 }
-#else
-QDF_STATUS
-csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
-			   enum roam_offload_state state, uint8_t reason)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (state == WLAN_ROAM_RSO_ENABLED)
-		status = wlan_cm_start_roaming(mac->pdev, vdev_id, reason);
-
-	return status;
-}
-#endif
 
 /**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
@@ -19172,7 +19177,9 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
-		csr_update_score_params(mac_ctx, req_buf, roam_info);
+		csr_update_score_params(mac_ctx,
+					&req_buf->score_params,
+					roam_info);
 		csr_update_fils_params_rso(mac_ctx, session, req_buf);
 	}
 
@@ -19212,8 +19219,23 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	return status;
 }
 
-#ifdef ROAM_OFFLOAD_V1
-#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#else
+
+QDF_STATUS
+csr_post_roam_state_change(struct mac_context *mac, uint8_t vdev_id,
+			   enum roam_offload_state state, uint8_t reason)
+{
+	return wlan_cm_roam_state_change(mac->pdev, vdev_id, state, reason);
+}
+
+QDF_STATUS
+csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
+		      uint8_t command, uint8_t reason)
+{
+	return wlan_cm_roam_send_rso_cmd(mac_ctx->psoc, session_id, command,
+					 reason);
+}
+
 QDF_STATUS
 wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
 			 uint8_t vdev_id,
@@ -19462,7 +19484,7 @@ wlan_cm_roam_scan_offload_rssi_thresh(
  * wlan_cm_roam_scan_offload_scan_period() - set roam offload scan period
  * parameters
  * @mac_ctx: global mac ctx
- * @session: csr roam session
+ * @vdev_id: vdev id
  * @params:  roam offload scan period related parameters
  *
  * This function is used to set roam offload scan period related parameters
@@ -19472,13 +19494,13 @@ wlan_cm_roam_scan_offload_rssi_thresh(
 static void
 wlan_cm_roam_scan_offload_scan_period(
 				struct mac_context *mac_ctx,
-				struct csr_roam_session *session,
+				uint8_t vdev_id,
 				struct wlan_roam_scan_period_params *params)
 {
 	tpCsrNeighborRoamControlInfo roam_info =
-			&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
+			&mac_ctx->roam.neighborRoamInfo[vdev_id];
 
-	params->vdev_id = session->vdev_id;
+	params->vdev_id = vdev_id;
 	params->empty_scan_refresh_period =
 				roam_info->cfgParams.emptyScanRefreshPeriod;
 	params->scan_period = params->empty_scan_refresh_period;
@@ -19491,6 +19513,195 @@ wlan_cm_roam_scan_offload_scan_period(
 			roam_info->cfgParams.roam_scan_period_after_inactivity;
 	params->full_scan_period =
 			roam_info->cfgParams.full_roam_scan_period;
+}
+
+/**
+ * wlan_cm_roam_scan_offload_ap_profile() - set roam ap profile parameters
+ * @mac_ctx: global mac ctx
+ * @session: sme session
+ * @params:  roam ap profile related parameters
+ *
+ * This function is used to set roam ap profile related parameters
+ *
+ * Return: None
+ */
+static void
+wlan_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
+				     struct csr_roam_session *session,
+				     struct ap_profile_params *params)
+{
+	struct ap_profile *profile = &params->profile;
+	struct roam_ext_params *roam_params_src =
+			&mac_ctx->roam.configParam.roam_params;
+	tpCsrNeighborRoamControlInfo roam_info =
+			&mac_ctx->roam.neighborRoamInfo[session->vdev_id];
+
+	params->vdev_id = session->vdev_id;
+	profile->ssid.length = session->connectedProfile.SSID.length;
+	qdf_mem_copy(profile->ssid.ssid, session->connectedProfile.SSID.ssId,
+		     profile->ssid.length);
+	profile->rsn_authmode =
+		e_csr_auth_type_to_rsn_authmode(
+			session->connectedProfile.AuthType,
+			session->connectedProfile.EncryptionType);
+	/* Pairwise cipher suite */
+	profile->rsn_ucastcipherset =
+		e_csr_encryption_type_to_rsn_cipherset(
+			session->connectedProfile.EncryptionType);
+	/* Group cipher suite */
+	profile->rsn_mcastcipherset =
+		e_csr_encryption_type_to_rsn_cipherset(
+			session->connectedProfile.mcEncryptionType);
+	/* Group management cipher suite */
+
+	profile->rssi_threshold = roam_info->cfgParams.roam_rssi_diff;
+	/*
+	 * rssi_diff which is updated via framework is equivalent to the
+	 * INI RoamRssiDiff parameter and hence should be updated.
+	 */
+	if (roam_params_src->rssi_diff)
+		profile->rssi_threshold  = roam_params_src->rssi_diff;
+
+	profile->rssi_abs_thresh =
+			mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
+
+	csr_update_score_params(mac_ctx, &params->param, roam_info);
+
+	params->min_rssi_params[DEAUTH_MIN_RSSI] =
+			mac_ctx->mlme_cfg->trig_min_rssi[DEAUTH_MIN_RSSI];
+	params->min_rssi_params[BMISS_MIN_RSSI] =
+			mac_ctx->mlme_cfg->trig_min_rssi[BMISS_MIN_RSSI];
+	params->score_delta_param[IDLE_ROAM_TRIGGER] =
+			mac_ctx->mlme_cfg->trig_score_delta[IDLE_ROAM_TRIGGER];
+	params->score_delta_param[BTM_ROAM_TRIGGER] =
+			mac_ctx->mlme_cfg->trig_score_delta[BTM_ROAM_TRIGGER];
+}
+
+/**
+ * wlan_cm_roam_scan_filter() - set roam scan filter parameters
+ * @mac_ctx: global mac ctx
+ * @vdev_id: vdev id
+ * @command: rso command
+ * @reason:  reason to roam
+ * @scan_filter_params:  roam scan filter related parameters
+ *
+ * There are filters such as whitelist, blacklist and preferred
+ * list that need to be applied to the scan results to form the
+ * probable candidates for roaming.
+ *
+ * Return: None
+ */
+static void
+wlan_cm_roam_scan_filter(
+		struct mac_context *mac_ctx,
+		uint8_t vdev_id,
+		uint8_t command,
+		uint8_t reason,
+		struct wlan_roam_scan_filter_params *scan_filter_params)
+{
+	int i;
+	uint32_t num_bssid_black_list = 0, num_ssid_white_list = 0,
+	   num_bssid_preferred_list = 0,  num_rssi_rejection_ap = 0;
+	uint32_t op_bitmap = 0;
+	struct roam_ext_params *roam_params;
+	struct roam_scan_filter_params *params;
+
+	scan_filter_params->reason = reason;
+	params = &scan_filter_params->filter_params;
+	roam_params = &mac_ctx->roam.configParam.roam_params;
+	if (command != ROAM_SCAN_OFFLOAD_STOP) {
+		switch (reason) {
+		case REASON_ROAM_SET_BLACKLIST_BSSID:
+			op_bitmap |= 0x1;
+			num_bssid_black_list =
+				roam_params->num_bssid_avoid_list;
+			break;
+		case REASON_ROAM_SET_SSID_ALLOWED:
+			op_bitmap |= 0x2;
+			num_ssid_white_list =
+				roam_params->num_ssid_allowed_list;
+			break;
+		case REASON_ROAM_SET_FAVORED_BSSID:
+			op_bitmap |= 0x4;
+			num_bssid_preferred_list =
+				roam_params->num_bssid_favored;
+			break;
+		case REASON_CTX_INIT:
+			if (command == ROAM_SCAN_OFFLOAD_START) {
+				params->lca_disallow_config_present = true;
+				num_rssi_rejection_ap =
+					roam_params->num_rssi_rejection_ap;
+			} else {
+				sme_debug("Roam Filter need not be sent, no need to fill parameters");
+				return;
+			}
+			break;
+		default:
+			sme_debug("Roam Filter need not be sent, no need to fill parameters");
+			return;
+		}
+	} else {
+		/* In case of STOP command, reset all the variables
+		 * except for blacklist BSSID which should be retained
+		 * across connections.
+		 */
+		op_bitmap = 0x2 | 0x4;
+		num_ssid_white_list = roam_params->num_ssid_allowed_list;
+		num_bssid_preferred_list = roam_params->num_bssid_favored;
+	}
+
+	/* fill in fixed values */
+	params->vdev_id = vdev_id;
+	params->op_bitmap = op_bitmap;
+	params->num_bssid_black_list = num_bssid_black_list;
+	params->num_ssid_white_list = num_ssid_white_list;
+	params->num_bssid_preferred_list = num_bssid_preferred_list;
+	params->num_rssi_rejection_ap = num_rssi_rejection_ap;
+	params->delta_rssi =
+		wlan_blm_get_rssi_blacklist_threshold(mac_ctx->pdev);
+	qdf_mem_copy(params->bssid_avoid_list, roam_params->bssid_avoid_list,
+		     MAX_BSSID_AVOID_LIST * sizeof(struct qdf_mac_addr));
+
+	for (i = 0; i < num_ssid_white_list; i++) {
+		qdf_mem_copy(params->ssid_allowed_list[i].ssid,
+			     roam_params->ssid_allowed_list[i].ssId,
+			     roam_params->ssid_allowed_list[i].length);
+		params->ssid_allowed_list[i].length =
+				roam_params->ssid_allowed_list[i].length;
+		sme_debug("SSID %d: %.*s", i,
+			  params->ssid_allowed_list[i].length,
+			  params->ssid_allowed_list[i].ssid);
+	}
+
+	for (i = 0; i < params->num_bssid_black_list; i++)
+		sme_debug("Blacklist bssid[%d]:" QDF_MAC_ADDR_STR, i,
+			  QDF_MAC_ADDR_ARRAY(params->bssid_avoid_list[i].bytes));
+	qdf_mem_copy(params->bssid_favored, roam_params->bssid_favored,
+		     MAX_BSSID_FAVORED * sizeof(struct qdf_mac_addr));
+	qdf_mem_copy(params->bssid_favored_factor,
+		     roam_params->bssid_favored_factor, MAX_BSSID_FAVORED);
+	qdf_mem_copy(params->rssi_rejection_ap,
+		     roam_params->rssi_reject_bssid_list,
+		     MAX_RSSI_AVOID_BSSID_LIST *
+			sizeof(struct reject_ap_config_params));
+
+	for (i = 0; i < params->num_bssid_preferred_list; i++)
+		sme_debug("Preferred Bssid[%d]:"QDF_MAC_ADDR_STR" score: %d", i,
+			  QDF_MAC_ADDR_ARRAY(params->bssid_favored[i].bytes),
+			  params->bssid_favored_factor[i]);
+
+	if (params->lca_disallow_config_present) {
+		params->disallow_duration
+				= mac_ctx->mlme_cfg->lfr.lfr3_disallow_duration;
+		params->rssi_channel_penalization
+			= mac_ctx->mlme_cfg->lfr.lfr3_rssi_channel_penalization;
+		params->num_disallowed_aps
+			= mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
+		sme_debug("disallow_dur %d rssi_chan_pen %d num_disallowed_aps %d",
+			  params->disallow_duration,
+			  params->rssi_channel_penalization,
+			  params->num_disallowed_aps);
+	}
 }
 
 QDF_STATUS
@@ -19516,19 +19727,22 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wlan_cm_roam_scan_offload_rssi_thresh(mac_ctx,
-					      session,
+	wlan_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
 					      &req->rssi_params);
 
-	wlan_cm_roam_scan_offload_scan_period(mac_ctx,
-					      session,
+	wlan_cm_roam_scan_offload_scan_period(mac_ctx, session->vdev_id,
 					      &req->scan_period_params);
+
+	wlan_cm_roam_scan_offload_ap_profile(mac_ctx, session,
+					     &req->profile_params);
+
+	wlan_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_START,
+				 reason, &req->scan_filter_params);
 
 	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
 
 	return status;
 }
-#endif
 #endif
 
 QDF_STATUS

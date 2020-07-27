@@ -28,22 +28,6 @@
 #include "wlan_cm_roam_public_srtuct.h"
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-/**
- * cm_roam_send_rso_cmd() - Send rso command
- * @psoc: psoc pointer
- * @vdev_id: vdev id
- * @rso_command: roam scan offload command
- * @reason: reason for changing roam state for the requested vdev id
- *
- * This function is used to send rso command
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-		     uint8_t vdev_id,
-		     uint8_t rso_command,
-		     uint8_t reason);
 
 /**
  * cm_roam_state_change() - Post roam state change to roam state machine
@@ -61,5 +45,23 @@ cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
 		     uint8_t vdev_id,
 		     enum roam_offload_state requested_state,
 		     uint8_t reason);
+
+/**
+ * cm_roam_send_rso_cmd() - send rso command
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @rso_command: roam command to send
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * similar to csr_roam_offload_scan, will be used from many legacy
+ * process directly, generate a new function wlan_cm_roam_send_rso_cmd
+ * for external usage.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				uint8_t vdev_id, uint8_t rso_command,
+				uint8_t reason);
+
 #endif
 #endif

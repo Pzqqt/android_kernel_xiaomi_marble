@@ -46,21 +46,6 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 					uint8_t vdev_id);
 
 /**
- * wlan_cm_start_roaming() - start roaming
- * @pdev: pdev pointer
- * @vdev_id: vdev id
- * @reason: reason to roam
- *
- * This function gets called to start roaming
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
-		      uint8_t vdev_id,
-		      uint8_t reason);
-
-/**
  * wlan_cm_roam_cmd_allowed() - check roam cmd is allowed or not
  * @psoc: pointer to psoc object
  * @vdev_id: vdev id
@@ -93,43 +78,10 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id,
 			    struct wlan_roam_start_config *req,
 			    uint8_t reason);
-
-/**
- * wlan_cm_roam_send_rso_cmd() - Send rso command
- * @psoc: psoc pointer
- * @vdev_id: vdev id
- * @rso_command: roam scan offload command
- * @reason: reason for changing roam state for the requested vdev id
- *
- * This function is used to send rso command
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-				     uint8_t vdev_id,
-				     uint8_t rso_command,
-				     uint8_t reason);
 #else
 static inline QDF_STATUS
 wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 					uint8_t vdev_id)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static inline QDF_STATUS
-wlan_cm_start_roaming(struct wlan_objmgr_pdev *pdev,
-		      uint8_t vdev_id,
-		      uint8_t reason)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-
-static inline QDF_STATUS
-wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
-			  uint8_t vdev_id,
-			  uint8_t rso_command,
-			  uint8_t reason);
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -157,6 +109,77 @@ QDF_STATUS cm_roam_release_lock(void);
  */
 char
 *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor);
+
+/**
+ * ucfg_cm_rso_init_deinit  - Init or Deinit roaming module at firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @enable: true: Send RSO init and RSO enable
+ *          false: Send RSO stop
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
+				   uint8_t vdev_id, bool enable);
+
+/**
+ * wlan_cm_disable_rso  - Disable roam scan offload to firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @requestor: RSO disable requestor
+ * @reason: Reason for RSO disable
+ *
+ * Return:  QDF_STATUS
+ */
+QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+			       enum wlan_cm_rso_control_requestor requestor,
+			       uint8_t reason);
+
+/**
+ * ucfg_cm_enable_rso  - Enable roam scan offload to firmware
+ * @pdev: Pointer to pdev
+ * @vdev_id: vdev id
+ * @requestor: RSO disable requestor
+ * @reason: Reason for RSO disable
+ *
+ * Return:  QDF_STATUS
+ */
+QDF_STATUS wlan_cm_enable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
+			      enum wlan_cm_rso_control_requestor requestor,
+			      uint8_t reason);
+
+/**
+ * wlan_cm_roam_state_change() - Post roam state change to roam state machine
+ * @pdev: pdev pointer
+ * @vdev_id: vdev id
+ * @requested_state: roam state to be set
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * This function posts roam state change to roam state machine handling
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_roam_state_change(struct wlan_objmgr_pdev *pdev,
+				     uint8_t vdev_id,
+				     enum roam_offload_state requested_state,
+				     uint8_t reason);
+
+/**
+ * wlan_cm_roam_send_rso_cmd() - send rso command
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @rso_command: roam command to send
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * similar to csr_roam_offload_scan, will be used from many legacy
+ * process directly, generate a new function wlan_cm_roam_send_rso_cmd
+ * for external usage.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
+				     uint8_t vdev_id, uint8_t rso_command,
+				     uint8_t reason);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
