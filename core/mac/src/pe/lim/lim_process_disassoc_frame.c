@@ -307,6 +307,11 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		ap_info.expected_rssi = frame_rssi +
 			wlan_blm_get_rssi_blacklist_threshold(mac->pdev);
 		qdf_mem_copy(ap_info.bssid.bytes, pHdr->sa, QDF_MAC_ADDR_SIZE);
+		ap_info.reject_reason = REASON_ASSOC_REJECT_POOR_RSSI;
+		ap_info.source = ADDED_BY_DRIVER;
+		ap_info.original_timeout = ap_info.retry_delay;
+		ap_info.received_time = qdf_mc_timer_get_system_time();
+
 		lim_add_bssid_to_reject_list(mac->pdev, &ap_info);
 	}
 	lim_extract_ies_from_deauth_disassoc(pe_session, (uint8_t *)pHdr,

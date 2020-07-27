@@ -6135,6 +6135,11 @@ void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
 
 		entry.bssid = blacklist->bssid;
 		entry.time_during_rejection = blacklist->received_time;
+		entry.reject_reason = blacklist->reject_reason;
+		entry.source = blacklist->source ? blacklist->source :
+						   ADDED_BY_TARGET;
+		entry.original_timeout = blacklist->original_timeout;
+		entry.received_time = blacklist->received_time;
 		/* If timeout = 0 and rssi = 0 ignore the entry */
 		if (!blacklist->timeout && !blacklist->rssi) {
 			continue;

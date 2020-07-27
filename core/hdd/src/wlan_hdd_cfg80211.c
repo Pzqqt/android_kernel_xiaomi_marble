@@ -4393,6 +4393,10 @@ static int hdd_set_blacklist_bssid(struct hdd_context *hdd_ctx,
 					   tb2[PARAM_SET_BSSID],
 					   QDF_MAC_ADDR_SIZE);
 				ap_info.reject_ap_type = USERSPACE_AVOID_TYPE;
+				ap_info.reject_reason =
+						REASON_USERSPACE_AVOID_LIST;
+				ap_info.source = ADDED_BY_DRIVER;
+
 				/* This BSSID is avoided and not blacklisted */
 				ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev,
 								  &ap_info);

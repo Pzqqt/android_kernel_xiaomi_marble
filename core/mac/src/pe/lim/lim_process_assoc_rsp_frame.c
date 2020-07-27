@@ -818,6 +818,10 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		ap_info.retry_delay = assoc_rsp->rssi_assoc_rej.retry_delay *
 							QDF_MC_TIMER_TO_MS_UNIT;
 		qdf_mem_copy(ap_info.bssid.bytes, hdr->sa, QDF_MAC_ADDR_SIZE);
+		ap_info.reject_reason = REASON_ASSOC_REJECT_OCE;
+		ap_info.source = ADDED_BY_DRIVER;
+		ap_info.original_timeout = ap_info.retry_delay;
+		ap_info.received_time = qdf_mc_timer_get_system_time();
 		lim_add_bssid_to_reject_list(mac_ctx->pdev, &ap_info);
 	}
 

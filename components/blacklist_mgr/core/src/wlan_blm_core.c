@@ -50,6 +50,7 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 		     MINUTES_TO_MS(cfg->avoid_list_exipry_time)) {
 			/* Move AP to monitor list as avoid list time is over */
 			blm_entry->userspace_avoidlist = false;
+			blm_entry->avoid_userspace = false;
 			blm_entry->driver_monitorlist = true;
 
 			blm_entry->ap_timestamp.driver_monitor_timestamp =
@@ -66,6 +67,9 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 		     MINUTES_TO_MS(cfg->avoid_list_exipry_time)) {
 			/* Move AP to monitor list as avoid list time is over */
 			blm_entry->driver_avoidlist = false;
+			blm_entry->nud_fail = false;
+			blm_entry->sta_kickout = false;
+			blm_entry->ho_fail = false;
 			blm_entry->driver_monitorlist = true;
 
 			blm_entry->ap_timestamp.driver_monitor_timestamp =
@@ -84,7 +88,9 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 			/* Move AP to monitor list as black list time is over */
 			blm_entry->driver_blacklist = false;
 			blm_entry->driver_monitorlist = true;
-
+			blm_entry->nud_fail = false;
+			blm_entry->sta_kickout = false;
+			blm_entry->ho_fail = false;
 			blm_entry->ap_timestamp.driver_monitor_timestamp =
 								cur_timestamp;
 			blm_debug("Driver blacklist timer expired, moved to monitor list");
@@ -115,8 +121,15 @@ blm_update_ap_info(struct blm_reject_ap *blm_entry, struct blm_config *cfg,
 			 *    for BTM message will fail (expected), as BTM does
 			 *    not care about the same.
 			 */
+			blm_entry->poor_rssi = false;
+			blm_entry->oce_assoc_reject = false;
+			blm_entry->btm_bss_termination = false;
+			blm_entry->btm_disassoc_imminent = false;
+			blm_entry->btm_mbo_retry = false;
+			blm_entry->no_more_stas = false;
+			blm_entry->reassoc_rssi_reject = false;
 			blm_entry->rssi_reject_list = false;
-			blm_debug("Remove from rssi reject expected RSSI = %d, current RSSI = %d, retry delay required = %d ms, delay = %lu ms",
+			blm_debug("Remove BSSID from rssi reject expected RSSI = %d, current RSSI = %d, retry delay required = %d ms, delay = %lu ms",
 				  blm_entry->rssi_reject_params.expected_rssi,
 				  scan_entry ? scan_entry->rssi_raw : 0,
 				  blm_entry->rssi_reject_params.retry_delay,
@@ -156,22 +169,38 @@ blm_prune_old_entries_and_get_action(struct blm_reject_ap *blm_entry,
 	}
 
 	if (BLM_IS_AP_IN_RSSI_REJECT_LIST(blm_entry) &&
-	    blm_entry->rssi_reject_params.retry_delay > MAX_BL_TIME) {
-		blm_info("Allow BSSID %pM as the retry delay is greater than %d ms, expected RSSI = %d, current RSSI = %d, retry delay = %d ms",
+	    !blm_entry->userspace_blacklist && !blm_entry->driver_blacklist &&
+	    blm_entry->rssi_reject_params.original_timeout > MAX_BL_TIME) {
+		blm_info("Allow BSSID %pM as the retry delay is greater than %u ms, expected RSSI = %d, current RSSI = %d, retry delay = %u ms original timeout %u time added %lu source %d reason %d",
 			 blm_entry->bssid.bytes, MAX_BL_TIME,
 			 blm_entry->rssi_reject_params.expected_rssi,
 			 entry ? entry->rssi_raw : 0,
-			 blm_entry->rssi_reject_params.retry_delay);
+			 blm_entry->rssi_reject_params.retry_delay,
+			 blm_entry->rssi_reject_params.original_timeout,
+			 blm_entry->rssi_reject_params.received_time,
+			 blm_entry->source, blm_entry->reject_ap_reason);
+
+		if (BLM_IS_AP_IN_AVOIDLIST(blm_entry)) {
+			blm_debug("%pM in avoid list, deprioritize it",
+				  blm_entry->bssid.bytes);
+			return CM_BLM_AVOID;
+		}
+
 		return CM_BLM_NO_ACTION;
 	}
-	if (BLM_IS_AP_IN_BLACKLIST(blm_entry))
+	if (BLM_IS_AP_IN_BLACKLIST(blm_entry)) {
+		blm_debug("%pM in blacklist list, reject ap type %d removing from candidate list",
+			  blm_entry->bssid.bytes, blm_entry->reject_ap_type);
 		return CM_BLM_REMOVE;
+	}
 
-	if (BLM_IS_AP_IN_AVOIDLIST(blm_entry))
+	if (BLM_IS_AP_IN_AVOIDLIST(blm_entry)) {
+		blm_debug("%pM in avoid list, deprioritize it",
+			  blm_entry->bssid.bytes);
 		return CM_BLM_AVOID;
+	}
 
 	return CM_BLM_NO_ACTION;
-
 }
 
 static enum cm_blacklist_action
@@ -232,6 +261,29 @@ wlan_blacklist_action_on_bssid(struct wlan_objmgr_pdev *pdev,
 }
 
 static void
+blm_update_avoidlist_reject_reason(struct blm_reject_ap *entry,
+				   enum blm_reject_ap_reason reject_reason)
+{
+	entry->nud_fail = false;
+	entry->sta_kickout = false;
+	entry->ho_fail = false;
+
+	switch(reject_reason) {
+	case REASON_NUD_FAILURE:
+		entry->nud_fail = true;
+		break;
+	case REASON_STA_KICKOUT:
+		entry->sta_kickout = true;
+		break;
+	case REASON_ROAM_HO_FAILURE:
+		entry->ho_fail = true;
+		break;
+	default:
+		blm_err("Invalid reason passed %d", reject_reason);
+	}
+}
+
+static void
 blm_handle_avoid_list(struct blm_reject_ap *entry,
 		      struct blm_config *cfg,
 		      struct reject_ap_info *ap_info)
@@ -240,13 +292,17 @@ blm_handle_avoid_list(struct blm_reject_ap *entry,
 
 	if (ap_info->reject_ap_type == USERSPACE_AVOID_TYPE) {
 		entry->userspace_avoidlist = true;
+		entry->avoid_userspace = true;
 		entry->ap_timestamp.userspace_avoid_timestamp = cur_timestamp;
 	} else if (ap_info->reject_ap_type == DRIVER_AVOID_TYPE) {
 		entry->driver_avoidlist = true;
+		blm_update_avoidlist_reject_reason(entry,
+						   ap_info->reject_reason);
 		entry->ap_timestamp.driver_avoid_timestamp = cur_timestamp;
 	} else {
 		return;
 	}
+	entry->source = ap_info->source;
 	/* Update bssid info for new entry */
 	entry->bssid = ap_info->bssid;
 
@@ -271,9 +327,10 @@ blm_handle_avoid_list(struct blm_reject_ap *entry,
 			  entry->bssid.bytes, entry->bad_bssid_counter);
 		return;
 	}
-	blm_debug("Added %pM to avoid list type %d, counter %d",
+	blm_debug("Added %pM to avoid list type %d, counter %d reason %d updated reject reason %d source %d",
 		  entry->bssid.bytes, ap_info->reject_ap_type,
-		  entry->bad_bssid_counter);
+		  entry->bad_bssid_counter, ap_info->reject_reason,
+		  entry->reject_ap_reason, entry->source);
 
 	entry->connect_timestamp = qdf_mc_timer_get_system_time();
 }
@@ -293,22 +350,77 @@ blm_handle_blacklist(struct blm_reject_ap *entry,
 	entry->ap_timestamp.userspace_blacklist_timestamp =
 						qdf_mc_timer_get_system_time();
 
+	entry->source = ADDED_BY_DRIVER;
+	entry->blacklist_userspace = true;
 	blm_debug("%pM added to userspace blacklist", entry->bssid.bytes);
+}
+
+static void
+blm_update_rssi_reject_reason(struct blm_reject_ap *entry,
+			      enum blm_reject_ap_reason reject_reason)
+{
+	entry->poor_rssi = false;
+	entry->oce_assoc_reject = false;
+	entry->btm_bss_termination = false;
+	entry->btm_disassoc_imminent = false;
+	entry->btm_mbo_retry = false;
+	entry->no_more_stas = false;
+	entry->reassoc_rssi_reject = false;
+
+	switch(reject_reason) {
+	case REASON_ASSOC_REJECT_POOR_RSSI:
+		entry->poor_rssi = true;
+		break;
+	case REASON_ASSOC_REJECT_OCE:
+		entry->oce_assoc_reject = true;
+		break;
+	case REASON_BTM_DISASSOC_IMMINENT:
+		entry->btm_disassoc_imminent = true;
+		break;
+	case REASON_BTM_BSS_TERMINATION:
+		entry->btm_bss_termination = true;
+		break;
+	case REASON_BTM_MBO_RETRY:
+		entry->btm_mbo_retry = true;
+		break;
+	case REASON_REASSOC_RSSI_REJECT:
+		entry->reassoc_rssi_reject = true;
+		break;
+	case REASON_REASSOC_NO_MORE_STAS:
+		entry->no_more_stas = true;
+		break;
+	default:
+		blm_err("Invalid reason passed %d", reject_reason);
+	}
 }
 
 static void
 blm_handle_rssi_reject_list(struct blm_reject_ap *entry,
 			    struct reject_ap_info *ap_info)
 {
-	entry->bssid = ap_info->bssid;
-	entry->rssi_reject_list = true;
+	bool bssid_newly_added;
+
+	if (entry->rssi_reject_list) {
+		bssid_newly_added = false;
+	} else {
+		entry->rssi_reject_params.source = ap_info->source;
+		entry->bssid = ap_info->bssid;
+		entry->rssi_reject_list = true;
+		bssid_newly_added = true;
+	}
+
 	entry->ap_timestamp.rssi_reject_timestamp =
 					qdf_mc_timer_get_system_time();
 	entry->rssi_reject_params = ap_info->rssi_reject_params;
-
-	blm_debug("%pM Added to rssi reject list, expected RSSI %d retry delay %d",
-		  entry->bssid.bytes, entry->rssi_reject_params.expected_rssi,
-		  entry->rssi_reject_params.retry_delay);
+	blm_update_rssi_reject_reason(entry, ap_info->reject_reason);
+	blm_info("%pM %s to rssi reject list, expected RSSI %d retry delay %u source %d original timeout %u received time %lu reject reason %d updated reason %d",
+		 bssid_newly_added ? "ADDED" : "UPDATED",
+		 entry->bssid.bytes, entry->rssi_reject_params.expected_rssi,
+		 entry->rssi_reject_params.retry_delay,
+		 entry->rssi_reject_params.source,
+		 entry->rssi_reject_params.original_timeout,
+		 entry->rssi_reject_params.received_time,
+		 ap_info->reject_reason, entry->reject_ap_reason);
 }
 
 static void
@@ -568,6 +680,48 @@ blm_remove_lowest_delta_entry(qdf_list_t *reject_ap_list,
 	return QDF_STATUS_E_FAILURE;
 }
 
+static enum blm_reject_ap_reason
+blm_get_rssi_reject_reason(struct blm_reject_ap *blm_entry)
+{
+	if (blm_entry->poor_rssi)
+		return REASON_ASSOC_REJECT_POOR_RSSI;
+	else if (blm_entry->oce_assoc_reject)
+		return REASON_ASSOC_REJECT_OCE;
+	else if(blm_entry->btm_bss_termination)
+		return REASON_BTM_BSS_TERMINATION;
+	else if (blm_entry->btm_disassoc_imminent)
+		return REASON_BTM_DISASSOC_IMMINENT;
+	else if (blm_entry->btm_mbo_retry)
+		return REASON_BTM_MBO_RETRY;
+	else if (blm_entry->no_more_stas)
+		return REASON_REASSOC_NO_MORE_STAS;
+	else if (blm_entry->reassoc_rssi_reject)
+		return REASON_REASSOC_RSSI_REJECT;
+
+	return REASON_UNKNOWN;
+}
+
+static void
+blm_fill_rssi_reject_params(struct blm_reject_ap *blm_entry,
+			    enum blm_reject_ap_type reject_ap_type,
+			    struct reject_ap_config_params *blm_reject_list)
+{
+	if (reject_ap_type != DRIVER_RSSI_REJECT_TYPE)
+		return;
+
+	blm_reject_list->source = blm_entry->rssi_reject_params.source;
+	blm_reject_list->original_timeout =
+			blm_entry->rssi_reject_params.original_timeout;
+	blm_reject_list->received_time =
+			blm_entry->rssi_reject_params.received_time;
+	blm_reject_list->reject_reason = blm_get_rssi_reject_reason(blm_entry);
+	blm_debug("%pM source %d original timeout %u received time %lu reject reason %d",
+		   blm_entry->bssid.bytes, blm_reject_list->source,
+		   blm_reject_list->original_timeout,
+		   blm_reject_list->received_time,
+		   blm_reject_list->reject_reason);
+}
+
 static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 				 struct reject_ap_config_params *reject_list,
 				 uint8_t *num_of_reject_bssid,
@@ -602,21 +756,26 @@ static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 		}
 
 		if (blm_is_bssid_of_type(reject_ap_type, blm_entry)) {
-			reject_list[*num_of_reject_bssid].expected_rssi =
+			struct reject_ap_config_params *blm_reject_list;
+
+			blm_reject_list = &reject_list[*num_of_reject_bssid];
+			blm_reject_list->expected_rssi =
 				    blm_entry->rssi_reject_params.expected_rssi;
-			reject_list[*num_of_reject_bssid].reject_duration =
+			blm_reject_list->reject_duration =
 			       blm_get_delta_of_bssid(reject_ap_type, blm_entry,
 						      cfg);
-			reject_list[*num_of_reject_bssid].reject_ap_type =
-								reject_ap_type;
-			reject_list[*num_of_reject_bssid].bssid =
-							blm_entry->bssid;
+
+			blm_fill_rssi_reject_params(blm_entry, reject_ap_type,
+						    blm_reject_list);
+			blm_reject_list->reject_ap_type = reject_ap_type;
+			blm_reject_list->bssid = blm_entry->bssid;
 			(*num_of_reject_bssid)++;
-			blm_debug("Adding BSSID %pM of type %d retry delay %d expected RSSI %d, entries added = %d",
+			blm_debug("Adding BSSID %pM of type %d retry delay %d expected RSSI %d, entries added = %d reject reason %d",
 				  blm_entry->bssid.bytes, reject_ap_type,
 				  reject_list[*num_of_reject_bssid -1].reject_duration,
 				  blm_entry->rssi_reject_params.expected_rssi,
-				  *num_of_reject_bssid);
+				  *num_of_reject_bssid,
+				  blm_entry->reject_ap_reason);
 		}
 		cur_node = next_node;
 		next_node = NULL;
@@ -797,6 +956,7 @@ blm_clear_userspace_blacklist_info(struct wlan_objmgr_pdev *pdev)
 			blm_debug("Clearing userspace blacklist bit for %pM",
 				  blm_entry->bssid.bytes);
 			blm_entry->userspace_blacklist = false;
+			blm_entry->blacklist_userspace = false;
 		}
 		cur_node = next_node;
 		next_node = NULL;
@@ -847,7 +1007,8 @@ blm_add_userspace_black_list(struct wlan_objmgr_pdev *pdev,
 	for (i = 0; i < num_of_bssid; i++) {
 		ap_info.bssid = bssid_black_list[i];
 		ap_info.reject_ap_type = USERSPACE_BLACKLIST_TYPE;
-
+		ap_info.source = ADDED_BY_DRIVER;
+		ap_info.reject_reason = REASON_USERSPACE_BL;
 		status = blm_add_bssid_to_reject_list(pdev, &ap_info);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			blm_err("Failed to add bssid to userspace blacklist");

@@ -242,6 +242,8 @@ void lim_delete_sta_context(struct mac_context *mac_ctx,
 			qdf_mem_copy(&ap_info.bssid, msg->addr2,
 				     QDF_MAC_ADDR_SIZE);
 			ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+			ap_info.reject_reason = REASON_STA_KICKOUT;
+			ap_info.source = ADDED_BY_DRIVER;
 			wlan_blm_add_bssid_to_reject_list(mac_ctx->pdev,
 							  &ap_info);
 

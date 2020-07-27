@@ -252,6 +252,8 @@ hdd_handle_nud_fail_sta(struct hdd_context *hdd_ctx,
 
 	ap_info.bssid = sta_ctx->conn_info.bssid;
 	ap_info.reject_ap_type = DRIVER_AVOID_TYPE;
+	ap_info.reject_reason = REASON_NUD_FAILURE;
+	ap_info.source = ADDED_BY_DRIVER;
 	ucfg_blm_add_bssid_to_reject_list(hdd_ctx->pdev, &ap_info);
 
 	if (roaming_offload_enabled(hdd_ctx))

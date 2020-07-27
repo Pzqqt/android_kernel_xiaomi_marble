@@ -7590,7 +7590,10 @@ lim_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 	ap_info.reject_ap_type = DRIVER_RSSI_REJECT_TYPE;
 	ap_info.rssi_reject_params.expected_rssi = entry->expected_rssi;
 	ap_info.rssi_reject_params.retry_delay = entry->retry_delay;
-
+	ap_info.reject_reason = entry->reject_reason;
+	ap_info.source = entry->source;
+	ap_info.rssi_reject_params.received_time = entry->received_time;
+	ap_info.rssi_reject_params.original_timeout = entry->original_timeout;
 	/* Add this ap info to the rssi reject ap type in blacklist manager */
 	wlan_blm_add_bssid_to_reject_list(pdev, &ap_info);
 }
