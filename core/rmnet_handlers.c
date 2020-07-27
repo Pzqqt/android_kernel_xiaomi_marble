@@ -219,7 +219,7 @@ static void rmnet_ip_route_rcv(struct sk_buff *skb, struct rmnet_port *port)
 		break;
 	case RMNET_IP_VERSION_6:
 		skb->protocol = htons(ETH_P_IPV6);
-		ip6h = ipv6_hdr(skb);
+		ip6h = (struct ipv6hdr *) rmnet_map_data_ptr(skb);
 		ep = rmnet_get_ip6_route_endpoint(port, &ip6h->saddr,
 						  &ip6h->daddr);
 		if (!ep)

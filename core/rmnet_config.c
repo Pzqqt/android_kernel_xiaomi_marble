@@ -834,7 +834,6 @@ struct rmnet_endpoint *rmnet_get_ip6_endpoint(struct rmnet_port *port,
 		if (!memcmp(&ep->in6addr, addr, sizeof(struct in6_addr))) {
 			return ep;
 		}
-
 	}
 
 	return NULL;
