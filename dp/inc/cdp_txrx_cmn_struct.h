@@ -980,11 +980,13 @@ struct cdp_soc_t {
  * @CDP_CONFIG_NAWDS: Enable nawds mode
  * @CDP_CONFIG_NAC: Enable nac
  * @CDP_CONFIG_ISOLATION : Enable isolation
+ * @CDP_CONFIG_IN_TWT : In TWT session or not
  */
 enum cdp_peer_param_type {
 	CDP_CONFIG_NAWDS,
 	CDP_CONFIG_NAC,
 	CDP_CONFIG_ISOLATION,
+	CDP_CONFIG_IN_TWT,
 };
 
 /*
@@ -1054,6 +1056,7 @@ enum cdp_pdev_param_type {
  *
  * @cdp_peer_param_nawds: Enable nawds mode
  * @cdp_peer_param_isolation: Enable isolation
+ * @cdp_peer_param_in_twt: in TWT session or not
  * @cdp_peer_param_nac: Enable nac
  *
  * @cdp_vdev_param_nawds: set nawds enable/disable
@@ -1110,6 +1113,7 @@ typedef union cdp_config_param_t {
 	bool cdp_peer_param_nawds;
 	bool cdp_peer_param_isolation;
 	uint8_t cdp_peer_param_nac;
+	bool cdp_peer_param_in_twt;
 
 	/* vdev params */
 	bool cdp_vdev_param_wds;

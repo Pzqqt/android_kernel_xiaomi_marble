@@ -2619,6 +2619,9 @@ done:
 				  nbuf);
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 				 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
+		if (qdf_unlikely(peer->in_twt))
+			DP_STATS_INC_PKT(peer, rx.to_stack_twt, 1,
+					 QDF_NBUF_CB_RX_PKT_LEN(nbuf));
 
 		tid_stats->delivered_to_stack++;
 		nbuf = next;

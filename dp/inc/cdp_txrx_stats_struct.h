@@ -815,6 +815,7 @@ struct protocol_trace_count {
  * @ru_tones: RU tones size
  * @ru_loc: pkt info for RU location 26/ 52/ 106/ 242/ 484 counter
  * @num_ppdu_cookie_valid : Number of comp received with valid ppdu cookie
+ * @tx_success_twt: Successful Tx Packets in TWT session
  */
 struct cdp_tx_stats {
 	struct cdp_pkt_info comp_pkt;
@@ -905,6 +906,7 @@ struct cdp_tx_stats {
 
 	uint32_t num_ppdu_cookie_valid;
 	uint32_t no_ack_count[QDF_PROTO_SUBTYPE_MAX];
+	struct cdp_pkt_info tx_success_twt;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
@@ -969,6 +971,7 @@ struct cdp_tx_stats {
  * @last_rssi: Previous rssi
  * @multipass_rx_pkt_drop: Dropped multipass rx pkt
  * @rx_mpdu_cnt: rx mpdu count per MCS rate
+ * @to_stack_twt: Total packets sent up the stack in TWT session
  */
 struct cdp_rx_stats {
 	struct cdp_pkt_info to_stack;
@@ -1037,6 +1040,7 @@ struct cdp_rx_stats {
 	uint8_t last_rssi;
 	uint32_t multipass_rx_pkt_drop;
 	uint32_t rx_mpdu_cnt[MAX_MCS];
+	struct cdp_pkt_info to_stack_twt;
 };
 
 /* struct cdp_tx_ingress_stats - Tx ingress Stats

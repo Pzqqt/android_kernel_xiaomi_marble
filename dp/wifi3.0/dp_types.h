@@ -2356,14 +2356,15 @@ struct dp_peer {
 	} security[2]; /* 0 -> multicast, 1 -> unicast */
 
 	/* NAWDS Flag and Bss Peer bit */
-	uint8_t nawds_enabled:1, /* NAWDS flag */
+	uint16_t nawds_enabled:1, /* NAWDS flag */
 		bss_peer:1, /* set for bss peer */
 		wds_enabled:1, /* WDS peer */
 		authorize:1, /* Set when authorized */
 		nac:1, /* NAC Peer*/
 		tx_cap_enabled:1, /* Peer's tx-capture is enabled */
 		rx_cap_enabled:1, /* Peer's rx-capture is enabled */
-		valid:1; /* valid bit */
+		valid:1, /* valid bit */
+		in_twt:1; /* in TWT session */
 
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 	bool isolation; /* enable peer isolation for this peer */

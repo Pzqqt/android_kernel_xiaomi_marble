@@ -7976,6 +7976,9 @@ static QDF_STATUS dp_set_peer_param(struct cdp_soc_t *cdp_soc,  uint8_t vdev_id,
 	case CDP_CONFIG_ISOLATION:
 		dp_set_peer_isolation(peer, val.cdp_peer_param_isolation);
 		break;
+	case CDP_CONFIG_IN_TWT:
+		peer->in_twt = !!(val.cdp_peer_param_in_twt);
+		break;
 	default:
 		break;
 	}

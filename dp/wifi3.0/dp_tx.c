@@ -3613,8 +3613,14 @@ void dp_tx_comp_process_tx_status(struct dp_soc *soc,
 		}
 	} else {
 		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
-		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
+		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
 			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
+			if (qdf_unlikely(peer->in_twt)) {
+				DP_STATS_INC_PKT(peer,
+						 tx.tx_success_twt,
+						 1, length);
+			}
+		}
 	}
 
 	dp_tx_update_peer_stats(tx_desc, ts, peer, ring_id);
