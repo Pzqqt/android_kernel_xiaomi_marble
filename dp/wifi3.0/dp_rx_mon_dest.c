@@ -70,9 +70,17 @@ dp_tx_capture_get_user_id(struct dp_pdev *dp_pdev, void *rx_desc_tlv)
 }
 #endif
 
+/*
+ * The protocol flow tag size
+ * if DP_RX_MON_MEM_FRAG is enabled.
+ */
+#ifdef DP_RX_MON_MEM_FRAG
+#if defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) ||\
+	defined(WLAN_SUPPORT_RX_FLOW_TAG)
+#define DP_RX_MON_PF_TAG_TOT_LEN (64)
+#endif
+#endif
 
-/* The maxinum buffer length allocated for radio tap */
-#define MAX_MONITOR_HEADER (512)
 /*
  * PPDU id is from 0 to 64k-1. PPDU id read from status ring and PPDU id
  * read from destination ring shall track each other. If the distance of
@@ -177,13 +185,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	struct hal_buf_info buf_info;
 	uint32_t rx_bufs_used = 0;
 	uint32_t msdu_ppdu_id, msdu_cnt;
-	uint8_t *data;
+	uint8_t *data = NULL;
 	uint32_t i;
 	uint32_t total_frag_len = 0, frag_len = 0;
 	bool is_frag, is_first_msdu;
-	bool drop_mpdu = false;
+	bool drop_mpdu = false, is_frag_non_raw = false;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
-	uint64_t nbuf_paddr = 0;
+	qdf_dma_addr_t buf_paddr = 0;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct cdp_mon_status *rs;
 
@@ -237,7 +245,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				     &msdu_list, &num_msdus);
 
 		for (i = 0; i < num_msdus; i++) {
-			uint32_t l2_hdr_offset;
+			uint16_t l2_hdr_offset;
 			struct dp_rx_desc *rx_desc = NULL;
 			struct rx_desc_pool *rx_desc_pool;
 
@@ -245,15 +253,15 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						     msdu_list.sw_cookie[i]);
 
 			qdf_assert_always(rx_desc);
-			msdu = rx_desc->nbuf;
 
-			if (msdu)
-				nbuf_paddr = qdf_nbuf_get_frag_paddr(msdu, 0);
+			msdu = DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc);
+			buf_paddr = dp_rx_mon_get_paddr_from_desc(rx_desc);
+
 			/* WAR for duplicate buffers received from HW */
 			if (qdf_unlikely(dp_pdev->mon_last_buf_cookie ==
 				msdu_list.sw_cookie[i] ||
-				!msdu ||
-				msdu_list.paddr[i] != nbuf_paddr ||
+				DP_RX_MON_IS_BUFFER_ADDR_NULL(rx_desc) ||
+				msdu_list.paddr[i] != buf_paddr ||
 				!rx_desc->in_use)) {
 				/* Skip duplicate buffer and drop subsequent
 				 * buffers in this MPDU
@@ -266,15 +274,11 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			}
 
 			if (rx_desc->unmapped == 0) {
-				rx_desc_pool = dp_rx_get_mon_desc_pool(
-							soc,
-							mac_id,
-							dp_pdev->pdev_id);
-				qdf_nbuf_unmap_nbytes_single(
-							soc->osdev,
-							rx_desc->nbuf,
-							QDF_DMA_FROM_DEVICE,
-							rx_desc_pool->buf_size);
+				rx_desc_pool = dp_rx_get_mon_desc_pool(soc,
+								       mac_id,
+								dp_pdev->pdev_id);
+				dp_rx_mon_buffer_unmap(soc, rx_desc,
+						       rx_desc_pool->buf_size);
 				rx_desc->unmapped = 1;
 			}
 
@@ -290,13 +294,12 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			if (drop_mpdu) {
 				dp_pdev->mon_last_linkdesc_paddr =
 					buf_info.paddr;
-				qdf_nbuf_free(msdu);
+				dp_rx_mon_buffer_free(rx_desc);
 				msdu = NULL;
 				goto next_msdu;
 			}
 
-			data = qdf_nbuf_data(msdu);
-
+			data = dp_rx_mon_get_buffer_data(rx_desc);
 			rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
@@ -309,7 +312,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 						soc->hal_soc,
 						rx_desc_tlv)) {
 					drop_mpdu = true;
-					qdf_nbuf_free(msdu);
+					dp_rx_mon_buffer_free(rx_desc);
 					msdu = NULL;
 					dp_pdev->mon_last_linkdesc_paddr =
 						buf_info.paddr;
@@ -358,6 +361,20 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				dp_pdev->mon_last_linkdesc_paddr =
 					buf_info.paddr;
+
+				if (dp_rx_mon_alloc_parent_buffer(head_msdu)
+				    != QDF_STATUS_SUCCESS) {
+					DP_STATS_INC(dp_pdev,
+						     replenish.nbuf_alloc_fail,
+						     1);
+					qdf_frag_free(rx_desc_tlv);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_DEBUG,
+						  "[%s] failed to allocate parent buffer to hold all frag",
+						  __func__);
+					drop_mpdu = true;
+					goto next_msdu;
+				}
 			}
 
 			if (hal_rx_desc_is_first_msdu(soc->hal_soc,
@@ -366,46 +383,28 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					rx_desc_tlv,
 					&(dp_pdev->ppdu_info.rx_status));
 
-
-			if (msdu_list.msdu_info[i].msdu_flags &
-				HAL_MSDU_F_MSDU_CONTINUATION) {
-				if (!is_frag) {
-					total_frag_len =
-					msdu_list.msdu_info[i].msdu_len;
-					is_frag = true;
-				}
-				dp_mon_adjust_frag_len(
-					&total_frag_len, &frag_len);
-			} else {
-				if (is_frag) {
-					dp_mon_adjust_frag_len(
-						&total_frag_len, &frag_len);
-				} else {
-					frag_len =
-					msdu_list.msdu_info[i].msdu_len;
-				}
-				is_frag = false;
+			dp_rx_mon_parse_desc_buffer(soc,
+						    &(msdu_list.msdu_info[i]),
+						    &is_frag,
+						    &total_frag_len,
+						    &frag_len,
+						    &l2_hdr_offset,
+						    rx_desc_tlv,
+						    &is_frag_non_raw, data);
+			if (!is_frag)
 				msdu_cnt--;
-			}
+
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				  "%s total_len %u frag_len %u flags %u",
 				  __func__, total_frag_len, frag_len,
 				  msdu_list.msdu_info[i].msdu_flags);
 
 			rx_pkt_offset = SIZE_OF_MONITOR_TLV;
-			/*
-			 * HW structures call this L3 header padding
-			 * -- even though this is actually the offset
-			 * from the buffer beginning where the L2
-			 * header begins.
-			 */
-			l2_hdr_offset =
-			hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, data);
 
 			rx_buf_size = rx_pkt_offset + l2_hdr_offset
 					+ frag_len;
 
-			qdf_nbuf_set_pktlen(msdu, rx_buf_size);
+			dp_rx_mon_buffer_set_pktlen(msdu, rx_buf_size);
 #if 0
 			/* Disble it.see packet on msdu done set to 0 */
 			/*
@@ -428,20 +427,15 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 #endif
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					  QDF_TRACE_LEVEL_DEBUG,
-					  "%s: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, addr=%pK skb->len %u",
+					  "%s: rx_pkt_offset=%d, l2_hdr_offset=%d, msdu_len=%d, frag_len %u",
 					  __func__, rx_pkt_offset, l2_hdr_offset,
 					  msdu_list.msdu_info[i].msdu_len,
-					  qdf_nbuf_data(msdu),
-					  (uint32_t)qdf_nbuf_len(msdu));
+					  frag_len);
 
-			if (head_msdu && !*head_msdu) {
-				*head_msdu = msdu;
-			} else {
-				if (last)
-					qdf_nbuf_set_next(last, msdu);
-			}
+			dp_rx_mon_add_msdu_to_list(head_msdu, msdu, &last,
+						   rx_desc_tlv, frag_len,
+						   l2_hdr_offset);
 
-			last = msdu;
 next_msdu:
 			dp_pdev->mon_last_buf_cookie = msdu_list.sw_cookie[i];
 			rx_bufs_used++;
@@ -466,11 +460,8 @@ next_msdu:
 			dp_err_rl("monitor link desc return failed");
 	} while (buf_info.paddr && msdu_cnt);
 
-	if (last)
-		qdf_nbuf_set_next(last, NULL);
-
-	*tail_msdu = msdu;
-
+	dp_rx_mon_init_tail_msdu(msdu, last, tail_msdu);
+	dp_rx_mon_remove_raw_frame_fcs_len(head_msdu);
 	return rx_bufs_used;
 
 }
@@ -486,6 +477,375 @@ void dp_rx_msdus_set_payload(struct dp_soc *soc, qdf_nbuf_t msdu)
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(soc->hal_soc, data);
 	qdf_nbuf_pull_head(msdu, rx_pkt_offset + l2_hdr_offset);
 }
+
+#ifdef DP_RX_MON_MEM_FRAG
+/**
+ * dp_rx_mon_frag_restitch_mpdu_from_msdus() - Restitch logic to
+ *      convert to dot3 header and adjust frag memory pointing to
+ *      dot3 header and payload in case of Non-Raw frame.
+ *
+ * @soc: struct dp_soc *
+ * @mac_id: MAC id
+ * @head_msdu: MPDU containing all MSDU as a frag
+ * @rx_status: struct cdp_mon_status *
+ * @pf_tag: Memory to store Protocol flow tag for every MSDU
+ *
+ * Return: Adjusted nbuf containing MPDU worth info.
+ */
+static inline
+qdf_nbuf_t dp_rx_mon_frag_restitch_mpdu_from_msdus(struct dp_soc *soc,
+						   uint32_t mac_id,
+						   qdf_nbuf_t head_msdu,
+						   qdf_nbuf_t last_msdu,
+						   struct cdp_mon_status *rx_status)
+{
+	uint32_t wifi_hdr_len, sec_hdr_len, msdu_llc_len,
+		mpdu_buf_len, decap_hdr_pull_bytes, dir,
+		is_amsdu, amsdu_pad, frag_size, tot_msdu_len;
+	qdf_frag_t rx_desc, rx_src_desc, rx_dest_desc, frag_addr;
+	char *hdr_desc;
+	uint8_t num_frags, frags_iter, l2_hdr_offset;
+	struct ieee80211_frame *wh;
+	struct ieee80211_qoscntl *qos;
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
+	int16_t frag_page_offset = 0;
+	struct hal_rx_mon_dest_buf_info buf_info;
+	uint32_t pad_byte_pholder = 0;
+
+	if (qdf_unlikely(!dp_pdev)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "pdev is null for mac_id = %d", mac_id);
+		return NULL;
+	}
+	qdf_mem_zero(&buf_info, sizeof(struct hal_rx_mon_dest_buf_info));
+
+	if (!head_msdu)
+		goto mpdu_stitch_fail;
+
+	num_frags = qdf_nbuf_get_nr_frags(head_msdu);
+	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - SIZE_OF_MONITOR_TLV;
+
+	if (HAL_RX_DESC_GET_MPDU_LENGTH_ERR(rx_desc)) {
+		/* It looks like there is some issue on MPDU len err */
+		/* Need further investigate if drop the packet */
+		DP_STATS_INC(dp_pdev, dropped.mon_rx_drop, 1);
+		return NULL;
+	}
+
+	/* Look for FCS error */
+	rx_desc =
+		qdf_nbuf_get_frag_addr(head_msdu,
+				       num_frags - 1) - SIZE_OF_MONITOR_TLV;
+	rx_status->cdp_rs_fcs_err = HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
+	dp_pdev->ppdu_info.rx_status.rs_fcs_err =
+		HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
+
+	rx_desc = qdf_nbuf_get_frag_addr(head_msdu, 0) - SIZE_OF_MONITOR_TLV;
+	hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc, &buf_info);
+
+	/* Easy case - The MSDU status indicates that this is a non-decapped
+	 * packet in RAW mode.
+	*/
+	if (buf_info.is_decap_raw == 1)
+		goto mpdu_stitch_done;
+
+	l2_hdr_offset = DP_RX_MON_NONRAW_L2_HDR_PAD_BYTE;
+
+	/* Decap mode:
+	 * Calculate the amount of header in decapped packet to knock off based
+	 * on the decap type and the corresponding number of raw bytes to copy
+	 * status header
+	 */
+	hdr_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "[%s][%d] decap format not raw",
+		  __func__, __LINE__);
+
+	/* Base size */
+	wifi_hdr_len = sizeof(struct ieee80211_frame);
+	wh = (struct ieee80211_frame *)hdr_desc;
+
+	dir = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
+
+	if (dir == IEEE80211_FC1_DIR_DSTODS)
+		wifi_hdr_len += 6;
+
+	is_amsdu = 0;
+	if (wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS) {
+		qos = (struct ieee80211_qoscntl *)
+			(hdr_desc + wifi_hdr_len);
+		wifi_hdr_len += 2;
+
+		is_amsdu = (qos->i_qos[0] & IEEE80211_QOS_AMSDU);
+	}
+
+	/*Calculate security header length based on 'Protected'
+	 * and 'EXT_IV' flag
+	 */
+	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
+		char *iv = (char *)wh + wifi_hdr_len;
+
+		if (iv[3] & KEY_EXTIV)
+			sec_hdr_len = 8;
+		else
+			sec_hdr_len = 4;
+	} else {
+		sec_hdr_len = 0;
+	}
+	wifi_hdr_len += sec_hdr_len;
+
+	/* MSDU related stuff LLC - AMSDU subframe header etc */
+	msdu_llc_len = is_amsdu ? (14 + 8) : 8;
+
+	mpdu_buf_len = wifi_hdr_len + msdu_llc_len;
+
+	/* "Decap" header to remove from MSDU buffer */
+	decap_hdr_pull_bytes = 14;
+
+	amsdu_pad = 0;
+	tot_msdu_len = 0;
+
+	/*
+	 * keeping first MSDU ops outside of loop to avoid multiple
+	 * check handling
+	 */
+
+	/* Construct src header */
+	rx_src_desc = hdr_desc;
+
+	/*
+	 * Update protocol and flow tag for MSDU
+	 * update frag index in ctx_idx field.
+	 * Reset head pointer data of nbuf before updating.
+	 */
+	qdf_mem_zero(qdf_nbuf_head(head_msdu),  DP_RX_MON_PF_TAG_TOT_LEN);
+	QDF_NBUF_CB_RX_CTX_ID(head_msdu) = 0;
+	dp_rx_mon_update_protocol_flow_tag(soc, dp_pdev, head_msdu, rx_desc);
+
+	/* Construct destination address */
+	frag_addr = qdf_nbuf_get_frag_addr(head_msdu, 0);
+	frag_size = qdf_nbuf_get_frag_size_by_idx(head_msdu, 0);
+	/* We will come here in 2 scenario:
+	 * 1. First MSDU of MPDU with single buffer
+	 * 2. First buffer of First MSDU of MPDU with continuation
+	 *
+	 *  ------------------------------------------------------------
+	 * | SINGLE BUFFER (<= RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN)|
+	 *  ------------------------------------------------------------
+	 *
+	 *  ------------------------------------------------------------
+	 * | First BUFFER with Continuation             | ...           |
+	 * | (RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) |               |
+	 *  ------------------------------------------------------------
+	 */
+	pad_byte_pholder =
+		(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+	/* Construct destination address
+	 *  --------------------------------------------------------------
+	 * | RX_PKT_TLV | L2_HDR_PAD   |   Decap HDR   |      Payload     |
+	 * |            |                              /                  |
+	 * |            >Frag address points here     /                   |
+	 * |            \                            /                    |
+	 * |             \ This bytes needs to      /                     |
+	 * |              \  removed to frame pkt  /                      |
+	 * |               -----------------------                        |
+	 * |                                      |                       |
+	 * |                                      |                       |
+	 * |   WIFI +LLC HDR will be added here <-|                       |
+	 * |        |                             |                       |
+	 * |         >Dest addr will point        |                       |
+	 * |            somewhere in this area    |                       |
+	 *  --------------------------------------------------------------
+	 */
+	rx_dest_desc =
+		(frag_addr + decap_hdr_pull_bytes + l2_hdr_offset) -
+					mpdu_buf_len;
+	/* Add WIFI and LLC header for 1st MSDU of MPDU */
+	qdf_mem_copy(rx_dest_desc, rx_src_desc, mpdu_buf_len);
+
+	frag_page_offset =
+		(decap_hdr_pull_bytes + l2_hdr_offset) - mpdu_buf_len;
+
+	qdf_nbuf_move_frag_page_offset(head_msdu, 0, frag_page_offset);
+
+	frag_size = qdf_nbuf_get_frag_size_by_idx(head_msdu, 0);
+
+	if (buf_info.first_buffer && buf_info.last_buffer) {
+		/* MSDU with single bufffer */
+		amsdu_pad = frag_size & 0x3;
+		amsdu_pad = amsdu_pad ? (4 - amsdu_pad) : 0;
+		if (amsdu_pad <= pad_byte_pholder) {
+			qdf_nbuf_trim_add_frag_size(head_msdu, 0, amsdu_pad,
+						    0);
+			amsdu_pad = 0;
+		}
+	} else {
+		/*
+		 * First buffer of Continuation frame and hence
+		 * amsdu_padding doesn't need to be added
+		 * Increase tot_msdu_len so that amsdu_pad byte
+		 * will be calculated for last frame of MSDU
+		 */
+		tot_msdu_len = frag_size;
+		amsdu_pad = 0;
+	}
+
+	/* Here amsdu_pad byte will have some value if 1sf buffer was
+	 * Single buffer MSDU and dint had pholder to adjust amsdu padding
+	 * byte in the end
+	 * So dont initialize to ZERO here
+	 */
+	pad_byte_pholder = 0;
+	for (frags_iter = 1; frags_iter < num_frags; frags_iter++) {
+		/* Construct destination address
+		 *  ----------------------------------------------------------
+		 * | RX_PKT_TLV | L2_HDR_PAD   |   Decap HDR | Payload | Pad  |
+		 * |            | (First buffer)             |         |      |
+		 * |            |                            /        /       |
+		 * |            >Frag address points here   /        /        |
+		 * |            \                          /        /         |
+		 * |             \ This bytes needs to    /        /          |
+		 * |              \  removed to frame pkt/        /           |
+		 * |               ----------------------        /            |
+		 * |                                     |     /     Add      |
+		 * |                                     |    /   amsdu pad   |
+		 * |   LLC HDR will be added here      <-|    |   Byte for    |
+		 * |        |                            |    |   last frame  |
+		 * |         >Dest addr will point       |    |    if space   |
+		 * |            somewhere in this area   |    |    available  |
+		 * |  And amsdu_pad will be created if   |    |               |
+		 * | dint get added in last buffer       |    |               |
+		 * |       (First Buffer)                |    |               |
+		 *  ----------------------------------------------------------
+		 */
+		frag_addr = qdf_nbuf_get_frag_addr(head_msdu, frags_iter);
+		rx_desc = frag_addr - SIZE_OF_MONITOR_TLV;
+
+		/*
+		 * Update protocol and flow tag for MSDU
+		 * update frag index in ctx_idx field
+		 */
+		QDF_NBUF_CB_RX_CTX_ID(head_msdu) = frags_iter;
+		dp_rx_mon_update_protocol_flow_tag(soc, dp_pdev,
+						   head_msdu, rx_desc);
+
+		/* Read buffer info from stored data in tlvs */
+		hal_rx_mon_dest_get_buffer_info_from_tlv(rx_desc,
+							 &buf_info);
+
+		frag_size = qdf_nbuf_get_frag_size_by_idx(head_msdu,
+							  frags_iter);
+
+		/* If Middle buffer, dont add any header */
+		if ((!buf_info.first_buffer) && (!buf_info.last_buffer)) {
+			tot_msdu_len += frag_size;
+			amsdu_pad = 0;
+			pad_byte_pholder = 0;
+			continue;
+		}
+
+		/* Calculate if current buffer has placeholder
+		 * to accommodate amsdu pad byte
+		 */
+		pad_byte_pholder =
+			(RX_MONITOR_BUFFER_SIZE - RX_PKT_TLVS_LEN) - frag_size;
+		/*
+		 * We will come here only only three condition:
+		 * 1. Msdu with single Buffer
+		 * 2. First buffer in case MSDU is spread in multiple buffer
+		 * 3. Last buffer in case MSDU is spread in multiple buffer
+		 *
+		 *         First buffER | Last buffer
+		 * Case 1:      1       |     1
+		 * Case 2:      1       |     0
+		 * Case 3:      0       |     1
+		 *
+		 * In 3rd case only l2_hdr_padding byte will be Zero and in
+		 * other case, It will be 2 Bytes.
+		 */
+		if (buf_info.first_buffer)
+			l2_hdr_offset = DP_RX_MON_NONRAW_L2_HDR_PAD_BYTE;
+		else
+			l2_hdr_offset = DP_RX_MON_RAW_L2_HDR_PAD_BYTE;
+
+		if (buf_info.first_buffer) {
+			/* Src addr from whre llc header needs to be copied */
+			rx_src_desc = HAL_RX_DESC_GET_80211_HDR(rx_desc);
+
+			/* Size of buffer with llc header */
+			frag_size = frag_size -
+				(l2_hdr_offset + decap_hdr_pull_bytes);
+			frag_size += msdu_llc_len;
+
+			/* Construct destination address */
+			rx_dest_desc = frag_addr + decap_hdr_pull_bytes +
+						l2_hdr_offset;
+			rx_dest_desc = rx_dest_desc - (msdu_llc_len);
+
+			qdf_mem_copy(rx_dest_desc, rx_src_desc, msdu_llc_len);
+
+			/*
+			 * Calculate new page offset and create hole
+			 * if amsdu_pad required.
+			 */
+			frag_page_offset = l2_hdr_offset +
+					decap_hdr_pull_bytes;
+			frag_page_offset = frag_page_offset -
+					(msdu_llc_len + amsdu_pad);
+
+			qdf_nbuf_move_frag_page_offset(head_msdu, frags_iter,
+						       frag_page_offset);
+
+			tot_msdu_len = frag_size;
+			/*
+			 * No amsdu padding required for first frame of
+			 * continuation buffer
+			 */
+			if (!buf_info.last_buffer) {
+				amsdu_pad = 0;
+				continue;
+			}
+		} else {
+			tot_msdu_len += frag_size;
+		}
+
+		/* Will reach to this place in only two case:
+		 * 1. Single buffer MSDU
+		 * 2. Last buffer of MSDU in case of multiple buffer MSDU
+		 */
+
+		/* Check size of buffer if amsdu padding required */
+		amsdu_pad = tot_msdu_len & 0x3;
+		amsdu_pad = amsdu_pad ? (4 - amsdu_pad) : 0;
+
+		/* Create placeholder if current bufer can
+		 * accommodate padding.
+		 */
+		if (amsdu_pad <= pad_byte_pholder) {
+			qdf_nbuf_trim_add_frag_size(head_msdu, frags_iter,
+						    amsdu_pad, 0);
+			amsdu_pad = 0;
+		}
+
+		/* reset tot_msdu_len */
+		tot_msdu_len = 0;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s %d head_msdu %pK head_msdu->len %u",
+		  __func__, __LINE__,
+		  head_msdu, head_msdu->len);
+
+mpdu_stitch_done:
+	return head_msdu;
+
+mpdu_stitch_fail:
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		  "%s mpdu_stitch_fail head_msdu %pK", __func__, head_msdu);
+	return NULL;
+}
+#endif
 
 static inline
 qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
@@ -792,6 +1152,60 @@ mpdu_stitch_fail:
 	return NULL;
 }
 
+#ifdef DP_RX_MON_MEM_FRAG
+#if defined(WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG) ||\
+	defined(WLAN_SUPPORT_RX_FLOW_TAG)
+static inline
+void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
+					     struct dp_pdev *pdev,
+					     qdf_nbuf_t nbuf)
+{
+	bool is_mon_protocol_flow_tag_enabled;
+
+	if (qdf_unlikely(!soc || !pdev || !nbuf))
+		return;
+
+	/* Return if it dint came from mon Path */
+	if (!qdf_nbuf_get_nr_frags(nbuf))
+		return;
+
+	is_mon_protocol_flow_tag_enabled =
+		wlan_cfg_is_rx_mon_protocol_flow_tag_enabled(soc->wlan_cfg_ctx);
+
+	if (qdf_unlikely(!is_mon_protocol_flow_tag_enabled))
+		return;
+
+	if (qdf_likely(!pdev->is_rx_protocol_tagging_enabled))
+		return;
+
+	if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < DP_RX_MON_PF_TAG_TOT_LEN)) {
+		dp_err("Nbuf avail Headroom[%d] < DP_RX_MON_PF_TAG_TOT_LEN[%d]",
+		       qdf_nbuf_headroom(nbuf), DP_RX_MON_PF_TAG_TOT_LEN);
+		return;
+	}
+
+	qdf_nbuf_push_head(nbuf, DP_RX_MON_PF_TAG_TOT_LEN);
+	qdf_mem_copy(qdf_nbuf_data(nbuf), qdf_nbuf_head(nbuf),
+		     DP_RX_MON_PF_TAG_TOT_LEN);
+	qdf_nbuf_pull_head(nbuf, DP_RX_MON_PF_TAG_TOT_LEN);
+}
+#else
+static inline
+void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
+					     struct dp_pdev *pdev,
+					     qdf_nbuf_t nbuf)
+{
+}
+#endif
+#else
+static inline
+void dp_rx_mon_update_pf_tag_to_buf_headroom(struct dp_soc *soc,
+					     struct dp_pdev *pdev,
+					     qdf_nbuf_t nbuf)
+{
+}
+#endif
+
 /**
  * dp_send_mgmt_packet_to_stack(): send indicataion to upper layers
  *
@@ -831,6 +1245,8 @@ static inline QDF_STATUS dp_send_mgmt_packet_to_stack(struct dp_soc *soc,
 		return QDF_STATUS_E_INVAL;
 	}
 	*nbuf_data = pdev->ppdu_info.com_info.ppdu_id;
+
+	dp_rx_mon_update_pf_tag_to_buf_headroom(soc, pdev, nbuf);
 
 	dp_wdi_event_handler(WDI_EVENT_RX_MGMT_CTRL, soc, nbuf,
 			     HTT_INVALID_PEER,
@@ -874,6 +1290,32 @@ void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
 	/* TODO: rx_mon_status->vht_flag_values1 */
 }
 
+#ifdef DP_RX_MON_MEM_FRAG
+static inline
+qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
+				   qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu,
+				   struct cdp_mon_status *rs)
+{
+	if (qdf_nbuf_get_nr_frags(head_msdu))
+		return dp_rx_mon_frag_restitch_mpdu_from_msdus(soc, mac_id,
+							       head_msdu,
+							       tail_msdu, rs);
+	else
+		return dp_rx_mon_restitch_mpdu_from_msdus(soc, mac_id,
+							  head_msdu,
+							  tail_msdu, rs);
+}
+#else
+static inline
+qdf_nbuf_t dp_rx_mon_restitch_mpdu(struct dp_soc *soc, uint32_t mac_id,
+				   qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu,
+				   struct cdp_mon_status *rs)
+{
+	return dp_rx_mon_restitch_mpdu_from_msdus(soc, mac_id, head_msdu,
+						  tail_msdu, rs);
+}
+#endif
+
 /*
  * dp_rx_mon_deliver(): function to deliver packets to stack
  * @soc: DP soc
@@ -895,8 +1337,8 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 		goto mon_deliver_fail;
 
 	/* restitch mon MPDU for delivery via monitor interface */
-	mon_mpdu = dp_rx_mon_restitch_mpdu_from_msdus(soc, mac_id, head_msdu,
-				tail_msdu, rs);
+	mon_mpdu = dp_rx_mon_restitch_mpdu(soc, mac_id, head_msdu,
+					   tail_msdu, rs);
 
 	/* monitor vap cannot be present when mcopy is enabled
 	 * hence same skb can be consumed
@@ -920,6 +1362,8 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 			DP_STATS_INC(pdev, dropped.mon_radiotap_update_err, 1);
 			goto mon_deliver_fail;
 		}
+
+		dp_rx_mon_update_pf_tag_to_buf_headroom(soc, pdev, head_msdu);
 		pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 						mon_mpdu,
 						&pdev->ppdu_info.rx_status);
@@ -1109,7 +1553,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			break;
 		}
 
-		if (qdf_likely((head_msdu) && (tail_msdu))) {
+		if (qdf_likely((head_msdu) &&
+			       (DP_RX_MON_IS_MSDU_NOT_NULL(tail_msdu)))) {
 			rx_mon_stats->dest_mpdu_done++;
 			dp_rx_mon_deliver(soc, mac_id, head_msdu, tail_msdu);
 		}

@@ -75,6 +75,34 @@ struct hal_wbm_err_desc_info {
 };
 
 /**
+ * hal_rx_mon_dest_buf_info: Structure to hold rx mon dest buffer info
+ * @first_buffer: First buffer of MSDU
+ * @last_buffer: Last buffer of MSDU
+ * @is_decap_raw: Is RAW Frame
+ * @reserved_1: Reserved
+ *
+ * MSDU with continuation:
+ *  -----------------------------------------------------------
+ * | first_buffer:1   | first_buffer: 0 | ... | first_buffer: 0 |
+ * | last_buffer :0   | last_buffer : 0 | ... | last_buffer : 0 |
+ * | is_decap_raw:1/0 |      Same as earlier  |  Same as earlier|
+ *  -----------------------------------------------------------
+ *
+ * Single buffer MSDU:
+ *  ------------------
+ * | first_buffer:1   |
+ * | last_buffer :1   |
+ * | is_decap_raw:1/0 |
+ *  ------------------
+ */
+struct hal_rx_mon_dest_buf_info {
+	uint8_t first_buffer:1,
+		last_buffer:1,
+		is_decap_raw:1,
+		reserved_1:5;
+};
+
+/**
  * struct hal_rx_msdu_metadata:Structure to hold rx fast path information.
  *
  * @l3_hdr_pad:	l3 header padding
@@ -3033,6 +3061,42 @@ static inline void hal_rx_wbm_err_info_get_from_tlv(uint8_t *buf,
 
 	qdf_mem_copy(wbm_er_info, pkt_tlvs->rx_padding0,
 		    sizeof(struct hal_wbm_err_desc_info));
+}
+
+/**
+ * hal_rx_mon_dest_set_buffer_info_to_tlv(): Save the mon dest frame info
+ *      into the reserved bytes of rx_tlv_hdr.
+ * @buf: start of rx_tlv_hdr
+ * @buf_info: hal_rx_mon_dest_buf_info structure
+ *
+ * Return: void
+ */
+static inline
+void hal_rx_mon_dest_set_buffer_info_to_tlv(uint8_t *buf,
+			struct hal_rx_mon_dest_buf_info *buf_info)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	qdf_mem_copy(pkt_tlvs->rx_padding0, buf_info,
+		     sizeof(struct hal_rx_mon_dest_buf_info));
+}
+
+/**
+ * hal_rx_mon_dest_get_buffer_info_from_tlv(): Retrieve mon dest frame info
+ *      from the reserved bytes of rx_tlv_hdr.
+ * @buf: start of rx_tlv_hdr
+ * @buf_info: hal_rx_mon_dest_buf_info structure
+ *
+ * Return: void
+ */
+static inline
+void hal_rx_mon_dest_get_buffer_info_from_tlv(uint8_t *buf,
+			struct hal_rx_mon_dest_buf_info *buf_info)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	qdf_mem_copy(buf_info, pkt_tlvs->rx_padding0,
+		     sizeof(struct hal_rx_mon_dest_buf_info));
 }
 
 /**
