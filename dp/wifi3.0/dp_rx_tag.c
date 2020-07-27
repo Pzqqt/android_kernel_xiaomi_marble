@@ -96,6 +96,39 @@ void dp_rx_update_rx_err_protocol_tag_stats(struct dp_pdev *pdev,
  * Return: void
  */
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
+
+#ifdef DP_RX_MON_MEM_FRAG
+/**
+ * dp_rx_update_proto_tag() - Update protocol tag to nbuf cb or to headroom
+ *
+ * @nbuf: QDF pkt buffer on which the protocol tag should be set
+ * @protocol_tag: Protocol tag
+ */
+static inline
+void dp_rx_update_proto_tag(qdf_nbuf_t nbuf, uint16_t protocol_tag)
+{
+	uint8_t idx;
+	uint8_t *nbuf_head = NULL;
+
+	if (qdf_nbuf_get_nr_frags(nbuf)) {
+		/* Get frag index, which was saved while restitch */
+		idx = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+		nbuf_head = qdf_nbuf_head(nbuf);
+		nbuf_head += (idx * DP_RX_MON_PF_TAG_SIZE);
+
+		*((uint16_t *)nbuf_head) = protocol_tag;
+	} else {
+		qdf_nbuf_set_rx_protocol_tag(nbuf, protocol_tag);
+	}
+}
+#else
+static inline
+void dp_rx_update_proto_tag(qdf_nbuf_t nbuf, uint16_t protocol_tag)
+{
+	qdf_nbuf_set_rx_protocol_tag(nbuf, protocol_tag);
+}
+#endif
+
 void
 dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 			  qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
@@ -156,7 +189,8 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 	 * received protocol type.
 	 */
 	protocol_tag = pdev->rx_proto_tag_map[cce_metadata].tag;
-	qdf_nbuf_set_rx_protocol_tag(nbuf, protocol_tag);
+
+	dp_rx_update_proto_tag(nbuf, protocol_tag);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Seq:%u dcap:%u CCE Match:%u ProtoID:%u Tag:%u stats:%u",
 		  hal_rx_get_rx_sequence(soc->hal_soc, rx_tlv_hdr),
@@ -189,6 +223,41 @@ dp_rx_update_protocol_tag(struct dp_soc *soc, struct dp_vdev *vdev,
  * Return: void
  */
 #ifdef WLAN_SUPPORT_RX_FLOW_TAG
+
+#ifdef DP_RX_MON_MEM_FRAG
+/**
+ * dp_rx_update_flow_tags() - Update protocol tag to nbuf cb or to headroom
+ *
+ * @nbuf: QDF pkt buffer on which the protocol tag should be set
+ * @flow_tag: Flow tag
+ */
+static inline
+void dp_rx_update_flow_tags(qdf_nbuf_t nbuf, uint32_t flow_tag)
+{
+	uint8_t idx;
+	uint8_t *nbuf_head = NULL;
+	uint16_t updated_flow_tag = (uint16_t)(flow_tag & 0xFFFF);
+
+	if (qdf_nbuf_get_nr_frags(nbuf)) {
+		/* Get frag index, which was saved while restitch */
+		idx = QDF_NBUF_CB_RX_CTX_ID(nbuf);
+		nbuf_head = qdf_nbuf_head(nbuf);
+		nbuf_head += ((idx * DP_RX_MON_PF_TAG_SIZE) +
+				sizeof(uint16_t));
+
+		*((uint16_t *)nbuf_head) = updated_flow_tag;
+	} else {
+		qdf_nbuf_set_rx_flow_tag(nbuf, flow_tag);
+	}
+}
+#else
+static inline
+void dp_rx_update_flow_tags(qdf_nbuf_t nbuf, uint16_t flow_tag)
+{
+	qdf_nbuf_set_rx_flow_tag(nbuf, flow_tag);
+}
+#endif
+
 void
 dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 		      qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr, bool update_stats)
@@ -240,7 +309,7 @@ dp_rx_update_flow_tag(struct dp_soc *soc, struct dp_vdev *vdev,
 	fse_metadata = hal_rx_msdu_fse_metadata_get(soc->hal_soc, rx_tlv_hdr) & 0xFFFF;
 
 	/* update the skb->cb with the user-specified tag/metadata */
-	qdf_nbuf_set_rx_flow_tag(nbuf, fse_metadata);
+	dp_rx_update_flow_tags(nbuf, fse_metadata);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Seq:%u dcap:%u invalid:%u timeout:%u flow:%u tag:%u stat:%u",
