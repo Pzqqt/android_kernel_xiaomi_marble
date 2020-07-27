@@ -109,6 +109,7 @@ enum {
 
 #define TDM_MAX_SLOTS 8
 #define TDM_SLOT_WIDTH_BITS 32
+#define TDM_SLOT_WIDTH_BYTES TDM_SLOT_WIDTH_BITS/8
 
 enum {
 	TDM_PRI = 0,
@@ -195,6 +196,7 @@ struct msm_asoc_mach_data {
 	struct device_node *fsa_handle;
 	struct clk *lpass_audio_hw_vote;
 	int core_audio_vote_count;
+	u32 tdm_max_slots; /* Max TDM slots used */
 };
 
 struct tdm_port {
@@ -1992,8 +1994,11 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 	int interface = ucontrol->value.integer.value[0];
 	int channel = ucontrol->value.integer.value[1];
 	unsigned int offset_val = 0;
+	unsigned int max_slot_offset = 0;
 	unsigned int *slot_offset = NULL;
 	struct tdm_dev_config *config = NULL;
+	struct msm_asoc_mach_data *pdata = NULL;
+	struct snd_soc_component *component = NULL;
 
 	if (interface < 0  || interface >= (TDM_INTERFACE_MAX * MAX_PATH)) {
 		pr_err("%s: incorrect interface = %d\n", __func__, interface);
@@ -2007,15 +2012,27 @@ static int tdm_slot_map_put(struct snd_kcontrol *kcontrol,
 	pr_debug("%s: interface = %d, channel = %d\n", __func__,
 		interface, channel);
 
+	component = snd_soc_kcontrol_component(kcontrol);
+	pdata = snd_soc_card_get_drvdata(component->card);
 	config = ((struct tdm_dev_config *) tdm_cfg[interface / MAX_PATH]) +
 			((interface % MAX_PATH) * TDM_PORT_MAX) + channel;
+	if (!config) {
+		pr_err("%s: tdm config is NULL\n", __func__);
+		return -EINVAL;
+	}
 	slot_offset = config->tdm_slot_offset;
+	if (!slot_offset) {
+		pr_err("%s: slot offset is NULL\n", __func__);
+		return -EINVAL;
+	}
 
-	for (slot_index = 0; slot_index < TDM_MAX_SLOTS; slot_index++) {
+	max_slot_offset = TDM_SLOT_WIDTH_BYTES * (pdata->tdm_max_slots - 1);
+
+	for (slot_index = 0; slot_index < pdata->tdm_max_slots; slot_index++) {
 		offset_val = ucontrol->value.integer.value[MAX_PATH +
 				slot_index];
-		/* Offset value can only be 0, 4, 8, ..28 */
-		if (offset_val % 4 == 0 && offset_val <= 28)
+		/* Offset value can only be 0, 4, 8, .. */
+		if (offset_val % 4 == 0 && offset_val <= max_slot_offset)
 			slot_offset[slot_index] = offset_val;
 		pr_debug("%s: slot offset[%d] = %d\n", __func__,
 			slot_index, slot_offset[slot_index]);
@@ -4587,14 +4604,17 @@ static int kona_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	int ret = 0;
 	int slot_width = TDM_SLOT_WIDTH_BITS;
-	int channels, slots = TDM_MAX_SLOTS;
+	int channels, slots;
 	unsigned int slot_mask, rate, clk_freq;
 	unsigned int *slot_offset;
 	struct tdm_dev_config *config;
 	unsigned int path_dir = 0, interface = 0, channel_interface = 0;
+	struct msm_asoc_mach_data *pdata = NULL;
 
 	pr_debug("%s: dai id = 0x%x\n", __func__, cpu_dai->id);
 
+	pdata = snd_soc_card_get_drvdata(rtd->card);
+	slots = pdata->tdm_max_slots;
 	if (cpu_dai->id < AFE_PORT_ID_TDM_PORT_RANGE_START) {
 		pr_err("%s: dai id 0x%x not supported\n",
 			__func__, cpu_dai->id);
@@ -4618,8 +4638,15 @@ static int kona_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 
 	config = ((struct tdm_dev_config *) tdm_cfg[interface]) +
 			(path_dir * TDM_PORT_MAX) + channel_interface;
+	if (!config) {
+		pr_err("%s: tdm config is NULL\n", __func__);
+		return -EINVAL;
+	}
 	slot_offset = config->tdm_slot_offset;
-
+	if (!slot_offset) {
+		pr_err("%s: slot offset is NULL\n", __func__);
+		return -EINVAL;
+	}
 	if (path_dir)
 		channels = tdm_tx_cfg[interface][channel_interface].channels;
 	else
@@ -7958,6 +7985,19 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	}
 	dev_info(&pdev->dev, "%s: Sound card %s registered\n",
 		 __func__, card->name);
+
+	ret = of_property_read_u32(pdev->dev.of_node, "qcom,tdm-max-slots",
+				   &pdata->tdm_max_slots);
+	if (ret) {
+		dev_err(&pdev->dev, "%s: No DT match for tdm max slots\n",
+			__func__);
+	}
+	if ((pdata->tdm_max_slots <= 0) || (pdata->tdm_max_slots >
+	    TDM_MAX_SLOTS)) {
+		pdata->tdm_max_slots = TDM_MAX_SLOTS;
+		dev_err(&pdev->dev, "%s: Using default tdm max slot: %d\n",
+			__func__, pdata->tdm_max_slots);
+	}
 
 	pdata->hph_en1_gpio_p = of_parse_phandle(pdev->dev.of_node,
 						"qcom,hph-en1-gpio", 0);
