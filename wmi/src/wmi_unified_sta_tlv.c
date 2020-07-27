@@ -1119,6 +1119,39 @@ wmi_get_wmi_reject_ap_type(enum blm_reject_ap_type reject_ap_type)
 	}
 }
 
+static WMI_BLACKLIST_REASON_ID
+wmi_get_reject_reason(enum blm_reject_ap_reason reject_reason)
+{
+	switch(reject_reason) {
+	case REASON_NUD_FAILURE:
+		return WMI_BL_REASON_NUD_FAILURE;
+	case REASON_STA_KICKOUT:
+		return WMI_BL_REASON_STA_KICKOUT;
+	case REASON_ROAM_HO_FAILURE:
+		return WMI_BL_REASON_ROAM_HO_FAILURE;
+	case REASON_ASSOC_REJECT_POOR_RSSI:
+		return WMI_BL_REASON_ASSOC_REJECT_POOR_RSSI;
+	case REASON_ASSOC_REJECT_OCE:
+		return WMI_BL_REASON_ASSOC_REJECT_OCE;
+	case REASON_USERSPACE_BL:
+		return WMI_BL_REASON_USERSPACE_BL;
+	case REASON_USERSPACE_AVOID_LIST:
+		return WMI_BL_REASON_USERSPACE_AVOID_LIST;
+	case REASON_BTM_DISASSOC_IMMINENT:
+		return WMI_BL_REASON_BTM_DIASSOC_IMMINENT;
+	case REASON_BTM_BSS_TERMINATION:
+		return WMI_BL_REASON_BTM_BSS_TERMINATION;
+	case REASON_BTM_MBO_RETRY:
+		return WMI_BL_REASON_BTM_MBO_RETRY;
+	case REASON_REASSOC_RSSI_REJECT:
+		return WMI_BL_REASON_REASSOC_RSSI_REJECT;
+	case REASON_REASSOC_NO_MORE_STAS:
+		return WMI_BL_REASON_REASSOC_NO_MORE_STAS;
+	default:
+		return 0;
+	}
+}
+
 static QDF_STATUS
 send_reject_ap_list_cmd_tlv(wmi_unified_t wmi_handle,
 			    struct reject_ap_params *reject_params)
@@ -1167,6 +1200,11 @@ send_reject_ap_list_cmd_tlv(wmi_unified_t wmi_handle,
 		chan_list->expected_rssi = reject_list[i].expected_rssi;
 		chan_list->remaining_disallow_duration =
 					reject_list[i].reject_duration;
+		chan_list->reason =
+			wmi_get_reject_reason(reject_list[i].reject_reason);
+		chan_list->original_timeout = reject_list[i].original_timeout;
+		chan_list->timestamp = reject_list[i].received_time;
+		chan_list->source = reject_list[i].source;
 		chan_list++;
 	}
 
