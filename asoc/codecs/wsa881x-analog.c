@@ -1521,7 +1521,7 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		memcpy(pdata->dai_driver, wsa_dai,
 			sizeof(struct snd_soc_dai_driver));
 
-		snprintf(buffer, sizeof(buffer), "wsa-codec.%d", wsa881x_index);
+		snprintf(buffer, sizeof(buffer), "wsa-codec%d", wsa881x_index);
 		pdata->driver->name = kstrndup(buffer,
 					       strlen(buffer), GFP_KERNEL);
 
