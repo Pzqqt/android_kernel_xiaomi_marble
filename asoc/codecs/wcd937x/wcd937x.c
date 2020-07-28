@@ -2229,6 +2229,14 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("IN2_HPHR"),
 	SND_SOC_DAPM_INPUT("IN3_AUX"),
 
+	/*
+	 * These dummy widgets are null connected to WCD937x dapm input and
+	 * output widgets which are not actual path endpoints. This ensures
+	 * dapm doesnt set these dapm input and output widgets as endpoints.
+	 */
+	SND_SOC_DAPM_INPUT("WCD_TX_DUMMY"),
+	SND_SOC_DAPM_OUTPUT("WCD_RX_DUMMY"),
+
 	/*tx widgets*/
 	SND_SOC_DAPM_ADC_E("ADC1", NULL, SND_SOC_NOPM, 0, 0,
 				wcd937x_codec_enable_adc,
@@ -2439,6 +2447,7 @@ static const struct snd_soc_dapm_widget wcd9375_dapm_widgets[] = {
 };
 
 static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
+	{"WCD_TX_DUMMY", NULL, "WCD_TX_OUTPUT"},
 	{"WCD_TX_OUTPUT", NULL, "ADC1_MIXER"},
 	{"ADC1_MIXER", "Switch", "ADC1 REQ"},
 	{"ADC1 REQ", NULL, "ADC1"},
@@ -2451,6 +2460,7 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 	{"ADC2 MUX", "INP3", "AMIC3"},
 	{"ADC2 MUX", "INP2", "AMIC2"},
 
+	{"IN1_HPHL", NULL, "WCD_RX_DUMMY"},
 	{"IN1_HPHL", NULL, "VDD_BUCK"},
 	{"IN1_HPHL", NULL, "CLS_H_PORT"},
 	{"RX1", NULL, "IN1_HPHL"},
@@ -2459,6 +2469,7 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 	{"HPHL PGA", NULL, "HPHL_RDAC"},
 	{"HPHL", NULL, "HPHL PGA"},
 
+	{"IN2_HPHR", NULL, "WCD_RX_DUMMY"},
 	{"IN2_HPHR", NULL, "VDD_BUCK"},
 	{"IN2_HPHR", NULL, "CLS_H_PORT"},
 	{"RX2", NULL, "IN2_HPHR"},
@@ -2467,6 +2478,7 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 	{"HPHR PGA", NULL, "HPHR_RDAC"},
 	{"HPHR", NULL, "HPHR PGA"},
 
+	{"IN3_AUX", NULL, "WCD_RX_DUMMY"},
 	{"IN3_AUX", NULL, "VDD_BUCK"},
 	{"IN3_AUX", NULL, "CLS_H_PORT"},
 	{"RX3", NULL, "IN3_AUX"},
@@ -2485,6 +2497,7 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 
 static const struct snd_soc_dapm_route wcd9375_audio_map[] = {
 
+	{"WCD_TX_DUMMY", NULL, "WCD_TX_OUTPUT"},
 	{"WCD_TX_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_OUTPUT", NULL, "ADC3_MIXER"},
 	{"ADC3_MIXER", "Switch", "ADC3 REQ"},
@@ -2758,6 +2771,8 @@ static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AUX");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
 	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_TX_DUMMY");
+	snd_soc_dapm_ignore_suspend(dapm, "WCD_RX_DUMMY");
 	snd_soc_dapm_sync(dapm);
 
 	wcd_cls_h_init(&wcd937x->clsh_info);
