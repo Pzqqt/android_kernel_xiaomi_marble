@@ -1861,6 +1861,47 @@ void wlan_ipa_uc_bw_monitor(struct wlan_ipa_priv *ipa_ctx, bool stop)
 #endif
 
 /**
+ * wlan_ipa_send_msg() - Allocate and send message to IPA
+ * @net_dev: Interface net device
+ * @type: event enum of type ipa_wlan_event
+ * @mac_address: MAC address associated with the event
+ *
+ * Return: QDF STATUS
+ */
+static QDF_STATUS wlan_ipa_send_msg(qdf_netdev_t net_dev,
+				    qdf_ipa_wlan_event type,
+				    uint8_t *mac_addr)
+{
+	qdf_ipa_msg_meta_t meta;
+	qdf_ipa_wlan_msg_t *msg;
+
+	QDF_IPA_MSG_META_MSG_LEN(&meta) = sizeof(qdf_ipa_wlan_msg_t);
+
+	msg = qdf_mem_malloc(QDF_IPA_MSG_META_MSG_LEN(&meta));
+
+	if (!msg) {
+		ipa_err("msg allocation failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	QDF_IPA_SET_META_MSG_TYPE(&meta, type);
+	strlcpy(QDF_IPA_WLAN_MSG_NAME(msg), net_dev->name, IPA_RESOURCE_NAME_MAX);
+	qdf_mem_copy(QDF_IPA_WLAN_MSG_MAC_ADDR(msg), mac_addr, QDF_NET_ETH_LEN);
+
+	ipa_debug("%s: Evt: %d", QDF_IPA_WLAN_MSG_NAME(msg), QDF_IPA_MSG_META_MSG_TYPE(&meta));
+
+	if (qdf_ipa_send_msg(&meta, msg, wlan_ipa_msg_free_fn)) {
+		ipa_err("%s: Evt: %d fail",
+			QDF_IPA_WLAN_MSG_NAME(msg),
+			QDF_IPA_MSG_META_MSG_TYPE(&meta));
+		qdf_mem_free(msg);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * __wlan_ipa_wlan_evt() - IPA event handler
  * @net_dev: Interface net device
  * @device_mode: Net interface device mode
@@ -2033,6 +2074,15 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 					ipa_ctx, net_dev, QDF_STA_MODE);
 			if (iface_ctx)
 				wlan_ipa_cleanup_iface(iface_ctx);
+			status = wlan_ipa_send_msg(net_dev,
+						   QDF_IPA_STA_DISCONNECT,
+						   mac_addr);
+			if (status != QDF_STATUS_SUCCESS) {
+				ipa_err("QDF_IPA_STA_DISCONNECT send failed %u",
+					status);
+				qdf_mutex_release(&ipa_ctx->event_lock);
+				goto end;
+			}
 		}
 
 		status = wlan_ipa_setup_iface(ipa_ctx, net_dev, device_mode,
