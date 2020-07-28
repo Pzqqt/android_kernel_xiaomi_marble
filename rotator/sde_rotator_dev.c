@@ -3476,6 +3476,9 @@ static int sde_rotator_probe(struct platform_device *pdev)
 	vdev->v4l2_dev = &rot_dev->v4l2_dev;
 	vdev->vfl_dir = VFL_DIR_M2M;
 	vdev->vfl_type = VFL_TYPE_GRABBER;
+	vdev->device_caps = V4L2_CAP_STREAMING | V4L2_CAP_VIDEO_M2M |
+		V4L2_CAP_VIDEO_OUTPUT | V4L2_CAP_VIDEO_CAPTURE;
+
 	strlcpy(vdev->name, SDE_ROTATOR_DRV_NAME, sizeof(vdev->name));
 
 	ret = video_register_device(vdev, VFL_TYPE_GRABBER,
