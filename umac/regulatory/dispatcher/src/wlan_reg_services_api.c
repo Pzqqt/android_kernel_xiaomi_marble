@@ -711,10 +711,17 @@ QDF_STATUS wlan_reg_get_freq_range(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	*low_2g = pdev_priv_obj->range_2g_low;
-	*high_2g = pdev_priv_obj->range_2g_high;
-	*low_5g = pdev_priv_obj->range_5g_low;
-	*high_5g = pdev_priv_obj->range_5g_high;
+	if (low_2g)
+		*low_2g = pdev_priv_obj->range_2g_low;
+
+	if (high_2g)
+		*high_2g = pdev_priv_obj->range_2g_high;
+
+	if (low_5g)
+		*low_5g = pdev_priv_obj->range_5g_low;
+
+	if (high_5g)
+		*high_5g = pdev_priv_obj->range_5g_high;
 
 	return QDF_STATUS_SUCCESS;
 }
