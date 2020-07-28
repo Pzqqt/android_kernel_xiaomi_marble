@@ -1257,6 +1257,12 @@ static void dp_display_stream_disable(struct dp_display_private *dp,
 		return;
 	}
 
+	if (dp_panel->stream_id == DP_STREAM_MAX ||
+			!dp->active_panels[dp_panel->stream_id]) {
+		DP_ERR("panel is already disabled\n");
+		return;
+	}
+
 	DP_DEBUG("stream_id=%d, active_stream_cnt=%d\n",
 			dp_panel->stream_id, dp->active_stream_cnt);
 
