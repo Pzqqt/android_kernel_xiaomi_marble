@@ -15,7 +15,7 @@
 
 #define DP_DEBUG(fmt, ...)                                                   \
 	do {                                                                 \
-		if (unlikely(drm_debug & DRM_UT_KMS))                        \
+		if (drm_debug_enabled(DRM_UT_KMS))                        \
 			DRM_DEBUG("[msm-dp-debug][%-4d]"fmt, current->pid,   \
 					##__VA_ARGS__);                      \
 		else                                                         \
@@ -25,7 +25,7 @@
 
 #define DP_INFO(fmt, ...)                                                    \
 	do {                                                                 \
-		if (unlikely(drm_debug & DRM_UT_KMS))                        \
+		if (drm_debug_enabled(DRM_UT_KMS))                        \
 			DRM_INFO("[msm-dp-info][%-4d]"fmt, current->pid,    \
 					##__VA_ARGS__);                      \
 		else                                                         \
