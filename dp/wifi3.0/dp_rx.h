@@ -1446,4 +1446,18 @@ static inline void dp_rx_wbm_sg_list_deinit(struct dp_soc *soc)
 #define DP_RX_PROCESS_NBUF(soc, head, tail, ebuf_head, ebuf_tail, rx_desc) \
 	DP_RX_LIST_APPEND(head, tail, rx_desc->nbuf)
 #endif /* WLAN_FEATURE_RX_PREALLOC_BUFFER_POOL */
+
+/*
+ * dp_rx_link_desc_refill_duplicate_check() - check if link desc duplicate
+					      to refill
+ * @soc: DP SOC handle
+ * @buf_info: the last link desc buf info
+ * @ring_buf_info: current buf address pointor including link desc
+ *
+ * return: none.
+ */
+void dp_rx_link_desc_refill_duplicate_check(
+				struct dp_soc *soc,
+				struct hal_buf_info *buf_info,
+				hal_buff_addrinfo_t ring_buf_info);
 #endif /* _DP_RX_H */

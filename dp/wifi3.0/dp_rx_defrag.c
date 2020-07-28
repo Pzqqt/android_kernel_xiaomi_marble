@@ -1071,6 +1071,13 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 						peer->rx_tid[tid].array;
 	qdf_nbuf_t nbuf_head;
 	struct rx_desc_pool *rx_desc_pool = NULL;
+	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(dst_ring_desc);
+
+	/* do duplicate link desc address check */
+	dp_rx_link_desc_refill_duplicate_check(
+				soc,
+				&soc->last_op_info.reo_reinject_link_desc,
+				buf_addr_info);
 
 	nbuf_head = dp_ipa_handle_rx_reo_reinject(soc, head);
 	if (qdf_unlikely(!nbuf_head)) {

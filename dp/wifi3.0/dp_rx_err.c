@@ -156,6 +156,26 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	return false;
 }
 
+void dp_rx_link_desc_refill_duplicate_check(
+				struct dp_soc *soc,
+				struct hal_buf_info *buf_info,
+				hal_buff_addrinfo_t ring_buf_info)
+{
+	struct hal_buf_info current_link_desc_buf_info = { 0 };
+
+	/* do duplicate link desc address check */
+	hal_rx_buffer_addr_info_get_paddr(ring_buf_info,
+					  &current_link_desc_buf_info);
+	if (qdf_unlikely(current_link_desc_buf_info.paddr ==
+			 buf_info->paddr)) {
+		dp_info_rl("duplicate link desc addr: %llu, cookie: 0x%x",
+			   current_link_desc_buf_info.paddr,
+			   current_link_desc_buf_info.sw_cookie);
+		DP_STATS_INC(soc, rx.err.dup_refill_link_desc, 1);
+	}
+	*buf_info = current_link_desc_buf_info;
+}
+
 /**
  * dp_rx_link_desc_return_by_addr - Return a MPDU link descriptor to
  *					(WBM) by address
@@ -181,6 +201,12 @@ dp_rx_link_desc_return_by_addr(struct dp_soc *soc,
 			"WBM RELEASE RING not initialized");
 		return status;
 	}
+
+	/* do duplicate link desc address check */
+	dp_rx_link_desc_refill_duplicate_check(
+				soc,
+				&soc->last_op_info.wbm_rel_link_desc,
+				link_desc_addr);
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, wbm_rel_srng))) {
 

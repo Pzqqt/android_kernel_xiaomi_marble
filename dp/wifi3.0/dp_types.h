@@ -859,6 +859,8 @@ struct dp_soc_stats {
 			uint32_t invalid_link_cookie;
 			/* Nbuf sanity failure */
 			uint32_t nbuf_sanity_fail;
+			/* Duplicate link desc refilled */
+			uint32_t dup_refill_link_desc;
 		} err;
 
 		/* packet count per core - per ring */
@@ -1028,6 +1030,14 @@ struct dp_rx_err_history {
 struct dp_rx_reinject_history {
 	qdf_atomic_t index;
 	struct dp_buf_info_record entry[DP_RX_REINJECT_HIST_MAX];
+};
+
+/* structure to record recent operation related variable */
+struct dp_last_op_info {
+	/* last link desc buf info through WBM release ring */
+	struct hal_buf_info wbm_rel_link_desc;
+	/* last link desc buf info through REO reinject ring */
+	struct hal_buf_info reo_reinject_link_desc;
 };
 
 /* SOC level structure for data path */
@@ -1432,6 +1442,8 @@ struct dp_soc {
 
 	/* RX buffer params */
 	struct rx_buff_pool rx_buff_pool[MAX_PDEV_CNT];
+	/* Save recent operation related variable */
+	struct dp_last_op_info last_op_info;
 };
 
 #ifdef IPA_OFFLOAD
