@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,3 +89,31 @@ qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask)
 }
 
 qdf_export_symbol(qdf_dev_set_irq_affinity);
+
+#ifdef ENHANCED_OS_ABSTRACTION
+QDF_STATUS
+qdf_dev_set_irq_status_flags(unsigned int irnum, unsigned long set)
+{
+	if (irnum <= 0)
+		return QDF_STATUS_E_INVAL;
+
+	irq_set_status_flags(irnum, set);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qdf_dev_set_irq_status_flags);
+
+QDF_STATUS
+qdf_dev_clear_irq_status_flags(unsigned int irnum, unsigned long clr)
+{
+	if (irnum <= 0)
+		return QDF_STATUS_E_INVAL;
+
+	irq_clear_status_flags(irnum, clr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qdf_dev_clear_irq_status_flags);
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -88,6 +88,30 @@ qdf_dev_modify_irq_status(uint32_t irnum, unsigned long cmask,
  */
 QDF_STATUS
 qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask);
+
+/**
+ * qdf_dev_set_irq_status_flags() - set irq status flags
+ * @irnum: irq number
+ * @set: status flag to set
+ *
+ * This function will set the status for an irq
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qdf_dev_set_irq_status_flags(unsigned int irnum, unsigned long set);
+
+/**
+ * qdf_dev_clear_irq_status_flags() - clear irq status flags
+ * @irnum: irq number
+ * @clear: status flag to clear
+ *
+ * This function will clear the status for an irq
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+qdf_dev_clear_irq_status_flags(unsigned int irnum, unsigned long clr);
 #else
 static inline QDF_STATUS
 qdf_dev_alloc_mem(struct qdf_dev *qdfdev, struct qdf_devm **mrptr,
@@ -113,6 +137,18 @@ static inline QDF_STATUS
 qdf_dev_set_irq_affinity(uint32_t irnum, struct qdf_cpu_mask *cpmask)
 {
 	return __qdf_dev_set_irq_affinity(irnum, cpmask);
+}
+
+static inline QDF_STATUS
+qdf_dev_set_irq_status_flags(unsigned int irnum, unsigned long set)
+{
+	return __qdf_dev_set_irq_status_flags(irnum, set);
+}
+
+static inline QDF_STATUS
+qdf_dev_clear_irq_status_flags(unsigned int irnum, unsigned long clr)
+{
+	return __qdf_dev_clear_irq_status_flags(irnum, clr);
 }
 #endif
 

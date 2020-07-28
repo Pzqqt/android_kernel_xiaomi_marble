@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -265,4 +265,56 @@ __qal_vbus_deregister_driver(struct qdf_pfm_drv *pfdev)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * __qal_vbus_gpio_set_value_cansleep() - assign a gpio's raw value
+ * @gpio: gpio whose value will be assigned
+ * @value: value to assign
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0)
+static inline QDF_STATUS
+__qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value)
+{
+	gpio_set_value_cansleep(gpio, value);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+__qal_vbus_gpio_set_value_cansleep(unsigned int gpio, int value)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * __qal_vbus_rcu_read_lock() - mark the beginning of an RCU read-side critical
+ * section
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static inline QDF_STATUS
+__qal_vbus_rcu_read_lock(void)
+{
+	rcu_read_lock();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __qal_vbus_rcu_read_unlock() - marks the end of an RCU read-side critical
+ * section.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static inline QDF_STATUS
+__qal_vbus_rcu_read_unlock(void)
+{
+	rcu_read_unlock();
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* __I_QAL_VBUS_DEV_H */

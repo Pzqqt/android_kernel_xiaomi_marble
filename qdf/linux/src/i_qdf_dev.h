@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -188,4 +188,39 @@ static inline int __qdf_core_ctl_set_boost(bool boost)
 	return 0;
 }
 #endif
+
+/**
+ * __qdf_dev_set_irq_status_flags() - set irq status flags
+ * @irnum: irq number
+ * @set: status flag to set
+ *
+ * This function will set the status for an irq
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static inline QDF_STATUS
+__qdf_dev_set_irq_status_flags(unsigned int irnum, unsigned long set)
+{
+	irq_set_status_flags(irnum, set);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __qdf_dev_clear_irq_status_flags() - clear irq status flags
+ * @irnum: irq number
+ * @clear: status flag to clear
+ *
+ * This function will set the status for an irq
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static inline QDF_STATUS
+__qdf_dev_clear_irq_status_flags(unsigned int irnum, unsigned long clr)
+{
+	irq_clear_status_flags(irnum, clr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif /* __I_QDF_DEV_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017,2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,6 +30,9 @@
 
 typedef struct dentry *__qdf_dentry_t;
 typedef struct seq_file *__qdf_debugfs_file_t;
+typedef struct debugfs_blob_wrapper *__qdf_debugfs_blob_wrap_t;
+typedef void *__qdf_entry_t;
+typedef const struct file_operations *__qdf_file_ops_t;
 
 #ifdef WLAN_DEBUGFS
 
