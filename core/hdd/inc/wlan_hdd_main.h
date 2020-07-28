@@ -1683,6 +1683,7 @@ struct hdd_fw_ver_info {
  * @country_change_work: work for updating vdev when country changes
  * @rx_aggregation: rx aggregation enable or disable state
  * @gro_force_flush: gro force flushed indication flag
+ * @current_pcie_gen_speed: current pcie gen speed
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -2012,6 +2013,7 @@ struct hdd_context {
 		qdf_atomic_t rx_aggregation;
 		uint8_t gro_force_flush[DP_MAX_RX_THREADS];
 	} dp_agg_param;
+	int current_pcie_gen_speed;
 };
 
 /**

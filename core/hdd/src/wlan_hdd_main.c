@@ -217,6 +217,9 @@
 #define PANIC_ON_BUG_STR ""
 #endif
 
+/* PCIe gen speed change idle shutdown timer 100 milliseconds */
+#define HDD_PCIE_GEN_SPEED_CHANGE_TIMEOUT_MS (100)
+
 int wlan_start_ret_val;
 static DECLARE_COMPLETION(wlan_start_comp);
 static qdf_atomic_t wlan_hdd_state_fops_ref;
@@ -267,6 +270,10 @@ static bool is_mode_change_psoc_idle_shutdown;
 #define WLAN_NLINK_CESIUM 30
 
 static qdf_wake_lock_t wlan_wake_lock;
+
+/* The valid PCIe gen speeds are 1, 2, 3 */
+#define HDD_INVALID_MIN_PCIE_GEN_SPEED (0)
+#define HDD_INVALID_MAX_PCIE_GEN_SPEED (4)
 
 #define WOW_MAX_FILTER_LISTS 1
 #define WOW_MAX_FILTERS_PER_LIST 4
@@ -11086,6 +11093,15 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
 
 	hdd_debug("Starting psoc idle timer");
 	timeout_ms += HDD_PSOC_IDLE_SHUTDOWN_SUSPEND_DELAY;
+
+	/* If PCIe gen speed change is requested, reduce idle shutdown
+	 * timeout to 100 ms
+	 */
+	if (hdd_ctx->current_pcie_gen_speed) {
+		timeout_ms = HDD_PCIE_GEN_SPEED_CHANGE_TIMEOUT_MS;
+		hdd_info("pcie gen speed change requested");
+	}
+
 	qdf_delayed_work_start(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
 	hdd_prevent_suspend_timeout(timeout_ms, reason);
 }
@@ -11197,6 +11213,15 @@ int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
 	ret = hdd_soc_idle_restart_lock(hdd_ctx->parent_dev);
 	if (ret)
 		return ret;
+
+	if (hdd_ctx->current_pcie_gen_speed) {
+		hdd_info("request pcie gen speed change to %d",
+			 hdd_ctx->current_pcie_gen_speed);
+
+		/* call pld api for pcie gen speed change */
+		hdd_ctx->current_pcie_gen_speed = 0;
+	}
+
 	ret = pld_idle_restart(hdd_ctx->parent_dev, hdd_psoc_idle_restart);
 	hdd_soc_idle_restart_unlock();
 
@@ -17812,14 +17837,47 @@ static const struct kernel_param_ops fwpath_ops = {
 	.get = param_get_string,
 };
 
+static int __pcie_set_gen_speed_handler(void)
+{
+	int ret;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	hdd_info_rl("Received PCIe gen speed %d", pcie_gen_speed);
+	if (pcie_gen_speed <= HDD_INVALID_MIN_PCIE_GEN_SPEED ||
+	    pcie_gen_speed >= HDD_INVALID_MAX_PCIE_GEN_SPEED) {
+		hdd_err_rl("invalid pcie gen speed %d", pcie_gen_speed);
+		return -EINVAL;
+	}
+
+	hdd_ctx->current_pcie_gen_speed = pcie_gen_speed;
+
+	return 0;
+}
+
 static int pcie_set_gen_speed_handler(const char *kmessage,
 				      const struct kernel_param *kp)
 {
+	struct osif_driver_sync *driver_sync;
 	int ret;
 
-	ret = param_set_int(kmessage, kp);
+	ret = osif_driver_sync_op_start(&driver_sync);
+	if (ret)
+		return ret;
 
-	hdd_info_rl("Received PCIe gen speed %d", pcie_gen_speed);
+	ret = param_set_int(kmessage, kp);
+	if (ret) {
+		hdd_err_rl("param set int failed %d", ret);
+		goto out;
+	}
+
+	ret = __pcie_set_gen_speed_handler();
+
+out:
+	osif_driver_sync_op_stop(driver_sync);
 
 	return ret;
 }
