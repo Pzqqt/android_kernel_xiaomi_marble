@@ -3593,10 +3593,11 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 			}
 		}
 		if (lim_is_session_he_capable(pe_session) &&
-		    pAssocRsp->he_cap.present) {
+		    (pAssocRsp->he_cap.present ||
+		     pBeaconStruct->he_cap.present)) {
 			lim_intersect_ap_he_caps(pe_session,
 						 pAddBssParams,
-						 NULL,
+						 pBeaconStruct,
 						 pAssocRsp);
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
 			lim_update_he_mcs_12_13(&pAddBssParams->staContext,
@@ -3693,10 +3694,11 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	}
 	if (lim_is_he_6ghz_band(pe_session)) {
 		if (lim_is_session_he_capable(pe_session) &&
-		    pAssocRsp->he_cap.present) {
+		    (pAssocRsp->he_cap.present ||
+		     pBeaconStruct->he_cap.present)) {
 			lim_intersect_ap_he_caps(pe_session,
 						 pAddBssParams,
-						 NULL,
+						 pBeaconStruct,
 						 pAssocRsp);
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
 			lim_update_he_6gop_assoc_resp(pAddBssParams,

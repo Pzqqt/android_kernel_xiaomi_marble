@@ -6740,10 +6740,10 @@ void lim_intersect_ap_he_caps(struct pe_session *session, struct bss_params *add
 	tDot11fIEhe_cap *session_he = &session->he_config;
 	tDot11fIEhe_cap *peer_he = &add_bss->staContext.he_config;
 
-	if (beacon)
-		rcvd_he = &beacon->he_cap;
-	else
+	if (assoc_rsp)
 		rcvd_he = &assoc_rsp->he_cap;
+	else
+		rcvd_he = &beacon->he_cap;
 
 	lim_intersect_he_caps(rcvd_he, session_he, peer_he);
 	add_bss->staContext.he_capable = true;
@@ -6859,10 +6859,16 @@ void lim_update_stads_he_caps(struct mac_context *mac_ctx,
 	tDot11fIEhe_cap *he_cap;
 
 	he_cap = &assoc_rsp->he_cap;
-	sta_ds->mlmStaContext.he_capable = he_cap->present;
 
-	if (!he_cap->present)
+	if (assoc_rsp->he_cap.present)
+		he_cap = &assoc_rsp->he_cap;
+	/* Use beacon HE caps if assoc resp doesn't have he caps */
+	else if (beacon->he_cap.present)
+		he_cap = &beacon->he_cap;
+	else
 		return;
+
+	sta_ds->mlmStaContext.he_capable = he_cap->present;
 
 	/* setting lpdc_coding if any of assoc_rsp or beacon has ladpc_coding
 	 * enabled
