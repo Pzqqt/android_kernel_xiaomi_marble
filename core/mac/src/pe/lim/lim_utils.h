@@ -1327,13 +1327,16 @@ void lim_set_he_caps(struct mac_context *mac, struct pe_session *session,
  * lim_send_he_caps_ie() - gets HE capability and send to firmware via wma
  * @mac_ctx: global mac context
  * @session: pe session. This can be NULL. In that case self cap will be sent
+ * @device_mode: VDEV op mode
  * @vdev_id: vdev for which IE is targeted
  *
  * This function gets HE capability and send to firmware via wma
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx, struct pe_session *session,
+QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
+			       struct pe_session *session,
+			       enum QDF_OPMODE device_mode,
 			       uint8_t vdev_id);
 
 /**
@@ -1526,6 +1529,7 @@ static inline void lim_set_he_caps(struct mac_context *mac, struct pe_session *s
 
 static inline QDF_STATUS lim_send_he_caps_ie(struct mac_context *mac_ctx,
 					     struct pe_session *session,
+					     enum QDF_OPMODE device_mode,
 					     uint8_t vdev_id)
 {
 	return QDF_STATUS_SUCCESS;
