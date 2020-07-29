@@ -1811,6 +1811,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	struct hdd_station_info *stainfo, *cache_stainfo, *tmp = NULL;
 	mac_handle_t mac_handle;
 	struct sap_config *sap_config;
+	struct sap_context *sap_ctx = NULL;
 
 	dev = context;
 	if (!dev) {
@@ -1997,16 +1998,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_start_event;
 		hdd_ipa_set_tx_flow_info();
+		sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+		if (!sap_ctx) {
+			hdd_err("sap ctx is null");
+			return QDF_STATUS_E_FAILURE;
+		}
 
-		if (policy_mgr_is_hw_mode_change_after_vdev_up(
-			hdd_ctx->psoc)) {
+		if (sap_ctx->is_chan_change_inprogress) {
 			hdd_debug("check for possible hw mode change");
 			status = policy_mgr_set_hw_mode_on_channel_switch(
 				hdd_ctx->psoc, adapter->vdev_id);
 			if (QDF_IS_STATUS_ERROR(status))
 				hdd_debug("set hw mode change not done");
-			policy_mgr_set_do_hw_mode_change_flag(
-					hdd_ctx->psoc, false);
 		}
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
@@ -2604,6 +2607,19 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		cdp_hl_fc_set_td_limit(cds_get_context(QDF_MODULE_ID_SOC),
 				       adapter->vdev_id,
 				       ap_ctx->operating_chan_freq);
+		sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+		if (!sap_ctx) {
+			hdd_err("sap ctx is null");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (sap_ctx->is_chan_change_inprogress) {
+			hdd_debug("check for possible hw mode change");
+			status = policy_mgr_set_hw_mode_on_channel_switch(
+					hdd_ctx->psoc, adapter->vdev_id);
+			if (QDF_IS_STATUS_ERROR(status))
+				hdd_debug("set hw mode change not done");
+		}
 
 		return hdd_hostapd_chan_change(adapter, sap_event);
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:

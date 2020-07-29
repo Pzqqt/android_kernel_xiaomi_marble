@@ -2913,7 +2913,6 @@ void lim_process_switch_channel_rsp(struct mac_context *mac,
 		 */
 		policy_mgr_update_connection_info(mac->psoc,
 						pe_session->smeSessionId);
-		policy_mgr_set_do_hw_mode_change_flag(mac->psoc, true);
 		break;
 	case LIM_SWITCH_CHANNEL_MONITOR:
 		lim_handle_mon_switch_channel_rsp(pe_session, status);

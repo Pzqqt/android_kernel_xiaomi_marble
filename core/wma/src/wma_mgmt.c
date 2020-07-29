@@ -2292,8 +2292,6 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 	status = vdev_mgr_up_send(mlme_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("failed to send vdev up");
-		policy_mgr_set_do_hw_mode_change_flag(
-			wma->psoc, false);
 		return status;
 	}
 	wma_set_sap_keepalive(wma, vdev_id);

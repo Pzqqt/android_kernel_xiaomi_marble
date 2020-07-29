@@ -1137,8 +1137,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 
 	if (!mac_ctx) {
 		wma_err("Failed to get mac_ctx");
-		policy_mgr_set_do_hw_mode_change_flag(
-			psoc, false);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1230,8 +1228,6 @@ QDF_STATUS wma_vdev_start_resp_handler(struct vdev_mlme_obj *vdev_mlme,
 		mlme_obj->proto.sta.assoc_id = iface->aid;
 		if (vdev_mgr_up_send(mlme_obj) != QDF_STATUS_SUCCESS) {
 			wma_err("failed to send vdev up");
-			policy_mgr_set_do_hw_mode_change_flag(
-				wma->psoc, false);
 			return QDF_STATUS_E_FAILURE;
 		}
 		ucfg_ocb_config_channel(wma->pdev);

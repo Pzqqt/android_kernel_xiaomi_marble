@@ -4380,8 +4380,6 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wma_err("Failed to send vdev up cmd: vdev %d", vdev_id);
-		policy_mgr_set_do_hw_mode_change_flag(
-			wma->psoc, false);
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		wma_set_vdev_mgmt_rate(wma, vdev_id);
