@@ -124,14 +124,14 @@ DATARMNET895df156d7=-(0xd26+209-0xdf6);u8 is_match_found=(0xd2d+202-0xdf7);
 struct DATARMNET9b44b71ee9*ep=NULL;unsigned long flags;if(!dev){
 DATARMNET68d84e7b98[DATARMNETf5157a9b85]++;return DATARMNET895df156d7;}
 spin_lock_irqsave(&DATARMNETec2a4f5211,flags);list_for_each_entry(ep,&
-DATARMNET30a3e83974,DATARMNET0763436b8d){if(!ep)continue;if(!ep->
-DATARMNET4a4e6f66b5)continue;if(ep->ep==dev){is_match_found=(0xd26+209-0xdf6);
-break;}}if(!is_match_found){DATARMNET68d84e7b98[DATARMNETb8fe2c0e64]++;
-spin_unlock_irqrestore(&DATARMNETec2a4f5211,flags);return DATARMNET895df156d7;}
-DATARMNETde5894dad9=ep->DATARMNET6bda8fe27e;DATARMNETd9e9d4ff7e=ep->
-DATARMNETd7a83774f8;while(DATARMNETde5894dad9<DATARMNETd9e9d4ff7e){if(ep->
-DATARMNET5af04d0405[DATARMNETde5894dad9]>=(0xd2d+202-0xdf7)){DATARMNET895df156d7
-=ep->DATARMNET5af04d0405[DATARMNETde5894dad9];break;}DATARMNETde5894dad9++;}if((
+DATARMNET30a3e83974,DATARMNET0763436b8d){if(!ep->DATARMNET4a4e6f66b5)continue;if
+(ep->ep==dev){is_match_found=(0xd26+209-0xdf6);break;}}if(!is_match_found){
+DATARMNET68d84e7b98[DATARMNETb8fe2c0e64]++;spin_unlock_irqrestore(&
+DATARMNETec2a4f5211,flags);return DATARMNET895df156d7;}DATARMNETde5894dad9=ep->
+DATARMNET6bda8fe27e;DATARMNETd9e9d4ff7e=ep->DATARMNETd7a83774f8;while(
+DATARMNETde5894dad9<DATARMNETd9e9d4ff7e){if(ep->DATARMNET5af04d0405[
+DATARMNETde5894dad9]>=(0xd2d+202-0xdf7)){DATARMNET895df156d7=ep->
+DATARMNET5af04d0405[DATARMNETde5894dad9];break;}DATARMNETde5894dad9++;}if((
 DATARMNET895df156d7>=(0xd2d+202-0xdf7))||((ep->DATARMNET6bda8fe27e+
 (0xd26+209-0xdf6))>=ep->DATARMNETd7a83774f8))ep->DATARMNET6bda8fe27e=((ep->
 DATARMNET6bda8fe27e+(0xd26+209-0xdf6))%ep->DATARMNETd7a83774f8);
@@ -141,14 +141,14 @@ NULL;int DATARMNET895df156d7=-(0xd26+209-0xdf6);u8 DATARMNETcc5b7cd962;u8
 DATARMNET15bde5cb53;u8 is_match_found=(0xd2d+202-0xdf7);unsigned long flags;if(!
 dev){DATARMNET68d84e7b98[DATARMNETf5157a9b85]++;return DATARMNET895df156d7;}
 spin_lock_irqsave(&DATARMNETec2a4f5211,flags);list_for_each_entry(ep,&
-DATARMNET30a3e83974,DATARMNET0763436b8d){if(!ep)continue;if(!ep->
-DATARMNET4a4e6f66b5)continue;if(ep->ep==dev){is_match_found=(0xd26+209-0xdf6);
-break;}}if(!is_match_found){DATARMNET68d84e7b98[DATARMNETb8fe2c0e64]++;
-spin_unlock_irqrestore(&DATARMNETec2a4f5211,flags);return DATARMNET895df156d7;}
-DATARMNETcc5b7cd962=ep->DATARMNET121a654efd;DATARMNET15bde5cb53=ep->
-DATARMNET847276e5af;while(DATARMNETcc5b7cd962<DATARMNET15bde5cb53){if(ep->
-DATARMNET7167e10d99[DATARMNETcc5b7cd962]>=(0xd2d+202-0xdf7)){DATARMNET895df156d7
-=ep->DATARMNET7167e10d99[DATARMNETcc5b7cd962];break;}DATARMNETcc5b7cd962++;}if(
+DATARMNET30a3e83974,DATARMNET0763436b8d){if(!ep->DATARMNET4a4e6f66b5)continue;if
+(ep->ep==dev){is_match_found=(0xd26+209-0xdf6);break;}}if(!is_match_found){
+DATARMNET68d84e7b98[DATARMNETb8fe2c0e64]++;spin_unlock_irqrestore(&
+DATARMNETec2a4f5211,flags);return DATARMNET895df156d7;}DATARMNETcc5b7cd962=ep->
+DATARMNET121a654efd;DATARMNET15bde5cb53=ep->DATARMNET847276e5af;while(
+DATARMNETcc5b7cd962<DATARMNET15bde5cb53){if(ep->DATARMNET7167e10d99[
+DATARMNETcc5b7cd962]>=(0xd2d+202-0xdf7)){DATARMNET895df156d7=ep->
+DATARMNET7167e10d99[DATARMNETcc5b7cd962];break;}DATARMNETcc5b7cd962++;}if(
 DATARMNET895df156d7>=(0xd2d+202-0xdf7))ep->DATARMNET121a654efd=((
 DATARMNETcc5b7cd962+(0xd26+209-0xdf6))%DATARMNET15bde5cb53);
 spin_unlock_irqrestore(&DATARMNETec2a4f5211,flags);return DATARMNET895df156d7;}
