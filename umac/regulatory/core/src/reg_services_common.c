@@ -1787,16 +1787,17 @@ static uint16_t reg_compute_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	chan_list = pdev_priv_obj->mas_chan_list;
 
 	for (count = min_chan_range; count <= max_chan_range; count++) {
-		if (REG_IS_49GHZ_FREQ(chan_list[count].center_freq)) {
-			if (chan_list[count].chan_num == chan_num)
+		if ((chan_list[count].state != CHANNEL_STATE_DISABLE) &&
+		    !(chan_list[count].chan_flags & REGULATORY_CHAN_DISABLED)) {
+			if (REG_IS_49GHZ_FREQ(chan_list[count].center_freq)) {
+				if (chan_list[count].chan_num == chan_num)
+					break;
+				continue;
+			} else if ((chan_list[count].chan_num >= chan_num) &&
+				   (chan_list[count].chan_num !=
+							INVALID_CHANNEL_NUM))
 				break;
-			continue;
-		} else if ((chan_list[count].chan_num >= chan_num) &&
-			   (chan_list[count].state != CHANNEL_STATE_DISABLE) &&
-			   !(chan_list[count].chan_flags &
-			     REGULATORY_CHAN_DISABLED) &&
-			   (chan_list[count].chan_num != INVALID_CHANNEL_NUM))
-			break;
+		}
 	}
 
 	if (count == max_chan_range + 1)
