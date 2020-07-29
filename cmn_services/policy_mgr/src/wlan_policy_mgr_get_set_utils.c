@@ -3542,42 +3542,6 @@ uint32_t policy_mgr_get_mcc_operating_channel(struct wlan_objmgr_psoc *psoc,
 	return ch_freq;
 }
 
-void policy_mgr_set_do_hw_mode_change_flag(struct wlan_objmgr_psoc *psoc,
-		bool flag)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	pm_ctx->do_hw_mode_change = flag;
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	policy_mgr_debug("hw_mode_change_channel:%d", flag);
-}
-
-bool policy_mgr_is_hw_mode_change_after_vdev_up(struct wlan_objmgr_psoc *psoc)
-{
-	bool flag;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return INVALID_CHANNEL_ID;
-	}
-
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	flag = pm_ctx->do_hw_mode_change;
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-
-	return flag;
-}
-
 bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 {
 	bool roffchan;

@@ -305,9 +305,6 @@ struct policy_mgr_cfg {
  *                        regulatory/other considerations
  * @sap_mandatory_channels_len: Length of the SAP mandatory
  *                            channel list
- * @do_hw_mode_change: Flag to check if HW mode change is needed
- *                   after vdev is up. Especially used after
- *                   channel switch related vdev restart
  * @concurrency_mode: active concurrency combination
  * @no_of_open_sessions: Number of active vdevs
  * @no_of_active_sessions: Number of active connections
@@ -351,7 +348,6 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_dp_cbacks dp_cbacks;
 	uint32_t sap_mandatory_channels[NUM_CHANNELS];
 	uint32_t sap_mandatory_channels_len;
-	bool do_hw_mode_change;
 	bool do_sap_unsafe_ch_check;
 	uint32_t concurrency_mode;
 	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
