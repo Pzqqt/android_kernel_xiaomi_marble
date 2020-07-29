@@ -2202,9 +2202,12 @@ lim_add_sta(struct mac_context *mac_ctx,
 
 	/* Update VHT/HT Capability */
 	if (LIM_IS_AP_ROLE(session_entry)) {
-		add_sta_params->htCapable = sta_ds->mlmStaContext.htCapability;
+		add_sta_params->htCapable =
+			sta_ds->mlmStaContext.htCapability &&
+			session_entry->htCapability;
 		add_sta_params->vhtCapable =
-			 sta_ds->mlmStaContext.vhtCapability;
+			 sta_ds->mlmStaContext.vhtCapability &&
+			 session_entry->vhtCapability;
 	}
 #ifdef FEATURE_WLAN_TDLS
 	/* SystemRole shouldn't be matter if staType is TDLS peer */
