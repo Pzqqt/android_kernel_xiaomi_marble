@@ -219,6 +219,8 @@ enum {
  * @dup_mon_linkdesc_cnt: duplicate link descriptor indications from HW
  * @dup_mon_buf_cnt: duplicate buffer indications from HW
  * @tlv_tag_status_err: status not correct in the tlv tag
+ * @status_buf_done_war: Number of status ring buffers for which DMA not done
+ *  WAR is applied.
  * @mon_rx_bufs_replenished_dest: Rx buffers replenish count
  * @mon_rx_bufs_reaped_dest: Rx buffer reap count
  * @ppdu_id_mismatch: counter to track ppdu id mismatch in
@@ -248,6 +250,7 @@ struct cdp_pdev_mon_stats {
 	uint32_t ppdu_id_hist_idx;
 	uint32_t mon_rx_dest_stuck;
 	uint32_t tlv_tag_status_err;
+	uint32_t status_buf_done_war;
 	uint32_t mon_rx_bufs_replenished_dest;
 	uint32_t mon_rx_bufs_reaped_dest;
 	uint32_t ppdu_id_mismatch;

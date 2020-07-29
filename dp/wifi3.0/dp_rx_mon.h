@@ -46,6 +46,23 @@
 #define DP_RX_MON_RAW_L2_HDR_PAD_BYTE (0)
 #define DP_RX_MON_NONRAW_L2_HDR_PAD_BYTE (2)
 
+/**
+ * enum dp_mon_reap_status - monitor status ring ppdu status
+ *
+ * @DP_MON_STATUS_NO_DMA - DMA not done for status ring entry
+ * @DP_MON_STATUS_MATCH - status and dest ppdu id mathes
+ * @DP_MON_STATUS_LAG - status ppdu id is lagging
+ * @DP_MON_STATUS_LEAD - status ppdu id is leading
+ * @DP_MON_STATUS_REPLENISH - status ring entry is NULL
+ */
+enum dp_mon_reap_status {
+	DP_MON_STATUS_NO_DMA,
+	DP_MON_STATUS_MATCH,
+	DP_MON_STATUS_LAG,
+	DP_MON_STATUS_LEAD,
+	DP_MON_STATUS_REPLENISH
+};
+
 /*
  * dp_rx_mon_status_process() - Process monitor status ring and
  *			TLV in status ring.
@@ -99,6 +116,19 @@ void dp_rx_pdev_mon_status_buffers_free(struct dp_pdev *pdev, uint32_t mac_id);
 QDF_STATUS
 dp_rx_pdev_mon_buf_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id,
 				 bool delayed_replenish);
+
+/**
+ * dp_rx_mon_handle_status_buf_done () - Handle DMA not done case for
+ * monitor status ring
+ *
+ * @pdev: DP pdev handle
+ * @mon_status_srng: Monitor status SRNG
+ *
+ * Return: enum dp_mon_reap_status
+ */
+enum dp_mon_reap_status
+dp_rx_mon_handle_status_buf_done(struct dp_pdev *pdev,
+				 void *mon_status_srng);
 
 #ifdef QCA_SUPPORT_FULL_MON
 
