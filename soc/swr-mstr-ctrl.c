@@ -80,6 +80,8 @@
 #define SWRM_DP_PORT_CTRL_OFFSET2_SHFT    0x10
 #define SWRM_DP_PORT_CTRL_OFFSET1_SHFT    0x08
 
+#define SWR_OVERFLOW_RETRY_COUNT 30
+
 /* pm runtime auto suspend timer in msecs */
 static int auto_suspend_timer = 500;
 module_param(auto_suspend_timer, int, 0664);
@@ -106,6 +108,11 @@ enum {
 enum {
 	LPASS_HW_CORE,
 	LPASS_AUDIO_CORE,
+};
+
+enum {
+	SWRM_WR_CHECK_AVAIL,
+	SWRM_RD_CHECK_AVAIL,
 };
 
 #define TRUE 1
@@ -790,6 +797,54 @@ static u32 swrm_get_packed_reg_val(u8 *cmd_id, u8 cmd_data,
 	return val;
 }
 
+static void swrm_wait_for_fifo_avail(struct swr_mstr_ctrl *swrm, int swrm_rd_wr)
+{
+	u32 fifo_outstanding_cmd;
+	u32 fifo_retry_count = SWR_OVERFLOW_RETRY_COUNT;
+
+	if (swrm_rd_wr) {
+		/* Check for fifo underflow during read */
+		/* Check no of outstanding commands in fifo before read */
+		fifo_outstanding_cmd = ((swr_master_read(swrm,
+				SWRM_CMD_FIFO_STATUS) & 0x001F0000) >> 16);
+		if (fifo_outstanding_cmd == 0) {
+			while (fifo_retry_count) {
+				usleep_range(500, 510);
+				fifo_outstanding_cmd =
+					((swr_master_read (swrm,
+					  SWRM_CMD_FIFO_STATUS) & 0x001F0000)
+					  >> 16);
+				fifo_retry_count--;
+				if (fifo_outstanding_cmd > 0)
+					break;
+			}
+		}
+		if (fifo_outstanding_cmd == 0)
+			dev_err_ratelimited(swrm->dev,
+					"%s err read underflow\n", __func__);
+	} else {
+		/* Check for fifo overflow during write */
+		/* Check no of outstanding commands in fifo before write */
+		fifo_outstanding_cmd = ((swr_master_read(swrm,
+					 SWRM_CMD_FIFO_STATUS) & 0x00001F00)
+					 >> 8);
+		if (fifo_outstanding_cmd == swrm->wr_fifo_depth) {
+			while (fifo_retry_count) {
+				usleep_range(500, 510);
+				fifo_outstanding_cmd =
+				((swr_master_read(swrm, SWRM_CMD_FIFO_STATUS)
+				  & 0x00001F00) >> 8);
+				fifo_retry_count--;
+				if (fifo_outstanding_cmd < swrm->wr_fifo_depth)
+					break;
+			}
+		}
+		if (fifo_outstanding_cmd == swrm->wr_fifo_depth)
+			dev_err_ratelimited(swrm->dev,
+					"%s err write overflow\n", __func__);
+	}
+}
+
 static int swrm_cmd_fifo_rd_cmd(struct swr_mstr_ctrl *swrm, int *cmd_data,
 				 u8 dev_addr, u8 cmd_id, u16 reg_addr,
 				 u32 len)
@@ -803,12 +858,19 @@ static int swrm_cmd_fifo_rd_cmd(struct swr_mstr_ctrl *swrm, int *cmd_data,
 		/* skip delay if read is handled in platform driver */
 		swr_master_write(swrm, SWRM_CMD_FIFO_RD_CMD, val);
 	} else {
+		/*
+		 * Check for outstanding cmd wrt. write fifo depth to avoid
+		 * overflow as read will also increase write fifo cnt.
+		 */
+		swrm_wait_for_fifo_avail(swrm, SWRM_WR_CHECK_AVAIL);
 		/* wait for FIFO RD to complete to avoid overflow */
 		usleep_range(100, 105);
 		swr_master_write(swrm, SWRM_CMD_FIFO_RD_CMD, val);
 		/* wait for FIFO RD CMD complete to avoid overflow */
 		usleep_range(250, 255);
 	}
+	/* Check if slave responds properly after FIFO RD is complete */
+	swrm_wait_for_fifo_avail(swrm, SWRM_RD_CHECK_AVAIL);
 retry_read:
 	*cmd_data = swr_master_read(swrm, SWRM_CMD_FIFO_RD_FIFO);
 	dev_dbg(swrm->dev, "%s: reg: 0x%x, cmd_id: 0x%x, rcmd_id: 0x%x, \
@@ -855,6 +917,11 @@ static int swrm_cmd_fifo_wr_cmd(struct swr_mstr_ctrl *swrm, u8 cmd_data,
 	dev_dbg(swrm->dev, "%s: reg: 0x%x, cmd_id: 0x%x,wcmd_id: 0x%x, \
 			dev_num: 0x%x, cmd_data: 0x%x\n", __func__,
 			reg_addr, cmd_id, swrm->wcmd_id,dev_addr, cmd_data);
+	/*
+	 * Check for outstanding cmd wrt. write fifo depth to avoid
+	 * overflow.
+	 */
+	swrm_wait_for_fifo_avail(swrm, SWRM_WR_CHECK_AVAIL);
 	swr_master_write(swrm, SWRM_CMD_FIFO_WR_CMD, val);
 	/*
 	 * wait for FIFO WR command to complete to avoid overflow
@@ -2699,6 +2766,11 @@ static int swrm_probe(struct platform_device *pdev)
 
 	if (pdev->dev.of_node)
 		of_register_swr_devices(&swrm->master);
+
+	swrm->rd_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_RD_FIFO_DEPTH) >> 15);
+	swrm->wr_fifo_depth = ((swr_master_read(swrm, SWRM_COMP_PARAMS)
+				& SWRM_COMP_PARAMS_WR_FIFO_DEPTH) >> 10);
 
 #ifdef CONFIG_DEBUG_FS
 	swrm->debugfs_swrm_dent = debugfs_create_dir(dev_name(&pdev->dev), 0);
