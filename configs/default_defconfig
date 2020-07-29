@@ -1145,6 +1145,9 @@ CONFIG_CM_ENABLE := n
 #Flag to enable roam offload compilation of connection manager module
 CONFIG_CM_ROAM_OFFLOAD := n
 
+#Enable VDEV Response wakelock feature
+CONFIG_FEATURE_VDEV_RSP_WAKELOCK := y
+
 # Enable RX buffer pool support
 ifeq ($(CONFIG_CNSS_QCA6750), y)
 CONFIG_WLAN_FEATURE_RX_BUFFER_POOL := y
