@@ -3014,6 +3014,21 @@ bool policy_mgr_is_safe_channel(struct wlan_objmgr_psoc *psoc,
 				uint32_t ch_freq);
 
 /**
+ * policy_mgr_is_sap_freq_allowed - Check if the channel is allowed for sap
+ * @psoc: PSOC object information
+ * @sap_freq: channel frequency to be checked
+ *
+ * Check the factors as below to decide whether the channel is allowed or not:
+ * If the channel is in LTE coex channel avoidance list;
+ * If it's STA+SAP SCC;
+ * If STA+SAP SCC on LTE coex channel is allowed.
+ *
+ * Return: true for allowed, else false
+ */
+bool policy_mgr_is_sap_freq_allowed(struct wlan_objmgr_psoc *psoc,
+				    uint32_t sap_freq);
+
+/**
  * policy_mgr_get_ch_width() - Convert hw_mode_bandwidth to phy_ch_width
  * @bw: Hardware mode band width used by WMI
  *
