@@ -544,7 +544,7 @@ static int dp_ctrl_link_train(struct dp_ctrl_private *ctrl)
 		ctrl->link->link_params.bw_code);
 	link_info.capabilities = ctrl->panel->link_info.capabilities;
 
-	ret = drm_dp_link_configure(ctrl->aux->drm_aux, &link_info);
+	ret = dp_link_configure(ctrl->aux->drm_aux, &link_info);
 	if (ret)
 		goto end;
 
