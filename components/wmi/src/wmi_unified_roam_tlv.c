@@ -1167,6 +1167,9 @@ static QDF_STATUS send_roam_invoke_cmd_tlv(wmi_unified_t wmi_handle,
 		       sizeof(wmi_tlv_buf_len_param));
 
 	buf_len_tlv = (wmi_tlv_buf_len_param *)(buf_ptr + WMI_TLV_HDR_SIZE);
+	WMITLV_SET_HDR(&buf_len_tlv->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_tlv_buf_len_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_tlv_buf_len_param));
 	buf_len_tlv->buf_len = roaminvoke->frame_len;
 
 	/* move to next tlv i.e. bcn_prb_frm */
