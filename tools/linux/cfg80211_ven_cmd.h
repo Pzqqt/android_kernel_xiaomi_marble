@@ -778,6 +778,11 @@ enum {
 	IEEE80211_PARAM_6G_HE_OP_MIN_RATE          = 713,  /* set HE sta minimum rate for its Tx PPDU in a bss */
 	IEEE80211_PARAM_6G_SECURITY_COMP           = 714, /* 6G Security Compliance on/off */
 	IEEE80211_PARAM_6G_KEYMGMT_MASK            = 715, /* 6G Key Mgmt Mask Config */
+	IEEE80211_PARAM_HE_ER_SU_DISABLE            = 716,
+	IEEE80211_PARAM_HE_1024QAM_LT242RU_RX_ENABLE = 717,
+	IEEE80211_PARAM_HE_UL_MU_DATA_DIS_RX_SUPP  = 718,
+	IEEE80211_PARAM_HE_FULL_BW_UL_MUMIMO       = 719,
+	IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX = 720,
 };
 
 enum {
@@ -2228,6 +2233,16 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"g_en_6g_sec_comp",    IEEE80211_PARAM_6G_SECURITY_COMP, GET_PARAM, 0},
 	{"keymgmt_mask_6g",     IEEE80211_PARAM_6G_KEYMGMT_MASK, SET_PARAM, 1},
 	{"g_keymgmt_mask_6g",   IEEE80211_PARAM_6G_KEYMGMT_MASK, GET_PARAM, 0},
+	{"he_er_su_disable",       IEEE80211_PARAM_HE_ER_SU_DISABLE, SET_PARAM, 1},
+	{"g_he_er_su_disable",   IEEE80211_PARAM_HE_ER_SU_DISABLE, GET_PARAM, 0},
+	{"he_1024qam_lt242ru_rx",       IEEE80211_PARAM_HE_1024QAM_LT242RU_RX_ENABLE, SET_PARAM, 1},
+	{"g_he_1024qam_lt242ru_rx",     IEEE80211_PARAM_HE_1024QAM_LT242RU_RX_ENABLE, GET_PARAM, 0},
+	{"he_ul_mu_data_dis_rx",        IEEE80211_PARAM_HE_UL_MU_DATA_DIS_RX_SUPP, SET_PARAM, 1},
+	{"g_he_ul_mu_data_dis_rx",      IEEE80211_PARAM_HE_UL_MU_DATA_DIS_RX_SUPP, GET_PARAM, 0},
+	{"he_full_bw_ulmumimo",         IEEE80211_PARAM_HE_FULL_BW_UL_MUMIMO, SET_PARAM, 1},
+	{"g_he_full_bw_ulmumimo",     IEEE80211_PARAM_HE_FULL_BW_UL_MUMIMO, GET_PARAM, 0},
+	{"he_dcm_max_const_rx",         IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX, SET_PARAM, 1},
+	{"g_he_dcm_max_const_rx",     IEEE80211_PARAM_HE_DCM_MAX_CONSTELLATION_RX, GET_PARAM, 0},
 };
 
 struct vendor_commands radio_vendor_cmds[] = {
