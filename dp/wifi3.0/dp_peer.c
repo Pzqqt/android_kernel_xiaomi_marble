@@ -235,6 +235,47 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
+/*
+ * dp_peer_exist_on_pdev - check if peer with mac address exist on pdev
+ *
+ * @soc: Datapath SOC handle
+ * @peer_mac_addr: peer mac address
+ * @mac_addr_is_aligned: is mac address aligned
+ * @pdev: Datapath PDEV handle
+ *
+ * Return: true if peer found else return false
+ */
+static bool dp_peer_exist_on_pdev(struct dp_soc *soc,
+				  uint8_t *peer_mac_addr,
+				  int mac_addr_is_aligned,
+				  struct dp_pdev *pdev)
+{
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	unsigned int index;
+	struct dp_peer *peer;
+	bool found = false;
+
+	if (mac_addr_is_aligned) {
+		mac_addr = (union dp_align_mac_addr *)peer_mac_addr;
+	} else {
+		qdf_mem_copy(
+			&local_mac_addr_aligned.raw[0],
+			peer_mac_addr, QDF_MAC_ADDR_SIZE);
+		mac_addr = &local_mac_addr_aligned;
+	}
+	index = dp_peer_find_hash_index(soc, mac_addr);
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &soc->peer_hash.bins[index], hash_list_elem) {
+		if (dp_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) == 0 &&
+		    (peer->vdev->pdev == pdev)) {
+			found = true;
+			break;
+		}
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	return found;
+}
+
 #ifdef FEATURE_AST
 /*
  * dp_peer_ast_hash_attach() - Allocate and initialize AST Hash Table
@@ -648,12 +689,11 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 			   uint32_t flags)
 {
 	struct dp_ast_entry *ast_entry = NULL;
-	struct dp_vdev *vdev = NULL, *tmp_vdev = NULL;
+	struct dp_vdev *vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	uint8_t next_node_mac[6];
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
-	struct dp_peer *tmp_peer = NULL;
 	bool is_peer_found = false;
 
 	vdev = peer->vdev;
@@ -666,22 +706,7 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 
 	pdev = vdev->pdev;
 
-	tmp_peer = dp_peer_find_hash_find(soc, mac_addr, 0,
-					  DP_VDEV_ALL);
-	if (tmp_peer) {
-		tmp_vdev = tmp_peer->vdev;
-		if (!tmp_vdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  FL("Peers vdev is NULL"));
-			QDF_ASSERT(0);
-			dp_peer_unref_delete(tmp_peer);
-			return QDF_STATUS_E_INVAL;
-		}
-		if (tmp_vdev->pdev->pdev_id == pdev->pdev_id)
-			is_peer_found = true;
-
-		dp_peer_unref_delete(tmp_peer);
-	}
+	is_peer_found = dp_peer_exist_on_pdev(soc, mac_addr, 0, pdev);
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (peer->delete_in_progress) {
