@@ -472,8 +472,11 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 			}
 		}
 
-		if (!policy_mgr_is_safe_channel(mac->psoc, *pChans))
+		if (!policy_mgr_is_sap_freq_allowed(mac->psoc, *pChans)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  "%s: Skip freq %d", __func__, *pChans);
 			continue;
+		}
 
 		/* OFDM rates are not supported on channel 14 */
 		if (channel == 14 &&
