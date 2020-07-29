@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,9 @@
 
 #ifndef __TARGET_IF_PSOC_WAKE_LOCK_H__
 #define __TARGET_IF_PSOC_WAKE_LOCK_H__
+
+#include <wlan_objmgr_psoc_obj.h>
+#include <qdf_lock.h>
 
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
 /**

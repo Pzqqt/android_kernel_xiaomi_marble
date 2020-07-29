@@ -219,19 +219,18 @@ tgt_psoc_get_wakelock_info(struct wlan_objmgr_psoc *psoc)
 
 	psoc_mlme = mlme_psoc_get_priv(psoc);
 	if (!psoc_mlme) {
-		mlme_err("VDEV_%d: VDEV_MLME is NULL", wlan_vdev_get_id(psoc));
+		mlme_err("PSOC_MLME is NULL");
 		return NULL;
 	}
 
-	return &psoc_mlme->psoc_wakelock;
+	return &psoc_mlme->psoc_mlme_wakelock;
 }
 
 static inline void
 tgt_psoc_reg_wakelock_info_rx_op(struct wlan_lmac_if_mlme_rx_ops
 				     *mlme_rx_ops)
 {
-	mlme_rx_ops->psoc_get_wakelock_info =
-		tgt_psoc_get_wakelock_info;
+	mlme_rx_ops->psoc_get_wakelock_info = tgt_psoc_get_wakelock_info;
 }
 #else
 static inline void

@@ -1761,7 +1761,7 @@ struct wlan_lmac_if_mlme_rx_ops {
 					struct wlan_objmgr_psoc *psoc,
 					struct multi_vdev_restart_resp *rsp);
 #ifdef FEATURE_VDEV_RSP_WAKELOCK
-	struct vdev_mlme_wakelock *(*psoc_get_wakelock_info)(
+	struct psoc_mlme_wakelock *(*psoc_get_wakelock_info)(
 				    struct wlan_objmgr_psoc *psoc);
 #endif
 	struct vdev_response_timer *(*psoc_get_vdev_response_timer_info)(
