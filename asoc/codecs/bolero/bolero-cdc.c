@@ -232,6 +232,27 @@ static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
 				priv->component,
 				BOLERO_MACRO_EVT_BCS_CLK_OFF, data);
 		break;
+	case WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE:
+		/* Update PA Gain only for bolero version 2.1 */
+		if (priv->version == BOLERO_VERSION_2_1)
+			if (priv->macro_params[RX_MACRO].event_handler)
+				priv->macro_params[RX_MACRO].event_handler(
+					priv->component,
+					BOLERO_MACRO_EVT_RX_PA_GAIN_UPDATE,
+					data);
+		break;
+	case WCD_BOLERO_EVT_HPHL_HD2_ENABLE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_HPHL_HD2_ENABLE, data);
+		break;
+	case WCD_BOLERO_EVT_HPHR_HD2_ENABLE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(
+				priv->component,
+				BOLERO_MACRO_EVT_HPHR_HD2_ENABLE, data);
+		break;
 	default:
 		dev_err(priv->dev, "%s: Invalid event %d trigger from wcd\n",
 			__func__, event);

@@ -33,6 +33,9 @@ enum {
 	WCD_BOLERO_EVT_IMPED_FALSE,  /* for imped false */
 	WCD_BOLERO_EVT_RX_COMPANDER_SOFT_RST,
 	WCD_BOLERO_EVT_BCS_CLK_OFF,
+	WCD_BOLERO_EVT_RX_PA_GAIN_UPDATE,
+	WCD_BOLERO_EVT_HPHL_HD2_ENABLE, /* to enable hd2 config for hphl */
+	WCD_BOLERO_EVT_HPHR_HD2_ENABLE, /* to enable hd2 config for hphr */
 };
 
 struct wcd_ctrl_platform_data {

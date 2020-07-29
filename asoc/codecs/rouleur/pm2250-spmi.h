@@ -7,8 +7,13 @@
 
 #ifdef CONFIG_PM2250_SPMI
 int pm2250_spmi_write(struct device *dev, int reg, int value);
+int pm2250_spmi_read(struct device *dev, int reg, int *value);
 #else
 int pm2250_spmi_write(struct device *dev, int reg, int value)
+{
+	return 0;
+}
+int pm2250_spmi_read(struct device *dev, int reg, int *value);
 {
 	return 0;
 }

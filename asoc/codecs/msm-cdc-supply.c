@@ -174,6 +174,52 @@ bool msm_cdc_is_ondemand_supply(struct device *dev,
 EXPORT_SYMBOL(msm_cdc_is_ondemand_supply);
 
 /*
+ * msm_cdc_set_supply_min_voltage:
+ *	Set min supply voltage for particular supply
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @supply_name: Supply name to change voltage for
+ * @vval_min: Min voltage to be set in uV
+ * @override_min_vol: True if override min voltage from default
+ * Return error code if unable to set voltage
+ */
+int msm_cdc_set_supply_min_voltage(struct device *dev,
+				    struct regulator_bulk_data *supplies,
+				    struct cdc_regulator *cdc_vreg,
+				    int num_supplies, char *supply_name,
+				    int vval_min, bool override_min_vol)
+{
+	int rc = 0, i;
+
+	if ((!supply_name) || (!supplies)) {
+		pr_err("%s: either dev or supplies or cdc_vreg is NULL\n",
+				__func__);
+		return -EINVAL;
+	}
+	/* input parameter validation */
+	rc = msm_cdc_check_supply_param(dev, cdc_vreg, num_supplies);
+	if (rc)
+		return rc;
+	for (i = 0; i < num_supplies; i++) {
+		if (!strcmp(cdc_vreg[i].name, supply_name)) {
+			if (override_min_vol)
+				regulator_set_voltage(supplies[i].consumer,
+					vval_min, cdc_vreg[i].max_uV);
+			else
+				regulator_set_voltage(supplies[i].consumer,
+				    cdc_vreg[i].min_uV, cdc_vreg[i].max_uV);
+			break;
+		}
+	}
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_set_supply_min_voltage);
+
+/*
  * msm_cdc_disable_ondemand_supply:
  *	Disable codec ondemand supply
  *
