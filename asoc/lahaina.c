@@ -7612,9 +7612,15 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 
-	bolero_set_port_map(component, ARRAY_SIZE(sm_port_map), sm_port_map);
-
 	card = rtd->card->snd_card;
+
+	if (strnstr(rtd->card->name, "shima", 5) != NULL)
+		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map_shima),
+				sm_port_map_shima);
+	else
+		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
+				sm_port_map);
+
 	if (!pdata->codec_root) {
 		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);

@@ -348,7 +348,7 @@ SND_SOC_DAILINK_DEFS(slimbus_7_tx,
 SND_SOC_DAILINK_DEFS(slimbus_8_tx,
 	DAILINK_COMP_ARRAY(COMP_CPU("msm-dai-q6-dev.16401")),
 	DAILINK_COMP_ARRAY(COMP_CODEC("btfmslim_slave",
-			"btfm_bt_sco_a2dp_slim_rx")),
+			"btfm_fm_slim_tx")),
 	DAILINK_COMP_ARRAY(COMP_PLATFORM("msm-pcm-routing")));
 
 SND_SOC_DAILINK_DEFS(display_port,
