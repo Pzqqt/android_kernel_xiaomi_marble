@@ -1109,6 +1109,10 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	else
 		country[2] = OP_CLASS_GLOBAL;
 
+	if (wlan_reg_is_6ghz_op_class(mac->pdev,
+				      beacon_req->channel_info.reg_class))
+		country[2] = OP_CLASS_GLOBAL;
+
 	sme_debug("RRM_SCN: Index:%d Request Reg class %d, AP's country code %c%c 0x%x, channel = %d",
 		  beacon_req->measurement_idx,
 		  beacon_req->channel_info.reg_class,
