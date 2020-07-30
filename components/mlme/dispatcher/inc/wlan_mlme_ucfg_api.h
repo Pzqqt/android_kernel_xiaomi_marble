@@ -3855,6 +3855,17 @@ ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
 				uint32_t *value);
 
 /**
+ * ucfg_mlme_get_nol_across_regdmn() - get scan 11d interval
+ * @psoc: pointer to psoc object
+ * @value:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+
+QDF_STATUS
+ucfg_mlme_get_nol_across_regdmn(struct wlan_objmgr_psoc *psoc, bool *value);
+
+/**
  * ucfg_mlme_get_valid_channel_freq_list() - get valid channel
  * list
  * @psoc: pointer to psoc object

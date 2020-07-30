@@ -236,6 +236,9 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 		hdd_err("Invalid 11d_enable flag");
 	config_vars->enable_11d_support = value;
 
+	ucfg_mlme_get_nol_across_regdmn(hdd_ctx->psoc, &value);
+	config_vars->retain_nol_across_regdmn_update = value;
+
 	ucfg_mlme_get_scan_11d_interval(hdd_ctx->psoc, &scan_11d_interval);
 	config_vars->scan_11d_interval = scan_11d_interval;
 

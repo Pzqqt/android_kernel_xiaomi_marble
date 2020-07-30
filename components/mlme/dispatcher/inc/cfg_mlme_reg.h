@@ -296,6 +296,29 @@
 			0, \
 			"Enable Pending list req")
 
+/*
+ * <ini>
+ * retain_nol_across_regdmn - Retain NOL across reg domain
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set if NOL needs to be retained
+ * on the reg domain change.
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RETAIN_NOL_ACROSS_REG_DOMAIN CFG_INI_BOOL( \
+		"retain_nol_across_regdmn", \
+		1, \
+		"Retain NOL even if the regdomain changes")
+
 #define CFG_REG_ALL \
 	CFG(CFG_SELF_GEN_FRM_PWR) \
 	CFG(CFG_ENABLE_PENDING_CHAN_LIST_REQ) \
@@ -307,6 +330,7 @@
 	CFG(CFG_SCAN_11D_INTERVAL) \
 	CFG(CFG_VALID_CHANNEL_LIST) \
 	CFG(CFG_IGNORE_FW_REG_OFFLOAD_IND) \
+	CFG(CFG_RETAIN_NOL_ACROSS_REG_DOMAIN) \
 	CFG_SAP_AVOID_ACS_FREQ_LIST_ALL
 
 #endif /* CFG_MLME_REG_H__ */
