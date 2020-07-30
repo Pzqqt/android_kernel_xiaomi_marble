@@ -2147,7 +2147,8 @@ bool sde_rm_topology_is_group(struct sde_rm *rm,
 			continue;
 		}
 
-		conn_state = drm_atomic_get_connector_state(state->state, conn);
+		conn_state = drm_atomic_get_new_connector_state(state->state,
+				conn);
 		if (!conn_state) {
 			SDE_DEBUG("%s invalid connector state\n", conn->name);
 			continue;
