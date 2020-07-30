@@ -30,6 +30,7 @@ struct cal_block_data {
 	struct list_head	list;
 	struct cal_data		cal_data;
 	bool			cal_stale;
+	bool			cma_mem;
 	struct mem_map_data	map_data;
 	int32_t			buffer_number;
 };
