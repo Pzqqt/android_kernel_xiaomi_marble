@@ -543,92 +543,136 @@ static int sde_hw_rc_check_mask_cfg(
 	int rc = 0;
 	u32 i = 0;
 	u32 half_panel_width;
+	u64 flags;
+	u32 cfg_param_01, cfg_param_02, cfg_param_03;
+	u32 cfg_param_07, cfg_param_08;
+	u32 *cfg_param_04, *cfg_param_05, *cfg_param_06;
+	bool r1_enable, r2_enable;
 
 	if (!hw_dspp || !hw_cfg || !rc_mask_cfg) {
 		SDE_ERROR("invalid arguments\n");
 		return -EINVAL;
 	}
 
-	if (!rc_mask_cfg->cfg_param_08 ||
-			rc_mask_cfg->cfg_param_08 > RC_DATA_SIZE_MAX) {
-		SDE_ERROR("invalid cfg_param_08:%d\n",
-				rc_mask_cfg->cfg_param_08);
+	flags = rc_mask_cfg->flags;
+	cfg_param_01 = rc_mask_cfg->cfg_param_01;
+	cfg_param_02 = rc_mask_cfg->cfg_param_02;
+	cfg_param_03 = rc_mask_cfg->cfg_param_03;
+	cfg_param_04 = rc_mask_cfg->cfg_param_04;
+	cfg_param_05 = rc_mask_cfg->cfg_param_05;
+	cfg_param_06 = rc_mask_cfg->cfg_param_06;
+	cfg_param_07 = rc_mask_cfg->cfg_param_07;
+	cfg_param_08 = rc_mask_cfg->cfg_param_08;
+	r1_enable = ((flags & SDE_HW_RC_DISABLE_R1) == SDE_HW_RC_DISABLE_R1) ?
+			false : true;
+	r2_enable = ((flags & SDE_HW_RC_DISABLE_R2) == SDE_HW_RC_DISABLE_R2) ?
+			false : true;
+
+	if (cfg_param_07 > hw_dspp->cap->sblk->rc.mem_total_size) {
+		SDE_ERROR("invalid cfg_param_07:%d\n", cfg_param_07);
 		return -EINVAL;
 	}
 
-	if (rc_mask_cfg->cfg_param_07 + rc_mask_cfg->cfg_param_08 >
+	if (cfg_param_08 > RC_DATA_SIZE_MAX) {
+		SDE_ERROR("invalid cfg_param_08:%d\n", cfg_param_08);
+		return -EINVAL;
+	}
+
+	if ((cfg_param_07 + cfg_param_08) >
 			hw_dspp->cap->sblk->rc.mem_total_size) {
 		SDE_ERROR("invalid cfg_param_08:%d, cfg_param_07:%d, max:%u\n",
-				rc_mask_cfg->cfg_param_08,
-				rc_mask_cfg->cfg_param_07,
+				cfg_param_08, cfg_param_07,
 				hw_dspp->cap->sblk->rc.mem_total_size);
 		return -EINVAL;
 	}
 
-	if (!rc_mask_cfg->cfg_param_03 ||
-			(rc_mask_cfg->cfg_param_03 != RC_PARAM_A1 &&
-			rc_mask_cfg->cfg_param_03 != RC_PARAM_A0)) {
-		SDE_ERROR("invalid cfg_param_03:%d\n",
-				rc_mask_cfg->cfg_param_03);
+	if (!(cfg_param_03 == RC_PARAM_A1 || cfg_param_03 == RC_PARAM_A0)) {
+		SDE_ERROR("invalid cfg_param_03:%d\n", cfg_param_03);
 		return -EINVAL;
 	}
 
-	if ((rc_mask_cfg->cfg_param_01 < 1) ||
-			((hw_cfg->displayv - rc_mask_cfg->cfg_param_02) < 1)) {
-		SDE_ERROR("invalid min cfg_param_01:%d or cfg_param_02:%d\n",
-				rc_mask_cfg->cfg_param_01,
-				rc_mask_cfg->cfg_param_02);
-		return -EINVAL;
-	}
-
-	if (rc_mask_cfg->cfg_param_01 > rc_mask_cfg->cfg_param_02) {
-		SDE_ERROR("invalid cfg_param_01:%d or cfg_param_02:%d\n",
-				rc_mask_cfg->cfg_param_01,
-				rc_mask_cfg->cfg_param_02);
-		return -EINVAL;
-	}
-
-	for (i = 0; i < rc_mask_cfg->cfg_param_03; i++) {
-		if (rc_mask_cfg->cfg_param_04[i] < 4) {
+	for (i = 0; i < cfg_param_03; i++) {
+		if (cfg_param_04[i] < 4) {
 			SDE_ERROR("invalid cfg_param_04[%d]:%d\n", i,
-					rc_mask_cfg->cfg_param_04[i]);
+					cfg_param_04[i]);
 			return -EINVAL;
 		}
 	}
 
-	half_panel_width = hw_cfg->displayh / rc_mask_cfg->cfg_param_03 * 2;
-	for (i = 0; i < rc_mask_cfg->cfg_param_03; i += 2) {
-		if (rc_mask_cfg->cfg_param_04[i] +
-				rc_mask_cfg->cfg_param_04[i+1] !=
-				half_panel_width) {
+	half_panel_width = hw_cfg->displayh / cfg_param_03 * 2;
+	for (i = 0; i < cfg_param_03; i += 2) {
+		if (cfg_param_04[i] + cfg_param_04[i+1] != half_panel_width) {
 			SDE_ERROR("invalid ratio [%d]:%d, [%d]:%d, %d\n",
-					i,
-					rc_mask_cfg->cfg_param_04[i],
-					i+1,
-					rc_mask_cfg->cfg_param_04[i+1],
-					half_panel_width);
+					i, cfg_param_04[i], i+1,
+					cfg_param_04[i+1], half_panel_width);
 			return -EINVAL;
 		}
 	}
 
-	for (i = 0; i < rc_mask_cfg->cfg_param_03 - 1; i++) {
-		if (rc_mask_cfg->cfg_param_05[i] >=
-				rc_mask_cfg->cfg_param_05[i+1]) {
-			SDE_ERROR("invalid cfg_param_05 overlap %d, %d\n",
-					rc_mask_cfg->cfg_param_05[i],
-					rc_mask_cfg->cfg_param_05[i+1]);
+	if (r1_enable && r2_enable) {
+		if (cfg_param_01 > cfg_param_02) {
+			SDE_ERROR("invalid cfg_param_01:%d, cfg_param_02:%d\n",
+					cfg_param_01, cfg_param_02);
 			return -EINVAL;
 		}
+	} else {
+		SDE_DEBUG("R1 or R2 disabled, skip overlap check");
 	}
 
-	for (i = 0; i < rc_mask_cfg->cfg_param_03; i++) {
-		if (rc_mask_cfg->cfg_param_05[i] >
-				RC_DATA_SIZE_MAX) {
-			SDE_ERROR("invalid cfg_param_05[%d]:%d\n", i,
-					rc_mask_cfg->cfg_param_05[i]);
+	if (r1_enable) {
+		if (cfg_param_01 < 1) {
+			SDE_ERROR("invalid min cfg_param_01:%d\n",
+					cfg_param_01);
 			return -EINVAL;
 		}
 
+		for (i = 0; i < cfg_param_03 - 1; i++) {
+			if (cfg_param_05[i] >= cfg_param_05[i+1]) {
+				SDE_ERROR("invalid cfg_param_05 %d, %d\n",
+						cfg_param_05[i],
+						cfg_param_05[i+1]);
+				return -EINVAL;
+			}
+		}
+
+		for (i = 0; i < cfg_param_03; i++) {
+			if (cfg_param_05[i] > RC_DATA_SIZE_MAX) {
+				SDE_ERROR("invalid cfg_param_05[%d]:%d\n", i,
+						cfg_param_05[i]);
+				return -EINVAL;
+			}
+
+		}
+	} else {
+		SDE_DEBUG("R1 is disabled, skip parameter checks\n");
+	}
+
+	if (r2_enable) {
+		if ((hw_cfg->displayv - cfg_param_02) < 1) {
+			SDE_ERROR("invalid max cfg_param_02:%d\n",
+					cfg_param_02);
+			return -EINVAL;
+		}
+
+		for (i = 0; i < cfg_param_03 - 1; i++) {
+			if (cfg_param_06[i] >= cfg_param_06[i+1]) {
+				SDE_ERROR("invalid cfg_param_06 %d, %d\n",
+						cfg_param_06[i],
+						cfg_param_06[i+1]);
+				return -EINVAL;
+			}
+		}
+
+		for (i = 0; i < cfg_param_03; i++) {
+			if (cfg_param_06[i] > RC_DATA_SIZE_MAX) {
+				SDE_ERROR("invalid cfg_param_06[%d]:%d\n", i,
+						cfg_param_06[i]);
+				return -EINVAL;
+			}
+
+		}
+	} else {
+		SDE_DEBUG("R2 is disabled, skip parameter checks\n");
 	}
 
 	return rc;
