@@ -2201,6 +2201,8 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	reg->ignore_fw_reg_offload_ind = cfg_get(
 						psoc,
 						CFG_IGNORE_FW_REG_OFFLOAD_IND);
+	reg->retain_nol_across_regdmn_update =
+		cfg_get(psoc, CFG_RETAIN_NOL_ACROSS_REG_DOMAIN);
 
 	qdf_uint8_array_parse(cfg_default(CFG_VALID_CHANNEL_LIST),
 			      channel_list,
