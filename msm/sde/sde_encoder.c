@@ -4311,7 +4311,6 @@ static ssize_t _sde_encoder_misr_setup(struct file *file,
 		const char __user *user_buf, size_t count, loff_t *ppos)
 {
 	struct sde_encoder_virt *sde_enc;
-	int rc;
 	char buf[MISR_BUFF_SIZE + 1];
 	size_t buff_copy;
 	u32 frame_count, enable;
@@ -4345,15 +4344,9 @@ static ssize_t _sde_encoder_misr_setup(struct file *file,
 	if (sscanf(buf, "%u %u", &enable, &frame_count) != 2)
 		return -EINVAL;
 
-	rc = pm_runtime_get_sync(drm_enc->dev->dev);
-	if (rc < 0)
-		return rc;
-
 	sde_enc->misr_enable = enable;
 	sde_enc->misr_reconfigure = true;
 	sde_enc->misr_frame_count = frame_count;
-	sde_encoder_misr_configure(&sde_enc->base, enable, frame_count);
-	pm_runtime_put_sync(drm_enc->dev->dev);
 	return count;
 }
 

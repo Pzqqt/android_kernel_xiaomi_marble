@@ -5864,7 +5864,6 @@ static ssize_t _sde_crtc_misr_setup(struct file *file,
 {
 	struct drm_crtc *crtc;
 	struct sde_crtc *sde_crtc;
-	int rc;
 	char buf[MISR_BUFF_SIZE + 1];
 	u32 frame_count, enable;
 	size_t buff_copy;
@@ -5899,14 +5898,9 @@ static ssize_t _sde_crtc_misr_setup(struct file *file,
 		return -EINVAL;
 	}
 
-	rc = pm_runtime_get_sync(crtc->dev->dev);
-	if (rc < 0)
-		return rc;
-
 	sde_crtc->misr_enable_debugfs = enable;
+	sde_crtc->misr_frame_count = frame_count;
 	sde_crtc->misr_reconfigure = true;
-	sde_crtc_misr_setup(crtc, enable, frame_count);
-	pm_runtime_put_sync(crtc->dev->dev);
 
 	return count;
 }
