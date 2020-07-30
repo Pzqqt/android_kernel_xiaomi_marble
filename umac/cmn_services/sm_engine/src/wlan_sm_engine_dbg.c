@@ -45,6 +45,7 @@ void wlan_sm_save_history(struct wlan_sm *sm,
 	p_memento->initial_state = initial_state;
 	p_memento->final_state = final_state;
 	p_memento->event_type = event_type;
+	p_memento->time = qdf_get_log_timestamp();
 }
 
 void wlan_sm_history_init(struct wlan_sm *sm)
@@ -72,23 +73,23 @@ static void wlan_sm_print_history_entry(struct wlan_sm *sm,
 			return;
 
 		sm_engine_nofl_err(
-				"|%6d |%11d |%23s[%3d] |%19s[%2d] |%19s[%2d] |",
-				i, ent->trace_type,
-				event_name ? event_name : "UNKNOWN_EVENT",
-				ent->event_type,
-				sm->state_info[ent->initial_state].name,
-				ent->initial_state,
-				sm->state_info[ent->final_state].name,
-				ent->final_state);
+			"| 0x%016llx |%6d |%11d |%23s[%3d] |%19s[%2d] |%19s[%2d] |",
+			ent->time, i, ent->trace_type,
+			event_name ? event_name : "UNKNOWN_EVENT",
+			ent->event_type,
+			sm->state_info[ent->initial_state].name,
+			ent->initial_state,
+			sm->state_info[ent->final_state].name,
+			ent->final_state);
 	} else {
 		sm_engine_nofl_err(
-				"|%6d |%11d |%28d |%19s[%2d] |%19s[%2d] |",
-				i, ent->trace_type,
-				ent->event_type,
-				sm->state_info[ent->initial_state].name,
-				ent->initial_state,
-				sm->state_info[ent->final_state].name,
-				ent->final_state);
+			"| 0x%016llx |%6d |%11d |%28d |%19s[%2d] |%19s[%2d] |",
+			ent->time, i, ent->trace_type,
+			ent->event_type,
+			sm->state_info[ent->initial_state].name,
+			ent->initial_state,
+			sm->state_info[ent->final_state].name,
+			ent->final_state);
 	}
 }
 
@@ -104,8 +105,8 @@ void wlan_sm_print_history(struct wlan_sm *sm)
 	 */
 	qdf_spin_lock_bh(&p_sm_history->sm_history_lock);
 
-	sm_engine_nofl_err("|%6s |%11s |%28s |%23s |%23s |", "Index",
-			   "Trace Type", "Event",
+	sm_engine_nofl_err("|%19s |%6s |%11s |%28s |%23s |%23s |", "Time",
+			   "Index", "Trace Type", "Event",
 			   "Initial State", "Final State");
 
 	for (i = 0; i < WLAN_SM_ENGINE_HISTORY_SIZE; i++) {
@@ -131,24 +132,24 @@ static void wlan_sm_print_fs_history_entry(struct wlan_sm *sm,
 		if (!ent->trace_type)
 			return;
 
-		qdf_debugfs_printf(m,
-				   "|%6d |%11d |%23s[%3d] |%19s[%2d] |%19s[%2d] |\n",
-				   i, ent->trace_type,
-				   event_name ? event_name : "UNKNOWN_EVENT",
-				   ent->event_type,
-				   sm->state_info[ent->initial_state].name,
-				   ent->initial_state,
-				   sm->state_info[ent->final_state].name,
-				   ent->final_state);
+		qdf_debugfs_printf(
+			m, "| 0x%016llx |%6d |%11d |%23s[%3d] |%19s[%2d] |%19s[%2d] |\n",
+			ent->time, i, ent->trace_type,
+			event_name ? event_name : "UNKNOWN_EVENT",
+			ent->event_type,
+			sm->state_info[ent->initial_state].name,
+			ent->initial_state,
+			sm->state_info[ent->final_state].name,
+			ent->final_state);
 	} else {
-		qdf_debugfs_printf(m,
-				   "|%6d |%11d |%28d |%19s[%2d] |%19s[%2d] |\n",
-				   i, ent->trace_type,
-				   ent->event_type,
-				   sm->state_info[ent->initial_state].name,
-				   ent->initial_state,
-				   sm->state_info[ent->final_state].name,
-				   ent->final_state);
+		qdf_debugfs_printf(
+			m, "| 0x%016llx |%6d |%11d |%28d |%19s[%2d] |%19s[%2d] |\n",
+			ent->time, i, ent->trace_type,
+			ent->event_type,
+			sm->state_info[ent->initial_state].name,
+			ent->initial_state,
+			sm->state_info[ent->final_state].name,
+			ent->final_state);
 	}
 }
 
@@ -163,8 +164,8 @@ void wlan_sm_print_fs_history(struct wlan_sm *sm, qdf_debugfs_file_t m)
 	 * Save a pointer to next write location and increment pointer.
 	 */
 	qdf_spin_lock_bh(&p_sm_history->sm_history_lock);
-	qdf_debugfs_printf(m, "|%6s |%11s |%28s |%23s |%23s |\n", "Index",
-			   "Trace Type", "Event",
+	qdf_debugfs_printf(m, "|%19s |%6s |%11s |%28s |%23s |%23s |\n", "Time",
+			   "Index", "Trace Type", "Event",
 			   "Initial State", "Final State");
 
 	for (i = 0; i < WLAN_SM_ENGINE_HISTORY_SIZE; i++) {
