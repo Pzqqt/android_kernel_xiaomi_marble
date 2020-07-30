@@ -23,9 +23,9 @@
 	do { \
 		pr_debug(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -33,7 +33,7 @@
 	do { \
 		pr_debug(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -42,9 +42,9 @@
 	do { \
 		pr_err(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 				IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 				IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -99,6 +99,7 @@ bool ipa3_mhi_stop_gsi_channel(enum ipa_client_type client)
 
 	return false;
 }
+EXPORT_SYMBOL(ipa3_mhi_stop_gsi_channel);
 
 static int ipa3_mhi_reset_gsi_channel(enum ipa_client_type client)
 {
@@ -143,6 +144,7 @@ int ipa3_mhi_reset_channel_internal(enum ipa_client_type client)
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_mhi_reset_channel_internal);
 
 int ipa3_mhi_start_channel_internal(enum ipa_client_type client)
 {
@@ -473,6 +475,7 @@ int ipa3_mhi_init_engine(struct ipa_mhi_init_engine *params)
 fail_init_engine:
 	return res;
 }
+EXPORT_SYMBOL(ipa3_mhi_init_engine);
 
 /**
  * ipa3_connect_mhi_pipe() - Connect pipe to IPA and start corresponding
@@ -546,6 +549,7 @@ fail_start_channel:
 	memset(ep, 0, offsetof(struct ipa3_ep_context, sys));
 	return -EPERM;
 }
+EXPORT_SYMBOL(ipa3_connect_mhi_pipe);
 
 /**
  * ipa3_disconnect_mhi_pipe() - Disconnect pipe from IPA and reset corresponding
@@ -612,6 +616,7 @@ int ipa3_disconnect_mhi_pipe(u32 clnt_hdl)
 fail_reset_channel:
 	return res;
 }
+EXPORT_SYMBOL(ipa3_disconnect_mhi_pipe);
 
 int ipa3_mhi_resume_channels_internal(enum ipa_client_type client,
 		bool LPTransitionRejected, bool brstmode_enabled,
@@ -683,6 +688,7 @@ int ipa3_mhi_resume_channels_internal(enum ipa_client_type client,
 	IPA_MHI_FUNC_EXIT();
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_mhi_resume_channels_internal);
 
 int ipa3_mhi_query_ch_info(enum ipa_client_type client,
 		struct gsi_chan_info *ch_info)
@@ -708,6 +714,7 @@ int ipa3_mhi_query_ch_info(enum ipa_client_type client,
 	IPA_MHI_FUNC_EXIT();
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_mhi_query_ch_info);
 
 bool ipa3_has_open_aggr_frame(enum ipa_client_type client)
 {
@@ -728,6 +735,7 @@ bool ipa3_has_open_aggr_frame(enum ipa_client_type client)
 
 	return false;
 }
+EXPORT_SYMBOL(ipa3_has_open_aggr_frame);
 
 int ipa3_mhi_destroy_channel(enum ipa_client_type client)
 {
@@ -771,6 +779,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_EP(client);
 	return res;
 }
+EXPORT_SYMBOL(ipa3_mhi_destroy_channel);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("IPA MHI driver");

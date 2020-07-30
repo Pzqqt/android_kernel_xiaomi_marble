@@ -126,7 +126,7 @@ int ipa_rm_resource_consumer_request_work(struct ipa_rm_resource_cons *consumer,
 		} else {
 			consumer->resource.state = IPA_RM_GRANTED;
 			ipa_rm_perf_profile_change(consumer->resource.name);
-			ipa_resume_resource(consumer->resource.name);
+			ipa3_resume_resource(consumer->resource.name);
 		}
 	} else if (driver_result != -EINPROGRESS) {
 		consumer->resource.state = prev_state;
@@ -162,7 +162,7 @@ int ipa_rm_resource_consumer_request(
 		IPA_ACTIVE_CLIENTS_PREP_RESOURCE(log_info,
 				ipa_rm_resource_str(consumer->resource.name));
 		if (prev_state == IPA_RM_RELEASE_IN_PROGRESS ||
-			ipa_inc_client_enable_clks_no_block(&log_info) != 0) {
+			ipa3_inc_client_enable_clks_no_block(&log_info) != 0) {
 			IPA_RM_DBG_LOW("async resume work for %s\n",
 				ipa_rm_resource_str(consumer->resource.name));
 			ipa_rm_wq_send_resume_cmd(consumer->resource.name,
@@ -229,7 +229,7 @@ int ipa_rm_resource_consumer_release(
 		if (consumer->usage_count == 0) {
 			consumer->resource.state = IPA_RM_RELEASE_IN_PROGRESS;
 			if (save_state == IPA_RM_REQUEST_IN_PROGRESS ||
-			    ipa_suspend_resource_no_block(
+			    ipa3_suspend_resource_no_block(
 						consumer->resource.name) != 0) {
 				ipa_rm_wq_send_suspend_cmd(
 						consumer->resource.name,
@@ -1015,7 +1015,7 @@ void ipa_rm_resource_consumer_handle_cb(struct ipa_rm_resource_cons *consumer,
 			goto bail;
 		consumer->resource.state = IPA_RM_GRANTED;
 		ipa_rm_perf_profile_change(consumer->resource.name);
-		ipa_resume_resource(consumer->resource.name);
+		ipa3_resume_resource(consumer->resource.name);
 		complete_all(&consumer->request_consumer_in_progress);
 		break;
 	case IPA_RM_RELEASE_IN_PROGRESS:

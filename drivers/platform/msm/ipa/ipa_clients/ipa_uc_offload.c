@@ -16,9 +16,9 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -26,7 +26,7 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -34,9 +34,9 @@
 	do { \
 		pr_err(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -44,9 +44,9 @@
 	do { \
 		pr_info(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -408,7 +408,7 @@ int ipa_uc_ntn_conn_pipes(struct ipa_ntn_conn_in_params *inp,
 	}
 
 	ntn_ctx->state = IPA_UC_OFFLOAD_STATE_UP;
-	result = ipa_setup_uc_ntn_pipes(inp, ntn_ctx->notify,
+	result = ipa3_setup_uc_ntn_pipes(inp, ntn_ctx->notify,
 		ntn_ctx->priv, ntn_ctx->hdr_len, outp);
 	if (result) {
 		IPA_UC_OFFLOAD_ERR("fail to setup uc offload pipes: %d\n",
@@ -502,7 +502,7 @@ static int ipa_uc_ntn_disconn_pipes(struct ipa_uc_offload_ctx *ntn_ctx)
 
 	ipa_ep_idx_ul = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_PROD);
 	ipa_ep_idx_dl = ipa_get_ep_mapping(IPA_CLIENT_ETHERNET_CONS);
-	ret = ipa_tear_down_uc_offload_pipes(ipa_ep_idx_ul, ipa_ep_idx_dl,
+	ret = ipa3_tear_down_uc_offload_pipes(ipa_ep_idx_ul, ipa_ep_idx_dl,
 		&ntn_ctx->conn);
 	if (ret) {
 		IPA_UC_OFFLOAD_ERR("fail to tear down ntn offload pipes, %d\n",
@@ -648,7 +648,7 @@ int ipa_uc_offload_reg_rdyCB_internal(struct ipa_uc_ready_params *inp)
 	}
 
 	if (inp->proto == IPA_UC_NTN)
-		ret = ipa_ntn_uc_reg_rdyCB(inp->notify, inp->priv);
+		ret = ipa3_ntn_uc_reg_rdyCB(inp->notify, inp->priv);
 
 	if (ret == -EEXIST) {
 		inp->is_uC_ready = true;
@@ -662,7 +662,7 @@ int ipa_uc_offload_reg_rdyCB_internal(struct ipa_uc_ready_params *inp)
 void ipa_uc_offload_dereg_rdyCB_internal(enum ipa_uc_offload_proto proto)
 {
 	if (proto == IPA_UC_NTN)
-		ipa_ntn_uc_dereg_rdyCB();
+		ipa3_ntn_uc_dereg_rdyCB();
 }
 
 int ipa_set_perf_profile_internal(struct ipa_perf_profile *profile)

@@ -23,9 +23,9 @@
 	do { \
 		pr_debug(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -33,7 +33,7 @@
 	do { \
 		pr_debug(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -42,9 +42,9 @@
 	do { \
 		pr_err(IPA_MHI_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 				IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 				IPA_MHI_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -361,7 +361,7 @@ static ssize_t ipa_mhi_debugfs_uc_stats(struct file *file,
 {
 	int nbytes = 0;
 
-	nbytes += ipa_uc_mhi_print_stats(dbg_buff, IPA_MHI_MAX_MSG_LEN);
+	nbytes += ipa3_uc_mhi_print_stats(dbg_buff, IPA_MHI_MAX_MSG_LEN);
 	return simple_read_from_buffer(ubuf, count, ppos, dbg_buff, nbytes);
 }
 
@@ -726,7 +726,7 @@ static int ipa_mhi_start_internal(struct ipa_mhi_start_params *params)
 	init_params.uC.ipa_cached_dl_ul_sync_info =
 			&ipa_cached_dl_ul_sync_info;
 
-	res = ipa_mhi_init_engine(&init_params);
+	res = ipa3_mhi_init_engine(&init_params);
 	if (res) {
 		IPA_MHI_ERR("IPA core failed to start MHI %d\n", res);
 		goto fail_init_engine;
@@ -956,7 +956,7 @@ static bool ipa_mhi_gsi_channel_empty(struct ipa_mhi_channel_ctx *channel)
 		return true;
 	}
 
-	if (ipa_mhi_stop_gsi_channel(channel->client)) {
+	if (ipa3_mhi_stop_gsi_channel(channel->client)) {
 		channel->stop_in_proc = false;
 		return true;
 	}
@@ -1030,7 +1030,7 @@ static int ipa_mhi_enable_force_clear(u32 request_id, bool throttle_source)
 	IPA_MHI_DBG("req_id=0x%x src_pipe_btmk=0x%x throt_src=%d\n",
 		req.request_id, req.source_pipe_bitmask,
 		req.throttle_source);
-	res = ipa_qmi_enable_force_clear_datapath_send(&req);
+	res = ipa3_qmi_enable_force_clear_datapath_send(&req);
 	if (res) {
 		IPA_MHI_ERR(
 			"ipa_qmi_enable_force_clear_datapath_send failed %d\n"
@@ -1051,10 +1051,10 @@ static int ipa_mhi_disable_force_clear(u32 request_id)
 	memset(&req, 0, sizeof(req));
 	req.request_id = request_id;
 	IPA_MHI_DBG("req_id=0x%x\n", req.request_id);
-	res = ipa_qmi_disable_force_clear_datapath_send(&req);
+	res = ipa3_qmi_disable_force_clear_datapath_send(&req);
 	if (res) {
 		IPA_MHI_ERR(
-			"ipa_qmi_disable_force_clear_datapath_send failed %d\n"
+			"ipa3_qmi_disable_force_clear_datapath_send failed %d\n"
 				, res);
 		return res;
 	}
@@ -1133,7 +1133,7 @@ static int ipa_mhi_reset_ul_channel(struct ipa_mhi_channel_ctx *channel)
 		ipa_mhi_client_ctx->qmi_req_id++;
 	}
 
-	res = ipa_mhi_reset_channel_internal(channel->client);
+	res = ipa3_mhi_reset_channel_internal(channel->client);
 	if (res) {
 		IPA_MHI_ERR("ipa_mhi_reset_ul_channel_internal failed %d\n"
 				, res);
@@ -1157,7 +1157,7 @@ static int ipa_mhi_reset_dl_channel(struct ipa_mhi_channel_ctx *channel)
 		return res;
 	}
 
-	res = ipa_mhi_reset_channel_internal(channel->client);
+	res = ipa3_mhi_reset_channel_internal(channel->client);
 	if (res) {
 		IPA_MHI_ERR(
 			"ipa_mhi_reset_ul_channel_internal failed %d\n"
@@ -1304,7 +1304,7 @@ static int ipa_mhi_connect_pipe_internal(struct ipa_mhi_connect_params *in, u32 
 			&channel->cached_gsi_evt_ring_hdl;
 	internal.start.gsi.evchid = channel->index;
 
-	res = ipa_connect_mhi_pipe(&internal, clnt_hdl);
+	res = ipa3_connect_mhi_pipe(&internal, clnt_hdl);
 	if (res) {
 		IPA_MHI_ERR("ipa_connect_mhi_pipe failed %d\n", res);
 		goto fail_connect_pipe;
@@ -1390,7 +1390,7 @@ static int ipa_mhi_disconnect_pipe_internal(u32 clnt_hdl)
 	}
 
 	mutex_lock(&mhi_client_general_mutex);
-	res = ipa_disconnect_mhi_pipe(clnt_hdl);
+	res = ipa3_disconnect_mhi_pipe(clnt_hdl);
 	if (res) {
 		IPA_MHI_ERR(
 			"IPA core driver failed to disconnect the pipe hdl %d, res %d"
@@ -1460,7 +1460,7 @@ static bool ipa_mhi_check_pending_packets_from_host(void)
 		if (!channel->valid)
 			continue;
 
-		res = ipa_mhi_query_ch_info(channel->client,
+		res = ipa3_mhi_query_ch_info(channel->client,
 				&channel->ch_info);
 		if (res) {
 			IPA_MHI_ERR("gsi_query_channel_info failed\n");
@@ -1502,7 +1502,7 @@ static int ipa_mhi_resume_channels(bool LPTransitionRejected,
 		channel = &channels[i];
 		IPA_MHI_DBG("resuming channel %d\n", channel->id);
 
-		res = ipa_mhi_resume_channels_internal(channel->client,
+		res = ipa3_mhi_resume_channels_internal(channel->client,
 			LPTransitionRejected, channel->brstmode_enabled,
 			channel->ch_scratch, channel->index);
 
@@ -1628,7 +1628,7 @@ static bool ipa_mhi_has_open_aggr_frame(void)
 		if (!channel->valid)
 			continue;
 
-		if (ipa_has_open_aggr_frame(channel->client))
+		if (ipa3_has_open_aggr_frame(channel->client))
 			return true;
 	}
 
@@ -1647,7 +1647,7 @@ static void ipa_mhi_update_host_ch_state(bool update_rp)
 			continue;
 
 		if (update_rp) {
-			res = ipa_mhi_query_ch_info(channel->client,
+			res = ipa3_mhi_query_ch_info(channel->client,
 				&channel->ch_info);
 			if (res) {
 				IPA_MHI_ERR("gsi_query_channel_info failed\n");
@@ -1686,7 +1686,7 @@ static void ipa_mhi_update_host_ch_state(bool update_rp)
 			continue;
 
 		if (update_rp) {
-			res = ipa_mhi_query_ch_info(channel->client,
+			res = ipa3_mhi_query_ch_info(channel->client,
 				&channel->ch_info);
 			if (res) {
 				IPA_MHI_ERR("gsi_query_channel_info failed\n");
@@ -1825,7 +1825,7 @@ static int ipa_mhi_suspend_internal(bool force)
 	usleep_range(IPA_MHI_SUSPEND_SLEEP_MIN, IPA_MHI_SUSPEND_SLEEP_MAX);
 
 	if (!empty)
-		ipa_set_tag_process_before_gating(false);
+		ipa3_set_tag_process_before_gating(false);
 
 	res = ipa_mhi_set_state(IPA_MHI_STATE_SUSPENDED);
 	if (res) {
@@ -1969,10 +1969,10 @@ static int  ipa_mhi_destroy_channels(struct ipa_mhi_channel_ctx *channels,
 				goto fail;
 			}
 		}
-		res = ipa_mhi_destroy_channel(channel->client);
+		res = ipa3_mhi_destroy_channel(channel->client);
 		if (res) {
 			IPA_MHI_ERR(
-				"ipa_mhi_destroy_channel failed %d"
+				"ipa3_mhi_destroy_channel failed %d"
 					, res);
 			goto fail;
 		}
@@ -2051,7 +2051,7 @@ static void ipa_mhi_destroy_internal(void)
 		return;
 	}
 
-	ipa_deregister_client_callback(IPA_CLIENT_MHI_PROD);
+	ipa3_deregister_client_callback(IPA_CLIENT_MHI_PROD);
 
 	/* reset all UL and DL acc channels and its accociated event rings */
 	res = ipa_mhi_destroy_all_channels();
@@ -2236,7 +2236,7 @@ static int ipa_mhi_init_internal(struct ipa_mhi_init_params *params)
 
 	ipa_mhi_set_state(IPA_MHI_STATE_READY);
 
-	ipa_register_client_callback(&ipa_mhi_set_lock_unlock, NULL,
+	ipa3_register_client_callback(&ipa_mhi_set_lock_unlock, NULL,
 					IPA_CLIENT_MHI_PROD);
 
 	/* Initialize debugfs */

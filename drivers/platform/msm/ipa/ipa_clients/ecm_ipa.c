@@ -1328,7 +1328,7 @@ static int ecm_ipa_ep_registers_cfg(u32 usb_to_ipa_hdl, u32 ipa_to_usb_hdl,
 	/* enable hdr_metadata_reg_valid */
 	usb_to_ipa_ep_cfg.hdr.hdr_metadata_reg_valid = true;
 
-	result = ipa_cfg_ep(usb_to_ipa_hdl, &usb_to_ipa_ep_cfg);
+	result = ipa3_cfg_ep(usb_to_ipa_hdl, &usb_to_ipa_ep_cfg);
 	if (result) {
 		ECM_IPA_ERROR("failed to configure USB to IPA point\n");
 		goto out;
@@ -1337,7 +1337,7 @@ static int ecm_ipa_ep_registers_cfg(u32 usb_to_ipa_hdl, u32 ipa_to_usb_hdl,
 	ipa_to_usb_ep_cfg.aggr.aggr_en = IPA_BYPASS_AGGR;
 	ipa_to_usb_ep_cfg.hdr.hdr_len = ETH_HLEN + hdr_add;
 	ipa_to_usb_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-	result = ipa_cfg_ep(ipa_to_usb_hdl, &ipa_to_usb_ep_cfg);
+	result = ipa3_cfg_ep(ipa_to_usb_hdl, &ipa_to_usb_ep_cfg);
 	if (result) {
 		ECM_IPA_ERROR("failed to configure IPA to USB end-point\n");
 		goto out;

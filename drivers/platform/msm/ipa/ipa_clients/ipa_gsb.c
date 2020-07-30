@@ -32,9 +32,9 @@
 	do { \
 		pr_debug(IPA_GSB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -42,7 +42,7 @@
 	do { \
 		pr_debug(IPA_GSB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -50,9 +50,9 @@
 	do { \
 		pr_err(IPA_GSB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_GSB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -1034,7 +1034,7 @@ static int ipa_bridge_resume_internal(u32 hdl)
 			return ret;
 		}
 
-		ret = ipa_start_gsi_channel(
+		ret = ipa3_start_gsi_channel(
 			ipa_gsb_ctx->cons_hdl);
 		if (ret) {
 			IPA_GSB_ERR(
@@ -1112,7 +1112,7 @@ static int ipa_bridge_suspend_internal(u32 hdl)
 		ret = ipa_pm_deactivate_sync(ipa_gsb_ctx->pm_hdl);
 		if (ret) {
 			IPA_GSB_ERR("fail to deactivate ipa pm\n");
-			ipa_start_gsi_channel(ipa_gsb_ctx->cons_hdl);
+			ipa3_start_gsi_channel(ipa_gsb_ctx->cons_hdl);
 			atomic_set(&ipa_gsb_ctx->suspend_in_progress, 0);
 			mutex_unlock(&ipa_gsb_ctx->lock);
 			mutex_unlock(&ipa_gsb_ctx->iface_lock[hdl]);

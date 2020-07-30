@@ -136,12 +136,14 @@ int ipa3_ntn_uc_reg_rdyCB(void (*ipa_ready_cb)(void *), void *user_data)
 
 	return -EEXIST;
 }
+EXPORT_SYMBOL(ipa3_ntn_uc_reg_rdyCB);
 
 void ipa3_ntn_uc_dereg_rdyCB(void)
 {
 	ipa3_ctx->uc_ntn_ctx.uc_ready_cb = NULL;
 	ipa3_ctx->uc_ntn_ctx.priv = NULL;
 }
+EXPORT_SYMBOL(ipa3_ntn_uc_dereg_rdyCB);
 
 static void ipa3_uc_ntn_loaded_handler(void)
 {
@@ -522,6 +524,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_setup_uc_ntn_pipes);
 
 /**
  * ipa3_tear_down_uc_offload_pipes() - tear down uc offload pipes
@@ -633,3 +636,4 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_tear_down_uc_offload_pipes);

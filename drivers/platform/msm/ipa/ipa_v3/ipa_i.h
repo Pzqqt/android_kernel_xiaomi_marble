@@ -23,7 +23,6 @@
 #include <linux/platform_device.h>
 #include <linux/firmware.h>
 #include "ipa_qmi_service.h"
-#include "ipa_api.h"
 #include "ipahal_reg.h"
 #include "ipahal.h"
 #include "ipahal_fltrt.h"
@@ -2435,8 +2434,6 @@ int ipa3_request_gsi_channel(struct ipa_request_gsi_channel_params *params,
 
 int ipa3_release_gsi_channel(u32 clnt_hdl);
 
-int ipa3_start_gsi_channel(u32 clnt_hdl);
-
 int ipa3_stop_gsi_channel(u32 clnt_hdl);
 
 int ipa3_reset_gsi_channel(u32 clnt_hdl);
@@ -2454,10 +2451,6 @@ int ipa3_xdci_connect(u32 clnt_hdl);
 int ipa3_xdci_disconnect(u32 clnt_hdl, bool should_force_clear, u32 qmi_req_id);
 
 void ipa3_xdci_ep_delay_rm(u32 clnt_hdl);
-void ipa3_register_client_callback(int (*client_cb)(bool),
-		bool (*teth_port_state)(void),
-		enum ipa_client_type client_type);
-void ipa3_deregister_client_callback(enum ipa_client_type client_type);
 int ipa3_set_reset_client_prod_pipe_delay(bool set_reset,
 		enum ipa_client_type client);
 int ipa3_start_stop_client_prod_gsi_chnl(enum ipa_client_type client,
@@ -2481,14 +2474,7 @@ int ipa3_clear_endpoint_delay(u32 clnt_hdl);
 /*
  * Configuration
  */
-int ipa3_cfg_ep(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg);
-
 int ipa3_cfg_ep_seq(u32 clnt_hdl, const struct ipa_ep_cfg_seq *seq_cfg);
-
-int ipa3_cfg_ep_nat(u32 clnt_hdl, const struct ipa_ep_cfg_nat *ipa_ep_cfg);
-
-int ipa3_cfg_ep_conn_track(u32 clnt_hdl,
-	const struct ipa_ep_cfg_conn_track *ep_conn_track);
 
 int ipa3_cfg_ep_hdr(u32 clnt_hdl, const struct ipa_ep_cfg_hdr *ipa_ep_cfg);
 
@@ -2523,14 +2509,9 @@ int ipa3_cfg_ep_ctrl(u32 clnt_hdl, const struct ipa_ep_cfg_ctrl *ep_ctrl);
  * Header removal / addition
  */
 
-
-int ipa3_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool by_user);
-
 int ipa3_del_hdr_by_user(struct ipa_ioc_del_hdr *hdls, bool by_user);
 
 int ipa3_commit_hdr(void);
-
-int ipa3_reset_hdr(bool user_only);
 
 int ipa3_get_hdr(struct ipa_ioc_get_hdr *lookup);
 
@@ -2541,10 +2522,6 @@ int ipa3_copy_hdr(struct ipa_ioc_copy_hdr *copy);
 /*
  * Header Processing Context
  */
-int ipa3_add_hdr_proc_ctx(struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs,
-							bool user_only);
-
-int ipa3_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls);
 
 int ipa3_del_hdr_proc_ctx_by_user(struct ipa_ioc_del_hdr_proc_ctx *hdls,
 	bool by_user);
@@ -2554,14 +2531,6 @@ int ipa3_del_hdr_proc_ctx_by_user(struct ipa_ioc_del_hdr_proc_ctx *hdls,
  */
 int ipa3_add_rt_rule(struct ipa_ioc_add_rt_rule *rules);
 
-int ipa3_add_rt_rule_v2(struct ipa_ioc_add_rt_rule_v2 *rules);
-
-int ipa3_add_rt_rule_usr(struct ipa_ioc_add_rt_rule *rules,
-	bool user_only);
-
-int ipa3_add_rt_rule_usr_v2(struct ipa_ioc_add_rt_rule_v2 *rules,
-	bool user_only);
-
 int ipa3_add_rt_rule_ext(struct ipa_ioc_add_rt_rule_ext *rules);
 
 int ipa3_add_rt_rule_ext_v2(struct ipa_ioc_add_rt_rule_ext_v2 *rules);
@@ -2570,12 +2539,6 @@ int ipa3_add_rt_rule_after(struct ipa_ioc_add_rt_rule_after *rules);
 
 int ipa3_add_rt_rule_after_v2(struct ipa_ioc_add_rt_rule_after_v2
 	*rules);
-
-int ipa3_del_rt_rule(struct ipa_ioc_del_rt_rule *hdls);
-
-int ipa3_commit_rt(enum ipa_ip_type ip);
-
-int ipa3_reset_rt(enum ipa_ip_type ip, bool user_only);
 
 int ipa3_get_rt_tbl(struct ipa_ioc_get_rt_tbl *lookup);
 
@@ -2605,8 +2568,6 @@ int ipa3_add_flt_rule_after(struct ipa_ioc_add_flt_rule_after *rules);
 int ipa3_add_flt_rule_after_v2(struct ipa_ioc_add_flt_rule_after_v2
 	*rules);
 
-int ipa3_del_flt_rule(struct ipa_ioc_del_flt_rule *hdls);
-
 int ipa3_mdfy_flt_rule(struct ipa_ioc_mdfy_flt_rule *rules);
 
 int ipa3_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
@@ -2626,18 +2587,6 @@ int ipa3_allocate_nat_table(
 	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
 int ipa3_allocate_ipv6ct_table(
 	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
-
-int ipa3_nat_init_cmd(struct ipa_ioc_v4_nat_init *init);
-int ipa3_ipv6ct_init_cmd(struct ipa_ioc_ipv6ct_init *init);
-
-int ipa3_table_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
-int ipa3_nat_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
-
-int ipa3_nat_del_cmd(struct ipa_ioc_v4_nat_del *del);
-int ipa3_del_nat_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
-int ipa3_del_ipv6ct_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
-
-int ipa3_nat_mdfy_pdn(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
 int ipa3_nat_get_sram_info(struct ipa_nat_in_sram_info *info_ptr);
 int ipa3_app_clk_vote(enum ipa_app_clock_vote_type vote_type);
 
@@ -2692,15 +2641,6 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl);
 
 int ipa3_teardown_sys_pipe(u32 clnt_hdl);
 
-int ipa3_sys_setup(struct ipa_sys_connect_params *sys_in,
-	unsigned long *ipa_transport_hdl,
-	u32 *ipa_pipe_num, u32 *clnt_hdl, bool en_status);
-
-int ipa3_sys_teardown(u32 clnt_hdl);
-
-int ipa3_sys_update_gsi_hdls(u32 clnt_hdl, unsigned long gsi_ch_hdl,
-	unsigned long gsi_ev_hdl);
-
 int ipa3_connect_wdi_pipe(struct ipa_wdi_in_params *in,
 		struct ipa_wdi_out_params *out);
 int ipa3_connect_gsi_wdi_pipe(struct ipa_wdi_in_params *in,
@@ -2715,53 +2655,13 @@ int ipa3_disconnect_gsi_wdi_pipe(u32 clnt_hdl);
 int ipa3_resume_wdi_pipe(u32 clnt_hdl);
 int ipa3_resume_gsi_wdi_pipe(u32 clnt_hdl);
 int ipa3_suspend_wdi_pipe(u32 clnt_hdl);
-void ipa3_get_gsi_stats(int prot_id,
-	struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_wdi_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_wdi3_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_usb_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_aqc_gsi_stats(struct ipa_uc_dbg_ring_stats *stats);
 int ipa3_get_wdi_stats(struct IpaHwStatsWDIInfoData_t *stats);
-int ipa3_get_prot_id(enum ipa_client_type client);
 u16 ipa3_get_smem_restr_bytes(void);
 int ipa3_broadcast_wdi_quota_reach_ind(uint32_t fid, uint64_t num_bytes);
-int ipa3_setup_uc_ntn_pipes(struct ipa_ntn_conn_in_params *in,
-		ipa_notify_cb notify, void *priv, u8 hdr_len,
-		struct ipa_ntn_conn_out_params *outp);
-int ipa3_tear_down_uc_offload_pipes(int ipa_ep_idx_ul, int ipa_ep_idx_dl,
-	struct ipa_ntn_conn_in_params *params);
-int ipa3_ntn_uc_reg_rdyCB(void (*ipauc_ready_cb)(void *), void *priv);
-void ipa3_ntn_uc_dereg_rdyCB(void);
-int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
-	struct ipa_wdi_conn_out_params *out,
-	ipa_wdi_meter_notifier_cb wdi_notify);
-int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
-int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
-int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
-
-int ipa3_conn_wigig_rx_pipe_i(void *in,
-	struct ipa_wigig_conn_out_params *out,
-	struct dentry **parent);
-
-int ipa3_conn_wigig_client_i(void *in,
-	struct ipa_wigig_conn_out_params *out,
-	ipa_notify_cb tx_notify,
-	void *priv);
-
-int ipa3_wigig_uc_msi_init(bool init,
-	phys_addr_t periph_baddr_pa,
-	phys_addr_t pseudo_cause_pa,
-	phys_addr_t int_gen_tx_pa,
-	phys_addr_t int_gen_rx_pa,
-	phys_addr_t dma_ep_misc_pa);
-
-int ipa3_disconn_wigig_pipe_i(enum ipa_client_type client,
-	struct ipa_wigig_pipe_setup_info_smmu *pipe_smmu,
-	void *dbuff);
-
-int ipa3_enable_wigig_pipe_i(enum ipa_client_type client);
-
-int ipa3_disable_wigig_pipe_i(enum ipa_client_type client);
 
 int ipa3_wigig_init_debugfs_i(struct dentry *dent);
 
@@ -2795,22 +2695,12 @@ void ipa3_release_wdi3_gsi_smmu_mappings(u8 dir);
 /*
  * Tethering bridge (Rmnet / MBIM)
  */
-int ipa3_teth_bridge_init(struct teth_bridge_init_params *params);
-
-int ipa3_teth_bridge_disconnect(enum ipa_client_type client);
-
-int ipa3_teth_bridge_connect(struct teth_bridge_connect_params *connect_params);
 
 int ipa3_teth_bridge_get_pm_hdl(void);
 
 /*
  * Tethering client info
  */
-void ipa3_set_client(int index, enum ipacm_client_enum client, bool uplink);
-
-enum ipacm_client_enum ipa3_get_client(int pipe_idx);
-
-bool ipa3_get_client_uplink(int pipe_idx);
 
 int ipa3_get_wlan_stats(struct ipa_get_wdi_sap_stats *wdi_sap_stats);
 
@@ -2840,32 +2730,9 @@ void ipa3_dma_destroy(void);
  * MHI
  */
 
-int ipa3_mhi_init_engine(struct ipa_mhi_init_engine *params);
-
-int ipa3_connect_mhi_pipe(
-		struct ipa_mhi_connect_params_internal *in,
-		u32 *clnt_hdl);
-
-int ipa3_disconnect_mhi_pipe(u32 clnt_hdl);
-
-bool ipa3_mhi_stop_gsi_channel(enum ipa_client_type client);
-
-int ipa3_mhi_reset_channel_internal(enum ipa_client_type client);
-
-int ipa3_mhi_start_channel_internal(enum ipa_client_type client);
-
-bool ipa3_has_open_aggr_frame(enum ipa_client_type client);
-
-int ipa3_mhi_resume_channels_internal(enum ipa_client_type client,
-		bool LPTransitionRejected, bool brstmode_enabled,
-		union __packed gsi_channel_scratch ch_scratch, u8 index);
-
-int ipa3_mhi_destroy_channel(enum ipa_client_type client);
-
 /*
  * mux id
  */
-int ipa3_write_qmap_id(struct ipa_ioc_write_qmapid *param_in);
 
 /*
  * interrupts
@@ -2874,8 +2741,6 @@ int ipa3_add_interrupt_handler(enum ipa_irq_type interrupt,
 		ipa_irq_handler_t handler,
 		bool deferred_flag,
 		void *private_data);
-
-int ipa3_remove_interrupt_handler(enum ipa_irq_type interrupt);
 
 /*
  * Miscellaneous
@@ -2904,9 +2769,6 @@ bool ipa3_get_modem_cfg_emb_pipe_flt(void);
 
 u8 ipa3_get_qmb_master_sel(enum ipa_client_type client);
 
-int ipa3_get_smmu_params(struct ipa_smmu_in_params *in,
-	struct ipa_smmu_out_params *out);
-
 bool ipa3_get_lan_rx_napi(void);
 
 bool ipa3_get_qmap_pipe_enable(void);
@@ -2914,9 +2776,6 @@ bool ipa3_get_qmap_pipe_enable(void);
 /* internal functions */
 
 u8 ipa3_get_hw_type_index(void);
-
-int ipa3_bind_api_controller(enum ipa_hw_type ipa_hw_type,
-	struct ipa_api_controller *api_ctrl);
 
 bool ipa_is_modem_pipe(int pipe_idx);
 
@@ -2957,10 +2816,8 @@ int ipa3_straddle_boundary(u32 start, u32 end, u32 boundary);
 struct ipa3_context *ipa3_get_ctx(void);
 void ipa3_enable_clks(void);
 void ipa3_disable_clks(void);
-void ipa3_inc_client_enable_clks(struct ipa_active_client_logging_info *id);
 int ipa3_inc_client_enable_clks_no_block(struct ipa_active_client_logging_info
 		*id);
-void ipa3_dec_client_disable_clks(struct ipa_active_client_logging_info *id);
 void ipa3_dec_client_disable_clks_no_block(
 	struct ipa_active_client_logging_info *id);
 void ipa3_active_clients_log_dec(struct ipa_active_client_logging_info *id,
@@ -3030,15 +2887,9 @@ int ipa3_enable_force_clear(u32 request_id, bool throttle_source,
 	u32 source_pipe_bitmask);
 int ipa3_disable_force_clear(u32 request_id);
 
-int ipa3_set_required_perf_profile(enum ipa_voltage_level floor_voltage,
-				  u32 bandwidth_mbps);
-
 int ipa3_cfg_ep_status(u32 clnt_hdl,
 		const struct ipahal_reg_ep_cfg_status *ipa_ep_cfg);
 
-int ipa3_suspend_resource_no_block(enum ipa_rm_resource_name name);
-int ipa3_suspend_resource_sync(enum ipa_rm_resource_name name);
-int ipa3_resume_resource(enum ipa_rm_resource_name name);
 bool ipa3_should_pipe_be_suspended(enum ipa_client_type client);
 int ipa3_tag_aggr_force_close(int pipe_num);
 
@@ -3057,12 +2908,9 @@ void ipa3_update_ssr_state(bool is_ssr);
 int ipa3_init_q6_smem(void);
 
 int ipa3_mhi_handle_ipa_config_req(struct ipa_config_req_msg_v01 *config_req);
-int ipa3_mhi_query_ch_info(enum ipa_client_type client,
-		struct gsi_chan_info *ch_info);
 
 int ipa3_uc_interface_init(void);
 int ipa3_uc_is_gsi_channel_empty(enum ipa_client_type ipa_client);
-int ipa3_uc_state_check(void);
 int ipa3_uc_loaded_check(void);
 int ipa3_uc_holb_enabled_check(void);
 int ipa3_uc_register_ready_cb(struct notifier_block *nb);
@@ -3079,24 +2927,11 @@ void ipa3_dma_async_memcpy_notify_cb(void *priv,
 
 int ipa3_uc_update_hw_flags(u32 flags);
 
-int ipa3_uc_mhi_init(void (*ready_cb)(void), void (*wakeup_request_cb)(void));
-void ipa3_uc_mhi_cleanup(void);
-int ipa3_uc_mhi_send_dl_ul_sync_info(union IpaHwMhiDlUlSyncCmdData_t *cmd);
-int ipa3_uc_mhi_init_engine(struct ipa_mhi_msi_info *msi, u32 mmio_addr,
-	u32 host_ctrl_addr, u32 host_data_addr, u32 first_ch_idx,
-	u32 first_evt_idx);
 int ipa3_uc_mhi_init_channel(int ipa_ep_idx, int channelHandle,
 	int contexArrayIndex, int channelDirection);
-int ipa3_uc_mhi_reset_channel(int channelHandle);
-int ipa3_uc_mhi_suspend_channel(int channelHandle);
 int ipa3_uc_mhi_resume_channel(int channelHandle, bool LPTransitionRejected);
-int ipa3_uc_mhi_stop_event_update_channel(int channelHandle);
-int ipa3_uc_mhi_print_stats(char *dbg_buff, int size);
 int ipa3_uc_memcpy(phys_addr_t dest, phys_addr_t src, int len);
 int ipa3_uc_send_remote_ipa_info(u32 remote_addr, uint32_t mbox_n);
-int ipa3_uc_debug_stats_alloc(
-	struct IpaHwOffloadStatsAllocCmdData_t cmdinfo);
-int ipa3_uc_debug_stats_dealloc(uint32_t protocol);
 int ipa3_uc_quota_monitor(uint64_t quota);
 int ipa3_uc_enable_holb_monitor(uint32_t polling_period);
 int ipa3_uc_add_holb_monitor(uint16_t gsi_ch, uint32_t action_mask,
@@ -3105,17 +2940,11 @@ int ipa3_uc_del_holb_monitor(uint16_t gsi_ch, uint8_t ee);
 int ipa3_uc_disable_holb_monitor(void);
 int ipa3_uc_bw_monitor(struct ipa_wdi_bw_info *info);
 int ipa3_uc_setup_event_ring(void);
-int ipa3_set_wlan_tx_info(struct ipa_wdi_tx_info *info);
-int ipa3_uc_debug_stats_dealloc(uint32_t prot_id);
 void ipa3_tag_destroy_imm(void *user1, int user2);
 const struct ipa_gsi_ep_config *ipa3_get_gsi_ep_info
 	(enum ipa_client_type client);
 
 int ipa3_wigig_init_i(void);
-int ipa3_wigig_internal_init(
-	struct ipa_wdi_uc_ready_params *inout,
-	ipa_wigig_misc_int_cb int_notify,
-	phys_addr_t *uc_db_pa);
 
 /* Hardware stats */
 
@@ -3227,7 +3056,6 @@ int ipa3_teardown_apps_low_lat_pipes(void);
 void ipa3_rmnet_ctl_ready_notifier(void);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);
-int ipa3_rx_poll(u32 clnt_hdl, int budget);
 int ipa3_lan_rx_poll(u32 clnt_hdl, int weight);
 int ipa3_smmu_map_peer_reg(phys_addr_t phys_addr, bool map,
 	enum ipa_smmu_cb_type cb_type);
@@ -3237,7 +3065,6 @@ void ipa3_reset_freeze_vote(void);
 int ipa3_ntn_init(void);
 int ipa3_get_ntn_stats(struct Ipa3HwStatsNTNInfoData_t *stats);
 struct dentry *ipa_debugfs_get_root(void);
-struct device *ipa3_get_pdev(void);
 void ipa3_enable_dcd(void);
 void ipa3_disable_prefetch(enum ipa_client_type client);
 int ipa3_alloc_common_event_ring(void);
@@ -3247,7 +3074,6 @@ int ipa3_allocate_coal_close_frame(void);
 void ipa3_free_coal_close_frame(void);
 int ipa3_set_clock_plan_from_pm(int idx);
 void __ipa_gsi_irq_rx_scedule_poll(struct ipa3_sys_context *sys);
-int ipa3_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
 void ipa3_init_imm_cmd_desc(struct ipa3_desc *desc,
 	struct ipahal_imm_cmd_pyld *cmd_pyld);
 int ipa3_is_vlan_mode(enum ipa_vlan_ifaces iface, bool *res);

@@ -29,9 +29,9 @@
 	do { \
 		pr_debug(IPADMA_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPADMA_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPADMA_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -39,7 +39,7 @@
 	do { \
 		pr_debug(IPADMA_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPADMA_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -47,9 +47,9 @@
 	do { \
 		pr_err(IPADMA_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPADMA_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPADMA_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 

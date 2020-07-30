@@ -15,9 +15,9 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -25,7 +25,7 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -33,9 +33,9 @@
 	do { \
 		pr_err(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -107,7 +107,7 @@ static int ipa_wdi_init_internal(struct ipa_wdi_init_in_params *in,
 	out->is_uC_ready = uc_ready_params.is_uC_ready;
 
 	smmu_in.smmu_client = IPA_SMMU_WLAN_CLIENT;
-	if (ipa_get_smmu_params(&smmu_in, &smmu_out))
+	if (ipa3_get_smmu_params(&smmu_in, &smmu_out))
 		out->is_smmu_enabled = false;
 	else
 		out->is_smmu_enabled = smmu_out.smmu_enable;
@@ -432,7 +432,7 @@ static int ipa_wdi_conn_pipes_internal(struct ipa_wdi_conn_in_params *in,
 	}
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
-		if (ipa_conn_wdi_pipes(in, out, ipa_wdi_ctx->wdi_notify)) {
+		if (ipa3_conn_wdi3_pipes(in, out, ipa_wdi_ctx->wdi_notify)) {
 			IPA_WDI_ERR("fail to setup wdi pipes\n");
 			ret = -EFAULT;
 			goto fail_connect_pipe;
@@ -591,7 +591,7 @@ static int ipa_wdi_disconn_pipes_internal(void)
 	}
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
-		if (ipa_disconn_wdi_pipes(ipa_ep_idx_rx, ipa_ep_idx_tx)) {
+		if (ipa3_disconn_wdi3_pipes(ipa_ep_idx_rx, ipa_ep_idx_tx)) {
 			IPA_WDI_ERR("fail to tear down wdi pipes\n");
 			return -EFAULT;
 		}
@@ -636,7 +636,7 @@ static int ipa_wdi_enable_pipes_internal(void)
 		return -EFAULT;
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
-		if (ipa_enable_wdi_pipes(ipa_ep_idx_tx, ipa_ep_idx_rx)) {
+		if (ipa3_enable_wdi3_pipes(ipa_ep_idx_tx, ipa_ep_idx_rx)) {
 			IPA_WDI_ERR("fail to enable wdi pipes\n");
 			return -EFAULT;
 		}
@@ -694,7 +694,7 @@ static int ipa_wdi_disable_pipes_internal(void)
 	}
 
 	if (ipa_wdi_ctx->wdi_version == IPA_WDI_3) {
-		if (ipa_disable_wdi_pipes(ipa_ep_idx_tx, ipa_ep_idx_rx)) {
+		if (ipa3_disable_wdi3_pipes(ipa_ep_idx_tx, ipa_ep_idx_rx)) {
 			IPA_WDI_ERR("fail to disable wdi pipes\n");
 			return -EFAULT;
 		}
@@ -759,7 +759,7 @@ void ipa_wdi3_register(void)
 	funcs.ipa_wdi_reg_intf = ipa_wdi_reg_intf_internal;
 	funcs.ipa_wdi_release_smmu_mapping = ipa3_release_wdi_mapping;
 	funcs.ipa_wdi_set_perf_profile = ipa_wdi_set_perf_profile_internal;
-	funcs.ipa_wdi_sw_stats = ipa_set_wlan_tx_info;
+	funcs.ipa_wdi_sw_stats = ipa3_set_wlan_tx_info;
 
 	if (ipa_fmwk_register_ipa_wdi3(&funcs))
 		pr_err("failed to register ipa_wdi3 APIs\n");

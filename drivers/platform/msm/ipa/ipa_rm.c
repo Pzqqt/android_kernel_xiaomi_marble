@@ -412,7 +412,7 @@ static void ipa_rm_wq_suspend_handler(struct work_struct *work)
 		IPA_RM_ERR("resource is not CONS\n");
 		return;
 	}
-	ipa_suspend_resource_sync(ipa_rm_work->resource_name);
+	ipa3_suspend_resource_sync(ipa_rm_work->resource_name);
 	spin_lock_irqsave(&ipa_rm_ctx->ipa_rm_lock, flags);
 	if (ipa_rm_dep_graph_get_resource(ipa_rm_ctx->dep_graph,
 					ipa_rm_work->resource_name,
@@ -626,10 +626,10 @@ static void ipa_rm_perf_profile_notify_to_ipa_work(struct work_struct *work)
 	IPA_RM_DBG_LOW("calling to IPA driver. voltage %d bandwidth %d\n",
 		notify_work->volt, notify_work->bandwidth_mbps);
 
-	res = ipa_set_required_perf_profile(notify_work->volt,
+	res = ipa3_set_required_perf_profile(notify_work->volt,
 		notify_work->bandwidth_mbps);
 	if (res) {
-		IPA_RM_ERR("ipa_set_required_perf_profile failed %d\n", res);
+		IPA_RM_ERR("ipa3_set_required_perf_profile failed %d\n", res);
 		goto bail;
 	}
 

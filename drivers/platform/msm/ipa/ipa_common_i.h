@@ -51,56 +51,56 @@
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_EP(log_info, client); \
-		ipa_inc_client_enable_clks(&log_info); \
+		ipa3_inc_client_enable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_DEC_EP(client) \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_EP(log_info, client); \
-		ipa_dec_client_disable_clks(&log_info); \
+		ipa3_dec_client_disable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_INC_SIMPLE() \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_SIMPLE(log_info); \
-		ipa_inc_client_enable_clks(&log_info); \
+		ipa3_inc_client_enable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_DEC_SIMPLE() \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_SIMPLE(log_info); \
-		ipa_dec_client_disable_clks(&log_info); \
+		ipa3_dec_client_disable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_INC_RESOURCE(resource_name) \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_RESOURCE(log_info, resource_name); \
-		ipa_inc_client_enable_clks(&log_info); \
+		ipa3_inc_client_enable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_DEC_RESOURCE(resource_name) \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_RESOURCE(log_info, resource_name); \
-		ipa_dec_client_disable_clks(&log_info); \
+		ipa3_dec_client_disable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_INC_SPECIAL(id_str) \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_SPECIAL(log_info, id_str); \
-		ipa_inc_client_enable_clks(&log_info); \
+		ipa3_inc_client_enable_clks(&log_info); \
 	} while (0)
 
 #define IPA_ACTIVE_CLIENTS_DEC_SPECIAL(id_str) \
 	do { \
 		struct ipa_active_client_logging_info log_info; \
 		IPA_ACTIVE_CLIENTS_PREP_SPECIAL(log_info, id_str); \
-		ipa_dec_client_disable_clks(&log_info); \
+		ipa3_dec_client_disable_clks(&log_info); \
 	} while (0)
 
 /*
@@ -450,64 +450,64 @@ extern const char *ipa_clients_strings[];
 				## args); \
 	} while (0)
 
-void ipa_inc_client_enable_clks(struct ipa_active_client_logging_info *id);
-void ipa_dec_client_disable_clks(struct ipa_active_client_logging_info *id);
-int ipa_inc_client_enable_clks_no_block(
+void ipa3_inc_client_enable_clks(struct ipa_active_client_logging_info *id);
+void ipa3_dec_client_disable_clks(struct ipa_active_client_logging_info *id);
+int ipa3_inc_client_enable_clks_no_block(
 	struct ipa_active_client_logging_info *id);
-int ipa_suspend_resource_no_block(enum ipa_rm_resource_name resource);
-int ipa_resume_resource(enum ipa_rm_resource_name name);
-int ipa_suspend_resource_sync(enum ipa_rm_resource_name resource);
-int ipa_set_required_perf_profile(enum ipa_voltage_level floor_voltage,
+int ipa3_suspend_resource_no_block(enum ipa_rm_resource_name resource);
+int ipa3_resume_resource(enum ipa_rm_resource_name name);
+int ipa3_suspend_resource_sync(enum ipa_rm_resource_name resource);
+int ipa3_set_required_perf_profile(enum ipa_voltage_level floor_voltage,
 	u32 bandwidth_mbps);
-void *ipa_get_ipc_logbuf(void);
-void *ipa_get_ipc_logbuf_low(void);
+void *ipa3_get_ipc_logbuf(void);
+void *ipa3_get_ipc_logbuf_low(void);
 void ipa_assert(void);
 
 /* MHI */
-int ipa_mhi_init_engine(struct ipa_mhi_init_engine *params);
-int ipa_connect_mhi_pipe(struct ipa_mhi_connect_params_internal *in,
+int ipa3_mhi_init_engine(struct ipa_mhi_init_engine *params);
+int ipa3_connect_mhi_pipe(struct ipa_mhi_connect_params_internal *in,
 		u32 *clnt_hdl);
-int ipa_disconnect_mhi_pipe(u32 clnt_hdl);
-bool ipa_mhi_stop_gsi_channel(enum ipa_client_type client);
-int ipa_qmi_enable_force_clear_datapath_send(
+int ipa3_disconnect_mhi_pipe(u32 clnt_hdl);
+bool ipa3_mhi_stop_gsi_channel(enum ipa_client_type client);
+int ipa3_qmi_enable_force_clear_datapath_send(
 	struct ipa_enable_force_clear_datapath_req_msg_v01 *req);
-int ipa_qmi_disable_force_clear_datapath_send(
+int ipa3_qmi_disable_force_clear_datapath_send(
 	struct ipa_disable_force_clear_datapath_req_msg_v01 *req);
-int ipa_generate_tag_process(void);
-int ipa_disable_sps_pipe(enum ipa_client_type client);
-int ipa_mhi_reset_channel_internal(enum ipa_client_type client);
-int ipa_mhi_start_channel_internal(enum ipa_client_type client);
-bool ipa_mhi_sps_channel_empty(enum ipa_client_type client);
-int ipa_mhi_resume_channels_internal(enum ipa_client_type client,
+int ipa3_generate_tag_process(void);
+int ipa3_disable_sps_pipe(enum ipa_client_type client);
+int ipa3_mhi_reset_channel_internal(enum ipa_client_type client);
+int ipa3_mhi_start_channel_internal(enum ipa_client_type client);
+bool ipa3_mhi_sps_channel_empty(enum ipa_client_type client);
+int ipa3_mhi_resume_channels_internal(enum ipa_client_type client,
 		bool LPTransitionRejected, bool brstmode_enabled,
 		union __packed gsi_channel_scratch ch_scratch, u8 index);
-int ipa_mhi_query_ch_info(enum ipa_client_type client,
+int ipa3_mhi_query_ch_info(enum ipa_client_type client,
 		struct gsi_chan_info *ch_info);
-int ipa_mhi_destroy_channel(enum ipa_client_type client);
+int ipa3_mhi_destroy_channel(enum ipa_client_type client);
 int ipa_mhi_is_using_dma(bool *flag);
 
 /* MHI uC */
-int ipa_uc_mhi_send_dl_ul_sync_info(union IpaHwMhiDlUlSyncCmdData_t *cmd);
-int ipa_uc_mhi_init
+int ipa3_uc_mhi_send_dl_ul_sync_info(union IpaHwMhiDlUlSyncCmdData_t *cmd);
+int ipa3_uc_mhi_init
 	(void (*ready_cb)(void), void (*wakeup_request_cb)(void));
-void ipa_uc_mhi_cleanup(void);
-int ipa_uc_mhi_reset_channel(int channelHandle);
-int ipa_uc_mhi_suspend_channel(int channelHandle);
-int ipa_uc_mhi_stop_event_update_channel(int channelHandle);
-int ipa_uc_mhi_print_stats(char *dbg_buff, int size);
+void ipa3_uc_mhi_cleanup(void);
+int ipa3_uc_mhi_reset_channel(int channelHandle);
+int ipa3_uc_mhi_suspend_channel(int channelHandle);
+int ipa3_uc_mhi_stop_event_update_channel(int channelHandle);
+int ipa3_uc_mhi_print_stats(char *dbg_buff, int size);
 
 /* uC */
-int ipa_uc_state_check(void);
+int ipa3_uc_state_check(void);
 
 /* general */
-void ipa_get_holb(int ep_idx, struct ipa_ep_cfg_holb *holb);
-void ipa_set_tag_process_before_gating(bool val);
-bool ipa_has_open_aggr_frame(enum ipa_client_type client);
-int ipa_setup_uc_ntn_pipes(struct ipa_ntn_conn_in_params *in,
+void ipa3_get_holb(int ep_idx, struct ipa_ep_cfg_holb *holb);
+void ipa3_set_tag_process_before_gating(bool val);
+bool ipa3_has_open_aggr_frame(enum ipa_client_type client);
+int ipa3_setup_uc_ntn_pipes(struct ipa_ntn_conn_in_params *in,
 	ipa_notify_cb notify, void *priv, u8 hdr_len,
 	struct ipa_ntn_conn_out_params *outp);
 
-int ipa_tear_down_uc_offload_pipes(int ipa_ep_idx_ul, int ipa_ep_idx_dl,
+int ipa3_tear_down_uc_offload_pipes(int ipa_ep_idx_ul, int ipa_ep_idx_dl,
 	struct ipa_ntn_conn_in_params *params);
 u8 *ipa_write_64(u64 w, u8 *dest);
 u8 *ipa_write_32(u32 w, u8 *dest);
@@ -515,22 +515,22 @@ u8 *ipa_write_16(u16 hw, u8 *dest);
 u8 *ipa_write_8(u8 b, u8 *dest);
 u8 *ipa_pad_to_64(u8 *dest);
 u8 *ipa_pad_to_32(u8 *dest);
-int ipa_ntn_uc_reg_rdyCB(void (*ipauc_ready_cb)(void *user_data),
+int ipa3_ntn_uc_reg_rdyCB(void (*ipauc_ready_cb)(void *user_data),
 			      void *user_data);
-void ipa_ntn_uc_dereg_rdyCB(void);
+void ipa3_ntn_uc_dereg_rdyCB(void);
 
-int ipa_conn_wdi_pipes(struct ipa_wdi_conn_in_params *in,
+int ipa3_conn_wdi3_pipes(struct ipa_wdi_conn_in_params *in,
 	struct ipa_wdi_conn_out_params *out,
 	ipa_wdi_meter_notifier_cb wdi_notify);
 
-int ipa_disconn_wdi_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
 
-int ipa_enable_wdi_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
 
-int ipa_disable_wdi_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
+int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx);
 
 const char *ipa_get_version_string(enum ipa_hw_type ver);
-int ipa_start_gsi_channel(u32 clnt_hdl);
+int ipa3_start_gsi_channel(u32 clnt_hdl);
 
 int ipa_smmu_store_sgt(struct sg_table **out_ch_ptr,
 		struct sg_table *in_sgt_ptr);
@@ -549,19 +549,19 @@ static inline void ipa_ut_module_exit(void)
 }
 #endif
 
-int ipa_wigig_internal_init(
+int ipa3_wigig_internal_init(
 	struct ipa_wdi_uc_ready_params *inout,
 	ipa_wigig_misc_int_cb int_notify,
 	phys_addr_t *uc_db_pa);
 
-int ipa_conn_wigig_rx_pipe_i(void *in, struct ipa_wigig_conn_out_params *out,
+int ipa3_conn_wigig_rx_pipe_i(void *in, struct ipa_wigig_conn_out_params *out,
 	struct dentry **parent);
 
-int ipa_conn_wigig_client_i(void *in, struct ipa_wigig_conn_out_params *out,
+int ipa3_conn_wigig_client_i(void *in, struct ipa_wigig_conn_out_params *out,
 	ipa_notify_cb tx_notify,
 	void *priv);
 
-int ipa_wigig_uc_msi_init(
+int ipa3_wigig_uc_msi_init(
 	bool init,
 	phys_addr_t periph_baddr_pa,
 	phys_addr_t pseudo_cause_pa,
@@ -569,13 +569,13 @@ int ipa_wigig_uc_msi_init(
 	phys_addr_t int_gen_rx_pa,
 	phys_addr_t dma_ep_misc_pa);
 
-int ipa_disconn_wigig_pipe_i(enum ipa_client_type client,
+int ipa3_disconn_wigig_pipe_i(enum ipa_client_type client,
 	struct ipa_wigig_pipe_setup_info_smmu *pipe_smmu,
 	void *dbuff);
 
-int ipa_enable_wigig_pipe_i(enum ipa_client_type client);
+int ipa3_enable_wigig_pipe_i(enum ipa_client_type client);
 
-int ipa_disable_wigig_pipe_i(enum ipa_client_type client);
+int ipa3_disable_wigig_pipe_i(enum ipa_client_type client);
 
 int ipa_wigig_send_msg(int msg_type,
 	const char *netdev_name, u8 *mac,
@@ -584,19 +584,19 @@ int ipa_wigig_send_msg(int msg_type,
 int ipa_wigig_send_wlan_msg(enum ipa_wlan_event msg_type,
 	const char *netdev_name, u8 *mac);
 
-void ipa_register_client_callback(int (*client_cb)(bool is_lock),
+void ipa3_register_client_callback(int (*client_cb)(bool is_lock),
 			bool (*teth_port_state)(void), u32 ipa_ep_idx);
 
-void ipa_deregister_client_callback(u32 ipa_ep_idx);
+void ipa3_deregister_client_callback(u32 ipa_ep_idx);
 
 /*
 * Configuration
 */
-int ipa_cfg_ep(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg);
+int ipa3_cfg_ep(u32 clnt_hdl, const struct ipa_ep_cfg *ipa_ep_cfg);
 
-int ipa_cfg_ep_nat(u32 clnt_hdl, const struct ipa_ep_cfg_nat *ipa_ep_cfg);
+int ipa3_cfg_ep_nat(u32 clnt_hdl, const struct ipa_ep_cfg_nat *ipa_ep_cfg);
 
-int ipa_cfg_ep_conn_track(u32 clnt_hdl,
+int ipa3_cfg_ep_conn_track(u32 clnt_hdl,
 	const struct ipa_ep_cfg_conn_track *ep_conn_track);
 
 int ipa_cfg_ep_hdr(u32 clnt_hdl, const struct ipa_ep_cfg_hdr *ipa_ep_cfg);
@@ -630,124 +630,106 @@ int ipa3_add_hdr(struct ipa_ioc_add_hdr *hdrs);
 
 int ipa3_del_hdr(struct ipa_ioc_del_hdr *hdls);
 
-int ipa_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
+int ipa3_add_hdr_usr(struct ipa_ioc_add_hdr *hdrs, bool user_only);
 
-int ipa_reset_hdr(bool user_only);
+int ipa3_reset_hdr(bool user_only);
 
 /*
 * Header Processing Context
 */
-int ipa_add_hdr_proc_ctx(struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs,
+int ipa3_add_hdr_proc_ctx(struct ipa_ioc_add_hdr_proc_ctx *proc_ctxs,
 	bool user_only);
 
-int ipa_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls);
+int ipa3_del_hdr_proc_ctx(struct ipa_ioc_del_hdr_proc_ctx *hdls);
 
 /*
 * Routing
 */
 
-int ipa_add_rt_rule_v2(struct ipa_ioc_add_rt_rule_v2 *rules);
+int ipa3_add_rt_rule_v2(struct ipa_ioc_add_rt_rule_v2 *rules);
 
-int ipa_add_rt_rule_usr(struct ipa_ioc_add_rt_rule *rules, bool user_only);
+int ipa3_add_rt_rule_usr(struct ipa_ioc_add_rt_rule *rules, bool user_only);
 
-int ipa_add_rt_rule_usr_v2(struct ipa_ioc_add_rt_rule_v2 *rules,
+int ipa3_add_rt_rule_usr_v2(struct ipa_ioc_add_rt_rule_v2 *rules,
 	bool user_only);
 
-int ipa_del_rt_rule(struct ipa_ioc_del_rt_rule *hdls);
+int ipa3_del_rt_rule(struct ipa_ioc_del_rt_rule *hdls);
 
-int ipa_commit_rt(enum ipa_ip_type ip);
+int ipa3_commit_rt(enum ipa_ip_type ip);
 
-int ipa_reset_rt(enum ipa_ip_type ip, bool user_only);
-
-int ipa_query_rt_index(struct ipa_ioc_get_rt_tbl_indx *in);
-
-int ipa_mdfy_rt_rule(struct ipa_ioc_mdfy_rt_rule *rules);
-
-int ipa_mdfy_rt_rule_v2(struct ipa_ioc_mdfy_rt_rule_v2 *rules);
-
-int ipa_get_rt_tbl(struct ipa_ioc_get_rt_tbl *lookup);
+int ipa3_reset_rt(enum ipa_ip_type ip, bool user_only);
 
 /*
 * Filtering
 */
-int ipa_add_flt_rule(struct ipa_ioc_add_flt_rule *rules);
 
-int ipa_add_flt_rule_v2(struct ipa_ioc_add_flt_rule_v2 *rules);
+int ipa3_del_flt_rule(struct ipa_ioc_del_flt_rule *hdls);
 
-int ipa_add_flt_rule_usr(struct ipa_ioc_add_flt_rule *rules, bool user_only);
+int ipa3_mdfy_flt_rule(struct ipa_ioc_mdfy_flt_rule *rules);
 
-int ipa_add_flt_rule_usr_v2(struct ipa_ioc_add_flt_rule_v2 *rules,
-	bool user_only);
+int ipa3_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
 
-int ipa_del_flt_rule(struct ipa_ioc_del_flt_rule *hdls);
-
-int ipa_mdfy_flt_rule(struct ipa_ioc_mdfy_flt_rule *rules);
-
-int ipa_mdfy_flt_rule_v2(struct ipa_ioc_mdfy_flt_rule_v2 *rules);
-
-int ipa_commit_flt(enum ipa_ip_type ip);
-
-int ipa_reset_flt(enum ipa_ip_type ip, bool user_only);
+int ipa3_reset_flt(enum ipa_ip_type ip, bool user_only);
 
 /*
 * NAT\IPv6CT
 */
-int ipa_allocate_nat_device(struct ipa_ioc_nat_alloc_mem *mem);
-int ipa_allocate_nat_table(struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
-int ipa_allocate_ipv6ct_table(
+int ipa3_allocate_nat_device(struct ipa_ioc_nat_alloc_mem *mem);
+int ipa3_allocate_nat_table(struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
+int ipa3_allocate_ipv6ct_table(
 	struct ipa_ioc_nat_ipv6ct_table_alloc *table_alloc);
 
-int ipa_nat_init_cmd(struct ipa_ioc_v4_nat_init *init);
-int ipa_ipv6ct_init_cmd(struct ipa_ioc_ipv6ct_init *init);
+int ipa3_nat_init_cmd(struct ipa_ioc_v4_nat_init *init);
+int ipa3_ipv6ct_init_cmd(struct ipa_ioc_ipv6ct_init *init);
 
-int ipa_nat_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
-int ipa_table_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
+int ipa3_nat_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
+int ipa3_table_dma_cmd(struct ipa_ioc_nat_dma_cmd *dma);
 
-int ipa_nat_del_cmd(struct ipa_ioc_v4_nat_del *del);
-int ipa_del_nat_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
-int ipa_del_ipv6ct_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
+int ipa3_nat_del_cmd(struct ipa_ioc_v4_nat_del *del);
+int ipa3_del_nat_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
+int ipa3_del_ipv6ct_table(struct ipa_ioc_nat_ipv6ct_table_del *del);
 
-int ipa_nat_mdfy_pdn(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
+int ipa3_nat_mdfy_pdn(struct ipa_ioc_nat_pdn_entry *mdfy_pdn);
 
 /*
 * Data path
 */
-int ipa_rx_poll(u32 clnt_hdl, int budget);
-void ipa_recycle_wan_skb(struct sk_buff *skb);
+int ipa3_rx_poll(u32 clnt_hdl, int budget);
+void ipa3_recycle_wan_skb(struct sk_buff *skb);
 
 /*
 * System pipes
 */
-int ipa_set_wlan_tx_info(struct ipa_wdi_tx_info *info);
+int ipa3_set_wlan_tx_info(struct ipa_wdi_tx_info *info);
 
 /*
 * Tethering bridge (Rmnet / MBIM)
 */
-int teth_bridge_init(struct teth_bridge_init_params *params);
+int ipa3_teth_bridge_init(struct teth_bridge_init_params *params);
 
-int teth_bridge_disconnect(enum ipa_client_type client);
+int ipa3_teth_bridge_disconnect(enum ipa_client_type client);
 
-int teth_bridge_connect(struct teth_bridge_connect_params *connect_params);
+int ipa3_teth_bridge_connect(struct teth_bridge_connect_params *connect_params);
 
 /*
 * Tethering client info
 */
-void ipa_set_client(int index, enum ipacm_client_enum client, bool uplink);
+void ipa3_set_client(int index, enum ipacm_client_enum client, bool uplink);
 
-enum ipacm_client_enum ipa_get_client(int pipe_idx);
+enum ipacm_client_enum ipa3_get_client(int pipe_idx);
 
-bool ipa_get_client_uplink(int pipe_idx);
+bool ipa3_get_client_uplink(int pipe_idx);
 
 /*
 * mux id
 */
-int ipa_write_qmap_id(struct ipa_ioc_write_qmapid *param_in);
+int ipa3_write_qmap_id(struct ipa_ioc_write_qmapid *param_in);
 
 /*
 * interrupts
 */
 
-int ipa_remove_interrupt_handler(enum ipa_irq_type interrupt);
+int ipa3_remove_interrupt_handler(enum ipa_irq_type interrupt);
 
 /*
 * Interface
@@ -763,13 +745,15 @@ int ipa3_deregister_intf(const char *name);
 * Miscellaneous
 */
 
-int ipa_uc_debug_stats_alloc(
+int ipa3_uc_debug_stats_alloc(
 	struct IpaHwOffloadStatsAllocCmdData_t cmdinfo);
-int ipa_uc_debug_stats_dealloc(uint32_t protocol);
-void ipa_get_gsi_stats(int prot_id,
+int ipa3_uc_debug_stats_dealloc(uint32_t protocol);
+void ipa3_get_gsi_stats(int prot_id,
 	struct ipa_uc_dbg_ring_stats *stats);
-int ipa_get_prot_id(enum ipa_client_type client);
+int ipa3_get_prot_id(enum ipa_client_type client);
 bool ipa_is_client_handle_valid(u32 clnt_hdl);
+int ipa3_get_smmu_params(struct ipa_smmu_in_params *in,
+	struct ipa_smmu_out_params *out);
 
 /**
 * ipa_tz_unlock_reg - Unlocks memory regions so that they become accessible
@@ -784,6 +768,6 @@ bool ipa_is_client_handle_valid(u32 clnt_hdl);
 *
 * Returns: 0 on success, negative on failure
 */
-int ipa_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
+int ipa3_tz_unlock_reg(struct ipa_tz_unlock_reg_info *reg_info, u16 num_regs);
 
 #endif /* _IPA_COMMON_I_H_ */

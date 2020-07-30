@@ -479,6 +479,7 @@ void ipa3_register_client_callback(int (*client_cb)(bool is_lock),
 		ipa3_ctx->get_teth_port_state[client] = teth_port_state;
 	IPADBG("exit\n");
 }
+EXPORT_SYMBOL(ipa3_register_client_callback);
 
 void ipa3_deregister_client_callback(enum ipa_client_type client_type)
 {
@@ -500,6 +501,7 @@ void ipa3_deregister_client_callback(enum ipa_client_type client_type)
 	ipa3_ctx->get_teth_port_state[client_cb] = NULL;
 	IPADBG("exit\n");
 }
+EXPORT_SYMBOL(ipa3_deregister_client_callback);
 
 static void client_lock_unlock_cb(enum ipa_client_type client, bool is_lock)
 {

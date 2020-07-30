@@ -471,7 +471,7 @@ static void ipa3_del_dflt_wan_rt_tables(void)
 
 	IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
 		rt_rule_entry->hdl, IPA_IP_v4);
-	if (ipa_del_rt_rule(rt_rule) ||
+	if (ipa3_del_rt_rule(rt_rule) ||
 			(rt_rule_entry->status)) {
 		IPAWANERR("Routing rule deletion failed\n");
 	}
@@ -480,7 +480,7 @@ static void ipa3_del_dflt_wan_rt_tables(void)
 	rt_rule_entry->hdl = rmnet_ipa3_ctx->dflt_v6_wan_rt_hdl;
 	IPAWANERR("Deleting Route hdl:(0x%x) with ip type: %d\n",
 		rt_rule_entry->hdl, IPA_IP_v6);
-	if (ipa_del_rt_rule(rt_rule) ||
+	if (ipa3_del_rt_rule(rt_rule) ||
 			(rt_rule_entry->status)) {
 		IPAWANERR("Routing rule deletion failed\n");
 	}
@@ -795,7 +795,7 @@ static int ipa3_wwan_add_ul_flt_rule_to_ipa(void)
 			sizeof(struct ipa_ipfltri_rule_eq));
 		memcpy(&(param->rules[0]), &flt_rule_entry,
 			sizeof(struct ipa_flt_rule_add));
-		if (ipa_add_flt_rule((struct ipa_ioc_add_flt_rule *)param)) {
+		if (ipa3_add_flt_rule((struct ipa_ioc_add_flt_rule *)param)) {
 			retval = -EFAULT;
 			IPAWANERR("add A7 UL filter rule(%d) failed\n", i);
 		} else {
@@ -857,7 +857,7 @@ static int ipa3_wwan_del_ul_flt_rule_to_ipa(void)
 		IPAWANDBG("delete-IPA rule index(%d)\n", i);
 		memcpy(&(param->hdl[0]), &flt_rule_entry,
 			sizeof(struct ipa_flt_rule_del));
-		if (ipa_del_flt_rule((struct ipa_ioc_del_flt_rule *)param)) {
+		if (ipa3_del_flt_rule((struct ipa_ioc_del_flt_rule *)param)) {
 			IPAWANERR("del A7 UL filter rule(%d) failed\n", i);
 			kfree(param);
 			return -EFAULT;
@@ -3287,10 +3287,10 @@ int rmnet_ipa3_set_tether_client_pipe(
 		IPAWANDBG("UL index-%d pipe %d\n", i,
 			data->ul_src_pipe_list[i]);
 		if (data->reset_client)
-			ipa_set_client(data->ul_src_pipe_list[i],
+			ipa3_set_client(data->ul_src_pipe_list[i],
 				0, false);
 		else
-			ipa_set_client(data->ul_src_pipe_list[i],
+			ipa3_set_client(data->ul_src_pipe_list[i],
 				data->ipa_client, true);
 	}
 	number = data->dl_dst_pipe_len;
@@ -3298,10 +3298,10 @@ int rmnet_ipa3_set_tether_client_pipe(
 		IPAWANDBG("DL index-%d pipe %d\n", i,
 			data->dl_dst_pipe_list[i]);
 		if (data->reset_client)
-			ipa_set_client(data->dl_dst_pipe_list[i],
+			ipa3_set_client(data->dl_dst_pipe_list[i],
 				0, false);
 		else
-			ipa_set_client(data->dl_dst_pipe_list[i],
+			ipa3_set_client(data->dl_dst_pipe_list[i],
 				data->ipa_client, false);
 	}
 	return 0;
@@ -3418,9 +3418,9 @@ static int rmnet_ipa3_query_tethering_stats_modem(
 			IPAWANDBG_LOW("dl_b_v4(%lu)v6(%lu)\n",
 				(unsigned long) stat_ptr->num_ipv4_bytes,
 				(unsigned long) stat_ptr->num_ipv6_bytes);
-			if (ipa_get_client_uplink(
+			if (ipa3_get_client_uplink(
 				stat_ptr->pipe_index) == false) {
-				if (data->ipa_client == ipa_get_client(
+				if (data->ipa_client == ipa3_get_client(
 					stat_ptr->pipe_index)) {
 					/* update the DL stats */
 					data->ipv4_rx_packets +=
@@ -3456,9 +3456,9 @@ static int rmnet_ipa3_query_tethering_stats_modem(
 			IPAWANDBG_LOW("ul_b_v4(%lu)v6(%lu)\n",
 				(unsigned long)stat_ptr->num_ipv4_bytes,
 				(unsigned long) stat_ptr->num_ipv6_bytes);
-			if (ipa_get_client_uplink(
+			if (ipa3_get_client_uplink(
 				stat_ptr->pipe_index) == true) {
-				if (data->ipa_client == ipa_get_client(
+				if (data->ipa_client == ipa3_get_client(
 					stat_ptr->pipe_index)) {
 					/* update the DL stats */
 					data->ipv4_tx_packets +=
@@ -4985,7 +4985,7 @@ static int ipa3_rmnet_poll(struct napi_struct *napi, int budget)
 {
 	int rcvd_pkts = 0;
 
-	rcvd_pkts = ipa_rx_poll(rmnet_ipa3_ctx->ipa3_to_apps_hdl,
+	rcvd_pkts = ipa3_rx_poll(rmnet_ipa3_ctx->ipa3_to_apps_hdl,
 					NAPI_WEIGHT);
 	IPAWANDBG_LOW("rcvd packets: %d\n", rcvd_pkts);
 	return rcvd_pkts;

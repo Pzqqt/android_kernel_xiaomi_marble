@@ -663,6 +663,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_conn_wdi3_pipes);
 
 int ipa3_disconn_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 {
@@ -738,6 +739,7 @@ exit:
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_by_pipe(ipa_ep_idx_tx));
 	return result;
 }
+EXPORT_SYMBOL(ipa3_disconn_wdi3_pipes);
 
 int ipa3_enable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 {
@@ -834,6 +836,7 @@ exit:
 	IPA_ACTIVE_CLIENTS_DEC_EP(ipa3_get_client_mapping(ipa_ep_idx_tx));
 	return result;
 }
+EXPORT_SYMBOL(ipa3_enable_wdi3_pipes);
 
 int ipa3_disable_wdi3_pipes(int ipa_ep_idx_tx, int ipa_ep_idx_rx)
 {
@@ -929,6 +932,7 @@ fail:
 	return result;
 
 }
+EXPORT_SYMBOL(ipa3_disable_wdi3_pipes);
 
 int ipa3_write_qmapid_wdi3_gsi_pipe(u32 clnt_hdl, u8 qmap_id)
 {

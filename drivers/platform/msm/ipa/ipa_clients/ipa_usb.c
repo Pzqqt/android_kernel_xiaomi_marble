@@ -31,9 +31,9 @@
 	do { \
 		pr_debug(IPA_USB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -41,7 +41,7 @@
 	do { \
 		pr_debug(IPA_USB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -49,9 +49,9 @@
 	do { \
 		pr_err(IPA_USB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -59,9 +59,9 @@
 	do { \
 		pr_info(IPA_USB_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_USB_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -605,7 +605,7 @@ static int ipa3_usb_init_teth_bridge(void)
 {
 	int result;
 
-	result = teth_bridge_init(&ipa3_usb_ctx->teth_bridge_params);
+	result = ipa3_teth_bridge_init(&ipa3_usb_ctx->teth_bridge_params);
 	if (result) {
 		IPA_USB_ERR("Failed to initialize teth_bridge\n");
 		return result;
@@ -870,7 +870,7 @@ static int ipa_usb_init_teth_prot_internal(enum ipa_usb_teth_prot teth_prot,
 		 * If needed we can include the same for IPA_PROD ep.
 		 * For IPA_USB_DIAG/DPL config there will not be any UL ep.
 		 */
-		ipa_register_client_callback(&ipa_usb_set_lock_unlock,
+		ipa3_register_client_callback(&ipa_usb_set_lock_unlock,
 			&ipa3_usb_get_teth_port_state, IPA_CLIENT_USB_PROD);
 		break;
 	case IPA_USB_DIAG:
@@ -1319,7 +1319,7 @@ static int ipa3_usb_connect_teth_bridge(
 {
 	int result;
 
-	result = teth_bridge_connect(params);
+	result = ipa3_teth_bridge_connect(params);
 	if (result) {
 		IPA_USB_ERR("failed to connect teth_bridge (%s)\n",
 			params->tethering_mode == TETH_TETHERING_MODE_RMNET ?
@@ -1459,7 +1459,7 @@ static int ipa3_usb_disconnect_teth_bridge(void)
 {
 	int result;
 
-	result = teth_bridge_disconnect(IPA_CLIENT_USB_PROD);
+	result = ipa3_teth_bridge_disconnect(IPA_CLIENT_USB_PROD);
 	if (result) {
 		IPA_USB_ERR("failed to disconnect teth_bridge\n");
 		return result;
@@ -2044,7 +2044,7 @@ static int ipa_usb_xdci_disconnect_internal(u32 ul_clnt_hdl, u32 dl_clnt_hdl,
 		memset(&holb_cfg, 0, sizeof(holb_cfg));
 		holb_cfg.en = IPA_HOLB_TMR_EN;
 		holb_cfg.tmr_val = 0;
-		ipa_cfg_ep_holb(dl_clnt_hdl, &holb_cfg);
+		ipa3_cfg_ep_holb(dl_clnt_hdl, &holb_cfg);
 	}
 
 	spin_lock_irqsave(&ipa3_usb_ctx->state_lock, flags);
@@ -2635,7 +2635,7 @@ void ipa3_usb_exit(void)
 	 * If needed we can include the same for IPA_PROD ep.
 	 * For IPA_USB_DIAG/DPL config there will not be any UL config.
 	 */
-	ipa_deregister_client_callback(IPA_CLIENT_USB_PROD);
+	ipa3_deregister_client_callback(IPA_CLIENT_USB_PROD);
 
 	ipa_usb_debugfs_remove();
 	kfree(ipa3_usb_ctx);

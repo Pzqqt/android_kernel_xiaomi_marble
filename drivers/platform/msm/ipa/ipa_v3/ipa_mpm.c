@@ -23,9 +23,9 @@
 	do { \
 		pr_debug(IPA_MPM_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			IPA_MPM_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MPM_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -33,7 +33,7 @@
 	do { \
 		pr_debug(IPA_MPM_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			IPA_MPM_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -42,9 +42,9 @@
 	do { \
 		pr_err(IPA_MPM_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 				IPA_MPM_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 				IPA_MPM_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -3003,7 +3003,7 @@ static int ipa_mpm_populate_smmu_info(struct platform_device *pdev)
 
 	/* get IPA SMMU enabled status */
 	smmu_in.smmu_client = IPA_SMMU_AP_CLIENT;
-	if (ipa_get_smmu_params(&smmu_in, &smmu_out))
+	if (ipa3_get_smmu_params(&smmu_in, &smmu_out))
 		ipa_mpm_ctx->dev_info.ipa_smmu_enabled = false;
 	else
 		ipa_mpm_ctx->dev_info.ipa_smmu_enabled =

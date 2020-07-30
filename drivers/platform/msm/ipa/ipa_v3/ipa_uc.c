@@ -617,6 +617,7 @@ int ipa3_uc_state_check(void)
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_uc_state_check);
 
 /**
  * ipa3_uc_loaded_check() - Check the uC has been loaded
@@ -1761,6 +1762,7 @@ int ipa3_set_wlan_tx_info(struct ipa_wdi_tx_info *info)
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_set_wlan_tx_info);
 
 int ipa3_uc_send_enable_flow_control(uint16_t gsi_chid,
 		uint16_t redMarkerThreshold)

@@ -128,6 +128,7 @@ int ipa3_wigig_internal_init(
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_wigig_internal_init);
 
 static int ipa3_wigig_tx_bit_to_ep(
 	const u8 tx_bit_num,
@@ -1143,6 +1144,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_conn_wigig_rx_pipe_i);
 
 int ipa3_conn_wigig_client_i(void *in,
 	struct ipa_wigig_conn_out_params *out,
@@ -1374,6 +1376,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_conn_wigig_client_i);
 
 int ipa3_disconn_wigig_pipe_i(enum ipa_client_type client,
 	struct ipa_wigig_pipe_setup_info_smmu *pipe_smmu,
@@ -1488,6 +1491,7 @@ fail:
 	IPA_ACTIVE_CLIENTS_DEC_SIMPLE();
 	return result;
 }
+EXPORT_SYMBOL(ipa3_disconn_wigig_pipe_i);
 
 int ipa3_wigig_uc_msi_init(bool init,
 	phys_addr_t periph_baddr_pa,
@@ -1642,6 +1646,7 @@ fail_gen_tx:
 fail:
 	return result;
 }
+EXPORT_SYMBOL(ipa3_wigig_uc_msi_init);
 
 int ipa3_enable_wigig_pipe_i(enum ipa_client_type client)
 {
@@ -1763,6 +1768,7 @@ fail_enable_datapath:
 	IPA_ACTIVE_CLIENTS_DEC_EP(client);
 	return res;
 }
+EXPORT_SYMBOL(ipa3_enable_wigig_pipe_i);
 
 int ipa3_disable_wigig_pipe_i(enum ipa_client_type client)
 {
@@ -1869,6 +1875,7 @@ fail_stop_channel:
 	ipa_assert();
 	return res;
 }
+EXPORT_SYMBOL(ipa3_disable_wigig_pipe_i);
 
 static void ipa_wigig_free_msg(void *msg, uint32_t len, uint32_t type)
 {

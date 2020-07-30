@@ -1258,6 +1258,7 @@ int ipa3_qmi_enable_force_clear_datapath_send(
 		resp.resp.result,
 		resp.resp.error, "ipa_enable_force_clear_datapath");
 }
+EXPORT_SYMBOL(ipa3_qmi_enable_force_clear_datapath_send);
 
 int ipa3_qmi_disable_force_clear_datapath_send(
 	struct ipa_disable_force_clear_datapath_req_msg_v01 *req)
@@ -1315,6 +1316,7 @@ int ipa3_qmi_disable_force_clear_datapath_send(
 		resp.resp.result,
 		resp.resp.error, "ipa_disable_force_clear_datapath");
 }
+EXPORT_SYMBOL(ipa3_qmi_disable_force_clear_datapath_send);
 
 /* sending filter-installed-notify-request to modem*/
 int ipa3_qmi_filter_notify_send(

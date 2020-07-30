@@ -227,13 +227,13 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	rt_rule->rules)[0].rule.cnt_idx = ctx->rt4_usb_cnt_id;
 	((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
+	if (ipa3_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
 	}
-	if (ipa_get_rt_tbl(&rt_lookup)) {
+	if (ipa3_get_rt_tbl(&rt_lookup)) {
 		IPA_UT_ERR("failed to query V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
@@ -261,13 +261,13 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	rt_rule->rules)[0].rule.cnt_idx = ctx->rt6_usb_cnt_id;
 	((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
+	if (ipa3_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
 	}
-	if (ipa_get_rt_tbl(&rt_lookup)) {
+	if (ipa3_get_rt_tbl(&rt_lookup)) {
 		IPA_UT_ERR("failed to query V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
@@ -295,13 +295,13 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	rt_rule->rules)[0].rule.cnt_idx = ctx->rt4_odu_cnt_id;
 	((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
+	if (ipa3_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
 	}
-	if (ipa_get_rt_tbl(&rt_lookup)) {
+	if (ipa3_get_rt_tbl(&rt_lookup)) {
 		IPA_UT_ERR("failed to query V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
@@ -329,13 +329,13 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	rt_rule->rules)[0].rule.cnt_idx = ctx->rt6_odu_cnt_id;
 	((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
+	if (ipa3_add_rt_rule_v2(rt_rule) || ((struct ipa_rt_rule_add_v2 *)
 	rt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
 	}
-	if (ipa_get_rt_tbl(&rt_lookup)) {
+	if (ipa3_get_rt_tbl(&rt_lookup)) {
 		IPA_UT_ERR("failed to query V4 rules\n");
 		ret = -EFAULT;
 		goto free_query;
@@ -364,7 +364,7 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	flt_rule->rules)[0].rule.cnt_idx = ctx->flt4_usb_cnt_id;
 	((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
+	if (ipa3_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
@@ -393,7 +393,7 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	flt_rule->rules)[0].rule.cnt_idx = ctx->flt6_usb_cnt_id;
 	((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
+	if (ipa3_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V6 rules\n");
 		ret = -EFAULT;
@@ -422,7 +422,7 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	flt_rule->rules)[0].rule.cnt_idx = ctx->flt4_odu_cnt_id;
 	((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
+	if (ipa3_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V4 rules\n");
 		ret = -EFAULT;
@@ -451,7 +451,7 @@ static int ipa_test_hw_stats_add_FnR(void *priv)
 	flt_rule->rules)[0].rule.cnt_idx = ctx->flt6_odu_cnt_id;
 	((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].rule.enable_stats = true;
-	if (ipa_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
+	if (ipa3_add_flt_rule_v2(flt_rule) || ((struct ipa_flt_rule_add_v2 *)
 	flt_rule->rules)[0].status) {
 		IPA_UT_ERR("failed to install V6 rules\n");
 		ret = -EFAULT;

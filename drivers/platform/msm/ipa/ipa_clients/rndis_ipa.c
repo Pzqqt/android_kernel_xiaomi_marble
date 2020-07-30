@@ -1951,7 +1951,7 @@ static int rndis_ipa_ep_registers_cfg(
 	}
 
 	usb_to_ipa_ep_cfg->deaggr.max_packet_len = max_xfer_size_bytes_to_dev;
-	result = ipa_cfg_ep(usb_to_ipa_hdl, usb_to_ipa_ep_cfg);
+	result = ipa3_cfg_ep(usb_to_ipa_hdl, usb_to_ipa_ep_cfg);
 	if (result) {
 		pr_err("failed to configure USB to IPA point\n");
 		return result;
@@ -1981,7 +1981,7 @@ static int rndis_ipa_ep_registers_cfg(
 	/* enable hdr_metadata_reg_valid */
 	usb_to_ipa_ep_cfg->hdr.hdr_metadata_reg_valid = true;
 
-	result = ipa_cfg_ep(ipa_to_usb_hdl, &ipa_to_usb_ep_cfg);
+	result = ipa3_cfg_ep(ipa_to_usb_hdl, &ipa_to_usb_ep_cfg);
 	if (result) {
 		pr_err("failed to configure IPA to USB end-point\n");
 		return result;
@@ -2372,7 +2372,7 @@ static ssize_t rndis_ipa_debugfs_aggr_write
 		return -EFAULT;
 	rndis_ipa_ctx = file->private_data;
 
-	result = ipa_cfg_ep(rndis_ipa_ctx->usb_to_ipa_hdl, &ipa_to_usb_ep_cfg);
+	result = ipa3_cfg_ep(rndis_ipa_ctx->usb_to_ipa_hdl, &ipa_to_usb_ep_cfg);
 	if (result) {
 		pr_err("failed to re-configure USB to IPA point\n");
 		return result;

@@ -44,6 +44,8 @@
 
 #endif
 
+#define DRV_NAME "ipa"
+
 #define IPA_SUBSYSTEM_NAME "ipa_fws"
 #define IPA_UC_SUBSYSTEM_NAME "ipa_uc"
 
@@ -143,6 +145,296 @@ static struct ipa3_plat_drv_res ipa3_res = {0, };
 static struct clk *ipa3_clk;
 
 struct ipa3_context *ipa3_ctx = NULL;
+
+int ipa3_plat_drv_probe(struct platform_device *pdev_p);
+int ipa3_pci_drv_probe(
+	struct pci_dev            *pci_dev,
+	const struct pci_device_id *ent);
+
+/**
+ * ipa_get_hw_type() - Return IPA HW version
+ *
+ * Return value: enum ipa_hw_type
+ */
+enum ipa_hw_type ipa_get_hw_type_internal(void)
+{
+	if (ipa3_ctx == NULL)
+		return IPA_HW_None;
+
+	return ipa3_ctx->ipa_hw_type;
+}
+
+/**
+ * ipa_assert() - general function for assertion
+ */
+void ipa_assert(void)
+{
+	pr_err("IPA: unrecoverable error has occurred, asserting\n");
+	BUG();
+}
+EXPORT_SYMBOL(ipa_assert);
+
+#if defined(CONFIG_IPA_EMULATION)
+static bool running_emulation = true;
+#else
+static bool running_emulation;
+#endif
+
+static const struct of_device_id ipa_pci_drv_match[] = {
+	{ .compatible = "qcom,ipa", },
+	{}
+};
+
+#define LOCAL_VENDOR 0x17CB
+#define LOCAL_DEVICE 0x00ff
+
+static const char ipa_pci_driver_name[] = "qcipav3";
+
+static const struct pci_device_id ipa_pci_tbl[] = {
+	{ PCI_DEVICE(LOCAL_VENDOR, LOCAL_DEVICE) },
+	{ 0, 0, 0, 0, 0, 0, 0 }
+};
+
+MODULE_DEVICE_TABLE(pci, ipa_pci_tbl);
+
+static void ipa_pci_remove(struct pci_dev *pci_dev)
+{
+}
+
+static void ipa_pci_shutdown(struct pci_dev *pci_dev)
+{
+}
+
+static pci_ers_result_t ipa_pci_io_error_detected(struct pci_dev *pci_dev,
+	pci_channel_state_t state)
+{
+	return 0;
+}
+
+static pci_ers_result_t ipa_pci_io_slot_reset(struct pci_dev *pci_dev)
+{
+	return 0;
+}
+
+static void ipa_pci_io_resume(struct pci_dev *pci_dev)
+{
+}
+
+/* PCI Error Recovery */
+static const struct pci_error_handlers ipa_pci_err_handler = {
+	.error_detected = ipa_pci_io_error_detected,
+	.slot_reset = ipa_pci_io_slot_reset,
+	.resume = ipa_pci_io_resume,
+};
+
+static struct pci_driver ipa_pci_driver = {
+	.name     = ipa_pci_driver_name,
+	.id_table = ipa_pci_tbl,
+	.probe    = ipa3_pci_drv_probe,
+	.remove   = ipa_pci_remove,
+	.shutdown = ipa_pci_shutdown,
+	.err_handler = &ipa_pci_err_handler
+};
+
+static const struct of_device_id ipa_plat_drv_match[] = {
+	{ .compatible = "qcom,ipa", },
+	{ .compatible = "qcom,ipa-smmu-ap-cb", },
+	{ .compatible = "qcom,ipa-smmu-wlan-cb", },
+	{ .compatible = "qcom,ipa-smmu-uc-cb", },
+	{ .compatible = "qcom,ipa-smmu-11ad-cb", },
+	{ .compatible = "qcom,smp2p-map-ipa-1-in", },
+	{ .compatible = "qcom,smp2p-map-ipa-1-out", },
+	{}
+};
+
+/**
+ * ipa_write_64() - convert 64 bit value to byte array
+ * @w: 64 bit integer
+ * @dest: byte array
+ *
+ * Return value: converted value
+ */
+u8 *ipa_write_64(u64 w, u8 *dest)
+{
+	if (unlikely(dest == NULL)) {
+		pr_err("%s: NULL address\n", __func__);
+		return dest;
+	}
+	*dest++ = (u8)((w) & 0xFF);
+	*dest++ = (u8)((w >> 8) & 0xFF);
+	*dest++ = (u8)((w >> 16) & 0xFF);
+	*dest++ = (u8)((w >> 24) & 0xFF);
+	*dest++ = (u8)((w >> 32) & 0xFF);
+	*dest++ = (u8)((w >> 40) & 0xFF);
+	*dest++ = (u8)((w >> 48) & 0xFF);
+	*dest++ = (u8)((w >> 56) & 0xFF);
+
+	return dest;
+}
+
+/**
+ * ipa_write_32() - convert 32 bit value to byte array
+ * @w: 32 bit integer
+ * @dest: byte array
+ *
+ * Return value: converted value
+ */
+u8 *ipa_write_32(u32 w, u8 *dest)
+{
+	if (unlikely(dest == NULL)) {
+		pr_err("%s: NULL address\n", __func__);
+		return dest;
+	}
+	*dest++ = (u8)((w) & 0xFF);
+	*dest++ = (u8)((w >> 8) & 0xFF);
+	*dest++ = (u8)((w >> 16) & 0xFF);
+	*dest++ = (u8)((w >> 24) & 0xFF);
+
+	return dest;
+}
+
+/**
+ * ipa_write_16() - convert 16 bit value to byte array
+ * @hw: 16 bit integer
+ * @dest: byte array
+ *
+ * Return value: converted value
+ */
+u8 *ipa_write_16(u16 hw, u8 *dest)
+{
+	if (unlikely(dest == NULL)) {
+		pr_err("%s: NULL address\n", __func__);
+		return dest;
+	}
+	*dest++ = (u8)((hw) & 0xFF);
+	*dest++ = (u8)((hw >> 8) & 0xFF);
+
+	return dest;
+}
+
+/**
+ * ipa_write_8() - convert 8 bit value to byte array
+ * @hw: 8 bit integer
+ * @dest: byte array
+ *
+ * Return value: converted value
+ */
+u8 *ipa_write_8(u8 b, u8 *dest)
+{
+	if (unlikely(dest == NULL)) {
+		WARN(1, "%s: NULL address\n", __func__);
+		return dest;
+	}
+	*dest++ = (b) & 0xFF;
+
+	return dest;
+}
+
+/**
+ * ipa_pad_to_64() - pad byte array to 64 bit value
+ * @dest: byte array
+ *
+ * Return value: padded value
+ */
+u8 *ipa_pad_to_64(u8 *dest)
+{
+	int i;
+	int j;
+
+	if (unlikely(dest == NULL)) {
+		WARN(1, "%s: NULL address\n", __func__);
+		return dest;
+	}
+
+	i = (long)dest & 0x7;
+
+	if (i)
+		for (j = 0; j < (8 - i); j++)
+			*dest++ = 0;
+
+	return dest;
+}
+
+/**
+ * ipa_pad_to_32() - pad byte array to 32 bit value
+ * @dest: byte array
+ *
+ * Return value: padded value
+ */
+u8 *ipa_pad_to_32(u8 *dest)
+{
+	int i;
+	int j;
+
+	if (unlikely(dest == NULL)) {
+		WARN(1, "%s: NULL address\n", __func__);
+		return dest;
+	}
+
+	i = (long)dest & 0x7;
+
+	if (i)
+		for (j = 0; j < (4 - i); j++)
+			*dest++ = 0;
+
+	return dest;
+}
+
+int ipa_smmu_store_sgt(struct sg_table **out_ch_ptr,
+	struct sg_table *in_sgt_ptr)
+{
+	unsigned int nents;
+
+	if (in_sgt_ptr != NULL) {
+		*out_ch_ptr = kzalloc(sizeof(struct sg_table), GFP_KERNEL);
+		if (*out_ch_ptr == NULL)
+			return -ENOMEM;
+
+		nents = in_sgt_ptr->nents;
+
+		(*out_ch_ptr)->sgl =
+			kcalloc(nents, sizeof(struct scatterlist),
+				GFP_KERNEL);
+		if ((*out_ch_ptr)->sgl == NULL) {
+			kfree(*out_ch_ptr);
+			*out_ch_ptr = NULL;
+			return -ENOMEM;
+		}
+
+		memcpy((*out_ch_ptr)->sgl, in_sgt_ptr->sgl,
+			nents*sizeof((*out_ch_ptr)->sgl));
+		(*out_ch_ptr)->nents = nents;
+		(*out_ch_ptr)->orig_nents = in_sgt_ptr->orig_nents;
+	}
+	return 0;
+}
+EXPORT_SYMBOL(ipa_smmu_store_sgt);
+
+int ipa_smmu_free_sgt(struct sg_table **out_sgt_ptr)
+{
+	if (*out_sgt_ptr != NULL) {
+		kfree((*out_sgt_ptr)->sgl);
+		(*out_sgt_ptr)->sgl = NULL;
+		kfree(*out_sgt_ptr);
+		*out_sgt_ptr = NULL;
+	}
+	return 0;
+}
+EXPORT_SYMBOL(ipa_smmu_free_sgt);
+
+static const struct dev_pm_ops ipa_pm_ops = {
+	.suspend_late = ipa3_ap_suspend,
+	.resume_early = ipa3_ap_resume,
+};
+
+static struct platform_driver ipa_plat_drv = {
+	.probe = ipa3_plat_drv_probe,
+	.driver = {
+		.name = DRV_NAME,
+		.pm = &ipa_pm_ops,
+		.of_match_table = ipa_plat_drv_match,
+	},
+};
 
 static struct {
 	bool present[IPA_SMMU_CB_MAX];
@@ -5052,6 +5344,7 @@ void ipa3_inc_client_enable_clks(struct ipa_active_client_logging_info *id)
 		atomic_read(&ipa3_ctx->ipa3_active_clients.cnt));
 	mutex_unlock(&ipa3_ctx->ipa3_active_clients.mutex);
 }
+EXPORT_SYMBOL(ipa3_inc_client_enable_clks);
 
 static void ipa3_handle_gsi_differ_irq(void)
 {
@@ -5091,6 +5384,7 @@ int ipa3_inc_client_enable_clks_no_block(struct ipa_active_client_logging_info
 
 	return -EPERM;
 }
+EXPORT_SYMBOL(ipa3_inc_client_enable_clks_no_block);
 
 static void __ipa3_dec_client_disable_clks(void)
 {
@@ -5169,6 +5463,7 @@ void ipa3_dec_client_disable_clks(struct ipa_active_client_logging_info *id)
 	ipa3_active_clients_log_dec(id, false);
 	__ipa3_dec_client_disable_clks();
 }
+EXPORT_SYMBOL(ipa3_dec_client_disable_clks);
 
 static void ipa_dec_clients_disable_clks_on_wq(struct work_struct *work)
 {
@@ -5406,6 +5701,7 @@ int ipa3_set_required_perf_profile(enum ipa_voltage_level floor_voltage,
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_set_required_perf_profile);
 
 static void ipa3_process_irq_schedule_rel(void)
 {
@@ -7501,7 +7797,7 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 	/* Get IPA HW Version */
 	result = of_property_read_u32(pdev->dev.of_node, "qcom,ipa-hw-ver",
 					&ipa_drv_res->ipa_hw_type);
-	if ((result) || (ipa_drv_res->ipa_hw_type == 0)) {
+	if ((result) || (ipa_drv_res->ipa_hw_type == IPA_HW_None)) {
 		IPAERR(":get resource failed for ipa-hw-ver\n");
 		return -ENODEV;
 	}
@@ -8522,13 +8818,45 @@ static void ipa_smmu_update_fw_loader(void)
 	}
 }
 
-int ipa3_plat_drv_probe(struct platform_device *pdev_p,
-	struct ipa_api_controller *api_ctrl,
-	const struct of_device_id *pdrv_match)
+int ipa3_plat_drv_probe(struct platform_device *pdev_p)
 {
 	int result;
 	struct device *dev = &pdev_p->dev;
 	struct ipa_smmu_cb_ctx *cb;
+
+	/*
+	 * IPA probe function can be called for multiple times as the same probe
+	 * function handles multiple compatibilities
+	 */
+	pr_debug("ipa: IPA driver probing started for %s\n",
+		pdev_p->dev.of_node->name);
+
+	if (ipa3_ctx == NULL) {
+		IPAERR("ipa3_ctx was not initialized\n");
+		return -EPROBE_DEFER;
+	}
+
+	if (ipa3_ctx->ipa_hw_type == 0) {
+
+		/* Get IPA HW Version */
+		result = of_property_read_u32(pdev_p->dev.of_node,
+			"qcom,ipa-hw-ver", &ipa3_ctx->ipa_hw_type);
+		if ((result) || (ipa3_ctx->ipa_hw_type == IPA_HW_None)) {
+			pr_err("ipa: get resource failed for ipa-hw-ver!\n");
+			return -ENODEV;
+		}
+		pr_debug("ipa: ipa_hw_type = %d\n", ipa3_ctx->ipa_hw_type);
+	}
+
+	if (ipa3_ctx->ipa_hw_type < IPA_HW_v3_0) {
+		pr_err(":IPA version below 3.0 not supported\n");
+		return -ENODEV;
+	}
+
+	if (ipa3_ctx->ipa_hw_type >= IPA_HW_MAX) {
+		pr_err(":IPA version is greater than the MAX\n");
+		return -ENODEV;
+	}
 
 	IPADBG("IPA driver probing started\n");
 	IPADBG("dev->of_node->name = %s\n", dev->of_node->name);
@@ -8601,12 +8929,6 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p,
 	/* Get GSI version */
 	ipa3_ctx->gsi_ver = ipa3_get_gsi_ver(ipa3_res.ipa_hw_type);
 
-	result = ipa3_bind_api_controller(ipa3_res.ipa_hw_type, api_ctrl);
-	if (result) {
-		IPAERR("IPA API binding failed\n");
-		return result;
-	}
-
 	if (of_property_read_bool(pdev_p->dev.of_node, "qcom,arm-smmu")) {
 		if (of_property_read_bool(pdev_p->dev.of_node,
 			"qcom,use-64-bit-dma-mask"))
@@ -8640,11 +8962,14 @@ int ipa3_plat_drv_probe(struct platform_device *pdev_p,
 	}
 
 	result = of_platform_populate(pdev_p->dev.of_node,
-		pdrv_match, NULL, &pdev_p->dev);
+		ipa_plat_drv_match, NULL, &pdev_p->dev);
 	if (result) {
 		IPAERR("failed to populate platform\n");
 		return result;
 	}
+
+	if (result && result != -EPROBE_DEFER)
+		IPAERR("ipa: ipa_plat_drv_probe failed\n");
 
 	return result;
 }
@@ -8877,6 +9202,7 @@ int ipa3_get_smmu_params(struct ipa_smmu_in_params *in,
 
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_get_smmu_params);
 
 #define MAX_LEN 96
 
@@ -8925,8 +9251,7 @@ void ipa_pc_qmp_enable(void)
 
 int ipa3_pci_drv_probe(
 	struct pci_dev            *pci_dev,
-	struct ipa_api_controller *api_ctrl,
-	const struct of_device_id *pdrv_match)
+	const struct pci_device_id *ent)
 {
 	int result;
 	struct ipa3_plat_drv_res *ipa_drv_res;
@@ -8938,11 +9263,27 @@ int ipa3_pci_drv_probe(
 	struct device *dev;
 	static struct platform_device platform_dev;
 
-	if (!pci_dev || !api_ctrl || !pdrv_match) {
-		IPAERR(
-		    "Bad arg: pci_dev (%pK) and/or api_ctrl (%pK) and/or pdrv_match (%pK)\n",
-		    pci_dev, api_ctrl, pdrv_match);
+	if (!pci_dev || !ent) {
+		pr_err(
+			"Bad arg: pci_dev (%pK) and/or ent (%pK)\n",
+			pci_dev, ent);
 		return -EOPNOTSUPP;
+	}
+
+	if (ipa3_ctx == NULL) {
+		IPAERR("ipa3_ctx was not initialized\n");
+		return -EPROBE_DEFER;
+	}
+
+	if (ipa3_ctx->ipa_hw_type == 0) {
+		/* Get IPA HW Version */
+		result = of_property_read_u32(NULL,
+			"qcom,ipa-hw-ver", &ipa3_ctx->ipa_hw_type);
+		if (result || ipa3_ctx->ipa_hw_type == IPA_HW_None) {
+			pr_err("ipa: get resource failed for ipa-hw-ver!\n");
+			return -ENODEV;
+		}
+		pr_debug("ipa: ipa_hw_type = %d\n", ipa3_ctx->ipa_hw_type);
 	}
 
 	dev = &(pci_dev->dev);
@@ -9041,14 +9382,6 @@ int ipa3_pci_drv_probe(
 	IPADBG("emulator_intcntrlr_mem_size = 0x%x\n",
 	       ipa_drv_res->emulator_intcntrlr_mem_size);
 
-	result = ipa3_bind_api_controller(ipa_drv_res->ipa_hw_type, api_ctrl);
-	if (result != 0) {
-		IPAERR("ipa3_bind_api_controller() failed\n");
-		pci_release_region(pci_dev, 0);
-		pci_disable_device(pci_dev);
-		return result;
-	}
-
 	bits = (ipa_drv_res->use_64_bit_dma_mask) ? 64 : 32;
 
 	if (dma_set_mask(dev, DMA_BIT_MASK(bits)) != 0) {
@@ -9114,6 +9447,37 @@ uint ipa3_get_emulation_type(void)
 	return emulation_type;
 }
 
+static int __init ipa_module_init(void)
+{
+	pr_debug("IPA module init\n");
+
+	ipa3_ctx = kzalloc(sizeof(*ipa3_ctx), GFP_KERNEL);
+	if (!ipa3_ctx) {
+		return -ENOMEM;
+	}
+	mutex_init(&ipa3_ctx->lock);
+
+	if (running_emulation) {
+		/* Register as a PCI device driver */
+		return pci_register_driver(&ipa_pci_driver);
+	}
+	/* Register as a platform device driver */
+	return platform_driver_register(&ipa_plat_drv);
+}
+subsys_initcall(ipa_module_init);
+
+static void __exit ipa_module_exit(void)
+{
+	if (running_emulation)
+		pci_unregister_driver(&ipa_pci_driver);
+	platform_driver_unregister(&ipa_plat_drv);
+	kfree(ipa3_ctx);
+	ipa3_ctx = NULL;
+}
+module_exit(ipa_module_exit);
+
+MODULE_SOFTDEP("pre: subsys-pil-tz");
+MODULE_SOFTDEP("pre: qcom-arm-smmu-mod");
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("IPA HW device driver");
 

@@ -15,9 +15,9 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -25,7 +25,7 @@
 	do { \
 		pr_debug(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -33,9 +33,9 @@
 	do { \
 		pr_err(OFFLOAD_DRV_NAME " %s:%d " fmt, \
 			__func__, __LINE__, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -44,7 +44,7 @@
 		pr_err_ratelimited_ipa( \
 		OFFLOAD_DRV_NAME " %s:%d " fmt, __func__,\
 		__LINE__, ## args);\
-		IPA_IPC_LOGGING(ipa_get_ipc_logbuf_low(), \
+		IPA_IPC_LOGGING(ipa3_get_ipc_logbuf_low(), \
 			OFFLOAD_DRV_NAME " %s:%d " fmt, ## args); \
 	} while (0)
 
@@ -163,7 +163,7 @@ static int ipa_wigig_init_internal(struct ipa_wigig_init_in_params *in,
 
 	inout.notify = in->notify;
 	inout.priv = in->priv;
-	if (ipa_wigig_internal_init(&inout, in->int_notify,
+	if (ipa3_wigig_internal_init(&inout, in->int_notify,
 		&out->uc_db_pa)) {
 		kfree(ipa_wigig_ctx);
 		ipa_wigig_ctx = NULL;
@@ -219,7 +219,7 @@ static bool ipa_wigig_is_smmu_enabled_internal(void)
 	IPA_WIGIG_DBG("\n");
 
 	in.smmu_client = IPA_SMMU_WIGIG_CLIENT;
-	ipa_get_smmu_params(&in, &out);
+	ipa3_get_smmu_params(&in, &out);
 
 	IPA_WIGIG_DBG("exit (%d)\n", out.smmu_enable);
 
@@ -235,7 +235,7 @@ static int ipa_wigig_init_smmu_params(void)
 	IPA_WIGIG_DBG("\n");
 
 	in.smmu_client = IPA_SMMU_WIGIG_CLIENT;
-	ret = ipa_get_smmu_params(&in, &out);
+	ret = ipa3_get_smmu_params(&in, &out);
 	if (ret) {
 		IPA_WIGIG_ERR("couldn't get SMMU params %d\n", ret);
 		return ret;
@@ -623,7 +623,7 @@ static int ipa_wigig_conn_rx_pipe_internal(struct ipa_wigig_conn_rx_in_params *i
 		return -EPERM;
 	}
 
-	ret = ipa_uc_state_check();
+	ret = ipa3_uc_state_check();
 	if (ret) {
 		IPA_WIGIG_ERR("uC not ready\n");
 		return ret;
@@ -649,7 +649,7 @@ static int ipa_wigig_conn_rx_pipe_internal(struct ipa_wigig_conn_rx_in_params *i
 	}
 	IPA_WIGIG_DBG("pm hdl %d\n", ipa_wigig_ctx->ipa_pm_hdl);
 
-	ret = ipa_wigig_uc_msi_init(true,
+	ret = ipa3_wigig_uc_msi_init(true,
 		ipa_wigig_ctx->periph_baddr_pa,
 		ipa_wigig_ctx->pseudo_cause_pa,
 		ipa_wigig_ctx->int_gen_tx_pa,
@@ -661,7 +661,7 @@ static int ipa_wigig_conn_rx_pipe_internal(struct ipa_wigig_conn_rx_in_params *i
 		goto fail_msi;
 	}
 
-	if (ipa_conn_wigig_rx_pipe_i(in, out, &ipa_wigig_ctx->parent)) {
+	if (ipa3_conn_wigig_rx_pipe_i(in, out, &ipa_wigig_ctx->parent)) {
 		IPA_WIGIG_ERR("fail to connect rx pipe\n");
 		ret = -EFAULT;
 		goto fail_connect_pipe;
@@ -684,7 +684,7 @@ static int ipa_wigig_conn_rx_pipe_internal(struct ipa_wigig_conn_rx_in_params *i
 	return 0;
 
 fail_connect_pipe:
-	ipa_wigig_uc_msi_init(false,
+	ipa3_wigig_uc_msi_init(false,
 		ipa_wigig_ctx->periph_baddr_pa,
 		ipa_wigig_ctx->pseudo_cause_pa,
 		ipa_wigig_ctx->int_gen_tx_pa,
@@ -1400,7 +1400,7 @@ static int ipa_wigig_conn_rx_pipe_smmu_internal(
 		return -EPERM;
 	}
 
-	ret = ipa_uc_state_check();
+	ret = ipa3_uc_state_check();
 	if (ret) {
 		IPA_WIGIG_ERR("uC not ready\n");
 		return ret;
@@ -1425,7 +1425,7 @@ static int ipa_wigig_conn_rx_pipe_smmu_internal(
 		goto fail_pm;
 	}
 
-	ret = ipa_wigig_uc_msi_init(true,
+	ret = ipa3_wigig_uc_msi_init(true,
 		ipa_wigig_ctx->periph_baddr_pa,
 		ipa_wigig_ctx->pseudo_cause_pa,
 		ipa_wigig_ctx->int_gen_tx_pa,
@@ -1437,7 +1437,7 @@ static int ipa_wigig_conn_rx_pipe_smmu_internal(
 		goto fail_msi;
 	}
 
-	if (ipa_conn_wigig_rx_pipe_i(in, out, &ipa_wigig_ctx->parent)) {
+	if (ipa3_conn_wigig_rx_pipe_i(in, out, &ipa_wigig_ctx->parent)) {
 		IPA_WIGIG_ERR("fail to connect rx pipe\n");
 		ret = -EFAULT;
 		goto fail_connect_pipe;
@@ -1463,11 +1463,11 @@ static int ipa_wigig_conn_rx_pipe_smmu_internal(
 	return 0;
 
 fail_smmu_store:
-	ipa_disconn_wigig_pipe_i(IPA_CLIENT_WIGIG_PROD,
+	ipa3_disconn_wigig_pipe_i(IPA_CLIENT_WIGIG_PROD,
 		&in->pipe_smmu,
 		&in->dbuff_smmu);
 fail_connect_pipe:
-	ipa_wigig_uc_msi_init(false,
+	ipa3_wigig_uc_msi_init(false,
 		ipa_wigig_ctx->periph_baddr_pa,
 		ipa_wigig_ctx->pseudo_cause_pa,
 		ipa_wigig_ctx->int_gen_tx_pa,
@@ -1562,7 +1562,7 @@ static int ipa_wigig_conn_client_internal(struct ipa_wigig_conn_tx_in_params *in
 		return -EFAULT;
 	}
 
-	if (ipa_uc_state_check()) {
+	if (ipa3_uc_state_check()) {
 		IPA_WIGIG_ERR("uC not ready\n");
 		return -EFAULT;
 	}
@@ -1572,7 +1572,7 @@ static int ipa_wigig_conn_client_internal(struct ipa_wigig_conn_tx_in_params *in
 		return -EFAULT;
 	}
 
-	if (ipa_conn_wigig_client_i(in, out, ipa_wigig_ctx->tx_notify,
+	if (ipa3_conn_wigig_client_i(in, out, ipa_wigig_ctx->tx_notify,
 		ipa_wigig_ctx->priv)) {
 		IPA_WIGIG_ERR(
 			"fail to connect client. MAC [%X][%X][%X][%X][%X][%X]\n"
@@ -1607,7 +1607,7 @@ static int ipa_wigig_conn_client_internal(struct ipa_wigig_conn_tx_in_params *in
 fail_sendmsg:
 	ipa_wigig_clean_pipe_info(idx);
 fail_convert_client_to_idx:
-	ipa_disconn_wigig_pipe_i(out->client, NULL, NULL);
+	ipa3_disconn_wigig_pipe_i(out->client, NULL, NULL);
 	return -EINVAL;
 }
 
@@ -1643,7 +1643,7 @@ static int ipa_wigig_conn_client_smmu_internal(
 		return -EFAULT;
 	}
 
-	ret = ipa_uc_state_check();
+	ret = ipa3_uc_state_check();
 	if (ret) {
 		IPA_WIGIG_ERR("uC not ready\n");
 		return ret;
@@ -1654,7 +1654,7 @@ static int ipa_wigig_conn_client_smmu_internal(
 		return -EFAULT;
 	}
 
-	if (ipa_conn_wigig_client_i(in, out, ipa_wigig_ctx->tx_notify,
+	if (ipa3_conn_wigig_client_i(in, out, ipa_wigig_ctx->tx_notify,
 		ipa_wigig_ctx->priv)) {
 		IPA_WIGIG_ERR(
 			"fail to connect client. MAC [%X][%X][%X][%X][%X][%X]\n"
@@ -1693,7 +1693,7 @@ fail_smmu:
 	ipa_wigig_send_wlan_msg(WLAN_CLIENT_DISCONNECT, netdev_name,
 		in->client_mac);
 fail_sendmsg:
-	ipa_disconn_wigig_pipe_i(out->client, &in->pipe_smmu, &in->dbuff_smmu);
+	ipa3_disconn_wigig_pipe_i(out->client, &in->pipe_smmu, &in->dbuff_smmu);
 	return ret;
 }
 
@@ -1751,7 +1751,7 @@ static int ipa_wigig_disconn_pipe_internal(enum ipa_client_type client)
 			if (ret)
 				return ret;
 
-			ret = ipa_disconn_wigig_pipe_i(client,
+			ret = ipa3_disconn_wigig_pipe_i(client,
 				pipe_smmu,
 				rx_dbuff_smmu);
 		} else {
@@ -1760,13 +1760,13 @@ static int ipa_wigig_disconn_pipe_internal(enum ipa_client_type client)
 			if (ret)
 				return ret;
 
-			ret = ipa_disconn_wigig_pipe_i(client,
+			ret = ipa3_disconn_wigig_pipe_i(client,
 				pipe_smmu,
 				tx_dbuff_smmu);
 		}
 
 	} else {
-		ret = ipa_disconn_wigig_pipe_i(client, NULL, NULL);
+		ret = ipa3_disconn_wigig_pipe_i(client, NULL, NULL);
 	}
 
 	if (ret) {
@@ -1777,7 +1777,7 @@ static int ipa_wigig_disconn_pipe_internal(enum ipa_client_type client)
 	/* RX will be disconnected last, deinit uC msi config */
 	if (client == IPA_CLIENT_WIGIG_PROD) {
 		IPA_WIGIG_DBG("Rx pipe disconnected, deIniting uc\n");
-		ret = ipa_wigig_uc_msi_init(false,
+		ret = ipa3_wigig_uc_msi_init(false,
 			ipa_wigig_ctx->periph_baddr_pa,
 			ipa_wigig_ctx->pseudo_cause_pa,
 			ipa_wigig_ctx->int_gen_tx_pa,
@@ -1829,7 +1829,7 @@ static int ipa_wigig_enable_pipe_internal(enum ipa_client_type client)
 
 	IPA_WIGIG_DBG("enabling pipe %d\n", client);
 
-	ret = ipa_enable_wigig_pipe_i(client);
+	ret = ipa3_enable_wigig_pipe_i(client);
 	if (ret)
 		return ret;
 
@@ -1847,7 +1847,7 @@ static int ipa_wigig_enable_pipe_internal(enum ipa_client_type client)
 	return 0;
 
 fail_pm_active:
-	ipa_disable_wigig_pipe_i(client);
+	ipa3_disable_wigig_pipe_i(client);
 	return ret;
 }
 
@@ -1861,7 +1861,7 @@ static int ipa_wigig_disable_pipe_internal(enum ipa_client_type client)
 	if (ret)
 		return ret;
 
-	ret = ipa_disable_wigig_pipe_i(client);
+	ret = ipa3_disable_wigig_pipe_i(client);
 	if (ret)
 		return ret;
 

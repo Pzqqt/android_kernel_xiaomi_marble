@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-only
 
 ipam-y += \
-	ipa_api.o ipa_rm.o ipa_rm_dependency_graph.o ipa_rm_peers_list.o ipa_rm_resource.o ipa_rm_inactivity_timer.o \
+	ipa_rm.o ipa_rm_dependency_graph.o ipa_rm_peers_list.o ipa_rm_resource.o ipa_rm_inactivity_timer.o \
 	ipa_v3/ipa.o \
 	ipa_v3/ipa_debugfs.o \
 	ipa_v3/ipa_hdr.o \

@@ -106,6 +106,7 @@ int ipa3_teth_bridge_init(struct teth_bridge_init_params *params)
 	TETH_DBG_FUNC_EXIT();
 	return 0;
 }
+EXPORT_SYMBOL(ipa3_teth_bridge_init);
 
 /**
  * ipa3_teth_bridge_get_pm_hdl() - Get the Tethering bridge Driver pm hdl
@@ -150,6 +151,7 @@ int ipa3_teth_bridge_disconnect(enum ipa_client_type client)
 
 	return res;
 }
+EXPORT_SYMBOL(ipa3_teth_bridge_disconnect);
 
 /**
  * ipa3_teth_bridge_connect() - Connect bridge for a tethered Rmnet / MBIM call
@@ -187,6 +189,7 @@ int ipa3_teth_bridge_connect(struct teth_bridge_connect_params *connect_params)
 	TETH_DBG_FUNC_EXIT();
 	return res;
 }
+EXPORT_SYMBOL(ipa3_teth_bridge_connect);
 
 static long ipa3_teth_bridge_ioctl(struct file *filp,
 			      unsigned int cmd,
