@@ -1820,6 +1820,11 @@ QDF_STATUS (*extract_peer_stats_info)(wmi_unified_t wmi_handle, void *evt_buf,
 		uint32_t index, wmi_host_peer_stats_info *peer_stats_info);
 #endif /* QCA_SUPPORT_MC_CP_STATS */
 
+QDF_STATUS
+(*extract_vdev_prb_fils_stats)(wmi_unified_t wmi_handle,
+			       void *evt_buf, uint32_t index,
+			       struct wmi_host_vdev_prb_fils_stats *vdev_stats);
+
 #ifdef OL_ATH_SMART_LOGGING
 QDF_STATUS (*extract_smartlog_event)(wmi_unified_t wmi_handle, void *evt_buf,
 				     struct wmi_debug_fatal_events *event);
