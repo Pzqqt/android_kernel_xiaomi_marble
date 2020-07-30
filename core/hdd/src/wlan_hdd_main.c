@@ -262,7 +262,10 @@ static struct kparam_string fwpath = {
 	.maxlen = BUF_LEN,
 };
 
-static char *country_code;
+char *country_code;
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(country_code);
+#endif
 static int enable_11d = -1;
 static int enable_dfs_chan_scan = -1;
 static bool is_mode_change_psoc_idle_shutdown;
@@ -1063,9 +1066,15 @@ struct notifier_block hdd_netdev_notifier = {
 };
 
 /* variable to hold the insmod parameters */
-static int con_mode;
+int con_mode;
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(con_mode);
+#endif
 
-static int con_mode_ftm;
+int con_mode_ftm;
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(con_mode_ftm);
+#endif
 int con_mode_epping;
 
 static int pcie_gen_speed;
@@ -16038,14 +16047,7 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 	return hdd_set_con_mode_cb(mode);
 }
 
-/**
- * hdd_driver_load() - Perform the driver-level load operation
- *
- * Note: this is used in both static and DLKM driver builds
- *
- * Return: Errno
- */
-static int hdd_driver_load(void)
+int hdd_driver_load(void)
 {
 	struct osif_driver_sync *driver_sync;
 	QDF_STATUS status;
@@ -16152,14 +16154,11 @@ exit:
 	return errno;
 }
 
-/**
- * hdd_driver_unload() - Performs the driver-level unload operation
- *
- * Note: this is used in both static and DLKM driver builds
- *
- * Return: None
- */
-static void hdd_driver_unload(void)
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(hdd_driver_load);
+#endif
+
+void hdd_driver_unload(void)
 {
 	struct osif_driver_sync *driver_sync;
 	struct hdd_context *hdd_ctx;
@@ -16239,6 +16238,10 @@ static void hdd_driver_unload(void)
 
 	hdd_qdf_deinit();
 }
+
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(hdd_driver_unload);
+#endif
 
 #ifndef MODULE
 /**
@@ -16374,6 +16377,12 @@ static int wlan_deinit_sysfs(void)
  *
  * Return: 0 for success, errno on failure
  */
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+static int hdd_module_init(void)
+{
+	return 0;
+}
+#else
 static int hdd_module_init(void)
 {
 	if (hdd_driver_load())
@@ -16381,6 +16390,7 @@ static int hdd_module_init(void)
 
 	return 0;
 }
+#endif
 #else
 static int __init hdd_module_init(void)
 {
@@ -16403,10 +16413,16 @@ static int __init hdd_module_init(void)
  *
  * Return: None
  */
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+static void __exit hdd_module_exit(void)
+{
+}
+#else
 static void __exit hdd_module_exit(void)
 {
 	hdd_driver_unload();
 }
+#endif
 #else
 static void __exit hdd_module_exit(void)
 {
@@ -17815,15 +17831,23 @@ MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Qualcomm Atheros, Inc.");
 MODULE_DESCRIPTION("WLAN HOST DEVICE DRIVER");
 
-static const struct kernel_param_ops con_mode_ops = {
+const struct kernel_param_ops con_mode_ops = {
 	.set = con_mode_handler,
 	.get = param_get_int,
 };
 
-static const struct kernel_param_ops con_mode_ftm_ops = {
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(con_mode_ops);
+#endif
+
+const struct kernel_param_ops con_mode_ftm_ops = {
 	.set = con_mode_handler_ftm,
 	.get = param_get_int,
 };
+
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+EXPORT_SYMBOL(con_mode_ftm_ops);
+#endif
 
 #ifdef WLAN_FEATURE_EPPING
 static const struct kernel_param_ops con_mode_epping_ops = {

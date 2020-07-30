@@ -4456,6 +4456,32 @@ static inline void hdd_sta_destroy_ctx_all(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef FEATURE_WLAN_RESIDENT_DRIVER
+extern char *country_code;
+extern int con_mode;
+extern const struct kernel_param_ops con_mode_ops;
+extern int con_mode_ftm;
+extern const struct kernel_param_ops con_mode_ftm_ops;
+#endif
+
+/**
+ * hdd_driver_load() - Perform the driver-level load operation
+ *
+ * Note: this is used in both static and DLKM driver builds
+ *
+ * Return: Errno
+ */
+int hdd_driver_load(void);
+
+/**
+ * hdd_driver_unload() - Performs the driver-level unload operation
+ *
+ * Note: this is used in both static and DLKM driver builds
+ *
+ * Return: None
+ */
+void hdd_driver_unload(void);
+
 /**
  * hdd_init_start_completion() - Init the completion variable to wait on ON/OFF
  *
