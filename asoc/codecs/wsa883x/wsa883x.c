@@ -37,7 +37,7 @@
 #define TEMP_INVALID	0xFFFF
 #define WSA883X_TEMP_RETRY 3
 
-#define MAX_NAME_LEN	30
+#define MAX_NAME_LEN	40
 #define WSA883X_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\
 			SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_192000 |\
@@ -1219,12 +1219,12 @@ static int wsa883x_get_temperature(struct snd_soc_component *component,
 
 static int wsa883x_codec_probe(struct snd_soc_component *component)
 {
+	char w_name[MAX_NAME_LEN];
 	struct wsa883x_priv *wsa883x = snd_soc_component_get_drvdata(component);
 	struct swr_device *dev;
 	int variant = 0, version = 0;
 	struct snd_soc_dapm_context *dapm =
 			snd_soc_component_get_dapm(component);
-	char w_name[100];
 
 	if (!wsa883x)
 		return -EINVAL;
@@ -1248,22 +1248,26 @@ static int wsa883x_codec_probe(struct snd_soc_component *component)
 	wsa883x_codec_init(component);
 	wsa883x->global_pa_cnt = 0;
 
-	snd_soc_dapm_ignore_suspend(dapm,
-		wsa883x->dai_driver->playback.stream_name);
-
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " IN", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " ", sizeof(w_name));
+	strlcat(w_name, wsa883x->dai_driver->playback.stream_name,
+				sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SWR DAC_PORT", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " IN", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
-	memset(w_name, 0, 100);
-	strlcpy(w_name, component->name_prefix, 100);
-	strlcat(w_name, " SPKR", 100);
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SWR DAC_PORT", sizeof(w_name));
+	snd_soc_dapm_ignore_suspend(dapm, w_name);
+
+	memset(w_name, 0, sizeof(w_name));
+	strlcpy(w_name, component->name_prefix, sizeof(w_name));
+	strlcat(w_name, " SPKR", sizeof(w_name));
 	snd_soc_dapm_ignore_suspend(dapm, w_name);
 
 	snd_soc_dapm_sync(dapm);
