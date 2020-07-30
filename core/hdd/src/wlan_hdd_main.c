@@ -11631,6 +11631,11 @@ int hdd_trigger_psoc_idle_restart(struct hdd_context *hdd_ctx)
 			 hdd_ctx->current_pcie_gen_speed);
 
 		/* call pld api for pcie gen speed change */
+		ret  = pld_set_pcie_gen_speed(hdd_ctx->parent_dev,
+					      hdd_ctx->current_pcie_gen_speed);
+		if (ret)
+			hdd_err_rl("failed to set pcie gen speed");
+
 		hdd_ctx->current_pcie_gen_speed = 0;
 	}
 
