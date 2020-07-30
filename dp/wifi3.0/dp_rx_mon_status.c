@@ -1936,6 +1936,7 @@ dp_rx_mon_status_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	return work_done;
 }
 
+#ifndef DISABLE_MON_CONFIG
 uint32_t
 dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 	       uint32_t mac_id, uint32_t quota)
@@ -1945,6 +1946,14 @@ dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 
 	return dp_rx_mon_status_process(soc, int_ctx, mac_id, quota);
 }
+#else
+uint32_t
+dp_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
+	       uint32_t mac_id, uint32_t quota)
+{
+	return 0;
+}
+#endif
 
 QDF_STATUS
 dp_rx_pdev_mon_status_buffers_alloc(struct dp_pdev *pdev, uint32_t mac_id)
