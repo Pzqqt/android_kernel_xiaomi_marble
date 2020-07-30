@@ -1023,6 +1023,7 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 	struct msm_display_conn_params *params)
 {
 	struct drm_encoder *encoder;
+	struct drm_bridge *bridge;
 	struct dsi_bridge *c_bridge;
 	struct dsi_display_mode adj_mode;
 	struct dsi_display *display;
@@ -1042,7 +1043,12 @@ int dsi_conn_post_kickoff(struct drm_connector *connector,
 		return 0;
 	}
 
-	c_bridge = to_dsi_bridge(encoder->bridge);
+	bridge = drm_bridge_chain_get_first_bridge(encoder);
+	if (!bridge) {
+		DSI_DEBUG("bridge is not available\n");
+		return 0;
+	}
+	c_bridge = to_dsi_bridge(bridge);
 	adj_mode = c_bridge->dsi_mode;
 	display = c_bridge->display;
 	dyn_clk_caps = &(display->panel->dyn_clk_caps);
@@ -1123,7 +1129,6 @@ struct dsi_bridge *dsi_drm_bridge_init(struct dsi_display *display,
 		goto error_free_bridge;
 	}
 
-	encoder->bridge = &bridge->base;
 	return bridge;
 error_free_bridge:
 	kfree(bridge);
@@ -1133,9 +1138,6 @@ error:
 
 void dsi_drm_bridge_cleanup(struct dsi_bridge *bridge)
 {
-	if (bridge && bridge->base.encoder)
-		bridge->base.encoder->bridge = NULL;
-
 	kfree(bridge);
 }
 

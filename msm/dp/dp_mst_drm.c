@@ -1300,7 +1300,6 @@ int dp_mst_drm_bridge_init(void *data, struct drm_encoder *encoder)
 		goto end;
 	}
 
-	encoder->bridge = &bridge->base;
 	priv->bridges[priv->num_bridges++] = &bridge->base;
 
 	state = kzalloc(sizeof(*state), GFP_KERNEL);
@@ -1604,6 +1603,7 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 	struct drm_crtc_state *crtc_state;
 	struct dp_mst_bridge *bridge;
 	struct dp_mst_bridge_state *bridge_state;
+	struct drm_bridge *drm_bridge;
 	struct dp_display *dp_display = display;
 	struct dp_mst_private *mst = dp_display->dp_mst_prv_info;
 	struct sde_connector *c_conn = to_sde_connector(connector);
@@ -1642,8 +1642,13 @@ static int dp_mst_connector_atomic_check(struct drm_connector *connector,
 			goto end;
 		}
 
-		bridge = to_dp_mst_bridge(
-				old_conn_state->best_encoder->bridge);
+		drm_bridge = drm_bridge_chain_get_first_bridge(
+				old_conn_state->best_encoder);
+		if (WARN_ON(!drm_bridge)) {
+			rc = -EINVAL;
+			goto end;
+		}
+		bridge = to_dp_mst_bridge(drm_bridge);
 
 		bridge_state = dp_mst_get_bridge_atomic_state(state, bridge);
 		if (IS_ERR(bridge_state)) {
@@ -1691,8 +1696,13 @@ mode_set:
 			goto end;
 		}
 
-		bridge = to_dp_mst_bridge(
-				new_conn_state->best_encoder->bridge);
+		drm_bridge = drm_bridge_chain_get_first_bridge(
+				new_conn_state->best_encoder);
+		if (WARN_ON(!drm_bridge)) {
+			rc = -EINVAL;
+			goto end;
+		}
+		bridge = to_dp_mst_bridge(drm_bridge);
 
 		bridge_state = dp_mst_get_bridge_atomic_state(state, bridge);
 		if (IS_ERR(bridge_state)) {

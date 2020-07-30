@@ -6381,7 +6381,7 @@ int dsi_display_drm_ext_bridge_init(struct dsi_display *display,
 		return -EINVAL;
 
 	drm = encoder->dev;
-	bridge = encoder->bridge;
+	bridge = drm_bridge_chain_get_first_bridge(encoder);
 	sde_conn = to_sde_connector(connector);
 	prev_bridge = bridge;
 
