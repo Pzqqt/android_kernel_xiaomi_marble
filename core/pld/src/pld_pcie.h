@@ -171,6 +171,12 @@ static inline void pld_pcie_allow_l1(struct device *dev)
 {
 }
 
+static inline int pld_pcie_set_gen_speed(struct device *dev, u8 pcie_gen_speed)
+{
+	return 0;
+}
+
+
 static inline void pld_pcie_link_down(struct device *dev)
 {
 }
@@ -446,6 +452,20 @@ static inline int pld_pcie_prevent_l1(struct device *dev)
 static inline void pld_pcie_allow_l1(struct device *dev)
 {
 	cnss_pci_allow_l1(dev);
+}
+
+/**
+ * pld_pcie_set_gen_speed() - Wrapper for platform API to set PCIE gen speed
+ * @dev: device
+ * @pcie_gen_speed: PCIE gen speed required
+ *
+ * Send required PCIE Gen speed to platform driver
+ *
+ * Return: 0 for success. Negative error codes.
+ */
+static inline int pld_pcie_set_gen_speed(struct device *dev, u8 pcie_gen_speed)
+{
+	return cnss_set_pcie_gen_speed(dev, pcie_gen_speed);
 }
 
 static inline void pld_pcie_link_down(struct device *dev)
