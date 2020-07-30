@@ -1543,6 +1543,9 @@ static void gsi_init_evt_ring(struct gsi_evt_ring_props *props,
 	ctx->elem_sz = props->re_size;
 	ctx->max_num_elem = ctx->len / ctx->elem_sz - 1;
 	ctx->end = ctx->base + (ctx->max_num_elem + 1) * ctx->elem_sz;
+
+	if (props->rp_update_vaddr)
+		*(uint64_t *)(props->rp_update_vaddr) = ctx->rp_local;
 }
 
 static void gsi_prime_evt_ring(struct gsi_evt_ctx *ctx)
