@@ -1585,9 +1585,6 @@ low_lat_fail:
 	if (ret)
 		ipa3_del_a7_qmap_hdr();
 
-	/* notify rmnet_ctl pipes are ready to ues */
-	ipa3_rmnet_ctl_ready_notifier();
-
 	/* Sending QMI indication message share RSC/QMAP pipe details*/
 	ipa_send_wan_pipe_ind_to_modem(ingress_eps_mask);
 end:

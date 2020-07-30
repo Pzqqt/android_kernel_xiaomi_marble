@@ -3053,7 +3053,6 @@ int ipa3_rmnet_ctl_xmit(struct sk_buff *skb);
 int ipa3_setup_apps_low_lat_prod_pipe(void);
 int ipa3_setup_apps_low_lat_cons_pipe(void);
 int ipa3_teardown_apps_low_lat_pipes(void);
-void ipa3_rmnet_ctl_ready_notifier(void);
 const char *ipa_hw_error_str(enum ipa3_hw_errors err_type);
 int ipa_gsi_ch20_wa(void);
 int ipa3_lan_rx_poll(u32 clnt_hdl, int weight);
