@@ -26,6 +26,7 @@
 #include "swr-slave-registers.h"
 #include <dsp/digital-cdc-rsc-mgr.h>
 #include "swr-mstr-ctrl.h"
+#include "swr-slave-port-config.h"
 
 #define SWR_NUM_PORTS    4 /* TODO - Get this info from DT */
 
@@ -128,6 +129,32 @@ static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
 static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr);
 static void swr_master_write(struct swr_mstr_ctrl *swrm, u16 reg_addr, u32 val);
 static int swrm_runtime_resume(struct device *dev);
+
+static u64 swrm_phy_dev[] = {
+	0,
+	0xd01170223,
+	0x858350223,
+	0x858350222,
+	0x858350221,
+	0x858350220,
+};
+
+static u8 swrm_get_device_id(struct swr_mstr_ctrl *swrm, u8 devnum)
+{
+	int i;
+
+	for (i = 1; i < (swrm->num_dev + 1); i++) {
+		if (swrm->logical_dev[devnum] == swrm_phy_dev[i])
+			break;
+	}
+
+	if (i == (swrm->num_dev + 1)) {
+		pr_info("%s: could not find the slave\n", __func__);
+		i = devnum;
+	}
+
+	return i;
+}
 
 static u8 swrm_get_clk_div(int mclk_freq, int bus_clk_freq)
 {
@@ -726,6 +753,9 @@ static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 				(swrm->master_id == MASTER_ID_RX))
 		usecase = 1;
 
+	if (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ)
+		usecase = 1;
+
 	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
 
@@ -1169,9 +1199,9 @@ int swrm_get_clk_div_rate(int mclk_freq, int bus_clk_freq)
 		if (bus_clk_freq <= SWR_CLK_RATE_0P6MHZ)
 			bus_clk_freq = SWR_CLK_RATE_0P6MHZ;
 		else if (bus_clk_freq <= SWR_CLK_RATE_1P2MHZ)
-			bus_clk_freq = SWR_CLK_RATE_1P2MHZ;
+			bus_clk_freq = SWR_CLK_RATE_4P8MHZ;
 		else if (bus_clk_freq <= SWR_CLK_RATE_2P4MHZ)
-			bus_clk_freq = SWR_CLK_RATE_2P4MHZ;
+			bus_clk_freq = SWR_CLK_RATE_4P8MHZ;
 		else if(bus_clk_freq <= SWR_CLK_RATE_4P8MHZ)
 			bus_clk_freq = SWR_CLK_RATE_4P8MHZ;
 		else if(bus_clk_freq <= SWR_CLK_RATE_9P6MHZ)
@@ -1302,26 +1332,91 @@ static void swrm_cleanup_disabled_port_reqs(struct swr_master *master)
 		}
 	}
 }
+
+static u8 swrm_get_controller_offset1(struct swr_mstr_ctrl *swrm,
+					u8* dev_offset, u8 off1)
+{
+	u8 offset1 = 0x0F;
+	int i = 0;
+
+	if (swrm->master_id == MASTER_ID_TX) {
+		for (i = 1; i < SWRM_NUM_AUTO_ENUM_SLAVES; i++) {
+			pr_debug("%s: dev offset: %d\n",
+				__func__, dev_offset[i]);
+			if (offset1 > dev_offset[i])
+				offset1 = dev_offset[i];
+		}
+	} else {
+		offset1 = off1;
+	}
+
+	pr_debug("%s: offset: %d\n", __func__, offset1);
+
+	return offset1;
+}
+
+static void swrm_get_device_frame_shape(struct swr_mstr_ctrl *swrm,
+					struct swrm_mports *mport,
+					struct swr_port_info *port_req)
+{
+	u32 port_id = 0;
+	u8 dev_num = 0;
+	struct port_params *pp_dev;
+	struct port_params *pp_port;
+
+	if ((swrm->master_id == MASTER_ID_TX) &&
+		((swrm->bus_clk == SWR_CLK_RATE_9P6MHZ) ||
+		 (swrm->bus_clk == SWR_CLK_RATE_4P8MHZ))) {
+		dev_num = swrm_get_device_id(swrm, port_req->dev_num);
+		port_id = port_req->slave_port_id;
+		if (swrm->bus_clk == SWR_CLK_RATE_9P6MHZ)
+			pp_dev = swrdev_frame_params_9p6MHz[dev_num].pp;
+		else
+			pp_dev = swrdev_frame_params_4p8MHz[dev_num].pp;
+		pp_port = &pp_dev[port_id];
+		port_req->sinterval = pp_port->si;
+		port_req->offset1 = pp_port->off1;
+		port_req->offset2 = pp_port->off2;
+		port_req->hstart = pp_port->hstart;
+		port_req->hstop = pp_port->hstop;
+		port_req->word_length = pp_port->wd_len;
+		port_req->blk_pack_mode = pp_port->bp_mode;
+		port_req->blk_grp_count = pp_port->bgp_ctrl;
+		port_req->lane_ctrl = pp_port->lane_ctrl;
+	} else {
+		/* copy master port config to slave */
+		port_req->sinterval = mport->sinterval;
+		port_req->offset1 = mport->offset1;
+		port_req->offset2 = mport->offset2;
+		port_req->hstart = mport->hstart;
+		port_req->hstop = mport->hstop;
+		port_req->word_length = mport->word_length;
+		port_req->blk_pack_mode = mport->blk_pack_mode;
+		port_req->blk_grp_count = mport->blk_grp_count;
+		port_req->lane_ctrl = mport->lane_ctrl;
+	}
+}
+
 static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 {
-	u32 value, slv_id;
+	u32 value = 0, slv_id = 0;
 	struct swr_port_info *port_req;
 	int i;
 	struct swrm_mports *mport;
-	struct swrm_mports *prev_mport = NULL;
 	u32 reg[SWRM_MAX_PORT_REG];
 	u32 val[SWRM_MAX_PORT_REG];
 	int len = 0;
-	u8 hparams;
-	u8 offset1 = 0;
-
+	u8 hparams = 0;
+	u32 controller_offset = 0;
 	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(master);
+	u8 dev_offset[SWRM_NUM_AUTO_ENUM_SLAVES];
 
 	if (!swrm) {
 		pr_err("%s: swrm is null\n", __func__);
 		return;
 	}
 
+	memset(dev_offset, 0xff, SWRM_NUM_AUTO_ENUM_SLAVES);
 	dev_dbg(swrm->dev, "%s: master num_port: %d\n", __func__,
 		master->num_port);
 
@@ -1335,6 +1430,12 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 
 		list_for_each_entry(port_req, &mport->port_req_list, list) {
 			slv_id = port_req->slave_port_id;
+			/* Assumption: If different channels in the same port
+			 * on master is enabled for different slaves, then each
+			 * slave offset should be configured differently.
+			 */
+			swrm_get_device_frame_shape(swrm, mport, port_req);
+
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
 			val[len++] = SWR_REG_VAL_PACK(port_req->req_ch,
 					port_req->dev_num, 0x00,
@@ -1342,42 +1443,36 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 								bank));
 
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK(mport->sinterval & 0xFF,
+			val[len++] = SWR_REG_VAL_PACK(
+					port_req->sinterval & 0xFF,
 					port_req->dev_num, 0x00,
 					SWRS_DP_SAMPLE_CONTROL_1_BANK(slv_id,
 								bank));
 
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK((mport->sinterval >> 8)& 0xFF,
+			val[len++] = SWR_REG_VAL_PACK(
+					(port_req->sinterval >> 8)& 0xFF,
 					port_req->dev_num, 0x00,
 					SWRS_DP_SAMPLE_CONTROL_2_BANK(slv_id,
 								bank));
-			/* Assumption: If different channels in the same port
-			 * on master is enabled for different slaves, then each
-			 * slave offset should be configured differently.
-			 */
-			if (prev_mport == mport)
-				offset1 += mport->offset1;
-			else {
-				offset1 = mport->offset1;
-				prev_mport = mport;
-			}
+
 			reg[len] = SWRM_CMD_FIFO_WR_CMD;
-			val[len++] = SWR_REG_VAL_PACK(offset1,
+			val[len++] = SWR_REG_VAL_PACK(port_req->offset1,
 					port_req->dev_num, 0x00,
 					SWRS_DP_OFFSET_CONTROL_1_BANK(slv_id,
 								bank));
 
-			if (mport->offset2 != SWR_INVALID_PARAM) {
+			if (port_req->offset2 != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
-				val[len++] = SWR_REG_VAL_PACK(mport->offset2,
+				val[len++] = SWR_REG_VAL_PACK(port_req->offset2,
 						port_req->dev_num, 0x00,
 						SWRS_DP_OFFSET_CONTROL_2_BANK(
 							slv_id, bank));
 			}
-			if (mport->hstart != SWR_INVALID_PARAM
-				&& mport->hstop != SWR_INVALID_PARAM) {
-				hparams = (mport->hstart << 4) | mport->hstop;
+			if (port_req->hstart != SWR_INVALID_PARAM
+				&& port_req->hstop != SWR_INVALID_PARAM) {
+				hparams = (port_req->hstart << 4) |
+						port_req->hstop;
 
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] = SWR_REG_VAL_PACK(hparams,
@@ -1385,39 +1480,42 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 						SWRS_DP_HCONTROL_BANK(slv_id,
 									bank));
 			}
-			if (mport->word_length != SWR_INVALID_PARAM) {
+			if (port_req->word_length != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
-					SWR_REG_VAL_PACK(mport->word_length,
+					SWR_REG_VAL_PACK(port_req->word_length,
 						port_req->dev_num, 0x00,
 						SWRS_DP_BLOCK_CONTROL_1(slv_id));
 			}
-			if (mport->blk_pack_mode != SWR_INVALID_PARAM
+			if (port_req->blk_pack_mode != SWR_INVALID_PARAM
 					&& swrm->master_id != MASTER_ID_WSA) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
-					SWR_REG_VAL_PACK(mport->blk_pack_mode,
+					SWR_REG_VAL_PACK(
+					port_req->blk_pack_mode,
 					port_req->dev_num, 0x00,
 					SWRS_DP_BLOCK_CONTROL_3_BANK(slv_id,
 									bank));
 			}
-			if (mport->blk_grp_count != SWR_INVALID_PARAM) {
+			if (port_req->blk_grp_count != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
-					 SWR_REG_VAL_PACK(mport->blk_grp_count,
+					 SWR_REG_VAL_PACK(
+						port_req->blk_grp_count,
 						port_req->dev_num, 0x00,
-						SWRS_DP_BLOCK_CONTROL_2_BANK(slv_id,
-									bank));
+						SWRS_DP_BLOCK_CONTROL_2_BANK(
+								slv_id, bank));
 			}
-			if (mport->lane_ctrl != SWR_INVALID_PARAM) {
+			if (port_req->lane_ctrl != SWR_INVALID_PARAM) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
-					SWR_REG_VAL_PACK(mport->lane_ctrl,
+					SWR_REG_VAL_PACK(port_req->lane_ctrl,
 						port_req->dev_num, 0x00,
-						SWRS_DP_LANE_CONTROL_BANK(slv_id,
-									bank));
+						SWRS_DP_LANE_CONTROL_BANK(
+								slv_id, bank));
 			}
 			port_req->ch_en = port_req->req_ch;
+			dev_offset[port_req->dev_num] = port_req->offset1;
 		}
 		value = ((mport->req_ch)
 				<< SWRM_DP_PORT_CTRL_EN_CHAN_SHFT);
@@ -1425,15 +1523,16 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		if (mport->offset2 != SWR_INVALID_PARAM)
 			value |= ((mport->offset2)
 					<< SWRM_DP_PORT_CTRL_OFFSET2_SHFT);
-		value |= ((mport->offset1)
-				<< SWRM_DP_PORT_CTRL_OFFSET1_SHFT);
+		controller_offset = (swrm_get_controller_offset1(swrm,
+						dev_offset, mport->offset1));
+		value |= (controller_offset << SWRM_DP_PORT_CTRL_OFFSET1_SHFT);
+		mport->offset1 = controller_offset;
 		value |= (mport->sinterval & 0xFF);
-
 
 		reg[len] = SWRM_DP_PORT_CTRL_BANK((i + 1), bank);
 		val[len++] = value;
 		dev_dbg(swrm->dev, "%s: mport :%d, reg: 0x%x, val: 0x%x\n",
-			__func__, i,
+			__func__, (i + 1),
 			(SWRM_DP_PORT_CTRL_BANK((i + 1), bank)), value);
 
 		reg[len] = SWRM_DP_SAMPLECTRL2_BANK((i + 1), bank);
@@ -2266,6 +2365,7 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 							"%s: devnum %d assigned for dev %llx\n",
 							__func__, i,
 							swr_dev->addr);
+						swrm->logical_dev[i] = swr_dev->addr;
 					}
 				}
 			}
