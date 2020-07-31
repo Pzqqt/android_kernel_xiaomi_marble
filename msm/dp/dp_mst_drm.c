@@ -681,7 +681,7 @@ static int dp_mst_calc_pbn_mode(struct dp_display_mode *dp_mode)
 		DSC_BPP(dp_mode->timing.comp_info.dsc_info.config)
 		: dp_mode->timing.bpp;
 
-	pbn = drm_dp_calc_pbn_mode(dp_mode->timing.pixel_clk_khz, bpp);
+	pbn = drm_dp_calc_pbn_mode(dp_mode->timing.pixel_clk_khz, bpp, false);
 	pbn_fp = drm_fixp_from_fraction(pbn, 1);
 
 	DP_DEBUG("before overhead pbn:%d, bpp:%d\n", pbn, bpp);
