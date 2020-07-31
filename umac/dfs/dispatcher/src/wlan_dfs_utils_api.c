@@ -1620,8 +1620,8 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev)
 }
 
 #ifdef QCA_SUPPORT_ADFS_RCAC
-void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				   enum dfs_rcac_sm_evt event)
+void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				    enum dfs_agile_sm_evt event)
 {
 	struct wlan_dfs *dfs;
 	void *event_data;
@@ -1640,10 +1640,10 @@ void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
 
 	event_data = (void *)dfs;
 
-	dfs_rcac_sm_deliver_evt(dfs->dfs_soc_obj,
-				event,
-				0,
-				event_data);
+	dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+				 event,
+				 0,
+				 event_data);
 }
 
 QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,

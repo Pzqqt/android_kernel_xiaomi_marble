@@ -160,13 +160,13 @@ static QDF_STATUS vdev_mgr_start_param_update(
 						     des_chan->ch_cfreq2,
 						     &is_dfs_chan_updated);
 
-	/* The RCAC state machine should be stopped only once for the channel
+	/* The Agile state machine should be stopped only once for the channel
 	 * change. If  the same channel is being sent to the FW then do
 	 * not send unnecessary STOP to the state machine.
 	 */
 	if (is_dfs_chan_updated)
-		utils_dfs_rcac_sm_deliver_evt(pdev,
-					      DFS_RCAC_SM_EV_RCAC_STOP);
+		utils_dfs_agile_sm_deliver_evt(pdev,
+					       DFS_AGILE_SM_EV_AGILE_STOP);
 
 	param->beacon_interval = mlme_obj->proto.generic.beacon_interval;
 	param->dtim_period = mlme_obj->proto.generic.dtim_period;

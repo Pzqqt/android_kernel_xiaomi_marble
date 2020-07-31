@@ -1238,8 +1238,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	if (dfs_is_agile_rcac_enabled(dfs) &&
 	    radar_found->detector_id == dfs_get_agile_detector_id(dfs))
-		utils_dfs_rcac_sm_deliver_evt(dfs->dfs_pdev_obj,
-					      DFS_RCAC_SM_EV_ADFS_RADAR_FOUND);
+		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
+					       DFS_AGILE_SM_EV_ADFS_RADAR);
 	/*
 	 * This calls into the umac DFS code, which sets the umac
 	 * related radar flags and begins the channel change

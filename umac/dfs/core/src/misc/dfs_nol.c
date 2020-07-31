@@ -316,8 +316,8 @@ static os_timer_func(dfs_remove_from_nol)
 	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
 		  "remove channel %d from nol", chan);
 	utils_dfs_unmark_precac_nol_for_freq(dfs->dfs_pdev_obj, delfreq);
-	utils_dfs_rcac_sm_deliver_evt(dfs->dfs_pdev_obj,
-				      DFS_RCAC_SM_EV_RCAC_START);
+	utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
+				       DFS_AGILE_SM_EV_AGILE_START);
 	utils_dfs_reg_update_nol_chan_for_freq(dfs->dfs_pdev_obj,
 					     &delfreq, 1, DFS_NOL_RESET);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);

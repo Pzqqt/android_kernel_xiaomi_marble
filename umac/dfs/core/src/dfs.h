@@ -941,17 +941,20 @@ struct dfs_mode_switch_defer_params {
 #ifdef QCA_SUPPORT_ADFS_RCAC
 #define DFS_PSOC_NO_IDX 0xFF
 /**
- * enum dfs_rcac_sm_state - DFS Rolling CAC SM states.
- * @DFS_RCAC_S_INIT:     Default state, where RCAC not in progress.
- * @DFS_RCAC_S_RUNNING:  RCAC is in progress.
- * @DFS_RCAC_S_COMPLETE: RCAC is completed.
- * @DFS_RCAC_S_MAX:      Max (invalid) state.
+ * enum dfs_agile_sm_state - DFS AGILE SM states.
+ * @DFS_AGILE_S_INIT:     Default state or the start state of the Agile SM.
+ * @DFS_AGILE_S_RUNNING:  Agile Engine is being run.
+ * @DFS_AGILE_S_COMPLETE: The Agile Engine's minimum run is complete.
+			  However, it is still running. Used only for RCAC
+			  as RCAC needs to run continuously (uninterrupted)
+			  until the channel change.
+ * @DFS_AGILE_S_MAX:      Max (invalid) state.
  */
-enum dfs_rcac_sm_state {
-	DFS_RCAC_S_INIT,
-	DFS_RCAC_S_RUNNING,
-	DFS_RCAC_S_COMPLETE,
-	DFS_RCAC_S_MAX,
+enum dfs_agile_sm_state {
+	DFS_AGILE_S_INIT,
+	DFS_AGILE_S_RUNNING,
+	DFS_AGILE_S_COMPLETE,
+	DFS_AGILE_S_MAX,
 };
 
 /**
@@ -1334,14 +1337,16 @@ struct wlan_dfs_priv {
  *                                radar detection related information to host.
  * @dfs_priv: array of dfs private structs with agile capability info
  * @num_dfs_privs: array size of dfs private structs for given psoc.
- * @cur_precac_dfs_index: current precac dfs index
+ * @cur_dfs_index: index of the current dfs object using the Agile Engine.
+ *                 It is used to index struct wlan_dfs_priv dfs_priv[] array.
  * @dfs_precac_timer: agile precac timer
  * @dfs_precac_timer_running: precac timer running flag
  * @ocac_status: Off channel CAC complete status
  * @dfs_nol_ctx: dfs NOL data for all radios.
  * @dfs_rcac_timer: Agile RCAC (Rolling CAC) timer.
- * @dfs_rcac_sm_hdl: DFS Rolling CAC state machine handle.
- * @dfs_rcac_curr_state: Current state of DFS rolling CAC state machine.
+ * @dfs_agile_sm_hdl: The handle for the state machine that drives Agile
+ *                    Engine.
+ * @dfs_agile_sm_cur_state: Current state of the Agile State Machine.
  * @dfs_rcac_sm_lock: DFS Rolling CAC state machine lock.
  */
 struct dfs_soc_priv_obj {
@@ -1351,7 +1356,7 @@ struct dfs_soc_priv_obj {
 #if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
 	struct wlan_dfs_priv dfs_priv[WLAN_UMAC_MAX_PDEVS];
 	uint8_t num_dfs_privs;
-	uint8_t cur_precac_dfs_index;
+	uint8_t cur_agile_dfs_index;
 	qdf_timer_t     dfs_precac_timer;
 	uint8_t dfs_precac_timer_running;
 	bool precac_state_started;
@@ -1360,9 +1365,9 @@ struct dfs_soc_priv_obj {
 	struct dfsreq_nolinfo *dfs_psoc_nolinfo;
 #if defined(QCA_SUPPORT_ADFS_RCAC)
 	qdf_timer_t dfs_rcac_timer;
-	struct wlan_sm *dfs_rcac_sm_hdl;
-	enum dfs_rcac_sm_state dfs_rcac_curr_state;
-	qdf_spinlock_t dfs_rcac_sm_lock;
+	struct wlan_sm *dfs_agile_sm_hdl;
+	enum dfs_agile_sm_state dfs_agile_sm_cur_state;
+	qdf_spinlock_t dfs_agile_sm_lock;
 #endif
 };
 
@@ -1383,6 +1388,7 @@ struct dfs_soc_priv_obj {
  * @WLAN_DEBUG_DFS_FALSE_DET2:  Second level check to confirm poisitive
  *                              detection.
  * @WLAN_DEBUG_DFS_RANDOM_CHAN: Random channel selection.
+ * @WLAN_DEBUG_DFS_AGILE:       Agile PreCAC/RCAC
  */
 enum {
 	WLAN_DEBUG_DFS  = 0x00000100,
@@ -1399,7 +1405,7 @@ enum {
 	WLAN_DEBUG_DFS_FALSE_DET  = 0x00080000,
 	WLAN_DEBUG_DFS_FALSE_DET2 = 0x00100000,
 	WLAN_DEBUG_DFS_RANDOM_CHAN = 0x00200000,
-	WLAN_DEBUG_DFS_RCAC       = 0x00400000,
+	WLAN_DEBUG_DFS_AGILE       = 0x00400000,
 	WLAN_DEBUG_DFS_MAX        = 0x80000000,
 	WLAN_DEBUG_DFS_ALWAYS     = WLAN_DEBUG_DFS_MAX
 };

@@ -465,7 +465,7 @@ QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
 			 */
 			if (!agile_precac_state)
 				dfs->dfs_agile_precac_freq_mhz = 0;
-			if (dfs_soc->cur_precac_dfs_index == i)
+			if (dfs_soc->cur_agile_dfs_index == i)
 				is_precac_running_on_given_pdev = true;
 		}
 	}
@@ -510,7 +510,7 @@ QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
 			 */
 			if (!agile_precac_state)
 				dfs->dfs_agile_precac_freq = 0;
-			if (dfs_soc->cur_precac_dfs_index == i)
+			if (dfs_soc->cur_agile_dfs_index == i)
 				is_precac_running_on_given_pdev = true;
 		}
 	}

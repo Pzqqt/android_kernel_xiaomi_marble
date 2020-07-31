@@ -980,14 +980,14 @@ void utils_dfs_reset_dfs_prevchan(struct wlan_objmgr_pdev *pdev);
 
 #ifdef QCA_SUPPORT_ADFS_RCAC
 /**
- * utils_dfs_rcac_sm_deliver_evt() - API to post events to DFS rolling CAC SM.
- * @pdev:           Pointer to DFS pdev object.
- * @event:          Event to be posted to DFS RCAC SM.
+ * utils_dfs_agile_sm_deliver_evt() - API to post events to DFS Agile SM.
+ * @pdev: Pointer to DFS pdev object.
+ * @event: Event to be posted to DFS AGILE SM.
  *
  * Return: None.
  */
-void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				   enum dfs_rcac_sm_evt event);
+void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				    enum dfs_agile_sm_evt event);
 
 /**
  * utils_dfs_get_rcac_channel() - Get the completed Rolling CAC channel if
@@ -1003,8 +1003,8 @@ QDF_STATUS utils_dfs_get_rcac_channel(struct wlan_objmgr_pdev *pdev,
 				      qdf_freq_t *target_chan_freq);
 #else
 static inline
-void utils_dfs_rcac_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
-				   enum dfs_rcac_sm_evt event)
+void utils_dfs_agile_sm_deliver_evt(struct wlan_objmgr_pdev *pdev,
+				    enum dfs_agile_sm_evt event)
 {
 }
 

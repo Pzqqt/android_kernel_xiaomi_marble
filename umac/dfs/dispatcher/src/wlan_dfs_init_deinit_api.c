@@ -198,8 +198,8 @@ static QDF_STATUS dfs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc
 	/* Initialize Rolling CAC timer */
 	dfs_rcac_timer_init(dfs_soc_obj);
 
-	/* DFS Rolling CAC SM initialization */
-	dfs_rcac_sm_create(dfs_soc_obj);
+	/* DFS Agile SM initialization */
+	dfs_agile_sm_create(dfs_soc_obj);
 
 	dfs_debug(NULL, WLAN_DEBUG_DFS1,
 		"DFS obj attach to psoc successfully");
@@ -228,8 +228,8 @@ static QDF_STATUS dfs_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *pso
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Delete DFS Rolling CAC SM */
-	dfs_rcac_sm_destroy(dfs_soc_obj);
+	/* Delete DFS Agile SM */
+	dfs_agile_sm_destroy(dfs_soc_obj);
 
 	dfs_rcac_timer_deinit(dfs_soc_obj);
 	dfs_zero_cac_timer_detach(dfs_soc_obj);
