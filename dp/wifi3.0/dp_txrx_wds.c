@@ -1060,3 +1060,56 @@ int dp_peer_find_ast_index_by_flowq_id(struct cdp_soc_t *soc,
 	return ast_index;
 }
 #endif
+
+void dp_hmwds_ast_add_notify(struct dp_peer *peer,
+			     uint8_t *mac_addr,
+			     enum cdp_txrx_ast_entry_type type,
+			     QDF_STATUS err,
+			     bool is_peer_map)
+{
+	struct dp_vdev *dp_vdev = peer->vdev;
+	struct dp_pdev *dp_pdev = dp_vdev->pdev;
+	struct cdp_peer_hmwds_ast_add_status add_status;
+
+	/* Ignore ast types other than HM */
+	if ((type != CDP_TXRX_AST_TYPE_WDS_HM) &&
+	    (type != CDP_TXRX_AST_TYPE_WDS_HM_SEC))
+		return;
+
+	/* existing ast delete in progress, will be attempted
+	 * to add again after delete is complete. Send status then.
+	 */
+	if (err == QDF_STATUS_E_AGAIN)
+		return;
+
+	/* peer map pending, notify actual status
+	 * when peer map is received.
+	 */
+	if (!is_peer_map && (err == QDF_STATUS_SUCCESS))
+		return;
+
+	qdf_mem_zero(&add_status, sizeof(add_status));
+	add_status.vdev_id = dp_vdev->vdev_id;
+	/* For type CDP_TXRX_AST_TYPE_WDS_HM_SEC dp_peer_add_ast()
+	 * returns QDF_STATUS_E_FAILURE as it is host only entry.
+	 * In such cases set err as success. Also err code set to
+	 * QDF_STATUS_E_ALREADY indicates entry already exist in
+	 * such cases set err as success too. Any other error code
+	 * is actual error.
+	 */
+	if (((type == CDP_TXRX_AST_TYPE_WDS_HM_SEC) &&
+	     (err == QDF_STATUS_E_FAILURE)) ||
+	    (err == QDF_STATUS_E_ALREADY)) {
+		err = QDF_STATUS_SUCCESS;
+	}
+	add_status.status = err;
+	qdf_mem_copy(add_status.peer_mac, peer->mac_addr.raw,
+		     QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(add_status.ast_mac, mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+#ifdef WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_HMWDS_AST_ADD_STATUS, dp_pdev->soc,
+			     (void *)&add_status, 0,
+			     WDI_NO_VAL, dp_pdev->pdev_id);
+#endif
+}
