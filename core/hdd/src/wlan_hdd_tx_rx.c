@@ -923,6 +923,41 @@ void hdd_get_transmit_mac_addr(struct hdd_adapter *adapter, struct sk_buff *skb,
 	}
 }
 
+#ifdef HANDLE_BROADCAST_EAPOL_TX_FRAME
+/**
+ * wlan_hdd_fix_broadcast_eapol() - Fix broadcast eapol
+ * @adapter: pointer to adapter
+ * @skb: pointer to OS packet (sk_buff)
+ *
+ * Override DA of broadcast eapol with bssid addr.
+ *
+ * Return: None
+ */
+static void wlan_hdd_fix_broadcast_eapol(struct hdd_adapter *adapter,
+					 struct sk_buff *skb)
+{
+	struct ethhdr *eh = (struct ethhdr *)skb->data;
+	unsigned char *ap_mac_addr =
+		&adapter->session.station.conn_info.bssid.bytes[0];
+
+	if (qdf_unlikely((QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
+			  QDF_NBUF_CB_PACKET_TYPE_EAPOL) &&
+			 QDF_NBUF_CB_GET_IS_BCAST(skb))) {
+		hdd_debug("SA: "QDF_MAC_ADDR_STR " override DA: "QDF_MAC_ADDR_STR " with AP mac address "QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_ARRAY(&eh->h_source[0]),
+			  QDF_MAC_ADDR_ARRAY(&eh->h_dest[0]),
+			  QDF_MAC_ADDR_ARRAY(ap_mac_addr));
+
+		qdf_mem_copy(&eh->h_dest, ap_mac_addr, QDF_MAC_ADDR_SIZE);
+	}
+}
+#else
+static void wlan_hdd_fix_broadcast_eapol(struct hdd_adapter *adapter,
+					 struct sk_buff *skb)
+{
+}
+#endif /* HANDLE_BROADCAST_EAPOL_TX_FRAME */
+
 /**
  * __hdd_hard_start_xmit() - Transmit a frame
  * @skb: pointer to OS packet (sk_buff)
@@ -1180,6 +1215,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
+
+	wlan_hdd_fix_broadcast_eapol(adapter, skb);
 
 	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
