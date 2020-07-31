@@ -7145,7 +7145,7 @@ static int msm_populate_dai_link_component_of_node(
 
 				np = dai_link[i].codecs[j].of_node;
                                 if (!of_device_is_available(np)) {
-                                        dev_err(cdev, "%s: codec is disabled: %s\n",
+                                        dev_dbg(cdev, "%s: codec is disabled: %s\n",
 						__func__,
 						np->full_name);
 					dai_link[i].codecs[j].of_node = NULL;
