@@ -8021,7 +8021,8 @@ static void dsi_display_handle_poms_te(struct work_struct *work)
 {
 	struct dsi_display *display = NULL;
 	struct delayed_work *dw = to_delayed_work(work);
-	struct mipi_dsi_device *dsi;
+	struct mipi_dsi_device *dsi = NULL;
+	struct dsi_panel *panel = NULL;
 	int rc = 0;
 
 	display = container_of(dw, struct dsi_display, poms_te_work);
@@ -8030,8 +8031,18 @@ static void dsi_display_handle_poms_te(struct work_struct *work)
 		return;
 	}
 
-	dsi = &display->panel->mipi_device;
+	panel = display->panel;
+	mutex_lock(&panel->panel_lock);
+	if (!dsi_panel_initialized(panel)) {
+		rc = -EINVAL;
+		goto error;
+	}
+
+	dsi = &panel->mipi_device;
 	rc = mipi_dsi_dcs_set_tear_off(dsi);
+
+error:
+	mutex_unlock(&panel->panel_lock);
 	if (rc < 0)
 		DSI_ERR("failed to set tear off\n");
 }

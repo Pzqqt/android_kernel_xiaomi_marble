@@ -509,7 +509,8 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	u32 bl_lvl)
 {
 	int rc = 0;
-	struct mipi_dsi_device *dsi;
+	unsigned long mode_flags = 0;
+	struct mipi_dsi_device *dsi = NULL;
 
 	if (!panel || (bl_lvl > 0xffff)) {
 		DSI_ERR("invalid params\n");
@@ -517,6 +518,10 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	}
 
 	dsi = &panel->mipi_device;
+	if (unlikely(panel->bl_config.lp_mode)) {
+		mode_flags = dsi->mode_flags;
+		dsi->mode_flags |= MIPI_DSI_MODE_LPM;
+	}
 
 	if (panel->bl_config.bl_inverted_dbv)
 		bl_lvl = (((bl_lvl & 0xff) << 8) | (bl_lvl >> 8));
@@ -524,6 +529,9 @@ static int dsi_panel_update_backlight(struct dsi_panel *panel,
 	rc = mipi_dsi_dcs_set_display_brightness(dsi, bl_lvl);
 	if (rc < 0)
 		DSI_ERR("failed to update dcs backlight:%d\n", bl_lvl);
+
+	if (unlikely(panel->bl_config.lp_mode))
+		dsi->mode_flags = mode_flags;
 
 	return rc;
 }
@@ -2144,10 +2152,11 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 {
 	int rc = 0;
 	u32 val = 0;
-	const char *bl_type;
-	const char *data;
+	const char *bl_type = NULL;
+	const char *data = NULL;
+	const char *state = NULL;
 	struct dsi_parser_utils *utils = &panel->utils;
-	char *bl_name;
+	char *bl_name = NULL;
 
 	if (!strcmp(panel->type, "primary"))
 		bl_name = "qcom,mdss-dsi-bl-pmic-control-type";
@@ -2216,6 +2225,15 @@ static int dsi_panel_parse_bl_config(struct dsi_panel *panel)
 
 	panel->bl_config.bl_inverted_dbv = utils->read_bool(utils->data,
 		"qcom,mdss-dsi-bl-inverted-dbv");
+
+	state = utils->get_property(utils->data, "qcom,bl-dsc-cmd-state", NULL);
+	if (!state || !strcmp(state, "dsi_hs_mode"))
+		panel->bl_config.lp_mode = false;
+	else if (!strcmp(state, "dsi_lp_mode"))
+		panel->bl_config.lp_mode = true;
+	else
+		DSI_ERR("bl-dsc-cmd-state command state unrecognized-%s\n",
+			state);
 
 	if (panel->bl_config.type == DSI_BACKLIGHT_PWM) {
 		rc = dsi_panel_parse_bl_pwm_config(panel);
