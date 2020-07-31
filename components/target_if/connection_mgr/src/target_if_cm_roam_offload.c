@@ -565,6 +565,53 @@ target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
 	return status;
 }
 
+static uint32_t
+target_if_get_wmi_roam_offload_flag(uint32_t flag)
+{
+	uint32_t roam_offload_flag = 0;
+
+	if (flag & WLAN_ROAM_FW_OFFLOAD_ENABLE)
+		roam_offload_flag |= WMI_ROAM_FW_OFFLOAD_ENABLE_FLAG;
+
+	if (flag & WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE)
+		roam_offload_flag |= WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG;
+
+	if (flag & WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE)
+		roam_offload_flag |=
+			WMI_VDEV_PARAM_SKIP_ROAM_EAPOL_4WAY_HANDSHAKE;
+
+	if (flag & WLAN_ROAM_BMISS_FINAL_SCAN_TYPE)
+		roam_offload_flag |= WMI_ROAM_BMISS_FINAL_SCAN_TYPE_FLAG;
+
+	return roam_offload_flag;
+}
+
+/**
+ * target_if_cm_roam_send_roam_init  - Send roam module init/deinit to firmware
+ * @vdev:  Pointer to Objmgr vdev
+ * @params: Roam offload init params
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_roam_init(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_roam_offload_init_params *params)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+	uint32_t flag;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	flag = target_if_get_wmi_roam_offload_flag(params->roam_offload_flag);
+	status = target_if_vdev_set_param(wmi_handle, params->vdev_id,
+					  WMI_VDEV_PARAM_ROAM_FW_OFFLOAD, flag);
+
+	return status;
+}
+
 /**
  * target_if_cm_roam_send_roam_start() - Send roam start related commands
  * to wmi
@@ -647,6 +694,7 @@ end:
 static void
 target_if_cm_roam_register_rso_req_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
+	tx_ops->send_roam_offload_init_req = target_if_cm_roam_send_roam_init;
 	tx_ops->send_roam_start_req = target_if_cm_roam_send_roam_start;
 }
 #else

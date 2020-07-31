@@ -122,11 +122,9 @@ wlan_cm_roam_triggers(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-cm_roam_init_req(struct wlan_objmgr_psoc *psoc,
-		 uint8_t vdev_id,
-		 bool enable)
+cm_roam_init_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, bool enable)
 {
-	return QDF_STATUS_SUCCESS;
+	return wlan_cm_tgt_send_roam_offload_init(psoc, vdev_id, enable);
 }
 
 /**
@@ -337,7 +335,6 @@ cm_roam_switch_to_deinit(struct wlan_objmgr_pdev *pdev,
 	}
 
 	status = cm_roam_init_req(psoc, vdev_id, false);
-
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
@@ -381,7 +378,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 	case WLAN_ROAM_DEINIT:
 		roaming_bitmap = mlme_get_roam_trigger_bitmap(psoc, vdev_id);
 		if (!roaming_bitmap) {
-			mlme_info("ROAM: Cannot change to INIT state for vdev[%d]",
+			mlme_info("CM_RSO: Cannot change to INIT state for vdev[%d]",
 				  vdev_id);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -404,7 +401,7 @@ cm_roam_switch_to_init(struct wlan_objmgr_pdev *pdev,
 			 * supplicant.
 			 */
 			if (reason != REASON_SUPPLICANT_INIT_ROAMING) {
-				mlme_info("ROAM: Roam module already initialized on vdev:[%d]",
+				mlme_info("CM_RSO: Roam module already initialized on vdev:[%d]",
 					  temp_vdev_id);
 				return QDF_STATUS_E_FAILURE;
 			}

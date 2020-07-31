@@ -89,6 +89,35 @@
 #define REASON_ROAM_ABORT                           53
 
 /**
+ * enum roam_offload_init_flags  - Flags sent in Roam offload initialization.
+ * @WLAN_ROAM_FW_OFFLOAD_ENABLE: Init roaming module at firwmare
+ * @WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE: Enable partial scan after final beacon
+ * miss event at firmware
+ * @WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE: Disable 4 Way-HS offload to firmware
+ * Setting this flag will make the eapol packets reach to host every time
+ * and can cause frequent APPS wake-ups.
+ * @WLAN_ROAM_BMISS_FINAL_SCAN_TYPE: Set this flag to skip full scan on final
+ * bmiss and use the channel map to do the partial scan alone
+ */
+enum roam_offload_init_flags {
+	WLAN_ROAM_FW_OFFLOAD_ENABLE = BIT(1),
+	WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE = BIT(2),
+	WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE = BIT(3),
+	WLAN_ROAM_BMISS_FINAL_SCAN_TYPE = BIT(4)
+};
+
+/**
+ * struct wlan_roam_offload_init_params - Firmware roam module initialization
+ * parameters. Used to fill
+ * @vdev_id: vdev for which the roaming has to be enabled/disabled
+ * @roam_offload_flag:  flag to init/deinit roam module
+ */
+struct wlan_roam_offload_init_params {
+	uint8_t vdev_id;
+	uint32_t roam_offload_flag;
+};
+
+/**
  * struct wlan_cm_roam_vendor_btm_params - vendor config roam control param
  * @scan_freq_scheme: scan frequency scheme from enum
  * qca_roam_scan_freq_scheme
@@ -625,6 +654,8 @@ struct set_pcl_req {
  * roaming related commands
  * @send_vdev_set_pcl_cmd: TX ops function pointer to send set vdev PCL
  * command
+ * @send_roam_offload_init_req: TX Ops function pointer to send roam offload
+ * module initialize request
  * @send_roam_start_req: TX ops function pointer to send roam start related
  * commands
  */
@@ -632,6 +663,10 @@ struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd) (struct wlan_objmgr_vdev *vdev,
 					     struct set_pcl_req *req);
 #ifdef ROAM_OFFLOAD_V1
+	QDF_STATUS (*send_roam_offload_init_req) (
+			struct wlan_objmgr_vdev *vdev,
+			struct wlan_roam_offload_init_params *params);
+
 	QDF_STATUS (*send_roam_start_req)(struct wlan_objmgr_vdev *vdev,
 					  struct wlan_roam_start_config *req);
 #endif

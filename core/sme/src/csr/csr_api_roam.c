@@ -22200,6 +22200,7 @@ QDF_STATUS csr_update_owe_info(struct mac_context *mac,
 	return status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS
 csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 			       bool enable)
@@ -22232,6 +22233,7 @@ csr_send_roam_offload_init_msg(struct mac_context *mac, uint32_t vdev_id,
 
 	return status;
 }
+#endif
 
 QDF_STATUS
 csr_roam_update_cfg(struct mac_context *mac, uint8_t vdev_id, uint8_t reason)
