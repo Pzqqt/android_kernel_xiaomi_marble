@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,7 @@
 #include "ahb_api.h"
 #include "if_ahb.h"
 #include "qal_vbus_dev.h"
+#include "qal_devnode.h"
 
 #include <linux/clk.h>
 #include <linux/of_address.h>
@@ -132,17 +133,17 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 	int ret = 0;
 	struct qdf_vbus_rstctl *vrstctl = NULL;
 
-	ret = of_property_read_u32(dev_node, "qca,msi_addr", &msi_addr);
+	ret = qal_devnode_read_u32(dev_node, "qca,msi_addr", &msi_addr);
 	if (ret) {
 		hif_err("Unable to get msi_addr - error :%d", ret);
 		return -EIO;
 	}
-	ret = of_property_read_u32(dev_node, "qca,msi_base", &msi_base);
+	ret = qal_devnode_read_u32(dev_node, "qca,msi_base", &msi_base);
 	if (ret) {
 		hif_err("Unable to get msi_base - error: %d", ret);
 		return -EIO;
 	}
-	ret = of_property_read_u32(dev_node, "core-id", &wifi_core_id);
+	ret = qal_devnode_read_u32(dev_node, "core-id", &wifi_core_id);
 	if (ret) {
 		hif_err("Unable to get core-id - error: %d", ret);
 		return -EIO;

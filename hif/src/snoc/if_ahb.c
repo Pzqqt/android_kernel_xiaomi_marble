@@ -36,6 +36,7 @@
 #include "pci_api.h"
 #include "hif_napi.h"
 #include "qal_vbus_dev.h"
+#include "qdf_irq.h"
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)
 #define IRQF_DISABLED 0x00000020
@@ -361,7 +362,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {
 		irq = hif_ext_group->os_irq[j];
-		irq_set_status_flags(irq, IRQ_DISABLE_UNLAZY);
+		qdf_dev_set_irq_status_flags(irq, QDF_IRQ_DISABLE_UNLAZY);
 		ret = pfrm_request_irq(scn->qdf_dev->dev,
 				       irq, hif_ext_group_interrupt_handler,
 				       IRQF_TRIGGER_RISING,
@@ -399,8 +400,9 @@ void hif_ahb_deconfigure_grp_irq(struct hif_softc *scn)
 			for (j = 0; j < hif_ext_group->numirq; j++) {
 				irq = hif_ext_group->os_irq[j];
 				hif_ext_group->irq_enabled = false;
-				irq_clear_status_flags(irq,
-						       IRQ_DISABLE_UNLAZY);
+				qdf_dev_clear_irq_status_flags(
+							irq,
+							QDF_IRQ_DISABLE_UNLAZY);
 			}
 			qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 

@@ -318,7 +318,7 @@ void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
 	uint32_t bucket;
 	uint32_t cpu_id = qdf_get_cpu();
 
-	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	poll_time_ns = qdf_time_sched_clock() - hif_ext_group->poll_start_time;
 	poll_time_us = qdf_do_div(poll_time_ns, 1000);
 
 	napi_stat = &hif_ext_group->stats[cpu_id];
@@ -345,7 +345,7 @@ static bool hif_exec_poll_should_yield(struct hif_exec_context *hif_ext_group)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 	struct hif_config_info *cfg = &scn->hif_config;
 
-	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	poll_time_ns = qdf_time_sched_clock() - hif_ext_group->poll_start_time;
 	time_limit_reached =
 		poll_time_ns > cfg->rx_softirq_max_yield_duration_ns ? 1 : 0;
 
@@ -388,7 +388,7 @@ bool hif_exec_should_yield(struct hif_opaque_softc *hif_ctx, uint grp_id)
 static inline
 void hif_exec_update_service_start_time(struct hif_exec_context *hif_ext_group)
 {
-	hif_ext_group->poll_start_time = sched_clock();
+	hif_ext_group->poll_start_time = qdf_time_sched_clock();
 }
 
 void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)

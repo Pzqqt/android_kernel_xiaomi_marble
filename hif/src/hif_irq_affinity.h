@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -47,7 +47,7 @@ int hif_exec_event(struct hif_opaque_softc     *hif,
  */
 static inline void hif_irq_affinity_remove(int os_irq)
 {
-	irq_set_affinity_hint(os_irq, NULL);
+	qdf_dev_set_irq_affinity(os_irq, NULL);
 }
 #else
 static inline void hif_irq_affinity_remove(int os_irq)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,7 +44,7 @@
 struct tasklet_work {
 	enum ce_id_type id;
 	void *data;
-	struct work_struct work;
+	qdf_work_t reg_work;
 };
 
 
@@ -56,8 +56,10 @@ struct tasklet_work {
  */
 static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 {
-	struct tasklet_work *ce_work = container_of(work, struct tasklet_work,
-						    work);
+	qdf_work_t *reg_work = qdf_container_of(work, qdf_work_t, work);
+	struct tasklet_work *ce_work = qdf_container_of(reg_work,
+							struct tasklet_work,
+							reg_work);
 	struct hif_softc *scn = ce_work->data;
 	struct HIF_CE_state *hif_ce_state;
 
@@ -102,7 +104,7 @@ void init_tasklet_worker_by_ceid(struct hif_opaque_softc *scn, int ce_id)
 
 	tasklet_workers[ce_id].id = ce_id;
 	tasklet_workers[ce_id].data = scn;
-	init_tasklet_work(&tasklet_workers[ce_id].work,
+	init_tasklet_work(&tasklet_workers[ce_id].reg_work.work,
 			  reschedule_ce_tasklet_work_handler);
 }
 
@@ -117,7 +119,7 @@ void deinit_tasklet_workers(struct hif_opaque_softc *scn)
 	u32 id;
 
 	for (id = 0; id < CE_ID_MAX; id++)
-		cancel_work_sync(&tasklet_workers[id].work);
+		qdf_cancel_work(&tasklet_workers[id].reg_work);
 }
 
 /**
@@ -432,7 +434,7 @@ void ce_tasklet_kill(struct hif_softc *scn)
 			 * completes. Even if tasklet_schedule() happens
 			 * tasklet_disable() will take care of that.
 			 */
-			cancel_work_sync(&tasklet_workers[i].work);
+			qdf_cancel_work(&tasklet_workers[i].reg_work);
 			tasklet_kill(&hif_ce_state->tasklets[i].intr_tq);
 		}
 	}

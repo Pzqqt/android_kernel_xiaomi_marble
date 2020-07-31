@@ -41,6 +41,9 @@
 #include "targaddrs.h"
 #include "hif_exec.h"
 
+#define CNSS_RUNTIME_FILE "cnss_runtime_pm"
+#define CNSS_RUNTIME_FILE_PERM QDF_FILE_USR_READ
+
 #ifdef FEATURE_RUNTIME_PM
 /**
  * hif_pci_pm_runtime_enabled() - To check if Runtime PM is enabled
@@ -306,9 +309,11 @@ static void hif_runtime_pm_debugfs_create(struct hif_softc *scn)
 {
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
-	rpm_ctx->pm_dentry = debugfs_create_file("cnss_runtime_pm",
-						 0400, NULL, scn,
-						 &hif_pci_runtime_pm_fops);
+	rpm_ctx->pm_dentry = qdf_debugfs_create_entry(CNSS_RUNTIME_FILE,
+						      CNSS_RUNTIME_FILE_PERM,
+						      NULL,
+						      scn,
+						      &hif_pci_runtime_pm_fops);
 }
 
 /**
@@ -321,7 +326,7 @@ static void hif_runtime_pm_debugfs_remove(struct hif_softc *scn)
 {
 	struct hif_runtime_pm_ctx *rpm_ctx = hif_bus_get_rpm_ctx(scn);
 
-	debugfs_remove(rpm_ctx->pm_dentry);
+	qdf_debugfs_remove_file(rpm_ctx->pm_dentry);
 }
 
 /**

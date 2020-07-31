@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,12 +31,12 @@
 #include <linux/cpu.h>
 #include <linux/topology.h>
 #include <linux/interrupt.h>
-#include <linux/irq.h>
 #include <linux/pm.h>
 #include <hif_napi.h>
 #include <hif_irq_affinity.h>
 #include <hif_exec.h>
 #include <hif_main.h>
+#include "qdf_irq.h"
 
 #if defined(FEATURE_NAPI_DEBUG) && defined(HIF_IRQ_AFFINITY)
 /*
@@ -245,6 +245,7 @@ static int hncm_exec_migrate_to(struct qca_napi_data *napid, uint8_t ctx_id,
 				int didx)
 {
 	struct hif_exec_context *exec_ctx;
+	struct qdf_cpu_mask *cpumask;
 	int rc = 0;
 	int status = 0;
 	int ind;
@@ -259,10 +260,11 @@ static int hncm_exec_migrate_to(struct qca_napi_data *napid, uint8_t ctx_id,
 
 	for (ind = 0; ind < exec_ctx->numirq; ind++) {
 		if (exec_ctx->os_irq[ind]) {
-			irq_modify_status(exec_ctx->os_irq[ind],
-					  IRQ_NO_BALANCING, 0);
-			rc = irq_set_affinity_hint(exec_ctx->os_irq[ind],
-						   &exec_ctx->cpumask);
+			qdf_dev_modify_irq_status(exec_ctx->os_irq[ind],
+						  QDF_IRQ_NO_BALANCING, 0);
+			cpumask = (struct qdf_cpu_mask *)&exec_ctx->cpumask;
+			rc = qdf_dev_set_irq_affinity(exec_ctx->os_irq[ind],
+						      cpumask);
 			if (rc)
 				status = rc;
 		}
@@ -449,12 +451,14 @@ static inline void hif_exec_bl_irq(struct qca_napi_data *napid, bool bl_flag)
 
 		if (bl_flag == true)
 			for (j = 0; j < exec_ctx->numirq; j++)
-				irq_modify_status(exec_ctx->os_irq[j],
-						  0, IRQ_NO_BALANCING);
+				qdf_dev_modify_irq_status(exec_ctx->os_irq[j],
+							  0,
+							  QDF_IRQ_NO_BALANCING);
 		else
 			for (j = 0; j < exec_ctx->numirq; j++)
-				irq_modify_status(exec_ctx->os_irq[j],
-						  IRQ_NO_BALANCING, 0);
+				qdf_dev_modify_irq_status(exec_ctx->os_irq[j],
+							  QDF_IRQ_NO_BALANCING,
+							  0);
 		hif_debug("bl_flag %d CE %d", bl_flag, i);
 	}
 }
