@@ -3186,7 +3186,7 @@ static int rmnet_ipa3_set_data_quota_wifi(struct wan_ioctl_set_data_quota *data)
 	memset(&wifi_quota, 0, sizeof(struct ipa_set_wifi_quota));
 	wifi_quota.set_quota = data->set_quota;
 	wifi_quota.quota_bytes = data->quota_mbytes;
-	IPAWANERR("iface name %s, quota %lu\n",
+	IPAWANDBG("iface name %s, quota %lu\n",
 		  data->interface_name, (unsigned long) data->quota_mbytes);
 
 	if (ipa3_ctx_get_type(IPA_HW_TYPE) >= IPA_HW_v4_5) {
@@ -4218,7 +4218,7 @@ void ipa3_broadcast_quota_reach_ind(u32 mux_id,
 		return;
 	}
 
-	IPAWANERR("putting nlmsg: <%s> <%s> <%s>\n",
+	IPAWANDBG("putting nlmsg: <%s> <%s> <%s>\n",
 		alert_msg, iface_name_l, iface_name_m);
 	kobject_uevent_env(&(IPA_NETDEV()->dev.kobj),
 		KOBJ_CHANGE, envp);

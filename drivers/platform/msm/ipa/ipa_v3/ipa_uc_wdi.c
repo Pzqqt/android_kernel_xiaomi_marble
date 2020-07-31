@@ -2851,7 +2851,7 @@ EXPORT_SYMBOL(ipa3_suspend_wdi_pipe);
 int ipa3_broadcast_wdi_quota_reach_ind(uint32_t fid,
 	uint64_t num_bytes)
 {
-	IPAERR("Quota reached indication on fid(%d) Mbytes(%lu)\n",
+	IPAERR_RL("Quota reached indication on fid(%d) Mbytes(%lu)\n",
 			  fid, (unsigned long)num_bytes);
 	ipa3_broadcast_quota_reach_ind(0, IPA_UPSTEAM_WLAN);
 	return 0;
@@ -3052,17 +3052,17 @@ int ipa3_create_wdi_mapping(u32 num_buffers, struct ipa_wdi_buffer_info *info)
 	int prot = IOMMU_READ | IOMMU_WRITE;
 
 	if (!info) {
-		IPAERR("info = %pK\n", info);
+		IPAERR_RL("info = %pK\n", info);
 		return -EINVAL;
 	}
 
 	if (!cb->valid) {
-		IPAERR("No SMMU CB setup\n");
+		IPAERR_RL("No SMMU CB setup\n");
 		return -EINVAL;
 	}
 
 	if (ipa3_ctx->s1_bypass_arr[IPA_SMMU_CB_WLAN]) {
-		IPAERR("IPA SMMU not enabled\n");
+		IPAERR_RL("IPA SMMU not enabled\n");
 		return -EINVAL;
 	}
 
