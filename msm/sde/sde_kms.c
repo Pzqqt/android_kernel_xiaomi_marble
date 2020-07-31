@@ -2990,6 +2990,16 @@ static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 
 	drm_connector_list_iter_begin(dev, &conn_iter);
 	drm_for_each_connector_iter(connector, &conn_iter) {
+		struct drm_encoder *c_encoder;
+
+		drm_connector_for_each_possible_encoder(connector,
+				c_encoder)
+			break;
+		if (!c_encoder) {
+			SDE_ERROR("c_encoder not found\n");
+			return -EINVAL;
+		}
+
 		/**
 		 * Inform cont_splash is disabled to each interface/connector.
 		 * This is currently supported for DSI interface.
@@ -2999,8 +3009,7 @@ static int sde_kms_inform_cont_splash_res_disable(struct msm_kms *kms,
 			if (!dsi_display || !encoder) {
 				sde_conn->ops.cont_splash_res_disable
 						(sde_conn->display);
-			} else if (connector->encoder_ids[0]
-					== encoder->base.id) {
+			} else if (c_encoder->base.id == encoder->base.id) {
 				/**
 				 * This handles dual DSI
 				 * configuration where one DSI
@@ -3183,6 +3192,16 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 		mutex_lock(&dev->mode_config.mutex);
 		drm_connector_list_iter_begin(dev, &conn_iter);
 		drm_for_each_connector_iter(connector, &conn_iter) {
+			struct drm_encoder *c_encoder;
+
+			drm_connector_for_each_possible_encoder(connector,
+					c_encoder)
+				break;
+			if (!c_encoder) {
+				SDE_ERROR("c_encoder not found\n");
+				mutex_unlock(&dev->mode_config.mutex);
+				return -EINVAL;
+			}
 			/**
 			 * SDE_KMS doesn't attach more than one encoder to
 			 * a DSI connector. So it is safe to check only with
@@ -3190,7 +3209,7 @@ static int sde_kms_cont_splash_config(struct msm_kms *kms,
 			 * ever have to support continuous splash for
 			 * external displays in MST configuration.
 			 */
-			if (connector->encoder_ids[0] == encoder->base.id)
+			if (c_encoder->base.id == encoder->base.id)
 				break;
 		}
 		drm_connector_list_iter_end(&conn_iter);

@@ -2078,8 +2078,7 @@ dp_mst_add_fixed_connector(struct drm_dp_mst_topology_mgr *mgr,
 	drm_modeset_lock_all(dev);
 
 	/* clear encoder list */
-	for (i = 0; i < DRM_CONNECTOR_MAX_ENCODER; i++)
-		connector->encoder_ids[i] = 0;
+	connector->possible_encoders = 0;
 
 	/* re-attach encoders from first available encoders */
 	for (i = enc_idx; i < MAX_DP_MST_DRM_BRIDGES; i++)
