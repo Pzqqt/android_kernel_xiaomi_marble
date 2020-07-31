@@ -131,6 +131,54 @@ end:
 
 #ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
+					      uint8_t vdev_id, bool is_init)
+{
+	QDF_STATUS status;
+	struct wlan_cm_roam_tx_ops roam_tx_ops;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_roam_offload_init_params init_msg = {0};
+	bool disable_4way_hs_offload, bmiss_skip_full_scan;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	roam_tx_ops = GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev);
+	if (!roam_tx_ops.send_roam_offload_init_req) {
+		mlme_err("CM_RSO: vdev%d send_roam_offload_init_req is NULL",
+			 vdev_id);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	init_msg.vdev_id = vdev_id;
+	if (is_init) {
+		init_msg.roam_offload_flag = WLAN_ROAM_FW_OFFLOAD_ENABLE |
+				 WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE;
+
+		wlan_mlme_get_4way_hs_offload(psoc, &disable_4way_hs_offload);
+		if (disable_4way_hs_offload)
+			init_msg.roam_offload_flag |=
+				WLAN_ROAM_SKIP_EAPOL_4WAY_HANDSHAKE;
+
+		wlan_mlme_get_bmiss_skip_full_scan_value(psoc,
+							 &bmiss_skip_full_scan);
+		if (bmiss_skip_full_scan)
+			init_msg.roam_offload_flag |=
+				WLAN_ROAM_BMISS_FINAL_SCAN_TYPE;
+	}
+
+	status = roam_tx_ops.send_roam_offload_init_req(vdev, &init_msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("CM_RSO: vdev%d fail to send rso init", vdev_id);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return status;
+}
+
 QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id,
 					   struct wlan_roam_start_config *req)
@@ -146,14 +194,14 @@ QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
 
 	roam_tx_ops = GET_CM_ROAM_TX_OPS_FROM_VDEV(vdev);
 	if (!roam_tx_ops.send_roam_start_req) {
-		mlme_err("send_roam_start_req is NULL");
+		mlme_err("CM_RSO: vdev%d send_roam_start_req is NULL", vdev_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	status = roam_tx_ops.send_roam_start_req(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		mlme_debug("fail to send roam start");
+		mlme_debug("CM_RSO: vdev%d fail to send roam start", vdev_id);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
 	return status;

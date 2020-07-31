@@ -51,6 +51,18 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 #ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
+ * wlan_cm_tgt_send_roam_offload_init  - Send WMI_VDEV_PARAM_ROAM_FW_OFFLOAD to
+ * init/deinit roaming module at firmware
+ * @psoc: PSOC pointer
+ * @vdev_id: vdev id
+ * @is_init: true if roam module is to be initialized else false for deinit
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
+					      uint8_t vdev_id, bool is_init);
+
+/**
  * wlan_cm_tgt_send_roam_start_req  - Send roam start command to firmware
  * @psoc:    psoc pointer
  * @vdev_id: vdev id

@@ -2631,10 +2631,10 @@ static void
 mlme_print_roaming_state(uint8_t vdev_id, enum roam_offload_state cur_state,
 			 enum roam_offload_state new_state)
 {
-	mlme_legacy_debug("ROAM: vdev%d: [%s(%d)] --> [%s(%d)]",
-			  vdev_id, mlme_roam_state_to_string(cur_state),
-			  cur_state,
-			  mlme_roam_state_to_string(new_state), new_state);
+	mlme_nofl_debug("CM_RSO: vdev%d: [%s(%d)] --> [%s(%d)]",
+			vdev_id, mlme_roam_state_to_string(cur_state),
+			cur_state,
+			mlme_roam_state_to_string(new_state), new_state);
 
 	/* TODO: Try to print the state change requestor also */
 }
@@ -2839,13 +2839,13 @@ void mlme_set_roam_state(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 						    WLAN_MLME_OBJMGR_ID);
 
 	if (!vdev) {
-		mlme_legacy_err("vdev object is NULL");
+		mlme_err("vdev%d: vdev object is NULL", vdev_id);
 		return;
 	}
 
 	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
 	if (!mlme_priv) {
-		mlme_legacy_err("vdev legacy private object is NULL");
+		mlme_err("vdev%d: vdev legacy private object is NULL", vdev_id);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_OBJMGR_ID);
 		return;
 	}
