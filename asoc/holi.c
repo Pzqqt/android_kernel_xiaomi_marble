@@ -181,6 +181,7 @@ struct msm_asoc_mach_data {
 	struct device_node *fsa_handle;
 	struct clk *lpass_audio_hw_vote;
 	int core_audio_vote_count;
+	u32 wcd_disabled;
 };
 
 struct tdm_port {
@@ -746,6 +747,70 @@ static struct wcd_mbhc_config wcd_mbhc_cfg = {
 	.enable_anc_mic_detect = false,
 	.moisture_duty_cycle_en = true,
 };
+
+/* set audio task affinity to core 1 & 2 */
+static const unsigned int audio_core_list[] = {1, 2};
+static cpumask_t audio_cpu_map = CPU_MASK_NONE;
+static struct dev_pm_qos_request *msm_audio_req = NULL;
+static unsigned int qos_client_active_cnt = 0;
+
+static void msm_audio_add_qos_request()
+{
+	int i;
+	int cpu = 0;
+
+	msm_audio_req = kzalloc(sizeof(struct dev_pm_qos_request) * NR_CPUS,
+				 GFP_KERNEL);
+	if (!msm_audio_req) {
+		pr_err("%s failed to alloc mem for qos req.\n", __func__);
+		return;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(audio_core_list); i++) {
+		if (audio_core_list[i] >= NR_CPUS)
+			pr_err("%s incorrect cpu id: %d specified.\n",
+				 __func__, audio_core_list[i]);
+		else
+			cpumask_set_cpu(audio_core_list[i], &audio_cpu_map);
+	}
+
+	for_each_cpu(cpu, &audio_cpu_map) {
+		dev_pm_qos_add_request(get_cpu_device(cpu),
+			&msm_audio_req[cpu],
+			DEV_PM_QOS_RESUME_LATENCY,
+			PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
+		pr_debug("%s set cpu affinity to core %d.\n", __func__, cpu);
+	}
+}
+
+static void msm_audio_remove_qos_request()
+{
+	int cpu = 0;
+
+	if (msm_audio_req) {
+		for_each_cpu(cpu, &audio_cpu_map) {
+			dev_pm_qos_remove_request(
+				&msm_audio_req[cpu]);
+			pr_debug("%s remove cpu affinity of core %d.\n",
+				 __func__, cpu);
+		}
+		kfree(msm_audio_req);
+	}
+}
+
+static void msm_audio_update_qos_request(u32 latency)
+{
+	int cpu = 0;
+
+	if (msm_audio_req) {
+		for_each_cpu(cpu, &audio_cpu_map) {
+			dev_pm_qos_update_request(
+				&msm_audio_req[cpu], latency);
+			pr_debug("%s update latency of core %d to %ul.\n",
+				 __func__, cpu, latency);
+		}
+	}
+}
 
 static inline int param_is_mask(int p)
 {
@@ -4277,8 +4342,23 @@ err:
 
 static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
 {
-	pr_debug("%s: TODO: add new QOS implementation\n", __func__);
+	(void)substream;
+
+	qos_client_active_cnt++;
+	if (qos_client_active_cnt == 1)
+		msm_audio_update_qos_request(MSM_LL_QOS_VALUE);
+
 	return 0;
+}
+
+static void msm_fe_qos_shutdown(struct snd_pcm_substream *substream)
+{
+	(void)substream;
+
+	if (qos_client_active_cnt > 0)
+		qos_client_active_cnt--;
+	if (qos_client_active_cnt == 0)
+		msm_audio_update_qos_request(PM_QOS_CPU_DMA_LAT_DEFAULT_VALUE);
 }
 
 void mi2s_disable_audio_vote(struct snd_pcm_substream *substream)
@@ -4510,6 +4590,7 @@ static struct snd_soc_ops msm_mi2s_be_ops = {
 
 static struct snd_soc_ops msm_fe_qos_ops = {
 	.prepare = msm_fe_qos_prepare,
+	.shutdown = msm_fe_qos_shutdown,
 };
 
 static struct snd_soc_ops msm_cdc_dma_be_ops = {
@@ -5767,94 +5848,6 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	},
 };
 
-static struct snd_soc_dai_link msm_rx_tx_cdc937x_dma_be_dai_links[] = {
-	/* RX CDC DMA Backend DAI Links */
-	{
-		.name = LPASS_BE_RX_CDC_DMA_RX_0,
-		.stream_name = "RX CDC DMA0 Playback",
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.dynamic_be = 1,
-#endif /* CONFIG_AUDIO_QGKI */
-		.no_pcm = 1,
-		.dpcm_playback = 1,
-		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_pmdown_time = 1,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(rx_dma_rx0_937x),
-		.init = &msm_aux_codec_init,
-	},
-	{
-		.name = LPASS_BE_RX_CDC_DMA_RX_1,
-		.stream_name = "RX CDC DMA1 Playback",
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.dynamic_be = 1,
-#endif /* CONFIG_AUDIO_QGKI */
-		.no_pcm = 1,
-		.dpcm_playback = 1,
-		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_1,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_pmdown_time = 1,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(rx_dma_rx1_937x),
-	},
-	{
-		.name = LPASS_BE_RX_CDC_DMA_RX_2,
-		.stream_name = "RX CDC DMA2 Playback",
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.dynamic_be = 1,
-#endif /* CONFIG_AUDIO_QGKI */
-		.no_pcm = 1,
-		.dpcm_playback = 1,
-		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_2,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_pmdown_time = 1,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(rx_dma_rx2_937x),
-	},
-	{
-		.name = LPASS_BE_RX_CDC_DMA_RX_3,
-		.stream_name = "RX CDC DMA3 Playback",
-#if IS_ENABLED(CONFIG_AUDIO_QGKI)
-		.dynamic_be = 1,
-#endif /* CONFIG_AUDIO_QGKI */
-		.no_pcm = 1,
-		.dpcm_playback = 1,
-		.id = MSM_BACKEND_DAI_RX_CDC_DMA_RX_3,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_pmdown_time = 1,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(rx_dma_rx3_937x),
-	},
-	/* TX CDC DMA Backend DAI Links */
-	{
-		.name = LPASS_BE_TX_CDC_DMA_TX_3,
-		.stream_name = "TX CDC DMA3 Capture",
-		.no_pcm = 1,
-		.dpcm_capture = 1,
-		.id = MSM_BACKEND_DAI_TX_CDC_DMA_TX_3,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(tx_dma_tx3_937x),
-	},
-	{
-		.name = LPASS_BE_TX_CDC_DMA_TX_4,
-		.stream_name = "TX CDC DMA4 Capture",
-		.no_pcm = 1,
-		.dpcm_capture = 1,
-		.id = MSM_BACKEND_DAI_TX_CDC_DMA_TX_4,
-		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ignore_suspend = 1,
-		.ops = &msm_cdc_dma_be_ops,
-		SND_SOC_DAILINK_REG(tx_dma_tx4_937x),
-	},
-};
-
 static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
 	{
 		.name = LPASS_BE_VA_CDC_DMA_TX_0,
@@ -6171,7 +6164,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	u32 val = 0;
 	u32 wcn_btfm_intf = 0;
 	const struct of_device_id *match;
-	int is_wcd937x_codec = 1;
 
 	match = of_match_node(holi_asoc_machine_of_match, dev->of_node);
 	if (!match) {
@@ -6180,13 +6172,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		return NULL;
 	}
 
-	rc = of_property_read_u32(dev->of_node,
-				  "qcom,is-wcd937x-codec",
-				  &is_wcd937x_codec);
-	if (rc) {
-		dev_dbg(dev, "%s: No DT match is-primary-codec\n",
-			__func__);
-	}
 	if (!strcmp(match->data, "codec")) {
 		card = &snd_soc_card_holi_msm;
 
@@ -6205,16 +6190,9 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_common_be_dai_links));
 		total_links += ARRAY_SIZE(msm_common_be_dai_links);
 
-		if (is_wcd937x_codec) {
-			memcpy(msm_holi_dai_links + total_links,
-			       msm_rx_tx_cdc937x_dma_be_dai_links,
-			       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
-		} else {
-			memcpy(msm_holi_dai_links + total_links,
-			       msm_rx_tx_cdc_dma_be_dai_links,
-			       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
-		}
-
+		memcpy(msm_holi_dai_links + total_links,
+		       msm_rx_tx_cdc_dma_be_dai_links,
+		       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
 
@@ -6397,11 +6375,21 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
 
+	pdata = snd_soc_card_get_drvdata(rtd->card);
+	if(!pdata)
+		return -EINVAL;
+
 	bolero_component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
 	if (!bolero_component) {
 		pr_err("%s: could not find component for bolero_codec\n",
 			__func__);
 		return -EINVAL;
+	}
+
+	if (pdata->wcd_disabled) {
+		bolero_set_port_map(bolero_component,
+			 ARRAY_SIZE(sm_port_map), sm_port_map);
+		return 0;
 	}
 
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
@@ -6425,7 +6413,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
-	pdata = snd_soc_card_get_drvdata(component->card);
 	if (!pdata->codec_root) {
 		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
@@ -6633,6 +6620,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	if (!pdata)
 		return -ENOMEM;
 
+	of_property_read_u32(pdev->dev.of_node,
+				"qcom,wcd-disabled",
+				&pdata->wcd_disabled);
+
 	card = populate_snd_card_dailinks(&pdev->dev);
 	if (!card) {
 		dev_err(&pdev->dev, "%s: Card uninitialized\n", __func__);
@@ -6787,6 +6778,9 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 
 	is_initial_boot = true;
 
+	/* Add QoS request for audio tasks */
+	msm_audio_add_qos_request();
+
 	return 0;
 err:
 	devm_kfree(&pdev->dev, pdata);
@@ -6800,6 +6794,7 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	snd_event_master_deregister(&pdev->dev);
 	snd_soc_unregister_card(card);
 	msm_i2s_auxpcm_deinit();
+	msm_audio_remove_qos_request();
 
 	return 0;
 }
@@ -6817,6 +6812,7 @@ static struct platform_driver holi_asoc_machine_driver = {
 };
 module_platform_driver(holi_asoc_machine_driver);
 
+MODULE_SOFTDEP("pre: bt_fm_slim");
 MODULE_DESCRIPTION("ALSA SoC msm");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:" DRV_NAME);
