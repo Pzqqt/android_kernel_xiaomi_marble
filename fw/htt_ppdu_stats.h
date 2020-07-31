@@ -1745,6 +1745,19 @@ typedef enum HTT_PPDU_STATS_RESP_TYPE HTT_PPDU_STATS_RESP_TYPE;
         ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_RTS_FAILURE_S)); \
     } while (0)
 
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_M  0x00040000
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_S          18
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_M) >> \
+    HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_S)
+
+#define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_SET (_var , _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_PREAM_PUNC_TX_S)); \
+    } while (0)
+
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_M     0xffffffff
 #define HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_CHAIN_RSSI_S              0
 
@@ -1868,11 +1881,15 @@ typedef struct {
      * BIT [ 15:  13]   :- medium protection type
      * BIT [ 16:  16]   :- rts_success
      * BIT [ 17:  17]   :- rts_failure
-     * BIT [ 31:  18]   :- reserved
+     * BIT [ 18:  18]   :- pream_punc_tx
+     * BIT [ 31:  19]   :- reserved
      */
     union {
-        A_UINT32 resp_type_is_ampdu__short_retry__long_retry; /* older name */
-        A_UINT32 resp_type__is_ampdu__short_retry__long_retry__mprot_type__rts_success__rts_failure; /* newer name */
+        /* older names */
+        A_UINT32 resp_type_is_ampdu__short_retry__long_retry;
+        A_UINT32 resp_type__is_ampdu__short_retry__long_retry__mprot_type__rts_success__rts_failure;
+        /* newest name */
+        A_UINT32 resp_type__is_ampdu__short_retry__long_retry__mprot_type__rts_success__rts_failure__pream_punc_tx;
         struct { /* bitfield names */
             A_UINT32 long_retries:               4,
                      short_retries:              4,
@@ -1881,7 +1898,8 @@ typedef struct {
                      mprot_type:                 3,
                      rts_success:                1,
                      rts_failure:                1,
-                     reserved0:                 14;
+                     pream_punc_tx:              1,
+                     reserved0:                 13;
         };
     };
 
