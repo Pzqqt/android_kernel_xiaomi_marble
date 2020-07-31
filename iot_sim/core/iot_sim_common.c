@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1711,7 +1711,7 @@ struct iot_sim_dbgfs_file iot_sim_dbgfs_files[IOT_SIM_DEBUGFS_FILE_NUM] = {
 static QDF_STATUS
 iot_sim_debugfs_deinit(struct iot_sim_context *isc)
 {
-	debugfs_remove_recursive(isc->iot_sim_dbgfs_ctx.iot_sim_dir_de);
+	qdf_debugfs_remove_dir_recursive(isc->iot_sim_dbgfs_ctx.iot_sim_dir_de);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1791,7 +1791,7 @@ iot_sim_debugfs_init(struct iot_sim_context *isc)
 	qdf_mem_zero(buf, sizeof(buf));
 	snprintf(buf, sizeof(buf), "iot_sim_pdev%u", pdev_id);
 
-	dbgfs_dir = debugfs_create_dir(buf, NULL);
+	dbgfs_dir = qdf_debugfs_create_dir(buf, NULL);
 	isc->iot_sim_dbgfs_ctx.iot_sim_dir_de = dbgfs_dir;
 
 	if (!isc->iot_sim_dbgfs_ctx.iot_sim_dir_de) {
@@ -1800,10 +1800,10 @@ iot_sim_debugfs_init(struct iot_sim_context *isc)
 	}
 
 	for (i = 0; i < IOT_SIM_DEBUGFS_FILE_NUM; ++i) {
-		de = debugfs_create_file(iot_sim_dbgfs_files[i].name,
-					 0644,
-					 dbgfs_dir, isc,
-					 iot_sim_dbgfs_files[i].ops);
+		de = qdf_debugfs_create_entry(iot_sim_dbgfs_files[i].name,
+					      IOT_SIM_DBG_FILE_PERM,
+					      dbgfs_dir, isc,
+					      iot_sim_dbgfs_files[i].ops);
 
 		if (!de) {
 			iot_sim_err("dbgfs file creation failed for pdev%u",
@@ -1816,7 +1816,7 @@ iot_sim_debugfs_init(struct iot_sim_context *isc)
 	return QDF_STATUS_SUCCESS;
 
 out:
-	debugfs_remove_recursive(dbgfs_dir);
+	qdf_debugfs_remove_dir_recursive(dbgfs_dir);
 	qdf_mem_set(isc->iot_sim_dbgfs_ctx.iot_sim_file_de,
 		    sizeof(isc->iot_sim_dbgfs_ctx.iot_sim_file_de), 0);
 
