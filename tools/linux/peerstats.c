@@ -340,6 +340,100 @@ static void dp_peer_tx_rate_stats_print(uint8_t *peer_mac,
 	return;
 }
 
+static void dp_peer_tx_link_stats_print(uint8_t *peer_mac,
+					uint64_t peer_cookie,
+					void *buffer,
+					uint32_t buffer_len)
+{
+	struct wlan_tx_link_stats *tx_stats;
+	uint8_t is_lithium;
+
+	is_lithium =  (peer_cookie & WLANSTATS_COOKIE_PLATFORM_OFFSET)
+					>> WLANSTATS_PEER_COOKIE_LSB;
+
+	if (!is_lithium) {
+		PRINT("Not supported in non-lithium platforms\n");
+		return;
+	}
+
+	if (buffer_len < sizeof(struct wlan_tx_link_stats)) {
+		PRINT("invalid buffer len, return");
+		return;
+	}
+
+	tx_stats = (struct wlan_tx_link_stats *)buffer;
+
+	PRINT("\n\n");
+	PRINT("========= PEER TX LINK QUALITY METRICS =========\n");
+	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx",
+	      peer_mac[0],
+	      peer_mac[1],
+	      peer_mac[2],
+	      peer_mac[3],
+	      peer_mac[4],
+	      peer_mac[5]);
+	PRINT("num_ppdus: %u", tx_stats->num_ppdus);
+	PRINT("bytes: %"PRIu64, tx_stats->bytes);
+	PRINT("phy_rate_actual_su: %u kbps", tx_stats->phy_rate_actual_su);
+	PRINT("phy_rate_actual_mu: %u kbps", tx_stats->phy_rate_actual_mu);
+	PRINT("ofdma_usage: %u", tx_stats->ofdma_usage);
+	PRINT("mu_mimo_usage: %u", tx_stats->mu_mimo_usage);
+	PRINT("bw_usage_avg: %u MHz", tx_stats->bw.usage_avg);
+	PRINT("bw_usage_packets: 20MHz: %u 40MHz: %u 80MHz: %u 160MHz: %u",
+	      tx_stats->bw.usage_counter[0], tx_stats->bw.usage_counter[1],
+	      tx_stats->bw.usage_counter[2], tx_stats->bw.usage_counter[3]);
+	PRINT("bw_usage_max:: %u%%", tx_stats->bw.usage_max);
+	PRINT("ack_rssi: %lu", tx_stats->ack_rssi);
+	PRINT("pkt_error_rate: %u%%", tx_stats->pkt_error_rate);
+}
+
+static void dp_peer_rx_link_stats_print(uint8_t *peer_mac,
+					uint64_t peer_cookie,
+					void *buffer,
+					uint32_t buffer_len)
+{
+	struct wlan_rx_link_stats *rx_stats;
+	uint8_t is_lithium;
+
+	is_lithium =  (peer_cookie & WLANSTATS_COOKIE_PLATFORM_OFFSET)
+					>> WLANSTATS_PEER_COOKIE_LSB;
+
+	if (!is_lithium) {
+		PRINT("Not supported in non-lithium platforms\n");
+		return;
+	}
+
+	if (buffer_len < sizeof(struct wlan_rx_link_stats)) {
+		PRINT("invalid buffer len, return");
+		return;
+	}
+
+	rx_stats = (struct wlan_rx_link_stats *)buffer;
+
+	PRINT("\n\n");
+	PRINT("========= PEER RX LINK QUALITY METRICS =========\n");
+	PRINT("PEER %02hhx:%02hhx:%02hhx:%02hhx%02hhx:%02hhx",
+	      peer_mac[0],
+	      peer_mac[1],
+	      peer_mac[2],
+	      peer_mac[3],
+	      peer_mac[4],
+	      peer_mac[5]);
+	PRINT("num_ppdus: %u", rx_stats->num_ppdus);
+	PRINT("bytes: %"PRIu64, rx_stats->bytes);
+	PRINT("phy_rate_actual_su: %u kbps", rx_stats->phy_rate_actual_su);
+	PRINT("phy_rate_actual_mu: %u kbps", rx_stats->phy_rate_actual_mu);
+	PRINT("ofdma_usage: %u", rx_stats->ofdma_usage);
+	PRINT("mu_mimo_usage: %u", rx_stats->mu_mimo_usage);
+	PRINT("bw_usage_avg: %u MHz", rx_stats->bw.usage_avg);
+	PRINT("bw_usage_packets: 20MHz: %u 40MHz: %u 80MHz: %u 160MHz: %u",
+	      rx_stats->bw.usage_counter[0], rx_stats->bw.usage_counter[1],
+	      rx_stats->bw.usage_counter[2], rx_stats->bw.usage_counter[3]);
+	PRINT("bw_usage_max: %u%%", rx_stats->bw.usage_max);
+	PRINT("su_rssi: %lu", rx_stats->su_rssi);
+	PRINT("pkt_error_rate: %u%%", rx_stats->pkt_error_rate);
+}
+
 static void dp_peer_stats_handler(uint32_t cache_type,
 				 uint8_t *peer_mac,
 				 uint64_t peer_cookie,
@@ -353,6 +447,14 @@ static void dp_peer_stats_handler(uint32_t cache_type,
 		break;
 	case DP_PEER_TX_RATE_STATS:
 		dp_peer_tx_rate_stats_print(peer_mac, peer_cookie,
+					    buffer, buffer_len);
+		break;
+	case DP_PEER_TX_LINK_STATS:
+		dp_peer_tx_link_stats_print(peer_mac, peer_cookie,
+					    buffer, buffer_len);
+		break;
+	case DP_PEER_RX_LINK_STATS:
+		dp_peer_rx_link_stats_print(peer_mac, peer_cookie,
 					    buffer, buffer_len);
 		break;
 	}
