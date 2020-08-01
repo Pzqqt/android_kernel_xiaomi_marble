@@ -579,11 +579,30 @@ static void dfs_fill_adfs_chan_params(struct wlan_dfs *dfs,
 	adfs_param->precac_chwidth = dfs->dfs_precac_chwidth;
 }
 
+/* dfs_agile_precac_cleanup() - Reset parameters of wlan_dfs.
+ *
+ * @dfs: Pointer to struct wlan_dfs.
+ */
+static void dfs_agile_precac_cleanup(struct wlan_dfs *dfs)
+{
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
+	dfs_soc_obj->dfs_precac_timer_running = 0;
+	dfs_soc_obj->precac_state_started = 0;
+	dfs->dfs_agile_precac_freq_mhz = 0;
+	dfs->dfs_precac_chwidth = CH_WIDTH_INVALID;
+	dfs_soc_obj->cur_agile_dfs_index = DFS_PSOC_NO_IDX;
+}
+
 /*
  * dfs_prepare_agile_precac_chan() - Prepare an agile channel for preCAC.
  * @dfs: Pointer to wlan_dfs.
+ *
+ * Return Type: void
  */
-void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
+void  dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs, bool *is_chan_found)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -651,9 +670,10 @@ void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
 		else
 			dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
 				"dfs_tx_ops=%pK", dfs_tx_ops);
+		*is_chan_found = true;
 	} else {
-		dfs->dfs_soc_obj->precac_state_started = false;
-		qdf_info("No channels in preCAC required list");
+		dfs_agile_precac_cleanup(dfs);
+		*is_chan_found = false;
 	}
 }
 #endif
@@ -872,6 +892,10 @@ static void dfs_unmark_rcac_done(struct wlan_dfs *dfs)
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 }
+#else
+static inline void dfs_unmark_rcac_done(struct wlan_dfs *dfs)
+{
+}
 #endif
 
 /*
@@ -1051,14 +1075,6 @@ void dfs_unmark_precac_nol_for_freq(struct wlan_dfs *dfs, uint16_t chan_freq)
 				dfs_mlme_channel_change_by_precac(
 						dfs->dfs_pdev_obj);
 			}
-		} else if (dfs_is_agile_precac_enabled(dfs) &&
-			   !dfs->dfs_soc_obj->precac_state_started) {
-			/* precac_state_started will be set to false if
-			 * agile CAC is not begun for any channels or
-			 * all channels were CACed. If it's not set, defer
-			 * changing the current Agile CAC channel.
-			 */
-			dfs_prepare_agile_precac_chan(dfs);
 		}
 	}
 }
@@ -1157,41 +1173,6 @@ void dfs_mark_precac_nol_for_freq(struct wlan_dfs *dfs,
 						dfs->dfs_pdev_obj);
 			}
 		}
-	} else if (dfs_is_agile_precac_enabled(dfs)) {
-		/* If preCAC is not running on the DFS where radar is detected,
-		 * no need to configure agile channel.
-		 * Return from this function.
-		 */
-		if (!(dfs_soc_obj->cur_agile_dfs_index == dfs->dfs_psoc_idx)) {
-			dfs_debug(dfs, WLAN_DEBUG_DFS,
-				  "preCAC not running on radarfound DFS idx=%d",
-				  dfs->dfs_psoc_idx);
-			return;
-		}
-
-		qdf_timer_sync_cancel(&dfs_soc_obj->dfs_precac_timer);
-		dfs_soc_obj->dfs_precac_timer_running = 0;
-
-		/* Since Agile DFS is interrupted due to radar, send
-		 * OCAC abort event to FW for a proper restart of the Agile
-		 * state machine.
-		 */
-		if (dfs_tx_ops && dfs_tx_ops->dfs_ocac_abort_cmd)
-			dfs_tx_ops->dfs_ocac_abort_cmd(pdev);
-		/*
-		 * If radar is found on agile engine, change the channel here
-		 * since primary channel change will not be triggered.
-		 * If radar is found on primary detector, let agile
-		 * channel change be triggered after start response.
-		 * Set precac_state_started to false to indicate preCAC is not
-		 * running and also reset the current Agile channel.
-		 */
-		if (detector_id == dfs_get_agile_detector_id(dfs)) {
-			dfs_prepare_agile_precac_chan(dfs);
-		} else {
-			dfs->dfs_agile_precac_freq_mhz = 0;
-			dfs_soc_obj->precac_state_started = PRECAC_NOT_STARTED;
-		}
 	}
 }
 
@@ -1266,9 +1247,10 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			       enum phy_ch_width chwidth)
 {
 	struct wlan_dfs *dfs = NULL;
-	struct dfs_agile_cac_params adfs_param;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs = wlan_pdev_get_dfs_obj(pdev);
+	dfs_soc_obj = dfs->dfs_soc_obj;
 
 	/* When the FW sends a delayed OCAC completion status, Host might
 	 * have changed the precac channel already before an OCAC
@@ -1294,12 +1276,9 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 	    return;
 	}
 
-	/* STOP TIMER irrespective of status */
-	utils_dfs_cancel_precac_timer(pdev);
 	if (ocac_status == OCAC_RESET) {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			  "PreCAC timer reset, Sending Agile chan set command");
-		dfs_prepare_agile_precac_chan(dfs);
 	} else if (ocac_status == OCAC_CANCEL) {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
 			  "PreCAC timer abort, agile precac stopped");
@@ -1308,19 +1287,14 @@ void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
 			  "PreCAC timer Completed for agile freq: %d %d",
 			  center_freq_mhz1,
 			  center_freq_mhz2);
-		/*
-		 * TRIGGER agile precac timer with 0sec timeout
-		 * with ocac_status 0 for old pdev
-		 */
-		adfs_param.precac_center_freq_1 = center_freq_mhz1;
-		adfs_param.precac_center_freq_2 = center_freq_mhz2;
-		adfs_param.precac_chwidth = dfs->dfs_precac_chwidth;
-		dfs_start_agile_precac_timer(dfs,
-					     ocac_status,
-					     &adfs_param);
 	} else {
 		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "Error Unknown");
 	}
+
+	dfs_soc_obj->ocac_status = ocac_status;
+	dfs_agile_sm_deliver_evt(dfs_soc_obj,
+				 DFS_AGILE_SM_EV_AGILE_DONE,
+				 0, (void *)dfs);
 }
 #endif
 #endif
@@ -1494,22 +1468,9 @@ static os_timer_func(dfs_precac_timeout)
 		     "Pre-cac expired, Agile Precac chan %u curr time %d",
 		     dfs->dfs_agile_precac_freq_mhz,
 		     current_time / 1000);
-	    if (dfs_soc_obj->ocac_status == OCAC_SUCCESS) {
-		dfs_soc_obj->ocac_status = OCAC_RESET;
-		dfs_mark_adfs_chan_as_cac_done(dfs);
-	    }
-	    /* check if CAC done on home channel */
-	    is_cac_done_on_des_chan = dfs_precac_check_home_chan_change(dfs);
-	    if (!is_cac_done_on_des_chan) {
-		/*
-		 * Use same home channel, only change preCAC channel.
-		 */
-
-		/*
-		 * TO BE DONE xxx : Need to lock the channel change.
-		 */
-		dfs_prepare_agile_precac_chan(dfs);
-	    }
+	    dfs_agile_sm_deliver_evt(dfs_soc_obj,
+				     DFS_AGILE_SM_EV_AGILE_DONE,
+				     0, (void *)dfs);
 	}
 }
 
@@ -2681,24 +2642,18 @@ void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
 	dfs_soc_obj = dfs->dfs_soc_obj;
 	dfs_soc_obj->dfs_precac_timer_running = 1;
 
-	if (ocac_status == OCAC_SUCCESS) {
-		dfs_soc_obj->ocac_status = OCAC_SUCCESS;
-		min_precac_timeout = 0;
-		max_precac_timeout = 0;
+	/* Find the minimum and maximum precac timeout. */
+	max_precac_timeout = MAX_PRECAC_DURATION;
+	if (dfs->dfs_precac_timeout_override != -1) {
+		min_precac_timeout =
+			dfs->dfs_precac_timeout_override * 1000;
+	} else if (dfs_is_pcac_on_weather_channel_for_freq(dfs,
+							   chwidth,
+							   pcacfreq)) {
+		min_precac_timeout = MIN_WEATHER_PRECAC_DURATION;
+		max_precac_timeout = MAX_WEATHER_PRECAC_DURATION;
 	} else {
-		/* Find the minimum and maximum precac timeout. */
-		max_precac_timeout = MAX_PRECAC_DURATION;
-		if (dfs->dfs_precac_timeout_override != -1) {
-			min_precac_timeout =
-				dfs->dfs_precac_timeout_override * 1000;
-		} else if (dfs_is_pcac_on_weather_channel_for_freq(dfs,
-								   chwidth,
-								   pcacfreq)) {
-			min_precac_timeout = MIN_WEATHER_PRECAC_DURATION;
-			max_precac_timeout = MAX_WEATHER_PRECAC_DURATION;
-		} else {
-			min_precac_timeout = MIN_PRECAC_DURATION;
-		}
+		min_precac_timeout = MIN_PRECAC_DURATION;
 	}
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -3271,9 +3226,8 @@ static void dfs_fill_des_rcac_chan_params(struct wlan_dfs *dfs,
 	ch_params->mhz_freq_seg0 = chan->dfs_ch_mhz_freq_seg1;
 	ch_params->mhz_freq_seg1 = chan->dfs_ch_mhz_freq_seg2;
 }
-#endif
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+
 bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 {
 	enum dfs_reg dfsdomain;
@@ -3287,6 +3241,14 @@ bool dfs_is_agile_rcac_enabled(struct wlan_dfs *dfs)
 	    rcac_enabled = true;
 
 	return rcac_enabled;
+}
+#endif
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+bool dfs_is_agile_cac_enabled(struct wlan_dfs *dfs)
+{
+	return (dfs_is_agile_precac_enabled(dfs) ||
+		dfs_is_agile_rcac_enabled(dfs));
 }
 #endif
 
@@ -3928,8 +3890,16 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 	if (dfs_is_precac_timer_running(dfs)) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			 "Precac flag changed. Cancel the precac timer");
-		dfs_cancel_precac_timer(dfs);
-		dfs->dfs_soc_obj->precac_state_started = 0;
+		if (tgt_tx_ops->tgt_is_tgt_type_qca9984(target_type)) {
+			dfs_cancel_precac_timer(dfs);
+			dfs->dfs_soc_obj->precac_state_started = 0;
+		} else {
+#ifdef QCA_SUPPORT_AGILE_DFS
+			dfs_agile_sm_deliver_evt(dfs->dfs_soc_obj,
+						 DFS_AGILE_SM_EV_AGILE_STOP,
+						 0, (void *)dfs);
+#endif
+		}
 	}
 }
 
@@ -4091,7 +4061,7 @@ void dfs_reinit_precac_lists(struct wlan_dfs *src_dfs,
 	PRECAC_LIST_UNLOCK(dest_dfs);
 }
 
-#ifdef QCA_SUPPORT_ADFS_RCAC
+#ifdef QCA_SUPPORT_AGILE_DFS
 /* dfs_start_agile_engine() - Prepare ADFS params and program the agile
  *                            engine sending agile config cmd to FW.
  * @dfs: Pointer to struct wlan_dfs.
@@ -4330,6 +4300,7 @@ QDF_STATUS dfs_agile_sm_deliver_event(struct dfs_soc_priv_obj *dfs_soc_obj,
 				event_data);
 }
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
 /* dfs_start_agile_rcac_timer() - Start host agile RCAC timer.
  *
  * @dfs: Pointer to struct wlan_dfs.
@@ -4359,6 +4330,11 @@ void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs)
 	qdf_timer_sync_cancel(&dfs_soc_obj->dfs_rcac_timer);
 }
 
+
+/**
+ * dfs_abort_agile_rcac() - Send abort Agile RCAC to F/W.
+ * @dfs: Pointer to struct wlan_dfs.
+ */
 static void dfs_abort_agile_rcac(struct wlan_dfs *dfs)
 {
 
@@ -4375,6 +4351,29 @@ static void dfs_abort_agile_rcac(struct wlan_dfs *dfs)
 	dfs->dfs_agile_precac_freq_mhz = 0;
 	dfs->dfs_precac_chwidth = CH_WIDTH_INVALID;
 	dfs->dfs_soc_obj->cur_agile_dfs_index = DFS_PSOC_NO_IDX;
+}
+#else
+static inline void dfs_abort_agile_rcac(struct wlan_dfs *dfs)
+{
+}
+#endif
+
+/* dfs_abort_agile_precac() - Reset parameters of wlan_dfs and send abort
+ * to F/W.
+ * @dfs: Pointer to struct wlan_dfs.
+ */
+static void dfs_abort_agile_precac(struct wlan_dfs *dfs)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+
+	dfs_agile_precac_cleanup(dfs);
+	/*Send the abort to F/W as well */
+	if (dfs_tx_ops && dfs_tx_ops->dfs_ocac_abort_cmd)
+		dfs_tx_ops->dfs_ocac_abort_cmd(dfs->dfs_pdev_obj);
 }
 
 /**
@@ -4406,6 +4405,40 @@ static void dfs_agile_state_init_exit(void *ctx)
 }
 
 /**
+  * dfs_init_agile_start_evt_handler() - Init state start event handler.
+  * @dfs: Instance of wlan_dfs structure.
+  * @dfs_soc: DFS SoC private object
+  *
+  * Return : True if PreCAC/RCAC chan is found.
+  */
+static bool  dfs_init_agile_start_evt_handler(struct wlan_dfs *dfs,
+					      struct dfs_soc_priv_obj *dfs_soc)
+{
+	bool is_chan_found = false;
+
+	/*For RCAC */
+	if (dfs_is_agile_rcac_enabled(dfs)) {
+		/* Check if feature is enabled for this DFS and if RCAC channel
+		 * is valid, if those are true, send appropriate WMIs to FW
+		 * and only then transition to the state as follows.
+		 */
+		dfs_prepare_agile_rcac_channel(dfs, &is_chan_found);
+	}
+	/*For PreCAC */
+	else if (dfs_is_agile_precac_enabled(dfs)) {
+		dfs_soc->dfs_priv[dfs->dfs_psoc_idx].agile_precac_active
+			= true;
+		if (!dfs_soc->precac_state_started &&
+		    !dfs_soc->dfs_precac_timer_running) {
+			dfs_soc->precac_state_started = true;
+			dfs_prepare_agile_precac_chan(dfs, &is_chan_found);
+		}
+	}
+
+	return is_chan_found;
+}
+
+/**
  * dfs_agile_state_init_event() - INIT State event handler
  * @ctx: DFS SoC private object
  * @event: Event posted to the SM.
@@ -4425,7 +4458,7 @@ static bool dfs_agile_state_init_event(void *ctx,
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	bool status;
 	struct wlan_dfs *dfs;
-	bool is_rcac_chan_available = false;
+	bool is_chan_found;
 
 	if (!event_data)
 		return false;
@@ -4434,18 +4467,24 @@ static bool dfs_agile_state_init_event(void *ctx,
 
 	switch (event) {
 	case DFS_AGILE_SM_EV_AGILE_START:
-		/* Check if feature is enabled for this DFS and if RCAC channel
-		 * is valid, if those are true, send appropriate WMIs to FW
-		 * and only then transition to the state as follows.
-		 */
 
 		if (dfs_soc->cur_agile_dfs_index != DFS_PSOC_NO_IDX)
 			return true;
-		dfs_prepare_agile_rcac_channel(dfs, &is_rcac_chan_available);
-		if (is_rcac_chan_available) {
+
+		is_chan_found = dfs_init_agile_start_evt_handler(dfs,
+								 dfs_soc);
+		if (is_chan_found) {
 			dfs_soc->cur_agile_dfs_index = dfs->dfs_psoc_idx;
 			dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_RUNNING);
+		} else {
+			/*
+			 * This happens when there is no preCAC chan
+			 * in any of the radios
+			 */
+			dfs_agile_precac_cleanup(dfs);
+			/* Cleanup and wait */
 		}
+
 		status = true;
 		break;
 	default:
@@ -4471,8 +4510,12 @@ static void dfs_agile_state_running_entry(void *ctx)
 		dfs_soc->dfs_priv[dfs_soc->cur_agile_dfs_index].dfs;
 
 	dfs_agile_set_curr_state(dfs_soc, DFS_AGILE_S_RUNNING);
-	dfs_start_agile_rcac_timer(dfs);
-	dfs_start_agile_engine(dfs);
+
+	/* RCAC */
+	if (dfs_is_agile_rcac_enabled(dfs)) {
+		dfs_start_agile_rcac_timer(dfs);
+		dfs_start_agile_engine(dfs);
+	}
 }
 
 /**
@@ -4508,6 +4551,7 @@ static bool dfs_agile_state_running_event(void *ctx,
 	struct dfs_soc_priv_obj *dfs_soc = (struct dfs_soc_priv_obj *)ctx;
 	bool status;
 	struct wlan_dfs *dfs;
+	bool is_cac_done_on_des_chan;
 
 	if (!event_data)
 		return false;
@@ -4530,21 +4574,48 @@ static bool dfs_agile_state_running_event(void *ctx,
 		 * channel not found and stay in that state.
 		 * Abort the existing RCAC and restart from INIT state.
 		 */
-		dfs_abort_agile_rcac(dfs);
+		if (dfs_is_agile_rcac_enabled(dfs))
+			dfs_abort_agile_rcac(dfs);
+		else if (dfs_is_agile_precac_enabled(dfs))
+			dfs_abort_agile_precac(dfs);
+
 		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
 		dfs_agile_sm_deliver_event(dfs_soc,
-					  DFS_AGILE_SM_EV_AGILE_START,
-					  event_data_len,
-					  event_data);
+					   DFS_AGILE_SM_EV_AGILE_START,
+					   event_data_len,
+					   event_data);
+
 		status = true;
 		break;
 	case DFS_AGILE_SM_EV_AGILE_STOP:
-		dfs_abort_agile_rcac(dfs);
+		if (dfs_is_agile_rcac_enabled(dfs))
+			dfs_abort_agile_rcac(dfs);
+		else if (dfs_is_agile_precac_enabled(dfs))
+			dfs_abort_agile_precac(dfs);
+
 		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
 		status = true;
 		break;
 	case DFS_AGILE_SM_EV_AGILE_DONE:
-		dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_COMPLETE);
+		if (dfs_is_agile_precac_enabled(dfs)) {
+			if (dfs_soc->ocac_status == OCAC_SUCCESS) {
+				dfs_soc->ocac_status = OCAC_RESET;
+				dfs_mark_adfs_chan_as_cac_done(dfs);
+			}
+			dfs_agile_sm_transition_to(dfs_soc, DFS_AGILE_S_INIT);
+			dfs_agile_precac_cleanup(dfs);
+			is_cac_done_on_des_chan =
+				dfs_precac_check_home_chan_change(dfs);
+			if (!is_cac_done_on_des_chan) {
+				dfs_agile_sm_deliver_event(dfs_soc,
+					DFS_AGILE_SM_EV_AGILE_START,
+					event_data_len,
+					event_data);
+			}
+		} else if (dfs_is_agile_rcac_enabled(dfs)) {
+			dfs_agile_sm_transition_to(dfs_soc,
+						   DFS_AGILE_S_COMPLETE);
+		}
 		status = true;
 	default:
 		status = false;
@@ -4737,9 +4808,9 @@ static void dfs_agile_sm_print_state_event(struct dfs_soc_priv_obj *dfs_soc_obj,
 }
 
 QDF_STATUS dfs_agile_sm_deliver_evt(struct dfs_soc_priv_obj *dfs_soc_obj,
-				   enum dfs_agile_sm_evt event,
-				   uint16_t event_data_len,
-				   void *event_data)
+				    enum dfs_agile_sm_evt event,
+				    uint16_t event_data_len,
+				    void *event_data)
 {
 	enum dfs_agile_sm_state old_state, new_state;
 	QDF_STATUS status;
@@ -4794,6 +4865,7 @@ QDF_STATUS dfs_agile_sm_destroy(struct dfs_soc_priv_obj *dfs_soc_obj)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_SUPPORT_ADFS_RCAC
 QDF_STATUS dfs_set_rcac_enable(struct wlan_dfs *dfs, bool rcac_en)
 {
 	if (rcac_en == dfs->dfs_agile_rcac_ucfg) {
@@ -4903,4 +4975,5 @@ void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 	dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE, "Chosen rcac channel: %d",
 		  rcac_ch_freq);
 }
+#endif
 #endif
