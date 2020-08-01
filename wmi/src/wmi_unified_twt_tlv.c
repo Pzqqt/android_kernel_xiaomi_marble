@@ -734,10 +734,15 @@ extract_twt_session_stats_event_data(wmi_unified_t wmi_handle,
 	session->bcast = WMI_TWT_SESSION_FLAG_BCAST_TWT_GET(flags);
 	session->trig = WMI_TWT_SESSION_FLAG_TRIGGER_TWT_GET(flags);
 	session->announ = WMI_TWT_SESSION_FLAG_ANNOUN_TWT_GET(flags);
+	session->protection = WMI_TWT_SESSION_FLAG_TWT_PROTECTION_GET(flags);
+	session->info_frame_disabled =
+			WMI_TWT_SESSION_FLAG_TWT_INFO_FRAME_DISABLED_GET(flags);
 	session->dialog_id = twt_session->dialog_id;
 	session->wake_dura_us = twt_session->wake_dura_us;
 	session->wake_intvl_us = twt_session->wake_intvl_us;
 	session->sp_offset_us = twt_session->sp_offset_us;
+	session->sp_tsf_us_lo = twt_session->sp_tsf_us_lo;
+	session->sp_tsf_us_hi = twt_session->sp_tsf_us_hi;
 	WMI_LOGD("type=%d,id=%d,bcast=%d,trig=%d",
 		 session->event_type, session->flow_id,
 		 session->bcast, session->trig);

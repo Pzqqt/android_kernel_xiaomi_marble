@@ -137,28 +137,36 @@ enum host_twt_session_stats_type {
  * struct wmi_host_twt_session_stats_info:
  * @vdev_id: id of VDEV for twt session
  * @peer_mac: MAC address of node
- * @event_type: TWT event types
- * @flow_id: TWT flow_id
- * @bcast:  broadcast TWT
- * @trig: trigger
- * @announ: TWT announcement
+ * @event_type: Indicates TWT session type (SETUP/TEARDOWN/UPDATE)
+ * @flow_id: TWT flow identifier established with TWT peer
+ * @bcast:  If this is a broacast TWT session
+ * @trig: If the TWT session is trigger enabled
+ * @announ: If the flow type is announced/unannounced
+ * @protection: If the TWT protection field is set
+ * @info_frame_disabled: If the TWT Information frame is disabled
  * @dialog_id: Dialog_id of current session
  * @wake_dura_us: wake duration in us
  * @wake_intvl_us: wake time interval in us
  * @sp_offset_us: Time until initial TWT SP occurs
+ * @sp_tsf_us_lo: TWT wake time TSF in usecs lower bits - 31:0
+ * @sp_tsf_us_hi: TWT wake time TSF in usecs higher bits - 63:32
  */
 struct wmi_host_twt_session_stats_info {
 	uint32_t vdev_id;
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t event_type;
 	uint32_t flow_id:16,
-			 bcast:1,
-			 trig:1,
-			 announ:1;
+		 bcast:1,
+		 trig:1,
+		 announ:1,
+		 protection:1,
+		 info_frame_disabled:1;
 	uint32_t dialog_id;
 	uint32_t wake_dura_us;
 	uint32_t wake_intvl_us;
 	uint32_t sp_offset_us;
+	uint32_t sp_tsf_us_lo;
+	uint32_t sp_tsf_us_hi;
 };
 
 /** struct wmi_twt_session_stats_event:
