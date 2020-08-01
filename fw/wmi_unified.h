@@ -8060,6 +8060,12 @@ typedef struct {
     A_UINT32 tx_time;
     /** msecs the radio is in active receive (32 bits number accruing over time) */
     A_UINT32 rx_time;
+    /*** NOTE ***
+     * Be cautious about adding new fields in wmi_channel_stats.
+     * STA-centric targets may instantiate many instances of per-channel
+     * stats, and consequently may consume a non-trivial amount of on-chip
+     * memory for storing the channel stats.
+     */
 } wmi_channel_stats;
 
 /*
@@ -11774,6 +11780,10 @@ typedef struct {
     A_UINT32 frame_inject_period;
     /** Destination address of frame */
     wmi_mac_addr frame_addr1;
+    /** Frame control duration field to be set in CTS_TO_SELF.
+     * Applicable to frame_type WMI_FRAME_INJECT_TYPE_CTS_TO_SELF only.
+     */
+    A_UINT32 fc_duration;
     /** variable buffer length. Can be used for frame template.
      * data is in TLV data[]
      */
