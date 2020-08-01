@@ -84,6 +84,8 @@ enum wlan_peer_rate_stats_cmd {
 	DP_PEER_RX_RATE_STATS,
 	DP_PEER_TX_RATE_STATS,
 	DP_PEER_SOJOURN_STATS,
+	DP_PEER_RX_LINK_STATS,
+	DP_PEER_TX_LINK_STATS,
 };
 
 /** struct wlan_tx_rate_stats - Tx packet rate info
@@ -144,6 +146,86 @@ struct wlan_tx_sojourn_stats {
 	uint32_t num_msdus[WLAN_DATA_TID_MAX];
 	void *cookie;
 	qdf_ewma_tx_lag avg_sojourn_msdu[WLAN_DATA_TID_MAX];
+};
+
+#define BW_USAGE_MAX_SIZE 4
+
+/**
+ * struct wlan_peer_bw_stats - per link bw related stats
+ * @usage_total - sum of total BW (20, 40, 80, 160)
+ * @usage_avg - @usage_total / number of PPDUs (avg BW)
+ * @usage_counter - each BW usage counter
+ * @usage_max - number of pkts in max BW mode
+ */
+struct wlan_peer_bw_stats {
+	uint32_t usage_total;
+	uint32_t usage_counter[BW_USAGE_MAX_SIZE];
+	uint8_t usage_avg;
+	uint8_t usage_max;
+};
+
+/**
+ * struct wlan_rx_link_stats - Peer Rx link statistics
+ * @num_ppdus - number of ppdus per user
+ * @bytes - number of bytes per user
+ * @phy_rate_lpf_avg_su - SU packet LPF averaged rx rate
+ * @phy_rate_actual_su - SU packet rounded average rx rate
+ * @phy_rate_lpf_avg_mu - MU packet LPF averaged rx rate
+ * @phy_rate_actual_mu - MUpacket rounded average rx rate
+ * @ofdma_usage - number of packet in OFDMA
+ * @mu_mimo_usage - number of pakcets in MU MIMO
+ * @bw - average BW and max BW related structure
+ * @su_rssi - single user RSSI
+ * @mpdu_retries - number of retried MPDUs
+ * @pkt_error_rate - average packet error rate
+ * @num_mpdus - total number of mpdus
+ */
+struct wlan_rx_link_stats {
+	uint64_t bytes;
+	uint32_t num_ppdus;
+	uint32_t phy_rate_lpf_avg_su;
+	uint32_t phy_rate_actual_su;
+	uint32_t phy_rate_lpf_avg_mu;
+	uint32_t phy_rate_actual_mu;
+	uint32_t ofdma_usage;
+	uint32_t mu_mimo_usage;
+	struct wlan_peer_bw_stats bw;
+	qdf_ewma_rx_rssi su_rssi;
+	uint32_t mpdu_retries;
+	uint32_t num_mpdus;
+	uint8_t pkt_error_rate;
+};
+
+/**
+ * struct wlan_tx_link_stats - Peer tx link statistics
+ * @num_ppdus - number of ppdus per user
+ * @bytes - number of bytes per user
+ * @phy_rate_lpf_avg_su - SU packet LPF averaged tx rate
+ * @phy_rate_actual_su - SU packet rounded average tx rate
+ * @phy_rate_lpf_avg_mu - MU packet LPF averaged tx rate
+ * @phy_rate_actual_mu - MUpacket rounded average tx rate
+ * @ofdma_usage - number of packet in OFDMA
+ * @mu_mimo_usage - number of pakcets in MU MIMO
+ * @bw - average BW and max BW related structure
+ * @ack_rssi - averaged ACK rssi
+ * @mpdu_failed - number of failed MPDUs
+ * @mpdu_success - number of success MPDUs
+ * @pkt_error_rate - average packet error rate
+ */
+struct wlan_tx_link_stats {
+	uint64_t bytes;
+	uint32_t num_ppdus;
+	uint32_t phy_rate_lpf_avg_su;
+	uint32_t phy_rate_actual_su;
+	uint32_t phy_rate_lpf_avg_mu;
+	uint32_t phy_rate_actual_mu;
+	uint32_t ofdma_usage;
+	uint32_t mu_mimo_usage;
+	struct wlan_peer_bw_stats bw;
+	qdf_ewma_rx_rssi ack_rssi;
+	uint32_t mpdu_failed;
+	uint32_t mpdu_success;
+	uint8_t pkt_error_rate;
 };
 
 /**

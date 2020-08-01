@@ -44,6 +44,20 @@
 struct cdp_pdev;
 
 /**
+ * enum dp_ppdu_type - enum for ppdu_type
+ * @DP_PPDU_TYPE_SU: single user PPDU
+ * @DP_PPDU_TYPE_MU_MIMO: multi user mimo ppdu
+ * @DP_PPDU_TYPE_MU_OFDMA: multi user ofdma ppdu
+ * @DP_PPDU_TYPE_MU_OFDMA_MIMO: multi user mimo/ofdma ppdu
+ */
+enum dp_ppdu_type {
+	DP_PPDU_TYPE_SU,
+	DP_PPDU_TYPE_MU_MIMO,
+	DP_PPDU_TYPE_MU_OFDMA,
+	DP_PPDU_TYPE_MU_OFDMA_MIMO,
+};
+
+/**
  * struct wlan_peer_tx_rate_stats - peer tx rate statistics
  * @stats: array containing tx rate stats
  * @cur_rix: rate index updated last in list
@@ -72,9 +86,31 @@ struct wlan_peer_rx_rate_stats {
 };
 
 /**
+ * struct wlan_peer_rx_link_stats - Peer Rx Link statistics
+ * @stats: array containing rx rate stats
+ * @lock: lock protecting list
+ */
+struct wlan_peer_rx_link_stats {
+	struct wlan_rx_link_stats stats;
+	qdf_spinlock_t lock;
+};
+
+/**
+ * struct wlan_peer_tx_link_stats - Peer Tx Link statistics
+ * @stats: array containing rx rate stats
+ * @lock: lock protecting list
+ */
+struct wlan_peer_tx_link_stats {
+	struct wlan_tx_link_stats stats;
+	qdf_spinlock_t lock;
+};
+
+/**
  * struct wlan_peer_rate_stats - Peer rate statistics ctx
  * @tx: tx rate statistics
  * @rx: rx rate statistics
+ * @tx_link_stats: tx link quality stats
+ * @rx_link_stats: rx link quality stats
  * @mac_addr: peer MAC address
  * @peer_cookie: cookie for unique session of peer
  * @pdev_id: id of dp pdev
@@ -82,6 +118,8 @@ struct wlan_peer_rx_rate_stats {
 struct wlan_peer_rate_stats_ctx {
 	struct wlan_peer_tx_rate_stats tx;
 	struct wlan_peer_rx_rate_stats rx;
+	struct wlan_peer_rx_link_stats rx_link_stats;
+	struct wlan_peer_tx_link_stats tx_link_stats;
 	uint8_t mac_addr[WLAN_MAC_ADDR_LEN];
 	uint64_t peer_cookie;
 	uint8_t pdev_id;
