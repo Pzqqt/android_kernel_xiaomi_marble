@@ -53,6 +53,28 @@ cm_roam_scan_bmiss_cnt(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	params->roam_bmiss_final_bcnt = beacon_miss_count;
 }
 
+QDF_STATUS
+cm_roam_fill_rssi_change_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				struct wlan_roam_rssi_change_params *params)
+{
+	struct cm_roam_values_copy temp;
+
+	params->vdev_id = vdev_id;
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   RSSI_CHANGE_THRESHOLD, &temp);
+	params->rssi_change_thresh = temp.int_value;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   BEACON_RSSI_WEIGHT, &temp);
+	params->bcn_rssi_weight = temp.uint_value;
+
+	wlan_cm_roam_cfg_get_value(psoc, vdev_id,
+				   HI_RSSI_DELAY_BTW_SCANS, &temp);
+	params->hirssi_delay_btw_scans = temp.uint_value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * cm_roam_reason_vsie() - set roam reason vsie
@@ -274,6 +296,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &start_req->beacon_miss_cnt);
 	cm_roam_reason_vsie(psoc, vdev_id, &start_req->reason_vsie_enable);
 	cm_roam_triggers(psoc, vdev_id, &start_req->roam_triggers);
+	cm_roam_fill_rssi_change_params(psoc, vdev_id,
+					&start_req->rssi_change_params);
 	cm_roam_mawc_params(psoc, vdev_id, &start_req->mawc_params);
 	cm_roam_bss_load_config(psoc, vdev_id, &start_req->bss_load_config);
 	cm_roam_disconnect_params(psoc, vdev_id, &start_req->disconnect_params);
@@ -311,8 +335,11 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	update_req = qdf_mem_malloc(sizeof(*update_req));
 	if (!update_req)
 		return QDF_STATUS_E_NOMEM;
+
 	/* fill from mlme directly */
 	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &update_req->beacon_miss_cnt);
+	cm_roam_fill_rssi_change_params(psoc, vdev_id,
+					&update_req->rssi_change_params);
 	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
 		cm_roam_disconnect_params(psoc, vdev_id,
 					  &update_req->disconnect_params);

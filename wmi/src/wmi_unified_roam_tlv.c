@@ -2548,6 +2548,67 @@ error:
 	return status;
 }
 
+#ifdef ROAM_OFFLOAD_V1
+/**
+ * send_roam_scan_offload_rssi_change_cmd_tlv() - set roam offload RSSI th
+ * @wmi_handle: wmi handle
+ * @rssi_change_thresh: RSSI Change threshold
+ * @bcn_rssi_weight: beacon RSSI weight
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
+ *
+ * Return: CDF status
+ */
+static QDF_STATUS send_roam_scan_offload_rssi_change_cmd_tlv(
+		wmi_unified_t wmi_handle,
+		struct wlan_roam_rssi_change_params *params)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_roam_scan_rssi_change_threshold_fixed_param *rssi_change_fp;
+
+	/* Send rssi change parameters */
+	len = sizeof(wmi_roam_scan_rssi_change_threshold_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	rssi_change_fp =
+		(wmi_roam_scan_rssi_change_threshold_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&rssi_change_fp->tlv_header,
+		WMITLV_TAG_STRUC_wmi_roam_scan_rssi_change_threshold_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_roam_scan_rssi_change_threshold_fixed_param));
+	/* fill in rssi change threshold (hysteresis) values */
+	rssi_change_fp->vdev_id = params->vdev_id;
+	rssi_change_fp->roam_scan_rssi_change_thresh =
+				params->rssi_change_thresh;
+	rssi_change_fp->bcn_rssi_weight = params->bcn_rssi_weight;
+	rssi_change_fp->hirssi_delay_btw_scans = params->hirssi_delay_btw_scans;
+
+	wmi_mtrace(WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD,
+		   rssi_change_fp->vdev_id, 0);
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto error;
+
+	wmi_nofl_debug("RSO_PARAM: rssi_change_thresh:%d bcn_rssi_weight:%d hirssi_delay_btw_scans:%d",
+		       rssi_change_fp->roam_scan_rssi_change_thresh,
+		       rssi_change_fp->bcn_rssi_weight,
+		       rssi_change_fp->hirssi_delay_btw_scans);
+
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return status;
+}
+#else
 /**
  * send_roam_scan_offload_rssi_change_cmd_tlv() - set roam offload RSSI th
  * @wmi_handle: wmi handle
@@ -2607,6 +2668,7 @@ error:
 
 	return status;
 }
+#endif
 
 /**
  * send_per_roam_config_cmd_tlv() - set per roaming config to FW
