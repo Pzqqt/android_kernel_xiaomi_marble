@@ -867,6 +867,14 @@ QDF_STATUS tdls_reset_peer(struct tdls_vdev_priv_obj *vdev_obj,
 				&reg_bw_offset);
 	}
 
+	if (curr_peer->is_peer_idle_timer_initialised) {
+		tdls_debug(QDF_MAC_ADDR_STR ": destroy  idle timer ",
+			   QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
+		qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
+		qdf_mc_timer_destroy(&curr_peer->peer_idle_timer);
+		curr_peer->is_peer_idle_timer_initialised = false;
+	}
+
 	tdls_set_peer_link_status(curr_peer, TDLS_LINK_IDLE,
 				  TDLS_LINK_UNSPECIFIED);
 	curr_peer->valid_entry = false;
