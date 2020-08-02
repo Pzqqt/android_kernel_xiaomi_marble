@@ -939,6 +939,42 @@ struct wlan_ie_vhtop {
 	uint16_t vhtop_basic_mcs_set;
 } qdf_packed;
 
+#define WLAN_HE_PHYCAP_160_SUPPORT BIT(2)
+#define WLAN_HE_PHYCAP_80_80_SUPPORT BIT(3)
+#define WLAN_HE_MACCAP_LEN 6
+#define WLAN_HE_PHYCAP_LEN 11
+#define WLAN_HE_MAX_MCS_MAPS 3
+/**
+ * struct wlan_ie_hecaps - HT capabilities
+ * @elem_id: HE caps IE
+ * @elem_len: HE caps IE len
+ * @elem_id_extn: HE caps extension id
+ * @he_mac_cap: HE mac capabilities
+ * @he_phy_cap: HE phy capabilities
+ * @phy_cap_bytes: HT phy capability bytes
+ * @supported_ch_width_set: Supported channel width set
+ * @mcs_bw_map: MCS NSS map per bandwidth
+ * @rx_mcs_map: RX MCS map
+ * @tx_mcs_map: TX MCS map
+ */
+struct wlan_ie_hecaps {
+	uint8_t elem_id;
+	uint8_t elem_len;
+	uint8_t elem_id_extn;
+	uint8_t he_mac_cap[WLAN_HE_MACCAP_LEN];
+	union {
+		uint8_t phy_cap_bytes[WLAN_HE_PHYCAP_LEN];
+		struct {
+			uint32_t reserved:1;
+			uint32_t supported_ch_width_set:7;
+		} qdf_packed;
+	} qdf_packed he_phy_cap;
+	struct {
+		uint16_t rx_mcs_map;
+		uint16_t tx_mcs_map;
+	} qdf_packed mcs_bw_map[WLAN_HE_MAX_MCS_MAPS];
+} qdf_packed;
+
 /**
  * struct he_oper_6g_param: 6 Ghz params for HE
  * @primary_channel: HE 6GHz Primary channel number
