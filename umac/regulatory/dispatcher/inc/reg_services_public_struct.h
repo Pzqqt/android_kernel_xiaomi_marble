@@ -991,7 +991,7 @@ struct reg_config_vars {
 	uint32_t indoor_chan_enabled;
 	uint32_t force_ssc_disable_indoor_channel;
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
-	bool enable_srd_chan_in_master_mode;
+	uint8_t enable_srd_chan_in_master_mode;
 	bool enable_11d_in_world_mode;
 	bool enable_5dot9_ghz_chan_in_master_mode;
 	bool retain_nol_across_regdmn_update;
