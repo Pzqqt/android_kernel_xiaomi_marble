@@ -456,6 +456,7 @@ static QDF_STATUS extract_twt_del_dialog_comp_event_tlv(
 	params->vdev_id = ev->vdev_id;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->peer_macaddr, params->peer_macaddr);
 	params->dialog_id = ev->dialog_id;
+	params->status = ev->status;
 
 	return QDF_STATUS_SUCCESS;
 }
