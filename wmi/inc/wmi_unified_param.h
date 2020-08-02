@@ -1589,16 +1589,12 @@ struct mobility_domain_info {
 	uint16_t mobility_domain;
 };
 
+#ifndef ROAM_OFFLOAD_V1
 #define WMI_HOST_ROAM_OFFLOAD_NUM_MCS_SET     (16)
 
 /* This TLV will be filled only in case roam offload
  * for wpa2-psk/pmkid/ese/11r is enabled */
 typedef struct {
-	/*
-	 * TLV tag and len; tag equals
-	 * WMITLV_TAG_STRUC_wmi_roam_offload_fixed_param
-	 */
-	uint32_t tlv_header;
 	uint32_t rssi_cat_gap;          /* gap for every category bucket */
 	uint32_t prefer_5g;             /* prefer select 5G candidate */
 	uint32_t select_5g_margin;
@@ -1743,6 +1739,7 @@ struct roam_offload_scan_params {
 	struct roam_fils_params roam_fils_params;
 #endif
 };
+#endif
 
 /**
  * struct wifi_epno_network - enhanced pno network block

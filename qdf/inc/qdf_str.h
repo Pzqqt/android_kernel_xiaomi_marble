@@ -182,4 +182,18 @@ static inline char *qdf_str_sep(char **str, char *delim)
 	return __qdf_str_sep(str, delim);
 }
 
+/**
+ * qdf_str_copy_all_before_char() - API to copy all character before a
+ * particular char provided
+ * @str: Source string
+ * @str_len: Source string legnth
+ * @dst: Destination string
+ * @dst_len: Destination string legnth
+ * @c: Character before which all characters need to be copied
+ *
+ * Return: length of the copied string, if success. zero otherwise.
+ */
+uint32_t
+qdf_str_copy_all_before_char(char *str, uint32_t str_len,
+			     char *dst, uint32_t dst_len, char c);
 #endif /* __QDF_STR_H */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,3 +56,21 @@ void qdf_str_right_trim(char *str)
 }
 qdf_export_symbol(qdf_str_right_trim);
 
+uint32_t
+qdf_str_copy_all_before_char(char *str, uint32_t str_len,
+			     char *dst, uint32_t dst_len, char c)
+{
+	uint32_t len = 0;
+
+	if (!str)
+		return len;
+
+	while ((len < str_len) && (len < dst_len) &&
+	       (*str != '\0') && (*str != c)) {
+		*dst++ = *str++;
+		len++;
+	}
+
+	return len;
+}
+qdf_export_symbol(qdf_str_copy_all_before_char);
