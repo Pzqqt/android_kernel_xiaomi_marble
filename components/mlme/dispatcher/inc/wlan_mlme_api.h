@@ -1942,6 +1942,19 @@ QDF_STATUS
 wlan_mlme_get_vht20_mcs9(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
+ * wlan_mlme_get_srd_master_mode_for_vdev  - Get SRD master mode for vdev
+ * @psoc:          pointer to psoc object
+ * @vdev_opmode:   vdev operating mode
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_srd_master_mode_for_vdev(struct wlan_objmgr_psoc *psoc,
+				       enum QDF_OPMODE vdev_opmode,
+				       bool *value);
+
+/**
  * wlan_mlme_get_force_sap_enabled() - Get the value of force SAP enabled
  * @psoc: psoc context
  * @value: data to get

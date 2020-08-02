@@ -1475,19 +1475,19 @@ ucfg_mlme_get_mws_coex_scc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
 #endif
 
 QDF_STATUS
-ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
-					     bool *value)
+ucfg_mlme_get_etsi_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *value)
 {
 	struct wlan_mlme_psoc_ext_obj *mlme_obj;
 
 	mlme_obj = mlme_get_psoc_ext_obj(psoc);
 	if (!mlme_obj) {
-		*value = cfg_default(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE);
+		*value = cfg_default(CFG_ETSI_SRD_CHAN_IN_MASTER_MODE);
 		mlme_legacy_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	*value = mlme_obj->cfg.reg.etsi13_srd_chan_in_master_mode;
+	*value = mlme_obj->cfg.reg.etsi_srd_chan_in_master_mode;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1508,6 +1508,14 @@ ucfg_mlme_get_5dot9_ghz_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 	*value = mlme_obj->cfg.reg.fcc_5dot9_ghz_chan_in_master_mode;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_srd_master_mode_for_vdev(struct wlan_objmgr_psoc *psoc,
+				       enum QDF_OPMODE vdev_opmode,
+				       bool *value)
+{
+	return wlan_mlme_get_srd_master_mode_for_vdev(psoc, vdev_opmode, value);
 }
 
 #ifdef SAP_AVOID_ACS_FREQ_LIST

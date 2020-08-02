@@ -6380,6 +6380,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	struct cfg80211_chan_def new_chandef;
 	struct cfg80211_chan_def *chandef;
 	uint16_t sap_ch;
+	bool srd_channel_allowed;
+	enum QDF_OPMODE vdev_opmode;
 
 	hdd_enter();
 
@@ -6491,9 +6493,15 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		hdd_err("SAP not allowed on DFS channel if no dfs master capability!!");
 		return -EINVAL;
 	}
-	if (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->pdev) &&
+
+	vdev_opmode = wlan_vdev_mlme_get_opmode(adapter->vdev);
+	ucfg_mlme_get_srd_master_mode_for_vdev(hdd_ctx->psoc, vdev_opmode,
+					       &srd_channel_allowed);
+
+	if (!srd_channel_allowed &&
 	    wlan_reg_is_etsi13_srd_chan(hdd_ctx->pdev, channel)) {
-		hdd_err("SAP not allowed on SRD channel.");
+		hdd_err("vdev opmode %d not allowed on SRD channel.",
+			vdev_opmode);
 		return -EINVAL;
 	}
 	if (cds_is_sub_20_mhz_enabled()) {
