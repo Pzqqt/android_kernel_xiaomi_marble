@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2020, The Linux Foundation. All rights reserved.
  * Copyright (C) 2014 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
  *
@@ -81,6 +81,10 @@ static inline bool _msm_seamless_for_conn(struct drm_connector *connector,
 	}
 
 	if (enable)
+		return false;
+
+	if (!connector->state->crtc &&
+		old_conn_state->crtc->state->connectors_changed)
 		return false;
 
 	if (msm_is_mode_seamless(&connector->encoder->crtc->state->mode))

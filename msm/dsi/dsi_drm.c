@@ -11,7 +11,6 @@
 #include "sde_connector.h"
 #include "dsi_drm.h"
 #include "sde_trace.h"
-#include "sde_encoder.h"
 
 #define to_dsi_bridge(x)     container_of((x), struct dsi_bridge, base)
 #define to_dsi_state(x)      container_of((x), struct dsi_connector_state, base)
@@ -344,8 +343,6 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 	struct dsi_display *display;
 	struct dsi_display_mode dsi_mode, cur_dsi_mode, *panel_dsi_mode;
 	struct drm_crtc_state *crtc_state;
-	bool clone_mode = false;
-	struct drm_encoder *encoder;
 
 	crtc_state = container_of(mode, struct drm_crtc_state, mode);
 
@@ -410,14 +407,6 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			return false;
 		}
 
-		drm_for_each_encoder(encoder, crtc_state->crtc->dev) {
-			if (encoder->crtc != crtc_state->crtc)
-				continue;
-
-			if (sde_encoder_in_clone_mode(encoder))
-				clone_mode = true;
-		}
-
 		/* No panel mode switch when drm pipeline is changing */
 		if ((dsi_mode.panel_mode != cur_dsi_mode.panel_mode) &&
 			(!(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR)) &&
@@ -434,16 +423,13 @@ static bool dsi_bridge_mode_fixup(struct drm_bridge *bridge,
 			dsi_mode.dsi_mode_flags |= DSI_MODE_FLAG_DMS;
 	}
 
-	/* Reject seamless transition when active/connectors changed */
-	if ((crtc_state->active_changed ||
-		(crtc_state->connectors_changed && clone_mode)) &&
-		((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) ||
-		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS) ||
-		(dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK))) {
-		DSI_INFO("seamless on active/conn(%d/%d) changed 0x%x\n",
-			crtc_state->active_changed,
-			crtc_state->connectors_changed,
-			dsi_mode.dsi_mode_flags);
+	/* Reject seamless transition when active changed */
+	if (crtc_state->active_changed &&
+			((dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_VRR) ||
+			 (dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_POMS) ||
+			 (dsi_mode.dsi_mode_flags & DSI_MODE_FLAG_DYN_CLK))) {
+		DSI_INFO("seamless upon active changed 0x%x %d\n",
+			dsi_mode.dsi_mode_flags, crtc_state->active_changed);
 		return false;
 	}
 
