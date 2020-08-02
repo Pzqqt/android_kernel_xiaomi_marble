@@ -22,6 +22,7 @@
 #include <wlan_scan_utils_api.h>
 #include "wlan_scan_main.h"
 #include "wlan_scan_cache_db_i.h"
+#include <wlan_dfs_utils_api.h>
 #include "wlan_crypto_global_def.h"
 #include "wlan_crypto_global_api.h"
 
@@ -581,7 +582,6 @@ static inline bool scm_is_fils_config_match(struct scan_filter *filter,
 }
 #endif
 
-
 bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 		      struct scan_cache_entry *db_entry,
 		      struct scan_filter *filter,
@@ -590,6 +590,7 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	int i;
 	bool match = false;
 	struct scan_default_params *def_param;
+	struct wlan_objmgr_pdev *pdev;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
@@ -631,6 +632,22 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	}
 	if (!match && filter->num_of_bssid)
 		return false;
+
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, db_entry->pdev_id,
+					  WLAN_SCAN_ID);
+	if (!pdev) {
+		scm_err("Invalid pdev");
+		return false;
+	}
+
+	if (filter->ignore_nol_chan &&
+	    utils_dfs_is_freq_in_nol(pdev, db_entry->channel.chan_freq)) {
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
+		scm_debug("%pM : Ignore as chan in NOL list",
+			  db_entry->bssid.bytes);
+		return false;
+	}
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
 
 	match = false;
 	for (i = 0; i < filter->num_of_channels; i++) {
