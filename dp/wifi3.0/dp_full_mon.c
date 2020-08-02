@@ -150,40 +150,39 @@ dp_rx_mon_status_buf_validate(struct dp_pdev *pdev,
 
 	if (tlv_tag == WIFIRX_PPDU_START_E) {
 		rx_tlv = (uint8_t *)rx_tlv + HAL_RX_TLV32_HDR_SIZE;
-		ppdu_info->com_info.ppdu_id = HAL_RX_GET(rx_tlv,
-							 RX_PPDU_START_0,
-							 PHY_PPDU_ID);
+		pdev->mon_desc->status_ppdu_id =
+			HAL_RX_GET(rx_tlv, RX_PPDU_START_0, PHY_PPDU_ID);
 		pdev->status_buf_addr = buf_paddr;
 	}
 
-	if (pdev->mon_desc->ppdu_id < pdev->ppdu_info.com_info.ppdu_id) {
+	if (pdev->mon_desc->ppdu_id < pdev->mon_desc->status_ppdu_id) {
 		status = dp_mon_status_lead;
 
 		/* For wrap around case */
-		ppdu_id_diff = pdev->ppdu_info.com_info.ppdu_id -
+		ppdu_id_diff = pdev->mon_desc->status_ppdu_id -
 			       pdev->mon_desc->ppdu_id;
 
 		if (ppdu_id_diff > DP_RX_MON_PPDU_ID_WRAP)
 			status = dp_mon_status_lag;
 
-	} else if (pdev->mon_desc->ppdu_id > pdev->ppdu_info.com_info.ppdu_id) {
+	} else if (pdev->mon_desc->ppdu_id > pdev->mon_desc->status_ppdu_id) {
 		status = dp_mon_status_lag;
 		/* For wrap around case */
 		ppdu_id_diff = pdev->mon_desc->ppdu_id -
-			       pdev->ppdu_info.com_info.ppdu_id;
+			       pdev->mon_desc->status_ppdu_id;
 		if (ppdu_id_diff > DP_RX_MON_PPDU_ID_WRAP)
 			status = dp_mon_status_lead;
 	}
 
 	if ((pdev->mon_desc->status_buf.paddr != buf_paddr) ||
-	     (pdev->mon_desc->ppdu_id != pdev->ppdu_info.com_info.ppdu_id)) {
+	     (pdev->mon_desc->ppdu_id != pdev->mon_desc->status_ppdu_id)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  FL("Monitor: PPDU id or status buf_addr mismatch "
 			     "status_ppdu_id: %d dest_ppdu_id: %d "
 			     "status_addr: %llx status_buf_cookie: %d "
 			     "dest_addr: %llx tlv_tag: %d"
 			     " status_nbuf: %pK pdev->hold_mon_dest: %d"),
-			      pdev->ppdu_info.com_info.ppdu_id,
+			      pdev->mon_desc->status_ppdu_id,
 			      pdev->mon_desc->ppdu_id, pdev->status_buf_addr,
 			      rx_buf_cookie,
 			      pdev->mon_desc->status_buf.paddr, tlv_tag,
@@ -286,7 +285,11 @@ dp_rx_monitor_deliver_ppdu(struct dp_soc *soc, uint32_t mac_id)
 			TAILQ_REMOVE(&pdev->mon_mpdu_q,
 				     mpdu, mpdu_list_elem);
 
-			pdev->ppdu_info.rx_status.rs_flags = mpdu->rs_flags;
+			/* Check for IEEE80211_AMSDU_FLAG in mpdu
+			 * and set in pdev->ppdu_info.rx_status
+			 */
+			HAL_RX_SET_MSDU_AGGREGATION(mpdu,
+				&(pdev->ppdu_info.rx_status));
 			pdev->ppdu_info.rx_status.ant_signal_db =
 				mpdu->ant_signal_db;
 			pdev->ppdu_info.rx_status.is_stbc = mpdu->is_stbc;
@@ -425,10 +428,16 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 	qdf_nbuf_t msdu = NULL, last_msdu = NULL;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct hal_rx_mon_desc_info *desc_info;
+	uint16_t prev_ppdu_id;
 
 	desc_info = pdev->mon_desc;
 
+	/* Restore previous ppdu_id to use it while doing
+	 * status buffer validation
+	 */
+	prev_ppdu_id = pdev->mon_desc->status_ppdu_id;
 	qdf_mem_zero(desc_info, sizeof(struct hal_rx_mon_desc_info));
+	pdev->mon_desc->status_ppdu_id = prev_ppdu_id;
 
 	/* Read SW Mon ring descriptor */
 	hal_rx_sw_mon_desc_info_get((struct hal_soc *)soc->hal_soc,
