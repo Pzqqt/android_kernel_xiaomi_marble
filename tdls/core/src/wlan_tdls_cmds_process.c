@@ -1402,8 +1402,8 @@ static QDF_STATUS tdls_add_peer_rsp(struct tdls_add_sta_rsp *rsp)
 				conn_rec[sta_idx].index = sta_idx;
 				qdf_copy_macaddr(&conn_rec[sta_idx].peer_mac,
 						 &rsp->peermac);
-				tdls_debug("TDLS: Add sta mac "
-					   QDF_MAC_ADDR_STR,
+				tdls_debug("TDLS: Add sta mac at idx %d"
+					   QDF_MAC_ADDR_STR, sta_idx,
 					   QDF_MAC_ADDR_ARRAY
 					   (rsp->peermac.bytes));
 				break;
@@ -1487,7 +1487,7 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 			continue;
 
 		macaddr = rsp->peermac.bytes;
-		tdls_debug("TDLS: del STA");
+		tdls_debug("TDLS: del STA with sta_idx %d", sta_idx);
 		curr_peer = tdls_find_peer(vdev_obj, macaddr);
 		if (curr_peer) {
 			tdls_debug(QDF_MAC_ADDR_STR " status is %d",

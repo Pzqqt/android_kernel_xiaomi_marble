@@ -570,7 +570,9 @@ tdls_get_conn_info(struct tdls_soc_priv_obj *tdls_soc,
 		if (!qdf_mem_cmp(
 			    tdls_soc->tdls_conn_info[sta_idx].peer_mac.bytes,
 			    peer_mac->bytes, QDF_MAC_ADDR_SIZE)) {
-			tdls_debug("tdls peer exists %pM", peer_mac->bytes);
+			tdls_debug("tdls peer exists idx %d " QDF_MAC_ADDR_STR,
+				   sta_idx,
+				   QDF_MAC_ADDR_ARRAY(peer_mac->bytes));
 			tdls_soc->tdls_conn_info[sta_idx].index = sta_idx;
 			return &tdls_soc->tdls_conn_info[sta_idx];
 		}
@@ -647,8 +649,11 @@ void tdls_ct_idle_handler(void *user_data)
 		return;
 
 	idx = tdls_info->index;
-	if (idx == INVALID_TDLS_PEER_INDEX || idx >= WLAN_TDLS_STA_MAX_NUM)
+	if (idx == INVALID_TDLS_PEER_INDEX || idx >= WLAN_TDLS_STA_MAX_NUM) {
+		tdls_debug("invalid peer index %d" QDF_MAC_ADDR_STR, idx,
+			  QDF_MAC_ADDR_ARRAY(tdls_info->peer_mac.bytes));
 		return;
+	}
 
 	tdls_soc_obj = qdf_container_of(tdls_info, struct tdls_soc_priv_obj,
 					tdls_conn_info[idx]);
