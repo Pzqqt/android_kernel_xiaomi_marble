@@ -3777,7 +3777,7 @@ ucfg_mlme_get_mws_coex_scc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
- * ucfg_mlme_get_etsi13_srd_chan_in_master_mode  - get etsi13 srd chan
+ * ucfg_mlme_get_etsi_srd_chan_in_master_mode  - get etsi srd chan
  * in master mode
  * @psoc:   pointer to psoc object
  * @value:  pointer to the value which will be filled for the caller
@@ -3785,8 +3785,8 @@ ucfg_mlme_get_mws_coex_scc_channel_avoid_delay(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS
-ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
-					     bool *value);
+ucfg_mlme_get_etsi_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *value);
 
 /**
  * ucfg_mlme_get_5dot9_ghz_chan_in_master_mode  - get fcc 5.9 GHz chan
@@ -3799,6 +3799,19 @@ ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_5dot9_ghz_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 					    bool *value);
+
+/**
+ * ucfg_mlme_get_srd_master_mode_for_vdev()  - Get SRD master mode for vdev
+ * @psoc:          pointer to psoc object
+ * @vdev_opmode:   vdev opmode
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_srd_master_mode_for_vdev(struct wlan_objmgr_psoc *psoc,
+				       enum QDF_OPMODE vdev_opmode,
+				       bool *value);
 
 #ifdef SAP_AVOID_ACS_FREQ_LIST
 /**

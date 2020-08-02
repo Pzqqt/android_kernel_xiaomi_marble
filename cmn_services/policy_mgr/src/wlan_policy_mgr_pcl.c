@@ -590,18 +590,12 @@ policy_mgr_modify_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
 	uint32_t pcl_list[NUM_CHANNELS];
 	uint8_t weight_list[NUM_CHANNELS];
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	bool is_etsi13_srd_chan_allowed_in_mas_mode = true;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return QDF_STATUS_E_FAILURE;
 	}
-	is_etsi13_srd_chan_allowed_in_mas_mode =
-		wlan_reg_is_etsi13_srd_chan_allowed_master_mode(pm_ctx->pdev);
-
-	if (is_etsi13_srd_chan_allowed_in_mas_mode)
-		return QDF_STATUS_SUCCESS;
 
 	if (*pcl_len_org > NUM_CHANNELS) {
 		policy_mgr_err("Invalid PCL List Length %d", *pcl_len_org);
@@ -634,6 +628,7 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	bool nol_modified_pcl = false;
 	bool dfs_modified_pcl = false;
 	bool modified_final_pcl = false;
+	bool srd_chan_enabled;
 
 	if (policy_mgr_is_sap_mandatory_channel_set(psoc)) {
 		status = policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
@@ -662,12 +657,18 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	}
 	dfs_modified_pcl = true;
 
-	status = policy_mgr_modify_pcl_based_on_srd
-			(psoc, pcl_channels, pcl_weight, len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		policy_mgr_err("failed to get srd modified pcl for SAP");
-		return status;
+	wlan_mlme_get_srd_master_mode_for_vdev(psoc, QDF_SAP_MODE,
+					       &srd_chan_enabled);
+
+	if (!srd_chan_enabled) {
+		status = policy_mgr_modify_pcl_based_on_srd
+				(psoc, pcl_channels, pcl_weight, len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			policy_mgr_err("Failed to modify SRD in pcl for SAP");
+			return status;
+		}
 	}
+
 	modified_final_pcl = true;
 	policy_mgr_debug(" %d %d %d %d",
 			 mandatory_modified_pcl,
@@ -685,6 +686,7 @@ static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool srd_chan_enabled;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -699,12 +701,18 @@ static QDF_STATUS policy_mgr_pcl_modification_for_p2p_go(
 		return status;
 	}
 
-	status = policy_mgr_modify_pcl_based_on_srd
-			(psoc, pcl_channels, pcl_weight, len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		policy_mgr_err("failed to get srd modified pcl for P2P-GO");
-		return status;
+	wlan_mlme_get_srd_master_mode_for_vdev(psoc, QDF_P2P_GO_MODE,
+					       &srd_chan_enabled);
+
+	if (!srd_chan_enabled) {
+		status = policy_mgr_modify_pcl_based_on_srd
+				(psoc, pcl_channels, pcl_weight, len);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			policy_mgr_err("Failed to modify SRD in pcl for GO");
+			return status;
+		}
 	}
+
 	policy_mgr_dump_channel_list(*len, pcl_channels, pcl_weight);
 
 	return QDF_STATUS_SUCCESS;

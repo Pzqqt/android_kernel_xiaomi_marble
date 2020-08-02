@@ -35,6 +35,7 @@
 #include "nan_ucfg_api.h"
 #include "wlan_mlme_api.h"
 #include "sap_api.h"
+#include "wlan_mlme_api.h"
 
 enum policy_mgr_conc_next_action (*policy_mgr_get_current_pref_hw_mode_ptr)
 	(struct wlan_objmgr_psoc *psoc);
@@ -2058,6 +2059,22 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool sta_sap_scc_on_dfs_chan;
 	bool is_dfs;
+	struct wlan_objmgr_vdev *vdev;
+	enum QDF_OPMODE vdev_opmode;
+	bool enable_srd_channel;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, sap_vdev_id,
+						    WLAN_POLICY_MGR_ID);
+	if (!vdev) {
+		policy_mgr_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	vdev_opmode = wlan_vdev_mlme_get_opmode(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
+
+	wlan_mlme_get_srd_master_mode_for_vdev(psoc, vdev_opmode,
+					       &enable_srd_channel);
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2100,8 +2117,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 							    ch_freq) ||
 		    !(policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
 		      policy_mgr_is_safe_channel(psoc, ch_freq)) ||
-		    (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(
-								pm_ctx->pdev) &&
+		    (!enable_srd_channel &&
 		     wlan_reg_is_etsi13_srd_chan_for_freq(pm_ctx->pdev,
 							  ch_freq))) {
 			if (is_dfs && sta_sap_scc_on_dfs_chan) {
