@@ -809,6 +809,28 @@ target_if_cm_roam_send_roam_init(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
+ * target_if_cm_roam_scan_rssi_change_cmd()  - Send WMI_ROAM_SCAN_RSSI_CHANGE
+ * command to firmware
+ * @vdev:  Vdev object
+ * @params: RSSI change parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS target_if_cm_roam_scan_rssi_change_cmd(
+			wmi_unified_t wmi_handle,
+			struct wlan_roam_rssi_change_params *params)
+{
+	/*
+	 * Start new rssi triggered scan only if it changes by
+	 * RoamRssiDiff value. Beacon weight of 14 means average rssi
+	 * is taken over 14 previous samples + 2 times the current
+	 * beacon's rssi.
+	 */
+	return wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_handle,
+							     params);
+}
+
+/**
  * target_if_cm_roam_send_start() - Send roam start related commands
  * to wmi
  * @vdev: vdev object
@@ -860,6 +882,14 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 						&req->scan_period_params);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
+	}
+
+	status = target_if_cm_roam_scan_rssi_change_cmd(
+			wmi_handle, &req->rssi_change_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Sending rssi change threshold failed",
+			      req->rssi_change_params.vdev_id);
+		goto end;
 	}
 
 	status = target_if_cm_roam_scan_offload_ap_profile(
@@ -1081,6 +1111,14 @@ target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 						&req->scan_period_params);
 		if (QDF_IS_STATUS_ERROR(status))
 			goto end;
+	}
+
+	status = target_if_cm_roam_scan_rssi_change_cmd(
+			wmi_handle, &req->rssi_change_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev:%d Sending rssi change threshold failed",
+			      req->rssi_change_params.vdev_id);
+		goto end;
 	}
 
 	status = target_if_cm_roam_scan_offload_ap_profile(

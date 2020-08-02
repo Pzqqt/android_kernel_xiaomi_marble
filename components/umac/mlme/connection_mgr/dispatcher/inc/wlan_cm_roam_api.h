@@ -24,7 +24,7 @@
 #define WLAN_CM_ROAM_API_H__
 
 #include "wlan_mlme_dbg.h"
-#include "wlan_cm_roam_public_struct.h"
+#include "../../core/src/wlan_cm_roam_offload.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 
@@ -242,6 +242,43 @@ QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 				 uint8_t reason);
+
+/**
+ * wlan_cm_roam_cfg_get_value  - Get RSO config value from mlme vdev private
+ * object
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @roam_cfg_type: Value needed
+ * @dst_config: Destination config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id,
+				      enum roam_cfg_param roam_cfg_type,
+				      struct cm_roam_values_copy *dst_config);
+
+/**
+ * wlan_cm_roam_cfg_set_value  - Set RSO config value
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @roam_cfg_type: Roam configuration type to set
+ * @src_config: Source config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   enum roam_cfg_param roam_cfg_type,
+			   struct cm_roam_values_copy *src_config);
+#else
+static inline QDF_STATUS
+wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   enum roam_cfg_param roam_cfg_type,
+			   struct cm_roam_values_copy *src_config)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

@@ -89,6 +89,19 @@
 #define REASON_ROAM_ABORT                           53
 
 /**
+ * enum roam_cfg_param  - Type values for roaming parameters used as index
+ * for get/set of roaming config values(pNeighborRoamInfo in legacy)
+ * @RSSI_CHANGE_THRESHOLD: Rssi change threshold
+ * @BEACON_RSSI_WEIGHT: Beacon Rssi weight parameter
+ * @HI_RSSI_DELAY_BTW_SCANS: High Rssi delay between scans
+ */
+enum roam_cfg_param {
+	RSSI_CHANGE_THRESHOLD,
+	BEACON_RSSI_WEIGHT,
+	HI_RSSI_DELAY_BTW_SCANS,
+};
+
+/**
  * enum roam_offload_init_flags  - Flags sent in Roam offload initialization.
  * @WLAN_ROAM_FW_OFFLOAD_ENABLE: Init roaming module at firwmare
  * @WLAN_ROAM_BMISS_FINAL_SCAN_ENABLE: Enable partial scan after final beacon
@@ -984,7 +997,25 @@ struct wlan_roam_scan_period_params {
 	uint32_t roam_scan_period_after_inactivity;
 	uint32_t full_scan_period;
 };
+#endif
 
+/**
+ * struct wlan_roam_rssi_change_params  - RSSI change parameters to be sent over
+ * WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD command
+ * @vdev_id: vdev id
+ * only if current RSSI changes by rssi_change_thresh value.
+ * @bcn_rssi_weight: Beacon RSSI weightage
+ * @hirssi_delay_btw_scans: Delay between high RSSI scans
+ * @rssi_change_thresh: RSSI change threshold. Start new rssi triggered scan
+ */
+struct wlan_roam_rssi_change_params {
+	uint32_t vdev_id;
+	uint32_t bcn_rssi_weight;
+	uint32_t hirssi_delay_btw_scans;
+	int32_t rssi_change_thresh;
+};
+
+#ifdef ROAM_OFFLOAD_V1
 /**
  * struct wlan_roam_start_config - structure containing parameters for
  * roam start config
@@ -993,6 +1024,7 @@ struct wlan_roam_scan_period_params {
  * @reason_vsie_enable: roam reason vsie enable parameters
  * @roam_triggers: roam triggers parameters
  * @scan_period_params: roam scan period parameters
+ * @rssi_change_params: Roam offload RSSI change parameters
  * @profile_params: ap profile parameters
  * @mawc_params: mawc parameters
  * @scan_filter_params: roam scan filter parameters
@@ -1009,6 +1041,7 @@ struct wlan_roam_start_config {
 	struct wlan_roam_triggers roam_triggers;
 	struct wlan_roam_scan_period_params scan_period_params;
 	struct wlan_roam_scan_offload_params rso_config;
+	struct wlan_roam_rssi_change_params rssi_change_params;
 	struct ap_profile_params profile_params;
 	struct wlan_roam_mawc_params mawc_params;
 	struct wlan_roam_scan_filter_params scan_filter_params;
@@ -1051,6 +1084,7 @@ struct wlan_roam_stop_config {
  * @beacon_miss_cnt: roam beacon miss count parameters
  * @scan_filter_params: roam scan filter parameters
  * @scan_period_params: roam scan period parameters
+ * @rssi_change_params: roam scan rssi change parameters
  * @profile_params: ap profile parameters
  * @rssi_params: roam scan rssi threshold parameters
  * @disconnect_params: disconnect params
@@ -1061,6 +1095,7 @@ struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
 	struct wlan_roam_scan_filter_params scan_filter_params;
 	struct wlan_roam_scan_period_params scan_period_params;
+	struct wlan_roam_rssi_change_params rssi_change_params;
 	struct ap_profile_params profile_params;
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
 	struct wlan_roam_disconnect_params disconnect_params;
@@ -1211,16 +1246,48 @@ enum roam_scan_freq_scheme {
 };
 
 /**
+ * struct wlan_cm_rso_configs  - Roam scan offload related per vdev
+ * configuration parameters.
+ * @rescan_rssi_delta: Roam scan rssi delta. Start new rssi triggered scan only
+ * if it changes by rescan_rssi_delta value.
+ * @beacon_rssi_weight: Number of beacons to be used to calculate the average
+ * rssi of the AP.
+ * @hi_rssi_scan_delay: Roam scan delay in ms for High RSSI roam trigger.
+ */
+struct wlan_cm_rso_configs {
+	uint8_t rescan_rssi_delta;
+	uint8_t beacon_rssi_weight;
+	uint32_t hi_rssi_scan_delay;
+
+};
+
+/**
  * struct wlan_cm_roam  - Connection manager roam configs, state and roam
  * data related structure
  * @tx_ops: Roam Tx ops to send roam offload commands to firmware
  * @pcl_vdev_cmd_active:  Flag to check if vdev level pcl command needs to be
  * sent or PDEV level PCL command needs to be sent
  * @control_param: vendor configured roam control param
+ * @vdev_rso_config: Roam scan offload related configurations. Equivalent to the
+ * legacy tpCsrNeighborRoamControlInfo structure.
  */
 struct wlan_cm_roam {
 	struct wlan_cm_roam_tx_ops tx_ops;
 	bool pcl_vdev_cmd_active;
 	struct wlan_cm_roam_vendor_btm_params vendor_btm_param;
+	struct wlan_cm_rso_configs vdev_rso_config;
+};
+
+/**
+ * struct cm_roam_values_copy  - Structure for values copy buffer
+ * @uint_value: Unsigned integer value to be copied
+ * @int_value: Integer value
+ * @bool_value: boolean value
+ */
+struct cm_roam_values_copy {
+	uint32_t uint_value;
+	int32_t int_value;
+	bool bool_value;
+
 };
 #endif

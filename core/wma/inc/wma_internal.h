@@ -411,11 +411,23 @@ QDF_STATUS
 wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 				  struct roam_offload_scan_req *roam_req);
 
+#ifndef ROAM_OFFLOAD_V1
 QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 					     uint32_t vdev_id,
 					     int32_t rssi_change_thresh,
 					     uint32_t bcn_rssi_weight,
 					     uint32_t hirssi_delay_btw_scans);
+#else
+static inline
+QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
+					     uint32_t vdev_id,
+					     int32_t rssi_change_thresh,
+					     uint32_t bcn_rssi_weight,
+					     uint32_t hirssi_delay_btw_scans)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,

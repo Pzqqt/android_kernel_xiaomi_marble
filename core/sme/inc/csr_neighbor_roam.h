@@ -27,6 +27,7 @@
 #define CSR_NEIGHBOR_ROAM_H
 
 #include "sme_api.h"
+#include "wlan_cm_roam_api.h"
 
 #define ROAM_AP_AGE_LIMIT_MS                     10000
 

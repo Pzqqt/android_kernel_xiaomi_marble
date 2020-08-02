@@ -25,7 +25,6 @@
 #include "wlan_mlme_main.h"
 #include "wlan_policy_mgr_api.h"
 #include <wmi_unified_priv.h>
-#include "../../core/src/wlan_cm_roam_offload.h"
 
 #ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -425,5 +424,93 @@ wlan_cm_roam_get_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 		     sizeof(struct wlan_cm_roam_vendor_btm_params));
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
+#endif
+
+#ifdef ROAM_OFFLOAD_V1
+QDF_STATUS wlan_cm_roam_cfg_get_value(struct wlan_objmgr_psoc *psoc,
+				      uint8_t vdev_id,
+				      enum roam_cfg_param roam_cfg_type,
+				      struct cm_roam_values_copy *dst_config)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	struct wlan_cm_rso_configs *src_config;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	src_config = &mlme_priv->cm_roam.vdev_rso_config;
+	switch (roam_cfg_type) {
+	case RSSI_CHANGE_THRESHOLD:
+		dst_config->int_value = src_config->rescan_rssi_delta;
+		break;
+	case BEACON_RSSI_WEIGHT:
+		dst_config->uint_value = src_config->beacon_rssi_weight;
+		break;
+	case HI_RSSI_DELAY_BTW_SCANS:
+		dst_config->uint_value = src_config->hi_rssi_scan_delay;
+		break;
+	default:
+		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wlan_cm_roam_cfg_set_value(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   enum roam_cfg_param roam_cfg_type,
+			   struct cm_roam_values_copy *src_config)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct mlme_legacy_priv *mlme_priv;
+	struct wlan_cm_rso_configs *dst_config;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev) {
+		mlme_err("vdev object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = wlan_vdev_mlme_get_ext_hdl(vdev);
+	if (!mlme_priv) {
+		mlme_err("vdev legacy private object is NULL");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dst_config = &mlme_priv->cm_roam.vdev_rso_config;
+	switch (roam_cfg_type) {
+	case RSSI_CHANGE_THRESHOLD:
+		dst_config->rescan_rssi_delta  = src_config->uint_value;
+		break;
+	case BEACON_RSSI_WEIGHT:
+		dst_config->beacon_rssi_weight = src_config->uint_value;
+		break;
+	case HI_RSSI_DELAY_BTW_SCANS:
+		dst_config->hi_rssi_scan_delay = src_config->uint_value;
+		break;
+	default:
+		mlme_err("Invalid roam config requested:%d", roam_cfg_type);
+	}
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
+	return QDF_STATUS_SUCCESS;
 }
 #endif

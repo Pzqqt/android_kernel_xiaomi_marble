@@ -740,21 +740,7 @@ wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 	return wmi_unified_roam_scan_offload_scan_period(wma_handle->wmi_handle,
 							 &scan_period_params);
 }
-#else
-QDF_STATUS
-wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
 
-QDF_STATUS
-wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
-				  struct roam_offload_scan_req *roam_req)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
 /**
  * wma_roam_scan_offload_rssi_change() - set roam offload RSSI change threshold
  * @wma_handle: wma handle
@@ -782,6 +768,21 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 				vdev_id, rssi_change_thresh,
 				bcn_rssi_weight, hirssi_delay_btw_scans);
 }
+#else
+QDF_STATUS
+wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+
+QDF_STATUS
+wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
+				  struct roam_offload_scan_req *roam_req)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 /**
  * wma_roam_scan_offload_chan_list() - set roam offload channel list
