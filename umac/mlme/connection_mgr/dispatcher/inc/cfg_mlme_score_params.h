@@ -234,7 +234,7 @@
 	"beamforming_cap_weightage", \
 	0, \
 	100, \
-	2, \
+	PLATFORM_VALUE(2, 0), \
 	CFG_VALUE_OR_DEFAULT, \
 	"Beamforming Cap Weightage")
 
@@ -261,7 +261,7 @@
 	"pcl_weightage", \
 	0, \
 	100, \
-	10, \
+	PLATFORM_VALUE(10, 0), \
 	CFG_VALUE_OR_DEFAULT, \
 	"PCL Weightage")
 
@@ -315,7 +315,7 @@
 	"oce_wan_weightage", \
 	0, \
 	100, \
-	2, \
+	PLATFORM_VALUE(2, 0), \
 	CFG_VALUE_OR_DEFAULT, \
 	"OCE WAN Weightage")
 
@@ -340,7 +340,7 @@
 		"oce_ap_tx_pwr_weightage", \
 		0, \
 		10, \
-		5, \
+		PLATFORM_VALUE(5, 0), \
 		CFG_VALUE_OR_DEFAULT,\
 		"AP weigtage for OCE ap tx power")
 
@@ -376,7 +376,7 @@
 		"oce_subnet_id_weightage", \
 		0, \
 		10, \
-		3, \
+		PLATFORM_VALUE(3, 0), \
 		CFG_VALUE_OR_DEFAULT,\
 		"AP weigtage for OCE subnet id")
 
