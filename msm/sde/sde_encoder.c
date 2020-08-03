@@ -3730,7 +3730,7 @@ void sde_encoder_early_wakeup(struct drm_encoder *drm_enc)
 
 	if (!sde_enc->crtc || (sde_enc->crtc->index
 			>= ARRAY_SIZE(priv->event_thread))) {
-		SDE_ERROR("invalid CRTC: %d or crtc index: %d\n",
+		SDE_DEBUG_ENC(sde_enc, "invalid CRTC: %d or crtc index: %d\n",
 			sde_enc->crtc == NULL,
 			sde_enc->crtc ? sde_enc->crtc->index : -EINVAL);
 		return;
