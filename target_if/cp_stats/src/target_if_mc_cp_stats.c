@@ -40,6 +40,274 @@
 #include <cdp_txrx_host_stats.h>
 #include <cds_api.h>
 
+#ifdef WLAN_SUPPORT_TWT
+
+#include <wmi.h>
+#include <wlan_cp_stats_mc_ucfg_api.h>
+
+/**
+ * target_if_twt_fill_peer_twt_session_params() - Fills peer twt session
+ * parameter obtained from firmware into mc_cp_stats of peer
+ * @mc_cp_stats: Pointer to Peer mc_cp stats
+ * @twt_params: twt session parameters to be copied
+ *
+ * Return: None
+ */
+static void target_if_twt_fill_peer_twt_session_params
+(
+	struct peer_mc_cp_stats *mc_cp_stats,
+	struct wmi_host_twt_session_stats_info *twt_params
+)
+{
+	uint32_t event_type;
+	int i = 0;
+
+	if (!mc_cp_stats || !twt_params)
+		return;
+
+	if ((twt_params->event_type == HOST_TWT_SESSION_UPDATE) ||
+	    (twt_params->event_type == HOST_TWT_SESSION_TEARDOWN)) {
+		/* Update for a existing session, find by dialog_id */
+		for (i = 0; i < TWT_PEER_MAX_SESSIONS; i++) {
+			if (mc_cp_stats->twt_param[i].dialog_id !=
+			    twt_params->dialog_id)
+				continue;
+			qdf_mem_copy(&mc_cp_stats->twt_param[i], twt_params,
+				     sizeof(*twt_params));
+			return;
+		}
+	} else if (twt_params->event_type == HOST_TWT_SESSION_SETUP) {
+		/* New session, fill in any existing invalid session */
+		for (i = 0; i < TWT_PEER_MAX_SESSIONS; i++) {
+			event_type = mc_cp_stats->twt_param[i].event_type;
+			if ((event_type != HOST_TWT_SESSION_SETUP) &&
+			    (event_type != HOST_TWT_SESSION_UPDATE)) {
+				qdf_mem_copy(&mc_cp_stats->twt_param[i],
+					     twt_params,
+					     sizeof(*twt_params));
+				return;
+			}
+		}
+	}
+
+	target_if_err("Unable to save twt session params with dialog id %d",
+		      twt_params->dialog_id);
+}
+
+/**
+ * target_if_obtain_mc_cp_stat_obj() - Retrieves peer mc cp stats object
+ * @peer_obj: peer object
+ *
+ * Return: mc cp stats object on success or NULL
+ */
+static struct peer_mc_cp_stats *
+target_if_obtain_mc_cp_stat_obj(struct wlan_objmgr_peer *peer_obj)
+{
+	struct peer_cp_stats *cp_stats_peer_obj;
+	struct peer_mc_cp_stats *mc_cp_stats;
+
+	cp_stats_peer_obj = wlan_objmgr_peer_get_comp_private_obj
+				(peer_obj, WLAN_UMAC_COMP_CP_STATS);
+	if (!cp_stats_peer_obj) {
+		target_if_err("cp peer stats obj err");
+		return NULL;
+	}
+
+	mc_cp_stats = cp_stats_peer_obj->peer_stats;
+	if (!mc_cp_stats) {
+		target_if_err("mc stats obj err");
+		return NULL;
+	}
+	return mc_cp_stats;
+}
+
+/**
+ * target_if_twt_session_params_event_handler() - Handles twt session stats
+ * event from firmware and store the per peer twt session parameters in
+ * mc_cp_stats
+ * @scn: scn handle
+ * @evt_buf: data buffer for event
+ * @evt_data_len: data length of event
+ *
+ * Return: 0 on success, else error values
+ */
+static int target_if_twt_session_params_event_handler(ol_scn_t scn,
+						      uint8_t *evt_buf,
+						      uint32_t evt_data_len)
+{
+	struct wlan_objmgr_psoc *psoc_obj;
+	struct wlan_objmgr_peer *peer_obj;
+	struct wmi_unified *wmi_hdl;
+	struct wmi_host_twt_session_stats_info twt_params;
+	struct wmi_twt_session_stats_event_param params = {0};
+	struct peer_mc_cp_stats *mc_cp_stats;
+	struct peer_cp_stats *peer_cp_stats_priv;
+	uint32_t expected_len;
+	int i;
+	QDF_STATUS status;
+
+	if (!scn || !evt_buf) {
+		target_if_err("scn: 0x%pK, evt_buf: 0x%pK", scn, evt_buf);
+		return -EINVAL;
+	}
+
+	psoc_obj = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc_obj) {
+		target_if_err("psoc object is null!");
+		return -EINVAL;
+	}
+
+	wmi_hdl = get_wmi_unified_hdl_from_psoc(psoc_obj);
+	if (!wmi_hdl) {
+		target_if_err("wmi_handle is null!");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_twt_session_stats_event(wmi_hdl, evt_buf, &params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Could not extract twt session stats event");
+		return qdf_status_to_os_return(status);
+	}
+
+	if (params.num_sessions > TWT_PEER_MAX_SESSIONS) {
+		target_if_err("no of twt sessions exceeded the max supported");
+		return -EINVAL;
+	}
+
+	expected_len = (sizeof(wmi_pdev_twt_session_stats_event_fixed_param) +
+			WMI_TLV_HDR_SIZE + (params.num_sessions *
+			sizeof(wmi_twt_session_stats_info)));
+
+	if (evt_data_len < expected_len) {
+		target_if_err("Got invalid len of data from FW %d expected %d",
+			      evt_data_len, expected_len);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < params.num_sessions; i++) {
+		status = wmi_extract_twt_session_stats_data(wmi_hdl, evt_buf,
+							    &params,
+							    &twt_params, i);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Unable to extract twt params for idx %d",
+				      i);
+			return -EINVAL;
+		}
+
+		peer_obj = wlan_objmgr_get_peer_by_mac(psoc_obj,
+						       twt_params.peer_mac,
+						       WLAN_CP_STATS_ID);
+		if (!peer_obj) {
+			target_if_err("peer obj not found for "
+				      QDF_MAC_ADDR_STR,
+				      QDF_MAC_ADDR_ARRAY(twt_params.peer_mac));
+			continue;
+		}
+
+		peer_cp_stats_priv = wlan_cp_stats_get_peer_stats_obj(peer_obj);
+		if (!peer_cp_stats_priv) {
+			target_if_err("peer_cp_stats_priv is null");
+			continue;
+		}
+
+		mc_cp_stats = target_if_obtain_mc_cp_stat_obj(peer_obj);
+		if (!mc_cp_stats) {
+			target_if_err("Unable to retrieve mc cp stats obj for "
+				      QDF_MAC_ADDR_STR,
+				      QDF_MAC_ADDR_ARRAY(twt_params.peer_mac));
+			wlan_objmgr_peer_release_ref(peer_obj,
+						     WLAN_CP_STATS_ID);
+			continue;
+		}
+
+		wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);
+		target_if_twt_fill_peer_twt_session_params(mc_cp_stats,
+							   &twt_params);
+		wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
+
+		wlan_objmgr_peer_release_ref(peer_obj, WLAN_CP_STATS_ID);
+	}
+	return 0;
+}
+
+/**
+ * target_if_twt_session_params_unregister_evt_hdlr() - Unregister the
+ * event handler registered for wmi event wmi_twt_session_stats_event_id
+ * @psoc: psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
+ */
+static QDF_STATUS
+target_if_twt_session_params_unregister_evt_hdlr(struct wlan_objmgr_psoc *psoc)
+{
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("psoc obj in null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_unified_unregister_event_handler(wmi_handle,
+					     wmi_twt_session_stats_event_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_twt_session_params_register_evt_hdlr() - Register a event
+ * handler with wmi layer for wmi event wmi_twt_session_stats_event_id
+ * @psoc: psoc object
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
+ */
+static QDF_STATUS
+target_if_twt_session_params_register_evt_hdlr(struct wlan_objmgr_psoc *psoc)
+{
+	int ret_val;
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("psoc obj in null!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret_val = wmi_unified_register_event_handler(
+			wmi_handle,
+			wmi_twt_session_stats_event_id,
+			target_if_twt_session_params_event_handler,
+			WMI_RX_WORK_CTX);
+
+	if (ret_val)
+		target_if_err("Failed to register twt session stats event cb");
+
+	return qdf_status_from_os_return(ret_val);
+}
+#else
+static QDF_STATUS
+target_if_twt_session_params_register_evt_hdlr(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS
+target_if_twt_session_params_unregister_evt_hdlr(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_TWT */
+
 #ifdef WLAN_FEATURE_MIB_STATS
 static void target_if_cp_stats_free_mib_stats(struct stats_event *ev)
 {
@@ -725,6 +993,48 @@ static QDF_STATUS target_if_cp_stats_send_stats_req(
 					      &param);
 }
 
+/**
+ * target_if_cp_stats_unregister_handlers() - Un-registers wmi event handlers
+ * of control plane stats & twt session stats info
+ * @psoc: PSOC object
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
+ */
+static QDF_STATUS
+target_if_cp_stats_unregister_handlers(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS qdf_status;
+
+	qdf_status = target_if_twt_session_params_unregister_evt_hdlr(psoc);
+	if (qdf_status == QDF_STATUS_SUCCESS)
+		qdf_status = target_if_cp_stats_unregister_event_handler(psoc);
+
+	return qdf_status;
+}
+
+/**
+ * target_if_cp_stats_register_handlers() - Registers wmi event handlers for
+ * control plane stats & twt session stats info
+ * @psoc: PSOC object
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF error values on failure
+ */
+static QDF_STATUS
+target_if_cp_stats_register_handlers(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS qdf_status;
+
+	qdf_status = target_if_cp_stats_register_event_handler(psoc);
+	if (qdf_status != QDF_STATUS_SUCCESS)
+		return qdf_status;
+
+	qdf_status = target_if_twt_session_params_register_evt_hdlr(psoc);
+	if (qdf_status != QDF_STATUS_SUCCESS)
+		target_if_cp_stats_unregister_event_handler(psoc);
+
+	return qdf_status;
+}
+
 QDF_STATUS
 target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -742,9 +1052,9 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	}
 
 	cp_stats_tx_ops->cp_stats_attach =
-		target_if_cp_stats_register_event_handler;
+		target_if_cp_stats_register_handlers;
 	cp_stats_tx_ops->cp_stats_detach =
-		target_if_cp_stats_unregister_event_handler;
+		target_if_cp_stats_unregister_handlers;
 	cp_stats_tx_ops->inc_wake_lock_stats =
 		target_if_cp_stats_inc_wake_lock_stats;
 	cp_stats_tx_ops->send_req_stats = target_if_cp_stats_send_stats_req;
