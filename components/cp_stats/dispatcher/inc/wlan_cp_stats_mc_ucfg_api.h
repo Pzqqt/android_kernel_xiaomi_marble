@@ -31,6 +31,37 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_cp_stats_mc_defs.h>
 
+#ifdef WLAN_SUPPORT_TWT
+
+#include <wlan_objmgr_peer_obj.h>
+#include "../../core/src/wlan_cp_stats_defs.h"
+#include <qdf_event.h>
+
+/* Max TWT sessions supported */
+#define TWT_PSOC_MAX_SESSIONS TWT_PEER_MAX_SESSIONS
+
+/* Valid dialog_id 0 to (0xFF - 1) */
+#define TWT_MAX_DIALOG_ID (0xFF - 1)
+
+/* dialog_id used to get all peer's twt session parameters */
+#define TWT_GET_ALL_PEER_PARAMS_DIALOG_ID (0xFF)
+
+/**
+ * ucfg_twt_get_peer_session_params() - Retrieves peer twt session parameters
+ * corresponding to a peer by using mac_addr and dialog id
+ * If dialog_id is TWT_GET_ALL_PEER_PARAMS_DIALOG_ID retrieves twt session
+ * parameters of all peers with valid twt session
+ * @psoc_obj: psoc object
+ * @params: array pointer to store peer twt session parameters, should contain
+ * mac_addr and dialog id of a peer for which twt session stats to be retrieved
+ *
+ * Return: QDF_STATUS_SUCCESS upon success, else qdf error values
+ */
+QDF_STATUS
+ucfg_twt_get_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
+				 struct wmi_host_twt_session_stats_info *param);
+#endif /* WLAN_SUPPORT_TWT */
+
 struct psoc_cp_stats;
 struct vdev_cp_stats;
 

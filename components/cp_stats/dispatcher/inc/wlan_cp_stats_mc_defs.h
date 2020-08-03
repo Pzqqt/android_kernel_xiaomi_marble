@@ -29,6 +29,14 @@
 #include "wlan_cmn.h"
 #include "qdf_event.h"
 
+#ifdef WLAN_SUPPORT_TWT
+
+#include <wmi_unified_twt_param.h>
+/* Max TWT sessions per peer (supported by fw) */
+#define TWT_PEER_MAX_SESSIONS 1
+
+#endif /* WLAN_SUPPORT_TWT */
+
 #define MAX_NUM_CHAINS              2
 
 #define MAX_MIB_STATS               1
@@ -300,6 +308,7 @@ struct peer_extd_stats {
  * @peer_macaddr: mac address
  * @extd_stats: Pointer to peer extended stats
  * @adv_stats: Pointer to peer adv (extd2) stats
+ * @twt_param: Pointer to peer twt session parameters
  */
 struct peer_mc_cp_stats {
 	uint32_t tx_rate;
@@ -308,6 +317,9 @@ struct peer_mc_cp_stats {
 	uint8_t peer_macaddr[QDF_MAC_ADDR_SIZE];
 	struct peer_extd_stats *extd_stats;
 	struct peer_adv_mc_cp_stats *adv_stats;
+#ifdef WLAN_SUPPORT_TWT
+	struct wmi_host_twt_session_stats_info twt_param[TWT_PEER_MAX_SESSIONS];
+#endif
 };
 
 /**
