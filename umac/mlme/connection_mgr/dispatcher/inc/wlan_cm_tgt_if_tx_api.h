@@ -30,7 +30,7 @@
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
- * wlan_cm_roam_send_set_vdev_pcl  - Send vdev set pcl command to firmware
+ * wlan_cm_roam_send_set_vdev_pcl()  - Send vdev set pcl command to firmware
  * @psoc:     PSOC pointer
  * @pcl_req:  Set pcl request structure pointer
  *
@@ -51,8 +51,8 @@ wlan_cm_roam_send_set_vdev_pcl(struct wlan_objmgr_psoc *psoc,
 #ifdef ROAM_OFFLOAD_V1
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
- * wlan_cm_tgt_send_roam_offload_init  - Send WMI_VDEV_PARAM_ROAM_FW_OFFLOAD to
- * init/deinit roaming module at firmware
+ * wlan_cm_tgt_send_roam_offload_init()  - Send WMI_VDEV_PARAM_ROAM_FW_OFFLOAD
+ * to init/deinit roaming module at firmware
  * @psoc: PSOC pointer
  * @vdev_id: vdev id
  * @is_init: true if roam module is to be initialized else false for deinit
@@ -63,7 +63,7 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 					      uint8_t vdev_id, bool is_init);
 
 /**
- * wlan_cm_tgt_send_roam_start_req  - Send roam start command to firmware
+ * wlan_cm_tgt_send_roam_start_req()  - Send roam start command to firmware
  * @psoc:    psoc pointer
  * @vdev_id: vdev id
  * @req: roam start config parameter
@@ -73,6 +73,52 @@ QDF_STATUS wlan_cm_tgt_send_roam_offload_init(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_cm_tgt_send_roam_start_req(struct wlan_objmgr_psoc *psoc,
 					   uint8_t vdev_id,
 					   struct wlan_roam_start_config *req);
+
+/**
+ * wlan_cm_tgt_send_roam_stop_req()  - Send roam stop command to firmware
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ * @req: roam stop config parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_stop_req(struct wlan_objmgr_psoc *psoc,
+					 uint8_t vdev_id,
+					 struct wlan_roam_stop_config *req);
+
+/**
+ * wlan_cm_tgt_send_roam_start_req()  - Send roam update command to firmware
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ * @req: roam update config parameter
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_update_req(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id,
+					   struct wlan_roam_update_config *req);
+
+/**
+ * wlan_cm_tgt_send_roam_abort_req()  - Send roam abort command to firmware
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_abort_req(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id);
+
+/**
+ * wlan_cm_tgt_send_roam_per_config()  - Send roam per config command to FW
+ * @psoc:    psoc pointer
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_tgt_send_roam_per_config(struct wlan_objmgr_psoc *psoc,
+					  uint8_t vdev_id,
+					  struct wlan_per_roam_config_req *req);
+
 #endif
 #endif
 #endif /* CM_TGT_IF_TX_API_H__ */

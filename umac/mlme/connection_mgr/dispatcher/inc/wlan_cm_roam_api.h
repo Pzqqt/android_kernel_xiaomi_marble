@@ -78,6 +78,16 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id,
 			    struct wlan_roam_start_config *req,
 			    uint8_t reason);
+
+/**
+ * wlan_cm_send_beacon_miss() - initiate beacon miss
+ * @vdev_id: vdev id
+ * @rssi: AP rssi
+ *
+ * Return: void
+ */
+void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi);
+
 #else
 static inline QDF_STATUS
 wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
@@ -88,21 +98,21 @@ wlan_cm_enable_roaming_on_connected_sta(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
- * cm_roam_acquire_lock  - Wrapper for sme_acquire_global_lock.
+ * cm_roam_acquire_lock() - Wrapper for sme_acquire_global_lock.
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_roam_acquire_lock(void);
 
 /**
- * cm_roam_release_lock  - Wrapper for sme_release_global_lock()
+ * cm_roam_release_lock() - Wrapper for sme_release_global_lock()
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS cm_roam_release_lock(void);
 
 /**
- * cm_roam_get_requestor_string  - RSO control requestor to string api
+ * cm_roam_get_requestor_string() - RSO control requestor to string api
  * @requestor: Requestor of type enum wlan_cm_rso_control_requestor
  *
  * Return: Pointer to converted string
@@ -111,7 +121,7 @@ char
 *cm_roam_get_requestor_string(enum wlan_cm_rso_control_requestor requestor);
 
 /**
- * ucfg_cm_rso_init_deinit  - Init or Deinit roaming module at firmware
+ * ucfg_cm_rso_init_deinit() - Init or Deinit roaming module at firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @enable: true: Send RSO init and RSO enable
@@ -123,7 +133,7 @@ QDF_STATUS wlan_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id, bool enable);
 
 /**
- * wlan_cm_disable_rso  - Disable roam scan offload to firmware
+ * wlan_cm_disable_rso() - Disable roam scan offload to firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @requestor: RSO disable requestor
@@ -136,7 +146,7 @@ QDF_STATUS wlan_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
 			       uint8_t reason);
 
 /**
- * ucfg_cm_enable_rso  - Enable roam scan offload to firmware
+ * ucfg_cm_enable_rso() - Enable roam scan offload to firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @requestor: RSO disable requestor
@@ -212,7 +222,7 @@ wlan_cm_roam_extract_roam_initial_info(wmi_unified_t wmi, void *evt_buf,
 				       uint8_t idx);
 
 /**
- * wlan_cm_roam_activate_pcl_per_vdev  - Set the PCL command to be sent per
+ * wlan_cm_roam_activate_pcl_per_vdev() - Set the PCL command to be sent per
  * vdev instead of pdev.
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
@@ -232,8 +242,8 @@ void wlan_cm_roam_activate_pcl_per_vdev(struct wlan_objmgr_psoc *psoc,
 					bool pcl_per_vdev);
 
 /**
- * wlan_cm_roam_is_pcl_per_vdev_active  - API to know if the pcl command needs to be
- * sent per vdev or not
+ * wlan_cm_roam_is_pcl_per_vdev_active() - API to know if the pcl command needs
+ * to be sent per vdev or not
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
  *
@@ -243,7 +253,7 @@ bool wlan_cm_roam_is_pcl_per_vdev_active(struct wlan_objmgr_psoc *psoc,
 					 uint8_t vdev_id);
 
 /**
- * wlan_cm_dual_sta_is_freq_allowed  - This API is used to check if the
+ * wlan_cm_dual_sta_is_freq_allowed() - This API is used to check if the
  * provided frequency is allowed for the 2nd STA vdev for connection.
  * @psoc:   Pointer to PSOC object
  * @freq:   Frequency in the given frequency list for the STA that is about to
@@ -260,7 +270,7 @@ wlan_cm_dual_sta_is_freq_allowed(struct wlan_objmgr_psoc *psoc, uint32_t freq,
 				 enum QDF_OPMODE opmode);
 
 /**
- * wlan_cm_dual_sta_roam_update_connect_channels  - Fill the allowed channels
+ * wlan_cm_dual_sta_roam_update_connect_channels() - Fill the allowed channels
  * for connection of the 2nd STA based on the 1st STA connected band if dual
  * sta roaming is enabled.
  * @psoc:   Pointer to PSOC object
@@ -272,7 +282,7 @@ void
 wlan_cm_dual_sta_roam_update_connect_channels(struct wlan_objmgr_psoc *psoc,
 					      struct scan_filter *filter);
 /**
- * wlan_cm_roam_set_vendor_btm_params  - API to set vendor btm params
+ * wlan_cm_roam_set_vendor_btm_params() - API to set vendor btm params
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
  * @param: vendor configured roam trigger param
@@ -285,7 +295,7 @@ wlan_cm_roam_set_vendor_btm_params(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_cm_roam_vendor_btm_params
 								*param);
 /**
- * wlan_cm_roam_disable_vendor_btm  - API to disable vendor btm by default
+ * wlan_cm_roam_disable_vendor_btm() - API to disable vendor btm by default
  * reason
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
@@ -296,7 +306,7 @@ void
 wlan_cm_roam_disable_vendor_btm(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id);
 
 /**
- * wlan_cm_roam_get_vendor_btm_params - API to get vendor btm param
+ * wlan_cm_roam_get_vendor_btm_params() - API to get vendor btm param
  * @psoc: PSOC pointer
  * @vdev_id: VDEV id
  * @param: vendor configured roam trigger param

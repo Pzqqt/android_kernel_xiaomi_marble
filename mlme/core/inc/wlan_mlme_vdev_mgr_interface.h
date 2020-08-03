@@ -116,6 +116,41 @@ QDF_STATUS mlme_set_bigtk_support(struct wlan_objmgr_vdev *vdev, bool val);
 bool mlme_get_bigtk_support(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * mlme_set_roam_reason_better_ap() - set roam reason better AP
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_set_roam_reason_better_ap(struct wlan_objmgr_vdev *vdev, bool val);
+
+/**
+ * mlme_get_roam_reason_better_ap() - get roam reason better AP
+ * @vdev: vdev pointer
+ *
+ * Return: bool
+ */
+bool mlme_get_roam_reason_better_ap(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_hb_ap_rssi() - set hb ap RSSI
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_hb_ap_rssi(struct wlan_objmgr_vdev *vdev, uint32_t val);
+
+/**
+ * mlme_get_hb_ap_rssi() - get HB AP RSSIc
+ * @vdev: vdev pointer
+ *
+ * Return: rssi value
+ */
+uint32_t mlme_get_hb_ap_rssi(struct wlan_objmgr_vdev *vdev);
+
+/**
  * mlme_set_connection_fail() - set connection failure flag
  * @vdev: vdev pointer
  * @val: value to be set

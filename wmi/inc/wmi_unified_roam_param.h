@@ -235,54 +235,6 @@ struct wmi_roam_invoke_cmd {
 };
 
 /**
- * struct wmi_per_roam_config - per based roaming parameters
- * @enable: if PER based roaming is enabled/disabled
- * @tx_high_rate_thresh: high rate threshold at which PER based
- *     roam will stop in tx path
- * @rx_high_rate_thresh: high rate threshold at which PER based
- *     roam will stop in rx path
- * @tx_low_rate_thresh: rate below which traffic will be considered
- *     for PER based roaming in Tx path
- * @rx_low_rate_thresh: rate below which traffic will be considered
- *     for PER based roaming in Tx path
- * @tx_rate_thresh_percnt: % above which when traffic is below low_rate_thresh
- *     will be considered for PER based scan in tx path
- * @rx_rate_thresh_percnt: % above which when traffic is below low_rate_thresh
- *     will be considered for PER based scan in rx path
- * @per_rest_time: time for which PER based roam will wait once it
- *     issues a roam scan.
- * @tx_per_mon_time: Minimum time required to be considered as valid scenario
- *     for PER based roam in tx path
- * @rx_per_mon_time: Minimum time required to be considered as valid scenario
- *     for PER based roam in rx path
- * @min_candidate_rssi: Minimum RSSI threshold for candidate AP to be used for
- *     PER based roaming
- */
-struct wmi_per_roam_config {
-	uint32_t enable;
-	uint32_t tx_high_rate_thresh;
-	uint32_t rx_high_rate_thresh;
-	uint32_t tx_low_rate_thresh;
-	uint32_t rx_low_rate_thresh;
-	uint32_t tx_rate_thresh_percnt;
-	uint32_t rx_rate_thresh_percnt;
-	uint32_t per_rest_time;
-	uint32_t tx_per_mon_time;
-	uint32_t rx_per_mon_time;
-	uint32_t min_candidate_rssi;
-};
-
-/**
- * struct wmi_per_roam_config_req: PER based roaming config request
- * @vdev_id: vdev id on which config needs to be set
- * @per_config: PER config
- */
-struct wmi_per_roam_config_req {
-	uint8_t vdev_id;
-	struct wmi_per_roam_config per_config;
-};
-
-/**
  * struct wmi_limit_off_chan_param - limit off channel parameters
  * @vdev_id: vdev id
  * @status: status of the command (enable/disable)
@@ -312,30 +264,6 @@ struct hlp_params {
 };
 
 /**
- * struct wmi_btm_config - BSS Transition Management offload params
- * @vdev_id: VDEV on which the parameters should be applied
- * @btm_offload_config: BTM config
- * @btm_solicited_timeout: Timeout value for waiting BTM request
- * @btm_max_attempt_cnt: Maximum attempt for sending BTM query to ESS
- * @btm_sticky_time: Stick time after roaming to new AP by BTM
- * @disassoc_timer_threshold: threshold value till which the firmware can
- * wait before triggering the roam scan after receiving the disassoc iminent
- * @btm_query_bitmask: bitmask to btm query with candidate list
- * @btm_candidate_min_score: Minimum score of the AP to consider it as a
- * candidate if the roam trigger is BTM kickout.
- */
-struct wmi_btm_config {
-	uint8_t vdev_id;
-	uint32_t btm_offload_config;
-	uint32_t btm_solicited_timeout;
-	uint32_t btm_max_attempt_cnt;
-	uint32_t btm_sticky_time;
-	uint32_t disassoc_timer_threshold;
-	uint32_t btm_query_bitmask;
-	uint32_t btm_candidate_min_score;
-};
-
-/**
  * struct wmi_bss_load_config - BSS load trigger parameters
  * @vdev_id: VDEV on which the parameters should be applied
  * @bss_load_threshold: BSS load threshold after which roam scan should trigger
@@ -357,36 +285,6 @@ struct wmi_bss_load_config {
 };
 
 /**
- * struct wmi_idle_roam_params - Idle roam trigger parameters
- * @vdev_id: VDEV on which the parameters should be applied
- * @enable: Enable/Disable Idle roaming
- * @band: Connected AP band
- * @conn_ap_rssi_delta: Rssi change of connected AP in dBm
- * @conn_ap_min_rssi: If connected AP rssi is less than min rssi trigger roam
- * @inactive_time: Connected AP idle time
- * @data_pkt_count: Data packet count allowed during idle time
- */
-struct wmi_idle_roam_params {
-	uint32_t vdev_id;
-	bool enable;
-	uint32_t band;
-	uint32_t conn_ap_rssi_delta;
-	int32_t conn_ap_min_rssi;
-	uint32_t inactive_time;
-	uint32_t data_pkt_count;
-};
-
-/**
- * struct wmi_disconnect_roam_params - Emergency deauth/disconnect roam params
- * @vdev_id: VDEV on which the parameters should be applied
- * @enable: Enable or disable disconnect roaming.
- */
-struct wmi_disconnect_roam_params {
-	uint32_t vdev_id;
-	bool enable;
-};
-
-/**
  * struct wmi_roam_auth_status_params - WPA3 roam auth response status
  * parameters
  * @vdev_id: Vdev on which roam preauth is happening
@@ -402,45 +300,6 @@ struct wmi_roam_auth_status_params {
 	uint32_t preauth_status;
 	struct qdf_mac_addr bssid;
 	uint8_t pmkid[PMKID_LEN];
-};
-
-/**
- * @time_offset: time offset after 11k offload command to trigger a neighbor
- *	report request (in seconds)
- * @low_rssi_offset: Offset from rssi threshold to trigger a neighbor
- *	report request (in dBm)
- * @bmiss_count_trigger: Number of beacon miss events to trigger neighbor
- *	report request
- * @per_threshold_offset: offset from PER threshold to trigger neighbor
- *	report request (in %)
- * @neighbor_report_cache_timeout: timeout after which new trigger can enable
- *	sending of a neighbor report request (in seconds)
- * @max_neighbor_report_req_cap: max number of neighbor report requests that
- *	can be sent to the peer in the current session
- * @ssid: Current connect SSID info
- */
-struct wmi_11k_offload_neighbor_report_params {
-	uint32_t time_offset;
-	uint32_t low_rssi_offset;
-	uint32_t bmiss_count_trigger;
-	uint32_t per_threshold_offset;
-	uint32_t neighbor_report_cache_timeout;
-	uint32_t max_neighbor_report_req_cap;
-	struct wlan_ssid ssid;
-};
-
-/**
- * struct wmi_11k_offload_params - offload 11k features to FW
- * @vdev_id: vdev id
- * @offload_11k_bitmask: bitmask to specify offloaded features
- *	B0: Neighbor Report Request offload
- *	B1-B31: Reserved
- * @neighbor_report_params: neighbor report offload params
- */
-struct wmi_11k_offload_params {
-	uint32_t vdev_id;
-	uint32_t offload_11k_bitmask;
-	struct wmi_11k_offload_neighbor_report_params neighbor_report_params;
 };
 
 /**

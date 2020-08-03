@@ -22,12 +22,14 @@
  * Implementation for the common roaming offload api interfaces.
  */
 
+#include "wlan_mlme_main.h"
 #include "wlan_cm_roam_offload.h"
 #include "wlan_cm_tgt_if_tx_api.h"
 #include "wlan_cm_roam_api.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 
 /**
- * wlan_cm_roam_scan_bmiss_cnt() - set roam beacon miss count
+ * cm_roam_scan_bmiss_cnt() - set roam beacon miss count
  * @psoc: psoc pointer
  * @vdev_id: vdev id
  * @params: roam beacon miss count parameters
@@ -37,9 +39,8 @@
  * Return: None
  */
 static void
-wlan_cm_roam_scan_bmiss_cnt(struct wlan_objmgr_psoc *psoc,
-			    uint8_t vdev_id,
-			    struct wlan_roam_beacon_miss_cnt *params)
+cm_roam_scan_bmiss_cnt(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		       struct wlan_roam_beacon_miss_cnt *params)
 {
 	uint8_t beacon_miss_count;
 
@@ -64,9 +65,8 @@ wlan_cm_roam_scan_bmiss_cnt(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 static void
-wlan_cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc,
-			 uint8_t vdev_id,
-			 struct wlan_roam_reason_vsie_enable *params)
+cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct wlan_roam_reason_vsie_enable *params)
 {
 	uint8_t enable_roam_reason_vsie;
 
@@ -87,9 +87,8 @@ wlan_cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 static void
-wlan_cm_roam_triggers(struct wlan_objmgr_psoc *psoc,
-		      uint8_t vdev_id,
-		      struct wlan_roam_triggers *params)
+cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		 struct wlan_roam_triggers *params)
 {
 	params->vdev_id = vdev_id;
 	params->trigger_bitmap =
@@ -98,17 +97,15 @@ wlan_cm_roam_triggers(struct wlan_objmgr_psoc *psoc,
 					   &params->vendor_btm_param);
 }
 #else
-static void
-wlan_cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc,
-			 uint8_t vdev_id,
-			 struct wlan_roam_reason_vsie_enable *params)
+static inline void
+cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct wlan_roam_reason_vsie_enable *params)
 {
 }
 
-static void
-wlan_cm_roam_triggers(struct wlan_objmgr_psoc *psoc,
-		      uint8_t vdev_id,
-		      struct wlan_roam_triggers *params)
+static inline void
+cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		 struct wlan_roam_triggers *params)
 {
 }
 #endif
@@ -127,6 +124,19 @@ cm_roam_init_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, bool enable)
 	return wlan_cm_tgt_send_roam_offload_init(psoc, vdev_id, enable);
 }
 
+static void cm_roam_set_roam_reason_better_ap(struct wlan_objmgr_psoc *psoc,
+					      uint8_t vdev_id, bool set)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return;
+	mlme_set_roam_reason_better_ap(vdev, set);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+}
+
 /**
  * cm_roam_start_req() - roam start request handling
  * @psoc: psoc pointer
@@ -136,8 +146,7 @@ cm_roam_init_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id, bool enable)
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-cm_roam_start_req(struct wlan_objmgr_psoc *psoc,
-		  uint8_t vdev_id,
+cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		  uint8_t reason)
 {
 	struct wlan_roam_start_config *start_req;
@@ -147,11 +156,11 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc,
 	if (!start_req)
 		return QDF_STATUS_E_NOMEM;
 
+	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 	/* fill from mlme directly */
-	wlan_cm_roam_scan_bmiss_cnt(psoc, vdev_id,
-				    &start_req->beacon_miss_cnt);
-	wlan_cm_roam_reason_vsie(psoc, vdev_id, &start_req->reason_vsie_enable);
-	wlan_cm_roam_triggers(psoc, vdev_id, &start_req->roam_triggers);
+	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &start_req->beacon_miss_cnt);
+	cm_roam_reason_vsie(psoc, vdev_id, &start_req->reason_vsie_enable);
+	cm_roam_triggers(psoc, vdev_id, &start_req->roam_triggers);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);
@@ -174,11 +183,199 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc,
-			  uint8_t vdev_id,
+cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 			  uint8_t reason)
 {
+	struct wlan_roam_update_config *update_req;
+	QDF_STATUS status;
+
+	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
+
+	update_req = qdf_mem_malloc(sizeof(*update_req));
+	if (!update_req)
+		return QDF_STATUS_E_NOMEM;
+
+	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send update config");
+
+	qdf_mem_free(update_req);
+
+	return status;
+}
+
+/**
+ * cm_roam_restart_req() - roam restart req for LFR2
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_restart_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    uint8_t reason)
+{
+
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						    WLAN_MLME_NB_ID);
+	if (!vdev)
+		return QDF_STATUS_E_INVAL;
+
+	/* Rome offload engine does not stop after any scan.
+	 * If this command is sent because all preauth attempts failed
+	 * and WMI_ROAM_REASON_SUITABLE_AP event was received earlier,
+	 * now it is time to call it heartbeat failure.
+	 */
+	if (reason == REASON_PREAUTH_FAILED_FOR_ALL
+	    && mlme_get_roam_reason_better_ap(vdev)) {
+		mlme_err("Sending heartbeat failure after preauth failures");
+		wlan_cm_send_beacon_miss(vdev_id, mlme_get_hb_ap_rssi(vdev));
+		mlme_set_roam_reason_better_ap(vdev, false);
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_NB_ID);
+
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cm_roam_abort_req() - roam scan abort req
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		  uint8_t reason)
+{
+	QDF_STATUS status;
+
+	status = wlan_cm_tgt_send_roam_abort_req(psoc, vdev_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send abort start");
+
+	return status;
+}
+
+/**
+ * cm_roam_stop_req() - roam stop request handling
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		 uint8_t reason)
+{
+	struct wlan_roam_stop_config *stop_req;
+	QDF_STATUS status;
+
+	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
+
+	stop_req = qdf_mem_malloc(sizeof(*stop_req));
+	if (!stop_req)
+		return QDF_STATUS_E_NOMEM;
+	/* do the filling as csr_post_rso_stop */
+
+	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam stop");
+
+	qdf_mem_free(stop_req);
+
+	return status;
+}
+
+/**
+ * cm_roam_fill_per_roam_request() - create PER roam offload config request
+ * @psoc: psoc context
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_fill_per_roam_request(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_per_roam_config_req *req)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	req->per_config.enable = mlme_obj->cfg.lfr.per_roam_enable;
+	req->per_config.tx_high_rate_thresh =
+		mlme_obj->cfg.lfr.per_roam_config_high_rate_th;
+	req->per_config.rx_high_rate_thresh =
+		mlme_obj->cfg.lfr.per_roam_config_high_rate_th;
+	req->per_config.tx_low_rate_thresh =
+		mlme_obj->cfg.lfr.per_roam_config_low_rate_th;
+	req->per_config.rx_low_rate_thresh =
+		mlme_obj->cfg.lfr.per_roam_config_low_rate_th;
+	req->per_config.per_rest_time = mlme_obj->cfg.lfr.per_roam_rest_time;
+	req->per_config.tx_per_mon_time =
+		mlme_obj->cfg.lfr.per_roam_monitor_time;
+	req->per_config.rx_per_mon_time =
+		mlme_obj->cfg.lfr.per_roam_monitor_time;
+	req->per_config.tx_rate_thresh_percnt =
+		mlme_obj->cfg.lfr.per_roam_config_rate_th_percent;
+	req->per_config.rx_rate_thresh_percnt =
+		mlme_obj->cfg.lfr.per_roam_config_rate_th_percent;
+	req->per_config.min_candidate_rssi =
+		mlme_obj->cfg.lfr.per_roam_min_candidate_rssi;
+
+	mlme_debug("PER based roaming configuaration enable: %d vdev: %d high_rate_thresh: %d low_rate_thresh: %d rate_thresh_percnt: %d per_rest_time: %d monitor_time: %d min cand rssi: %d",
+		   req->per_config.enable, req->vdev_id,
+		   req->per_config.tx_high_rate_thresh,
+		   req->per_config.tx_low_rate_thresh,
+		   req->per_config.tx_rate_thresh_percnt,
+		   req->per_config.per_rest_time,
+		   req->per_config.tx_per_mon_time,
+		   req->per_config.min_candidate_rssi);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cm_roam_offload_per_scan() - populates roam offload scan request and sends
+ * to fw
+ * @psoc: psoc context
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+cm_roam_offload_per_config(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	struct wlan_per_roam_config_req *req = NULL;
+	QDF_STATUS status;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req)
+		return QDF_STATUS_E_NOMEM;
+
+	req->vdev_id = vdev_id;
+	status = cm_roam_fill_per_roam_request(psoc, req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(req);
+		mlme_debug("fail to fill per config");
+		return status;
+	}
+
+	status = wlan_cm_tgt_send_roam_per_config(psoc, vdev_id, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_debug("fail to send roam stop");
+
+	qdf_mem_free(req);
+
+	return status;
 }
 
 /*
@@ -200,33 +397,26 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 		mlme_debug("ROAM: not allowed");
 		return status;
 	}
+
+	/*
+	 * Update PER config to FW. No need to update in case of stop command,
+	 * FW takes care of stopping this internally
+	 */
+	if (rso_command != ROAM_SCAN_OFFLOAD_STOP)
+		cm_roam_offload_per_config(psoc, vdev_id);
+
 	if (rso_command == ROAM_SCAN_OFFLOAD_START)
 		status = cm_roam_start_req(psoc, vdev_id, reason);
 	else if (rso_command == ROAM_SCAN_OFFLOAD_UPDATE_CFG)
 		status = cm_roam_update_config_req(psoc, vdev_id, reason);
-//	else if (rso_command == ROAM_SCAN_OFFLOAD_RESTART)
-		/* RESTART API */
-//	else
-		/* ABORT SCAN API */
+	else if (rso_command == ROAM_SCAN_OFFLOAD_RESTART)
+		status = cm_roam_restart_req(psoc, vdev_id, reason);
+	else if (rso_command == ROAM_SCAN_OFFLOAD_ABORT_SCAN)
+		status = cm_roam_abort_req(psoc, vdev_id, reason);
+	else
+		mlme_debug("ROAM: invalid RSO command %d", rso_command);
 
 	return status;
-}
-
-/**
- * cm_roam_stop_req() - roam stop request handling
- * @psoc: psoc pointer
- * @vdev_id: vdev id
- * @reason: reason for changing roam state for the requested vdev id
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-cm_roam_stop_req(struct wlan_objmgr_psoc *psoc,
-		 uint8_t vdev_id,
-		 uint8_t reason)
-{
-	/* do the filling as csr_post_rso_stop */
-	return QDF_STATUS_SUCCESS;
 }
 
 /**

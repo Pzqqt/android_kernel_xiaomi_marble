@@ -92,7 +92,7 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	status = cm_roam_state_change(pdev, vdev_id,
+	status = cm_roam_send_rso_cmd(psoc, vdev_id,
 				      ROAM_SCAN_OFFLOAD_ABORT_SCAN,
 				      REASON_ROAM_ABORT_ROAM_SCAN);
 	cm_roam_release_lock();
