@@ -67,6 +67,22 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 #endif
 
 /**
+ * dp_hmwds_ast_add_notify() - schedules hmwds ast add status work
+ * @peer: DP peer
+ * @mac_addr: ast mac addr
+ * @type: ast type
+ * @err: QDF_STATUS error code
+ * @is_peer_map: notify is from peer map
+ *
+ * Return: void
+ */
+void dp_hmwds_ast_add_notify(struct dp_peer *peer,
+			     uint8_t *mac_addr,
+			     enum cdp_txrx_ast_entry_type type,
+			     QDF_STATUS err,
+			     bool is_peer_map);
+
+/**
  * dp_rx_wds_add_or_update_ast() - Add or update the ast entry.
  *
  * @soc: core txrx main context
