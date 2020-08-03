@@ -646,7 +646,7 @@ typedef struct sAniSirLim {
 		(struct mac_context *mac, struct scheduler_msg *msg);
 	QDF_STATUS(*stop_roaming_callback)
 		(mac_handle_t mac, uint8_t session_id, uint8_t reason,
-		 uint32_t requestor);
+		 enum wlan_cm_rso_control_requestor requestor);
 	uint8_t retry_packet_cnt;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
