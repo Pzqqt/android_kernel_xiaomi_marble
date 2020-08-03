@@ -19,66 +19,69 @@
 static bool is_initialized;
 qca_multi_link_parameters_t qca_multi_link_cfg;
 
-static inline bool is_fast_lane_radio(struct wiphy *fl_wiphy)
+static inline qca_multi_link_radio_node_t *
+		qca_multi_link_find_radio_node(struct wiphy *wiphy)
 {
 	qdf_list_node_t *node = NULL, *next_node = NULL;
 
-	if (!fl_wiphy) {
-		return false;
+	if (!wiphy) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
+			 FL(" Radio wiphy pointer is NULL\n"));
+		return NULL;
 	}
 
-	if (qdf_list_empty(&qca_multi_link_cfg.fast_lane_list)) {
-		return false;
+	if (qdf_list_empty(&qca_multi_link_cfg.radio_list)) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
+			 FL(" Radio list is empty\n"));
+		return NULL;
 	}
 
-	qdf_list_peek_front(&qca_multi_link_cfg.fast_lane_list,
-		(qdf_list_node_t **)&next_node);
+	qdf_list_peek_front(&qca_multi_link_cfg.radio_list,
+			   (qdf_list_node_t **)&next_node);
 	while (next_node) {
-		struct qca_multi_link_list_node *fast_lane_node
-		= (struct qca_multi_link_list_node *)next_node;
-		if (fast_lane_node->wiphy == fl_wiphy) {
-			return true;
+		qca_multi_link_radio_node_t *radio_node
+		= (qca_multi_link_radio_node_t *)next_node;
+		if (radio_node->wiphy == wiphy) {
+			return radio_node;
 		} else {
 			node = next_node;
 			next_node = NULL;
-		if ((qdf_list_peek_next(&qca_multi_link_cfg.fast_lane_list, node, &next_node))
-			!= QDF_STATUS_SUCCESS) {
-			return false;
-		}
+			if ((qdf_list_peek_next(&qca_multi_link_cfg.radio_list,
+					       node, (qdf_list_node_t **)&next_node))
+						!= QDF_STATUS_SUCCESS) {
+				return NULL;
+			}
 		}
 	}
-	return false;
+	return NULL;
+}
+
+static inline bool is_fast_lane_radio(struct wiphy *fl_wiphy)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(fl_wiphy);
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	if (!radio_node) {
+		return false;
+	}
+
+	return radio_node->is_fast_lane;
 }
 
 static inline bool is_no_backhaul_radio(struct wiphy *no_bl_wiphy)
 {
-	qdf_list_node_t *node = NULL, *next_node = NULL;
+	qca_multi_link_radio_node_t *radio_node = NULL;
 
-	if (!no_bl_wiphy) {
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(no_bl_wiphy);
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	if (!radio_node) {
 		return false;
 	}
 
-	if (qdf_list_empty(&qca_multi_link_cfg.no_backhaul_list)) {
-		return false;
-	}
-
-	qdf_list_peek_front(&qca_multi_link_cfg.no_backhaul_list,
-		(qdf_list_node_t **)&next_node);
-	while (next_node) {
-		struct qca_multi_link_list_node *no_bl_node
-		= (struct qca_multi_link_list_node *)next_node;
-		if (no_bl_node->wiphy == no_bl_wiphy) {
-			return true;
-		} else {
-			node = next_node;
-			next_node = NULL;
-			if ((qdf_list_peek_next(&qca_multi_link_cfg.no_backhaul_list, node, &next_node))
-				!= QDF_STATUS_SUCCESS) {
-				return false;
-			}
-		}
-	}
-	return false;
+	return radio_node->no_backhaul;
 }
 
 static inline bool is_other_fast_lane_radio_primary(struct wiphy *fl_wiphy)
@@ -89,20 +92,24 @@ static inline bool is_other_fast_lane_radio_primary(struct wiphy *fl_wiphy)
 		return false;
 	}
 
-	if (qdf_list_empty(&qca_multi_link_cfg.fast_lane_list)) {
+	if (qdf_list_empty(&qca_multi_link_cfg.radio_list)) {
 		return false;
 	}
 
-	qdf_list_peek_front(&qca_multi_link_cfg.fast_lane_list,
-		(qdf_list_node_t **)&next_node);
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	qdf_list_peek_front(&qca_multi_link_cfg.radio_list,
+			   (qdf_list_node_t **)&next_node);
 	while (next_node) {
-		struct qca_multi_link_list_node *fast_lane_node
-		= (struct qca_multi_link_list_node *)next_node;
-		if ((fast_lane_node->wiphy != fl_wiphy)
-		&& (fast_lane_node->wiphy  == qca_multi_link_cfg.primary_wiphy)) {
+		qca_multi_link_radio_node_t *radio_node
+		= (qca_multi_link_radio_node_t *)next_node;
+		if ((radio_node->wiphy != fl_wiphy) &&
+		   (radio_node->is_fast_lane) &&
+		   (radio_node->wiphy  == qca_multi_link_cfg.primary_wiphy)) {
+			qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 			return true;
 		}
 	}
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 	return false;
 }
 
@@ -203,6 +210,26 @@ static inline bool qca_multi_link_drop_always_primary(bool is_primary, qdf_nbuf_
 }
 
 /**
+ * qca_multi_link_get_station_vap() - get the radio station vap pointer for a radio
+ * @primary_wiphy: wiphy pointer of radio device
+ *
+ * Return: station vap netdevice pointer
+ */
+static struct net_device *qca_multi_link_get_station_vap(struct wiphy *wiphy)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(wiphy);
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	if (!radio_node || !radio_node->sta_dev) {
+		return NULL;
+	}
+
+	return radio_node->sta_dev;
+}
+
+/**
  * qca_multi_link_deinit_module() - De-initialize the repeater base structute
  * Return: void
  */
@@ -214,9 +241,9 @@ void qca_multi_link_deinit_module(void)
 	qca_multi_link_cfg.total_stavaps_up = 0;
 	qca_multi_link_cfg.loop_detected = 0;
 	qca_multi_link_cfg.primary_wiphy = NULL;
-	qdf_list_destroy(&qca_multi_link_cfg.fast_lane_list);
-	qdf_list_destroy(&qca_multi_link_cfg.no_backhaul_list);
+	qdf_list_destroy(&qca_multi_link_cfg.radio_list);
 	is_initialized = false;
+	qdf_spinlock_destroy(&qca_multi_link_cfg.radio_lock);
 
 	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
 		FL("\n******QCA RPtr De-Init Done***********\n"));
@@ -238,9 +265,10 @@ void qca_multi_link_init_module(void)
 	qca_multi_link_cfg.total_stavaps_up = 0;
 	qca_multi_link_cfg.loop_detected = 0;
 	qca_multi_link_cfg.primary_wiphy = NULL;
-	qdf_list_create(&qca_multi_link_cfg.fast_lane_list, QCA_MULTI_LINK_FAST_LANE_LIST_SIZE);
-	qdf_list_create(&qca_multi_link_cfg.no_backhaul_list, QCA_MULTI_LINK_NO_BACKHAUL_LIST_SIZE);
+	qdf_list_create(&qca_multi_link_cfg.radio_list, QCA_MULTI_LINK_RADIO_LIST_SIZE);
+	qdf_spinlock_create(&qca_multi_link_cfg.radio_lock);
 
+	memset(&qca_multi_link_cfg.qca_ml_stats, 0x0, sizeof(qca_multi_link_radio_node_t));
 	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
 		FL("\n******QCA Repeater Initialization Done***********\n"));
 }
@@ -299,7 +327,8 @@ qdf_export_symbol(qca_multi_link_append_num_sta);
 bool qca_multi_link_is_dbdc_processing_reqd(struct net_device *net_dev)
 {
 	if (qca_multi_link_cfg.total_stavaps_up > 2)
-		return (qca_multi_link_cfg.loop_detected && qca_multi_link_cfg.rptr_processing_enable);
+		return (qca_multi_link_cfg.loop_detected &&
+		       qca_multi_link_cfg.rptr_processing_enable);
 	else
 		return false;
 }
@@ -382,10 +411,88 @@ void qca_multi_link_set_primary_radio(struct wiphy *primary_wiphy)
 	}
 	qca_multi_link_cfg.primary_wiphy = primary_wiphy;
 	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
-		FL("\nSetting primary radio for wiphy%p\n"), primary_wiphy);
+		FL("\n******Setting primary radio for wiphy****%p\n"), primary_wiphy);
 }
 
 qdf_export_symbol(qca_multi_link_set_primary_radio);
+
+/**
+ * qca_multi_link_remove_radio() - remove the radio pointer from repeater list
+ * @primary_wiphy: wiphy pointer of radio device
+ *
+ * Return: false: addition not successful
+ *	   true: addition is successful
+ */
+bool qca_multi_link_remove_radio(struct wiphy *wiphy)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+		return false;
+	}
+
+	qdf_list_remove_node(&qca_multi_link_cfg.radio_list, &radio_node->node);
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	qdf_mem_free(radio_node);
+	return true;
+}
+
+qdf_export_symbol(qca_multi_link_remove_radio);
+
+/**
+ * qca_multi_link_add_radio() - add the radio pointer to repeater list
+ * @primary_wiphy: wiphy pointer of radio device
+ *
+ * Return: false: addition not successful
+ *	   true: addition is successful
+ */
+bool qca_multi_link_add_radio(struct wiphy *wiphy)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	if (!wiphy) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
+			FL(" Radio could not be set - wiphy is NULL\n"));
+		return false;
+	}
+
+	/*
+	 * Check if Radio is already present in reppeater list.
+	 */
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(wiphy);
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	if (radio_node) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
+			FL(" Radio node already present\n"));
+		return false;
+	}
+
+	radio_node = qdf_mem_malloc(sizeof(qca_multi_link_radio_node_t));
+	if (!radio_node) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
+			FL("Could not allocate node for wiphy%p\n"), wiphy);
+		return false;
+	}
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node->wiphy = wiphy;
+	if (qdf_list_insert_front(&qca_multi_link_cfg.radio_list, &radio_node->node)
+		== QDF_STATUS_SUCCESS) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
+			 FL("Adding radio node for wiphy%p\n"), wiphy);
+		return true;
+	}
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	qdf_mem_free(radio_node);
+	return false;
+}
+
+qdf_export_symbol(qca_multi_link_add_radio);
 
 /**
  * qca_multi_link_add_fastlane_radio() - add the fast lane radio pointer to list
@@ -396,27 +503,18 @@ qdf_export_symbol(qca_multi_link_set_primary_radio);
  */
 bool qca_multi_link_add_fastlane_radio(struct wiphy *fl_wiphy)
 {
-	struct qca_multi_link_list_node *fast_lane_node;
+	qca_multi_link_radio_node_t *radio_node = NULL;
 
-	if (!fl_wiphy) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
-			FL(" Fast lane radio could not be set - wiphy is NULL\n"));
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(fl_wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 		return false;
 	}
 
-	fast_lane_node = qdf_mem_malloc(sizeof(struct qca_multi_link_list_node));
-	if (!fast_lane_node) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
-			FL("Could not allocate fast-lane node for wiphy%p\n"), fl_wiphy);
-		return false;
-	}
-
-	fast_lane_node->wiphy = fl_wiphy;
-	if (qdf_list_insert_front(&qca_multi_link_cfg.fast_lane_list, &fast_lane_node->node)
-		== QDF_STATUS_SUCCESS) {
-		return true;
-	}
-	return false;
+	radio_node->is_fast_lane = true;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	return true;
 }
 
 qdf_export_symbol(qca_multi_link_add_fastlane_radio);
@@ -430,33 +528,18 @@ qdf_export_symbol(qca_multi_link_add_fastlane_radio);
  */
 bool qca_multi_link_remove_fastlane_radio(struct wiphy *fl_wiphy)
 {
-	qdf_list_node_t *node = NULL, *next_node = NULL;
+	qca_multi_link_radio_node_t *radio_node = NULL;
 
-	if (!fl_wiphy) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
-			FL(" Fast lane radio could not be removed - wiphy is NULL\n"));
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(fl_wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 		return false;
 	}
 
-	qdf_list_peek_front(&qca_multi_link_cfg.fast_lane_list,
-		(qdf_list_node_t **)&next_node);
-	while (next_node) {
-		struct qca_multi_link_list_node *fast_lane_node
-			= (struct qca_multi_link_list_node *)next_node;
-		if (fast_lane_node->wiphy == fl_wiphy) {
-			qdf_list_remove_node(&qca_multi_link_cfg.fast_lane_list, next_node);
-			qdf_mem_free(fast_lane_node);
-			return true;
-		} else {
-			node = next_node;
-			next_node = NULL;
-			if ((qdf_list_peek_next(&qca_multi_link_cfg.fast_lane_list, node,
-				(qdf_list_node_t **)&next_node)) != QDF_STATUS_SUCCESS) {
-				return false;
-			}
-		}
-	}
-	return false;
+	radio_node->is_fast_lane = false;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	return true;
 }
 
 qdf_export_symbol(qca_multi_link_remove_fastlane_radio);
@@ -470,27 +553,18 @@ qdf_export_symbol(qca_multi_link_remove_fastlane_radio);
  */
 bool qca_multi_link_add_no_backhaul_radio(struct wiphy *no_bl_wiphy)
 {
-	struct qca_multi_link_list_node *no_bl_node;
+	qca_multi_link_radio_node_t *radio_node = NULL;
 
-	if (!no_bl_wiphy) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
-			FL(" No backhaul radio could not be set - wiphy is NULL\n"));
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(no_bl_wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 		return false;
 	}
 
-	no_bl_node = qdf_mem_malloc(sizeof(struct qca_multi_link_list_node));
-	if (!no_bl_node) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
-			FL("Could not allocate back-haul node for wiphy%p\n"), no_bl_node);
-		return false;
-	}
-
-	no_bl_node->wiphy = no_bl_wiphy;
-	if (qdf_list_insert_front(&qca_multi_link_cfg.no_backhaul_list, &no_bl_node->node)
-		== QDF_STATUS_SUCCESS) {
-		return true;
-	}
-	return false;
+	radio_node->no_backhaul = true;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	return true;
 }
 
 qdf_export_symbol(qca_multi_link_add_no_backhaul_radio);
@@ -504,36 +578,80 @@ qdf_export_symbol(qca_multi_link_add_no_backhaul_radio);
  */
 bool qca_multi_link_remove_no_backhaul_radio(struct wiphy *no_bl_wiphy)
 {
-	qdf_list_node_t *node = NULL, *next_node = NULL;
+	qca_multi_link_radio_node_t *radio_node = NULL;
 
-	if (!no_bl_wiphy) {
-		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
-			FL(" No backhaul radio could not be removed - wiphy is NULL\n"));
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(no_bl_wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
 		return false;
 	}
 
-	qdf_list_peek_front(&qca_multi_link_cfg.no_backhaul_list,
-		(qdf_list_node_t **)&next_node);
-	while (next_node) {
-		struct qca_multi_link_list_node *no_bl_node
-			= (struct qca_multi_link_list_node *)next_node;
-		if (no_bl_node->wiphy == no_bl_wiphy) {
-			qdf_list_remove_node(&qca_multi_link_cfg.no_backhaul_list, next_node);
-			qdf_mem_free(no_bl_node);
-			return true;
-		} else {
-			node = next_node;
-			next_node = NULL;
-			if ((qdf_list_peek_next(&qca_multi_link_cfg.no_backhaul_list, node, &next_node))
-				!= QDF_STATUS_SUCCESS) {
-				return false;
-			}
-		}
-	}
-	return false;
+	radio_node->no_backhaul = false;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	return true;
 }
 
 qdf_export_symbol(qca_multi_link_remove_no_backhaul_radio);
+
+/**
+ * qca_multi_link_remove_station_vap() - remove the radio station vap pointer for a radio
+ * @primary_wiphy: wiphy pointer of radio device
+ *
+ * Return: false: addition not successful
+ *	   true: addition is successful
+ */
+bool qca_multi_link_remove_station_vap(struct wiphy *wiphy)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+		return false;
+	}
+
+	radio_node->sta_dev = NULL;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	return true;
+}
+
+qdf_export_symbol(qca_multi_link_remove_station_vap);
+
+/**
+ * qca_multi_link_add_station_vap() - add the station vap pointer for a radio
+ * @primary_wiphy: wiphy pointer of radio device
+ *
+ * Return: false: addition not successful
+ *	   true: addition is successful
+ */
+bool qca_multi_link_add_station_vap(struct wiphy *wiphy, struct net_device *sta_dev)
+{
+	qca_multi_link_radio_node_t *radio_node = NULL;
+
+	qdf_spin_lock(&qca_multi_link_cfg.radio_lock);
+	radio_node = qca_multi_link_find_radio_node(wiphy);
+	if (!radio_node) {
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+		return false;
+	}
+
+	if (radio_node->sta_dev) {
+		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_WARN,
+			 FL("STA Device already mapped for wiphy%p\n"), wiphy);
+		qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+		return false;
+	}
+
+	radio_node->sta_dev = sta_dev;
+	qdf_spin_unlock(&qca_multi_link_cfg.radio_lock);
+	QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
+		 FL("STA Device mapped for wiphy%p\n"), wiphy);
+	return true;
+}
+
+qdf_export_symbol(qca_multi_link_add_station_vap);
 
 /**
  * qca_multi_link_secondary_ap_rx() - Processing for frames recieved on Secondary AP VAP
@@ -599,13 +717,16 @@ static qca_multi_link_status_t qca_multi_link_secondary_ap_rx(struct net_device 
 		/*
 		 * Find the station vap corresponding to the AP vap.
 		 */
-		sta_dev = qca_multi_link_tbl_find_sta_or_ap(ap_dev, 1);
+		sta_dev = qca_multi_link_get_station_vap(ap_wiphy);
 		if (!sta_dev) {
 			QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
 				FL("Null STA device found %pM - Give to bridge\n"), eh->ether_shost);
+			qca_multi_link_cfg.qca_ml_stats.ap_rx_sec_sta_null++;
 			return QCA_MULTI_LINK_PKT_DROP;
 		}
 
+		qca_multi_link_tbl_add_or_refresh_entry(ap_dev, eh->ether_shost,
+						       QCA_MULTI_LINK_ENTRY_USER_ADDED);
 		dev_hold(sta_dev);
 		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
 			FL("shost %pM dhost %pM \n"), eh->ether_shost, eh->ether_dhost);
@@ -728,6 +849,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 		 * Always drop mcast packets on secondary radio when loop has been detected.
 		 */
 		if (qca_multi_link_cfg.loop_detected) {
+			qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_mcast_drop++;
 			return QCA_MULTI_LINK_PKT_DROP;
 		}
 
@@ -739,13 +861,14 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 		if (qal_status != QDF_STATUS_SUCCESS) {
 			if (!qca_multi_link_cfg.loop_detected
 				&& !qca_multi_link_cfg.drop_secondary_mcast) {
-		/*
-		 * This condition is to allow packets on Secondary Station
-		 * when stations are connected to different RootAPs and loop is not
-		 * detected.
-		 */
+			/*
+			 * This condition is to allow packets on Secondary Station
+			 * when stations are connected to different RootAPs and loop is not
+			 * detected.
+			 */
 				return QCA_MULTI_LINK_PKT_ALLOW;
 			} else {
+				qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_mcast_no_fdb++;
 				return QCA_MULTI_LINK_PKT_DROP;
 			}
 		}
@@ -769,10 +892,12 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 					QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO, FL("\n****Wifi Rptr Loop Detected****\n"));
 				}
 			}
+			qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_mcast_dup_pkts++;
 			return QCA_MULTI_LINK_PKT_DROP;
 		}
 
 		if (qca_multi_link_drop_secondary_mcast(nbuf)) {
+			qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_mcast_drop_sec++;
 			return QCA_MULTI_LINK_PKT_DROP;
 		}
 
@@ -787,6 +912,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 			return QCA_MULTI_LINK_PKT_ALLOW;
 		}
 
+		qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_mcast_drop++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -807,6 +933,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 			 * on secondary stations.
 			 */
 			if (!qca_ml_entry.qal_fdb_ieee80211_ptr) {
+				qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_ucast_src_eth++;
 				return QCA_MULTI_LINK_PKT_DROP;
 			}
 
@@ -818,16 +945,17 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 				&& (qca_ml_entry.qal_fdb_ieee80211_ptr->wiphy == sta_wiphy)) {
 				QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG, FL("Unicast Sec STA to AP direct enq for\
 					shost %pM dhost %pM \n"), eh->ether_shost, eh->ether_dhost);
-			/*
-			 * Holding the AP dev so that it cannot be brought down
-			 * while we are enqueueing.
-			 */
-			dev_hold(qca_ml_entry.qal_fdb_dev);
-			qca_ml_entry.qal_fdb_dev->netdev_ops->ndo_start_xmit(nbuf, qca_ml_entry.qal_fdb_dev);
-			dev_put(qca_ml_entry.qal_fdb_dev);
-			return QCA_MULTI_LINK_PKT_CONSUMED;
+				/*
+				 * Holding the AP dev so that it cannot be brought down
+				 * while we are enqueueing.
+				 */
+				dev_hold(qca_ml_entry.qal_fdb_dev);
+				qca_ml_entry.qal_fdb_dev->netdev_ops->ndo_start_xmit(nbuf, qca_ml_entry.qal_fdb_dev);
+				dev_put(qca_ml_entry.qal_fdb_dev);
+				return QCA_MULTI_LINK_PKT_CONSUMED;
 			}
 
+			qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_ucast_src_dif_band++;
 			return QCA_MULTI_LINK_PKT_DROP;
 		} else {
 
@@ -843,7 +971,8 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_rx(struct net_device
 			ap_dev = qca_multi_link_tbl_find_sta_or_ap(sta_dev, 0);
 			if (!ap_dev) {
 				QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG,
-				FL("Null AP device found %pM - Give to bridge\n"), eh->ether_shost);
+				FL("Null AP device found %pM - Drop\n"), eh->ether_shost);
+				qca_multi_link_cfg.qca_ml_stats.sta_rx_sec_sta_ucast_no_ap++;
 				return QCA_MULTI_LINK_PKT_DROP;
 			}
 
@@ -913,6 +1042,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 		 */
 			return QCA_MULTI_LINK_PKT_ALLOW;
 		}
+		qca_multi_link_cfg.qca_ml_stats.sta_rx_pri_sta_mcast_no_fdb++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -931,13 +1061,15 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 	 * Drop the loopback mcast packets from ethernet devices behind the repeater.
 	 */
 	if (!qca_ml_entry.qal_fdb_ieee80211_ptr) {
+		qca_multi_link_cfg.qca_ml_stats.sta_rx_pri_sta_mcast_drop++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
 	if (qca_ml_entry.qal_fdb_ieee80211_ptr->wiphy != sta_wiphy) {
-		if (!qca_multi_link_cfg.loop_detected) {
-			if (qca_ml_entry.qal_fdb_is_local
-	&& (qca_ml_entry.qal_fdb_ieee80211_ptr->iftype == NL80211_IFTYPE_STATION)) {
+		if (qca_ml_entry.qal_fdb_is_local &&
+				(qca_ml_entry.qal_fdb_ieee80211_ptr->iftype
+				== NL80211_IFTYPE_STATION)) {
+			if (!qca_multi_link_cfg.loop_detected) {
 				qca_multi_link_cfg.loop_detected = true;
 				QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_INFO,
 						FL("\n****Wifi Rptr Loop Detected****\n"));
@@ -954,6 +1086,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 				return QCA_MULTI_LINK_PKT_ALLOW;
 			}
 		}
+		qca_multi_link_cfg.qca_ml_stats.sta_rx_pri_sta_mcast_drop++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -966,6 +1099,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_rx(struct net_device *
 		return QCA_MULTI_LINK_PKT_ALLOW;
 	}
 
+	qca_multi_link_cfg.qca_ml_stats.sta_rx_pri_sta_mcast_drop++;
 	return QCA_MULTI_LINK_PKT_DROP;
 }
 
@@ -1052,6 +1186,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_tx(struct net_device
 	qdf_ether_header_t *eh = (qdf_ether_header_t *) qdf_nbuf_data(nbuf);
 
 	if (qca_multi_link_drop_always_primary(false, nbuf)) {
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_sec_sta_alwys_prim++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1073,8 +1208,9 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_tx(struct net_device
 				       &qca_ml_entry);
 	if (qal_status != QDF_STATUS_SUCCESS) {
 		if (!is_mcast) {
-		return QCA_MULTI_LINK_PKT_ALLOW;
+			return QCA_MULTI_LINK_PKT_ALLOW;
 		}
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_sec_sta_mcast_no_fdb++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1083,6 +1219,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_tx(struct net_device
 		 * ieee80211_ptr pointer will be NULL for ethernet devices.
 		 * Packets from ethernet devices or bridge are allowed only on	Primary radio.
 		 */
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_sec_sta_src_eth++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1095,6 +1232,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_tx(struct net_device
 	}
 
 	if (qca_multi_link_drop_secondary_mcast(nbuf)) {
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_sec_sta_mcast_drop_sec++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1105,6 +1243,7 @@ static qca_multi_link_status_t qca_multi_link_secondary_sta_tx(struct net_device
 	if (qca_ml_entry.qal_fdb_ieee80211_ptr->wiphy != sta_dev->ieee80211_ptr->wiphy) {
 		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG, FL("STA TX: Diff Band Primary drop\
 			shost %pM dhost %pM \n"), eh->ether_shost, eh->ether_dhost);
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_sec_sta_drop_dif_band++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1152,6 +1291,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_tx(struct net_device *
 	 * as they will be received from bridge only.
 	 */
 	if (qal_status != QDF_STATUS_SUCCESS) {
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_pri_sta_drop_no_fdb++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
@@ -1186,6 +1326,7 @@ static qca_multi_link_status_t qca_multi_link_primary_sta_tx(struct net_device *
 	if (qca_ml_entry.qal_fdb_ieee80211_ptr->wiphy != sta_dev->ieee80211_ptr->wiphy) {
 		QDF_TRACE(QDF_MODULE_ID_RPTR, QDF_TRACE_LEVEL_DEBUG, FL("STA TX: Diff Band Primary drop\
 			shost %pM dhost %pM \n"), eh->ether_shost, eh->ether_dhost);
+		qca_multi_link_cfg.qca_ml_stats.sta_tx_pri_sta_drop_dif_band++;
 		return QCA_MULTI_LINK_PKT_DROP;
 	}
 
