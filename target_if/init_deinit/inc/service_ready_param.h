@@ -400,6 +400,10 @@ struct wlan_psoc_host_service_ext_param {
  * @max_ndp_sessions: Max number of ndp session fw supports
  * @preamble_puncture_bw_cap: Preamble Puncturing Tx support
  * @num_scan_radio_caps: Number of scan radio capabilities
+ * @max_users_dl_ofdma: Max number of users per-PPDU for Downlink OFDMA
+ * @max_users_ul_ofdma: Max number of users per-PPDU for Uplink OFDMA
+ * @max_users_dl_mumimo: Max number of users per-PPDU for Downlink MU-MIMO
+ * @max_users_ul_mumimo: Max number of users per-PPDU for Uplink MU-MIMO
  */
 struct wlan_psoc_host_service_ext2_param {
 	uint8_t reg_db_version_major;
@@ -411,6 +415,10 @@ struct wlan_psoc_host_service_ext2_param {
 	uint32_t max_ndp_sessions;
 	uint32_t preamble_puncture_bw_cap;
 	uint8_t num_scan_radio_caps;
+	uint16_t max_users_dl_ofdma;
+	uint16_t max_users_ul_ofdma;
+	uint16_t max_users_dl_mumimo;
+	uint16_t max_users_ul_mumimo;
 };
 
 #endif /* _SERVICE_READY_PARAM_H_*/

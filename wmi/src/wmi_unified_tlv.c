@@ -10644,6 +10644,14 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 
 	param->preamble_puncture_bw_cap = ev->preamble_puncture_bw;
 	param->num_scan_radio_caps = param_buf->num_wmi_scan_radio_caps;
+	param->max_users_dl_ofdma = WMI_MAX_USER_PER_PPDU_DL_OFDMA_GET(
+						ev->max_user_per_ppdu_ofdma);
+	param->max_users_ul_ofdma = WMI_MAX_USER_PER_PPDU_UL_OFDMA_GET(
+						ev->max_user_per_ppdu_ofdma);
+	param->max_users_dl_mumimo = WMI_MAX_USER_PER_PPDU_DL_MUMIMO_GET(
+						ev->max_user_per_ppdu_mumimo);
+	param->max_users_ul_mumimo = WMI_MAX_USER_PER_PPDU_UL_MUMIMO_GET(
+						ev->max_user_per_ppdu_mumimo);
 
 	return QDF_STATUS_SUCCESS;
 }
