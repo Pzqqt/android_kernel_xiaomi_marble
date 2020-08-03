@@ -17227,23 +17227,6 @@ csr_add_ch_lst_from_roam_scan_list(struct mac_context *mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void
-csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
-			      uint16_t *rsn_caps)
-{
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
-						    WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("Invalid vdev");
-		return;
-	}
-
-	*rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-}
-
 #ifdef WLAN_FEATURE_11W
 /**
  * csr_rso_command_fill_11w_params() - Fill the 11w related parameters
@@ -17306,13 +17289,50 @@ csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 		network_cfg->gp_mgmt_cipher_suite = eSIR_ED_NONE;
 }
 
+static void csr_fill_pmf_caps(uint16_t *rsn_caps,
+			      tCsrRoamConnectedProfile *profile)
+{
+	*rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
+	*rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+	if (profile->MFPRequired)
+		*rsn_caps |= WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+	if (profile->MFPCapable)
+		*rsn_caps |= WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
+}
 #else
 static inline
 void csr_rso_command_fill_11w_params(struct mac_context *mac_ctx,
 				     uint8_t session_id,
 				     struct roam_offload_scan_req *rso_req)
 {}
+
+static inline
+void csr_fill_pmf_caps(uint16_t *rsn_caps, tCsrRoamConnectedProfile *profile)
+{
+	*rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_ENABLED;
+	*rsn_caps &= ~WLAN_CRYPTO_RSN_CAP_MFP_REQUIRED;
+}
 #endif
+
+static void
+csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
+			      uint16_t *rsn_caps,
+			      tCsrRoamConnectedProfile *profile)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc, vdev_id,
+						    WLAN_LEGACY_SME_ID);
+	if (!vdev) {
+		sme_err("Invalid vdev");
+		return;
+	}
+
+	*rsn_caps = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP);
+	csr_fill_pmf_caps(rsn_caps, profile);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+}
 
 /**
  * csr_update_btm_offload_config() - Update btm config param to fw
@@ -17463,7 +17483,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 
 	/* Copy the self RSN capabilities in roam offload request */
 	csr_rso_command_fill_rsn_caps(mac_ctx, session_id,
-				      (uint16_t *)&req_buf->rsn_caps);
+		(uint16_t *)&req_buf->rsn_caps,
+		&mac_ctx->roam.roamSession[session_id].connectedProfile);
 	csr_rso_command_fill_11w_params(mac_ctx, session_id, req_buf);
 
 	req_buf->delay_before_vdev_stop =
