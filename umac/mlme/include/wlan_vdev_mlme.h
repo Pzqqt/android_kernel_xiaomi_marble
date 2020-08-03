@@ -206,6 +206,7 @@ struct vdev_mlme_proto {
  * @disable_hw_ack: disable ha ack flag
  * @bssid: bssid
  * @phy_mode: phy mode
+ * @special_vdev_mode: indicates special vdev mode
  */
 struct vdev_mlme_mgmt_generic {
 	uint32_t rts_threshold;
@@ -231,6 +232,7 @@ struct vdev_mlme_mgmt_generic {
 	bool disable_hw_ack;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t phy_mode;
+	bool special_vdev_mode;
 };
 
 /**

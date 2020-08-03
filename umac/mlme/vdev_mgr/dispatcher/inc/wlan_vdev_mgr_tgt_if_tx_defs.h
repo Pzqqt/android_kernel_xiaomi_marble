@@ -491,6 +491,7 @@ struct vdev_set_params {
  * @pdev_id: pdev id on pdev for this vdev
  * @mbssid_flags: MBSS IE flags indicating vdev type
  * @vdevid_trans: id of transmitting vdev for MBSS IE
+ * @special_vdev_mode: indicates special vdev mode
  */
 struct vdev_create_params {
 	uint8_t vdev_id;
@@ -501,6 +502,7 @@ struct vdev_create_params {
 	uint32_t pdev_id;
 	uint32_t mbssid_flags;
 	uint8_t vdevid_trans;
+	bool special_vdev_mode;
 };
 
 /**
