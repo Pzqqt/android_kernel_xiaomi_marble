@@ -890,4 +890,27 @@ static inline uint32_t wlan_vdev_mlme_get_txmgmtrate(
 
 	return vdev_mlme->mgmt.rate_info.tx_mgmt_rate;
 }
+
+/**
+ * wlan_vdev_mlme_is_special_vdev() - check given vdev is a special vdev
+ * @vdev: VDEV object
+ *
+ * API to check given vdev is a special vdev.
+ *
+ * Return: true if given vdev is special vdev, else false
+ */
+static inline bool wlan_vdev_mlme_is_special_vdev(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	if (!vdev)
+		return false;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme)
+		return false;
+
+	return vdev_mlme->mgmt.generic.special_vdev_mode;
+}
 #endif
