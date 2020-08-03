@@ -576,7 +576,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 /* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 370) is unused */
 
+#ifndef ROAM_OFFLOAD_V1
 #define SIR_HAL_SET_PER_ROAM_CONFIG_CMD     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 371)
+#endif
 #define SIR_HAL_RX_CHN_STATUS_EVENT         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 372)
 
 #define SIR_HAL_GET_RCPI_REQ                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 373)
@@ -588,7 +590,10 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_HIDDEN_SSID_RESTART_RSP     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 379)
 
+
+#ifndef ROAM_OFFLOAD_V1
 #define SIR_HAL_INIT_ROAM_OFFLOAD_PARAM     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 380)
+#endif
 
 /*
  * Unused SIR_HAL_ITC_MSG_TYPES_BEGIN + 381 to

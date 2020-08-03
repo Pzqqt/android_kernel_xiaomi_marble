@@ -84,6 +84,7 @@
 #if !defined(REMOVE_PKT_LOG)
 #include <wlan_logging_sock_svc.h>
 #endif
+#include "wlan_cm_roam_api.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -2411,6 +2412,20 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 	wma_lost_link_info_handler(wma, vdev_id, rssi);
 }
 
+#ifdef ROAM_OFFLOAD_V1
+void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
+{
+	tp_wma_handle wma;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		wma_err("Invalid wma");
+		return;
+	}
+
+	wma_beacon_miss_handler(wma, vdev_id, rssi);
+}
+#endif
 /**
  * wma_get_status_str() - get string of tx status from firmware
  * @status: tx status

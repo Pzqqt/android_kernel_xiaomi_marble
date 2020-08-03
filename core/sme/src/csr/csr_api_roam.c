@@ -16998,6 +16998,64 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 
+/**
+ * csr_update_btm_offload_config() - Update btm config param to fw
+ * @mac_ctx: Global mac ctx
+ * @command: Roam offload command
+ * @btm_offload_config: btm offload config
+ * @session: roam session
+ *
+ * Return: None
+ */
+static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
+					  uint8_t command,
+					  uint32_t *btm_offload_config,
+					  struct csr_roam_session *session)
+{
+	struct wlan_objmgr_peer *peer;
+	bool is_pmf_enabled;
+
+	*btm_offload_config =
+			mac_ctx->mlme_cfg->btm.btm_offload_config;
+
+	/* Return if INI is disabled */
+	if (!(*btm_offload_config))
+		return;
+
+	/* For RSO Stop Disable BTM offload to firmware */
+	if (command == ROAM_SCAN_OFFLOAD_STOP) {
+		*btm_offload_config = 0;
+		return;
+	}
+
+	if (!session->pConnectBssDesc) {
+		sme_err("Connected Bss Desc is NULL");
+		return;
+	}
+
+	peer = wlan_objmgr_get_peer(mac_ctx->psoc,
+				    wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev),
+				    session->pConnectBssDesc->bssId,
+				    WLAN_LEGACY_SME_ID);
+	if (!peer) {
+		sme_debug("Peer of peer_mac %pM not found",
+			  session->pConnectBssDesc->bssId);
+		return;
+	}
+
+	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
+	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_SME_ID);
+	sme_debug("get is_pmf_enabled %d for %pM", is_pmf_enabled,
+		  session->pConnectBssDesc->bssId);
+
+	/* If peer does not support PMF in case of OCE/MBO
+	 * Connection, Disable BTM offload to firmware.
+	 */
+	if (session->pConnectBssDesc->mbo_oce_enabled_ap &&
+	    !is_pmf_enabled)
+		*btm_offload_config = 0;
+}
+
 #ifndef ROAM_OFFLOAD_V1
 /**
  * csr_populate_roam_chan_list()
@@ -17335,64 +17393,6 @@ csr_rso_command_fill_rsn_caps(struct mac_context *mac_ctx, uint8_t vdev_id,
 }
 
 /**
- * csr_update_btm_offload_config() - Update btm config param to fw
- * @mac_ctx: Global mac ctx
- * @command: Roam offload command
- * @req_buf: roam offload scan request
- * @session: roam session
- *
- * Return: None
- */
-static void csr_update_btm_offload_config(struct mac_context *mac_ctx,
-					  uint8_t command,
-					  struct roam_offload_scan_req *req_buf,
-					  struct csr_roam_session *session)
-{
-	struct wlan_objmgr_peer *peer;
-	bool is_pmf_enabled;
-
-	req_buf->btm_offload_config =
-			mac_ctx->mlme_cfg->btm.btm_offload_config;
-
-	/* Return if INI is disabled */
-	if (!req_buf->btm_offload_config)
-		return;
-
-	/* For RSO Stop Disable BTM offload to firmware */
-	if (command == ROAM_SCAN_OFFLOAD_STOP) {
-		req_buf->btm_offload_config = 0;
-		return;
-	}
-
-	if (!session->pConnectBssDesc) {
-		sme_err("Connected Bss Desc is NULL");
-		return;
-	}
-
-	peer = wlan_objmgr_get_peer(mac_ctx->psoc,
-				    wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev),
-				    session->pConnectBssDesc->bssId,
-				    WLAN_LEGACY_SME_ID);
-	if (!peer) {
-		sme_debug("Peer of peer_mac %pM not found",
-			  session->pConnectBssDesc->bssId);
-		return;
-	}
-
-	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
-	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_SME_ID);
-	sme_debug("get is_pmf_enabled %d for %pM", is_pmf_enabled,
-		  session->pConnectBssDesc->bssId);
-
-	/* If peer does not support PMF in case of OCE/MBO
-	 * Connection, Disable BTM offload to firmware.
-	 */
-	if (session->pConnectBssDesc->mbo_oce_enabled_ap &&
-	    !is_pmf_enabled)
-		req_buf->btm_offload_config = 0;
-}
-
-/**
  * csr_create_roam_scan_offload_request() - init roam offload scan request
  *
  * parameters
@@ -17664,7 +17664,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
 
-	csr_update_btm_offload_config(mac_ctx, command, req_buf, session);
+	csr_update_btm_offload_config(mac_ctx, command,
+				      &req_buf->btm_offload_config, session);
 
 	req_buf->btm_solicited_timeout =
 		mac_ctx->mlme_cfg->btm.btm_solicited_timeout;
@@ -17702,7 +17703,8 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 			      struct roam_offload_scan_req *req_buffer,
 			      bool enabled)
 {
-	struct wmi_11k_offload_params *params = &req_buffer->offload_11k_params;
+	struct wlan_roam_11k_offload_params *params =
+		&req_buffer->offload_11k_params;
 	struct csr_config *csr_config = &mac_ctx->roam.configParam;
 	struct csr_neighbor_report_offload_params *neighbor_report_offload =
 		&csr_config->neighbor_report_offload;
@@ -18129,13 +18131,13 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
  *
  * Return: per roam config request packet buffer
  */
-static struct wmi_per_roam_config_req *
+static struct wlan_per_roam_config_req *
 csr_create_per_roam_request(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
-	struct wmi_per_roam_config_req *req_buf = NULL;
+	struct wlan_per_roam_config_req *req_buf = NULL;
 
-	req_buf = qdf_mem_malloc(sizeof(struct wmi_per_roam_config_req));
+	req_buf = qdf_mem_malloc(sizeof(struct wlan_per_roam_config_req));
 	if (!req_buf)
 		return NULL;
 
@@ -18188,7 +18190,7 @@ csr_create_per_roam_request(struct mac_context *mac_ctx,
 static QDF_STATUS
 csr_roam_offload_per_scan(struct mac_context *mac_ctx, uint8_t session_id)
 {
-	struct wmi_per_roam_config_req *req_buf;
+	struct wlan_per_roam_config_req *req_buf;
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
@@ -19258,10 +19260,8 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 }
 
 QDF_STATUS
-wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
-			 uint8_t vdev_id,
-			 uint8_t command,
-			 uint8_t reason)
+wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			 uint8_t command, uint8_t reason)
 {
 	uint8_t *state = NULL;
 	struct csr_roam_session *session;
@@ -19407,7 +19407,7 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * wlan_cm_roam_scan_offload_rssi_thresh() - set roam offload scan rssi
+ * csr_cm_roam_scan_offload_rssi_thresh() - set roam offload scan rssi
  * parameters
  * @mac_ctx: global mac ctx
  * @session: csr roam session
@@ -19418,8 +19418,7 @@ wlan_cm_roam_cmd_allowed(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 static void
-wlan_cm_roam_scan_offload_rssi_thresh(
-			struct mac_context *mac_ctx,
+csr_cm_roam_scan_offload_rssi_thresh(struct mac_context *mac_ctx,
 			struct csr_roam_session *session,
 			struct wlan_roam_offload_scan_rssi_params *params)
 {
@@ -19502,7 +19501,7 @@ wlan_cm_roam_scan_offload_rssi_thresh(
 }
 
 /**
- * wlan_cm_roam_scan_offload_scan_period() - set roam offload scan period
+ * csr_cm_roam_scan_offload_scan_period() - set roam offload scan period
  * parameters
  * @mac_ctx: global mac ctx
  * @vdev_id: vdev id
@@ -19513,10 +19512,9 @@ wlan_cm_roam_scan_offload_rssi_thresh(
  * Return: None
  */
 static void
-wlan_cm_roam_scan_offload_scan_period(
-				struct mac_context *mac_ctx,
-				uint8_t vdev_id,
-				struct wlan_roam_scan_period_params *params)
+csr_cm_roam_scan_offload_scan_period(struct mac_context *mac_ctx,
+				    uint8_t vdev_id,
+				    struct wlan_roam_scan_period_params *params)
 {
 	tpCsrNeighborRoamControlInfo roam_info =
 			&mac_ctx->roam.neighborRoamInfo[vdev_id];
@@ -19537,7 +19535,7 @@ wlan_cm_roam_scan_offload_scan_period(
 }
 
 /**
- * wlan_cm_roam_scan_offload_ap_profile() - set roam ap profile parameters
+ * csr_cm_roam_scan_offload_ap_profile() - set roam ap profile parameters
  * @mac_ctx: global mac ctx
  * @session: sme session
  * @params:  roam ap profile related parameters
@@ -19547,9 +19545,9 @@ wlan_cm_roam_scan_offload_scan_period(
  * Return: None
  */
 static void
-wlan_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
-				     struct csr_roam_session *session,
-				     struct ap_profile_params *params)
+csr_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
+				    struct csr_roam_session *session,
+				    struct ap_profile_params *params)
 {
 	struct ap_profile *profile = &params->profile;
 	struct roam_ext_params *roam_params_src =
@@ -19599,7 +19597,7 @@ wlan_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
 }
 
 /**
- * wlan_cm_roam_scan_filter() - set roam scan filter parameters
+ * csr_cm_roam_scan_filter() - set roam scan filter parameters
  * @mac_ctx: global mac ctx
  * @vdev_id: vdev id
  * @command: rso command
@@ -19613,12 +19611,9 @@ wlan_cm_roam_scan_offload_ap_profile(struct mac_context *mac_ctx,
  * Return: None
  */
 static void
-wlan_cm_roam_scan_filter(
-		struct mac_context *mac_ctx,
-		uint8_t vdev_id,
-		uint8_t command,
-		uint8_t reason,
-		struct wlan_roam_scan_filter_params *scan_filter_params)
+csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
+			uint8_t command, uint8_t reason,
+			struct wlan_roam_scan_filter_params *scan_filter_params)
 {
 	int i;
 	uint32_t num_bssid_black_list = 0, num_ssid_white_list = 0,
@@ -19725,6 +19720,38 @@ wlan_cm_roam_scan_filter(
 	}
 }
 
+/**
+ * csr_cm_roam_scan_btm_offload() - set roam scan btm offload parameters
+ * @mac_ctx: global mac ctx
+ * @session: sme session
+ * @params:  roam roam scan btm offload parameters
+ *
+ * This function is used to set roam scan btm offload related parameters
+ *
+ * Return: None
+ */
+static void
+csr_cm_roam_scan_btm_offload(struct mac_context *mac_ctx,
+			     struct csr_roam_session *session,
+			     struct wlan_roam_btm_config *params)
+{
+	params->vdev_id = session->vdev_id;
+	csr_update_btm_offload_config(mac_ctx, ROAM_SCAN_OFFLOAD_START,
+				      &params->btm_offload_config, session);
+	params->btm_solicited_timeout =
+			mac_ctx->mlme_cfg->btm.btm_solicited_timeout;
+	params->btm_max_attempt_cnt =
+			mac_ctx->mlme_cfg->btm.btm_max_attempt_cnt;
+	params->btm_sticky_time =
+			mac_ctx->mlme_cfg->btm.btm_sticky_time;
+	params->disassoc_timer_threshold =
+			mac_ctx->mlme_cfg->btm.disassoc_timer_threshold;
+	params->btm_query_bitmask =
+			mac_ctx->mlme_cfg->btm.btm_query_bitmask;
+	params->btm_candidate_min_score =
+			mac_ctx->mlme_cfg->btm.btm_trig_min_candidate_score;
+}
+
 QDF_STATUS
 wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 			    uint8_t vdev_id,
@@ -19748,17 +19775,19 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wlan_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
-					      &req->rssi_params);
+	csr_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
+					     &req->rssi_params);
 
-	wlan_cm_roam_scan_offload_scan_period(mac_ctx, session->vdev_id,
+	csr_cm_roam_scan_offload_scan_period(mac_ctx, session->vdev_id,
 					      &req->scan_period_params);
 
-	wlan_cm_roam_scan_offload_ap_profile(mac_ctx, session,
+	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
 					     &req->profile_params);
 
-	wlan_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_START,
+	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_START,
 				 reason, &req->scan_filter_params);
+
+	csr_cm_roam_scan_btm_offload(mac_ctx, session, &req->btm_config);
 
 	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
 

@@ -2613,7 +2613,7 @@ error:
  */
 static QDF_STATUS
 send_per_roam_config_cmd_tlv(wmi_unified_t wmi_handle,
-			     struct wmi_per_roam_config_req *req_buf)
+			     struct wlan_per_roam_config_req *req_buf)
 {
 	wmi_buf_t buf = NULL;
 	QDF_STATUS status;
@@ -2785,12 +2785,12 @@ void wmi_fils_sk_attach_tlv(wmi_unified_t wmi_handle)
 /*
  * send_btm_config_cmd_tlv() - Send wmi cmd for BTM config
  * @wmi_handle: wmi handle
- * @params: pointer to wmi_btm_config
+ * @params: pointer to wlan_roam_btm_config
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
-					  struct wmi_btm_config *params)
+					  struct wlan_roam_btm_config *params)
 {
 	wmi_btm_config_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -2883,7 +2883,7 @@ send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
 /**
  * send_disconnect_roam_params_tlv() - send disconnect roam trigger parameters
  * @wmi_handle: wmi handle
- * @disconnect_roam: pointer to wmi_disconnect_roam_params which carries the
+ * @disconnect_roam: pointer to wlan_roam_disconnect_params which carries the
  * disconnect_roam_trigger parameters from CSR
  *
  * This function sends the disconnect roam trigger parameters to fw.
@@ -2892,7 +2892,7 @@ send_roam_bss_load_config_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
-				struct wmi_disconnect_roam_params *req)
+				struct wlan_roam_disconnect_params *req)
 {
 	wmi_roam_deauth_config_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -2929,7 +2929,7 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
 /**
  * send_idle_roam_params_tlv() - send idle roam trigger parameters
  * @wmi_handle: wmi handle
- * @idle_roam_params: pointer to wmi_idle_roam_params which carries the
+ * @idle_roam_params: pointer to wlan_roam_idle_params which carries the
  * idle roam parameters from CSR
  *
  * This function sends the idle roam trigger parameters to fw.
@@ -2938,7 +2938,7 @@ send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
-			  struct wmi_idle_roam_params *idle_roam_params)
+			  struct wlan_roam_idle_params *idle_roam_params)
 {
 	wmi_roam_idle_config_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -3036,14 +3036,14 @@ send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
 #else
 static inline QDF_STATUS
 send_disconnect_roam_params_tlv(wmi_unified_t wmi_handle,
-				struct wmi_disconnect_roam_params *req)
+				struct wlan_roam_disconnect_params *req)
 {
 	return QDF_STATUS_E_FAILURE;
 }
 
 static inline QDF_STATUS
 send_idle_roam_params_tlv(wmi_unified_t wmi_handle,
-			  struct wmi_idle_roam_params *idle_roam_params)
+			  struct wlan_roam_idle_params *idle_roam_params)
 {
 	return QDF_STATUS_E_FAILURE;
 }
@@ -3065,7 +3065,7 @@ send_roam_preauth_status_tlv(wmi_unified_t wmi_handle,
  */
 static QDF_STATUS
 send_offload_11k_cmd_tlv(wmi_unified_t wmi_handle,
-			 struct wmi_11k_offload_params *params)
+			 struct wlan_roam_11k_offload_params *params)
 {
 	wmi_11k_offload_report_fixed_param *cmd;
 	wmi_buf_t buf;

@@ -160,6 +160,8 @@ struct wlan_mlme_roam {
  * @cm_roam: Roaming configuration
  * @bigtk_vdev_support: BIGTK feature support for this vdev (SAP)
  * @sae_auth_retry: SAE auth retry information
+ * @roam_reason_better_ap: roam due to better AP found
+ * @better_ap_hb_failure_rssi: heartbeat failure AP RSSI
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
@@ -180,6 +182,8 @@ struct mlme_legacy_priv {
 	struct wlan_cm_roam cm_roam;
 	bool bigtk_vdev_support;
 	struct sae_auth_retry sae_retry;
+	bool roam_reason_better_ap;
+	uint32_t hb_failure_rssi;
 };
 
 /**

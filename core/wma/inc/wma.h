@@ -848,9 +848,6 @@ struct wma_wlm_stats_data {
  * @roam_ho_wl: wake lock for roam handoff req
  * @wow_nack: wow negative ack flag
  * @is_wow_bus_suspended: is wow bus suspended flag
- * @suitable_ap_hb_failure: better ap found
- * @suitable_ap_hb_failure_rssi: RSSI when suitable_ap_hb_failure
- *   triggered for later usage to report RSSI at beacon miss scenario
  * @IsRArateLimitEnabled: RA rate limiti s enabled or not
  * @RArateLimitInterval: RA rate limit interval
  * @is_lpass_enabled: Flag to indicate if LPASS feature is enabled or not
@@ -974,8 +971,6 @@ typedef struct {
 	qdf_wake_lock_t roam_preauth_wl;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
-	bool suitable_ap_hb_failure;
-	uint32_t suitable_ap_hb_failure_rssi;
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif

@@ -2211,8 +2211,8 @@ struct roam_offload_scan_req {
 	bool is_sae_single_pmk;
 	bool enable_ft_im_roaming;
 	/* Idle/Disconnect roam parameters */
-	struct wmi_idle_roam_params idle_roam_params;
-	struct wmi_disconnect_roam_params disconnect_roam_params;
+	struct wlan_roam_idle_params idle_roam_params;
+	struct wlan_roam_disconnect_params disconnect_roam_params;
 #endif
 	struct roam_ext_params roam_params;
 	struct wlan_roam_triggers roam_triggers;
@@ -2239,7 +2239,7 @@ struct roam_offload_scan_req {
 	uint32_t rct_validity_timer;
 	uint32_t disassoc_timer_threshold;
 	uint32_t btm_trig_min_candidate_score;
-	struct wmi_11k_offload_params offload_11k_params;
+	struct wlan_roam_11k_offload_params offload_11k_params;
 	uint32_t ho_delay_for_rx;
 	uint32_t roam_preauth_retry_count;
 	uint32_t roam_preauth_no_ack_timeout;

@@ -565,6 +565,26 @@ target_if_cm_roam_scan_filter(wmi_unified_t wmi_handle, uint8_t command,
 	return status;
 }
 
+/**
+ * target_if_cm_roam_scan_btm_offload() - send roam scan btm offload to firmware
+ * @wmi_handle: wmi handle
+ * @req: roam scan btm offload parameters
+ *
+ * Send WMI_ROAM_BTM_CONFIG_CMDID parameters to firmware
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_scan_btm_offload(wmi_unified_t wmi_handle,
+				   struct wlan_roam_btm_config *req)
+{
+	target_if_debug("vdev %u btm_offload:%u btm_query_bitmask:%u btm_candidate_min_score:%d",
+			req->vdev_id, req->btm_offload_config,
+			req->btm_query_bitmask, req->btm_candidate_min_score);
+
+	return wmi_unified_send_btm_config(wmi_handle, req);
+}
+
 static uint32_t
 target_if_get_wmi_roam_offload_flag(uint32_t flag)
 {
@@ -613,7 +633,7 @@ target_if_cm_roam_send_roam_init(struct wlan_objmgr_vdev *vdev,
 }
 
 /**
- * target_if_cm_roam_send_roam_start() - Send roam start related commands
+ * target_if_cm_roam_send_start() - Send roam start related commands
  * to wmi
  * @vdev: vdev object
  * @req: roam start config parameters
@@ -623,8 +643,8 @@ target_if_cm_roam_send_roam_init(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 static QDF_STATUS
-target_if_cm_roam_send_roam_start(struct wlan_objmgr_vdev *vdev,
-				  struct wlan_roam_start_config *req)
+target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_roam_start_config *req)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
@@ -678,9 +698,105 @@ target_if_cm_roam_send_roam_start(struct wlan_objmgr_vdev *vdev,
 		goto end;
 	}
 
+	status = target_if_cm_roam_scan_btm_offload(wmi_handle,
+						    &req->btm_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending BTM config to fw failed");
+	}
+
 	/* add other wmi commands */
 end:
 	return status;
+}
+
+/**
+ * target_if_cm_roam_send_stop() - Send roam stop related commands
+ * to wmi
+ * @vdev: vdev object
+ * @req: roam stop config parameters
+ *
+ * This function is used to Send roam start related commands to wmi
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_roam_stop_config *req)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_cm_roam_send_update_config() - Send roam update config related
+ * commands to wmi
+ * @vdev: vdev object
+ * @req: roam update config parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_roam_update_config *req)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * target_if_cm_roam_abort() - Send roam abort to wmi
+ * @vdev: vdev object
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_abort(struct wlan_objmgr_vdev *vdev, uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	if (!target_if_is_vdev_valid(vdev_id)) {
+		target_if_err("Invalid vdev id:%d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return wmi_unified_roam_scan_offload_cmd(wmi_handle,
+						 WMI_ROAM_SCAN_STOP_CMD,
+						 vdev_id);
+}
+
+/**
+ * target_if_cm_roam_send_update_config() - Send roam update config related
+ * commands to wmi
+ * @vdev: vdev object
+ * @req: roam per config parameters
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+target_if_cm_roam_per_config(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_per_roam_config_req *req)
+{
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_set_per_roam_config(wmi_handle, req);
 }
 
 /**
@@ -695,7 +811,11 @@ static void
 target_if_cm_roam_register_rso_req_ops(struct wlan_cm_roam_tx_ops *tx_ops)
 {
 	tx_ops->send_roam_offload_init_req = target_if_cm_roam_send_roam_init;
-	tx_ops->send_roam_start_req = target_if_cm_roam_send_roam_start;
+	tx_ops->send_roam_start_req = target_if_cm_roam_send_start;
+	tx_ops->send_roam_stop_offload = target_if_cm_roam_send_stop;
+	tx_ops->send_roam_update_config = target_if_cm_roam_send_update_config;
+	tx_ops->send_roam_abort = target_if_cm_roam_abort;
+	tx_ops->send_roam_per_config = target_if_cm_roam_per_config;
 }
 #else
 static void

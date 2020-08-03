@@ -170,7 +170,7 @@ QDF_STATUS wmi_unified_roam_invoke_cmd(wmi_unified_t wmi_handle,
 
 QDF_STATUS
 wmi_unified_send_disconnect_roam_params(wmi_unified_t wmi_handle,
-					struct wmi_disconnect_roam_params *req)
+					struct wlan_roam_disconnect_params *req)
 {
 	if (wmi_handle->ops->send_disconnect_roam_params)
 		return wmi_handle->ops->send_disconnect_roam_params(wmi_handle,
@@ -180,7 +180,7 @@ wmi_unified_send_disconnect_roam_params(wmi_unified_t wmi_handle,
 
 QDF_STATUS
 wmi_unified_send_idle_roam_params(wmi_unified_t wmi_handle,
-				  struct wmi_idle_roam_params *req)
+				  struct wlan_roam_idle_params *req)
 {
 	if (wmi_handle->ops->send_idle_roam_params)
 		return wmi_handle->ops->send_idle_roam_params(wmi_handle,
@@ -276,7 +276,7 @@ wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
 
 QDF_STATUS
 wmi_unified_set_per_roam_config(wmi_unified_t wmi_handle,
-				struct wmi_per_roam_config_req *req_buf)
+				struct wlan_per_roam_config_req *req_buf)
 {
 	if (wmi_handle->ops->send_per_roam_config_cmd)
 		return wmi_handle->ops->send_per_roam_config_cmd(wmi_handle,
@@ -309,7 +309,7 @@ QDF_STATUS wmi_unified_roam_send_hlp_cmd(wmi_unified_t wmi_handle,
 #endif /* WLAN_FEATURE_FILS_SK */
 
 QDF_STATUS wmi_unified_send_btm_config(wmi_unified_t wmi_handle,
-				       struct wmi_btm_config *params)
+				       struct wlan_roam_btm_config *params)
 {
 	if (wmi_handle->ops->send_btm_config)
 		return wmi_handle->ops->send_btm_config(wmi_handle,
@@ -328,9 +328,9 @@ QDF_STATUS wmi_unified_send_bss_load_config(wmi_unified_t wmi_handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
-
-QDF_STATUS wmi_unified_offload_11k_cmd(wmi_unified_t wmi_handle,
-				       struct wmi_11k_offload_params *params)
+QDF_STATUS
+wmi_unified_offload_11k_cmd(wmi_unified_t wmi_handle,
+			    struct wlan_roam_11k_offload_params *params)
 {
 	if (wmi_handle->ops->send_offload_11k_cmd)
 		return wmi_handle->ops->send_offload_11k_cmd(wmi_handle,

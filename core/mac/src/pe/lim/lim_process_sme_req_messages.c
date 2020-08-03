@@ -3489,6 +3489,7 @@ static void __lim_process_roam_scan_offload_req(struct mac_context *mac_ctx,
 }
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#ifndef ROAM_OFFLOAD_V1
 /**
  * lim_send_roam_offload_init() - Process Roam offload flag from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -3534,7 +3535,7 @@ static void lim_send_roam_per_command(struct mac_context *mac_ctx,
 		qdf_mem_free(msg_buf);
 	}
 }
-
+#endif
 /**
  * lim_send_roam_set_pcl() - Process Roam offload flag from csr
  * @mac_ctx: Pointer to Global MAC structure
@@ -3558,6 +3559,8 @@ static void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 	}
 }
 #else
+
+#ifndef ROAM_OFFLOAD_V1
 static void lim_send_roam_offload_init(struct mac_context *mac_ctx,
 				       uint32_t *msg_buf)
 {
@@ -3569,7 +3572,7 @@ static void lim_send_roam_per_command(struct mac_context *mac_ctx,
 {
 	qdf_mem_free(msg_buf);
 }
-
+#endif
 static inline void lim_send_roam_set_pcl(struct mac_context *mac_ctx,
 					 struct set_pcl_req *msg_buf)
 {
@@ -4644,18 +4647,20 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		__lim_process_roam_scan_offload_req(mac, msg_buf);
 		bufConsumed = false;
 		break;
-	case eWNI_SME_ROAM_INIT_PARAM:
-		lim_send_roam_offload_init(mac, msg_buf);
-		bufConsumed = false;
-		break;
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
 		lim_send_roam_set_pcl(mac, (struct set_pcl_req *)msg_buf);
+		bufConsumed = false;
+		break;
+#ifndef ROAM_OFFLOAD_V1
+	case eWNI_SME_ROAM_INIT_PARAM:
+		lim_send_roam_offload_init(mac, msg_buf);
 		bufConsumed = false;
 		break;
 	case eWNI_SME_ROAM_SEND_PER_REQ:
 		lim_send_roam_per_command(mac, msg_buf);
 		bufConsumed = false;
 		break;
+#endif
 	case eWNI_SME_ROAM_INVOKE:
 		lim_process_roam_invoke(mac, msg_buf);
 		bufConsumed = false;

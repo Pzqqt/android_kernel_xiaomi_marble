@@ -1633,10 +1633,10 @@ static QDF_STATUS
 wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 			  struct roam_offload_scan_req *roam_req)
 {
-	struct wmi_btm_config *params;
+	struct wlan_roam_btm_config *params;
 	QDF_STATUS status;
 
-	params = qdf_mem_malloc(sizeof(struct wmi_btm_config));
+	params = qdf_mem_malloc(sizeof(struct wlan_roam_btm_config));
 	if (!params)
 		return QDF_STATUS_E_FAILURE;
 
@@ -1711,7 +1711,7 @@ void wma_send_roam_bss_load_config(WMA_HANDLE handle,
  */
 static
 QDF_STATUS wma_send_offload_11k_params(WMA_HANDLE handle,
-				    struct wmi_11k_offload_params *params)
+				    struct wlan_roam_11k_offload_params *params)
 {
 	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
@@ -1758,7 +1758,7 @@ wma_send_disconnect_roam_params(tp_wma_handle wma_handle,
 				struct roam_offload_scan_req *roam_req)
 {
 	QDF_STATUS status;
-	struct wmi_disconnect_roam_params *params =
+	struct wlan_roam_disconnect_params *params =
 				&roam_req->disconnect_roam_params;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
@@ -1920,10 +1920,10 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		  roam_req->Command, roam_req->reason, roam_req->sessionId,
 		  roam_req->RoamScanOffloadEnabled,
 		  roam_req->offload_11k_params.offload_11k_bitmask);
-	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
+	intr = &wma_handle->interfaces[roam_req->sessionId];
+	intr->roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
-		intr = &wma_handle->interfaces[roam_req->sessionId];
 		intr->delay_before_vdev_stop = roam_req->delay_before_vdev_stop;
 		/*
 		 * Scan/Roam threshold parameters are translated from
@@ -1935,8 +1935,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		/* First param is positive rssi value to trigger rssi based scan
 		 * Opportunistic scan is started at 30dB > trigger rssi.
 		 */
-		wma_handle->suitable_ap_hb_failure = false;
-
+		mlme_set_roam_reason_better_ap(intr->vdev, false);
 		qdf_status = wma_roam_scan_offload_rssi_thresh(wma_handle,
 								roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS)
@@ -2104,8 +2103,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			break;
 		}
 
-		wma_handle->suitable_ap_hb_failure = false;
-
+		mlme_set_roam_reason_better_ap(intr->vdev, false);
 		wma_roam_scan_fill_scan_params(wma_handle, mac,
 					       NULL, &scan_params);
 
@@ -2207,17 +2205,17 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		 * now it is time to call it heartbeat failure.
 		 */
 		if ((roam_req->reason == REASON_PREAUTH_FAILED_FOR_ALL)
-		    && wma_handle->suitable_ap_hb_failure) {
+		    && mlme_get_roam_reason_better_ap(intr->vdev)) {
 			wma_err("Sending heartbeat failure after preauth failures");
 			wma_beacon_miss_handler(wma_handle,
 				roam_req->sessionId,
-				wma_handle->suitable_ap_hb_failure_rssi);
-			wma_handle->suitable_ap_hb_failure = false;
+				mlme_get_hb_ap_rssi(intr->vdev));
+			mlme_set_roam_reason_better_ap(intr->vdev, false);
 		}
 		break;
 
 	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
-		wma_handle->suitable_ap_hb_failure = false;
+		mlme_set_roam_reason_better_ap(intr->vdev, false);
 
 		qdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
 					     roam_req->RoamBmissFirstBcnt,
@@ -2307,8 +2305,9 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 	return qdf_status;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 void wma_update_per_roam_config(WMA_HANDLE handle,
-				struct wmi_per_roam_config_req *req_buf)
+				struct wlan_per_roam_config_req *req_buf)
 {
 	QDF_STATUS status;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
@@ -2323,6 +2322,7 @@ void wma_update_per_roam_config(WMA_HANDLE handle,
 	if (QDF_IS_STATUS_ERROR(status))
 		wma_err("failed to set per roam config to FW");
 }
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 
@@ -6205,7 +6205,8 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		 */
 		wma_debug("Better AP found for vdevid %x, rssi %d",
 			 wmi_event->vdev_id, wmi_event->rssi);
-		wma_handle->suitable_ap_hb_failure = false;
+		mlme_set_roam_reason_better_ap(
+			wma_handle->interfaces[wmi_event->vdev_id].vdev, false);
 		wma_roam_better_ap_handler(wma_handle, wmi_event->vdev_id);
 		break;
 	case WMI_ROAM_REASON_SUITABLE_AP:
@@ -6213,8 +6214,11 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		 * WMI_ROAM_REASON_SUITABLE_AP can get called in soft IRQ
 		 * context, so avoid using CSR/PE structure directly.
 		 */
-		wma_handle->suitable_ap_hb_failure = true;
-		wma_handle->suitable_ap_hb_failure_rssi = wmi_event->rssi;
+		mlme_set_roam_reason_better_ap(
+			wma_handle->interfaces[wmi_event->vdev_id].vdev, true);
+		mlme_set_hb_ap_rssi(
+			wma_handle->interfaces[wmi_event->vdev_id].vdev,
+			wmi_event->rssi);
 		wma_debug("Bmiss scan AP found for vdevid %x, rssi %d",
 			 wmi_event->vdev_id, wmi_event->rssi);
 		wma_roam_better_ap_handler(wma_handle, wmi_event->vdev_id);

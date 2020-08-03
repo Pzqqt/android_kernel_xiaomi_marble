@@ -350,6 +350,7 @@ wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle, uint8_t *event,
 }
 #endif
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_update_per_roam_config() -per roam config parameter updation to FW
  * @handle: wma handle
@@ -358,8 +359,8 @@ wma_roam_scan_chan_list_event_handler(WMA_HANDLE handle, uint8_t *event,
  * Return: none
  */
 void wma_update_per_roam_config(WMA_HANDLE handle,
-				 struct wmi_per_roam_config_req *req_buf);
-
+				 struct wlan_per_roam_config_req *req_buf);
+#endif
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
 

@@ -28,7 +28,7 @@
 #ifdef ROAM_OFFLOAD_V1
 
 /**
- * ucfg_user_space_enable_disable_rso  - Enable/Disable Roam Scan offload
+ * ucfg_user_space_enable_disable_rso() - Enable/Disable Roam Scan offload
  * to firmware.
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
@@ -55,7 +55,7 @@ QDF_STATUS ucfg_cm_abort_roam_scan(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
 
 /**
- * ucfg_cm_rso_init_deinit  - Init or Deinit roaming module at firmware
+ * ucfg_cm_rso_init_deinit() - Init or Deinit roaming module at firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @enable: true: Send RSO init and RSO enable
@@ -71,7 +71,7 @@ ucfg_cm_rso_init_deinit(struct wlan_objmgr_pdev *pdev, uint8_t vdev_id,
 }
 
 /**
- * ucfg_cm_disable_rso  - Disable roam scan offload to firmware
+ * ucfg_cm_disable_rso() - Disable roam scan offload to firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @requestor: RSO disable requestor
@@ -88,7 +88,7 @@ QDF_STATUS ucfg_cm_disable_rso(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id,
 }
 
 /**
- * ucfg_cm_enable_rso  - Enable roam scan offload to firmware
+ * ucfg_cm_enable_rso() - Enable roam scan offload to firmware
  * @pdev: Pointer to pdev
  * @vdev_id: vdev id
  * @requestor: RSO disable requestor

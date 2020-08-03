@@ -4025,6 +4025,7 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
+#ifndef ROAM_OFFLOAD_V1
 /**
  * wma_set_roam_offload_flag() -  Set roam offload flag to fw
  * @wma:     wma handle
@@ -4094,6 +4095,7 @@ void wma_update_roam_offload_flag(void *handle,
 
 	wma_set_roam_offload_flag(wma, params->vdev_id, params->enable);
 }
+#endif
 
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {

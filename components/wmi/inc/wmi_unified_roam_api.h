@@ -225,24 +225,24 @@ QDF_STATUS wmi_unified_set_roam_triggers(wmi_unified_t wmi_handle,
  * wmi_unified_send_disconnect_roam_params() - Send disconnect roam trigger
  * parameters to firmware
  * @wmi_hdl:  wmi handle
- * @params: pointer to wmi_disconnect_roam_params
+ * @params: pointer to wlan_roam_disconnect_params
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wmi_unified_send_disconnect_roam_params(wmi_unified_t wmi_handle,
-					struct wmi_disconnect_roam_params *req);
+				struct wlan_roam_disconnect_params *req);
 
 /**
  * wmi_unified_send_idle_roam_params() - Send idle roam trigger params to fw
  * @wmi_hdl:  wmi handle
- * @params: pointer to wmi_idle_roam_params
+ * @params: pointer to wlan_roam_idle_params
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
 wmi_unified_send_idle_roam_params(wmi_unified_t wmi_handle,
-				  struct wmi_idle_roam_params *req);
+				  struct wlan_roam_idle_params *req);
 
 /**
  * wmi_unified_send_roam_preauth_status() - Send roam preauthentication status
@@ -359,7 +359,7 @@ wmi_unified_roam_scan_offload_rssi_change_cmd(wmi_unified_t wmi_handle,
  */
 QDF_STATUS
 wmi_unified_set_per_roam_config(wmi_unified_t wmi_handle,
-				struct wmi_per_roam_config_req *req_buf);
+				struct wlan_per_roam_config_req *req_buf);
 
 /**
  * wmi_unified_send_limit_off_chan_cmd() - send wmi cmd of limit off channel
@@ -388,12 +388,12 @@ QDF_STATUS wmi_unified_roam_send_hlp_cmd(wmi_unified_t wmi_handle,
 /**
  * wmi_unified_send_btm_config() - Send BTM config to fw
  * @wmi_handle:  wmi handle
- * @params: pointer to wmi_btm_config
+ * @params: pointer to wlan_roam_btm_config
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS wmi_unified_send_btm_config(wmi_unified_t wmi_handle,
-				       struct wmi_btm_config *params);
+				       struct wlan_roam_btm_config *params);
 
 /**
  * wmi_unified_send_bss_load_config() - Send bss load trigger params to fw
@@ -414,8 +414,9 @@ QDF_STATUS wmi_unified_send_bss_load_config(wmi_unified_t wmi_handle,
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_offload_11k_cmd(wmi_unified_t wmi_handle,
-				       struct wmi_11k_offload_params *params);
+QDF_STATUS
+wmi_unified_offload_11k_cmd(wmi_unified_t wmi_handle,
+			    struct wlan_roam_11k_offload_params *params);
 /**
  * wmi_unified_invoke_neighbor_report_cmd() - send invoke neighbor report cmd
  * @wmi_handle: wmi handle
