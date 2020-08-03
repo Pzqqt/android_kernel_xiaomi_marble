@@ -1085,10 +1085,12 @@ struct ol_if_ops {
 			       uint16_t peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
 #endif
 	int (*get_soc_nss_cfg)(struct cdp_ctrl_objmgr_psoc *ol_soc_handle);
-	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 
 	char *(*get_device_name)(struct cdp_ctrl_objmgr_psoc *ctrl_psoc,
 				 uint8_t pdev_id);
+	QDF_STATUS(*nss_stats_clr)(struct cdp_ctrl_objmgr_psoc *psoc,
+				   uint8_t vdev_id);
+	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
 #ifdef DP_PEER_EXTENDED_API

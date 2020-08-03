@@ -7303,16 +7303,28 @@ void dp_print_napi_stats(struct dp_soc *soc)
 /**
  * dp_txrx_host_stats_clr(): Reinitialize the txrx stats
  * @vdev: DP_VDEV handle
+ * @dp_soc: DP_SOC handle
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-dp_txrx_host_stats_clr(struct dp_vdev *vdev)
+dp_txrx_host_stats_clr(struct dp_vdev *vdev, struct dp_soc *soc)
 {
 	struct dp_peer *peer = NULL;
 
 	if (!vdev || !vdev->pdev)
 		return QDF_STATUS_E_FAILURE;
+
+	/*
+	 * if NSS offload is enabled, then send message
+	 * to NSS FW to clear the stats. Once NSS FW clears the statistics
+	 * then clear host statistics.
+	 */
+	if (wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
+		if (soc->cdp_soc.ol_ops->nss_stats_clr)
+			soc->cdp_soc.ol_ops->nss_stats_clr(soc->ctrl_psoc,
+							   vdev->vdev_id);
+	}
 
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
@@ -7321,10 +7333,15 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 	hif_clear_napi_stats(vdev->pdev->soc->hif_handle);
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		if (!peer)
-			return QDF_STATUS_E_FAILURE;
-		DP_STATS_CLR(peer);
+		struct dp_rx_tid *rx_tid;
+		uint8_t tid;
 
+		for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+			rx_tid = &peer->rx_tid[tid];
+			DP_STATS_CLR(rx_tid);
+		}
+
+		DP_STATS_CLR(peer);
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
 				     &peer->stats,  peer->peer_id,
@@ -7424,13 +7441,15 @@ static void dp_txrx_stats_help(void)
 /**
  * dp_print_host_stats()- Function to print the stats aggregated at host
  * @vdev_handle: DP_VDEV handle
- * @type: host stats type
+ * @req: host stats type
+ * @soc: dp soc handler
  *
  * Return: 0 on success, print error message in case of failure
  */
 static int
 dp_print_host_stats(struct dp_vdev *vdev,
-		    struct cdp_txrx_stats_req *req)
+		    struct cdp_txrx_stats_req *req,
+		    struct dp_soc *soc)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
 	enum cdp_host_txrx_stats type =
@@ -7440,7 +7459,7 @@ dp_print_host_stats(struct dp_vdev *vdev,
 
 	switch (type) {
 	case TXRX_CLEAR_STATS:
-		dp_txrx_host_stats_clr(vdev);
+		dp_txrx_host_stats_clr(vdev, soc);
 		break;
 	case TXRX_RX_RATE_STATS:
 		dp_print_rx_rates(vdev);
@@ -8996,7 +9015,7 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_soc_t *soc_handle,
 
 	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
 			(host_stats <= TXRX_HOST_STATS_MAX))
-		return dp_print_host_stats(vdev, req);
+		return dp_print_host_stats(vdev, req, soc);
 	else
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"Wrong Input for TxRx Stats");

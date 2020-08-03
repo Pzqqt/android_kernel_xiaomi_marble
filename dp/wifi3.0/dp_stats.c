@@ -5366,11 +5366,11 @@ static void dp_print_jitter_stats(struct dp_peer *peer, struct dp_pdev *pdev)
 				"Total Success Count       : %llu\n"
 				"Total Drop                : %llu\n",
 				rx_tid->tid,
-				rx_tid->tx_avg_jitter,
-				rx_tid->tx_avg_delay,
-				rx_tid->tx_avg_err,
-				rx_tid->tx_total_success,
-				rx_tid->tx_drop);
+				rx_tid->stats.tx_avg_jitter,
+				rx_tid->stats.tx_avg_delay,
+				rx_tid->stats.tx_avg_err,
+				rx_tid->stats.tx_total_success,
+				rx_tid->stats.tx_drop);
 	}
 }
 #else

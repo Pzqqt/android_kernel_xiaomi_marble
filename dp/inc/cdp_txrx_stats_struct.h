@@ -1271,6 +1271,23 @@ struct cdp_peer_stats {
 	struct cdp_rx_stats rx;
 };
 
+/* struct cdp_peer_tid_stats - Per peer and per TID stats
+ * @tx_avg_jitter: tx average jitter
+ * @tx_avg_delay: tx average delay
+ * @tx_avg_err: tx average error
+ * @tx_total_success: tx total success
+ * @tx_drop: tx drop
+ */
+struct cdp_peer_tid_stats {
+#ifdef WLAN_PEER_JITTER
+	uint32_t tx_avg_jitter;
+	uint32_t tx_avg_delay;
+	uint64_t tx_avg_err;
+	uint64_t tx_total_success;
+	uint64_t tx_drop;
+#endif
+};
+
 /* struct cdp_interface_peer_stats - interface structure for txrx peer stats
  * @peer_mac: peer mac address
  * @vdev_id : vdev_id for the peer
