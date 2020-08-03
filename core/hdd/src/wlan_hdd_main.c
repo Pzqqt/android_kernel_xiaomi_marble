@@ -3884,6 +3884,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			ret = qdf_status_to_os_return(status);
 			goto close;
 		}
+		/* Set IRQ affinity for WLAN DP and CE IRQS */
+		hif_config_irq_set_perf_affinity_hint(hif_ctx);
 
 		ret = hdd_register_cb(hdd_ctx);
 		if (ret) {
