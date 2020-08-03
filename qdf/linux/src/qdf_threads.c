@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -278,3 +278,18 @@ void qdf_cpumask_setall(qdf_cpu_mask *dstp)
 }
 
 qdf_export_symbol(qdf_cpumask_setall);
+
+bool qdf_cpumask_empty(const qdf_cpu_mask *srcp)
+{
+	return cpumask_empty(srcp);
+}
+
+qdf_export_symbol(qdf_cpumask_empty);
+
+void qdf_cpumask_copy(qdf_cpu_mask *dstp,
+		      const qdf_cpu_mask *srcp)
+{
+	return cpumask_copy(dstp, srcp);
+}
+
+qdf_export_symbol(qdf_cpumask_copy);

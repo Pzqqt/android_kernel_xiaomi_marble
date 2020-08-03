@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,4 +168,24 @@ void qdf_cpumask_set_cpu(unsigned int cpu, qdf_cpu_mask *dstp);
  * Return: None
  */
 void qdf_cpumask_setall(qdf_cpu_mask *dstp);
+
+/**
+ * qdf_cpumask_empty - Check if cpu_mask is empty
+ * @srcp: cpumask pointer
+ *
+ * Return: true or false
+ *
+ */
+bool qdf_cpumask_empty(const qdf_cpu_mask *srcp);
+
+/**
+ * qdf_cpumask_copy - Copy srcp cpumask to dstp
+ * @srcp: source cpumask pointer
+ * @dstp: destination cpumask pointer
+ *
+ * Return: None
+ *
+ */
+void qdf_cpumask_copy(qdf_cpu_mask *dstp,
+		      const qdf_cpu_mask *srcp);
 #endif /* __QDF_THREADS_H */
