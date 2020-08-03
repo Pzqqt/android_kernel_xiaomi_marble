@@ -2576,8 +2576,6 @@ static inline
 QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 					    void *desc, uint8_t usr_idx)
 {
-	struct dp_peer *peer;
-	struct dp_vdev *vdev = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc = desc;
 	struct cdp_tx_completion_ppdu_user *user = &ppdu_desc->user[usr_idx];
 	struct ieee80211_ctlframe_addr2 *wh_min;
@@ -2663,20 +2661,29 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf,
 				    sizeof(struct ieee80211_frame_min_one));
 	else {
+		struct dp_peer *peer;
+		struct dp_vdev *vdev = NULL;
+
 		peer = dp_peer_get_ref_by_id(pdev->soc, user->peer_id,
 					     DP_MOD_ID_TX_CAPTURE);
 		if (peer) {
 			vdev = peer->vdev;
+
+			if (vdev)
+				qdf_mem_copy(wh_min->i_addr2,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
 		} else {
 			vdev =
-			dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
-							   ppdu_desc->vdev_id);
+			dp_vdev_get_ref_by_id(pdev->soc, ppdu_desc->vdev_id);
+			if (vdev) {
+				qdf_mem_copy(wh_min->i_addr2,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
+				dp_vdev_unref_delete(pdev->soc, vdev);
+			}
 		}
-		if (vdev)
-			qdf_mem_copy(wh_min->i_addr2,
-				     vdev->mac_addr.raw,
-				     QDF_MAC_ADDR_SIZE);
 		qdf_nbuf_set_pktlen(tx_capture_info.mpdu_nbuf, sizeof(*wh_min));
 	}
 
@@ -2710,7 +2717,7 @@ QDF_STATUS dp_send_dummy_mpdu_info_to_stack(struct dp_pdev *pdev,
 static
 void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 				 struct cdp_tx_completion_ppdu *cur_ppdu_desc,
-				 uint8_t usr_idx)
+				 uint8_t usr_id)
 {
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct dp_pdev_tx_capture *ptr_tx_cap;
@@ -2725,7 +2732,7 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 	ppdu_desc->channel = cur_ppdu_desc->channel;
 	ppdu_desc->num_mpdu = 1;
 	ppdu_desc->num_msdu = 1;
-	ppdu_desc->user[usr_idx].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
+	ppdu_desc->user[usr_id].ppdu_type = HTT_PPDU_STATS_PPDU_TYPE_SU;
 	ppdu_desc->bar_num_users = 0;
 	ppdu_desc->num_users = 1;
 
@@ -2744,22 +2751,22 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 		ppdu_desc->ppdu_end_timestamp =
 				cur_ppdu_desc->ppdu_end_timestamp;
 		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration;
-		ppdu_desc->user[usr_idx].peer_id =
-				cur_ppdu_desc->user[usr_idx].peer_id;
+		ppdu_desc->user[usr_id].peer_id =
+				cur_ppdu_desc->user[usr_id].peer_id;
 		ppdu_desc->frame_ctrl = (IEEE80211_FC0_SUBTYPE_RTS |
 					 IEEE80211_FC0_TYPE_CTL);
-		qdf_mem_copy(&ppdu_desc->user[usr_idx].mac_addr,
-			     &cur_ppdu_desc->user[usr_idx].mac_addr,
+		qdf_mem_copy(&ppdu_desc->user[usr_id].mac_addr,
+			     &cur_ppdu_desc->user[usr_id].mac_addr,
 			     QDF_MAC_ADDR_SIZE);
 
-		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_idx);
+		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_id);
 	}
 
 	if ((rts_send && cur_ppdu_desc->rts_success) ||
 	    cur_ppdu_desc->mprot_type == SEND_WIFICTS2SELF_E) {
 		uint16_t peer_id;
 
-		peer_id = cur_ppdu_desc->user[usr_idx].peer_id;
+		peer_id = cur_ppdu_desc->user[usr_id].peer_id;
 		/* send dummy CTS frame */
 		ppdu_desc->htt_frame_type = HTT_STATS_FTYPE_SGEN_CTS;
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
@@ -2771,25 +2778,31 @@ void dp_send_dummy_rts_cts_frame(struct dp_pdev *pdev,
 				cur_ppdu_desc->ppdu_end_timestamp;
 		ppdu_desc->tx_duration = cur_ppdu_desc->tx_duration -
 					 (RTS_INTERVAL + SIFS_INTERVAL);
-		ppdu_desc->user[usr_idx].peer_id = peer_id;
+		ppdu_desc->user[usr_id].peer_id = peer_id;
 		peer = dp_peer_get_ref_by_id(pdev->soc, peer_id,
 					     DP_MOD_ID_TX_CAPTURE);
 		if (peer) {
 			vdev = peer->vdev;
+			if (vdev)
+				qdf_mem_copy(&ppdu_desc->user[usr_id].mac_addr,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
 			dp_peer_unref_delete(peer, DP_MOD_ID_TX_CAPTURE);
 		} else {
 			uint8_t vdev_id;
 
 			vdev_id = ppdu_desc->vdev_id;
-			vdev = dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
-								  vdev_id);
+			vdev = dp_vdev_get_ref_by_id(pdev->soc, vdev_id);
+			if (vdev) {
+				qdf_mem_copy(&ppdu_desc->user[usr_id].mac_addr,
+					     vdev->mac_addr.raw,
+					     QDF_MAC_ADDR_SIZE);
+				dp_vdev_unref_delete(pdev->soc, vdev);
+			}
 		}
 
-		if (vdev)
-			qdf_mem_copy(&ppdu_desc->user[usr_idx].mac_addr,
-				     vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE);
 
-		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_idx);
+		dp_send_dummy_mpdu_info_to_stack(pdev, ppdu_desc, usr_id);
 	}
 }
 
