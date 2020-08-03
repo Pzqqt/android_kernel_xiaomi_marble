@@ -1380,9 +1380,13 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 			WLAN_CHAN_15_FREQ)
 			req->scan_req.chan_list.chan[idx].phymode =
 				SCAN_PHY_MODE_11G;
-		else
+		else if (req->scan_req.chan_list.chan[idx].freq <=
+			 WLAN_REG_MAX_5GHZ_CHAN_FREQ)
 			req->scan_req.chan_list.chan[idx].phymode =
 				SCAN_PHY_MODE_11A;
+		else
+			req->scan_req.chan_list.chan[idx].phymode =
+				SCAN_PHY_MODE_11AX_HE20;
 	}
 
 end:
