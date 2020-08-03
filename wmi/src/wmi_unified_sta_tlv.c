@@ -1098,7 +1098,7 @@ static QDF_STATUS send_set_base_macaddr_indicate_cmd_tlv(wmi_unified_t wmi_handl
 	return 0;
 }
 
-#ifdef FEATURE_BLACKLIST_MGR
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_BLACKLIST_MGR)
 
 static WMI_BSSID_DISALLOW_LIST_TYPE
 wmi_get_wmi_reject_ap_type(enum blm_reject_ap_type reject_ap_type)

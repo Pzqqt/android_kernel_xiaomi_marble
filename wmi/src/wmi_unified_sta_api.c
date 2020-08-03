@@ -181,7 +181,7 @@ QDF_STATUS wmi_extract_vdev_tdls_ev_param(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_WLAN_TDLS */
 
-#ifdef FEATURE_BLACKLIST_MGR
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_BLACKLIST_MGR)
 QDF_STATUS
 wmi_unified_send_reject_ap_list(struct wmi_unified *wmi_handle,
 				struct reject_ap_params *reject_params)

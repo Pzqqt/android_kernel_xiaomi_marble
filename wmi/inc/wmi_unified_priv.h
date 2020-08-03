@@ -429,7 +429,7 @@ QDF_STATUS (*send_d0wow_disable_cmd)(wmi_unified_t wmi_handle,
 				uint8_t mac_id);
 #endif
 
-#ifdef FEATURE_BLACKLIST_MGR
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_BLACKLIST_MGR)
 QDF_STATUS
 (*send_reject_ap_list_cmd)(struct wmi_unified *wmi_handle,
 			   struct reject_ap_params *reject_params);
@@ -2747,7 +2747,7 @@ void wmi_policy_mgr_attach_tlv(struct wmi_unified *wmi_handle)
 }
 #endif
 
-#ifdef FEATURE_BLACKLIST_MGR
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD) && defined(FEATURE_BLACKLIST_MGR)
 void wmi_blacklist_mgr_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline
