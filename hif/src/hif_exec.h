@@ -171,9 +171,27 @@ void hif_exec_kill(struct hif_opaque_softc *scn);
  */
 void hif_pci_irq_set_affinity_hint(
 	struct hif_exec_context *hif_ext_group);
+
+/**
+ * hif_pci_ce_irq_set_affinity_hint() - API to set IRQ affinity
+ * @hif_softc: hif_softc to extract the CE irq info
+ *
+ * This function will set the CE IRQ affinity to the gold cores
+ * only for defconfig builds
+ *
+ * Return: none
+ */
+void hif_pci_ce_irq_set_affinity_hint(
+	struct hif_softc *scn);
+
 #else
 static inline void hif_pci_irq_set_affinity_hint(
 	struct hif_exec_context *hif_ext_group)
+{
+}
+
+static inline void hif_pci_ce_irq_set_affinity_hint(
+	struct hif_softc *scn)
 {
 }
 #endif /* ifdef HIF_CPU_PERF_AFFINE_MASK */
