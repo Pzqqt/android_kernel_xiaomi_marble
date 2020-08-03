@@ -3602,13 +3602,25 @@ endif
 # If the module name is wlan, leave MULTI_IF_NAME undefined and the code will
 # treat the driver as the primary driver.
 #
-# If DYNAMIC_SINGLE_CHIP is defined, which means there are multiple possible
-# drivers, but only 1 driver will be loaded at a time(WLAN dynamic detect),
-# leave MULTI_IF_NAME undefined, no matter what the module name is, then
+# If DYNAMIC_SINGLE_CHIP is defined and MULTI_IF_NAME is undefined, which means
+# there are multiple possible drivers, but only 1 driver will be loaded at
+# a time(WLAN dynamic detect), no matter what the module name is, then
 # host driver will only append DYNAMIC_SINGLE_CHIP to the path of
 # firmware/mac/ini file.
+#
+# If DYNAMIC_SINGLE_CHIP & MULTI_IF_NAME defined, which means there are
+# multiple possible drivers, we also can load multiple drivers together.
+# And we can use DYNAMIC_SINGLE_CHIP to distingush the ko name, and use
+# MULTI_IF_NAME to make cnss2 platform driver to figure out which wlanhost
+# driver attached. Moreover, as the first priority, host driver will only
+# append DYNAMIC_SINGLE_CHIP to the path of firmware/mac/ini file.
+
 ifneq ($(DYNAMIC_SINGLE_CHIP),)
 ccflags-y += -DDYNAMIC_SINGLE_CHIP=\"$(DYNAMIC_SINGLE_CHIP)\"
+ifneq ($(MULTI_IF_NAME),)
+ccflags-y += -DMULTI_IF_NAME=\"$(MULTI_IF_NAME)\"
+endif
+#
 else
 
 ifneq ($(MODNAME), wlan)
