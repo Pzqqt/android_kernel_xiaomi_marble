@@ -1222,6 +1222,10 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_PUNCTURED_BAND = 453,
 	/* Control frame configuration for MBSSID */
 	OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG = 454,
+	/* Max users per-PPDU for OFDMA, 16 LSBs for DL and 16 MSBs for UL */
+	OL_ATH_PARAM_OFDMA_MAX_USERS = 455,
+	/* Max users per-PPDU for MU-MIMO, 16 LSBs for DL and 16 MSBs for UL */
+	OL_ATH_PARAM_MUMIMO_MAX_USERS = 456,
 
 };
 
@@ -3154,6 +3158,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG, SET_PARAM, 1},
 	{"g_he_mbssid_ctrl_frame_config",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_HE_MBSSID_CTRL_FRAME_CONFIG, GET_PARAM, 0},
+	{"get_ofdma_usr",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_OFDMA_MAX_USERS, GET_PARAM, 0},
+	{"get_mumimo_usr",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_MUMIMO_MAX_USERS, GET_PARAM, 0},
 };
 #endif
 #endif
