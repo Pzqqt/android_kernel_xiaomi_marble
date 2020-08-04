@@ -692,7 +692,9 @@ void tdls_timer_restart(struct wlan_objmgr_vdev *vdev,
 				 qdf_mc_timer_t *timer,
 				 uint32_t expiration_time)
 {
-	qdf_mc_timer_start(timer, expiration_time);
+	if (QDF_TIMER_STATE_RUNNING !=
+	    qdf_mc_timer_get_current_state(timer))
+		qdf_mc_timer_start(timer, expiration_time);
 }
 
 /**
