@@ -33,6 +33,7 @@
 #include "wma_twt.h"
 #include "osif_sync.h"
 #include "wlan_osif_request_manager.h"
+#include <wlan_cp_stats_mc_ucfg_api.h>
 
 #define TWT_SETUP_COMPLETE_TIMEOUT 1000
 #define TWT_DISABLE_COMPLETE_TIMEOUT 1000
@@ -113,6 +114,303 @@ wlan_hdd_wifi_twt_config_policy[
 		[QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS] = {
 			.type = NLA_NESTED},
 };
+
+/**
+ * hdd_twt_get_params_resp_len() - Calculates the length
+ * of twt get_params nl response
+ *
+ * Return: Length of get params nl response
+ */
+static uint32_t hdd_twt_get_params_resp_len(void)
+{
+	uint32_t len = nla_total_size(0);
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR */
+	len += nla_total_size(QDF_MAC_ADDR_SIZE);
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_ANNOUNCE */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED */
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION */
+	len += nla_total_size(sizeof(u32));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA */
+	len += nla_total_size(sizeof(u32));
+
+	/*QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP*/
+	len += nla_total_size(sizeof(u8));
+
+	/* QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF */
+	len += nla_total_size(sizeof(u64));
+
+	return len;
+}
+
+/**
+ * hdd_twt_pack_get_params_resp_nlmsg()- Packs and sends twt get_params response
+ * @reply_skb: pointer to response skb buffer
+ * @params: Ponter to twt peer session parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+static QDF_STATUS
+hdd_twt_pack_get_params_resp_nlmsg(struct sk_buff *reply_skb,
+				   struct wmi_host_twt_session_stats_info *params)
+{
+	struct nlattr *config_attr, *nla_params;
+	uint64_t tsf_val;
+	int i, attr;
+
+	config_attr = nla_nest_start(reply_skb,
+				     QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS);
+	if (!config_attr) {
+		hdd_err("TWT: get_params nla_nest_start error");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	for (i = 0; i < TWT_PSOC_MAX_SESSIONS; i++) {
+		if (params[i].event_type != HOST_TWT_SESSION_SETUP &&
+		    params[i].event_type != HOST_TWT_SESSION_UPDATE)
+			continue;
+
+		nla_params = nla_nest_start(reply_skb, i);
+		if (!nla_params) {
+			hdd_err("TWT: get_params nla_nest_start error");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAC_ADDR;
+		if (nla_put(reply_skb, attr, QDF_MAC_ADDR_SIZE,
+			    params[i].peer_mac)) {
+			hdd_err("TWT: get_params failed to put mac_addr");
+			return QDF_STATUS_E_INVAL;
+		}
+		hdd_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(params[i].peer_mac));
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+		if (nla_put_u8(reply_skb, attr, params[i].dialog_id)) {
+			hdd_err("TWT: get_params failed to put dialog_id");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		if (params[i].bcast) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_BCAST;
+			if (nla_put_flag(reply_skb, attr)) {
+				hdd_err("TWT: get_params fail to put bcast");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].trig) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
+			if (nla_put_flag(reply_skb, attr)) {
+				hdd_err("TWT: get_params fail to put Trigger");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].announ) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_TYPE;
+			if (nla_put_flag(reply_skb, attr)) {
+				hdd_err("TWT: get_params fail to put Announce");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].protection) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_PROTECTION;
+			if (nla_put_flag(reply_skb, attr)) {
+				hdd_err("TWT: get_params fail to put Protect");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		if (params[i].info_frame_disabled) {
+			attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TWT_INFO_ENABLED;
+			if (nla_put_flag(reply_skb, attr)) {
+				hdd_err("TWT: get_params put Info Enable fail");
+				return QDF_STATUS_E_INVAL;
+			}
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_DURATION;
+		if (nla_put_u32(reply_skb, attr, params[i].wake_dura_us)) {
+			hdd_err("TWT: get_params failed to put Wake duration");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_MANTISSA;
+		if (nla_put_u32(reply_skb, attr, params[i].wake_intvl_us)) {
+			hdd_err("TWT: get_params failed to put Wake Interval");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_INTVL_EXP;
+		if (nla_put_u8(reply_skb, attr, 0)) {
+			hdd_err("TWT: get_params put Wake Interval Exp failed");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		tsf_val = ((uint64_t)params[i].sp_tsf_us_hi << 32) |
+			   params[i].sp_tsf_us_lo;
+
+		hdd_debug("TWT: get_params dialog_id %d TSF = 0x%llx",
+			  params[i].dialog_id, tsf_val);
+
+		attr = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_WAKE_TIME_TSF;
+		if (hdd_wlan_nla_put_u64(reply_skb, attr, tsf_val)) {
+			hdd_err("TWT: get_params failed to put TSF Value");
+			return QDF_STATUS_E_INVAL;
+		}
+
+		nla_nest_end(reply_skb, nla_params);
+	}
+	nla_nest_end(reply_skb, config_attr);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_twt_pack_get_params_resp()- Obtains twt session parameters of a peer
+ * and sends response to the user space via nl layer
+ * @hdd_ctx: hdd context
+ * @params: Pointer to store twt peer session parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+static QDF_STATUS
+hdd_twt_pack_get_params_resp(struct hdd_context *hdd_ctx,
+			     struct wmi_host_twt_session_stats_info *params)
+{
+	struct sk_buff *reply_skb;
+	uint32_t skb_len = NLMSG_HDRLEN, i;
+	QDF_STATUS qdf_status;
+
+	/* Length of attribute QCA_WLAN_VENDOR_ATTR_CONFIG_TWT_PARAMS */
+	skb_len += NLA_HDRLEN;
+
+	/* Length of twt session parameters */
+	for (i = 0; i < TWT_PSOC_MAX_SESSIONS; i++) {
+		if (params[i].event_type == HOST_TWT_SESSION_SETUP ||
+		    params[i].event_type == HOST_TWT_SESSION_UPDATE)
+			skb_len += hdd_twt_get_params_resp_len();
+	}
+
+	reply_skb = wlan_cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy,
+							     skb_len);
+	if (!reply_skb) {
+		hdd_err("TWT: get_params alloc reply skb failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_status = hdd_twt_pack_get_params_resp_nlmsg(reply_skb, params);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		goto fail;
+
+	if (cfg80211_vendor_cmd_reply(reply_skb))
+		qdf_status = QDF_STATUS_E_INVAL;
+fail:
+	if (QDF_IS_STATUS_ERROR(qdf_status) && reply_skb)
+		kfree_skb(reply_skb);
+
+	return qdf_status;
+}
+
+/**
+ * hdd_twt_get_peer_session_params() - Obtains twt session parameters of a peer
+ * and sends response to the user space
+ * @hdd_ctx: hdd context
+ * @params: Pointer to store twt peer session parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success, else other qdf error values
+ */
+static QDF_STATUS
+hdd_twt_get_peer_session_params(struct hdd_context *hdd_ctx,
+				struct wmi_host_twt_session_stats_info *params)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_INVAL;
+
+	if (!hdd_ctx || !params)
+		return qdf_status;
+
+	qdf_status = ucfg_twt_get_peer_session_params(hdd_ctx->psoc, params);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		qdf_status = hdd_twt_pack_get_params_resp(hdd_ctx, params);
+
+	return qdf_status;
+}
+
+/**
+ * hdd_twt_get_session_params() - Parses twt nl attrributes, obtains twt
+ * session parameters based on dialog_id and returns to user via nl layer
+ * @adapter: hdd_adapter
+ * @twt_param_attr: twt nl attributes
+ *
+ * Return: 0 on success, negative value on failure
+ */
+static int hdd_twt_get_session_params(struct hdd_adapter *adapter,
+				      struct nlattr *twt_param_attr)
+{
+	struct hdd_station_ctx *hdd_sta_ctx =
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX + 1];
+	struct wmi_host_twt_session_stats_info
+				params[TWT_PSOC_MAX_SESSIONS] = { {0} };
+	int ret, id;
+	QDF_STATUS qdf_status;
+
+	ret = wlan_cfg80211_nla_parse_nested(tb,
+					     QCA_WLAN_VENDOR_ATTR_TWT_SETUP_MAX,
+					     twt_param_attr,
+					     qca_wlan_vendor_twt_add_dialog_policy);
+	if (ret)
+		return ret;
+
+	/*
+	 * Currently twt_get_params nl cmd is sending only dialog_id(STA), fill
+	 * mac_addr of STA in params and call hdd_twt_get_peer_session_params.
+	 * When twt_get_params passes mac_addr and dialog_id of STA/SAP, update
+	 * both mac_addr and dialog_id in params before calling
+	 * hdd_twt_get_peer_session_params. dialog_id if not received,
+	 * dialog_id of value 0 will be used as default.
+	 */
+	id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_FLOW_ID;
+	if (tb[id])
+		params[0].dialog_id = (uint32_t)nla_get_u8(tb[id]);
+	else
+		params[0].dialog_id = 0;
+
+	hdd_debug("TWT: get_params dialog_id %d", params[0].dialog_id);
+
+	if (params[0].dialog_id <= TWT_MAX_DIALOG_ID) {
+		qdf_mem_copy(params[0].peer_mac,
+			     hdd_sta_ctx->conn_info.bssid.bytes,
+			     QDF_MAC_ADDR_SIZE);
+		hdd_debug("TWT: get_params peer mac_addr " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(params[0].peer_mac));
+	}
+
+	qdf_status = hdd_twt_get_peer_session_params(adapter->hdd_ctx,
+						     &params[0]);
+
+	return qdf_status_to_os_return(qdf_status);
+}
 
 static uint32_t hdd_get_twt_setup_event_len(void)
 {
@@ -1305,6 +1603,7 @@ static int hdd_twt_configure(struct hdd_adapter *adapter,
 		ret = hdd_twt_setup_session(adapter, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_GET:
+		ret = hdd_twt_get_session_params(adapter, twt_param_attr);
 		break;
 	case QCA_WLAN_TWT_TERMINATE:
 		ret = hdd_twt_terminate_session(adapter, twt_param_attr);
