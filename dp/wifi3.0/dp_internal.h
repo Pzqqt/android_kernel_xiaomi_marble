@@ -1646,6 +1646,8 @@ dp_hif_update_pipe_callback(struct dp_soc *dp_soc,
 
 QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev, struct dp_peer *peer);
 
+QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
+				    struct cdp_rx_stats_ppdu_user *ppdu_user);
 #else
 static inline int dp_wdi_event_unsub(struct cdp_soc_t *soc, uint8_t pdev_id,
 				     wdi_event_subscribe *event_cb_sub_handle,
@@ -1708,6 +1710,11 @@ static inline QDF_STATUS dp_peer_stats_notify(struct dp_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
+				    struct cdp_rx_stats_ppdu_user *ppdu_user)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* CONFIG_WIN */
 
 #ifdef VDEV_PEER_PROTOCOL_COUNT

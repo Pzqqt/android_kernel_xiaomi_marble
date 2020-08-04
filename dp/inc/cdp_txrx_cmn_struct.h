@@ -2039,17 +2039,19 @@ struct cdp_tx_completion_msdu {
  * @other_msdu_count: Number of MSDUs other than UDP and TCP MSDUs in PPDU
  * @frame_control: frame control field
  * @frame_control_info_valid: frame_control valid
+ * @qos_control: qos control field
+ * @qos_control_info_valid: qos_control valid
  * @data_sequence_control_info_valid: data_sequence_control_info valid
  * @first_data_seq_ctrl: Sequence control field of first data frame
  * @preamble: preamble
  * @ht_flag: ht flag
  * @vht_flag: vht flag
  * @he_re: he_re (range extension)
+ * @mac_addr: Peer MAC Address
  * @mpdu_cnt_fcs_ok: Number of MPDUs in PPDU with fcs ok
  * @mpdu_cnt_fcs_err: Number of MPDUs in PPDU with fcs err
  * @mpdu_fcs_ok_bitmap - MPDU with fcs ok bitmap
  * @retried - number of retries
- * @mac_addr: Peer MAC Address
  */
 struct cdp_rx_stats_ppdu_user {
 	uint16_t peer_id;
@@ -2070,19 +2072,21 @@ struct cdp_rx_stats_ppdu_user {
 	uint16_t  other_msdu_count;
 	uint16_t frame_control;
 	uint8_t  frame_control_info_valid;
+	uint16_t qos_control;
+	uint8_t  qos_control_info_valid;
 	uint8_t data_sequence_control_info_valid;
 	uint16_t first_data_seq_ctrl;
 	uint32_t preamble_type;
 	uint16_t ht_flags;
 	uint16_t vht_flags;
 	uint16_t he_flags;
+	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
 	uint32_t mpdu_fcs_ok_bitmap[QDF_MON_STATUS_MPDU_FCS_BMAP_NWORDS];
 	uint32_t mpdu_ok_byte_count;
 	uint32_t mpdu_err_byte_count;
 	uint32_t retries;
-	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 /**

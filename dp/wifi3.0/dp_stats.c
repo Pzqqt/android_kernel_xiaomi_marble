@@ -4394,6 +4394,33 @@ QDF_STATUS dp_peer_stats_notify(struct dp_pdev *dp_pdev, struct dp_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS dp_peer_qos_stats_notify(struct dp_pdev *dp_pdev,
+				    struct cdp_rx_stats_ppdu_user *ppdu_user)
+{
+	struct cdp_interface_peer_qos_stats qos_stats_intf;
+
+	if (ppdu_user->peer_id == HTT_INVALID_PEER) {
+		qdf_err("Invalid peer id");
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_zero(&qos_stats_intf, sizeof(qos_stats_intf));
+
+	qdf_mem_copy(qos_stats_intf.peer_mac, ppdu_user->mac_addr,
+		     QDF_MAC_ADDR_SIZE);
+	qos_stats_intf.frame_control = ppdu_user->frame_control;
+	qos_stats_intf.frame_control_info_valid =
+			ppdu_user->frame_control_info_valid;
+	qos_stats_intf.qos_control = ppdu_user->qos_control;
+	qos_stats_intf.qos_control_info_valid =
+			ppdu_user->qos_control_info_valid;
+	qos_stats_intf.vdev_id = ppdu_user->vdev_id;
+	dp_wdi_event_handler(WDI_EVENT_PEER_QOS_STATS, dp_pdev->soc,
+			     (void *)&qos_stats_intf, 0,
+			     WDI_NO_VAL, dp_pdev->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
 #endif
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT

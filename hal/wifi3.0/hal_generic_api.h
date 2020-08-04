@@ -270,11 +270,19 @@ hal_rx_populate_byte_count(void *rx_tlv, void *ppduinfo,
 #endif
 
 static inline void
-hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
+hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo, uint32_t user_id,
 			     struct mon_rx_user_status *mon_rx_user_status)
 {
+	struct mon_rx_info *mon_rx_info;
+	struct mon_rx_user_info *mon_rx_user_info;
 	struct hal_rx_ppdu_info *ppdu_info =
 			(struct hal_rx_ppdu_info *)ppduinfo;
+
+	mon_rx_info = &ppdu_info->rx_info;
+	mon_rx_user_info = &ppdu_info->rx_user_info[user_id];
+	mon_rx_user_info->qos_control_info_valid =
+		mon_rx_info->qos_control_info_valid;
+	mon_rx_user_info->qos_control =  mon_rx_info->qos_control;
 
 	mon_rx_user_status->ast_index = ppdu_info->rx_status.ast_index;
 	mon_rx_user_status->tid = ppdu_info->rx_status.tid;
@@ -309,30 +317,6 @@ hal_rx_populate_mu_user_info(void *rx_tlv, void *ppduinfo,
 
 	hal_rx_populate_byte_count(rx_tlv, ppdu_info, mon_rx_user_status);
 }
-
-#ifdef WLAN_TX_PKT_CAPTURE_ENH
-static inline void
-hal_rx_populate_tx_capture_user_info(void *ppduinfo,
-				     uint32_t user_id)
-{
-	struct hal_rx_ppdu_info *ppdu_info;
-	struct mon_rx_info *mon_rx_info;
-	struct mon_rx_user_info *mon_rx_user_info;
-
-	ppdu_info = (struct hal_rx_ppdu_info *)ppduinfo;
-	mon_rx_info = &ppdu_info->rx_info;
-	mon_rx_user_info = &ppdu_info->rx_user_info[user_id];
-	mon_rx_user_info->qos_control_info_valid =
-		mon_rx_info->qos_control_info_valid;
-	mon_rx_user_info->qos_control =  mon_rx_info->qos_control;
-}
-#else
-static inline void
-hal_rx_populate_tx_capture_user_info(void *ppduinfo,
-				     uint32_t user_id)
-{
-}
-#endif
 
 #define HAL_RX_UPDATE_RSSI_PER_CHAIN_BW(chain, word_1, word_2, \
 					ppdu_info, rssi_info_tlv) \
@@ -740,10 +724,8 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			ppdu_info->com_info.num_users++;
 
 			hal_rx_populate_mu_user_info(rx_tlv, ppdu_info,
+						     user_id,
 						     mon_rx_user_status);
-
-			hal_rx_populate_tx_capture_user_info(ppdu_info,
-							     user_id);
 
 		}
 		break;

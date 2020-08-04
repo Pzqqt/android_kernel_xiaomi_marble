@@ -200,6 +200,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 	uint32_t ast_index;
 	int i;
 	struct mon_rx_user_status *rx_user_status;
+	struct mon_rx_user_info *rx_user_info;
 	struct cdp_rx_stats_ppdu_user *rx_stats_peruser;
 	int ru_size;
 	bool is_data = false;
@@ -211,6 +212,7 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 			return;
 
 		rx_user_status =  &ppdu_info->rx_user_status[i];
+		rx_user_info = &ppdu_info->rx_user_info[i];
 		rx_stats_peruser = &cdp_rx_ppdu->user[i];
 
 		ast_index = rx_user_status->ast_index;
@@ -240,6 +242,10 @@ dp_rx_populate_cdp_indication_ppdu_user(struct dp_pdev *pdev,
 		rx_stats_peruser->frame_control =
 			rx_user_status->frame_control;
 
+		rx_stats_peruser->qos_control_info_valid =
+			rx_user_info->qos_control_info_valid;
+		rx_stats_peruser->qos_control =
+			rx_user_info->qos_control;
 		rx_stats_peruser->tcp_msdu_count =
 			rx_user_status->tcp_msdu_count;
 		rx_stats_peruser->udp_msdu_count =
@@ -696,6 +702,7 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		dp_peer_stats_notify(pdev, peer);
 		DP_STATS_UPD(peer, rx.last_rssi, ppdu->rssi);
 
+		dp_peer_qos_stats_notify(pdev, ppdu_user);
 		if (peer == pdev->invalid_peer)
 			continue;
 

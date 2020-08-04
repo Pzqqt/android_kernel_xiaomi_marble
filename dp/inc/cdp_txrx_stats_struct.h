@@ -360,6 +360,7 @@ enum WDI_EVENT {
 	WDI_EVENT_FLUSH_RATE_STATS_REQ,
 	WDI_EVENT_RX_MPDU,
 	WDI_EVENT_HMWDS_AST_ADD_STATUS,
+	WDI_EVENT_PEER_QOS_STATS,
 	/* End of new event items */
 	WDI_EVENT_LAST
 };
@@ -1315,6 +1316,23 @@ struct cdp_interface_peer_stats {
 	uint32_t rx_byte_count;
 	uint32_t per;
 	uint32_t ack_rssi;
+};
+
+/* struct cdp_interface_peer_qos_stats - interface structure for peer qos stats
+ * @peer_mac: peer mac address
+ * @frame_control: frame control field
+ * @qos_control: qos control field
+ * @frame_control_info_valid: frame_control valid
+ * @qos_control_info_valid: qos_control valid
+ * @vdev_id : vdev_id for the peer
+ */
+struct cdp_interface_peer_qos_stats {
+	uint8_t  peer_mac[QDF_MAC_ADDR_SIZE];
+	uint16_t frame_control;
+	uint16_t qos_control;
+	uint8_t  frame_control_info_valid;
+	uint8_t  qos_control_info_valid;
+	uint8_t  vdev_id;
 };
 
 /* Tx completions per interrupt */
