@@ -502,6 +502,12 @@ static bool lim_is_6g_allowed_sec(struct mac_context *mac,
 		pe_err("open mode sec not allowed for 6G conn");
 		return false;
 	}
+
+	if (!session->limRmfEnabled) {
+		pe_err("rmf enabled is false");
+		return false;
+	}
+
 	keymgmt = wlan_crypto_get_param(vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
 	if (!keymgmt ||
 	    (keymgmt & (1 << WLAN_CRYPTO_KEY_MGMT_NONE |
@@ -1452,8 +1458,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, void *msg_buf)
 
 		session->encryptType = sme_join_req->UCEncryptionType;
 		if (wlan_reg_is_6ghz_chan_freq(session->curr_op_freq)) {
-			if (!session->limRmfEnabled ||
-			    !lim_is_session_he_capable(session) ||
+			if (!lim_is_session_he_capable(session) ||
 			    !lim_is_6g_allowed_sec(mac_ctx, session)) {
 				pe_err("JOIN_REQ with invalid 6G security");
 				ret_code = eSIR_SME_INVALID_PARAMETERS;
