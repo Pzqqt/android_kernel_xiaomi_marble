@@ -236,6 +236,7 @@ put_vdev:
 /**
  * __wlan_hdd_ipv6_changed() - IPv6 notifier callback function
  * @net_dev: net_device whose IP address changed
+ * @event: event from kernel, NETDEV_UP or NETDEV_DOWN
  *
  * This is a callback function that is registered with the kernel via
  * register_inet6addr_notifier() which allows the driver to be
@@ -243,7 +244,8 @@ put_vdev:
  *
  * Return: None
  */
-static void __wlan_hdd_ipv6_changed(struct net_device *net_dev)
+static void __wlan_hdd_ipv6_changed(struct net_device *net_dev,
+				    unsigned long event)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net_dev);
 	struct hdd_context *hdd_ctx;
@@ -260,8 +262,12 @@ static void __wlan_hdd_ipv6_changed(struct net_device *net_dev)
 	if (errno)
 		goto exit;
 
-	if (adapter->device_mode == QDF_STA_MODE ||
-	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+	/* Only need to be notified for ipv6_add_addr
+	 * No need for ipv6_del_addr or addrconf_ifdown
+	 */
+	if (event == NETDEV_UP &&
+	    (adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->vdev_id);
 		schedule_work(&adapter->ipv6_notifier_work);
@@ -281,7 +287,7 @@ int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	if (osif_vdev_sync_op_start(net_dev, &vdev_sync))
 		return NOTIFY_DONE;
 
-	__wlan_hdd_ipv6_changed(net_dev);
+	__wlan_hdd_ipv6_changed(net_dev, data);
 
 	osif_vdev_sync_op_stop(vdev_sync);
 
