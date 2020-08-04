@@ -326,6 +326,21 @@ QDF_STATUS ucfg_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_wls_6ghz_cap() - Get the WiFi Location Service(WLS)
+ * 6ghz capability
+ * @psoc: pointer to psoc object
+ * @wls_6ghz_capable: Pointer to the variable from caller
+ *
+ * Return: void
+ */
+static inline
+void ucfg_mlme_get_wls_6ghz_cap(struct wlan_objmgr_psoc *psoc,
+				bool *wls_6ghz_capable)
+{
+	wlan_mlme_get_wls_6ghz_cap(psoc, wls_6ghz_capable);
+}
+
+/**
  * ucfg_mlme_get_self_recovery() - Get the self recovery config
  * @psoc: pointer to psoc object
  * @self_recovery: Pointer to the variable from caller

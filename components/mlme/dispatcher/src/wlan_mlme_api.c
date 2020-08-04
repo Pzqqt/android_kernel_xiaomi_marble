@@ -285,6 +285,19 @@ QDF_STATUS wlan_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wlan_mlme_get_wls_6ghz_cap(struct wlan_objmgr_psoc *psoc,
+				bool *wls_6ghz_capable)
+{
+	struct wlan_mlme_psoc_ext_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_ext_obj(psoc);
+	if (!mlme_obj) {
+		*wls_6ghz_capable = cfg_default(CFG_WLS_6GHZ_CAPABLE);
+		return;
+	}
+	*wls_6ghz_capable = mlme_obj->cfg.gen.wls_6ghz_capable;
+}
+
 QDF_STATUS wlan_mlme_get_self_recovery(struct wlan_objmgr_psoc *psoc,
 				       bool *self_recovery)
 {

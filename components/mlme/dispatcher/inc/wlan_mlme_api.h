@@ -320,6 +320,17 @@ QDF_STATUS wlan_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
 				       bool *lpass_support);
 
 /**
+ * wlan_mlme_get_wls_6ghz_cap() - Get the wifi location service(WLS)
+ * 6ghz capability
+ * @psoc: pointer to psoc object
+ * @wls_6ghz_capable: Pointer to the variable from caller
+ *
+ * Return: void
+ */
+void wlan_mlme_get_wls_6ghz_cap(struct wlan_objmgr_psoc *psoc,
+				bool *wls_6ghz_capable);
+
+/**
  * wlan_mlme_get_self_recovery() - Get the self recovery config
  * @psoc: pointer to psoc object
  * @self_recovery: Pointer to the variable from caller
