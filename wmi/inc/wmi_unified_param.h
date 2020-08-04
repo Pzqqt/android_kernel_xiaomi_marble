@@ -4682,6 +4682,7 @@ typedef enum {
 	wmi_roam_cap_report_event_id,
 	wmi_vdev_bcn_latency_event_id,
 	wmi_vdev_disconnect_event_id,
+	wmi_peer_create_conf_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 

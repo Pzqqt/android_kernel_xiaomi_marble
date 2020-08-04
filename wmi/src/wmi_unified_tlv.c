@@ -15041,6 +15041,8 @@ event_ids[wmi_roam_scan_chan_list_id] =
 			WMI_VDEV_BCN_LATENCY_EVENTID;
 	event_ids[wmi_vdev_disconnect_event_id] =
 			WMI_VDEV_DISCONNECT_EVENTID;
+	event_ids[wmi_peer_create_conf_event_id] =
+			WMI_PEER_CREATE_CONF_EVENTID;
 }
 
 /**
