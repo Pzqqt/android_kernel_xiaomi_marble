@@ -2855,6 +2855,7 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 {
 	enum wlan_phymode bss_phymode;
 	struct wlan_channel *des_chan;
+	struct wlan_channel *bss_chan;
 	struct vdev_mlme_obj *vdev_mlme;
 	uint8_t channel;
 
@@ -2866,9 +2867,16 @@ static void wma_update_phymode_on_roam(tp_wma_handle wma, uint8_t *bssid,
 		wma_get_phy_mode_cb(channel, iface->chan_width, &bss_phymode);
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(iface->vdev);
+	/* Update vdev mlme channel info after roaming */
 	des_chan = wlan_vdev_mlme_get_des_chan(iface->vdev);
-
+	bss_chan = wlan_vdev_mlme_get_bss_chan(iface->vdev);
 	des_chan->ch_phymode = bss_phymode;
+	des_chan->ch_freq = chan->mhz;
+	des_chan->ch_cfreq1 = chan->band_center_freq1;
+	des_chan->ch_cfreq2 = chan->band_center_freq2;
+	des_chan->ch_width = iface->chan_width;
+	qdf_mem_copy(bss_chan, des_chan, sizeof(struct wlan_channel));
+
 	if (!vdev_mlme)
 		return;
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
