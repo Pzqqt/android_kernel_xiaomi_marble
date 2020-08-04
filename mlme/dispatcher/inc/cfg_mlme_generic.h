@@ -760,6 +760,27 @@
 				0, 0x52, 0x49, CFG_VALUE_OR_DEFAULT, \
 				"Bit mask to retry Auth and full connection on assoc timeout to same AP for SAE connection")
 
+/*
+ * <ini>
+ *
+ * wls_6ghz_capable - WiFi Location Service(WLS) is 6Ghz capable
+ * @Min: 0 (WLS 6Ghz non-capable)
+ * @Max: 1 (WLS 6Ghz capable)
+ * @Default: 0 (WLS 6Ghz non-capable)
+ *
+ * Related: None
+ *
+ * Supported Feature: General
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_WLS_6GHZ_CAPABLE CFG_INI_BOOL( \
+	"wls_6ghz_capable", \
+	0, \
+	"WiFi Location Service(WLS) is 6Ghz capable or not")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -791,5 +812,6 @@
 	CFG(CFG_BMISS_SKIP_FULL_SCAN) \
 	CFG(CFG_ENABLE_RING_BUFFER) \
 	CFG(CFG_DFS_CHAN_AGEOUT_TIME) \
-	CFG(CFG_SAE_CONNECION_RETRIES)
+	CFG(CFG_SAE_CONNECION_RETRIES) \
+	CFG(CFG_WLS_6GHZ_CAPABLE)
 #endif /* __CFG_MLME_GENERIC_H */

@@ -1110,6 +1110,7 @@ struct wlan_mlme_chainmask {
  * @peer_create_conf_support: Peer create confirmation command support
  * @dual_sta_roam_fw_support: Firmware support for dual sta roaming feature
  * @sae_connect_retries: sae connect retry bitmask
+ * @wls_6ghz_capable: wifi location service(WLS) is 6ghz capable
  */
 struct wlan_mlme_generic {
 	uint32_t band_capability;
@@ -1151,6 +1152,7 @@ struct wlan_mlme_generic {
 	bool peer_create_conf_support;
 	bool dual_sta_roam_fw_support;
 	uint32_t sae_connect_retries;
+	bool wls_6ghz_capable;
 };
 
 /*
