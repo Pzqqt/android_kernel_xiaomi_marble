@@ -1553,6 +1553,17 @@ QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(utils_dfs_is_spoof_check_failed);
+
+bool utils_dfs_is_spoof_done(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return !!dfs->dfs_spoof_test_done;
+}
 #endif
 
 int dfs_get_num_chans(void)
