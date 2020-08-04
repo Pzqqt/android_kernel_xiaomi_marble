@@ -25945,8 +25945,7 @@ typedef struct {
  */
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SCAN_RADIO_CAPABILITIES_EXT2 */
-    /* pdev id */
-    A_UINT32 pdev_id;
+    A_UINT32 phy_id;
     /*
      * [0] 1 - SCAN_RADIO supported  0 - SCAN_RADIO  not supported
      * [1] 1 - DFS enabled           0 - DFS disabled
