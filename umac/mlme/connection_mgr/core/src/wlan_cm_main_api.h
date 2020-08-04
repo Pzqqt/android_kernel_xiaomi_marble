@@ -102,6 +102,16 @@ QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id);
 QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp);
 
+/**
+ * cm_connect_start_req() - Connect start req from the requester
+ * @vdev: vdev on which connect is received
+ * @req: Connection req provided
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_req *req);
+
 /*************** DISCONNECT APIs ****************/
 
 /**
@@ -125,7 +135,7 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
 
 /**
- * cm_connect_complete() - This API would be called after connect complete
+ * cm_disconnect_complete() - This API would be called after disconnect complete
  * request from the serialization.
  * @cm_ctx: connection manager context
  * @resp: disconnection complete resp.
@@ -136,5 +146,15 @@ QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id);
  */
 QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 				  struct wlan_cm_discon_rsp *resp);
+
+/**
+ * cm_disconnect_start_req() - Disconnect start req from the requester
+ * @vdev: vdev on which connect is received
+ * @req: disconnection req provided
+ *
+ * Return: QDF status
+ */
+QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_disconnect_req *req);
 
 #endif /* __WLAN_CM_MAIN_API_H__ */

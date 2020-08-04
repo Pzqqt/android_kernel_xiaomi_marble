@@ -18,6 +18,7 @@
  * DOC: Implements disconnect specific apis of connection manager
  */
 #include "wlan_cm_main_api.h"
+#include "wlan_cm_sm.h"
 
 QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 			       struct cm_disconnect_req *req)
@@ -48,3 +49,17 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_cm_disconnect_req *req)
+{
+	struct cnx_mgr *cm_ctx = NULL;
+	struct cm_disconnect_req *cm_req = NULL;
+
+	/*
+	 * TODO: Prepare cm_disconnect_req cm_req, get cm id and inform it to
+	 * OSIF. store disconnect req to the cm ctx req_list
+	 */
+
+	return cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_DISCONNECT_REQ,
+				   sizeof(*cm_req), cm_req);
+}

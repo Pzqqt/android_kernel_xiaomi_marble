@@ -21,16 +21,17 @@
  */
 
 #include <wlan_cm_api.h>
+#include "connection_mgr/core/src/wlan_cm_main_api.h"
 
 QDF_STATUS wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 				 struct wlan_cm_connect_req *req)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_connect_start_req(vdev, req);
 }
 
 QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_disconnect_req *req)
 {
-	return QDF_STATUS_SUCCESS;
+	return cm_disconnect_start_req(vdev, req);
 }
 

@@ -72,63 +72,6 @@ enum wlan_cm_sm_state {
 };
 
 /**
- * enum wlan_cm_sm_evt - connection manager related events
- * @WLAN_CM_SM_EV_CONNECT_REQ:            Connect request event from requester
- * @WLAN_CM_SM_EV_SCAN:                   Event to start connect scan
- * @WLAN_CM_SM_EV_SCAN_SUCCESS:           Connect scan success event
- * @WLAN_CM_SM_EV_SCAN_FAILURE:           Connect scan fail event
- * @WLAN_CM_SM_EV_CONNECT_START:          Connect start process initiate
- * @WLAN_CM_SM_EV_CONNECT_ACTIVE:         Connect request is activated
- * @WLAN_CM_SM_EV_CONNECT_SUCCESS:        Connect success
- * @WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE: Get next candidate for connection
- * @WLAN_CM_SM_EV_CONNECT_FAILURE:        Connect failed for all candidate
- * @WLAN_CM_SM_EV_DISCONNECT_REQ:         Disconnect request event from
- * requester
- * @WLAN_CM_SM_EV_DISCONNECT_START:       Start disconnect sequence
- * @WLAN_CM_SM_EV_DISCONNECT_ACTIVE:      Process disconnect after in active cmd
- * @WLAN_CM_SM_EV_DISCONNECT_DONE:        Disconnect done event
- * @WLAN_CM_SM_EV_ROAM_START:             Roam start event
- * @WLAN_CM_SM_EV_ROAM_SYNC:              Roam sync event
- * @WLAN_CM_SM_EV_ROAM_INVOKE_FAIL:       Roam invoke fail event
- * @WLAN_CM_SM_EV_ROAM_HO_FAIL:           Hand off failed event
- * @WLAN_CM_SM_EV_PREAUTH_DONE:           Preauth is completed
- * @WLAN_CM_SM_EV_GET_NEXT_PREAUTH_AP:    Get next candidate as preauth failed
- * @WLAN_CM_SM_EV_PREAUTH_FAIL:           Preauth failed for all candidate
- * @WLAN_CM_SM_EV_START_REASSOC:          Start reassoc after preauth done
- * @WLAN_CM_SM_EV_REASSOC_DONE:           Reassoc completed
- * @WLAN_CM_SM_EV_REASSOC_FAILURE:        Reassoc failed
- * @WLAN_CM_SM_EV_ROAM_COMPLETE:          Roaming completed
- * @WLAN_CM_SM_EV_MAX:                    Max event
- */
-enum wlan_cm_sm_evt {
-	WLAN_CM_SM_EV_CONNECT_REQ = 0,
-	WLAN_CM_SM_EV_SCAN = 1,
-	WLAN_CM_SM_EV_SCAN_SUCCESS = 2,
-	WLAN_CM_SM_EV_SCAN_FAILURE = 3,
-	WLAN_CM_SM_EV_CONNECT_START = 4,
-	WLAN_CM_SM_EV_CONNECT_ACTIVE = 5,
-	WLAN_CM_SM_EV_CONNECT_SUCCESS = 6,
-	WLAN_CM_SM_EV_CONNECT_GET_NEXT_CANDIDATE = 7,
-	WLAN_CM_SM_EV_CONNECT_FAILURE = 8,
-	WLAN_CM_SM_EV_DISCONNECT_REQ = 9,
-	WLAN_CM_SM_EV_DISCONNECT_START = 10,
-	WLAN_CM_SM_EV_DISCONNECT_ACTIVE = 11,
-	WLAN_CM_SM_EV_DISCONNECT_DONE = 12,
-	WLAN_CM_SM_EV_ROAM_START = 13,
-	WLAN_CM_SM_EV_ROAM_SYNC = 14,
-	WLAN_CM_SM_EV_ROAM_INVOKE_FAIL = 15,
-	WLAN_CM_SM_EV_ROAM_HO_FAIL = 16,
-	WLAN_CM_SM_EV_PREAUTH_DONE = 17,
-	WLAN_CM_SM_EV_GET_NEXT_PREAUTH_AP = 18,
-	WLAN_CM_SM_EV_PREAUTH_FAIL = 19,
-	WLAN_CM_SM_EV_START_REASSOC = 20,
-	WLAN_CM_SM_EV_REASSOC_DONE = 21,
-	WLAN_CM_SM_EV_REASSOC_FAILURE = 22,
-	WLAN_CM_SM_EV_ROAM_COMPLETE = 23,
-	WLAN_CM_SM_EV_MAX,
-};
-
-/**
  * struct cm_state_sm - connection manager sm
  * @cm_sm_lock: sm lock
  * @sm_hdl: sm handlers
@@ -164,7 +107,7 @@ struct cm_connect_req {
 	qdf_timer_t hw_mode_timer;
 	struct wlan_cm_connect_req req;
 	struct element_info rsn_ie;
-	qdf_list_t candidate_list;
+	qdf_list_t *candidate_list;
 	struct scan_cache_node *cur_candidate;
 };
 

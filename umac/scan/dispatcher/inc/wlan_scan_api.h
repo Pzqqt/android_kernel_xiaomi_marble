@@ -223,4 +223,19 @@ static inline QDF_STATUS wlan_scan_purge_results(qdf_list_t *scan_list)
 	return scm_purge_scan_results(scan_list);
 }
 
+/**
+ * wlan_scan_get_result() - The Public API to get scan results
+ * @pdev: pdev info
+ * @filter: Filters
+ *
+ * This function fetches scan result
+ *
+ * Return: scan list pointer
+ */
+static inline qdf_list_t *wlan_scan_get_result(struct wlan_objmgr_pdev *pdev,
+					       struct scan_filter *filter)
+{
+	return scm_get_scan_result(pdev, filter);
+}
+
 #endif
