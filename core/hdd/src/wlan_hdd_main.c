@@ -5101,8 +5101,16 @@ static int hdd_set_features(struct net_device *net_dev,
 	struct osif_vdev_sync *vdev_sync;
 
 	errno = osif_vdev_sync_op_start(net_dev, &vdev_sync);
-	if (errno)
-		return errno;
+	if (errno) {
+		/*
+		 * Only invoke from netdev_feature_update_work expected,
+		 * which is from CLD inside.
+		 * Ignore others from upper stack during loading phase,
+		 * and return success to avoid failure print from kernel.
+		 */
+		hdd_debug("VDEV in transition, ignore set_features");
+		return 0;
+	}
 
 	errno = __hdd_set_features(net_dev, features);
 
