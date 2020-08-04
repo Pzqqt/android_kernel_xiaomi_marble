@@ -1709,6 +1709,101 @@ static bool wmi_is_legacy_d0wow_disable_cmd(wmi_buf_t buf, uint32_t cmd_id)
 
 #endif
 
+#ifdef WMI_INTERFACE_SEQUENCE_CHECK
+static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
+{
+	qdf_spinlock_create(&wmi_handle->wmi_seq_lock);
+	wmi_handle->wmi_sequence = 0;
+	wmi_handle->wmi_exp_sequence = 0;
+}
+
+static inline void wmi_interface_sequence_deinit(struct wmi_unified *wmi_handle)
+{
+	qdf_spinlock_destroy(&wmi_handle->wmi_seq_lock);
+}
+
+static inline QDF_STATUS wmi_htc_send_pkt(struct wmi_unified *wmi_handle,
+					  HTC_PACKET *pkt,
+					  const char *func, uint32_t line)
+{
+	wmi_buf_t buf = GET_HTC_PACKET_NET_BUF_CONTEXT(pkt);
+	QDF_STATUS status;
+
+	qdf_spin_lock_bh(&wmi_handle->wmi_seq_lock);
+	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
+	if (QDF_STATUS_SUCCESS != status) {
+		qdf_spin_unlock_bh(&wmi_handle->wmi_seq_lock);
+		qdf_atomic_dec(&wmi_handle->pending_cmds);
+		wmi_nofl_err("%s:%d, htc_send_pkt failed, status:%d",
+			     func, line, status);
+		qdf_mem_free(pkt);
+		return status;
+	}
+	/* Record the sequence number in the SKB */
+	qdf_nbuf_set_mark(buf, wmi_handle->wmi_sequence);
+	/* Increment the sequence number */
+	wmi_handle->wmi_sequence = (wmi_handle->wmi_sequence + 1)
+				   & (wmi_handle->wmi_max_cmds - 1);
+	qdf_spin_unlock_bh(&wmi_handle->wmi_seq_lock);
+
+	return status;
+}
+
+static inline void wmi_interface_sequence_check(struct wmi_unified *wmi_handle,
+						wmi_buf_t buf)
+{
+	qdf_spin_lock_bh(&wmi_handle->wmi_seq_lock);
+	/* Match the completion sequence and expected sequence number */
+	if (qdf_nbuf_get_mark(buf) != wmi_handle->wmi_exp_sequence) {
+		qdf_spin_unlock_bh(&wmi_handle->wmi_seq_lock);
+		wmi_nofl_err("WMI Tx Completion Sequence number mismatch");
+		wmi_nofl_err("Expected %d Received %d",
+			     wmi_handle->wmi_exp_sequence,
+			     qdf_nbuf_get_mark(buf));
+		/* Trigger Recovery */
+		qdf_trigger_self_recovery(wmi_handle->soc,
+					  QDF_WMI_BUF_SEQUENCE_MISMATCH);
+	} else {
+		/* Increment the expected sequence number */
+		wmi_handle->wmi_exp_sequence =
+				(wmi_handle->wmi_exp_sequence + 1)
+				& (wmi_handle->wmi_max_cmds - 1);
+		qdf_spin_unlock_bh(&wmi_handle->wmi_seq_lock);
+	}
+}
+#else
+static inline void wmi_interface_sequence_init(struct wmi_unified *wmi_handle)
+{
+}
+
+static inline void wmi_interface_sequence_deinit(struct wmi_unified *wmi_handle)
+{
+}
+
+static inline QDF_STATUS wmi_htc_send_pkt(struct wmi_unified *wmi_handle,
+					  HTC_PACKET *pkt,
+					  const char *func, uint32_t line)
+{
+	QDF_STATUS status;
+
+	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
+	if (QDF_STATUS_SUCCESS != status) {
+		qdf_atomic_dec(&wmi_handle->pending_cmds);
+		wmi_nofl_err("%s:%d, htc_send_pkt failed, status:%d",
+			     func, line, status);
+		qdf_mem_free(pkt);
+		return status;
+	}
+
+	return status;
+}
+
+static inline void wmi_interface_sequence_check(struct wmi_unified *wmi_handle,
+						wmi_buf_t buf)
+{
+}
+#endif
+
 static inline void wmi_unified_debug_dump(wmi_unified_t wmi_handle)
 {
 	wmi_nofl_err("Endpoint ID = %d, Tx Queue Depth = %d, soc_id = %u, target type = %s",
@@ -1726,7 +1821,6 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 				   const char *func, uint32_t line)
 {
 	HTC_PACKET *pkt;
-	QDF_STATUS status;
 	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
@@ -1816,21 +1910,11 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 			WMI_COMMAND_RECORD(wmi_handle, cmd_id, tmpbuf);
 			wmi_specific_cmd_record(wmi_handle, cmd_id, tmpbuf);
 		}
+
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
 #endif
-
-	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_atomic_dec(&wmi_handle->pending_cmds);
-		wmi_nofl_err("%s:%d, htc_send_pkt failed, status:%d",
-			     func, line, status);
-		qdf_mem_free(pkt);
-		return status;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return wmi_htc_send_pkt(wmi_handle, pkt, func, line);
 }
 qdf_export_symbol(wmi_unified_cmd_send_fl);
 
@@ -2669,6 +2753,8 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		wmi_handle->target_type = soc->target_type;
 		wmi_handle->wmi_max_cmds = soc->wmi_max_cmds;
 
+		wmi_interface_sequence_init(wmi_handle);
+
 		soc->wmi_pdev[pdev_idx] = wmi_handle;
 	} else
 		wmi_handle = soc->wmi_pdev[pdev_idx];
@@ -2804,6 +2890,7 @@ void *wmi_unified_attach(void *scn_handle,
 		WMI_LOGE("wmi attach is not registered");
 		goto error;
 	}
+	wmi_interface_sequence_init(wmi_handle);
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = param->use_cookie;
 	wmi_handle->osdev = param->osdev;
@@ -2813,7 +2900,6 @@ void *wmi_unified_attach(void *scn_handle,
 	/* Increase the ref count once refcount infra is present */
 	soc->wmi_psoc = param->psoc;
 	qdf_spinlock_create(&soc->ctx_lock);
-
 	soc->ops = wmi_handle->ops;
 	soc->wmi_pdev[0] = wmi_handle;
 	if (wmi_ext_dbgfs_init(wmi_handle) != QDF_STATUS_SUCCESS)
@@ -2875,6 +2961,9 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 					soc->wmi_pdev[i]->events_logs_list);
 
 			qdf_spinlock_destroy(&soc->wmi_pdev[i]->eventq_lock);
+
+			wmi_interface_sequence_deinit(soc->wmi_pdev[i]);
+
 			qdf_mem_free(soc->wmi_pdev[i]);
 		}
 	}
@@ -2942,7 +3031,9 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	u_int32_t len;
 	struct wmi_unified *wmi_handle;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
+	struct wmi_debug_log_info *log_info;
 	uint32_t cmd_id;
+	uint8_t *offset_ptr;
 #endif
 
 	ASSERT(wmi_cmd_buf);
@@ -2952,28 +3043,33 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 		QDF_ASSERT(0);
 		return;
 	}
+	buf_ptr = (u_int8_t *)wmi_buf_data(wmi_cmd_buf);
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	if (wmi_handle && wmi_handle->log_info.wmi_logging_enable) {
+	log_info = &wmi_handle->log_info;
+
+	if (wmi_handle && log_info->wmi_logging_enable) {
 		cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf),
 				WMI_CMD_HDR, COMMANDID);
 
-	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
-	/* Record 16 bytes of WMI cmd tx complete data
-	- exclude TLV and WMI headers */
-	if (wmi_handle->ops->is_management_record(cmd_id)) {
-		WMI_MGMT_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
-			qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->soc->buf_offset_command);
-	} else {
-		WMI_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
-			qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->soc->buf_offset_command);
-	}
+		qdf_spin_lock_bh(&log_info->wmi_record_lock);
+		/* Record 16 bytes of WMI cmd tx complete data
+		 * - exclude TLV and WMI headers
+		 */
+		offset_ptr = buf_ptr + wmi_handle->soc->buf_offset_command;
+		if (wmi_handle->ops->is_management_record(cmd_id)) {
+			WMI_MGMT_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
+						       offset_ptr);
+		} else {
+			WMI_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
+						  offset_ptr);
+		}
 
-	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
+		qdf_spin_unlock_bh(&log_info->wmi_record_lock);
 	}
 #endif
-	buf_ptr = (u_int8_t *) wmi_buf_data(wmi_cmd_buf);
+
+	wmi_interface_sequence_check(wmi_handle, wmi_cmd_buf);
+
 	len = qdf_nbuf_len(wmi_cmd_buf);
 	qdf_mem_zero(buf_ptr, len);
 	wmi_buf_free(wmi_cmd_buf);

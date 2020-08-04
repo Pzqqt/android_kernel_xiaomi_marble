@@ -2543,6 +2543,14 @@ struct wmi_unified {
 	uint32_t *evt_pdev_id_map;
 	uint32_t *cmd_phy_id_map;
 	uint32_t *evt_phy_id_map;
+#ifdef WMI_INTERFACE_SEQUENCE_CHECK
+	/* wmi next transmit sequence number */
+	uint32_t wmi_sequence;
+	/* wmi completion expected sequence number */
+	uint32_t wmi_exp_sequence;
+	qdf_spinlock_t wmi_seq_lock;
+#endif /*WMI_INTERFACE_SEQUENCE_CHECK*/
+
 	qdf_atomic_t num_stats_over_qmi;
 };
 

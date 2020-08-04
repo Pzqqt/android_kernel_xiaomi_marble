@@ -3756,6 +3756,29 @@ static inline void qdf_nbuf_trim_add_frag_size(qdf_nbuf_t nbuf, uint8_t idx,
 	__qdf_nbuf_trim_add_frag_size(nbuf, idx, size, truesize);
 }
 
+/**
+ * qdf_nbuf_set_mark() - Set nbuf mark
+ * @nbuf: qdf_nbuf_t
+ * @mark: Value to set mark
+ *
+ * Return: none
+ */
+static inline void qdf_nbuf_set_mark(qdf_nbuf_t nbuf, uint32_t mark)
+{
+	__qdf_nbuf_set_mark(nbuf, mark);
+}
+
+/**
+ * qdf_nbuf_get_mark() - Get nbuf mark
+ * @nbuf: qdf_nbuf_t
+ *
+ * Return: mark value
+ */
+static inline uint32_t qdf_nbuf_get_mark(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_get_mark(nbuf);
+}
+
 #ifdef NBUF_FRAG_MEMORY_DEBUG
 
 #define qdf_nbuf_move_frag_page_offset(f, i, o) \

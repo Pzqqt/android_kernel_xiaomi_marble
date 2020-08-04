@@ -2451,6 +2451,29 @@ void __qdf_nbuf_add_rx_frag(__qdf_frag_t buf, __qdf_nbuf_t nbuf,
 			    int offset, int frag_len,
 			    unsigned int truesize, bool take_frag_ref);
 
+/**
+ * __qdf_nbuf_set_mark() - Set nbuf mark
+ * @buf: Pointer to nbuf
+ * @mark: Value to set mark
+ *
+ * Return: None
+ */
+static inline void __qdf_nbuf_set_mark(__qdf_nbuf_t buf, uint32_t mark)
+{
+	buf->mark = mark;
+}
+
+/**
+ * __qdf_nbuf_get_mark() - Get nbuf mark
+ * @buf: Pointer to nbuf
+ *
+ * Return: Value of mark
+ */
+static inline uint32_t __qdf_nbuf_get_mark(__qdf_nbuf_t buf)
+{
+	return buf->mark;
+}
+
 #ifdef CONFIG_NBUF_AP_PLATFORM
 #include <i_qdf_nbuf_w.h>
 #else
