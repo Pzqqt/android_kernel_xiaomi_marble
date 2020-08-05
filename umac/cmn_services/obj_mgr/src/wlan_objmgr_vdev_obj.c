@@ -1107,7 +1107,7 @@ QDF_STATUS wlan_objmgr_vdev_try_get_ref(struct wlan_objmgr_vdev *vdev,
 		wlan_vdev_obj_unlock(vdev);
 		if (vdev->vdev_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err(
+			obj_mgr_debug(
 			"[Ref id: %d] vdev(%d) is not in Created state(%d)",
 				id, vdev_id, vdev->obj_state);
 
