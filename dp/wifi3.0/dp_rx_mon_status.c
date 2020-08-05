@@ -2039,10 +2039,10 @@ dp_rx_pdev_mon_status_desc_pool_init(struct dp_pdev *pdev, uint32_t mac_id)
 	qdf_mem_zero(&pdev->ppdu_info, sizeof(pdev->ppdu_info));
 
 	/*
-	 * Set ppdu_id to HAL_INVALID_PPDU_ID in order to avoid ppdu_id
+	 * Set last_ppdu_id to HAL_INVALID_PPDU_ID in order to avoid ppdu_id
 	 * match with '0' ppdu_id from monitor status ring
 	 */
-	pdev->ppdu_info.com_info.ppdu_id = HAL_INVALID_PPDU_ID;
+	pdev->ppdu_info.com_info.last_ppdu_id = HAL_INVALID_PPDU_ID;
 
 	qdf_mem_zero(&pdev->rx_mon_stats, sizeof(pdev->rx_mon_stats));
 
