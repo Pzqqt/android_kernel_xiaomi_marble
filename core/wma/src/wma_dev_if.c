@@ -4373,13 +4373,6 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, del_sta->smesessionId)) {
-		wma_err("roaming in progress, reject del sta!");
-		del_sta->status = QDF_STATUS_E_PERM;
-		qdf_mem_free(peer_state);
-		goto send_del_rsp;
-	}
-
 	peer_state->peer_state = TDLS_PEER_STATE_TEARDOWN;
 	peer_state->vdev_id = del_sta->smesessionId;
 	peer_state->resp_reqd = del_sta->respReqd;
@@ -4448,8 +4441,6 @@ static void wma_delete_sta_req_sta_mode(tp_wma_handle wma,
 
 	iface = &wma->interfaces[params->smesessionId];
 	iface->uapsd_cached_val = 0;
-	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, params->smesessionId))
-		return;
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType) {
 		wma_del_tdls_sta(wma, params);
@@ -4533,22 +4524,20 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (del_sta->staType == STA_ENTRY_NDI_PEER)
 		oper_mode = BSS_OPERATIONAL_MODE_NDI;
 
-	wma_debug("oper_mode %d", oper_mode);
+	wma_debug("vdev %d oper_mode %d", del_sta->smesessionId, oper_mode);
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
-		wma_delete_sta_req_sta_mode(wma, del_sta);
 		if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(wma->psoc, smesession_id)) {
 			wma_debug("LFR3: Del STA on vdev_id %d",
 				  del_sta->smesessionId);
 			qdf_mem_free(del_sta);
 			return;
 		}
-		if (!rsp_requested) {
-			wma_debug("vdev_id %d status %d",
-				 del_sta->smesessionId, del_sta->status);
+		wma_delete_sta_req_sta_mode(wma, del_sta);
+		if (!rsp_requested)
 			qdf_mem_free(del_sta);
-		}
+
 		break;
 
 	case BSS_OPERATIONAL_MODE_AP:
@@ -4556,16 +4545,11 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		/* free the memory here only if sync feature is not enabled */
 		if (!rsp_requested &&
 		    !wmi_service_enabled(wma->wmi_handle,
-				wmi_service_sync_delete_cmds)) {
-			wma_debug("vdev_id %d status %d",
-				 del_sta->smesessionId, del_sta->status);
+					 wmi_service_sync_delete_cmds))
 			qdf_mem_free(del_sta);
-		} else if (!rsp_requested &&
-				(del_sta->status != QDF_STATUS_SUCCESS)) {
-			wma_debug("Release del_sta mem vdev_id %d status %d",
-				 del_sta->smesessionId, del_sta->status);
+		else if (!rsp_requested &&
+			 (del_sta->status != QDF_STATUS_SUCCESS))
 			qdf_mem_free(del_sta);
-		}
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
 		wma_delete_sta_req_ndi_mode(wma, del_sta);
