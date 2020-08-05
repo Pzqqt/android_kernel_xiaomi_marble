@@ -55,7 +55,7 @@ cm_roam_scan_bmiss_cnt(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
- * wlan_cm_roam_reason_vsie() - set roam reason vsie
+ * cm_roam_reason_vsie() - set roam reason vsie
  * @psoc: psoc pointer
  * @vdev_id: vdev id
  * @params: roam reason vsie parameters
@@ -77,7 +77,7 @@ cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 }
 
 /**
- * wlan_cm_roam_triggers() - set roam triggers
+ * cm_roam_triggers() - set roam triggers
  * @psoc: psoc pointer
  * @vdev_id: vdev id
  * @params: roam triggers parameters
@@ -96,6 +96,47 @@ cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	wlan_cm_roam_get_vendor_btm_params(psoc, vdev_id,
 					   &params->vendor_btm_param);
 }
+
+/**
+ * cm_roam_disconnect_params() - set disconnect roam parameters
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @params: disconnect roam parameters
+ *
+ * This function is used to set disconnect roam parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_disconnect_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  struct wlan_roam_disconnect_params *params)
+{
+	params->vdev_id = vdev_id;
+	wlan_mlme_get_enable_disconnect_roam_offload(psoc, &params->enable);
+}
+
+/**
+ * cm_roam_idle_params() - set roam idle parameters
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @params: roam idle parameters
+ *
+ * This function is used to set roam idle parameters
+ *
+ * Return: None
+ */
+static void
+cm_roam_idle_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct wlan_roam_idle_params *params)
+{
+	params->vdev_id = vdev_id;
+	wlan_mlme_get_enable_idle_roam(psoc, &params->enable);
+	wlan_mlme_get_idle_roam_rssi_delta(psoc, &params->conn_ap_rssi_delta);
+	wlan_mlme_get_idle_roam_inactive_time(psoc, &params->inactive_time);
+	wlan_mlme_get_idle_data_packet_count(psoc, &params->data_pkt_count);
+	wlan_mlme_get_idle_roam_min_rssi(psoc, &params->conn_ap_min_rssi);
+	wlan_mlme_get_idle_roam_band(psoc, &params->band);
+}
 #else
 static inline void
 cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
@@ -106,6 +147,18 @@ cm_roam_reason_vsie(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 static inline void
 cm_roam_triggers(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		 struct wlan_roam_triggers *params)
+{
+}
+
+static void
+cm_roam_disconnect_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			  struct wlan_roam_disconnect_params *params)
+{
+}
+
+static void
+cm_roam_idle_params(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		    struct wlan_roam_idle_params *params)
 {
 }
 #endif
@@ -161,6 +214,8 @@ cm_roam_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &start_req->beacon_miss_cnt);
 	cm_roam_reason_vsie(psoc, vdev_id, &start_req->reason_vsie_enable);
 	cm_roam_triggers(psoc, vdev_id, &start_req->roam_triggers);
+	cm_roam_disconnect_params(psoc, vdev_id, &start_req->disconnect_params);
+	cm_roam_idle_params(psoc, vdev_id, &start_req->idle_params);
 
 	/* fill from legacy through this API */
 	wlan_cm_roam_fill_start_req(psoc, vdev_id, start_req, reason);

@@ -17690,24 +17690,114 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 }
 
 /**
+ * check_allowed_ssid_list() - Check the WhiteList
+ * @req_buffer:      Buffer which contains the connected profile SSID.
+ * @roam_params:     Buffer which contains the whitelist SSID's.
+ *
+ * Check if the connected profile SSID exists in the whitelist.
+ * It is assumed that the framework provides this also in the whitelist.
+ * If it exists there is no issue. Otherwise add it to the list.
+ *
+ * Return: None
+ */
+static void check_allowed_ssid_list(struct roam_offload_scan_req *req_buffer,
+				    struct roam_ext_params *roam_params)
+{
+	int i = 0;
+	bool match = false;
+
+	for (i = 0; i < roam_params->num_ssid_allowed_list; i++) {
+		if ((roam_params->ssid_allowed_list[i].length ==
+			req_buffer->ConnectedNetwork.ssId.length) &&
+			(!qdf_mem_cmp(roam_params->ssid_allowed_list[i].ssId,
+				req_buffer->ConnectedNetwork.ssId.ssId,
+				roam_params->ssid_allowed_list[i].length))) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+				  "Whitelist contains connected profile SSID");
+			match = true;
+			break;
+		}
+	}
+	if (!match) {
+		if (roam_params->num_ssid_allowed_list >=
+				MAX_SSID_ALLOWED_LIST) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+				 "Whitelist is FULL. Cannot Add another entry");
+			return;
+		}
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  "Adding Connected profile SSID to whitelist");
+		/* i is the next available index to add the entry.*/
+		i = roam_params->num_ssid_allowed_list;
+		qdf_mem_copy(roam_params->ssid_allowed_list[i].ssId,
+			     req_buffer->ConnectedNetwork.ssId.ssId,
+			     req_buffer->ConnectedNetwork.ssId.length);
+		roam_params->ssid_allowed_list[i].length =
+			req_buffer->ConnectedNetwork.ssId.length;
+		roam_params->num_ssid_allowed_list++;
+	}
+}
+
+/**
+ * csr_add_rssi_reject_ap_list() - add rssi reject AP list to the
+ * roam params
+ * @mac_ctx: mac ctx.
+ * @roam_params: roam params in which reject AP list needs
+ * to be populated.
+ *
+ * Return: None
+ */
+static void
+csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
+			    struct roam_ext_params *roam_params)
+{
+	int i = 0;
+	struct reject_ap_config_params *reject_list;
+
+	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
+				     MAX_RSSI_AVOID_BSSID_LIST);
+	if (!reject_list)
+		return;
+
+	roam_params->num_rssi_rejection_ap =
+		wlan_blm_get_bssid_reject_list(mac_ctx->pdev, reject_list,
+					       MAX_RSSI_AVOID_BSSID_LIST,
+					       DRIVER_RSSI_REJECT_TYPE);
+	if (!roam_params->num_rssi_rejection_ap) {
+		qdf_mem_free(reject_list);
+		return;
+	}
+
+	for (i = 0; i < roam_params->num_rssi_rejection_ap; i++) {
+		roam_params->rssi_reject_bssid_list[i] = reject_list[i];
+		sme_debug("BSSID %pM expected rssi %d remaining duration %d",
+			  roam_params->rssi_reject_bssid_list[i].bssid.bytes,
+			  roam_params->rssi_reject_bssid_list[i].expected_rssi,
+			  roam_params->rssi_reject_bssid_list[i].
+							reject_duration);
+	}
+
+	qdf_mem_free(reject_list);
+}
+#endif
+
+/**
  * csr_update_11k_offload_params - Update 11K offload params
  * @mac_ctx: MAC context
  * @session: Pointer to the CSR Roam Session
- * @req_buffer: Pointer to the RSO Request buffer
+ * @params: Pointer to the roam 11k offload params
  * @enabled: 11k offload enabled/disabled.
  *
- * API to update 11k offload params to Roam Scan Offload request buffer
+ * API to update 11k offload params
  *
  * Return: none
  */
 static void
 csr_update_11k_offload_params(struct mac_context *mac_ctx,
 			      struct csr_roam_session *session,
-			      struct roam_offload_scan_req *req_buffer,
+			      struct wlan_roam_11k_offload_params *params,
 			      bool enabled)
 {
-	struct wlan_roam_11k_offload_params *params =
-		&req_buffer->offload_11k_params;
 	struct csr_config *csr_config = &mac_ctx->roam.configParam;
 	struct csr_neighbor_report_offload_params *neighbor_report_offload =
 		&csr_config->neighbor_report_offload;
@@ -17788,97 +17878,6 @@ csr_update_11k_offload_params(struct mac_context *mac_ctx,
 			session->connectedProfile.SSID.ssId,
 			session->connectedProfile.SSID.length);
 }
-
-/**
- * check_allowed_ssid_list() - Check the WhiteList
- * @req_buffer:      Buffer which contains the connected profile SSID.
- * @roam_params:     Buffer which contains the whitelist SSID's.
- *
- * Check if the connected profile SSID exists in the whitelist.
- * It is assumed that the framework provides this also in the whitelist.
- * If it exists there is no issue. Otherwise add it to the list.
- *
- * Return: None
- */
-static void check_allowed_ssid_list(struct roam_offload_scan_req *req_buffer,
-				    struct roam_ext_params *roam_params)
-{
-	int i = 0;
-	bool match = false;
-
-	for (i = 0; i < roam_params->num_ssid_allowed_list; i++) {
-		if ((roam_params->ssid_allowed_list[i].length ==
-			req_buffer->ConnectedNetwork.ssId.length) &&
-			(!qdf_mem_cmp(roam_params->ssid_allowed_list[i].ssId,
-				req_buffer->ConnectedNetwork.ssId.ssId,
-				roam_params->ssid_allowed_list[i].length))) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"Whitelist contains connected profile SSID");
-			match = true;
-			break;
-		}
-	}
-	if (!match) {
-		if (roam_params->num_ssid_allowed_list >=
-				MAX_SSID_ALLOWED_LIST) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"Whitelist is FULL. Cannot Add another entry");
-			return;
-		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"Adding Connected profile SSID to whitelist");
-		/* i is the next available index to add the entry.*/
-		i = roam_params->num_ssid_allowed_list;
-		qdf_mem_copy(roam_params->ssid_allowed_list[i].ssId,
-				req_buffer->ConnectedNetwork.ssId.ssId,
-				req_buffer->ConnectedNetwork.ssId.length);
-		roam_params->ssid_allowed_list[i].length =
-			req_buffer->ConnectedNetwork.ssId.length;
-		roam_params->num_ssid_allowed_list++;
-	}
-}
-
-/**
- * csr_add_rssi_reject_ap_list() - add rssi reject AP list to the
- * roam params
- * @mac_ctx: mac ctx.
- * @roam_params: roam params in which reject AP list needs
- * to be populated.
- *
- * Return: None
- */
-static void
-csr_add_rssi_reject_ap_list(struct mac_context *mac_ctx,
-			    struct roam_ext_params *roam_params)
-{
-	int i = 0;
-	struct reject_ap_config_params *reject_list;
-
-	reject_list = qdf_mem_malloc(sizeof(*reject_list) *
-				     MAX_RSSI_AVOID_BSSID_LIST);
-	if (!reject_list)
-		return;
-
-	roam_params->num_rssi_rejection_ap =
-		wlan_blm_get_bssid_reject_list(mac_ctx->pdev, reject_list,
-					       MAX_RSSI_AVOID_BSSID_LIST,
-					       DRIVER_RSSI_REJECT_TYPE);
-	if (!roam_params->num_rssi_rejection_ap) {
-		qdf_mem_free(reject_list);
-		return;
-	}
-
-	for (i = 0; i < roam_params->num_rssi_rejection_ap; i++) {
-		roam_params->rssi_reject_bssid_list[i] = reject_list[i];
-		sme_debug("BSSID %pM expected rssi %d remaining duration %d",
-		   roam_params->rssi_reject_bssid_list[i].bssid.bytes,
-		   roam_params->rssi_reject_bssid_list[i].expected_rssi,
-		   roam_params->rssi_reject_bssid_list[i].reject_duration);
-	}
-
-	qdf_mem_free(reject_list);
-}
-#endif
 
 QDF_STATUS csr_invoke_neighbor_report_request(
 				uint8_t session_id,
@@ -19214,9 +19213,11 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 	 * 11k offload is disabled during RSO Stop after disconnect indication
 	 */
 	if (command == ROAM_SCAN_OFFLOAD_START)
-		csr_update_11k_offload_params(mac_ctx, session, req_buf, TRUE);
+		csr_update_11k_offload_params(
+			mac_ctx, session, &req_buf->offload_11k_params, TRUE);
 	else if (command == ROAM_SCAN_OFFLOAD_STOP)
-		csr_update_11k_offload_params(mac_ctx, session, req_buf, FALSE);
+		csr_update_11k_offload_params(
+			mac_ctx, session, &req_buf->offload_11k_params, FALSE);
 
 	wlan_cm_roam_get_vendor_btm_params(mac_ctx->psoc, session_id,
 					   &req_buf->roam_triggers.
@@ -19727,7 +19728,7 @@ csr_cm_roam_scan_filter(struct mac_context *mac_ctx, uint8_t vdev_id,
  * csr_cm_roam_scan_btm_offload() - set roam scan btm offload parameters
  * @mac_ctx: global mac ctx
  * @session: sme session
- * @params:  roam roam scan btm offload parameters
+ * @params:  roam scan btm offload parameters
  *
  * This function is used to set roam scan btm offload related parameters
  *
@@ -19753,6 +19754,26 @@ csr_cm_roam_scan_btm_offload(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->btm.btm_query_bitmask;
 	params->btm_candidate_min_score =
 			mac_ctx->mlme_cfg->btm.btm_trig_min_candidate_score;
+}
+
+/**
+ * csr_cm_roam_offload_11k_params() - set roam 11k offload parameters
+ * @mac_ctx: global mac ctx
+ * @session: sme session
+ * @params:  roam 11k offload parameters
+ * @enabled: 11k offload enabled/disabled
+ *
+ * This function is used to set roam 11k offload related parameters
+ *
+ * Return: None
+ */
+static void
+csr_cm_roam_offload_11k_params(struct mac_context *mac_ctx,
+			       struct csr_roam_session *session,
+			       struct wlan_roam_11k_offload_params *params,
+			       bool enabled)
+{
+	csr_update_11k_offload_params(mac_ctx, session, params, enabled);
 }
 
 QDF_STATUS
@@ -19782,16 +19803,19 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 					     &req->rssi_params);
 
 	csr_cm_roam_scan_offload_scan_period(mac_ctx, session->vdev_id,
-					      &req->scan_period_params);
+					     &req->scan_period_params);
 
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
-					     &req->profile_params);
+					    &req->profile_params);
 
 	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_START,
-				 reason, &req->scan_filter_params);
+				reason, &req->scan_filter_params);
 
 	csr_cm_roam_scan_btm_offload(mac_ctx, session, &req->btm_config);
 
+	/* 11k offload is enabled during RSO Start after connect indication */
+	csr_cm_roam_offload_11k_params(mac_ctx, session,
+				       &req->roam_11k_params, TRUE);
 	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
 
 	return status;
