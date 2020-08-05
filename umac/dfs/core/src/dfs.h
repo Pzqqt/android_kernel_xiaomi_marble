@@ -1761,8 +1761,15 @@ int dfs_get_random_bin5_dur(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  * @dl: Pointer to dfs_delayline structure.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_print_delayline(struct wlan_dfs *dfs,
 		struct dfs_delayline *dl);
+#else
+static inline
+void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
+{
+}
+#endif
 
 /**
  * dfs_print_nol() - Print NOL elements.
@@ -1906,9 +1913,19 @@ int dfs_staggered_check(struct wlan_dfs *dfs,
  *
  * Return: Returns pri_margin.
  */
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_pri_margin(struct wlan_dfs *dfs,
 		int is_extchan_detect,
 		int is_fixed_pattern);
+#else
+static inline
+int dfs_get_pri_margin(struct wlan_dfs *dfs,
+		       int is_extchan_detect,
+		       int is_fixed_pattern)
+{
+	return 0;
+}
+#endif
 
 /**
  * dfs_get_filter_threshold() - Get filter threshold.

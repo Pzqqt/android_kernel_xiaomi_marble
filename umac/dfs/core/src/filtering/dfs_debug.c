@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include "../dfs.h"
 #include "wlan_dfs_lmac_api.h"
 
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
 {
 	int i = 0, index;
@@ -38,6 +39,7 @@ void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
 		index = (index + 1) & DFS_MAX_DL_MASK;
 	}
 }
+#endif
 
 void dfs_print_filter(struct wlan_dfs *dfs, struct dfs_filter *rf)
 {

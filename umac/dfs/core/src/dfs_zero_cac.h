@@ -164,7 +164,7 @@ struct dfs_precac_entry {
  * dfs_zero_cac_timer_init() - Initialize zero-cac timers
  * @dfs_soc_obj: Pointer to DFS SOC object structure.
  */
-#if !defined(QCA_MCL_DFS_SUPPORT)
+#if defined(ATH_SUPPORT_ZERO_CAC_DFS) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj);
 #else
 static inline void
@@ -308,7 +308,7 @@ static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
  * dfs_zero_cac_timer_detach() - Free Zero cac DFS variables.
  * @dfs_soc_obj: Pointer to dfs_soc_priv_obj structure.
  */
-#if !defined(QCA_MCL_DFS_SUPPORT)
+#if defined(ATH_SUPPORT_ZERO_CAC_DFS) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj);
 #else
 static inline void
