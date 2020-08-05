@@ -39,6 +39,7 @@ endif
 
 qdf-objs :=                     \
 linux/src/qdf_defer.o  \
+linux/src/qdf_func_tracker.o \
 linux/src/qdf_dev.o    \
 linux/src/qdf_event.o   \
 linux/src/qdf_file.o   \

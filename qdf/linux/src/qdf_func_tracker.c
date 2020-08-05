@@ -19,6 +19,7 @@
 #include <linux/string.h>
 #include <qdf_func_tracker.h>
 #include <qdf_mem.h>
+#include <qdf_module.h>
 
 #ifdef FUNC_CALL_MAP
 char qdf_func_call_map_buf[QDF_FUNCTION_CALL_MAP_BUF_LEN] = {0};
@@ -33,14 +34,21 @@ void cc_func(unsigned int track)
 	qdf_func_call_map_buf[index] |= (char)(1 << bit);
 }
 
+qdf_export_symbol(cc_func);
+
 void qdf_get_func_call_map(char *data)
 {
 	qdf_mem_copy(data, qdf_func_call_map_buf,
 		     QDF_FUNCTION_CALL_MAP_BUF_LEN);
 }
 
+qdf_export_symbol(qdf_get_func_call_map);
+
 void qdf_clear_func_call_map(void)
 {
 	qdf_mem_zero(qdf_func_call_map_buf, QDF_FUNCTION_CALL_MAP_BUF_LEN);
 }
+
+qdf_export_symbol(qdf_clear_func_call_map);
+
 #endif
