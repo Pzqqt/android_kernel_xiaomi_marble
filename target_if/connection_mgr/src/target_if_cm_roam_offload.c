@@ -242,6 +242,77 @@ target_if_cm_roam_scan_get_cckm_mode(struct wlan_objmgr_vdev *vdev,
 	else
 		return WMI_AUTH_CCKM;
 }
+
+/* target_if_cm_roam_disconnect_params(): Send the disconnect roam parameters
+ * to wmi
+ * @wmi_handle: handle to WMI
+ * @command: rso command
+ * @req: disconnect roam parameters
+ *
+ * Return: void
+ */
+static void
+target_if_cm_roam_disconnect_params(wmi_unified_t wmi_handle, uint8_t command,
+				    struct wlan_roam_disconnect_params *req)
+{
+	QDF_STATUS status;
+
+	switch (command) {
+	case ROAM_SCAN_OFFLOAD_START:
+	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
+		if (!req->enable)
+			return;
+		break;
+	case ROAM_SCAN_OFFLOAD_STOP:
+		req->enable = false;
+		break;
+	default:
+		break;
+	}
+
+	status = wmi_unified_send_disconnect_roam_params(wmi_handle, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("failed to send disconnect roam parameters");
+}
+
+/* target_if_cm_roam_idle_params(): Send the roam idle parameters to wmi
+ * @wmi_handle: handle to WMI
+ * @command: rso command
+ * @req: roam idle parameters
+ *
+ * Return: void
+ */
+static void
+target_if_cm_roam_idle_params(wmi_unified_t wmi_handle, uint8_t command,
+			      struct wlan_roam_idle_params *req)
+{
+	QDF_STATUS status;
+	bool db2dbm_enabled;
+
+	switch (command) {
+	case ROAM_SCAN_OFFLOAD_START:
+	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
+		if (!req->enable)
+			return;
+		break;
+	case ROAM_SCAN_OFFLOAD_STOP:
+		req->enable = false;
+		break;
+	default:
+		break;
+	}
+
+	db2dbm_enabled = wmi_service_enabled(wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (!db2dbm_enabled) {
+		req->conn_ap_min_rssi -= NOISE_FLOOR_DBM_DEFAULT;
+		req->conn_ap_min_rssi &= 0x000000ff;
+	}
+
+	status = wmi_unified_send_idle_roam_params(wmi_handle, req);
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("failed to send idle roam parameters");
+}
 #else
 static void
 target_if_cm_roam_reason_vsie(wmi_unified_t wmi_handle,
@@ -261,6 +332,18 @@ target_if_cm_roam_scan_get_cckm_mode(struct wlan_objmgr_vdev *vdev,
 				     uint32_t auth_mode)
 {
 	return WMI_AUTH_CCKM;
+}
+
+static void
+target_if_cm_roam_disconnect_params(wmi_unified_t wmi_handle, uint8_t command,
+				    struct wlan_roam_disconnect_params *req)
+{
+}
+
+static void
+target_if_cm_roam_idle_params(wmi_unified_t wmi_handle, uint8_t command,
+			      struct wlan_roam_idle_params *req)
+{
 }
 #endif
 /**
@@ -585,6 +668,42 @@ target_if_cm_roam_scan_btm_offload(wmi_unified_t wmi_handle,
 	return wmi_unified_send_btm_config(wmi_handle, req);
 }
 
+/**
+ * target_if_cm_roam_offload_11k_params() - send 11k offload params to firmware
+ * @wmi_handle: wmi handle
+ * @req: 11k offload parameters
+ *
+ * Send WMI_11K_OFFLOAD_REPORT_CMDID parameters to firmware
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS
+target_if_cm_roam_offload_11k_params(wmi_unified_t wmi_handle,
+				     struct wlan_roam_11k_offload_params *req)
+{
+	QDF_STATUS status;
+
+	if (!wmi_service_enabled(wmi_handle,
+				 wmi_service_11k_neighbour_report_support)) {
+		target_if_err("FW doesn't support 11k offload");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/* If 11k enable command and ssid length is 0, drop it */
+	if (req->offload_11k_bitmask &&
+	    !req->neighbor_report_params.ssid.length) {
+		target_if_debug("SSID Len 0");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_offload_11k_cmd(wmi_handle, req);
+
+	if (status != QDF_STATUS_SUCCESS)
+		target_if_err("failed to send 11k offload command");
+
+	return status;
+}
+
 static uint32_t
 target_if_get_wmi_roam_offload_flag(uint32_t flag)
 {
@@ -702,8 +821,25 @@ target_if_cm_roam_send_start(struct wlan_objmgr_vdev *vdev,
 						    &req->btm_config);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("Sending BTM config to fw failed");
+		goto end;
 	}
 
+	/*
+	 * Send 11k offload enable and bss load trigger parameters
+	 * to FW as part of RSO Start
+	 */
+	status = target_if_cm_roam_offload_11k_params(wmi_handle,
+						      &req->roam_11k_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("11k offload enable not sent, status %d", status);
+		goto end;
+	}
+
+	target_if_cm_roam_disconnect_params(wmi_handle, ROAM_SCAN_OFFLOAD_START,
+					    &req->disconnect_params);
+
+	target_if_cm_roam_idle_params(wmi_handle, ROAM_SCAN_OFFLOAD_START,
+				      &req->idle_params);
 	/* add other wmi commands */
 end:
 	return status;

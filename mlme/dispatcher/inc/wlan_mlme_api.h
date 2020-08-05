@@ -2516,6 +2516,81 @@ uint32_t wlan_mlme_get_roaming_triggers(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS
 wlan_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 			      bool *val);
+
+/**
+ * wlan_mlme_get_enable_disconnect_roam_offload() - Get emergency roaming
+ * Enable/Disable status during deauth/disassoc
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to emergency roaming Enable/Disable status
+ *        during deauth/disassoc
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_enable_disconnect_roam_offload(struct wlan_objmgr_psoc *psoc,
+					     bool *val);
+
+/**
+ * wlan_mlme_get_enable_idle_roam() - Get Enable/Disable idle roaming status
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to Enable/Disable idle roaming status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_enable_idle_roam(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * wlan_mlme_get_idle_roam_rssi_delta() - Get idle roam rssi delta
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to idle roam rssi delta
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_idle_roam_rssi_delta(struct wlan_objmgr_psoc *psoc,
+				   uint32_t *val);
+
+/**
+ * wlan_mlme_get_idle_roam_inactive_time() - Get idle roam inactive time
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to idle roam inactive time
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_idle_roam_inactive_time(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *val);
+/**
+ * wlan_mlme_get_idle_data_packet_count() - Get idle data packet count
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to idle data packet count
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_idle_data_packet_count(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *val);
+
+/**
+ * wlan_mlme_get_idle_roam_min_rssi() - Get idle roam min rssi
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to idle roam min rssi
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_idle_roam_min_rssi(struct wlan_objmgr_psoc *psoc, uint32_t *val);
+
+/**
+ * wlan_mlme_get_idle_roam_band() - Get idle roam band
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to idle roam band
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_idle_roam_band(struct wlan_objmgr_psoc *psoc, uint32_t *val);
 #else
 static inline QDF_STATUS
 wlan_mlme_get_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
