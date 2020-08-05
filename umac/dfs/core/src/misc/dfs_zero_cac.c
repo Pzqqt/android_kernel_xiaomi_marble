@@ -273,10 +273,12 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 	dfs->dfs_precac_secondary_freq_mhz = 0;
 }
 
+#if defined(ATH_SUPPORT_ZERO_CAC_DFS) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 	qdf_timer_free(&dfs_soc_obj->dfs_precac_timer);
 }
+#endif
 
 int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)
 {
@@ -1474,6 +1476,7 @@ static os_timer_func(dfs_precac_timeout)
 	}
 }
 
+#if defined(ATH_SUPPORT_ZERO_CAC_DFS) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 	dfs_soc_obj->precac_state_started = false;
@@ -1482,6 +1485,7 @@ void dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
 		       (void *)dfs_soc_obj,
 		       QDF_TIMER_TYPE_WAKE_APPS);
 }
+#endif
 
 void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 {
