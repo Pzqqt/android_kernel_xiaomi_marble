@@ -1496,8 +1496,8 @@ static int ipa_mhi_resume_channels(bool LPTransitionRejected,
 	for (i = 0; i < max_channels; i++) {
 		if (!channels[i].valid)
 			continue;
-		if (channels[i].state !=
-		    IPA_HW_MHI_CHANNEL_STATE_SUSPEND)
+		if (channels[i].state != IPA_HW_MHI_CHANNEL_STATE_SUSPEND &&
+		    !channels[i].stop_in_proc)
 			continue;
 		channel = &channels[i];
 		IPA_MHI_DBG("resuming channel %d\n", channel->id);
