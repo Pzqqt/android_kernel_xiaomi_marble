@@ -4467,14 +4467,14 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			htc_pm_runtime_put(soc->htc_soc);
 			soc->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 			soc->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 				"target uses HTT version %d.%d; host uses %d.%d",
 				soc->tgt_ver.major, soc->tgt_ver.minor,
 				HTT_CURRENT_VERSION_MAJOR,
 				HTT_CURRENT_VERSION_MINOR);
 			if (soc->tgt_ver.major != HTT_CURRENT_VERSION_MAJOR) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_ERROR,
+					QDF_TRACE_LEVEL_WARN,
 					"*** Incompatible host/target HTT versions!");
 			}
 			/* abort if the target is incompatible with the host */
@@ -4482,7 +4482,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				HTT_CURRENT_VERSION_MAJOR);
 			if (soc->tgt_ver.minor != HTT_CURRENT_VERSION_MINOR) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
-					QDF_TRACE_LEVEL_WARN,
+					QDF_TRACE_LEVEL_INFO_LOW,
 					"*** Warning: host/target HTT versions"
 					" are different, though compatible!");
 			}
