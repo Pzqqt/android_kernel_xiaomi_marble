@@ -8056,6 +8056,9 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	uint16_t latency_level;
 	QDF_STATUS status;
 
+	if (!hdd_is_wlm_latency_manager_supported(hdd_ctx))
+		return -EINVAL;
+
 	latency_level = nla_get_u16(attr);
 	switch (latency_level) {
 	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL:
