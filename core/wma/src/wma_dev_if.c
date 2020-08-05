@@ -2726,7 +2726,7 @@ QDF_STATUS wma_vdev_pre_start(uint8_t vdev_id, bool restart)
 	}
 
 	/* Send the dynamic nss chain params before vdev start to fw */
-	if (wma->dynamic_nss_chains_support)
+	if (wma->dynamic_nss_chains_support && !restart)
 		wma_vdev_nss_chain_params_send(vdev_id, ini_cfg);
 
 	status = ucfg_coex_psoc_get_btc_chain_mode(wma->psoc, &btc_chain_mode);
