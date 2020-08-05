@@ -194,6 +194,7 @@ struct msm_asoc_mach_data {
 	int core_audio_vote_count;
 	u32 wsa_max_devs;
 	u32 tdm_max_slots; /* Max TDM slots used */
+	int wcd_disabled;
 };
 
 struct tdm_port {
@@ -7650,6 +7651,12 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_card *card = NULL;
 	struct msm_asoc_mach_data *pdata;
 
+	pdata = snd_soc_card_get_drvdata(rtd->card);
+	if(!pdata)
+		return -EINVAL;
+
+	if (pdata->wcd_disabled)
+		return 0;
 	component = snd_soc_rtdcom_lookup(rtd, WCD938X_DRV_NAME);
 	if (!component) {
 		pr_err("%s component is NULL\n", __func__);
@@ -7668,7 +7675,6 @@ static int msm_aux_codec_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
-	pdata = snd_soc_card_get_drvdata(component->card);
 	if (!pdata->codec_root) {
 		entry = msm_snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
@@ -7844,6 +7850,10 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	of_property_read_u32(pdev->dev.of_node,
 				"qcom,lito-is-v2-enabled",
 				&pdata->lito_v2_enabled);
+
+	of_property_read_u32(pdev->dev.of_node,
+				"qcom,wcd-disabled",
+				&pdata->wcd_disabled);
 
 	card = populate_snd_card_dailinks(&pdev->dev);
 	if (!card) {
