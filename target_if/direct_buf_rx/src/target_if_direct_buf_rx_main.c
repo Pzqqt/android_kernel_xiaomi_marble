@@ -1620,6 +1620,12 @@ static QDF_STATUS target_if_get_dbr_data(struct wlan_objmgr_pdev *pdev,
 	*cookie = WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_GET(
 				dbr_rsp->dbr_entries[idx].paddr_hi);
 	dbr_data->vaddr = target_if_dbr_vaddr_lookup(mod_param, paddr, *cookie);
+
+	if (!dbr_data->vaddr) {
+		direct_buf_rx_err("dbr vaddr lookup failed, vaddr NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	dbr_data->cookie = *cookie;
 	dbr_data->paddr = paddr;
 	direct_buf_rx_debug("Cookie = %d Vaddr look up = %pK",
