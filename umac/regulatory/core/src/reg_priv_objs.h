@@ -99,6 +99,8 @@ struct chan_change_cbk_entry {
  *	(service bit WMI_SERVICE_5_DOT_9GHZ_SUPPORT)
  * @enable_5dot9_ghz_chan_in_master_mode: 5.9 GHz channel support in
  *	master mode (ini fcc_5dot9_ghz_chan_in_master_mode)
+ * @retain_nol_across_regdmn_update: Retain the NOL list across the regdomain
+ *	changes.
  */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
@@ -150,6 +152,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool enable_11d_in_world_mode;
 	bool enable_5dot9_ghz_chan_in_master_mode;
 	qdf_spinlock_t cbk_list_lock;
+	bool retain_nol_across_regdmn_update;
 };
 
 /**

@@ -1141,7 +1141,8 @@ QDF_STATUS reg_process_master_chan_list(
 			REGULATORY_CHAN_DISABLED;
 		mas_chan_list[chan_enum].state =
 			CHANNEL_STATE_DISABLE;
-		mas_chan_list[chan_enum].nol_chan = false;
+		if (!soc_reg->retain_nol_across_regdmn_update)
+			mas_chan_list[chan_enum].nol_chan = false;
 	}
 
 	soc_reg->num_phy = regulat_info->num_phy;

@@ -95,6 +95,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->enable_11d_in_world_mode = false;
 	soc_reg_obj->five_dot_nine_ghz_supported = false;
 	soc_reg_obj->enable_5dot9_ghz_chan_in_master_mode = false;
+	soc_reg_obj->retain_nol_across_regdmn_update = false;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;

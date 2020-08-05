@@ -980,6 +980,7 @@ enum restart_beaconing_on_ch_avoid_rule {
  * @enable_11d_in_world_mode: enable 11d in world mode
  * @enable_5dot9_ghz_chan_in_master_mode: 5.9 GHz channel support in
  * master mode
+ * @retain_nol_across_regdmn_update: Retain the NOL list across the regdomain.
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -993,6 +994,7 @@ struct reg_config_vars {
 	bool enable_srd_chan_in_master_mode;
 	bool enable_11d_in_world_mode;
 	bool enable_5dot9_ghz_chan_in_master_mode;
+	bool retain_nol_across_regdmn_update;
 };
 
 /**
