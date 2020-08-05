@@ -18569,8 +18569,6 @@ csr_post_rso_stop(struct mac_context *mac, uint8_t vdev_id, uint16_t reason)
 	status = csr_roam_send_rso_cmd(mac, vdev_id, req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("ROAM: Post RSO stop failed, vdev_id: %d", vdev_id);
-		qdf_mem_zero(req, sizeof(*req));
-		qdf_mem_free(req);
 		return QDF_STATUS_E_FAULT;
 	}
 	roam_info->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
