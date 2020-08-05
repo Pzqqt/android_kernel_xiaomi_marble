@@ -5220,6 +5220,7 @@ typedef enum {
 	wmi_service_5dot9_ghz_support,
 	wmi_service_cfr_ta_ra_as_fp_support,
 	wmi_service_cfr_capture_count_support,
+	wmi_service_ll_stats_per_chan_rx_tx_time,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

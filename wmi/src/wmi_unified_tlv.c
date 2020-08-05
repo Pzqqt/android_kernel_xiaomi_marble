@@ -14754,6 +14754,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_CFR_TA_RA_AS_FP_SUPPORT;
 	wmi_service[wmi_service_cfr_capture_count_support] =
 			WMI_SERVICE_CFR_CAPTURE_COUNT_SUPPORT;
+	wmi_service[wmi_service_ll_stats_per_chan_rx_tx_time] =
+			WMI_SERVICE_LL_STATS_PER_CHAN_RX_TX_TIME_SUPPORT;
 }
 
 /**
