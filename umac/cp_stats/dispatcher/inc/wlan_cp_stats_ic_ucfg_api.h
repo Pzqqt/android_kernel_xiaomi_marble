@@ -625,6 +625,15 @@ UCFG_PEER_CP_STATS_SET_FUNCS(is_tx_nobuf);
 UCFG_PEER_CP_STATS_SET_FUNCS(tx_dropblock);
 #endif
 UCFG_PEER_CP_STATS_SET_FUNCS(rx_decryptcrc);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_event_type);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_flow_id);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_bcast);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_trig);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_announ);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_dialog_id);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_wake_dura_us);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_wake_intvl_us);
+UCFG_PEER_CP_STATS_SET_FUNCS(twt_sp_offset_us);
 
 static inline
 void ucfg_peer_cp_stats_rx_mgmt_rssi_update(struct wlan_objmgr_peer *peer,

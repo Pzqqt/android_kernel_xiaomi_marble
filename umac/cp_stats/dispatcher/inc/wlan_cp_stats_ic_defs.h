@@ -468,6 +468,17 @@ struct peer_ic_cp_stats {
 	uint32_t cs_tx_assoc_fail;
 	uint32_t cs_is_tx_nobuf;
 	uint32_t cs_rx_decryptcrc;
+
+	/* TWT stats */
+	uint32_t cs_twt_event_type;
+	uint32_t cs_twt_flow_id:16,
+		 cs_twt_bcast:1,
+		 cs_twt_trig:1,
+		 cs_twt_announ:1;
+	uint32_t cs_twt_dialog_id;
+	uint32_t cs_twt_wake_dura_us;
+	uint32_t cs_twt_wake_intvl_us;
+	uint32_t cs_twt_sp_offset_us;
 };
 
 #endif /* QCA_SUPPORT_CP_STATS */
