@@ -649,7 +649,10 @@ struct csr_roamstruct {
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
 	uint32_t deauthRspStatus;
+#if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
+	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
 	qdf_mc_timer_t packetdump_timer;
+#endif
 	spinlock_t roam_state_lock;
 };
 

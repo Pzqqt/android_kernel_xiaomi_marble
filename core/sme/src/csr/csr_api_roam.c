@@ -1373,6 +1373,8 @@ void csr_set_global_cfgs(struct mac_context *mac)
 	csr_set_default_dot11_mode(mac);
 }
 
+#if defined(WLAN_LOGGING_SOCK_SVC_ENABLE) && \
+	defined(FEATURE_PKTLOG) && !defined(REMOVE_PKT_LOG)
 /**
  * csr_packetdump_timer_handler() - packet dump timer
  * handler
@@ -1388,6 +1390,34 @@ static void csr_packetdump_timer_handler(void *pv)
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s Invoking packetdump deregistration API", __func__);
 	wlan_deregister_txrx_packetdump(OL_TXRX_PDEV_ID);
+}
+
+void csr_packetdump_timer_start(void)
+{
+	QDF_STATUS status;
+	mac_handle_t mac_handle;
+	struct mac_context *mac;
+	QDF_TIMER_STATE cur_state;
+
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	mac = MAC_CONTEXT(mac_handle);
+	if (!mac) {
+		QDF_ASSERT(0);
+		return;
+	}
+	cur_state = qdf_mc_timer_get_current_state(&mac->roam.packetdump_timer);
+	if (cur_state == QDF_TIMER_STATE_STARTING ||
+	    cur_state == QDF_TIMER_STATE_STARTING) {
+		sme_debug("packetdump_timer is already started: %d", cur_state);
+		return;
+	}
+
+	status = qdf_mc_timer_start(&mac->roam.packetdump_timer,
+				    (PKT_DUMP_TIMER_DURATION *
+				     QDF_MC_TIMER_TO_SEC_UNIT) /
+				    QDF_MC_TIMER_TO_MS_UNIT);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_debug("cannot start packetdump timer status: %d", status);
 }
 
 void csr_packetdump_timer_stop(void)
@@ -1407,6 +1437,46 @@ void csr_packetdump_timer_stop(void)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("cannot stop packetdump timer");
 }
+
+static QDF_STATUS csr_packetdump_timer_init(struct mac_context *mac)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!mac) {
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
+
+	status = qdf_mc_timer_init(&mac->roam.packetdump_timer,
+				   QDF_TIMER_TYPE_SW,
+				   csr_packetdump_timer_handler,
+				   mac);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("cannot allocate memory for packetdump timer");
+		return status;
+	}
+
+	return status;
+}
+
+static void csr_packetdump_timer_deinit(struct mac_context *mac)
+{
+	if (!mac) {
+		QDF_ASSERT(0);
+		return;
+	}
+
+	qdf_mc_timer_stop(&mac->roam.packetdump_timer);
+	qdf_mc_timer_destroy(&mac->roam.packetdump_timer);
+}
+#else
+static inline QDF_STATUS csr_packetdump_timer_init(struct mac_context *mac)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void csr_packetdump_timer_deinit(struct mac_context *mac) {}
+#endif
 
 static QDF_STATUS csr_roam_open(struct mac_context *mac)
 {
@@ -1432,13 +1502,10 @@ static QDF_STATUS csr_roam_open(struct mac_context *mac)
 			sme_err("cannot allocate memory for WaitForKey time out timer");
 			break;
 		}
-		status = qdf_mc_timer_init(&mac->roam.packetdump_timer,
-				QDF_TIMER_TYPE_SW, csr_packetdump_timer_handler,
-				mac);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_err("cannot allocate memory for packetdump timer");
+		status = csr_packetdump_timer_init(mac);
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			break;
-		}
+
 		spin_lock_init(&mac->roam.roam_state_lock);
 	} while (0);
 	return status;
@@ -1458,8 +1525,7 @@ static QDF_STATUS csr_roam_close(struct mac_context *mac)
 
 	qdf_mc_timer_stop(&mac->roam.hTimerWaitForKey);
 	qdf_mc_timer_destroy(&mac->roam.hTimerWaitForKey);
-	qdf_mc_timer_stop(&mac->roam.packetdump_timer);
-	qdf_mc_timer_destroy(&mac->roam.packetdump_timer);
+	csr_packetdump_timer_deinit(mac);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -14740,7 +14806,6 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	uint8_t ese_config = 0;
 	tpCsrNeighborRoamControlInfo neigh_roam_info;
 	uint32_t value = 0, value1 = 0;
-	QDF_STATUS packetdump_timer_status;
 	bool is_vendor_ap_present;
 	struct vdev_type_nss *vdev_type_nss;
 	struct action_oui_search_attr vendor_ap_search_attr;
@@ -15659,17 +15724,9 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			break;
 		}
 
-		if (pProfile->csrPersona == QDF_STA_MODE) {
+		if (pProfile->csrPersona == QDF_STA_MODE)
 			wlan_register_txrx_packetdump(OL_TXRX_PDEV_ID);
-			packetdump_timer_status = qdf_mc_timer_start(
-						&mac->roam.packetdump_timer,
-						(PKT_DUMP_TIMER_DURATION *
-						QDF_MC_TIMER_TO_SEC_UNIT)/
-						QDF_MC_TIMER_TO_MS_UNIT);
-			if (!QDF_IS_STATUS_SUCCESS(packetdump_timer_status))
-				sme_debug("cannot start packetdump timer status: %d",
-					  packetdump_timer_status);
-		}
+
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 		if (eWNI_SME_JOIN_REQ == messageType) {
 			/* Notify QoS module that join happening */
