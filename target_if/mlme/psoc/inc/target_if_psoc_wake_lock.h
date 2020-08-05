@@ -28,19 +28,23 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <qdf_lock.h>
 
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 /**
  *  struct wlan_vdev_wakelock - vdev wake lock sub structure
  *  @start_wakelock: wakelock for vdev start
  *  @stop_wakelock: wakelock for vdev stop
  *  @delete_wakelock: wakelock for vdev delete
  *  @wmi_cmd_rsp_runtime_lock: run time lock
+ *  @prevent_runtime_lock: run time lock
+ *  @is_link_up: flag to check link status
  */
 struct psoc_mlme_wakelock {
 	qdf_wake_lock_t start_wakelock;
 	qdf_wake_lock_t stop_wakelock;
 	qdf_wake_lock_t delete_wakelock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
+	qdf_runtime_lock_t prevent_runtime_lock;
+	bool is_link_up;
 };
 #endif
 
@@ -50,7 +54,7 @@ enum wakelock_mode {
 	DELETE_WAKELOCK
 };
 
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 
 /**
  * target_if_wake_lock_init() - API to initialize
@@ -97,6 +101,27 @@ QDF_STATUS target_if_wake_lock_timeout_acquire(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS target_if_wake_lock_timeout_release(struct wlan_objmgr_psoc *psoc,
 					       enum wakelock_mode mode);
+
+/**
+ * target_if_vdev_start_link_handler() - check for SAP mode and DFS freq
+						to handle link up/down
+ * @vdev: pointer to vdev
+ * @cfreq1 : center freq1
+ * @cfreq2 : center freq2
+ *
+ * Return: None
+ */
+void target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
+				       uint32_t cfreq1, uint32_t cfreq2);
+
+/**
+ * target_if_vdev_stop_link_handler() - check for SAP mode to handle link
+ * @vdev: pointer to vdev
+ *
+ * Return: None
+ */
+void target_if_vdev_stop_link_handler(struct wlan_objmgr_vdev *vdev);
+
 #else
 static inline void target_if_wake_lock_init(struct wlan_objmgr_psoc *psoc)
 {
@@ -119,5 +144,17 @@ static inline QDF_STATUS target_if_wake_lock_timeout_release(
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline void
+target_if_vdev_start_link_handler(struct wlan_objmgr_vdev *vdev,
+				  uint32_t cfreq1, uint32_t cfreq2)
+{
+}
+
+static inline void
+target_if_vdev_stop_link_handler(struct wlan_objmgr_vdev *vdev)
+{
+}
+
 #endif
 #endif

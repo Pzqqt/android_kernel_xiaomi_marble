@@ -24,7 +24,7 @@
 #include <wlan_vdev_mgr_tgt_if_rx_defs.h>
 #include <qdf_timer.h>
 #include <wlan_cm_bss_score_param.h>
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 #include <target_if_psoc_wake_lock.h>
 #endif
 /* Max RNR size given max vaps are 16 */
@@ -89,7 +89,7 @@ struct psoc_mlme_obj {
 	struct wlan_objmgr_psoc *psoc;
 	mlme_psoc_ext_t *ext_psoc_ptr;
 	struct vdev_response_timer psoc_vdev_rt[WLAN_UMAC_PSOC_MAX_VDEVS];
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 	struct psoc_mlme_wakelock psoc_mlme_wakelock;
 #endif
 	struct wlan_6ghz_rnr_global_cache rnr_6ghz_cache;

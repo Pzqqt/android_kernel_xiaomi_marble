@@ -1782,7 +1782,7 @@ struct wlan_lmac_if_mlme_rx_ops {
 	QDF_STATUS (*vdev_mgr_multi_vdev_restart_resp)(
 					struct wlan_objmgr_psoc *psoc,
 					struct multi_vdev_restart_resp *rsp);
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 	struct psoc_mlme_wakelock *(*psoc_get_wakelock_info)(
 				    struct wlan_objmgr_psoc *psoc);
 #endif

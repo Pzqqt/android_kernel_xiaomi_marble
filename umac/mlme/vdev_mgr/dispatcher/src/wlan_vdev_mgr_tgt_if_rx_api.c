@@ -211,7 +211,7 @@ static QDF_STATUS tgt_vdev_mgr_multi_vdev_restart_resp_handler(
 	return mlme_vdev_ops_ext_hdl_multivdev_restart_resp(psoc, resp);
 }
 
-#ifdef FEATURE_VDEV_RSP_WAKELOCK
+#ifdef FEATURE_VDEV_OPS_WAKELOCK
 static struct psoc_mlme_wakelock *
 tgt_psoc_get_wakelock_info(struct wlan_objmgr_psoc *psoc)
 {

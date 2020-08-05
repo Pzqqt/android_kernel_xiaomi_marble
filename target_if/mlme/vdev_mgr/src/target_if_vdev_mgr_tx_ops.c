@@ -479,6 +479,10 @@ static QDF_STATUS target_if_vdev_mgr_start_send(
 		else
 			target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 							  START_RESPONSE_BIT);
+	} else {
+		target_if_vdev_start_link_handler(vdev,
+						  param->channel.cfreq1,
+						  param->channel.cfreq2);
 	}
 	return status;
 }
@@ -614,6 +618,8 @@ static QDF_STATUS target_if_vdev_mgr_stop_send(
 		target_if_vdev_mgr_rsp_timer_stop(psoc, vdev_rsp,
 						  STOP_RESPONSE_BIT);
 		target_if_wake_lock_timeout_release(psoc, STOP_WAKELOCK);
+	} else {
+		target_if_vdev_stop_link_handler(vdev);
 	}
 	return status;
 }
