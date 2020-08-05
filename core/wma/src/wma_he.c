@@ -428,9 +428,6 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	he_cap->chan_width_5 = he_cap->chan_width_5 | new_cap->chan_width_5;
 	he_cap->chan_width_6 = he_cap->chan_width_6 | new_cap->chan_width_6;
 
-	he_cap->rx_pream_puncturing =
-		QDF_MIN(he_cap->rx_pream_puncturing,
-				new_cap->rx_pream_puncturing);
 	he_cap->device_class = QDF_MIN(he_cap->device_class,
 			new_cap->device_class);
 	he_cap->ldpc_coding = QDF_MIN(he_cap->ldpc_coding,
@@ -521,6 +518,9 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	mcs_2 = new_cap->tx_he_mcs_map_lt_80;
 	he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
 	if (is_5g_cap) {
+		he_cap->rx_pream_puncturing =
+					QDF_MIN(he_cap->rx_pream_puncturing,
+						new_cap->rx_pream_puncturing);
 		*((uint16_t *)he_cap->rx_he_mcs_map_160) =
 			*((uint16_t *)new_cap->rx_he_mcs_map_160);
 		*((uint16_t *)he_cap->tx_he_mcs_map_160) =
