@@ -1656,6 +1656,8 @@ void wlan_register_txrx_packetdump(uint8_t pdev_id)
 
 	gtx_count = 0;
 	grx_count = 0;
+
+	csr_packetdump_timer_start();
 }
 #endif /* REMOVE_PKT_LOG */
 #endif /* FEATURE_PKTLOG */
