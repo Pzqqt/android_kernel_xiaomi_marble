@@ -1396,6 +1396,7 @@ struct sde_perf_cfg {
  * @ubwc_version       UBWC feature version (0x0 for not supported)
  * @ubwc_bw_calc_version indicate how UBWC BW has to be calculated
  * @has_idle_pc        indicate if idle power collapse feature is supported
+ * @wakeup_with_touch  indicate early wake up display with input touch event
  * @has_hdr            HDR feature support
  * @has_hdr_plus       HDR10+ feature support
  * @dma_formats        Supported formats for dma pipe
@@ -1474,6 +1475,7 @@ struct sde_mdss_cfg {
 	u32 ubwc_version;
 	u32 ubwc_bw_calc_version;
 	bool has_idle_pc;
+	bool wakeup_with_touch;
 	u32 vbif_qos_nlvl;
 	u32 ts_prefill_rev;
 	u32 true_inline_rot_rev;

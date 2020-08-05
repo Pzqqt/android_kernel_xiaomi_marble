@@ -232,6 +232,7 @@ struct sde_encoder_virt {
 	u32 misr_frame_count;
 
 	bool idle_pc_enabled;
+	bool input_event_enabled;
 	struct mutex rc_lock;
 	enum sde_enc_rc_states rc_state;
 	struct kthread_delayed_work delayed_off_work;

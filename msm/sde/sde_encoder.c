@@ -2403,7 +2403,8 @@ static void _sde_encoder_input_handler_register(
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 	int rc;
 
-	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE) ||
+		!sde_enc->input_event_enabled)
 		return;
 
 	if (sde_enc->input_handler && !sde_enc->input_handler->private) {
@@ -2424,7 +2425,8 @@ static void _sde_encoder_input_handler_unregister(
 {
 	struct sde_encoder_virt *sde_enc = to_sde_encoder_virt(drm_enc);
 
-	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE))
+	if (!sde_encoder_check_curr_mode(drm_enc, MSM_DISPLAY_CMD_MODE) ||
+		!sde_enc->input_event_enabled)
 		return;
 
 	if (sde_enc->input_handler && sde_enc->input_handler->private) {
@@ -4677,6 +4679,8 @@ static int sde_encoder_setup_display(struct sde_encoder_virt *sde_enc,
 	    (disp_info->capabilities & MSM_DISPLAY_CAP_VID_MODE))
 		sde_enc->idle_pc_enabled = sde_kms->catalog->has_idle_pc;
 
+	sde_enc->input_event_enabled = sde_kms->catalog->wakeup_with_touch;
+
 	mutex_lock(&sde_enc->enc_lock);
 	for (i = 0; i < disp_info->num_of_h_tiles && !ret; i++) {
 		/*
@@ -4843,7 +4847,8 @@ struct drm_encoder *sde_encoder_init_with_ops(
 		sde_enc->rsc_client = NULL;
 	}
 
-	if (disp_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE) {
+	if (disp_info->capabilities & MSM_DISPLAY_CAP_CMD_MODE &&
+		sde_enc->input_event_enabled) {
 		ret = _sde_encoder_input_handler(sde_enc);
 		if (ret)
 			SDE_ERROR(
