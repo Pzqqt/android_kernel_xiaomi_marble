@@ -7686,6 +7686,10 @@ struct wmi_roam_scan_stats_res {
  * @validity_interval:     Preferred candidate list validity interval in ms
  * @candidate_list_count:  Number of candidates in BTM request.
  * @btm_resp_status:       Status code of the BTM response.
+ * @btm_bss_termination_timeout: BTM BSS termination timeout value
+ * in milli seconds
+ * @btm_mbo_assoc_retry_timeout: BTM MBO assoc retry timeout value in
+ * milli seconds
  */
 struct wmi_roam_btm_trigger_data {
 	uint32_t btm_request_mode;
@@ -7693,6 +7697,8 @@ struct wmi_roam_btm_trigger_data {
 	uint32_t validity_interval;
 	uint32_t candidate_list_count;
 	uint32_t btm_resp_status;
+	uint32_t btm_bss_termination_timeout;
+	uint32_t btm_mbo_assoc_retry_timeout;
 };
 
 /**
@@ -7757,6 +7763,12 @@ struct wmi_roam_wtc_btm_trigger_data {
  *  @rssi_score:  AP RSSI score
  *  @total_score: Total score of the candidate AP.
  *  @etp:         Estimated throughput value of the AP in Mbps
+ *  @bl_reason:   Blacklist reason
+ *  @bl_source:   Source of adding AP to BL
+ *  @bl_timestamp:This timestamp indicates the time when AP added
+ *  to blacklist.
+ *  @bl_original_timeout: Original timeout value in milli seconds
+ *  when AP added to BL
  */
 struct wmi_roam_candidate_info {
 	uint32_t timestamp;
@@ -7769,6 +7781,10 @@ struct wmi_roam_candidate_info {
 	uint32_t rssi_score;
 	uint32_t total_score;
 	uint32_t etp;
+	uint32_t bl_reason;
+	uint32_t bl_source;
+	uint32_t bl_timestamp;
+	uint32_t bl_original_timeout;
 };
 
 /**
