@@ -26082,6 +26082,16 @@ typedef struct {
     A_UINT32 prio;
 } wmi_therm_throt_level_config_info;
 
+typedef enum {
+    WMI_THERMAL_CLIENT_UNSPECIFIED = 0,
+    WMI_THERMAL_CLIENT_APPS        = 1,
+    WMI_THERMAL_CLIENT_WPSS        = 2,
+    WMI_THERMAL_CLIENT_FW          = 3,
+    WMI_THERMAL_CLIENT_MAX
+} WMI_THERMAL_MITIGATION_CLIENTS;
+
+#define WMI_THERMAL_CLIENT_MAX_PRIORITY 10
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_therm_throt_config_request_fixed_param */
     A_UINT32 pdev_id;          /* config for each pdev */
@@ -26089,6 +26099,8 @@ typedef struct {
     A_UINT32 dc;               /* duty cycle in ms */
     A_UINT32 dc_per_event;     /* how often (after how many duty cycles) the FW sends stats to host */
     A_UINT32 therm_throt_levels; /* Indicates the number of thermal zone configuration */
+    A_UINT32 client_id;        /* Indicates the client from whom the request is being forwarded to FW. Refer to WMI_THERMAL_MITIGATION_CLIENTS. */
+    A_UINT32 priority;         /* Indicates the priority, higher the value, higher the priority. Varies from 1 to WMI_THERMAL_CLIENT_MAX_PRIORITY. */
     /*
      * Following this structure is the TLV:
      * struct wmi_therm_throt_level_config_info therm_throt_level_config_info[therm_throt_levels];
