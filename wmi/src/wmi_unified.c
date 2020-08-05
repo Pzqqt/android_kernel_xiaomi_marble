@@ -1843,73 +1843,22 @@ static int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
 }
 
 /**
- * wmi_unified_register_event() - register wmi event handler
- * @wmi_handle: handle to wmi
- * @event_id: wmi event id
- * @handler_func: wmi event handler function
- *
- * Return: 0 on success
- */
-int wmi_unified_register_event(wmi_unified_t wmi_handle,
-				       uint32_t event_id,
-				       wmi_unified_event_handler handler_func)
-{
-	uint32_t idx = 0;
-	uint32_t evt_id;
-	struct wmi_soc *soc;
-
-	if (!wmi_handle) {
-		WMI_LOGE("WMI handle is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	soc = wmi_handle->soc;
-
-	if (event_id >= wmi_events_max ||
-		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
-			  "%s: Event id %d is unavailable",
-					__func__, event_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-	evt_id = wmi_handle->wmi_events[event_id];
-	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
-			  "%s : event handler already registered 0x%x",
-				__func__, evt_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
-		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
-			  "%s : no more event handlers 0x%x",
-					__func__, evt_id);
-		return QDF_STATUS_E_FAILURE;
-	}
-	idx = soc->max_event_idx;
-	wmi_handle->event_handler[idx] = handler_func;
-	wmi_handle->event_id[idx] = evt_id;
-	qdf_spin_lock_bh(&soc->ctx_lock);
-	wmi_handle->ctx[idx] = WMI_RX_UMAC_CTX;
-	qdf_spin_unlock_bh(&soc->ctx_lock);
-	soc->max_event_idx++;
-
-	return 0;
-}
-
-/**
- * wmi_unified_register_event_handler() - register wmi event handler
+ * wmi_register_event_handler_with_ctx() - register event handler with
+ * exec ctx and buffer type
  * @wmi_handle: handle to wmi
  * @event_id: wmi event id
  * @handler_func: wmi event handler function
  * @rx_ctx: rx execution context for wmi rx events
+ * @rx_buf_type: rx execution context for wmi rx events
  *
- * This API is to support legacy requirements. Will be deprecated in future.
- * Return: 0 on success
+ * Return: QDF_STATUS_SUCCESS on successful register event else failure.
  */
-int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
-				       wmi_conv_event_id event_id,
-				       wmi_unified_event_handler handler_func,
-				       uint8_t rx_ctx)
+static QDF_STATUS
+wmi_register_event_handler_with_ctx(wmi_unified_t wmi_handle,
+				    uint32_t event_id,
+				    wmi_unified_event_handler handler_func,
+				    enum wmi_rx_exec_ctx rx_ctx,
+				    enum wmi_rx_buff_type rx_buf_type)
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
@@ -1938,7 +1887,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	}
 	if (soc->max_event_idx == WMI_UNIFIED_MAX_EVENT) {
 		WMI_LOGE("no more event handlers 0x%x",
-			  evt_id);
+			 evt_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
@@ -1946,14 +1895,50 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	idx = soc->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = evt_id;
+
 	qdf_spin_lock_bh(&soc->ctx_lock);
-	wmi_handle->ctx[idx] = rx_ctx;
+	wmi_handle->ctx[idx].exec_ctx = rx_ctx;
+	wmi_handle->ctx[idx].buff_type = rx_buf_type;
 	qdf_spin_unlock_bh(&soc->ctx_lock);
 	soc->max_event_idx++;
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
+
+int wmi_unified_register_event(wmi_unified_t wmi_handle,
+			       uint32_t event_id,
+			       wmi_unified_event_handler handler_func)
+{
+	return wmi_register_event_handler_with_ctx(wmi_handle, event_id,
+						   handler_func,
+						   WMI_RX_UMAC_CTX,
+						   WMI_RX_PROCESSED_BUFF);
+}
+
+int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
+				       wmi_conv_event_id event_id,
+				       wmi_unified_event_handler handler_func,
+				       uint8_t rx_ctx)
+{
+	return wmi_register_event_handler_with_ctx(wmi_handle, event_id,
+						   handler_func, rx_ctx,
+						   WMI_RX_PROCESSED_BUFF);
+}
+
 qdf_export_symbol(wmi_unified_register_event_handler);
+
+int
+wmi_unified_register_raw_event_handler(wmi_unified_t wmi_handle,
+				       wmi_conv_event_id event_id,
+				       wmi_unified_event_handler handler_func,
+				       enum wmi_rx_exec_ctx rx_ctx)
+{
+	return wmi_register_event_handler_with_ctx(wmi_handle, event_id,
+						   handler_func, rx_ctx,
+						   WMI_RX_RAW_BUFF);
+}
+
+qdf_export_symbol(wmi_unified_register_raw_event_handler);
 
 /**
  * wmi_unified_unregister_event() - unregister wmi event handler
@@ -2230,7 +2215,7 @@ static void wmi_process_control_rx(struct wmi_unified *wmi_handle,
 	}
 	wmi_mtrace_rx(id, 0xFF, idx);
 	qdf_spin_lock_bh(&soc->ctx_lock);
-	exec_ctx = wmi_handle->ctx[idx];
+	exec_ctx = wmi_handle->ctx[idx].exec_ctx;
 	qdf_spin_unlock_bh(&soc->ctx_lock);
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
@@ -2395,6 +2380,8 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	int tlv_ok_status = 0;
 #endif
 	uint32_t idx = 0;
+	struct wmi_raw_event_buffer ev_buf;
+	enum wmi_rx_buff_type ev_buff_type;
 
 	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 
@@ -2455,9 +2442,18 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	}
 #endif
 	/* Call the WMI registered event handler */
-	if (wmi_handle->target_type == WMI_TLV_TARGET)
-		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
-			wmi_cmd_struct_ptr, len);
+	if (wmi_handle->target_type == WMI_TLV_TARGET) {
+		ev_buff_type = wmi_handle->ctx[idx].buff_type;
+		if (ev_buff_type == WMI_RX_PROCESSED_BUFF) {
+			wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
+				wmi_cmd_struct_ptr, len);
+		} else if (ev_buff_type == WMI_RX_RAW_BUFF) {
+			ev_buf.evt_raw_buf = data;
+			ev_buf.evt_processed_buf = wmi_cmd_struct_ptr;
+			wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
+							(void *)&ev_buf, len);
+		}
+	}
 	else
 		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
 			data, len);

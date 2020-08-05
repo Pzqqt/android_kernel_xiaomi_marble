@@ -8330,4 +8330,15 @@ enum wmi_host_tbtt_offset_cmd_type {
 	WMI_HOST_PDEV_GET_TBTT_OFFSET,
 	WMI_HOST_PDEV_SET_TBTT_OFFSET,
 };
+
+/**
+ * struct wmi_raw_event_buffer - fw event buffers
+ * @evt_raw_buf: event raw buffer
+ * @evt_processed_buf: event processed buffer
+ */
+struct wmi_raw_event_buffer {
+	void *evt_raw_buf;
+	void *evt_processed_buf;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */

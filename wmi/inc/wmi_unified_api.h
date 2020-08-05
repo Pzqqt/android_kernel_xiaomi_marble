@@ -164,6 +164,17 @@ enum wmi_rx_exec_ctx {
 };
 
 /**
+ * enum wmi_rx_buff_type - wmi rx event buffer type
+ * @WMI_RX_PROCESSED_BUFF: processed event buffer provided by WMI layer
+ * @WMI_RX_RAW_BUFF:       raw event buffer provided by WMI layer
+ *
+ */
+enum wmi_rx_buff_type {
+	WMI_RX_PROCESSED_BUFF,
+	WMI_RX_RAW_BUFF
+};
+
+/**
  * enum wmi_fw_mem_prio - defines FW Memory requirement type
  * @WMI_FW_MEM_HIGH_PRIORITY:   Memory requires contiguous memory allocation
  * @WMI_FW_MEM_LOW_PRIORITY:    Memory can be fragmented
@@ -194,6 +205,16 @@ struct wmi_unified_attach_params {
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t max_commands;
 	uint32_t soc_id;
+};
+
+/**
+ *  struct wmi_unified_exec_ctx - wmi execution ctx and handler buff
+ *  @exec_ctx:  execution context of event
+ *  @buff_type: buffer type for event handler
+ */
+struct wmi_unified_exec_ctx {
+	enum wmi_rx_exec_ctx exec_ctx;
+	enum wmi_rx_buff_type buff_type;
 };
 
 /**
@@ -393,6 +414,24 @@ wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 int
 wmi_unified_unregister_event(wmi_unified_t wmi_handle,
 					 uint32_t event_id);
+
+/**
+ * wmi_unified_register_raw_event_handler() - WMI event handler
+ * registration function.
+ * @wmi_handle:   handle to WMI.
+ * @event_id:     WMI event ID
+ * @handler_func: Event handler call back function
+ * @rx_ctx:       rx event processing context
+ *
+ * Register event handler to get struct wmi_raw_event_buffer as arg
+ *
+ * @return: 0 on success and -ve on failure.
+ */
+int
+wmi_unified_register_raw_event_handler(wmi_unified_t wmi_handle,
+				       wmi_conv_event_id event_id,
+				       wmi_unified_event_handler handler_func,
+				       enum wmi_rx_exec_ctx rx_ctx);
 
 /**
  * WMI event handler unregister function

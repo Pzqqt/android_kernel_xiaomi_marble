@@ -2449,7 +2449,7 @@ struct wmi_unified {
 	uint16_t max_msg_len;
 	uint32_t *event_id;
 	wmi_unified_event_handler *event_handler;
-	enum wmi_rx_exec_ctx *ctx;
+	struct wmi_unified_exec_ctx *ctx;
 	HTC_HANDLE htc_handle;
 	qdf_spinlock_t eventq_lock;
 	qdf_nbuf_queue_t event_queue;
@@ -2514,7 +2514,7 @@ struct wmi_soc {
 	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
 	uint32_t max_event_idx;
-	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
+	struct wmi_unified_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
 	qdf_spinlock_t ctx_lock;
 	struct wmi_unified *wmi_pdev[WMI_MAX_RADIOS];
 	HTC_ENDPOINT_ID wmi_endpoint_id[WMI_MAX_RADIOS];
