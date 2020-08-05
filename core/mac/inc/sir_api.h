@@ -72,7 +72,9 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 /* Periodic Tx pattern offload feature */
 #define PERIODIC_TX_PTRN_MAX_SIZE 1536
+#ifndef MAXNUM_PERIODIC_TX_PTRNS
 #define MAXNUM_PERIODIC_TX_PTRNS 6
+#endif
 
 /* FW response timeout values in milli seconds */
 #define SIR_PEER_ASSOC_TIMEOUT           (4000) /* 4 seconds */

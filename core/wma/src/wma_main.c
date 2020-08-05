@@ -334,7 +334,7 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 	tgt_cfg->num_multicast_filter_entries =
 		CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES;
 	tgt_cfg->num_wow_filters = 0;
-	tgt_cfg->num_keep_alive_pattern = WMA_MAXNUM_PERIODIC_TX_PTRNS;
+	tgt_cfg->num_keep_alive_pattern = MAXNUM_PERIODIC_TX_PTRNS;
 	tgt_cfg->num_max_sta_vdevs = CFG_TGT_DEFAULT_MAX_STA_VDEVS;
 	tgt_cfg->keep_alive_pattern_size = 0;
 	tgt_cfg->max_tdls_concurrent_sleep_sta =

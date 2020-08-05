@@ -46,13 +46,6 @@
 #define WMA_LINK_MONITOR_DEFAULT_TIME_SECS 10
 #define WMA_KEEP_ALIVE_DEFAULT_TIME_SECS   5
 
-/* The maximum number of patterns that can be transmitted by the firmware
- *  and maximum patterns size.
- */
-#ifndef WMA_MAXNUM_PERIODIC_TX_PTRNS
-#define WMA_MAXNUM_PERIODIC_TX_PTRNS 6
-#endif
-
 #define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 
 #define MAX_HT_MCS_IDX 8
