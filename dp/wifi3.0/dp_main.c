@@ -5315,6 +5315,7 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	vdev->raw_mode_war = wlan_cfg_get_raw_mode_war(soc->wlan_cfg_ctx);
 	vdev->prev_tx_enq_tstamp = 0;
 	vdev->prev_rx_deliver_tstamp = 0;
+	vdev->skip_sw_tid_classification = DP_TX_HW_DSCP_TID_MAP_VALID;
 
 	dp_vdev_pdev_list_add(soc, pdev, vdev);
 	pdev->vdev_count++;
@@ -7221,6 +7222,12 @@ void dp_vdev_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		FL("val %d"), val);
 	vdev->mesh_vdev = val;
+	if (val)
+		vdev->skip_sw_tid_classification |=
+			DP_TX_MESH_ENABLED;
+	else
+		vdev->skip_sw_tid_classification &=
+			~DP_TX_MESH_ENABLED;
 }
 
 /*
@@ -7240,6 +7247,44 @@ void dp_vdev_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 	vdev->mesh_rx_filter = val;
 }
 #endif
+
+/*
+ * dp_peer_set_hlos_tid_override() - to set hlos tid override
+ * @vdev_hdl: virtual device object
+ * @val: value to be set
+ *
+ * Return: void
+ */
+static
+void dp_vdev_set_hlos_tid_override(struct cdp_vdev *vdev_hdl, uint32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		FL("val %d"), val);
+	if (val)
+		vdev->skip_sw_tid_classification |=
+			DP_TXRX_HLOS_TID_OVERRIDE_ENABLED;
+	else
+		vdev->skip_sw_tid_classification &=
+			~DP_TXRX_HLOS_TID_OVERRIDE_ENABLED;
+}
+
+/*
+ * dp_peer_get_hlos_tid_override() - to get hlos tid override flag
+ * @vdev_hdl: virtual device object
+ * @val: value to be set
+ *
+ * Return: 1 if this flag is set
+ */
+static
+uint8_t dp_vdev_get_hlos_tid_override(struct cdp_vdev *vdev_hdl)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
+
+	return !!(vdev->skip_sw_tid_classification &
+			DP_TXRX_HLOS_TID_OVERRIDE_ENABLED);
+}
 
 #ifdef VDEV_PEER_PROTOCOL_COUNT
 static void dp_enable_vdev_peer_protocol_count(struct cdp_soc_t *soc_hdl,
@@ -8577,6 +8622,9 @@ static QDF_STATUS dp_get_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		break;
 	case CDP_ENABLE_MCAST_EN:
 		val->cdp_vdev_param_mcast_en = vdev->mcast_enhancement_en;
+	case CDP_ENABLE_HLOS_TID_OVERRIDE:
+		val->cdp_vdev_param_hlos_tid_override =
+			    dp_vdev_get_hlos_tid_override((struct cdp_vdev *)vdev);
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -8697,6 +8745,16 @@ dp_set_vdev_param(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 		dp_info("vdev_id %d enable Checksum %d", vdev_id,
 			val.cdp_enable_tx_checksum);
 		vdev->csum_enabled = val.cdp_enable_tx_checksum;
+		break;
+	case CDP_ENABLE_HLOS_TID_OVERRIDE:
+		dp_info("vdev_id %d enable hlod tid override %d", vdev_id,
+			val.cdp_vdev_param_hlos_tid_override);
+		if (vdev->opmode == wlan_op_mode_ap)
+			dp_vdev_set_hlos_tid_override((struct cdp_vdev *)vdev,
+				   val.cdp_vdev_param_hlos_tid_override);
+		else
+			dp_vdev_set_hlos_tid_override((struct cdp_vdev *)vdev,
+				   false);
 		break;
 	default:
 		break;
@@ -8859,6 +8917,13 @@ static QDF_STATUS dp_set_vdev_dscp_tid_map_wifi3(ol_txrx_soc_handle cdp_soc,
 						     DP_MOD_ID_CDP);
 	if (vdev) {
 		vdev->dscp_tid_map_id = map_id;
+		/* Updatr flag for transmit tid classification */
+		if (vdev->dscp_tid_map_id < soc->num_hw_dscp_tid_map)
+			vdev->skip_sw_tid_classification |=
+				DP_TX_HW_DSCP_TID_MAP_VALID;
+		else
+			vdev->skip_sw_tid_classification &=
+				~DP_TX_HW_DSCP_TID_MAP_VALID;
 		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_CDP);
 		return QDF_STATUS_SUCCESS;
 	}

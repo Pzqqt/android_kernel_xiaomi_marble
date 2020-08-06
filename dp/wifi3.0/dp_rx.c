@@ -2474,6 +2474,13 @@ done:
 			continue;
 		}
 
+		/* when hlos tid override is enabled, save tid in
+		 * skb->priority
+		 */
+		if (qdf_unlikely(vdev->skip_sw_tid_classification &
+					DP_TXRX_HLOS_TID_OVERRIDE_ENABLED))
+			qdf_nbuf_set_priority(nbuf, tid);
+
 		rx_pdev = vdev->pdev;
 		DP_RX_TID_SAVE(nbuf, tid);
 		if (qdf_unlikely(rx_pdev->delay_stats_flag) ||

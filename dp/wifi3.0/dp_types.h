@@ -122,6 +122,11 @@
 #define PHYB_2G_LMAC_ID 2
 #define PHYB_2G_TARGET_PDEV_ID 2
 
+/* Flags for skippig s/w tid classification */
+#define DP_TX_HW_DSCP_TID_MAP_VALID 0x1
+#define DP_TXRX_HLOS_TID_OVERRIDE_ENABLED 0x2
+#define DP_TX_MESH_ENABLED 0x4
+
 enum rx_pktlog_mode {
 	DP_RX_PKTLOG_DISABLED = 0,
 	DP_RX_PKTLOG_FULL,
@@ -2198,6 +2203,12 @@ struct dp_vdev {
 
 	/* Address search type to be set in TX descriptor */
 	uint8_t search_type;
+
+	/*
+	 * Flag to indicate if s/w tid classification should be
+	 * skipped
+	 */
+	uint8_t skip_sw_tid_classification;
 
 	/* AST hash value for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_hash;

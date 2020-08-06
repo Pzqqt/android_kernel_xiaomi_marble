@@ -42,6 +42,9 @@
 #endif
 #include "dp_hist.h"
 
+/* Flag to skip CCE classify when mesh or tid override enabled */
+#define DP_TX_SKIP_CCE_CLASSIFY \
+	(DP_TXRX_HLOS_TID_OVERRIDE_ENABLED | DP_TX_MESH_ENABLED)
 
 /* TODO Add support in TSO */
 #define DP_DESC_NUM_FRAG(x) 0
@@ -1305,9 +1308,15 @@ static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 	qdf_nbuf_t nbuf_clone = NULL;
 	qdf_dot3_qosframe_t *qos_wh = NULL;
 
-	/* for mesh packets don't do any classification */
-	if (qdf_unlikely(vdev->mesh_vdev))
-		return false;
+	if (qdf_likely(vdev->skip_sw_tid_classification)) {
+	/*
+	 * In case of mesh packets or hlos tid override enabled,
+	 * don't do any classification
+	 */
+		if (qdf_unlikely(vdev->skip_sw_tid_classification
+					& DP_TX_SKIP_CCE_CLASSIFY))
+			return false;
+	}
 
 	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
 		eh = (qdf_ether_header_t *)qdf_nbuf_data(nbuf);
@@ -1537,16 +1546,23 @@ static void dp_tx_get_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 static inline void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				      struct dp_tx_msdu_info_s *msdu_info)
 {
-	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
-
 	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
 
-	if (pdev->soc && vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map)
+	/*
+	 * skip_sw_tid_classification flag will set in below cases-
+	 * 1. vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map
+	 * 2. hlos_tid_override enabled for vdev
+	 * 3. mesh mode enabled for vdev
+	 */
+	if (qdf_likely(vdev->skip_sw_tid_classification)) {
+		/* Update tid in msdu_info from skb priority */
+		if (qdf_unlikely(vdev->skip_sw_tid_classification
+			    & DP_TXRX_HLOS_TID_OVERRIDE_ENABLED)) {
+			msdu_info->tid = qdf_nbuf_get_priority(nbuf);
+			return;
+		}
 		return;
-
-	/* for mesh packets don't do any classification */
-	if (qdf_unlikely(vdev->mesh_vdev))
-		return;
+	}
 
 	dp_tx_get_tid(vdev, nbuf, msdu_info);
 }

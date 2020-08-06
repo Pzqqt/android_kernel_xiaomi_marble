@@ -1095,6 +1095,7 @@ enum cdp_pdev_param_type {
  * @cdp_vdev_param_mesh_mode: set mesh mode
  * @cdp_vdev_param_safe_mode: set safe mode
  * @cdp_vdev_param_drop_unenc: set drop unencrypted flag
+ * @cdp_vdev_param_hlos_tid_override: set hlos tid override
  *
  * @cdp_pdev_param_dbg_snf: Enable debug sniffer feature
  * @cdp_pdev_param_bpr_enable: Enable bcast probe feature
@@ -1159,6 +1160,7 @@ typedef union cdp_config_param_t {
 	uint32_t cdp_vdev_param_mesh_mode;
 	uint32_t cdp_vdev_param_safe_mode;
 	uint32_t cdp_vdev_param_drop_unenc;
+	uint8_t cdp_vdev_param_hlos_tid_override;
 
 	/* pdev params */
 	bool cdp_pdev_param_cptr_latcy;
@@ -1268,6 +1270,7 @@ enum cdp_pdev_bpr_param {
  * @CDP_SAFEMODE: set safe mode
  * @CDP_DROP_UNENC: set drop unencrypted flag
  * @CDP_ENABLE_IGMP_MCAST_EN: enable/disable igmp multicast enhancement
+ * @CDP_ENABLE_HLOS_TID_OVERRIDE: set hlos tid override flag
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -1294,6 +1297,7 @@ enum cdp_vdev_param_type {
 	CDP_DROP_UNENC,
 	CDP_ENABLE_CSUM,
 	CDP_ENABLE_IGMP_MCAST_EN,
+	CDP_ENABLE_HLOS_TID_OVERRIDE,
 };
 
 /*
