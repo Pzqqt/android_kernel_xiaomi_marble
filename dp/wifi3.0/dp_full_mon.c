@@ -269,12 +269,14 @@ dp_rx_mon_drop_ppdu(struct dp_pdev *pdev, uint32_t mac_id)
  * to upper layer stack
  *
  * @soc: DP soc handle
+ * @pdev: pdev
  * @mac_id: lmac id
  */
 static inline QDF_STATUS
-dp_rx_monitor_deliver_ppdu(struct dp_soc *soc, uint32_t mac_id)
+dp_rx_monitor_deliver_ppdu(struct dp_soc *soc,
+			   struct dp_pdev *pdev,
+			   uint32_t mac_id)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	struct dp_mon_mpdu *mpdu = NULL;
 	struct dp_mon_mpdu *temp_mpdu = NULL;
 
@@ -308,6 +310,7 @@ dp_rx_monitor_deliver_ppdu(struct dp_soc *soc, uint32_t mac_id)
  * status ring.
  *
  * @soc: DP soc handle
+ * @pdev: pdev
  * @int_ctx: interrupt context
  * @mac_id: mac id on which interrupt is received
  * @quota: number of status ring entries to be reaped
@@ -315,12 +318,12 @@ dp_rx_monitor_deliver_ppdu(struct dp_soc *soc, uint32_t mac_id)
  */
 static inline uint32_t
 dp_rx_mon_reap_status_ring(struct dp_soc *soc,
+			   struct dp_pdev *pdev,
 			   struct dp_intr *int_ctx,
 			   uint32_t mac_id,
 			   uint32_t quota,
 			   struct hal_rx_mon_desc_info *desc_info)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	uint8_t status_buf_count;
 	uint32_t work_done = 0;
 	enum dp_mon_reap_status status;
@@ -397,6 +400,7 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
  * and returns link descriptor to HW (WBM)
  *
  * @soc: DP soc handle
+ * @pdev: pdev
  * @mac_id: lmac id
  * @ring_desc: SW monitor ring desc
  * @head_msdu: nbuf pointing to first msdu in a chain
@@ -407,12 +411,12 @@ dp_rx_mon_reap_status_ring(struct dp_soc *soc,
  * Return: number of reaped buffers
  */
 static inline uint32_t
-dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
-		    qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu,
+dp_rx_mon_mpdu_reap(struct dp_soc *soc, struct dp_pdev *pdev, uint32_t mac_id,
+		    void *ring_desc, qdf_nbuf_t *head_msdu,
+		    qdf_nbuf_t *tail_msdu,
 		    union dp_rx_desc_list_elem_t **head_desc,
 		    union dp_rx_desc_list_elem_t **tail_desc)
 {
-	struct dp_pdev *pdev = dp_get_pdev_for_lmac_id(soc, mac_id);
 	struct dp_rx_desc *rx_desc = NULL;
 	struct hal_rx_msdu_list msdu_list;
 	uint32_t rx_buf_reaped = 0;
@@ -692,7 +696,7 @@ dp_rx_mon_deliver_prev_ppdu(struct dp_pdev *pdev,
 
 		work_done += dp_rx_mon_status_process(soc, int_ctx, mac_id,
 				desc_info->status_buf_count);
-		dp_rx_monitor_deliver_ppdu(soc, mac_id);
+		dp_rx_monitor_deliver_ppdu(soc, pdev, mac_id);
 	}
 
 	return work_done;
@@ -784,7 +788,7 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 			  hal_srng_dst_peek(hal_soc, mon_dest_srng))) {
 		head_msdu = NULL;
 		tail_msdu = NULL;
-		rx_bufs_reaped = dp_rx_mon_mpdu_reap(soc, mac_id,
+		rx_bufs_reaped = dp_rx_mon_mpdu_reap(soc, pdev, mac_id,
 						     ring_desc, &head_msdu,
 						     &tail_msdu, &head_desc,
 						     &tail_desc);
@@ -891,13 +895,13 @@ uint32_t dp_rx_mon_process(struct dp_soc *soc, struct dp_intr *int_ctx,
 		 */
 		rx_mon_stats->dest_ppdu_done++;
 
-		work_done += dp_rx_mon_reap_status_ring(soc, int_ctx, mac_id,
-							quota, desc_info);
+		work_done += dp_rx_mon_reap_status_ring(soc, pdev, int_ctx,
+						mac_id, quota, desc_info);
 		/* Deliver all MPDUs for a PPDU */
 		if (desc_info->drop_ppdu)
 			dp_rx_mon_drop_ppdu(pdev, mac_id);
 		else if (!pdev->hold_mon_dest_ring)
-			dp_rx_monitor_deliver_ppdu(soc, mac_id);
+			dp_rx_monitor_deliver_ppdu(soc, pdev, mac_id);
 
 next_entry:
 		hal_srng_dst_get_next(hal_soc, mon_dest_srng);
