@@ -257,27 +257,15 @@ dp_txrx_set_wds_rx_policy(struct cdp_soc_t *soc, uint8_t vdev_id, u_int32_t val)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (vdev->opmode == wlan_op_mode_ap) {
-		/* for ap, set it on bss_peer */
-		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-			if (peer->bss_peer) {
-				peer->wds_ecm.wds_rx_filter = 1;
-				peer->wds_ecm.wds_rx_ucast_4addr =
-					(val & WDS_POLICY_RX_UCAST_4ADDR) ?
-					1 : 0;
-				peer->wds_ecm.wds_rx_mcast_4addr =
-					(val & WDS_POLICY_RX_MCAST_4ADDR) ?
-					1 : 0;
-				break;
-			}
-		}
-	} else if (vdev->opmode == wlan_op_mode_sta) {
-		peer = TAILQ_FIRST(&vdev->peer_list);
+	peer = dp_vdev_bss_peer_ref_n_get(vdev);
+
+	if (peer) {
 		peer->wds_ecm.wds_rx_filter = 1;
 		peer->wds_ecm.wds_rx_ucast_4addr =
 			(val & WDS_POLICY_RX_UCAST_4ADDR) ? 1 : 0;
 		peer->wds_ecm.wds_rx_mcast_4addr =
 			(val & WDS_POLICY_RX_MCAST_4ADDR) ? 1 : 0;
+		dp_peer_unref_delete(peer);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -345,17 +333,15 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr,
 	int rx_mcast = hal_rx_msdu_end_da_is_mcbc_get(hal_soc, rx_tlv_hdr);
 
 	if (vdev->opmode == wlan_op_mode_ap) {
-		TAILQ_FOREACH(bss_peer, &vdev->peer_list, peer_list_elem) {
-			if (bss_peer->bss_peer) {
-				/* if wds policy check is not enabled on this vdev, accept all frames */
-				if (!bss_peer->wds_ecm.wds_rx_filter) {
-					return 1;
-				}
-				break;
-			}
+		bss_peer = dp_vdev_bss_peer_ref_n_get(vdev);
+		/* if wds policy check is not enabled on this vdev, accept all frames */
+		if (bss_peer && !bss_peer->wds_ecm.wds_rx_filter) {
+			dp_peer_unref_delete(bss_peer);
+			return 1;
 		}
 		rx_policy_ucast = bss_peer->wds_ecm.wds_rx_ucast_4addr;
 		rx_policy_mcast = bss_peer->wds_ecm.wds_rx_mcast_4addr;
+		dp_peer_unref_delete(bss_peer);
 	} else {             /* sta mode */
 		if (!peer->wds_ecm.wds_rx_filter) {
 			return 1;
@@ -915,7 +901,7 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"%s: Peer ast flow map not in STA mode\n", __func__);
 		/* Release peer reference */
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 		return;
 	}
 
@@ -924,7 +910,7 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 				(struct qdf_mac_addr *)peer->mac_addr.raw)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: Peer mac address mismatch\n", __func__);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 		return;
 	}
 
@@ -933,7 +919,7 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 				(struct qdf_mac_addr *)peer->vdev->mac_addr.raw)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s: Ast flow mapping not valid for self peer \n", __func__);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 		return;
 	}
 
@@ -975,7 +961,7 @@ void dp_peer_ast_index_flow_queue_map_create(void *soc_hdl,
 	}
 
 	/* Release peer reference */
-	dp_peer_unref_del_find_by_id(peer);
+	dp_peer_unref_delete(peer);
 }
 
 /**
