@@ -6292,12 +6292,6 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 				snd_soc_card_get_drvdata(rtd->card);
 	int ret = 0;
 
-	component = snd_soc_rtdcom_lookup(rtd, "wsa-codec.1");
-	if (!component) {
-		pr_err("%s: wsa-codec.1 component is NULL\n", __func__);
-		return -EINVAL;
-	}
-
 	component = snd_soc_rtdcom_lookup(rtd, "bolero_codec");
 	if (!component) {
 		pr_err("%s: could not find component for bolero_codec\n",
