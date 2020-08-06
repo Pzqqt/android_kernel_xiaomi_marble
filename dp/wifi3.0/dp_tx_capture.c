@@ -240,15 +240,15 @@ struct dp_peer *dp_tx_cap_peer_find_by_id(struct dp_soc *soc,
 {
 	struct dp_peer *peer;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	qdf_spin_lock_bh(&soc->peer_map_lock);
 	peer = __dp_peer_find_by_id(soc, peer_id);
 	if (!peer || (peer && peer->delete_in_progress)) {
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		qdf_spin_unlock_bh(&soc->peer_map_lock);
 		return NULL;
 	}
 
 	qdf_atomic_inc(&peer->ref_cnt);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	qdf_spin_unlock_bh(&soc->peer_map_lock);
 
 	return peer;
 }
@@ -290,7 +290,6 @@ void dp_tx_capture_htt_frame_counter(struct dp_pdev *pdev,
 void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
-	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = NULL;
 	struct dp_peer *peer = NULL;
 	uint64_t c_defer_msdu_len = 0;
@@ -298,10 +297,10 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 	uint64_t c_pending_q_len = 0;
 
 	DP_PRINT_STATS("pending peer msdu and ppdu:");
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 
 	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		qdf_spin_lock_bh(&vdev->peer_list_lock);
 		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 			int tid;
 			struct dp_tx_tid *tx_tid;
@@ -335,6 +334,7 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 			if (!consolidated)
 				dp_tx_capture_print_stats(peer);
 		}
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	}
 
 	DP_PRINT_STATS("consolidated: msdu_comp_q[%d] defer_msdu_q[%d] pending_ppdu_q[%d]",
@@ -342,7 +342,6 @@ void dp_print_tid_qlen_per_peer(void *pdev_hdl, uint8_t consolidated)
 		       c_pending_q_len);
 
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
 static void
@@ -1559,21 +1558,20 @@ static void dp_soc_set_txrx_ring_map_single(struct dp_soc *soc)
 static void  dp_iterate_free_peer_msdu_q(void *pdev_hdl)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
-	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = NULL;
 	struct dp_peer *peer = NULL;
 
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		qdf_spin_lock_bh(&vdev->peer_list_lock);
 		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 			/* set peer tx cap enabled to 0, when feature disable */
 			peer->tx_cap_enabled = 0;
 			dp_peer_tid_queue_cleanup(peer);
 		}
+		qdf_spin_unlock_bh(&vdev->peer_list_lock);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
 /*

@@ -55,9 +55,6 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
 		check_wds_ase = true;
 	}
 
-	 /* Peer list access lock */
-	qdf_spin_lock_bh(&soc->peer_ref_mutex);
-
 	/* AST list access lock */
 	qdf_spin_lock_bh(&soc->ast_lock);
 
@@ -65,6 +62,7 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
 		pdev = soc->pdev_list[i];
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			qdf_spin_lock_bh(&vdev->peer_list_lock);
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					/*
@@ -107,12 +105,12 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
 					}
 				}
 			}
+			qdf_spin_unlock_bh(&vdev->peer_list_lock);
 		}
 		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		qdf_timer_mod(&soc->ast_aging_timer,
