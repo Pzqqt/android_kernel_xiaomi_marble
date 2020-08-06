@@ -1146,8 +1146,6 @@ static int wsa881x_probe(struct snd_soc_component *component)
 	struct snd_soc_dapm_context *dapm =
 					snd_soc_component_get_dapm(component);
 	char *widget_name = NULL;
-	struct snd_soc_card *card = component->card;
-	struct snd_soc_codec_conf *codec_conf = card->codec_conf;
 
 	client = dev_get_drvdata(component->dev);
 	ret = wsa881x_i2c_get_client_index(client, &wsa881x_index);
@@ -1171,17 +1169,17 @@ static int wsa881x_probe(struct snd_soc_component *component)
 	INIT_DELAYED_WORK(&wsa_pdata[wsa881x_index].ocp_ctl_work,
 				wsa881x_ocp_ctl_work);
 
-	if (codec_conf->name_prefix) {
+	if (component->name_prefix) {
 		widget_name = kcalloc(WIDGET_NAME_MAX_SIZE, sizeof(char),
 					GFP_KERNEL);
 		if (!widget_name)
 			return -ENOMEM;
 
 		snprintf(widget_name, WIDGET_NAME_MAX_SIZE,
-			"%s WSA_SPKR", codec_conf->name_prefix);
+			"%s WSA_SPKR", component->name_prefix);
 		snd_soc_dapm_ignore_suspend(dapm, widget_name);
 		snprintf(widget_name, WIDGET_NAME_MAX_SIZE,
-			"%s WSA_IN", codec_conf->name_prefix);
+			"%s WSA_IN", component->name_prefix);
 		snd_soc_dapm_ignore_suspend(dapm, widget_name);
 		kfree(widget_name);
 	} else {
@@ -1366,6 +1364,7 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 	struct clk *wsa_mclk = NULL;
 	char buffer[MAX_NAME_LEN];
 	const char *wsa881x_name_prefix_of = NULL;
+	struct snd_soc_component *component;
 
 	ret = wsa881x_i2c_get_client_index(client, &wsa881x_index);
 	if (ret != 0) {
@@ -1538,7 +1537,21 @@ static int wsa881x_i2c_probe(struct i2c_client *client,
 		ret = snd_soc_register_component(&client->dev,
 					pdata->driver, pdata->dai_driver, 1);
 
+
+		pdata->wsa881x_name_prefix = kstrndup(wsa881x_name_prefix_of,
+			strlen(wsa881x_name_prefix_of), GFP_KERNEL);
+
+		component = snd_soc_lookup_component(&client->dev, pdata->driver->name);
+		if (!component) {
+			dev_err(&client->dev, "%s: component is NULL \n", __func__);
+			ret = -EINVAL;
+			goto err_mem;
+		}
+
+		component->name_prefix = pdata->wsa881x_name_prefix;
+
 		pdata->status = WSA881X_STATUS_I2C;
+		goto err1;
 	}
 err_mem:
 	 kfree(pdata->wsa881x_name_prefix);
