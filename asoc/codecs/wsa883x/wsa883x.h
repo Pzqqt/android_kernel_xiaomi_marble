@@ -21,6 +21,7 @@ int wsa883x_set_channel_map(struct snd_soc_component *component,
 int wsa883x_codec_info_create_codec_entry(
 					struct snd_info_entry *codec_root,
 					struct snd_soc_component *component);
+int wsa883x_codec_get_dev_num(struct snd_soc_component *component);
 #else
 static int wsa883x_set_channel_map(struct snd_soc_component *component,
 				   u8 *port, u8 num_port, unsigned int *ch_mask,
@@ -36,6 +37,10 @@ static int wsa883x_codec_info_create_codec_entry(
 	return 0;
 }
 
+static int wsa883x_codec_get_dev_num(struct snd_soc_component *component)
+{
+	return 0;
+}
 #endif
 
 #endif /* _WSA883X_H */
