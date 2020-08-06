@@ -3446,6 +3446,11 @@ bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter)
 		adapter->session.ap.beacon = NULL;
 	}
 
+	if (!sap_ctx) {
+		hdd_debug("sap context is NULL");
+		return true;
+	}
+
 	hdd_debug("destroying sap context");
 
 	if (QDF_IS_STATUS_ERROR(sap_destroy_ctx(sap_ctx)))
