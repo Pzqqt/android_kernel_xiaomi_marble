@@ -1203,6 +1203,14 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_RPT_MAX_PHY = 446,
 	/* Enable additional operating triplets in the Country IE */
 	OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS = 447,
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+	/* Set the primary frequency for the AP to go back to, after NOL */
+	OL_ATH_DFS_CHAN_POSTNOL_FREQ = 448,
+	/* Set the mode for the AP to go back to, after NOL */
+	OL_ATH_DFS_CHAN_POSTNOL_MODE = 449,
+	/* Set the secondary center frequency for the post NOL channel. */
+	OL_ATH_DFS_CHAN_POSTNOL_CFREQ2 = 450,
+#endif
 
 };
 
@@ -3103,6 +3111,20 @@ struct vendor_commands radio_vendor_cmds[] = {
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, SET_PARAM, 1},
 	{"g_enable_additional_triplets",
 		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_ENABLE_ADDITIONAL_TRIPLETS, GET_PARAM, 0},
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+	{"setpostNOLfreq",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_FREQ, SET_PARAM, 1},
+	{"getpostNOLfreq",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_FREQ, GET_PARAM, 0},
+	{"setpostNOLmode",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_MODE, SET_PARAM, 1},
+	{"getpostNOLmode",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_MODE, SET_PARAM, 0},
+	{"setpostNOLcfreq2",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_CFREQ2, SET_PARAM, 1},
+	{"getpostNOLcfreq2",
+		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_CFREQ2, GET_PARAM, 0},
+#endif
 };
 #endif
 #endif
