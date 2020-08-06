@@ -26,6 +26,7 @@
 #define DEFAULT_DBGBUS_SDE	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_VBIFRT	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_DBGBUS_DSI	SDE_DBG_DUMP_IN_MEM
+#define DEFAULT_DBGBUS_LUTDMA	SDE_DBG_DUMP_IN_MEM
 #define DEFAULT_BASE_REG_CNT	DEFAULT_MDSS_HW_BLOCK_SIZE
 #define GROUP_BYTES		4
 #define ROW_BYTES		16
@@ -38,6 +39,11 @@
 #define DBGBUS_NAME_SDE		"sde"
 #define DBGBUS_NAME_VBIF_RT	"vbif_rt"
 #define DBGBUS_NAME_DSI		"dsi"
+#define DBGBUS_NAME_LUTDMA	"reg_dma"
+
+/* offsets from LUTDMA top address for the debug buses */
+#define DBGBUS_LUTDMA_0	0x1E8
+#define DBGBUS_LUTDMA_1	0x5E8
 
 /* offsets from sde top address for the debug buses */
 #define DBGBUS_SSPP0	0x188
@@ -164,6 +170,12 @@ struct dsi_debug_bus_entry {
 	u32 sel;
 };
 
+struct lutdma_debug_bus_entry {
+	u32 wr_addr;
+	bool read_engine;
+	u32 indicies;
+};
+
 struct sde_dbg_dsi_ctrl_list_entry {
 	const char *name;
 	void __iomem *base;
@@ -197,6 +209,11 @@ struct sde_dbg_dsi_debug_bus {
 	struct dsi_debug_bus_entry *entries;
 };
 
+struct sde_dbg_lutdma_debug_bus {
+	struct sde_dbg_debug_bus_common cmn;
+	struct lutdma_debug_bus_entry *entries;
+};
+
 /**
  * struct sde_dbg_regbuf - wraps buffer and tracking params for register dumps
  * @buf: pointer to allocated memory for storing register dumps in hw recovery
@@ -228,6 +245,7 @@ struct sde_dbg_regbuf {
  * @enable_reg_dump: whether to dump registers into memory, kernel log, or both
  * @dbgbus_sde: debug bus structure for the sde
  * @dbgbus_vbif_rt: debug bus structure for the realtime vbif
+ * @dbgbus_lutdma: debug bus structure for the lutdma hw
  * @dump_all: dump all entries in register dump
  * @dump_secure: dump entries excluding few as it is in secure-session
  * @dsi_dbg_bus: dump dsi debug bus register
@@ -252,6 +270,7 @@ static struct sde_dbg_base {
 	struct sde_dbg_sde_debug_bus dbgbus_sde;
 	struct sde_dbg_vbif_debug_bus dbgbus_vbif_rt;
 	struct sde_dbg_dsi_debug_bus dbgbus_dsi;
+	struct sde_dbg_lutdma_debug_bus dbgbus_lutdma;
 	bool dump_all;
 	bool dump_secure;
 	u32 debugfs_ctrl;
@@ -4291,6 +4310,13 @@ static struct dsi_debug_bus_entry dsi_dbg_bus_kona[] = {
 	{0, 0x3c}, {0, 0x3d}, {0, 0x3e}, {0, 0x3f},
 };
 
+static struct lutdma_debug_bus_entry dbg_bus_lutdma_lahaina[] = {
+	{ DBGBUS_LUTDMA_0, false, 1024 },
+	{ DBGBUS_LUTDMA_0, true, 1024 },
+	{ DBGBUS_LUTDMA_1, false, 1024 },
+	{ DBGBUS_LUTDMA_1, true, 1024 },
+};
+
 /**
  * _sde_power_check - check if power needs to enabled
  * @dump_mode: to check if power need to be enabled
@@ -4960,6 +4986,103 @@ static void _sde_dbg_dump_dsi_dbg_bus(struct sde_dbg_dsi_debug_bus *bus)
 			bus->cmn.name);
 }
 
+static void _sde_dbg_dump_lutdma_dbg_bus(struct sde_dbg_lutdma_debug_bus *bus)
+{
+	void __iomem *mem_base = NULL;
+	struct sde_dbg_reg_base *reg_base;
+	struct lutdma_debug_bus_entry *entries;
+	bool dump_in_log, dump_in_mem;
+	u32 **dump_mem = NULL;
+	u32 *dump_addr = NULL;
+	u32 i, j, entry_count, addr, count, val, engine_bit, dump_mem_size = 0;
+	int rc;
+
+	if (!bus || !bus->cmn.entries_size)
+		return;
+
+	list_for_each_entry(reg_base, &sde_dbg_base.reg_base_list,
+			reg_base_head) {
+		if (strlen(reg_base->name) &&
+			!strcmp(reg_base->name, bus->cmn.name))
+			mem_base = reg_base->base;
+	}
+
+	if (!mem_base) {
+		pr_err("unable to find mem_base for %s\n", bus->cmn.name);
+		return;
+	}
+
+	entries = bus->entries;
+	entry_count = bus->cmn.entries_size;
+
+	dump_in_log = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_LOG);
+	dump_in_mem = (bus->cmn.enable_mask & SDE_DBG_DUMP_IN_MEM);
+	dump_mem = &bus->cmn.dumped_content;
+
+	if (!dump_in_log && !dump_in_mem)
+		return;
+
+	rc = pm_runtime_get_sync(sde_dbg_base.dev);
+	if (rc < 0) {
+		pr_err("failed to enable power %d\n", rc);
+		return;
+	}
+
+	dev_info(sde_dbg_base.dev, "======== start %s dump =========\n",
+			bus->cmn.name);
+
+	if (dump_in_mem) {
+		if (*dump_mem == NULL) {
+			for (i = 0; i < entry_count; i++)
+				dump_mem_size += (entries[i].indicies *
+					sizeof(u32));
+
+			//Ensure enough chunks for debugfs dumping
+			dump_mem_size += dump_mem_size % (DUMP_CLMN_COUNT * 4);
+			*dump_mem = devm_kzalloc(sde_dbg_base.dev,
+					dump_mem_size, GFP_KERNEL);
+			bus->cmn.content_size = dump_mem_size / sizeof(u32);
+		}
+
+		if (*dump_mem) {
+			dump_addr = *dump_mem;
+			dev_info(sde_dbg_base.dev,
+				"%s: start_addr:0x%pK len:0x%x\n",
+				__func__, dump_addr, dump_mem_size);
+		} else {
+			dump_in_mem = false;
+			pr_err("dump_mem: allocation fails\n");
+		}
+	}
+
+	for (i = 0; i < entry_count; i++) {
+		addr = entries[i].wr_addr;
+		count = entries[i].indicies;
+		engine_bit  = entries[i].read_engine ? BIT(14) : 0;
+
+		for (j = 0 ; j < count; j++) {
+			val = (BIT(0) | engine_bit | (j << 1)) & 0xFFFF;
+			writel_relaxed(val, mem_base + addr);
+			wmb(); /* Ensure dbgbus setup occurs before read */
+			val = readl_relaxed(mem_base + addr + 0x4);
+
+			if (dump_in_log)
+				dev_info(sde_dbg_base.dev,
+					"lutdma_waddr=0x%x index=0x%x val=0x%x\n",
+					addr, j, val);
+
+			if (dump_in_mem)
+				dump_addr[i * count +  j] = val;
+		}
+
+		//Disable debug bus when done
+		writel_relaxed(0, mem_base + addr);
+	}
+
+	dev_info(sde_dbg_base.dev, "======== end %s dump =========\n",
+			bus->cmn.name);
+}
+
 /**
  * _sde_dump_array - dump array of register bases
  * @blk_arr: array of register base pointers
@@ -5003,6 +5126,9 @@ static void _sde_dump_array(struct sde_dbg_reg_base *blk_arr[],
 
 	if (dump_all || dump_dbgbus_dsi)
 		_sde_dbg_dump_dsi_dbg_bus(&sde_dbg_base.dbgbus_dsi);
+
+	if (dump_all || dump_dbgbus_sde)
+		_sde_dbg_dump_lutdma_dbg_bus(&sde_dbg_base.dbgbus_lutdma);
 
 	if (do_panic && sde_dbg_base.panic_on_err)
 		panic(name);
@@ -5651,6 +5777,29 @@ static const struct file_operations sde_recovery_dsi_dbgbus_fops = {
 	.read = sde_recovery_dbgbus_dump_read,
 };
 
+
+static int sde_recovery_lutdma_dbgbus_dump_open(struct inode *inode,
+		struct file *file)
+{
+	if (!inode || !file)
+		return -EINVAL;
+
+	/* non-seekable */
+	file->f_mode &= ~(FMODE_LSEEK | FMODE_PREAD | FMODE_PWRITE);
+	file->private_data =  (void *)&sde_dbg_base.dbgbus_lutdma.cmn;
+
+	mutex_lock(&sde_dbg_base.mutex);
+	sde_dbg_base.dbgbus_lutdma.cmn.content_idx = 0;
+	mutex_unlock(&sde_dbg_base.mutex);
+
+	return 0;
+}
+
+static const struct file_operations sde_recovery_lutdma_dbgbus_fops = {
+	.open = sde_recovery_lutdma_dbgbus_dump_open,
+	.read = sde_recovery_dbgbus_dump_read,
+};
+
 /**
  * sde_dbg_reg_base_release - release allocated reg dump file private data
  * @inode: debugfs inode
@@ -6075,6 +6224,16 @@ int sde_dbg_debugfs_register(struct device *dev)
 				&dbg->dbgbus_dsi.cmn.enable_mask);
 	}
 
+	if (dbg->dbgbus_lutdma.entries) {
+		debugfs_create_file("recovery_lutdma_dbgbus", 0400,
+				debugfs_root, NULL,
+				&sde_recovery_lutdma_dbgbus_fops);
+		snprintf(debug_name, sizeof(debug_name), "%s_dbgbus",
+				dbg->dbgbus_lutdma.cmn.name);
+		debugfs_create_u32(debug_name, 0600, debugfs_root,
+				&dbg->dbgbus_lutdma.cmn.enable_mask);
+	}
+
 	list_for_each_entry(blk_base, &dbg->reg_base_list, reg_base_head) {
 		snprintf(debug_name, sizeof(debug_name), "%s_off",
 				blk_base->name);
@@ -6120,6 +6279,13 @@ void sde_dbg_init_dbg_buses(u32 hwversion)
 				ARRAY_SIZE(dsi_dbg_bus_kona);
 		dbg->dbgbus_dsi.cmn.name = DBGBUS_NAME_DSI;
 		dbg->dbgbus_dsi.cmn.enable_mask = DEFAULT_DBGBUS_DSI;
+
+		dbg->dbgbus_lutdma.entries = dbg_bus_lutdma_lahaina;
+		dbg->dbgbus_lutdma.cmn.name = DBGBUS_NAME_LUTDMA;
+		dbg->dbgbus_lutdma.cmn.entries_size =
+				ARRAY_SIZE(dbg_bus_lutdma_lahaina);
+		dbg->dbgbus_lutdma.cmn.enable_mask = DEFAULT_DBGBUS_LUTDMA;
+		dbg->dbgbus_lutdma.cmn.include_in_deferred_work = true;
 	} else if (SDE_HW_REV_MAJOR(hwversion) == 0x6) {
 		dbg->dbgbus_sde.entries = dbg_bus_sde_kona;
 		dbg->dbgbus_sde.cmn.entries_size =
