@@ -514,6 +514,13 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan)
 	bool ret_val = 0;
 	uint16_t cfreq;
 
+	if (!WLAN_IS_CHAN_5GHZ(chan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "Channel %d not a 5GHz channel",
+			  chan->dfs_ch_ieee);
+		return 0;
+	}
+
 	if (WLAN_IS_CHAN_MODE_160(chan))
 		cfreq = chan->dfs_ch_mhz_freq_seg2;
 	else if (WLAN_IS_CHAN_MODE_165(dfs, chan))
@@ -3541,6 +3548,12 @@ static qdf_freq_t dfs_find_rcac_chan(struct wlan_dfs *dfs,
 		 */
 		if (WLAN_IS_CHAN_MODE_165(dfs, dfs->dfs_curchan))
 			flags |= DFS_RANDOM_CH_FLAG_RESTRICTED_80P80_ENABLED;
+
+		if (!WLAN_IS_CHAN_5GHZ(dfs->dfs_curchan)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_AGILE,
+				  "Current operating channel not a 5G channel");
+			goto exit;
+		}
 
 		dfs_fill_des_rcac_chan_params(dfs,
 					      &nxt_chan_params,
