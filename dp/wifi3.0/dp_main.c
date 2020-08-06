@@ -5197,6 +5197,7 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 	struct dp_pdev *pdev;
 	struct dp_neighbour_peer *peer = NULL;
 	struct dp_neighbour_peer *temp_peer = NULL;
+	struct dp_peer *vap_self_peer = NULL;
 	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
 
 	if (!vdev)
@@ -5204,14 +5205,11 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	pdev = vdev->pdev;
 
-	if (wlan_op_mode_sta == vdev->opmode) {
-		if (vdev->vap_self_peer)
-			dp_peer_delete_wifi3((struct cdp_soc_t *)soc,
-					     vdev->vdev_id,
-					     vdev->vap_self_peer->mac_addr.raw,
-					     0);
-		else
-			dp_err("vdev self peer is NULL");
+	vap_self_peer = dp_sta_vdev_self_peer_ref_n_get(soc, vdev);
+	if (vap_self_peer) {
+		dp_peer_delete_wifi3((struct cdp_soc_t *)soc, vdev->vdev_id,
+				     vap_self_peer->mac_addr.raw, 0);
+		dp_peer_unref_delete(vap_self_peer);
 	}
 
 	/*
@@ -5563,13 +5561,12 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			(wlan_op_mode_sta != vdev->opmode)) {
 		dp_info("vdev bss_peer!!");
 		peer->bss_peer = 1;
-		vdev->vap_bss_peer = peer;
 	}
 
 	if (wlan_op_mode_sta == vdev->opmode &&
 	    qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
 			QDF_MAC_ADDR_SIZE) == 0) {
-		vdev->vap_self_peer = peer;
+		peer->sta_self_peer = 1;
 	}
 
 	for (i = 0; i < DP_MAX_TIDS; i++)
@@ -6147,35 +6144,6 @@ dp_peer_authorize(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 }
 
 /*
- * dp_vdev_reset_peer() - Update peer related member in vdev
-			  as peer is going to free
- * @vdev: datapath vdev handle
- * @peer: dataptah peer handle
- *
- * Return: None
- */
-static void dp_vdev_reset_peer(struct dp_vdev *vdev,
-			       struct dp_peer *peer)
-{
-	struct dp_peer *bss_peer = NULL;
-
-	if (!vdev) {
-		dp_err("vdev is NULL");
-	} else {
-		if (vdev->vap_bss_peer == peer) {
-			vdev->vap_bss_peer = NULL;
-			qdf_mem_zero(vdev->vap_bss_peer_mac_addr,
-				     QDF_MAC_ADDR_SIZE);
-		}
-
-		if (vdev && vdev->vap_bss_peer) {
-		    bss_peer = vdev->vap_bss_peer;
-		    DP_UPDATE_STATS(vdev, peer);
-		}
-	}
-}
-
-/*
  * dp_peer_release_mem() - free dp peer handle memory
  * @soc: dataptah soc handle
  * @pdev: datapath pdev handle
@@ -6345,8 +6313,8 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 
 		/* cleanup the peer data */
 		dp_peer_cleanup(vdev, peer, false);
-		/* reset this peer related info in vdev */
-		dp_vdev_reset_peer(vdev, peer);
+		if (!peer->bss_peer)
+			DP_UPDATE_STATS(vdev, peer);
 		/* save vdev related member in case vdev freed */
 		vdev_opmode = vdev->opmode;
 		qdf_mem_copy(vdev_mac_addr, vdev->mac_addr.raw,
@@ -10460,39 +10428,6 @@ dp_txrx_post_data_stall_event(struct cdp_soc_t *soc_hdl,
 }
 #endif /* WLAN_SUPPORT_DATA_STALL */
 
-#ifdef DP_PEER_EXTENDED_API
-/**
- * dp_peer_get_ref_find_by_addr - get peer with addr by ref count inc
- * @dev: physical device instance
- * @peer_mac_addr: peer mac address
- * @debug_id: to track enum peer access
- *
- * Return: peer instance pointer
- */
-static void *
-dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
-			     enum peer_debug_id_type debug_id)
-{
-	struct dp_pdev *pdev = (struct dp_pdev *)dev;
-	struct dp_peer *peer;
-
-	peer = dp_peer_find_hash_find(pdev->soc, peer_mac_addr, 0, DP_VDEV_ALL);
-
-	if (!peer)
-		return NULL;
-
-	if (peer->delete_in_progress) {
-		dp_err("Peer deletion in progress");
-		dp_peer_unref_delete(peer);
-		return NULL;
-	}
-
-	dp_info_rl("peer %pK mac: %pM", peer, peer->mac_addr.raw);
-
-	return peer;
-}
-#endif /* DP_PEER_EXTENDED_API */
-
 #ifdef WLAN_FEATURE_STATS_EXT
 /* rx hw stats event wait timeout in ms */
 #define DP_REO_STATUS_STATS_TIMEOUT 1500
@@ -10594,8 +10529,7 @@ dp_request_rx_hw_stats(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer = dp_peer_get_ref_find_by_addr((struct cdp_pdev *)vdev->pdev,
-					    vdev->vap_bss_peer_mac_addr, 0);
+	peer = dp_vdev_bss_peer_ref_n_get(soc, vdev);
 
 	if (!peer) {
 		dp_err("Peer is NULL");

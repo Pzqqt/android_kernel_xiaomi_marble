@@ -711,6 +711,7 @@ QDF_STATUS dp_peer_add_ast(struct dp_soc *soc,
 	uint8_t next_node_mac[6];
 	txrx_ast_free_cb cb = NULL;
 	void *cookie = NULL;
+	struct dp_peer *vap_bss_peer = NULL;
 	bool is_peer_found = false;
 
 	vdev = peer->vdev;
@@ -916,7 +917,13 @@ add_ast_entry:
 		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
 		break;
 	case CDP_TXRX_AST_TYPE_DA:
-		peer = peer->vdev->vap_bss_peer;
+		vap_bss_peer = dp_vdev_bss_peer_ref_n_get(soc, vdev);
+		if (!vap_bss_peer) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			qdf_mem_free(ast_entry);
+			return QDF_STATUS_E_FAILURE;
+		}
+		peer = vap_bss_peer;
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_DA;
 		break;
@@ -953,10 +960,15 @@ add_ast_entry:
 				next_node_mac,
 				flags,
 				ast_entry->type)) {
+			if (vap_bss_peer)
+				dp_peer_unref_delete(vap_bss_peer);
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return QDF_STATUS_SUCCESS;
 		}
 	}
+
+	if (vap_bss_peer)
+		dp_peer_unref_delete(vap_bss_peer);
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
 	return QDF_STATUS_E_FAILURE;
@@ -1781,10 +1793,6 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 					QDF_MAC_ADDR_SIZE) != 0) {
 				dp_info("STA vdev bss_peer!!!!");
 				peer->bss_peer = 1;
-				peer->vdev->vap_bss_peer = peer;
-				qdf_mem_copy(peer->vdev->vap_bss_peer_mac_addr,
-					     peer->mac_addr.raw,
-					     QDF_MAC_ADDR_SIZE);
 			}
 
 			if (peer->vdev->opmode == wlan_op_mode_sta) {
@@ -4032,4 +4040,61 @@ bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id)
 	}
 
 	return false;
+}
+
+/**
+ * dp_vdev_bss_peer_ref_n_get: Get bss peer of a vdev
+ * @soc: DP soc
+ * @vdev: vdev
+ *
+ * Return: VDEV BSS peer
+ */
+struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
+					   struct dp_vdev *vdev)
+{
+	struct dp_peer *peer;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (peer->bss_peer)
+			break;
+	}
+
+	if (!peer || !qdf_atomic_inc_not_zero(&peer->ref_cnt)) {
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		return NULL;
+	}
+
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	return peer;
+}
+
+/**
+ * dp_sta_vdev_self_peer_ref_n_get: Get self peer of sta vdev
+ * @soc: DP soc
+ * @vdev: vdev
+ *
+ * Return: VDEV self peer
+ */
+struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
+						struct dp_vdev *vdev)
+{
+	struct dp_peer *peer;
+
+	if (vdev->opmode != wlan_op_mode_sta)
+		return NULL;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (peer->sta_self_peer)
+			break;
+	}
+
+	if (!peer || !qdf_atomic_inc_not_zero(&peer->ref_cnt)) {
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+		return NULL;
+	}
+
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	return peer;
 }
