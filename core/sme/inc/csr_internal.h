@@ -42,6 +42,8 @@
 /* No of sessions to be supported, and a session is for Infra, BT-AMP */
 #define CSR_IS_SESSION_VALID(mac, sessionId) \
 	((sessionId) < WLAN_MAX_VDEVS && \
+	 (mac != NULL) && \
+	 ((mac)->roam.roamSession != NULL) && \
 	 (mac)->roam.roamSession[(sessionId)].sessionActive)
 
 #define CSR_GET_SESSION(mac, sessionId) \
