@@ -1032,12 +1032,12 @@ dfs_radar_action_for_hw_mode_switch(struct wlan_dfs *dfs,
 	 * If in progress, defer the processing of radar event received till
 	 * the mode switch is completed.
 	 */
-	if (dfs_is_hw_mode_switch_in_progress(dfs)) {
-		struct radar_found_info *radar_params = NULL;
 
-		radar_params = qdf_mem_malloc(sizeof(*radar_params));
-		if (!radar_params)
-			return QDF_STATUS_SUCCESS;
+	struct radar_found_info *radar_params = NULL;
+
+	radar_params = qdf_mem_malloc(sizeof(*radar_params));
+	if (!radar_params)
+		return QDF_STATUS_E_NOMEM;
 
 	/* If CAC timer is running, cancel it here rather than
 	 * after processing to avoid handling unnecessary CAC timeouts.
@@ -1053,10 +1053,8 @@ dfs_radar_action_for_hw_mode_switch(struct wlan_dfs *dfs,
 	qdf_mem_copy(radar_params, radar_found, sizeof(*radar_params));
 	dfs->dfs_defer_params.radar_params = radar_params;
 	dfs->dfs_defer_params.is_radar_detected = true;
-	return QDF_STATUS_SUCCESS;
-	}
 
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef CONFIG_CHAN_FREQ_API
@@ -1156,8 +1154,72 @@ dfs_send_nol_ie_and_rcsa(struct wlan_dfs *dfs,
 }
 #endif /* QCA_DFS_RCSA_SUPPORT */
 
-QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
-				 struct radar_found_info *radar_found)
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS) || \
+	defined(QCA_SUPPORT_ADFS_RCAC)
+/**
+ * dfs_is_radarsource_agile() - Indicates whether the radar event is received
+ * on the agile channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info structure.
+ *
+ * Return: QDF_STATUS
+ */
+static
+bool dfs_is_radarsource_agile(struct wlan_dfs *dfs,
+			      struct radar_found_info *radar_found)
+{
+	bool is_radar_from_agile_dfs =
+	    (radar_found->detector_id == dfs_get_agile_detector_id(dfs));
+	bool is_radar_from_zero_wait_dfs =
+	    (dfs_is_precac_timer_running(dfs) &&
+	     (radar_found->segment_id == SEG_ID_SECONDARY));
+
+	return (is_radar_from_agile_dfs || is_radar_from_zero_wait_dfs);
+}
+#else
+static
+bool dfs_is_radarsource_agile(struct wlan_dfs *dfs,
+			      struct radar_found_info *radar_found)
+{
+	return false;
+}
+#endif
+
+QDF_STATUS
+dfs_process_radar_ind(struct wlan_dfs *dfs,
+		      struct radar_found_info *radar_found)
+{
+	QDF_STATUS status;
+
+	/* Acquire a lock to avoid initiating mode switch till radar
+	 * processing is completed.
+	 */
+	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
+
+	if (utils_dfs_can_ignore_radar_event(dfs->dfs_pdev_obj)) {
+		DFS_RADAR_MODE_SWITCH_UNLOCK(dfs);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/* Before processing radar, check if HW mode switch is in progress.
+	 * If in progress, defer the processing of radar event received till
+	 * the mode switch is completed.
+	 */
+	if (dfs_is_hw_mode_switch_in_progress(dfs))
+		status = dfs_radar_action_for_hw_mode_switch(dfs, radar_found);
+	else if (dfs_is_radarsource_agile(dfs, radar_found))
+		status = dfs_process_radar_ind_on_agile_chan(dfs, radar_found);
+	else
+		status = dfs_process_radar_ind_on_home_chan(dfs, radar_found);
+
+	DFS_RADAR_MODE_SWITCH_UNLOCK(dfs);
+
+	return status;
+}
+
+QDF_STATUS
+dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
+				   struct radar_found_info *radar_found)
 {
 	bool wait_for_csa = false;
 	uint16_t freq_list[NUM_CHANNELS_160MHZ];
@@ -1167,17 +1229,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	uint32_t freq_center;
 	uint32_t radarfound_freq;
 	struct dfs_channel *dfs_curchan;
-
-	if (utils_dfs_can_ignore_radar_event(dfs->dfs_pdev_obj))
-		return QDF_STATUS_SUCCESS;
-	/* Acquire a lock to avoid initiating mode switch till radar
-	 * processing is completed.
-	 */
-	DFS_RADAR_MODE_SWITCH_LOCK(dfs);
-
-	if (dfs_radar_action_for_hw_mode_switch(dfs, radar_found)
-		== QDF_STATUS_SUCCESS)
-		goto exit;
 
 	dfs_curchan = dfs->dfs_curchan;
 
@@ -1288,11 +1339,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 nol_freq_list,
 				 num_channels,
 				 &wait_for_csa);
-	/* If radar is found on preCAC or Agile CAC, return here since
-	 * channel change is not required.
-	 */
-	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs))
-		goto exit;
+
 	if (!dfs->dfs_is_offload_enabled &&
 	    dfs->is_radar_found_on_secondary_seg) {
 		dfs_second_segment_radar_disable(dfs);
@@ -1332,7 +1379,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				   dfs->dfs_curchan->dfs_ch_flags);
 
 exit:
-	DFS_RADAR_MODE_SWITCH_UNLOCK(dfs);
 	return status;
 }
 #endif

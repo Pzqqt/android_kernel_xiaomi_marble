@@ -138,6 +138,18 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		struct radar_found_info *radar_found);
 
 /**
+ * dfs_process_radar_ind_on_home_chan() - Process radar indication event on
+ * home channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info structure.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dfs_process_radar_ind_on_home_chan(struct wlan_dfs *dfs,
+				   struct radar_found_info *radar_found);
+
+/**
  * dfs_radarfound_action_generic() - The dfs action on radar detection by host
  * for domains other than FCC.
  * @dfs: Pointer to wlan_dfs structure.

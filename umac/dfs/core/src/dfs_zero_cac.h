@@ -1384,4 +1384,25 @@ static inline void dfs_stop_agile_rcac_timer(struct wlan_dfs *dfs)
 }
 #endif /* QCA_SUPPORT_ADFS_RCAC */
 
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS) || \
+	defined(QCA_SUPPORT_ADFS_RCAC)
+/**
+ * dfs_process_radar_ind_on_agile_chan() - Process radar indication event on
+ * agile channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info structure.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
+				    struct radar_found_info *radar_found);
+#else
+static inline QDF_STATUS
+dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
+				    struct radar_found_info *radar_found)
+{
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
 #endif /* _DFS_ZERO_CAC_H_ */
