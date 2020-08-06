@@ -1646,11 +1646,6 @@ void tdls_scan_done_callback(struct tdls_soc_priv_obj *tdls_soc)
 	if (!tdls_soc)
 		return;
 
-	if (TDLS_SUPPORT_DISABLED == tdls_soc->tdls_current_mode) {
-		tdls_debug_rl("TDLS mode is disabled OR not enabled");
-		return;
-	}
-
 	/* if tdls was enabled before scan, re-enable tdls mode */
 	if (TDLS_SUPPORT_IMP_MODE == tdls_soc->tdls_last_mode ||
 	    TDLS_SUPPORT_EXT_CONTROL == tdls_soc->tdls_last_mode ||
@@ -1706,10 +1701,53 @@ void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
 	tdls_post_scan_done_msg(tdls_soc);
 }
 
+/**
+ * tdls_check_peer_buf_capable() - Check buffer sta capable of tdls peers
+ * @tdls_vdev: TDLS vdev object
+ *
+ * Used in scheduler thread context, no lock needed.
+ *
+ * Return: false if there is connected peer and not support buffer sta.
+ */
+static bool tdls_check_peer_buf_capable(struct tdls_vdev_priv_obj *tdls_vdev)
+{
+	uint16_t i;
+	struct tdls_peer *peer;
+	qdf_list_t *head;
+	qdf_list_node_t *p_node;
+	QDF_STATUS status;
+
+	if (!tdls_vdev) {
+		tdls_err("invalid tdls vdev object");
+		return false;
+	}
+
+	for (i = 0; i < WLAN_TDLS_PEER_LIST_SIZE; i++) {
+		head = &tdls_vdev->peer_list[i];
+
+		status = qdf_list_peek_front(head, &p_node);
+		while (QDF_IS_STATUS_SUCCESS(status)) {
+			peer = qdf_container_of(p_node, struct tdls_peer, node);
+
+			if (peer &&
+			    (TDLS_LINK_CONNECTED == peer->link_status) &&
+			    (!peer->buf_sta_capable))
+				return false;
+
+			status = qdf_list_peek_next(head, p_node, &p_node);
+		}
+	}
+
+	return true;
+}
+
 QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 {
 	struct tdls_vdev_priv_obj *tdls_vdev;
 	struct wlan_objmgr_vdev *vdev;
+	uint16_t tdls_peer_count;
+	uint32_t feature;
+	bool peer_buf_capable;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* if tdls is not enabled, then continue scan */
@@ -1737,6 +1775,35 @@ QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 			status = QDF_STATUS_E_BUSY;
 		}
 	}
+
+	tdls_peer_count = tdls_soc->connected_peer_count;
+	if (!tdls_peer_count)
+		goto disable_tdls;
+
+	feature = tdls_soc->tdls_configs.tdls_feature_flags;
+	if (TDLS_IS_SCAN_ENABLED(feature)) {
+		tdls_debug("TDLS Scan enabled, keep tdls link and allow scan, connected tdls peers: %d",
+			   tdls_peer_count);
+		goto disable_tdls;
+	}
+
+	if (TDLS_IS_BUFFER_STA_ENABLED(feature) &&
+	    (tdls_peer_count <= TDLS_MAX_CONNECTED_PEERS_TO_ALLOW_SCAN)) {
+		peer_buf_capable = tdls_check_peer_buf_capable(tdls_vdev);
+		if (peer_buf_capable) {
+			tdls_debug("All peers (num %d) bufSTAs, we can be sleep sta, so allow scan, tdls mode changed to %d",
+				   tdls_peer_count,
+				   tdls_soc->tdls_current_mode);
+			goto disable_tdls;
+		}
+	}
+
+	tdls_disable_offchan_and_teardown_links(vdev);
+
+disable_tdls:
+	tdls_set_current_mode(tdls_soc, TDLS_SUPPORT_DISABLED,
+			      false, TDLS_SET_MODE_SOURCE_SCAN);
+
 return_success:
 	wlan_objmgr_vdev_release_ref(vdev,
 				     WLAN_TDLS_NB_ID);

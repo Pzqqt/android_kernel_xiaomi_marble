@@ -58,6 +58,7 @@
  */
 #define TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE     1000
 #define TDLS_SCAN_REJECT_MAX            5
+#define TDLS_MAX_CONNECTED_PEERS_TO_ALLOW_SCAN   1
 
 #define tdls_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_TDLS, params)
