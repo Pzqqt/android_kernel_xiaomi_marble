@@ -3715,24 +3715,17 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_roaming_callbacks(
-	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
-		struct roam_offload_synch_ind *roam_synch_data,
-		struct bss_description *bss_desc_ptr,
-		enum sir_roam_op_code reason),
+	csr_roam_synch_fn_t csr_roam_synch_cb,
 	QDF_STATUS (*csr_roam_auth_event_handle_cb)(struct mac_context *mac,
 						    uint8_t vdev_id,
 						    struct qdf_mac_addr bssid),
-	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
-		struct roam_offload_synch_ind *roam_synch_data,
-		struct bss_description *bss_desc_ptr,
-		enum sir_roam_op_code reason),
+	pe_roam_synch_fn_t pe_roam_synch_cb,
 	QDF_STATUS (*pe_disconnect_cb) (struct mac_context *mac,
 					uint8_t vdev_id,
 					uint8_t *deauth_disassoc_frame,
 					uint16_t deauth_disassoc_frame_len,
 					uint16_t reason_code),
-	QDF_STATUS (*csr_roam_pmkid_req_cb)(uint8_t vdev_id,
-		struct roam_pmkid_req_event *bss_list))
+	csr_roam_pmkid_req_fn_t csr_roam_pmkid_req_cb)
 {
 
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
