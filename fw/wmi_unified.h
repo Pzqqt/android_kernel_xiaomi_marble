@@ -6861,6 +6861,9 @@ typedef enum {
      */
     WMI_PDEV_PARAM_SR_TRIGGER_MARGIN,
 
+    /* Param to enable/disable PCIE HW ILP */
+    WMI_PDEV_PARAM_PCIE_HW_ILP,
+
 } WMI_PDEV_PARAM;
 
 #define WMI_PDEV_ONLY_BSR_TRIG_IS_ENABLED(trig_type) WMI_GET_BITS(trig_type, 0, 1)
