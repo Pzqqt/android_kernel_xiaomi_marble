@@ -195,7 +195,72 @@ uint8_t dfs_get_bonding_channels_for_freq(struct wlan_dfs *dfs,
 					  uint32_t segment_id,
 					  uint8_t detector_id,
 					  uint16_t *freq_list);
+
+/**
+ * dfs_compute_radar_found_cfreq(): Computes the centre frequency of the
+ * radar hit channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info.
+ * @freq_center: Pointer to retrieve the value of radar found cfreq.
+ */
+void
+dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
+			      struct radar_found_info *radar_found,
+			      uint32_t *freq_center);
+
+/**
+ * dfs_find_radar_affected_channels()- Find the radar affected 20MHz channels.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar found structure.
+ * @freq_list: List of 20MHz frequencies on which radar has been detected.
+ * @freq_center: Frequency center of the band on which the radar was detected.
+ *
+ * Return: number of radar affected channels.
+ */
+uint8_t
+dfs_find_radar_affected_channels(struct wlan_dfs *dfs,
+				 struct radar_found_info *radar_found,
+				 uint16_t *freq_list,
+				 uint32_t freq_center);
+
+/**
+ * dfs_radar_add_channel_list_to_nol_for_freq()- Add given channels to nol
+ * @dfs: Pointer to wlan_dfs structure.
+ * @freq_list: Pointer to list of frequency(has both nonDFS and DFS channels).
+ * Input frequency list.
+ * @nol_freq_list: Pointer to list of NOL frequencies. Output frequency list.
+ * @num_channels: Pointer to number of channels in the list. It is both input
+ * and output to this function.
+ * *Input: Number of subchannels in @freq_list.
+ * *Output: Number of subchannels in @nol_freq_list.
+ *
+ * Add list of channels to nol, only if the channel is dfs.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dfs_radar_add_channel_list_to_nol_for_freq(struct wlan_dfs *dfs,
+					   uint16_t *freq_list,
+					   uint16_t *nol_freq_list,
+					   uint8_t *num_channels);
 #endif
+
+/**
+ * dfs_reset_bangradar() - Rest bangradar parameters.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: void.
+ */
+void dfs_reset_bangradar(struct wlan_dfs *dfs);
+
+/**
+ * dfs_send_csa_to_current_chan() - Send CSA to current channel
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * For the test mode(usenol = 0), don't do a CSA; but setup the test timer so
+ * we get a CSA _back_ to the current operating channel.
+ */
+void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs);
 
 /**
  * dfs_get_bonding_channels_without_seg_info() - Get bonding channels in chan
