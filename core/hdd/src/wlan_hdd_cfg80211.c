@@ -16445,7 +16445,10 @@ QDF_STATUS wlan_hdd_update_wiphy_supported_band(struct hdd_context *hdd_ctx)
 	    cfg->dot11Mode != eHDD_DOT11_MODE_11ax_ONLY)
 		 wlan_hdd_band_5_ghz.vht_cap.vht_supported = 0;
 
-	hdd_init_6ghz(hdd_ctx);
+	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax_ONLY)
+		hdd_init_6ghz(hdd_ctx);
 
 	return QDF_STATUS_SUCCESS;
 }

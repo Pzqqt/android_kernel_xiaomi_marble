@@ -2197,6 +2197,29 @@ static void hdd_component_cfg_chan_to_freq(struct wlan_objmgr_pdev *pdev)
 	ucfg_mlme_cfg_chan_to_freq(pdev);
 }
 
+static uint32_t hdd_update_band_cap_from_dot11mode(
+		struct hdd_context *hdd_ctx, uint32_t band_capability)
+{
+	if (hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_AUTO)
+		return band_capability;
+
+	if (hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_11b ||
+	    hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_11g ||
+	    hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_11g_ONLY ||
+	    hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_11b_ONLY)
+		band_capability = (band_capability & (~BIT(REG_BAND_5G)));
+
+	if (hdd_ctx->config->dot11Mode == eHDD_DOT11_MODE_11a)
+		band_capability = (band_capability & (~BIT(REG_BAND_2G)));
+
+	if (hdd_ctx->config->dot11Mode != eHDD_DOT11_MODE_11ax_ONLY &&
+	    hdd_ctx->config->dot11Mode != eHDD_DOT11_MODE_11ax)
+		band_capability = (band_capability & (~BIT(REG_BAND_6G)));
+
+	qdf_debug("Update band capability %x", band_capability);
+	return band_capability;
+}
+
 int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
@@ -2282,6 +2305,9 @@ int hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		ret = qdf_status_to_os_return(status);
 		goto pdev_close;
 	}
+
+	band_capability =
+		hdd_update_band_cap_from_dot11mode(hdd_ctx, band_capability);
 
 	/* first store the INI band capability */
 	temp_band_cap = band_capability;
