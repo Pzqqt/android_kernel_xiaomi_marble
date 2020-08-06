@@ -706,7 +706,7 @@ static void dfs_action_on_spoof_success(struct wlan_dfs *dfs)
 			 "cac timer started for channel %d",
 			 dfs->dfs_curchan->dfs_ch_ieee);
 		dfs_start_cac_timer(dfs);
-	} else{
+	} else {
 		dfs_remove_spoof_channel_from_nol(dfs);
 	}
 }
