@@ -5782,11 +5782,6 @@ static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
 	uint8_t btc_chain_mode;
 	QDF_STATUS status;
 
-	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is invalid");
-		goto err;
-	}
-
 	if (!adapter) {
 		hdd_err("adapter is invalid");
 		goto err;
