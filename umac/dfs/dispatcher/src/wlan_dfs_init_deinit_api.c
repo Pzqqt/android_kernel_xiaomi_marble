@@ -74,6 +74,29 @@ register_dfs_precac_auto_chan_callbacks_freq(struct dfs_to_mlme *mlme_callback)
 #endif
 #endif
 
+/**
+ * register_dfs_postnol_csa_callback - Register postNOL channel switch callbacks
+ * @mlme_callback: Pointer to dfs_to_mlme.
+ */
+#ifndef QCA_MCL_DFS_SUPPORT
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+static inline void
+register_dfs_postnol_csa_callback(struct dfs_to_mlme *mlme_callback)
+{
+	if (!mlme_callback)
+		return;
+
+	mlme_callback->mlme_postnol_chan_switch =
+		mlme_dfs_postnol_chan_switch;
+}
+#else
+static inline void
+register_dfs_postnol_csa_callback(struct dfs_to_mlme *mlme_callback)
+{
+}
+#endif
+#endif
+
 /*
  * register_dfs_callbacks_for_freq() - Register dfs callbacks.
  * @mlme_callback: Pointer to dfs_to_mlme.
@@ -149,6 +172,7 @@ void register_dfs_callbacks(void)
 	register_dfs_precac_auto_chan_callbacks_freq(tmp_dfs_to_mlme);
 	/* Register freq based callbacks */
 	register_dfs_callbacks_for_freq(tmp_dfs_to_mlme);
+	register_dfs_postnol_csa_callback(tmp_dfs_to_mlme);
 }
 #else
 void register_dfs_callbacks(void)

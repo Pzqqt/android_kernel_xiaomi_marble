@@ -537,3 +537,113 @@ bool ucfg_dfs_is_agile_rcac_enabled(struct wlan_objmgr_pdev *pdev)
 
 qdf_export_symbol(ucfg_dfs_is_agile_rcac_enabled);
 #endif
+
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+QDF_STATUS ucfg_dfs_set_postnol_freq(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t postnol_freq)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_set_postnol_freq(dfs, postnol_freq);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_set_postnol_freq);
+
+QDF_STATUS ucfg_dfs_set_postnol_mode(struct wlan_objmgr_pdev *pdev,
+				     uint8_t postnol_mode)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_set_postnol_mode(dfs, postnol_mode);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_set_postnol_mode);
+
+QDF_STATUS ucfg_dfs_set_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+				       qdf_freq_t postnol_cfreq2)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_set_postnol_cfreq2(dfs, postnol_cfreq2);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_set_postnol_cfreq2);
+
+QDF_STATUS ucfg_dfs_get_postnol_freq(struct wlan_objmgr_pdev *pdev,
+				     qdf_freq_t *postnol_freq)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_get_postnol_freq(dfs, postnol_freq);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_get_postnol_freq);
+
+QDF_STATUS ucfg_dfs_get_postnol_mode(struct wlan_objmgr_pdev *pdev,
+				     uint8_t *postnol_mode)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_get_postnol_mode(dfs, postnol_mode);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_get_postnol_mode);
+
+QDF_STATUS ucfg_dfs_get_postnol_cfreq2(struct wlan_objmgr_pdev *pdev,
+				       qdf_freq_t *postnol_cfreq2)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_get_postnol_cfreq2(dfs, postnol_cfreq2);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(ucfg_dfs_get_postnol_cfreq2);
+#endif

@@ -1524,6 +1524,14 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
  * @dfs_complete_deferred_tasks:      Process mode switch completion in DFS.
  * @dfs_is_agile_rcac_enabled:        Checks if Agile RCAC is enabled.
  * @dfs_agile_sm_deliver_evt:         API to post events to DFS Agile  SM.
+ * @dfs_set_postnol_freq:             API to set frequency to switch, post NOL.
+ * @dfs_set_postnol_mode:             API to set phymode to switch to, post NOL.
+ * @dfs_set_postnol_cfreq2            API to set secondary center frequency to
+ *                                    switch to, post NOL.
+ * @dfs_get_postnol_freq:             API to get frequency to switch, post NOL.
+ * @dfs_get_postnol_mode:             API to get phymode to switch to, post NOL.
+ * @dfs_get_postnol_cfreq2:           API to get secondary center frequency to
+ *                                    switch to, post NOL.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1720,6 +1728,20 @@ struct wlan_lmac_if_dfs_rx_ops {
 #ifdef QCA_SUPPORT_AGILE_DFS
 	void (*dfs_agile_sm_deliver_evt)(struct wlan_objmgr_pdev *pdev,
 					 enum dfs_agile_sm_evt event);
+#endif
+#ifdef QCA_SUPPORT_DFS_CHAN_POSTNOL
+	QDF_STATUS (*dfs_set_postnol_freq)(struct wlan_objmgr_pdev *pdev,
+					   qdf_freq_t postnol_freq);
+	QDF_STATUS (*dfs_set_postnol_mode)(struct wlan_objmgr_pdev *pdev,
+					   uint8_t postnol_mode);
+	QDF_STATUS (*dfs_set_postnol_cfreq2)(struct wlan_objmgr_pdev *pdev,
+					     qdf_freq_t postnol_cfreq2);
+	QDF_STATUS (*dfs_get_postnol_freq)(struct wlan_objmgr_pdev *pdev,
+					   qdf_freq_t *postnol_freq);
+	QDF_STATUS (*dfs_get_postnol_mode)(struct wlan_objmgr_pdev *pdev,
+					   uint8_t *postnol_mode);
+	QDF_STATUS (*dfs_get_postnol_cfreq2)(struct wlan_objmgr_pdev *pdev,
+					     qdf_freq_t *postnol_cfreq2);
 #endif
 };
 
