@@ -33,8 +33,10 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
  * @pdev: Pointer to DFS pdev object.
  * @wait_for_csa: Wait for CSA from RootAP.
  */
+#if defined(QCA_DFS_RCSA_SUPPORT)
 void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
 		bool *wait_for_csa);
+#endif
 
 /**
  * dfs_mlme_mark_dfs() - Mark the channel in the channel list.

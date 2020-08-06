@@ -31,12 +31,14 @@
 #include "wni_api.h"
 #endif
 
+#if defined(QCA_DFS_RCSA_SUPPORT)
 void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
 		bool *wait_for_csa)
 {
 	if (global_dfs_to_mlme.dfs_start_rcsa)
 		global_dfs_to_mlme.dfs_start_rcsa(pdev, wait_for_csa);
 }
+#endif
 
 #ifndef QCA_MCL_DFS_SUPPORT
 #ifdef CONFIG_CHAN_NUM_API

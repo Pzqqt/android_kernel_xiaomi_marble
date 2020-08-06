@@ -1293,11 +1293,13 @@ struct wlan_dfs {
 	int32_t        dfs_freq_offset;
 	bool           dfs_cac_aborted;
 	qdf_spinlock_t dfs_data_struct_lock;
+#if defined(QCA_DFS_RCSA_SUPPORT)
 	uint8_t        dfs_nol_ie_bandwidth;
 	uint16_t       dfs_nol_ie_startfreq;
 	uint8_t        dfs_nol_ie_bitmap;
 	bool           dfs_is_rcsa_ie_sent;
 	bool           dfs_is_nol_ie_sent;
+#endif
 	uint8_t        dfs_legacy_precac_ucfg:1,
 		       dfs_agile_precac_ucfg:1,
 #if defined(QCA_SUPPORT_ADFS_RCAC)
@@ -2739,8 +2741,19 @@ int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
  *                         - centre frequency.
  * @nol_ie_bitmap          - NOL bitmap denoting affected subchannels.
  */
+#if defined(QCA_DFS_RCSA_SUPPORT)
 void dfs_fetch_nol_ie_info(struct wlan_dfs *dfs, uint8_t *nol_ie_bandwidth,
 			   uint16_t *nol_ie_startfreq, uint8_t *nol_ie_bitmap);
+#else
+static inline
+void dfs_fetch_nol_ie_info(struct wlan_dfs *dfs, uint8_t *nol_ie_bandwidth,
+			   uint16_t *nol_ie_startfreq, uint8_t *nol_ie_bitmap)
+{
+	*nol_ie_bandwidth = 0;
+	*nol_ie_startfreq = 0;
+	*nol_ie_bitmap = 0;
+}
+#endif
 
 /**
  * dfs_set_rcsa_flags() - Set flags that are required for sending RCSA and
@@ -2749,8 +2762,16 @@ void dfs_fetch_nol_ie_info(struct wlan_dfs *dfs, uint8_t *nol_ie_bandwidth,
  * @is_rcsa_ie_sent: Boolean to check if RCSA IE should be sent or not.
  * @is_nol_ie_sent: Boolean to check if NOL IE should be sent or not.
  */
+#if defined(QCA_DFS_RCSA_SUPPORT)
 void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
 			bool is_nol_ie_sent);
+#else
+static inline
+void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
+			bool is_nol_ie_sent)
+{
+}
+#endif
 
 /**
  * dfs_get_rcsa_flags() - Get flags that are required for sending RCSA and
@@ -2759,8 +2780,18 @@ void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
  * @is_rcsa_ie_sent: Boolean to check if RCSA IE should be sent or not.
  * @is_nol_ie_sent: Boolean to check if NOL IE should be sent or not.
  */
+#if defined(QCA_DFS_RCSA_SUPPORT)
 void dfs_get_rcsa_flags(struct wlan_dfs *dfs, bool *is_rcsa_ie_sent,
 			bool *is_nol_ie_sent);
+#else
+static inline
+void dfs_get_rcsa_flags(struct wlan_dfs *dfs, bool *is_rcsa_ie_sent,
+			bool *is_nol_ie_sent)
+{
+	*is_rcsa_ie_sent = false;
+	*is_nol_ie_sent = false;
+}
+#endif
 
 /**
  * dfs_process_nol_ie_bitmap() - Update NOL with external radar information.
@@ -2772,9 +2803,19 @@ void dfs_get_rcsa_flags(struct wlan_dfs *dfs, bool *is_rcsa_ie_sent,
  *
  * Return: True if NOL IE should be propagated, else false.
  */
+#if defined(QCA_DFS_RCSA_SUPPORT)
 bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 			       uint16_t nol_ie_startfreq,
 			       uint8_t nol_ie_bitmap);
+#else
+static inline
+bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
+			       uint16_t nol_ie_startfreq,
+			       uint8_t nol_ie_bitmap)
+{
+	return false;
+}
+#endif
 
 /**
  * dfs_is_cac_required() - Check if DFS CAC is required for the current channel.

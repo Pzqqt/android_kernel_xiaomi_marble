@@ -832,6 +832,7 @@ int dfs_second_segment_radar_disable(struct wlan_dfs *dfs)
 	return 0;
 }
 
+#if defined(QCA_DFS_RCSA_SUPPORT)
 /* dfs_prepare_nol_ie_bitmap: Create a Bitmap from the radar found subchannels
  * to be sent along with RCSA.
  * @dfs: Pointer to wlan_dfs.
@@ -958,6 +959,7 @@ bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
 	return should_nol_ie_be_sent;
 }
 #endif
+#endif /* QCA_DFS_RCSA_SUPPORT */
 
 #if defined(WLAN_DFS_TRUE_160MHZ_SUPPORT) && defined(WLAN_DFS_FULL_OFFLOAD)
 void dfs_translate_radar_params(struct wlan_dfs *dfs,
@@ -1100,6 +1102,60 @@ dfs_find_radar_affected_channels(struct wlan_dfs *dfs,
 	return num_channels;
 }
 
+#if defined(QCA_DFS_RCSA_SUPPORT)
+/**
+ * dfs_send_nol_ie_and_rcsa()- Send NOL IE and RCSA action frames.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar found structure.
+ * @nol_freq_list: List of 20MHz frequencies on which radar has been detected.
+ * @num_channels: number of radar affected channels.
+ * @wait_for_csa: indicates if the repeater AP should take DFS action or wait
+ * for CSA
+ *
+ * Return: void.
+ */
+static void
+dfs_send_nol_ie_and_rcsa(struct wlan_dfs *dfs,
+			 struct radar_found_info *radar_found,
+			 uint16_t *nol_freq_list,
+			 uint8_t num_channels,
+			 bool *wait_for_csa)
+{
+	dfs->dfs_is_nol_ie_sent = false;
+	(dfs->is_radar_during_precac ||
+	 radar_found->detector_id == dfs_get_agile_detector_id(dfs)) ?
+		(dfs->dfs_is_rcsa_ie_sent = false) :
+		(dfs->dfs_is_rcsa_ie_sent = true);
+	if (dfs->dfs_use_nol_subchannel_marking) {
+		dfs_reset_nol_ie_bitmap(dfs);
+		dfs_prepare_nol_ie_bitmap_for_freq(dfs, radar_found,
+						   nol_freq_list,
+						   num_channels);
+		dfs->dfs_is_nol_ie_sent = true;
+	}
+
+	/*
+	 * This calls into the umac DFS code, which sets the umac
+	 * related radar flags and begins the channel change
+	 * machinery.
+
+	 * Even during precac, this API is called, but with a flag
+	 * saying not to send RCSA, but only the radar affected subchannel
+	 * information.
+	 */
+	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, wait_for_csa);
+}
+#else
+static void
+dfs_send_nol_ie_and_rcsa(struct wlan_dfs *dfs,
+			 struct radar_found_info *radar_found,
+			 uint16_t *nol_freq_list,
+			 uint8_t num_channels,
+			 bool *wait_for_csa)
+{
+}
+#endif /* QCA_DFS_RCSA_SUPPORT */
+
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
 {
@@ -1197,19 +1253,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		goto exit;
 	}
 
-	dfs->dfs_is_nol_ie_sent = false;
-	(dfs->is_radar_during_precac ||
-	 radar_found->detector_id == dfs_get_agile_detector_id(dfs)) ?
-		(dfs->dfs_is_rcsa_ie_sent = false) :
-		(dfs->dfs_is_rcsa_ie_sent = true);
-	if (dfs->dfs_use_nol_subchannel_marking) {
-		dfs_reset_nol_ie_bitmap(dfs);
-		dfs_prepare_nol_ie_bitmap_for_freq(dfs, radar_found,
-						   nol_freq_list,
-						   num_channels);
-		dfs->dfs_is_nol_ie_sent = true;
-	}
-
 	/*
 	 * If precac is running and the radar found in secondary
 	 * VHT80 mark the channel as radar and add to NOL list.
@@ -1239,18 +1282,12 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	if (radar_found->detector_id == dfs_get_agile_detector_id(dfs))
 		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
 					       DFS_AGILE_SM_EV_ADFS_RADAR);
-	/*
-	 * This calls into the umac DFS code, which sets the umac
-	 * related radar flags and begins the channel change
-	 * machinery.
 
-	 * Even during precac, this API is called, but with a flag
-	 * saying not to send RCSA, but only the radar affected subchannel
-	 * information.
-	 */
-
-	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, &wait_for_csa);
-
+	dfs_send_nol_ie_and_rcsa(dfs,
+				 radar_found,
+				 nol_freq_list,
+				 num_channels,
+				 &wait_for_csa);
 	/* If radar is found on preCAC or Agile CAC, return here since
 	 * channel change is not required.
 	 */
