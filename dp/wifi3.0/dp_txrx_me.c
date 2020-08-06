@@ -281,7 +281,8 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	qdf_dma_addr_t paddr_mcbuf = 0;
 	uint8_t empty_entry_mac[QDF_MAC_ADDR_SIZE] = {0};
 	QDF_STATUS status;
-	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id,
+						     DP_MOD_ID_MCAST2UCAST);
 
 	if (!vdev)
 		goto free_return;
@@ -430,7 +431,7 @@ dp_tx_me_send_convert_ucast(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 	qdf_nbuf_free(nbuf);
-	dp_vdev_unref_delete(soc, vdev);
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_MCAST2UCAST);
 	return new_mac_cnt;
 
 fail_map:
@@ -449,7 +450,7 @@ unmap_free_return:
 	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 free_return:
 	if (vdev)
-		dp_vdev_unref_delete(soc, vdev);
+		dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_MCAST2UCAST);
 	qdf_nbuf_free(nbuf);
 	return 1;
 }
