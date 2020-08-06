@@ -2164,6 +2164,8 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 				hw_ctl->ops.update_bitmask_mixer(
 						hw_ctl, hw_lm->idx, 1);
 		}
+
+		sde_cp_mode_switch_prop_dirty(crtc);
 	}
 }
 
