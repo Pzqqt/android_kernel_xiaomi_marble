@@ -4192,11 +4192,11 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 	target_pdev_id = HTT_T2H_PPDU_STATS_PDEV_ID_GET(*msg_word);
 	pdev_id = dp_get_host_pdev_id_for_target_pdev_id(soc->dp_soc,
 							 target_pdev_id);
+	dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
+			     htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
+			     pdev_id);
 	free_buf = dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
 					      htt_t2h_msg);
-	dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
-		htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
-		pdev_id);
 	return free_buf;
 }
 #else

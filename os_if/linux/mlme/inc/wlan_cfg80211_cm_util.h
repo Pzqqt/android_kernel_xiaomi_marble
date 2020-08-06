@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2020, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,5 +15,13 @@
  */
 
 /**
- * DOC: Implements general apis of connection manager
+ * DOC: wlan_cfg80211_cm_util.h
+ *
+ * This header file maintains declarations of connect, disconnect, roam
+ * common apis.
  */
+
+#ifndef __WLAN_CFG80211_CM_UTIL_H
+#define __WLAN_CFG80211_CM_UTIL_H
+
+#endif /* __WLAN_CFG80211_CM_UTIL_H */

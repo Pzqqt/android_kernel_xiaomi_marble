@@ -25,6 +25,7 @@
 
 #ifdef FEATURE_CM_ENABLE
 #include <wlan_scan_public_structs.h>
+#include "wlan_crypto_global_def.h"
 
 typedef uint32_t wlan_cm_id;
 
@@ -44,35 +45,32 @@ struct wlan_cm_wep_key_params {
 	uint8_t key_idx;
 };
 
-#define WLAN_CM_MAX_NR_CIPHER_SUITES 5
-#define WLAN_CM_MAX_NR_AKM_SUITES 2
-
 /**
  * struct wlan_cm_connect_crypto_info - Crypto settings
  * @wpa_versions: indicates which, if any, WPA versions are enabled
  *	(from enum nl80211_wpa_versions)
- * @auth_type: Auth mode type
- * @group_cipher: group key cipher suite (or 0 if unset)
+ * @auth_type: Auth mode type bitmask
+ * @group_cipher: group key cipher suite bitmask
  * @n_ciphers_pairwise: number of AP supported unicast ciphers
- * @ciphers_pairwise: unicast key cipher suites
+ * @ciphers_pairwise: unicast key cipher suites bitmask
  * @n_akm_suites: number of AKM suites
- * @akm_suites: AKM suites
+ * @akm_suites: AKM suites bitmask
  * @wep_keys: static WEP keys, if not NULL points to an array of
  *	MAX_WEP_KEYS WEP keys
  * @pmf_cap: Pmf capability
- * @mgmt_ciphers: mgmt cipher
+ * @mgmt_ciphers: mgmt cipher bitmask
  */
 struct wlan_cm_connect_crypto_info {
 	uint32_t wpa_versions;
-	wlan_crypto_auth_mode auth_type;
-	wlan_crypto_cipher_type group_cipher;
+	uint32_t auth_type;
+	uint32_t group_cipher;
 	uint32_t n_ciphers_pairwise;
-	wlan_crypto_cipher_type ciphers_pairwise[WLAN_CM_MAX_NR_CIPHER_SUITES];
+	uint32_t ciphers_pairwise;
 	uint32_t n_akm_suites;
-	wlan_crypto_key_mgmt akm_suites[WLAN_CM_MAX_NR_AKM_SUITES];
+	uint32_t akm_suites;
 	struct wlan_cm_wep_key_params wep_keys;
 	enum wlan_pmf_cap pmf_cap;
-	wlan_crypto_cipher_type mgmt_ciphers;
+	uint32_t mgmt_ciphers;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK
