@@ -204,6 +204,8 @@ void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 			qdf_mem_free(beacon_struct);
 			goto error;
 		}
+		qdf_mem_free(assocRsp->sha384_ft_subelem.gtk);
+		qdf_mem_free(assocRsp->sha384_ft_subelem.igtk);
 		qdf_mem_free(assocRsp);
 		qdf_mem_free(beacon_struct);
 		pe_session->limAssocResponseData = NULL;
@@ -325,6 +327,8 @@ void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 			qdf_mem_free(pBeaconStruct);
 			goto Error;
 		}
+		qdf_mem_free(assocRsp->sha384_ft_subelem.gtk);
+		qdf_mem_free(assocRsp->sha384_ft_subelem.igtk);
 		qdf_mem_free(assocRsp);
 		pe_session->limAssocResponseData = NULL;
 		qdf_mem_free(pBeaconStruct);

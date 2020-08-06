@@ -847,6 +847,7 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 	uint16_t n;
 	TX_TIMER *timer_ptr;
 	struct wlan_objmgr_vdev *vdev;
+	tpSirAssocRsp assoc_rsp;
 
 	if (!session || (session && !session->valid)) {
 		pe_debug("session already deleted or not valid");
@@ -968,6 +969,9 @@ void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 		session->parsedAssocReq = NULL;
 	}
 	if (session->limAssocResponseData) {
+		assoc_rsp = (tpSirAssocRsp) session->limAssocResponseData;
+		qdf_mem_free(assoc_rsp->sha384_ft_subelem.gtk);
+		qdf_mem_free(assoc_rsp->sha384_ft_subelem.igtk);
 		qdf_mem_free(session->limAssocResponseData);
 		session->limAssocResponseData = NULL;
 	}

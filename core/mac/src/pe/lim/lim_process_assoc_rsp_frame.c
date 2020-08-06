@@ -586,6 +586,14 @@ lim_handle_pmfcomeback_timer(struct pe_session *session_entry,
 }
 #endif
 
+static void clean_up_ft_sha384(tpSirAssocRsp assoc_rsp, bool sha384_akm)
+{
+	if (sha384_akm) {
+		qdf_mem_free(assoc_rsp->sha384_ft_subelem.gtk);
+		qdf_mem_free(assoc_rsp->sha384_ft_subelem.igtk);
+	}
+}
+
 /**
  * lim_process_assoc_rsp_frame() - Processes assoc response
  * @mac_ctx: Pointer to Global MAC structure
@@ -622,6 +630,8 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	uint8_t ap_nss;
 	int8_t rssi;
 	QDF_STATUS status;
+	enum ani_akm_type auth_type;
+	bool sha384_akm;
 	tpRRMCaps rrm_caps = &mac_ctx->rrm.rrmPEContext.rrmEnabledCaps;
 
 	assoc_cnf.resultCode = eSIR_SME_SUCCESS;
@@ -793,8 +803,12 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	lim_update_ese_tspec(mac_ctx, session_entry, assoc_rsp);
 #endif
 
+	auth_type = session_entry->connected_akm;
+	sha384_akm = lim_is_sha384_akm(auth_type);
+
 	if (lim_get_capability_info(mac_ctx, &caps, session_entry)
 		!= QDF_STATUS_SUCCESS) {
+		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
 		pe_err("could not retrieve Capabilities");
@@ -829,6 +843,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	/* return if retry again timer is started and ignore this assoc resp */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		qdf_mem_free(beacon);
+		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		return;
 	}
@@ -1032,6 +1047,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		assoc_cnf.protStatusCode = eSIR_SME_SUCCESS;
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			(uint32_t *) &assoc_cnf);
+		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
 		return;
@@ -1116,6 +1132,7 @@ lim_process_assoc_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			beacon,
 			&session_entry->lim_join_req->bssDescription, true,
 			 session_entry)) {
+		clean_up_ft_sha384(assoc_rsp, sha384_akm);
 		qdf_mem_free(assoc_rsp);
 		qdf_mem_free(beacon);
 		return;
