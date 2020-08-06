@@ -2404,4 +2404,34 @@ static inline uint32_t target_psoc_get_chan_width_switch_num_peers(
 
 	return psoc_info->info.service_ext2_param.chwidth_num_peer_caps;
 }
+
+/**
+ * target_if_is_scan_radio_supported() - API to check scan radio
+ * support for the given radio
+ * @pdev: pointer to pdev
+ * @is_scan_radio_supported: pointer to scan radio support flag
+ *
+ * API to check scan radio support for the given radio
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_pdev_is_scan_radio_supported(struct wlan_objmgr_pdev *pdev,
+				    bool *is_scan_radio_supported);
+
+/**
+ * target_pdev_scan_radio_is_dfs_enabled() - API to check
+ * whether DFS needs to be enabled/disabled for scan radio.
+ * @pdev:  pointer to pdev
+ * @is_dfs_en: Pointer to DFS enable flag
+ *
+ * API to check whether DFS needs to be enabled/disabled for
+ * scan radio. This API should be used only for a scan radio
+ * pdev.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_pdev_scan_radio_is_dfs_enabled(struct wlan_objmgr_pdev *pdev,
+				      bool *is_dfs_en);
 #endif
