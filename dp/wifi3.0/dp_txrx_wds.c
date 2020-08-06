@@ -211,7 +211,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 		return;
 
 	soc = vdev->pdev->soc;
-	peer = vdev->vap_bss_peer;
+	peer = dp_vdev_bss_peer_ref_n_get(soc, vdev);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -233,6 +233,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 				mac_addr,
 				CDP_TXRX_AST_TYPE_MEC,
 				flags);
+	dp_peer_unref_delete(peer);
 }
 
 /**
