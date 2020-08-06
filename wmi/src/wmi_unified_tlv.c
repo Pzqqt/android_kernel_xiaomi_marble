@@ -11307,6 +11307,7 @@ extract_service_ready_ext2_tlv(wmi_unified_t wmi_handle, uint8_t *event,
 		param->max_ndp_sessions = 0;
 
 	param->preamble_puncture_bw_cap = ev->preamble_puncture_bw;
+	param->num_scan_radio_caps = param_buf->num_wmi_scan_radio_caps;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -11673,6 +11674,32 @@ static QDF_STATUS extract_dbr_ring_cap_service_ready_ext2_tlv(
 				    &param_buf->dma_ring_caps[idx]);
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS extract_scan_radio_cap_service_ready_ext2_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t idx,
+			struct wlan_psoc_host_scan_radio_caps *param)
+{
+	WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *param_buf;
+	WMI_SCAN_RADIO_CAPABILITIES_EXT2 *scan_radio_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT2_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	if (idx >= param_buf->num_wmi_scan_radio_caps)
+		return QDF_STATUS_E_INVAL;
+
+	scan_radio_caps = &param_buf->wmi_scan_radio_caps[idx];
+	param->phy_id = scan_radio_caps->phy_id;
+	param->scan_radio_supported =
+		WMI_SCAN_RADIO_CAP_SCAN_RADIO_FLAG_GET(scan_radio_caps->flags);
+	param->dfs_en =
+		WMI_SCAN_RADIO_CAP_DFS_FLAG_GET(scan_radio_caps->flags);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * extract_thermal_stats_tlv() - extract thermal stats from event
  * @wmi_handle: wmi handle
@@ -14506,6 +14533,8 @@ struct wmi_ops tlv_ops =  {
 				extract_dbr_ring_cap_service_ready_ext_tlv,
 	.extract_dbr_ring_cap_service_ready_ext2 =
 				extract_dbr_ring_cap_service_ready_ext2_tlv,
+	.extract_scan_radio_cap_service_ready_ext2 =
+				extract_scan_radio_cap_service_ready_ext2_tlv,
 	.extract_sar_cap_service_ready_ext =
 				extract_sar_cap_service_ready_ext_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,

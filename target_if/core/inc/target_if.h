@@ -184,6 +184,7 @@ struct target_version_info {
  * @num_mem_chunks: number of mem chunks allocated
  * @hw_mode_caps: HW mode caps of preferred mode
  * @mem_chunks: allocated memory blocks for FW
+ * @scan_radio_caps: scan radio capabilities
  */
 struct tgt_info {
 	struct host_fw_ver version;
@@ -213,6 +214,7 @@ struct tgt_info {
 	struct target_supported_modes hw_modes;
 	uint8_t pdev_id_to_phy_id_map[WLAN_UMAC_MAX_PDEVS];
 	bool is_pdevid_to_phyid_map;
+	struct wlan_psoc_host_scan_radio_caps *scan_radio_caps;
 };
 
 /**
@@ -1354,6 +1356,23 @@ static inline uint32_t target_psoc_get_num_dbr_ring_caps
 }
 
 /**
+ * target_psoc_get_num_scan_radio_caps() - get no of scan_radio_caps
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get num_scan_radio_caps
+ *
+ * Return: no of scan_radio_caps
+ */
+static inline uint32_t target_psoc_get_num_scan_radio_caps
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return 0;
+
+	return psoc_info->info.service_ext2_param.num_scan_radio_caps;
+}
+
+/**
  * target_psoc_get_mac_phy_cap_for_mode() - get mac_phy_cap for a hw-mode
  * @psoc_info:  pointer to structure target_psoc_info
  *
@@ -1430,6 +1449,23 @@ static inline struct wlan_psoc_host_dbr_ring_caps
 		return NULL;
 
 	return psoc_info->info.dbr_ring_cap;
+}
+
+/**
+ * target_psoc_get_scan_radio_caps() - get scan_radio_cap
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get scan_radio_cap
+ *
+ * Return: structure pointer to wlan_psoc_host_scan_radio_caps
+ */
+static inline struct wlan_psoc_host_scan_radio_caps
+	*target_psoc_get_scan_radio_caps(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return NULL;
+
+	return psoc_info->info.scan_radio_caps;
 }
 
 /**

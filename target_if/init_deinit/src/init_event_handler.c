@@ -282,6 +282,13 @@ static int init_deinit_service_ext2_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_add_11ax_modes(psoc, tgt_hdl);
 
+	err_code = init_deinit_populate_scan_radio_cap_ext2(wmi_handle, event,
+							    info);
+	if (err_code) {
+		target_if_err("failed to populate scan radio cap ext2");
+		goto exit;
+	}
+
 	/* send init command */
 	init_deinit_set_send_init_cmd(psoc, tgt_hdl);
 

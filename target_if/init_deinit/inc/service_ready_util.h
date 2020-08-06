@@ -223,6 +223,17 @@ QDF_STATUS init_deinit_dbr_ring_cap_free(
 				struct target_psoc_info *tgt_psoc_info);
 
 /**
+ * init_deinit_scan_radio_cap_free() - free scan radio capability
+ * @tgt_psoc_info: target psoc info object
+ *
+ * API to free scan radio related capability information.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS init_deinit_scan_radio_cap_free(
+				struct target_psoc_info *tgt_psoc_info);
+
+/**
  * init_deinit_spectral_scaling_params_free() - free Spectral scaling params
  * @tgt_psoc_info: target psoc info object
  *
@@ -277,6 +288,21 @@ int init_deinit_populate_hal_reg_cap_ext2(wmi_unified_t handle, uint8_t *event,
  */
 int init_deinit_populate_mac_phy_cap_ext2(wmi_unified_t handle, uint8_t *event,
 					  struct tgt_info *info);
+
+/**
+ * init_deinit_populate_scan_radio_cap_ext2() - populate scan radio capabilities
+ * from service ready ext2 event
+ * @handle: WMI handle pointer
+ * @event: event buffer received from FW
+ * @info: tgt_info object
+ *
+ * API to populate scan radio capability from service ready ext2 event.
+ *
+ * Return: zero on successful population of scan radio or failure
+ */
+int init_deinit_populate_scan_radio_cap_ext2(wmi_unified_t handle,
+					     uint8_t *event,
+					     struct tgt_info *info);
 
 /**
  * init_deinit_validate_160_80p80_fw_caps() - validate 160 80p80 fw caps

@@ -779,6 +779,66 @@ int init_deinit_populate_hal_reg_cap_ext2(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+int init_deinit_populate_scan_radio_cap_ext2(wmi_unified_t wmi_handle,
+					     uint8_t *event,
+					     struct tgt_info *info)
+{
+	struct wlan_psoc_host_scan_radio_caps *param;
+	uint32_t num_scan_radio_caps;
+	uint8_t cap_idx;
+	QDF_STATUS status;
+
+	if (!event) {
+		target_if_err("Invalid event buffer");
+		return -EINVAL;
+	}
+
+	num_scan_radio_caps = info->service_ext2_param.num_scan_radio_caps;
+	target_if_debug("num scan radio capabilities = %d",
+			num_scan_radio_caps);
+
+	if (!num_scan_radio_caps)
+		return 0;
+
+	info->scan_radio_caps = qdf_mem_malloc(
+				sizeof(struct wlan_psoc_host_scan_radio_caps) *
+				num_scan_radio_caps);
+
+	if (!info->scan_radio_caps) {
+		target_if_err("Failed to allocate memory for scan radio caps");
+		return -EINVAL;
+	}
+
+	for (cap_idx = 0; cap_idx < num_scan_radio_caps; cap_idx++) {
+		param = &info->scan_radio_caps[cap_idx];
+		status = wmi_extract_scan_radio_cap_service_ready_ext2(
+				wmi_handle, event, cap_idx, param);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("Extraction of scan radio cap failed");
+			goto free_and_return;
+		}
+	}
+
+	return 0;
+
+free_and_return:
+	qdf_mem_free(info->scan_radio_caps);
+	info->scan_radio_caps = NULL;
+
+	return qdf_status_to_os_return(status);
+}
+
+QDF_STATUS init_deinit_scan_radio_cap_free(
+		struct target_psoc_info *tgt_psoc_info)
+{
+	qdf_mem_free(tgt_psoc_info->info.scan_radio_caps);
+	tgt_psoc_info->info.scan_radio_caps = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(init_deinit_scan_radio_cap_free);
+
 static bool init_deinit_regdmn_160mhz_support(
 		struct wlan_psoc_host_hal_reg_capabilities_ext *hal_cap)
 {
