@@ -3716,6 +3716,8 @@ static inline void hdd_send_peer_status_ind_to_app(
 		return;
 	}
 
+	/* chan_id is obsoleted by mhz */
+	ch_info.chan_id = 0;
 	ch_info.mhz = chan_info->mhz;
 	ch_info.band_center_freq1 = chan_info->band_center_freq1;
 	ch_info.band_center_freq2 = chan_info->band_center_freq2;
