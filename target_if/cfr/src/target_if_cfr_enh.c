@@ -1276,7 +1276,7 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	target_type = target_if_cfr_get_target_type(psoc);
 
-	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) == 1) {
+	if (tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) {
 		cfr_err("CFR capture failed as peer is in powersave: "
 			QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(tx_evt_param.peer_mac_addr.bytes));
