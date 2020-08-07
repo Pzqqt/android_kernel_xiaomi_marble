@@ -3847,6 +3847,23 @@ void hal_rx_get_next_msdu_link_desc_buf_addr_info(
 }
 
 /**
+ * hal_rx_clear_next_msdu_link_desc_buf_addr_info(): clear next msdu link desc
+ *						     buffer addr info
+ * @link_desc_va: pointer to current msdu link Desc
+ *
+ * return: None
+ */
+static inline
+void hal_rx_clear_next_msdu_link_desc_buf_addr_info(void *link_desc_va)
+{
+	struct rx_msdu_link *msdu_link = link_desc_va;
+
+	if (msdu_link)
+		qdf_mem_zero(&msdu_link->next_msdu_link_desc_addr_info,
+			     sizeof(msdu_link->next_msdu_link_desc_addr_info));
+}
+
+/**
  * hal_rx_is_buf_addr_info_valid(): check is the buf_addr_info valid
  *
  * @buf_addr_info: pointer to buf_addr_info structure
