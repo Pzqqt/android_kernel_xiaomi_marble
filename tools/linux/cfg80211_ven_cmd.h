@@ -761,6 +761,7 @@ enum {
 	IEEE80211_PARAM_OCE_TX_POWER               = 696, /* Enables tx power to be advertised as OCE attribute in Beacon and  Probe response frame */
 	IEEE80211_PARAM_OCE_IP_SUBNET_ID           = 697, /* IP subnet identifier value to be advertised as OCE attribute in Beacon and  Probe response frame */
 	IEEE80211_PARAM_OCE_ADD_ESS_RPT            = 698, /* Add ESS Report */
+	IEEE80211_PARAM_ENABLE_MSCS                = 699, /* Enable MSCS */
 	IEEE80211_PARAM_RSNX_OVERRIDE              = 700,
 #if QCA_AIRTIME_FAIRNESS
 	IEEE80211_PARAM_ATF_ENABLE_STATS           = 701,
@@ -2175,6 +2176,8 @@ struct vendor_commands vap_vendor_cmds[] = {
 	{"rsim_de_frmcnt",      IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES, SET_PARAM, 1},
 	{"g_rsim_de_frmcnt",    IEEE80211_PARAM_RAWSIM_DEBUG_NUM_DECAP_FRAMES, GET_PARAM, 0},
 #endif
+	{"mscs",                IEEE80211_PARAM_ENABLE_MSCS, SET_PARAM, 1},
+	{"g_mscs",              IEEE80211_PARAM_ENABLE_MSCS, GET_PARAM, 0},
 	{"setiebuf",            35828, SET_PARAM, 1},
 	{"getiebuf",            35827, GET_PARAM, 0},
 	{"dbgreq",              35832, SET_PARAM, 1},
