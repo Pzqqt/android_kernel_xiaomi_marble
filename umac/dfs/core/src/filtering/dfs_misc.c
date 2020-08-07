@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017,2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -95,6 +95,7 @@ static inline void dfs_get_cached_ext_chan_busy(
 	}
 }
 
+#if defined(WLAN_DFS_DIRECT_ATTACH) || defined(WLAN_DFS_PARTIAL_OFFLOAD)
 int dfs_get_pri_margin(struct wlan_dfs *dfs,
 		int is_extchan_detect,
 		int is_fixed_pattern)
@@ -123,6 +124,7 @@ int dfs_get_pri_margin(struct wlan_dfs *dfs,
 
 	return pri_margin;
 }
+#endif
 
 int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
