@@ -569,9 +569,12 @@
  *
  * </ini>
  */
-#define CFG_TDLS_EXTERNAL_CONTROL CFG_INI_BOOL( \
+#define CFG_TDLS_EXTERNAL_CONTROL CFG_INI_UINT( \
 	"gTDLSExternalControl", \
+	0, \
+	2, \
 	1, \
+	CFG_VALUE_OR_DEFAULT, \
 	"Enable external TDLS control")
 
 /*
