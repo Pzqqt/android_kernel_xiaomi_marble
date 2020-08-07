@@ -82,6 +82,8 @@ struct msm_vidc_inst {
 	struct kref                        kref;
 	u32                                session_id;
 	u32                                sid;
+	void                              *packet;
+	u32                                packet_size;
 	struct v4l2_format                 fmts[MAX_PORT];
 	struct v4l2_ctrl_handler           ctrl_handler;
 	struct v4l2_fh                     event_handler;

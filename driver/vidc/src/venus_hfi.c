@@ -2322,7 +2322,7 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 	int rc = 0;
 
 	if (!core) {
-		d_vpr_e("%s: invalid device\n", __func__);
+		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
 
@@ -2345,6 +2345,21 @@ int venus_hfi_session_open(struct msm_vidc_core *core, struct msm_vidc_inst *ins
 
 	d_vpr_h("%s(): inst %p, core %p\n",
 		__func__, inst, core);
+
+	if (!core || !inst) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	inst->packet_size = 4096;
+	inst->packet = kzalloc(inst->packet_size, GFP_KERNEL);
+	if (!inst->packet) {
+		d_vpr_e("%s(): inst packet allocation failed\n", __func__);
+		return -ENOMEM;
+	}
+	rc = hfi_packet_session_open(inst, inst->packet, inst->packet_size);
+	if (rc)
+		return rc;
 
 	return rc;
 }

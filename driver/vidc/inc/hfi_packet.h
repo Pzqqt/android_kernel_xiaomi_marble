@@ -49,5 +49,8 @@ int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
 		void *packet, u32 packet_size, u32 mode);
 int hfi_packet_sys_pc_prep(struct msm_vidc_core *core,
 		void *packet, u32 packet_size);
-
+int hfi_packet_session_open(struct msm_vidc_inst *inst,
+		void *packet, u32 pkt_size);
+int hfi_packet_session_close(struct msm_vidc_inst *inst,
+		void *packet, u32 pkt_size);
 #endif // _HFI_PACKET_H_

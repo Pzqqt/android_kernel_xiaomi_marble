@@ -36,6 +36,12 @@ void msm_vidc_batch_handler(struct work_struct *work);
 int msm_vidc_setup_event_queue(struct msm_vidc_inst *inst);
 int msm_vidc_queue_init(struct msm_vidc_inst *inst);
 u32 msm_vidc_convert_color_fmt(u32 v4l2_fmt);
+int msm_vidc_get_control(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl);
+int msm_vidc_get_port_from_type(u32 type);
+int msm_vidc_start_input(struct msm_vidc_inst *inst);
+int msm_vidc_start_output(struct msm_vidc_inst *inst);
+int msm_vidc_stop_input(struct msm_vidc_inst *inst);
+int msm_vidc_stop_output(struct msm_vidc_inst *inst);
 
 #endif // _MSM_VIDC_DRIVER_H_
 

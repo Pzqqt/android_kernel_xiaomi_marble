@@ -147,17 +147,8 @@ int msm_vidc_query_ctrl(void *instance, struct v4l2_queryctrl *q_ctrl)
 	q_ctrl->minimum = ctrl->minimum;
 	q_ctrl->maximum = ctrl->maximum;
 	q_ctrl->default_value = ctrl->default_value;
-	/* remove tier info for HEVC level */
-	if (q_ctrl->id == V4L2_CID_MPEG_VIDEO_HEVC_LEVEL) {
-		q_ctrl->minimum &= ~(0xF << 28);
-		q_ctrl->maximum &= ~(0xF << 28);
-	}
-	if (ctrl->type == V4L2_CTRL_TYPE_MENU) {
-		q_ctrl->flags = ~(ctrl->menu_skip_mask);
-	} else {
-		q_ctrl->flags = 0;
-		q_ctrl->step = ctrl->step;
-	}
+	q_ctrl->flags = 0;
+	q_ctrl->step = ctrl->step;
 	s_vpr_h(inst->sid,
 		"query ctrl: %s: min %d, max %d, default %d step %d flags %#x\n",
 		ctrl->name, q_ctrl->minimum, q_ctrl->maximum,
@@ -213,7 +204,7 @@ int msm_vidc_s_fmt(void *instance, struct v4l2_format *f)
 		return -EINVAL;
 
 	if (inst->domain == MSM_VIDC_DECODER)
-		rc = 0;//msm_vdec_s_fmt(instance, f);
+		rc = msm_vdec_s_fmt(inst, f);
 	if (inst->domain == MSM_VIDC_ENCODER)
 		rc = 0;//msm_venc_s_fmt(instance, f);
 
@@ -230,7 +221,7 @@ int msm_vidc_g_fmt(void *instance, struct v4l2_format *f)
 		return -EINVAL;
 
 	if (inst->domain == MSM_VIDC_DECODER)
-		rc = 0;//msm_vdec_g_fmt(instance, f);
+		rc = msm_vdec_g_fmt(inst, f);
 	if (inst->domain == MSM_VIDC_ENCODER)
 		rc = 0;//msm_venc_g_fmt(instance, f);
 
@@ -260,7 +251,7 @@ int msm_vidc_g_ctrl(void *instance, struct v4l2_control *control)
 
 	ctrl = v4l2_ctrl_find(&inst->ctrl_handler, control->id);
 	if (ctrl) {
-		rc = 0;//try_get_ctrl_for_instance(inst, ctrl);
+		rc = msm_vidc_get_control(inst, ctrl);
 		if (!rc)
 			control->value = ctrl->val;
 	}
@@ -271,7 +262,25 @@ EXPORT_SYMBOL(msm_vidc_g_ctrl);
 
 int msm_vidc_reqbufs(void *instance, struct v4l2_requestbuffers *b)
 {
-	return 0;
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	int port;
+
+	if (!inst || !b)
+		return -EINVAL;
+
+	port = msm_vidc_get_port_from_type(b->type);
+	if (port < 0) {
+		d_vpr_e("%s: invalid queue type %d\n", __func__, b->type);
+		return -EINVAL;
+	}
+	mutex_lock(&inst->lock);
+	rc = vb2_reqbufs(&inst->vb2q[port], b);
+	mutex_unlock(&inst->lock);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: vb2_reqbufs failed, %d\n", rc);
+
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_reqbufs);
 
@@ -290,13 +299,49 @@ EXPORT_SYMBOL(msm_vidc_dqbuf);
 
 int msm_vidc_streamon(void *instance, enum v4l2_buf_type i)
 {
-	return 0;
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	int port;
+
+	if (!inst)
+		return -EINVAL;
+
+	port = msm_vidc_get_port_from_type(i);
+	if (port < 0) {
+		d_vpr_e("%s: invalid buf type %d\n", __func__, i);
+		return -EINVAL;
+	}
+	mutex_lock(&inst->lock);
+	rc = vb2_streamon(&inst->vb2q[port], i);
+	mutex_unlock(&inst->lock);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: vb2_streamon failed, %d\n", rc);
+
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamon);
 
 int msm_vidc_streamoff(void *instance, enum v4l2_buf_type i)
 {
-	return 0;
+	int rc = 0;
+	struct msm_vidc_inst *inst = instance;
+	int port;
+
+	if (!inst)
+		return -EINVAL;
+
+	port = msm_vidc_get_port_from_type(i);
+	if (port < 0) {
+		d_vpr_e("%s: invalid buf type %d\n", __func__, i);
+		return -EINVAL;
+	}
+	mutex_lock(&inst->lock);
+	rc = vb2_streamoff(&inst->vb2q[port], i);
+	mutex_unlock(&inst->lock);
+	if (rc)
+		s_vpr_e(inst->sid, "%s: vb2_streamoff failed, %d\n", rc);
+
+	return rc;
 }
 EXPORT_SYMBOL(msm_vidc_streamoff);
 

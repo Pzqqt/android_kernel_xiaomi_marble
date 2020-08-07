@@ -9,6 +9,8 @@
 #include "msm_vidc_core.h"
 #include "msm_vidc_inst.h"
 
+int msm_vdec_s_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
+int msm_vdec_g_fmt(struct msm_vidc_inst *inst, struct v4l2_format *f);
 int msm_vdec_inst_init(struct msm_vidc_inst *inst);
 int msm_vdec_ctrl_init(struct msm_vidc_inst *inst);
 
