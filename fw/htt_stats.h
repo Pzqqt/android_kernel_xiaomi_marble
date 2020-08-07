@@ -375,6 +375,13 @@ enum htt_dbg_ext_stats_type {
      */
     HTT_DBG_EXT_PKTLOG_AND_HTT_RING_STATS = 35,
 
+    /* HTT_DBG_EXT_STATS_DLPAGER_STATS
+     * PARAMS:
+     *
+     * RESP MSG:
+     *   - htt_dlpager_stats_t
+     */
+    HTT_DBG_EXT_STATS_DLPAGER_STATS = 36,
 
     /* keep this last */
     HTT_DBG_NUM_EXT_STATS = 256,
@@ -520,6 +527,7 @@ typedef enum {
     HTT_STATS_STA_UL_OFDMA_STATS_TAG               = 117, /* htt_sta_ul_ofdma_stats_tlv */
     HTT_STATS_VDEV_RTT_RESP_STATS_TAG              = 118, /* htt_vdev_rtt_resp_stats_tlv */
     HTT_STATS_PKTLOG_AND_HTT_RING_STATS_TAG        = 119, /* htt_pktlog_and_htt_ring_stats_tlv */
+    HTT_STATS_DLPAGER_STATS_TAG                    = 120, /* htt_dlpager_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -5144,6 +5152,133 @@ typedef struct {
     /* No of pktlog sw events payloads that were dropped */
     A_UINT32 pktlog_sw_events_drop_cnt;
 } htt_pktlog_and_htt_ring_stats_tlv;
+
+#define HTT_DLPAGER_STATS_MAX_HIST            10
+#define HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_M 0x000000FF
+#define HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_S 0
+#define HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_M  0x0000FF00
+#define HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_S  8
+#define HTT_DLPAGER_TOTAL_LOCKED_PAGES_M      0x0000FFFF
+#define HTT_DLPAGER_TOTAL_LOCKED_PAGES_S      0
+#define HTT_DLPAGER_TOTAL_FREE_PAGES_M        0xFFFF0000
+#define HTT_DLPAGER_TOTAL_FREE_PAGES_S        16
+#define HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_M    0x0000FFFF
+#define HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_S    0
+#define HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_M  0xFFFF0000
+#define HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_S  16
+
+#define HTT_DLPAGER_ASYNC_LOCK_PAGE_COUNT_GET(_var) \
+    (((_var) & HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_M) >> \
+     HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_S)
+
+#define HTT_DLPAGER_ASYNC_LOCK_PAGE_COUNT_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT, _val); \
+        ((_var) &= ~(HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_M));\
+        ((_var) |= ((_val) << HTT_DLPAGER_ASYNC_LOCKED_PAGE_COUNT_S)); \
+    } while (0)
+
+#define HTT_DLPAGER_SYNC_LOCK_PAGE_COUNT_GET(_var) \
+    (((_var) & HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_M) >> \
+     HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_S)
+
+#define HTT_DLPAGER_SYNC_LOCK_PAGE_COUNT_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT, _val); \
+        ((_var) &= ~(HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_M));\
+        ((_var) |= ((_val) << HTT_DLPAGER_SYNC_LOCKED_PAGE_COUNT_S)); \
+    } while (0)
+
+#define HTT_DLPAGER_TOTAL_LOCKED_PAGES_GET(_var) \
+    (((_var) & HTT_DLPAGER_TOTAL_LOCKED_PAGES_M) >> \
+     HTT_DLPAGER_TOTAL_LOCKED_PAGES_S)
+
+#define HTT_DLPAGER_TOTAL_LOCKED_PAGES_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_TOTAL_LOCKED_PAGES, _val); \
+        ((_var) &= ~(HTT_DLPAGER_TOTAL_LOCKED_PAGES_M)); \
+        ((_var) |= ((_val) << HTT_DLPAGER_TOTAL_LOCKED_PAGES_S)); \
+    } while (0)
+
+#define HTT_DLPAGER_TOTAL_FREE_PAGES_GET(_var) \
+    (((_var) & HTT_DLPAGER_TOTAL_FREE_PAGES_M) >> \
+     HTT_DLPAGER_TOTAL_FREE_PAGES_S)
+
+#define HTT_DLPAGER_TOTAL_FREE_PAGES_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_TOTAL_FREE_PAGES, _val); \
+        ((_var) &= ~(HTT_DLPAGER_TOTAL_FREE_PAGES_M)); \
+        ((_var) |= ((_val) << HTT_DLPAGER_TOTAL_FREE_PAGES_S)); \
+    } while (0)
+
+#define HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_GET(_var) \
+    (((_var) & HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_M) >> \
+     HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_S)
+
+#define HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_LAST_LOCKED_PAGE_IDX, _val); \
+        ((_var) &= ~(HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_M)); \
+        ((_var) |= ((_val) << HTT_DLPAGER_LAST_LOCKED_PAGE_IDX_S)); \
+    } while (0)
+
+#define HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_GET(_var) \
+    (((_var) & HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_M) >> \
+     HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_S)
+
+#define HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX, _val); \
+        ((_var) &= ~(HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_M)); \
+        ((_var) |= ((_val) << HTT_DLPAGER_LAST_UNLOCKED_PAGE_IDX_S)); \
+    } while (0)
+
+enum {
+    HTT_STATS_PAGE_LOCKED = 0,
+    HTT_STATS_PAGE_UNLOCKED = 1,
+    HTT_STATS_NUM_PAGE_LOCK_STATES
+};
+
+/* dlPagerStats structure
+ * Number of lock/unlock pages with last 10 lock/unlock occurrences are recorded */
+typedef struct{
+    /* msg_dword_1 bitfields:
+     *     async_lock                 : 8,
+     *     sync_lock                  : 8,
+     *     reserved                   : 16;
+     */
+    A_UINT32     msg_dword_1;
+    /* mst_dword_2 bitfields:
+     *     total_locked_pages         : 16,
+     *     total_free_pages           : 16;
+     */
+    A_UINT32     msg_dword_2;
+    /* msg_dword_3 bitfields:
+     *     last_locked_page_idx       : 16,
+     *     last_unlocked_page_idx     : 16;
+     */
+    A_UINT32     msg_dword_3;
+
+    struct {
+        A_UINT32 page_num;
+        A_UINT32 num_of_pages;
+        /* timestamp is in microsecond units, from SoC timer clock */
+        A_UINT32 timestamp_lsbs;
+        A_UINT32 timestamp_msbs;
+    } last_pages_info[HTT_STATS_NUM_PAGE_LOCK_STATES][HTT_DLPAGER_STATS_MAX_HIST];
+} htt_dl_pager_stats_tlv;
+
+/* NOTE:
+ *  This structure is for documentation, and cannot be safely used directly.
+ *  Instead, use the constituent TLV structures to fill/parse.
+ *  STATS_TYPE : HTT_DBG_EXT_STATS_DLPAGER_STATS
+ *  TLV_TAGS:
+ *      - HTT_STATS_DLPAGER_STATS_TAG
+ */
+typedef struct {
+    htt_tlv_hdr_t tlv_hdr;
+    htt_dl_pager_stats_tlv dl_pager_stats;
+} htt_dlpager_stats_t;
 
 
 #endif /* __HTT_STATS_H__ */
