@@ -12819,7 +12819,7 @@ static void dp_soc_cfg_init(struct dp_soc *soc)
 		soc->lmac_polled_mode = 0;
 		soc->wbm_release_desc_rx_sg_support = 1;
 		if (cfg_get(soc->ctrl_psoc, CFG_DP_FULL_MON_MODE))
-			soc->full_mon_mode = true;
+			dp_config_full_mon_mode((struct cdp_soc_t *)soc, 1);
 		break;
 	case TARGET_TYPE_QCA5018:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
