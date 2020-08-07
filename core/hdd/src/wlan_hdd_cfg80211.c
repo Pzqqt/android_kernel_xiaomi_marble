@@ -9768,6 +9768,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		struct nlattr *twt_session;
 		int tmp, rc;
 		uint32_t congestion_timeout = 0;
+		uint8_t twt_cmd;
 
 		if ((adapter->device_mode != QDF_STA_MODE &&
 		     adapter->device_mode != QDF_P2P_CLIENT_MODE) ||
@@ -9819,7 +9820,16 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				hdd_err_rl("TWT_SETUP_REQ_TYPE is must");
 				goto send_err;
 			}
-			params.twt_cmd = nla_get_u8(tb2[cmd_id]);
+			twt_cmd = nla_get_u8(tb2[cmd_id]);
+			if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_REQUEST)
+				params.twt_cmd =
+					WMI_HOST_TWT_COMMAND_REQUEST_TWT;
+			else if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_SUGGEST)
+				params.twt_cmd =
+					WMI_HOST_TWT_COMMAND_SUGGEST_TWT;
+			else if (twt_cmd == QCA_WLAN_VENDOR_TWT_SETUP_DEMAND)
+				params.twt_cmd =
+					WMI_HOST_TWT_COMMAND_DEMAND_TWT;
 
 			cmd_id = QCA_WLAN_VENDOR_ATTR_TWT_SETUP_TRIGGER;
 			if (tb2[cmd_id])
