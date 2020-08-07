@@ -35,6 +35,7 @@
  * Override to use async transfer
  */
 #define MIPI_DSI_MSG_ASYNC_OVERRIDE BIT(4)
+#define MIPI_DSI_MSG_CMD_DMA_SCHED BIT(5)
 
 enum dsi_panel_rotation {
 	DSI_PANEL_ROTATE_NONE = 0,
