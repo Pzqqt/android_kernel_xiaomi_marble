@@ -25,6 +25,7 @@
 #include "wlan_mlme_dbg.h"
 #include "wlan_mlme_api.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_mlme_main.h"
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD) || defined(ROAM_OFFLOAD_V1)
 static struct wmi_unified
@@ -757,7 +758,7 @@ target_if_cm_roam_send_roam_init(struct wlan_objmgr_vdev *vdev,
  * @vdev: vdev object
  * @req: roam start config parameters
  *
- * This function is used to Send roam start related commands to wmi
+ * This function is used to send roam start related commands to wmi
  *
  * Return: QDF_STATUS
  */
@@ -851,7 +852,7 @@ end:
  * @vdev: vdev object
  * @req: roam stop config parameters
  *
- * This function is used to Send roam start related commands to wmi
+ * This function is used to send roam stop related commands to wmi
  *
  * Return: QDF_STATUS
  */
@@ -859,13 +860,95 @@ static QDF_STATUS
 target_if_cm_roam_send_stop(struct wlan_objmgr_vdev *vdev,
 			    struct wlan_roam_stop_config *req)
 {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
+	uint32_t mode = 0;
+	bool is_roam_offload_enabled = false;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id;
 
 	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
 	if (!wmi_handle)
 		return QDF_STATUS_E_FAILURE;
 
-	return QDF_STATUS_SUCCESS;
+	/* Send 11k offload disable command to FW as part of RSO Stop */
+	status = target_if_cm_roam_offload_11k_params(wmi_handle,
+						      &req->roam_11k_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("11k offload disable not sent, status %d",
+			      status);
+		goto end;
+	}
+
+	/* Send BTM config as disabled during RSO Stop */
+	status = target_if_cm_roam_scan_btm_offload(wmi_handle,
+						    &req->btm_config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending BTM config to fw failed");
+		goto end;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_mlme_get_roaming_offload(psoc, &is_roam_offload_enabled);
+	if (req->reason == REASON_ROAM_STOP_ALL ||
+	    req->reason == REASON_DISCONNECTED ||
+	    req->reason == REASON_ROAM_SYNCH_FAILED ||
+	    req->reason == REASON_SUPPLICANT_DISABLED_ROAMING) {
+		mode = WMI_ROAM_SCAN_MODE_NONE;
+	} else {
+		if (is_roam_offload_enabled)
+			mode = WMI_ROAM_SCAN_MODE_NONE |
+				WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
+		else
+			mode = WMI_ROAM_SCAN_MODE_NONE;
+	}
+
+	/*
+	 * After sending the roam scan mode because of a disconnect,
+	 * clear the scan bitmap client as well by sending
+	 * the following command
+	 */
+	target_if_cm_roam_scan_offload_rssi_thresh(wmi_handle,
+						   &req->rssi_params);
+
+	/*
+	 * If the STOP command is due to a disconnect, then
+	 * send the filter command to clear all the filter
+	 * entries. If it is roaming scenario, then do not
+	 * send the cleared entries.
+	 */
+	if (!req->middle_of_roaming) {
+		status = target_if_cm_roam_scan_filter(
+					wmi_handle, ROAM_SCAN_OFFLOAD_STOP,
+					&req->scan_filter_params);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			target_if_err("clear for roam scan filter failed");
+			goto end;
+		}
+	}
+
+	target_if_cm_roam_disconnect_params(wmi_handle, ROAM_SCAN_OFFLOAD_STOP,
+					    &req->disconnect_params);
+
+	target_if_cm_roam_idle_params(wmi_handle, ROAM_SCAN_OFFLOAD_STOP,
+				      &req->idle_params);
+	/*
+	 * Disable all roaming triggers if RSO stop is as part of
+	 * disconnect
+	 */
+	vdev_id = wlan_vdev_get_id(vdev);
+	if (mode == WMI_ROAM_SCAN_MODE_NONE) {
+		req->roam_triggers.vdev_id = vdev_id;
+		req->roam_triggers.trigger_bitmap = 0;
+		target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+	}
+end:
+	return status;
 }
 
 /**
@@ -880,13 +963,69 @@ static QDF_STATUS
 target_if_cm_roam_send_update_config(struct wlan_objmgr_vdev *vdev,
 				     struct wlan_roam_update_config *req)
 {
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	wmi_unified_t wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t vdev_id;
 
 	wmi_handle = target_if_cm_roam_get_wmi_handle_from_vdev(vdev);
 	if (!wmi_handle)
 		return QDF_STATUS_E_FAILURE;
 
-	return QDF_STATUS_SUCCESS;
+	status = target_if_cm_roam_scan_bmiss_cnt(wmi_handle,
+						  &req->beacon_miss_cnt);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("vdev set bmiss bcnt param failed");
+		goto end;
+	}
+
+	status = target_if_cm_roam_scan_filter(wmi_handle,
+					       ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+					       &req->scan_filter_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending update for roam scan filter failed");
+		goto end;
+	}
+
+	status = target_if_cm_roam_scan_offload_rssi_thresh(
+							wmi_handle,
+							&req->rssi_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Sending roam scan offload rssi thresh failed");
+		goto end;
+	}
+
+	if (req->scan_period_params.empty_scan_refresh_period > 0) {
+		status = target_if_cm_roam_scan_offload_scan_period(
+						wmi_handle,
+						&req->scan_period_params);
+		if (QDF_IS_STATUS_ERROR(status))
+			goto end;
+	}
+
+	status = target_if_cm_roam_scan_offload_ap_profile(
+							vdev, wmi_handle,
+							&req->profile_params);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto end;
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev);
+	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		target_if_cm_roam_disconnect_params(
+				wmi_handle, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				&req->disconnect_params);
+
+		target_if_cm_roam_idle_params(
+				wmi_handle, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				&req->idle_params);
+		target_if_cm_roam_triggers(wmi_handle, &req->roam_triggers);
+	}
+end:
+	return status;
 }
 
 /**
@@ -915,7 +1054,7 @@ target_if_cm_roam_abort(struct wlan_objmgr_vdev *vdev, uint8_t vdev_id)
 }
 
 /**
- * target_if_cm_roam_send_update_config() - Send roam update config related
+ * target_if_cm_roam_per_config() - Send roam per config related
  * commands to wmi
  * @vdev: vdev object
  * @req: roam per config parameters

@@ -722,6 +722,8 @@ struct wlan_roam_start_config {
 /**
  * struct wlan_roam_stop_config - structure containing parameters for
  * roam stop
+ * @reason: roaming reason
+ * @middle_of_roaming: in the middle of roaming
  * @roam_11k_params: 11k params
  * @btm_config: btm configuration
  * @scan_filter_params: roam scan filter parameters
@@ -731,6 +733,8 @@ struct wlan_roam_start_config {
  * @rssi_params: roam scan rssi threshold parameters
  */
 struct wlan_roam_stop_config {
+	uint8_t reason;
+	uint8_t middle_of_roaming;
 	struct wlan_roam_11k_offload_params roam_11k_params;
 	struct wlan_roam_btm_config btm_config;
 	struct wlan_roam_scan_filter_params scan_filter_params;
@@ -746,17 +750,21 @@ struct wlan_roam_stop_config {
  * @beacon_miss_cnt: roam beacon miss count parameters
  * @scan_filter_params: roam scan filter parameters
  * @scan_period_params: roam scan period parameters
+ * @profile_params: ap profile parameters
  * @rssi_params: roam scan rssi threshold parameters
  * @disconnect_params: disconnect params
  * @idle_params: idle params
+ * @roam_triggers: roam triggers parameters
  */
 struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
 	struct wlan_roam_scan_filter_params scan_filter_params;
 	struct wlan_roam_scan_period_params scan_period_params;
+	struct ap_profile_params profile_params;
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
 	struct wlan_roam_disconnect_params disconnect_params;
 	struct wlan_roam_idle_params idle_params;
+	struct wlan_roam_triggers roam_triggers;
 };
 
 #endif
