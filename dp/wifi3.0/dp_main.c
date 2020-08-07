@@ -5207,6 +5207,13 @@ static QDF_STATUS dp_vdev_detach_wifi3(struct cdp_soc_t *cdp_soc,
 
 	vap_self_peer = dp_sta_vdev_self_peer_ref_n_get(soc, vdev);
 	if (vap_self_peer) {
+		qdf_spin_lock_bh(&soc->ast_lock);
+		if (vap_self_peer->self_ast_entry) {
+			dp_peer_del_ast(soc, vap_self_peer->self_ast_entry);
+			vap_self_peer->self_ast_entry = NULL;
+		}
+		qdf_spin_unlock_bh(&soc->ast_lock);
+
 		dp_peer_delete_wifi3((struct cdp_soc_t *)soc, vdev->vdev_id,
 				     vap_self_peer->mac_addr.raw, 0);
 		dp_peer_unref_delete(vap_self_peer);
