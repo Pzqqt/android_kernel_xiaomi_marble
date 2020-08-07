@@ -2203,8 +2203,6 @@ struct dp_vdev {
 
 	/* TIDmap priority */
 	uint8_t tidmap_prty;
-	/* Self Peer in STA mode */
-	struct dp_peer *vap_self_peer;
 
 #ifdef QCA_MULTIPASS_SUPPORT
 	uint16_t *iv_vlan_map;
@@ -2230,10 +2228,6 @@ struct dp_vdev {
 	bool peer_protocol_count_track;
 	int peer_protocol_count_dropmask;
 #endif
-
-	/* vap bss peer mac addr */
-	uint8_t vap_bss_peer_mac_addr[QDF_MAC_ADDR_SIZE];
-
 	/* callback to collect connectivity stats */
 	ol_txrx_stats_rx_fp stats_cb;
 
@@ -2364,7 +2358,9 @@ struct dp_peer {
 		tx_cap_enabled:1, /* Peer's tx-capture is enabled */
 		rx_cap_enabled:1, /* Peer's rx-capture is enabled */
 		valid:1, /* valid bit */
-		in_twt:1; /* in TWT session */
+		in_twt:1, /* in TWT session */
+		delete_in_progress:1, /*delete_in_progress bit*/
+		sta_self_peer:1; /* Indicate STA self peer */
 
 #ifdef QCA_SUPPORT_PEER_ISOLATION
 	bool isolation; /* enable peer isolation for this peer */
@@ -2387,7 +2383,6 @@ struct dp_peer {
 #ifdef WDS_VENDOR_EXTENSION
 	dp_ecm_policy wds_ecm;
 #endif
-	bool delete_in_progress;
 
 	/* Active Block ack sessions */
 	uint16_t active_ba_session_cnt;

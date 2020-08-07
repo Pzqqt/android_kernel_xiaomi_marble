@@ -401,4 +401,8 @@ static inline void dp_peer_ext_stats_ctx_dealloc(struct dp_soc *soc,
 }
 #endif
 
+struct dp_peer *dp_vdev_bss_peer_ref_n_get(struct dp_soc *soc,
+					   struct dp_vdev *vdev);
+struct dp_peer *dp_sta_vdev_self_peer_ref_n_get(struct dp_soc *soc,
+						struct dp_vdev *vdev);
 #endif /* _DP_PEER_H_ */

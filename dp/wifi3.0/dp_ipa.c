@@ -1717,7 +1717,7 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 	struct dp_peer *vdev_peer;
 	uint16_t len;
 
-	vdev_peer = vdev->vap_bss_peer;
+	vdev_peer = dp_vdev_bss_peer_ref_n_get(pdev->soc, vdev);
 	if (qdf_unlikely(!vdev_peer))
 		return nbuf;
 
@@ -1726,10 +1726,12 @@ static qdf_nbuf_t dp_ipa_intrabss_send(struct dp_pdev *pdev,
 
 	if (dp_tx_send((struct cdp_soc_t *)pdev->soc, vdev->vdev_id, nbuf)) {
 		DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.fail, 1, len);
+		dp_peer_unref_delete(vdev_peer);
 		return nbuf;
 	}
 
 	DP_STATS_INC_PKT(vdev_peer, rx.intra_bss.pkts, 1, len);
+	dp_peer_unref_delete(vdev_peer);
 	return NULL;
 }
 
