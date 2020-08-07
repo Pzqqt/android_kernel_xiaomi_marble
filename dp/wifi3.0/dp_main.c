@@ -3856,14 +3856,17 @@ static void dp_soc_rx_history_attach(struct dp_soc *soc)
 
 	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
 		soc->rx_ring_history[i] = qdf_mem_malloc(rx_ring_hist_size);
-		qdf_atomic_init(&soc->rx_ring_history[i]->index);
+		if (soc->rx_ring_history[i])
+			qdf_atomic_init(&soc->rx_ring_history[i]->index);
 	}
 
 	soc->rx_err_ring_history = qdf_mem_malloc(rx_err_ring_hist_size);
-	qdf_atomic_init(&soc->rx_err_ring_history->index);
+	if (soc->rx_err_ring_history)
+		qdf_atomic_init(&soc->rx_err_ring_history->index);
 
 	soc->rx_reinject_ring_history = qdf_mem_malloc(rx_reinject_hist_size);
-	qdf_atomic_init(&soc->rx_reinject_ring_history->index);
+	if (soc->rx_reinject_ring_history)
+		qdf_atomic_init(&soc->rx_reinject_ring_history->index);
 }
 
 static void dp_soc_rx_history_detach(struct dp_soc *soc)
