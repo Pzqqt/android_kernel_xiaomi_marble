@@ -183,6 +183,12 @@ QDF_STATUS wlan_cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 {
 	return cm_roam_send_rso_cmd(psoc, vdev_id, rso_command, reason);
 }
+
+QDF_STATUS wlan_cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 uint8_t reason)
+{
+	return cm_roam_stop_req(psoc, vdev_id, reason);
+}
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

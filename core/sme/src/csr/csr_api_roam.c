@@ -19848,12 +19848,9 @@ csr_cm_roam_offload_11k_params(struct mac_context *mac_ctx,
 }
 
 QDF_STATUS
-wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
-			    uint8_t vdev_id,
-			    struct wlan_roam_start_config *req,
-			    uint8_t reason)
+wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			    struct wlan_roam_start_config *req, uint8_t reason)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_session *session;
 	struct mac_context *mac_ctx;
 
@@ -19873,7 +19870,7 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 	csr_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
 					     &req->rssi_params);
 
-	csr_cm_roam_scan_offload_scan_period(mac_ctx, session->vdev_id,
+	csr_cm_roam_scan_offload_scan_period(mac_ctx, vdev_id,
 					     &req->scan_period_params);
 
 	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
@@ -19888,6 +19885,114 @@ wlan_cm_roam_fill_start_req(struct wlan_objmgr_psoc *psoc,
 	csr_cm_roam_offload_11k_params(mac_ctx, session,
 				       &req->roam_11k_params, TRUE);
 	/* fill other struct similar to wlan_roam_offload_scan_rssi_params */
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_cm_roam_fill_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+			   struct wlan_roam_stop_config *req, uint8_t reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reason == REASON_ROAM_SYNCH_FAILED)
+		return status;
+	else if (reason == REASON_DRIVER_DISABLED)
+		req->reason = REASON_ROAM_STOP_ALL;
+	else if (reason == REASON_SUPPLICANT_DISABLED_ROAMING)
+		req->reason = REASON_SUPPLICANT_DISABLED_ROAMING;
+	else if (reason == REASON_DISCONNECTED)
+		req->reason = REASON_DISCONNECTED;
+	else if (reason == REASON_OS_REQUESTED_ROAMING_NOW)
+		req->reason = REASON_OS_REQUESTED_ROAMING_NOW;
+	else
+		req->reason = REASON_SME_ISSUED;
+
+	if (csr_neighbor_middle_of_roaming(mac_ctx, vdev_id))
+		req->middle_of_roaming = 1;
+	else
+		csr_roam_reset_roam_params(mac_ctx);
+
+	/*
+	 * Disable offload_11k_params for current vdev
+	 */
+	req->roam_11k_params.vdev_id = vdev_id;
+
+	return status;
+}
+
+QDF_STATUS
+wlan_cm_roam_fill_update_config_req(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id,
+				    struct wlan_roam_update_config *req,
+				    uint8_t reason)
+{
+	struct csr_roam_session *session;
+	struct mac_context *mac_ctx;
+
+	mac_ctx = sme_get_mac_context();
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	if (!session) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "session is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	csr_cm_roam_scan_filter(mac_ctx, vdev_id, ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				reason, &req->scan_filter_params);
+
+	csr_cm_roam_scan_offload_rssi_thresh(mac_ctx, session,
+					     &req->rssi_params);
+
+	csr_cm_roam_scan_offload_scan_period(mac_ctx, vdev_id,
+					     &req->scan_period_params);
+
+	csr_cm_roam_scan_offload_ap_profile(mac_ctx, session,
+					    &req->profile_params);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_cm_roam_scan_offload_rsp(uint8_t vdev_id, uint8_t reason)
+{
+	QDF_STATUS status;
+	struct scheduler_msg cds_msg = {0};
+	struct roam_offload_scan_rsp *scan_offload_rsp;
+
+	if (reason == REASON_OS_REQUESTED_ROAMING_NOW) {
+		scan_offload_rsp = qdf_mem_malloc(sizeof(*scan_offload_rsp));
+		if (!scan_offload_rsp) {
+			return QDF_STATUS_E_NOMEM;
+		}
+		cds_msg.type = eWNI_SME_ROAM_SCAN_OFFLOAD_RSP;
+		scan_offload_rsp->sessionId = vdev_id;
+		scan_offload_rsp->reason = reason;
+		cds_msg.bodyptr = scan_offload_rsp;
+		/*
+		 * Since REASSOC request is processed in
+		 * Roam_Scan_Offload_Rsp post a dummy rsp msg back to
+		 * SME with proper reason code.
+		 */
+		status = scheduler_post_message(QDF_MODULE_ID_MLME,
+						QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_SME,
+						&cds_msg);
+		if (QDF_IS_STATUS_ERROR(status))
+			qdf_mem_free(scan_offload_rsp);
+	}
 
 	return status;
 }

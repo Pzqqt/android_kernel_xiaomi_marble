@@ -249,6 +249,19 @@ cm_roam_update_config_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	update_req = qdf_mem_malloc(sizeof(*update_req));
 	if (!update_req)
 		return QDF_STATUS_E_NOMEM;
+	/* fill from mlme directly */
+	cm_roam_scan_bmiss_cnt(psoc, vdev_id, &update_req->beacon_miss_cnt);
+	if (!MLME_IS_ROAM_STATE_RSO_ENABLED(psoc, vdev_id)) {
+		cm_roam_disconnect_params(psoc, vdev_id,
+					  &update_req->disconnect_params);
+		cm_roam_idle_params(psoc, vdev_id,
+				    &update_req->idle_params);
+		cm_roam_triggers(psoc, vdev_id,
+				 &update_req->roam_triggers);
+	}
+
+	/* fill from legacy through this API */
+	wlan_cm_roam_fill_update_config_req(psoc, vdev_id, update_req, reason);
 
 	status = wlan_cm_tgt_send_roam_update_req(psoc, vdev_id, update_req);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -317,31 +330,61 @@ cm_roam_abort_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 	return status;
 }
 
-/**
- * cm_roam_stop_req() - roam stop request handling
- * @psoc: psoc pointer
- * @vdev_id: vdev id
- * @reason: reason for changing roam state for the requested vdev id
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
+QDF_STATUS
 cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
 		 uint8_t reason)
 {
 	struct wlan_roam_stop_config *stop_req;
 	QDF_STATUS status;
 
+	/*
+	 * If roam synch propagation is in progress and an user space
+	 * disconnect is requested, then there is no need to send the
+	 * RSO STOP to firmware, since the roaming is already complete.
+	 * If the RSO STOP is sent to firmware, then an HO_FAIL will be
+	 * generated and the expectation from firmware would be to
+	 * clean up the peer context on the host and not send down any
+	 * WMI PEER DELETE commands to firmware. But, if the user space
+	 * disconnect gets processed first, then there is a chance to
+	 * send down the PEER DELETE commands. Hence, if we do not
+	 * receive the HO_FAIL, and we complete the roam sync
+	 * propagation, then the host and firmware will be in sync with
+	 * respect to the peer and then the user space disconnect can
+	 * be handled gracefully in a normal way.
+	 *
+	 * Ensure to check the reason code since the RSO Stop might
+	 * come when roam sync failed as well and at that point it
+	 * should go through to the firmware and receive HO_FAIL
+	 * and clean up.
+	 */
+	if (MLME_IS_ROAM_SYNCH_IN_PROGRESS(psoc, vdev_id) &&
+	    reason == REASON_ROAM_STOP_ALL) {
+		mlme_info("vdev_id:%d : Drop RSO stop during roam sync",
+			  vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	cm_roam_set_roam_reason_better_ap(psoc, vdev_id, false);
 
 	stop_req = qdf_mem_malloc(sizeof(*stop_req));
 	if (!stop_req)
 		return QDF_STATUS_E_NOMEM;
+
 	/* do the filling as csr_post_rso_stop */
+	status = wlan_cm_roam_fill_stop_req(psoc, vdev_id, stop_req, reason);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_debug("fail to fill stop config req");
+		return status;
+	}
 
 	status = wlan_cm_tgt_send_roam_stop_req(psoc, vdev_id, stop_req);
-	if (QDF_IS_STATUS_ERROR(status))
+	if (QDF_IS_STATUS_ERROR(status)) {
 		mlme_debug("fail to send roam stop");
+	} else {
+		status = wlan_cm_roam_scan_offload_rsp(vdev_id, reason);
+		if (QDF_IS_STATUS_ERROR(status))
+			mlme_debug("fail to send rso rsp msg");
+	}
 
 	qdf_mem_free(stop_req);
 

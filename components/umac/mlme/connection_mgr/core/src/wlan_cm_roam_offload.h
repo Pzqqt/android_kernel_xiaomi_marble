@@ -63,5 +63,17 @@ QDF_STATUS cm_roam_send_rso_cmd(struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id, uint8_t rso_command,
 				uint8_t reason);
 
+/**
+ * cm_roam_stop_req() - roam stop request handling
+ * @psoc: psoc pointer
+ * @vdev_id: vdev id
+ * @reason: reason for changing roam state for the requested vdev id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+cm_roam_stop_req(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+		 uint8_t reason);
+
 #endif
 #endif
