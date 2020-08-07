@@ -480,6 +480,7 @@ struct hal_rx_ppdu_common_info {
 	uint32_t mpdu_cnt_fcs_ok;
 	uint32_t mpdu_cnt_fcs_err;
 	uint32_t mpdu_fcs_ok_bitmap[HAL_RX_NUM_WORDS_PER_PPDU_BITMAP];
+	uint32_t last_ppdu_id;
 	uint32_t mpdu_cnt;
 	uint8_t num_users;
 };

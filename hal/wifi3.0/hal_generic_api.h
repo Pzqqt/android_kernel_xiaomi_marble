@@ -568,17 +568,19 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 
 	case WIFIRX_PPDU_START_E:
 	{
-		if (qdf_likely(ppdu_info->com_info.ppdu_id !=
+		if (qdf_unlikely(ppdu_info->com_info.last_ppdu_id ==
 		    HAL_RX_GET(rx_tlv, RX_PPDU_START_0, PHY_PPDU_ID)))
-			/* Reset ppdu_info before processing the ppdu */
-			qdf_mem_zero(ppdu_info,
-				     sizeof(struct hal_rx_ppdu_info));
-		else
-			qdf_assert_always(0);
+			hal_err("Matching ppdu_id(%u) detected",
+				 ppdu_info->com_info.last_ppdu_id);
 
-		ppdu_info->com_info.ppdu_id =
-			HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
-				PHY_PPDU_ID);
+		/* Reset ppdu_info before processing the ppdu */
+		qdf_mem_zero(ppdu_info,
+			     sizeof(struct hal_rx_ppdu_info));
+
+		ppdu_info->com_info.last_ppdu_id =
+			ppdu_info->com_info.ppdu_id =
+				HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
+					PHY_PPDU_ID);
 
 		/* channel number is set in PHY meta data */
 		ppdu_info->rx_status.chan_num =
