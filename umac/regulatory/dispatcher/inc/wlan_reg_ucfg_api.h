@@ -330,6 +330,18 @@ void ucfg_reg_unit_simulate_ch_avoid(struct wlan_objmgr_psoc *psoc,
 	struct ch_avoid_ind_type *ch_avoid);
 
 /**
+ * ucfg_reg_ch_avoid () - Send channel avoid cmd to regulatory
+ * @psoc: psoc ptr
+ * @ch_avoid: ch_avoid_ind_type ranges
+ *
+ * This function send channel avoid cmd to regulatory from os_if/upper layer
+ *
+ * Return: void
+ */
+void ucfg_reg_ch_avoid(struct wlan_objmgr_psoc *psoc,
+		       struct ch_avoid_ind_type *ch_avoid);
+
+/**
  * ucfg_reg_11d_vdev_delete_update() - update vdev delete to regulatory
  * @vdev: vdev ptr
  *

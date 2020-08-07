@@ -253,6 +253,12 @@ void ucfg_reg_unit_simulate_ch_avoid(struct wlan_objmgr_psoc *psoc,
 	reg_process_ch_avoid_event(psoc, ch_avoid);
 }
 
+void ucfg_reg_ch_avoid(struct wlan_objmgr_psoc *psoc,
+		       struct ch_avoid_ind_type *ch_avoid)
+{
+	reg_process_ch_avoid_event(psoc, ch_avoid);
+}
+
 QDF_STATUS ucfg_reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 {
 	return reg_11d_vdev_delete_update(vdev);
