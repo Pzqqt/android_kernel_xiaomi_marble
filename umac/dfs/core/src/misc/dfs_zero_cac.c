@@ -4994,3 +4994,96 @@ void dfs_prepare_agile_rcac_channel(struct wlan_dfs *dfs,
 }
 #endif
 #endif
+
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS) || \
+    defined(QCA_SUPPORT_ADFS_RCAC)
+QDF_STATUS
+dfs_process_radar_ind_on_agile_chan(struct wlan_dfs *dfs,
+				    struct radar_found_info *radar_found)
+{
+	uint32_t freq_center;
+	uint32_t radarfound_freq;
+	QDF_STATUS status;
+	uint8_t num_channels;
+	uint16_t freq_list[NUM_CHANNELS_160MHZ];
+	uint16_t nol_freq_list[NUM_CHANNELS_160MHZ];
+	bool is_radar_source_agile =
+		(radar_found->detector_id == dfs_get_agile_detector_id(dfs));
+
+	if ((!dfs_is_agile_precac_enabled(dfs) &&
+	     !dfs_is_agile_rcac_enabled(dfs)) ||
+	     !dfs->dfs_agile_precac_freq_mhz) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+			"radar on Agile detector when ADFS is not running");
+		status = QDF_STATUS_E_FAILURE;
+		goto exit;
+	}
+
+	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);
+	radarfound_freq = freq_center + radar_found->freq_offset;
+	if (is_radar_source_agile)
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Radar found on Agile detector freq=%d radar freq=%d",
+			 freq_center, radarfound_freq);
+	else if (radar_found->segment_id == SEG_ID_SECONDARY)
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Radar found on second segment.Radarfound Freq=%d MHz.Secondary Chan cfreq=%d MHz.",
+			 radarfound_freq, freq_center);
+	utils_dfs_deliver_event(dfs->dfs_pdev_obj, radarfound_freq,
+				WLAN_EV_RADAR_DETECTED);
+	if (!dfs->dfs_use_nol) {
+		dfs_reset_bangradar(dfs);
+		dfs_send_csa_to_current_chan(dfs);
+		status = QDF_STATUS_SUCCESS;
+		goto exit;
+	}
+
+	 num_channels = dfs_find_radar_affected_channels(dfs,
+			 radar_found,
+			 freq_list,
+			 freq_center);
+
+	 dfs_reset_bangradar(dfs);
+
+	 status = dfs_radar_add_channel_list_to_nol_for_freq(dfs,
+			 freq_list,
+			 nol_freq_list,
+			 &num_channels);
+	 if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+			"radar event received on invalid channel");
+		goto exit;
+	 }
+	 /*
+	  * If precac is running and the radar found in secondary
+	  * VHT80 mark the channel as radar and add to NOL list.
+	  * Otherwise random channel selection can choose this
+	  * channel.
+	  */
+	 dfs_debug(dfs, WLAN_DEBUG_DFS,
+			 "found_on_second=%d is_pre=%d",
+			 dfs->is_radar_found_on_secondary_seg,
+			 dfs_is_precac_timer_running(dfs));
+	 /*
+	  * Even if radar found on primary, we need to mark the channel as NOL
+	  * in preCAC list. The preCAC list also maintains the current CAC
+	  * channels as part of pre-cleared DFS. Hence call the API
+	  * to mark channels as NOL irrespective of preCAC being enabled or not.
+	  */
+
+	 dfs_debug(dfs, WLAN_DEBUG_DFS,
+			 "%s: %d Radar found on dfs detector:%d",
+			 __func__, __LINE__, radar_found->detector_id);
+	 dfs_mark_precac_nol_for_freq(dfs,
+			 dfs->is_radar_found_on_secondary_seg,
+			 radar_found->detector_id,
+			 nol_freq_list,
+			 num_channels);
+	if (is_radar_source_agile)
+		utils_dfs_agile_sm_deliver_evt(dfs->dfs_pdev_obj,
+					       DFS_AGILE_SM_EV_ADFS_RADAR);
+
+exit:
+	return status;
+}
+#endif
