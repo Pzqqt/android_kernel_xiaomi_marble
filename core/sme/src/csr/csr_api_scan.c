@@ -2033,7 +2033,7 @@ static void csr_fill_auth_type(enum csr_akm_type *auth_type,
 		return;
 	}
 
-	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_SHARED)) {
+	if (QDF_HAS_PARAM(authmodeset, WLAN_CRYPTO_AUTH_WAPI)) {
 		csr_fill_wapi_auth_type(auth_type, akm);
 		return;
 	}
