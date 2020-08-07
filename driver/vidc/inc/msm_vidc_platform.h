@@ -45,6 +45,8 @@ struct msm_vidc_ubwc_config_data {
 		u32 mal_length_override : 1;
 		u32 hb_override : 1;
 		u32 bank_swzl_level_override : 1;
+		u32 bank_swz2_level_override : 1;
+		u32 bank_swz3_level_override : 1;
 		u32 bank_spreading_override : 1;
 		u32 reserved : 27;
 	} override_bit_info;
@@ -53,6 +55,8 @@ struct msm_vidc_ubwc_config_data {
 	u32 mal_length;
 	u32 highest_bank_bit;
 	u32 bank_swzl_level;
+	u32 bank_swz2_level;
+	u32 bank_swz3_level;
 	u32 bank_spreading;
 };
 

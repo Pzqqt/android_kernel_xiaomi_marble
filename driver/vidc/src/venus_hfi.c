@@ -2339,7 +2339,8 @@ int venus_hfi_suspend(struct msm_vidc_core *core)
 	return rc;
 }
 
-int venus_hfi_session_open(struct msm_vidc_core *core, struct msm_vidc_inst *inst)
+int venus_hfi_session_open(struct msm_vidc_core *core,
+	struct msm_vidc_inst *inst)
 {
 	int rc = 0;
 
@@ -2357,10 +2358,17 @@ int venus_hfi_session_open(struct msm_vidc_core *core, struct msm_vidc_inst *ins
 		d_vpr_e("%s(): inst packet allocation failed\n", __func__);
 		return -ENOMEM;
 	}
-	rc = hfi_packet_session_open(inst, inst->packet, inst->packet_size);
+	rc = hfi_packet_session_command(inst,
+					HFI_CMD_OPEN,
+					(HFI_HOST_FLAGS_RESPONSE_REQUIRED |
+					HFI_HOST_FLAGS_INTR_REQUIRED),
+					HFI_PORT_NONE,
+					0 /* session_id */,
+					HFI_PAYLOAD_U32,
+					&inst->session_id /*payload*/,
+					sizeof(u32));
 	if (rc)
 		return rc;
 
 	return rc;
 }
-

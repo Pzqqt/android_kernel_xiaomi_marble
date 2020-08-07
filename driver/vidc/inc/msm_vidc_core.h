@@ -101,6 +101,8 @@ struct msm_vidc_core {
 	struct msm_vidc_venus_ops             *venus_ops;
 	struct msm_vidc_session_ops           *session_ops;
 	struct msm_vidc_memory_ops            *mem_ops;
+	u32                                    header_id;
+	u32                                    packet_id;
 };
 
 #endif // _MSM_VIDC_CORE_H_

@@ -9,48 +9,31 @@
 #include "msm_vidc_internal.h"
 #include "msm_vidc_inst.h"
 #include "msm_vidc_core.h"
+#include "hfi_command.h"
+#include "hfi_property.h"
+#include "hfi_definition.h"
 
-struct hfi_header {
-	u32 size;
-	u32 session_id;
-	u32 header_id;
-	u32 reserved[4];
-	u32 num_packets;
-};
-
-struct hfi_packet {
-	u32 size;
-	u32 type;
-	u32 flags;
-	u32 payload_info;
-	u32 port;
-	u32 packet_id;
-	u32 reserved[2];
-};
-
-struct hfi_buffer {
-	u32 type;
-	u32 index;
-	u64 base_address;
-	u32 addr_offset;
-	u32 buffer_size;
-	u32 data_offset;
-	u32 data_size;
-	u32 flags;
-	u64 timestamp;
-	u32 reserved[5];
-};
+int hfi_create_header(u8 *pkt, u32 session_id,
+	u32 header_id, u32 num_packets, u32 total_size);
+int hfi_create_packet(u8 *packet, u32 packet_size, u32 *offset,
+	u32 pkt_type, u32 pkt_flags, u32 payload_type, u32 port,
+	u32 packet_id, void *payload, u32 payload_size);
+int hfi_create_buffer(u8 *packet, u32 packet_size, u32 *offset,
+	enum msm_vidc_domain_type domain, struct msm_vidc_buffer *data);
 
 int hfi_packet_sys_init(struct msm_vidc_core *core,
-		void *packet, u32 packet_size);
+	u8 *pkt, u32 pkt_size);
 int hfi_packet_image_version(struct msm_vidc_core *core,
-		void *packet, u32 packet_size);
-int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
-		void *packet, u32 packet_size, u32 mode);
+	u8 *pkt, u32 pkt_size);
 int hfi_packet_sys_pc_prep(struct msm_vidc_core *core,
-		void *packet, u32 packet_size);
-int hfi_packet_session_open(struct msm_vidc_inst *inst,
-		void *packet, u32 pkt_size);
-int hfi_packet_session_close(struct msm_vidc_inst *inst,
-		void *packet, u32 pkt_size);
+	u8 *pkt, u32 pkt_size);
+int hfi_packet_sys_debug_config(struct msm_vidc_core *core,
+	u8 *pkt, u32 pkt_size, u32 debug_config);
+int hfi_packet_session_command(struct msm_vidc_inst *inst,
+	u32 pkt_type, u32 flags, u32 port, u32 session_id,
+	u32 payload_type, void *payload, u32 payload_size);
+int hfi_packet_create_property(struct msm_vidc_inst *inst,
+	void *pkt, u32 pkt_size, u32 pkt_type, u32 flags,
+	u32 port, u32 payload, u32 payload_type, u32 payload_size);
 #endif // _HFI_PACKET_H_
+
