@@ -25,6 +25,7 @@
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
 #endif
+#include <wlan_serialization_api.h>
 
 #ifdef WLAN_POLICY_MGR_ENABLE
 static void
@@ -187,6 +188,93 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+cm_ser_connect_cb(struct wlan_serialization_command *cmd,
+		  enum wlan_serialization_cb_reason reason)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev;
+
+	if (!cmd) {
+		mlme_err("cmd is NULL, reason: %d", reason);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	vdev = cmd->vdev;
+
+	switch (reason) {
+	case WLAN_SER_CB_ACTIVATE_CMD:
+		/* To do:- Post event to move CM SM to join active */
+		break;
+
+	case WLAN_SER_CB_CANCEL_CMD:
+		/* command removed from pending list.
+		 */
+		break;
+
+	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
+		mlme_err("Active command timeout cm_id %d", cmd->cmd_id);
+		QDF_ASSERT(0);
+		break;
+
+	case WLAN_SER_CB_RELEASE_MEM_CMD:
+		/* command completed. Release reference of vdev
+		 */
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
+		break;
+
+	default:
+		QDF_ASSERT(0);
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+}
+
+#define CONNECT_TIMEOUT       30000
+
+static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
+				     struct cnx_mgr *cm_ctx,
+				     struct cm_connect_req *cm_req)
+{
+	struct wlan_serialization_command cmd = {0, };
+	enum wlan_serialization_status ser_cmd_status;
+	QDF_STATUS status;
+
+	status = wlan_objmgr_vdev_try_get_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("unable to get reference");
+		return status;
+	}
+
+	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
+	cmd.cmd_id = cm_req->cm_id;
+	cmd.cmd_cb = cm_connect_serialize_callback;
+	cmd.source = WLAN_UMAC_COMP_MLME;
+	cmd.is_high_priority = false;
+	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
+	cmd.vdev = cm_ctx->vdev;
+
+	ser_cmd_status = wlan_serialization_request(&cmd);
+	switch (ser_cmd_status) {
+	case WLAN_SER_CMD_PENDING:
+		/* command moved to pending list.Do nothing */
+		break;
+	case WLAN_SER_CMD_ACTIVE:
+		/* command moved to active list. Do nothing */
+		break;
+	default:
+		mlme_err("ser cmd status %d", ser_cmd_status);
+		wlan_objmgr_vdev_release_ref(cm_ctx->vdev, WLAN_MLME_CM_ID);
+
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 			    struct cm_connect_req *cm_req)
 {
@@ -198,6 +286,7 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;
+
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_NO_CANDIDATE_FOUND;
@@ -205,8 +294,15 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	}
 
 	/* TODO: Do HW mode change */
-	/* TODO: serialize */
+
+	status = cm_serialize_connect_req(pdev, cm_ctx, cm_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reason = CM_SER_FAILURE;
+		goto connect_err;
+	}
+
 	return QDF_STATUS_SUCCESS;
+
 connect_err:
 	return cm_send_connect_start_fail(cm_ctx, cm_req, reason);
 }
