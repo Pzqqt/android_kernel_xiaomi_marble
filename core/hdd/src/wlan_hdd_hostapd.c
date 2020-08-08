@@ -2085,6 +2085,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		}
 
 		qdf_atomic_set(&adapter->ch_switch_in_progress, 0);
+		hdd_stop_tsf_sync(adapter);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -5959,7 +5960,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-		hdd_stop_tsf_sync(adapter);
 
 		/*BSS stopped, clear the active sessions for this device mode*/
 		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
@@ -6650,8 +6650,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			hdd_err("Error Start bss Failed");
 			goto err_start_bss;
 		}
-
-		hdd_start_tsf_sync(adapter);
 
 		if (wdev->chandef.chan->center_freq !=
 				params->chandef.chan->center_freq)
