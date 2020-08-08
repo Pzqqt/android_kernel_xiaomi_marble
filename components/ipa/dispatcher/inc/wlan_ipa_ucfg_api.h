@@ -358,6 +358,13 @@ void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
 void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_ipa_component_config_free() - Free IPA component config
+ *
+ * Return: None
+ */
+void ucfg_ipa_component_config_free(void);
+
+/**
  * ucfg_get_ipa_tx_buf_count() - get IPA tx buffer count
  *
  * Return: IPA tx buffer count
@@ -585,6 +592,11 @@ void ucfg_ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev)
 
 static inline
 void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static inline
+void ucfg_ipa_component_config_free(void)
 {
 }
 

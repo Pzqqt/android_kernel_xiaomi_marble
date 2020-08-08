@@ -213,6 +213,11 @@ void ucfg_ipa_component_config_update(struct wlan_objmgr_psoc *psoc)
 	ipa_component_config_update(psoc);
 }
 
+void ucfg_ipa_component_config_free(void)
+{
+	ipa_component_config_free();
+}
+
 uint32_t ucfg_ipa_get_tx_buf_count(void)
 {
 	return ipa_get_tx_buf_count();

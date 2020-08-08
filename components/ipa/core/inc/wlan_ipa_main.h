@@ -447,6 +447,13 @@ void ipa_fw_rejuvenate_send_msg(struct wlan_objmgr_pdev *pdev);
 void ipa_component_config_update(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ipa_component_config_free() - Free ipa config
+ *
+ * Return: None
+ */
+void ipa_component_config_free(void);
+
+/**
  * ipa_get_tx_buf_count() - get IPA config tx buffer count
  *
  * Return: IPA config tx buffer count
@@ -473,6 +480,14 @@ void ipa_update_tx_stats(struct wlan_objmgr_pdev *pdev, uint64_t sta_tx,
  */
 void ipa_flush_pending_vdev_events(struct wlan_objmgr_pdev *pdev,
 				   uint8_t vdev_id);
+
+/**
+ * ipa_is_ready() - Is IPA register callback is invoked
+ *
+ * Return: true if IPA register callback is invoked or false
+ * otherwise
+ */
+bool ipa_is_ready(void);
 
 #else /* Not IPA_OFFLOAD */
 typedef QDF_STATUS (*wlan_ipa_softap_xmit)(qdf_nbuf_t nbuf, qdf_netdev_t dev);
