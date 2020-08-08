@@ -124,7 +124,9 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.dp_rx_get_pending = dp_rx_tm_get_pending,
 #ifdef DP_MEM_PRE_ALLOC
 	.dp_prealloc_get_consistent = dp_prealloc_get_coherent,
-	.dp_prealloc_put_consistent = dp_prealloc_put_coherent
+	.dp_prealloc_put_consistent = dp_prealloc_put_coherent,
+	.dp_get_multi_pages = dp_prealloc_get_multi_pages,
+	.dp_put_multi_pages = dp_prealloc_put_multi_pages
 #endif
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

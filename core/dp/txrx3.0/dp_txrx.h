@@ -500,6 +500,33 @@ void *dp_prealloc_get_coherent(uint32_t *size, void **base_vaddr_unaligned,
  */
 void dp_prealloc_put_coherent(qdf_size_t size, void *vaddr_unligned,
 			      qdf_dma_addr_t paddr);
+
+/**
+ * dp_prealloc_get_multi_page() - gets pre-alloc DP multi-pages memory
+ * @src_type: the source that do memory allocation
+ * @element_size: single element size
+ * @element_num: total number of elements should be allocated
+ * @pages: multi page information storage
+ * @cacheable: coherent memory or cacheable memory
+ *
+ * Return: None.
+ */
+void dp_prealloc_get_multi_pages(uint32_t src_type,
+				 size_t element_size,
+				 uint16_t element_num,
+				 struct qdf_mem_multi_page_t *pages,
+				 bool cacheable);
+
+/**
+ * dp_prealloc_put_multi_pages() - puts back pre-alloc DP multi-pages memory
+ * @src_type: the source that do memory freement
+ * @pages: multi page information storage
+ *
+ * Return: None
+ */
+void dp_prealloc_put_multi_pages(uint32_t src_type,
+				 struct qdf_mem_multi_page_t *pages);
+
 #else
 static inline QDF_STATUS dp_prealloc_init(void) { return QDF_STATUS_SUCCESS; }
 
