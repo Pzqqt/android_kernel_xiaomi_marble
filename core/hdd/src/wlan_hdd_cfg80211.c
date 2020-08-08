@@ -1897,13 +1897,13 @@ static int wlan_hdd_set_acs_ch_range(
 		sap_cfg->acs_cfg.start_ch_freq =
 				wlan_reg_ch_to_freq(CHAN_ENUM_5180);
 		sap_cfg->acs_cfg.end_ch_freq =
-				wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+				wlan_reg_ch_to_freq(CHAN_ENUM_5885);
 	} else if (hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
 		sap_cfg->acs_cfg.start_ch_freq =
 				wlan_reg_ch_to_freq(CHAN_ENUM_2412);
 		sap_cfg->acs_cfg.end_ch_freq =
-				wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+				wlan_reg_ch_to_freq(CHAN_ENUM_5885);
 	}
 
 	if (ht_enabled)

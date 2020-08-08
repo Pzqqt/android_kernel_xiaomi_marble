@@ -2219,7 +2219,7 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 					wlan_reg_ch_to_freq(CHAN_ENUM_2432) ?
 					(*start_ch_freq - ACS_2G_EXTEND) :
 					wlan_reg_ch_to_freq(CHAN_ENUM_2412);
-	} else if (*start_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5865)) {
+	} else if (*start_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5885)) {
 		*bandStartChannel = CHAN_ENUM_5180;
 		tmp_start_ch_freq = (*start_ch_freq - ACS_5G_EXTEND) >
 					wlan_reg_ch_to_freq(CHAN_ENUM_5180) ?
@@ -2245,22 +2245,22 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 					wlan_reg_ch_to_freq(CHAN_ENUM_2484) ?
 					(*end_ch_freq + ACS_2G_EXTEND) :
 					wlan_reg_ch_to_freq(CHAN_ENUM_2484);
-	} else if (*end_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5865)) {
-		*bandEndChannel = CHAN_ENUM_5865;
+	} else if (*end_ch_freq <= wlan_reg_ch_to_freq(CHAN_ENUM_5885)) {
+		*bandEndChannel = CHAN_ENUM_5885;
 		tmp_end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
-				     wlan_reg_ch_to_freq(CHAN_ENUM_5865) ?
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5885) ?
 				     (*end_ch_freq + ACS_5G_EXTEND) :
-				     wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5885);
 	} else if (WLAN_REG_IS_6GHZ_CHAN_FREQ(*end_ch_freq)) {
 		tmp_end_ch_freq = *end_ch_freq;
 		wlansap_update_end_range_6ghz(&tmp_end_ch_freq,
 					      bandEndChannel);
 	} else {
-		*bandEndChannel = CHAN_ENUM_5865;
+		*bandEndChannel = CHAN_ENUM_5885;
 		tmp_end_ch_freq = (*end_ch_freq + ACS_5G_EXTEND) <=
-				     wlan_reg_ch_to_freq(CHAN_ENUM_5865) ?
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5885) ?
 				     (*end_ch_freq + ACS_5G_EXTEND) :
-				     wlan_reg_ch_to_freq(CHAN_ENUM_5865);
+				     wlan_reg_ch_to_freq(CHAN_ENUM_5885);
 
 		sap_err("unexpected end freq %d", *end_ch_freq);
 	}
