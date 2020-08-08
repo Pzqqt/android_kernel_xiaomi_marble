@@ -3929,7 +3929,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		ret = hdd_configure_cds(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to Enable cds modules; errno: %d", ret);
-			goto destroy_driver_sysfs;
+			goto sched_disable;
 		}
 
 		hdd_enable_power_management(hdd_ctx);
@@ -3955,11 +3955,14 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 	hdd_exit();
 
 	return 0;
-
-destroy_driver_sysfs:
+/*
+ * Disable scheduler 1st so that scheduler thread dosent send messages to fw
+ * in parallel to the cleanup
+ */
+sched_disable:
+	dispatcher_disable();
 	hdd_destroy_sysfs_files();
 	cds_post_disable();
-
 unregister_notifiers:
 	hdd_unregister_notifiers(hdd_ctx);
 
