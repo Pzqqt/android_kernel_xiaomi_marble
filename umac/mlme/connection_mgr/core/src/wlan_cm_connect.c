@@ -109,8 +109,8 @@ static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
 		filter->chan_freq_list[0] = cm_req->req.chan_freq;
 	}
 
-	/* TODO: Fill band (STA+STA) */
-	/* TODO: RSN OVERRIDE */
+	/* Fill band (STA+STA) */
+	/* RSN OVERRIDE */
 
 	filter->authmodeset = cm_req->req.crypto.auth_type;
 	filter->ucastcipherset = cm_req->req.crypto.ciphers_pairwise;
@@ -120,9 +120,9 @@ static void cm_connect_prepare_scan_fliter(struct cnx_mgr *cm_ctx,
 
 	cm_set_pmf_caps(cm_req, filter);
 
-	/* TODO: FOR WPS/OSEN set ignore auth */
-	/* TODO: SET mobility domain */
-	/* TODO: fill fils info */
+	/* FOR WPS/OSEN set ignore auth */
+	/* SET mobility domain */
+	/* Fill fils info */
 }
 
 static QDF_STATUS
@@ -131,14 +131,17 @@ cm_send_connect_start_fail(struct cnx_mgr *cm_ctx,
 			   enum wlan_cm_connect_fail_reason reason)
 {
 	struct wlan_cm_connect_rsp *resp;
+	QDF_STATUS status;
 
 	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp)
 		return QDF_STATUS_E_NOMEM;
 
-	return cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
-				   sizeof(*resp), resp);
+	status = cm_sm_deliver_event(cm_ctx, WLAN_CM_SM_EV_CONNECT_FAILURE,
+				     sizeof(*resp), resp);
 	qdf_mem_free(resp);
+
+	return status;
 }
 
 static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
@@ -167,8 +170,7 @@ static QDF_STATUS cm_connect_get_candidates(struct wlan_objmgr_pdev *pdev,
 		cm_calculate_scores(pdev, filter, candidate_list);
 	qdf_mem_free(filter);
 
-	if (!candidate_list ||
-	    (candidate_list && !qdf_list_size(candidate_list))) {
+	if (!candidate_list || !qdf_list_size(candidate_list)) {
 		if (candidate_list)
 			wlan_scan_purge_results(candidate_list);
 		mlme_info("No valid candidate found num_bss %d", num_bss);
@@ -205,12 +207,11 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
-		/* To do:- Post event to move CM SM to join active */
+		/* Post event to move CM SM to join active */
 		break;
 
 	case WLAN_SER_CB_CANCEL_CMD:
-		/* command removed from pending list.
-		 */
+		/* command removed from pending list. */
 		break;
 
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
@@ -219,8 +220,7 @@ cm_ser_connect_cb(struct wlan_serialization_command *cmd,
 		break;
 
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		/* command completed. Release reference of vdev
-		 */
+		/* command completed. Release reference of vdev */
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
 
@@ -251,7 +251,7 @@ static QDF_STATUS cm_ser_connect_req(struct wlan_objmgr_pdev *pdev,
 
 	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
 	cmd.cmd_id = cm_req->cm_id;
-	cmd.cmd_cb = cm_connect_serialize_callback;
+	cmd.cmd_cb = cm_ser_connect_cb;
 	cmd.source = WLAN_UMAC_COMP_MLME;
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = CONNECT_TIMEOUT;
@@ -282,10 +282,13 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 	enum wlan_cm_connect_fail_reason reason = CM_GENERIC_FAILURE;
 	QDF_STATUS status;
 
-	/* TODO: Interface event */
+	/* Interface event */
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
-	if (!pdev)
-		return QDF_STATUS_E_INVAL;
+	if (!pdev) {
+		mlme_err("Failed to find pdev from vdev %d",
+			 wlan_vdev_get_id(cm_ctx->vdev));
+		goto connect_err;
+	}
 
 	status = cm_connect_get_candidates(pdev, cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -293,9 +296,9 @@ QDF_STATUS cm_connect_start(struct cnx_mgr *cm_ctx,
 		goto connect_err;
 	}
 
-	/* TODO: Do HW mode change */
+	/*  Do HW mode change */
 
-	status = cm_serialize_connect_req(pdev, cm_ctx, cm_req);
+	status = cm_ser_connect_req(pdev, cm_ctx, cm_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		reason = CM_SER_FAILURE;
 		goto connect_err;
@@ -310,7 +313,7 @@ connect_err:
 QDF_STATUS cm_connect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	/*
-	 * TODO: get first valid candidate, create bss peer.
+	 * get first valid candidate, create bss peer.
 	 * fill vdev crypto for the peer.
 	 * call vdev sm to start connect for the candidate.
 	 */
@@ -321,7 +324,7 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 				 struct wlan_cm_connect_rsp *resp)
 {
 	/*
-	 * TODO: get next valid candidate, if no candidate left, post
+	 * get next valid candidate, if no candidate left, post
 	 * WLAN_CM_SM_EV_CONNECT_FAILURE to SM, inform osif about failure for
 	 * the candidate if its not last one. and initiate the connect for
 	 * next candidate.
@@ -332,7 +335,7 @@ QDF_STATUS cm_try_next_candidate(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_connect_cmd_timeout(struct cnx_mgr *cm_ctx, wlan_cm_id cm_id)
 {
 	/*
-	 * TODO: get the connect req from connect list and post
+	 * get the connect req from connect list and post
 	 * WLAN_CM_SM_EV_CONNECT_FAILURE.
 	 */
 	return QDF_STATUS_SUCCESS;
@@ -342,7 +345,7 @@ QDF_STATUS cm_connect_complete(struct cnx_mgr *cm_ctx,
 			       struct wlan_cm_connect_rsp *resp)
 {
 	/*
-	 * TODO: inform osif about success/failure, inform interface manager
+	 * inform osif about success/failure, inform interface manager
 	 * update fils/wep key and inform legacy, update bcn filter and scan
 	 * entry mlme info, blm action and remove from serialization at the end.
 	 */
@@ -356,7 +359,7 @@ QDF_STATUS cm_connect_start_req(struct wlan_objmgr_vdev *vdev,
 	struct cm_connect_req *cm_req = NULL;
 
 	/*
-	 * TODO: Get WAPI/WPA/RSN IE and refill crypto params of req.
+	 * Get WAPI/WPA/RSN IE and refill crypto params of req.
 	 * Prepare cm_connect_req cm_req, get cm id and inform it to OSIF.
 	 * store connect req to the cm ctx req_list
 	 */

@@ -51,9 +51,7 @@ struct wlan_cm_wep_key_params {
  *	(from enum nl80211_wpa_versions)
  * @auth_type: Auth mode type bitmask
  * @group_cipher: group key cipher suite bitmask
- * @n_ciphers_pairwise: number of AP supported unicast ciphers
  * @ciphers_pairwise: unicast key cipher suites bitmask
- * @n_akm_suites: number of AKM suites
  * @akm_suites: AKM suites bitmask
  * @wep_keys: static WEP keys, if not NULL points to an array of
  *	MAX_WEP_KEYS WEP keys
@@ -64,9 +62,7 @@ struct wlan_cm_connect_crypto_info {
 	uint32_t wpa_versions;
 	uint32_t auth_type;
 	uint32_t group_cipher;
-	uint32_t n_ciphers_pairwise;
 	uint32_t ciphers_pairwise;
-	uint32_t n_akm_suites;
 	uint32_t akm_suites;
 	struct wlan_cm_wep_key_params wep_keys;
 	enum wlan_pmf_cap pmf_cap;

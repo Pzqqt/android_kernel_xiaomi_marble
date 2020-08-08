@@ -25,7 +25,7 @@ QDF_STATUS cm_connect_scan_start(struct cnx_mgr *cm_ctx,
 				 struct cm_connect_req *req)
 {
 	/*
-	 * TODO: initiate connect scan and scan timer.
+	 * initiate connect scan and scan timer.
 	 * post WLAN_CM_SM_EV_CONNECT_SCAN_FAILURE on scan req failure.
 	 */
 	return QDF_STATUS_SUCCESS;
@@ -35,7 +35,7 @@ QDF_STATUS cm_connect_scan_resp(struct cnx_mgr *cm_ctx, wlan_scan_id *scan_id,
 				QDF_STATUS status)
 {
 	/*
-	 * TODO: get connect req from head and check if scan_id match
+	 * get connect req from head and check if scan_id match
 	 * if not drop else proceed with success or failure handling
 	 * (post WLAN_CM_SM_EV_CONNECT_FAILURE in case of status failure or if
 	 * no candidate found again after scan)

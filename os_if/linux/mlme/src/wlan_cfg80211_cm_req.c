@@ -101,7 +101,7 @@ QDF_STATUS wlan_osif_set_crypto_params(struct wlan_cm_connect_req *connect_req,
 {
 	uint32_t i = 0;
 	QDF_STATUS status;
-	wlan_crypto_cipher_type cipher;
+	wlan_crypto_cipher_type cipher = WLAN_CRYPTO_CIPHER_NONE;
 	wlan_crypto_key_mgmt akm;
 
 	connect_req->crypto.wpa_versions = req->crypto.wpa_versions;
@@ -110,46 +110,32 @@ QDF_STATUS wlan_osif_set_crypto_params(struct wlan_cm_connect_req *connect_req,
 
 	if (req->crypto.cipher_group)
 		cipher = osif_nl_to_crypto_cipher_type(cipher);
-	else
-		cipher = WLAN_CRYPTO_CIPHER_NONE;
 
 	QDF_SET_PARAM(connect_req->crypto.group_cipher, cipher);
 
 	/* Fill Pairwise ciphers */
-	if (req->crypto.n_ciphers_pairwise > NL80211_MAX_NR_CIPHER_SUITES)
-		connect_req->crypto.n_ciphers_pairwise =
-						NL80211_MAX_NR_CIPHER_SUITES;
-	else
-		connect_req->crypto.n_ciphers_pairwise =
-						req->crypto.n_ciphers_pairwise;
-
-	if (connect_req->crypto.n_ciphers_pairwise) {
-		for (i = 0; i < connect_req->crypto.n_ciphers_pairwise ; i++) {
+	if (req->crypto.n_ciphers_pairwise) {
+		for (i = 0; i < req->crypto.n_ciphers_pairwise &&
+		     i < NL80211_MAX_NR_CIPHER_SUITES; i++) {
 			cipher = osif_nl_to_crypto_cipher_type(
 					req->crypto.ciphers_pairwise[i]);
 			QDF_SET_PARAM(connect_req->crypto.ciphers_pairwise,
 				      cipher);
 		}
 	} else {
-		connect_req->crypto.n_ciphers_pairwise = 1;
 		QDF_SET_PARAM(connect_req->crypto.ciphers_pairwise,
 			      WLAN_CRYPTO_CIPHER_NONE);
 	}
 
 	/* Fill AKM suites */
-	if (req->crypto.n_akm_suites > NL80211_MAX_NR_AKM_SUITES)
-		connect_req->crypto.n_akm_suites = NL80211_MAX_NR_AKM_SUITES;
-	else
-		connect_req->crypto.n_akm_suites = req->crypto.n_akm_suites;
-
-	if (connect_req->crypto.n_akm_suites) {
-		for (i = 0; i < connect_req->crypto.n_akm_suites; i++) {
+	if (req->crypto.n_akm_suites) {
+		for (i = 0; i < req->crypto.n_akm_suites &&
+		     i < NL80211_MAX_NR_AKM_SUITES; i++) {
 			akm = osif_nl_to_crypto_akm_type(
 					req->crypto.akm_suites[i]);
 			QDF_SET_PARAM(connect_req->crypto.akm_suites, akm);
 		}
 	} else {
-		connect_req->crypto.n_akm_suites = 1;
 		QDF_SET_PARAM(connect_req->crypto.akm_suites,
 			      WLAN_CRYPTO_KEY_MGMT_NONE);
 	}
@@ -347,7 +333,7 @@ int wlan_osif_cfg80211_connect(struct net_device *dev,
 
 	connect_req->ssid.length = req->ssid_len;
 	if (connect_req->ssid.length > WLAN_SSID_MAX_LEN) {
-		osif_err("Invalid ssid len %d", req->ssid_len);
+		osif_err("Invalid ssid len %zu", req->ssid_len);
 		return -EINVAL;
 	}
 
@@ -388,9 +374,7 @@ int wlan_osif_cfg80211_connect(struct net_device *dev,
 
 	status = ucfg_wlan_cm_start_connect(vdev, connect_req);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto connect_start_fail;
-
-	return qdf_status_to_os_return(status);
+		osif_err("Connect failed with status %d", status);
 
 connect_start_fail:
 	if (connect_req->assoc_ie.ptr) {
@@ -415,7 +399,7 @@ int wlan_osif_cfg80211_disconnect(struct net_device *dev,
 	if (!req)
 		return -ENOMEM;
 
-	/* TODO print reason in string */
+	/* print reason in string */
 	osif_info("%s(vdevid-%d): Received Disconnect reason:%d",
 		  dev->name, vdev_id, reason);
 
@@ -424,7 +408,9 @@ int wlan_osif_cfg80211_disconnect(struct net_device *dev,
 	req->reason_code = reason;
 	status = ucfg_wlan_cm_start_disconnect(vdev, req);
 	if (QDF_IS_STATUS_ERROR(status))
-		qdf_mem_free(req);
+		osif_err("Disconnect failed with status %d", status);
+
+	qdf_mem_free(req);
 
 	return qdf_status_to_os_return(status);
 }

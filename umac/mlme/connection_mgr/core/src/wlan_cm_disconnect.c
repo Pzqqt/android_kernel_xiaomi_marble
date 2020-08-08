@@ -38,12 +38,11 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
-		/* To do:- Post event disconnect acitve to CM SM*/
+		/* Post event disconnect active to CM SM */
 		break;
 
 	case WLAN_SER_CB_CANCEL_CMD:
-		/* command removed from pending list.
-		 */
+		/* command removed from pending list. */
 		break;
 
 	case WLAN_SER_CB_ACTIVE_CMD_TIMEOUT:
@@ -52,8 +51,7 @@ cm_ser_disconnect_cb(struct wlan_serialization_command *cmd,
 		break;
 
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
-		/* command completed. Release reference of vdev
-		 */
+		/* command completed. Release reference of vdev */
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_CM_ID);
 		break;
 
@@ -84,7 +82,7 @@ static QDF_STATUS cm_ser_disconnect_req(struct wlan_objmgr_pdev *pdev,
 
 	cmd.cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
 	cmd.cmd_id = req->cm_id;
-	cmd.cmd_cb = cm_disconnect_serialize_callback;
+	cmd.cmd_cb = cm_ser_disconnect_cb;
 	cmd.source = WLAN_UMAC_COMP_MLME;
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = DISCONNECT_TIMEOUT;
@@ -113,17 +111,17 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 {
 	struct wlan_objmgr_pdev *pdev;
 
-	/* TODO: Interface event */
+	/* Interface event */
 	pdev = wlan_vdev_get_pdev(cm_ctx->vdev);
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;
 
 	/*
-	 * TODO: Interface event, stop scan, disconnect TDLS, P2P roc cleanup
+	 * Interface event, stop scan, disconnect TDLS, P2P roc cleanup
 	 */
 
-	/* Serialize disconnect req, TODO:- Handle failure status */
-	cm_serialize_disconnect_req(pdev, cm_ctx, req);
+	/* Serialize disconnect req, Handle failure status */
+	cm_ser_disconnect_req(pdev, cm_ctx, req);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -131,7 +129,7 @@ QDF_STATUS cm_disconnect_start(struct cnx_mgr *cm_ctx,
 QDF_STATUS cm_disconnect_active(struct cnx_mgr *cm_ctx, wlan_cm_id *cm_id)
 {
 	/*
-	 * TODO: call vdev sm to start disconnect.
+	 * call vdev sm to start disconnect.
 	 */
 	return QDF_STATUS_SUCCESS;
 }
@@ -140,7 +138,7 @@ QDF_STATUS cm_disconnect_complete(struct cnx_mgr *cm_ctx,
 				  struct wlan_cm_discon_rsp *resp)
 {
 	/*
-	 * TODO: inform osif, inform interface manager
+	 * inform osif, inform interface manager
 	 * update fils/wep key and inform legacy, update bcn filter and scan
 	 * entry mlme info, blm action and remove from serialization at the end.
 	 */
@@ -154,7 +152,7 @@ QDF_STATUS cm_disconnect_start_req(struct wlan_objmgr_vdev *vdev,
 	struct cm_disconnect_req *cm_req = NULL;
 
 	/*
-	 * TODO: Prepare cm_disconnect_req cm_req, get cm id and inform it to
+	 * Prepare cm_disconnect_req cm_req, get cm id and inform it to
 	 * OSIF. store disconnect req to the cm ctx req_list
 	 */
 
