@@ -729,6 +729,218 @@ static int ipa_test_hw_stats_set_sw_stats(void *priv)
 	return 0;
 }
 
+static int ipa_test_hw_stats_query_drop_stats(void *priv)
+{
+       int ret, i, ep_idx, reg_idx;
+       struct ipa_drop_stats_all *query;
+
+       query = kzalloc(sizeof(struct ipa_drop_stats_all), GFP_KERNEL);
+       if (!query)
+               return -ENOMEM;
+
+       IPA_UT_INFO("========query all drop stats========\n");
+
+       ret = ipa_get_drop_stats(query);
+       if (!ret)
+               goto fail;
+
+       for (i = 0; i <= IPA_CLIENT_MAX; i++) {
+               ep_idx = ipa3_get_ep_mapping(i);
+               if (ep_idx == -1 || !IPA_CLIENT_IS_CONS(i) || IPA_CLIENT_IS_TEST(i))
+                       continue;
+
+               reg_idx = ipahal_get_ep_reg_idx(ep_idx);
+               if (!(ipa3_ctx->hw_stats.drop.init.enabled_bitmask[reg_idx] &
+                       ipahal_get_ep_bit(ep_idx)))
+                       continue;
+
+               IPA_UT_INFO("Client %u pkt_cnt %u bytes cnt %llu\n", i,
+                       query->client[i].drop_packet_cnt, query->client[i].drop_byte_cnt);
+       }
+
+       IPA_UT_INFO("================ done ============\n");
+
+fail:
+       kfree(query);
+       return ret;
+}
+
+static int ipa_test_hw_stats_reset_all_drop_stats(void *priv)
+{
+       int ret;
+
+       IPA_UT_INFO("========reset all drop stats========\n");
+
+       ret = ipa_reset_all_drop_stats();
+       if (ret)
+               IPA_UT_ERR("ipa_reset_all_drop_stats failed %d\n", ret);
+
+       IPA_UT_INFO("================ done ============\n");
+
+       return ret;
+}
+
+static int ipa_test_hw_stats_query_teth_stats(void *priv)
+{
+       int i, j, prod_reg, cons_reg;
+       int res;
+       struct ipa_quota_stats_all *stats;
+
+       stats = kzalloc(sizeof(*stats), GFP_KERNEL);
+       if (!stats)
+               return -ENOMEM;
+
+       IPA_UT_INFO("========get all tethering stats========\n");
+       res = ipa_get_teth_stats();
+       if (res) {
+               IPA_UT_ERR("ipa_get_teth_stats failed with code %u\n", res);
+               goto teardown;
+       }
+
+       for (i = 0; i < IPA_CLIENT_MAX; i++) {
+               int ep_idx = ipa3_get_ep_mapping(i);
+
+               if (ep_idx == -1)
+                       continue;
+
+               if (!IPA_CLIENT_IS_PROD(i))
+                       continue;
+
+               if (IPA_CLIENT_IS_TEST(i))
+                       continue;
+
+               prod_reg = ipahal_get_ep_reg_idx(ep_idx);
+               if (!(ipa3_ctx->hw_stats.teth.init.prod_bitmask[prod_reg] &
+                       ipahal_get_ep_bit(ep_idx)))
+                       continue;
+
+               res = ipa_query_teth_stats(i, stats, false);
+               if (res) {
+                       IPA_UT_ERR("ipa_query_teth_stats failed with code %u\n", res);
+                       goto teardown;
+               }
+
+               for (j = 0; j < IPA_CLIENT_MAX; j++) {
+                       int cons_idx = ipa3_get_ep_mapping(j);
+
+                       if (cons_idx == -1)
+                               continue;
+
+                       if (IPA_CLIENT_IS_TEST(j))
+                               continue;
+
+                       cons_reg = ipahal_get_ep_reg_idx(j);
+                       if (!(ipa3_ctx->hw_stats.teth.init.
+                               cons_bitmask[ep_idx][cons_reg]
+                               & ipahal_get_ep_bit(cons_idx)))
+                               continue;
+
+                       IPA_UT_INFO("%s->%s:\n", ipa_clients_strings[i],
+                               ipa_clients_strings[j]);
+                       IPA_UT_INFO("num_ipv4_bytes=%llu\n",
+                                               stats->client[j].num_ipv4_bytes);
+                       IPA_UT_INFO("num_ipv6_bytes=%llu\n",
+                                               stats->client[j].num_ipv6_bytes);
+                       IPA_UT_INFO("num_ipv4_pkts=%u\n",
+                                               stats->client[j].num_ipv4_pkts);
+                       IPA_UT_INFO("num_ipv6_pkts=%u\n",
+                                               stats->client[j].num_ipv6_pkts);
+               }
+       }
+
+       IPA_UT_INFO("================ done ============\n");
+
+teardown:
+       kfree(stats);
+       return res;
+}
+
+static int ipa_test_hw_stats_reset_teth_stats(void *priv)
+{
+	int ret;
+	unsigned int random_int;
+	enum ipa_client_type prod;
+	enum ipa_client_type cons;
+
+	get_random_bytes(&random_int, sizeof(random_int));
+	prod = (random_int % IPA_CLIENT_MAX) & 0x8FFFFFFE;
+
+	get_random_bytes(&random_int, sizeof(random_int));
+	cons = ((random_int % IPA_CLIENT_MAX) & 0x8FFFFFFF) | 0x1;
+
+	IPA_UT_INFO("========reset some tethering stats========\n");
+
+	ret = ipa_reset_teth_stats(prod, cons);
+	if (ret)
+		IPA_UT_ERR("ipa_reset_teth_stats failed %d\n", ret);
+
+	IPA_UT_INFO("================ done ============\n");
+
+	return ret;
+}
+
+static int ipa_test_hw_stats_query_quota_stats(void *priv)
+{
+       struct ipa_quota_stats_all *out;
+       int i, reg_idx, ep_idx;
+       int res;
+
+       out = kzalloc(sizeof(*out), GFP_KERNEL);
+       if (!out)
+               return -ENOMEM;
+
+       IPA_UT_INFO("========get all quota stats========\n");
+
+       res = ipa_get_quota_stats(out);
+       if (res) {
+               IPA_UT_ERR("ipa_get_quota_stats failed with code %u\n", res);
+               goto teardown;
+       }
+
+       for (i = 0; i < IPA_CLIENT_MAX; i++) {
+               ep_idx = ipa3_get_ep_mapping(i);
+
+               if (ep_idx == -1)
+                       continue;
+
+               if (IPA_CLIENT_IS_TEST(i))
+                       continue;
+
+               reg_idx = ipahal_get_ep_reg_idx(ep_idx);
+               if (!(ipa3_ctx->hw_stats.quota.init.enabled_bitmask[reg_idx] &
+                       ipahal_get_ep_bit(ep_idx)))
+                       continue;
+
+               IPA_UT_INFO("%s:\n", ipa_clients_strings[i]);
+               IPA_UT_INFO("num_ipv4_bytes=%llu\n", out->client[i].num_ipv4_bytes);
+               IPA_UT_INFO("num_ipv6_bytes=%llu\n", out->client[i].num_ipv6_bytes);
+               IPA_UT_INFO("num_ipv4_pkts=%u\n", out->client[i].num_ipv4_pkts);
+               IPA_UT_INFO("num_ipv6_pkts=%u\n", out->client[i].num_ipv6_pkts);
+
+       }
+
+       IPA_UT_INFO("================ done ============\n");
+
+teardown:
+       kfree(out);
+       return res;
+}
+
+static int ipa_test_hw_stats_reset_all_quota_stats(void *priv)
+{
+       int ret;
+
+       IPA_UT_INFO("========reset all drop stats========\n");
+
+       ret = ipa_reset_all_quota_stats();
+       if (ret)
+               IPA_UT_ERR("ipa_reset_all_quota_stats failed %d\n", ret);
+
+       IPA_UT_INFO("================ done ============\n");
+
+       return ret;
+}
+
 static int ipa_test_hw_stats_set_uc_event_ring(void *priv)
 {
 	struct ipa_ioc_flt_rt_counter_alloc *counter = NULL;
@@ -943,6 +1155,30 @@ IPA_UT_DEFINE_SUITE_START(hw_stats, "HW stats test",
 
 	IPA_UT_ADD_TEST(set_sw_stats, "Set SW stats to dummy values",
 		ipa_test_hw_stats_set_sw_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(query_drop_stats, "Query drop stats",
+		ipa_test_hw_stats_query_drop_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(reset_drop_stats, "Reset drop stats",
+		ipa_test_hw_stats_reset_all_drop_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(query_teth_stats, "Query tethering stats",
+		ipa_test_hw_stats_query_teth_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(reset_teth_stats, "Reset tethering stats",
+		ipa_test_hw_stats_reset_teth_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(query_quota_stats, "Query quota stats",
+		ipa_test_hw_stats_query_quota_stats, false,
+		IPA_HW_v4_5, IPA_HW_MAX),
+
+	IPA_UT_ADD_TEST(reset_quota_stats, "Reset quota stats",
+		ipa_test_hw_stats_reset_all_quota_stats, false,
 		IPA_HW_v4_5, IPA_HW_MAX),
 
 	IPA_UT_ADD_TEST(set_uc_evtring, "Set uc event ring",
