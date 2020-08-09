@@ -981,4 +981,24 @@ void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * lim_create_fils_rik()- This API create rik using rrk coming from
+ * supplicant.
+ * @rrk: input rrk
+ * @rrk_len: rrk length
+ * @rik: Created rik
+ * @rik_len: rik length to be filled
+ *
+ * rIK = KDF (K, S), where
+ * K = rRK and
+ * S = rIK Label + "\0" + cryptosuite + length
+ * The rIK Label is the 8-bit ASCII string:
+ * Re-authentication Integrity Key@ietf.org
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_crypto_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
+				       uint8_t *rik, uint32_t *rik_len);
+#endif /* WLAN_FEATURE_FILS_SK */
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

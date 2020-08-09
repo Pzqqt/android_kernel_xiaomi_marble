@@ -54,6 +54,8 @@ extern "C" {
 #define IS_VALID_CTR_KEY_LEN(len) ((((len) == 16) || ((len) == 32) || \
 	((len) == 48)) ? 1 : 0)
 
+#define WLAN_MAX_PRF_INTERATIONS_COUNT 255
+
 /* Function declarations and documenation */
 
 /**
@@ -86,6 +88,34 @@ int qdf_get_hash(uint8_t *type, uint8_t element_cnt,
 int qdf_get_hmac_hash(uint8_t *type, uint8_t *key,
 		uint32_t keylen, uint8_t element_cnt,
 		uint8_t *addr[], uint32_t *addr_len, int8_t *hash);
+
+/**
+ * qdf_default_hmac_sha256_kdf()- This API calculates key data using default kdf
+ * defined in RFC4306.
+ * @secret: key which needs to be used in crypto
+ * @secret_len: key_len of secret
+ * @label: PRF label
+ * @optional_data: Data used for hash
+ * @optional_data_len: data length
+ * @key: key data output
+ * @keylen: key data length
+ *
+ * This API creates default KDF as defined in RFC4306
+ * PRF+ (K,S) = T1 | T2 | T3 | T4 | ...
+ * T1 = PRF (K, S | 0x01)
+ * T2 = PRF (K, T1 | S | 0x02)
+ * T3 = PRF (K, T2 | S | 0x03)
+ * T4 = PRF (K, T3 | S | 0x04)
+ *
+ * for every iteration its creates 32 bit of hash
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+qdf_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
+			    uint8_t *label, uint8_t *optional_data,
+			    uint32_t optional_data_len, uint8_t *key,
+			    uint32_t keylen);
 
 /**
  * qdf_get_keyed_hash: API to get hash using specific crypto and

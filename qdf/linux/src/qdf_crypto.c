@@ -78,6 +78,63 @@ int qdf_get_hmac_hash(uint8_t *type, uint8_t *key,
 				  src_len, element_cnt,  hash);
 }
 
+QDF_STATUS
+qdf_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
+			    uint8_t *label, uint8_t *optional_data,
+			    uint32_t optional_data_len, uint8_t *key,
+			    uint32_t keylen)
+{
+	uint8_t tmp_hash[SHA256_DIGEST_SIZE] = {0};
+	uint8_t count = 1;
+	uint8_t *addr[4];
+	uint32_t len[4];
+	uint32_t current_position = 0, remaining_data = SHA256_DIGEST_SIZE;
+
+	addr[0] = tmp_hash;
+	len[0] = SHA256_DIGEST_SIZE;
+	addr[1] = label;
+	len[1] = strlen(label) + 1;
+	addr[2] = optional_data;
+	len[2] = optional_data_len;
+	addr[3] = &count;
+	len[3] = 1;
+
+	if (keylen == 0 ||
+	    (keylen > (WLAN_MAX_PRF_INTERATIONS_COUNT * SHA256_DIGEST_SIZE))) {
+		qdf_err("invalid key length %d", keylen);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Create T1 */
+	if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret, secret_len, 3,
+			      &addr[1], &len[1], tmp_hash) < 0) {
+		qdf_err("failed to get hmac hash");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Update hash from tmp_hash */
+	qdf_mem_copy(key + current_position, tmp_hash, remaining_data);
+	current_position += remaining_data;
+
+	for (count = 2; current_position < keylen; count++) {
+		remaining_data = keylen - current_position;
+		if (remaining_data > SHA256_DIGEST_SIZE)
+			remaining_data = SHA256_DIGEST_SIZE;
+
+		/* Create T-n */
+		if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret,
+				      secret_len, 4, addr, len, tmp_hash) < 0) {
+			qdf_err("failed to get hmac hash");
+			return QDF_STATUS_E_FAILURE;
+		}
+		/* Update hash from tmp_hash */
+		qdf_mem_copy(key + current_position, tmp_hash, remaining_data);
+		current_position += remaining_data;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /* qdf_update_dbl from RFC 5297. Length of d is AES_BLOCK_SIZE (128 bits) */
 void qdf_update_dbl(uint8_t *d)
 {

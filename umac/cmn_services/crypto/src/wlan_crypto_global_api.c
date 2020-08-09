@@ -4486,5 +4486,38 @@ void wlan_crypto_set_sae_single_pmk_bss_cap(struct wlan_objmgr_vdev *vdev,
 	}
 }
 #endif
-
 #endif
+
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS wlan_crypto_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
+				       uint8_t *rik, uint32_t *rik_len)
+{
+	uint8_t optional_data[WLAN_CRYPTO_FILS_OPTIONAL_DATA_LEN];
+	uint8_t label[] = WLAN_CRYPTO_FILS_RIK_LABEL;
+	QDF_STATUS status;
+
+	if (!rrk || !rik) {
+		crypto_err("FILS rrk/rik NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	optional_data[0] = HMAC_SHA256_128;
+	/* basic validation */
+	if (rrk_len <= 0) {
+		crypto_err("invalid r_rk length %d", rrk_len);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_crypto_put_be16(&optional_data[1], rrk_len);
+	status = qdf_default_hmac_sha256_kdf(rrk, rrk_len, label, optional_data,
+					     sizeof(optional_data), rik,
+					     rrk_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		crypto_err("failed to create rik");
+		return status;
+	}
+	*rik_len = rrk_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_FILS_SK */
