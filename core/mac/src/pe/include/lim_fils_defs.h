@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017, 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "wlan_crypto_global_def.h"
 
 #define FILS_EAP_TLV_MAX_DATA_LEN 255
 #define FILS_SHA256_128_AUTH_TAG 16
@@ -80,8 +82,6 @@
 #define FILS_SHA256_Q_LEN 32
 #define FILS_SHA384_Q_LEN 48
 
-#define MAX_PRF_INTERATIONS_COUNT 255
-
 /* 9.4.2.180 FILS Session element */
 #define SIR_FILS_SESSION_LENGTH    8
 #define SIR_FILS_SESSION_EXT_EID   4
@@ -141,20 +141,6 @@ struct eap_auth_reserved {
 	uint8_t flag_b:1;
 	uint8_t flag_l:1;
 	uint8_t reverved:5;
-};
-
-/*
- * enum fils_erp_cryptosuite: this enum defines the cryptosuites used
- * to calculate auth tag and auth tag length as defined by RFC 6696 5.3.1
- * @HMAC_SHA256_64: sha256 with auth tag len as 64 bits
- * @HMAC_SHA256_128: sha256 with auth tag len as 128 bits
- * @HMAC_SHA256_256: sha256 with auth tag len as 256 bits
- */
-enum fils_erp_cryptosuite {
-	INVALID_CRYPTO = 0, /* reserved */
-	HMAC_SHA256_64,
-	HMAC_SHA256_128,
-	HMAC_SHA256_256,
 };
 
 /*

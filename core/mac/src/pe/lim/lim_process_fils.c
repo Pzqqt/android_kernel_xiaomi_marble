@@ -25,6 +25,7 @@
 #include <lim_session.h>
 #include <qdf_crypto.h>
 #include "qdf_util.h"
+#include "wlan_crypto_global_api.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 
@@ -316,83 +317,6 @@ static QDF_STATUS lim_get_key_from_prf(uint8_t *type, uint8_t *secret,
 		}
 		qdf_mem_copy(&key[i], tmp_hash, remain_len);
 		i += crypto_digest_len;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * lim_default_hmac_sha256_kdf()- This API calculates key data using default kdf
- * defined in RFC4306.
- * @secret: key which needs to be used in crypto
- * @secret_len: key_len of secret
- * @label: PRF label
- * @optional_data: Data used for hash
- * @optional_data_len: data length
- * @key: key data output
- * @keylen: key data length
- *
- * This API creates default KDF as defined in RFC4306
- * PRF+ (K,S) = T1 | T2 | T3 | T4 | ...
- * T1 = PRF (K, S | 0x01)
- * T2 = PRF (K, T1 | S | 0x02)
- * T3 = PRF (K, T2 | S | 0x03)
- * T4 = PRF (K, T3 | S | 0x04)
- *
- * for every iteration its creates 32 bit of hash
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-lim_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
-		uint8_t *label, uint8_t *optional_data,
-		uint32_t optional_data_len, uint8_t *key, uint32_t keylen)
-{
-	uint8_t tmp_hash[SHA256_DIGEST_SIZE] = {0};
-	uint8_t count = 1;
-	uint8_t *addr[4];
-	uint32_t len[4];
-	uint32_t current_position = 0, remaining_data = SHA256_DIGEST_SIZE;
-
-	addr[0] = tmp_hash;
-	len[0] = SHA256_DIGEST_SIZE;
-	addr[1] = label;
-	len[1] = strlen(label) + 1;
-	addr[2] = optional_data;
-	len[2] = optional_data_len;
-	addr[3] = &count;
-	len[3] = 1;
-
-	if (keylen == 0 ||
-	   (keylen > (MAX_PRF_INTERATIONS_COUNT * SHA256_DIGEST_SIZE))) {
-		pe_err("invalid key length %d", keylen);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Create T1 */
-	if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret, secret_len, 3,
-			&addr[1], &len[1], tmp_hash) < 0) {
-		pe_err("failed to get hmac hash");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* Update hash from tmp_hash */
-	qdf_mem_copy(key + current_position, tmp_hash, remaining_data);
-	current_position += remaining_data;
-
-	for (count = 2; current_position < keylen; count++) {
-		remaining_data = keylen - current_position;
-		if (remaining_data > SHA256_DIGEST_SIZE)
-			remaining_data = SHA256_DIGEST_SIZE;
-
-		/* Create T-n */
-		if (qdf_get_hmac_hash(HMAC_SHA256_CRYPTO_TYPE, secret,
-				secret_len, 4, addr, len, tmp_hash) < 0) {
-			pe_err("failed to get hmac hash");
-			return QDF_STATUS_E_FAILURE;
-		}
-		/* Update hash from tmp_hash */
-		qdf_mem_copy(key + current_position, tmp_hash, remaining_data);
-		current_position += remaining_data;
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -788,10 +712,10 @@ static void lim_generate_rmsk_data(struct pe_session *pe_session)
 	 */
 	lim_copy_u16_be(&optional_data[0], fils_info->sequence_number);
 	lim_copy_u16_be(&optional_data[2], fils_info->fils_rrk_len);
-	lim_default_hmac_sha256_kdf(fils_info->fils_rrk,
-			fils_info->fils_rrk_len, rmsk_label,
-			optional_data, sizeof(optional_data),
-			fils_info->fils_rmsk, fils_info->fils_rmsk_len);
+	qdf_default_hmac_sha256_kdf(
+		fils_info->fils_rrk, fils_info->fils_rrk_len, rmsk_label,
+		optional_data, sizeof(optional_data), fils_info->fils_rmsk,
+		fils_info->fils_rmsk_len);
 }
 
 /**
@@ -934,36 +858,6 @@ bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 	return true;
 }
 
-QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
-					uint8_t *rik, uint32_t *rik_len)
-{
-	uint8_t optional_data[SIR_FILS_OPTIONAL_DATA_LEN];
-	uint8_t label[] = SIR_FILS_RIK_LABEL;
-
-	if (!rrk || !rik) {
-		pe_err("FILS rrk/rik NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	optional_data[0] = HMAC_SHA256_128;
-	/* basic validation */
-	if (rrk_len <= 0) {
-		pe_err("invalid r_rk length %d", rrk_len);
-		return QDF_STATUS_E_FAILURE;
-	}
-	lim_copy_u16_be(&optional_data[1], rrk_len);
-	if (lim_default_hmac_sha256_kdf(rrk, rrk_len, label,
-				optional_data, sizeof(optional_data),
-				rik, rrk_len)
-			!= QDF_STATUS_SUCCESS) {
-		pe_err("failed to create rik");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*rik_len = rrk_len;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * lim_create_fils_wrapper_data()- This API create warpped data which will be
  * sent in auth request.
@@ -1057,10 +951,11 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 		fils_info->fils_erp_reauth_pkt = NULL;
 		return -EINVAL;
 	}
-	status = lim_create_fils_rik(fils_info->fils_rrk,
-				     fils_info->fils_rrk_len,
-				     fils_info->fils_rik,
-				     &fils_info->fils_rik_len);
+
+	status = wlan_crypto_create_fils_rik(fils_info->fils_rrk,
+					     fils_info->fils_rrk_len,
+					     fils_info->fils_rik,
+					     &fils_info->fils_rik_len);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("RIK create fails");
 		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
@@ -2294,12 +2189,12 @@ void lim_update_fils_rik(struct pe_session *pe_session,
 			return;
 		}
 
-		lim_create_fils_rik(roam_fils_params->rrk,
-				    roam_fils_params->rrk_length,
-				    roam_fils_params->rik,
-				    &roam_fils_params->rik_length);
+		wlan_crypto_create_fils_rik(roam_fils_params->rrk,
+					    roam_fils_params->rrk_length,
+					    roam_fils_params->rik,
+					    &roam_fils_params->rik_length);
 		pe_debug("Fils created rik len %d",
-					roam_fils_params->rik_length);
+			 roam_fils_params->rik_length);
 		return;
 	}
 
