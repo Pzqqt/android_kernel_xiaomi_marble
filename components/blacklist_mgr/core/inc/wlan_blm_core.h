@@ -176,6 +176,7 @@ QDF_STATUS
 blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,
 			     struct reject_ap_info *ap_info);
 
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * blm_send_reject_ap_list_to_fw() - Send the blacklist BSSIDs to FW
  * @pdev: Pdev object
@@ -191,6 +192,13 @@ void
 blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
 			      struct blm_config *cfg);
+#else
+static inline void blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
+						 qdf_list_t *reject_db_list,
+						 struct blm_config *cfg)
+{
+}
+#endif
 
 /**
  * blm_add_userspace_black_list() - Clear already existing userspace BSSID, and

@@ -782,6 +782,7 @@ static void blm_fill_reject_list(qdf_list_t *reject_db_list,
 	}
 }
 
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void
 blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			      qdf_list_t *reject_db_list,
@@ -825,6 +826,7 @@ blm_send_reject_ap_list_to_fw(struct wlan_objmgr_pdev *pdev,
 
 	qdf_mem_free(reject_params.bssid_list);
 }
+#endif
 
 QDF_STATUS
 blm_add_bssid_to_reject_list(struct wlan_objmgr_pdev *pdev,

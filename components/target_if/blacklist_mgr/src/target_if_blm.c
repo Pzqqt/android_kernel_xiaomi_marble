@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 #include <target_if_blm.h>
 #include "target_if.h"
 
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
 target_if_blm_send_reject_ap_list(struct wlan_objmgr_pdev *pdev,
 				  struct reject_ap_params *reject_params)
@@ -48,3 +49,4 @@ void target_if_blm_register_tx_ops(struct wlan_blm_tx_ops *blm_tx_ops)
 
 	blm_tx_ops->blm_send_reject_ap_list = target_if_blm_send_reject_ap_list;
 }
+#endif
