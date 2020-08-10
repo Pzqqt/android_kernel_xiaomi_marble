@@ -217,6 +217,138 @@ QDF_STATUS mlme_vdev_ops_ext_hdl_multivdev_restart_resp(
 	return ret;
 }
 
+#ifdef FEATURE_CM_ENABLE
+QDF_STATUS mlme_cm_ops_ext_connect_start(struct wlan_objmgr_vdev *vdev,
+					 struct wlan_cm_connect_req *req)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_connect_start)
+		ret = glbl_ops->mlme_cm_ext_connect_start(vdev, req);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_connect_active(struct wlan_objmgr_vdev *vdev,
+					  struct wlan_cm_vdev_connect_req *req)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_connect_active)
+		ret = glbl_ops->mlme_cm_ext_connect_active(vdev, req);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_bss_peer_create_req(struct wlan_objmgr_vdev *vdev,
+					       struct qdf_mac_addr *peer_mac)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_bss_peer_create_req)
+		ret = glbl_ops->mlme_cm_ext_bss_peer_create_req(vdev,
+								     peer_mac);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_connect_req(struct wlan_objmgr_vdev *vdev,
+				       struct wlan_cm_vdev_connect_req *req)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_connect_req)
+		ret = glbl_ops->mlme_cm_ext_connect_req(vdev, req);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_connect_complete(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_connect_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_connect_complete)
+		ret = glbl_ops->mlme_cm_ext_connect_complete(vdev, rsp);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_disconnect_start(struct wlan_objmgr_vdev *vdev,
+					    struct wlan_cm_disconnect_req *req)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_disconnect_start)
+		ret = glbl_ops->mlme_cm_ext_disconnect_start(vdev, req);
+
+	return ret;
+}
+
+QDF_STATUS
+mlme_cm_ops_ext_disconnect_active(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_vdev_discon_req *req)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_disconnect_active)
+		ret = glbl_ops->mlme_cm_ext_disconnect_active(vdev, req);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_bss_peer_delete_req(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_bss_peer_delete_req)
+		ret = glbl_ops->mlme_cm_ext_bss_peer_delete_req(vdev);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+					       struct wlan_cm_discon_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_disconnect_complete)
+		ret = glbl_ops->mlme_cm_ext_disconnect_complete(vdev, rsp);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_osif_connect(struct wlan_objmgr_vdev *vdev,
+					struct wlan_cm_connect_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_osif_connect)
+		ret = glbl_ops->mlme_cm_ext_osif_connect(vdev, rsp);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ops_ext_osif_disconnect(struct wlan_objmgr_vdev *vdev,
+					   struct wlan_cm_discon_rsp *rsp)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_osif_disconnect)
+		ret = glbl_ops->mlme_cm_ext_osif_disconnect(vdev, rsp);
+
+	return ret;
+}
+
+QDF_STATUS mlme_cm_ext_vdev_down(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if ((glbl_ops) && glbl_ops->mlme_cm_ext_vdev_down)
+		ret = glbl_ops->mlme_cm_ext_vdev_down(vdev);
+	return ret;
+}
+#endif
 void mlme_set_ops_register_cb(mlme_get_global_ops_cb ops_cb)
 {
 	glbl_ops_cb = ops_cb;

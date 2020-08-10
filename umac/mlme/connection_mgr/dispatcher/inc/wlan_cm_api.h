@@ -46,6 +46,58 @@ QDF_STATUS wlan_cm_start_connect(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS wlan_cm_start_disconnect(struct wlan_objmgr_vdev *vdev,
 				    struct wlan_cm_disconnect_req *req);
 
+/**
+ * wlan_cm_bss_peer_create_rsp() - Connection manager bss peer create response
+ * @vdev: vdev pointer
+ * @status: Status
+ * @peer_mac: Peer mac address
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_bss_peer_create_rsp(struct wlan_objmgr_vdev *vdev,
+				       uint32_t status,
+				       struct qdf_mac_addr *peer_mac);
+
+/**
+ * wlan_cm_connect_rsp() - Connection manager connect response
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_connect_rsp(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_cm_connect_rsp *cm_conn_rsp);
+
+/**
+ * wlan_cm_bss_peer_delete_ind() - Connection manager peer delete indication
+ * @vdev: vdev pointer
+ * @peer_mac: Peer mac address
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_bss_peer_delete_ind(struct wlan_objmgr_vdev *vdev,
+				       struct qdf_mac_addr *peer_mac);
+
+/**
+ * wlan_cm_bss_peer_delete_rsp() - Connection manager peer delete response
+ * @vdev: vdev pointer
+ * @status: status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_bss_peer_delete_rsp(struct wlan_objmgr_vdev *vdev,
+				       uint32_t status);
+
+/**
+ * wlan_cm_disconnect_rsp() - Connection manager disconnect response
+ * @vdev: vdev pointer
+ * @cm_discon_rsp: disconnect response
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_cm_disconnect_rsp(struct wlan_objmgr_vdev *vdev,
+				  struct wlan_cm_discon_rsp cm_discon_rsp);
+
 #endif
 #endif /* __WLAN_CM_UCFG_API_H */
 
