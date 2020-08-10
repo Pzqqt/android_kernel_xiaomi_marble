@@ -461,8 +461,9 @@ dp_peer_update_state(struct dp_soc *soc,
 		QDF_ASSERT(0);
 		break;
 	}
-	qdf_info("Updating peer state from %u to %u mac %pM\n",
-		 peer_state, state, peer->mac_addr.raw);
+	qdf_info("Updating peer state from %u to %u mac "QDF_MAC_ADDR_FMT"\n",
+		 peer_state, state,
+		 QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 	peer->peer_state = state;
 }
 

@@ -367,8 +367,8 @@ static inline void dp_set_peer_isolation(struct dp_peer *peer, bool val)
 {
 	peer->isolation = val;
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		  "peer:%pM isolation:%d",
-		  peer->mac_addr.raw, peer->isolation);
+		  "peer:"QDF_MAC_ADDR_FMT" isolation:%d",
+		  QDF_MAC_ADDR_REF(peer->mac_addr.raw), peer->isolation);
 }
 
 #else

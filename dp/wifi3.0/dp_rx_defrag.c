@@ -240,8 +240,8 @@ static void dp_rx_defrag_waitlist_add(struct dp_peer *peer, unsigned tid)
 	struct dp_soc *psoc = peer->vdev->pdev->soc;
 	struct dp_rx_tid *rx_reorder = &peer->rx_tid[tid];
 
-	dp_debug("Adding TID %u to waitlist for peer %pK at MAC address %pM",
-		 tid, peer, peer->mac_addr.raw);
+	dp_debug("Adding TID %u to waitlist for peer %pK at MAC address "QDF_MAC_ADDR_FMT,
+		 tid, peer, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 	/* TODO: use LIST macros instead of TAIL macros */
 	qdf_spin_lock_bh(&psoc->rx.defrag.defrag_lock);
@@ -269,8 +269,8 @@ void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 	struct dp_rx_tid *rx_reorder;
 	struct dp_rx_tid *tmp;
 
-	dp_debug("Removing TID %u to waitlist for peer %pK at MAC address %pM",
-		 tid, peer, peer->mac_addr.raw);
+	dp_debug("Removing TID %u to waitlist for peer %pK at MAC address "QDF_MAC_ADDR_FMT,
+		 tid, peer, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 	if (tid >= DP_MAX_TIDS) {
 		dp_err("TID out of bounds: %d", tid);
@@ -1544,8 +1544,8 @@ void dp_rx_defrag_cleanup(struct dp_peer *peer, unsigned tid)
 		rx_reorder_array_elem->head = NULL;
 		rx_reorder_array_elem->tail = NULL;
 	} else {
-		dp_info("Cleanup self peer %pK and TID %u at MAC address %pM",
-			peer, tid, peer->mac_addr.raw);
+		dp_info("Cleanup self peer %pK and TID %u at MAC address "QDF_MAC_ADDR_FMT,
+			peer, tid, QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 	}
 
 	/* Free up saved ring descriptors */
@@ -1991,9 +1991,9 @@ QDF_STATUS dp_rx_defrag_add_last_frag(struct dp_soc *soc,
 	 */
 	if (!rx_reorder_array_elem) {
 		dp_verbose_debug(
-			"peer id:%d mac: %pM drop rx frame!",
+			"peer id:%d mac: "QDF_MAC_ADDR_FMT" drop rx frame!",
 			peer->peer_id,
-			peer->mac_addr.raw);
+			QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 		DP_STATS_INC(soc, rx.err.defrag_peer_uninit, 1);
 		qdf_nbuf_free(nbuf);
 		goto fail;

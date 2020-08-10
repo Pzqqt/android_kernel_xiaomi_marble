@@ -1235,8 +1235,8 @@ dp_print_peer_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 			"DA", "HMWDS_SEC"};
 
 	DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
-	    DP_PRINT_STATS("%6d mac_addr = %pM"
-		    " peer_mac_addr = %pM"
+	    DP_PRINT_STATS("%6d mac_addr = "QDF_MAC_ADDR_FMT
+		    " peer_mac_addr = "QDF_MAC_ADDR_FMT
 		    " peer_id = %u"
 		    " type = %s"
 		    " next_hop = %d"
@@ -1247,8 +1247,8 @@ dp_print_peer_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 		    " pdev_id = %d"
 		    " vdev_id = %d",
 		    ++num_entries,
-		    ase->mac_addr.raw,
-		    peer->mac_addr.raw,
+		    QDF_MAC_ADDR_REF(ase->mac_addr.raw),
+		    QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 		    ase->peer_id,
 		    type[ase->type],
 		    ase->next_hop,
@@ -1305,14 +1305,14 @@ void dp_print_ast_stats(struct dp_soc *soc)
 static void
 dp_print_peer_info(struct dp_soc *soc, struct dp_peer *peer, void *arg)
 {
-	DP_PRINT_STATS("    peer_mac_addr = %pM"
+	DP_PRINT_STATS("    peer_mac_addr = "QDF_MAC_ADDR_FMT
 		       " nawds_enabled = %d"
 		       " bss_peer = %d"
 		       " wds_enabled = %d"
 		       " tx_cap_enabled = %d"
 		       " rx_cap_enabled = %d"
 		       " peer id = %d",
-		       peer->mac_addr.raw,
+		       QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 		       peer->nawds_enabled,
 		       peer->bss_peer,
 		       peer->wds_enabled,
@@ -5210,7 +5210,8 @@ static QDF_STATUS dp_vdev_attach_wifi3(struct cdp_soc_t *cdp_soc,
 	if (pdev->vdev_count == 1)
 		dp_lro_hash_setup(soc, pdev);
 
-	dp_info("Created vdev %pK (%pM)", vdev, vdev->mac_addr.raw);
+	dp_info("Created vdev %pK ("QDF_MAC_ADDR_FMT")", vdev,
+		QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 	DP_STATS_INIT(vdev);
 
 	if (wlan_op_mode_sta == vdev->opmode)
@@ -5334,8 +5335,8 @@ static void dp_vdev_flush_peers(struct cdp_vdev *vdev_handle, bool unmap_only)
 			continue;
 		}
 
-		dp_info("peer: %pM is getting unmap",
-			peer->mac_addr.raw);
+		dp_info("peer: "QDF_MAC_ADDR_FMT" is getting unmap",
+			QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 		dp_rx_peer_unmap_handler(soc, i,
 					 vdev->vdev_id,
@@ -5693,8 +5694,8 @@ dp_peer_create_wifi3(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	/* Initialize the peer state */
 	peer->state = OL_TXRX_PEER_STATE_DISC;
 
-	dp_info("vdev %pK created peer %pK (%pM) ref_cnt: %d",
-		vdev, peer, peer->mac_addr.raw,
+	dp_info("vdev %pK created peer %pK ("QDF_MAC_ADDR_FMT") ref_cnt: %d",
+		vdev, peer, QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 		qdf_atomic_read(&peer->ref_cnt));
 	/*
 	 * For every peer MAp message search and set if bss_peer
@@ -6277,10 +6278,10 @@ dp_record_mscs_params(struct cdp_soc_t *soc_hdl, uint8_t *peer_mac,
 		peer->mscs_ipv6_parameter.classifier_mask =
 			mscs_params->classifier_mask;
 		peer->mscs_active = 1;
-		dp_info("\n\tMSCS Procedure request based parameters for %pM\n"
+		dp_info("\n\tMSCS Procedure request based parameters for "QDF_MAC_ADDR_FMT"\n"
 			"\tClassifier_type = %d\tUser priority bitmap = %x\n"
 			"\tUser priority limit = %x\tClassifier mask = %x",
-			peer_mac,
+			QDF_MAC_ADDR_REF(peer_mac),
 			mscs_params->classifier_type,
 			peer->mscs_ipv4_parameter.user_priority_bitmap,
 			peer->mscs_ipv4_parameter.user_priority_limit,
@@ -6388,8 +6389,8 @@ void dp_vdev_unref_delete(struct dp_soc *soc, struct dp_vdev *vdev,
 	vdev_delete_cb = vdev->delete.callback;
 	vdev_delete_context = vdev->delete.context;
 
-	dp_info("deleting vdev object %pK (%pM)- its last peer is done",
-		vdev, vdev->mac_addr.raw);
+	dp_info("deleting vdev object %pK ("QDF_MAC_ADDR_FMT")- its last peer is done",
+		vdev, QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 
 	if (wlan_op_mode_monitor == vdev->opmode) {
 		if (soc->intr_mode == DP_INTR_POLL)
@@ -6421,6 +6422,8 @@ free_vdev:
 
 	dp_info("deleting vdev object %pK (%pM)",
 		vdev, vdev->mac_addr.raw);
+	dp_info("deleting vdev object %pK ("QDF_MAC_ADDR_FMT")",
+		vdev, QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 	wlan_minidump_remove(vdev);
 	qdf_mem_free(vdev);
 	vdev = NULL;
@@ -6468,7 +6471,8 @@ void dp_peer_unref_delete(struct dp_peer *peer, enum dp_mod_id mod_id)
 		QDF_ASSERT(peer_id == HTT_INVALID_PEER);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
+			  "Deleting peer %pK ("QDF_MAC_ADDR_FMT")", peer,
+			  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 		/*
 		 * Deallocate the extended stats contenxt
@@ -6556,7 +6560,8 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 
 	if (!peer->valid) {
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
-		dp_err("Invalid peer: %pM", peer_mac);
+		dp_err("Invalid peer: "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_ALREADY;
 	}
 
@@ -6567,7 +6572,8 @@ static QDF_STATUS dp_peer_delete_wifi3(struct cdp_soc_t *soc_hdl,
 	peer->valid = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
+		FL("peer %pK ("QDF_MAC_ADDR_FMT")"),  peer,
+		  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
 
@@ -8915,7 +8921,8 @@ dp_txrx_get_peer_stats_param(struct cdp_soc_t *soc, uint8_t vdev_id,
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid Peer for Mac %pM", peer_mac);
+			  "Invalid Peer for Mac "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_FAILURE;
 	} else if (type < cdp_peer_stats_max) {
 		switch (type) {
