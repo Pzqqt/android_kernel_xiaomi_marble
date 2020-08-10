@@ -1186,26 +1186,12 @@ QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 				   params);
 }
 
-/**
- * wlansap_update_csa_channel_params() - function to populate channel width and
- *                                        bonding modes.
- * @sap_context: sap adapter context
- * @channel: target channel
- *
- * Return: The QDF_STATUS code associated with performing the operation
- */
-static QDF_STATUS
-wlansap_update_csa_channel_params(struct sap_context *sap_context,
-				  uint32_t chan_freq)
+enum phy_ch_width
+wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
+				       uint32_t chan_freq)
 {
-	struct mac_context *mac_ctx;
 	uint32_t max_fw_bw;
-
-	mac_ctx = sap_get_mac_context();
-	if (!mac_ctx) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
-		return QDF_STATUS_E_FAULT;
-	}
+	enum phy_ch_width ch_width;
 
 	if (WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq)) {
 		/*
@@ -1213,7 +1199,7 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		 * SAP coming up in HT40 on channel switch we are
 		 * disabling channel bonding in 2.4Ghz.
 		 */
-		mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_20MHZ;
+		ch_width = CH_WIDTH_20MHZ;
 	} else {
 		if (sap_context->csr_roamProfile.phyMode ==
 		    eCSR_DOT11_MODE_11ac ||
@@ -1225,23 +1211,21 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 		    eCSR_DOT11_MODE_11ax_ONLY) {
 			max_fw_bw = sme_get_vht_ch_width();
 			if (max_fw_bw >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ)
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-					CH_WIDTH_160MHZ;
+				ch_width = CH_WIDTH_160MHZ;
 			else
-				mac_ctx->sap.SapDfsInfo.new_chanWidth =
-					CH_WIDTH_80MHZ;
+				ch_width = CH_WIDTH_80MHZ;
 		} else if (sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n ||
 			   sap_context->csr_roamProfile.phyMode ==
 			   eCSR_DOT11_MODE_11n_ONLY) {
-			mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_40MHZ;
+			ch_width = CH_WIDTH_40MHZ;
 		} else {
 			/* For legacy 11a mode return 20MHz */
-			mac_ctx->sap.SapDfsInfo.new_chanWidth = CH_WIDTH_20MHZ;
+			ch_width = CH_WIDTH_20MHZ;
 		}
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return ch_width;
 }
 
 /**
@@ -1293,6 +1277,63 @@ static char *sap_get_csa_reason_str(enum sap_csa_reason_code reason)
 	}
 }
 
+/**
+ * wlansap_set_chan_params_for_csa() - Update sap channel parameters
+ *    for channel switch
+ * @mac: mac ctx
+ * @sap_ctx: sap context
+ * @target_chan_freq: target channel frequency in MHz
+ * @target_bw: target bandwidth
+ *
+ * Return: QDF_STATUS_SUCCESS for success.
+ */
+static QDF_STATUS
+wlansap_set_chan_params_for_csa(struct mac_context *mac,
+				struct sap_context *sap_ctx,
+				uint32_t target_chan_freq,
+				enum phy_ch_width target_bw)
+{
+	mac->sap.SapDfsInfo.new_chanWidth =
+		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
+						       target_chan_freq);
+	/*
+	 * Copy the requested target channel
+	 * to sap context.
+	 */
+	mac->sap.SapDfsInfo.target_chan_freq = target_chan_freq;
+	mac->sap.SapDfsInfo.new_ch_params.ch_width =
+		mac->sap.SapDfsInfo.new_chanWidth;
+
+	/* By this time, the best bandwidth is calculated for
+	 * the given target channel. Now, if there was a
+	 * request from user to move to a selected bandwidth,
+	 * we can see if it can be honored.
+	 *
+	 * Ex1: BW80 was selected for the target channel and
+	 * user wants BW40, it can be allowed
+	 * Ex2: BW40 was selected for the target channel and
+	 * user wants BW80, it cannot be allowed for the given
+	 * target channel.
+	 *
+	 * So, the MIN of the selected channel bandwidth and
+	 * user input is used for the bandwidth
+	 */
+	if (target_bw != CH_WIDTH_MAX) {
+		sap_nofl_debug("SAP CSA: target bw:%d new width:%d",
+			       target_bw,
+			       mac->sap.SapDfsInfo.new_ch_params.ch_width);
+		mac->sap.SapDfsInfo.new_ch_params.ch_width =
+			mac->sap.SapDfsInfo.new_chanWidth =
+			QDF_MIN(mac->sap.SapDfsInfo.new_ch_params.ch_width,
+				target_bw);
+	}
+	wlan_reg_set_channel_params_for_freq(
+		mac->pdev, target_chan_freq, 0,
+		&mac->sap.SapDfsInfo.new_ch_params);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 					       uint32_t target_chan_freq,
 					       enum phy_ch_width target_bw,
@@ -1303,6 +1344,9 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 	bool valid;
 	QDF_STATUS status, hw_mode_status;
 	bool sta_sap_scc_on_dfs_chan;
+	bool is_dfs;
+	struct ch_params tmp_ch_params = {0};
+	enum channel_state state;
 
 	if (!sap_ctx) {
 		sap_err("Invalid SAP pointer");
@@ -1328,23 +1372,45 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		       mac->psoc, sap_ctx->sessionId, POLICY_MGR_BAND_5),
 		       sap_get_csa_reason_str(sap_ctx->csa_reason),
 		       sap_ctx->csa_reason, strict, sap_ctx->sessionId);
+	if (sap_ctx->chan_freq == target_chan_freq)
+		return QDF_STATUS_E_FAULT;
+
+	state = wlan_reg_get_channel_state_for_freq(mac->pdev,
+						    target_chan_freq);
+	if (state == CHANNEL_STATE_DISABLE || state == CHANNEL_STATE_INVALID) {
+		sap_nofl_debug("invalid target freq %d state %d",
+			       target_chan_freq, state);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);
+
+	tmp_ch_params.ch_width =
+		wlansap_get_csa_chanwidth_from_phymode(sap_ctx,
+						       target_chan_freq);
+	if (target_bw != CH_WIDTH_MAX) {
+		tmp_ch_params.ch_width =
+			QDF_MIN(tmp_ch_params.ch_width, target_bw);
+		sap_nofl_debug("target ch_width %d to %d ", target_bw,
+			       tmp_ch_params.ch_width);
+	}
+
+	wlan_reg_set_channel_params_for_freq(mac->pdev, target_chan_freq, 0,
+					     &tmp_ch_params);
+	is_dfs = wlan_mlme_check_chan_param_has_dfs(
+			mac->pdev, &tmp_ch_params,
+			target_chan_freq);
 	/*
 	 * Now, validate if the passed channel is valid in the
 	 * current regulatory domain.
 	 */
-	if (sap_ctx->chan_freq != target_chan_freq &&
-		((wlan_reg_get_channel_state_for_freq(mac->pdev, target_chan_freq) ==
-			CHANNEL_STATE_ENABLE) ||
-		(wlan_reg_get_channel_state_for_freq(mac->pdev, target_chan_freq) ==
-			CHANNEL_STATE_DFS &&
-		(!policy_mgr_is_any_mode_active_on_band_along_with_session(
+	if (!is_dfs ||
+	    (!policy_mgr_is_any_mode_active_on_band_along_with_session(
 			mac->psoc, sap_ctx->sessionId,
 			POLICY_MGR_BAND_5) ||
 			sta_sap_scc_on_dfs_chan ||
-			sap_ctx->csa_reason == CSA_REASON_DCS)))) {
+			sap_ctx->csa_reason == CSA_REASON_DCS)) {
 		/*
 		 * validate target channel switch w.r.t various concurrency
 		 * rules set.
@@ -1366,9 +1432,10 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 		 * state.
 		 */
 		if (sap_ctx->fsm_state == SAP_STARTED) {
-			status = wlansap_update_csa_channel_params(sap_ctx,
-								   target_chan_freq);
-			if (status != QDF_STATUS_SUCCESS)
+			status = wlansap_set_chan_params_for_csa(
+					mac, sap_ctx, target_chan_freq,
+					target_bw);
+			if (QDF_IS_STATUS_ERROR(status))
 				return status;
 
 			hw_mode_status =
@@ -1394,41 +1461,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 								mac->psoc);
 				return status;
 			}
-			/*
-			 * Copy the requested target channel
-			 * to sap context.
-			 */
-			mac->sap.SapDfsInfo.target_chan_freq = target_chan_freq;
-			mac->sap.SapDfsInfo.new_ch_params.ch_width =
-				mac->sap.SapDfsInfo.new_chanWidth;
 
-			/* By this time, the best bandwidth is calculated for
-			 * the given target channel. Now, if there was a
-			 * request from user to move to a selected bandwidth,
-			 * we can see if it can be honored.
-			 *
-			 * Ex1: BW80 was selected for the target channel and
-			 * user wants BW40, it can be allowed
-			 * Ex2: BW40 was selected for the target channel and
-			 * user wants BW80, it cannot be allowed for the given
-			 * target channel.
-			 *
-			 * So, the MIN of the selected channel bandwidth and
-			 * user input is used for the bandwidth
-			 */
-			if (target_bw != CH_WIDTH_MAX) {
-				sap_nofl_debug("SAP CSA: target bw:%d new width:%d",
-					  target_bw,
-					  mac->sap.SapDfsInfo.
-					  new_ch_params.ch_width);
-				mac->sap.SapDfsInfo.new_ch_params.ch_width =
-					mac->sap.SapDfsInfo.new_chanWidth =
-					QDF_MIN(mac->sap.SapDfsInfo.
-							new_ch_params.ch_width,
-							target_bw);
-			}
-			wlan_reg_set_channel_params_for_freq(mac->pdev, target_chan_freq,
-				0, &mac->sap.SapDfsInfo.new_ch_params);
 			/*
 			 * Set the CSA IE required flag.
 			 */
@@ -1472,7 +1505,8 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sap_ctx,
 
 	} else {
 		sap_err("Channel freq = %d is not valid in the current"
-			"regulatory domain", target_chan_freq);
+			"regulatory domain, is_dfs %d", target_chan_freq,
+			is_dfs);
 
 		return QDF_STATUS_E_FAULT;
 	}

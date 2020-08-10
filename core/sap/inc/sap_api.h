@@ -1151,6 +1151,18 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 QDF_STATUS wlansap_get_dfs_cac_state(mac_handle_t mac_handle,
 				     eSapDfsCACState_t *cac_state);
 
+/**
+ * wlansap_get_csa_chanwidth_from_phymode() - function to populate
+ * channel width from user configured phymode for csa
+ * @sap_context: sap adapter context
+ * @chan_freq: target channel frequency (MHz)
+ *
+ * Return: phy_ch_width
+ */
+enum phy_ch_width
+wlansap_get_csa_chanwidth_from_phymode(struct sap_context *sap_context,
+				       uint32_t chan_freq);
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS
 wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,

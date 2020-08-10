@@ -2928,6 +2928,7 @@ bool policy_mgr_go_scc_enforced(struct wlan_objmgr_psoc *psoc);
  * @con_ch_freq: pointer to the chan freq on which sap will come up
  * @sap_ch_freq: initial channel frequency for SAP
  * @sap_vdev_id: sap vdev id.
+ * @ch_params: sap channel parameters
  *
  * This function checks & updates the channel SAP to come up on in
  * case of STA+SAP concurrency
@@ -2935,7 +2936,8 @@ bool policy_mgr_go_scc_enforced(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
-	uint32_t sap_ch_freq, uint8_t sap_vdev_id);
+	uint32_t sap_ch_freq, uint8_t sap_vdev_id,
+	struct ch_params *ch_params);
 
 /**
  * policy_mgr_get_alternate_channel_for_sap() - Get an alternate

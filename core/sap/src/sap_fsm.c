@@ -740,6 +740,7 @@ sap_validate_chan(struct sap_context *sap_context,
 	uint32_t sta_sap_bit_mask = QDF_STA_MASK | QDF_SAP_MASK;
 	uint32_t concurrent_state;
 	bool go_force_scc;
+	struct ch_params ch_params;
 
 	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 	mac_ctx = MAC_CONTEXT(mac_handle);
@@ -783,13 +784,19 @@ sap_validate_chan(struct sap_context *sap_context,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				  FL("After check overlap: con_ch:%d"),
 				  con_ch_freq);
+			ch_params = sap_context->ch_params;
+			if (con_ch_freq &&
+			    WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
+				ch_params.ch_width = CH_WIDTH_20MHZ;
+
 			if (sap_context->cc_switch_mode !=
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
 				if (QDF_IS_STATUS_ERROR(
 					policy_mgr_valid_sap_conc_channel_check(
 						mac_ctx->psoc, &con_ch_freq,
 						sap_context->chan_freq,
-						sap_context->sessionId))) {
+						sap_context->sessionId,
+						&ch_params))) {
 					QDF_TRACE(QDF_MODULE_ID_SAP,
 						QDF_TRACE_LEVEL_WARN,
 						FL("SAP can't start (no MCC)"));
@@ -802,13 +809,18 @@ sap_validate_chan(struct sap_context *sap_context,
 			sta_sap_scc_on_dfs_chan =
 				policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 						mac_ctx->psoc);
+			ch_params = sap_context->ch_params;
+			if (con_ch_freq &&
+			    WLAN_REG_IS_24GHZ_CH_FREQ(con_ch_freq))
+				ch_params.ch_width = CH_WIDTH_20MHZ;
 			if (con_ch_freq &&
 			    (policy_mgr_sta_sap_scc_on_lte_coex_chan(
 						mac_ctx->psoc) ||
 			     policy_mgr_is_safe_channel(
 						mac_ctx->psoc, con_ch_freq)) &&
-			    (!wlan_reg_is_dfs_for_freq(
-					mac_ctx->pdev, con_ch_freq) ||
+			    (!wlan_mlme_check_chan_param_has_dfs(
+					mac_ctx->pdev, &ch_params,
+					con_ch_freq) ||
 			    sta_sap_scc_on_dfs_chan)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_DEBUG,

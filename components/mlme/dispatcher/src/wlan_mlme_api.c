@@ -4413,3 +4413,31 @@ wlan_mlme_get_bss_load_rssi_threshold_24ghz(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+bool
+wlan_mlme_check_chan_param_has_dfs(struct wlan_objmgr_pdev *pdev,
+				   struct ch_params *ch_params,
+				   uint32_t chan_freq)
+{
+	bool is_dfs = false;
+
+	if (ch_params->ch_width == CH_WIDTH_160MHZ) {
+		is_dfs = true;
+	} else if (ch_params->ch_width == CH_WIDTH_80P80MHZ) {
+		if (wlan_reg_get_channel_state_for_freq(
+			pdev,
+			chan_freq) == CHANNEL_STATE_DFS ||
+		    wlan_reg_get_channel_state_for_freq(
+			pdev,
+			ch_params->mhz_freq_seg1) == CHANNEL_STATE_DFS)
+			is_dfs = true;
+	} else if (wlan_reg_get_channel_state_for_freq(
+			pdev, chan_freq) == CHANNEL_STATE_DFS) {
+		is_dfs = true;
+	}
+	if (WLAN_REG_IS_6GHZ_CHAN_FREQ(chan_freq) ||
+	    WLAN_REG_IS_24GHZ_CH_FREQ(chan_freq))
+		is_dfs = false;
+
+	return is_dfs;
+}

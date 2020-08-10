@@ -2904,4 +2904,17 @@ wlan_mlme_get_bss_load_rssi_threshold_5ghz(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_bss_load_rssi_threshold_24ghz(struct wlan_objmgr_psoc *psoc,
 					    int32_t *val);
+/**
+ * wlan_mlme_check_chan_param_has_dfs() - Get dfs flag based on
+ * channel & channel parameters
+ * @pdev: pdev object
+ * @ch_params: channel parameters
+ * @chan_freq: channel frequency in MHz
+ *
+ * Return: True for dfs
+ */
+bool
+wlan_mlme_check_chan_param_has_dfs(struct wlan_objmgr_pdev *pdev,
+				   struct ch_params *ch_params,
+				   uint32_t chan_freq);
 #endif /* _WLAN_MLME_API_H_ */
