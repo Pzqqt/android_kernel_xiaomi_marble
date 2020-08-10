@@ -454,6 +454,23 @@ static const struct attribute_group *sde_crtc_attr_groups[] = {
 	NULL,
 };
 
+static void sde_crtc_event_notify(struct drm_crtc *crtc, uint32_t type, uint32_t len, uint64_t val)
+{
+	struct drm_event event;
+
+	if (!crtc) {
+		SDE_ERROR("invalid crtc\n");
+		return;
+	}
+
+	event.type = type;
+	event.length = len;
+	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event, (u8 *)&val);
+
+	SDE_EVT32(DRMID(crtc), type, len, val >> 32, val & 0xFFFFFFFF);
+	SDE_DEBUG("crtc:%d event(%d) value(%llu) notified\n", DRMID(crtc), type, val);
+}
+
 static void sde_crtc_destroy(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
@@ -2313,6 +2330,144 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 	}
 }
 
+static void _sde_crtc_put_frame_data_buffer(struct sde_frame_data_buffer *buf)
+{
+	if (!buf)
+		return;
+
+	msm_gem_put_buffer(buf->gem);
+	kfree(buf);
+	buf = NULL;
+}
+
+static int _sde_crtc_get_frame_data_buffer(struct drm_crtc *crtc, uint32_t fd)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_frame_data_buffer *buf;
+	uint32_t cur_buf;
+
+	sde_crtc = to_sde_crtc(crtc);
+	cur_buf = sde_crtc->frame_data.cnt;
+
+	buf = kzalloc(sizeof(struct sde_frame_data_buffer), GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
+
+	sde_crtc->frame_data.buf[cur_buf] = buf;
+	buf->fb = drm_framebuffer_lookup(crtc->dev, NULL, fd);
+	if (!buf->fb) {
+		SDE_ERROR("unable to get fb");
+		return -EINVAL;
+	}
+
+	buf->gem = msm_framebuffer_bo(buf->fb, 0);
+	if (!buf->gem) {
+		SDE_ERROR("unable to get drm gem");
+		return -EINVAL;
+	}
+
+	return msm_gem_get_buffer(buf->gem, crtc->dev, buf->fb,
+			sizeof(struct sde_drm_frame_data_packet));
+}
+
+static void _sde_crtc_set_frame_data_buffers(struct drm_crtc *crtc,
+			struct sde_crtc_state *cstate, void __user *usr)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_drm_frame_data_buffers_ctrl ctrl;
+	int i, ret;
+
+	if (!crtc || !cstate || !usr)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+
+	ret = copy_from_user(&ctrl, usr, sizeof(ctrl));
+	if (ret) {
+		SDE_ERROR("failed to copy frame data ctrl, ret %d\n", ret);
+		return;
+	}
+
+	if (!ctrl.num_buffers) {
+		SDE_DEBUG("clearing frame data buffers");
+		goto exit;
+	} else if (ctrl.num_buffers > SDE_FRAME_DATA_BUFFER_MAX) {
+		SDE_ERROR("invalid number of buffers %d", ctrl.num_buffers);
+		return;
+	}
+
+	for (i = 0; i < ctrl.num_buffers; i++) {
+		if (_sde_crtc_get_frame_data_buffer(crtc, ctrl.fds[i])) {
+			SDE_ERROR("unable to set buffer for fd %d", ctrl.fds[i]);
+			goto exit;
+		}
+		sde_crtc->frame_data.cnt++;
+	}
+
+	return;
+exit:
+	while (sde_crtc->frame_data.cnt--)
+		_sde_crtc_put_frame_data_buffer(
+				sde_crtc->frame_data.buf[sde_crtc->frame_data.cnt]);
+}
+
+static void _sde_crtc_frame_data_notify(struct drm_crtc *crtc,
+		struct sde_drm_frame_data_packet *frame_data_packet)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_drm_frame_data_buf buf;
+	struct msm_gem_object *msm_gem;
+	u32 cur_buf;
+
+	sde_crtc = to_sde_crtc(crtc);
+	cur_buf = sde_crtc->frame_data.idx;
+	msm_gem = to_msm_bo(sde_crtc->frame_data.buf[cur_buf]->gem);
+
+	buf.fd = sde_crtc->frame_data.buf[cur_buf]->fd;
+	buf.offset = msm_gem->offset;
+
+	sde_crtc_event_notify(crtc, DRM_EVENT_FRAME_DATA, sizeof(struct sde_drm_frame_data_buf),
+			(uint64_t)(&buf));
+
+	sde_crtc->frame_data.idx = ++sde_crtc->frame_data.idx % sde_crtc->frame_data.cnt;
+}
+
+void sde_crtc_get_frame_data(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+	struct drm_plane *plane;
+	struct sde_drm_frame_data_packet frame_data_packet = {0, 0};
+	struct sde_drm_frame_data_packet *data;
+	struct sde_frame_data *frame_data;
+	int i = 0;
+
+	if (!crtc || !crtc->state)
+		return;
+
+	sde_crtc = to_sde_crtc(crtc);
+	frame_data = &sde_crtc->frame_data;
+
+	if (frame_data->cnt) {
+		struct msm_gem_object *msm_gem;
+
+		msm_gem = to_msm_bo(frame_data->buf[frame_data->cnt]->gem);
+		data = (struct sde_drm_frame_data_packet *)
+				(((u8 *)msm_gem->vaddr) + msm_gem->offset);
+	} else {
+		data = &frame_data_packet;
+	}
+
+	data->commit_count = sde_crtc->play_count;
+	data->frame_count = sde_crtc->fps_info.frame_count;
+
+	/* Collect plane specific data */
+	drm_for_each_plane_mask(plane, crtc->dev, sde_crtc->plane_mask_old)
+		sde_plane_get_frame_data(plane, &data->plane_frame_data[i]);
+
+	if (frame_data->cnt)
+		_sde_crtc_frame_data_notify(crtc, data);
+}
+
 static void sde_crtc_frame_event_cb(void *data, u32 event, ktime_t ts)
 {
 	struct drm_crtc *crtc = (struct drm_crtc *)data;
@@ -2320,8 +2475,6 @@ static void sde_crtc_frame_event_cb(void *data, u32 event, ktime_t ts)
 	struct msm_drm_private *priv;
 	struct sde_crtc_frame_event *fevent;
 	struct sde_kms_frame_event_cb_data *cb_data;
-	struct drm_plane *plane;
-	u32 ubwc_error, meta_error;
 	unsigned long flags;
 	u32 crtc_id;
 
@@ -2360,21 +2513,8 @@ static void sde_crtc_frame_event_cb(void *data, u32 event, ktime_t ts)
 	/* log and clear plane ubwc errors if any */
 	if (event & (SDE_ENCODER_FRAME_EVENT_ERROR
 				| SDE_ENCODER_FRAME_EVENT_PANEL_DEAD
-				| SDE_ENCODER_FRAME_EVENT_DONE)) {
-		drm_for_each_plane_mask(plane, crtc->dev,
-						sde_crtc->plane_mask_old) {
-			ubwc_error = sde_plane_get_ubwc_error(plane);
-			meta_error = sde_plane_get_meta_error(plane);
-			if (ubwc_error | meta_error) {
-				SDE_EVT32(DRMID(crtc), DRMID(plane), ubwc_error,
-						meta_error, SDE_EVTLOG_ERROR);
-				SDE_DEBUG("crtc%d plane %d ubwc_error %d meta_error %d\n",
-						DRMID(crtc), DRMID(plane), ubwc_error, meta_error);
-				sde_plane_clear_ubwc_error(plane);
-				sde_plane_clear_meta_error(plane);
-			}
-		}
-	}
+				| SDE_ENCODER_FRAME_EVENT_DONE))
+		sde_crtc_get_frame_data(crtc);
 
 	if ((event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE) &&
 		(sde_crtc && sde_crtc->retire_frame_event_sf)) {
@@ -2652,23 +2792,6 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 	list_add_tail(&fevent->list, &sde_crtc->frame_event_list);
 	spin_unlock_irqrestore(&sde_crtc->fevent_spin_lock, flags);
 	SDE_ATRACE_END("crtc_frame_event");
-}
-
-static void sde_crtc_event_notify(struct drm_crtc *crtc, uint32_t type, uint32_t len, uint32_t val)
-{
-	struct drm_event event;
-
-	if (!crtc) {
-		SDE_ERROR("invalid crtc\n");
-		return;
-	}
-
-	event.type = type;
-	event.length = len;
-	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event, (u8 *)&val);
-
-	SDE_EVT32(DRMID(crtc), type, len, val);
-	SDE_DEBUG("crtc:%d event(%d) value(%d) notified\n", DRMID(crtc), type, val);
 }
 
 void sde_crtc_complete_commit(struct drm_crtc *crtc,
@@ -5707,6 +5830,10 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 
 	sde_crtc_install_noise_layer_properties(sde_crtc, catalog, info);
 
+	if (catalog->has_ubwc_stats)
+		msm_property_install_range(&sde_crtc->property_info, "frame_data",
+				0x0, 0, ~0, 0, CRTC_PROP_FRAME_DATA_BUF);
+
 	kfree(info);
 }
 
@@ -5861,6 +5988,9 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 	case CRTC_PROP_NOISE_LAYER_V1:
 		_sde_crtc_set_noise_layer(sde_crtc, cstate,
 					(void __user *)(uintptr_t)val);
+		break;
+	case CRTC_PROP_FRAME_DATA_BUF:
+		_sde_crtc_set_frame_data_buffers(crtc, cstate, (void __user *)(uintptr_t)val);
 		break;
 	default:
 		/* nothing to do */

@@ -1938,6 +1938,9 @@ static void sde_sspp_set_features(struct sde_mdss_cfg *sde_cfg,
 				SSPP_MAX_PER_PIPE_BW_HIGH, i);
 		else
 			sblk->max_per_pipe_bw_high = sblk->max_per_pipe_bw;
+
+		if (sde_cfg->has_ubwc_stats)
+			set_bit(SDE_SSPP_UBWC_STATS, &sspp->features);
 	}
 }
 
@@ -5071,6 +5074,7 @@ static int _sde_hardware_pre_caps(struct sde_mdss_cfg *sde_cfg, uint32_t hw_rev)
 		set_bit(SDE_MDP_PERIPH_TOP_0_REMOVED, &sde_cfg->mdp[0].features);
 		sde_cfg->has_precise_vsync_ts = true;
 		sde_cfg->has_trusted_vm_support = true;
+		sde_cfg->has_ubwc_stats = true;
 	} else if (IS_YUPIK_TARGET(hw_rev)) {
 		sde_cfg->has_cwb_support = true;
 		sde_cfg->has_qsync = true;

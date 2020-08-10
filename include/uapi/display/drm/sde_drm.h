@@ -526,6 +526,92 @@ struct sde_drm_roi_v1 {
 #define SDE_RECOVERY_CAPTURE		1
 #define SDE_RECOVERY_HARD_RESET		2
 
+/**
+ * Define UBWC statistics config
+ */
+#define UBWC_STATS_MAX_ROI		0x3
+
+/**
+ * struct sde_drm_ubwc_stats_roi - region of interest for ubwc stats
+ * y_coord0: first y offset from top of display
+ * y_coord1: second y offset from top of display
+ */
+struct sde_drm_ubwc_stats_roi {
+	__u16 y_coord0;
+	__u16 y_coord1;
+};
+
+/**
+ * struct sde_drm_ubwc_stats_data: ubwc statistics
+ * roi: region of interest
+ * worst_bw: worst bandwidth, per roi
+ * worst_bw_y_coord: y offset (row) location of worst bandwidth, per roi
+ * total_bw: total bandwidth, per roi
+ * error: error status
+ * meta_error: meta error data
+ */
+struct sde_drm_ubwc_stats_data {
+	struct sde_drm_ubwc_stats_roi roi;
+	__u16 worst_bw[UBWC_STATS_MAX_ROI];
+	__u16 worst_bw_y_coord[UBWC_STATS_MAX_ROI];
+	__u32 total_bw[UBWC_STATS_MAX_ROI];
+	__u32 error;
+	__u32 meta_error;
+};
+
+/**
+ * Define frame data config
+ */
+#define SDE_FRAME_DATA_BUFFER_MAX	0x3
+#define SDE_FRAME_DATA_GUARD_BYTES	0xFF
+#define SDE_FRAME_DATA_MAX_PLANES	0x10
+
+/**
+ * struct sde_drm_frame_data_buffers_ctrl - control frame data buffers
+ * num_buffers: number of allocated buffers
+ * fds: fd list for allocated buffers
+ */
+struct sde_drm_frame_data_buffers_ctrl {
+	__u32 num_buffers;
+	__u32 fds[SDE_FRAME_DATA_BUFFER_MAX];
+};
+
+/**
+ * struct sde_drm_frame_data_buf - frame data buffer info sent to userspace
+ * fd: buffer fd
+ * offset: offset from buffer address
+ * status: status flag
+ */
+struct sde_drm_frame_data_buf {
+	__u32 fd;
+	__u32 offset;
+	__u32 status;
+};
+
+/**
+ * struct sde_drm_plane_frame_data - definition of plane frame data struct
+ * plane_id: drm plane id
+ * ubwc_stats: ubwc statistics
+ */
+struct sde_drm_plane_frame_data {
+	__u32 plane_id;
+
+	struct sde_drm_ubwc_stats_data ubwc_stats;
+};
+
+/**
+ * struct sde_drm_frame_data_packet - definition of frame data struct
+ * frame_count: interface frame count
+ * commit_count: sw commit count
+ * plane_frame_data: data available per plane
+ */
+struct sde_drm_frame_data_packet {
+	__u32 frame_count;
+	__u64 commit_count;
+
+	struct sde_drm_plane_frame_data plane_frame_data[SDE_FRAME_DATA_MAX_PLANES];
+};
+
 /*
  * Colorimetry Data Block values
  * These bit nums are defined as per the CTA spec
@@ -723,6 +809,7 @@ struct drm_msm_noise_layer_cfg {
 #define DRM_EVENT_LTM_WB_PB 0X80000009
 #define DRM_EVENT_LTM_OFF 0X8000000A
 #define DRM_EVENT_MMRM_CB 0X8000000B
+#define DRM_EVENT_FRAME_DATA 0x8000000C
 
 #ifndef DRM_MODE_FLAG_VID_MODE_PANEL
 #define DRM_MODE_FLAG_VID_MODE_PANEL        0x01

@@ -136,6 +136,7 @@ enum msm_mdp_plane_property {
 	PLANE_PROP_INVERSE_PMA,
 	PLANE_PROP_FP16_IGC,
 	PLANE_PROP_FP16_UNMULT,
+	PLANE_PROP_UBWC_STATS_ROI,
 
 	/* enum/bitmask properties */
 	PLANE_PROP_BLEND_OP,
@@ -181,6 +182,7 @@ enum msm_mdp_crtc_property {
 	CRTC_PROP_CACHE_STATE,
 	CRTC_PROP_VM_REQ_STATE,
 	CRTC_PROP_NOISE_LAYER_V1,
+	CRTC_PROP_FRAME_DATA_BUF,
 
 	/* total # of properties */
 	CRTC_PROP_COUNT

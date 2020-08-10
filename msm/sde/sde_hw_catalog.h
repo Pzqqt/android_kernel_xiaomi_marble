@@ -275,6 +275,7 @@ enum {
  * @SDE_SSPP_FP16_GC         FP16 GC color processing block support
  * @SDE_SSPP_FP16_CSC        FP16 CSC color processing block support
  * @SDE_SSPP_FP16_UNMULT     FP16 alpha unmult color processing block support
+ * @SDE_SSPP_UBWC_STATS:     Support for ubwc stats
  * @SDE_SSPP_MAX             maximum value
  */
 enum {
@@ -311,6 +312,7 @@ enum {
 	SDE_SSPP_FP16_GC,
 	SDE_SSPP_FP16_CSC,
 	SDE_SSPP_FP16_UNMULT,
+	SDE_SSPP_UBWC_STATS,
 	SDE_SSPP_MAX
 };
 
@@ -1543,6 +1545,7 @@ struct sde_perf_cfg {
  * @has_vig_p010  indicates if vig pipe supports p010 format
  * @has_fp16      indicates if FP16 format is supported on SSPP pipes
  * @has_precise_vsync_ts  indicates if HW has vsyc timestamp logging capability
+ * @has_ubwc_stats: indicates if ubwc stats feature is supported
  * @mdss_hw_block_size  Max offset of MDSS_HW block (0 offset), used for debug
  * @inline_rot_formats formats supported by the inline rotator feature
  * @irq_offset_list     list of sde_intr_irq_offsets to initialize irq table
@@ -1627,6 +1630,8 @@ struct sde_mdss_cfg {
 	bool has_vig_p010;
 	bool has_fp16;
 	bool has_precise_vsync_ts;
+	bool has_ubwc_stats;
+
 	u32 mdss_hw_block_size;
 	u32 mdss_count;
 	struct sde_mdss_base_cfg mdss[MAX_BLOCKS];
