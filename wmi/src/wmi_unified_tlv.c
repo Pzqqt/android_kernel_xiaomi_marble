@@ -708,6 +708,9 @@ static QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 					      wmi_buf_t buf,
 					      uint32_t buflen, uint32_t cmd_id)
 {
+	if (!wmi_is_qmi_stats_enabled(wmi_handle))
+		goto send_over_wmi;
+
 	if (wmi_is_target_suspended(wmi_handle)) {
 		if (QDF_IS_STATUS_SUCCESS(
 		    wmi_unified_cmd_send_over_qmi(wmi_handle, buf,
@@ -715,6 +718,7 @@ static QDF_STATUS wmi_unified_cmd_send_pm_chk(struct wmi_unified *wmi_handle,
 			return QDF_STATUS_SUCCESS;
 	}
 
+send_over_wmi:
 	qdf_atomic_set(&wmi_handle->num_stats_over_qmi, 0);
 
 	return wmi_unified_cmd_send(wmi_handle, buf, buflen, cmd_id);
