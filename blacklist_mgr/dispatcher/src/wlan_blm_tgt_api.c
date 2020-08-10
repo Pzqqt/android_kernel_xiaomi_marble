@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,7 @@
 
 #include "wlan_blm_tgt_api.h"
 
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS
 tgt_blm_send_reject_list_to_fw(struct wlan_objmgr_pdev *pdev,
 			       struct reject_ap_params *reject_params)
@@ -46,3 +47,4 @@ tgt_blm_send_reject_list_to_fw(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif

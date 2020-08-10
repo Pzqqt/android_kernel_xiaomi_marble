@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 
 #include "wlan_blm_public_struct.h"
 
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * target_if_blm_send_reject_ap_list() - API to send reject ap list to FW
  * @pdev: pdev object
@@ -50,5 +51,11 @@ target_if_blm_send_reject_ap_list(struct wlan_objmgr_pdev *pdev,
  * Return: void
  */
 void target_if_blm_register_tx_ops(struct wlan_blm_tx_ops *blm_tx_ops);
+#else
+static inline void target_if_blm_register_tx_ops(
+	struct wlan_blm_tx_ops *blm_tx_ops)
+{
+}
+#endif //WLAN_FEATURE_ROAM_OFFLOAD
 
-#endif
+#endif //__TARGET_IF_BLM_H
