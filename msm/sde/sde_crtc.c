@@ -433,7 +433,6 @@ static bool sde_crtc_mode_fixup(struct drm_crtc *crtc,
 {
 	SDE_DEBUG("\n");
 
-	sde_cp_mode_switch_prop_dirty(crtc);
 	if ((msm_is_mode_seamless(adjusted_mode) ||
 	     (msm_is_mode_seamless_vrr(adjusted_mode) ||
 	      msm_is_mode_seamless_dyn_clk(adjusted_mode))) &&
@@ -1113,40 +1112,49 @@ static int _sde_crtc_check_rois(struct drm_crtc *crtc,
 static void _sde_crtc_program_lm_output_roi(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc;
-	struct sde_crtc_state *crtc_state;
+	struct sde_crtc_state *cstate;
 	const struct sde_rect *lm_roi;
 	struct sde_hw_mixer *hw_lm;
 	bool right_mixer = false;
+	bool lm_updated = false;
 	int lm_idx;
 
 	if (!crtc)
 		return;
 
 	sde_crtc = to_sde_crtc(crtc);
-	crtc_state = to_sde_crtc_state(crtc->state);
+	cstate = to_sde_crtc_state(crtc->state);
 
 	for (lm_idx = 0; lm_idx < sde_crtc->num_mixers; lm_idx++) {
 		struct sde_hw_mixer_cfg cfg;
 
-		lm_roi = &crtc_state->lm_roi[lm_idx];
+		lm_roi = &cstate->lm_roi[lm_idx];
 		hw_lm = sde_crtc->mixers[lm_idx].hw_lm;
 		if (!sde_crtc->mixers_swapped)
 			right_mixer = lm_idx % MAX_MIXERS_PER_LAYOUT;
 
-		SDE_EVT32(DRMID(crtc_state->base.crtc), lm_idx,
-				lm_roi->x, lm_roi->y, lm_roi->w, lm_roi->h,
-				right_mixer);
+		if (lm_roi->w != hw_lm->cfg.out_width ||
+				lm_roi->h != hw_lm->cfg.out_height ||
+				right_mixer != hw_lm->cfg.right_mixer) {
+			hw_lm->cfg.out_width = lm_roi->w;
+			hw_lm->cfg.out_height = lm_roi->h;
+			hw_lm->cfg.right_mixer = right_mixer;
 
-		hw_lm->cfg.out_width = lm_roi->w;
-		hw_lm->cfg.out_height = lm_roi->h;
-		hw_lm->cfg.right_mixer = right_mixer;
+			cfg.out_width = lm_roi->w;
+			cfg.out_height = lm_roi->h;
+			cfg.right_mixer = right_mixer;
+			cfg.flags = 0;
 
-		cfg.out_width = lm_roi->w;
-		cfg.out_height = lm_roi->h;
-		cfg.right_mixer = right_mixer;
-		cfg.flags = 0;
-		hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
+			hw_lm->ops.setup_mixer_out(hw_lm, &cfg);
+			lm_updated = true;
+		}
+
+		SDE_EVT32(DRMID(crtc), lm_idx, lm_roi->x, lm_roi->y, lm_roi->w,
+				lm_roi->h, right_mixer, lm_updated);
 	}
+
+	if (lm_updated)
+		sde_cp_crtc_res_change(crtc);
 }
 
 struct plane_state {
@@ -1532,8 +1540,6 @@ static void _sde_crtc_blend_setup_mixer(struct drm_crtc *crtc,
 			clear_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
 		}
 	}
-
-	_sde_crtc_program_lm_output_roi(crtc);
 
 end:
 	kfree(pstates);
@@ -2165,8 +2171,6 @@ static void _sde_crtc_dest_scaler_setup(struct drm_crtc *crtc)
 				hw_ctl->ops.update_bitmask_mixer(
 						hw_ctl, hw_lm->idx, 1);
 		}
-
-		sde_cp_mode_switch_prop_dirty(crtc);
 	}
 }
 
@@ -3901,12 +3905,63 @@ static void sde_crtc_reset(struct drm_crtc *crtc)
 	crtc->state = &cstate->base;
 }
 
+static void sde_crtc_clear_cached_mixer_cfg(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
+	struct sde_hw_mixer *hw_lm;
+	int lm_idx;
+
+	/* clearing lm cfg marks it dirty to force reprogramming next update */
+	for (lm_idx = 0; lm_idx < sde_crtc->num_mixers; lm_idx++) {
+		hw_lm = sde_crtc->mixers[lm_idx].hw_lm;
+		hw_lm->cfg.out_width = 0;
+		hw_lm->cfg.out_height = 0;
+	}
+
+	SDE_EVT32(DRMID(crtc));
+}
+
+static void sde_crtc_reset_sw_state_for_ipc(struct drm_crtc *crtc)
+{
+	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+	struct drm_plane *plane;
+
+	/* mark planes, mixers, and other blocks dirty for next update */
+	drm_atomic_crtc_for_each_plane(plane, crtc)
+		sde_plane_set_revalidate(plane, true);
+
+	/* mark mixers dirty for next update */
+	sde_crtc_clear_cached_mixer_cfg(crtc);
+
+	/* mark other properties which need to be dirty for next update */
+	set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
+	if (cstate->num_ds_enabled)
+		set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
+}
+
+static void sde_crtc_post_ipc(struct drm_crtc *crtc)
+{
+	struct sde_crtc *sde_crtc;
+	struct sde_crtc_state *cstate;
+	struct drm_encoder *encoder;
+
+	sde_crtc = to_sde_crtc(crtc);
+	cstate = to_sde_crtc_state(crtc->state);
+
+	/* restore encoder; crtc will be programmed during commit */
+	drm_for_each_encoder_mask(encoder, crtc->dev, crtc->state->encoder_mask)
+		sde_encoder_virt_restore(encoder);
+
+	/* restore UIDLE */
+	sde_core_perf_crtc_update_uidle(crtc, true);
+
+	sde_cp_crtc_post_ipc(crtc);
+}
+
 static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 {
 	struct drm_crtc *crtc = arg;
 	struct sde_crtc *sde_crtc;
-	struct sde_crtc_state *cstate;
-	struct drm_plane *plane;
 	struct drm_encoder *encoder;
 	u32 power_on;
 	unsigned long flags;
@@ -3919,7 +3974,6 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		return;
 	}
 	sde_crtc = to_sde_crtc(crtc);
-	cstate = to_sde_crtc_state(crtc->state);
 
 	mutex_lock(&sde_crtc->crtc_lock);
 
@@ -3927,15 +3981,6 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 
 	switch (event_type) {
 	case SDE_POWER_EVENT_POST_ENABLE:
-		/* restore encoder; crtc will be programmed during commit */
-		drm_for_each_encoder_mask(encoder, crtc->dev,
-				crtc->state->encoder_mask) {
-			sde_encoder_virt_restore(encoder);
-		}
-
-		/* restore UIDLE */
-		sde_core_perf_crtc_update_uidle(crtc, true);
-
 		spin_lock_irqsave(&sde_crtc->spin_lock, flags);
 		list_for_each_entry(node, &sde_crtc->user_event_list, list) {
 			ret = 0;
@@ -3947,10 +3992,9 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		}
 		spin_unlock_irqrestore(&sde_crtc->spin_lock, flags);
 
-		sde_cp_crtc_post_ipc(crtc);
+		sde_crtc_post_ipc(crtc);
 		break;
 	case SDE_POWER_EVENT_PRE_DISABLE:
-
 		drm_for_each_encoder_mask(encoder, crtc->dev,
 				crtc->state->encoder_mask) {
 			/*
@@ -3980,21 +4024,8 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		sde_cp_crtc_pre_ipc(crtc);
 		break;
 	case SDE_POWER_EVENT_POST_DISABLE:
-		/*
-		 * set revalidate flag in planes, so it will be re-programmed
-		 * in the next frame update
-		 */
-		drm_atomic_crtc_for_each_plane(plane, crtc)
-			sde_plane_set_revalidate(plane, true);
-
+		sde_crtc_reset_sw_state_for_ipc(crtc);
 		sde_cp_crtc_suspend(crtc);
-
-		/* reconfigure everything on next frame update */
-		set_bit(SDE_CRTC_DIRTY_DIM_LAYERS, cstate->dirty);
-
-		if (cstate->num_ds_enabled)
-			set_bit(SDE_CRTC_DIRTY_DEST_SCALER, cstate->dirty);
-
 		event.type = DRM_EVENT_SDE_POWER;
 		event.length = sizeof(power_on);
 		power_on = 0;
@@ -4013,6 +4044,9 @@ static void _sde_crtc_reset(struct drm_crtc *crtc)
 {
 	struct sde_crtc *sde_crtc = to_sde_crtc(crtc);
 	struct sde_crtc_state *cstate = to_sde_crtc_state(crtc->state);
+
+	/* mark mixer cfgs dirty before wiping them */
+	sde_crtc_clear_cached_mixer_cfg(crtc);
 
 	memset(sde_crtc->mixers, 0, sizeof(sde_crtc->mixers));
 	sde_crtc->num_mixers = 0;
