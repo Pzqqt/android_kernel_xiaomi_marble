@@ -1217,7 +1217,7 @@ QDF_STATUS rrm_process_beacon_req(struct mac_context *mac_ctx, tSirMacAddr peer,
 
 	if (index  >= MAX_MEASUREMENT_REQUEST) {
 		status = rrm_reject_req(&report, rrm_req, num_report, index,
-			       rrm_req->MeasurementRequest[index].
+			       rrm_req->MeasurementRequest[0].
 							measurement_type);
 		return status;
 	}
