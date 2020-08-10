@@ -1223,8 +1223,8 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	/* Get the vdev id */
 	if (wma_find_vdev_id_by_addr(wma, pRateUpdateParams->bssid.bytes,
 				     &vdev_id)) {
-		wma_err("vdev handle is invalid for %pM",
-			 pRateUpdateParams->bssid.bytes);
+		wma_err("vdev handle is invalid for "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(pRateUpdateParams->bssid.bytes));
 		qdf_mem_free(pRateUpdateParams);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1261,8 +1261,8 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	wma_debug("dev_id = %d, dev_type = %d, dev_mode = %d,",
 		 vdev_id, intr[vdev_id].type,
 		 pRateUpdateParams->dev_mode);
-	wma_debug("mac = %pM, config.shortgi = %d, rate_flags = 0x%x",
-		 pRateUpdateParams->bssid.bytes,
+	wma_debug("mac = "QDF_MAC_ADDR_FMT", config.shortgi = %d, rate_flags = 0x%x",
+		 QDF_MAC_ADDR_REF(pRateUpdateParams->bssid.bytes),
 		 intr[vdev_id].config.shortgi, rate_flag);
 	ret = wma_encode_mc_rate(short_gi, intr[vdev_id].config.chwidth,
 				 intr[vdev_id].ch_freq, mbpsx10_rate,
@@ -2893,7 +2893,8 @@ void wma_tx_abort(uint8_t vdev_id)
 		return;
 	}
 
-	wma_debug("vdevid %d bssid %pM", vdev_id, bssid);
+	wma_debug("vdevid %d bssid "QDF_MAC_ADDR_FMT, vdev_id,
+		  QDF_MAC_ADDR_REF(bssid));
 	wma_vdev_set_pause_bit(vdev_id, PAUSE_TYPE_HOST);
 	cdp_fc_vdev_pause(cds_get_context(QDF_MODULE_ID_SOC), vdev_id,
 			  OL_TXQ_PAUSE_REASON_TX_ABORT, 0);
@@ -2967,7 +2968,8 @@ void wma_delete_invalid_peer_entries(uint8_t vdev_id, uint8_t *peer_mac_addr)
 			}
 		}
 		if (i == INVALID_PEER_MAX_NUM)
-			wma_debug("peer_mac_addr %pM is not found", peer_mac_addr);
+			wma_debug("peer_mac_addr "QDF_MAC_ADDR_FMT" is not found",
+				  QDF_MAC_ADDR_REF(peer_mac_addr));
 	} else {
 		qdf_mem_zero(iface->invalid_peers,
 			     sizeof(iface->invalid_peers));
@@ -3019,19 +3021,17 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 			(index + 1) % INVALID_PEER_MAX_NUM;
 
 		/* send deauth */
-		wma_debug("vdev_id %d", vdev_id);
-		wma_debug(" RA: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ra));
-		wma_debug(" TA: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
+		wma_debug("vdev_id: %d RA: "QDF_MAC_ADDR_FMT" TA: "QDF_MAC_ADDR_FMT,
+			  vdev_id, QDF_MAC_ADDR_REF(rx_inv_msg->ra),
+			  QDF_MAC_ADDR_REF(rx_inv_msg->ta));
 
 		wma_send_msg(wma,
 			     SIR_LIM_RX_INVALID_PEER,
 			     (void *)rx_inv_msg, 0);
 	} else {
 		wma_debug_rl("Ignore invalid peer indication as received more than once "
-			QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(rx_inv_msg->ta));
+			QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(rx_inv_msg->ta));
 		qdf_mem_free(rx_inv_msg);
 	}
 
@@ -3055,8 +3055,8 @@ int wma_dp_send_delba_ind(uint8_t vdev_id, uint8_t *peer_macaddr,
 	qdf_mem_copy(req->peer_macaddr, peer_macaddr, QDF_MAC_ADDR_SIZE);
 	req->tid = tid;
 	req->reason_code = reason_code;
-	wma_debug("req delba_ind vdev %d %pM tid %d reason %d",
-		 vdev_id, peer_macaddr, tid, reason_code);
+	wma_debug("req delba_ind vdev %d "QDF_MAC_ADDR_FMT" tid %d reason %d",
+		 vdev_id, QDF_MAC_ADDR_REF(peer_macaddr), tid, reason_code);
 	wma_send_msg_high_priority(wma, SIR_HAL_REQ_SEND_DELBA_REQ_IND,
 				   (void *)req, 0);
 

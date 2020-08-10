@@ -178,21 +178,21 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 		break;
 	}
 
-	wma_debug("Set WMI_AP_PS_PEER_PARAM_UAPSD 0x%x for %pM",
-		 uapsd, peer_addr);
+	wma_debug("Set WMI_AP_PS_PEER_PARAM_UAPSD 0x%x for "QDF_MAC_ADDR_FMT,
+		 uapsd, QDF_MAC_ADDR_REF(peer_addr));
 	param.vdev_id = vdev_id;
 	param.param = WMI_AP_PS_PEER_PARAM_UAPSD;
 	param.value = uapsd;
 	ret = wmi_unified_ap_ps_cmd_send(wma->wmi_handle, peer_addr,
 						&param);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_UAPSD for %pM",
-			peer_addr);
+		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_UAPSD for "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(peer_addr));
 		return ret;
 	}
 
-	wma_debug("Set WMI_AP_PS_PEER_PARAM_MAX_SP 0x%x for %pM",
-		 max_sp_len, peer_addr);
+	wma_debug("Set WMI_AP_PS_PEER_PARAM_MAX_SP 0x%x for "QDF_MAC_ADDR_FMT,
+		 max_sp_len, QDF_MAC_ADDR_REF(peer_addr));
 
 	param.vdev_id = vdev_id;
 	param.param = WMI_AP_PS_PEER_PARAM_MAX_SP;
@@ -200,8 +200,8 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 	ret = wmi_unified_ap_ps_cmd_send(wma->wmi_handle, peer_addr,
 					  &param);
 	if (QDF_IS_STATUS_ERROR(ret)) {
-		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_MAX_SP for %pM",
-			peer_addr);
+		wma_err("Failed to set WMI_AP_PS_PEER_PARAM_MAX_SP for "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(peer_addr));
 		return ret;
 	}
 
@@ -267,15 +267,15 @@ void wma_set_tx_power(WMA_HANDLE handle,
 						&vdev_id);
 	}
 	if (ret) {
-		wma_err("vdev id is invalid for %pM",
-			tx_pwr_params->bssId.bytes);
+		wma_err("vdev id is invalid for "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(tx_pwr_params->bssId.bytes));
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
 	if (!wma_is_vdev_up(vdev_id)) {
-		wma_err("vdev id %d is not up for %pM", vdev_id,
-			tx_pwr_params->bssId.bytes);
+		wma_err("vdev id %d is not up for "QDF_MAC_ADDR_FMT, vdev_id,
+			QDF_MAC_ADDR_REF(tx_pwr_params->bssId.bytes));
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
@@ -372,8 +372,8 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 						&vdev_id);
 	}
 	if (ret) {
-		wma_err("vdev id is invalid for %pM",
-			tx_pwr_params->bssId.bytes);
+		wma_err("vdev id is invalid for "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(tx_pwr_params->bssId.bytes));
 		qdf_mem_free(tx_pwr_params);
 		return;
 	}
@@ -1411,9 +1411,9 @@ void wma_process_set_mimops_req(tp_wma_handle wma_handle,
 	else if (mimops->htMIMOPSState == eSIR_HT_MIMO_PS_NO_LIMIT)
 		mimops->htMIMOPSState = WMI_PEER_MIMO_PS_NONE;
 
-	wma_debug("htMIMOPSState = %d, sessionId = %d peerMac <"QDF_MAC_ADDR_STR">",
+	wma_debug("htMIMOPSState = %d, sessionId = %d peerMac <"QDF_MAC_ADDR_FMT">",
 		 mimops->htMIMOPSState, mimops->sessionId,
-		 QDF_MAC_ADDR_ARRAY(mimops->peerMac));
+		 QDF_MAC_ADDR_REF(mimops->peerMac));
 
 	wma_set_peer_param(wma_handle, mimops->peerMac,
 			   WMI_PEER_MIMO_PS_STATE, mimops->htMIMOPSState,

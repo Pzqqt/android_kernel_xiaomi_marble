@@ -51,13 +51,13 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct wma_txrx_node *iface;
 
 	iface = &wma->interfaces[add_sta->smesessionId];
-	wma_debug("vdev: %d, peer_mac_addr: "QDF_MAC_ADDR_STR,
-		add_sta->smesessionId, QDF_MAC_ADDR_ARRAY(add_sta->staMac));
+	wma_debug("vdev: %d, peer_mac_addr: "QDF_MAC_ADDR_FMT,
+		add_sta->smesessionId, QDF_MAC_ADDR_REF(add_sta->staMac));
 
 	if (cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
 					add_sta->staMac)) {
-		wma_err("NDI peer already exists, peer_addr %pM",
-			 add_sta->staMac);
+		wma_err("NDI peer already exists, peer_addr "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
 	}
@@ -70,8 +70,8 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * here.
 	 */
 	if (cdp_find_peer_exist(soc, pdev_id, add_sta->staMac)) {
-		wma_err("peer exists on other vdev with peer_addr %pM",
-			 add_sta->staMac);
+		wma_err("peer exists on other vdev with peer_addr "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = QDF_STATUS_E_EXISTS;
 		goto send_rsp;
 	}
@@ -79,28 +79,30 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	status = wma_create_peer(wma, add_sta->staMac,
 				 WMI_PEER_TYPE_NAN_DATA, add_sta->smesessionId);
 	if (status != QDF_STATUS_SUCCESS) {
-		wma_err("Failed to create peer for %pM", add_sta->staMac);
+		wma_err("Failed to create peer for "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = status;
 		goto send_rsp;
 	}
 
 	if (!cdp_find_peer_exist_on_vdev(soc, add_sta->smesessionId,
 					 add_sta->staMac)) {
-		wma_err("Failed to find peer handle using peer mac %pM",
-			 add_sta->staMac);
+		wma_err("Failed to find peer handle using peer mac "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(add_sta->staMac));
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		wma_remove_peer(wma, add_sta->staMac, add_sta->smesessionId);
 		goto send_rsp;
 	}
 
-	wma_debug("Moving peer %pM to state %d", add_sta->staMac, state);
+	wma_debug("Moving peer "QDF_MAC_ADDR_FMT" to state %d",
+		  QDF_MAC_ADDR_REF(add_sta->staMac), state);
 	cdp_peer_state_update(soc, add_sta->staMac, state);
 
 	add_sta->nss    = iface->nss;
 	add_sta->status = QDF_STATUS_SUCCESS;
 send_rsp:
-	wma_debug("Sending add sta rsp to umac (mac:%pM, status:%d)",
-		 add_sta->staMac, add_sta->status);
+	wma_debug("Sending add sta rsp to umac (mac:"QDF_MAC_ADDR_FMT", status:%d)",
+		  QDF_MAC_ADDR_REF(add_sta->staMac), add_sta->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }
 

@@ -4162,7 +4162,8 @@ void wma_remove_bss_peer_on_vdev_start_failure(tp_wma_handle wma,
 	wma_err("ADD BSS failure for vdev %d", vdev_id);
 
 	if (!cdp_find_peer_exist(soc, pdev_id, bss_peer.bytes)) {
-		wma_err("Failed to find peer %pM", bss_peer.bytes);
+		wma_err("Failed to find peer "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(bss_peer.bytes));
 		return;
 	}
 

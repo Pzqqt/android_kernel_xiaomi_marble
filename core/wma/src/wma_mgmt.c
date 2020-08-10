@@ -338,7 +338,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&kickout_event->peer_macaddr, macaddr);
 	if (cdp_peer_get_vdevid(soc, macaddr, &vdev_id) !=
 			QDF_STATUS_SUCCESS) {
-		wma_err("Not able to find BSSID for peer [%pM]", macaddr);
+		wma_err("Not able to find BSSID for peer ["QDF_MAC_ADDR_FMT"]",
+			 QDF_MAC_ADDR_REF(macaddr));
 		return -EINVAL;
 	}
 	vdev = wma->interfaces[vdev_id].vdev;
@@ -348,8 +349,9 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	}
 	addr = wlan_vdev_mlme_get_macaddr(vdev);
 
-	wma_nofl_info("STA kickout for %pM, on mac %pM, vdev %d, reason:%d",
-		      macaddr, addr, vdev_id, kickout_event->reason);
+	wma_nofl_info("STA kickout for "QDF_MAC_ADDR_FMT", on mac "QDF_MAC_ADDR_FMT", vdev %d, reason:%d",
+		      QDF_MAC_ADDR_REF(macaddr), QDF_MAC_ADDR_REF(addr),
+		      vdev_id, kickout_event->reason);
 
 	if (wma->interfaces[vdev_id].roaming_in_progress) {
 		wma_err("Ignore STA kick out since roaming is in progress");
@@ -369,8 +371,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 		del_sta_ctx = (tpDeleteStaContext)
 			qdf_mem_malloc(sizeof(tDeleteStaContext));
 		if (!del_sta_ctx) {
-			wma_err("mem alloc failed for struct del_sta_context for TDLS peer: %pM",
-				macaddr);
+			wma_err("mem alloc failed for struct del_sta_context for TDLS peer: "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(macaddr));
 			return -ENOMEM;
 		}
 
@@ -3170,8 +3172,8 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		rx_pkt->pkt_meta.mpdu_data_ptr =
 		rx_pkt->pkt_meta.mpdu_hdr_ptr +
 		rx_pkt->pkt_meta.mpdu_hdr_len;
-		wma_debug("BSSID: "QDF_MAC_ADDR_STR" tsf_delta: %u",
-			  QDF_MAC_ADDR_ARRAY(wh->i_addr3),
+		wma_debug("BSSID: "QDF_MAC_ADDR_FMT" tsf_delta: %u",
+			  QDF_MAC_ADDR_REF(wh->i_addr3),
 			  rx_pkt->pkt_meta.tsf_delta);
 	} else {
 		if (QDF_IS_ADDR_BROADCAST(wh->i_addr1) ||
@@ -3211,13 +3213,14 @@ wma_get_peer_pmf_status(tp_wma_handle wma, uint8_t *peer_mac)
 				    wlan_objmgr_pdev_get_pdev_id(wma->pdev),
 				    peer_mac, WLAN_LEGACY_WMA_ID);
 	if (!peer) {
-		wma_err("Peer of peer_mac %pM not found", peer_mac);
+		wma_err("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
+			 QDF_MAC_ADDR_REF(peer_mac));
 		return false;
 	}
 	is_pmf_enabled = mlme_get_peer_pmf_status(peer);
 	wlan_objmgr_peer_release_ref(peer, WLAN_LEGACY_WMA_ID);
-	wma_nofl_debug("get is_pmf_enabled %d for %pM",
-		       is_pmf_enabled, peer_mac);
+	wma_nofl_debug("get is_pmf_enabled %d for "QDF_MAC_ADDR_FMT,
+		       is_pmf_enabled, QDF_MAC_ADDR_REF(peer_mac));
 
 	return is_pmf_enabled;
 }
@@ -3433,9 +3436,9 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	 * If the mpdu_data_len is greater than Max (2k), drop the frame
 	 */
 	if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
-		wma_err("Data Len %d greater than max, dropping frame from "QDF_MAC_ADDR_STR,
+		wma_err("Data Len %d greater than max, dropping frame from "QDF_MAC_ADDR_FMT,
 			 rx_pkt->pkt_meta.mpdu_data_len,
-			 QDF_MAC_ADDR_ARRAY(wh->i_addr3));
+			 QDF_MAC_ADDR_REF(wh->i_addr3));
 		qdf_nbuf_free(buf);
 		qdf_mem_free(rx_pkt);
 		return -EINVAL;
@@ -3485,8 +3488,8 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 		if (mgmt_rx_params->buf_len <=
 			(sizeof(struct ieee80211_frame) +
 			offsetof(struct wlan_bcn_frame, ie))) {
-			wma_debug("Dropping frame from "QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(wh->i_addr3));
+			wma_debug("Dropping frame from "QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(wh->i_addr3));
 			cds_pkt_return_packet(rx_pkt);
 			return -EINVAL;
 		}
