@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,8 +62,8 @@ target_if_peer_set_default_routing(struct cdp_ctrl_objmgr_psoc *psoc,
 
 	if (wmi_set_peer_param_send(pdev_wmi_handle, peer_macaddr, &param)) {
 		target_if_err("Unable to set default routing for peer "
-				QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(peer_macaddr));
+				QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(peer_macaddr));
 	}
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_PDEV_TARGET_IF_ID);
 }

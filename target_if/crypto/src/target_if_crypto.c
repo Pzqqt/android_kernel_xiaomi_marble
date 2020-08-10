@@ -253,7 +253,8 @@ QDF_STATUS target_if_crypto_set_key(struct wlan_objmgr_vdev *vdev,
 
 	target_if_debug("vdev_id:%d, key: idx:%d,len:%d", params.vdev_id,
 			params.key_idx, params.key_len);
-	target_if_debug("peer mac %pM", params.peer_mac);
+	target_if_debug("peer mac "QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(params.peer_mac));
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_DEBUG,
 			   &params.key_rsc_ctr, sizeof(uint64_t));
 	status = wmi_unified_setup_install_key_cmd(pdev_wmi_handle, &params);

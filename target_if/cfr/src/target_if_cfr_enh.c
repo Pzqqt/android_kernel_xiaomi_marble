@@ -379,12 +379,12 @@ static void dump_metadata(struct csi_cfr_header *header, uint32_t cookie)
 	if (meta->is_mu_ppdu) {
 		for (user_id = 0; user_id < meta->num_mu_users; user_id++) {
 			usermac = meta->peer_addr.mu_peer_addr[user_id];
-			cfr_debug("peermac[%d]: " QDF_MAC_ADDR_STR,
-				  user_id, QDF_MAC_ADDR_ARRAY(usermac));
+			cfr_debug("peermac[%d]: " QDF_MAC_ADDR_FMT,
+				  user_id, QDF_MAC_ADDR_REF(usermac));
 		}
 	} else {
-		cfr_debug("peermac: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(meta->peer_addr.su_peer_addr));
+		cfr_debug("peermac: " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(meta->peer_addr.su_peer_addr));
 	}
 
 	for (chain_id = 0; chain_id < HOST_MAX_CHAINS; chain_id++) {
@@ -1116,9 +1116,9 @@ static void dump_cfr_peer_tx_event_enh(wmi_cfr_peer_tx_event_param *event,
 				       uint32_t cookie)
 {
 	cfr_debug("<TXCOMP><%u>CFR capture method: %d vdev_id: %d mac: "
-		  QDF_MAC_ADDR_STR, cookie,
+		  QDF_MAC_ADDR_FMT, cookie,
 		  event->capture_method, event->vdev_id,
-		  QDF_MAC_ADDR_ARRAY(event->peer_mac_addr.bytes));
+		  QDF_MAC_ADDR_REF(event->peer_mac_addr.bytes));
 
 	cfr_debug("<TXCOMP><%u>Chan: %d bw: %d phymode: %d cfreq1: %d cfrq2: %d "
 		  "nss: %d\n",
@@ -1278,8 +1278,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	if (tx_evt_param.status & PEER_CFR_CAPTURE_EVT_PS_STATUS_MASK) {
 		cfr_err("CFR capture failed as peer is in powersave: "
-			QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(tx_evt_param.peer_mac_addr.bytes));
+			QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(tx_evt_param.peer_mac_addr.bytes));
 
 		enh_prepare_cfr_header_txstatus(&tx_evt_param,
 						&header_error,
@@ -1296,8 +1296,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 	}
 
 	if ((tx_evt_param.status & PEER_CFR_CAPTURE_EVT_STATUS_MASK) == 0) {
-		cfr_debug("CFR capture failed for peer: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(tx_evt_param.peer_mac_addr.bytes));
+		cfr_debug("CFR capture failed for peer: " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(tx_evt_param.peer_mac_addr.bytes));
 		pcfr->tx_peer_status_cfr_fail++;
 		retval = -EINVAL;
 		goto relref;
@@ -1305,9 +1305,9 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	if (tx_evt_param.status & CFR_TX_EVT_STATUS_MASK) {
 		cfr_debug("TX packet returned status %d for peer: "
-			  QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_FMT,
 			  tx_evt_param.status & CFR_TX_EVT_STATUS_MASK,
-			  QDF_MAC_ADDR_ARRAY(tx_evt_param.peer_mac_addr.bytes));
+			  QDF_MAC_ADDR_REF(tx_evt_param.peer_mac_addr.bytes));
 		pcfr->tx_evt_status_cfr_fail++;
 		retval = -EINVAL;
 		goto relref;
