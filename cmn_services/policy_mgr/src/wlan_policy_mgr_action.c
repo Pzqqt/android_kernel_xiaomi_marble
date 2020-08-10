@@ -33,6 +33,7 @@
 #include "qdf_platform.h"
 #include "wlan_nan_api.h"
 #include "nan_ucfg_api.h"
+#include "wlan_mlme_api.h"
 #include "sap_api.h"
 
 enum policy_mgr_conc_next_action (*policy_mgr_get_current_pref_hw_mode_ptr)
@@ -2049,12 +2050,14 @@ static QDF_STATUS policy_mgr_check_6ghz_sap_conc(
 
 QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 	struct wlan_objmgr_psoc *psoc, uint32_t *con_ch_freq,
-	uint32_t sap_ch_freq, uint8_t sap_vdev_id)
+	uint32_t sap_ch_freq, uint8_t sap_vdev_id,
+	struct ch_params *ch_params)
 {
 	uint32_t ch_freq = *con_ch_freq;
 	uint32_t temp_ch_freq = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	bool sta_sap_scc_on_dfs_chan;
+	bool is_dfs;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -2089,9 +2092,10 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc);
-
+	is_dfs = wlan_mlme_check_chan_param_has_dfs(
+			pm_ctx->pdev, ch_params, ch_freq);
 	if (policy_mgr_valid_sta_channel_check(psoc, ch_freq)) {
-		if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq) ||
+		if (is_dfs ||
 		    wlan_reg_is_passive_or_disable_for_freq(pm_ctx->pdev,
 							    ch_freq) ||
 		    !(policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
@@ -2100,8 +2104,7 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 								pm_ctx->pdev) &&
 		     wlan_reg_is_etsi13_srd_chan_for_freq(pm_ctx->pdev,
 							  ch_freq))) {
-			if (wlan_reg_is_dfs_for_freq(pm_ctx->pdev, ch_freq) &&
-			    sta_sap_scc_on_dfs_chan) {
+			if (is_dfs && sta_sap_scc_on_dfs_chan) {
 				policy_mgr_debug("STA SAP SCC is allowed on DFS channel");
 				goto update_chan;
 			}
