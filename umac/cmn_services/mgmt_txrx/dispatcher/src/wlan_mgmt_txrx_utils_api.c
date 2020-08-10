@@ -128,7 +128,7 @@ static QDF_STATUS wlan_mgmt_txrx_psoc_obj_destroy_notification(
 	qdf_spinlock_destroy(&mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
 	qdf_mem_free(mgmt_txrx_psoc_ctx);
 
-	mgmt_txrx_debug("mgmt txrx deletion successful, psoc: %pK", psoc);
+	mgmt_txrx_debug("mgmt txrx deletion successful");
 
 	return QDF_STATUS_SUCCESS;
 }
