@@ -145,7 +145,6 @@ static void wlan_serialization_destroy_cmd_pool(
 		struct wlan_serialization_pdev_queue *pdev_queue)
 {
 	qdf_list_node_t *node = NULL;
-	struct wlan_serialization_command_list *cmd_list;
 
 	ser_debug("Destroy cmd pool list %pK, size %d",
 		  &pdev_queue->cmd_pool_list,
@@ -153,8 +152,7 @@ static void wlan_serialization_destroy_cmd_pool(
 	while (!qdf_list_empty(&pdev_queue->cmd_pool_list)) {
 		qdf_list_remove_front(&pdev_queue->cmd_pool_list,
 				      &node);
-		cmd_list = (struct wlan_serialization_command_list *)node;
-		qdf_mem_free(cmd_list);
+		qdf_mem_free(node);
 	}
 
 	qdf_list_destroy(&pdev_queue->cmd_pool_list);
