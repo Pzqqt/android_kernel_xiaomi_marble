@@ -843,7 +843,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	struct wma_txrx_node *intr = wma->interfaces;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
-	struct pdev_params pdev_param;
+	struct pdev_params pdev_param = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
 
