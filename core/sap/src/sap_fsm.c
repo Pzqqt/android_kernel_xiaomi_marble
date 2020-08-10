@@ -1778,8 +1778,9 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 	case eSAP_STOP_BSS_DUE_TO_NO_CHNL:
 		sap_ap_event.sapHddEventCode = eSAP_STOP_BSS_DUE_TO_NO_CHNL;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-			  FL("stopping session_id:%d, bssid:%pM, chan_freq:%d"),
-			     sap_ctx->sessionId, sap_ctx->self_mac_addr,
+			  FL("stopping session_id:%d, bssid:"QDF_MAC_ADDR_FMT", chan_freq:%d"),
+			     sap_ctx->sessionId,
+			     QDF_MAC_ADDR_REF(sap_ctx->self_mac_addr),
 			     sap_ctx->chan_freq);
 		break;
 
@@ -3275,8 +3276,8 @@ void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
 	for (i = 0; i < size; i++) {
 		macArray = (macList + i)->bytes;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "** ACL entry %i - " QDF_MAC_ADDR_STR, i,
-			  QDF_MAC_ADDR_ARRAY(macArray));
+			  "** ACL entry %i - " QDF_MAC_ADDR_FMT, i,
+			  QDF_MAC_ADDR_REF(macArray));
 	}
 	return;
 }
@@ -3294,8 +3295,8 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 	if (sap_search_mac_list
 		    (sap_ctx->denyMacList, sap_ctx->nDenyMac, peerMac, NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " QDF_MAC_ADDR_STR " in deny list",
-			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
+			  "In %s, Peer " QDF_MAC_ADDR_FMT " in deny list",
+			  __func__, QDF_MAC_ADDR_REF(peerMac));
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* A new station CAN associate, unless in deny list. Less stringent mode */
@@ -3305,9 +3306,9 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 	/* A new station CANNOT associate, unless in accept list. More stringent mode */
 	if (eSAP_DENY_UNLESS_ACCEPTED == sap_ctx->eSapMacAddrAclMode) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " QDF_MAC_ADDR_STR
+			  "In %s, Peer " QDF_MAC_ADDR_FMT
 			  " denied, Mac filter mode is eSAP_DENY_UNLESS_ACCEPTED",
-			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
+			  __func__, QDF_MAC_ADDR_REF(peerMac));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3318,9 +3319,9 @@ QDF_STATUS sap_is_peer_mac_allowed(struct sap_context *sap_ctx,
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_UNKNOWN_STA_JOIN,
 				     (void *) peerMac);
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "In %s, Peer " QDF_MAC_ADDR_STR
+			  "In %s, Peer " QDF_MAC_ADDR_FMT
 			  " denied, Mac filter mode is eSAP_SUPPORT_ACCEPT_AND_DENY",
-			  __func__, QDF_MAC_ADDR_ARRAY(peerMac));
+			  __func__, QDF_MAC_ADDR_REF(peerMac));
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;

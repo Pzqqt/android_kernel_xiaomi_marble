@@ -962,9 +962,9 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 	}
 	if (qdf_mem_cmp(sap_ctx->bssid.bytes, peer_sta_mac,
 			QDF_MAC_ADDR_SIZE) == 0) {
-		sap_err("requested peer mac is" QDF_MAC_ADDR_STR
+		sap_err("requested peer mac is "QDF_MAC_ADDR_FMT
 			"our own SAP BSSID. Do not blacklist or whitelist this BSSID",
-			QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+			QDF_MAC_ADDR_REF(peer_sta_mac));
 		return QDF_STATUS_E_FAULT;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
@@ -990,10 +990,10 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 				 peer_sta_mac, &staBLIndex);
 
 	if (sta_white_list && sta_black_list) {
-		sap_err("Peer mac " QDF_MAC_ADDR_STR
+		sap_err("Peer mac " QDF_MAC_ADDR_FMT
 			" found in white and black lists."
 			"Initial lists passed incorrect. Cannot execute this command.",
-			QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+			QDF_MAC_ADDR_REF(peer_sta_mac));
 		return QDF_STATUS_E_FAILURE;
 
 	}
@@ -1007,15 +1007,15 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			/* if list is already at max, return failure */
 			if (sap_ctx->nAcceptMac == MAX_ACL_MAC_ADDRESS) {
 				sap_err("White list is already maxed out. Cannot accept "
-					  QDF_MAC_ADDR_STR,
-					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					  QDF_MAC_ADDR_FMT,
+					  QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
 			if (sta_white_list) {
 				/* Do nothing if already present in white list. Just print a warning */
 				sap_warn("MAC address already present in white list "
-					 QDF_MAC_ADDR_STR,
-					 QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					 QDF_MAC_ADDR_FMT,
+					 QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_SUCCESS;
 			}
 			if (sta_black_list) {
@@ -1056,8 +1056,8 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 					  sap_ctx->nDenyMac);
 			} else {
 				sap_warn("MAC address to be deleted is not present in the white list "
-					 QDF_MAC_ADDR_STR,
-					 QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					 QDF_MAC_ADDR_FMT,
+					 QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
 		} else {
@@ -1074,15 +1074,15 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			/* if list is already at max, return failure */
 			if (sap_ctx->nDenyMac == MAX_ACL_MAC_ADDRESS) {
 				sap_err("Black list is already maxed out. Cannot accept "
-					QDF_MAC_ADDR_STR,
-					QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					QDF_MAC_ADDR_FMT,
+					QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
 			if (sta_black_list) {
 				/* Do nothing if already present in white list */
 				sap_warn("MAC address already present in black list "
-					 QDF_MAC_ADDR_STR,
-					 QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					 QDF_MAC_ADDR_FMT,
+					 QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_SUCCESS;
 			}
 			if (sta_white_list) {
@@ -1119,8 +1119,8 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 					  sap_ctx->nDenyMac);
 			} else {
 				sap_warn("MAC address to be deleted is not present in the black list "
-					  QDF_MAC_ADDR_STR,
-					  QDF_MAC_ADDR_ARRAY(peer_sta_mac));
+					  QDF_MAC_ADDR_FMT,
+					  QDF_MAC_ADDR_REF(peer_sta_mac));
 				return QDF_STATUS_E_FAILURE;
 			}
 		} else {
@@ -1499,9 +1499,8 @@ QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 			qdf_mem_copy(buf,
 				sap_ctx->pStaWpaRsnReqIE,
 				sap_ctx->nStaWPARSnReqIeLength);
-			sap_info("WPAIE: "QDF_MAC_ADDR_STR"",
-				 buf[0], buf[1], buf[2], buf[3], buf[4],
-				 buf[5]);
+			sap_info("WPAIE: "QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(buf));
 			qdf_status = QDF_STATUS_SUCCESS;
 		}
 	}
@@ -2363,9 +2362,9 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 	else
 		params->subtype = SIR_MAC_MGMT_DEAUTH;
 
-	sap_debug("Delete STA with RC:%hu subtype:%hhu MAC::" QDF_MAC_ADDR_STR,
+	sap_debug("Delete STA with RC:%hu subtype:%hhu MAC::" QDF_MAC_ADDR_FMT,
 		  params->reason_code, params->subtype,
-		  QDF_MAC_ADDR_ARRAY(params->peerMacAddr.bytes));
+		  QDF_MAC_ADDR_REF(params->peerMacAddr.bytes));
 }
 
 void sap_undo_acs(struct sap_context *sap_ctx, struct sap_config *sap_cfg)
