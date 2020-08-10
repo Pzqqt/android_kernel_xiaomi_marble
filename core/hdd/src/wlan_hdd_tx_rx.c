@@ -943,10 +943,10 @@ static void wlan_hdd_fix_broadcast_eapol(struct hdd_adapter *adapter,
 	if (qdf_unlikely((QDF_NBUF_CB_GET_PACKET_TYPE(skb) ==
 			  QDF_NBUF_CB_PACKET_TYPE_EAPOL) &&
 			 QDF_NBUF_CB_GET_IS_BCAST(skb))) {
-		hdd_debug("SA: "QDF_MAC_ADDR_STR " override DA: "QDF_MAC_ADDR_STR " with AP mac address "QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(&eh->h_source[0]),
-			  QDF_MAC_ADDR_ARRAY(&eh->h_dest[0]),
-			  QDF_MAC_ADDR_ARRAY(ap_mac_addr));
+		hdd_debug("SA: "QDF_MAC_ADDR_FMT " override DA: "QDF_MAC_ADDR_FMT " with AP mac address "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(&eh->h_source[0]),
+			  QDF_MAC_ADDR_REF(&eh->h_dest[0]),
+			  QDF_MAC_ADDR_REF(ap_mac_addr));
 
 		qdf_mem_copy(&eh->h_dest, ap_mac_addr, QDF_MAC_ADDR_SIZE);
 	}
@@ -1189,7 +1189,7 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 			  QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Tx not allowed for sta: "
-			  QDF_MAC_ADDR_STR), QDF_MAC_ADDR_ARRAY(
+			  QDF_MAC_ADDR_FMT), QDF_MAC_ADDR_REF(
 			  mac_addr_tx_allowed.bytes));
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
@@ -1221,8 +1221,8 @@ static void __hdd_hard_start_xmit(struct sk_buff *skb,
 	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for sta_id: "
-			  QDF_MAC_ADDR_STR,
-			  __func__, QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+			  QDF_MAC_ADDR_FMT,
+			  __func__, QDF_MAC_ADDR_REF(mac_addr.bytes));
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}

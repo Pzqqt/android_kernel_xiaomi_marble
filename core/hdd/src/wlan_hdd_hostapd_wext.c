@@ -180,8 +180,8 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 			hdd_for_each_sta_ref(
 					adapter->sta_info_list, sta_info,
 					STA_INFO_SAP_SET_TWO_INTS_GETNONE) {
-				hdd_debug("bss_id: " QDF_MAC_ADDR_STR,
-					  QDF_MAC_ADDR_ARRAY(
+				hdd_debug("bss_id: " QDF_MAC_ADDR_FMT,
+					  QDF_MAC_ADDR_REF(
 					  sta_info->sta_mac.bytes));
 
 				req.peer_addr = (char *)
@@ -279,8 +279,8 @@ static void print_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 
 	for (i = 0; i < size; i++) {
 		macArray = (macList + i)->bytes;
-		pr_info("ACL entry %i - "QDF_MAC_ADDR_STR"\n",
-			i, QDF_MAC_ADDR_ARRAY(macArray));
+		pr_info("ACL entry %i - "QDF_MAC_ADDR_FMT"\n",
+			i, QDF_MAC_ADDR_REF(macArray));
 	}
 }
 
@@ -1425,8 +1425,8 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	i++;
 	cmd = (int)(*(value + i));
 
-	hdd_debug("Modify ACL mac:" QDF_MAC_ADDR_STR " type: %d cmd: %d",
-	       QDF_MAC_ADDR_ARRAY(peer_mac), list_type, cmd);
+	hdd_debug("Modify ACL mac:" QDF_MAC_ADDR_FMT " type: %d cmd: %d",
+	       QDF_MAC_ADDR_REF(peer_mac), list_type, cmd);
 
 	qdf_status = wlansap_modify_acl(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
@@ -1821,8 +1821,8 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	 */
 	peer_macaddr = (uint8_t *) (extra);
 
-	hdd_debug("data " QDF_MAC_ADDR_STR,
-		  QDF_MAC_ADDR_ARRAY(peer_macaddr));
+	hdd_debug("data " QDF_MAC_ADDR_FMT,
+		  QDF_MAC_ADDR_REF(peer_macaddr));
 	wlansap_populate_del_sta_params(peer_macaddr,
 					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
 					SIR_MAC_MGMT_DISASSOC,
@@ -2257,12 +2257,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 		written += scnprintf(buf + written, size - written,
 				     QDF_MAC_ADDR_STR
 				     " ecsa=%d\n",
-				     sta->sta_mac.bytes[0],
-				     sta->sta_mac.bytes[1],
-				     sta->sta_mac.bytes[2],
-				     sta->sta_mac.bytes[3],
-				     sta->sta_mac.bytes[4],
-				     sta->sta_mac.bytes[5],
+				     QDF_MAC_ADDR_ARRAY(sta->sta_mac.bytes),
 				     sta->ecsa_capable);
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta, true,
 				     STA_INFO_SOFTAP_GET_STA_INFO);
@@ -2640,8 +2635,8 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 		wrqu->data.length +=
 			scnprintf(extra + wrqu->data.length,
 				  IW_PRIV_SIZE_MASK - wrqu->data.length,
-				  "[%pM] [%d]\n",
-				  rssi_info->peer_stats[i].peer_macaddr,
+				  "["QDF_MAC_ADDR_STR"] [%d]\n",
+				  QDF_MAC_ADDR_ARRAY(rssi_info->peer_stats[i].peer_macaddr),
 				  rssi_info->peer_stats[i].peer_rssi);
 
 	wrqu->data.length++;

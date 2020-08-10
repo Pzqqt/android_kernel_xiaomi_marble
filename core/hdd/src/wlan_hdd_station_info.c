@@ -1107,8 +1107,8 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 					  STA_INFO_GET_CACHED_STATION_REMOTE);
 
 	if (!stainfo) {
-		hdd_err("peer " QDF_MAC_ADDR_STR " not found",
-			QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+		hdd_err("peer " QDF_MAC_ADDR_FMT " not found",
+			QDF_MAC_ADDR_REF(mac_addr.bytes));
 		return -EINVAL;
 	}
 
@@ -1451,8 +1451,8 @@ __hdd_cfg80211_get_station_cmd(struct wiphy *wiphy,
 		nla_memcpy(mac_addr.bytes, tb[STATION_REMOTE],
 			   QDF_MAC_ADDR_SIZE);
 
-		hdd_debug("STATION_REMOTE " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+		hdd_debug("STATION_REMOTE " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(mac_addr.bytes));
 
 		status = hdd_get_station_remote(hdd_ctx, adapter, mac_addr);
 	} else {

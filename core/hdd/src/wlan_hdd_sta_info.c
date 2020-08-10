@@ -265,8 +265,8 @@ hdd_put_sta_info_ref(struct hdd_sta_info_obj *sta_info_container,
 	if (lock_required)
 		qdf_spin_unlock_bh(&sta_info_container->sta_obj_lock);
 
-	hdd_nofl_debug("STA_INFO: " QDF_MAC_ADDR_STR " freed",
-		       QDF_MAC_ADDR_ARRAY(addr.bytes));
+	hdd_nofl_debug("STA_INFO: " QDF_MAC_ADDR_FMT " freed",
+		       QDF_MAC_ADDR_REF(addr.bytes));
 }
 
 void hdd_clear_cached_sta_info(struct hdd_adapter *adapter)

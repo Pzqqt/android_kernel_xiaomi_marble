@@ -149,8 +149,8 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	req.vdev_id = adapter->vdev_id;
 
 	hdd_debug("Configuring gateway for session %d", req.vdev_id);
-	hdd_debug("mac:%pM, ipv4:%pI4 (type %d), ipv6:%pI6c (type %d)",
-		  req.gw_mac_addr.bytes,
+	hdd_debug("mac:"QDF_MAC_ADDR_FMT", ipv4:%pI4 (type %d), ipv6:%pI6c (type %d)",
+		  QDF_MAC_ADDR_REF(req.gw_mac_addr.bytes),
 		  req.ipv4_addr, req.ipv4_addr_type,
 		  req.ipv6_addr, req.ipv6_addr_type);
 

@@ -199,13 +199,13 @@ static bool hdd_nud_honour_failure(struct hdd_adapter *adapter)
 			->nud_tracking.tx_rx_stats.gw_rx_packets);
 
 	if (!tx_transmitted || !tx_acked || !gw_rx_pkt) {
-		hdd_debug("NUD_FAILURE_HONORED [mac:%pM]",
-			  adapter->nud_tracking.gw_mac_addr.bytes);
+		hdd_debug("NUD_FAILURE_HONORED [mac:"QDF_MAC_ADDR_FMT"]",
+			  QDF_MAC_ADDR_REF(adapter->nud_tracking.gw_mac_addr.bytes));
 		hdd_nud_stats_info(adapter);
 		return true;
 	}
-	hdd_debug("NUD_FAILURE_NOT_HONORED [mac:%pM]",
-		  adapter->nud_tracking.gw_mac_addr.bytes);
+	hdd_debug("NUD_FAILURE_NOT_HONORED [mac:"QDF_MAC_ADDR_FMT"]",
+		  QDF_MAC_ADDR_REF(adapter->nud_tracking.gw_mac_addr.bytes));
 	hdd_nud_stats_info(adapter);
 	return false;
 }

@@ -1606,8 +1606,8 @@ static QDF_STATUS hdd_parse_plm_cmd(uint8_t *command,
 			req->mac_addr.bytes[count] = content;
 		}
 
-		hdd_debug("MAC addr " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(req->mac_addr.bytes));
+		hdd_debug("MAC addr " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(req->mac_addr.bytes));
 
 		in_ptr = strpbrk(in_ptr, " ");
 
@@ -1847,8 +1847,9 @@ static int hdd_set_app_type1_parser(struct hdd_adapter *adapter,
 	params.pass_length = strlen(password);
 	qdf_mem_copy(params.password, password, params.pass_length);
 
-	hdd_debug("%d %pM %.8s %u %.16s %u",
-		  params.vdev_id, params.wakee_mac_addr.bytes,
+	hdd_debug("%d "QDF_MAC_ADDR_FMT" %.8s %u %.16s %u",
+		  params.vdev_id,
+		  QDF_MAC_ADDR_REF(params.wakee_mac_addr.bytes),
 		  params.identification_id, params.id_length,
 		  params.password, params.pass_length);
 
@@ -1908,7 +1909,7 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	if (6 != sscanf(mac_addr, QDF_MAC_ADDR_STR,
+	if (6 != sscanf(mac_addr, "%02x:%02x:%02x:%02x:%02x:%02x",
 			&gateway_mac[0], &gateway_mac[1], &gateway_mac[2],
 			&gateway_mac[3], &gateway_mac[4], &gateway_mac[5])) {
 		hdd_err("Invalid MacAddress Input %s", mac_addr);
@@ -1961,8 +1962,8 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 		params.tcp_rx_timeout_val =
 		  ucfg_pmo_extwow_app2_tcp_rx_timeout(hdd_ctx->psoc);
 
-	hdd_debug("%pM %.16s %u %u %u %u %u %u %u %u %u %u %u %u %u",
-		  gateway_mac, rc4_key, params.ip_id,
+	hdd_debug(QDF_MAC_ADDR_FMT" %.16s %u %u %u %u %u %u %u %u %u %u %u %u %u",
+		  QDF_MAC_ADDR_REF(gateway_mac), rc4_key, params.ip_id,
 		  params.ip_device_ip, params.ip_server_ip, params.tcp_seq,
 		  params.tcp_ack_seq, params.tcp_src_port, params.tcp_dst_port,
 		  params.keepalive_init, params.keepalive_min,
@@ -2540,8 +2541,9 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int target_rate)
 	rate_update.mcastDataRate5GHz = target_rate;
 	rate_update.bcastDataRate = -1;
 	qdf_copy_macaddr(&rate_update.bssid, &adapter->mac_addr);
-	hdd_debug("MC Target rate %d, mac = %pM, dev_mode %s(%d)",
-		  rate_update.mcastDataRate24GHz, rate_update.bssid.bytes,
+	hdd_debug("MC Target rate %d, mac = "QDF_MAC_ADDR_FMT", dev_mode %s(%d)",
+		  rate_update.mcastDataRate24GHz,
+		  QDF_MAC_ADDR_REF(rate_update.bssid.bytes),
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 	status = sme_send_rate_update_ind(hdd_ctx->mac_handle, &rate_update);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -5062,10 +5064,10 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 				 &adapter->mac_addr);
 
 		hdd_debug("Device mode %d max tx power %d selfMac: "
-			  QDF_MAC_ADDR_STR " bssId: " QDF_MAC_ADDR_STR,
+			  QDF_MAC_ADDR_FMT " bssId: " QDF_MAC_ADDR_FMT,
 			  adapter->device_mode, tx_power,
-			  QDF_MAC_ADDR_ARRAY(selfmac.bytes),
-			  QDF_MAC_ADDR_ARRAY(bssid.bytes));
+			  QDF_MAC_ADDR_REF(selfmac.bytes),
+			  QDF_MAC_ADDR_REF(bssid.bytes));
 
 		status = sme_set_max_tx_power(hdd_ctx->mac_handle,
 					      bssid, selfmac, tx_power);
@@ -5518,9 +5520,9 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 					sizeof(adapter->mc_addr_list.addr[i]));
 
 				hdd_debug("%s RX filter : addr ="
-				    QDF_MAC_ADDR_STR,
+				    QDF_MAC_ADDR_FMT,
 				    action ? "setting" : "clearing",
-				    QDF_MAC_ADDR_ARRAY(filter->multicastAddr[j].bytes));
+				    QDF_MAC_ADDR_REF(filter->multicastAddr[j].bytes));
 				j++;
 			}
 			if (j == SIR_MAX_NUM_MULTICAST_ADDRESS)

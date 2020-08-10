@@ -296,12 +296,14 @@ static void hdd_softap_inspect_tx_eap_pkt(struct hdd_adapter *adapter,
 	if (!sta_info)
 		return;
 	if (tx_comp) {
-		hdd_debug("eap_failure frm tx done %pM", mac_addr);
+		hdd_debug("eap_failure frm tx done "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(mac_addr->bytes));
 		qdf_atomic_clear_bit(PENDING_TYPE_EAP_FAILURE,
 				     &sta_info->pending_eap_frm_type);
 		qdf_event_set(&hapd_state->qdf_sta_eap_frm_done_event);
 	} else {
-		hdd_debug("eap_failure frm tx pending %pM", mac_addr);
+		hdd_debug("eap_failure frm tx pending "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(mac_addr->bytes));
 		qdf_event_reset(&hapd_state->qdf_sta_eap_frm_done_event);
 		qdf_atomic_set_bit(PENDING_TYPE_EAP_FAILURE,
 				   &sta_info->pending_eap_frm_type);
@@ -333,7 +335,8 @@ void hdd_softap_check_wait_for_tx_eap_pkt(struct hdd_adapter *adapter,
 		return;
 	if (qdf_atomic_test_bit(PENDING_TYPE_EAP_FAILURE,
 				&sta_info->pending_eap_frm_type)) {
-		hdd_debug("eap_failure frm pending %pM", mac_addr);
+		hdd_debug("eap_failure frm pending "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(mac_addr->bytes));
 		qdf_status = qdf_wait_for_event_completion(
 				&hapd_state->qdf_sta_eap_frm_done_event,
 				EAP_FRM_TIME_OUT);
@@ -359,8 +362,8 @@ int hdd_post_dhcp_ind(struct hdd_adapter *adapter, uint8_t *mac_addr,
 	tAniDHCPInd pmsg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	hdd_debug("Post DHCP indication,sta_mac=" QDF_MAC_ADDR_STR
-		  " ,  type=%d", QDF_MAC_ADDR_ARRAY(mac_addr), type);
+	hdd_debug("Post DHCP indication,sta_mac=" QDF_MAC_ADDR_FMT
+		  " ,  type=%d", QDF_MAC_ADDR_REF(mac_addr), type);
 
 	if (!adapter) {
 		hdd_err("NULL adapter");
@@ -603,9 +606,9 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		if (sta_info->is_deauth_in_progress) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: STA " QDF_MAC_ADDR_STR
+				  "%s: STA " QDF_MAC_ADDR_FMT
 				  "deauth in progress", __func__,
-				  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+				  QDF_MAC_ADDR_REF(sta_info->sta_mac.bytes));
 			goto drop_pkt;
 		}
 
@@ -709,8 +712,8 @@ static void __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	if (adapter->tx_fn(soc, adapter->vdev_id, (qdf_nbuf_t)skb)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for sta: "
-			  QDF_MAC_ADDR_STR, __func__,
-			  QDF_MAC_ADDR_ARRAY(dest_mac_addr->bytes));
+			  QDF_MAC_ADDR_FMT, __func__,
+			  QDF_MAC_ADDR_REF(dest_mac_addr->bytes));
 		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
@@ -971,8 +974,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 					   STA_INFO_SOFTAP_INIT_TX_RX_STA);
 
 	if (sta_info) {
-		hdd_err("Reinit of in use station " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(sta_mac->bytes));
+		hdd_err("Reinit of in use station " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(sta_mac->bytes));
 		status = hdd_sta_info_re_attach(&adapter->sta_info_list,
 						sta_info, sta_mac);
 		hdd_put_sta_info_ref(&adapter->sta_info_list, &sta_info, true,
@@ -989,8 +992,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 
 	status = hdd_sta_info_attach(&adapter->sta_info_list, sta_info);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to attach station: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(sta_mac->bytes));
+		hdd_err("Failed to attach station: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(sta_mac->bytes));
 		qdf_mem_free(sta_info);
 	}
 
@@ -1313,9 +1316,9 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	sta_info->is_qos_enabled = wmm_enabled;
 
 	if (!auth_required) {
-		hdd_debug("open/shared auth STA MAC= " QDF_MAC_ADDR_STR
+		hdd_debug("open/shared auth STA MAC= " QDF_MAC_ADDR_FMT
 			  ".  Changing TL state to AUTHENTICATED at Join time",
-			 QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+			 QDF_MAC_ADDR_REF(sta_info->sta_mac.bytes));
 
 		/* Connections that do not need Upper layer auth,
 		 * transition TL directly to 'Authenticated' state.
@@ -1331,9 +1334,9 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 							sta_mac);
 	} else {
 
-		hdd_debug("ULA auth STA MAC = " QDF_MAC_ADDR_STR
+		hdd_debug("ULA auth STA MAC = " QDF_MAC_ADDR_FMT
 			  ".  Changing TL state to CONNECTED at Join time",
-			 QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+			 QDF_MAC_ADDR_REF(sta_info->sta_mac.bytes));
 
 		qdf_status = hdd_change_peer_state(adapter,
 						   txrx_desc.peer_addr.bytes,
@@ -1448,8 +1451,8 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 					   STA_INFO_SOFTAP_CHANGE_STA_STATE);
 
 	if (!sta_info) {
-		hdd_debug("Failed to find right station MAC: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(sta_mac->bytes));
+		hdd_debug("Failed to find right station MAC: " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(sta_mac->bytes));
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1460,8 +1463,8 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 
 	qdf_status =
 		hdd_change_peer_state(adapter, mac_addr.bytes, state);
-	hdd_debug("Station " QDF_MAC_ADDR_STR " changed to state %d",
-		  QDF_MAC_ADDR_ARRAY(mac_addr.bytes), state);
+	hdd_debug("Station " QDF_MAC_ADDR_FMT " changed to state %d",
+		  QDF_MAC_ADDR_REF(mac_addr.bytes), state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		sta_info->peer_state = OL_TXRX_PEER_STATE_AUTH;

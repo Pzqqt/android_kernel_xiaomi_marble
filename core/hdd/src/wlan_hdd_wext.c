@@ -7267,8 +7267,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		if (apps_args[0] == CDP_TXRX_STATS_28) {
 			if (sta_ctx->conn_info.is_authenticated) {
-				hdd_debug("ap mac addr: %pM",
-					  (void *)&sta_ctx->conn_info.bssid);
+				hdd_debug("ap mac addr: "QDF_MAC_ADDR_FMT,
+					  QDF_MAC_ADDR_REF(sta_ctx->conn_info.bssid.bytes));
 				req.peer_addr =
 					(char *)&sta_ctx->conn_info.bssid;
 			}
@@ -8042,8 +8042,8 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		       request->destIpv4Addr[0], request->destIpv4Addr[1],
 		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
-		hdd_debug("Dest MAC address: "QDF_MAC_ADDR_STR,
-		       QDF_MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
+		hdd_debug("Dest MAC address: "QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(request->dest_macaddr.bytes));
 		break;
 	}
 

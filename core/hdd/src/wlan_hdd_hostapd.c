@@ -700,9 +700,9 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	if (adapter_temp) {
 		if (!qdf_str_cmp(adapter_temp->dev->name, dev->name))
 			return 0;
-		hdd_err("%s adapter exist with same address " QDF_MAC_ADDR_STR,
+		hdd_err("%s adapter exist with same address " QDF_MAC_ADDR_FMT,
 			adapter_temp->dev->name,
-			QDF_MAC_ADDR_ARRAY(mac_addr.bytes));
+			QDF_MAC_ADDR_REF(mac_addr.bytes));
 		return -EINVAL;
 	}
 
@@ -721,8 +721,8 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 		return -EINVAL;
 	}
 
-	hdd_debug("Changing MAC to " QDF_MAC_ADDR_STR " of interface %s ",
-		  QDF_MAC_ADDR_ARRAY(mac_addr.bytes),
+	hdd_debug("Changing MAC to " QDF_MAC_ADDR_FMT " of interface %s ",
+		  QDF_MAC_ADDR_REF(mac_addr.bytes),
 		  dev->name);
 	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
@@ -2222,8 +2222,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		memcpy(msg.src_addr.sa_data,
 		       &sap_event->sapevt.sapStationMICFailureEvent.
 		       staMac, QDF_MAC_ADDR_SIZE);
-		hdd_debug("MIC MAC " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(msg.src_addr.sa_data));
+		hdd_debug("MIC MAC " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(msg.src_addr.sa_data));
 		if (sap_event->sapevt.sapStationMICFailureEvent.
 		    multicast == true)
 			msg.flags = IW_MICFAILURE_GROUP;
@@ -2256,8 +2256,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 	case eSAP_STA_REASSOC_EVENT:
 		event = &sap_event->sapevt.sapStationAssocReassocCompleteEvent;
 		if (eSAP_STATUS_FAILURE == event->status) {
-			hdd_info("assoc failure: " QDF_MAC_ADDR_STR,
-				 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			hdd_info("assoc failure: " QDF_MAC_ADDR_FMT,
+				 QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
 			break;
 		}
 
@@ -2266,8 +2266,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
 		       &event->staMac, QDF_MAC_ADDR_SIZE);
-		hdd_info("associated " QDF_MAC_ADDR_STR,
-			 QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+		hdd_info("associated " QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
 		if ((eCSR_ENCRYPT_TYPE_NONE == ap_ctx->encryption_type) ||
@@ -2288,8 +2288,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					QDF_MAC_ADDR_STR "", qdf_status,
-					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
 		} else {
 			qdf_status = hdd_softap_register_sta(
 						adapter,
@@ -2300,8 +2300,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 						event->wmmEnabled);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hdd_err("Failed to register STA %d "
-					QDF_MAC_ADDR_STR "", qdf_status,
-					QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+					QDF_MAC_ADDR_FMT, qdf_status,
+					QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
 		}
 
 		sta_id = event->staId;
@@ -2416,8 +2416,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(struct sap_event *sap_event,
 					     &cache_stainfo, true,
 					     STA_INFO_HOSTAPD_SAP_EVENT_CB);
 		}
-		hdd_nofl_info("SAP disassociated " QDF_MAC_ADDR_STR,
-			      QDF_MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+		hdd_nofl_info("SAP disassociated " QDF_MAC_ADDR_FMT,
+			      QDF_MAC_ADDR_REF(wrqu.addr.sa_data));
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -5687,8 +5687,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		  config->mfpCapable, config->mfpRequired);
 #endif
 
-	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_STR " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
-		       QDF_MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
+	hdd_nofl_debug("SAP mac:" QDF_MAC_ADDR_FMT " SSID: %.*s BCNINTV:%d Freq:%d freq_seg0:%d freq_seg1:%d ch_width:%d HW mode:%d privacy:%d akm:%d acs_mode:%d acs_dfs_mode %d dtim period:%d",
+		       QDF_MAC_ADDR_REF(adapter->mac_addr.bytes),
 		       config->SSIDinfo.ssid.length,
 		       config->SSIDinfo.ssid.ssId, (int)config->beacon_int,
 		       config->chan_freq, config->ch_params.mhz_freq_seg0,
@@ -6855,8 +6855,8 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 
 	hdd_for_each_sta_ref_safe(adapter->sta_info_list, sta_info, tmp,
 				  STA_INFO_SAP_INDICATE_DISCONNECT_FOR_STA) {
-		hdd_debug("sta_mac: " QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(sta_info->sta_mac.bytes));
+		hdd_debug("sta_mac: " QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(sta_info->sta_mac.bytes));
 
 		if (qdf_is_macaddr_broadcast(&sta_info->sta_mac)) {
 			hdd_softap_deregister_sta(adapter, &sta_info);
