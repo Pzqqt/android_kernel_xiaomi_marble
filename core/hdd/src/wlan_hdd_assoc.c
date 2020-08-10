@@ -1988,6 +1988,14 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
+	/*
+	 * Reset hdd_reassoc_scenario to false here. After roaming in
+	 * 802.1x or WPA3 security, EAPOL is handled at supplicant and
+	 * the hdd_reassoc_scenario flag will not be reset if disconnection
+	 * happens before EAP/EAPOL at supplicant is complete.
+	 */
+	sta_ctx->hdd_reassoc_scenario = false;
+
 	/* Unblock anyone waiting for disconnect to complete */
 	complete(&adapter->disconnect_comp_var);
 
