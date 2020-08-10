@@ -58,6 +58,10 @@
 #define QCA_WIFI_SUPPORT_SRNG
 #endif
 
+#ifdef QCA_WIFI_SUPPORT_SRNG
+#include <hal_api.h>
+#endif
+
 /* Forward references */
 QDF_STATUS hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 
@@ -1018,11 +1022,14 @@ static QDF_STATUS ce_alloc_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 						scn->ipa_ce_ring->vaddr;
 	} else {
 		ce_ring->base_addr_owner_space_unaligned =
-			qdf_mem_alloc_consistent(scn->qdf_dev,
-						 scn->qdf_dev->dev,
-						 (nentries * desc_size +
-						 CE_DESC_RING_ALIGN),
-						 base_addr);
+			hif_mem_alloc_consistent_unaligned
+					(scn,
+					 (nentries * desc_size +
+					  CE_DESC_RING_ALIGN),
+					 base_addr,
+					 ce_ring->hal_ring_type,
+					 &ce_ring->is_ring_prealloc);
+
 		if (!ce_ring->base_addr_owner_space_unaligned) {
 			HIF_ERROR("%s: Failed to allocate DMA memory for ce ring id : %u",
 				  __func__, CE_id);
@@ -1053,10 +1060,12 @@ static void ce_free_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 		}
 		ce_ring->base_addr_owner_space_unaligned = NULL;
 	} else {
-		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
-			ce_ring->nentries * desc_size + CE_DESC_RING_ALIGN,
-			ce_ring->base_addr_owner_space_unaligned,
-			ce_ring->base_addr_CE_space, 0);
+		hif_mem_free_consistent_unaligned
+			(scn,
+			 ce_ring->nentries * desc_size + CE_DESC_RING_ALIGN,
+			 ce_ring->base_addr_owner_space_unaligned,
+			 ce_ring->base_addr_CE_space, 0,
+			 ce_ring->is_ring_prealloc);
 		ce_ring->base_addr_owner_space_unaligned = NULL;
 	}
 }
@@ -1067,9 +1076,14 @@ static QDF_STATUS ce_alloc_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 				     unsigned int nentries, uint32_t desc_size)
 {
 	ce_ring->base_addr_owner_space_unaligned =
-		qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+			hif_mem_alloc_consistent_unaligned
+					(scn,
 					 (nentries * desc_size +
-					 CE_DESC_RING_ALIGN), base_addr);
+					  CE_DESC_RING_ALIGN),
+					 base_addr,
+					 ce_ring->hal_ring_type,
+					 &ce_ring->is_ring_prealloc);
+
 	if (!ce_ring->base_addr_owner_space_unaligned) {
 		HIF_ERROR("%s: Failed to allocate DMA memory for ce ring id : %u",
 			  __func__, CE_id);
@@ -1081,10 +1095,12 @@ static QDF_STATUS ce_alloc_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 static void ce_free_desc_ring(struct hif_softc *scn, unsigned int CE_id,
 			      struct CE_ring_state *ce_ring, uint32_t desc_size)
 {
-	qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
-		ce_ring->nentries * desc_size + CE_DESC_RING_ALIGN,
-		ce_ring->base_addr_owner_space_unaligned,
-		ce_ring->base_addr_CE_space, 0);
+	hif_mem_free_consistent_unaligned
+		(scn,
+		 ce_ring->nentries * desc_size + CE_DESC_RING_ALIGN,
+		 ce_ring->base_addr_owner_space_unaligned,
+		 ce_ring->base_addr_CE_space, 0,
+		 ce_ring->is_ring_prealloc);
 	ce_ring->base_addr_owner_space_unaligned = NULL;
 }
 #endif /* IPA_OFFLOAD */
@@ -1184,7 +1200,26 @@ static inline uint32_t ce_get_desc_size(struct hif_softc *scn,
 	return hif_state->ce_services->ce_get_desc_size(ring_type);
 }
 
-
+#ifdef QCA_WIFI_SUPPORT_SRNG
+static inline int32_t ce_ring_type_to_hal_ring_type(uint32_t ce_ring_type)
+{
+	switch (ce_ring_type) {
+	case CE_RING_SRC:
+		return CE_SRC;
+	case CE_RING_DEST:
+		return CE_DST;
+	case CE_RING_STATUS:
+		return CE_DST_STATUS;
+	default:
+		return -EINVAL;
+	}
+}
+#else
+static int32_t ce_ring_type_to_hal_ring_type(uint32_t ce_ring_type)
+{
+	return 0;
+}
+#endif
 static struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
 		uint8_t ring_type, uint32_t nentries)
 {
@@ -1209,6 +1244,7 @@ static struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
 	ce_ring->low_water_mark_nentries = 0;
 	ce_ring->high_water_mark_nentries = nentries;
 	ce_ring->per_transfer_context = (void **)ptr;
+	ce_ring->hal_ring_type = ce_ring_type_to_hal_ring_type(ring_type);
 
 	desc_size = ce_get_desc_size(scn, ring_type);
 

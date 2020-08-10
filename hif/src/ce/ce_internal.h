@@ -89,6 +89,12 @@ struct CE_ring_state {
 	unsigned int high_water_mark_nentries;
 	void *srng_ctx;
 	void **per_transfer_context;
+
+	/* HAL CE ring type */
+	uint32_t hal_ring_type;
+	/* ring memory prealloc */
+	uint8_t is_ring_prealloc;
+
 	OS_DMA_MEM_CONTEXT(ce_dmacontext); /* OS Specific DMA context */
 };
 

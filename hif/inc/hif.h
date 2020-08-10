@@ -583,6 +583,8 @@ struct htc_callbacks {
  * @is_load_unload_in_progress: Query if driver state Load/Unload in Progress
  * @is_driver_unloading: Query if driver is unloading.
  * @get_bandwidth_level: Query current bandwidth level for the driver
+ * @prealloc_get_consistent_mem_unligned: get prealloc unaligned consistent mem
+ * @prealloc_put_consistent_mem_unligned: put unaligned consistent mem to pool
  * This Structure provides callback pointer for HIF to query hdd for driver
  * states.
  */
@@ -594,6 +596,10 @@ struct hif_driver_state_callbacks {
 	bool (*is_driver_unloading)(void *context);
 	bool (*is_target_ready)(void *context);
 	int (*get_bandwidth_level)(void *context);
+	void *(*prealloc_get_consistent_mem_unaligned)(qdf_size_t size,
+						       qdf_dma_addr_t *paddr,
+						       uint32_t ring_type);
+	void (*prealloc_put_consistent_mem_unaligned)(void *vaddr);
 };
 
 /* This API detaches the HTC layer from the HIF device */
