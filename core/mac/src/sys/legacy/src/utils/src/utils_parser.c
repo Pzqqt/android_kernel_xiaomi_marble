@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -650,35 +650,35 @@ void convert_wmm_schedule(struct mac_context *mac,
 	pOld->specInterval = pNew->spec_interval;
 }
 
-void convert_qos_mapset_frame(struct mac_context *mac, struct qos_map_set *Qos,
-			      tDot11fIEQosMapSet *dot11fIE)
+void convert_qos_mapset_frame(struct mac_context *mac, struct qos_map_set *qos,
+			      tDot11fIEQosMapSet *dot11f_ie)
 {
 	uint8_t i, j = 0;
-	uint8_t qos_dscp_sz, dot11_dscp_sz;
+	uint8_t dot11_dscp_exception_sz;
 
-	qos_dscp_sz = (sizeof(Qos->dscp_exceptions)/2);
-	dot11_dscp_sz = sizeof(dot11fIE->dscp_exceptions);
-	if (dot11fIE->num_dscp_exceptions > QOS_MAP_LEN_MAX)
-		dot11fIE->num_dscp_exceptions = QOS_MAP_LEN_MAX;
-	if (dot11fIE->num_dscp_exceptions < QOS_MAP_LEN_MIN)
+	if (dot11f_ie->num_dscp_exceptions < DOT11F_IE_QOSMAPSET_MIN_LEN ||
+	    dot11f_ie->num_dscp_exceptions % 2) {
+		pe_debug("Invalid num_dscp_exceptions %d",
+			 dot11f_ie->num_dscp_exceptions);
 		return;
-	Qos->num_dscp_exceptions =
-		(dot11fIE->num_dscp_exceptions - QOS_MAP_LEN_MIN) / 2;
-
-	for (i = 0;
-			i < Qos->num_dscp_exceptions &&
-			i < qos_dscp_sz && j < dot11_dscp_sz;
-			i++) {
-		Qos->dscp_exceptions[i][0] = dot11fIE->dscp_exceptions[j];
-		j++;
-		Qos->dscp_exceptions[i][1] = dot11fIE->dscp_exceptions[j];
-		j++;
 	}
-	for (i = 0; i < 8 && j < dot11_dscp_sz; i++) {
-		Qos->dscp_range[i][0] = dot11fIE->dscp_exceptions[j];
-		j++;
-		Qos->dscp_range[i][1] = dot11fIE->dscp_exceptions[j];
-		j++;
+
+	dot11_dscp_exception_sz = dot11f_ie->num_dscp_exceptions -
+				  DOT11F_IE_QOSMAPSET_MIN_LEN;
+	qos->num_dscp_exceptions = dot11_dscp_exception_sz / 2;
+	if (qos->num_dscp_exceptions > QOS_MAP_MAX_EX)
+		qos->num_dscp_exceptions = QOS_MAP_MAX_EX;
+
+	for (i = 0; i < qos->num_dscp_exceptions &&
+	     j < dot11_dscp_exception_sz - 1; i++) {
+		qos->dscp_exceptions[i][0] = dot11f_ie->dscp_exceptions[j++];
+		qos->dscp_exceptions[i][1] = dot11f_ie->dscp_exceptions[j++];
+	}
+
+	for (i = 0; i < QOS_MAP_RANGE_NUM &&
+	     j < dot11f_ie->num_dscp_exceptions - 1; i++) {
+		qos->dscp_range[i][0] = dot11f_ie->dscp_exceptions[j++];
+		qos->dscp_range[i][1] = dot11f_ie->dscp_exceptions[j++];
 	}
 }
 

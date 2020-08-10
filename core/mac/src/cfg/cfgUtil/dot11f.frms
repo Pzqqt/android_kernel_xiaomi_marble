@@ -156,6 +156,8 @@ const ANI_WDS_INFO_MAX_LENGTH        =  64;
 const SIR_MAC_MAX_NUMBER_OF_RATES    =  12;
 const HT_MAX_SUPPORTED_MCS_SET       =  16;
 const MAX_SUPPORTED_NEIGHBOR_RPT     =  15;
+const MAX_QOS_DSCP_DATA_LEN          =  58;
+const QOS_DSCP_RANGE_LEN             =  16;
 
 /////////////////////////////////////////////////////////////////////////////
 //                  Wi-Fi Protected Setup TLV Identifiers                  //
@@ -2585,7 +2587,7 @@ IE OperatingMode (EID_OPERATING_MODE)
 
 IE QosMapSet (EID_QOS_MAP_SET)
 {
-    dscp_exceptions[0..60];
+    dscp_exceptions[QOS_DSCP_RANGE_LEN..MAX_QOS_DSCP_DATA_LEN];
 }
 
 CONTAINERIE RICDataDesc
