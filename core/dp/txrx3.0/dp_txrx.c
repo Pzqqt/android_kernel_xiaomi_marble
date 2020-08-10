@@ -24,7 +24,8 @@
 #include <cdp_txrx_misc.h>
 #include <dp_tx_desc.h>
 #include <dp_rx.h>
-
+#include <ce_api.h>
+#include <ce_internal.h>
 
 QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, uint8_t pdev_id,
 			struct dp_txrx_config *config)
@@ -193,6 +194,23 @@ struct dp_multi_page_prealloc {
 	struct qdf_mem_multi_page_t pages;
 };
 
+/**
+ * struct dp_consistent_prealloc_unaligned - element representing DP pre-alloc
+					     unaligned memory
+ * @ring_type: HAL ring type
+ * @size: size of pre-alloc memory
+ * @in_use: whether this element is in use (occupied)
+ * @va_unaligned: unaligned virtual address
+ * @pa_unaligned: unaligned physical address
+ */
+struct dp_consistent_prealloc_unaligned {
+	enum hal_ring_type ring_type;
+	uint32_t size;
+	bool in_use;
+	void *va_unaligned;
+	qdf_dma_addr_t pa_unaligned;
+};
+
 static struct  dp_consistent_prealloc g_dp_consistent_allocs[] = {
 	/* 5 REO DST rings */
 	{REO_DST, (sizeof(struct reo_destination_ring)) * REO_DST_RING_SIZE, 0, NULL, NULL, 0, 0},
@@ -270,7 +288,7 @@ static struct  dp_multi_page_prealloc g_dp_multi_page_allocs[] = {
 	{DP_TX_TSO_NUM_SEG_TYPE, TX_TSO_NUM_SEG_DESC_SIZE, DP_TX_DESC_POOL_SIZE, 0, CACHEABLE, { 0 } },
 	{DP_TX_TSO_NUM_SEG_TYPE, TX_TSO_NUM_SEG_DESC_SIZE, DP_TX_DESC_POOL_SIZE, 0, CACHEABLE, { 0 } },
 
-	/* DP RX DESCs pools */
+	/* DP RX DESCs BUF pools */
 	{DP_RX_DESC_BUF_TYPE, sizeof(union dp_rx_desc_list_elem_t),
 	 WLAN_CFG_RX_SW_DESC_WEIGHT_SIZE * WLAN_CFG_RXDMA_REFILL_RING_SIZE, 0, CACHEABLE, { 0 } },
 
@@ -288,11 +306,40 @@ static struct  dp_multi_page_prealloc g_dp_multi_page_allocs[] = {
 
 };
 
+static struct dp_consistent_prealloc_unaligned
+		g_dp_consistent_unaligned_allocs[] = {
+	/* CE-0 */
+	{CE_SRC, (sizeof(struct ce_srng_src_desc) * 16 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	/* CE-1 */
+	{CE_DST, (sizeof(struct ce_srng_dest_desc) * 512 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	{CE_DST_STATUS, (sizeof(struct ce_srng_dest_status_desc) * 512
+	 + CE_DESC_RING_ALIGN), false, NULL, 0},
+	/* CE-2 */
+	{CE_DST, (sizeof(struct ce_srng_dest_desc) * 32 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	{CE_DST_STATUS, (sizeof(struct ce_srng_dest_status_desc) * 32
+	 + CE_DESC_RING_ALIGN), false, NULL, 0},
+	/* CE-3 */
+	{CE_SRC, (sizeof(struct ce_srng_src_desc) * 32 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	/* CE-4 */
+	{CE_SRC, (sizeof(struct ce_srng_src_desc) * 256 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	/* CE-5 */
+	{CE_DST, (sizeof(struct ce_srng_dest_desc) * 512 + CE_DESC_RING_ALIGN),
+	 false, NULL, 0},
+	{CE_DST_STATUS, (sizeof(struct ce_srng_dest_status_desc) * 512
+	 + CE_DESC_RING_ALIGN), false, NULL, 0},
+};
+
 void dp_prealloc_deinit(void)
 {
 	int i;
 	struct dp_consistent_prealloc *p;
 	struct dp_multi_page_prealloc *mp;
+	struct dp_consistent_prealloc_unaligned *up;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_ctx) {
@@ -307,8 +354,9 @@ void dp_prealloc_deinit(void)
 			dp_warn("i %d: consistent_mem in use while free", i);
 
 		if (p->va_aligned) {
-			dp_debug("i %d: va aligned %pK pa aligned %llx size %d",
-				i, p->va_aligned, p->pa_aligned, p->size);
+			dp_debug("i %d: va aligned %pK pa aligned %pK size %d",
+				 i, p->va_aligned, (void *)p->pa_aligned,
+				 p->size);
 			qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 						p->size,
 						p->va_unaligned,
@@ -334,6 +382,24 @@ void dp_prealloc_deinit(void)
 			qdf_mem_zero(mp, sizeof(*mp));
 		}
 	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs); i++) {
+		up = &g_dp_consistent_unaligned_allocs[i];
+
+		if (qdf_unlikely(up->in_use))
+			dp_info("i %d: unaligned mem in use while free", i);
+
+		if (up->va_unaligned) {
+			dp_info("i %d: va unalign %pK pa unalign %pK size %d",
+				i, up->va_unaligned,
+				(void *)up->pa_unaligned, up->size);
+			qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
+						up->size,
+						up->va_unaligned,
+						up->pa_unaligned, 0);
+			qdf_mem_zero(up, sizeof(*up));
+		}
+	}
 }
 
 QDF_STATUS dp_prealloc_init(void)
@@ -341,6 +407,7 @@ QDF_STATUS dp_prealloc_init(void)
 	int i;
 	struct dp_consistent_prealloc *p;
 	struct dp_multi_page_prealloc *mp;
+	struct dp_consistent_prealloc_unaligned *up;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_ctx) {
@@ -359,14 +426,13 @@ QDF_STATUS dp_prealloc_init(void)
 							 &p->pa_unaligned,
 							 &p->pa_aligned,
 							 DP_RING_BASE_ALIGN);
-		if (!p->va_unaligned) {
+		if (qdf_unlikely(!p->va_unaligned)) {
 			dp_warn("i %d: unable to preallocate %d bytes memory!",
 				i, p->size);
 			break;
 		}
-
-		dp_debug("i %d: va aligned %pK pa aligned %llx size %d", i,
-			p->va_aligned, p->pa_aligned, p->size);
+		dp_debug("i %d: va aligned %pK pa aligned %pK size %d",
+			 i, p->va_aligned, (void *)p->pa_aligned, p->size);
 	}
 
 	if (i != QDF_ARRAY_SIZE(g_dp_consistent_allocs)) {
@@ -396,6 +462,32 @@ QDF_STATUS dp_prealloc_init(void)
 
 	if (i != QDF_ARRAY_SIZE(g_dp_multi_page_allocs)) {
 		dp_err("unable to allocate multi-pages memory!");
+		goto deinit;
+	}
+
+	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs); i++) {
+		up = &g_dp_consistent_unaligned_allocs[i];
+		up->in_use = 0;
+		up->va_unaligned = qdf_mem_alloc_consistent(qdf_ctx,
+							    qdf_ctx->dev,
+							    up->size,
+							    &up->pa_unaligned);
+		if (qdf_unlikely(!up->va_unaligned)) {
+			dp_warn("i %d: fail to prealloc unaligned %d bytes!",
+				i, up->size);
+			break;
+		}
+		dp_info("i %d: va unalign %pK pa unalign %pK size %d",
+			i, up->va_unaligned,
+			(void *)up->pa_unaligned, up->size);
+	}
+
+	if (i != QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs)) {
+		dp_info("unable to allocate unaligned memory!");
+		/*
+		 * Only if unaligned memory prealloc fail, is deinit
+		 * necessary for all other DP srng/multi-pages memory?
+		 */
 		goto deinit;
 	}
 
@@ -516,11 +608,55 @@ void dp_prealloc_put_multi_pages(uint32_t desc_type,
 		}
 	}
 
-	if (!mp_found)
+	if (qdf_unlikely(!mp_found))
 		dp_warn("Not prealloc pages %pK desc_type %d cacheable_pages %pK dma_pages %pK",
 			pages,
 			desc_type,
 			pages->cacheable_pages,
 			pages->dma_pages);
+}
+
+void *dp_prealloc_get_consistent_mem_unaligned(size_t size,
+					       qdf_dma_addr_t *base_addr,
+					       uint32_t ring_type)
+{
+	int i;
+	struct dp_consistent_prealloc_unaligned *up;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs); i++) {
+		up = &g_dp_consistent_unaligned_allocs[i];
+
+		if (ring_type == up->ring_type && size == up->size &&
+		    up->va_unaligned && !up->in_use) {
+			up->in_use = true;
+			*base_addr = up->pa_unaligned;
+			dp_info("i %d: va unalign %pK pa unalign %pK size %d",
+				i, up->va_unaligned,
+				(void *)up->pa_unaligned, up->size);
+			return up->va_unaligned;
+		}
+	}
+
+	return NULL;
+}
+
+void dp_prealloc_put_consistent_mem_unaligned(void *va_unaligned)
+{
+	int i;
+	struct dp_consistent_prealloc_unaligned *up;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs); i++) {
+		up = &g_dp_consistent_unaligned_allocs[i];
+
+		if (va_unaligned == up->va_unaligned) {
+			dp_info("index %d, returned", i);
+			up->in_use = false;
+			qdf_mem_zero(up->va_unaligned, up->size);
+			break;
+		}
+	}
+
+	if (i == QDF_ARRAY_SIZE(g_dp_consistent_unaligned_allocs))
+		dp_err("unable to find vaddr %pK", va_unaligned);
 }
 #endif

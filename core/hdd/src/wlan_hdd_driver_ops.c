@@ -95,6 +95,55 @@ static int hdd_get_bandwidth_level(void *data)
 	return ret;
 }
 
+#ifdef DP_MEM_PRE_ALLOC
+
+/**
+ * hdd_get_consistent_mem_unaligned() - API to get consistent unaligned mem
+ * @size: Size of memory required
+ * @paddr: Pointer to paddr to be filled in by API
+ * @ring_type: Pointer to ring type for which consistent memory is needed
+ *
+ * Return: Virtual address of consistent memory on success, else null
+ */
+static
+void *hdd_get_consistent_mem_unaligned(size_t size,
+				       qdf_dma_addr_t *paddr,
+				       uint32_t ring_type)
+{
+	return dp_prealloc_get_consistent_mem_unaligned(size, paddr,
+							ring_type);
+}
+
+/**
+ * hdd_put_consistent_mem_unaligned() - API to put consistent unaligned mem
+ * @vaddr: Virtual address of memory
+ *
+ * Return: None
+ */
+static
+void hdd_put_consistent_mem_unaligned(void *vaddr)
+{
+	dp_prealloc_put_consistent_mem_unaligned(vaddr);
+}
+
+#else
+static
+void *hdd_get_consistent_mem_unaligned(size_t size,
+				       qdf_dma_addr_t *paddr,
+				       uint32_t ring_type)
+{
+	hdd_err_rl("prealloc not support!");
+
+	return NULL;
+}
+
+static
+void hdd_put_consistent_mem_unaligned(void *vaddr)
+{
+	hdd_err_rl("prealloc not support!");
+}
+#endif
+
 /**
  * hdd_set_recovery_in_progress() - API to set recovery in progress
  * @data: Context
@@ -172,6 +221,10 @@ static void hdd_hif_init_driver_state_callbacks(void *data,
 	cbk->is_driver_unloading = hdd_is_driver_unloading;
 	cbk->is_target_ready = hdd_is_target_ready;
 	cbk->get_bandwidth_level = hdd_get_bandwidth_level;
+	cbk->prealloc_get_consistent_mem_unaligned =
+		hdd_get_consistent_mem_unaligned;
+	cbk->prealloc_put_consistent_mem_unaligned =
+		hdd_put_consistent_mem_unaligned;
 }
 
 #ifdef FORCE_WAKE

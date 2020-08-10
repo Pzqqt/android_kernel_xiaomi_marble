@@ -527,6 +527,28 @@ void dp_prealloc_get_multi_pages(uint32_t src_type,
 void dp_prealloc_put_multi_pages(uint32_t src_type,
 				 struct qdf_mem_multi_page_t *pages);
 
+/**
+ * dp_prealloc_get_consistent_mem_unaligned() - gets pre-alloc unaligned
+						consistent memory
+ * @size: total memory size
+ * @base_addr: pointer to dma address
+ * @ring_type: HAL ring type that requires memory
+ *
+ * Return: memory virtual address pointer, NULL if fail
+ */
+void *dp_prealloc_get_consistent_mem_unaligned(size_t size,
+					       qdf_dma_addr_t *base_addr,
+					       uint32_t ring_type);
+
+/**
+ * dp_prealloc_put_consistent_mem_unaligned() - puts back pre-alloc unaligned
+						consistent memory
+ * @va_unaligned: memory virtual address pointer
+ *
+ * Return: None
+ */
+void dp_prealloc_put_consistent_mem_unaligned(void *va_unaligned);
+
 #else
 static inline QDF_STATUS dp_prealloc_init(void) { return QDF_STATUS_SUCCESS; }
 
