@@ -287,6 +287,21 @@ QDF_STATUS ucfg_fwol_get_ani_enabled(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS ucfg_fwol_get_ilp_config(struct wlan_objmgr_psoc *psoc,
+					   bool *enable_ilp)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_ilp = fwol_obj->cfg.enable_ilp;
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS ucfg_get_enable_rts_sifsbursting(struct wlan_objmgr_psoc *psoc,
 					    bool *enable_rts_sifsbursting)
 {
@@ -962,7 +977,18 @@ QDF_STATUS ucfg_fwol_send_dscp_up_map_to_fw(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS ucfg_fwol_configure_global_params(struct wlan_objmgr_psoc *psoc,
 					     struct wlan_objmgr_pdev *pdev)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	bool value;
+
+	status = ucfg_fwol_get_ilp_config(psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	status = fwol_set_ilp_config(pdev, value);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	return status;
 }
 
 QDF_STATUS ucfg_fwol_configure_vdev_params(struct wlan_objmgr_psoc *psoc,

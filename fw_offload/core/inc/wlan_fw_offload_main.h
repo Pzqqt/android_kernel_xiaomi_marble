@@ -205,6 +205,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @dhcp_max_num_clients: Max number of DHCP client supported
  * @dwelltime_params: adaptive dwell time parameters
  * @ocl_cfg: OCL mode configuration
+ * @enable_ilp: ILP HW block configuration
  */
 struct wlan_fwol_cfg {
 	/* Add CFG and INI items here */
@@ -256,6 +257,7 @@ struct wlan_fwol_cfg {
 #endif
 	struct adaptive_dwelltime_params dwelltime_params;
 	uint32_t ocl_cfg;
+	bool enable_ilp;
 };
 
 /**
@@ -367,4 +369,14 @@ fwol_init_adapt_dwelltime_in_cfg(
 QDF_STATUS
 fwol_set_adaptive_dwelltime_config(
 			struct adaptive_dwelltime_params *dwelltime_params);
+
+/**
+ * fwol_set_ilp_config() - API to set ILP HW block config
+ * @pdev: pointer to the pdev object
+ * @enable_ilp: enable/disable config for ILP
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS fwol_set_ilp_config(struct wlan_objmgr_pdev *pdev,
+			       bool enable_ilp);
 #endif
