@@ -3714,6 +3714,20 @@ out:
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+static inline
+void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
+{
+	wmi_set_qmi_stats(get_wmi_unified_hdl_from_psoc(hdd_ctx->psoc),
+			  hdd_ctx->config->is_qmi_stats_enabled);
+}
+#else
+static inline
+void hdd_set_qmi_stats_enabled(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -3833,6 +3847,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			ret = qdf_status_to_os_return(status);
 			goto psoc_close;
 		}
+
+		hdd_set_qmi_stats_enabled(hdd_ctx);
 
 		hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 
@@ -11402,6 +11418,20 @@ static void hdd_init_runtime_pm(struct hdd_config *config,
 }
 #endif
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+static void hdd_init_qmi_stats(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+{
+	config->is_qmi_stats_enabled = cfg_get(psoc, CFG_ENABLE_QMI_STATS);
+}
+#else
+static void hdd_init_qmi_stats(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+
+{
+}
+#endif
+
 #ifdef FEATURE_WLAN_DYNAMIC_CVM
 static void hdd_init_vc_mode_cfg_bitmap(struct hdd_config *config,
 					struct wlan_objmgr_psoc *psoc)
@@ -11571,6 +11601,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_init_dhcp_server_ip(hdd_ctx);
 	hdd_dp_cfg_update(psoc, hdd_ctx);
 	hdd_sar_cfg_update(config, psoc);
+	hdd_init_qmi_stats(config, psoc);
 }
 
 struct hdd_context *hdd_context_create(struct device *dev)

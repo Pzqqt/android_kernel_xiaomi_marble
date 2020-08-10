@@ -214,6 +214,9 @@ struct hdd_config {
 #ifdef FEATURE_RUNTIME_PM
 	uint8_t runtime_pm;
 #endif
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+	bool is_qmi_stats_enabled;
+#endif
 	uint8_t inform_bss_rssi_raw;
 
 	bool mac_provision;

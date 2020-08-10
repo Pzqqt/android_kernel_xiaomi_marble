@@ -1744,6 +1744,61 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+/**
+ * wlan_hdd_qmi_get_sync_resume() - Get operation to trigger RTPM
+ * sync resume without WoW exit
+ * @hdd_ctx: hdd context
+ * @dev: device context
+ *
+ * Returns: 0 for success, non-zero for failure
+ */
+static inline
+int wlan_hdd_qmi_get_sync_resume(struct hdd_context *hdd_ctx,
+				 struct device *dev)
+{
+	if (!hdd_ctx->config->is_qmi_stats_enabled) {
+		hdd_debug("periodic stats over qmi is disabled");
+		return 0;
+	}
+
+	return pld_qmi_send_get(dev);
+}
+
+/**
+ * wlan_hdd_qmi_put_suspend() - Put operation to trigger RTPM suspend
+ * without WoW entry
+ * @hdd_ctx: hdd context
+ * @dev: device context
+ *
+ * Returns: 0 for success, non-zero for failure
+ */
+static inline
+int wlan_hdd_qmi_put_suspend(struct hdd_context *hdd_ctx,
+			     struct device *dev)
+{
+	if (!hdd_ctx->config->is_qmi_stats_enabled) {
+		hdd_debug("periodic stats over qmi is disabled");
+		return 0;
+	}
+
+	return pld_qmi_send_put(dev);
+}
+#else
+static inline
+int wlan_hdd_qmi_get_sync_resume(struct hdd_context *hdd_ctx,
+				 struct device *dev)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_qmi_put_suspend(struct hdd_context *hdd_ctx,
+					   struct device *dev)
+{
+	return 0;
+}
+#endif /* end if of WLAN_FEATURE_WMI_SEND_RECV_QMI */
+
 /**
  * wlan_hdd_cfg80211_ll_stats_get() - get ll stats
  * @wiphy: Pointer to wiphy
@@ -1758,9 +1813,14 @@ int wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 				   const void *data,
 				   int data_len)
 {
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct osif_vdev_sync *vdev_sync;
 	int errno;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != errno)
+		return -EINVAL;
 
 	if (!qdf_ctx)
 		return -EINVAL;
@@ -1769,13 +1829,13 @@ int wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	if (errno)
 		return errno;
 
-	errno = pld_qmi_send_get(qdf_ctx->dev);
+	errno = wlan_hdd_qmi_get_sync_resume(hdd_ctx, qdf_ctx->dev);
 	if (errno)
 		goto end;
 
 	errno = __wlan_hdd_cfg80211_ll_stats_get(wiphy, wdev, data, data_len);
 
-	pld_qmi_send_put(qdf_ctx->dev);
+	wlan_hdd_qmi_put_suspend(hdd_ctx, qdf_ctx->dev);
 
 end:
 	osif_vdev_sync_op_stop(vdev_sync);
@@ -5083,13 +5143,13 @@ static int _wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (!qdf_ctx)
 		return -EINVAL;
 
-	errno = pld_qmi_send_get(qdf_ctx->dev);
+	errno = wlan_hdd_qmi_get_sync_resume(hdd_ctx, qdf_ctx->dev);
 	if (errno)
 		return errno;
 
 	errno = __wlan_hdd_cfg80211_get_station(wiphy, dev, mac, sinfo);
 
-	pld_qmi_send_put(qdf_ctx->dev);
+	wlan_hdd_qmi_put_suspend(hdd_ctx, qdf_ctx->dev);
 
 	return errno;
 }

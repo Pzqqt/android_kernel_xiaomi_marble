@@ -514,6 +514,41 @@ enum hdd_runtime_pm_cfg {
 #define CFG_ENABLE_RUNTIME_PM_ALL
 #endif
 
+#ifdef WLAN_FEATURE_WMI_SEND_RECV_QMI
+/*
+ * <ini>
+ * enable_qmi_stats - enable periodic stats over qmi
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable periodic stats over qmi if DUT is
+ * in RTPM suspended state to avoid WoW enter/exit for every stats
+ * request.
+ *
+ * 0: Periodic stats over QMI is disabled
+ * 1: Periodic stats over QMI is enabled
+ * Related: None
+ *
+ * Supported Feature: Power Save
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_QMI_STATS CFG_INI_UINT( \
+		"enable_qmi_stats", \
+		0, \
+		1, \
+		1, \
+		CFG_VALUE_OR_DEFAULT, \
+		"This ini is used to enable periodic stats over qmi")
+#define CFG_ENABLE_QMI_STATS_ALL \
+	CFG(CFG_ENABLE_QMI_STATS)
+#else
+#define CFG_ENABLE_QMI_STATS_ALL
+#endif
+
 /*
  * <ini>
  * gInformBssRssiRaw - Report rssi in cfg80211_inform_bss_frame
@@ -1614,6 +1649,7 @@ enum host_log_level {
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
+	CFG_ENABLE_QMI_STATS_ALL \
 	CFG_VC_MODE_BITMAP_ALL \
 	CFG_WLAN_AUTO_SHUTDOWN_ALL \
 	CFG_WLAN_LOGGING_SUPPORT_ALL \
