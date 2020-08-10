@@ -27,6 +27,49 @@
 #include "wlan_cm_public_struct.h"
 #endif
 
+#ifdef FEATURE_CM_ENABLE
+
+/**
+ * mlme_cm_ops: connection manager callbacks
+ * @mlme_cm_connect_complete_cb:       Connect done callback
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: connect response
+ *
+ * @mlme_cm_failed_candidate_cb:       Callback to indicate failed candidate
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: connect response
+ *
+ * @mlme_cm_update_conn_id_and_src_cb: Callback to update connect id and
+ *                                     source of the connect request
+ * @vdev: vdev pointer
+ * @Source: Source of the connect req
+ * @conn_id: Connect id
+ *
+ * @mlme_cm_disconnect_complete_cb:    Disconnect done callback
+ * @vdev: vdev pointer
+ * @cm_disconnect_rsp: Disconnect response
+ *
+ * @mlme_cm_disconnect_start_cb:       Disconnect start callback
+ * @vdev: vdev pointer
+ */
+struct mlme_cm_ops {
+	void (*mlme_cm_connect_complete_cb)(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_rsp *cm_conn_rsp);
+	void (*mlme_cm_failed_candidate_cb)(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_connect_rsp *cm_conn_rsp);
+	void (*mlme_cm_update_conn_id_and_src_cb)(
+						struct wlan_objmgr_vdev *vdev,
+						enum wlan_cm_source source,
+						uint64_t conn_id);
+	void (*mlme_cm_disconnect_complete_cb)(
+				struct wlan_objmgr_vdev *vdev,
+				struct wlan_cm_discon_rsp *cm_disconn_rsp);
+	void (*mlme_cm_disconnect_start_cb)(struct wlan_objmgr_vdev *vdev);
+};
+#endif
+
 /**
  * struct vdev_mlme_ext_ops - VDEV MLME legacy callbacks structure
  * @mlme_psoc_ext_hdl_create:        callback to invoke creation of legacy
@@ -457,6 +500,72 @@ QDF_STATUS mlme_cm_ops_ext_osif_disconnect(struct wlan_objmgr_vdev *vdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_cm_ext_vdev_down(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_cm_connect_complete() - Connect response
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: None
+ */
+void mlme_cm_connect_complete(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_cm_connect_rsp *cm_conn_rsp);
+
+/**
+ * mlme_cm_failed_candidate() - Failed Candidate indication
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: None
+ */
+void mlme_cm_failed_candidate(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_cm_connect_rsp *cm_conn_rsp);
+
+/**
+ * mlme_cm_update_conn_id_and_src() - Update connection id and source
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: None
+ */
+void mlme_cm_update_conn_id_and_src(struct wlan_objmgr_vdev *vdev,
+				    enum wlan_cm_source source,
+				    uint64_t cm_id);
+
+/**
+ * mlme_cm_disconnect_complete() - Disconnect response
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: None
+ */
+void mlme_cm_disconnect_complete(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_cm_discon_rsp *cm_disconn_rsp);
+
+/**
+ * mlme_cm_disconnect_start() - Disconnect start
+ * @vdev: vdev pointer
+ * @cm_conn_rsp: Connect response
+ *
+ * Return: None
+ */
+void mlme_cm_disconnect_start(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * typedef osif_cm_get_global_ops_cb() - Callback to get connection manager
+ * global ops
+ */
+typedef struct mlme_cm_ops *(*osif_cm_get_global_ops_cb)(void);
+
+/**
+ * mlme_set_osif_cm_cb() - Sets ops registration callback
+ * @cm_osif_ops:  Function pointer
+ *
+ * API to set ops registration call back
+ *
+ * Return: void
+ */
+void mlme_set_osif_cm_cb(osif_cm_get_global_ops_cb cm_osif_ops);
 
 #endif
 

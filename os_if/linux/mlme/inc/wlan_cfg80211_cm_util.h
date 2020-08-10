@@ -24,4 +24,11 @@
 #ifndef __WLAN_CFG80211_CM_UTIL_H
 #define __WLAN_CFG80211_CM_UTIL_H
 
+/**
+ * osif_cm_register_cb() - API to register connection manager
+ * callbacks.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS osif_cm_register_cb(void);
 #endif /* __WLAN_CFG80211_CM_UTIL_H */
