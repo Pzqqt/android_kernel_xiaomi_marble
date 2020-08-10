@@ -840,9 +840,6 @@ QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int);
 #define QDF_FULL_MAC_FMT "%pM"
 #define QDF_FULL_MAC_REF(a) (a)
 
-#define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
-#define QDF_MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
-
 #if defined(WLAN_TRACE_HIDE_MAC_ADDRESS)
 #define QDF_MAC_ADDR_FMT "%02x:**:**:**:%02x:%02x"
 
