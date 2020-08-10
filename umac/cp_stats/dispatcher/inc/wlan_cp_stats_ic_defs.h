@@ -300,6 +300,10 @@ struct pdev_ic_cp_stats {
  * @prob_req_drops: no of probe requests drops
  * @oob_probe_req_count: no of out of band probe requests
  * @wc_probe_req_drops: no of wildcard probe requests drops
+ * @cs_fils_frames_sent: fils discovery sent success count
+ * @cs_fils_frames_sent_fail: fils discovery sent success count
+ * @cs_tx_offload_prb_resp_succ_cnt: Offload probe response success count
+ * @cs_tx_offload_prb_resp_fail_cnt: Offload probe response fail count
  */
 struct vdev_80211_stats {
 	uint64_t cs_rx_wrongbss;
@@ -374,6 +378,8 @@ struct vdev_80211_stats {
 	uint64_t cs_wc_probe_req_drops;
 	uint64_t cs_fils_frames_sent;
 	uint64_t cs_fils_frames_sent_fail;
+	uint64_t cs_tx_offload_prb_resp_succ_cnt;
+	uint64_t cs_tx_offload_prb_resp_fail_cnt;
 };
 
 /**
