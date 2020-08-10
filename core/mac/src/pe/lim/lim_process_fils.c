@@ -61,7 +61,8 @@ static int lim_get_crypto_digest_len(uint8_t *type)
 		return SHA384_DIGEST_SIZE;
 	else if (!strcmp(type, HMAC_SHA256_CRYPTO_TYPE))
 		return SHA256_DIGEST_SIZE;
-	return -EINVAL;
+
+	return 0;
 }
 
 /**
@@ -282,6 +283,11 @@ static QDF_STATUS lim_get_key_from_prf(uint8_t *type, uint8_t *secret,
 	uint16_t interation;
 	uint8_t crypto_digest_len = lim_get_crypto_digest_len(type);
 	uint8_t tmp_hash[SHA384_DIGEST_SIZE] = {0};
+
+	if (!crypto_digest_len) {
+		pe_err("Incorrect crypto length");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	addr[0] = count;
 	len[0] = sizeof(count);
