@@ -1643,10 +1643,10 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(struct mac_context *mac,
 	if (!pSession) {
 		return QDF_STATUS_E_FAILURE;
 	}
-	sme_debug("Current bssid::"QDF_MAC_ADDR_STR,
-		QDF_MAC_ADDR_ARRAY(pSession->pConnectBssDesc->bssId));
-	sme_debug("My bssid::"QDF_MAC_ADDR_STR" ch_freq %d",
-		QDF_MAC_ADDR_ARRAY(bssid.bytes), ch_freq);
+	sme_debug("Current bssid::"QDF_MAC_ADDR_FMT,
+		QDF_MAC_ADDR_REF(pSession->pConnectBssDesc->bssId));
+	sme_debug("My bssid::"QDF_MAC_ADDR_FMT" ch_freq %d",
+		QDF_MAC_ADDR_REF(bssid.bytes), ch_freq);
 
 	size = pSession->pConnectBssDesc->length +
 		sizeof(pSession->pConnectBssDesc->length);
@@ -1710,8 +1710,8 @@ csr_rso_save_ap_to_scan_cache(struct mac_context *mac,
 			bss_desc_ptr,
 			(sizeof(struct bss_description) + length));
 
-	sme_debug("LFR3:Add BSSID to scan cache" QDF_MAC_ADDR_STR,
-		QDF_MAC_ADDR_ARRAY(scan_res_ptr->Result.BssDescriptor.bssId));
+	sme_debug("LFR3:Add BSSID to scan cache" QDF_MAC_ADDR_FMT,
+		QDF_MAC_ADDR_REF(scan_res_ptr->Result.BssDescriptor.bssId));
 	csr_scan_add_result(mac, scan_res_ptr);
 	csr_free_scan_result_entry(mac, scan_res_ptr);
 	return QDF_STATUS_SUCCESS;
@@ -2219,8 +2219,9 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 				scan_entry->channel.chan_freq);
 	if (ap_channel_state == CHANNEL_STATE_DISABLE ||
 	    ap_channel_state == CHANNEL_STATE_INVALID) {
-		sme_err("BSS %pM channel %d invalid, not populating this BSSID",
-			scan_entry->bssid.bytes, scan_entry->channel.chan_freq);
+		sme_err("BSS "QDF_MAC_ADDR_FMT" channel %d invalid, not populating this BSSID",
+			QDF_MAC_ADDR_REF(scan_entry->bssid.bytes),
+			scan_entry->channel.chan_freq);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -2605,7 +2606,8 @@ static inline void csr_flush_bssid(struct mac_context *mac_ctx,
 		     bssid, QDF_MAC_ADDR_SIZE);
 
 	csr_flush_scan_results(mac_ctx, filter);
-	sme_debug("Removed BSS entry:%pM", bssid);
+	sme_debug("Removed BSS entry:"QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(bssid));
 	if (filter)
 		qdf_mem_free(filter);
 }

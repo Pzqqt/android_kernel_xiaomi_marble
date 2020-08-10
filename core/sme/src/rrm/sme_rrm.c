@@ -213,9 +213,9 @@ sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 				bss_desc, size);
 			tmp_bss_desc[i] =
 				beacon_rep->pBssDescription[i];
-			sme_debug("RRM Result Bssid = " QDF_MAC_ADDR_STR
+			sme_debug("RRM Result Bssid = " QDF_MAC_ADDR_FMT
 				  " freq= %d, rssi = -%d",
-				  QDF_MAC_ADDR_ARRAY(
+				  QDF_MAC_ADDR_REF(
 				  beacon_rep->pBssDescription[i]->bssId),
 				  beacon_rep->pBssDescription[i]->chan_freq,
 				  beacon_rep->pBssDescription[i]->rssi * (-1));
@@ -365,8 +365,8 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 				continue;
 			bcn_report->bcnRepBssInfo[j].ieLen = out_ie_len;
 
-			sme_debug("Bssid"QDF_MAC_ADDR_STR" Freq:%d Rssi:%d",
-				  QDF_MAC_ADDR_ARRAY(bss_desc->bssId),
+			sme_debug("Bssid"QDF_MAC_ADDR_FMT" Freq:%d Rssi:%d",
+				  QDF_MAC_ADDR_REF(bss_desc->bssId),
 				  bss_desc->chan_freq, (-1) * bss_desc->rssi);
 			bcn_report->numBss++;
 			if (++j >= SIR_BCN_REPORT_MAX_BSS_DESC)
@@ -802,8 +802,8 @@ QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx, uint8_t idx)
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
 	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("sme session ID not found for bssid= "QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(sme_rrm_ctx->sessionBssId.bytes));
+		sme_err("sme session ID not found for bssid= "QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(sme_rrm_ctx->sessionBssId.bytes));
 		status = QDF_STATUS_E_FAILURE;
 		goto send_ind;
 	}
@@ -1592,8 +1592,8 @@ static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
 			     sizeof(tSirNeighborBssDescription));
 
 		sme_debug("Received neighbor report with Neighbor BSSID: "
-			QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(
+			QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(
 			       neighbor_rpt->sNeighborBssDescription[i].bssId));
 
 		rrm_calculate_neighbor_ap_roam_score(mac, neighbor_rpt_desc);
@@ -1603,9 +1603,9 @@ static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
 					mac, neighbor_rpt_desc,
 					neighbor_rpt->measurement_idx);
 		} else {
-			sme_err("Roam score of BSSID  " QDF_MAC_ADDR_STR
+			sme_err("Roam score of BSSID  " QDF_MAC_ADDR_FMT
 				" is 0, Ignoring..",
-				QDF_MAC_ADDR_ARRAY(neighbor_rpt->
+				QDF_MAC_ADDR_REF(neighbor_rpt->
 					       sNeighborBssDescription[i].
 					       bssId));
 
