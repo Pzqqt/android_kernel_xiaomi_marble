@@ -3645,7 +3645,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 
 		if (!s_ppdu_info->done && !recv_ack_ba_done) {
 			if (time_delta < MAX_SCHED_STARVE) {
-				qdf_err("pdev[%d] ppdu_id[%d] sched_cmdid[%d] TLV_B[0x%x] TSF[%u] D[%d]",
+				dp_info("pdev[%d] ppdu_id[%d] sched_cmdid[%d] TLV_B[0x%x] TSF[%u] D[%d]",
 					pdev->pdev_id,
 					s_ppdu_info->ppdu_id,
 					s_ppdu_info->sched_cmdid,
@@ -3669,11 +3669,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		ppdu_desc->tlv_bitmap = s_ppdu_info->tlv_bitmap;
 
 		if (starved) {
-			qdf_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
-				ppdu_desc->frame_ctrl,
-				ppdu_desc->htt_frame_type,
-				ppdu_desc->tlv_bitmap,
-				ppdu_desc->user[0].completion_status);
+			dp_err("ppdu starved fc[0x%x] h_ftype[%d] tlv_bitmap[0x%x] cs[%d]\n",
+			       ppdu_desc->frame_ctrl,
+			       ppdu_desc->htt_frame_type,
+			       ppdu_desc->tlv_bitmap,
+			       ppdu_desc->user[0].completion_status);
 			starved = 0;
 		}
 
