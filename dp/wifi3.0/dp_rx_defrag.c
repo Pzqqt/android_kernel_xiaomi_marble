@@ -1632,6 +1632,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (tid >= DP_MAX_TIDS) {
 		dp_info("TID out of bounds: %d", tid);
 		qdf_assert_always(0);
+		goto discard_frag;
 	}
 
 	pdev = peer->vdev->pdev;
