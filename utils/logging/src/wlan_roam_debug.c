@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -247,9 +247,10 @@ void wlan_roam_debug_dump_table(void)
 
 		roam_debug("index = %5d timestamp = 0x%016llx delta ms = %-12u",
 			   i, dbg_rec->time, delta);
-		roam_debug("info = %-24s vdev_id = %-3d mac addr = %pM",
+		roam_debug("info = %-24s vdev_id = %-3d mac addr = "QDF_MAC_ADDR_FMT,
 			   wlan_roam_debug_string(dbg_rec->operation),
-			   (int8_t)dbg_rec->vdev_id, dbg_rec->mac_addr.bytes);
+			   (int8_t)dbg_rec->vdev_id,
+			   QDF_MAC_ADDR_REF(dbg_rec->mac_addr.bytes));
 		roam_debug("peer obj = 0x%pK peer_id = %-4d", dbg_rec->peer_obj,
 			   (int8_t)dbg_rec->peer_id);
 		roam_debug("arg1 = 0x%-8x arg2 = 0x%-8x", dbg_rec->arg1,
