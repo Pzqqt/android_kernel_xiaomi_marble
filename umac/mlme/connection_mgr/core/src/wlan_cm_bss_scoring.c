@@ -971,6 +971,29 @@ static void cm_list_insert_sorted(qdf_list_t *scan_list,
 		qdf_list_insert_back(scan_list, &scan_entry->node);
 }
 
+static bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
+				struct scan_cache_entry *entry)
+{
+	uint8_t reason;
+	uint8_t *mbo_oce;
+	bool check_assoc_disallowed;
+
+	mbo_oce = util_scan_entry_mbo_oce(entry);
+
+	check_assoc_disallowed =
+	   mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed;
+
+	if (check_assoc_disallowed &&
+	    wlan_parse_oce_assoc_disallowed_ie(mbo_oce, &reason)) {
+		mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, assoc disallowed set in MBO/OCE IE reason %d",
+				entry->bssid.bytes, entry->channel.chan_freq,
+				entry->rssi_raw, reason);
+		return false;
+	}
+
+	return true;
+}
+
 void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 				 struct pcl_freq_weight_list *pcl_lst,
 				 qdf_list_t *scan_list,
@@ -985,6 +1008,7 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 	struct psoc_phy_config *config;
 	enum cm_blacklist_action blacklist_action;
 	struct wlan_objmgr_psoc *psoc;
+	bool assoc_allowed;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
@@ -1023,8 +1047,15 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		scan_entry = qdf_container_of(cur_node, struct scan_cache_node,
 					      node);
 
-		blacklist_action =
-			wlan_blacklist_action_on_bssid(pdev, scan_entry->entry);
+		assoc_allowed = cm_is_assoc_allowed(mlme_psoc_obj,
+						    scan_entry->entry);
+
+		if (assoc_allowed)
+			blacklist_action = wlan_blacklist_action_on_bssid(pdev,
+							scan_entry->entry);
+		else
+			blacklist_action = CM_BLM_REMOVE;
+
 		if (blacklist_action == CM_BLM_NO_ACTION &&
 		    pcl_lst && pcl_lst->num_of_pcl_channels &&
 		    scan_entry->entry->rssi_raw > CM_PCL_RSSI_THRESHOLD &&
@@ -1059,12 +1090,14 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 				 scan_entry->entry->bssid.bytes);
 			return;
 		}
+
 		/*
-		 * If CM_BLM_REMOVE ie blacklisted then free the entry
-		 * else add back to the list sorted
+		 * If CM_BLM_REMOVE ie blacklisted or assoc not allowed then
+		 * free the entry else add back to the list sorted
 		 */
 		if (blacklist_action == CM_BLM_REMOVE) {
-			mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Blacklist, remove entry",
+			if (assoc_allowed)
+				mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Blacklist, remove entry",
 					scan_entry->entry->bssid.bytes,
 					scan_entry->entry->channel.chan_freq,
 					scan_entry->entry->rssi_raw);
@@ -1073,6 +1106,7 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		} else {
 			cm_list_insert_sorted(scan_list, scan_entry);
 		}
+
 		cur_node = next_node;
 		next_node = NULL;
 	}
@@ -1232,5 +1266,17 @@ void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_SCORING_BAND_WEIGHT_PER_IDX));
 	score_cfg->is_bssid_hint_priority =
 			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
+	score_cfg->check_assoc_disallowed = false;
 }
 
+void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
+					bool value)
+{
+	struct psoc_mlme_obj *mlme_psoc_obj;
+
+	mlme_psoc_obj = wlan_psoc_mlme_get_cmpt_obj(psoc);
+	if (!mlme_psoc_obj)
+		return;
+
+	mlme_psoc_obj->psoc_cfg.score_config.check_assoc_disallowed = value;
+}

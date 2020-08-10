@@ -124,6 +124,7 @@ struct per_slot_score {
  * @nss_weight_per_index: nss weight per index
  * @band_weight_per_index: band weight per index
  * @is_bssid_hint_priority: True if bssid_hint is given priority
+ * @check_assoc_disallowed: Should assoc be disallowed if MBO OCE IE indicate so
  */
 struct scoring_cfg {
 	struct weight_cfg weight_config;
@@ -134,6 +135,7 @@ struct scoring_cfg {
 	uint32_t nss_weight_per_index;
 	uint32_t band_weight_per_index;
 	bool is_bssid_hint_priority;
+	bool check_assoc_disallowed;
 };
 
 /**
@@ -197,4 +199,15 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
  */
 void wlan_cm_init_score_config(struct wlan_objmgr_psoc *psoc,
 			       struct scoring_cfg *score_cfg);
+
+/**
+ * wlan_cm_set_check_assoc_disallowed() - Set check assoc disallowed param
+ * @psoc: pointer to psoc object
+ * @value: value to be set
+ *
+ * Return: void
+ */
+void wlan_cm_set_check_assoc_disallowed(struct wlan_objmgr_psoc *psoc,
+					bool value);
+
 #endif
