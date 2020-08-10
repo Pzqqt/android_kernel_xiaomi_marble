@@ -921,9 +921,7 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 	tSirMacRadioMeasureReport *report = NULL;
 	tSirMacBeaconReport *beacon_report;
 	struct bss_description *bss_desc;
-	tpRRMReq curr_req =
-		mac_ctx->rrm.rrmPEContext.
-		pCurrentReq[beacon_xmit_ind->measurement_idx];
+	tpRRMReq curr_req;
 	struct pe_session *session_entry;
 	uint8_t session_id, counter;
 	uint8_t i, j;
@@ -941,6 +939,16 @@ rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (beacon_xmit_ind->measurement_idx >=
+	    QDF_ARRAY_SIZE(mac_ctx->rrm.rrmPEContext.pCurrentReq)) {
+		pe_err("Received measurement_idx is out of range: %u - %lu",
+		       beacon_xmit_ind->measurement_idx,
+		       QDF_ARRAY_SIZE(mac_ctx->rrm.rrmPEContext.pCurrentReq));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	curr_req = mac_ctx->rrm.rrmPEContext.
+		pCurrentReq[beacon_xmit_ind->measurement_idx];
 	if (!curr_req) {
 		pe_err("Received report xmit while there is no request pending in PE");
 		status = QDF_STATUS_E_FAILURE;
