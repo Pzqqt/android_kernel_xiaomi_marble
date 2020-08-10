@@ -762,10 +762,9 @@ static QDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->num_cfg_txrx_streams = num_bands;
 	copy_vdev_create_pdev_id(wmi_handle, cmd, param);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
-	WMI_LOGD("%s: ID = %d[pdev:%d] VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
+	WMI_LOGD("%s: ID = %d[pdev:%d] VAP Addr = "QDF_MAC_ADDR_FMT,
 		 __func__, param->vdev_id, cmd->pdev_id,
-		 macaddr[0], macaddr[1], macaddr[2],
-		 macaddr[3], macaddr[4], macaddr[5]);
+		 QDF_MAC_ADDR_REF(macaddr));
 	buf_ptr = (uint8_t *)cmd + sizeof(*cmd);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 			(num_bands * sizeof(wmi_vdev_txrx_streams)));
@@ -1129,9 +1128,9 @@ static QDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
 	cmd->peer_tid_bitmap = param->peer_tid_bitmap;
 	cmd->vdev_id = param->vdev_id;
-	WMI_LOGD("%s: peer_addr %pM vdev_id %d and peer bitmap %d", __func__,
-				peer_addr, param->vdev_id,
-				param->peer_tid_bitmap);
+	WMI_LOGD("%s: peer_addr "QDF_MAC_ADDR_FMT" vdev_id %d and peer bitmap %d",
+		 __func__, QDF_MAC_ADDR_REF(peer_addr), param->vdev_id,
+		 param->peer_tid_bitmap);
 	wmi_mtrace(WMI_PEER_FLUSH_TIDS_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_TIDS_CMDID)) {
 		WMI_LOGP("%s: Failed to send flush tid command", __func__);
@@ -1169,7 +1168,8 @@ static QDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
 	cmd->vdev_id = vdev_id;
 
-	WMI_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
+	WMI_LOGD("%s: peer_addr "QDF_MAC_ADDR_FMT" vdev_id %d",
+		 __func__, QDF_MAC_ADDR_REF(peer_addr), vdev_id);
 	wmi_mtrace(WMI_PEER_DELETE_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_DELETE_CMDID)) {
 		WMI_LOGP("%s: Failed to send peer delete command", __func__);
@@ -1279,8 +1279,9 @@ static QDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 	cmd->param_id = param_id;
 	cmd->param_value = param->param_value;
 
-	WMI_LOGD("%s: vdev_id %d peer_mac: %pM param_id: %u param_value: %x",
-		 __func__, cmd->vdev_id, peer_addr, param->param_id,
+	WMI_LOGD("%s: vdev_id %d peer_mac: "QDF_MAC_ADDR_FMT" param_id: %u param_value: %x",
+		 __func__, cmd->vdev_id,
+		 QDF_MAC_ADDR_REF(peer_addr), param->param_id,
 		 cmd->param_value);
 
 	wmi_mtrace(WMI_PEER_SET_PARAM_CMDID, cmd->vdev_id, 0);
@@ -1313,8 +1314,9 @@ static QDF_STATUS send_vdev_up_cmd_tlv(wmi_unified_t wmi,
 	int32_t len = sizeof(*cmd);
 
 	WMI_LOGD("%s: VDEV_UP", __func__);
-	WMI_LOGD("%s: vdev_id %d aid %d bssid %pM", __func__,
-		 params->vdev_id, params->assoc_id, bssid);
+	WMI_LOGD("%s: vdev_id %d aid %d bssid "QDF_MAC_ADDR_FMT,
+		 __func__,
+		 params->vdev_id, params->assoc_id, QDF_MAC_ADDR_REF(bssid));
 	buf = wmi_buf_alloc(wmi, len);
 	if (!buf)
 		return QDF_STATUS_E_NOMEM;
@@ -1374,8 +1376,9 @@ static QDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: peer_addr %pM vdev_id %d", __func__, param->peer_addr,
-			param->vdev_id);
+	WMI_LOGD("%s: peer_addr "QDF_MAC_ADDR_FMT" vdev_id %d",
+		 __func__, QDF_MAC_ADDR_REF(param->peer_addr),
+		param->vdev_id);
 
 	return 0;
 }
@@ -1423,8 +1426,10 @@ QDF_STATUS send_peer_rx_reorder_queue_setup_cmd_tlv(wmi_unified_t wmi,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid %d", __func__,
-		param->peer_macaddr, param->vdev_id, param->tid);
+	WMI_LOGD("%s: peer_macaddr "QDF_MAC_ADDR_FMT" vdev_id %d, tid %d",
+		 __func__,
+		QDF_MAC_ADDR_REF(param->peer_macaddr),
+		param->vdev_id, param->tid);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1467,8 +1472,10 @@ QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid_map %d", __func__,
-		param->peer_macaddr, param->vdev_id, param->peer_tid_bitmap);
+	WMI_LOGD("%s: peer_macaddr "QDF_MAC_ADDR_FMT" vdev_id %d, tid_map %d",
+		__func__,
+		QDF_MAC_ADDR_REF(param->peer_macaddr),
+		param->vdev_id, param->peer_tid_bitmap);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2665,10 +2672,8 @@ static QDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 			 param->peer_he_tx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
 		WMI_LOGD("param->peer_he_rx_mcs_set[160MHz]=%x",
 			 param->peer_he_rx_mcs_set[WMI_HOST_HE_TXRX_MCS_NSS_IDX_160]);
-		WMI_LOGD("peer_mac=%02x:%02x:%02x:%02x:%02x:%02x",
-			 param->peer_mac[0], param->peer_mac[1],
-			 param->peer_mac[2], param->peer_mac[3],
-			 param->peer_mac[4], param->peer_mac[5]);
+		WMI_LOGD("peer_mac="QDF_MAC_ADDR_FMT,
+			 QDF_MAC_ADDR_REF(param->peer_mac));
 	}
 
 	WMI_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
@@ -5081,7 +5086,8 @@ static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("StopReq: %d", cmd->stop_stats_collection_req);
 	WMI_LOGD("Vdev Id: %d", cmd->vdev_id);
 	WMI_LOGD("Clear Stat Mask: %d", cmd->stats_clear_req_mask);
-	WMI_LOGD("Peer MAC Addr: %pM", clear_req->peer_macaddr.bytes);
+	WMI_LOGD("Peer MAC Addr: "QDF_MAC_ADDR_FMT,
+		 QDF_MAC_ADDR_REF(clear_req->peer_macaddr.bytes));
 
 	wmi_mtrace(WMI_CLEAR_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -5185,9 +5191,9 @@ static QDF_STATUS send_process_ll_stats_get_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(get_req->peer_macaddr.bytes,
 				   &cmd->peer_macaddr);
 
-	WMI_LOGD("LINK_LAYER_STATS - Get Request Params Request ID: %u Stats Type: %0x Vdev ID: %d Peer MAC Addr: %pM",
+	WMI_LOGD("LINK_LAYER_STATS - Get Request Params Request ID: %u Stats Type: %0x Vdev ID: %d Peer MAC Addr: "QDF_MAC_ADDR_FMT,
 		 cmd->request_id, cmd->stats_type, cmd->vdev_id,
-		 get_req->peer_macaddr.bytes);
+		 QDF_MAC_ADDR_REF(get_req->peer_macaddr.bytes));
 
 	wmi_mtrace(WMI_REQUEST_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send_pm_chk(wmi_handle, buf, len,

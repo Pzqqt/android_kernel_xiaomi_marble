@@ -795,13 +795,15 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_discovery_mac_addr,
 				rsp->peer_discovery_mac_addr.bytes);
 
-	WMI_LOGD("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d service_instance %d, ndp_instance %d, role %d, policy %d csid: %d, scid_len: %d, peer_addr: %pM, peer_disc_addr: %pM ndp_cfg - %d bytes ndp_app_info - %d bytes",
+	WMI_LOGD("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d service_instance %d, ndp_instance %d, role %d, policy %d csid: %d, scid_len: %d, peer_addr: "QDF_MAC_ADDR_FMT", peer_disc_addr: "QDF_MAC_ADDR_FMT" ndp_cfg - %d bytes ndp_app_info - %d bytes",
 		 WMI_NDP_INDICATION_EVENTID, fixed_params->vdev_id,
 		 fixed_params->service_instance_id,
 		 fixed_params->ndp_instance_id, fixed_params->self_ndp_role,
 		 fixed_params->accept_policy, fixed_params->nan_csid,
-		 fixed_params->nan_scid_len, rsp->peer_mac_addr.bytes,
-		 rsp->peer_discovery_mac_addr.bytes, fixed_params->ndp_cfg_len,
+		 fixed_params->nan_scid_len,
+		 QDF_MAC_ADDR_REF(rsp->peer_mac_addr.bytes),
+		 QDF_MAC_ADDR_REF(rsp->peer_discovery_mac_addr.bytes),
+		 fixed_params->ndp_cfg_len,
 		 fixed_params->ndp_app_info_len);
 
 	rsp->ncs_sk_type = fixed_params->nan_csid;
@@ -1007,9 +1009,10 @@ static QDF_STATUS extract_ndp_responder_rsp_tlv(wmi_unified_t wmi_handle,
 	rsp->create_peer = fixed_params->create_peer;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
 				   rsp->peer_mac_addr.bytes);
-	WMI_LOGD("WMI_NDP_RESPONDER_RSP_EVENTID(0x%X) received. vdev_id: %d, peer_mac_addr: %pM,transaction_id: %d, status_code %d, reason_code: %d, create_peer: %d",
+	WMI_LOGD("WMI_NDP_RESPONDER_RSP_EVENTID(0x%X) received. vdev_id: %d, peer_mac_addr: "QDF_MAC_ADDR_FMT",transaction_id: %d, status_code %d, reason_code: %d, create_peer: %d",
 		 WMI_NDP_RESPONDER_RSP_EVENTID, fixed_params->vdev_id,
-		 rsp->peer_mac_addr.bytes, rsp->transaction_id,
+		 QDF_MAC_ADDR_REF(rsp->peer_mac_addr.bytes),
+		 rsp->transaction_id,
 		 rsp->status, rsp->reason, rsp->create_peer);
 
 	return QDF_STATUS_SUCCESS;

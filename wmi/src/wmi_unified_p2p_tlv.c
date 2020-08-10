@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -250,8 +250,9 @@ send_set_mac_addr_rx_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->enable = 1;
 	else
 		cmd->enable = 0;
-	WMI_LOGD("set random mac rx vdev %d freq %d set %d %pM",
-		 param->vdev_id, param->freq, param->set, param->mac);
+	WMI_LOGD("set random mac rx vdev %d freq %d set %d "QDF_MAC_ADDR_FMT,
+		 param->vdev_id, param->freq, param->set,
+		 QDF_MAC_ADDR_REF(param->mac));
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_CMDID);
 	if (ret) {

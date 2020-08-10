@@ -763,10 +763,11 @@ send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
 
 	cmd->peer_state = peer_state->peer_state;
 
-	WMI_LOGD("%s: vdev_id: %d, peermac: %pM, "
+	WMI_LOGD("%s: vdev_id: %d, peermac: "QDF_MAC_ADDR_FMT", "
 		 "peer_macaddr.mac_addr31to0: 0x%x, "
 		 "peer_macaddr.mac_addr47to32: 0x%x, peer_state: %d",
-		 __func__, cmd->vdev_id, peer_state->peer_macaddr,
+		 __func__, cmd->vdev_id,
+		 QDF_MAC_ADDR_REF(peer_state->peer_macaddr),
 		 cmd->peer_macaddr.mac_addr31to0,
 		 cmd->peer_macaddr.mac_addr47to32, cmd->peer_state);
 
@@ -971,8 +972,9 @@ static QDF_STATUS extract_vdev_tdls_ev_param_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	};
 
-	WMI_LOGD("%s: tdls event, peer: %pM, type: 0x%x, reason: %d, vdev: %d",
-		 __func__, param->peermac.bytes, param->message_type,
+	WMI_LOGD("%s: tdls event, peer: "QDF_MAC_ADDR_FMT", type: 0x%x, reason: %d, vdev: %d",
+		 __func__, QDF_MAC_ADDR_REF(param->peermac.bytes),
+		 param->message_type,
 		 param->peer_reason, param->vdev_id);
 
 	return QDF_STATUS_SUCCESS;

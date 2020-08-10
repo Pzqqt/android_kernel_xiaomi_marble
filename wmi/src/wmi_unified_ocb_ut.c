@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -282,11 +282,11 @@ static QDF_STATUS fake_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 
 	for (i = 0; i < config->channel_count; i++) {
 		WMI_LOGI("%s: channel info for channel %d"
-			" chan_freq=%d, bandwidth=%d, " QDF_MAC_ADDRESS_STR
+			" chan_freq=%d, bandwidth=%d, " QDF_MAC_ADDR_FMT
 			" max_pwr=%d, min_pwr=%d, reg_pwr=%d, antenna_max=%d, "
 			"flags=%d", __func__, i, config->channels[i].chan_freq,
 			config->channels[i].bandwidth,
-			QDF_MAC_ADDR_ARRAY(
+			QDF_MAC_ADDR_REF(
 				config->channels[i].mac_address.bytes),
 			config->channels[i].max_pwr,
 			config->channels[i].min_pwr,

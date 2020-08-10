@@ -596,8 +596,9 @@ static QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = vdev_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicast_addr.bytes, &cmd->mcastbdcastaddr);
 
-	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d; MCBC MAC Addr: %pM",
-		 cmd->action, vdev_id, clearList, multicast_addr.bytes);
+	WMI_LOGD("Action:%d; vdev_id:%d; clearList:%d; MCBC MAC Addr: "QDF_MAC_ADDR_FMT,
+		 cmd->action, vdev_id, clearList,
+		 QDF_MAC_ADDR_REF(multicast_addr.bytes));
 
 	wmi_mtrace(WMI_SET_MCASTBCAST_FILTER_CMDID, cmd->vdev_id, 0);
 	err = wmi_unified_cmd_send(wmi_handle, buf,
@@ -1846,14 +1847,15 @@ static QDF_STATUS send_set_app_type2_params_in_fw_cmd_tlv(wmi_unified_t wmi_hand
 	cmd->tcp_tx_timeout_val = appType2Params->tcp_tx_timeout_val;
 	cmd->tcp_rx_timeout_val = appType2Params->tcp_rx_timeout_val;
 
-	WMI_LOGD("%s: vdev_id %d gateway_mac %pM "
+	WMI_LOGD("%s: vdev_id %d gateway_mac "QDF_MAC_ADDR_FMT" "
 		 "rc4_key %.16s rc4_key_len %u "
 		 "ip_id %x ip_device_ip %x ip_server_ip %x "
 		 "tcp_src_port %u tcp_dst_port %u tcp_seq %u "
 		 "tcp_ack_seq %u keepalive_init %u keepalive_min %u "
 		 "keepalive_max %u keepalive_inc %u "
 		 "tcp_tx_timeout_val %u tcp_rx_timeout_val %u",
-		 __func__, cmd->vdev_id, appType2Params->gateway_mac.bytes,
+		 __func__, cmd->vdev_id,
+		 QDF_MAC_ADDR_REF(appType2Params->gateway_mac.bytes),
 		 cmd->rc4_key, cmd->rc4_key_len,
 		 cmd->ip_id, cmd->ip_device_ip, cmd->ip_server_ip,
 		 cmd->tcp_src_port, cmd->tcp_dst_port, cmd->tcp_seq,
@@ -1911,10 +1913,11 @@ static QDF_STATUS send_app_type1_params_in_fw_cmd_tlv(wmi_unified_t wmi_handle,
 	qdf_mem_copy(cmd->passwd, app_type1_params->password, 16);
 	cmd->passwd_len = app_type1_params->pass_length;
 
-	WMI_LOGD("%s: vdev_id %d wakee_mac_addr %pM "
+	WMI_LOGD("%s: vdev_id %d wakee_mac_addr "QDF_MAC_ADDR_FMT" "
 		 "identification_id %.8s id_length %u "
 		 "password %.16s pass_length %u",
-		 __func__, cmd->vdev_id, app_type1_params->wakee_mac_addr.bytes,
+		 __func__, cmd->vdev_id,
+		 QDF_MAC_ADDR_REF(app_type1_params->wakee_mac_addr.bytes),
 		 cmd->ident, cmd->ident_len, cmd->passwd, cmd->passwd_len);
 
 	wmi_mtrace(WMI_EXTWOW_SET_APP_TYPE1_PARAMS_CMDID, cmd->vdev_id, 0);
