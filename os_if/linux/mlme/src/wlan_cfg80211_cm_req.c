@@ -262,7 +262,8 @@ static inline void wlan_osif_set_prev_bssid(
 static inline void osif_dump_prev_bssid(struct cfg80211_connect_params *req)
 {
 	if (req->prev_bssid)
-		osif_nofl_debug("prev BSSID %pM", req->prev_bssid);
+		osif_nofl_debug("prev BSSID "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(req->prev_bssid));
 }
 
 #else
@@ -292,9 +293,11 @@ static inline void osif_dump_connect_req(struct net_device *dev,
 			req->crypto.cipher_group, req->mfp,
 			req->channel_hint ? req->channel_hint->center_freq : 0);
 	if (req->bssid)
-		osif_nofl_debug("BSSID %pM", req->bssid);
+		osif_nofl_debug("BSSID "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(req->bssid));
 	if (req->bssid_hint)
-		osif_nofl_debug("BSSID hint %pM", req->bssid_hint);
+		osif_nofl_debug("BSSID hint "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(req->bssid_hint));
 	osif_dump_prev_bssid(req);
 
 	for (i = 0; i < req->crypto.n_akm_suites; i++)

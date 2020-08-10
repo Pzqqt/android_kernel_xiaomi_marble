@@ -86,8 +86,8 @@ static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
 	*randomize = true;
 	memcpy(addr, mac_addr, QDF_MAC_ADDR_SIZE);
 	memcpy(mask, mac_addr_mask, QDF_MAC_ADDR_SIZE);
-	osif_debug("Random mac addr: %pM and Random mac mask: %pM",
-		   addr, mask);
+	osif_debug("Random mac addr: "QDF_MAC_ADDR_FMT" and Random mac mask: "QDF_MAC_ADDR_STR,
+		   QDF_MAC_ADDR_REF(addr), QDF_MAC_ADDR_ARRAY(mask));
 }
 
 /**
@@ -1965,8 +1965,9 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.frame_len = wlan_get_frame_len(scan_params);
 	bss_data.mgmt = qdf_mem_malloc_atomic(bss_data.frame_len);
 	if (!bss_data.mgmt) {
-		osif_err("mem alloc failed for bss %pM seq %d",
-			 bss_data.mgmt->bssid, scan_params->seq_num);
+		osif_err("mem alloc failed for bss "QDF_MAC_ADDR_FMT" seq %d",
+			 QDF_MAC_ADDR_REF(bss_data.mgmt->bssid),
+			 scan_params->seq_num);
 		return;
 	}
 	qdf_mem_copy(bss_data.mgmt,
@@ -1987,8 +1988,9 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.chan = wlan_get_ieee80211_channel(wiphy, pdev,
 		scan_params->channel.chan_freq);
 	if (!bss_data.chan) {
-		osif_err("Channel not found for bss %pM seq %d chan_freq %d",
-			 bss_data.mgmt->bssid, scan_params->seq_num,
+		osif_err("Channel not found for bss "QDF_MAC_ADDR_FMT" seq %d chan_freq %d",
+			 QDF_MAC_ADDR_REF(bss_data.mgmt->bssid),
+			 scan_params->seq_num,
 			 scan_params->channel.chan_freq);
 		qdf_mem_free(bss_data.mgmt);
 		return;
@@ -2007,8 +2009,9 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 
 	bss = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	if (!bss)
-		osif_err("failed to inform bss %pM seq %d",
-			 bss_data.mgmt->bssid, scan_params->seq_num);
+		osif_err("failed to inform bss "QDF_MAC_ADDR_FMT" seq %d",
+			 QDF_MAC_ADDR_REF(bss_data.mgmt->bssid),
+			 scan_params->seq_num);
 	else
 		wlan_cfg80211_put_bss(wiphy, bss);
 
@@ -2048,10 +2051,11 @@ void __wlan_cfg80211_unlink_bss_list(struct wiphy *wiphy, uint8_t *bssid,
 	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid,
 				    ssid, ssid_len);
 	if (!bss) {
-		osif_info("BSS %pM not found", bssid);
+		osif_info("BSS "QDF_MAC_ADDR_FMT" not found",
+			  QDF_MAC_ADDR_REF(bssid));
 	} else {
-		osif_debug("unlink entry for ssid:%.*s and BSSID %pM",
-			   ssid_len, ssid, bssid);
+		osif_debug("unlink entry for ssid:%.*s and BSSID "QDF_MAC_ADDR_FMT,
+			   ssid_len, ssid, QDF_MAC_ADDR_REF(bssid));
 		cfg80211_unlink_bss(wiphy, bss);
 		wlan_cfg80211_put_bss(wiphy, bss);
 	}
@@ -2067,11 +2071,11 @@ void __wlan_cfg80211_unlink_bss_list(struct wiphy *wiphy, uint8_t *bssid,
 	 */
 	bss = wlan_cfg80211_get_bss(wiphy, NULL, bssid, NULL, 0);
 	if (!bss) {
-		osif_debug("Hidden bss not found for Ssid:%.*s BSSID: %pM sid_len %d",
-			   ssid_len, ssid, bssid, ssid_len);
+		osif_debug("Hidden bss not found for Ssid:%.*s BSSID: "QDF_MAC_ADDR_FMT" sid_len %d",
+			   ssid_len, ssid, QDF_MAC_ADDR_REF(bssid), ssid_len);
 	} else {
-		osif_debug("unlink entry for Hidden ssid:%.*s and BSSID %pM",
-			   ssid_len, ssid, bssid);
+		osif_debug("unlink entry for Hidden ssid:%.*s and BSSID "QDF_MAC_ADDR_FMT,
+			   ssid_len, ssid, QDF_MAC_ADDR_REF(bssid));
 
 		cfg80211_unlink_bss(wiphy, bss);
 		/* cfg80211_get_bss get bss with ref count so release it */
