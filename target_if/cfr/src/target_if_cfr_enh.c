@@ -1158,6 +1158,8 @@ static void enh_prepare_cfr_header_txstatus(wmi_cfr_peer_tx_event_param
 
 	if (target_type == TARGET_TYPE_QCN9000)
 		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
+	else if (target_type == TARGET_TYPE_QCA5018)
+		header->chip_type      = CFR_CAPTURE_RADIO_MAPLE;
 	else
 		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
 
@@ -1354,6 +1356,8 @@ target_if_peer_capture_event(ol_scn_t sc, uint8_t *data, uint32_t datalen)
 
 	if (target_type == TARGET_TYPE_QCN9000)
 		header->chip_type      = CFR_CAPTURE_RADIO_PINE;
+	else if (target_type == TARGET_TYPE_QCA5018)
+		header->chip_type      = CFR_CAPTURE_RADIO_MAPLE;
 	else
 		header->chip_type      = CFR_CAPTURE_RADIO_CYP;
 
@@ -1724,7 +1728,7 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 		/* Update global configuration */
 		target_if_cfr_update_global_cfg(pdev);
 	} else {
-		cfr_err("Sending WMI to configure default has failed\n");
+		cfr_err("Sending WMI to configure default has failed");
 		return status;
 	}
 
@@ -1737,6 +1741,11 @@ QDF_STATUS cfr_enh_init_pdev(struct wlan_objmgr_psoc *psoc,
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_PINE;
 		pcfr->chip_type = CFR_CAPTURE_RADIO_PINE;
 		pcfr->max_mu_users = PINE_CFR_MU_USERS;
+	} else if (target_type == TARGET_TYPE_QCA5018) {
+		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_MAPLE;
+		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_MAPLE;
+		pcfr->chip_type = CFR_CAPTURE_RADIO_MAPLE;
+		pcfr->max_mu_users = MAPLE_CFR_MU_USERS;
 	} else {
 		pcfr->subbuf_size = STREAMFS_MAX_SUBBUF_CYP;
 		pcfr->num_subbufs = STREAMFS_NUM_SUBBUF_CYP;

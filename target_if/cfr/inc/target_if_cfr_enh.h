@@ -105,6 +105,52 @@ enum macrx_freeze_tlv_version {
 	MACRX_FREEZE_TLV_VERSION_MAX
 };
 
+/* Max 4 users in MU case for Maple */
+#define MAPLE_CFR_MU_USERS 4
+
+#define MAPLE_MAX_HEADER_LENGTH_WORDS 16
+
+#define MAPLE_MAX_DATA_LENGTH_BYTES 4096
+
+/* Max size :
+ * sizeof(csi_cfr_header) + 64 bytes(cfr uCode header) +
+ * 4096 bytes(cfr payload)
+ */
+#define STREAMFS_MAX_SUBBUF_MAPLE \
+	(sizeof(struct csi_cfr_header) + \
+	 (MAPLE_MAX_HEADER_LENGTH_WORDS * 4) + \
+	 MAPLE_MAX_DATA_LENGTH_BYTES)
+
+/* The number 470 has come up by considering the 2MB benchmark
+ * for Relay FS buffer pool. For Cascade, dakota and HK, the
+ * Relay FS buffer pool has been considered as 2MB and based
+ * on that the number of sub buffers are 1100, 2200 and 255.
+ * For Cypress and pine, since the buffer size has increased
+ * to 16K, if we would have considered to keep the relay FS
+ * buffer pool size as 2MB then the number of sub buffers /
+ * CFR records would have been lesser in number (around 130)
+ * So, the decision had been taken to keep the sub buffer
+ * count to 255 and as result the relay fs buffer pool size
+ * in case of Cypress and Pine exceeded 4MB.
+ *
+ * In case of Maple, since the Buffer size is small (4470B)
+ * we have decided to maintain the relay fs buffer pool size
+ * as 2MB, as a result the number of sub buffers has become
+ * 470.
+ *
+ * RelayFS memory required:
+ * Max sub buffer size * Number of sub buffers
+ *
+ * Cascade: (2200B  * 1100) ~= 2MB
+ * Dakota:  (1100B  * 2200) ~= 2MB
+ * Hawkeye: (8200B  * 255 ) ~= 2MB
+ * Cypress: (16438B * 255 ) ~= 4MB
+ * Pine   : (16894B * 255 ) ~= 4MB
+ * Maple  : (4470B *  470 ) ~= 2MB
+ *
+ */
+#define STREAMFS_NUM_SUBBUF_MAPLE 470
+
 /*
  * @tag: ucode fills this with 0xBA
  *
