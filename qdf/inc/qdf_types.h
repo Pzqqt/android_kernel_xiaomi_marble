@@ -823,6 +823,27 @@ QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int);
 #define QDF_MAC_ADDR_SIZE 6
 #define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define QDF_MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
+
+#if defined(WLAN_TRACE_HIDE_MAC_ADDRESS)
+#define QDF_MAC_ADDR_FMT "%02x:**:**:**:%02x:%02x"
+
+/*
+ * The input data type for QDF_MAC_ADDR_REF can be pointer or an array.
+ * In case of array, compiler was throwing following warning
+ * 'address of array will always evaluate as ‘true’
+ * and if the pointer is NULL, zero is passed to the format specifier
+ * which results in zero mac address (00:**:**:**:00:00)
+ * For this reason, input data type is typecasted to (uintptr_t).
+ */
+#define QDF_MAC_ADDR_REF(a) \
+	(((uintptr_t)NULL != (uintptr_t)(a)) ? (a)[0] : 0), \
+	(((uintptr_t)NULL != (uintptr_t)(a)) ? (a)[4] : 0), \
+	(((uintptr_t)NULL != (uintptr_t)(a)) ? (a)[5] : 0)
+#else
+#define QDF_MAC_ADDR_FMT "%pM"
+#define QDF_MAC_ADDR_REF(a) (a)
+#endif /* WLAN_TRACE_HIDE_MAC_ADDRESS */
+
 #define QDF_MAC_ADDR_BCAST_INIT { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } }
 #define QDF_MAC_ADDR_ZERO_INIT { { 0, 0, 0, 0, 0, 0 } }
 
