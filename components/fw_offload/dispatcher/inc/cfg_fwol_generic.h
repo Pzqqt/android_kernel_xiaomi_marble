@@ -758,6 +758,27 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"OCL configuration")
 
+/*
+ * <ini>
+ * g_enable_ilp - Enable/Disable ILP HW Block
+ * @Default: 1
+ *
+ * This ini is used to enable/disable the ILP HW block
+ *
+ * Related: none
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * <ini>
+ */
+
+#define CFG_SET_ENABLE_ILP CFG_INI_BOOL( \
+		"g_enable_ilp", \
+		1, \
+		"ILP configuration")
+
 #define CFG_FWOL_GENERIC_ALL \
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
@@ -785,6 +806,7 @@
 	CFG(CFG_TX_SCH_DELAY) \
 	CFG(CFG_ENABLE_SECONDARY_RATE) \
 	CFG(CFG_SET_SAP_XLNA_BYPASS) \
-	CFG(CFG_SET_OCL_CFG)
+	CFG(CFG_SET_OCL_CFG) \
+	CFG(CFG_SET_ENABLE_ILP)
 
 #endif
