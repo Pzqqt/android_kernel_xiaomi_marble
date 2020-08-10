@@ -1460,7 +1460,7 @@ static QDF_STATUS dp_srng_init(struct dp_soc *soc, struct dp_srng *srng,
 	/* memset the srng ring to zero */
 	qdf_mem_zero(srng->base_vaddr_unaligned, srng->alloc_size);
 
-	ring_params.flags = 0;
+	qdf_mem_zero(&ring_params, sizeof(struct hal_srng_params));
 	ring_params.ring_base_paddr = srng->base_paddr_aligned;
 	ring_params.ring_base_vaddr = srng->base_vaddr_aligned;
 
@@ -11700,7 +11700,7 @@ static uint8_t dp_bucket_index(uint32_t delay, uint16_t *array)
 {
 	uint8_t i = CDP_DELAY_BUCKET_0;
 
-	for (; i < CDP_DELAY_BUCKET_MAX; i++) {
+	for (; i < CDP_DELAY_BUCKET_MAX - 1; i++) {
 		if (delay >= array[i] && delay <= array[i + 1])
 			return i;
 	}

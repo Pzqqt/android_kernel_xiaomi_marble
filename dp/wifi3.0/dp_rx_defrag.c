@@ -363,10 +363,12 @@ static QDF_STATUS dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned ti
 			while ((cur_fragno > head_fragno) && cur) {
 				prev = cur;
 				cur = qdf_nbuf_next(cur);
-				rx_desc_info = qdf_nbuf_data(cur);
-				head_fragno =
-					dp_rx_frag_get_mpdu_frag_number(
+				if (cur) {
+					rx_desc_info = qdf_nbuf_data(cur);
+					head_fragno =
+						dp_rx_frag_get_mpdu_frag_number(
 								rx_desc_info);
+				}
 			}
 
 			if (cur_fragno == head_fragno) {
