@@ -90,8 +90,8 @@ wlan_cfg80211_send_interop_issues_ap_cb(
 		return;
 	}
 
-	osif_debug("interop issues ap mac:" QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(data->rap_addr.bytes));
+	osif_debug("interop issues ap mac:" QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(data->rap_addr.bytes));
 
 	if (nla_put(skb,
 		    QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID,
@@ -150,8 +150,8 @@ wlan_parse_interop_issues_ap(struct qdf_mac_addr *interop_issues_ap,
 		nla_memcpy(interop_issues_ap[i].bytes,
 			   tb2[QCA_WLAN_VENDOR_ATTR_INTEROP_ISSUES_AP_BSSID],
 			   QDF_MAC_ADDR_SIZE);
-		osif_debug(QDF_MAC_ADDR_STR,
-			   QDF_MAC_ADDR_ARRAY(interop_issues_ap[i].bytes));
+		osif_debug(QDF_MAC_ADDR_FMT,
+			   QDF_MAC_ADDR_REF(interop_issues_ap[i].bytes));
 		i++;
 	}
 

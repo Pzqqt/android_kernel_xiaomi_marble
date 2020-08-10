@@ -44,9 +44,9 @@ static int wlan_cfg80211_tdls_validate_mac_addr(const uint8_t *mac)
 	static const uint8_t temp_mac[QDF_MAC_ADDR_SIZE] = {0};
 
 	if (!qdf_mem_cmp(mac, temp_mac, QDF_MAC_ADDR_SIZE)) {
-		osif_debug("Invalid Mac address " QDF_MAC_ADDR_STR
+		osif_debug("Invalid Mac address " QDF_MAC_ADDR_FMT
 			   " cmd declined.",
-			   QDF_MAC_ADDR_ARRAY(mac));
+			   QDF_MAC_ADDR_REF(mac));
 		return -EINVAL;
 	}
 
@@ -218,8 +218,8 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
 	if (status)
 		return status;
 
-	osif_debug("Add TDLS peer " QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(mac));
+	osif_debug("Add TDLS peer " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(mac));
 
 	add_peer_req = qdf_mem_malloc(sizeof(*add_peer_req));
 	if (!add_peer_req) {
@@ -439,8 +439,8 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 	if (status)
 		return status;
 
-	osif_debug("Update TDLS peer " QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(mac));
+	osif_debug("Update TDLS peer " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(mac));
 
 	req_info = qdf_mem_malloc(sizeof(*req_info));
 	if (!req_info) {
@@ -772,8 +772,8 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_vdev *vdev,
 
 	/* make sure doesn't call send_mgmt() while it is pending */
 	if (TDLS_VDEV_MAGIC == tdls_priv->mgmt_tx_completion_status) {
-		osif_err(QDF_MAC_ADDR_STR " action %d couldn't sent, as one is pending. return EBUSY",
-			 QDF_MAC_ADDR_ARRAY(peer_mac), action_code);
+		osif_err(QDF_MAC_ADDR_FMT " action %d couldn't sent, as one is pending. return EBUSY",
+			 QDF_MAC_ADDR_REF(peer_mac), action_code);
 		return -EBUSY;
 	}
 

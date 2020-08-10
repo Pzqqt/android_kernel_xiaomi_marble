@@ -676,9 +676,9 @@ wlan_cfg80211_mc_cp_stats_get_mib_stats(struct wlan_objmgr_vdev *vdev,
 	}
 	qdf_mem_copy(info.peer_mac_addr, peer->macaddr, QDF_MAC_ADDR_SIZE);
 
-	osif_debug("vdev id %d, pdev id %d, peer " QDF_MAC_ADDR_STR,
+	osif_debug("vdev id %d, pdev id %d, peer " QDF_MAC_ADDR_FMT,
 		   info.vdev_id, info.pdev_id,
-		   QDF_MAC_ADDR_ARRAY(info.peer_mac_addr));
+		   QDF_MAC_ADDR_REF(info.peer_mac_addr));
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 
