@@ -2434,4 +2434,21 @@ target_pdev_is_scan_radio_supported(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS
 target_pdev_scan_radio_is_dfs_enabled(struct wlan_objmgr_pdev *pdev,
 				      bool *is_dfs_en);
+
+/**
+ * target_psoc_get_preamble_puncture_cap() - Get Preamble Puncturing capability
+ * @psoc_info: pointer to structure target_psoc_info
+ *
+ * API to get the target capability for Preamble Punctured Tx
+ *
+ * Return: target capability for Preamble Punctured Tx.
+ */
+static inline uint32_t target_psoc_get_preamble_puncture_cap(
+					    struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return 0;
+
+	return psoc_info->info.service_ext2_param.preamble_puncture_bw_cap;
+}
 #endif
