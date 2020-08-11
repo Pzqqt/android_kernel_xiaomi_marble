@@ -1192,7 +1192,7 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-	pmo_debug("Host wakeup indication sent to fw");
+	pmo_info("Host wakeup indication sent to fw");
 
 	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_resume,
 					PMO_RESUME_TIMEOUT);
