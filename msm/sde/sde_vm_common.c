@@ -300,33 +300,30 @@ int sde_vm_request_valid(struct sde_kms *sde_kms,
 
 	switch (new_state) {
 	case VM_REQ_RELEASE:
-		if (old_state == VM_REQ_RELEASE)
-			rc = -EINVAL;
-		break;
 	case VM_REQ_NONE:
-		if (old_state == VM_REQ_RELEASE)
+		if ((old_state == VM_REQ_RELEASE) ||
+			!vm_ops->vm_owns_hw(sde_kms))
 			rc = -EINVAL;
 		break;
 	case VM_REQ_ACQUIRE:
-		/**
-		 * Only the display which requested for HW assignment
-		 * can reclaim it back
-		 */
-		if (old_state != VM_REQ_RELEASE)
+		if (old_state != VM_REQ_RELEASE) {
 			rc = -EINVAL;
+		} else if (!vm_ops->vm_owns_hw(sde_kms)) {
+			if (vm_ops->vm_acquire)
+				rc = vm_ops->vm_acquire(sde_kms);
+			else
+				rc = -EINVAL;
+		}
 		break;
 	default:
 		SDE_ERROR("invalid vm request\n");
 		rc = -EINVAL;
 	};
 
-	if (!rc && !vm_ops->vm_owns_hw(sde_kms))
-		rc = -EINVAL;
-
-	SDE_DEBUG("old req: %d new req: %d owns_hw: %d\n",
+	SDE_DEBUG("old req: %d new req: %d owns_hw: %d, rc: %d\n",
 			old_state, new_state,
-			vm_ops->vm_owns_hw(sde_kms));
-	SDE_EVT32(old_state, new_state, vm_ops->vm_owns_hw(sde_kms));
+			vm_ops->vm_owns_hw(sde_kms), rc);
+	SDE_EVT32(old_state, new_state, vm_ops->vm_owns_hw(sde_kms), rc);
 
 	return rc;
 }

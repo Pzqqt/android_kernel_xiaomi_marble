@@ -104,9 +104,22 @@ struct sde_vm_ops {
 	 */
 	int (*vm_client_post_acquire)(struct sde_kms *kms);
 
+	/**
+	 * vm_request_valid - hook to validate the RM_REQ state change
+	 * @sde_kms - handle to sde_kms
+	 * @old_state - current vm_req state
+	 * @new_state - new vm_req state
+	 */
 	int (*vm_request_valid)(struct sde_kms *sde_kms,
 			enum sde_crtc_vm_req old_state,
 			enum sde_crtc_vm_req new_state);
+
+	/**
+	 * vm_acquire_fail_handler - hook to the handler when resource
+	 *                           accept/reclaim fails.
+	 * @sde_kms - handle to sde_kms
+	 */
+	int (*vm_acquire_fail_handler)(struct sde_kms *sde_kms);
 };
 
 /**

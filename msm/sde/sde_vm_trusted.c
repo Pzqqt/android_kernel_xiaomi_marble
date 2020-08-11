@@ -61,86 +61,12 @@ static int __irq_cmp(const void *a, const void *b)
 	return  (l->label - r->label);
 }
 
-void sde_vm_irq_lend_notification_handler(void *req, unsigned long notif_type,
-		enum hh_irq_label label)
-{
-	struct sde_vm_trusted *sde_vm;
-	struct sde_kms *sde_kms;
-	struct sde_vm_irq_desc *irq_desc;
-	struct sde_vm_irq_entry irq_temp, *found = NULL;
-	struct irq_data *exp_irq_data, *acc_irq_data;
-	int accepted_irq, expected_irq;
-	int rc;
-
-	if (!req) {
-		SDE_ERROR("invalid data on lend notification\n");
-		return;
-	}
-
-	sde_vm = to_vm_trusted(req);
-	sde_kms = sde_vm->base.sde_kms;
-	irq_desc = sde_vm->irq_desc;
-
-	mutex_lock(&sde_vm->base.vm_res_lock);
-
-	memset(&irq_temp, 0, sizeof(irq_temp));
-
-	irq_temp.label = label;
-	found = bsearch((void *)&irq_temp, (void *)irq_desc->irq_entries,
-			irq_desc->n_irq, sizeof(struct sde_vm_irq_entry),
-			__irq_cmp);
-	if (!found) {
-		SDE_ERROR("irq mismatch for label: %d irq: %d\n",
-			   irq_temp.label, irq_temp.irq);
-		goto end;
-	}
-
-	expected_irq = found->irq;
-	accepted_irq = hh_irq_accept(label, -1, IRQ_TYPE_LEVEL_HIGH);
-	if (accepted_irq < 0) {
-		SDE_ERROR("failed to accept irq for label: %d\n");
-		goto end;
-	}
-
-	exp_irq_data = irq_get_irq_data(expected_irq);
-	if (!exp_irq_data) {
-		SDE_ERROR("failed to get irq data for irq: %d\n", exp_irq_data);
-		goto end;
-	}
-
-	acc_irq_data = irq_get_irq_data(accepted_irq);
-	if (!acc_irq_data) {
-		SDE_ERROR("failed to get irq data for irq: %d\n", accepted_irq);
-		goto end;
-	}
-
-	if (exp_irq_data->hwirq != acc_irq_data->hwirq) {
-		SDE_ERROR("IRQ mismatch on ACCEPT for label %d\n", label);
-		goto end;
-	}
-
-	SDE_INFO("IRQ accept succeeded for label %d irq: %d\n", label,
-			exp_irq_data->hwirq);
-
-	atomic_inc(&sde_vm->base.n_irq_lent);
-
-	rc = sde_kms_vm_trusted_resource_init(sde_kms);
-	if (rc)
-		SDE_ERROR("vm resource init failed\n");
-end:
-	mutex_unlock(&sde_vm->base.vm_res_lock);
-}
-
 static void sde_vm_mem_lend_notification_handler(enum hh_mem_notifier_tag tag,
 					       unsigned long notif_type,
 					void *entry_data, void *notif_msg)
 {
 	struct hh_rm_notif_mem_shared_payload *payload;
-	struct hh_sgl_desc *sgl_desc;
-	struct hh_acl_desc *acl_desc;
-	struct sde_kms *sde_kms;
 	struct sde_vm_trusted *sde_vm;
-	int rc = 0;
 
 	if (notif_type != HH_RM_NOTIF_MEM_SHARED ||
 			tag != HH_MEM_NOTIFIER_TAG_DISPLAY)
@@ -156,50 +82,21 @@ static void sde_vm_mem_lend_notification_handler(enum hh_mem_notifier_tag tag,
 		return;
 
 	sde_vm = (struct sde_vm_trusted *)entry_data;
-	sde_kms = sde_vm->base.sde_kms;
 
 	mutex_lock(&sde_vm->base.vm_res_lock);
 
-	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
-	if (IS_ERR(acl_desc)) {
-		SDE_ERROR("failed to populate acl data, rc=%d\n",
-			   PTR_ERR(acl_desc));
-		goto acl_fail;
-	}
-
-	sgl_desc = hh_rm_mem_accept(payload->mem_handle, HH_RM_MEM_TYPE_IO,
-				    HH_RM_TRANS_TYPE_LEND,
-				    HH_RM_MEM_ACCEPT_VALIDATE_ACL_ATTRS|
-				    HH_RM_MEM_ACCEPT_VALIDATE_LABEL|
-				    HH_RM_MEM_ACCEPT_DONE,
-				    payload->label,
-				    acl_desc, NULL, NULL, 0);
-	if (IS_ERR_OR_NULL(sgl_desc)) {
-		SDE_ERROR("hh_rm_mem_accept failed with error, rc=%d\n",
-			   PTR_ERR(sgl_desc));
-		goto accept_fail;
-	}
-
-	rc = _sde_vm_validate_sgl(sde_vm->sgl_desc, sgl_desc);
-	if (rc) {
-		SDE_ERROR("failed in sgl validation for label: %d, rc = %d\n",
-				payload->label, rc);
-		goto accept_fail;
-	}
-
 	sde_vm->base.io_mem_handle = payload->mem_handle;
 
-	SDE_INFO("mem accept succeeded for tag: %d label: %d\n", tag,
-				payload->label);
-
-	rc = sde_kms_vm_trusted_resource_init(sde_kms);
-	if (rc)
-		SDE_ERROR("vm resource init failed\n");
-
-accept_fail:
-	kfree(acl_desc);
-acl_fail:
 	mutex_unlock(&sde_vm->base.vm_res_lock);
+
+	SDE_INFO("mem lend notification for tag: %d label: %d handle: %d\n",
+			tag, payload->label, payload->mem_handle);
+}
+
+void sde_vm_irq_lend_notification_handler(void *req,
+		unsigned long notif_type, enum hh_irq_label label)
+{
+	SDE_INFO("IRQ LEND notification for label: %d\n", label);
 }
 
 static int _sde_vm_release_irq(struct sde_vm *vm)
@@ -208,30 +105,61 @@ static int _sde_vm_release_irq(struct sde_vm *vm)
 	struct sde_vm_irq_desc *irq_desc = sde_vm->irq_desc;
 	int i, rc = 0;
 
-	for (i = 0; i < irq_desc->n_irq; i++) {
+	for (i = atomic_read(&sde_vm->base.n_irq_lent) - 1; i >= 0; i--) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
 		rc = hh_irq_release(entry->label);
 		if (rc) {
 			SDE_ERROR("failed to release IRQ label: %d rc = %d\n",
 				  entry->label, rc);
-			return rc;
+			goto done;
 		}
+
+		atomic_dec(&sde_vm->base.n_irq_lent);
 
 		rc = hh_irq_release_notify(entry->label);
 		if (rc) {
 			SDE_ERROR(
 				 "irq release notify failed,label: %d rc: %d\n",
 				 entry->label, rc);
-			return rc;
+			goto done;
 		}
 
-		atomic_dec(&sde_vm->base.n_irq_lent);
+		SDE_INFO("sde vm irq release for label: %d succeeded\n",
+				entry->label);
+	}
+done:
+	return rc;
+}
+
+static int _sde_vm_release_mem(struct sde_vm *vm)
+{
+	int rc = 0;
+	struct sde_vm_trusted *sde_vm = (struct sde_vm_trusted *)vm;
+
+	if (sde_vm->base.io_mem_handle < 0)
+		return 0;
+
+	rc = hh_rm_mem_release(sde_vm->base.io_mem_handle, 0);
+	if (rc) {
+		SDE_ERROR("hh_rm_mem_release failed, rc=%d\n", rc);
+		goto done;
 	}
 
-	SDE_INFO("sde vm irq release succeeded, rc = %d\n", rc);
+	rc = hh_rm_mem_notify(sde_vm->base.io_mem_handle,
+			HH_RM_MEM_NOTIFY_OWNER_RELEASED,
+			HH_MEM_NOTIFIER_TAG_DISPLAY, 0);
+	if (rc) {
+		SDE_ERROR("hyp mem notify on release failed, rc = %d\n", rc);
+		goto done;
+	}
 
+	sde_vm->base.io_mem_handle = -1;
+
+	SDE_INFO("sde vm mem release succeeded\n");
+done:
 	return rc;
+
 }
 
 static int _sde_vm_release(struct sde_kms *kms)
@@ -244,35 +172,19 @@ static int _sde_vm_release(struct sde_kms *kms)
 
 	sde_vm = to_vm_trusted(kms->vm);
 
-	mutex_lock(&sde_vm->base.vm_res_lock);
+	sde_kms_vm_trusted_resource_deinit(kms);
 
-	rc = hh_rm_mem_release(sde_vm->base.io_mem_handle, 0);
+	rc = _sde_vm_release_mem(kms->vm);
 	if (rc) {
-		SDE_ERROR("hh_rm_mem_release failed, rc=%d\n", rc);
+		SDE_ERROR("mem_release failed, rc = %d\n", rc);
 		goto end;
 	}
-
-	rc = hh_rm_mem_notify(sde_vm->base.io_mem_handle,
-			HH_RM_MEM_NOTIFY_OWNER_RELEASED,
-			HH_MEM_NOTIFIER_TAG_DISPLAY, 0);
-	if (rc) {
-		SDE_ERROR("hyp mem notify on release failed, rc = %d\n", rc);
-		goto end;
-	}
-
-	sde_vm->base.io_mem_handle = -1;
-
-	SDE_INFO("sde vm mem release succeeded, rc = %d\n", rc);
 
 	rc = _sde_vm_release_irq(kms->vm);
-	if (rc) {
+	if (rc)
 		SDE_ERROR("irq_release failed, rc = %d\n", rc);
-		goto end;
-	}
 
 end:
-	mutex_unlock(&sde_vm->base.vm_res_lock);
-
 	return rc;
 }
 
@@ -310,7 +222,7 @@ int _sde_vm_populate_res(struct sde_kms *sde_kms, struct sde_vm_trusted *vm)
 	return rc;
 }
 
-static bool sde_vm_owns_hw(struct sde_kms *sde_kms)
+static bool _sde_vm_owns_hw(struct sde_kms *sde_kms)
 {
 	struct sde_vm_trusted *sde_vm;
 	bool owns_irq, owns_mem_io;
@@ -347,6 +259,142 @@ static void  _sde_vm_deinit(struct sde_kms *kms, struct sde_vm_ops *ops)
 	kfree(sde_vm);
 }
 
+static int _sde_vm_accept_mem(struct sde_vm *vm)
+{
+	struct hh_sgl_desc *sgl_desc;
+	struct hh_acl_desc *acl_desc;
+	struct sde_vm_trusted *sde_vm;
+	int rc = 0;
+
+	sde_vm = to_vm_trusted(vm);
+
+	acl_desc = sde_vm_populate_acl(HH_TRUSTED_VM);
+	if (IS_ERR(acl_desc)) {
+		SDE_ERROR("failed to populate acl data, rc=%d\n",
+			   PTR_ERR(acl_desc));
+		rc = PTR_ERR(acl_desc);
+		goto done;
+	}
+
+	sgl_desc = hh_rm_mem_accept(sde_vm->base.io_mem_handle,
+				    HH_RM_MEM_TYPE_IO,
+				    HH_RM_TRANS_TYPE_LEND,
+				    HH_RM_MEM_ACCEPT_VALIDATE_ACL_ATTRS|
+				    HH_RM_MEM_ACCEPT_VALIDATE_LABEL|
+				    HH_RM_MEM_ACCEPT_DONE,
+				    SDE_VM_MEM_LABEL,
+				    acl_desc, NULL, NULL, 0);
+	if (IS_ERR_OR_NULL(sgl_desc)) {
+		SDE_ERROR("hh_rm_mem_accept failed with error, rc=%d\n",
+			   PTR_ERR(sgl_desc));
+		rc = -EINVAL;
+
+		/* ACCEPT didn't go through. So no need to call the RELEASE */
+		sde_vm->base.io_mem_handle = -1;
+		goto accept_fail;
+	}
+
+	rc = _sde_vm_validate_sgl(sde_vm->sgl_desc, sgl_desc);
+	if (rc) {
+		SDE_ERROR(
+			"failed in sgl validation for SDE_VM_MEM_LABEL label, rc = %d\n",
+			rc);
+		goto accept_fail;
+	}
+
+	SDE_INFO("mem accept succeeded for SDE_VM_MEM_LABEL label\n");
+
+	return 0;
+
+accept_fail:
+	kfree(acl_desc);
+done:
+	return rc;
+}
+
+static int _sde_vm_accept_irq(struct sde_vm *vm)
+{
+	struct sde_vm_trusted *sde_vm;
+	struct sde_vm_irq_desc *irq_desc;
+	struct irq_data *exp_irq_data, *acc_irq_data;
+	int accepted_irq, expected_irq;
+	int rc = 0, i;
+
+	sde_vm = to_vm_trusted(vm);
+	irq_desc = sde_vm->irq_desc;
+
+	for (i = 0; i < irq_desc->n_irq; i++) {
+		struct sde_vm_irq_entry *irq_entry = &irq_desc->irq_entries[i];
+
+		expected_irq = irq_entry->irq;
+		accepted_irq = hh_irq_accept(irq_entry->label, -1,
+				IRQ_TYPE_LEVEL_HIGH);
+		if (accepted_irq < 0) {
+			SDE_ERROR("failed to accept irq for label: %d\n",
+					irq_entry->label);
+			rc = -EINVAL;
+			goto end;
+		}
+
+		atomic_inc(&sde_vm->base.n_irq_lent);
+
+		exp_irq_data = irq_get_irq_data(expected_irq);
+		if (!exp_irq_data) {
+			SDE_ERROR("failed to get irq data for irq: %d\n",
+					exp_irq_data);
+			rc = -EINVAL;
+			goto end;
+		}
+
+		acc_irq_data = irq_get_irq_data(accepted_irq);
+		if (!acc_irq_data) {
+			SDE_ERROR("failed to get irq data for irq: %d\n",
+					accepted_irq);
+			rc = -EINVAL;
+			goto end;
+		}
+
+		if (exp_irq_data->hwirq != acc_irq_data->hwirq) {
+			SDE_ERROR("IRQ mismatch on ACCEPT for label %d\n",
+					irq_entry->label);
+			rc = -EINVAL;
+			goto end;
+		}
+
+		SDE_INFO("IRQ accept succeeded for label %d irq: %d\n",
+				irq_entry->label, exp_irq_data->hwirq);
+	}
+end:
+	return rc;
+}
+
+static int _sde_vm_accept(struct sde_kms *kms)
+{
+	int rc = 0;
+
+	rc = _sde_vm_accept_mem(kms->vm);
+	if (rc)
+		goto res_accept_fail;
+
+	rc = _sde_vm_accept_irq(kms->vm);
+	if (rc)
+		goto res_accept_fail;
+
+	rc = sde_kms_vm_trusted_resource_init(kms);
+	if (rc) {
+		SDE_ERROR("vm resource init failed\n");
+		goto res_accept_fail;
+	}
+
+	goto end;
+
+res_accept_fail:
+	_sde_vm_release_irq(kms->vm);
+	_sde_vm_release_mem(kms->vm);
+end:
+	return rc;
+}
+
 static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 {
 	memset(ops, 0, sizeof(*ops));
@@ -354,11 +402,13 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 	ops->vm_client_pre_release = sde_vm_pre_release;
 	ops->vm_client_post_acquire = sde_vm_post_acquire;
 	ops->vm_release = _sde_vm_release;
-	ops->vm_owns_hw = sde_vm_owns_hw;
+	ops->vm_acquire = _sde_vm_accept;
+	ops->vm_owns_hw = _sde_vm_owns_hw;
 	ops->vm_deinit = _sde_vm_deinit;
 	ops->vm_prepare_commit = sde_kms_vm_trusted_prepare_commit;
 	ops->vm_post_commit = sde_kms_vm_trusted_post_commit;
 	ops->vm_request_valid = sde_vm_request_valid;
+	ops->vm_acquire_fail_handler = _sde_vm_release;
 }
 
 int sde_vm_trusted_init(struct sde_kms *kms)

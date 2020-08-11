@@ -12,7 +12,7 @@
 
 #define to_vm_primary(vm) ((struct sde_vm_primary *)vm)
 
-static bool sde_vm_owns_hw(struct sde_kms *sde_kms)
+static bool _sde_vm_owns_hw(struct sde_kms *sde_kms)
 {
 	struct sde_vm_primary *sde_vm;
 	bool owns_irq, owns_mem_io;
@@ -28,76 +28,90 @@ static bool sde_vm_owns_hw(struct sde_kms *sde_kms)
 void sde_vm_irq_release_notification_handler(void *req,
 		unsigned long notif_type, enum hh_irq_label label)
 {
-	struct sde_vm_primary *sde_vm;
-	int rc = 0;
-
-	if (!req) {
-		SDE_ERROR("invalid data on release notificaiton\n");
-		return;
-	}
-
-	sde_vm = to_vm_primary(req);
-
-	mutex_lock(&sde_vm->base.vm_res_lock);
-
-	rc = hh_irq_reclaim(label);
-	if (rc) {
-		SDE_ERROR("failed to reclaim irq label: %d\n", label);
-		goto notify_end;
-	}
-
-	/**
-	 * Skipping per IRQ label verification since IRQ's are MDSS centric.
-	 * Need to enable addition verifications when per-display IRQ's are
-	 *  supported.
-	 */
-	atomic_dec(&sde_vm->base.n_irq_lent);
-
-	SDE_INFO("irq reclaim succeeded for label: %d\n", label);
-notify_end:
-	mutex_unlock(&sde_vm->base.vm_res_lock);
-
+	SDE_INFO("irq release notification for label: %d\n", label);
 }
 
 static void sde_vm_mem_release_notification_handler(
 		enum hh_mem_notifier_tag tag, unsigned long notif_type,
 		void *entry_data, void *notif_msg)
 {
-	struct hh_rm_notif_mem_released_payload *payload;
-	struct sde_vm_primary *sde_vm;
-	struct sde_kms *sde_kms;
-	int rc = 0;
-
-	if (notif_type != HH_RM_NOTIF_MEM_RELEASED ||
-			tag != HH_MEM_NOTIFIER_TAG_DISPLAY)
-		return;
-
-	if (!entry_data || !notif_msg)
-		return;
-
-	payload = (struct hh_rm_notif_mem_released_payload *)notif_msg;
-	sde_vm = (struct sde_vm_primary *)entry_data;
-	sde_kms = sde_vm->base.sde_kms;
-
-	mutex_lock(&sde_vm->base.vm_res_lock);
-
-	if (payload->mem_handle != sde_vm->base.io_mem_handle)
-		goto notify_end;
-
-	rc = hh_rm_mem_reclaim(payload->mem_handle, 0);
-	if (rc) {
-		SDE_ERROR("failed to reclaim IO memory, rc=%d\n", rc);
-		goto notify_end;
-	}
-
-	sde_vm->base.io_mem_handle = -1;
-
-	SDE_INFO("mem reclaim succeeded for tag: %d\n", tag);
-notify_end:
-	mutex_unlock(&sde_vm->base.vm_res_lock);
+	SDE_INFO("mem release notification for tag: %d\n", tag);
 }
 
-static int _sde_vm_lend_notify_registers(struct sde_vm *vm,
+int _sde_vm_reclaim_mem(struct sde_kms *sde_kms)
+{
+	struct sde_vm_primary *sde_vm = to_vm_primary(sde_kms->vm);
+	int rc = 0;
+
+	if (sde_vm->base.io_mem_handle < 0)
+		return 0;
+
+	rc = hh_rm_mem_reclaim(sde_vm->base.io_mem_handle, 0);
+	if (rc) {
+		SDE_ERROR("failed to reclaim IO memory, rc=%d\n", rc);
+		goto reclaim_fail;
+	}
+
+	SDE_INFO("mem reclaim succeeded\n");
+reclaim_fail:
+	sde_vm->base.io_mem_handle = -1;
+
+	return rc;
+}
+
+int _sde_vm_reclaim_irq(struct sde_kms *sde_kms)
+{
+	struct sde_vm_primary *sde_vm = to_vm_primary(sde_kms->vm);
+	struct sde_vm_irq_desc *irq_desc;
+	int rc = 0, i;
+
+	if (!sde_vm->irq_desc)
+		return 0;
+
+	irq_desc = sde_vm->irq_desc;
+
+	for (i = atomic_read(&sde_vm->base.n_irq_lent) - 1; i >= 0; i--) {
+		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
+
+		rc = hh_irq_reclaim(entry->label);
+		if (rc) {
+			SDE_ERROR("failed to reclaim irq label: %d rc = %d\n",
+					entry->label, rc);
+			goto reclaim_fail;
+		}
+
+		atomic_dec(&sde_vm->base.n_irq_lent);
+
+		SDE_INFO("irq reclaim succeeded for label: %d\n", entry->label);
+	}
+
+reclaim_fail:
+	sde_vm_free_irq(sde_vm->irq_desc);
+	sde_vm->irq_desc = NULL;
+	atomic_set(&sde_vm->base.n_irq_lent, 0);
+
+	return rc;
+}
+
+static int _sde_vm_reclaim(struct sde_kms *sde_kms)
+{
+	int rc = 0;
+
+	rc = _sde_vm_reclaim_mem(sde_kms);
+	if (rc) {
+		SDE_ERROR("vm reclaim mem failed, rc=%d\n", rc);
+		goto end;
+	}
+
+	rc = _sde_vm_reclaim_irq(sde_kms);
+	if (rc)
+		SDE_ERROR("vm reclaim irq failed, rc=%d\n", rc);
+
+end:
+	return rc;
+}
+
+static int _sde_vm_lend_mem(struct sde_vm *vm,
 					 struct msm_io_res *io_res)
 {
 	struct sde_vm_primary *sde_vm;
@@ -114,13 +128,14 @@ static int _sde_vm_lend_notify_registers(struct sde_vm *vm,
 	if (IS_ERR(acl_desc)) {
 		SDE_ERROR("failed to populate acl descriptor, rc = %d\n",
 			   PTR_ERR(acl_desc));
-		return rc;
+		return -EINVAL;
 	}
 
 	sgl_desc = sde_vm_populate_sgl(io_res);
 	if (IS_ERR_OR_NULL(sgl_desc)) {
 		SDE_ERROR("failed to populate sgl descriptor, rc = %d\n",
 			   PTR_ERR(sgl_desc));
+		rc = -EINVAL;
 		goto sgl_fail;
 	}
 
@@ -130,6 +145,8 @@ static int _sde_vm_lend_notify_registers(struct sde_vm *vm,
 		SDE_ERROR("hyp lend failed with error, rc: %d\n", rc);
 		goto fail;
 	}
+
+	sde_vm->base.io_mem_handle = mem_handle;
 
 	hh_rm_get_vmid(HH_TRUSTED_VM, &trusted_vmid);
 
@@ -141,8 +158,6 @@ static int _sde_vm_lend_notify_registers(struct sde_vm *vm,
 		SDE_ERROR("hyp mem notify failed, rc = %d\n", rc);
 		goto notify_fail;
 	}
-
-	sde_vm->base.io_mem_handle = mem_handle;
 
 	SDE_INFO("IO memory lend suceeded for tag: %d\n",
 			HH_MEM_NOTIFIER_TAG_DISPLAY);
@@ -167,6 +182,9 @@ static int _sde_vm_lend_irq(struct sde_vm *vm, struct msm_io_res *io_res)
 
 	irq_desc = sde_vm_populate_irq(io_res);
 
+	/* cache the irq list for validation during reclaim */
+	sde_vm->irq_desc = irq_desc;
+
 	for (i  = 0; i < irq_desc->n_irq; i++) {
 		struct sde_vm_irq_entry *entry = &irq_desc->irq_entries[i];
 
@@ -176,25 +194,22 @@ static int _sde_vm_lend_irq(struct sde_vm *vm, struct msm_io_res *io_res)
 		if (rc) {
 			SDE_ERROR("irq lend failed for irq label: %d, rc=%d\n",
 				  entry->label, rc);
-			hh_irq_reclaim(entry->label);
-			return rc;
+			goto done;
 		}
+
+		atomic_inc(&sde_vm->base.n_irq_lent);
 
 		rc = hh_irq_lend_notify(entry->label);
 		if (rc) {
 			SDE_ERROR("irq lend notify failed, label: %d, rc=%d\n",
 				entry->label, rc);
-			hh_irq_reclaim(entry->label);
-			return rc;
+			goto done;
 		}
 
 		SDE_INFO("vm lend suceeded for IRQ label: %d\n", entry->label);
 	}
 
-	// cache the irq list for validation during release
-	sde_vm->irq_desc = irq_desc;
-	atomic_set(&sde_vm->base.n_irq_lent, sde_vm->irq_desc->n_irq);
-
+done:
 	return rc;
 }
 
@@ -215,25 +230,27 @@ static int _sde_vm_release(struct sde_kms *kms)
 	rc = sde_vm_get_resources(kms, &io_res);
 	if (rc) {
 		SDE_ERROR("fail to get resources\n");
-		goto assign_fail;
+		goto done;
 	}
 
-	mutex_lock(&sde_vm->base.vm_res_lock);
-
-	rc = _sde_vm_lend_notify_registers(kms->vm, &io_res);
+	rc = _sde_vm_lend_mem(kms->vm, &io_res);
 	if (rc) {
 		SDE_ERROR("fail to lend notify resources\n");
-		goto assign_fail;
+		goto res_lend_fail;
 	}
 
 	rc = _sde_vm_lend_irq(kms->vm, &io_res);
 	if (rc) {
 		SDE_ERROR("failed to lend irq's\n");
-		goto assign_fail;
+		goto res_lend_fail;
 	}
-assign_fail:
+
+	goto done;
+
+res_lend_fail:
+	_sde_vm_reclaim(kms);
+done:
 	sde_vm_free_resources(&io_res);
-	mutex_unlock(&sde_vm->base.vm_res_lock);
 
 	return rc;
 }
@@ -266,7 +283,8 @@ static void _sde_vm_set_ops(struct sde_vm_ops *ops)
 	ops->vm_client_pre_release = sde_vm_pre_release;
 	ops->vm_client_post_acquire = sde_vm_post_acquire;
 	ops->vm_release = _sde_vm_release;
-	ops->vm_owns_hw = sde_vm_owns_hw;
+	ops->vm_acquire = _sde_vm_reclaim;
+	ops->vm_owns_hw = _sde_vm_owns_hw;
 	ops->vm_deinit = _sde_vm_deinit;
 	ops->vm_prepare_commit = sde_kms_vm_primary_prepare_commit;
 	ops->vm_post_commit = sde_kms_vm_primary_post_commit;

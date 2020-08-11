@@ -1358,10 +1358,12 @@ int sde_kms_vm_trusted_post_commit(struct sde_kms *sde_kms,
 
 	sde_hw_set_lutdma_sid(sde_kms->hw_sid, 0);
 
-	sde_kms_vm_trusted_resource_deinit(sde_kms);
+	sde_vm_lock(sde_kms);
 
 	if (vm_ops->vm_release)
 		rc = vm_ops->vm_release(sde_kms);
+
+	sde_vm_unlock(sde_kms);
 
 	return rc;
 }
@@ -1438,12 +1440,15 @@ int sde_kms_vm_primary_post_commit(struct sde_kms *sde_kms,
 		}
 	}
 
+	sde_vm_lock(sde_kms);
 	/* release HW */
 	if (vm_ops->vm_release) {
 		rc = vm_ops->vm_release(sde_kms);
 		if (rc)
 			SDE_ERROR("sde vm assign failed, rc=%d\n", rc);
 	}
+	sde_vm_unlock(sde_kms);
+
 exit:
 	return rc;
 }
@@ -2675,6 +2680,38 @@ static int sde_kms_check_secure_transition(struct msm_kms *kms,
 	return 0;
 }
 
+static void sde_kms_vm_res_release(struct msm_kms *kms,
+		struct drm_atomic_state *state)
+{
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *crtc_state;
+	struct sde_vm_ops *vm_ops;
+	enum sde_crtc_vm_req vm_req;
+	struct sde_kms *sde_kms = to_sde_kms(kms);
+	int i;
+
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
+		struct sde_crtc_state *cstate;
+
+		cstate = to_sde_crtc_state(state->crtcs[0].new_state);
+
+		vm_req = sde_crtc_get_property(cstate, CRTC_PROP_VM_REQ_STATE);
+		if (vm_req != VM_REQ_ACQUIRE)
+			return;
+	}
+
+	vm_ops = sde_vm_get_ops(sde_kms);
+	if (!vm_ops)
+		return;
+
+	sde_vm_lock(sde_kms);
+
+	if (vm_ops->vm_acquire_fail_handler)
+		vm_ops->vm_acquire_fail_handler(sde_kms);
+
+	sde_vm_unlock(sde_kms);
+}
+
 static int sde_kms_atomic_check(struct msm_kms *kms,
 		struct drm_atomic_state *state)
 {
@@ -2695,9 +2732,15 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 		goto end;
 	}
 
+	ret = sde_kms_check_vm_request(kms, state);
+	if (ret) {
+		SDE_ERROR("vm switch request checks failed\n");
+		goto end;
+	}
+
 	ret = drm_atomic_helper_check(dev, state);
 	if (ret)
-		goto end;
+		goto vm_clean_up;
 	/*
 	 * Check if any secure transition(moving CRTC between secure and
 	 * non-secure state and vice-versa) is allowed or not. when moving
@@ -2707,12 +2750,12 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 	 */
 	ret = sde_kms_check_secure_transition(kms, state);
 	if (ret)
-		goto end;
+		goto vm_clean_up;
 
-	ret = sde_kms_check_vm_request(kms, state);
-	if (ret)
-		SDE_ERROR("vm switch request checks failed\n");
+	goto end;
 
+vm_clean_up:
+	sde_kms_vm_res_release(kms, state);
 end:
 	SDE_ATRACE_END("atomic_check");
 	return ret;
@@ -4454,19 +4497,11 @@ int sde_kms_vm_trusted_resource_init(struct sde_kms *sde_kms)
 	struct msm_drm_private *priv;
 	struct sde_splash_display *handoff_display;
 	struct dsi_display *display;
-	struct sde_vm_ops *vm_ops;
 	int ret, i;
 
 	if (!sde_kms || !sde_kms->dev || !sde_kms->dev->dev_private) {
 		SDE_ERROR("invalid params\n");
 		return -EINVAL;
-	}
-
-	vm_ops = sde_vm_get_ops(sde_kms);
-	if (vm_ops && !vm_ops->vm_owns_hw(sde_kms)) {
-		SDE_DEBUG(
-		   "skipping sde res init as device assign is not completed\n");
-		return 0;
 	}
 
 	if (sde_kms->dsi_display_count != 1) {
