@@ -440,11 +440,11 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
  *
  * process radar indication.
  *
- * Return: channel to which sap wishes to switch.
+ * Return: frequency to which sap wishes to switch.
  */
-uint8_t sap_indicate_radar(struct sap_context *sap_ctx);
+qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx);
 #else
-static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
+static inline qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx)
 {
 	return 0;
 }

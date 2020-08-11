@@ -182,11 +182,11 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
  * This function first eliminates invalid channel, then selects random channel
  * using following algorithm:
  *
- * Return: channel number picked
+ * Return: channel frequency picked
  */
-static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
+static qdf_freq_t sap_random_channel_sel(struct sap_context *sap_ctx)
 {
-	uint8_t ch;
+	uint16_t chan_freq;
 	uint8_t ch_wd;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct ch_params *ch_params;
@@ -236,14 +236,15 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 		 sap_operating_chan_preferred_location == 2)
 		flag |= DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH;
 
-	if (QDF_IS_STATUS_ERROR(utils_dfs_get_vdev_random_channel(
-	    pdev, sap_ctx->vdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {
+	if (QDF_IS_STATUS_ERROR(utils_dfs_get_vdev_random_channel_for_freq(
+					pdev, sap_ctx->vdev, flag, ch_params,
+					&hw_mode, &chan_freq, &acs_info))) {
 		/* No available channel found */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("No available channel found!!!"));
 		sap_signal_hdd_event(sap_ctx, NULL,
-				eSAP_DFS_NO_AVAILABLE_CHANNEL,
-				(void *)eSAP_STATUS_SUCCESS);
+				     eSAP_DFS_NO_AVAILABLE_CHANNEL,
+				     (void *)eSAP_STATUS_SUCCESS);
 		return 0;
 	}
 	mac_ctx->sap.SapDfsInfo.new_chanWidth = ch_params->ch_width;
@@ -251,7 +252,7 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	sap_ctx->ch_params.sec_ch_offset = ch_params->sec_ch_offset;
 	sap_ctx->ch_params.center_freq_seg0 = ch_params->center_freq_seg0;
 	sap_ctx->ch_params.center_freq_seg1 = ch_params->center_freq_seg1;
-	return ch;
+	return chan_freq;
 }
 #else
 static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
@@ -2145,11 +2146,11 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 	if (sap_dfs_is_channel_in_nol_list(sap_ctx, sap_chan,
 					   PHY_CHANNEL_BONDING_STATE_MAX) ||
 	    b_leak_chan) {
-		uint8_t ch;
+		qdf_freq_t chan_freq;
 
 		/* find a new available channel */
-		ch = sap_random_channel_sel(sap_ctx);
-		if (!ch) {
+		chan_freq = sap_random_channel_sel(sap_ctx);
+		if (!chan_freq) {
 			/* No available channel found */
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_ERROR,
@@ -2161,10 +2162,10 @@ static QDF_STATUS sap_validate_dfs_nol(struct sap_context *sap_ctx,
 		}
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("ch_freq %d is in NOL, Start Bss on new chan %d"),
-			  sap_ctx->chan_freq, ch);
+			  FL("ch_freq %d is in NOL, start bss on new freq %d"),
+			  sap_ctx->chan_freq, chan_freq);
 
-		sap_ctx->chan_freq = wlan_reg_chan_to_freq(mac_ctx->pdev, ch);
+		sap_ctx->chan_freq = chan_freq;
 		wlan_reg_set_channel_params_for_freq(mac_ctx->pdev,
 						     sap_ctx->chan_freq,
 						     sap_ctx->sec_ch_freq,
@@ -3607,9 +3608,9 @@ static QDF_STATUS sap_get_freq_list(struct sap_context *sap_ctx,
 #endif
 
 #ifdef DFS_COMPONENT_ENABLE
-uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
+qdf_freq_t sap_indicate_radar(struct sap_context *sap_ctx)
 {
-	uint8_t target_channel = 0;
+	qdf_freq_t chan_freq = 0;
 	struct mac_context *mac;
 
 	if (!sap_ctx) {
@@ -3649,16 +3650,16 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 	    (void *) eSAP_STATUS_SUCCESS)))
 		return 0;
 
-	target_channel = sap_random_channel_sel(sap_ctx);
-	if (!target_channel)
+	chan_freq = sap_random_channel_sel(sap_ctx);
+	if (!chan_freq)
 		sap_signal_hdd_event(sap_ctx, NULL,
 		eSAP_DFS_NO_AVAILABLE_CHANNEL, (void *) eSAP_STATUS_SUCCESS);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
-		  FL("sapdfs: New selected target channel is [%d]"),
-		  target_channel);
+		  FL("sapdfs: New selected target freq is [%d]"),
+		  chan_freq);
 
-	return target_channel;
+	return chan_freq;
 }
 #endif
 

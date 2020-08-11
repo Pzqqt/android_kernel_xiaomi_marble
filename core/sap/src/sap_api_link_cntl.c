@@ -1025,7 +1025,8 @@ QDF_STATUS wlansap_roam_callback(void *ctx,
 		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_RADAR_DETECT,
 				     (void *) eSAP_STATUS_SUCCESS);
 		mac_ctx->sap.SapDfsInfo.target_chan_freq =
-			wlan_reg_chan_to_freq(mac_ctx->pdev, sap_indicate_radar(sap_ctx));
+			sap_indicate_radar(sap_ctx);
+
 		/* if there is an assigned next channel hopping */
 		if (0 < mac_ctx->sap.SapDfsInfo.user_provided_target_chan_freq) {
 			mac_ctx->sap.SapDfsInfo.target_chan_freq =
