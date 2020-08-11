@@ -330,6 +330,50 @@ void hal_rx_proc_phyrx_other_receive_info_tlv_5018(void *rx_tlv_hdr,
 {
 }
 
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+static inline
+void hal_rx_get_bb_info_5018(void *rx_tlv,
+			     void *ppdu_info_hdl)
+{
+	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
+
+	ppdu_info->cfr_info.bb_captured_channel =
+		HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_CHANNEL);
+
+	ppdu_info->cfr_info.bb_captured_timeout =
+		HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_TIMEOUT);
+
+	ppdu_info->cfr_info.bb_captured_reason =
+		HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_3, BB_CAPTURED_REASON);
+}
+
+static inline
+void hal_rx_get_rtt_info_5018(void *rx_tlv,
+			      void *ppdu_info_hdl)
+{
+	struct hal_rx_ppdu_info *ppdu_info  = ppdu_info_hdl;
+
+	ppdu_info->cfr_info.rx_location_info_valid =
+	HAL_RX_GET(rx_tlv, PHYRX_PKT_END_13_RX_PKT_END_DETAILS,
+		   RX_LOCATION_INFO_DETAILS_RX_LOCATION_INFO_VALID);
+
+	ppdu_info->cfr_info.rtt_che_buffer_pointer_low32 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_12_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_CHE_BUFFER_POINTER_LOW32);
+
+	ppdu_info->cfr_info.rtt_che_buffer_pointer_high8 =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_11_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RTT_CHE_BUFFER_POINTER_HIGH8);
+
+	ppdu_info->cfr_info.chan_capture_status =
+	HAL_RX_GET(rx_tlv,
+		   PHYRX_PKT_END_13_RX_PKT_END_DETAILS_RX_LOCATION_INFO_DETAILS,
+		   RESERVED_8);
+}
+#endif
+
 /**
  * hal_rx_dump_msdu_start_tlv_5018() : dump RX msdu_start TLV in structured
  *			     human readable format.
@@ -1697,8 +1741,13 @@ struct hal_hw_txrx_ops qca5018_hal_hw_txrx_ops = {
 	hal_rx_msdu_get_flow_params_5018,
 	hal_rx_tlv_get_tcp_chksum_5018,
 	hal_rx_get_rx_sequence_5018,
+#if defined(WLAN_CFR_ENABLE) && defined(WLAN_ENH_CFR_ENABLE)
+	hal_rx_get_bb_info_5018,
+	hal_rx_get_rtt_info_5018,
+#else
 	NULL,
 	NULL,
+#endif
 	/* rx - msdu fast path info fields */
 	hal_rx_msdu_packet_metadata_get_5018,
 	NULL,
