@@ -581,13 +581,15 @@ static inline int pld_set_wlan_unsafe_channel(struct device *dev,
 					      u16 *unsafe_ch_list,
 					      u16 ch_count)
 {
-	return -EINVAL;
+	return 0;
 }
 static inline int pld_get_wlan_unsafe_channel(struct device *dev,
 					      u16 *unsafe_ch_list,
 					      u16 *ch_count, u16 buf_len)
 {
-	return -EINVAL;
+	*ch_count = 0;
+
+	return 0;
 }
 static inline int pld_wlan_set_dfs_nol(struct device *dev,
 				       void *info, u16 info_len)
