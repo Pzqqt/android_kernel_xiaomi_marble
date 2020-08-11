@@ -586,8 +586,8 @@ QDF_STATUS ucfg_p2p_register_callbacks(struct wlan_objmgr_psoc *soc,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
 	if (!soc || !cb_obj) {
-		p2p_err("psoc %pM cb_obj %pM context passed is NULL", soc,
-			cb_obj);
+		p2p_err("psoc: %pK or cb_obj: %pK context passed is NULL",
+			soc, cb_obj);
 		return QDF_STATUS_E_INVAL;
 	}
 

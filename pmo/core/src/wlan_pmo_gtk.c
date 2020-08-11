@@ -141,9 +141,9 @@ static QDF_STATUS pmo_core_is_gtk_enabled_in_fwr(
 	if (qdf_mem_cmp(&vdev_ctx->vdev_gtk_req.bssid,
 		&peer_bssid, QDF_MAC_ADDR_SIZE)) {
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-		pmo_err("cache request mac:%pM, peer mac:%pM are not same",
-			vdev_ctx->vdev_gtk_req.bssid.bytes,
-			peer_bssid.bytes);
+		pmo_err("cache request mac:"QDF_MAC_ADDR_FMT", peer mac:"QDF_MAC_ADDR_FMT" are not same",
+			QDF_MAC_ADDR_REF(vdev_ctx->vdev_gtk_req.bssid.bytes),
+			QDF_MAC_ADDR_REF(peer_bssid.bytes));
 		return QDF_STATUS_E_INVAL;
 	}
 

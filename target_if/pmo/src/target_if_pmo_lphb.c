@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,12 +76,12 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 
 	target_if_info("PMO --> WMI_HB_SET_TCP_PARAMS srv_ip=%08x, "
 		"dev_ip=%08x, src_port=%d, dst_port=%d, timeout=%d, "
-		"session=%d, gateway_mac= %pM, time_period_sec=%d,"
+		"session=%d, gateway_mac= "QDF_MAC_ADDR_FMT", time_period_sec=%d,"
 		"tcp_sn=%d", ts_lphb_tcp_param->srv_ip,
 		ts_lphb_tcp_param->dev_ip, ts_lphb_tcp_param->src_port,
 		ts_lphb_tcp_param->dst_port, ts_lphb_tcp_param->timeout,
 		ts_lphb_tcp_param->session,
-		ts_lphb_tcp_param->gateway_mac.bytes,
+		QDF_MAC_ADDR_REF(ts_lphb_tcp_param->gateway_mac.bytes),
 		ts_lphb_tcp_param->time_period_sec, ts_lphb_tcp_param->tcp_sn);
 
 	/* fill in values */
@@ -158,12 +158,12 @@ QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 
 	target_if_info("HB_SET_UDP_PARAMS srv_ip=%d, dev_ip=%d, src_port=%d, "
 		"dst_port=%d, interval=%d, timeout=%d, session=%d, "
-		"gateway_mac= %pM",
+		"gateway_mac= "QDF_MAC_ADDR_FMT,
 		ts_lphb_udp_param->srv_ip, ts_lphb_udp_param->dev_ip,
 		ts_lphb_udp_param->src_port, ts_lphb_udp_param->dst_port,
 		ts_lphb_udp_param->interval, ts_lphb_udp_param->timeout,
 		ts_lphb_udp_param->session,
-		ts_lphb_udp_param->gateway_mac.bytes);
+		QDF_MAC_ADDR_REF(ts_lphb_udp_param->gateway_mac.bytes));
 
 	/* fill in values */
 	hb_udp_params_fp.vdev_id = ts_lphb_udp_param->session;

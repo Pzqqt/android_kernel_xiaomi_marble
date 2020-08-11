@@ -1330,8 +1330,8 @@ static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
 		}
 	}
 	if (sta_add && sta_found) {
-		ipa_err("STA already exist, cannot add: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(mac_addr));
+		ipa_err("STA already exist, cannot add: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(mac_addr));
 		return sta_found;
 	}
 	if (sta_add) {
@@ -1347,7 +1347,7 @@ static bool wlan_ipa_uc_find_add_assoc_sta(struct wlan_ipa_priv *ipa_ctx,
 	}
 	if (!sta_add && !sta_found) {
 		ipa_info("STA does not exist, cannot delete: "
-			 QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(mac_addr));
+			 QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac_addr));
 		return sta_found;
 	}
 	if (!sta_add) {
@@ -1930,8 +1930,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
 
-	ipa_debug("%s: EVT: %d, MAC: %pM, session_id: %u",
-		  net_dev->name, type, mac_addr, session_id);
+	ipa_debug("%s: EVT: %d, MAC: "QDF_MAC_ADDR_FMT", session_id: %u",
+		  net_dev->name, type, QDF_MAC_ADDR_REF(mac_addr), session_id);
 
 	if (type >= QDF_IPA_WLAN_EVENT_MAX)
 		return QDF_STATUS_E_INVAL;
@@ -2316,9 +2316,9 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 		if (wlan_ipa_uc_find_add_assoc_sta(ipa_ctx, true,
 						   mac_addr)) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
-			ipa_err("%s: STA found, addr: " QDF_MAC_ADDR_STR,
+			ipa_err("%s: STA found, addr: " QDF_MAC_ADDR_FMT,
 				net_dev->name,
-				QDF_MAC_ADDR_ARRAY(mac_addr));
+				QDF_MAC_ADDR_REF(mac_addr));
 			return QDF_STATUS_SUCCESS;
 		}
 
@@ -2430,8 +2430,8 @@ static QDF_STATUS __wlan_ipa_wlan_evt(qdf_netdev_t net_dev, uint8_t device_mode,
 						    mac_addr)) {
 			qdf_mutex_release(&ipa_ctx->event_lock);
 			ipa_debug("%s: STA NOT found, not valid: "
-				QDF_MAC_ADDR_STR,
-				msg_ex->name, QDF_MAC_ADDR_ARRAY(mac_addr));
+				QDF_MAC_ADDR_FMT,
+				msg_ex->name, QDF_MAC_ADDR_REF(mac_addr));
 
 			return QDF_STATUS_SUCCESS;
 		}

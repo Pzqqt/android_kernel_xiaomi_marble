@@ -98,9 +98,9 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
-	pmo_debug("vdev self mac addr: %pM bss peer mac addr: %pM",
-		wlan_vdev_mlme_get_macaddr(vdev),
-		wlan_peer_get_macaddr(peer));
+	pmo_debug("vdev self mac addr: "QDF_MAC_ADDR_FMT" bss peer mac addr: "QDF_MAC_ADDR_FMT,
+		QDF_MAC_ADDR_REF(wlan_vdev_mlme_get_macaddr(vdev)),
+		QDF_MAC_ADDR_REF(wlan_peer_get_macaddr(peer)));
 	/* get peer and peer mac accdress aka ap mac address */
 	qdf_mem_copy(&request.bssid,
 		wlan_peer_get_macaddr(peer),
