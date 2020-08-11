@@ -36,7 +36,8 @@
 #define LSM_REG_MULTI_SND_MODEL (10)
 #define LSM_DEREG_MULTI_SND_MODEL (11)
 #define LSM_MULTI_SND_MODEL_CONFIDENCE_LEVELS (12)
-#define LSM_PARAMS_MAX (LSM_MULTI_SND_MODEL_CONFIDENCE_LEVELS + 1)
+#define LSM_GET_CUSTOM_PARAMS (13)
+#define LSM_PARAMS_MAX (LSM_GET_CUSTOM_PARAMS + 1)
 
 #define LSM_EVENT_NON_TIME_STAMP_MODE (0)
 #define LSM_EVENT_TIME_STAMP_MODE (1)
@@ -288,6 +289,29 @@ struct snd_lsm_input_hw_params {
 	__u16 num_channels;
 } __packed;
 
+/*
+ * Param get info  for each parameter type
+ * add "for SNDRV_LSM_GET_MODULE_PARAMS ioctl"
+ * Existing member variables:
+ * @module_id: Module to which parameter is to be set
+ * @instance_id: instance id of the param to which parameter is to be set
+ * @param_id: Parameter that is to be set
+ * @param_size: size of requested param
+ * @param_type: Parameter type as defined in values upto LSM_PARAMS_MAX
+ * @stage_idx: detection stage for which the param is applicable
+ * @payload: memory where requested param info will be populated
+ */
+struct lsm_params_get_info {
+	__u32 module_id;
+	__u16 instance_id;
+	__u16 reserved;
+	__u32 param_id;
+	__u32 param_size;
+	__u32 param_type;
+	__u16 stage_idx;
+	__u8 payload[0];
+} __packed;
+
 #define SNDRV_LSM_DEREG_SND_MODEL _IOW('U', 0x01, int)
 #define SNDRV_LSM_EVENT_STATUS	_IOW('U', 0x02, struct snd_lsm_event_status)
 #define SNDRV_LSM_ABORT_EVENT	_IOW('U', 0x03, int)
@@ -315,5 +339,6 @@ struct snd_lsm_input_hw_params {
 					struct snd_lsm_session_data_v2)
 #define SNDRV_LSM_SET_MODULE_PARAMS_V2 _IOW('U', 0x13, \
 					struct snd_lsm_module_params)
-
+#define SNDRV_LSM_GET_MODULE_PARAMS _IOWR('U', 0x14, \
+					struct lsm_params_get_info)
 #endif
