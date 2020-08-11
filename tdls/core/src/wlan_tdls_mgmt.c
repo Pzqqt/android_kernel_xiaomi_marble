@@ -55,8 +55,8 @@ QDF_STATUS tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tdls_debug("rssi %d, peer " QDF_MAC_ADDR_STR,
-		   rssi, QDF_MAC_ADDR_ARRAY(mac));
+	tdls_debug("rssi %d, peer " QDF_MAC_ADDR_FMT,
+		   rssi, QDF_MAC_ADDR_REF(mac));
 
 	tdls_vdev = wlan_objmgr_vdev_get_comp_private_obj(
 			vdev, WLAN_UMAC_COMP_TDLS);
@@ -113,8 +113,8 @@ static QDF_STATUS tdls_process_rx_mgmt(
 						TDLS_PUBLIC_ACTION_DISC_RESP) {
 		mac = &rx_mgmt->buf[TDLS_80211_PEER_ADDR_OFFSET];
 		tdls_notice("[TDLS] TDLS Discovery Response,"
-		       QDF_MAC_ADDR_STR " RSSI[%d] <--- OTA",
-		       QDF_MAC_ADDR_ARRAY(mac), rx_mgmt->rx_rssi);
+		       QDF_MAC_ADDR_FMT " RSSI[%d] <--- OTA",
+		       QDF_MAC_ADDR_REF(mac), rx_mgmt->rx_rssi);
 			tdls_recv_discovery_resp(tdls_vdev, mac);
 			tdls_set_rssi(tdls_vdev->vdev, mac, rx_mgmt->rx_rssi);
 	}

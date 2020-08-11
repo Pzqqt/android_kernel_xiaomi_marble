@@ -417,8 +417,8 @@ static int __tdls_get_all_peers_from_list(
 			if (buf_len < 32 + 1)
 				break;
 			len = qdf_scnprintf(buf, buf_len,
-				QDF_MAC_ADDR_STR "%4s%3s%5d\n",
-				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
+				QDF_MAC_ADDR_FMT "%4s%3s%5d\n",
+				QDF_MAC_ADDR_REF(curr_peer->peer_mac.bytes),
 				(curr_peer->tdls_support ==
 				 TDLS_CAP_SUPPORTED) ? "Y" : "N",
 				TDLS_IS_LINK_CONNECTED(curr_peer) ? "Y" :
@@ -504,8 +504,8 @@ static QDF_STATUS tdls_process_reset_all_peers(struct wlan_objmgr_vdev *vdev)
 		if (!curr_peer)
 			continue;
 
-		tdls_notice("indicate TDLS teardown %pM",
-			    curr_peer->peer_mac.bytes);
+		tdls_notice("indicate TDLS teardown "QDF_MAC_ADDR_FMT,
+			    QDF_MAC_ADDR_REF(curr_peer->peer_mac.bytes));
 
 		/* Indicate teardown to supplicant */
 		tdls_indicate_teardown(tdls_vdev,
