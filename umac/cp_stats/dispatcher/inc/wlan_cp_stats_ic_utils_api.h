@@ -40,7 +40,7 @@
 	peer_cp_stats_##field##_dec(struct wlan_objmgr_peer *_peer, \
 				    uint64_t _val) \
 	{ \
-		ucfg_peer_cp_stats_##field##_inc(_peer, _val); \
+		ucfg_peer_cp_stats_##field##_dec(_peer, _val); \
 	} \
 	static inline void \
 	peer_cp_stats_##field##_update(struct wlan_objmgr_peer *_peer, \
