@@ -33,6 +33,11 @@ QDF_STATUS scheduler_disable(void)
 	if (!sched_ctx)
 		return QDF_STATUS_E_INVAL;
 
+	if (!sched_ctx->sch_thread) {
+		sched_debug("Scheduler already disabled");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	/* send shutdown signal to scheduler thread */
 	qdf_atomic_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_atomic_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
