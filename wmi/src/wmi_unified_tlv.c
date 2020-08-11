@@ -6754,6 +6754,22 @@ extract_pdev_sscan_fft_bin_index_tlv(
 }
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef FEATURE_WPSS_THERMAL_MITIGATION
+static inline void
+wmi_fill_client_id_priority(wmi_therm_throt_config_request_fixed_param *tt_conf,
+			    struct thermal_mitigation_params *param)
+{
+	tt_conf->client_id = param->client_id;
+	tt_conf->priority = param->priority;
+}
+#else
+static inline void
+wmi_fill_client_id_priority(wmi_therm_throt_config_request_fixed_param *tt_conf,
+			    struct thermal_mitigation_params *param)
+{
+}
+#endif
+
 /**
  * send_thermal_mitigation_param_cmd_tlv() - configure thermal mitigation params
  * @param wmi_handle : handle to WMI.
@@ -6795,7 +6811,7 @@ static QDF_STATUS send_thermal_mitigation_param_cmd_tlv(
 	tt_conf->dc = param->dc;
 	tt_conf->dc_per_event = param->dc_per_event;
 	tt_conf->therm_throt_levels = param->num_thermal_conf;
-
+	wmi_fill_client_id_priority(tt_conf, param);
 	buf_ptr = (uint8_t *) ++tt_conf;
 	/* init TLV params */
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
@@ -14756,6 +14772,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_CFR_CAPTURE_COUNT_SUPPORT;
 	wmi_service[wmi_service_ll_stats_per_chan_rx_tx_time] =
 			WMI_SERVICE_LL_STATS_PER_CHAN_RX_TX_TIME_SUPPORT;
+	wmi_service[wmi_service_thermal_multi_client_support] =
+			WMI_SERVICE_THERMAL_MULTI_CLIENT_SUPPORT;
 }
 
 /**

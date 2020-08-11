@@ -2893,6 +2893,8 @@ typedef struct {
  * @dc: DC
  * @dc_per_event: DC per event
  * @num_thermal_conf: Number of thermal configurations to be sent
+ * @client_id: Thermal client id either apps or wpps
+ * @priority: Priority of apps/wpps
  * @tt_level_config: TT level config params
  */
 struct thermal_mitigation_params {
@@ -2901,6 +2903,8 @@ struct thermal_mitigation_params {
 	uint32_t dc;
 	uint32_t dc_per_event;
 	uint8_t num_thermal_conf;
+	uint8_t client_id;
+	uint8_t priority;
 	tt_level_config levelconf[THERMAL_LEVELS];
 };
 
@@ -5221,6 +5225,7 @@ typedef enum {
 	wmi_service_cfr_ta_ra_as_fp_support,
 	wmi_service_cfr_capture_count_support,
 	wmi_service_ll_stats_per_chan_rx_tx_time,
+	wmi_service_thermal_multi_client_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
