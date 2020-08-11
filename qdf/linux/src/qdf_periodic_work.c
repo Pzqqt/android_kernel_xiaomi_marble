@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,7 +97,7 @@ QDF_STATUS __qdf_periodic_work_create(struct qdf_periodic_work *pwork,
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	INIT_DELAYED_WORK(&pwork->dwork, __qdf_periodic_work_handler);
+	INIT_DEFERRABLE_WORK(&pwork->dwork, __qdf_periodic_work_handler);
 	pwork->callback = callback;
 	pwork->context = context;
 	pwork->msec = 0;
