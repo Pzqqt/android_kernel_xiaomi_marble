@@ -24,7 +24,8 @@
 #ifndef __HTT_STATS_H__
 #define __HTT_STATS_H__
 
-#include <htt.h>
+#include <htt_deps.h> /* A_UINT32 */
+#include <htt_common.h>
 
 /*
  * htt_dbg_ext_stats_type -

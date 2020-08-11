@@ -251,42 +251,6 @@
  */
 #define HTT_T2H_MSG_TYPE_RC_UPDATE_IND DEPRECATED_HTT_T2H_MSG_TYPE_RC_UPDATE_IND
 
-/* HTT Access Category values */
-enum HTT_AC_WMM {
-    /* WMM Access Categories */
-    HTT_AC_WMM_BE         = 0x0,
-    HTT_AC_WMM_BK         = 0x1,
-    HTT_AC_WMM_VI         = 0x2,
-    HTT_AC_WMM_VO         = 0x3,
-
-    HTT_NUM_AC_WMM        = 0x4,
-
-    /* extension Access Categories */
-    HTT_AC_EXT_NON_QOS    = 0x4,
-    HTT_AC_EXT_UCAST_MGMT = 0x5,
-    HTT_AC_EXT_MCAST_DATA = 0x6,
-    HTT_AC_EXT_MCAST_MGMT = 0x7,
-};
-enum HTT_AC_WMM_MASK {
-    /* WMM Access Categories */
-    HTT_AC_WMM_BE_MASK = (1 << HTT_AC_WMM_BE),
-    HTT_AC_WMM_BK_MASK = (1 << HTT_AC_WMM_BK),
-    HTT_AC_WMM_VI_MASK = (1 << HTT_AC_WMM_VI),
-    HTT_AC_WMM_VO_MASK = (1 << HTT_AC_WMM_VO),
-    /* extension Access Categories */
-    HTT_AC_EXT_NON_QOS_MASK    = (1 << HTT_AC_EXT_NON_QOS),
-    HTT_AC_EXT_UCAST_MGMT_MASK = (1 << HTT_AC_EXT_UCAST_MGMT),
-    HTT_AC_EXT_MCAST_DATA_MASK = (1 << HTT_AC_EXT_MCAST_DATA),
-    HTT_AC_EXT_MCAST_MGMT_MASK = (1 << HTT_AC_EXT_MCAST_MGMT),
-};
-#define HTT_AC_MASK_WMM \
-    (HTT_AC_WMM_BE_MASK | HTT_AC_WMM_BK_MASK | \
-     HTT_AC_WMM_VI_MASK | HTT_AC_WMM_VO_MASK)
-#define HTT_AC_MASK_EXT \
-    (HTT_AC_EXT_NON_QOS_MASK | HTT_AC_EXT_UCAST_MGMT_MASK | \
-    HTT_AC_EXT_MCAST_DATA_MASK | HTT_AC_EXT_MCAST_MGMT_MASK)
-#define HTT_AC_MASK_ALL (HTT_AC_MASK_WMM | HTT_AC_MASK_EXT)
-
 /*
  * htt_dbg_stats_type -
  * bit positions for each stats type within a stats type bitmask
@@ -12661,14 +12625,6 @@ typedef enum {
                               /* Reserved from 128 - 255 for target internal use.*/
     HTT_PEER_TYPE_ROAMOFFLOAD_TEMP = 128, /* Temporarily created during offload roam */
 } HTT_PEER_TYPE;
-
-/** 2 word representation of MAC addr */
-typedef struct {
-    /** upper 4 bytes of  MAC address */
-    A_UINT32 mac_addr31to0;
-    /** lower 2 bytes of  MAC address */
-    A_UINT32 mac_addr47to32;
-} htt_mac_addr;
 
 /** macro to convert MAC address from char array to HTT word format */
 #define HTT_CHAR_ARRAY_TO_MAC_ADDR(c_macaddr, phtt_mac_addr)  do { \
