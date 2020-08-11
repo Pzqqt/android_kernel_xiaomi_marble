@@ -9820,6 +9820,33 @@ dp_flush_rate_stats_req(struct cdp_soc_t *soc_hdl,
 }
 #endif
 
+static void *dp_peer_get_wlan_stats_ctx(struct cdp_soc_t *soc_hdl,
+					uint8_t vdev_id,
+					uint8_t *mac_addr)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_peer *peer;
+	void *wlanstats_ctx = NULL;
+
+	if (mac_addr) {
+		peer = dp_peer_find_hash_find(soc, mac_addr,
+					      0, vdev_id);
+		if (!peer)
+			return NULL;
+
+		if (peer->delete_in_progress) {
+			dp_peer_unref_delete(peer);
+			return NULL;
+		}
+
+		wlanstats_ctx = peer->wlanstats_ctx;
+
+		dp_peer_unref_delete(peer);
+	}
+
+	return wlanstats_ctx;
+}
+
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 static QDF_STATUS dp_peer_flush_rate_stats(struct cdp_soc_t *soc,
 					   uint8_t pdev_id,
@@ -10128,6 +10155,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_rate_stats_ctx = dp_soc_get_rate_stats_ctx,
 	.txrx_peer_flush_rate_stats = dp_peer_flush_rate_stats,
 	.txrx_flush_rate_stats_request = dp_flush_rate_stats_req,
+	.txrx_peer_get_wlan_stats_ctx = dp_peer_get_wlan_stats_ctx,
 
 	.set_pdev_pcp_tid_map = dp_set_pdev_pcp_tid_map_wifi3,
 	.set_vdev_pcp_tid_map = dp_set_vdev_pcp_tid_map_wifi3,

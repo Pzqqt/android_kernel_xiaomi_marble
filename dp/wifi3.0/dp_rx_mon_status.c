@@ -538,8 +538,6 @@ static void dp_rx_stats_update(struct dp_pdev *pdev,
 		if (!peer)
 			peer = pdev->invalid_peer;
 
-		ppdu->cookie = (void *)peer->wlanstats_ctx;
-
 		if (ppdu_type == HAL_RX_TYPE_SU) {
 			mcs = ppdu->u.mcs;
 			nss = ppdu->u.nss;

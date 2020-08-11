@@ -2678,6 +2678,7 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 	if (qdf_likely(ppdu_user_desc->completion_status ==
 			HTT_PPDU_STATS_USER_STATUS_OK)) {
 		ppdu_desc->ack_rssi = dp_stats_buf->ack_rssi;
+		ppdu_user_desc->usr_ack_rssi = dp_stats_buf->ack_rssi;
 		ppdu_user_desc->ack_rssi_valid = 1;
 	} else {
 		ppdu_user_desc->ack_rssi_valid = 0;
@@ -3513,8 +3514,6 @@ dp_ppdu_desc_user_stats_update(struct dp_pdev *pdev,
 		 */
 		if (!peer)
 			continue;
-
-		ppdu_desc->user[i].cookie = (void *)peer->wlanstats_ctx;
 
 		/*
 		 * different frame like DATA, BAR or CTRL has different

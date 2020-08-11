@@ -2483,6 +2483,32 @@ cdp_peer_flush_rate_stats(ol_txrx_soc_handle soc, uint8_t pdev_id,
 }
 
 /**
+ * cdp_peer_get_wlanstats_ctx() - get wlanstats context
+ * @soc: opaque soc handle
+ * @vdev_id: id of vdev handle
+ * @mac: peer mac address
+ */
+static inline void
+*cdp_peer_get_wlanstats_ctx(ol_txrx_soc_handle soc, uint8_t vdev_id,
+			  uint8_t *mac_addr)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_get_wlan_stats_ctx)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_get_wlan_stats_ctx(soc,
+								   vdev_id,
+								   mac_addr);
+}
+
+/**
  * cdp_flush_rate_stats_request() - request flush rate statistics
  * @soc: opaque soc handle
  * @pdev_id: id of pdev handle
