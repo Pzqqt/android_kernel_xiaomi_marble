@@ -40,14 +40,46 @@
 #define DP_PEER_AST3_FLOW_MASK 0x2
 #define DP_MAX_AST_INDEX_PER_PEER 4
 
+static void
+dp_peer_age_ast_entries(struct dp_soc *soc, struct dp_peer *peer, void *arg)
+{
+	struct dp_ast_entry *ase, *temp_ase;
+	bool check_wds_ase = *(bool *)arg;
+
+	DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
+		/*
+		 * Do not expire static ast entries and HM WDS entries
+		 */
+		if (ase->type != CDP_TXRX_AST_TYPE_WDS &&
+		    ase->type != CDP_TXRX_AST_TYPE_MEC &&
+		    ase->type != CDP_TXRX_AST_TYPE_DA)
+			continue;
+
+		/* Expire MEC entry every n sec. This needs to be expired in
+		 * case if STA backbone is made as AP backbone, In this case
+		 * it needs to be re-added as a WDS entry.
+		 */
+		if (ase->is_active && ase->type ==  CDP_TXRX_AST_TYPE_MEC) {
+			ase->is_active = FALSE;
+			continue;
+		} else if (ase->is_active &&  check_wds_ase) {
+			ase->is_active = FALSE;
+			continue;
+		}
+
+		if (ase->type == CDP_TXRX_AST_TYPE_MEC) {
+			DP_STATS_INC(soc, ast.aged_out, 1);
+			dp_peer_del_ast(soc, ase);
+		} else if (check_wds_ase) {
+			DP_STATS_INC(soc, ast.aged_out, 1);
+			dp_peer_del_ast(soc, ase);
+		}
+	}
+}
+
 static void dp_ast_aging_timer_fn(void *soc_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct dp_peer *peer;
-	struct dp_ast_entry *ase, *temp_ase;
-	int i;
 	bool check_wds_ase = false;
 
 	if (soc->wds_ast_aging_timer_cnt++ >= DP_WDS_AST_AGING_TIMER_CNT) {
@@ -58,58 +90,8 @@ static void dp_ast_aging_timer_fn(void *soc_hdl)
 	/* AST list access lock */
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
-		pdev = soc->pdev_list[i];
-		qdf_spin_lock_bh(&pdev->vdev_list_lock);
-		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-			qdf_spin_lock_bh(&vdev->peer_list_lock);
-			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
-				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
-					/*
-					 * Do not expire static ast entries
-					 * and HM WDS entries
-					 */
-					if (ase->type !=
-					    CDP_TXRX_AST_TYPE_WDS &&
-					    ase->type !=
-					    CDP_TXRX_AST_TYPE_MEC &&
-					    ase->type !=
-					    CDP_TXRX_AST_TYPE_DA)
-						continue;
-
-					/* Expire MEC entry every n sec.
-					 * This needs to be expired in
-					 * case if STA backbone is made as
-					 * AP backbone, In this case it needs
-					 * to be re-added as a WDS entry.
-					 */
-					if (ase->is_active && ase->type ==
-					    CDP_TXRX_AST_TYPE_MEC) {
-						ase->is_active = FALSE;
-						continue;
-					} else if (ase->is_active &&
-						   check_wds_ase) {
-						ase->is_active = FALSE;
-						continue;
-					}
-
-					if (ase->type ==
-					    CDP_TXRX_AST_TYPE_MEC) {
-						DP_STATS_INC(soc,
-							     ast.aged_out, 1);
-						dp_peer_del_ast(soc, ase);
-					} else if (check_wds_ase) {
-						DP_STATS_INC(soc,
-							     ast.aged_out, 1);
-						dp_peer_del_ast(soc, ase);
-					}
-				}
-			}
-			qdf_spin_unlock_bh(&vdev->peer_list_lock);
-		}
-		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
-	}
-
+	dp_soc_iterate_peer(soc, dp_peer_age_ast_entries, (void *)&check_wds_ase,
+			    DP_MOD_ID_AST);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
