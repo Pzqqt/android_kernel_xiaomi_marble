@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -272,7 +272,8 @@ QDF_STATUS ucfg_tdls_set_rssi(struct wlan_objmgr_vdev *vdev,
 /**
  * ucfg_tdls_notify_connect_failure() - This api is called if STA/P2P
  * connection fails on one iface and to enable/disable TDLS on the other
- * STA/P2P iface which is already connected.
+ * STA/P2P iface which is already connected.It is a wrapper function to
+ * API wlan_tdls_notify_connect_failure()
  * @psoc: psoc object
  *
  * Return: void
