@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -832,9 +832,9 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 				      hash_list_elem) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  "%*shash idx %d -> %pK ("QDF_MAC_ADDR_STR")\n",
+					  "%*shash idx %d -> %pK ("QDF_MAC_ADDR_FMT")\n",
 					indent + 4, " ", i, peer,
-					QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+					QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 			}
 		}
 	}

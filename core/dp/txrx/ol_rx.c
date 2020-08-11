@@ -811,9 +811,9 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 		return;
 	}
 	ol_txrx_dbg(
-		"sec spec for peer %pK ("QDF_MAC_ADDR_STR"): %s key of type %d\n",
+		"sec spec for peer %pK ("QDF_MAC_ADDR_FMT"): %s key of type %d\n",
 		peer,
-		QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+		QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 		is_unicast ? "ucast" : "mcast", sec_type);
 	sec_index = is_unicast ? txrx_sec_ucast : txrx_sec_mcast;
 	peer->security[sec_index].sec_type = sec_type;
@@ -1414,9 +1414,9 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 		if (OL_RX_DECAP(vdev, peer, msdu, &info) != A_OK) {
 			discard = 1;
 			ol_txrx_dbg(
-				"decap error %pK from peer %pK ("QDF_MAC_ADDR_STR") len %d\n",
+				"decap error %pK from peer %pK ("QDF_MAC_ADDR_FMT") len %d\n",
 				msdu, peer,
-				QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+				QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 				qdf_nbuf_len(msdu));
 			goto DONE;
 		}

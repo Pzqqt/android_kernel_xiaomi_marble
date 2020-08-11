@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1336,11 +1336,11 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Q: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_STR")",
+					  "Q: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_FMT")",
 					  record.num_frms, record.num_bytes,
 					  record.tid,
 					  record.peer_id,
-					  QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+					  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 			else
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -1370,11 +1370,11 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "DQ: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_STR")",
+					  "DQ: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_FMT")",
 					  record.num_frms, record.num_bytes,
 					  record.tid,
 					  record.peer_id,
-					  QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+					  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 			else
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -1404,11 +1404,11 @@ ol_tx_queue_log_record_display(struct ol_txrx_pdev_t *pdev, int offset)
 			if (peer)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "F: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_STR")",
+					  "F: %6d  %5d  %3d  %4d ("QDF_MAC_ADDR_FMT")",
 					  record.num_frms, record.num_bytes,
 					  record.tid,
 					  record.peer_id,
-					  QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw));
+					  QDF_MAC_ADDR_REF(peer->mac_addr.raw));
 			else
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,

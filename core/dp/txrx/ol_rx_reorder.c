@@ -761,11 +761,11 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 						current_time_ms;
 					ol_txrx_warn(
 					   "Tgt PN check failed - TID %d, peer %pK "
-					   "("QDF_MAC_ADDR_STR")\n"
+					   "("QDF_MAC_ADDR_FMT")\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",
 					   tid, peer,
-					   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+					   QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 					   pn.pn128[1],
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,
@@ -775,11 +775,11 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 				} else {
 					ol_txrx_dbg(
 					   "Tgt PN check failed - TID %d, peer %pK "
-					   "("QDF_MAC_ADDR_STR")\n"
+					   "("QDF_MAC_ADDR_FMT")\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",
 					   tid, peer,
-					   QDF_MAC_ADDR_ARRAY(peer->mac_addr.raw),
+					   QDF_MAC_ADDR_REF(peer->mac_addr.raw),
 					   pn.pn128[1],
 					   pn.pn128[0],
 					   pn.pn128[0] & 0xffffffffffffULL,

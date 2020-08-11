@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -488,8 +488,8 @@ ol_txrx_get_tx_resource(struct cdp_soc_t *soc_hdl, uint8_t pdev_id,
 					     peer_addr);
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid peer address: " QDF_MAC_ADDR_STR,
-			  __func__, QDF_MAC_ADDR_ARRAY(peer_addr.bytes));
+			  "%s: Invalid peer address: " QDF_MAC_ADDR_FMT,
+			  __func__, QDF_MAC_ADDR_REF(peer_addr.bytes));
 		/* Return true so caller do not understand that resource
 		 * is less than low_watermark.
 		 * sta_id validation will be done in ol_tx_send_data_frame

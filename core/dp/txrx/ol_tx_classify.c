@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -456,9 +456,9 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: STA %pK ("QDF_MAC_ADDR_STR") trying to send bcast DA tx data frame w/o association\n",
+					  "Error: STA %pK ("QDF_MAC_ADDR_FMT") trying to send bcast DA tx data frame w/o association\n",
 					  vdev,
-					  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
+					  QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 				return NULL; /* error */
 			} else if ((peer->security[
 				OL_TXRX_PEER_SECURITY_MULTICAST].sec_type
@@ -503,9 +503,9 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: vdev %pK ("QDF_MAC_ADDR_STR") trying to send bcast/mcast, but no self-peer found\n",
+					  "Error: vdev %pK ("QDF_MAC_ADDR_FMT") trying to send bcast/mcast, but no self-peer found\n",
 					  vdev,
-					  QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
+					  QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 				return NULL; /* error */
 			}
 		}
@@ -565,9 +565,9 @@ ol_tx_classify(
 			 * associated peer. It is illegitimate to send unicast
 			 * data if there is no peer to send it to.
 			 */
-			ol_txrx_err_rl("Error: vdev %pK (" QDF_MAC_ADDR_STR ") trying to send unicast tx data frame to an unknown peer",
+			ol_txrx_err_rl("Error: vdev %pK (" QDF_MAC_ADDR_FMT ") trying to send unicast tx data frame to an unknown peer",
 				       vdev,
-				       QDF_MAC_ADDR_ARRAY(vdev->mac_addr.raw));
+				       QDF_MAC_ADDR_REF(vdev->mac_addr.raw));
 			return NULL; /* error */
 		}
 		TX_SCHED_DEBUG_PRINT("Peer found\n");
