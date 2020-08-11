@@ -517,12 +517,12 @@ static int dp_rx_thread_loop(void *arg)
 	int status;
 	struct dp_rx_tm_handle_cmn *tm_handle_cmn;
 
-	tm_handle_cmn = rx_thread->rtm_handle_cmn;
-
 	if (!arg) {
 		dp_err("bad Args passed");
 		return 0;
 	}
+
+	tm_handle_cmn = rx_thread->rtm_handle_cmn;
 
 	qdf_set_user_nice(qdf_get_current_task(), -1);
 	qdf_set_wake_up_idle(true);
