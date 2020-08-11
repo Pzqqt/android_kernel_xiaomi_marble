@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -114,7 +114,7 @@ lim_collect_bss_description(struct mac_context *mac,
 
 	if (!pBssDescr->beaconInterval) {
 		pe_warn("Beacon Interval is ZERO, making it to default 100 "
-			   QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(pHdr->bssId));
+			   QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(pHdr->bssId));
 		pBssDescr->beaconInterval = 100;
 	}
 	/*
@@ -143,16 +143,17 @@ lim_collect_bss_description(struct mac_context *mac,
 
 	/* SINR no longer reported by HW */
 	pBssDescr->sinr = 0;
-	pe_debug(QDF_MAC_ADDR_STR " rssi: normalized: %d, absolute: %d",
-		QDF_MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
+	pe_debug(QDF_MAC_ADDR_FMT " rssi: normalized: %d, absolute: %d",
+		QDF_MAC_ADDR_REF(pHdr->bssId), pBssDescr->rssi,
 		pBssDescr->rssi_raw);
 
 	pBssDescr->received_time = (uint64_t)qdf_mc_timer_get_system_time();
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
 	pBssDescr->seq_ctrl = pHdr->seqControl;
 
-	pe_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x ssid:%.*s, rssi: %d",
-		 pBssDescr->fProbeRsp ? "Probe Rsp" : "Beacon", pHdr->bssId,
+	pe_debug("Received %s from BSSID: "QDF_MAC_ADDR_FMT" tsf_delta = %u Seq Num: %x ssid:%.*s, rssi: %d",
+		 pBssDescr->fProbeRsp ? "Probe Rsp" : "Beacon",
+		 QDF_MAC_ADDR_REF(pHdr->bssId),
 		 pBssDescr->tsf_delta, ((pHdr->seqControl.seqNumHi <<
 		 HIGH_SEQ_NUM_OFFSET) | pHdr->seqControl.seqNumLo),
 		 pBPR->ssId.length, pBPR->ssId.ssId, pBssDescr->rssi_raw);

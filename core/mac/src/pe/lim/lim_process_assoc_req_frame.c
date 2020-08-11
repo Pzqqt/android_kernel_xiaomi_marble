@@ -169,17 +169,17 @@ static QDF_STATUS lim_check_sta_in_pe_entries(struct mac_context *mac_ctx,
 				    eLIM_MLM_WT_DEL_BSS_RSP_STATE ||
 				    sta_ds->sta_deletion_in_progress) {
 					pe_debug(
-					"Deletion is in progress (%d) for peer:%pM in mlmState %d",
+					"Deletion is in progress (%d) for peer:"QDF_MAC_ADDR_FMT" in mlmState %d",
 					sta_ds->sta_deletion_in_progress,
-					sta_ds->staAddr,
+					QDF_MAC_ADDR_REF(sta_ds->staAddr),
 					sta_ds->mlmStaContext.mlmState);
 					*dup_entry = true;
 					return QDF_STATUS_E_AGAIN;
 				}
 				sta_ds->sta_deletion_in_progress = true;
 				pe_err("Sending Disassoc and Deleting existing STA entry:"
-				       QDF_MAC_ADDR_STR,
-				       QDF_MAC_ADDR_ARRAY(
+				       QDF_MAC_ADDR_FMT,
+				       QDF_MAC_ADDR_REF(
 						session->self_mac_addr));
 				lim_send_disassoc_mgmt_frame(mac_ctx,
 					eSIR_MAC_UNSPEC_FAILURE_REASON,
@@ -264,7 +264,7 @@ static bool lim_chk_assoc_req_parse_error(struct mac_context *mac_ctx,
 		return true;
 
 	pe_warn("Assoc Req rejected: frame parsing error. source addr:"
-			QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(hdr->sa));
+			QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(hdr->sa));
 	lim_send_assoc_rsp_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_STATUS,
 				      1, hdr->sa, sub_type, 0, session, false);
 	return false;
@@ -300,9 +300,9 @@ static bool lim_chk_capab(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	if (lim_compare_capabilities(mac_ctx, assoc_req,
 				     local_cap, session) == false) {
 		pe_warn("Rcvd %s Req with unsupported capab from"
-				QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_FMT,
 			(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+			QDF_MAC_ADDR_REF(hdr->sa));
 		/*
 		 * Capabilities of requesting STA does not match with
 		 * local capabilities. Respond with 'unsupported capabilities'
@@ -336,11 +336,11 @@ static bool lim_chk_ssid(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		return true;
 
 	pe_err("%s Req with ssid wrong(Rcvd: %.*s self: %.*s) from "
-			QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_FMT,
 		(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
 		assoc_req->ssId.length, assoc_req->ssId.ssId,
 		session->ssId.length, session->ssId.ssId,
-		QDF_MAC_ADDR_ARRAY(hdr->sa));
+		QDF_MAC_ADDR_REF(hdr->sa));
 
 	/*
 	 * Received Re/Association Request with either Broadcast SSID OR with
@@ -393,9 +393,9 @@ static bool lim_chk_rates(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		return true;
 
 	pe_warn("Assoc Req rejected: unsupported rates, soruce addr: %s"
-			QDF_MAC_ADDR_STR,
+			QDF_MAC_ADDR_FMT,
 		(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-		QDF_MAC_ADDR_ARRAY(hdr->sa));
+		QDF_MAC_ADDR_REF(hdr->sa));
 	/*
 	 * Requesting STA does not support ALL BSS basic rates. Respond with
 	 * 'basic rates not supported' status code.
@@ -426,8 +426,8 @@ static bool lim_chk_11g_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	    (session->dot11mode == MLME_DOT11_MODE_11G_ONLY) &&
 	    (assoc_req->HTCaps.present)) {
 		pe_err("SOFTAP was in 11G only mode, rejecting legacy STA: "
-				QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(hdr->sa));
 		lim_send_assoc_rsp_mgmt_frame(
 			mac_ctx, eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 			1, hdr->sa, sub_type, 0, session, false);
@@ -456,8 +456,8 @@ static bool lim_chk_11n_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	    (session->dot11mode == MLME_DOT11_MODE_11N_ONLY) &&
 	    (!assoc_req->HTCaps.present)) {
 		pe_err("SOFTAP was in 11N only mode, rejecting legacy STA: "
-				QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(hdr->sa));
 		lim_send_assoc_rsp_mgmt_frame(
 			mac_ctx, eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
 			1, hdr->sa, sub_type, 0, session, false);
@@ -624,17 +624,17 @@ lim_process_for_spectrum_mgmt(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				 */
 				if (!assoc_req->powerCapabilityPresent) {
 					pe_warn("LIM Info: Missing Power capability IE in %s Req from "
-							QDF_MAC_ADDR_STR,
+							QDF_MAC_ADDR_FMT,
 						(LIM_ASSOC == sub_type) ?
 							"Assoc" : "ReAssoc",
-						QDF_MAC_ADDR_ARRAY(hdr->sa));
+						QDF_MAC_ADDR_REF(hdr->sa));
 				}
 				if (!assoc_req->supportedChannelsPresent) {
 					pe_warn("LIM Info: Missing Supported channel IE in %s Req from "
-							QDF_MAC_ADDR_STR,
+							QDF_MAC_ADDR_FMT,
 						(LIM_ASSOC == sub_type) ?
 							"Assoc" : "ReAssoc",
-						QDF_MAC_ADDR_ARRAY(hdr->sa));
+						QDF_MAC_ADDR_REF(hdr->sa));
 				}
 			} else {
 				/* Assoc request has mandatory fields */
@@ -643,19 +643,19 @@ lim_process_for_spectrum_mgmt(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 					mac_ctx, assoc_req, session);
 				if (QDF_STATUS_SUCCESS != status) {
 					pe_warn("LIM Info: MinTxPower(STA) > MaxTxPower(AP) in %s Req from "
-						QDF_MAC_ADDR_STR,
+						QDF_MAC_ADDR_FMT,
 						(LIM_ASSOC == sub_type) ?
 							"Assoc" : "ReAssoc",
-						QDF_MAC_ADDR_ARRAY(hdr->sa));
+						QDF_MAC_ADDR_REF(hdr->sa));
 				}
 				status = lim_is_dot11h_supported_channels_valid(
 							mac_ctx, assoc_req);
 				if (QDF_STATUS_SUCCESS != status) {
 					pe_warn("LIM Info: wrong supported channels (STA) in %s Req from "
-						QDF_MAC_ADDR_STR,
+						QDF_MAC_ADDR_FMT,
 						(LIM_ASSOC == sub_type) ?
 							"Assoc" : "ReAssoc",
-						QDF_MAC_ADDR_ARRAY(hdr->sa));
+						QDF_MAC_ADDR_REF(hdr->sa));
 				}
 				/* IEs are valid, use them if needed */
 			}
@@ -698,9 +698,9 @@ static bool lim_chk_mcs(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	if ((assoc_req->HTCaps.present) && (lim_check_mcs_set(mac_ctx,
 			assoc_req->HTCaps.supportedMCSSet) == false)) {
 		pe_warn("rcvd %s req with unsupported MCS Rate Set from "
-				QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_FMT,
 			(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+			QDF_MAC_ADDR_REF(hdr->sa));
 		/*
 		 * Requesting STA does not support ALL BSS MCS basic Rate set
 		 * rates. Spec does not define any status code for this
@@ -956,13 +956,13 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 	qdf_mem_zero((uint8_t *) &dot11f_ie_rsn, sizeof(dot11f_ie_rsn));
 	qdf_mem_zero((uint8_t *) &dot11f_ie_wpa, sizeof(dot11f_ie_wpa));
 	pe_debug("RSN enabled auth, Re/Assoc req from STA: "
-		 QDF_MAC_ADDR_STR, QDF_MAC_ADDR_ARRAY(hdr->sa));
+		 QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(hdr->sa));
 
 	if (assoc_req->rsnPresent) {
 		if (!(assoc_req->rsn.length)) {
 			pe_warn("Re/Assoc rejected from: "
-				QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(hdr->sa));
 			/*
 			 * rcvd Assoc req frame with RSN IE but
 			 * length is zero
@@ -993,8 +993,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 						  pmf_connection);
 			if (eSIR_MAC_SUCCESS_STATUS != status) {
 				pe_warn("Re/Assoc rejected from: "
-					QDF_MAC_ADDR_STR,
-					QDF_MAC_ADDR_ARRAY(hdr->sa));
+					QDF_MAC_ADDR_FMT,
+					QDF_MAC_ADDR_REF(hdr->sa));
 
 				lim_send_assoc_rsp_mgmt_frame(
 					mac_ctx, status, 1, hdr->sa, sub_type,
@@ -1002,8 +1002,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 				return false;
 			}
 		} else {
-			pe_warn("Re/Assoc rejected from: " QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+			pe_warn("Re/Assoc rejected from: " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(hdr->sa));
 			/*
 			 * rcvd Assoc req frame with RSN IE but
 			 * IE version is wrong
@@ -1021,8 +1021,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 					       *akm_type);
 		if (eSIR_MAC_SUCCESS_STATUS != status) {
 			/* Reject pmf disable SAE STA */
-			pe_warn("Re/Assoc rejected from: " QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+			pe_warn("Re/Assoc rejected from: " QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(hdr->sa));
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx, status,
 						      1, hdr->sa, sub_type,
 						      0, session, false);
@@ -1032,8 +1032,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 	} else if (assoc_req->wpaPresent) {
 		if (!(assoc_req->wpa.length)) {
 			pe_warn("Re/Assoc rejected from: "
-				QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(hdr->sa));
 
 			/* rcvd Assoc req frame with invalid WPA IE length */
 			lim_send_assoc_rsp_mgmt_frame(
@@ -1059,8 +1059,8 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session,
 					  &dot11f_ie_wpa);
 		if (eSIR_MAC_SUCCESS_STATUS != status) {
 			pe_warn("Re/Assoc rejected from: "
-				QDF_MAC_ADDR_STR,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(hdr->sa));
 			/*
 			 * rcvd Assoc req frame with WPA IE
 			 * but there is mismatch
@@ -1175,9 +1175,9 @@ static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 				hdr->sa, session, false);
 
 		pe_warn("rcvd %s req, sessionid: %d, without pre-auth ctx"
-				QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_FMT,
 			(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-			session->peSessionId, QDF_MAC_ADDR_ARRAY(hdr->sa));
+			session->peSessionId, QDF_MAC_ADDR_REF(hdr->sa));
 		return false;
 	}
 	/* Delete 'pre-auth' context of STA */
@@ -1247,9 +1247,10 @@ static bool lim_process_assoc_req_sta_ctx(struct mac_context *mac_ctx,
 	if (sta_ds->sta_deletion_in_progress ||
 	    (sta_ds->mlmStaContext.mlmState !=
 	     eLIM_MLM_LINK_ESTABLISHED_STATE)) {
-		pe_debug("%s: peer:%pM in mlmState %d (%s) and sta del %d",
+		pe_debug("%s: peer:"QDF_MAC_ADDR_FMT" in mlmState %d (%s) and sta del %d",
 			 (sub_type == LIM_ASSOC) ? "Assoc" : "ReAssoc",
-			 sta_ds->staAddr, sta_ds->mlmStaContext.mlmState,
+			 QDF_MAC_ADDR_REF(sta_ds->staAddr),
+			 sta_ds->mlmStaContext.mlmState,
 			 lim_mlm_state_str(sta_ds->mlmStaContext.mlmState),
 			 sta_ds->sta_deletion_in_progress);
 		lim_update_assoc_drop_count(mac_ctx, sub_type);
@@ -1679,8 +1680,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			&assoc_req->he_cap) != QDF_STATUS_SUCCESS) {
 		/* Could not update hash table entry at DPH with rateset */
 		pe_err("Couldn't update hash entry for aid: %d MacAddr: "
-		       QDF_MAC_ADDR_STR,
-		       peer_idx, QDF_MAC_ADDR_ARRAY(hdr->sa));
+		       QDF_MAC_ADDR_FMT,
+		       peer_idx, QDF_MAC_ADDR_REF(hdr->sa));
 
 		/* Release AID */
 		lim_release_peer_idx(mac_ctx, peer_idx, session);
@@ -1787,8 +1788,8 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 					       session);
 			return false;
 		}
-		pe_debug("Created pmf timer assoc-id:%d sta mac" QDF_MAC_ADDR_STR,
-			 sta_ds->assocId, QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
+		pe_debug("Created pmf timer assoc-id:%d sta mac" QDF_MAC_ADDR_FMT,
+			 sta_ds->assocId, QDF_MAC_ADDR_REF(sta_ds->staAddr));
 	}
 #endif
 
@@ -1871,8 +1872,8 @@ static bool lim_update_sta_ctx(struct mac_context *mac_ctx, struct pe_session *s
 			if (lim_del_sta(mac_ctx, sta_ds, true, session)
 					!= QDF_STATUS_SUCCESS) {
 				pe_err("Couldn't DEL STA, assocId: %d sta mac"
-				       QDF_MAC_ADDR_STR, sta_ds->assocId,
-				       QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
+				       QDF_MAC_ADDR_FMT, sta_ds->assocId,
+				       QDF_MAC_ADDR_REF(sta_ds->staAddr));
 				lim_reject_association(mac_ctx, sta_ds->staAddr,
 					sta_ds->mlmStaContext.subType, true,
 					sta_ds->mlmStaContext.authType,
@@ -2052,9 +2053,9 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 		return false;
 
 	/* STA is Associated ! */
-	pe_debug("Received: %s Req  successful from " QDF_MAC_ADDR_STR,
+	pe_debug("Received: %s Req  successful from " QDF_MAC_ADDR_FMT,
 		 (sub_type == LIM_ASSOC) ? "Assoc" : "ReAssoc",
-		 QDF_MAC_ADDR_ARRAY(hdr->sa));
+		 QDF_MAC_ADDR_REF(hdr->sa));
 
 	/*
 	 * AID for this association will be same as the peer Index used in DPH
@@ -2083,7 +2084,7 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 	if (!sta_ds) {
 		/* Could not add hash table entry at DPH */
 		pe_err("couldn't add hash entry at DPH for aid: %d MacAddr:"
-			   QDF_MAC_ADDR_STR, peer_idx, QDF_MAC_ADDR_ARRAY(hdr->sa));
+			   QDF_MAC_ADDR_FMT, peer_idx, QDF_MAC_ADDR_REF(hdr->sa));
 
 		/* Release AID */
 		lim_release_peer_idx(mac_ctx, peer_idx, session);
@@ -2168,8 +2169,8 @@ lim_peer_present_on_any_sta(struct mac_context *mac_ctx, uint8_t *peer_addr)
 	peer_vdev_id = wlan_vdev_get_id(wlan_peer_get_vdev(peer));
 	mode = wlan_vdev_mlme_get_opmode(wlan_peer_get_vdev(peer));
 	if (mode == QDF_STA_MODE || mode == QDF_P2P_CLIENT_MODE) {
-		pe_debug("duplicate mac detected!!! Peer " QDF_MAC_ADDR_STR " present on STA vdev %d",
-			 QDF_MAC_ADDR_ARRAY(peer_addr), peer_vdev_id);
+		pe_debug("duplicate mac detected!!! Peer " QDF_MAC_ADDR_FMT " present on STA vdev %d",
+			 QDF_MAC_ADDR_REF(peer_addr), peer_vdev_id);
 		sta_peer_present = true;
 	}
 
@@ -2216,18 +2217,18 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
-	pe_nofl_debug("Assoc req RX: subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_STR,
+	pe_nofl_debug("Assoc req RX: subtype %d vdev %d sys role %d lim state %d rssi %d from " QDF_MAC_ADDR_FMT,
 		      sub_type, session->vdev_id, GET_LIM_SYSTEM_ROLE(session),
 		      session->limMlmState,
 		      WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info),
-		      QDF_MAC_ADDR_ARRAY(hdr->sa));
+		      QDF_MAC_ADDR_REF(hdr->sa));
 
 	if (LIM_IS_STA_ROLE(session)) {
 		pe_err("Rcvd unexpected ASSOC REQ, sessionid: %d sys sub_type: %d for role: %d from: "
-			   QDF_MAC_ADDR_STR,
+			   QDF_MAC_ADDR_FMT,
 			session->peSessionId, sub_type,
 			GET_LIM_SYSTEM_ROLE(session),
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+			QDF_MAC_ADDR_REF(hdr->sa));
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				   WMA_GET_RX_MPDU_DATA(rx_pkt_info),
 				   frame_len);
@@ -2235,10 +2236,10 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	}
 	if (session->limMlmState == eLIM_MLM_WT_DEL_BSS_RSP_STATE) {
 		pe_err("drop ASSOC REQ on sessionid: %d "
-			"role: %d from: "QDF_MAC_ADDR_STR" in limMlmState: %d",
+			"role: %d from: "QDF_MAC_ADDR_FMT" in limMlmState: %d",
 			session->peSessionId,
 			GET_LIM_SYSTEM_ROLE(session),
-			QDF_MAC_ADDR_ARRAY(hdr->sa),
+			QDF_MAC_ADDR_REF(hdr->sa),
 			eLIM_MLM_WT_DEL_BSS_RSP_STATE);
 		return;
 	}
@@ -2275,9 +2276,9 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 	if (sta_ds) {
 		if (hdr->fc.retry > 0) {
 			pe_err("STA is initiating Assoc Req after ACK lost. Do not process sessionid: %d sys sub_type=%d for role=%d from: "
-				QDF_MAC_ADDR_STR, session->peSessionId,
+				QDF_MAC_ADDR_FMT, session->peSessionId,
 			sub_type, GET_LIM_SYSTEM_ROLE(session),
-			QDF_MAC_ADDR_ARRAY(hdr->sa));
+			QDF_MAC_ADDR_REF(hdr->sa));
 			return;
 		} else if (!sta_ds->rmfEnabled && (sub_type == LIM_REASSOC)) {
 			/*
@@ -2305,10 +2306,10 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 				sub_type,
 				sta_ds, session, false);
 			pe_err("DUT already received an assoc request frame and STA is sending another assoc req.So, do not Process sessionid: %d sys sub_type: %d for role: %d from: "
-					QDF_MAC_ADDR_STR,
+					QDF_MAC_ADDR_FMT,
 				session->peSessionId, sub_type,
 				session->limSystemRole,
-				QDF_MAC_ADDR_ARRAY(hdr->sa));
+				QDF_MAC_ADDR_REF(hdr->sa));
 			return;
 		}
 	}
@@ -2340,9 +2341,9 @@ void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_in
 		 * ignore it
 		 */
 		pe_err("Rcvd: %s Req, sessionid: %d from a BC/MC address"
-				QDF_MAC_ADDR_STR,
+				QDF_MAC_ADDR_FMT,
 			(LIM_ASSOC == sub_type) ? "Assoc" : "ReAssoc",
-			session->peSessionId, QDF_MAC_ADDR_ARRAY(hdr->sa));
+			session->peSessionId, QDF_MAC_ADDR_REF(hdr->sa));
 		return;
 	}
 
@@ -2973,9 +2974,9 @@ void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 		sub_type = LIM_ASSOC;
 
 	pe_debug("Sessionid: %d ssid: %s sub_type: %d Associd: %d staAddr: "
-		 QDF_MAC_ADDR_STR, session_entry->peSessionId,
+		 QDF_MAC_ADDR_FMT, session_entry->peSessionId,
 		 assoc_req->ssId.ssId, sub_type, sta_ds->assocId,
-		 QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
+		 QDF_MAC_ADDR_REF(sta_ds->staAddr));
 
 	if (sub_type == LIM_ASSOC || sub_type == LIM_REASSOC) {
 		temp = sizeof(tLimMlmAssocInd);

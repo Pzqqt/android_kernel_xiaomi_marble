@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,24 +116,24 @@ QDF_STATUS sys_bbt_process_message_core(struct mac_context *mac_ctx,
 
 		mac_hdr = WMA_GET_RX_MAC_HEADER(bd_ptr);
 		if (subtype == SIR_MAC_MGMT_ASSOC_REQ) {
-			pe_debug("ASSOC REQ frame allowed: da: " QDF_MAC_ADDR_STR ", sa: " QDF_MAC_ADDR_STR ", bssid: " QDF_MAC_ADDR_STR ", Assoc Req count so far: %d",
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->da),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
+			pe_debug("ASSOC REQ frame allowed: da: " QDF_MAC_ADDR_FMT ", sa: " QDF_MAC_ADDR_FMT ", bssid: " QDF_MAC_ADDR_FMT ", Assoc Req count so far: %d",
+				 QDF_MAC_ADDR_REF(mac_hdr->da),
+				 QDF_MAC_ADDR_REF(mac_hdr->sa),
+				 QDF_MAC_ADDR_REF(mac_hdr->bssId),
 				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DEAUTH) {
-			pe_debug("DEAUTH frame allowed: da: " QDF_MAC_ADDR_STR ", sa: " QDF_MAC_ADDR_STR ", bssid: " QDF_MAC_ADDR_STR ", DEAUTH count so far: %d",
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->da),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
+			pe_debug("DEAUTH frame allowed: da: " QDF_MAC_ADDR_FMT ", sa: " QDF_MAC_ADDR_FMT ", bssid: " QDF_MAC_ADDR_FMT ", DEAUTH count so far: %d",
+				 QDF_MAC_ADDR_REF(mac_hdr->da),
+				 QDF_MAC_ADDR_REF(mac_hdr->sa),
+				 QDF_MAC_ADDR_REF(mac_hdr->bssId),
 				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 		if (subtype == SIR_MAC_MGMT_DISASSOC) {
-			pe_debug("DISASSOC frame allowed: da: " QDF_MAC_ADDR_STR ", sa: " QDF_MAC_ADDR_STR ", bssid: " QDF_MAC_ADDR_STR ", DISASSOC count so far: %d",
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->da),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
-				 QDF_MAC_ADDR_ARRAY(mac_hdr->bssId),
+			pe_debug("DISASSOC frame allowed: da: " QDF_MAC_ADDR_FMT ", sa: " QDF_MAC_ADDR_FMT ", bssid: " QDF_MAC_ADDR_FMT ", DISASSOC count so far: %d",
+				 QDF_MAC_ADDR_REF(mac_hdr->da),
+				 QDF_MAC_ADDR_REF(mac_hdr->sa),
+				 QDF_MAC_ADDR_REF(mac_hdr->bssId),
 				 mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 

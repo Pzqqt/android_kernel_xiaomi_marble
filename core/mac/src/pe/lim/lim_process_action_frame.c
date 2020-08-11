@@ -1976,8 +1976,9 @@ void lim_process_action_frame(struct mac_context *mac_ctx,
 		}
 		break;
 	case ACTION_CATEGORY_BACK:
-		pe_debug("Rcvd Block Ack for %pM; action: %d",
-			session->self_mac_addr, action_hdr->actionID);
+		pe_debug("Rcvd Block Ack for "QDF_MAC_ADDR_FMT"; action: %d",
+			  QDF_MAC_ADDR_REF(session->self_mac_addr),
+			  action_hdr->actionID);
 		switch (action_hdr->actionID) {
 		case ADDBA_REQUEST:
 			lim_process_addba_req(mac_ctx, rx_pkt_info, session);

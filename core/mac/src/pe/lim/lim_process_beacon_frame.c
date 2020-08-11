@@ -68,9 +68,9 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	 */
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 
-	pe_debug("Beacon (len %d): " QDF_MAC_ADDR_STR " RSSI %d",
+	pe_debug("Beacon (len %d): " QDF_MAC_ADDR_FMT " RSSI %d",
 		 WMA_GET_RX_MPDU_LEN(rx_pkt_info),
-		 QDF_MAC_ADDR_ARRAY(mac_hdr->sa),
+		 QDF_MAC_ADDR_REF(mac_hdr->sa),
 		 (uint)abs((int8_t)
 		 WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
 

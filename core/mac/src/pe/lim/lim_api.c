@@ -1909,8 +1909,8 @@ lim_roam_gen_mbssid_beacon(struct mac_context *mac,
 		scan_entry = scan_node->entry;
 		if (qdf_is_macaddr_equal(&roam_ind->bssid,
 					 &scan_entry->bssid)) {
-			pe_debug("matched BSSID %pM bcn len %d profiles %d",
-				 scan_entry->bssid.bytes,
+			pe_debug("matched BSSID "QDF_MAC_ADDR_FMT" bcn len %d profiles %d",
+				 QDF_MAC_ADDR_REF(scan_entry->bssid.bytes),
 				 scan_entry->raw_frame.len,
 				 list_count);
 			nontx_bcn_prbrsp = scan_entry->raw_frame.ptr;
@@ -2005,17 +2005,17 @@ lim_roam_gen_beacon_descr(struct mac_context *mac,
 	ie_offset = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET;
 
 	if (qdf_is_macaddr_zero((struct qdf_mac_addr *)mac_hdr->bssId)) {
-		pe_debug("bssid is 0 in beacon/probe update it with bssId %pM in sync ind",
-			roam_ind->bssid.bytes);
+		pe_debug("bssid is 0 in beacon/probe update it with bssId "QDF_MAC_ADDR_FMT" in sync ind",
+			QDF_MAC_ADDR_REF(roam_ind->bssid.bytes));
 		qdf_mem_copy(mac_hdr->bssId, roam_ind->bssid.bytes,
 			     sizeof(tSirMacAddr));
 	}
 
 	if (qdf_mem_cmp(&roam_ind->bssid.bytes,
 			&mac_hdr->bssId, QDF_MAC_ADDR_SIZE) != 0) {
-		pe_debug("LFR3:MBSSID Beacon/Prb Rsp: %d bssid %pM",
+		pe_debug("LFR3:MBSSID Beacon/Prb Rsp: %d bssid "QDF_MAC_ADDR_FMT,
 			 roam_ind->isBeacon,
-			 mac_hdr->bssId);
+			 QDF_MAC_ADDR_REF(mac_hdr->bssId));
 		/*
 		 * Its a MBSSID non-tx BSS roaming scenario.
 		 * Generate non tx BSS beacon/probe response
@@ -2099,10 +2099,10 @@ lim_roam_fill_bss_descr(struct mac_context *mac,
 		qdf_mem_free(parsed_frm_ptr);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pe_debug("LFR3:Beacon/Prb Rsp: %d bssid %pM beacon %pM",
+	pe_debug("LFR3:Beacon/Prb Rsp: %d bssid "QDF_MAC_ADDR_FMT" beacon "QDF_MAC_ADDR_FMT,
 		 roam_synch_ind_ptr->isBeacon,
-		 roam_synch_ind_ptr->bssid.bytes,
-		 mac_hdr->bssId);
+		 QDF_MAC_ADDR_REF(roam_synch_ind_ptr->bssid.bytes),
+		 QDF_MAC_ADDR_REF(mac_hdr->bssId));
 
 	status = lim_roam_gen_beacon_descr(mac,
 					   roam_synch_ind_ptr,
@@ -2489,8 +2489,9 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 		return status;
 	}
 
-	pe_debug("LFR3:Received ROAM SYNCH IND bssid %pM auth: %d vdevId: %d",
-		 roam_sync_ind_ptr->bssid.bytes, roam_sync_ind_ptr->authStatus,
+	pe_debug("LFR3:Received ROAM SYNCH IND bssid "QDF_MAC_ADDR_FMT" auth: %d vdevId: %d",
+		 QDF_MAC_ADDR_REF(roam_sync_ind_ptr->bssid.bytes),
+		 roam_sync_ind_ptr->authStatus,
 		 roam_sync_ind_ptr->roamed_vdev_id);
 
 	/*
@@ -2563,8 +2564,8 @@ pe_roam_synch_callback(struct mac_context *mac_ctx,
 					 DPH_STA_HASH_INDEX_PEER,
 					 &ft_session_ptr->dph.dphHashTable);
 	if (!curr_sta_ds) {
-		pe_err("LFR3:failed to add hash entry for %pM",
-		       add_bss_params->staContext.staMac);
+		pe_err("LFR3:failed to add hash entry for "QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(add_bss_params->staContext.staMac));
 		ft_session_ptr->bRoamSynchInProgress = false;
 		return status;
 	}

@@ -71,8 +71,8 @@ static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 		pe_err("NDI Peer already exists!!");
 		return QDF_STATUS_SUCCESS;
 	}
-	pe_info("Need to create NDI Peer :" QDF_MAC_ADDR_STR,
-		QDF_MAC_ADDR_ARRAY(peer_mac_addr.bytes));
+	pe_info("Need to create NDI Peer :" QDF_MAC_ADDR_FMT,
+		QDF_MAC_ADDR_REF(peer_mac_addr.bytes));
 
 	peer_idx = lim_assign_peer_idx(mac_ctx, session);
 	if (!peer_idx) {
@@ -135,8 +135,8 @@ static void lim_ndp_delete_peer_by_addr(struct mac_context *mac_ctx, uint8_t vde
 		return;
 	}
 
-	pe_info("deleting peer: "QDF_MAC_ADDR_STR" confirm rejected",
-		QDF_MAC_ADDR_ARRAY(peer_ndi_mac_addr.bytes));
+	pe_info("deleting peer: "QDF_MAC_ADDR_FMT" confirm rejected",
+		QDF_MAC_ADDR_REF(peer_ndi_mac_addr.bytes));
 
 	session = pe_find_session_by_vdev_id(mac_ctx, vdev_id);
 	if (!session || (session->bssType != eSIR_NDI_MODE)) {
@@ -199,9 +199,9 @@ static void lim_ndp_delete_peers(struct mac_context *mac_ctx,
 		return;
 
 	for (i = 0; i < num_peers; i++) {
-		pe_debug("ndp_map[%d]: MAC: " QDF_MAC_ADDR_STR " num_active %d",
+		pe_debug("ndp_map[%d]: MAC: " QDF_MAC_ADDR_FMT " num_active %d",
 			 i,
-			 QDF_MAC_ADDR_ARRAY(ndp_map[i].peer_ndi_mac_addr.bytes),
+			 QDF_MAC_ADDR_REF(ndp_map[i].peer_ndi_mac_addr.bytes),
 			 ndp_map[i].num_active_ndp_sessions);
 
 		/* Do not delete a peer with active NDPs */
@@ -304,9 +304,9 @@ void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 		pe_err("DEL STA failed!");
 		goto skip_event;
 	}
-	pe_info("Deleted STA AssocID %d MAC " QDF_MAC_ADDR_STR,
+	pe_info("Deleted STA AssocID %d MAC " QDF_MAC_ADDR_FMT,
 		sta_ds->assocId,
-		QDF_MAC_ADDR_ARRAY(sta_ds->staAddr));
+		QDF_MAC_ADDR_REF(sta_ds->staAddr));
 
 	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
 		sta_ds->staAddr, sizeof(tSirMacAddr));
@@ -468,15 +468,16 @@ void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session
 				    &session->dph.dphHashTable);
 	if (!sta_ds) {
 		pe_err("NAN: ADD_STA_RSP for unknown MAC addr "
-			QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(add_sta_rsp->staMac));
+			QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(add_sta_rsp->staMac));
 		qdf_mem_free(add_sta_rsp);
 		return;
 	}
 
 	if (add_sta_rsp->status != QDF_STATUS_SUCCESS) {
-		pe_err("NAN: ADD_STA_RSP error %x for MAC addr: %pM",
-			add_sta_rsp->status, add_sta_rsp->staMac);
+		pe_err("NAN: ADD_STA_RSP error %x for MAC addr: "QDF_MAC_ADDR_FMT,
+			add_sta_rsp->status,
+			QDF_MAC_ADDR_REF(add_sta_rsp->staMac));
 		/* delete the sta_ds allocated during ADD STA */
 		lim_delete_dph_hash_entry(mac_ctx, add_sta_rsp->staMac,
 				      peer_idx, session);

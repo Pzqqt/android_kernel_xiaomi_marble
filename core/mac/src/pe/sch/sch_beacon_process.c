@@ -1415,10 +1415,10 @@ QDF_STATUS lim_process_obss_detection_ind(struct mac_context *mac_ctx,
 	enum reg_wifi_band rf_band = REG_BAND_UNKNOWN;
 	struct obss_detection_cfg *cur_detect;
 
-	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " QDF_MAC_ADDR_STR,
+	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " QDF_MAC_ADDR_FMT,
 		 obss_detection->vdev_id, obss_detection->reason,
 		 obss_detection->matched_detection_masks,
-		 QDF_MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));
+		 QDF_MAC_ADDR_REF(obss_detection->matched_bssid_addr));
 
 	session = pe_find_session_by_vdev_id(mac_ctx, obss_detection->vdev_id);
 	if (!session) {

@@ -73,10 +73,10 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		return;
 	}
 
-	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " QDF_MAC_ADDR_STR,
+	pe_debug("ReAssoc Req on session: %d role: %d mlm: %d " QDF_MAC_ADDR_FMT,
 		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
-		QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
+		QDF_MAC_ADDR_REF(reassoc_req->peerMacAddr));
 
 	if (LIM_IS_AP_ROLE(session) ||
 		(session->limMlmState !=
@@ -87,9 +87,9 @@ void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 		 * parameters code.
 		 */
 
-		pe_warn("unexpect msg state: %X role: %d MAC" QDF_MAC_ADDR_STR,
+		pe_warn("unexpect msg state: %X role: %d MAC" QDF_MAC_ADDR_FMT,
 			session->limMlmState, GET_LIM_SYSTEM_ROLE(session),
-			QDF_MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
+			QDF_MAC_ADDR_REF(reassoc_req->peerMacAddr));
 		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
 		reassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
@@ -398,8 +398,8 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 				 &pe_session->dph.dphHashTable);
 	if (!sta) {
 		/* Could not add hash table entry */
-		pe_err("could not add hash entry at DPH for %pM",
-		       pe_session->bssId);
+		pe_err("could not add hash entry at DPH for "QDF_MAC_ADDR_FMT,
+		       QDF_MAC_ADDR_REF(pe_session->bssId));
 		goto end;
 	}
 
