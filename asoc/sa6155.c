@@ -5760,6 +5760,70 @@ static struct snd_soc_dai_link msm_auto_fe_dai_links[] = {
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA25,
 		SND_SOC_DAILINK_REG(multimedia25),
 	},
+	{
+		.name = MSM_DAILINK_NAME(Media31),
+		.stream_name = "MultiMedia31",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			    SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA31,
+		SND_SOC_DAILINK_REG(multimedia31),
+	},
+	{
+		.name = MSM_DAILINK_NAME(Media32),
+		.stream_name = "MultiMedia32",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			    SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA32,
+		SND_SOC_DAILINK_REG(multimedia32),
+	},
+	{
+		.name = MSM_DAILINK_NAME(Media33),
+		.stream_name = "MultiMedia33",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			    SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA33,
+		SND_SOC_DAILINK_REG(multimedia33),
+	},
+	{
+		.name = MSM_DAILINK_NAME(Media34),
+		.stream_name = "MultiMedia34",
+		.dynamic = 1,
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+		.async_ops = ASYNC_DPCM_SND_SOC_PREPARE,
+#endif /* CONFIG_AUDIO_QGKI */
+		.dpcm_playback = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+			    SND_SOC_DPCM_TRIGGER_POST},
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.id = MSM_FRONTEND_DAI_MULTIMEDIA34,
+		SND_SOC_DAILINK_REG(multimedia34),
+	},
 };
 
 static struct snd_soc_dai_link msm_custom_fe_dai_links[] = {
