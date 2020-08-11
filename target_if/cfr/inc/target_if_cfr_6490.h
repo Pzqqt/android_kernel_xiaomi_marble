@@ -44,27 +44,4 @@ QDF_STATUS
 target_if_cfr_subscribe_ppdu_desc(struct wlan_objmgr_pdev *pdev,
 				  bool is_subscribe);
 
-/**
- * cfr_6490_init_pdev() - Init pdev cfr for QCA6490
- * @psoc: pointer to psoc object
- * @pdev: pointer to pdev object
- *
- * Registers to DBR component and init pdev cfr parameters
- *
- * Return: QDF status
- */
-QDF_STATUS cfr_6490_init_pdev(struct wlan_objmgr_psoc *psoc,
-			      struct wlan_objmgr_pdev *pdev);
-
-/**
- * cfr_6490_deinit_pdev() - De-inits pdev cfr for QCA6490
- * @pdev: pointer to pdev object
- *
- * Unregister to DBR and deinit pdev cfr parameters
- *
- * Return: QDF status
- */
-QDF_STATUS cfr_6490_deinit_pdev(struct wlan_objmgr_psoc *psoc,
-				struct wlan_objmgr_pdev *pdev);
-
 #endif /* _TARGET_IF_CFR_6490_H */
