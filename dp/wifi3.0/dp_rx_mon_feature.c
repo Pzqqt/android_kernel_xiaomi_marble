@@ -386,14 +386,19 @@ dp_rx_enh_capture_is_peer_enabled(struct dp_soc *soc,
 	struct dp_peer *peer;
 	struct dp_ast_entry *ast_entry;
 	uint32_t ast_index;
+	bool rx_cap_enabled;
 
 	ast_index = ppdu_info->rx_user_status[user_id].ast_index;
 	if (ast_index < wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx)) {
 		ast_entry = soc->ast_table[ast_index];
 		if (ast_entry) {
-			peer = ast_entry->peer;
-			if (peer && (peer->peer_id != HTT_INVALID_PEER))
-				return peer->rx_cap_enabled;
+			peer = dp_peer_get_ref_by_id(soc, ast_entry->peer_id,
+						     DP_MOD_ID_AST);
+			if (peer) {
+				rx_cap_enabled = peer->rx_cap_enabled;
+				dp_peer_unref_delete(peer, DP_MOD_ID_AST);
+				return rx_cap_enabled;
+			}
 		}
 	}
 	return false;

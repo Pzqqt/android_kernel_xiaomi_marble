@@ -5455,12 +5455,7 @@ QDF_STATUS dp_send_cts_frame_to_stack(struct dp_soc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = ast_entry->peer;
-	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return QDF_STATUS_E_FAILURE;
-	}
-	peer_id = peer->peer_id;
+	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
@@ -5596,12 +5591,7 @@ void dp_send_usr_ack_frm_to_stack(struct dp_soc *soc,
 		return;
 	}
 
-	peer = ast_entry->peer;
-	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return;
-	}
-	peer_id = peer->peer_id;
+	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
@@ -5864,12 +5854,7 @@ QDF_STATUS dp_send_noack_frame_to_stack(struct dp_soc *soc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = ast_entry->peer;
-	if (!peer || peer->peer_id == HTT_INVALID_PEER) {
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return QDF_STATUS_E_FAILURE;
-	}
-	peer_id = peer->peer_id;
+	peer_id = ast_entry->peer_id;
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	peer = dp_peer_get_ref_by_id(soc, peer_id, DP_MOD_ID_TX_CAPTURE);
