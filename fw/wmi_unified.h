@@ -2800,6 +2800,30 @@ typedef struct {
 #define WMI_HW_MAX_TX_POWER_SET(dword, value) \
     WMI_SET_BITS(dword, WMI_HW_MAX_TX_POWER_BITPOS, 16, value)
 
+#define WMI_MAX_USER_PER_PPDU_UL_OFDMA_GET(dword) \
+        WMI_GET_BITS(dword, 0, 16)
+
+#define WMI_MAX_USER_PER_PPDU_UL_OFDMA_SET(dword, value) \
+        WMI_SET_BITS(dword, 0, 16, value)
+
+#define WMI_MAX_USER_PER_PPDU_DL_OFDMA_GET(dword) \
+        WMI_GET_BITS(dword, 16, 16)
+
+#define WMI_MAX_USER_PER_PPDU_DL_OFDMA_SET(dword, value) \
+        WMI_SET_BITS(dword, 16, 16, value)
+
+#define WMI_MAX_USER_PER_PPDU_UL_MUMIMO_GET(dword) \
+        WMI_GET_BITS(dword, 0, 16)
+
+#define WMI_MAX_USER_PER_PPDU_UL_MUMIMO_SET(dword, value) \
+        WMI_SET_BITS(dword, 0, 16, value)
+
+#define WMI_MAX_USER_PER_PPDU_DL_MUMIMO_GET(dword) \
+        WMI_GET_BITS(dword, 16, 16)
+
+#define WMI_MAX_USER_PER_PPDU_DL_MUMIMO_SET(dword, value) \
+        WMI_SET_BITS(dword, 16, 16, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param.*/
 
@@ -2849,6 +2873,20 @@ typedef struct {
      * 320: puncturing supported within 320 MHz channels
      */
     A_UINT32 preamble_puncture_bw;
+
+    /*
+     * [15:0]  - ULOFDMA Refer WMI_MAX_USER_PER_PPDU_UL_OFDMA_GET & SET
+     * [31:16] - DLOFDMA Refer WMI_MAX_USER_PER_PPDU_DL_OFDMA_GET & SET
+     * If max_user_per_ppdu_ofdma == 0 the UL/DL max users are unspecified.
+     */
+    A_UINT32 max_user_per_ppdu_ofdma;
+
+    /*
+     * [15:0]  - ULMUMIMO Refer WMI_MAX_USER_PER_PPDU_UL_MUMIMO_GET & SET
+     * [31:16] - DLMUMIMO Refer WMI_MAX_USER_PER_PPDU_DL_MUMIMO_GET & SET
+     * If max_user_per_ppdu_mumimo == 0 the UL/DL max users are unspecified.
+     */
+    A_UINT32 max_user_per_ppdu_mumimo;
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
