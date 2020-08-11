@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,8 +68,8 @@ static int target_if_interop_issues_ap_event_handler(ol_scn_t sc,
 	if (ret)
 		return -EINVAL;
 
-	target_if_debug("interop issues ap macaddr: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(data.rap_addr.bytes));
+	target_if_debug("interop issues ap macaddr: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(data.rap_addr.bytes));
 
 	return tgt_interop_issues_ap_info_callback(psoc, &data);
 }

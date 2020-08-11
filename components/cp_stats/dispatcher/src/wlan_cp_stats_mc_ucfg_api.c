@@ -118,8 +118,8 @@ ucfg_twt_get_single_peer_session_params(struct wlan_objmgr_psoc *psoc_obj,
 						      dialog_id, params)) {
 		qdf_status = QDF_STATUS_SUCCESS;
 	} else {
-		qdf_err("No TWT session for " QDF_MAC_ADDR_STR " dialog_id %d",
-			QDF_MAC_ADDR_ARRAY(mac_addr), dialog_id);
+		qdf_err("No TWT session for " QDF_MAC_ADDR_FMT " dialog_id %d",
+			QDF_MAC_ADDR_REF(mac_addr), dialog_id);
 	}
 
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);

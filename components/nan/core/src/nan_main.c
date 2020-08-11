@@ -352,9 +352,9 @@ nan_increment_ndp_sessions(struct wlan_objmgr_psoc *psoc,
 			     sizeof(struct nan_datapath_channel_info));
 
 	peer_nan_obj->active_ndp_sessions++;
-	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_STR"",
+	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_FMT,
 		  peer_nan_obj->active_ndp_sessions,
-		  QDF_MAC_ADDR_ARRAY(peer_ndi_mac->bytes));
+		  QDF_MAC_ADDR_REF(peer_ndi_mac->bytes));
 	qdf_spin_unlock_bh(&peer_nan_obj->lock);
 	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 
@@ -391,9 +391,9 @@ static QDF_STATUS nan_decrement_ndp_sessions(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 	peer_nan_obj->active_ndp_sessions--;
-	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_STR"",
+	nan_debug("Number of active session = %d for peer:"QDF_MAC_ADDR_FMT,
 		  peer_nan_obj->active_ndp_sessions,
-		  QDF_MAC_ADDR_ARRAY(peer_ndi_mac->bytes));
+		  QDF_MAC_ADDR_REF(peer_ndi_mac->bytes));
 	qdf_spin_unlock_bh(&peer_nan_obj->lock);
 	wlan_objmgr_peer_release_ref(peer, WLAN_NAN_ID);
 
@@ -434,8 +434,8 @@ ndi_remove_and_update_primary_connection(struct wlan_objmgr_psoc *psoc,
 	while (peer) {
 		peer_nan_obj = nan_get_peer_priv_obj(peer);
 		if (!peer_nan_obj)
-			nan_err("NAN peer object for Peer " QDF_MAC_ADDR_STR " is NULL",
-				QDF_MAC_ADDR_ARRAY(wlan_peer_get_macaddr(peer)));
+			nan_err("NAN peer object for Peer " QDF_MAC_ADDR_FMT " is NULL",
+				QDF_MAC_ADDR_REF(wlan_peer_get_macaddr(peer)));
 		else if (peer_nan_obj->active_ndp_sessions)
 			break;
 
@@ -576,8 +576,8 @@ static QDF_STATUS nan_handle_confirm(struct nan_datapath_confirm_event *confirm)
 		 * This peer was created at ndp_indication but
 		 * confirm failed, so it needs to be deleted
 		 */
-		nan_err("NDP confirm with reject and no active ndp sessions. deleting peer: "QDF_MAC_ADDR_STR" on vdev_id: %d",
-			QDF_MAC_ADDR_ARRAY(confirm->peer_ndi_mac_addr.bytes),
+		nan_err("NDP confirm with reject and no active ndp sessions. deleting peer: "QDF_MAC_ADDR_FMT" on vdev_id: %d",
+			QDF_MAC_ADDR_REF(confirm->peer_ndi_mac_addr.bytes),
 			vdev_id);
 		psoc_nan_obj->cb_obj.delete_peers_by_addr(vdev_id,
 						confirm->peer_ndi_mac_addr);
@@ -661,9 +661,9 @@ static QDF_STATUS nan_handle_ndp_ind(
 	}
 
 	nan_debug("role: %d, vdev: %d, csid: %d, peer_mac_addr "
-		QDF_MAC_ADDR_STR,
+		QDF_MAC_ADDR_FMT,
 		ndp_ind->role, vdev_id, ndp_ind->ncs_sk_type,
-		QDF_MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
+		QDF_MAC_ADDR_REF(ndp_ind->peer_mac_addr.bytes));
 
 	if ((ndp_ind->role == NAN_DATAPATH_ROLE_INITIATOR) ||
 	    ((NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role) &&

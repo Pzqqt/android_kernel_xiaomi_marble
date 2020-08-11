@@ -140,8 +140,8 @@ static void peer_rssi_iterator(struct wlan_objmgr_pdev *pdev,
 	struct peer_extd_stats *peer_extd_mc_stats;
 
 	if (WLAN_PEER_SELF == wlan_peer_get_peer_type(peer)) {
-		cp_stats_debug("ignore self peer: %pM",
-			       wlan_peer_get_macaddr(peer));
+		cp_stats_debug("ignore self peer: "QDF_MAC_ADDR_FMT,
+			       QDF_MAC_ADDR_REF(wlan_peer_get_macaddr(peer)));
 		return;
 	}
 
@@ -213,7 +213,8 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 		peer = wlan_objmgr_get_peer(psoc, last_req->pdev_id,
 					    mac_addr, WLAN_CP_STATS_ID);
 		if (!peer) {
-			cp_stats_err("peer[%pM] is null", mac_addr);
+			cp_stats_err("peer["QDF_MAC_ADDR_FMT"] is null",
+				     QDF_MAC_ADDR_REF(mac_addr));
 			goto end;
 		}
 
@@ -346,8 +347,9 @@ tgt_mc_cp_stats_update_peer_stats(struct wlan_objmgr_psoc *psoc,
 		peer_mc_stats->rx_rate = peer_stats->rx_rate;
 	if (peer_stats->peer_rssi)
 		peer_mc_stats->peer_rssi = peer_stats->peer_rssi;
-	cp_stats_nofl_debug("PEER STATS: peer_mac=%pM, tx_rate=%u, rx_rate=%u, peer_rssi=%d",
-			    peer_mc_stats->peer_macaddr, peer_mc_stats->tx_rate,
+	cp_stats_nofl_debug("PEER STATS: peer_mac="QDF_MAC_ADDR_FMT", tx_rate=%u, rx_rate=%u, peer_rssi=%d",
+			    QDF_MAC_ADDR_REF(peer_mc_stats->peer_macaddr),
+			    peer_mc_stats->tx_rate,
 			    peer_mc_stats->rx_rate, peer_mc_stats->peer_rssi);
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
@@ -405,8 +407,8 @@ tgt_mc_cp_stats_update_peer_extd_stats(
 					peer_extended_stats->rx_mc_bc_cnt;
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
-	cp_stats_debug("peer_mac=%pM, rx_mc_bc_cnt=%u",
-		       peer_extended_stats->peer_macaddr,
+	cp_stats_debug("peer_mac="QDF_MAC_ADDR_FMT", rx_mc_bc_cnt=%u",
+		       QDF_MAC_ADDR_REF(peer_extended_stats->peer_macaddr),
 		       peer_extended_stats->rx_mc_bc_cnt);
 
 end:
@@ -704,7 +706,8 @@ static void tgt_mc_cp_stats_extract_vdev_summary_stats(
 	peer = wlan_objmgr_get_peer(psoc, last_req.pdev_id,
 				    last_req.peer_mac_addr, WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_debug("peer is null %pM", last_req.peer_mac_addr);
+		cp_stats_debug("peer is null "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(last_req.peer_mac_addr));
 		goto end;
 	}
 

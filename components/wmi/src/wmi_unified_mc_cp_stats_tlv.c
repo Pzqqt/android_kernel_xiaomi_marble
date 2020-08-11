@@ -288,8 +288,9 @@ send_request_peer_stats_info_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_mac_addr, &cmd->peer_macaddr);
 	cmd->reset_after_request = param->reset_after_request;
 
-	WMI_LOGD("PEER STATS REQ VDEV_ID:%d PEER:%pM TYPE:%d RESET:%d",
-		 cmd->vdev_id, param->peer_mac_addr, cmd->request_type,
+	WMI_LOGD("PEER STATS REQ VDEV_ID:%d PEER:"QDF_MAC_ADDR_FMT" TYPE:%d RESET:%d",
+		 cmd->vdev_id, QDF_MAC_ADDR_REF(param->peer_mac_addr),
+		 cmd->request_type,
 		 cmd->reset_after_request);
 
 	wmi_mtrace(WMI_REQUEST_PEER_STATS_INFO_CMDID, cmd->vdev_id, 0);
@@ -340,7 +341,7 @@ static void dump_peer_stats_info(wmi_peer_stats_info *stats)
 	int i;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&stats->peer_macaddr, mac);
-	WMI_LOGD("mac %pM", mac);
+	WMI_LOGD("mac "QDF_MAC_ADDR_FMT, QDF_MAC_ADDR_REF(mac));
 	WMI_LOGD("tx_bytes %d %d tx_packets %d %d",
 		 stats->tx_bytes.low_32,
 		 stats->tx_bytes.high_32,

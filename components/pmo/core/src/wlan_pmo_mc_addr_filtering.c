@@ -57,8 +57,8 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 			QDF_MAC_ADDR_SIZE)) ||
 		   (addr_fp &&
 		   (!qdf_mem_cmp(ip->mc_addr[i].bytes, &addr_fp, 1)))) {
-			pmo_debug("MC/BC filtering Skip addr %pM",
-				ip->mc_addr[i].bytes);
+			pmo_debug("MC/BC filtering Skip addr "QDF_MAC_ADDR_FMT,
+				QDF_MAC_ADDR_REF(ip->mc_addr[i].bytes));
 			qdf_spin_lock_bh(&temp_ctx->pmo_vdev_lock);
 			op_list->mc_cnt--;
 			qdf_spin_unlock_bh(&temp_ctx->pmo_vdev_lock);
@@ -70,7 +70,8 @@ static void pmo_core_fill_mc_list(struct pmo_vdev_priv_obj **vdev_ctx,
 		qdf_mem_copy(&op_list->mc_addr[j].bytes,
 			     ip->mc_addr[i].bytes, QDF_MAC_ADDR_SIZE);
 		qdf_spin_unlock_bh(&temp_ctx->pmo_vdev_lock);
-		pmo_debug("Index = %d, mac[%pM]", j, op_list->mc_addr[i].bytes);
+		pmo_debug("Index = %d, mac["QDF_MAC_ADDR_FMT"]", j,
+			  QDF_MAC_ADDR_REF(op_list->mc_addr[i].bytes));
 		j++;
 	}
 }

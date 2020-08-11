@@ -199,8 +199,8 @@ static int target_if_twt_session_params_event_handler(ol_scn_t scn,
 						       WLAN_CP_STATS_ID);
 		if (!peer_obj) {
 			target_if_err("peer obj not found for "
-				      QDF_MAC_ADDR_STR,
-				      QDF_MAC_ADDR_ARRAY(twt_params.peer_mac));
+				      QDF_MAC_ADDR_FMT,
+				      QDF_MAC_ADDR_REF(twt_params.peer_mac));
 			continue;
 		}
 
@@ -213,8 +213,8 @@ static int target_if_twt_session_params_event_handler(ol_scn_t scn,
 		mc_cp_stats = target_if_obtain_mc_cp_stat_obj(peer_obj);
 		if (!mc_cp_stats) {
 			target_if_err("Unable to retrieve mc cp stats obj for "
-				      QDF_MAC_ADDR_STR,
-				      QDF_MAC_ADDR_ARRAY(twt_params.peer_mac));
+				      QDF_MAC_ADDR_FMT,
+				      QDF_MAC_ADDR_REF(twt_params.peer_mac));
 			wlan_objmgr_peer_release_ref(peer_obj,
 						     WLAN_CP_STATS_ID);
 			continue;

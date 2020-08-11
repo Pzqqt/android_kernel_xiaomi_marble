@@ -335,9 +335,9 @@ static void wlan_ipa_dump_ipa_ctx(struct wlan_ipa_priv *ipa_ctx)
 	QDF_TRACE(QDF_MODULE_ID_IPA, QDF_TRACE_LEVEL_INFO,
 		"\nassoc_stas_map ----");
 	for (i = 0; i < WLAN_IPA_MAX_STA_COUNT; i++) {
-		ipa_info("\n\t[%d]: is_reserved=%d mac: " QDF_MAC_ADDR_STR, i,
+		ipa_info("\n\t[%d]: is_reserved=%d mac: " QDF_MAC_ADDR_FMT, i,
 			 ipa_ctx->assoc_stas_map[i].is_reserved,
-			 QDF_MAC_ADDR_ARRAY(
+			 QDF_MAC_ADDR_REF(
 				ipa_ctx->assoc_stas_map[i].mac_addr.bytes));
 	}
 }
@@ -537,9 +537,9 @@ static void wlan_ipa_print_session_info(struct wlan_ipa_priv *ipa_ctx)
 	qdf_list_peek_front(&ipa_ctx->pending_event,
 			(qdf_list_node_t **)&event);
 	while (event) {
-		ipa_info("PENDING EVENT[%d]: EVT:%s, MAC:%pM",
+		ipa_info("PENDING EVENT[%d]: EVT:%s, MAC:"QDF_MAC_ADDR_FMT,
 			 i, wlan_ipa_wlan_event_to_str(event->type),
-			 event->mac_addr);
+			 QDF_MAC_ADDR_REF(event->mac_addr));
 
 		qdf_list_peek_next(&ipa_ctx->pending_event,
 				   (qdf_list_node_t *)event,

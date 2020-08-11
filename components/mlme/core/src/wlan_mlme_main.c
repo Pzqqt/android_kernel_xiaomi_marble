@@ -133,7 +133,8 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 	peer = wlan_objmgr_get_peer(psoc, pdev_id,
 				    peer_mac, WLAN_LEGACY_MAC_ID);
 	if (!peer) {
-		mlme_legacy_debug("Peer of peer_mac %pM not found", peer_mac);
+		mlme_legacy_debug("Peer of peer_mac "QDF_MAC_ADDR_FMT" not found",
+				  QDF_MAC_ADDR_REF(peer_mac));
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -150,8 +151,9 @@ QDF_STATUS mlme_get_peer_mic_len(struct wlan_objmgr_psoc *psoc, uint8_t pdev_id,
 		*mic_hdr_len = IEEE80211_CCMP_HEADERLEN;
 		*mic_len = IEEE80211_CCMP_MICLEN;
 	}
-	mlme_legacy_debug("peer %pM hdr_len %d mic_len %d key_cipher 0x%x",
-			  peer_mac, *mic_hdr_len, *mic_len, key_cipher);
+	mlme_legacy_debug("peer "QDF_MAC_ADDR_FMT" hdr_len %d mic_len %d key_cipher 0x%x",
+			  QDF_MAC_ADDR_REF(peer_mac),
+			  *mic_hdr_len, *mic_len, key_cipher);
 
 	return QDF_STATUS_SUCCESS;
 }
