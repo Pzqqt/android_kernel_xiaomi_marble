@@ -484,6 +484,7 @@ struct cdp_rx_mic_err_info {
 	uint16_t vdev_id;
 };
 
+#ifdef WLAN_SUPPORT_MSCS
 /**
  * struct cdp_mscs_params - MSCS parameters obtained
  * from handshake
@@ -498,6 +499,7 @@ struct cdp_mscs_params {
 	uint8_t classifier_type;
 	uint8_t classifier_mask;
 };
+#endif
 
 /**
  * struct cdp_sec_type - security type information

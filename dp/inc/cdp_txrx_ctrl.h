@@ -99,6 +99,7 @@ cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 }
 #endif /* ATH_SUPPORT_NAC || ATH_SUPPORT_NAC_RSSI*/
 
+#ifdef WLAN_SUPPORT_MSCS
 /**
  * @brief record the MSCS data and send it to the Data path
  * @details
@@ -131,6 +132,7 @@ cdp_record_vdev_mscs_params(ol_txrx_soc_handle soc, uint8_t
 	return soc->ops->ctrl_ops->txrx_record_mscs_params
 			(soc, macaddr, vdev_id, mscs_params, active);
 }
+#endif
 
 /**
  * @brief set the Reo Destination ring for the pdev

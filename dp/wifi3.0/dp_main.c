@@ -6224,6 +6224,7 @@ fail0:
 }
 #endif /* ATH_SUPPORT_NAC_RSSI || ATH_SUPPORT_NAC */
 
+#ifdef WLAN_SUPPORT_MSCS
 /*
  * dp_record_mscs_params - MSCS parameters sent by the STA in
  * the MSCS Request to the AP. The AP makes a note of these
@@ -6292,6 +6293,7 @@ fail:
 		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 	return status;
 }
+#endif
 
 /*
  * dp_get_sec_type() - Get the security type
@@ -10458,7 +10460,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
 	.txrx_vdev_get_neighbour_rssi = dp_vdev_get_neighbour_rssi,
 #endif
+#ifdef WLAN_SUPPORT_MSCS
 	.txrx_record_mscs_params = dp_record_mscs_params,
+#endif
 	.set_key = dp_set_michael_key,
 	.txrx_get_vdev_param = dp_get_vdev_param,
 	.enable_peer_based_pktlog = dp_enable_peer_based_pktlog,

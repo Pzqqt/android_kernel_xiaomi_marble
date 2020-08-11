@@ -681,12 +681,14 @@ struct cdp_ctrl_ops {
 						   uint8_t *rssi);
 #endif
 
+#ifdef WLAN_SUPPORT_MSCS
 	QDF_STATUS
 		(*txrx_record_mscs_params) (
 				struct cdp_soc_t *soc, uint8_t *macaddr,
 				uint8_t vdev_id,
 				struct cdp_mscs_params *mscs_params,
 				bool active);
+#endif
 
 	QDF_STATUS
 	(*set_key)(struct cdp_soc_t *soc, uint8_t vdev_id, uint8_t *mac,
