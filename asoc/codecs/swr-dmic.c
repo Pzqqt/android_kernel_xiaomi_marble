@@ -274,23 +274,41 @@ static const struct snd_kcontrol_new dmic_switch[] = {
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
 };
 
+static const struct snd_kcontrol_new va_dmic_switch[] = {
+	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0)
+};
+
 static const struct snd_soc_dapm_widget swr_dmic_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER_E("SWR_DMIC_MIXER", SND_SOC_NOPM, 0, 0,
 			dmic_switch, ARRAY_SIZE(dmic_switch), dmic_swr_ctrl,
 			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
+	SND_SOC_DAPM_MIXER_E("SWR_DMIC_VA_MIXER", SND_SOC_NOPM, 0, 0,
+			va_dmic_switch, ARRAY_SIZE(va_dmic_switch), dmic_swr_ctrl,
+			SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_INPUT("SWR_DMIC"),
+	SND_SOC_DAPM_INPUT("VA_SWR_DMIC"),
 
 	SND_SOC_DAPM_OUT_DRV_E("SMIC_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
 				swr_dmic_port_enable,
 				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+
+	SND_SOC_DAPM_OUT_DRV_E("SMIC_VA_PORT_EN", SND_SOC_NOPM, 0, 0, NULL, 0,
+				swr_dmic_port_enable,
+				SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
+
 	SND_SOC_DAPM_OUTPUT("SWR_DMIC_OUTPUT"),
+	SND_SOC_DAPM_OUTPUT("SWR_DMIC_VA_OUTPUT"),
 };
 
 static const struct snd_soc_dapm_route swr_dmic_audio_map[] = {
 	{"SWR_DMIC_MIXER", "Switch", "SWR_DMIC"},
 	{"SMIC_PORT_EN", NULL, "SWR_DMIC_MIXER"},
 	{"SWR_DMIC_OUTPUT", NULL, "SMIC_PORT_EN"},
+	{"SWR_DMIC_VA_MIXER", "Switch", "VA_SWR_DMIC"},
+	{"SMIC_VA_PORT_EN", NULL, "SWR_DMIC_VA_MIXER"},
+	{"SWR_DMIC_VA_OUTPUT", NULL, "SMIC_VA_PORT_EN"},
 };
 
 static int swr_dmic_codec_probe(struct snd_soc_component *component)
