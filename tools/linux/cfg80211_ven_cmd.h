@@ -1212,7 +1212,8 @@ enum _ol_ath_param_t {
 	/* Set the secondary center frequency for the post NOL channel. */
 	OL_ATH_DFS_CHAN_POSTNOL_CFREQ2 = 450,
 #endif
-
+	/* DCS Wideband (5-7GHz) policy */
+	OL_ATH_PARAM_DCS_WIDEBAND_POLICY = 451,
 };
 
 #ifdef CONFIG_SUPPORT_LIBROXML
@@ -3128,6 +3129,10 @@ struct vendor_commands radio_vendor_cmds[] = {
 	{"getpostNOLcfreq2",
 		OL_ATH_PARAM_SHIFT | OL_ATH_DFS_CHAN_POSTNOL_CFREQ2, GET_PARAM, 0},
 #endif
+	{"dcs_wideband_policy",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS_WIDEBAND_POLICY, SET_PARAM, 1},
+	{"get_dcs_wideband_policy",
+		OL_ATH_PARAM_SHIFT | OL_ATH_PARAM_DCS_WIDEBAND_POLICY, GET_PARAM, 0},
 };
 #endif
 #endif
