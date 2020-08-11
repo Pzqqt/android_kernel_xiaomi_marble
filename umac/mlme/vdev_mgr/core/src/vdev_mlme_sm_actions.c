@@ -220,6 +220,8 @@ static QDF_STATUS mlme_stop_pending_restart(struct wlan_objmgr_pdev *pdev,
 		    !wlan_util_map_is_any_index_set(
 				pdev_mlme->restart_send_vdev_bmap,
 				sizeof(pdev_mlme->restart_send_vdev_bmap))) {
+			mlme_err("Clear MVR bit for Pdev %d",
+				 wlan_objmgr_pdev_get_pdev_id(pdev));
 			wlan_pdev_mlme_op_clear
 					(pdev,
 					 WLAN_PDEV_OP_RESTART_INPROGRESS);
@@ -359,6 +361,8 @@ static void mlme_multivdev_restart(struct pdev_mlme_obj *pdev_mlme)
 	if (!wlan_util_map_is_any_index_set(
 			pdev_mlme->restart_pend_vdev_bmap,
 			sizeof(pdev_mlme->restart_pend_vdev_bmap))) {
+		mlme_err("Sending MVR for Pdev %d",
+			 wlan_objmgr_pdev_get_pdev_id(pdev));
 		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_MBSSID_RESTART);
 		wlan_pdev_mlme_op_clear(pdev, WLAN_PDEV_OP_RESTART_INPROGRESS);
 
