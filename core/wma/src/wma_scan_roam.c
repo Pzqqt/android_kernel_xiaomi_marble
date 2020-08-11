@@ -3549,11 +3549,12 @@ wma_get_trigger_detail_str(struct wmi_roam_trigger_info *roam_info, char *buf)
 		 * Use roam_info->current_rssi get the RSSI of current AP after
 		 * roam scan is triggered. This avoids discrepency with the
 		 * next rssi threshold value printed in roam scan details.
-		 * roam_info->rssi_trig_data.threshold gives the rssi of AP
-		 * before the roam scan was triggered.
+		 * roam_info->rssi_trig_data.threshold gives the rssi threshold
+		 * for the Low Rssi/Periodic scan trigger.
 		 */
 		buf_cons = qdf_snprint(temp, buf_left,
-				       " Current AP RSSI: %d",
+				       " Cur_Rssi threshold:%d Current AP RSSI: %d",
+				       roam_info->rssi_trig_data.threshold,
 				       roam_info->current_rssi);
 		temp += buf_cons;
 		buf_left -= buf_cons;
@@ -3660,12 +3661,12 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	uint16_t i;
 	char time[TIME_STRING_LEN], time2[TIME_STRING_LEN];
 
-	wma_nofl_info("%40s%40s", LINE_STR, LINE_STR);
-	wma_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %6s %6s %16s %6s",
-		     "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
-		     "SCR", "CU%", "SCR", "TOT_SCR", "REASON", "SOURCE",
-		     "BT_TIMESTAMP", "TIMEOUT(msec)");
-	wma_nofl_info("%40s%40s", LINE_STR, LINE_STR);
+	wma_nofl_info("%62s%62s", LINE_STR, LINE_STR);
+	wma_nofl_info("%13s %16s %8s %4s %4s %5s/%3s %3s/%3s %7s %7s %6s %12s %20s",
+		      "AP BSSID", "TSTAMP", "CH", "TY", "ETP", "RSSI",
+		      "SCR", "CU%", "SCR", "TOT_SCR", "BL_RSN", "BL_SRC",
+		      "BL_TSTAMP", "BL_TIMEOUT(ms)");
+	wma_nofl_info("%62s%62s", LINE_STR, LINE_STR);
 
 	if (num_entries > MAX_ROAM_CANDIDATE_AP)
 		num_entries = MAX_ROAM_CANDIDATE_AP;
@@ -3673,13 +3674,14 @@ wma_log_roam_scan_candidates(struct wmi_roam_candidate_info *ap,
 	for (i = 0; i < num_entries; i++) {
 		mlme_get_converted_timestamp(ap->timestamp, time);
 		mlme_get_converted_timestamp(ap->bl_timestamp, time2);
-		wma_nofl_info(QDF_MAC_ADDR_STR " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d %5d %5d %17s %5d",
-			 QDF_MAC_ADDR_ARRAY(ap->bssid.bytes), time, ap->freq,
-			 ((ap->type == 0) ? "C_AP" :
-			  ((ap->type == 2) ? "R_AP" : "P_AP")),
-			 ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
-			 ap->cu_score, ap->total_score, ap->bl_reason,
-			 ap->bl_source, time2, ap->bl_original_timeout);
+		wma_nofl_info(QDF_MAC_ADDR_STR " %17s %4d %-4s %4d %3d/%-4d %2d/%-4d %5d %7d %7d   %17s %9d",
+			      QDF_MAC_ADDR_ARRAY(ap->bssid.bytes), time,
+			      ap->freq,
+			      ((ap->type == 0) ? "C_AP" :
+			       ((ap->type == 2) ? "R_AP" : "P_AP")),
+			      ap->etp, ap->rssi, ap->rssi_score, ap->cu_load,
+			      ap->cu_score, ap->total_score, ap->bl_reason,
+			      ap->bl_source, time2, ap->bl_original_timeout);
 		ap++;
 	}
 }
