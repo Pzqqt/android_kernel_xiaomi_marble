@@ -4042,6 +4042,14 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 	QDF_ASSERT(pIes);
 	if (!pIes)
 		return QDF_STATUS_E_FAILURE;
+	if (!pProfile) {
+		sme_debug("Profile is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!bss_desc) {
+		sme_debug("bss_desc is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	qdf_mem_copy(&pBssConfig->BssCap, &bss_desc->capabilityInfo,
 		     sizeof(tSirMacCapabilityInfo));
@@ -21861,8 +21869,11 @@ csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	}
 
 	conn_profile = &session->connectedProfile;
-	csr_roam_stop_network(mac_ctx, session_id, session->pCurRoamProfile,
-			      bss_desc, ies_local);
+	status = csr_roam_stop_network(mac_ctx, session_id,
+				       session->pCurRoamProfile,
+				       bss_desc, ies_local);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto end;
 	ps_global_info->remain_in_power_active_till_dhcp = false;
 	session->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
 
