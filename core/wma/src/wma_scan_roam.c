@@ -4160,18 +4160,18 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	 * Instead of making another infra, send the RSN-CAPS in MSB of
 	 * beacon Caps.
 	 */
-	roam_offload_params->capability = *((uint32_t *)(&roam_req->rsn_caps));
+	roam_offload_params->capability = *((uint16_t *)(&roam_req->rsn_caps));
 	roam_offload_params->capability <<= RSN_CAPS_SHIFT;
 	roam_offload_params->capability |= ((*pCfgValue16) & 0xFFFF);
 
 	roam_offload_params->ht_caps_info =
-		*(uint32_t *)&mac->mlme_cfg->ht_caps.ht_cap_info;
+		*(uint16_t *)&mac->mlme_cfg->ht_caps.ht_cap_info;
 
 	roam_offload_params->ampdu_param =
-		*(uint32_t *)&mac->mlme_cfg->ht_caps.ampdu_params;
+		*(uint8_t *)&mac->mlme_cfg->ht_caps.ampdu_params;
 
 	roam_offload_params->ht_ext_cap =
-		*(uint32_t *)&mac->mlme_cfg->ht_caps.ext_cap_info;
+		*(uint16_t *)&mac->mlme_cfg->ht_caps.ext_cap_info;
 
 	val_len = ROAM_OFFLOAD_NUM_MCS_SET;
 	if (wlan_mlme_get_cfg_str((uint8_t *)roam_offload_params->mcsset,
