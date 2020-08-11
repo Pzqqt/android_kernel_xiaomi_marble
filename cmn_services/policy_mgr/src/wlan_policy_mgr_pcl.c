@@ -195,12 +195,12 @@ static void
 policy_mgr_update_valid_ch_freq_list(struct policy_mgr_psoc_priv_obj *pm_ctx,
 				     struct regulatory_channel *reg_ch_list)
 {
-	uint32_t i, j = 0, ch;
+	uint32_t i, j = 0, ch_freq;
 	enum channel_state state;
 
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		ch = reg_ch_list[i].chan_num;
-		state = wlan_reg_get_channel_state(pm_ctx->pdev, ch);
+		ch_freq = reg_ch_list[i].center_freq;
+		state = wlan_reg_get_channel_state_for_freq(pm_ctx->pdev, ch_freq);
 
 		if (state != CHANNEL_STATE_DISABLE &&
 		    state != CHANNEL_STATE_INVALID) {
