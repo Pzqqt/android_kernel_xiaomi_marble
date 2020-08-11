@@ -184,9 +184,9 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 		tdls_err("psoc: 0x%pK, info: 0x%pK", psoc, info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	tdls_debug("vdev: %d, type: %d, reason: %d" QDF_MAC_ADDR_STR,
+	tdls_debug("vdev: %d, type: %d, reason: %d" QDF_MAC_ADDR_FMT,
 		   info->vdev_id, info->message_type, info->peer_reason,
-		   QDF_MAC_ADDR_ARRAY(info->peermac.bytes));
+		   QDF_MAC_ADDR_REF(info->peermac.bytes));
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify) {
 		tdls_err("mem allocate fail");

@@ -61,8 +61,8 @@ struct tdls_peer *tdls_find_peer(struct tdls_vdev_priv_obj *vdev_obj,
 		status = qdf_list_peek_next(head, p_node, &p_node);
 	}
 
-	tdls_debug("no tdls peer " QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(macaddr));
+	tdls_debug("no tdls peer " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(macaddr));
 	return NULL;
 }
 
@@ -194,8 +194,8 @@ static struct tdls_peer *tdls_add_peer(struct tdls_vdev_priv_obj *vdev_obj,
 
 	qdf_list_insert_back(head, &peer->node);
 
-	tdls_debug("add tdls peer: " QDF_MAC_ADDR_STR,
-		   QDF_MAC_ADDR_ARRAY(macaddr));
+	tdls_debug("add tdls peer: " QDF_MAC_ADDR_FMT,
+		   QDF_MAC_ADDR_REF(macaddr));
 	return peer;
 }
 
@@ -228,8 +228,8 @@ tdls_find_progress_peer_in_list(qdf_list_t *head,
 			status = qdf_list_peek_next(head, p_node, &p_node);
 			continue;
 		} else if (TDLS_LINK_CONNECTING == peer->link_status) {
-			tdls_debug(QDF_MAC_ADDR_STR " TDLS_LINK_CONNECTING",
-				   QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
+			tdls_debug(QDF_MAC_ADDR_FMT " TDLS_LINK_CONNECTING",
+				   QDF_MAC_ADDR_REF(peer->peer_mac.bytes));
 			return peer;
 		}
 		status = qdf_list_peek_next(head, p_node, &p_node);
@@ -359,9 +359,9 @@ tdls_find_first_connected_peer(struct tdls_vdev_priv_obj *vdev_obj)
 			peer = qdf_container_of(p_node, struct tdls_peer, node);
 
 			if (peer && TDLS_LINK_CONNECTED == peer->link_status) {
-				tdls_debug(QDF_MAC_ADDR_STR
+				tdls_debug(QDF_MAC_ADDR_FMT
 					   " TDLS_LINK_CONNECTED",
-					   QDF_MAC_ADDR_ARRAY(
+					   QDF_MAC_ADDR_REF(
 						   peer->peer_mac.bytes));
 				return peer;
 			}
@@ -696,9 +696,9 @@ void tdls_set_peer_link_status(struct tdls_peer *peer,
 	struct tdls_vdev_priv_obj *vdev_obj;
 	enum tdls_link_state old_status;
 
-	tdls_debug("state %d reason %d peer:" QDF_MAC_ADDR_STR,
+	tdls_debug("state %d reason %d peer:" QDF_MAC_ADDR_FMT,
 		   link_status, link_reason,
-		   QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
+		   QDF_MAC_ADDR_REF(peer->peer_mac.bytes));
 
 	vdev_obj = peer->vdev_priv;
 	old_status = peer->link_status;
@@ -868,8 +868,8 @@ QDF_STATUS tdls_reset_peer(struct tdls_vdev_priv_obj *vdev_obj,
 	}
 
 	if (curr_peer->is_peer_idle_timer_initialised) {
-		tdls_debug(QDF_MAC_ADDR_STR ": destroy  idle timer ",
-			   QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
+		tdls_debug(QDF_MAC_ADDR_FMT ": destroy  idle timer ",
+			   QDF_MAC_ADDR_REF(curr_peer->peer_mac.bytes));
 		qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
 		qdf_mc_timer_destroy(&curr_peer->peer_idle_timer);
 		curr_peer->is_peer_idle_timer_initialised = false;
@@ -902,9 +902,9 @@ void tdls_peer_idle_timers_destroy(struct tdls_vdev_priv_obj *vdev_obj)
 		while (QDF_IS_STATUS_SUCCESS(status)) {
 			peer = qdf_container_of(p_node, struct tdls_peer, node);
 			if (peer && peer->is_peer_idle_timer_initialised) {
-				tdls_debug(QDF_MAC_ADDR_STR
+				tdls_debug(QDF_MAC_ADDR_FMT
 					   ": destroy  idle timer ",
-					   QDF_MAC_ADDR_ARRAY(
+					   QDF_MAC_ADDR_REF(
 						   peer->peer_mac.bytes));
 				qdf_mc_timer_stop(&peer->peer_idle_timer);
 				qdf_mc_timer_destroy(&peer->peer_idle_timer);
