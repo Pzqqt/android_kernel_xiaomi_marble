@@ -118,7 +118,7 @@ ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 		(TXRX_HL_TX_DESC_HI_PRIO_RESERVED + 100)
 
 struct peer_hang_data {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	uint8_t peer_mac_addr[QDF_MAC_ADDR_SIZE];
 	uint16_t peer_timeout_bitmask;
 } qdf_packed;

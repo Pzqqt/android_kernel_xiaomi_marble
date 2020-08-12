@@ -79,7 +79,7 @@
 #include "wlan_pkt_capture_ucfg_api.h"
 
 struct pe_hang_event_fixed_param {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	uint8_t vdev_id;
 	uint8_t limmlmstate;
 	uint8_t limprevmlmstate;

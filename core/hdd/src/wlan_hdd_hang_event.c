@@ -21,7 +21,7 @@
 #include <qdf_types.h>
 
 struct hdd_hang_event_fixed_param  {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	uint8_t vdev_id;
 	uint8_t vdev_opmode;
 	uint8_t vdev_state;
@@ -29,7 +29,7 @@ struct hdd_hang_event_fixed_param  {
 } qdf_packed;
 
 struct hdd_scan_fixed_param {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	uint8_t last_scan_reject_vdev_id;
 	enum scan_reject_states last_scan_reject_reason;
 	unsigned long last_scan_reject_timestamp;
