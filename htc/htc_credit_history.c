@@ -41,6 +41,7 @@ static uint32_t g_htc_credit_history_length;
 static
 struct HTC_CREDIT_HISTORY htc_credit_history_buffer[HTC_CREDIT_HISTORY_MAX];
 
+#define NUM_HANG_CREDIT_HISTORY 1
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
 #define HTC_EMULATION_DELAY_IN_MS 20
@@ -149,7 +150,7 @@ void htc_log_hang_credit_history(struct notifier_block *block, void *data)
 	qdf_notif_block *notif_block = qdf_container_of(block, qdf_notif_block,
 							notif_block);
 	struct qdf_notifer_data *htc_hang_data = data;
-	uint32_t count = 3, idx, total_len;
+	uint32_t count = NUM_HANG_CREDIT_HISTORY, idx, total_len;
 	HTC_HANDLE htc;
 	struct htc_hang_data_fixed_param *cmd;
 	uint8_t *htc_buf_ptr;

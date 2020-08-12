@@ -28,6 +28,7 @@ struct wmi_hang_data_fixed_param {
 
 #define WMI_EVT_HIST 0
 #define WMI_CMD_HIST 1
+#define NUM_HANG_WMI_HISTORY 1
 
 static void wmi_log_history(struct notifier_block *block, void *data,
 			    uint8_t wmi_history)
@@ -36,7 +37,7 @@ static void wmi_log_history(struct notifier_block *block, void *data,
 							notif_block);
 	struct qdf_notifer_data *wmi_hang_data = data;
 	int nread, pos, total_len;
-	unsigned int wmi_ring_size = 3;
+	unsigned int wmi_ring_size = NUM_HANG_WMI_HISTORY;
 	uint64_t secs, usecs;
 	struct wmi_event_debug *wmi_evt;
 	struct wmi_unified *wmi_handle;
