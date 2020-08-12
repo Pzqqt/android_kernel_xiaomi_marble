@@ -34,7 +34,25 @@
 #define CMN_NOISE_FLOOR       (-96)
 #define NUM_CHAINS_FW_TO_HOST(n) ((1 << ((n) + 1)) - 1)
 
+#define CFR_INVALID_SNR 0x80
+
 static u_int32_t end_magic = 0xBEAFDEAD;
+
+/**
+ * snr_to_signal_strength() - Convert SNR(dB) to signal strength(dBm)
+ * @snr: SNR in dB
+ *
+ * Return: signal strength in dBm
+ */
+static inline
+u_int32_t snr_to_signal_strength(uint8_t snr)
+{
+	/* SNR value 0x80 indicates -128dB which is not a valid value */
+	return (snr != CFR_INVALID_SNR) ?
+		(((int8_t)snr) + CMN_NOISE_FLOOR) :
+		((int8_t)snr);
+}
+
 /**
  * get_lut_entry() - Retrieve LUT entry using cookie number
  * @pcfr: PDEV CFR object
@@ -800,7 +818,7 @@ void target_if_cfr_rx_tlv_process(struct wlan_objmgr_pdev *pdev, void *nbuf)
 
 	for (i = 0; i < MAX_CHAIN; i++)
 		meta->chain_rssi[i] =
-			cdp_rx_ppdu->per_chain_rssi[i] + CMN_NOISE_FLOOR;
+			snr_to_signal_strength(cdp_rx_ppdu->per_chain_rssi[i]);
 
 	if (cdp_rx_ppdu->u.ppdu_type != CDP_RX_TYPE_SU) {
 		for (i = 0 ; i < meta->num_mu_users; i++) {
