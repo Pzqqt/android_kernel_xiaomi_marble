@@ -129,6 +129,36 @@ struct net_device *qca_multi_link_tbl_find_sta_or_ap(struct net_device *net_dev,
 
 qdf_export_symbol(qca_multi_link_tbl_find_sta_or_ap);
 
+QDF_STATUS qca_multi_link_tbl_add_or_refresh_entry(struct net_device *net_dev, uint8_t *addr,
+							qca_multi_link_entry_type_t entry_type)
+{
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
+	int status;
+	uint16_t state = NUD_NONE;
+
+	if (entry_type == QCA_MULTI_LINK_ENTRY_USER_ADDED) {
+		state = NUD_REACHABLE;
+	} else if (entry_type == QCA_MULTI_LINK_ENTRY_LOCAL) {
+		state = NUD_PERMANENT;
+	} else if (entry_type == QCA_MULTI_LINK_ENTRY_STATIC) {
+		state = NUD_NOARP;
+	}
+#endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
+	status = br_fdb_add_or_refresh_by_netdev(net_dev, addr, 0, state);
+	if (status < 0) {
+		return QDF_STATUS_E_FAILURE;
+	}
+#else
+	/* Use 5.4-specific API */
+	qdf_info("Needs alternative implementation");
+#endif
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(qca_multi_link_tbl_add_or_refresh_entry);
+
 QDF_STATUS qca_multi_link_tbl_delete_entry(struct net_device *net_dev, uint8_t *addr)
 {
 #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 4, 24)
