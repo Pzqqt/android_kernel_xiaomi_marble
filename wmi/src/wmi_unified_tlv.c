@@ -13178,7 +13178,6 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	case WMI_ROAM_TRIGGER_REASON_PER:
 	case WMI_ROAM_TRIGGER_REASON_BMISS:
 	case WMI_ROAM_TRIGGER_REASON_HIGH_RSSI:
-	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
 	case WMI_ROAM_TRIGGER_REASON_MAWC:
 	case WMI_ROAM_TRIGGER_REASON_DENSE:
 	case WMI_ROAM_TRIGGER_REASON_BACKGROUND:
@@ -13213,6 +13212,7 @@ extract_roam_trigger_stats_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 		trig->deauth_trig_data.reason = src_data->deauth_reason;
 		return QDF_STATUS_SUCCESS;
 
+	case WMI_ROAM_TRIGGER_REASON_PERIODIC:
 	case WMI_ROAM_TRIGGER_REASON_LOW_RSSI:
 		trig->rssi_trig_data.threshold = src_data->roam_rssi_threshold;
 		return QDF_STATUS_SUCCESS;
