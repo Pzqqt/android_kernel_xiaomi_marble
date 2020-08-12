@@ -1308,6 +1308,8 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	qdf_flush_work(&gp_cds_context->cds_recovery_work);
 
+	cds_shutdown_notifier_purge();
+
 	qdf_status = wma_wmi_work_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to close wma_wmi_work");
@@ -1340,8 +1342,6 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	ucfg_pmo_psoc_update_dp_handle(psoc, NULL);
 	wlan_psoc_set_dp_handle(psoc, NULL);
-
-	cds_shutdown_notifier_purge();
 
 	if (true == wma_needshutdown()) {
 		cds_err("Failed to shutdown wma");
