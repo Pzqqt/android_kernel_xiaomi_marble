@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -853,9 +853,9 @@ static void wlan_ipa_uc_set_quota(struct wlan_ipa_priv *ipa_ctx,
 	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
 	if (false == ipa_ctx->resource_loading) {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
-	} else {
 		cdp_ipa_uc_set_quota(ipa_ctx->dp_soc, ipa_ctx->dp_pdev_id,
 				     quota_bytes);
+	} else {
 		qdf_mutex_release(&ipa_ctx->ipa_lock);
 	}
 }
