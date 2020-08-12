@@ -2158,6 +2158,9 @@ hdd_rx_check_qdisc_for_adapter(struct hdd_adapter *adapter, uint8_t rx_ctx_id)
 	struct Qdisc *ingress_qdisc;
 	bool is_qdisc_ingress = false;
 
+	if (qdf_unlikely(!soc))
+		return;
+
 	/*
 	 * This additional ingress_queue NULL check is to avoid
 	 * doing RCU lock/unlock in the common scenario where
