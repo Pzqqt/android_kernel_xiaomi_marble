@@ -9152,6 +9152,7 @@ QDF_STATUS send_injector_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->enable = inject_config_params->enable;
 	cmd->frame_type = inject_config_params->frame_type;
 	cmd->frame_inject_period = inject_config_params->frame_inject_period;
+	cmd->fc_duration = inject_config_params->frame_duration;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(inject_config_params->dstmac,
 			&cmd->frame_addr1);
 
