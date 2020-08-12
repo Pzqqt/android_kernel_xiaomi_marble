@@ -29,4 +29,4 @@
 
 /* vendor controls end */
 
-#endif // __MSM_VIDC_UTILS_H__
+#endif

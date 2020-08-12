@@ -76,6 +76,8 @@ struct msm_vidc_core {
 	u32                                    spur_count;
 	u32                                    reg_count;
 	bool                                   power_enabled;
+	struct msm_vidc_core_capability       *capabilities;
+	struct msm_vidc_inst_capability       *inst_caps;
 	struct msm_vidc_mem_addr               sfr;
 	struct msm_vidc_mem_addr               iface_q_table;
 	struct msm_vidc_iface_q_info           iface_queues[VIDC_IFACEQ_NUMQ];

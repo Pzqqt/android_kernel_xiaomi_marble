@@ -36,6 +36,8 @@
 #define MAX_SUPPORTED_INSTANCES  16
 #define MAX_BSE_VPP_DELAY        6
 #define DEFAULT_BSE_VPP_DELAY    2
+#define MAX_CAP_PARENTS          16
+#define MAX_CAP_CHILDREN         16
 
 /* Maintains the number of FTB's between each FBD over a window */
 #define DCVS_FTB_WINDOW 16
@@ -130,8 +132,9 @@ enum msm_vidc_port_type {
 	MAX_PORT,
 };
 
-enum msm_vidc_core_data_type {
-	ENC_CODECS = 0,
+enum msm_vidc_core_capability_type {
+	CORE_CAP_NONE = 0,
+	ENC_CODECS,
 	DEC_CODECS,
 	MAX_SESSION_COUNT,
 	MAX_SECURE_SESSION_COUNT,
@@ -159,16 +162,18 @@ enum msm_vidc_core_data_type {
 	DECODE_BATCH_TIMEOUT,
 	AV_SYNC_WINDOW_SIZE,
 	CLK_FREQ_THRESHOLD,
+	CORE_CAP_MAX,
 };
 
-enum msm_vidc_instance_data_type {
+enum msm_vidc_inst_capability_type {
+	INST_CAP_NONE = 0,
 	FRAME_WIDTH,
 	FRAME_HEIGHT,
 	MBPF,
 	MBPS,
 	FRAME_RATE,
 	BIT_RATE,
-	CABAC_BIT_RATE,
+	CABAC_BITRATE,
 	LTR_COUNT,
 	LCU_SIZE,
 	POWER_SAVE_MBPS,
@@ -205,6 +210,39 @@ enum msm_vidc_instance_data_type {
 	MB_CYCLES_LP,
 	MB_CYCLES_FW,
 	MB_CYCLES_FW_VPP,
+	INST_CAP_MAX,
+};
+
+enum msm_vidc_inst_capability_flags {
+	CAP_FLAG_ROOT                    = BIT(0),
+	CAP_FLAG_DYNAMIC_ALLOWED         = BIT(1),
+	CAP_FLAG_MENU                    = BIT(2),
+};
+
+struct msm_vidc_inst_cap {
+	enum msm_vidc_inst_capability_type cap;
+	s32 min;
+	s32 max;
+	u32 step_or_menu;
+	s32 value;
+	enum msm_vidc_inst_capability_flags flags;
+	u32 v4l2_id;
+	u32 hfi_id;
+	u8 parents[MAX_CAP_PARENTS];
+	u8 children[MAX_CAP_CHILDREN];
+	void (*adjust)(void *inst, s32 new_value);
+	int (*set)(void *inst, struct v4l2_ctrl *ctrl);
+};
+
+struct msm_vidc_inst_capability {
+	enum msm_vidc_domain_type domain;
+	enum msm_vidc_codec_type codec;
+	struct msm_vidc_inst_cap cap[INST_CAP_MAX];
+};
+
+struct msm_vidc_core_capability {
+	enum msm_vidc_core_capability_type type;
+	u32 value;
 };
 
 enum efuse_purpose {

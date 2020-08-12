@@ -40,7 +40,7 @@
 #define CODECS_ALL     (MSM_VIDC_H264 | MSM_VIDC_HEVC | \
 			MSM_VIDC_VP9 | MSM_VIDC_MPEG2)
 
-static struct msm_vidc_core_data core_data_waipio[] = {
+static struct msm_platform_core_capability core_data_waipio[] = {
 	/* {type, value} */
 	{ENC_CODECS, H264|HEVC},
 	{DEC_CODECS, H264|HEVC|VP9|MPEG2},
@@ -81,7 +81,7 @@ static struct msm_vidc_core_data core_data_waipio[] = {
 	{AV_SYNC_WINDOW_SIZE, 40},
 };
 
-static struct msm_vidc_instance_data instance_data_waipio[] = {
+static struct msm_platform_inst_capability instance_data_waipio[] = {
 	/* {type, domains, codecs, min, max, step_or_menu, value} */
 	{FRAME_WIDTH, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1920},
 	{FRAME_HEIGHT, ENC|DEC, CODECS_ALL, 128, 8192, 1, 1080},
@@ -92,7 +92,7 @@ static struct msm_vidc_instance_data instance_data_waipio[] = {
 	{FRAME_RATE, ENC|DEC, CODECS_ALL, 1, 960, 1, 30},
 	{BIT_RATE, ENC|DEC, CODECS_ALL, 1, 220000000, 1, 20000000},
 	{BIT_RATE, ENC, HEVC, 1, 160000000, 1, 20000000},
-	{CABAC_BIT_RATE, ENC, H264, 1, 160000000, 1, 20000000},
+	{CABAC_BITRATE, ENC, H264, 1, 160000000, 1, 20000000},
 	{SCALE_X, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
 	{SCALE_Y, ENC, CODECS_ALL, 8192, 65536, 1, 8192},
 	{SCALE_X, DEC, CODECS_ALL, 65536, 65536, 1, 65536},

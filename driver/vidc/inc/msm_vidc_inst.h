@@ -106,6 +106,7 @@ struct msm_vidc_inst {
 	bool                               session_created;
 	struct dentry                     *debugfs_root;
 	struct msm_vidc_debug              debug;
+	struct msm_vidc_inst_capability   *capabilities;
 };
 
 #endif // _MSM_VIDC_INST_H_

@@ -10,19 +10,26 @@
 
 #include "msm_vidc_internal.h"
 
-struct msm_vidc_core_data {
-	enum msm_vidc_core_data_type type;
+struct msm_platform_core_capability {
+	enum msm_vidc_core_capability_type type;
 	u32 value;
 };
 
-struct msm_vidc_instance_data {
-	enum msm_vidc_instance_data_type type;
-	enum msm_vidc_domain_type domains;
-	enum msm_vidc_codec_type codecs;
-	u32 min;
-	u32 max;
+struct msm_platform_inst_capability {
+	enum msm_vidc_inst_capability_type cap;
+	enum msm_vidc_domain_type domain;
+	enum msm_vidc_codec_type codec;
+	s32 min;
+	s32 max;
 	u32 step_or_menu;
-	u32 value;
+	s32 value;
+	enum msm_vidc_inst_capability_flags flags;
+	u32 v4l2_id;
+	u32 hfi_id;
+	u8 parents[MAX_CAP_PARENTS];
+	u8 children[MAX_CAP_CHILDREN];
+	void (*adjust)(void *inst, s32 new_value);
+	int (*set)(void *inst, struct v4l2_ctrl *ctrl);
 };
 
 struct msm_vidc_csc_coeff {
@@ -61,9 +68,9 @@ struct msm_vidc_ubwc_config_data {
 };
 
 struct msm_vidc_platform_data {
-	struct msm_vidc_core_data *core_data;
+	struct msm_platform_core_capability *core_data;
 	u32 core_data_size;
-	struct msm_vidc_instance_data *instance_data;
+	struct msm_platform_inst_capability *instance_data;
 	u32 instance_data_size;
 	struct allowed_clock_rates_table *allowed_clks_tbl;
 	u32 allowed_clks_tbl_size;

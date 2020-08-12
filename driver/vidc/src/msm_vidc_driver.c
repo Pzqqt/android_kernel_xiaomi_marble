@@ -9,10 +9,18 @@
 #include <media/msm_media_info.h>
 
 #include "msm_vidc_driver.h"
+#include "msm_vidc_platform.h"
 #include "msm_vidc_internal.h"
 #include "msm_vidc_memory.h"
 #include "msm_vidc_debug.h"
 #include "venus_hfi.h"
+
+#define COUNT_BITS(a, out) ({       \
+	while ((a) >= 1) {          \
+		(out) += (a) & (1); \
+		(a) >>= (1);        \
+	}                           \
+})
 
 void print_vidc_buffer(struct msm_vidc_inst *inst, struct msm_vidc_buffer *b)
 {
@@ -542,12 +550,187 @@ int msm_vidc_session_open(struct msm_vidc_inst *inst)
 	return 0;
 }
 
+static int msm_vidc_init_core_caps(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	int i, num_platform_caps;
+	struct msm_platform_core_capability *platform_data;
+
+	if (!core || !core->platform) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	platform_data = core->platform->data.core_data;
+	if (!platform_data) {
+		d_vpr_e("%s: platform core data is NULL\n",
+				__func__);
+			rc = -EINVAL;
+			goto exit;
+	}
+
+	if (!core->capabilities) {
+		core->capabilities = kcalloc(1,
+			(sizeof(struct msm_vidc_core_capability) *
+			CORE_CAP_MAX), GFP_KERNEL);
+		if (!core->capabilities) {
+			d_vpr_e("%s: failed to allocate core capabilities\n",
+				__func__);
+			rc = -ENOMEM;
+			goto exit;
+		}
+	} else {
+		d_vpr_e("%s: capabilities memory is expected to be freed\n",
+			__func__);
+	}
+
+	num_platform_caps = core->platform->data.core_data_size;
+
+	/* loop over platform caps */
+	for (i = 0; i < num_platform_caps; i++) {
+		core->capabilities[platform_data[i].type].type = platform_data[i].type;
+		core->capabilities[platform_data[i].type].value = platform_data[i].value;
+	}
+
+exit:
+	return rc;
+}
+
+static void update_inst_capability(struct msm_platform_inst_capability *in,
+		struct msm_vidc_inst_capability *capability)
+{
+	if (!in || !capability) {
+		d_vpr_e("%s: invalid params %pK %pK\n",
+			__func__, in, capability);
+		return;
+	}
+	if (in->cap < INST_CAP_MAX) {
+		capability->cap[in->cap].cap = in->cap;
+		capability->cap[in->cap].min = in->min;
+		capability->cap[in->cap].max = in->max;
+		capability->cap[in->cap].step_or_menu = in->step_or_menu;
+		capability->cap[in->cap].value = in->value;
+		capability->cap[in->cap].flags = in->flags;
+		capability->cap[in->cap].v4l2_id = in->v4l2_id;
+		capability->cap[in->cap].hfi_id = in->hfi_id;
+		memcpy(capability->cap[in->cap].parents, in->parents,
+			sizeof(capability->cap[in->cap].parents));
+		memcpy(capability->cap[in->cap].children, in->children,
+			sizeof(capability->cap[in->cap].children));
+		capability->cap[in->cap].adjust = in->adjust;
+		capability->cap[in->cap].set = in->set;
+	} else {
+		d_vpr_e("%s: invalid cap %d\n",
+			__func__, in->cap);
+	}
+}
+
+static int msm_vidc_init_instance_caps(struct msm_vidc_core *core)
+{
+	int rc = 0;
+	u8 enc_valid_codecs, dec_valid_codecs;
+	u8 count_bits, enc_codec_count;
+	u8 codecs_count = 0;
+	int i, j, check_bit, num_platform_caps;
+	struct msm_platform_inst_capability *platform_data = NULL;
+
+	if (!core || !core->platform || !core->capabilities) {
+		d_vpr_e("%s: invalid params\n", __func__);
+		rc = -EINVAL;
+		goto exit;
+	}
+
+	platform_data = core->platform->data.instance_data;
+	if (!platform_data) {
+		d_vpr_e("%s: platform instance data is NULL\n",
+				__func__);
+			rc = -EINVAL;
+			goto exit;
+	}
+
+	enc_valid_codecs = core->capabilities[ENC_CODECS].value;
+	count_bits = enc_valid_codecs;
+	COUNT_BITS(count_bits, codecs_count);
+	enc_codec_count = codecs_count;
+
+	dec_valid_codecs = core->capabilities[DEC_CODECS].value;
+	count_bits = dec_valid_codecs;
+	COUNT_BITS(count_bits, codecs_count);
+
+	if (!core->inst_caps) {
+		core->inst_caps = kcalloc(codecs_count,
+			sizeof(struct msm_vidc_inst_capability),
+			GFP_KERNEL);
+		if (!core->inst_caps) {
+			d_vpr_e("%s: failed to allocate core capabilities\n",
+				__func__);
+			rc = -ENOMEM;
+			goto exit;
+		}
+	} else {
+		d_vpr_e("%s: capabilities memory is expected to be freed\n",
+			__func__);
+	}
+
+	check_bit = 0;
+	/* determine codecs for enc domain */
+	for (i = 0; i < enc_codec_count; i++) {
+		while (check_bit < (sizeof(enc_valid_codecs) * 8)) {
+			if (enc_valid_codecs & BIT(check_bit)) {
+				core->inst_caps[i].domain = MSM_VIDC_ENCODER;
+				core->inst_caps[i].codec = enc_valid_codecs &
+						BIT(check_bit);
+				check_bit++;
+				break;
+			}
+			check_bit++;
+		}
+	}
+
+	/* reset checkbit to check from 0th bit of decoder codecs set bits*/
+	check_bit = 0;
+	/* determine codecs for dec domain */
+	for (; i < codecs_count; i++) {
+		while (check_bit < (sizeof(dec_valid_codecs) * 8)) {
+			if (dec_valid_codecs & BIT(check_bit)) {
+				core->inst_caps[i].domain = MSM_VIDC_DECODER;
+				core->inst_caps[i].codec = dec_valid_codecs &
+						BIT(check_bit);
+				check_bit++;
+				break;
+			}
+			check_bit++;
+		}
+	}
+
+	num_platform_caps = core->platform->data.instance_data_size;
+
+	d_vpr_h("%s: num caps %d\n", __func__, num_platform_caps);
+	/* loop over each platform capability */
+	for (i = 0; i < num_platform_caps; i++) {
+		/* select matching core codec and update it */
+		for (j = 0; j < codecs_count; j++) {
+			if ((platform_data[i].domain &
+				core->inst_caps[j].domain) &&
+				(platform_data[i].codec &
+				core->inst_caps[j].codec)) {
+				/* update core capability */
+				update_inst_capability(&platform_data[i],
+					&core->inst_caps[j]);
+			}
+		}
+	}
+exit:
+	return rc;
+}
+
 int msm_vidc_core_init(struct msm_vidc_core *core)
 {
-	int rc;
+	int rc = 0;
 
 	d_vpr_h("%s()\n", __func__);
-	if (!core) {
+	if (!core || !core->platform) {
 		d_vpr_e("%s: invalid params\n", __func__);
 		return -EINVAL;
 	}
@@ -562,6 +745,13 @@ int msm_vidc_core_init(struct msm_vidc_core *core)
 		rc = 0;
 		goto unlock;
 	}
+
+	rc = msm_vidc_init_core_caps(core);
+	if (rc)
+		goto unlock;
+	rc = msm_vidc_init_instance_caps(core);
+	if (rc)
+		goto unlock;
 
 	rc = venus_hfi_core_init(core);
 	if (rc) {
