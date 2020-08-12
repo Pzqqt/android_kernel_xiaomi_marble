@@ -422,13 +422,14 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 	uint16_t num_msdus = 0, msdu_index, rx_hdr_tlv_len, l3_hdr_pad;
 	uint32_t total_frag_len = 0, frag_len = 0;
 	bool drop_mpdu = false;
-	bool msdu_frag = false;
+	bool msdu_frag = false, is_first_msdu = true, is_frag_non_raw = false;
 	void *link_desc_va;
 	uint8_t *rx_tlv_hdr;
 	qdf_nbuf_t msdu = NULL, last_msdu = NULL;
 	uint32_t rx_link_buf_info[HAL_RX_BUFFINFO_NUM_DWORDS];
 	struct hal_rx_mon_desc_info *desc_info;
 	uint16_t prev_ppdu_id;
+	struct rx_desc_pool *rx_desc_pool = NULL;
 
 	desc_info = pdev->mon_desc;
 
@@ -478,24 +479,43 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 
 			qdf_assert_always(rx_desc);
 
-			msdu = rx_desc->nbuf;
+			msdu = DP_RX_MON_GET_NBUF_FROM_DESC(rx_desc);
 
 			if (rx_desc->unmapped == 0) {
-				qdf_nbuf_unmap_single(soc->osdev,
-						      msdu,
-						      QDF_DMA_FROM_DEVICE);
+				rx_desc_pool = dp_rx_get_mon_desc_pool(
+					soc, mac_id, pdev->pdev_id);
+				dp_rx_mon_buffer_unmap(soc, rx_desc,
+						       rx_desc_pool->buf_size);
+
 				rx_desc->unmapped = 1;
 			}
 
 			if (drop_mpdu) {
-				qdf_nbuf_free(msdu);
+				dp_rx_mon_buffer_free(rx_desc);
 				msdu = NULL;
 				desc_info->msdu_count--;
 				goto next_msdu;
 			}
 
-			rx_tlv_hdr = qdf_nbuf_data(msdu);
+			rx_tlv_hdr = dp_rx_mon_get_buffer_data(rx_desc);
 
+			if (is_first_msdu) {
+				if (dp_rx_mon_alloc_parent_buffer(head_msdu)
+				    != QDF_STATUS_SUCCESS) {
+					DP_STATS_INC(pdev,
+						     replenish.nbuf_alloc_fail,
+						     1);
+					qdf_frag_free(rx_tlv_hdr);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_DEBUG,
+						  "[%s] failed to allocate parent buffer to hold all frag",
+						  __func__);
+					drop_mpdu = true;
+					desc_info->msdu_count--;
+					goto next_msdu;
+				}
+				is_first_msdu = false;
+			}
 			if (hal_rx_desc_is_first_msdu(soc->hal_soc,
 						      rx_tlv_hdr))
 				hal_rx_mon_hw_desc_get_mpdu_status(soc->hal_soc,
@@ -508,23 +528,16 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 			 *   b. calculate the number of fragmented buffers for
 			 *      a msdu and decrement one msdu_count
 			 */
-			if (msdu_list.msdu_info[msdu_index].msdu_flags
-			    & HAL_MSDU_F_MSDU_CONTINUATION) {
-				if (!msdu_frag) {
-					total_frag_len = msdu_list.msdu_info[msdu_index].msdu_len;
-					msdu_frag = true;
-				}
-				dp_mon_adjust_frag_len(&total_frag_len,
-						       &frag_len);
-			} else {
-				if (msdu_frag)
-					dp_mon_adjust_frag_len(&total_frag_len,
-							       &frag_len);
-				else
-					frag_len = msdu_list.msdu_info[msdu_index].msdu_len;
-				msdu_frag = false;
+			dp_rx_mon_parse_desc_buffer(soc,
+					&(msdu_list.msdu_info[msdu_index]),
+						 &msdu_frag,
+						 &total_frag_len,
+						 &frag_len,
+						 &l3_hdr_pad,
+						 rx_tlv_hdr,
+						 &is_frag_non_raw, rx_tlv_hdr);
+			if (!msdu_frag)
 				desc_info->msdu_count--;
-			}
 
 			rx_hdr_tlv_len = SIZE_OF_MONITOR_TLV;
 
@@ -535,9 +548,6 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 			 * header begins.
 			 */
 
-			l3_hdr_pad = hal_rx_msdu_end_l3_hdr_padding_get(
-								soc->hal_soc,
-								rx_tlv_hdr);
 
 			/*******************************************************
 			 *                    RX_PACKET                        *
@@ -546,17 +556,14 @@ dp_rx_mon_mpdu_reap(struct dp_soc *soc, uint32_t mac_id, void *ring_desc,
 			 * ----------------------------------------------------*
 			 ******************************************************/
 
-			qdf_nbuf_set_pktlen(msdu,
-					    rx_hdr_tlv_len +
-					    l3_hdr_pad +
-					    frag_len);
+			dp_rx_mon_buffer_set_pktlen(msdu,
+						    rx_hdr_tlv_len +
+						    l3_hdr_pad +
+						    frag_len);
 
-			if (head_msdu && !*head_msdu)
-				*head_msdu = msdu;
-			else if (last_msdu)
-				qdf_nbuf_set_next(last_msdu, msdu);
-
-			last_msdu = msdu;
+			dp_rx_mon_add_msdu_to_list(head_msdu, msdu, &last_msdu,
+						   rx_tlv_hdr, frag_len,
+						   l3_hdr_pad);
 
 next_msdu:
 			rx_buf_reaped++;
@@ -592,10 +599,8 @@ next_msdu:
 	}
 	pdev->rx_mon_stats.dest_mpdu_done++;
 
-	if (last_msdu)
-		qdf_nbuf_set_next(last_msdu, NULL);
-
-	*tail_msdu = msdu;
+	dp_rx_mon_init_tail_msdu(msdu, last_msdu, tail_msdu);
+	dp_rx_mon_remove_raw_frame_fcs_len(head_msdu);
 
 	return rx_buf_reaped;
 }

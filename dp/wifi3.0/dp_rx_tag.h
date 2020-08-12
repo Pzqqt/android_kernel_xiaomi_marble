@@ -22,6 +22,10 @@
 #include "dp_internal.h"
 #include "dp_types.h"
 
+#ifdef DP_RX_MON_MEM_FRAG
+#define DP_RX_MON_PF_TAG_SIZE (4)
+#endif
+
 #ifdef WLAN_SUPPORT_RX_PROTOCOL_TYPE_TAG
 /**
  * dp_update_pdev_rx_protocol_tag - Add/remove a protocol tag that should be
