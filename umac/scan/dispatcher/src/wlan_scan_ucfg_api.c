@@ -624,8 +624,8 @@ ucfg_scan_config_hidden_ssid_for_bssid(struct wlan_objmgr_pdev *pdev,
 	if (!scan_obj)
 		return QDF_STATUS_E_FAILURE;
 
-	scm_debug("Configure bsssid:%pM ssid:%.*s",
-		  bssid, ssid->length, ssid->ssid);
+	scm_debug("Configure bsssid:"QDF_MAC_ADDR_FMT" ssid:%.*s",
+		  QDF_MAC_ADDR_REF(bssid), ssid->length, ssid->ssid);
 	qdf_mem_copy(scan_obj->pdev_info[pdev_id].conf_bssid,
 		     bssid, QDF_MAC_ADDR_SIZE);
 	scan_obj->pdev_info[pdev_id].conf_ssid.length = ssid->length;

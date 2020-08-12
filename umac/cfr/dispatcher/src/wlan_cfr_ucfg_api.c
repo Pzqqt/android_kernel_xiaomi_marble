@@ -304,8 +304,8 @@ static void cfr_iter_peer_handler(struct wlan_objmgr_pdev *pdev,
 	if (pe->period && (pe->request == PEER_CFR_CAPTURE_ENABLE)) {
 		*cfr_capt_status = pe->request;
 		cfr_debug("CFR capture running for peer "
-			  QDF_MAC_ADDR_STR,
-			  QDF_MAC_ADDR_ARRAY(peer->macaddr));
+			  QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(peer->macaddr));
 	}
 }
 
@@ -969,12 +969,12 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 			glbl_cfg->ctrl_subtype_filter);
 		cfr_err("Data subtype : 0x%x\n",
 			glbl_cfg->data_subtype_filter);
-		cfr_err("TX Addr: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(glbl_cfg->tx_addr));
+		cfr_err("TX Addr: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(glbl_cfg->tx_addr));
 		cfr_err("TX Addr Mask: " QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(glbl_cfg->tx_addr_mask));
-		cfr_err("RX Addr: " QDF_MAC_ADDR_STR,
-			QDF_MAC_ADDR_ARRAY(glbl_cfg->rx_addr));
+		cfr_err("RX Addr: " QDF_MAC_ADDR_FMT,
+			QDF_MAC_ADDR_REF(glbl_cfg->rx_addr));
 		cfr_err("RX Addr Mask: " QDF_MAC_ADDR_STR,
 			QDF_MAC_ADDR_ARRAY(glbl_cfg->rx_addr_mask));
 	}

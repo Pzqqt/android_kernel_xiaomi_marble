@@ -846,8 +846,9 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	if (score_config->is_bssid_hint_priority && bssid_hint &&
 	    qdf_is_macaddr_equal(bssid_hint, &entry->bssid)) {
 		entry->bss_score = CM_BEST_CANDIDATE_MAX_BSS_SCORE;
-		mlme_nofl_debug("Candidate(%pM freq %d): rssi %d BSSID hint given, give max score %d",
-				entry->bssid.bytes, entry->channel.chan_freq,
+		mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d BSSID hint given, give max score %d",
+				QDF_MAC_ADDR_REF(entry->bssid.bytes),
+				entry->channel.chan_freq,
 				entry->rssi_raw,
 				CM_BEST_CANDIDATE_MAX_BSS_SCORE);
 		return CM_BEST_CANDIDATE_MAX_BSS_SCORE;
@@ -974,8 +975,9 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 					   prorated_pcnt, sta_nss);
 	score += nss_score;
 
-	mlme_nofl_debug("Candidate(%pM freq %d): rssi %d HT %d VHT %d HE %d su bfer %d phy %d  air time frac %d qbss %d cong_pct %d NSS %d ap_tx_pwr_dbm %d oce_subnet_id_present %d prorated_pcnt %d",
-			entry->bssid.bytes, entry->channel.chan_freq,
+	mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d HT %d VHT %d HE %d su bfer %d phy %d  air time frac %d qbss %d cong_pct %d NSS %d ap_tx_pwr_dbm %d oce_subnet_id_present %d prorated_pcnt %d",
+			QDF_MAC_ADDR_REF(entry->bssid.bytes),
+			entry->channel.chan_freq,
 			entry->rssi_raw, util_scan_entry_htcap(entry) ? 1 : 0,
 			util_scan_entry_vhtcap(entry) ? 1 : 0,
 			util_scan_entry_hecap(entry) ? 1 : 0, ap_su_beam_former,
@@ -1032,8 +1034,9 @@ static bool cm_is_assoc_allowed(struct psoc_mlme_obj *mlme_psoc_obj,
 
 	if (check_assoc_disallowed &&
 	    wlan_parse_oce_assoc_disallowed_ie(mbo_oce, &reason)) {
-		mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, assoc disallowed set in MBO/OCE IE reason %d",
-				entry->bssid.bytes, entry->channel.chan_freq,
+		mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, assoc disallowed set in MBO/OCE IE reason %d",
+				QDF_MAC_ADDR_REF(entry->bssid.bytes),
+				entry->channel.chan_freq,
 				entry->rssi_raw, reason);
 		return false;
 	}
@@ -1123,8 +1126,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 			/* add min score so that it is added back in the end */
 			scan_entry->entry->bss_score =
 					CM_AVOID_CANDIDATE_MIN_SCORE;
-			mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Avoidlist, give min score %d",
-					scan_entry->entry->bssid.bytes,
+			mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, is in Avoidlist, give min score %d",
+					QDF_MAC_ADDR_REF(scan_entry->entry->bssid.bytes),
 					scan_entry->entry->channel.chan_freq,
 					scan_entry->entry->rssi_raw,
 					scan_entry->entry->bss_score);
@@ -1133,8 +1136,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		/* Remove node from current locaion to add node back shorted */
 		status = qdf_list_remove_node(scan_list, cur_node);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			mlme_err("failed to remove node for BSS %pM from scan list",
-				 scan_entry->entry->bssid.bytes);
+			mlme_err("failed to remove node for BSS "QDF_MAC_ADDR_FMT" from scan list",
+				 QDF_MAC_ADDR_REF(scan_entry->entry->bssid.bytes));
 			return;
 		}
 
@@ -1144,8 +1147,8 @@ void wlan_cm_calculate_bss_score(struct wlan_objmgr_pdev *pdev,
 		 */
 		if (blacklist_action == CM_BLM_REMOVE) {
 			if (assoc_allowed)
-				mlme_nofl_debug("Candidate(%pM freq %d): rssi %d, is in Blacklist, remove entry",
-					scan_entry->entry->bssid.bytes,
+				mlme_nofl_debug("Candidate("QDF_MAC_ADDR_FMT" freq %d): rssi %d, is in Blacklist, remove entry",
+					QDF_MAC_ADDR_REF(scan_entry->entry->bssid.bytes),
 					scan_entry->entry->channel.chan_freq,
 					scan_entry->entry->rssi_raw);
 			util_scan_free_cache_entry(scan_entry->entry);

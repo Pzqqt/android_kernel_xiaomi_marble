@@ -103,7 +103,8 @@ static void scm_add_rnr_channel_db(struct wlan_objmgr_psoc *psoc,
 	if (!(is_6g_bss || entry->ie_list.rnrie))
 		return;
 
-	scm_debug("BSS freq %d BSSID: %pM", chan_freq, entry->bssid.bytes);
+	scm_debug("BSS freq %d BSSID: "QDF_MAC_ADDR_FMT, chan_freq,
+		  QDF_MAC_ADDR_REF(entry->bssid.bytes));
 	if (is_6g_bss) {
 		channel = scm_get_chan_meta(psoc, chan_freq);
 		if (!channel) {
@@ -151,8 +152,9 @@ static void scm_add_rnr_channel_db(struct wlan_objmgr_psoc *psoc,
 				     QDF_MAC_ADDR_SIZE);
 		if (rnr_bss->short_ssid)
 			rnr_node->entry.short_ssid = rnr_bss->short_ssid;
-		scm_debug("Add freq %d: %pM short ssid %x", chan_freq,
-			  rnr_bss->bssid.bytes, rnr_bss->short_ssid);
+		scm_debug("Add freq %d: "QDF_MAC_ADDR_FMT" short ssid %x", chan_freq,
+			  QDF_MAC_ADDR_REF(rnr_bss->bssid.bytes),
+			  rnr_bss->short_ssid);
 		qdf_list_insert_back(&channel->rnr_list,
 				     &rnr_node->node);
 	}
@@ -421,8 +423,8 @@ static void scm_check_and_age_out(struct scan_dbs *scan_db,
 {
 	if (util_scan_entry_age(node->entry) >=
 	   scan_aging_time) {
-		scm_debug("Aging out BSSID: %pM with age %lu ms",
-			  node->entry->bssid.bytes,
+		scm_debug("Aging out BSSID: "QDF_MAC_ADDR_FMT" with age %lu ms",
+			  QDF_MAC_ADDR_REF(node->entry->bssid.bytes),
 			  util_scan_entry_age(node->entry));
 		qdf_spin_lock_bh(&scan_db->scan_db_lock);
 		scm_scan_entry_del(scan_db, node);
@@ -544,9 +546,9 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 	}
 
 	if (oldest_node) {
-		scm_debug("Flush oldest BSSID: %pM with age %lu ms",
-				oldest_node->entry->bssid.bytes,
-				util_scan_entry_age(oldest_node->entry));
+		scm_debug("Flush oldest BSSID: "QDF_MAC_ADDR_FMT" with age %lu ms",
+			  QDF_MAC_ADDR_REF(oldest_node->entry->bssid.bytes),
+			  util_scan_entry_age(oldest_node->entry));
 		/* Release ref_cnt taken for oldest_node and delete it */
 		qdf_spin_lock_bh(&scan_db->scan_db_lock);
 		scm_scan_entry_del(scan_db, oldest_node);
@@ -655,8 +657,8 @@ scm_copy_info_from_dup_entry(struct wlan_objmgr_pdev *pdev,
 	    scan_params->frm_subtype == MGMT_SUBTYPE_BEACON &&
 	    !util_scan_is_null_ssid(&scan_params->ssid)) {
 		if (scan_obj->cb.unlink_bss) {
-			scm_debug("Hidden AP %pM switch to non-hidden SSID, So unlink the entry",
-				  scan_entry->bssid.bytes);
+			scm_debug("Hidden AP "QDF_MAC_ADDR_FMT" switch to non-hidden SSID, So unlink the entry",
+				  QDF_MAC_ADDR_REF(scan_entry->bssid.bytes));
 			scan_obj->cb.unlink_bss(pdev, scan_entry);
 		}
 	}
@@ -842,16 +844,17 @@ static QDF_STATUS scm_add_update_entry(struct wlan_objmgr_psoc *psoc,
 	if (scan_params->ie_list.csa ||
 	   scan_params->ie_list.xcsa ||
 	   scan_params->ie_list.cswrp)
-		scm_debug("CSA IE present for BSSID: %pM",
-			  scan_params->bssid.bytes);
+		scm_debug("CSA IE present for BSSID: "QDF_MAC_ADDR_FMT,
+			  QDF_MAC_ADDR_REF(scan_params->bssid.bytes));
 
 	is_dup_found = scm_find_duplicate(pdev, scan_obj, scan_db, scan_params,
 					  &dup_node);
 
 	security_type = scan_params->security_type;
-	scm_nofl_debug("Received %s: %pM \"%.*s\" freq %d rssi %d tsf_delta %u seq %d snr %d phy %d hidden %d mismatch %d %s%s%s%s pdev %d boot_time %llu ns",
+	scm_nofl_debug("Received %s: "QDF_MAC_ADDR_FMT" \"%.*s\" freq %d rssi %d tsf_delta %u seq %d snr %d phy %d hidden %d mismatch %d %s%s%s%s pdev %d boot_time %llu ns",
 		       (scan_params->frm_subtype == MGMT_SUBTYPE_PROBE_RESP) ?
-		       "prb rsp" : "bcn", scan_params->bssid.bytes,
+		       "prb rsp" : "bcn",
+		       QDF_MAC_ADDR_REF(scan_params->bssid.bytes),
 		       scan_params->ssid.length, scan_params->ssid.ssid,
 		       scan_params->channel.chan_freq, scan_params->rssi_raw,
 		       scan_params->tsf_delta, scan_params->seq_num,
@@ -962,8 +965,8 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 			qdf_nbuf_len(bcn->buf), bcn->frm_type,
 			bcn->rx_data);
 	if (!scan_list || qdf_list_empty(scan_list)) {
-		scm_debug("failed to unpack %d frame BSSID: %pM",
-			  bcn->frm_type, hdr->i_addr3);
+		scm_debug("failed to unpack %d frame BSSID: "QDF_MAC_ADDR_FMT,
+			  bcn->frm_type, QDF_MAC_ADDR_REF(hdr->i_addr3));
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
@@ -972,8 +975,8 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 	for (i = 0; i < list_count; i++) {
 		status = qdf_list_remove_front(scan_list, &next_node);
 		if (QDF_IS_STATUS_ERROR(status) || !next_node) {
-			scm_debug("list remove failure i:%d, lsize:%d, BSSID: %pM",
-				  i, list_count, hdr->i_addr3);
+			scm_debug("list remove failure i:%d, lsize:%d, BSSID: "QDF_MAC_ADDR_FMT,
+				  i, list_count, QDF_MAC_ADDR_REF(hdr->i_addr3));
 			status = QDF_STATUS_E_INVAL;
 			goto free_nbuf;
 		}
@@ -985,8 +988,8 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 
 		if (scan_obj->drop_bcn_on_chan_mismatch &&
 		    scan_entry->channel_mismatch) {
-			scm_nofl_debug("Drop frame for chan mismatch %pM Seq Num: %d freq %d RSSI %d",
-				       scan_entry->bssid.bytes,
+			scm_nofl_debug("Drop frame for chan mismatch "QDF_MAC_ADDR_FMT" Seq Num: %d freq %d RSSI %d",
+				       QDF_MAC_ADDR_REF(scan_entry->bssid.bytes),
 				       scan_entry->seq_num,
 				       scan_entry->channel.chan_freq,
 				       scan_entry->rssi_raw);
@@ -998,7 +1001,7 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 		if (scan_obj->drop_bcn_on_invalid_freq &&
 		    wlan_reg_is_disable_for_freq(pdev,
 					scan_entry->channel.chan_freq)) {
-			scm_nofl_debug("Drop frame for invalid freq %d: %pM Seq Num: %d RSSI %d",
+			scm_nofl_debug("Drop frame for invalid freq %d: "QDF_MAC_ADDR_FMT" Seq Num: %d RSSI %d",
 				       scan_entry->channel.chan_freq,
 				       scan_entry->bssid.bytes,
 				       scan_entry->seq_num,
@@ -1012,8 +1015,8 @@ QDF_STATUS __scm_handle_bcn_probe(struct scan_bcn_probe_event *bcn)
 
 		status = scm_add_update_entry(psoc, pdev, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_debug("failed to add entry for BSSID: %pM Seq Num: %d",
-				  scan_entry->bssid.bytes,
+			scm_debug("failed to add entry for BSSID: "QDF_MAC_ADDR_FMT" Seq Num: %d",
+				  QDF_MAC_ADDR_REF(scan_entry->bssid.bytes),
 				  scan_entry->seq_num);
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);

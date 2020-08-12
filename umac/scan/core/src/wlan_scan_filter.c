@@ -39,22 +39,24 @@ static bool scm_check_open(struct scan_filter *filter,
 			   struct security_info *security)
 {
 	if (db_entry->cap_info.wlan_caps.privacy) {
-		scm_debug("%pM : have privacy set",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : have privacy set",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (filter->ucastcipherset &&
 	   !(QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_NONE))) {
-		scm_debug("%pM : Filter doesn't have CIPHER none in uc %x",
-			  db_entry->bssid.bytes, filter->ucastcipherset);
+		scm_debug(QDF_MAC_ADDR_FMT" : Filter doesn't have CIPHER none in uc %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->ucastcipherset);
 		return false;
 	}
 
 	if (filter->mcastcipherset &&
 	   !(QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_NONE))) {
-		scm_debug("%pM : Filter doesn't have CIPHER none in mc %x",
-			  db_entry->bssid.bytes, filter->mcastcipherset);
+		scm_debug(QDF_MAC_ADDR_FMT" : Filter doesn't have CIPHER none in mc %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->mcastcipherset);
 		return false;
 	}
 
@@ -78,19 +80,21 @@ static bool scm_check_wep(struct scan_filter *filter,
 {
 	/* If privacy bit is not set, consider no match */
 	if (!db_entry->cap_info.wlan_caps.privacy) {
-		scm_debug("%pM : doesn't have privacy set",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : doesn't have privacy set",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (!(db_entry->security_type & SCAN_SECURITY_TYPE_WEP)) {
-		scm_debug("%pM : doesn't support WEP", db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : doesn't support WEP",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (!filter->ucastcipherset || !filter->mcastcipherset) {
-		scm_debug("%pM : Filter uc %x or mc %x cipher are 0",
-			  db_entry->bssid.bytes, filter->ucastcipherset,
+		scm_debug(QDF_MAC_ADDR_FMT" : Filter uc %x or mc %x cipher are 0",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->ucastcipherset,
 			  filter->mcastcipherset);
 		return false;
 	}
@@ -99,8 +103,9 @@ static bool scm_check_wep(struct scan_filter *filter,
 	     QDF_HAS_PARAM(filter->ucastcipherset, WLAN_CRYPTO_CIPHER_WEP_40) ||
 	     QDF_HAS_PARAM(filter->ucastcipherset,
 			   WLAN_CRYPTO_CIPHER_WEP_104))) {
-		scm_debug("%pM : Filter doesn't have WEP cipher in uc %x",
-			  db_entry->bssid.bytes, filter->ucastcipherset);
+		scm_debug(QDF_MAC_ADDR_FMT" : Filter doesn't have WEP cipher in uc %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->ucastcipherset);
 		return false;
 	}
 
@@ -108,8 +113,9 @@ static bool scm_check_wep(struct scan_filter *filter,
 	     QDF_HAS_PARAM(filter->mcastcipherset, WLAN_CRYPTO_CIPHER_WEP_40) ||
 	     QDF_HAS_PARAM(filter->mcastcipherset,
 			   WLAN_CRYPTO_CIPHER_WEP_104))) {
-		scm_debug("%pM : Filter doesn't have WEP cipher in mc %x",
-			  db_entry->bssid.bytes, filter->mcastcipherset);
+		scm_debug(QDF_MAC_ADDR_FMT" : Filter doesn't have WEP cipher in mc %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+			  filter->mcastcipherset);
 		return false;
 	}
 
@@ -186,8 +192,8 @@ static bool scm_chk_crypto_params(struct scan_filter *filter,
 				  struct security_info *security)
 {
 	if (!scm_chk_if_cipher_n_akm_match(filter, ap_crypto)) {
-		scm_debug("%pM: fail. adaptive 11r %d Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
-			  db_entry->bssid.bytes, is_adaptive_11r,
+		scm_debug(QDF_MAC_ADDR_FMT": fail. adaptive 11r %d Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes), is_adaptive_11r,
 			  filter->key_mgmt, filter->mcastcipherset,
 			  filter->ucastcipherset, filter->mgmtcipherset,
 			  filter->pmf_cap, ap_crypto->key_mgmt,
@@ -223,7 +229,8 @@ static bool scm_check_rsn(struct scan_filter *filter,
 	bool match;
 
 	if (!util_scan_entry_rsn(db_entry)) {
-		scm_debug("%pM : doesn't have RSN IE", db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : doesn't have RSN IE",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
@@ -233,8 +240,8 @@ static bool scm_check_rsn(struct scan_filter *filter,
 	status = wlan_crypto_rsnie_check(ap_crypto,
 					 util_scan_entry_rsn(db_entry));
 	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("%pM: failed to parse RSN IE, status %d",
-			db_entry->bssid.bytes, status);
+		scm_err(QDF_MAC_ADDR_FMT": failed to parse RSN IE, status %d",
+			QDF_MAC_ADDR_REF(db_entry->bssid.bytes), status);
 		qdf_mem_free(ap_crypto);
 		return false;
 	}
@@ -290,8 +297,8 @@ static bool scm_check_wpa(struct scan_filter *filter,
 	bool match;
 
 	if (!util_scan_entry_wpa(db_entry)) {
-		scm_debug("%pM : doesn't have WPA IE",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : doesn't have WPA IE",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
@@ -302,8 +309,8 @@ static bool scm_check_wpa(struct scan_filter *filter,
 	status = wlan_crypto_wpaie_check(ap_crypto,
 					 util_scan_entry_wpa(db_entry));
 	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("%pM: failed to parse WPA IE, status %d",
-			db_entry->bssid.bytes, status);
+		scm_err(QDF_MAC_ADDR_FMT": failed to parse WPA IE, status %d",
+			QDF_MAC_ADDR_REF(db_entry->bssid.bytes), status);
 		qdf_mem_free(ap_crypto);
 		return false;
 	}
@@ -331,8 +338,8 @@ static bool scm_check_wapi(struct scan_filter *filter,
 	struct wlan_crypto_params *ap_crypto;
 
 	if (!util_scan_entry_wapi(db_entry)) {
-		scm_debug("%pM : doesn't have WAPI IE",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : doesn't have WAPI IE",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
@@ -343,15 +350,15 @@ static bool scm_check_wapi(struct scan_filter *filter,
 	status = wlan_crypto_wapiie_check(ap_crypto,
 					  util_scan_entry_wapi(db_entry));
 	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("%pM: failed to parse WAPI IE, status %d",
-			db_entry->bssid.bytes, status);
+		scm_err(QDF_MAC_ADDR_FMT": failed to parse WAPI IE, status %d",
+			QDF_MAC_ADDR_REF(db_entry->bssid.bytes), status);
 		qdf_mem_free(ap_crypto);
 		return false;
 	}
 
 	if (!scm_chk_if_cipher_n_akm_match(filter, ap_crypto)) {
-		scm_debug("%pM: fail. Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
-			  db_entry->bssid.bytes, filter->key_mgmt,
+		scm_debug(QDF_MAC_ADDR_FMT": fail. Self: AKM %x CIPHER: mc %x uc %x mgmt %x pmf %d AP: AKM %x CIPHER: mc %x uc %x mgmt %x, RSN caps %x",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes), filter->key_mgmt,
 			  filter->mcastcipherset, filter->ucastcipherset,
 			  filter->mgmtcipherset, filter->pmf_cap,
 			  ap_crypto->key_mgmt, ap_crypto->mcastcipherset,
@@ -396,8 +403,8 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		status = wlan_crypto_rsnie_check(ap_crypto,
 						 util_scan_entry_rsn(db_entry));
 		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_err("%pM: failed to parse RSN IE, status %d",
-				db_entry->bssid.bytes, status);
+			scm_err(QDF_MAC_ADDR_FMT": failed to parse RSN IE, status %d",
+				QDF_MAC_ADDR_REF(db_entry->bssid.bytes), status);
 			goto free;
 		}
 		security->mcastcipherset = ap_crypto->mcastcipherset;
@@ -412,8 +419,8 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		status = wlan_crypto_wpaie_check(ap_crypto,
 						 util_scan_entry_wpa(db_entry));
 		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_err("%pM: failed to parse WPA IE, status %d",
-				db_entry->bssid.bytes, status);
+			scm_err(QDF_MAC_ADDR_FMT": failed to parse WPA IE, status %d",
+				QDF_MAC_ADDR_REF(db_entry->bssid.bytes), status);
 			goto free;
 		}
 		security->mcastcipherset = ap_crypto->mcastcipherset;
@@ -428,8 +435,9 @@ static bool scm_match_any_security(struct scan_filter *filter,
 		status = wlan_crypto_wapiie_check(ap_crypto,
 						util_scan_entry_wapi(db_entry));
 		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_err("%pM: failed to parse WPA IE, status %d",
-				db_entry->bssid.bytes, status);
+			scm_err(QDF_MAC_ADDR_FMT": failed to parse WPA IE, status %d",
+				QDF_MAC_ADDR_REF(db_entry->bssid.bytes),
+				status);
 			goto free;
 		}
 		security->mcastcipherset = ap_crypto->mcastcipherset;
@@ -643,8 +651,8 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (filter->ignore_nol_chan &&
 	    utils_dfs_is_freq_in_nol(pdev, db_entry->channel.chan_freq)) {
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
-		scm_debug("%pM : Ignore as chan in NOL list",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as chan in NOL list",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SCAN_ID);
@@ -667,8 +675,8 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	if (!filter->ignore_auth_enc_type && !filter->match_security_func &&
 	    !scm_is_security_match(filter, db_entry, security)) {
-		scm_debug("%pM : Ignore as security profile didn't match",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as security profile didn't match",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
@@ -690,15 +698,15 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 
 	/* Match realm */
 	if (!scm_is_fils_config_match(filter, db_entry)) {
-		scm_debug("%pM :Ignore as fils config didn't match",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" :Ignore as fils config didn't match",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 
 	if (!util_mdie_match(filter->mobility_domain,
 	   (struct rsn_mdie *)db_entry->ie_list.mdie)) {
-		scm_debug("%pM : Ignore as mdie didn't match",
-			  db_entry->bssid.bytes);
+		scm_debug(QDF_MAC_ADDR_FMT" : Ignore as mdie didn't match",
+			  QDF_MAC_ADDR_REF(db_entry->bssid.bytes));
 		return false;
 	}
 	return true;

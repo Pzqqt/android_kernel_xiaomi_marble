@@ -203,8 +203,8 @@ void wlan_objmgr_notify_log_delete(void *obj,
 	wlan_obj_type_get_obj(del_obj, &node->obj, obj_type);
 	node->obj_type = obj_type;
 	node->tstamp = tstamp;
-	obj_mgr_debug("#%s : mac_addr :" QDF_MAC_ADDR_STR" entered L-state",
-		      obj_name, QDF_MAC_ADDR_ARRAY(macaddr));
+	obj_mgr_debug("#%s : mac_addr: "QDF_MAC_ADDR_FMT" entered L-state",
+		      obj_name, QDF_MAC_ADDR_REF(macaddr));
 	wlan_objmgr_insert_ld_obj_to_list(debug_info, &node->node);
 }
 
@@ -291,8 +291,8 @@ void wlan_objmgr_notify_destroy(void *obj,
 		obj_mgr_err("obj_name is null");
 		return;
 	}
-	obj_mgr_debug("#%s, macaddr: " QDF_MAC_ADDR_STR" exited L-state",
-		      obj_name, QDF_MAC_ADDR_ARRAY(macaddr));
+	obj_mgr_debug("#%s : macaddr: "QDF_MAC_ADDR_FMT" exited L-state",
+		      obj_name, QDF_MAC_ADDR_REF(macaddr));
 
 	wlan_objmgr_rem_ld_obj_from_list(del_obj,
 					 debug_info, obj_type);
@@ -493,8 +493,8 @@ static void wlan_objmgr_iterate_log_del_obj_handler(void *timer_arg)
 			break;
 		}
 
-		obj_mgr_alert("#%s in L-state,MAC: " QDF_MAC_ADDR_STR,
-			      obj_name, QDF_MAC_ADDR_ARRAY(macaddr));
+		obj_mgr_alert("#%s in L-state,MAC: " QDF_MAC_ADDR_FMT,
+			      obj_name, QDF_MAC_ADDR_REF(macaddr));
 		wlan_objmgr_print_pending_refs(&del_obj->obj, obj_type);
 
 		wlan_objmgr_trace_print_ref(&del_obj->obj, obj_type);
