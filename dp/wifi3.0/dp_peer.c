@@ -1937,7 +1937,8 @@ dp_rx_peer_map_handler(struct dp_soc *soc, uint16_t peer_id,
 
 		err = dp_peer_map_ast(soc, peer, peer_mac_addr, hw_peer_id,
 				      vdev_id, ast_hash, is_wds);
-
+		if (peer)
+			dp_peer_unref_delete(peer);
 	} else {
 		/*
 		 * It's the responsibility of the CP and FW to ensure
@@ -2020,15 +2021,17 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	 * in peer_id_to_obj_map will be NULL.
 	 */
 	if (!peer) {
-		dp_err("Received unmap event for invalid peer_id %u", peer_id);
+		dp_err("Received unmap event for invalid peer_id %u",
+		       peer_id);
 		return;
 	}
 
 	/* If V2 Peer map messages are enabled AST entry has to be freed here
 	 */
 	if (is_wds) {
-		if (!dp_peer_ast_free_entry_by_mac(soc, peer, mac_addr))
+		if (!dp_peer_ast_free_entry_by_mac(soc, peer, mac_addr)) {
 			return;
+		}
 
 		dp_alert("AST entry not found with peer %pK peer_id %u peer_mac %pM mac_addr %pM vdev_id %u next_hop %u",
 			 peer, peer->peer_id,
@@ -2061,6 +2064,9 @@ dp_rx_peer_unmap_handler(struct dp_soc *soc, uint16_t peer_id,
 	dp_peer_cleanup(vdev, peer);
 	DP_UPDATE_STATS(vdev, peer);
 
+	qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
+	TAILQ_INSERT_TAIL(&soc->inactive_peer_list, peer, inactive_list_elem);
+	qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 	/*
 	 * Remove a reference to the peer.
 	 * If there are no more references, delete the peer object.
@@ -3662,7 +3668,7 @@ dp_rx_sec_ind_handler(struct dp_soc *soc, uint16_t peer_id,
 	 * is available
 	 */
 
-	dp_peer_unref_del_find_by_id(peer);
+	dp_peer_unref_delete(peer);
 }
 
 #ifdef QCA_PEER_EXT_STATS
@@ -3798,7 +3804,7 @@ dp_rx_delba_ind_handler(void *soc_handle, uint16_t peer_id,
 		status = QDF_STATUS_E_FAILURE;
 	}
 
-	dp_peer_unref_del_find_by_id(peer);
+	dp_peer_unref_delete(peer);
 
 	return status;
 }
@@ -4245,7 +4251,7 @@ bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id)
 		 * Decrement the peer ref which is taken as part of
 		 * dp_peer_find_by_id if PEER_LOCK_REF_PROTECT is enabled
 		 */
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 		return true;
 	}

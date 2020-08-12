@@ -220,7 +220,7 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 		}
 
 		if (temp_peer)
-			dp_peer_unref_del_find_by_id(temp_peer);
+			dp_peer_unref_delete(temp_peer);
 
 	}
 }
@@ -1779,7 +1779,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			now_ms + pdev->soc->rx.defrag.timeout_ms;
 
 		dp_rx_defrag_waitlist_add(peer, tid);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -1825,7 +1825,7 @@ dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 	dp_rx_defrag_cleanup(peer, tid);
 
-	dp_peer_unref_del_find_by_id(peer);
+	dp_peer_unref_delete(peer);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1842,7 +1842,7 @@ err_free_desc:
 
 end:
 	if (peer)
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 	DP_STATS_INC(soc, rx.rx_frag_err, 1);
 	return QDF_STATUS_E_DEFRAG_ERROR;

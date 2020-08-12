@@ -4366,6 +4366,8 @@ static void dp_soc_deinit(void *txrx_soc)
 	dp_soc_srng_deinit(soc);
 
 	dp_hw_link_desc_ring_deinit(soc);
+	QDF_ASSERT(TAILQ_EMPTY(&soc->inactive_peer_list));
+	qdf_spinlock_destroy(&soc->inactive_peer_list_lock);
 
 	htt_soc_htc_dealloc(soc->htt_handle);
 
@@ -6163,6 +6165,8 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 	struct dp_soc *soc = pdev->soc;
 	uint16_t peer_id;
 	struct cdp_peer_cookie peer_cookie;
+	struct dp_peer *tmp_peer;
+	bool found = false;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -6207,6 +6211,20 @@ void dp_peer_unref_delete(struct dp_peer *peer)
 #endif
 		peer->wlanstats_ctx = NULL;
 		wlan_minidump_remove(peer);
+
+		qdf_spin_lock_bh(&soc->inactive_peer_list_lock);
+		TAILQ_FOREACH(tmp_peer, &soc->inactive_peer_list,
+			      inactive_list_elem) {
+			if (tmp_peer == peer) {
+				found = 1;
+				break;
+			}
+		}
+		if (found)
+			TAILQ_REMOVE(&soc->inactive_peer_list, peer,
+				     inactive_list_elem);
+		/* delete this peer from the list */
+		qdf_spin_unlock_bh(&soc->inactive_peer_list_lock);
 		/*
 		 * Peer AST list hast to be empty here
 		 */
@@ -6550,7 +6568,7 @@ static QDF_STATUS dp_get_peer_mac_from_peer_id(struct cdp_soc_t *soc,
 		if (peer) {
 			qdf_mem_copy(peer_mac, peer->mac_addr.raw,
 				     QDF_MAC_ADDR_SIZE);
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -11096,6 +11114,8 @@ void *dp_soc_init(struct dp_soc *soc, HTC_HANDLE htc_handle,
 	/* fill the tx/rx cpu ring map*/
 	dp_soc_set_txrx_ring_map(soc);
 
+	TAILQ_INIT(&soc->inactive_peer_list);
+	qdf_spinlock_create(&soc->inactive_peer_list_lock);
 	qdf_spinlock_create(&soc->htt_stats.lock);
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);

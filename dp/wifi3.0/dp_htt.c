@@ -2415,7 +2415,7 @@ static void dp_process_ppdu_stats_user_common_tlv(
 		}
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 }
 
@@ -2460,13 +2460,12 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 			     QDF_MAC_ADDR_SIZE);
 	} else {
 		peer = dp_peer_find_by_id(pdev->soc, peer_id);
-
 		if (peer) {
 			ppdu_desc->vdev_id = peer->vdev->vdev_id;
 			qdf_mem_copy(ppdu_user_desc->mac_addr,
 				     peer->mac_addr.raw,
 				     QDF_MAC_ADDR_SIZE);
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 		}
 	}
 
@@ -2558,7 +2557,7 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2604,6 +2603,7 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 	HTT_PPDU_STATS_ENQ_MPDU_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
 	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id, ppdu_info);
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->tlv_bitmap |= (1 << tlv_type);
@@ -2611,7 +2611,7 @@ static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2662,7 +2662,7 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2792,7 +2792,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2839,7 +2839,7 @@ static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	ppdu_user_desc->peer_id = peer_id;
 
@@ -2883,13 +2883,12 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 		ppdu_desc->vdev_id = peer->vdev->vdev_id;
 		qdf_mem_copy(ppdu_user_desc->mac_addr,
 			     peer->mac_addr.raw, QDF_MAC_ADDR_SIZE);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	if (!ppdu_user_desc->ack_ba_tlv) {
 		ppdu_user_desc->ack_ba_tlv = 1;
 	} else {
 		pdev->stats.ack_ba_comes_twice++;
-		dp_peer_unref_del_find_by_id(peer);
 		return;
 	}
 
@@ -3029,7 +3028,7 @@ dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
 			     ppdu_desc->num_msdu);
 	}
 
-	dp_peer_unref_del_find_by_id(peer);
+	dp_peer_unref_delete(peer);
 
 add_ppdu_to_sched_list:
 	ppdu_info->done = 1;
@@ -3111,7 +3110,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 			ppdu_desc->user[i].peer_last_delayed_ba =
 				peer->last_delayed_ba;
 
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 
 			if (ppdu_desc->user[i].delayed_ba &&
 			    !ppdu_desc->user[i].debug_copied) {
@@ -3149,7 +3148,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 
 			if (ppdu_desc->user[i].completion_status !=
 			    HTT_PPDU_STATS_USER_STATUS_OK) {
-				dp_peer_unref_del_find_by_id(peer);
+				dp_peer_unref_delete(peer);
 				continue;
 			}
 
@@ -3167,7 +3166,7 @@ dp_process_ppdu_stats_sch_cmd_status_tlv(struct dp_pdev *pdev,
 			}
 			ppdu_desc->user[i].peer_last_delayed_ba =
 				peer->last_delayed_ba;
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 		}
 	}
 
@@ -4578,7 +4577,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				 * If PEER_LOCK_REF_PROTECT enbled dec ref
 				 * which is inc by dp_peer_find_by_id
 				 */
-				dp_peer_unref_del_find_by_id(peer);
+				dp_peer_unref_delete(peer);
 
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					QDF_TRACE_LEVEL_INFO,
@@ -5275,7 +5274,7 @@ dp_peer_update_inactive_time(struct dp_pdev *pdev, uint32_t tag_type,
 			qdf_event_set(&pdev->fw_peer_stats_event);
 		}
 		if (peer)
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 	}
 	break;
 	default:

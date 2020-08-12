@@ -2483,7 +2483,7 @@ done:
 		if (qdf_unlikely(!peer)) {
 			peer = dp_peer_find_by_id(soc, peer_id);
 		} else if (peer && peer->peer_id != peer_id) {
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 			peer = dp_peer_find_by_id(soc, peer_id);
 		}
 
@@ -2754,7 +2754,7 @@ done:
 	}
 
 	if (qdf_likely(peer))
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 	if (dp_rx_enable_eol_data_check(soc) && rx_bufs_used) {
 		if (quota) {

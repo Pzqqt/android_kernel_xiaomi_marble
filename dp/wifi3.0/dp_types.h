@@ -1462,6 +1462,8 @@ struct dp_soc {
 	struct rx_buff_pool rx_buff_pool[MAX_PDEV_CNT];
 	/* Save recent operation related variable */
 	struct dp_last_op_info last_op_info;
+	TAILQ_HEAD(, dp_peer) inactive_peer_list;
+	qdf_spinlock_t inactive_peer_list_lock;
 };
 
 #ifdef IPA_OFFLOAD
@@ -2458,6 +2460,8 @@ struct dp_peer {
 #ifdef QCA_PEER_MULTIQ_SUPPORT
 	struct dp_peer_ast_params peer_ast_flowq_idx[DP_PEER_AST_FLOWQ_MAX];
 #endif
+	/* entry to inactive_list*/
+	TAILQ_ENTRY(dp_peer) inactive_list_elem;
 };
 
 /*

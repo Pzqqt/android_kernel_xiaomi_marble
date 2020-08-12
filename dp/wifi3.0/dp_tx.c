@@ -3680,7 +3680,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 						HAL_TX_TQM_RR_FRAME_ACKED)
 					peer->stats.tx.tx_failed++;
 
-				dp_peer_unref_del_find_by_id(peer);
+				dp_peer_unref_delete(peer);
 			}
 
 			qdf_assert(pdev);
@@ -3712,7 +3712,7 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
 		if (peer)
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 
 		next = desc->next;
 
@@ -3821,12 +3821,13 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status,
 		}
 
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
-		if (qdf_likely(peer))
-			dp_peer_unref_del_find_by_id(peer);
 
 		dp_tx_comp_process_tx_status(soc, tx_desc, &ts, peer, ring_id);
 		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
 		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
+
+		if (qdf_likely(peer))
+			dp_peer_unref_delete(peer);
 
 		break;
 	}

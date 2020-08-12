@@ -56,7 +56,6 @@ __dp_peer_find_by_id(struct dp_soc *soc,
 	return peer;
 }
 
-#ifdef PEER_PROTECTED_ACCESS
 /**
  * dp_peer_find_by_id() - Returns peer object given the peer id
  *                        if delete_in_progress in not set for peer
@@ -83,21 +82,6 @@ struct dp_peer *dp_peer_find_by_id(struct dp_soc *soc,
 
 	return peer;
 }
-#else
-static inline struct dp_peer *
-dp_peer_find_by_id(struct dp_soc *soc,
-		   uint16_t peer_id)
-{
-	struct dp_peer *peer;
-
-	peer = __dp_peer_find_by_id (soc, peer_id);
-	if (peer && peer->delete_in_progress) {
-		return NULL;
-	}
-
-	return peer;
-}
-#endif /* PEER_LOCK_REF_PROTECT */
 
 #ifdef PEER_CACHE_RX_PKTS
 /**

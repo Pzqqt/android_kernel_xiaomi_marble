@@ -405,7 +405,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, hal_ring_desc_t ring_desc,
 			"discard rx due to PN error for peer  %pK  %pM",
 			peer, peer->mac_addr.raw);
 
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 	}
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Packet received with PN error");
@@ -451,13 +451,13 @@ dp_rx_oor_handle(struct dp_soc *soc,
 	if (dp_rx_deliver_special_frame(soc, peer, nbuf, frame_mask,
 					rx_tlv_hdr)) {
 		DP_STATS_INC(soc, rx.err.reo_err_oor_to_stack, 1);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 		return;
 	}
 
 free_nbuf:
 	if (peer)
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 	DP_STATS_INC(soc, rx.err.reo_err_oor_drop, 1);
 	qdf_nbuf_free(nbuf);
@@ -791,7 +791,8 @@ dp_2k_jump_handle(struct dp_soc *soc,
 
 	peer = dp_peer_find_by_id(soc, peer_id);
 	if (!peer) {
-		dp_info_rl("peer not found");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "peer not found");
 		goto free_nbuf;
 	}
 
@@ -832,13 +833,13 @@ nbuf_deliver:
 	if (dp_rx_deliver_special_frame(soc, peer, nbuf, frame_mask,
 					rx_tlv_hdr)) {
 		DP_STATS_INC(soc, rx.err.rx_2k_jump_to_stack, 1);
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 		return;
 	}
 
 free_nbuf:
 	if (peer)
-		dp_peer_unref_del_find_by_id(peer);
+		dp_peer_unref_delete(peer);
 
 	DP_STATS_INC(soc, rx.err.rx_2k_jump_drop, 1);
 	qdf_nbuf_free(nbuf);
@@ -2039,6 +2040,8 @@ done:
 			qdf_nbuf_free(nbuf);
 			dp_info_rl("scattered msdu dropped");
 			nbuf = next;
+			if (peer)
+				dp_peer_unref_delete(peer);
 			continue;
 		}
 
@@ -2066,11 +2069,7 @@ done:
 					dp_rx_null_q_desc_handle(soc, nbuf,
 								 rx_tlv_hdr,
 								 pool_id, peer);
-					nbuf = next;
-					if (peer)
-						dp_peer_unref_del_find_by_id(
-									peer);
-					continue;
+					break;
 				/* TODO */
 				/* Add per error code accounting */
 				case HAL_REO_ERR_REGULAR_FRAME_2K_JUMP:
@@ -2091,23 +2090,20 @@ done:
 					dp_2k_jump_handle(soc, nbuf,
 							  rx_tlv_hdr,
 							  peer_id, tid);
-					nbuf = next;
-					if (peer)
-						dp_peer_unref_del_find_by_id(
-									peer);
-					continue;
+					break;
 				case HAL_REO_ERR_BAR_FRAME_2K_JUMP:
 				case HAL_REO_ERR_BAR_FRAME_OOR:
 					if (peer)
 						dp_rx_wbm_err_handle_bar(soc,
 									 peer,
 									 nbuf);
+					qdf_nbuf_free(nbuf);
 					break;
 
 				default:
 					dp_info_rl("Got pkt with REO ERROR: %d",
 						   wbm_err_info.reo_err_code);
-					break;
+					qdf_nbuf_free(nbuf);
 				}
 			}
 		} else if (wbm_err_info.wbm_err_src ==
@@ -2135,33 +2131,29 @@ done:
 								wbm_err_info.
 								rxdma_err_code,
 								pool_id);
-					nbuf = next;
-					if (peer)
-						dp_peer_unref_del_find_by_id(peer);
-					continue;
+					break;
 
 				case HAL_RXDMA_ERR_TKIP_MIC:
 					dp_rx_process_mic_error(soc, nbuf,
 								rx_tlv_hdr,
 								peer);
-					nbuf = next;
-					if (peer) {
+					if (peer)
 						DP_STATS_INC(peer, rx.err.mic_err, 1);
-						dp_peer_unref_del_find_by_id(
-									peer);
-					}
-					continue;
+					break;
 
 				case HAL_RXDMA_ERR_DECRYPT:
 
 					if (peer) {
 						DP_STATS_INC(peer, rx.err.
 							     decrypt_err, 1);
+						qdf_nbuf_free(nbuf);
 						break;
 					}
 
-					if (!dp_handle_rxdma_decrypt_err())
+					if (!dp_handle_rxdma_decrypt_err()) {
+						qdf_nbuf_free(nbuf);
 						break;
+					}
 
 					pool_id = wbm_err_info.pool_id;
 					err_code = wbm_err_info.rxdma_err_code;
@@ -2170,10 +2162,10 @@ done:
 								tlv_hdr, NULL,
 								err_code,
 								pool_id);
-					nbuf = next;
-					continue;
+					break;
 
 				default:
+					qdf_nbuf_free(nbuf);
 					dp_err_rl("RXDMA error %d",
 						  wbm_err_info.rxdma_err_code);
 				}
@@ -2184,11 +2176,8 @@ done:
 		}
 
 		if (peer)
-			dp_peer_unref_del_find_by_id(peer);
+			dp_peer_unref_delete(peer);
 
-		hal_rx_dump_pkt_tlvs(hal_soc, rx_tlv_hdr,
-				     QDF_TRACE_LEVEL_DEBUG);
-		qdf_nbuf_free(nbuf);
 		nbuf = next;
 	}
 	return rx_bufs_used; /* Assume no scale factor for now */
