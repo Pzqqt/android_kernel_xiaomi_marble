@@ -1786,14 +1786,14 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			    qdf_nbuf_t nbuf, bool *fwd_success)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev =
-		dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
 	struct dp_pdev *pdev;
 	struct dp_peer *da_peer;
 	struct dp_peer *sa_peer;
 	qdf_nbuf_t nbuf_copy;
 	uint8_t da_is_bcmc;
 	struct ethhdr *eh;
+	bool status = false;
 
 	*fwd_success = false; /* set default as failure */
 
@@ -1809,16 +1809,16 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 
 	pdev = vdev->pdev;
 	if (qdf_unlikely(!pdev))
-		return false;
+		goto out;
 
 	/* no fwd for station mode and just pass up to stack */
 	if (vdev->opmode == wlan_op_mode_sta)
-		return false;
+		goto out;
 
 	if (da_is_bcmc) {
 		nbuf_copy = qdf_nbuf_copy(nbuf);
 		if (!nbuf_copy)
-			return false;
+			goto out;
 
 		if (dp_ipa_intrabss_send(pdev, vdev, nbuf_copy))
 			qdf_nbuf_free(nbuf_copy);
@@ -1826,25 +1826,25 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 			*fwd_success = true;
 
 		/* return false to pass original pkt up to stack */
-		return false;
+		goto out;
 	}
 
 	eh = (struct ethhdr *)qdf_nbuf_data(nbuf);
 
 	if (!qdf_mem_cmp(eh->h_dest, vdev->mac_addr.raw, QDF_MAC_ADDR_SIZE))
-		return false;
+		goto out;
 
 	da_peer = dp_peer_find_hash_find(soc, eh->h_dest, 0, vdev->vdev_id,
 					 DP_MOD_ID_IPA);
 	if (!da_peer)
-		return false;
+		goto out;
 
 	dp_peer_unref_delete(da_peer, DP_MOD_ID_IPA);
 
 	sa_peer = dp_peer_find_hash_find(soc, eh->h_source, 0, vdev->vdev_id,
 					 DP_MOD_ID_IPA);
 	if (!sa_peer)
-		return false;
+		goto out;
 
 	dp_peer_unref_delete(sa_peer, DP_MOD_ID_IPA);
 
@@ -1860,7 +1860,10 @@ bool dp_ipa_rx_intrabss_fwd(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 	else
 		*fwd_success = true;
 
-	return true;
+	status = true;
+out:
+	dp_vdev_unref_delete(soc, vdev);
+	return status;
 }
 
 #ifdef MDM_PLATFORM

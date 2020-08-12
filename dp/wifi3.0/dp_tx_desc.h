@@ -526,16 +526,18 @@ static inline bool
 dp_tx_desc_thresh_reached(struct cdp_soc_t *soc_hdl, uint8_t vdev_id)
 {
 	struct dp_soc *soc = cdp_soc_t_to_dp_soc(soc_hdl);
-	struct dp_vdev *vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
-								  vdev_id);
+	struct dp_vdev *vdev = dp_vdev_get_ref_by_id(soc, vdev_id);
 	struct dp_tx_desc_pool_s *pool;
+	bool status;
 
 	if (!vdev)
 		return false;
 
 	pool = vdev->pool;
+	status = dp_tx_is_threshold_reached(pool, pool->avail_desc);
+	dp_vdev_unref_delete(soc, vdev);
 
-	return  dp_tx_is_threshold_reached(pool, pool->avail_desc);
+	return status;
 }
 #else /* QCA_LL_TX_FLOW_CONTROL_V2 */
 

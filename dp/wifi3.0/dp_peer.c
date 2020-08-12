@@ -266,7 +266,7 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 }
 
 /*
- * dp_peer_vdev_list_add() - add peer into vdev list
+ * dp_peer_vdev_list_add() - add peer into vdev's peer list
  * @soc: soc handle
  * @vdev: vdev handle
  * @peer: peer handle
@@ -297,7 +297,7 @@ void dp_peer_vdev_list_add(struct dp_soc *soc, struct dp_vdev *vdev,
 }
 
 /*
- * dp_peer_vdev_list_remove() - remove peer from vdev list
+ * dp_peer_vdev_list_remove() - remove peer from vdev's peer list
  * @soc: SoC handle
  * @vdev: VDEV handle
  * @peer: peer handle
@@ -3500,15 +3500,7 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 	uint8_t pn_size;
 	struct hal_reo_cmd_params params;
 	struct dp_peer *peer = NULL;
-	struct dp_vdev *vdev =
-		dp_get_vdev_from_soc_vdev_id_wifi3((struct dp_soc *)soc,
-						   vdev_id);
-
-	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: VDEV is NULL!\n", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
+	struct dp_vdev *vdev = NULL;
 
 	peer = dp_peer_find_hash_find((struct dp_soc *)soc,
 				      peer_mac, 0, vdev_id,
@@ -3517,6 +3509,15 @@ dp_set_pn_check_wifi3(struct cdp_soc_t *soc, uint8_t vdev_id,
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Peer is NULL!\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev = peer->vdev;
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: VDEV is NULL!\n", __func__);
+		dp_peer_unref_delete(peer, DP_MOD_ID_CDP);
 		return QDF_STATUS_E_FAILURE;
 	}
 

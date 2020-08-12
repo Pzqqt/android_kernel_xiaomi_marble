@@ -2128,20 +2128,47 @@ void dp_rx_fst_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 #endif
 
 /**
- * dp_get_vdev_from_soc_vdev_id_wifi3() - Returns vdev object given the vdev id
+ * dp_vdev_get_ref() - API to take a reference for VDEV object
+ *
+ * @soc		: core DP soc context
+ * @vdev	: DP vdev
+ *
+ * Return:	QDF_STATUS_SUCCESS if reference held successfully
+ *		else QDF_STATUS_E_INVAL
+ */
+static inline
+QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev)
+{
+	if (!qdf_atomic_inc_not_zero(&vdev->ref_cnt))
+		return QDF_STATUS_E_INVAL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_vdev_get_ref_by_id() - Returns vdev object given the vdev id
  * @soc: core DP soc context
  * @vdev_id: vdev id from vdev object can be retrieved
  *
  * Return: struct dp_vdev*: Pointer to DP vdev object
  */
 static inline struct dp_vdev *
-dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
-				   uint8_t vdev_id)
+dp_vdev_get_ref_by_id(struct dp_soc *soc, uint8_t vdev_id)
 {
+	struct dp_vdev *vdev = NULL;
 	if (qdf_unlikely(vdev_id >= MAX_VDEV_CNT))
 		return NULL;
 
-	return soc->vdev_id_map[vdev_id];
+	qdf_spin_lock_bh(&soc->vdev_map_lock);
+	vdev = soc->vdev_id_map[vdev_id];
+
+	if (!vdev || dp_vdev_get_ref(soc, vdev) != QDF_STATUS_SUCCESS) {
+		qdf_spin_unlock_bh(&soc->vdev_map_lock);
+		return NULL;
+	}
+	qdf_spin_unlock_bh(&soc->vdev_map_lock);
+
+	return vdev;
 }
 
 /**
@@ -2278,22 +2305,4 @@ dp_hmwds_ast_add_notify(struct dp_peer *peer,
 {
 }
 #endif
-
-/**
- * dp_vdev_get_ref() - API to take a reference for VDEV object
- *
- * @soc		: core DP soc context
- * @vdev	: DP vdev
- *
- * Return:	QDF_STATUS_SUCCESS if reference held successfully
- *		else QDF_STATUS_E_INVAL
- */
-static inline
-QDF_STATUS dp_vdev_get_ref(struct dp_soc *soc, struct dp_vdev *vdev)
-{
-	if (!qdf_atomic_inc_not_zero(&vdev->ref_cnt))
-		return QDF_STATUS_E_INVAL;
-
-	return QDF_STATUS_SUCCESS;
-}
 #endif /* #ifndef _DP_INTERNAL_H_ */
