@@ -817,8 +817,10 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 
 	hex_dump_skb_data(fisa_flow->head_skb, false);
 
-	fisa_flow_vdev = dp_get_vdev_from_soc_vdev_id_wifi3(fisa_flow->soc_hdl,
-				QDF_NBUF_CB_RX_VDEV_ID(fisa_flow->head_skb));
+	fisa_flow_vdev = dp_vdev_get_ref_by_id(
+				fisa_flow->soc_hdl,
+				QDF_NBUF_CB_RX_VDEV_ID(fisa_flow->head_skb),
+				DP_MOD_ID_RX);
 	if (qdf_unlikely(!fisa_flow_vdev ||
 					(fisa_flow_vdev != fisa_flow->vdev))) {
 		qdf_nbuf_free(fisa_flow->head_skb);
@@ -851,6 +853,10 @@ dp_rx_fisa_flush_udp_flow(struct dp_vdev *vdev,
 	}
 
 out:
+	if (fisa_flow_vdev)
+		dp_vdev_unref_delete(fisa_flow->soc_hdl,
+				     fisa_flow_vdev,
+				     DP_MOD_ID_RX);
 	fisa_flow->head_skb = NULL;
 	fisa_flow->last_skb = NULL;
 
@@ -1351,7 +1357,7 @@ QDF_STATUS dp_rx_fisa_flush_by_vdev_id(struct dp_soc *soc, uint8_t vdev_id)
 	int i;
 	struct dp_vdev *vdev;
 
-	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_RX);
 	if (qdf_unlikely(!vdev)) {
 		dp_err("null vdev by vdev_id %d", vdev_id);
 		return QDF_STATUS_E_FAILURE;
@@ -1364,6 +1370,7 @@ QDF_STATUS dp_rx_fisa_flush_by_vdev_id(struct dp_soc *soc, uint8_t vdev_id)
 			dp_rx_fisa_flush_flow_wrap(&sw_ft_entry[i]);
 		}
 	}
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1374,9 +1381,10 @@ void dp_set_fisa_disallowed_for_vdev(struct cdp_soc_t *cdp_soc, uint8_t vdev_id,
 	struct dp_soc *soc = (struct dp_soc *)cdp_soc;
 	struct dp_vdev *vdev;
 
-	vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc, vdev_id);
+	vdev = dp_vdev_get_ref_by_id(soc, vdev_id, DP_MOD_ID_RX);
 	if (qdf_unlikely(!vdev))
 		return;
 
 	vdev->fisa_disallowed[rx_ctx_id] = val;
+	dp_vdev_unref_delete(soc, vdev, DP_MOD_ID_RX);
 }
