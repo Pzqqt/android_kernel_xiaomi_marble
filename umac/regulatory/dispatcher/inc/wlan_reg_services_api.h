@@ -134,6 +134,30 @@ bool wlan_reg_is_24ghz_ch_freq(qdf_freq_t freq);
 #define WLAN_REG_IS_5GHZ_CH_FREQ(freq) wlan_reg_is_5ghz_ch_freq(freq)
 bool wlan_reg_is_5ghz_ch_freq(qdf_freq_t freq);
 
+/**
+ * wlan_reg_is_range_overlap_2g() - Check if the given low_freq and high_freq
+ * is in the 2G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 2G range,
+ * else false.
+ */
+bool wlan_reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
+/**
+ * wlan_reg_is_range_overlap_5g() - Check if the given low_freq and high_freq
+ * is in the 5G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 5G range,
+ * else false.
+ */
+bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
 #ifdef CONFIG_BAND_6GHZ
 /**
  * wlan_reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
@@ -155,9 +179,27 @@ bool wlan_reg_is_6ghz_chan_freq(uint16_t freq);
  * else false.
  */
 bool wlan_reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
+/**
+ * wlan_reg_is_range_overlap_6g() - Check if the given low_freq and high_freq
+ * is in the 6G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 6G range,
+ * else false.
+ */
+bool wlan_reg_is_range_overlap_6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
 #else
 static inline bool wlan_reg_is_range_only6g(qdf_freq_t low_freq,
 					    qdf_freq_t high_freq)
+{
+	return false;
+}
+
+static inline bool wlan_reg_is_range_overlap_6g(qdf_freq_t low_freq,
+						qdf_freq_t high_freq)
 {
 	return false;
 }

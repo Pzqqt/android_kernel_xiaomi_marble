@@ -789,6 +789,16 @@ bool wlan_reg_is_5ghz_ch_freq(qdf_freq_t freq)
 	return reg_is_5ghz_ch_freq(freq);
 }
 
+bool wlan_reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	return reg_is_range_overlap_2g(low_freq, high_freq);
+}
+
+bool wlan_reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	return reg_is_range_overlap_5g(low_freq, high_freq);
+}
+
 #ifdef CONFIG_BAND_6GHZ
 bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
 {
@@ -799,6 +809,11 @@ bool wlan_reg_is_6ghz_chan_freq(uint16_t freq)
 bool wlan_reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 {
 	return reg_is_range_only6g(low_freq, high_freq);
+}
+
+bool wlan_reg_is_range_overlap_6g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	return reg_is_range_overlap_6g(low_freq, high_freq);
 }
 #endif
 

@@ -2481,13 +2481,6 @@ static inline bool BAND_5G_PRESENT(uint8_t band_mask)
 	return !!(band_mask & (BIT(REG_BAND_5G)));
 }
 
-#ifdef CONFIG_BAND_6GHZ
-bool reg_is_6ghz_chan_freq(uint16_t freq)
-{
-	return REG_IS_6GHZ_FREQ(freq);
-}
-
-#ifdef CONFIG_6G_FREQ_OVERLAP
 /**
  * reg_is_freq_in_between() - Check whether freq falls within low_freq and
  * high_freq, inclusively.
@@ -2521,20 +2514,32 @@ static bool reg_is_ranges_overlap(qdf_freq_t low_freq, qdf_freq_t high_freq,
 				       end_edge_freq));
 }
 
-static bool reg_is_range_overlap_6g(qdf_freq_t low_freq,
-				    qdf_freq_t high_freq)
+bool reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 {
 	return reg_is_ranges_overlap(low_freq, high_freq,
-				     SIXG_STARTING_EDGE_FREQ,
-				     SIXG_ENDING_EDGE_FREQ);
+				     TWO_GIG_STARTING_EDGE_FREQ,
+				     TWO_GIG_ENDING_EDGE_FREQ);
 }
 
-static bool reg_is_range_overlap_5g(qdf_freq_t low_freq,
-				    qdf_freq_t high_freq)
+bool reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq)
 {
 	return reg_is_ranges_overlap(low_freq, high_freq,
-				     FIVEG_STARTING_EDGE_FREQ,
-				     FIVEG_ENDING_EDGE_FREQ);
+				     FIVE_GIG_STARTING_EDGE_FREQ,
+				     FIVE_GIG_ENDING_EDGE_FREQ);
+}
+
+#ifdef CONFIG_BAND_6GHZ
+bool reg_is_6ghz_chan_freq(uint16_t freq)
+{
+	return REG_IS_6GHZ_FREQ(freq);
+}
+
+#ifdef CONFIG_6G_FREQ_OVERLAP
+bool reg_is_range_overlap_6g(qdf_freq_t low_freq, qdf_freq_t high_freq)
+{
+	return reg_is_ranges_overlap(low_freq, high_freq,
+				     SIX_GIG_STARTING_EDGE_FREQ,
+				     SIX_GIG_ENDING_EDGE_FREQ);
 }
 
 bool reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq)

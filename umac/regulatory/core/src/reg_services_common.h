@@ -81,15 +81,19 @@
 #define HALF_5MHZ_BW     2
 #define HALF_20MHZ_BW    10
 
-#define FIVEG_STARTING_EDGE_FREQ (channel_map_global[MIN_49GHZ_CHANNEL]. \
+#define TWO_GIG_STARTING_EDGE_FREQ (channel_map_global[MIN_24GHZ_CHANNEL]. \
+				  center_freq - HALF_20MHZ_BW)
+#define TWO_GIG_ENDING_EDGE_FREQ   (channel_map_global[MAX_24GHZ_CHANNEL]. \
+				  center_freq + HALF_20MHZ_BW)
+#define FIVE_GIG_STARTING_EDGE_FREQ (channel_map_global[MIN_49GHZ_CHANNEL]. \
 				  center_freq - HALF_5MHZ_BW)
-#define FIVEG_ENDING_EDGE_FREQ   (channel_map_global[MAX_5GHZ_CHANNEL]. \
+#define FIVE_GIG_ENDING_EDGE_FREQ   (channel_map_global[MAX_5GHZ_CHANNEL]. \
 				  center_freq + HALF_20MHZ_BW)
 
 #ifdef CONFIG_BAND_6GHZ
-#define SIXG_STARTING_EDGE_FREQ  (channel_map_global[MIN_6GHZ_CHANNEL]. \
+#define SIX_GIG_STARTING_EDGE_FREQ  (channel_map_global[MIN_6GHZ_CHANNEL]. \
 				  center_freq - HALF_20MHZ_BW)
-#define SIXG_ENDING_EDGE_FREQ    (channel_map_global[MAX_6GHZ_CHANNEL]. \
+#define SIX_GIG_ENDING_EDGE_FREQ    (channel_map_global[MAX_6GHZ_CHANNEL]. \
 				  center_freq + HALF_20MHZ_BW)
 
 #define FREQ_LEFT_SHIFT         55
@@ -553,6 +557,30 @@ bool reg_is_24ghz_ch_freq(uint32_t freq);
  */
 bool reg_is_5ghz_ch_freq(uint32_t freq);
 
+/**
+ * reg_is_range_overlap_2g() - Check if the given low_freq and high_freq
+ * is in the 2G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 2G range,
+ * else false.
+ */
+bool reg_is_range_overlap_2g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
+/**
+ * reg_is_range_overlap_5g() - Check if the given low_freq and high_freq
+ * is in the 5G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps 5G range,
+ * else false.
+ */
+bool reg_is_range_overlap_5g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
 #ifdef CONFIG_BAND_6GHZ
 /**
  * reg_is_6ghz_chan_freq() - Check if the given channel frequency is 6GHz
@@ -564,8 +592,20 @@ bool reg_is_6ghz_chan_freq(uint16_t freq);
 
 #ifdef CONFIG_6G_FREQ_OVERLAP
 /**
- * reg_is_range_only6g() - Check if the given low_freq and high_freq is in
+ * reg_is_range_only6g() - Check if the given low_freq and high_freq is only in
  * the 6G range.
+ *
+ * @low_freq - Low frequency.
+ * @high_freq - High frequency.
+ *
+ * Return: Return true if given low_freq and high_freq overlaps only the 6G
+ * range, else false.
+ */
+bool reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+
+/**
+ * reg_is_range_overlap_6g() - Check if the given low_freq and high_freq
+ * is in the 6G range.
  *
  * @low_freq - Low frequency.
  * @high_freq - High frequency.
@@ -573,7 +613,7 @@ bool reg_is_6ghz_chan_freq(uint16_t freq);
  * Return: Return true if given low_freq and high_freq overlaps 6G range,
  * else false.
  */
-bool reg_is_range_only6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
+bool reg_is_range_overlap_6g(qdf_freq_t low_freq, qdf_freq_t high_freq);
 #endif
 
 /**
@@ -633,6 +673,12 @@ reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 }
 
 #ifdef CONFIG_6G_FREQ_OVERLAP
+static inline bool reg_is_range_overlap_6g(qdf_freq_t low_freq,
+					   qdf_freq_t high_freq)
+{
+	return false;
+}
+
 static inline bool reg_is_range_only6g(qdf_freq_t low_freq,
 				       qdf_freq_t high_freq)
 {
