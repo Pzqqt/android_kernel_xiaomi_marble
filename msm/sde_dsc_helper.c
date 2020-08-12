@@ -81,10 +81,27 @@ static char sde_dsc_rc_range_max_qp[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
 	};
 
 /*
- * Rate control - bpg offset values
+ * Rate control - bpg offset values for each ratio type in sde_dsc_ratio_type
  */
-static char sde_dsc_rc_range_bpg_offset[DSC_NUM_BUF_RANGES] =
-	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12};
+static char sde_dsc_rc_range_bpg[DSC_RATIO_TYPE_MAX][DSC_NUM_BUF_RANGES] = {
+	/* DSC v1.1 */
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
+	/* DSC v1.1 SCR and DSC V1.2 RGB 444 */
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
+	/* DSC v1.2 YUV422 */
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -10, -12, -12, -12},
+	{10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10, -10, -12, -12, -12},
+	/* DSC v1.2 YUV420 */
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{2, 0, 0, -2, -4, -6, -8, -8, -8, -10, -10, -12, -12, -12, -12},
+	{10, 8, 6, 4, 2, 0, -2, -4, -6, -8, -10, -10, -12, -12, -12},
+};
 
 /**
  * Maps to lookup the sde_dsc_ratio_type index used in rate control tables
@@ -206,7 +223,7 @@ int sde_dsc_populate_dsc_config(struct drm_dsc_config *dsc, int scr_ver) {
 		dsc->rc_range_params[i].range_max_qp =
 			sde_dsc_rc_range_max_qp[ratio_idx][i];
 		dsc->rc_range_params[i].range_bpg_offset =
-			sde_dsc_rc_range_bpg_offset[i];
+			sde_dsc_rc_range_bpg[ratio_idx][i];
 	}
 
 	if (bpp == 8) {
