@@ -200,7 +200,6 @@ static QDF_STATUS send_cfr_rcc_cmd_tlv(wmi_unified_t wmi_handle,
 
 		for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
 			if (qdf_test_bit(grp_id,
-					 (unsigned long *)
 					 &rcc->modified_in_curr_session)) {
 				populate_wmi_cfr_param(grp_id, rcc, param);
 				param++;

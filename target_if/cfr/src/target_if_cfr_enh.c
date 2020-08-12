@@ -1598,15 +1598,13 @@ void target_if_cfr_update_global_cfg(struct wlan_objmgr_pdev *pdev)
 	struct pdev_cfr *pcfr;
 	struct ta_ra_cfr_cfg *curr_cfg = NULL;
 	struct ta_ra_cfr_cfg *glbl_cfg = NULL;
-	unsigned long *modified_in_this_session;
 
 	pcfr = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						     WLAN_UMAC_COMP_CFR);
-	modified_in_this_session =
-		(unsigned long *)&pcfr->rcc_param.modified_in_curr_session;
 
 	for (grp_id = 0; grp_id < MAX_TA_RA_ENTRIES; grp_id++) {
-		if (qdf_test_bit(grp_id, modified_in_this_session)) {
+		if (qdf_test_bit(grp_id,
+				 &pcfr->rcc_param.modified_in_curr_session)) {
 			/* Populating global config based on user's input */
 			glbl_cfg = &pcfr->global[grp_id];
 			curr_cfg = &pcfr->rcc_param.curr[grp_id];

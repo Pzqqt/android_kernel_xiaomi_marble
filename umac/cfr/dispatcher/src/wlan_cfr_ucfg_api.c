@@ -774,7 +774,7 @@ ucfg_cfr_set_capture_duration(struct wlan_objmgr_vdev *vdev,
  * Copy user provided group parameters( type/ subtype of mgmt, ctrl, data )
  * into curr_cfg instance of ta_ra_cfr_cfg.
  * Set valid mask for the provided configuration.
- * Set modified_in_this_session for the particular group.
+ * Set modified_in_curr_session for the particular group.
  */
 
 QDF_STATUS
@@ -801,7 +801,6 @@ ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
 	curr_cfg->valid_data_subtype = 1;
 
 	qdf_set_bit(params->grp_id,
-		    (unsigned long *)
 		    &pcfr->rcc_param.modified_in_curr_session);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
@@ -813,7 +812,7 @@ ucfg_cfr_set_frame_type_subtype(struct wlan_objmgr_vdev *vdev,
  * Copy user provided group parameters( BW and NSS )
  * into curr_cfg instance of ta_ra_cfr_cfg.
  * Set valid mask for the provided configuration.
- * Set modified_in_this_session for the particular group.
+ * Set modified_in_curr_session for the particular group.
  */
 
 QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
@@ -837,7 +836,7 @@ QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
 	curr_cfg->valid_nss_mask = 1;
 
 	qdf_set_bit(params->grp_id,
-		    (unsigned long *)&pcfr->rcc_param.modified_in_curr_session);
+		    &pcfr->rcc_param.modified_in_curr_session);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
 
@@ -848,7 +847,7 @@ QDF_STATUS ucfg_cfr_set_bw_nss(struct wlan_objmgr_vdev *vdev,
  * Copy user provided group parameters( TA, RA, TA_MASK, RA_MASK )
  * into curr_cfg instance of ta_ra_cfr_cfg.
  * Set valid mask for the provided configuration.
- * Set modified_in_this_session for the particular group.
+ * Set modified_in_curr_session for the particular group.
  */
 
 QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
@@ -877,7 +876,6 @@ QDF_STATUS ucfg_cfr_set_tara_config(struct wlan_objmgr_vdev *vdev,
 	curr_cfg->valid_ra_mask = 1;
 
 	qdf_set_bit(params->grp_id,
-		    (unsigned long *)
 		    &pcfr->rcc_param.modified_in_curr_session);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_CFR_ID);
@@ -942,7 +940,7 @@ QDF_STATUS ucfg_cfr_get_cfg(struct wlan_objmgr_vdev *vdev)
 		pcfr->rcc_param.freeze_tlv_delay_cnt_thr);
 	cfr_err("Enabled CFG id bitmap : 0x%x\n",
 		pcfr->rcc_param.filter_group_bitmap);
-	cfr_err(" Modified cfg id bitmap : 0x%x\n",
+	cfr_err(" Modified cfg id bitmap : %lu\n",
 		pcfr->rcc_param.modified_in_curr_session);
 
 	cfr_err("TARA_CONFIG details:\n");
@@ -1195,7 +1193,7 @@ static void cfr_set_filter(struct wlan_objmgr_pdev *pdev, bool enable,
  * called glbl_cfg and update the current config to default state for the
  * next commit session.
  *
- * Finally, reset the counter (modified_in_this_session) to 0 before moving to
+ * Finally, reset the counter (modified_in_curr_session) to 0 before moving to
  * next commit session.
  *
  */

@@ -444,7 +444,7 @@ struct cfr_rcc_param {
 	uint8_t num_grp_tlvs;
 
 	struct ta_ra_cfr_cfg curr[MAX_TA_RA_ENTRIES];
-	uint16_t modified_in_curr_session;
+	unsigned long modified_in_curr_session;
 	uint32_t capture_count            :16,
 		 capture_intval_mode_sel  :1,
 		 rsvd2                    :15;
@@ -626,7 +626,7 @@ QDF_STATUS wlan_cfr_pdev_close(struct wlan_objmgr_pdev *pdev);
  *
  * Return: No. of set bits
  */
-uint8_t count_set_bits(uint32_t value);
+uint8_t count_set_bits(unsigned long value);
 
 /**
  * wlan_cfr_is_feature_disabled() - Check if cfr feature is disabled

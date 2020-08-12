@@ -179,7 +179,7 @@ QDF_STATUS cfr_deinitialize_pdev(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(cfr_deinitialize_pdev);
 
-uint8_t count_set_bits(uint32_t value)
+uint8_t count_set_bits(unsigned long value)
 {
 	uint8_t count = 0;
 
