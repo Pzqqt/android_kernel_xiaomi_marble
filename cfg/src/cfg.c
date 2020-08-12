@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -234,8 +234,8 @@ cfg_mac_item_handler(struct cfg_value_store *store,
 		return;
 
 	cfg_err("%s=%s - Invalid format (status %d); Using default "
-		QDF_MAC_ADDR_STR, meta->name, str_value, status,
-		QDF_MAC_ADDR_ARRAY(store_value->bytes));
+		QDF_MAC_ADDR_FMT, meta->name, str_value, status,
+		QDF_MAC_ADDR_REF(store_value->bytes));
 }
 
 static __attribute__((unused)) void
@@ -539,7 +539,8 @@ cfg_store_print(struct wlan_objmgr_psoc *psoc)
 
 #undef __CFG_INI_MAC
 #define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
-	cfg_nofl_debug("%s %pM", name, (&store->values.id##_internal)->bytes);
+	cfg_nofl_debug("%s "QDF_MAC_ADDR_FMT, name, \
+	QDF_MAC_ADDR_REF((&store->values.id##_internal)->bytes));
 
 #undef __CFG_INI_IPV4
 #define __CFG_INI_IPV4(id, mtype, ctype, name, desc, def...) \
@@ -591,8 +592,9 @@ cfg_ini_config_print(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 #undef __CFG_INI_MAC
 #define __CFG_INI_MAC(id, mtype, ctype, name, desc, def...) \
 	do { \
-		len = qdf_scnprintf(buf, buflen, "%s %pM\n", name, \
-				    (&store->values.id##_internal)->bytes); \
+		len = qdf_scnprintf(buf, buflen, "%s "QDF_MAC_ADDR_FMT"\n", \
+			name, \
+			QDF_MAC_ADDR_REF((&store->values.id##_internal)->bytes)); \
 		buf += len; \
 		buflen -= len; \
 	} while (0);
