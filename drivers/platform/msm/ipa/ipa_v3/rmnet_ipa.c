@@ -4641,6 +4641,7 @@ int rmnet_ipa3_query_per_client_stats(
 		return -EINVAL;
 	}
 
+	teth_ptr = &rmnet_ipa3_ctx->tether_device[data->device_type];
 	if (data->num_clients == 1) {
 		/* Check if the client info is valid.*/
 		lan_clnt_idx1 = rmnet_ipa3_get_lan_client_info(
@@ -4652,7 +4653,6 @@ int rmnet_ipa3_query_per_client_stats(
 			return -EINVAL;
 		}
 
-		teth_ptr = &rmnet_ipa3_ctx->tether_device[data->device_type];
 		lan_client = &teth_ptr->lan_client[lan_clnt_idx1];
 
 		/*
@@ -4723,7 +4723,7 @@ int rmnet_ipa3_query_per_client_stats(
 		return rc;
 	}
 
-	if (resp->per_client_stats_list_valid) {
+	if (resp->per_client_stats_list_valid && teth_ptr) {
 		for (i = 0; i < resp->per_client_stats_list_len
 				&& i < IPA_MAX_NUM_HW_PATH_CLIENTS; i++) {
 			/* Subtract the header bytes from the DL bytes. */
