@@ -1606,6 +1606,11 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 				}
 			}
 			rate = wcd938x_get_clk_rate(i);
+			if (wcd938x->adc_count) {
+				rate =  (wcd938x->adc_count * rate);
+				if (rate > SWR_CLK_RATE_9P6MHZ)
+					rate = SWR_CLK_RATE_9P6MHZ;
+			}
 			wcd938x_set_swr_clk_rate(component, rate, bank);
 		}
 		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
@@ -1732,6 +1737,11 @@ static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 			}
 		}
 		clk_rate = wcd938x_get_clk_rate(i);
+
+		/* clk_rate depends on number of paths getting enabled */
+		clk_rate =  (wcd938x->adc_count * clk_rate);
+		if (clk_rate > SWR_CLK_RATE_9P6MHZ)
+			clk_rate = SWR_CLK_RATE_9P6MHZ;
 		wcd938x_set_swr_clk_rate(component, clk_rate, bank);
 		ret = swr_slvdev_datapath_control(wcd938x->tx_swr_dev,
 				 wcd938x->tx_swr_dev->dev_num,
