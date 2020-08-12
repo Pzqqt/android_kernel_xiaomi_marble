@@ -31,7 +31,7 @@ struct HTC_CREDIT_HISTORY {
 };
 
 struct htc_hang_data_fixed_param {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	struct HTC_CREDIT_HISTORY credit_hist;
 } qdf_packed;
 

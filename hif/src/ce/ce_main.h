@@ -301,7 +301,7 @@ struct ce_index {
  * @ce_info: CE info
  */
 struct hang_event_info {
-	uint32_t tlv_header;
+	uint16_t tlv_header;
 	uint8_t active_tasklet_count;
 	uint8_t active_grp_tasklet_cnt;
 	uint8_t ce_count;

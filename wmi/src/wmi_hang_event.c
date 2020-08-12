@@ -20,7 +20,7 @@
 #include <qdf_trace.h>
 
 struct wmi_hang_data_fixed_param {
-	uint32_t tlv_header; /* tlv tag and length */
+	uint16_t tlv_header; /* tlv tag and length */
 	uint32_t event;
 	uint32_t data;
 	uint64_t time;
