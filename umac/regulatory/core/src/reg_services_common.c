@@ -2627,6 +2627,99 @@ bool reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 }
 
 /**
+ * reg_get_max_psd() - Get max PSD.
+ * @freq: Channel frequency.
+ * @bw: Channel bandwidth.
+ * @reg_ap: Regulatory 6G AP type.
+ * @reg_client: Regulatory 6G client type.
+ * @tx_power: Pointer to tx-power.
+ *
+ * Return: Return QDF_STATUS_SUCCESS, if PSD is filled for 6G TPE IE
+ * else return QDF_STATUS_E_FAILURE.
+ */
+static QDF_STATUS reg_get_max_psd(qdf_freq_t freq,
+				  uint16_t bw,
+				  enum reg_6g_ap_type reg_ap,
+				  enum reg_6g_client_type reg_client,
+				  uint8_t *tx_power)
+{
+	if (reg_ap == REG_INDOOR_AP) {
+		switch (reg_client) {
+		case REG_DEFAULT_CLIENT:
+			*tx_power = REG_PSD_MAX_TXPOWER_FOR_DEFAULT_CLIENT;
+			return QDF_STATUS_SUCCESS;
+		case REG_SUBORDINATE_CLIENT:
+			*tx_power = REG_PSD_MAX_TXPOWER_FOR_SUBORDINATE_CLIENT;
+			return QDF_STATUS_SUCCESS;
+		default:
+			reg_err_rl("Invalid client type");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * reg_get_max_txpower_for_eirp() - Get max EIRP.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ * @bw: Channel bandwidth.
+ * @reg_ap: Regulatory 6G AP type.
+ * @reg_client: Regulatory client type.
+ * @tx_power: Pointer to tx-power.
+ *
+ * Return: Return QDF_STATUS_SUCCESS, if EIRP is filled for 6G TPE IE
+ * else return QDF_STATUS_E_FAILURE.
+ */
+static QDF_STATUS reg_get_max_eirp(struct wlan_objmgr_pdev *pdev,
+				   qdf_freq_t freq,
+				   uint16_t bw,
+				   enum reg_6g_ap_type reg_ap,
+				   enum reg_6g_client_type reg_client,
+				   uint8_t *tx_power)
+{
+	if (reg_ap == REG_INDOOR_AP) {
+		switch (reg_client) {
+		case REG_DEFAULT_CLIENT:
+			*tx_power = reg_get_channel_reg_power_for_freq(pdev,
+								       freq);
+			return QDF_STATUS_SUCCESS;
+		case REG_SUBORDINATE_CLIENT:
+			*tx_power = REG_EIRP_MAX_TXPOWER_FOR_SUBORDINATE_CLIENT;
+			return QDF_STATUS_SUCCESS;
+		default:
+			reg_err_rl("Invalid client type");
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS reg_get_max_txpower_for_6g_tpe(struct wlan_objmgr_pdev *pdev,
+					  qdf_freq_t freq, uint8_t bw,
+					  enum reg_6g_ap_type reg_ap,
+					  enum reg_6g_client_type reg_client,
+					  bool is_psd,
+					  uint8_t *tx_power)
+{
+	if (!REG_IS_6GHZ_FREQ(freq)) {
+		reg_err_rl("%d is not a 6G channel frequency", freq);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * For now, there is support only for Indoor AP and we have only
+	 * LPI power values.
+	 */
+	if (is_psd)
+		return reg_get_max_psd(freq, bw, reg_ap, reg_client, tx_power);
+
+	return reg_get_max_eirp(pdev, freq, bw, reg_ap, reg_client, tx_power);
+}
+
+/**
  * BAND_6G_PRESENT() - Check if REG_BAND_6G is set in the band_mask
  * @band_mask: Bitmask for bands
  *

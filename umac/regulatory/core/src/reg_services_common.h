@@ -648,6 +648,27 @@ bool reg_is_6ghz_psc_chan_freq(uint16_t freq);
 bool reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq);
 
 /**
+ * reg_get_max_txpower_for_6g_tpe() - Get max txpower for 6G TPE IE.
+ * @pdev: Pointer to pdev.
+ * @freq: Channel frequency.
+ * @bw: Channel bandwidth.
+ * @reg_ap: Regulatory 6G AP type.
+ * @reg_client: Regulatory 6G client type.
+ * @is_psd: True if txpower is needed in PSD format, and false if needed in EIRP
+ * format.
+ * @tx_power: Pointer to tx-power.
+ *
+ * Return: Return QDF_STATUS_SUCCESS, if tx_power is filled for 6G TPE IE
+ * else return QDF_STATUS_E_FAILURE.
+ */
+QDF_STATUS reg_get_max_txpower_for_6g_tpe(struct wlan_objmgr_pdev *pdev,
+					  qdf_freq_t freq, uint8_t bw,
+					  enum reg_6g_ap_type reg_ap,
+					  enum reg_6g_client_type reg_client,
+					  bool is_psd,
+					  uint8_t *tx_power);
+
+/**
  * reg_min_6ghz_chan_freq() - Get minimum 6GHz channel center frequency
  *
  * Return: Minimum 6GHz channel center frequency
@@ -670,6 +691,17 @@ static inline bool
 reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
 	return false;
+}
+
+static inline QDF_STATUS
+reg_get_max_txpower_for_6g_tpe(struct wlan_objmgr_pdev *pdev,
+			       qdf_freq_t freq, uint8_t bw,
+			       enum reg_6g_ap_type reg_ap,
+			       enum reg_6g_client_type reg_client,
+			       bool is_psd,
+			       uint8_t *tx_power)
+{
+	return QDF_STATUS_E_FAILURE;
 }
 
 #ifdef CONFIG_6G_FREQ_OVERLAP

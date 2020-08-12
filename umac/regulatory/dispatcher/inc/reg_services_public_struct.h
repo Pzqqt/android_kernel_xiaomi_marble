@@ -27,7 +27,14 @@
 #define REG_SBS_SEPARATION_THRESHOLD 100
 
 #ifdef CONFIG_BAND_6GHZ
-#define REG_MAX_CHANNELS_PER_OPERATING_CLASS  70
+#define REG_MAX_CHANNELS_PER_OPERATING_CLASS        70
+/*
+ * These tx-power macros are present till the 6G regdomains are defined to
+ * support tx-power values for various client types.
+ */
+#define REG_PSD_MAX_TXPOWER_FOR_DEFAULT_CLIENT      (-1) /* dBm */
+#define REG_PSD_MAX_TXPOWER_FOR_SUBORDINATE_CLIENT  5    /* dBm */
+#define REG_EIRP_MAX_TXPOWER_FOR_SUBORDINATE_CLIENT 24   /* dBm */
 #else
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
 #endif
@@ -513,6 +520,32 @@ enum channel_state {
 	CHANNEL_STATE_DFS,
 	CHANNEL_STATE_ENABLE,
 	CHANNEL_STATE_INVALID,
+};
+
+/**
+ * enum reg_6g_ap_type - Regulatory AP type for regulatory info subfield.
+ * @REG_INDOOR_AP: Indoor AP
+ * @REG_STANDARD_POWER_AP: Standard Power AP
+ * @REG_MAX_AP_TYPE: Maximum value possible for (3 bits) regulatory info
+ * sub-field in the 6G HE Operation IE
+ */
+enum reg_6g_ap_type {
+	REG_INDOOR_AP = 0,
+	REG_STANDARD_POWER_AP = 1,
+	REG_MAX_AP_TYPE = 7,
+};
+
+/**
+ * enum reg_6g_client_type - Regulatory client type for max tx-power category
+ * @REG_DEFAULT_CLIENT: Default client
+ * @REG_SUBORDINATE_CLIENT: Subordinate client
+ * @REG_MAX_CLIENT_TYPE: Maximum value possible for max tx-power category
+ * (2 bits) sub-field in the TPE (Transmit Power Envelope) IE
+ */
+enum reg_6g_client_type {
+	REG_DEFAULT_CLIENT = 0,
+	REG_SUBORDINATE_CLIENT = 1,
+	REG_MAX_CLIENT_TYPE = 3,
 };
 
 /**

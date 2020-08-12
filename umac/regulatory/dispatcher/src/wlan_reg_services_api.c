@@ -836,6 +836,20 @@ bool wlan_reg_is_6g_freq_indoor(struct wlan_objmgr_pdev *pdev, qdf_freq_t freq)
 {
 	return reg_is_6g_freq_indoor(pdev, freq);
 }
+
+QDF_STATUS
+wlan_reg_get_max_txpower_for_6g_tpe(struct wlan_objmgr_pdev *pdev,
+				    qdf_freq_t freq, uint8_t bw,
+				    enum reg_6g_ap_type reg_ap,
+				    enum reg_6g_client_type reg_client,
+				    bool is_psd,
+				    uint8_t *tx_power)
+{
+	return reg_get_max_txpower_for_6g_tpe(pdev, freq, bw,
+					      reg_ap,
+					      reg_client, is_psd,
+					      tx_power);
+}
 #endif /* CONFIG_BAND_6GHZ */
 
 uint16_t
