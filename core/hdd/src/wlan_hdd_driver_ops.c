@@ -744,7 +744,7 @@ static inline void hdd_wlan_ssr_shutdown_event(void) { }
  *
  * Return: None
  */
-static void hdd_send_hang_data(void *data, size_t data_len)
+static void hdd_send_hang_data(uint8_t *data, size_t data_len)
 {
 	enum qdf_hang_reason reason = QDF_REASON_UNSPECIFIED;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -1846,7 +1846,7 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 
 		break;
 	case PLD_FW_HANG_EVENT:
-		hdd_info("Received fimrware hang event");
+		hdd_info("Received firmware hang event");
 		cds_get_recovery_reason(&reason);
 		hang_evt_data.hang_data =
 				qdf_mem_malloc(QDF_HANG_EVENT_DATA_SIZE);
@@ -1854,12 +1854,12 @@ wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 			return;
 		hang_evt_data.offset = 0;
 		qdf_hang_event_notifier_call(reason, &hang_evt_data);
+		hang_evt_data.offset = QDF_WLAN_HANG_FW_OFFSET;
 		if (event_data->hang_data.hang_event_data_len >=
 		    QDF_HANG_EVENT_DATA_SIZE / 2)
 			event_data->hang_data.hang_event_data_len =
 						QDF_HANG_EVENT_DATA_SIZE / 2;
 
-		hang_evt_data.offset = QDF_WLAN_HANG_FW_OFFSET;
 		if (event_data->hang_data.hang_event_data_len)
 			qdf_mem_copy((hang_evt_data.hang_data +
 				      hang_evt_data.offset),
