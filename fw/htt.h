@@ -206,9 +206,10 @@
  * 3.82 Add WIN_SIZE field to HTT_T2H_MSG_TYPE_RX_DELBA msg.
  * 3.83 Shrink seq_idx field in HTT PPDU ID from 3 bits to 2.
  * 3.84 Add fisa_control_bits_v2 def.
+ * 3.85 Add HTT_RX_PEER_META_DATA defs.
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 84
+#define HTT_CURRENT_VERSION_MINOR 85
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -14136,6 +14137,127 @@ PREPACK struct htt_ppdu_id {
     do {                                                 \
         HTT_CHECK_SET_VAL(HTT_PPDU_ID_SEQ_CMD_TYPE, _val);  \
         ((_var) |= ((_val) << HTT_PPDU_ID_SEQ_CMD_TYPE_S)); \
+    } while (0)
+
+/**
+ * @brief target -> RX PEER METADATA V0 format
+ * Host will know the peer metadata version from the wmi_service_ready_ext2
+ * message from target, and will confirm to the target which peer metadata
+ * version to use in the wmi_init message.
+ *
+ * The following diagram shows the format of the RX PEER METADATA.
+ *
+ * |31             24|23             16|15              8|7               0|
+ * |-----------------------------------------------------------------------|
+ * |    Reserved     |     VDEV ID     |              PEER ID              |
+ * |-----------------------------------------------------------------------|
+ */
+PREPACK struct htt_rx_peer_metadata_v0 {
+    A_UINT32
+        peer_id:         16,
+        vdev_id:         8,
+        reserved1:       8;
+} POSTPACK;
+
+#define HTT_RX_PEER_META_DATA_V0_PEER_ID_S    0
+#define HTT_RX_PEER_META_DATA_V0_PEER_ID_M    0x0000ffff
+#define HTT_RX_PEER_META_DATA_V0_PEER_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V0_PEER_ID_M) >> HTT_RX_PEER_META_DATA_V0_PEER_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V0_PEER_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V0_PEER_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V0_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V0_VDEV_ID_S    16
+#define HTT_RX_PEER_META_DATA_V0_VDEV_ID_M    0x00ff0000
+#define HTT_RX_PEER_META_DATA_V0_VDEV_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V0_VDEV_ID_M) >> HTT_RX_PEER_META_DATA_V0_VDEV_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V0_VDEV_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V0_VDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V0_VDEV_ID_S)); \
+    } while (0)
+
+/**
+ * @brief target -> RX PEER METADATA V1 format
+ * Host will know the peer metadata version from the wmi_service_ready_ext2
+ * message from target, and will confirm to the target which peer metadata
+ * version to use in the wmi_init message.
+ *
+ * The following diagram shows the format of the RX PEER METADATA V1 format.
+ *
+ * |31 29|28   26|25   24|23        16|15 14|   13  |12                   0|
+ * |-----------------------------------------------------------------------|
+ * |Rsvd2|CHIP ID|LMAC ID|  VDEV ID   |Rsvd1|ML PEER| SW PEER ID/ML PEER ID|
+ * |-----------------------------------------------------------------------|
+ */
+PREPACK struct htt_rx_peer_metadata_v1 {
+    A_UINT32
+        peer_id:         13,
+        ml_peer_valid:   1,
+        reserved1:       2,
+        vdev_id:         8,
+        lmac_id:         2,
+        chip_id:         3,
+        reserved2:       3;
+} POSTPACK;
+
+#define HTT_RX_PEER_META_DATA_V1_PEER_ID_S    0
+#define HTT_RX_PEER_META_DATA_V1_PEER_ID_M    0x00001fff
+#define HTT_RX_PEER_META_DATA_V1_PEER_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_PEER_ID_M) >> HTT_RX_PEER_META_DATA_V1_PEER_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_PEER_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_PEER_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_PEER_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_S    13
+#define HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_M    0x00002000
+#define HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_M) >> HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_ML_PEER_VALID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1_VDEV_ID_S    16
+#define HTT_RX_PEER_META_DATA_V1_VDEV_ID_M    0x00ff0000
+#define HTT_RX_PEER_META_DATA_V1_VDEV_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_VDEV_ID_M) >> HTT_RX_PEER_META_DATA_V1_VDEV_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_VDEV_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_VDEV_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_VDEV_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1_LMAC_ID_S    24
+#define HTT_RX_PEER_META_DATA_V1_LMAC_ID_M    0x03000000
+#define HTT_RX_PEER_META_DATA_V1_LMAC_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_LMAC_ID_M) >> HTT_RX_PEER_META_DATA_V1_LMAC_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_LMAC_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_LMAC_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_LMAC_ID_S)); \
+    } while (0)
+
+#define HTT_RX_PEER_META_DATA_V1_CHIP_ID_S    26
+#define HTT_RX_PEER_META_DATA_V1_CHIP_ID_M    0x1c000000
+#define HTT_RX_PEER_META_DATA_V1_CHIP_ID_GET(_var) \
+    (((_var) & HTT_RX_PEER_META_DATA_V1_CHIP_ID_M) >> HTT_RX_PEER_META_DATA_V1_CHIP_ID_S)
+
+#define HTT_RX_PEER_META_DATA_V1_CHIP_ID_SET(_var, _val) \
+    do {                                             \
+        HTT_CHECK_SET_VAL(HTT_RX_PEER_META_DATA_V1_CHIP_ID, _val);  \
+        ((_var) |= ((_val) << HTT_RX_PEER_META_DATA_V1_CHIP_ID_S)); \
     } while (0)
 
 

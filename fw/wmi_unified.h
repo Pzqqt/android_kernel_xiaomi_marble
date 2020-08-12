@@ -2824,6 +2824,11 @@ typedef struct {
 #define WMI_MAX_USER_PER_PPDU_DL_MUMIMO_SET(dword, value) \
         WMI_SET_BITS(dword, 16, 16, value)
 
+#define WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_GET(target_cap_flags) \
+        WMI_GET_BITS(target_cap_flags, 0, 2)
+#define WMI_TARGET_CAP_FLAGS_RX_PEER_METADATA_VERSION_SET(target_cap_flags, value) \
+        WMI_SET_BITS(target_cap_flags, 0, 2, value)
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_service_ready_ext2_event_fixed_param.*/
 
@@ -2887,6 +2892,18 @@ typedef struct {
      * If max_user_per_ppdu_mumimo == 0 the UL/DL max users are unspecified.
      */
     A_UINT32 max_user_per_ppdu_mumimo;
+
+    /**
+     * @brief target_cap_flags - flags containing information about target capabilities.
+     * Bits 1:0
+     *    Rx peer metadata version number used by target
+     *    0-> legacy case
+     *    1-> MLO support
+     *    2,3-> reserved
+     *    Refer to WMI_TARGET_CAP_FLAGS_PEER_METADATA_VERSION macros.
+     * Bits 31:2 - Reserved
+     */
+    A_UINT32 target_cap_flags;
 } wmi_service_ready_ext2_event_fixed_param;
 
 typedef struct {
@@ -3683,7 +3700,17 @@ typedef struct {
      *
      *      Refer to the below WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_GET/SET
      *      macros.
-     *  Bits 31:4 - Reserved
+     *  Bits 5:4
+     *      HTT rx peer metadata version number that host supports.
+     *      Firmware intially sends the target supported version number
+     *      as part of service_ready_ext2 message.
+     *      Host can ack the version number that it is using as part of
+     *      this message.
+     *      0-> legacy case
+     *      1-> MLO support
+     *      2-3-> Reserved
+     *      Refer to the WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION macros.
+     *  Bits 31:6 - Reserved
      */
     A_UINT32 flags2;
     /** @brief host_service_flags - can be used by Host to indicate
@@ -3939,6 +3966,11 @@ typedef struct {
     WMI_GET_BITS(flags2, pdev_id, 1)
 #define WMI_RSRC_CFG_FLAGS2_RE_ULRESP_PDEV_CFG_SET(flags2, pdev_id, value) \
     WMI_SET_BITS(flags2, pdev_id, 1, value)
+
+#define WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION_GET(flags2) \
+    WMI_GET_BITS(flags2, 4, 2)
+#define WMI_RSRC_CFG_FLAGS2_RX_PEER_METADATA_VERSION_SET(flags2, value) \
+    WMI_SET_BITS(flags2, 4, 2, value)
 
 #define WMI_RSRC_CFG_HOST_SERVICE_FLAG_NAN_IFACE_SUPPORT_GET(host_service_flags) \
     WMI_GET_BITS(host_service_flags, 0, 1)
