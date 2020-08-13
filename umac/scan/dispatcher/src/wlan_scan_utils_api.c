@@ -1751,6 +1751,7 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 	/* new ssid */
 	tmp_new = util_scan_find_ie(WLAN_ELEMID_SSID, sub_copy, subie_len);
 	if (tmp_new) {
+		scm_debug(" SSID %.*s", tmp_new[1], &tmp_new[2]);
 		qdf_mem_copy(pos, tmp_new, tmp_new[1] + 2);
 		pos += (tmp_new[1] + 2);
 	}
@@ -1789,7 +1790,18 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 					 */
 					qdf_mem_copy(pos, tmp, tmp[1] + 2);
 					pos += tmp[1] + 2;
-					tmp[0] = 0xff;
+					tmp[0] = 0;
+				} else {
+					qdf_mem_copy(pos, tmp_old,
+						     tmp_old[1] + 2);
+					pos += tmp_old[1] + 2;
+				}
+			} else if (tmp_old[0] == WLAN_ELEMID_EXTN_ELEM) {
+				if (tmp_old[2] == tmp[2]) {
+					/* same ie, copy from subelement */
+					qdf_mem_copy(pos, tmp, tmp[1] + 2);
+					pos += tmp[1] + 2;
+					tmp[0] = 0;
 				} else {
 					qdf_mem_copy(pos, tmp_old,
 						     tmp_old[1] + 2);
@@ -1799,7 +1811,7 @@ static uint32_t util_gen_new_ie(uint8_t *ie, uint32_t ielen,
 				/* copy ie from subelement into new ie */
 				qdf_mem_copy(pos, tmp, tmp[1] + 2);
 				pos += tmp[1] + 2;
-				tmp[0] = 0xff;
+				tmp[0] = 0;
 			}
 		}
 
